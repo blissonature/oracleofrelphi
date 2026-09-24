@@ -17,7 +17,7 @@ new Function(glyphCopy);
 new Function(registry);
 new Function(interactions);
 
-assert.match(html,/sky-chart-vocab-tab-v1\.js\?v=79/,'Sky Chart must load the Vocab subtab');
+assert.match(html,/sky-chart-vocab-tab-v1\.js\?v=80/,'Sky Chart must load the Vocab subtab');
 assert.match(html,/sky-chart-foundation-interactions-v2\.js\?v=22/,'Sky Chart must load the interaction owner exposing native wheel isolation');
 assert.match(html,/sky-chart-card-drawers-v1\.css\?v=15/,'Sky Chart must load the microheptagram sizing fix');
 assert.match(html,/sky-chart-filter-control-unified-v1\.css\?v=9/,'Sky Chart must load the shared Vocab/Relationships control styling');
