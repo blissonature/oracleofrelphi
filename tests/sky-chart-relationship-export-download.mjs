@@ -64,6 +64,30 @@ const matchStatus=await page.locator('#skyFoundationRelationshipCount').evaluate
 }));
 assert.equal(matchStatus.text,String(eligibleOrder.length),'Changing Limit to 20 must not change the number of relationships that match the current filters.');
 assert.match(matchStatus.suffix,/matches/,'The header must label the pre-cap qualifying count as matches.');
+
+const stableMatches=String(eligibleOrder.length);
+for(const mode of ['names','referents','glyphs']){
+  await page.evaluate(mode=>window.RelphiSkyRelationshipDisplay?.setMode?.(mode),mode);
+  await page.waitForFunction(mode=>document.documentElement.dataset.relationshipDisplay===mode,mode);
+  await page.waitForTimeout(80);
+  const progressiveStatus=await page.locator('#skyFoundationRelationshipCount').evaluate(node=>({
+    matchCount:node.dataset.matchCount||'',
+    visualNumber:getComputedStyle(node,'::before').content.replace(/["']/g,''),
+    visualLabel:getComputedStyle(node,'::after').content,
+    aria:node.getAttribute('aria-label')||''
+  }));
+  assert.equal(progressiveStatus.matchCount,stableMatches,`Progressive ${mode} reveal must not change match state.`);
+  assert.equal(progressiveStatus.visualNumber,stableMatches,`Progressive ${mode} reveal must not change the visible match number.`);
+  assert.match(progressiveStatus.visualLabel,/matches/,`Progressive ${mode} reveal must preserve the matches label.`);
+  assert.equal(progressiveStatus.aria,`${stableMatches} matching relationships`,`Progressive ${mode} reveal must preserve the accessible match count.`);
+}
+await page.locator('#skyFoundationRelationshipCount').evaluate(node=>{node.textContent='1/999'});
+const legacyOverwriteStatus=await page.locator('#skyFoundationRelationshipCount').evaluate(node=>({
+  visualNumber:getComputedStyle(node,'::before').content.replace(/["']/g,''),
+  visualLabel:getComputedStyle(node,'::after').content
+}));
+assert.equal(legacyOverwriteStatus.visualNumber,stableMatches,'A legacy textContent writer must not alter the visible match number.');
+assert.match(legacyOverwriteStatus.visualLabel,/matches/,'A legacy textContent writer must not alter the visible matches label.');
 const continuation=page.locator('#skyFoundationRelationshipList>[data-result-limit-show-more]');
 await continuation.waitFor({state:'visible'});
 assert.match((await continuation.textContent()||'').trim(),/^\d+ more matching results · Show more$/,'A capped list must end with a direct Show more continuation.');
