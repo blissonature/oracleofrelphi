@@ -26,8 +26,8 @@
 .understanding-card{display:grid;justify-items:stretch;gap:.35rem;width:100%;min-width:0;color:#211d1a}
 .understanding-card.sky-a{grid-area:card-a;color:#c9211e}.understanding-card.sky-b{grid-area:card-b;color:#2462d0}
 .correspondence-label{color:currentColor;font:900 .62rem/1 system-ui,sans-serif;text-align:center;text-transform:uppercase;letter-spacing:.08em}
-.correspondence-card-art{display:block;width:100%;margin:0;padding:.18rem;border:3px solid currentColor;border-radius:13px;background:#fff;box-sizing:border-box;overflow:hidden}
-.correspondence-card-art img{display:block;width:100%;height:auto;aspect-ratio:352/600;object-fit:cover;border-radius:8px}
+.correspondence-card-art{display:block;width:100%;margin:0;padding:0;border:3px solid currentColor;border-radius:0;background:transparent;box-sizing:border-box;overflow:visible}
+.correspondence-card-art img{display:block;width:100%;height:auto;max-height:none;aspect-ratio:auto;object-fit:contain;object-position:center;border:0;border-radius:0;box-shadow:none;clip-path:none}
 .ledger-entry{width:100%;margin:0;padding:.42rem .45rem;border:1px solid currentColor;border-radius:9px;background:#fff;color:currentColor;font:750 .63rem/1.15 system-ui,sans-serif;cursor:pointer}
 .ledger-entry:hover,.ledger-entry:focus-visible{background:#fffdfa;outline:2px solid color-mix(in srgb,currentColor 35%,transparent);outline-offset:1px}
 @media(max-width:760px){.relationship-visual{grid-template-columns:repeat(2,minmax(0,145px));grid-template-areas:"wheel wheel" "card-a card-b"}.relationship-mini-wheel.sky-selected-aspect-diagram{width:min(100%,280px);justify-self:center}}
