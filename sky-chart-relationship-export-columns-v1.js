@@ -230,7 +230,7 @@ function visibleRows(){
 function summary(){
   const b=document.querySelector('#skyFoundationRelationships .sky-chart-filter-bar');
   if(!b)return'';
-  const p=[],h=b.querySelector('[data-harmonic-window-input]'),limit=b.querySelector('[data-relationship-limit]');
+  const p=[],h=b.querySelector('[data-harmonic-window-input]'),limit=document.querySelector('#skyFoundationRelationships [data-relationship-limit]');
   if(h?.value)p.push(`Harmonic window ${h.value}°`);
   if(limit?.value&&limit.value!=='all')p.push(`Limit ${limit.value}`);
   for(const[q,label]of[['[data-placement-filter-summary]','Placements'],['[data-house-filter-summary]','Houses'],['[data-aspect-filter-summary]','Aspects']]){
@@ -315,7 +315,7 @@ async function build(){
   document.body.appendChild(host);
   sheet.className='rex-sheet';
   sheet.style.width=width+'px';
-  sheet.innerHTML=`<div class="rex-title"><h1>${esc(name('A'))} ↔ ${esc(name('B'))} — Relationships</h1><p>Current relationship export · referents · timing · Tarot correspondences · isolated aspect geometry</p></div><div class="rex-context"><span><b>${esc(name('A'))}</b>${context('A')?' · '+esc(context('A')):''}</span><span><b>${esc(name('B'))}</b>${context('B')?' · '+esc(context('B')):''}</span></div><div class="rex-head"><strong>Relationships</strong><em>${esc((document.getElementById('skyFoundationRelationshipCount')?.textContent||rows.length)+' shown')}</em></div>`;
+  sheet.innerHTML=`<div class="rex-title"><h1>${esc(name('A'))} ↔ ${esc(name('B'))} — Relationships</h1><p>Current relationship export · referents · timing · Tarot correspondences · isolated aspect geometry</p></div><div class="rex-context"><span><b>${esc(name('A'))}</b>${context('A')?' · '+esc(context('A')):''}</span><span><b>${esc(name('B'))}</b>${context('B')?' · '+esc(context('B')):''}</span></div><div class="rex-head"><strong>Relationships</strong><em>${esc(rows.length+' shown')}</em></div>`;
   const filter=summary();
   if(filter){
     const n=document.createElement('div');
