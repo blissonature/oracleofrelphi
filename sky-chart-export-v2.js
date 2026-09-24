@@ -160,6 +160,27 @@
     box.append(label,triptych);
     return box;
   }
+  function wheelBrand(){
+    const brand=document.createElement('div');
+    brand.className='sky-export-brand';
+    brand.dataset.exportBrand='oracle-of-relphi';
+    const logo=document.createElement('img');
+    logo.className='sky-export-brand-logo';
+    logo.src=new URL('logo.png',document.baseURI).href;
+    logo.alt='Oracle of Relphi logo';
+    logo.decoding='sync';
+    const copy=document.createElement('div');
+    copy.className='sky-export-brand-copy';
+    const title=document.createElement('strong');
+    title.className='sky-export-brand-title';
+    title.textContent='Sky Chart';
+    const line=document.createElement('span');
+    line.className='sky-export-brand-line';
+    line.textContent='an Oracle of Relphi tool';
+    copy.append(title,line);
+    brand.append(logo,copy);
+    return brand;
+  }
   function exportHost(width,height){
     const host=document.createElement('div');host.className='sky-export-host';
     Object.assign(host.style,{position:'fixed',left:'-100000px',top:'0',width:`${width}px`,height:`${height}px`,background:'#fffdf8',overflow:'hidden',zIndex:'-1'});document.body.appendChild(host);return host;
@@ -183,6 +204,8 @@
     const box=wheel.viewBox?.baseVal,wheelWidth=Math.max(1,Math.ceil(box?.width||1200)),wheelHeight=Math.max(1,Math.ceil(box?.height||1200));
     const width=wheelWidth+WHEEL_EXPORT_FRAME.side*2,height=wheelHeight+WHEEL_EXPORT_FRAME.top+WHEEL_EXPORT_FRAME.bottom;
     const host=exportHost(width,height),stage=document.createElement('div');stage.className='sky-wheel-export-stage';stage.dataset.exportSkyMode=slots.length===1?'single':'comparison';stage.dataset.exportIdentityMode='fingerprint';stage.style.width=`${width}px`;stage.style.height=`${height}px`;
+
+    stage.appendChild(wheelBrand());
 
     const wheelMount=document.createElement('div');wheelMount.id='skyFoundationWheelMount';wheelMount.className=sourceMount.className;
     Object.assign(wheelMount.style,{position:'absolute',display:'block',left:`${WHEEL_EXPORT_FRAME.side}px`,top:`${WHEEL_EXPORT_FRAME.top}px`,width:`${wheelWidth}px`,height:`${wheelHeight}px`,minHeight:'0',padding:'0',border:'0',overflow:'visible',background:'transparent'});
@@ -293,6 +316,11 @@
     #skyFoundationComparison>.sky-foundation-heading{flex-wrap:wrap}#skyFoundationComparison .sky-export-wheel-slot{display:flex;align-items:center;justify-content:flex-end;gap:6px;margin-left:auto}.sky-relationship-heading-actions{display:flex;align-items:center;gap:6px}.sky-relationship-heading-actions button{margin:0}
     #${STATUS_ID}{flex:1 0 100%;color:#665e57;text-align:right;font:650 .58rem/1.2 system-ui,sans-serif}#${STATUS_ID}:empty{display:none}#${STATUS_ID}[data-error="true"]{color:#b81712}#${STATUS_ID}[data-busy="true"]{margin-top:4px;padding:7px 10px;border-radius:999px;background:#f6f0e8;color:#3e3833;font-size:.68rem;font-weight:800}
     .sky-wheel-export-stage{position:relative;background:#fffdf8;color:#2d2824;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}.sky-wheel-export-stage>#skyFoundationWheelMount{position:absolute}
+    .sky-export-brand{position:absolute;z-index:4;top:22px;left:50%;transform:translateX(-50%);display:flex;align-items:center;justify-content:center;gap:11px;min-width:248px;padding:7px 12px;border-radius:12px;background:rgba(255,253,248,.96);box-shadow:0 1px 8px rgba(31,27,24,.08)}
+    .sky-export-brand-logo{display:block;width:46px;height:46px;object-fit:contain}
+    .sky-export-brand-copy{display:grid;gap:3px;text-align:left;white-space:nowrap}
+    .sky-export-brand-title{color:#211d19;font:900 22px/1 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+    .sky-export-brand-line{color:#655d56;font:750 12px/1.15 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
     .sky-export-fingerprint{position:absolute;top:24px;z-index:3;display:grid;gap:4px;padding:7px 9px;border-radius:12px;background:rgba(255,253,248,.96);box-shadow:0 1px 8px rgba(31,27,24,.08)}
     .sky-export-fingerprint-a{left:${WHEEL_EXPORT_FRAME.side}px;border-left:4px solid #c9211e}.sky-export-fingerprint-b{right:${WHEEL_EXPORT_FRAME.side}px;border-right:4px solid #2462d0}
     .sky-export-fingerprint-single{left:50%!important;right:auto!important;transform:translateX(-50%);border-right:0}.sky-export-fingerprint-single[data-sky="A"]{border-left:4px solid #c9211e}.sky-export-fingerprint-single[data-sky="B"]{border-left:4px solid #2462d0}
