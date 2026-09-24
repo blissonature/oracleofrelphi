@@ -86,6 +86,10 @@ assert.ok(mobileRelationshipHeading.title.right<=mobileRelationshipHeading.count
 assert.ok(mobileRelationshipHeading.actions.top>=Math.min(mobileRelationshipHeading.title.bottom,mobileRelationshipHeading.count.bottom),'Relationship actions must occupy their own row on mobile.');
 assert.ok(mobileRelationshipHeading.actions.left>=mobileRelationshipHeading.heading.left&&mobileRelationshipHeading.actions.right<=mobileRelationshipHeading.heading.right+1,'Relationship actions must stay inside the mobile heading.');
 assert.ok(mobileRelationshipHeading.controls.every((box,index,array)=>index===0||box.left>=array[index-1].right-1),'Sort, Max, Copy, and Download must not overlap each other on mobile.');
+assert.ok(mobileRelationshipHeading.controls.length>=4,'Mobile Relationships actions must expose Sort, Max, Copy, and Download.');
+assert.ok(mobileRelationshipHeading.controls[0].left<=mobileRelationshipHeading.actions.left+2,'Dropdown controllers must stay left aligned.');
+assert.ok(mobileRelationshipHeading.controls.at(-1).right>=mobileRelationshipHeading.actions.right-2,'Copy and Download group must stay right aligned.');
+assert.ok(mobileRelationshipHeading.controls[2].left-mobileRelationshipHeading.controls[1].right>8,'Copy/Download must be visually separated from the left-aligned dropdown controllers.');
 assert.ok(mobileRelationshipHeading.scrollWidth<=mobileRelationshipHeading.clientWidth+1,'Mobile Relationships heading must not overflow horizontally.');
 await page.setViewportSize({width:1440,height:1300});
 await page.waitForTimeout(80);
