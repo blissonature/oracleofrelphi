@@ -34,7 +34,7 @@
 #shortListPanel .card-row-card-wrap>.or-card,#shortListPanel .card-row-drop-card{width:100%!important;max-width:none!important;margin:0!important}
 /* Keep every drawn card's face measurable before a lazy WebP decodes. iOS Safari can otherwise collapse
    an absolutely positioned card to its sticker while deciding that its zero-height image is not load-worthy. */
-#shortListPanel .card-row-workspace .card-row-card .or-card-art.relphi-surface-face{display:block!important;width:100%!important;max-width:100%!important;height:auto!important;aspect-ratio:500/866!important;object-fit:contain!important}
+#shortListPanel .card-row-workspace .card-row-card .or-card-art.relphi-surface-face{display:block!important;width:100%!important;max-width:100%!important;height:auto!important;aspect-ratio:auto!important;object-fit:contain!important;border:0!important;outline:0!important;border-radius:0!important;box-shadow:none!important;clip-path:none!important;mask:none!important;-webkit-mask:none!important}
 #shortListPanel .card-row-placeholder-item>.card-row-drop-card{aspect-ratio:500/866!important;display:grid!important;place-items:center!important;cursor:pointer!important;border:1.5px dashed rgba(17,17,17,.42)!important;background:var(--relphi-card-envelope-bg,#f3f0ea)!important}
 #shortListPanel .card-row-placeholder-item>.card-row-drop-card>.card-row-drop-card-inner{padding:.6rem!important;font-size:.68rem!important;font-weight:800!important;text-align:center!important;opacity:.72!important}
 #shortListPanel .card-row-card-wrap::before,#shortListPanel .card-row-card-wrap::after,#shortListPanel .card-row-drop-card::before,#shortListPanel .card-row-drop-card::after{content:none!important;display:none!important}
