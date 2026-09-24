@@ -213,7 +213,7 @@
 
 .sky-foundation-relationships-heading {
   display:grid;
-  grid-template-columns:minmax(0,1fr) auto auto auto;
+  grid-template-columns:auto auto minmax(0,1fr);
   align-items:center;
   gap:6px;
   min-height:44px;
@@ -294,11 +294,15 @@
 .sky-foundation-relationships-heading>.sky-relationship-heading-actions{
   display:flex;
   align-items:center;
-  justify-content:flex-end;
+  justify-content:flex-start;
   gap:5px;
+  width:100%;
   min-width:0;
   order:2;
   flex-wrap:nowrap;
+}
+.sky-foundation-relationships-heading>.sky-relationship-heading-actions>.sky-relationship-copy-button{
+  margin-left:auto!important;
 }
 
 #skyFoundationClearIsolation {
