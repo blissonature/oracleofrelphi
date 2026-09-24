@@ -34,7 +34,7 @@ function byId(id){return cards().find(c=>c.card_id===id||c.stable_symbol_id===id
 function planetCard(planet){return cards().find(c=>c.arcana==='Major'&&values(c.astrology?.planet).includes(planet))||byId(PLANET_FALLBACK[planet])}
 function decanCard(si,d){return byId(DECAN_CARDS[si]?.[d])}
 function cardName(c){return String(c?.name||c?.title||c?.card_name||c?.card_id||'Card').replace(/_/g,' ')}
-function thumb(c,w=48,h=83){if(!c)return'';const id=encodeURIComponent(c.card_id||c.stable_symbol_id||''),src=new URL(`assets/tarot/rws/${id}.webp`,document.baseURI).href,u=new URL('https://wsrv.nl/');u.searchParams.set('url',src);u.searchParams.set('w',String(w));u.searchParams.set('h',String(h));u.searchParams.set('fit','cover');u.searchParams.set('output','webp');u.searchParams.set('q','60');return u.href}
+function thumb(c,w=48,h=83,q=60){if(!c)return'';const id=encodeURIComponent(c.card_id||c.stable_symbol_id||''),src=new URL(`assets/tarot/rws/${id}.webp`,document.baseURI).href,u=new URL('https://wsrv.nl/');u.searchParams.set('url',src);u.searchParams.set('w',String(w));u.searchParams.set('h',String(h));u.searchParams.set('fit','cover');u.searchParams.set('output','webp');u.searchParams.set('q',String(q));return u.href}
 function asc(list){return list.find(r=>['ascendant','asc','rising'].includes(r.canonical))||null}
 function planetRecord(list,p){return list.find(r=>r.canonical===canonical(p))||null}
 function chartRuler(list){const a=asc(list);return a?SIGN_RULERS[a.signIndex]||'':''}
@@ -119,7 +119,12 @@ function fingerprint(p){
     root.style.setProperty('--ruler-house-color',fingerprintColor(info.house-1));
   }
   const img=document.createElement('img');
-  img.src=thumb(info.card,28,48);img.alt='';img.loading='lazy';img.decoding='async';
+  img.src=thumb(info.card,20,34,30);
+  img.alt='';
+  img.loading='lazy';
+  img.decoding='async';
+  img.fetchPriority='low';
+  img.dataset.cardMedia='fingerprint-20x34-q30';
   root.appendChild(img);
   if(Number.isFinite(info.signIndex)){
     const rail=document.createElement('span');
