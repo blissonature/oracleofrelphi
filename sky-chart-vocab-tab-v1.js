@@ -1142,9 +1142,9 @@ function houseDropdownMarkup(slot){
 }
 function harmonicWindowMarkup(slot){
   const max=Number(HARMONIC()?.maxWindow??0),value=harmonicWindow();
-  return '<label class="sky-orb-number-field sky-vocab-harmonic-field" data-vocab-harmonic-field="'+slot+'">'+
-    '<span>Harmonic Window</span>'+
-    '<input type="text" inputmode="decimal" autocomplete="off" value="'+htmlEscape(value)+'" data-vocab-harmonic-window-input="'+slot+'" role="spinbutton" aria-valuemin="0" aria-valuemax="'+htmlEscape(max)+'" aria-valuenow="'+htmlEscape(value)+'" aria-label="Master harmonic phase window in degrees, maximum '+htmlEscape(max)+'">'+
+  return '<label class="sky-vocab-dropdown sky-vocab-harmonic-field" data-vocab-harmonic-field="'+slot+'">'+
+    '<span class="sky-vocab-dropdown-label">Harmonic Window</span>'+
+    '<input class="sky-vocab-dropdown-field sky-vocab-harmonic-input" type="text" inputmode="decimal" autocomplete="off" value="'+htmlEscape(value)+'" data-vocab-harmonic-window-input="'+slot+'" role="spinbutton" aria-valuemin="0" aria-valuemax="'+htmlEscape(max)+'" aria-valuenow="'+htmlEscape(value)+'" aria-label="Master harmonic phase window in degrees, maximum '+htmlEscape(max)+'">'+
   '</label>';
 }
 function controlsMarkup(slot){return '<div class="sky-vocab-harmonic-row">'+harmonicWindowMarkup(slot)+'</div><div class="sky-vocab-dropdown-row">'+layerDropdownMarkup(slot)+placementDropdownMarkup(slot)+signDropdownMarkup(slot)+houseDropdownMarkup(slot)+'</div>'}
@@ -1338,9 +1338,9 @@ function installStyles(){
     .sky-placement-vocab-tab.is-active{background:#241f1b;color:#fff}
     .sky-vocab-panel{display:grid;gap:.72rem;padding:.52rem .7rem .82rem;min-width:0}
     .sky-vocab-panel[hidden]{display:none!important}
-    .sky-vocab-harmonic-row{display:flex;align-items:end}
-    .sky-vocab-harmonic-field{width:min(170px,100%);margin:0}
-    .sky-vocab-harmonic-field input{width:100%;box-sizing:border-box}
+    .sky-vocab-harmonic-row{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;align-items:end}
+    .sky-vocab-harmonic-field{width:auto;min-width:0;margin:0}
+    .sky-vocab-harmonic-input{width:100%;box-sizing:border-box;background:#fff!important;padding-right:.58rem}
     .sky-vocab-dropdown-row{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;align-items:end}
 
     /* Display remains Vocab-specific. Placement / Houses / Zodiac use the Relationships classes directly. */
