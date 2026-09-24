@@ -1542,7 +1542,7 @@
   .ph-calendar-moon-context .ph-moon-disc { width:4.3rem; height:4.3rem; flex:0 0 auto; }
   .ph-calendar-moon-context .ph-moon-facts { min-width:0; }
   .ph-calendar-moon-context .ph-moon-facts p { margin:.22rem 0; }
-  .ph-calendar-moon-placement { display:flex; align-items:center; gap:.28rem; color:#211d19; font-size:.92rem; font-weight:900; font-variant-numeric:tabular-nums; }
+  .ph-calendar-moon-placement { display:flex; align-items:center; justify-content:center; flex-wrap:nowrap; gap:.28rem; color:#211d19; font-size:.92rem; font-weight:900; font-variant-numeric:tabular-nums; white-space:nowrap; }
   .ph-calendar-moon-placement .ph-direct-canonical-glyph { width:1.15em; height:1.15em; margin:0; transform:none; }
   .ph-calendar-context-label { margin:0 0 .48rem; color:#514b46; font:850 .76rem/1.2 system-ui,sans-serif; text-transform:uppercase; letter-spacing:.07em; }
   .ph-calendar-event-lane { display:flex; gap:.4rem; flex-wrap:wrap; align-items:flex-start; min-width:0; min-height:2rem; overflow:hidden; }
@@ -2521,7 +2521,7 @@
         const moonMeta = phEventBodyMeta('Moon', base);
         const placement = moonMeta || phLongitudeToPlacement(phAstronomyLongitude('Moon', base));
         const house = moonMeta ? calendarHouseNumber(moonMeta.house) : 0;
-        const houseMarkup = house ? ' <span class="ph-calendar-house-token">' + calendarHouseMedallionMarkup(house) + '<span>' + htmlText(calendarHouseNames[house]) + '</span></span>' : '';
+        const houseMarkup = house ? calendarHouseMedallionMarkup(house) : '';
         el.moonPlacement.innerHTML = canonicalSignGlyphMarkup(placement.sign) + '<span>' + placement.sign + ' ' + placement.degree + '°' + String(placement.minute).padStart(2,'0') + '′</span>' + houseMarkup;
         el.moonPlacement.title = 'Moon in ' + placement.sign + ' ' + placement.degree + '°' + String(placement.minute).padStart(2,'0') + '′' + (house ? ' · ' + calendarHouseNames[house] : '');
       } catch (error) {
