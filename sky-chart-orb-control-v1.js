@@ -102,7 +102,11 @@
 
     reconcilePlacementIsolation(rows,visibleIndexes);
     const count=document.getElementById('skyFoundationRelationshipCount'),empty=document.getElementById('skyFoundationRelationshipEmpty');
-    if(count){count.textContent=`${visibleIndexes.size}/${rows.length}`;count.dataset.countLabel='shown'}
+    if(count){
+      count.textContent=String(visibleIndexes.size);
+      count.dataset.countLabel='matches';
+      count.setAttribute('aria-label',visibleIndexes.size+' matching relationships');
+    }
     if(empty)empty.hidden=visibleIndexes.size!==0||hiddenByHarmonicWindow>0;
     const more=ensureShowMoreRow(),max=Number(model()?.maxWindow??12);
     if(more){
