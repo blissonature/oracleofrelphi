@@ -245,6 +245,10 @@ assert.match(vocab,/event\.pointerType!=='touch'&&event\.pointerType!=='pen'/,'T
 assert.doesNotMatch(vocab,/applyWheelSpec\([^)]*vocab/i,'Vocab-to-wheel context highlighting must not mutate the Vocab filter state');
 
 assert.match(vocab,/function clearVocabWheelContextFromBlank\(event\)/,'Retained Vocab wheel context must clear from blank space');
+assert.match(vocab,/function hasVocabWheelContext\(\)/,'Vocab must recognize token, row, pinned, and touch highlight states when deciding whether another interaction clears the wheel glow');
+assert.match(vocab,/transition:none!important/,'Vocab-owned wheel highlights must bypass the old filter transition that caused a dark flash');
+assert.match(vocab,/rgba\(126,143,164,\.68\)/,'Individual Vocab tokens must use the established light wheel-glow color rather than a dark shadow');
+assert.doesNotMatch(vocab,/has-vocab-token-context[^}]*rgba\(31,27,24,\.34\)/,'Individual Vocab token highlighting must not use the old dark flash shadow');
 assert.match(vocab,/target\.closest\('\.sky-vocab-line,[^']*button,input,select,textarea/,'Blank-space clearing must not cancel a real Vocab row or control interaction');
 assert.match(vocab,/target\.closest\('#skyFoundationWheelMount \[data-focus-piece\],#skyFoundationWheelMount \[data-interactive\]'\)/,'Blank-space clearing must not cancel interaction with a real wheel object');
 assert.match(vocab,/document\.addEventListener\('pointerdown',clearVocabWheelContextFromBlank,true\)/,'Mouse, touch, and pen blank-space presses must share one clearing path');
