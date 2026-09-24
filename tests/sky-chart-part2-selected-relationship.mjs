@@ -60,13 +60,13 @@ await page.addInitScript(({a,b}) => {
 
 await page.goto('http://127.0.0.1:4173/part2/sky-chart.html', {waitUntil:'networkidle'});
 await page.waitForSelector('.sky-foundation-relationship-row[data-relation-index]', {timeout:15000});
-await page.waitForSelector('.sky-chart-filter-bar [data-house-system-filter]', {timeout:10000});
-await page.waitForSelector('#skyFoundationRelationships > .sky-foundation-focus-heading', {timeout:10000});
+await page.waitForSelector('#skyFoundationFocus .sky-chart-filter-bar [data-house-system-filter]', {timeout:10000});
+await page.waitForSelector('#skyFoundationFocus > .sky-foundation-focus-heading', {timeout:10000});
 await page.waitForSelector('#skyFoundationRelationships > .sky-relationship-controls [data-relationship-sort]', {timeout:10000});
 assert.equal((await page.locator('#skyFoundationComparison > .sky-foundation-heading').textContent()).trim(), 'Zodiac Wheel');
-assert.equal((await page.locator('#skyFoundationRelationships > .sky-foundation-focus-heading h2').textContent()).trim(), 'Focus');
-const focusStructureOrder=await page.locator('#skyFoundationRelationships').evaluate(node=>Array.from(node.children).slice(0,5).map(child=>child.className||child.id));
-assert.deepEqual(focusStructureOrder.slice(0,4),['sky-foundation-focus-heading','sky-chart-filter-bar','sky-foundation-relationships-heading','sky-relationship-controls']);
+assert.equal((await page.locator('#skyFoundationFocus > .sky-foundation-focus-heading h2').textContent()).trim(), 'Focus');
+assert.equal(await page.locator('#skyFoundationRelationships .sky-chart-filter-bar').count(),0,'Shared Focus filters must not remain inside Relationships.');
+assert.equal(await page.locator('#skyFoundationFocus > .sky-chart-filter-bar').count(),1,'Focus must own the shared filter bar.');
 assert.equal(await page.locator('#skyFoundationRelationships > .sky-relationship-controls [data-relationship-sort]').count(),1,'Sort must stay with Relationships rather than Focus.');
 assert.equal(await page.locator('#skyFoundationRelationships > .sky-relationship-controls [data-relationship-display-control]').count(),1,'Relationship display controls must stay with Relationships rather than Focus.');
 await page.waitForSelector('.sky-ph-heptagram[data-canonical-heptagram-v1="true"]', {timeout:10000});
