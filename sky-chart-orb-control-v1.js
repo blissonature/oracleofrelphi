@@ -104,6 +104,7 @@
     const count=document.getElementById('skyFoundationRelationshipCount'),empty=document.getElementById('skyFoundationRelationshipEmpty');
     if(count){
       count.textContent=String(visibleIndexes.size);
+      count.dataset.matchCount=String(visibleIndexes.size);
       count.dataset.countLabel='matches';
       count.setAttribute('aria-label',visibleIndexes.size+' matching relationships');
     }
