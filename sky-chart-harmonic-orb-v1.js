@@ -20,9 +20,31 @@ const ASPECTS=Object.freeze([
 const BY_ID=new Map(ASPECTS.map(aspect=>[aspect.id,aspect]));
 let activeWindow=DEFAULT_WINDOW;
 function clampWindow(value){const n=Number(value);return Number.isFinite(n)&&n>=0?Math.min(MAX_WINDOW,n):DEFAULT_WINDOW}
-function setWindow(value){activeWindow=clampWindow(value);document.documentElement.dataset.skyHarmonicWindow=String(activeWindow);return activeWindow}
+function syncVisibleControls(){
+  const value=String(activeWindow),max=String(MAX_WINDOW);
+  document.querySelectorAll('[data-harmonic-window-input],[data-vocab-harmonic-window-input]').forEach(input=>{
+    input.value=value;
+    input.setAttribute('aria-valuenow',value);
+    input.setAttribute('aria-valuemax',max);
+    input.setAttribute('aria-invalid','false');
+    input.setCustomValidity?.('');
+  });
+}
+function setWindow(value){
+  activeWindow=clampWindow(value);
+  document.documentElement.dataset.skyHarmonicWindow=String(activeWindow);
+  syncVisibleControls();
+  return activeWindow;
+}
 function getWindow(){return activeWindow}
-function windowFromControl(){const input=document.querySelector('[data-filter="orb"]');if(input&&String(input.value).trim()!=='')setWindow(input.value);return activeWindow}
+// The [data-filter="orb"] control is the stable MAXIMUM candidate ceiling used
+// to build the relationship pool. Reading it must never mutate the user's live
+// Harmonic Window.
+function windowFromControl(){
+  const input=document.querySelector('[data-filter="orb"]');
+  const raw=String(input?.value??'').trim().replace(',','.');
+  return raw!==''?clampWindow(raw):MAX_WINDOW;
+}
 function metrics(distance,aspectLike,windowValue){
   const aspect=typeof aspectLike==='string'?BY_ID.get(aspectLike):aspectLike;
   if(!aspect)return null;
@@ -51,5 +73,5 @@ function motion(metricsLike,leftVelocity,rightVelocity){
 }
 function relation(left,right,aspect,distance,windowValue){const m=metrics(distance,aspect,windowValue);if(!m||!m.active)return null;const temporal=motion(m,left?.angularVelocity??left?.velocity??left?.item?.angularVelocity??left?.item?.velocity??left?.item?.speed,right?.angularVelocity??right?.velocity??right?.item?.angularVelocity??right?.item?.velocity??right?.item?.speed);return{left,right,aspect,distance,orb:m.ordinaryOrb,...m,temporal}}
 window.addEventListener('relphi:sky-orb-limit-changed',event=>{const value=event.detail?.harmonicWindow??event.detail?.orb;if(value!=null)setWindow(value)});
-window.RelphiHarmonicOrb=Object.freeze({theorem:'ordinary orb × fundamental harmonic order = harmonic phase error',defaultWindow:DEFAULT_WINDOW,maxWindow:MAX_WINDOW,aspects:ASPECTS,byId:id=>BY_ID.get(String(id||''))||null,clampWindow,setWindow,getWindow,windowFromControl,metrics,motion,relation});
+window.RelphiHarmonicOrb=Object.freeze({theorem:'ordinary orb × fundamental harmonic order = harmonic phase error',defaultWindow:DEFAULT_WINDOW,maxWindow:MAX_WINDOW,aspects:ASPECTS,byId:id=>BY_ID.get(String(id||''))||null,clampWindow,setWindow,getWindow,syncVisibleControls,windowFromControl,metrics,motion,relation});
 })();
