@@ -1425,19 +1425,32 @@
 
   /* Direct Sky Chart-matched heptagram renderer: core presentation, no post-processing. */
   #heptagramSvg .ph-core-heptagram-circle,
-  #heptagramSvg .ph-core-heptagram-guide { fill:none; stroke:#2a2521; vector-effect:non-scaling-stroke; }
-  #heptagramSvg .ph-core-heptagram-circle { stroke-width:1.4; opacity:.55; }
+  .ph-calendar-hour-heptagram .ph-core-heptagram-circle,
+  #heptagramSvg .ph-core-heptagram-guide,
+  .ph-calendar-hour-heptagram .ph-core-heptagram-guide { fill:none; stroke:#2a2521; vector-effect:non-scaling-stroke; }
+  #heptagramSvg .ph-core-heptagram-circle,
+  .ph-calendar-hour-heptagram .ph-core-heptagram-circle { stroke-width:1.4; opacity:.55; }
   #heptagramSvg .ph-core-heptagram-guide { stroke-width:1; opacity:.2; }
-  #heptagramSvg .ph-core-heptagram-week { fill:none; stroke:#d8d0c8; stroke-width:3; stroke-linecap:round; vector-effect:non-scaling-stroke; }
-  #heptagramSvg .ph-core-heptagram-week.past { stroke:#c9211e; }
-  #heptagramSvg .ph-core-heptagram-week.current { stroke:#c9211e; stroke-width:6; filter:drop-shadow(0 0 5px rgba(201,33,30,.34)); }
-  #heptagramSvg .ph-core-heptagram-hour { fill:none; stroke:#27221e; stroke-width:2.2; stroke-linecap:round; opacity:.28; vector-effect:non-scaling-stroke; }
-  #heptagramSvg .ph-core-heptagram-hour.current { stroke:#c9211e; stroke-width:5; opacity:1; filter:drop-shadow(0 0 4px rgba(201,33,30,.30)); }
-  #heptagramSvg .ph-core-heptagram-day-ring { fill:none; vector-effect:non-scaling-stroke; }
-  #heptagramSvg .ph-core-heptagram-day-ring.inner { stroke-width:1.65; }
-  #heptagramSvg .ph-core-heptagram-day-ring.outer { stroke-width:1.15; opacity:.76; }
-  #heptagramSvg .ph-core-heptagram-planet { filter:drop-shadow(0 1px 2px rgba(45,39,34,.12)); }
-  #heptagramSvg .ph-core-heptagram-art * { vector-effect:non-scaling-stroke; }
+  #heptagramSvg .ph-core-heptagram-week,
+  .ph-calendar-hour-heptagram .ph-core-heptagram-week { fill:none; stroke:#d8d0c8; stroke-width:3; stroke-linecap:round; vector-effect:non-scaling-stroke; }
+  #heptagramSvg .ph-core-heptagram-week.past,
+  .ph-calendar-hour-heptagram .ph-core-heptagram-week.past { stroke:#c9211e; }
+  #heptagramSvg .ph-core-heptagram-week.current,
+  .ph-calendar-hour-heptagram .ph-core-heptagram-week.current { stroke:#c9211e; stroke-width:6; filter:drop-shadow(0 0 5px rgba(201,33,30,.34)); }
+  #heptagramSvg .ph-core-heptagram-hour,
+  .ph-calendar-hour-heptagram .ph-core-heptagram-hour { fill:none; stroke:#27221e; stroke-width:2.2; stroke-linecap:round; opacity:.28; vector-effect:non-scaling-stroke; }
+  #heptagramSvg .ph-core-heptagram-hour.current,
+  .ph-calendar-hour-heptagram .ph-core-heptagram-hour.current { stroke:#c9211e; stroke-width:5; opacity:1; filter:drop-shadow(0 0 4px rgba(201,33,30,.30)); }
+  #heptagramSvg .ph-core-heptagram-day-ring,
+  .ph-calendar-hour-heptagram .ph-core-heptagram-day-ring { fill:none; vector-effect:non-scaling-stroke; }
+  #heptagramSvg .ph-core-heptagram-day-ring.inner,
+  .ph-calendar-hour-heptagram .ph-core-heptagram-day-ring.inner { stroke-width:1.65; }
+  #heptagramSvg .ph-core-heptagram-day-ring.outer,
+  .ph-calendar-hour-heptagram .ph-core-heptagram-day-ring.outer { stroke-width:1.15; opacity:.76; }
+  #heptagramSvg .ph-core-heptagram-planet,
+  .ph-calendar-hour-heptagram .ph-core-heptagram-planet { filter:drop-shadow(0 1px 2px rgba(45,39,34,.12)); }
+  #heptagramSvg .ph-core-heptagram-art *,
+  .ph-calendar-hour-heptagram .ph-core-heptagram-art * { vector-effect:non-scaling-stroke; }
 
 
   /* Settings correction: one visible time display and reliably legible secondary actions. */
@@ -1473,10 +1486,20 @@
   .ph-calendar-nav button:hover,
   .ph-calendar-nav button:focus-visible,
   .ph-calendar-date-control input:focus-visible { outline:none; border-color:var(--relphi-red); box-shadow:0 0 0 3px rgba(220,31,24,.1); }
-  .ph-calendar-day-context { display:grid; grid-template-columns:minmax(220px,.9fr) minmax(220px,.9fr) minmax(280px,1.2fr); gap:.9rem; align-items:stretch; margin:.9rem 0 1rem; }
+  .ph-calendar-day-context { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:.9rem; align-items:stretch; margin:.9rem 0 .9rem; }
   .ph-calendar-day-ruler-context,
+  .ph-calendar-hour-ruler-context,
   .ph-calendar-moon-context,
   .ph-calendar-events-context { background:#fff; border:1px solid var(--relphi-line); border-radius:1rem; padding:.8rem; min-width:0; }
+  .ph-calendar-events-wide { margin:0 0 1rem; }
+  .ph-calendar-hour-ruler-context { display:flex; flex-direction:column; align-items:stretch; text-align:center; }
+  .ph-calendar-hour-ruler-identity { display:grid; justify-items:center; gap:.22rem; }
+  .ph-calendar-hour-ruler-identity strong { display:inline-flex; align-items:center; justify-content:center; color:#111; font-size:1.05rem; line-height:1.2; }
+  .ph-calendar-hour-ruler-identity strong .ph-direct-canonical-glyph { width:1.35em; height:1.35em; margin:0 .28em 0 0; transform:none; }
+  .ph-calendar-hour-ruler-identity > span { color:#555; font-size:.8rem; line-height:1.35; font-weight:700; }
+  .ph-calendar-hour-star-stage { display:grid; place-items:center; width:100%; min-height:10.5rem; margin:.35rem auto .2rem; }
+  .ph-calendar-hour-heptagram { width:min(220px,88%); height:auto; display:block; overflow:visible; }
+  .ph-calendar-hour-ruler-meta { margin:.2rem 0 0; color:#514a44; font-size:.76rem; line-height:1.35; font-weight:750; font-variant-numeric:tabular-nums; }
   .ph-calendar-day-ruler-context .ph-day-ruler-profile-left {
     position:static;
     display:grid;
@@ -1726,8 +1749,8 @@
   .ph-wanderer-frame > h2 { margin-bottom:.2rem; }
   .ph-wanderer-frame .ph-wanderer-strip { margin-top:.25rem; border-top:0; padding-top:.25rem; }
   @media (max-width:920px) {
-    .ph-calendar-day-context { grid-template-columns:1fr 1fr; }
-    .ph-calendar-events-context { grid-column:1 / -1; }
+    .ph-calendar-day-context { grid-template-columns:repeat(3,minmax(0,1fr)); gap:.65rem; }
+    .ph-calendar-hour-star-stage { min-height:8.5rem; }
   }
   @media (max-width:760px) {
     .ph-calendar-day-ruler-context .ph-day-ruler-photo-label { display:block !important; color:#111 !important; }
@@ -1998,7 +2021,19 @@
         <p class="ph-tiny ph-sr-only" id="bridgeInfo">—</p>
         <div class="ph-sr-only" id="dayCalendarDate">—</div>
       </div>
+      <div class="ph-calendar-hour-ruler-context" aria-label="Current planetary hour ruler">
+        <p class="ph-calendar-context-label">Hour ruler</p>
+        <div class="ph-calendar-hour-ruler-identity">
+          <strong id="calendarHourRulerName">—</strong>
+          <span id="calendarHourRulerFocus">—</span>
+        </div>
+        <div class="ph-calendar-hour-star-stage" aria-hidden="true">
+          <svg class="ph-heptagram-svg ph-calendar-hour-heptagram" id="calendarHourHeptagram" viewBox="0 0 360 360"></svg>
+        </div>
+        <p class="ph-calendar-hour-ruler-meta" id="calendarHourRulerMeta">—</p>
+      </div>
       <div class="ph-calendar-moon-context" aria-label="Moon condition for this calendar day">
+        <p class="ph-calendar-context-label">Moon</p>
         <div class="ph-moon-wrap">
           <div class="ph-moon-disc" id="moonDisc"></div>
           <div class="ph-moon-facts">
@@ -2009,9 +2044,10 @@
           </div>
         </div>
       </div>
-      <div class="ph-calendar-events-context">
-        <p class="ph-calendar-context-label">Events in this planetary day</p>
-        <div class="ph-calendar-event-lane" id="calendarEventLane" aria-live="polite"></div>
+    </div>
+    <div class="ph-calendar-events-context ph-calendar-events-wide">
+      <p class="ph-calendar-context-label">Events in this planetary day</p>
+      <div class="ph-calendar-event-lane" id="calendarEventLane" aria-live="polite"></div>
         <details class="ph-calendar-alerts" id="calendarAlerts">
           <summary><span>Alerts</span><span class="ph-calendar-alert-count" id="calendarAlertCount">0</span></summary>
           <div class="ph-calendar-alert-body">
@@ -2046,7 +2082,6 @@
           </div>
         </details>
         <p class="ph-calendar-note-summary" id="calendarNoteSummary">No journal notes on this planetary day yet.</p>
-      </div>
     </div>
 
     <div class="ph-calendar-timeline" id="planetaryDayTimeline" aria-label="Twenty-four planetary hours"></div>
@@ -2245,6 +2280,10 @@
     dayRulerPortrait: document.getElementById('dayRulerPortrait'),
     dayRulerProfileName: document.getElementById('dayRulerProfileName'),
     hourRulerProfileName: document.getElementById('hourRulerProfileName'),
+    calendarHourRulerName: document.getElementById('calendarHourRulerName'),
+    calendarHourRulerFocus: document.getElementById('calendarHourRulerFocus'),
+    calendarHourRulerMeta: document.getElementById('calendarHourRulerMeta'),
+    calendarHourHeptagram: document.getElementById('calendarHourHeptagram'),
     dayRulerFocus: document.getElementById('dayRulerFocus'),
     hourRulerFocus: document.getElementById('hourRulerFocus')
   };
@@ -4868,10 +4907,17 @@
     el.heptagramSvg.dataset.directHeptagramReady = 'true';
 
     if (el.dayRulerPortrait && mythicProfiles[dayKey]) { el.dayRulerPortrait.src = mythicProfiles[dayKey]; el.dayRulerPortrait.alt = day.name + ' profile artwork'; }
-    if (el.dayRulerProfileName) el.dayRulerProfileName.innerHTML = canonicalPlanetGlyphMarkup(day.key, day.name) + ' ' + day.name + ' day';
+    if (el.dayRulerProfileName) el.dayRulerProfileName.innerHTML = canonicalPlanetGlyphMarkup(day.key, day.name) + ' ' + day.name;
     if (el.dayRulerFocus) el.dayRulerFocus.textContent = day.focusDay + '.';
-    if (el.hourRulerProfileName && row) el.hourRulerProfileName.innerHTML = canonicalPlanetGlyphMarkup(row.ruler.key, row.ruler.name) + ' ' + row.ruler.name + ' hour';
+    if (el.hourRulerProfileName && row) el.hourRulerProfileName.innerHTML = canonicalPlanetGlyphMarkup(row.ruler.key, row.ruler.name) + ' ' + row.ruler.name;
     if (el.hourRulerFocus && row) el.hourRulerFocus.textContent = row.ruler.focusHour + '.';
+    if (el.calendarHourRulerName && row) el.calendarHourRulerName.innerHTML = canonicalPlanetGlyphMarkup(row.ruler.key, row.ruler.name) + ' ' + row.ruler.name;
+    if (el.calendarHourRulerFocus && row) el.calendarHourRulerFocus.textContent = row.ruler.focusHour + '.';
+    if (el.calendarHourRulerMeta && row) el.calendarHourRulerMeta.textContent = fmtHM(row.start) + '–' + fmtHM(row.end) + ' · Hour ' + row.index + ' · ' + (row.isBright ? 'Bright' : 'Dark');
+    if (el.calendarHourHeptagram) {
+      el.calendarHourHeptagram.innerHTML = svg;
+      el.calendarHourHeptagram.dataset.directHeptagramReady = 'true';
+    }
 
     const weekText = weekPath.slice(0, 7).map(function (key) { return canonicalPlanetGlyphMarkup(key, byKey[key].name) + ' ' + byKey[key].name; }).join(' → ') + ' → ' + canonicalPlanetGlyphMarkup('sun', 'Sun') + ' Sun';
     const completeText = weekIndex ? weekPath.slice(0, weekIndex + 1).map(function (key) { return byKey[key].name; }).join(' → ') : 'Sun';
