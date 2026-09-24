@@ -254,3 +254,18 @@ assert.match(page,/calendarHouseMedallionMarkup\(house\)/);
 assert.match(page,/name:calendarHouseNames\[house\]/);
 assert.doesNotMatch(page,/' H' \+/);
 assert.doesNotMatch(page,/name:'H' \+ house/);
+
+assert.match(page,/const calendarSignColors = calendarHouseColors/);
+assert.match(page,/function calendarSpatialRailsMarkup/);
+assert.match(page,/ph-calendar-spatial-rail sign/);
+assert.match(page,/ph-calendar-spatial-rail house/);
+assert.match(page,/function calendarEventClassAndStyle/);
+assert.match(page,/conjunction:'#d7263d'/);
+assert.match(page,/opposition:'#0d9488'/);
+assert.match(page,/height:11\.6rem; max-height:11\.6rem/);
+assert.match(page,/-webkit-line-clamp:2/);
+assert.match(page,/const visibleLimit = calendarDisplayState\(\)\.referents \? 2 : 3/);
+assert.match(page,/\.ph-calendar-event-lane > \* \{ min-width:0; max-width:100%; \}/);
+assert.match(page,/const sphere = '<circle class="ph-moon-sphere"/);
+assert.doesNotMatch(page,/const rightBlack =/);
+assert.match(page,/x="49\.25"/);
