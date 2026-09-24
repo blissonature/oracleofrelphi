@@ -274,82 +274,66 @@ const relationshipCountBeforeVocabHover=await page.locator('#skyFoundationRelati
 await sunMercuryCluster.dispatchEvent('pointerover',{pointerType:'mouse'});
 await page.waitForFunction(()=>document.querySelector('#skyFoundationWheelMount>.sky-foundation-wheel')?.classList.contains('has-vocab-context'));
 const vocabWheelHighlight=await page.evaluate(()=>({
-  placements:[...document.querySelectorAll('#skyFoundationWheelMount [data-focus-piece="placement"].is-vocab-context')].map(node=>node.dataset.placement),
-  signs:[...document.querySelectorAll('#skyFoundationWheelMount .sky-foundation-sign-glyph.is-vocab-context')].map(node=>Number(node.dataset.sign)),
-  houses:[...document.querySelectorAll('#skyFoundationWheelMount [data-layer="a-houses"] .sky-foundation-house-number.is-vocab-context')].map(node=>Number((node.textContent||'').trim())),
-  exact:[...document.querySelectorAll('#skyFoundationWheelMount .is-vocab-context-exact')].map(node=>node.dataset.placement||'')
+  isolated:document.querySelector('#skyFoundationWheelMount>.sky-foundation-wheel')?.classList.contains('has-isolation')||false,
+  placements:[...document.querySelectorAll('#skyFoundationWheelMount [data-focus-piece="placement"].is-vocab-context.is-kept')].map(node=>node.dataset.placement),
+  signs:[...document.querySelectorAll('#skyFoundationWheelMount [data-focus-piece="sign"].is-vocab-context.is-kept')].map(node=>Number(node.dataset.sign)),
+  houses:[...document.querySelectorAll('#skyFoundationWheelMount [data-focus-piece="house"].is-vocab-context.is-kept')].map(node=>({sky:node.dataset.sky,house:Number(node.dataset.house)}))
 }));
-assert.ok(vocabWheelHighlight.placements.includes('sun')&&vocabWheelHighlight.placements.includes('mercury'),'Hovering a concentration must highlight each member placement on the wheel.');
-assert.ok(vocabWheelHighlight.signs.includes(6),'Hovering the Libra concentration must highlight Libra on the wheel.');
-assert.ok(vocabWheelHighlight.exact.includes('sun')&&vocabWheelHighlight.exact.includes('mercury'),'Placement loci must receive the strongest Vocab-context emphasis.');
+assert.equal(vocabWheelHighlight.isolated,true,'Hovering a Vocab structure must use the comparison wheel isolation state.');
+assert.ok(vocabWheelHighlight.placements.includes('sun')&&vocabWheelHighlight.placements.includes('mercury'),'Hovering a concentration must keep each member placement on the wheel.');
+assert.ok(vocabWheelHighlight.signs.includes(6),'Hovering the Libra concentration must keep Libra on the wheel.');
 const unrelatedMoonOpacity=Number(await page.locator('#skyFoundationWheelMount [data-focus-piece="placement"][data-sky="A"][data-placement="moon"]').evaluate(node=>getComputedStyle(node).opacity));
-assert.equal(unrelatedMoonOpacity,1,'Unrelated placement glyphs must keep native opacity while a Vocab row highlights its context.');
-const selectedContextStrength=await page.evaluate(()=>{
-  const signSector=document.querySelector('#skyFoundationWheelMount .sky-foundation-sign-sector[data-sign="6"]');
-  const houseSector=document.querySelector('#skyFoundationWheelMount .sky-foundation-house-sector[data-sky="A"][data-house="1"]');
-  const signGlyph=document.querySelector('#skyFoundationWheelMount .sky-foundation-sign-glyph[data-sign="6"]');
-  const houseNumber=[...document.querySelectorAll('#skyFoundationWheelMount [data-layer="a-houses"] .sky-foundation-house-number')].find(node=>(node.textContent||'').trim()==='1');
-  return{
-    signFill:Number(getComputedStyle(signSector).fillOpacity),
-    houseFill:Number(getComputedStyle(houseSector).fillOpacity),
-    signSectorMarked:signSector.classList.contains('is-vocab-context'),
-    houseSectorMarked:houseSector.classList.contains('is-vocab-context'),
-    signGlyphMarked:signGlyph.classList.contains('is-vocab-context'),
-    houseNumberMarked:houseNumber?.classList.contains('is-vocab-context')||false,
-    signGlyphFilter:getComputedStyle(signGlyph).filter,
-    houseNumberFilter:houseNumber?getComputedStyle(houseNumber).filter:''
-  };
-});
-assert.equal(selectedContextStrength.signFill,.82,'Vocab context must leave the zodiac sector fill unchanged.');
-assert.equal(selectedContextStrength.houseFill,.5,'Vocab context must leave the house sector fill unchanged.');
-assert.equal(selectedContextStrength.signSectorMarked,false,'Vocab context must not mark the whole zodiac wedge.');
-assert.equal(selectedContextStrength.houseSectorMarked,false,'Vocab context must not mark the whole house wedge.');
-assert.equal(selectedContextStrength.signGlyphMarked,true,'Vocab context must mark the corresponding zodiac glyph itself.');
-assert.equal(selectedContextStrength.houseNumberMarked,true,'Vocab context must mark the corresponding house number itself.');
-assert.match(selectedContextStrength.signGlyphFilter,/drop-shadow/i,'The corresponding zodiac glyph must visibly glow.');
-assert.match(selectedContextStrength.houseNumberFilter,/drop-shadow/i,'The corresponding house number must visibly glow.');
-assert.equal(await page.locator('#skyFoundationRelationshipList>.sky-foundation-relationship-row:visible').count(),relationshipCountBeforeVocabHover,'Vocab wheel highlighting must not filter the Relationships list.');
+assert.ok(unrelatedMoonOpacity<=.1,'Unrelated placement glyphs must dim under Vocab isolation just as they do under wheel hover.');
+assert.equal(await page.locator('#skyFoundationRelationshipList>.sky-foundation-relationship-row:visible').count(),relationshipCountBeforeVocabHover,'Vocab wheel isolation must remain visual-only and must not filter the Relationships list.');
 await sunMercuryCluster.dispatchEvent('pointerout',{pointerType:'mouse'});
 await page.waitForFunction(()=>!document.querySelector('#skyFoundationWheelMount>.sky-foundation-wheel')?.classList.contains('has-vocab-context'));
 
-// Individual Vocab components must hold a light wheel glow for the whole hover,
-// then release on mouse exit. Clicking/tapping the component pins that same glow
-// until another interaction takes over.
+// Individual Vocab components reuse the same native comparison-wheel isolate logic.
 const sunToken=sunLine.locator('.sky-vocab-token[data-vocab-kind="placement"][data-vocab-id="sun"]').first();
 await sunToken.dispatchEvent('pointerover',{pointerType:'mouse'});
-await page.waitForFunction(()=>document.querySelector('#skyFoundationWheelMount>.sky-foundation-wheel')?.classList.contains('has-vocab-token-context'));
-await page.waitForTimeout(140);
-const tokenGlow=await page.evaluate(()=> {
-  const node=document.querySelector('#skyFoundationWheelMount [data-focus-piece="placement"][data-sky="A"][data-placement="sun"]');
-  const style=getComputedStyle(node);
-  return{active:node.classList.contains('is-vocab-token-context'),filter:style.filter,transition:style.transition,opacity:Number(style.opacity)};
+await page.waitForFunction(()=>document.querySelector('#skyFoundationWheelMount>.sky-foundation-wheel')?.classList.contains('has-isolation'));
+const nativeTokenState=await page.evaluate(()=> {
+  const sun=document.querySelector('#skyFoundationWheelMount [data-focus-piece="placement"][data-sky="A"][data-placement="sun"]');
+  const moon=document.querySelector('#skyFoundationWheelMount [data-focus-piece="placement"][data-sky="A"][data-placement="moon"]');
+  return{
+    sunKept:sun?.classList.contains('is-kept')||false,
+    sunHovered:sun?.classList.contains('is-hovered')||false,
+    sunOpacity:sun?Number(getComputedStyle(sun).opacity):null,
+    moonOpacity:moon?Number(getComputedStyle(moon).opacity):null
+  };
 });
-assert.equal(tokenGlow.active,true,'Hovered Vocab component must keep its corresponding wheel piece highlighted.');
-assert.equal(tokenGlow.opacity,1,'Hovered Vocab component must not dim its corresponding wheel piece.');
-assert.match(tokenGlow.filter,/drop-shadow/i,'Hovered Vocab component must use a visible glow.');
-assert.ok(!/rgba?\(31,\s*27,\s*24/i.test(tokenGlow.filter),'Hovered Vocab component glow must not use the old dark flash color.');
-assert.ok(tokenGlow.transition==='none'||tokenGlow.transition==='all 0s ease 0s','Vocab glow must not animate through the old dark transition.');
+assert.equal(nativeTokenState.sunKept,true,'Hovered Vocab component must keep its corresponding wheel placement.');
+assert.equal(nativeTokenState.sunHovered,true,'Hovered Vocab component must use the native wheel hover state.');
+assert.equal(nativeTokenState.sunOpacity,1,'Hovered Vocab component must remain fully visible.');
+assert.ok(nativeTokenState.moonOpacity<=.1,'Unrelated wheel components must dim under the same native isolation logic.');
+assert.equal(await page.locator('#skyFoundationRelationshipList>.sky-foundation-relationship-row:visible').count(),relationshipCountBeforeVocabHover,'Native Vocab preview must not filter the Relationships list.');
 await sunToken.dispatchEvent('pointerout',{pointerType:'mouse'});
-await page.waitForFunction(()=>!document.querySelector('#skyFoundationWheelMount>.sky-foundation-wheel')?.classList.contains('has-vocab-token-context'));
+await page.waitForFunction(()=>!document.querySelector('#skyFoundationWheelMount>.sky-foundation-wheel')?.classList.contains('has-isolation'));
 
 await sunToken.click();
-await page.waitForFunction(()=>document.querySelector('#skyFoundationWheelMount>.sky-foundation-wheel')?.classList.contains('has-vocab-token-context'));
+await page.waitForFunction(()=>document.querySelector('#skyFoundationWheelMount>.sky-foundation-wheel')?.classList.contains('has-isolation'));
+const pinnedState=await page.evaluate(()=>{
+  const sun=document.querySelector('#skyFoundationWheelMount [data-focus-piece="placement"][data-sky="A"][data-placement="sun"]');
+  return{selected:sun?.classList.contains('is-selected')||false,kept:sun?.classList.contains('is-kept')||false};
+});
+assert.equal(pinnedState.selected,true,'Clicking a Vocab token must pin the native wheel selection.');
+assert.equal(pinnedState.kept,true,'Pinned Vocab selection must remain kept.');
 await page.locator('#skyFoundationA [data-vocab-dropdown-toggle="layers"]').click();
-await page.waitForFunction(()=>!document.querySelector('#skyFoundationWheelMount>.sky-foundation-wheel')?.classList.contains('has-vocab-token-context'));
+await page.waitForFunction(()=>!document.querySelector('#skyFoundationWheelMount>.sky-foundation-wheel')?.classList.contains('has-isolation'));
 await page.keyboard.press('Escape');
 
-// Retained/touch-style context must clear on blank Vocab space.
+// Retained/touch-style row context clears on another Vocab interaction.
 await sunMercuryCluster.evaluate(node=>node.dispatchEvent(new PointerEvent('pointerup',{bubbles:true,pointerType:'touch',pointerId:77,isPrimary:true})));
 await page.waitForFunction(()=>document.querySelector('#skyFoundationWheelMount>.sky-foundation-wheel')?.classList.contains('has-vocab-context'));
 await page.locator('#skyFoundationA .sky-vocab-placements-heading').dispatchEvent('pointerdown',{pointerType:'touch',pointerId:78,isPrimary:true});
-await page.waitForFunction(()=>!document.querySelector('#skyFoundationWheelMount>.sky-foundation-wheel')?.classList.contains('has-vocab-context'));
+await page.waitForFunction(()=>!document.querySelector('#skyFoundationWheelMount>.sky-foundation-wheel')?.classList.contains('has-isolation'));
 
-// Blank wheel space must clear the same retained context without requiring a second Vocab tap.
+// Blank wheel space clears the same retained context.
 await sunMercuryCluster.evaluate(node=>node.dispatchEvent(new PointerEvent('pointerup',{bubbles:true,pointerType:'touch',pointerId:79,isPrimary:true})));
 await page.waitForFunction(()=>document.querySelector('#skyFoundationWheelMount>.sky-foundation-wheel')?.classList.contains('has-vocab-context'));
 const wheelBlank=page.locator('#skyFoundationWheelMount>.sky-foundation-wheel');
 await wheelBlank.dispatchEvent('pointerdown',{pointerType:'mouse',clientX:1,clientY:1,button:0});
-await page.waitForFunction(()=>!document.querySelector('#skyFoundationWheelMount>.sky-foundation-wheel')?.classList.contains('has-vocab-context'));
+await page.waitForFunction(()=>!document.querySelector('#skyFoundationWheelMount>.sky-foundation-wheel')?.classList.contains('has-isolation'));
 
 
 const glyphMetrics=await page.locator('#skyFoundationA .sky-vocab-glyph svg').first().evaluate(node=>{
