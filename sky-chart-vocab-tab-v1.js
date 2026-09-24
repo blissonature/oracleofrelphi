@@ -1203,7 +1203,7 @@ function setHarmonicWindowFromVocab(input,commit=false){
   input.setAttribute('aria-invalid',valid?'false':'true');
   if(!valid)return;
   input.setAttribute('aria-valuenow',String(value));
-  model?.setWindow?.(value);
+  model?.setWindow?.(value,input);
   const canonical=canonicalHarmonicWindowInput();
   if(canonical){
     canonical.value=String(value);
