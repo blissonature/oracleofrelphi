@@ -58,14 +58,8 @@
 
   function apply(){
     queued=false;
-    const input=visibleInput();if(!input)return;
-    const raw=input.value.trim().replace(',','.'),limit=Number(raw),max=model()?.maxWindow??12;
-    const valid=raw!==''&&Number.isFinite(limit)&&limit>=0&&limit<=max;
-    input.setCustomValidity(valid?'':`Enter a harmonic phase window from 0 to ${max} degrees.`);
-    input.setAttribute('aria-invalid',valid?'false':'true');
-    if(!valid)return;
-
-    model()?.setWindow?.(limit,input);
+    const limit=Number(model()?.getWindow?.()??model()?.defaultWindow??6);
+    if(!Number.isFinite(limit))return;
     const visibleIndexes=new Set(),rows=[...document.querySelectorAll('.sky-foundation-relationship-row[data-relation-index]')],rowsByIndex=new Map(rows.map(row=>[String(row.dataset.relationIndex||''),row]));
     rows.forEach(row=>{
       const phase=phaseFromRow(row),hiddenByOrb=Number.isFinite(phase)&&phase>limit,hiddenByWheel=wheelIndexes&&!wheelIndexes.has(String(row.dataset.relationIndex));
@@ -107,6 +101,17 @@
     if(!Number.isFinite(value))return;
     input.value=String(Math.max(0,Math.min(max,value)));
   }
+  function driveFromInput(input,commit=false){
+    if(commit)normalizeOnCommit(input);
+    const max=model()?.maxWindow??12,raw=input.value.trim().replace(',','.'),value=Number(raw);
+    const valid=raw!==''&&Number.isFinite(value)&&value>=0&&value<=max;
+    input.setCustomValidity(valid?'':`Enter a harmonic phase window from 0 to ${max} degrees.`);
+    input.setAttribute('aria-invalid',valid?'false':'true');
+    if(!valid)return;
+    input.setAttribute('aria-valuenow',String(value));
+    model()?.setWindow?.(value,input);
+    schedule();
+  }
 
   function install(){
     const bar=document.querySelector('#skyFoundationRelationships .sky-chart-filter-bar')||document.querySelector('.sky-chart-filter-bar');
@@ -119,9 +124,9 @@
     input.setAttribute('role','spinbutton');input.setAttribute('aria-valuemin','0');input.setAttribute('aria-valuemax',String(m?.maxWindow??12));input.setAttribute('aria-valuenow',input.value);
     input.setAttribute('aria-label',`Master harmonic phase window in degrees, maximum ${m?.maxWindow??12}`);
     field.append(caption,input);bar.prepend(field);
-    input.addEventListener('input',()=>{input.setAttribute('aria-valuenow',input.value.trim().replace(',','.'));schedule()});
-    input.addEventListener('change',()=>{normalizeOnCommit(input);input.setAttribute('aria-valuenow',input.value);schedule()});
-    input.addEventListener('blur',()=>{normalizeOnCommit(input);input.setAttribute('aria-valuenow',input.value);schedule()});
+    input.addEventListener('input',()=>driveFromInput(input,false));
+    input.addEventListener('change',()=>driveFromInput(input,true));
+    input.addEventListener('blur',()=>driveFromInput(input,true));
     schedule();return true;
   }
 
@@ -153,6 +158,7 @@
       schedule();
     });
     ['relphi:sky-foundation-interactions-ready','relphi:sky-intrasky-relationships-ready','relphi:sky-intrasky-b-relationships-ready','relphi:sky-placement-multiselect-changed','relphi:sky-house-multiselect-changed','relphi:sky-aspect-multiselect-changed','relphi:sky-zodiac-filter-changed','relphi:selected-relationship-rendered','relphi:sky-foundation-ready'].forEach(name=>window.addEventListener(name,ensureInstalled));
+    window.addEventListener('relphi:sky-harmonic-window-model-changed',schedule);
     document.getElementById('skyFoundationRelationships')?.addEventListener('change',schedule);
   }
 
