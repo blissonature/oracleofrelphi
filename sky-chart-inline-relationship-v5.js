@@ -61,7 +61,7 @@ function onPointerCancel(event){if(touchGesture?.id===event.pointerId)touchGestu
 function onPointerUp(event){
   if(!touchPointer(event)||!touchGesture||touchGesture.id!==event.pointerId)return;
   const gesture=touchGesture;touchGesture=null;
-  if(gesture.moved||event.target.closest?.('[data-inline-ledger]'))return;
+  if(gesture.moved||event.target.closest?.('[data-inline-ledger],[data-rel-vocab-token]'))return;
   const row=rowFromTarget(event.target);if(!row||row!==gesture.row)return;
   open(row);suppressClickRow=row;suppressClickAt=performance.now();
 }
@@ -69,6 +69,7 @@ function onClick(event){
   const row=rowFromTarget(event.target);
   if(row&&row===suppressClickRow&&performance.now()-suppressClickAt<900){event.preventDefault();event.stopImmediatePropagation();suppressClickRow=null;return}
   suppressClickRow=null;
+  if(event.target.closest?.('[data-rel-vocab-token]'))return;
   const ledger=event.target.closest('[data-inline-ledger]');if(ledger){event.stopImmediatePropagation();return}
   const topGlyph=event.target.closest('[data-inline-top-reveal],.sky-foundation-relationship-glyph--left,.sky-foundation-relationship-glyph--aspect,.sky-foundation-relationship-glyph--right'),revealRow=topGlyph?.closest('.sky-foundation-relationship-row.is-inline-expanded');
   if(revealRow){const field=topGlyph.dataset.inlineTopReveal||fieldFromTopGlyph(topGlyph);if(field){event.preventDefault();event.stopImmediatePropagation();cycleReveal(revealRow,field);return}}
