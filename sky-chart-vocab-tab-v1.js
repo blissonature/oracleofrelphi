@@ -822,21 +822,19 @@ function vocabLineContext(line){
   return{slot,placements,signs,houses};
 }
 function clearVocabWheelTokenContext(){
-  const wheel=document.querySelector('#skyFoundationWheelMount > .sky-foundation-wheel');
-  if(wheel){
-    wheel.classList.remove('has-vocab-token-context');
-    wheel.querySelectorAll('.is-vocab-token-context').forEach(node=>node.classList.remove('is-vocab-token-context'));
-  }
+  window.RelphiSkyFoundationInteractions?.clearWheelPreview?.();
   vocabWheelContextToken?.classList.remove('is-wheel-token-active');
   vocabWheelContextToken=null;
 }
-function clearVocabWheelContext(){
+function clearVocabLineIsolation(){
   const wheel=document.querySelector('#skyFoundationWheelMount > .sky-foundation-wheel');
-  if(wheel){
-    wheel.classList.remove('has-vocab-context','has-vocab-axis-context');
-    wheel.querySelectorAll('.is-vocab-context').forEach(node=>node.classList.remove('is-vocab-context'));
-    wheel.querySelectorAll('.is-vocab-context-exact').forEach(node=>node.classList.remove('is-vocab-context-exact'));
-  }
+  if(!wheel||wheel.dataset.vocabIsolation!=='true')return;
+  wheel.querySelectorAll('.is-vocab-context').forEach(node=>node.classList.remove('is-vocab-context','is-kept','is-hovered'));
+  wheel.classList.remove('has-vocab-context','has-vocab-axis-context','has-isolation');
+  delete wheel.dataset.vocabIsolation;
+}
+function clearVocabWheelContext(){
+  clearVocabLineIsolation();
   clearVocabWheelTokenContext();
   vocabWheelContextLine?.classList.remove('is-wheel-context-active');
   vocabWheelContextLine=null;
@@ -855,33 +853,19 @@ function vocabTokenWheelContext(tokenNode){
   const house=Number(id.replace(/^house-/,''));
   return Number.isInteger(house)&&house>=1&&house<=12?{kind,slot,house}:null;
 }
-function vocabSignGlyph(wheel,sign){
-  return wheel.querySelector('.sky-foundation-sign-glyph[data-focus-piece="sign"][data-sign="'+sign+'"]');
-}
-function vocabHouseNumber(wheel,slot,house){
-  const layer=wheel.querySelector('[data-layer="'+String(slot).toLowerCase()+'-houses"]');
-  if(!layer)return null;
-  return Array.from(layer.querySelectorAll('.sky-foundation-house-number')).find(node=>Number(String(node.textContent||'').trim())===Number(house))||null;
-}
-function vocabPlacementGlyph(wheel,slot,id){
-  return wheel.querySelector('[data-layer="placements"] [data-focus-piece="placement"][data-sky="'+slot+'"][data-placement="'+id+'"]');
-}
-function markVocabVisual(node,className,exact=false){
-  if(!node)return 0;
-  node.classList.add(className);
-  if(exact)node.classList.add('is-vocab-context-exact');
-  return 1;
+function foundationSpec(context){
+  if(!context)return null;
+  if(context.kind==='placement')return{kind:'placement',sky:context.slot,value:context.id};
+  if(context.kind==='sign')return{kind:'sign',sky:null,value:context.sign};
+  if(context.kind==='house')return{kind:'house',sky:context.slot,value:context.house};
+  return null;
 }
 function applyVocabTokenWheelContext(tokenNode){
-  const context=vocabTokenWheelContext(tokenNode),wheel=document.querySelector('#skyFoundationWheelMount > .sky-foundation-wheel');
-  if(!context||!wheel)return;
-  clearVocabWheelContext();
-  let matched=0;
-  if(context.kind==='placement')matched+=markVocabVisual(vocabPlacementGlyph(wheel,context.slot,context.id),'is-vocab-token-context',true);
-  if(context.kind==='sign')matched+=markVocabVisual(vocabSignGlyph(wheel,context.sign),'is-vocab-token-context');
-  if(context.kind==='house')matched+=markVocabVisual(vocabHouseNumber(wheel,context.slot,context.house),'is-vocab-token-context');
-  if(!matched)return;
-  wheel.classList.add('has-vocab-token-context');
+  const context=vocabTokenWheelContext(tokenNode),api=window.RelphiSkyFoundationInteractions;
+  if(!context||!api?.previewWheel)return;
+  clearVocabLineIsolation();
+  if(!api.previewWheel(foundationSpec(context)))return;
+  vocabWheelContextToken?.classList.remove('is-wheel-token-active');
   tokenNode.classList.add('is-wheel-token-active');
   vocabWheelContextToken=tokenNode;
 }
@@ -893,28 +877,40 @@ function restoreVocabWheelContext(line=null){
 }
 function togglePinnedVocabToken(tokenNode){
   if(!(tokenNode instanceof HTMLElement))return;
-  const line=tokenNode.closest('.sky-vocab-line');
-  if(vocabWheelPinnedToken===tokenNode){
-    vocabWheelPinnedToken=null;
-    clearVocabWheelTokenContext();
-    if(line)applyVocabWheelContext(line);
-    return;
-  }
-  vocabWheelPinnedToken=tokenNode;
+  const context=vocabTokenWheelContext(tokenNode),api=window.RelphiSkyFoundationInteractions;
+  if(!context||!api?.toggleWheel)return;
+  clearVocabLineIsolation();
+  const wasPinned=vocabWheelPinnedToken===tokenNode;
+  vocabWheelPinnedToken=wasPinned?null:tokenNode;
   vocabWheelTouchLine=null;
-  applyVocabTokenWheelContext(tokenNode);
+  vocabWheelContextToken?.classList.remove('is-wheel-token-active');
+  vocabWheelContextToken=wasPinned?null:tokenNode;
+  tokenNode.classList.toggle('is-wheel-token-active',!wasPinned);
+  api.toggleWheel(foundationSpec(context));
 }
 function applyVocabWheelContext(line){
   if(line===vocabWheelContextLine)return;
-  clearVocabWheelContext();
+  window.RelphiSkyFoundationInteractions?.clearWheelPreview?.();
+  clearVocabLineIsolation();
   const context=vocabLineContext(line),wheel=document.querySelector('#skyFoundationWheelMount > .sky-foundation-wheel');
-  if(!context||!wheel)return;
+  if(!context||!wheel||wheel.classList.contains('has-isolation'))return;
   let matched=0;
-  context.placements.forEach(id=>{matched+=markVocabVisual(vocabPlacementGlyph(wheel,context.slot,id),'is-vocab-context',true)});
-  context.signs.forEach(sign=>{matched+=markVocabVisual(vocabSignGlyph(wheel,sign),'is-vocab-context')});
-  context.houses.forEach(house=>{matched+=markVocabVisual(vocabHouseNumber(wheel,context.slot,house),'is-vocab-context')});
+  wheel.querySelectorAll('[data-focus-piece]').forEach(node=>{
+    const type=String(node.dataset.focusPiece||''),sky=String(node.dataset.sky||'').toUpperCase();
+    let keep=false;
+    if((type==='placement'||type==='leader')&&sky===context.slot&&context.placements.has(String(node.dataset.placement||'')))keep=true;
+    if(type==='sign'&&context.signs.has(Number(node.dataset.sign)))keep=true;
+    if(type==='house'&&sky===context.slot&&context.houses.has(Number(node.dataset.house)))keep=true;
+    if(type==='aspect'){
+      const leftSky=String(node.dataset.leftSky||'').toUpperCase(),rightSky=String(node.dataset.rightSky||'').toUpperCase();
+      const leftId=String(node.dataset.leftPlacement||''),rightId=String(node.dataset.rightPlacement||'');
+      keep=(leftSky===context.slot&&context.placements.has(leftId))||(rightSky===context.slot&&context.placements.has(rightId));
+    }
+    if(keep){node.classList.add('is-vocab-context','is-kept');matched++}
+  });
   if(!matched)return;
-  wheel.classList.add('has-vocab-context');
+  wheel.dataset.vocabIsolation='true';
+  wheel.classList.add('has-isolation','has-vocab-context');
   wheel.classList.toggle('has-vocab-axis-context',line.dataset.vocabStructure==='axis-polarity');
   line.classList.add('is-wheel-context-active');
   vocabWheelContextLine=line;
@@ -1413,22 +1409,8 @@ function installStyles(){
     .sky-vocab-line[data-vocab-placement-colors="true"]::after{left:4px;background:var(--vocab-placement-houses);opacity:.5}
     .sky-vocab-line.is-wheel-context-active{box-shadow:inset 0 0 0 1px rgba(31,27,24,.14)}
     .sky-vocab-token.is-wheel-token-active>.sky-vocab-level{background:rgba(45,39,34,.09);box-shadow:inset 0 -2px 0 rgba(31,27,24,.22)}
-    #skyFoundationWheelMount>.sky-foundation-wheel.has-vocab-context .is-vocab-context{
-      opacity:1!important;transition:none!important;
-      filter:drop-shadow(0 0 2px rgba(255,255,255,1)) drop-shadow(0 0 6px rgba(104,174,255,.84))!important
-    }
-    #skyFoundationWheelMount>.sky-foundation-wheel.has-vocab-context .sky-foundation-sign-glyph.is-vocab-context,
-    #skyFoundationWheelMount>.sky-foundation-wheel.has-vocab-context .sky-foundation-house-number.is-vocab-context{
-      filter:drop-shadow(0 0 2px rgba(255,255,255,1)) drop-shadow(0 0 7px rgba(104,174,255,.92))!important
-    }
-    #skyFoundationWheelMount>.sky-foundation-wheel.has-vocab-token-context .is-vocab-token-context{
-      opacity:1!important;transition:none!important;
-      filter:drop-shadow(0 0 2.5px rgba(255,255,255,1)) drop-shadow(0 0 8px rgba(88,164,255,.96))!important
-    }
-    #skyFoundationWheelMount>.sky-foundation-wheel.has-vocab-token-context .sky-foundation-sign-glyph.is-vocab-token-context,
-    #skyFoundationWheelMount>.sky-foundation-wheel.has-vocab-token-context .sky-foundation-house-number.is-vocab-token-context{
-      filter:drop-shadow(0 0 3px rgba(255,255,255,1)) drop-shadow(0 0 9px rgba(88,164,255,1))!important
-    }
+    /* Wheel emphasis deliberately reuses the comparison wheel's native isolation
+       classes. Vocab owns no second glow/brightness treatment. */
     .sky-vocab-structure-label{font:inherit;color:inherit}
     .sky-vocab-structure-member-group{display:inline}
     .sky-vocab-structure-member-context{white-space:normal;color:inherit}
