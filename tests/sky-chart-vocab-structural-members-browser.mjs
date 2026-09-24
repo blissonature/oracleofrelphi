@@ -97,8 +97,8 @@ try{
     text:(node.textContent||'').trim(),
     suffix:getComputedStyle(node,'::after').content
   }));
-  assert.match(relationshipCountStatus.text,/^\d+\/\d+$/,'Relationship count must retain the compact fraction.');
-  assert.match(relationshipCountStatus.suffix,/shown/,'Relationship count must visibly identify the fraction as shown results.');
+  assert.match(relationshipCountStatus.text,/^\d+$/,'Relationship header must report the number of relationships matching the current scope.');
+  assert.match(relationshipCountStatus.suffix,/matches/,'Relationship count must visibly identify the number as matches.');
 
   const showMore=page.locator('#skyFoundationRelationshipList [data-harmonic-show-more]');
   await showMore.waitFor({state:'visible'});
