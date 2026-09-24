@@ -91,7 +91,7 @@
   }
   function activeSlots(){return bActive()?SLOTS:['A']}
   function activeKinds(){return bActive()?['all','a','b']:['all','a']}
-  function filterBar(){return document.querySelector('#skyFoundationRelationships .sky-chart-filter-bar')}
+  function filterBar(){return (document.querySelector('#skyFoundationFocus .sky-chart-filter-bar')||document.querySelector('#skyFoundationRelationships .sky-chart-filter-bar'))}
   function control(){return document.querySelector('[data-placement-filter="combined"]')}
   function popover(){return document.getElementById('skyChartPlacementPopover')}
   function isOpen(owner){return !!owner?.classList.contains('is-open')}
