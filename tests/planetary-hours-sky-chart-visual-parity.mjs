@@ -285,3 +285,11 @@ assert.match(page,/canonicalPlanetGlyphMarkup\(day\.key, day\.name\) \+ ' ' \+ d
 assert.match(page,/canonicalPlanetGlyphMarkup\(row\.ruler\.key, row\.ruler\.name\) \+ ' ' \+ row\.ruler\.name;/);
 assert.doesNotMatch(page,/dayRulerProfileName\.innerHTML = .*\+ ' day'/);
 assert.doesNotMatch(page,/hourRulerProfileName\.innerHTML = .*\+ ' hour'/);
+
+assert.doesNotMatch(page,/#heptagramSvg[^\n]*,\s*\{/);
+assert.match(page,/#heptagramSvg \.ph-core-heptagram-circle,\s*#heptagramSvg \.ph-core-heptagram-guide \{ fill:none;/s);
+assert.match(page,/function calendarSourceColor\(id\)/);
+assert.match(page,/class="ph-calendar-sky-color"/);
+assert.match(page,/has-calendar-source/);
+assert.match(page,/--ph-calendar-source-color/);
+assert.match(page,/records\.findIndex\(function \(record\) \{ return savedSkyRecordRef\(record\) === value; \}\)/);
