@@ -53,6 +53,12 @@ try{
   assert.equal(await vocabWindow.count(),1,'Vocab must expose one Harmonic Window controller for Sky A.');
   assert.equal(await relationshipWindow.count(),1,'Relationships must retain one Harmonic Window controller.');
   const defaultWindow=await page.evaluate(()=>String(window.RelphiHarmonicOrb.defaultWindow));
+  const initialWindows=await page.evaluate(()=>({
+    live:String(window.RelphiHarmonicOrb.getWindow()),
+    ceiling:String(document.querySelector('[data-orb-candidate-ceiling]')?.value||'')
+  }));
+  assert.equal(initialWindows.ceiling,String(await page.evaluate(()=>window.RelphiHarmonicOrb.maxWindow)),'The hidden relationship candidate ceiling must remain at the model maximum.');
+  assert.equal(initialWindows.live,defaultWindow,'The hidden candidate ceiling must not overwrite the live Harmonic Window.');
   assert.equal(await relationshipWindow.inputValue(),defaultWindow,'Relationships must initialize from the shared Harmonic Window default.');
   assert.equal(await vocabWindow.inputValue(),defaultWindow,'Vocab must initialize from the same shared Harmonic Window default.');
 
