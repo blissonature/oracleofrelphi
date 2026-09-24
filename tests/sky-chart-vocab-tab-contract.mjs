@@ -27,7 +27,7 @@ new Function(placementLogic);
 
 assert.match(html,/sky-chart-vocab-tab-v1\.js\?v=85/,'Sky Chart must load the Vocab subtab');
 assert.match(html,/sky-chart-placement-multiselect-v4\.js\?v=7/,'Sky Chart must load the shared Relationships Placements controller');
-assert.match(html,/sky-chart-harmonic-orb-v1\.js\?v=7/,'Sky Chart must load the shared Harmonic Window model fix');
+assert.match(html,/sky-chart-harmonic-orb-v1\.js\?v=8/,'Sky Chart must load the shared Harmonic Window model fix');
 assert.match(html,/sky-chart-orb-control-v1\.js\?v=17/,'Relationships must load the source-aware shared Harmonic Window controller');
 assert.match(html,/sky-chart-foundation-interactions-v2\.js\?v=22/,'Sky Chart must load the interaction owner exposing native wheel isolation');
 assert.match(html,/sky-chart-card-drawers-v1\.css\?v=15/,'Sky Chart must load the microheptagram sizing fix');
@@ -142,6 +142,10 @@ assert.match(vocab,/model\?\.getWindow/,'Vocab must read the Harmonic Window fro
 assert.match(harmonic,/function syncVisibleControls\(sourceInput=null\)/,'The harmonic model must own synchronization of all visible Harmonic Window controllers');
 assert.match(harmonic,/\[data-harmonic-window-input\],\[data-vocab-harmonic-window-input\]/,'Relationships and Vocab must be synchronized from the same model value');
 assert.match(harmonic,/function setWindow\(value,sourceInput=null\)/,'The shared Harmonic Window must support source-aware mirroring while a controller is being edited');
+assert.match(harmonic,/const WINDOW_STEP=\.05/,'Harmonic Window keyboard stepping must use 0.05° increments');
+assert.match(harmonic,/event\.key!=='ArrowUp'&&event\.key!=='ArrowDown'/,'Harmonic Window must support deliberate Up/Down keyboard stepping');
+assert.match(harmonic,/stepWindow\(input,event\.key==='ArrowUp'\?1:-1\)/,'Arrow keys must drive the shared Harmonic Window model');
+assert.doesNotMatch(harmonic,/addEventListener\('wheel'/,'Harmonic Window must not hijack page scrolling with wheel-based adjustment');
 assert.match(vocab,/model\?\.setWindow\?\.\(value,input\)/,'Vocab must write directly into the shared Harmonic Window model');
 
 const candidateReader=harmonic.slice(harmonic.indexOf('function windowFromControl()'),harmonic.indexOf('function metrics(',harmonic.indexOf('function windowFromControl()')));
