@@ -147,6 +147,37 @@ jobs:
           console.log('CARD_HITS_DRAWER '+JSON.stringify(drawer));
           assert.equal(drawer.open,true);
           assert.equal(drawer.structure,true);
+
+          const rulerArt=await page.evaluate(()=>{
+            const wrap=document.querySelector('#skyFoundationA .sky-card-ruler-art'),img=wrap?.querySelector('img');
+            const ws=wrap?getComputedStyle(wrap):null,is=img?getComputedStyle(img):null,u=img?new URL(img.src):null;
+            return{wrapRadius:ws?.borderRadius,wrapShadow:ws?.boxShadow,imgRadius:is?.borderRadius,imgShadow:is?.boxShadow,imgFit:is?.objectFit,imgClip:is?.clipPath,hasForcedHeight:u?.searchParams.has('h')||false,fitParam:u?.searchParams.get('fit')||''};
+          });
+          assert.equal(rulerArt.wrapRadius,'0px');
+          assert.equal(rulerArt.wrapShadow,'none');
+          assert.equal(rulerArt.imgRadius,'0px');
+          assert.equal(rulerArt.imgShadow,'none');
+          assert.equal(rulerArt.imgFit,'contain');
+          assert.equal(rulerArt.imgClip,'none');
+          assert.equal(rulerArt.hasForcedHeight,false);
+          assert.equal(rulerArt.fitParam,'');
+
+          await page.locator('#skyFoundationA [data-card-hits-view="houses"]').click();
+          await page.waitForTimeout(80);
+          const houseArt=await page.evaluate(()=>{
+            const wrap=document.querySelector('#skyFoundationA .sky-card-house-decan-art'),img=wrap?.querySelector('img');
+            const ws=wrap?getComputedStyle(wrap):null,is=img?getComputedStyle(img):null,u=img?new URL(img.src):null;
+            return{wrapRadius:ws?.borderRadius,wrapShadow:ws?.boxShadow,imgRadius:is?.borderRadius,imgShadow:is?.boxShadow,imgFit:is?.objectFit,imgClip:is?.clipPath,hasForcedHeight:u?.searchParams.has('h')||false,fitParam:u?.searchParams.get('fit')||''};
+          });
+          assert.equal(houseArt.wrapRadius,'0px');
+          assert.equal(houseArt.wrapShadow,'none');
+          assert.equal(houseArt.imgRadius,'0px');
+          assert.equal(houseArt.imgShadow,'none');
+          assert.equal(houseArt.imgFit,'contain');
+          assert.equal(houseArt.imgClip,'none');
+          assert.equal(houseArt.hasForcedHeight,false);
+          assert.equal(houseArt.fitParam,'');
+
           assert.deepEqual(errors,[]);
           await browser.close();
           EOF
