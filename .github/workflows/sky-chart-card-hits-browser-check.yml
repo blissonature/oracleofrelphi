@@ -108,6 +108,7 @@ jobs:
                 cardMedia:fp.querySelector('img')?.dataset?.cardMedia||'',
                 cardSrc:fp.querySelector('img')?.src||'',
                 cardStyle:(()=>{const img=fp.querySelector('img'),style=img?getComputedStyle(img):null;return style?{objectFit:style.objectFit,borderRadius:style.borderRadius,boxShadow:style.boxShadow,clipPath:style.clipPath}:null})(),
+                railStyle:(()=>{const sign=fp.querySelector('.sky-card-ruler-fingerprint-rail-sign'),house=fp.querySelector('.sky-card-ruler-fingerprint-rail-house'),img=fp.querySelector('img');if(!sign||!house||!img)return null;const ss=getComputedStyle(sign),hs=getComputedStyle(house),sr=sign.getBoundingClientRect(),hr=house.getBoundingClientRect(),ir=img.getBoundingClientRect();return{signRadius:ss.borderRadius,houseRadius:hs.borderRadius,signShadow:ss.boxShadow,houseShadow:hs.boxShadow,signBottom:sr.bottom,imgTop:ir.top,imgBottom:ir.bottom,houseTop:hr.top}})(),
                 html:fp.outerHTML
               }:null,
               fpError,
@@ -135,6 +136,12 @@ jobs:
           assert.equal(state.directFingerprint?.cardStyle?.borderRadius,'0px');
           assert.equal(state.directFingerprint?.cardStyle?.boxShadow,'none');
           assert.equal(state.directFingerprint?.cardStyle?.clipPath,'none');
+          assert.equal(state.directFingerprint?.railStyle?.signRadius,'0px');
+          assert.equal(state.directFingerprint?.railStyle?.houseRadius,'0px');
+          assert.equal(state.directFingerprint?.railStyle?.signShadow,'none');
+          assert.equal(state.directFingerprint?.railStyle?.houseShadow,'none');
+          assert.ok(state.directFingerprint?.railStyle?.signBottom<=state.directFingerprint?.railStyle?.imgTop);
+          assert.ok(state.directFingerprint?.railStyle?.imgBottom<=state.directFingerprint?.railStyle?.houseTop);
           assert.equal(state.mountHidden,false);
           assert.ok(state.mountChildCount>0);
           await page.locator('#skyFoundationA [data-sky-drawer-tab="card-hits"]').click({force:true});
