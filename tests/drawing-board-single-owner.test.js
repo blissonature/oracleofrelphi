@@ -10,7 +10,7 @@ const board = read('drawing-board-workflow-v2.js');
 const css = read('drawing-board-workflow-v2.css');
 const app = read('tarot-app.js');
 
-assert.match(nav, /drawing-board-workflow-v2\.js\?v=90/);
+assert.match(nav, /drawing-board-workflow-v2\.js\?v=96/);
 [
   'drawing-board-interactions-v1.js',
   'drawing-board-template-lifecycle-v1.js',
@@ -70,18 +70,16 @@ assert.match(board, /ArrowRight/);
 assert.doesNotMatch(css, /relphi-bulk-questions/);
 assert.match(board, /relphi-focus-reader/);
 assert.match(board, /relphi-focus-strip/);
-assert.match(board, /relphi-focus-fan/);
-assert.match(board, /function renderFocusFan/);
-assert.match(board, /function installFocusFanScrub/);
-assert.match(board, /startLogical/);
-assert.match(board, /targetLogical/);
+assert.doesNotMatch(board, /relphi-focus-fan/);
+assert.match(board, /function installFocusStripScrub/);
+assert.match(board, /drawnButtonAt/);
 assert.match(board, /is-under-finger/);
-assert.match(css, /\.relphi-focus-fan>button\.is-under-finger/);
-assert.match(css, /\.relphi-focus-fan\.is-scrubbing/);
-assert.match(board, /FOCUS_NAV_MODE_KEY/);
+assert.match(css, /\.relphi-focus-strip>button\.is-under-finger/);
+assert.match(css, /\.relphi-focus-strip\.is-scrubbing/);
+assert.doesNotMatch(board, /FOCUS_NAV_MODE_KEY|focusNavMode|renderFocusFan|installFocusFanScrub/);
 assert.match(board, /delta>0 && current>=order\.length-1[\s\S]{0,160}configuredPositionCount\(\)===0[\s\S]{0,80}drawNextLogical\(panel\(\)\)/);
-assert.match(css, /\.relphi-focus-fan>button/);
-assert.match(css, /transition:transform/);
+assert.doesNotMatch(css, /\.relphi-focus-fan/);
+assert.doesNotMatch(css, /\.relphi-focus-strip>button[^\n]*transition:transform/);
 assert.match(board, /keepFocusStripCurrentVisible/);
 assert.match(board, /renderFocusStrip\(existingReader,index,\{preserveScroll:true\}\)/);
 assert.doesNotMatch(board, /existingReader\.replaceWith\(reader\)/);
