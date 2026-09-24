@@ -35,7 +35,7 @@
   let hoverFilterActive = false;
 
   function filterBar() {
-    return document.querySelector('#skyFoundationRelationships .sky-chart-filter-bar');
+    return (document.querySelector('#skyFoundationFocus .sky-chart-filter-bar')||document.querySelector('#skyFoundationRelationships .sky-chart-filter-bar'));
   }
 
   function control() {
