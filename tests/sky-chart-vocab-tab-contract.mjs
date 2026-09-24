@@ -9,12 +9,17 @@ const registry=readFileSync(new URL('../relphi-glyph-registry-v1.js',import.meta
 const antiVertexSvg=readFileSync(new URL('../assets/planet-glyphs/anti-vertex.svg',import.meta.url),'utf8');
 const unified=readFileSync(new URL('../sky-chart-filter-control-unified-v1.css',import.meta.url),'utf8');
 const zodiacCss=readFileSync(new URL('../sky-chart-zodiac-filter-v1.css',import.meta.url),'utf8');
+const interactions=readFileSync(new URL('../sky-chart-foundation-interactions-v2.js',import.meta.url),'utf8');
+const drawersCss=readFileSync(new URL('../sky-chart-card-drawers-v1.css',import.meta.url),'utf8');
 new Function(vocab);
 new Function(vocabCopy);
 new Function(glyphCopy);
 new Function(registry);
+new Function(interactions);
 
-assert.match(html,/sky-chart-vocab-tab-v1\.js\?v=78/,'Sky Chart must load the Vocab subtab');
+assert.match(html,/sky-chart-vocab-tab-v1\.js\?v=79/,'Sky Chart must load the Vocab subtab');
+assert.match(html,/sky-chart-foundation-interactions-v2\.js\?v=22/,'Sky Chart must load the interaction owner exposing native wheel isolation');
+assert.match(html,/sky-chart-card-drawers-v1\.css\?v=15/,'Sky Chart must load the microheptagram sizing fix');
 assert.match(html,/sky-chart-filter-control-unified-v1\.css\?v=9/,'Sky Chart must load the shared Vocab/Relationships control styling');
 assert.match(html,/sky-chart-zodiac-filter-v1\.css\?v=3/,'Sky Chart must load the shared Vocab/Relationships zodiac styling');
 assert.match(registry,/\['anti-vertex','Anti-Vertex',\['anti-vertex','anti vertex','antivertex','avx'\],'assets\/planet-glyphs\/anti-vertex\.svg',1,0,0,'AVx','letter','700'\]/,'Anti-Vertex must use its canonical SVG with the same 16px bold letter treatment as chart angles');
@@ -222,44 +227,23 @@ assert.doesNotMatch(vocab,/form one concentrated group/,'Concentration cards mus
 assert.match(vocab,/stellium\?'Stellium · ':'/,'Stellium must remain visible because it adds information beyond the Concentrations heading');
 
 assert.match(vocab,/function vocabLineContext\(line\)/,'Vocab rows must derive wheel context from the placements, signs, and houses they display');
-assert.match(vocab,/function applyVocabWheelContext\(line\)/,'Vocab rows must be able to highlight their context on the comparison wheel');
-assert.doesNotMatch(vocab,/has-vocab-context[^\n]*opacity:/,'Structure highlighting must never dim or force opacity on the wheel');
-assert.doesNotMatch(vocab,/has-vocab-context[^\n]*saturate|has-vocab-context[^\n]*brightness/,'Structure highlighting must not recolor the wheel through saturation or brightness');
-assert.doesNotMatch(vocab,/has-vocab-context[^\n]*fill-opacity/,'Structure highlighting must preserve native sign and house fill opacity');
-assert.match(vocab,/has-vocab-context \[data-focus-piece\]\.is-vocab-context\{filter:drop-shadow/,'Structure highlighting must use only a restrained glow');
-assert.match(vocab,/has-vocab-token-context \[data-focus-piece\]\.is-vocab-token-context\{filter:drop-shadow/,'Individual token highlighting must use a slightly stronger restrained glow');
+assert.match(vocab,/function applyVocabWheelContext\(line\)/,'Vocab rows must be able to isolate their context on the comparison wheel');
+assert.match(vocab,/wheel\.classList\.add\('has-isolation','has-vocab-context'\)/,'Whole Vocab rows must reuse the wheel’s native dim/isolate state');
+assert.match(vocab,/node\.classList\.add\('is-vocab-context','is-kept'\)/,'Whole Vocab rows must mark their relevant wheel pieces with the native kept class');
 assert.match(vocab,/function vocabTokenWheelContext\(tokenNode\)/,'Vocab must derive wheel context from individual placement, sign, and house tokens');
-assert.match(vocab,/function applyVocabTokenWheelContext\(tokenNode\)[\s\S]*clearVocabWheelContext\(\)[\s\S]*is-vocab-token-context/,'Individual token focus must clear structure whiteout and add only a local highlight');
-const tokenContextSource=vocab.slice(vocab.indexOf('function applyVocabTokenWheelContext(tokenNode)'),vocab.indexOf('function restoreVocabWheelContext'));
-assert.doesNotMatch(tokenContextSource,/applyVocabWheelContext\(line\)/,'Individual token focus must not establish row-level dimming');
-assert.match(vocab,/context\.kind==='placement'[\s\S]*context\.kind==='sign'[\s\S]*context\.kind==='house'/,'Individual Vocab token context must address placement, sign, and house wheel pieces');
-assert.match(vocab,/panel\.addEventListener\('click'[\s\S]*togglePinnedVocabToken\(tokenNode\)/,'Clicking or tapping an individual Vocab token must pin its wheel highlight');
-assert.match(vocab,/panel\.addEventListener\('pointerover'[\s\S]*applyVocabTokenWheelContext\(tokenNode\)/,'Hovering an individual Vocab token must temporarily highlight that wheel piece');
-
-
-assert.doesNotMatch(vocab,/has-vocab-token-context [^{]*is-vocab-context:not\(\.is-vocab-token-context\)[^{]*\{[^}]*opacity:/,'Token focus must not dim any non-selected member of the active structure');
-assert.match(vocab,/context\.kind==='placement'&&\(type==='placement'\|\|type==='leader'\)/,'Placement token focus must target the placement and its leader while the shared token-context rule supplies the neutral glow');
-
-
+assert.match(vocab,/window\.RelphiSkyFoundationInteractions/,'Individual Vocab tokens must delegate to the comparison wheel interaction owner');
+assert.match(vocab,/api\.previewWheel\(foundationSpec\(context\)\)/,'Hovering a Vocab token must run the same native wheel isolation preview used by comparison-wheel hover');
+assert.match(vocab,/api\.toggleWheel\(foundationSpec\(context\)\)/,'Clicking or tapping a Vocab token must pin the same native wheel isolation state');
+assert.match(interactions,/window\.RelphiSkyFoundationInteractions=Object\.freeze/,'The interaction owner must expose a shared wheel-isolation API');
+assert.match(interactions,/previewWheel:previewExternalWheel/,'The shared interaction API must expose wheel preview');
+assert.match(interactions,/toggleWheel:toggleExternalWheel/,'The shared interaction API must expose pinned wheel selection');
+assert.match(interactions,/if\(wheelOnlyExternal\)return/,'External Vocab isolation must affect the wheel only and must not filter the Relationships list');
+assert.doesNotMatch(vocab,/#skyFoundationWheelMount[^\n]*drop-shadow/,'Vocab must not own a second custom wheel glow style');
+assert.doesNotMatch(vocab,/has-vocab-token-context|is-vocab-token-context/,'The retired custom Vocab token highlight state must stay removed');
 assert.match(vocab,/event\.pointerType!=='touch'&&event\.pointerType!=='pen'/,'Touch and pen taps must retain a Vocab wheel context instead of relying on hover');
-assert.doesNotMatch(vocab,/applyWheelSpec\([^)]*vocab/i,'Vocab-to-wheel context highlighting must not mutate the Vocab filter state');
-
-assert.match(vocab,/function clearVocabWheelContextFromBlank\(event\)/,'Retained Vocab wheel context must clear from blank space');
-assert.match(vocab,/function hasVocabWheelContext\(\)/,'Vocab must recognize token, row, pinned, and touch highlight states when deciding whether another interaction clears the wheel glow');
-assert.match(vocab,/transition:none!important/,'Vocab-owned wheel highlights must bypass the old filter transition that caused a dark flash');
-assert.match(vocab,/rgba\(88,164,255,\.96\)/,'Individual Vocab tokens must use a clear cool marker glow rather than a dark shadow');
-assert.match(vocab,/function vocabSignGlyph\(wheel,sign\)/,'Sign vocabulary must target the zodiac glyph, not the whole sign sector');
-assert.match(vocab,/function vocabHouseNumber\(wheel,slot,house\)/,'House vocabulary must target the house number, not the whole house sector');
-assert.match(vocab,/function vocabPlacementGlyph\(wheel,slot,id\)/,'Placement vocabulary must target the placement marker itself');
-assert.doesNotMatch(vocab,/fill-opacity:1!important/,'Vocab highlighting must not alter colored sector fill opacity');
-assert.doesNotMatch(vocab,/sky-foundation-sign-sector\.is-vocab-(?:token-)?context/,'Vocab highlighting must not style the whole zodiac wedge');
-assert.doesNotMatch(vocab,/sky-foundation-house-sector\.is-vocab-(?:token-)?context/,'Vocab highlighting must not style the whole house wedge');
-assert.doesNotMatch(vocab,/has-vocab-token-context[^}]*rgba\(31,27,24,\.34\)/,'Individual Vocab token highlighting must not use the old dark flash shadow');
-assert.match(vocab,/vocabWheelPinnedToken\?\.contains\?\.\(target\)/,'Pinned token interaction must not clear itself');
-assert.match(vocab,/vocabWheelContextLine\?\.contains\?\.\(target\)/,'Active row interaction must not clear itself');
-assert.match(vocab,/if\(target\.closest\('\.sky-vocab-line'\)\)return/,'Moving within a Vocab result must retain its wheel highlight');
-assert.match(vocab,/document\.addEventListener\('pointerdown',clearVocabWheelContextFromBlank,true\)/,'Mouse, touch, and pen blank-space presses must share one clearing path');
-
+assert.match(vocab,/function clearVocabWheelContextFromBlank\(event\)/,'Retained Vocab wheel context must clear when another interaction takes over');
+assert.match(vocab,/document\.addEventListener\('pointerdown',clearVocabWheelContextFromBlank,true\)/,'Mouse, touch, and pen presses must share one clearing path');
+assert.match(drawersCss,/sky-where-fingerprint-heptagram\{[^}]*height:43px!important;[^}]*min-height:0!important;/,'The Sky Card microheptagram must explicitly defeat the full-size heptagram minimum height');
 assert.match(vocab,/vertex\|anti-vertex','anti-vertex\|vertex/,'Vertex and Anti-Vertex must be treated as an automatic polarity rather than a counted raw relationship');
 assert.doesNotMatch(vocab,/has-vocab-(?:token-)?context[^\n]*\[data-focus-piece="placement"\][^{]*\{[^}]*opacity:/,'Vocab context must not dim unrelated wheel placements');
 assert.doesNotMatch(vocab,/has-vocab-(?:token-)?context[^\n]*\[data-focus-piece="leader"\][^{]*\{[^}]*opacity:/,'Vocab context must preserve native placement-leader opacity');
