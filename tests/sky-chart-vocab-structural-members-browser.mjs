@@ -48,6 +48,32 @@ try{
   assert.ok(members.includes('south-node'),`South Node must attach to Vertex pole: ${JSON.stringify(members)}`);
   assert.ok(members.includes('north-node'),`North Node must attach to Anti-Vertex pole: ${JSON.stringify(members)}`);
 
+  const vocabWindow=page.locator('#skyFoundationA [data-vocab-harmonic-window-input="A"]');
+  const relationshipWindow=page.locator('#skyFoundationRelationships [data-harmonic-window-input]');
+  assert.equal(await vocabWindow.count(),1,'Vocab must expose one Harmonic Window controller for Sky A.');
+  assert.equal(await relationshipWindow.count(),1,'Relationships must retain the canonical Harmonic Window controller.');
+  await vocabWindow.fill('0');
+  await page.waitForFunction(()=>document.documentElement.dataset.skyHarmonicWindow==='0');
+  await page.waitForFunction(()=>{
+    const row=document.querySelector('#skyFoundationA [data-vocab-structure="axis-polarity"][data-vocab-axis="vertex-anti-vertex"]');
+    return row?.dataset.vocabHarmonicWindow==='0';
+  });
+  const narrowMembers=(await vertex.getAttribute('data-vocab-members')||'').split('|').filter(Boolean);
+  assert.equal(narrowMembers.includes('south-node'),false,`South Node must leave the Vertex pole when the shared Harmonic Window narrows to zero: ${JSON.stringify(narrowMembers)}`);
+  assert.equal(narrowMembers.includes('north-node'),false,`North Node must leave the Anti-Vertex pole when the shared Harmonic Window narrows to zero: ${JSON.stringify(narrowMembers)}`);
+  assert.equal(await relationshipWindow.inputValue(),'0','Changing Vocab Harmonic Window must update the Relationships controller.');
+
+  const defaultWindow=await page.evaluate(()=>String(window.RelphiHarmonicOrb.defaultWindow));
+  await vocabWindow.fill(defaultWindow);
+  await page.waitForFunction(value=>document.documentElement.dataset.skyHarmonicWindow===value,defaultWindow);
+  await page.waitForFunction(value=>{
+    const row=document.querySelector('#skyFoundationA [data-vocab-structure="axis-polarity"][data-vocab-axis="vertex-anti-vertex"]');
+    return row?.dataset.vocabHarmonicWindow===value;
+  },defaultWindow);
+  const restoredMembers=(await vertex.getAttribute('data-vocab-members')||'').split('|').filter(Boolean);
+  assert.ok(restoredMembers.includes('south-node'),`South Node must return when the shared Harmonic Window is restored: ${JSON.stringify(restoredMembers)}`);
+  assert.ok(restoredMembers.includes('north-node'),`North Node must return when the shared Harmonic Window is restored: ${JSON.stringify(restoredMembers)}`);
+
   // Dispatch from the structure row itself so the test exercises row context rather
   // than accidentally landing on one of the many child tokens at the row's center.
   await vertex.dispatchEvent('pointerover',{pointerType:'mouse'});
