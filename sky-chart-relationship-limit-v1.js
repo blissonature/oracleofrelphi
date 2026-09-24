@@ -36,7 +36,7 @@ function installStyles(){
 #skyFoundationRelationships .sky-relationship-limit-control>span{color:#5a524b;font:800 .61rem/1 system-ui,sans-serif}
 #skyFoundationRelationships .sky-relationship-limit-control>select{
   appearance:none;-webkit-appearance:none;width:auto;min-width:54px;height:29px;box-sizing:border-box;margin:0;padding:0 24px 0 8px;
-  border:1px solid rgba(31,27,24,.18);border-radius:999px;background:#fff var(--sky-chart-filter-chevron) no-repeat right 6px center/14px 14px;color:#332e2a;
+  border:1px solid rgba(31,27,24,.18);border-radius:9px;background:#fff var(--sky-chart-filter-chevron) no-repeat right 6px center/14px 14px;color:#332e2a;
   font:800 .67rem/1 system-ui,sans-serif;cursor:pointer
 }
 #skyFoundationRelationships .sky-relationship-limit-control>select:hover,
