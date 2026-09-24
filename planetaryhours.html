@@ -1778,6 +1778,260 @@
   @media (max-width:980px) {
     .ph-top-triad { grid-template-columns:1fr; }
   }
+  /* Planetary Hours Where and When mirrors the Sky Chart editor grammar. */
+  .ph-where-when-shell {
+    padding:0;
+    overflow:hidden;
+    border-color:rgba(31,27,24,.14);
+    background:#fffdf8;
+  }
+  .ph-where-when-shell > details > summary {
+    display:grid;
+    grid-template-columns:auto minmax(0,1fr) auto;
+    align-items:center;
+    gap:.7rem;
+    min-height:2.8rem;
+    box-sizing:border-box;
+    padding:.58rem .78rem;
+    cursor:pointer;
+    list-style:none;
+    color:#211d19;
+  }
+  .ph-where-when-shell > details > summary::-webkit-details-marker { display:none; }
+  .ph-where-when-shell > details > summary::after {
+    content:'⌄';
+    color:#6a625c;
+    font:900 .85rem/1 system-ui,sans-serif;
+    transition:transform .15s ease;
+  }
+  .ph-where-when-shell > details[open] > summary::after { transform:rotate(180deg); }
+  .ph-where-when-title { font:900 .82rem/1.2 system-ui,sans-serif; }
+  .ph-where-when-shell .ph-settings-summary {
+    justify-self:end;
+    min-width:0;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+    color:#625950;
+    font:700 .68rem/1.2 system-ui,sans-serif;
+  }
+  .ph-where-when-shell > details[open] > summary {
+    border-bottom:1px solid rgba(31,27,24,.12);
+    background:#fff;
+  }
+
+  .ph-where-when-editor {
+    display:grid;
+    gap:12px;
+    width:100%;
+    max-width:100%;
+    min-width:0;
+    box-sizing:border-box;
+    margin:0;
+    padding:12px;
+    border-top:0;
+  }
+  .ph-where-when-editor > *,
+  .ph-where-when-section,
+  .ph-where-when-advanced,
+  .ph-where-search-row,
+  .ph-location-confirmation,
+  .ph-where-when-grid,
+  .ph-where-when-coordinate-grid,
+  .ph-where-when-inline-actions {
+    min-width:0;
+    max-width:100%;
+    box-sizing:border-box;
+  }
+  .ph-where-when-section {
+    display:grid;
+    gap:8px;
+    width:100%;
+    min-inline-size:0;
+    margin:0;
+    padding:10px;
+    border:1px solid rgba(31,27,24,.13);
+    border-radius:12px;
+    background:#fffdfa;
+  }
+  .ph-where-when-section legend {
+    margin:0;
+    padding:0 4px;
+    color:#201b17;
+    font:900 .78rem/1.2 system-ui,sans-serif;
+  }
+  .ph-where-when-label {
+    display:grid;
+    gap:4px;
+    min-width:0;
+    max-width:100%;
+    color:#49413a;
+    font:800 .65rem/1.25 system-ui,sans-serif;
+  }
+  .ph-where-when-input,
+  .ph-where-when-select {
+    width:100%;
+    max-width:100%;
+    min-width:0;
+    min-height:40px;
+    box-sizing:border-box;
+    border:1px solid rgba(31,27,24,.23);
+    border-radius:9px;
+    background:#fff;
+    color:#181512;
+    padding:.62rem .68rem;
+    font:700 .76rem/1.2 system-ui,sans-serif;
+  }
+  .ph-where-when-input:focus,
+  .ph-where-when-select:focus {
+    border-color:#8b1714;
+    outline:2px solid rgba(201,33,30,.16);
+    outline-offset:1px;
+  }
+  .ph-where-when-input:disabled {
+    background:#f2eee8;
+    color:#756c65;
+    cursor:not-allowed;
+  }
+  .ph-where-when-button {
+    appearance:none;
+    max-width:100%;
+    min-width:0;
+    box-sizing:border-box;
+    border:0;
+    border-radius:999px;
+    background:#202020;
+    color:#fff;
+    padding:.64rem .82rem;
+    font:900 .68rem/1 system-ui,sans-serif;
+    cursor:pointer;
+    white-space:nowrap;
+  }
+  .ph-where-when-button.primary { background:#c9211e; }
+  .ph-where-when-button.secondary {
+    border:1px solid rgba(31,27,24,.24);
+    background:#fff;
+    color:#211d19;
+  }
+  .ph-where-when-button:hover,
+  .ph-where-when-button:focus-visible {
+    filter:brightness(.94);
+    outline:3px solid rgba(201,33,30,.18);
+    outline-offset:2px;
+  }
+  .ph-where-when-here-row,
+  .ph-where-when-now-row {
+    display:flex;
+    align-items:center;
+    gap:8px;
+    min-width:0;
+  }
+  .ph-where-when-here-row > span,
+  .ph-where-when-now-row > span {
+    min-width:0;
+    color:#625950;
+    font:650 .63rem/1.3 system-ui,sans-serif;
+  }
+  .ph-where-when-now-row {
+    padding:.12rem .1rem;
+    cursor:pointer;
+  }
+  .ph-where-when-now-row input {
+    width:1rem;
+    height:1rem;
+    margin:0;
+    accent-color:#c9211e;
+  }
+  .ph-where-when-now-row span { display:grid; gap:1px; }
+  .ph-where-when-now-row strong { color:#241f1b; font-size:.68rem; }
+  .ph-where-when-now-row small { color:#6a625c; font-size:.61rem; font-weight:650; }
+  .ph-where-search-row {
+    display:grid;
+    grid-template-columns:minmax(0,1fr) auto;
+    gap:4px;
+    align-items:end;
+    width:100%;
+  }
+  .ph-location-confirmation {
+    display:grid;
+    gap:4px;
+    width:100%;
+    border-left:3px solid #c9211e;
+    padding:6px 8px;
+    background:#fff7f4;
+  }
+  .ph-location-confirmation p {
+    margin:0;
+    overflow-wrap:anywhere;
+    color:#332d28;
+    font:650 .65rem/1.35 system-ui,sans-serif;
+  }
+  .ph-location-confirmation .ph-warning { color:#a11c18; }
+  .ph-where-when-grid {
+    display:grid;
+    grid-template-columns:minmax(0,.95fr) minmax(0,1.05fr) auto;
+    gap:6px;
+    align-items:end;
+    width:100%;
+  }
+  .ph-where-when-advanced {
+    width:100%;
+    border:1px solid rgba(31,27,24,.14);
+    border-radius:11px;
+    background:#faf7f2;
+    overflow:hidden;
+  }
+  .ph-where-when-advanced > summary {
+    cursor:pointer;
+    padding:10px;
+    color:#29231e;
+    font:900 .68rem/1.2 system-ui,sans-serif;
+  }
+  .ph-where-when-advanced-body {
+    display:grid;
+    gap:8px;
+    min-width:0;
+    max-width:100%;
+    box-sizing:border-box;
+    padding:0 10px 10px;
+  }
+  .ph-where-when-coordinate-grid {
+    display:grid;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:7px;
+    width:100%;
+  }
+  .ph-where-when-inline-actions {
+    display:flex;
+    flex-wrap:wrap;
+    gap:6px;
+    width:100%;
+  }
+  .ph-where-when-inline-actions .ph-where-when-button { flex:1 1 9rem; }
+  @media(max-width:620px) {
+    .ph-where-when-shell > details > summary {
+      grid-template-columns:minmax(0,1fr) auto;
+    }
+    .ph-where-when-shell .ph-settings-summary {
+      grid-column:1 / -1;
+      justify-self:start;
+      max-width:100%;
+      white-space:normal;
+    }
+    .ph-where-search-row,
+    .ph-where-when-grid,
+    .ph-where-when-coordinate-grid {
+      grid-template-columns:1fr;
+    }
+    .ph-where-search-row .ph-where-when-button,
+    .ph-where-when-apply-time {
+      width:100%;
+    }
+    .ph-where-when-here-row {
+      display:grid;
+      grid-template-columns:1fr;
+    }
+  }
 </style>
 </head>
 <body>
@@ -1786,44 +2040,70 @@
   <h1>Planetary <span class="red">Hours</span></h1>
   <p class="planetary-subtitle">A living heptagram, hour clock, and local sky guide.</p>
 
-  <section class="ph-panel ph-settings" id="controls" aria-label="Planetary hours controls">
+  <section class="ph-panel ph-settings ph-where-when-shell" id="controls" aria-label="Planetary hours where and when">
     <details id="settingsDetails">
-      <summary><span>Where and when settings</span><span class="ph-settings-summary" id="settingsSummary">—</span></summary>
-      <div class="ph-settings-body">
+      <summary><span class="ph-where-when-title">Where and when</span><span class="ph-settings-summary" id="settingsSummary">—</span></summary>
+      <div class="ph-settings-body ph-where-when-editor">
         <span class="ph-sr-only" id="localClock" aria-hidden="true">--:--</span>
-        <div class="ph-settings-group ph-settings-group-location">
-          <div class="ph-settings-group-title">Location</div>
-          <div class="ph-settings-row ph-settings-row-location">
-            <button class="ph-btn" id="useGeo" type="button">Use my location</button>
-            <label class="ph-settings-field ph-settings-field-timezone"><span>Timezone</span>
-              <select class="ph-select" id="tzSelect"></select>
-            </label>
-            <label class="ph-settings-field ph-settings-field-coordinate"><span>Lat</span><input class="ph-input short" id="lat" step="0.0001" type="number"/></label>
-            <label class="ph-settings-field ph-settings-field-coordinate"><span>Lon</span><input class="ph-input short" id="lon" step="0.0001" type="number"/></label>
-            <button class="ph-btn ph-btn-secondary" id="setLatLon" type="button">Set</button>
+
+        <fieldset class="ph-where-when-section">
+          <legend>Where</legend>
+          <div class="ph-where-when-here-row">
+            <button class="ph-where-when-button primary" id="useGeo" type="button">Use my location</button>
+            <span>Use this browser’s location and matching timezone.</span>
           </div>
-          <p class="ph-settings-echo ph-tiny" id="echo">—</p>
-          <div class="ph-settings-row ph-settings-row-place" aria-label="Manual location search">
-            <label class="ph-settings-field ph-location-search"><span>Search place</span>
-              <input class="ph-input" id="locationSearch" list="locationOptions" placeholder="Search a preloaded place, e.g. Malden" type="search"/>
+
+          <div class="ph-where-search-row">
+            <label class="ph-where-when-label ph-location-search">Search for a location
+              <input class="ph-where-when-input" id="locationSearch" list="locationOptions" placeholder="Ex. Malden, Massachusetts" type="search"/>
             </label>
             <datalist id="locationOptions"></datalist>
-            <button class="ph-btn" id="applyLocation" type="button">Use selected location</button>
-            <button class="ph-btn ph-btn-secondary" id="copyLink" type="button">Copy link</button>
-            <span class="ph-location-note" id="locationNote">Choose a place to update latitude, longitude, and timezone together.</span>
+            <button class="ph-where-when-button secondary" id="applyLocation" type="button">Use location</button>
           </div>
-        </div>
-        <div class="ph-settings-group ph-settings-group-time">
-          <div class="ph-settings-group-title">Date &amp; time</div>
-          <div class="ph-settings-row ph-settings-row-time">
-            <label class="ph-switch ph-system-time-toggle"><input checked id="useSystem" type="checkbox"/><span>Use system date/time</span></label>
-            <span class="ph-row-system-time" id="manualTime">
-              <label class="ph-settings-field"><span>Date</span><input class="ph-input" id="datePick" type="date"/></label>
-              <label class="ph-settings-field"><span>Time</span><input class="ph-input" id="timePick" type="time"/></label>
-              <button class="ph-btn" id="applyDT" type="button">Apply</button>
-            </span>
+
+          <div class="ph-location-confirmation" aria-live="polite">
+            <p class="ph-settings-echo" id="echo">—</p>
+            <p id="locationNote">Choose a place to update latitude, longitude, and timezone together.</p>
           </div>
-        </div>
+        </fieldset>
+
+        <fieldset class="ph-where-when-section">
+          <legend>When</legend>
+          <label class="ph-where-when-now-row ph-system-time-toggle">
+            <input checked id="useSystem" type="checkbox"/>
+            <span><strong>Current local time</strong><small>Keep this view moving with the clock.</small></span>
+          </label>
+          <div class="ph-where-when-grid" id="manualTime">
+            <label class="ph-where-when-label">Date
+              <input class="ph-where-when-input" id="datePick" type="date"/>
+            </label>
+            <label class="ph-where-when-label">Local time
+              <input class="ph-where-when-input" id="timePick" type="time"/>
+            </label>
+            <button class="ph-where-when-button primary ph-where-when-apply-time" id="applyDT" type="button">Use this time</button>
+          </div>
+        </fieldset>
+
+        <details class="ph-where-when-advanced">
+          <summary>Advanced settings</summary>
+          <div class="ph-where-when-advanced-body">
+            <label class="ph-where-when-label">Time zone
+              <select class="ph-where-when-select" id="tzSelect"></select>
+            </label>
+            <div class="ph-where-when-coordinate-grid">
+              <label class="ph-where-when-label">Latitude
+                <input class="ph-where-when-input" id="lat" step="0.0001" type="number"/>
+              </label>
+              <label class="ph-where-when-label">Longitude
+                <input class="ph-where-when-input" id="lon" step="0.0001" type="number"/>
+              </label>
+            </div>
+            <div class="ph-where-when-inline-actions">
+              <button class="ph-where-when-button secondary" id="setLatLon" type="button">Use coordinates</button>
+              <button class="ph-where-when-button secondary" id="copyLink" type="button">Copy link</button>
+            </div>
+          </div>
+        </details>
       </div>
     </details>
   </section>
@@ -5143,7 +5423,7 @@
     el.tzSelect.addEventListener('change', function () { el.locationNote.innerHTML = '<span class="ph-warning">Timezone changed separately from the selected location. Check that it still matches the intended place.</span>'; rebuild(); });
     el.useSystem.addEventListener('change', function () {
       state.useSystem = el.useSystem.checked;
-      el.manualTime.style.display = 'inline-flex'; if (el.datePick) el.datePick.disabled = state.useSystem; if (el.timePick) el.timePick.disabled = state.useSystem;
+      el.manualTime.style.display = 'grid'; if (el.datePick) el.datePick.disabled = state.useSystem; if (el.timePick) el.timePick.disabled = state.useSystem;
       rebuild();
     });
     el.applyDT.addEventListener('click', function () {
@@ -5314,7 +5594,7 @@
       state.now = addDays(base, delta);
       state.heptagramHourOverride = hourOverride == null ? null : hourOverride;
       if (el.useSystem) el.useSystem.checked = false;
-      if (el.manualTime) { el.manualTime.style.display = 'inline-flex'; if (el.datePick) el.datePick.disabled = false; if (el.timePick) el.timePick.disabled = false; }
+      if (el.manualTime) { el.manualTime.style.display = 'grid'; if (el.datePick) el.datePick.disabled = false; if (el.timePick) el.timePick.disabled = false; }
       if (el.datePick) el.datePick.value = dateInputValueFor(state.now, state.tz);
       if (el.timePick) el.timePick.value = timeInputValueFor(state.now, state.tz);
       rebuild();
@@ -5420,7 +5700,7 @@
       if (current >= 24) { shiftManualDay(1, 1); }
       else { state.heptagramHourOverride = Math.min(24, current + 1); rebuild(); }
     });
-    if (el.heptagramNow) el.heptagramNow.addEventListener('click', function () { state.heptagramHourOverride = null; state.useSystem = true; if (el.useSystem) el.useSystem.checked = true; if (el.manualTime) { el.manualTime.style.display = 'inline-flex'; if (el.datePick) el.datePick.disabled = true; if (el.timePick) el.timePick.disabled = true; } rebuild(); });
+    if (el.heptagramNow) el.heptagramNow.addEventListener('click', function () { state.heptagramHourOverride = null; state.useSystem = true; if (el.useSystem) el.useSystem.checked = true; if (el.manualTime) { el.manualTime.style.display = 'grid'; if (el.datePick) el.datePick.disabled = true; if (el.timePick) el.timePick.disabled = true; } rebuild(); });
     window.addEventListener('storage', function (event) {
       if (event.key === calendarDisplayStorageKey) {
         syncCalendarDisplayState();
@@ -5447,7 +5727,7 @@
     el.lat.value = state.lat.toFixed(4);
     el.lon.value = state.lon.toFixed(4);
     el.useSystem.checked = state.useSystem;
-    el.manualTime.style.display = 'inline-flex'; if (el.datePick) el.datePick.disabled = state.useSystem; if (el.timePick) el.timePick.disabled = state.useSystem;
+    el.manualTime.style.display = 'grid'; if (el.datePick) el.datePick.disabled = state.useSystem; if (el.timePick) el.timePick.disabled = state.useSystem;
     const now = localNow();
     el.datePick.value = dateInputValueFor(now, state.tz);
     el.timePick.value = timeInputValueFor(now, state.tz);
