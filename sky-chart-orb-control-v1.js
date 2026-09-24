@@ -103,7 +103,7 @@
     reconcilePlacementIsolation(rows,visibleIndexes);
     const count=document.getElementById('skyFoundationRelationshipCount'),empty=document.getElementById('skyFoundationRelationshipEmpty');
     if(count){count.textContent=`${visibleIndexes.size}/${rows.length}`;count.dataset.countLabel='shown'}
-    if(empty)empty.hidden=visibleIndexes.size!==0;
+    if(empty)empty.hidden=visibleIndexes.size!==0||hiddenByHarmonicWindow>0;
     const more=ensureShowMoreRow(),max=Number(model()?.maxWindow??12);
     if(more){
       const canReveal=limit<max&&hiddenByHarmonicWindow>0;
