@@ -94,10 +94,12 @@ try{
   assert.equal(await relationshipWindow.inputValue(),'0','Changing Vocab Harmonic Window must update Relationships.');
 
   const relationshipCountStatus=await page.locator('#skyFoundationRelationshipCount').evaluate(node=>({
-    text:(node.textContent||'').trim(),
+    matchCount:node.dataset.matchCount||'',
+    visibleNumber:getComputedStyle(node,'::before').content.replace(/["']/g,''),
     suffix:getComputedStyle(node,'::after').content
   }));
-  assert.match(relationshipCountStatus.text,/^\d+$/,'Relationship header must report the number of relationships matching the current scope.');
+  assert.match(relationshipCountStatus.matchCount,/^\d+$/,'Relationship header must retain a stable matching-count state.');
+  assert.equal(relationshipCountStatus.visibleNumber,relationshipCountStatus.matchCount,'Visible relationship count must render from stable match state.');
   assert.match(relationshipCountStatus.suffix,/matches/,'Relationship count must visibly identify the number as matches.');
 
   const showMore=page.locator('#skyFoundationRelationshipList [data-harmonic-show-more]');
