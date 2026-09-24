@@ -413,6 +413,16 @@ await wheelBlank.dispatchEvent('pointerdown',{pointerType:'mouse',clientX:1,clie
 await page.waitForFunction(()=>!document.querySelector('#skyFoundationWheelMount>.sky-foundation-wheel')?.classList.contains('has-isolation'));
 
 
+const inlineGlyphPaintState=await page.locator('#skyFoundationA .sky-vocab-glyph.has-svg-glyph svg').evaluateAll(nodes=>nodes.slice(0,24).map(svg=>({
+  ready:svg.dataset.vocabInlineGlyphReady==='true',
+  visibility:getComputedStyle(svg).visibility,
+  width:svg.getBoundingClientRect().width,
+  height:svg.getBoundingClientRect().height
+})));
+assert.ok(inlineGlyphPaintState.length>0,'Expanded Vocab must expose canonical inline SVG glyphs.');
+assert.equal(inlineGlyphPaintState.every(item=>item.ready||item.visibility==='hidden'),true,'An expanded Vocab glyph must never paint before its final fitted state is ready.');
+assert.equal(inlineGlyphPaintState.every(item=>item.width>=18&&item.height>=18),true,'Expanded Vocab glyph frames must start and remain at their final inline geometry.');
+
 const glyphMetrics=await page.locator('#skyFoundationA .sky-vocab-glyph svg').first().evaluate(node=>{
   const style=getComputedStyle(node);
   return{width:parseFloat(style.width),height:parseFloat(style.height)};
