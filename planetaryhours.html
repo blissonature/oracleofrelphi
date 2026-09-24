@@ -1942,6 +1942,7 @@
     align-items:end;
     width:100%;
   }
+  .ph-my-current-location { justify-self:start; }
   .ph-location-confirmation {
     display:grid;
     gap:4px;
@@ -2061,6 +2062,7 @@
             <datalist id="locationOptions"></datalist>
             <button class="ph-where-when-button secondary" id="applyLocation" type="button">Search</button>
           </div>
+          <button class="ph-where-when-button secondary ph-my-current-location" id="useCurrentLocation" type="button">My current location</button>
 
           <div class="ph-location-confirmation" aria-live="polite">
             <p class="ph-settings-echo" id="echo">—</p>
@@ -2436,6 +2438,7 @@
     timeFormatToggle: document.getElementById('timeFormatToggle'),
     copy: document.getElementById('copyLink'),
     useGeo: document.getElementById('useGeo'),
+    useCurrentLocation: document.getElementById('useCurrentLocation'),
     tzSelect: document.getElementById('tzSelect'),
     lat: document.getElementById('lat'),
     lon: document.getElementById('lon'),
@@ -5424,6 +5427,29 @@
         el.locationNote.textContent = 'Current location selected; timezone set from this browser.';
         rebuild();
       }, function () { smallEcho('Geolocation failed.'); });
+    });
+    if (el.useCurrentLocation) el.useCurrentLocation.addEventListener('click', function () {
+      if (!navigator.geolocation) { smallEcho('Geolocation is unavailable.'); return; }
+      el.useCurrentLocation.disabled = true;
+      el.useCurrentLocation.textContent = 'Requesting location…';
+      navigator.geolocation.getCurrentPosition(function (pos) {
+        state.lat = pos.coords.latitude;
+        state.lon = pos.coords.longitude;
+        state.locationName = 'Current browser location';
+        const browserTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+        if (browserTz) { state.tz = browserTz; el.tzSelect.value = state.tz; }
+        el.lat.value = state.lat.toFixed(4);
+        el.lon.value = state.lon.toFixed(4);
+        el.locationSearch.value = '';
+        el.locationNote.textContent = 'Current location selected; timezone set from this browser.';
+        el.useCurrentLocation.disabled = false;
+        el.useCurrentLocation.textContent = 'My current location';
+        rebuild();
+      }, function () {
+        el.useCurrentLocation.disabled = false;
+        el.useCurrentLocation.textContent = 'My current location';
+        smallEcho('Geolocation failed.');
+      });
     });
     el.setLatLon.addEventListener('click', function () { state.locationName = 'Manual coordinates'; el.locationNote.textContent = 'Manual coordinates are active. Keep timezone paired with the intended place.'; rebuild(); });
     el.applyLocation.addEventListener('click', function () { applyLocationPreset(matchLocation(el.locationSearch.value)); });
