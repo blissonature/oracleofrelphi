@@ -36,7 +36,7 @@
   function activeSlots() { return bActive() ? SLOTS : ['A']; }
   function activeKinds() { return bActive() ? ['all','a','b'] : ['all','a']; }
 
-  function filterBar() { return document.querySelector('#skyFoundationRelationships .sky-chart-filter-bar'); }
+  function filterBar() { return (document.querySelector('#skyFoundationFocus .sky-chart-filter-bar')||document.querySelector('#skyFoundationRelationships .sky-chart-filter-bar')); }
   function control() { return document.querySelector('[data-house-filter="combined"]'); }
   function popover() { return document.getElementById('skyChartHousePopover'); }
   function idsFor(scope, target) { return scope === 'all' ? HOUSES : HOUSES.includes(target) ? [target] : []; }
