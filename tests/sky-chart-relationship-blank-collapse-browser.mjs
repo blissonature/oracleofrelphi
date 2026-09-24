@@ -48,7 +48,7 @@ try {
   assert.ok(fusion.referents.every(Boolean),'Relationship fusion tokens should expose referents.');
   assert.equal(fusion.originalTilePartsHidden,true,'Legacy tile geometry should yield to the prose surface.');
 
-  window.RelphiSkyRelationshipDisplay?.setState?.({glyphs:false,names:true,referents:false});
+  await page.evaluate(()=>window.RelphiSkyRelationshipDisplay?.setState?.({glyphs:false,names:true,referents:false}));
   await page.waitForFunction(()=>[...document.querySelectorAll('.sky-foundation-relationship-row[data-relation-index]:not([hidden]) [data-rel-vocab-token]')].every(token=>getComputedStyle(token.querySelector('.sky-rel-vocab-glyph')).display==='none'&&!token.querySelector('.sky-rel-vocab-name').hidden&&token.querySelector('.sky-rel-vocab-referent').hidden));
   await row.locator('[data-rel-vocab-token="left"]').click();
   await page.waitForFunction(()=>document.querySelector('#skyFoundationWheelMount>.sky-foundation-wheel')?.classList.contains('has-isolation'));
@@ -57,7 +57,7 @@ try {
 
   await page.evaluate(()=>document.getElementById('skyFoundationComparison')?.dispatchEvent(new MouseEvent('click',{bubbles:true})));
   await page.waitForFunction(()=>!document.querySelector('#skyFoundationWheelMount>.sky-foundation-wheel')?.classList.contains('has-isolation'));
-  window.RelphiSkyRelationshipDisplay?.setState?.({glyphs:true,names:true,referents:true});
+  await page.evaluate(()=>window.RelphiSkyRelationshipDisplay?.setState?.({glyphs:true,names:true,referents:true}));
 
   await page.evaluate(()=>document.querySelector('.sky-foundation-relationship-row[data-relation-index]:not([hidden])')?.dispatchEvent(new MouseEvent('click',{bubbles:true})));
   await page.waitForFunction(()=>document.querySelector('.sky-foundation-relationship-row.is-inline-expanded'));
