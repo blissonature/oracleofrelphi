@@ -131,7 +131,9 @@ test('selected relationship keeps exact mini-wheel geometry, permanent Tarot art
   assert.doesNotMatch(selectedRelationship, /durationMarkup/);
   assert.doesNotMatch(selectedRelationship, /relationship-mini-wheel-meta/);
   assert.match(selectedRelationshipCss, /\.relationship-visual\{display:grid;grid-template-columns:minmax\(112px,150px\) minmax\(220px,270px\) minmax\(112px,150px\)/);
-  assert.match(selectedRelationshipCss, /\.correspondence-card-art img\{[\s\S]*aspect-ratio:352\/600/);
+  assert.match(selectedRelationshipCss, /\.correspondence-card-art\{[^}]*padding:0;[^}]*border:3px solid currentColor;[^}]*border-radius:0;[^}]*overflow:visible/);
+  assert.match(selectedRelationshipCss, /\.correspondence-card-art img\{[^}]*height:auto;[^}]*aspect-ratio:auto;[^}]*object-fit:contain;[^}]*border:0;[^}]*border-radius:0;[^}]*clip-path:none/);
+  assert.doesNotMatch(selectedRelationshipCss, /\.correspondence-card-art img\{[^}]*object-fit:cover/);
   assert.match(selectedRelationshipCss, /\.sky-selected-aspect-point>\.relphi-glyph-bubble>circle\{opacity:0!important\}/);
   assert.doesNotMatch(selectedRelationshipCss, /\.card-back/);
   assert.doesNotMatch(selectedRelationshipCss, /\.card-inner/);

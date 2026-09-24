@@ -27,14 +27,10 @@ await page.waitForFunction(()=>document.querySelectorAll('#skyFoundationA .sky-f
 await page.waitForFunction(()=>{
   const hosts=Array.from(document.querySelectorAll('#skyFoundationA .sky-foundation-row > svg,#skyFoundationB .sky-foundation-row > svg'));
   return hosts.length>20&&hosts.every(host=>{
-    const root=host.querySelector('.relphi-glyph-bubble.relphi-glyph-framed[data-canonical-framing="hidden-bubble"]');
-    const circle=root?.querySelector(':scope > circle');
-    const art=root&&Array.from(root.children).find(node=>node.classList?.contains('relphi-canonical-glyph'));
+    const art=host.querySelector(':scope > .relphi-canonical-glyph');
     return host.getAttribute('viewBox')==='-20 -20 40 40'&&
       host.dataset.canonicalFit==='registry-component'&&
       !!host.dataset.canonicalGlyphId&&
-      !!root&&
-      circle?.getAttribute('opacity')==='0'&&
       art?.dataset.relphiAtomicCommit==='true'&&
       !!art.getAttribute('transform');
   });
@@ -56,11 +52,7 @@ const issues=await page.evaluate(({colors})=>{
       if(host?.getAttribute('viewBox')!=='-20 -20 40 40')issues.push(`${slot} row ${index+1}: ledger viewBox changed`);
       if(host?.dataset.canonicalFit!=='registry-component')issues.push(`${slot} row ${index+1}: registry-component fit marker missing`);
       if(!host?.dataset.canonicalGlyphId)issues.push(`${slot} row ${index+1}: canonical glyph identity missing`);
-      const root=host?.querySelector('.relphi-glyph-bubble.relphi-glyph-framed');
-      if(root?.dataset.canonicalFraming!=='hidden-bubble')issues.push(`${slot} row ${index+1}: hidden calibration framing missing`);
-      const circle=root?.querySelector(':scope > circle');
-      if(circle?.getAttribute('opacity')!=='0'||circle?.getAttribute('aria-hidden')!=='true')issues.push(`${slot} row ${index+1}: calibration circle remains visible`);
-      const art=root&&Array.from(root.children).find(node=>node.classList?.contains('relphi-canonical-glyph'));
+      const art=host?.querySelector(':scope > .relphi-canonical-glyph');
       if(!art){issues.push(`${slot} row ${index+1}: canonical art missing`);return}
       if(art.dataset.relphiAtomicCommit!=='true'||!art.getAttribute('transform'))issues.push(`${slot} row ${index+1}: canonical art did not commit and fit atomically`);
       art.querySelectorAll(geometry).forEach((node,shapeIndex)=>{

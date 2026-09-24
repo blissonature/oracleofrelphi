@@ -135,8 +135,8 @@
 
   function loadCanonicalGlyphRuntime(onready) {
     ensureCanonicalSkyBootStyle();
-    appendScript('relphi-glyph-registry-v1.js?v=28', function () {
-      appendScript('relphi-glyph-component-v1.js?v=32', function () {
+    appendScript('relphi-glyph-registry-v1.js?v=30', function () {
+      appendScript('relphi-glyph-component-v1.js?v=33', function () {
         appendScript('relphi-glyph-source-integrity-v1.js?v=2', onready);
       });
     });
@@ -144,7 +144,7 @@
 
   function refreshDrawingBoardControlAssets() {
     const link = document.querySelector('link[href^="drawing-board-workflow-v2.css"]');
-    if (link) link.href = 'drawing-board-workflow-v2.css?v=42';
+    if (link) link.href = 'drawing-board-workflow-v2.css?v=49';
     if (!document.getElementById('relphi-drawing-board-collapse-contract')) {
       const style = document.createElement('style');
       style.id = 'relphi-drawing-board-collapse-contract';
@@ -163,20 +163,20 @@
     if (isTarotContext()) {
       loadCanonicalGlyphRuntime();
       refreshDrawingBoardControlAssets();
-      appendScript('tarot-date-sky-bridge-v1.js?v=3');
+      appendScript('tarot-date-sky-bridge-v1.js?v=4');
       appendScript('tarot-search-list-v1.js?v=1');
       appendScript('tarot-reversed-copy-v1.js?v=1');
       appendScript('tarot-card-selection-scroll-v1.js?v=2', function () {
         requestAnimationFrame(function () { window.RelphiTarotCardSelectionScroll?.scrollFromLocation(); });
       });
-      appendScript('drawing-board-workflow-v2.js?v=90', function () {
+      appendScript('drawing-board-workflow-v2.js?v=96', function () {
         window.dispatchEvent(new Event('relphi:tarot-enhancements-ready'));
       });
     }
     if (isPlanetaryHoursContext()) {
       loadCanonicalGlyphRuntime(function () {
         appendScript('standardize-zodiac-wheels.js?v=7');
-        appendScript('relphi-inline-glyph-consumer-v1.js?v=2');
+        appendScript('relphi-inline-glyph-consumer-v1.js?v=3');
         appendScript('planetary-hours-sect-v1.js?v=4');
       });
       appendScript('planetary-hours-location-prompt.js?v=4');

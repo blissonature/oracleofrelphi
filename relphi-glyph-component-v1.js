@@ -198,6 +198,14 @@
     return text;
   }
 
+  function commitCanonical(parent, art, entry, fitted) {
+    parent.dataset.canonicalFit = 'registry-component';
+    parent.dataset.canonicalGlyphId = entry.id;
+    art.dataset.relphiAtomicCommit = fitted ? 'true' : 'false';
+    art.dataset.canonicalGlyphId = entry.id;
+    return art;
+  }
+
   function staticMaster(parent, source, entry, color, radius) {
     const art = svg('g');
     Array.from(source.children).forEach(child => art.appendChild(document.importNode(child, true)));
@@ -224,7 +232,7 @@
 
     if (entry.asset) {
       const source = await loadAsset(entry.asset);
-      if (entry.fitMode === 'static-master') return staticMaster(parent, source, entry, color, radius);
+      if (entry.fitMode === 'static-master') return commitCanonical(parent, staticMaster(parent, source, entry, color, radius), entry, true);
       art = svg('g');
       Array.from(source.children).forEach(child => art.appendChild(document.importNode(child, true)));
       // Dynamic SVG masters must never expose their raw source geometry. Fitting uses
@@ -245,7 +253,7 @@
       if (fitted) art.style.visibility = '';
       else console.error('[Relphi glyph fit] Canonical dynamic glyph remained hidden because its source metrics could not be resolved:', entry.id);
     }
-    return art;
+    return commitCanonical(parent, art, entry, fitted);
   }
 
   function createBubble(parent, identity, options) {

@@ -34,7 +34,7 @@
 #shortListPanel .card-row-card-wrap>.or-card,#shortListPanel .card-row-drop-card{width:100%!important;max-width:none!important;margin:0!important}
 /* Keep every drawn card's face measurable before a lazy WebP decodes. iOS Safari can otherwise collapse
    an absolutely positioned card to its sticker while deciding that its zero-height image is not load-worthy. */
-#shortListPanel .card-row-workspace .card-row-card .or-card-art.relphi-surface-face{display:block!important;width:100%!important;max-width:100%!important;height:auto!important;aspect-ratio:500/866!important;object-fit:contain!important}
+#shortListPanel .card-row-workspace .card-row-card .or-card-art.relphi-surface-face{display:block!important;width:100%!important;max-width:100%!important;height:auto!important;aspect-ratio:auto!important;object-fit:contain!important;border:0!important;outline:0!important;border-radius:0!important;box-shadow:none!important;clip-path:none!important;mask:none!important;-webkit-mask:none!important}
 #shortListPanel .card-row-placeholder-item>.card-row-drop-card{aspect-ratio:500/866!important;display:grid!important;place-items:center!important;cursor:pointer!important;border:1.5px dashed rgba(17,17,17,.42)!important;background:var(--relphi-card-envelope-bg,#f3f0ea)!important}
 #shortListPanel .card-row-placeholder-item>.card-row-drop-card>.card-row-drop-card-inner{padding:.6rem!important;font-size:.68rem!important;font-weight:800!important;text-align:center!important;opacity:.72!important}
 #shortListPanel .card-row-card-wrap::before,#shortListPanel .card-row-card-wrap::after,#shortListPanel .card-row-drop-card::before,#shortListPanel .card-row-drop-card::after{content:none!important;display:none!important}
@@ -94,9 +94,8 @@
 
 .relphi-focus-open{overflow:hidden!important}
 .relphi-focus-reader{position:fixed!important;inset:0!important;z-index:100000!important;display:grid!important;place-items:center!important;padding:1.25rem!important;background:rgba(17,12,10,.72)!important;backdrop-filter:blur(8px)!important}
-.relphi-focus-shell{display:grid!important;grid-template-rows:auto auto minmax(0,1fr) auto!important;width:min(76rem,calc(100vw - 2rem))!important;height:min(54rem,calc(100dvh - 2rem))!important;max-height:calc(100dvh - 2rem)!important;border:1px solid rgba(255,255,255,.5)!important;border-radius:18px!important;background:#fffdf8!important;box-shadow:0 24px 70px rgba(0,0,0,.42)!important;overflow-x:hidden!important;overflow-y:auto!important}
-.relphi-focus-shell>header{display:flex!important;align-items:center!important;justify-content:flex-end!important;gap:1rem!important;padding:.65rem .8rem!important;background:#fffdf8!important}
-.relphi-focus-position-panel{display:grid!important;place-items:center!important;box-sizing:border-box!important;min-width:0!important;min-height:0!important;max-height:none!important;padding:.72rem 1.2rem .8rem!important;border-top:2px solid rgba(220,31,24,.48)!important;border-bottom:1px solid #ddd4cb!important;background:#fff8ee!important;text-align:center!important;overflow:visible!important}
+.relphi-focus-shell{display:grid!important;grid-template-rows:auto minmax(0,1fr) auto!important;width:min(76rem,calc(100vw - 2rem))!important;height:min(54rem,calc(100dvh - 2rem))!important;max-height:calc(100dvh - 2rem)!important;border:1px solid rgba(255,255,255,.5)!important;border-radius:18px!important;background:#fffdf8!important;box-shadow:0 24px 70px rgba(0,0,0,.42)!important;overflow-x:hidden!important;overflow-y:auto!important}
+.relphi-focus-position-panel{display:grid!important;grid-template-columns:2.2rem minmax(0,1fr) 2.2rem!important;align-items:center!important;gap:.6rem!important;box-sizing:border-box!important;min-width:0!important;min-height:0!important;max-height:none!important;padding:.55rem .8rem!important;border-top:2px solid rgba(220,31,24,.48)!important;border-bottom:1px solid #ddd4cb!important;background:#fff8ee!important;text-align:center!important;overflow:visible!important}.relphi-focus-position{grid-column:2!important;min-width:0!important}.relphi-focus-position-panel>.relphi-focus-close{grid-column:3!important;justify-self:end!important;display:grid!important;visibility:visible!important;opacity:1!important;pointer-events:auto!important;z-index:5!important}
 .relphi-focus-position{display:block!important;width:100%!important;max-width:60rem!important;max-height:none!important;margin:0!important;padding:0!important;border:0!important;background:transparent!important;color:#171412!important;font-size:clamp(1.05rem,1.9vw,1.45rem)!important;font-weight:900!important;line-height:1.24!important;white-space:normal!important;overflow:visible!important;text-overflow:clip!important;overflow-wrap:anywhere!important;word-break:normal!important}
 .relphi-focus-reversed-badge{display:inline-flex!important;align-items:center!important;justify-content:center!important;min-height:1.85rem!important;padding:.28rem .55rem!important;border:1.5px solid #b81712!important;border-radius:999px!important;background:#fff3f1!important;color:#a51612!important;font-size:.68rem!important;font-weight:950!important;letter-spacing:.07em!important;text-transform:uppercase!important;line-height:1!important}
 .relphi-focus-reversed-badge[hidden]{display:none!important}
@@ -104,7 +103,7 @@
 .relphi-focus-main{display:grid!important;grid-template-columns:minmax(16rem,.82fr) minmax(0,1.45fr)!important;gap:1rem!important;min-height:0!important;padding:.85rem!important;overflow:hidden!important;touch-action:pan-y!important;background:#fffdf8!important}
 .relphi-focus-art-pane{display:grid!important;box-sizing:border-box!important;place-items:start center!important;min-width:0!important;min-height:0!important;padding:.2rem!important;overflow:auto!important}
 .relphi-focus-art-frame{position:relative!important;display:block!important;box-sizing:border-box!important;width:min(100%,23rem)!important;height:auto!important;aspect-ratio:500/866!important;min-width:0!important;min-height:0!important;max-height:none!important;padding:0!important;overflow:hidden!important}
-.relphi-focus-art{position:absolute!important;inset:0!important;display:block!important;box-sizing:border-box!important;width:100%!important;height:100%!important;max-width:100%!important;max-height:100%!important;object-fit:contain!important;border:0!important;border-radius:8px!important;background:transparent!important;box-shadow:none!important;transform:none!important;transform-origin:50% 50%!important}
+.relphi-focus-art{position:absolute!important;inset:0!important;display:block!important;box-sizing:border-box!important;width:100%!important;height:100%!important;max-width:100%!important;max-height:100%!important;object-fit:contain!important;border:0!important;border-radius:0!important;background:transparent!important;box-shadow:none!important;clip-path:none!important;transform:none!important;transform-origin:50% 50%!important}
 .relphi-focus-art.is-reversed{transform:rotate(180deg)!important}
 .relphi-focus-entry{min-width:0!important;min-height:0!important;margin:0!important;padding:.2rem .4rem .9rem!important;overflow:auto!important;overscroll-behavior:contain!important;background:#fffdf8!important;color:#111!important;text-align:left!important}
 .relphi-focus-entry>.eyebrow{margin:.1rem 0 .45rem!important}
@@ -121,12 +120,29 @@
 .relphi-focus-entry .relphi-focus-reversed p{margin:0!important;font-size:1.05rem!important;line-height:1.45!important}
 .relphi-focus-shell>footer{display:grid!important;grid-template-columns:2.4rem minmax(0,1fr) 2.4rem!important;align-items:center!important;gap:.4rem!important;padding:.55rem .7rem!important;border-top:1px solid #ddd4cb!important;background:#faf6f1!important}
 .relphi-focus-prev,.relphi-focus-next{display:grid!important;place-items:center!important;width:2.4rem!important;height:2.4rem!important;margin:0!important;padding:0!important;border:1px solid #bdb3aa!important;border-radius:8px!important;background:#fff!important;color:#111!important;font-size:1.5rem!important}
-.relphi-focus-strip{display:flex!important;align-items:center!important;gap:.35rem!important;min-width:0!important;overflow-x:auto!important;scrollbar-width:thin!important;padding:.15rem!important}
-.relphi-focus-strip>button{position:relative!important;flex:0 0 3rem!important;width:3rem!important;height:3.8rem!important;margin:0!important;padding:.15rem!important;border:2px solid transparent!important;border-radius:7px!important;background:#eee7df!important;color:#111!important;overflow:hidden!important}
-.relphi-focus-strip>button.is-current{border-color:#dc1f18!important}
-.relphi-focus-strip>button img{width:100%!important;height:100%!important;object-fit:cover!important;border-radius:4px!important;transform:none!important}
+.relphi-focus-strip{display:flex!important;align-items:center!important;gap:.35rem!important;min-width:0!important;overflow-x:auto!important;overscroll-behavior-x:contain!important;scroll-behavior:auto!important;scrollbar-width:thin!important;padding:.18rem!important;touch-action:pan-y!important}
+.relphi-focus-strip.is-scrubbing{cursor:grabbing!important}
+.relphi-focus-strip>button{position:relative!important;flex:0 0 3rem!important;width:3rem!important;height:3.8rem!important;margin:0!important;padding:.15rem!important;border:2px solid transparent!important;border-radius:7px!important;background:#eee7df!important;color:#111!important;overflow:hidden!important;box-shadow:none!important;filter:none!important;transition:border-color .08s linear,box-shadow .08s linear,filter .08s linear!important}
+.relphi-focus-strip>button.is-current{border-color:#dc1f18!important;box-shadow:0 0 0 1px rgba(220,31,24,.12)!important}
+.relphi-focus-strip>button.is-under-finger{border-color:#111!important;box-shadow:0 4px 12px rgba(0,0,0,.22),0 0 0 2px rgba(255,255,255,.82)!important;filter:brightness(1.04)!important}
+.relphi-focus-strip>button img{width:100%!important;height:100%!important;object-fit:cover!important;border-radius:4px!important;transform:none!important;pointer-events:none!important}
 .relphi-focus-strip>button.is-reversed img{transform:rotate(180deg)!important}
-.relphi-focus-strip>button span{position:absolute!important;right:.15rem!important;bottom:.15rem!important;display:grid!important;place-items:center!important;width:1.2rem!important;height:1.2rem!important;border-radius:50%!important;background:rgba(255,255,255,.9)!important;font-size:.6rem!important;font-weight:900!important}
+.relphi-focus-strip>button span{position:absolute!important;right:.15rem!important;bottom:.15rem!important;display:grid!important;place-items:center!important;width:1.2rem!important;height:1.2rem!important;border-radius:50%!important;background:rgba(255,255,255,.9)!important;font-size:.6rem!important;font-weight:900!important;pointer-events:none!important}
+.relphi-focus-navigator{display:block!important;min-width:0!important}
+
+
+@media(min-width:701px){
+  .relphi-focus-shell{overflow:hidden!important}
+  .relphi-focus-art-pane{place-items:center!important;overflow:hidden!important}
+  .relphi-focus-art-frame{
+    width:auto!important;
+    height:100%!important;
+    max-width:100%!important;
+    max-height:36rem!important;
+    aspect-ratio:500/866!important;
+    overflow:visible!important
+  }
+}
 
 @media(max-width:700px){
   #shortListPanel .card-row-workspace{height:clamp(23rem,58dvh,36rem)!important;min-height:clamp(23rem,58dvh,36rem)!important;max-height:clamp(23rem,58dvh,36rem)!important}
@@ -144,9 +160,8 @@
   #shortListPanel .relphi-draw-options>label:not(:first-child){width:100%!important;white-space:normal!important}
   #shortListPanel .relphi-template-save{grid-template-columns:1fr!important}
   .relphi-focus-reader{padding:0!important;background:#fffdf8!important}
-  .relphi-focus-shell{grid-template-rows:auto auto minmax(0,1fr) auto!important;width:100vw!important;height:100dvh!important;max-height:100dvh!important;border:0!important;border-radius:0!important;box-shadow:none!important}
-  .relphi-focus-shell>header{padding:.5rem .65rem!important}
-  .relphi-focus-position-panel{min-height:0!important;padding:.62rem .8rem .7rem!important}
+  .relphi-focus-shell{grid-template-rows:auto minmax(0,1fr) auto!important;width:100vw!important;height:100dvh!important;max-height:100dvh!important;border:0!important;border-radius:0!important;box-shadow:none!important}
+    .relphi-focus-position-panel{min-height:0!important;grid-template-columns:2rem minmax(0,1fr) 2rem!important;gap:.45rem!important;padding:.5rem .55rem!important}
   .relphi-focus-position{font-size:clamp(1.05rem,4.8vw,1.3rem)!important}
   .relphi-focus-main{display:block!important;padding:.55rem!important;overflow-y:auto!important;overflow-x:hidden!important;touch-action:pan-y!important}
   .relphi-focus-art-pane{display:grid!important;place-items:center!important;overflow:visible!important;padding:.15rem 0 .9rem!important}
@@ -154,7 +169,8 @@
   .relphi-focus-art{position:static!important;inset:auto!important;width:min(18rem,80vw)!important;height:auto!important;max-width:min(18rem,80vw)!important;max-height:none!important}
   .relphi-focus-entry{overflow:visible!important;padding:.2rem .1rem 1rem!important}
   .relphi-focus-entry .full-entry-title-row h2,.relphi-focus-entry .full-entry-hero .full-entry-title-block h2,.relphi-focus-entry.tarot-detail h2{font-size:clamp(1.65rem,8vw,2.25rem)!important}
-  .relphi-focus-shell>footer{padding-bottom:max(.55rem,env(safe-area-inset-bottom))!important}
+  .relphi-focus-shell>footer{padding:.38rem .45rem max(.45rem,env(safe-area-inset-bottom))!important;gap:.28rem!important}
+  .relphi-focus-strip>button{flex-basis:2.7rem!important;width:2.7rem!important;height:3.45rem!important}
 }
 @media(max-width:430px){
   #shortListPanel .drawing-board-top-actions>#clearShortListCardsOnly{font-size:0!important}
@@ -206,9 +222,7 @@
 #shortListPanel .relphi-more-button{font-size:1.15rem!important;font-weight:900!important;line-height:1!important;letter-spacing:.08em!important}
 #shortListPanel:not(.relphi-transform-editing-unlocked) .card-row-transform-box{display:none!important;visibility:hidden!important;opacity:0!important;pointer-events:none!important}
 #shortListPanel .relphi-tool-flyout>#relphiToggleTransformEditing{width:100%!important;min-height:2rem!important;margin:0!important;padding:.35rem .55rem!important;border:1px solid #bfb5ac!important;border-radius:7px!important;background:#fff!important;color:#111!important;font:inherit!important;font-size:.7rem!important;font-weight:850!important;text-align:left!important}
-.relphi-focus-actions{display:flex!important;align-items:center!important;gap:.5rem!important}
-.relphi-focus-draw{min-height:2.2rem!important;margin:0!important;padding:.42rem .85rem!important;border:1.5px solid #b81712!important;border-radius:8px!important;background:#dc1f18!important;color:#fff!important;font:inherit!important;font-size:.78rem!important;font-weight:900!important}
-@media(max-width:700px){#shortListPanel .relphi-reading-options-drawer{position:absolute!important;top:.5rem!important;right:.5rem!important;bottom:.5rem!important;left:.5rem!important;width:auto!important;max-width:none!important;height:auto!important;max-height:none!important;box-sizing:border-box!important}.relphi-focus-shell>header{gap:.45rem!important}.relphi-focus-actions{gap:.35rem!important}.relphi-focus-draw{padding:.38rem .65rem!important}}
+@media(max-width:700px){#shortListPanel .relphi-reading-options-drawer{position:absolute!important;top:.5rem!important;right:.5rem!important;bottom:.5rem!important;left:.5rem!important;width:auto!important;max-width:none!important;height:auto!important;max-height:none!important;box-sizing:border-box!important}}
 
 /* Restore the compact in-board Options presentation from the d125423 era while preserving the current owner and behavior. */
 #shortListPanel .relphi-reading-options-drawer{position:absolute!important;top:.5rem!important;bottom:.5rem!important;left:.5rem!important;right:auto!important;width:min(29rem,calc(100% - 1rem))!important;max-width:min(29rem,calc(100% - 1rem))!important;height:auto!important;max-height:none!important;border-radius:10px!important;box-shadow:0 12px 28px rgba(30,20,15,.20)!important}

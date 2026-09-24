@@ -17,13 +17,12 @@
   const LABEL_H = 68;
   const GUTTER = 12;
   const MAX_POSITIONS = 50; // 10×5 dense packing stays above the supported .32 card scale.
-  const MIN_ZOOM = .45;
-  const MAX_ZOOM = 2.4;
 
   let boardOpen = false;
   let initialized = false;
   let optionsSession = null;
   let focusIndex = -1;
+  let suppressStripClickUntil = 0;
   let pendingFocusIndex = null;
   let activeDraw = false;
   let openTool = '';
@@ -34,6 +33,14 @@
   function prefabBridge() { return window.RelphiDrawingBoardPrefabsBridge || null; }
   function optionsBridge() { return window.RelphiDrawingBoardOptionsBridge || null; }
   function ledgerBridge() { return window.RelphiTarotLedgerBridge || null; }
+  function zoomLimits() {
+    const limits=optionsBridge()?.zoomLimits || {};
+    const min=Number(limits.min),max=Number(limits.max);
+    return {
+      min:Number.isFinite(min)&&min>0?min:.02,
+      max:Number.isFinite(max)&&max>0?max:2.4
+    };
+  }
   function clone(value) { return value == null ? value : JSON.parse(JSON.stringify(value)); }
   function clamp(value, min, max) { return Math.max(min, Math.min(max, Number(value) || 0)); }
   function escapeHtml(value) {
@@ -357,14 +364,16 @@
   function setZoomFromControl(value) {
     const input = zoomInput();
     if (!input) return;
-    const next = clamp(value, Number(input.min) || MIN_ZOOM, Number(input.max) || MAX_ZOOM);
+    const limits=zoomLimits();
+    const next = clamp(value, Number(input.min) || limits.min, Number(input.max) || limits.max);
     input.value = String(next);
     input.dispatchEvent(new Event('input',{bubbles:true}));
     input.dispatchEvent(new Event('change',{bubbles:true}));
   }
   function nudgeZoom(delta) {
     const input = zoomInput();
-    setZoomFromControl((Number(input?.value) || 1) + delta);
+    const current=Number(input?.value) || 1;
+    setZoomFromControl(current * (delta < 0 ? 1/1.2 : 1.2));
   }
 
   function installPinchZoom(root) {
@@ -401,7 +410,8 @@
       if (!pinching || event.touches.length !== 2 || !startDistance) return;
       const input = control();
       if (!input) return;
-      const next = clamp(startZoom * (distance(event.touches) / startDistance), Number(input.min) || MIN_ZOOM, Number(input.max) || MAX_ZOOM);
+      const limits=zoomLimits();
+      const next = clamp(startZoom * (distance(event.touches) / startDistance), Number(input.min) || limits.min, Number(input.max) || limits.max);
       input.value = String(next);
       input.dispatchEvent(new Event('input',{bubbles:true}));
       event.preventDefault();
@@ -424,43 +434,28 @@
     workspace.addEventListener('touchcancel',end,{capture:true,passive:false});
   }
 
-  function rotatedBounds(width, height, degrees) {
-    const radians = Math.abs(Number(degrees) || 0) * Math.PI / 180;
+  function renderedContentBounds(root) {
+    const board=root?.querySelector('.card-row-board');
+    const input=zoomInput(root);
+    if (!board || !input) return {minX:0,minY:0,maxX:CARD_W,maxY:CARD_H};
+    const currentZoom=Math.max(.0001,Number(input.value)||1);
+    const boardRect=board.getBoundingClientRect();
+    const rects=[];
+    board.querySelectorAll(':scope > .card-row-item').forEach(item=>{
+      const face=item.querySelector('.card-row-card-wrap,.card-row-drop-card') || item;
+      const sticker=item.querySelector(':scope > .card-row-position-panel');
+      [face,sticker].filter(Boolean).forEach(node=>{
+        const rect=node.getBoundingClientRect();
+        if (rect.width>0 && rect.height>0) rects.push(rect);
+      });
+    });
+    if (!rects.length) return {minX:0,minY:0,maxX:CARD_W,maxY:CARD_H};
     return {
-      width:Math.abs(Math.cos(radians)) * width + Math.abs(Math.sin(radians)) * height,
-      height:Math.abs(Math.sin(radians)) * width + Math.abs(Math.cos(radians)) * height
+      minX:Math.min(...rects.map(rect=>(rect.left-boardRect.left)/currentZoom)),
+      minY:Math.min(...rects.map(rect=>(rect.top-boardRect.top)/currentZoom)),
+      maxX:Math.max(...rects.map(rect=>(rect.right-boardRect.left)/currentZoom)),
+      maxY:Math.max(...rects.map(rect=>(rect.bottom-boardRect.top)/currentZoom))
     };
-  }
-  function logicalPosition(snapshot, index) {
-    const saved = snapshot?.rowEnvelopeLayout?.[index] || snapshot?.rowEnvelopeLayout?.[String(index)];
-    if (saved && Number.isFinite(Number(saved.x)) && Number.isFinite(Number(saved.y))) return {x:Number(saved.x),y:Number(saved.y)};
-    const cols = 4;
-    return {x:(index % cols) * CARD_W,y:Math.floor(index / cols) * CARD_H};
-  }
-  function logicalTransform(snapshot, index) {
-    const saved = snapshot?.rowCardTransforms?.[index] || snapshot?.rowCardTransforms?.[String(index)] || {};
-    return {scale:clamp(saved.scale || 1,.45,2.5),rotation:Number(saved.rotation) || 0};
-  }
-  function stateContentBounds(snapshot, count) {
-    if (!count) return {minX:0,minY:0,maxX:CARD_W,maxY:CARD_H};
-    let minX=Infinity,minY=Infinity,maxX=-Infinity,maxY=-Infinity;
-    for (let i=0;i<count;i++) {
-      const p = logicalPosition(snapshot,i);
-      const t = logicalTransform(snapshot,i);
-      const centerX = p.x + CARD_W / 2;
-      const centerY = p.y + CARD_H / 2;
-      const rotated = rotatedBounds(CARD_W*t.scale,CARD_H*t.scale,t.rotation);
-      let left=centerX-rotated.width/2, right=centerX+rotated.width/2;
-      let top=centerY-rotated.height/2, bottom=centerY+rotated.height/2;
-      const labelH = showPositionStickers ? LABEL_H*t.scale : 0;
-      if (labelH) {
-        if (Math.abs(t.rotation % 180) < 1) top -= labelH;
-        else { left -= labelH; right += labelH; top -= labelH; bottom += labelH; }
-      }
-      minX=Math.min(minX,left); minY=Math.min(minY,top);
-      maxX=Math.max(maxX,right); maxY=Math.max(maxY,bottom);
-    }
-    return {minX,minY,maxX,maxY};
   }
   function zoomExtents() {
     const root = panel();
@@ -468,18 +463,18 @@
     const bridge = optionsBridge();
     if (!root || !workspace || !bridge) return false;
     const snapshot = bridge.capture();
-    const count = currentSlotCount(root);
-    const bounds = stateContentBounds(snapshot,count);
+    const bounds = renderedContentBounds(root);
     const toolbar = root.querySelector('.card-row-workspace-toolbar.relphi-board-controller');
     const toolbarH = toolbar?.offsetHeight || 52;
-    const availableW = Math.max(CARD_W, workspace.clientWidth - GUTTER*2);
-    const availableH = Math.max(CARD_H, workspace.clientHeight - toolbarH - GUTTER*2);
-    const contentW = Math.max(CARD_W,bounds.maxX-bounds.minX);
-    const contentH = Math.max(CARD_H,bounds.maxY-bounds.minY);
-    const zoom = clamp(Math.min(availableW/contentW,availableH/contentH),MIN_ZOOM,MAX_ZOOM);
+    const availableW = Math.max(1, workspace.clientWidth - GUTTER*2);
+    const availableH = Math.max(1, workspace.clientHeight - toolbarH - GUTTER*2);
+    const contentW = Math.max(1,bounds.maxX-bounds.minX);
+    const contentH = Math.max(1,bounds.maxY-bounds.minY);
+    const limits=zoomLimits();
+    const zoom = clamp(Math.min(availableW/contentW,availableH/contentH),limits.min,limits.max);
     snapshot.rowZoom = zoom;
-    snapshot.rowPanX = Math.round((availableW-contentW*zoom)/2-bounds.minX*zoom+GUTTER);
-    snapshot.rowPanY = Math.round((availableH-contentH*zoom)/2-bounds.minY*zoom+GUTTER);
+    snapshot.rowPanX = Math.round(GUTTER+(availableW-contentW*zoom)/2-bounds.minX*zoom);
+    snapshot.rowPanY = Math.round(GUTTER+(availableH-contentH*zoom)/2-bounds.minY*zoom);
     bridge.restore(snapshot);
     return true;
   }
@@ -666,18 +661,18 @@
       section = document.createElement('section');
       section.id = 'drawing-board-post-export';
       section.className = 'relphi-board-export';
-      section.innerHTML = '<header><strong>Save & export</strong><span>Keep the arranged board or export the cards.</span></header><div class="board-options-body"></div>';
+      section.innerHTML = '<header><strong>Save & export</strong><span>Save the visual arrangement, the reading, or portable board data.</span></header><div class="board-options-body"></div>';
       anchor.insertAdjacentElement('afterend',section);
     } else if (section.previousElementSibling !== anchor) {
       anchor.insertAdjacentElement('afterend',section);
     }
     const destination = section.querySelector('.board-options-body');
     const labels = {
-      snapshotCardRowArrangement:'Prepare arrangement snapshot (PNG)',
-      downloadRowHtml:'Download cards (HTML)',
-      downloadRowTextHtml:'Download text (HTML)',
-      downloadRowJson:'Download board data (JSON)',
-      printCardRowImage:'Print / image'
+      snapshotCardRowArrangement:'Save arranged board (PNG)',
+      downloadRowHtml:'Export reading with art (HTML)',
+      downloadRowTextHtml:'Export reading text (HTML)',
+      downloadRowJson:'Export board data (JSON)',
+      printCardRowImage:'Make card sheet (PNG/JPEG)'
     };
     Object.entries(labels).forEach(([id,label]) => {
       const node = root.querySelector('#'+id);
@@ -1056,22 +1051,111 @@
     if (!strip) return;
     const preserveScroll=options.preserveScroll !== false;
     const previousScroll=preserveScroll ? strip.scrollLeft : 0;
-    strip.replaceChildren();
+    const existing=new Map(Array.from(strip.querySelectorAll('[data-focus-position]')).map(node=>[node.dataset.focusPosition,node]));
     order.forEach((nativeIndex,logicalIndex)=>{
-      const button=document.createElement('button');
-      button.type='button'; button.dataset.focusPosition=String(nativeIndex);
+      const key=String(nativeIndex);
+      let button=existing.get(key);
+      if (!button) {
+        button=document.createElement('button');
+        button.type='button';
+        button.dataset.focusPosition=key;
+        button.addEventListener('click',event=>{
+          if (Date.now()<suppressStripClickUntil) { event.preventDefault(); return; }
+          navigateFocusTo(Number(button.dataset.focusPosition));
+        });
+        strip.appendChild(button);
+      }
+      existing.delete(key);
       button.classList.toggle('is-current',nativeIndex===index);
       button.classList.toggle('is-reversed',focusCardIsReversed(nativeIndex));
       const card=cardAt(nativeIndex);
-      const img=focusArtImage(card)?.cloneNode(true);
-      if (img) { img.removeAttribute('loading'); button.appendChild(img); }
-      const span=document.createElement('span'); span.textContent=String(logicalIndex+1); button.appendChild(span);
+      button.classList.toggle('is-empty',!card);
+      const art=focusArtImage(card);
+      const signature=art ? `${art.currentSrc||art.src||''}|${focusCardIsReversed(nativeIndex)?'r':'u'}|${logicalIndex}` : `empty|${logicalIndex}`;
+      if (button.dataset.focusCardSignature!==signature) {
+        button.dataset.focusCardSignature=signature;
+        button.replaceChildren();
+        const img=art?.cloneNode(true);
+        if (img) {
+          img.removeAttribute('loading');
+          img.removeAttribute('decoding');
+          button.appendChild(img);
+        }
+        const span=document.createElement('span');
+        span.textContent=String(logicalIndex+1);
+        button.appendChild(span);
+      }
       button.title=positionLabel(nativeIndex);
-      button.addEventListener('click',()=>navigateFocusTo(nativeIndex));
-      strip.appendChild(button);
+      button.setAttribute('aria-label',positionLabel(nativeIndex)+(card?'':' · draw this position'));
+      button.tabIndex=nativeIndex===index?0:-1;
     });
+    existing.forEach(node=>node.remove());
     if (preserveScroll) strip.scrollLeft=previousScroll;
     keepFocusStripCurrentVisible(strip,!preserveScroll);
+  }
+  function installFocusStripScrub(reader) {
+    const strip=reader.querySelector('.relphi-focus-strip');
+    if (!strip || strip.dataset.scrubReady==='true') return;
+    strip.dataset.scrubReady='true';
+    let gesture=null;
+    const setFingerCard=nativeIndex=>{
+      strip.querySelectorAll('[data-focus-position]').forEach(button=>{
+        button.classList.toggle('is-under-finger',Number(button.dataset.focusPosition)===nativeIndex);
+      });
+    };
+    const activateDrawn=nativeIndex=>{
+      if (!Number.isInteger(nativeIndex) || !cardAt(nativeIndex) || nativeIndex===focusIndex) return;
+      const leaving=focusIndex;
+      if (leaving>=0 && leaving!==nativeIndex && isCrossingPosition(leaving)) acknowledgeCelticCrossing();
+      openFocus(nativeIndex);
+    };
+    const drawnButtonAt=(x,y)=>{
+      const hit=document.elementFromPoint(x,y)?.closest?.('.relphi-focus-strip [data-focus-position]');
+      if (!hit || !strip.contains(hit)) return null;
+      const nativeIndex=Number(hit.dataset.focusPosition);
+      return Number.isInteger(nativeIndex) && cardAt(nativeIndex) ? nativeIndex : null;
+    };
+    strip.addEventListener('pointerdown',event=>{
+      if (event.button!=null && event.button!==0) return;
+      const pressed=event.target.closest?.('[data-focus-position]');
+      if (!pressed || !strip.contains(pressed)) return;
+      const nativeIndex=Number(pressed.dataset.focusPosition);
+      if (!Number.isInteger(nativeIndex) || !cardAt(nativeIndex)) return;
+      activateDrawn(nativeIndex);
+      setFingerCard(nativeIndex);
+      gesture={id:event.pointerId,x:event.clientX,y:event.clientY,target:nativeIndex,moved:false};
+      strip.classList.add('is-scrubbing');
+      strip.setPointerCapture?.(event.pointerId);
+      event.preventDefault();
+    });
+    strip.addEventListener('pointermove',event=>{
+      if (!gesture || event.pointerId!==gesture.id) return;
+      const dx=event.clientX-gesture.x;
+      const dy=event.clientY-gesture.y;
+      if (!gesture.moved && Math.hypot(dx,dy)>=4) gesture.moved=true;
+      if (!gesture.moved) return;
+      const target=drawnButtonAt(event.clientX,event.clientY);
+      if (target==null) {
+        setFingerCard(null);
+        return;
+      }
+      setFingerCard(target);
+      if (target!==gesture.target) {
+        gesture.target=target;
+        activateDrawn(target);
+      }
+      event.preventDefault();
+    });
+    const finish=event=>{
+      if (!gesture || event.pointerId!==gesture.id) return;
+      const moved=gesture.moved;
+      gesture=null;
+      strip.classList.remove('is-scrubbing');
+      strip.querySelectorAll('.is-under-finger').forEach(button=>button.classList.remove('is-under-finger'));
+      if (moved) suppressStripClickUntil=Date.now()+280;
+    };
+    strip.addEventListener('pointerup',finish);
+    strip.addEventListener('pointercancel',finish);
   }
   function installFocusSwipe(reader) {
     const main=reader.querySelector('.relphi-focus-main');
@@ -1112,13 +1196,13 @@
     reader.setAttribute('role','dialog');
     reader.setAttribute('aria-modal','true');
     reader.setAttribute('aria-label',positionLabel(index,root));
-    reader.innerHTML=`<div class="relphi-focus-shell"><header><span class="relphi-focus-reversed-badge" hidden>Reversed</span><div class="relphi-focus-actions"><button type="button" class="relphi-focus-draw">Draw</button><button type="button" class="relphi-focus-close" aria-label="Close focused card">×</button></div></header><section class="relphi-focus-position-panel" aria-label="Reading question or position"><strong class="relphi-focus-position"></strong></section><div class="relphi-focus-main"><section class="relphi-focus-art-pane" aria-label="Card art"><div class="relphi-focus-art-frame"><img class="relphi-focus-art" alt=""></div></section><article class="relphi-focus-entry tarot-detail" aria-label="Full Tarot Ledger entry"></article></div><footer><button type="button" class="relphi-focus-prev" aria-label="Previous position">‹</button><div class="relphi-focus-strip" aria-label="Reading positions"></div><button type="button" class="relphi-focus-next" aria-label="Next position">›</button></footer></div>`;
+    reader.innerHTML=`<div class="relphi-focus-shell"><section class="relphi-focus-position-panel" aria-label="Reading question or position"><span class="relphi-focus-reversed-badge" hidden>Reversed</span><strong class="relphi-focus-position"></strong><button type="button" class="relphi-focus-close" aria-label="Close focused card">×</button></section><div class="relphi-focus-main"><section class="relphi-focus-art-pane" aria-label="Card art"><div class="relphi-focus-art-frame"><img class="relphi-focus-art" alt=""></div></section><article class="relphi-focus-entry tarot-detail" aria-label="Full Tarot Ledger entry"></article></div><footer><button type="button" class="relphi-focus-prev" aria-label="Previous position">‹</button><div class="relphi-focus-navigator"><div class="relphi-focus-strip" aria-label="Reading positions"></div></div><button type="button" class="relphi-focus-next" aria-label="Next position">›</button></footer></div>`;
     renderFocusEntry(reader,index);
     renderFocusStrip(reader,index,{preserveScroll:false});
+    installFocusStripScrub(reader);
     reader.querySelector('.relphi-focus-close').addEventListener('click',()=>closeFocus({acknowledge:true}));
     reader.querySelector('.relphi-focus-prev').addEventListener('click',()=>navigateFocusBy(-1));
     reader.querySelector('.relphi-focus-next').addEventListener('click',()=>navigateFocusBy(1));
-    reader.querySelector('.relphi-focus-draw').addEventListener('click',()=>drawNextLogical(panel()));
     installFocusSwipe(reader);
     document.body.appendChild(reader);
     document.body.classList.add('relphi-focus-open');
@@ -1149,6 +1233,10 @@
     if (!order.length) return closeFocus({acknowledge:true});
     const currentIndex=order.indexOf(focusIndex);
     const current=currentIndex>=0 ? currentIndex : 0;
+    if (delta>0 && current>=order.length-1) {
+      if (configuredPositionCount()===0) drawNextLogical(panel());
+      return;
+    }
     const logical=Math.max(0,Math.min(order.length-1,current+delta));
     navigateFocusTo(order[logical]);
   }

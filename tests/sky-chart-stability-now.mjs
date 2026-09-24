@@ -104,30 +104,43 @@ await page.addInitScript(({ a, b, fixed }) => {
 await page.goto('http://127.0.0.1:4173/sky-chart.html', { waitUntil:'domcontentloaded', timeout:15000 });
 await page.waitForSelector('#skyFoundationRoot[aria-busy="false"]', { timeout:20000 });
 await page.waitForFunction(() => document.documentElement.dataset.skyFinalPass === 'v2');
-await page.waitForFunction(() => document.documentElement.dataset.skyChartLiveIntegrity === 'v6');
 await page.waitForFunction(() => document.querySelectorAll('.sky-ph-heptagram').length === 2);
 await page.waitForFunction(() => Array.from(document.querySelectorAll('.sky-ph-summary')).every(node => !/Calculating/i.test(node.textContent || '')));
 
 assert.equal(await page.locator('#skyFoundationWheelMount .sky-axis-label').count(), 0, 'Comparison wheel must not contain chart-axis name labels.');
 
-const ledgerAudit = await page.evaluate(() => Array.from(document.querySelectorAll('#skyFoundationA .sky-foundation-row svg,#skyFoundationB .sky-foundation-row svg')).map(svg => {
+const ledgerAudit = await page.evaluate(() => Array.from(document.querySelectorAll('#skyFoundationA .sky-foundation-row > svg,#skyFoundationB .sky-foundation-row > svg')).map(svg => {
   const row = svg.closest('.sky-foundation-row');
   const art = svg.querySelector('.relphi-canonical-glyph');
+  const placement = row?.dataset.placement || '';
   return {
-    placement:row?.dataset.placement || '',
+    placement,
     name:row?.querySelector('.sky-foundation-row-name')?.textContent?.trim() || '',
+    viewBox:svg.getAttribute('viewBox') || '',
     fit:svg.dataset.canonicalFit || '',
+    glyphId:svg.dataset.canonicalGlyphId || '',
     committed:art?.dataset.relphiAtomicCommit || '',
     transform:art?.getAttribute('transform') || '',
     count:svg.querySelectorAll('.relphi-canonical-glyph').length,
-    classes:art?.getAttribute('class') || ''
+    canonicalClass:!!art?.classList.contains('relphi-canonical-glyph'),
+    identityClass:placement ? !!art?.classList.contains('relphi-glyph-' + placement) : false,
+    glyphError:svg.dataset.relphiGlyphError || ''
   };
 }));
-assert.ok(ledgerAudit.length > 20, 'Both placement ledgers must be populated.');
-assert.equal(ledgerAudit.every(item => item.fit === 'registry-component'), true, 'Every ledger glyph must use the shared registry component.');
-const ledgerStructuralAnomalies = ledgerAudit.filter(item => item.committed !== 'true' || !item.transform || item.count !== 1);
+assert.ok(ledgerAudit.length >= 20, 'The active placement ledger must be fully populated.');
+const ledgerStructuralAnomalies = ledgerAudit.filter(item =>
+  item.viewBox !== '-20 -20 40 40' ||
+  item.fit !== 'registry-component' ||
+  item.glyphId !== item.placement ||
+  item.committed !== 'true' ||
+  !item.canonicalClass ||
+  !item.identityClass ||
+  !item.transform ||
+  item.count !== 1 ||
+  !!item.glyphError
+);
 if (ledgerStructuralAnomalies.length) console.log('LEDGER_STRUCTURAL_ANOMALIES', JSON.stringify(ledgerStructuralAnomalies));
-assert.equal(ledgerAudit.every(item => item.committed === 'true' && item.count >= 1), true, 'Every ledger glyph must contain committed canonical artwork.');
+assert.equal(ledgerStructuralAnomalies.length, 0, 'Every ledger row must contain exactly one fitted canonical registry glyph with the correct identity.');
 
 const initialHeptagramsStable = await page.evaluate(async () => {
   const beforeA = document.querySelector('#skyFoundationA .sky-ph-heptagram');

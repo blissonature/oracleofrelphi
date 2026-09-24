@@ -18,6 +18,7 @@ const requiredFiles = [
   'relphi-glyph-source-integrity-v1.js',
   'glyphs-unified-preview.html',
   'assets/planet-glyphs/part-of-fortune.svg',
+  'assets/planet-glyphs/anti-vertex.svg',
   'sky-chart.html',
   'sky-chart-foundation-v2.js',
   'sky-chart-calculated-points-v1.js',
@@ -45,7 +46,7 @@ if (fs.existsSync(required('relphi-glyph-registry-v1.js'))) {
 
 const skyIdentities = [
   'sun','moon','mercury','venus','mars','jupiter','saturn','uranus','neptune','pluto',
-  'chiron','north-node','south-node','lilith','part-of-fortune','vertex','asc','dsc','mc','ic'
+  'chiron','north-node','south-node','lilith','part-of-fortune','vertex','anti-vertex','asc','dsc','mc','ic'
 ];
 
 if (registry) {
@@ -67,6 +68,7 @@ if (registry) {
     'north-node': ['☊','symbol','400'],
     'south-node': ['☋','symbol','400'],
     vertex: ['Vx','letter','700'],
+    'anti-vertex': ['AVx','letter','700'],
     asc: ['Asc','letter','700'],
     dsc: ['Dsc','letter','700'],
     mc: ['MC','letter','700'],

@@ -98,8 +98,20 @@ jobs:
               mountChildCount:mount?.childElementCount??null,
               mountHTML:mount?.innerHTML||'',
               structurePresent:!!structure,
-              info:info?{ruler:info.ruler,sign:info.sign,signIndex:info.signIndex,hasCard:!!info.card}:null,
-              directFingerprint:fp?{ruler:fp.dataset.chartRulerFingerprint||'',html:fp.outerHTML}:null,
+              info:info?{ruler:info.ruler,sign:info.sign,signIndex:info.signIndex,house:info.house,hasCard:!!info.card}:null,
+              directFingerprint:fp?{
+                ruler:fp.dataset.chartRulerFingerprint||'',
+                sharedStack:fp.classList.contains('sky-card-ruler-rail-stack'),
+                signRail:!!fp.querySelector('.sky-card-ruler-rail-sign'),
+                houseRail:!!fp.querySelector('.sky-card-ruler-rail-house'),
+                oldGlyph:!!fp.querySelector('.sky-card-ruler-fingerprint-glyph'),
+                oldHouseMedallion:!!fp.querySelector('.sky-card-ruler-fingerprint-house'),
+                cardMedia:fp.querySelector('img')?.dataset?.cardMedia||'',
+                cardSrc:fp.querySelector('img')?.src||'',
+                cardStyle:(()=>{const img=fp.querySelector('img'),style=img?getComputedStyle(img):null;return style?{objectFit:style.objectFit,borderRadius:style.borderRadius,boxShadow:style.boxShadow,clipPath:style.clipPath}:null})(),
+                railStyle:(()=>{const sign=fp.querySelector('.sky-card-ruler-rail-sign'),house=fp.querySelector('.sky-card-ruler-rail-house'),img=fp.querySelector('img');if(!sign||!house||!img)return null;const ss=getComputedStyle(sign),hs=getComputedStyle(house),sr=sign.getBoundingClientRect(),hr=house.getBoundingClientRect(),ir=img.getBoundingClientRect();return{signRadius:ss.borderRadius,houseRadius:hs.borderRadius,signShadow:ss.boxShadow,houseShadow:hs.boxShadow,signBottom:sr.bottom,imgTop:ir.top,imgBottom:ir.bottom,houseTop:hr.top}})(),
+                html:fp.outerHTML
+              }:null,
               fpError,
               tabs:[...document.querySelectorAll('#skyFoundationA [data-sky-drawer-tab]')].map(x=>x.dataset.skyDrawerTab),
               bodyHTML:document.querySelector('#skyFoundationA .sky-foundation-body')?.innerHTML||''
@@ -113,6 +125,25 @@ jobs:
           assert.equal(state.structurePresent,true);
           assert.ok(state.info?.ruler);
           assert.equal(state.info?.hasCard,true);
+          assert.ok(Number.isInteger(state.info?.house));
+          assert.equal(state.directFingerprint?.sharedStack,true);
+          assert.equal(state.directFingerprint?.signRail,true);
+          assert.equal(state.directFingerprint?.houseRail,true);
+          assert.equal(state.directFingerprint?.oldGlyph,false);
+          assert.equal(state.directFingerprint?.oldHouseMedallion,false);
+          assert.equal(state.directFingerprint?.cardMedia,'fingerprint-local-eager');
+          assert.match(state.directFingerprint?.cardSrc||'',/\/assets\/tarot\/rws\/.+\.webp$/);
+          assert.equal((state.directFingerprint?.cardSrc||'').includes('wsrv.nl'),false);
+          assert.equal(state.directFingerprint?.cardStyle?.objectFit,'contain');
+          assert.equal(state.directFingerprint?.cardStyle?.borderRadius,'0px');
+          assert.equal(state.directFingerprint?.cardStyle?.boxShadow,'none');
+          assert.equal(state.directFingerprint?.cardStyle?.clipPath,'none');
+          assert.equal(state.directFingerprint?.railStyle?.signRadius,'0px');
+          assert.equal(state.directFingerprint?.railStyle?.houseRadius,'0px');
+          assert.equal(state.directFingerprint?.railStyle?.signShadow,'none');
+          assert.equal(state.directFingerprint?.railStyle?.houseShadow,'none');
+          assert.ok(Math.abs(state.directFingerprint?.railStyle?.signBottom-state.directFingerprint?.railStyle?.imgTop)<=0.75,'Card Hits fingerprint top rail must sit flush against card art.');
+          assert.ok(Math.abs(state.directFingerprint?.railStyle?.imgBottom-state.directFingerprint?.railStyle?.houseTop)<=0.75,'Card Hits fingerprint bottom rail must sit flush against card art.');
           assert.equal(state.mountHidden,false);
           assert.ok(state.mountChildCount>0);
           await page.locator('#skyFoundationA [data-sky-drawer-tab="card-hits"]').click({force:true});
@@ -125,6 +156,136 @@ jobs:
           console.log('CARD_HITS_DRAWER '+JSON.stringify(drawer));
           assert.equal(drawer.open,true);
           assert.equal(drawer.structure,true);
+
+          await page.waitForFunction(()=>{const img=document.querySelector('#skyFoundationA .sky-card-ruler-art img');return !!img&&img.complete&&img.naturalWidth>0},{timeout:10000});
+          const rulerArt=await page.evaluate(()=>{
+            const wrap=document.querySelector('#skyFoundationA .sky-card-ruler-art'),img=wrap?.querySelector('img');
+            const ws=wrap?getComputedStyle(wrap):null,is=img?getComputedStyle(img):null,u=img?new URL(img.src):null;
+            return{wrapRadius:ws?.borderRadius,wrapShadow:ws?.boxShadow,imgRadius:is?.borderRadius,imgShadow:is?.boxShadow,imgFit:is?.objectFit,imgClip:is?.clipPath,src:u?.href||'',naturalWidth:img?.naturalWidth||0,media:img?.dataset?.cardMedia||''};
+          });
+          assert.equal(rulerArt.wrapRadius,'0px');
+          assert.equal(rulerArt.wrapShadow,'none');
+          assert.equal(rulerArt.imgRadius,'0px');
+          assert.equal(rulerArt.imgShadow,'none');
+          assert.equal(rulerArt.imgFit,'contain');
+          assert.equal(rulerArt.imgClip,'none');
+          assert.match(rulerArt.src,/\/assets\/tarot\/rws\/.+\.webp$/);
+          assert.equal(rulerArt.src.includes('wsrv.nl'),false);
+          assert.ok(rulerArt.naturalWidth>0);
+          assert.equal(rulerArt.media,'local-ruler-art');
+
+          const rulerLayout=await page.evaluate(()=>{
+            const grid=document.querySelector('#skyFoundationA .sky-card-rulers-grid');
+            const cards=[...grid.querySelectorAll(':scope>.sky-card-ruler')];
+            const chart=cards.find(card=>card.classList.contains('is-chart-ruler'));
+            const gr=grid.getBoundingClientRect();
+            const rows=new Map();
+            cards.forEach(card=>{
+              const r=card.getBoundingClientRect(),key=Math.round(r.top);
+              if(!rows.has(key))rows.set(key,[]);
+              rows.get(key).push({name:card.dataset.cardRuler,left:r.left,right:r.right,center:r.left+r.width/2,chart:card===chart});
+            });
+            const ordered=[...rows.entries()].sort((a,b)=>a[0]-b[0]).map(([,items])=>items.sort((a,b)=>a.left-b.left));
+            const cr=chart.getBoundingClientRect();
+            return{rowCounts:ordered.map(row=>row.length),firstRowChart:ordered[0]?.[0]?.chart||false,chartCenter:cr.left+cr.width/2,gridCenter:gr.left+gr.width/2,domFirst:cards[0]===chart};
+          });
+          assert.deepEqual(rulerLayout.rowCounts,[1,3,3],'Rulers must render as chart ruler alone, then two rows of three.');
+          assert.equal(rulerLayout.firstRowChart,true,'The chart ruler must occupy the first row.');
+          assert.ok(Math.abs(rulerLayout.chartCenter-rulerLayout.gridCenter)<=1,'The chart ruler must be centered over the lower six.');
+          assert.equal(rulerLayout.domFirst,true,'Chart ruler should also be first in keyboard/DOM order.');
+
+          const rulerRails=await page.evaluate(()=>{
+            const cards=[...document.querySelectorAll('#skyFoundationA .sky-card-ruler')];
+            const placedGlyphs=document.querySelectorAll('#skyFoundationA .sky-card-ruler-placed-glyph').length;
+            const signRails=document.querySelectorAll('#skyFoundationA [data-ruler-card-sign-rail]').length;
+            const houseRails=document.querySelectorAll('#skyFoundationA [data-ruler-card-house-rail]').length;
+            const sample=cards.map(card=>card.querySelector('.sky-card-ruler-art')).find(art=>art?.querySelector('[data-ruler-card-sign-rail]')&&art?.querySelector('[data-ruler-card-house-rail]'));
+            if(!sample)return{placedGlyphs,signRails,houseRails,sample:null};
+            const sign=sample.querySelector('[data-ruler-card-sign-rail]'),img=sample.querySelector('img'),house=sample.querySelector('[data-ruler-card-house-rail]');
+            const sr=sign.getBoundingClientRect(),ir=img.getBoundingClientRect(),hr=house.getBoundingClientRect(),ss=getComputedStyle(sign),hs=getComputedStyle(house);
+            return{placedGlyphs,signRails,houseRails,sharedStack:sample.classList.contains('sky-card-ruler-rail-stack'),sample:{
+              signBottom:sr.bottom,imgTop:ir.top,imgBottom:ir.bottom,houseTop:hr.top,
+              signRadius:ss.borderRadius,houseRadius:hs.borderRadius,
+              signShadow:ss.boxShadow,houseShadow:hs.boxShadow
+            }};
+          });
+          assert.equal(rulerRails.placedGlyphs,0,'Ruler cards must not overlay sign glyphs on card art.');
+          assert.ok(rulerRails.signRails>0,'Placed ruler cards must show sign rails.');
+          assert.ok(rulerRails.houseRails>0,'Placed ruler cards with houses must show house rails.');
+          assert.ok(rulerRails.sample,'At least one Ruler card fixture must expose both sign and house rails.');
+          assert.equal(rulerRails.sharedStack,true,'Ruler cards and the Card Hits fingerprint must share the same rail-stack component.');
+          assert.equal(rulerRails.sample.signRadius,'0px');
+          assert.equal(rulerRails.sample.houseRadius,'0px');
+          assert.equal(rulerRails.sample.signShadow,'none');
+          assert.equal(rulerRails.sample.houseShadow,'none');
+          assert.ok(Math.abs(rulerRails.sample.signBottom-rulerRails.sample.imgTop)<=0.75,'Top sign rail must sit flush against card art.');
+          assert.ok(Math.abs(rulerRails.sample.imgBottom-rulerRails.sample.houseTop)<=0.75,'Bottom house rail must sit flush against card art.');
+
+          await page.locator('#skyFoundationA [data-card-hits-view="houses"]').click();
+          await page.waitForTimeout(80);
+          await page.waitForFunction(()=>{const img=document.querySelector('#skyFoundationA .sky-card-house-decan-art img');return !!img&&img.complete&&img.naturalWidth>0},{timeout:10000});
+          const houseArt=await page.evaluate(()=>{
+            const wrap=document.querySelector('#skyFoundationA .sky-card-house-decan-art'),img=wrap?.querySelector('img');
+            const ws=wrap?getComputedStyle(wrap):null,is=img?getComputedStyle(img):null,u=img?new URL(img.src):null,rect=img?.getBoundingClientRect();
+            return{wrapRadius:ws?.borderRadius,wrapBorder:ws?.borderWidth,wrapOutline:ws?.outlineWidth,wrapShadow:ws?.boxShadow,wrapClip:ws?.clipPath,wrapOverflow:ws?.overflow,imgRadius:is?.borderRadius,imgBorder:is?.borderWidth,imgOutline:is?.outlineWidth,imgShadow:is?.boxShadow,imgFit:is?.objectFit,imgClip:is?.clipPath,imgMask:is?.maskImage,imgWebkitMask:is?.webkitMaskImage,imgAspect:is?.aspectRatio,maxHeight:is?.maxHeight,sourceRatio:img?.naturalHeight?img.naturalWidth/img.naturalHeight:null,renderedRatio:rect?.height?rect.width/rect.height:null,nativeClass:img?.classList.contains('sky-card-house-art-native')||false,src:u?.href||'',naturalWidth:img?.naturalWidth||0,media:img?.dataset?.cardMedia||'',countInside:!!wrap?.querySelector('.sky-card-house-decan-count')};
+          });
+          assert.equal(houseArt.wrapRadius,'0px');
+          assert.equal(houseArt.wrapBorder,'0px');
+          assert.equal(houseArt.wrapOutline,'0px');
+          assert.equal(houseArt.wrapShadow,'none');
+          assert.equal(houseArt.wrapClip,'none');
+          assert.equal(houseArt.wrapOverflow,'visible');
+          assert.equal(houseArt.imgRadius,'0px');
+          assert.equal(houseArt.imgBorder,'0px');
+          assert.equal(houseArt.imgOutline,'0px');
+          assert.equal(houseArt.imgShadow,'none');
+          assert.equal(houseArt.countInside,false,'House hit count must not sit on top of the card art.');
+          assert.equal(houseArt.imgFit,'contain');
+          assert.equal(houseArt.imgClip,'none');
+          assert.equal(houseArt.imgMask,'none');
+          assert.equal(houseArt.imgWebkitMask,'none');
+          assert.equal(houseArt.imgAspect,'auto');
+          assert.equal(houseArt.maxHeight,'none');
+          assert.equal(houseArt.nativeClass,true);
+          assert.ok(Math.abs(houseArt.renderedRatio-houseArt.sourceRatio)<0.01,'House decan card art must preserve the source image aspect ratio without cropping.');
+          assert.match(houseArt.src,/\/assets\/tarot\/rws\/.+\.webp$/);
+          assert.equal(houseArt.src.includes('wsrv.nl'),false);
+          assert.ok(houseArt.naturalWidth>0);
+          assert.equal(houseArt.media,'local-house-art');
+
+          await page.waitForSelector('#skyFoundationA [data-card-house-toggle]',{timeout:10000});
+          await page.locator('#skyFoundationA [data-card-house-toggle]').first().click();
+          await page.waitForFunction(()=>{
+            const imgs=[...document.querySelectorAll('#skyFoundationA .sky-card-house-detail-row[data-card-house-detail-role="ruler"] .sky-card-house-span-major-art img,#skyFoundationA .sky-card-house-detail-row[data-card-house-detail-role="sign"] .sky-card-house-span-major-art img')];
+            return imgs.length===2&&imgs.every(img=>img.complete&&img.naturalWidth>0);
+          },{timeout:10000});
+          const expandedMajorArt=await page.evaluate(()=>[...document.querySelectorAll('#skyFoundationA .sky-card-house-detail-row[data-card-house-detail-role="ruler"] .sky-card-house-span-major-art img,#skyFoundationA .sky-card-house-detail-row[data-card-house-detail-role="sign"] .sky-card-house-span-major-art img')].map(img=>{const style=getComputedStyle(img),wrap=img.parentElement,wrapStyle=getComputedStyle(wrap),rect=img.getBoundingClientRect();return{src:img.src,naturalWidth:img.naturalWidth,media:img.dataset.cardMedia||'',nativeClass:img.classList.contains('sky-card-house-art-native'),fit:style.objectFit,clip:style.clipPath,mask:style.maskImage,webkitMask:style.webkitMaskImage,radius:style.borderRadius,border:style.borderWidth,outline:style.outlineWidth,shadow:style.boxShadow,aspect:style.aspectRatio,maxHeight:style.maxHeight,wrapRadius:wrapStyle.borderRadius,wrapBorder:wrapStyle.borderWidth,wrapOutline:wrapStyle.outlineWidth,wrapShadow:wrapStyle.boxShadow,wrapClip:wrapStyle.clipPath,wrapOverflow:wrapStyle.overflow,sourceRatio:img.naturalHeight?img.naturalWidth/img.naturalHeight:null,renderedRatio:rect.height?rect.width/rect.height:null}}));
+          assert.equal(expandedMajorArt.length,2);
+          expandedMajorArt.forEach(item=>{
+            assert.match(item.src,/\/assets\/tarot\/rws\/.+\.webp$/);
+            assert.equal(item.src.includes('wsrv.nl'),false);
+            assert.ok(item.naturalWidth>0);
+            assert.equal(item.media,'local-house-major-art');
+            assert.equal(item.nativeClass,true);
+            assert.equal(item.fit,'contain');
+            assert.equal(item.clip,'none');
+            assert.equal(item.mask,'none');
+            assert.equal(item.webkitMask,'none');
+            assert.equal(item.radius,'0px');
+            assert.equal(item.border,'0px');
+            assert.equal(item.outline,'0px');
+            assert.equal(item.shadow,'none');
+            assert.equal(item.wrapRadius,'0px');
+            assert.equal(item.wrapBorder,'0px');
+            assert.equal(item.wrapOutline,'0px');
+            assert.equal(item.wrapShadow,'none');
+            assert.equal(item.wrapClip,'none');
+            assert.equal(item.wrapOverflow,'visible');
+            assert.equal(item.aspect,'auto');
+            assert.equal(item.maxHeight,'none');
+            assert.ok(Math.abs(item.renderedRatio-item.sourceRatio)<0.01,'Expanded House Ruler/Sign card art must preserve the source image aspect ratio without cropping.');
+          });
+
           assert.deepEqual(errors,[]);
           await browser.close();
           EOF

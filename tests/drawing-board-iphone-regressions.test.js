@@ -138,6 +138,34 @@ async function assertFocusReadingView(page) {
   assert.equal(toolbarState.visibility,'visible');
   assert.ok(toolbarState.opacity>.9);
 
+  // Focus close remains an explicit control and lives on the question row.
+  await applyTemplate(page,'celtic-cross-10');
+  await page.click('.card-row-item[data-row-index="0"] .card-row-drop-card');
+  await page.waitForSelector('.relphi-focus-reader',{state:'visible'});
+  const focusCloseGeometry=await page.evaluate(()=>{
+    const panel=document.querySelector('.relphi-focus-position-panel');
+    const question=document.querySelector('.relphi-focus-position');
+    const close=document.querySelector('.relphi-focus-close');
+    if(!panel||!question||!close)return null;
+    const pr=panel.getBoundingClientRect(),qr=question.getBoundingClientRect(),cr=close.getBoundingClientRect();
+    return {
+      closeInQuestionRow:close.parentElement===panel,
+      questionCenter:qr.left+qr.width/2,
+      panelCenter:pr.left+pr.width/2,
+      verticalDelta:Math.abs((cr.top+cr.height/2)-(qr.top+qr.height/2))
+    };
+  });
+  assert.ok(focusCloseGeometry?.closeInQuestionRow,'Focus close control must belong to the question row');
+  assert.ok(Math.abs(focusCloseGeometry.questionCenter-focusCloseGeometry.panelCenter)<=2,'Focus question must remain centered when the close control shares its row');
+  assert.ok(focusCloseGeometry.verticalDelta<=3,'Focus close control must sit on the same visual level as the question');
+  await page.click('.relphi-focus-close');
+  await page.waitForSelector('.relphi-focus-reader',{state:'detached'});
+  await page.click('#drawingBoardOptionsButton');
+  await page.waitForSelector('.relphi-reading-options-drawer.is-reading-options-open',{state:'visible'});
+  await page.click('#relphiResetBoard');
+  await page.waitForFunction(()=>window.RelphiDrawingBoardPrefabsBridge?.getState?.()?.slotCount===0);
+  await page.waitForSelector('.relphi-reading-options-drawer',{state:'detached'}).catch(()=>{});
+
   // Export controls are permanent document chrome, not trapped in hidden Options.
   for (const id of ['snapshotCardRowArrangement','downloadRowHtml','downloadRowTextHtml','downloadRowJson','printCardRowImage']) {
     await page.waitForSelector(`#drawing-board-post-export #${id}`,{state:'visible',timeout:10000});
@@ -175,6 +203,39 @@ async function assertFocusReadingView(page) {
   const allLabels=await page.locator('#shortListPanel .card-row-position-panel').evaluateAll(nodes=>nodes.map(node=>({text:node.textContent.trim(),visible:getComputedStyle(node).display!=='none'})));
   assert.equal(allLabels.filter(item=>item.visible).length,10,'all ten Celtic position labels must remain visible');
   await page.screenshot({path:path.join(out,'drawing-board-mobile-celtic-full.png'),fullPage:true});
+
+  assert.equal(await page.locator('script[src^="drawing-board-export-preserver"]').count(),0,'obsolete snapshot sidecars must not load');
+  assert.equal(await page.locator('#saveDrawingBoardSnapshotToDevice').count(),0,'native snapshot export must not be replaced by a second save control');
+  await page.evaluate(()=>{
+    try { Object.defineProperty(navigator,'share',{value:undefined,configurable:true}); } catch (_) {}
+    try { Object.defineProperty(navigator,'canShare',{value:undefined,configurable:true}); } catch (_) {}
+  });
+  const snapshotDownload=page.waitForEvent('download');
+  await page.click('#drawing-board-post-export #snapshotCardRowArrangement');
+  const snapshotFile=await snapshotDownload;
+  assert.match(snapshotFile.suggestedFilename(),/\.png$/i,'arrangement snapshot must download as PNG when system sharing is unavailable');
+  const snapshotPath=await snapshotFile.path();
+  const snapshotBytes=fs.readFileSync(snapshotPath);
+  assert.ok(snapshotBytes.length>5000,'arrangement snapshot must contain rendered board pixels, not an empty file');
+  const snapshotStats=await page.evaluate(async dataUrl=>{
+    const image=new Image();
+    await new Promise((resolve,reject)=>{image.onload=resolve;image.onerror=reject;image.src=dataUrl;});
+    const canvas=document.createElement('canvas');
+    canvas.width=64; canvas.height=64;
+    const context=canvas.getContext('2d');
+    context.drawImage(image,0,0,64,64);
+    const pixels=context.getImageData(0,0,64,64).data;
+    const colors=new Set();
+    let opaque=0;
+    for(let i=0;i<pixels.length;i+=16){
+      const a=pixels[i+3];
+      if(a) opaque+=1;
+      colors.add(`${pixels[i]},${pixels[i+1]},${pixels[i+2]},${a}`);
+    }
+    return {width:image.naturalWidth,height:image.naturalHeight,opaque,colors:colors.size};
+  },'data:image/png;base64,'+snapshotBytes.toString('base64'));
+  assert.ok(snapshotStats.width>100&&snapshotStats.height>100,'arrangement snapshot must have real image dimensions');
+  assert.ok(snapshotStats.opaque>100&&snapshotStats.colors>8,`arrangement snapshot must contain visible, nonblank board content: ${JSON.stringify(snapshotStats)}`);
 
   await page.click('#shortListPanel .card-row-item[data-relphi-position-id="self"] [data-row-card]');
   await page.waitForSelector('.relphi-focus-reader',{state:'visible'});

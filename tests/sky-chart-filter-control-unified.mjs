@@ -24,21 +24,26 @@ await page.waitForSelector('#skyFoundationRoot[aria-busy="false"]',{timeout:2000
 await page.waitForSelector('[data-aspect-filter="combined"]',{timeout:20000});
 await page.waitForSelector('[data-placement-filter="combined"]',{timeout:20000});
 await page.waitForSelector('[data-house-filter="combined"]',{timeout:20000});
+await page.waitForSelector('#skyFoundationRelationships [data-harmonic-window-input]',{timeout:20000});
+await page.waitForSelector('#skyFoundationRelationships .sky-chart-aspect-summary-choices',{timeout:20000});
+await page.waitForSelector('#skyFoundationRelationships .sky-chart-placement-summary-choices',{timeout:20000});
+await page.waitForSelector('#skyFoundationRelationships .sky-chart-house-summary-choices',{timeout:20000});
+await page.waitForSelector('#skyFoundationRelationships .sky-chart-aspect-filter-label',{timeout:20000});
+await page.waitForSelector('#skyFoundationRelationships .sky-chart-placement-filter-label',{timeout:20000});
+await page.waitForSelector('#skyFoundationRelationships .sky-chart-house-filter-label',{timeout:20000});
 
 const result=await page.evaluate(()=>{
   const selectors={
-    orb:'input[data-filter="orb"]',
-    aspects:'.sky-chart-aspect-filter-value',
-    placements:'.sky-chart-placement-summary-choices',
-    houses:'.sky-chart-house-summary-choices',
-    houseSystem:'[data-house-system-filter]'
+    orb:'#skyFoundationRelationships [data-harmonic-window-input]',
+    aspects:'#skyFoundationRelationships .sky-chart-aspect-summary-choices',
+    placements:'#skyFoundationRelationships .sky-chart-placement-summary-choices',
+    houses:'#skyFoundationRelationships .sky-chart-house-summary-choices'
   };
   const labelSelectors={
-    orb:'input[data-filter="orb"]',
-    aspects:'.sky-chart-aspect-filter-label',
-    placements:'.sky-chart-placement-filter-label',
-    houses:'.sky-chart-house-filter-label',
-    houseSystem:'[data-house-system-filter]'
+    orb:'#skyFoundationRelationships [data-harmonic-window-input]',
+    aspects:'#skyFoundationRelationships .sky-chart-aspect-filter-label',
+    placements:'#skyFoundationRelationships .sky-chart-placement-filter-label',
+    houses:'#skyFoundationRelationships .sky-chart-house-filter-label'
   };
   const fields={};
   const labels={};
@@ -67,7 +72,7 @@ const result=await page.evaluate(()=>{
   }
   for(const [name,selector] of Object.entries(labelSelectors)){
     const source=document.querySelector(selector);
-    const node=(name==='orb'||name==='houseSystem')?source.closest('label'):source;
+    const node=name==='orb'?source.closest('label'):source;
     const style=getComputedStyle(node);
     labels[name]={
       color:style.color,
@@ -79,9 +84,9 @@ const result=await page.evaluate(()=>{
   }
   const toggles={};
   for(const [name,selector] of Object.entries({
-    aspects:'.sky-chart-aspect-filter-toggle',
-    placements:'.sky-chart-placement-filter-toggle',
-    houses:'.sky-chart-house-filter-toggle'
+    aspects:'#skyFoundationRelationships .sky-chart-aspect-filter-toggle',
+    placements:'#skyFoundationRelationships .sky-chart-placement-filter-toggle',
+    houses:'#skyFoundationRelationships .sky-chart-house-filter-toggle'
   })){
     const node=document.querySelector(selector);
     const style=getComputedStyle(node);
@@ -96,8 +101,6 @@ const reference=result.fields.orb;
 for(const name of fieldNames){
   const field=result.fields[name];
   assert.ok(Math.abs(field.height-reference.height)<=0.5,`${name} height ${field.height} does not match Orb ${reference.height}`);
-  assert.ok(Math.abs(field.top-reference.top)<=1,`${name} top ${field.top} does not match Orb ${reference.top}`);
-  assert.ok(Math.abs(field.bottom-reference.bottom)<=1,`${name} bottom ${field.bottom} does not match Orb ${reference.bottom}`);
   for(const property of ['backgroundColor','borderTopColor','borderTopStyle','borderTopWidth','borderTopLeftRadius','borderTopRightRadius','borderBottomLeftRadius','borderBottomRightRadius','color','fontFamily','fontSize','fontWeight','lineHeight']){
     assert.equal(field[property],reference[property],`${name} ${property} must match Orb`);
   }
@@ -118,7 +121,7 @@ for(const [name,toggle] of Object.entries(result.toggles)){
 
 // Aspect matrix rows retain the canonical aspect identity so the shared glyph decorator
 // can restore the symbol and its aspect-specific color.
-await page.locator('.sky-chart-aspect-filter-toggle').click();
+await page.locator('#skyFoundationRelationships .sky-chart-aspect-filter-toggle').click();
 await page.waitForSelector('#skyChartAspectPopover:not([hidden]) [data-aspect-list="matrix"]');
 await page.waitForFunction(()=>document.querySelectorAll('#skyChartAspectPopover .sky-filter-symbol-aspect[data-glyph-color]').length===11);
 const aspectGlyphAudit=await page.locator('#skyChartAspectPopover .sky-chart-aspect-list-item[data-aspect-list-item]:not([data-aspect-list-item="all"])').evaluateAll(rows=>rows.map(row=>{

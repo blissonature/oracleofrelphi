@@ -116,13 +116,16 @@ function renderCardHits(slot,payload){
     return;
   }
   const ruler=fingerprint.dataset.chartRulerFingerprint||'';
-  const sign=structure.chartRulerInfo?.(payload)?.signIndex;
-  const signKey=Number.isFinite(sign)?String(sign):'';
+  const info=structure.chartRulerInfo?.(payload)||null;
+  const sign=info?.signIndex,house=info?.house;
+  const signKey=Number.isFinite(sign)?String(sign):'',houseKey=Number.isInteger(house)?String(house):'';
   const sameRuler=mount.firstElementChild?.dataset?.chartRulerFingerprint===ruler;
   const sameSign=(mount.dataset.rulerSign||'')===signKey;
-  if(!sameRuler||!sameSign)mount.replaceChildren(fingerprint);
+  const sameHouse=(mount.dataset.rulerHouse||'')===houseKey;
+  if(!sameRuler||!sameSign||!sameHouse)mount.replaceChildren(fingerprint);
   mount.hidden=false;
   if(signKey)mount.dataset.rulerSign=signKey;else mount.removeAttribute('data-ruler-sign');
+  if(houseKey)mount.dataset.rulerHouse=houseKey;else mount.removeAttribute('data-ruler-house');
   const label=fingerprint.getAttribute('aria-label');
   if(label)mount.setAttribute('aria-label',label);
 }

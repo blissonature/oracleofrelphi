@@ -27,6 +27,9 @@ function installStyles(){
     .sky-where-when-scroll-body{min-height:0;overflow:auto;padding-bottom:.2rem}
     .sky-where-when-here-now-row{display:flex;align-items:center;padding:.62rem .62rem .18rem}
     .sky-where-when-here-now{border-radius:999px}
+    .sky-where-search-label-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:.45rem;align-items:center}
+    .sky-where-search-label-row .sky-where-when-label{display:block}
+    .sky-use-here-button{padding:.42rem .68rem;font-size:.62rem}
     .sky-inferred-location-value{font-weight:800}
     .sky-where-when-footer{position:relative;display:grid!important;grid-template-columns:minmax(0,1fr)!important;grid-template-rows:auto auto!important;gap:.5rem!important;width:100%;padding:.45rem .62rem .62rem!important;box-sizing:border-box;background:#fffdf8;border-top:1px solid rgba(31,27,24,.12);z-index:2}
     .sky-where-when-footer-actions{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,2fr);gap:.48rem;width:100%}
@@ -54,8 +57,8 @@ function installStyles(){
 function readJson(key,fallback){try{const raw=localStorage.getItem(key);return raw?JSON.parse(raw):fallback}catch(_){return fallback}}
 function writeJson(key,value){localStorage.setItem(key,JSON.stringify(value))}
 function payload(slot){return readJson(SLOT_KEYS[slot],null)}
-function profileFor(slot){const value=payload(slot);return value?.calcProfile&&typeof value.calcProfile==='object'?value.calcProfile:{}}
-function completeProfile(p){return!!(p&&p.dateTime&&p.location&&p.timeZone&&Number.isFinite(Number(p.latitude))&&Number.isFinite(Number(p.longitude)))}
+function profileFor(slot){const value=payload(slot);return window.RelphiSkyCardShell?.profile?.(value)||(value?.calcProfile&&typeof value.calcProfile==='object'?value.calcProfile:{})}
+function completeProfile(p){return!!(p&&(p.instant||p.dateTime)&&p.location&&p.timeZone&&Number.isFinite(Number(p.latitude))&&Number.isFinite(Number(p.longitude)))}
 function panel(slot){return document.getElementById(`skyFoundation${slot}`)}
 function shell(slot){return window.RelphiSkyCardShell?.ensure?.(slot,payload(slot))||null}
 function formFor(slot){return shell(slot)?.editor?.querySelector('.sky-where-when-editor')||null}
@@ -114,7 +117,7 @@ function editorMarkup(slot,p){
   return `<form class="sky-where-when-editor" data-slot="${slot}">
     <div class="sky-where-when-scroll-body">
       <div class="sky-where-when-here-now-row"><button class="sky-where-when-button primary sky-where-when-here-now" type="button" data-ww-action="here-and-now">Here and Now</button></div>
-      <fieldset class="sky-where-when-section"><legend>Where</legend><div class="sky-where-search-row"><label class="sky-where-when-label">Search for a location<input class="sky-where-when-input" data-ww-field="location-query" type="search" autocomplete="off" value="${escapeHtml(selected?.query||'')}" placeholder="Ex. City, State or Country"></label><button class="sky-where-when-button secondary" type="button" data-ww-action="search-location">Search</button></div><div class="sky-location-results" aria-live="polite"></div>${confirmationMarkup(selected)}</fieldset>
+      <fieldset class="sky-where-when-section" data-ww-where><legend>Where</legend><div class="sky-where-search-label-row"><label class="sky-where-when-label" for="skyWhereLocation${slot}">Search for a location</label><button class="sky-where-when-button secondary sky-use-here-button" type="button" data-current-location="${slot}" data-ww-action="use-here">Use Here</button></div><div class="sky-where-search-row"><input id="skyWhereLocation${slot}" class="sky-where-when-input" data-ww-field="location-query" type="search" autocomplete="off" value="${escapeHtml(selected?.query||'')}" placeholder="Ex. City, State or Country"><button class="sky-where-when-button secondary" type="button" data-ww-action="search-location">Search</button></div><div class="sky-location-results" aria-live="polite"></div>${confirmationMarkup(selected)}</fieldset>
       <fieldset class="sky-where-when-section" data-ww-when${disabled}><legend>When</legend><div class="sky-where-when-now-row"><button class="sky-where-when-button secondary sky-use-now-button" type="button" data-ww-action="use-now">Current local time</button><span>Use the current instant at this location.</span></div><div class="sky-where-when-grid"><label class="sky-where-when-label">Date<input class="sky-where-when-input" data-ww-field="date" type="date" value="${escapeHtml(date)}"${disabled}></label><label class="sky-where-when-label">Local time<input class="sky-where-when-input" data-ww-field="time" type="time" value="${escapeHtml(time)}"${disabled}></label></div></fieldset>
       <details class="sky-where-when-advanced"><summary>Advanced settings</summary><div class="sky-where-when-advanced-body"><label class="sky-where-when-label">Time zone<input class="sky-where-when-input" data-ww-field="timezone" type="text" readonly value="${escapeHtml(selected?.timezone||p.timeZone||'')}"></label><div class="sky-where-when-coordinate-grid"><label class="sky-where-when-label">Latitude<input class="sky-where-when-input" data-ww-field="latitude" type="number" step="0.00001" min="-90" max="90" value="${escapeHtml(displayCoordinate(selected?.latitude??p.latitude))}"></label><label class="sky-where-when-label">Longitude<input class="sky-where-when-input" data-ww-field="longitude" type="number" step="0.00001" min="-180" max="180" value="${escapeHtml(displayCoordinate(selected?.longitude??p.longitude))}"></label></div><div data-ww-paste-inference-host></div></div></details>
       <p class="sky-where-when-status" data-update-now-status aria-live="polite"></p>
@@ -271,6 +274,24 @@ async function currentLocalTime(slot){
   form.querySelector('[data-ww-field="date"]').value=local.toFormat('yyyy-MM-dd');form.querySelector('[data-ww-field="time"]').value=local.toFormat('HH:mm');window.RelphiSkyWhereWhenDraftHeptagram?.render?.(slot,0);
   await submitForm(slot,form,{liveOrigin:'use-now',instant:now.toUTC().toISO()});
 }
+async function useHere(slot,button){
+  const form=formFor(slot);if(!form)return;
+  const dateField=form.querySelector('[data-ww-field="date"]'),timeField=form.querySelector('[data-ww-field="time"]');
+  const dateValue=dateField?.value||'',timeValue=timeField?.value||'';
+  if(button){button.disabled=true;button.setAttribute('aria-busy','true')}
+  status(slot,'Finding your current browser location…');
+  try{
+    const packet=await currentLocationPacket();
+    if(!selectLocation(slot,packet))throw new Error('Current browser location could not be applied.');
+    if(dateField)dateField.value=dateValue;
+    if(timeField)timeField.value=timeValue;
+    status(slot,'Current browser location applied. Date and time unchanged.');
+  }catch(error){
+    status(slot,error?.code===1?'Location permission was denied.':error?.message||'Current browser location could not be resolved.',true);
+  }finally{
+    if(button){button.disabled=false;button.removeAttribute('aria-busy')}
+  }
+}
 async function hereAndNow(slot){
   const form=formFor(slot);if(!form)return;setBusy(slot,true);status(slot,'Using your current location and the current instant…');
   try{
@@ -323,7 +344,7 @@ window.RelphiSkyWhereWhen=Object.freeze({
 
 document.addEventListener('click',event=>{
   const actionNode=event.target.closest?.('[data-ww-action]');if(!actionNode)return;const slot=eventSlot(actionNode);if(!slot)return;const action=actionNode.dataset.wwAction;
-  if(action==='cancel')closeEditor(slot);else if(action==='search-location')void searchLocation(slot);else if(action==='select-location')selectLocation(slot,actionNode);else if(action==='use-now')void currentLocalTime(slot);else if(action==='here-and-now')void hereAndNow(slot);
+  if(action==='cancel')closeEditor(slot);else if(action==='search-location')void searchLocation(slot);else if(action==='select-location')selectLocation(slot,actionNode);else if(action==='use-here')void useHere(slot,actionNode);else if(action==='use-now')void currentLocalTime(slot);else if(action==='here-and-now')void hereAndNow(slot);
 });
 document.addEventListener('submit',event=>{const form=event.target.closest?.('.sky-where-when-editor');if(!form)return;event.preventDefault();void submitForm(form.dataset.slot,form)});
 document.addEventListener('keydown',event=>{if(event.key!=='Enter')return;const input=event.target.closest?.('[data-ww-field="location-query"]');if(!input)return;event.preventDefault();const slot=eventSlot(input);if(slot)void searchLocation(slot)});

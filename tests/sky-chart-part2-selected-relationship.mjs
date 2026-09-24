@@ -60,11 +60,131 @@ await page.addInitScript(({a,b}) => {
 
 await page.goto('http://127.0.0.1:4173/part2/sky-chart.html', {waitUntil:'networkidle'});
 await page.waitForSelector('.sky-foundation-relationship-row[data-relation-index]', {timeout:15000});
-await page.waitForSelector('.sky-chart-filter-bar [data-house-system-filter]', {timeout:10000});
+await page.waitForSelector('#skyFoundationFocus .sky-chart-filter-bar [data-house-system-filter]', {timeout:10000});
+await page.waitForSelector('#skyFoundationFocus > .sky-foundation-focus-heading', {timeout:10000});
+await page.waitForSelector('#skyFoundationFocus > .sky-foundation-focus-heading [data-harmonic-window-input]', {timeout:10000});
+await page.waitForSelector('#skyFoundationFocus > .sky-foundation-focus-heading [data-relationship-display-control]', {timeout:10000});
+await page.waitForSelector('#skyFoundationRelationships > .sky-foundation-relationships-heading [data-relationship-sort]', {timeout:10000});
+assert.equal((await page.locator('#skyFoundationComparison > .sky-foundation-heading').textContent()).trim(), 'Zodiac Wheel');
+assert.equal((await page.locator('#skyFoundationFocus > .sky-foundation-focus-heading h2').textContent()).trim(), 'Focus');
+assert.equal(await page.locator('#skyFoundationRelationships .sky-chart-filter-bar').count(),0,'Shared Focus filters must not remain inside Relationships.');
+assert.equal(await page.locator('#skyFoundationFocus > .sky-chart-filter-bar').count(),1,'Focus must own the shared filter bar.');
+assert.equal(await page.locator('#skyFoundationFocus > .sky-foundation-focus-heading [data-harmonic-window-input]').count(),1,'Harmonic Window must share the Focus heading line.');
+assert.equal(await page.locator('#skyFoundationFocus > .sky-foundation-focus-heading [data-relationship-display-control]').count(),1,'Display must share the Focus heading line.');
+assert.equal(await page.locator('#skyFoundationRelationships > .sky-foundation-relationships-heading [data-relationship-sort]').count(),1,'Sort must share the Relationships heading line.');
+assert.equal(await page.locator('#skyFoundationRelationships > .sky-foundation-relationships-heading [data-relationship-limit]').count(),1,'Max must share the Relationships heading line.');
+
+await page.waitForFunction(()=>{
+  const count=document.getElementById('skyFoundationRelationshipCount');
+  return count?.dataset?.countLabel==='matches'&&/^\\d+$/.test(count.dataset.matchCount||'');
+});
+const matchCountPresentation=await page.locator('#skyFoundationRelationshipCount').evaluate(node=>({
+  raw:node.textContent.trim(),
+  matchCount:node.dataset.matchCount,
+  after:getComputedStyle(node,'::after').content,
+  fontSize:getComputedStyle(node).fontSize
+}));
+assert.match(matchCountPresentation.raw,/^\\d+(?:\\/\\d+)?$/,'Underlying relationship count may still be written by legacy filters, but presentation owns the visible label.');
+assert.equal(matchCountPresentation.after,'"' + matchCountPresentation.matchCount + ' matches"','Visible relationship count must be a single “N matches” phrase with one normal space and no slash total.');
+assert.equal(matchCountPresentation.fontSize,'0px','Legacy slash-total text must be visually suppressed.');
+
+await page.setViewportSize({width:360,height:900});
+await page.waitForTimeout(80);
+const mobileRelationshipHeading=await page.locator('#skyFoundationRelationships > .sky-foundation-relationships-heading').evaluate(heading=>{
+  const rect=node=>{const r=node.getBoundingClientRect();return{left:r.left,right:r.right,top:r.top,bottom:r.bottom,width:r.width,height:r.height}};
+  const title=heading.querySelector(':scope>h2'),count=heading.querySelector(':scope>#skyFoundationRelationshipCount'),actions=heading.querySelector(':scope>.sky-relationship-heading-actions');
+  const controls=actions?[...actions.children].filter(node=>getComputedStyle(node).display!=='none').map(rect):[];
+  return{heading:rect(heading),title:rect(title),count:rect(count),actions:rect(actions),controls,scrollWidth:heading.scrollWidth,clientWidth:heading.clientWidth};
+});
+assert.ok(mobileRelationshipHeading.title.right<=mobileRelationshipHeading.count.left,'Relationships title and match count must not overlap on mobile.');
+assert.ok(mobileRelationshipHeading.actions.top>=Math.min(mobileRelationshipHeading.title.bottom,mobileRelationshipHeading.count.bottom),'Relationship actions must occupy their own row on mobile.');
+assert.ok(mobileRelationshipHeading.actions.left>=mobileRelationshipHeading.heading.left&&mobileRelationshipHeading.actions.right<=mobileRelationshipHeading.heading.right+1,'Relationship actions must stay inside the mobile heading.');
+assert.ok(mobileRelationshipHeading.controls.every((box,index,array)=>index===0||box.left>=array[index-1].right-1),'Sort, Max, Copy, and Download must not overlap each other on mobile.');
+assert.ok(mobileRelationshipHeading.controls.length>=4,'Mobile Relationships actions must expose Sort, Max, Copy, and Download.');
+assert.ok(mobileRelationshipHeading.controls[0].left<=mobileRelationshipHeading.actions.left+2,'Dropdown controllers must stay left aligned.');
+assert.ok(mobileRelationshipHeading.controls.at(-1).right>=mobileRelationshipHeading.actions.right-2,'Copy and Download group must stay right aligned.');
+assert.ok(mobileRelationshipHeading.controls[2].left-mobileRelationshipHeading.controls[1].right>8,'Copy/Download must be visually separated from the left-aligned dropdown controllers.');
+const mobileSortFit=await page.locator('#skyFoundationRelationships [data-relationship-sort]').evaluate(select=>{
+  const style=getComputedStyle(select),canvas=document.createElement('canvas'),ctx=canvas.getContext('2d');
+  ctx.font=style.font;
+  const textWidth=ctx.measureText('Most Challenging First').width;
+  const usable=select.clientWidth-parseFloat(style.paddingLeft)-parseFloat(style.paddingRight);
+  return{width:select.getBoundingClientRect().width,textWidth,usable};
+});
+assert.ok(mobileSortFit.width>150,'Mobile Sort selector should reclaim available row width.');
+assert.ok(mobileSortFit.usable>=mobileSortFit.textWidth,'Mobile Sort selector must fully show “Most Challenging First”.');
+assert.ok(mobileRelationshipHeading.scrollWidth<=mobileRelationshipHeading.clientWidth+1,'Mobile Relationships heading must not overflow horizontally.');
+await page.setViewportSize({width:1440,height:1300});
+await page.waitForTimeout(80);
+
 await page.waitForSelector('.sky-ph-heptagram[data-canonical-heptagram-v1="true"]', {timeout:10000});
 await page.waitForSelector('#skySelectedRelationship:not([hidden])', {timeout:10000});
 assert.equal(await page.locator('#skySelectedRelationship .sky-selected-card').count(), 2);
 assert.equal(await page.locator('#skySelectedRelationship .sky-selected-card img').evaluateAll(images => images.every(image => image.complete && image.naturalWidth > 0)), true);
+await page.waitForFunction(()=>[...document.querySelectorAll('#skySelectedRelationship .correspondence-card-art img')].length===2&&[...document.querySelectorAll('#skySelectedRelationship .correspondence-card-art img')].every(img=>img.complete&&img.naturalWidth>0),null,{timeout:10000});
+const dualComparisonArt=await page.locator('#skySelectedRelationship .correspondence-card-art').evaluateAll(figures=>figures.map(figure=>{
+  const img=figure.querySelector('img'),fs=getComputedStyle(figure),is=getComputedStyle(img),fr=figure.getBoundingClientRect(),ir=img.getBoundingClientRect();
+  const bl=parseFloat(fs.borderLeftWidth)||0,br=parseFloat(fs.borderRightWidth)||0,bt=parseFloat(fs.borderTopWidth)||0,bb=parseFloat(fs.borderBottomWidth)||0;
+  return{
+    figureRadius:fs.borderRadius,
+    figurePadding:[fs.paddingTop,fs.paddingRight,fs.paddingBottom,fs.paddingLeft],
+    figureOverflow:fs.overflow,
+    borderWidth:[fs.borderTopWidth,fs.borderRightWidth,fs.borderBottomWidth,fs.borderLeftWidth],
+    borderColor:fs.borderTopColor,
+    imageRadius:is.borderRadius,
+    imageFit:is.objectFit,
+    imageAspect:is.aspectRatio,
+    imageBorder:is.borderWidth,
+    imageClip:is.clipPath,
+    sourceRatio:img.naturalWidth/img.naturalHeight,
+    renderedRatio:ir.width/ir.height,
+    flush:{
+      left:Math.abs(ir.left-(fr.left+bl)),
+      right:Math.abs(ir.right-(fr.right-br)),
+      top:Math.abs(ir.top-(fr.top+bt)),
+      bottom:Math.abs(ir.bottom-(fr.bottom-bb))
+    }
+  };
+}));
+assert.equal(dualComparisonArt.length,2);
+dualComparisonArt.forEach(item=>{
+  assert.equal(item.figureRadius,'0px','Dual comparison Sky stroke must have sharp corners.');
+  assert.deepEqual(item.figurePadding,['0px','0px','0px','0px'],'Dual comparison art must have no gap inside the Sky stroke.');
+  assert.equal(item.figureOverflow,'visible');
+  assert.deepEqual(item.borderWidth,['3px','3px','3px','3px'],'Sky identity stroke must remain visible.');
+  assert.equal(item.imageRadius,'0px','Tarot art itself must have sharp corners.');
+  assert.equal(item.imageFit,'contain');
+  assert.equal(item.imageAspect,'auto');
+  assert.equal(item.imageBorder,'0px');
+  assert.equal(item.imageClip,'none');
+  assert.ok(Math.abs(item.renderedRatio-item.sourceRatio)<0.01,'Dual comparison art must preserve the source image aspect ratio.');
+  assert.ok(Object.values(item.flush).every(delta=>delta<=0.75),'Tarot art must sit flush against the inside edge of the Sky identity stroke.');
+});
+assert.equal(dualComparisonArt[0].borderColor,'rgb(201, 33, 30)','Sky A comparison stroke must stay red.');
+assert.equal(dualComparisonArt[1].borderColor,'rgb(36, 98, 208)','Sky B comparison stroke must stay blue.');
+
+await page.setViewportSize({width:360,height:900});
+await page.waitForTimeout(80);
+const mobileDualCorners=await page.locator('#skySelectedRelationship [data-selected-card]').evaluateAll(cards=>cards.map(card=>{
+  const figure=card.querySelector('.correspondence-card-art'),img=card.querySelector('img');
+  return{
+    cardRadius:getComputedStyle(card).borderRadius,
+    buttonRadius:card.querySelector('.sky-selected-card-button')?getComputedStyle(card.querySelector('.sky-selected-card-button')).borderRadius:null,
+    figureRadius:figure?getComputedStyle(figure).borderRadius:null,
+    figurePadding:figure?[getComputedStyle(figure).paddingTop,getComputedStyle(figure).paddingRight,getComputedStyle(figure).paddingBottom,getComputedStyle(figure).paddingLeft]:null,
+    imageRadius:img?getComputedStyle(img).borderRadius:null
+  };
+}));
+mobileDualCorners.forEach(item=>{
+  assert.equal(item.cardRadius,'0px','Mobile selected-card wrapper must have sharp corners.');
+  if(item.buttonRadius!==null)assert.equal(item.buttonRadius,'0px','Mobile selected-card button must have sharp corners.');
+  if(item.figureRadius!==null)assert.equal(item.figureRadius,'0px','Mobile Sky identity stroke must have sharp corners.');
+  if(item.figurePadding!==null)assert.deepEqual(item.figurePadding,['0px','0px','0px','0px'],'Mobile Sky stroke must sit flush to the art.');
+  assert.equal(item.imageRadius,'0px','Mobile tarot art must have sharp corners.');
+});
+await page.setViewportSize({width:1440,height:1300});
+await page.waitForTimeout(80);
+
 assert.equal(await page.locator('#skySelectedRelationship').getAttribute('data-selection-source'), 'initial-relationship');
 const ledgerGlyphs = await page.locator('.sky-foundation-row > svg[data-canonical-ledger-glyph="true"]').evaluateAll(nodes => nodes.map(svg => {
   const art=svg.querySelector('.relphi-canonical-glyph');
@@ -129,6 +249,20 @@ assert.ok(heptagramLineTones.every(tone => tone.earlier.every(value => value ===
 assert.ok(await page.locator('.sky-ph-heptagram').evaluateAll(nodes => nodes.every(svg => svg.querySelectorAll('.sky-ph-hour-segment:not(.current)').length === 7)));
 await page.locator('#skyFoundationA').getByRole('button', {name:'Placements', exact:true}).click();
 await page.locator('#skyFoundationB').getByRole('button', {name:'Placements', exact:true}).click();
+
+const skyBSunRow=page.locator('#skyFoundationB .sky-foundation-row[data-placement="sun"]').first();
+await skyBSunRow.click();
+await page.waitForFunction(()=>window.RelphiSkyFoundationInteractions?.getSelectionOrigin?.()?.value==='sun');
+assert.deepEqual(await page.evaluate(()=>window.RelphiSkyFoundationInteractions.getSelectionOrigin()),{
+  kind:'placement',
+  sky:'B',
+  value:'sun',
+  label:'Sun',
+  source:'Placements'
+},'Wheel-driving state must return the exact Placements item that originated the selection.');
+await skyBSunRow.click();
+await page.waitForFunction(()=>window.RelphiSkyFoundationInteractions?.getSelectionOrigin?.()===null);
+
 assert.ok(await page.locator('.sky-foundation-ledger > .sky-foundation-row > svg[data-canonical-ledger-glyph="true"]').evaluateAll(nodes => {
   const visible=nodes.map(svg=>svg.getBoundingClientRect()).filter(box=>box.width>0&&box.height>0);
   return visible.length>0&&visible.every(box=>box.width<=24&&box.height<=24);

@@ -9,10 +9,10 @@ const FAMILIES=Object.freeze([{id:'intersky',title:'Intersky'},{id:'intrasky',ti
 const GLOBAL_TIMING_SORTS=new Set(['duration-longest','duration-shortest','ends-soonest','ends-last']);
 const GLOBAL_SIGNIFICANCE_SORTS=new Set(['most-supportive','most-challenging']);
 const GLOBAL_SORTS=new Set([...GLOBAL_TIMING_SORTS,...GLOBAL_SIGNIFICANCE_SORTS]);
-const PLACEMENT_SYMBOLS=Object.freeze({sun:'☉',moon:'☽',mercury:'☿',venus:'♀',mars:'♂',jupiter:'♃',saturn:'♄',uranus:'♅',neptune:'♆',pluto:'♇',chiron:'⚷','north-node':'☊','south-node':'☋',lilith:'⚸','part-of-fortune':'⊗',vertex:'Vx',asc:'Asc',dsc:'Dsc',mc:'MC',ic:'IC'});
+const PLACEMENT_SYMBOLS=Object.freeze({sun:'☉',moon:'☽',mercury:'☿',venus:'♀',mars:'♂',jupiter:'♃',saturn:'♄',uranus:'♅',neptune:'♆',pluto:'♇',chiron:'⚷','north-node':'☊','south-node':'☋',lilith:'⚸','part-of-fortune':'⊗',vertex:'Vx','anti-vertex':'AVx',asc:'Asc',dsc:'Dsc',mc:'MC',ic:'IC'});
 const SIGN_SYMBOLS=Object.freeze(['♈','♉','♊','♋','♌','♍','♎','♏','♐','♑','♒','♓']);
 const ASPECT_SYMBOLS=Object.freeze({conjunction:'☌',opposition:'☍',trine:'△',square:'□',sextile:'✶','semi-sextile':'⚺',quincunx:'⚻',octile:'∠','tri-octile':'⚼',quintile:'Q','bi-quintile':'BQ'});
-const HIDDEN_CLASSES=Object.freeze(['sky-foundation-single-sky-cross-hidden','sky-chart-filter-hidden','sky-chart-orb-hidden','sky-orb-filter-hidden','sky-chart-multiselect-hidden','sky-chart-house-multiselect-hidden','sky-chart-aspect-multiselect-hidden','sky-chart-zodiac-filter-hidden']);
+const HIDDEN_CLASSES=Object.freeze(['sky-foundation-single-sky-cross-hidden','sky-chart-filter-hidden','sky-chart-orb-hidden','sky-orb-filter-hidden','sky-chart-multiselect-hidden','sky-chart-house-multiselect-hidden','sky-chart-aspect-multiselect-hidden','sky-chart-zodiac-filter-hidden','sky-chart-result-limit-hidden']);
 const COLLAPSED_VISUAL_CLASS='sky-relationship-drawer-collapsed-visual';
 const collapsed=new Set();
 let observer=null,observedList=null,queued=false,applying=false,copyTimer=0;
@@ -52,7 +52,8 @@ function groupList(){
   const rows=[...list.querySelectorAll(':scope>.sky-foundation-relationship-row')];if(!rows.length)return;
   collapsed.clear();
   rows.forEach(row=>row.classList.remove(COLLAPSED_VISUAL_CLASS));
-  const other=[...list.children].filter(node=>!node.matches?.('.sky-foundation-relationship-row')),desired=[...other];
+  const helpers=[...list.children].filter(node=>node.matches?.('[data-result-limit-show-more],[data-harmonic-show-more]'));
+  const other=[...list.children].filter(node=>!node.matches?.('.sky-foundation-relationship-row,[data-result-limit-show-more],[data-harmonic-show-more]')),desired=[...other];
   const sorter=window.RelphiRelationshipSort,sortMode=sorter?.mode?.();
   // Significance and absolute-duration sorts can answer one question across the whole
   // visible set. "Began Most Recently" is intentionally excluded: its "ago" value is
@@ -68,6 +69,7 @@ function groupList(){
       }
     }
   }
+  desired.push(...helpers);
   if(!sameOrder([...list.children],desired)){
     applying=true;
     const frag=document.createDocumentFragment();
@@ -110,7 +112,7 @@ function serializeAll(){
 }
 function legacyCopy(text){const active=document.activeElement;let ta=null;try{ta=document.createElement('textarea');ta.value=text;ta.setAttribute('aria-hidden','true');Object.assign(ta.style,{position:'fixed',left:'0',top:'0',width:'1px',height:'1px',padding:'0',border:'0',opacity:'0',fontSize:'16px'});document.body.appendChild(ta);try{ta.focus({preventScroll:true})}catch(_){ta.focus()}ta.select();ta.setSelectionRange(0,ta.value.length);return document.execCommand('copy')===true}catch(_){return false}finally{ta?.remove();try{active?.focus?.({preventScroll:true})}catch(_){try{active?.focus?.()}catch(__){}}}}
 async function writeClipboard(text){if(legacyCopy(text))return true;if(!navigator.clipboard?.writeText)return false;let timer=0;try{const timeout=new Promise(resolve=>{timer=window.setTimeout(()=>resolve(false),900)});const copy=Promise.resolve(navigator.clipboard.writeText(text)).then(()=>true,()=>false);return await Promise.race([copy,timeout])}catch(_){return false}finally{clearTimeout(timer)}}
-function bindCopyButton(){const b=document.querySelector('.sky-relationship-copy-button');if(!b||b.dataset.scopeCopyOverride==='v8')return;b.dataset.scopeCopyOverride='v8';b.setAttribute('aria-label','Copy included relationships at the current reveal level');b.addEventListener('click',async e=>{e.preventDefault();e.stopImmediatePropagation();const text=serializeAll();if(!text)return;b.textContent='Copying…';let ok=false;try{ok=await writeClipboard(text)}catch(_){}if(!ok){b.textContent='Copy failed';clearTimeout(copyTimer);copyTimer=setTimeout(()=>{if(b.isConnected)b.textContent='Copy'},1400);return}b.textContent='Copied';clearTimeout(copyTimer);copyTimer=setTimeout(()=>{if(b.isConnected)b.textContent='Copy'},1000)},true)}
+function bindCopyButton(){const b=document.querySelector('.sky-relationship-copy-button');if(!b||b.dataset.scopeCopyOverride==='v8')return;b.dataset.scopeCopyOverride='v8';b.setAttribute('aria-label','Copy included relationships at the current reveal level');b.addEventListener('click',async e=>{e.preventDefault();e.stopImmediatePropagation();const text=serializeAll();if(!text)return;b.textContent='Copying…';let ok=false;try{ok=await writeClipboard(text)}catch(_){}if(!ok){b.textContent='Copy failed';clearTimeout(copyTimer);copyTimer=setTimeout(()=>{if(b.isConnected)b.textContent='Copy'},1400);return}b.textContent='Copied '+visibleRows().length;clearTimeout(copyTimer);copyTimer=setTimeout(()=>{if(b.isConnected)b.textContent='Copy'},1000)},true)}
 function visibilityClassChanged(record){
   if(record.type!=='attributes'||record.attributeName!=='class')return false;
   const row=record.target?.matches?.('.sky-foundation-relationship-row')?record.target:null;

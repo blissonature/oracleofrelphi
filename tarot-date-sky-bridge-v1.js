@@ -3,16 +3,6 @@
   'use strict';
   if (!/(^|\/)tarot\.html$/.test(location.pathname)) return;
 
-  function loadDrawingBoardExportPreserver() {
-    if (document.querySelector('script[src^="drawing-board-export-preserver-v2.js"]')) return;
-    const script = document.createElement('script');
-    script.async = false;
-    script.src = 'drawing-board-export-preserver-v2.js?v=1';
-    document.body.appendChild(script);
-  }
-
-  loadDrawingBoardExportPreserver();
-
   function byId(id) { return document.getElementById(id); }
   function fire(node, type) { if (node) node.dispatchEvent(new Event(type, { bubbles:true })); }
   function setValue(id, value) {

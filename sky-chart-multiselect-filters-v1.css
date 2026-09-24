@@ -1,5 +1,5 @@
 /* Categorized Placement checklist. Deliberately mirrors the Houses control. */
-#skyFoundationRelationships{overflow:visible!important}
+#skyFoundationFocus,#skyFoundationRelationships{overflow:visible!important}
 .sky-chart-filter-bar[data-multiselect-placement-filters="true"]{position:relative;z-index:2;display:grid;align-items:end;gap:6px;overflow:visible}
 .sky-chart-filter-bar[data-multiselect-placement-filters="true"]>.sky-chart-placement-filter{grid-column:auto;width:auto;min-width:0}
 .sky-chart-placement-filter{position:relative;min-width:0;color:#4e463f;font:800 .62rem/1.2 system-ui,sans-serif}

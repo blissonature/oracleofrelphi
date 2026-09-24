@@ -98,9 +98,122 @@
   background:#fffdf8;
 }
 
+#skyFoundationFocus {
+  display:grid;
+  min-width:0;
+  overflow:visible;
+  border-top:1px solid rgba(31,27,24,.11);
+  border-bottom:1px solid rgba(31,27,24,.11);
+  background:#fffdf8;
+}
+
+#skyFoundationFocus .sky-chart-filter-bar {
+  border-bottom:0;
+}
+
+.sky-foundation-focus-heading {
+  display:flex;
+  align-items:center;
+  gap:10px;
+  min-height:44px;
+  padding:6px 10px;
+  border-bottom:1px solid rgba(31,27,24,.11);
+  background:#fffdf8;
+}
+
+.sky-foundation-focus-heading h2 {
+  min-width:0;
+  margin:0;
+  font:800 .82rem/1.2 system-ui,sans-serif;
+}
+
+.sky-focus-heading-controls {
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  gap:9px;
+  min-width:0;
+  margin-left:auto;
+  flex-wrap:wrap;
+}
+
+.sky-focus-heading-controls .sky-orb-number-field {
+  display:inline-flex!important;
+  align-items:center!important;
+  gap:4px!important;
+  min-width:0!important;
+  margin:0!important;
+  color:#5a524b!important;
+  font:800 .61rem/1 system-ui,sans-serif!important;
+}
+
+.sky-focus-heading-controls .sky-orb-number-field>span {
+  white-space:nowrap;
+}
+
+.sky-focus-heading-controls .sky-orb-number-field input[data-harmonic-window-input] {
+  width:52px!important;
+  min-width:52px!important;
+  height:29px!important;
+  min-height:29px!important;
+  box-sizing:border-box!important;
+  margin:0!important;
+  padding:0 9px!important;
+  border:1px solid rgba(31,27,24,.18)!important;
+  border-radius:9px!important;
+  background:#fff!important;
+  color:#332e2a!important;
+  font:800 .67rem/1 system-ui,sans-serif!important;
+}
+
+.sky-focus-heading-controls .sky-orb-number-field input[data-harmonic-window-input]:hover,
+.sky-focus-heading-controls .sky-orb-number-field input[data-harmonic-window-input]:focus-visible {
+  border-color:#6b625a!important;
+  outline:none!important;
+}
+
+@media(max-width:620px) {
+  .sky-foundation-focus-heading {
+    align-items:flex-start;
+    flex-wrap:wrap;
+  }
+  .sky-focus-heading-controls {
+    width:100%;
+    justify-content:flex-start;
+    margin-left:0;
+  }
+}
+
+.sky-relationship-controls {
+  --sky-filter-label-color:#4e463f;
+  --sky-filter-control-color:#191613;
+  --sky-filter-border:1px solid rgba(31,27,24,.2);
+  --sky-filter-radius:9px;
+  --sky-filter-height:35px;
+  --sky-filter-label-font:800 .62rem/1.2 system-ui,sans-serif;
+  --sky-filter-control-font:700 .68rem/1.2 system-ui,sans-serif;
+  --sky-filter-control-padding:.52rem .58rem;
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:7px;
+  padding:8px 10px 10px;
+  border-bottom:1px solid rgba(31,27,24,.11);
+  background:#fffdf8;
+}
+
+.sky-relationship-controls:empty {
+  display:none;
+}
+
+@media(max-width:620px) {
+  .sky-relationship-controls {
+    grid-template-columns:1fr;
+  }
+}
+
 .sky-foundation-relationships-heading {
   display:grid;
-  grid-template-columns:minmax(0,1fr) auto auto auto;
+  grid-template-columns:auto auto minmax(0,1fr);
   align-items:center;
   gap:6px;
   min-height:44px;
@@ -115,42 +228,85 @@
 }
 
 #skyFoundationRelationshipCount {
-  display:grid;
-  place-items:center;
-  min-width:42px;
-  height:25px;
-  padding:0 8px;
-  border-radius:999px;
-  background:#f0ebe4;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:.22em;
+  min-width:0;
+  height:auto;
+  padding:0;
+  border:0;
+  border-radius:0;
+  background:transparent;
   color:#3f3934;
   font:800 .69rem/1 system-ui,sans-serif;
   font-variant-numeric:tabular-nums;
+  white-space:nowrap;
   order:1;
+}
+
+#skyFoundationRelationshipCount[data-count-label="matches"] {
+  gap:0;
+  column-gap:0;
+  font-size:0;
+  color:transparent;
+}
+
+#skyFoundationRelationshipCount[data-count-label="matches"]::before {
+  content:none;
+}
+
+#skyFoundationRelationshipCount[data-count-label="matches"]::after {
+  content:attr(data-match-count) " matches";
+  color:#3f3934;
+  font:800 .69rem/1 system-ui,sans-serif;
+  font-variant-numeric:tabular-nums;
+}
+
+.sky-foundation-harmonic-show-more {
+  grid-column:1/-1;
+  appearance:none;
+  width:100%;
+  min-height:38px;
+  margin:0;
+  padding:8px 11px;
+  border:1px dashed rgba(31,27,24,.22);
+  border-radius:9px;
+  background:#f8f3ec;
+  color:#514941;
+  font:750 .68rem/1.25 system-ui,sans-serif;
+  text-align:center;
+  cursor:pointer;
+}
+
+.sky-foundation-harmonic-show-more:hover,
+.sky-foundation-harmonic-show-more:focus-visible {
+  border-style:solid;
+  background:#f1e9df;
+  color:#211d19;
+  outline:none;
+}
+
+.sky-foundation-harmonic-show-more[hidden] {
+  display:none!important;
 }
 
 .sky-foundation-relationships-heading>.sky-relationship-heading-actions{
   display:flex;
   align-items:center;
-  justify-content:flex-end;
+  justify-content:flex-start;
   gap:5px;
+  width:100%;
   min-width:0;
   order:2;
+  flex-wrap:nowrap;
+}
+.sky-foundation-relationships-heading>.sky-relationship-heading-actions>.sky-relationship-copy-button{
+  margin-left:auto!important;
 }
 
 #skyFoundationClearIsolation {
-  appearance:none;
-  border:1px solid rgba(31,27,24,.2);
-  border-radius:999px;
-  background:#fff;
-  color:#241f1b;
-  padding:.4rem .68rem;
-  font:800 .68rem/1 system-ui,sans-serif;
-  cursor:pointer;
-  order:3;
-}
-
-#skyFoundationClearIsolation[hidden] {
-  display:none;
+  display:none!important;
 }
 
 #skyFoundationRelationshipList {
@@ -271,12 +427,33 @@
 
 @media(max-width:620px) {
   .sky-foundation-relationships-heading{
-    grid-template-columns:minmax(0,1fr) auto auto auto;
-    gap:4px;
-    padding-inline:8px;
+    grid-template-columns:minmax(0,1fr) auto;
+    grid-template-areas:
+      "title count"
+      "actions actions";
+    gap:6px 8px;
+    min-height:0;
+    padding:8px;
   }
-  #skyFoundationRelationshipCount{min-width:38px;padding-inline:6px}
-  #skyFoundationClearIsolation{padding-inline:.55rem}
+  .sky-foundation-relationships-heading>h2{
+    grid-area:title;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+  }
+  #skyFoundationRelationshipCount{
+    grid-area:count;
+    min-width:0;
+    padding:0;
+    justify-self:end;
+  }
+  .sky-foundation-relationships-heading>.sky-relationship-heading-actions{
+    grid-area:actions;
+    width:100%;
+    max-width:100%;
+    justify-content:flex-start;
+    overflow:visible;
+  }
   #skyFoundationRelationshipList {
     grid-template-columns:1fr;
     max-height:420px;

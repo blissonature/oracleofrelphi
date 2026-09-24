@@ -8,13 +8,10 @@
   window.__relphiSkyOrbControlV10=true;window.__relphiSkyOrbControlV9=true;window.__relphiSkyOrbControlV8=true;window.__relphiSkyOrbControlV7=true;window.__relphiSkyOrbControlV6=true;window.__relphiSkyOrbControlV5=true;window.__relphiSkyOrbControlV4=true;window.__relphiSkyOrbControlV3=true;window.__relphiSkyOrbControlV2=true;window.__relphiSkyOrbControlV1=true;
 
   let queued=false,wheelIndexes=null,wheelState=null,installQueued=false,filterObserver=null,lastApplied=null;
-  let activeWindow=null;
   const model=()=>window.RelphiHarmonicOrb;
-  const visibleInput=()=>document.querySelector('[data-harmonic-window-input]');
 
   function initialWindow(){
-    const fallback=model()?.defaultWindow??6;
-    return activeWindow==null?fallback:activeWindow;
+    return model()?.getWindow?.()??model()?.defaultWindow??6;
   }
 
   function phaseFromRow(row){
@@ -58,21 +55,33 @@
     document.querySelectorAll('#skyFoundationWheelMount [data-focus-piece="placement"],#skyFoundationWheelMount [data-focus-piece="leader"]').forEach(node=>node.classList.toggle('is-kept',kept.has(`${node.dataset.sky}:${node.dataset.placement}`)));
   }
 
+  function ensureShowMoreRow(){
+    const list=document.getElementById('skyFoundationRelationshipList');if(!list)return null;
+    let button=list.querySelector('[data-harmonic-show-more]');
+    if(!button){
+      button=document.createElement('button');
+      button.type='button';
+      button.className='sky-foundation-harmonic-show-more';
+      button.dataset.harmonicShowMore='true';
+      button.addEventListener('click',event=>{
+        event.preventDefault();event.stopPropagation();
+        const m=model();m?.setWindow?.(m?.maxWindow??12);
+        schedule();
+      });
+      list.appendChild(button);
+    }else if(button!==list.lastElementChild)list.appendChild(button);
+    return button;
+  }
   function apply(){
     queued=false;
-    const input=visibleInput();if(!input)return;
-    const raw=input.value.trim().replace(',','.'),limit=Number(raw),max=model()?.maxWindow??12;
-    const valid=raw!==''&&Number.isFinite(limit)&&limit>=0&&limit<=max;
-    input.setCustomValidity(valid?'':`Enter a harmonic phase window from 0 to ${max} degrees.`);
-    input.setAttribute('aria-invalid',valid?'false':'true');
-    if(!valid)return;
-
-    activeWindow=limit;
-    model()?.setWindow?.(limit);
+    const limit=Number(model()?.getWindow?.()??model()?.defaultWindow??6);
+    if(!Number.isFinite(limit))return;
     const visibleIndexes=new Set(),rows=[...document.querySelectorAll('.sky-foundation-relationship-row[data-relation-index]')],rowsByIndex=new Map(rows.map(row=>[String(row.dataset.relationIndex||''),row]));
+    let hiddenByHarmonicWindow=0;
     rows.forEach(row=>{
       const phase=phaseFromRow(row),hiddenByOrb=Number.isFinite(phase)&&phase>limit,hiddenByWheel=wheelIndexes&&!wheelIndexes.has(String(row.dataset.relationIndex));
       const hiddenByOther=row.classList.contains('sky-chart-filter-hidden')||row.classList.contains('sky-chart-multiselect-hidden')||row.classList.contains('sky-chart-house-multiselect-hidden')||row.classList.contains('sky-chart-aspect-multiselect-hidden')||row.classList.contains('sky-chart-sign-filter-hidden')||row.classList.contains('sky-foundation-single-sky-cross-hidden');
+      if(hiddenByOrb&&!hiddenByWheel&&!hiddenByOther)hiddenByHarmonicWindow+=1;
       const visible=!hiddenByOrb&&!hiddenByWheel&&!hiddenByOther;
       row.classList.toggle('sky-chart-orb-hidden',hiddenByOrb);row.hidden=!visible;row.setAttribute('aria-hidden',visible?'false':'true');
       if(Number.isFinite(phase)){
@@ -93,8 +102,20 @@
 
     reconcilePlacementIsolation(rows,visibleIndexes);
     const count=document.getElementById('skyFoundationRelationshipCount'),empty=document.getElementById('skyFoundationRelationshipEmpty');
-    if(count)count.textContent=`${visibleIndexes.size}/${rows.length}`;
-    if(empty)empty.hidden=visibleIndexes.size!==0;
+    if(count){
+      count.textContent=String(visibleIndexes.size);
+      count.dataset.matchCount=String(visibleIndexes.size);
+      count.dataset.countLabel='matches';
+      count.setAttribute('aria-label',visibleIndexes.size+' matching relationships');
+    }
+    if(empty)empty.hidden=visibleIndexes.size!==0||hiddenByHarmonicWindow>0;
+    const more=ensureShowMoreRow(),max=Number(model()?.maxWindow??12);
+    if(more){
+      const canReveal=limit<max&&hiddenByHarmonicWindow>0;
+      more.hidden=!canReveal;
+      more.textContent=canReveal?`${hiddenByHarmonicWindow} more beyond ${Number(limit.toFixed(2))}° Harmonic Window · Show more`:'';
+      more.setAttribute('aria-label',canReveal?`Show ${hiddenByHarmonicWindow} more relationships by increasing Harmonic Window to ${max} degrees`:'Show more relationships');
+    }
     document.documentElement.dataset.skyHarmonicWindow=String(limit);
 
     if(lastApplied!==limit){
@@ -110,21 +131,35 @@
     if(!Number.isFinite(value))return;
     input.value=String(Math.max(0,Math.min(max,value)));
   }
+  function driveFromInput(input,commit=false){
+    if(commit)normalizeOnCommit(input);
+    const max=model()?.maxWindow??12,raw=input.value.trim().replace(',','.'),value=Number(raw);
+    const valid=raw!==''&&Number.isFinite(value)&&value>=0&&value<=max;
+    input.setCustomValidity(valid?'':`Enter a harmonic phase window from 0 to ${max} degrees.`);
+    input.setAttribute('aria-invalid',valid?'false':'true');
+    if(!valid)return;
+    input.setAttribute('aria-valuenow',String(value));
+    model()?.setWindow?.(value,input);
+    schedule();
+  }
 
   function install(){
-    const bar=document.querySelector('#skyFoundationRelationships .sky-chart-filter-bar')||document.querySelector('.sky-chart-filter-bar');
-    if(!bar||bar.querySelector('[data-harmonic-window-input]'))return false;
-    const field=document.createElement('label');field.className='sky-orb-number-field';field.dataset.orbField='true';
+    const slot=document.querySelector('#skyFoundationFocus .sky-focus-heading-controls');
+    if(!slot)return false;
+    let field=document.querySelector('[data-orb-field="true"]');
+    if(field&&field.parentElement!==slot)slot.prepend(field);
+    if(field)return true;
+    field=document.createElement('label');field.className='sky-orb-number-field';field.dataset.orbField='true';
     const caption=document.createElement('span');caption.textContent='Harmonic Window';
     const input=document.createElement('input'),m=model();
     input.type='text';input.inputMode='decimal';input.autocomplete='off';input.value=String(initialWindow());
     input.dataset.harmonicWindowInput='true';input.dataset.orbMode='harmonic-phase';
     input.setAttribute('role','spinbutton');input.setAttribute('aria-valuemin','0');input.setAttribute('aria-valuemax',String(m?.maxWindow??12));input.setAttribute('aria-valuenow',input.value);
     input.setAttribute('aria-label',`Master harmonic phase window in degrees, maximum ${m?.maxWindow??12}`);
-    field.append(caption,input);bar.prepend(field);
-    input.addEventListener('input',()=>{input.setAttribute('aria-valuenow',input.value.trim().replace(',','.'));schedule()});
-    input.addEventListener('change',()=>{normalizeOnCommit(input);input.setAttribute('aria-valuenow',input.value);schedule()});
-    input.addEventListener('blur',()=>{normalizeOnCommit(input);input.setAttribute('aria-valuenow',input.value);schedule()});
+    field.append(caption,input);slot.prepend(field);
+    input.addEventListener('input',()=>driveFromInput(input,false));
+    input.addEventListener('change',()=>driveFromInput(input,true));
+    input.addEventListener('blur',()=>driveFromInput(input,true));
     schedule();return true;
   }
 
@@ -141,7 +176,7 @@
     // Deliberately start a new page load at the canonical default. The previous
     // session-storage behavior preserved accidental zeroes caused by the old
     // scroll-sensitive number input.
-    activeWindow=model()?.defaultWindow??6;
+    model()?.setWindow?.(model()?.getWindow?.()??model()?.defaultWindow??6);
     ensureInstalled();observeFilterBay();
     window.addEventListener('relphi:sky-foundation-filter-changed',event=>{
       const nextState=event.detail?.state||null;
@@ -156,6 +191,7 @@
       schedule();
     });
     ['relphi:sky-foundation-interactions-ready','relphi:sky-intrasky-relationships-ready','relphi:sky-intrasky-b-relationships-ready','relphi:sky-placement-multiselect-changed','relphi:sky-house-multiselect-changed','relphi:sky-aspect-multiselect-changed','relphi:sky-zodiac-filter-changed','relphi:selected-relationship-rendered','relphi:sky-foundation-ready'].forEach(name=>window.addEventListener(name,ensureInstalled));
+    window.addEventListener('relphi:sky-harmonic-window-model-changed',schedule);
     document.getElementById('skyFoundationRelationships')?.addEventListener('change',schedule);
   }
 

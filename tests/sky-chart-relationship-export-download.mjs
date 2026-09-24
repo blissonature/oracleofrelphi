@@ -38,6 +38,73 @@ await page.waitForSelector('#skyFoundationRelationshipList .sky-foundation-relat
 const button=page.locator('#skyChartRelationshipsExport');
 await button.waitFor({state:'visible',timeout:10000});
 assert.equal(await button.getAttribute('data-relationship-export-owner'),'columns-v2');
+
+await page.evaluate(()=>window.RelphiHarmonicOrb?.setWindow?.(window.RelphiHarmonicOrb.maxWindow));
+await page.locator('[data-relationship-sort]').selectOption('most-challenging');
+await page.waitForTimeout(250);
+const limit=page.locator('[data-relationship-limit]');
+await limit.waitFor({state:'visible'});
+assert.equal(await limit.evaluate(node=>node.closest('.sky-relationship-heading-actions')?.classList.contains('sky-relationship-heading-actions')||false),true,'Limit must sit in the Relationships header action cluster beside Copy and Download.');
+assert.equal(await limit.evaluate(node=>Boolean(node.closest('.sky-chart-filter-bar'))),false,'Limit must not remain in the filter grid.');
+assert.deepEqual(await limit.locator('option').allTextContents(),['10','20','50','All'],'Relationships must expose 10, 20, 50, and All result limits.');
+const eligibleOrder=await page.evaluate(()=>[...document.querySelectorAll('#skyFoundationRelationshipList>.sky-foundation-relationship-row[data-relation-index]')]
+  .filter(row=>{const style=getComputedStyle(row);return !row.hidden&&style.display!=='none'&&style.visibility!=='hidden'})
+  .map(row=>row.dataset.relationIndex));
+assert.ok(eligibleOrder.length>20,`Fixture must expose more than 20 eligible relationships to test a real cap: ${eligibleOrder.length}`);
+await limit.selectOption('20');
+await page.waitForFunction(()=>document.documentElement.dataset.skyRelationshipLimit==='20');
+await page.waitForFunction(()=>[...document.querySelectorAll('#skyFoundationRelationshipList>.sky-foundation-relationship-row')].filter(row=>{const style=getComputedStyle(row);return !row.hidden&&style.display!=='none'&&style.visibility!=='hidden'}).length===20);
+const cappedOrder=await page.evaluate(()=>[...document.querySelectorAll('#skyFoundationRelationshipList>.sky-foundation-relationship-row[data-relation-index]')]
+  .filter(row=>{const style=getComputedStyle(row);return !row.hidden&&style.display!=='none'&&style.visibility!=='hidden'})
+  .map(row=>row.dataset.relationIndex));
+assert.deepEqual(cappedOrder,eligibleOrder.slice(0,20),'Most Challenging + Limit 20 must expose exactly the first 20 relationships in the ranked set.');
+const matchStatus=await page.locator('#skyFoundationRelationshipCount').evaluate(node=>({
+  matchCount:node.dataset.matchCount||'',
+  visibleNumber:getComputedStyle(node,'::before').content.replace(/["']/g,''),
+  suffix:getComputedStyle(node,'::after').content
+}));
+assert.equal(matchStatus.matchCount,String(eligibleOrder.length),'Changing Limit to 20 must not change the number of relationships that match the current filters.');
+assert.equal(matchStatus.visibleNumber,String(eligibleOrder.length),'The visible match number must come from stable pre-cap match state.');
+assert.match(matchStatus.suffix,/matches/,'The header must label the pre-cap qualifying count as matches.');
+
+const stableMatches=String(eligibleOrder.length);
+for(const mode of ['names','referents','glyphs']){
+  await page.evaluate(mode=>window.RelphiSkyRelationshipDisplay?.setMode?.(mode),mode);
+  await page.waitForFunction(mode=>document.documentElement.dataset.relationshipDisplay===mode,mode);
+  await page.waitForTimeout(80);
+  const progressiveStatus=await page.locator('#skyFoundationRelationshipCount').evaluate(node=>({
+    matchCount:node.dataset.matchCount||'',
+    visualNumber:getComputedStyle(node,'::before').content.replace(/["']/g,''),
+    visualLabel:getComputedStyle(node,'::after').content,
+    aria:node.getAttribute('aria-label')||''
+  }));
+  assert.equal(progressiveStatus.matchCount,stableMatches,`Progressive ${mode} reveal must not change match state.`);
+  assert.equal(progressiveStatus.visualNumber,stableMatches,`Progressive ${mode} reveal must not change the visible match number.`);
+  assert.match(progressiveStatus.visualLabel,/matches/,`Progressive ${mode} reveal must preserve the matches label.`);
+  assert.equal(progressiveStatus.aria,`${stableMatches} matching relationships`,`Progressive ${mode} reveal must preserve the accessible match count.`);
+}
+await page.locator('#skyFoundationRelationshipCount').evaluate(node=>{node.textContent='1/999'});
+const legacyOverwriteStatus=await page.locator('#skyFoundationRelationshipCount').evaluate(node=>({
+  visualNumber:getComputedStyle(node,'::before').content.replace(/["']/g,''),
+  visualLabel:getComputedStyle(node,'::after').content
+}));
+assert.equal(legacyOverwriteStatus.visualNumber,stableMatches,'A legacy textContent writer must not alter the visible match number.');
+assert.match(legacyOverwriteStatus.visualLabel,/matches/,'A legacy textContent writer must not alter the visible matches label.');
+const continuation=page.locator('#skyFoundationRelationshipList>[data-result-limit-show-more]');
+await continuation.waitFor({state:'visible'});
+assert.match((await continuation.textContent()||'').trim(),/^\d+ more matching results · Show more$/,'A capped list must end with a direct Show more continuation.');
+
+await page.evaluate(()=>{
+  window.__relphiLimitCopiedText='';
+  document.execCommand=()=>false;
+  const clipboard={writeText:async text=>{window.__relphiLimitCopiedText=String(text)}};
+  try{Object.defineProperty(navigator,'clipboard',{configurable:true,value:clipboard})}catch(_){try{navigator.clipboard.writeText=clipboard.writeText}catch(__){}}
+});
+const copyButton=page.locator('.sky-relationship-copy-button');
+await copyButton.click();
+await page.waitForFunction(()=>Boolean(window.__relphiLimitCopiedText),null,{timeout:3000});
+assert.equal((await copyButton.textContent()||'').trim(),'Copied 20','Copy feedback must confirm that only the 20 capped relationships were copied.');
+
 await button.click();
 await page.waitForTimeout(3000);
 const diagnostics=await page.evaluate(()=>({
@@ -47,6 +114,7 @@ const diagnostics=await page.evaluate(()=>({
   relationshipExportV2:!!window.__relphiRelationshipExportColumnsV2,
   genericExportV5:!!window.__relphiSkyExportV5,
   visibleRows:[...document.querySelectorAll('#skyFoundationRelationshipList>.sky-foundation-relationship-row')].filter(r=>{const s=getComputedStyle(r);return !r.hidden&&s.display!=='none'&&s.visibility!=='hidden'}).length,
+  limit:document.querySelector('[data-relationship-limit]')?.value||'',
   exportOptions:window.__relphiRelationshipExportOptions||null,
   pendingImages:[...document.querySelectorAll('.rex-sheet img')].filter(i=>!i.complete||!i.naturalWidth).map(i=>i.getAttribute('src')).slice(0,12),
   rexSheet:!!document.querySelector('.rex-sheet')
@@ -57,6 +125,8 @@ assert.match(downloads[0].suggestedFilename(),/relationships-.*\.png$/i);
 assert.equal(diagnostics.disabled,false,'Download control should recover after export completes.');
 assert.equal(diagnostics.rexSheet,false,'Off-screen export sheet should be removed after completion.');
 assert.equal(diagnostics.relationshipExportV4,true,'Compact Relationships exporter should own the download.');
+assert.equal(diagnostics.limit,'20','Export must run with the active 20-result cap.');
+assert.equal(diagnostics.visibleRows,20,'Export must include only the 20 currently shown relationships.');
 const expectedCols=Math.ceil(diagnostics.visibleRows/16);
 const expectedWidth=24+expectedCols*500+Math.max(0,expectedCols-1)*8;
 const expectedRatio=diagnostics.visibleRows>24?1:1.1;

@@ -1,7 +1,7 @@
 // Unified relationship-list intrasky owner.
 // Generates both Sky A (A↔A) and Sky B (B↔B) intrasky relationships.
 // A↔B remains owned by the comparison relationship engine.
-// Redundant self-defining pairs Asc-Dsc, MC-IC, and North Node-South Node are omitted;
+// Redundant self-defining pairs Asc-Dsc, MC-IC, North Node-South Node, and Vertex-Anti-Vertex are omitted;
 // those points remain eligible for every other relationship.
 (function(){
 'use strict';
@@ -16,9 +16,9 @@ const COLOR='#c9211e';
 const COLOR_B='#2462d0';
 const SIGNS=['aries','taurus','gemini','cancer','leo','virgo','libra','scorpio','sagittarius','capricorn','aquarius','pisces'];
 const SIGN_NAMES=['Aries','Taurus','Gemini','Cancer','Leo','Virgo','Libra','Scorpio','Sagittarius','Capricorn','Aquarius','Pisces'];
-const ORDER=['sun','moon','mercury','venus','mars','jupiter','saturn','uranus','neptune','pluto','chiron','lilith','part-of-fortune','vertex','north-node','south-node','asc','dsc','mc','ic'];
-const ALIASES={rising:'asc',ascendant:'asc',asc:'asc',ac:'asc',descendant:'dsc',dsc:'dsc',dc:'dsc',midheaven:'mc',mc:'mc','imum coeli':'ic',imumcoeli:'ic',ic:'ic',vertex:'vertex',vx:'vertex','north node':'north-node',node:'north-node','true node':'north-node','mean node':'north-node','south node':'south-node',chiron:'chiron',lilith:'lilith','black moon lilith':'lilith',fortune:'part-of-fortune','part of fortune':'part-of-fortune',pof:'part-of-fortune'};
-const REDUNDANT=new Set(['asc|dsc','ic|mc','north-node|south-node']);
+const ORDER=['sun','moon','mercury','venus','mars','jupiter','saturn','uranus','neptune','pluto','chiron','lilith','part-of-fortune','vertex','anti-vertex','north-node','south-node','asc','dsc','mc','ic'];
+const ALIASES={rising:'asc',ascendant:'asc',asc:'asc',ac:'asc',descendant:'dsc',dsc:'dsc',dc:'dsc',midheaven:'mc',mc:'mc','imum coeli':'ic',imumcoeli:'ic',ic:'ic',vertex:'vertex',vx:'vertex','anti vertex':'anti-vertex','anti-vertex':'anti-vertex',antivertex:'anti-vertex',avx:'anti-vertex','north node':'north-node',node:'north-node','true node':'north-node','mean node':'north-node','south node':'south-node',chiron:'chiron',lilith:'lilith','black moon lilith':'lilith',fortune:'part-of-fortune','part of fortune':'part-of-fortune',pof:'part-of-fortune'};
+const REDUNDANT=new Set(['asc|dsc','ic|mc','north-node|south-node','anti-vertex|vertex']);
 const HIDDEN_CLASSES=['sky-foundation-single-sky-cross-hidden','sky-chart-filter-hidden','sky-chart-orb-hidden','sky-orb-filter-hidden','sky-chart-multiselect-hidden','sky-chart-house-multiselect-hidden','sky-chart-aspect-multiselect-hidden','sky-chart-sign-filter-hidden','sky-chart-semantic-hidden'];
 let queued=false,countQueued=false,colorQueued=false,listObserver=null;
 

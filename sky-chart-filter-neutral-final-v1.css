@@ -18,10 +18,10 @@ html body #skyRelationshipDisplayPopover.sky-relationship-display-popover.is-por
 }
 .sky-chart-placement-list-header-choice-a,
 .sky-chart-placement-list-header-choice-b,
-.sky-chart-placement-summary-choices .sky-chart-placement-choice-a,
-.sky-chart-placement-summary-choices .sky-chart-placement-choice-b,
-.sky-chart-placement-choice-a,
-.sky-chart-placement-choice-b,
+.sky-chart-placement-summary-choices .sky-chart-placement-choice-a:not(.sky-placement-logic-control),
+.sky-chart-placement-summary-choices .sky-chart-placement-choice-b:not(.sky-placement-logic-control),
+.sky-chart-placement-choice-a:not(.sky-placement-logic-control),
+.sky-chart-placement-choice-b:not(.sky-placement-logic-control),
 .sky-chart-house-choice-a,
 .sky-chart-house-choice-b{
   background:rgba(31,27,24,.018)!important;

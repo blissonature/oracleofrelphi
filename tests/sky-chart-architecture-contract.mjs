@@ -61,6 +61,10 @@ assert.match(whereWhen,/Location inferred from pasted placements/,'Inference con
 assert.match(whereWhen,/window\.RelphiSkyWhereWhen=Object\.freeze/,'Where and When must expose an explicit extension contract');
 assert.match(whereWhen,/finishExternalCommit/,'External placement imports must finish through the controller lifecycle');
 assert.match(whereWhen,/relphi:sky-where-when-location-selected/,'Location state changes must be published explicitly');
+assert.match(whereWhen,/data-ww-action="use-here">Use Here<\/button>/,'Where and When must own a single Use Here browser-location control');
+assert.match(whereWhen,/data-current-location="\$\{slot\}"/,'Use Here must suppress the legacy current-location injector');
+assert.match(whereWhen,/async function useHere\(slot,button\)[\s\S]*currentLocationPacket\(\)[\s\S]*selectLocation\(slot,packet\)/,'Use Here must resolve and apply only browser location state');
+assert.match(whereWhen,/const dateValue=dateField\?\.value\|\|'',timeValue=timeField\?\.value\|\|''[\s\S]*dateField\.value=dateValue[\s\S]*timeField\.value=timeValue/,'Use Here must preserve existing date and time values');
 
 assert.equal(draft.includes('MutationObserver'),false,'Draft heptagram must render from explicit events, not DOM repair observation');
 assert.equal(draft.includes('preview.before(advanced)'),false,'Draft heptagram must not reorder the editor after creation');
@@ -96,3 +100,6 @@ assert.equal(quickCopy.includes("title.textContent='Placements'"),false,'Copy be
 assert.equal(quickCopy.includes('sky-placement-copy-row'),false,'Copy behavior must not own persistent Placements chrome');
 
 console.log('Sky Chart architecture contract passed.');
+assert.match(extraPoints,/placement\('Anti-Vertex',Number\(resolvedVertex\.longitude\)\+180,'vertex-opposition'\)/,'Anti-Vertex must be derived exactly opposite Vertex during state preparation');
+assert.match(foundation,/anti-vertex\|vertex/,'The foundation must omit the constitutive Vertex–Anti-Vertex opposition from intrasky aspects');
+assert.match(foundation,/vertex','anti-vertex','mc'/,'Anti-Vertex must be a first-class ordered wheel placement beside Vertex');

@@ -17,8 +17,30 @@ function installStyles(){
   `;
   document.head.appendChild(style);
 }
-function profile(payload){return payload?.calcProfile&&typeof payload.calcProfile==='object'?payload.calcProfile:{}}
-function complete(payload){const p=profile(payload);return!!(p&&p.dateTime&&p.location&&p.timeZone&&Number.isFinite(Number(p.latitude))&&Number.isFinite(Number(p.longitude)))}
+function profile(payload){
+  if(!payload||typeof payload!=='object')return{};
+  const current=payload.calcProfile&&typeof payload.calcProfile==='object'?payload.calcProfile:{};
+  const legacy=payload.profile&&typeof payload.profile==='object'?payload.profile:{};
+  const metadata=payload.metadata&&typeof payload.metadata==='object'?payload.metadata:{};
+  const notes=String(payload.notes||'');
+  const noteInstant=notes.match(/Motion state sampled around\s+(\d{4}-\d\d-\d\dT\d\d:\d\d(?::\d\d(?:\.\d+)?)?Z)/i)?.[1]||'';
+  const noteCoordinates=notes.match(/latitude\s+(-?\d+(?:\.\d+)?)\s+and longitude\s+(-?\d+(?:\.\d+)?)/i);
+  const noteTimeZone=notes.match(/Time zone:\s*([^\.]+)\./i)?.[1]?.trim()||'';
+  const noteLocation=notes.match(/Location:\s*(.+?)\.\s*Time zone:/i)?.[1]?.trim()||'';
+  return{
+    ...legacy,...current,
+    dateTime:current.dateTime||legacy.dateTime||payload.dateTime||metadata.dateTime||'',
+    instant:current.instant||legacy.instant||payload.instant||metadata.instant||noteInstant||'',
+    latitude:current.latitude??legacy.latitude??payload.latitude??metadata.latitude??noteCoordinates?.[1]??'',
+    longitude:current.longitude??legacy.longitude??payload.longitude??metadata.longitude??noteCoordinates?.[2]??'',
+    location:current.location||legacy.location||payload.location||metadata.location||noteLocation||'',
+    locationQuery:current.locationQuery||legacy.locationQuery||payload.locationQuery||metadata.locationQuery||'',
+    timeZone:current.timeZone||legacy.timeZone||payload.timeZone||metadata.timeZone||noteTimeZone||'',
+    houseSystem:current.houseSystem||legacy.houseSystem||payload.houseSystem||'whole-sign',
+    houseCusps:current.houseCusps||current.cusps||legacy.houseCusps||legacy.cusps||payload.houseCusps||payload.cusps||[]
+  };
+}
+function complete(payload){const p=profile(payload);return!!(p&&(p.instant||p.dateTime)&&p.location&&p.timeZone&&Number.isFinite(Number(p.latitude))&&Number.isFinite(Number(p.longitude)))}
 function panel(slot){return document.getElementById(PANELS[slot]||'')}
 function body(slot){return panel(slot)?.querySelector(':scope > .sky-foundation-body')||null}
 function fingerprint(slot,name,label){return `<span class="sky-drawer-fingerprint sky-drawer-fingerprint-${name}" data-sky-drawer-fingerprint="${name}" data-sky-slot="${slot}" role="img" aria-label="${label}" hidden></span>`}
@@ -114,7 +136,7 @@ function ensure(slot,payload){
 function setEditorExpanded(slot,expanded){const current=refs(slot);if(!current)return;current.editor.hidden=!expanded;current.summary?.classList.toggle('is-editor-expanded',!!expanded);current.root.dataset.whereEditorExpanded=expanded?'true':'false'}
 function openDrawer(slot,name){const current=refs(slot);if(!current)return;activateDrawer(current.root,drawer(current.root,name))}
 function repair(){['A','B'].forEach(slot=>{const current=refs(slot);if(!current)return;installDrawerBehavior(slot,current.root);current.root.removeAttribute('inert');current.root.dataset.whereEditorExpanded=current.editor&&!current.editor.hidden?'true':'false'})}
-window.RelphiSkyCardShell=Object.freeze({ensure,get:refs,sync,setEditorExpanded,openDrawer,complete,repair});
+window.RelphiSkyCardShell=Object.freeze({ensure,get:refs,sync,setEditorExpanded,openDrawer,profile,complete,repair});
 window.addEventListener('relphi:sky-session-recovered',repair);
 installStyles();
 })();

@@ -4,6 +4,7 @@
 if(window.RelphiHarmonicOrb)return;
 const DEFAULT_WINDOW=6;
 const MAX_WINDOW=12;
+const WINDOW_STEP=.05;
 const ASPECTS=Object.freeze([
   Object.freeze({id:'conjunction',angle:0,numerator:0,harmonic:1,color:'#e53935'}),
   Object.freeze({id:'semi-sextile',angle:30,numerator:1,harmonic:12,color:'#7c9b49'}),
@@ -20,8 +21,50 @@ const ASPECTS=Object.freeze([
 const BY_ID=new Map(ASPECTS.map(aspect=>[aspect.id,aspect]));
 let activeWindow=DEFAULT_WINDOW;
 function clampWindow(value){const n=Number(value);return Number.isFinite(n)&&n>=0?Math.min(MAX_WINDOW,n):DEFAULT_WINDOW}
-function setWindow(value){activeWindow=clampWindow(value);document.documentElement.dataset.skyHarmonicWindow=String(activeWindow);return activeWindow}
-function windowFromControl(){const input=document.querySelector('[data-filter="orb"]');if(input&&String(input.value).trim()!=='')setWindow(input.value);return activeWindow}
+function syncVisibleControls(sourceInput=null){
+  const value=String(activeWindow),max=String(MAX_WINDOW);
+  document.querySelectorAll('[data-harmonic-window-input],[data-vocab-harmonic-window-input]').forEach(input=>{
+    if(input!==sourceInput)input.value=value;
+    input.setAttribute('aria-valuenow',value);
+    input.setAttribute('aria-valuemax',max);
+    input.setAttribute('aria-invalid','false');
+    input.setCustomValidity?.('');
+  });
+}
+function setWindow(value,sourceInput=null){
+  const next=clampWindow(value),changed=next!==activeWindow;
+  activeWindow=next;
+  document.documentElement.dataset.skyHarmonicWindow=String(activeWindow);
+  syncVisibleControls(sourceInput);
+  if(changed)window.dispatchEvent(new CustomEvent('relphi:sky-harmonic-window-model-changed',{detail:{harmonicWindow:activeWindow}}));
+  return activeWindow;
+}
+function getWindow(){return activeWindow}
+function harmonicWindowInput(target){
+  return target?.closest?.('[data-harmonic-window-input],[data-vocab-harmonic-window-input]')||null;
+}
+function stepWindow(input,direction){
+  const current=Number(String(input?.value??activeWindow).trim().replace(',','.'));
+  const base=Number.isFinite(current)?current:activeWindow;
+  const next=clampWindow(Math.round((base+direction*WINDOW_STEP)*100)/100);
+  if(input)input.value=String(next);
+  return setWindow(next,input);
+}
+document.addEventListener('keydown',event=>{
+  const input=harmonicWindowInput(event.target);
+  if(!input||(event.key!=='ArrowUp'&&event.key!=='ArrowDown'))return;
+  event.preventDefault();
+  event.stopPropagation();
+  stepWindow(input,event.key==='ArrowUp'?1:-1);
+});
+// The [data-filter="orb"] control is the stable MAXIMUM candidate ceiling used
+// to build the relationship pool. Reading it must never mutate the user's live
+// Harmonic Window.
+function windowFromControl(){
+  const input=document.querySelector('[data-filter="orb"]');
+  const raw=String(input?.value??'').trim().replace(',','.');
+  return raw!==''?clampWindow(raw):MAX_WINDOW;
+}
 function metrics(distance,aspectLike,windowValue){
   const aspect=typeof aspectLike==='string'?BY_ID.get(aspectLike):aspectLike;
   if(!aspect)return null;
@@ -50,5 +93,5 @@ function motion(metricsLike,leftVelocity,rightVelocity){
 }
 function relation(left,right,aspect,distance,windowValue){const m=metrics(distance,aspect,windowValue);if(!m||!m.active)return null;const temporal=motion(m,left?.angularVelocity??left?.velocity??left?.item?.angularVelocity??left?.item?.velocity??left?.item?.speed,right?.angularVelocity??right?.velocity??right?.item?.angularVelocity??right?.item?.velocity??right?.item?.speed);return{left,right,aspect,distance,orb:m.ordinaryOrb,...m,temporal}}
 window.addEventListener('relphi:sky-orb-limit-changed',event=>{const value=event.detail?.harmonicWindow??event.detail?.orb;if(value!=null)setWindow(value)});
-window.RelphiHarmonicOrb=Object.freeze({theorem:'ordinary orb × fundamental harmonic order = harmonic phase error',defaultWindow:DEFAULT_WINDOW,maxWindow:MAX_WINDOW,aspects:ASPECTS,byId:id=>BY_ID.get(String(id||''))||null,clampWindow,setWindow,windowFromControl,metrics,motion,relation});
+window.RelphiHarmonicOrb=Object.freeze({theorem:'ordinary orb × fundamental harmonic order = harmonic phase error',defaultWindow:DEFAULT_WINDOW,maxWindow:MAX_WINDOW,windowStep:WINDOW_STEP,aspects:ASPECTS,byId:id=>BY_ID.get(String(id||''))||null,clampWindow,setWindow,getWindow,stepWindow,syncVisibleControls,windowFromControl,metrics,motion,relation});
 })();

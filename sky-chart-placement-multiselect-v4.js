@@ -1,5 +1,6 @@
-// Stable, indexed Placement checklist for Sky A / Sky B.
-// Endpoint-OR semantics are authoritative here; no compatibility second pass is required.
+// Stable, indexed Placement logic filter for Sky A / Sky B.
+// Category and placement predicates rotate neutral -> OR -> AND -> NOT -> neutral.
+// NOT vetoes; every AND predicate is required; pooled OR predicates require at least one match.
 (function(){
   'use strict';
   if(!/(^|\/)sky-chart\.html$/.test(location.pathname)||window.__relphiSkyPlacementMultiselectV4)return;
@@ -11,6 +12,8 @@
 
   const SLOTS=['A','B'];
   const KEYS={A:'relphiSkyChartA',B:'relphiSkyChartB'};
+  const LOGIC_KEY='relphiSkyPlacementLogicV1';
+  const LOGIC_STATES=Object.freeze(['','or','and','not']);
   const GROUPS=Object.freeze([
     {id:'luminaries',label:'Luminaries',members:['sun','moon']},
     {id:'planets',label:'Planets',members:['mercury','venus','mars','jupiter','saturn','uranus','neptune','pluto']},
@@ -39,11 +42,25 @@
     A:{available:new Map(),selected:new Set(),initialized:false,signature:''},
     B:{available:new Map(),selected:new Set(),initialized:false,signature:''}
   };
+  const logicRules=new Map();
+
+  function ruleKey(scope,target,choice){return [scope,target,choice].join('|')}
+  function loadLogic(){
+    try{
+      const raw=JSON.parse(sessionStorage.getItem(LOGIC_KEY)||'{}');
+      Object.entries(raw||{}).forEach(([key,value])=>{if(LOGIC_STATES.includes(value)&&value)logicRules.set(key,value)});
+    }catch(_){}
+  }
+  function saveLogic(){
+    try{sessionStorage.setItem(LOGIC_KEY,JSON.stringify(Object.fromEntries(logicRules)))}catch(_){}
+  }
+  loadLogic();
 
   let refreshQueued=false;
   let applyQueued=false;
   let positionQueued=false;
   let portalOwner=null;
+  let portalAnchor=null;
   let rootObserver=null;
   let modeObserver=null;
   let lockedPopoverWidth=0;
@@ -74,7 +91,7 @@
   }
   function activeSlots(){return bActive()?SLOTS:['A']}
   function activeKinds(){return bActive()?['all','a','b']:['all','a']}
-  function filterBar(){return document.querySelector('#skyFoundationRelationships .sky-chart-filter-bar')}
+  function filterBar(){return (document.querySelector('#skyFoundationFocus .sky-chart-filter-bar')||document.querySelector('#skyFoundationRelationships .sky-chart-filter-bar'))}
   function control(){return document.querySelector('[data-placement-filter="combined"]')}
   function popover(){return document.getElementById('skyChartPlacementPopover')}
   function isOpen(owner){return !!owner?.classList.contains('is-open')}
@@ -123,10 +140,8 @@
     const signature=JSON.stringify(entries.map(entry=>[entry.id,entry.label,entry.group]));
     const current=state[slot];
     if(current.signature===signature)return false;
-    const previouslyAll=!current.initialized||current.selected.size===current.available.size;
-    const previous=new Set(current.selected);
     current.available=new Map(entries.map(entry=>[entry.id,entry]));
-    current.selected=previouslyAll?new Set(current.available.keys()):new Set(Array.from(previous).filter(id=>current.available.has(id)));
+    current.selected=new Set(current.available.keys());
     current.initialized=true;
     current.signature=signature;
     return true;
@@ -138,21 +153,22 @@
     if(scope==='placement'&&state[slot].available.has(target))return[target];
     return[];
   }
-  function setSelection(ids,slot,checked){ids.forEach(id=>checked?state[slot].selected.add(id):state[slot].selected.delete(id))}
-
+  function logicState(scope,target,choice){return logicRules.get(ruleKey(scope,target,choice))||''}
+  function setLogicState(scope,target,choice,value){
+    const key=ruleKey(scope,target,choice),next=LOGIC_STATES.includes(value)?value:'';
+    if(next)logicRules.set(key,next);else logicRules.delete(key);
+    saveLogic();
+  }
+  function nextLogicState(value){const index=LOGIC_STATES.indexOf(value);return LOGIC_STATES[(index<0?0:index+1)%LOGIC_STATES.length]}
   function choice(scope,target,kind,rowLabel){
-    const label=document.createElement('label');
-    label.className=`sky-chart-placement-choice sky-chart-placement-choice-${kind}`;
-    const input=document.createElement('input');
-    input.type='checkbox';
-    input.dataset.placementScope=scope;
-    input.dataset.placementTarget=target;
-    input.dataset.placementChoice=kind;
-    input.setAttribute('aria-label',`${rowLabel}: ${kind==='all'?'All skies':`Sky ${kind.toUpperCase()}`}`);
-    const text=document.createElement('span');
-    text.textContent=kind==='all'?'All':kind.toUpperCase();
-    label.append(input,text);
-    return label;
+    const button=document.createElement('button');
+    button.type='button';
+    button.className=`sky-chart-placement-choice sky-chart-placement-choice-${kind} sky-placement-logic-control`;
+    button.dataset.placementScope=scope;
+    button.dataset.placementTarget=target;
+    button.dataset.placementChoice=kind;
+    updateChoice(button,rowLabel);
+    return button;
   }
   function row(scope,target,labelText,kind){
     const item=document.createElement('div');
@@ -179,39 +195,50 @@
     return Array.from(combined.values()).sort((a,b)=>rank(a.id)-rank(b.id)||a.label.localeCompare(b.label));
   }
 
-  function updateChoice(input){
-    const slots=input.dataset.placementChoice==='all'?activeSlots():[input.dataset.placementChoice.toUpperCase()];
-    let available=0,selected=0;
-    slots.forEach(slot=>{
-      if(slot==='B'&&!bActive())return;
-      const ids=idsFor(input.dataset.placementScope,input.dataset.placementTarget,slot);
-      available+=ids.length;
-      selected+=ids.filter(id=>state[slot].selected.has(id)).length;
+  function predicateAvailable(scope,target,choice){
+    const slots=choice==='all'?activeSlots():[choice.toUpperCase()];
+    return slots.some(slot=>{
+      if(slot==='B'&&!bActive())return false;
+      return idsFor(scope,target,slot).length>0;
     });
-    input.checked=available>0&&selected===available;
-    input.indeterminate=selected>0&&selected<available;
-    input.disabled=available===0;
   }
-  function summary(slot){
-    const current=state[slot];
-    if(!current.selected.size)return'None';
-    if(current.available.size&&current.selected.size===current.available.size)return'All';
-    if(current.selected.size===1)return current.available.get(Array.from(current.selected)[0])?.label||'1 selected';
-    return`${current.selected.size} of ${current.available.size}`;
+  function rowLabelFor(scope,target){
+    if(scope==='group')return GROUPS.find(group=>group.id===target)?.label||titleCase(target);
+    if(scope==='placement')return activeSlots().map(slot=>state[slot].available.get(target)?.label).find(Boolean)||labelFor(target);
+    return'All placements';
+  }
+  function updateChoice(button,rowLabel=rowLabelFor(button.dataset.placementScope,button.dataset.placementTarget)){
+    const scope=button.dataset.placementScope,target=button.dataset.placementTarget,choice=button.dataset.placementChoice;
+    const value=logicState(scope,target,choice),scopeLabel=choice==='all'?'All skies':`Sky ${choice.toUpperCase()}`;
+    button.dataset.logicState=value||'neutral';
+    button.textContent=value?value.toUpperCase():'';
+    button.title=`${rowLabel} · ${scopeLabel} · ${value?value.toUpperCase():'Neutral'}`;
+    button.setAttribute('aria-label',`${rowLabel}, ${scopeLabel}: ${value?value.toUpperCase():'neutral'}. Click to cycle logic.`);
+    button.disabled=!predicateAvailable(scope,target,choice);
+  }
+  function activeRules(){
+    const out=[];
+    logicRules.forEach((op,key)=>{
+      const [scope,target,choice]=key.split('|');
+      if(!op||choice==='b'&&!bActive()||!predicateAvailable(scope,target,choice))return;
+      out.push({scope,target,choice,op});
+    });
+    return out;
+  }
+  function ruleSummary(rule){
+    const prefix=rule.choice==='all'?'':rule.choice.toUpperCase()+' ';
+    return`${prefix}${rowLabelFor(rule.scope,rule.target)} ${rule.op.toUpperCase()}`;
   }
   function combinedSummary(){
-    const a=summary('A');
-    if(!bActive())return a;
-    const b=summary('B');
-    if(a==='All'&&b==='All')return'All';
-    if(a==='None'&&b==='None')return'None';
-    return`A: ${a} · B: ${b}`;
+    const rules=activeRules();
+    if(!rules.length)return'All';
+    return rules.map(ruleSummary).join(' · ');
   }
   function updateControl(){
     const owner=control(),menu=popover();
     if(!owner||!menu)return;
-    owner.querySelectorAll('[data-placement-choice]').forEach(updateChoice);
-    if(!owner.contains(menu))menu.querySelectorAll('[data-placement-choice]').forEach(updateChoice);
+    owner.querySelectorAll('[data-placement-choice]').forEach(button=>updateChoice(button));
+    if(!owner.contains(menu))menu.querySelectorAll('[data-placement-choice]').forEach(button=>updateChoice(button));
     const status=owner.querySelector('[data-placement-filter-summary]');
     if(status)status.textContent=combinedSummary();
   }
@@ -237,14 +264,17 @@
       headerChoices.appendChild(heading);
     });
     header.append(headerLabel,headerChoices);
-    list.append(header,row('all','all','All placements','master'));
+    list.append(header);
     GROUPS.forEach(group=>{
       const entries=listEntries(group.id);
       if(!entries.length)return;
       list.appendChild(row('group',group.id,group.label,'group'));
       entries.forEach(entry=>list.appendChild(row('placement',entry.id,entry.label,'placement')));
     });
-    body.replaceChildren(list);
+    const toolbar=document.createElement('div');
+    toolbar.className='sky-placement-logic-toolbar';
+    toolbar.innerHTML='<span>Click: blank → OR → AND → NOT</span><button type="button" data-placement-logic-clear>Clear</button>';
+    body.replaceChildren(toolbar,list);
     updateControl();
     if(isOpen(portalOwner))requestAnimationFrame(()=>{menu.scrollTop=priorScroll});
   }
@@ -267,13 +297,52 @@
     renderCache={list,wheel,rowCount,aspectCount,rows,aspectsByIndex};
     return renderCache;
   }
-  function relationshipMatches(row){
-    if(state.A.selected.size===0&&state.B.selected.size===0)return false;
+  function rowEndpoints(row){
     const [leftSlot,rightSlot]=relationshipSlots(row);
-    const leftId=canonicalId(row.dataset.leftPlacement);
-    const rightId=canonicalId(row.dataset.rightPlacement);
-    return(!!leftId&&state[leftSlot]?.selected.has(leftId))||(!!rightId&&state[rightSlot]?.selected.has(rightId));
+    return[
+      {slot:leftSlot,id:canonicalId(row.dataset.leftPlacement)},
+      {slot:rightSlot,id:canonicalId(row.dataset.rightPlacement)}
+    ].filter(endpoint=>endpoint.id).map(endpoint=>({...endpoint,group:state[endpoint.slot]?.available.get(endpoint.id)?.group||groupFor(endpoint.id)}));
   }
+  function ruleMatchesEndpoint(rule,endpoint){
+    if(rule.choice!=='all'&&endpoint.slot!==rule.choice.toUpperCase())return false;
+    if(rule.scope==='placement')return endpoint.id===rule.target;
+    if(rule.scope==='group')return endpoint.group===rule.target;
+    return true;
+  }
+  function ruleMatchesRow(rule,row){return rowEndpoints(row).some(endpoint=>ruleMatchesEndpoint(rule,endpoint))}
+  function relationshipMatches(row){
+    const rules=activeRules();
+    if(!rules.length)return true;
+    const notRules=rules.filter(rule=>rule.op==='not');
+    if(notRules.some(rule=>ruleMatchesRow(rule,row)))return false;
+    const andRules=rules.filter(rule=>rule.op==='and');
+    if(andRules.some(rule=>!ruleMatchesRow(rule,row)))return false;
+    const orRules=rules.filter(rule=>rule.op==='or');
+    if(orRules.length&&!orRules.some(rule=>ruleMatchesRow(rule,row)))return false;
+    return true;
+  }
+  function endpointRules(slot,id){
+    const endpoint={slot,id:canonicalId(id),group:state[slot]?.available.get(canonicalId(id))?.group||groupFor(id)};
+    return activeRules().filter(rule=>ruleMatchesEndpoint(rule,endpoint));
+  }
+  function endpointVetoed(slot,id){return endpointRules(slot,id).some(rule=>rule.op==='not')}
+  function endpointPositive(slot,id){return endpointRules(slot,id).some(rule=>rule.op==='or'||rule.op==='and')}
+  function compatibilitySelection(slot){
+    const positives=activeRules().some(rule=>rule.op==='or'||rule.op==='and');
+    return Array.from(state[slot].available.keys()).filter(id=>!endpointVetoed(slot,id)&&(!positives||endpointPositive(slot,id)));
+  }
+  function effectiveSelection(slot){
+    const scoped=activeRules().filter(rule=>rule.choice==='all'||rule.choice.toUpperCase()===slot);
+    const positives=scoped.some(rule=>rule.op==='or'||rule.op==='and');
+    return Array.from(state[slot].available.keys()).filter(id=>{
+      const endpoint={slot,id,group:state[slot]?.available.get(id)?.group||groupFor(id)};
+      const matching=scoped.filter(rule=>ruleMatchesEndpoint(rule,endpoint));
+      if(matching.some(rule=>rule.op==='not'))return false;
+      return!positives||matching.some(rule=>rule.op==='or'||rule.op==='and');
+    });
+  }
+  function serializedLogic(){return activeRules().map(rule=>({...rule}))}
   function updateCount(rows){
     requestAnimationFrame(()=>{
       const eligible=rows.filter(row=>!row.classList.contains('sky-foundation-single-sky-cross-hidden'));
@@ -303,10 +372,11 @@
       (cache.aspectsByIndex.get(String(row.dataset.relationIndex||''))||[]).forEach(node=>node.classList.toggle('sky-chart-multiselect-hidden',!visible));
     });
     updateControl();
-    document.documentElement.dataset.skyPlacementMultiselect='v4';
-    document.documentElement.dataset.skyPlacementFilterSemantics='endpoint-or';
+    document.documentElement.dataset.skyPlacementMultiselect='logic-v1';
+    document.documentElement.dataset.skyPlacementFilterSemantics='or-and-not';
     updateCount(cache.rows);
-    window.dispatchEvent(new CustomEvent('relphi:sky-placement-multiselect-changed',{detail:{A:Array.from(state.A.selected),B:Array.from(state.B.selected)}}));
+    const logic=serializedLogic();
+    window.dispatchEvent(new CustomEvent('relphi:sky-placement-multiselect-changed',{detail:{A:compatibilitySelection('A'),B:compatibilitySelection('B'),logic}}));
   }
   function scheduleApply(){
     if(applyQueued)return;
@@ -319,7 +389,7 @@
     return Math.max(280,Math.min(360,window.innerWidth-margin*2));
   }
   function position(remeasureWidth=false){
-    const owner=portalOwner,menu=popover(),head=owner?.querySelector('.sky-chart-placement-filter-head');
+    const owner=portalOwner,menu=popover(),head=portalAnchor?.isConnected?portalAnchor:owner?.querySelector('.sky-chart-placement-filter-head');
     if(!isOpen(owner)||!menu?.classList.contains('is-portaled')||!head)return;
     if(remeasureWidth||!lockedPopoverWidth)lockedPopoverWidth=stablePopoverWidth();
     const rect=head.getBoundingClientRect();
@@ -336,38 +406,47 @@
     positionQueued=true;
     requestAnimationFrame(()=>{positionQueued=false;position(remeasureWidth)});
   }
-  function open(owner){
+  function open(owner,anchor=null){
     const menu=owner.querySelector('.sky-chart-placement-filter-popover')||popover();
     if(!menu)return;
     portalOwner=owner;
+    portalAnchor=anchor||owner.querySelector('.sky-chart-placement-filter-head');
     lockedPopoverWidth=stablePopoverWidth();
     owner.classList.add('is-open');
     menu.hidden=false;
     menu.classList.add('is-portaled');
     document.body.appendChild(menu);
     owner.querySelector('[data-placement-filter-toggle]')?.setAttribute('aria-expanded','true');
+    portalAnchor?.querySelector?.('[data-vocab-shared-placement-toggle]')?.setAttribute('aria-expanded','true');
     requestAnimationFrame(()=>position(false));
   }
   function close(owner){
     const menu=popover();
     if(!menu||!owner)return;
+    const anchor=portalAnchor;
     menu.hidden=true;
     menu.classList.remove('is-portaled');
     menu.removeAttribute('style');
     owner.appendChild(menu);
     owner.classList.remove('is-open');
     owner.querySelector('[data-placement-filter-toggle]')?.setAttribute('aria-expanded','false');
+    anchor?.querySelector?.('[data-vocab-shared-placement-toggle]')?.setAttribute('aria-expanded','false');
     portalOwner=null;
+    portalAnchor=null;
     lockedPopoverWidth=0;
+  }
+  function openAt(anchor){
+    const owner=control();if(!owner||!anchor)return false;
+    if(isOpen(owner))close(owner);
+    open(owner,anchor);
+    return true;
   }
 
   function createControl(){
     const root=document.createElement('div');
     root.className='sky-chart-placement-filter sky-chart-placement-filter-combined';
     root.dataset.placementFilter='combined';
-    root.innerHTML='<div class="sky-chart-placement-filter-head"><span class="sky-chart-placement-filter-label">Placements</span><div class="sky-chart-placement-summary-choices" role="group" aria-label="All placements"></div><button type="button" class="sky-chart-placement-filter-toggle" data-placement-filter-toggle aria-label="Open placement filters" aria-haspopup="dialog" aria-expanded="false" aria-controls="skyChartPlacementPopover"></button><span class="sky-chart-placement-filter-status" data-placement-filter-summary aria-live="polite">All</span></div><div id="skyChartPlacementPopover" class="sky-chart-placement-filter-popover" role="dialog" aria-label="Placement filters" hidden><div class="sky-chart-placement-filter-body"></div></div>';
-    const choices=root.querySelector('.sky-chart-placement-summary-choices');
-    activeKinds().forEach(kind=>choices.appendChild(choice('all','all',kind,'All placements')));
+    root.innerHTML='<div class="sky-chart-placement-filter-head"><span class="sky-chart-placement-filter-label">Placements</span><div class="sky-chart-placement-summary-choices"><span data-placement-filter-summary aria-live="polite">All</span></div><button type="button" class="sky-chart-placement-filter-toggle" data-placement-filter-toggle aria-label="Open placement filters" aria-haspopup="dialog" aria-expanded="false" aria-controls="skyChartPlacementPopover"></button></div><div id="skyChartPlacementPopover" class="sky-chart-placement-filter-popover" role="dialog" aria-label="Placement filters" hidden><div class="sky-chart-placement-filter-body"></div></div>';
     root.querySelector('[data-placement-filter-toggle]').addEventListener('click',()=>isOpen(root)?close(root):open(root));
     return root;
   }
@@ -401,10 +480,7 @@
     if(whereWhenEditing()||!ensure())return;
     const scopeSignature=bActive()?'A+B':'A',scopeChanged=scopeSignature!==lastScopeSignature;
     lastScopeSignature=scopeSignature;
-    if(scopeChanged){
-      const owner=control(),choices=owner?.querySelector('.sky-chart-placement-summary-choices');
-      if(choices){choices.replaceChildren();activeKinds().forEach(kind=>choices.appendChild(choice('all','all',kind,'All placements')))}
-    }
+
     const changed=refreshAvailable('A')|refreshAvailable('B');
     if(scopeChanged||changed||!popover()?.querySelector('[data-placement-list]'))renderList();
     else updateControl();
@@ -417,20 +493,24 @@
     refreshQueued=true;
     requestAnimationFrame(refresh);
   }
-  function handleChange(event){
-    const input=event.target.closest?.('[data-placement-choice]');
-    if(!input)return;
-    const slots=input.dataset.placementChoice==='all'?activeSlots():[input.dataset.placementChoice.toUpperCase()];
-    slots.forEach(slot=>setSelection(idsFor(input.dataset.placementScope,input.dataset.placementTarget,slot),slot,input.checked));
-    updateControl();
-    scheduleApply();
+  function handleLogicClick(event){
+    const clear=event.target.closest?.('[data-placement-logic-clear]');
+    if(clear){
+      event.preventDefault();logicRules.clear();saveLogic();updateControl();popover()?.querySelectorAll('[data-placement-choice]').forEach(button=>updateChoice(button));scheduleApply();return;
+    }
+    const button=event.target.closest?.('[data-placement-choice]');
+    if(!button)return;
+    event.preventDefault();
+    const scope=button.dataset.placementScope,target=button.dataset.placementTarget,choice=button.dataset.placementChoice;
+    setLogicState(scope,target,choice,nextLogicState(logicState(scope,target,choice)));
+    updateChoice(button);updateControl();scheduleApply();
   }
 
   function eventInsidePlacementUI(event){
-    const owner=portalOwner,menu=popover();
+    const owner=portalOwner,menu=popover(),anchor=portalAnchor;
     if(!owner||!menu)return false;
     const path=typeof event.composedPath==='function'?event.composedPath():[];
-    if(path.includes(owner)||path.includes(menu)||owner.contains(event.target)||menu.contains(event.target))return true;
+    if(path.includes(owner)||path.includes(menu)||path.includes(anchor)||owner.contains(event.target)||menu.contains(event.target)||anchor?.contains?.(event.target))return true;
     if(Number.isFinite(event.clientX)&&Number.isFinite(event.clientY)){
       const rect=menu.getBoundingClientRect();
       if(event.clientX>=rect.left&&event.clientX<=rect.right&&event.clientY>=rect.top&&event.clientY<=rect.bottom)return true;
@@ -457,7 +537,7 @@
     modeObserver.observe(document.documentElement,{attributes:true,attributeFilter:['data-sky-b-present','data-sky-b-editing','data-sky-last-mode']});
 
     ['relphi:sky-foundation-ready','relphi:sky-foundation-interactions-ready','relphi:sky-single-sky-aspects-rendered','relphi:sky-b-removed','relphi:sky-b-restored'].forEach(name=>window.addEventListener(name,scheduleRefresh));
-    document.addEventListener('change',handleChange);
+    document.addEventListener('click',handleLogicClick);
     document.addEventListener('pointerdown',event=>{
       if(!isOpen(portalOwner))return;
       if(eventInsidePlacementUI(event))return;
@@ -465,9 +545,9 @@
     },true);
     document.addEventListener('keydown',event=>{
       if(event.key!=='Escape'||!isOpen(portalOwner))return;
-      const owner=portalOwner;
+      const owner=portalOwner,focusTarget=portalAnchor?.querySelector?.('[data-vocab-shared-placement-toggle]')||owner.querySelector('[data-placement-filter-toggle]');
       close(owner);
-      owner.querySelector('[data-placement-filter-toggle]')?.focus();
+      focusTarget?.focus();
     });
     window.addEventListener('resize',()=>schedulePosition(true));
     window.addEventListener('scroll',event=>{
@@ -479,6 +559,18 @@
     window.visualViewport?.addEventListener('resize',()=>schedulePosition(true));
     scheduleRefresh();
   }
+
+  window.RelphiSkyPlacementLogic=Object.freeze({
+    rules:serializedLogic,
+    summary:combinedSummary,
+    selection:effectiveSelection,
+    endpointVetoed,
+    endpointPositive,
+    relationshipMatches,
+    openAt,
+    close:()=>{if(portalOwner)close(portalOwner)},
+    clear:()=>{logicRules.clear();saveLogic();updateControl();scheduleApply()}
+  });
 
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});
   else start();

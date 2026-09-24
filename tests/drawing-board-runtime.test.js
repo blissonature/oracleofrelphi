@@ -141,6 +141,35 @@ async function assertReadableFocus(page) {
   const bg=await mobile.locator('.card-row-workspace').evaluate(node=>getComputedStyle(node).backgroundColor);
   assert.notEqual(bg,'rgba(0, 0, 0, 0)');
 
+  // Free-draw Focus: no predefined positions, but Focus must remain closable and Next must append.
+  await mobile.click('#drawingBoardOptionsButton');
+  await mobile.waitForSelector('.relphi-reading-options-drawer.is-reading-options-open',{state:'visible'});
+  await mobile.click('#relphiResetBoard');
+  await mobile.waitForFunction(()=>{
+    const state=window.RelphiDrawingBoardPrefabsBridge?.getState?.();
+    return state && !state.activeLayout && state.slotCount===0 && state.hasCards===false;
+  });
+  if (await mobile.locator('#relphiCancelOptions').isVisible().catch(()=>false)) await mobile.click('#relphiCancelOptions');
+  await mobile.click('#drawRandomRowCard');
+  await mobile.waitForSelector('.relphi-focus-reader',{state:'visible'});
+  await mobile.waitForFunction(()=>document.querySelectorAll('#shortListPanel .card-row-board [data-row-card]').length===1);
+  assert.equal(await mobile.locator('.relphi-focus-position-panel>.relphi-focus-close').isVisible(),true,'Free-draw Focus must always expose its close control even without position stickers');
+  assert.equal(await mobile.locator('.relphi-focus-position').textContent(),'Position 1','Free draw should supply a neutral position label without creating a position sticker');
+  await mobile.click('.relphi-focus-next');
+  await mobile.waitForFunction(()=>document.querySelectorAll('#shortListPanel .card-row-board [data-row-card]').length===2);
+  await mobile.waitForFunction(()=>Number(document.querySelector('.relphi-focus-reader')?.dataset.focusIndex)===1);
+  assert.equal(await mobile.locator('.relphi-focus-position').textContent(),'Position 2','Next on the final free-draw card must append and advance to a new card');
+  await mobile.click('.relphi-focus-close');
+  await mobile.waitForSelector('.relphi-focus-reader',{state:'detached'});
+  await mobile.click('#drawingBoardOptionsButton');
+  await mobile.waitForSelector('.relphi-reading-options-drawer.is-reading-options-open',{state:'visible'});
+  await mobile.click('#relphiResetBoard');
+  await mobile.waitForFunction(()=>{
+    const state=window.RelphiDrawingBoardPrefabsBridge?.getState?.();
+    return state && !state.activeLayout && state.slotCount===0 && state.hasCards===false;
+  });
+  if (await mobile.locator('#relphiCancelOptions').isVisible().catch(()=>false)) await mobile.click('#relphiCancelOptions');
+
   await applyCeltic(mobile);
   let state=await boardState(mobile);
   assert.equal(state.prefab.slotCount,10);
@@ -156,14 +185,31 @@ async function assertReadableFocus(page) {
   await mobile.locator('.card-row-item[data-row-index="0"] .card-row-drop-card').click();
   await mobile.waitForSelector('.card-row-item[data-row-index="0"] [data-row-card]',{state:'visible'});
   await mobile.waitForSelector('.relphi-focus-reader',{state:'visible'});
-  assert.equal(await mobile.locator('.relphi-focus-strip>button').count(),10);
-  assert.equal(await mobile.locator('.relphi-focus-draw').count(),1,'Card Focus must keep Draw available');
+  assert.equal(await mobile.locator('.relphi-focus-strip>button').count(),10,'Stable Focus strip must represent every reading position');
+  assert.equal(await mobile.locator('.relphi-focus-fan').count(),0,'The motion-heavy fan must not render in Focus View');
+  assert.equal(await mobile.locator('[data-focus-nav-mode]').count(),0,'Focus View must not expose a retired fan/strip mode switch');
+  assert.equal(await mobile.locator('.relphi-focus-strip').isVisible(),true,'Stable direct-scrub strip must be the sole Focus navigator');
+  const focusIngredientTabs=mobile.locator('.relphi-focus-entry [data-ingredient-tab]');
+  assert.ok(await focusIngredientTabs.count()>=2,'Focused full Ledger entry must expose multiple ingredient tabs for the drawn card');
+  const firstFocusTab=focusIngredientTabs.nth(0), secondFocusTab=focusIngredientTabs.nth(1);
+  const firstTarget=await firstFocusTab.getAttribute('data-ingredient-tab');
+  const secondTarget=await secondFocusTab.getAttribute('data-ingredient-tab');
+  assert.equal(await firstFocusTab.getAttribute('aria-selected'),'true','Focused Ledger entry must start on its first ingredient');
+  await secondFocusTab.click();
+  assert.equal(await secondFocusTab.getAttribute('aria-selected'),'true','Clicking an ingredient tab in Card Focus must select it');
+  assert.equal(await firstFocusTab.getAttribute('aria-selected'),'false','Selecting another ingredient must clear the prior focused tab');
+  assert.equal(await mobile.locator(`.relphi-focus-entry [data-ingredient-panel="${firstTarget}"]`).isHidden(),true,'Prior ingredient panel must hide when another tab is selected');
+  assert.equal(await mobile.locator(`.relphi-focus-entry [data-ingredient-panel="${secondTarget}"]`).isVisible(),true,'Selected ingredient panel must become visible in Card Focus');
+  await secondFocusTab.press('ArrowLeft');
+  assert.equal(await firstFocusTab.getAttribute('aria-selected'),'true','Ingredient tabs in Card Focus must support arrow-key navigation');
+  assert.equal(await mobile.locator('.relphi-focus-draw').count(),0,'Card Focus must not duplicate drawing in a separate top-row button');
+  assert.equal(await mobile.locator('.relphi-focus-position-panel>.relphi-focus-close').count(),1,'Card Focus close control must live beside the question');
   assert.equal(await mobile.locator('#shortListPanel [data-row-reverse]').count(),0,'randomly drawn cards must not show the manual card flipper');
   await assertReadableFocus(mobile);
   const transformDisplay=await mobile.locator('.card-row-item[data-row-index="0"] .card-row-transform-box').evaluate(node=>getComputedStyle(node).display);
   assert.equal(transformDisplay,'none','rotation/scale gizmos must start hidden');
   await mobile.screenshot({path:path.join(out,'drawing-board-mobile-focus.png'),fullPage:true});
-  await mobile.click('.relphi-focus-draw');
+  await mobile.click('.relphi-focus-next');
   await mobile.waitForFunction(() => Number(document.querySelector('.relphi-focus-reader')?.dataset.focusIndex)===1);
   assert.equal(await mobile.locator('.card-row-item[data-row-index="1"] [data-row-card]').count(),1,'Draw in Card Focus must draw the next position');
   const titleGeometry=await mobile.locator('.card-row-item[data-row-index="0"] [data-row-card]').evaluate(card=>{
@@ -332,6 +378,7 @@ async function assertReadableFocus(page) {
   await assertContained(desktop);
   await desktop.screenshot({path:path.join(out,'drawing-board-desktop-celtic.png'),fullPage:true});
 
+  await desktop.setViewportSize({width:1440,height:760});
   await desktop.locator('.card-row-item[data-row-index="9"] .card-row-drop-card').click();
   await desktop.waitForSelector('.relphi-focus-reader',{state:'visible'});
   const desktopFocus=await desktop.evaluate(()=>{
@@ -349,16 +396,22 @@ async function assertReadableFocus(page) {
       sideBySide:art.right<=entry.left+3,
       entryText:document.querySelector('.relphi-focus-entry')?.textContent?.trim().length||0,
       objectFit:getComputedStyle(artEl).objectFit,
+      artRadius:getComputedStyle(artEl).borderRadius,
       paneOverflow:getComputedStyle(paneEl).overflow,
-      paneScrollable:paneEl.scrollHeight>=paneEl.clientHeight&&paneEl.scrollWidth>=paneEl.clientWidth,
-      rendered,pane:{left:pane.left,right:pane.right,top:pane.top,bottom:pane.bottom}
+      paneScrollable:paneEl.scrollHeight>paneEl.clientHeight+1||paneEl.scrollWidth>paneEl.clientWidth+1,
+      shellOverflow:getComputedStyle(document.querySelector('.relphi-focus-shell')).overflow,
+      rendered,pane:{left:pane.left,right:pane.right,top:pane.top,bottom:pane.bottom},
+      fitsPane:rendered.left>=pane.left-1&&rendered.right<=pane.right+1&&rendered.top>=pane.top-1&&rendered.bottom<=pane.bottom+1
     };
   });
   await desktop.screenshot({path:path.join(out,'drawing-board-desktop-focus-full-entry.png'),fullPage:true});
   assert.ok(desktopFocus?.sideBySide,'desktop focus view must show full art beside the Ledger entry: '+JSON.stringify(desktopFocus));
   assert.equal(desktopFocus?.objectFit,'contain','desktop focus art must use contain rather than crop');
-  assert.equal(desktopFocus?.paneOverflow,'auto','desktop focus art pane must remain a bounded scroll container if a long question reduces available height');
-  assert.ok(desktopFocus?.paneScrollable,'desktop focus art must remain reachable without shrinking when available height is reduced: '+JSON.stringify(desktopFocus));
+  assert.equal(desktopFocus?.artRadius,'0px','desktop focus card art must keep sharp source corners');
+  assert.equal(desktopFocus?.paneOverflow,'hidden','desktop focus art pane must not expose its own scrollbar');
+  assert.equal(desktopFocus?.shellOverflow,'hidden','desktop focus shell must not scroll just to accommodate the card art');
+  assert.equal(desktopFocus?.paneScrollable,false,'desktop focus art must shrink to the available height instead of requiring a scrollbar: '+JSON.stringify(desktopFocus));
+  assert.equal(desktopFocus?.fitsPane,true,'desktop focus art must remain completely inside its pane: '+JSON.stringify(desktopFocus));
   assert.ok(desktopFocus.entryText>100,'desktop focus view must show the full Ledger entry');
   let semantic=await boardState(desktop);
   const outcomeIndex=semantic.snap.rowPositionMeta.findIndex(meta=>meta?.id==='outcome');
@@ -366,6 +419,7 @@ async function assertReadableFocus(page) {
   assert.equal(await desktop.locator(`.card-row-item[data-row-index="${outcomeIndex}"] [data-row-card]`).count(),1);
   assert.deepEqual(semantic.prefab.activeLayout.positions.map(position=>position.id),['covering','crossing','crowning','beneath','behind','before','self','house','hopes-fears','outcome']);
   await desktop.click('.relphi-focus-close');
+  await desktop.setViewportSize({width:1440,height:1000});
 
   await desktop.click('#drawRandomRowCard');
   await desktop.waitForSelector('.relphi-focus-reader',{state:'visible'});

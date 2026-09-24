@@ -11,7 +11,7 @@ fs.mkdirSync(out,{recursive:true});
   try{
     const page=await browser.newPage({viewport:{width:1191,height:859}});
     const errors=[];
-    page.on('pageerror',error=>errors.push(String(error)));
+    page.on('pageerror',error=>errors.push(error?.stack||String(error)));
     await page.goto('http://127.0.0.1:8000/drawing-board.html',{waitUntil:'domcontentloaded',timeout:30000});
     const frame=page.frames().find(candidate=>candidate!==page.mainFrame());
     assert.ok(frame,'standalone Drawing Board iframe must load');

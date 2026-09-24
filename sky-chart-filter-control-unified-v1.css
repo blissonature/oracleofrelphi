@@ -1,5 +1,6 @@
 /* One visual system for every relationship-filter heading and closed control. */
-#skyFoundationRelationships .sky-chart-filter-bar{
+:is(#skyFoundationFocus,#skyFoundationRelationships,.sky-vocab-panel) .sky-chart-filter-bar,
+.sky-vocab-panel{
   --sky-filter-label-color:#4e463f;
   --sky-filter-control-color:#191613;
   --sky-filter-border:1px solid rgba(31,27,24,.2);
@@ -9,80 +10,80 @@
   --sky-filter-control-font:700 .68rem/1.2 system-ui,sans-serif;
   --sky-filter-control-padding:.52rem .58rem;
 }
-#skyFoundationRelationships .sky-chart-filter-bar>label,
-#skyFoundationRelationships .sky-chart-filter-bar>.sky-chart-aspect-filter,
-#skyFoundationRelationships .sky-chart-filter-bar>.sky-chart-placement-filter,
-#skyFoundationRelationships .sky-chart-filter-bar>.sky-chart-house-filter{
+:is(#skyFoundationFocus,#skyFoundationRelationships,.sky-vocab-panel) .sky-chart-filter-bar>label,
+:is(#skyFoundationFocus,#skyFoundationRelationships,.sky-vocab-panel) .sky-chart-filter-bar>.sky-chart-aspect-filter,
+:is(#skyFoundationFocus,#skyFoundationRelationships,.sky-vocab-panel) .sky-chart-filter-bar>.sky-chart-placement-filter,
+:is(#skyFoundationFocus,#skyFoundationRelationships,.sky-vocab-panel) .sky-chart-filter-bar>.sky-chart-house-filter{
   align-self:end!important;min-width:0!important;color:var(--sky-filter-label-color)!important;font:var(--sky-filter-label-font)!important
 }
-#skyFoundationRelationships .sky-chart-filter-bar>label{display:grid!important;grid-template-rows:auto var(--sky-filter-height)!important;gap:4px!important}
-#skyFoundationRelationships .sky-chart-aspect-filter-head,
-#skyFoundationRelationships .sky-chart-placement-filter-head,
-#skyFoundationRelationships .sky-chart-house-filter-head{
+:is(#skyFoundationFocus,#skyFoundationRelationships,.sky-vocab-panel) .sky-chart-filter-bar>label{display:grid!important;grid-template-rows:auto var(--sky-filter-height)!important;gap:4px!important}
+:is(#skyFoundationFocus,#skyFoundationRelationships,.sky-vocab-panel) .sky-chart-aspect-filter-head,
+:is(#skyFoundationFocus,#skyFoundationRelationships,.sky-vocab-panel) .sky-chart-placement-filter-head,
+:is(#skyFoundationFocus,#skyFoundationRelationships,.sky-vocab-panel) .sky-chart-house-filter-head{
   display:grid!important;grid-template-columns:minmax(0,1fr) 32px!important;grid-template-rows:auto var(--sky-filter-height)!important;grid-template-areas:"label label" "field field"!important;align-items:center!important;gap:4px 0!important;min-height:0!important;height:auto!important;padding:0!important;border:0!important;border-radius:0!important;background:transparent!important;box-shadow:none!important;color:var(--sky-filter-label-color)!important;font:var(--sky-filter-label-font)!important
 }
-#skyFoundationRelationships .sky-chart-aspect-filter-label,
-#skyFoundationRelationships .sky-chart-placement-filter-label,
-#skyFoundationRelationships .sky-chart-house-filter-label{
+:is(#skyFoundationFocus,#skyFoundationRelationships,.sky-vocab-panel) .sky-chart-aspect-filter-label,
+:is(#skyFoundationFocus,#skyFoundationRelationships,.sky-vocab-panel) .sky-chart-placement-filter-label,
+:is(#skyFoundationFocus,#skyFoundationRelationships,.sky-vocab-panel) .sky-chart-house-filter-label{
   grid-area:label!important;align-self:end!important;min-width:0!important;padding:0!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important;background:transparent!important;color:var(--sky-filter-label-color)!important;font:var(--sky-filter-label-font)!important;letter-spacing:normal!important;text-transform:none!important
 }
-#skyFoundationRelationships .sky-chart-filter-bar input[data-filter="orb"],
-#skyFoundationRelationships .sky-chart-filter-bar select,
-#skyFoundationRelationships .sky-chart-filter-bar [data-house-system-filter]{
+:is(#skyFoundationFocus,#skyFoundationRelationships,.sky-vocab-panel) .sky-chart-filter-bar input[data-filter="orb"],
+:is(#skyFoundationFocus,#skyFoundationRelationships,.sky-vocab-panel) .sky-chart-filter-bar select,
+:is(#skyFoundationFocus,#skyFoundationRelationships,.sky-vocab-panel) .sky-chart-filter-bar [data-house-system-filter]{
   width:100%!important;min-width:0!important;height:var(--sky-filter-height)!important;min-height:var(--sky-filter-height)!important;box-sizing:border-box!important;margin:0!important;padding:var(--sky-filter-control-padding)!important;border:var(--sky-filter-border)!important;border-radius:var(--sky-filter-radius)!important;background-color:#fff!important;color:var(--sky-filter-control-color)!important;font:var(--sky-filter-control-font)!important;letter-spacing:normal!important
 }
-#skyFoundationRelationships .sky-chart-filter-bar select,
-#skyFoundationRelationships .sky-chart-filter-bar [data-house-system-filter]{padding-right:32px!important}
-#skyFoundationRelationships .sky-chart-aspect-filter-value,
-#skyFoundationRelationships .sky-chart-aspect-summary-choices,
-#skyFoundationRelationships .sky-chart-placement-summary-choices,
-#skyFoundationRelationships .sky-chart-house-summary-choices{
+:is(#skyFoundationFocus,#skyFoundationRelationships,.sky-vocab-panel) .sky-chart-filter-bar select,
+:is(#skyFoundationFocus,#skyFoundationRelationships,.sky-vocab-panel) .sky-chart-filter-bar [data-house-system-filter]{padding-right:32px!important}
+:is(#skyFoundationFocus,#skyFoundationRelationships,.sky-vocab-panel) .sky-chart-aspect-filter-value,
+:is(#skyFoundationFocus,#skyFoundationRelationships,.sky-vocab-panel) .sky-chart-aspect-summary-choices,
+:is(#skyFoundationFocus,#skyFoundationRelationships,.sky-vocab-panel) .sky-chart-placement-summary-choices,
+:is(#skyFoundationFocus,#skyFoundationRelationships,.sky-vocab-panel) .sky-chart-house-summary-choices{
   grid-area:field!important;grid-column:1/3!important;grid-row:2!important;align-self:stretch!important;width:100%!important;min-width:0!important;height:var(--sky-filter-height)!important;min-height:var(--sky-filter-height)!important;box-sizing:border-box!important;margin:0!important;padding:var(--sky-filter-control-padding)!important;padding-right:36px!important;border:var(--sky-filter-border)!important;border-radius:var(--sky-filter-radius)!important;background:#fff!important;box-shadow:none!important;color:var(--sky-filter-control-color)!important;font:var(--sky-filter-control-font)!important;line-height:1.2!important;letter-spacing:normal!important
 }
-#skyFoundationRelationships .sky-chart-aspect-filter-value{display:flex!important;align-items:center!important;overflow:hidden!important;text-align:left!important;text-overflow:ellipsis!important;white-space:nowrap!important}
-#skyFoundationRelationships .sky-chart-aspect-summary-choices,
-#skyFoundationRelationships .sky-chart-placement-summary-choices,
-#skyFoundationRelationships .sky-chart-house-summary-choices{
+:is(#skyFoundationFocus,#skyFoundationRelationships,.sky-vocab-panel) .sky-chart-aspect-filter-value{display:flex!important;align-items:center!important;overflow:hidden!important;text-align:left!important;text-overflow:ellipsis!important;white-space:nowrap!important}
+:is(#skyFoundationFocus,#skyFoundationRelationships,.sky-vocab-panel) .sky-chart-aspect-summary-choices,
+:is(#skyFoundationFocus,#skyFoundationRelationships,.sky-vocab-panel) .sky-chart-placement-summary-choices,
+:is(#skyFoundationFocus,#skyFoundationRelationships,.sky-vocab-panel) .sky-chart-house-summary-choices{
   display:flex!important;align-items:center!important;justify-content:flex-start!important;gap:6px!important;overflow:hidden!important
 }
-#skyFoundationRelationships .sky-chart-aspect-filter-toggle,
-#skyFoundationRelationships .sky-chart-placement-filter-toggle,
-#skyFoundationRelationships .sky-chart-house-filter-toggle{
+:is(#skyFoundationFocus,#skyFoundationRelationships,.sky-vocab-panel) .sky-chart-aspect-filter-toggle,
+:is(#skyFoundationFocus,#skyFoundationRelationships,.sky-vocab-panel) .sky-chart-placement-filter-toggle,
+:is(#skyFoundationFocus,#skyFoundationRelationships,.sky-vocab-panel) .sky-chart-house-filter-toggle{
   grid-column:2!important;grid-row:2!important;align-self:stretch!important;justify-self:stretch!important;z-index:2!important;width:32px!important;min-width:32px!important;height:var(--sky-filter-height)!important;min-height:var(--sky-filter-height)!important;box-sizing:border-box!important;margin:0!important;padding:0!important;border:0!important;border-radius:0 var(--sky-filter-radius) var(--sky-filter-radius) 0!important;background-color:transparent!important;background-image:var(--sky-chart-filter-chevron)!important;background-repeat:no-repeat!important;background-position:center!important;background-size:15px 15px!important;box-shadow:none!important;color:transparent!important;font-size:0!important;cursor:pointer!important
 }
-#skyFoundationRelationships .sky-chart-aspect-summary-choices .sky-chart-aspect-matrix-choice,
-#skyFoundationRelationships .sky-chart-placement-summary-choices .sky-chart-placement-choice,
-#skyFoundationRelationships .sky-chart-house-summary-choices .sky-chart-house-choice{
+:is(#skyFoundationFocus,#skyFoundationRelationships,.sky-vocab-panel) .sky-chart-aspect-summary-choices .sky-chart-aspect-matrix-choice,
+:is(#skyFoundationFocus,#skyFoundationRelationships,.sky-vocab-panel) .sky-chart-placement-summary-choices .sky-chart-placement-choice,
+:is(#skyFoundationFocus,#skyFoundationRelationships,.sky-vocab-panel) .sky-chart-house-summary-choices .sky-chart-house-choice{
   display:inline-flex!important;flex:0 0 auto!important;align-items:center!important;justify-content:flex-start!important;gap:4px!important;min-width:0!important;min-height:0!important;margin:0!important;padding:0!important;border:0!important;background:transparent!important;color:var(--sky-filter-control-color)!important;font:var(--sky-filter-control-font)!important;white-space:nowrap!important
 }
-#skyFoundationRelationships .sky-chart-aspect-summary-choices .sky-chart-aspect-matrix-choice span,
-#skyFoundationRelationships .sky-chart-placement-summary-choices .sky-chart-placement-choice span,
-#skyFoundationRelationships .sky-chart-house-summary-choices .sky-chart-house-choice span{display:inline!important;color:inherit!important;font:inherit!important}
-#skyFoundationRelationships .sky-chart-aspect-summary-choices input[type="checkbox"],
-#skyFoundationRelationships .sky-chart-placement-summary-choices input[type="checkbox"],
-#skyFoundationRelationships .sky-chart-house-summary-choices input[type="checkbox"]{flex:0 0 15px!important}
-#skyFoundationRelationships .sky-chart-aspect-filter-value:hover,
-#skyFoundationRelationships .sky-chart-aspect-filter-value:focus-visible,
-#skyFoundationRelationships .sky-chart-aspect-summary-choices:hover,
-#skyFoundationRelationships .sky-chart-placement-summary-choices:hover,
-#skyFoundationRelationships .sky-chart-house-summary-choices:hover,
-#skyFoundationRelationships .sky-chart-aspect-filter-toggle:hover,
-#skyFoundationRelationships .sky-chart-aspect-filter-toggle:focus-visible,
-#skyFoundationRelationships .sky-chart-placement-filter-toggle:hover,
-#skyFoundationRelationships .sky-chart-placement-filter-toggle:focus-visible,
-#skyFoundationRelationships .sky-chart-house-filter-toggle:hover,
-#skyFoundationRelationships .sky-chart-house-filter-toggle:focus-visible{background-color:#f5f1eb!important;outline:none!important}
-#skyFoundationRelationships .sky-chart-aspect-filter.is-open .sky-chart-aspect-summary-choices,
-#skyFoundationRelationships .sky-chart-aspect-filter.is-open .sky-chart-aspect-filter-value,
-#skyFoundationRelationships .sky-chart-placement-filter.is-open .sky-chart-placement-summary-choices,
-#skyFoundationRelationships .sky-chart-house-filter.is-open .sky-chart-house-summary-choices{border-color:rgba(31,27,24,.42)!important;box-shadow:0 0 0 2px rgba(31,27,24,.08)!important}
-#skyFoundationRelationships .sky-chart-aspect-filter.is-open .sky-chart-aspect-filter-toggle,
-#skyFoundationRelationships .sky-chart-placement-filter.is-open .sky-chart-placement-filter-toggle,
-#skyFoundationRelationships .sky-chart-house-filter.is-open .sky-chart-house-filter-toggle{box-shadow:none!important}
+:is(#skyFoundationFocus,#skyFoundationRelationships,.sky-vocab-panel) .sky-chart-aspect-summary-choices .sky-chart-aspect-matrix-choice span,
+:is(#skyFoundationFocus,#skyFoundationRelationships,.sky-vocab-panel) .sky-chart-placement-summary-choices .sky-chart-placement-choice span,
+:is(#skyFoundationFocus,#skyFoundationRelationships,.sky-vocab-panel) .sky-chart-house-summary-choices .sky-chart-house-choice span{display:inline!important;color:inherit!important;font:inherit!important}
+:is(#skyFoundationFocus,#skyFoundationRelationships,.sky-vocab-panel) .sky-chart-aspect-summary-choices input[type="checkbox"],
+:is(#skyFoundationFocus,#skyFoundationRelationships,.sky-vocab-panel) .sky-chart-placement-summary-choices input[type="checkbox"],
+:is(#skyFoundationFocus,#skyFoundationRelationships,.sky-vocab-panel) .sky-chart-house-summary-choices input[type="checkbox"]{flex:0 0 15px!important}
+:is(#skyFoundationFocus,#skyFoundationRelationships,.sky-vocab-panel) .sky-chart-aspect-filter-value:hover,
+:is(#skyFoundationFocus,#skyFoundationRelationships,.sky-vocab-panel) .sky-chart-aspect-filter-value:focus-visible,
+:is(#skyFoundationFocus,#skyFoundationRelationships,.sky-vocab-panel) .sky-chart-aspect-summary-choices:hover,
+:is(#skyFoundationFocus,#skyFoundationRelationships,.sky-vocab-panel) .sky-chart-placement-summary-choices:hover,
+:is(#skyFoundationFocus,#skyFoundationRelationships,.sky-vocab-panel) .sky-chart-house-summary-choices:hover,
+:is(#skyFoundationFocus,#skyFoundationRelationships,.sky-vocab-panel) .sky-chart-aspect-filter-toggle:hover,
+:is(#skyFoundationFocus,#skyFoundationRelationships,.sky-vocab-panel) .sky-chart-aspect-filter-toggle:focus-visible,
+:is(#skyFoundationFocus,#skyFoundationRelationships,.sky-vocab-panel) .sky-chart-placement-filter-toggle:hover,
+:is(#skyFoundationFocus,#skyFoundationRelationships,.sky-vocab-panel) .sky-chart-placement-filter-toggle:focus-visible,
+:is(#skyFoundationFocus,#skyFoundationRelationships,.sky-vocab-panel) .sky-chart-house-filter-toggle:hover,
+:is(#skyFoundationFocus,#skyFoundationRelationships,.sky-vocab-panel) .sky-chart-house-filter-toggle:focus-visible{background-color:#f5f1eb!important;outline:none!important}
+:is(#skyFoundationFocus,#skyFoundationRelationships,.sky-vocab-panel) .sky-chart-aspect-filter.is-open .sky-chart-aspect-summary-choices,
+:is(#skyFoundationFocus,#skyFoundationRelationships,.sky-vocab-panel) .sky-chart-aspect-filter.is-open .sky-chart-aspect-filter-value,
+:is(#skyFoundationFocus,#skyFoundationRelationships,.sky-vocab-panel) .sky-chart-placement-filter.is-open .sky-chart-placement-summary-choices,
+:is(#skyFoundationFocus,#skyFoundationRelationships,.sky-vocab-panel) .sky-chart-house-filter.is-open .sky-chart-house-summary-choices{border-color:rgba(31,27,24,.42)!important;box-shadow:0 0 0 2px rgba(31,27,24,.08)!important}
+:is(#skyFoundationFocus,#skyFoundationRelationships,.sky-vocab-panel) .sky-chart-aspect-filter.is-open .sky-chart-aspect-filter-toggle,
+:is(#skyFoundationFocus,#skyFoundationRelationships,.sky-vocab-panel) .sky-chart-placement-filter.is-open .sky-chart-placement-filter-toggle,
+:is(#skyFoundationFocus,#skyFoundationRelationships,.sky-vocab-panel) .sky-chart-house-filter.is-open .sky-chart-house-filter-toggle{box-shadow:none!important}
 
 @media(min-width:621px){
-  body.sky-chart-page #skyFoundationRelationships .sky-chart-filter-bar,
-  body.sky-chart-page #skyFoundationRelationships .sky-chart-filter-bar[data-multiselect-placement-filters="true"][data-multiselect-house-filters="true"]{
+  body.sky-chart-page :is(#skyFoundationFocus,#skyFoundationRelationships,.sky-vocab-panel) .sky-chart-filter-bar,
+  body.sky-chart-page :is(#skyFoundationFocus,#skyFoundationRelationships,.sky-vocab-panel) .sky-chart-filter-bar[data-multiselect-placement-filters="true"][data-multiselect-house-filters="true"]{
     grid-template-columns:repeat(12,minmax(0,1fr))!important;
     grid-auto-flow:row!important;
     gap:7px 6px!important;
@@ -90,26 +91,26 @@
   }
 
   /* Row 1: Aspects needs room for All + A↔A + B↔B + A↔B + chevron. */
-  body.sky-chart-page #skyFoundationRelationships .sky-chart-filter-bar>.sky-chart-aspect-filter{grid-column:1/span 4!important;grid-row:1!important}
-  body.sky-chart-page #skyFoundationRelationships .sky-chart-filter-bar>.sky-chart-placement-filter{grid-column:5/span 3!important;grid-row:1!important}
-  body.sky-chart-page #skyFoundationRelationships .sky-chart-filter-bar>.sky-chart-zodiac-filter{grid-column:8/span 2!important;grid-row:1!important}
-  body.sky-chart-page #skyFoundationRelationships .sky-chart-filter-bar>.sky-chart-house-filter{grid-column:10/span 3!important;grid-row:1!important}
+  body.sky-chart-page :is(#skyFoundationFocus,#skyFoundationRelationships,.sky-vocab-panel) .sky-chart-filter-bar>.sky-chart-aspect-filter{grid-column:1/span 4!important;grid-row:1!important}
+  body.sky-chart-page :is(#skyFoundationFocus,#skyFoundationRelationships,.sky-vocab-panel) .sky-chart-filter-bar>.sky-chart-placement-filter{grid-column:5/span 3!important;grid-row:1!important}
+  body.sky-chart-page :is(#skyFoundationFocus,#skyFoundationRelationships,.sky-vocab-panel) .sky-chart-filter-bar>.sky-chart-zodiac-filter{grid-column:8/span 2!important;grid-row:1!important}
+  body.sky-chart-page :is(#skyFoundationFocus,#skyFoundationRelationships,.sky-vocab-panel) .sky-chart-filter-bar>.sky-chart-house-filter{grid-column:10/span 3!important;grid-row:1!important}
 
   /* Row 2: evaluation / presentation controls. */
-  body.sky-chart-page #skyFoundationRelationships .sky-chart-filter-bar>.sky-orb-number-field{grid-column:1/span 4!important;grid-row:2!important}
-  body.sky-chart-page #skyFoundationRelationships .sky-chart-filter-bar>.sky-relationship-display-control{grid-column:5/span 3!important;grid-row:2!important;max-width:none!important;min-width:0!important}
-  body.sky-chart-page #skyFoundationRelationships .sky-chart-filter-bar>.sky-relationship-sort-control{grid-column:8/span 5!important;grid-row:2!important;max-width:none!important;min-width:0!important}
+  body.sky-chart-page :is(#skyFoundationFocus,#skyFoundationRelationships,.sky-vocab-panel) .sky-chart-filter-bar>.sky-orb-number-field{grid-column:1/span 4!important;grid-row:2!important}
+  body.sky-chart-page :is(#skyFoundationFocus,#skyFoundationRelationships,.sky-vocab-panel) .sky-chart-filter-bar>.sky-relationship-display-control{grid-column:5/span 3!important;grid-row:2!important;max-width:none!important;min-width:0!important}
+  body.sky-chart-page :is(#skyFoundationFocus,#skyFoundationRelationships,.sky-vocab-panel) .sky-chart-filter-bar>.sky-relationship-sort-control{grid-column:8/span 5!important;grid-row:2!important;max-width:none!important;min-width:0!important}
 
-  body.sky-chart-page #skyFoundationRelationships .sky-orb-number-field>span{white-space:nowrap!important}
+  body.sky-chart-page :is(#skyFoundationFocus,#skyFoundationRelationships,.sky-vocab-panel) .sky-orb-number-field>span{white-space:nowrap!important}
 
-  body.sky-chart-page #skyFoundationRelationships .sky-chart-aspect-summary-choices,
-  body.sky-chart-page #skyFoundationRelationships .sky-chart-placement-summary-choices,
-  body.sky-chart-page #skyFoundationRelationships .sky-chart-house-summary-choices{gap:3px!important;padding-left:.4rem!important;padding-right:30px!important}
-  body.sky-chart-page #skyFoundationRelationships .sky-chart-aspect-summary-choices .sky-chart-aspect-matrix-choice,
-  body.sky-chart-page #skyFoundationRelationships .sky-chart-placement-summary-choices .sky-chart-placement-choice,
-  body.sky-chart-page #skyFoundationRelationships .sky-chart-house-summary-choices .sky-chart-house-choice{gap:2px!important}
-  body.sky-chart-page #skyFoundationRelationships .sky-chart-aspect-summary-choices .sky-chart-aspect-matrix-choice{font-size:.57rem!important}
-  body.sky-chart-page #skyFoundationRelationships .sky-chart-aspect-summary-choices input[type="checkbox"],
-  body.sky-chart-page #skyFoundationRelationships .sky-chart-placement-summary-choices input[type="checkbox"],
-  body.sky-chart-page #skyFoundationRelationships .sky-chart-house-summary-choices input[type="checkbox"]{flex-basis:13px!important;width:13px!important;height:13px!important}
+  body.sky-chart-page :is(#skyFoundationFocus,#skyFoundationRelationships,.sky-vocab-panel) .sky-chart-aspect-summary-choices,
+  body.sky-chart-page :is(#skyFoundationFocus,#skyFoundationRelationships,.sky-vocab-panel) .sky-chart-placement-summary-choices,
+  body.sky-chart-page :is(#skyFoundationFocus,#skyFoundationRelationships,.sky-vocab-panel) .sky-chart-house-summary-choices{gap:3px!important;padding-left:.4rem!important;padding-right:30px!important}
+  body.sky-chart-page :is(#skyFoundationFocus,#skyFoundationRelationships,.sky-vocab-panel) .sky-chart-aspect-summary-choices .sky-chart-aspect-matrix-choice,
+  body.sky-chart-page :is(#skyFoundationFocus,#skyFoundationRelationships,.sky-vocab-panel) .sky-chart-placement-summary-choices .sky-chart-placement-choice,
+  body.sky-chart-page :is(#skyFoundationFocus,#skyFoundationRelationships,.sky-vocab-panel) .sky-chart-house-summary-choices .sky-chart-house-choice{gap:2px!important}
+  body.sky-chart-page :is(#skyFoundationFocus,#skyFoundationRelationships,.sky-vocab-panel) .sky-chart-aspect-summary-choices .sky-chart-aspect-matrix-choice{font-size:.57rem!important}
+  body.sky-chart-page :is(#skyFoundationFocus,#skyFoundationRelationships,.sky-vocab-panel) .sky-chart-aspect-summary-choices input[type="checkbox"],
+  body.sky-chart-page :is(#skyFoundationFocus,#skyFoundationRelationships,.sky-vocab-panel) .sky-chart-placement-summary-choices input[type="checkbox"],
+  body.sky-chart-page :is(#skyFoundationFocus,#skyFoundationRelationships,.sky-vocab-panel) .sky-chart-house-summary-choices input[type="checkbox"]{flex-basis:13px!important;width:13px!important;height:13px!important}
 }

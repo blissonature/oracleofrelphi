@@ -64,15 +64,10 @@ function byId(id){return tarotCards().find(c=>c.card_id===id||c.stable_symbol_id
 function planetCard(planet){return tarotCards().find(c=>c.arcana==='Major'&&values(c.astrology?.planet).includes(planet))||byId(FALLBACK[planet])}
 function signCard(sign){const wanted=String(sign||'').trim().toLowerCase();return tarotCards().find(c=>c.arcana==='Major'&&values(c.astrology?.sign).some(v=>v.toLowerCase()===wanted))||null}
 function cardName(card){return String(card?.systems?.golden_dawn_rws?.display_name||card?.name||card?.title||card?.card_name||card?.card_id||'Card').replace(/_/g,' ')}
-function thumb(card,w=48,h=83){
+function thumb(card){
   if(!card)return'';
-  const shared=window.RelphiSkyCardHitsDrawer?.thumbnailFor;
-  if(typeof shared==='function')return shared(card,w,h);
   const id=encodeURIComponent(card.card_id||card.stable_symbol_id||'');
-  const src=new URL(`assets/tarot/rws/${id}.webp`,document.baseURI).href;
-  const u=new URL('https://wsrv.nl/');
-  u.searchParams.set('url',src);u.searchParams.set('w',String(w));u.searchParams.set('h',String(h));u.searchParams.set('fit','cover');u.searchParams.set('output','webp');u.searchParams.set('q','60');
-  return u.href;
+  return new URL(`assets/tarot/rws/${id}.webp`,document.baseURI).href;
 }
 function titleCase(v){const s=String(v||'');return s?s[0].toUpperCase()+s.slice(1):''}
 function json(key){try{const raw=localStorage.getItem(key);return raw?JSON.parse(raw):null}catch(_){return null}}
@@ -212,6 +207,8 @@ function ensureStyles(){
 .sky-card-house-span{display:grid;gap:.42rem;min-width:0;padding-top:.68rem;border-top:1px solid rgba(31,27,24,.09)}
 .sky-card-house-span:first-of-type{padding-top:0;border-top:0}
 .sky-card-house-span-heading{min-width:0;color:#554d46;font:850 .57rem/1.28 system-ui,sans-serif}
+.sky-card-house-span-major-art,.sky-card-house-detail-row .sky-card-house-decan-art{display:grid!important;place-items:center!important;border:0!important;outline:0!important;border-radius:0!important;background:transparent!important;box-shadow:none!important;clip-path:none!important;mask:none!important;-webkit-mask:none!important;overflow:visible!important}
+.sky-card-house-span-major-art>.sky-card-house-art-native,.sky-card-house-detail-row .sky-card-house-decan-art>.sky-card-house-art-native{border:0!important;outline:0!important;border-radius:0!important;box-shadow:none!important;clip-path:none!important;mask:none!important;-webkit-mask:none!important;overflow:visible!important}
 @media(max-width:520px){.sky-card-house-toggle{gap:.38rem;padding:.5rem .55rem}.sky-card-house-toggle-range{gap:.18rem;font-size:.54rem}.sky-card-house-toggle-glyph{flex-basis:29px;width:29px;height:29px}.sky-card-house-detail-glyph{flex-basis:31px;width:31px;height:31px}}
 `;
   document.head.appendChild(style);
@@ -236,7 +233,7 @@ function makeMajorRow(role,label,card,glyphId,meaning){
   const row=document.createElement('div');row.className='sky-card-house-detail-row';row.dataset.cardHouseDetailRole=role.toLowerCase();
   const roleLabel=document.createElement('span');roleLabel.className='sky-card-house-detail-role';roleLabel.textContent=role;
   const art=document.createElement('span');art.className='sky-card-house-span-major-art';art.title=card?cardName(card):label;
-  if(card){const img=document.createElement('img');img.src=thumb(card,64,111);img.alt='';img.loading='lazy';img.decoding='async';art.appendChild(img)}
+  if(card){const img=document.createElement('img');img.className='sky-card-house-art-native';img.src=thumb(card);img.alt='';img.loading='lazy';img.decoding='async';img.dataset.cardMedia='local-house-major-art';art.appendChild(img)}
   row.append(roleLabel,art,progressiveCopy(label,meaning,glyphId,card?cardName(card):''));return row;
 }
 function decanCardLabel(node){const first=String(node?.title||'').split('·')[0].trim();return first||'Decan card'}

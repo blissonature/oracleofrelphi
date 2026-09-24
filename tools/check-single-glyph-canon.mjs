@@ -161,7 +161,8 @@ if (fs.existsSync(registryPath)) {
     ["['asc','Ascendant',['asc','ascendant','rising','ac'],null,1,0,0,'Asc','letter','700']", 'Ascendant'],
     ["['dsc','Descendant',['dsc','descendant','dc'],null,1,0,0,'Dsc','letter','700']", 'Descendant'],
     ["['mc','Midheaven',['mc','midheaven'],null,1,0,0,'MC','letter','700']", 'Midheaven'],
-    ["['ic','Imum Coeli',['ic','imum coeli','imumcoeli'],null,1,0,0,'IC','letter','700']", 'Imum Coeli']
+    ["['ic','Imum Coeli',['ic','imum coeli','imumcoeli'],null,1,0,0,'IC','letter','700']", 'Imum Coeli'],
+    ["['anti-vertex','Anti-Vertex',['anti-vertex','anti vertex','antivertex','avx'],'assets/planet-glyphs/anti-vertex.svg',1,0,0,'AVx','letter','700']", 'Anti-Vertex']
   ];
   for (const [snippet, label] of angleRules) {
     if (!registry.includes(snippet)) fail(`${label} no longer uses the approved Master Glyph List text treatment.`);
@@ -212,10 +213,10 @@ if (fs.existsSync(integrityPath)) {
 if (fs.existsSync(navloaderPath)) {
   const nav = text(navloaderPath);
   for (const snippet of [
-    "appendScript('relphi-glyph-registry-v1.js?v=28'",
-    "appendScript('relphi-glyph-component-v1.js?v=32'",
+    "appendScript('relphi-glyph-registry-v1.js?v=30'",
+    "appendScript('relphi-glyph-component-v1.js?v=33'",
     "appendScript('relphi-glyph-source-integrity-v1.js?v=2'",
-    "appendScript('relphi-inline-glyph-consumer-v1.js?v=2'",
+    "appendScript('relphi-inline-glyph-consumer-v1.js?v=3'",
     "appendScript('astrology-foundations-canonical-glyphs-v1.js?v=2'"
   ]) {
     if (!nav.includes(snippet)) fail(`navloader lost required single-canon route: ${snippet}`);

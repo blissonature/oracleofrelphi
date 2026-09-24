@@ -9,6 +9,7 @@
 
   const LIB_URL='https://cdn.jsdelivr.net/npm/html-to-image@1.11.11/dist/html-to-image.js';
   const WHEEL_ID='skyChartWheelExport';
+  const WHEEL_COPY_ID='skyChartWheelCopy';
   const REL_ID='skyChartRelationshipsExport';
   const STATUS_ID='skyChartExportStatus';
   const WHEEL_EXPORT_FRAME=Object.freeze({side:64,top:150,bottom:74});
@@ -73,14 +74,6 @@
     if(busy){button.setAttribute('aria-busy','true');button.innerHTML=WAIT_ICON}
     else{button.removeAttribute('aria-busy');button.innerHTML=ICON}
   }
-  function facts(slot){
-    const panel=document.getElementById(slot==='A'?'skyFoundationA':'skyFoundationB');
-    const lines=[...panel?.querySelectorAll('.sky-where-when-facts p')||[]].map(node=>node.textContent.trim());
-    const profile=read(slot)?.calcProfile||{};
-    const where=(lines.find(line=>/^Where:/i.test(line))||'').replace(/^Where:\s*/i,'')||profile.location||'';
-    const when=(lines.find(line=>/^When:/i.test(line))||'').replace(/^When:\s*/i,'')||profile.dateTime||'';
-    return{name:resolvedSkyName(slot),where,when};
-  }
   function wheelSlots(wheel){
     const explicit=String(wheel?.dataset?.singleSky||'').trim().toUpperCase();
     if(explicit==='A'||explicit==='B')return[explicit];
@@ -100,21 +93,93 @@
     const clone=label.cloneNode(true);clone.querySelectorAll('select,input,button').forEach(node=>node.remove());return cleanLabel(clone.textContent);
   }
   function filterSummary(){
-    const bar=document.querySelector('#skyFoundationRelationships .sky-chart-filter-bar');
+    const bar=(document.querySelector('#skyFoundationFocus .sky-chart-filter-bar')||document.querySelector('#skyFoundationRelationships .sky-chart-filter-bar'));
     if(!bar)return'';
     const parts=[];
     const harmonic=bar.querySelector('[data-harmonic-window-input]');if(harmonic?.value.trim())parts.push(`Harmonic window ${harmonic.value.trim()}°`);
+    const limit=document.querySelector('#skyFoundationRelationships [data-relationship-limit]');if(limit?.value&&limit.value!=='all')parts.push(`Limit ${limit.value}`);
     const custom=[['[data-placement-filter-summary]','Placements'],['[data-house-filter-summary]','Houses'],['[data-aspect-filter-summary]','Aspects']];
     custom.forEach(([selector,label])=>{const text=cleanLabel(bar.querySelector(selector)?.textContent);if(text&&text!=='All')parts.push(`${label}: ${text}`)});
     [...bar.querySelectorAll('select')].forEach(select=>{const text=cleanLabel(select.selectedOptions?.[0]?.textContent||select.value);if(!text||/^all$/i.test(text)||/^none$/i.test(text))return;const caption=selectCaption(select)||'Filter';const item=`${caption}: ${text}`;if(!parts.includes(item))parts.push(item)});
     return parts.join(' · ');
   }
+  function selectionSummary(){
+    const origin=window.RelphiSkyFoundationInteractions?.getSelectionOrigin?.();
+    if(!origin)return'';
+    const label=cleanLabel(origin.label||origin.value);
+    if(!label)return'';
+    const sky=origin.sky==='A'||origin.sky==='B'?'Sky '+origin.sky:'';
+    return 'Selected: '+[sky,label].filter(Boolean).join(' · ');
+  }
+  function wheelContextSummary(){
+    return [selectionSummary(),filterSummary()].filter(Boolean).join(' · ');
+  }
 
-  function infoBox(info,slot,single=false){
-    const side=slot.toLowerCase(),box=document.createElement('div');box.className=`sky-export-info sky-export-info-${side}${single?' sky-export-info-single':''}`;
+  function fingerprintSource(slot,kind){
+    const refs=window.RelphiSkyCardShell?.get?.(slot);
+    if(kind==='where')return refs?.whereFingerprint||null;
+    if(kind==='placements')return refs?.placementFingerprint||null;
+    if(kind==='ruler')return refs?.cardHitsFingerprint||null;
+    return null;
+  }
+  function cloneFingerprintPiece(slot,kind){
+    const wrapper=document.createElement('span');
+    wrapper.className=`sky-export-fingerprint-piece sky-export-fingerprint-piece-${kind}`;
+    wrapper.dataset.fingerprintPart=kind;
+    const source=fingerprintSource(slot,kind);
+    const sourceChild=source?.firstElementChild;
+    if(sourceChild){
+      const clone=sourceChild.cloneNode(true);
+      clone.removeAttribute?.('hidden');
+      clone.querySelectorAll?.('[hidden]').forEach(node=>node.removeAttribute('hidden'));
+      wrapper.appendChild(clone);
+      const label=source.getAttribute?.('aria-label');
+      if(label)wrapper.setAttribute('aria-label',label);
+    }else{
+      wrapper.dataset.fingerprintMissing='true';
+      wrapper.setAttribute('aria-hidden','true');
+    }
+    return wrapper;
+  }
+  function fingerprintBox(slot,single=false){
+    const side=slot.toLowerCase(),box=document.createElement('div');
+    box.className=`sky-export-fingerprint sky-export-fingerprint-${side}${single?' sky-export-fingerprint-single':''}`;
     box.dataset.sky=slot;
-    box.innerHTML=`<strong>${esc(info.name)}</strong>${info.where?`<span>${esc(info.where)}</span>`:''}${info.when?`<span>${esc(info.when)}</span>`:''}`;
+    box.dataset.exportSkyIdentifier='fingerprint';
+    box.setAttribute('aria-label',`Sky ${slot} fingerprint identifier`);
+    const label=document.createElement('span');
+    label.className='sky-export-fingerprint-label';
+    label.textContent=`Sky ${slot}`;
+    const triptych=document.createElement('span');
+    triptych.className='sky-export-fingerprint-triptych';
+    triptych.append(
+      cloneFingerprintPiece(slot,'where'),
+      cloneFingerprintPiece(slot,'placements'),
+      cloneFingerprintPiece(slot,'ruler')
+    );
+    box.append(label,triptych);
     return box;
+  }
+  function wheelBrand(){
+    const brand=document.createElement('div');
+    brand.className='sky-export-brand';
+    brand.dataset.exportBrand='oracle-of-relphi';
+    const logo=document.createElement('img');
+    logo.className='sky-export-brand-logo';
+    logo.src=new URL('logo.png',document.baseURI).href;
+    logo.alt='Oracle of Relphi logo';
+    logo.decoding='sync';
+    const copy=document.createElement('div');
+    copy.className='sky-export-brand-copy';
+    const title=document.createElement('strong');
+    title.className='sky-export-brand-title';
+    title.textContent='Sky Chart';
+    const line=document.createElement('span');
+    line.className='sky-export-brand-line';
+    line.textContent='an Oracle of Relphi tool';
+    copy.append(title,line);
+    brand.append(logo,copy);
+    return brand;
   }
   function exportHost(width,height){
     const host=document.createElement('div');host.className='sky-export-host';
@@ -138,7 +203,9 @@
     const slots=wheelSlots(wheel);
     const box=wheel.viewBox?.baseVal,wheelWidth=Math.max(1,Math.ceil(box?.width||1200)),wheelHeight=Math.max(1,Math.ceil(box?.height||1200));
     const width=wheelWidth+WHEEL_EXPORT_FRAME.side*2,height=wheelHeight+WHEEL_EXPORT_FRAME.top+WHEEL_EXPORT_FRAME.bottom;
-    const host=exportHost(width,height),stage=document.createElement('div');stage.className='sky-wheel-export-stage';stage.dataset.exportSkyMode=slots.length===1?'single':'comparison';stage.style.width=`${width}px`;stage.style.height=`${height}px`;
+    const host=exportHost(width,height),stage=document.createElement('div');stage.className='sky-wheel-export-stage';stage.dataset.exportSkyMode=slots.length===1?'single':'comparison';stage.dataset.exportIdentityMode='fingerprint';stage.style.width=`${width}px`;stage.style.height=`${height}px`;
+
+    stage.appendChild(wheelBrand());
 
     const wheelMount=document.createElement('div');wheelMount.id='skyFoundationWheelMount';wheelMount.className=sourceMount.className;
     Object.assign(wheelMount.style,{position:'absolute',display:'block',left:`${WHEEL_EXPORT_FRAME.side}px`,top:`${WHEEL_EXPORT_FRAME.top}px`,width:`${wheelWidth}px`,height:`${wheelHeight}px`,minHeight:'0',padding:'0',border:'0',overflow:'visible',background:'transparent'});
@@ -147,9 +214,9 @@
     Object.assign(clone.style,{position:'relative',display:'block',left:'0',top:'0',width:`${wheelWidth}px`,height:`${wheelHeight}px`,maxHeight:'none',overflow:'visible'});
     wheelMount.appendChild(clone);stage.appendChild(wheelMount);
 
-    if(slots.length===1)stage.appendChild(infoBox(facts(slots[0]),slots[0],true));
-    else slots.forEach(slot=>stage.appendChild(infoBox(facts(slot),slot,false)));
-    const summary=filterSummary();if(summary){const line=document.createElement('div');line.className='sky-export-filter-summary';line.textContent=`Showing only: ${summary}`;stage.appendChild(line)}
+    if(slots.length===1)stage.appendChild(fingerprintBox(slots[0],true));
+    else slots.forEach(slot=>stage.appendChild(fingerprintBox(slot,false)));
+    const summary=wheelContextSummary();if(summary){const line=document.createElement('div');line.className='sky-export-filter-summary';line.textContent=summary;stage.appendChild(line)}
     host.appendChild(stage);return{host,stage,width,height,slots};
   }
   function rowVisible(row){const style=getComputedStyle(row);return!row.hidden&&style.display!=='none'&&style.visibility!=='hidden'}
@@ -171,11 +238,12 @@
   }
   function buildRelationshipStage(){
     const source=document.getElementById('skyFoundationRelationships'),list=document.getElementById('skyFoundationRelationshipList');if(!source||!list)throw new Error('The relationship list is not ready.');
+    const visibleRows=visibleViewportRows(list);
     const width=Math.max(620,Math.min(900,Math.ceil(source.getBoundingClientRect().width||760))),host=exportHost(width,2000),stage=document.createElement('div');stage.className='sky-relationships-export-stage';stage.style.width=`${width}px`;
-    const head=document.createElement('div');head.className='sky-relationships-export-head';head.innerHTML=`<strong>Relationships</strong><span>${esc(document.getElementById('skyFoundationRelationshipCount')?.textContent||'')}</span>`;stage.appendChild(head);
+    const head=document.createElement('div');head.className='sky-relationships-export-head';head.innerHTML=`<strong>Relationships</strong><span>${esc(visibleRows.length+' shown')}</span>`;stage.appendChild(head);
     const summary=filterSummary();if(summary){const line=document.createElement('div');line.className='sky-relationships-export-summary';line.textContent=`Showing only: ${summary}`;stage.appendChild(line)}
     const frame=document.createElement('div');frame.className='sky-relationships-export-frame';const groups=document.createElement('div');groups.className='sky-relationships-export-groups';
-    groupedRelationshipRows(visibleViewportRows(list)).forEach(({group,rows})=>{
+    groupedRelationshipRows(visibleRows).forEach(({group,rows})=>{
       const section=document.createElement('section');section.className=`sky-relationships-export-group ${group.className}`;
       const title=document.createElement('div');title.className='sky-relationships-export-group-title';title.textContent=group.title;
       const grid=document.createElement('div');grid.className='sky-relationships-export-grid';rows.forEach(row=>grid.appendChild(row.cloneNode(true)));
@@ -191,6 +259,34 @@
   }
   function download(file){const url=URL.createObjectURL(file),a=document.createElement('a');a.href=url;a.download=file.name;a.style.display='none';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),30000)}
   async function shareIOS(file){if(navigator.share&&(!navigator.canShare||navigator.canShare({files:[file]}))){await navigator.share({files:[file],title:'Sky Chart snapshot'});return}const url=URL.createObjectURL(file);window.open(url,'_blank','noopener')||location.assign(url)}
+
+  async function copyWheel(button){
+    if(preparing)return;
+    preparing=true;
+    if(button){button.disabled=true;button.setAttribute('aria-busy','true')}
+    status('Preparing wheel copy…',false,true);
+    let built=null;
+    try{
+      if(!navigator.clipboard?.write||typeof ClipboardItem==='undefined')throw new Error('Image copy is not supported in this browser.');
+      built=buildWheelStage();
+      await new Promise(resolve=>requestAnimationFrame(resolve));
+      built.height=Math.max(1,Math.ceil(built.stage.scrollHeight||built.height));built.host.style.height=`${built.height}px`;
+      const file=await nodeToFile(built.stage,built.width,built.height,filename('wheel',built.slots));
+      await navigator.clipboard.write([new ClipboardItem({'image/png':file})]);
+      if(button){
+        const previous=button.textContent;
+        button.textContent='Copied';
+        window.setTimeout(()=>{if(button.isConnected)button.textContent=previous||'Copy'},1200);
+      }
+      status('Wheel copied to clipboard.');
+    }catch(error){
+      console.error('Sky Chart wheel copy failed:',error);
+      status(String(error?.message||'Unable to copy wheel.').replace(/\s+/g,' ').slice(0,140),true);
+    }finally{
+      built?.host?.remove();preparing=false;
+      if(button?.isConnected){button.disabled=false;button.removeAttribute('aria-busy')}
+    }
+  }
 
   async function exportKind(kind,button){
     if(preparing)return;
@@ -216,9 +312,26 @@
     const style=document.createElement('style');style.id='skyChartExportV4Styles';style.textContent=`
     @keyframes skyExportSpin{to{transform:rotate(360deg)}}
     .sky-export-icon-button{appearance:none;display:grid;place-items:center;width:30px;height:30px;padding:0;border:1px solid rgba(31,27,24,.2);border-radius:999px;background:#fff;color:#2d2824;cursor:pointer}.sky-export-icon-button svg{width:17px;height:17px}.sky-export-icon-button .sky-export-spinner{animation:skyExportSpin .8s linear infinite}.sky-export-icon-button:hover,.sky-export-icon-button:focus-visible{outline:none;border-color:#2462d0;box-shadow:0 0 0 2px rgba(36,98,208,.12)}.sky-export-icon-button:disabled{opacity:.82;cursor:wait}.sky-export-icon-button[data-export-ready="true"]{border-color:#2462d0;color:#2462d0}
-    #skyFoundationComparison>.sky-foundation-heading{flex-wrap:wrap}#skyFoundationComparison .sky-export-wheel-slot{display:flex;align-items:center;justify-content:flex-end;margin-left:auto}.sky-relationship-heading-actions{display:flex;align-items:center;gap:6px}.sky-relationship-heading-actions button{margin:0}
+    .sky-wheel-copy-button{appearance:none;height:30px;padding:0 .72rem;border:1px solid rgba(31,27,24,.18);border-radius:999px;background:#fff;color:#332e2a;font:800 .68rem/1 system-ui,sans-serif;cursor:pointer;white-space:nowrap}.sky-wheel-copy-button:hover,.sky-wheel-copy-button:focus-visible{outline:none;border-color:#6b625a;background:#fffdfa}.sky-wheel-copy-button:disabled{opacity:.7;cursor:wait}
+    #skyFoundationComparison>.sky-foundation-heading{flex-wrap:wrap}#skyFoundationComparison .sky-export-wheel-slot{display:flex;align-items:center;justify-content:flex-end;gap:6px;margin-left:auto}.sky-relationship-heading-actions{display:flex;align-items:center;gap:6px}.sky-relationship-heading-actions button{margin:0}
     #${STATUS_ID}{flex:1 0 100%;color:#665e57;text-align:right;font:650 .58rem/1.2 system-ui,sans-serif}#${STATUS_ID}:empty{display:none}#${STATUS_ID}[data-error="true"]{color:#b81712}#${STATUS_ID}[data-busy="true"]{margin-top:4px;padding:7px 10px;border-radius:999px;background:#f6f0e8;color:#3e3833;font-size:.68rem;font-weight:800}
-    .sky-wheel-export-stage{position:relative;background:#fffdf8;color:#2d2824;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}.sky-wheel-export-stage>#skyFoundationWheelMount{position:absolute}.sky-export-info{position:absolute;top:22px;z-index:3;width:360px;display:grid;gap:5px;padding:12px 14px;border-radius:12px;background:rgba(255,253,248,.96);box-shadow:0 1px 8px rgba(31,27,24,.08);font-size:15px;line-height:1.28;text-align:left}.sky-export-info strong{font-size:19px}.sky-export-info span{color:#5d554e}.sky-export-info-a{left:${WHEEL_EXPORT_FRAME.side}px;border-left:5px solid #c9211e}.sky-export-info-b{right:${WHEEL_EXPORT_FRAME.side}px;border-right:5px solid #2462d0}.sky-export-info-single{left:50%!important;right:auto!important;transform:translateX(-50%);border-right:0}.sky-export-info-single[data-sky="A"]{border-left:5px solid #c9211e}.sky-export-info-single[data-sky="B"]{border-left:5px solid #2462d0}.sky-export-filter-summary{position:absolute;left:50%;bottom:18px;z-index:3;transform:translateX(-50%);max-width:82%;padding:8px 14px;border-radius:999px;background:rgba(255,253,248,.96);box-shadow:0 1px 7px rgba(31,27,24,.08);font:750 14px/1.25 system-ui,sans-serif;text-align:center;color:#554e48}
+    .sky-wheel-export-stage{position:relative;background:#fffdf8;color:#2d2824;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}.sky-wheel-export-stage>#skyFoundationWheelMount{position:absolute}
+    .sky-export-brand{position:absolute;z-index:4;top:22px;left:50%;transform:translateX(-50%);display:flex;align-items:center;justify-content:center;gap:11px;min-width:248px;padding:7px 12px;border-radius:12px;background:rgba(255,253,248,.96);box-shadow:0 1px 8px rgba(31,27,24,.08)}
+    .sky-export-brand-logo{display:block;width:46px;height:46px;object-fit:contain}
+    .sky-export-brand-copy{display:grid;gap:3px;text-align:left;white-space:nowrap}
+    .sky-export-brand-title{color:#211d19;font:900 22px/1 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+    .sky-export-brand-line{color:#655d56;font:750 12px/1.15 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+    .sky-export-fingerprint{position:absolute;top:24px;z-index:3;display:grid;gap:4px;padding:7px 9px;border-radius:12px;background:rgba(255,253,248,.96);box-shadow:0 1px 8px rgba(31,27,24,.08)}
+    .sky-export-fingerprint-a{left:${WHEEL_EXPORT_FRAME.side}px;border-left:4px solid #c9211e}.sky-export-fingerprint-b{right:${WHEEL_EXPORT_FRAME.side}px;border-right:4px solid #2462d0}
+    .sky-export-fingerprint-single{left:50%!important;right:auto!important;transform:translateX(-50%);border-right:0}.sky-export-fingerprint-single[data-sky="A"]{border-left:4px solid #c9211e}.sky-export-fingerprint-single[data-sky="B"]{border-left:4px solid #2462d0}
+    .sky-export-fingerprint-label{color:#5d554e;font:850 10px/1 system-ui,sans-serif;letter-spacing:.04em;text-transform:uppercase}
+    .sky-export-fingerprint-triptych{display:grid;grid-template-columns:repeat(3,58px);align-items:center;justify-items:center;gap:3px}
+    .sky-export-fingerprint-piece{display:grid;place-items:center;width:58px;height:58px;min-width:58px;min-height:58px;overflow:visible}
+    .sky-export-fingerprint-piece[data-fingerprint-missing="true"]{opacity:.18}
+    .sky-export-fingerprint-piece .sky-where-fingerprint-heptagram,.sky-export-fingerprint-piece .sky-placement-fingerprint-wheel{display:block!important;width:52px!important;height:52px!important;max-width:52px!important;max-height:52px!important;margin:auto!important;overflow:visible!important;transform:none!important}
+    .sky-export-fingerprint-piece .sky-card-ruler-fingerprint{--ruler-art-width:28px!important;--ruler-stack-box-width:42px!important;--ruler-rail-height:4px!important;width:42px!important;height:auto!important;transform:none!important}
+    .sky-export-fingerprint-piece svg{overflow:visible}
+    .sky-export-filter-summary{position:absolute;left:50%;bottom:18px;z-index:3;transform:translateX(-50%);max-width:82%;padding:8px 14px;border-radius:999px;background:rgba(255,253,248,.96);box-shadow:0 1px 7px rgba(31,27,24,.08);font:750 14px/1.25 system-ui,sans-serif;text-align:center;color:#554e48}
     .sky-relationships-export-stage{box-sizing:border-box;padding:16px;border:1px solid rgba(31,27,24,.13);border-radius:14px;background:#fffdf8;color:#191613;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}.sky-relationships-export-head{display:flex;align-items:center;justify-content:space-between;padding:0 2px 10px;font-size:16px}.sky-relationships-export-head>span{padding:5px 9px;border-radius:999px;background:#f0ebe4;font-size:12px;font-weight:800}.sky-relationships-export-summary{margin:0 0 10px;padding:8px 10px;border-radius:8px;background:#f6f0e8;color:#5d554e;font-size:12px;font-weight:700}.sky-relationships-export-frame{overflow:visible}.sky-relationships-export-groups{display:grid;gap:12px}.sky-relationships-export-group{display:grid;gap:6px}.sky-relationships-export-group-title{padding:6px 9px;border-radius:7px;background:#f2ece5;color:#3b3530;font:900 12px/1.2 system-ui,sans-serif}.sky-relationships-export-group.sky-a .sky-relationships-export-group-title{border-left:4px solid #c9211e}.sky-relationships-export-group.sky-b .sky-relationships-export-group-title{border-left:4px solid #2462d0}.sky-relationships-export-group.sky-ab .sky-relationships-export-group-title{border-left:4px solid #7655aa}.sky-relationships-export-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}.sky-relationships-export-grid>.sky-foundation-relationship-row{margin:0!important}
     `;document.head.appendChild(style);
   }
@@ -226,8 +339,14 @@
   function button(id,label){const b=document.createElement('button');b.type='button';b.id=id;b.className='sky-export-icon-button';b.innerHTML=ICON;b.setAttribute('aria-label',label);b.title=label;return b}
   function ensureWheelControl(){
     const heading=document.querySelector('#skyFoundationComparison>.sky-foundation-heading');if(!heading)return;
-    heading.querySelector('.sky-snapshot-actions')?.remove();heading.querySelector(`#${STATUS_ID}`)?.remove();
-    let slot=heading.querySelector('.sky-export-wheel-slot');if(!slot){slot=document.createElement('span');slot.className='sky-export-wheel-slot';const b=button(WHEEL_ID,'Download wheel snapshot');b.addEventListener('click',()=>exportKind('wheel',b));slot.appendChild(b);heading.appendChild(slot);const s=document.createElement('span');s.id=STATUS_ID;s.setAttribute('role','status');s.setAttribute('aria-live','polite');heading.appendChild(s)}
+    heading.querySelector('.sky-snapshot-actions')?.remove();
+    let slot=heading.querySelector('.sky-export-wheel-slot');
+    if(!slot){slot=document.createElement('span');slot.className='sky-export-wheel-slot';heading.appendChild(slot)}
+    if(!slot.querySelector(`#${WHEEL_COPY_ID}`)){
+      const copy=document.createElement('button');copy.type='button';copy.id=WHEEL_COPY_ID;copy.className='sky-wheel-copy-button';copy.textContent='Copy';copy.setAttribute('aria-label','Copy Zodiac Wheel snapshot');copy.title='Copy Zodiac Wheel snapshot to clipboard';copy.addEventListener('click',()=>copyWheel(copy));slot.appendChild(copy);
+    }
+    if(!slot.querySelector(`#${WHEEL_ID}`)){const b=button(WHEEL_ID,'Download wheel snapshot');b.addEventListener('click',()=>exportKind('wheel',b));slot.appendChild(b)}
+    let state=heading.querySelector(`#${STATUS_ID}`);if(!state){state=document.createElement('span');state.id=STATUS_ID;state.setAttribute('role','status');state.setAttribute('aria-live','polite');heading.appendChild(state)}
   }
   function ensureRelationshipControl(){
     const heading=document.querySelector('#skyFoundationRelationships>.sky-foundation-relationships-heading');if(!heading)return;

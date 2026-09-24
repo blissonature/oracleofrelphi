@@ -55,12 +55,16 @@
     return value.placements;
   }
 
-  function find(source, names) {
+  function findEntry(source, names) {
     const wanted = new Set(names.map(normalizedName));
     for (const [key, item] of Object.entries(source || {})) {
-      if (wanted.has(normalizedName(item?.name || item?.label || key))) return item;
+      if (wanted.has(normalizedName(item?.name || item?.label || key))) return [key,item];
     }
     return null;
+  }
+
+  function find(source, names) {
+    return findEntry(source,names)?.[1] || null;
   }
 
   function placementObject(name, longitude) {
@@ -117,6 +121,16 @@
       const prior = previousPlacement(previous, [name]);
       if (prior) source[name] = { ...prior };
     });
+
+    const vertex = find(source, ['Vertex']);
+    const antiVertexEntry = findEntry(source, ['Anti-Vertex','Anti Vertex','Antivertex','AVx']);
+    if (vertex && Number.isFinite(Number(vertex.longitude))) {
+      const key = antiVertexEntry?.[0] || 'Anti-Vertex';
+      source[key] = placementObject('Anti-Vertex', Number(vertex.longitude) + 180);
+      source[key].source = 'vertex-opposition';
+    } else if (antiVertexEntry?.[1]?.source === 'vertex-opposition') {
+      delete source[antiVertexEntry[0]];
+    }
 
     if (asc && sun && moon && Number.isFinite(Number(asc.longitude)) && Number.isFinite(Number(sun.longitude)) && Number.isFinite(Number(moon.longitude))) {
       let isDay = true;
@@ -375,15 +389,60 @@
     }
   }
 
+  function ensureFocusStructure(relationshipPanel, bar) {
+    if (!relationshipPanel || !bar) return;
+
+    const comparison = document.getElementById('skyFoundationComparison');
+    if (!comparison) return;
+
+    let focusPanel = document.getElementById('skyFoundationFocus');
+    if (!focusPanel) {
+      focusPanel = document.createElement('section');
+      focusPanel.id = 'skyFoundationFocus';
+      focusPanel.className = 'sky-foundation-focus-panel';
+      focusPanel.setAttribute('aria-label', 'Focus');
+      focusPanel.innerHTML = '<header class="sky-foundation-focus-heading"><h2>Focus</h2><span class="sky-focus-heading-controls" aria-label="Focus display controls"></span></header>';
+    }
+
+    const focusHeading = focusPanel.querySelector(':scope > .sky-foundation-focus-heading');
+    if (focusHeading && !focusHeading.querySelector(':scope > .sky-focus-heading-controls')) {
+      const controls = document.createElement('span');
+      controls.className = 'sky-focus-heading-controls';
+      controls.setAttribute('aria-label', 'Focus display controls');
+      focusHeading.appendChild(controls);
+    }
+    if (bar.parentElement !== focusPanel) focusPanel.appendChild(bar);
+
+    if (relationshipPanel.parentElement === comparison) {
+      comparison.insertBefore(focusPanel, relationshipPanel);
+    } else if (!focusPanel.isConnected) {
+      comparison.appendChild(focusPanel);
+    }
+
+    let relationshipControls = relationshipPanel.querySelector(':scope > .sky-relationship-controls');
+    if (!relationshipControls) {
+      relationshipControls = document.createElement('div');
+      relationshipControls.className = 'sky-relationship-controls';
+      relationshipControls.setAttribute('aria-label', 'Relationship display controls');
+    }
+    const relationshipHeading = relationshipPanel.querySelector(':scope > .sky-foundation-relationships-heading');
+    const list = relationshipPanel.querySelector(':scope > #skyFoundationRelationshipList');
+    if (relationshipHeading && relationshipHeading.nextElementSibling !== relationshipControls) relationshipHeading.after(relationshipControls);
+    if (list && relationshipControls.nextElementSibling !== list) relationshipControls.after(list);
+
+    if (focusHeading && focusPanel.firstElementChild !== focusHeading) focusPanel.prepend(focusHeading);
+  }
+
   function addFilters() {
     const relationshipPanel = document.getElementById('skyFoundationRelationships');
     if (!relationshipPanel) return;
-    let bar = relationshipPanel.querySelector('.sky-chart-filter-bar');
+    let focusPanel = document.getElementById('skyFoundationFocus');
+    let bar = focusPanel?.querySelector(':scope > .sky-chart-filter-bar') || relationshipPanel.querySelector(':scope > .sky-chart-filter-bar');
     if (!bar) {
       bar = document.createElement('div');
       bar.className = 'sky-chart-filter-bar';
-      relationshipPanel.insertBefore(bar, relationshipPanel.querySelector('#skyFoundationRelationshipList'));
     }
+    ensureFocusStructure(relationshipPanel, bar);
     if (bar.dataset.finalFilterOwner === 'true') return;
     bar.dataset.finalFilterOwner = 'true';
     const aspectOptions = Object.entries(ASPECT_LABELS).map(([value, label]) => `<option value="${value}">${label}</option>`).join('');

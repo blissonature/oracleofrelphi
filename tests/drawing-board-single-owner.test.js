@@ -10,7 +10,7 @@ const board = read('drawing-board-workflow-v2.js');
 const css = read('drawing-board-workflow-v2.css');
 const app = read('tarot-app.js');
 
-assert.match(nav, /drawing-board-workflow-v2\.js\?v=90/);
+assert.match(nav, /drawing-board-workflow-v2\.js\?v=96/);
 [
   'drawing-board-interactions-v1.js',
   'drawing-board-template-lifecycle-v1.js',
@@ -21,7 +21,7 @@ assert.match(nav, /drawing-board-workflow-v2\.js\?v=90/);
 ].forEach(name => assert.doesNotMatch(nav, new RegExp(name.replaceAll('.', '\\.'))));
 assert.doesNotMatch(nav, /relphi-drawing-board-ui-ready|relphi-drawing-board-ui-stable/);
 
-['MutationObserver','getBoundingClientRect','relphi-drawing-board-ui-ready','relphi-drawing-board-ui-stable','Close Options'].forEach(needle => {
+['MutationObserver','relphi-drawing-board-ui-ready','relphi-drawing-board-ui-stable','Close Options'].forEach(needle => {
   assert.ok(!board.includes(needle), `unified Drawing Board must not contain ${needle}`);
 });
 ['repair','reconcile','rehydrate','settling'].forEach(needle => {
@@ -42,7 +42,7 @@ assert.match(app, /document\.dispatchEvent\(new CustomEvent\('relphi:drawing-boa
 
 assert.match(board, /Zoom Extents/);
 assert.match(board, /zoomCardRowExtents/);
-assert.match(board, /stateContentBounds/);
+assert.match(board, /renderedContentBounds/);
 assert.match(board, /workspace\.clientWidth/);
 assert.match(board, /workspace\.clientHeight/);
 assert.match(board, /relphi-workspace-tools/);
@@ -63,12 +63,23 @@ assert.doesNotMatch(board, /relphiBulkQuestions/);
 assert.match(board, /parseBulkQuestions/);
 assert.match(board, /const acceptCommaList=\(value\)=>/);
 assert.match(board, /relphi-focus-reversed-badge/);
-assert.match(board, /relphi-focus-draw/);
+assert.doesNotMatch(board, /relphi-focus-draw/);
+assert.match(board, /relphi-focus-position-panel[^\n]*relphi-focus-close/);
 assert.match(board, /ArrowLeft/);
 assert.match(board, /ArrowRight/);
 assert.doesNotMatch(css, /relphi-bulk-questions/);
 assert.match(board, /relphi-focus-reader/);
 assert.match(board, /relphi-focus-strip/);
+assert.doesNotMatch(board, /relphi-focus-fan/);
+assert.match(board, /function installFocusStripScrub/);
+assert.match(board, /drawnButtonAt/);
+assert.match(board, /is-under-finger/);
+assert.match(css, /\.relphi-focus-strip>button\.is-under-finger/);
+assert.match(css, /\.relphi-focus-strip\.is-scrubbing/);
+assert.doesNotMatch(board, /FOCUS_NAV_MODE_KEY|focusNavMode|renderFocusFan|installFocusFanScrub/);
+assert.match(board, /delta>0 && current>=order\.length-1[\s\S]{0,160}configuredPositionCount\(\)===0[\s\S]{0,80}drawNextLogical\(panel\(\)\)/);
+assert.doesNotMatch(css, /\.relphi-focus-fan/);
+assert.doesNotMatch(css, /\.relphi-focus-strip>button[^\n]*transition:transform/);
 assert.match(board, /keepFocusStripCurrentVisible/);
 assert.match(board, /renderFocusStrip\(existingReader,index,\{preserveScroll:true\}\)/);
 assert.doesNotMatch(board, /existingReader\.replaceWith\(reader\)/);
@@ -95,9 +106,11 @@ assert.match(css, /\.relphi-focus-main\{/);
 assert.match(css, /\.relphi-focus-art\{/);
 assert.match(css, /\.relphi-focus-entry\{/);
 assert.match(css, /\.relphi-focus-position-panel\{/);
-assert.match(css, /\.relphi-focus-shell\{[^}]*grid-template-rows:auto auto minmax\(0,1fr\) auto/);
+assert.match(css, /\.relphi-focus-shell\{[^}]*grid-template-rows:auto minmax\(0,1fr\) auto/);
 assert.match(css, /\.relphi-focus-position-panel\{[^}]*overflow:visible!important/);
 assert.match(css, /\.relphi-focus-art-frame\{[^}]*max-height:none!important/);
+assert.match(css, /@media\(min-width:701px\)\{[\s\S]*\.relphi-focus-shell\{overflow:hidden!important\}[\s\S]*\.relphi-focus-art-pane\{[^}]*overflow:hidden!important\}[\s\S]*\.relphi-focus-art-frame\{[^}]*height:100%!important[^}]*max-height:36rem!important/);
+assert.match(css, /\.relphi-focus-art\{[^}]*border-radius:0!important[^}]*clip-path:none!important/);
 assert.doesNotMatch(css, /position-anchor:--relphi-focus-card-title/);
 assert.match(css, /\.relphi-focus-art\.is-reversed\{/);
 assert.match(css, /\.relphi-focus-strip\{/);

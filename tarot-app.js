@@ -380,8 +380,8 @@
     const items = locked.ingredient_refs.map(ref => ({ ref, item: LOCKED_INGREDIENTS[ref] })).filter(entry => entry.item);
     if (!items.length) return '';
     const baseId = `ingredients-${escapeHtml(card.card_id || 'card')}`;
-    const tabs = items.map((entry, index) => `<button class="locked-ingredient-tab ${index === 0 ? 'is-active' : ''}" type="button" data-ingredient-tab="${baseId}-${index}" aria-selected="${index === 0 ? 'true' : 'false'}">${escapeHtml(ingredientTypeLabel(entry.ref, entry.item, index))}</button>`).join('');
-    const panels = items.map((entry, index) => { const item = entry.item; return `<article class="locked-ingredient-panel ${index === 0 ? 'is-active' : ''}" data-ingredient-panel="${baseId}-${index}" ${index === 0 ? '' : 'hidden'}><h4>${escapeHtml(item.name)}</h4><dl><dt>Operation</dt><dd>${escapeHtml(item.operation)}</dd><dt>Question</dt><dd>${escapeHtml(item.question)}</dd><dt>Contribution</dt><dd>${escapeHtml(item.contribution)}</dd></dl></article>`; }).join('');
+    const tabs = items.map((entry, index) => { const id=`${baseId}-${index}`; return `<button id="${id}-tab" class="locked-ingredient-tab ${index === 0 ? 'is-active' : ''}" type="button" role="tab" data-ingredient-tab="${id}" aria-controls="${id}-panel" aria-selected="${index === 0 ? 'true' : 'false'}" tabindex="${index === 0 ? '0' : '-1'}">${escapeHtml(ingredientTypeLabel(entry.ref, entry.item, index))}</button>`; }).join('');
+    const panels = items.map((entry, index) => { const item = entry.item; const id=`${baseId}-${index}`; return `<article id="${id}-panel" class="locked-ingredient-panel ${index === 0 ? 'is-active' : ''}" role="tabpanel" aria-labelledby="${id}-tab" data-ingredient-panel="${id}" ${index === 0 ? '' : 'hidden'}><h4>${escapeHtml(item.name)}</h4><dl><dt>Operation</dt><dd>${escapeHtml(item.operation)}</dd><dt>Question</dt><dd>${escapeHtml(item.question)}</dd><dt>Contribution</dt><dd>${escapeHtml(item.contribution)}</dd></dl></article>`; }).join('');
     return `<section class="locked-ingredients locked-ingredients--tabs"><h3>Ingredients</h3><div class="locked-ingredient-tabs" role="tablist">${tabs}</div><div class="locked-ingredient-panels">${panels}</div></section>`;
   }
   function lockedTraditionalTitleHtml(locked) {
@@ -847,7 +847,7 @@
     state.rowLayoutLocked = !!snapshot.rowLayoutLocked || !!(state.shortList || []).length;
     state.rowCenterOpen = false;
     state.rowTransformTarget = Number(snapshot.rowTransformTarget) || 0;
-    if (has('rowZoom')) state.rowZoom = Math.max(.25, Math.min(4, Number(snapshot.rowZoom) || 1));
+    if (has('rowZoom')) state.rowZoom = rowZoomValue(snapshot.rowZoom);
     if (has('rowPanX')) state.rowPanX = Number(snapshot.rowPanX) || 0;
     if (has('rowPanY')) state.rowPanY = Number(snapshot.rowPanY) || 0;
     if (has('rowSnapEnabled')) state.rowSnapEnabled = snapshot.rowSnapEnabled !== false;
@@ -1322,7 +1322,7 @@
     const associationLine = c => c.association ? `<p class="relphi-association">${escapeHtml(c.association)}</p>` : '';
     const interpretationLine = c => `<p class="relphi-definition">${escapeHtml(c.interpretation || '')}</p>`;
     const cardsHtml = data.cards.map((c, i) => `<article class="export-card${c.reversed ? ' is-reversed' : ''}${includeArt ? '' : ' export-card-text-only'}"><div class="export-position${positionClass(c.position)}"><strong>${escapeHtml(c.position || ('Position ' + (i + 1)))}</strong></div>${includeArt ? `<img class="export-card-art${c.reversed ? ' is-reversed' : ''}" src="${imageSources[i] || ''}" alt="${escapeHtml(c.title)} card art${c.reversed ? ', reversed' : ''}">` : ''}<h2>${titleLine(c)}</h2>${associationLine(c)}${interpretationLine(c)}</article>`).join('');
-    const style = `@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;700;800&display=swap');body{font-family:'Montserrat',system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;max-width:${includeArt ? '1120' : '860'}px;margin:40px auto;line-height:1.52;background:#fffaf0;color:#111;padding:0 1rem}.brand-header{display:flex;align-items:center;justify-content:space-between;gap:1rem;border-bottom:1px solid rgba(17,17,17,.18);padding-bottom:.8rem;margin-bottom:1rem}.brand-header h1{margin:0;font-family:'Montserrat',system-ui,sans-serif;letter-spacing:.04em}.brand-lockup{display:flex;align-items:center;gap:.65rem;text-align:left}.brand-logo{display:block;width:46px;height:46px;object-fit:contain}.brand-wordmark{font-size:.92rem;font-weight:800;line-height:1.1}.brand-wordmark span{color:#dc1f18}.brand-footer{display:flex;align-items:center;gap:.5rem;margin:2rem 0 .5rem;padding-top:.8rem;border-top:1px solid rgba(17,17,17,.24);font-size:.76rem;color:#5f5751}.brand-footer img{width:24px;height:24px;object-fit:contain}.brand-footer a{color:inherit}.meta{border:1px solid rgba(220,31,24,.45);border-radius:18px;padding:1rem;margin:1rem 0;background:#fffdf8}.stamp{font-size:.9rem;color:#666}.card-grid{display:grid;grid-template-columns:${includeArt ? 'repeat(auto-fill,minmax(180px,205px))' : '1fr'};justify-content:start;align-items:start;gap:1.1rem;margin:1.2rem 0}.export-card{border:1px solid rgba(17,17,17,.82);border-radius:14px;padding:.8rem;background:#fff;box-shadow:0 8px 20px rgba(0,0,0,.07);max-width:${includeArt ? '205px' : 'none'}}.export-card-text-only{max-width:none}.export-card.is-reversed{border-width:2px}.export-position{font-weight:800;margin-bottom:.55rem;border:1px solid rgba(17,17,17,.22);border-radius:10px;background:#fffaf0;padding:.42rem .55rem;min-height:2.4rem;display:grid;place-items:center;text-align:center;box-sizing:border-box;line-height:1.15}.export-position.is-md{font-size:.82rem}.export-position.is-sm{font-size:.72rem}.export-position.is-xs{font-size:.62rem;line-height:1.02}.export-card img{display:block;width:100%;max-width:172px;max-height:295px;margin:0 auto;border-radius:10px;border:1px solid #222;object-fit:contain}.export-card img.is-reversed{transform:rotate(180deg)}.export-card h2{font-size:1.05rem;margin:.6rem 0 .3rem;text-transform:capitalize}.export-card p{font-size:.95rem}.relphi-association{margin:.35rem 0;color:#5f5751;font-size:.82rem!important;font-weight:700}.relphi-definition{margin:.55rem 0 0}`;
+    const style = `@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;700;800&display=swap');body{font-family:'Montserrat',system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;max-width:${includeArt ? '1120' : '860'}px;margin:40px auto;line-height:1.52;background:#fffaf0;color:#111;padding:0 1rem}.brand-header{display:flex;align-items:center;justify-content:space-between;gap:1rem;border-bottom:1px solid rgba(17,17,17,.18);padding-bottom:.8rem;margin-bottom:1rem}.brand-header h1{margin:0;font-family:'Montserrat',system-ui,sans-serif;letter-spacing:.04em}.brand-lockup{display:flex;align-items:center;gap:.65rem;text-align:left}.brand-logo{display:block;width:46px;height:46px;object-fit:contain}.brand-wordmark{font-size:.92rem;font-weight:800;line-height:1.1}.brand-wordmark span{color:#dc1f18}.brand-footer{display:flex;align-items:center;gap:.5rem;margin:2rem 0 .5rem;padding-top:.8rem;border-top:1px solid rgba(17,17,17,.24);font-size:.76rem;color:#5f5751}.brand-footer img{width:24px;height:24px;object-fit:contain}.brand-footer a{color:inherit}.meta{border:1px solid rgba(220,31,24,.45);border-radius:18px;padding:1rem;margin:1rem 0;background:#fffdf8}.stamp{font-size:.9rem;color:#666}.card-grid{display:grid;grid-template-columns:${includeArt ? 'repeat(auto-fill,minmax(180px,205px))' : '1fr'};justify-content:start;align-items:start;gap:1.1rem;margin:1.2rem 0}.export-card{border:1px solid rgba(17,17,17,.82);border-radius:14px;padding:.8rem;background:#fff;box-shadow:0 8px 20px rgba(0,0,0,.07);max-width:${includeArt ? '205px' : 'none'}}.export-card-text-only{max-width:none}.export-card.is-reversed{border-width:2px}.export-position{font-weight:800;margin-bottom:.55rem;border:1px solid rgba(17,17,17,.22);border-radius:10px;background:#fffaf0;padding:.42rem .55rem;min-height:2.4rem;display:grid;place-items:center;text-align:center;box-sizing:border-box;line-height:1.15}.export-position.is-md{font-size:.82rem}.export-position.is-sm{font-size:.72rem}.export-position.is-xs{font-size:.62rem;line-height:1.02}.export-card img{display:block;width:100%;max-width:172px;height:auto;max-height:none;margin:0 auto;border:0;border-radius:0;box-shadow:none;clip-path:none;object-fit:contain}.export-card img.is-reversed{transform:rotate(180deg)}.export-card h2{font-size:1.05rem;margin:.6rem 0 .3rem;text-transform:capitalize}.export-card p{font-size:.95rem}.relphi-association{margin:.35rem 0;color:#5f5751;font-size:.82rem!important;font-weight:700}.relphi-definition{margin:.55rem 0 0}`;
     const fileSuffix = includeArt ? 'with-art' : 'text-only';
     download(`drawing-board-${fileSuffix}-${createdSlug}.html`, `<!doctype html><html><head><meta charset="utf-8"><title>Drawing Board · Oracle of Relphi</title><style>${style}</style></head><body><header class="brand-header"><h1>Drawing Board</h1><div class="brand-lockup"><img class="brand-logo" src="${brandLogoSource}" alt="Oracle of Relphi logo"><div class="brand-wordmark">Oracle of <span>Relphi</span></div></div></header><div class="meta">${data.name ? `<p><strong>${escapeHtml(data.name)}</strong></p>` : ''}<p>${escapeHtml(data.scope)} · ${data.count} cards</p><p class="stamp">Created ${escapeHtml(createdLabel)}</p>${data.notes ? `<p><strong>Notes:</strong> ${escapeHtml(data.notes)}</p>` : ''}</div><section class="card-grid">${cardsHtml}</section><footer class="brand-footer"><img src="${brandLogoSource}" alt=""><span><strong>Oracle of Relphi</strong> · <a href="https://oracleofrelphi.com/">oracleofrelphi.com</a></span></footer></body></html>`, 'text/html');
   }
@@ -1453,8 +1453,6 @@
         const label = `${title(card)}${rowCardIsReversed(i) ? ' · Reversed' : ''}`.slice(0, 42);
         ctx.fillText(label, x + cardW / 2, nameY + nameH / 2);
       }
-      ctx.fillStyle = '#fff'; ctx.strokeStyle = '#111'; ctx.lineWidth = 2;
-      drawRoundedRect(ctx, x, artY, cardW, cardH, 12); ctx.fill(); ctx.stroke();
       const img = images[i];
       if (img) {
         const scale = Math.min(cardW / img.width, cardH / img.height);
@@ -1493,19 +1491,58 @@
     if (canvas.toBlob) canvas.toBlob(finish, type, .92);
     else finish(null);
   }
+  function drawingBoardArrangementBounds(slots) {
+    if (!slots) return { minX:0, minY:0, maxX:CARD_ROW_ENVELOPE_W, maxY:CARD_ROW_ENVELOPE_H };
+    let minX=Infinity,minY=Infinity,maxX=-Infinity,maxY=-Infinity;
+    for (let i=0;i<slots;i++) {
+      const pos=rowEnvelopePosition(i);
+      const t=rowCardTransform(i);
+      const radians=Math.abs(Number(t.rotation)||0)*Math.PI/180;
+      const width=(Math.abs(Math.cos(radians))*CARD_ROW_ENVELOPE_W+Math.abs(Math.sin(radians))*CARD_ROW_ENVELOPE_H)*t.scale;
+      const height=(Math.abs(Math.sin(radians))*CARD_ROW_ENVELOPE_W+Math.abs(Math.cos(radians))*CARD_ROW_ENVELOPE_H)*t.scale;
+      const cx=pos.x+CARD_ROW_ENVELOPE_W/2;
+      const cy=pos.y+CARD_ROW_ENVELOPE_H/2;
+      minX=Math.min(minX,cx-width/2);
+      maxX=Math.max(maxX,cx+width/2);
+      minY=Math.min(minY,cy-height/2);
+      maxY=Math.max(maxY,cy+height/2);
+    }
+    return { minX, minY, maxX, maxY };
+  }
+  function drawingBoardSnapshotScale(contentW, contentH, headerH, brandFooterH, margin) {
+    const mobile = !!window.matchMedia?.('(max-width:700px)').matches || Number(navigator.maxTouchPoints || 0) > 1;
+    const maxDimension = mobile ? 4096 : 8192;
+    const maxPixels = mobile ? 12000000 : 24000000;
+    const fixedW = margin * 2;
+    const fixedH = margin * 2 + headerH + brandFooterH;
+    let scale = 1.08;
+    scale = Math.min(scale,
+      Math.max(.001,(maxDimension-fixedW)/Math.max(1,contentW)),
+      Math.max(.001,(maxDimension-fixedH)/Math.max(1,contentH))
+    );
+    let width = contentW * scale + fixedW;
+    let height = contentH * scale + fixedH;
+    if (width * height > maxPixels) {
+      scale *= Math.sqrt(maxPixels / Math.max(1,width * height));
+      width = contentW * scale + fixedW;
+      height = contentH * scale + fixedH;
+    }
+    return Math.max(.001,scale);
+  }
   async function downloadCardRowArrangementSnapshot() {
     const slots = rowSlotCount();
     if (!slots) return;
     const createdAt = new Date();
     const positions = Array.from({ length: slots }, (_, i) => rowEnvelopePosition(i));
-    const minX = Math.min(...positions.map(pos => pos.x), 0);
-    const minY = Math.min(...positions.map(pos => pos.y), 0);
-    const maxX = Math.max(...positions.map(pos => pos.x + CARD_ROW_ENVELOPE_W), CARD_ROW_ENVELOPE_W);
-    const maxY = Math.max(...positions.map(pos => pos.y + CARD_ROW_ENVELOPE_H), CARD_ROW_ENVELOPE_H);
+    const bounds = drawingBoardArrangementBounds(slots);
+    const minX = Math.min(bounds.minX, 0);
+    const minY = Math.min(bounds.minY, 0);
+    const maxX = Math.max(bounds.maxX, CARD_ROW_ENVELOPE_W);
+    const maxY = Math.max(bounds.maxY, CARD_ROW_ENVELOPE_H);
     const margin = 36;
     const headerH = state.shortListNotes ? 118 : 82;
-    const scale = 1.08;
     const brandFooterH = 54;
+    const scale = drawingBoardSnapshotScale(maxX-minX,maxY-minY,headerH,brandFooterH,margin);
     const canvas = document.createElement('canvas');
     canvas.width = Math.ceil((maxX - minX) * scale + margin * 2);
     canvas.height = Math.ceil((maxY - minY) * scale + margin * 2 + headerH + brandFooterH);
@@ -1572,14 +1609,16 @@
       drawPositionPanelOnCanvas(ctx, position, x + 12 * scale, y + 12 * scale, groupW - 24 * scale, positionH);
       const artX = x + (groupW - cardW) / 2;
       const artY = y + 12 * scale + positionH + gap;
-      ctx.fillStyle = '#fff';
-      ctx.strokeStyle = card ? '#111' : 'rgba(17,17,17,.55)';
-      ctx.setLineDash(card ? [] : [8, 7]);
-      drawRoundedRect(ctx, artX, artY, cardW, cardH, 12);
-      ctx.fill();
-      ctx.stroke();
-      ctx.setLineDash([]);
       const img = images[i];
+      if (!card) {
+        ctx.fillStyle = '#fff';
+        ctx.strokeStyle = 'rgba(17,17,17,.55)';
+        ctx.setLineDash([8, 7]);
+        drawRoundedRect(ctx, artX, artY, cardW, cardH, 12);
+        ctx.fill();
+        ctx.stroke();
+        ctx.setLineDash([]);
+      }
       if (img) {
         const s = Math.min(cardW / img.width, cardH / img.height);
         const w = img.width * s, h = img.height * s;
@@ -1611,7 +1650,7 @@
       ctx.restore();
     });
     drawRelphiExportBrand(ctx,canvas,brandFooterH,brandLogoImage);
-    const finish = blob => {
+    const finish = async blob => {
       const filename = `drawing-board-arrangement-${localTimestampSlug(createdAt)}.png`;
       if (!blob) {
         const a = document.createElement('a');
@@ -1619,13 +1658,24 @@
         a.download = filename;
         document.body.appendChild(a); a.click(); a.remove(); return;
       }
+      const file = typeof File === 'function' ? new File([blob],filename,{type:'image/png',lastModified:Date.now()}) : null;
+      if (file && navigator.share && (!navigator.canShare || navigator.canShare({files:[file]}))) {
+        try {
+          await navigator.share({files:[file],title:'Drawing Board arrangement'});
+          return;
+        } catch (error) {
+          if (error?.name === 'AbortError') return;
+          console.warn('Drawing Board share failed; falling back to download.',error);
+        }
+      }
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url; a.download = filename; a.rel = 'noopener'; document.body.appendChild(a); a.click(); a.remove();
       const status = $('downloadStatus');
       if (status) status.innerHTML = `Arrangement snapshot created. If it did not save automatically, use this link: <a href="${url}" download="${filename}">${filename}</a>`;
+      window.setTimeout(()=>URL.revokeObjectURL(url),60000);
     };
-    if (canvas.toBlob) canvas.toBlob(finish, 'image/png'); else finish(null);
+    if (canvas.toBlob) canvas.toBlob(blob=>{ void finish(blob); }, 'image/png'); else void finish(null);
   }
 
   function rowDrawPool(scope, options = {}) {
@@ -1814,6 +1864,8 @@
 
   const CARD_ROW_ENVELOPE_W = 174;
   const CARD_ROW_ENVELOPE_H = 390;
+  const CARD_ROW_ZOOM_MIN = .02;
+  const CARD_ROW_ZOOM_MAX = 2.4;
   const CARD_ROW_TABLE_COLS = 3;
   const CARD_ROW_TABLE_ROWS = 5;
   const CARD_ROW_SNAP_GRIDS = { 'one-sixteenth': { label: '1/16 card', fraction: 1/16 }, 'one-eighth': { label: '1/8 card', fraction: 1/8 }, 'one-sixth': { label: '1/6 card', fraction: 1/6 }, 'one-fourth': { label: '1/4 card', fraction: 1/4 }, 'one-third': { label: '1/3 card', fraction: 1/3 }, 'one-half': { label: '1/2 card', fraction: 1/2 }, 'one-card': { label: '1 card', fraction: 1 } };
@@ -1825,7 +1877,7 @@
   ];
   const CARD_ROW_DEFAULT_GAP_X_PX = 0;
   const CARD_ROW_DEFAULT_GAP_Y_PX = 0;
-  function rowZoomValue() { return Math.max(.45, Math.min(2.4, Number(state.rowZoom) || 1)); }
+  function rowZoomValue(value = state.rowZoom) { return Math.max(CARD_ROW_ZOOM_MIN, Math.min(CARD_ROW_ZOOM_MAX, Number(value) || 1)); }
   function rowPanXValue() { return Number.isFinite(Number(state.rowPanX)) ? Number(state.rowPanX) : 0; }
   function rowPanYValue() { return Number.isFinite(Number(state.rowPanY)) ? Number(state.rowPanY) : 0; }
   function rowSnapGridValue() { return CARD_ROW_SNAP_GRIDS[state.rowSnapGrid] ? state.rowSnapGrid : 'one-eighth'; }
@@ -2130,7 +2182,7 @@
       const transform = normalizedPrefabTransform(position.canonicalTransform || position.transform);
       return transform.x * PREFAB_CANVAS_WIDTH + CARD_ROW_ENVELOPE_W * transform.scale;
     }), CARD_ROW_ENVELOPE_W);
-    state.rowZoom = Math.max(.45, Math.min(1, (cardRowAvailableWidth() - 24) / Math.max(maxX, 1)));
+    state.rowZoom = Math.max(CARD_ROW_ZOOM_MIN, Math.min(1, (cardRowAvailableWidth() - 24) / Math.max(maxX, 1)));
     renderShortList();
     return true;
   }
@@ -2288,6 +2340,7 @@
     return true;
   }
   window.RelphiDrawingBoardOptionsBridge = Object.freeze({
+    zoomLimits:Object.freeze({ min:CARD_ROW_ZOOM_MIN, max:CARD_ROW_ZOOM_MAX }),
     capture() { return cloneBoardValue(boardSnapshot(), {}); },
     restore:restoreDrawingBoardOptionsSnapshot,
     changedFrom:drawingBoardOptionsChangedFrom,
@@ -2409,8 +2462,8 @@
       if (!pinchZoomGesture) return;
       event.preventDefault();
       const current = rowZoomValue();
-      const delta = event.deltaY < 0 ? 0.08 : -0.08;
-      state.rowZoom = Math.max(.45, Math.min(2.4, current + delta));
+      const factor = Math.exp(-event.deltaY * .0025);
+      state.rowZoom = rowZoomValue(current * factor);
       const zoomInput = $('rowZoom');
       const zoomValue = $('rowZoomValue');
       if (zoomInput) zoomInput.value = String(rowZoomValue());
@@ -2616,7 +2669,7 @@
     const boardDrawerOpen = boardDrawerWasOpen !== false || state.cardRowBoardOpen;
     const optionsOpen = !!(optionsWasOpen || state.cardRowSettingsOpen);
     const boardStatsHtml = items.length ? rowStatsHtml(items, selectedItems) : '';
-    const boardHtml = `${items.length ? '' : '<p class="short-list-empty card-row-board-empty">Draw a card or add placeholders. The board is ready.</p>'}<div class="card-row-workspace" style="${cardRowWorkspaceStyle(displaySlots)}" aria-label="Pan-and-zoom Drawing Board workspace"><div class="card-row-workspace-toolbar"><label class="card-row-zoom-label" title="Zoom the board">Zoom <input id="rowZoom" type="range" min="0.45" max="2.4" step="0.01" value="${rowZoom}"><span id="rowZoomValue">${Math.round(rowZoom * 100)}%</span></label><button type="button" id="resetCardRowPan" title="Center the Drawing Board">Center</button><span class="card-row-pan-note">Drag the table background to pan. Position stickers appear only when you add a placeholder or type a sticker.</span></div><div class="short-list-row card-row-board" style="${cardRowBoardStyle(displaySlots)}" aria-label="Movable Drawing Board">${Array.from({ length: displaySlots }).map((_, i) => { const card = items[i]; const envelopeArt = rowEnvelopeArtFor(i); const panel = rowPositionPanelHtml(i, { force: !card }); if (card) { return rowCardEnvelopeHtml(card, i, panel); } return `<div class="card-row-item card-row-placeholder-item" data-row-index="${i}" data-row-placeholder="${i}" style="${cardRowItemStyle(i)}">${panel}<div class="card-row-drop-card${envelopeArt ? ' has-custom-envelope-art' : ''}" tabindex="0">${envelopeArt ? `<img src="${escapeHtml(envelopeArt)}" alt="Custom placeholder art for position ${i + 1}">` : '<span class="card-row-drop-card-inner">Position placeholder</span>'}</div></div>`; }).join('')}</div></div>${boardStatsHtml}`;
+    const boardHtml = `${items.length ? '' : '<p class="short-list-empty card-row-board-empty">Draw a card or add placeholders. The board is ready.</p>'}<div class="card-row-workspace" style="${cardRowWorkspaceStyle(displaySlots)}" aria-label="Pan-and-zoom Drawing Board workspace"><div class="card-row-workspace-toolbar"><label class="card-row-zoom-label" title="Zoom the board">Zoom <input id="rowZoom" type="range" min="${CARD_ROW_ZOOM_MIN}" max="${CARD_ROW_ZOOM_MAX}" step="0.01" value="${rowZoom}"><span id="rowZoomValue">${Math.round(rowZoom * 100)}%</span></label><button type="button" id="resetCardRowPan" title="Center the Drawing Board">Center</button><span class="card-row-pan-note">Drag the table background to pan. Position stickers appear only when you add a placeholder or type a sticker.</span></div><div class="short-list-row card-row-board" style="${cardRowBoardStyle(displaySlots)}" aria-label="Movable Drawing Board">${Array.from({ length: displaySlots }).map((_, i) => { const card = items[i]; const envelopeArt = rowEnvelopeArtFor(i); const panel = rowPositionPanelHtml(i, { force: !card }); if (card) { return rowCardEnvelopeHtml(card, i, panel); } return `<div class="card-row-item card-row-placeholder-item" data-row-index="${i}" data-row-placeholder="${i}" style="${cardRowItemStyle(i)}">${panel}<div class="card-row-drop-card${envelopeArt ? ' has-custom-envelope-art' : ''}" tabindex="0">${envelopeArt ? `<img src="${escapeHtml(envelopeArt)}" alt="Custom placeholder art for position ${i + 1}">` : '<span class="card-row-drop-card-inner">Position placeholder</span>'}</div></div>`; }).join('')}</div></div>${boardStatsHtml}`;
     const moreOptionsHtml = `<details class="card-row-more-options card-row-settings-panel"><summary>More Board Options</summary><div class="card-row-tools card-row-composer"><label class="card-row-name-label">Name <input id="rowName" type="text" value="${escapeHtml(rowName)}" placeholder="Reading name"></label><label class="card-row-position-label">Position stickers <input id="rowPositionLabels" type="text" list="rowStickerPresetList" value="${escapeHtml(positionValue)}" placeholder="Type stickers, or choose a spread…"><datalist id="rowStickerPresetList">${STICKER_PRESETS.map(preset => `<option value="${escapeHtml(stickerPresetDisplay(preset))}">${escapeHtml(preset.labels.join(', '))}</option>`).join('')}</datalist></label><label class="card-row-draw-scope-label">Pack <select id="rowDrawScope">${option('full','Full Pack')}${option('shown','Shown cards')}${option('uhn','Universal Human Needs')}${option('majors','Majors')}${option('planetary-majors','Planetary Majors')}${option('zodiac-majors','Zodiac Majors')}${option('aces','Aces')}${option('courts','Courts')}${option('pips','Pips')}${option('decans','Decan pips')}${option('wands','Wands')}${option('cups','Cups')}${option('swords','Swords')}${option('pentacles','Pentacles / Disks')}</select></label><label class="spread-toggle"><input id="rowAllowRepeats" type="checkbox" ${state.rowAllowRepeats ? 'checked' : ''}> Repeats</label><label class="spread-toggle"><input id="rowSnapEnabled" type="checkbox" ${state.rowSnapEnabled ? 'checked' : ''}> Align</label><label class="spread-toggle"><input id="rowRotationSnapEnabled" type="checkbox" ${state.rowRotationSnapEnabled ? 'checked' : ''}> Rotation snap</label><span class="card-row-snap-steppers"><button type="button" id="rowSnapGridMinus" aria-label="Smaller alignment snap">−</button><span id="rowSnapGridValue">${escapeHtml(rowSnapGrid().label)}</span><button type="button" id="rowSnapGridPlus" aria-label="Larger alignment snap">+</button><button type="button" id="rowRotationSnapMinus" aria-label="Smaller rotation snap">−</button><span id="rowRotationSnapValue">${rowRotationSnapDegrees()}°</span><button type="button" id="rowRotationSnapPlus" aria-label="Larger rotation snap">+</button></span><label class="card-row-color-label">Placeholder color <input id="rowEnvelopeColor" type="color" value="${escapeHtml(state.rowEnvelopeColor || '#f3f0ea')}"></label><label class="card-row-table-color-label">Table <input id="rowTableColor" type="color" value="${escapeHtml(state.rowTableColor || '#7d1f28')}"></label><button type="button" id="rowTableImageUpload">Upload table image</button><button type="button" id="rowTableImageReset" ${state.rowTableImage ? '' : 'disabled'}>Reset table</button><button type="button" id="resetCardRowLayout" ${displaySlots ? '' : 'disabled'}>Reset layout</button><button type="button" id="resetRowCardTransform" ${displaySlots ? '' : 'disabled'}>Reset selected card</button><button type="button" id="selectAllRow" ${items.length ? '' : 'disabled'}>Select all</button><button type="button" id="clearRowSelection" ${state.shortListSelection.length ? '' : 'disabled'}>Clear selection</button><button type="button" id="snapshotCardRowArrangement" ${displaySlots ? '' : 'disabled'}>Snapshot</button><button type="button" id="downloadRowHtml" ${items.length ? '' : 'disabled'}>Board with art</button><button type="button" id="downloadRowTextHtml" ${items.length ? '' : 'disabled'}>Text only</button><button type="button" id="downloadRowJson" ${items.length ? '' : 'disabled'}>Board data</button><button type="button" id="printCardRowImage" ${items.length ? '' : 'disabled'}>Image</button><label class="card-row-notes-label">Notes <textarea id="rowNotes" rows="1" placeholder="Board notes">${escapeHtml(rowNotes)}</textarea></label><input id="rowTableImageFile" type="file" accept="image/*" hidden></div></details>`;
     wrap.innerHTML = `<details class="short-list-drawer card-row-drawing-board"><summary><strong>Drawing Board <span class="card-row-count">${items.length}</span></strong></summary><div class="drawing-board-top-actions" aria-label="Drawing Board actions"><button type="button" id="drawingBoardOptionsButton" aria-controls="drawingBoardReadingOptions" aria-expanded="false">Options</button><button type="button" id="drawRandomRowCard" title="Draw random card" aria-label="Draw random card">Draw</button><button type="button" id="undoShortList" class="board-history-icon" ${state.shortListUndo.length ? '' : 'disabled'} title="Undo" aria-label="Undo"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"><path d="M9 7 4 12l5 5"></path><path d="M4 12h9a7 7 0 0 1 7 7"></path></svg></button><button type="button" id="redoShortList" class="board-history-icon" ${state.shortListRedo.length ? '' : 'disabled'} title="Redo" aria-label="Redo"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"><path d="m15 7 5 5-5 5"></path><path d="M20 12h-9a7 7 0 0 0-7 7"></path></svg></button><button type="button" id="clearShortListCardsOnly" ${items.length ? '' : 'disabled'} title="Remove drawn cards and keep the spread positions" aria-label="Clear cards and keep spread positions">Clear Cards</button></div><span class="short-list-actions card-row-icon-toolbar card-row-action-staging" aria-label="Drawing Board staging controls" hidden><button type="button" id="addCardPlaceholder" title="Add placeholder" aria-label="Add placeholder">Add placeholder</button><label class="quick-reversal-toggle" title="Allow reversed cards in future draws"><input id="rowAllowReversalsQuick" type="checkbox" ${state.rowAllowReversals ? 'checked' : ''}> Reversals</label><button type="button" id="clearShortList" ${displaySlots ? '' : 'disabled'} title="Clear board" aria-label="Clear Drawing Board">Clear</button></span>${moreOptionsHtml}${boardHtml}</details>`;
     bindRenderedDrawingBoardActions(wrap);
@@ -2681,13 +2734,13 @@
     const zoomInput = $('rowZoom');
     if (zoomInput) {
       zoomInput.addEventListener('input', () => {
-        state.rowZoom = Math.max(.45, Math.min(2.4, Number(zoomInput.value) || 1));
+        state.rowZoom = rowZoomValue(zoomInput.value);
         const zoomValue = $('rowZoomValue');
         if (zoomValue) zoomValue.textContent = `${Math.round(rowZoomValue() * 100)}%`;
         applyCardRowLayoutLive(wrap);
       });
       zoomInput.addEventListener('change', () => {
-        state.rowZoom = Math.max(.45, Math.min(2.4, Number(zoomInput.value) || 1));
+        state.rowZoom = rowZoomValue(zoomInput.value);
         applyCardRowLayoutLive(wrap);
       });
     }
@@ -3847,6 +3900,55 @@
     });
   }
 
+  function activateIngredientTab(root, tab, focus = false) {
+    if (!root || !tab || !root.contains(tab)) return false;
+    const tabsRoot = tab.closest('.locked-ingredients--tabs');
+    const targetId = tab.dataset.ingredientTab;
+    if (!tabsRoot || !targetId || !root.contains(tabsRoot)) return false;
+    tabsRoot.querySelectorAll('[data-ingredient-tab]').forEach(candidate => {
+      const active = candidate === tab;
+      candidate.classList.toggle('is-active', active);
+      candidate.setAttribute('aria-selected', active ? 'true' : 'false');
+      candidate.setAttribute('tabindex', active ? '0' : '-1');
+    });
+    tabsRoot.querySelectorAll('[data-ingredient-panel]').forEach(panel => {
+      const active = panel.dataset.ingredientPanel === targetId;
+      panel.hidden = !active;
+      panel.classList.toggle('is-active', active);
+    });
+    if (focus) tab.focus();
+    return true;
+  }
+  function bindCardEntry(root) {
+    if (!root) return;
+    bindCardNoteEditor(root);
+    if (root.dataset.cardEntryInteractionsReady === 'true') return;
+    root.dataset.cardEntryInteractionsReady = 'true';
+    root.addEventListener('click', event => {
+      const tab = event.target.closest?.('[data-ingredient-tab]');
+      if (!tab || !root.contains(tab)) return;
+      if (!activateIngredientTab(root, tab)) return;
+      event.preventDefault();
+      event.stopPropagation();
+    });
+    root.addEventListener('keydown', event => {
+      const tab = event.target.closest?.('[data-ingredient-tab]');
+      if (!tab || !root.contains(tab)) return;
+      const tabsRoot = tab.closest('.locked-ingredients--tabs');
+      const tabs = tabsRoot ? Array.from(tabsRoot.querySelectorAll('[data-ingredient-tab]')) : [];
+      const index = tabs.indexOf(tab);
+      if (index < 0 || !['ArrowLeft','ArrowRight','Home','End'].includes(event.key)) return;
+      let next = index;
+      if (event.key === 'ArrowLeft') next = (index - 1 + tabs.length) % tabs.length;
+      if (event.key === 'ArrowRight') next = (index + 1) % tabs.length;
+      if (event.key === 'Home') next = 0;
+      if (event.key === 'End') next = tabs.length - 1;
+      event.preventDefault();
+      event.stopPropagation();
+      activateIngredientTab(root, tabs[next], true);
+    });
+  }
+
   function cardDetailHtml(card, eyebrow = 'Selected card') {
     if (!card) return '<h2>No card selected</h2><p>Search, show all, or draw a spread to inspect cards.</p>';
     const inShortList = state.shortList.includes(card.card_id);
@@ -3906,9 +4008,10 @@
   function renderDetail(card) {
     const panel = $('cardDetail');
     panel.innerHTML = cardDetailHtml(card);
-    bindCardNoteEditor(panel);
+    bindCardEntry(panel);
 
   }
+  const bindRenderedCardEntry = bindCardEntry;
   window.RelphiTarotLedgerBridge = Object.freeze({
     renderCardEntry(cardId, eyebrow = 'Tarot Ledger entry') {
       const card = cardById(String(cardId || ''));
@@ -3925,8 +4028,7 @@
       return serializeDrawingBoardReadingText();
     },
     bindCardEntry(root) {
-      if (!root) return;
-      bindCardNoteEditor(root);
+      bindRenderedCardEntry(root);
     }
   });
   function spreadPositionDetailHtml(item) {
@@ -3943,7 +4045,7 @@
     if (!panel) return;
     panel.hidden = false;
     panel.innerHTML = spreadPositionDetailHtml(item) + cardDetailHtml(card, 'Spread card database entry');
-    bindCardNoteEditor(panel);
+    bindCardEntry(panel);
 
     panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   }
@@ -4449,7 +4551,7 @@
     const imageSources = await Promise.all(spreadCards.map(card => imageDataUrlForExport(rwsExportImagePath(card))));
     const cardsHtml = data.cards.map((c, i) => `<article class="export-card"><div class="export-position">${escapeHtml(c.position)}</div><img src="${imageSources[i] || ''}" alt="${escapeHtml(c.card)} card art"><h2>${escapeHtml(c.card)}</h2><p>${escapeHtml(c.statement)}</p></article>`).join('');
     const rows = data.cards.map((c, i) => `<tr><th>${escapeHtml(c.position)}</th><td>${escapeHtml(c.card)}</td><td><img class="table-art" src="${imageSources[i] || ''}" alt="${escapeHtml(c.card)} card art"></td><td>${escapeHtml(c.statement)}</td></tr>`).join('');
-    download(`${slug(data.spreadName)}-${localTimestampSlug(new Date())}.html`, `<!doctype html><html><head><meta charset="utf-8"><title>${escapeHtml(data.spreadName)}</title><style>body{font-family:Georgia,serif;max-width:1100px;margin:40px auto;line-height:1.5;background:#fffaf0;color:#111}h1{font-family:system-ui,sans-serif;letter-spacing:.04em}.meta{border:1px solid #d33;border-radius:18px;padding:1rem;margin:1rem 0}.card-grid,.spread-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,190px));justify-content:start;gap:1.1rem;margin:1.2rem 0}.export-card{border:1px solid #111;border-radius:14px;padding:.75rem;background:#fff;box-shadow:0 8px 20px rgba(0,0,0,.08);max-width:190px}.export-position{font-weight:800;margin-bottom:.45rem;border:1px solid rgba(17,17,17,.22);border-radius:10px;background:#fffaf0;padding:.45rem .55rem;min-height:2.2rem}.export-card img{display:block;width:100%;max-width:165px;max-height:285px;margin:0 auto;border-radius:10px;border:1px solid #222;object-fit:contain}.export-card h2{font-size:1.05rem;margin:.55rem 0 .25rem}.export-card p{font-size:.95rem}table{border-collapse:collapse;width:100%;margin-top:1rem}th,td{border:1px solid #111;padding:.7em;text-align:left;vertical-align:top}.table-art{width:80px;border:1px solid #222;border-radius:6px}</style></head><body><h1>${escapeHtml(data.spreadName)}</h1><div class="meta"><p>${escapeHtml(new Date().toLocaleString())}</p></div><section class="spread-grid">${cardsHtml}</section><table>${rows}</table><h2>Notes</h2><p>${escapeHtml(data.notes).replace(/\n/g,'<br>')}</p></body></html>`, 'text/html');
+    download(`${slug(data.spreadName)}-${localTimestampSlug(new Date())}.html`, `<!doctype html><html><head><meta charset="utf-8"><title>${escapeHtml(data.spreadName)}</title><style>body{font-family:Georgia,serif;max-width:1100px;margin:40px auto;line-height:1.5;background:#fffaf0;color:#111}h1{font-family:system-ui,sans-serif;letter-spacing:.04em}.meta{border:1px solid #d33;border-radius:18px;padding:1rem;margin:1rem 0}.card-grid,.spread-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,190px));justify-content:start;gap:1.1rem;margin:1.2rem 0}.export-card{border:1px solid #111;border-radius:14px;padding:.75rem;background:#fff;box-shadow:0 8px 20px rgba(0,0,0,.08);max-width:190px}.export-position{font-weight:800;margin-bottom:.45rem;border:1px solid rgba(17,17,17,.22);border-radius:10px;background:#fffaf0;padding:.45rem .55rem;min-height:2.2rem}.export-card img{display:block;width:100%;max-width:165px;height:auto;max-height:none;margin:0 auto;border:0;border-radius:0;box-shadow:none;clip-path:none;object-fit:contain}.export-card h2{font-size:1.05rem;margin:.55rem 0 .25rem}.export-card p{font-size:.95rem}table{border-collapse:collapse;width:100%;margin-top:1rem}th,td{border:1px solid #111;padding:.7em;text-align:left;vertical-align:top}.table-art{width:80px;height:auto;border:0;border-radius:0;box-shadow:none;clip-path:none;object-fit:contain}</style></head><body><h1>${escapeHtml(data.spreadName)}</h1><div class="meta"><p>${escapeHtml(new Date().toLocaleString())}</p></div><section class="spread-grid">${cardsHtml}</section><table>${rows}</table><h2>Notes</h2><p>${escapeHtml(data.notes).replace(/\n/g,'<br>')}</p></body></html>`, 'text/html');
   }
 
   function openDate() { collapseCardRow(); state.mode = 'date'; showPanel('datePanel'); updateSummary([]); hideCommandMenu(); pushHistory(); }
@@ -9511,7 +9613,7 @@ ${notes || ''}`;
     }
     const panel = dialog.querySelector('.sky-card-inspector-detail');
     panel.innerHTML = cardDetailHtml(card, 'Card database entry');
-    bindCardNoteEditor(panel);
+    bindCardEntry(panel);
     if (typeof dialog.showModal === 'function') { if (!dialog.open) dialog.showModal(); }
     else dialog.setAttribute('open', '');
   }
@@ -9673,17 +9775,6 @@ ${notes || ''}`;
     $('drawMode')?.addEventListener('click', openSpread); $('spreadSelect').addEventListener('change', () => { syncSpreadControls(); if (state.currentSpread.length) renderSpread(); }); $('spreadOutput').addEventListener('click', handleSpreadClick); $('spreadOutput').addEventListener('keydown', handleSpreadKeydown); $('drawSpread').addEventListener('click', drawSpread); if ($('revealSpread')) $('revealSpread').addEventListener('click', revealAllSpreadCards); $('clearSpread').addEventListener('click', clearSpread); $('downloadSpreadHtml').addEventListener('click', downloadSpreadHtml); $('downloadSpreadJson').addEventListener('click', () => state.currentSpread.length && download('spread-data.json', JSON.stringify(spreadData(), null, 2), 'application/json')); if ($('crossedLayoutToggle')) $('crossedLayoutToggle').addEventListener('change', e => { state.crossedLayout = e.target.checked; renderSpread(); }); if ($('positionStickerToggle')) $('positionStickerToggle').addEventListener('change', e => { state.positionStickers = e.target.checked; renderSpread(); }); if ($('tutorialOrderToggle')) $('tutorialOrderToggle').addEventListener('change', e => { state.revealGuideEnabled = e.target.checked; state.revealGuideActive = e.target.checked && state.currentSpread.some(x => !x.revealed); renderSpread(); });
 
     ['cardDetail','spreadCardDetail','shortListPanel'].forEach(id => { const el = $(id); if (el) el.addEventListener('click', event => {
-      const ingredientTab = event.target.closest('[data-ingredient-tab]');
-      if (ingredientTab) {
-        event.preventDefault(); event.stopPropagation();
-        const tabsRoot = ingredientTab.closest('.locked-ingredients--tabs');
-        const targetId = ingredientTab.dataset.ingredientTab;
-        if (tabsRoot && targetId) {
-          tabsRoot.querySelectorAll('[data-ingredient-tab]').forEach(tab => { const active = tab === ingredientTab; tab.classList.toggle('is-active', active); tab.setAttribute('aria-selected', active ? 'true' : 'false'); });
-          tabsRoot.querySelectorAll('[data-ingredient-panel]').forEach(panel => { const active = panel.dataset.ingredientPanel === targetId; panel.hidden = !active; panel.classList.toggle('is-active', active); });
-        }
-        return;
-      }
       const filter = event.target.closest('[data-filter]');
       if (filter) { event.preventDefault(); event.stopPropagation(); applyChipFilter(filter.dataset.filter); return; }
       const btn = event.target.closest('[data-shortlist]');

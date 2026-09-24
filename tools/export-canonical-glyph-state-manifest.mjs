@@ -3,7 +3,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 
 const SOURCE_URL = 'https://oracleofrelphi.com/glyphs-unified-preview.html';
-const EXPECTED_GLYPHS = 93;
+const EXPECTED_GLYPHS = 94;
 const outputPath = path.resolve(process.argv[2] || 'relphi-canonical-glyph-manifest-v1.js');
 
 const browser = await chromium.launch({ headless: true });

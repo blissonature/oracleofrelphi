@@ -12,6 +12,7 @@ function sample(name,offset,profile){
 const skyA=sample('Alpha sky',0,{dateTime:'1985-10-08T04:37',instant:'1985-10-08T08:37:00.000Z',location:'Malden, Massachusetts, United States',timeZone:'America/New_York',latitude:42.4251,longitude:-71.0662});
 const skyB=sample('Beta sky',29.27,{dateTime:'2026-09-10T21:00',instant:'2026-09-11T03:00:00.000Z',location:'Salt Lake City, Utah, United States',timeZone:'America/Denver',latitude:40.7608,longitude:-111.891});
 const saved={...structuredClone(skyA),id:'saved-alpha',name:'Saved Alpha',metadata:{savedSkyId:'saved-alpha',savedSkyName:'Saved Alpha'}};
+const legacySaved={...structuredClone(skyA),id:'legacy-sage',name:'Legacy Sage Event',calcProfile:{},instant:'2021-05-22T16:15:00.000Z',notes:'Motion state sampled around 2021-05-22T16:15:00.000Z. Location: Malden, Massachusetts, United States. Time zone: America/New_York. latitude 42.4251 and longitude -71.0662',metadata:{savedSkyId:'legacy-sage',savedSkyName:'Legacy Sage Event'}};
 
 const browser=await chromium.launch({headless:true});
 try{
@@ -27,7 +28,7 @@ try{
     localStorage.setItem('relphiSkyChartLastModeV1','comparison');
     window.__skyBRemovedCount=0;
     window.addEventListener('relphi:sky-b-removed',()=>{window.__skyBRemovedCount+=1});
-  },{a:skyA,b:skyB,library:[saved]});
+  },{a:skyA,b:skyB,library:[saved,legacySaved]});
 
   await page.goto('http://127.0.0.1:4173/sky-chart.html',{waitUntil:'networkidle',timeout:30000});
   await page.waitForSelector('#skyFoundationRoot[aria-busy="false"]',{timeout:20000});
@@ -72,6 +73,25 @@ try{
     assert.ok(thumb.weekLines>=7,`Sky ${slot} microheptagram should retain the weekly star geometry: ${JSON.stringify(thumb)}`);
     assert.equal(thumb.visibleWeekLines,thumb.weekLines,`Sky ${slot} microheptagram lines should be visibly painted: ${JSON.stringify(thumb)}`);
   }
+
+  // Loading an older Saved Sky into an already-mounted Sky B must rebuild both
+  // the hidden source heptagram and the visible microheptagram fingerprint.
+  await page.locator('[data-saved-sky-trigger="B"]').click();
+  await page.waitForSelector('#skySavedSkiesPopover .sky-saved-list',{timeout:5000});
+  await page.locator('#skySavedSkiesPopover [data-saved-sky-ref="legacy-sage"]').click();
+  await page.waitForFunction(()=>JSON.parse(localStorage.getItem('relphiSkyChartB')||'null')?.metadata?.savedSkyId==='legacy-sage',null,{timeout:5000});
+  await page.waitForFunction(()=>{
+    const refs=window.RelphiSkyCardShell?.get?.('B'),source=refs?.heptagram,thumb=refs?.whereFingerprint?.querySelector('.sky-where-fingerprint-heptagram');
+    return !!source&&source.dataset.canonicalSourceReady==='true'&&source.querySelectorAll('.sky-ph-week-segment').length>=7&&!!thumb&&thumb.querySelectorAll('.sky-ph-week-segment').length>=7;
+  },null,{timeout:10000});
+  const loadedLegacyB=await page.evaluate(()=>{
+    const refs=window.RelphiSkyCardShell?.get?.('B'),source=refs?.heptagram,thumb=refs?.whereFingerprint?.querySelector('.sky-where-fingerprint-heptagram'),rect=thumb?.getBoundingClientRect();
+    return{sourceReady:source?.dataset.canonicalSourceReady,sourceWeek:source?.querySelectorAll('.sky-ph-week-segment').length||0,thumb:!!thumb,width:rect?.width||0,height:rect?.height||0};
+  });
+  assert.equal(loadedLegacyB.sourceReady,'true',`Loaded legacy Sky B must rebuild its source heptagram: ${JSON.stringify(loadedLegacyB)}`);
+  assert.ok(loadedLegacyB.sourceWeek>=7,`Loaded legacy Sky B source must contain weekly heptagram geometry: ${JSON.stringify(loadedLegacyB)}`);
+  assert.equal(loadedLegacyB.thumb,true,`Loaded legacy Sky B must display its microheptagram: ${JSON.stringify(loadedLegacyB)}`);
+  assert.ok(loadedLegacyB.width>=40&&loadedLegacyB.height>=40,`Loaded legacy Sky B microheptagram must occupy the visible tab: ${JSON.stringify(loadedLegacyB)}`);
 
   await page.locator('[data-saved-sky-trigger="B"]').click();
   await page.waitForSelector('#skySavedSkiesPopover .sky-saved-list',{timeout:5000});

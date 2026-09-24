@@ -80,8 +80,35 @@ async function applyQuestions(page,labels){
     assert.equal(denseAudit.xs,10,`50-position automatic layout should use a 10-column comfortable pack; columns=${denseAudit.xs}`);
     assert.equal(denseAudit.ys,5,`50-position automatic layout should use five rows; rows=${denseAudit.ys}`);
     assert.deepEqual(denseAudit.overlaps,[],'automatic 50-position layout must not overlap card/label envelopes');
-    assert.ok(denseAudit.zoom>=.45,'dense layout should remain within supported board zoom');
-    assert.ok(denseAudit.minScale>=.32 && denseAudit.maxScale<.45,`50-position pack should use the dense prefab scale band without being clamped back to .45; scales=${denseAudit.minScale}–${denseAudit.maxScale}`);
+    assert.ok(denseAudit.zoom>0,'dense layout should retain a positive board zoom');
+    assert.ok(denseAudit.minScale>=.32 && denseAudit.maxScale<.45,`50-position pack should use the dense prefab scale band; scales=${denseAudit.minScale}–${denseAudit.maxScale}`);
+
+    await page.setViewportSize({width:390,height:844});
+    await page.click('#zoomCardRowExtents');
+    await page.waitForTimeout(180);
+    const mobileFit=await page.evaluate(()=>{
+      const root=document.querySelector('#shortListPanel');
+      const workspace=root?.querySelector('.card-row-workspace');
+      const toolbar=root?.querySelector('.card-row-workspace-toolbar.relphi-board-controller');
+      const wr=workspace?.getBoundingClientRect();
+      const tr=toolbar?.getBoundingClientRect();
+      const failures=[];
+      root?.querySelectorAll('.card-row-board>.card-row-item').forEach((item,index)=>{
+        const nodes=[item.querySelector('.card-row-drop-card,.card-row-card-wrap'),item.querySelector(':scope>.card-row-position-panel')].filter(Boolean);
+        nodes.forEach((node,nodeIndex)=>{
+          const r=node.getBoundingClientRect();
+          if(r.left<(wr?.left||0)-3||r.right>(wr?.right||0)+3||r.top<(wr?.top||0)-3||r.bottom>(wr?.bottom||0)+3) failures.push({index,node:nodeIndex?'label':'face',reason:'outside'});
+          if(tr&&r.left<tr.right&&r.right>tr.left&&r.top<tr.bottom&&r.bottom>tr.top) failures.push({index,node:nodeIndex?'label':'face',reason:'toolbar-overlap'});
+        });
+      });
+      const snap=window.RelphiDrawingBoardOptionsBridge.capture();
+      return {zoom:Number(snap.rowZoom)||0,failures};
+    });
+    assert.ok(mobileFit.zoom<.45,`50-position mobile Zoom Extents must be allowed below the old 45% floor; zoom=${mobileFit.zoom}`);
+    assert.deepEqual(mobileFit.failures,[],'50-position mobile Zoom Extents must keep every card and label visible');
+    await page.setViewportSize({width:1440,height:1000});
+    await page.click('#zoomCardRowExtents');
+    await page.waitForTimeout(180);
 
     await page.click('#drawingBoardOptionsButton');
     await page.waitForSelector('.relphi-reading-options-drawer.is-reading-options-open',{state:'visible'});

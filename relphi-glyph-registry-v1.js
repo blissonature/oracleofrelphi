@@ -47,6 +47,7 @@
     ['lilith','Lilith',['lilith','black moon lilith','bml','⚸'],'assets/planet-glyphs/lilith.svg',1,0,0,null,'static-master'],
     ['part-of-fortune','Part of Fortune',['part of fortune','fortune','pars fortunae','pof','⊗','pa'],'assets/planet-glyphs/part-of-fortune.svg',1,0,0,null,'static-master'],
     ['vertex','Vertex',['vertex','vx'],null,1,0,0,'Vx','letter','700'],
+    ['anti-vertex','Anti-Vertex',['anti-vertex','anti vertex','antivertex','avx'],'assets/planet-glyphs/anti-vertex.svg',1,0,0,'AVx','letter','700'],
     ['asc','Ascendant',['asc','ascendant','rising','ac'],null,1,0,0,'Asc','letter','700'],
     ['dsc','Descendant',['dsc','descendant','dc'],null,1,0,0,'Dsc','letter','700'],
     ['mc','Midheaven',['mc','midheaven'],null,1,0,0,'MC','letter','700'],

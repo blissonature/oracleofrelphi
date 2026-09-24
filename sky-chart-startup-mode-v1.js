@@ -28,7 +28,7 @@ function warmExactTarotPreview(){
   if(tarotWarmStarted)return;
   tarotWarmStarted=true;
   [
-    'style.css?v=346',
+    'style.css?v=367',
     'navloader.js?v=56',
     'tarot-cards.js?v=3',
     'relphi-locked-interpretations.js?v=207',
