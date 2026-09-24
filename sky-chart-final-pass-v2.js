@@ -401,10 +401,16 @@
       focusPanel.id = 'skyFoundationFocus';
       focusPanel.className = 'sky-foundation-focus-panel';
       focusPanel.setAttribute('aria-label', 'Focus');
-      focusPanel.innerHTML = '<header class="sky-foundation-focus-heading"><h2>Focus</h2></header>';
+      focusPanel.innerHTML = '<header class="sky-foundation-focus-heading"><h2>Focus</h2><span class="sky-focus-heading-controls" aria-label="Focus display controls"></span></header>';
     }
 
     const focusHeading = focusPanel.querySelector(':scope > .sky-foundation-focus-heading');
+    if (focusHeading && !focusHeading.querySelector(':scope > .sky-focus-heading-controls')) {
+      const controls = document.createElement('span');
+      controls.className = 'sky-focus-heading-controls';
+      controls.setAttribute('aria-label', 'Focus display controls');
+      focusHeading.appendChild(controls);
+    }
     if (bar.parentElement !== focusPanel) focusPanel.appendChild(bar);
 
     if (relationshipPanel.parentElement === comparison) {
