@@ -39,6 +39,48 @@ try {
   await page.waitForFunction(()=>document.querySelector('.sky-foundation-relationship-row.is-inline-expanded'));
   assert.equal(await row.getAttribute('aria-expanded'),'true','relationship row should expand');
 
+  await page.waitForFunction(()=>[...document.querySelectorAll('.sky-foundation-relationship-row.is-inline-expanded .inline-rel-card-art img')].length===2&&[...document.querySelectorAll('.sky-foundation-relationship-row.is-inline-expanded .inline-rel-card-art img')].every(img=>img.complete&&img.naturalWidth>0),null,{timeout:10000});
+  const inlineCardArt=await page.evaluate(()=>[...document.querySelectorAll('.sky-foundation-relationship-row.is-inline-expanded .inline-rel-card-art')].map(frame=>{
+    const img=frame.querySelector('img'),fs=getComputedStyle(frame),is=getComputedStyle(img),fr=frame.getBoundingClientRect(),ir=img.getBoundingClientRect();
+    const bl=parseFloat(fs.borderLeftWidth)||0,br=parseFloat(fs.borderRightWidth)||0,bt=parseFloat(fs.borderTopWidth)||0,bb=parseFloat(fs.borderBottomWidth)||0;
+    return{
+      frameRadius:fs.borderRadius,
+      framePadding:[fs.paddingTop,fs.paddingRight,fs.paddingBottom,fs.paddingLeft],
+      frameBorder:[fs.borderTopWidth,fs.borderRightWidth,fs.borderBottomWidth,fs.borderLeftWidth],
+      frameColor:fs.borderTopColor,
+      frameOverflow:fs.overflow,
+      imgRadius:is.borderRadius,
+      imgBorder:is.borderWidth,
+      imgFit:is.objectFit,
+      imgAspect:is.aspectRatio,
+      imgClip:is.clipPath,
+      sourceRatio:img.naturalWidth/img.naturalHeight,
+      renderedRatio:ir.width/ir.height,
+      flush:{
+        left:Math.abs(ir.left-(fr.left+bl)),
+        right:Math.abs(ir.right-(fr.right-br)),
+        top:Math.abs(ir.top-(fr.top+bt)),
+        bottom:Math.abs(ir.bottom-(fr.bottom-bb))
+      }
+    };
+  }));
+  assert.equal(inlineCardArt.length,2,'expanded relationship must show two card-art frames');
+  inlineCardArt.forEach(item=>{
+    assert.equal(item.frameRadius,'0px','dual-card Sky stroke must have sharp corners');
+    assert.deepEqual(item.framePadding,['0px','0px','0px','0px'],'dual-card Sky stroke must be flush to the card art');
+    assert.deepEqual(item.frameBorder,['2px','2px','2px','2px'],'dual-card Sky assignment stroke must remain visible');
+    assert.equal(item.frameOverflow,'visible');
+    assert.equal(item.imgRadius,'0px','dual-card tarot image must have sharp corners');
+    assert.equal(item.imgBorder,'0px','stroke belongs outside the image pixels');
+    assert.equal(item.imgFit,'contain');
+    assert.equal(item.imgAspect,'auto');
+    assert.equal(item.imgClip,'none');
+    assert.ok(Math.abs(item.renderedRatio-item.sourceRatio)<0.01,'dual-card art must preserve the source image aspect ratio');
+    assert.ok(Object.values(item.flush).every(delta=>delta<=0.75),'dual-card art must touch the inside edge of its Sky stroke without a gap');
+  });
+  assert.equal(inlineCardArt[0].frameColor,'rgb(201, 33, 30)','Sky A card stroke must stay red');
+  assert.equal(inlineCardArt[1].frameColor,'rgb(36, 98, 208)','Sky B card stroke must stay blue');
+
   const blank=await page.evaluate(()=>{
     const row=document.querySelector('.sky-foundation-relationship-row.is-inline-expanded');
     const detail=row?.querySelector(':scope > .inline-rel-detail');
