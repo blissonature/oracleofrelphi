@@ -639,6 +639,14 @@ function cloneCachedPreviewGlyph(svg,cached){
   svg.dataset.vocabPreviewGlyphReady='true';
   svg.style.visibility='visible';
 }
+function fallbackAbstractPreviewGlyph(svg,fallback){
+  svg.replaceChildren();
+  const text=document.createElementNS('http://www.w3.org/2000/svg','text');
+  text.setAttribute('x','0');text.setAttribute('y','0');text.setAttribute('text-anchor','middle');text.setAttribute('dominant-baseline','central');
+  text.setAttribute('font-size','20');text.setAttribute('font-weight','800');text.textContent=fallback;
+  svg.appendChild(text);svg.dataset.vocabPreviewGlyphReady='true';svg.style.visibility='visible';
+  return svg;
+}
 function renderAbstractPreviewGlyph(svg,tokenNode){
   const key=abstractPreviewGlyphKey(tokenNode);
   const cached=abstractPreviewGlyphCache.get(key);
@@ -649,32 +657,26 @@ function renderAbstractPreviewGlyph(svg,tokenNode){
   }
   const glyphId=tokenNode.dataset.vocabGlyphId,fallback=tokenNode.dataset.vocabFallbackGlyph||tokenNode.dataset.vocabName||tokenNode.dataset.vocabId;
   const registry=window.RelphiGlyphRegistry,component=window.RelphiGlyphComponent,entry=glyphId&&(registry?.get?.(glyphId)||registry?.resolve?.(glyphId));
-  if(!entry||!component){
-    svg.replaceChildren();
-    const text=document.createElementNS('http://www.w3.org/2000/svg','text');
-    text.setAttribute('x','0');text.setAttribute('y','0');text.setAttribute('text-anchor','middle');text.setAttribute('dominant-baseline','central');
-    text.setAttribute('font-size','20');text.setAttribute('font-weight','800');text.textContent=fallback;
-    svg.appendChild(text);svg.dataset.vocabPreviewGlyphReady='true';svg.style.visibility='visible';
+  if(!entry||!component?.draw){
+    fallbackAbstractPreviewGlyph(svg,fallback);
     const template=svg.cloneNode(true);abstractPreviewGlyphCache.set(key,template);return Promise.resolve(svg);
   }
+
+  // Draw into the live, final-size SVG. The box is hidden but already 15×15,
+  // so canonical fitting resolves against the real consumer geometry without
+  // ever exposing a differently-sized intermediate state.
   svg.style.visibility='hidden';
-  const template=document.createElementNS('http://www.w3.org/2000/svg','svg');
-  template.setAttribute('viewBox','-18 -18 36 36');
-  template.setAttribute('aria-hidden','true');
-  const ready=component.draw(template,entry.id,{radius:14,padding:.7,color:'currentColor'}).then(()=>{
-    template.dataset.vocabPreviewGlyphReady='true';
+  const ready=Promise.resolve(component.draw(svg,entry.id,{radius:14,padding:.7,color:'currentColor'})).then(()=>{
+    svg.dataset.vocabPreviewGlyphReady='true';
+    svg.style.visibility='visible';
+    const template=svg.cloneNode(true);
     template.style.visibility='visible';
     abstractPreviewGlyphCache.set(key,template);
-    if(svg.isConnected)cloneCachedPreviewGlyph(svg,template);
     return template;
   }).catch(()=>{
-    template.replaceChildren();
-    const text=document.createElementNS('http://www.w3.org/2000/svg','text');
-    text.setAttribute('x','0');text.setAttribute('y','0');text.setAttribute('text-anchor','middle');text.setAttribute('dominant-baseline','central');
-    text.setAttribute('font-size','20');text.setAttribute('font-weight','800');text.textContent=fallback;
-    template.appendChild(text);template.dataset.vocabPreviewGlyphReady='true';template.style.visibility='visible';
+    fallbackAbstractPreviewGlyph(svg,fallback);
+    const template=svg.cloneNode(true);
     abstractPreviewGlyphCache.set(key,template);
-    if(svg.isConnected)cloneCachedPreviewGlyph(svg,template);
     return template;
   });
   abstractPreviewGlyphCache.set(key,ready);
