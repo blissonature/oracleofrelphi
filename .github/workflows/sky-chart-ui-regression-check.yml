@@ -5,6 +5,9 @@ on:
     paths:
       - 'sky-chart.html'
       - 'sky-chart-vocab-tab-v1.js'
+      - 'sky-chart-harmonic-orb-v1.js'
+      - 'sky-chart-harmonic-window-ceiling-v1.js'
+      - 'sky-chart-orb-control-v1.js'
       - 'sky-chart-vocab-copy-v1.js'
       - 'relphi-glyph-copy-serializer-v1.js'
       - 'relphi-glyph-registry-v1.js'
@@ -55,6 +58,9 @@ jobs:
           node --check tests/sky-chart-filter-control-unified.mjs
           node --check tests/sky-chart-stability-now.mjs
           node --check tests/sky-chart-placement-ledger-colors.mjs
+          node --check sky-chart-harmonic-orb-v1.js
+          node --check sky-chart-harmonic-window-ceiling-v1.js
+          node --check sky-chart-orb-control-v1.js
           node --check sky-chart-vocab-copy-v1.js
           node --check relphi-glyph-copy-serializer-v1.js
           node --check tests/sky-chart-vocab-tab-browser.mjs
