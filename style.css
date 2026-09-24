@@ -19828,3 +19828,49 @@ body.sky-chart-page .unified-sky-wheel .chart-wheel-all-aspects .chart-wheel-asp
   .sky-data-menu,
   .sky-data-menu > summary { width: 100%; text-align: center; }
 }
+
+
+/* v367 — site-wide tarot source-art integrity.
+   The RWS source files are already cropped exactly as intended. UI chrome must not
+   round, stroke, mask, clip, shadow, or cover the image itself. A stroke around
+   tarot art is opt-in only, never a default. */
+html body [class] img[src][src*="assets/tarot/rws/"],
+html body img[src][src*="assets/tarot/rws/"] {
+  display: block !important;
+  height: auto !important;
+  max-height: none !important;
+  aspect-ratio: auto !important;
+  object-fit: contain !important;
+  border: 0 !important;
+  outline: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  clip-path: none !important;
+  mask: none !important;
+  -webkit-mask: none !important;
+}
+
+/* Card-art owners may size/position the art, but may not trim its pixels. */
+html body :is(
+  .or-card,
+  .spread-card,
+  .card-row-card,
+  .card-row-card-wrap,
+  .sky-card-hit-art,
+  .sky-chart-hit,
+  .sky-card-ruler-art,
+  .sky-card-ruler-fingerprint,
+  .sky-card-house-decan-art,
+  .sky-card-house-span-major-art,
+  .sky-selected-card,
+  .rex-card
+):has(img[src*="assets/tarot/rws/"]) {
+  border: 0 !important;
+  outline: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  clip-path: none !important;
+  mask: none !important;
+  -webkit-mask: none !important;
+  overflow: visible !important;
+}
