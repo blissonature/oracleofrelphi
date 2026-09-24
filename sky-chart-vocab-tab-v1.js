@@ -730,14 +730,14 @@ function appendPlacementNames(frag,members){
     frag.appendChild(token(placementInfo(record),'placement',false));
   });
 }
-function appendSimplePlacementList(frag,members,contextKind){
+function appendSimplePlacementList(frag,members,contextKind,suppressContextKey=''){
   const groups=simplePlacementContextGroups(members,contextKind);
   groups.forEach((group,index)=>{
     if(index)frag.appendChild(document.createTextNode('; '));
     appendPlacementNames(frag,group.members);
-    const first=group.members[0];
-    if(contextKind==='house'&&first?.house)frag.append(document.createTextNode(' · '),compactStructureContext(houseInfo(first.house),'house'));
-    if(contextKind==='sign'&&Number.isInteger(first?.sign))frag.append(document.createTextNode(' · '),compactStructureContext(signInfo(first.sign),'sign'));
+    const first=group.members[0],suppress=String(group.key)===String(suppressContextKey);
+    if(!suppress&&contextKind==='house'&&first?.house)frag.append(document.createTextNode(' · '),compactStructureContext(houseInfo(first.house),'house'));
+    if(!suppress&&contextKind==='sign'&&Number.isInteger(first?.sign))frag.append(document.createTextNode(' · '),compactStructureContext(signInfo(first.sign),'sign'));
   });
 }
 function appendSignPole(frag,signIndex,list,sentenceStart=false){
@@ -770,7 +770,7 @@ function appendHousePole(frag,house,slot,list,sentenceStart=false){
   }
   const members=houseOccupants(list,house);
   if(members.length){
-    frag.appendChild(document.createTextNode(': '));appendSimplePlacementList(frag,members,'sign');
+    frag.appendChild(document.createTextNode(': '));appendSimplePlacementList(frag,members,'sign',Number.isInteger(cuspSign)?String(cuspSign):'');
   }else{
     const ruler=Number.isInteger(cuspSign)?SIGN_RULERS[cuspSign]:'unknown';
     frag.appendChild(document.createTextNode(': no placements · default ruler '+ruler));
