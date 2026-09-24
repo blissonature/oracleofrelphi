@@ -100,7 +100,7 @@
     const clone=label.cloneNode(true);clone.querySelectorAll('select,input,button').forEach(node=>node.remove());return cleanLabel(clone.textContent);
   }
   function filterSummary(){
-    const bar=document.querySelector('#skyFoundationRelationships .sky-chart-filter-bar');
+    const bar=(document.querySelector('#skyFoundationFocus .sky-chart-filter-bar')||document.querySelector('#skyFoundationRelationships .sky-chart-filter-bar'));
     if(!bar)return'';
     const parts=[];
     const harmonic=bar.querySelector('[data-harmonic-window-input]');if(harmonic?.value.trim())parts.push(`Harmonic window ${harmonic.value.trim()}°`);
