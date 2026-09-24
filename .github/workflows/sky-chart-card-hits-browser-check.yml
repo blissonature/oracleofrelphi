@@ -127,10 +127,9 @@ jobs:
           assert.equal(state.directFingerprint?.houseRail,true);
           assert.equal(state.directFingerprint?.oldGlyph,false);
           assert.equal(state.directFingerprint?.oldHouseMedallion,false);
-          assert.equal(state.directFingerprint?.cardMedia,'fingerprint-20x34-q30');
-          assert.match(state.directFingerprint?.cardSrc||'',/[?&]w=20(?:&|$)/);
-          assert.match(state.directFingerprint?.cardSrc||'',/[?&]h=34(?:&|$)/);
-          assert.match(state.directFingerprint?.cardSrc||'',/[?&]q=30(?:&|$)/);
+          assert.equal(state.directFingerprint?.cardMedia,'fingerprint-local-eager');
+          assert.match(state.directFingerprint?.cardSrc||'',/\/assets\/tarot\/rws\/.+\.webp$/);
+          assert.equal((state.directFingerprint?.cardSrc||'').includes('wsrv.nl'),false);
           assert.equal(state.mountHidden,false);
           assert.ok(state.mountChildCount>0);
           await page.locator('#skyFoundationA [data-sky-drawer-tab="card-hits"]').click({force:true});
