@@ -31,6 +31,7 @@ await page.addInitScript(({a,b})=>{
   localStorage.removeItem('relphiSkyVocabDisplayV1');
   localStorage.removeItem('relphiSkyVocabFilterV1');
   sessionStorage.removeItem('relphiSkyVocabViewV1');
+  sessionStorage.removeItem('relphiSkyPlacementLogicV1');
 },{a:skyA,b:skyB});
 
 await page.goto('http://127.0.0.1:4173/sky-chart.html',{waitUntil:'domcontentloaded'});
@@ -204,14 +205,26 @@ assert.equal(await displayMenu.locator('[data-vocab-layer-none="A"]').count(),1)
 await page.keyboard.press('Escape');
 await displayMenu.waitFor({state:'hidden'});
 
-const placements=page.locator('#skyFoundationA [data-vocab-dropdown-toggle="placements"]');
+const placements=page.locator('#skyFoundationA [data-vocab-shared-placement-toggle="A"]');
+const vocabPlacementSummary=page.locator('#skyFoundationA [data-vocab-dropdown-summary="placements"][data-vocab-summary-slot="A"]');
+const relationshipPlacementSummary=page.locator('#skyFoundationRelationships [data-placement-filter-summary]');
+assert.equal(await vocabPlacementSummary.textContent(),await relationshipPlacementSummary.textContent(),'Vocab Placements must initialize from the Relationships Placements state.');
+
 await placements.click();
-const placementMenu=page.locator('[data-vocab-dropdown-menu="placements"][data-vocab-menu-slot="A"]');
+const placementMenu=page.locator('#skyChartPlacementPopover');
 await placementMenu.waitFor({state:'visible'});
-assert.ok(await placementMenu.locator('[data-vocab-placement]').count()>10,'Placement matrix must expose the chart placements.');
-assert.equal(await placementMenu.locator('.sky-chart-placement-list').count(),1,'Vocab Placement must reuse the Relationships Placement list.');
-assert.ok(await placementMenu.locator('.sky-chart-placement-list-item-group').count()>=4,'Vocab Placement must use Relationships group rows.');
-assert.equal(await placementMenu.locator('[data-vocab-dimension-master="placements"]').count(),1,'Placement list must use the Relationships-style All placements master row.');
+assert.equal(await placementMenu.locator('.sky-chart-placement-list').count(),1,'Opening Placements from Vocab must open the actual Relationships placement list.');
+assert.ok(await placementMenu.locator('.sky-chart-placement-list-item-group').count()>=4,'The shared Placements popover must retain Relationships group rows.');
+assert.ok(await placementMenu.locator('[data-placement-choice]').count()>10,'The shared Placements popover must retain OR/AND/NOT logic controls.');
+
+const sunAChoice=placementMenu.locator('[data-placement-scope="placement"][data-placement-target="sun"][data-placement-choice="a"]');
+await sunAChoice.click();
+await page.waitForFunction(()=>document.querySelector('#skyFoundationRelationships [data-placement-filter-summary]')?.textContent==='A Sun OR');
+await page.waitForFunction(()=>document.querySelector('#skyFoundationA [data-vocab-dropdown-summary="placements"]')?.textContent==='A Sun OR');
+assert.equal(await vocabPlacementSummary.textContent(),'A Sun OR','Vocab Placements summary must mirror Relationships immediately.');
+const inheritedPlacementIds=await page.locator('#skyFoundationA .sky-vocab-line:not([data-vocab-structure]) .sky-vocab-token[data-vocab-kind="placement"]').evaluateAll(tokens=>[...new Set(tokens.map(token=>token.dataset.vocabId).filter(Boolean))]);
+assert.deepEqual(inheritedPlacementIds,['sun'],'Vocab placement results must inherit the effective Sky A placement scope from Relationships.');
+
 const placementScroll=await placementMenu.evaluate(async menu=>{
   await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
   const max=Math.max(0,menu.scrollHeight-menu.clientHeight);
@@ -221,8 +234,13 @@ const placementScroll=await placementMenu.evaluate(async menu=>{
   await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
   return{before,after:menu.scrollTop,max};
 });
-assert.ok(placementScroll.max>0,'The Placements dropdown test fixture must be scrollable.');
-assert.ok(placementScroll.before>0&&placementScroll.after>=placementScroll.before-2,'Scrolling the Placements dropdown must not snap back to the top.');
+assert.ok(placementScroll.max>0,'The shared Placements dropdown test fixture must be scrollable.');
+assert.ok(placementScroll.before>0&&placementScroll.after>=placementScroll.before-2,'Scrolling the shared Placements dropdown must not snap back to the top.');
+
+await placementMenu.locator('[data-placement-logic-clear]').click();
+await page.waitForFunction(()=>document.querySelector('#skyFoundationRelationships [data-placement-filter-summary]')?.textContent==='All');
+await page.waitForFunction(()=>document.querySelector('#skyFoundationA [data-vocab-dropdown-summary="placements"]')?.textContent==='All');
+assert.ok(await page.locator('#skyFoundationA .sky-vocab-line:not([data-vocab-structure])').count()>5,'Clearing Relationships Placements must restore the full Vocab placement layer.');
 await page.keyboard.press('Escape');
 await placementMenu.waitFor({state:'hidden'});
 
