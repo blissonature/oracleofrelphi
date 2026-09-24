@@ -1425,19 +1425,19 @@
 
   /* Direct Sky Chart-matched heptagram renderer: core presentation, no post-processing. */
   #heptagramSvg .ph-core-heptagram-circle,
-  #heptagramSvg .ph-core-heptagram-guide, { fill:none; stroke:#2a2521; vector-effect:non-scaling-stroke; }
-  #heptagramSvg .ph-core-heptagram-circle, { stroke-width:1.4; opacity:.55; }
+  #heptagramSvg .ph-core-heptagram-guide { fill:none; stroke:#2a2521; vector-effect:non-scaling-stroke; }
+  #heptagramSvg .ph-core-heptagram-circle { stroke-width:1.4; opacity:.55; }
   #heptagramSvg .ph-core-heptagram-guide { stroke-width:1; opacity:.2; }
-  #heptagramSvg .ph-core-heptagram-week, { fill:none; stroke:#d8d0c8; stroke-width:3; stroke-linecap:round; vector-effect:non-scaling-stroke; }
-  #heptagramSvg .ph-core-heptagram-week.past, { stroke:#c9211e; }
-  #heptagramSvg .ph-core-heptagram-week.current, { stroke:#c9211e; stroke-width:6; filter:drop-shadow(0 0 5px rgba(201,33,30,.34)); }
-  #heptagramSvg .ph-core-heptagram-hour, { fill:none; stroke:#27221e; stroke-width:2.2; stroke-linecap:round; opacity:.28; vector-effect:non-scaling-stroke; }
-  #heptagramSvg .ph-core-heptagram-hour.current, { stroke:#c9211e; stroke-width:5; opacity:1; filter:drop-shadow(0 0 4px rgba(201,33,30,.30)); }
-  #heptagramSvg .ph-core-heptagram-day-ring, { fill:none; vector-effect:non-scaling-stroke; }
-  #heptagramSvg .ph-core-heptagram-day-ring.inner, { stroke-width:1.65; }
-  #heptagramSvg .ph-core-heptagram-day-ring.outer, { stroke-width:1.15; opacity:.76; }
-  #heptagramSvg .ph-core-heptagram-planet, { filter:drop-shadow(0 1px 2px rgba(45,39,34,.12)); }
-  #heptagramSvg .ph-core-heptagram-art *, { vector-effect:non-scaling-stroke; }
+  #heptagramSvg .ph-core-heptagram-week { fill:none; stroke:#d8d0c8; stroke-width:3; stroke-linecap:round; vector-effect:non-scaling-stroke; }
+  #heptagramSvg .ph-core-heptagram-week.past { stroke:#c9211e; }
+  #heptagramSvg .ph-core-heptagram-week.current { stroke:#c9211e; stroke-width:6; filter:drop-shadow(0 0 5px rgba(201,33,30,.34)); }
+  #heptagramSvg .ph-core-heptagram-hour { fill:none; stroke:#27221e; stroke-width:2.2; stroke-linecap:round; opacity:.28; vector-effect:non-scaling-stroke; }
+  #heptagramSvg .ph-core-heptagram-hour.current { stroke:#c9211e; stroke-width:5; opacity:1; filter:drop-shadow(0 0 4px rgba(201,33,30,.30)); }
+  #heptagramSvg .ph-core-heptagram-day-ring { fill:none; vector-effect:non-scaling-stroke; }
+  #heptagramSvg .ph-core-heptagram-day-ring.inner { stroke-width:1.65; }
+  #heptagramSvg .ph-core-heptagram-day-ring.outer { stroke-width:1.15; opacity:.76; }
+  #heptagramSvg .ph-core-heptagram-planet { filter:drop-shadow(0 1px 2px rgba(45,39,34,.12)); }
+  #heptagramSvg .ph-core-heptagram-art * { vector-effect:non-scaling-stroke; }
 
 
   /* Settings correction: one visible time display and reliably legible secondary actions. */
@@ -1549,6 +1549,7 @@
   .ph-calendar-event-lane > * { min-width:0; max-width:100%; }
   .ph-calendar-event { display:block; min-width:0; max-width:100%; box-sizing:border-box; padding:.34rem .55rem; border:1px solid rgba(17,17,17,.12); border-left-width:3px; border-radius:.55rem; background:#faf8f5; color:#302a25; font:750 .75rem/1.2 system-ui,sans-serif; white-space:normal; overflow-wrap:anywhere; }
   .ph-calendar-event.has-aspect { border-left-color:var(--ph-calendar-aspect-color,rgba(17,17,17,.12)); }
+  .ph-calendar-event.has-calendar-source { border-left-color:var(--ph-calendar-source-color,rgba(17,17,17,.18)); }
   .ph-calendar-event strong { color:var(--relphi-red-dark); font-weight:900; }
   .ph-calendar-note-summary { margin:.55rem 0 0; color:#655d56; font-size:.8rem; font-weight:700; }
   .ph-calendar-month-view { margin-top:.9rem; }
@@ -1568,6 +1569,7 @@
   .ph-calendar-month-events { display:grid; gap:.22rem; min-width:0; overflow:hidden; }
   .ph-calendar-month-event { display:block; min-width:0; max-width:100%; padding:.25rem .32rem; box-sizing:border-box; border:1px solid rgba(17,17,17,.08); border-left:3px solid rgba(17,17,17,.16); border-radius:.28rem .46rem .46rem .28rem; background:#faf8f5; color:#453d37; font:750 .61rem/1.22 system-ui,sans-serif; overflow:hidden; overflow-wrap:anywhere; }
   .ph-calendar-month-event.has-aspect { border-left-color:var(--ph-calendar-aspect-color,rgba(17,17,17,.16)); }
+  .ph-calendar-month-event.has-calendar-source { border-left-color:var(--ph-calendar-source-color,rgba(17,17,17,.18)); }
   .ph-calendar-month-event.alert { background:#fff7f4; }
   .ph-calendar-month-event.personal { background:#f7f5f2; font-weight:850; }
   .ph-calendar-month-event .ph-calendar-event-main { display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; overflow:hidden; }
@@ -1637,7 +1639,8 @@
   .ph-calendar-default-sky-control label { color:#514a44; font:850 .7rem/1.2 system-ui,sans-serif; }
   .ph-calendar-default-sky-control select { flex:1 1 14rem; min-height:36px; max-width:100%; border:1px solid rgba(17,17,17,.15); border-radius:999px; background:#fff; color:#211d19; padding:.38rem 1.9rem .38rem .7rem; font:750 .72rem/1.2 system-ui,sans-serif; }
   .ph-calendar-sky-overlay-list { display:grid; gap:.3rem; }
-  .ph-calendar-sky-overlay { display:grid; grid-template-columns:auto minmax(0,1fr) auto; align-items:center; gap:.48rem; min-width:0; padding:.4rem .48rem; border-radius:.58rem; background:#faf8f5; color:#302a26; cursor:pointer; }
+  .ph-calendar-sky-overlay { display:grid; grid-template-columns:auto auto minmax(0,1fr) auto; align-items:center; gap:.48rem; min-width:0; padding:.4rem .48rem; border-radius:.58rem; background:#faf8f5; color:#302a26; cursor:pointer; }
+  .ph-calendar-sky-color { width:.7rem; height:.7rem; border-radius:50%; background:var(--ph-calendar-source-color,#777); box-shadow:0 0 0 1px rgba(17,17,17,.12); }
   .ph-calendar-sky-overlay input { width:1rem; height:1rem; margin:0; accent-color:var(--relphi-red); }
   .ph-calendar-sky-overlay-name { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font:800 .72rem/1.2 system-ui,sans-serif; }
   .ph-calendar-sky-default-badge { padding:.18rem .38rem; border-radius:999px; background:#fff; border:1px solid rgba(17,17,17,.10); color:#6a6159; font:800 .57rem/1 system-ui,sans-serif; text-transform:uppercase; letter-spacing:.04em; }
@@ -2862,10 +2865,21 @@
 
   function calendarEventClassAndStyle(event) {
     const aspectId = calendarEventAspectId(event);
-    const color = calendarAspectColors[aspectId] || '';
+    const aspectColor = calendarAspectColors[aspectId] || '';
+    const sourceColor = event && event.referenceId ? calendarSourceColor(event.referenceId) : '';
+    const classes = [];
+    const styles = [];
+    if (aspectId) {
+      classes.push('has-aspect');
+      if (aspectColor) styles.push('--ph-calendar-aspect-color:' + aspectColor);
+    }
+    if (sourceColor) {
+      classes.push('has-calendar-source');
+      styles.push('--ph-calendar-source-color:' + sourceColor);
+    }
     return {
-      className: aspectId ? ' has-aspect' : '',
-      style: color ? ' style="--ph-calendar-aspect-color:' + color + '"' : ''
+      className: classes.length ? ' ' + classes.join(' ') : '',
+      style: styles.length ? ' style="' + styles.join(';') + '"' : ''
     };
   }
 
@@ -3998,6 +4012,15 @@
     trine:'#84cc16',
     opposition:'#0d9488'
   });
+  const calendarSourceColors = Object.freeze(['#c9211e','#277390','#8c4fb4','#2ca69b','#d97706','#5961c8','#43a85b','#b23b79','#7c6f64']);
+
+  function calendarSourceColor(id) {
+    const value = String(id || '');
+    if (!value) return '';
+    let hash = 0;
+    for (let i = 0; i < value.length; i += 1) hash = ((hash << 5) - hash + value.charCodeAt(i)) | 0;
+    return calendarSourceColors[Math.abs(hash) % calendarSourceColors.length];
+  }
   const calendarHouseReferents = Object.freeze([
     '',
     'self, embodiment, appearance, approach, and the immediate way life is entered',
@@ -4309,7 +4332,8 @@
         const id = savedSkyRecordRef(record);
         const name = String(record.name || 'Saved sky');
         const badge = id === selected ? '<span class="ph-calendar-sky-default-badge">Default</span>' : '';
-        return '<label class="ph-calendar-sky-overlay"><input type="checkbox" data-calendar-sky-overlay="' + htmlText(id) + '"' + (shown.has(id) ? ' checked' : '') + '><span class="ph-calendar-sky-overlay-name">' + htmlText(name) + '</span>' + badge + '</label>';
+        const color = calendarSourceColor(id);
+        return '<label class="ph-calendar-sky-overlay"><input type="checkbox" data-calendar-sky-overlay="' + htmlText(id) + '"' + (shown.has(id) ? ' checked' : '') + '><span class="ph-calendar-sky-color" style="--ph-calendar-source-color:' + color + '" aria-hidden="true"></span><span class="ph-calendar-sky-overlay-name">' + htmlText(name) + '</span>' + badge + '</label>';
       }).join('') : '<p class="ph-calendar-alert-empty">No saved skies yet.</p>';
       if (el.calendarSkyCount) el.calendarSkyCount.textContent = shown.size + ' shown';
     }
