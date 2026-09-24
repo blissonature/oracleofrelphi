@@ -74,14 +74,6 @@
     if(busy){button.setAttribute('aria-busy','true');button.innerHTML=WAIT_ICON}
     else{button.removeAttribute('aria-busy');button.innerHTML=ICON}
   }
-  function facts(slot){
-    const panel=document.getElementById(slot==='A'?'skyFoundationA':'skyFoundationB');
-    const lines=[...panel?.querySelectorAll('.sky-where-when-facts p')||[]].map(node=>node.textContent.trim());
-    const profile=read(slot)?.calcProfile||{};
-    const where=(lines.find(line=>/^Where:/i.test(line))||'').replace(/^Where:\s*/i,'')||profile.location||'';
-    const when=(lines.find(line=>/^When:/i.test(line))||'').replace(/^When:\s*/i,'')||profile.dateTime||'';
-    return{name:resolvedSkyName(slot),where,when};
-  }
   function wheelSlots(wheel){
     const explicit=String(wheel?.dataset?.singleSky||'').trim().toUpperCase();
     if(explicit==='A'||explicit==='B')return[explicit];
@@ -123,10 +115,49 @@
     return [selectionSummary(),filterSummary()].filter(Boolean).join(' · ');
   }
 
-  function infoBox(info,slot,single=false){
-    const side=slot.toLowerCase(),box=document.createElement('div');box.className=`sky-export-info sky-export-info-${side}${single?' sky-export-info-single':''}`;
+  function fingerprintSource(slot,kind){
+    const refs=window.RelphiSkyCardShell?.get?.(slot);
+    if(kind==='where')return refs?.whereFingerprint||null;
+    if(kind==='placements')return refs?.placementFingerprint||null;
+    if(kind==='ruler')return refs?.cardHitsFingerprint||null;
+    return null;
+  }
+  function cloneFingerprintPiece(slot,kind){
+    const wrapper=document.createElement('span');
+    wrapper.className=`sky-export-fingerprint-piece sky-export-fingerprint-piece-${kind}`;
+    wrapper.dataset.fingerprintPart=kind;
+    const source=fingerprintSource(slot,kind);
+    const sourceChild=source?.firstElementChild;
+    if(sourceChild){
+      const clone=sourceChild.cloneNode(true);
+      clone.removeAttribute?.('hidden');
+      clone.querySelectorAll?.('[hidden]').forEach(node=>node.removeAttribute('hidden'));
+      wrapper.appendChild(clone);
+      const label=source.getAttribute?.('aria-label');
+      if(label)wrapper.setAttribute('aria-label',label);
+    }else{
+      wrapper.dataset.fingerprintMissing='true';
+      wrapper.setAttribute('aria-hidden','true');
+    }
+    return wrapper;
+  }
+  function fingerprintBox(slot,single=false){
+    const side=slot.toLowerCase(),box=document.createElement('div');
+    box.className=`sky-export-fingerprint sky-export-fingerprint-${side}${single?' sky-export-fingerprint-single':''}`;
     box.dataset.sky=slot;
-    box.innerHTML=`<strong>${esc(info.name)}</strong>${info.where?`<span>${esc(info.where)}</span>`:''}${info.when?`<span>${esc(info.when)}</span>`:''}`;
+    box.dataset.exportSkyIdentifier='fingerprint';
+    box.setAttribute('aria-label',`Sky ${slot} fingerprint identifier`);
+    const label=document.createElement('span');
+    label.className='sky-export-fingerprint-label';
+    label.textContent=`Sky ${slot}`;
+    const triptych=document.createElement('span');
+    triptych.className='sky-export-fingerprint-triptych';
+    triptych.append(
+      cloneFingerprintPiece(slot,'where'),
+      cloneFingerprintPiece(slot,'placements'),
+      cloneFingerprintPiece(slot,'ruler')
+    );
+    box.append(label,triptych);
     return box;
   }
   function exportHost(width,height){
@@ -151,7 +182,7 @@
     const slots=wheelSlots(wheel);
     const box=wheel.viewBox?.baseVal,wheelWidth=Math.max(1,Math.ceil(box?.width||1200)),wheelHeight=Math.max(1,Math.ceil(box?.height||1200));
     const width=wheelWidth+WHEEL_EXPORT_FRAME.side*2,height=wheelHeight+WHEEL_EXPORT_FRAME.top+WHEEL_EXPORT_FRAME.bottom;
-    const host=exportHost(width,height),stage=document.createElement('div');stage.className='sky-wheel-export-stage';stage.dataset.exportSkyMode=slots.length===1?'single':'comparison';stage.style.width=`${width}px`;stage.style.height=`${height}px`;
+    const host=exportHost(width,height),stage=document.createElement('div');stage.className='sky-wheel-export-stage';stage.dataset.exportSkyMode=slots.length===1?'single':'comparison';stage.dataset.exportIdentityMode='fingerprint';stage.style.width=`${width}px`;stage.style.height=`${height}px`;
 
     const wheelMount=document.createElement('div');wheelMount.id='skyFoundationWheelMount';wheelMount.className=sourceMount.className;
     Object.assign(wheelMount.style,{position:'absolute',display:'block',left:`${WHEEL_EXPORT_FRAME.side}px`,top:`${WHEEL_EXPORT_FRAME.top}px`,width:`${wheelWidth}px`,height:`${wheelHeight}px`,minHeight:'0',padding:'0',border:'0',overflow:'visible',background:'transparent'});
@@ -160,8 +191,8 @@
     Object.assign(clone.style,{position:'relative',display:'block',left:'0',top:'0',width:`${wheelWidth}px`,height:`${wheelHeight}px`,maxHeight:'none',overflow:'visible'});
     wheelMount.appendChild(clone);stage.appendChild(wheelMount);
 
-    if(slots.length===1)stage.appendChild(infoBox(facts(slots[0]),slots[0],true));
-    else slots.forEach(slot=>stage.appendChild(infoBox(facts(slot),slot,false)));
+    if(slots.length===1)stage.appendChild(fingerprintBox(slots[0],true));
+    else slots.forEach(slot=>stage.appendChild(fingerprintBox(slot,false)));
     const summary=wheelContextSummary();if(summary){const line=document.createElement('div');line.className='sky-export-filter-summary';line.textContent=summary;stage.appendChild(line)}
     host.appendChild(stage);return{host,stage,width,height,slots};
   }
@@ -261,7 +292,21 @@
     .sky-wheel-copy-button{appearance:none;height:30px;padding:0 .72rem;border:1px solid rgba(31,27,24,.18);border-radius:999px;background:#fff;color:#332e2a;font:800 .68rem/1 system-ui,sans-serif;cursor:pointer;white-space:nowrap}.sky-wheel-copy-button:hover,.sky-wheel-copy-button:focus-visible{outline:none;border-color:#6b625a;background:#fffdfa}.sky-wheel-copy-button:disabled{opacity:.7;cursor:wait}
     #skyFoundationComparison>.sky-foundation-heading{flex-wrap:wrap}#skyFoundationComparison .sky-export-wheel-slot{display:flex;align-items:center;justify-content:flex-end;gap:6px;margin-left:auto}.sky-relationship-heading-actions{display:flex;align-items:center;gap:6px}.sky-relationship-heading-actions button{margin:0}
     #${STATUS_ID}{flex:1 0 100%;color:#665e57;text-align:right;font:650 .58rem/1.2 system-ui,sans-serif}#${STATUS_ID}:empty{display:none}#${STATUS_ID}[data-error="true"]{color:#b81712}#${STATUS_ID}[data-busy="true"]{margin-top:4px;padding:7px 10px;border-radius:999px;background:#f6f0e8;color:#3e3833;font-size:.68rem;font-weight:800}
-    .sky-wheel-export-stage{position:relative;background:#fffdf8;color:#2d2824;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}.sky-wheel-export-stage>#skyFoundationWheelMount{position:absolute}.sky-export-info{position:absolute;top:22px;z-index:3;width:360px;display:grid;gap:5px;padding:12px 14px;border-radius:12px;background:rgba(255,253,248,.96);box-shadow:0 1px 8px rgba(31,27,24,.08);font-size:15px;line-height:1.28;text-align:left}.sky-export-info strong{font-size:19px}.sky-export-info span{color:#5d554e}.sky-export-info-a{left:${WHEEL_EXPORT_FRAME.side}px;border-left:5px solid #c9211e}.sky-export-info-b{right:${WHEEL_EXPORT_FRAME.side}px;border-right:5px solid #2462d0}.sky-export-info-single{left:50%!important;right:auto!important;transform:translateX(-50%);border-right:0}.sky-export-info-single[data-sky="A"]{border-left:5px solid #c9211e}.sky-export-info-single[data-sky="B"]{border-left:5px solid #2462d0}.sky-export-filter-summary{position:absolute;left:50%;bottom:18px;z-index:3;transform:translateX(-50%);max-width:82%;padding:8px 14px;border-radius:999px;background:rgba(255,253,248,.96);box-shadow:0 1px 7px rgba(31,27,24,.08);font:750 14px/1.25 system-ui,sans-serif;text-align:center;color:#554e48}
+    .sky-wheel-export-stage{position:relative;background:#fffdf8;color:#2d2824;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}.sky-wheel-export-stage>#skyFoundationWheelMount{position:absolute}
+    .sky-export-fingerprint{position:absolute;top:24px;z-index:3;display:grid;gap:4px;padding:7px 9px;border-radius:12px;background:rgba(255,253,248,.96);box-shadow:0 1px 8px rgba(31,27,24,.08)}
+    .sky-export-fingerprint-a{left:${WHEEL_EXPORT_FRAME.side}px;border-left:4px solid #c9211e}.sky-export-fingerprint-b{right:${WHEEL_EXPORT_FRAME.side}px;border-right:4px solid #2462d0}
+    .sky-export-fingerprint-single{left:50%!important;right:auto!important;transform:translateX(-50%);border-right:0}.sky-export-fingerprint-single[data-sky="A"]{border-left:4px solid #c9211e}.sky-export-fingerprint-single[data-sky="B"]{border-left:4px solid #2462d0}
+    .sky-export-fingerprint-label{color:#5d554e;font:850 10px/1 system-ui,sans-serif;letter-spacing:.04em;text-transform:uppercase}
+    .sky-export-fingerprint-triptych{display:grid;grid-template-columns:repeat(3,58px);align-items:center;justify-items:center;gap:3px}
+    .sky-export-fingerprint-piece{display:grid;place-items:center;width:58px;height:58px;min-width:58px;min-height:58px;overflow:visible}
+    .sky-export-fingerprint-piece[data-fingerprint-missing="true"]{opacity:.18}
+    .sky-export-fingerprint-piece .sky-where-fingerprint-heptagram,.sky-export-fingerprint-piece .sky-placement-fingerprint-wheel{display:block!important;width:52px!important;height:52px!important;max-width:52px!important;max-height:52px!important;margin:auto!important;overflow:visible!important;transform:none!important}
+    .sky-export-fingerprint-piece .sky-card-ruler-fingerprint{position:relative!important;display:block!important;width:42px!important;height:54px!important;transform:none!important}
+    .sky-export-fingerprint-piece .sky-card-ruler-fingerprint>img:first-child{position:absolute!important;left:4px!important;top:5px!important;width:27px!important;height:45px!important;object-fit:cover!important;border-radius:2px!important;box-shadow:0 1px 3px rgba(31,27,24,.18)!important}
+    .sky-export-fingerprint-piece .sky-card-ruler-fingerprint-house{position:absolute!important;z-index:3!important;left:-4px!important;top:-2px!important;width:18px!important;height:18px!important;min-width:18px!important;min-height:18px!important;margin:0!important}
+    .sky-export-fingerprint-piece .sky-card-ruler-fingerprint-glyph{position:absolute!important;right:-2px!important;bottom:-1px!important;width:25px!important;height:25px!important;color:#111!important}
+    .sky-export-fingerprint-piece svg{overflow:visible}
+    .sky-export-filter-summary{position:absolute;left:50%;bottom:18px;z-index:3;transform:translateX(-50%);max-width:82%;padding:8px 14px;border-radius:999px;background:rgba(255,253,248,.96);box-shadow:0 1px 7px rgba(31,27,24,.08);font:750 14px/1.25 system-ui,sans-serif;text-align:center;color:#554e48}
     .sky-relationships-export-stage{box-sizing:border-box;padding:16px;border:1px solid rgba(31,27,24,.13);border-radius:14px;background:#fffdf8;color:#191613;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}.sky-relationships-export-head{display:flex;align-items:center;justify-content:space-between;padding:0 2px 10px;font-size:16px}.sky-relationships-export-head>span{padding:5px 9px;border-radius:999px;background:#f0ebe4;font-size:12px;font-weight:800}.sky-relationships-export-summary{margin:0 0 10px;padding:8px 10px;border-radius:8px;background:#f6f0e8;color:#5d554e;font-size:12px;font-weight:700}.sky-relationships-export-frame{overflow:visible}.sky-relationships-export-groups{display:grid;gap:12px}.sky-relationships-export-group{display:grid;gap:6px}.sky-relationships-export-group-title{padding:6px 9px;border-radius:7px;background:#f2ece5;color:#3b3530;font:900 12px/1.2 system-ui,sans-serif}.sky-relationships-export-group.sky-a .sky-relationships-export-group-title{border-left:4px solid #c9211e}.sky-relationships-export-group.sky-b .sky-relationships-export-group-title{border-left:4px solid #2462d0}.sky-relationships-export-group.sky-ab .sky-relationships-export-group-title{border-left:4px solid #7655aa}.sky-relationships-export-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}.sky-relationships-export-grid>.sky-foundation-relationship-row{margin:0!important}
     `;document.head.appendChild(style);
   }
