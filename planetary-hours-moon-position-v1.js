@@ -137,6 +137,13 @@
 
   function start() {
     if (!document.querySelector('.ph-moon-frame')) return;
+    // Planetary Hours now owns the authoritative Moon placement line directly.
+    // Do not inject the legacy duplicate "Current zodiac position" block.
+    if (document.getElementById('moonPlacement')) {
+      document.getElementById('moonZodiacPosition')?.remove();
+      document.getElementById('ph-moon-position-style')?.remove();
+      return;
+    }
     ensureStyle();
     ensurePositionElement();
     renderMoonPosition();
