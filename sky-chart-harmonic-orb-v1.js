@@ -20,20 +20,20 @@ const ASPECTS=Object.freeze([
 const BY_ID=new Map(ASPECTS.map(aspect=>[aspect.id,aspect]));
 let activeWindow=DEFAULT_WINDOW;
 function clampWindow(value){const n=Number(value);return Number.isFinite(n)&&n>=0?Math.min(MAX_WINDOW,n):DEFAULT_WINDOW}
-function syncVisibleControls(){
+function syncVisibleControls(sourceInput=null){
   const value=String(activeWindow),max=String(MAX_WINDOW);
   document.querySelectorAll('[data-harmonic-window-input],[data-vocab-harmonic-window-input]').forEach(input=>{
-    input.value=value;
+    if(input!==sourceInput)input.value=value;
     input.setAttribute('aria-valuenow',value);
     input.setAttribute('aria-valuemax',max);
     input.setAttribute('aria-invalid','false');
     input.setCustomValidity?.('');
   });
 }
-function setWindow(value){
+function setWindow(value,sourceInput=null){
   activeWindow=clampWindow(value);
   document.documentElement.dataset.skyHarmonicWindow=String(activeWindow);
-  syncVisibleControls();
+  syncVisibleControls(sourceInput);
   return activeWindow;
 }
 function getWindow(){return activeWindow}
