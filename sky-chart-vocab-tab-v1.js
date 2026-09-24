@@ -1187,9 +1187,10 @@ function openDropdown(slot,kind){
   closeDropdown();const owner=dropdownOwner(slot,kind),menu=dropdownMenu(slot,kind);if(!owner||!menu)return;
   openDropdownState={slot,kind};owner.classList.add('is-open');menu.hidden=false;menu.classList.add('is-portaled');document.body.appendChild(menu);owner.querySelector('[data-vocab-dropdown-toggle]')?.setAttribute('aria-expanded','true');scheduleDropdownPosition();
 }
-function canonicalHarmonicWindowInput(){return document.querySelector('#skyFoundationRelationships [data-harmonic-window-input]')}
 function syncHarmonicWindowControls(){
-  const value=String(harmonicWindow()),max=String(HARMONIC()?.maxWindow??0);
+  const model=HARMONIC();
+  model?.syncVisibleControls?.();
+  const value=String(harmonicWindow()),max=String(model?.maxWindow??0);
   document.querySelectorAll('[data-vocab-harmonic-window-input]').forEach(input=>{
     input.value=value;input.setAttribute('aria-valuenow',value);input.setAttribute('aria-valuemax',max);input.setAttribute('aria-invalid','false');input.setCustomValidity('');
   });
@@ -1204,14 +1205,6 @@ function setHarmonicWindowFromVocab(input,commit=false){
   if(!valid)return;
   input.setAttribute('aria-valuenow',String(value));
   model?.setWindow?.(value,input);
-  const canonical=canonicalHarmonicWindowInput();
-  if(canonical){
-    canonical.value=String(value);
-    canonical.setAttribute('aria-valuenow',String(value));
-    canonical.dispatchEvent(new Event(commit?'change':'input',{bubbles:true}));
-    return;
-  }
-  window.dispatchEvent(new CustomEvent('relphi:sky-harmonic-window-visibility-changed',{detail:{harmonicWindow:value}}));
 }
 function syncControlState(){
   syncHarmonicWindowControls();
@@ -1567,7 +1560,7 @@ document.addEventListener('pointerdown',mirrorDirectWheelClick,true);
 document.addEventListener('pointerdown',clearVocabWheelContextFromBlank,true);
 [
   'relphi:sky-foundation-ready','relphi:sky-foundation-interactions-ready',
-  'relphi:sky-orb-limit-changed','relphi:sky-harmonic-window-visibility-changed','relphi:sky-working-copy-updated','relphi:saved-sky-loaded',
+  'relphi:sky-orb-limit-changed','relphi:sky-harmonic-window-model-changed','relphi:sky-harmonic-window-visibility-changed','relphi:sky-working-copy-updated','relphi:saved-sky-loaded',
   'relphi:sky-b-restored','relphi:sky-session-recovered'
 ].forEach(name=>window.addEventListener(name,schedule));
 window.addEventListener('storage',event=>{if(!event.key||Object.values(KEYS).includes(event.key)||event.key===DISPLAY_KEY)schedule()});
