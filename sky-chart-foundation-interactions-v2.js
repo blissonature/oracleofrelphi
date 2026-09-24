@@ -360,6 +360,10 @@
       const value=Number(spec.value);
       return Number.isInteger(value)&&value>=0&&value<12?{kind,sky:null,value}:null;
     }
+    if(kind==='aspect'){
+      const value=String(spec.value||'');
+      return value?{kind,sky:null,value}:null;
+    }
     return null;
   }
   function previewExternalWheel(spec){
