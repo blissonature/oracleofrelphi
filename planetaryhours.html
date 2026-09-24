@@ -1587,6 +1587,31 @@
   .ph-calendar-display-body input { width:1rem; height:1rem; margin:0; accent-color:var(--relphi-red); }
   .ph-calendar-glyph { display:inline-block; width:1.08em; height:1.08em; flex:0 0 auto; vertical-align:-.14em; margin:0 .08em; background:center/contain no-repeat var(--ph-calendar-glyph); }
   .ph-calendar-glyph-fallback { width:auto; height:auto; background:none; vertical-align:baseline; font-weight:900; line-height:1; }
+  .ph-calendar-house-token { display:inline-flex; align-items:center; gap:.22em; white-space:nowrap; vertical-align:middle; }
+  .ph-calendar-house-medallion {
+    --house-color:#777;
+    --house-ink:#fff;
+    display:inline-grid;
+    place-items:center;
+    width:18px;
+    height:18px;
+    box-sizing:border-box;
+    padding:0 !important;
+    border:0 !important;
+    border-radius:50% !important;
+    background:var(--house-color) !important;
+    color:var(--house-ink) !important;
+    font:900 .58rem/1 system-ui,sans-serif !important;
+    font-variant-numeric:tabular-nums;
+    text-align:center;
+    vertical-align:middle;
+    white-space:nowrap;
+    box-shadow:0 1px 2px rgba(0,0,0,.16);
+  }
+  .ph-calendar-house-medallion[data-house="10"],
+  .ph-calendar-house-medallion[data-house="11"],
+  .ph-calendar-house-medallion[data-house="12"] { font-size:.49rem !important; letter-spacing:-.035em; }
+  #tableSection[data-calendar-glyphs="false"] .ph-calendar-house-medallion { display:none !important; }
   .ph-calendar-placement { display:inline; }
   .ph-calendar-coordinate { white-space:nowrap; }
   .ph-calendar-aspect { display:inline-flex; align-items:center; gap:.08em; white-space:nowrap; }
@@ -1594,7 +1619,6 @@
   .ph-calendar-event-main { display:inline; }
   .ph-calendar-event-referents { display:block; margin-top:.18rem; color:#756c65; font-size:.86em; line-height:1.25; font-weight:650; }
   .ph-calendar-referent-item { display:inline; }
-  .ph-calendar-referent-coordinate { white-space:nowrap; }
   #tableSection[data-calendar-glyphs="false"] .ph-calendar-glyph { display:none !important; }
   #tableSection[data-calendar-names="false"] .ph-calendar-display-name,
   #tableSection[data-calendar-names="false"] .ph-calendar-referent-name { display:none !important; }
@@ -2462,9 +2486,10 @@
       try {
         const moonMeta = phEventBodyMeta('Moon', base);
         const placement = moonMeta || phLongitudeToPlacement(phAstronomyLongitude('Moon', base));
-        const houseText = moonMeta && moonMeta.house ? ' H' + moonMeta.house : '';
-        el.moonPlacement.innerHTML = canonicalSignGlyphMarkup(placement.sign) + '<span>' + placement.sign + ' ' + placement.degree + '°' + String(placement.minute).padStart(2,'0') + '′' + houseText + '</span>';
-        el.moonPlacement.title = 'Moon in ' + placement.sign + ' ' + placement.degree + '°' + String(placement.minute).padStart(2,'0') + '′' + houseText;
+        const house = moonMeta ? calendarHouseNumber(moonMeta.house) : 0;
+        const houseMarkup = house ? ' <span class="ph-calendar-house-token">' + calendarHouseMedallionMarkup(house) + '<span>' + htmlText(calendarHouseNames[house]) + '</span></span>' : '';
+        el.moonPlacement.innerHTML = canonicalSignGlyphMarkup(placement.sign) + '<span>' + placement.sign + ' ' + placement.degree + '°' + String(placement.minute).padStart(2,'0') + '′</span>' + houseMarkup;
+        el.moonPlacement.title = 'Moon in ' + placement.sign + ' ' + placement.degree + '°' + String(placement.minute).padStart(2,'0') + '′' + (house ? ' · ' + calendarHouseNames[house] : '');
       } catch (error) {
         el.moonPlacement.textContent = 'Moon position unavailable.';
       }
@@ -2733,10 +2758,37 @@
     } catch (error) { return null; }
   }
 
+  function calendarHouseNumber(value) {
+    const n = Number(value);
+    return Number.isFinite(n) && n >= 1 && n <= 12 ? Math.trunc(n) : 0;
+  }
+
+  function calendarHouseName(value) {
+    const n = calendarHouseNumber(value);
+    return n ? calendarHouseNames[n] : '';
+  }
+
+  function calendarHouseInk(hex) {
+    const value = String(hex || '').replace('#','');
+    if (value.length !== 6) return '#fff';
+    const r = parseInt(value.slice(0,2),16);
+    const g = parseInt(value.slice(2,4),16);
+    const b = parseInt(value.slice(4,6),16);
+    return (.299*r + .587*g + .114*b) > 160 ? '#211d1a' : '#fff';
+  }
+
+  function calendarHouseMedallionMarkup(value) {
+    const n = calendarHouseNumber(value);
+    if (!n) return '';
+    const color = calendarHouseColors[n - 1];
+    const ink = calendarHouseInk(color);
+    return '<span class="relphi-house-medallion ph-calendar-house-medallion" data-house="' + n + '" style="--house-color:' + color + ';--house-ink:' + ink + '" role="img" aria-label="' + attrText(calendarHouseNames[n]) + '" title="' + attrText(calendarHouseNames[n]) + '">' + n + '</span>';
+  }
+
   function phPlacementLabel(meta) {
     if (!meta) return '';
-    const house = Number.isFinite(Number(meta.house)) ? ' H' + Number(meta.house) : '';
-    return String(meta.body || meta.name || '') + ' ' + String(meta.sign || '') + ' ' + Number(meta.degree || 0) + '°' + String(Number(meta.minute || 0)).padStart(2,'0') + '′' + house;
+    const house = calendarHouseName(meta.house);
+    return String(meta.body || meta.name || '') + ' ' + String(meta.sign || '') + ' ' + Number(meta.degree || 0) + '°' + String(Number(meta.minute || 0)).padStart(2,'0') + '′' + (house ? ' ' + house : '');
   }
 
   function calendarCanonicalGlyphMarkup(value, label) {
@@ -2771,13 +2823,17 @@
     if (!meta) return '';
     const body = String(meta.body || meta.name || '');
     const sign = String(meta.sign || '');
-    const house = Number.isFinite(Number(meta.house)) ? ' H' + Number(meta.house) : '';
+    const house = calendarHouseNumber(meta.house);
     const bodyGlyph = calendarCanonicalGlyphMarkup(body, body);
     const signGlyph = calendarCanonicalGlyphMarkup(sign, sign);
+    const houseMarkup = house
+      ? ' <span class="ph-calendar-house-token">' + calendarHouseMedallionMarkup(house) + '<span class="ph-calendar-display-name">' + htmlText(calendarHouseNames[house]) + '</span></span>'
+      : '';
     return '<span class="ph-calendar-placement">' +
       bodyGlyph + '<span class="ph-calendar-display-name">' + htmlText(body) + '</span> ' +
       signGlyph + '<span class="ph-calendar-display-name">' + htmlText(sign) + '</span> ' +
-      '<span class="ph-calendar-coordinate">' + Number(meta.degree || 0) + '°' + String(Number(meta.minute || 0)).padStart(2,'0') + '′' + htmlText(house) + '</span></span>';
+      '<span class="ph-calendar-coordinate">' + Number(meta.degree || 0) + '°' + String(Number(meta.minute || 0)).padStart(2,'0') + '′</span>' +
+      houseMarkup + '</span>';
   }
 
   function calendarAspectMarkup(value) {
@@ -2798,9 +2854,9 @@
     if (signIndex >= 0 && calendarSignReferents[signIndex]) {
       items.push({name:String(meta.sign || ''), text:calendarSignReferents[signIndex], kind:'name'});
     }
-    const house = Number(meta.house);
-    if (Number.isFinite(house) && calendarHouseReferents[house]) {
-      items.push({name:'H' + house, text:calendarHouseReferents[house], kind:'coordinate'});
+    const house = calendarHouseNumber(meta.house);
+    if (house && calendarHouseReferents[house]) {
+      items.push({name:calendarHouseNames[house], text:calendarHouseReferents[house], kind:'name'});
     }
     return items;
   }
@@ -2828,7 +2884,7 @@
 
   function calendarReferentMarkup(item) {
     if (!item || !item.text) return '';
-    const nameClass = item.kind === 'coordinate' ? 'ph-calendar-referent-coordinate' : 'ph-calendar-referent-name';
+    const nameClass = 'ph-calendar-referent-name';
     return '<span class="ph-calendar-referent-item"><span class="' + nameClass + '">' + htmlText(item.name || '') + (item.name ? ': ' : '') + '</span>' + htmlText(item.text) + '</span>';
   }
 
@@ -3868,6 +3924,8 @@
     'systems, reform, collective intelligence, detachment, and future orientation',
     'surrender, imagination, compassion, permeability, and release'
   ]);
+  const calendarHouseNames = Object.freeze(['','First House','Second House','Third House','Fourth House','Fifth House','Sixth House','Seventh House','Eighth House','Ninth House','Tenth House','Eleventh House','Twelfth House']);
+  const calendarHouseColors = Object.freeze(['#e53935','#f06b32','#f39a2e','#f5be3d','#f1dc43','#a9cf46','#43a85b','#2ca69b','#3285c7','#5961c8','#8c4fb4','#bd438e']);
   const calendarHouseReferents = Object.freeze([
     '',
     'self, embodiment, appearance, approach, and the immediate way life is entered',
@@ -4393,7 +4451,7 @@
       event.label = String(event.label || 'Lunation') + ' · ' + phPlacementLabel(primary) + ' · ' + phPlacementLabel(secondary);
     } else if (event.type === 'ingress' && primary) {
       if (event.sign) { primary.sign = event.sign; primary.degree = 0; primary.minute = 0; }
-      event.label = String(primary.body) + ' enters ' + String(primary.sign) + ' ' + Number(primary.degree || 0) + '°' + String(Number(primary.minute || 0)).padStart(2,'0') + '′' + (primary.house ? ' H' + primary.house : '');
+      event.label = String(primary.body) + ' enters ' + String(primary.sign) + ' ' + Number(primary.degree || 0) + '°' + String(Number(primary.minute || 0)).padStart(2,'0') + '′' + (calendarHouseName(primary.house) ? ' ' + calendarHouseName(primary.house) : '');
     } else if (event.type === 'station' && primary) {
       event.label = phPlacementLabel(primary) + ' stations ' + String(event.direction || '');
     }
