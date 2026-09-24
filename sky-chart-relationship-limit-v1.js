@@ -11,7 +11,7 @@ const HIDDEN_CLASSES=Object.freeze([
   'sky-chart-zodiac-filter-hidden','sky-chart-sign-filter-hidden','sky-chart-semantic-hidden'
 ]);
 const CAP_CLASS='sky-chart-result-limit-hidden';
-let limit='all',queued=false,listObserver=null,countObserver=null,observedList=null,observedCount=null,lastState='';
+let limit='all',queued=false,listObserver=null,observedList=null,lastState='';
 
 function normalize(value){const text=String(value??'all').toLowerCase();return OPTIONS.includes(text)?text:'all'}
 function numericLimit(){return limit==='all'?Infinity:Number(limit)}
@@ -129,6 +129,7 @@ function apply(){
   const count=document.getElementById('skyFoundationRelationshipCount');
   if(count){
     const next=String(eligible.length);
+    count.dataset.matchCount=next;
     if(count.textContent!==next)count.textContent=next;
     count.dataset.countLabel='matches';
     count.setAttribute('aria-label',eligible.length+' matching relationships');
@@ -159,25 +160,21 @@ function relevantClassMutation(record){
   const before=new Set(String(record.oldValue||'').split(/\s+/).filter(Boolean));
   return HIDDEN_CLASSES.some(name=>before.has(name)!==row.classList.contains(name));
 }
+function rowListMutation(record){
+  if(record.type!=='childList'||record.target!==observedList)return false;
+  return [...record.addedNodes,...record.removedNodes].some(node=>node instanceof Element&&node.matches?.('.sky-foundation-relationship-row'));
+}
+function rowVisibilityMutation(record){
+  return record.type==='attributes'&&record.target?.matches?.('.sky-foundation-relationship-row')&&(record.attributeName==='hidden'||record.attributeName==='aria-hidden');
+}
 function ensureObservers(){
   const list=document.getElementById('skyFoundationRelationshipList');
   if(list&&list!==observedList){
     listObserver?.disconnect();observedList=list;
     listObserver=new MutationObserver(records=>{
-      if(records.some(record=>
-        record.type==='childList'||
-        record.attributeName==='hidden'||
-        record.attributeName==='aria-hidden'||
-        relevantClassMutation(record)
-      ))schedule();
+      if(records.some(record=>rowListMutation(record)||rowVisibilityMutation(record)||relevantClassMutation(record)))schedule();
     });
     listObserver.observe(list,{childList:true,subtree:true,attributes:true,attributeFilter:['class','hidden','aria-hidden'],attributeOldValue:true});
-  }
-  const count=document.getElementById('skyFoundationRelationshipCount');
-  if(count&&count!==observedCount){
-    countObserver?.disconnect();observedCount=count;
-    countObserver=new MutationObserver(()=>schedule());
-    countObserver.observe(count,{childList:true,characterData:true,subtree:true});
   }
 }
 function start(){
