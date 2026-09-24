@@ -21,8 +21,9 @@ new Function(interactions);
 new Function(harmonic);
 new Function(harmonicCeiling);
 
-assert.match(html,/sky-chart-vocab-tab-v1\.js\?v=80/,'Sky Chart must load the Vocab subtab');
-assert.match(html,/sky-chart-harmonic-orb-v1\.js\?v=5/,'Sky Chart must load the shared Harmonic Window model fix');
+assert.match(html,/sky-chart-vocab-tab-v1\.js\?v=81/,'Sky Chart must load the Vocab subtab');
+assert.match(html,/sky-chart-harmonic-orb-v1\.js\?v=6/,'Sky Chart must load the shared Harmonic Window model fix');
+assert.match(html,/sky-chart-orb-control-v1\.js\?v=16/,'Relationships must load the source-aware shared Harmonic Window controller');
 assert.match(html,/sky-chart-foundation-interactions-v2\.js\?v=22/,'Sky Chart must load the interaction owner exposing native wheel isolation');
 assert.match(html,/sky-chart-card-drawers-v1\.css\?v=15/,'Sky Chart must load the microheptagram sizing fix');
 assert.match(html,/sky-chart-filter-control-unified-v1\.css\?v=9/,'Sky Chart must load the shared Vocab/Relationships control styling');
@@ -132,6 +133,9 @@ assert.match(vocab,/function harmonicWindow\(\)/,'Vocab must read the live share
 assert.match(vocab,/model\?\.getWindow/,'Vocab must read the Harmonic Window from the shared harmonic model rather than owning a second value');
 assert.match(harmonic,/function syncVisibleControls\(\)/,'The harmonic model must own synchronization of all visible Harmonic Window controllers');
 assert.match(harmonic,/\[data-harmonic-window-input\],\[data-vocab-harmonic-window-input\]/,'Relationships and Vocab must be synchronized from the same model value');
+assert.match(harmonic,/function setWindow\(value,sourceInput=null\)/,'The shared Harmonic Window must support source-aware mirroring while a controller is being edited');
+assert.match(vocab,/model\?\.setWindow\?\.\(value,input\)/,'Vocab must write directly into the shared Harmonic Window model');
+
 const candidateReader=harmonic.slice(harmonic.indexOf('function windowFromControl()'),harmonic.indexOf('function metrics(',harmonic.indexOf('function windowFromControl()')));
 assert.doesNotMatch(candidateReader,/setWindow\(/,'Reading the maximum relationship-candidate ceiling must never overwrite the live Harmonic Window');
 assert.match(harmonicCeiling,/data\.filter='orb'/,'The hidden orb field must remain only the stable maximum candidate ceiling');
