@@ -4012,11 +4012,14 @@
     trine:'#84cc16',
     opposition:'#0d9488'
   });
-  const calendarSourceColors = Object.freeze(['#c9211e','#277390','#8c4fb4','#2ca69b','#d97706','#5961c8','#43a85b','#b23b79','#7c6f64']);
+  const calendarSourceColors = Object.freeze(['#c9211e','#277390','#8c4fb4','#2ca69b','#d97706','#5961c8','#43a85b','#b23b79','#7c6f64','#d1495b','#4d908e','#6d597a']);
 
   function calendarSourceColor(id) {
     const value = String(id || '');
     if (!value) return '';
+    const records = savedSkyLibrary();
+    const index = records.findIndex(function (record) { return savedSkyRecordRef(record) === value; });
+    if (index >= 0) return calendarSourceColors[index % calendarSourceColors.length];
     let hash = 0;
     for (let i = 0; i < value.length; i += 1) hash = ((hash << 5) - hash + value.charCodeAt(i)) | 0;
     return calendarSourceColors[Math.abs(hash) % calendarSourceColors.length];
