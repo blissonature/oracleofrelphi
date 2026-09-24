@@ -389,6 +389,35 @@
     }
   }
 
+  function ensureFocusStructure(relationshipPanel, bar) {
+    if (!relationshipPanel || !bar) return;
+    relationshipPanel.setAttribute('aria-label', 'Focus and Relationships');
+
+    let focusHeading = relationshipPanel.querySelector(':scope > .sky-foundation-focus-heading');
+    if (!focusHeading) {
+      focusHeading = document.createElement('header');
+      focusHeading.className = 'sky-foundation-focus-heading';
+      const title = document.createElement('h2');
+      title.textContent = 'Focus';
+      focusHeading.appendChild(title);
+    }
+
+    const relationshipHeading = relationshipPanel.querySelector(':scope > .sky-foundation-relationships-heading');
+    let relationshipControls = relationshipPanel.querySelector(':scope > .sky-relationship-controls');
+    if (!relationshipControls) {
+      relationshipControls = document.createElement('div');
+      relationshipControls.className = 'sky-relationship-controls';
+      relationshipControls.setAttribute('aria-label', 'Relationship display controls');
+    }
+    const list = relationshipPanel.querySelector(':scope > #skyFoundationRelationshipList');
+
+    if (relationshipPanel.firstElementChild !== focusHeading) relationshipPanel.prepend(focusHeading);
+    if (focusHeading.nextElementSibling !== bar) focusHeading.after(bar);
+    if (relationshipHeading && bar.nextElementSibling !== relationshipHeading) bar.after(relationshipHeading);
+    if (relationshipHeading && relationshipHeading.nextElementSibling !== relationshipControls) relationshipHeading.after(relationshipControls);
+    if (list && relationshipControls.nextElementSibling !== list) relationshipControls.after(list);
+  }
+
   function addFilters() {
     const relationshipPanel = document.getElementById('skyFoundationRelationships');
     if (!relationshipPanel) return;
@@ -398,6 +427,7 @@
       bar.className = 'sky-chart-filter-bar';
       relationshipPanel.insertBefore(bar, relationshipPanel.querySelector('#skyFoundationRelationshipList'));
     }
+    ensureFocusStructure(relationshipPanel, bar);
     if (bar.dataset.finalFilterOwner === 'true') return;
     bar.dataset.finalFilterOwner = 'true';
     const aspectOptions = Object.entries(ASPECT_LABELS).map(([value, label]) => `<option value="${value}">${label}</option>`).join('');
