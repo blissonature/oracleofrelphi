@@ -130,9 +130,16 @@ const AXIS_STRUCTURES=[
 ];
 const STELLIUM_IDS=new Set(['sun','moon','mercury','venus','mars','jupiter','saturn','uranus','neptune','pluto']);
 const STRUCTURAL_ANCHOR_IDS=new Set(AXIS_STRUCTURES.flatMap(axis=>[axis.left,axis.right]));
-const POLARITY_ATTACH_ORB=6;
 const CLUSTER_ORB=3;
 const HARMONIC=()=>window.RelphiHarmonicOrb;
+function harmonicWindow(){
+  const model=HARMONIC(),live=Number(document.documentElement.dataset.skyHarmonicWindow);
+  if(Number.isFinite(live))return model?.clampWindow?.(live)??live;
+  const canonical=document.querySelector('#skyFoundationRelationships [data-harmonic-window-input]');
+  const raw=Number(String(canonical?.value??'').trim().replace(',','.'));
+  if(Number.isFinite(raw))return model?.clampWindow?.(raw)??raw;
+  return Number(model?.defaultWindow??0);
+}
 let queued=false;
 let openDropdownState=null;
 let dropdownPositionQueued=false;
@@ -228,7 +235,7 @@ function structuralRecords(slot,list){
   return[...list,anti];
 }
 function relations(list){
-  const model=HARMONIC(),aspects=model?.aspects||[],windowValue=(model?.windowFromControl?.()??Number(document.documentElement.dataset.skyHarmonicWindow))||6,result=[];
+  const model=HARMONIC(),aspects=model?.aspects||[],windowValue=harmonicWindow(),result=[];
   for(let i=0;i<list.length;i++)for(let j=i+1;j<list.length;j++){
     const left=list[i],right=list[j],distance=separation(left.value,right.value);
     for(const aspect of aspects){
@@ -445,20 +452,21 @@ function relationSentence(relation){
   frag.append(token(placementInfo(relation.left),'placement',true),document.createTextNode(' is in '),token(aspectInfo(relation.aspect),'aspect'),document.createTextNode(' with '),token(placementInfo(relation.right),'placement'));
   return frag;
 }
-function polarityPole(list,anchorId,oppositeId){
+function polarityPole(list,anchorId,oppositeId,windowValue){
   const anchor=list.find(record=>record.id===anchorId);if(!anchor)return[];
   const attached=list.filter(record=>
     record.id!==anchorId&&
     record.id!==oppositeId&&
-    separation(record.value,anchor.value)<=POLARITY_ATTACH_ORB
+    separation(record.value,anchor.value)<=windowValue
   );
   return[anchor,...attached];
 }
 function polarityStructures(list){
+  const windowValue=harmonicWindow();
   return AXIS_STRUCTURES.map(axis=>{
-    const left=polarityPole(list,axis.left,axis.right),right=polarityPole(list,axis.right,axis.left);
+    const left=polarityPole(list,axis.left,axis.right,windowValue),right=polarityPole(list,axis.right,axis.left,windowValue);
     if(!left.length||!right.length)return null;
-    return{...axis,left,right};
+    return{...axis,left,right,harmonicWindow:windowValue};
   }).filter(Boolean);
 }
 function proximityClusters(list){
@@ -710,7 +718,7 @@ function renderStructures(container,list,permitted,slot){
   if(visiblePolarities.length){
     appendStructureSubheading(container,'Primary polarities');
     visiblePolarities.forEach(structure=>{
-      const line=document.createElement('div');line.className='sky-vocab-line sky-vocab-structure-line';line.dataset.vocabStructure='axis-polarity';line.dataset.vocabAxis=structure.left[0].id+'-'+structure.right[0].id;line.dataset.vocabMembers=[...structure.left,...structure.right].map(record=>record.id).join('|');
+      const line=document.createElement('div');line.className='sky-vocab-line sky-vocab-structure-line';line.dataset.vocabStructure='axis-polarity';line.dataset.vocabAxis=structure.left[0].id+'-'+structure.right[0].id;line.dataset.vocabMembers=[...structure.left,...structure.right].map(record=>record.id).join('|');line.dataset.vocabHarmonicWindow=String(structure.harmonicWindow);
       applyPolarityRails(
         line,
         halfWeightedStructureGradient(structure.left,structure.right,record=>record.sign,key=>SIGN_COLORS[key]),
@@ -1132,7 +1140,14 @@ function houseDropdownMarkup(slot){
     '<div id="'+menuId+'" class="sky-chart-house-filter-popover sky-vocab-rel-popover" data-vocab-dropdown-menu="houses" data-vocab-menu-slot="'+slot+'" role="dialog" aria-label="Houses" hidden>'+body+'</div>'+
   '</div>';
 }
-function controlsMarkup(slot){return '<div class="sky-vocab-dropdown-row">'+layerDropdownMarkup(slot)+placementDropdownMarkup(slot)+signDropdownMarkup(slot)+houseDropdownMarkup(slot)+'</div>'}
+function harmonicWindowMarkup(slot){
+  const max=Number(HARMONIC()?.maxWindow??0),value=harmonicWindow();
+  return '<label class="sky-orb-number-field sky-vocab-harmonic-field" data-vocab-harmonic-field="'+slot+'">'+
+    '<span>Harmonic Window</span>'+
+    '<input type="text" inputmode="decimal" autocomplete="off" value="'+htmlEscape(value)+'" data-vocab-harmonic-window-input="'+slot+'" role="spinbutton" aria-valuemin="0" aria-valuemax="'+htmlEscape(max)+'" aria-valuenow="'+htmlEscape(value)+'" aria-label="Master harmonic phase window in degrees, maximum '+htmlEscape(max)+'">'+
+  '</label>';
+}
+function controlsMarkup(slot){return '<div class="sky-vocab-harmonic-row">'+harmonicWindowMarkup(slot)+'</div><div class="sky-vocab-dropdown-row">'+layerDropdownMarkup(slot)+placementDropdownMarkup(slot)+signDropdownMarkup(slot)+houseDropdownMarkup(slot)+'</div>'}
 function dropdownOwner(slot,kind){return document.querySelector('[data-sky-vocab-panel="'+slot+'"] [data-vocab-dropdown="'+kind+'"]')}
 function dropdownMenu(slot,kind){return document.querySelector('[data-vocab-dropdown-menu="'+kind+'"][data-vocab-menu-slot="'+slot+'"]')}
 function closeDropdown(){
@@ -1165,7 +1180,34 @@ function openDropdown(slot,kind){
   closeDropdown();const owner=dropdownOwner(slot,kind),menu=dropdownMenu(slot,kind);if(!owner||!menu)return;
   openDropdownState={slot,kind};owner.classList.add('is-open');menu.hidden=false;menu.classList.add('is-portaled');document.body.appendChild(menu);owner.querySelector('[data-vocab-dropdown-toggle]')?.setAttribute('aria-expanded','true');scheduleDropdownPosition();
 }
+function canonicalHarmonicWindowInput(){return document.querySelector('#skyFoundationRelationships [data-harmonic-window-input]')}
+function syncHarmonicWindowControls(){
+  const value=String(harmonicWindow()),max=String(HARMONIC()?.maxWindow??0);
+  document.querySelectorAll('[data-vocab-harmonic-window-input]').forEach(input=>{
+    input.value=value;input.setAttribute('aria-valuenow',value);input.setAttribute('aria-valuemax',max);input.setAttribute('aria-invalid','false');input.setCustomValidity('');
+  });
+}
+function setHarmonicWindowFromVocab(input,commit=false){
+  const model=HARMONIC(),max=Number(model?.maxWindow??0),raw=String(input.value||'').trim().replace(',','.');
+  let value=Number(raw);
+  if(commit&&Number.isFinite(value)){value=Math.max(0,Math.min(max,value));input.value=String(value)}
+  const valid=raw!==''&&Number.isFinite(value)&&value>=0&&value<=max;
+  input.setCustomValidity(valid?'':'Enter a harmonic phase window from 0 to '+max+' degrees.');
+  input.setAttribute('aria-invalid',valid?'false':'true');
+  if(!valid)return;
+  input.setAttribute('aria-valuenow',String(value));
+  const canonical=canonicalHarmonicWindowInput();
+  if(canonical){
+    canonical.value=String(value);
+    canonical.dispatchEvent(new Event(commit?'change':'input',{bubbles:true}));
+    return;
+  }
+  model?.setWindow?.(value);
+  document.documentElement.dataset.skyHarmonicWindow=String(value);
+  window.dispatchEvent(new CustomEvent('relphi:sky-harmonic-window-visibility-changed',{detail:{harmonicWindow:value}}));
+}
 function syncControlState(){
+  syncHarmonicWindowControls();
   const display=displayState(),filters=filterState();
   document.querySelectorAll('[data-vocab-layer]').forEach(input=>{input.checked=!!display[input.dataset.vocabLayer]});
   document.querySelectorAll('[data-vocab-filter="relationships"]').forEach(input=>{input.checked=filters.relationships!==false});
@@ -1230,6 +1272,11 @@ function ensurePanel(slot,view){
   panel.innerHTML=controlsMarkup(slot)+'<div class="sky-vocab-paragraph" data-sky-vocab-paragraph></div>';
   decorateRelationshipStyleMenus(panel);
   const mount=view.querySelector('[data-sky-drawer-mount="placements"]');mount?.insertAdjacentElement('afterend',panel);
+  panel.querySelectorAll('[data-vocab-harmonic-window-input]').forEach(input=>{
+    input.addEventListener('input',()=>setHarmonicWindowFromVocab(input,false));
+    input.addEventListener('change',()=>setHarmonicWindowFromVocab(input,true));
+    input.addEventListener('blur',()=>setHarmonicWindowFromVocab(input,true));
+  });
   panel.querySelectorAll('[data-vocab-layer]').forEach(input=>input.addEventListener('change',()=>{const state=displayState();state[input.dataset.vocabLayer]=input.checked;saveDisplay(state);rerenderPanels()}));
   panel.querySelectorAll('[data-vocab-placement]').forEach(input=>input.addEventListener('change',()=>toggleDimension(slot,'placements',input.dataset.vocabPlacement,input.checked)));
   panel.querySelectorAll('[data-vocab-sign]').forEach(input=>input.addEventListener('change',()=>toggleDimension(slot,'signs',input.dataset.vocabSign,input.checked)));
@@ -1291,6 +1338,9 @@ function installStyles(){
     .sky-placement-vocab-tab.is-active{background:#241f1b;color:#fff}
     .sky-vocab-panel{display:grid;gap:.72rem;padding:.52rem .7rem .82rem;min-width:0}
     .sky-vocab-panel[hidden]{display:none!important}
+    .sky-vocab-harmonic-row{display:flex;align-items:end}
+    .sky-vocab-harmonic-field{width:min(170px,100%);margin:0}
+    .sky-vocab-harmonic-field input{width:100%;box-sizing:border-box}
     .sky-vocab-dropdown-row{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;align-items:end}
 
     /* Display remains Vocab-specific. Placement / Houses / Zodiac use the Relationships classes directly. */
@@ -1516,7 +1566,7 @@ document.addEventListener('pointerdown',mirrorDirectWheelClick,true);
 document.addEventListener('pointerdown',clearVocabWheelContextFromBlank,true);
 [
   'relphi:sky-foundation-ready','relphi:sky-foundation-interactions-ready',
-  'relphi:sky-orb-limit-changed','relphi:sky-working-copy-updated','relphi:saved-sky-loaded',
+  'relphi:sky-orb-limit-changed','relphi:sky-harmonic-window-visibility-changed','relphi:sky-working-copy-updated','relphi:saved-sky-loaded',
   'relphi:sky-b-restored','relphi:sky-session-recovered'
 ].forEach(name=>window.addEventListener(name,schedule));
 window.addEventListener('storage',event=>{if(!event.key||Object.values(KEYS).includes(event.key)||event.key===DISPLAY_KEY)schedule()});
