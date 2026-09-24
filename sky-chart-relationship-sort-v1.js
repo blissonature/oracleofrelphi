@@ -340,25 +340,20 @@ function installStyles(){
   const style=document.createElement('style');
   style.id='skyRelationshipSortV1Styles';
   style.textContent=`
-#skyFoundationRelationships .sky-chart-filter-bar>.sky-relationship-sort-control{align-self:end!important;min-width:0!important}
+#skyFoundationRelationships .sky-relationship-controls>.sky-relationship-sort-control{align-self:end!important;min-width:0!important}
 #skyFoundationRelationships .sky-relationship-sort-control>span{align-self:end;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--sky-filter-label-color,#4e463f);font:var(--sky-filter-label-font,800 .62rem/1.2 system-ui,sans-serif)}
 #skyFoundationRelationships .sky-relationship-sort-select[aria-busy="true"]{cursor:progress!important;opacity:.66}
-@media(min-width:621px){
-  #skyFoundationRelationships .sky-chart-filter-bar>.sky-relationship-sort-control{grid-column:8/span 5!important;grid-row:2!important}
-}
 `;
   document.head.appendChild(style);
 }
 function ensureControl(){
   installStyles();
   const relationships=document.getElementById('skyFoundationRelationships');
-  const bar=relationships?.querySelector('.sky-chart-filter-bar');
-  if(!bar)return null;
+  const controls=relationships?.querySelector(':scope > .sky-relationship-controls');
+  if(!controls)return null;
 
-  const headingControl=relationships.querySelector('.sky-foundation-relationships-heading .sky-relationship-sort-control');
-  headingControl?.remove();
-
-  let control=bar.querySelector(':scope>.sky-relationship-sort-control');
+  const legacy=relationships.querySelector('.sky-chart-filter-bar .sky-relationship-sort-control');
+  let control=controls.querySelector(':scope>.sky-relationship-sort-control')||legacy;
   if(!control){
     control=document.createElement('label');
     control.className='sky-relationship-sort-control';
@@ -392,15 +387,7 @@ function ensureControl(){
     select.addEventListener('change',()=>setMode(select.value));
     control.append(label,select);
   }
-
-  const display=bar.querySelector(':scope>[data-relationship-display-control]');
-  if(display){
-    if(control.previousElementSibling!==display)display.after(control);
-  }else if(control.parentElement!==bar){
-    bar.appendChild(control);
-  }else if(!control.isConnected){
-    bar.appendChild(control);
-  }
+  if(control.parentElement!==controls)controls.appendChild(control);
 
   const select=control.querySelector('select');
   if(select&&select.value!==mode)select.value=mode;
