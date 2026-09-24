@@ -115,8 +115,10 @@
 }
 
 #skyFoundationRelationshipCount {
-  display:grid;
-  place-items:center;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:.22em;
   min-width:42px;
   height:25px;
   padding:0 8px;
@@ -125,7 +127,42 @@
   color:#3f3934;
   font:800 .69rem/1 system-ui,sans-serif;
   font-variant-numeric:tabular-nums;
+  white-space:nowrap;
   order:1;
+}
+
+#skyFoundationRelationshipCount[data-count-label="shown"]::after {
+  content:"shown";
+  font-weight:720;
+  color:#665e57;
+}
+
+.sky-foundation-harmonic-show-more {
+  grid-column:1/-1;
+  appearance:none;
+  width:100%;
+  min-height:38px;
+  margin:0;
+  padding:8px 11px;
+  border:1px dashed rgba(31,27,24,.22);
+  border-radius:9px;
+  background:#f8f3ec;
+  color:#514941;
+  font:750 .68rem/1.25 system-ui,sans-serif;
+  text-align:center;
+  cursor:pointer;
+}
+
+.sky-foundation-harmonic-show-more:hover,
+.sky-foundation-harmonic-show-more:focus-visible {
+  border-style:solid;
+  background:#f1e9df;
+  color:#211d19;
+  outline:none;
+}
+
+.sky-foundation-harmonic-show-more[hidden] {
+  display:none!important;
 }
 
 .sky-foundation-relationships-heading>.sky-relationship-heading-actions{
