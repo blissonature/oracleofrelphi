@@ -132,7 +132,7 @@ function openMenu(){
 function toggleMenu(){menu?.hidden?openMenu():closeMenu()}
 
 function install(){
-  const bar=document.querySelector('#skyFoundationRelationships .sky-chart-filter-bar');
+  const bar=(document.querySelector('#skyFoundationFocus .sky-chart-filter-bar')||document.querySelector('#skyFoundationRelationships .sky-chart-filter-bar'));
   if(!bar)return;
   const existing=bar.querySelector('[data-zodiac-filter]');
   if(existing){root=existing;button=root.querySelector('[data-zodiac-summary]');return;}
