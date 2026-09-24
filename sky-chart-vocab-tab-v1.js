@@ -822,7 +822,9 @@ function vocabLineContext(line){
   return{slot,placements,signs,houses};
 }
 function clearVocabWheelTokenContext(){
-  window.RelphiSkyFoundationInteractions?.clearWheelPreview?.();
+  const api=window.RelphiSkyFoundationInteractions;
+  api?.clearWheel?.();
+  api?.clearWheelPreview?.();
   vocabWheelContextToken?.classList.remove('is-wheel-token-active');
   vocabWheelContextToken=null;
 }
