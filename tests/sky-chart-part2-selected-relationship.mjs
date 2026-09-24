@@ -141,6 +141,20 @@ assert.ok(heptagramLineTones.every(tone => tone.earlier.every(value => value ===
 assert.ok(await page.locator('.sky-ph-heptagram').evaluateAll(nodes => nodes.every(svg => svg.querySelectorAll('.sky-ph-hour-segment:not(.current)').length === 7)));
 await page.locator('#skyFoundationA').getByRole('button', {name:'Placements', exact:true}).click();
 await page.locator('#skyFoundationB').getByRole('button', {name:'Placements', exact:true}).click();
+
+const skyBSunRow=page.locator('#skyFoundationB .sky-foundation-row[data-placement="sun"]').first();
+await skyBSunRow.click();
+await page.waitForFunction(()=>window.RelphiSkyFoundationInteractions?.getSelectionOrigin?.()?.value==='sun');
+assert.deepEqual(await page.evaluate(()=>window.RelphiSkyFoundationInteractions.getSelectionOrigin()),{
+  kind:'placement',
+  sky:'B',
+  value:'sun',
+  label:'Sun',
+  source:'Placements'
+},'Wheel-driving state must return the exact Placements item that originated the selection.');
+await skyBSunRow.click();
+await page.waitForFunction(()=>window.RelphiSkyFoundationInteractions?.getSelectionOrigin?.()===null);
+
 assert.ok(await page.locator('.sky-foundation-ledger > .sky-foundation-row > svg[data-canonical-ledger-glyph="true"]').evaluateAll(nodes => {
   const visible=nodes.map(svg=>svg.getBoundingClientRect()).filter(box=>box.width>0&&box.height>0);
   return visible.length>0&&visible.every(box=>box.width<=24&&box.height<=24);
