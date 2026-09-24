@@ -206,8 +206,8 @@ jobs:
           await page.waitForFunction(()=>{const img=document.querySelector('#skyFoundationA .sky-card-house-decan-art img');return !!img&&img.complete&&img.naturalWidth>0},{timeout:10000});
           const houseArt=await page.evaluate(()=>{
             const wrap=document.querySelector('#skyFoundationA .sky-card-house-decan-art'),img=wrap?.querySelector('img');
-            const ws=wrap?getComputedStyle(wrap):null,is=img?getComputedStyle(img):null,u=img?new URL(img.src):null;
-            return{wrapRadius:ws?.borderRadius,wrapShadow:ws?.boxShadow,imgRadius:is?.borderRadius,imgShadow:is?.boxShadow,imgFit:is?.objectFit,imgClip:is?.clipPath,src:u?.href||'',naturalWidth:img?.naturalWidth||0,media:img?.dataset?.cardMedia||''};
+            const ws=wrap?getComputedStyle(wrap):null,is=img?getComputedStyle(img):null,u=img?new URL(img.src):null,rect=img?.getBoundingClientRect();
+            return{wrapRadius:ws?.borderRadius,wrapShadow:ws?.boxShadow,imgRadius:is?.borderRadius,imgShadow:is?.boxShadow,imgFit:is?.objectFit,imgClip:is?.clipPath,imgMask:is?.maskImage,imgWebkitMask:is?.webkitMaskImage,imgAspect:is?.aspectRatio,maxHeight:is?.maxHeight,sourceRatio:img?.naturalHeight?img.naturalWidth/img.naturalHeight:null,renderedRatio:rect?.height?rect.width/rect.height:null,nativeClass:img?.classList.contains('sky-card-house-art-native')||false,src:u?.href||'',naturalWidth:img?.naturalWidth||0,media:img?.dataset?.cardMedia||''};
           });
           assert.equal(houseArt.wrapRadius,'0px');
           assert.equal(houseArt.wrapShadow,'none');
@@ -215,6 +215,12 @@ jobs:
           assert.equal(houseArt.imgShadow,'none');
           assert.equal(houseArt.imgFit,'contain');
           assert.equal(houseArt.imgClip,'none');
+          assert.equal(houseArt.imgMask,'none');
+          assert.equal(houseArt.imgWebkitMask,'none');
+          assert.equal(houseArt.imgAspect,'auto');
+          assert.equal(houseArt.maxHeight,'none');
+          assert.equal(houseArt.nativeClass,true);
+          assert.ok(Math.abs(houseArt.renderedRatio-houseArt.sourceRatio)<0.01,'House decan card art must preserve the source image aspect ratio without cropping.');
           assert.match(houseArt.src,/\/assets\/tarot\/rws\/.+\.webp$/);
           assert.equal(houseArt.src.includes('wsrv.nl'),false);
           assert.ok(houseArt.naturalWidth>0);
@@ -226,13 +232,23 @@ jobs:
             const imgs=[...document.querySelectorAll('#skyFoundationA .sky-card-house-detail-row[data-card-house-detail-role="ruler"] .sky-card-house-span-major-art img,#skyFoundationA .sky-card-house-detail-row[data-card-house-detail-role="sign"] .sky-card-house-span-major-art img')];
             return imgs.length===2&&imgs.every(img=>img.complete&&img.naturalWidth>0);
           },{timeout:10000});
-          const expandedMajorArt=await page.evaluate(()=>[...document.querySelectorAll('#skyFoundationA .sky-card-house-detail-row[data-card-house-detail-role="ruler"] .sky-card-house-span-major-art img,#skyFoundationA .sky-card-house-detail-row[data-card-house-detail-role="sign"] .sky-card-house-span-major-art img')].map(img=>({src:img.src,naturalWidth:img.naturalWidth,media:img.dataset.cardMedia||''})));
+          const expandedMajorArt=await page.evaluate(()=>[...document.querySelectorAll('#skyFoundationA .sky-card-house-detail-row[data-card-house-detail-role="ruler"] .sky-card-house-span-major-art img,#skyFoundationA .sky-card-house-detail-row[data-card-house-detail-role="sign"] .sky-card-house-span-major-art img')].map(img=>{const style=getComputedStyle(img),rect=img.getBoundingClientRect();return{src:img.src,naturalWidth:img.naturalWidth,media:img.dataset.cardMedia||'',nativeClass:img.classList.contains('sky-card-house-art-native'),fit:style.objectFit,clip:style.clipPath,mask:style.maskImage,webkitMask:style.webkitMaskImage,radius:style.borderRadius,shadow:style.boxShadow,aspect:style.aspectRatio,maxHeight:style.maxHeight,sourceRatio:img.naturalHeight?img.naturalWidth/img.naturalHeight:null,renderedRatio:rect.height?rect.width/rect.height:null}}));
           assert.equal(expandedMajorArt.length,2);
           expandedMajorArt.forEach(item=>{
             assert.match(item.src,/\/assets\/tarot\/rws\/.+\.webp$/);
             assert.equal(item.src.includes('wsrv.nl'),false);
             assert.ok(item.naturalWidth>0);
             assert.equal(item.media,'local-house-major-art');
+            assert.equal(item.nativeClass,true);
+            assert.equal(item.fit,'contain');
+            assert.equal(item.clip,'none');
+            assert.equal(item.mask,'none');
+            assert.equal(item.webkitMask,'none');
+            assert.equal(item.radius,'0px');
+            assert.equal(item.shadow,'none');
+            assert.equal(item.aspect,'auto');
+            assert.equal(item.maxHeight,'none');
+            assert.ok(Math.abs(item.renderedRatio-item.sourceRatio)<0.01,'Expanded House Ruler/Sign card art must preserve the source image aspect ratio without cropping.');
           });
 
           assert.deepEqual(errors,[]);
