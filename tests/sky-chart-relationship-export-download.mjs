@@ -38,6 +38,28 @@ await page.waitForSelector('#skyFoundationRelationshipList .sky-foundation-relat
 const button=page.locator('#skyChartRelationshipsExport');
 await button.waitFor({state:'visible',timeout:10000});
 assert.equal(await button.getAttribute('data-relationship-export-owner'),'columns-v2');
+
+await page.evaluate(()=>window.RelphiHarmonicOrb?.setWindow?.(window.RelphiHarmonicOrb.maxWindow));
+await page.locator('[data-relationship-sort]').selectOption('most-challenging');
+await page.waitForTimeout(250);
+const limit=page.locator('[data-relationship-limit]');
+await limit.waitFor({state:'visible'});
+assert.deepEqual(await limit.locator('option').allTextContents(),['10','20','50','All'],'Relationships must expose 10, 20, 50, and All result limits.');
+const eligibleOrder=await page.evaluate(()=>[...document.querySelectorAll('#skyFoundationRelationshipList>.sky-foundation-relationship-row[data-relation-index]')]
+  .filter(row=>{const style=getComputedStyle(row);return !row.hidden&&style.display!=='none'&&style.visibility!=='hidden'})
+  .map(row=>row.dataset.relationIndex));
+assert.ok(eligibleOrder.length>20,`Fixture must expose more than 20 eligible relationships to test a real cap: ${eligibleOrder.length}`);
+await limit.selectOption('20');
+await page.waitForFunction(()=>document.documentElement.dataset.skyRelationshipLimit==='20');
+await page.waitForFunction(()=>[...document.querySelectorAll('#skyFoundationRelationshipList>.sky-foundation-relationship-row')].filter(row=>{const style=getComputedStyle(row);return !row.hidden&&style.display!=='none'&&style.visibility!=='hidden'}).length===20);
+const cappedOrder=await page.evaluate(()=>[...document.querySelectorAll('#skyFoundationRelationshipList>.sky-foundation-relationship-row[data-relation-index]')]
+  .filter(row=>{const style=getComputedStyle(row);return !row.hidden&&style.display!=='none'&&style.visibility!=='hidden'})
+  .map(row=>row.dataset.relationIndex));
+assert.deepEqual(cappedOrder,eligibleOrder.slice(0,20),'Most Challenging + Limit 20 must expose exactly the first 20 relationships in the ranked set.');
+const continuation=page.locator('#skyFoundationRelationshipList>[data-result-limit-show-more]');
+await continuation.waitFor({state:'visible'});
+assert.match((await continuation.textContent()||'').trim(),/^\d+ more matching results · Show more$/,'A capped list must end with a direct Show more continuation.');
+
 await button.click();
 await page.waitForTimeout(3000);
 const diagnostics=await page.evaluate(()=>({
@@ -47,6 +69,7 @@ const diagnostics=await page.evaluate(()=>({
   relationshipExportV2:!!window.__relphiRelationshipExportColumnsV2,
   genericExportV5:!!window.__relphiSkyExportV5,
   visibleRows:[...document.querySelectorAll('#skyFoundationRelationshipList>.sky-foundation-relationship-row')].filter(r=>{const s=getComputedStyle(r);return !r.hidden&&s.display!=='none'&&s.visibility!=='hidden'}).length,
+  limit:document.querySelector('[data-relationship-limit]')?.value||'',
   exportOptions:window.__relphiRelationshipExportOptions||null,
   pendingImages:[...document.querySelectorAll('.rex-sheet img')].filter(i=>!i.complete||!i.naturalWidth).map(i=>i.getAttribute('src')).slice(0,12),
   rexSheet:!!document.querySelector('.rex-sheet')
@@ -57,6 +80,8 @@ assert.match(downloads[0].suggestedFilename(),/relationships-.*\.png$/i);
 assert.equal(diagnostics.disabled,false,'Download control should recover after export completes.');
 assert.equal(diagnostics.rexSheet,false,'Off-screen export sheet should be removed after completion.');
 assert.equal(diagnostics.relationshipExportV4,true,'Compact Relationships exporter should own the download.');
+assert.equal(diagnostics.limit,'20','Export must run with the active 20-result cap.');
+assert.equal(diagnostics.visibleRows,20,'Export must include only the 20 currently shown relationships.');
 const expectedCols=Math.ceil(diagnostics.visibleRows/16);
 const expectedWidth=24+expectedCols*500+Math.max(0,expectedCols-1)*8;
 const expectedRatio=diagnostics.visibleRows>24?1:1.1;
