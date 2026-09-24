@@ -104,6 +104,7 @@
     if(!bar)return'';
     const parts=[];
     const harmonic=bar.querySelector('[data-harmonic-window-input]');if(harmonic?.value.trim())parts.push(`Harmonic window ${harmonic.value.trim()}°`);
+    const limit=document.querySelector('#skyFoundationRelationships [data-relationship-limit]');if(limit?.value&&limit.value!=='all')parts.push(`Limit ${limit.value}`);
     const custom=[['[data-placement-filter-summary]','Placements'],['[data-house-filter-summary]','Houses'],['[data-aspect-filter-summary]','Aspects']];
     custom.forEach(([selector,label])=>{const text=cleanLabel(bar.querySelector(selector)?.textContent);if(text&&text!=='All')parts.push(`${label}: ${text}`)});
     [...bar.querySelectorAll('select')].forEach(select=>{const text=cleanLabel(select.selectedOptions?.[0]?.textContent||select.value);if(!text||/^all$/i.test(text)||/^none$/i.test(text))return;const caption=selectCaption(select)||'Filter';const item=`${caption}: ${text}`;if(!parts.includes(item))parts.push(item)});
@@ -171,11 +172,12 @@
   }
   function buildRelationshipStage(){
     const source=document.getElementById('skyFoundationRelationships'),list=document.getElementById('skyFoundationRelationshipList');if(!source||!list)throw new Error('The relationship list is not ready.');
+    const visibleRows=visibleViewportRows(list);
     const width=Math.max(620,Math.min(900,Math.ceil(source.getBoundingClientRect().width||760))),host=exportHost(width,2000),stage=document.createElement('div');stage.className='sky-relationships-export-stage';stage.style.width=`${width}px`;
-    const head=document.createElement('div');head.className='sky-relationships-export-head';head.innerHTML=`<strong>Relationships</strong><span>${esc(document.getElementById('skyFoundationRelationshipCount')?.textContent||'')}</span>`;stage.appendChild(head);
+    const head=document.createElement('div');head.className='sky-relationships-export-head';head.innerHTML=`<strong>Relationships</strong><span>${esc(visibleRows.length+' shown')}</span>`;stage.appendChild(head);
     const summary=filterSummary();if(summary){const line=document.createElement('div');line.className='sky-relationships-export-summary';line.textContent=`Showing only: ${summary}`;stage.appendChild(line)}
     const frame=document.createElement('div');frame.className='sky-relationships-export-frame';const groups=document.createElement('div');groups.className='sky-relationships-export-groups';
-    groupedRelationshipRows(visibleViewportRows(list)).forEach(({group,rows})=>{
+    groupedRelationshipRows(visibleRows).forEach(({group,rows})=>{
       const section=document.createElement('section');section.className=`sky-relationships-export-group ${group.className}`;
       const title=document.createElement('div');title.className='sky-relationships-export-group-title';title.textContent=group.title;
       const grid=document.createElement('div');grid.className='sky-relationships-export-grid';rows.forEach(row=>grid.appendChild(row.cloneNode(true)));
