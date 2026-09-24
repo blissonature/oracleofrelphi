@@ -156,6 +156,7 @@ assert.equal(await ariesLibra.locator('[data-vocab-context-kind="house"]').count
 const houseFourTen=page.locator('#skyFoundationA [data-vocab-structure="house-polarity"][data-vocab-houses="4|10"]');
 assert.equal(await houseFourTen.count(),1,'All house polarities must be represented structurally.');
 assert.match(await houseFourTen.textContent(),/Tenth House[^.]*no placements[^.]*default ruler Mercury/i,'An empty Tenth House in the fixture must state its Gemini-cusp default ruler, Mercury.');
+assert.equal(await houseFourTen.locator('[data-vocab-context-kind="sign"]').count(),2,'A house polarity must state each cusp sign once; occupants in that same sign must not repeat it.');
 
 const meridianStructure=page.locator('#skyFoundationA [data-vocab-structure="axis-polarity"][data-vocab-axis="mc-ic"]');
 const beforeHouseSystemRails=await meridianStructure.evaluate(node=>({
