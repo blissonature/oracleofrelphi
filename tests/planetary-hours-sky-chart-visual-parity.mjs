@@ -240,7 +240,7 @@ assert.match(page,/calendarAspectReferents/);
 assert.match(page,/data-calendar-referents/);
 assert.match(page,/class="ph-calendar-source"/);
 
-assert.match(page,/#tableSection\[data-calendar-names="false"\] \.ph-calendar-source/);
+assert.doesNotMatch(page,/#tableSection\[data-calendar-names="false"\] \.ph-calendar-source/);
 assert.match(page,/#tableSection\[data-calendar-names="false"\] \.ph-calendar-referent-name/);
 assert.match(page,/function calendarReferentMarkup/);
 assert.match(page,/kind:'coordinate'/);
