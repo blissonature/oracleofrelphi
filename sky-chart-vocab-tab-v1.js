@@ -994,12 +994,9 @@ function clearVocabWheelContextFromBlank(event){
   if(!hasVocabWheelContext())return;
   const target=event.target instanceof Element?event.target:null;
   if(!target)return;
-  if(target.closest('.sky-vocab-line,[data-vocab-dropdown],[data-vocab-dropdown-menu],[data-sky-vocab-tabs],button,input,select,textarea,a,label,summary,details'))return;
-  if(target.closest('#skyFoundationWheelMount [data-focus-piece],#skyFoundationWheelMount [data-interactive]'))return;
-  const blankVocab=target.closest('[data-sky-vocab-panel]');
-  const blankWheel=target.closest('#skyFoundationWheelMount');
-  const blankChart=vocabClearableBlank(target);
-  if(!blankVocab&&!blankWheel&&!blankChart)return;
+  if(vocabWheelPinnedToken?.contains?.(target)||vocabWheelContextToken?.contains?.(target))return;
+  if(vocabWheelTouchLine?.contains?.(target)||vocabWheelContextLine?.contains?.(target))return;
+  if(target.closest('.sky-vocab-line'))return;
   vocabWheelTouchLine=null;
   vocabWheelPinnedToken=null;
   clearVocabWheelContext();
