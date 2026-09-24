@@ -8,13 +8,11 @@
   window.__relphiSkyOrbControlV10=true;window.__relphiSkyOrbControlV9=true;window.__relphiSkyOrbControlV8=true;window.__relphiSkyOrbControlV7=true;window.__relphiSkyOrbControlV6=true;window.__relphiSkyOrbControlV5=true;window.__relphiSkyOrbControlV4=true;window.__relphiSkyOrbControlV3=true;window.__relphiSkyOrbControlV2=true;window.__relphiSkyOrbControlV1=true;
 
   let queued=false,wheelIndexes=null,wheelState=null,installQueued=false,filterObserver=null,lastApplied=null;
-  let activeWindow=null;
   const model=()=>window.RelphiHarmonicOrb;
   const visibleInput=()=>document.querySelector('[data-harmonic-window-input]');
 
   function initialWindow(){
-    const fallback=model()?.defaultWindow??6;
-    return activeWindow==null?fallback:activeWindow;
+    return model()?.getWindow?.()??model()?.defaultWindow??6;
   }
 
   function phaseFromRow(row){
@@ -67,7 +65,6 @@
     input.setAttribute('aria-invalid',valid?'false':'true');
     if(!valid)return;
 
-    activeWindow=limit;
     model()?.setWindow?.(limit);
     const visibleIndexes=new Set(),rows=[...document.querySelectorAll('.sky-foundation-relationship-row[data-relation-index]')],rowsByIndex=new Map(rows.map(row=>[String(row.dataset.relationIndex||''),row]));
     rows.forEach(row=>{
@@ -141,7 +138,7 @@
     // Deliberately start a new page load at the canonical default. The previous
     // session-storage behavior preserved accidental zeroes caused by the old
     // scroll-sensitive number input.
-    activeWindow=model()?.defaultWindow??6;
+    model()?.setWindow?.(model()?.getWindow?.()??model()?.defaultWindow??6);
     ensureInstalled();observeFilterBay();
     window.addEventListener('relphi:sky-foundation-filter-changed',event=>{
       const nextState=event.detail?.state||null;
