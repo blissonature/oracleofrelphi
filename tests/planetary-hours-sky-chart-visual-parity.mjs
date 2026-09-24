@@ -225,3 +225,17 @@ assert.ok(page.indexOf('id="calendarSkyCalendars"') < page.indexOf('id="calendar
 assert.ok(page.indexOf('id="calendarSkyCalendars"') < page.indexOf('id="calendarMonthView"'));
 
 assert.match(page,/renderMoonFrame\(frame\.localNow, state\.lat, state\.lon\);\s+populateCalendarPersonalSkySelect\(\);/);
+
+assert.match(page,/id="calendarDisplayGlyphs"/);
+assert.match(page,/id="calendarDisplayNames"/);
+assert.match(page,/id="calendarDisplayReferents"/);
+assert.match(page,/relphiPlanetaryCalendarDisplayV1/);
+assert.match(page,/function syncCalendarDisplayState/);
+assert.match(page,/function calendarCanonicalGlyphMarkup/);
+assert.match(page,/function calendarEventMarkup/);
+assert.match(page,/calendarPlacementReferents/);
+assert.match(page,/calendarSignReferents/);
+assert.match(page,/calendarHouseReferents/);
+assert.match(page,/calendarAspectReferents/);
+assert.match(page,/data-calendar-referents/);
+assert.match(page,/class="ph-calendar-source"/);
