@@ -109,6 +109,8 @@ assert.match(css, /\.relphi-focus-position-panel\{/);
 assert.match(css, /\.relphi-focus-shell\{[^}]*grid-template-rows:auto minmax\(0,1fr\) auto/);
 assert.match(css, /\.relphi-focus-position-panel\{[^}]*overflow:visible!important/);
 assert.match(css, /\.relphi-focus-art-frame\{[^}]*max-height:none!important/);
+assert.match(css, /@media\(min-width:701px\)\{[\s\S]*\.relphi-focus-shell\{overflow:hidden!important\}[\s\S]*\.relphi-focus-art-pane\{[^}]*overflow:hidden!important\}[\s\S]*\.relphi-focus-art-frame\{[^}]*height:100%!important[^}]*max-height:36rem!important/);
+assert.match(css, /\.relphi-focus-art\{[^}]*border-radius:0!important[^}]*clip-path:none!important/);
 assert.doesNotMatch(css, /position-anchor:--relphi-focus-card-title/);
 assert.match(css, /\.relphi-focus-art\.is-reversed\{/);
 assert.match(css, /\.relphi-focus-strip\{/);
