@@ -247,9 +247,13 @@ assert.doesNotMatch(vocab,/applyWheelSpec\([^)]*vocab/i,'Vocab-to-wheel context 
 assert.match(vocab,/function clearVocabWheelContextFromBlank\(event\)/,'Retained Vocab wheel context must clear from blank space');
 assert.match(vocab,/function hasVocabWheelContext\(\)/,'Vocab must recognize token, row, pinned, and touch highlight states when deciding whether another interaction clears the wheel glow');
 assert.match(vocab,/transition:none!important/,'Vocab-owned wheel highlights must bypass the old filter transition that caused a dark flash');
-assert.match(vocab,/rgba\(88,164,255,\.98\)/,'Individual Vocab tokens must use the stronger cool wheel glow rather than a dark shadow');
-assert.match(vocab,/brightness\(1\.34\)/,'Individual Vocab token highlighting must visibly brighten the underlying wheel color');
-assert.match(vocab,/stroke:rgba\(255,255,255,1\)!important/,'Focused Vocab sectors must use a bright white edge rather than a dark selection outline');
+assert.match(vocab,/rgba\(88,164,255,\.96\)/,'Individual Vocab tokens must use a clear cool marker glow rather than a dark shadow');
+assert.match(vocab,/function vocabSignGlyph\(wheel,sign\)/,'Sign vocabulary must target the zodiac glyph, not the whole sign sector');
+assert.match(vocab,/function vocabHouseNumber\(wheel,slot,house\)/,'House vocabulary must target the house number, not the whole house sector');
+assert.match(vocab,/function vocabPlacementGlyph\(wheel,slot,id\)/,'Placement vocabulary must target the placement marker itself');
+assert.doesNotMatch(vocab,/fill-opacity:1!important/,'Vocab highlighting must not alter colored sector fill opacity');
+assert.doesNotMatch(vocab,/sky-foundation-sign-sector\.is-vocab-(?:token-)?context/,'Vocab highlighting must not style the whole zodiac wedge');
+assert.doesNotMatch(vocab,/sky-foundation-house-sector\.is-vocab-(?:token-)?context/,'Vocab highlighting must not style the whole house wedge');
 assert.doesNotMatch(vocab,/has-vocab-token-context[^}]*rgba\(31,27,24,\.34\)/,'Individual Vocab token highlighting must not use the old dark flash shadow');
 assert.match(vocab,/vocabWheelPinnedToken\?\.contains\?\.\(target\)/,'Pinned token interaction must not clear itself');
 assert.match(vocab,/vocabWheelContextLine\?\.contains\?\.\(target\)/,'Active row interaction must not clear itself');
