@@ -28,14 +28,38 @@ try {
   await page.addInitScript(({a,b})=>{
     localStorage.setItem('relphiSkyChartA',JSON.stringify(a));
     localStorage.setItem('relphiSkyChartB',JSON.stringify(b));
+    localStorage.setItem('relphiSkyVocabDisplayV1',JSON.stringify({glyphs:true,names:true,referents:true}));
   },{a:sample('Sky A test',0),b:sample('Sky B test',73)});
 
   await page.goto('http://127.0.0.1:4173/sky-chart.html',{waitUntil:'networkidle'});
   await page.waitForSelector('#skyFoundationRoot[aria-busy="false"]',{timeout:15000});
   const row=page.locator('.sky-foundation-relationship-row[data-relation-index]:visible').first();
   await row.waitFor({state:'visible',timeout:15000});
+  await page.waitForFunction(()=>document.querySelector('.sky-foundation-relationship-row[data-relation-index]:not([hidden]) .sky-rel-vocab-line'),null,{timeout:10000});
 
-  await row.click();
+  const fusion=await row.evaluate(node=>({
+    tokens:node.querySelectorAll('[data-rel-vocab-token]').length,
+    names:[...node.querySelectorAll('.sky-rel-vocab-name')].map(el=>el.textContent.trim()),
+    referents:[...node.querySelectorAll('.sky-rel-vocab-referent')].map(el=>el.textContent.trim()),
+    originalTilePartsHidden:[...node.querySelectorAll(':scope>.sky-foundation-relationship-placement,:scope>.sky-foundation-relationship-glyph--aspect,:scope>.sky-foundation-relationship-orb')].every(el=>getComputedStyle(el).display==='none')
+  }));
+  assert.equal(fusion.tokens,3,'Relationship fusion surface should read as three Vocab-like tokens.');
+  assert.ok(fusion.names.every(Boolean),'Relationship fusion tokens should expose readable names.');
+  assert.ok(fusion.referents.every(Boolean),'Relationship fusion tokens should expose referents.');
+  assert.equal(fusion.originalTilePartsHidden,true,'Legacy tile geometry should yield to the prose surface.');
+
+  window.RelphiSkyRelationshipDisplay?.setState?.({glyphs:false,names:true,referents:false});
+  await page.waitForFunction(()=>[...document.querySelectorAll('.sky-foundation-relationship-row[data-relation-index]:not([hidden]) [data-rel-vocab-token]')].every(token=>getComputedStyle(token.querySelector('.sky-rel-vocab-glyph')).display==='none'&&!token.querySelector('.sky-rel-vocab-name').hidden&&token.querySelector('.sky-rel-vocab-referent').hidden));
+  await row.locator('[data-rel-vocab-token="left"]').click();
+  await page.waitForFunction(()=>document.querySelector('#skyFoundationWheelMount>.sky-foundation-wheel')?.classList.contains('has-isolation'));
+  assert.equal(await row.locator('[data-rel-vocab-token="left"]').evaluate(token=>token.classList.contains('is-wheel-active')),true,'A relationship token should temporarily isolate its wheel context.');
+  assert.equal(await row.locator('[data-rel-vocab-token="left"] .sky-rel-vocab-glyph').evaluate(el=>el.hidden),false,'Progressive reveal should add a globally hidden layer locally.');
+
+  await page.evaluate(()=>document.getElementById('skyFoundationComparison')?.dispatchEvent(new MouseEvent('click',{bubbles:true})));
+  await page.waitForFunction(()=>!document.querySelector('#skyFoundationWheelMount>.sky-foundation-wheel')?.classList.contains('has-isolation'));
+  window.RelphiSkyRelationshipDisplay?.setState?.({glyphs:true,names:true,referents:true});
+
+  await page.evaluate(()=>document.querySelector('.sky-foundation-relationship-row[data-relation-index]:not([hidden])')?.dispatchEvent(new MouseEvent('click',{bubbles:true})));
   await page.waitForFunction(()=>document.querySelector('.sky-foundation-relationship-row.is-inline-expanded'));
   assert.equal(await row.getAttribute('aria-expanded'),'true','relationship row should expand');
 
