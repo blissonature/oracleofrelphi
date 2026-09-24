@@ -64,15 +64,10 @@ function byId(id){return tarotCards().find(c=>c.card_id===id||c.stable_symbol_id
 function planetCard(planet){return tarotCards().find(c=>c.arcana==='Major'&&values(c.astrology?.planet).includes(planet))||byId(FALLBACK[planet])}
 function signCard(sign){const wanted=String(sign||'').trim().toLowerCase();return tarotCards().find(c=>c.arcana==='Major'&&values(c.astrology?.sign).some(v=>v.toLowerCase()===wanted))||null}
 function cardName(card){return String(card?.systems?.golden_dawn_rws?.display_name||card?.name||card?.title||card?.card_name||card?.card_id||'Card').replace(/_/g,' ')}
-function thumb(card,w=48,h=83){
+function thumb(card){
   if(!card)return'';
-  const shared=window.RelphiSkyCardHitsDrawer?.thumbnailFor;
-  if(typeof shared==='function')return shared(card,w,h);
   const id=encodeURIComponent(card.card_id||card.stable_symbol_id||'');
-  const src=new URL(`assets/tarot/rws/${id}.webp`,document.baseURI).href;
-  const u=new URL('https://wsrv.nl/');
-  u.searchParams.set('url',src);u.searchParams.set('w',String(w));u.searchParams.set('h',String(h));u.searchParams.set('fit','cover');u.searchParams.set('output','webp');u.searchParams.set('q','60');
-  return u.href;
+  return new URL(`assets/tarot/rws/${id}.webp`,document.baseURI).href;
 }
 function titleCase(v){const s=String(v||'');return s?s[0].toUpperCase()+s.slice(1):''}
 function json(key){try{const raw=localStorage.getItem(key);return raw?JSON.parse(raw):null}catch(_){return null}}
@@ -236,7 +231,7 @@ function makeMajorRow(role,label,card,glyphId,meaning){
   const row=document.createElement('div');row.className='sky-card-house-detail-row';row.dataset.cardHouseDetailRole=role.toLowerCase();
   const roleLabel=document.createElement('span');roleLabel.className='sky-card-house-detail-role';roleLabel.textContent=role;
   const art=document.createElement('span');art.className='sky-card-house-span-major-art';art.title=card?cardName(card):label;
-  if(card){const img=document.createElement('img');img.src=thumb(card,64,111);img.alt='';img.loading='lazy';img.decoding='async';art.appendChild(img)}
+  if(card){const img=document.createElement('img');img.src=thumb(card);img.alt='';img.loading='lazy';img.decoding='async';img.dataset.cardMedia='local-house-major-art';art.appendChild(img)}
   row.append(roleLabel,art,progressiveCopy(label,meaning,glyphId,card?cardName(card):''));return row;
 }
 function decanCardLabel(node){const first=String(node?.title||'').split('·')[0].trim();return first||'Decan card'}
