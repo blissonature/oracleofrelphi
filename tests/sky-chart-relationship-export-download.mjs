@@ -44,6 +44,8 @@ await page.locator('[data-relationship-sort]').selectOption('most-challenging');
 await page.waitForTimeout(250);
 const limit=page.locator('[data-relationship-limit]');
 await limit.waitFor({state:'visible'});
+assert.equal(await limit.evaluate(node=>node.closest('.sky-relationship-heading-actions')?.classList.contains('sky-relationship-heading-actions')||false),true,'Limit must sit in the Relationships header action cluster beside Copy and Download.');
+assert.equal(await limit.evaluate(node=>Boolean(node.closest('.sky-chart-filter-bar'))),false,'Limit must not remain in the filter grid.');
 assert.deepEqual(await limit.locator('option').allTextContents(),['10','20','50','All'],'Relationships must expose 10, 20, 50, and All result limits.');
 const eligibleOrder=await page.evaluate(()=>[...document.querySelectorAll('#skyFoundationRelationshipList>.sky-foundation-relationship-row[data-relation-index]')]
   .filter(row=>{const style=getComputedStyle(row);return !row.hidden&&style.display!=='none'&&style.visibility!=='hidden'})
@@ -56,6 +58,12 @@ const cappedOrder=await page.evaluate(()=>[...document.querySelectorAll('#skyFou
   .filter(row=>{const style=getComputedStyle(row);return !row.hidden&&style.display!=='none'&&style.visibility!=='hidden'})
   .map(row=>row.dataset.relationIndex));
 assert.deepEqual(cappedOrder,eligibleOrder.slice(0,20),'Most Challenging + Limit 20 must expose exactly the first 20 relationships in the ranked set.');
+const matchStatus=await page.locator('#skyFoundationRelationshipCount').evaluate(node=>({
+  text:(node.textContent||'').trim(),
+  suffix:getComputedStyle(node,'::after').content
+}));
+assert.equal(matchStatus.text,String(eligibleOrder.length),'Changing Limit to 20 must not change the number of relationships that match the current filters.');
+assert.match(matchStatus.suffix,/matches/,'The header must label the pre-cap qualifying count as matches.');
 const continuation=page.locator('#skyFoundationRelationshipList>[data-result-limit-show-more]');
 await continuation.waitFor({state:'visible'});
 assert.match((await continuation.textContent()||'').trim(),/^\d+ more matching results · Show more$/,'A capped list must end with a direct Show more continuation.');
