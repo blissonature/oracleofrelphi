@@ -55,14 +55,33 @@
     document.querySelectorAll('#skyFoundationWheelMount [data-focus-piece="placement"],#skyFoundationWheelMount [data-focus-piece="leader"]').forEach(node=>node.classList.toggle('is-kept',kept.has(`${node.dataset.sky}:${node.dataset.placement}`)));
   }
 
+  function ensureShowMoreRow(){
+    const list=document.getElementById('skyFoundationRelationshipList');if(!list)return null;
+    let button=list.querySelector('[data-harmonic-show-more]');
+    if(!button){
+      button=document.createElement('button');
+      button.type='button';
+      button.className='sky-foundation-harmonic-show-more';
+      button.dataset.harmonicShowMore='true';
+      button.addEventListener('click',event=>{
+        event.preventDefault();event.stopPropagation();
+        const m=model();m?.setWindow?.(m?.maxWindow??12);
+        schedule();
+      });
+      list.appendChild(button);
+    }else if(button!==list.lastElementChild)list.appendChild(button);
+    return button;
+  }
   function apply(){
     queued=false;
     const limit=Number(model()?.getWindow?.()??model()?.defaultWindow??6);
     if(!Number.isFinite(limit))return;
     const visibleIndexes=new Set(),rows=[...document.querySelectorAll('.sky-foundation-relationship-row[data-relation-index]')],rowsByIndex=new Map(rows.map(row=>[String(row.dataset.relationIndex||''),row]));
+    let hiddenByHarmonicWindow=0;
     rows.forEach(row=>{
       const phase=phaseFromRow(row),hiddenByOrb=Number.isFinite(phase)&&phase>limit,hiddenByWheel=wheelIndexes&&!wheelIndexes.has(String(row.dataset.relationIndex));
       const hiddenByOther=row.classList.contains('sky-chart-filter-hidden')||row.classList.contains('sky-chart-multiselect-hidden')||row.classList.contains('sky-chart-house-multiselect-hidden')||row.classList.contains('sky-chart-aspect-multiselect-hidden')||row.classList.contains('sky-chart-sign-filter-hidden')||row.classList.contains('sky-foundation-single-sky-cross-hidden');
+      if(hiddenByOrb&&!hiddenByWheel&&!hiddenByOther)hiddenByHarmonicWindow+=1;
       const visible=!hiddenByOrb&&!hiddenByWheel&&!hiddenByOther;
       row.classList.toggle('sky-chart-orb-hidden',hiddenByOrb);row.hidden=!visible;row.setAttribute('aria-hidden',visible?'false':'true');
       if(Number.isFinite(phase)){
@@ -83,8 +102,15 @@
 
     reconcilePlacementIsolation(rows,visibleIndexes);
     const count=document.getElementById('skyFoundationRelationshipCount'),empty=document.getElementById('skyFoundationRelationshipEmpty');
-    if(count)count.textContent=`${visibleIndexes.size}/${rows.length}`;
+    if(count){count.textContent=`${visibleIndexes.size}/${rows.length}`;count.dataset.countLabel='shown'}
     if(empty)empty.hidden=visibleIndexes.size!==0;
+    const more=ensureShowMoreRow(),max=Number(model()?.maxWindow??12);
+    if(more){
+      const canReveal=limit<max&&hiddenByHarmonicWindow>0;
+      more.hidden=!canReveal;
+      more.textContent=canReveal?`${hiddenByHarmonicWindow} more beyond ${Number(limit.toFixed(2))}° Harmonic Window · Show more`:'';
+      more.setAttribute('aria-label',canReveal?`Show ${hiddenByHarmonicWindow} more relationships by increasing Harmonic Window to ${max} degrees`:'Show more relationships');
+    }
     document.documentElement.dataset.skyHarmonicWindow=String(limit);
 
     if(lastApplied!==limit){
