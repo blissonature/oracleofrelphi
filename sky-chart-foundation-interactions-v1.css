@@ -131,8 +131,8 @@
   order:1;
 }
 
-#skyFoundationRelationshipCount[data-count-label="shown"]::after {
-  content:"shown";
+#skyFoundationRelationshipCount[data-count-label="matches"]::after {
+  content:"matches";
   font-weight:720;
   color:#665e57;
 }
