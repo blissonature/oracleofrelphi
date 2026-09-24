@@ -144,7 +144,7 @@
   }
 
   function install(){
-    const bar=document.querySelector('#skyFoundationRelationships .sky-chart-filter-bar')||document.querySelector('.sky-chart-filter-bar');
+    const bar=(document.querySelector('#skyFoundationFocus .sky-chart-filter-bar')||document.querySelector('#skyFoundationRelationships .sky-chart-filter-bar'))||document.querySelector('.sky-chart-filter-bar');
     if(!bar||bar.querySelector('[data-harmonic-window-input]'))return false;
     const field=document.createElement('label');field.className='sky-orb-number-field';field.dataset.orbField='true';
     const caption=document.createElement('span');caption.textContent='Harmonic Window';
