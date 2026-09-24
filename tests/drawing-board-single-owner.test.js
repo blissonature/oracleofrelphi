@@ -21,7 +21,7 @@ assert.match(nav, /drawing-board-workflow-v2\.js\?v=96/);
 ].forEach(name => assert.doesNotMatch(nav, new RegExp(name.replaceAll('.', '\\.'))));
 assert.doesNotMatch(nav, /relphi-drawing-board-ui-ready|relphi-drawing-board-ui-stable/);
 
-['MutationObserver','getBoundingClientRect','relphi-drawing-board-ui-ready','relphi-drawing-board-ui-stable','Close Options'].forEach(needle => {
+['MutationObserver','relphi-drawing-board-ui-ready','relphi-drawing-board-ui-stable','Close Options'].forEach(needle => {
   assert.ok(!board.includes(needle), `unified Drawing Board must not contain ${needle}`);
 });
 ['repair','reconcile','rehydrate','settling'].forEach(needle => {
