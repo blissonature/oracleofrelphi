@@ -145,6 +145,7 @@ function harmonicWindow(){
 }
 let queued=false;
 const abstractPreviewGlyphCache=new Map();
+const inlineGlyphCache=new Map();
 let openDropdownState=null;
 let dropdownPositionQueued=false;
 let wheelFilterState=null;
@@ -362,6 +363,52 @@ function token(info,kind='term',sentenceStart=false,lead=''){
   renderToken(node);
   return node;
 }
+function cloneCachedInlineGlyph(svg,cached){
+  svg.replaceChildren(...Array.from(cached.childNodes).map(node=>node.cloneNode(true)));
+  Array.from(cached.attributes).forEach(attr=>{
+    if(attr.name==='style'||attr.name==='class'||attr.name==='aria-hidden'||attr.name==='focusable'||attr.name==='viewBox'||attr.name==='data-vocab-inline-glyph-ready')return;
+    svg.setAttribute(attr.name,attr.value);
+  });
+  svg.dataset.vocabInlineGlyphReady='true';
+  svg.style.visibility='visible';
+}
+function fallbackInlineGlyph(svg,fallback){
+  svg.replaceChildren();
+  const text=document.createElementNS('http://www.w3.org/2000/svg','text');
+  text.setAttribute('x','0');text.setAttribute('y','0');text.setAttribute('text-anchor','middle');text.setAttribute('dominant-baseline','central');
+  text.setAttribute('fill','currentColor');text.setAttribute('font-size','16');text.setAttribute('font-weight','800');text.textContent=fallback;
+  svg.appendChild(text);svg.dataset.vocabInlineGlyphReady='true';svg.style.visibility='visible';
+  return svg;
+}
+function renderInlineGlyph(svg,entryId,fallback){
+  const key=String(entryId||'');
+  const cached=inlineGlyphCache.get(key);
+  if(cached instanceof SVGSVGElement){cloneCachedInlineGlyph(svg,cached);return Promise.resolve(svg)}
+  if(cached instanceof Promise){
+    svg.dataset.vocabInlineGlyphReady='false';
+    svg.style.visibility='hidden';
+    return cached.then(template=>{if(svg.isConnected)cloneCachedInlineGlyph(svg,template);return svg});
+  }
+  const component=window.RelphiGlyphComponent;
+  svg.dataset.vocabInlineGlyphReady='false';
+  svg.style.visibility='hidden';
+  const ready=Promise.resolve(component.draw(svg,entryId,{radius:14.5,padding:.5,color:'currentColor'})).then(()=>{
+    svg.dataset.vocabInlineGlyphReady='true';
+    const template=svg.cloneNode(true);
+    template.dataset.vocabInlineGlyphReady='true';
+    template.style.visibility='visible';
+    inlineGlyphCache.set(key,template);
+    if(svg.isConnected)svg.style.visibility='visible';
+    return template;
+  }).catch(()=>{
+    fallbackInlineGlyph(svg,fallback);
+    const template=svg.cloneNode(true);
+    inlineGlyphCache.set(key,template);
+    return template;
+  });
+  inlineGlyphCache.set(key,ready);
+  return ready.then(()=>svg);
+}
 function glyphNode(tokenNode){
   const holder=document.createElement('span');holder.className='sky-vocab-level sky-vocab-glyph';holder.dataset.vocabLevel='glyph';holder.setAttribute('role','button');holder.tabIndex=0;holder.setAttribute('aria-label','Reveal name');applyTokenColor(holder,tokenNode);
   const glyphId=tokenNode.dataset.vocabGlyphId,fallback=tokenNode.dataset.vocabFallbackGlyph||tokenNode.dataset.vocabName;
@@ -380,10 +427,16 @@ function glyphNode(tokenNode){
     }
   }
   const registry=window.RelphiGlyphRegistry,component=window.RelphiGlyphComponent,entry=glyphId&&(registry?.get?.(glyphId)||registry?.resolve?.(glyphId));
-  if(entry&&component){
+  if(entry&&component?.draw){
     holder.classList.add('has-svg-glyph');
-    const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');svg.setAttribute('viewBox','-18 -18 36 36');svg.setAttribute('aria-hidden','true');svg.setAttribute('focusable','false');holder.appendChild(svg);
-    component.draw(svg,entry.id,{radius:14.5,padding:.5,color:'currentColor'}).catch(()=>{holder.replaceChildren(document.createTextNode(fallback))});
+    const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
+    svg.setAttribute('viewBox','-18 -18 36 36');
+    svg.setAttribute('aria-hidden','true');
+    svg.setAttribute('focusable','false');
+    svg.dataset.vocabInlineGlyphReady='false';
+    svg.style.visibility='hidden';
+    holder.appendChild(svg);
+    renderInlineGlyph(svg,entry.id,fallback);
   }else holder.textContent=fallback;
   return holder;
 }
@@ -1666,6 +1719,7 @@ function installStyles(){
     .sky-vocab-glyph{position:relative;display:inline-block;width:var(--vocab-mark-size);min-width:var(--vocab-mark-size);height:1em;min-height:1em;margin:0;vertical-align:baseline;overflow:visible;font-weight:800;line-height:1}
     .sky-vocab-glyph.has-svg-glyph{width:var(--vocab-mark-size);min-width:var(--vocab-mark-size)}
     .sky-vocab-glyph svg{position:absolute;left:50%;top:50%;display:block;width:var(--vocab-mark-size);height:var(--vocab-mark-size);overflow:visible;transform:translate(-50%,-36%)}
+    .sky-vocab-glyph.has-svg-glyph>svg[data-vocab-inline-glyph-ready="false"]{visibility:hidden!important}
     .sky-vocab-glyph.is-house-medallion{position:relative;display:inline-block;width:var(--vocab-mark-size);min-width:var(--vocab-mark-size);height:1em;min-height:1em;vertical-align:-.08em;overflow:visible}
     .sky-vocab-glyph>.relphi-house-medallion{position:absolute!important;left:50%!important;top:50%!important;display:inline-grid!important;width:1.3rem!important;height:1.3rem!important;margin:0!important;place-items:center!important;vertical-align:baseline!important;transform:translate(-50%,-61%);color:var(--house-ink)!important;-webkit-text-fill-color:var(--house-ink)!important;font-size:.72em!important;line-height:1!important}
     .sky-vocab-glyph>.relphi-house-medallion[data-house="10"],.sky-vocab-glyph>.relphi-house-medallion[data-house="11"],.sky-vocab-glyph>.relphi-house-medallion[data-house="12"]{font-size:.61em!important;letter-spacing:-.02em!important}
