@@ -317,5 +317,7 @@ const whereWhenSection = page.slice(page.indexOf('class="ph-panel ph-settings ph
 const whereWhenButtons = [...whereWhenSection.matchAll(/<button\b[^>]*>([\s\S]*?)<\/button>/gi)]
   .map(match => match[1].replace(/<[^>]+>/g,'').trim())
   .filter(Boolean);
-assert.deepEqual(whereWhenButtons,['Here and Now','Search','Current local time','Cancel','Use This Where and When']);
+assert.deepEqual(whereWhenButtons,['Here and Now','Search','My current location','Current local time','Cancel','Use This Where and When']);
 assert.match(whereWhenSection,/class="ph-where-when-title">Where and When<\/span>/);
+
+assert.match(whereWhenSection,/id="useCurrentLocation"[^>]*>My current location<\/button>/);
