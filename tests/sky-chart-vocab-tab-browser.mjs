@@ -91,7 +91,7 @@ const axisWheelEmphasis=await page.evaluate(()=>{
 });
 assert.equal(axisWheelEmphasis.vertex,1,'The active Vertex axis endpoint must remain fully emphasized.');
 assert.equal(axisWheelEmphasis.antiVertex,1,'The active Anti-Vertex axis endpoint must remain fully emphasized.');
-assert.equal(axisWheelEmphasis.moon,1,'Placements outside the active axis must keep their native opacity; glow alone identifies Vocab context.');
+assert.ok(axisWheelEmphasis.moon<=.1,'Placements outside the active axis must dim under the same isolation logic as comparison-wheel hover.');
 await vertexAxis.dispatchEvent('pointerout',{pointerType:'mouse'});
 await page.waitForFunction(()=>!document.querySelector('#skyFoundationWheelMount>.sky-foundation-wheel')?.classList.contains('has-vocab-context'));
 assert.equal(await vocabParagraph.locator('[data-vocab-structure="axis-polarity"][data-vocab-axis="vertex-anti-vertex"] .sky-vocab-token[data-vocab-id="anti-vertex"]').count(),1,'Vertex polarity must include a derived Anti-Vertex when the sky stores only Vertex.');
