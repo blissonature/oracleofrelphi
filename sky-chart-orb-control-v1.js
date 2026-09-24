@@ -65,7 +65,7 @@
     input.setAttribute('aria-invalid',valid?'false':'true');
     if(!valid)return;
 
-    model()?.setWindow?.(limit);
+    model()?.setWindow?.(limit,input);
     const visibleIndexes=new Set(),rows=[...document.querySelectorAll('.sky-foundation-relationship-row[data-relation-index]')],rowsByIndex=new Map(rows.map(row=>[String(row.dataset.relationIndex||''),row]));
     rows.forEach(row=>{
       const phase=phaseFromRow(row),hiddenByOrb=Number.isFinite(phase)&&phase>limit,hiddenByWheel=wheelIndexes&&!wheelIndexes.has(String(row.dataset.relationIndex));
