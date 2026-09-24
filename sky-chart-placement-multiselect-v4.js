@@ -225,14 +225,14 @@
     });
     return out;
   }
+  function ruleSummary(rule){
+    const prefix=rule.choice==='all'?'':rule.choice.toUpperCase()+' ';
+    return`${prefix}${rowLabelFor(rule.scope,rule.target)} ${rule.op.toUpperCase()}`;
+  }
   function combinedSummary(){
     const rules=activeRules();
     if(!rules.length)return'All';
-    if(rules.length===1){
-      const rule=rules[0],prefix=rule.choice==='all'?'':rule.choice.toUpperCase()+' ';
-      return`${prefix}${rowLabelFor(rule.scope,rule.target)} ${rule.op.toUpperCase()}`;
-    }
-    return`${rules.length} logic rules`;
+    return rules.map(ruleSummary).join(' · ');
   }
   function updateControl(){
     const owner=control(),menu=popover();
