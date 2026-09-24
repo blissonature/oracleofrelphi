@@ -70,9 +70,10 @@
       const wrap = item.querySelector(':scope > .card-row-card-wrap');
       const drop = item.querySelector(':scope > .card-row-drop-card');
       [wrap, drop].filter(Boolean).forEach(surface => {
-        setImportant(surface, 'border-radius', RADIUS);
-        setImportant(surface, 'overflow', 'hidden');
-        setImportant(surface, 'clip-path', 'inset(0 round ' + RADIUS + ')');
+        const ownsTarotArt = !!surface.querySelector('img[src*="assets/tarot/rws/"]');
+        setImportant(surface, 'border-radius', ownsTarotArt ? '0px' : RADIUS);
+        setImportant(surface, 'overflow', ownsTarotArt ? 'visible' : 'hidden');
+        setImportant(surface, 'clip-path', ownsTarotArt ? 'none' : 'inset(0 round ' + RADIUS + ')');
         setImportant(surface, 'background-clip', 'padding-box');
         setImportant(surface, 'border', '0px');
         setImportant(surface, 'outline', '0px');
@@ -80,7 +81,15 @@
       });
 
       item.querySelectorAll('.card-row-card,.or-card.card-row-card,.card-row-drop-card-inner,.card-row-drop-card>img').forEach(surface => {
-        setImportant(surface, 'border-radius', RADIUS);
+        const isTarotArt = surface.matches?.('img[src*="assets/tarot/rws/"]') || !!surface.querySelector?.('img[src*="assets/tarot/rws/"]');
+        setImportant(surface, 'border-radius', isTarotArt ? '0px' : RADIUS);
+        if (isTarotArt) {
+          setImportant(surface, 'border', '0px');
+          setImportant(surface, 'outline', '0px');
+          setImportant(surface, 'box-shadow', 'none');
+          setImportant(surface, 'clip-path', 'none');
+          setImportant(surface, 'overflow', 'visible');
+        }
         setImportant(surface, 'background-clip', 'padding-box');
       });
     });
