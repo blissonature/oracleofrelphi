@@ -391,41 +391,50 @@
 
   function ensureFocusStructure(relationshipPanel, bar) {
     if (!relationshipPanel || !bar) return;
-    relationshipPanel.setAttribute('aria-label', 'Focus and Relationships');
 
-    let focusHeading = relationshipPanel.querySelector(':scope > .sky-foundation-focus-heading');
-    if (!focusHeading) {
-      focusHeading = document.createElement('header');
-      focusHeading.className = 'sky-foundation-focus-heading';
-      const title = document.createElement('h2');
-      title.textContent = 'Focus';
-      focusHeading.appendChild(title);
+    const comparison = document.getElementById('skyFoundationComparison');
+    if (!comparison) return;
+
+    let focusPanel = document.getElementById('skyFoundationFocus');
+    if (!focusPanel) {
+      focusPanel = document.createElement('section');
+      focusPanel.id = 'skyFoundationFocus';
+      focusPanel.className = 'sky-foundation-focus-panel';
+      focusPanel.setAttribute('aria-label', 'Focus');
+      focusPanel.innerHTML = '<header class="sky-foundation-focus-heading"><h2>Focus</h2></header>';
     }
 
-    const relationshipHeading = relationshipPanel.querySelector(':scope > .sky-foundation-relationships-heading');
+    const focusHeading = focusPanel.querySelector(':scope > .sky-foundation-focus-heading');
+    if (bar.parentElement !== focusPanel) focusPanel.appendChild(bar);
+
+    if (relationshipPanel.parentElement === comparison) {
+      comparison.insertBefore(focusPanel, relationshipPanel);
+    } else if (!focusPanel.isConnected) {
+      comparison.appendChild(focusPanel);
+    }
+
     let relationshipControls = relationshipPanel.querySelector(':scope > .sky-relationship-controls');
     if (!relationshipControls) {
       relationshipControls = document.createElement('div');
       relationshipControls.className = 'sky-relationship-controls';
       relationshipControls.setAttribute('aria-label', 'Relationship display controls');
     }
+    const relationshipHeading = relationshipPanel.querySelector(':scope > .sky-foundation-relationships-heading');
     const list = relationshipPanel.querySelector(':scope > #skyFoundationRelationshipList');
-
-    if (relationshipPanel.firstElementChild !== focusHeading) relationshipPanel.prepend(focusHeading);
-    if (focusHeading.nextElementSibling !== bar) focusHeading.after(bar);
-    if (relationshipHeading && bar.nextElementSibling !== relationshipHeading) bar.after(relationshipHeading);
     if (relationshipHeading && relationshipHeading.nextElementSibling !== relationshipControls) relationshipHeading.after(relationshipControls);
     if (list && relationshipControls.nextElementSibling !== list) relationshipControls.after(list);
+
+    if (focusHeading && focusPanel.firstElementChild !== focusHeading) focusPanel.prepend(focusHeading);
   }
 
   function addFilters() {
     const relationshipPanel = document.getElementById('skyFoundationRelationships');
     if (!relationshipPanel) return;
-    let bar = relationshipPanel.querySelector('.sky-chart-filter-bar');
+    let focusPanel = document.getElementById('skyFoundationFocus');
+    let bar = focusPanel?.querySelector(':scope > .sky-chart-filter-bar') || relationshipPanel.querySelector(':scope > .sky-chart-filter-bar');
     if (!bar) {
       bar = document.createElement('div');
       bar.className = 'sky-chart-filter-bar';
-      relationshipPanel.insertBefore(bar, relationshipPanel.querySelector('#skyFoundationRelationshipList'));
     }
     ensureFocusStructure(relationshipPanel, bar);
     if (bar.dataset.finalFilterOwner === 'true') return;
