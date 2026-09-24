@@ -11,6 +11,7 @@ const DISPLAY_KEY='relphiSkyVocabDisplayV1';
 const VIEW_KEY='relphiSkyVocabViewV1';
 const FILTER_KEY='relphiSkyVocabFilterV1';
 const SCOPE_FILTER_KEY='relphiSkyVocabScopeFilterV1';
+const GROUP_OPEN_KEY='relphiSkyVocabGroupOpenV1';
 const SIGNS=['Aries','Taurus','Gemini','Cancer','Leo','Virgo','Libra','Scorpio','Sagittarius','Capricorn','Aquarius','Pisces'];
 const SIGN_COLORS=['#e53935','#f06b32','#f39a2e','#f5be3d','#f1dc43','#a9cf46','#43a85b','#2ca69b','#3285c7','#5961c8','#8c4fb4','#bd438e'];
 const SIGN_RULERS=['Mars','Venus','Mercury','Moon','Sun','Mercury','Venus','Mars','Jupiter','Saturn','Saturn','Jupiter'];
@@ -568,8 +569,74 @@ function polaritySentence(structure){
   appendStructureMembers(frag,structure.right);
   return frag;
 }
-function appendStructureSubheading(container,label){
-  const heading=document.createElement('div');heading.className='sky-vocab-structure-subheading';heading.textContent=label;container.appendChild(heading);
+function vocabGroupState(){
+  const value=readJson(sessionStorage,GROUP_OPEN_KEY,null);
+  return{A:value?.A&&typeof value.A==='object'?value.A:{},B:value?.B&&typeof value.B==='object'?value.B:{}};
+}
+function saveVocabGroupState(slot,key,open){
+  const state=vocabGroupState();
+  state[slot]={...state[slot],[key]:!!open};
+  writeJson(sessionStorage,GROUP_OPEN_KEY,state);
+}
+function previewRailValue(line,kind){
+  const names=kind==='sign'
+    ?['--vocab-polarity-signs','--vocab-concentration-signs','--vocab-placement-signs']
+    :['--vocab-polarity-houses','--vocab-concentration-houses','--vocab-placement-houses'];
+  return names.map(name=>line.style.getPropertyValue(name).trim()).find(Boolean)||'';
+}
+function horizontalPreviewGradient(value){
+  return String(value||'').replace(/to bottom/,'to right');
+}
+function groupPreviewGlyph(tokenNode){
+  const holder=document.createElement('span');holder.className='sky-vocab-group-preview-glyph';
+  holder.title=String(tokenNode.dataset.vocabName||tokenNode.dataset.vocabId||'');
+  holder.setAttribute('aria-hidden','true');
+  const glyphId=tokenNode.dataset.vocabGlyphId,fallback=tokenNode.dataset.vocabFallbackGlyph||tokenNode.dataset.vocabName||tokenNode.dataset.vocabId;
+  const registry=window.RelphiGlyphRegistry,component=window.RelphiGlyphComponent,entry=glyphId&&(registry?.get?.(glyphId)||registry?.resolve?.(glyphId));
+  if(entry&&component){
+    const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');svg.setAttribute('viewBox','-18 -18 36 36');svg.setAttribute('aria-hidden','true');holder.appendChild(svg);
+    component.draw(svg,entry.id,{radius:14,padding:.7,color:'currentColor'}).catch(()=>{holder.replaceChildren(document.createTextNode(fallback))});
+  }else holder.textContent=fallback;
+  return holder;
+}
+function populateVocabGroupPreview(summary,body){
+  const preview=document.createElement('span');preview.className='sky-vocab-group-preview';
+  if(displayState().glyphs){
+    const glyphs=document.createElement('span');glyphs.className='sky-vocab-group-preview-glyphs';glyphs.setAttribute('aria-label','Group placement glyphs');
+    const seen=new Set();
+    body.querySelectorAll('.sky-vocab-token[data-vocab-kind="placement"]').forEach(tokenNode=>{
+      const id=String(tokenNode.dataset.vocabId||'');if(!id||seen.has(id))return;seen.add(id);glyphs.appendChild(groupPreviewGlyph(tokenNode));
+    });
+    if(glyphs.childNodes.length)preview.appendChild(glyphs);
+  }
+  const rails=document.createElement('span');rails.className='sky-vocab-group-preview-rails';rails.setAttribute('aria-label','Sign and house color preview');
+  ['sign','house'].forEach(kind=>{
+    const rail=document.createElement('span');rail.className='sky-vocab-group-preview-rail sky-vocab-group-preview-rail-'+kind;rail.dataset.vocabPreviewRail=kind;
+    rail.title=kind==='sign'?'Signs represented in this group':'Houses represented in this group';
+    body.querySelectorAll('.sky-vocab-line').forEach(line=>{
+      const value=previewRailValue(line,kind);if(!value)return;
+      const segment=document.createElement('span');segment.className='sky-vocab-group-preview-segment';segment.style.background=horizontalPreviewGradient(value);rail.appendChild(segment);
+    });
+    if(rail.childNodes.length)rails.appendChild(rail);
+  });
+  if(rails.childNodes.length)preview.appendChild(rails);
+  summary.appendChild(preview);
+}
+function createVocabGroup(container,slot,key,label,renderBody){
+  const details=document.createElement('details');details.className='sky-vocab-group';details.dataset.vocabGroup=key;details.dataset.vocabGroupSlot=slot;
+  const summary=document.createElement('summary');summary.className='sky-vocab-group-summary';
+  const title=document.createElement('span');title.className='sky-vocab-structure-subheading sky-vocab-group-title';title.textContent=label;
+  const chevron=document.createElement('span');chevron.className='sky-vocab-group-chevron';chevron.setAttribute('aria-hidden','true');
+  summary.append(title,chevron);
+  const body=document.createElement('div');body.className='sky-vocab-group-body';body.dataset.vocabGroupBody=key;
+  renderBody(body);
+  if(!body.querySelector('.sky-vocab-line'))return null;
+  const state=vocabGroupState();details.open=state[slot]?.[key]===true;
+  populateVocabGroupPreview(summary,body);
+  details.append(summary,body);
+  details.addEventListener('toggle',()=>saveVocabGroupState(slot,key,details.open));
+  container.appendChild(details);
+  return details;
 }
 function appendSimplePlacementList(frag,members,contextKind){
   members.forEach((record,index)=>{
@@ -727,8 +794,7 @@ function renderStructures(container,list,permitted,slot){
 
   const heading=document.createElement('div');heading.className='sky-vocab-structures-heading';heading.textContent='Structures';container.appendChild(heading);
 
-  if(visiblePolarities.length){
-    appendStructureSubheading(container,'Primary polarities');
+  if(visiblePolarities.length)createVocabGroup(container,slot,'structures-primary-polarities','Primary polarities',body=>{
     visiblePolarities.forEach(structure=>{
       const line=document.createElement('div');line.className='sky-vocab-line sky-vocab-structure-line';line.dataset.vocabStructure='axis-polarity';line.dataset.vocabAxis=structure.left[0].id+'-'+structure.right[0].id;line.dataset.vocabMembers=[...structure.left,...structure.right].map(record=>record.id).join('|');line.dataset.vocabHarmonicWindow=String(structure.harmonicWindow);
       applyPolarityRails(
@@ -737,23 +803,21 @@ function renderStructures(container,list,permitted,slot){
         halfWeightedStructureGradient(structure.left,structure.right,record=>record.house||null,key=>HOUSE_COLORS[key-1]),
         slot
       );
-      line.append(polaritySentence(structure),document.createTextNode('.'));container.appendChild(line);
+      line.append(polaritySentence(structure),document.createTextNode('.'));body.appendChild(line);
     });
-  }
+  });
 
-  if(visibleClusters.length){
-    appendStructureSubheading(container,'Concentrations');
+  if(visibleClusters.length)createVocabGroup(container,slot,'structures-concentrations','Concentrations',body=>{
     visibleClusters.forEach(members=>{
       const profile=clusterSignProfile(members),line=document.createElement('div');
       line.className='sky-vocab-line sky-vocab-structure-line';line.dataset.vocabStructure=isStellium(members)?'stellium':'cluster';
       line.dataset.vocabClusterType=profile.type;line.dataset.vocabSigns=profile.names.join('|');line.dataset.vocabMembers=members.map(record=>record.id).join(',');
       applyConcentrationStripe(line,members,profile,slot);
-      line.append(clusterSentence(members),document.createTextNode('.'));container.appendChild(line);
+      line.append(clusterSentence(members),document.createTextNode('.'));body.appendChild(line);
     });
-  }
+  });
 
-  if(visibleSignPairs.length){
-    appendStructureSubheading(container,'Sign polarities');
+  if(visibleSignPairs.length)createVocabGroup(container,slot,'structures-sign-polarities','Sign polarities',body=>{
     visibleSignPairs.forEach(pair=>{
       const line=document.createElement('div');line.className='sky-vocab-line sky-vocab-structure-line';line.dataset.vocabStructure='sign-polarity';line.dataset.vocabSigns=pair.map(index=>SIGNS[index]).join('|');
       const leftMembers=list.filter(record=>record.sign===pair[0]),rightMembers=list.filter(record=>record.sign===pair[1]);
@@ -763,12 +827,11 @@ function renderStructures(container,list,permitted,slot){
         halfWeightedStructureGradient(leftMembers,rightMembers,record=>record.house||null,key=>HOUSE_COLORS[key-1]),
         slot
       );
-      line.append(signPolaritySentence(pair,list),document.createTextNode('.'));container.appendChild(line);
+      line.append(signPolaritySentence(pair,list),document.createTextNode('.'));body.appendChild(line);
     });
-  }
+  });
 
-  if(visibleHousePairs.length){
-    appendStructureSubheading(container,'House polarities');
+  if(visibleHousePairs.length)createVocabGroup(container,slot,'structures-house-polarities','House polarities',body=>{
     visibleHousePairs.forEach(pair=>{
       const line=document.createElement('div');line.className='sky-vocab-line sky-vocab-structure-line';line.dataset.vocabStructure='house-polarity';line.dataset.vocabHouses=pair.join('|');
       const leftCuspSign=houseCuspSign(slot,list,pair[0]),rightCuspSign=houseCuspSign(slot,list,pair[1]);
@@ -778,9 +841,9 @@ function renderStructures(container,list,permitted,slot){
         splitStructureGradient(HOUSE_COLORS[pair[0]-1],HOUSE_COLORS[pair[1]-1]),
         slot
       );
-      line.append(housePolaritySentence(pair,slot,list),document.createTextNode('.'));container.appendChild(line);
+      line.append(housePolaritySentence(pair,slot,list),document.createTextNode('.'));body.appendChild(line);
     });
-  }
+  });
 }
 function renderGroup(container,list,category,slot){
   list.filter(record=>categoryOf(record)===category).forEach(record=>appendSentence(container,phrasePlacement(record),[record],slot));
@@ -792,12 +855,21 @@ function renderAxisPair(container,list,aId,bId,slot){
   if(b)appendSentence(container,phrasePlacement(b),[b],slot);
 }
 function renderFullPlacements(container,list,slot){
-  renderGroup(container,list,'nodes',slot);
-  renderAxisPair(container,list,'asc','dsc',slot);
-  renderAxisPair(container,list,'mc','ic',slot);
-  renderGroup(container,list,'luminaries',slot);
-  renderGroup(container,list,'planets',slot);
-  renderGroup(container,list,'other',slot);
+  const nodes=list.filter(record=>categoryOf(record)==='nodes');
+  if(nodes.length)createVocabGroup(container,slot,'placements-nodes',CATEGORY_LABELS.nodes,body=>renderGroup(body,list,'nodes',slot));
+
+  const axes=list.filter(record=>categoryOf(record)==='axes');
+  if(axes.length)createVocabGroup(container,slot,'placements-axes',CATEGORY_LABELS.axes,body=>{
+    renderAxisPair(body,list,'asc','dsc',slot);
+    renderAxisPair(body,list,'mc','ic',slot);
+    const paired=new Set(['asc','dsc','mc','ic']);
+    list.filter(record=>categoryOf(record)==='axes'&&!paired.has(record.id)).forEach(record=>appendSentence(body,phrasePlacement(record),[record],slot));
+  });
+
+  ['luminaries','planets','other'].forEach(category=>{
+    if(!list.some(record=>categoryOf(record)===category))return;
+    createVocabGroup(container,slot,'placements-'+category,CATEGORY_LABELS[category],body=>renderGroup(body,list,category,slot));
+  });
 }
 function vocabLineContext(line){
   if(!(line instanceof HTMLElement))return null;
@@ -1377,6 +1449,22 @@ function installStyles(){
     .sky-vocab-structures-heading{margin:0 0 -.08rem;padding-top:0;border-top:0;color:#6a6058;font:900 .62rem/1.2 system-ui,sans-serif;text-transform:uppercase;letter-spacing:.055em}
     .sky-vocab-structure-subheading,.sky-vocab-placements-heading{margin:.12rem 0 -.18rem;color:#756b62;font:850 .58rem/1.2 system-ui,sans-serif;text-transform:uppercase;letter-spacing:.045em}
     .sky-vocab-placements-heading{margin-top:.32rem;padding-top:.5rem;border-top:1px solid rgba(31,27,24,.12)}
+    .sky-vocab-group{margin:0;border:1px solid rgba(31,27,24,.09);border-radius:7px;background:rgba(255,255,255,.45);overflow:hidden}
+    .sky-vocab-group-summary{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:.28rem .5rem;align-items:center;padding:.42rem .48rem;cursor:pointer;list-style:none;user-select:none}
+    .sky-vocab-group-summary::-webkit-details-marker{display:none}
+    .sky-vocab-group-title{margin:0;color:#665d55}
+    .sky-vocab-group-chevron{width:.42rem;height:.42rem;border-right:1.7px solid #655c55;border-bottom:1.7px solid #655c55;transform:rotate(45deg);transition:transform .14s ease;margin-right:.12rem}
+    .sky-vocab-group[open]>.sky-vocab-group-summary .sky-vocab-group-chevron{transform:rotate(225deg)}
+    .sky-vocab-group-preview{grid-column:1/-1;display:grid;grid-template-columns:minmax(0,1fr) minmax(58px,34%);gap:.4rem;align-items:center;min-width:0}
+    .sky-vocab-group-preview-glyphs{display:flex;align-items:center;gap:.12rem;min-width:0;overflow:hidden}
+    .sky-vocab-group-preview-glyph{display:inline-grid;place-items:center;flex:0 0 1.05rem;width:1.05rem;height:1.05rem;color:#332e2a;font:750 .63rem/1 system-ui,sans-serif}
+    .sky-vocab-group-preview-glyph svg{display:block;width:1.05rem;height:1.05rem;overflow:visible}
+    .sky-vocab-group-preview-rails{display:grid;gap:2px;min-width:0}
+    .sky-vocab-group-preview-rail{display:flex;height:4px;overflow:hidden;border-radius:999px;background:rgba(31,27,24,.08)}
+    .sky-vocab-group-preview-rail-house{opacity:.5}
+    .sky-vocab-group-preview-segment{flex:1 1 0;min-width:2px}
+    .sky-vocab-group-body{display:grid;gap:.48rem;padding:.06rem .44rem .46rem}
+    .sky-vocab-group:not([open])>.sky-vocab-group-body{display:none}
     .sky-vocab-structure-line{padding:.34rem .42rem;border-left:3px solid rgba(31,27,24,.24);border-radius:0 6px 6px 0;background:rgba(31,27,24,.035);color:#211d19;font-size:1em;font-weight:500;line-height:1.52}
     .sky-vocab-structure-line[data-vocab-polarity-colors="true"]{position:relative;border-left:0;padding-left:.76rem}
     .sky-vocab-structure-line[data-vocab-polarity-colors="true"]::before,.sky-vocab-structure-line[data-vocab-polarity-colors="true"]::after{content:"";position:absolute;top:0;bottom:0;width:3px}
