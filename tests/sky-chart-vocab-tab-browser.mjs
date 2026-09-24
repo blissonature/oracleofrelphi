@@ -66,6 +66,32 @@ assert.equal(collapsedPreview.bodyDisplay,'none','Collapsed Vocab group bodies m
 assert.match(collapsedPreview.signBackground,/linear-gradient/i,'Collapsed sign previews must carry the same segmented color data as expanded sign rails.');
 assert.match(collapsedPreview.houseBackground,/linear-gradient/i,'Collapsed house previews must carry the same segmented color data as expanded house rails.');
 
+await page.waitForFunction(()=>[...document.querySelectorAll('#skyFoundationA .sky-vocab-group-preview-glyph svg')].some(svg=>svg.dataset.vocabPreviewGlyphReady==='true'));
+const abstractGlyphGeometry=async()=>page.locator('#skyFoundationA .sky-vocab-group-preview-glyph').evaluateAll(nodes=>nodes.slice(0,8).map(node=>{
+  const box=node.getBoundingClientRect(),svg=node.querySelector('svg'),style=svg?getComputedStyle(svg):null;
+  return{w:box.width,h:box.height,svgW:svg?.getBoundingClientRect().width||0,svgH:svg?.getBoundingClientRect().height||0,visible:style?.visibility!=='hidden',ready:svg?.dataset.vocabPreviewGlyphReady==='true'};
+}));
+const initialAbstractGlyphGeometry=await abstractGlyphGeometry();
+assert.ok(initialAbstractGlyphGeometry.length>0,'Abstract Vocab must expose preview glyph geometry.');
+assert.equal(initialAbstractGlyphGeometry.every(item=>Math.abs(item.w-15)<.25&&Math.abs(item.h-15)<.25&&Math.abs(item.svgW-15)<.25&&Math.abs(item.svgH-15)<.25),true,'Abstract preview glyph boxes must start at their final fixed 15px geometry.');
+assert.equal(initialAbstractGlyphGeometry.every(item=>!item.visible||item.ready),true,'An abstract preview glyph must never paint before its canonical fitted state is ready.');
+
+const displayToggle=page.locator('#skyFoundationA [data-vocab-dropdown-toggle="layers"]');
+await displayToggle.click();
+const abstractDisplayMenu=page.locator('[data-vocab-dropdown-menu="layers"][data-vocab-menu-slot="A"]');
+await abstractDisplayMenu.waitFor({state:'visible'});
+for(const layer of ['referents','names']){
+  const input=abstractDisplayMenu.locator(`[data-vocab-layer="${layer}"][data-vocab-slot="A"]`);
+  await input.click();
+  await page.waitForTimeout(30);
+  await input.click();
+  await page.waitForTimeout(30);
+}
+await page.keyboard.press('Escape');
+const afterDisplayGlyphGeometry=await abstractGlyphGeometry();
+assert.deepEqual(afterDisplayGlyphGeometry.map(({w,h,svgW,svgH})=>[Math.round(w*100),Math.round(h*100),Math.round(svgW*100),Math.round(svgH*100)]),initialAbstractGlyphGeometry.map(({w,h,svgW,svgH})=>[Math.round(w*100),Math.round(h*100),Math.round(svgW*100),Math.round(svgH*100)]),'Changing Display must not resize abstract Vocab glyphs.');
+assert.equal(afterDisplayGlyphGeometry.every(item=>!item.visible||item.ready),true,'Display changes must never reveal an unfitted abstract glyph state.');
+
 // Open all groups for the detailed interaction and geometry assertions below.
 await vocabGroups.evaluateAll(nodes=>nodes.forEach(node=>{node.open=true}));
 await page.waitForFunction(()=>[...document.querySelectorAll('#skyFoundationA details.sky-vocab-group')].every(node=>node.open));
