@@ -104,6 +104,15 @@ assert.ok(mobileRelationshipHeading.controls.length>=4,'Mobile Relationships act
 assert.ok(mobileRelationshipHeading.controls[0].left<=mobileRelationshipHeading.actions.left+2,'Dropdown controllers must stay left aligned.');
 assert.ok(mobileRelationshipHeading.controls.at(-1).right>=mobileRelationshipHeading.actions.right-2,'Copy and Download group must stay right aligned.');
 assert.ok(mobileRelationshipHeading.controls[2].left-mobileRelationshipHeading.controls[1].right>8,'Copy/Download must be visually separated from the left-aligned dropdown controllers.');
+const mobileSortFit=await page.locator('#skyFoundationRelationships [data-relationship-sort]').evaluate(select=>{
+  const style=getComputedStyle(select),canvas=document.createElement('canvas'),ctx=canvas.getContext('2d');
+  ctx.font=style.font;
+  const textWidth=ctx.measureText('Most Challenging First').width;
+  const usable=select.clientWidth-parseFloat(style.paddingLeft)-parseFloat(style.paddingRight);
+  return{width:select.getBoundingClientRect().width,textWidth,usable};
+});
+assert.ok(mobileSortFit.width>150,'Mobile Sort selector should reclaim available row width.');
+assert.ok(mobileSortFit.usable>=mobileSortFit.textWidth,'Mobile Sort selector must fully show “Most Challenging First”.');
 assert.ok(mobileRelationshipHeading.scrollWidth<=mobileRelationshipHeading.clientWidth+1,'Mobile Relationships heading must not overflow horizontally.');
 await page.setViewportSize({width:1440,height:1300});
 await page.waitForTimeout(80);
