@@ -51,7 +51,16 @@ try{
   const vocabWindow=page.locator('#skyFoundationA [data-vocab-harmonic-window-input="A"]');
   const relationshipWindow=page.locator('#skyFoundationRelationships [data-harmonic-window-input]');
   assert.equal(await vocabWindow.count(),1,'Vocab must expose one Harmonic Window controller for Sky A.');
-  assert.equal(await relationshipWindow.count(),1,'Relationships must retain the canonical Harmonic Window controller.');
+  assert.equal(await relationshipWindow.count(),1,'Relationships must retain one Harmonic Window controller.');
+  const defaultWindow=await page.evaluate(()=>String(window.RelphiHarmonicOrb.defaultWindow));
+  assert.equal(await relationshipWindow.inputValue(),defaultWindow,'Relationships must initialize from the shared Harmonic Window default.');
+  assert.equal(await vocabWindow.inputValue(),defaultWindow,'Vocab must initialize from the same shared Harmonic Window default.');
+
+  await relationshipWindow.fill('4');
+  await page.waitForFunction(()=>document.documentElement.dataset.skyHarmonicWindow==='4');
+  await page.waitForFunction(()=>document.querySelector('#skyFoundationA [data-vocab-harmonic-window-input="A"]')?.value==='4');
+  assert.equal(await vocabWindow.inputValue(),'4','Changing Relationships Harmonic Window must update Vocab.');
+
   await vocabWindow.fill('0');
   await page.waitForFunction(()=>document.documentElement.dataset.skyHarmonicWindow==='0');
   await page.waitForFunction(()=>{
@@ -61,9 +70,8 @@ try{
   const narrowMembers=(await vertex.getAttribute('data-vocab-members')||'').split('|').filter(Boolean);
   assert.equal(narrowMembers.includes('south-node'),false,`South Node must leave the Vertex pole when the shared Harmonic Window narrows to zero: ${JSON.stringify(narrowMembers)}`);
   assert.equal(narrowMembers.includes('north-node'),false,`North Node must leave the Anti-Vertex pole when the shared Harmonic Window narrows to zero: ${JSON.stringify(narrowMembers)}`);
-  assert.equal(await relationshipWindow.inputValue(),'0','Changing Vocab Harmonic Window must update the Relationships controller.');
+  assert.equal(await relationshipWindow.inputValue(),'0','Changing Vocab Harmonic Window must update Relationships.');
 
-  const defaultWindow=await page.evaluate(()=>String(window.RelphiHarmonicOrb.defaultWindow));
   await vocabWindow.fill(defaultWindow);
   await page.waitForFunction(value=>document.documentElement.dataset.skyHarmonicWindow===value,defaultWindow);
   await page.waitForFunction(value=>{
