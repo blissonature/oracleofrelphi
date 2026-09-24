@@ -106,7 +106,7 @@ assert.match(css, /\.relphi-focus-main\{/);
 assert.match(css, /\.relphi-focus-art\{/);
 assert.match(css, /\.relphi-focus-entry\{/);
 assert.match(css, /\.relphi-focus-position-panel\{/);
-assert.match(css, /\.relphi-focus-shell\{[^}]*grid-template-rows:auto auto minmax\(0,1fr\) auto/);
+assert.match(css, /\.relphi-focus-shell\{[^}]*grid-template-rows:auto minmax\(0,1fr\) auto/);
 assert.match(css, /\.relphi-focus-position-panel\{[^}]*overflow:visible!important/);
 assert.match(css, /\.relphi-focus-art-frame\{[^}]*max-height:none!important/);
 assert.doesNotMatch(css, /position-anchor:--relphi-focus-card-title/);
