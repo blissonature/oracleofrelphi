@@ -293,3 +293,8 @@ assert.match(page,/class="ph-calendar-sky-color"/);
 assert.match(page,/has-calendar-source/);
 assert.match(page,/--ph-calendar-source-color/);
 assert.match(page,/records\.findIndex\(function \(record\) \{ return savedSkyRecordRef\(record\) === value; \}\)/);
+
+assert.match(page,/\.ph-calendar-moon-placement \{[^}]*flex-wrap:nowrap;[^}]*white-space:nowrap;/s);
+assert.match(page,/const houseMarkup = house \? calendarHouseMedallionMarkup\(house\) : '';/);
+assert.doesNotMatch(page,/calendarHouseMedallionMarkup\(house\) \+ '<span>' \+ htmlText\(calendarHouseNames\[house\]\)/);
+assert.doesNotMatch(page,/current zodiac position/i);
