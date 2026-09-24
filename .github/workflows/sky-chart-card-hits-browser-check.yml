@@ -191,6 +191,21 @@ jobs:
           assert.ok(houseArt.naturalWidth>0);
           assert.equal(houseArt.media,'local-house-art');
 
+          await page.waitForSelector('#skyFoundationA [data-card-house-toggle]',{timeout:10000});
+          await page.locator('#skyFoundationA [data-card-house-toggle]').first().click();
+          await page.waitForFunction(()=>{
+            const imgs=[...document.querySelectorAll('#skyFoundationA .sky-card-house-detail-row[data-card-house-detail-role="ruler"] .sky-card-house-span-major-art img,#skyFoundationA .sky-card-house-detail-row[data-card-house-detail-role="sign"] .sky-card-house-span-major-art img')];
+            return imgs.length===2&&imgs.every(img=>img.complete&&img.naturalWidth>0);
+          },{timeout:10000});
+          const expandedMajorArt=await page.evaluate(()=>[...document.querySelectorAll('#skyFoundationA .sky-card-house-detail-row[data-card-house-detail-role="ruler"] .sky-card-house-span-major-art img,#skyFoundationA .sky-card-house-detail-row[data-card-house-detail-role="sign"] .sky-card-house-span-major-art img')].map(img=>({src:img.src,naturalWidth:img.naturalWidth,media:img.dataset.cardMedia||''})));
+          assert.equal(expandedMajorArt.length,2);
+          expandedMajorArt.forEach(item=>{
+            assert.match(item.src,/\/assets\/tarot\/rws\/.+\.webp$/);
+            assert.equal(item.src.includes('wsrv.nl'),false);
+            assert.ok(item.naturalWidth>0);
+            assert.equal(item.media,'local-house-major-art');
+          });
+
           assert.deepEqual(errors,[]);
           await browser.close();
           EOF
