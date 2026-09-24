@@ -709,12 +709,35 @@ function createVocabGroup(container,slot,key,label,renderBody){
   container.appendChild(details);
   return details;
 }
-function appendSimplePlacementList(frag,members,contextKind){
+function simplePlacementContextKey(record,contextKind){
+  if(contextKind==='house')return record.house?String(record.house):'';
+  if(contextKind==='sign')return Number.isInteger(record.sign)?String(record.sign):'';
+  return'';
+}
+function simplePlacementContextGroups(members,contextKind){
+  const groups=[],byKey=new Map();
+  members.forEach(record=>{
+    const key=simplePlacementContextKey(record,contextKind);
+    let group=byKey.get(key);
+    if(!group){group={key,members:[]};byKey.set(key,group);groups.push(group)}
+    group.members.push(record);
+  });
+  return groups;
+}
+function appendPlacementNames(frag,members){
   members.forEach((record,index)=>{
     if(index)frag.appendChild(document.createTextNode(index===members.length-1?' and ':', '));
     frag.appendChild(token(placementInfo(record),'placement',false));
-    if(contextKind==='house'&&record.house)frag.append(document.createTextNode(' · '),compactStructureContext(houseInfo(record.house),'house'));
-    if(contextKind==='sign')frag.append(document.createTextNode(' · '),compactStructureContext(signInfo(record.sign),'sign'));
+  });
+}
+function appendSimplePlacementList(frag,members,contextKind){
+  const groups=simplePlacementContextGroups(members,contextKind);
+  groups.forEach((group,index)=>{
+    if(index)frag.appendChild(document.createTextNode('; '));
+    appendPlacementNames(frag,group.members);
+    const first=group.members[0];
+    if(contextKind==='house'&&first?.house)frag.append(document.createTextNode(' · '),compactStructureContext(houseInfo(first.house),'house'));
+    if(contextKind==='sign'&&Number.isInteger(first?.sign))frag.append(document.createTextNode(' · '),compactStructureContext(signInfo(first.sign),'sign'));
   });
 }
 function appendSignPole(frag,signIndex,list,sentenceStart=false){
