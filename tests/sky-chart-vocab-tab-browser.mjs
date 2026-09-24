@@ -151,6 +151,7 @@ assert.equal(await page.locator('#skyFoundationRelationshipList>.sky-foundation-
 const ariesLibra=page.locator('#skyFoundationA [data-vocab-structure="sign-polarity"][data-vocab-signs="Aries|Libra"]');
 assert.equal(await ariesLibra.count(),1,'All sign polarities must be represented structurally.');
 assert.match(await ariesLibra.textContent(),/Aries[^.]*no placements[^.]*default ruler Mars/i,'An empty Aries pole must state both the absence and Mars as its default ruler.');
+assert.equal(await ariesLibra.locator('[data-vocab-context-kind="house"]').count(),1,'Placements sharing one house inside a sign pole must share one house context instead of repeating it after every placement.');
 
 const houseFourTen=page.locator('#skyFoundationA [data-vocab-structure="house-polarity"][data-vocab-houses="4|10"]');
 assert.equal(await houseFourTen.count(),1,'All house polarities must be represented structurally.');
@@ -246,6 +247,13 @@ await sunAChoice.click();
 await page.waitForFunction(()=>document.querySelector('#skyFoundationRelationships [data-placement-filter-summary]')?.textContent==='A Sun OR');
 await page.waitForFunction(()=>document.querySelector('#skyFoundationA [data-vocab-dropdown-summary="placements"]')?.textContent==='A Sun OR');
 assert.equal(await vocabPlacementSummary.textContent(),'A Sun OR','Vocab Placements summary must mirror Relationships immediately.');
+const mercuryAChoice=placementMenu.locator('[data-placement-scope="placement"][data-placement-target="mercury"][data-placement-choice="a"]');
+await mercuryAChoice.click();
+await mercuryAChoice.click();
+await page.waitForFunction(()=>document.querySelector('#skyFoundationRelationships [data-placement-filter-summary]')?.textContent==='A Sun OR · A Mercury AND');
+assert.equal(await relationshipPlacementSummary.textContent(),'A Sun OR · A Mercury AND','Multiple placement rules must be named instead of collapsed to a vague rule count.');
+await mercuryAChoice.click();
+await mercuryAChoice.click();
 const inheritedPlacementIds=await page.locator('#skyFoundationA .sky-vocab-line:not([data-vocab-structure]) .sky-vocab-token[data-vocab-kind="placement"]').evaluateAll(tokens=>[...new Set(tokens.map(token=>token.dataset.vocabId).filter(Boolean))]);
 assert.deepEqual(inheritedPlacementIds,['sun'],'Vocab placement results must inherit the effective Sky A placement scope from Relationships.');
 
