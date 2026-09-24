@@ -245,20 +245,18 @@
 }
 
 #skyFoundationRelationshipCount[data-count-label="matches"] {
-  column-gap:3px;
-  font-size:0;
-  color:transparent;
-}
-
-#skyFoundationRelationshipCount[data-count-label="matches"]::before {
-  content:attr(data-match-count);
+  column-gap:0;
   color:#3f3934;
   font:800 .69rem/1 system-ui,sans-serif;
   font-variant-numeric:tabular-nums;
 }
 
+#skyFoundationRelationshipCount[data-count-label="matches"]::before {
+  content:none;
+}
+
 #skyFoundationRelationshipCount[data-count-label="matches"]::after {
-  content:"matches";
+  content:" matches";
   color:#665e57;
   font:720 .69rem/1 system-ui,sans-serif;
 }
