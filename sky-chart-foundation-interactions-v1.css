@@ -232,11 +232,12 @@
   align-items:center;
   justify-content:center;
   gap:.22em;
-  min-width:42px;
-  height:25px;
-  padding:0 8px;
-  border-radius:999px;
-  background:#f0ebe4;
+  min-width:0;
+  height:auto;
+  padding:0;
+  border:0;
+  border-radius:0;
+  background:transparent;
   color:#3f3934;
   font:800 .69rem/1 system-ui,sans-serif;
   font-variant-numeric:tabular-nums;
@@ -442,8 +443,8 @@
   }
   #skyFoundationRelationshipCount{
     grid-area:count;
-    min-width:38px;
-    padding-inline:6px;
+    min-width:0;
+    padding:0;
     justify-self:end;
   }
   .sky-foundation-relationships-heading>.sky-relationship-heading-actions{
