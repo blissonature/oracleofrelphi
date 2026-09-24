@@ -269,3 +269,12 @@ assert.match(page,/\.ph-calendar-event-lane > \* \{ min-width:0; max-width:100%;
 assert.match(page,/const sphere = '<circle class="ph-moon-sphere"/);
 assert.doesNotMatch(page,/const rightBlack =/);
 assert.match(page,/x="49\.25"/);
+
+assert.match(page,/id="calendarHourRulerName"/);
+assert.match(page,/id="calendarHourHeptagram"/);
+assert.match(page,/ph-calendar-events-context ph-calendar-events-wide/);
+assert.match(page,/canonicalPlanetGlyphMarkup\(day\.key, day\.name\) \+ ' ' \+ day\.name;/);
+assert.match(page,/canonicalPlanetGlyphMarkup\(row\.ruler\.key, row\.ruler\.name\) \+ ' ' \+ row\.ruler\.name;/);
+assert.doesNotMatch(page,/dayRulerProfileName\.innerHTML = .*\+ ' day'/);
+assert.doesNotMatch(page,/hourRulerProfileName\.innerHTML = .*\+ ' hour'/);
+assert.match(page,/el\.calendarHourHeptagram\.innerHTML = svg/);
