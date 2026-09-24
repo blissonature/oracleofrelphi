@@ -101,14 +101,15 @@ jobs:
               info:info?{ruler:info.ruler,sign:info.sign,signIndex:info.signIndex,house:info.house,hasCard:!!info.card}:null,
               directFingerprint:fp?{
                 ruler:fp.dataset.chartRulerFingerprint||'',
-                signRail:!!fp.querySelector('.sky-card-ruler-fingerprint-rail-sign'),
-                houseRail:!!fp.querySelector('.sky-card-ruler-fingerprint-rail-house'),
+                sharedStack:fp.classList.contains('sky-card-ruler-rail-stack'),
+                signRail:!!fp.querySelector('.sky-card-ruler-rail-sign'),
+                houseRail:!!fp.querySelector('.sky-card-ruler-rail-house'),
                 oldGlyph:!!fp.querySelector('.sky-card-ruler-fingerprint-glyph'),
                 oldHouseMedallion:!!fp.querySelector('.sky-card-ruler-fingerprint-house'),
                 cardMedia:fp.querySelector('img')?.dataset?.cardMedia||'',
                 cardSrc:fp.querySelector('img')?.src||'',
                 cardStyle:(()=>{const img=fp.querySelector('img'),style=img?getComputedStyle(img):null;return style?{objectFit:style.objectFit,borderRadius:style.borderRadius,boxShadow:style.boxShadow,clipPath:style.clipPath}:null})(),
-                railStyle:(()=>{const sign=fp.querySelector('.sky-card-ruler-fingerprint-rail-sign'),house=fp.querySelector('.sky-card-ruler-fingerprint-rail-house'),img=fp.querySelector('img');if(!sign||!house||!img)return null;const ss=getComputedStyle(sign),hs=getComputedStyle(house),sr=sign.getBoundingClientRect(),hr=house.getBoundingClientRect(),ir=img.getBoundingClientRect();return{signRadius:ss.borderRadius,houseRadius:hs.borderRadius,signShadow:ss.boxShadow,houseShadow:hs.boxShadow,signBottom:sr.bottom,imgTop:ir.top,imgBottom:ir.bottom,houseTop:hr.top}})(),
+                railStyle:(()=>{const sign=fp.querySelector('.sky-card-ruler-rail-sign'),house=fp.querySelector('.sky-card-ruler-rail-house'),img=fp.querySelector('img');if(!sign||!house||!img)return null;const ss=getComputedStyle(sign),hs=getComputedStyle(house),sr=sign.getBoundingClientRect(),hr=house.getBoundingClientRect(),ir=img.getBoundingClientRect();return{signRadius:ss.borderRadius,houseRadius:hs.borderRadius,signShadow:ss.boxShadow,houseShadow:hs.boxShadow,signBottom:sr.bottom,imgTop:ir.top,imgBottom:ir.bottom,houseTop:hr.top}})(),
                 html:fp.outerHTML
               }:null,
               fpError,
@@ -125,6 +126,7 @@ jobs:
           assert.ok(state.info?.ruler);
           assert.equal(state.info?.hasCard,true);
           assert.ok(Number.isInteger(state.info?.house));
+          assert.equal(state.directFingerprint?.sharedStack,true);
           assert.equal(state.directFingerprint?.signRail,true);
           assert.equal(state.directFingerprint?.houseRail,true);
           assert.equal(state.directFingerprint?.oldGlyph,false);
@@ -140,8 +142,8 @@ jobs:
           assert.equal(state.directFingerprint?.railStyle?.houseRadius,'0px');
           assert.equal(state.directFingerprint?.railStyle?.signShadow,'none');
           assert.equal(state.directFingerprint?.railStyle?.houseShadow,'none');
-          assert.ok(state.directFingerprint?.railStyle?.signBottom<=state.directFingerprint?.railStyle?.imgTop);
-          assert.ok(state.directFingerprint?.railStyle?.imgBottom<=state.directFingerprint?.railStyle?.houseTop);
+          assert.ok(Math.abs(state.directFingerprint?.railStyle?.signBottom-state.directFingerprint?.railStyle?.imgTop)<=0.75,'Card Hits fingerprint top rail must sit flush against card art.');
+          assert.ok(Math.abs(state.directFingerprint?.railStyle?.imgBottom-state.directFingerprint?.railStyle?.houseTop)<=0.75,'Card Hits fingerprint bottom rail must sit flush against card art.');
           assert.equal(state.mountHidden,false);
           assert.ok(state.mountChildCount>0);
           await page.locator('#skyFoundationA [data-sky-drawer-tab="card-hits"]').click({force:true});
@@ -181,7 +183,7 @@ jobs:
             if(!sample)return{placedGlyphs,signRails,houseRails,sample:null};
             const sign=sample.querySelector('[data-ruler-card-sign-rail]'),img=sample.querySelector('img'),house=sample.querySelector('[data-ruler-card-house-rail]');
             const sr=sign.getBoundingClientRect(),ir=img.getBoundingClientRect(),hr=house.getBoundingClientRect(),ss=getComputedStyle(sign),hs=getComputedStyle(house);
-            return{placedGlyphs,signRails,houseRails,sample:{
+            return{placedGlyphs,signRails,houseRails,sharedStack:sample.classList.contains('sky-card-ruler-rail-stack'),sample:{
               signBottom:sr.bottom,imgTop:ir.top,imgBottom:ir.bottom,houseTop:hr.top,
               signRadius:ss.borderRadius,houseRadius:hs.borderRadius,
               signShadow:ss.boxShadow,houseShadow:hs.boxShadow
@@ -191,6 +193,7 @@ jobs:
           assert.ok(rulerRails.signRails>0,'Placed ruler cards must show sign rails.');
           assert.ok(rulerRails.houseRails>0,'Placed ruler cards with houses must show house rails.');
           assert.ok(rulerRails.sample,'At least one Ruler card fixture must expose both sign and house rails.');
+          assert.equal(rulerRails.sharedStack,true,'Ruler cards and the Card Hits fingerprint must share the same rail-stack component.');
           assert.equal(rulerRails.sample.signRadius,'0px');
           assert.equal(rulerRails.sample.houseRadius,'0px');
           assert.equal(rulerRails.sample.signShadow,'none');
