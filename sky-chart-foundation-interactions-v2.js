@@ -18,7 +18,7 @@
   const ASPECTS=HARMONIC?.aspects||[];
   const ALIASES={rising:'asc',ascendant:'asc',asc:'asc',ac:'asc',descendant:'dsc',dsc:'dsc',dc:'dsc',midheaven:'mc',mc:'mc','imum coeli':'ic',imumcoeli:'ic',ic:'ic',vertex:'vertex',vx:'vertex','anti vertex':'anti-vertex','anti-vertex':'anti-vertex',antivertex:'anti-vertex',avx:'anti-vertex','north node':'north-node',node:'north-node','true node':'north-node','mean node':'north-node','south node':'south-node',chiron:'chiron',lilith:'lilith','black moon lilith':'lilith',fortune:'part-of-fortune','part of fortune':'part-of-fortune',pof:'part-of-fortune'};
 
-  let lockedState=null,hoverState=null,rowLockedState=null,rowHoverState=null,refreshQueued=false,selectionClearObserver=null,renderedRelationshipSignature=null;
+  let lockedState=null,hoverState=null,rowLockedState=null,rowHoverState=null,refreshQueued=false,selectionClearObserver=null,renderedRelationshipSignature=null,wheelOnlyExternal=false;
   let current={listA:[],listB:[],relations:[],cuspsA:[],cuspsB:[]};
 
   const norm=value=>((Number(value)%360)+360)%360;
@@ -257,6 +257,7 @@
         node.classList.toggle('is-hovered',!!hoverState&&!lockedState&&matchesNode(node,hoverState)||(!filterState&&!rowLockedState&&!!rowHoverState&&rowMarksNode(node,rowHoverState)));
       });
     }
+    if(wheelOnlyExternal)return;
     ['A','B'].forEach(slot=>{const panel=document.getElementById(slot==='A'?'skyFoundationA':'skyFoundationB');if(!panel)return;panel.classList.toggle('has-ledger-isolation',!!filterState);panel.querySelectorAll('.sky-foundation-row[data-placement]').forEach(row=>{row.classList.toggle('is-kept',!!filterState&&filterKeep.placements.has(`${slot}:${row.dataset.placement}`));row.classList.toggle('is-selected',!!lockedState&&matchesNode(row,lockedState));row.classList.toggle('is-hovered',!!hoverState&&!lockedState&&matchesNode(row,hoverState))})});
     document.querySelectorAll('.sky-foundation-relationship-row').forEach(row=>{const visible=!filterState||filterKeep.matched.has(String(row.dataset.relationIndex||''));row.hidden=!visible;row.setAttribute('aria-hidden',visible?'false':'true')});
     const allRows=[...document.querySelectorAll('#skyFoundationRelationshipList>.sky-foundation-relationship-row[data-relation-index]')],visibleCount=filterState?filterKeep.matched.size:allRows.filter(row=>rowEligibleForWheel(row)).length,totalCount=allRows.length,count=document.getElementById('skyFoundationRelationshipCount'),empty=document.getElementById('skyFoundationRelationshipEmpty'),clear=document.getElementById('skyFoundationClearIsolation');if(count)count.textContent=`${visibleCount}/${totalCount}`;if(empty)empty.hidden=visibleCount!==0;if(clear)clear.hidden=!(lockedState||rowLockedState);
@@ -306,9 +307,52 @@
       if(lockedState||hoverState||rowLockedState||rowHoverState)applyState();
     }));
   }
+  function normalizeExternalSpec(spec){
+    if(!spec||typeof spec!=='object')return null;
+    const kind=String(spec.kind||'');
+    if(kind==='placement'){
+      const sky=String(spec.sky||'').toUpperCase(),value=String(spec.value||'');
+      return(sky==='A'||sky==='B')&&value?{kind,sky,value}:null;
+    }
+    if(kind==='house'){
+      const sky=String(spec.sky||'').toUpperCase(),value=Number(spec.value);
+      return(sky==='A'||sky==='B')&&Number.isInteger(value)&&value>=1&&value<=12?{kind,sky,value}:null;
+    }
+    if(kind==='sign'){
+      const value=Number(spec.value);
+      return Number.isInteger(value)&&value>=0&&value<12?{kind,sky:null,value}:null;
+    }
+    return null;
+  }
+  function previewExternalWheel(spec){
+    const next=normalizeExternalSpec(spec);if(!next||lockedState&&!wheelOnlyExternal)return false;
+    wheelOnlyExternal=true;rowLockedState=null;rowHoverState=null;hoverState=next;applyState();return true;
+  }
+  function clearExternalWheelPreview(){
+    if(!wheelOnlyExternal||lockedState)return false;
+    hoverState=null;rowHoverState=null;applyState();wheelOnlyExternal=false;return true;
+  }
+  function toggleExternalWheel(spec){
+    const next=normalizeExternalSpec(spec);if(!next)return false;
+    wheelOnlyExternal=true;rowLockedState=null;rowHoverState=null;
+    lockedState=same(lockedState,next)?null:next;hoverState=null;applyState();
+    if(!lockedState)wheelOnlyExternal=false;
+    return!!lockedState;
+  }
+  function clearExternalWheel(){
+    if(!wheelOnlyExternal)return false;
+    lockedState=null;hoverState=null;rowLockedState=null;rowHoverState=null;applyState();wheelOnlyExternal=false;return true;
+  }
+  window.RelphiSkyFoundationInteractions=Object.freeze({
+    previewWheel:previewExternalWheel,
+    clearWheelPreview:clearExternalWheelPreview,
+    toggleWheel:toggleExternalWheel,
+    clearWheel:clearExternalWheel
+  });
   function bind(){
     const root=document.getElementById('skyFoundationRoot');if(!root||root.dataset.foundationInteractionsV2Bound==='true')return;root.dataset.foundationInteractionsV2Bound='true';
     root.addEventListener('pointerover',event=>{
+      wheelOnlyExternal=false;
       const row=event.target.closest?.('.sky-foundation-relationship-row[data-relation-index]');
       if(row)return;
       if(lockedState)return;
@@ -333,11 +377,12 @@
       if(lockedState)return;const node=interactive(event);if(!node||node.contains(event.relatedTarget))return;hoverState=null;applyState()
     });
     root.addEventListener('click',event=>{
+      wheelOnlyExternal=false;
       const row=event.target.closest?.('.sky-foundation-relationship-row[data-relation-index]');
       if(row)return;
       const node=interactive(event);if(node){event.preventDefault();rowLockedState=null;rowHoverState=null;const next=specFrom(node);lockedState=same(lockedState,next)?null:next;hoverState=null;applyState();return}if(clearableWhitespace(event))clearFromWhitespace()
     });
-    root.addEventListener('keydown',event=>{if(event.key==='Escape'){clearFromWhitespace();return}if(event.target.closest('.sky-foundation-relationship-row'))return;if(!['Enter',' '].includes(event.key))return;const node=interactive(event);if(!node)return;event.preventDefault();rowLockedState=null;rowHoverState=null;const next=specFrom(node);lockedState=same(lockedState,next)?null:next;hoverState=null;applyState()});
+    root.addEventListener('keydown',event=>{wheelOnlyExternal=false;if(event.key==='Escape'){clearFromWhitespace();return}if(event.target.closest('.sky-foundation-relationship-row'))return;if(!['Enter',' '].includes(event.key))return;const node=interactive(event);if(!node)return;event.preventDefault();rowLockedState=null;rowHoverState=null;const next=specFrom(node);lockedState=same(lockedState,next)?null:next;hoverState=null;applyState()});
   }
   function whereWhenEditing(){return document.documentElement.dataset.skyWhereWhenEditing==='true'}
   async function refresh(){
