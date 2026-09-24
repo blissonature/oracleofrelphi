@@ -231,7 +231,7 @@ function makeMajorRow(role,label,card,glyphId,meaning){
   const row=document.createElement('div');row.className='sky-card-house-detail-row';row.dataset.cardHouseDetailRole=role.toLowerCase();
   const roleLabel=document.createElement('span');roleLabel.className='sky-card-house-detail-role';roleLabel.textContent=role;
   const art=document.createElement('span');art.className='sky-card-house-span-major-art';art.title=card?cardName(card):label;
-  if(card){const img=document.createElement('img');img.src=thumb(card);img.alt='';img.loading='lazy';img.decoding='async';img.dataset.cardMedia='local-house-major-art';art.appendChild(img)}
+  if(card){const img=document.createElement('img');img.className='sky-card-house-art-native';img.src=thumb(card);img.alt='';img.loading='lazy';img.decoding='async';img.dataset.cardMedia='local-house-major-art';art.appendChild(img)}
   row.append(roleLabel,art,progressiveCopy(label,meaning,glyphId,card?cardName(card):''));return row;
 }
 function decanCardLabel(node){const first=String(node?.title||'').split('·')[0].trim();return first||'Decan card'}
