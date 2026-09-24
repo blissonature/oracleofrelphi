@@ -247,10 +247,13 @@ assert.doesNotMatch(vocab,/applyWheelSpec\([^)]*vocab/i,'Vocab-to-wheel context 
 assert.match(vocab,/function clearVocabWheelContextFromBlank\(event\)/,'Retained Vocab wheel context must clear from blank space');
 assert.match(vocab,/function hasVocabWheelContext\(\)/,'Vocab must recognize token, row, pinned, and touch highlight states when deciding whether another interaction clears the wheel glow');
 assert.match(vocab,/transition:none!important/,'Vocab-owned wheel highlights must bypass the old filter transition that caused a dark flash');
-assert.match(vocab,/rgba\(126,143,164,\.68\)/,'Individual Vocab tokens must use the established light wheel-glow color rather than a dark shadow');
+assert.match(vocab,/rgba\(88,164,255,\.98\)/,'Individual Vocab tokens must use the stronger cool wheel glow rather than a dark shadow');
+assert.match(vocab,/brightness\(1\.34\)/,'Individual Vocab token highlighting must visibly brighten the underlying wheel color');
+assert.match(vocab,/stroke:rgba\(255,255,255,1\)!important/,'Focused Vocab sectors must use a bright white edge rather than a dark selection outline');
 assert.doesNotMatch(vocab,/has-vocab-token-context[^}]*rgba\(31,27,24,\.34\)/,'Individual Vocab token highlighting must not use the old dark flash shadow');
-assert.match(vocab,/target\.closest\('\.sky-vocab-line,[^']*button,input,select,textarea/,'Blank-space clearing must not cancel a real Vocab row or control interaction');
-assert.match(vocab,/target\.closest\('#skyFoundationWheelMount \[data-focus-piece\],#skyFoundationWheelMount \[data-interactive\]'\)/,'Blank-space clearing must not cancel interaction with a real wheel object');
+assert.match(vocab,/vocabWheelPinnedToken\?\.contains\?\.\(target\)/,'Pinned token interaction must not clear itself');
+assert.match(vocab,/vocabWheelContextLine\?\.contains\?\.\(target\)/,'Active row interaction must not clear itself');
+assert.match(vocab,/if\(target\.closest\('\.sky-vocab-line'\)\)return/,'Moving within a Vocab result must retain its wheel highlight');
 assert.match(vocab,/document\.addEventListener\('pointerdown',clearVocabWheelContextFromBlank,true\)/,'Mouse, touch, and pen blank-space presses must share one clearing path');
 
 assert.match(vocab,/vertex\|anti-vertex','anti-vertex\|vertex/,'Vertex and Anti-Vertex must be treated as an automatic polarity rather than a counted raw relationship');
