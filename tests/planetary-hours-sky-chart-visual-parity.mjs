@@ -312,3 +312,10 @@ assert.match(page,/\.ph-where-when-input:focus/);
 assert.match(page,/\.ph-where-when-button\.primary \{ background:#c9211e; \}/);
 assert.match(page,/class="ph-location-confirmation"/);
 assert.match(page,/el\.manualTime\.style\.display = 'grid';/);
+
+const whereWhenSection = page.slice(page.indexOf('class="ph-panel ph-settings ph-where-when-shell"'), page.indexOf('<section class="ph-panel" id="daySummary">'));
+const whereWhenButtons = [...whereWhenSection.matchAll(/<button\b[^>]*>([\s\S]*?)<\/button>/gi)]
+  .map(match => match[1].replace(/<[^>]+>/g,'').trim())
+  .filter(Boolean);
+assert.deepEqual(whereWhenButtons,['Here and Now','Search','Current local time','Cancel','Use This Where and When']);
+assert.match(whereWhenSection,/class="ph-where-when-title">Where and When<\/span>/);
