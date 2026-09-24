@@ -253,7 +253,7 @@ function relations(list){
 function placementReferent(record){return PLACEMENT_REFERENTS[record.id]||String(record.name||'placement').toLowerCase()}
 function signInfo(index){const name=SIGNS[index]||'Sign';return{id:slug(name),glyphId:slug(name),name,referent:SIGN_REFERENTS[name]||'zodiacal setting',color:SIGN_COLORS[index]||''}}
 function houseInfo(number){return{id:'house-'+number,glyphId:null,name:HOUSE_NAMES[number]||'House',referent:HOUSE_MENU_DESCRIPTIONS[number]||'life area',fallbackGlyph:String(number||''),color:HOUSE_COLORS[number-1]||''}}
-function placementInfo(record){return{id:record.id,glyphId:record.glyphId,name:record.name,referent:placementReferent(record),fallbackGlyph:record.fallbackGlyph||record.name,color:''}}
+function placementInfo(record){return{id:record.id,glyphId:record.glyphId,name:record.name,referent:placementReferent(record),fallbackGlyph:record.fallbackGlyph||record.name,color:'',value:record.value}}
 function aspectInfo(aspect){return{id:aspect.id,glyphId:aspect.id,name:ASPECT_NAMES[aspect.id]||aspect.id,referent:ASPECT_REFERENTS[aspect.id]||'relationship',fallbackGlyph:ASPECT_NAMES[aspect.id]||aspect.id,color:String(aspect?.color||'')}}
 
 function displayState(){
@@ -353,6 +353,7 @@ function token(info,kind='term',sentenceStart=false,lead=''){
   node.dataset.vocabReferent=String(info.referent||'');
   node.dataset.vocabFallbackGlyph=String(info.fallbackGlyph||info.name||'');
   node.dataset.vocabColor=String(info.color||'');
+  if(Number.isFinite(Number(info.value)))node.dataset.vocabLongitude=String(norm(info.value));
   node.dataset.vocabLead=String(lead||'');
   if(info.color)node.style.setProperty('--vocab-token-color',String(info.color));
   node.dataset.vocabLocalStage='0';
@@ -592,10 +593,48 @@ function previewRailValue(line,kind){
 function horizontalPreviewGradient(value){
   return String(value||'').replace(/to bottom/,'to right');
 }
-function groupPreviewGlyph(tokenNode){
-  const holder=document.createElement('span');holder.className='sky-vocab-group-preview-glyph';
-  holder.title=String(tokenNode.dataset.vocabName||tokenNode.dataset.vocabId||'');
-  holder.setAttribute('aria-hidden','true');
+function coordinateText(value){
+  const longitude=norm(value),sign=Math.floor(longitude/30),within=longitude-sign*30;
+  let degree=Math.floor(within),minute=Math.floor((within-degree)*60+1e-9);
+  if(minute>=60){minute=0;degree+=1}
+  if(degree>=30){degree=0}
+  return degree+'°'+String(minute).padStart(2,'0')+'′ '+(SIGNS[sign]||'');
+}
+function zodiacAxisGradient(){
+  const stops=[];
+  SIGN_COLORS.forEach((color,index)=>{
+    const from=index/12*100,to=(index+1)/12*100;
+    stops.push(color+' '+from+'% '+to+'%');
+  });
+  return'linear-gradient(to right,'+stops.join(',')+')';
+}
+function previewPlacementTokens(body){
+  const seen=new Set(),tokens=[];
+  body.querySelectorAll('.sky-vocab-token[data-vocab-kind="placement"][data-vocab-longitude]').forEach(tokenNode=>{
+    const id=String(tokenNode.dataset.vocabId||''),value=Number(tokenNode.dataset.vocabLongitude);
+    if(!id||seen.has(id)||!Number.isFinite(value))return;
+    seen.add(id);tokens.push({tokenNode,value:norm(value)});
+  });
+  return tokens.sort((a,b)=>a.value-b.value);
+}
+function spatialLanes(items){
+  const last=[-Infinity,-Infinity,-Infinity],gap=18;
+  return items.map(item=>{
+    let lane=last.findIndex(value=>item.value-value>=gap);
+    if(lane<0)lane=last.indexOf(Math.min(...last));
+    last[lane]=item.value;
+    return{...item,lane};
+  });
+}
+function groupPreviewGlyph(tokenNode,value,lane){
+  const holder=document.createElement('span');holder.className='sky-vocab-group-preview-glyph sky-vocab-group-preview-spatial-glyph';
+  const coordinate=coordinateText(value),name=String(tokenNode.dataset.vocabName||tokenNode.dataset.vocabId||'');
+  holder.title=(name?name+' · ':'')+coordinate;
+  holder.dataset.vocabSpatialLongitude=String(value);
+  holder.dataset.vocabCoordinate=coordinate;
+  holder.style.left=(value/360*100)+'%';
+  holder.style.setProperty('--vocab-spatial-lane',String(lane));
+  holder.setAttribute('aria-label',(name?name+', ':'')+coordinate);
   const glyphId=tokenNode.dataset.vocabGlyphId,fallback=tokenNode.dataset.vocabFallbackGlyph||tokenNode.dataset.vocabName||tokenNode.dataset.vocabId;
   const registry=window.RelphiGlyphRegistry,component=window.RelphiGlyphComponent,entry=glyphId&&(registry?.get?.(glyphId)||registry?.resolve?.(glyphId));
   if(entry&&component){
@@ -621,20 +660,24 @@ function groupPreviewText(body,state){
 }
 function populateVocabGroupPreview(summary,body){
   const state=displayState(),preview=document.createElement('span');preview.className='sky-vocab-group-preview';
-  const content=document.createElement('span');content.className='sky-vocab-group-preview-content';
-  if(state.glyphs){
-    const glyphs=document.createElement('span');glyphs.className='sky-vocab-group-preview-glyphs';glyphs.setAttribute('aria-label','Group placement glyphs');
-    const seen=new Set();
-    body.querySelectorAll('.sky-vocab-token[data-vocab-kind="placement"]').forEach(tokenNode=>{
-      const id=String(tokenNode.dataset.vocabId||'');if(!id||seen.has(id))return;seen.add(id);glyphs.appendChild(groupPreviewGlyph(tokenNode));
-    });
-    if(glyphs.childNodes.length)content.appendChild(glyphs);
-  }
   const previewText=groupPreviewText(body,state);
   if(previewText){
+    const content=document.createElement('span');content.className='sky-vocab-group-preview-content';
     const text=document.createElement('span');text.className='sky-vocab-group-preview-text';text.textContent=previewText;text.title=previewText;content.appendChild(text);
+    preview.appendChild(content);
   }
-  preview.appendChild(content);
+
+  const map=document.createElement('span');map.className='sky-vocab-group-preview-map';
+  if(state.glyphs){
+    const placements=spatialLanes(previewPlacementTokens(body));
+    if(placements.length){
+      const spatial=document.createElement('span');spatial.className='sky-vocab-group-preview-spatial';spatial.setAttribute('aria-label','Placement positions from 0° Aries through 360°');
+      const axis=document.createElement('span');axis.className='sky-vocab-group-preview-spatial-axis';axis.style.background=zodiacAxisGradient();spatial.appendChild(axis);
+      placements.forEach(({tokenNode,value,lane})=>spatial.appendChild(groupPreviewGlyph(tokenNode,value,lane)));
+      map.appendChild(spatial);
+    }
+  }
+
   const rails=document.createElement('span');rails.className='sky-vocab-group-preview-rails';rails.setAttribute('aria-label','Sign and house color preview');
   ['sign','house'].forEach(kind=>{
     const rail=document.createElement('span');rail.className='sky-vocab-group-preview-rail sky-vocab-group-preview-rail-'+kind;rail.dataset.vocabPreviewRail=kind;
@@ -645,7 +688,8 @@ function populateVocabGroupPreview(summary,body){
     });
     if(rail.childNodes.length)rails.appendChild(rail);
   });
-  if(rails.childNodes.length)preview.appendChild(rails);
+  if(rails.childNodes.length)map.appendChild(rails);
+  if(map.childNodes.length)preview.appendChild(map);
   summary.appendChild(preview);
 }
 function createVocabGroup(container,slot,key,label,renderBody){
@@ -1478,15 +1522,17 @@ function installStyles(){
     .sky-vocab-group-title{margin:0;color:#665d55}
     .sky-vocab-group-chevron{width:.42rem;height:.42rem;border-right:1.7px solid #655c55;border-bottom:1.7px solid #655c55;transform:rotate(45deg);transition:transform .14s ease;margin-right:.12rem}
     .sky-vocab-group[open]>.sky-vocab-group-summary .sky-vocab-group-chevron{transform:rotate(225deg)}
-    .sky-vocab-group-preview{grid-column:1/-1;display:grid;grid-template-columns:minmax(0,1fr) minmax(58px,34%);gap:.4rem;align-items:center;min-width:0}
-    .sky-vocab-group-preview-content{display:grid;gap:.16rem;min-width:0}
-    .sky-vocab-group-preview-content:empty + .sky-vocab-group-preview-rails{grid-column:1/-1}
-    .sky-vocab-group-preview-text{display:-webkit-box;min-width:0;overflow:hidden;color:#5f5750;font:650 .64rem/1.28 system-ui,sans-serif;-webkit-box-orient:vertical;-webkit-line-clamp:2;line-clamp:2}
-    .sky-vocab-group-preview-glyphs{display:flex;align-items:center;gap:.12rem;min-width:0;overflow:hidden}
-    .sky-vocab-group-preview-glyph{display:inline-grid;place-items:center;flex:0 0 1.05rem;width:1.05rem;height:1.05rem;color:#332e2a;font:750 .63rem/1 system-ui,sans-serif}
-    .sky-vocab-group-preview-glyph svg{display:block;width:1.05rem;height:1.05rem;overflow:visible}
+    .sky-vocab-group-preview{grid-column:1/-1;display:grid;gap:.22rem;align-items:center;min-width:0}
+    .sky-vocab-group-preview-content{display:block;min-width:0}
+    .sky-vocab-group-preview-text{display:-webkit-box;min-width:0;overflow:hidden;color:#5f5750;font:650 .61rem/1.24 system-ui,sans-serif;-webkit-box-orient:vertical;-webkit-line-clamp:2;line-clamp:2}
+    .sky-vocab-group-preview-map{display:grid;gap:2px;min-width:0}
+    .sky-vocab-group-preview-spatial{position:relative;display:block;height:24px;margin:0 .48rem;overflow:visible}
+    .sky-vocab-group-preview-spatial-axis{position:absolute;left:0;right:0;top:50%;height:3px;border-radius:999px;opacity:.46;transform:translateY(-50%)}
+    .sky-vocab-group-preview-glyph{display:inline-grid;place-items:center;width:.92rem;height:.92rem;color:#332e2a;font:800 .58rem/1 system-ui,sans-serif}
+    .sky-vocab-group-preview-spatial-glyph{position:absolute;z-index:2;top:calc(50% + (var(--vocab-spatial-lane) - 1) * 6px);transform:translate(-50%,-50%);border-radius:50%;background:#fffdf8;box-shadow:0 0 0 1px rgba(31,27,24,.1)}
+    .sky-vocab-group-preview-glyph svg{display:block;width:.92rem;height:.92rem;overflow:visible}
     .sky-vocab-group-preview-rails{display:grid;gap:2px;min-width:0}
-    .sky-vocab-group-preview-rail{display:flex;height:4px;overflow:hidden;border-radius:999px;background:rgba(31,27,24,.08)}
+    .sky-vocab-group-preview-rail{display:flex;height:3px;overflow:hidden;border-radius:999px;background:rgba(31,27,24,.08)}
     .sky-vocab-group-preview-rail-house{opacity:.5}
     .sky-vocab-group-preview-segment{flex:1 1 0;min-width:2px}
     .sky-vocab-group-body{display:grid;gap:.48rem;padding:.06rem .44rem .46rem}
