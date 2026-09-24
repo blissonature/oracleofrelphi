@@ -51,71 +51,69 @@ async function resetAndApplyQuestions(page,labels){
       await page.waitForFunction(index=>Number(document.querySelector('.relphi-focus-reader')?.dataset.focusIndex)===index,next);
     }
 
-    const fanBefore=await page.evaluate(()=>{
-      const reader=document.querySelector('.relphi-focus-reader');
-      const fan=reader?.querySelector('.relphi-focus-fan');
-      const current=fan?.querySelector('.is-current');
-      const visible=[...(fan?.querySelectorAll('[data-focus-position]')||[])].filter(button=>Number(getComputedStyle(button).opacity)>.25);
+    const stripBefore=await page.evaluate(()=>{
+      const strip=document.querySelector('.relphi-focus-strip');
+      const current=strip?.querySelector('.is-current');
+      const boxes={};
+      strip?.querySelectorAll('[data-focus-position]').forEach(button=>{
+        const r=button.getBoundingClientRect();
+        boxes[button.dataset.focusPosition]={x:r.x,y:r.y,width:r.width,height:r.height,transform:getComputedStyle(button).transform};
+      });
       return {
-        mode:reader?.dataset.focusNavMode||'',
-        visible:visible.length,
         current:String(current?.dataset.focusPosition||''),
-        currentTransform:current?.style.transform||'',
-        transition:getComputedStyle(current).transitionProperty
+        fanCount:document.querySelectorAll('.relphi-focus-fan').length,
+        modeControlCount:document.querySelectorAll('[data-focus-nav-mode]').length,
+        boxes
       };
     });
-    assert.equal(fanBefore.mode,'fan','Card Focus should open in fan mode by default');
-    assert.ok(fanBefore.visible>=3,`fan mode must juxtapose neighboring cards; visible=${fanBefore.visible}`);
-    assert.equal(fanBefore.current,'6');
-    assert.match(fanBefore.transition,/transform/,'fan cards must animate position changes');
+    assert.equal(stripBefore.current,'6');
+    assert.equal(stripBefore.fanCount,0,'motion-heavy fan must be removed from Focus View');
+    assert.equal(stripBefore.modeControlCount,0,'retired Fan / Strip mode switch must be removed');
+    assert.equal(stripBefore.boxes['6']?.transform,'none','Focus strip cards must not be spatially animated');
 
-    // Direct manipulation: one held drag may scrub across several cards before release.
-    const dragStart=await page.locator('.relphi-focus-fan [data-focus-position="6"]').boundingBox();
-    const dragNeighbor=await page.locator('.relphi-focus-fan [data-focus-position="5"]').boundingBox();
-    assert.ok(dragStart&&dragNeighbor,'fan scrub fixture must expose adjacent drawn cards');
-    const spacing=Math.abs((dragStart.x+dragStart.width/2)-(dragNeighbor.x+dragNeighbor.width/2));
-    assert.ok(spacing>15,`fan scrub spacing must be measurable; spacing=${spacing}`);
+    // Direct manipulation remains: one held drag can scrub across several stationary cards.
+    const dragStart=await page.locator('.relphi-focus-strip [data-focus-position="6"]').boundingBox();
+    const dragTarget=await page.locator('.relphi-focus-strip [data-focus-position="3"]').boundingBox();
+    assert.ok(dragStart&&dragTarget,'stable strip scrub fixture must expose drawn cards three spaces apart');
     const startX=dragStart.x+dragStart.width/2;
-    const startY=dragStart.y+dragStart.height*.42;
+    const startY=dragStart.y+dragStart.height*.5;
+    const targetX=dragTarget.x+dragTarget.width/2;
+    const targetY=dragTarget.y+dragTarget.height*.5;
     await page.mouse.move(startX,startY);
     await page.mouse.down();
-    await page.mouse.move(startX-spacing*3,startY,{steps:12});
+    await page.mouse.move(targetX,targetY,{steps:12});
     await page.waitForFunction(()=>Number(document.querySelector('.relphi-focus-reader')?.dataset.focusIndex)===3);
     const heldAtThree=await page.evaluate(()=>({
-      current:String(document.querySelector('.relphi-focus-fan .is-current')?.dataset.focusPosition||''),
-      finger:String(document.querySelector('.relphi-focus-fan .is-under-finger')?.dataset.focusPosition||''),
-      scrubbing:document.querySelector('.relphi-focus-fan')?.classList.contains('is-scrubbing')||false
+      current:String(document.querySelector('.relphi-focus-strip .is-current')?.dataset.focusPosition||''),
+      finger:String(document.querySelector('.relphi-focus-strip .is-under-finger')?.dataset.focusPosition||''),
+      scrubbing:document.querySelector('.relphi-focus-strip')?.classList.contains('is-scrubbing')||false,
+      boxes:Object.fromEntries([...document.querySelectorAll('.relphi-focus-strip [data-focus-position="3"],.relphi-focus-strip [data-focus-position="4"],.relphi-focus-strip [data-focus-position="5"],.relphi-focus-strip [data-focus-position="6"]')].map(button=>{
+        const r=button.getBoundingClientRect();
+        return [button.dataset.focusPosition,{x:r.x,y:r.y}];
+      }))
     }));
-    assert.equal(heldAtThree.current,'3','held fan drag must traverse multiple card positions before release');
-    assert.equal(heldAtThree.finger,'3','the card beneath the held finger must identify itself immediately');
-    assert.equal(heldAtThree.scrubbing,true,'fan must remain in direct-manipulation state while the pointer is held');
+    assert.equal(heldAtThree.current,'3','held strip drag must traverse multiple card positions before release');
+    assert.equal(heldAtThree.finger,'3','the stationary card beneath the held finger must identify itself immediately');
+    assert.equal(heldAtThree.scrubbing,true,'strip must remain in direct-manipulation state while the pointer is held');
+    for(const key of ['3','4','5','6']){
+      assert.ok(Math.abs(heldAtThree.boxes[key].x-stripBefore.boxes[key].x)<1,'scrubbing must not slide card '+key+' horizontally');
+      assert.ok(Math.abs(heldAtThree.boxes[key].y-stripBefore.boxes[key].y)<1,'scrubbing must not bob card '+key+' vertically');
+    }
     await page.mouse.up();
 
-    const dragBack=await page.locator('.relphi-focus-fan [data-focus-position="3"]').boundingBox();
-    const dragBackNeighbor=await page.locator('.relphi-focus-fan [data-focus-position="4"]').boundingBox();
-    assert.ok(dragBack&&dragBackNeighbor,'fan scrub return fixture must expose adjacent cards');
-    const backSpacing=Math.abs((dragBackNeighbor.x+dragBackNeighbor.width/2)-(dragBack.x+dragBack.width/2));
-    const backX=dragBack.x+dragBack.width/2;
-    const backY=dragBack.y+dragBack.height*.42;
-    await page.mouse.move(backX,backY);
+    const dragBack=await page.locator('.relphi-focus-strip [data-focus-position="3"]').boundingBox();
+    const dragBackTarget=await page.locator('.relphi-focus-strip [data-focus-position="6"]').boundingBox();
+    assert.ok(dragBack&&dragBackTarget,'stable strip scrub return fixture must expose both cards');
+    await page.mouse.move(dragBack.x+dragBack.width/2,dragBack.y+dragBack.height*.5);
     await page.mouse.down();
-    await page.mouse.move(backX+backSpacing*3,backY,{steps:12});
+    await page.mouse.move(dragBackTarget.x+dragBackTarget.width/2,dragBackTarget.y+dragBackTarget.height*.5,{steps:12});
     await page.waitForFunction(()=>Number(document.querySelector('.relphi-focus-reader')?.dataset.focusIndex)===6);
     await page.mouse.up();
 
     await page.click('.relphi-focus-next');
     await page.waitForFunction(()=>Number(document.querySelector('.relphi-focus-reader')?.dataset.focusIndex)===7);
-    await page.waitForTimeout(120);
-    const fanAfter=await page.evaluate(()=>({
-      current:String(document.querySelector('.relphi-focus-fan .is-current')?.dataset.focusPosition||''),
-      previousTransform:document.querySelector('.relphi-focus-fan [data-focus-position="6"]')?.style.transform||''
-    }));
-    assert.equal(fanAfter.current,'7','next arrow must advance the selected card through the fan');
-    assert.notEqual(fanAfter.previousTransform,fanBefore.currentTransform,'the prior current card must animate into its neighboring fan position');
-
-    await page.click('[data-focus-nav-mode="strip"]');
-    await page.waitForFunction(()=>document.querySelector('.relphi-focus-reader')?.dataset.focusNavMode==='strip');
-    assert.equal(await page.locator('.relphi-focus-strip').isVisible(),true,'Strip must remain available as an alternate navigation mode');
+    assert.equal(await page.locator('.relphi-focus-strip .is-current').getAttribute('data-focus-position'),'7','next arrow must advance through the same stable strip');
+    assert.equal(await page.locator('.relphi-focus-fan').count(),0,'Next must not resurrect the retired fan');
 
     const before=await page.evaluate(()=>{
       const strip=document.querySelector('.relphi-focus-strip');
@@ -153,13 +151,11 @@ async function resetAndApplyQuestions(page,labels){
         scrollLeft:Number(strip?.scrollLeft)||0,
         current:String(current?.dataset.focusPosition||''),
         currentVisible:!!(sr&&cr&&cr.left>=sr.left-1&&cr.right<=sr.right+1),
-        mode:document.querySelector('.relphi-focus-reader')?.dataset.focusNavMode||''
       };
     });
 
     assert.equal(after.sameNode,true,'drawing in Focus View must update the existing filmstrip instead of replacing it');
     assert.equal(after.current,'8','newly drawn position must become the current filmstrip item');
-    assert.equal(after.mode,'strip','the chosen navigation mode must persist while moving through cards');
     assert.ok(after.scrollLeft>50,`drawing a new card must not reset filmstrip scroll to the beginning; before=${after.before}, after=${after.scrollLeft}`);
     assert.ok(Math.abs(after.scrollLeft-after.before)<100,`filmstrip should move only as much as needed to reveal the next position; before=${after.before}, after=${after.scrollLeft}`);
     assert.equal(after.currentVisible,true,'new current position must remain visible after preserving filmstrip scroll');
@@ -188,7 +184,7 @@ async function resetAndApplyQuestions(page,labels){
     assert.equal(artAfterNext.sameNode,false,'Focus View must replace the image node immediately when moving to the next question so the previous card cannot linger');
     assert.notEqual(artAfterNext.src,artAfterNext.beforeSrc,'next Focus question must point at its own card art');
 
-    console.log('Focus View fan animates neighboring cards, Strip preserves scroll, and card art swaps immediately while navigating.');
+    console.log('Focus View keeps cards spatially stable, direct strip scrubbing traverses multiple cards, scroll is preserved, and card art swaps immediately.');
   }finally{
     await browser.close();
   }
