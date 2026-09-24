@@ -305,6 +305,32 @@ assert.equal(await page.locator('#skyFoundationRelationshipList>.sky-foundation-
 await sunMercuryCluster.dispatchEvent('pointerout',{pointerType:'mouse'});
 await page.waitForFunction(()=>!document.querySelector('#skyFoundationWheelMount>.sky-foundation-wheel')?.classList.contains('has-vocab-context'));
 
+// Individual Vocab components must hold a light wheel glow for the whole hover,
+// then release on mouse exit. Clicking/tapping the component pins that same glow
+// until another interaction takes over.
+const sunToken=sunLine.locator('.sky-vocab-token[data-vocab-kind="placement"][data-vocab-id="sun"]').first();
+await sunToken.dispatchEvent('pointerover',{pointerType:'mouse'});
+await page.waitForFunction(()=>document.querySelector('#skyFoundationWheelMount>.sky-foundation-wheel')?.classList.contains('has-vocab-token-context'));
+await page.waitForTimeout(140);
+const tokenGlow=await page.evaluate(()=> {
+  const node=document.querySelector('#skyFoundationWheelMount [data-focus-piece="placement"][data-sky="A"][data-placement="sun"]');
+  const style=getComputedStyle(node);
+  return{active:node.classList.contains('is-vocab-token-context'),filter:style.filter,transition:style.transition,opacity:Number(style.opacity)};
+});
+assert.equal(tokenGlow.active,true,'Hovered Vocab component must keep its corresponding wheel piece highlighted.');
+assert.equal(tokenGlow.opacity,1,'Hovered Vocab component must not dim its corresponding wheel piece.');
+assert.match(tokenGlow.filter,/drop-shadow/i,'Hovered Vocab component must use a visible glow.');
+assert.ok(!/rgba?\(31,\s*27,\s*24/i.test(tokenGlow.filter),'Hovered Vocab component glow must not use the old dark flash color.');
+assert.ok(tokenGlow.transition==='none'||tokenGlow.transition==='all 0s ease 0s','Vocab glow must not animate through the old dark transition.');
+await sunToken.dispatchEvent('pointerout',{pointerType:'mouse'});
+await page.waitForFunction(()=>!document.querySelector('#skyFoundationWheelMount>.sky-foundation-wheel')?.classList.contains('has-vocab-token-context'));
+
+await sunToken.click();
+await page.waitForFunction(()=>document.querySelector('#skyFoundationWheelMount>.sky-foundation-wheel')?.classList.contains('has-vocab-token-context'));
+await page.locator('#skyFoundationA [data-vocab-dropdown-toggle="layers"]').click();
+await page.waitForFunction(()=>!document.querySelector('#skyFoundationWheelMount>.sky-foundation-wheel')?.classList.contains('has-vocab-token-context'));
+await page.keyboard.press('Escape');
+
 // Retained/touch-style context must clear on blank Vocab space.
 await sunMercuryCluster.evaluate(node=>node.dispatchEvent(new PointerEvent('pointerup',{bubbles:true,pointerType:'touch',pointerId:77,isPrimary:true})));
 await page.waitForFunction(()=>document.querySelector('#skyFoundationWheelMount>.sky-foundation-wheel')?.classList.contains('has-vocab-context'));
