@@ -98,6 +98,19 @@
   background:#fffdf8;
 }
 
+#skyFoundationFocus {
+  display:grid;
+  min-width:0;
+  overflow:visible;
+  border-top:1px solid rgba(31,27,24,.11);
+  border-bottom:1px solid rgba(31,27,24,.11);
+  background:#fffdf8;
+}
+
+#skyFoundationFocus .sky-chart-filter-bar {
+  border-bottom:0;
+}
+
 .sky-foundation-focus-heading {
   display:flex;
   align-items:center;
