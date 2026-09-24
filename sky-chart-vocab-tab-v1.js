@@ -1428,7 +1428,7 @@ function installStyles(){
   `;document.head.appendChild(style);
 }
 function render(){
-  queued=false;if(vocabWheelContextLine&&!vocabWheelContextLine.isConnected){vocabWheelTouchLine=null;clearVocabWheelContext()}installStyles();saveDisplay(displayState());['A','B'].forEach(ensureSlot);
+  queued=false;if(vocabWheelContextLine&&!vocabWheelContextLine.isConnected){vocabWheelTouchLine=null;clearVocabWheelContext()}installStyles();saveDisplay(displayState());['A','B'].forEach(ensureSlot);syncControlState();
 }
 function schedule(){if(queued)return;queued=true;requestAnimationFrame(render)}
 function relationshipRowSlots(row){
