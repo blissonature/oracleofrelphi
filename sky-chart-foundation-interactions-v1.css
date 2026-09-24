@@ -98,6 +98,48 @@
   background:#fffdf8;
 }
 
+.sky-foundation-focus-heading {
+  display:flex;
+  align-items:center;
+  min-height:44px;
+  padding:0 10px;
+  border-bottom:1px solid rgba(31,27,24,.11);
+  background:#fffdf8;
+}
+
+.sky-foundation-focus-heading h2 {
+  min-width:0;
+  margin:0;
+  font:800 .82rem/1.2 system-ui,sans-serif;
+}
+
+.sky-relationship-controls {
+  --sky-filter-label-color:#4e463f;
+  --sky-filter-control-color:#191613;
+  --sky-filter-border:1px solid rgba(31,27,24,.2);
+  --sky-filter-radius:9px;
+  --sky-filter-height:35px;
+  --sky-filter-label-font:800 .62rem/1.2 system-ui,sans-serif;
+  --sky-filter-control-font:700 .68rem/1.2 system-ui,sans-serif;
+  --sky-filter-control-padding:.52rem .58rem;
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:7px;
+  padding:8px 10px 10px;
+  border-bottom:1px solid rgba(31,27,24,.11);
+  background:#fffdf8;
+}
+
+.sky-relationship-controls:empty {
+  display:none;
+}
+
+@media(max-width:620px) {
+  .sky-relationship-controls {
+    grid-template-columns:1fr;
+  }
+}
+
 .sky-foundation-relationships-heading {
   display:grid;
   grid-template-columns:minmax(0,1fr) auto auto auto;
