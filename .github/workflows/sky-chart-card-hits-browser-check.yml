@@ -207,12 +207,19 @@ jobs:
           const houseArt=await page.evaluate(()=>{
             const wrap=document.querySelector('#skyFoundationA .sky-card-house-decan-art'),img=wrap?.querySelector('img');
             const ws=wrap?getComputedStyle(wrap):null,is=img?getComputedStyle(img):null,u=img?new URL(img.src):null,rect=img?.getBoundingClientRect();
-            return{wrapRadius:ws?.borderRadius,wrapShadow:ws?.boxShadow,imgRadius:is?.borderRadius,imgShadow:is?.boxShadow,imgFit:is?.objectFit,imgClip:is?.clipPath,imgMask:is?.maskImage,imgWebkitMask:is?.webkitMaskImage,imgAspect:is?.aspectRatio,maxHeight:is?.maxHeight,sourceRatio:img?.naturalHeight?img.naturalWidth/img.naturalHeight:null,renderedRatio:rect?.height?rect.width/rect.height:null,nativeClass:img?.classList.contains('sky-card-house-art-native')||false,src:u?.href||'',naturalWidth:img?.naturalWidth||0,media:img?.dataset?.cardMedia||''};
+            return{wrapRadius:ws?.borderRadius,wrapBorder:ws?.borderWidth,wrapOutline:ws?.outlineWidth,wrapShadow:ws?.boxShadow,wrapClip:ws?.clipPath,wrapOverflow:ws?.overflow,imgRadius:is?.borderRadius,imgBorder:is?.borderWidth,imgOutline:is?.outlineWidth,imgShadow:is?.boxShadow,imgFit:is?.objectFit,imgClip:is?.clipPath,imgMask:is?.maskImage,imgWebkitMask:is?.webkitMaskImage,imgAspect:is?.aspectRatio,maxHeight:is?.maxHeight,sourceRatio:img?.naturalHeight?img.naturalWidth/img.naturalHeight:null,renderedRatio:rect?.height?rect.width/rect.height:null,nativeClass:img?.classList.contains('sky-card-house-art-native')||false,src:u?.href||'',naturalWidth:img?.naturalWidth||0,media:img?.dataset?.cardMedia||'',countInside:!!wrap?.querySelector('.sky-card-house-decan-count')};
           });
           assert.equal(houseArt.wrapRadius,'0px');
+          assert.equal(houseArt.wrapBorder,'0px');
+          assert.equal(houseArt.wrapOutline,'0px');
           assert.equal(houseArt.wrapShadow,'none');
+          assert.equal(houseArt.wrapClip,'none');
+          assert.equal(houseArt.wrapOverflow,'visible');
           assert.equal(houseArt.imgRadius,'0px');
+          assert.equal(houseArt.imgBorder,'0px');
+          assert.equal(houseArt.imgOutline,'0px');
           assert.equal(houseArt.imgShadow,'none');
+          assert.equal(houseArt.countInside,false,'House hit count must not sit on top of the card art.');
           assert.equal(houseArt.imgFit,'contain');
           assert.equal(houseArt.imgClip,'none');
           assert.equal(houseArt.imgMask,'none');
@@ -232,7 +239,7 @@ jobs:
             const imgs=[...document.querySelectorAll('#skyFoundationA .sky-card-house-detail-row[data-card-house-detail-role="ruler"] .sky-card-house-span-major-art img,#skyFoundationA .sky-card-house-detail-row[data-card-house-detail-role="sign"] .sky-card-house-span-major-art img')];
             return imgs.length===2&&imgs.every(img=>img.complete&&img.naturalWidth>0);
           },{timeout:10000});
-          const expandedMajorArt=await page.evaluate(()=>[...document.querySelectorAll('#skyFoundationA .sky-card-house-detail-row[data-card-house-detail-role="ruler"] .sky-card-house-span-major-art img,#skyFoundationA .sky-card-house-detail-row[data-card-house-detail-role="sign"] .sky-card-house-span-major-art img')].map(img=>{const style=getComputedStyle(img),rect=img.getBoundingClientRect();return{src:img.src,naturalWidth:img.naturalWidth,media:img.dataset.cardMedia||'',nativeClass:img.classList.contains('sky-card-house-art-native'),fit:style.objectFit,clip:style.clipPath,mask:style.maskImage,webkitMask:style.webkitMaskImage,radius:style.borderRadius,shadow:style.boxShadow,aspect:style.aspectRatio,maxHeight:style.maxHeight,sourceRatio:img.naturalHeight?img.naturalWidth/img.naturalHeight:null,renderedRatio:rect.height?rect.width/rect.height:null}}));
+          const expandedMajorArt=await page.evaluate(()=>[...document.querySelectorAll('#skyFoundationA .sky-card-house-detail-row[data-card-house-detail-role="ruler"] .sky-card-house-span-major-art img,#skyFoundationA .sky-card-house-detail-row[data-card-house-detail-role="sign"] .sky-card-house-span-major-art img')].map(img=>{const style=getComputedStyle(img),wrap=img.parentElement,wrapStyle=getComputedStyle(wrap),rect=img.getBoundingClientRect();return{src:img.src,naturalWidth:img.naturalWidth,media:img.dataset.cardMedia||'',nativeClass:img.classList.contains('sky-card-house-art-native'),fit:style.objectFit,clip:style.clipPath,mask:style.maskImage,webkitMask:style.webkitMaskImage,radius:style.borderRadius,border:style.borderWidth,outline:style.outlineWidth,shadow:style.boxShadow,aspect:style.aspectRatio,maxHeight:style.maxHeight,wrapRadius:wrapStyle.borderRadius,wrapBorder:wrapStyle.borderWidth,wrapOutline:wrapStyle.outlineWidth,wrapShadow:wrapStyle.boxShadow,wrapClip:wrapStyle.clipPath,wrapOverflow:wrapStyle.overflow,sourceRatio:img.naturalHeight?img.naturalWidth/img.naturalHeight:null,renderedRatio:rect.height?rect.width/rect.height:null}}));
           assert.equal(expandedMajorArt.length,2);
           expandedMajorArt.forEach(item=>{
             assert.match(item.src,/\/assets\/tarot\/rws\/.+\.webp$/);
@@ -245,7 +252,15 @@ jobs:
             assert.equal(item.mask,'none');
             assert.equal(item.webkitMask,'none');
             assert.equal(item.radius,'0px');
+            assert.equal(item.border,'0px');
+            assert.equal(item.outline,'0px');
             assert.equal(item.shadow,'none');
+            assert.equal(item.wrapRadius,'0px');
+            assert.equal(item.wrapBorder,'0px');
+            assert.equal(item.wrapOutline,'0px');
+            assert.equal(item.wrapShadow,'none');
+            assert.equal(item.wrapClip,'none');
+            assert.equal(item.wrapOverflow,'visible');
             assert.equal(item.aspect,'auto');
             assert.equal(item.maxHeight,'none');
             assert.ok(Math.abs(item.renderedRatio-item.sourceRatio)<0.01,'Expanded House Ruler/Sign card art must preserve the source image aspect ratio without cropping.');
