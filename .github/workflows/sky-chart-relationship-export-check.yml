@@ -8,6 +8,7 @@ on:
       - 'sky-chart-relationship-export-columns-v1.js'
       - 'sky-chart-relationship-copy-v1.js'
       - 'sky-chart-relationship-scope-sections-v1.js'
+      - 'sky-chart-relationship-limit-v1.js'
       - 'tests/sky-chart-glyph-copy-houses.mjs'
       - 'tests/sky-chart-relationship-export-download.mjs'
       - '.github/workflows/sky-chart-relationship-export-check.yml'
@@ -20,6 +21,7 @@ on:
       - 'sky-chart-relationship-export-columns-v1.js'
       - 'sky-chart-relationship-copy-v1.js'
       - 'sky-chart-relationship-scope-sections-v1.js'
+      - 'sky-chart-relationship-limit-v1.js'
       - 'tests/sky-chart-glyph-copy-houses.mjs'
       - 'tests/sky-chart-relationship-export-download.mjs'
       - '.github/workflows/sky-chart-relationship-export-check.yml'
@@ -38,6 +40,7 @@ jobs:
           node --check sky-chart-relationship-export-columns-v1.js
           node --check sky-chart-relationship-copy-v1.js
           node --check sky-chart-relationship-scope-sections-v1.js
+          node --check sky-chart-relationship-limit-v1.js
           node --check tests/sky-chart-glyph-copy-houses.mjs
           node --check tests/sky-chart-relationship-export-download.mjs
       - name: Install browser dependencies
