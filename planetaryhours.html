@@ -1570,10 +1570,32 @@
   .ph-calendar-month-event.alert { border-left-color:var(--relphi-red); background:#fff1ed; }
   .ph-calendar-month-event.personal { border-left-color:#211d19; background:#f4f1ed; font-weight:850; }
   .ph-calendar-month-more { color:#756c65; font:800 .59rem/1.2 system-ui,sans-serif; }
-  .ph-calendar-sky-calendars { max-width:34rem; margin:.72rem auto 0; border:1px solid rgba(17,17,17,.11); border-radius:.85rem; background:#fff; overflow:hidden; }
-  .ph-calendar-sky-calendars > summary { display:flex; align-items:center; justify-content:space-between; gap:.7rem; padding:.62rem .78rem; cursor:pointer; list-style:none; color:#39332e; font:850 .75rem/1.2 system-ui,sans-serif; }
-  .ph-calendar-sky-calendars > summary::-webkit-details-marker { display:none; }
-  .ph-calendar-sky-count { color:#756c65; font-size:.66rem; font-weight:800; }
+  .ph-calendar-secondary-controls { display:flex; align-items:flex-start; justify-content:center; gap:.48rem; margin:.72rem auto 0; max-width:48rem; }
+  .ph-calendar-sky-calendars,
+  .ph-calendar-display { margin:0; border:1px solid rgba(17,17,17,.11); border-radius:.85rem; background:#fff; overflow:hidden; }
+  .ph-calendar-sky-calendars { flex:1 1 30rem; max-width:34rem; }
+  .ph-calendar-display { flex:0 1 13rem; min-width:11rem; }
+  .ph-calendar-sky-calendars > summary,
+  .ph-calendar-display > summary { display:flex; align-items:center; justify-content:space-between; gap:.7rem; padding:.62rem .78rem; cursor:pointer; list-style:none; color:#39332e; font:850 .75rem/1.2 system-ui,sans-serif; }
+  .ph-calendar-sky-calendars > summary::-webkit-details-marker,
+  .ph-calendar-display > summary::-webkit-details-marker { display:none; }
+  .ph-calendar-sky-count,
+  .ph-calendar-display-summary { color:#756c65; font-size:.66rem; font-weight:800; }
+  .ph-calendar-display-body { display:grid; gap:.28rem; padding:.6rem .72rem .7rem; border-top:1px solid rgba(17,17,17,.07); }
+  .ph-calendar-display-body label { display:flex; align-items:center; gap:.42rem; padding:.28rem .34rem; border-radius:.5rem; color:#3d3630; cursor:pointer; font:800 .7rem/1.2 system-ui,sans-serif; }
+  .ph-calendar-display-body label:hover { background:#faf8f5; }
+  .ph-calendar-display-body input { width:1rem; height:1rem; margin:0; accent-color:var(--relphi-red); }
+  .ph-calendar-glyph { display:inline-block; width:1.08em; height:1.08em; flex:0 0 auto; vertical-align:-.14em; margin:0 .08em; background:center/contain no-repeat var(--ph-calendar-glyph); }
+  .ph-calendar-glyph-fallback { width:auto; height:auto; background:none; vertical-align:baseline; font-weight:900; line-height:1; }
+  .ph-calendar-placement { display:inline; }
+  .ph-calendar-coordinate { white-space:nowrap; }
+  .ph-calendar-aspect { display:inline-flex; align-items:center; gap:.08em; white-space:nowrap; }
+  .ph-calendar-source { white-space:nowrap; font-weight:900; }
+  .ph-calendar-event-main { display:inline; }
+  .ph-calendar-event-referents { display:block; margin-top:.18rem; color:#756c65; font-size:.86em; line-height:1.25; font-weight:650; }
+  #tableSection[data-calendar-glyphs="false"] .ph-calendar-glyph { display:none !important; }
+  #tableSection[data-calendar-names="false"] .ph-calendar-display-name { display:none !important; }
+  #tableSection[data-calendar-referents="false"] .ph-calendar-event-referents { display:none !important; }
   .ph-calendar-sky-calendars-body { display:grid; gap:.6rem; padding:0 .78rem .75rem; border-top:1px solid rgba(17,17,17,.07); }
   .ph-calendar-default-sky-control { display:flex; align-items:center; gap:.48rem; padding-top:.62rem; flex-wrap:wrap; }
   .ph-calendar-default-sky-control label { color:#514a44; font:850 .7rem/1.2 system-ui,sans-serif; }
@@ -1587,6 +1609,8 @@
   .ph-calendar-personal-source { margin:0; color:#514a44; text-align:left; font:800 .7rem/1.3 system-ui,sans-serif; }
   .ph-calendar-month-help { margin:.25rem 0 0; text-align:center; }
   @media (max-width:760px) {
+    .ph-calendar-secondary-controls { flex-direction:column; align-items:stretch; max-width:none; }
+    .ph-calendar-sky-calendars, .ph-calendar-display { max-width:none; width:100%; box-sizing:border-box; }
     .ph-calendar-weekdays, .ph-calendar-month-grid { gap:.16rem; }
     .ph-calendar-weekdays span { font-size:.58rem; letter-spacing:0; padding:.12rem 0; }
     .ph-calendar-month-day { min-height:6.9rem; padding:.28rem .22rem; border-radius:.52rem; gap:.18rem; }
@@ -1902,18 +1926,28 @@
       </div>
     </div>
 
-    <details class="ph-calendar-sky-calendars" id="calendarSkyCalendars">
-      <summary><span>Calendars</span><span class="ph-calendar-sky-count" id="calendarSkyCount">0 shown</span></summary>
-      <div class="ph-calendar-sky-calendars-body">
-        <div class="ph-calendar-default-sky-control">
-          <label for="calendarPersonalSkySelect">Default</label>
-          <select id="calendarPersonalSkySelect" aria-label="Default saved sky"></select>
+    <div class="ph-calendar-secondary-controls">
+      <details class="ph-calendar-sky-calendars" id="calendarSkyCalendars">
+        <summary><span>Calendars</span><span class="ph-calendar-sky-count" id="calendarSkyCount">0 shown</span></summary>
+        <div class="ph-calendar-sky-calendars-body">
+          <div class="ph-calendar-default-sky-control">
+            <label for="calendarPersonalSkySelect">Default</label>
+            <select id="calendarPersonalSkySelect" aria-label="Default saved sky"></select>
+          </div>
+          <div class="ph-calendar-sky-overlay-list" id="calendarSkyOverlayList" aria-label="Saved sky calendar overlays"></div>
+          <p class="ph-calendar-personal-source" id="calendarPersonalSource">Turn on saved skies to overlay their transits.</p>
+          <p class="ph-tiny ph-calendar-sky-note">Default marks the primary saved sky. Shown calendars are independent and can be combined.</p>
         </div>
-        <div class="ph-calendar-sky-overlay-list" id="calendarSkyOverlayList" aria-label="Saved sky calendar overlays"></div>
-        <p class="ph-calendar-personal-source" id="calendarPersonalSource">Turn on saved skies to overlay their transits.</p>
-        <p class="ph-tiny ph-calendar-sky-note">Default marks the primary saved sky. Shown calendars are independent and can be combined.</p>
-      </div>
-    </details>
+      </details>
+      <details class="ph-calendar-display" id="calendarDisplay">
+        <summary><span>Display</span><span class="ph-calendar-display-summary" id="calendarDisplaySummary">Glyphs · Names</span></summary>
+        <div class="ph-calendar-display-body" role="group" aria-label="Planetary Calendar event display">
+          <label><input type="checkbox" id="calendarDisplayGlyphs" checked><span>Glyphs</span></label>
+          <label><input type="checkbox" id="calendarDisplayNames" checked><span>Names</span></label>
+          <label><input type="checkbox" id="calendarDisplayReferents"><span>Referents</span></label>
+        </div>
+      </details>
+    </div>
 
     <div class="ph-calendar-day-view" id="calendarDayView">
     <div class="ph-calendar-day-context">
@@ -2120,6 +2154,10 @@
     calendarPersonalSkySelect: document.getElementById('calendarPersonalSkySelect'),
     calendarSkyOverlayList: document.getElementById('calendarSkyOverlayList'),
     calendarSkyCount: document.getElementById('calendarSkyCount'),
+    calendarDisplaySummary: document.getElementById('calendarDisplaySummary'),
+    calendarDisplayGlyphs: document.getElementById('calendarDisplayGlyphs'),
+    calendarDisplayNames: document.getElementById('calendarDisplayNames'),
+    calendarDisplayReferents: document.getElementById('calendarDisplayReferents'),
     calendarPersonalSource: document.getElementById('calendarPersonalSource'),
     calendarDatePick: document.getElementById('calendarDatePick'),
     calendarPrevDay: document.getElementById('calendarPrevDay'),
@@ -2696,6 +2734,115 @@
     if (!meta) return '';
     const house = Number.isFinite(Number(meta.house)) ? ' H' + Number(meta.house) : '';
     return String(meta.body || meta.name || '') + ' ' + String(meta.sign || '') + ' ' + Number(meta.degree || 0) + '°' + String(Number(meta.minute || 0)).padStart(2,'0') + '′' + house;
+  }
+
+  function calendarCanonicalGlyphMarkup(value, label) {
+    const registry = window.RelphiGlyphRegistry;
+    const entry = registry && (registry.resolve(value) || registry.get(value));
+    if (!entry) return '';
+    if (entry.asset) {
+      return '<span class="ph-calendar-glyph" style="--ph-calendar-glyph:url(\'' + attrText(entry.asset) + '\')" role="img" aria-label="' + attrText(label || entry.name || value) + '"></span>';
+    }
+    if (entry.fallback) {
+      return '<span class="ph-calendar-glyph ph-calendar-glyph-fallback" role="img" aria-label="' + attrText(label || entry.name || value) + '">' + htmlText(entry.fallback) + '</span>';
+    }
+    return '';
+  }
+
+  function calendarPlacementId(meta) {
+    const value = String(meta && (meta.body || meta.name) || '');
+    const entry = window.RelphiGlyphRegistry && window.RelphiGlyphRegistry.resolve(value);
+    return entry ? entry.id : value.toLowerCase().replace(/\s+/g,'-');
+  }
+
+  function calendarAspectId(value) {
+    const n = Number(value);
+    return n === 0 ? 'conjunction' : n === 60 ? 'sextile' : n === 90 ? 'square' : n === 120 ? 'trine' : n === 180 ? 'opposition' : String(value || '');
+  }
+
+  function calendarAspectName(value) {
+    return ({conjunction:'conjunct',sextile:'sextile',square:'square',trine:'trine',opposition:'opposite'})[calendarAspectId(value)] || String(value || '');
+  }
+
+  function calendarPlacementMarkup(meta) {
+    if (!meta) return '';
+    const body = String(meta.body || meta.name || '');
+    const sign = String(meta.sign || '');
+    const house = Number.isFinite(Number(meta.house)) ? ' H' + Number(meta.house) : '';
+    const bodyGlyph = calendarCanonicalGlyphMarkup(body, body);
+    const signGlyph = calendarCanonicalGlyphMarkup(sign, sign);
+    return '<span class="ph-calendar-placement">' +
+      bodyGlyph + '<span class="ph-calendar-display-name">' + htmlText(body) + '</span> ' +
+      signGlyph + '<span class="ph-calendar-display-name">' + htmlText(sign) + '</span> ' +
+      '<span class="ph-calendar-coordinate">' + Number(meta.degree || 0) + '°' + String(Number(meta.minute || 0)).padStart(2,'0') + '′' + htmlText(house) + '</span></span>';
+  }
+
+  function calendarAspectMarkup(value) {
+    const id = calendarAspectId(value);
+    return '<span class="ph-calendar-aspect">' +
+      calendarCanonicalGlyphMarkup(id, calendarAspectName(id)) +
+      '<span class="ph-calendar-display-name">' + htmlText(calendarAspectName(id)) + '</span></span>';
+  }
+
+  function calendarReferentForPlacement(meta) {
+    if (!meta) return [];
+    const id = calendarPlacementId(meta);
+    const signIndex = phSigns.indexOf(String(meta.sign || ''));
+    const items = [];
+    if (calendarPlacementReferents[id]) items.push(String(meta.body || meta.name || '') + ': ' + calendarPlacementReferents[id]);
+    if (signIndex >= 0 && calendarSignReferents[signIndex]) items.push(String(meta.sign) + ': ' + calendarSignReferents[signIndex]);
+    const house = Number(meta.house);
+    if (Number.isFinite(house) && calendarHouseReferents[house]) items.push('H' + house + ': ' + calendarHouseReferents[house]);
+    return items;
+  }
+
+  function calendarEventReferents(event) {
+    const items = [];
+    const add = function (values) { (values || []).forEach(function (value) { if (value && !items.includes(value)) items.push(value); }); };
+    add(calendarReferentForPlacement(event && (event.transitMeta || event.primaryMeta)));
+    const aspectId = event && (event.aspectId || (event.aspect != null ? calendarAspectId(event.aspect) : event.type === 'conjunction' ? 'conjunction' : ''));
+    if (aspectId && calendarAspectReferents[aspectId]) add([aspectId.charAt(0).toUpperCase() + aspectId.slice(1) + ': ' + calendarAspectReferents[aspectId]]);
+    add(calendarReferentForPlacement(event && (event.targetMeta || event.secondaryMeta)));
+    return items;
+  }
+
+  function calendarEventMarkup(event) {
+    if (!event) return '';
+    let main = '';
+    const primary = event.transitMeta || event.primaryMeta || null;
+    const secondary = event.targetMeta || event.secondaryMeta || null;
+    const aspect = event.aspectId || (event.aspect != null ? calendarAspectId(event.aspect) : event.type === 'conjunction' ? 'conjunction' : '');
+
+    if (event.type === 'personal' && primary && secondary) {
+      main = calendarPlacementMarkup(primary) + ' ' + calendarAspectMarkup(aspect) + ' ' + calendarPlacementMarkup(secondary);
+    } else if (event.type === 'conjunction' && primary && secondary) {
+      main = calendarPlacementMarkup(primary) + ' ' + calendarAspectMarkup('conjunction') + ' ' + calendarPlacementMarkup(secondary);
+    } else if (event.type === 'lunation' && primary && secondary) {
+      const lunationAspect = String(event.label || '').toLowerCase().includes('full') ? 'opposition' : 'conjunction';
+      main = '<span class="ph-calendar-display-name">' + htmlText(String(event.lunationName || event.label || 'Lunation').split(' · ')[0]) + '</span> · ' +
+        calendarPlacementMarkup(primary) + ' ' + calendarAspectMarkup(lunationAspect) + ' ' + calendarPlacementMarkup(secondary);
+    } else if (event.type === 'ingress' && primary) {
+      main = calendarPlacementMarkup(primary) + ' <span class="ph-calendar-display-name">enters</span>';
+    } else if (event.type === 'station' && primary) {
+      main = calendarPlacementMarkup(primary) + ' <span class="ph-calendar-display-name">stations ' + htmlText(event.direction || '') + '</span>';
+    } else if (event.type === 'rise-set' && primary) {
+      main = calendarPlacementMarkup(primary) + ' · <span class="ph-calendar-display-name">' + htmlText(event.action || '') + '</span>';
+    } else if (event.type === 'alert' && event.rule) {
+      const rule = event.rule;
+      const p = phEventBodyMeta(rule.body, event.time);
+      if (rule.type === 'aspect') {
+        const s = phEventBodyMeta(rule.targetBody, event.time);
+        main = calendarPlacementMarkup(p) + ' ' + calendarAspectMarkup(rule.aspect) + ' ' + calendarPlacementMarkup(s);
+      } else {
+        main = calendarPlacementMarkup(p) + ' · <span class="ph-calendar-display-name">' + htmlText(phAlertRuleLabel(rule)) + '</span>';
+      }
+    }
+    if (!main) main = '<span class="ph-calendar-display-name">' + htmlText(event.label || '') + '</span>';
+
+    if (event.referenceName) main += ' · <span class="ph-calendar-source">' + htmlText(event.referenceName) + '</span>';
+    const referents = calendarEventReferents(event);
+    return '<span class="ph-calendar-event-main">' + main + '</span>' +
+      (referents.length ? '<span class="ph-calendar-event-referents">' + referents.map(htmlText).join(' · ') + '</span>' : '');
   }
   function phWheelDisplayAngles(items, minGapDeg) {
     const gap = Math.max(0, Number(minGapDeg) || 9);
@@ -3658,6 +3805,107 @@
     } catch (error) { return fallback; }
   }
 
+  const calendarDisplayStorageKey = 'relphiPlanetaryCalendarDisplayV1';
+  const calendarPlacementReferents = Object.freeze({
+    sun:'identity, vitality, and conscious purpose',
+    moon:'feelings, instincts, memory, and emotional needs',
+    mercury:'thought, perception, language, and communication',
+    venus:'values, attraction, affection, pleasure, and relating',
+    mars:'drive, assertion, desire, conflict, and action',
+    jupiter:'growth, confidence, meaning, opportunity, and expansion',
+    saturn:'structure, limits, responsibility, time, and commitment',
+    uranus:'freedom, disruption, originality, awakening, and change',
+    neptune:'imagination, sensitivity, surrender, ideals, and vision',
+    pluto:'power, depth, compulsion, elimination, and transformation',
+    chiron:'wounding, healing intelligence, and the capacity to guide healing',
+    asc:'the way a person enters life and is immediately perceived',
+    dsc:'the way a person meets partners and encounters the other',
+    mc:'public direction, vocation, visibility, and the role a person grows toward',
+    ic:'roots, home, private foundations, and inherited belonging',
+    'north-node':'growth through unfamiliar experience and developing capacity',
+    'south-node':'familiar patterns, inherited capacity, and the known path',
+    lilith:'instinctive autonomy, refusal, exile, and uncompromised desire',
+    'part-of-fortune':'the meeting place of body, feeling, circumstance, and ease',
+    vertex:'encounters that feel consequential or outside ordinary control'
+  });
+  const calendarSignReferents = Object.freeze([
+    'initiative, directness, courage, impulse, and beginning',
+    'embodiment, value, pleasure, endurance, and material continuity',
+    'language, exchange, curiosity, movement, and multiplicity',
+    'care, protection, memory, belonging, and attachment',
+    'radiance, creativity, pride, loyalty, and recognition',
+    'discernment, service, refinement, repair, and usefulness',
+    'relationship, balance, fairness, dialogue, and mutual recognition',
+    'intensity, secrecy, survival, bonding, and emotional truth',
+    'meaning, faith, exploration, philosophy, and freedom',
+    'structure, responsibility, endurance, mastery, and worldly form',
+    'systems, reform, collective intelligence, detachment, and future orientation',
+    'surrender, imagination, compassion, permeability, and release'
+  ]);
+  const calendarHouseReferents = Object.freeze([
+    '',
+    'self, embodiment, appearance, approach, and the immediate way life is entered',
+    'resources, possessions, money, personal values, and what is held as one’s own',
+    'communication, learning, siblings, neighbors, short journeys, and the local environment',
+    'home, roots, family, ancestry, privacy, and the foundations of life',
+    'creativity, pleasure, romance, children, play, and personal self-expression',
+    'work, service, routines, health practices, maintenance, and practical obligations',
+    'partnership, contracts, one-to-one relationship, and encounters with the other',
+    'shared resources, intimacy, debt, inheritance, vulnerability, and transformation',
+    'worldview, religion, philosophy, higher learning, long journeys, and the search for meaning',
+    'vocation, public standing, reputation, authority, achievement, and visible responsibility',
+    'friends, networks, groups, alliances, hopes, and participation in a larger collective',
+    'retreat, hidden processes, solitude, confinement, surrender, spirituality, and closure'
+  ]);
+  const calendarAspectReferents = Object.freeze({
+    conjunction:'the two functions operate together',
+    sextile:'a cooperative opening activated through participation',
+    square:'activating pressure and development',
+    trine:'low-resistance exchange',
+    opposition:'awareness through polarity, contrast, and exchange'
+  });
+
+  function calendarDisplayState() {
+    const fallback = {glyphs:true,names:true,referents:false};
+    try {
+      const parsed = JSON.parse(localStorage.getItem(calendarDisplayStorageKey) || 'null');
+      return parsed && typeof parsed === 'object'
+        ? {glyphs:parsed.glyphs !== false,names:parsed.names !== false,referents:parsed.referents === true}
+        : fallback;
+    } catch (error) { return fallback; }
+  }
+
+  function setCalendarDisplayState(next) {
+    const value = {
+      glyphs:next && next.glyphs !== false,
+      names:next && next.names !== false,
+      referents:!!(next && next.referents)
+    };
+    try { localStorage.setItem(calendarDisplayStorageKey, JSON.stringify(value)); } catch (error) {}
+    syncCalendarDisplayState(value);
+    return value;
+  }
+
+  function syncCalendarDisplayState(value) {
+    const display = value || calendarDisplayState();
+    const host = document.getElementById('tableSection');
+    if (host) {
+      host.dataset.calendarGlyphs = display.glyphs ? 'true' : 'false';
+      host.dataset.calendarNames = display.names ? 'true' : 'false';
+      host.dataset.calendarReferents = display.referents ? 'true' : 'false';
+    }
+    if (el.calendarDisplayGlyphs) el.calendarDisplayGlyphs.checked = display.glyphs;
+    if (el.calendarDisplayNames) el.calendarDisplayNames.checked = display.names;
+    if (el.calendarDisplayReferents) el.calendarDisplayReferents.checked = display.referents;
+    if (el.calendarDisplaySummary) {
+      const active = [];
+      if (display.glyphs) active.push('Glyphs');
+      if (display.names) active.push('Names');
+      if (display.referents) active.push('Referents');
+      el.calendarDisplaySummary.textContent = active.length ? active.join(' · ') : 'Coordinates only';
+    }
+  }
+
   const defaultSkyStorageKey = 'relphiDefaultSkyIdV1';
   const calendarSkyOverlayStorageKey = 'relphiPlanetaryCalendarSkyOverlaysV1';
 
@@ -3975,6 +4223,7 @@
                   body:body,
                   targetName:target.name,
                   aspect:aspect.angle,
+                  aspectId:calendarAspectId(aspect.angle),
                   referenceId:recordId,
                   referenceName:referenceName,
                   transitMeta:transitMeta,
@@ -4110,8 +4359,11 @@
     const primary = event.body ? phEventBodyMeta(event.body, event.time) : null;
     const secondary = event.targetBody ? phEventBodyMeta(event.targetBody, event.time) : null;
     if (event.type === 'conjunction' && primary && secondary) {
+      event.aspectId = 'conjunction';
       event.label = phPlacementLabel(primary) + ' conjunct ' + phPlacementLabel(secondary);
     } else if (event.type === 'lunation' && primary && secondary) {
+      event.lunationName = String(event.label || 'Lunation').split(' · ')[0];
+      event.aspectId = event.lunationName.toLowerCase().includes('full') ? 'opposition' : 'conjunction';
       event.label = String(event.label || 'Lunation') + ' · ' + phPlacementLabel(primary) + ' · ' + phPlacementLabel(secondary);
     } else if (event.type === 'ingress' && primary) {
       if (event.sign) { primary.sign = event.sign; primary.degree = 0; primary.minute = 0; }
@@ -4196,7 +4448,7 @@
       return !Number.isNaN(time.getTime()) && time >= range.start && time < range.end;
     }).map(function (rule) {
       const time = new Date(rule.nextAt);
-      return {time:time, type:'alert', label:phAlertOccurrenceLabel(rule, time), isAlert:true};
+      return {time:time, type:'alert', label:phAlertOccurrenceLabel(rule, time), rule:rule, isAlert:true};
     });
     const allEvents = automatic.concat(personal, alerts).sort(function (a,b) { return a.time - b.time; });
     const byDate = {};
@@ -4221,7 +4473,7 @@
       const events = byDate[key] || [];
       const visible = events.slice(0,3);
       const eventMarkup = visible.map(function (event) {
-        return '<span class="ph-calendar-month-event ' + htmlText(event.isAlert ? 'alert' : event.type) + '">' + htmlText(calendarMonthEventLabel(event)) + '</span>';
+        return '<span class="ph-calendar-month-event ' + htmlText(event.isAlert ? 'alert' : event.type) + '"><strong class="ph-calendar-event-time">' + htmlText(fmtHM(event.time)) + '</strong> ' + calendarEventMarkup(event) + '</span>';
       }).join('');
       const more = events.length > 3 ? '<span class="ph-calendar-month-more">+' + (events.length - 3) + ' more</span>' : '';
       const notes = noteCounts[key] || 0;
@@ -4273,28 +4525,29 @@
     const sunsetMeta = phEventBodyMeta('Sun', frame.sunset);
     const nextSunriseMeta = phEventBodyMeta('Sun', frame.end);
     const events = [
-      {time:frame.sunrise, label:phPlacementLabel(sunriseMeta) + ' · Sunrise', type:'rise-set'},
-      {time:frame.sunset, label:phPlacementLabel(sunsetMeta) + ' · Sunset', type:'rise-set'},
-      {time:frame.end, label:phPlacementLabel(nextSunriseMeta) + ' · Next sunrise', type:'rise-set'}
+      {time:frame.sunrise, label:phPlacementLabel(sunriseMeta) + ' · Sunrise', type:'rise-set', primaryMeta:sunriseMeta, action:'Sunrise'},
+      {time:frame.sunset, label:phPlacementLabel(sunsetMeta) + ' · Sunset', type:'rise-set', primaryMeta:sunsetMeta, action:'Sunset'},
+      {time:frame.end, label:phPlacementLabel(nextSunriseMeta) + ' · Next sunrise', type:'rise-set', primaryMeta:nextSunriseMeta, action:'Next sunrise'}
     ];
     automaticPlanetaryEventsForRange(frame.start, frame.end).forEach(function (event) {
-      events.push({
-        time:event.time,
-        label:event.label,
-        type:event.type || 'sky-event',
-        isSkyEvent:true
-      });
+      events.push(Object.assign({}, event, {isSkyEvent:true}));
     });
     personalTransitEventsForRange(frame.start, frame.end).forEach(function (event) {
-      events.push({time:event.time,label:event.label,type:'personal',isPersonal:true});
+      events.push(Object.assign({}, event, {type:'personal',isPersonal:true}));
     });
     if (window.SunCalc) {
       [-1,0,1,2].forEach(function (offset) {
         try {
           const base = localNoonFor(frame.start, state.tz, offset);
           const mt = SunCalc.getMoonTimes(base, state.lat, state.lon);
-          if (mt.rise && mt.rise >= frame.start && mt.rise <= frame.end) events.push({time:mt.rise,label:phPlacementLabel(phEventBodyMeta('Moon', mt.rise)) + ' · Moonrise'});
-          if (mt.set && mt.set >= frame.start && mt.set <= frame.end) events.push({time:mt.set,label:phPlacementLabel(phEventBodyMeta('Moon', mt.set)) + ' · Moonset'});
+          if (mt.rise && mt.rise >= frame.start && mt.rise <= frame.end) {
+            const moonRiseMeta = phEventBodyMeta('Moon', mt.rise);
+            events.push({time:mt.rise,label:phPlacementLabel(moonRiseMeta) + ' · Moonrise',type:'rise-set',primaryMeta:moonRiseMeta,action:'Moonrise'});
+          }
+          if (mt.set && mt.set >= frame.start && mt.set <= frame.end) {
+            const moonSetMeta = phEventBodyMeta('Moon', mt.set);
+            events.push({time:mt.set,label:phPlacementLabel(moonSetMeta) + ' · Moonset',type:'rise-set',primaryMeta:moonSetMeta,action:'Moonset'});
+          }
         } catch (error) {}
       });
     }
@@ -4302,7 +4555,7 @@
     savedAlerts.forEach(function (rule) {
       if (!rule.nextAt) return;
       const time = new Date(rule.nextAt);
-      if (!Number.isNaN(time.getTime()) && time >= frame.start && time <= frame.end) events.push({time:time,label:phAlertOccurrenceLabel(rule, time),type:'alert',isAlert:true});
+      if (!Number.isNaN(time.getTime()) && time >= frame.start && time <= frame.end) events.push({time:time,label:phAlertOccurrenceLabel(rule, time),type:'alert',rule:rule,isAlert:true});
     });
     const seen = new Set();
     const ordered = events.filter(function (event) {
@@ -4314,7 +4567,7 @@
     }).sort(function (a,b) { return new Date(a.time) - new Date(b.time); });
     state.calendarEvents = ordered;
     el.calendarEventLane.innerHTML = ordered.map(function (event) {
-      return '<span class="ph-calendar-event' + (event.isAlert ? ' is-alert' : '') + (event.isPersonal ? ' is-personal' : '') + (event.isSkyEvent ? ' is-sky-event' : '') + '"><strong>' + htmlText(fmtHM(event.time)) + '</strong> ' + htmlText(event.label) + '</span>';
+      return '<span class="ph-calendar-event' + (event.isAlert ? ' is-alert' : '') + (event.isPersonal ? ' is-personal' : '') + (event.isSkyEvent ? ' is-sky-event' : '') + '"><strong>' + htmlText(fmtHM(event.time)) + '</strong> ' + calendarEventMarkup(event) + '</span>';
     }).join('');
   }
 
@@ -4896,6 +5149,16 @@
     }
     if (el.prevDayCue) el.prevDayCue.addEventListener('click', function () { shiftManualDay(-1); });
     if (el.nextDayCue) el.nextDayCue.addEventListener('click', function () { shiftManualDay(1); });
+    [el.calendarDisplayGlyphs, el.calendarDisplayNames, el.calendarDisplayReferents].forEach(function (control) {
+      if (!control) return;
+      control.addEventListener('change', function () {
+        setCalendarDisplayState({
+          glyphs:!!(el.calendarDisplayGlyphs && el.calendarDisplayGlyphs.checked),
+          names:!!(el.calendarDisplayNames && el.calendarDisplayNames.checked),
+          referents:!!(el.calendarDisplayReferents && el.calendarDisplayReferents.checked)
+        });
+      });
+    });
     if (el.calendarPersonalSkySelect) el.calendarPersonalSkySelect.addEventListener('change', function () {
       const id = el.calendarPersonalSkySelect.value;
       setDefaultSkyId(id);
@@ -4973,6 +5236,10 @@
     });
     if (el.heptagramNow) el.heptagramNow.addEventListener('click', function () { state.heptagramHourOverride = null; state.useSystem = true; if (el.useSystem) el.useSystem.checked = true; if (el.manualTime) { el.manualTime.style.display = 'inline-flex'; if (el.datePick) el.datePick.disabled = true; if (el.timePick) el.timePick.disabled = true; } rebuild(); });
     window.addEventListener('storage', function (event) {
+      if (event.key === calendarDisplayStorageKey) {
+        syncCalendarDisplayState();
+        return;
+      }
       if (event.key === defaultSkyStorageKey || event.key === calendarSkyOverlayStorageKey || event.key === 'relphiSkyLibraryV1') {
         personalTransitEventCache.clear();
         rebuild();
@@ -4989,6 +5256,7 @@
     }
     populateTimezones();
     populateLocations();
+    syncCalendarDisplayState();
     el.locationSearch.value = state.locationName || '';
     el.lat.value = state.lat.toFixed(4);
     el.lon.value = state.lon.toFixed(4);
