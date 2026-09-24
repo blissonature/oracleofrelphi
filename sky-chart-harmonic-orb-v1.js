@@ -31,9 +31,11 @@ function syncVisibleControls(sourceInput=null){
   });
 }
 function setWindow(value,sourceInput=null){
-  activeWindow=clampWindow(value);
+  const next=clampWindow(value),changed=next!==activeWindow;
+  activeWindow=next;
   document.documentElement.dataset.skyHarmonicWindow=String(activeWindow);
   syncVisibleControls(sourceInput);
+  if(changed)window.dispatchEvent(new CustomEvent('relphi:sky-harmonic-window-model-changed',{detail:{harmonicWindow:activeWindow}}));
   return activeWindow;
 }
 function getWindow(){return activeWindow}
