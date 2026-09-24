@@ -604,16 +604,37 @@ function groupPreviewGlyph(tokenNode){
   }else holder.textContent=fallback;
   return holder;
 }
+function groupPreviewText(body,state){
+  if(!state.names&&!state.referents)return'';
+  const seen=new Set(),parts=[];
+  body.querySelectorAll('.sky-vocab-token').forEach(tokenNode=>{
+    const name=String(tokenNode.dataset.vocabName||'').trim();
+    const referent=String(tokenNode.dataset.vocabReferent||'').trim();
+    let text='';
+    if(state.names&&state.referents&&name&&referent)text=name+' — '+referent;
+    else if(state.names&&name)text=name;
+    else if(state.referents&&referent)text=referent;
+    if(!text||seen.has(text))return;
+    seen.add(text);parts.push(text);
+  });
+  return parts.join(' · ');
+}
 function populateVocabGroupPreview(summary,body){
-  const preview=document.createElement('span');preview.className='sky-vocab-group-preview';
-  if(displayState().glyphs){
+  const state=displayState(),preview=document.createElement('span');preview.className='sky-vocab-group-preview';
+  const content=document.createElement('span');content.className='sky-vocab-group-preview-content';
+  if(state.glyphs){
     const glyphs=document.createElement('span');glyphs.className='sky-vocab-group-preview-glyphs';glyphs.setAttribute('aria-label','Group placement glyphs');
     const seen=new Set();
     body.querySelectorAll('.sky-vocab-token[data-vocab-kind="placement"]').forEach(tokenNode=>{
       const id=String(tokenNode.dataset.vocabId||'');if(!id||seen.has(id))return;seen.add(id);glyphs.appendChild(groupPreviewGlyph(tokenNode));
     });
-    if(glyphs.childNodes.length)preview.appendChild(glyphs);
+    if(glyphs.childNodes.length)content.appendChild(glyphs);
   }
+  const previewText=groupPreviewText(body,state);
+  if(previewText){
+    const text=document.createElement('span');text.className='sky-vocab-group-preview-text';text.textContent=previewText;text.title=previewText;content.appendChild(text);
+  }
+  preview.appendChild(content);
   const rails=document.createElement('span');rails.className='sky-vocab-group-preview-rails';rails.setAttribute('aria-label','Sign and house color preview');
   ['sign','house'].forEach(kind=>{
     const rail=document.createElement('span');rail.className='sky-vocab-group-preview-rail sky-vocab-group-preview-rail-'+kind;rail.dataset.vocabPreviewRail=kind;
@@ -1221,7 +1242,7 @@ function harmonicWindowMarkup(slot){
     '<input class="sky-vocab-dropdown-field sky-vocab-harmonic-input" type="text" inputmode="decimal" autocomplete="off" value="'+htmlEscape(value)+'" data-vocab-harmonic-window-input="'+slot+'" role="spinbutton" aria-valuemin="0" aria-valuemax="'+htmlEscape(max)+'" aria-valuenow="'+htmlEscape(value)+'" aria-label="Master harmonic phase window in degrees, maximum '+htmlEscape(max)+'">'+
   '</label>';
 }
-function controlsMarkup(slot){return '<div class="sky-vocab-dropdown-row">'+layerDropdownMarkup(slot)+'</div>'}
+function controlsMarkup(slot){return''}
 function dropdownOwner(slot,kind){return document.querySelector('[data-sky-vocab-panel="'+slot+'"] [data-vocab-dropdown="'+kind+'"]')}
 function dropdownMenu(slot,kind){return document.querySelector('[data-vocab-dropdown-menu="'+kind+'"][data-vocab-menu-slot="'+slot+'"]')}
 function closeDropdown(){
@@ -1461,6 +1482,9 @@ function installStyles(){
     .sky-vocab-group-chevron{width:.42rem;height:.42rem;border-right:1.7px solid #655c55;border-bottom:1.7px solid #655c55;transform:rotate(45deg);transition:transform .14s ease;margin-right:.12rem}
     .sky-vocab-group[open]>.sky-vocab-group-summary .sky-vocab-group-chevron{transform:rotate(225deg)}
     .sky-vocab-group-preview{grid-column:1/-1;display:grid;grid-template-columns:minmax(0,1fr) minmax(58px,34%);gap:.4rem;align-items:center;min-width:0}
+    .sky-vocab-group-preview-content{display:grid;gap:.16rem;min-width:0}
+    .sky-vocab-group-preview-content:empty + .sky-vocab-group-preview-rails{grid-column:1/-1}
+    .sky-vocab-group-preview-text{display:-webkit-box;min-width:0;overflow:hidden;color:#5f5750;font:650 .64rem/1.28 system-ui,sans-serif;-webkit-box-orient:vertical;-webkit-line-clamp:2;line-clamp:2}
     .sky-vocab-group-preview-glyphs{display:flex;align-items:center;gap:.12rem;min-width:0;overflow:hidden}
     .sky-vocab-group-preview-glyph{display:inline-grid;place-items:center;flex:0 0 1.05rem;width:1.05rem;height:1.05rem;color:#332e2a;font:750 .63rem/1 system-ui,sans-serif}
     .sky-vocab-group-preview-glyph svg{display:block;width:1.05rem;height:1.05rem;overflow:visible}
@@ -1648,6 +1672,7 @@ window.addEventListener('relphi:sky-foundation-clear-selection',()=>{
 window.addEventListener('relphi:sky-house-focus-bridge-changed',event=>mirrorHouseBridge(event.detail));
 window.addEventListener('relphi:sky-zodiac-filter-changed',event=>mirrorZodiacBridge(event.detail));
 window.addEventListener('relphi:sky-house-multiselect-changed',event=>mirrorSharedHouseFilters(event.detail));
+window.addEventListener('relphi:sky-display-changed',schedule);
 document.addEventListener('pointerdown',mirrorDirectWheelClick,true);
 document.addEventListener('pointerdown',clearVocabWheelContextFromBlank,true);
 [
