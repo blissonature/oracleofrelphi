@@ -634,6 +634,7 @@ function groupPreviewGlyph(tokenNode,value,lane){
   holder.dataset.vocabCoordinate=coordinate;
   holder.style.left=(value/360*100)+'%';
   holder.style.setProperty('--vocab-spatial-lane',String(lane));
+  holder.style.setProperty('--vocab-spatial-offset',((lane-1)*6)+'px');
   holder.setAttribute('aria-label',(name?name+', ':'')+coordinate);
   const glyphId=tokenNode.dataset.vocabGlyphId,fallback=tokenNode.dataset.vocabFallbackGlyph||tokenNode.dataset.vocabName||tokenNode.dataset.vocabId;
   const registry=window.RelphiGlyphRegistry,component=window.RelphiGlyphComponent,entry=glyphId&&(registry?.get?.(glyphId)||registry?.resolve?.(glyphId));
@@ -1529,7 +1530,7 @@ function installStyles(){
     .sky-vocab-group-preview-spatial{position:relative;display:block;height:24px;margin:0 .48rem;overflow:visible}
     .sky-vocab-group-preview-spatial-axis{position:absolute;left:0;right:0;top:50%;height:3px;border-radius:999px;opacity:.46;transform:translateY(-50%)}
     .sky-vocab-group-preview-glyph{display:inline-grid;place-items:center;width:.92rem;height:.92rem;color:#332e2a;font:800 .58rem/1 system-ui,sans-serif}
-    .sky-vocab-group-preview-spatial-glyph{position:absolute;z-index:2;top:calc(50% + (var(--vocab-spatial-lane) - 1) * 6px);transform:translate(-50%,-50%);border-radius:50%;background:#fffdf8;box-shadow:0 0 0 1px rgba(31,27,24,.1)}
+    .sky-vocab-group-preview-spatial-glyph{position:absolute;z-index:2;top:calc(50% + var(--vocab-spatial-offset,0px));transform:translate(-50%,-50%);border-radius:50%;background:#fffdf8;box-shadow:0 0 0 1px rgba(31,27,24,.1)}
     .sky-vocab-group-preview-glyph svg{display:block;width:.92rem;height:.92rem;overflow:visible}
     .sky-vocab-group-preview-rails{display:grid;gap:2px;min-width:0}
     .sky-vocab-group-preview-rail{display:flex;height:3px;overflow:hidden;border-radius:999px;background:rgba(31,27,24,.08)}
