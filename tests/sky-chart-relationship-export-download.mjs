@@ -59,10 +59,12 @@ const cappedOrder=await page.evaluate(()=>[...document.querySelectorAll('#skyFou
   .map(row=>row.dataset.relationIndex));
 assert.deepEqual(cappedOrder,eligibleOrder.slice(0,20),'Most Challenging + Limit 20 must expose exactly the first 20 relationships in the ranked set.');
 const matchStatus=await page.locator('#skyFoundationRelationshipCount').evaluate(node=>({
-  text:(node.textContent||'').trim(),
+  matchCount:node.dataset.matchCount||'',
+  visibleNumber:getComputedStyle(node,'::before').content.replace(/["']/g,''),
   suffix:getComputedStyle(node,'::after').content
 }));
-assert.equal(matchStatus.text,String(eligibleOrder.length),'Changing Limit to 20 must not change the number of relationships that match the current filters.');
+assert.equal(matchStatus.matchCount,String(eligibleOrder.length),'Changing Limit to 20 must not change the number of relationships that match the current filters.');
+assert.equal(matchStatus.visibleNumber,String(eligibleOrder.length),'The visible match number must come from stable pre-cap match state.');
 assert.match(matchStatus.suffix,/matches/,'The header must label the pre-cap qualifying count as matches.');
 
 const stableMatches=String(eligibleOrder.length);
