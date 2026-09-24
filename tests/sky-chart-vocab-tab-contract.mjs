@@ -25,7 +25,7 @@ new Function(harmonicCeiling);
 new Function(orbControl);
 new Function(placementLogic);
 
-assert.match(html,/sky-chart-vocab-tab-v1\.js\?v=83/,'Sky Chart must load the Vocab subtab');
+assert.match(html,/sky-chart-vocab-tab-v1\.js\?v=84/,'Sky Chart must load the Vocab subtab');
 assert.match(html,/sky-chart-placement-multiselect-v4\.js\?v=7/,'Sky Chart must load the shared Relationships Placements controller');
 assert.match(html,/sky-chart-harmonic-orb-v1\.js\?v=7/,'Sky Chart must load the shared Harmonic Window model fix');
 assert.match(html,/sky-chart-orb-control-v1\.js\?v=17/,'Relationships must load the source-aware shared Harmonic Window controller');
