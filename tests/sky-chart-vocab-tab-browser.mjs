@@ -275,8 +275,8 @@ await sunMercuryCluster.dispatchEvent('pointerover',{pointerType:'mouse'});
 await page.waitForFunction(()=>document.querySelector('#skyFoundationWheelMount>.sky-foundation-wheel')?.classList.contains('has-vocab-context'));
 const vocabWheelHighlight=await page.evaluate(()=>({
   placements:[...document.querySelectorAll('#skyFoundationWheelMount [data-focus-piece="placement"].is-vocab-context')].map(node=>node.dataset.placement),
-  signs:[...document.querySelectorAll('#skyFoundationWheelMount [data-focus-piece="sign"].is-vocab-context')].map(node=>Number(node.dataset.sign)),
-  houses:[...document.querySelectorAll('#skyFoundationWheelMount [data-focus-piece="house"].is-vocab-context')].map(node=>({sky:node.dataset.sky,house:Number(node.dataset.house)})),
+  signs:[...document.querySelectorAll('#skyFoundationWheelMount .sky-foundation-sign-glyph.is-vocab-context')].map(node=>Number(node.dataset.sign)),
+  houses:[...document.querySelectorAll('#skyFoundationWheelMount [data-layer="a-houses"] .sky-foundation-house-number.is-vocab-context')].map(node=>Number((node.textContent||'').trim())),
   exact:[...document.querySelectorAll('#skyFoundationWheelMount .is-vocab-context-exact')].map(node=>node.dataset.placement||'')
 }));
 assert.ok(vocabWheelHighlight.placements.includes('sun')&&vocabWheelHighlight.placements.includes('mercury'),'Hovering a concentration must highlight each member placement on the wheel.');
@@ -285,22 +285,29 @@ assert.ok(vocabWheelHighlight.exact.includes('sun')&&vocabWheelHighlight.exact.i
 const unrelatedMoonOpacity=Number(await page.locator('#skyFoundationWheelMount [data-focus-piece="placement"][data-sky="A"][data-placement="moon"]').evaluate(node=>getComputedStyle(node).opacity));
 assert.equal(unrelatedMoonOpacity,1,'Unrelated placement glyphs must keep native opacity while a Vocab row highlights its context.');
 const selectedContextStrength=await page.evaluate(()=>{
-  const sign=document.querySelector('#skyFoundationWheelMount .sky-foundation-sign-sector[data-sign="6"]');
-  const house=document.querySelector('#skyFoundationWheelMount .sky-foundation-house-sector[data-sky="A"][data-house="1"]');
-  const unrelatedSign=document.querySelector('#skyFoundationWheelMount .sky-foundation-sign-sector[data-sign="0"]');
+  const signSector=document.querySelector('#skyFoundationWheelMount .sky-foundation-sign-sector[data-sign="6"]');
+  const houseSector=document.querySelector('#skyFoundationWheelMount .sky-foundation-house-sector[data-sky="A"][data-house="1"]');
+  const signGlyph=document.querySelector('#skyFoundationWheelMount .sky-foundation-sign-glyph[data-sign="6"]');
+  const houseNumber=[...document.querySelectorAll('#skyFoundationWheelMount [data-layer="a-houses"] .sky-foundation-house-number')].find(node=>(node.textContent||'').trim()==='1');
   return{
-    signFill:Number(getComputedStyle(sign).fillOpacity),
-    houseFill:Number(getComputedStyle(house).fillOpacity),
-    signOpacity:Number(getComputedStyle(sign).opacity),
-    houseOpacity:Number(getComputedStyle(house).opacity),
-    unrelatedSignOpacity:Number(getComputedStyle(unrelatedSign).opacity)
+    signFill:Number(getComputedStyle(signSector).fillOpacity),
+    houseFill:Number(getComputedStyle(houseSector).fillOpacity),
+    signSectorMarked:signSector.classList.contains('is-vocab-context'),
+    houseSectorMarked:houseSector.classList.contains('is-vocab-context'),
+    signGlyphMarked:signGlyph.classList.contains('is-vocab-context'),
+    houseNumberMarked:houseNumber?.classList.contains('is-vocab-context')||false,
+    signGlyphFilter:getComputedStyle(signGlyph).filter,
+    houseNumberFilter:houseNumber?getComputedStyle(houseNumber).filter:''
   };
 });
-assert.equal(selectedContextStrength.signFill,1,'Matching sign sector must become fully luminous while receiving the Vocab glow.');
-assert.equal(selectedContextStrength.houseFill,1,'Matching house sector must become fully luminous while receiving the Vocab glow.');
-assert.equal(selectedContextStrength.signOpacity,1,'Matching sign sector must remain fully visible.');
-assert.equal(selectedContextStrength.houseOpacity,1,'Matching house sector must remain fully visible.');
-assert.equal(selectedContextStrength.unrelatedSignOpacity,1,'Unrelated sign sectors must keep native opacity; Vocab context must not dim them.');
+assert.equal(selectedContextStrength.signFill,.82,'Vocab context must leave the zodiac sector fill unchanged.');
+assert.equal(selectedContextStrength.houseFill,.5,'Vocab context must leave the house sector fill unchanged.');
+assert.equal(selectedContextStrength.signSectorMarked,false,'Vocab context must not mark the whole zodiac wedge.');
+assert.equal(selectedContextStrength.houseSectorMarked,false,'Vocab context must not mark the whole house wedge.');
+assert.equal(selectedContextStrength.signGlyphMarked,true,'Vocab context must mark the corresponding zodiac glyph itself.');
+assert.equal(selectedContextStrength.houseNumberMarked,true,'Vocab context must mark the corresponding house number itself.');
+assert.match(selectedContextStrength.signGlyphFilter,/drop-shadow/i,'The corresponding zodiac glyph must visibly glow.');
+assert.match(selectedContextStrength.houseNumberFilter,/drop-shadow/i,'The corresponding house number must visibly glow.');
 assert.equal(await page.locator('#skyFoundationRelationshipList>.sky-foundation-relationship-row:visible').count(),relationshipCountBeforeVocabHover,'Vocab wheel highlighting must not filter the Relationships list.');
 await sunMercuryCluster.dispatchEvent('pointerout',{pointerType:'mouse'});
 await page.waitForFunction(()=>!document.querySelector('#skyFoundationWheelMount>.sky-foundation-wheel')?.classList.contains('has-vocab-context'));
