@@ -12,7 +12,7 @@ const GLOBAL_SORTS=new Set([...GLOBAL_TIMING_SORTS,...GLOBAL_SIGNIFICANCE_SORTS]
 const PLACEMENT_SYMBOLS=Object.freeze({sun:'☉',moon:'☽',mercury:'☿',venus:'♀',mars:'♂',jupiter:'♃',saturn:'♄',uranus:'♅',neptune:'♆',pluto:'♇',chiron:'⚷','north-node':'☊','south-node':'☋',lilith:'⚸','part-of-fortune':'⊗',vertex:'Vx','anti-vertex':'AVx',asc:'Asc',dsc:'Dsc',mc:'MC',ic:'IC'});
 const SIGN_SYMBOLS=Object.freeze(['♈','♉','♊','♋','♌','♍','♎','♏','♐','♑','♒','♓']);
 const ASPECT_SYMBOLS=Object.freeze({conjunction:'☌',opposition:'☍',trine:'△',square:'□',sextile:'✶','semi-sextile':'⚺',quincunx:'⚻',octile:'∠','tri-octile':'⚼',quintile:'Q','bi-quintile':'BQ'});
-const HIDDEN_CLASSES=Object.freeze(['sky-foundation-single-sky-cross-hidden','sky-chart-filter-hidden','sky-chart-orb-hidden','sky-orb-filter-hidden','sky-chart-multiselect-hidden','sky-chart-house-multiselect-hidden','sky-chart-aspect-multiselect-hidden','sky-chart-zodiac-filter-hidden']);
+const HIDDEN_CLASSES=Object.freeze(['sky-foundation-single-sky-cross-hidden','sky-chart-filter-hidden','sky-chart-orb-hidden','sky-orb-filter-hidden','sky-chart-multiselect-hidden','sky-chart-house-multiselect-hidden','sky-chart-aspect-multiselect-hidden','sky-chart-zodiac-filter-hidden','sky-chart-result-limit-hidden']);
 const COLLAPSED_VISUAL_CLASS='sky-relationship-drawer-collapsed-visual';
 const collapsed=new Set();
 let observer=null,observedList=null,queued=false,applying=false,copyTimer=0;
@@ -52,7 +52,8 @@ function groupList(){
   const rows=[...list.querySelectorAll(':scope>.sky-foundation-relationship-row')];if(!rows.length)return;
   collapsed.clear();
   rows.forEach(row=>row.classList.remove(COLLAPSED_VISUAL_CLASS));
-  const other=[...list.children].filter(node=>!node.matches?.('.sky-foundation-relationship-row')),desired=[...other];
+  const helpers=[...list.children].filter(node=>node.matches?.('[data-result-limit-show-more],[data-harmonic-show-more]'));
+  const other=[...list.children].filter(node=>!node.matches?.('.sky-foundation-relationship-row,[data-result-limit-show-more],[data-harmonic-show-more]')),desired=[...other];
   const sorter=window.RelphiRelationshipSort,sortMode=sorter?.mode?.();
   // Significance and absolute-duration sorts can answer one question across the whole
   // visible set. "Began Most Recently" is intentionally excluded: its "ago" value is
@@ -68,6 +69,7 @@ function groupList(){
       }
     }
   }
+  desired.push(...helpers);
   if(!sameOrder([...list.children],desired)){
     applying=true;
     const frag=document.createDocumentFragment();
