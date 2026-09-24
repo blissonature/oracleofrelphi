@@ -32,6 +32,7 @@ await page.addInitScript(({a,b})=>{
   localStorage.removeItem('relphiSkyVocabFilterV1');
   sessionStorage.removeItem('relphiSkyVocabViewV1');
   sessionStorage.removeItem('relphiSkyPlacementLogicV1');
+  sessionStorage.removeItem('relphiSkyVocabGroupOpenV1');
 },{a:skyA,b:skyB});
 
 await page.goto('http://127.0.0.1:4173/sky-chart.html',{waitUntil:'domcontentloaded'});
@@ -45,6 +46,29 @@ await page.waitForFunction(()=>{const panel=document.querySelector('#skyFoundati
 assert.equal(await vocabButton.getAttribute('aria-selected'),'true','Vocab tab must become selected when clicked.');
 assert.equal(await page.locator('#skyFoundationA [data-sky-drawer-mount="placements"]').evaluate(node=>node.hidden),true,'Placements ledger must hide while Vocab is active.');
 assert.equal(await page.locator('#skyFoundationA [data-sky-vocab-panel="A"]').evaluate(node=>node.hidden),false,'Vocab panel must be visible after clicking Vocab.');
+
+const vocabGroups=page.locator('#skyFoundationA details.sky-vocab-group');
+assert.ok(await vocabGroups.count()>=6,'Vocab results must be grouped into collapsed semantic disclosures.');
+assert.equal(await vocabGroups.evaluateAll(nodes=>nodes.every(node=>!node.open)),true,'Vocab groups must default collapsed.');
+assert.ok(await page.locator('#skyFoundationA .sky-vocab-group-preview-glyph').count()>4,'Collapsed Vocab summaries must preview their member glyphs.');
+assert.equal(await page.locator('#skyFoundationA [data-vocab-preview-rail="sign"]').count(),await vocabGroups.count(),'Every collapsed group must preview its sign rail data.');
+assert.equal(await page.locator('#skyFoundationA [data-vocab-preview-rail="house"]').count(),await vocabGroups.count(),'Every collapsed group must preview its house rail data.');
+const collapsedPreview=await page.locator('#skyFoundationA .sky-vocab-group').first().evaluate(node=>{
+  const sign=node.querySelector('[data-vocab-preview-rail="sign"] .sky-vocab-group-preview-segment');
+  const house=node.querySelector('[data-vocab-preview-rail="house"] .sky-vocab-group-preview-segment');
+  return{
+    bodyDisplay:getComputedStyle(node.querySelector('.sky-vocab-group-body')).display,
+    signBackground:sign?.style.background||'',
+    houseBackground:house?.style.background||''
+  };
+});
+assert.equal(collapsedPreview.bodyDisplay,'none','Collapsed Vocab group bodies must stay hidden while the preview remains visible.');
+assert.match(collapsedPreview.signBackground,/linear-gradient/i,'Collapsed sign previews must carry the same segmented color data as expanded sign rails.');
+assert.match(collapsedPreview.houseBackground,/linear-gradient/i,'Collapsed house previews must carry the same segmented color data as expanded house rails.');
+
+// Open all groups for the detailed interaction and geometry assertions below.
+await vocabGroups.evaluateAll(nodes=>nodes.forEach(node=>{node.open=true}));
+await page.waitForFunction(()=>[...document.querySelectorAll('#skyFoundationA details.sky-vocab-group')].every(node=>node.open));
 
 const vocabParagraph=page.locator('#skyFoundationA [data-sky-vocab-paragraph]');
 assert.equal(await vocabParagraph.locator(':scope > :first-child').evaluate(node=>node.classList.contains('sky-vocab-structures-heading')),true,'Structures must be the first reading layer before Placements.');
