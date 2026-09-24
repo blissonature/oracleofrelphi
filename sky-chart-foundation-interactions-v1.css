@@ -245,10 +245,10 @@
 }
 
 #skyFoundationRelationshipCount[data-count-label="matches"] {
+  gap:0;
   column-gap:0;
-  color:#3f3934;
-  font:800 .69rem/1 system-ui,sans-serif;
-  font-variant-numeric:tabular-nums;
+  font-size:0;
+  color:transparent;
 }
 
 #skyFoundationRelationshipCount[data-count-label="matches"]::before {
@@ -256,9 +256,10 @@
 }
 
 #skyFoundationRelationshipCount[data-count-label="matches"]::after {
-  content:" matches";
-  color:#665e57;
-  font:720 .69rem/1 system-ui,sans-serif;
+  content:attr(data-match-count) " matches";
+  color:#3f3934;
+  font:800 .69rem/1 system-ui,sans-serif;
+  font-variant-numeric:tabular-nums;
 }
 
 .sky-foundation-harmonic-show-more {
