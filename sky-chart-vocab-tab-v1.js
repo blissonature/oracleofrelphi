@@ -144,6 +144,7 @@ function harmonicWindow(){
   return Number(model?.defaultWindow??6);
 }
 let queued=false;
+const abstractPreviewGlyphCache=new Map();
 let openDropdownState=null;
 let dropdownPositionQueued=false;
 let wheelFilterState=null;
@@ -626,6 +627,59 @@ function spatialLanes(items){
     return{...item,lane};
   });
 }
+function abstractPreviewGlyphKey(tokenNode){
+  return String(tokenNode?.dataset?.vocabGlyphId||'')+'|'+String(tokenNode?.dataset?.vocabFallbackGlyph||tokenNode?.dataset?.vocabName||tokenNode?.dataset?.vocabId||'');
+}
+function cloneCachedPreviewGlyph(svg,cached){
+  svg.replaceChildren(...Array.from(cached.childNodes).map(node=>node.cloneNode(true)));
+  Array.from(cached.attributes).forEach(attr=>{
+    if(attr.name==='style'||attr.name==='class'||attr.name==='aria-hidden'||attr.name==='viewBox')return;
+    svg.setAttribute(attr.name,attr.value);
+  });
+  svg.dataset.vocabPreviewGlyphReady='true';
+  svg.style.visibility='visible';
+}
+function renderAbstractPreviewGlyph(svg,tokenNode){
+  const key=abstractPreviewGlyphKey(tokenNode);
+  const cached=abstractPreviewGlyphCache.get(key);
+  if(cached instanceof SVGSVGElement){cloneCachedPreviewGlyph(svg,cached);return Promise.resolve(svg)}
+  if(cached instanceof Promise){
+    svg.style.visibility='hidden';
+    return cached.then(template=>{if(svg.isConnected)cloneCachedPreviewGlyph(svg,template);return svg});
+  }
+  const glyphId=tokenNode.dataset.vocabGlyphId,fallback=tokenNode.dataset.vocabFallbackGlyph||tokenNode.dataset.vocabName||tokenNode.dataset.vocabId;
+  const registry=window.RelphiGlyphRegistry,component=window.RelphiGlyphComponent,entry=glyphId&&(registry?.get?.(glyphId)||registry?.resolve?.(glyphId));
+  if(!entry||!component){
+    svg.replaceChildren();
+    const text=document.createElementNS('http://www.w3.org/2000/svg','text');
+    text.setAttribute('x','0');text.setAttribute('y','0');text.setAttribute('text-anchor','middle');text.setAttribute('dominant-baseline','central');
+    text.setAttribute('font-size','20');text.setAttribute('font-weight','800');text.textContent=fallback;
+    svg.appendChild(text);svg.dataset.vocabPreviewGlyphReady='true';svg.style.visibility='visible';
+    const template=svg.cloneNode(true);abstractPreviewGlyphCache.set(key,template);return Promise.resolve(svg);
+  }
+  svg.style.visibility='hidden';
+  const template=document.createElementNS('http://www.w3.org/2000/svg','svg');
+  template.setAttribute('viewBox','-18 -18 36 36');
+  template.setAttribute('aria-hidden','true');
+  const ready=component.draw(template,entry.id,{radius:14,padding:.7,color:'currentColor'}).then(()=>{
+    template.dataset.vocabPreviewGlyphReady='true';
+    template.style.visibility='visible';
+    abstractPreviewGlyphCache.set(key,template);
+    if(svg.isConnected)cloneCachedPreviewGlyph(svg,template);
+    return template;
+  }).catch(()=>{
+    template.replaceChildren();
+    const text=document.createElementNS('http://www.w3.org/2000/svg','text');
+    text.setAttribute('x','0');text.setAttribute('y','0');text.setAttribute('text-anchor','middle');text.setAttribute('dominant-baseline','central');
+    text.setAttribute('font-size','20');text.setAttribute('font-weight','800');text.textContent=fallback;
+    template.appendChild(text);template.dataset.vocabPreviewGlyphReady='true';template.style.visibility='visible';
+    abstractPreviewGlyphCache.set(key,template);
+    if(svg.isConnected)cloneCachedPreviewGlyph(svg,template);
+    return template;
+  });
+  abstractPreviewGlyphCache.set(key,ready);
+  return ready.then(()=>svg);
+}
 function groupPreviewGlyph(tokenNode,value,lane){
   const holder=document.createElement('span');holder.className='sky-vocab-group-preview-glyph sky-vocab-group-preview-spatial-glyph';
   const coordinate=coordinateText(value),name=String(tokenNode.dataset.vocabName||tokenNode.dataset.vocabId||'');
@@ -636,12 +690,12 @@ function groupPreviewGlyph(tokenNode,value,lane){
   holder.style.setProperty('--vocab-spatial-lane',String(lane));
   holder.style.setProperty('--vocab-spatial-offset',((lane-1)*6)+'px');
   holder.setAttribute('aria-label',(name?name+', ':'')+coordinate);
-  const glyphId=tokenNode.dataset.vocabGlyphId,fallback=tokenNode.dataset.vocabFallbackGlyph||tokenNode.dataset.vocabName||tokenNode.dataset.vocabId;
-  const registry=window.RelphiGlyphRegistry,component=window.RelphiGlyphComponent,entry=glyphId&&(registry?.get?.(glyphId)||registry?.resolve?.(glyphId));
-  if(entry&&component){
-    const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');svg.setAttribute('viewBox','-18 -18 36 36');svg.setAttribute('aria-hidden','true');holder.appendChild(svg);
-    component.draw(svg,entry.id,{radius:14,padding:.7,color:'currentColor'}).catch(()=>{holder.replaceChildren(document.createTextNode(fallback))});
-  }else holder.textContent=fallback;
+  const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
+  svg.setAttribute('viewBox','-18 -18 36 36');
+  svg.setAttribute('aria-hidden','true');
+  svg.style.visibility='hidden';
+  holder.appendChild(svg);
+  renderAbstractPreviewGlyph(svg,tokenNode);
   return holder;
 }
 function groupPreviewText(body,state){
@@ -1379,13 +1433,28 @@ function syncControlState(){
   });
   document.querySelectorAll('[data-vocab-dropdown-summary="layers"]').forEach(node=>{node.textContent=layerSummary()});
 }
+function refreshGroupPreviews(root=document){
+  root.querySelectorAll?.('details.sky-vocab-group').forEach(details=>{
+    const summary=details.querySelector(':scope > .sky-vocab-group-summary'),body=details.querySelector(':scope > .sky-vocab-group-body');
+    if(!summary||!body)return;
+    summary.querySelector(':scope > .sky-vocab-group-preview')?.remove();
+    populateVocabGroupPreview(summary,body);
+  });
+}
+function refreshDisplayLayers(){
+  syncControlState();
+  document.querySelectorAll('[data-sky-vocab-panel]').forEach(panel=>{
+    rerenderTokens(panel);
+    refreshGroupPreviews(panel);
+  });
+}
 function rerenderPanels(){vocabWheelTouchLine=null;clearVocabWheelContext();syncControlState();document.querySelectorAll('[data-sky-vocab-panel]').forEach(panel=>renderParagraph(panel.dataset.skyVocabPanel,panel))}
 function releaseWheelIsolationForManualFilter(){
   if(!wheelFilterState)return;
   wheelFilterState=null;wheelFilterSpec=null;
   const clear=document.getElementById('skyFoundationClearIsolation');if(clear&&!clear.hidden)clear.click();
 }
-function setLayerAll(checked){const state=displayState();['glyphs','referents','names'].forEach(id=>{state[id]=checked});saveDisplay(state);rerenderPanels()}
+function setLayerAll(checked){const state=displayState();['glyphs','referents','names'].forEach(id=>{state[id]=checked});saveDisplay(state);refreshDisplayLayers()}
 function setDimensionAll(slot,kind,checked){
   releaseWheelIsolationForManualFilter();
   const all=kind==='placements'?records(slot).map(record=>record.id):kind==='signs'?ALL_SIGNS:ALL_HOUSES;
@@ -1429,7 +1498,7 @@ function ensurePanel(slot,view){
     input.addEventListener('change',()=>setHarmonicWindowFromVocab(input,true));
     input.addEventListener('blur',()=>setHarmonicWindowFromVocab(input,true));
   });
-  panel.querySelectorAll('[data-vocab-layer]').forEach(input=>input.addEventListener('change',()=>{const state=displayState();state[input.dataset.vocabLayer]=input.checked;saveDisplay(state);rerenderPanels()}));
+  panel.querySelectorAll('[data-vocab-layer]').forEach(input=>input.addEventListener('change',()=>{const state=displayState();state[input.dataset.vocabLayer]=input.checked;saveDisplay(state);refreshDisplayLayers()}));
   panel.querySelectorAll('[data-vocab-shared-placement-toggle]').forEach(button=>button.addEventListener('click',event=>{event.preventDefault();event.stopPropagation();openSharedPlacementDropdown(button)}));
   panel.querySelectorAll('[data-vocab-sign]').forEach(input=>input.addEventListener('change',()=>toggleDimension(slot,'signs',input.dataset.vocabSign,input.checked)));
   panel.querySelectorAll('[data-vocab-house]').forEach(input=>input.addEventListener('change',()=>toggleDimension(slot,'houses',input.dataset.vocabHouse,input.checked)));
@@ -1552,9 +1621,9 @@ function installStyles(){
     .sky-vocab-group-preview-map{display:grid;gap:2px;min-width:0}
     .sky-vocab-group-preview-spatial{position:relative;display:block;height:24px;margin:0 .48rem;overflow:visible}
     .sky-vocab-group-preview-spatial-axis{position:absolute;left:0;right:0;top:50%;height:3px;border-radius:999px;opacity:.46;transform:translateY(-50%)}
-    .sky-vocab-group-preview-glyph{display:inline-grid;place-items:center;width:.92rem;height:.92rem;color:#332e2a;font:800 .58rem/1 system-ui,sans-serif}
+    .sky-vocab-group-preview-glyph{display:inline-grid;place-items:center;width:15px;min-width:15px;max-width:15px;height:15px;min-height:15px;max-height:15px;color:#332e2a;font:800 9px/1 system-ui,sans-serif;contain:layout size}
     .sky-vocab-group-preview-spatial-glyph{position:absolute;z-index:2;top:calc(50% + var(--vocab-spatial-offset,0px));transform:translate(-50%,-50%);border-radius:50%;background:#fffdf8;box-shadow:0 0 0 1px rgba(31,27,24,.1)}
-    .sky-vocab-group-preview-glyph svg{display:block;width:.92rem;height:.92rem;overflow:visible}
+    .sky-vocab-group-preview-glyph svg{display:block;width:15px!important;min-width:15px!important;max-width:15px!important;height:15px!important;min-height:15px!important;max-height:15px!important;overflow:visible}
     .sky-vocab-group-preview-rails{display:grid;gap:2px;min-width:0}
     .sky-vocab-group-preview-rail{display:flex;height:3px;overflow:hidden;border-radius:999px;background:rgba(31,27,24,.08)}
     .sky-vocab-group-preview-rail-house{opacity:.5}
