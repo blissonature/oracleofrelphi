@@ -1188,9 +1188,7 @@ function openDropdown(slot,kind){
   openDropdownState={slot,kind};owner.classList.add('is-open');menu.hidden=false;menu.classList.add('is-portaled');document.body.appendChild(menu);owner.querySelector('[data-vocab-dropdown-toggle]')?.setAttribute('aria-expanded','true');scheduleDropdownPosition();
 }
 function syncHarmonicWindowControls(){
-  const model=HARMONIC();
-  model?.syncVisibleControls?.();
-  const value=String(harmonicWindow()),max=String(model?.maxWindow??0);
+  const model=HARMONIC(),value=String(harmonicWindow()),max=String(model?.maxWindow??0);
   document.querySelectorAll('[data-vocab-harmonic-window-input]').forEach(input=>{
     input.value=value;input.setAttribute('aria-valuenow',value);input.setAttribute('aria-valuemax',max);input.setAttribute('aria-invalid','false');input.setCustomValidity('');
   });
