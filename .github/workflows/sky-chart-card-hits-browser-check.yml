@@ -172,6 +172,32 @@ jobs:
           assert.ok(rulerArt.naturalWidth>0);
           assert.equal(rulerArt.media,'local-ruler-art');
 
+          const rulerRails=await page.evaluate(()=>{
+            const cards=[...document.querySelectorAll('#skyFoundationA .sky-card-ruler')];
+            const placedGlyphs=document.querySelectorAll('#skyFoundationA .sky-card-ruler-placed-glyph').length;
+            const signRails=document.querySelectorAll('#skyFoundationA [data-ruler-card-sign-rail]').length;
+            const houseRails=document.querySelectorAll('#skyFoundationA [data-ruler-card-house-rail]').length;
+            const sample=cards.map(card=>card.querySelector('.sky-card-ruler-art')).find(art=>art?.querySelector('[data-ruler-card-sign-rail]')&&art?.querySelector('[data-ruler-card-house-rail]'));
+            if(!sample)return{placedGlyphs,signRails,houseRails,sample:null};
+            const sign=sample.querySelector('[data-ruler-card-sign-rail]'),img=sample.querySelector('img'),house=sample.querySelector('[data-ruler-card-house-rail]');
+            const sr=sign.getBoundingClientRect(),ir=img.getBoundingClientRect(),hr=house.getBoundingClientRect(),ss=getComputedStyle(sign),hs=getComputedStyle(house);
+            return{placedGlyphs,signRails,houseRails,sample:{
+              signBottom:sr.bottom,imgTop:ir.top,imgBottom:ir.bottom,houseTop:hr.top,
+              signRadius:ss.borderRadius,houseRadius:hs.borderRadius,
+              signShadow:ss.boxShadow,houseShadow:hs.boxShadow
+            }};
+          });
+          assert.equal(rulerRails.placedGlyphs,0,'Ruler cards must not overlay sign glyphs on card art.');
+          assert.ok(rulerRails.signRails>0,'Placed ruler cards must show sign rails.');
+          assert.ok(rulerRails.houseRails>0,'Placed ruler cards with houses must show house rails.');
+          assert.ok(rulerRails.sample,'At least one Ruler card fixture must expose both sign and house rails.');
+          assert.equal(rulerRails.sample.signRadius,'0px');
+          assert.equal(rulerRails.sample.houseRadius,'0px');
+          assert.equal(rulerRails.sample.signShadow,'none');
+          assert.equal(rulerRails.sample.houseShadow,'none');
+          assert.ok(rulerRails.sample.signBottom<=rulerRails.sample.imgTop,'Top sign rail must not overlap card art.');
+          assert.ok(rulerRails.sample.imgBottom<=rulerRails.sample.houseTop,'Bottom house rail must not overlap card art.');
+
           await page.locator('#skyFoundationA [data-card-hits-view="houses"]').click();
           await page.waitForTimeout(80);
           await page.waitForFunction(()=>{const img=document.querySelector('#skyFoundationA .sky-card-house-decan-art img');return !!img&&img.complete&&img.naturalWidth>0},{timeout:10000});
