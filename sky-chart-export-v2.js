@@ -111,6 +111,17 @@
     [...bar.querySelectorAll('select')].forEach(select=>{const text=cleanLabel(select.selectedOptions?.[0]?.textContent||select.value);if(!text||/^all$/i.test(text)||/^none$/i.test(text))return;const caption=selectCaption(select)||'Filter';const item=`${caption}: ${text}`;if(!parts.includes(item))parts.push(item)});
     return parts.join(' · ');
   }
+  function selectionSummary(){
+    const origin=window.RelphiSkyFoundationInteractions?.getSelectionOrigin?.();
+    if(!origin)return'';
+    const label=cleanLabel(origin.label||origin.value);
+    if(!label)return'';
+    const sky=origin.sky==='A'||origin.sky==='B'?'Sky '+origin.sky:'';
+    return 'Selected: '+[sky,label].filter(Boolean).join(' · ');
+  }
+  function wheelContextSummary(){
+    return [selectionSummary(),filterSummary()].filter(Boolean).join(' · ');
+  }
 
   function infoBox(info,slot,single=false){
     const side=slot.toLowerCase(),box=document.createElement('div');box.className=`sky-export-info sky-export-info-${side}${single?' sky-export-info-single':''}`;
@@ -151,7 +162,7 @@
 
     if(slots.length===1)stage.appendChild(infoBox(facts(slots[0]),slots[0],true));
     else slots.forEach(slot=>stage.appendChild(infoBox(facts(slot),slot,false)));
-    const summary=filterSummary();if(summary){const line=document.createElement('div');line.className='sky-export-filter-summary';line.textContent=`Showing only: ${summary}`;stage.appendChild(line)}
+    const summary=wheelContextSummary();if(summary){const line=document.createElement('div');line.className='sky-export-filter-summary';line.textContent=summary;stage.appendChild(line)}
     host.appendChild(stage);return{host,stage,width,height,slots};
   }
   function rowVisible(row){const style=getComputedStyle(row);return!row.hidden&&style.display!=='none'&&style.visibility!=='hidden'}
