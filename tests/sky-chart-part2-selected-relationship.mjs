@@ -73,6 +73,23 @@ assert.equal(await page.locator('#skyFoundationFocus > .sky-foundation-focus-hea
 assert.equal(await page.locator('#skyFoundationFocus > .sky-foundation-focus-heading [data-relationship-display-control]').count(),1,'Display must share the Focus heading line.');
 assert.equal(await page.locator('#skyFoundationRelationships > .sky-foundation-relationships-heading [data-relationship-sort]').count(),1,'Sort must share the Relationships heading line.');
 assert.equal(await page.locator('#skyFoundationRelationships > .sky-foundation-relationships-heading [data-relationship-limit]').count(),1,'Max must share the Relationships heading line.');
+
+await page.setViewportSize({width:360,height:900});
+await page.waitForTimeout(80);
+const mobileRelationshipHeading=await page.locator('#skyFoundationRelationships > .sky-foundation-relationships-heading').evaluate(heading=>{
+  const rect=node=>{const r=node.getBoundingClientRect();return{left:r.left,right:r.right,top:r.top,bottom:r.bottom,width:r.width,height:r.height}};
+  const title=heading.querySelector(':scope>h2'),count=heading.querySelector(':scope>#skyFoundationRelationshipCount'),actions=heading.querySelector(':scope>.sky-relationship-heading-actions');
+  const controls=actions?[...actions.children].filter(node=>getComputedStyle(node).display!=='none').map(rect):[];
+  return{heading:rect(heading),title:rect(title),count:rect(count),actions:rect(actions),controls,scrollWidth:heading.scrollWidth,clientWidth:heading.clientWidth};
+});
+assert.ok(mobileRelationshipHeading.title.right<=mobileRelationshipHeading.count.left,'Relationships title and match count must not overlap on mobile.');
+assert.ok(mobileRelationshipHeading.actions.top>=Math.min(mobileRelationshipHeading.title.bottom,mobileRelationshipHeading.count.bottom),'Relationship actions must occupy their own row on mobile.');
+assert.ok(mobileRelationshipHeading.actions.left>=mobileRelationshipHeading.heading.left&&mobileRelationshipHeading.actions.right<=mobileRelationshipHeading.heading.right+1,'Relationship actions must stay inside the mobile heading.');
+assert.ok(mobileRelationshipHeading.controls.every((box,index,array)=>index===0||box.left>=array[index-1].right-1),'Sort, Max, Copy, and Download must not overlap each other on mobile.');
+assert.ok(mobileRelationshipHeading.scrollWidth<=mobileRelationshipHeading.clientWidth+1,'Mobile Relationships heading must not overflow horizontally.');
+await page.setViewportSize({width:1440,height:1300});
+await page.waitForTimeout(80);
+
 await page.waitForSelector('.sky-ph-heptagram[data-canonical-heptagram-v1="true"]', {timeout:10000});
 await page.waitForSelector('#skySelectedRelationship:not([hidden])', {timeout:10000});
 assert.equal(await page.locator('#skySelectedRelationship .sky-selected-card').count(), 2);
