@@ -378,6 +378,7 @@ async function assertReadableFocus(page) {
   await assertContained(desktop);
   await desktop.screenshot({path:path.join(out,'drawing-board-desktop-celtic.png'),fullPage:true});
 
+  await desktop.setViewportSize({width:1440,height:760});
   await desktop.locator('.card-row-item[data-row-index="9"] .card-row-drop-card').click();
   await desktop.waitForSelector('.relphi-focus-reader',{state:'visible'});
   const desktopFocus=await desktop.evaluate(()=>{
@@ -395,16 +396,22 @@ async function assertReadableFocus(page) {
       sideBySide:art.right<=entry.left+3,
       entryText:document.querySelector('.relphi-focus-entry')?.textContent?.trim().length||0,
       objectFit:getComputedStyle(artEl).objectFit,
+      artRadius:getComputedStyle(artEl).borderRadius,
       paneOverflow:getComputedStyle(paneEl).overflow,
-      paneScrollable:paneEl.scrollHeight>=paneEl.clientHeight&&paneEl.scrollWidth>=paneEl.clientWidth,
-      rendered,pane:{left:pane.left,right:pane.right,top:pane.top,bottom:pane.bottom}
+      paneScrollable:paneEl.scrollHeight>paneEl.clientHeight+1||paneEl.scrollWidth>paneEl.clientWidth+1,
+      shellOverflow:getComputedStyle(document.querySelector('.relphi-focus-shell')).overflow,
+      rendered,pane:{left:pane.left,right:pane.right,top:pane.top,bottom:pane.bottom},
+      fitsPane:rendered.left>=pane.left-1&&rendered.right<=pane.right+1&&rendered.top>=pane.top-1&&rendered.bottom<=pane.bottom+1
     };
   });
   await desktop.screenshot({path:path.join(out,'drawing-board-desktop-focus-full-entry.png'),fullPage:true});
   assert.ok(desktopFocus?.sideBySide,'desktop focus view must show full art beside the Ledger entry: '+JSON.stringify(desktopFocus));
   assert.equal(desktopFocus?.objectFit,'contain','desktop focus art must use contain rather than crop');
-  assert.equal(desktopFocus?.paneOverflow,'auto','desktop focus art pane must remain a bounded scroll container if a long question reduces available height');
-  assert.ok(desktopFocus?.paneScrollable,'desktop focus art must remain reachable without shrinking when available height is reduced: '+JSON.stringify(desktopFocus));
+  assert.equal(desktopFocus?.artRadius,'0px','desktop focus card art must keep sharp source corners');
+  assert.equal(desktopFocus?.paneOverflow,'hidden','desktop focus art pane must not expose its own scrollbar');
+  assert.equal(desktopFocus?.shellOverflow,'hidden','desktop focus shell must not scroll just to accommodate the card art');
+  assert.equal(desktopFocus?.paneScrollable,false,'desktop focus art must shrink to the available height instead of requiring a scrollbar: '+JSON.stringify(desktopFocus));
+  assert.equal(desktopFocus?.fitsPane,true,'desktop focus art must remain completely inside its pane: '+JSON.stringify(desktopFocus));
   assert.ok(desktopFocus.entryText>100,'desktop focus view must show the full Ledger entry');
   let semantic=await boardState(desktop);
   const outcomeIndex=semantic.snap.rowPositionMeta.findIndex(meta=>meta?.id==='outcome');
@@ -412,6 +419,7 @@ async function assertReadableFocus(page) {
   assert.equal(await desktop.locator(`.card-row-item[data-row-index="${outcomeIndex}"] [data-row-card]`).count(),1);
   assert.deepEqual(semantic.prefab.activeLayout.positions.map(position=>position.id),['covering','crossing','crowning','beneath','behind','before','self','house','hopes-fears','outcome']);
   await desktop.click('.relphi-focus-close');
+  await desktop.setViewportSize({width:1440,height:1000});
 
   await desktop.click('#drawRandomRowCard');
   await desktop.waitForSelector('.relphi-focus-reader',{state:'visible'});
