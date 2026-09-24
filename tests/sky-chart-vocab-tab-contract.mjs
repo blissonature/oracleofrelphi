@@ -14,7 +14,7 @@ new Function(vocabCopy);
 new Function(glyphCopy);
 new Function(registry);
 
-assert.match(html,/sky-chart-vocab-tab-v1\.js\?v=74/,'Sky Chart must load the Vocab subtab');
+assert.match(html,/sky-chart-vocab-tab-v1\.js\?v=75/,'Sky Chart must load the Vocab subtab');
 assert.match(html,/sky-chart-filter-control-unified-v1\.css\?v=9/,'Sky Chart must load the shared Vocab/Relationships control styling');
 assert.match(html,/sky-chart-zodiac-filter-v1\.css\?v=3/,'Sky Chart must load the shared Vocab/Relationships zodiac styling');
 assert.match(registry,/\['anti-vertex','Anti-Vertex',\['anti-vertex','anti vertex','antivertex','avx'\],'assets\/planet-glyphs\/anti-vertex\.svg',1,0,0,'AVx','letter','700'\]/,'Anti-Vertex must use its canonical SVG with the same 16px bold letter treatment as chart angles');
@@ -119,6 +119,8 @@ assert.match(vocab,/const HOUSE_POLARITIES=\[\[1,7\],\[2,8\],\[3,9\],\[4,10\],\[
 assert.match(vocab,/const SIGN_RULERS=\['Mars','Venus','Mercury','Moon','Sun','Mercury','Venus','Mars','Jupiter','Saturn','Saturn','Jupiter'\]/,'Empty sign and house contexts must use Relphi’s traditional sign rulers');
 assert.doesNotMatch(vocab,/POLARITY_ATTACH_ORB=6/,'Vocab must not keep a static six-degree Harmonic Window');
 assert.match(vocab,/function harmonicWindow\(\)/,'Vocab must read the live shared Harmonic Window');
+assert.match(vocab,/model\?\.getWindow/,'Vocab must read the Harmonic Window from the shared harmonic model rather than owning a second value');
+assert.doesNotMatch(vocab,/defaultWindow\?\?0/,'An unset Harmonic Window must never fall through to zero');
 assert.match(vocab,/separation\(record\.value,anchor\.value\)<=windowValue/,'Axis polarity attachment eligibility must use the live Harmonic Window');
 assert.match(vocab,/data-vocab-harmonic-window-input/,'Vocab must expose its own controller for the shared Harmonic Window');
 assert.match(vocab,/canonicalHarmonicWindowInput\(\)/,'The Vocab controller must forward into the canonical Relationships Harmonic Window');
