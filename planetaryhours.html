@@ -1593,8 +1593,12 @@
   .ph-calendar-source { white-space:nowrap; font-weight:900; }
   .ph-calendar-event-main { display:inline; }
   .ph-calendar-event-referents { display:block; margin-top:.18rem; color:#756c65; font-size:.86em; line-height:1.25; font-weight:650; }
+  .ph-calendar-referent-item { display:inline; }
+  .ph-calendar-referent-coordinate { white-space:nowrap; }
   #tableSection[data-calendar-glyphs="false"] .ph-calendar-glyph { display:none !important; }
-  #tableSection[data-calendar-names="false"] .ph-calendar-display-name { display:none !important; }
+  #tableSection[data-calendar-names="false"] .ph-calendar-display-name,
+  #tableSection[data-calendar-names="false"] .ph-calendar-source,
+  #tableSection[data-calendar-names="false"] .ph-calendar-referent-name { display:none !important; }
   #tableSection[data-calendar-referents="false"] .ph-calendar-event-referents { display:none !important; }
   .ph-calendar-sky-calendars-body { display:grid; gap:.6rem; padding:0 .78rem .75rem; border-top:1px solid rgba(17,17,17,.07); }
   .ph-calendar-default-sky-control { display:flex; align-items:center; gap:.48rem; padding-top:.62rem; flex-wrap:wrap; }
@@ -2789,21 +2793,44 @@
     const id = calendarPlacementId(meta);
     const signIndex = phSigns.indexOf(String(meta.sign || ''));
     const items = [];
-    if (calendarPlacementReferents[id]) items.push(String(meta.body || meta.name || '') + ': ' + calendarPlacementReferents[id]);
-    if (signIndex >= 0 && calendarSignReferents[signIndex]) items.push(String(meta.sign) + ': ' + calendarSignReferents[signIndex]);
+    if (calendarPlacementReferents[id]) {
+      items.push({name:String(meta.body || meta.name || ''), text:calendarPlacementReferents[id], kind:'name'});
+    }
+    if (signIndex >= 0 && calendarSignReferents[signIndex]) {
+      items.push({name:String(meta.sign || ''), text:calendarSignReferents[signIndex], kind:'name'});
+    }
     const house = Number(meta.house);
-    if (Number.isFinite(house) && calendarHouseReferents[house]) items.push('H' + house + ': ' + calendarHouseReferents[house]);
+    if (Number.isFinite(house) && calendarHouseReferents[house]) {
+      items.push({name:'H' + house, text:calendarHouseReferents[house], kind:'coordinate'});
+    }
     return items;
   }
 
   function calendarEventReferents(event) {
     const items = [];
-    const add = function (values) { (values || []).forEach(function (value) { if (value && !items.includes(value)) items.push(value); }); };
+    const seen = new Set();
+    const add = function (values) {
+      (values || []).forEach(function (value) {
+        if (!value || !value.text) return;
+        const key = String(value.name || '') + '|' + String(value.text || '');
+        if (seen.has(key)) return;
+        seen.add(key);
+        items.push(value);
+      });
+    };
     add(calendarReferentForPlacement(event && (event.transitMeta || event.primaryMeta)));
     const aspectId = event && (event.aspectId || (event.aspect != null ? calendarAspectId(event.aspect) : event.type === 'conjunction' ? 'conjunction' : ''));
-    if (aspectId && calendarAspectReferents[aspectId]) add([aspectId.charAt(0).toUpperCase() + aspectId.slice(1) + ': ' + calendarAspectReferents[aspectId]]);
+    if (aspectId && calendarAspectReferents[aspectId]) {
+      add([{name:aspectId.charAt(0).toUpperCase() + aspectId.slice(1), text:calendarAspectReferents[aspectId], kind:'name'}]);
+    }
     add(calendarReferentForPlacement(event && (event.targetMeta || event.secondaryMeta)));
     return items;
+  }
+
+  function calendarReferentMarkup(item) {
+    if (!item || !item.text) return '';
+    const nameClass = item.kind === 'coordinate' ? 'ph-calendar-referent-coordinate' : 'ph-calendar-referent-name';
+    return '<span class="ph-calendar-referent-item"><span class="' + nameClass + '">' + htmlText(item.name || '') + (item.name ? ': ' : '') + '</span>' + htmlText(item.text) + '</span>';
   }
 
   function calendarEventMarkup(event) {
@@ -2839,10 +2866,10 @@
     }
     if (!main) main = '<span class="ph-calendar-display-name">' + htmlText(event.label || '') + '</span>';
 
-    if (event.referenceName) main += ' · <span class="ph-calendar-source">' + htmlText(event.referenceName) + '</span>';
+    if (event.referenceName) main += ' <span class="ph-calendar-display-name">·</span> <span class="ph-calendar-source">' + htmlText(event.referenceName) + '</span>';
     const referents = calendarEventReferents(event);
     return '<span class="ph-calendar-event-main">' + main + '</span>' +
-      (referents.length ? '<span class="ph-calendar-event-referents">' + referents.map(htmlText).join(' · ') + '</span>' : '');
+      (referents.length ? '<span class="ph-calendar-event-referents">' + referents.map(calendarReferentMarkup).join(' · ') + '</span>' : '');
   }
   function phWheelDisplayAngles(items, minGapDeg) {
     const gap = Math.max(0, Number(minGapDeg) || 9);
