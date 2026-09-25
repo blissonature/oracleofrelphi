@@ -80,12 +80,24 @@ assert.ok(relationshipHeaderOrder.sort>=0&&relationshipHeaderOrder.limit>relatio
 assert.ok(relationshipHeaderOrder.count>relationshipHeaderOrder.limit,'Match count must come after the controls.');
 assert.ok(relationshipHeaderOrder.copy>relationshipHeaderOrder.count,'Copy pill must come after the match count.');
 assert.ok(relationshipHeaderOrder.download>relationshipHeaderOrder.copy,'Download pill must follow Copy.');
-const countCopyGap=await page.evaluate(()=>{
-  const count=document.getElementById('skyFoundationRelationshipCount')?.getBoundingClientRect();
-  const copy=document.querySelector('#skyFoundationRelationships .sky-relationship-copy-button')?.getBoundingClientRect();
-  return count&&copy?copy.left-count.right:null;
+const rightCluster=await page.evaluate(()=>{
+  const actions=document.querySelector('#skyFoundationRelationships .sky-relationship-heading-actions');
+  const max=actions?.querySelector('.sky-relationship-limit-control')?.getBoundingClientRect();
+  const count=actions?.querySelector('#skyFoundationRelationshipCount')?.getBoundingClientRect();
+  const copy=actions?.querySelector('.sky-relationship-copy-button')?.getBoundingClientRect();
+  const download=actions?.querySelector('#skyChartRelationshipsExport')?.getBoundingClientRect();
+  const ar=actions?.getBoundingClientRect();
+  return{
+    maxToCount:max&&count?count.left-max.right:null,
+    countToCopy:count&&copy?copy.left-count.right:null,
+    copyToDownload:copy&&download?download.left-copy.right:null,
+    rightGap:download&&ar?ar.right-download.right:null
+  };
 });
-assert.ok(countCopyGap!==null&&countCopyGap<=9,'The match count must sit directly beside Copy rather than being pushed away from it.');
+assert.ok(rightCluster.maxToCount!==null&&rightCluster.maxToCount>=18,'The match count must break away from Sort/Max into the right-aligned action cluster.');
+assert.ok(rightCluster.countToCopy!==null&&rightCluster.countToCopy<=9,'The match count must sit directly beside Copy.');
+assert.ok(rightCluster.copyToDownload!==null&&rightCluster.copyToDownload<=9,'Copy and Download must remain a compact pair.');
+assert.ok(rightCluster.rightGap!==null&&rightCluster.rightGap<=2,'Matches, Copy, and Download must terminate at the far-right edge of the Relationships action line.');
 
 assert.equal(await page.locator('#skyFoundationRelationships .sky-relationship-sort-control>span').count(),0,'Sort must not restore a visible Sort header.');
 assert.equal(await page.locator('#skyFoundationRelationships .sky-relationship-limit-control>span').count(),0,'Max must not restore a visible Max header.');
