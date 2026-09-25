@@ -112,7 +112,9 @@ async function applyQuestions(page,labels){
 
     await page.click('#drawingBoardOptionsButton');
     await page.waitForSelector('.relphi-reading-options-drawer.is-reading-options-open',{state:'visible'});
-    assert.equal(await page.locator('#relphiAddPosition').isDisabled(),true,'Add position must stop at the comfortable 50-position cap');
+    await page.click('[data-referent-path="bespoke"]');
+    await page.waitForSelector('#relphiAddPosition',{state:'visible'});
+    assert.equal(await page.locator('#relphiAddPosition').isDisabled(),true,'Add referent must stop at the comfortable 50-position cap');
     await page.click('#relphiCancelOptions');
 
     await page.evaluate(()=>{
