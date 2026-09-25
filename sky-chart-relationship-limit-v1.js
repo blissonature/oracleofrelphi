@@ -32,8 +32,7 @@ function installStyles(){
   style.id='skyRelationshipLimitV1Styles';
   style.textContent=`
 .sky-chart-result-limit-hidden{display:none!important}
-#skyFoundationRelationships .sky-relationship-limit-control{display:inline-flex;align-items:center;gap:4px;min-width:0;white-space:nowrap}
-#skyFoundationRelationships .sky-relationship-limit-control>span{color:#5a524b;font:800 .61rem/1 system-ui,sans-serif}
+#skyFoundationRelationships .sky-relationship-limit-control{display:inline-flex;align-items:center;min-width:0;white-space:nowrap}
 #skyFoundationRelationships .sky-relationship-limit-control>select{
   appearance:none;-webkit-appearance:none;width:auto;min-width:54px;height:29px;box-sizing:border-box;margin:0;padding:0 24px 0 8px;
   border:1px solid rgba(31,27,24,.18);border-radius:9px;background:#fff var(--sky-chart-filter-chevron) no-repeat right 6px center/14px 14px;color:#332e2a;
@@ -41,7 +40,6 @@ function installStyles(){
 }
 #skyFoundationRelationships .sky-relationship-limit-control>select:hover,
 #skyFoundationRelationships .sky-relationship-limit-control>select:focus-visible{border-color:#6b625a;outline:none}
-@media(max-width:420px){#skyFoundationRelationships .sky-relationship-limit-control>span{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);clip-path:inset(50%)}}
 `;
   document.head.appendChild(style);
 }
@@ -75,7 +73,6 @@ function ensureControl(){
   if(!control){
     control=document.createElement('label');
     control.className='sky-relationship-limit-control';
-    const label=document.createElement('span');label.textContent='Max';
     const select=document.createElement('select');
     select.dataset.relationshipLimit='true';
     select.setAttribute('aria-label','Maximum shown relationships');
@@ -84,10 +81,12 @@ function ensureControl(){
     });
     select.value=limit;
     select.addEventListener('change',()=>setLimit(select.value));
-    control.append(label,select);
+    control.appendChild(select);
   }
-  const anchor=actions.querySelector('.sky-relationship-copy-button,#skyChartRelationshipsExport');
-  if(control.parentElement!==actions||control.nextElementSibling!==anchor)actions.insertBefore(control,anchor||actions.firstChild);
+  const count=document.getElementById('skyFoundationRelationshipCount');
+  const pill=actions.querySelector('.sky-relationship-copy-button,#skyChartRelationshipsExport');
+  const anchor=count?.parentElement===actions?count:pill;
+  if(control.parentElement!==actions||control.nextElementSibling!==anchor)actions.insertBefore(control,anchor||pill||null);
   placeMatchCount(actions);
   syncControl();
   return control;
