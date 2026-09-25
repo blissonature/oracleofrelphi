@@ -1260,7 +1260,9 @@
     const entry=reader.querySelector('.relphi-focus-entry');
     const position=reader.querySelector('.relphi-focus-position');
     const reversedBadge=reader.querySelector('.relphi-focus-reversed-badge');
-    if (position) position.textContent=positionLabel(index);
+    const positionText=positionLabel(index);
+    reader.classList.toggle('has-long-referent',positionText.length>320);
+    if (position) position.textContent=positionText;
     if (reversedBadge) reversedBadge.hidden=!reversed;
     replaceFocusArt(reader,artSource,cardId,reversed);
     if (entry) {
