@@ -323,7 +323,7 @@
   }
   function beginOptionsSession() {
     if (optionsSession) return;
-    optionsSession = { baseline:currentSnapshot(), draft:draftFromState(), path:'', building:{element:'',planet:'',aspect:'',sign:'',house:''}, suggestions:[], surfaceDraws:{} };
+    optionsSession = { baseline:currentSnapshot(), draft:draftFromState(), path:'templates', building:{element:'',planet:'',aspect:'',sign:'',house:''}, suggestions:[], surfaceDraws:{} };
   }
   function optionsStructuralChanged(session = optionsSession) {
     if (!session) return false;
@@ -1065,6 +1065,9 @@
   function resetBoardFromOptions(root) {
     if (!optionsSession) return;
     optionsSession.draft=blankDraft();
+    optionsSession.path='bespoke';
+    optionsSession.suggestions=[];
+    optionsSession.surfaceDraws={};
     openTool='';
     closeFocus({acknowledge:false});
     const clear=root.querySelector('#clearShortList');
