@@ -149,6 +149,7 @@ function applyMatrix({announce=true}={}){
   document.documentElement.dataset.skyRelationshipScopeSelection=scopes.join(',');
   updateCount();
   if(announce)window.dispatchEvent(new CustomEvent('relphi:sky-aspect-multiselect-changed',{detail:{selected,scopes,matrix}}));
+  window.dispatchEvent(new CustomEvent('relphi:sky-aspect-visibility-applied',{detail:{selected,scopes,matrix}}));
   applying=false;
 }
 function positionPopover({reset=false}={}){
