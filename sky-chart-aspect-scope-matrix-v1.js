@@ -134,7 +134,7 @@ function updateCount(){
     if(count)count.textContent=`${shown}/${rows.length}`;if(empty)empty.hidden=shown!==0;
   });
 }
-function visible(node){const mode=relationshipMode(node);if(!activeScopes().includes(mode))return false;const aspect=normalize(node?.dataset?.aspect||'');if(!aspect)return true;return!!state[mode]?.has(aspect)}
+function visible(node){const mode=relationshipMode(node);if(!activeScopes().includes(mode))return false;if(window.RelphiAspectConfigurations?.participates?.(node))return true;const aspect=normalize(node?.dataset?.aspect||'');if(!aspect)return true;return!!state[mode]?.has(aspect)}
 function applyMatrix({announce=true}={}){
   applying=true;
   document.querySelectorAll('.sky-foundation-relationship-row,[data-layer="aspects"]>.sky-foundation-aspect').forEach(node=>node.classList.toggle('sky-chart-aspect-multiselect-hidden',!visible(node)));
@@ -188,7 +188,7 @@ function handleLegacyAspectPass(event){
 }
 function start(){
   schedule();document.addEventListener('change',handleChange);
-  ['relphi:sky-foundation-ready','relphi:sky-foundation-interactions-ready','relphi:sky-intrasky-relationships-ready','relphi:sky-intrasky-b-relationships-ready','relphi:sky-single-sky-aspects-rendered','relphi:sky-placement-multiselect-changed','relphi:sky-house-multiselect-changed','relphi:sky-foundation-filter-changed','relphi:sky-b-removed','relphi:sky-b-restored'].forEach(name=>window.addEventListener(name,schedule));
+  ['relphi:sky-foundation-ready','relphi:sky-foundation-interactions-ready','relphi:sky-intrasky-relationships-ready','relphi:sky-intrasky-b-relationships-ready','relphi:sky-single-sky-aspects-rendered','relphi:sky-placement-multiselect-changed','relphi:sky-house-multiselect-changed','relphi:sky-foundation-filter-changed','relphi:sky-b-removed','relphi:sky-b-restored','relphi:sky-configuration-selection-changed','relphi:sky-configurations-detected'].forEach(name=>window.addEventListener(name,schedule));
   window.addEventListener('relphi:sky-aspect-multiselect-changed',handleLegacyAspectPass);
   window.addEventListener('storage',event=>{if(!event.key||event.key==='relphiSkyChartB')schedule()});
   new MutationObserver(schedule).observe(document.documentElement,{attributes:true,attributeFilter:['data-sky-b-present','data-sky-b-editing']});
