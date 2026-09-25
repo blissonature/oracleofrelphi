@@ -177,6 +177,7 @@ function clearPeerHighlight(){
   document.querySelectorAll('.sky-foundation-relationship-row.is-configuration-peer,.sky-foundation-relationship-row.is-configuration-hover-source').forEach(row=>row.classList.remove('is-configuration-peer','is-configuration-hover-source'));
   document.querySelectorAll('.sky-chart-configuration-line.is-configuration-peer-line').forEach(line=>line.classList.remove('is-configuration-peer-line'));
   document.querySelector('[data-layer="configurations"]')?.classList.remove('is-peer-hover');
+  peerHoverRow=null;peerHoverFrozen=false;
 }
 function highlightPeers(row){
   const related=patternsForNode(row);if(!related.length){clearPeerHighlight();return}
@@ -184,8 +185,20 @@ function highlightPeers(row){
   clearPeerHighlight();
   document.querySelectorAll('.sky-foundation-relationship-row').forEach(candidate=>{if(keys.has(relationNodeKey(candidate)))candidate.classList.add('is-configuration-peer')});
   row.classList.add('is-configuration-hover-source');
+  peerHoverRow=row;peerHoverFrozen=false;
   const layer=document.querySelector('[data-layer="configurations"]');layer?.classList.add('is-peer-hover');
   layer?.querySelectorAll('.sky-chart-configuration-line').forEach(line=>line.classList.toggle('is-configuration-peer-line',keys.has(String(line.dataset.configurationKey||''))));
+}
+function freezePeerHoverOnExternalExit(event,row){
+  if(!row||row.contains(event.relatedTarget)||event.relatedTarget!==null)return false;
+  peerHoverFrozen=!!peerHoverRow;
+  return peerHoverFrozen;
+}
+function reconcileFrozenPeerHover(event){
+  if(!peerHoverFrozen)return;
+  peerHoverFrozen=false;
+  const row=event.target?.closest?.('.sky-foundation-relationship-row')||null;
+  if(row)highlightPeers(row);else clearPeerHighlight();
 }
 function setSelection(id,checked){
   const available=availableTypes();
@@ -200,10 +213,14 @@ function handleChange(event){const input=event.target.closest?.('[data-configura
 function handleClick(event){const button=event.target.closest?.('[data-configuration-pattern]');if(!button)return;event.preventDefault();const key=button.dataset.configurationPattern;activePatternKey=activePatternKey===key?'':key;renderOverlay();const result=detect();renderConfigurationSection(result.graph);window.dispatchEvent(new CustomEvent('relphi:sky-configuration-selection-changed',{detail:{selected:[...selectedTypes],activePattern:activePatternKey}}))}
 function start(){
   document.addEventListener('change',handleChange,true);document.addEventListener('click',handleClick,true);
-  document.addEventListener('pointerover',event=>{const row=event.target.closest?.('.sky-foundation-relationship-row');if(row&&row!==event.relatedTarget?.closest?.('.sky-foundation-relationship-row'))highlightPeers(row)});
-  document.addEventListener('pointerout',event=>{const row=event.target.closest?.('.sky-foundation-relationship-row');if(row&&!row.contains(event.relatedTarget))clearPeerHighlight()});
+  document.addEventListener('pointerover',event=>{const row=event.target.closest?.('.sky-foundation-relationship-row');if(row&&row!==event.relatedTarget?.closest?.('.sky-foundation-relationship-row')){peerHoverFrozen=false;highlightPeers(row)}});
+  document.addEventListener('pointermove',reconcileFrozenPeerHover,true);
+  document.addEventListener('pointerdown',reconcileFrozenPeerHover,true);
+  document.addEventListener('pointerout',event=>{const row=event.target.closest?.('.sky-foundation-relationship-row');if(!row||row.contains(event.relatedTarget))return;if(freezePeerHoverOnExternalExit(event,row))return;clearPeerHighlight()});
   document.addEventListener('focusin',event=>{const row=event.target.closest?.('.sky-foundation-relationship-row');if(row)highlightPeers(row)});
   document.addEventListener('focusout',event=>{const row=event.target.closest?.('.sky-foundation-relationship-row');if(row&&!row.contains(event.relatedTarget))clearPeerHighlight()});
+  window.addEventListener('blur',()=>{if(peerHoverRow)peerHoverFrozen=true});
+  document.addEventListener('visibilitychange',()=>{if(document.hidden&&peerHoverRow)peerHoverFrozen=true});
   ['relphi:sky-aspect-filter-rendered','relphi:sky-foundation-ready','relphi:sky-intrasky-relationships-ready','relphi:sky-intrasky-b-relationships-ready','relphi:sky-harmonic-window-visibility-changed','relphi:sky-orb-limit-changed','relphi:sky-b-removed','relphi:sky-b-restored','relphi:saved-sky-loaded'].forEach(name=>window.addEventListener(name,schedule));
   new MutationObserver(records=>{if(records.some(record=>record.addedNodes?.length&&[...record.addedNodes].some(node=>node instanceof Element&&(node.matches?.('.sky-foundation-relationship-row')||node.querySelector?.('.sky-foundation-relationship-row')))))schedule()}).observe(document.getElementById('skyFoundationRoot')||document.body,{childList:true,subtree:true});
   schedule();
