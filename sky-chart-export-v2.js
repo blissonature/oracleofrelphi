@@ -313,7 +313,7 @@
     @keyframes skyExportSpin{to{transform:rotate(360deg)}}
     .sky-export-icon-button{appearance:none;display:grid;place-items:center;width:30px;height:30px;padding:0;border:1px solid rgba(31,27,24,.2);border-radius:999px;background:#fff;color:#2d2824;cursor:pointer}.sky-export-icon-button svg{width:17px;height:17px}.sky-export-icon-button .sky-export-spinner{animation:skyExportSpin .8s linear infinite}.sky-export-icon-button:hover,.sky-export-icon-button:focus-visible{outline:none;border-color:#2462d0;box-shadow:0 0 0 2px rgba(36,98,208,.12)}.sky-export-icon-button:disabled{opacity:.82;cursor:wait}.sky-export-icon-button[data-export-ready="true"]{border-color:#2462d0;color:#2462d0}
     .sky-wheel-copy-button{appearance:none;height:30px;padding:0 .72rem;border:1px solid rgba(31,27,24,.18);border-radius:999px;background:#fff;color:#332e2a;font:800 .68rem/1 system-ui,sans-serif;cursor:pointer;white-space:nowrap}.sky-wheel-copy-button:hover,.sky-wheel-copy-button:focus-visible{outline:none;border-color:#6b625a;background:#fffdfa}.sky-wheel-copy-button:disabled{opacity:.7;cursor:wait}
-    #skyFoundationComparison>.sky-foundation-heading{flex-wrap:wrap}#skyFoundationComparison .sky-export-wheel-slot{display:flex;align-items:center;justify-content:flex-end;gap:6px;margin-left:auto}.sky-relationship-heading-actions{display:flex;align-items:center;gap:6px}.sky-relationship-heading-actions button{margin:0}
+    #skyFoundationFocus .sky-export-wheel-slot{display:flex;align-items:center;justify-content:flex-end;gap:6px;margin-left:0}.sky-relationship-heading-actions{display:flex;align-items:center;gap:6px}.sky-relationship-heading-actions button{margin:0}
     #${STATUS_ID}{flex:1 0 100%;color:#665e57;text-align:right;font:650 .58rem/1.2 system-ui,sans-serif}#${STATUS_ID}:empty{display:none}#${STATUS_ID}[data-error="true"]{color:#b81712}#${STATUS_ID}[data-busy="true"]{margin-top:4px;padding:7px 10px;border-radius:999px;background:#f6f0e8;color:#3e3833;font-size:.68rem;font-weight:800}
     .sky-wheel-export-stage{position:relative;background:#fffdf8;color:#2d2824;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}.sky-wheel-export-stage>#skyFoundationWheelMount{position:absolute}
     .sky-export-brand{position:absolute;z-index:4;top:22px;left:50%;transform:translateX(-50%);display:flex;align-items:center;justify-content:center;gap:11px;min-width:248px;padding:7px 12px;border-radius:12px;background:rgba(255,253,248,.96);box-shadow:0 1px 8px rgba(31,27,24,.08)}
@@ -338,15 +338,16 @@
 
   function button(id,label){const b=document.createElement('button');b.type='button';b.id=id;b.className='sky-export-icon-button';b.innerHTML=ICON;b.setAttribute('aria-label',label);b.title=label;return b}
   function ensureWheelControl(){
-    const heading=document.querySelector('#skyFoundationComparison>.sky-foundation-heading');if(!heading)return;
-    heading.querySelector('.sky-snapshot-actions')?.remove();
-    let slot=heading.querySelector('.sky-export-wheel-slot');
-    if(!slot){slot=document.createElement('span');slot.className='sky-export-wheel-slot';heading.appendChild(slot)}
+    const controls=document.querySelector('#skyFoundationFocus>.sky-foundation-focus-heading .sky-focus-heading-controls');if(!controls)return;
+    document.querySelector('#skyFoundationComparison>.sky-foundation-heading .sky-export-wheel-slot')?.remove();
+    document.querySelector('#skyFoundationComparison>.sky-foundation-heading .sky-snapshot-actions')?.remove();
+    let slot=controls.querySelector('.sky-export-wheel-slot');
+    if(!slot){slot=document.createElement('span');slot.className='sky-export-wheel-slot';controls.appendChild(slot)}
     if(!slot.querySelector(`#${WHEEL_COPY_ID}`)){
       const copy=document.createElement('button');copy.type='button';copy.id=WHEEL_COPY_ID;copy.className='sky-wheel-copy-button';copy.textContent='Copy';copy.setAttribute('aria-label','Copy Zodiac Wheel snapshot');copy.title='Copy Zodiac Wheel snapshot to clipboard';copy.addEventListener('click',()=>copyWheel(copy));slot.appendChild(copy);
     }
     if(!slot.querySelector(`#${WHEEL_ID}`)){const b=button(WHEEL_ID,'Download wheel snapshot');b.addEventListener('click',()=>exportKind('wheel',b));slot.appendChild(b)}
-    let state=heading.querySelector(`#${STATUS_ID}`);if(!state){state=document.createElement('span');state.id=STATUS_ID;state.setAttribute('role','status');state.setAttribute('aria-live','polite');heading.appendChild(state)}
+    let state=controls.querySelector(`#${STATUS_ID}`);if(!state){state=document.createElement('span');state.id=STATUS_ID;state.setAttribute('role','status');state.setAttribute('aria-live','polite');controls.appendChild(state)}
   }
   function ensureRelationshipControl(){
     const heading=document.querySelector('#skyFoundationRelationships>.sky-foundation-relationships-heading');if(!heading)return;
