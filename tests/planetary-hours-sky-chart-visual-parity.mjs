@@ -341,3 +341,11 @@ assert.match(page,/const kind = \/set\$\/i\.test\(action\) \? 'Set' : \/rise\$\/
 assert.doesNotMatch(page,/calendarPlacementMarkup\(primary\) \+ ' · <span class="ph-calendar-display-name">/);
 assert.doesNotMatch(page,/calendarPlacementMarkup\(p\) \+ ' · <span class="ph-calendar-display-name">/);
 assert.doesNotMatch(page,/main \+= ' <span class="ph-calendar-display-name">·<\/span>/);
+
+assert.match(page,/function renderCalendarFittedGlyphs\(root\)/);
+assert.match(page,/component\.draw\(svg, id, \{radius:14\.5,padding:\.5,color:'currentColor'\}\)/);
+assert.match(page,/\.ph-calendar-glyph \{[\s\S]*width:1\.68em;[\s\S]*height:1em;/);
+assert.match(page,/\.ph-calendar-glyph svg \{[\s\S]*width:1\.68em;[\s\S]*height:1\.68em;[\s\S]*transform:translate\(-50%,-36%\)/);
+assert.doesNotMatch(page,/\.ph-calendar-event-lane \.ph-calendar-body-glyph/);
+assert.match(page,/renderCalendarFittedGlyphs\(el\.calendarMonthGrid\);/);
+assert.match(page,/renderCalendarFittedGlyphs\(el\.calendarEventLane\);/);
