@@ -896,7 +896,7 @@
       const num=surfacePipNumber(draws.pip);
       parts.push('<article data-surface-kind="pip" data-surface-card-type="'+escapeHtml(draws.pip.card_type||'')+'"><strong>'+escapeHtml(draws.pip.name)+'</strong><span>What form it is taking · '+escapeHtml(draws.pip.element||'')+' · '+escapeHtml(HOUSE_ORDINALS[num-1]||String(num))+' House · '+escapeHtml(MODE_BY_PIP[num]||'')+'</span></article>');
     }
-    return parts.length ? '<div class="relphi-surface-draws">'+parts.join('')+'</div>' : '<p class="relphi-referent-empty">Draw from the symbolic sub-packs. These cards suggest what to ask and do not become part of the reading.</p>';
+    return parts.length ? '<div class="relphi-surface-draws">'+parts.join('')+'</div>' : '<p class="relphi-referent-empty">Draw from the symbolic sub-packs. The surfaced card suggests the referent; that position then draws its reading card from the same sub-pack. The surfaced card itself does not become part of the reading.</p>';
   }
   function suggestionsFromSurface(session) {
     const draws=session.surfaceDraws || {};
@@ -1132,6 +1132,8 @@
     };
     drawer.querySelector('#relphiAcceptSuggestions')?.addEventListener('click',()=>{
       if (!commitSelectedSuggestions()) return;
+      session.suggestions=[];
+      session.suggestionPacks=[];
       renderOptions(root);
     });
 
@@ -1337,6 +1339,23 @@
     else if (block) block.appendChild(section);
     else entry.prepend(section);
   }
+  function addFocusSurfaceContext(entry,index,cardId) {
+    entry.querySelectorAll('[data-relphi-focus-surface-context]').forEach(node=>node.remove());
+    const snap=currentSnapshot() || {};
+    const scope=String(snap.rowPositionMeta?.[index]?.drawScope || snap.rowActiveLayout?.positions?.[index]?.drawScope || '');
+    if (scope!=='courts') return;
+    const card=(Array.isArray(window.RELPHI_TAROT_CARDS)?window.RELPHI_TAROT_CARDS:[]).find(item=>item?.card_id===cardId);
+    if (!isPrincessPage(card)) return;
+    const formula=surfaceCourtFormula(card);
+    const section=document.createElement('section');
+    section.className='interpretation-card--priority relphi-focus-surface-context';
+    section.dataset.relphiFocusSurfaceContext='princess-page';
+    const heading=document.createElement('h3'); heading.textContent='Next-generation embodiment';
+    const body=document.createElement('p'); body.textContent='Page/Princess · '+formula+' · Earth carries the suit element into tangible form.';
+    section.append(heading,body);
+    const block=entry.querySelector('.full-entry-title-block');
+    if (block) block.appendChild(section); else entry.prepend(section);
+  }
   function replaceFocusArt(reader, artSource, cardId, reversed) {
     const frame=reader.querySelector('.relphi-focus-art-frame');
     if (!frame) return;
@@ -1368,6 +1387,7 @@
       entry.innerHTML=ledgerBridge()?.renderCardEntry?.(cardId,'Tarot Ledger entry') || '<p>Card entry unavailable.</p>';
       entry.querySelectorAll('.tarot-card-art,.full-entry-row-button').forEach(node=>node.remove());
       addFocusReversedMeaning(entry,cardId,reversed);
+      addFocusSurfaceContext(entry,index,cardId);
       ledgerBridge()?.bindCardEntry?.(entry);
       entry.scrollTop=0;
     }
