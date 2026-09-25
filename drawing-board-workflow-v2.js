@@ -1122,7 +1122,14 @@
   }
   function openOptions(root = panel()) {
     if (!root) return;
-    if (optionsSession) { closeOptions(root); return; }
+    if (optionsSession) {
+      const existing=root.querySelector('.relphi-reading-options-drawer');
+      if (existing) { closeOptions(root); return; }
+      const trigger=root.querySelector('#drawingBoardOptionsButton');
+      if (trigger) { trigger.textContent='Referents'; trigger.setAttribute('aria-expanded','true'); }
+      renderOptions(root);
+      return;
+    }
     beginOptionsSession();
     const trigger=root.querySelector('#drawingBoardOptionsButton');
     if (trigger) { trigger.textContent='Referents'; trigger.setAttribute('aria-expanded','true'); }
