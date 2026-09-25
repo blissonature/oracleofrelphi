@@ -330,3 +330,14 @@ assert.ok(page.indexOf('id="moonDisc"') < page.indexOf('id="heptagramSvg"'));
 assert.ok(page.indexOf('id="heptagramSvg"') < page.indexOf('id="phCurrentWheel"'));
 assert.ok(page.indexOf('id="phCurrentWheel"') < page.indexOf('Where’s the Wanderer?'));
 assert.doesNotMatch(page,/class="ph-top-triad"/);
+
+assert.match(page,/ph-calendar-body-glyph/);
+assert.match(page,/ph-calendar-sign-glyph/);
+assert.match(page,/ph-calendar-aspect-glyph/);
+assert.match(page,/\.ph-calendar-event-lane \.ph-calendar-body-glyph \{[^}]*width:1\.48em;[^}]*height:1\.48em;/s);
+assert.match(page,/\['rise-set','ingress','station'\]\.includes\(event\.type\)/);
+assert.match(page,/class="ph-calendar-event-kind">Ingress<\/span>/);
+assert.match(page,/const kind = \/set\$\/i\.test\(action\) \? 'Set' : \/rise\$\/i\.test\(action\) \? 'Rise'/);
+assert.doesNotMatch(page,/calendarPlacementMarkup\(primary\) \+ ' · <span class="ph-calendar-display-name">/);
+assert.doesNotMatch(page,/calendarPlacementMarkup\(p\) \+ ' · <span class="ph-calendar-display-name">/);
+assert.doesNotMatch(page,/main \+= ' <span class="ph-calendar-display-name">·<\/span>/);
