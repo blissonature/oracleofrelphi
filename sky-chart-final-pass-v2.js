@@ -413,11 +413,13 @@
     }
     if (bar.parentElement !== focusPanel) focusPanel.appendChild(bar);
 
-    if (relationshipPanel.parentElement === comparison) {
-      comparison.insertBefore(focusPanel, relationshipPanel);
+    const wheelMount = comparison.querySelector(':scope > #skyFoundationWheelMount');
+    if (wheelMount) {
+      if (focusPanel.parentElement !== comparison || focusPanel.nextElementSibling !== wheelMount) comparison.insertBefore(focusPanel, wheelMount);
     } else if (!focusPanel.isConnected) {
-      comparison.appendChild(focusPanel);
+      comparison.prepend(focusPanel);
     }
+    comparison.querySelector(':scope > .sky-foundation-heading')?.remove();
 
     let relationshipControls = relationshipPanel.querySelector(':scope > .sky-relationship-controls');
     if (!relationshipControls) {
