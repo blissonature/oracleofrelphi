@@ -952,12 +952,22 @@
     });
 
     const labelsList=drawer.querySelector('#relphiPositionLabels');
+    const refreshBespokeLabels=()=>{
+      if (!labelsList?.isConnected) return;
+      labelsList.innerHTML=labelsMarkup(draft.labels);
+      const add=drawer.querySelector('#relphiAddPosition');
+      if (add) add.disabled=hasCards || draft.labels.length>=MAX_POSITIONS;
+      drawer.querySelector('.relphi-referent-review')?.remove();
+      const review=referentReviewMarkup(draft);
+      const settings=drawer.querySelector('.relphi-referent-settings');
+      if (review && settings) settings.insertAdjacentHTML('beforebegin',review);
+    };
     const acceptCommaList=(value)=>{
       const labels=parseBulkQuestions(value);
       if (!labels.length) return false;
       draft.labels=labels;
       markQuestionEditCustom(drawer,draft);
-      if (optionsSession) renderOptions(root);
+      refreshBespokeLabels();
       return true;
     };
     drawer.querySelector('#relphiParseReferents')?.addEventListener('click',()=>acceptCommaList(drawer.querySelector('#relphiBulkReferents')?.value || ''));
