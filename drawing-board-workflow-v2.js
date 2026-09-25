@@ -769,7 +769,8 @@
   const MODE_BY_PIP = {2:'Cardinal',3:'Cardinal',4:'Cardinal',5:'Fixed',6:'Fixed',7:'Fixed',8:'Mutable',9:'Mutable',10:'Mutable'};
 
   function referentPathButton(id,label,description,path,disabled=false) {
-    return '<button type="button" class="relphi-referent-path'+(path===id?' is-active':'')+'" data-referent-path="'+id+'" '+(disabled?'disabled':'')+'><strong>'+escapeHtml(label)+'</strong><span>'+escapeHtml(description)+'</span></button>';
+    const active=path===id;
+    return '<button type="button" role="tab" aria-selected="'+(active?'true':'false')+'" tabindex="'+(active?'0':'-1')+'" class="relphi-referent-path'+(active?' is-active':'')+'" data-referent-path="'+id+'" '+(disabled?'disabled':'')+'><strong>'+escapeHtml(label)+'</strong></button>';
   }
   function candidateQuestionsFromBlocks(blocks={}) {
     const element=String(blocks.element||'');
@@ -888,7 +889,7 @@
   function pathPanelMarkup(session,hasCards) {
     const draft=session.draft;
     if (!session.path) return '<p class="relphi-referent-intro">Choose how you want to begin. You can always draw without referents.</p>';
-    if (session.path==='draw') return '<section class="relphi-referent-panel"><strong>Draw</strong><p>Use an open board with no referents or spread structure.</p><button type="button" id="relphiUseBlankDraw" '+(hasCards?'disabled':'')+'>Use blank board</button></section>';
+    if (session.path==='draw') return '';
     if (session.path==='bespoke') return bespokeMarkup(draft,hasCards);
     if (session.path==='templates') return templatesMarkup(draft,hasCards);
     if (session.path==='blocks') return '<section class="relphi-referent-panel"><div class="relphi-options-subhead"><div><strong>Building Blocks</strong><span>Choose Relphi symbols deliberately and let them formulate candidate referents.</span></div></div>'+buildingControlsMarkup(session,hasCards)+suggestionMarkup(session,hasCards)+'</section>';
@@ -912,22 +913,33 @@
     drawer.innerHTML = '<div class="relphi-options-heading"><div><span class="eyebrow">Drawing Board</span><h3>Referents</h3></div></div>'+
       (hasCards ? '<p class="relphi-options-note relphi-options-note-visible">Reset Board before changing referents. The reading structure is locked once cards are drawn.</p>' : '')+
       '<div class="relphi-options-body">'+
-        '<nav class="relphi-referent-paths" aria-label="Referent paths">'+
+        '<div class="relphi-referent-paths" role="tablist" aria-label="Referent paths">'+
           referentPathButton('draw','Draw','No referents. Just begin.',session.path,hasCards)+
           referentPathButton('bespoke','Bespoke','Write your own referents.',session.path,hasCards)+
           referentPathButton('templates','Templates','Use a saved or established spread.',session.path,hasCards)+
           referentPathButton('blocks','Building Blocks','Choose elements planets aspects signs and houses.',session.path,hasCards)+
           referentPathButton('surface','See What Surfaces','Draw symbolic cards to discover what to ask.',session.path,hasCards)+
-        '</nav>'+
+        '</div>'+
         pathPanelMarkup(session,hasCards)+
         referentReviewMarkup(draft)+
         '<details class="relphi-referent-settings"><summary>Draw settings</summary><div class="relphi-draw-options"><label>Pack<select id="relphiDraftPack">'+packOptions(draft.pack)+'</select></label><label><input id="relphiDraftStickers" type="checkbox" '+(draft.stickers?'checked':'')+' title="Show position stickers"> Show referent stickers</label><label><input id="relphiDraftReversals" type="checkbox" '+(draft.reversals?'checked':'')+'> Reversals</label><label><input id="relphiDraftRepeats" type="checkbox" '+(draft.repeats?'checked':'')+'> Repeats</label></div></details>'+
       '</div>'+
-      '<div class="relphi-options-commitbar"><button type="button" id="relphiResetBoard" class="relphi-reset-board">Reset Board</button><span></span><button type="button" id="relphiCancelOptions">Cancel</button><button type="button" id="relphiApplyOptions" class="primary">'+(session.path==='draw'?'Start Drawing':'Start Reading')+'</button></div>';
+      '<div class="relphi-options-commitbar"><button type="button" id="relphiResetBoard" class="relphi-reset-board">Reset Board</button><span></span><button type="button" id="relphiCancelOptions">Cancel</button><button type="button" id="relphiApplyOptions" class="primary">Start Reading</button></div>';
     workspace.appendChild(drawer);
 
     drawer.querySelectorAll('[data-referent-path]').forEach(button=>button.addEventListener('click',()=>{
-      session.path=button.dataset.referentPath || '';
+      const nextPath=button.dataset.referentPath || '';
+      if (nextPath==='draw') {
+        session.path='draw';
+        session.suggestions=[];
+        draft.labels=[];
+        draft.templateId='';
+        draft.basedOnTemplateId='';
+        draft.templateName='';
+        applyOptions(root);
+        return;
+      }
+      session.path=nextPath;
       session.suggestions=[];
       renderOptions(root);
     }));
@@ -1046,10 +1058,6 @@
       renderOptions(root);
     });
 
-    drawer.querySelector('#relphiUseBlankDraw')?.addEventListener('click',()=>{
-      draft.labels=[]; draft.templateId=''; draft.basedOnTemplateId=''; draft.templateName='';
-      applyOptions(root);
-    });
     drawer.querySelector('#relphiDraftPack')?.addEventListener('change',event=>{draft.pack=event.target.value;});
     drawer.querySelector('#relphiDraftStickers')?.addEventListener('change',event=>{draft.stickers=event.target.checked;});
     drawer.querySelector('#relphiDraftReversals')?.addEventListener('change',event=>{draft.reversals=event.target.checked;});
