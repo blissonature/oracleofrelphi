@@ -1551,6 +1551,18 @@
   .ph-calendar-event.has-aspect { border-left-color:var(--ph-calendar-aspect-color,rgba(17,17,17,.12)); }
   .ph-calendar-event.has-calendar-source { border-left-color:var(--ph-calendar-source-color,rgba(17,17,17,.18)); }
   .ph-calendar-event strong { color:var(--relphi-red-dark); font-weight:900; }
+  .ph-calendar-event-lane .ph-calendar-body-glyph {
+    width:1.48em;
+    height:1.48em;
+    margin:0 .12em;
+    vertical-align:-.3em;
+  }
+  .ph-calendar-event-kind {
+    display:inline;
+    white-space:nowrap;
+    color:#302a25;
+    font-weight:900;
+  }
   .ph-calendar-note-summary { margin:.55rem 0 0; color:#655d56; font-size:.8rem; font-weight:700; }
   .ph-calendar-month-view { margin-top:.9rem; }
   .ph-calendar-weekdays,
@@ -3142,15 +3154,16 @@
     return String(meta.body || meta.name || '') + ' ' + String(meta.sign || '') + ' ' + Number(meta.degree || 0) + '°' + String(Number(meta.minute || 0)).padStart(2,'0') + '′' + (house ? ' ' + house : '');
   }
 
-  function calendarCanonicalGlyphMarkup(value, label) {
+  function calendarCanonicalGlyphMarkup(value, label, extraClass) {
     const registry = window.RelphiGlyphRegistry;
     const entry = registry && (registry.resolve(value) || registry.get(value));
     if (!entry) return '';
+    const className = 'ph-calendar-glyph' + (extraClass ? ' ' + extraClass : '');
     if (entry.asset) {
-      return '<span class="ph-calendar-glyph" style="--ph-calendar-glyph:url(\'' + attrText(entry.asset) + '\')" role="img" aria-label="' + attrText(label || entry.name || value) + '"></span>';
+      return '<span class="' + className + '" style="--ph-calendar-glyph:url(\'' + attrText(entry.asset) + '\')" role="img" aria-label="' + attrText(label || entry.name || value) + '"></span>';
     }
     if (entry.fallback) {
-      return '<span class="ph-calendar-glyph ph-calendar-glyph-fallback" role="img" aria-label="' + attrText(label || entry.name || value) + '">' + htmlText(entry.fallback) + '</span>';
+      return '<span class="' + className + ' ph-calendar-glyph-fallback" role="img" aria-label="' + attrText(label || entry.name || value) + '">' + htmlText(entry.fallback) + '</span>';
     }
     return '';
   }
@@ -3218,8 +3231,8 @@
     const body = String(meta.body || meta.name || '');
     const sign = String(meta.sign || '');
     const house = calendarHouseNumber(meta.house);
-    const bodyGlyph = calendarCanonicalGlyphMarkup(body, body);
-    const signGlyph = calendarCanonicalGlyphMarkup(sign, sign);
+    const bodyGlyph = calendarCanonicalGlyphMarkup(body, body, 'ph-calendar-body-glyph');
+    const signGlyph = calendarCanonicalGlyphMarkup(sign, sign, 'ph-calendar-sign-glyph');
     const houseMarkup = house
       ? ' <span class="ph-calendar-house-token">' + calendarHouseMedallionMarkup(house) + '<span class="ph-calendar-display-name">' + htmlText(calendarHouseNames[house]) + '</span></span>'
       : '';
@@ -3234,7 +3247,7 @@
   function calendarAspectMarkup(value) {
     const id = calendarAspectId(value);
     return '<span class="ph-calendar-aspect">' +
-      calendarCanonicalGlyphMarkup(id, calendarAspectName(id)) +
+      calendarCanonicalGlyphMarkup(id, calendarAspectName(id), 'ph-calendar-aspect-glyph') +
       '<span class="ph-calendar-display-name">' + htmlText(calendarAspectName(id)) + '</span></span>';
   }
 
@@ -3257,6 +3270,7 @@
   }
 
   function calendarEventReferents(event) {
+    if (event && ['rise-set','ingress','station'].includes(event.type)) return [];
     const items = [];
     const seen = new Set();
     const add = function (values) {
@@ -3296,14 +3310,17 @@
       main = calendarPlacementMarkup(primary) + ' ' + calendarAspectMarkup('conjunction') + ' ' + calendarPlacementMarkup(secondary);
     } else if (event.type === 'lunation' && primary && secondary) {
       const lunationAspect = String(event.label || '').toLowerCase().includes('full') ? 'opposition' : 'conjunction';
-      main = '<span class="ph-calendar-display-name">' + htmlText(String(event.lunationName || event.label || 'Lunation').split(' · ')[0]) + '</span> · ' +
+      main = '<span class="ph-calendar-event-kind">' + htmlText(String(event.lunationName || event.label || 'Lunation').split(' · ')[0]) + '</span> ' +
         calendarPlacementMarkup(primary) + ' ' + calendarAspectMarkup(lunationAspect) + ' ' + calendarPlacementMarkup(secondary);
     } else if (event.type === 'ingress' && primary) {
-      main = calendarPlacementMarkup(primary) + ' <span class="ph-calendar-display-name">enters</span>';
+      main = calendarPlacementMarkup(primary) + ' <span class="ph-calendar-event-kind">Ingress</span>';
     } else if (event.type === 'station' && primary) {
-      main = calendarPlacementMarkup(primary) + ' <span class="ph-calendar-display-name">stations ' + htmlText(event.direction || '') + '</span>';
+      const stationKind = event.direction ? 'Station · ' + String(event.direction) : 'Station';
+      main = calendarPlacementMarkup(primary) + ' <span class="ph-calendar-event-kind">' + htmlText(stationKind) + '</span>';
     } else if (event.type === 'rise-set' && primary) {
-      main = calendarPlacementMarkup(primary) + ' · <span class="ph-calendar-display-name">' + htmlText(event.action || '') + '</span>';
+      const action = String(event.action || '').replace(/^Next\s+/i,'').replace(/^Moon/i,'Moon ').trim();
+      const kind = /set$/i.test(action) ? 'Set' : /rise$/i.test(action) ? 'Rise' : action;
+      main = calendarPlacementMarkup(primary) + ' <span class="ph-calendar-event-kind">' + htmlText(kind) + '</span>';
     } else if (event.type === 'alert' && event.rule) {
       const rule = event.rule;
       const p = phEventBodyMeta(rule.body, event.time);
@@ -3311,12 +3328,12 @@
         const s = phEventBodyMeta(rule.targetBody, event.time);
         main = calendarPlacementMarkup(p) + ' ' + calendarAspectMarkup(rule.aspect) + ' ' + calendarPlacementMarkup(s);
       } else {
-        main = calendarPlacementMarkup(p) + ' · <span class="ph-calendar-display-name">' + htmlText(phAlertRuleLabel(rule)) + '</span>';
+        main = calendarPlacementMarkup(p) + ' <span class="ph-calendar-display-name">' + htmlText(phAlertRuleLabel(rule)) + '</span>';
       }
     }
     if (!main) main = '<span class="ph-calendar-display-name">' + htmlText(event.label || '') + '</span>';
 
-    if (event.referenceName) main += ' <span class="ph-calendar-display-name">·</span> <span class="ph-calendar-source">' + htmlText(event.referenceName) + '</span>';
+    if (event.referenceName) main += ' <span class="ph-calendar-source">' + htmlText(event.referenceName) + '</span>';
     const referents = calendarEventReferents(event);
     return '<span class="ph-calendar-event-main">' + main + '</span>' +
       (referents.length ? '<span class="ph-calendar-event-referents">' + referents.map(calendarReferentMarkup).join(' · ') + '</span>' : '');
