@@ -46,9 +46,24 @@ const base='http://127.0.0.1:8000/tarot.html';
     assert.equal(await page.locator('.relphi-referent-review li').count(),3,'accepted suggestions should become current referents');
 
     await page.click('[data-referent-path="surface"]');
+    const surfaceButtons=await page.locator('[data-surface-draw]').allTextContents();
+    assert.deepEqual(surfaceButtons,[
+      'Which primordial force?','What is taking root?','What is at work?','How is it showing up?',
+      'What is needed?','How is it being carried?','What form is it taking?'
+    ],'See What Surfaces should label sub-packs by what they tell the reader rather than technical pack names');
     await page.click('#relphiSurfaceAll');
-    await page.waitForFunction(()=>document.querySelectorAll('.relphi-surface-draws article').length===3);
-    assert.equal(await page.locator('[data-suggestion-text]').count(),3,'See What Surfaces should translate the draw into candidate referents');
+    await page.waitForFunction(()=>document.querySelectorAll('.relphi-surface-draws article').length===7);
+    assert.ok(await page.locator('[data-suggestion-text]').count()>=7,'See What Surfaces should translate all surfaced layers into candidate referents');
+    assert.ok((await page.locator('.relphi-surface-draws').innerText()).includes('three-element layer before Earth'),'Mother-letter Majors should be identified as the primordial three-element layer');
+    assert.ok((await page.locator('.relphi-surface-draws').innerText()).includes('four-element layer with Earth included'),'Aces should be identified as the four-element quaternion');
+
+    await page.evaluate(()=>{Math.random=()=>0.999999;});
+    await page.click('[data-surface-draw="court"]');
+    await page.waitForFunction(()=>document.querySelector('.relphi-surface-draws .is-princess-page'));
+    const princessText=await page.locator('.relphi-surface-draws .is-princess-page').innerText();
+    assert.match(princessText,/Next-generation embodiment/,'Princess/Page should surface with its special embodiment status');
+    assert.match(princessText,/Page\/Princess/,'Princess/Page should preserve both court names');
+    assert.match(princessText,/Earth of Earth|Earth of (Fire|Water|Air)/,'Princess/Page should expose its Earth-of-X formula');
     assert.equal(await page.locator('#shortListPanel .card-row-board [data-row-card]').count(),0,'idea cards must not become reading cards');
 
     await page.click('[data-referent-path="draw"]');
