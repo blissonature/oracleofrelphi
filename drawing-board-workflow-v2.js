@@ -828,15 +828,20 @@
       '<label>House<select data-building-key="house" '+(disabled?'disabled':'')+'>'+option('',String(b.house||''))+HOUSE_ORDINALS.map((name,index)=>'<option value="'+(index+1)+'" '+(String(b.house)===String(index+1)?'selected':'')+'>'+name+' House</option>').join('')+'</select></label>'+
       '</div><button type="button" id="relphiBuildQuestions" '+(disabled?'disabled':'')+'>Surface referents</button>';
   }
+  const PIP_NUMBER_BY_RANK = {Two:2,Three:3,Four:4,Five:5,Six:6,Seven:7,Eight:8,Nine:9,Ten:10};
   function surfacePlanet(card) {
     return String(card?.astrology?.planet || '').split('/')[0].trim();
+  }
+  function surfacePipNumber(card) {
+    const numeric=Number(card?.number);
+    return numeric || PIP_NUMBER_BY_RANK[String(card?.rank || '')] || 0;
   }
   function surfaceCardPools() {
     const cards=Array.isArray(window.RELPHI_TAROT_CARDS)?window.RELPHI_TAROT_CARDS:[];
     return {
       planet:cards.filter(card=>card?.card_type==='Major' && String(card?.astrology?.attribution_type||'').startsWith('Planet') && surfacePlanet(card)),
       sign:cards.filter(card=>card?.card_type==='Major' && card?.astrology?.attribution_type==='Sign' && card?.astrology?.sign),
-      pip:cards.filter(card=>card?.card_type==='Pip' && Number(card?.number)>=2 && Number(card?.number)<=10)
+      pip:cards.filter(card=>card?.card_type==='Pip' && surfacePipNumber(card)>=2 && surfacePipNumber(card)<=10)
     };
   }
   function randomFrom(values) { return values?.length ? values[Math.floor(Math.random()*values.length)] : null; }
@@ -846,7 +851,7 @@
     if (draws.planet) parts.push('<article><strong>'+escapeHtml(draws.planet.name)+'</strong><span>Planet · '+escapeHtml(surfacePlanet(draws.planet))+'</span></article>');
     if (draws.sign) parts.push('<article><strong>'+escapeHtml(draws.sign.name)+'</strong><span>Sign · '+escapeHtml(draws.sign.astrology?.sign||'')+'</span></article>');
     if (draws.pip) {
-      const num=Number(draws.pip.number)||0;
+      const num=surfacePipNumber(draws.pip);
       parts.push('<article><strong>'+escapeHtml(draws.pip.name)+'</strong><span>'+escapeHtml(draws.pip.element||'')+' · '+escapeHtml(HOUSE_ORDINALS[num-1]||String(num))+' House · '+escapeHtml(MODE_BY_PIP[num]||'')+'</span></article>');
     }
     return parts.length ? '<div class="relphi-surface-draws">'+parts.join('')+'</div>' : '<p class="relphi-referent-empty">Draw from the symbolic sub-packs. These cards suggest what to ask and do not become part of the reading.</p>';
@@ -854,7 +859,7 @@
   function questionsFromSurface(session) {
     const draws=session.surfaceDraws || {};
     const pip=draws.pip;
-    const number=Number(pip?.number)||0;
+    const number=surfacePipNumber(pip);
     return candidateQuestionsFromBlocks({
       planet:surfacePlanet(draws.planet),
       sign:draws.sign?.astrology?.sign || '',
