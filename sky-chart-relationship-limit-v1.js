@@ -77,6 +77,8 @@ function installStyles(){
   style.id='skyRelationshipLimitV1Styles';
   style.textContent=`
 .sky-chart-result-limit-hidden{display:none!important}
+#skyFoundationRelationshipList>.sky-foundation-result-limit-show-more{order:2147483646!important}
+#skyFoundationRelationshipList>[data-harmonic-show-more]{order:2147483647!important}
 #skyFoundationRelationships .sky-relationship-limit-control{position:relative;display:inline-flex;align-items:center;min-width:0;white-space:nowrap}
 #skyFoundationRelationships .sky-relationship-limit-control>input{
   width:92px;min-width:54px;height:29px;box-sizing:border-box;margin:0;padding:0 27px 0 8px;
@@ -260,10 +262,10 @@ function ensureHelper(){
     button.className='sky-foundation-harmonic-show-more sky-foundation-result-limit-show-more';
     button.dataset.resultLimitShowMore='true';
     button.addEventListener('click',event=>{event.preventDefault();event.stopPropagation();revealMore()});
+    const harmonic=list.querySelector(':scope>[data-harmonic-show-more]');
+    if(harmonic)list.insertBefore(button,harmonic);
+    else list.appendChild(button);
   }
-  const harmonic=list.querySelector(':scope>[data-harmonic-show-more]');
-  if(harmonic){if(button.nextElementSibling!==harmonic)list.insertBefore(button,harmonic)}
-  else if(button!==list.lastElementChild)list.appendChild(button);
   return button;
 }
 function nextLimit(){
