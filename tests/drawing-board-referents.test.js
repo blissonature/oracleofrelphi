@@ -44,8 +44,21 @@ const base='http://127.0.0.1:8000/tarot.html';
 
     await page.click('[data-referent-path="surface"]');
     await page.click('#relphiSurfaceAll');
-    await page.waitForFunction(()=>document.querySelectorAll('.relphi-surface-draws article').length===3);
-    assert.equal(await page.locator('[data-suggestion-text]').count(),3,'See What Surfaces should translate the draw into candidate referents');
+    await page.waitForTimeout(150);
+    const surfaceDiagnostic=await page.evaluate(()=>{
+      const cards=Array.isArray(window.RELPHI_TAROT_CARDS)?window.RELPHI_TAROT_CARDS:[];
+      return {
+        cardCount:cards.length,
+        planet:cards.filter(card=>card?.card_type==='Major' && String(card?.astrology?.attribution_type||'').startsWith('Planet') && String(card?.astrology?.planet||'').trim()).length,
+        sign:cards.filter(card=>card?.card_type==='Major' && card?.astrology?.attribution_type==='Sign' && card?.astrology?.sign).length,
+        pip:cards.filter(card=>card?.card_type==='Pip' && Number(card?.number)>=2 && Number(card?.number)<=10).length,
+        articleCount:document.querySelectorAll('.relphi-surface-draws article').length,
+        suggestionCount:document.querySelectorAll('[data-suggestion-text]').length,
+        surfaceText:document.querySelector('.relphi-referent-panel')?.textContent || ''
+      };
+    });
+    assert.equal(surfaceDiagnostic.articleCount,3,'See What Surfaces draw failed: '+JSON.stringify(surfaceDiagnostic));
+    assert.equal(surfaceDiagnostic.suggestionCount,3,'See What Surfaces should translate the draw into candidate referents');
     assert.equal(await page.locator('#shortListPanel .card-row-board [data-row-card]').count(),0,'idea cards must not become reading cards');
 
     assert.deepEqual(errors,[]);
