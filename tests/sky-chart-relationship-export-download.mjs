@@ -63,12 +63,10 @@ const cappedOrder=await page.evaluate(()=>[...document.querySelectorAll('#skyFou
 assert.deepEqual(cappedOrder,eligibleOrder.slice(0,20),'Most Challenging + Limit 20 must expose exactly the first 20 relationships in the ranked set.');
 const matchStatus=await page.locator('#skyFoundationRelationshipCount').evaluate(node=>({
   matchCount:node.dataset.matchCount||'',
-  visibleNumber:getComputedStyle(node,'::before').content.replace(/["']/g,''),
-  suffix:getComputedStyle(node,'::after').content
+  visiblePhrase:getComputedStyle(node,'::after').content.replace(/["']/g,'')
 }));
 assert.equal(matchStatus.matchCount,String(eligibleOrder.length),'Changing Limit to 20 must not change the number of relationships that match the current filters.');
-assert.equal(matchStatus.visibleNumber,String(eligibleOrder.length),'The visible match number must come from stable pre-cap match state.');
-assert.match(matchStatus.suffix,/matches/,'The header must label the pre-cap qualifying count as matches.');
+assert.equal(matchStatus.visiblePhrase,`${eligibleOrder.length} matches`,'The visible match phrase must come from stable pre-range match state.');
 
 await limit.fill('3');
 await limit.press('Enter');
@@ -94,22 +92,18 @@ for(const mode of ['names','referents','glyphs']){
   await page.waitForTimeout(80);
   const progressiveStatus=await page.locator('#skyFoundationRelationshipCount').evaluate(node=>({
     matchCount:node.dataset.matchCount||'',
-    visualNumber:getComputedStyle(node,'::before').content.replace(/["']/g,''),
-    visualLabel:getComputedStyle(node,'::after').content,
+    visualPhrase:getComputedStyle(node,'::after').content.replace(/["']/g,''),
     aria:node.getAttribute('aria-label')||''
   }));
   assert.equal(progressiveStatus.matchCount,stableMatches,`Progressive ${mode} reveal must not change match state.`);
-  assert.equal(progressiveStatus.visualNumber,stableMatches,`Progressive ${mode} reveal must not change the visible match number.`);
-  assert.match(progressiveStatus.visualLabel,/matches/,`Progressive ${mode} reveal must preserve the matches label.`);
+  assert.equal(progressiveStatus.visualPhrase,`${stableMatches} matches`,`Progressive ${mode} reveal must preserve the visible match phrase.`);
   assert.equal(progressiveStatus.aria,`${stableMatches} matching relationships`,`Progressive ${mode} reveal must preserve the accessible match count.`);
 }
 await page.locator('#skyFoundationRelationshipCount').evaluate(node=>{node.textContent='1/999'});
 const legacyOverwriteStatus=await page.locator('#skyFoundationRelationshipCount').evaluate(node=>({
-  visualNumber:getComputedStyle(node,'::before').content.replace(/["']/g,''),
-  visualLabel:getComputedStyle(node,'::after').content
+  visualPhrase:getComputedStyle(node,'::after').content.replace(/["']/g,'')
 }));
-assert.equal(legacyOverwriteStatus.visualNumber,stableMatches,'A legacy textContent writer must not alter the visible match number.');
-assert.match(legacyOverwriteStatus.visualLabel,/matches/,'A legacy textContent writer must not alter the visible matches label.');
+assert.equal(legacyOverwriteStatus.visualPhrase,`${stableMatches} matches`,'A legacy textContent writer must not alter the visible match phrase.');
 const continuation=page.locator('#skyFoundationRelationshipList>[data-result-limit-show-more]');
 await continuation.waitFor({state:'visible'});
 assert.match((await continuation.textContent()||'').trim(),/^\d+ more matching results · Show more$/,'A capped list must end with a direct Show more continuation.');
