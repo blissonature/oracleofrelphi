@@ -1551,12 +1551,6 @@
   .ph-calendar-event.has-aspect { border-left-color:var(--ph-calendar-aspect-color,rgba(17,17,17,.12)); }
   .ph-calendar-event.has-calendar-source { border-left-color:var(--ph-calendar-source-color,rgba(17,17,17,.18)); }
   .ph-calendar-event strong { color:var(--relphi-red-dark); font-weight:900; }
-  .ph-calendar-event-lane .ph-calendar-body-glyph {
-    width:1.48em;
-    height:1.48em;
-    margin:0 .12em;
-    vertical-align:-.3em;
-  }
   .ph-calendar-event-kind {
     display:inline;
     white-space:nowrap;
@@ -1606,8 +1600,31 @@
   .ph-calendar-display-body label { display:flex; align-items:center; gap:.42rem; padding:.28rem .34rem; border-radius:.5rem; color:#3d3630; cursor:pointer; font:800 .7rem/1.2 system-ui,sans-serif; }
   .ph-calendar-display-body label:hover { background:#faf8f5; }
   .ph-calendar-display-body input { width:1rem; height:1rem; margin:0; accent-color:var(--relphi-red); }
-  .ph-calendar-glyph { display:inline-block; width:1.08em; height:1.08em; flex:0 0 auto; vertical-align:-.14em; margin:0 .08em; background:center/contain no-repeat var(--ph-calendar-glyph); }
-  .ph-calendar-glyph-fallback { width:auto; height:auto; background:none; vertical-align:baseline; font-weight:900; line-height:1; }
+  .ph-calendar-glyph {
+    position:relative;
+    display:inline-block;
+    width:1.68em;
+    min-width:1.68em;
+    height:1em;
+    min-height:1em;
+    margin:0;
+    vertical-align:baseline;
+    overflow:visible;
+    flex:0 0 auto;
+    line-height:1;
+  }
+  .ph-calendar-glyph svg {
+    position:absolute;
+    left:50%;
+    top:50%;
+    display:block;
+    width:1.68em;
+    height:1.68em;
+    overflow:visible;
+    transform:translate(-50%,-36%);
+  }
+  .ph-calendar-glyph[data-calendar-glyph-ready="false"] svg { visibility:hidden; }
+  .ph-calendar-glyph-fallback { width:1.68em; min-width:1.68em; height:1em; min-height:1em; vertical-align:baseline; font-weight:900; line-height:1; }
   .ph-calendar-house-token { display:inline-flex; align-items:center; gap:.22em; white-space:nowrap; vertical-align:middle; }
   .ph-calendar-house-medallion {
     --house-color:#777;
@@ -3159,13 +3176,35 @@
     const entry = registry && (registry.resolve(value) || registry.get(value));
     if (!entry) return '';
     const className = 'ph-calendar-glyph' + (extraClass ? ' ' + extraClass : '');
-    if (entry.asset) {
-      return '<span class="' + className + '" style="--ph-calendar-glyph:url(\'' + attrText(entry.asset) + '\')" role="img" aria-label="' + attrText(label || entry.name || value) + '"></span>';
-    }
-    if (entry.fallback) {
-      return '<span class="' + className + ' ph-calendar-glyph-fallback" role="img" aria-label="' + attrText(label || entry.name || value) + '">' + htmlText(entry.fallback) + '</span>';
-    }
-    return '';
+    return '<span class="' + className + '" data-calendar-glyph-id="' + attrText(entry.id) + '" data-calendar-glyph-fallback="' + attrText(entry.fallback || entry.name || value) + '" data-calendar-glyph-ready="false" role="img" aria-label="' + attrText(label || entry.name || value) + '"><svg viewBox="-18 -18 36 36" aria-hidden="true" focusable="false"></svg></span>';
+  }
+
+  function renderCalendarFittedGlyphs(root) {
+    if (!root) return;
+    const component = window.RelphiGlyphComponent;
+    root.querySelectorAll('.ph-calendar-glyph[data-calendar-glyph-id][data-calendar-glyph-ready="false"]').forEach(function (holder) {
+      const svg = holder.querySelector('svg');
+      const id = holder.dataset.calendarGlyphId;
+      const fallback = holder.dataset.calendarGlyphFallback || id || '';
+      if (!svg || !id) return;
+      if (!component?.draw) {
+        holder.classList.add('ph-calendar-glyph-fallback');
+        holder.textContent = fallback;
+        holder.dataset.calendarGlyphReady = 'true';
+        return;
+      }
+      holder.dataset.calendarGlyphReady = 'pending';
+      Promise.resolve(component.draw(svg, id, {radius:14.5,padding:.5,color:'currentColor'})).then(function () {
+        if (!holder.isConnected) return;
+        holder.dataset.calendarGlyphReady = 'true';
+        svg.style.visibility = 'visible';
+      }).catch(function () {
+        if (!holder.isConnected) return;
+        holder.classList.add('ph-calendar-glyph-fallback');
+        holder.textContent = fallback;
+        holder.dataset.calendarGlyphReady = 'true';
+      });
+    });
   }
 
   function calendarPlacementId(meta) {
@@ -5006,6 +5045,7 @@
         '<span class="ph-calendar-month-events">' + eventMarkup + more + '</span>' +
       '</button>';
     }).join('');
+    renderCalendarFittedGlyphs(el.calendarMonthGrid);
   }
 
   function syncCalendarView(base, day, frame) {
@@ -5089,6 +5129,7 @@
       const aspectPresentation = calendarEventClassAndStyle(event);
       return '<span class="ph-calendar-event' + (event.isAlert ? ' is-alert' : '') + (event.isPersonal ? ' is-personal' : '') + (event.isSkyEvent ? ' is-sky-event' : '') + aspectPresentation.className + '"' + aspectPresentation.style + '><strong>' + htmlText(fmtHM(event.time)) + '</strong> ' + calendarEventMarkup(event) + '</span>';
     }).join('');
+    renderCalendarFittedGlyphs(el.calendarEventLane);
   }
 
   function updateCalendarNoteSummary(frame, rows) {
