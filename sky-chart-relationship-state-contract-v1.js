@@ -12,7 +12,8 @@
     'sky-orb-filter-hidden',
     'sky-chart-multiselect-hidden',
     'sky-chart-house-multiselect-hidden',
-    'sky-chart-aspect-multiselect-hidden'
+    'sky-chart-aspect-multiselect-hidden',
+    'sky-chart-theme-filter-hidden'
   ]);
   const VISIBILITY_CLASSES = Object.freeze([
     ...HIDDEN_CLASSES,
@@ -193,6 +194,7 @@
       'relphi:sky-placement-multiselect-changed',
       'relphi:sky-house-multiselect-changed',
       'relphi:sky-aspect-multiselect-changed',
+      'relphi:sky-theme-filter-changed',
       'relphi:sky-single-sky-aspects-rendered',
       'relphi:selected-relationship-rendered'
     ].forEach(name => window.addEventListener(name, scheduleStructural));
