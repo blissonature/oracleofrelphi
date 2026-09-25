@@ -59,11 +59,11 @@ jobs:
           python3 -m http.server 8000 --bind 127.0.0.1 >/tmp/relphi-http.log 2>&1 &
           SERVER_PID=$!
           trap 'kill $SERVER_PID || true' EXIT
+          node tests/drawing-board-referents.test.js
           node tests/drawing-board-crossing-label.test.js
           node tests/drawing-board-reading-text.test.js
           node tests/drawing-board-focus-filmstrip.test.js
           node tests/drawing-board-density-question-layout.test.js
-          node tests/drawing-board-referents.test.js
           node tests/drawing-board-clear-cards.test.js
           node tests/drawing-board-runtime.test.js
           node tests/drawing-board-iphone-regressions.test.js
