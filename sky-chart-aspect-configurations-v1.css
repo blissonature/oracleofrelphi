@@ -88,3 +88,20 @@
   .sky-chart-configuration-choice{font-size:.64rem}
   .sky-chart-configuration-result span{font-size:.56rem}
 }
+
+.sky-foundation-relationship-row.is-configuration-peer{
+  position:relative;
+  z-index:1;
+  box-shadow:inset 0 0 0 2px rgba(31,27,24,.22);
+  background:#f8f4ed;
+}
+.sky-foundation-relationship-row.is-configuration-hover-source{
+  box-shadow:inset 0 0 0 2px rgba(31,27,24,.5),0 3px 10px rgba(31,27,24,.09);
+  background:#fffdf8;
+}
+.sky-chart-configuration-overlay.is-peer-hover .sky-chart-configuration-line{opacity:.16}
+.sky-chart-configuration-overlay.is-peer-hover .sky-chart-configuration-line.is-configuration-peer-line{
+  opacity:1;
+  stroke-width:6.5;
+  filter:drop-shadow(0 0 2px #fffdf8);
+}
