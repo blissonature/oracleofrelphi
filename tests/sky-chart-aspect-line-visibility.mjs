@@ -21,7 +21,40 @@ await page.addInitScript(({a,b})=>{localStorage.setItem('relphiSkyChartA',JSON.s
 await page.goto('http://127.0.0.1:4173/sky-chart.html',{waitUntil:'networkidle'});
 await page.waitForSelector('#skyFoundationRoot[aria-busy="false"]',{timeout:20000});
 await page.waitForSelector('#skyFoundationRelationshipList .sky-foundation-relationship-row',{timeout:20000});
+await page.waitForSelector('#skyChartAspectPopover .sky-chart-configuration-section',{state:'attached',timeout:10000});
+await page.waitForSelector('#skyFoundationRelationships .sky-relationship-heading-actions #skyFoundationRelationshipCount',{timeout:10000});
 await page.waitForTimeout(500);
+
+const configurationUI=await page.evaluate(()=>{
+  const section=document.querySelector('#skyChartAspectPopover .sky-chart-configuration-section');
+  const labels=[...section.querySelectorAll('.sky-chart-configuration-name')].map(node=>node.textContent.trim());
+  const api=window.RelphiAspectConfigurations;
+  return{section:!!section,labels,typeCount:api?.types?.length||0};
+});
+assert.equal(configurationUI.section,true,'Configurations must remain mounted inside the Aspects popover.');
+assert.equal(configurationUI.typeCount,10,'All ten configuration types must remain available.');
+assert.ok(configurationUI.labels.includes('Grand Trine'),'Grand Trine must remain in Configurations.');
+assert.ok(configurationUI.labels.includes('Grand Cross / Grand Square'),'Grand Cross / Grand Square must remain in Configurations.');
+
+const relationshipHeaderOrder=await page.evaluate(()=>{
+  const actions=document.querySelector('#skyFoundationRelationships .sky-relationship-heading-actions');
+  const children=[...actions.children];
+  const index=node=>children.indexOf(node);
+  const sort=actions.querySelector('.sky-relationship-sort-control');
+  const limit=actions.querySelector('.sky-relationship-limit-control');
+  const count=actions.querySelector('#skyFoundationRelationshipCount');
+  const copy=actions.querySelector('.sky-relationship-copy-button');
+  const download=actions.querySelector('#skyChartRelationshipsExport');
+  return{
+    sort:index(sort),limit:index(limit),count:index(count),copy:index(copy),download:index(download),
+    countParent:count?.parentElement===actions
+  };
+});
+assert.equal(relationshipHeaderOrder.countParent,true,'Match count must live on the Relationships action line, not between the header and controls.');
+assert.ok(relationshipHeaderOrder.sort>=0&&relationshipHeaderOrder.limit>relationshipHeaderOrder.sort,'Sort must precede Max.');
+assert.ok(relationshipHeaderOrder.count>relationshipHeaderOrder.limit,'Match count must come after the controls.');
+assert.ok(relationshipHeaderOrder.copy>relationshipHeaderOrder.count,'Copy pill must come after the match count.');
+assert.ok(relationshipHeaderOrder.download>relationshipHeaderOrder.copy,'Download pill must follow Copy.');
 
 const audit=await page.evaluate(()=>{
   const rows=[...document.querySelectorAll('#skyFoundationRelationshipList>.sky-foundation-relationship-row[data-relation-index]')];
