@@ -5,6 +5,7 @@ on:
     paths:
       - 'sky-chart.html'
       - 'sky-chart-vocab-tab-v1.js'
+      - 'sky-chart-relationship-vocab-v1.js'
       - 'sky-chart-harmonic-orb-v1.js'
       - 'sky-chart-harmonic-window-ceiling-v1.js'
       - 'sky-chart-orb-control-v1.js'
@@ -31,6 +32,7 @@ on:
       - 'tests/sky-chart-vocab-copy-browser.mjs'
       - 'tests/sky-chart-vocab-structural-members-browser.mjs'
       - 'tests/sky-chart-vocab-tab-contract.mjs'
+      - 'tests/sky-chart-relationship-vocab-contract.mjs'
       - 'tools/check-single-glyph-canon.mjs'
       - 'tools/check-sky-chart-glyph-readiness.mjs'
       - '.github/workflows/sky-chart-ui-regression-check.yml'
@@ -70,12 +72,15 @@ jobs:
           node --check sky-chart-relationship-export-columns-v1.js
           node --check sky-chart-placement-multiselect-v4.js
           node --check sky-chart-vocab-copy-v1.js
+          node --check sky-chart-relationship-vocab-v1.js
           node --check relphi-glyph-copy-serializer-v1.js
           node --check tests/sky-chart-vocab-tab-browser.mjs
           node --check tests/sky-chart-vocab-copy-browser.mjs
           node --check tests/sky-chart-vocab-structural-members-browser.mjs
           node --check tests/sky-chart-vocab-tab-contract.mjs
+          node --check tests/sky-chart-relationship-vocab-contract.mjs
           node tests/sky-chart-vocab-tab-contract.mjs
+          node tests/sky-chart-relationship-vocab-contract.mjs
           node tools/check-single-glyph-canon.mjs
           node tools/check-sky-chart-glyph-readiness.mjs
 
