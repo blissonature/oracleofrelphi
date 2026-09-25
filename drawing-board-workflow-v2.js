@@ -326,7 +326,7 @@
   }
   function beginOptionsSession() {
     if (optionsSession) return;
-    optionsSession = { baseline:currentSnapshot(), draft:draftFromState(), path:'templates', building:{element:'',planet:'',aspect:'',sign:'',house:''}, suggestions:[], surfaceDraws:{} };
+    optionsSession = { baseline:currentSnapshot(), draft:draftFromState(), path:'', building:{element:'',planet:'',aspect:'',sign:'',house:''}, suggestions:[], suggestionPacks:[], surfaceDraws:{} };
   }
   function optionsStructuralChanged(session = optionsSession) {
     if (!session) return false;
@@ -775,7 +775,7 @@
 
   function referentPathButton(id,label,description,path,disabled=false) {
     const active=path===id;
-    return '<button type="button" role="tab" aria-selected="'+(active?'true':'false')+'" tabindex="'+(active?'0':'-1')+'" class="relphi-referent-path'+(active?' is-active':'')+'" data-referent-path="'+id+'" '+(disabled?'disabled':'')+'><strong>'+escapeHtml(label)+'</strong></button>';
+    return '<button type="button" aria-pressed="'+(active?'true':'false')+'" class="relphi-referent-path'+(active?' is-active':'')+'" data-referent-path="'+id+'" '+(disabled?'disabled':'')+'><strong>'+escapeHtml(label)+'</strong><span>'+escapeHtml(description)+'</span></button>';
   }
   function candidateQuestionsFromBlocks(blocks={}) {
     const element=String(blocks.element||'');
@@ -951,8 +951,7 @@
   }
   function pathPanelMarkup(session,hasCards) {
     const draft=session.draft;
-    if (!session.path) return '<p class="relphi-referent-intro">Choose how you want to begin. You can always draw without referents.</p>';
-    if (session.path==='draw') return '';
+    if (!session.path) return '<p class="relphi-referent-intro">Choose a referent path. Drawing itself stays in the Board tab.</p>';
     if (session.path==='bespoke') return bespokeMarkup(draft,hasCards);
     if (session.path==='templates') return templatesMarkup(draft,hasCards);
     if (session.path==='blocks') return '<section class="relphi-referent-panel"><div class="relphi-options-subhead"><div><strong>Building Blocks</strong><span>Choose Relphi symbols deliberately and let them formulate candidate referents.</span></div></div>'+buildingControlsMarkup(session,hasCards)+suggestionMarkup(session,hasCards)+'</section>';
@@ -963,8 +962,8 @@
   function renderOptions(root = panel()) {
     if (!root || !optionsSession) return;
     root.querySelector('.relphi-reading-options-drawer')?.remove();
-    const workspace = root.querySelector('.card-row-workspace');
-    if (!workspace) return;
+    const modeTabs = root.querySelector('.drawing-board-mode-tabs');
+    if (!modeTabs) return;
     const session=optionsSession;
     const draft = session.draft;
     const hasCards = currentCardCount(root) > 0;
@@ -976,8 +975,7 @@
     drawer.innerHTML = '<div class="relphi-options-heading"><div><span class="eyebrow">Drawing Board</span><h3>Referents</h3></div></div>'+
       (hasCards ? '<p class="relphi-options-note relphi-options-note-visible">Reset Board before changing referents. The reading structure is locked once cards are drawn.</p>' : '')+
       '<div class="relphi-options-body">'+
-        '<div class="relphi-referent-paths" role="tablist" aria-label="Referent paths">'+
-          referentPathButton('draw','Draw','No referents. Just begin.',session.path,hasCards)+
+        '<div class="relphi-referent-paths" role="list" aria-label="Referent paths">'+
           referentPathButton('bespoke','Bespoke','Write your own referents.',session.path,hasCards)+
           referentPathButton('templates','Templates','Use a saved or established spread.',session.path,hasCards)+
           referentPathButton('blocks','Building Blocks','Choose elements planets aspects signs and houses.',session.path,hasCards)+
@@ -988,20 +986,11 @@
         '<section class="relphi-referent-settings" aria-label="Draw settings"><strong class="relphi-referent-settings-title">Draw settings</strong><div class="relphi-draw-options"><label>Pack<select id="relphiDraftPack">'+packOptions(draft.pack)+'</select></label><label><input id="relphiDraftStickers" type="checkbox" '+(draft.stickers?'checked':'')+' title="Show position stickers"> Show referent stickers</label><label><input id="relphiDraftReversals" type="checkbox" '+(draft.reversals?'checked':'')+'> Reversals</label><label><input id="relphiDraftRepeats" type="checkbox" '+(draft.repeats?'checked':'')+'> Repeats</label></div></section>'+
       '</div>'+
       '<div class="relphi-options-commitbar"><button type="button" id="relphiResetBoard" class="relphi-reset-board">Reset Board</button><span></span><button type="button" id="relphiCancelOptions">Cancel</button><button type="button" id="relphiApplyOptions" class="primary">Start Reading</button></div>';
-    workspace.appendChild(drawer);
+    modeTabs.insertAdjacentElement('afterend',drawer);
+    setBoardMode(root,'referents');
 
     drawer.querySelectorAll('[data-referent-path]').forEach(button=>button.addEventListener('click',()=>{
       const nextPath=button.dataset.referentPath || '';
-      if (nextPath==='draw') {
-        session.path='draw';
-        session.suggestions=[];
-        draft.labels=[];
-        draft.templateId='';
-        draft.basedOnTemplateId='';
-        draft.templateName='';
-        applyOptions(root);
-        return;
-      }
       session.path=nextPath;
       session.suggestions=[];
       session.suggestionPacks=[];
@@ -1144,11 +1133,7 @@
     drawer.querySelector('#relphiResetBoard')?.addEventListener('click',()=>resetBoardFromOptions(root));
     drawer.querySelector('#relphiCancelOptions')?.addEventListener('click',()=>closeOptions(root));
     drawer.querySelector('#relphiApplyOptions')?.addEventListener('click',()=>{
-      if (session.path==='draw') {
-        draft.labels=[]; draft.positionPacks=[]; draft.templateId=''; draft.basedOnTemplateId=''; draft.templateName='';
-      } else if ((session.path==='surface'||session.path==='blocks') && session.suggestions.length) {
-        commitSelectedSuggestions();
-      }
+      if ((session.path==='surface'||session.path==='blocks') && session.suggestions.length) commitSelectedSuggestions();
       applyOptions(root);
     });
   }
@@ -1205,25 +1190,36 @@
     keepBoardOpen();
     setTimeout(keepBoardOpen,0);
   }
+  function setBoardMode(root = panel(), mode = 'board') {
+    if (!root) return;
+    const referents=mode==='referents';
+    root.classList.toggle('relphi-referents-mode',referents);
+    const boardTab=root.querySelector('#drawingBoardBoardTab');
+    const referentsTab=root.querySelector('#drawingBoardOptionsButton');
+    if (boardTab) {
+      boardTab.classList.toggle('is-active',!referents);
+      boardTab.setAttribute('aria-selected',String(!referents));
+    }
+    if (referentsTab) {
+      referentsTab.classList.toggle('is-active',referents);
+      referentsTab.setAttribute('aria-selected',String(referents));
+      referentsTab.setAttribute('aria-expanded',String(referents));
+    }
+  }
   function closeOptions(root = panel()) {
     optionsSession=null;
     root?.querySelector('.relphi-reading-options-drawer')?.remove();
-    const trigger=root?.querySelector('#drawingBoardOptionsButton');
-    if (trigger) trigger.setAttribute('aria-expanded','false');
+    setBoardMode(root,'board');
   }
   function openOptions(root = panel()) {
     if (!root) return;
     if (optionsSession) {
       const existing=root.querySelector('.relphi-reading-options-drawer');
-      if (existing) { closeOptions(root); return; }
-      const trigger=root.querySelector('#drawingBoardOptionsButton');
-      if (trigger) { trigger.textContent='Referents'; trigger.setAttribute('aria-expanded','true'); }
+      if (existing) { setBoardMode(root,'referents'); return; }
       renderOptions(root);
       return;
     }
     beginOptionsSession();
-    const trigger=root.querySelector('#drawingBoardOptionsButton');
-    if (trigger) { trigger.textContent='Referents'; trigger.setAttribute('aria-expanded','true'); }
     renderOptions(root);
   }
 
@@ -1666,6 +1662,11 @@
     },true);
   }
   function installTopActions(root) {
+    const boardTab=root.querySelector('#drawingBoardBoardTab');
+    if (boardTab && boardTab.dataset.relphiUnifiedBoardTab!=='true') {
+      boardTab.dataset.relphiUnifiedBoardTab='true';
+      boardTab.addEventListener('click',event=>{event.preventDefault();event.stopImmediatePropagation();closeOptions(root);},true);
+    }
     const options=root.querySelector('#drawingBoardOptionsButton');
     if (options) {
       options.textContent='Referents';
@@ -1768,6 +1769,13 @@
       return;
     }
     const root=panel();
+    const boardTrigger=event.target.closest?.('#shortListPanel #drawingBoardBoardTab');
+    if (boardTrigger && root?.contains(boardTrigger)) {
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      closeOptions(root);
+      return;
+    }
     const optionsTrigger=event.target.closest?.('#shortListPanel #drawingBoardOptionsButton');
     if (optionsTrigger && root?.contains(optionsTrigger)) {
       event.preventDefault();
