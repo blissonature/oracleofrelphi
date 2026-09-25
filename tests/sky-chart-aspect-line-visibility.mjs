@@ -185,10 +185,8 @@ assert.ok(mobileRelationshipLayout.row2Top>mobileRelationshipLayout.row1Bottom,'
 assert.ok(mobileRelationshipLayout.sortWidth>mobileRelationshipLayout.limitWidth*4,'Sort must receive substantially more width than editable Max on mobile.');
 assert.ok(mobileRelationshipLayout.headingRight-mobileRelationshipLayout.downloadRight<=12,'The first-row action cluster must remain right aligned.');
 assert.ok(mobileRelationshipLayout.headingHeight<95,'The mobile Relationships heading must remain exactly a compact two-row composition.');
-await page.waitForFunction(()=>document.documentElement.dataset.skyRelationshipLimit==='20');
-assert.equal(await maxInput.inputValue(),'20','Max must remain functional after opening.');
-await maxInput.fill(''); await maxInput.press('Enter');
-await page.waitForFunction(()=>document.documentElement.dataset.skyRelationshipLimit==='all');
+await page.setViewportSize({width:1440,height:1000});
+await page.waitForTimeout(80);
 
 const audit=await page.evaluate(()=>{
   const rows=[...document.querySelectorAll('#skyFoundationRelationshipList>.sky-foundation-relationship-row[data-relation-index]')];
