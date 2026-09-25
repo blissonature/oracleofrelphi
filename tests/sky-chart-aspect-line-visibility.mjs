@@ -50,6 +50,12 @@ const focusControlOrder=await page.evaluate(()=>{
 assert.ok(focusControlOrder.display>=0,'Display must stay in the Focus heading controls.');
 assert.ok(focusControlOrder.harmonic>focusControlOrder.display,'Harmonic Window must sit to the right of Display.');
 assert.ok(focusControlOrder.actions>focusControlOrder.harmonic,'Copy and Download must remain to the far right of Harmonic Window.');
+const focusHeaderGap=await page.evaluate(()=>{
+  const title=document.querySelector('#skyFoundationFocus>.sky-foundation-focus-heading h2')?.getBoundingClientRect();
+  const first=document.querySelector('#skyFoundationFocus .sky-focus-heading-controls>[data-relationship-display-control]')?.getBoundingClientRect();
+  return title&&first?first.left-title.right:null;
+});
+assert.ok(focusHeaderGap!==null&&focusHeaderGap>=14,'Focus needs breathing room between its header and first control.');
 
 await page.locator('#skyFoundationFocus [data-relationship-display-value]').click();
 await page.waitForSelector('#skyRelationshipDisplayPopover:not([hidden])',{timeout:5000});
@@ -75,6 +81,13 @@ const relationshipHeaderOrder=await page.evaluate(()=>{
     countParent:count?.parentElement===actions
   };
 });
+const relationshipHeaderGap=await page.evaluate(()=>{
+  const heading=document.querySelector('#skyFoundationRelationships>.sky-foundation-relationships-heading');
+  const title=heading?.querySelector('[data-relationship-vocab-tabs],h2:not([hidden])')?.getBoundingClientRect();
+  const first=heading?.querySelector('.sky-relationship-heading-actions>[data-relationship-sort],.sky-relationship-heading-actions>.sky-relationship-sort-control')?.getBoundingClientRect();
+  return title&&first?first.left-title.right:null;
+});
+assert.ok(relationshipHeaderGap!==null&&relationshipHeaderGap>=14,'Relationships needs breathing room between its header and first control.');
 assert.equal(relationshipHeaderOrder.countParent,true,'Match count must live on the Relationships action line, not between the header and controls.');
 assert.ok(relationshipHeaderOrder.sort>=0&&relationshipHeaderOrder.limit>relationshipHeaderOrder.sort,'Sort must precede Max.');
 assert.ok(relationshipHeaderOrder.count>relationshipHeaderOrder.limit,'Match count must come after the controls.');
