@@ -1686,6 +1686,7 @@
     if (key === 'shown') pool = visible.length ? visible : cards;
     else if (key === 'majors') pool = cards.filter(card => card.card_type === 'Major');
     else if (key === 'uhn') pool = UHN_CARD_IDS.map(cardById).filter(Boolean);
+    else if (key === 'primordial-majors') pool = cards.filter(card => card.card_type === 'Major' && card.astrology?.attribution_type === 'Element' && ['Aleph','Mem','Shin'].includes(String(card.hebrew?.letter || '')));
     else if (key === 'planetary-majors') pool = cards.filter(card => card.card_type === 'Major' && planetaryBodies.has(card.astrology?.planet));
     else if (key === 'zodiac-majors') pool = cards.filter(card => card.card_type === 'Major' && !!card.astrology?.sign);
     else if (key === 'aces') pool = cards.filter(card => card.card_type === 'Ace');
@@ -1726,8 +1727,17 @@
     return next;
   }
 
-  function rowDrawSignature() {
-    const key = state.rowDrawScope || 'full';
+  function positionDrawScope(index) {
+    return String(
+      state.rowPositionMeta?.[index]?.drawScope ||
+      state.rowActiveLayout?.positions?.[index]?.drawScope ||
+      state.rowDrawScope ||
+      'full'
+    );
+  }
+
+  function rowDrawSignature(scope = state.rowDrawScope || 'full') {
+    const key = scope || 'full';
     const visibleIds = key === 'shown' ? currentCards().map(card => card.card_id).join('|') : '';
     return JSON.stringify({
       scope: key,
@@ -1743,21 +1753,21 @@
     state.rowShuffleCount = 0;
   }
 
-  function buildRowDrawDeck() {
-    const pool = rowDrawPool(state.rowDrawScope);
+  function buildRowDrawDeck(scope = state.rowDrawScope || 'full') {
+    const pool = rowDrawPool(scope);
     const entries = pool.map(card => ({
       cardId: card.card_id,
       reversed: !!state.rowAllowReversals && randomInt(2) === 1
     }));
     state.rowDrawDeck = shuffleArray(entries);
-    state.rowDrawDeckSignature = rowDrawSignature();
+    state.rowDrawDeckSignature = rowDrawSignature(scope);
     state.rowShuffleCount = (Number(state.rowShuffleCount) || 0) + 1;
     return state.rowDrawDeck;
   }
 
-  function drawFromRowDeck() {
-    const signature = rowDrawSignature();
-    if (!Array.isArray(state.rowDrawDeck) || state.rowDrawDeckSignature !== signature) buildRowDrawDeck();
+  function drawFromRowDeck(scope = state.rowDrawScope || 'full') {
+    const signature = rowDrawSignature(scope);
+    if (!Array.isArray(state.rowDrawDeck) || state.rowDrawDeckSignature !== signature) buildRowDrawDeck(scope);
     const used = new Set([...(state.shortList || []), ...(state.shortListPositionCardIds || [])]);
     while (state.rowDrawDeck.length) {
       const entry = state.rowDrawDeck.shift();
@@ -1782,9 +1792,11 @@
       if (status) status.textContent = 'Finish the layout design before drawing cards.';
       return;
     }
+    const index = (state.shortList || []).length;
+    const drawScope = positionDrawScope(index);
     let draw;
     if (state.rowAllowRepeats) {
-      const pool = rowDrawPool(state.rowDrawScope);
+      const pool = rowDrawPool(drawScope);
       if (!pool.length) {
         const status = $('downloadStatus');
         if (status) status.textContent = 'No cards are available in that pack.';
@@ -1792,7 +1804,7 @@
       }
       draw = randomRowDraw(pool, !!state.rowAllowReversals);
     } else {
-      draw = drawFromRowDeck();
+      draw = drawFromRowDeck(drawScope);
       if (!draw?.card) {
         const status = $('downloadStatus');
         if (status) status.textContent = 'The current draw pile is exhausted. Clear the board or allow repeats to keep drawing.';
@@ -1801,7 +1813,6 @@
       }
     }
     if (!draw?.card) return;
-    const index = (state.shortList || []).length;
     commitShortList([...state.shortList, draw.card.card_id], { newCardsManual:false });
     setRowCardReversed(index, !!draw.reversed);
     refreshShortListViews();
@@ -2114,7 +2125,7 @@
           zIndex:transform.zIndex
         })
       };
-      ['role','covers','crosses'].forEach(key => { if (meta[key]) result[key] = String(meta[key]); });
+      ['role','covers','crosses','drawScope'].forEach(key => { if (meta[key]) result[key] = String(meta[key]); });
       if (meta.openTransform) result.openTransform = normalizedPrefabTransform(meta.openTransform);
       return result;
     });
@@ -2154,6 +2165,7 @@
         role:position.role || '',
         covers:position.covers || '',
         crosses:position.crosses || '',
+        drawScope:String(position.drawScope || ''),
         openTransform:position.openTransform ? normalizedPrefabTransform(position.openTransform) : null
       };
     });
@@ -2194,6 +2206,7 @@
       role:position.role || '',
       covers:position.covers || '',
       crosses:position.crosses || '',
+      drawScope:String(position.drawScope || ''),
       openTransform:position.openTransform || null
     }));
     state.rowLayoutDesignMode = false;
