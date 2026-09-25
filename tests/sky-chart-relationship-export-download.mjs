@@ -46,12 +46,15 @@ const limit=page.locator('[data-relationship-limit]');
 await limit.waitFor({state:'visible'});
 assert.equal(await limit.evaluate(node=>node.closest('.sky-relationship-heading-actions')?.classList.contains('sky-relationship-heading-actions')||false),true,'Limit must sit in the Relationships header action cluster beside Copy and Download.');
 assert.equal(await limit.evaluate(node=>Boolean(node.closest('.sky-chart-filter-bar'))),false,'Limit must not remain in the filter grid.');
-assert.deepEqual(await limit.locator('option').allTextContents(),['10','20','50','All'],'Relationships must expose 10, 20, 50, and All result limits.');
+const limitList=await limit.getAttribute('list');
+assert.ok(limitList,'Editable Relationships range must expose preset suggestions.');
+assert.deepEqual(await page.locator('#'+limitList+' option').evaluateAll(nodes=>nodes.map(node=>node.value)),['10','20','50','Max','Custom Range'],'Relationships range must expose 10, 20, 50, Max, and Custom Range suggestions.');
 const eligibleOrder=await page.evaluate(()=>[...document.querySelectorAll('#skyFoundationRelationshipList>.sky-foundation-relationship-row[data-relation-index]')]
   .filter(row=>{const style=getComputedStyle(row);return !row.hidden&&style.display!=='none'&&style.visibility!=='hidden'})
   .map(row=>row.dataset.relationIndex));
 assert.ok(eligibleOrder.length>20,`Fixture must expose more than 20 eligible relationships to test a real cap: ${eligibleOrder.length}`);
-await limit.selectOption('20');
+await limit.fill('20');
+await limit.press('Enter');
 await page.waitForFunction(()=>document.documentElement.dataset.skyRelationshipLimit==='20');
 await page.waitForFunction(()=>[...document.querySelectorAll('#skyFoundationRelationshipList>.sky-foundation-relationship-row')].filter(row=>{const style=getComputedStyle(row);return !row.hidden&&style.display!=='none'&&style.visibility!=='hidden'}).length===20);
 const cappedOrder=await page.evaluate(()=>[...document.querySelectorAll('#skyFoundationRelationshipList>.sky-foundation-relationship-row[data-relation-index]')]
@@ -60,12 +63,27 @@ const cappedOrder=await page.evaluate(()=>[...document.querySelectorAll('#skyFou
 assert.deepEqual(cappedOrder,eligibleOrder.slice(0,20),'Most Challenging + Limit 20 must expose exactly the first 20 relationships in the ranked set.');
 const matchStatus=await page.locator('#skyFoundationRelationshipCount').evaluate(node=>({
   matchCount:node.dataset.matchCount||'',
-  visibleNumber:getComputedStyle(node,'::before').content.replace(/["']/g,''),
-  suffix:getComputedStyle(node,'::after').content
+  visiblePhrase:getComputedStyle(node,'::after').content.replace(/["']/g,'')
 }));
 assert.equal(matchStatus.matchCount,String(eligibleOrder.length),'Changing Limit to 20 must not change the number of relationships that match the current filters.');
-assert.equal(matchStatus.visibleNumber,String(eligibleOrder.length),'The visible match number must come from stable pre-cap match state.');
-assert.match(matchStatus.suffix,/matches/,'The header must label the pre-cap qualifying count as matches.');
+assert.equal(matchStatus.visiblePhrase,`${eligibleOrder.length} matches`,'The visible match phrase must come from stable pre-range match state.');
+
+await limit.fill('3');
+await limit.press('Enter');
+await page.waitForFunction(()=>document.documentElement.dataset.skyRelationshipLimit==='3');
+await page.waitForFunction(()=>[...document.querySelectorAll('#skyFoundationRelationshipList>.sky-foundation-relationship-row')].filter(row=>{const style=getComputedStyle(row);return !row.hidden&&style.display!=='none'&&style.visibility!=='hidden'}).length===3);
+assert.equal(await page.locator('#skyFoundationRelationshipCount').evaluate(node=>node.dataset.matchCount),String(eligibleOrder.length),'A typed custom maximum must not change the matching count.');
+
+await limit.fill('midpoint-end');
+await limit.press('Enter');
+await page.waitForFunction(()=>document.documentElement.dataset.skyRelationshipLimit==='midpoint-end');
+const midpointSlice=await page.evaluate(()=>[...document.querySelectorAll('#skyFoundationRelationshipList>.sky-foundation-relationship-row')].filter(row=>{const style=getComputedStyle(row);return !row.hidden&&style.display!=='none'&&style.visibility!=='hidden'}).length);
+assert.equal(midpointSlice,eligibleOrder.length-Math.ceil(eligibleOrder.length/2)+1,'Named midpoint-end range must expose the second half of the ranked relationships.');
+
+await limit.fill('20');
+await limit.press('Enter');
+await page.waitForFunction(()=>document.documentElement.dataset.skyRelationshipLimit==='20');
+
 
 const stableMatches=String(eligibleOrder.length);
 for(const mode of ['names','referents','glyphs']){
@@ -74,22 +92,18 @@ for(const mode of ['names','referents','glyphs']){
   await page.waitForTimeout(80);
   const progressiveStatus=await page.locator('#skyFoundationRelationshipCount').evaluate(node=>({
     matchCount:node.dataset.matchCount||'',
-    visualNumber:getComputedStyle(node,'::before').content.replace(/["']/g,''),
-    visualLabel:getComputedStyle(node,'::after').content,
+    visualPhrase:getComputedStyle(node,'::after').content.replace(/["']/g,''),
     aria:node.getAttribute('aria-label')||''
   }));
   assert.equal(progressiveStatus.matchCount,stableMatches,`Progressive ${mode} reveal must not change match state.`);
-  assert.equal(progressiveStatus.visualNumber,stableMatches,`Progressive ${mode} reveal must not change the visible match number.`);
-  assert.match(progressiveStatus.visualLabel,/matches/,`Progressive ${mode} reveal must preserve the matches label.`);
+  assert.equal(progressiveStatus.visualPhrase,`${stableMatches} matches`,`Progressive ${mode} reveal must preserve the visible match phrase.`);
   assert.equal(progressiveStatus.aria,`${stableMatches} matching relationships`,`Progressive ${mode} reveal must preserve the accessible match count.`);
 }
 await page.locator('#skyFoundationRelationshipCount').evaluate(node=>{node.textContent='1/999'});
 const legacyOverwriteStatus=await page.locator('#skyFoundationRelationshipCount').evaluate(node=>({
-  visualNumber:getComputedStyle(node,'::before').content.replace(/["']/g,''),
-  visualLabel:getComputedStyle(node,'::after').content
+  visualPhrase:getComputedStyle(node,'::after').content.replace(/["']/g,'')
 }));
-assert.equal(legacyOverwriteStatus.visualNumber,stableMatches,'A legacy textContent writer must not alter the visible match number.');
-assert.match(legacyOverwriteStatus.visualLabel,/matches/,'A legacy textContent writer must not alter the visible matches label.');
+assert.equal(legacyOverwriteStatus.visualPhrase,`${stableMatches} matches`,'A legacy textContent writer must not alter the visible match phrase.');
 const continuation=page.locator('#skyFoundationRelationshipList>[data-result-limit-show-more]');
 await continuation.waitFor({state:'visible'});
 assert.match((await continuation.textContent()||'').trim(),/^\d+ more matching results · Show more$/,'A capped list must end with a direct Show more continuation.');
