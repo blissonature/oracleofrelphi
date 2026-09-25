@@ -313,3 +313,45 @@
   #shortListPanel .relphi-building-grid,#shortListPanel .relphi-surface-draws{grid-template-columns:1fr!important}
   #shortListPanel .relphi-building-grid label:last-child,#shortListPanel .relphi-surface-actions #relphiSurfaceAll{grid-column:auto!important}
 }
+
+
+/* Referents mode: authoritative in-flow sizing. Legacy Options rules above must not turn this back into an absolute overlay. */
+#shortListPanel.relphi-referents-mode .relphi-reading-options-drawer{
+  position:relative!important;
+  inset:auto!important;
+  top:auto!important;
+  right:auto!important;
+  bottom:auto!important;
+  left:auto!important;
+  display:flex!important;
+  flex-direction:column!important;
+  box-sizing:border-box!important;
+  width:calc(100% - 1rem)!important;
+  max-width:none!important;
+  height:clamp(30rem,68dvh,44rem)!important;
+  min-height:30rem!important;
+  max-height:44rem!important;
+  margin:.5rem!important;
+}
+#shortListPanel.relphi-referents-mode .relphi-options-body{
+  flex:1 1 auto!important;
+  min-height:0!important;
+  overflow-y:auto!important;
+  overflow-x:hidden!important;
+}
+@media(max-width:700px){
+  #shortListPanel.relphi-referents-mode .relphi-reading-options-drawer{
+    position:relative!important;
+    inset:auto!important;
+    top:auto!important;
+    right:auto!important;
+    bottom:auto!important;
+    left:auto!important;
+    width:calc(100% - .8rem)!important;
+    max-width:none!important;
+    height:clamp(30rem,72dvh,42rem)!important;
+    min-height:30rem!important;
+    max-height:42rem!important;
+    margin:.4rem!important;
+  }
+}
