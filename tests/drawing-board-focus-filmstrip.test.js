@@ -20,9 +20,9 @@ async function resetAndApplyQuestions(page,labels){
     const state=window.RelphiDrawingBoardPrefabsBridge?.getState?.();
     return state && !state.activeLayout && state.slotCount===0 && state.hasCards===false;
   });
-  await page.waitForSelector('#relphiBulkReferents',{state:'visible'});
-  await page.fill('#relphiBulkReferents',labels.join(', '));
-  await page.click('#relphiParseReferents');
+  const first=page.locator('#relphiPositionLabels .relphi-label-row input').first();
+  await first.fill(labels.join(', '));
+  await first.dispatchEvent('change');
   await page.waitForFunction(count=>document.querySelectorAll('#relphiPositionLabels .relphi-label-row').length===count,labels.length);
   await page.click('#relphiApplyOptions');
   await page.waitForFunction(count=>{
