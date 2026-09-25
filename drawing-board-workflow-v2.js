@@ -952,7 +952,7 @@
       if (!labels.length) return false;
       draft.labels=labels;
       markQuestionEditCustom(drawer,draft);
-      setTimeout(()=>{ if (optionsSession) renderOptions(root); },0);
+      if (optionsSession) renderOptions(root);
       return true;
     };
     drawer.querySelector('#relphiParseReferents')?.addEventListener('click',()=>acceptCommaList(drawer.querySelector('#relphiBulkReferents')?.value || ''));
