@@ -828,10 +828,13 @@
       '<label>House<select data-building-key="house" '+(disabled?'disabled':'')+'>'+option('',String(b.house||''))+HOUSE_ORDINALS.map((name,index)=>'<option value="'+(index+1)+'" '+(String(b.house)===String(index+1)?'selected':'')+'>'+name+' House</option>').join('')+'</select></label>'+
       '</div><button type="button" id="relphiBuildQuestions" '+(disabled?'disabled':'')+'>Surface referents</button>';
   }
+  function surfacePlanet(card) {
+    return String(card?.astrology?.planet || '').split('/')[0].trim();
+  }
   function surfaceCardPools() {
     const cards=Array.isArray(window.RELPHI_TAROT_CARDS)?window.RELPHI_TAROT_CARDS:[];
     return {
-      planet:cards.filter(card=>card?.card_type==='Major' && card?.astrology?.attribution_type==='Planet' && card?.astrology?.planet),
+      planet:cards.filter(card=>card?.card_type==='Major' && String(card?.astrology?.attribution_type||'').startsWith('Planet') && surfacePlanet(card)),
       sign:cards.filter(card=>card?.card_type==='Major' && card?.astrology?.attribution_type==='Sign' && card?.astrology?.sign),
       pip:cards.filter(card=>card?.card_type==='Pip' && Number(card?.number)>=2 && Number(card?.number)<=10)
     };
@@ -840,7 +843,7 @@
   function surfaceDrawSummary(session) {
     const draws=session.surfaceDraws || {};
     const parts=[];
-    if (draws.planet) parts.push('<article><strong>'+escapeHtml(draws.planet.name)+'</strong><span>Planet · '+escapeHtml(draws.planet.astrology?.planet||'')+'</span></article>');
+    if (draws.planet) parts.push('<article><strong>'+escapeHtml(draws.planet.name)+'</strong><span>Planet · '+escapeHtml(surfacePlanet(draws.planet))+'</span></article>');
     if (draws.sign) parts.push('<article><strong>'+escapeHtml(draws.sign.name)+'</strong><span>Sign · '+escapeHtml(draws.sign.astrology?.sign||'')+'</span></article>');
     if (draws.pip) {
       const num=Number(draws.pip.number)||0;
@@ -853,7 +856,7 @@
     const pip=draws.pip;
     const number=Number(pip?.number)||0;
     return candidateQuestionsFromBlocks({
-      planet:draws.planet?.astrology?.planet || '',
+      planet:surfacePlanet(draws.planet),
       sign:draws.sign?.astrology?.sign || '',
       element:pip?.element || '',
       house:number>=1 && number<=12 ? number : '',
