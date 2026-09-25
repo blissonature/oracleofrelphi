@@ -12,7 +12,7 @@ const GLOBAL_SORTS=new Set([...GLOBAL_TIMING_SORTS,...GLOBAL_SIGNIFICANCE_SORTS]
 const PLACEMENT_SYMBOLS=Object.freeze({sun:'☉',moon:'☽',mercury:'☿',venus:'♀',mars:'♂',jupiter:'♃',saturn:'♄',uranus:'♅',neptune:'♆',pluto:'♇',chiron:'⚷','north-node':'☊','south-node':'☋',lilith:'⚸','part-of-fortune':'⊗',vertex:'Vx','anti-vertex':'AVx',asc:'Asc',dsc:'Dsc',mc:'MC',ic:'IC'});
 const SIGN_SYMBOLS=Object.freeze(['♈','♉','♊','♋','♌','♍','♎','♏','♐','♑','♒','♓']);
 const ASPECT_SYMBOLS=Object.freeze({conjunction:'☌',opposition:'☍',trine:'△',square:'□',sextile:'✶','semi-sextile':'⚺',quincunx:'⚻',octile:'∠','tri-octile':'⚼',quintile:'Q','bi-quintile':'BQ'});
-const HIDDEN_CLASSES=Object.freeze(['sky-foundation-single-sky-cross-hidden','sky-chart-filter-hidden','sky-chart-orb-hidden','sky-orb-filter-hidden','sky-chart-multiselect-hidden','sky-chart-house-multiselect-hidden','sky-chart-aspect-multiselect-hidden','sky-chart-zodiac-filter-hidden','sky-chart-result-limit-hidden']);
+const HIDDEN_CLASSES=Object.freeze(['sky-foundation-single-sky-cross-hidden','sky-chart-filter-hidden','sky-chart-orb-hidden','sky-orb-filter-hidden','sky-chart-multiselect-hidden','sky-chart-house-multiselect-hidden','sky-chart-aspect-multiselect-hidden','sky-chart-zodiac-filter-hidden','sky-chart-theme-filter-hidden','sky-chart-result-limit-hidden']);
 const COLLAPSED_VISUAL_CLASS='sky-relationship-drawer-collapsed-visual';
 const collapsed=new Set();
 let observer=null,observedList=null,queued=false,applying=false,copyTimer=0;
@@ -134,6 +134,6 @@ function ensureObserver(){
 }
 function bind(){ensureObserver();bindCopyButton();schedule()}
 function bindCopySoon(){bindCopyButton();requestAnimationFrame(bindCopyButton)}
-function start(){installStyles();bind();requestAnimationFrame(bindCopySoon);const events=['relphi:sky-foundation-ready','relphi:sky-foundation-interactions-ready','relphi:sky-intrasky-relationships-ready','relphi:sky-intrasky-b-relationships-ready','relphi:sky-aspect-multiselect-changed','relphi:sky-placement-multiselect-changed','relphi:sky-house-multiselect-changed','relphi:sky-zodiac-filter-changed','relphi:sky-foundation-filter-changed','relphi:relationship-display-changed','relphi:relationship-sort-changed'];events.forEach(name=>window.addEventListener(name,()=>{schedule();bindCopySoon()}))}
+function start(){installStyles();bind();requestAnimationFrame(bindCopySoon);const events=['relphi:sky-foundation-ready','relphi:sky-foundation-interactions-ready','relphi:sky-intrasky-relationships-ready','relphi:sky-intrasky-b-relationships-ready','relphi:sky-aspect-multiselect-changed','relphi:sky-placement-multiselect-changed','relphi:sky-house-multiselect-changed','relphi:sky-zodiac-filter-changed','relphi:sky-theme-filter-changed','relphi:sky-foundation-filter-changed','relphi:relationship-display-changed','relphi:relationship-sort-changed'];events.forEach(name=>window.addEventListener(name,()=>{schedule();bindCopySoon()}))}
 document.readyState==='loading'?document.addEventListener('DOMContentLoaded',start,{once:true}):start();
 })();
