@@ -114,7 +114,8 @@
 .sky-foundation-focus-heading {
   display:flex;
   align-items:center;
-  gap:10px;
+  column-gap:16px;
+  row-gap:8px;
   min-height:44px;
   padding:6px 10px;
   border-bottom:1px solid rgba(31,27,24,.11);
@@ -215,7 +216,8 @@
   display:grid;
   grid-template-columns:auto minmax(0,1fr);
   align-items:center;
-  gap:6px;
+  column-gap:16px;
+  row-gap:6px;
   min-height:44px;
   padding:0 10px;
   border-bottom:1px solid rgba(31,27,24,.11);
