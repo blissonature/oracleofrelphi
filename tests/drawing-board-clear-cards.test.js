@@ -24,14 +24,14 @@ async function applyTemplate(page,id){
 }
 
 async function fillCustomQuestions(page,questions){
-  const firstLabel='#relphiPositionLabels .relphi-label-row input';
-  if (!(await page.locator(firstLabel).first().isVisible().catch(()=>false))) {
+  if (!(await page.locator('#relphiBulkReferents').isVisible().catch(()=>false))) {
     await page.click('#drawingBoardOptionsButton');
+    await page.waitForSelector('.relphi-reading-options-drawer.is-reading-options-open',{state:'visible'});
+    await page.click('[data-referent-path="bespoke"]');
   }
-  await page.waitForSelector(firstLabel,{state:'visible'});
-  const input=page.locator(firstLabel).first();
-  await input.fill(questions.join(', '));
-  await input.dispatchEvent('change');
+  await page.waitForSelector('#relphiBulkReferents',{state:'visible'});
+  await page.fill('#relphiBulkReferents',questions.join(', '));
+  await page.click('#relphiParseReferents');
   await page.waitForFunction(count => document.querySelectorAll('#relphiPositionLabels .relphi-label-row').length===count,questions.length);
   await page.click('#relphiApplyOptions');
   await page.waitForFunction(count => {
