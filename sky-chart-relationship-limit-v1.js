@@ -220,7 +220,7 @@ function start(){
   ensureObservers();ensureControl();schedule();
 }
 window.RelphiRelationshipLimit=Object.freeze({
-  options:OPTIONS,
+  options:PRESETS,
   get:()=>limit,
   set:setLimit,
   revealMore,
