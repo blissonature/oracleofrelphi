@@ -142,27 +142,19 @@ assert.ok(rightCluster.rightGap!==null&&rightCluster.rightGap<=2,'Matches, Copy,
 assert.equal(await page.locator('#skyFoundationRelationships .sky-relationship-sort-control>span').count(),0,'Sort must not restore a visible Sort header.');
 assert.equal(await page.locator('#skyFoundationRelationships .sky-relationship-limit-control>span').count(),0,'Max must not restore a visible Max header.');
 
-const maxSelect=page.locator('#skyFoundationRelationships [data-relationship-limit]');
-await maxSelect.evaluate(select=>{window.__relphiMaxOpenIdentity={select,parent:select.parentElement,control:select.closest('.sky-relationship-limit-control'),next:select.closest('.sky-relationship-limit-control')?.nextElementSibling}});
-await maxSelect.click();
-await page.keyboard.press('Escape');
-await page.waitForTimeout(80);
-const maxStable=await maxSelect.evaluate(select=>{
-  const before=window.__relphiMaxOpenIdentity||{};
-  return{
-    sameSelect:select===before.select,
-    sameParent:select.parentElement===before.parent,
-    sameControl:select.closest('.sky-relationship-limit-control')===before.control,
-    sameNext:select.closest('.sky-relationship-limit-control')?.nextElementSibling===before.next,
-    nextId:select.closest('.sky-relationship-limit-control')?.nextElementSibling?.id||''
-  };
-});
-assert.equal(maxStable.sameSelect,true,'Opening Max must keep the same native select node.');
-assert.equal(maxStable.sameParent,true,'Opening Max must not reparent the native select.');
-assert.equal(maxStable.sameControl,true,'Opening Max must not replace its control wrapper.');
-assert.equal(maxStable.sameNext,true,'Opening Max must not trigger header reordering that closes the native dropdown.');
-assert.equal(maxStable.nextId,'skyFoundationRelationshipCount','Max must stay immediately before the match count.');
-assert.equal((await maxSelect.locator('option[value="all"]').textContent()).trim(),'Max','The unlimited relationship cap must read Max in the control.');
+const maxInput=page.locator('#skyFoundationRelationships [data-relationship-limit]');
+assert.equal(await maxInput.getAttribute('type'),'number','Max must be an editable numeric field rather than a preset dropdown.');
+assert.equal(await maxInput.getAttribute('min'),'1','Max must reject zero and negative limits.');
+assert.equal(await maxInput.getAttribute('step'),'1','Max must accept positive integers only.');
+assert.equal(await maxInput.getAttribute('placeholder'),'Max','The unlimited state must read Max without occupying the field value.');
+await maxInput.fill('13');
+await maxInput.press('Enter');
+await page.waitForFunction(()=>document.documentElement.dataset.skyRelationshipLimit==='13');
+assert.equal(await maxInput.inputValue(),'13','A custom positive integer must become the relationship maximum.');
+await maxInput.fill('');
+await maxInput.press('Enter');
+await page.waitForFunction(()=>document.documentElement.dataset.skyRelationshipLimit==='all');
+assert.equal(await maxInput.getAttribute('placeholder'),'Max','Clearing the custom maximum must restore the unlimited Max state.');
 
 await page.setViewportSize({width:390,height:844});
 await page.waitForTimeout(100);
@@ -175,28 +167,27 @@ const mobileRelationshipLayout=await page.locator('#skyFoundationRelationships>.
   const count=box(actions?.querySelector('#skyFoundationRelationshipCount'));
   const copy=box(actions?.querySelector('.sky-relationship-copy-button'));
   const download=box(actions?.querySelector('#skyChartRelationshipsExport'));
+  const headingBox=heading.getBoundingClientRect();
   return{
     titleTop:title?.top??null,countTop:count?.top??null,copyTop:copy?.top??null,downloadTop:download?.top??null,
     sortTop:sort?.top??null,limitTop:limit?.top??null,
     sortWidth:sort?.width??0,limitWidth:limit?.width??0,
     row1Bottom:Math.max(title?.bottom||0,count?.bottom||0,copy?.bottom||0,download?.bottom||0),
     row2Top:Math.min(sort?.top??Infinity,limit?.top??Infinity),
-    headingRight:heading.getBoundingClientRect().right,downloadRight:download?.right??0
+    headingRight:headingBox.right,downloadRight:download?.right??0,
+    headingHeight:headingBox.height
   };
 });
 assert.ok(Math.abs(mobileRelationshipLayout.titleTop-mobileRelationshipLayout.countTop)<=5,'Relationships title and matches must share the first mobile row.');
 assert.ok(Math.abs(mobileRelationshipLayout.countTop-mobileRelationshipLayout.copyTop)<=5&&Math.abs(mobileRelationshipLayout.copyTop-mobileRelationshipLayout.downloadTop)<=5,'Matches, Copy, and Download must share the first mobile row.');
 assert.ok(Math.abs(mobileRelationshipLayout.sortTop-mobileRelationshipLayout.limitTop)<=5,'Sort and Max must share the second mobile row.');
 assert.ok(mobileRelationshipLayout.row2Top>mobileRelationshipLayout.row1Bottom,'Sort and Max must sit below the Relationships/action row.');
-assert.ok(mobileRelationshipLayout.sortWidth>mobileRelationshipLayout.limitWidth*2,'Sort must receive substantially more width than Max on mobile.');
+assert.ok(mobileRelationshipLayout.sortWidth>mobileRelationshipLayout.limitWidth*4,'Sort must receive substantially more width than editable Max on mobile.');
 assert.ok(mobileRelationshipLayout.headingRight-mobileRelationshipLayout.downloadRight<=12,'The first-row action cluster must remain right aligned.');
-await page.setViewportSize({width:1440,height:1000});
-await page.waitForTimeout(80);
-
-await maxSelect.selectOption('20');
+assert.ok(mobileRelationshipLayout.headingHeight<95,'The mobile Relationships heading must remain exactly a compact two-row composition.');
 await page.waitForFunction(()=>document.documentElement.dataset.skyRelationshipLimit==='20');
-assert.equal(await maxSelect.inputValue(),'20','Max must remain functional after opening.');
-await maxSelect.selectOption('all');
+assert.equal(await maxInput.inputValue(),'20','Max must remain functional after opening.');
+await maxInput.fill(''); await maxInput.press('Enter');
 await page.waitForFunction(()=>document.documentElement.dataset.skyRelationshipLimit==='all');
 
 const audit=await page.evaluate(()=>{
