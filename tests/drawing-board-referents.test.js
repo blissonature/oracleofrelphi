@@ -31,6 +31,12 @@ const base='http://127.0.0.1:8000/tarot.html';
     assert.ok(pathBoxes.every(box=>Math.abs(box.left-pathBoxes[0].left)<2 && Math.abs(box.width-pathBoxes[0].width)<2),'Vertical path buttons should share one mobile-friendly column');
     assert.equal(await page.locator('.relphi-referent-settings').evaluate(node=>node.tagName),'SECTION','Draw settings should not be a collapsed details control');
     assert.equal(await page.locator('.relphi-referent-settings .relphi-draw-options').isVisible(),true,'Draw settings controls should always be visible');
+    const referentsBox=await page.locator('.relphi-referents-drawer').evaluate(node=>{
+      const r=node.getBoundingClientRect();
+      return {height:r.height,position:getComputedStyle(node).position};
+    });
+    assert.equal(referentsBox.position,'relative','Referents must stay in normal document flow rather than becoming an absolute overlay');
+    assert.ok(referentsBox.height>=450,'Referents must have a usable working height instead of collapsing to roughly 100 px');
 
     await page.click('[data-referent-path="bespoke"]');
     await page.fill('#relphiBulkReferents','Situation, Challenge, Strategy');
