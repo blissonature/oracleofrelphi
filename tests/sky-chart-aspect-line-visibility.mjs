@@ -60,16 +60,21 @@ assert.equal(await page.locator('#skyFoundationRelationships .sky-relationship-s
 assert.equal(await page.locator('#skyFoundationRelationships .sky-relationship-limit-control>span').count(),0,'Max must not restore a visible Max header.');
 
 const maxSelect=page.locator('#skyFoundationRelationships [data-relationship-limit]');
-const maxIdentity=await maxSelect.evaluate(select=>({parent:select.parentElement,control:select.closest('.sky-relationship-limit-control'),next:select.closest('.sky-relationship-limit-control')?.nextElementSibling}));
+await maxSelect.evaluate(select=>{window.__relphiMaxOpenIdentity={select,parent:select.parentElement,control:select.closest('.sky-relationship-limit-control'),next:select.closest('.sky-relationship-limit-control')?.nextElementSibling}});
 await maxSelect.click();
 await page.keyboard.press('Escape');
 await page.waitForTimeout(80);
-const maxStable=await maxSelect.evaluate((select,before)=>({
-  sameParent:select.parentElement===before.parent,
-  sameControl:select.closest('.sky-relationship-limit-control')===before.control,
-  sameNext:select.closest('.sky-relationship-limit-control')?.nextElementSibling===before.next,
-  nextId:select.closest('.sky-relationship-limit-control')?.nextElementSibling?.id||''
-}),maxIdentity);
+const maxStable=await maxSelect.evaluate(select=>{
+  const before=window.__relphiMaxOpenIdentity||{};
+  return{
+    sameSelect:select===before.select,
+    sameParent:select.parentElement===before.parent,
+    sameControl:select.closest('.sky-relationship-limit-control')===before.control,
+    sameNext:select.closest('.sky-relationship-limit-control')?.nextElementSibling===before.next,
+    nextId:select.closest('.sky-relationship-limit-control')?.nextElementSibling?.id||''
+  };
+});
+assert.equal(maxStable.sameSelect,true,'Opening Max must keep the same native select node.');
 assert.equal(maxStable.sameParent,true,'Opening Max must not reparent the native select.');
 assert.equal(maxStable.sameControl,true,'Opening Max must not replace its control wrapper.');
 assert.equal(maxStable.sameNext,true,'Opening Max must not trigger header reordering that closes the native dropdown.');
