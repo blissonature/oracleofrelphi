@@ -976,7 +976,8 @@
       if (!row || event.target.tagName!=='INPUT' || Number(row.dataset.labelRow)!==0) return;
       const pasted=event.clipboardData?.getData('text') || '';
       if (!pasted.includes(',') || parseBulkQuestions(pasted).length<2) return;
-      event.preventDefault(); acceptCommaList(pasted);
+      event.preventDefault();
+      queueMicrotask(()=>{ if (optionsSession && labelsList?.isConnected) acceptCommaList(pasted); });
     });
     labelsList?.addEventListener('input',event=>{
       const row=event.target.closest('.relphi-label-row');
@@ -989,7 +990,8 @@
     labelsList?.addEventListener('change',event=>{
       const row=event.target.closest('.relphi-label-row');
       if (!row || event.target.tagName!=='INPUT' || Number(row.dataset.labelRow)!==0) return;
-      acceptCommaList(event.target.value);
+      const value=event.target.value;
+      queueMicrotask(()=>{ if (optionsSession && labelsList?.isConnected) acceptCommaList(value); });
     });
     labelsList?.addEventListener('click',event=>{
       const button=event.target.closest('[data-remove-label]');
