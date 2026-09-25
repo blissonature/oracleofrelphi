@@ -19,6 +19,12 @@ const ASPECTS=Object.freeze([
   {id:'opposition',label:'Opposition',angle:180}
 ]);
 const IDS=Object.freeze(ASPECTS.map(item=>item.id));
+const GROUPS=Object.freeze([
+  {id:'major',label:'Major',aspects:['conjunction','opposition','trine','square','sextile']},
+  {id:'minor',label:'Minor',aspects:['semi-sextile','octile','tri-octile','quincunx']},
+  {id:'harmonic',label:'Harmonic',aspects:['quintile','bi-quintile']}
+]);
+const GROUP_MAP=new Map(GROUPS.map(group=>[group.id,group]));
 const SCOPES=Object.freeze([
   {id:'A-A',label:'A↔A'},
   {id:'B-B',label:'B↔B'},
@@ -55,7 +61,8 @@ function relationshipMode(node){
 }
 function cells(scope,aspect){
   const scopes=scope==='all'?activeScopes():activeScopes().includes(scope)?[scope]:[];
-  const aspects=aspect==='all'?IDS:IDS.includes(aspect)?[aspect]:[];
+  const groupId=String(aspect||'').startsWith('group:')?String(aspect).slice(6):'';
+  const aspects=aspect==='all'?IDS:GROUP_MAP.has(groupId)?GROUP_MAP.get(groupId).aspects:IDS.includes(aspect)?[aspect]:[];
   const out=[];
   scopes.forEach(scopeId=>aspects.forEach(aspectId=>out.push([scopeId,aspectId])));
   return out;
@@ -104,7 +111,17 @@ function renderPopover(){
   const cols=document.createElement('div');cols.className='sky-chart-aspect-list-header-choices';
   const labels=bActive()?['All','A↔A','B↔B','A↔B']:['All','A↔A'];
   labels.forEach(text=>{const span=document.createElement('span');span.textContent=text;cols.appendChild(span)});
-  header.append(title,cols);list.append(header,matrixRow('all','All aspects',true));ASPECTS.forEach(aspect=>list.appendChild(matrixRow(aspect.id,aspect.label,false,aspect.angle)));
+  header.append(title,cols);list.append(header,matrixRow('all','All aspects',true));
+  GROUPS.forEach(group=>{
+    const groupRow=matrixRow('group:'+group.id,group.label,true);
+    groupRow.classList.add('sky-chart-aspect-category-row');
+    groupRow.dataset.aspectCategory=group.id;
+    list.appendChild(groupRow);
+    group.aspects.forEach(id=>{
+      const aspect=ASPECTS.find(item=>item.id===id);
+      if(aspect)list.appendChild(matrixRow(aspect.id,aspect.label,false,aspect.angle));
+    });
+  });
   body.replaceChildren(list);
   window.dispatchEvent(new Event('relphi:sky-aspect-filter-rendered'));
 }
