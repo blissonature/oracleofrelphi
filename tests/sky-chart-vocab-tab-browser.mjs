@@ -193,6 +193,9 @@ const ariesLibra=page.locator('#skyFoundationA [data-vocab-structure="sign-polar
 assert.equal(await ariesLibra.count(),1,'All sign polarities must be represented structurally.');
 assert.match(await ariesLibra.textContent(),/Aries[^.]*no placements[^.]*default ruler Mars/i,'An empty Aries pole must state both the absence and Mars as its default ruler.');
 assert.equal(await ariesLibra.locator('[data-vocab-context-kind="house"]').count(),1,'Placements sharing one house inside a sign pole must share one house context instead of repeating it after every placement.');
+const ariesLibraHouseRail=await ariesLibra.evaluate(node=>getComputedStyle(node).getPropertyValue('--vocab-polarity-houses').trim());
+assert.doesNotMatch(ariesLibraHouseRail,/rgba\(31\s*,\s*27\s*,\s*24\s*,\s*(?:\.18|0\.18)\)/i,'An empty sign pole must inherit the house territory colors instead of turning gray.');
+assert.match(ariesLibraHouseRail,/(#43a85b|rgb\(67\s*,\s*168\s*,\s*91\)|#2ca69b|rgb\(44\s*,\s*166\s*,\s*155\))/i,'The empty Aries pole must still show the actual house colors crossed by Aries in the fixture.');
 
 const houseFourTen=page.locator('#skyFoundationA [data-vocab-structure="house-polarity"][data-vocab-houses="4|10"]');
 assert.equal(await houseFourTen.count(),1,'All house polarities must be represented structurally.');
