@@ -321,3 +321,12 @@ assert.deepEqual(whereWhenButtons,['Here and Now','Search','My current location'
 assert.match(whereWhenSection,/class="ph-where-when-title">Where and When<\/span>/);
 
 assert.match(whereWhenSection,/id="useCurrentLocation"[^>]*>My current location<\/button>/);
+
+assert.match(page,/class="ph-top-instrument-grid"/);
+assert.match(page,/class="ph-top-left-stack"/);
+assert.match(page,/class="ph-top-right-stack"/);
+assert.ok(page.indexOf('id="dayRulerProfile"') < page.indexOf('id="moonDisc"'));
+assert.ok(page.indexOf('id="moonDisc"') < page.indexOf('id="heptagramSvg"'));
+assert.ok(page.indexOf('id="heptagramSvg"') < page.indexOf('id="phCurrentWheel"'));
+assert.ok(page.indexOf('id="phCurrentWheel"') < page.indexOf('Where’s the Wanderer?'));
+assert.doesNotMatch(page,/class="ph-top-triad"/);
