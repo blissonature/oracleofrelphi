@@ -162,6 +162,37 @@ assert.equal(maxStable.sameParent,true,'Opening Max must not reparent the native
 assert.equal(maxStable.sameControl,true,'Opening Max must not replace its control wrapper.');
 assert.equal(maxStable.sameNext,true,'Opening Max must not trigger header reordering that closes the native dropdown.');
 assert.equal(maxStable.nextId,'skyFoundationRelationshipCount','Max must stay immediately before the match count.');
+assert.equal((await maxSelect.locator('option[value="all"]').textContent()).trim(),'Max','The unlimited relationship cap must read Max in the control.');
+
+await page.setViewportSize({width:390,height:844});
+await page.waitForTimeout(100);
+const mobileRelationshipLayout=await page.locator('#skyFoundationRelationships>.sky-foundation-relationships-heading').evaluate(heading=>{
+  const box=node=>node?.getBoundingClientRect();
+  const title=box(heading.querySelector('[data-relationship-vocab-tabs],h2:not([hidden])'));
+  const actions=heading.querySelector('.sky-relationship-heading-actions');
+  const sort=box(actions?.querySelector('.sky-relationship-sort-control'));
+  const limit=box(actions?.querySelector('.sky-relationship-limit-control'));
+  const count=box(actions?.querySelector('#skyFoundationRelationshipCount'));
+  const copy=box(actions?.querySelector('.sky-relationship-copy-button'));
+  const download=box(actions?.querySelector('#skyChartRelationshipsExport'));
+  return{
+    titleTop:title?.top??null,countTop:count?.top??null,copyTop:copy?.top??null,downloadTop:download?.top??null,
+    sortTop:sort?.top??null,limitTop:limit?.top??null,
+    sortWidth:sort?.width??0,limitWidth:limit?.width??0,
+    row1Bottom:Math.max(title?.bottom||0,count?.bottom||0,copy?.bottom||0,download?.bottom||0),
+    row2Top:Math.min(sort?.top??Infinity,limit?.top??Infinity),
+    headingRight:heading.getBoundingClientRect().right,downloadRight:download?.right??0
+  };
+});
+assert.ok(Math.abs(mobileRelationshipLayout.titleTop-mobileRelationshipLayout.countTop)<=5,'Relationships title and matches must share the first mobile row.');
+assert.ok(Math.abs(mobileRelationshipLayout.countTop-mobileRelationshipLayout.copyTop)<=5&&Math.abs(mobileRelationshipLayout.copyTop-mobileRelationshipLayout.downloadTop)<=5,'Matches, Copy, and Download must share the first mobile row.');
+assert.ok(Math.abs(mobileRelationshipLayout.sortTop-mobileRelationshipLayout.limitTop)<=5,'Sort and Max must share the second mobile row.');
+assert.ok(mobileRelationshipLayout.row2Top>mobileRelationshipLayout.row1Bottom,'Sort and Max must sit below the Relationships/action row.');
+assert.ok(mobileRelationshipLayout.sortWidth>mobileRelationshipLayout.limitWidth*2,'Sort must receive substantially more width than Max on mobile.');
+assert.ok(mobileRelationshipLayout.headingRight-mobileRelationshipLayout.downloadRight<=12,'The first-row action cluster must remain right aligned.');
+await page.setViewportSize({width:1440,height:1000});
+await page.waitForTimeout(80);
+
 await maxSelect.selectOption('20');
 await page.waitForFunction(()=>document.documentElement.dataset.skyRelationshipLimit==='20');
 assert.equal(await maxSelect.inputValue(),'20','Max must remain functional after opening.');
