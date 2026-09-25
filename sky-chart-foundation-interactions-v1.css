@@ -449,10 +449,25 @@
   }
   .sky-foundation-relationships-heading>.sky-relationship-heading-actions{
     grid-area:actions;
+    display:grid;
+    grid-template-columns:minmax(0,1fr) auto auto;
+    align-items:center;
+    gap:5px;
     width:100%;
     max-width:100%;
-    justify-content:flex-start;
     overflow:visible;
+  }
+  .sky-foundation-relationships-heading>.sky-relationship-heading-actions>.sky-relationship-sort-control{
+    min-width:0;
+    justify-self:start;
+  }
+  .sky-foundation-relationships-heading>.sky-relationship-heading-actions>.sky-relationship-copy-button{
+    margin-left:0!important;
+    justify-self:end;
+  }
+  .sky-foundation-relationships-heading>.sky-relationship-heading-actions>[id*="Download"],
+  .sky-foundation-relationships-heading>.sky-relationship-heading-actions>[data-relationship-export-owner]{
+    justify-self:end;
   }
   #skyFoundationRelationshipList {
     grid-template-columns:1fr;
