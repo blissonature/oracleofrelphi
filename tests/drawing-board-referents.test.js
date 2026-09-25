@@ -66,6 +66,37 @@ const base='http://127.0.0.1:8000/tarot.html';
     assert.match(princessText,/Earth of Earth|Earth of (Fire|Water|Air)/,'Princess/Page should expose its Earth-of-X formula');
     assert.equal(await page.locator('#shortListPanel .card-row-board [data-row-card]').count(),0,'idea cards must not become reading cards');
 
+    // User flow: edit a surfaced referent and go straight to Start Reading.
+    // It must become a real board position without requiring the extra "Use selected referents" click.
+    await page.click('#relphiResetBoard');
+    await page.click('[data-referent-path="surface"]');
+    await page.click('[data-surface-draw="court"]');
+    await page.waitForFunction(()=>document.querySelectorAll('[data-suggestion-text]').length===1);
+    const question='How is this being carried into tangible form?';
+    await page.fill('[data-suggestion-text="0"]',question);
+    await page.click('#relphiApplyOptions');
+    await page.waitForSelector('.relphi-referents-drawer',{state:'detached'});
+    await page.waitForFunction(expected=>{
+      const state=window.RelphiDrawingBoardOptionsBridge?.capture?.();
+      return state?.shortListPositionLabels?.[0]===expected &&
+        state?.rowPositionMeta?.[0]?.drawScope==='courts' &&
+        document.querySelectorAll('#shortListPanel .card-row-placeholder-item').length===1;
+    },question);
+    assert.equal(await page.locator('[data-row-position-label-editor="0"]').textContent(),question,'surfaced referent should become the visible position sticker');
+
+    await page.click('#drawRandomRowCard');
+    await page.waitForSelector('.relphi-focus-reader',{state:'visible'});
+    const drawnType=await page.evaluate(()=>{
+      const id=document.querySelector('#shortListPanel .card-row-board [data-row-card]')?.dataset?.rowCard;
+      return window.RELPHI_TAROT_CARDS?.find(card=>card.card_id===id)?.card_type||'';
+    });
+    assert.equal(drawnType,'Court','a court-sourced referent should draw its reading card from the Courts sub-pack');
+    assert.equal(await page.locator('.relphi-focus-position').textContent(),question,'focus view should show the actual referent rather than Position 1');
+    await page.click('.relphi-focus-close');
+
+    await page.click('#drawingBoardOptionsButton');
+    await page.waitForSelector('.relphi-referents-drawer',{state:'visible'});
+    await page.click('#relphiResetBoard');
     await page.click('[data-referent-path="draw"]');
     await page.waitForSelector('.relphi-referents-drawer',{state:'detached'});
     assert.equal(await page.locator('#relphiUseBlankDraw').count(),0,'Draw tab itself should return to the native board');
