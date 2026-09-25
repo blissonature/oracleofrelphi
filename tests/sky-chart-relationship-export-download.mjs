@@ -46,7 +46,7 @@ const limit=page.locator('[data-relationship-limit]');
 await limit.waitFor({state:'visible'});
 assert.equal(await limit.evaluate(node=>node.closest('.sky-relationship-heading-actions')?.classList.contains('sky-relationship-heading-actions')||false),true,'Limit must sit in the Relationships header action cluster beside Copy and Download.');
 assert.equal(await limit.evaluate(node=>Boolean(node.closest('.sky-chart-filter-bar'))),false,'Limit must not remain in the filter grid.');
-assert.deepEqual(await limit.locator('option').allTextContents(),['10','20','50','Max'],'Relationships must expose 10, 20, 50, and Max result limits.');
+assert.deepEqual(await limit.locator('option').allTextContents(),positive integer Max field,'Relationships must expose an editable positive integer result maximum.');
 const eligibleOrder=await page.evaluate(()=>[...document.querySelectorAll('#skyFoundationRelationshipList>.sky-foundation-relationship-row[data-relation-index]')]
   .filter(row=>{const style=getComputedStyle(row);return !row.hidden&&style.display!=='none'&&style.visibility!=='hidden'})
   .map(row=>row.dataset.relationIndex));
