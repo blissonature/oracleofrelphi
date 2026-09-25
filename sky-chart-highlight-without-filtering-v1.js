@@ -236,7 +236,9 @@
 
     root.addEventListener('focusout', event => {
       const row = event.target.closest('.sky-foundation-relationship-row');
-      if (row && !row.contains(event.relatedTarget)) clearRowHover();
+      if (!row || row.contains(event.relatedTarget)) return;
+      if (freezeRowHoverOnExternalExit(event, row)) return;
+      clearRowHover();
     });
 
     window.addEventListener('blur', () => {
