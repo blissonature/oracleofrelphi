@@ -753,53 +753,15 @@ function groupPreviewGlyph(tokenNode,value,lane){
   renderAbstractPreviewGlyph(svg,tokenNode);
   return holder;
 }
-function groupPreviewText(body,state){
-  if(!state.names&&!state.referents)return'';
-  const seen=new Set(),parts=[];
-  body.querySelectorAll('.sky-vocab-token').forEach(tokenNode=>{
-    const name=String(tokenNode.dataset.vocabName||'').trim();
-    const referent=String(tokenNode.dataset.vocabReferent||'').trim();
-    let text='';
-    if(state.names&&state.referents&&name&&referent)text=name+' — '+referent;
-    else if(state.names&&name)text=name;
-    else if(state.referents&&referent)text=referent;
-    if(!text||seen.has(text))return;
-    seen.add(text);parts.push(text);
-  });
-  return parts.join(' · ');
-}
 function populateVocabGroupPreview(summary,body){
-  const state=displayState(),preview=document.createElement('span');preview.className='sky-vocab-group-preview';
-  const previewText=groupPreviewText(body,state);
-  if(previewText){
-    const content=document.createElement('span');content.className='sky-vocab-group-preview-content';
-    const text=document.createElement('span');text.className='sky-vocab-group-preview-text';text.textContent=previewText;text.title=previewText;content.appendChild(text);
-    preview.appendChild(content);
+  const preview=document.createElement('span');preview.className='sky-vocab-group-preview';
+  const placements=spatialLanes(previewPlacementTokens(body));
+  if(placements.length){
+    const spatial=document.createElement('span');spatial.className='sky-vocab-group-preview-spatial';spatial.setAttribute('aria-label','Placement positions from 0° Aries through 360°');
+    const axis=document.createElement('span');axis.className='sky-vocab-group-preview-spatial-axis';axis.style.background=zodiacAxisGradient();spatial.appendChild(axis);
+    placements.forEach(({tokenNode,value,lane})=>spatial.appendChild(groupPreviewGlyph(tokenNode,value,lane)));
+    preview.appendChild(spatial);
   }
-
-  const map=document.createElement('span');map.className='sky-vocab-group-preview-map';
-  if(state.glyphs){
-    const placements=spatialLanes(previewPlacementTokens(body));
-    if(placements.length){
-      const spatial=document.createElement('span');spatial.className='sky-vocab-group-preview-spatial';spatial.setAttribute('aria-label','Placement positions from 0° Aries through 360°');
-      const axis=document.createElement('span');axis.className='sky-vocab-group-preview-spatial-axis';axis.style.background=zodiacAxisGradient();spatial.appendChild(axis);
-      placements.forEach(({tokenNode,value,lane})=>spatial.appendChild(groupPreviewGlyph(tokenNode,value,lane)));
-      map.appendChild(spatial);
-    }
-  }
-
-  const rails=document.createElement('span');rails.className='sky-vocab-group-preview-rails';rails.setAttribute('aria-label','Sign and house color preview');
-  ['sign','house'].forEach(kind=>{
-    const rail=document.createElement('span');rail.className='sky-vocab-group-preview-rail sky-vocab-group-preview-rail-'+kind;rail.dataset.vocabPreviewRail=kind;
-    rail.title=kind==='sign'?'Signs represented in this group':'Houses represented in this group';
-    body.querySelectorAll('.sky-vocab-line').forEach(line=>{
-      const value=previewRailValue(line,kind);if(!value)return;
-      const segment=document.createElement('span');segment.className='sky-vocab-group-preview-segment';segment.style.background=horizontalPreviewGradient(value);rail.appendChild(segment);
-    });
-    if(rail.childNodes.length)rails.appendChild(rail);
-  });
-  if(rails.childNodes.length)map.appendChild(rails);
-  if(map.childNodes.length)preview.appendChild(map);
   summary.appendChild(preview);
 }
 function createVocabGroup(container,slot,key,label,renderBody){
@@ -1670,19 +1632,12 @@ function installStyles(){
     .sky-vocab-group-title{margin:0;color:#665d55}
     .sky-vocab-group-chevron{width:.42rem;height:.42rem;border-right:1.7px solid #655c55;border-bottom:1.7px solid #655c55;transform:rotate(45deg);transition:transform .14s ease;margin-right:.12rem}
     .sky-vocab-group[open]>.sky-vocab-group-summary .sky-vocab-group-chevron{transform:rotate(225deg)}
-    .sky-vocab-group-preview{grid-column:1/-1;display:grid;gap:.22rem;align-items:center;min-width:0}
-    .sky-vocab-group-preview-content{display:block;min-width:0}
-    .sky-vocab-group-preview-text{display:-webkit-box;min-width:0;overflow:hidden;color:#5f5750;font:650 .61rem/1.24 system-ui,sans-serif;-webkit-box-orient:vertical;-webkit-line-clamp:2;line-clamp:2}
-    .sky-vocab-group-preview-map{display:grid;gap:2px;min-width:0}
+    .sky-vocab-group-preview{grid-column:1/-1;display:block;min-width:0}
     .sky-vocab-group-preview-spatial{position:relative;display:block;height:24px;margin:0 .48rem;overflow:visible}
     .sky-vocab-group-preview-spatial-axis{position:absolute;left:0;right:0;top:50%;height:3px;border-radius:999px;opacity:.46;transform:translateY(-50%)}
     .sky-vocab-group-preview-glyph{display:inline-grid;place-items:center;width:15px;min-width:15px;max-width:15px;height:15px;min-height:15px;max-height:15px;color:#332e2a;font:800 9px/1 system-ui,sans-serif;contain:layout size}
     .sky-vocab-group-preview-spatial-glyph{position:absolute;z-index:2;top:calc(50% + var(--vocab-spatial-offset,0px));transform:translate(-50%,-50%);border-radius:50%;background:#fffdf8;box-shadow:0 0 0 1px rgba(31,27,24,.1)}
     .sky-vocab-group-preview-glyph svg{display:block;width:15px!important;min-width:15px!important;max-width:15px!important;height:15px!important;min-height:15px!important;max-height:15px!important;overflow:visible}
-    .sky-vocab-group-preview-rails{display:grid;gap:2px;min-width:0}
-    .sky-vocab-group-preview-rail{display:flex;height:3px;overflow:hidden;border-radius:999px;background:rgba(31,27,24,.08)}
-    .sky-vocab-group-preview-rail-house{opacity:.5}
-    .sky-vocab-group-preview-segment{flex:1 1 0;min-width:2px}
     .sky-vocab-group-body{display:grid;gap:.48rem;padding:.06rem .44rem .46rem}
     .sky-vocab-group:not([open])>.sky-vocab-group-body{display:none}
     .sky-vocab-structure-line{padding:.34rem .42rem;border-left:3px solid rgba(31,27,24,.24);border-radius:0 6px 6px 0;background:rgba(31,27,24,.035);color:#211d19;font-size:1em;font-weight:500;line-height:1.52}
