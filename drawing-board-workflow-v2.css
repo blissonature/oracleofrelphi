@@ -255,3 +255,45 @@
 
 /* The question / position is ceremonial reading chrome, not Ledger content. Keep it static while the card entry scrolls. */
 .relphi-focus-entry>.eyebrow{display:none!important}
+
+
+/* Tarot Ledger Referents v1 */
+#shortListPanel .relphi-options-note-visible{display:block!important}
+#shortListPanel .relphi-referent-paths{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:.45rem!important}
+#shortListPanel .relphi-referent-path{display:grid!important;gap:.14rem!important;align-content:start!important;min-height:4.3rem!important;margin:0!important;padding:.62rem .68rem!important;border:1px solid #cfc5bc!important;border-radius:9px!important;background:#fff!important;color:#171412!important;text-align:left!important;font:inherit!important}
+#shortListPanel .relphi-referent-path:first-child{grid-column:1/-1!important}
+#shortListPanel .relphi-referent-path strong{font-size:.8rem!important}
+#shortListPanel .relphi-referent-path span{font-size:.66rem!important;line-height:1.3!important;color:#655d56!important}
+#shortListPanel .relphi-referent-path.is-active{border-color:var(--relphi-board-red)!important;background:#fff7f5!important;box-shadow:inset 0 0 0 1px rgba(220,31,24,.12)!important}
+#shortListPanel .relphi-referent-intro,#shortListPanel .relphi-referent-empty{margin:0!important;padding:.7rem!important;border:1px dashed #d6ccc3!important;border-radius:9px!important;background:#fbf8f4!important;color:#655d56!important;font-size:.73rem!important;line-height:1.4!important}
+#shortListPanel .relphi-referent-panel{display:grid!important;gap:.62rem!important;padding:.7rem!important;border:1px solid #ddd4cb!important;border-radius:10px!important;background:#fff!important}
+#shortListPanel .relphi-referent-panel>strong{font-size:.88rem!important}
+#shortListPanel .relphi-referent-panel>p{margin:0!important;font-size:.73rem!important;line-height:1.4!important;color:#5d554f!important}
+#shortListPanel .relphi-options-subhead>div{display:grid!important;gap:.08rem!important}
+#shortListPanel .relphi-options-subhead>div span,#shortListPanel .relphi-options-subhead>span{font-size:.65rem!important;font-weight:600!important;color:#6b625b!important}
+#shortListPanel .relphi-bulk-referents{display:grid!important;gap:.28rem!important;margin:0!important;font-size:.72rem!important;font-weight:800!important}
+#shortListPanel .relphi-bulk-referents textarea,#shortListPanel .relphi-suggestion-row input[type="text"]{width:100%!important;box-sizing:border-box!important;margin:0!important;padding:.45rem .52rem!important;border:1px solid #bfb5ac!important;border-radius:7px!important;background:#fff!important;color:#111!important;font:inherit!important;font-size:.76rem!important;line-height:1.35!important}
+#shortListPanel #relphiParseReferents,#shortListPanel #relphiBuildQuestions,#shortListPanel #relphiAcceptSuggestions,#shortListPanel #relphiUseBlankDraw,#shortListPanel .relphi-surface-actions button{min-height:2.15rem!important;margin:0!important;padding:.42rem .62rem!important;border:1px solid #bfb5ac!important;border-radius:7px!important;background:#fff!important;color:#111!important;font:inherit!important;font-size:.72rem!important;font-weight:850!important}
+#shortListPanel .relphi-building-grid{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:.45rem!important}
+#shortListPanel .relphi-building-grid label{display:grid!important;gap:.25rem!important;font-size:.7rem!important;font-weight:800!important}
+#shortListPanel .relphi-building-grid select{width:100%!important;min-height:2.15rem!important;margin:0!important;padding:.36rem .48rem!important;border:1px solid #bfb5ac!important;border-radius:7px!important;background:#fff!important;font:inherit!important;font-size:.74rem!important}
+#shortListPanel .relphi-building-grid label:last-child{grid-column:1/-1!important}
+#shortListPanel .relphi-suggestions-review{display:grid!important;gap:.42rem!important}
+#shortListPanel .relphi-suggestion-row{display:grid!important;grid-template-columns:auto 1.3rem minmax(0,1fr)!important;align-items:center!important;gap:.35rem!important}
+#shortListPanel .relphi-suggestion-row>span{font-size:.68rem!important;font-weight:900!important;text-align:center!important}
+#shortListPanel .relphi-surface-actions{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:.4rem!important}
+#shortListPanel .relphi-surface-actions #relphiSurfaceAll{grid-column:1/-1!important;border-color:var(--relphi-board-red)!important;color:#a61712!important}
+#shortListPanel .relphi-surface-draws{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:.42rem!important}
+#shortListPanel .relphi-surface-draws article{display:grid!important;gap:.16rem!important;padding:.55rem!important;border:1px solid #ddd4cb!important;border-radius:8px!important;background:#fbf8f4!important}
+#shortListPanel .relphi-surface-draws strong{font-size:.72rem!important}
+#shortListPanel .relphi-surface-draws span{font-size:.62rem!important;line-height:1.3!important;color:#655d56!important}
+#shortListPanel .relphi-template-preview,#shortListPanel .relphi-referent-review ol{display:grid!important;gap:.28rem!important;margin:0!important;padding-left:1.4rem!important;font-size:.72rem!important;line-height:1.35!important}
+#shortListPanel .relphi-referent-review{display:grid!important;gap:.35rem!important;padding:.62rem .7rem!important;border-left:3px solid var(--relphi-board-red)!important;border-radius:7px!important;background:#fff8ee!important}
+#shortListPanel .relphi-referent-review>strong{font-size:.75rem!important}
+#shortListPanel .relphi-referent-settings{margin:0!important;border-top:1px solid #e4dbd2!important;padding-top:.35rem!important}
+#shortListPanel .relphi-referent-settings>summary{cursor:pointer!important;font-size:.7rem!important;font-weight:850!important}
+#shortListPanel .relphi-referent-settings .relphi-draw-options{margin-top:.5rem!important}
+@media(max-width:700px){
+  #shortListPanel .relphi-referent-paths,#shortListPanel .relphi-building-grid,#shortListPanel .relphi-surface-draws{grid-template-columns:1fr!important}
+  #shortListPanel .relphi-referent-path:first-child,#shortListPanel .relphi-building-grid label:last-child,#shortListPanel .relphi-surface-actions #relphiSurfaceAll{grid-column:auto!important}
+}
