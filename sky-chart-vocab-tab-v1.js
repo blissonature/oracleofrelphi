@@ -492,8 +492,9 @@ function phrasePlacement(record){
 }
 function placementRailGradient(records,keyOf,colorOf){
   const members=records.filter(Boolean);
-  if(!members.length)return structureNeutralColor();
-  if(members.length===1)return colorOf(keyOf(members[0]))||structureNeutralColor();
+  const solid=color=>'linear-gradient(to bottom,'+color+' 0 100%)';
+  if(!members.length)return solid(structureNeutralColor());
+  if(members.length===1)return solid(colorOf(keyOf(members[0]))||structureNeutralColor());
   const step=100/members.length,stops=[];
   members.forEach((record,index)=>{
     const color=colorOf(keyOf(record))||structureNeutralColor(),start=index*step,end=(index+1)*step;
