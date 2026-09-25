@@ -5,6 +5,8 @@ on:
     paths:
       - 'relphi-semantic-search-v1.js'
       - 'sky-chart-relationship-themes-v1.js'
+      - 'sky-chart-relationship-display-v1.js'
+      - 'tests/sky-chart-relationship-display-browser.mjs'
       - 'sky-chart.html'
       - 'tarot.html'
       - 'tarot-app.js'
@@ -34,6 +36,8 @@ jobs:
         run: |
           node --check relphi-semantic-search-v1.js
           node --check sky-chart-relationship-themes-v1.js
+          node --check sky-chart-relationship-display-v1.js
+          node --check tests/sky-chart-relationship-display-browser.mjs
           node --check tarot-app.js
           node --check tests/sky-chart-relationship-themes-browser.mjs
       - name: Install browser dependencies
@@ -44,3 +48,4 @@ jobs:
         run: |
           python3 -m http.server 4173 > /tmp/sky-chart-relationship-themes-server.log 2>&1 &
           node tests/sky-chart-relationship-themes-browser.mjs
+          node tests/sky-chart-relationship-display-browser.mjs
