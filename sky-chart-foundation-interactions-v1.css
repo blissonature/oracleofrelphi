@@ -213,7 +213,7 @@
 
 .sky-foundation-relationships-heading {
   display:grid;
-  grid-template-columns:auto auto minmax(0,1fr);
+  grid-template-columns:auto minmax(0,1fr);
   align-items:center;
   gap:6px;
   min-height:44px;
@@ -242,7 +242,7 @@
   font:800 .69rem/1 system-ui,sans-serif;
   font-variant-numeric:tabular-nums;
   white-space:nowrap;
-  order:1;
+  order:0;
 }
 
 #skyFoundationRelationshipCount[data-count-label="matches"] {
@@ -292,6 +292,7 @@
 }
 
 .sky-foundation-relationships-heading>.sky-relationship-heading-actions{
+  grid-column:2/-1;
   display:flex;
   align-items:center;
   justify-content:flex-start;
