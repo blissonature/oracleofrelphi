@@ -84,6 +84,8 @@ const base='http://127.0.0.1:8000/tarot.html';
     await page.fill('[data-suggestion-text="0"]',question);
     await page.click('#relphiApplyOptions');
     await page.waitForSelector('.relphi-referents-drawer',{state:'detached'});
+    assert.equal(await page.locator('#drawingBoardBoardTab').getAttribute('aria-selected'),'true','Start Reading should return to Board mode');
+    assert.equal(await page.locator('.drawing-board-board-mode').isVisible(),true,'Board actions should reappear after Start Reading');
     await page.waitForFunction(expected=>{
       const state=window.RelphiDrawingBoardOptionsBridge?.capture?.();
       return state?.shortListPositionLabels?.[0]===expected &&
