@@ -76,6 +76,14 @@ const rowHoverIsolationSamples=await page.evaluate(async()=>{
 assert.equal(rowHoverIsolationSamples.some(Boolean),false,'Relationship-row hover must keep the wheel fully illuminated on every sampled frame.');
 assert.equal(await intraskyRow.evaluate(row=>row.classList.contains('is-row-hovered')),true,'Hovered relationship row should retain its row-highlight state.');
 assert.ok(await page.locator('.sky-foundation-aspect.is-row-hovered:not(.sky-foundation-aspect-hit)').count()>0,'Relationship-row hover should highlight its matching wheel line.');
+
+// A screen-capture overlay can take pointer ownership away from the browser with no
+// relatedTarget. That handoff must freeze the visible hover instead of repainting the chart.
+await intraskyRow.dispatchEvent('pointerout',{pointerType:'mouse',relatedTarget:null});
+await page.waitForTimeout(50);
+assert.equal(await intraskyRow.evaluate(row=>row.classList.contains('is-row-hovered')),true,'External pointer handoff must preserve the relationship tile hover for screenshots.');
+assert.ok(await page.locator('.sky-foundation-aspect.is-row-hovered:not(.sky-foundation-aspect-hit)').count()>0,'External pointer handoff must preserve the matching wheel line for screenshots.');
+
 await page.locator('.sky-foundation-relationships-heading h2').hover();
 await page.waitForTimeout(50);
 assert.equal(await page.locator('.sky-foundation-wheel').evaluate(wheel=>wheel.classList.contains('has-isolation')),false);
