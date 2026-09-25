@@ -24,19 +24,25 @@ const TYPES=Object.freeze([
   {id:'thors-hammer',label:"Thor's Hammer / Fist of God",vertices:3}
 ]);
 const TYPE_MAP=new Map(TYPES.map(type=>[type.id,type]));
+const TYPE_IDS=Object.freeze(TYPES.map(type=>type.id));
+const SCOPES=Object.freeze([
+  {id:'A-A',label:'A↔A'},
+  {id:'B-B',label:'B↔B'},
+  {id:'A-B',label:'A↔B'}
+]);
 const PLACEMENT_SYMBOLS=Object.freeze({sun:'☉',moon:'☽',mercury:'☿',venus:'♀',mars:'♂',jupiter:'♃',saturn:'♄',uranus:'♅',neptune:'♆',pluto:'♇',chiron:'⚷','north-node':'☊','south-node':'☋',lilith:'⚸','part-of-fortune':'⊗',vertex:'Vx','anti-vertex':'AVx',asc:'Asc',dsc:'Dsc',mc:'MC',ic:'IC'});
-const selectedTypes=new Set();
+const configurationState=Object.fromEntries(SCOPES.map(scope=>[scope.id,new Set()]));
 let patterns=[];
 let queued=false;
 let applying=false;
-let activePatternKey='';
 let peerHoverRow=null,peerHoverFrozen=false,configurationObserver=null,observedConfigurationBody=null;
 
 function popoverBody(){return document.querySelector('#skyChartAspectPopover .sky-chart-aspect-filter-body')}
 function harmonicWindow(){const model=window.RelphiHarmonicOrb;const value=Number(model?.getWindow?.()??model?.defaultWindow??6);return Number.isFinite(value)?value:6}
 function bActive(){const html=document.documentElement;return html.dataset.skyBEditing==='true'||html.dataset.skyBPresent==='true'}
 function relationshipMode(row){const raw=String(row?.dataset?.relationshipMode||'').toUpperCase();if(raw==='A-A'||raw==='B-B'||raw==='A-B')return raw;if(raw==='B-A')return'A-B';const l=String(row?.dataset?.leftSky||'').toUpperCase(),r=String(row?.dataset?.rightSky||'').toUpperCase();if(l&&r)return l===r?`${l}-${r}`:'A-B';return'A-B'}
-function activeMode(mode){return bActive()?['A-A','B-B','A-B'].includes(mode):mode==='A-A'}
+function activeScopes(){return bActive()?SCOPES.map(scope=>scope.id):['A-A']}
+function activeMode(mode){return activeScopes().includes(mode)}
 function nodeKey(sky,placement){return`${String(sky||'').toUpperCase()}:${String(placement||'')}`}
 function edgeKey(a,b){return[a,b].sort().join('|')}
 function patternKey(type,vertices){return`${type}:${vertices.slice().sort().join('|')}`}
@@ -88,18 +94,7 @@ function detect(){
   out.sort((a,b)=>a.maxPhase-b.maxPhase||a.meanPhase-b.meanPhase||TYPES.findIndex(type=>type.id===a.type)-TYPES.findIndex(type=>type.id===b.type));
   return{graph,patterns:out};
 }
-function simpleCategoryHeading(label){const div=document.createElement('div');div.className='sky-chart-aspect-category-heading';div.textContent=label;return div}
-function decorateSimpleGroups(){
-  const list=document.querySelector('#skyChartAspectPopover [data-aspect-list="matrix"]');if(!list)return;
-  list.querySelectorAll('.sky-chart-aspect-category-heading').forEach(node=>node.remove());
-  const master=list.querySelector('[data-aspect-matrix-row="all"]');
-  if(master&&master.parentElement===list)list.insertBefore(master,list.querySelector('[data-aspect-matrix-row]:not([data-aspect-matrix-row="all"])'));
-  let anchor=master;
-  for(const group of SIMPLE_GROUPS){
-    const heading=simpleCategoryHeading(group.label);if(anchor?.nextSibling)list.insertBefore(heading,anchor.nextSibling);else list.appendChild(heading);anchor=heading;
-    for(const id of group.aspects){const row=list.querySelector(`[data-aspect-matrix-row="${id}"]`);if(row){if(anchor.nextSibling)list.insertBefore(row,anchor.nextSibling);else list.appendChild(row);anchor=row}}
-  }
-}
+function decorateSimpleGroups(){/* Aspect category master rows are rendered by the scope matrix. */}
 function provenance(pattern,graph){const skies=new Set(pattern.vertices.map(key=>graph.nodes.get(key)?.sky).filter(Boolean));if(skies.size===1){const sky=[...skies][0];return`${sky}↔${sky}`}return'A+B'}
 function vertexLabel(key,graph){const node=graph.nodes.get(key);if(!node)return key;return`${node.sky} ${PLACEMENT_SYMBOLS[node.placement]||node.placement}`}
 function typePatterns(type){return patterns.filter(pattern=>pattern.type===type)}
