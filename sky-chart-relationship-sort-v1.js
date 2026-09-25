@@ -29,7 +29,7 @@ const AXIS_FAMILY=Object.freeze({
 const SIGNIFICANCE_HIDDEN_CLASSES=Object.freeze([
   'sky-foundation-single-sky-cross-hidden','sky-chart-filter-hidden','sky-chart-orb-hidden','sky-orb-filter-hidden',
   'sky-chart-multiselect-hidden','sky-chart-house-multiselect-hidden','sky-chart-aspect-multiselect-hidden',
-  'sky-chart-zodiac-filter-hidden','sky-chart-semantic-hidden'
+  'sky-chart-zodiac-filter-hidden','sky-chart-theme-filter-hidden','sky-chart-semantic-hidden'
 ]);
 
 // The ranking model is deliberately scope-agnostic: A↔B, A↔A, and B↔B use
@@ -489,6 +489,7 @@ function start(){
     'relphi:sky-harmonic-window-visibility-changed',
     'relphi:sky-live-origin-changed'
   ].forEach(name=>window.addEventListener(name,()=>requestAnimationFrame(invalidateTransit)));
+  window.addEventListener('relphi:sky-theme-filter-changed',()=>requestAnimationFrame(refreshForRows));
   const root=document.getElementById('skyFoundationRoot');
   if(root)new MutationObserver(()=>requestAnimationFrame(ensureControl)).observe(root,{childList:true,subtree:true});
 }

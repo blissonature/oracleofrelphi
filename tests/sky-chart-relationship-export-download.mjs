@@ -46,16 +46,29 @@ const limit=page.locator('[data-relationship-limit]');
 await limit.waitFor({state:'visible'});
 assert.equal(await limit.evaluate(node=>node.closest('.sky-relationship-heading-actions')?.classList.contains('sky-relationship-heading-actions')||false),true,'Limit must sit in the Relationships header action cluster beside Copy and Download.');
 assert.equal(await limit.evaluate(node=>Boolean(node.closest('.sky-chart-filter-bar'))),false,'Limit must not remain in the filter grid.');
-const limitList=await limit.getAttribute('list');
-assert.ok(limitList,'Editable Relationships range must expose preset suggestions.');
-assert.deepEqual(await page.locator('#'+limitList+' option').evaluateAll(nodes=>nodes.map(node=>node.value)),['10','20','50','Max','Custom Range'],'Relationships range must expose 10, 20, 50, Max, and Custom Range suggestions.');
+const limitToggle=page.locator('#skyFoundationRelationships .sky-relationship-limit-toggle');
+await limitToggle.click();
+const presetMenu=page.locator('#skyRelationshipLimitMenu');
+await presetMenu.waitFor({state:'visible'});
+assert.deepEqual(
+  await presetMenu.locator('[data-relationship-limit-preset]').evaluateAll(nodes=>nodes.map(node=>node.textContent.trim())),
+  ['10','20','50','100','Max','Custom Range'],
+  'Max dropdown must expose 10, 20, 50, 100, Max, and Custom Range.'
+);
+await limitToggle.click();
 const eligibleOrder=await page.evaluate(()=>[...document.querySelectorAll('#skyFoundationRelationshipList>.sky-foundation-relationship-row[data-relation-index]')]
   .filter(row=>{const style=getComputedStyle(row);return !row.hidden&&style.display!=='none'&&style.visibility!=='hidden'})
   .map(row=>row.dataset.relationIndex));
 assert.ok(eligibleOrder.length>20,`Fixture must expose more than 20 eligible relationships to test a real cap: ${eligibleOrder.length}`);
-await limit.fill('20');
-await limit.press('Enter');
+await limit.fill('7');
+await page.waitForFunction(()=>document.documentElement.dataset.skyRelationshipLimit==='7');
+await page.waitForFunction(()=>[...document.querySelectorAll('#skyFoundationRelationshipList>.sky-foundation-relationship-row')].filter(row=>{const style=getComputedStyle(row);return !row.hidden&&style.display!=='none'&&style.visibility!=='hidden'}).length===7);
+assert.equal(await page.locator('#skyFoundationRelationshipCount').evaluate(node=>node.dataset.matchCount),String(eligibleOrder.length),'Typing a custom number must immediately cap the results without changing the match count.');
+
+await limitToggle.click();
+await page.locator('#skyRelationshipLimitMenu [data-relationship-limit-preset="20"]').click();
 await page.waitForFunction(()=>document.documentElement.dataset.skyRelationshipLimit==='20');
+
 await page.waitForFunction(()=>[...document.querySelectorAll('#skyFoundationRelationshipList>.sky-foundation-relationship-row')].filter(row=>{const style=getComputedStyle(row);return !row.hidden&&style.display!=='none'&&style.visibility!=='hidden'}).length===20);
 const cappedOrder=await page.evaluate(()=>[...document.querySelectorAll('#skyFoundationRelationshipList>.sky-foundation-relationship-row[data-relation-index]')]
   .filter(row=>{const style=getComputedStyle(row);return !row.hidden&&style.display!=='none'&&style.visibility!=='hidden'})
@@ -107,6 +120,27 @@ assert.equal(legacyOverwriteStatus.visualPhrase,`${stableMatches} matches`,'A le
 const continuation=page.locator('#skyFoundationRelationshipList>[data-result-limit-show-more]');
 await continuation.waitFor({state:'visible'});
 assert.match((await continuation.textContent()||'').trim(),/^\d+ more matching results · Show more$/,'A capped list must end with a direct Show more continuation.');
+const showMorePositions=[];
+for(let pass=0;pass<4;pass+=1){
+  await page.evaluate(()=>{
+    window.dispatchEvent(new CustomEvent('relphi:relationship-sort-changed'));
+    window.dispatchEvent(new CustomEvent('relphi:sky-foundation-filter-changed'));
+    window.dispatchEvent(new CustomEvent('relphi:sky-harmonic-window-visibility-changed'));
+  });
+  await page.waitForTimeout(80);
+  showMorePositions.push(await page.evaluate(()=>{
+    const helper=document.querySelector('#skyFoundationRelationshipList>[data-result-limit-show-more]');
+    const visible=[...document.querySelectorAll('#skyFoundationRelationshipList>.sky-foundation-relationship-row')].filter(row=>{
+      const style=getComputedStyle(row);
+      return !row.hidden&&style.display!=='none'&&style.visibility!=='hidden';
+    });
+    const helperTop=helper?.getBoundingClientRect().top??-Infinity;
+    const lastBottom=Math.max(...visible.map(row=>row.getBoundingClientRect().bottom));
+    return{helperTop,lastBottom,order:getComputedStyle(helper).order};
+  }));
+}
+assert.ok(showMorePositions.every(state=>state.helperTop>=state.lastBottom-1),'Show more must stay visually below every visible relationship while filters and sorting reconcile.');
+assert.ok(showMorePositions.every(state=>Number(state.order)>0),'Show more must have a stable terminal grid order.');
 
 await page.evaluate(()=>{
   window.__relphiLimitCopiedText='';

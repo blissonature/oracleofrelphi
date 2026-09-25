@@ -3000,6 +3000,8 @@
     return checkedValues('type').includes(card.card_type) && (!card.suit || checkedValues('suit').includes(card.suit)) && checkedValues('rank').includes(rankKey(card)) && checkedValues('element').includes(elementKey(card));
   }
   function normalizeSearch(value) {
+    const shared = window.RelphiSemanticSearch?.normalize;
+    if (shared) return shared(value);
     return String(value || '').toLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g, '').replace(/[“”]/g, '"').replace(/[‘’]/g, "'").trim();
   }
   function safeSearchStatement(card) {
@@ -3045,12 +3047,14 @@
     return score;
   }
   function searchCorpus(card) {
-    return normalizeSearch([
+    const values = [
       title(card), card.name, card.card_id, card.card_type, card.arcana, card.suit, card.thoth_suit, card.rank, card.rws_rank,
-      card.element, card.rank_element, card.elemental_formula, card.polarity, (card.tags || []).join(' '),
-      JSON.stringify(card.astrology || {}), JSON.stringify(card.hebrew || {}), JSON.stringify(card.systems || {}),
+      card.element, card.rank_element, card.elemental_formula, card.polarity, card.tags || [],
+      card.astrology || {}, card.hebrew || {}, card.systems || {},
       safeSearchStatement(card)
-    ].filter(Boolean).join(' '));
+    ];
+    const shared = window.RelphiSemanticSearch?.corpus;
+    return shared ? shared(values) : normalizeSearch(values.map(value => typeof value === 'object' ? JSON.stringify(value) : value).filter(Boolean).join(' '));
   }
   function typedRankNumber(query) {
     const cleaned = String(query || '').trim().toLowerCase();

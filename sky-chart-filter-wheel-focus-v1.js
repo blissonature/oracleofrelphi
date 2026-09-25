@@ -11,7 +11,8 @@
     'sky-chart-multiselect-hidden',
     'sky-chart-house-multiselect-hidden',
     'sky-chart-aspect-multiselect-hidden',
-    'sky-chart-sign-filter-hidden'
+    'sky-chart-sign-filter-hidden',
+    'sky-chart-theme-filter-hidden'
   ]);
   const ORB_HIDDEN_CLASSES=new Set(['sky-chart-orb-hidden','sky-orb-filter-hidden']);
   const SIGNS=['aries','taurus','gemini','cancer','leo','virgo','libra','scorpio','sagittarius','capricorn','aquarius','pisces'];

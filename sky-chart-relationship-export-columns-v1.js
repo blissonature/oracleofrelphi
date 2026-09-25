@@ -233,6 +233,8 @@ function summary(){
   const p=[],h=b.querySelector('[data-harmonic-window-input]'),limit=document.querySelector('#skyFoundationRelationships [data-relationship-limit]');
   if(h?.value)p.push(`Harmonic window ${h.value}°`);
   if(limit?.value&&limit.value!=='all')p.push(`Limit ${limit.value}`);
+  const theme=String(document.querySelector('[data-theme-search="true"]')?.value||'').trim();
+  if(theme)p.push(`Themes: ${theme}`);
   for(const[q,label]of[['[data-placement-filter-summary]','Placements'],['[data-house-filter-summary]','Houses'],['[data-aspect-filter-summary]','Aspects']]){
     const text=(b.querySelector(q)?.textContent||'').replace(/\s+/g,' ').trim();
     if(text&&!/^all$/i.test(text))p.push(`${label}: ${text}`);
