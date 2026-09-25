@@ -76,7 +76,7 @@ function ensureControl(){
     const select=document.createElement('select');
     select.dataset.relationshipLimit='true';
     select.setAttribute('aria-label','Maximum shown relationships');
-    [['10','10'],['20','20'],['50','50'],['all','All']].forEach(([value,text])=>{
+    [['10','10'],['20','20'],['50','50'],['all','Max']].forEach(([value,text])=>{
       const option=document.createElement('option');option.value=value;option.textContent=text;select.appendChild(option);
     });
     select.value=limit;
