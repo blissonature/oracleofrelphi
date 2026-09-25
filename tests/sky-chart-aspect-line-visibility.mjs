@@ -35,6 +35,33 @@ assert.equal(configurationUI.section,true,'Configurations must remain mounted in
 assert.equal(configurationUI.typeCount,10,'All ten configuration types must remain available.');
 assert.ok(configurationUI.labels.includes('Grand Trine'),'Grand Trine must remain in Configurations.');
 assert.ok(configurationUI.labels.includes('Grand Cross / Grand Square'),'Grand Cross / Grand Square must remain in Configurations.');
+assert.equal(await page.locator('#skyChartAspectPopover .sky-chart-configuration-results').count(),0,'Detected configuration results do not belong inside the Aspects menu.');
+assert.equal(await page.locator('#skyChartAspectPopover [data-configuration-pattern]').count(),0,'The Aspects menu must contain configuration controls only, never result buttons.');
+
+for(const category of ['major','minor','harmonic']){
+  const row=page.locator('#skyChartAspectPopover [data-aspect-category="'+category+'"]');
+  assert.equal(await row.count(),1,category+' must have its own category master row.');
+  assert.equal(await row.locator('[data-aspect-matrix-scope="all"]').count(),1,category+' must support All scopes.');
+  assert.equal(await row.locator('[data-aspect-matrix-scope="A-A"]').count(),1,category+' must support A↔A.');
+  assert.equal(await row.locator('[data-aspect-matrix-scope="B-B"]').count(),1,category+' must support B↔B.');
+  assert.equal(await row.locator('[data-aspect-matrix-scope="A-B"]').count(),1,category+' must support A↔B.');
+}
+const majorAA=page.locator('#skyChartAspectPopover [data-aspect-category="major"] [data-aspect-matrix-scope="A-A"]');
+await majorAA.uncheck();
+assert.equal(await page.locator('#skyChartAspectPopover [data-aspect-matrix-row="trine"] [data-aspect-matrix-scope="A-A"]').isChecked(),false,'Major A↔A must drive its individual aspect checkboxes.');
+assert.equal(await page.locator('#skyChartAspectPopover [data-aspect-matrix-row="trine"] [data-aspect-matrix-scope="B-B"]').isChecked(),true,'Major A↔A must not alter B↔B.');
+await majorAA.check();
+
+const grandTrineConfig=page.locator('#skyChartAspectPopover [data-configuration-row="grand-trine"]');
+assert.equal(await grandTrineConfig.locator('[data-configuration-scope="all"]').count(),1,'Configurations must support All scopes.');
+assert.equal(await grandTrineConfig.locator('[data-configuration-scope="A-A"]').count(),1,'Configurations must support A↔A.');
+assert.equal(await grandTrineConfig.locator('[data-configuration-scope="B-B"]').count(),1,'Configurations must support B↔B.');
+assert.equal(await grandTrineConfig.locator('[data-configuration-scope="A-B"]').count(),1,'Configurations must support A↔B.');
+const configAA=grandTrineConfig.locator('[data-configuration-scope="A-A"]');
+await configAA.check();
+assert.ok((await page.evaluate(()=>window.RelphiAspectConfigurations?.matrix?.()['A-A']||[])).includes('grand-trine'),'A↔A configuration selection must be represented in the configuration matrix.');
+assert.equal((await page.evaluate(()=>window.RelphiAspectConfigurations?.matrix?.()['B-B']||[])).includes('grand-trine'),false,'A↔A configuration selection must not select B↔B.');
+await configAA.uncheck();
 
 await page.waitForSelector('#skyFoundationFocus [data-relationship-display-control]',{timeout:10000});
 await page.waitForSelector('#skyFoundationFocus [data-harmonic-window-input]',{timeout:10000});
