@@ -45,6 +45,11 @@ function installStyles(){
 `;
   document.head.appendChild(style);
 }
+function placeMatchCount(actions){
+  const count=document.getElementById('skyFoundationRelationshipCount');if(!actions||!count)return;
+  const pill=actions.querySelector('.sky-relationship-copy-button,#skyChartRelationshipsExport');
+  if(count.parentElement!==actions||count.nextElementSibling!==pill)actions.insertBefore(count,pill||null);
+}
 function ensureHeadingActions(){
   const heading=document.querySelector('#skyFoundationRelationships .sky-foundation-relationships-heading');
   if(!heading)return null;
@@ -59,6 +64,7 @@ function ensureHeadingActions(){
     if(copy)actions.appendChild(copy);
     if(download)actions.appendChild(download);
   }
+  placeMatchCount(actions);
   return actions;
 }
 function ensureControl(){
@@ -82,6 +88,7 @@ function ensureControl(){
   }
   const anchor=actions.querySelector('.sky-relationship-copy-button,#skyChartRelationshipsExport');
   if(control.parentElement!==actions||control.nextElementSibling!==anchor)actions.insertBefore(control,anchor||actions.firstChild);
+  placeMatchCount(actions);
   syncControl();
   return control;
 }
