@@ -1752,31 +1752,53 @@
 <script src="https://unpkg.com/suncalc@1.9.0/suncalc.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/luxon@3/build/global/luxon.min.js"></script>
 <script src="https://cdn.jsdelivr.net/gh/cosinekitty/astronomy@master/source/js/astronomy.browser.min.js"></script>
-<style>/* v319 Planetary Hours system time visibility */ .ph-row-system-time{display:inline-flex!important}.ph-row-system-time input:disabled{opacity:.7;background:#f7f3ed;color:#444}  /* Restored primary Day | Hour | Moon instrument above Wanderer. */
-  .ph-top-triad {
+<style>/* v319 Planetary Hours system time visibility */ .ph-row-system-time{display:inline-flex!important}.ph-row-system-time input:disabled{opacity:.7;background:#f7f3ed;color:#444}  /* Primary instrument: day + Moon | living hour | local sky + Wanderer. */
+  .ph-top-instrument-grid {
     display:grid;
-    grid-template-columns:minmax(230px,.82fr) minmax(390px,1.5fr) minmax(230px,.82fr);
+    grid-template-columns:minmax(235px,.82fr) minmax(390px,1.5fr) minmax(255px,.92fr);
     gap:1rem;
-    align-items:stretch;
+    align-items:start;
     margin:0;
   }
-  .ph-top-triad > .ph-day-frame,
-  .ph-top-triad > .ph-hour-frame,
-  .ph-top-triad > .ph-moon-frame {
+  .ph-top-left-stack,
+  .ph-top-right-stack {
+    display:grid;
+    gap:1rem;
+    align-content:start;
     min-width:0;
-    height:100%;
+  }
+  .ph-top-instrument-grid > .ph-hour-frame,
+  .ph-top-left-stack > *,
+  .ph-top-right-stack > * {
+    min-width:0;
   }
   .ph-top-day-frame,
-  .ph-top-moon-frame { text-align:center; }
+  .ph-top-moon-frame { text-align:center; height:auto !important; }
   .ph-top-day-date { margin:.08rem 0 .5rem !important; font-size:clamp(1.2rem,2vw,1.65rem); line-height:1.12; }
   .ph-top-day-frame .ph-calendar-sun-frame { margin:.65rem .15rem .45rem; text-align:left; }
-  .ph-top-day-frame .ph-calendar-day-wheel { margin:.7rem auto 0; }
   .ph-top-moon-frame .ph-moon-wrap { align-items:center; justify-content:center; }
   .ph-top-moon-frame .ph-moon-facts { text-align:left; }
-  .ph-top-wanderer-frame { margin-top:1rem; }
+  .ph-top-current-sky-frame {
+    display:grid;
+    place-items:center;
+    min-width:0;
+    padding:.8rem;
+    border:1px solid var(--relphi-line);
+    border-radius:1rem;
+    background:#fff;
+  }
+  .ph-top-current-sky-card {
+    width:100%;
+    max-width:none !important;
+    margin:0 !important;
+    box-sizing:border-box;
+  }
+  .ph-top-wanderer-frame { margin-top:0 !important; }
   .ph-top-wanderer-frame > h2 { text-align:center; }
   @media (max-width:980px) {
-    .ph-top-triad { grid-template-columns:1fr; }
+    .ph-top-instrument-grid { grid-template-columns:1fr; }
+    .ph-top-left-stack,
+    .ph-top-right-stack { grid-template-columns:1fr; }
   }
   /* Planetary Hours Where and When mirrors the Sky Chart editor grammar. */
   .ph-where-when-shell {
@@ -2114,18 +2136,32 @@
   </section>
 
   <section class="ph-panel" id="daySummary">
-    <div class="ph-top-triad" aria-label="Day ruler, planetary hour, and Moon">
-      <div class="ph-day-frame ph-top-day-frame" aria-label="Planetary day ruler and solar frame">
-        <p class="eyebrow">Day ruler</p><h2 class="ph-top-day-date" id="dayCalendarDate">—</h2>
-        <div class="ph-ruler-profile ph-day-ruler-profile-left" id="dayRulerProfile">
-          <img id="dayRulerPortrait" alt="" loading="lazy"/>
-          <div class="ph-day-ruler-photo-label"><strong id="dayRulerProfileName">—</strong><span class="ph-ruler-focus-line" id="dayRulerFocus">—</span></div>
+    <div class="ph-top-instrument-grid" aria-label="Planetary day, living hour, and local sky">
+      <div class="ph-top-left-stack">
+        <div class="ph-day-frame ph-top-day-frame" aria-label="Planetary day ruler and solar frame">
+          <p class="eyebrow">Day ruler</p><h2 class="ph-top-day-date" id="dayCalendarDate">—</h2>
+          <div class="ph-ruler-profile ph-day-ruler-profile-left" id="dayRulerProfile">
+            <img id="dayRulerPortrait" alt="" loading="lazy"/>
+            <div class="ph-day-ruler-photo-label"><strong id="dayRulerProfileName">—</strong><span class="ph-ruler-focus-line" id="dayRulerFocus">—</span></div>
+          </div>
+          <p class="ph-calendar-sun-frame" id="sunTimes">—</p>
+
+          <div class="ph-day-line ph-sr-only"><p class="ph-tiny" id="dayRulerMeta">—</p></div>
+          <p class="ph-tiny ph-sr-only" id="bridgeInfo">—</p>
+          
         </div>
-        <p class="ph-calendar-sun-frame" id="sunTimes">—</p>
-        <a class="ph-current-wheel-card ph-calendar-day-wheel" id="phCurrentWheelCard" href="sky-chart.html#sky-calc" aria-label="Open this moment and location in Sky Chart"><h3>Current placements</h3><div id="phCurrentWheel"></div><span class="ph-current-wheel-jump">Jump to this moment in Sky Chart</span></a>
-        <div class="ph-day-line ph-sr-only"><p class="ph-tiny" id="dayRulerMeta">—</p></div>
-        <p class="ph-tiny ph-sr-only" id="bridgeInfo">—</p>
-        
+        <div class="ph-moon-frame ph-top-moon-frame" aria-label="Moon condition for this calendar day">
+          <h2>Moon</h2>
+          <div class="ph-moon-wrap">
+            <div class="ph-moon-disc" id="moonDisc"></div>
+            <div class="ph-moon-facts">
+              <p class="ph-calendar-moon-placement" id="moonPlacement">—</p>
+              <p id="moonPhase">—</p>
+              <p class="ph-tiny" id="moonTimes">—</p>
+              <p class="ph-tiny" id="moonVisibility">—</p>
+            </div>
+          </div>
+        </div>
       </div>
       <div class="ph-hour-frame ph-hour-frame-merged ph-living-heptagram-frame">
         <p class="eyebrow">Living planetary hour</p>
@@ -2196,32 +2232,25 @@
           <button class="ph-btn ph-hour-jump" id="topHourJump" type="button">Show in calendar</button>
         </div>
       </div>
-      <div class="ph-moon-frame ph-top-moon-frame" aria-label="Moon condition for this calendar day">
-        <h2>Moon</h2>
-        <div class="ph-moon-wrap">
-          <div class="ph-moon-disc" id="moonDisc"></div>
-          <div class="ph-moon-facts">
-            <p class="ph-calendar-moon-placement" id="moonPlacement">—</p>
-            <p id="moonPhase">—</p>
-            <p class="ph-tiny" id="moonTimes">—</p>
-            <p class="ph-tiny" id="moonVisibility">—</p>
-          </div>
+      <div class="ph-top-right-stack">
+        <div class="ph-top-current-sky-frame">
+          <a class="ph-current-wheel-card ph-calendar-day-wheel ph-top-current-sky-card" id="phCurrentWheelCard" href="sky-chart.html#sky-calc" aria-label="Open this moment and location in Sky Chart"><h3>Current placements</h3><div id="phCurrentWheel"></div><span class="ph-current-wheel-jump">Jump to this moment in Sky Chart</span></a>
         </div>
+        <div class="ph-moon-frame ph-wanderer-frame ph-top-wanderer-frame">
+            <h2>Where’s the Wanderer?</h2>
+          <div class="ph-wanderer-strip" aria-label="Traditional wanderer rise and set times">
+            <div class="ph-section-heading compact">
+              <p class="eyebrow">Wanderer visibility</p>
+              <h3>Rise, set, and current sky position</h3>
+              <p class="ph-planet-instructions">Choose a tile to see rise, set, visibility, compass direction, and altitude together.</p>
+            </div>
+            <div class="ph-wanderer-grid" id="wandererGrid">
+              <p class="ph-tiny">Planet positions load here when Astronomy Engine is available.</p>
+            </div>
+          </div>
+          </div>
       </div>
     </div>
-    <div class="ph-moon-frame ph-wanderer-frame ph-top-wanderer-frame">
-        <h2>Where’s the Wanderer?</h2>
-      <div class="ph-wanderer-strip" aria-label="Traditional wanderer rise and set times">
-        <div class="ph-section-heading compact">
-          <p class="eyebrow">Wanderer visibility</p>
-          <h3>Rise, set, and current sky position</h3>
-          <p class="ph-planet-instructions">Choose a tile to see rise, set, visibility, compass direction, and altitude together.</p>
-        </div>
-        <div class="ph-wanderer-grid" id="wandererGrid">
-          <p class="ph-tiny">Planet positions load here when Astronomy Engine is available.</p>
-        </div>
-      </div>
-      </div>
       <section class="ph-sky-orientation ph-sky-orientation-inline ph-sky-orientation-merged ph-sr-only" id="skyOrientationPanel" aria-label="Selected wanderer orientation">
     <div class="ph-section-heading ph-sr-only">
       <p class="eyebrow">Sky orientation</p>
