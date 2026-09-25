@@ -36,6 +36,31 @@ assert.equal(configurationUI.typeCount,10,'All ten configuration types must rema
 assert.ok(configurationUI.labels.includes('Grand Trine'),'Grand Trine must remain in Configurations.');
 assert.ok(configurationUI.labels.includes('Grand Cross / Grand Square'),'Grand Cross / Grand Square must remain in Configurations.');
 
+await page.waitForSelector('#skyFoundationFocus [data-relationship-display-control]',{timeout:10000});
+await page.waitForSelector('#skyFoundationFocus [data-harmonic-window-input]',{timeout:10000});
+const focusControlOrder=await page.evaluate(()=>{
+  const controls=document.querySelector('#skyFoundationFocus .sky-focus-heading-controls');
+  const children=[...controls.children];
+  const display=controls.querySelector(':scope>[data-relationship-display-control]');
+  const harmonic=controls.querySelector(':scope>[data-orb-field="true"]');
+  const actions=controls.querySelector(':scope>.sky-export-wheel-slot');
+  const index=node=>children.indexOf(node);
+  return{display:index(display),harmonic:index(harmonic),actions:index(actions)};
+});
+assert.ok(focusControlOrder.display>=0,'Display must stay in the Focus heading controls.');
+assert.ok(focusControlOrder.harmonic>focusControlOrder.display,'Harmonic Window must sit to the right of Display.');
+assert.ok(focusControlOrder.actions>focusControlOrder.harmonic,'Copy and Download must remain to the far right of Harmonic Window.');
+
+await page.locator('#skyFoundationFocus [data-relationship-display-value]').click();
+await page.waitForSelector('#skyRelationshipDisplayPopover:not([hidden])',{timeout:5000});
+const displayChecks=page.locator('#skyRelationshipDisplayPopover [data-shared-display-layer]');
+assert.equal(await displayChecks.count(),3,'Display must expose three individual layer checkboxes.');
+await page.locator('#skyRelationshipDisplayPopover .sky-relationship-display-actions button',{hasText:'None'}).click();
+assert.equal(await displayChecks.evaluateAll(inputs=>inputs.every(input=>!input.checked)),true,'Display None must clear every individual layer checkbox immediately.');
+await page.locator('#skyRelationshipDisplayPopover .sky-relationship-display-actions button',{hasText:'All'}).click();
+assert.equal(await displayChecks.evaluateAll(inputs=>inputs.every(input=>input.checked)),true,'Display All must check every individual layer checkbox immediately.');
+await page.keyboard.press('Escape');
+
 const relationshipHeaderOrder=await page.evaluate(()=>{
   const actions=document.querySelector('#skyFoundationRelationships .sky-relationship-heading-actions');
   const children=[...actions.children];
@@ -55,6 +80,12 @@ assert.ok(relationshipHeaderOrder.sort>=0&&relationshipHeaderOrder.limit>relatio
 assert.ok(relationshipHeaderOrder.count>relationshipHeaderOrder.limit,'Match count must come after the controls.');
 assert.ok(relationshipHeaderOrder.copy>relationshipHeaderOrder.count,'Copy pill must come after the match count.');
 assert.ok(relationshipHeaderOrder.download>relationshipHeaderOrder.copy,'Download pill must follow Copy.');
+const countCopyGap=await page.evaluate(()=>{
+  const count=document.getElementById('skyFoundationRelationshipCount')?.getBoundingClientRect();
+  const copy=document.querySelector('#skyFoundationRelationships .sky-relationship-copy-button')?.getBoundingClientRect();
+  return count&&copy?copy.left-count.right:null;
+});
+assert.ok(countCopyGap!==null&&countCopyGap<=9,'The match count must sit directly beside Copy rather than being pushed away from it.');
 
 assert.equal(await page.locator('#skyFoundationRelationships .sky-relationship-sort-control>span').count(),0,'Sort must not restore a visible Sort header.');
 assert.equal(await page.locator('#skyFoundationRelationships .sky-relationship-limit-control>span').count(),0,'Max must not restore a visible Max header.');
