@@ -23,7 +23,12 @@
     Object.freeze({mode:'B-B',title:'Sky B — Intrasky'}),
     Object.freeze({mode:'A-B',title:'Sky A ↔ Sky B — Intersky'})
   ]);
+  const LONG_PRESS_MS=560;
+  const LONG_PRESS_MOVE_PX=12;
   let feedbackTimer=0;
+  let longPress=null;
+  let suppressClickUntil=0;
+  let suppressClickRow=null;
   let selectedIsolation=null;
   let houseSelections={A:[...ALL_HOUSES],B:[...ALL_HOUSES]};
 
@@ -36,6 +41,7 @@
       .sky-relationship-copy-button{margin-left:auto;padding:.38rem .68rem;border:1px solid rgba(31,27,24,.18);border-radius:999px;background:#fff;color:#332e2a;font:800 .68rem/1 system-ui,sans-serif;cursor:pointer;white-space:nowrap}
       .sky-relationship-heading-actions .sky-relationship-copy-button{margin-left:0}
       .sky-relationship-copy-button:hover,.sky-relationship-copy-button:focus-visible{border-color:#6b625a;outline:0;background:#fffdfa}
+      .sky-foundation-relationship-row{-webkit-touch-callout:none;touch-action:pan-y}
       .sky-foundation-relationship-row svg,.sky-foundation-relationship-glyph,.sky-foundation-relationship-sign{-webkit-user-select:none;user-select:none}
       .sky-foundation-relationship-copy,.sky-foundation-relationship-orb{-webkit-user-select:text;user-select:text}
     `;
@@ -168,6 +174,74 @@
     try{if(!range.intersectsNode(list))return[]}catch(_){return[]}
     return visibleRows().filter(row=>{try{return range.intersectsNode(row)}catch(_){return false}});
   }
+
+  function relationshipRow(target){
+    return target?.closest?.('#skyFoundationRelationshipList .sky-foundation-relationship-row[data-relation-index]')||null;
+  }
+  function clearLongPress(){
+    if(!longPress)return;
+    window.clearTimeout(longPress.timer);
+    longPress=null;
+  }
+  function beginLongPress(event){
+    if(event.button!==0&&!['touch','pen'].includes(event.pointerType))return;
+    const row=relationshipRow(event.target);
+    if(!row||row.hidden||row.getAttribute('aria-hidden')==='true'||getComputedStyle(row).display==='none')return;
+    clearLongPress();
+    const state={
+      row,
+      pointerId:event.pointerId,
+      x:Number(event.clientX)||0,
+      y:Number(event.clientY)||0,
+      armed:false,
+      timer:0
+    };
+    state.timer=window.setTimeout(()=>{
+      if(longPress===state&&state.row.isConnected)state.armed=true;
+    },LONG_PRESS_MS);
+    longPress=state;
+  }
+  function moveLongPress(event){
+    if(!longPress||event.pointerId!==longPress.pointerId)return;
+    const dx=(Number(event.clientX)||0)-longPress.x,dy=(Number(event.clientY)||0)-longPress.y;
+    if(Math.hypot(dx,dy)>LONG_PRESS_MOVE_PX)clearLongPress();
+  }
+  async function endLongPress(event){
+    if(!longPress||event.pointerId!==longPress.pointerId)return;
+    const state=longPress;
+    window.clearTimeout(state.timer);
+    longPress=null;
+    if(!state.armed||!state.row.isConnected)return;
+    const text=serializeRow(state.row);
+    if(!text)return;
+    suppressClickUntil=Date.now()+700;
+    suppressClickRow=state.row;
+    event.preventDefault();
+    event.stopPropagation();
+    const copied=await writeClipboard(text);
+    if(copied){
+      state.row.dataset.relationshipLongPressCopied='true';
+      window.setTimeout(()=>{if(state.row.isConnected)delete state.row.dataset.relationshipLongPressCopied},900);
+      try{window.getSelection?.()?.removeAllRanges()}catch(_){}
+    }
+  }
+  function suppressLongPressClick(event){
+    if(Date.now()>suppressClickUntil){suppressClickRow=null;return}
+    const row=relationshipRow(event.target);
+    if(row&&row===suppressClickRow){
+      event.preventDefault();
+      event.stopImmediatePropagation();
+    }
+  }
+
+  document.addEventListener('pointerdown',beginLongPress,{capture:true});
+  document.addEventListener('pointermove',moveLongPress,{capture:true});
+  document.addEventListener('pointerup',endLongPress,{capture:true});
+  document.addEventListener('pointercancel',clearLongPress,{capture:true});
+  document.addEventListener('click',suppressLongPressClick,{capture:true});
+  document.addEventListener('contextmenu',event=>{
+    if(longPress?.armed&&relationshipRow(event.target)===longPress.row)event.preventDefault();
+  },{capture:true});
 
   document.addEventListener('copy',event=>{
     const rows=rowsIntersectingSelection();

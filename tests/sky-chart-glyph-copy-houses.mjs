@@ -64,6 +64,33 @@ try{
   assert.match(copied,new RegExp(`H${expected.leftHouse}\\b`));
   assert.match(copied,new RegExp(`H${expected.rightHouse}\\b`));
   assert.equal(/First House|Second House|Third House|Fourth House|Fifth House|Sixth House|Seventh House|Eighth House|Ninth House|Tenth House|Eleventh House|Twelfth House/.test(copied),false,'Glyph mode should add only H# house identifiers, not house names or meanings.');
+
+  await page.evaluate(()=>{window.__relphiCopiedText=''});
+  const longPressRow=page.locator('#skyFoundationRelationshipList>.sky-foundation-relationship-row[data-relation-index]:visible').first();
+  const longPressExpected=await longPressRow.evaluate(row=>{
+    const placementSymbols={sun:'☉',moon:'☽',mercury:'☿',venus:'♀',mars:'♂',jupiter:'♃',saturn:'♄',uranus:'♅',neptune:'♆',pluto:'♇',chiron:'⚷','north-node':'☊','south-node':'☋',lilith:'⚸','part-of-fortune':'⊗',vertex:'Vx',asc:'Asc',dsc:'Dsc',mc:'MC',ic:'IC'};
+    const signSymbols=['♈','♉','♊','♋','♌','♍','♎','♏','♐','♑','♒','♓'];
+    const aspectSymbols={conjunction:'☌',opposition:'☍',trine:'△',square:'□',sextile:'✶','semi-sextile':'⚺',quincunx:'⚻',octile:'∠','tri-octile':'⚼',quintile:'Q','bi-quintile':'BQ'};
+    const coordinate=(side)=>{
+      const group=row.querySelector(`.sky-foundation-relationship-placement--${side}`);
+      const small=group?.querySelector('.sky-foundation-relationship-copy small')||(side==='left'?row.querySelector(':scope > .sky-foundation-relationship-copy:nth-child(2) small'):row.querySelector(':scope > .sky-foundation-relationship-copy:nth-child(5) small'));
+      return String(small?.dataset?.relationshipCoordinate||'').trim()||String(small?.textContent||'').match(/\d{1,2}°\d{2}′/)?.[0]||'';
+    };
+    const left=row.dataset.leftPlacement||'',right=row.dataset.rightPlacement||'',aspect=row.dataset.aspect||'';
+    return `${placementSymbols[left]||left} in ${signSymbols[Number(row.dataset.leftSign)]||''} ${coordinate('left')} H${row.dataset.leftHouse} ${aspectSymbols[aspect]||aspect} ${placementSymbols[right]||right} in ${signSymbols[Number(row.dataset.rightSign)]||''} ${coordinate('right')} H${row.dataset.rightHouse}`.replace(/\s+/g,' ').trim();
+  });
+  const box=await longPressRow.boundingBox();
+  assert.ok(box,'long-press fixture row must have geometry');
+  const point={x:box.x+box.width/2,y:box.y+box.height/2};
+  await longPressRow.dispatchEvent('pointerdown',{pointerId:41,pointerType:'touch',isPrimary:true,button:0,clientX:point.x,clientY:point.y});
+  await page.waitForTimeout(620);
+  await longPressRow.dispatchEvent('pointerup',{pointerId:41,pointerType:'touch',isPrimary:true,button:0,clientX:point.x,clientY:point.y});
+  await page.waitForFunction(()=>Boolean(window.__relphiCopiedText),null,{timeout:3000});
+  const longPressCopied=await page.evaluate(()=>window.__relphiCopiedText);
+  assert.equal(longPressCopied,longPressExpected,'Long-pressing one relationship tile must copy only that relationship line.');
+  assert.equal(longPressCopied.includes('Relationships'),false,'Single-tile long-press copy must not prepend the bulk-copy Relationships heading.');
+  assert.equal(await longPressRow.getAttribute('data-relationship-long-press-copied'),'true','A successful long-press copy must mark the source tile transiently for regression visibility.');
+
   assert.deepEqual(errors,[]);
   console.log('Glyph relationship copy includes H# for both endpoints without house meanings.');
 }finally{
