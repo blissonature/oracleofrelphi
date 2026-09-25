@@ -218,7 +218,7 @@ function start(){
   document.addEventListener('pointerdown',reconcileFrozenPeerHover,true);
   document.addEventListener('pointerout',event=>{const row=event.target.closest?.('.sky-foundation-relationship-row');if(!row||row.contains(event.relatedTarget))return;if(freezePeerHoverOnExternalExit(event,row))return;clearPeerHighlight()});
   document.addEventListener('focusin',event=>{const row=event.target.closest?.('.sky-foundation-relationship-row');if(row)highlightPeers(row)});
-  document.addEventListener('focusout',event=>{const row=event.target.closest?.('.sky-foundation-relationship-row');if(row&&!row.contains(event.relatedTarget))clearPeerHighlight()});
+  document.addEventListener('focusout',event=>{const row=event.target.closest?.('.sky-foundation-relationship-row');if(!row||row.contains(event.relatedTarget))return;if(freezePeerHoverOnExternalExit(event,row))return;clearPeerHighlight()});
   window.addEventListener('blur',()=>{if(peerHoverRow)peerHoverFrozen=true});
   document.addEventListener('visibilitychange',()=>{if(document.hidden&&peerHoverRow)peerHoverFrozen=true});
   ['relphi:sky-aspect-filter-rendered','relphi:sky-foundation-ready','relphi:sky-intrasky-relationships-ready','relphi:sky-intrasky-b-relationships-ready','relphi:sky-harmonic-window-visibility-changed','relphi:sky-orb-limit-changed','relphi:sky-b-removed','relphi:sky-b-restored','relphi:saved-sky-loaded'].forEach(name=>window.addEventListener(name,schedule));
