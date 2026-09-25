@@ -42,7 +42,7 @@ function installStyles(){
 .sky-chart-result-limit-hidden{display:none!important}
 #skyFoundationRelationships .sky-relationship-limit-control{display:inline-flex;align-items:center;min-width:0;white-space:nowrap}
 #skyFoundationRelationships .sky-relationship-limit-control>input{
-  appearance:textfield;-moz-appearance:textfield;width:62px;min-width:62px;height:29px;box-sizing:border-box;margin:0;padding:0 8px;
+  appearance:textfield;-moz-appearance:textfield;width:72px;min-width:72px;height:29px;box-sizing:border-box;margin:0;padding:0 8px;
   border:1px solid rgba(31,27,24,.18);border-radius:9px;background:#fff;color:#332e2a;
   font:800 .67rem/1 system-ui,sans-serif;text-align:center
 }
