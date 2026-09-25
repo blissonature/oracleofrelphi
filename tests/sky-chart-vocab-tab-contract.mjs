@@ -175,11 +175,13 @@ assert.match(orbControl,/count\.dataset\.countLabel='matches'/,'Relationship sta
 assert.match(foundationCss,/#skyFoundationRelationshipCount\[data-count-label="matches"\]::before\s*\{[\s\S]*content:attr\(data-match-count\)/,'The visible relationship number must come from stable match state rather than mutable legacy text');
 assert.match(foundationCss,/#skyFoundationRelationshipCount\[data-count-label="matches"\]::after\s*\{[\s\S]*content:"matches"/,'The relationship count must visibly append matches');
 assert.match(foundationCss,/\.sky-foundation-harmonic-show-more\s*\{/,'The Harmonic continuation item must be styled as a full-width list item');
-assert.match(relationshipLimit,/\[\['10','10'\],\['20','20'\],\['50','50'\],\['all','All'\]\]/,'Result Limit must offer 10, 20, 50, and All');
+assert.match(relationshipLimit,/\[\['10','10'\],\['20','20'\],\['50','50'\],\['Max','Max'\],\['Custom Range','Custom Range'\]\]/,'Result range must offer 10, 20, 50, Max, and Custom Range presets');
 assert.match(relationshipLimit,/function ensureHeadingActions\(\)/,'Result Limit must live in the Relationships heading action cluster rather than the filter grid');
 assert.match(relationshipLimit,/const actions=ensureHeadingActions\(\)/,'The Limit control must mount through the heading action owner');
 assert.match(relationshipLimit,/count\.dataset\.matchCount=next/,'The Relationships header must store the pre-cap qualifying count in dedicated match state');
 assert.match(relationshipLimit,/count\.dataset\.countLabel='matches'/,'The result-limit owner must keep the header status labeled as matches');
+assert.match(relationshipLimit,/midpoint/,'Editable Relationship ranges must support the named midpoint variable');
+assert.match(relationshipLimit,/resolvedRange/,'Editable Relationship ranges must resolve numeric and named range expressions');
 assert.match(relationshipLimit,/function rowVisibilityMutation\(record\)/,'Match-count observation must distinguish relationship-row visibility from progressive child visibility');
 assert.match(relationshipLimit,/record\.target\?\.matches\?\.\('\.sky-foundation-relationship-row'\)/,'Progressive child hidden/aria-hidden mutations must not recalculate relationship matches');
 assert.doesNotMatch(relationshipLimit,/countObserver/,'Legacy count text rewrites must not drive match-count recalculation');
