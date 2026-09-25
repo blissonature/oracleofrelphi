@@ -158,17 +158,26 @@ jobs:
           assert.equal(drawer.structure,true);
 
           const chartRulerPresentation=await page.evaluate(()=>{
-            const note=document.querySelector('#skyFoundationA .sky-card-chart-ruler-note');
-            const chart=document.querySelector('#skyFoundationA .sky-card-ruler.is-chart-ruler');
-            const style=chart?getComputedStyle(chart):null,pseudo=chart?getComputedStyle(chart,'::after'):null;
+            const stage=document.querySelector('#skyFoundationA .sky-card-chart-ruler-stage');
+            const chart=stage?.querySelector('.sky-card-ruler.is-chart-ruler');
+            const pedestal=stage?.querySelector('.sky-card-chart-ruler-pedestal');
+            const style=chart?getComputedStyle(chart):null,pseudo=chart?getComputedStyle(chart,'::after'):null,pedestalStyle=pedestal?getComputedStyle(pedestal):null;
             return{
-              note:(note?.textContent||'').trim(),
+              noteCount:document.querySelectorAll('#skyFoundationA .sky-card-chart-ruler-note').length,
+              stage:!!stage,
+              pedestal:(pedestal?.textContent||'').trim(),
+              pedestalBackground:pedestalStyle?.backgroundImage||'',
+              pedestalShadow:pedestalStyle?.boxShadow||'',
               borderWidth:style?.borderTopWidth||'',
               borderRadius:style?.borderRadius||'',
               afterContent:pseudo?.content||''
             };
           });
-          assert.equal(chartRulerPresentation.note,'The ruler of the Ascendant is the chart ruler.');
+          assert.equal(chartRulerPresentation.noteCount,0,'Instructional chart-ruler prose must be removed.');
+          assert.equal(chartRulerPresentation.stage,true,'The chart ruler must have its own pedestal stage.');
+          assert.equal(chartRulerPresentation.pedestal,'Chart Ruler','The pedestal itself must identify the Chart Ruler.');
+          assert.match(chartRulerPresentation.pedestalBackground,/linear-gradient/i,'The pedestal must read as a visual plinth rather than plain text.');
+          assert.notEqual(chartRulerPresentation.pedestalShadow,'none','The chart-ruler pedestal must have dimensional treatment.');
           assert.equal(chartRulerPresentation.borderWidth,'0px','Ruler cards must not put a rounded frame around tarot art.');
           assert.equal(chartRulerPresentation.borderRadius,'0px','Ruler cards must keep crisp unframed geometry.');
           assert.ok(chartRulerPresentation.afterContent==='none'||chartRulerPresentation.afterContent==='normal'||chartRulerPresentation.afterContent==='""','Chart ruler must not invent an ASC badge.');
@@ -191,24 +200,35 @@ jobs:
           assert.equal(rulerArt.media,'local-ruler-art');
 
           const rulerLayout=await page.evaluate(()=>{
-            const grid=document.querySelector('#skyFoundationA .sky-card-rulers-grid');
+            const root=document.querySelector('#skyFoundationA .sky-card-hits-structure');
+            const stage=root.querySelector('.sky-card-chart-ruler-stage');
+            const chart=stage.querySelector('.sky-card-ruler.is-chart-ruler');
+            const grid=root.querySelector('.sky-card-rulers-grid');
             const cards=[...grid.querySelectorAll(':scope>.sky-card-ruler')];
-            const chart=cards.find(card=>card.classList.contains('is-chart-ruler'));
-            const gr=grid.getBoundingClientRect();
+            const gr=grid.getBoundingClientRect(),sr=stage.getBoundingClientRect(),cr=chart.getBoundingClientRect();
             const rows=new Map();
             cards.forEach(card=>{
               const r=card.getBoundingClientRect(),key=Math.round(r.top);
               if(!rows.has(key))rows.set(key,[]);
-              rows.get(key).push({name:card.dataset.cardRuler,left:r.left,right:r.right,center:r.left+r.width/2,chart:card===chart});
+              rows.get(key).push({name:card.dataset.cardRuler,left:r.left});
             });
             const ordered=[...rows.entries()].sort((a,b)=>a[0]-b[0]).map(([,items])=>items.sort((a,b)=>a.left-b.left));
-            const cr=chart.getBoundingClientRect();
-            return{rowCounts:ordered.map(row=>row.length),firstRowChart:ordered[0]?.[0]?.chart||false,chartCenter:cr.left+cr.width/2,gridCenter:gr.left+gr.width/2,domFirst:cards[0]===chart};
+            return{
+              lowerRowCounts:ordered.map(row=>row.length),
+              lowerCount:cards.length,
+              lowerHasChart:cards.some(card=>card.classList.contains('is-chart-ruler')),
+              chartCenter:cr.left+cr.width/2,
+              stageCenter:sr.left+sr.width/2,
+              gridCenter:gr.left+gr.width/2,
+              chartBeforeGrid:stage.compareDocumentPosition(grid)&Node.DOCUMENT_POSITION_FOLLOWING?true:false
+            };
           });
-          assert.deepEqual(rulerLayout.rowCounts,[1,3,3],'Rulers must render as chart ruler alone, then two rows of three.');
-          assert.equal(rulerLayout.firstRowChart,true,'The chart ruler must occupy the first row.');
-          assert.ok(Math.abs(rulerLayout.chartCenter-rulerLayout.gridCenter)<=1,'The chart ruler must be centered over the lower six.');
-          assert.equal(rulerLayout.domFirst,true,'Chart ruler should also be first in keyboard/DOM order.');
+          assert.deepEqual(rulerLayout.lowerRowCounts,[3,3],'The six ordinary rulers must remain two rows of three beneath the pedestal.');
+          assert.equal(rulerLayout.lowerCount,6);
+          assert.equal(rulerLayout.lowerHasChart,false,'The chart ruler must live on the pedestal rather than inside the lower grid.');
+          assert.ok(Math.abs(rulerLayout.chartCenter-rulerLayout.stageCenter)<=1,'The chart ruler must be centered on its pedestal stage.');
+          assert.ok(Math.abs(rulerLayout.chartCenter-rulerLayout.gridCenter)<=1,'The chart ruler pedestal must remain centered over the lower six.');
+          assert.equal(rulerLayout.chartBeforeGrid,true,'The chart-ruler pedestal must precede the ordinary ruler grid in DOM order.');
 
           const rulerRails=await page.evaluate(()=>{
             const cards=[...document.querySelectorAll('#skyFoundationA .sky-card-ruler')];
