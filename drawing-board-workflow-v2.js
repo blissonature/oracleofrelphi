@@ -1262,6 +1262,7 @@
     writeStickerVisibility(draft.stickers);
     optionsSession=null;
     root.querySelector('.relphi-reading-options-drawer')?.remove();
+    setBoardMode(root,'board');
     if (structural && currentCardCount(root)===0) {
       const clear=root.querySelector('#clearShortList');
       clear?.click();
