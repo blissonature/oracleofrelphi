@@ -111,6 +111,7 @@ const firstPlacementRails=await placementRows.first().evaluate(node=>{const styl
 assert.ok(firstPlacementRails.sign,'Each placement row must expose a sign rail.');
 assert.ok(firstPlacementRails.house,'Each placement row must expose a house rail.');
 assert.notEqual(firstPlacementRails.backgroundImage,'none','The sign and house rails must actually paint on the Vocab row.');
+assert.ok((firstPlacementRails.backgroundImage.match(/linear-gradient/g)||[]).length>=2,'A single-placement Vocab row must visibly paint both the sign rail and the house rail.');
 assert.match(firstPlacementRails.backgroundSize,/3px 100%/,'Vocab rails must remain narrow visible sign and house stripes.');
 assert.equal(firstPlacementRails.system,'equal-house','Placement rails must use the active house system.');
 const ascDscPlacementRow=placementRows.filter({has:page.locator('[data-vocab-id="asc"]')}).filter({has:page.locator('[data-vocab-id="dsc"]')}).first();
