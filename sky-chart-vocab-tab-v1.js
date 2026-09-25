@@ -884,8 +884,32 @@ function structureNeutralColor(){return'rgba(31,27,24,.18)'}
 function splitStructureGradient(colorA,colorB){
   return'linear-gradient(to bottom,'+(colorA||structureNeutralColor())+' 0 50%,'+(colorB||structureNeutralColor())+' 50% 100%)';
 }
-function halfWeightedStructureGradient(left,right,keyOf,colorOf){
-  const sideStops=(members,from,to)=>{
+function circularArcOverlap(startA,spanA,startB,spanB){
+  const rel=norm(startB-startA),candidates=[rel,rel-360];let overlap=0;
+  candidates.forEach(start=>{overlap+=Math.max(0,Math.min(spanA,start+spanB)-Math.max(0,start))});
+  return Math.min(spanA,overlap);
+}
+function territoryStops(items,from,to,colorOf){
+  const valid=items.filter(item=>item.weight>1e-9&&colorOf(item.key));
+  const total=valid.reduce((sum,item)=>sum+item.weight,0);if(!total)return[];
+  let used=0;
+  return valid.map(item=>{
+    const start=from+(used/total)*(to-from);used+=item.weight;const end=from+(used/total)*(to-from);
+    return colorOf(item.key)+' '+start+'% '+end+'%';
+  });
+}
+function signHouseTerritoryStops(slot,list,signIndex,from,to){
+  const values=cusps(payload(slot),list);if(values.length!==12)return[];
+  const signStart=Number(signIndex)*30,territories=[];
+  values.forEach((start,index)=>{
+    const span=norm(values[(index+1)%12]-start)||30;
+    const weight=circularArcOverlap(signStart,30,start,span);
+    if(weight>1e-9)territories.push({key:index+1,weight});
+  });
+  return territoryStops(territories,from,to,key=>HOUSE_COLORS[key-1]);
+}
+function halfWeightedStructureGradient(left,right,keyOf,colorOf,fallbackSide=null){
+  const sideStops=(members,from,to,side)=>{
     const counts=new Map(),order=[];
     members.forEach(record=>{
       const key=keyOf(record);
@@ -894,7 +918,10 @@ function halfWeightedStructureGradient(left,right,keyOf,colorOf){
       counts.set(key,(counts.get(key)||0)+1);
     });
     const total=order.reduce((sum,key)=>sum+counts.get(key),0);
-    if(!total)return[structureNeutralColor()+' '+from+'% '+to+'%'];
+    if(!total){
+      const fallback=typeof fallbackSide==='function'?fallbackSide(side,from,to):[];
+      return fallback?.length?fallback:[structureNeutralColor()+' '+from+'% '+to+'%'];
+    }
     let used=0;
     return order.map(key=>{
       const start=from+(used/total)*(to-from);
@@ -903,7 +930,7 @@ function halfWeightedStructureGradient(left,right,keyOf,colorOf){
       return colorOf(key)+' '+start+'% '+end+'%';
     });
   };
-  return'linear-gradient(to bottom,'+[...sideStops(left,0,50),...sideStops(right,50,100)].join(',')+')';
+  return'linear-gradient(to bottom,'+[...sideStops(left,0,50,0),...sideStops(right,50,100,1)].join(',')+')';
 }
 function activeHouseSystem(slot){
   const value=payload(slot),p=profile(value);
@@ -1001,7 +1028,13 @@ function renderStructures(container,list,permitted,slot){
       applyPolarityRails(
         line,
         splitStructureGradient(SIGN_COLORS[pair[0]],SIGN_COLORS[pair[1]]),
-        halfWeightedStructureGradient(leftMembers,rightMembers,record=>record.house||null,key=>HOUSE_COLORS[key-1]),
+        halfWeightedStructureGradient(
+          leftMembers,
+          rightMembers,
+          record=>record.house||null,
+          key=>HOUSE_COLORS[key-1],
+          (side,from,to)=>signHouseTerritoryStops(slot,list,pair[side],from,to)
+        ),
         slot
       );
       line.append(signPolaritySentence(pair,list),document.createTextNode('.'));body.appendChild(line);
