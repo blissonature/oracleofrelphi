@@ -51,20 +51,16 @@ const vocabGroups=page.locator('#skyFoundationA details.sky-vocab-group');
 assert.ok(await vocabGroups.count()>=6,'Vocab results must be grouped into collapsed semantic disclosures.');
 assert.equal(await vocabGroups.evaluateAll(nodes=>nodes.every(node=>!node.open)),true,'Vocab groups must default collapsed.');
 assert.ok(await page.locator('#skyFoundationA .sky-vocab-group-preview-glyph').count()>4,'Collapsed Vocab summaries must preview their member glyphs.');
-assert.equal(await page.locator('#skyFoundationA [data-vocab-preview-rail="sign"]').count(),await vocabGroups.count(),'Every collapsed group must preview its sign rail data.');
-assert.equal(await page.locator('#skyFoundationA [data-vocab-preview-rail="house"]').count(),await vocabGroups.count(),'Every collapsed group must preview its house rail data.');
-const collapsedPreview=await page.locator('#skyFoundationA .sky-vocab-group').first().evaluate(node=>{
-  const sign=node.querySelector('[data-vocab-preview-rail="sign"] .sky-vocab-group-preview-segment');
-  const house=node.querySelector('[data-vocab-preview-rail="house"] .sky-vocab-group-preview-segment');
-  return{
-    bodyDisplay:getComputedStyle(node.querySelector('.sky-vocab-group-body')).display,
-    signBackground:sign?.style.background||'',
-    houseBackground:house?.style.background||''
-  };
-});
-assert.equal(collapsedPreview.bodyDisplay,'none','Collapsed Vocab group bodies must stay hidden while the preview remains visible.');
-assert.match(collapsedPreview.signBackground,/linear-gradient/i,'Collapsed sign previews must carry the same segmented color data as expanded sign rails.');
-assert.match(collapsedPreview.houseBackground,/linear-gradient/i,'Collapsed house previews must carry the same segmented color data as expanded house rails.');
+assert.equal(await page.locator('#skyFoundationA .sky-vocab-group-preview-text').count(),0,'Collapsed Vocab summaries must not duplicate names or referents.');
+assert.equal(await page.locator('#skyFoundationA [data-vocab-preview-rail]').count(),0,'Collapsed Vocab summaries must contain only the spatial glyph stripe, not separate sign or house rails.');
+const collapsedPreview=await page.locator('#skyFoundationA .sky-vocab-group').first().evaluate(node=>({
+  bodyDisplay:getComputedStyle(node.querySelector('.sky-vocab-group-body')).display,
+  spatialCount:node.querySelectorAll('.sky-vocab-group-preview-spatial').length,
+  glyphCount:node.querySelectorAll('.sky-vocab-group-preview-glyph').length
+}));
+assert.equal(collapsedPreview.bodyDisplay,'none','Collapsed Vocab group bodies must stay hidden while the abstract stripe remains visible.');
+assert.equal(collapsedPreview.spatialCount,1,'Each collapsed Vocab group must show one abstract spatial stripe.');
+assert.ok(collapsedPreview.glyphCount>0,'The collapsed spatial stripe must carry placement glyphs.');
 
 await page.waitForFunction(()=>[...document.querySelectorAll('#skyFoundationA .sky-vocab-group-preview-glyph svg')].some(svg=>svg.dataset.vocabPreviewGlyphReady==='true'));
 const abstractGlyphGeometry=async()=>page.locator('#skyFoundationA .sky-vocab-group-preview-glyph').evaluateAll(nodes=>nodes.slice(0,8).map(node=>{
