@@ -9,7 +9,7 @@ const NAMED=Object.freeze(['start','midpoint','end','max','all']);
 const HIDDEN_CLASSES=Object.freeze([
   'sky-foundation-single-sky-cross-hidden','sky-chart-filter-hidden','sky-chart-orb-hidden','sky-orb-filter-hidden',
   'sky-chart-multiselect-hidden','sky-chart-house-multiselect-hidden','sky-chart-aspect-multiselect-hidden',
-  'sky-chart-zodiac-filter-hidden','sky-chart-sign-filter-hidden','sky-chart-semantic-hidden'
+  'sky-chart-zodiac-filter-hidden','sky-chart-sign-filter-hidden','sky-chart-theme-filter-hidden','sky-chart-semantic-hidden'
 ]);
 const CAP_CLASS='sky-chart-result-limit-hidden';
 let limit='all',queued=false,listObserver=null,observedList=null,lastState='',editing=false;
@@ -272,7 +272,7 @@ function start(){
     'relphi:sky-foundation-ready','relphi:sky-foundation-interactions-ready','relphi:sky-intrasky-relationships-ready',
     'relphi:sky-intrasky-b-relationships-ready','relphi:sky-placement-multiselect-changed','relphi:sky-house-multiselect-changed',
     'relphi:sky-aspect-multiselect-changed','relphi:sky-zodiac-filter-changed','relphi:sky-foundation-filter-changed',
-    'relphi:sky-harmonic-window-model-changed','relphi:sky-harmonic-window-visibility-changed','relphi:relationship-sort-changed'
+    'relphi:sky-harmonic-window-model-changed','relphi:sky-harmonic-window-visibility-changed','relphi:relationship-sort-changed','relphi:sky-theme-filter-changed'
   ];
   events.forEach(name=>window.addEventListener(name,()=>{ensureObservers();schedule()}));
   ensureObservers();ensureControl();schedule();
