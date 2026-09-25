@@ -192,6 +192,7 @@
     });
     ['relphi:sky-foundation-interactions-ready','relphi:sky-intrasky-relationships-ready','relphi:sky-intrasky-b-relationships-ready','relphi:sky-placement-multiselect-changed','relphi:sky-house-multiselect-changed','relphi:sky-aspect-multiselect-changed','relphi:sky-zodiac-filter-changed','relphi:sky-theme-filter-changed','relphi:selected-relationship-rendered','relphi:sky-foundation-ready'].forEach(name=>window.addEventListener(name,ensureInstalled));
     window.addEventListener('relphi:sky-harmonic-window-model-changed',schedule);
+    window.addEventListener('relphi:sky-theme-filter-changed',schedule);
     document.getElementById('skyFoundationRelationships')?.addEventListener('change',schedule);
   }
 
