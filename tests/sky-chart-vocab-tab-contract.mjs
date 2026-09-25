@@ -283,6 +283,7 @@ assert.match(vocab,/data-vocab-polarity-colors="true"\]\::after\{left:4px;backgr
 assert.match(vocab,/data-vocab-concentration-colors="true"\]\::after\{left:4px;background:var\(--vocab-concentration-houses\);opacity:\.5\}/,'Concentration house stripe must use 50% opacity to match house-sector fill');
 assert.match(vocab,/data-vocab-placement-colors="true"\]\::after\{left:4px;background:var\(--vocab-placement-houses\);opacity:\.5\}/,'Placement house stripe must use 50% opacity to match house-sector fill');
 assert.match(vocab,/halfWeightedStructureGradient\(structure\.left,structure\.right,record=>record\.house\|\|null/,'Primary polarity house rail must use live member house assignments');
+assert.match(vocab,/signHouseTerritoryStops\(slot,list,pair\[side\],from,to\)/,'An empty sign-polarity pole must derive house rail colors from the sign territory rather than a neutral gray fallback.');
 assert.match(vocab,/leftCuspSign=houseCuspSign\(slot,list,pair\[0\]\)/,'House-polarity sign rail must derive from the active house-system cusps');
 assert.match(vocab,/line\.dataset\.vocabHouseSystem=activeHouseSystem\(slot\)/,'Structure rails must identify the active house system they were derived from');
 
