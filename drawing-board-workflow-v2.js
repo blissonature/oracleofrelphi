@@ -830,6 +830,7 @@
       '</div><button type="button" id="relphiBuildQuestions" '+(disabled?'disabled':'')+'>Surface referents</button>';
   }
   const PIP_NUMBER_BY_RANK = {Two:2,Three:3,Four:4,Five:5,Six:6,Seven:7,Eight:8,Nine:9,Ten:10};
+  const SURFACE_DRAW_KEYS = ['primordial','ace','planet','sign','need','court','pip'];
   function surfacePlanet(card) {
     return String(card?.astrology?.planet || '').split('/')[0].trim();
   }
@@ -837,11 +838,27 @@
     const numeric=Number(card?.number);
     return numeric || PIP_NUMBER_BY_RANK[String(card?.rank || '')] || 0;
   }
+  function surfacePrimordialElement(card) {
+    return String(card?.astrology?.zodiac_range || card?.astrology?.element || '').trim();
+  }
+  function surfaceNeed(card) {
+    return String(card?.relphi?.universal_human_needs?.need || '').trim();
+  }
+  function isPrincessPage(card) {
+    return card?.card_type==='Court' && (String(card?.rank||'').toLowerCase()==='princess' || String(card?.rws_rank||'').toLowerCase()==='page');
+  }
+  function surfaceCourtFormula(card) {
+    return String(card?.elemental_formula || [card?.rank_element,card?.element].filter(Boolean).join(' of ') || '').trim();
+  }
   function surfaceCardPools() {
     const cards=Array.isArray(window.RELPHI_TAROT_CARDS)?window.RELPHI_TAROT_CARDS:[];
     return {
+      primordial:cards.filter(card=>card?.card_type==='Major' && card?.astrology?.attribution_type==='Element' && ['Aleph','Mem','Shin'].includes(String(card?.hebrew?.letter||''))),
+      ace:cards.filter(card=>card?.card_type==='Ace' && card?.element),
       planet:cards.filter(card=>card?.card_type==='Major' && String(card?.astrology?.attribution_type||'').startsWith('Planet') && surfacePlanet(card)),
       sign:cards.filter(card=>card?.card_type==='Major' && card?.astrology?.attribution_type==='Sign' && card?.astrology?.sign),
+      need:cards.filter(card=>surfaceNeed(card)),
+      court:cards.filter(card=>card?.card_type==='Court' && surfaceCourtFormula(card)),
       pip:cards.filter(card=>card?.card_type==='Pip' && surfacePipNumber(card)>=2 && surfacePipNumber(card)<=10)
     };
   }
@@ -849,11 +866,21 @@
   function surfaceDrawSummary(session) {
     const draws=session.surfaceDraws || {};
     const parts=[];
-    if (draws.planet) parts.push('<article><strong>'+escapeHtml(draws.planet.name)+'</strong><span>Planet · '+escapeHtml(surfacePlanet(draws.planet))+'</span></article>');
-    if (draws.sign) parts.push('<article><strong>'+escapeHtml(draws.sign.name)+'</strong><span>Sign · '+escapeHtml(draws.sign.astrology?.sign||'')+'</span></article>');
+    if (draws.primordial) parts.push('<article><strong>'+escapeHtml(draws.primordial.name)+'</strong><span>Primordial element · '+escapeHtml(surfacePrimordialElement(draws.primordial))+' · Mother-letter Major · three-element layer before Earth</span></article>');
+    if (draws.ace) parts.push('<article><strong>'+escapeHtml(draws.ace.name)+'</strong><span>Elemental quaternion · '+escapeHtml(draws.ace.element||'')+' · four-element layer with Earth included</span></article>');
+    if (draws.planet) parts.push('<article><strong>'+escapeHtml(draws.planet.name)+'</strong><span>What is at work · '+escapeHtml(surfacePlanet(draws.planet))+'</span></article>');
+    if (draws.sign) parts.push('<article><strong>'+escapeHtml(draws.sign.name)+'</strong><span>How it is showing up · '+escapeHtml(draws.sign.astrology?.sign||'')+'</span></article>');
+    if (draws.need) parts.push('<article><strong>'+escapeHtml(draws.need.name)+'</strong><span>What is needed · '+escapeHtml(surfaceNeed(draws.need))+'</span></article>');
+    if (draws.court) {
+      const formula=surfaceCourtFormula(draws.court);
+      const special=isPrincessPage(draws.court)
+        ? 'Next-generation embodiment · Page/Princess · '+formula+' · Earth carries the suit element into tangible form'
+        : 'How it is being carried · '+escapeHtml(draws.court.rank||'Court')+' · '+escapeHtml(formula);
+      parts.push('<article class="'+(isPrincessPage(draws.court)?'is-princess-page':'')+'"><strong>'+escapeHtml(draws.court.name)+'</strong><span>'+special+'</span></article>');
+    }
     if (draws.pip) {
       const num=surfacePipNumber(draws.pip);
-      parts.push('<article><strong>'+escapeHtml(draws.pip.name)+'</strong><span>'+escapeHtml(draws.pip.element||'')+' · '+escapeHtml(HOUSE_ORDINALS[num-1]||String(num))+' House · '+escapeHtml(MODE_BY_PIP[num]||'')+'</span></article>');
+      parts.push('<article><strong>'+escapeHtml(draws.pip.name)+'</strong><span>What form it is taking · '+escapeHtml(draws.pip.element||'')+' · '+escapeHtml(HOUSE_ORDINALS[num-1]||String(num))+' House · '+escapeHtml(MODE_BY_PIP[num]||'')+'</span></article>');
     }
     return parts.length ? '<div class="relphi-surface-draws">'+parts.join('')+'</div>' : '<p class="relphi-referent-empty">Draw from the symbolic sub-packs. These cards suggest what to ask and do not become part of the reading.</p>';
   }
@@ -861,13 +888,26 @@
     const draws=session.surfaceDraws || {};
     const pip=draws.pip;
     const number=surfacePipNumber(pip);
-    return candidateQuestionsFromBlocks({
+    const base=candidateQuestionsFromBlocks({
       planet:surfacePlanet(draws.planet),
       sign:draws.sign?.astrology?.sign || '',
-      element:pip?.element || '',
+      element:pip?.element || draws.ace?.element || '',
       house:number>=1 && number<=12 ? number : '',
       mode:MODE_BY_PIP[number] || ''
     });
+    const extra=[];
+    const primordial=surfacePrimordialElement(draws.primordial);
+    if (primordial) extra.push('What does the primordial '+primordial+' principle reveal about this matter?');
+    if (draws.ace?.element) extra.push('What is taking root materially through '+draws.ace.element+'?');
+    const need=surfaceNeed(draws.need);
+    if (need) extra.push('What does the unmet need for '+need+' ask me to recognize?');
+    if (draws.court) {
+      const formula=surfaceCourtFormula(draws.court);
+      extra.push(isPrincessPage(draws.court)
+        ? 'What is ready to become tangible through '+formula+'?'
+        : 'How is '+formula+' carrying this situation?');
+    }
+    return Array.from(new Set([...extra,...base].map(q=>String(q||'').replace(/\s+/g,' ').trim()).filter(Boolean))).slice(0,MAX_POSITIONS);
   }
   function bespokeMarkup(draft,hasCards) {
     return '<section class="relphi-referent-panel">'+
@@ -893,7 +933,7 @@
     if (session.path==='bespoke') return bespokeMarkup(draft,hasCards);
     if (session.path==='templates') return templatesMarkup(draft,hasCards);
     if (session.path==='blocks') return '<section class="relphi-referent-panel"><div class="relphi-options-subhead"><div><strong>Building Blocks</strong><span>Choose Relphi symbols deliberately and let them formulate candidate referents.</span></div></div>'+buildingControlsMarkup(session,hasCards)+suggestionMarkup(session,hasCards)+'</section>';
-    if (session.path==='surface') return '<section class="relphi-referent-panel"><div class="relphi-options-subhead"><div><strong>See What Surfaces</strong><span>Let the deck choose the symbolic ingredients first.</span></div></div><div class="relphi-surface-actions"><button type="button" data-surface-draw="planet" '+(hasCards?'disabled':'')+'>Draw planet</button><button type="button" data-surface-draw="sign" '+(hasCards?'disabled':'')+'>Draw sign</button><button type="button" data-surface-draw="pip" '+(hasCards?'disabled':'')+'>Draw pip</button><button type="button" id="relphiSurfaceAll" '+(hasCards?'disabled':'')+'>Draw all three</button></div>'+surfaceDrawSummary(session)+suggestionMarkup(session,hasCards)+'</section>';
+    if (session.path==='surface') return '<section class="relphi-referent-panel"><div class="relphi-options-subhead"><div><strong>See What Surfaces</strong><span>Let the deck choose the symbolic ingredients first.</span></div></div><div class="relphi-surface-actions"><button type="button" data-surface-draw="primordial" '+(hasCards?'disabled':'')+'>Which primordial force?</button><button type="button" data-surface-draw="ace" '+(hasCards?'disabled':'')+'>What is taking root?</button><button type="button" data-surface-draw="planet" '+(hasCards?'disabled':'')+'>What is at work?</button><button type="button" data-surface-draw="sign" '+(hasCards?'disabled':'')+'>How is it showing up?</button><button type="button" data-surface-draw="need" '+(hasCards?'disabled':'')+'>What is needed?</button><button type="button" data-surface-draw="court" '+(hasCards?'disabled':'')+'>How is it being carried?</button><button type="button" data-surface-draw="pip" '+(hasCards?'disabled':'')+'>What form is it taking?</button><button type="button" id="relphiSurfaceAll" '+(hasCards?'disabled':'')+'>Surface all layers</button></div>'+surfaceDrawSummary(session)+suggestionMarkup(session,hasCards)+'</section>';
     return '';
   }
 
@@ -1037,7 +1077,7 @@
     drawer.querySelectorAll('[data-surface-draw]').forEach(button=>button.addEventListener('click',()=>redrawSurface(button.dataset.surfaceDraw)));
     drawer.querySelector('#relphiSurfaceAll')?.addEventListener('click',()=>{
       const pools=surfaceCardPools();
-      session.surfaceDraws={planet:randomFrom(pools.planet),sign:randomFrom(pools.sign),pip:randomFrom(pools.pip)};
+      session.surfaceDraws=Object.fromEntries(SURFACE_DRAW_KEYS.map(kind=>[kind,randomFrom(pools[kind])]));
       session.suggestions=questionsFromSurface(session);
       renderOptions(root);
     });
