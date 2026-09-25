@@ -16,6 +16,7 @@
   let hoveredRow = null;
   let hoveredLines = new Set();
   let hoverFilterActive = false;
+  let rowHoverFrozen = false;
 
   function endpointSky(node, side) {
     const explicit = String(node?.dataset?.[side === 'left' ? 'leftSky' : 'rightSky'] || '').toUpperCase();
@@ -150,6 +151,25 @@
     hoveredLines.forEach(line => line.classList.remove('is-row-hovered'));
     hoveredRow = null;
     hoveredLines = new Set();
+    rowHoverFrozen = false;
+  }
+
+  // Screen-capture overlays and app switchers can take pointer ownership away from
+  // the browser without giving pointerout a real relatedTarget. Preserve the exact
+  // relationship highlight in that case; a real pointer move/click after the page
+  // regains ownership will reconcile it.
+  function freezeRowHoverOnExternalExit(event, row) {
+    if (!row || row.contains(event.relatedTarget) || event.relatedTarget !== null) return false;
+    rowHoverFrozen = !!hoveredRow;
+    return rowHoverFrozen;
+  }
+
+  function reconcileFrozenRowHover(event) {
+    if (!rowHoverFrozen) return;
+    rowHoverFrozen = false;
+    const row = event.target?.closest?.('.sky-foundation-relationship-row') || null;
+    if (row) setRowHover(row);
+    else clearRowHover();
   }
 
   function setRowHover(row) {
@@ -195,12 +215,17 @@
     root.addEventListener('pointerover', event => {
       const row = event.target.closest('.sky-foundation-relationship-row');
       if (!row || row.contains(event.relatedTarget)) return;
+      rowHoverFrozen = false;
       setRowHover(row);
     });
+
+    root.addEventListener('pointermove', reconcileFrozenRowHover, true);
+    root.addEventListener('pointerdown', reconcileFrozenRowHover, true);
 
     root.addEventListener('pointerout', event => {
       const row = event.target.closest('.sky-foundation-relationship-row');
       if (!row || row.contains(event.relatedTarget)) return;
+      if (freezeRowHoverOnExternalExit(event, row)) return;
       clearRowHover();
     });
 
@@ -212,6 +237,13 @@
     root.addEventListener('focusout', event => {
       const row = event.target.closest('.sky-foundation-relationship-row');
       if (row && !row.contains(event.relatedTarget)) clearRowHover();
+    });
+
+    window.addEventListener('blur', () => {
+      if (hoveredRow) rowHoverFrozen = true;
+    });
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden && hoveredRow) rowHoverFrozen = true;
     });
   }
 
