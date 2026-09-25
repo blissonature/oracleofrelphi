@@ -175,7 +175,7 @@ assert.match(orbControl,/count\.dataset\.countLabel='matches'/,'Relationship sta
 assert.match(foundationCss,/#skyFoundationRelationshipCount\[data-count-label="matches"\]::before\s*\{[\s\S]*content:attr\(data-match-count\)/,'The visible relationship number must come from stable match state rather than mutable legacy text');
 assert.match(foundationCss,/#skyFoundationRelationshipCount\[data-count-label="matches"\]::after\s*\{[\s\S]*content:"matches"/,'The relationship count must visibly append matches');
 assert.match(foundationCss,/\.sky-foundation-harmonic-show-more\s*\{/,'The Harmonic continuation item must be styled as a full-width list item');
-assert.match(relationshipLimit,/\[\['10','10'\],\['20','20'\],\['50','50'\],\['all','All'\]\]/,'Result Limit must offer 10, 20, 50, and All');
+assert.match(relationshipLimit,/\[\['10','10'\],\['20','20'\],\['50','50'\],\['all','All'\]\]/,'Result Limit must offer 10, 20, 50, and Max');
 assert.match(relationshipLimit,/function ensureHeadingActions\(\)/,'Result Limit must live in the Relationships heading action cluster rather than the filter grid');
 assert.match(relationshipLimit,/const actions=ensureHeadingActions\(\)/,'The Limit control must mount through the heading action owner');
 assert.match(relationshipLimit,/count\.dataset\.matchCount=next/,'The Relationships header must store the pre-cap qualifying count in dedicated match state');
