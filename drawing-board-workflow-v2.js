@@ -303,7 +303,7 @@
   }
 
   function blankDraft() {
-    return { templateId:'', basedOnTemplateId:'', labels:[], pack:'full', stickers:true, reversals:true, repeats:false, templateName:'' };
+    return { templateId:'', basedOnTemplateId:'', labels:[], positionPacks:[], pack:'full', stickers:true, reversals:true, repeats:false, templateName:'' };
   }
   function draftFromState() {
     const snap = currentSnapshot() || {};
@@ -314,6 +314,9 @@
       templateId:knownTemplate ? activeId : '',
       basedOnTemplateId:String(state.activeLayout?.basedOn || (knownTemplate ? activeId : '')),
       labels:Array.isArray(snap.shortListPositionLabels) ? snap.shortListPositionLabels.slice() : [],
+      positionPacks:Array.from({length:Array.isArray(snap.shortListPositionLabels)?snap.shortListPositionLabels.length:0},(_,index)=>
+        String(snap.rowPositionMeta?.[index]?.drawScope || state.activeLayout?.positions?.[index]?.drawScope || '')
+      ),
       pack:String(snap.rowDrawScope || 'full'),
       stickers:showPositionStickers,
       reversals:snap.rowAllowReversals !== false,
@@ -331,7 +334,9 @@
     const baseLayout = String(base.rowActiveLayout?.id || '');
     const draftLayout = session.draft.templateId || (baseLayout==='custom-active' ? 'custom-active' : '');
     const baseLabels = Array.isArray(base.shortListPositionLabels) ? base.shortListPositionLabels : [];
-    return draftLayout !== baseLayout || JSON.stringify(session.draft.labels) !== JSON.stringify(baseLabels);
+    const basePacks=baseLabels.map((_,index)=>String(base.rowPositionMeta?.[index]?.drawScope || base.rowActiveLayout?.positions?.[index]?.drawScope || ''));
+    const draftPacks=(session.draft.positionPacks||[]).slice(0,session.draft.labels.length).map(value=>String(value||''));
+    return draftLayout !== baseLayout || JSON.stringify(session.draft.labels) !== JSON.stringify(baseLabels) || JSON.stringify(draftPacks)!==JSON.stringify(basePacks);
   }
 
   function setBoardOpen(open, { fit = false } = {}) {
@@ -831,6 +836,15 @@
   }
   const PIP_NUMBER_BY_RANK = {Two:2,Three:3,Four:4,Five:5,Six:6,Seven:7,Eight:8,Nine:9,Ten:10};
   const SURFACE_DRAW_KEYS = ['primordial','ace','planet','sign','need','court','pip'];
+  const SURFACE_PACK_BY_KIND = Object.freeze({
+    primordial:'primordial-majors',
+    ace:'aces',
+    planet:'planetary-majors',
+    sign:'zodiac-majors',
+    need:'uhn',
+    court:'courts',
+    pip:'pips'
+  });
   function surfacePlanet(card) {
     return String(card?.astrology?.planet || '').split('/')[0].trim();
   }
@@ -866,48 +880,57 @@
   function surfaceDrawSummary(session) {
     const draws=session.surfaceDraws || {};
     const parts=[];
-    if (draws.primordial) parts.push('<article><strong>'+escapeHtml(draws.primordial.name)+'</strong><span>Primordial element · '+escapeHtml(surfacePrimordialElement(draws.primordial))+' · Mother-letter Major · three-element layer before Earth</span></article>');
-    if (draws.ace) parts.push('<article><strong>'+escapeHtml(draws.ace.name)+'</strong><span>Elemental quaternion · '+escapeHtml(draws.ace.element||'')+' · four-element layer with Earth included</span></article>');
-    if (draws.planet) parts.push('<article><strong>'+escapeHtml(draws.planet.name)+'</strong><span>What is at work · '+escapeHtml(surfacePlanet(draws.planet))+'</span></article>');
-    if (draws.sign) parts.push('<article><strong>'+escapeHtml(draws.sign.name)+'</strong><span>How it is showing up · '+escapeHtml(draws.sign.astrology?.sign||'')+'</span></article>');
-    if (draws.need) parts.push('<article><strong>'+escapeHtml(draws.need.name)+'</strong><span>What is needed · '+escapeHtml(surfaceNeed(draws.need))+'</span></article>');
+    if (draws.primordial) parts.push('<article data-surface-kind="primordial" data-surface-card-type="'+escapeHtml(draws.primordial.card_type||'')+'"><strong>'+escapeHtml(draws.primordial.name)+'</strong><span>Primordial element · '+escapeHtml(surfacePrimordialElement(draws.primordial))+' · Mother-letter Major · three-element layer before Earth</span></article>');
+    if (draws.ace) parts.push('<article data-surface-kind="ace" data-surface-card-type="'+escapeHtml(draws.ace.card_type||'')+'"><strong>'+escapeHtml(draws.ace.name)+'</strong><span>Elemental quaternion · '+escapeHtml(draws.ace.element||'')+' · four-element layer with Earth included</span></article>');
+    if (draws.planet) parts.push('<article data-surface-kind="planet" data-surface-card-type="'+escapeHtml(draws.planet.card_type||'')+'"><strong>'+escapeHtml(draws.planet.name)+'</strong><span>What is at work · '+escapeHtml(surfacePlanet(draws.planet))+'</span></article>');
+    if (draws.sign) parts.push('<article data-surface-kind="sign" data-surface-card-type="'+escapeHtml(draws.sign.card_type||'')+'"><strong>'+escapeHtml(draws.sign.name)+'</strong><span>How it is showing up · '+escapeHtml(draws.sign.astrology?.sign||'')+'</span></article>');
+    if (draws.need) parts.push('<article data-surface-kind="need" data-surface-card-type="'+escapeHtml(draws.need.card_type||'')+'"><strong>'+escapeHtml(draws.need.name)+'</strong><span>What is needed · '+escapeHtml(surfaceNeed(draws.need))+'</span></article>');
     if (draws.court) {
       const formula=surfaceCourtFormula(draws.court);
       const special=isPrincessPage(draws.court)
         ? 'Next-generation embodiment · Page/Princess · '+formula+' · Earth carries the suit element into tangible form'
         : 'How it is being carried · '+escapeHtml(draws.court.rank||'Court')+' · '+escapeHtml(formula);
-      parts.push('<article class="'+(isPrincessPage(draws.court)?'is-princess-page':'')+'"><strong>'+escapeHtml(draws.court.name)+'</strong><span>'+special+'</span></article>');
+      parts.push('<article data-surface-kind="court" data-surface-card-type="'+escapeHtml(draws.court.card_type||'')+'" class="'+(isPrincessPage(draws.court)?'is-princess-page':'')+'"><strong>'+escapeHtml(draws.court.name)+'</strong><span>'+special+'</span></article>');
     }
     if (draws.pip) {
       const num=surfacePipNumber(draws.pip);
-      parts.push('<article><strong>'+escapeHtml(draws.pip.name)+'</strong><span>What form it is taking · '+escapeHtml(draws.pip.element||'')+' · '+escapeHtml(HOUSE_ORDINALS[num-1]||String(num))+' House · '+escapeHtml(MODE_BY_PIP[num]||'')+'</span></article>');
+      parts.push('<article data-surface-kind="pip" data-surface-card-type="'+escapeHtml(draws.pip.card_type||'')+'"><strong>'+escapeHtml(draws.pip.name)+'</strong><span>What form it is taking · '+escapeHtml(draws.pip.element||'')+' · '+escapeHtml(HOUSE_ORDINALS[num-1]||String(num))+' House · '+escapeHtml(MODE_BY_PIP[num]||'')+'</span></article>');
     }
     return parts.length ? '<div class="relphi-surface-draws">'+parts.join('')+'</div>' : '<p class="relphi-referent-empty">Draw from the symbolic sub-packs. These cards suggest what to ask and do not become part of the reading.</p>';
   }
-  function questionsFromSurface(session) {
+  function suggestionsFromSurface(session) {
     const draws=session.surfaceDraws || {};
-    const pip=draws.pip;
-    const number=surfacePipNumber(pip);
-    const base=candidateQuestionsFromBlocks({
-      planet:surfacePlanet(draws.planet),
-      sign:draws.sign?.astrology?.sign || '',
-      element:pip?.element || draws.ace?.element || '',
-      house:number>=1 && number<=12 ? number : '',
-      mode:MODE_BY_PIP[number] || ''
-    });
-    const extra=[];
+    const result=[];
+    const push=(kind,text)=>{
+      const clean=String(text||'').replace(/\s+/g,' ').trim();
+      if(clean) result.push({text:clean,pack:SURFACE_PACK_BY_KIND[kind]||''});
+    };
     const primordial=surfacePrimordialElement(draws.primordial);
-    if (primordial) extra.push('What does the primordial '+primordial+' principle reveal about this matter?');
-    if (draws.ace?.element) extra.push('What is taking root materially through '+draws.ace.element+'?');
+    if (primordial) push('primordial','What does the primordial '+primordial+' principle reveal about this matter?');
+    if (draws.ace?.element) push('ace','What is taking root materially through '+draws.ace.element+'?');
+    const planet=surfacePlanet(draws.planet);
+    if (planet) push('planet','What is '+planet+' asking me to understand about this matter?');
+    const sign=String(draws.sign?.astrology?.sign||'').trim();
+    if (sign) push('sign','How is '+sign+' shaping the way this situation is being expressed?');
     const need=surfaceNeed(draws.need);
-    if (need) extra.push('What does the unmet need for '+need+' ask me to recognize?');
+    if (need) push('need','What does the unmet need for '+need+' ask me to recognize?');
     if (draws.court) {
       const formula=surfaceCourtFormula(draws.court);
-      extra.push(isPrincessPage(draws.court)
+      push('court',isPrincessPage(draws.court)
         ? 'What is ready to become tangible through '+formula+'?'
         : 'How is '+formula+' carrying this situation?');
     }
-    return Array.from(new Set([...extra,...base].map(q=>String(q||'').replace(/\s+/g,' ').trim()).filter(Boolean))).slice(0,MAX_POSITIONS);
+    if (draws.pip) {
+      const number=surfacePipNumber(draws.pip);
+      const form=[draws.pip.element,HOUSE_ORDINALS[number-1] ? HOUSE_ORDINALS[number-1]+' House' : '',MODE_BY_PIP[number]||''].filter(Boolean).join(' · ');
+      push('pip','What form is this taking through '+form+'?');
+    }
+    return result.slice(0,MAX_POSITIONS);
+  }
+  function setSurfaceSuggestions(session) {
+    const entries=suggestionsFromSurface(session);
+    session.suggestions=entries.map(item=>item.text);
+    session.suggestionPacks=entries.map(item=>item.pack);
   }
   function bespokeMarkup(draft,hasCards) {
     return '<section class="relphi-referent-panel">'+
@@ -981,6 +1004,7 @@
       }
       session.path=nextPath;
       session.suggestions=[];
+      session.suggestionPacks=[];
       renderOptions(root);
     }));
 
@@ -990,7 +1014,9 @@
       draft.templateId=templateSelect.value;
       draft.basedOnTemplateId=templateSelect.value;
       if (chosen) {
-        draft.labels=chosen.positions.slice().sort((a,b)=>a.drawOrder-b.drawOrder).map(item=>item.label);
+        const ordered=chosen.positions.slice().sort((a,b)=>a.drawOrder-b.drawOrder);
+        draft.labels=ordered.map(item=>item.label);
+        draft.positionPacks=ordered.map(item=>String(item.drawScope||''));
         draft.pack=chosen.rules?.drawScope || draft.pack;
         draft.reversals=chosen.rules?.allowReversals !== false;
         draft.repeats=!!chosen.rules?.allowRepeats;
@@ -999,6 +1025,7 @@
         draft.basedOnTemplateId='';
         draft.templateName='';
         draft.labels=[];
+        draft.positionPacks=[];
       }
       renderOptions(root);
     });
@@ -1018,6 +1045,7 @@
       const labels=parseBulkQuestions(value);
       if (!labels.length) return false;
       draft.labels=labels;
+      draft.positionPacks=[];
       markQuestionEditCustom(drawer,draft);
       refreshBespokeLabels();
       return true;
@@ -1037,6 +1065,7 @@
       const index=Number(row.dataset.labelRow);
       while (draft.labels.length<=index) draft.labels.push('');
       draft.labels[index]=event.target.value;
+      draft.positionPacks=[];
       markQuestionEditCustom(drawer,draft);
     });
     labelsList?.addEventListener('change',event=>{
@@ -1048,12 +1077,14 @@
     labelsList?.addEventListener('click',event=>{
       const button=event.target.closest('[data-remove-label]');
       if (!button) return;
-      draft.labels.splice(Number(button.dataset.removeLabel),1);
+      const index=Number(button.dataset.removeLabel);
+      draft.labels.splice(index,1);
+      draft.positionPacks?.splice?.(index,1);
       markQuestionEditCustom(drawer,draft); renderOptions(root);
     });
     drawer.querySelector('#relphiAddPosition')?.addEventListener('click',()=>{
       if (draft.labels.length>=MAX_POSITIONS) return;
-      draft.labels.push(''); markQuestionEditCustom(drawer,draft); renderOptions(root);
+      draft.labels.push(''); draft.positionPacks?.push?.(''); markQuestionEditCustom(drawer,draft); renderOptions(root);
     });
     drawer.querySelector('#relphiTemplateName')?.addEventListener('input',event=>{draft.templateName=event.target.value.slice(0,60);});
     drawer.querySelector('#relphiSaveTemplate')?.addEventListener('click',()=>saveDraftTemplate(root));
@@ -1064,6 +1095,7 @@
     }));
     drawer.querySelector('#relphiBuildQuestions')?.addEventListener('click',()=>{
       session.suggestions=candidateQuestionsFromBlocks(session.building);
+      session.suggestionPacks=session.suggestions.map(()=>draft.pack||'full');
       renderOptions(root);
     });
 
@@ -1071,30 +1103,35 @@
       const pools=surfaceCardPools();
       session.surfaceDraws ||= {};
       session.surfaceDraws[kind]=randomFrom(pools[kind]);
-      session.suggestions=questionsFromSurface(session);
+      setSurfaceSuggestions(session);
       renderOptions(root);
     };
     drawer.querySelectorAll('[data-surface-draw]').forEach(button=>button.addEventListener('click',()=>redrawSurface(button.dataset.surfaceDraw)));
     drawer.querySelector('#relphiSurfaceAll')?.addEventListener('click',()=>{
       const pools=surfaceCardPools();
       session.surfaceDraws=Object.fromEntries(SURFACE_DRAW_KEYS.map(kind=>[kind,randomFrom(pools[kind])]));
-      session.suggestions=questionsFromSurface(session);
+      setSurfaceSuggestions(session);
       renderOptions(root);
     });
 
     drawer.querySelectorAll('[data-suggestion-text]').forEach(input=>input.addEventListener('input',()=>{
       session.suggestions[Number(input.dataset.suggestionText)]=input.value;
     }));
-    drawer.querySelector('#relphiAcceptSuggestions')?.addEventListener('click',()=>{
+    const commitSelectedSuggestions=()=>{
       const chosen=Array.from(drawer.querySelectorAll('[data-suggestion-use]')).filter(box=>box.checked).map(box=>{
         const index=Number(box.dataset.suggestionUse);
-        return String(session.suggestions[index]||'').trim();
-      }).filter(Boolean);
-      if (!chosen.length) return;
-      draft.labels=chosen.slice(0,MAX_POSITIONS);
+        return {text:String(session.suggestions[index]||'').trim(),pack:String(session.suggestionPacks?.[index]||'')};
+      }).filter(item=>item.text).slice(0,MAX_POSITIONS);
+      if (!chosen.length) return false;
+      draft.labels=chosen.map(item=>item.text);
+      draft.positionPacks=chosen.map(item=>item.pack);
       draft.templateId='';
       draft.basedOnTemplateId='';
       draft.templateName='';
+      return true;
+    };
+    drawer.querySelector('#relphiAcceptSuggestions')?.addEventListener('click',()=>{
+      if (!commitSelectedSuggestions()) return;
       renderOptions(root);
     });
 
@@ -1105,7 +1142,11 @@
     drawer.querySelector('#relphiResetBoard')?.addEventListener('click',()=>resetBoardFromOptions(root));
     drawer.querySelector('#relphiCancelOptions')?.addEventListener('click',()=>closeOptions(root));
     drawer.querySelector('#relphiApplyOptions')?.addEventListener('click',()=>{
-      if (session.path==='draw') { draft.labels=[]; draft.templateId=''; draft.basedOnTemplateId=''; draft.templateName=''; }
+      if (session.path==='draw') {
+        draft.labels=[]; draft.positionPacks=[]; draft.templateId=''; draft.basedOnTemplateId=''; draft.templateName='';
+      } else if ((session.path==='surface'||session.path==='blocks') && session.suggestions.length) {
+        commitSelectedSuggestions();
+      }
       applyOptions(root);
     });
   }
@@ -1187,9 +1228,10 @@
   function draftPrefab(draft) {
     const based=templateById(draft.templateId || draft.basedOnTemplateId);
     const labels=draft.labels.slice(0,MAX_POSITIONS).map((value,index)=>String(value || `Position ${index+1}`).trim());
+    const positionPacks=(draft.positionPacks||[]).slice(0,labels.length).map(value=>String(value||''));
     if (based && based.positions.length===labels.length) {
       const next=clone(based);
-      next.positions.forEach((item,index)=>{item.label=labels[index]; item.drawOrder=index+1;});
+      next.positions.forEach((item,index)=>{item.label=labels[index]; item.drawOrder=index+1; item.drawScope=positionPacks[index]||item.drawScope||'';});
       next.rules={allowReversals:draft.reversals,allowRepeats:draft.repeats,drawScope:draft.pack};
       if (!draft.templateId) {
         next.id='custom-active';
@@ -1200,7 +1242,9 @@
       }
       return next;
     }
-    return {version:1,id:'custom-active',name:draft.templateName || 'Custom',cardCount:labels.length,source:'custom',editable:true,basedOn:based?.id||null,positions:genericPositions(labels),rules:{allowReversals:draft.reversals,allowRepeats:draft.repeats,drawScope:draft.pack}};
+    const positions=genericPositions(labels);
+    positions.forEach((item,index)=>{item.drawScope=positionPacks[index]||'';});
+    return {version:1,id:'custom-active',name:draft.templateName || 'Custom',cardCount:labels.length,source:'custom',editable:true,basedOn:based?.id||null,positions,rules:{allowReversals:draft.reversals,allowRepeats:draft.repeats,drawScope:draft.pack}};
   }
 
   function applyDrawSettings(draft) {
