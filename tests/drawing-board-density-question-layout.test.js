@@ -26,12 +26,11 @@ async function applyQuestions(page,labels){
     await page.click('#drawingBoardOptionsButton');
     await page.waitForSelector('.relphi-reading-options-drawer.is-reading-options-open',{state:'visible'});
   }
-  if (!(await page.locator('#relphiBulkReferents').isVisible().catch(()=>false))) {
-    await page.click('[data-referent-path="bespoke"]');
-  }
-  await page.waitForSelector('#relphiBulkReferents',{state:'visible'});
-  await page.fill('#relphiBulkReferents',labels.join(', '));
-  await page.click('#relphiParseReferents');
+  const first=page.locator('#relphiPositionLabels .relphi-label-row input').first();
+  if (!(await first.isVisible().catch(()=>false))) await page.click('[data-referent-path="bespoke"]');
+  await first.waitFor({state:'visible'});
+  await first.fill(labels.join(', '));
+  await first.dispatchEvent('change');
   await page.waitForFunction(count=>document.querySelectorAll('#relphiPositionLabels .relphi-label-row').length===count,labels.length);
   await page.click('#relphiApplyOptions');
   await page.waitForFunction(count=>{
