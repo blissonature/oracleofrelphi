@@ -30,6 +30,7 @@ let patterns=[];
 let queued=false;
 let applying=false;
 let activePatternKey='';
+let peerHoverRow=null,peerHoverFrozen=false,configurationObserver=null,observedConfigurationBody=null;
 
 function popoverBody(){return document.querySelector('#skyChartAspectPopover .sky-chart-aspect-filter-body')}
 function harmonicWindow(){const model=window.RelphiHarmonicOrb;const value=Number(model?.getWindow?.()??model?.defaultWindow??6);return Number.isFinite(value)?value:6}
@@ -208,6 +209,14 @@ function setSelection(id,checked){
   syncConfigInputs();renderOverlay();const result=detect();renderConfigurationSection(result.graph);window.dispatchEvent(new CustomEvent('relphi:sky-configuration-selection-changed',{detail:{selected:[...selectedTypes],activePattern:activePatternKey}}));
 }
 function refresh(){queued=false;if(applying)return;applying=true;try{decorateSimpleGroups();const result=detect();patterns=result.patterns;const available=availableTypes();[...selectedTypes].forEach(id=>{if(!available.has(id))selectedTypes.delete(id)});if(activePatternKey&&!patterns.some(pattern=>pattern.key===activePatternKey))activePatternKey='';renderConfigurationSection(result.graph);window.RelphiAspectConfigurations=Object.freeze({types:TYPES,patterns:patterns.slice(),harmonicWindow:result.graph.windowValue,refresh:schedule,participates,selectedPatterns:()=>selectedPatternsForVisibility().slice()});renderOverlay();window.dispatchEvent(new CustomEvent('relphi:sky-configurations-detected',{detail:{patterns:patterns.slice(),harmonicWindow:result.graph.windowValue}}))}finally{applying=false}}
+function ensureConfigurationObserver(){
+  const body=popoverBody();if(!body||body===observedConfigurationBody)return;
+  configurationObserver?.disconnect();observedConfigurationBody=body;
+  configurationObserver=new MutationObserver(()=>{
+    if(body.querySelector('[data-aspect-list="matrix"]')&&!body.querySelector('.sky-chart-configuration-section'))schedule();
+  });
+  configurationObserver.observe(body,{childList:true});
+}
 function schedule(){if(queued)return;queued=true;requestAnimationFrame(refresh)}
 function handleChange(event){const input=event.target.closest?.('[data-configuration-choice]');if(!input)return;event.stopPropagation();setSelection(input.dataset.configurationChoice,input.checked)}
 function handleClick(event){const button=event.target.closest?.('[data-configuration-pattern]');if(!button)return;event.preventDefault();const key=button.dataset.configurationPattern;activePatternKey=activePatternKey===key?'':key;renderOverlay();const result=detect();renderConfigurationSection(result.graph);window.dispatchEvent(new CustomEvent('relphi:sky-configuration-selection-changed',{detail:{selected:[...selectedTypes],activePattern:activePatternKey}}))}
@@ -221,9 +230,9 @@ function start(){
   document.addEventListener('focusout',event=>{const row=event.target.closest?.('.sky-foundation-relationship-row');if(!row||row.contains(event.relatedTarget))return;if(freezePeerHoverOnExternalExit(event,row))return;clearPeerHighlight()});
   window.addEventListener('blur',()=>{if(peerHoverRow)peerHoverFrozen=true});
   document.addEventListener('visibilitychange',()=>{if(document.hidden&&peerHoverRow)peerHoverFrozen=true});
-  ['relphi:sky-aspect-filter-rendered','relphi:sky-foundation-ready','relphi:sky-intrasky-relationships-ready','relphi:sky-intrasky-b-relationships-ready','relphi:sky-harmonic-window-visibility-changed','relphi:sky-orb-limit-changed','relphi:sky-b-removed','relphi:sky-b-restored','relphi:saved-sky-loaded'].forEach(name=>window.addEventListener(name,schedule));
+  ['relphi:sky-aspect-filter-rendered','relphi:sky-foundation-ready','relphi:sky-intrasky-relationships-ready','relphi:sky-intrasky-b-relationships-ready','relphi:sky-harmonic-window-visibility-changed','relphi:sky-orb-limit-changed','relphi:sky-b-removed','relphi:sky-b-restored','relphi:saved-sky-loaded'].forEach(name=>window.addEventListener(name,()=>{ensureConfigurationObserver();schedule()}));
   new MutationObserver(records=>{if(records.some(record=>record.addedNodes?.length&&[...record.addedNodes].some(node=>node instanceof Element&&(node.matches?.('.sky-foundation-relationship-row')||node.querySelector?.('.sky-foundation-relationship-row')))))schedule()}).observe(document.getElementById('skyFoundationRoot')||document.body,{childList:true,subtree:true});
-  schedule();
+  ensureConfigurationObserver();schedule();
 }
 document.readyState==='loading'?document.addEventListener('DOMContentLoaded',start,{once:true}):start();
 })();
