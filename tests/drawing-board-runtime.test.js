@@ -373,7 +373,7 @@ async function assertReadableFocus(page) {
     return offenders;
   });
   assert.deepEqual(optionsOverflow,[],'no Options control may overflow or be clipped by the drawer');
-  assert.equal(desktopOptions.pathCount,5,'Referents must expose all five starting paths');
+  assert.equal(desktopOptions.pathCount,4,'Referents must expose the four referent paths and no Draw path');
   assert.equal(desktopOptions.activePath,'templates','Templates should be the continuity path when Referents first opens');
   assert.equal(await desktop.locator('#relphiSpreadTemplateSelect').count(),1,'Templates path must expose the spread library');
   await desktop.screenshot({path:path.join(out,'drawing-board-desktop-options-left.png'),fullPage:true});
