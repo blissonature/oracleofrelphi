@@ -1568,11 +1568,11 @@ function ensureSlot(slot){
 function installStyles(){
   if(document.getElementById('skyVocabTabV1Styles'))return;
   const style=document.createElement('style');style.id='skyVocabTabV1Styles';style.textContent=`
-    .sky-placement-vocab-tabs{display:inline-flex;align-items:center;gap:.18rem;min-width:0}
+    .sky-placement-vocab-tabs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));align-items:center;gap:4px;flex:1 1 auto;width:min(190px,100%);min-width:0;padding:3px;border:1px solid rgba(31,27,24,.12);border-radius:999px;background:#f5f0e9}
     .sky-vocab-copy{margin-left:auto}
-    .sky-placement-vocab-tab{appearance:none;border:0;border-radius:999px;background:transparent;color:#5e554e;padding:.34rem .58rem;font:850 .72rem/1 system-ui,sans-serif;cursor:pointer}
-    .sky-placement-vocab-tab:hover,.sky-placement-vocab-tab:focus-visible{background:#f4eee7;outline:none}
-    .sky-placement-vocab-tab.is-active{background:#241f1b;color:#fff}
+    .sky-placement-vocab-tab{appearance:none;min-width:0;min-height:30px;margin:0;padding:.34rem .58rem;border:0;border-radius:999px;background:transparent;color:#5d554e;font:850 .68rem/1 system-ui,sans-serif;cursor:pointer}
+    .sky-placement-vocab-tab:hover,.sky-placement-vocab-tab:focus-visible{background:#f8f3ed;outline:none}
+    .sky-placement-vocab-tab.is-active{background:#fff;color:#211d19;box-shadow:0 1px 3px rgba(31,27,24,.12)}
     .sky-vocab-panel{display:grid;gap:.72rem;padding:.52rem .7rem .82rem;min-width:0}
     .sky-vocab-panel[hidden]{display:none!important}
     .sky-vocab-harmonic-row{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;align-items:end}
@@ -1641,18 +1641,23 @@ function installStyles(){
     .sky-vocab-group-body{display:grid;gap:.48rem;padding:.06rem .44rem .46rem}
     .sky-vocab-group:not([open])>.sky-vocab-group-body{display:none}
     .sky-vocab-structure-line{padding:.34rem .42rem;border-left:3px solid rgba(31,27,24,.24);border-radius:0 6px 6px 0;background:rgba(31,27,24,.035);color:#211d19;font-size:1em;font-weight:500;line-height:1.52}
-    .sky-vocab-structure-line[data-vocab-polarity-colors="true"]{position:relative;border-left:0;padding-left:.76rem}
-    .sky-vocab-structure-line[data-vocab-polarity-colors="true"]::before,.sky-vocab-structure-line[data-vocab-polarity-colors="true"]::after{content:"";position:absolute;top:0;bottom:0;width:3px}
-    .sky-vocab-structure-line[data-vocab-polarity-colors="true"]::before{left:0;border-radius:3px 0 0 3px;background:var(--vocab-polarity-signs)}
-    .sky-vocab-structure-line[data-vocab-polarity-colors="true"]::after{left:4px;background:var(--vocab-polarity-houses);opacity:.5}
-    .sky-vocab-structure-line[data-vocab-concentration-colors="true"]{position:relative;border-left:0;padding-left:.76rem}
-    .sky-vocab-structure-line[data-vocab-concentration-colors="true"]::before,.sky-vocab-structure-line[data-vocab-concentration-colors="true"]::after{content:"";position:absolute;top:0;bottom:0;width:3px}
-    .sky-vocab-structure-line[data-vocab-concentration-colors="true"]::before{left:0;border-radius:3px 0 0 3px;background:var(--vocab-concentration-signs)}
-    .sky-vocab-structure-line[data-vocab-concentration-colors="true"]::after{left:4px;background:var(--vocab-concentration-houses);opacity:.5}
-    .sky-vocab-line[data-vocab-placement-colors="true"]{position:relative;padding-left:.76rem}
-    .sky-vocab-line[data-vocab-placement-colors="true"]::before,.sky-vocab-line[data-vocab-placement-colors="true"]::after{content:"";position:absolute;top:0;bottom:0;width:3px}
-    .sky-vocab-line[data-vocab-placement-colors="true"]::before{left:0;background:var(--vocab-placement-signs)}
-    .sky-vocab-line[data-vocab-placement-colors="true"]::after{left:4px;background:var(--vocab-placement-houses);opacity:.5}
+    /* Sign + house rails are painted on the Vocab line itself so they cannot disappear
+       behind grouped-card overflow or pseudo-element stacking. Outer rail = sign; inner = house. */
+    .sky-vocab-structure-line[data-vocab-polarity-colors="true"]{
+      position:relative;border-left:0;padding-left:.76rem;
+      background-image:var(--vocab-polarity-signs),var(--vocab-polarity-houses);
+      background-size:3px 100%,3px 100%;background-position:0 0,4px 0;background-repeat:no-repeat
+    }
+    .sky-vocab-structure-line[data-vocab-concentration-colors="true"]{
+      position:relative;border-left:0;padding-left:.76rem;
+      background-image:var(--vocab-concentration-signs),var(--vocab-concentration-houses);
+      background-size:3px 100%,3px 100%;background-position:0 0,4px 0;background-repeat:no-repeat
+    }
+    .sky-vocab-line[data-vocab-placement-colors="true"]{
+      position:relative;padding-left:.76rem;
+      background-image:var(--vocab-placement-signs),var(--vocab-placement-houses);
+      background-size:3px 100%,3px 100%;background-position:0 0,4px 0;background-repeat:no-repeat
+    }
     .sky-vocab-line.is-wheel-context-active{box-shadow:inset 0 0 0 1px rgba(31,27,24,.14)}
     .sky-vocab-token.is-wheel-token-active>.sky-vocab-level{background:rgba(45,39,34,.09);box-shadow:inset 0 -2px 0 rgba(31,27,24,.22)}
     /* Wheel emphasis deliberately reuses the comparison wheel's native isolation
@@ -1684,7 +1689,8 @@ function installStyles(){
     .sky-vocab-level.is-color-coded svg{color:var(--vocab-token-color)!important}
     .sky-vocab-empty{color:#766c64;font-style:italic}
     @media(max-width:620px){
-      .sky-placement-vocab-tab{font-size:.7rem;padding:.34rem .52rem}
+      .sky-placement-vocab-tabs{width:min(184px,100%)}
+      .sky-placement-vocab-tab{font-size:.67rem;padding:.34rem .48rem}
       .sky-vocab-panel{padding:.48rem .58rem .74rem}
       .sky-vocab-dropdown-row{grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
       .sky-vocab-paragraph{font-size:.79rem;line-height:1.5}
