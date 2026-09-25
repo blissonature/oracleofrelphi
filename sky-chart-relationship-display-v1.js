@@ -124,7 +124,7 @@ function setMode(mode,{announce=true}={}){
 }
 
 function installStyles(){if(document.getElementById(STYLE_ID))return;const style=document.createElement('style');style.id=STYLE_ID;style.textContent=`
-#skyFoundationFocus .sky-relationship-display-control{position:relative;display:inline-flex;align-items:center;min-width:0;color:#4e463f;font:800 .61rem/1 system-ui,sans-serif}
+#skyFoundationFocus .sky-relationship-display-control{position:relative;display:inline-flex;align-items:center;min-width:0;color:#4e463f;font:800 .61rem/1 system-ui,sans-serif;order:10}
 #skyFoundationFocus .sky-relationship-display-head{position:relative!important;display:flex!important;align-items:center!important;gap:4px!important;min-width:0!important;height:29px!important;padding:0!important;border:0!important;background:transparent!important}
 #skyFoundationFocus .sky-relationship-display-label{min-width:0!important;padding:0!important;white-space:nowrap!important;color:#5a524b!important;font:800 .61rem/1 system-ui,sans-serif!important}
 #skyFoundationFocus .sky-relationship-display-value{display:flex!important;align-items:center!important;width:auto!important;min-width:118px!important;max-width:170px!important;height:29px!important;box-sizing:border-box!important;margin:0!important;padding:0 30px 0 9px!important;border:1px solid rgba(31,27,24,.18)!important;border-radius:9px!important;background:#fff!important;color:#332e2a!important;font:800 .67rem/1 system-ui,sans-serif!important;overflow:hidden!important;text-align:left!important;cursor:pointer!important}
@@ -143,7 +143,11 @@ function syncControl(state=readState()){
   let text=value?.querySelector('[data-relationship-display-value-text]');
   if(value&&!text){text=document.createElement('span');text.className='sky-relationship-display-value-text';text.dataset.relationshipDisplayValueText='true';value.replaceChildren(text)}
   if(text)text.textContent=stateSummary(state);
-  owner.querySelectorAll('[data-shared-display-layer]').forEach(input=>{input.checked=!!state[input.dataset.sharedDisplayLayer]});
+  const inputs=new Set([
+    ...owner.querySelectorAll('[data-shared-display-layer]'),
+    ...(popover()?.querySelectorAll('[data-shared-display-layer]')||[])
+  ]);
+  inputs.forEach(input=>{input.checked=!!state[input.dataset.sharedDisplayLayer]});
 }
 function positionPortal(){const owner=portalOwner,menu=popover(),head=owner?.querySelector('.sky-relationship-display-head');if(!isOpen(owner)||!menu?.classList.contains('is-portaled')||!head)return;const rect=head.getBoundingClientRect(),margin=12,width=Math.min(280,Math.max(230,window.innerWidth-margin*2)),left=Math.min(window.innerWidth-width-margin,Math.max(margin,rect.left+rect.width/2-width/2)),menuHeight=Math.min(190,window.innerHeight-margin*2),roomBelow=window.innerHeight-rect.bottom-margin,above=roomBelow<menuHeight&&rect.top>roomBelow,top=above?Math.max(margin,rect.top-menuHeight-6):Math.min(window.innerHeight-menuHeight-margin,rect.bottom+6);Object.assign(menu.style,{width:`${width}px`,left:`${left}px`,top:`${Math.max(margin,top)}px`})}
 function open(owner=control()){const menu=owner?.querySelector('.sky-relationship-display-popover')||popover();if(!owner||!menu)return;portalOwner=owner;owner.classList.add('is-open');menu.hidden=false;menu.classList.add('is-portaled');document.body.appendChild(menu);owner.querySelector('[data-relationship-display-value]')?.setAttribute('aria-expanded','true');owner.querySelector('[data-relationship-display-toggle]')?.setAttribute('aria-expanded','true');requestAnimationFrame(()=>{positionPortal();menu.querySelector('[data-shared-display-layer]')?.focus({preventScroll:true})})}
