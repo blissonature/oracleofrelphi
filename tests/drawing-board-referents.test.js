@@ -17,12 +17,18 @@ const base='http://127.0.0.1:8000/tarot.html';
     await page.click('#drawingBoardOptionsButton');
     await page.waitForSelector('.relphi-referents-drawer',{state:'visible'});
 
+    assert.equal(await page.locator('.drawing-board-mode-tabs').getAttribute('role'),'tablist','Board and Referents should be the top-level mode tabs');
+    assert.equal(await page.locator('#drawingBoardOptionsButton').getAttribute('aria-selected'),'true','Referents tab should be active while editing referents');
+    assert.equal(await page.locator('.drawing-board-board-mode').isVisible(),false,'Board controls should be hidden while Referents is active');
+
     const paths=page.locator('[data-referent-path]');
-    assert.equal(await paths.count(),5,'Referents should expose five tabs');
-    assert.equal(await page.locator('.relphi-referent-paths').getAttribute('role'),'tablist');
-    assert.equal(await paths.first().getAttribute('role'),'tab');
-    assert.equal(await page.locator('#relphiUseBlankDraw').count(),0,'Draw must not add a second gate in front of the native board');
-    assert.equal(await page.locator('[data-referent-path].is-active').getAttribute('data-referent-path'),'templates');
+    assert.equal(await paths.count(),4,'Referents should expose exactly four paths');
+    assert.deepEqual(await paths.locator('strong').allTextContents(),['Bespoke','Templates','Building Blocks','See What Surfaces']);
+    assert.equal(await page.locator('.relphi-referent-paths').getAttribute('role'),'list');
+    assert.equal(await page.locator('[data-referent-path="draw"]').count(),0,'Drawing is the Board itself and must not be a Referents path');
+    const pathBoxes=await paths.evaluateAll(nodes=>nodes.map(node=>node.getBoundingClientRect()).map(rect=>({top:rect.top,left:rect.left,width:rect.width})));
+    assert.ok(pathBoxes.every((box,index)=>index===0 || box.top>pathBoxes[index-1].top),'Referent paths should stack vertically');
+    assert.ok(pathBoxes.every(box=>Math.abs(box.left-pathBoxes[0].left)<2 && Math.abs(box.width-pathBoxes[0].width)<2),'Vertical path buttons should share one mobile-friendly column');
     assert.equal(await page.locator('.relphi-referent-settings').evaluate(node=>node.tagName),'SECTION','Draw settings should not be a collapsed details control');
     assert.equal(await page.locator('.relphi-referent-settings .relphi-draw-options').isVisible(),true,'Draw settings controls should always be visible');
 
@@ -99,9 +105,15 @@ const base='http://127.0.0.1:8000/tarot.html';
     await page.click('#drawingBoardOptionsButton');
     await page.waitForSelector('.relphi-referents-drawer',{state:'visible'});
     await page.click('#relphiResetBoard');
-    await page.click('[data-referent-path="draw"]');
+    await page.click('#drawingBoardBoardTab');
     await page.waitForSelector('.relphi-referents-drawer',{state:'detached'});
-    assert.equal(await page.locator('#relphiUseBlankDraw').count(),0,'Draw tab itself should return to the native board');
+    assert.equal(await page.locator('#drawingBoardBoardTab').getAttribute('aria-selected'),'true','Board tab should restore Board mode');
+    assert.equal(await page.locator('.drawing-board-board-mode').isVisible(),true,'Board mode should contain the board controls');
+    assert.deepEqual(
+      await page.locator('.drawing-board-board-mode .drawing-board-top-actions > button').evaluateAll(nodes=>nodes.map(node=>node.id)),
+      ['drawRandomRowCard','undoShortList','redoShortList','clearShortListCardsOnly'],
+      'Draw Undo Redo and Clear Cards belong inside Board mode'
+    );
 
     assert.deepEqual(errors,[]);
   } finally {
