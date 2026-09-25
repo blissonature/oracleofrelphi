@@ -169,7 +169,10 @@
         !row.classList.contains('sky-orb-filter-hidden') &&
         !row.classList.contains('sky-chart-multiselect-hidden') &&
         !row.classList.contains('sky-chart-house-multiselect-hidden') &&
-        !row.classList.contains('sky-chart-aspect-multiselect-hidden')
+        !row.classList.contains('sky-chart-aspect-multiselect-hidden') &&
+        !row.classList.contains('sky-chart-sign-filter-hidden') &&
+        !row.classList.contains('sky-chart-theme-filter-hidden') &&
+        !row.classList.contains('sky-chart-semantic-hidden')
       ).length;
       const count = document.getElementById('skyFoundationRelationshipCount');
       const empty = document.getElementById('skyFoundationRelationshipEmpty');
