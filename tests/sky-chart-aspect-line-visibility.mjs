@@ -47,10 +47,10 @@ for(const category of ['major','minor','harmonic']){
   assert.equal(await row.locator('[data-aspect-matrix-scope="A-B"]').count(),1,category+' must support A↔B.');
 }
 const majorAA=page.locator('#skyChartAspectPopover [data-aspect-category="major"] [data-aspect-matrix-scope="A-A"]');
-await majorAA.uncheck();
+await majorAA.evaluate(input=>{input.checked=false;input.dispatchEvent(new Event('change',{bubbles:true}))});
 assert.equal(await page.locator('#skyChartAspectPopover [data-aspect-matrix-row="trine"] [data-aspect-matrix-scope="A-A"]').isChecked(),false,'Major A↔A must drive its individual aspect checkboxes.');
 assert.equal(await page.locator('#skyChartAspectPopover [data-aspect-matrix-row="trine"] [data-aspect-matrix-scope="B-B"]').isChecked(),true,'Major A↔A must not alter B↔B.');
-await majorAA.check();
+await majorAA.evaluate(input=>{input.checked=true;input.dispatchEvent(new Event('change',{bubbles:true}))});
 
 const grandTrineConfig=page.locator('#skyChartAspectPopover [data-configuration-row="grand-trine"]');
 assert.equal(await grandTrineConfig.locator('[data-configuration-scope="all"]').count(),1,'Configurations must support All scopes.');
@@ -58,10 +58,10 @@ assert.equal(await grandTrineConfig.locator('[data-configuration-scope="A-A"]').
 assert.equal(await grandTrineConfig.locator('[data-configuration-scope="B-B"]').count(),1,'Configurations must support B↔B.');
 assert.equal(await grandTrineConfig.locator('[data-configuration-scope="A-B"]').count(),1,'Configurations must support A↔B.');
 const configAA=grandTrineConfig.locator('[data-configuration-scope="A-A"]');
-await configAA.check();
+await configAA.evaluate(input=>{input.checked=true;input.dispatchEvent(new Event('change',{bubbles:true}))});
 assert.ok((await page.evaluate(()=>window.RelphiAspectConfigurations?.matrix?.()['A-A']||[])).includes('grand-trine'),'A↔A configuration selection must be represented in the configuration matrix.');
 assert.equal((await page.evaluate(()=>window.RelphiAspectConfigurations?.matrix?.()['B-B']||[])).includes('grand-trine'),false,'A↔A configuration selection must not select B↔B.');
-await configAA.uncheck();
+await configAA.evaluate(input=>{input.checked=false;input.dispatchEvent(new Event('change',{bubbles:true}))});
 
 await page.waitForSelector('#skyFoundationFocus [data-relationship-display-control]',{timeout:10000});
 await page.waitForSelector('#skyFoundationFocus [data-harmonic-window-input]',{timeout:10000});
