@@ -56,6 +56,30 @@ assert.ok(relationshipHeaderOrder.count>relationshipHeaderOrder.limit,'Match cou
 assert.ok(relationshipHeaderOrder.copy>relationshipHeaderOrder.count,'Copy pill must come after the match count.');
 assert.ok(relationshipHeaderOrder.download>relationshipHeaderOrder.copy,'Download pill must follow Copy.');
 
+assert.equal(await page.locator('#skyFoundationRelationships .sky-relationship-sort-control>span').count(),0,'Sort must not restore a visible Sort header.');
+assert.equal(await page.locator('#skyFoundationRelationships .sky-relationship-limit-control>span').count(),0,'Max must not restore a visible Max header.');
+
+const maxSelect=page.locator('#skyFoundationRelationships [data-relationship-limit]');
+const maxIdentity=await maxSelect.evaluate(select=>({parent:select.parentElement,control:select.closest('.sky-relationship-limit-control'),next:select.closest('.sky-relationship-limit-control')?.nextElementSibling}));
+await maxSelect.click();
+await page.keyboard.press('Escape');
+await page.waitForTimeout(80);
+const maxStable=await maxSelect.evaluate((select,before)=>({
+  sameParent:select.parentElement===before.parent,
+  sameControl:select.closest('.sky-relationship-limit-control')===before.control,
+  sameNext:select.closest('.sky-relationship-limit-control')?.nextElementSibling===before.next,
+  nextId:select.closest('.sky-relationship-limit-control')?.nextElementSibling?.id||''
+}),maxIdentity);
+assert.equal(maxStable.sameParent,true,'Opening Max must not reparent the native select.');
+assert.equal(maxStable.sameControl,true,'Opening Max must not replace its control wrapper.');
+assert.equal(maxStable.sameNext,true,'Opening Max must not trigger header reordering that closes the native dropdown.');
+assert.equal(maxStable.nextId,'skyFoundationRelationshipCount','Max must stay immediately before the match count.');
+await maxSelect.selectOption('20');
+await page.waitForFunction(()=>document.documentElement.dataset.skyRelationshipLimit==='20');
+assert.equal(await maxSelect.inputValue(),'20','Max must remain functional after opening.');
+await maxSelect.selectOption('all');
+await page.waitForFunction(()=>document.documentElement.dataset.skyRelationshipLimit==='all');
+
 const audit=await page.evaluate(()=>{
   const rows=[...document.querySelectorAll('#skyFoundationRelationshipList>.sky-foundation-relationship-row[data-relation-index]')];
   const lines=[...document.querySelectorAll('[data-layer="aspects"]>line.sky-foundation-aspect:not(.sky-foundation-aspect-hit)')];
