@@ -89,7 +89,8 @@ const CONFIGS={
   cradle:{name:'Cradle',referent:'opposing poles supported by a network of trines and sextiles'},
   'thors-hammer':{name:"Thor's Hammer / Fist of God",referent:'concentrated friction driven through a single apex'}
 };
-const HIDDEN_FOR_VOCAB=['sky-foundation-single-sky-cross-hidden','sky-chart-filter-hidden','sky-chart-orb-hidden','sky-orb-filter-hidden','sky-chart-multiselect-hidden','sky-chart-house-multiselect-hidden','sky-chart-sign-filter-hidden','sky-chart-zodiac-filter-hidden','sky-chart-semantic-hidden'];
+const HIDDEN_FOR_CONFIG=['sky-foundation-single-sky-cross-hidden','sky-chart-filter-hidden','sky-chart-orb-hidden','sky-orb-filter-hidden','sky-chart-multiselect-hidden','sky-chart-house-multiselect-hidden','sky-chart-sign-filter-hidden','sky-chart-zodiac-filter-hidden','sky-chart-semantic-hidden'];
+const HIDDEN_FOR_RELATIONSHIP=[...HIDDEN_FOR_CONFIG,'sky-chart-aspect-multiselect-hidden'];
 let queued=false,activeMode='relationships',hoverRows=[],hoverLines=[];
 
 function readJson(storage,key,fallback){try{const raw=storage.getItem(key);return raw?JSON.parse(raw):fallback}catch(_){return fallback}}
@@ -152,7 +153,8 @@ function progressive(event){
 function relationshipMode(row){const raw=String(row?.dataset?.relationshipMode||'').toUpperCase();if(raw==='A-A'||raw==='B-B'||raw==='A-B')return raw;if(raw==='B-A')return'A-B';const a=String(row?.dataset?.leftSky||'').toUpperCase(),b=String(row?.dataset?.rightSky||'').toUpperCase();return a===b&&a? a+'-'+a:'A-B'}
 function slots(row){const mode=relationshipMode(row);return{left:String(row.dataset.leftSky||(mode==='B-B'?'B':'A')).toUpperCase(),right:String(row.dataset.rightSky||(mode==='A-A'?'A':mode==='B-B'?'B':'B')).toUpperCase()}}
 function rowKey(row){const s=slots(row);return s.left+':'+row.dataset.leftPlacement+'|'+row.dataset.aspect+'|'+s.right+':'+row.dataset.rightPlacement}
-function eligibleRow(row){return !HIDDEN_FOR_VOCAB.some(name=>row.classList.contains(name))}
+function configurationEligibleRow(row){return !HIDDEN_FOR_CONFIG.some(name=>row.classList.contains(name))}
+function eligibleRow(row){return !row.hidden&&row.getAttribute('aria-hidden')!=='true'&&!HIDDEN_FOR_RELATIONSHIP.some(name=>row.classList.contains(name))}
 function relationshipRows(){return [...document.querySelectorAll('#skyFoundationRelationshipList>.sky-foundation-relationship-row[data-aspect]')].filter(eligibleRow)}
 function memberFromKey(key,pattern){
   const parts=String(key).split(':'),sky=parts.shift(),id=parts.join(':');let sign=NaN,house=NaN;
@@ -164,7 +166,7 @@ function appendMember(frag,member,index,total){
   frag.append(makeToken(placementInfo(member.id),'placement',index===0),makeToken(signInfo(member.sign),'sign',false,' is in '));
   if(Number.isInteger(member.house)&&member.house>0)frag.append(makeToken(houseInfo(member.house),'house',false,', concerning '))
 }
-function patternEligible(pattern){return (pattern.edges||[]).every(edge=>edge?.row&&eligibleRow(edge.row))}
+function patternEligible(pattern){return (pattern.edges||[]).every(edge=>edge?.row&&configurationEligibleRow(edge.row))}
 function geometryClause(pattern){
   const frag=document.createDocumentFragment(),aspect=id=>makeToken(aspectInfo(id),'aspect');
   if(pattern.type==='grand-trine'){frag.append(document.createTextNode(', with each placement in '),aspect('trine'),document.createTextNode(' with the other two'));return frag}
@@ -240,9 +242,9 @@ function ensureTabs(){
 function viewState(){return sessionStorage.getItem(VIEW_KEY)==='vocab'?'vocab':'relationships'}
 function activate(mode){
   const next=mode==='vocab'?'vocab':'relationships',panel=ensurePanel(),list=document.getElementById('skyFoundationRelationshipList'),empty=document.getElementById('skyFoundationRelationshipEmpty'),count=document.getElementById('skyFoundationRelationshipCount');
-  activeMode=next;sessionStorage.setItem(VIEW_KEY,next);if(list)list.hidden=next==='vocab';if(panel)panel.hidden=next!=='vocab';if(empty)empty.hidden=next==='vocab'?true:empty.hidden;if(count)count.hidden=next==='vocab';
+  activeMode=next;sessionStorage.setItem(VIEW_KEY,next);if(list)list.hidden=next==='vocab';if(panel)panel.hidden=next!=='vocab';if(empty)empty.hidden=next==='vocab'?true:relationshipRows().length!==0;if(count)count.hidden=next==='vocab';
   document.querySelectorAll('[data-relationship-vocab-view]').forEach(button=>{const active=button.dataset.relationshipVocabView===next;button.classList.toggle('is-active',active);button.setAttribute('aria-selected',active?'true':'false');button.tabIndex=active?0:-1});
-  document.querySelectorAll('#skyFoundationRelationships [data-relationship-sort],#skyFoundationRelationships [data-relationship-limit]').forEach(control=>control.hidden=next==='vocab');
+  document.querySelectorAll('#skyFoundationRelationships .sky-relationship-sort-control,#skyFoundationRelationships .sky-relationship-limit-control').forEach(control=>control.hidden=next==='vocab');
   document.documentElement.dataset.skyRelationshipView=next;if(next==='vocab')renderPanel();else clearEdgeHighlight()
 }
 function clearEdgeHighlight(){
@@ -289,7 +291,7 @@ function start(){
     const download=event.target.closest('#skyChartRelationshipsExport');if(download){event.preventDefault();event.stopImmediatePropagation();vocabDownload()}
   },true);
   ['relphi:sky-foundation-ready','relphi:sky-intrasky-relationships-ready','relphi:sky-intrasky-b-relationships-ready','relphi:sky-aspect-multiselect-changed','relphi:sky-configuration-selection-changed','relphi:sky-configurations-detected','relphi:sky-harmonic-window-visibility-changed','relphi:sky-display-changed','relphi:sky-placement-multiselect-changed','relphi:sky-house-multiselect-changed','relphi:sky-zodiac-filter-changed'].forEach(name=>window.addEventListener(name,()=>{if(activeMode==='vocab')schedule()}));
-  new MutationObserver(records=>{if(activeMode==='vocab'&&records.some(record=>record.addedNodes?.length||record.removedNodes?.length))schedule()}).observe(document.getElementById('skyFoundationRelationships')||document.body,{childList:true,subtree:true});
+  const observedList=document.getElementById('skyFoundationRelationshipList');if(observedList)new MutationObserver(records=>{if(activeMode==='vocab'&&records.some(record=>record.addedNodes?.length||record.removedNodes?.length))schedule()}).observe(observedList,{childList:true,subtree:false});
   schedule()
 }
 window.RelphiRelationshipVocab=Object.freeze({render:schedule,serialize:serializePanel,activate});
