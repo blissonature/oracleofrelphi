@@ -293,9 +293,9 @@ async function assertReadableFocus(page) {
   await mobile.screenshot({path:path.join(out,'drawing-board-mobile-reset-options.png'),fullPage:true});
 
   const bulkQuestions=['What is changing?','What needs release?','What supports me?'];
-  await mobile.waitForSelector('#relphiBulkReferents',{state:'visible'});
-  await mobile.fill('#relphiBulkReferents',bulkQuestions.join(', '));
-  await mobile.click('#relphiParseReferents');
+  const firstQuestion=mobile.locator('#relphiPositionLabels .relphi-label-row input').first();
+  await firstQuestion.fill(bulkQuestions.join(', '));
+  await firstQuestion.dispatchEvent('change');
   await mobile.waitForFunction(count => document.querySelectorAll('#relphiPositionLabels .relphi-label-row').length===count,bulkQuestions.length);
   assert.equal(await mobile.locator('#relphiPositionLabels').count(),1,'Options must show the individual label editor');
   assert.equal(await mobile.locator('#relphiPositionLabels .relphi-label-row').count(),3,'comma-separated questions should create three individual label fields');
