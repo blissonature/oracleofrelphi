@@ -270,7 +270,7 @@ assert.match(page,/const sphere = '<circle class="ph-moon-sphere"/);
 assert.doesNotMatch(page,/const rightBlack =/);
 assert.match(page,/x="49\.25"/);
 
-assert.match(page,/class="ph-top-triad"/);
+assert.match(page,/class="ph-top-instrument-grid"/);
 assert.match(page,/class="ph-day-frame ph-top-day-frame"/);
 assert.match(page,/class="ph-moon-frame ph-top-moon-frame"/);
 assert.ok(page.indexOf('id="dayRulerProfile"') < page.indexOf('Where’s the Wanderer?'));
