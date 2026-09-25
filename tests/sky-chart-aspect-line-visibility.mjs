@@ -55,7 +55,7 @@ const focusHeaderGap=await page.evaluate(()=>{
   const first=document.querySelector('#skyFoundationFocus .sky-focus-heading-controls>[data-relationship-display-control]')?.getBoundingClientRect();
   return title&&first?first.left-title.right:null;
 });
-assert.ok(focusHeaderGap!==null&&focusHeaderGap>=22,'Focus needs a generous visual break between its header and first control.');
+assert.ok(focusHeaderGap!==null&&focusHeaderGap>=98,'Focus needs a 100px visual break between its header and first control.');
 
 await page.locator('#skyFoundationFocus [data-relationship-display-value]').click();
 await page.waitForSelector('#skyRelationshipDisplayPopover:not([hidden])',{timeout:5000});
@@ -87,7 +87,7 @@ const relationshipHeaderGap=await page.evaluate(()=>{
   const first=heading?.querySelector('.sky-relationship-heading-actions>[data-relationship-sort],.sky-relationship-heading-actions>.sky-relationship-sort-control')?.getBoundingClientRect();
   return title&&first?first.left-title.right:null;
 });
-assert.ok(relationshipHeaderGap!==null&&relationshipHeaderGap>=22,'Relationships needs a generous visual break between its header and first control.');
+assert.ok(relationshipHeaderGap!==null&&relationshipHeaderGap>=98,'Relationships needs a 100px visual break between its header and first control.');
 assert.equal(relationshipHeaderOrder.countParent,true,'Match count must live on the Relationships action line, not between the header and controls.');
 assert.ok(relationshipHeaderOrder.sort>=0&&relationshipHeaderOrder.limit>relationshipHeaderOrder.sort,'Sort must precede Max.');
 assert.ok(relationshipHeaderOrder.count>relationshipHeaderOrder.limit,'Match count must come after the controls.');
