@@ -18,7 +18,10 @@ const base='http://127.0.0.1:8000/tarot.html';
     await page.waitForSelector('.relphi-referents-drawer',{state:'visible'});
 
     const paths=page.locator('[data-referent-path]');
-    assert.equal(await paths.count(),5,'Referents should expose five starting paths');
+    assert.equal(await paths.count(),5,'Referents should expose five tabs');
+    assert.equal(await page.locator('.relphi-referent-paths').getAttribute('role'),'tablist');
+    assert.equal(await paths.first().getAttribute('role'),'tab');
+    assert.equal(await page.locator('#relphiUseBlankDraw').count(),0,'Draw must not add a second gate in front of the native board');
     assert.equal(await page.locator('[data-referent-path].is-active').getAttribute('data-referent-path'),'templates');
 
     await page.click('[data-referent-path="bespoke"]');
@@ -47,6 +50,10 @@ const base='http://127.0.0.1:8000/tarot.html';
     await page.waitForFunction(()=>document.querySelectorAll('.relphi-surface-draws article').length===3);
     assert.equal(await page.locator('[data-suggestion-text]').count(),3,'See What Surfaces should translate the draw into candidate referents');
     assert.equal(await page.locator('#shortListPanel .card-row-board [data-row-card]').count(),0,'idea cards must not become reading cards');
+
+    await page.click('[data-referent-path="draw"]');
+    await page.waitForSelector('.relphi-referents-drawer',{state:'detached'});
+    assert.equal(await page.locator('#relphiUseBlankDraw').count(),0,'Draw tab itself should return to the native board');
 
     assert.deepEqual(errors,[]);
   } finally {
