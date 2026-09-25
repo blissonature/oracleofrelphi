@@ -20,6 +20,22 @@ await page.route('https://cdn.jsdelivr.net/npm/luxon@3/build/global/luxon.min.js
 await page.addInitScript(({a,b})=>{localStorage.setItem('relphiSkyChartA',JSON.stringify(a));localStorage.setItem('relphiSkyChartB',JSON.stringify(b));localStorage.setItem('relphiSkyChartLastModeV1','comparison')},{a:skyA,b:skyB});
 await page.goto('http://127.0.0.1:4173/sky-chart.html',{waitUntil:'networkidle'});
 await page.waitForSelector('#skyFoundationRoot[aria-busy="false"]',{timeout:20000});
+await page.waitForSelector('#skyFoundationFocus',{timeout:10000});
+await page.waitForSelector('#skyFoundationFocus #skyChartWheelCopy',{timeout:10000});
+const comparisonLayout=await page.locator('#skyFoundationComparison').evaluate(node=>({
+  firstId:node.firstElementChild?.id||'',
+  secondId:node.firstElementChild?.nextElementSibling?.id||'',
+  titleBarCount:node.querySelectorAll(':scope>.sky-foundation-heading').length,
+  zodiacLabel:[...node.querySelectorAll(':scope>*')].some(child=>child.textContent?.trim()==='Zodiac Wheel'),
+  wheelCopyInFocus:!!node.querySelector('#skyFoundationFocus .sky-focus-heading-controls #skyChartWheelCopy'),
+  wheelDownloadInFocus:!!node.querySelector('#skyFoundationFocus .sky-focus-heading-controls #skyChartWheelExport')
+}));
+assert.equal(comparisonLayout.firstId,'skyFoundationFocus','Focus must be the first visible section in the comparison panel.');
+assert.equal(comparisonLayout.secondId,'skyFoundationWheelMount','The wheel must follow Focus directly.');
+assert.equal(comparisonLayout.titleBarCount,0,'The separate Zodiac Wheel title bar must be removed.');
+assert.equal(comparisonLayout.zodiacLabel,false,'The visual Zodiac Wheel label must not return.');
+assert.equal(comparisonLayout.wheelCopyInFocus,true,'Wheel Copy must move into the Focus heading.');
+assert.equal(comparisonLayout.wheelDownloadInFocus,true,'Wheel Download must move into the Focus heading.');
 const panel=page.locator('#skyFoundationB');
 await panel.scrollIntoViewIfNeeded();
 await panel.locator('[data-sky-drawer-tab="where"]').click();
