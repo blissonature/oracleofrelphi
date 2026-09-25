@@ -157,6 +157,22 @@ jobs:
           assert.equal(drawer.open,true);
           assert.equal(drawer.structure,true);
 
+          const chartRulerPresentation=await page.evaluate(()=>{
+            const note=document.querySelector('#skyFoundationA .sky-card-chart-ruler-note');
+            const chart=document.querySelector('#skyFoundationA .sky-card-ruler.is-chart-ruler');
+            const style=chart?getComputedStyle(chart):null,pseudo=chart?getComputedStyle(chart,'::after'):null;
+            return{
+              note:(note?.textContent||'').trim(),
+              borderWidth:style?.borderTopWidth||'',
+              borderRadius:style?.borderRadius||'',
+              afterContent:pseudo?.content||''
+            };
+          });
+          assert.equal(chartRulerPresentation.note,'The ruler of the Ascendant is the chart ruler.');
+          assert.equal(chartRulerPresentation.borderWidth,'0px','Ruler cards must not put a rounded frame around tarot art.');
+          assert.equal(chartRulerPresentation.borderRadius,'0px','Ruler cards must keep crisp unframed geometry.');
+          assert.ok(chartRulerPresentation.afterContent==='none'||chartRulerPresentation.afterContent==='normal'||chartRulerPresentation.afterContent==='""','Chart ruler must not invent an ASC badge.');
+
           await page.waitForFunction(()=>{const img=document.querySelector('#skyFoundationA .sky-card-ruler-art img');return !!img&&img.complete&&img.naturalWidth>0},{timeout:10000});
           const rulerArt=await page.evaluate(()=>{
             const wrap=document.querySelector('#skyFoundationA .sky-card-ruler-art'),img=wrap?.querySelector('img');
