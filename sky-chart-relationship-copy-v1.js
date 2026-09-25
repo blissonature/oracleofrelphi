@@ -23,7 +23,7 @@
     Object.freeze({mode:'B-B',title:'Sky B — Intrasky'}),
     Object.freeze({mode:'A-B',title:'Sky A ↔ Sky B — Intersky'})
   ]);
-  const LONG_PRESS_MS=560;
+  const LONG_PRESS_MS=430;
   const LONG_PRESS_MOVE_PX=12;
   let feedbackTimer=0;
   let longPress=null;
@@ -183,6 +183,24 @@
     window.clearTimeout(longPress.timer);
     longPress=null;
   }
+  async function commitLongPress(state,event){
+    if(!state||state.copied||!state.row.isConnected)return false;
+    const text=serializeRow(state.row);
+    if(!text)return false;
+    suppressClickUntil=Date.now()+900;
+    suppressClickRow=state.row;
+    if(event){
+      event.preventDefault();
+      event.stopPropagation();
+    }
+    const copied=await writeClipboard(text);
+    if(!copied)return false;
+    state.copied=true;
+    state.row.dataset.relationshipLongPressCopied='true';
+    window.setTimeout(()=>{if(state.row.isConnected)delete state.row.dataset.relationshipLongPressCopied},900);
+    try{window.getSelection?.()?.removeAllRanges()}catch(_){}
+    return true;
+  }
   function beginLongPress(event){
     if(event.button!==0&&!['touch','pen'].includes(event.pointerType))return;
     const row=relationshipRow(event.target);
@@ -193,16 +211,16 @@
       pointerId:event.pointerId,
       x:Number(event.clientX)||0,
       y:Number(event.clientY)||0,
-      armed:false,
+      copied:false,
       timer:0
     };
     state.timer=window.setTimeout(()=>{
-      if(longPress===state&&state.row.isConnected)state.armed=true;
+      if(longPress===state&&state.row.isConnected)void commitLongPress(state);
     },LONG_PRESS_MS);
     longPress=state;
   }
   function moveLongPress(event){
-    if(!longPress||event.pointerId!==longPress.pointerId)return;
+    if(!longPress||event.pointerId!==longPress.pointerId||longPress.copied)return;
     const dx=(Number(event.clientX)||0)-longPress.x,dy=(Number(event.clientY)||0)-longPress.y;
     if(Math.hypot(dx,dy)>LONG_PRESS_MOVE_PX)clearLongPress();
   }
@@ -210,19 +228,12 @@
     if(!longPress||event.pointerId!==longPress.pointerId)return;
     const state=longPress;
     window.clearTimeout(state.timer);
+    if(!state.copied&&event.timeStamp-state.startedAt>=LONG_PRESS_MS)await commitLongPress(state,event);
+    const copied=state.copied;
     longPress=null;
-    if(!state.armed||!state.row.isConnected)return;
-    const text=serializeRow(state.row);
-    if(!text)return;
-    suppressClickUntil=Date.now()+700;
-    suppressClickRow=state.row;
-    event.preventDefault();
-    event.stopPropagation();
-    const copied=await writeClipboard(text);
     if(copied){
-      state.row.dataset.relationshipLongPressCopied='true';
-      window.setTimeout(()=>{if(state.row.isConnected)delete state.row.dataset.relationshipLongPressCopied},900);
-      try{window.getSelection?.()?.removeAllRanges()}catch(_){}
+      event.preventDefault();
+      event.stopPropagation();
     }
   }
   function suppressLongPressClick(event){
@@ -234,13 +245,35 @@
     }
   }
 
-  document.addEventListener('pointerdown',beginLongPress,{capture:true});
+  document.addEventListener('pointerdown',event=>{
+    beginLongPress(event);
+    if(longPress)longPress.startedAt=event.timeStamp;
+  },{capture:true});
   document.addEventListener('pointermove',moveLongPress,{capture:true});
   document.addEventListener('pointerup',endLongPress,{capture:true});
-  document.addEventListener('pointercancel',clearLongPress,{capture:true});
+  document.addEventListener('pointercancel',event=>{
+    if(longPress?.copied){
+      window.clearTimeout(longPress.timer);
+      longPress=null;
+      return;
+    }
+    clearLongPress();
+  },{capture:true});
   document.addEventListener('click',suppressLongPressClick,{capture:true});
   document.addEventListener('contextmenu',event=>{
-    if(longPress?.armed&&relationshipRow(event.target)===longPress.row)event.preventDefault();
+    const row=relationshipRow(event.target);
+    if(!row)return;
+    if(longPress&&row===longPress.row){
+      event.preventDefault();
+      event.stopPropagation();
+      window.clearTimeout(longPress.timer);
+      void commitLongPress(longPress,event);
+      return;
+    }
+    if(row===suppressClickRow&&Date.now()<=suppressClickUntil){
+      event.preventDefault();
+      event.stopPropagation();
+    }
   },{capture:true});
 
   document.addEventListener('copy',event=>{
