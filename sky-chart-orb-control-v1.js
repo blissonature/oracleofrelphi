@@ -147,8 +147,14 @@
     const slot=document.querySelector('#skyFoundationFocus .sky-focus-heading-controls');
     if(!slot)return false;
     let field=document.querySelector('[data-orb-field="true"]');
-    if(field&&field.parentElement!==slot)slot.prepend(field);
-    if(field)return true;
+    const display=slot.querySelector(':scope>[data-relationship-display-control]');
+    const wheelActions=slot.querySelector(':scope>.sky-export-wheel-slot');
+    if(field&&field.parentElement!==slot)slot.insertBefore(field,wheelActions||null);
+    if(field){
+      field.style.order='20';
+      if(display&&field.previousElementSibling!==display)slot.insertBefore(field,display.nextSibling);
+      return true;
+    }
     field=document.createElement('label');field.className='sky-orb-number-field';field.dataset.orbField='true';
     const caption=document.createElement('span');caption.textContent='Harmonic Window';
     const input=document.createElement('input'),m=model();
@@ -156,7 +162,11 @@
     input.dataset.harmonicWindowInput='true';input.dataset.orbMode='harmonic-phase';
     input.setAttribute('role','spinbutton');input.setAttribute('aria-valuemin','0');input.setAttribute('aria-valuemax',String(m?.maxWindow??12));input.setAttribute('aria-valuenow',input.value);
     input.setAttribute('aria-label',`Master harmonic phase window in degrees, maximum ${m?.maxWindow??12}`);
-    field.append(caption,input);slot.prepend(field);
+    field.append(caption,input);field.style.order='20';
+    const display=slot.querySelector(':scope>[data-relationship-display-control]');
+    const wheelActions=slot.querySelector(':scope>.sky-export-wheel-slot');
+    if(display)slot.insertBefore(field,display.nextSibling);
+    else slot.insertBefore(field,wheelActions||null);
     input.addEventListener('input',()=>driveFromInput(input,false));
     input.addEventListener('change',()=>driveFromInput(input,true));
     input.addEventListener('blur',()=>driveFromInput(input,true));
