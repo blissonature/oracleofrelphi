@@ -45,6 +45,35 @@ assert.equal(comparisonLayout.wheelCopyInFocus,true,'Wheel Copy must move into t
 assert.equal(comparisonLayout.wheelDownloadInFocus,true,'Wheel Download must move into the Focus heading.');
 assert.ok(comparisonLayout.wheelActionsRightGap!==null&&comparisonLayout.wheelActionsRightGap<=12,'Wheel Copy and Download must sit on the far-right edge of the Focus panel.');
 assert.equal(comparisonLayout.wheelActionsOrder,'999','Wheel actions must stay after the other Focus controls regardless of initialization order.');
+
+await page.setViewportSize({width:390,height:844});
+await page.waitForTimeout(100);
+const mobileFocusLayout=await page.locator('#skyFoundationFocus>.sky-foundation-focus-heading').evaluate(heading=>{
+  const r=node=>node?.getBoundingClientRect();
+  const title=r(heading.querySelector('h2'));
+  const actions=r(heading.querySelector('.sky-export-wheel-slot'));
+  const display=r(heading.querySelector('[data-relationship-display-control]'));
+  const harmonic=r(heading.querySelector('[data-orb-field="true"]'));
+  const hr=r(heading);
+  return{
+    titleTop:title?.top??null,
+    actionsTop:actions?.top??null,
+    displayTop:display?.top??null,
+    harmonicTop:harmonic?.top??null,
+    firstRowBottom:Math.max(title?.bottom||0,actions?.bottom||0),
+    secondRowTop:Math.min(display?.top??Infinity,harmonic?.top??Infinity),
+    actionsRightGap:hr&&actions?hr.right-actions.right:null,
+    height:hr?.height??null
+  };
+});
+assert.ok(Math.abs(mobileFocusLayout.titleTop-mobileFocusLayout.actionsTop)<=4,'On mobile, Copy and Download must share the Focus title row.');
+assert.ok(Math.abs(mobileFocusLayout.displayTop-mobileFocusLayout.harmonicTop)<=4,'On mobile, Display and Harmonic Window must share the second row.');
+assert.ok(mobileFocusLayout.secondRowTop>mobileFocusLayout.firstRowBottom,'The selector row must sit below the Focus title/action row.');
+assert.ok(mobileFocusLayout.actionsRightGap!==null&&mobileFocusLayout.actionsRightGap<=12,'Mobile Copy and Download must remain right-aligned.');
+assert.ok(mobileFocusLayout.height<105,'Focus should remain a compact two-row header on mobile.');
+await page.setViewportSize({width:1440,height:800});
+await page.waitForTimeout(80);
+
 const panel=page.locator('#skyFoundationB');
 await panel.scrollIntoViewIfNeeded();
 await panel.locator('[data-sky-drawer-tab="where"]').click();
