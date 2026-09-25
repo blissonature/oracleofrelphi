@@ -294,9 +294,9 @@
 #shortListPanel .relphi-template-preview,#shortListPanel .relphi-referent-review ol{display:grid!important;gap:.28rem!important;margin:0!important;padding-left:1.4rem!important;font-size:.72rem!important;line-height:1.35!important}
 #shortListPanel .relphi-referent-review{display:grid!important;gap:.35rem!important;padding:.62rem .7rem!important;border-left:3px solid var(--relphi-board-red)!important;border-radius:7px!important;background:#fff8ee!important}
 #shortListPanel .relphi-referent-review>strong{font-size:.75rem!important}
-#shortListPanel .relphi-referent-settings{margin:0!important;border-top:1px solid #e4dbd2!important;padding-top:.35rem!important}
-#shortListPanel .relphi-referent-settings>summary{cursor:pointer!important;font-size:.7rem!important;font-weight:850!important}
-#shortListPanel .relphi-referent-settings .relphi-draw-options{margin-top:.5rem!important}
+#shortListPanel .relphi-referent-settings{display:grid!important;gap:.5rem!important;margin:0!important;border-top:1px solid #e4dbd2!important;padding-top:.5rem!important}
+#shortListPanel .relphi-referent-settings-title{display:block!important;font-size:.7rem!important;font-weight:850!important}
+#shortListPanel .relphi-referent-settings .relphi-draw-options{margin-top:0!important}
 @media(max-width:700px){
   #shortListPanel .relphi-building-grid,#shortListPanel .relphi-surface-draws{grid-template-columns:1fr!important}
   #shortListPanel .relphi-building-grid label:last-child,#shortListPanel .relphi-surface-actions #relphiSurfaceAll{grid-column:auto!important}
