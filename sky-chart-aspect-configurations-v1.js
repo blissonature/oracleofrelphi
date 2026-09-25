@@ -17,7 +17,7 @@ const TYPES=Object.freeze([
   {id:'yod',label:'Yod / Finger of God',vertices:3},
   {id:'mystic-rectangle',label:'Mystic Rectangle',vertices:4},
   {id:'t-square',label:'T-Square',vertices:3},
-  {id:'grand-cross',label:'Grand Cross',vertices:4},
+  {id:'grand-cross',label:'Grand Cross / Grand Square',vertices:4},
   {id:'minor-grand-trine',label:'Minor Grand Trine',vertices:3},
   {id:'grand-sextile',label:'Grand Sextile',vertices:6},
   {id:'cradle',label:'Cradle',vertices:4},
