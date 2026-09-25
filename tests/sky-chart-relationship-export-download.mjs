@@ -46,12 +46,15 @@ const limit=page.locator('[data-relationship-limit]');
 await limit.waitFor({state:'visible'});
 assert.equal(await limit.evaluate(node=>node.closest('.sky-relationship-heading-actions')?.classList.contains('sky-relationship-heading-actions')||false),true,'Limit must sit in the Relationships header action cluster beside Copy and Download.');
 assert.equal(await limit.evaluate(node=>Boolean(node.closest('.sky-chart-filter-bar'))),false,'Limit must not remain in the filter grid.');
-assert.deepEqual(await limit.locator('option').allTextContents(),['10','20','50','All'],'Relationships must expose 10, 20, 50, and All result limits.');
+const limitList=await limit.getAttribute('list');
+assert.ok(limitList,'Editable Relationships range must expose preset suggestions.');
+assert.deepEqual(await page.locator('#'+limitList+' option').evaluateAll(nodes=>nodes.map(node=>node.value)),['10','20','50','Max','Custom Range'],'Relationships range must expose 10, 20, 50, Max, and Custom Range suggestions.');
 const eligibleOrder=await page.evaluate(()=>[...document.querySelectorAll('#skyFoundationRelationshipList>.sky-foundation-relationship-row[data-relation-index]')]
   .filter(row=>{const style=getComputedStyle(row);return !row.hidden&&style.display!=='none'&&style.visibility!=='hidden'})
   .map(row=>row.dataset.relationIndex));
 assert.ok(eligibleOrder.length>20,`Fixture must expose more than 20 eligible relationships to test a real cap: ${eligibleOrder.length}`);
-await limit.selectOption('20');
+await limit.fill('20');
+await limit.press('Enter');
 await page.waitForFunction(()=>document.documentElement.dataset.skyRelationshipLimit==='20');
 await page.waitForFunction(()=>[...document.querySelectorAll('#skyFoundationRelationshipList>.sky-foundation-relationship-row')].filter(row=>{const style=getComputedStyle(row);return !row.hidden&&style.display!=='none'&&style.visibility!=='hidden'}).length===20);
 const cappedOrder=await page.evaluate(()=>[...document.querySelectorAll('#skyFoundationRelationshipList>.sky-foundation-relationship-row[data-relation-index]')]
@@ -66,6 +69,23 @@ const matchStatus=await page.locator('#skyFoundationRelationshipCount').evaluate
 assert.equal(matchStatus.matchCount,String(eligibleOrder.length),'Changing Limit to 20 must not change the number of relationships that match the current filters.');
 assert.equal(matchStatus.visibleNumber,String(eligibleOrder.length),'The visible match number must come from stable pre-cap match state.');
 assert.match(matchStatus.suffix,/matches/,'The header must label the pre-cap qualifying count as matches.');
+
+await limit.fill('3');
+await limit.press('Enter');
+await page.waitForFunction(()=>document.documentElement.dataset.skyRelationshipLimit==='3');
+await page.waitForFunction(()=>[...document.querySelectorAll('#skyFoundationRelationshipList>.sky-foundation-relationship-row')].filter(row=>{const style=getComputedStyle(row);return !row.hidden&&style.display!=='none'&&style.visibility!=='hidden'}).length===3);
+assert.equal(await page.locator('#skyFoundationRelationshipCount').evaluate(node=>node.dataset.matchCount),String(eligibleOrder.length),'A typed custom maximum must not change the matching count.');
+
+await limit.fill('midpoint-end');
+await limit.press('Enter');
+await page.waitForFunction(()=>document.documentElement.dataset.skyRelationshipLimit==='midpoint-end');
+const midpointSlice=await page.evaluate(()=>[...document.querySelectorAll('#skyFoundationRelationshipList>.sky-foundation-relationship-row')].filter(row=>{const style=getComputedStyle(row);return !row.hidden&&style.display!=='none'&&style.visibility!=='hidden'}).length);
+assert.equal(midpointSlice,eligibleOrder.length-Math.ceil(eligibleOrder.length/2)+1,'Named midpoint-end range must expose the second half of the ranked relationships.');
+
+await limit.fill('20');
+await limit.press('Enter');
+await page.waitForFunction(()=>document.documentElement.dataset.skyRelationshipLimit==='20');
+
 
 const stableMatches=String(eligibleOrder.length);
 for(const mode of ['names','referents','glyphs']){
