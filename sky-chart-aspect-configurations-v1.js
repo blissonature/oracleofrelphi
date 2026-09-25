@@ -95,43 +95,54 @@ function detect(){
   return{graph,patterns:out};
 }
 function decorateSimpleGroups(){/* Aspect category master rows are rendered by the scope matrix. */}
-function provenance(pattern,graph){const skies=new Set(pattern.vertices.map(key=>graph.nodes.get(key)?.sky).filter(Boolean));if(skies.size===1){const sky=[...skies][0];return`${sky}↔${sky}`}return'A+B'}
-function vertexLabel(key,graph){const node=graph.nodes.get(key);if(!node)return key;return`${node.sky} ${PLACEMENT_SYMBOLS[node.placement]||node.placement}`}
-function typePatterns(type){return patterns.filter(pattern=>pattern.type===type)}
-function availableTypes(){return new Set(TYPES.filter(type=>typePatterns(type.id).length).map(type=>type.id))}
-function configCheckbox(id,label,count,master=false){
-  const row=document.createElement('label');row.className=`sky-chart-configuration-choice${master?' sky-chart-configuration-choice-master':''}`;
-  const text=document.createElement('span');text.className='sky-chart-configuration-name';text.textContent=label;
-  const badge=document.createElement('span');badge.className='sky-chart-configuration-count';badge.textContent=String(count);
-  const input=document.createElement('input');input.type='checkbox';input.dataset.configurationChoice=id;input.setAttribute('aria-label',label);
-  row.append(text,badge,input);return row;
+function patternScope(pattern){
+  const skies=new Set((pattern?.vertices||[]).map(key=>String(key).split(':')[0]).filter(sky=>sky==='A'||sky==='B'));
+  if(skies.size===1){const sky=[...skies][0];return sky+'-'+sky}
+  return'A-B';
+}
+function configCells(scope,type){
+  const scopes=scope==='all'?activeScopes():activeScopes().includes(scope)?[scope]:[];
+  const types=type==='all'?TYPE_IDS:TYPE_IDS.includes(type)?[type]:[];
+  const out=[];scopes.forEach(scopeId=>types.forEach(typeId=>out.push([scopeId,typeId])));return out;
+}
+function configCellState(scope,type){
+  const target=configCells(scope,type),selected=target.filter(([scopeId,typeId])=>configurationState[scopeId].has(typeId)).length;
+  return{available:target.length,selected,checked:target.length>0&&selected===target.length,indeterminate:selected>0&&selected<target.length};
+}
+function setConfigCells(scope,type,checked){configCells(scope,type).forEach(([scopeId,typeId])=>checked?configurationState[scopeId].add(typeId):configurationState[scopeId].delete(typeId))}
+function configurationMatrix(){return Object.fromEntries(SCOPES.map(scope=>[scope.id,TYPE_IDS.filter(type=>configurationState[scope.id].has(type))]))}
+function configChoice(scope,type,labelText){
+  const label=document.createElement('label');label.className='sky-chart-aspect-matrix-choice sky-chart-configuration-matrix-choice';
+  const input=document.createElement('input');input.type='checkbox';input.dataset.configurationScope=scope;input.dataset.configurationType=type;input.setAttribute('aria-label',labelText);
+  const text=document.createElement('span');text.textContent=scope==='all'?'All':SCOPES.find(item=>item.id===scope)?.label||scope;
+  label.append(input,text);return label;
+}
+function configRow(type,labelText,master=false){
+  const row=document.createElement('div');row.className='sky-chart-configuration-choice'+(master?' sky-chart-configuration-choice-master':'');row.dataset.configurationRow=type;
+  const name=document.createElement('strong');name.className='sky-chart-configuration-name';name.textContent=labelText;
+  const choices=document.createElement('div');choices.className='sky-chart-configuration-choices';choices.setAttribute('role','group');choices.setAttribute('aria-label',labelText);
+  const scopes=SCOPES.filter(scope=>activeScopes().includes(scope.id));
+  choices.append(configChoice('all',type,labelText+': all relationship scopes'),...scopes.map(scope=>configChoice(scope.id,type,labelText+': '+scope.label)));
+  row.append(name,choices);return row;
 }
 function syncConfigInputs(){
-  const available=availableTypes(),master=document.querySelector('[data-configuration-choice="all"]'),enabled=[...available].filter(id=>selectedTypes.has(id));
-  if(master){master.checked=available.size>0&&enabled.length===available.size;master.indeterminate=enabled.length>0&&enabled.length<available.size;master.disabled=available.size===0}
-  document.querySelectorAll('[data-configuration-choice]:not([data-configuration-choice="all"])').forEach(input=>{const id=input.dataset.configurationChoice;input.checked=selectedTypes.has(id);input.disabled=!available.has(id)});
+  document.querySelectorAll('[data-configuration-scope][data-configuration-type]').forEach(input=>{
+    const current=configCellState(input.dataset.configurationScope,input.dataset.configurationType);
+    input.checked=current.checked;input.indeterminate=current.indeterminate;input.disabled=current.available===0;
+  });
 }
-function renderDetectedList(section,graph){
-  const chosen=patterns.filter(pattern=>selectedTypes.has(pattern.type));
-  const results=document.createElement('div');results.className='sky-chart-configuration-results';
-  if(!chosen.length){const note=document.createElement('div');note.className='sky-chart-configuration-empty';note.textContent=patterns.length?'Select a configuration to highlight it on the wheel.':'No configurations fall within the current Harmonic Window.';results.appendChild(note);section.appendChild(results);return}
-  for(const pattern of chosen){
-    const button=document.createElement('button');button.type='button';button.className='sky-chart-configuration-result';button.dataset.configurationPattern=pattern.key;if(pattern.key===activePatternKey)button.classList.add('is-active');
-    const label=document.createElement('strong');label.textContent=TYPE_MAP.get(pattern.type)?.label||pattern.type;
-    const detail=document.createElement('span');detail.textContent=`${provenance(pattern,graph)} · ${pattern.vertices.map(key=>vertexLabel(key,graph)).join(' · ')} · max phase ${Number(pattern.maxPhase.toFixed(2))}°`;
-    button.append(label,detail);results.appendChild(button);
-  }
-  section.appendChild(results);
-}
-function renderConfigurationSection(graph){
+function renderConfigurationSection(){
   const body=popoverBody();if(!body)return;
   body.querySelector('.sky-chart-configuration-section')?.remove();
   const section=document.createElement('section');section.className='sky-chart-configuration-section';section.setAttribute('aria-label','Configurations');
-  const title=document.createElement('div');title.className='sky-chart-configuration-title';title.textContent='Configurations';section.appendChild(title);
+  const title=document.createElement('div');title.className='sky-chart-configuration-title';
+  const heading=document.createElement('strong');heading.textContent='Configurations';
+  const cols=document.createElement('div');cols.className='sky-chart-configuration-title-choices';
+  const labels=bActive()?['All','A↔A','B↔B','A↔B']:['All','A↔A'];labels.forEach(text=>{const span=document.createElement('span');span.textContent=text;cols.appendChild(span)});
+  title.append(heading,cols);section.appendChild(title);
   const list=document.createElement('div');list.className='sky-chart-configuration-list';
-  list.appendChild(configCheckbox('all','All configurations',patterns.length,true));
-  TYPES.forEach(type=>list.appendChild(configCheckbox(type.id,type.label,typePatterns(type.id).length,false)));
-  section.appendChild(list);renderDetectedList(section,graph);body.appendChild(section);syncConfigInputs();
+  list.appendChild(configRow('all','All configurations',true));TYPES.forEach(type=>list.appendChild(configRow(type.id,type.label,false)));
+  section.appendChild(list);body.appendChild(section);syncConfigInputs();
 }
 function relationIndex(edge){return String(edge?.row?.dataset?.relationIndex||'')}
 function relationNodeKey(node){
@@ -141,11 +152,7 @@ function relationNodeKey(node){
   return aspect&&left&&right?`${edgeKey(left,right)}:${aspect}`:'';
 }
 function edgeNodeKey(edge){return relationNodeKey(edge?.row)||`${edgeKey(edge?.left,edge?.right)}:${edge?.aspect||''}`}
-function selectedPatternsForVisibility(){
-  if(!selectedTypes.size)return[];
-  if(activePatternKey){const exact=patterns.find(pattern=>pattern.key===activePatternKey);return exact&&selectedTypes.has(exact.type)?[exact]:[]}
-  return patterns.filter(pattern=>selectedTypes.has(pattern.type));
-}
+function selectedPatternsForVisibility(){return patterns.filter(pattern=>configurationState[patternScope(pattern)]?.has(pattern.type))}
 function selectedRelationshipKeys(){const keys=new Set();selectedPatternsForVisibility().forEach(pattern=>pattern.edges.forEach(edge=>keys.add(edgeNodeKey(edge))));return keys}
 function participates(node){const key=relationNodeKey(node);return!!key&&selectedRelationshipKeys().has(key)}
 function patternsForNode(node){const key=relationNodeKey(node);return key?selectedPatternsForVisibility().filter(pattern=>pattern.edges.some(edge=>edgeNodeKey(edge)===key)):[]}
@@ -167,7 +174,8 @@ function renderOverlay(){
   const layer=ensureOverlay();if(!layer)return;layer.replaceChildren();clearPeerHighlight();markParticipants();
   const chosen=selectedPatternsForVisibility(),seen=new Set();
   for(const pattern of chosen)for(const edge of pattern.edges){const key=edgeNodeKey(edge);if(seen.has(key))continue;seen.add(key);const base=matchingBaseLine(edge);if(!base)continue;const line=document.createElementNS('http://www.w3.org/2000/svg','line');['x1','y1','x2','y2','stroke'].forEach(name=>{const value=base.getAttribute(name);if(value!=null)line.setAttribute(name,value)});line.setAttribute('vector-effect','non-scaling-stroke');line.classList.add('sky-chart-configuration-line');line.dataset.configurationRelation=relationIndex(edge)||'';line.dataset.configurationKey=key;layer.appendChild(line)}
-  document.documentElement.dataset.skyConfigurationSelection=selectedTypes.size?`${selectedTypes.size}/${TYPES.length}`:'0';
+  const selectedCount=activeScopes().reduce((sum,scope)=>sum+configurationState[scope].size,0);
+  document.documentElement.dataset.skyConfigurationSelection=String(selectedCount);
 }
 function clearPeerHighlight(){
   document.querySelectorAll('.sky-foundation-relationship-row.is-configuration-peer,.sky-foundation-relationship-row.is-configuration-hover-source').forEach(row=>row.classList.remove('is-configuration-peer','is-configuration-hover-source'));
@@ -196,14 +204,19 @@ function reconcileFrozenPeerHover(event){
   const row=event.target?.closest?.('.sky-foundation-relationship-row')||null;
   if(row)highlightPeers(row);else clearPeerHighlight();
 }
-function setSelection(id,checked){
-  const available=availableTypes();
-  if(id==='all'){selectedTypes.clear();if(checked)available.forEach(type=>selectedTypes.add(type))}
-  else if(checked&&available.has(id))selectedTypes.add(id);else selectedTypes.delete(id);
-  if(activePatternKey&&!patterns.some(pattern=>pattern.key===activePatternKey&&selectedTypes.has(pattern.type)))activePatternKey='';
-  syncConfigInputs();renderOverlay();const result=detect();renderConfigurationSection(result.graph);window.dispatchEvent(new CustomEvent('relphi:sky-configuration-selection-changed',{detail:{selected:[...selectedTypes],activePattern:activePatternKey}}));
+function setSelection(scope,type,checked){
+  setConfigCells(scope,type,checked);syncConfigInputs();renderOverlay();
+  const matrix=configurationMatrix();
+  window.dispatchEvent(new CustomEvent('relphi:sky-configuration-selection-changed',{detail:{matrix,selectedPatterns:selectedPatternsForVisibility().map(pattern=>pattern.key)}}));
 }
-function refresh(){queued=false;if(applying)return;applying=true;try{decorateSimpleGroups();const result=detect();patterns=result.patterns;const available=availableTypes();[...selectedTypes].forEach(id=>{if(!available.has(id))selectedTypes.delete(id)});if(activePatternKey&&!patterns.some(pattern=>pattern.key===activePatternKey))activePatternKey='';renderConfigurationSection(result.graph);window.RelphiAspectConfigurations=Object.freeze({types:TYPES,patterns:patterns.slice(),harmonicWindow:result.graph.windowValue,refresh:schedule,participates,selectedPatterns:()=>selectedPatternsForVisibility().slice()});renderOverlay();window.dispatchEvent(new CustomEvent('relphi:sky-configurations-detected',{detail:{patterns:patterns.slice(),harmonicWindow:result.graph.windowValue}}))}finally{applying=false}}
+function refresh(){queued=false;if(applying)return;applying=true;try{
+  decorateSimpleGroups();const result=detect();patterns=result.patterns;renderConfigurationSection();
+  window.RelphiAspectConfigurations=Object.freeze({
+    types:TYPES,patterns:patterns.slice(),harmonicWindow:result.graph.windowValue,refresh:schedule,participates,
+    selectedPatterns:()=>selectedPatternsForVisibility().slice(),matrix:()=>configurationMatrix(),scopeForPattern:patternScope
+  });
+  renderOverlay();window.dispatchEvent(new CustomEvent('relphi:sky-configurations-detected',{detail:{patterns:patterns.slice(),harmonicWindow:result.graph.windowValue}}))
+}finally{applying=false}}
 function ensureConfigurationObserver(){
   const body=popoverBody();if(!body||body===observedConfigurationBody)return;
   configurationObserver?.disconnect();observedConfigurationBody=body;
@@ -213,10 +226,9 @@ function ensureConfigurationObserver(){
   configurationObserver.observe(body,{childList:true});
 }
 function schedule(){if(queued)return;queued=true;requestAnimationFrame(refresh)}
-function handleChange(event){const input=event.target.closest?.('[data-configuration-choice]');if(!input)return;event.stopPropagation();setSelection(input.dataset.configurationChoice,input.checked)}
-function handleClick(event){const button=event.target.closest?.('[data-configuration-pattern]');if(!button)return;event.preventDefault();const key=button.dataset.configurationPattern;activePatternKey=activePatternKey===key?'':key;renderOverlay();const result=detect();renderConfigurationSection(result.graph);window.dispatchEvent(new CustomEvent('relphi:sky-configuration-selection-changed',{detail:{selected:[...selectedTypes],activePattern:activePatternKey}}))}
+function handleChange(event){const input=event.target.closest?.('[data-configuration-scope][data-configuration-type]');if(!input)return;event.stopPropagation();setSelection(input.dataset.configurationScope,input.dataset.configurationType,input.checked)}
 function start(){
-  document.addEventListener('change',handleChange,true);document.addEventListener('click',handleClick,true);
+  document.addEventListener('change',handleChange,true);
   document.addEventListener('pointerover',event=>{const row=event.target.closest?.('.sky-foundation-relationship-row');if(row&&row!==event.relatedTarget?.closest?.('.sky-foundation-relationship-row')){peerHoverFrozen=false;highlightPeers(row)}});
   document.addEventListener('pointermove',reconcileFrozenPeerHover,true);
   document.addEventListener('pointerdown',reconcileFrozenPeerHover,true);
