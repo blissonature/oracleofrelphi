@@ -132,17 +132,20 @@
 
 
 @media(min-width:701px){
-  .relphi-focus-shell{overflow-x:hidden!important;overflow-y:auto!important}
-  .relphi-focus-main{min-height:min(38rem,calc(100dvh - 11rem))!important}
-  .relphi-focus-art-pane{place-items:center!important;min-height:min(36rem,calc(100dvh - 13rem))!important;overflow:hidden!important}
+  .relphi-focus-shell{overflow:hidden!important}
+  .relphi-focus-art-pane{place-items:center!important;overflow:hidden!important}
   .relphi-focus-art-frame{
     width:auto!important;
-    height:min(36rem,calc(100dvh - 13rem))!important;
+    height:100%!important;
     max-width:100%!important;
     max-height:36rem!important;
     aspect-ratio:500/866!important;
     overflow:visible!important
   }
+  .relphi-focus-reader.has-long-referent .relphi-focus-shell{overflow-x:hidden!important;overflow-y:auto!important}
+  .relphi-focus-reader.has-long-referent .relphi-focus-main{min-height:min(38rem,calc(100dvh - 11rem))!important}
+  .relphi-focus-reader.has-long-referent .relphi-focus-art-pane{min-height:min(36rem,calc(100dvh - 13rem))!important}
+  .relphi-focus-reader.has-long-referent .relphi-focus-art-frame{height:min(36rem,calc(100dvh - 13rem))!important}
 }
 
 @media(max-width:700px){
