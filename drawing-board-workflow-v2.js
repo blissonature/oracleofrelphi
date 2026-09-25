@@ -913,7 +913,7 @@
         '</nav>'+
         pathPanelMarkup(session,hasCards)+
         referentReviewMarkup(draft)+
-        '<details class="relphi-referent-settings"><summary>Draw settings</summary><div class="relphi-draw-options"><label>Pack<select id="relphiDraftPack">'+packOptions(draft.pack)+'</select></label><label><input id="relphiDraftStickers" type="checkbox" '+(draft.stickers?'checked':'')+'> Show referent stickers</label><label><input id="relphiDraftReversals" type="checkbox" '+(draft.reversals?'checked':'')+'> Reversals</label><label><input id="relphiDraftRepeats" type="checkbox" '+(draft.repeats?'checked':'')+'> Repeats</label></div></details>'+
+        '<details class="relphi-referent-settings"><summary>Draw settings</summary><div class="relphi-draw-options"><label>Pack<select id="relphiDraftPack">'+packOptions(draft.pack)+'</select></label><label><input id="relphiDraftStickers" type="checkbox" '+(draft.stickers?'checked':'')+' title="Show position stickers"> Show referent stickers</label><label><input id="relphiDraftReversals" type="checkbox" '+(draft.reversals?'checked':'')+'> Reversals</label><label><input id="relphiDraftRepeats" type="checkbox" '+(draft.repeats?'checked':'')+'> Repeats</label></div></details>'+
       '</div>'+
       '<div class="relphi-options-commitbar"><button type="button" id="relphiResetBoard" class="relphi-reset-board">Reset Board</button><span></span><button type="button" id="relphiCancelOptions">Cancel</button><button type="button" id="relphiApplyOptions" class="primary">'+(session.path==='draw'?'Start Drawing':'Start Reading')+'</button></div>';
     workspace.appendChild(drawer);
@@ -967,6 +967,11 @@
       while (draft.labels.length<=index) draft.labels.push('');
       draft.labels[index]=event.target.value;
       markQuestionEditCustom(drawer,draft);
+    });
+    labelsList?.addEventListener('change',event=>{
+      const row=event.target.closest('.relphi-label-row');
+      if (!row || event.target.tagName!=='INPUT' || Number(row.dataset.labelRow)!==0) return;
+      acceptCommaList(event.target.value);
     });
     labelsList?.addEventListener('click',event=>{
       const button=event.target.closest('[data-remove-label]');
