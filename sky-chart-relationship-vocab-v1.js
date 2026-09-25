@@ -272,14 +272,34 @@ function serializePanel(){
   });return lines.join('\n').replace(/\n{3,}/g,'\n\n').trim()
 }
 async function writeClipboard(text){try{if(navigator.clipboard?.writeText){await navigator.clipboard.writeText(text);return true}}catch(_){}const area=document.createElement('textarea');area.value=text;area.setAttribute('readonly','');Object.assign(area.style,{position:'fixed',left:'-9999px',opacity:'0'});document.body.appendChild(area);area.select();const ok=document.execCommand('copy')===true;area.remove();return ok}
-function vocabDownload(){const text=serializePanel();if(!text)return;const blob=new Blob([text+'\n'],{type:'text/plain;charset=utf-8'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='relationship-vocab.txt';a.style.display='none';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),30000)}
+let imageLibraryPromise=null;
+function loadImageLibrary(){
+  if(window.htmlToImage?.toPng)return Promise.resolve(window.htmlToImage);
+  if(imageLibraryPromise)return imageLibraryPromise;
+  imageLibraryPromise=new Promise((resolve,reject)=>{
+    const src='https://cdn.jsdelivr.net/npm/html-to-image@1.11.11/dist/html-to-image.js',existing=document.querySelector('script[src="'+src+'"]');
+    if(existing){existing.addEventListener('load',()=>window.htmlToImage?.toPng?resolve(window.htmlToImage):reject(new Error('PNG exporter unavailable.')),{once:true});existing.addEventListener('error',()=>reject(new Error('PNG exporter did not load.')),{once:true});return}
+    const script=document.createElement('script');script.src=src;script.async=true;script.crossOrigin='anonymous';script.addEventListener('load',()=>window.htmlToImage?.toPng?resolve(window.htmlToImage):reject(new Error('PNG exporter unavailable.')),{once:true});script.addEventListener('error',()=>reject(new Error('PNG exporter did not load.')),{once:true});document.head.appendChild(script)
+  });
+  return imageLibraryPromise
+}
+async function vocabDownload(button){
+  const panel=document.getElementById('skyRelationshipVocabPanel');if(!panel)return;
+  const previous=button?.innerHTML||'',wasDisabled=!!button?.disabled;if(button){button.disabled=true;button.setAttribute('aria-busy','true')}
+  try{
+    const lib=await loadImageLibrary(),rect=panel.getBoundingClientRect(),width=Math.max(320,Math.ceil(rect.width)),height=Math.max(120,Math.ceil(panel.scrollHeight));
+    const dataUrl=await lib.toPng(panel,{cacheBust:false,backgroundColor:'#fffdf8',width,height,pixelRatio:2,canvasWidth:width*2,canvasHeight:height*2,skipAutoScale:true});
+    const a=document.createElement('a');a.href=dataUrl;a.download='relationship-vocab-'+new Date().toISOString().slice(0,10)+'.png';a.style.display='none';document.body.appendChild(a);a.click();a.remove()
+  }catch(error){console.error('[Sky Chart] Relationship Vocab export failed',error)}
+  finally{if(button){button.disabled=wasDisabled;button.removeAttribute('aria-busy');button.innerHTML=previous}}
+}
 function installStyles(){
   if(document.getElementById('skyRelationshipVocabV1Styles'))return;const style=document.createElement('style');style.id='skyRelationshipVocabV1Styles';style.textContent=
     '.sky-relationship-vocab-tabs{grid-column:1/2;justify-self:start}.sky-relationship-vocab-panel{padding:.52rem .7rem .82rem;border-top:1px solid rgba(31,27,24,.1)}'+
     '.sky-relationship-vocab-preview{display:flex!important;gap:3px;align-items:center;overflow:hidden}.sky-relationship-vocab-preview-token{display:inline-flex;align-items:center;justify-content:center;min-width:17px;height:17px;padding:0 2px;border-radius:999px;background:#fffdf8;box-shadow:inset 0 0 0 1px rgba(31,27,24,.1);font:800 10px/1 system-ui,sans-serif;color:#332e2a}'+
     '.sky-relationship-vocab-line{position:relative}.sky-foundation-relationship-row.is-relationship-vocab-peer{box-shadow:inset 0 0 0 2px rgba(31,27,24,.38);background:#fffaf2}.sky-foundation-aspect.is-relationship-vocab-peer{stroke-width:6!important;opacity:1!important;filter:drop-shadow(0 0 2px #fffdf8)}'+
     '.sky-foundation-wheel.has-relationship-vocab-hover [data-layer="aspects"]>.sky-foundation-aspect:not(.is-relationship-vocab-peer){opacity:.12!important}'+
-    '@media(max-width:620px){.sky-relationship-vocab-tabs{grid-column:1/-1}.sky-relationship-vocab-panel{padding:.48rem .58rem .74rem}}';
+    '@media(max-width:620px){.sky-relationship-vocab-tabs{grid-area:title;grid-column:auto}.sky-relationship-vocab-panel{padding:.48rem .58rem .74rem}}';
   document.head.appendChild(style)
 }
 function refresh(){queued=false;installStyles();ensureTabs();ensurePanel();activate(viewState())}
@@ -288,7 +308,7 @@ function start(){
   document.addEventListener('click',event=>{
     if(activeMode!=='vocab')return;
     const copy=event.target.closest('.sky-relationship-copy-button');if(copy){event.preventDefault();event.stopImmediatePropagation();void writeClipboard(serializePanel()).then(ok=>{if(!ok)return;const previous=copy.textContent;copy.textContent='Copied';setTimeout(()=>{if(copy.isConnected)copy.textContent=previous||'Copy'},1200)});return}
-    const download=event.target.closest('#skyChartRelationshipsExport');if(download){event.preventDefault();event.stopImmediatePropagation();vocabDownload()}
+    const download=event.target.closest('#skyChartRelationshipsExport');if(download){event.preventDefault();event.stopImmediatePropagation();void vocabDownload(download)}
   },true);
   ['relphi:sky-foundation-ready','relphi:sky-intrasky-relationships-ready','relphi:sky-intrasky-b-relationships-ready','relphi:sky-aspect-multiselect-changed','relphi:sky-configuration-selection-changed','relphi:sky-configurations-detected','relphi:sky-harmonic-window-visibility-changed','relphi:sky-display-changed','relphi:sky-placement-multiselect-changed','relphi:sky-house-multiselect-changed','relphi:sky-zodiac-filter-changed'].forEach(name=>window.addEventListener(name,()=>{if(activeMode==='vocab')schedule()}));
   const observedList=document.getElementById('skyFoundationRelationshipList');if(observedList)new MutationObserver(records=>{if(activeMode==='vocab'&&records.some(record=>record.addedNodes?.length||record.removedNodes?.length))schedule()}).observe(observedList,{childList:true,subtree:false});
