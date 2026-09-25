@@ -23,6 +23,8 @@ const base='http://127.0.0.1:8000/tarot.html';
     assert.equal(await paths.first().getAttribute('role'),'tab');
     assert.equal(await page.locator('#relphiUseBlankDraw').count(),0,'Draw must not add a second gate in front of the native board');
     assert.equal(await page.locator('[data-referent-path].is-active').getAttribute('data-referent-path'),'templates');
+    assert.equal(await page.locator('.relphi-referent-settings').evaluate(node=>node.tagName),'SECTION','Draw settings should not be a collapsed details control');
+    assert.equal(await page.locator('.relphi-referent-settings .relphi-draw-options').isVisible(),true,'Draw settings controls should always be visible');
 
     await page.click('[data-referent-path="bespoke"]');
     await page.fill('#relphiBulkReferents','Situation, Challenge, Strategy');
