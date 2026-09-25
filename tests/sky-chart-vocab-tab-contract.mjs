@@ -172,8 +172,8 @@ assert.match(orbControl,/data\.harmonicShowMore='true'/,'Relationships must expo
 assert.match(orbControl,/hiddenByHarmonicWindow\+=1/,'The continuation count must include only relationships excluded by Harmonic Window after other active filters');
 assert.match(orbControl,/m\?\.setWindow\?\.\(m\?\.maxWindow\?\?12\)/,'Clicking Show more must widen the shared Harmonic Window immediately');
 assert.match(orbControl,/count\.dataset\.countLabel='matches'/,'Relationship status must identify the qualifying count as matches');
-assert.match(foundationCss,/#skyFoundationRelationshipCount\[data-count-label="matches"\]::before\s*\{[\s\S]*content:attr\(data-match-count\)/,'The visible relationship number must come from stable match state rather than mutable legacy text');
-assert.match(foundationCss,/#skyFoundationRelationshipCount\[data-count-label="matches"\]::after\s*\{[\s\S]*content:"matches"/,'The relationship count must visibly append matches');
+assert.match(foundationCss,/#skyFoundationRelationshipCount\[data-count-label="matches"\]::before\s*\{[\s\S]*content:none/,'Legacy slash-total content must stay visually suppressed');
+assert.match(foundationCss,/#skyFoundationRelationshipCount\[data-count-label="matches"\]::after\s*\{[\s\S]*content:attr\(data-match-count\) " matches"/,'The visible relationship count must come from stable match state as one N matches phrase');
 assert.match(foundationCss,/\.sky-foundation-harmonic-show-more\s*\{/,'The Harmonic continuation item must be styled as a full-width list item');
 assert.match(relationshipLimit,/\[\['10','10'\],\['20','20'\],\['50','50'\],\['Max','Max'\],\['Custom Range','Custom Range'\]\]/,'Result range must offer 10, 20, 50, Max, and Custom Range presets');
 assert.match(relationshipLimit,/function ensureHeadingActions\(\)/,'Result Limit must live in the Relationships heading action cluster rather than the filter grid');
