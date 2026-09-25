@@ -22,20 +22,29 @@ await page.goto('http://127.0.0.1:4173/sky-chart.html',{waitUntil:'networkidle'}
 await page.waitForSelector('#skyFoundationRoot[aria-busy="false"]',{timeout:20000});
 await page.waitForSelector('#skyFoundationFocus',{timeout:10000});
 await page.waitForSelector('#skyFoundationFocus #skyChartWheelCopy',{timeout:10000});
-const comparisonLayout=await page.locator('#skyFoundationComparison').evaluate(node=>({
-  firstId:node.firstElementChild?.id||'',
-  secondId:node.firstElementChild?.nextElementSibling?.id||'',
-  titleBarCount:node.querySelectorAll(':scope>.sky-foundation-heading').length,
-  zodiacLabel:[...node.querySelectorAll(':scope>*')].some(child=>child.textContent?.trim()==='Zodiac Wheel'),
-  wheelCopyInFocus:!!node.querySelector('#skyFoundationFocus .sky-focus-heading-controls #skyChartWheelCopy'),
-  wheelDownloadInFocus:!!node.querySelector('#skyFoundationFocus .sky-focus-heading-controls #skyChartWheelExport')
-}));
+const comparisonLayout=await page.locator('#skyFoundationComparison').evaluate(node=>{
+  const heading=node.querySelector('#skyFoundationFocus>.sky-foundation-focus-heading');
+  const actions=heading?.querySelector('.sky-export-wheel-slot');
+  const hr=heading?.getBoundingClientRect(),ar=actions?.getBoundingClientRect(),style=actions?getComputedStyle(actions):null;
+  return{
+    firstId:node.firstElementChild?.id||'',
+    secondId:node.firstElementChild?.nextElementSibling?.id||'',
+    titleBarCount:node.querySelectorAll(':scope>.sky-foundation-heading').length,
+    zodiacLabel:[...node.querySelectorAll(':scope>*')].some(child=>child.textContent?.trim()==='Zodiac Wheel'),
+    wheelCopyInFocus:!!node.querySelector('#skyFoundationFocus .sky-focus-heading-controls #skyChartWheelCopy'),
+    wheelDownloadInFocus:!!node.querySelector('#skyFoundationFocus .sky-focus-heading-controls #skyChartWheelExport'),
+    wheelActionsRightGap:hr&&ar?hr.right-ar.right:null,
+    wheelActionsOrder:style?.order||''
+  };
+});
 assert.equal(comparisonLayout.firstId,'skyFoundationFocus','Focus must be the first visible section in the comparison panel.');
 assert.equal(comparisonLayout.secondId,'skyFoundationWheelMount','The wheel must follow Focus directly.');
 assert.equal(comparisonLayout.titleBarCount,0,'The separate Zodiac Wheel title bar must be removed.');
 assert.equal(comparisonLayout.zodiacLabel,false,'The visual Zodiac Wheel label must not return.');
 assert.equal(comparisonLayout.wheelCopyInFocus,true,'Wheel Copy must move into the Focus heading.');
 assert.equal(comparisonLayout.wheelDownloadInFocus,true,'Wheel Download must move into the Focus heading.');
+assert.ok(comparisonLayout.wheelActionsRightGap!==null&&comparisonLayout.wheelActionsRightGap<=12,'Wheel Copy and Download must sit on the far-right edge of the Focus panel.');
+assert.equal(comparisonLayout.wheelActionsOrder,'999','Wheel actions must stay after the other Focus controls regardless of initialization order.');
 const panel=page.locator('#skyFoundationB');
 await panel.scrollIntoViewIfNeeded();
 await panel.locator('[data-sky-drawer-tab="where"]').click();
