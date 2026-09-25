@@ -1,0 +1,46 @@
+name: Sky Chart relationship themes check
+
+on:
+  pull_request:
+    paths:
+      - 'relphi-semantic-search-v1.js'
+      - 'sky-chart-relationship-themes-v1.js'
+      - 'sky-chart.html'
+      - 'tarot.html'
+      - 'tarot-app.js'
+      - 'tests/sky-chart-relationship-themes-browser.mjs'
+      - '.github/workflows/sky-chart-relationship-themes-check.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - 'relphi-semantic-search-v1.js'
+      - 'sky-chart-relationship-themes-v1.js'
+      - 'sky-chart.html'
+      - 'tarot.html'
+      - 'tarot-app.js'
+      - 'tests/sky-chart-relationship-themes-browser.mjs'
+      - '.github/workflows/sky-chart-relationship-themes-check.yml'
+
+jobs:
+  browser-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: JavaScript syntax
+        run: |
+          node --check relphi-semantic-search-v1.js
+          node --check sky-chart-relationship-themes-v1.js
+          node --check tarot-app.js
+          node --check tests/sky-chart-relationship-themes-browser.mjs
+      - name: Install browser dependencies
+        run: |
+          npm install --no-save playwright@1.52.0 luxon@3 suncalc@1.9.0
+          npx playwright install --with-deps chromium
+      - name: Run Relationship Themes assertions
+        run: |
+          python3 -m http.server 4173 > /tmp/sky-chart-relationship-themes-server.log 2>&1 &
+          node tests/sky-chart-relationship-themes-browser.mjs
