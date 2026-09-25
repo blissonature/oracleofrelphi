@@ -44,6 +44,11 @@ await vocabButton.click();
 await page.waitForFunction(()=>{const panel=document.querySelector('#skyFoundationA [data-sky-vocab-panel="A"]');return panel&&!panel.hidden;});
 
 assert.equal(await vocabButton.getAttribute('aria-selected'),'true','Vocab tab must become selected when clicked.');
+const placementTabsStyle=await page.locator('#skyFoundationA .sky-placement-vocab-tabs').evaluate(node=>{const s=getComputedStyle(node),active=getComputedStyle(node.querySelector('.sky-placement-vocab-tab.is-active'));return{display:s.display,radius:s.borderRadius,background:s.backgroundColor,activeBackground:active.backgroundColor,activeRadius:active.borderRadius}});
+assert.equal(placementTabsStyle.display,'grid','Placements / Vocab must use the same segmented-track layout as Rulers / Houses.');
+assert.ok(parseFloat(placementTabsStyle.radius)>20,'Placements / Vocab must have the rounded shared tab track.');
+assert.notEqual(placementTabsStyle.activeBackground,'rgba(0, 0, 0, 0)','The selected Vocab tab must be a filled pill inside the track.');
+assert.ok(parseFloat(placementTabsStyle.activeRadius)>20,'The selected Vocab tab must keep the pill treatment.');
 assert.equal(await page.locator('#skyFoundationA [data-sky-drawer-mount="placements"]').evaluate(node=>node.hidden),true,'Placements ledger must hide while Vocab is active.');
 assert.equal(await page.locator('#skyFoundationA [data-sky-vocab-panel="A"]').evaluate(node=>node.hidden),false,'Vocab panel must be visible after clicking Vocab.');
 
@@ -96,13 +101,17 @@ const vocabParagraph=page.locator('#skyFoundationA [data-sky-vocab-paragraph]');
 assert.equal(await vocabParagraph.locator(':scope > :first-child').evaluate(node=>node.classList.contains('sky-vocab-structures-heading')),true,'Structures must be the first reading layer before Placements.');
 const placementRows=vocabParagraph.locator('.sky-vocab-line[data-vocab-placement-colors="true"]');
 assert.ok(await placementRows.count()>5,'Placements must remain a complete atomic reading layer beneath Structures.');
-const firstPlacementRails=await placementRows.first().evaluate(node=>({
-  sign:getComputedStyle(node).getPropertyValue('--vocab-placement-signs').trim(),
-  house:getComputedStyle(node).getPropertyValue('--vocab-placement-houses').trim(),
+const firstPlacementRails=await placementRows.first().evaluate(node=>{const style=getComputedStyle(node);return{
+  sign:style.getPropertyValue('--vocab-placement-signs').trim(),
+  house:style.getPropertyValue('--vocab-placement-houses').trim(),
+  backgroundImage:style.backgroundImage,
+  backgroundSize:style.backgroundSize,
   system:node.dataset.vocabHouseSystem
-}));
+}});
 assert.ok(firstPlacementRails.sign,'Each placement row must expose a sign rail.');
 assert.ok(firstPlacementRails.house,'Each placement row must expose a house rail.');
+assert.notEqual(firstPlacementRails.backgroundImage,'none','The sign and house rails must actually paint on the Vocab row.');
+assert.match(firstPlacementRails.backgroundSize,/3px 100%/,'Vocab rails must remain narrow visible sign and house stripes.');
 assert.equal(firstPlacementRails.system,'equal-house','Placement rails must use the active house system.');
 const ascDscPlacementRow=placementRows.filter({has:page.locator('[data-vocab-id="asc"]')}).filter({has:page.locator('[data-vocab-id="dsc"]')}).first();
 assert.equal(await ascDscPlacementRow.count(),1,'Ascendant and Descendant must remain one paired placement sentence.');
