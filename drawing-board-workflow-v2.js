@@ -2538,7 +2538,8 @@
     const trigger=document.getElementById('relphiOpenDrawingBoardCurrent');
     if (!initialized) initialized=true;
     boardOpen=trigger?.getAttribute('aria-expanded')==='true';
-    if (!optionsSession) setBoardMode(root,boardHasCraftedStructure(root)?'referents':'board');
+    if (!optionsSession && boardHasCraftedStructure(root)) beginOptionsSession();
+    setBoardMode(root,optionsSession?'referents':'board');
     if (!boardOpen) {
       root.hidden=true;
       if (trigger) { trigger.textContent='Open Drawing Board'; trigger.setAttribute('aria-expanded','false'); }
@@ -2559,6 +2560,7 @@
     installLockedLayoutPointerGuards(root);
     installBoardCapture(root);
     if (optionsSession) renderOptions(root);
+    else root.querySelector('.relphi-reading-options-drawer')?.remove();
     if (surfaceReadingSession) maybeGenerateSurfaceFollowups(root);
     if (recursionActive()) {
       const session=ensureRecursionSession();
