@@ -181,9 +181,7 @@
   }
 
   function start(){
-    // Deliberately start a new page load at the canonical default. The previous
-    // session-storage behavior preserved accidental zeroes caused by the old
-    // scroll-sensitive number input.
+    // Preserve the user's explicit Harmonic Window across reloads.
     model()?.setWindow?.(model()?.getWindow?.()??model()?.defaultWindow??6);
     ensureInstalled();observeFilterBay();
     window.addEventListener('relphi:sky-foundation-filter-changed',event=>{
