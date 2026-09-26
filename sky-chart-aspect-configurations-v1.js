@@ -134,28 +134,39 @@ function miniConfigurationMarkup(pattern,{compact=false,interactive=true}={}){
     return'<line x1="'+a.x+'" y1="'+a.y+'" x2="'+b.x+'" y2="'+b.y+'" class="sky-configuration-mini-aspect" data-aspect="'+edge.aspect+'" style="stroke:'+stroke+'"/>';
   }).join('');
   const radii=[...records.values()].map(record=>{const p=resultPoint(record.value),color=RESULT_COLORS[record.sky]||'#777';return'<line x1="60" y1="60" x2="'+p.x+'" y2="'+p.y+'" class="sky-configuration-mini-radius" style="stroke:'+color+'"/>'}).join('');
-  const points=[...records.values()].map(record=>{const p=resultPoint(record.value),radius=compact?7.4:9;return'<g class="sky-configuration-mini-point" data-sky="'+record.sky+'" data-placement="'+record.id+'" transform="translate('+p.x+' '+p.y+')"><g class="sky-configuration-mini-vertex-glyph" data-canonical-placement="'+record.id+'" data-sky="'+record.sky+'" data-canonical-radius="'+radius+'"></g></g>'}).join('');
+  const vertices=[...records.values()].map(record=>{
+    const p=resultPoint(record.value),left=(p.x/120*100).toFixed(4),top=(p.y/120*100).toFixed(4);
+    return'<span class="sky-configuration-vertex-host" data-canonical-placement="'+record.id+'" data-sky="'+record.sky+'" style="left:'+left+'%;top:'+top+'%"></span>';
+  }).join('');
   const classes='sky-configuration-mini-wheel'+(compact?' is-compact':'');
-  const attrs=interactive?' role="button" tabindex="0" aria-label="Reveal configuration name, structure, and interpretation"':' aria-hidden="true"';
-  return'<div class="'+classes+'"'+attrs+'><svg viewBox="0 0 120 120" aria-hidden="true"><circle cx="60" cy="60" r="47" class="sky-configuration-mini-ring"/>'+radii+lines+points+'</svg></div>';
+  const attrs=interactive?' role="button" tabindex="0" aria-label="Configuration diagram"':' aria-hidden="true"';
+  return'<div class="'+classes+'"'+attrs+'><svg viewBox="0 0 120 120" aria-hidden="true"><circle cx="60" cy="60" r="47" class="sky-configuration-mini-ring"/>'+radii+lines+'</svg><span class="sky-configuration-vertex-layer" aria-hidden="true">'+vertices+'</span></div>';
 }
 async function paintConfigurationMiniGlyphs(root){
   if(!root)return;
   const component=window.RelphiGlyphComponent,registry=window.RelphiGlyphRegistry;
   if(!component?.createBubble||!registry)return;
-  for(const slot of root.querySelectorAll('.sky-configuration-mini-vertex-glyph[data-canonical-placement]')){
-    if(slot.dataset.canonicalGlyphReady==='true')continue;
-    const id=String(slot.dataset.canonicalPlacement||''),sky=String(slot.dataset.sky||'A').toUpperCase(),color=RESULT_COLORS[sky]||RESULT_COLORS.A,radius=Number(slot.dataset.canonicalRadius)||9;
+  for(const host of root.querySelectorAll('.sky-configuration-vertex-host[data-canonical-placement]')){
+    if(host.dataset.canonicalGlyphReady==='true')continue;
+    const id=String(host.dataset.canonicalPlacement||''),sky=String(host.dataset.sky||'A').toUpperCase(),color=RESULT_COLORS[sky]||RESULT_COLORS.A;
     const entry=registry.get?.(id)||registry.resolve?.(id);
     if(!entry){console.error('[Sky Chart] Missing canonical configuration glyph:',id);continue}
-    slot.replaceChildren();
+    const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
+    svg.setAttribute('viewBox','-32 -32 64 64');
+    svg.setAttribute('width','38');
+    svg.setAttribute('height','38');
+    svg.setAttribute('aria-hidden','true');
+    svg.setAttribute('focusable','false');
+    svg.classList.add('sky-configuration-canonical-vertex');
+    host.replaceChildren(svg);
     try{
-      const bubble=component.createBubble(slot,entry.id,{radius,color,fill:'#fffdf8'});
+      const bubble=component.createBubble(svg,entry.id,{radius:19,color,fill:'#fffdf8'});
       await Promise.resolve(bubble.ready);
-      slot.dataset.canonicalGlyphReady='true';
-      slot.dataset.canonicalGlyphForm='circled-master';
+      host.dataset.canonicalGlyphReady='true';
+      host.dataset.canonicalGlyphForm='circled-master-38';
     }catch(error){
       console.error('[Sky Chart] Canonical configuration bubble failed:',entry.id,error);
+      host.replaceChildren();
     }
   }
 }
