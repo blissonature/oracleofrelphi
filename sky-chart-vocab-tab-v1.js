@@ -141,7 +141,7 @@ function harmonicWindow(){
     const live=Number(liveRaw.replace(',','.'));
     if(Number.isFinite(live))return model?.clampWindow?.(live)??live;
   }
-  return Number(model?.defaultWindow??6);
+  return Number(model?.defaultWindow??7);
 }
 let queued=false;
 const abstractPreviewGlyphCache=new Map();
