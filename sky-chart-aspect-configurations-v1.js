@@ -78,16 +78,23 @@ function vertexLabel(key){const [sky,id]=String(key||'').split(':');return{sky,i
 function patternScopeLabel(pattern){const scope=patternScope(pattern);return SCOPES.find(item=>item.id===scope)?.label||scope}
 function structureText(pattern){const recipe=CONFIG_STRUCTURE[pattern.type]||'a compound aspect pattern';const names=pattern.vertices.map(key=>{const item=vertexLabel(key);return 'Sky '+item.sky+' '+item.label}).join(' · ');return recipe+(names?' — '+names:'')}
 function interpretationText(pattern){return CONFIG_INTERPRETATION[pattern.type]||'A compound relationship pattern formed by several aspect edges operating together.'}
-function miniConfigurationMarkup(pattern){
+function miniConfigurationMarkup(pattern,{compact=false,interactive=true}={}){
   const records=new Map(pattern.vertices.map(key=>[key,resultVertexRecord(key)]).filter(([,record])=>record));
   const lines=pattern.edges.map(edge=>{
     const left=records.get(edge.left),right=records.get(edge.right);if(!left||!right)return'';
     const a=resultPoint(left.value),b=resultPoint(right.value),stroke=RESULT_ASPECT_COLORS[edge.aspect]||'#777';
-    return'<line x1="'+a.x+'" y1="'+a.y+'" x2="'+b.x+'" y2="'+b.y+'" class="sky-configuration-mini-aspect" style="stroke:'+stroke+'"/>';
+    return'<line x1="'+a.x+'" y1="'+a.y+'" x2="'+b.x+'" y2="'+b.y+'" class="sky-configuration-mini-aspect" data-aspect="'+edge.aspect+'" style="stroke:'+stroke+'"/>';
   }).join('');
   const radii=[...records.values()].map(record=>{const p=resultPoint(record.value),color=RESULT_COLORS[record.sky]||'#777';return'<line x1="60" y1="60" x2="'+p.x+'" y2="'+p.y+'" class="sky-configuration-mini-radius" style="stroke:'+color+'"/>'}).join('');
-  const points=[...records.values()].map(record=>{const p=resultPoint(record.value),color=RESULT_COLORS[record.sky]||'#777';return'<g class="sky-configuration-mini-point"><circle cx="'+p.x+'" cy="'+p.y+'" r="5.4" style="fill:'+color+';stroke:'+color+'"/><text x="'+p.x+'" y="'+(p.y+.4)+'" text-anchor="middle" dominant-baseline="middle">'+record.sky+'</text></g>'}).join('');
-  return'<div class="sky-configuration-mini-wheel" role="button" tabindex="0" aria-label="Reveal configuration name, structure, and interpretation"><svg viewBox="0 0 120 120" aria-hidden="true"><circle cx="60" cy="60" r="47" class="sky-configuration-mini-ring"/>'+radii+lines+points+'</svg></div>';
+  const points=[...records.values()].map(record=>{const p=resultPoint(record.value),color=RESULT_COLORS[record.sky]||'#777';return'<g class="sky-configuration-mini-point" data-sky="'+record.sky+'"><circle cx="'+p.x+'" cy="'+p.y+'" r="'+(compact?4.7:5.4)+'" style="fill:'+color+';stroke:'+color+'"/><text x="'+p.x+'" y="'+(p.y+.4)+'" text-anchor="middle" dominant-baseline="middle">'+record.sky+'</text></g>'}).join('');
+  const classes='sky-configuration-mini-wheel'+(compact?' is-compact':'');
+  const attrs=interactive?' role="button" tabindex="0" aria-label="Reveal configuration name, structure, and interpretation"':' aria-hidden="true"';
+  return'<div class="'+classes+'"'+attrs+'><svg viewBox="0 0 120 120" aria-hidden="true"><circle cx="60" cy="60" r="47" class="sky-configuration-mini-ring"/>'+radii+lines+points+'</svg></div>';
+}
+function aspectColorRail(pattern){
+  const seen=[];
+  pattern.edges.forEach(edge=>{const color=RESULT_ASPECT_COLORS[edge.aspect]||'#777';if(!seen.some(item=>item.aspect===edge.aspect))seen.push({aspect:edge.aspect,color})});
+  return'<span class="sky-configuration-result-color-rail" aria-hidden="true">'+seen.map(item=>'<i data-aspect="'+item.aspect+'" style="background:'+item.color+'"></i>').join('')+'</span>';
 }
 function ensureResultsPanel(){
   const relationships=document.getElementById('skyFoundationRelationships'),comparison=document.getElementById('skyFoundationComparison');if(!relationships||!comparison)return null;
@@ -130,13 +137,18 @@ function openConfiguration(tile,pattern){
   detail.hidden=false;
 }
 function resultTile(pattern,index){
-  const type=TYPE_MAP.get(pattern.type),tile=document.createElement('article');tile.className='sky-configuration-result-tile';tile.dataset.configurationResult=pattern.key;tile.setAttribute('aria-expanded','false');
+  const type=TYPE_MAP.get(pattern.type),tile=document.createElement('article');tile.className='sky-configuration-result-tile';tile.dataset.configurationResult=pattern.key;tile.dataset.configurationScope=patternScope(pattern);tile.setAttribute('aria-expanded','false');
   const button=document.createElement('button');button.type='button';button.className='sky-configuration-result-summary';
+  const thumb=document.createElement('span');thumb.className='sky-configuration-result-thumb';thumb.innerHTML=miniConfigurationMarkup(pattern,{compact:true,interactive:false});
+  const copy=document.createElement('span');copy.className='sky-configuration-result-summary-copy';
+  const top=document.createElement('span');top.className='sky-configuration-result-summary-top';
   const name=document.createElement('strong');name.textContent=type?.label||pattern.type;
   const meta=document.createElement('span');meta.className='sky-configuration-result-meta';
   const scope=document.createElement('span');scope.className='sky-configuration-result-scope';scope.textContent=patternScopeLabel(pattern);
   const exact=document.createElement('span');exact.className='sky-configuration-result-exactness';exact.textContent=Number.isFinite(pattern.maxPhase)?pattern.maxPhase.toFixed(2)+'°':'';
-  meta.append(scope,exact);button.append(name,meta);button.setAttribute('aria-label',(type?.label||pattern.type)+', '+patternScopeLabel(pattern)+', configuration '+(index+1)+'. Expand configuration.');
+  meta.append(scope,exact);top.append(name,meta);
+  const rail=document.createElement('span');rail.innerHTML=aspectColorRail(pattern);copy.append(top,rail.firstElementChild);
+  button.append(thumb,copy);button.setAttribute('aria-label',(type?.label||pattern.type)+', '+patternScopeLabel(pattern)+', configuration '+(index+1)+'. Expand configuration.');
   button.addEventListener('click',event=>{event.preventDefault();openConfiguration(tile,pattern)});
   tile.addEventListener('pointerenter',()=>highlightPattern(pattern));tile.addEventListener('focusin',()=>highlightPattern(pattern));tile.addEventListener('pointerleave',()=>{if(!tile.classList.contains('is-expanded'))clearPatternHighlight()});tile.addEventListener('focusout',event=>{if(!tile.contains(event.relatedTarget)&&!tile.classList.contains('is-expanded'))clearPatternHighlight()});
   tile.appendChild(button);return tile;
