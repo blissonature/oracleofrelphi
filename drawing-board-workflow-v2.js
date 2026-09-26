@@ -835,14 +835,14 @@
   const PIP_NUMBER_BY_RANK = {Two:2,Three:3,Four:4,Five:5,Six:6,Seven:7,Eight:8,Nine:9,Ten:10};
   const SURFACE_DRAW_KEYS = ['origin','primordial','ace','planet','sign','need','court','pip'];
   const SURFACE_QUESTIONS = Object.freeze({
-    origin:'Where should I begin?',
-    primordial:'What basic force is here?',
-    ace:'What wants to begin?',
-    planet:'What is driving this?',
-    sign:'What style is it taking?',
-    need:'What is needed?',
-    court:'How is it being handled?',
-    pip:'What is happening in practice?'
+    origin:'What should I see first?',
+    primordial:'What is happening at the root of this?',
+    ace:'What is beginning here?',
+    planet:'What is moving this from one state to another?',
+    sign:'How is this unfolding?',
+    need:'What need is asking for attention?',
+    court:'How is the situation being carried?',
+    pip:'What condition has taken shape?'
   });
   const SURFACE_PACK_LABELS = Object.freeze({
     origin:'Full Pack',
