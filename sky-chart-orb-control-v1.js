@@ -11,7 +11,7 @@
   const model=()=>window.RelphiHarmonicOrb;
 
   function initialWindow(){
-    return model()?.getWindow?.()??model()?.defaultWindow??6;
+    return model()?.getWindow?.()??model()?.defaultWindow??7;
   }
 
   function phaseFromRow(row){
@@ -74,7 +74,7 @@
   }
   function apply(){
     queued=false;
-    const limit=Number(model()?.getWindow?.()??model()?.defaultWindow??6);
+    const limit=Number(model()?.getWindow?.()??model()?.defaultWindow??7);
     if(!Number.isFinite(limit))return;
     const visibleIndexes=new Set(),rows=[...document.querySelectorAll('.sky-foundation-relationship-row[data-relation-index]')],rowsByIndex=new Map(rows.map(row=>[String(row.dataset.relationIndex||''),row]));
     let hiddenByHarmonicWindow=0;
@@ -182,7 +182,7 @@
 
   function start(){
     // Preserve the user's explicit Harmonic Window across reloads.
-    model()?.setWindow?.(model()?.getWindow?.()??model()?.defaultWindow??6);
+    model()?.setWindow?.(model()?.getWindow?.()??model()?.defaultWindow??7);
     ensureInstalled();observeFilterBay();
     window.addEventListener('relphi:sky-foundation-filter-changed',event=>{
       const nextState=event.detail?.state||null;
