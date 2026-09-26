@@ -57,59 +57,72 @@ const base='http://127.0.0.1:8000/tarot.html';
     assert.equal(built.length,3);
     assert.ok(built.every(value=>value.endsWith('?')),'Building Blocks suggestions should be reviewable questions');
     await page.click('#relphiAcceptSuggestions');
-    assert.equal(await page.locator('.relphi-referent-review li').count(),3,'accepted suggestions should become current referents');
+    assert.equal(await page.locator('.relphi-referent-review').count(),0,'Referents should not repeat a second redundant question list');
 
     await page.click('[data-referent-path="surface"]');
-    const surfaceButtons=await page.locator('[data-surface-draw]').allTextContents();
-    assert.deepEqual(surfaceButtons,[
+    const choices=page.locator('[data-surface-choice]');
+    assert.equal(await choices.count(),7,'See What Surfaces should expose one checkbox per question type');
+    assert.deepEqual(await page.locator('.relphi-surface-question-choice strong').allTextContents(),[
       'Which primordial force?','What is taking root?','What is at work?','How is it showing up?',
       'What is needed?','How is it being carried?','What form is it taking?'
-    ],'See What Surfaces should label sub-packs by what they tell the reader rather than technical pack names');
-    await page.click('#relphiSurfaceAll');
-    await page.waitForFunction(()=>document.querySelectorAll('.relphi-surface-draws article').length===7);
-    assert.ok(await page.locator('[data-suggestion-text]').count()>=7,'See What Surfaces should translate all surfaced layers into candidate referents');
-    assert.ok((await page.locator('.relphi-surface-draws').innerText()).includes('three-element layer before Earth'),'Mother-letter Majors should be identified as the primordial three-element layer');
-    assert.ok((await page.locator('.relphi-surface-draws').innerText()).includes('four-element layer with Earth included'),'Aces should be identified as the four-element quaternion');
+    ]);
+    assert.equal(await page.locator('#relphiSurfaceAll').count(),0,'See What Surfaces should not force a single-or-all control');
+    assert.equal(await page.locator('[data-surface-draw]').count(),0,'Question types should be selected before entering the reading, not pre-drawn in Referents');
+    assert.equal(await page.locator('#relphiApplyOptions').isDisabled(),true,'Start Reading should wait until at least one question type is chosen');
 
-    await page.evaluate(()=>{Math.random=()=>0.999999;});
-    await page.click('[data-surface-draw="court"]');
-    await page.waitForFunction(()=>document.querySelector('.relphi-surface-draws .is-princess-page'));
-    const princessText=await page.locator('.relphi-surface-draws .is-princess-page').innerText();
-    assert.match(princessText,/Next-generation embodiment/,'Princess/Page should surface with its special embodiment status');
-    assert.match(princessText,/Page\/Princess/,'Princess/Page should preserve both court names');
-    assert.match(princessText,/Earth of Earth|Earth of (Fire|Water|Air)/,'Princess/Page should expose its Earth-of-X formula');
-    assert.equal(await page.locator('#shortListPanel .card-row-board [data-row-card]').count(),0,'idea cards must not become reading cards');
-
-    // User flow: edit a surfaced referent and go straight to Start Reading.
-    // It must become a real board position without requiring the extra "Use selected referents" click.
-    await page.click('#relphiResetBoard');
-    await page.click('[data-referent-path="surface"]');
-    await page.click('[data-surface-draw="court"]');
-    await page.waitForFunction(()=>document.querySelectorAll('[data-suggestion-text]').length===1);
-    const question='How is this being carried into tangible form?';
-    await page.fill('[data-suggestion-text="0"]',question);
+    await page.check('[data-surface-choice="primordial"]');
+    await page.check('[data-surface-choice="court"]');
+    assert.equal(await page.locator('#relphiApplyOptions').isDisabled(),false,'Any chosen combination should be allowed');
     await page.click('#relphiApplyOptions');
+
     await page.waitForSelector('.relphi-referents-drawer',{state:'detached'});
+    await page.waitForSelector('.relphi-attune-reader',{state:'visible'});
     assert.equal(await page.locator('#drawingBoardBoardTab').getAttribute('aria-selected'),'true','Start Reading should return to Board mode');
     assert.equal(await page.locator('.drawing-board-board-mode').isVisible(),true,'Board actions should reappear after Start Reading');
-    await page.waitForFunction(expected=>{
-      const state=window.RelphiDrawingBoardOptionsBridge?.capture?.();
-      return state?.shortListPositionLabels?.[0]===expected &&
-        state?.rowPositionMeta?.[0]?.drawScope==='courts' &&
-        document.querySelectorAll('#shortListPanel .card-row-placeholder-item').length===1;
-    },question);
-    assert.equal(await page.locator('[data-row-position-label-editor="0"]').textContent(),question,'surfaced referent should become the visible position sticker');
+    assert.equal(await page.locator('.relphi-focus-reader').count(),0,'Attunement should happen before the card is revealed');
+    assert.equal(await page.locator('#shortListPanel .card-row-board [data-row-card]').count(),0,'No card should be chosen before the reader reveals it');
+    assert.equal(await page.locator('.relphi-attune-shell h2').textContent(),'Which primordial force?');
+    assert.ok((await page.locator('.relphi-board-toast').innerText()).includes('Attune to each referent'),'Board toast should explain the reading mode after settings are established');
 
-    await page.click('#drawRandomRowCard');
+    const configured=await page.evaluate(()=>window.RelphiDrawingBoardOptionsBridge.capture());
+    assert.deepEqual(configured.shortListPositionLabels.slice(0,2),['Which primordial force?','How is it being carried?']);
+    assert.deepEqual(configured.rowPositionMeta.slice(0,2).map(item=>item.drawScope),['primordial-majors','courts']);
+
+    await page.click('[data-attune-random]');
     await page.waitForSelector('.relphi-focus-reader',{state:'visible'});
-    const drawnType=await page.evaluate(()=>{
+    const firstCard=await page.evaluate(()=>{
       const id=document.querySelector('#shortListPanel .card-row-board [data-row-card]')?.dataset?.rowCard;
-      return window.RELPHI_TAROT_CARDS?.find(card=>card.card_id===id)?.card_type||'';
+      return window.RELPHI_TAROT_CARDS?.find(card=>card.card_id===id)||null;
     });
-    assert.equal(drawnType,'Court','a court-sourced referent should draw its reading card from the Courts sub-pack');
-    assert.equal(await page.locator('.relphi-focus-position').textContent(),question,'focus view should show the actual referent rather than Position 1');
-    await page.click('.relphi-focus-close');
+    assert.equal(firstCard?.card_type,'Major','primordial exploration should draw a Major');
+    assert.ok(['Aleph','Mem','Shin'].includes(String(firstCard?.hebrew?.letter||'')),'primordial exploration should draw from the mother-letter Majors');
+    assert.equal(await page.locator('.relphi-focus-position').textContent(),'Which primordial force?');
 
+    await page.click('.relphi-focus-next');
+    await page.waitForSelector('.relphi-attune-reader',{state:'visible'});
+    assert.equal(await page.locator('.relphi-attune-shell h2').textContent(),'How is it being carried?');
+    await page.click('[data-attune-search]');
+    await page.fill('.relphi-attune-search input','Magician');
+    await page.waitForFunction(()=>document.querySelectorAll('.relphi-attune-search-results [data-attune-card]').length>0);
+    const magician=page.locator('.relphi-attune-search-results [data-attune-card]',{hasText:'Magician'}).first();
+    assert.ok(await magician.count(),'Physical-card search should find The Magician in the Tarot Ledger');
+    await magician.click();
+
+    await page.waitForSelector('.relphi-focus-reader',{state:'visible'});
+    assert.equal(await page.locator('.relphi-focus-position').textContent(),'How is it being carried?');
+    await page.waitForFunction(()=>{
+      const state=window.RelphiDrawingBoardOptionsBridge?.capture?.();
+      return (state?.shortListPositionLabels?.length||0)>2;
+    });
+    const afterExploration=await page.evaluate(()=>window.RelphiDrawingBoardOptionsBridge.capture());
+    assert.ok(afterExploration.shortListPositionLabels[2].startsWith('What does the primordial '),'After the initial exploration, a new question should be made from what surfaced');
+    assert.equal(afterExploration.rowPositionMeta[2].drawScope,'primordial-majors','Follow-up should retain the symbolic pack that surfaced it');
+
+    await page.click('.relphi-focus-next');
+    await page.waitForSelector('.relphi-attune-reader',{state:'visible'});
+    assert.ok((await page.locator('.relphi-attune-shell h2').textContent()).startsWith('What does the primordial '),'Follow-up question should enter the same sacred attune/reveal flow');
+
+    await page.click('.relphi-attune-close');
     await page.click('#drawingBoardOptionsButton');
     await page.waitForSelector('.relphi-referents-drawer',{state:'visible'});
     await page.click('#relphiResetBoard');
