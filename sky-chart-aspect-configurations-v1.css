@@ -751,3 +751,23 @@ html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]) .sky-chart-con
     grid-template-areas:"visual" "explanation" "instance"!important;
   }
 }
+
+
+/* Participant identity appears once, at Relationships-scale glyph size. */
+.sky-configuration-result-instance{
+  align-items:center;
+  gap:7px;
+}
+.sky-configuration-result-instance>span{
+  min-height:29px;
+  gap:6px;
+  padding:3px 8px 3px 4px;
+  font:900 1.05rem/1 system-ui,sans-serif;
+}
+.sky-configuration-result-instance>span>b{
+  flex:0 0 21px;
+  min-width:21px;
+  width:21px;
+  height:21px;
+  font:900 .58rem/1 system-ui,sans-serif;
+}
