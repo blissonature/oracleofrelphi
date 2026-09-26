@@ -245,6 +245,18 @@
     );
   }
 
+  window.RelphiSkyCardHits = Object.freeze({
+    analyzePayload(payload) {
+      const previousA=localStorage.getItem(KEYS.A);
+      try {
+        localStorage.setItem(KEYS.A,JSON.stringify(payload||{}));
+        return buildTally('A').map(hit=>({id:hit.id,name:displayName(hit.card),arcana:hit.card?.arcana||'',count:hit.count,reasons:hit.reasons.slice()}));
+      } finally {
+        if(previousA==null)localStorage.removeItem(KEYS.A);else localStorage.setItem(KEYS.A,previousA);
+      }
+    }
+  });
+
   function ensureSection(slot) {
     const panel = document.getElementById(`skyFoundation${slot}`);
     if (!panel) return null;
