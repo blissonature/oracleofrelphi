@@ -1113,7 +1113,7 @@
     const value=session[key]||'here-now';
     const selectedId=value.startsWith('saved:')?value.slice(6):'';
     const records=astrologySavedSkies();
-    return '<label class="relphi-astrology-sky-source"><span><strong>Sky '+slot+'</strong></span><select data-astrology-sky-source="'+slot+'" '+(disabled?'disabled':'')+'>'+
+    return '<label class="relphi-astrology-sky-source"><select aria-label="'+(slot==='B'?'Second sky':'Sky')+'" data-astrology-sky-source="'+slot+'" '+(disabled?'disabled':'')+'>'+
       '<option value="here-now" '+(value==='here-now'?'selected':'')+'>Here & Now</option>'+
       (records.length?'<optgroup label="Saved Skies">'+astrologySavedSkyOptions(selectedId)+'</optgroup>':'')+
       '</select>'+(records.length?'':'<small class="relphi-saved-sky-empty">No Saved Skies were found in the shared Sky Chart library.</small>')+'</label>';
@@ -1137,26 +1137,20 @@
   function astrologyCalculateHereNow() {
     return new Promise((resolve,reject)=>{
       const packet=astrologyWhereWhenPacket();
-      if(!packet.latitude||!packet.longitude)return reject(new Error('Set Where and When before using Here & Now.'));
-      const now=new Date(),pad=n=>String(n).padStart(2,'0'),local=window.luxon?.DateTime?.now?.().setZone?.(packet.timeZone||'UTC');
-      const dateTime=local?.isValid?local.toFormat("yyyy-MM-dd'T'HH:mm"):(now.getFullYear()+'-'+pad(now.getMonth()+1)+'-'+pad(now.getDate())+'T'+pad(now.getHours())+':'+pad(now.getMinutes()));
-      astrologySetField('skyCalcTarget','chart');astrologySetField('skyCreatorTarget','chart');astrologySetField('skyCalcDateTime',dateTime);astrologySetField('skyCalcLatitude',packet.latitude);astrologySetField('skyCalcLongitude',packet.longitude);astrologySetField('skyCalcTimeZone',packet.timeZone||'UTC');astrologySetField('skyCalcLocation',packet.location||'Here & Now');astrologySetField('skyCalcName','Here & Now');
-      const run=document.getElementById('skyCalcRun');if(!run)return reject(new Error('Sky calculation is unavailable.'));run.click();const started=Date.now();
-      (function wait(){
-        const status=document.getElementById('skyCalcStatus')?.textContent?.trim()||'';
-        if(/^Calculated\b/i.test(status)){
-          const placements={};
-          document.querySelectorAll('#chartPlacements [data-placement-key],#chartPlacements .placement-row').forEach((row,index)=>{
-            const key=row.dataset.placementKey||row.dataset.key||row.querySelector('[data-body]')?.dataset.body||row.querySelector('select')?.value||('placement-'+index);
-            const sign=row.querySelector('[data-field="sign"],select[name*="sign"]')?.value||'',degree=Number(row.querySelector('[data-field="degree"],input[name*="degree"]')?.value),minute=Number(row.querySelector('[data-field="minute"],input[name*="minute"]')?.value);
-            const signIndex=ASTRO_SIGNS.indexOf(sign);if(signIndex>=0)placements[key]={name:key,sign,degree:Number.isFinite(degree)?degree:0,minute:Number.isFinite(minute)?minute:0,longitude:signIndex*30+(Number.isFinite(degree)?degree:0)+(Number.isFinite(minute)?minute:0)/60};
-          });
-          if(Object.keys(placements).length)return resolve({name:'Here & Now',placements,calcProfile:{dateTime,timeZone:packet.timeZone||'UTC',latitude:Number(packet.latitude),longitude:Number(packet.longitude),location:packet.location||'Here & Now',source:'here-and-now'}});
-          try{const payload=JSON.parse(localStorage.getItem('relphiTarotChart')||'null');if(payload?.placements&&Object.keys(payload.placements).length)return resolve({...clone(payload),name:'Here & Now',calcProfile:{...(payload.calcProfile||{}),dateTime,source:'here-and-now'}})}catch(_){}
-          return reject(new Error('Here & Now could not be prepared.'));
-        }
-        if(Date.now()-started>30000)return reject(new Error('Here & Now calculation timed out.'));if(/^(Could not|Enter |Choose )/i.test(status))return reject(new Error(status));setTimeout(wait,120);
-      })();
+      if(packet.latitude==null||packet.longitude==null)return reject(new Error('Set Where and When before using Here & Now.'));
+      const now=new Date(),browserZone=Intl.DateTimeFormat().resolvedOptions().timeZone||'UTC',zone=packet.timeZone||browserZone;
+      const parts=Object.fromEntries(new Intl.DateTimeFormat('en-CA',{timeZone:zone,hour12:false,year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'}).formatToParts(now).filter(p=>p.type!=='literal').map(p=>[p.type,p.value]));
+      const dateTime=parts.year+'-'+parts.month+'-'+parts.day+'T'+(parts.hour==='24'?'00':parts.hour)+':'+parts.minute;
+      astrologySetField('skyCalcTarget','chart');astrologySetField('skyCreatorTarget','chart');astrologySetField('skyCalcDateTime',dateTime);astrologySetField('skyCalcLatitude',packet.latitude);astrologySetField('skyCalcLongitude',packet.longitude);astrologySetField('skyCalcTimeZone',zone);astrologySetField('skyCalcLocation',packet.location||'Here & Now');astrologySetField('skyCalcName','Here & Now');
+      const startedAt=Date.now(),onCalculated=event=>{
+        const result=event.detail;if(!result||result.target!=='chart'||!result.placements||!Object.keys(result.placements).length)return;
+        cleanup();resolve({name:'Here & Now',placements:clone(result.placements),calcProfile:{...(result.calcProfile||{}),source:'here-and-now'}});
+      },cleanup=()=>window.removeEventListener('relphi:sky-calculated',onCalculated);
+      window.addEventListener('relphi:sky-calculated',onCalculated);
+      const direct=typeof runSkyCalculation==='function'?runSkyCalculation('chart'):null;
+      if(direct&&typeof direct.then==='function')direct.then(ok=>{if(!ok){cleanup();reject(new Error(document.getElementById('skyCalcStatus')?.textContent||'Here & Now could not be calculated.'))}}).catch(error=>{cleanup();reject(error)});
+      else {const button=document.getElementById('skyCalcRun');if(!button){cleanup();return reject(new Error('Sky calculation is unavailable.'))}button.click()}
+      setTimeout(()=>{if(Date.now()-startedAt>=15000){cleanup();reject(new Error('Here & Now calculation timed out.'))}},15100);
     });
   }
   async function astrologyResolveSource(source) {
@@ -1232,7 +1226,7 @@
           referentPathButton('templates','Templates','Use a saved or established spread.',session.path,hasCards)+
           referentPathButton('blocks','Building Blocks','Choose elements planets aspects signs and houses.',session.path,hasCards)+
           referentPathButton('surface','See What Surfaces','Draw symbolic cards to discover what to ask.',session.path,hasCards)+
-          referentPathButton('astro','Astrological Tarot Reading','Connect Sky A or Sky A + Sky B and surface questions from exact card hits.',session.path,hasCards)+
+          referentPathButton('astro','Astrological Tarot Reading','Connect one or two skies and surface questions from exact card hits.',session.path,hasCards)+
         '</div>'+
         pathPanelMarkup(session,hasCards)+
         '<section class="relphi-referent-settings" aria-label="Draw settings"><strong class="relphi-referent-settings-title">Draw settings</strong><div class="relphi-draw-options"><label>Pack<select id="relphiDraftPack">'+packOptions(draft.pack)+'</select></label>'+keywordDraftMarkup(draft)+'<label><input id="relphiDraftStickers" type="checkbox" '+(draft.stickers?'checked':'')+' title="Show position stickers"> Show referent stickers</label><label><input id="relphiDraftReversals" type="checkbox" '+(draft.reversals?'checked':'')+'> Reversals</label><label><input id="relphiDraftRepeats" type="checkbox" '+(draft.repeats?'checked':'')+'> Repeats</label></div></section>'+
@@ -1272,7 +1266,7 @@
         renderOptions(root);
         showBoardToast('The selected sky'+(skyB?'s are':' is')+' loaded into the Astrological Tarot Reading. The next draw can now use real placement data.',{title:'Astrological Tarot Reading',duration:6200});
       }catch(error){if(status)status.textContent=error.message||'The selected sky could not be prepared.';showBoardToast(error.message||'The selected sky could not be prepared.',{title:'Astrological Tarot Reading',duration:6200})}
-      finally{if(button?.isConnected){button.disabled=false;button.textContent='Use These Skies'}}
+      finally{if(button?.isConnected){button.disabled=false;button.textContent='Use '+(count>1?'These Skies':'This Sky')}}
     });
 
     const templateSelect = drawer.querySelector('#relphiSpreadTemplateSelect');
