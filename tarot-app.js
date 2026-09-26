@@ -4037,6 +4037,25 @@
     drawingBoardReadingEntries() {
       return drawingBoardReadingEntries().map(entry => ({ ...entry }));
     },
+    searchCards(query, limit = 24) {
+      const needle = normalizeSearch(String(query || ''));
+      if (!needle) return [];
+      const max = Math.max(1, Math.min(60, Number(limit) || 24));
+      return cards.filter(card => normalizeSearch(compactText(card) + ' ' + cardSearchTokens(card)).includes(needle)).slice(0, max).map(card => ({
+        card_id:card.card_id,
+        title:title(card),
+        image:rwsImagePath(card)
+      }));
+    },
+    addCardToBoard(cardId) {
+      const id=String(cardId || '').trim();
+      if (!cardById(id)) return false;
+      if (!state.rowAllowRepeats && state.shortList.includes(id)) return false;
+      commitShortList([...state.shortList,id],{newCardsManual:true});
+      expandCardRow();
+      scrollCardRowToEnd();
+      return true;
+    },
     serializeDrawingBoardReading() {
       return serializeDrawingBoardReadingText();
     },
