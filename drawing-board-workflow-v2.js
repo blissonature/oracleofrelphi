@@ -1165,8 +1165,8 @@
     const drawer = document.createElement('section');
     drawer.className='relphi-reading-options-drawer is-reading-options-open relphi-referents-drawer';
     drawer.id='drawingBoardReadingOptions';
-    drawer.setAttribute('role','dialog');
-    drawer.setAttribute('aria-label','Crafted Draw');
+    drawer.setAttribute('role','region');
+    drawer.setAttribute('aria-label','Crafted Draw settings');
     drawer.innerHTML = '<div class="relphi-options-heading"><div><span class="eyebrow">Drawing Board</span><h3>Crafted Draw</h3></div></div>'+
       (hasCards ? '<p class="relphi-options-note relphi-options-note-visible">Reset Board before changing referents. The reading structure is locked once cards are drawn.</p>' : '')+
       '<div class="relphi-options-body">'+
@@ -1441,7 +1441,7 @@
     if (referentsTab) {
       referentsTab.classList.toggle('is-active',referents);
       referentsTab.setAttribute('aria-checked',String(referents));
-      referentsTab.setAttribute('aria-expanded',String(referents));
+      referentsTab.removeAttribute('aria-expanded');
     }
   }
   function closeOptions(root = panel(), {switchToFree=false} = {}) {
@@ -2675,7 +2675,7 @@
     const attune=document.querySelector('.relphi-attune-reader');
     if (attune) closeAttune();
     else if (reader) closeFocus({acknowledge:true});
-    else if (optionsSession) closeOptions(panel());
+    else if (optionsSession) { /* Mode is permanent; Escape does not collapse Crafted mode. */ }
     else if (openTool) { openTool=''; enhance(panel()); }
   });
   document.addEventListener('relphi:drawing-board-rendered',()=>enhance(panel()));
