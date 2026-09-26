@@ -1208,6 +1208,8 @@
         const skyA=await astrologyResolveSource(session.astrologySkyASource||'here-now');
         const skyB=mode==='AB'?await astrologyResolveSource(session.astrologySkyBSource||'here-now'):null;
         session.astrologyResolved={mode,skyA,skyB,resolvedAt:new Date().toISOString()};
+        draft.labels=['Astrological surface · 1','Astrological surface · 2','Astrological surface · 3'];
+        draft.positionPacks=['full','full','full'];draft.templateId='';draft.basedOnTemplateId='';draft.templateName='Astrological Tarot Reading';
         window.RELPHI_ASTROLOGICAL_TAROT_CONTEXT=clone(session.astrologyResolved);
         window.dispatchEvent(new CustomEvent('relphi:astrological-tarot-skies-ready',{detail:clone(session.astrologyResolved)}));
         if(status)status.textContent=(skyA.name||'Sky A')+(skyB?' + '+(skyB.name||'Sky B'):'')+' ready · '+Object.keys(skyA.placements||{}).length+(skyB?' + '+Object.keys(skyB.placements||{}).length:'')+' placements.';
@@ -1996,8 +1998,11 @@
     const draft=clone(session.draft);
     const structural=optionsStructuralChanged(session);
     const surfaceKinds=session.path==='surface' ? selectedSurfaceKinds(session) : [];
+    if(session.path==='astro'&&!session.astrologyResolved){showBoardToast('Choose and prepare the sky before starting the Astrological Tarot Reading.',{title:'Astrological Tarot Reading',duration:5200});return}
+    const astrologyRequested=session.path==='astro'&&!!session.astrologyResolved;
     const recursionRequested=draft.templateId===RECURSION_ID || draft.basedOnTemplateId===RECURSION_ID;
     surfaceReadingSession=surfaceKinds.length ? {kinds:surfaceKinds.slice(),initialCount:surfaceKinds.length,followupsGenerated:false,followupCount:0} : null;
+    if(astrologyRequested) surfaceReadingSession={kinds:['astrology','astrology','astrology'],initialCount:3,followupsGenerated:true,followupCount:0,astrology:true,skyContext:clone(session.astrologyResolved)};
     recursionSession=recursionRequested ? {level:1,maxLevel:1,complete:false} : null;
     recursionPortalLevel=0;
     writeStickerVisibility(draft.stickers);
@@ -2027,8 +2032,9 @@
           }
         });
       } else if (surfaceReadingSession) {
-        showBoardToast(surfaceGuidance(),{
-          title:'See What Surfaces',
+        const astrologySurface=!!surfaceReadingSession.astrology;
+        showBoardToast(astrologySurface?'Draw the three surface cards. Their correspondences can now be compared against the resolved sky data as the astrological question engine is connected.':surfaceGuidance(),{
+          title:astrologySurface?'Astrological Tarot Reading':'See What Surfaces',
           duration:0,
           actionLabel:'Begin reading',
           onAction:()=>{
