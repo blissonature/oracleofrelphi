@@ -309,7 +309,7 @@
   }
 
   const state = {
-    mode: 'idle', query: '', selected: null, currentSpread: [], currentSpreadKey: '', chart: {}, currentSky: {}, lastDateField: null, activeCelticCard: null, revealGuideActive: false, revealGuideEnabled: true, crossedLayout: true, positionStickers: true, transitFilters: { aspect:['conjunction','opposition','trine','square','sextile'], house:'all', sign:'all', placement:'all', orb:'3' }, cardFilters: [], shortList: [], shortListUndo: [], shortListRedo: [], shortListSelection: [], shortListSelectMode: false, shortListPositionLabels: [], shortListPositionCardIds: [], rowDrawScope: 'full', rowAllowRepeats: false, rowAllowReversals: true, rowDrawDeck: [], rowDrawDeckSignature: '', rowCardReversals: {}, shortListName: '', shortListNotes: '', rowZoom: 1, rowPanX: 0, rowPanY: 0, rowSnapEnabled: true, rowSnapGrid: 'one-eighth', rowRotationSnapEnabled: true, rowRotationSnapDegrees: 15, rowShuffled: false, rowShuffleCount: 0, resultScale: 'medium', resultZoom: 1, resultLayout: 'auto', resultGlyphsVisible: false, rowEnvelopeLayout: {}, rowCardTransforms: {}, rowTransformTarget: 0, rowEnvelopeColor: '#f3f0ea', rowEnvelopeArt: {}, rowTableColor: '#7d1f28', rowTableImage: '', rowCustomArtTarget: '', customCardArt: {}, rowActiveLayout: null, rowPositionMeta: [], rowLayoutDesignMode: false, rowLayoutLocked: false, rowCenterOpen: false, chartName: '', chartNotes: '', currentSkyName: '', currentSkyNotes: '', skyChartMode: 'single', skyBuilderUiMode: 'wizard', skyCreatorTarget: 'chart', skyCreatorDrawerAutoClosed: false, skyEntrySource: { chart:'', currentSky:'' }, skyEntryMethod: { chart:'', currentSky:'' }, skyEntryPendingSource: { chart:'', currentSky:'' }, skyLibrarySelection: { chart:'', currentSky:'' }, relationshipFilterOpenMenu:'', cardRowBoardOpen: true, cardRowSettingsOpen: false
+    mode: 'idle', query: '', selected: null, currentSpread: [], currentSpreadKey: '', chart: {}, currentSky: {}, lastDateField: null, activeCelticCard: null, revealGuideActive: false, revealGuideEnabled: true, crossedLayout: true, positionStickers: true, transitFilters: { aspect:['conjunction','opposition','trine','square','sextile'], house:'all', sign:'all', placement:'all', orb:'3' }, cardFilters: [], shortList: [], shortListUndo: [], shortListRedo: [], shortListSelection: [], shortListSelectMode: false, shortListPositionLabels: [], shortListPositionCardIds: [], rowDrawScope: 'full', rowTagQuery: '', rowSelectedTags: [], rowTagMatchMode: 'any', rowAllowRepeats: false, rowAllowReversals: true, rowDrawDeck: [], rowDrawDeckSignature: '', rowCardReversals: {}, shortListName: '', shortListNotes: '', rowZoom: 1, rowPanX: 0, rowPanY: 0, rowSnapEnabled: true, rowSnapGrid: 'one-eighth', rowRotationSnapEnabled: true, rowRotationSnapDegrees: 15, rowShuffled: false, rowShuffleCount: 0, resultScale: 'medium', resultZoom: 1, resultLayout: 'auto', resultGlyphsVisible: false, rowEnvelopeLayout: {}, rowCardTransforms: {}, rowTransformTarget: 0, rowEnvelopeColor: '#f3f0ea', rowEnvelopeArt: {}, rowTableColor: '#7d1f28', rowTableImage: '', rowCustomArtTarget: '', customCardArt: {}, rowActiveLayout: null, rowPositionMeta: [], rowLayoutDesignMode: false, rowLayoutLocked: false, rowCenterOpen: false, chartName: '', chartNotes: '', currentSkyName: '', currentSkyNotes: '', skyChartMode: 'single', skyBuilderUiMode: 'wizard', skyCreatorTarget: 'chart', skyCreatorDrawerAutoClosed: false, skyEntrySource: { chart:'', currentSky:'' }, skyEntryMethod: { chart:'', currentSky:'' }, skyEntryPendingSource: { chart:'', currentSky:'' }, skyLibrarySelection: { chart:'', currentSky:'' }, relationshipFilterOpenMenu:'', cardRowBoardOpen: true, cardRowSettingsOpen: false
   };
 
   function escapeHtml(value) {
@@ -780,6 +780,9 @@
       shortListName: String(state.shortListName || ''),
       shortListNotes: String(state.shortListNotes || ''),
       rowDrawScope: state.rowDrawScope || 'full',
+      rowTagQuery: String(state.rowTagQuery || ''),
+      rowSelectedTags: Array.isArray(state.rowSelectedTags) ? state.rowSelectedTags.slice() : [],
+      rowTagMatchMode: state.rowTagMatchMode === 'all' ? 'all' : 'any',
       rowAllowRepeats: !!state.rowAllowRepeats,
       rowAllowReversals: !!state.rowAllowReversals,
       rowDrawDeck: (state.rowDrawDeck || []).slice(),
@@ -833,6 +836,9 @@
     if (has('shortListName')) state.shortListName = String(snapshot.shortListName || '').slice(0, 80);
     if (has('shortListNotes')) state.shortListNotes = String(snapshot.shortListNotes || '').slice(0, 4000);
     if (has('rowDrawScope')) state.rowDrawScope = snapshot.rowDrawScope || 'full';
+    if (has('rowTagQuery')) state.rowTagQuery = String(snapshot.rowTagQuery || '').slice(0, 120);
+    if (has('rowSelectedTags')) state.rowSelectedTags = Array.isArray(snapshot.rowSelectedTags) ? snapshot.rowSelectedTags.map(String).filter(Boolean).slice(0, 24) : [];
+    if (has('rowTagMatchMode')) state.rowTagMatchMode = snapshot.rowTagMatchMode === 'all' ? 'all' : 'any';
     if (has('rowAllowRepeats')) state.rowAllowRepeats = !!snapshot.rowAllowRepeats;
     if (has('rowAllowReversals')) state.rowAllowReversals = !!snapshot.rowAllowReversals;
     if (has('rowDrawDeck')) state.rowDrawDeck = Array.isArray(snapshot.rowDrawDeck) ? snapshot.rowDrawDeck.slice() : [];
@@ -1054,6 +1060,9 @@
     state.rowLayoutDesignMode = false;
     state.rowLayoutLocked = false;
     state.rowDrawScope = 'full';
+    state.rowTagQuery = '';
+    state.rowSelectedTags = [];
+    state.rowTagMatchMode = 'any';
     state.rowAllowRepeats = false;
     state.rowAllowReversals = true;
     state.rowCenterOpen = false;
@@ -1247,6 +1256,7 @@
       scope: selected.length ? 'selected' : 'full row',
       count: active.length,
       notes: state.shortListNotes || '',
+      activeSubpack: { scope: state.rowDrawScope || 'full', tags: state.rowDrawScope === 'tags' ? (state.rowSelectedTags || []).slice() : [], matchMode: state.rowTagMatchMode === 'all' ? 'all' : 'any' },
       zoom: state.rowZoom || 1,
       pan: { x: rowPanXValue(), y: rowPanYValue() },
       snapEnabled: !!state.rowSnapEnabled,
@@ -1258,7 +1268,7 @@
       layout: state.rowEnvelopeLayout || {},
       transforms: state.rowCardTransforms || {},
       stats: rowStats(active),
-      cards: active.map((card, i) => ({ position: state.shortListPositionLabels[i] || String(i+1), positionStickerCardId: state.shortListPositionCardIds?.[i] || '', cardId: card.card_id, title: title(card), reversed: rowCardIsReversed(i), orientation: rowCardIsReversed(i) ? 'reversed' : 'upright', transform: rowCardTransform(i), association: drawingBoardAssociationText(card), interpretation: rowCardInterpretation(card, i) }))
+      cards: active.map((card, i) => ({ position: state.shortListPositionLabels[i] || String(i+1), positionStickerCardId: state.shortListPositionCardIds?.[i] || '', cardId: card.card_id, title: title(card), reversed: rowCardIsReversed(i), orientation: rowCardIsReversed(i) ? 'reversed' : 'upright', transform: rowCardTransform(i), association: drawingBoardAssociationText(card), interpretation: rowCardInterpretation(card, i), tags: canonicalCardTags(card), subpackMemberships: cardSubpackMemberships(card) }))
     };
   }
 
@@ -1678,6 +1688,106 @@
     if (canvas.toBlob) canvas.toBlob(blob=>{ void finish(blob); }, 'image/png'); else void finish(null);
   }
 
+  const BUILTIN_SUBPACK_DEFINITIONS = [
+    ['uhn','Universal Human Needs', card => UHN_ORDER.has(card?.card_id)],
+    ['majors','Majors', card => card?.card_type === 'Major'],
+    ['primordial-majors','Primordial Element Majors', card => card?.card_type === 'Major' && card.astrology?.attribution_type === 'Element' && ['Aleph','Mem','Shin'].includes(String(card.hebrew?.letter || ''))],
+    ['planetary-majors','Planetary Majors', card => card?.card_type === 'Major' && new Set(['Sun','Moon','Mercury','Venus','Mars','Jupiter','Saturn']).has(card.astrology?.planet)],
+    ['zodiac-majors','Zodiac Majors', card => card?.card_type === 'Major' && !!card.astrology?.sign],
+    ['aces','Aces', card => card?.card_type === 'Ace'],
+    ['courts','Courts', card => card?.card_type === 'Court'],
+    ['pips','Pips', card => card?.card_type === 'Pip'],
+    ['decans','Decan pips', card => card?.card_type === 'Pip' && !!card.astrology?.decan],
+    ['wands','Wands', card => card?.suit === 'Wands'],
+    ['cups','Cups', card => card?.suit === 'Cups'],
+    ['swords','Swords', card => card?.suit === 'Swords'],
+    ['pentacles','Pentacles / Disks', card => card?.suit === 'Pentacles']
+  ];
+
+  function splitCanonicalTagValue(value) {
+    return String(value || '').split(/[,/]/).map(part => part.trim()).filter(Boolean);
+  }
+
+  function canonicalCardTags(card) {
+    if (!card) return [];
+    const values = [
+      ...(Array.isArray(card.tags) ? card.tags : []),
+      card.rank, card.rws_rank, card.card_type, card.arcana, card.suit, card.thoth_suit,
+      card.element, card.rank_element, card.elemental_formula, card.polarity,
+      ...splitCanonicalTagValue(card.astrology?.planet),
+      ...splitCanonicalTagValue(card.astrology?.sign),
+      ...splitCanonicalTagValue(card.astrology?.sign_ruler),
+      ...splitCanonicalTagValue(card.astrology?.decan_ruler),
+      card.astrology?.decan,
+      card.hebrew?.letter,
+      card.hebrew?.letter_name
+    ].flatMap(value => splitCanonicalTagValue(value));
+    const seen = new Set();
+    return values.filter(value => {
+      const key = normalizeSearch(value);
+      if (!key || seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  }
+
+  function canonicalTagCatalog() {
+    const byKey = new Map();
+    cards.forEach(card => canonicalCardTags(card).forEach(tag => {
+      const key = normalizeSearch(tag);
+      if (!byKey.has(key)) byKey.set(key, tag);
+    }));
+    return [...byKey.values()].sort((a,b) => a.localeCompare(b, undefined, { sensitivity:'base', numeric:true }));
+  }
+
+  function matchingCanonicalTags(query = state.rowTagQuery) {
+    const needle = normalizeSearch(query);
+    if (!needle) return [];
+    return canonicalTagCatalog().filter(tag => normalizeSearch(tag).includes(needle)).slice(0, 40);
+  }
+
+  function cardMatchesSelectedTags(card, tags = state.rowSelectedTags, mode = state.rowTagMatchMode) {
+    const selected = (Array.isArray(tags) ? tags : []).map(normalizeSearch).filter(Boolean);
+    if (!selected.length) return false;
+    const cardTags = new Set(canonicalCardTags(card).map(normalizeSearch));
+    return mode === 'all' ? selected.every(tag => cardTags.has(tag)) : selected.some(tag => cardTags.has(tag));
+  }
+
+  function cardSubpackMemberships(card) {
+    if (!card) return [];
+    const memberships = BUILTIN_SUBPACK_DEFINITIONS
+      .filter(([, , test]) => test(card))
+      .map(([key,label]) => ({ key, label, kind:'built-in' }));
+    canonicalCardTags(card).forEach(tag => memberships.push({ key:`tag:${normalizeSearch(tag)}`, label:tag, kind:'tag' }));
+    return memberships;
+  }
+
+  function cardQuestionGeneratorContext(card) {
+    return {
+      cardId: card?.card_id || '',
+      tags: canonicalCardTags(card),
+      subpacks: cardSubpackMemberships(card),
+      activeKeywordTags: state.rowDrawScope === 'tags' ? (state.rowSelectedTags || []).slice() : [],
+      activeKeywordMatchMode: state.rowTagMatchMode === 'all' ? 'all' : 'any'
+    };
+  }
+  window.RELPHI_CARD_SUBPACK_CONTEXT = cardQuestionGeneratorContext;
+
+  function keywordSubpackHtml() {
+    if (state.rowDrawScope !== 'tags') return '';
+    const selected = Array.isArray(state.rowSelectedTags) ? state.rowSelectedTags : [];
+    const matches = matchingCanonicalTags();
+    const matchRows = matches.length
+      ? matches.map(tag => {
+          const checked = selected.some(value => normalizeSearch(value) === normalizeSearch(tag));
+          return `<label class="row-tag-match"><input type="checkbox" data-row-tag-choice value="${escapeHtml(tag)}" ${checked ? 'checked' : ''}> <span>${escapeHtml(tag)}</span></label>`;
+        }).join('')
+      : (state.rowTagQuery ? '<p class="row-tag-empty">No matching tags yet. Try another word.</p>' : '<p class="row-tag-empty">Type a tag to build this sub-pack.</p>');
+    const selectedHtml = selected.length ? `<div class="row-tag-selected" aria-label="Selected tags">${selected.map(tag => `<button type="button" data-row-tag-remove="${escapeHtml(tag)}" title="Remove ${escapeHtml(tag)}">${escapeHtml(tag)} ×</button>`).join('')}</div>` : '';
+    const poolCount = selected.length ? rowDrawPool('tags', { ignoreUsed:true }).length : 0;
+    return `<section class="row-tag-subpack" aria-label="Keyword and tag sub-pack"><label class="row-tag-search-label">Tags <input id="rowTagQuery" type="search" value="${escapeHtml(state.rowTagQuery || '')}" placeholder="Type a tag, e.g. prince" autocomplete="off"></label><div class="row-tag-match-mode" role="group" aria-label="How selected tags combine"><label><input type="radio" name="rowTagMatchMode" value="any" ${state.rowTagMatchMode !== 'all' ? 'checked' : ''}> Any</label><label><input type="radio" name="rowTagMatchMode" value="all" ${state.rowTagMatchMode === 'all' ? 'checked' : ''}> All</label></div><div class="row-tag-matches" aria-live="polite">${matchRows}</div>${selectedHtml}<p class="row-tag-pool-count">${selected.length ? `${poolCount} card${poolCount === 1 ? '' : 's'} in this sub-pack` : 'Choose one or more matching tags before drawing.'}</p></section>`;
+  }
+
   function rowDrawPool(scope, options = {}) {
     const key = scope || state.rowDrawScope || 'full';
     const visible = currentCards();
@@ -1697,6 +1807,7 @@
     else if (key === 'cups') pool = cards.filter(card => card.suit === 'Cups');
     else if (key === 'swords') pool = cards.filter(card => card.suit === 'Swords');
     else if (key === 'pentacles') pool = cards.filter(card => card.suit === 'Pentacles');
+    else if (key === 'tags') pool = cards.filter(card => cardMatchesSelectedTags(card));
     else pool = cards;
     if (!state.rowAllowRepeats && !options.ignoreUsed) {
       const used = new Set([...(state.shortList || []), ...(state.shortListPositionCardIds || [])]);
@@ -1742,6 +1853,8 @@
     return JSON.stringify({
       scope: key,
       shown: visibleIds,
+      tags: key === 'tags' ? (state.rowSelectedTags || []).map(normalizeSearch).sort() : [],
+      tagMode: key === 'tags' && state.rowTagMatchMode === 'all' ? 'all' : 'any',
       repeats: !!state.rowAllowRepeats,
       reversals: !!state.rowAllowReversals
     });
@@ -2683,7 +2796,7 @@
     const optionsOpen = !!(optionsWasOpen || state.cardRowSettingsOpen);
     const boardStatsHtml = items.length ? rowStatsHtml(items, selectedItems) : '';
     const boardHtml = `${items.length ? '' : '<p class="short-list-empty card-row-board-empty">Draw a card or add placeholders. The board is ready.</p>'}<div class="card-row-workspace" style="${cardRowWorkspaceStyle(displaySlots)}" aria-label="Pan-and-zoom Drawing Board workspace"><div class="card-row-workspace-toolbar"><label class="card-row-zoom-label" title="Zoom the board">Zoom <input id="rowZoom" type="range" min="${CARD_ROW_ZOOM_MIN}" max="${CARD_ROW_ZOOM_MAX}" step="0.01" value="${rowZoom}"><span id="rowZoomValue">${Math.round(rowZoom * 100)}%</span></label><button type="button" id="resetCardRowPan" title="Center the Drawing Board">Center</button><span class="card-row-pan-note">Drag the table background to pan. Position stickers appear only when you add a placeholder or type a sticker.</span></div><div class="short-list-row card-row-board" style="${cardRowBoardStyle(displaySlots)}" aria-label="Movable Drawing Board">${Array.from({ length: displaySlots }).map((_, i) => { const card = items[i]; const envelopeArt = rowEnvelopeArtFor(i); const panel = rowPositionPanelHtml(i, { force: !card }); if (card) { return rowCardEnvelopeHtml(card, i, panel); } return `<div class="card-row-item card-row-placeholder-item" data-row-index="${i}" data-row-placeholder="${i}" style="${cardRowItemStyle(i)}">${panel}<div class="card-row-drop-card${envelopeArt ? ' has-custom-envelope-art' : ''}" tabindex="0">${envelopeArt ? `<img src="${escapeHtml(envelopeArt)}" alt="Custom placeholder art for position ${i + 1}">` : '<span class="card-row-drop-card-inner">Position placeholder</span>'}</div></div>`; }).join('')}</div></div>${boardStatsHtml}`;
-    const moreOptionsHtml = `<details class="card-row-more-options card-row-settings-panel"><summary>More Board Options</summary><div class="card-row-tools card-row-composer"><label class="card-row-name-label">Name <input id="rowName" type="text" value="${escapeHtml(rowName)}" placeholder="Reading name"></label><label class="card-row-position-label">Position stickers <input id="rowPositionLabels" type="text" list="rowStickerPresetList" value="${escapeHtml(positionValue)}" placeholder="Type stickers, or choose a spread…"><datalist id="rowStickerPresetList">${STICKER_PRESETS.map(preset => `<option value="${escapeHtml(stickerPresetDisplay(preset))}">${escapeHtml(preset.labels.join(', '))}</option>`).join('')}</datalist></label><label class="card-row-draw-scope-label">Pack <select id="rowDrawScope">${option('full','Full Pack')}${option('shown','Shown cards')}${option('uhn','Universal Human Needs')}${option('majors','Majors')}${option('primordial-majors','Primordial Element Majors')}${option('planetary-majors','Planetary Majors')}${option('zodiac-majors','Zodiac Majors')}${option('aces','Aces')}${option('courts','Courts')}${option('pips','Pips')}${option('decans','Decan pips')}${option('wands','Wands')}${option('cups','Cups')}${option('swords','Swords')}${option('pentacles','Pentacles / Disks')}</select></label><label class="spread-toggle"><input id="rowAllowRepeats" type="checkbox" ${state.rowAllowRepeats ? 'checked' : ''}> Repeats</label><label class="spread-toggle"><input id="rowSnapEnabled" type="checkbox" ${state.rowSnapEnabled ? 'checked' : ''}> Align</label><label class="spread-toggle"><input id="rowRotationSnapEnabled" type="checkbox" ${state.rowRotationSnapEnabled ? 'checked' : ''}> Rotation snap</label><span class="card-row-snap-steppers"><button type="button" id="rowSnapGridMinus" aria-label="Smaller alignment snap">−</button><span id="rowSnapGridValue">${escapeHtml(rowSnapGrid().label)}</span><button type="button" id="rowSnapGridPlus" aria-label="Larger alignment snap">+</button><button type="button" id="rowRotationSnapMinus" aria-label="Smaller rotation snap">−</button><span id="rowRotationSnapValue">${rowRotationSnapDegrees()}°</span><button type="button" id="rowRotationSnapPlus" aria-label="Larger rotation snap">+</button></span><label class="card-row-color-label">Placeholder color <input id="rowEnvelopeColor" type="color" value="${escapeHtml(state.rowEnvelopeColor || '#f3f0ea')}"></label><label class="card-row-table-color-label">Table <input id="rowTableColor" type="color" value="${escapeHtml(state.rowTableColor || '#7d1f28')}"></label><button type="button" id="rowTableImageUpload">Upload table image</button><button type="button" id="rowTableImageReset" ${state.rowTableImage ? '' : 'disabled'}>Reset table</button><button type="button" id="resetCardRowLayout" ${displaySlots ? '' : 'disabled'}>Reset layout</button><button type="button" id="resetRowCardTransform" ${displaySlots ? '' : 'disabled'}>Reset selected card</button><button type="button" id="selectAllRow" ${items.length ? '' : 'disabled'}>Select all</button><button type="button" id="clearRowSelection" ${state.shortListSelection.length ? '' : 'disabled'}>Clear selection</button><button type="button" id="snapshotCardRowArrangement" ${displaySlots ? '' : 'disabled'}>Snapshot</button><button type="button" id="downloadRowHtml" ${items.length ? '' : 'disabled'}>Board with art</button><button type="button" id="downloadRowTextHtml" ${items.length ? '' : 'disabled'}>Text only</button><button type="button" id="downloadRowJson" ${items.length ? '' : 'disabled'}>Board data</button><button type="button" id="printCardRowImage" ${items.length ? '' : 'disabled'}>Image</button><label class="card-row-notes-label">Notes <textarea id="rowNotes" rows="1" placeholder="Board notes">${escapeHtml(rowNotes)}</textarea></label><input id="rowTableImageFile" type="file" accept="image/*" hidden></div></details>`;
+    const moreOptionsHtml = `<details class="card-row-more-options card-row-settings-panel"><summary>More Board Options</summary><div class="card-row-tools card-row-composer"><label class="card-row-name-label">Name <input id="rowName" type="text" value="${escapeHtml(rowName)}" placeholder="Reading name"></label><label class="card-row-position-label">Position stickers <input id="rowPositionLabels" type="text" list="rowStickerPresetList" value="${escapeHtml(positionValue)}" placeholder="Type stickers, or choose a spread…"><datalist id="rowStickerPresetList">${STICKER_PRESETS.map(preset => `<option value="${escapeHtml(stickerPresetDisplay(preset))}">${escapeHtml(preset.labels.join(', '))}</option>`).join('')}</datalist></label><label class="card-row-draw-scope-label">Pack <select id="rowDrawScope">${option('full','Full Pack')}${option('shown','Shown cards')}${option('uhn','Universal Human Needs')}${option('majors','Majors')}${option('primordial-majors','Primordial Element Majors')}${option('planetary-majors','Planetary Majors')}${option('zodiac-majors','Zodiac Majors')}${option('aces','Aces')}${option('courts','Courts')}${option('pips','Pips')}${option('decans','Decan pips')}${option('wands','Wands')}${option('cups','Cups')}${option('swords','Swords')}${option('pentacles','Pentacles / Disks')}${option('tags','Keywords / Tags')}</select></label>${keywordSubpackHtml()}<label class="spread-toggle"><input id="rowAllowRepeats" type="checkbox" ${state.rowAllowRepeats ? 'checked' : ''}> Repeats</label><label class="spread-toggle"><input id="rowSnapEnabled" type="checkbox" ${state.rowSnapEnabled ? 'checked' : ''}> Align</label><label class="spread-toggle"><input id="rowRotationSnapEnabled" type="checkbox" ${state.rowRotationSnapEnabled ? 'checked' : ''}> Rotation snap</label><span class="card-row-snap-steppers"><button type="button" id="rowSnapGridMinus" aria-label="Smaller alignment snap">−</button><span id="rowSnapGridValue">${escapeHtml(rowSnapGrid().label)}</span><button type="button" id="rowSnapGridPlus" aria-label="Larger alignment snap">+</button><button type="button" id="rowRotationSnapMinus" aria-label="Smaller rotation snap">−</button><span id="rowRotationSnapValue">${rowRotationSnapDegrees()}°</span><button type="button" id="rowRotationSnapPlus" aria-label="Larger rotation snap">+</button></span><label class="card-row-color-label">Placeholder color <input id="rowEnvelopeColor" type="color" value="${escapeHtml(state.rowEnvelopeColor || '#f3f0ea')}"></label><label class="card-row-table-color-label">Table <input id="rowTableColor" type="color" value="${escapeHtml(state.rowTableColor || '#7d1f28')}"></label><button type="button" id="rowTableImageUpload">Upload table image</button><button type="button" id="rowTableImageReset" ${state.rowTableImage ? '' : 'disabled'}>Reset table</button><button type="button" id="resetCardRowLayout" ${displaySlots ? '' : 'disabled'}>Reset layout</button><button type="button" id="resetRowCardTransform" ${displaySlots ? '' : 'disabled'}>Reset selected card</button><button type="button" id="selectAllRow" ${items.length ? '' : 'disabled'}>Select all</button><button type="button" id="clearRowSelection" ${state.shortListSelection.length ? '' : 'disabled'}>Clear selection</button><button type="button" id="snapshotCardRowArrangement" ${displaySlots ? '' : 'disabled'}>Snapshot</button><button type="button" id="downloadRowHtml" ${items.length ? '' : 'disabled'}>Board with art</button><button type="button" id="downloadRowTextHtml" ${items.length ? '' : 'disabled'}>Text only</button><button type="button" id="downloadRowJson" ${items.length ? '' : 'disabled'}>Board data</button><button type="button" id="printCardRowImage" ${items.length ? '' : 'disabled'}>Image</button><label class="card-row-notes-label">Notes <textarea id="rowNotes" rows="1" placeholder="Board notes">${escapeHtml(rowNotes)}</textarea></label><input id="rowTableImageFile" type="file" accept="image/*" hidden></div></details>`;
     wrap.innerHTML = `<details class="short-list-drawer card-row-drawing-board"><summary><strong>Drawing Board <span class="card-row-count">${items.length}</span></strong></summary><div class="drawing-board-mode-tabs" role="tablist" aria-label="Drawing Board modes"><button type="button" id="drawingBoardBoardTab" role="tab" aria-selected="true" class="is-active">Board</button><button type="button" id="drawingBoardOptionsButton" role="tab" aria-controls="drawingBoardReadingOptions" aria-selected="false" aria-expanded="false">Referents</button></div><div class="drawing-board-board-mode" role="tabpanel" aria-label="Board"><div class="drawing-board-top-actions" aria-label="Board actions"><button type="button" id="drawRandomRowCard" title="Draw random card" aria-label="Draw random card">Draw</button><button type="button" id="undoShortList" class="board-history-icon" ${state.shortListUndo.length ? '' : 'disabled'} title="Undo" aria-label="Undo"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"><path d="M9 7 4 12l5 5"></path><path d="M4 12h9a7 7 0 0 1 7 7"></path></svg></button><button type="button" id="redoShortList" class="board-history-icon" ${state.shortListRedo.length ? '' : 'disabled'} title="Redo" aria-label="Redo"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"><path d="m15 7 5 5-5 5"></path><path d="M20 12h-9a7 7 0 0 0-7 7"></path></svg></button><button type="button" id="clearShortListCardsOnly" ${items.length ? '' : 'disabled'} title="Remove drawn cards and keep the spread positions" aria-label="Clear cards and keep spread positions">Clear Cards</button></div><span class="short-list-actions card-row-icon-toolbar card-row-action-staging" aria-label="Drawing Board staging controls" hidden><button type="button" id="addCardPlaceholder" title="Add placeholder" aria-label="Add placeholder">Add placeholder</button><label class="quick-reversal-toggle" title="Allow reversed cards in future draws"><input id="rowAllowReversalsQuick" type="checkbox" ${state.rowAllowReversals ? 'checked' : ''}> Reversals</label><button type="button" id="clearShortList" ${displaySlots ? '' : 'disabled'} title="Clear board" aria-label="Clear Drawing Board">Clear</button></span>${moreOptionsHtml}${boardHtml}</div></details>`;
     bindRenderedDrawingBoardActions(wrap);
     const renderedBoardDrawer = wrap.querySelector('.card-row-drawing-board');
@@ -2848,7 +2961,45 @@
         renderShortList();
       });
     }
-    const scope = $('rowDrawScope'); if (scope) scope.addEventListener('change', () => { state.rowDrawScope = scope.value; resetRowDrawDeck(); renderShortList(); });
+    const scope = $('rowDrawScope'); if (scope) scope.addEventListener('change', () => {
+      state.rowDrawScope = scope.value;
+      if (scope.value !== 'tags') state.rowTagQuery = '';
+      resetRowDrawDeck();
+      renderShortList();
+    });
+    const tagQuery = $('rowTagQuery');
+    if (tagQuery) tagQuery.addEventListener('input', () => {
+      state.rowTagQuery = tagQuery.value.slice(0, 120);
+      resetRowDrawDeck();
+      renderShortList();
+      const next = $('rowTagQuery');
+      if (next) {
+        next.focus({ preventScroll:true });
+        try { next.setSelectionRange(next.value.length, next.value.length); } catch (error) {}
+      }
+    });
+    qsa('[data-row-tag-choice]', wrap).forEach(input => input.addEventListener('change', () => {
+      const value = input.value;
+      const current = Array.isArray(state.rowSelectedTags) ? state.rowSelectedTags.slice() : [];
+      state.rowSelectedTags = input.checked
+        ? [...current.filter(tag => normalizeSearch(tag) !== normalizeSearch(value)), value]
+        : current.filter(tag => normalizeSearch(tag) !== normalizeSearch(value));
+      resetRowDrawDeck();
+      renderShortList();
+    }));
+    qsa('[data-row-tag-remove]', wrap).forEach(button => button.addEventListener('click', event => {
+      event.preventDefault();
+      const value = button.dataset.rowTagRemove || '';
+      state.rowSelectedTags = (state.rowSelectedTags || []).filter(tag => normalizeSearch(tag) !== normalizeSearch(value));
+      resetRowDrawDeck();
+      renderShortList();
+    }));
+    qsa('input[name="rowTagMatchMode"]', wrap).forEach(input => input.addEventListener('change', () => {
+      if (!input.checked) return;
+      state.rowTagMatchMode = input.value === 'all' ? 'all' : 'any';
+      resetRowDrawDeck();
+      renderShortList();
+    }));
     const repeats = $('rowAllowRepeats'); if (repeats) repeats.addEventListener('change', () => { state.rowAllowRepeats = repeats.checked; resetRowDrawDeck(); renderShortList(); });
     const reversals = $('rowAllowReversals'); if (reversals) reversals.addEventListener('change', () => { state.rowAllowReversals = reversals.checked; resetRowDrawDeck(); renderShortList(); });
     const quickReversals = $('rowAllowReversalsQuick'); if (quickReversals) quickReversals.addEventListener('change', () => { state.rowAllowReversals = quickReversals.checked; resetRowDrawDeck(); renderShortList(); });
