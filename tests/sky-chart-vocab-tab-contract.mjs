@@ -36,7 +36,7 @@ assert.match(html,/sky-chart-vocab-tab-v1\.js\?v=85/,'Sky Chart must load the Vo
 assert.match(html,/sky-chart-placement-multiselect-v4\.js\?v=7/,'Sky Chart must load the shared Relationships Placements controller');
 assert.match(html,/sky-chart-harmonic-orb-v1\.js\?v=8/,'Sky Chart must load the shared Harmonic Window model fix');
 assert.match(html,/sky-chart-orb-control-v1\.js\?v=20/,'Relationships must load the Harmonic Window controller with stable match-count semantics');
-assert.match(html,/sky-chart-relationship-limit-v1\.js\?v=3/,'Relationships must load the progressive-proof header result-limit owner after sorting');
+assert.match(html,/sky-chart-relationship-limit-v1\.js\?v=11/,'Relationships must load the hybrid preset/custom Max owner after sorting');
 assert.match(html,/sky-chart-relationship-scope-sections-v1\.js\?v=11/,'Relationships Copy must load the result-limit-aware scope serializer');
 assert.match(html,/sky-chart-relationship-export-columns-v1\.js\?v=14/,'Relationships export must load the header-Limit-aware exporter');
 assert.match(html,/sky-chart-foundation-interactions-v1\.css\?v=6/,'Relationships must load the progressive-proof match-count styling');
@@ -175,7 +175,9 @@ assert.match(orbControl,/count\.dataset\.countLabel='matches'/,'Relationship sta
 assert.match(foundationCss,/#skyFoundationRelationshipCount\[data-count-label="matches"\]::before\s*\{[\s\S]*content:attr\(data-match-count\)/,'The visible relationship number must come from stable match state rather than mutable legacy text');
 assert.match(foundationCss,/#skyFoundationRelationshipCount\[data-count-label="matches"\]::after\s*\{[\s\S]*content:"matches"/,'The relationship count must visibly append matches');
 assert.match(foundationCss,/\.sky-foundation-harmonic-show-more\s*\{/,'The Harmonic continuation item must be styled as a full-width list item');
-assert.match(relationshipLimit,/\[\['10','10'\],\['20','20'\],\['50','50'\],\['all','All'\]\]/,'Result Limit must offer an editable positive integer Max');
+assert.match(relationshipLimit,/const PRESETS=Object\.freeze\(\[5,10,20,50\]\)/,'Result Limit must expose the common Max presets 5, 10, 20, and 50');
+assert.match(relationshipLimit,/\['custom','Custom…'\]/,'Result Limit must expose Custom as a preset-list choice');
+assert.match(relationshipLimit,/input\.type='number'[\s\S]*input\.min='1'/,'Custom Max must accept positive cardinal numbers');
 assert.match(relationshipLimit,/function ensureHeadingActions\(\)/,'Result Limit must live in the Relationships heading action cluster rather than the filter grid');
 assert.match(relationshipLimit,/const actions=ensureHeadingActions\(\)/,'The Limit control must mount through the heading action owner');
 assert.match(relationshipLimit,/count\.dataset\.matchCount=next/,'The Relationships header must store the pre-cap qualifying count in dedicated match state');
@@ -186,7 +188,7 @@ assert.doesNotMatch(relationshipLimit,/countObserver/,'Legacy count text rewrite
 assert.match(relationshipLimit,/CAP_CLASS='sky-chart-result-limit-hidden'/,'Result Limit must own a distinct non-destructive visibility class');
 assert.match(relationshipLimit,/eligible\.forEach\(\(row,index\)=>row\.classList\.toggle\(CAP_CLASS,index>=cap\)\)/,'Result Limit must cap the current sorted eligible DOM order');
 assert.match(relationshipLimit,/data\.resultLimitShowMore='true'/,'A capped list must expose an actionable continuation row');
-assert.match(relationshipLimit,/if\(limit==='20'\)return'50'/,'Show more must advance a 20-result cap without requiring the dropdown');
+assert.match(relationshipLimit,/PRESETS\.find\(value=>value>current\)/,'Show more must advance through the common Max presets without requiring the dropdown');
 assert.match(relationshipScope,/sky-chart-result-limit-hidden/,'Relationships Copy must exclude rows hidden by the result cap');
 assert.match(relationshipScope,/Copied '\+visibleRows\(\)\.length/,'Copy feedback must confirm the number of capped visible relationships copied');
 assert.match(relationshipExport,/limit=document\.querySelector\('#skyFoundationRelationships \[data-relationship-limit\]'\)/,'Relationship export summary must include the header-mounted active result cap');
