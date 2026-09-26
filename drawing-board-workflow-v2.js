@@ -1043,6 +1043,61 @@
     }
     return result.slice(0,MAX_POSITIONS);
   }
+  const ASTRO_SIGNS=['Aries','Taurus','Gemini','Cancer','Leo','Virgo','Libra','Scorpio','Sagittarius','Capricorn','Aquarius','Pisces'];
+  const ASTRO_MODES=['Cardinal','Fixed','Mutable'];
+  const ASTRO_ELEMENTS=['Fire','Earth','Air','Water'];
+  const ASTRO_DECAN_CARDS=[
+    ['two_of_wands','three_of_wands','four_of_wands'],['five_of_pentacles','six_of_pentacles','seven_of_pentacles'],['eight_of_swords','nine_of_swords','ten_of_swords'],
+    ['two_of_cups','three_of_cups','four_of_cups'],['five_of_wands','six_of_wands','seven_of_wands'],['eight_of_pentacles','nine_of_pentacles','ten_of_pentacles'],
+    ['two_of_swords','three_of_swords','four_of_swords'],['five_of_cups','six_of_cups','seven_of_cups'],['eight_of_wands','nine_of_wands','ten_of_wands'],
+    ['two_of_pentacles','three_of_pentacles','four_of_pentacles'],['five_of_swords','six_of_swords','seven_of_swords'],['eight_of_cups','nine_of_cups','ten_of_cups']
+  ];
+  function astrologyPayloadRecords(payload) {
+    const source=payload?.placements||payload?.positions||payload?.points||payload?.bodies||{};
+    return Object.entries(source).map(([key,item])=>{
+      if(!item||typeof item!=='object')return null;
+      let lon=Number(item.longitude),signIndex=ASTRO_SIGNS.findIndex(s=>s.toLowerCase()===String(item.sign||item.zodiac||'').toLowerCase());
+      if(!Number.isFinite(lon)&&signIndex>=0)lon=signIndex*30+Number(item.degree||item.degrees||0)+Number(item.minute||item.minutes||0)/60;
+      if(!Number.isFinite(lon))return null;lon=((lon%360)+360)%360;if(signIndex<0)signIndex=Math.floor(lon/30);
+      const degree=Number.isFinite(Number(item.degree??item.degrees))?Number(item.degree??item.degrees):lon%30;
+      return {key,body:String(item.name||item.label||item.body||item.planet||key),lon,signIndex,sign:ASTRO_SIGNS[signIndex],degree,decan:Math.min(2,Math.floor(degree/10)),mode:ASTRO_MODES[signIndex%3],element:ASTRO_ELEMENTS[signIndex%4]};
+    }).filter(Boolean);
+  }
+  function astrologyCardHits(payload) {
+    if(window.RelphiSkyCardHits?.analyzePayload)return window.RelphiSkyCardHits.analyzePayload(payload);
+    const cards=Array.isArray(window.RELPHI_TAROT_CARDS)?window.RELPHI_TAROT_CARDS:[],map=new Map(),add=(card,reason)=>{
+      if(!card)return;const id=card.card_id||card.stable_symbol_id;if(!id)return;const hit=map.get(id)||{id,name:card.name||card.systems?.golden_dawn_rws?.display_name||id,arcana:card.arcana||'',count:0,reasons:[]};hit.count++;hit.reasons.push(reason);map.set(id,hit);
+    };
+    const split=v=>String(v||'').split(',').map(x=>x.trim()),majorFor=(field,value)=>cards.find(card=>card.arcana==='Major'&&split(card.astrology?.[field]).includes(value));
+    astrologyPayloadRecords(payload).forEach(r=>{add(majorFor('sign',r.sign),r.body+' in '+r.sign);add(cards.find(card=>(card.card_id||card.stable_symbol_id)===ASTRO_DECAN_CARDS[r.signIndex]?.[r.decan]),r.body+' in '+r.sign+' decan '+(r.decan+1));});
+    return [...map.values()].sort((a,b)=>b.count-a.count);
+  }
+  function astrologyPatterns(payload) {
+    const records=astrologyPayloadRecords(payload),patterns=[],countBy=key=>records.reduce((m,r)=>(m[r[key]]=(m[r[key]]||0)+1,m),{});
+    [['sign','sign'],['mode','mode'],['element','element'],['decan','decan']].forEach(([key,type])=>Object.entries(countBy(key)).filter(([,n])=>n>=3).forEach(([value,n])=>patterns.push({type,value:type==='decan'?'Decan '+(Number(value)+1):value,count:n,score:n+(type==='sign'?2:type==='mode'?1:0)})));
+    const sorted=records.slice().sort((a,b)=>a.lon-b.lon);for(let i=0;i<sorted.length;i++){const cluster=[sorted[i]];for(let j=i+1;j<sorted.length;j++){const d=Math.min(Math.abs(sorted[j].lon-sorted[i].lon),360-Math.abs(sorted[j].lon-sorted[i].lon));if(d<=10)cluster.push(sorted[j])}if(cluster.length>=3)patterns.push({type:'cluster',value:cluster.map(r=>r.body).join(' · '),count:cluster.length,score:cluster.length+2})}
+    const cfg=payload?.configurations||payload?.aspectConfigurations||payload?.patterns?.configurations||[];(Array.isArray(cfg)?cfg:[]).forEach(x=>patterns.push({type:'configuration',value:String(x.name||x.type||x.label||'Configuration'),count:Number(x.members?.length||x.points?.length||3),score:7}));
+    return patterns.sort((a,b)=>b.score-a.score||b.count-a.count).filter((p,i,a)=>a.findIndex(q=>q.type===p.type&&q.value===p.value)===i);
+  }
+  function astrologyQuestionSuggestions(analysis) {
+    const out=[],push=(text,score,source,evidence)=>{if(text&&!out.some(q=>q.text===text))out.push({text,score,source,evidence})};
+    analysis.patterns.forEach(p=>{if(p.type==='sign')push('What is the '+p.value+' concentration emphasizing?',90+p.score,'pattern',p);else if(p.type==='mode')push('What is the '+p.value.toLowerCase()+' emphasis asking to be handled differently?',84+p.score,'pattern',p);else if(p.type==='element')push('What is the concentration of '+p.value.toLowerCase()+' bringing to the foreground?',82+p.score,'pattern',p);else if(p.type==='decan')push('Why is '+p.value+' repeating across this sky?',80+p.score,'pattern',p);else if(p.type==='cluster')push('What is the '+p.value+' cluster concentrating into one issue?',92+p.score,'cluster',p);else if(p.type==='configuration')push('What is the '+p.value+' configuration organizing in this reading?',96+p.score,'configuration',p)});
+    analysis.hits.slice(0,8).forEach(hit=>push('What is '+hit.name+' activating in this sky?',70+Math.min(20,hit.count*3),'card-hit',hit));
+    return out.sort((a,b)=>b.score-a.score).slice(0,12);
+  }
+  function astrologyAnalyzeResolved(skyA,skyB) {
+    const perSky=[skyA,skyB].filter(Boolean).map((sky,index)=>({slot:index?'B':'A',name:sky.name||('Sky '+(index?'B':'A')),hits:astrologyCardHits(sky),patterns:astrologyPatterns(sky)}));
+    const hits=new Map(),patterns=[];perSky.forEach(s=>{s.hits.forEach(h=>{const x=hits.get(h.id)||{...h,count:0,reasons:[]};x.count+=h.count;x.reasons.push(...h.reasons);hits.set(h.id,x)});patterns.push(...s.patterns.map(p=>({...p,sky:s.name})))});
+    const analysis={perSky,hits:[...hits.values()].sort((a,b)=>b.count-a.count),patterns};analysis.questions=astrologyQuestionSuggestions(analysis);return analysis;
+  }
+  function astrologyAnalysisMarkup(analysis) {
+    if(!analysis)return '';
+    const hits=analysis.hits.slice(0,8).map(h=>'<li><strong>'+escapeHtml(h.name)+'</strong> ×'+h.count+'</li>').join('');
+    const patterns=analysis.patterns.slice(0,8).map(p=>'<li><strong>'+escapeHtml(p.value)+'</strong> · '+escapeHtml(p.type)+'</li>').join('');
+    const questions=analysis.questions.map((q,i)=>'<label class="relphi-astrology-question"><input type="checkbox" data-astrology-question="'+i+'" '+(i<3?'checked':'')+'><span>'+escapeHtml(q.text)+'</span></label>').join('');
+    return '<div class="relphi-astrology-analysis"><section><h4>Card Hits</h4><ol>'+hits+'</ol></section><section><h4>Patterns</h4><ol>'+patterns+'</ol></section><section class="relphi-astrology-questions"><h4>Suggested questions</h4>'+questions+'</section></div>';
+  }
+
   function astrologySavedSkies() {
     try {
       const list=JSON.parse(localStorage.getItem('relphiSkyLibraryV1')||'[]');
@@ -1058,7 +1113,7 @@
     const value=session[key]||'here-now';
     const selectedId=value.startsWith('saved:')?value.slice(6):'';
     const records=astrologySavedSkies();
-    return '<label class="relphi-astrology-sky-source"><span><strong>Sky '+slot+'</strong><small>Choose the live sky or any sky already saved in Sky Chart.</small></span><select data-astrology-sky-source="'+slot+'" '+(disabled?'disabled':'')+'>'+
+    return '<label class="relphi-astrology-sky-source"><span><strong>Sky '+slot+'</strong></span><select data-astrology-sky-source="'+slot+'" '+(disabled?'disabled':'')+'>'+
       '<option value="here-now" '+(value==='here-now'?'selected':'')+'>Here & Now</option>'+
       (records.length?'<optgroup label="Saved Skies">'+astrologySavedSkyOptions(selectedId)+'</optgroup>':'')+
       '</select>'+(records.length?'':'<small class="relphi-saved-sky-empty">No Saved Skies were found in the shared Sky Chart library.</small>')+'</label>';
@@ -1110,14 +1165,14 @@
   function astrologySurfaceMarkup(session,disabled=false) {
     const count=Math.max(0,Math.min(2,Number(session.astrologySkyCount)||0));
     return '<section class="relphi-referent-panel relphi-astrology-surface">'+
-      '<div class="relphi-options-subhead"><div><strong>Astrological Tarot Reading</strong><span>Add the sky or skies you want this reading to use.</span></div></div>'+
+      '<div class="relphi-options-subhead"><div><strong>Astrological Tarot Reading</strong></div></div>'+
       '<div class="relphi-astrology-sky-sources">'+
         (count>0?astrologySkySourceMarkup('A',session,disabled):'')+
         (count>1?astrologySkySourceMarkup('B',session,disabled):'')+
         (count<2?'<button type="button" class="relphi-add-sky" data-add-astrology-sky '+(disabled?'disabled':'')+'>+ Add a sky</button>':'')+
       '</div>'+
-      (count?'<div class="relphi-astrology-bridge-status"><strong>Sky connection</strong><span data-astrology-sky-status>Each sky is a disposable reading copy. Sky Chart assignments stay unchanged.</span><button type="button" id="relphiConnectSky" '+(disabled?'disabled':'')+'>Use '+(count>1?'These Skies':'This Sky')+'</button></div>':'')+
-      '<p class="relphi-astrology-note">Zodiacal Majors locate houses. Pips retain their exact sign/decan intervals. Card Hits and concentrations will become candidate questions before you Attune.</p>'+
+      (count?'<div class="relphi-astrology-bridge-status"><strong>Sky connection</strong><span data-astrology-sky-status>Ready.</span><button type="button" id="relphiConnectSky" '+(disabled?'disabled':'')+'>Use '+(count>1?'These Skies':'This Sky')+'</button></div>':'')+
+      (session.astrologyAnalysis?astrologyAnalysisMarkup(session.astrologyAnalysis):'')+
       '</section>';
   }
 
@@ -1205,11 +1260,14 @@
         const skyA=await astrologyResolveSource(session.astrologySkyASource||'here-now');
         const skyB=mode==='AB'?await astrologyResolveSource(session.astrologySkyBSource||'here-now'):null;
         session.astrologyResolved={mode,skyA,skyB,resolvedAt:new Date().toISOString()};
-        draft.labels=['Astrological surface · 1','Astrological surface · 2','Astrological surface · 3'];
+        session.astrologyAnalysis=astrologyAnalyzeResolved(skyA,skyB);
+        draft.labels=session.astrologyAnalysis.questions.slice(0,3).map(q=>q.text);
+        if(!draft.labels.length)draft.labels=['Astrological surface · 1','Astrological surface · 2','Astrological surface · 3'];
         draft.positionPacks=['full','full','full'];draft.templateId='';draft.basedOnTemplateId='';draft.templateName='Astrological Tarot Reading';
         window.RELPHI_ASTROLOGICAL_TAROT_CONTEXT=clone(session.astrologyResolved);
         window.dispatchEvent(new CustomEvent('relphi:astrological-tarot-skies-ready',{detail:clone(session.astrologyResolved)}));
-        if(status)status.textContent=(skyA.name||'Sky A')+(skyB?' + '+(skyB.name||'Sky B'):'')+' ready · '+Object.keys(skyA.placements||{}).length+(skyB?' + '+Object.keys(skyB.placements||{}).length:'')+' placements.';
+        if(status)status.textContent=(skyA.name||'Sky A')+(skyB?' + '+(skyB.name||'Sky B'):'')+' ready.';
+        renderOptions(root);
         showBoardToast('The selected sky'+(skyB?'s are':' is')+' loaded into the Astrological Tarot Reading. The next draw can now use real placement data.',{title:'Astrological Tarot Reading',duration:6200});
       }catch(error){if(status)status.textContent=error.message||'The selected sky could not be prepared.';showBoardToast(error.message||'The selected sky could not be prepared.',{title:'Astrological Tarot Reading',duration:6200})}
       finally{if(button?.isConnected){button.disabled=false;button.textContent='Use These Skies'}}
