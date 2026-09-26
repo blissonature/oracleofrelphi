@@ -97,6 +97,7 @@ function resultVertexRecord(key){
 }
 function resultPoint(value,radius=47){const angle=(resultNorm(value)-180)*Math.PI/180;return{x:60+radius*Math.cos(angle),y:60+radius*Math.sin(angle)}}
 function placementLabel(id){return PLACEMENT_SYMBOLS[id]||window.RelphiGlyphRegistry?.get?.(id)?.fallback||String(id||'').replace(/-/g,' ')}
+function placementWord(id){const entry=window.RelphiGlyphRegistry?.get?.(id)||window.RelphiGlyphRegistry?.resolve?.(id);return entry?.name||String(id||'').replace(/-/g,' ').replace(/\b\w/g,letter=>letter.toUpperCase())}
 function vertexLabel(key){const [sky,id]=String(key||'').split(':');return{sky,id,label:placementLabel(id)}}
 function patternScopeLabel(pattern){const scope=patternScope(pattern);return SCOPES.find(item=>item.id===scope)?.label||scope}
 function structureText(pattern){return CONFIG_STRUCTURE[pattern.type]||'a compound aspect pattern'}
@@ -207,6 +208,23 @@ function nestedConfigurationMarkup(pattern){
     return'<span class="sky-configuration-nested-item" data-type="'+child.type+'"><b>'+label+'</b><small>'+exact+'</small></span>';
   }).join('')+'</div></div>';
 }
+async function paintConfigurationParticipantGlyphs(root){
+  if(!root)return;
+  const templates=window.RelphiRelationshipGlyphTemplates;
+  const colors=templates?.colors||RESULT_COLORS;
+  for(const slot of root.querySelectorAll('.sky-configuration-participant-glyph[data-canonical-placement]')){
+    const id=String(slot.dataset.canonicalPlacement||''),sky=String(slot.dataset.sky||'A').toUpperCase(),color=colors?.[sky]||RESULT_COLORS[sky]||RESULT_COLORS.A;
+    if(!id)continue;
+    let glyph=null;
+    try{glyph=await templates?.clone?.(id,color)}catch(_){}
+    if(glyph){
+      glyph.removeAttribute?.('width');glyph.removeAttribute?.('height');
+      slot.replaceChildren(glyph);slot.dataset.canonicalGlyphReady='true';
+    }else{
+      slot.textContent=placementWord(id);slot.dataset.canonicalGlyphReady='false';
+    }
+  }
+}
 function openConfiguration(tile,pattern){
   if(tile.classList.contains('is-expanded')){closeConfigurationTile(tile);return}
   if(openConfigurationTile&&openConfigurationTile!==tile)closeConfigurationTile(openConfigurationTile);
@@ -214,10 +232,11 @@ function openConfiguration(tile,pattern){
   let detail=tile.querySelector(':scope>.sky-configuration-result-detail');
   if(!detail){
     detail=document.createElement('div');detail.className='sky-configuration-result-detail';
-    detail.innerHTML='<div class="sky-configuration-result-visual">'+miniConfigurationMarkup(pattern,{interactive:false})+'</div><div class="sky-configuration-result-explanation"><div class="sky-configuration-result-structure"><strong>Structure</strong><span>'+structureText(pattern)+'</span></div><div class="sky-configuration-result-interpretation"><strong>Interpretation</strong><span>'+interpretationText(pattern)+'</span></div>'+nestedConfigurationMarkup(pattern)+'</div><div class="sky-configuration-result-instance">'+pattern.vertices.map(key=>{const item=vertexLabel(key);return'<span data-sky="'+item.sky+'"><b>'+item.sky+'</b>'+item.label+'</span>'}).join('')+'</div>';
+    detail.innerHTML='<div class="sky-configuration-result-visual">'+miniConfigurationMarkup(pattern,{interactive:false})+'</div><div class="sky-configuration-result-explanation"><div class="sky-configuration-result-structure"><strong>Structure</strong><span>'+structureText(pattern)+'</span></div><div class="sky-configuration-result-interpretation"><strong>Interpretation</strong><span>'+interpretationText(pattern)+'</span></div>'+nestedConfigurationMarkup(pattern)+'</div><div class="sky-configuration-result-instance">'+pattern.vertices.map(key=>{const item=vertexLabel(key);return'<span class="sky-configuration-participant" data-sky="'+item.sky+'" data-placement="'+item.id+'" aria-label="Sky '+item.sky+' '+placementWord(item.id)+'"><span class="sky-configuration-participant-glyph" data-canonical-placement="'+item.id+'" data-sky="'+item.sky+'"></span></span>'}).join('')+'</div>';
     tile.appendChild(detail);
   }
   detail.hidden=false;
+  paintConfigurationParticipantGlyphs(detail);
 }
 function resultTile(pattern,index){
   const type=TYPE_MAP.get(pattern.type),tile=document.createElement('article');tile.className='sky-configuration-result-tile';tile.dataset.configurationResult=pattern.key;tile.dataset.configurationScope=patternScope(pattern);tile.setAttribute('aria-expanded','false');
