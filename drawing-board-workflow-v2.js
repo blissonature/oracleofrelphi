@@ -1086,33 +1086,20 @@
       const now=new Date(),pad=n=>String(n).padStart(2,'0');
       const local=window.luxon?.DateTime?.now?.().setZone?.(packet.timeZone||'UTC');
       const dateTime=local?.isValid?local.toFormat("yyyy-MM-dd'T'HH:mm"):(now.getFullYear()+'-'+pad(now.getMonth()+1)+'-'+pad(now.getDate())+'T'+pad(now.getHours())+':'+pad(now.getMinutes()));
-      astrologySetField('skyCalcTarget','chart');astrologySetField('skyCreatorTarget','chart');astrologySetField('skyCalcDateTime',dateTime);
+      const target='currentSky',protectedSnapshot=typeof captureSkySlot==='function'?captureSkySlot(target):null;
+      astrologySetField('skyCalcTarget',target);astrologySetField('skyCreatorTarget',target);astrologySetField('skyCalcDateTime',dateTime);
       astrologySetField('skyCalcLatitude',packet.latitude);astrologySetField('skyCalcLongitude',packet.longitude);astrologySetField('skyCalcTimeZone',packet.timeZone||'UTC');astrologySetField('skyCalcLocation',packet.location||'Here & Now');astrologySetField('skyCalcName','Here & Now');
-      const run=document.getElementById('skyCalcRun');if(!run)return reject(new Error('The Tarot sky calculator is unavailable.'));
-      run.click();const started=Date.now();
-      (function wait(){
-        const status=document.getElementById('skyCalcStatus')?.textContent?.trim()||'';
-        if(/^Calculated\b/i.test(status)){
-          // The Tarot calculator writes the successful result into its live chart state/form.
-          // saveChart() serializes that state to relphiTarotChart, but allow one paint before
-          // saving so dynamically rebuilt placement controls are present for readChartForm().
-          requestAnimationFrame(()=>requestAnimationFrame(()=>{
-            document.getElementById('saveChart')?.click();
-            setTimeout(()=>{
-              try{
-                const payload=JSON.parse(localStorage.getItem('relphiTarotChart')||'null');
-                if(payload?.placements&&Object.keys(payload.placements).length)return resolve({...payload,name:payload.name||'Here & Now',calcProfile:{dateTime,timeZone:packet.timeZone||'UTC',latitude:Number(packet.latitude),longitude:Number(packet.longitude),location:packet.location||'Here & Now',source:'here-and-now'}});
-                const library=astrologySavedSkies(),fresh=[...library].sort((a,b)=>Date.parse(b.savedAt||0)-Date.parse(a.savedAt||0))[0];
-                if(fresh?.placements&&Object.keys(fresh.placements).length)return resolve({...clone(fresh),calcProfile:{...(fresh.calcProfile||{}),dateTime,timeZone:packet.timeZone||'UTC',latitude:Number(packet.latitude),longitude:Number(packet.longitude),location:packet.location||'Here & Now',source:'here-and-now'}});
-              }catch(_){}
-              reject(new Error('Here & Now calculated, but its placements could not be read back.'));
-            },60);
-          }));return;
-        }
-        if(Date.now()-started>30000)return reject(new Error(status||'Here & Now calculation timed out.'));
-        if(/^(Could not|Enter |Choose )/i.test(status))return reject(new Error(status));
-        setTimeout(wait,120);
-      })();
+      const run=typeof runSkyCalculation==='function'?runSkyCalculation(target):null;
+      Promise.resolve(run).then(ok=>{
+        try{
+          if(ok===false)throw new Error(document.getElementById('skyCalcStatus')?.textContent||'Here & Now could not be calculated.');
+          const placements=typeof statePlacementsForKind==='function'?clone(statePlacementsForKind(target)||{}):{};
+          if(!Object.keys(placements).length)throw new Error('Here & Now calculated, but no disposable placements were returned.');
+          const payload={name:'Here & Now',placements,calcProfile:{dateTime,timeZone:packet.timeZone||'UTC',latitude:Number(packet.latitude),longitude:Number(packet.longitude),location:packet.location||'Here & Now',source:'here-and-now'}};
+          resolve(payload);
+        }catch(error){reject(error)}
+        finally{if(protectedSnapshot&&typeof restoreSkySlot==='function')restoreSkySlot(target,protectedSnapshot)}
+      }).catch(error=>{if(protectedSnapshot&&typeof restoreSkySlot==='function')restoreSkySlot(target,protectedSnapshot);reject(error)});
     });
   }
   async function astrologyResolveSource(source) {
@@ -1124,9 +1111,10 @@
     const mode=session.astrologySkyMode==='AB' ? 'AB' : 'A';
     return '<section class="relphi-referent-panel relphi-astrology-surface">'+
       '<div class="relphi-options-subhead"><div><strong>Astrological Tarot Reading</strong><span>Choose the sky or skies, then let the cards reveal where the astrology is asking for inquiry.</span></div></div>'+
-      '<div class="relphi-astrology-sky-mode" role="radiogroup" aria-label="Number of skies">'+
-        '<label><input type="radio" name="relphiAstrologySkyMode" value="A" '+(mode==='A'?'checked ':'')+(disabled?'disabled':'')+'><span><strong>One sky</strong><small>Read a single sky.</small></span></label>'+
-        '<label><input type="radio" name="relphiAstrologySkyMode" value="AB" '+(mode==='AB'?'checked ':'')+(disabled?'disabled':'')+'><span><strong>Two skies</strong><small>Read the relationship between two skies.</small></span></label>'+
+      '<div class="relphi-astrology-sky-mode relphi-segmented-toggle" role="radiogroup" aria-label="Number of skies">'+
+        '<span class="relphi-segmented-label">Skies:</span>'+
+        '<label class="'+(mode==='A'?'is-active':'')+'"><input type="radio" name="relphiAstrologySkyMode" value="A" '+(mode==='A'?'checked ':'')+(disabled?'disabled':'')+'><span>One</span></label>'+
+        '<label class="'+(mode==='AB'?'is-active':'')+'"><input type="radio" name="relphiAstrologySkyMode" value="AB" '+(mode==='AB'?'checked ':'')+(disabled?'disabled':'')+'><span>Two</span></label>'+
       '</div>'+
       '<div class="relphi-astrology-sky-sources">'+astrologySkySourceMarkup('A',session,disabled)+(mode==='AB'?astrologySkySourceMarkup('B',session,disabled):'')+'</div>'+
       '<div class="relphi-astrology-bridge-status"><strong>Sky connection</strong><span data-astrology-sky-status>Here & Now is available immediately. Saved Sky choices come from Sky Chart.</span><button type="button" id="relphiConnectSky" '+(disabled?'disabled':'')+'>Use These Skies</button></div>'+
