@@ -1300,7 +1300,8 @@
     if (!results) return;
     const q=String(query||'').trim();
     if (!q) { results.innerHTML='<p>Search the Tarot Ledger by card name, title, rank, suit, element, planet, sign, or other indexed term.</p>'; return; }
-    const matches=ledgerBridge()?.searchCards?.(q,24) || [];
+    const scope=String(reader.dataset.attuneScope || 'full');
+    const matches=ledgerBridge()?.searchCards?.(q,24,scope) || [];
     results.innerHTML=matches.length ? matches.map(card=>'<button type="button" data-attune-card="'+escapeHtml(card.card_id)+'"><img src="'+escapeHtml(card.image||'')+'" alt=""><span>'+escapeHtml(card.title||card.card_id)+'</span></button>').join('') : '<p>No matching cards.</p>';
     results.querySelectorAll('[data-attune-card]').forEach(button=>button.addEventListener('click',()=>{
       const target=attuneIndex;
@@ -1309,7 +1310,8 @@
       const cardId=button.dataset.attuneCard || '';
       if (!Number.isInteger(target) || target<0) return;
       pendingFocusIndex=drawnIndex;
-      if (!ledgerBridge()?.addCardToBoard?.(cardId)) { pendingFocusIndex=null; return; }
+      const scope=String(reader.dataset.attuneScope || 'full');
+      if (!ledgerBridge()?.addCardToBoard?.(cardId,scope)) { pendingFocusIndex=null; return; }
       if (target!==drawnIndex) prefabBridge()?.swapPositionSlots?.(drawnIndex,target);
       closeAttune();
       setTimeout(()=>enhance(panel()),0);
@@ -1326,6 +1328,7 @@
     const scope=String(snap.rowPositionMeta?.[index]?.drawScope || snap.rowActiveLayout?.positions?.[index]?.drawScope || snap.rowDrawScope || 'full');
     const reader=document.createElement('section');
     reader.className='relphi-attune-reader';
+    reader.dataset.attuneScope=scope;
     reader.setAttribute('role','dialog');
     reader.setAttribute('aria-modal','true');
     reader.setAttribute('aria-label','Attune to the Referent');
