@@ -99,7 +99,7 @@ function aspectColorRail(pattern){
 function ensureResultsPanel(){
   const relationships=document.getElementById('skyFoundationRelationships'),comparison=document.getElementById('skyFoundationComparison');if(!relationships||!comparison)return null;
   let panel=document.getElementById(RESULT_PANEL_ID);
-  if(!panel){panel=document.createElement('section');panel.id=RESULT_PANEL_ID;panel.className='sky-configuration-results-panel';panel.setAttribute('aria-label','Configuration matches');panel.innerHTML='<header class="sky-configuration-results-heading"><h2>Configurations</h2><span class="sky-configuration-results-count" aria-live="polite"></span></header><div class="sky-configuration-results-grid"></div>'}
+  if(!panel){panel=document.createElement('section');panel.id=RESULT_PANEL_ID;panel.className='sky-configuration-results-panel';panel.setAttribute('aria-label','Configuration matches');panel.innerHTML='<header class="sky-configuration-results-heading"><h2>Configurations</h2><span class="sky-configuration-results-actions"><span class="sky-configuration-results-count" aria-live="polite"></span><button type="button" class="sky-configuration-copy-button">Copy</button><button type="button" class="sky-configuration-download-button" aria-label="Download visible configurations as PNG" title="Download visible configurations as PNG"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 3v11m0 0-4-4m4 4 4-4M5 15v4h14v-4" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg></button></span></header><div class="sky-configuration-results-grid"></div>'}
   if(panel.parentElement!==comparison||panel.nextElementSibling!==relationships)comparison.insertBefore(panel,relationships);
   return panel;
 }
@@ -183,11 +183,84 @@ function configurationFocusActive(){
 function patternsForResults(){
   return configurationFocusActive()?selectedPatternsForVisibility():patterns;
 }
+
+let configurationCopyTimer=0,configurationExportBusy=false,configurationExportLibrary=null;
+function configurationVertexText(key){
+  const record=resultVertexRecord(key),item=vertexLabel(key);
+  if(!record)return 'Sky '+item.sky+' '+item.label;
+  const signNames=['Aries','Taurus','Gemini','Cancer','Leo','Virgo','Libra','Scorpio','Sagittarius','Capricorn','Aquarius','Pisces'];
+  const sign=Math.floor(resultNorm(record.value)/30),within=resultNorm(record.value)-sign*30,degree=Math.floor(within),minute=Math.floor((within-degree)*60+1e-7);
+  return 'Sky '+item.sky+' '+item.label+' '+degree+'°'+String(minute).padStart(2,'0')+'′ '+signNames[sign];
+}
+function serializeConfigurationPattern(pattern){
+  const type=TYPE_MAP.get(pattern.type)?.label||pattern.type;
+  const scope=patternScopeLabel(pattern);
+  const exact=Number.isFinite(pattern.maxPhase)?' · max phase '+pattern.maxPhase.toFixed(2)+'°':'';
+  const vertices=pattern.vertices.map(configurationVertexText).join(' · ');
+  const recipe=CONFIG_STRUCTURE[pattern.type]||'compound aspect pattern';
+  return type+' · '+scope+exact+'\n'+recipe+'\n'+vertices;
+}
+function serializeVisibleConfigurations(){
+  const current=patternsForResults();
+  if(!current.length)return'';
+  return 'Configurations\n\n'+current.map(serializeConfigurationPattern).join('\n\n');
+}
+async function copyVisibleConfigurations(button){
+  const text=serializeVisibleConfigurations();if(!text)return;
+  let ok=false;
+  try{if(navigator.clipboard?.writeText){await navigator.clipboard.writeText(text);ok=true}}catch(_){}
+  if(!ok){
+    const area=document.createElement('textarea');area.value=text;area.setAttribute('readonly','');Object.assign(area.style,{position:'fixed',left:'-10000px',top:'0',opacity:'0'});document.body.appendChild(area);area.select();try{ok=document.execCommand('copy')}catch(_){}area.remove();
+  }
+  if(ok&&button){
+    const count=patternsForResults().length;button.textContent='Copied '+count;clearTimeout(configurationCopyTimer);configurationCopyTimer=setTimeout(()=>{if(button.isConnected)button.textContent='Copy'},1200);
+  }
+}
+function loadConfigurationExporter(){
+  if(window.htmlToImage?.toPng)return Promise.resolve(window.htmlToImage);
+  if(configurationExportLibrary)return configurationExportLibrary;
+  const src='https://cdn.jsdelivr.net/npm/html-to-image@1.11.11/dist/html-to-image.js';
+  configurationExportLibrary=new Promise((resolve,reject)=>{
+    const existing=document.querySelector('script[src="'+src+'"]');
+    if(existing){if(window.htmlToImage?.toPng)return resolve(window.htmlToImage);existing.addEventListener('load',()=>window.htmlToImage?.toPng?resolve(window.htmlToImage):reject(new Error('PNG exporter unavailable.')),{once:true});existing.addEventListener('error',()=>reject(new Error('PNG exporter did not load.')),{once:true});return}
+    const script=document.createElement('script');script.src=src;script.async=true;script.crossOrigin='anonymous';script.addEventListener('load',()=>window.htmlToImage?.toPng?resolve(window.htmlToImage):reject(new Error('PNG exporter unavailable.')),{once:true});script.addEventListener('error',()=>reject(new Error('PNG exporter did not load.')),{once:true});document.head.appendChild(script);
+  });
+  return configurationExportLibrary;
+}
+function configurationExportName(){
+  const safe=value=>String(value||'sky').trim().toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'').slice(0,48)||'sky';
+  const sky=slot=>{try{const data=resultRead(slot)||{};return data.metadata?.savedSkyName||data.name||data.displayName||data.skyName||data.title||('sky-'+slot.toLowerCase())}catch(_){return'sky-'+slot.toLowerCase()}};
+  const stamp=new Date().toISOString().replace(/[-:]/g,'').replace(/T(\d{4}).*/, '-$1');
+  return safe(sky('A'))+'-vs-'+safe(sky('B'))+'-configurations-'+stamp+'.png';
+}
+async function downloadVisibleConfigurations(button){
+  if(configurationExportBusy)return;
+  const source=document.getElementById(RESULT_PANEL_ID);if(!source||source.hidden)return;
+  configurationExportBusy=true;if(button){button.disabled=true;button.setAttribute('aria-busy','true')}
+  let host=null;
+  try{
+    const width=Math.max(560,Math.ceil(source.getBoundingClientRect().width||700));
+    host=document.createElement('div');Object.assign(host.style,{position:'fixed',left:'-100000px',top:'0',width:width+'px',background:'#fffdf8',zIndex:'-1'});document.body.appendChild(host);
+    const clone=source.cloneNode(true);clone.removeAttribute('hidden');clone.querySelector('.sky-configuration-results-actions')?.querySelectorAll('button').forEach(node=>node.remove());clone.style.width=width+'px';host.appendChild(clone);
+    if(document.fonts?.ready)await document.fonts.ready.catch(()=>{});
+    const exporter=await loadConfigurationExporter();
+    const height=Math.max(1,Math.ceil(clone.scrollHeight||clone.getBoundingClientRect().height||300)),pixelRatio=Math.min(2,Math.max(1,window.devicePixelRatio||1));
+    const dataUrl=await exporter.toPng(clone,{cacheBust:false,backgroundColor:'#fffdf8',width,height,pixelRatio,canvasWidth:Math.ceil(width*pixelRatio),canvasHeight:Math.ceil(height*pixelRatio),skipAutoScale:true,includeQueryParams:false});
+    const a=document.createElement('a');a.href=dataUrl;a.download=configurationExportName();a.style.display='none';document.body.appendChild(a);a.click();a.remove();
+  }catch(error){console.error('Configuration export failed:',error)}
+  finally{host?.remove();configurationExportBusy=false;if(button?.isConnected){button.disabled=false;button.removeAttribute('aria-busy')}}
+}
+function bindConfigurationActions(panel){
+  const copy=panel?.querySelector('.sky-configuration-copy-button'),download=panel?.querySelector('.sky-configuration-download-button');
+  if(copy&&!copy.dataset.bound){copy.dataset.bound='true';copy.addEventListener('click',event=>{event.preventDefault();event.stopPropagation();copyVisibleConfigurations(copy)})}
+  if(download&&!download.dataset.bound){download.dataset.bound='true';download.addEventListener('click',event=>{event.preventDefault();event.stopPropagation();downloadVisibleConfigurations(download)})}
+}
 function renderResultsPanel(){
   const panel=ensureResultsPanel();if(!panel)return;
   const visiblePatterns=patternsForResults();
   if(!visiblePatterns.length){panel.hidden=true;clearPatternHighlight();openConfigurationTile=null;return}
   panel.hidden=false;
+  bindConfigurationActions(panel);
   const count=panel.querySelector('.sky-configuration-results-count'),grid=panel.querySelector('.sky-configuration-results-grid');
   if(grid){grid.replaceChildren();visiblePatterns.forEach((pattern,index)=>grid.appendChild(resultTile(pattern,index)));openConfigurationTile=null}
   const currentCount=grid?.querySelectorAll(':scope>.sky-configuration-result-tile').length??visiblePatterns.length;
