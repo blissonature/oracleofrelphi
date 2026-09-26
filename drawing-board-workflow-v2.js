@@ -217,10 +217,16 @@
 
   const RECURSION_ID = 'relphi-recursion-22';
   const RECURSION_LEVELS = 7;
+  const RECURSION_LOGO_GEOMETRY = Object.freeze({
+    mem:Object.freeze({x:.377,y:.318}),
+    aleph:Object.freeze({x:.537,y:.318}),
+    shin:Object.freeze({x:.377,y:.508}),
+    earth:Object.freeze({x:.537,y:.508})
+  });
   const RECURSION_TRIAD = Object.freeze([
-    { key:'mem', label:'Mem · Water', glyph:'מ', role:'recursion-mem', x:.055 },
-    { key:'aleph', label:'Aleph · Air', glyph:'א', role:'recursion-aleph', x:.355 },
-    { key:'shin', label:'Shin · Fire', glyph:'ש', role:'recursion-shin', x:.655 }
+    { key:'mem', label:'Mem · Water', glyph:'מ', role:'recursion-mem', ...RECURSION_LOGO_GEOMETRY.mem },
+    { key:'aleph', label:'Aleph · Air', glyph:'א', role:'recursion-aleph', ...RECURSION_LOGO_GEOMETRY.aleph },
+    { key:'shin', label:'Shin · Fire', glyph:'ש', role:'recursion-shin', ...RECURSION_LOGO_GEOMETRY.shin }
   ]);
   function recursionPositions() {
     const positions=[];
@@ -231,7 +237,7 @@
           `recursion-${level}-${item.key}`,
           `Level ${level} · ${item.label}`,
           drawOrder++,
-          transform(item.x,.18,.86),
+          transform(item.x,item.y,.44),
           { role:item.role, recursionLevel:level, recursionElement:item.key, recursionGlyph:item.glyph }
         ));
       });
@@ -240,7 +246,7 @@
           'recursion-7-earth',
           'Level 7 · Earth · Completion · Seed',
           drawOrder++,
-          transform(.355,.62,.56),
+          transform(RECURSION_LOGO_GEOMETRY.earth.x,RECURSION_LOGO_GEOMETRY.earth.y,.44),
           { role:'recursion-earth', recursionLevel:7, recursionElement:'earth', recursionGlyph:'🜃' }
         ));
       }
@@ -250,7 +256,7 @@
   const RELPHI_RECURSION = {
     version:1,
     id:RECURSION_ID,
-    name:'Relphi Recursion Reading',
+    name:'Relphi Recursive Reading',
     cardCount:22,
     positionCount:28,
     virtualPositionCount:6,
@@ -506,6 +512,11 @@
         if (rect.width>0 && rect.height>0) rects.push(rect);
       });
     });
+    const recursionLogo=board.querySelector(':scope > .relphi-recursion-logo-underlay');
+    if (recursionLogo) {
+      const rect=recursionLogo.getBoundingClientRect();
+      if (rect.width>0 && rect.height>0) rects.push(rect);
+    }
     if (!rects.length) return {minX:0,minY:0,maxX:CARD_W,maxY:CARD_H};
     return {
       minX:Math.min(...rects.map(rect=>(rect.left-boardRect.left)/currentZoom)),
@@ -995,7 +1006,7 @@
     const selected=templateById(draft.templateId||draft.basedOnTemplateId);
     const positions=selected?.positions?.slice?.().sort((a,b)=>a.drawOrder-b.drawOrder) || [];
     const preview=selected?.id===RECURSION_ID
-      ? '<div class="relphi-recursion-template-note"><strong>Seven recursive levels · 22 cards</strong><span>Mem, Aleph, and Shin repeat at each depth. Earth is the portal between the first six levels; the seventh Earth receives the twenty-second card.</span></div>'
+      ? '<div class="relphi-recursion-template-note"><strong>Seven recursive levels · 22 cards</strong><span>Each level uses the Relphi logo: Mem, Aleph, and Shin occupy the three black circles. The red circle is Earth, the portal to the next level; on Level 7 it receives card 22.</span></div>'
       : positions.length
         ? '<ol class="relphi-template-preview">'+positions.map(item=>'<li>'+escapeHtml(item.label)+'</li>').join('')+'</ol>'
         : '<p class="relphi-referent-empty">Choose a template to preview its referents.</p>';
@@ -1409,6 +1420,7 @@
   function installRecursionBoard(root=panel()) {
     if (!root) return;
     const workspace=root.querySelector('.card-row-workspace');
+    const board=root.querySelector('.card-row-board');
     const session=ensureRecursionSession();
     root.classList.toggle('relphi-recursion-reading',!!session);
     root.querySelectorAll('.card-row-board>.card-row-item[data-row-index]').forEach(item=>{
@@ -1419,10 +1431,19 @@
       if (element) item.dataset.relphiRecursionElement=element; else delete item.dataset.relphiRecursionElement;
       item.classList.toggle('is-recursion-level-active',!!session && level===session.level);
     });
-    if (!workspace) return;
+    if (!workspace || !board) return;
     let depth=workspace.querySelector('.relphi-recursion-board-depth');
-    let portal=workspace.querySelector('.relphi-recursion-board-portal');
-    if (!session) { depth?.remove(); portal?.remove(); return; }
+    let logo=board.querySelector(':scope > .relphi-recursion-logo-underlay');
+    let portal=board.querySelector(':scope > .relphi-recursion-board-portal');
+    if (!session) { depth?.remove(); logo?.remove(); portal?.remove(); return; }
+    if (!logo) {
+      logo=document.createElement('img');
+      logo.className='relphi-recursion-logo-underlay';
+      logo.src='logo.png';
+      logo.alt='';
+      logo.setAttribute('aria-hidden','true');
+      board.prepend(logo);
+    }
     if (!depth) {
       depth=document.createElement('nav');
       depth.className='relphi-recursion-board-depth';
@@ -1438,7 +1459,7 @@
         portal=document.createElement('button');
         portal.type='button';
         portal.className='relphi-recursion-board-portal';
-        workspace.appendChild(portal);
+        board.appendChild(portal);
       }
       const ready=recursionTriadComplete(session.level);
       portal.disabled=!ready;
