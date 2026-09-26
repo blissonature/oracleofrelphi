@@ -76,13 +76,16 @@ const base='http://127.0.0.1:8000/tarot.html';
     await page.click('#relphiApplyOptions');
 
     await page.waitForSelector('.relphi-referents-drawer',{state:'detached'});
-    await page.waitForSelector('.relphi-attune-reader',{state:'visible'});
     assert.equal(await page.locator('#drawingBoardBoardTab').getAttribute('aria-selected'),'true','Start Reading should return to Board mode');
     assert.equal(await page.locator('.drawing-board-board-mode').isVisible(),true,'Board actions should reappear after Start Reading');
-    assert.equal(await page.locator('.relphi-focus-reader').count(),0,'Attunement should happen before the card is revealed');
+    assert.equal(await page.locator('.relphi-focus-reader').count(),0,'No card should be revealed before attunement');
+    assert.equal(await page.locator('.relphi-attune-reader').count(),0,'The board guidance toast should be visible before the attunement screen covers the board');
     assert.equal(await page.locator('#shortListPanel .card-row-board [data-row-card]').count(),0,'No card should be chosen before the reader reveals it');
-    assert.equal(await page.locator('.relphi-attune-shell h2').textContent(),'Which primordial force?');
     assert.ok((await page.locator('.relphi-board-toast').innerText()).includes('Attune to each referent'),'Board toast should explain the reading mode after settings are established');
+    assert.equal(await page.locator('.relphi-board-toast-action').textContent(),'Begin reading');
+    await page.click('.relphi-board-toast-action');
+    await page.waitForSelector('.relphi-attune-reader',{state:'visible'});
+    assert.equal(await page.locator('.relphi-attune-shell h2').textContent(),'Which primordial force?');
 
     const configured=await page.evaluate(()=>window.RelphiDrawingBoardOptionsBridge.capture());
     assert.deepEqual(configured.shortListPositionLabels.slice(0,2),['Which primordial force?','How is it being carried?']);
