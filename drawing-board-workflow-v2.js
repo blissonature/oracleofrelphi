@@ -360,6 +360,7 @@
       if (fit) setTimeout(zoomExtents, 0);
     } else {
       closeFocus({ acknowledge:true });
+      closeSurfaceFollowupReview();
       optionsSession = null;
       root.hidden = true;
       trigger.textContent = 'Open Drawing Board';
@@ -1265,7 +1266,7 @@
     if (duration>0) setTimeout(()=>{ if (toast.isConnected) remove(); },duration);
   }
   function surfaceGuidance() {
-    return 'Attune to each referent before revealing its card. Draw randomly from the assigned pack or search for the physical card you drew. After the initial exploration, new questions are created from what surfaced.';
+    return 'Attune to each referent before revealing its card. Draw randomly from the assigned pack or search for the physical card you drew. After the initial exploration, review what surfaced and choose which follow-up questions you actually agree to ask.';
   }
   function cardDataAt(index) {
     const id=String(cardAt(index)?.dataset?.rowCard || '');
