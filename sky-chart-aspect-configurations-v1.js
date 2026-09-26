@@ -31,6 +31,57 @@ const SCOPES=Object.freeze([
   {id:'A-B',label:'A↔B'}
 ]);
 const PLACEMENT_SYMBOLS=Object.freeze({sun:'☉',moon:'☽',mercury:'☿',venus:'♀',mars:'♂',jupiter:'♃',saturn:'♄',uranus:'♅',neptune:'♆',pluto:'♇',chiron:'⚷','north-node':'☊','south-node':'☋',lilith:'⚸','part-of-fortune':'⊗',vertex:'Vx','anti-vertex':'AVx',asc:'Asc',dsc:'Dsc',mc:'MC',ic:'IC'});
+const RESULT_PANEL_ID='skyFoundationConfigurations';
+function placementLabel(id){return PLACEMENT_SYMBOLS[id]||window.RelphiGlyphRegistry?.get?.(id)?.fallback||String(id||'').replace(/-/g,' ')}
+function vertexLabel(key){const [sky,id]=String(key||'').split(':');return{sky,id,label:placementLabel(id)}}
+function patternScopeLabel(pattern){const scope=patternScope(pattern);return SCOPES.find(item=>item.id===scope)?.label||scope}
+function ensureResultsPanel(){
+  const relationships=document.getElementById('skyFoundationRelationships');
+  const comparison=document.getElementById('skyFoundationComparison');
+  if(!relationships||!comparison)return null;
+  let panel=document.getElementById(RESULT_PANEL_ID);
+  if(!panel){
+    panel=document.createElement('section');panel.id=RESULT_PANEL_ID;panel.className='sky-configuration-results-panel';panel.setAttribute('aria-label','Configuration matches');
+    panel.innerHTML='<header class="sky-configuration-results-heading"><div><span class="sky-configuration-results-kicker">Patterns found</span><h2>Configurations</h2></div><span class="sky-configuration-results-count" aria-live="polite"></span></header><div class="sky-configuration-results-grid"></div>';
+  }
+  if(panel.parentElement!==comparison||panel.nextElementSibling!==relationships)comparison.insertBefore(panel,relationships);
+  return panel;
+}
+function clearPatternHighlight(){
+  document.querySelectorAll('.sky-foundation-relationship-row.is-configuration-result-peer').forEach(row=>row.classList.remove('is-configuration-result-peer'));
+  document.querySelectorAll('.sky-chart-configuration-line.is-configuration-result-line').forEach(line=>line.classList.remove('is-configuration-result-line'));
+  document.querySelector('[data-layer="configurations"]')?.classList.remove('is-result-focus');
+}
+function highlightPattern(pattern){
+  clearPatternHighlight();if(!pattern)return;
+  const keys=new Set(pattern.edges.map(edge=>edgeNodeKey(edge)));
+  document.querySelectorAll('.sky-foundation-relationship-row').forEach(row=>{if(keys.has(relationNodeKey(row)))row.classList.add('is-configuration-result-peer')});
+  const layer=document.querySelector('[data-layer="configurations"]');layer?.classList.add('is-result-focus');
+  layer?.querySelectorAll('.sky-chart-configuration-line').forEach(line=>line.classList.toggle('is-configuration-result-line',keys.has(String(line.dataset.configurationKey||''))));
+}
+function resultTile(pattern,index){
+  const type=TYPE_MAP.get(pattern.type),button=document.createElement('button');button.type='button';button.className='sky-configuration-result-tile';button.dataset.configurationResult=pattern.key;
+  const top=document.createElement('span');top.className='sky-configuration-result-top';
+  const name=document.createElement('strong');name.textContent=type?.label||pattern.type;
+  const scope=document.createElement('span');scope.className='sky-configuration-result-scope';scope.textContent=patternScopeLabel(pattern);top.append(name,scope);
+  const vertices=document.createElement('span');vertices.className='sky-configuration-result-vertices';
+  pattern.vertices.map(vertexLabel).forEach(item=>{const chip=document.createElement('span');chip.className='sky-configuration-result-vertex';chip.dataset.sky=item.sky;chip.innerHTML='<b>'+item.sky+'</b><span>'+item.label+'</span>';vertices.appendChild(chip)});
+  const exact=document.createElement('span');exact.className='sky-configuration-result-exactness';exact.textContent=Number.isFinite(pattern.maxPhase)?'max phase '+pattern.maxPhase.toFixed(2)+'°':'';
+  button.append(top,vertices,exact);
+  button.addEventListener('pointerenter',()=>highlightPattern(pattern));button.addEventListener('focus',()=>highlightPattern(pattern));
+  button.addEventListener('pointerleave',clearPatternHighlight);button.addEventListener('blur',clearPatternHighlight);
+  button.addEventListener('click',event=>{event.preventDefault();const locked=button.getAttribute('aria-pressed')==='true';document.querySelectorAll('.sky-configuration-result-tile[aria-pressed="true"]').forEach(tile=>tile.setAttribute('aria-pressed','false'));if(locked){clearPatternHighlight();return}button.setAttribute('aria-pressed','true');highlightPattern(pattern)});
+  button.setAttribute('aria-pressed','false');button.setAttribute('aria-label',(type?.label||pattern.type)+', '+patternScopeLabel(pattern)+', configuration '+(index+1));
+  return button;
+}
+function renderResultsPanel(){
+  const panel=ensureResultsPanel();if(!panel)return;
+  if(!patterns.length){panel.hidden=true;clearPatternHighlight();return}
+  panel.hidden=false;
+  const count=panel.querySelector('.sky-configuration-results-count'),grid=panel.querySelector('.sky-configuration-results-grid');
+  if(count)count.textContent=patterns.length+' match'+(patterns.length===1?'':'es');
+  if(grid){grid.replaceChildren();patterns.forEach((pattern,index)=>grid.appendChild(resultTile(pattern,index)))}
+}
 const CONFIG_STORAGE_KEY='relphiSkyConfigurationMatrixV1';
 const configurationState=Object.fromEntries(SCOPES.map(scope=>[scope.id,new Set()]));
 (function loadPersistedConfigurationState(){try{const saved=JSON.parse(localStorage.getItem(CONFIG_STORAGE_KEY)||'null');if(!saved||typeof saved!=='object')return;SCOPES.forEach(scope=>{if(Array.isArray(saved[scope.id]))configurationState[scope.id]=new Set(saved[scope.id].filter(type=>TYPE_IDS.includes(type)))})}catch(_){}})();
@@ -208,12 +259,12 @@ function reconcileFrozenPeerHover(event){
   if(row)highlightPeers(row);else clearPeerHighlight();
 }
 function setSelection(scope,type,checked){
-  setConfigCells(scope,type,checked);saveConfigurationState();syncConfigInputs();renderOverlay();
+  setConfigCells(scope,type,checked);saveConfigurationState();syncConfigInputs();renderOverlay();renderResultsPanel();
   const matrix=configurationMatrix();
   window.dispatchEvent(new CustomEvent('relphi:sky-configuration-selection-changed',{detail:{matrix,selectedPatterns:selectedPatternsForVisibility().map(pattern=>pattern.key)}}));
 }
 function refresh(){queued=false;if(applying)return;applying=true;try{
-  decorateSimpleGroups();const result=detect();patterns=result.patterns;renderConfigurationSection();
+  decorateSimpleGroups();const result=detect();patterns=result.patterns;renderConfigurationSection();renderResultsPanel();
   window.RelphiAspectConfigurations=Object.freeze({
     types:TYPES,patterns:patterns.slice(),harmonicWindow:result.graph.windowValue,refresh:schedule,participates,
     selectedPatterns:()=>selectedPatternsForVisibility().slice(),matrix:()=>configurationMatrix(),scopeForPattern:patternScope
