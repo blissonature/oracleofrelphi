@@ -2214,7 +2214,8 @@
         }
         if (isEmptyItem(item)) {
           event.preventDefault(); event.stopImmediatePropagation();
-          drawInto(item,index);
+          if (surfaceReadingSession) openAttune(index);
+          else drawInto(item,index);
           return;
         }
       }
