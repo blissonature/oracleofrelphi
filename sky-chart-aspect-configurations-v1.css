@@ -861,3 +861,17 @@ html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]) .sky-chart-con
     grid-template-areas:"visual" "explanation"!important;
   }
 }
+
+
+/* Canonical circled masters own configuration vertices; do not synthesize or restyle the frame. */
+.sky-configuration-mini-point>circle{display:none!important}
+.sky-configuration-mini-vertex-glyph{
+  pointer-events:none;
+}
+.sky-configuration-mini-vertex-glyph>.relphi-canonical-master-frame{
+  transform-box:fill-box;
+  transform-origin:center;
+}
+.sky-configuration-mini-vertex-glyph .relphi-glyph-bubble{
+  overflow:visible;
+}
