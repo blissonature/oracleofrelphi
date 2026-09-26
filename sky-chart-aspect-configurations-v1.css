@@ -962,3 +962,15 @@ html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]) .sky-chart-con
     right:8px;
   }
 }
+
+
+@media(max-width:620px){
+  #skyFoundationConfigurations,
+  #skyFoundationConfigurations .sky-configuration-results-grid,
+  #skyFoundationConfigurations .sky-configuration-result-tile,
+  #skyFoundationConfigurations .sky-configuration-result-summary,
+  #skyFoundationConfigurations .sky-configuration-result-detail,
+  #skyFoundationConfigurations .sky-configuration-match-row{
+    touch-action:pan-y pinch-zoom;
+  }
+}
