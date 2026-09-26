@@ -837,3 +837,27 @@ html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]) .sky-chart-con
   overflow:visible;
   transform:none!important;
 }
+
+
+/* Configuration vertices are identified by their canonical placement glyphs. */
+.sky-configuration-mini-point circle{
+  stroke-width:1.4;
+}
+.sky-configuration-mini-vertex-glyph{
+  pointer-events:none;
+}
+.sky-configuration-mini-vertex-glyph>svg{
+  overflow:visible;
+}
+.sky-configuration-mini-word-fallback{
+  fill:#332e2a;
+  font:800 4.5px/1 system-ui,sans-serif;
+}
+.sky-configuration-result-detail{
+  grid-template-areas:"visual explanation"!important;
+}
+@media(max-width:420px){
+  .sky-configuration-result-detail{
+    grid-template-areas:"visual" "explanation"!important;
+  }
+}
