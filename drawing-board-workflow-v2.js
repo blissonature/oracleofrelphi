@@ -1531,8 +1531,10 @@
       if(custom){
         const box=review.querySelector('[data-followup-custom-use="'+custom.dataset.followupCustomText+'"]');
         if(box && String(custom.value||'').trim())box.checked=true;
+        update();
+        return;
       }
-      update();
+      if(event.target.closest?.('[data-followup-text]'))update();
     });
     review.addEventListener('change',update);
     review.querySelector('[data-followup-skip]')?.addEventListener('click',()=>{
