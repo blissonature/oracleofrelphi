@@ -6,7 +6,7 @@ const app=fs.readFileSync('tarot-app.js','utf8');
 assert.match(js,/Astrological Tarot Reading/);
 assert.match(js,/Sky A \+ Sky B/);
 assert.match(js,/relphiConnectSky/);
-assert.match(js,/relphi:request-sky-connection/);
+assert.match(js,/RELPHI_ASTROLOGICAL_TAROT_CONTEXT/);
 assert.match(js,/options\.textContent='Crafted'/);
 assert.match(js,/boardTab\.textContent='Free'/);
 assert.match(js,/const scrollTop=body\?\.scrollTop\|\|0/);
