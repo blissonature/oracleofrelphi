@@ -249,34 +249,92 @@ function nestedConfigurationMarkup(pattern){
     return'<span class="sky-configuration-nested-item" data-type="'+child.type+'"><b>'+label+'</b><small>'+exact+'</small></span>';
   }).join('')+'</div></div>';
 }
-function openConfiguration(tile,pattern){
+function groupedPatternsForResults(){
+  const groups=new Map();
+  patternsForResults().forEach(pattern=>{
+    if(!groups.has(pattern.type))groups.set(pattern.type,[]);
+    groups.get(pattern.type).push(pattern);
+  });
+  return [...groups.entries()].map(([type,matches])=>({
+    type,
+    matches:matches.slice().sort((a,b)=>a.maxPhase-b.maxPhase||a.meanPhase-b.meanPhase),
+    representative:matches.slice().sort((a,b)=>a.maxPhase-b.maxPhase||a.meanPhase-b.meanPhase)[0]
+  })).sort((a,b)=>a.representative.maxPhase-b.representative.maxPhase||a.representative.meanPhase-b.representative.meanPhase);
+}
+function configurationMatchLabel(pattern){
+  return pattern.vertices.map(key=>vertexLabel(key).label).join(' · ');
+}
+function configurationMatchRow(pattern,index){
+  const button=document.createElement('button');
+  button.type='button';
+  button.className='sky-configuration-match-row';
+  button.dataset.configurationMatch=pattern.key;
+  const placements=document.createElement('span');
+  placements.className='sky-configuration-match-placements';
+  placements.textContent=configurationMatchLabel(pattern);
+  const meta=document.createElement('span');
+  meta.className='sky-configuration-match-meta';
+  const scope=document.createElement('span');
+  scope.textContent=patternScopeLabel(pattern);
+  const exact=document.createElement('span');
+  exact.textContent=Number.isFinite(pattern.maxPhase)?pattern.maxPhase.toFixed(2)+'°':'';
+  meta.append(scope,exact);
+  button.append(placements,meta);
+  button.setAttribute('aria-label','Match '+(index+1)+': '+configurationMatchLabel(pattern)+', '+patternScopeLabel(pattern)+(exact.textContent?', '+exact.textContent:''));
+  button.addEventListener('click',event=>{
+    event.preventDefault();event.stopPropagation();
+    button.closest('.sky-configuration-result-tile')?.querySelectorAll('.sky-configuration-match-row.is-selected').forEach(node=>node.classList.remove('is-selected'));
+    button.classList.add('is-selected');
+    highlightPattern(pattern);
+  });
+  button.addEventListener('pointerenter',()=>highlightPattern(pattern));
+  button.addEventListener('focus',()=>highlightPattern(pattern));
+  return button;
+}
+function openConfiguration(tile,group){
   if(tile.classList.contains('is-expanded')){closeConfigurationTile(tile);return}
   if(openConfigurationTile&&openConfigurationTile!==tile)closeConfigurationTile(openConfigurationTile);
+  const pattern=group.representative;
   openConfigurationTile=tile;tile.classList.add('is-expanded');tile.setAttribute('aria-expanded','true');highlightPattern(pattern);
   let detail=tile.querySelector(':scope>.sky-configuration-result-detail');
   if(!detail){
     detail=document.createElement('div');detail.className='sky-configuration-result-detail';
     detail.innerHTML='<div class="sky-configuration-result-visual">'+miniConfigurationMarkup(pattern,{interactive:false})+'</div><div class="sky-configuration-result-explanation"><div class="sky-configuration-result-structure"><strong>Structure</strong><span>'+structureText(pattern)+'</span></div><div class="sky-configuration-result-interpretation"><strong>Interpretation</strong><span>'+interpretationText(pattern)+'</span></div>'+nestedConfigurationMarkup(pattern)+'</div>';
+    const matches=document.createElement('div');matches.className='sky-configuration-match-stack';
+    const heading=document.createElement('div');heading.className='sky-configuration-match-stack-heading';heading.textContent=group.matches.length+' match'+(group.matches.length===1?'':'es');
+    const list=document.createElement('div');list.className='sky-configuration-match-list';
+    group.matches.forEach((match,index)=>list.appendChild(configurationMatchRow(match,index)));
+    matches.append(heading,list);detail.appendChild(matches);
     tile.appendChild(detail);
   }
   detail.hidden=false;
   paintConfigurationMiniGlyphs(detail);
 }
-function resultTile(pattern,index){
-  const type=TYPE_MAP.get(pattern.type),tile=document.createElement('article');tile.className='sky-configuration-result-tile';tile.dataset.configurationResult=pattern.key;tile.dataset.configurationScope=patternScope(pattern);tile.setAttribute('aria-expanded','false');
+function resultGroupTile(group,index){
+  const pattern=group.representative,type=TYPE_MAP.get(group.type),tile=document.createElement('article');
+  tile.className='sky-configuration-result-tile sky-configuration-type-tile';
+  tile.dataset.configurationResult=pattern.key;
+  tile.dataset.configurationType=group.type;
+  tile.dataset.configurationCount=String(group.matches.length);
+  tile.dataset.hasStack=group.matches.length>1?'true':'false';
+  tile.setAttribute('aria-expanded','false');
   const button=document.createElement('button');button.type='button';button.className='sky-configuration-result-summary';
   const thumb=document.createElement('span');thumb.className='sky-configuration-result-thumb';thumb.innerHTML=miniConfigurationMarkup(pattern,{compact:true,interactive:false});
   const copy=document.createElement('span');copy.className='sky-configuration-result-summary-copy';
   const top=document.createElement('span');top.className='sky-configuration-result-summary-top';
-  const name=document.createElement('strong');name.textContent=type?.label||pattern.type;
+  const name=document.createElement('strong');name.textContent=type?.label||group.type;
   const meta=document.createElement('span');meta.className='sky-configuration-result-meta';
-  const scope=document.createElement('span');scope.className='sky-configuration-result-scope';scope.textContent=patternScopeLabel(pattern);
+  const countChip=document.createElement('span');countChip.className='sky-configuration-count-chip';countChip.textContent='×'+group.matches.length;
   const exact=document.createElement('span');exact.className='sky-configuration-result-exactness';exact.textContent=Number.isFinite(pattern.maxPhase)?pattern.maxPhase.toFixed(2)+'°':'';
-  meta.append(scope,exact);top.append(name,meta);
+  meta.append(countChip,exact);top.append(name,meta);
   const rail=document.createElement('span');rail.innerHTML=aspectColorRail(pattern);copy.append(top,rail.firstElementChild);
-  button.append(thumb,copy);button.setAttribute('aria-label',(type?.label||pattern.type)+', '+patternScopeLabel(pattern)+', configuration '+(index+1)+'. Expand configuration.');
-  button.addEventListener('click',event=>{event.preventDefault();openConfiguration(tile,pattern)});
-  tile.addEventListener('pointerenter',()=>highlightPattern(pattern));tile.addEventListener('focusin',()=>highlightPattern(pattern));tile.addEventListener('pointerleave',()=>{if(!tile.classList.contains('is-expanded'))clearPatternHighlight()});tile.addEventListener('focusout',event=>{if(!tile.contains(event.relatedTarget)&&!tile.classList.contains('is-expanded'))clearPatternHighlight()});
+  button.append(thumb,copy);
+  button.setAttribute('aria-label',(type?.label||group.type)+', '+group.matches.length+' matches. Expand configuration stack.');
+  button.addEventListener('click',event=>{event.preventDefault();openConfiguration(tile,group)});
+  tile.addEventListener('pointerenter',()=>highlightPattern(pattern));
+  tile.addEventListener('focusin',()=>highlightPattern(pattern));
+  tile.addEventListener('pointerleave',()=>{if(!tile.classList.contains('is-expanded'))clearPatternHighlight()});
+  tile.addEventListener('focusout',event=>{if(!tile.contains(event.relatedTarget)&&!tile.classList.contains('is-expanded'))clearPatternHighlight()});
   tile.appendChild(button);return tile;
 }
 function configurationFocusActive(){
@@ -379,13 +437,13 @@ function bindConfigurationActions(panel){
 }
 function renderResultsPanel(){
   const panel=ensureResultsPanel();if(!panel)return;
-  const visiblePatterns=patternsForResults();
+  const visiblePatterns=patternsForResults(),groups=groupedPatternsForResults();
   if(!visiblePatterns.length){panel.hidden=true;clearPatternHighlight();openConfigurationTile=null;return}
   panel.hidden=false;
   bindConfigurationActions(panel);
   const count=panel.querySelector('.sky-configuration-results-count'),grid=panel.querySelector('.sky-configuration-results-grid');
-  if(grid){grid.replaceChildren();visiblePatterns.forEach((pattern,index)=>grid.appendChild(resultTile(pattern,index)));openConfigurationTile=null}
-  const currentCount=grid?.querySelectorAll(':scope>.sky-configuration-result-tile').length??visiblePatterns.length;
+  if(grid){grid.replaceChildren();groups.forEach((group,index)=>grid.appendChild(resultGroupTile(group,index)));openConfigurationTile=null}
+  const currentCount=visiblePatterns.length;
   if(count)count.textContent=currentCount+' match'+(currentCount===1?'':'es');
   paintConfigurationMiniGlyphs(grid);
 }
