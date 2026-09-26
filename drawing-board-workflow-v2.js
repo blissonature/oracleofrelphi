@@ -1742,8 +1742,8 @@
       enhance(panel());
       zoomExtents();
       if (recursionSession && recursionActive()) {
-        showBoardToast('Seven levels repeat Mem, Aleph, and Shin. Earth opens the next depth six times; the seventh Earth receives the twenty-second card.',{
-          title:'Relphi Recursion Reading',
+        showBoardToast('Each level takes the shape of the Relphi logo: Mem, Aleph, and Shin occupy the three black circles. The red Earth circle opens the next depth; on Level 7 it receives card 22.',{
+          title:'Relphi Recursive Reading',
           duration:0,
           actionLabel:'Enter Level 1',
           onAction:()=>{
