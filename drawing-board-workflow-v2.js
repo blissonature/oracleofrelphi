@@ -1307,10 +1307,12 @@
       const root=panel();
       const drawnIndex=currentCardCount(root);
       const cardId=button.dataset.attuneCard || '';
-      if (!Number.isInteger(target) || target<0 || !ledgerBridge()?.addCardToBoard?.(cardId)) return;
+      if (!Number.isInteger(target) || target<0) return;
       pendingFocusIndex=drawnIndex;
+      if (!ledgerBridge()?.addCardToBoard?.(cardId)) { pendingFocusIndex=null; return; }
       if (target!==drawnIndex) prefabBridge()?.swapPositionSlots?.(drawnIndex,target);
       closeAttune();
+      setTimeout(()=>enhance(panel()),0);
     }));
   }
   function openAttune(index) {
