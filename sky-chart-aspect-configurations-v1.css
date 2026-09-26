@@ -755,28 +755,29 @@ html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]) .sky-chart-con
 
 
 
-/* Configuration diagrams: preserve the compact thumbnail; expanded vertices use canonical inscribed masters only. */
+/* Configuration diagrams: preserve the compact thumbnail; expanded vertices reuse Relationships canonical masters exactly. */
 .sky-configuration-mini-wheel{position:relative}
 .sky-configuration-mini-wheel>svg{position:relative;z-index:1}
 .sky-configuration-vertex-layer{position:absolute;inset:0;z-index:2;pointer-events:none}
 .sky-configuration-vertex-host{
   position:absolute;
-  width:26px;
-  height:26px;
+  width:38px;
+  height:38px;
   transform:translate(-50%,-50%);
   display:grid;
   place-items:center;
   overflow:visible;
 }
-.sky-configuration-vertex-host>.sky-configuration-canonical-vertex{
+.sky-configuration-vertex-host>svg[data-relationship-canonical-host]{
   display:block;
-  width:26px!important;
-  height:26px!important;
-  min-width:26px;
-  min-height:26px;
-  max-width:26px;
-  max-height:26px;
+  width:38px!important;
+  height:38px!important;
+  min-width:38px;
+  min-height:38px;
+  max-width:38px;
+  max-height:38px;
   overflow:visible;
+  transform:none!important;
 }
 .sky-configuration-mini-wheel.is-compact .sky-configuration-mini-point{display:block}
 .sky-configuration-mini-wheel.is-compact .sky-configuration-mini-point circle{stroke-width:1}
