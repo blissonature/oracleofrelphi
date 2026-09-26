@@ -1088,14 +1088,17 @@
   function astrologyAnalyzeResolved(skyA,skyB) {
     const perSky=[skyA,skyB].filter(Boolean).map((sky,index)=>({slot:index?'B':'A',name:sky.name||('Sky '+(index?'B':'A')),hits:astrologyCardHits(sky),patterns:astrologyPatterns(sky)}));
     const hits=new Map(),patterns=[];perSky.forEach(s=>{s.hits.forEach(h=>{const x=hits.get(h.id)||{...h,count:0,reasons:[]};x.count+=h.count;x.reasons.push(...h.reasons);hits.set(h.id,x)});patterns.push(...s.patterns.map(p=>({...p,sky:s.name})))});
-    const analysis={perSky,hits:[...hits.values()].sort((a,b)=>b.count-a.count),patterns};analysis.questions=astrologyQuestionSuggestions(analysis);return analysis;
+    const hitList=[...hits.values()].sort((a,b)=>b.count-a.count),cards=Array.isArray(window.RELPHI_TAROT_CARDS)?window.RELPHI_TAROT_CARDS:[],cardById=new Map(cards.map(card=>[card.card_id||card.stable_symbol_id,card])),tagCounts=new Map(),rulerCounts=new Map();
+    hitList.forEach(hit=>{const card=cardById.get(hit.id);if(!card)return;const weight=Math.max(1,Number(hit.count)||1);(card.tags||[]).forEach(tag=>tagCounts.set(tag,(tagCounts.get(tag)||0)+weight));[card.astrology?.planet,card.astrology?.sign_ruler,card.astrology?.decan_ruler].filter(Boolean).forEach(ruler=>rulerCounts.set(ruler,(rulerCounts.get(ruler)||0)+weight))});
+    const ranked=map=>[...map].map(([value,count])=>({value,count})).sort((a,b)=>b.count-a.count||a.value.localeCompare(b.value));
+    const analysis={perSky,hits:hitList,patterns,topTags:ranked(tagCounts).slice(0,8),topRulers:ranked(rulerCounts).slice(0,8)};analysis.questions=astrologyQuestionSuggestions(analysis);return analysis;
   }
   function astrologyAnalysisMarkup(analysis) {
     if(!analysis)return '';
     const hits=analysis.hits.slice(0,8).map(h=>'<li><strong>'+escapeHtml(h.name)+'</strong> ×'+h.count+'</li>').join('');
-    const patterns=analysis.patterns.slice(0,8).map(p=>'<li><strong>'+escapeHtml(p.value)+'</strong> · '+escapeHtml(p.type)+'</li>').join('');
+    const evidence=[...analysis.patterns.slice(0,5).map(p=>({value:p.value,type:p.type,count:p.count||0})),...analysis.topRulers.slice(0,4).map(x=>({...x,type:'ruler'})),...analysis.topTags.slice(0,4).map(x=>({...x,type:'tag'}))].sort((a,b)=>(b.count||0)-(a.count||0)).slice(0,10).map(p=>'<li><strong>'+escapeHtml(p.value)+'</strong> · '+escapeHtml(p.type)+(p.count?' ×'+p.count:'')+'</li>').join('');
     const questions=analysis.questions.map((q,i)=>'<label class="relphi-astrology-question"><input type="checkbox" data-astrology-question="'+i+'" '+(i<3?'checked':'')+'><span>'+escapeHtml(q.text)+'</span></label>').join('');
-    return '<div class="relphi-astrology-analysis"><section><h4>Card Hits</h4><ol>'+hits+'</ol></section><section><h4>Patterns</h4><ol>'+patterns+'</ol></section><section class="relphi-astrology-questions"><h4>Suggested questions</h4>'+questions+'</section></div>';
+    return '<div class="relphi-astrology-analysis"><section><h4>Card Hits</h4><ol>'+hits+'</ol></section><section><h4>Patterns & concentrations</h4><ol>'+evidence+'</ol></section><section class="relphi-astrology-questions"><h4>Suggested questions</h4><p class="relphi-question-prompt">Review the evidence above. Select questions to carry into the reading or write your own.</p>'+questions+'<label class="relphi-astrology-own-question"><span>Your question</span><input type="text" data-astrology-own-question placeholder="Write your own question…"></label></section></div>';
   }
 
   function astrologySavedSkies() {
@@ -1167,7 +1170,7 @@
         (count>1?astrologySkySourceMarkup('B',session,disabled):'')+
         (count<2?'<button type="button" class="relphi-add-sky" data-add-astrology-sky '+(disabled?'disabled':'')+'>+ Add a sky</button>':'')+
       '</div>'+
-      (count?'<div class="relphi-astrology-bridge-status"><strong>Sky connection</strong><span data-astrology-sky-status>Ready.</span><button type="button" id="relphiConnectSky" '+(disabled?'disabled':'')+'>Use '+(count>1?'These Skies':'This Sky')+'</button></div>':'')+
+      (count?'<div class="relphi-astrology-bridge-status"><strong>Sky connection</strong><span data-astrology-sky-status>'+(session.astrologyAnalysis?'Review the evidence below. Select suggested questions or write your own before starting the reading.':'Ready to connect.')+'</span><button type="button" id="relphiConnectSky" '+(disabled?'disabled':'')+'>Use '+(count>1?'These Skies':'This Sky')+'</button></div>':'')+
       (session.astrologyAnalysis?astrologyAnalysisMarkup(session.astrologyAnalysis):'')+
       '</section>';
   }
@@ -1244,6 +1247,7 @@
     }));
 
     drawer.querySelector('[data-add-astrology-sky]')?.addEventListener('click',()=>{session.astrologySkyCount=Math.min(2,(Number(session.astrologySkyCount)||0)+1);renderOptions(root);});
+    drawer.querySelector('[data-astrology-own-question]')?.addEventListener('input',event=>{session.astrologyOwnQuestion=event.target.value;});
     drawer.querySelectorAll('[data-astrology-sky-source]').forEach(select=>select.addEventListener('change',()=>{
       const slot=select.dataset.astrologySkySource==='B'?'B':'A';
       session[slot==='B'?'astrologySkyBSource':'astrologySkyASource']=select.value||'here-now';
@@ -1367,6 +1371,12 @@
     drawer.querySelectorAll('[data-suggestion-text]').forEach(input=>input.addEventListener('input',()=>{
       session.suggestions[Number(input.dataset.suggestionText)]=input.value;
     }));
+    if(session.path==='astro') {
+      const chosen=Array.from(drawer.querySelectorAll('[data-astrology-question]')).filter(box=>box.checked).map(box=>session.astrologyAnalysis?.questions?.[Number(box.dataset.astrologyQuestion)]?.text).filter(Boolean);
+      const own=String(drawer.querySelector('[data-astrology-own-question]')?.value||session.astrologyOwnQuestion||'').trim();
+      if(own)chosen.push(own);
+      if(chosen.length){draft.labels=chosen.slice(0,MAX_POSITIONS);draft.positionPacks=draft.labels.map(()=>draft.pack||'full');}
+    }
     const commitSelectedSuggestions=()=>{
       const chosen=Array.from(drawer.querySelectorAll('[data-suggestion-use]')).filter(box=>box.checked).map(box=>{
         const index=Number(box.dataset.suggestionUse);
