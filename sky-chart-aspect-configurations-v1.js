@@ -229,7 +229,16 @@ function highlightPattern(pattern){
   });
 }
 function closeConfigurationTile(tile){
-  if(!tile)return;tile.classList.remove('is-expanded');tile.setAttribute('aria-expanded','false');const detail=tile.querySelector(':scope>.sky-configuration-result-detail');if(detail)detail.hidden=true;tile.dataset.revealLevel='';clearPatternHighlight();if(openConfigurationTile===tile)openConfigurationTile=null
+  if(!tile)return;
+  tile.classList.remove('is-expanded');
+  tile.setAttribute('aria-expanded','false');
+  tile.dataset.suppressConfigurationPreview='true';
+  const detail=tile.querySelector(':scope>.sky-configuration-result-detail');
+  if(detail)detail.hidden=true;
+  tile.dataset.revealLevel='';
+  clearPatternHighlight();
+  requestAnimationFrame(()=>clearPatternHighlight());
+  if(openConfigurationTile===tile)openConfigurationTile=null;
 }
 function revealConfiguration(tile,pattern){
   const reveal=tile.querySelector('.sky-configuration-result-reveal');if(!reveal)return;
@@ -369,7 +378,7 @@ function openConfiguration(tile,group){
   if(tile.classList.contains('is-expanded')){closeConfigurationTile(tile);return}
   if(openConfigurationTile&&openConfigurationTile!==tile)closeConfigurationTile(openConfigurationTile);
   const pattern=group.representative;
-  openConfigurationTile=tile;tile.classList.add('is-expanded');tile.setAttribute('aria-expanded','true');
+  openConfigurationTile=tile;delete tile.dataset.suppressConfigurationPreview;tile.classList.add('is-expanded');tile.setAttribute('aria-expanded','true');
   let detail=tile.querySelector(':scope>.sky-configuration-result-detail');
   if(!detail){
     detail=document.createElement('div');detail.className='sky-configuration-result-detail';
@@ -417,10 +426,16 @@ function resultGroupTile(group,index){
   button.append(thumb,copy);
   button.setAttribute('aria-label',(type?.label||group.type)+', '+group.matches.length+' matches. Expand configuration stack.');
   button.addEventListener('click',event=>{event.preventDefault();openConfiguration(tile,group)});
-  tile.addEventListener('pointerenter',()=>highlightPattern(pattern));
-  tile.addEventListener('focusin',()=>highlightPattern(pattern));
-  tile.addEventListener('pointerleave',()=>{if(!tile.classList.contains('is-expanded'))clearPatternHighlight()});
-  tile.addEventListener('focusout',event=>{if(!tile.contains(event.relatedTarget)&&!tile.classList.contains('is-expanded'))clearPatternHighlight()});
+  tile.addEventListener('pointerenter',()=>{if(tile.dataset.suppressConfigurationPreview!=='true')highlightPattern(pattern)});
+  tile.addEventListener('focusin',()=>{if(tile.dataset.suppressConfigurationPreview!=='true')highlightPattern(pattern)});
+  tile.addEventListener('pointerleave',()=>{
+    delete tile.dataset.suppressConfigurationPreview;
+    if(!tile.classList.contains('is-expanded'))clearPatternHighlight();
+  });
+  tile.addEventListener('focusout',event=>{
+    if(!tile.contains(event.relatedTarget))delete tile.dataset.suppressConfigurationPreview;
+    if(!tile.contains(event.relatedTarget)&&!tile.classList.contains('is-expanded'))clearPatternHighlight();
+  });
   tile.appendChild(button);return tile;
 }
 function configurationFocusActive(){
@@ -826,6 +841,11 @@ function schedule(){if(queued)return;queued=true;requestAnimationFrame(refresh)}
 function handleChange(event){const input=event.target.closest?.('[data-configuration-scope][data-configuration-type]');if(!input)return;event.stopPropagation();setSelection(input.dataset.configurationScope,input.dataset.configurationType,input.checked)}
 function start(){
   document.addEventListener('change',handleChange,true);
+  window.addEventListener('relphi:sky-foundation-clear-selection',()=>{
+    clearPatternHighlight();
+    clearPeerHighlight();
+    requestAnimationFrame(()=>{clearPatternHighlight();clearPeerHighlight()});
+  });
   document.addEventListener('pointerover',event=>{const row=event.target.closest?.('.sky-foundation-relationship-row');if(row&&row!==event.relatedTarget?.closest?.('.sky-foundation-relationship-row')){peerHoverFrozen=false;highlightPeers(row)}});
   document.addEventListener('pointermove',reconcileFrozenPeerHover,true);
   document.addEventListener('pointerdown',reconcileFrozenPeerHover,true);
