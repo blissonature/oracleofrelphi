@@ -31,7 +31,9 @@ const SCOPES=Object.freeze([
   {id:'A-B',label:'A↔B'}
 ]);
 const PLACEMENT_SYMBOLS=Object.freeze({sun:'☉',moon:'☽',mercury:'☿',venus:'♀',mars:'♂',jupiter:'♃',saturn:'♄',uranus:'♅',neptune:'♆',pluto:'♇',chiron:'⚷','north-node':'☊','south-node':'☋',lilith:'⚸','part-of-fortune':'⊗',vertex:'Vx','anti-vertex':'AVx',asc:'Asc',dsc:'Dsc',mc:'MC',ic:'IC'});
+const CONFIG_STORAGE_KEY='relphiSkyConfigurationMatrixV1';
 const configurationState=Object.fromEntries(SCOPES.map(scope=>[scope.id,new Set()]));
+(function loadPersistedConfigurationState(){try{const saved=JSON.parse(localStorage.getItem(CONFIG_STORAGE_KEY)||'null');if(!saved||typeof saved!=='object')return;SCOPES.forEach(scope=>{if(Array.isArray(saved[scope.id]))configurationState[scope.id]=new Set(saved[scope.id].filter(type=>TYPE_IDS.includes(type)))})}catch(_){}})();
 let patterns=[];
 let queued=false;
 let applying=false;
@@ -111,6 +113,7 @@ function configCellState(scope,type){
 }
 function setConfigCells(scope,type,checked){configCells(scope,type).forEach(([scopeId,typeId])=>checked?configurationState[scopeId].add(typeId):configurationState[scopeId].delete(typeId))}
 function configurationMatrix(){return Object.fromEntries(SCOPES.map(scope=>[scope.id,TYPE_IDS.filter(type=>configurationState[scope.id].has(type))]))}
+function saveConfigurationState(){try{localStorage.setItem(CONFIG_STORAGE_KEY,JSON.stringify(configurationMatrix()))}catch(_){}}
 function configChoice(scope,type,labelText){
   const label=document.createElement('label');label.className='sky-chart-aspect-matrix-choice sky-chart-configuration-matrix-choice';
   const input=document.createElement('input');input.type='checkbox';input.dataset.configurationScope=scope;input.dataset.configurationType=type;input.setAttribute('aria-label',labelText);
@@ -205,7 +208,7 @@ function reconcileFrozenPeerHover(event){
   if(row)highlightPeers(row);else clearPeerHighlight();
 }
 function setSelection(scope,type,checked){
-  setConfigCells(scope,type,checked);syncConfigInputs();renderOverlay();
+  setConfigCells(scope,type,checked);saveConfigurationState();syncConfigInputs();renderOverlay();
   const matrix=configurationMatrix();
   window.dispatchEvent(new CustomEvent('relphi:sky-configuration-selection-changed',{detail:{matrix,selectedPatterns:selectedPatternsForVisibility().map(pattern=>pattern.key)}}));
 }
