@@ -238,7 +238,7 @@
       if (level===RECURSION_LEVELS) {
         positions.push(position(
           'recursion-7-earth',
-          'Level 7 · Earth · Completion',
+          'Level 7 · Earth · Completion · Seed',
           drawOrder++,
           transform(.355,.62,.56),
           { role:'recursion-earth', recursionLevel:7, recursionElement:'earth', recursionGlyph:'🜃' }
@@ -1397,7 +1397,7 @@
   }
   function recursionDepthMarkup(session,compact=false) {
     if (!session) return '';
-    const buttons=Array.from({length:RECURSION_LEVELS},(_,index=>{
+    const buttons=Array.from({length:RECURSION_LEVELS},(_,index)=>{
       const level=index+1;
       const opened=level<=session.maxLevel;
       const current=level===session.level;
@@ -1537,7 +1537,7 @@
     const portal=reader.querySelector('.relphi-recursion-portal-focus');
     if (portal) {
       portal.hidden=false;
-      portal.innerHTML='<span class="relphi-recursion-portal-ring" aria-hidden="true"><span>🜃</span></span><span class="eyebrow">Level '+level+' · Earth</span><h2>Descend</h2><p>Earth does not answer beside Mem, Aleph, and Shin. It opens the same threefold form one level deeper.</p><button type="button" class="primary" data-recursion-descend>Enter Level '+(level+1)+'</button>';
+      portal.innerHTML='<span class="relphi-recursion-portal-ring" aria-hidden="true"><span>🜃</span></span><span class="eyebrow">Level '+level+' · Earth</span><h2>Descend</h2><p>Earth does not answer beside Mem, Aleph, and Shin. It opens the same threefold form one octave deeper.</p><button type="button" class="primary" data-recursion-descend>Enter Level '+(level+1)+'</button>';
       portal.querySelector('[data-recursion-descend]')?.addEventListener('click',()=>descendRecursion(level));
     }
     renderRecursionFocusStrip(reader,-1);
