@@ -1101,7 +1101,7 @@
   function renderOptions(root = panel()) {
     if (!root || !optionsSession) return;
     root.querySelector('.relphi-reading-options-drawer')?.remove();
-    const modeTabs = root.querySelector('.drawing-board-mode-tabs');
+    const modeTabs = root.querySelector('.drawing-board-mode-switch');
     if (!modeTabs) return;
     const session=optionsSession;
     const draft = session.draft;
@@ -1353,11 +1353,11 @@
     const referentsTab=root.querySelector('#drawingBoardOptionsButton');
     if (boardTab) {
       boardTab.classList.toggle('is-active',!referents);
-      boardTab.setAttribute('aria-selected',String(!referents));
+      boardTab.setAttribute('aria-checked',String(!referents));
     }
     if (referentsTab) {
       referentsTab.classList.toggle('is-active',referents);
-      referentsTab.setAttribute('aria-selected',String(referents));
+      referentsTab.setAttribute('aria-checked',String(referents));
       referentsTab.setAttribute('aria-expanded',String(referents));
     }
   }
@@ -2391,14 +2391,14 @@
   }
   function installTopActions(root) {
     const boardTab=root.querySelector('#drawingBoardBoardTab');
-    if (boardTab) boardTab.textContent='Free Draw';
+    if (boardTab) boardTab.textContent='Free';
     if (boardTab && boardTab.dataset.relphiUnifiedBoardTab!=='true') {
       boardTab.dataset.relphiUnifiedBoardTab='true';
       boardTab.addEventListener('click',event=>{event.preventDefault();event.stopImmediatePropagation();closeOptions(root);},true);
     }
     const options=root.querySelector('#drawingBoardOptionsButton');
     if (options) {
-      options.textContent='Crafted Draw';
+      options.textContent='Crafted';
       options.setAttribute('aria-expanded',String(!!optionsSession));
       options.onclick=null;
       if (options.dataset.relphiUnifiedOptions!=='true') {
