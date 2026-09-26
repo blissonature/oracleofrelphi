@@ -678,3 +678,76 @@ html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]) .sky-chart-con
     justify-self:end;
   }
 }
+
+
+/* Configuration hierarchy + first-open explanation. */
+.sky-configuration-result-detail{
+  grid-template-columns:minmax(128px,164px) minmax(0,1fr)!important;
+  grid-template-areas:"visual explanation" "instance instance"!important;
+  align-items:start!important;
+}
+.sky-configuration-result-explanation{
+  grid-area:explanation;
+  display:grid;
+  gap:9px;
+  min-width:0;
+}
+.sky-configuration-result-structure,
+.sky-configuration-result-interpretation,
+.sky-configuration-nested{
+  display:grid;
+  gap:4px;
+  padding:9px 10px;
+  border-radius:9px;
+  background:#f7f3ed;
+  color:#332e2a;
+}
+.sky-configuration-result-structure>strong,
+.sky-configuration-result-interpretation>strong,
+.sky-configuration-nested>strong{
+  font:900 .58rem/1 system-ui,sans-serif;
+  letter-spacing:.055em;
+  text-transform:uppercase;
+  color:#6f655d;
+}
+.sky-configuration-result-structure>span,
+.sky-configuration-result-interpretation>span{
+  font:750 .68rem/1.4 system-ui,sans-serif;
+}
+.sky-configuration-result-interpretation{
+  background:#f3f6f0;
+}
+.sky-configuration-nested{
+  background:#f4f1f8;
+}
+.sky-configuration-nested-list{
+  display:flex;
+  flex-wrap:wrap;
+  gap:5px;
+}
+.sky-configuration-nested-item{
+  display:inline-flex;
+  align-items:center;
+  gap:5px;
+  padding:5px 7px;
+  border-radius:999px;
+  background:#fff;
+  border:1px solid rgba(31,27,24,.11);
+}
+.sky-configuration-nested-item>b{
+  font:850 .61rem/1 system-ui,sans-serif;
+}
+.sky-configuration-nested-item>small{
+  color:#7a7169;
+  font:800 .55rem/1 system-ui,sans-serif;
+  font-variant-numeric:tabular-nums;
+}
+.sky-configuration-result-instance{
+  grid-area:instance!important;
+}
+@media(max-width:420px){
+  .sky-configuration-result-detail{
+    grid-template-columns:1fr!important;
+    grid-template-areas:"visual" "explanation" "instance"!important;
+  }
+}
