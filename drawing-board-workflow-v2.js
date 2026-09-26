@@ -46,6 +46,35 @@
       max:Number.isFinite(max)&&max>0?max:2.4
     };
   }
+  function recursionFitZoomFloor(root=panel()) {
+    if (!recursionActive()) return null;
+    const workspace=root?.querySelector('.card-row-workspace');
+    if (!workspace) return null;
+    const bounds=renderedContentBounds(root);
+    const toolbar=root.querySelector('.card-row-workspace-toolbar.relphi-board-controller');
+    const toolbarH=toolbar?.offsetHeight || 52;
+    const availableW=Math.max(1,workspace.clientWidth-GUTTER*2);
+    const availableH=Math.max(1,workspace.clientHeight-toolbarH-GUTTER*2);
+    const contentW=Math.max(1,bounds.maxX-bounds.minX);
+    const contentH=Math.max(1,bounds.maxY-bounds.minY);
+    const limits=zoomLimits();
+    return clamp(Math.min(availableW/contentW,availableH/contentH),limits.min,limits.max);
+  }
+  function syncRecursionZoomFloor(root=panel()) {
+    const input=zoomInput(root);
+    if (!input) return null;
+    if (!input.dataset.relphiBaseMin) input.dataset.relphiBaseMin=String(input.min || zoomLimits().min);
+    const baseMin=Number(input.dataset.relphiBaseMin) || zoomLimits().min;
+    const floor=recursionFitZoomFloor(root);
+    const nextMin=Number.isFinite(floor)?Math.max(baseMin,floor):baseMin;
+    input.min=String(nextMin);
+    if ((Number(input.value)||1)<nextMin) {
+      input.value=String(nextMin);
+      input.dispatchEvent(new Event('input',{bubbles:true}));
+      input.dispatchEvent(new Event('change',{bubbles:true}));
+    }
+    return nextMin;
+  }
   function clone(value) { return value == null ? value : JSON.parse(JSON.stringify(value)); }
   function clamp(value, min, max) { return Math.max(min, Math.min(max, Number(value) || 0)); }
   function escapeHtml(value) {
@@ -218,6 +247,7 @@
 
   const RECURSION_ID = 'relphi-recursion-22';
   const RECURSION_LEVELS = 7;
+  const RECURSION_VEILVA_BODIES = Object.freeze(['saturn','jupiter','mars','sun','venus','mercury','moon']);
   const RECURSION_LOGO_GEOMETRY = Object.freeze({
     // Transform coordinates are the unscaled card-envelope top-lefts.
     // At the canonical .44 card scale, each card face is centered inside one logo circle.
@@ -1414,10 +1444,32 @@
       const level=index+1;
       const opened=level<=session.maxLevel;
       const current=level===session.level;
-      return '<button type="button" data-recursion-depth="'+level+'" '+(opened?'':'disabled ')+'class="'+(current?'is-current ':'')+(opened?'is-opened':'is-future')+'" aria-label="Level '+level+'">'+(compact?String(level):'<span>'+level+'</span>')+'</button>';
+      const body=RECURSION_VEILVA_BODIES[index];
+      const name=body.charAt(0).toUpperCase()+body.slice(1);
+      return '<button type="button" data-recursion-depth="'+level+'" '+(opened?'':'disabled ')+'class="'+(current?'is-current ':'')+(opened?'is-opened':'is-future')+'" aria-label="Level '+level+' · '+name+'" title="Level '+level+' · '+name+'"><svg class="relphi-veilva-glyph" data-relphi-veilva-glyph="'+body+'" viewBox="-14 -14 28 28" aria-hidden="true"></svg></button>';
     }).join('');
     return '<span class="relphi-recursion-depth-line" aria-hidden="true"></span>'+buttons+
       (session.complete?'<strong class="relphi-recursion-complete-mark">22 / 22 · complete</strong>':'');
+  }
+  function hydrateVeilvaGlyphs(root,attempt=0) {
+    if (!root?.querySelectorAll) return;
+    const registry=window.RelphiGlyphRegistry;
+    const component=window.RelphiGlyphComponent;
+    if (!registry || !component?.draw) {
+      if (attempt<40) setTimeout(()=>hydrateVeilvaGlyphs(root,attempt+1),50);
+      return;
+    }
+    root.querySelectorAll('[data-relphi-veilva-glyph]').forEach(host=>{
+      if (host.dataset.relphiCanonicalGlyph==='true') return;
+      const identity=String(host.dataset.relphiVeilvaGlyph||'');
+      const entry=registry.get?.(identity) || registry.resolve?.(identity);
+      if (!entry) return;
+      host.replaceChildren();
+      host.dataset.relphiCanonicalGlyph='true';
+      Promise.resolve(component.draw(host,entry.id,{radius:10.5,padding:.75,color:'currentColor'})).catch(()=>{
+        delete host.dataset.relphiCanonicalGlyph;
+      });
+    });
   }
   function installRecursionBoard(root=panel()) {
     if (!root) return;
@@ -1444,11 +1496,15 @@
     let logo=board.querySelector(':scope > .relphi-recursion-logo-underlay');
     let states=board.querySelector(':scope > .relphi-recursion-circle-states');
     let portal=board.querySelector(':scope > .relphi-recursion-board-portal');
-    if (!session) { depth?.remove(); logo?.remove(); states?.remove(); portal?.remove(); return; }
+    if (!session) {
+      depth?.remove(); logo?.remove(); states?.remove(); portal?.remove();
+      syncRecursionZoomFloor(root);
+      return;
+    }
     if (!logo) {
       logo=document.createElement('img');
       logo.className='relphi-recursion-logo-underlay';
-      logo.src='logo.png';
+      logo.src='assets/relphi-logo-tight.svg';
       logo.alt='';
       logo.setAttribute('aria-hidden','true');
       board.prepend(logo);
@@ -1476,6 +1532,7 @@
       workspace.appendChild(depth);
     }
     depth.innerHTML=recursionDepthMarkup(session,true);
+    hydrateVeilvaGlyphs(depth);
     depth.querySelectorAll('[data-recursion-depth]').forEach(button=>button.addEventListener('click',()=>{
       setRecursionLevel(Number(button.dataset.recursionDepth));
     }));
@@ -1525,6 +1582,11 @@
         };
       }
     }
+    if (workspace.dataset.relphiRecursionZoomFloorBound!=='true') {
+      workspace.dataset.relphiRecursionZoomFloorBound='true';
+      window.addEventListener('resize',()=>requestAnimationFrame(()=>syncRecursionZoomFloor(panel())));
+    }
+    requestAnimationFrame(()=>syncRecursionZoomFloor(root));
   }
   function renderRecursionDepth(reader) {
     const session=ensureRecursionSession();
@@ -1532,6 +1594,7 @@
     if (!nav || !session) return;
     nav.hidden=false;
     nav.innerHTML=recursionDepthMarkup(session,false);
+    hydrateVeilvaGlyphs(nav);
     nav.querySelectorAll('[data-recursion-depth]').forEach(button=>button.addEventListener('click',()=>{
       const level=Number(button.dataset.recursionDepth);
       if (!setRecursionLevel(level)) return;
