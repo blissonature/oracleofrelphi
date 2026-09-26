@@ -8383,6 +8383,8 @@ ${notes || ''}`;
       setSkyEntrySource(target, consumeSkyPendingEntrySource(target, 'calculated'));
       updateSkyCreatorDeleteStoredButton();
       skyCalcStatus(`Calculated ${skyCreatorLabel(target)} for ${timestampLabelInZone(date, profile.timeZone)} at ${Number(latitude).toFixed(4)}, ${Number(longitude).toFixed(4)}${profile.timeZone ? ` (${profile.timeZone})` : ''}. Stored Rising, Midheaven, ${skyHouseSystemLabel(houseSystem)} houses, and planetary retrograde/station states. ${risingLabel}.${selectedStoredRecordId ? ' The loaded stored sky was updated.' : ''}`);
+      window.RELPHI_LAST_SKY_CALCULATION={target,label,notes,placements:cloneSkySlotValue(placements),calcProfile:cloneSkySlotValue(profile),calculatedAt:new Date().toISOString()};
+      window.dispatchEvent(new CustomEvent('relphi:sky-calculated',{detail:window.RELPHI_LAST_SKY_CALCULATION}));
       return true;
     } catch (error) {
       restoreSkySlot(protectedKind, protectedSnapshot);
