@@ -905,7 +905,7 @@
     return true;
   }
   function surfaceCardLabel(card) {
-    return String(card?.systems?.golden_dawn_rws?.display_name || card?.systems?.golden_dawn_rws?.title || card?.name || card?.title || card?.card_id || 'Surfaced card').trim();
+    return String(card?.name || card?.systems?.golden_dawn_rws?.display_name || card?.systems?.thoth?.display_name || card?.systems?.golden_dawn_rws?.title || card?.title || card?.card_id || 'Surfaced card').trim();
   }
   function surfaceOperationWord(interpretation, card) {
     const text=String(interpretation||'').toLowerCase();
