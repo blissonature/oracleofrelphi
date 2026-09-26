@@ -27,8 +27,33 @@ function installStyle(){
       grid-area:detail!important;
       grid-column:1/-1!important;
       grid-row:3!important;
+      position:relative!important;
       min-width:0!important;
       width:100%!important;
+      box-sizing:border-box!important;
+      padding-top:40px!important;
+    }
+    .sky-foundation-relationship-row.is-inline-expanded .inline-rel-tile-copy{
+      appearance:none;
+      position:absolute;
+      top:8px;
+      right:8px;
+      z-index:5;
+      min-height:28px;
+      padding:0 10px;
+      border:1px solid rgba(31,27,24,.16);
+      border-radius:999px;
+      background:#fff;
+      color:#3f3934;
+      box-shadow:0 1px 3px rgba(31,27,24,.06);
+      font:850 .63rem/1 system-ui,sans-serif;
+      cursor:pointer;
+    }
+    .sky-foundation-relationship-row.is-inline-expanded .inline-rel-tile-copy:hover,
+    .sky-foundation-relationship-row.is-inline-expanded .inline-rel-tile-copy:focus-visible{
+      border-color:#6b625a;
+      background:#fffdfa;
+      outline:none;
     }
     .sky-foundation-relationship-row.is-inline-expanded .sky-foundation-relationship-placement{
       display:grid!important;
