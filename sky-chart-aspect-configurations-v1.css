@@ -786,3 +786,102 @@ html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]) .sky-chart-con
   font:900 5.4px/1 system-ui,sans-serif;
   pointer-events:none;
 }
+
+
+/* One tile per configuration type, with explicit ×N marker and stack affordance. */
+.sky-configuration-type-tile{
+  position:relative;
+  isolation:isolate;
+}
+.sky-configuration-type-tile[data-has-stack="true"]::before,
+.sky-configuration-type-tile[data-has-stack="true"]::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  border:1px solid rgba(31,27,24,.10);
+  border-radius:10px;
+  background:#fffdf8;
+  pointer-events:none;
+  z-index:-1;
+}
+.sky-configuration-type-tile[data-has-stack="true"]::before{
+  transform:translate(3px,3px);
+}
+.sky-configuration-type-tile[data-has-stack="true"]::after{
+  transform:translate(6px,6px);
+  opacity:.72;
+}
+.sky-configuration-type-tile.is-expanded::before,
+.sky-configuration-type-tile.is-expanded::after{
+  display:none;
+}
+.sky-configuration-count-chip{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-width:25px;
+  height:20px;
+  padding:0 7px;
+  border-radius:999px;
+  background:#2f2a26;
+  color:#fffdf8;
+  font:900 .61rem/1 system-ui,sans-serif;
+  font-variant-numeric:tabular-nums;
+  white-space:nowrap;
+}
+.sky-configuration-match-stack{
+  grid-column:1/-1;
+  display:grid;
+  gap:6px;
+  margin-top:2px;
+  padding-top:9px;
+  border-top:1px solid rgba(31,27,24,.10);
+}
+.sky-configuration-match-stack-heading{
+  color:#6b625a;
+  font:900 .58rem/1 system-ui,sans-serif;
+  letter-spacing:.055em;
+  text-transform:uppercase;
+}
+.sky-configuration-match-list{
+  display:grid;
+  gap:5px;
+}
+.sky-configuration-match-row{
+  appearance:none;
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto;
+  align-items:center;
+  gap:10px;
+  width:100%;
+  padding:7px 9px;
+  border:1px solid rgba(31,27,24,.12);
+  border-radius:8px;
+  background:#fffdfa;
+  color:#2f2a26;
+  text-align:left;
+  cursor:pointer;
+}
+.sky-configuration-match-row:hover,
+.sky-configuration-match-row:focus-visible,
+.sky-configuration-match-row.is-selected{
+  border-color:rgba(31,27,24,.36);
+  background:#f6f0e8;
+  outline:none;
+}
+.sky-configuration-match-placements{
+  min-width:0;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  font:800 .65rem/1.2 system-ui,sans-serif;
+}
+.sky-configuration-match-meta{
+  display:inline-flex;
+  align-items:center;
+  gap:7px;
+  color:#6b625a;
+  font:800 .59rem/1 system-ui,sans-serif;
+  font-variant-numeric:tabular-nums;
+  white-space:nowrap;
+}
