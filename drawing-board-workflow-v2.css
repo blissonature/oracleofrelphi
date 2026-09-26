@@ -575,3 +575,38 @@ body.relphi-attune-open{overflow:hidden!important}
 @media (max-width: 700px){
   .row-tag-matches{grid-template-columns:1fr 1fr;}
 }
+
+
+/* Keywords / Tags is a first-class Draw Settings panel, not a grid checkbox. */
+#shortListPanel .relphi-draw-options>.relphi-keyword-builder{
+  grid-column:1/-1!important;display:grid!important;grid-template-columns:minmax(0,1fr) auto!important;
+  align-items:end!important;gap:.45rem .7rem!important;min-width:0!important;margin:0!important;padding:.65rem!important;
+  border:1px solid #d0c7bf!important;border-radius:9px!important;background:var(--relphi-board-paper)!important;
+  color:var(--relphi-board-ink)!important;font:inherit!important;font-size:.72rem!important
+}
+#shortListPanel .relphi-keyword-builder>label{display:grid!important;gap:.28rem!important;margin:0!important;font:inherit!important;font-size:.72rem!important;font-weight:800!important}
+#shortListPanel .relphi-keyword-builder input[type="search"]{
+  width:100%!important;min-width:0!important;min-height:2.15rem!important;margin:0!important;padding:.38rem .5rem!important;
+  border:1px solid #bfb5ac!important;border-radius:7px!important;background:#fff!important;color:#111!important;
+  font:inherit!important;font-size:.76rem!important;appearance:auto!important
+}
+#shortListPanel .relphi-keyword-match-mode{display:flex!important;align-items:center!important;gap:.65rem!important;min-height:2.15rem!important;padding:.38rem .5rem!important}
+#shortListPanel .relphi-keyword-match-mode label,#shortListPanel .relphi-keyword-matches label{
+  display:inline-flex!important;align-items:center!important;gap:.32rem!important;margin:0!important;font:inherit!important;font-size:.72rem!important;font-weight:800!important
+}
+#shortListPanel .relphi-keyword-matches{grid-column:1/-1!important;display:flex!important;flex-wrap:wrap!important;gap:.35rem!important;min-width:0!important}
+#shortListPanel .relphi-keyword-matches p,#shortListPanel .relphi-keyword-builder>p{grid-column:1/-1!important;margin:.05rem 0!important;color:#6b625b!important;font:inherit!important;font-size:.7rem!important;line-height:1.35!important}
+#shortListPanel .relphi-keyword-selected{grid-column:1/-1!important;display:flex!important;flex-wrap:wrap!important;gap:.35rem!important}
+#shortListPanel .relphi-keyword-selected button{
+  min-height:1.9rem!important;margin:0!important;padding:.3rem .52rem!important;border:1px solid rgba(220,31,24,.48)!important;
+  border-radius:999px!important;background:#fff!important;color:#a61712!important;font:inherit!important;font-size:.68rem!important;font-weight:900!important;box-shadow:none!important
+}
+#shortListPanel .relphi-reading-options-drawer,
+#shortListPanel .relphi-reading-options-drawer button,
+#shortListPanel .relphi-reading-options-drawer input,
+#shortListPanel .relphi-reading-options-drawer select,
+#shortListPanel .relphi-reading-options-drawer textarea{font-family:'Montserrat',sans-serif!important}
+@media(max-width:700px){
+  #shortListPanel .relphi-keyword-builder{grid-template-columns:1fr!important}
+  #shortListPanel .relphi-keyword-match-mode{padding-left:0!important}
+}
