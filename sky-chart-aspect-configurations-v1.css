@@ -771,3 +771,41 @@ html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]) .sky-chart-con
   height:21px;
   font:900 .58rem/1 system-ui,sans-serif;
 }
+
+
+/* Canonical configuration participants: color identifies sky; no repeated A/B badges. */
+.sky-configuration-result-instance{
+  display:flex;
+  flex-wrap:wrap;
+  align-items:center;
+  gap:8px;
+}
+.sky-configuration-result-instance>.sky-configuration-participant{
+  display:grid;
+  place-items:center;
+  width:31px;
+  height:31px;
+  min-height:31px;
+  padding:0;
+  border:0;
+  border-radius:0;
+  background:transparent;
+  color:inherit;
+}
+.sky-configuration-participant-glyph{
+  display:grid;
+  place-items:center;
+  width:25px;
+  height:25px;
+  font:800 .68rem/1 system-ui,sans-serif;
+  white-space:nowrap;
+}
+.sky-configuration-participant-glyph>svg{
+  display:block;
+  width:25px;
+  height:25px;
+  overflow:visible;
+}
+.sky-configuration-result-instance>.sky-configuration-participant>b{
+  display:none!important;
+}
