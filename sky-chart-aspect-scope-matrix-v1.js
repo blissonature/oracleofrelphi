@@ -30,7 +30,9 @@ const SCOPES=Object.freeze([
   {id:'B-B',label:'B↔B'},
   {id:'A-B',label:'A↔B'}
 ]);
+const STORAGE_KEY='relphiSkyAspectMatrixV1';
 const state=Object.fromEntries(SCOPES.map(scope=>[scope.id,new Set(IDS)]));
+(function loadPersistedState(){try{const saved=JSON.parse(localStorage.getItem(STORAGE_KEY)||'null');if(!saved||typeof saved!=='object')return;SCOPES.forEach(scope=>{if(Array.isArray(saved[scope.id]))state[scope.id]=new Set(saved[scope.id].filter(id=>IDS.includes(id)))})}catch(_){}})();
 let queued=false;
 let applying=false;
 let menuObserver=null;
@@ -157,6 +159,7 @@ function applyMatrix({announce=true}={}){
   document.querySelectorAll('.sky-foundation-relationship-row,[data-layer="aspects"]>.sky-foundation-aspect').forEach(node=>node.classList.toggle('sky-chart-aspect-multiselect-hidden',!visible(node)));
   updateInputs();
   const matrix=Object.fromEntries(SCOPES.map(scope=>[scope.id,IDS.filter(id=>state[scope.id].has(id))]));
+  try{localStorage.setItem(STORAGE_KEY,JSON.stringify(matrix))}catch(_){}
   const active=new Set(activeScopes());
   const scopes=SCOPES.filter(scope=>active.has(scope.id)&&state[scope.id].size>0).map(scope=>scope.id);
   const selected=IDS.filter(id=>SCOPES.some(scope=>active.has(scope.id)&&state[scope.id].has(id)));
