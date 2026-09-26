@@ -10,10 +10,10 @@
 #shortListPanel .card-row-drawing-board>summary{padding:.7rem .85rem!important;cursor:pointer!important;text-align:left!important}
 #shortListPanel .card-row-drawing-board:not([open])>:not(summary){display:none!important}
 
-#shortListPanel .drawing-board-mode-tabs{display:flex!important;align-items:flex-end!important;gap:0!important;margin:.2rem .5rem 0!important;border-bottom:1px solid var(--relphi-board-line)!important}
-#shortListPanel .drawing-board-mode-tabs>button{min-height:2.35rem!important;margin:0 0 -1px!important;padding:.48rem .8rem!important;border:0!important;border-bottom:2px solid transparent!important;border-radius:0!important;background:transparent!important;color:#625a53!important;font:inherit!important;font-size:.76rem!important;font-weight:900!important;box-shadow:none!important;cursor:pointer!important}
-#shortListPanel .drawing-board-mode-tabs>button.is-active{border-bottom-color:var(--relphi-board-red)!important;color:#a61712!important}
-#shortListPanel .drawing-board-mode-tabs>button:focus-visible{outline:2px solid var(--relphi-board-red)!important;outline-offset:-2px!important}
+#shortListPanel .drawing-board-mode-switch{display:flex!important;align-items:flex-end!important;gap:0!important;margin:.2rem .5rem 0!important;border-bottom:1px solid var(--relphi-board-line)!important}
+#shortListPanel .drawing-board-mode-switch>button{min-height:2.35rem!important;margin:0 0 -1px!important;padding:.48rem .8rem!important;border:0!important;border-bottom:2px solid transparent!important;border-radius:0!important;background:transparent!important;color:#625a53!important;font:inherit!important;font-size:.76rem!important;font-weight:900!important;box-shadow:none!important;cursor:pointer!important}
+#shortListPanel .drawing-board-mode-switch>button.is-active{border-bottom-color:var(--relphi-board-red)!important;color:#a61712!important}
+#shortListPanel .drawing-board-mode-switch>button:focus-visible{outline:2px solid var(--relphi-board-red)!important;outline-offset:-2px!important}
 #shortListPanel .drawing-board-board-mode{display:block!important}
 #shortListPanel.relphi-referents-mode .drawing-board-board-mode{display:none!important}
 #shortListPanel .drawing-board-top-actions{position:relative!important;z-index:1800!important;isolation:isolate!important;display:flex!important;align-items:center!important;justify-content:flex-start!important;gap:.4rem!important;flex-wrap:wrap!important;width:calc(100% - 1rem)!important;margin:.5rem!important;pointer-events:auto!important;touch-action:manipulation!important}
@@ -304,8 +304,8 @@
 #shortListPanel .relphi-referent-settings-title{display:block!important;font-size:.7rem!important;font-weight:850!important}
 #shortListPanel .relphi-referent-settings .relphi-draw-options{margin-top:0!important}
 @media(max-width:700px){
-  #shortListPanel .drawing-board-mode-tabs{margin-left:.4rem!important;margin-right:.4rem!important}
-  #shortListPanel .drawing-board-mode-tabs>button{flex:1 1 50%!important;text-align:center!important}
+  #shortListPanel .drawing-board-mode-switch{margin-left:.4rem!important;margin-right:.4rem!important}
+  #shortListPanel .drawing-board-mode-switch>button{flex:1 1 50%!important;text-align:center!important}
   #shortListPanel .drawing-board-top-actions{display:grid!important;grid-template-columns:minmax(0,1fr) 2.25rem 2.25rem minmax(0,1fr)!important;gap:.35rem!important;margin:.4rem!important;width:calc(100% - .8rem)!important}
   #shortListPanel .drawing-board-top-actions>#drawRandomRowCard,#shortListPanel .drawing-board-top-actions>#clearShortListCardsOnly{width:100%!important}
   #shortListPanel .relphi-reading-options-drawer{margin:.4rem!important}
@@ -633,3 +633,7 @@ body.relphi-attune-open{overflow:hidden!important}
 #shortListPanel .relphi-saved-sky-slot[hidden]{display:none!important}
 #shortListPanel .relphi-saved-sky-slot button{min-height:2rem!important;padding:.32rem .58rem!important;border:1.5px solid var(--relphi-board-ink)!important;border-radius:8px!important;background:#fff!important;color:var(--relphi-board-ink)!important;font:inherit!important;font-size:.7rem!important;font-weight:900!important}
 @media(max-width:700px){#shortListPanel .relphi-astrology-sky-source{grid-template-columns:1fr!important}#shortListPanel .relphi-saved-sky-slot{grid-column:1!important;align-items:flex-start!important;flex-direction:column!important}}
+
+#shortListPanel .drawing-board-mode-switch{align-items:center!important}
+#shortListPanel .drawing-board-mode-label{font-size:.76rem!important;font-weight:900!important;color:var(--relphi-board-ink)!important}
+#shortListPanel .drawing-board-mode-or{font-size:.7rem!important;font-weight:700!important;color:#6b625b!important}
