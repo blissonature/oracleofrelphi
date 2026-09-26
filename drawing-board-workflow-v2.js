@@ -1501,11 +1501,29 @@
         }
       };
     } else {
-      portal?.remove();
       const earthIndex=recursionEarthIndex();
       const earthItem=Number.isInteger(earthIndex) && earthIndex>=0 ? root.querySelector('.card-row-board>.card-row-item[data-row-index="'+earthIndex+'"]') : null;
-      const earthReady=recursionTriadComplete(RECURSION_LEVELS) && earthItem && !cardAt(earthIndex);
-      earthItem?.classList.toggle('is-recursion-earth-ready',!!earthReady);
+      const earthDrawn=Number.isInteger(earthIndex) && earthIndex>=0 && !!cardAt(earthIndex);
+      const ready=recursionTriadComplete(RECURSION_LEVELS) && !earthDrawn;
+      earthItem?.classList.toggle('is-recursion-earth-ready',!!ready);
+      if (earthDrawn) {
+        portal?.remove();
+      } else {
+        if (!portal) {
+          portal=document.createElement('button');
+          portal.type='button';
+          portal.className='relphi-recursion-board-portal';
+          board.appendChild(portal);
+        }
+        portal.disabled=!ready;
+        portal.classList.toggle('is-ready',ready);
+        portal.classList.toggle('is-locked',!ready);
+        portal.dataset.recursionPortal='7';
+        portal.innerHTML='<span class="relphi-recursion-earth-glyph" aria-hidden="true">🜃</span><strong>Earth</strong><small>'+(ready?'Draw card 22':'Mem · Aleph · Shin first')+'</small>';
+        portal.onclick=()=>{
+          if (ready && Number.isInteger(earthIndex) && earthIndex>=0) openAttune(earthIndex);
+        };
+      }
     }
   }
   function renderRecursionDepth(reader) {
