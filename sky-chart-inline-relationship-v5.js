@@ -73,7 +73,7 @@ function serializeExpandedRelationship(row,rel){
   if(detail){
     const clone=detail.cloneNode(true);
     clone.querySelectorAll('.inline-rel-tile-copy,[hidden]').forEach(node=>node.remove());
-    const body=clone.innerText.replace(/\n{3,}/g,'\n\n').trim();
+    const body=String(clone.textContent||'').replace(/[ \t]+/g,' ').replace(/\n{3,}/g,'\n\n').trim();
     if(body)lines.push(body);
   }
   return lines.join('\n');
@@ -104,17 +104,19 @@ function alignExpandedRow(row){requestAnimationFrame(()=>requestAnimationFrame((
 function open(row){if(row?.classList.contains('is-inline-expanded')){close(row);openRow=null;return}if(openRow&&openRow!==row)close(openRow);const rel=relation(row);if(!rel)return;openRow=row;row.classList.add('is-inline-expanded');row.setAttribute('aria-expanded','true');decorateTopReveal(row);const signature=`${rel.left.sky}:${rel.left.id}@${rel.left.value.toFixed(7)}|${rel.aspect}|${rel.right.sky}:${rel.right.id}@${rel.right.value.toFixed(7)}`;let detail=row.querySelector(':scope>.inline-rel-detail');if(detail&&detail.dataset.inlineRelationshipSignature===signature){detail.hidden=false;bindInlineTileCopy(row,detail,rel);document.getElementById('skySelectedRelationship')?.setAttribute('hidden','');alignExpandedRow(row);return}detail?.remove();detail=document.createElement('div');detail.className='inline-rel-detail';detail.dataset.inlineRelationshipSignature=signature;const ca=card(rel.left),cb=card(rel.right);warmCardArt(ca.image);warmCardArt(cb.image);detail.innerHTML=`<div class="inline-rel-top-reveal" role="status" aria-live="polite" hidden></div><div class="inline-rel-visual">${cardMarkup(rel.left.sky,ca)}${wheelMarkup(rel)}${cardMarkup(rel.right.sky,cb)}</div>${contextMarkup(rel)}`;row.appendChild(detail);bindInlineTileCopy(row,detail,rel);document.getElementById('skySelectedRelationship')?.setAttribute('hidden','');alignExpandedRow(row)}
 function rowFromTarget(target){return target?.closest?.('.sky-foundation-relationship-row[data-relation-index]')||null}
 function touchPointer(event){return event.pointerType==='touch'||event.pointerType==='pen'}
-function onPointerDown(event){if(!touchPointer(event))return;const row=rowFromTarget(event.target);if(!row)return;touchGesture={id:event.pointerId,row,x:event.clientX,y:event.clientY,moved:false}}
+function onPointerDown(event){if(!touchPointer(event)||event.target.closest?.('.inline-rel-tile-copy'))return;const row=rowFromTarget(event.target);if(!row)return;touchGesture={id:event.pointerId,row,x:event.clientX,y:event.clientY,moved:false}}
 function onPointerMove(event){if(!touchGesture||touchGesture.id!==event.pointerId)return;const dx=event.clientX-touchGesture.x,dy=event.clientY-touchGesture.y;if(Math.hypot(dx,dy)>10)touchGesture.moved=true}
 function onPointerCancel(event){if(touchGesture?.id===event.pointerId)touchGesture=null}
 function onPointerUp(event){
   if(!touchPointer(event)||!touchGesture||touchGesture.id!==event.pointerId)return;
   const gesture=touchGesture;touchGesture=null;
   if(gesture.moved||event.target.closest?.('[data-inline-ledger]'))return;
+  if(event.target.closest?.('.inline-rel-tile-copy'))return;
   const row=rowFromTarget(event.target);if(!row||row!==gesture.row)return;
   open(row);suppressClickRow=row;suppressClickAt=performance.now();
 }
 function onClick(event){
+  if(event.target.closest?.('.inline-rel-tile-copy'))return;
   const row=rowFromTarget(event.target);
   if(row&&row===suppressClickRow&&performance.now()-suppressClickAt<900){event.preventDefault();event.stopImmediatePropagation();suppressClickRow=null;return}
   suppressClickRow=null;
