@@ -118,17 +118,36 @@ const base='http://127.0.0.1:8000/tarot.html';
       return window.RELPHI_TAROT_CARDS?.find(card=>card.card_id===id)?.card_type||'';
     });
     assert.equal(physicalType,'Court','Physical-card search should stay within the referent\'s assigned pack');
-    await page.waitForFunction(()=>{
-      const state=window.RelphiDrawingBoardOptionsBridge?.capture?.();
-      return (state?.shortListPositionLabels?.length||0)>2;
-    });
-    const afterExploration=await page.evaluate(()=>window.RelphiDrawingBoardOptionsBridge.capture());
-    assert.ok(afterExploration.shortListPositionLabels[2].startsWith('What does the primordial '),'After the initial exploration, a new question should be made from what surfaced');
-    assert.equal(afterExploration.rowPositionMeta[2].drawScope,'primordial-majors','Follow-up should retain the symbolic pack that surfaced it');
+    const beforeReview=await page.evaluate(()=>window.RelphiDrawingBoardOptionsBridge.capture());
+    assert.equal(beforeReview.shortListPositionLabels.length,2,'Follow-ups must not be appended before the reader accepts them');
 
     await page.click('.relphi-focus-next');
+    await page.waitForSelector('.relphi-surface-followup-review',{state:'visible'});
+    assert.ok(await page.locator('[data-followup-use]').count()>=2,'Surfaced cards should offer multiple card-linked follow-up choices');
+    assert.ok((await page.locator('.relphi-followup-question-row small').first().textContent()).startsWith('From '),'Generated follow-ups must name the card that surfaced them');
+    assert.equal(await page.locator('[data-followup-use]:checked').count(),0,'Generated follow-ups must require explicit acceptance');
+    assert.equal(await page.locator('[data-followup-custom-row]').count(),1,'Review should begin with one Write your own row');
+    assert.equal((await page.locator('[data-followup-custom-row] small').first().textContent()).trim(),'Write your own');
+
+    await page.click('[data-followup-add-custom]');
+    assert.equal(await page.locator('[data-followup-custom-row]').count(),2,'Plus must add an additional custom-question row');
+    await page.fill('[data-followup-custom-text="0"]','What else do I need to ask here?');
+    await page.selectOption('[data-followup-custom-pack="0"]','full');
+    await page.check('[data-followup-use="0"]');
+    assert.equal(await page.locator('[data-followup-confirm]').isDisabled(),false,'Selecting or writing a question should enable confirmation');
+    await page.click('[data-followup-confirm]');
+
+    await page.waitForSelector('.relphi-surface-followup-review',{state:'detached'});
+    const afterExploration=await page.evaluate(()=>window.RelphiDrawingBoardOptionsBridge.capture());
+    assert.equal(afterExploration.shortListPositionLabels.length,4,'Only accepted generated/custom follow-ups should be appended');
+    assert.ok(afterExploration.shortListPositionLabels[2].startsWith('What does the primordial '),'Accepted generated question should come from the surfaced card');
+    assert.equal(afterExploration.rowPositionMeta[2].drawScope,'primordial-majors','Generated follow-up should retain its suggested sub-pack');
+    assert.equal(afterExploration.shortListPositionLabels[3],'What else do I need to ask here?','Accepted Write your own question should become a real referent');
+    assert.equal(afterExploration.rowPositionMeta[3].drawScope,'full','Write your own should default to Full Pack unless changed');
+
+    await page.click('.relphi-board-toast-action');
     await page.waitForSelector('.relphi-attune-reader',{state:'visible'});
-    assert.ok((await page.locator('.relphi-attune-shell h2').textContent()).startsWith('What does the primordial '),'Follow-up question should enter the same sacred attune/reveal flow');
+    assert.ok((await page.locator('.relphi-attune-shell h2').textContent()).startsWith('What does the primordial '),'Accepted follow-up question should enter the same sacred attune/reveal flow');
 
     await page.click('.relphi-attune-close');
     await page.click('#drawingBoardOptionsButton');
