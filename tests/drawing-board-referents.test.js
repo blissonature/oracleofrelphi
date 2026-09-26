@@ -63,8 +63,8 @@ const base='http://127.0.0.1:8000/tarot.html';
     const choices=page.locator('[data-surface-choice]');
     assert.equal(await choices.count(),8,'See What Surfaces should expose Full Pack plus each specialist question type');
     assert.deepEqual(await page.locator('.relphi-surface-question-choice strong').allTextContents(),[
-      'Where should I begin?','Which primordial force?','What is taking root?','What is at work?','How is it showing up?',
-      'What is needed?','How is it being carried?','What form is it taking?'
+      'Where should I begin?','What basic force is here?','What wants to begin?','What is driving this?','What style is it taking?',
+      'What is needed?','How is it being handled?','What is happening in practice?'
     ]);
     assert.equal(await page.locator('[data-surface-choice="origin"]').count(),1,'Full Pack should be available as the open-ended starting route');
     assert.equal(await page.locator('#relphiSurfaceAll').count(),0,'See What Surfaces should not force a single-or-all control');
@@ -86,10 +86,10 @@ const base='http://127.0.0.1:8000/tarot.html';
     assert.equal(await page.locator('.relphi-board-toast-action').textContent(),'Begin reading');
     await page.click('.relphi-board-toast-action');
     await page.waitForSelector('.relphi-attune-reader',{state:'visible'});
-    assert.equal(await page.locator('.relphi-attune-shell h2').textContent(),'Which primordial force?');
+    assert.equal(await page.locator('.relphi-attune-shell h2').textContent(),'What basic force is here?');
 
     const configured=await page.evaluate(()=>window.RelphiDrawingBoardOptionsBridge.capture());
-    assert.deepEqual(configured.shortListPositionLabels.slice(0,2),['Which primordial force?','How is it being carried?']);
+    assert.deepEqual(configured.shortListPositionLabels.slice(0,2),['What basic force is here?','How is it being handled?']);
     assert.deepEqual(configured.rowPositionMeta.slice(0,2).map(item=>item.drawScope),['primordial-majors','courts']);
 
     await page.click('[data-attune-random]');
@@ -100,11 +100,11 @@ const base='http://127.0.0.1:8000/tarot.html';
     });
     assert.equal(firstCard?.card_type,'Major','primordial exploration should draw a Major');
     assert.ok(['Aleph','Mem','Shin'].includes(String(firstCard?.hebrew?.letter||'')),'primordial exploration should draw from the mother-letter Majors');
-    assert.equal(await page.locator('.relphi-focus-position').textContent(),'Which primordial force?');
+    assert.equal(await page.locator('.relphi-focus-position').textContent(),'What basic force is here?');
 
     await page.click('.relphi-focus-next');
     await page.waitForSelector('.relphi-attune-reader',{state:'visible'});
-    assert.equal(await page.locator('.relphi-attune-shell h2').textContent(),'How is it being carried?');
+    assert.equal(await page.locator('.relphi-attune-shell h2').textContent(),'How is it being handled?');
     await page.click('[data-attune-search]');
     await page.fill('.relphi-attune-search input','Queen');
     await page.waitForFunction(()=>document.querySelectorAll('.relphi-attune-search-results [data-attune-card]').length>0);
@@ -112,7 +112,7 @@ const base='http://127.0.0.1:8000/tarot.html';
     await physicalChoice.click();
 
     await page.waitForSelector('.relphi-focus-reader',{state:'visible'});
-    assert.equal(await page.locator('.relphi-focus-position').textContent(),'How is it being carried?');
+    assert.equal(await page.locator('.relphi-focus-position').textContent(),'How is it being handled?');
     const physicalType=await page.evaluate(()=>{
       const cards=[...document.querySelectorAll('#shortListPanel .card-row-board [data-row-card]')];
       const id=cards[1]?.dataset?.rowCard;
@@ -126,7 +126,7 @@ const base='http://127.0.0.1:8000/tarot.html';
     await page.waitForSelector('.relphi-surface-followup-review',{state:'visible'});
     assert.ok(await page.locator('[data-followup-use]').count()>=6,'Each surfaced card should offer several distinct card-linked follow-up choices');
     assert.ok((await page.locator('.relphi-followup-question-row small').first().textContent()).startsWith('From '),'Generated follow-ups must name the card that surfaced them');
-    assert.ok((await page.locator('.relphi-followup-question-row small').first().textContent()).includes('Which primordial force?'),'Follow-up provenance should retain the question the source card already answered');
+    assert.ok((await page.locator('.relphi-followup-question-row small').first().textContent()).includes('What basic force is here?'),'Follow-up provenance should retain the question the source card already answered');
     assert.equal(await page.locator('[data-followup-use]:checked').count(),0,'Generated follow-ups must require explicit acceptance');
     assert.equal(await page.locator('[data-followup-pack="0"]').inputValue(),'full','Follow-up pack selection must default from the new question, not inherit the source sub-pack');
     assert.equal(await page.locator('[data-followup-repeats]').isChecked(),false,'Follow-up settings should suggest Repeats off to avoid hereditary loops');
