@@ -637,3 +637,10 @@ body.relphi-attune-open{overflow:hidden!important}
 #shortListPanel .drawing-board-mode-switch{align-items:center!important}
 #shortListPanel .drawing-board-mode-label{font-size:.76rem!important;font-weight:900!important;color:var(--relphi-board-ink)!important}
 #shortListPanel .drawing-board-mode-or{font-size:.7rem!important;font-weight:700!important;color:#6b625b!important}
+
+#shortListPanel .relphi-astrology-sky-mode.relphi-segmented-toggle{display:flex!important;grid-template-columns:none!important;align-items:center!important;gap:0!important;width:max-content!important;max-width:100%!important;padding:2px!important;border:1px solid #c9c0b8!important;border-radius:999px!important;background:#f4f0ec!important}
+#shortListPanel .relphi-segmented-toggle .relphi-segmented-label{padding:0 .5rem!important;font-size:.7rem!important;font-weight:900!important;color:#554d47!important}
+#shortListPanel .relphi-segmented-toggle>label{display:block!important;margin:0!important;padding:0!important;border:0!important;border-radius:999px!important;background:transparent!important}
+#shortListPanel .relphi-segmented-toggle>label>input{position:absolute!important;opacity:0!important;pointer-events:none!important}
+#shortListPanel .relphi-segmented-toggle>label>span{display:block!important;padding:.34rem .65rem!important;border-radius:999px!important;font-size:.7rem!important;font-weight:900!important;line-height:1!important;cursor:pointer!important}
+#shortListPanel .relphi-segmented-toggle>label.is-active>span{background:var(--relphi-board-ink)!important;color:#fff!important}
