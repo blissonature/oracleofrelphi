@@ -262,16 +262,26 @@ function groupedPatternsForResults(){
   })).sort((a,b)=>a.representative.maxPhase-b.representative.maxPhase||a.representative.meanPhase-b.representative.meanPhase);
 }
 function configurationMatchLabel(pattern){
-  return pattern.vertices.map(key=>vertexLabel(key).label).join(' · ');
+  return pattern.vertices.map(key=>placementWord(vertexLabel(key).id)).join(' · ');
 }
 function configurationMatchRow(pattern,index){
   const button=document.createElement('button');
   button.type='button';
   button.className='sky-configuration-match-row';
   button.dataset.configurationMatch=pattern.key;
+
   const placements=document.createElement('span');
   placements.className='sky-configuration-match-placements';
-  placements.textContent=configurationMatchLabel(pattern);
+  pattern.vertices.forEach(key=>{
+    const item=vertexLabel(key);
+    const glyph=document.createElement('span');
+    glyph.className='sky-configuration-match-glyph';
+    glyph.dataset.canonicalPlacement=item.id;
+    glyph.dataset.sky=item.sky;
+    glyph.setAttribute('aria-label','Sky '+item.sky+' '+placementWord(item.id));
+    placements.appendChild(glyph);
+  });
+
   const meta=document.createElement('span');
   meta.className='sky-configuration-match-meta';
   const scope=document.createElement('span');
@@ -281,25 +291,70 @@ function configurationMatchRow(pattern,index){
   meta.append(scope,exact);
   button.append(placements,meta);
   button.setAttribute('aria-label','Match '+(index+1)+': '+configurationMatchLabel(pattern)+', '+patternScopeLabel(pattern)+(exact.textContent?', '+exact.textContent:''));
+
   button.addEventListener('click',event=>{
     event.preventDefault();event.stopPropagation();
-    button.closest('.sky-configuration-result-tile')?.querySelectorAll('.sky-configuration-match-row.is-selected').forEach(node=>node.classList.remove('is-selected'));
-    button.classList.add('is-selected');
-    highlightPattern(pattern);
+    const tile=button.closest('.sky-configuration-result-tile');
+    if(!tile)return;
+    selectConfigurationMatch(tile,pattern,button);
   });
   button.addEventListener('pointerenter',()=>highlightPattern(pattern));
   button.addEventListener('focus',()=>highlightPattern(pattern));
   return button;
 }
+async function paintConfigurationMatchGlyphs(root){
+  if(!root)return;
+  const templates=window.RelphiRelationshipGlyphTemplates;
+  if(!templates?.clone)return;
+  const colors=templates.colors||RESULT_COLORS;
+  for(const host of root.querySelectorAll('.sky-configuration-match-glyph[data-canonical-placement]')){
+    if(host.dataset.canonicalGlyphReady==='true')continue;
+    const id=String(host.dataset.canonicalPlacement||''),sky=String(host.dataset.sky||'A').toUpperCase(),color=colors?.[sky]||RESULT_COLORS[sky]||RESULT_COLORS.A;
+    if(!id)continue;
+    let glyph=null;
+    try{glyph=await templates.clone(id,color)}catch(error){console.error('[Sky Chart] Configuration match glyph clone failed:',id,error)}
+    if(!glyph)continue;
+    host.replaceChildren(glyph);
+    host.dataset.canonicalGlyphReady='true';
+  }
+}
+function renderSelectedConfiguration(tile,pattern){
+  const detail=tile?.querySelector(':scope>.sky-configuration-result-detail');
+  if(!detail)return;
+  const visual=detail.querySelector('.sky-configuration-result-visual');
+  const structure=detail.querySelector('.sky-configuration-result-structure>span');
+  const interpretation=detail.querySelector('.sky-configuration-result-interpretation>span');
+  const explanation=detail.querySelector('.sky-configuration-result-explanation');
+  if(visual)visual.innerHTML=miniConfigurationMarkup(pattern,{interactive:false});
+  if(structure)structure.textContent=structureText(pattern);
+  if(interpretation)interpretation.textContent=interpretationText(pattern);
+  const oldNested=explanation?.querySelector('.sky-configuration-nested');
+  oldNested?.remove();
+  if(explanation&&pattern.nested?.length){
+    const holder=document.createElement('div');
+    holder.innerHTML=nestedConfigurationMarkup(pattern);
+    if(holder.firstElementChild)explanation.appendChild(holder.firstElementChild);
+  }
+  tile.dataset.configurationResult=pattern.key;
+  const exact=tile.querySelector(':scope>.sky-configuration-result-summary .sky-configuration-result-exactness');
+  if(exact)exact.textContent=Number.isFinite(pattern.maxPhase)?pattern.maxPhase.toFixed(2)+'°':'';
+  paintConfigurationMiniGlyphs(visual);
+}
+function selectConfigurationMatch(tile,pattern,row){
+  tile.querySelectorAll('.sky-configuration-match-row.is-selected').forEach(node=>node.classList.remove('is-selected'));
+  row?.classList.add('is-selected');
+  renderSelectedConfiguration(tile,pattern);
+  highlightPattern(pattern);
+}
 function openConfiguration(tile,group){
   if(tile.classList.contains('is-expanded')){closeConfigurationTile(tile);return}
   if(openConfigurationTile&&openConfigurationTile!==tile)closeConfigurationTile(openConfigurationTile);
   const pattern=group.representative;
-  openConfigurationTile=tile;tile.classList.add('is-expanded');tile.setAttribute('aria-expanded','true');highlightPattern(pattern);
+  openConfigurationTile=tile;tile.classList.add('is-expanded');tile.setAttribute('aria-expanded','true');
   let detail=tile.querySelector(':scope>.sky-configuration-result-detail');
   if(!detail){
     detail=document.createElement('div');detail.className='sky-configuration-result-detail';
-    detail.innerHTML='<div class="sky-configuration-result-visual">'+miniConfigurationMarkup(pattern,{interactive:false})+'</div><div class="sky-configuration-result-explanation"><div class="sky-configuration-result-structure"><strong>Structure</strong><span>'+structureText(pattern)+'</span></div><div class="sky-configuration-result-interpretation"><strong>Interpretation</strong><span>'+interpretationText(pattern)+'</span></div>'+nestedConfigurationMarkup(pattern)+'</div>';
+    detail.innerHTML='<div class="sky-configuration-result-visual"></div><div class="sky-configuration-result-explanation"><div class="sky-configuration-result-structure"><strong>Structure</strong><span></span></div><div class="sky-configuration-result-interpretation"><strong>Interpretation</strong><span></span></div></div>';
     const matches=document.createElement('div');matches.className='sky-configuration-match-stack';
     const heading=document.createElement('div');heading.className='sky-configuration-match-stack-heading';heading.textContent=group.matches.length+' match'+(group.matches.length===1?'':'es');
     const list=document.createElement('div');list.className='sky-configuration-match-list';
@@ -308,7 +363,9 @@ function openConfiguration(tile,group){
     tile.appendChild(detail);
   }
   detail.hidden=false;
-  paintConfigurationMiniGlyphs(detail);
+  paintConfigurationMatchGlyphs(detail);
+  const firstRow=detail.querySelector('.sky-configuration-match-row[data-configuration-match="'+CSS.escape(pattern.key)+'"]')||detail.querySelector('.sky-configuration-match-row');
+  selectConfigurationMatch(tile,pattern,firstRow);
 }
 function resultGroupTile(group,index){
   const pattern=group.representative,type=TYPE_MAP.get(group.type),tile=document.createElement('article');
