@@ -1772,6 +1772,15 @@
     };
   }
   window.RELPHI_CARD_SUBPACK_CONTEXT = cardQuestionGeneratorContext;
+  window.RELPHI_KEYWORD_SUBPACK_CONTEXT = Object.freeze({
+    catalog: () => canonicalTagCatalog().slice(),
+    matches: query => {
+      const needle = normalizeSearch(query);
+      if (!needle) return [];
+      return canonicalTagCatalog().filter(tag => normalizeSearch(tag).includes(needle)).slice(0, 40);
+    },
+    count: (tags, mode = 'any') => cards.filter(card => cardMatchesSelectedTags(card, tags, mode === 'all' ? 'all' : 'any')).length
+  });
 
 
   // Shared evidence contract for See What Surfaces bridges.
