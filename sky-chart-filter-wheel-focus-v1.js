@@ -86,10 +86,13 @@
     const rows=eligibleRows();
     if(!rows.length){clearMarks(wheel);return}
     const matched=explicitRows(rows);
-    const active=matched.length<rows.length;
+    // Zero surviving relationships means the user has selected no relationship signal.
+    // That is a neutral wheel state, not "dim the entire chart."
+    const active=matched.length>0&&matched.length<rows.length;
     wheel.classList.toggle('has-filter-focus',active);
     if(!active){
-      document.documentElement.removeAttribute('data-sky-filter-wheel-focus');
+      clearMarks(wheel);
+      window.dispatchEvent(new CustomEvent('relphi:sky-filter-wheel-focus-changed',{detail:{active:false,visible:matched.length,total:rows.length,relationshipIndexes:[]}}));
       return;
     }
 
@@ -161,7 +164,9 @@
       'relphi:sky-placement-multiselect-changed',
       'relphi:sky-house-multiselect-changed',
       'relphi:sky-aspect-multiselect-changed',
-      'relphi:sky-zodiac-filter-changed'
+      'relphi:sky-zodiac-filter-changed',
+      'relphi:sky-configuration-selection-changed',
+      'relphi:sky-aspect-visibility-applied'
     ].forEach(name=>window.addEventListener(name,schedule));
     document.addEventListener('change',event=>{
       if(event.target.closest?.('#skyFoundationFocus .sky-chart-filter-bar,#skyFoundationRelationships .sky-chart-filter-bar')&&!event.target.matches?.('[data-harmonic-window-input]'))schedule();
