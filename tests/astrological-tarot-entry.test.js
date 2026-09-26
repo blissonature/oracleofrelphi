@@ -24,3 +24,8 @@ assert.match(js,/function astrologyQuestionSuggestions/);
 assert.match(js,/Suggested questions/);
 assert.doesNotMatch(js,/Each sky is a disposable reading copy/);
 assert.doesNotMatch(js,/Zodiacal Majors locate houses/);
+
+assert.match(app,/relphi:sky-calculated/);
+assert.doesNotMatch(js,/<strong>Sky '\+slot\+'<\/strong>/);
+assert.match(js,/Use '\+\(count>1\?'These Skies':'This Sky'\)/);
+assert.doesNotMatch(js,/Connect Sky A or Sky A \+ Sky B/);
