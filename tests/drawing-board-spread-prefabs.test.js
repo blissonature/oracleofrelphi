@@ -14,8 +14,16 @@ sandbox.window.document=sandbox.document; sandbox.window.localStorage=sandbox.lo
 vm.createContext(sandbox); vm.runInContext(source,sandbox);
 const api=sandbox.window.RelphiDrawingBoardSpreadPrefabs;
 assert.ok(api);
-assert.equal(api.shipped.length,9);
+assert.equal(api.shipped.length,10);
 assert.ok(api.shipped.every(item=>item.positions.length===item.cardCount));
+const recursion=api.byId('relphi-recursion-22');
+assert.ok(recursion);
+assert.equal(recursion.cardCount,22);
+assert.equal(recursion.positionCount,28);
+assert.equal(recursion.virtualPositionCount,6);
+assert.equal(recursion.positions.length,22);
+assert.deepEqual(Array.from(recursion.positions.slice(0,3),p=>p.recursionElement),['mem','aleph','shin']);
+assert.equal(recursion.positions.at(-1).recursionElement,'earth');
 const c=api.byId('celtic-cross-10');
 assert.equal(c.positions[0].role,'covering');
 assert.equal(c.positions[1].role,'crossing');
