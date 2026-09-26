@@ -1043,15 +1043,24 @@
     }
     return result.slice(0,MAX_POSITIONS);
   }
+  function astrologySkySourceMarkup(slot,session,disabled=false) {
+    const key=slot==='B'?'astrologySkyBSource':'astrologySkyASource';
+    const value=session[key]||'here-now';
+    return '<label class="relphi-astrology-sky-source"><span><strong>Sky '+slot+'</strong><small>Choose where this sky comes from.</small></span><select data-astrology-sky-source="'+slot+'" '+(disabled?'disabled':'')+'>'+
+      '<option value="here-now" '+(value==='here-now'?'selected':'')+'>Here & Now</option>'+
+      '<option value="saved" '+(value==='saved'?'selected':'')+'>Saved Sky…</option>'+
+      '</select><div class="relphi-saved-sky-slot" data-saved-sky-slot="'+slot+'" '+(value==='saved'?'':'hidden')+'><button type="button" data-choose-saved-sky="'+slot+'" '+(disabled?'disabled':'')+'>Choose Saved Sky</button><span data-saved-sky-name="'+slot+'">No saved sky chosen</span></div></label>';
+  }
   function astrologySurfaceMarkup(session,disabled=false) {
     const mode=session.astrologySkyMode==='AB' ? 'AB' : 'A';
     return '<section class="relphi-referent-panel relphi-astrology-surface">'+
-      '<div class="relphi-options-subhead"><div><strong>Astrological Tarot Reading</strong><span>Connect sky data, then let the cards reveal where the sky is asking for inquiry.</span></div></div>'+
-      '<div class="relphi-astrology-sky-mode" role="radiogroup" aria-label="Sky data">'+
-        '<label><input type="radio" name="relphiAstrologySkyMode" value="A" '+(mode==='A'?'checked ':'')+(disabled?'disabled':'')+'><span><strong>Sky A</strong><small>Read one connected sky.</small></span></label>'+
-        '<label><input type="radio" name="relphiAstrologySkyMode" value="AB" '+(mode==='AB'?'checked ':'')+(disabled?'disabled':'')+'><span><strong>Sky A + Sky B</strong><small>Include the relationship between two skies.</small></span></label>'+
+      '<div class="relphi-options-subhead"><div><strong>Astrological Tarot Reading</strong><span>Choose the sky or skies, then let the cards reveal where the astrology is asking for inquiry.</span></div></div>'+
+      '<div class="relphi-astrology-sky-mode" role="radiogroup" aria-label="Number of skies">'+
+        '<label><input type="radio" name="relphiAstrologySkyMode" value="A" '+(mode==='A'?'checked ':'')+(disabled?'disabled':'')+'><span><strong>One sky</strong><small>Read a single sky.</small></span></label>'+
+        '<label><input type="radio" name="relphiAstrologySkyMode" value="AB" '+(mode==='AB'?'checked ':'')+(disabled?'disabled':'')+'><span><strong>Two skies</strong><small>Read the relationship between two skies.</small></span></label>'+
       '</div>'+
-      '<div class="relphi-astrology-bridge-status"><strong>Sky connection</strong><span data-astrology-sky-status>No Sky Chart data connected yet.</span><button type="button" id="relphiConnectSky" '+(disabled?'disabled':'')+'>Connect from Sky Chart</button></div>'+
+      '<div class="relphi-astrology-sky-sources">'+astrologySkySourceMarkup('A',session,disabled)+(mode==='AB'?astrologySkySourceMarkup('B',session,disabled):'')+'</div>'+
+      '<div class="relphi-astrology-bridge-status"><strong>Sky connection</strong><span data-astrology-sky-status>Here & Now is available immediately. Saved Sky choices come from Sky Chart.</span><button type="button" id="relphiConnectSky" '+(disabled?'disabled':'')+'>Use These Skies</button></div>'+
       '<p class="relphi-astrology-note">Zodiacal Majors locate houses. Pips retain their exact sign/decan intervals. Card Hits and concentrations will become candidate questions before you Attune.</p>'+
       '</section>';
   }
@@ -1127,11 +1136,22 @@
       renderOptions(root);
     }));
 
-    drawer.querySelectorAll('input[name="relphiAstrologySkyMode"]').forEach(input=>input.addEventListener('change',()=>{session.astrologySkyMode=input.value==='AB'?'AB':'A';}));
+    drawer.querySelectorAll('input[name="relphiAstrologySkyMode"]').forEach(input=>input.addEventListener('change',()=>{session.astrologySkyMode=input.value==='AB'?'AB':'A'; renderOptions(root);}));
+    drawer.querySelectorAll('[data-astrology-sky-source]').forEach(select=>select.addEventListener('change',()=>{
+      const slot=select.dataset.astrologySkySource==='B'?'B':'A';
+      session[slot==='B'?'astrologySkyBSource':'astrologySkyASource']=select.value==='saved'?'saved':'here-now';
+      renderOptions(root);
+    }));
+    drawer.querySelectorAll('[data-choose-saved-sky]').forEach(button=>button.addEventListener('click',()=>{
+      const slot=button.dataset.chooseSavedSky==='B'?'B':'A';
+      window.dispatchEvent(new CustomEvent('relphi:request-saved-sky',{detail:{slot,source:'crafted-draw'}}));
+      showBoardToast('Choose a saved sky for Sky '+slot+' in Sky Chart.',{title:'Saved Sky',duration:4200});
+    }));
     drawer.querySelector('#relphiConnectSky')?.addEventListener('click',()=>{
-      const payload={mode:session.astrologySkyMode==='AB'?'AB':'A',source:'crafted-draw'};
+      const mode=session.astrologySkyMode==='AB'?'AB':'A';
+      const payload={mode,source:'crafted-draw',skyA:{source:session.astrologySkyASource||'here-now'},skyB:mode==='AB'?{source:session.astrologySkyBSource||'here-now'}:null};
       window.dispatchEvent(new CustomEvent('relphi:request-sky-connection',{detail:payload}));
-      showBoardToast('Sky Chart connection requested. The visible reading path is ready for the Sky Chart bridge to supply Sky A'+(payload.mode==='AB'?' and Sky B':'')+'.',{title:'Astrological Tarot Reading',duration:5200});
+      showBoardToast('Astrological reading setup requested with '+(mode==='AB'?'two skies':'one sky')+'.',{title:'Astrological Tarot Reading',duration:5200});
     });
 
     const templateSelect = drawer.querySelector('#relphiSpreadTemplateSelect');
