@@ -72,9 +72,30 @@ const base='http://127.0.0.1:8000/tarot.html';
     assert.equal(await page.locator('.relphi-recursion-board-portal').evaluate(node=>node.parentElement?.classList.contains('card-row-board')),true,'The Earth portal should occupy the logo itself, not float below it');
     assert.equal(await page.locator('.relphi-recursion-board-portal').evaluate(node=>getComputedStyle(node).backgroundColor),'rgb(220, 31, 24)','The logo red circle is the Earth portal');
 
-    await page.click('.relphi-board-toast-action');
+    const recursionAttuneScrollY=await page.evaluate(()=>{
+      document.body.style.minHeight='2600px';
+      window.scrollTo(0,640);
+      return window.scrollY;
+    });
+    await page.evaluate(()=>document.querySelector('.relphi-board-toast-action')?.click());
     await page.waitForSelector('.relphi-attune-reader',{state:'visible'});
     assert.ok((await page.locator('.relphi-attune-shell h2').textContent()).includes('Mem'));
+    const recursionAttuneViewport=await page.evaluate(()=>({
+      bodyPosition:document.body.style.position,
+      bodyTop:document.body.style.top,
+      overlayTop:document.querySelector('.relphi-attune-reader')?.getBoundingClientRect().top,
+      overlayBottom:document.querySelector('.relphi-attune-reader')?.getBoundingClientRect().bottom,
+      viewportHeight:window.innerHeight
+    }));
+    assert.equal(recursionAttuneViewport.bodyPosition,'fixed');
+    assert.equal(recursionAttuneViewport.bodyTop,(-recursionAttuneScrollY)+'px');
+    assert.equal(Math.round(recursionAttuneViewport.overlayTop),0);
+    assert.equal(Math.round(recursionAttuneViewport.overlayBottom),Math.round(recursionAttuneViewport.viewportHeight));
+    await page.click('.relphi-attune-close');
+    await page.waitForSelector('.relphi-attune-reader',{state:'detached'});
+    assert.ok(Math.abs((await page.evaluate(()=>window.scrollY))-recursionAttuneScrollY)<=1,'Closing Recursive Attune should restore the exact page scroll position');
+    await page.evaluate(()=>document.querySelector('.card-row-board>.card-row-item.is-recursion-level-active')?.click());
+    await page.waitForSelector('.relphi-attune-reader',{state:'visible'});
 
     async function drawAttuned(){
       await page.waitForSelector('.relphi-attune-reader',{state:'visible'});
