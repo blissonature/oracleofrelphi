@@ -1686,6 +1686,7 @@
     if (key === 'shown') pool = visible.length ? visible : cards;
     else if (key === 'majors') pool = cards.filter(card => card.card_type === 'Major');
     else if (key === 'uhn') pool = UHN_CARD_IDS.map(cardById).filter(Boolean);
+    else if (key === 'primordial-majors') pool = cards.filter(card => card.card_type === 'Major' && card.astrology?.attribution_type === 'Element' && ['Aleph','Mem','Shin'].includes(String(card.hebrew?.letter || '')));
     else if (key === 'planetary-majors') pool = cards.filter(card => card.card_type === 'Major' && planetaryBodies.has(card.astrology?.planet));
     else if (key === 'zodiac-majors') pool = cards.filter(card => card.card_type === 'Major' && !!card.astrology?.sign);
     else if (key === 'aces') pool = cards.filter(card => card.card_type === 'Ace');
@@ -1726,8 +1727,17 @@
     return next;
   }
 
-  function rowDrawSignature() {
-    const key = state.rowDrawScope || 'full';
+  function positionDrawScope(index) {
+    return String(
+      state.rowPositionMeta?.[index]?.drawScope ||
+      state.rowActiveLayout?.positions?.[index]?.drawScope ||
+      state.rowDrawScope ||
+      'full'
+    );
+  }
+
+  function rowDrawSignature(scope = state.rowDrawScope || 'full') {
+    const key = scope || 'full';
     const visibleIds = key === 'shown' ? currentCards().map(card => card.card_id).join('|') : '';
     return JSON.stringify({
       scope: key,
@@ -1743,21 +1753,21 @@
     state.rowShuffleCount = 0;
   }
 
-  function buildRowDrawDeck() {
-    const pool = rowDrawPool(state.rowDrawScope);
+  function buildRowDrawDeck(scope = state.rowDrawScope || 'full') {
+    const pool = rowDrawPool(scope);
     const entries = pool.map(card => ({
       cardId: card.card_id,
       reversed: !!state.rowAllowReversals && randomInt(2) === 1
     }));
     state.rowDrawDeck = shuffleArray(entries);
-    state.rowDrawDeckSignature = rowDrawSignature();
+    state.rowDrawDeckSignature = rowDrawSignature(scope);
     state.rowShuffleCount = (Number(state.rowShuffleCount) || 0) + 1;
     return state.rowDrawDeck;
   }
 
-  function drawFromRowDeck() {
-    const signature = rowDrawSignature();
-    if (!Array.isArray(state.rowDrawDeck) || state.rowDrawDeckSignature !== signature) buildRowDrawDeck();
+  function drawFromRowDeck(scope = state.rowDrawScope || 'full') {
+    const signature = rowDrawSignature(scope);
+    if (!Array.isArray(state.rowDrawDeck) || state.rowDrawDeckSignature !== signature) buildRowDrawDeck(scope);
     const used = new Set([...(state.shortList || []), ...(state.shortListPositionCardIds || [])]);
     while (state.rowDrawDeck.length) {
       const entry = state.rowDrawDeck.shift();
@@ -1782,9 +1792,11 @@
       if (status) status.textContent = 'Finish the layout design before drawing cards.';
       return;
     }
+    const index = (state.shortList || []).length;
+    const drawScope = positionDrawScope(index);
     let draw;
     if (state.rowAllowRepeats) {
-      const pool = rowDrawPool(state.rowDrawScope);
+      const pool = rowDrawPool(drawScope);
       if (!pool.length) {
         const status = $('downloadStatus');
         if (status) status.textContent = 'No cards are available in that pack.';
@@ -1792,7 +1804,7 @@
       }
       draw = randomRowDraw(pool, !!state.rowAllowReversals);
     } else {
-      draw = drawFromRowDeck();
+      draw = drawFromRowDeck(drawScope);
       if (!draw?.card) {
         const status = $('downloadStatus');
         if (status) status.textContent = 'The current draw pile is exhausted. Clear the board or allow repeats to keep drawing.';
@@ -1801,7 +1813,6 @@
       }
     }
     if (!draw?.card) return;
-    const index = (state.shortList || []).length;
     commitShortList([...state.shortList, draw.card.card_id], { newCardsManual:false });
     setRowCardReversed(index, !!draw.reversed);
     refreshShortListViews();
@@ -2114,7 +2125,7 @@
           zIndex:transform.zIndex
         })
       };
-      ['role','covers','crosses'].forEach(key => { if (meta[key]) result[key] = String(meta[key]); });
+      ['role','covers','crosses','drawScope'].forEach(key => { if (meta[key]) result[key] = String(meta[key]); });
       if (meta.openTransform) result.openTransform = normalizedPrefabTransform(meta.openTransform);
       return result;
     });
@@ -2154,6 +2165,7 @@
         role:position.role || '',
         covers:position.covers || '',
         crosses:position.crosses || '',
+        drawScope:String(position.drawScope || ''),
         openTransform:position.openTransform ? normalizedPrefabTransform(position.openTransform) : null
       };
     });
@@ -2194,6 +2206,7 @@
       role:position.role || '',
       covers:position.covers || '',
       crosses:position.crosses || '',
+      drawScope:String(position.drawScope || ''),
       openTransform:position.openTransform || null
     }));
     state.rowLayoutDesignMode = false;
@@ -2670,8 +2683,8 @@
     const optionsOpen = !!(optionsWasOpen || state.cardRowSettingsOpen);
     const boardStatsHtml = items.length ? rowStatsHtml(items, selectedItems) : '';
     const boardHtml = `${items.length ? '' : '<p class="short-list-empty card-row-board-empty">Draw a card or add placeholders. The board is ready.</p>'}<div class="card-row-workspace" style="${cardRowWorkspaceStyle(displaySlots)}" aria-label="Pan-and-zoom Drawing Board workspace"><div class="card-row-workspace-toolbar"><label class="card-row-zoom-label" title="Zoom the board">Zoom <input id="rowZoom" type="range" min="${CARD_ROW_ZOOM_MIN}" max="${CARD_ROW_ZOOM_MAX}" step="0.01" value="${rowZoom}"><span id="rowZoomValue">${Math.round(rowZoom * 100)}%</span></label><button type="button" id="resetCardRowPan" title="Center the Drawing Board">Center</button><span class="card-row-pan-note">Drag the table background to pan. Position stickers appear only when you add a placeholder or type a sticker.</span></div><div class="short-list-row card-row-board" style="${cardRowBoardStyle(displaySlots)}" aria-label="Movable Drawing Board">${Array.from({ length: displaySlots }).map((_, i) => { const card = items[i]; const envelopeArt = rowEnvelopeArtFor(i); const panel = rowPositionPanelHtml(i, { force: !card }); if (card) { return rowCardEnvelopeHtml(card, i, panel); } return `<div class="card-row-item card-row-placeholder-item" data-row-index="${i}" data-row-placeholder="${i}" style="${cardRowItemStyle(i)}">${panel}<div class="card-row-drop-card${envelopeArt ? ' has-custom-envelope-art' : ''}" tabindex="0">${envelopeArt ? `<img src="${escapeHtml(envelopeArt)}" alt="Custom placeholder art for position ${i + 1}">` : '<span class="card-row-drop-card-inner">Position placeholder</span>'}</div></div>`; }).join('')}</div></div>${boardStatsHtml}`;
-    const moreOptionsHtml = `<details class="card-row-more-options card-row-settings-panel"><summary>More Board Options</summary><div class="card-row-tools card-row-composer"><label class="card-row-name-label">Name <input id="rowName" type="text" value="${escapeHtml(rowName)}" placeholder="Reading name"></label><label class="card-row-position-label">Position stickers <input id="rowPositionLabels" type="text" list="rowStickerPresetList" value="${escapeHtml(positionValue)}" placeholder="Type stickers, or choose a spread…"><datalist id="rowStickerPresetList">${STICKER_PRESETS.map(preset => `<option value="${escapeHtml(stickerPresetDisplay(preset))}">${escapeHtml(preset.labels.join(', '))}</option>`).join('')}</datalist></label><label class="card-row-draw-scope-label">Pack <select id="rowDrawScope">${option('full','Full Pack')}${option('shown','Shown cards')}${option('uhn','Universal Human Needs')}${option('majors','Majors')}${option('planetary-majors','Planetary Majors')}${option('zodiac-majors','Zodiac Majors')}${option('aces','Aces')}${option('courts','Courts')}${option('pips','Pips')}${option('decans','Decan pips')}${option('wands','Wands')}${option('cups','Cups')}${option('swords','Swords')}${option('pentacles','Pentacles / Disks')}</select></label><label class="spread-toggle"><input id="rowAllowRepeats" type="checkbox" ${state.rowAllowRepeats ? 'checked' : ''}> Repeats</label><label class="spread-toggle"><input id="rowSnapEnabled" type="checkbox" ${state.rowSnapEnabled ? 'checked' : ''}> Align</label><label class="spread-toggle"><input id="rowRotationSnapEnabled" type="checkbox" ${state.rowRotationSnapEnabled ? 'checked' : ''}> Rotation snap</label><span class="card-row-snap-steppers"><button type="button" id="rowSnapGridMinus" aria-label="Smaller alignment snap">−</button><span id="rowSnapGridValue">${escapeHtml(rowSnapGrid().label)}</span><button type="button" id="rowSnapGridPlus" aria-label="Larger alignment snap">+</button><button type="button" id="rowRotationSnapMinus" aria-label="Smaller rotation snap">−</button><span id="rowRotationSnapValue">${rowRotationSnapDegrees()}°</span><button type="button" id="rowRotationSnapPlus" aria-label="Larger rotation snap">+</button></span><label class="card-row-color-label">Placeholder color <input id="rowEnvelopeColor" type="color" value="${escapeHtml(state.rowEnvelopeColor || '#f3f0ea')}"></label><label class="card-row-table-color-label">Table <input id="rowTableColor" type="color" value="${escapeHtml(state.rowTableColor || '#7d1f28')}"></label><button type="button" id="rowTableImageUpload">Upload table image</button><button type="button" id="rowTableImageReset" ${state.rowTableImage ? '' : 'disabled'}>Reset table</button><button type="button" id="resetCardRowLayout" ${displaySlots ? '' : 'disabled'}>Reset layout</button><button type="button" id="resetRowCardTransform" ${displaySlots ? '' : 'disabled'}>Reset selected card</button><button type="button" id="selectAllRow" ${items.length ? '' : 'disabled'}>Select all</button><button type="button" id="clearRowSelection" ${state.shortListSelection.length ? '' : 'disabled'}>Clear selection</button><button type="button" id="snapshotCardRowArrangement" ${displaySlots ? '' : 'disabled'}>Snapshot</button><button type="button" id="downloadRowHtml" ${items.length ? '' : 'disabled'}>Board with art</button><button type="button" id="downloadRowTextHtml" ${items.length ? '' : 'disabled'}>Text only</button><button type="button" id="downloadRowJson" ${items.length ? '' : 'disabled'}>Board data</button><button type="button" id="printCardRowImage" ${items.length ? '' : 'disabled'}>Image</button><label class="card-row-notes-label">Notes <textarea id="rowNotes" rows="1" placeholder="Board notes">${escapeHtml(rowNotes)}</textarea></label><input id="rowTableImageFile" type="file" accept="image/*" hidden></div></details>`;
-    wrap.innerHTML = `<details class="short-list-drawer card-row-drawing-board"><summary><strong>Drawing Board <span class="card-row-count">${items.length}</span></strong></summary><div class="drawing-board-top-actions" aria-label="Drawing Board actions"><button type="button" id="drawingBoardOptionsButton" aria-controls="drawingBoardReadingOptions" aria-expanded="false">Options</button><button type="button" id="drawRandomRowCard" title="Draw random card" aria-label="Draw random card">Draw</button><button type="button" id="undoShortList" class="board-history-icon" ${state.shortListUndo.length ? '' : 'disabled'} title="Undo" aria-label="Undo"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"><path d="M9 7 4 12l5 5"></path><path d="M4 12h9a7 7 0 0 1 7 7"></path></svg></button><button type="button" id="redoShortList" class="board-history-icon" ${state.shortListRedo.length ? '' : 'disabled'} title="Redo" aria-label="Redo"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"><path d="m15 7 5 5-5 5"></path><path d="M20 12h-9a7 7 0 0 0-7 7"></path></svg></button><button type="button" id="clearShortListCardsOnly" ${items.length ? '' : 'disabled'} title="Remove drawn cards and keep the spread positions" aria-label="Clear cards and keep spread positions">Clear Cards</button></div><span class="short-list-actions card-row-icon-toolbar card-row-action-staging" aria-label="Drawing Board staging controls" hidden><button type="button" id="addCardPlaceholder" title="Add placeholder" aria-label="Add placeholder">Add placeholder</button><label class="quick-reversal-toggle" title="Allow reversed cards in future draws"><input id="rowAllowReversalsQuick" type="checkbox" ${state.rowAllowReversals ? 'checked' : ''}> Reversals</label><button type="button" id="clearShortList" ${displaySlots ? '' : 'disabled'} title="Clear board" aria-label="Clear Drawing Board">Clear</button></span>${moreOptionsHtml}${boardHtml}</details>`;
+    const moreOptionsHtml = `<details class="card-row-more-options card-row-settings-panel"><summary>More Board Options</summary><div class="card-row-tools card-row-composer"><label class="card-row-name-label">Name <input id="rowName" type="text" value="${escapeHtml(rowName)}" placeholder="Reading name"></label><label class="card-row-position-label">Position stickers <input id="rowPositionLabels" type="text" list="rowStickerPresetList" value="${escapeHtml(positionValue)}" placeholder="Type stickers, or choose a spread…"><datalist id="rowStickerPresetList">${STICKER_PRESETS.map(preset => `<option value="${escapeHtml(stickerPresetDisplay(preset))}">${escapeHtml(preset.labels.join(', '))}</option>`).join('')}</datalist></label><label class="card-row-draw-scope-label">Pack <select id="rowDrawScope">${option('full','Full Pack')}${option('shown','Shown cards')}${option('uhn','Universal Human Needs')}${option('majors','Majors')}${option('primordial-majors','Primordial Element Majors')}${option('planetary-majors','Planetary Majors')}${option('zodiac-majors','Zodiac Majors')}${option('aces','Aces')}${option('courts','Courts')}${option('pips','Pips')}${option('decans','Decan pips')}${option('wands','Wands')}${option('cups','Cups')}${option('swords','Swords')}${option('pentacles','Pentacles / Disks')}</select></label><label class="spread-toggle"><input id="rowAllowRepeats" type="checkbox" ${state.rowAllowRepeats ? 'checked' : ''}> Repeats</label><label class="spread-toggle"><input id="rowSnapEnabled" type="checkbox" ${state.rowSnapEnabled ? 'checked' : ''}> Align</label><label class="spread-toggle"><input id="rowRotationSnapEnabled" type="checkbox" ${state.rowRotationSnapEnabled ? 'checked' : ''}> Rotation snap</label><span class="card-row-snap-steppers"><button type="button" id="rowSnapGridMinus" aria-label="Smaller alignment snap">−</button><span id="rowSnapGridValue">${escapeHtml(rowSnapGrid().label)}</span><button type="button" id="rowSnapGridPlus" aria-label="Larger alignment snap">+</button><button type="button" id="rowRotationSnapMinus" aria-label="Smaller rotation snap">−</button><span id="rowRotationSnapValue">${rowRotationSnapDegrees()}°</span><button type="button" id="rowRotationSnapPlus" aria-label="Larger rotation snap">+</button></span><label class="card-row-color-label">Placeholder color <input id="rowEnvelopeColor" type="color" value="${escapeHtml(state.rowEnvelopeColor || '#f3f0ea')}"></label><label class="card-row-table-color-label">Table <input id="rowTableColor" type="color" value="${escapeHtml(state.rowTableColor || '#7d1f28')}"></label><button type="button" id="rowTableImageUpload">Upload table image</button><button type="button" id="rowTableImageReset" ${state.rowTableImage ? '' : 'disabled'}>Reset table</button><button type="button" id="resetCardRowLayout" ${displaySlots ? '' : 'disabled'}>Reset layout</button><button type="button" id="resetRowCardTransform" ${displaySlots ? '' : 'disabled'}>Reset selected card</button><button type="button" id="selectAllRow" ${items.length ? '' : 'disabled'}>Select all</button><button type="button" id="clearRowSelection" ${state.shortListSelection.length ? '' : 'disabled'}>Clear selection</button><button type="button" id="snapshotCardRowArrangement" ${displaySlots ? '' : 'disabled'}>Snapshot</button><button type="button" id="downloadRowHtml" ${items.length ? '' : 'disabled'}>Board with art</button><button type="button" id="downloadRowTextHtml" ${items.length ? '' : 'disabled'}>Text only</button><button type="button" id="downloadRowJson" ${items.length ? '' : 'disabled'}>Board data</button><button type="button" id="printCardRowImage" ${items.length ? '' : 'disabled'}>Image</button><label class="card-row-notes-label">Notes <textarea id="rowNotes" rows="1" placeholder="Board notes">${escapeHtml(rowNotes)}</textarea></label><input id="rowTableImageFile" type="file" accept="image/*" hidden></div></details>`;
+    wrap.innerHTML = `<details class="short-list-drawer card-row-drawing-board"><summary><strong>Drawing Board <span class="card-row-count">${items.length}</span></strong></summary><div class="drawing-board-mode-tabs" role="tablist" aria-label="Drawing Board modes"><button type="button" id="drawingBoardBoardTab" role="tab" aria-selected="true" class="is-active">Board</button><button type="button" id="drawingBoardOptionsButton" role="tab" aria-controls="drawingBoardReadingOptions" aria-selected="false" aria-expanded="false">Referents</button></div><div class="drawing-board-board-mode" role="tabpanel" aria-label="Board"><div class="drawing-board-top-actions" aria-label="Board actions"><button type="button" id="drawRandomRowCard" title="Draw random card" aria-label="Draw random card">Draw</button><button type="button" id="undoShortList" class="board-history-icon" ${state.shortListUndo.length ? '' : 'disabled'} title="Undo" aria-label="Undo"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"><path d="M9 7 4 12l5 5"></path><path d="M4 12h9a7 7 0 0 1 7 7"></path></svg></button><button type="button" id="redoShortList" class="board-history-icon" ${state.shortListRedo.length ? '' : 'disabled'} title="Redo" aria-label="Redo"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"><path d="m15 7 5 5-5 5"></path><path d="M20 12h-9a7 7 0 0 0-7 7"></path></svg></button><button type="button" id="clearShortListCardsOnly" ${items.length ? '' : 'disabled'} title="Remove drawn cards and keep the spread positions" aria-label="Clear cards and keep spread positions">Clear Cards</button></div><span class="short-list-actions card-row-icon-toolbar card-row-action-staging" aria-label="Drawing Board staging controls" hidden><button type="button" id="addCardPlaceholder" title="Add placeholder" aria-label="Add placeholder">Add placeholder</button><label class="quick-reversal-toggle" title="Allow reversed cards in future draws"><input id="rowAllowReversalsQuick" type="checkbox" ${state.rowAllowReversals ? 'checked' : ''}> Reversals</label><button type="button" id="clearShortList" ${displaySlots ? '' : 'disabled'} title="Clear board" aria-label="Clear Drawing Board">Clear</button></span>${moreOptionsHtml}${boardHtml}</div></details>`;
     bindRenderedDrawingBoardActions(wrap);
     const renderedBoardDrawer = wrap.querySelector('.card-row-drawing-board');
     if (renderedBoardDrawer) {
@@ -4023,6 +4036,26 @@
     },
     drawingBoardReadingEntries() {
       return drawingBoardReadingEntries().map(entry => ({ ...entry }));
+    },
+    searchCards(query, limit = 24, scope = 'full') {
+      const needle = normalizeSearch(String(query || ''));
+      if (!needle) return [];
+      const max = Math.max(1, Math.min(60, Number(limit) || 24));
+      return rowDrawPool(scope || 'full',{ignoreUsed:true}).filter(card => normalizeSearch(compactText(card) + ' ' + cardSearchTokens(card)).includes(needle)).slice(0, max).map(card => ({
+        card_id:card.card_id,
+        title:title(card),
+        image:rwsImagePath(card)
+      }));
+    },
+    addCardToBoard(cardId, scope = 'full') {
+      const id=String(cardId || '').trim();
+      if (!cardById(id)) return false;
+      if (!rowDrawPool(scope || 'full',{ignoreUsed:true}).some(card=>card.card_id===id)) return false;
+      if (!state.rowAllowRepeats && state.shortList.includes(id)) return false;
+      commitShortList([...state.shortList,id],{newCardsManual:true});
+      expandCardRow();
+      scrollCardRowToEnd();
+      return true;
     },
     serializeDrawingBoardReading() {
       return serializeDrawingBoardReadingText();

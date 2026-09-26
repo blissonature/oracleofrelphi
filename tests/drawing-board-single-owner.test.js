@@ -10,7 +10,7 @@ const board = read('drawing-board-workflow-v2.js');
 const css = read('drawing-board-workflow-v2.css');
 const app = read('tarot-app.js');
 
-assert.match(nav, /drawing-board-workflow-v2\.js\?v=96/);
+assert.match(nav, /drawing-board-workflow-v2\.js\?v=110/);
 [
   'drawing-board-interactions-v1.js',
   'drawing-board-template-lifecycle-v1.js',
@@ -110,6 +110,8 @@ assert.match(css, /\.relphi-focus-shell\{[^}]*grid-template-rows:auto minmax\(0,
 assert.match(css, /\.relphi-focus-position-panel\{[^}]*overflow:visible!important/);
 assert.match(css, /\.relphi-focus-art-frame\{[^}]*max-height:none!important/);
 assert.match(css, /@media\(min-width:701px\)\{[\s\S]*\.relphi-focus-shell\{overflow:hidden!important\}[\s\S]*\.relphi-focus-art-pane\{[^}]*overflow:hidden!important\}[\s\S]*\.relphi-focus-art-frame\{[^}]*height:100%!important[^}]*max-height:36rem!important/);
+assert.match(css, /\.relphi-focus-reader\.has-long-referent \.relphi-focus-shell\{[^}]*overflow-y:auto!important/);
+assert.match(board, /classList\.toggle\('has-long-referent',positionText\.length>320\)/);
 assert.match(css, /\.relphi-focus-art\{[^}]*border-radius:0!important[^}]*clip-path:none!important/);
 assert.doesNotMatch(css, /position-anchor:--relphi-focus-card-title/);
 assert.match(css, /\.relphi-focus-art\.is-reversed\{/);

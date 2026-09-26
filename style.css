@@ -15143,6 +15143,12 @@ html body .menu-container {
   top: 1rem;
   left: 1rem;
 }
+html body .menu-container.active {
+  z-index: 20000 !important;
+}
+html body .menu-container.active .dropdown-menu {
+  z-index: 20001 !important;
+}
 html body .anniversary-nav .logo-btn,
 html body .menu-container .logo-btn {
   width: auto;
