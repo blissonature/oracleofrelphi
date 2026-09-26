@@ -56,6 +56,11 @@ const base='http://127.0.0.1:8000/tarot.html';
     const built=await page.locator('[data-suggestion-text]').evaluateAll(nodes=>nodes.map(node=>node.value));
     assert.equal(built.length,3);
     assert.ok(built.every(value=>value.endsWith('?')),'Building Blocks suggestions should be reviewable questions');
+    assert.equal(await page.locator('[data-suggestion-toggle-all]').isChecked(),true,'Building Blocks bulk selector should reflect that all suggested questions start selected');
+    await page.uncheck('[data-suggestion-toggle-all]');
+    assert.equal(await page.locator('[data-suggestion-use]:checked').count(),0,'Building Blocks bulk selector should clear every suggested question');
+    await page.check('[data-suggestion-toggle-all]');
+    assert.equal(await page.locator('[data-suggestion-use]:checked').count(),3,'Building Blocks bulk selector should select every suggested question');
     await page.click('#relphiAcceptSuggestions');
     assert.equal(await page.locator('.relphi-referent-review').count(),0,'Referents should not repeat a second redundant question list');
 
@@ -67,9 +72,16 @@ const base='http://127.0.0.1:8000/tarot.html';
       'What need is asking for attention?','How is the situation being carried?','What condition has taken shape?'
     ]);
     assert.equal(await page.locator('[data-surface-choice="origin"]').count(),1,'Full Pack should be available as the open-ended starting route');
-    assert.equal(await page.locator('#relphiSurfaceAll').count(),0,'See What Surfaces should not force a single-or-all control');
+    assert.equal(await page.locator('#relphiSurfaceAll').count(),0,'See What Surfaces should not restore the old single-or-all restriction');
     assert.equal(await page.locator('[data-surface-draw]').count(),0,'Question types should be selected before entering the reading, not pre-drawn in Referents');
     assert.equal(await page.locator('#relphiApplyOptions').isDisabled(),true,'Start Reading should wait until at least one question type is chosen');
+    assert.equal(await page.locator('[data-surface-toggle-all]').isChecked(),false,'Initial bulk selector should reflect that no starting questions are selected');
+    await page.check('[data-surface-toggle-all]');
+    assert.equal(await page.locator('[data-surface-choice]:checked').count(),8,'Initial bulk selector should select every starting question');
+    assert.equal(await page.locator('#relphiApplyOptions').isDisabled(),false,'Selecting all should enable Start Reading');
+    await page.uncheck('[data-surface-toggle-all]');
+    assert.equal(await page.locator('[data-surface-choice]:checked').count(),0,'Initial bulk selector should clear every starting question');
+    assert.equal(await page.locator('#relphiApplyOptions').isDisabled(),true,'Clearing all should disable Start Reading again');
 
     await page.check('[data-surface-choice="primordial"]');
     await page.check('[data-surface-choice="court"]');
@@ -86,10 +98,10 @@ const base='http://127.0.0.1:8000/tarot.html';
     assert.equal(await page.locator('.relphi-board-toast-action').textContent(),'Begin reading');
     await page.click('.relphi-board-toast-action');
     await page.waitForSelector('.relphi-attune-reader',{state:'visible'});
-    assert.equal(await page.locator('.relphi-attune-shell h2').textContent(),'What basic force is here?');
+    assert.equal(await page.locator('.relphi-attune-shell h2').textContent(),'What is happening at the root of this?');
 
     const configured=await page.evaluate(()=>window.RelphiDrawingBoardOptionsBridge.capture());
-    assert.deepEqual(configured.shortListPositionLabels.slice(0,2),['What basic force is here?','How is it being handled?']);
+    assert.deepEqual(configured.shortListPositionLabels.slice(0,2),['What is happening at the root of this?','How is the situation being carried?']);
     assert.deepEqual(configured.rowPositionMeta.slice(0,2).map(item=>item.drawScope),['primordial-majors','courts']);
 
     await page.click('[data-attune-random]');
@@ -100,11 +112,11 @@ const base='http://127.0.0.1:8000/tarot.html';
     });
     assert.equal(firstCard?.card_type,'Major','primordial exploration should draw a Major');
     assert.ok(['Aleph','Mem','Shin'].includes(String(firstCard?.hebrew?.letter||'')),'primordial exploration should draw from the mother-letter Majors');
-    assert.equal(await page.locator('.relphi-focus-position').textContent(),'What basic force is here?');
+    assert.equal(await page.locator('.relphi-focus-position').textContent(),'What is happening at the root of this?');
 
     await page.click('.relphi-focus-next');
     await page.waitForSelector('.relphi-attune-reader',{state:'visible'});
-    assert.equal(await page.locator('.relphi-attune-shell h2').textContent(),'How is it being handled?');
+    assert.equal(await page.locator('.relphi-attune-shell h2').textContent(),'How is the situation being carried?');
     await page.click('[data-attune-search]');
     await page.fill('.relphi-attune-search input','Queen');
     await page.waitForFunction(()=>document.querySelectorAll('.relphi-attune-search-results [data-attune-card]').length>0);
@@ -112,7 +124,7 @@ const base='http://127.0.0.1:8000/tarot.html';
     await physicalChoice.click();
 
     await page.waitForSelector('.relphi-focus-reader',{state:'visible'});
-    assert.equal(await page.locator('.relphi-focus-position').textContent(),'How is it being handled?');
+    assert.equal(await page.locator('.relphi-focus-position').textContent(),'How is the situation being carried?');
     const physicalType=await page.evaluate(()=>{
       const cards=[...document.querySelectorAll('#shortListPanel .card-row-board [data-row-card]')];
       const id=cards[1]?.dataset?.rowCard;
@@ -126,8 +138,15 @@ const base='http://127.0.0.1:8000/tarot.html';
     await page.waitForSelector('.relphi-surface-followup-review',{state:'visible'});
     assert.ok(await page.locator('[data-followup-use]').count()>=6,'Each surfaced card should offer several distinct card-linked follow-up choices');
     assert.ok((await page.locator('.relphi-followup-question-row small').first().textContent()).startsWith('From '),'Generated follow-ups must name the card that surfaced them');
-    assert.ok((await page.locator('.relphi-followup-question-row small').first().textContent()).includes('What basic force is here?'),'Follow-up provenance should retain the question the source card already answered');
+    assert.ok((await page.locator('.relphi-followup-question-row small').first().textContent()).includes('What is happening at the root of this?'),'Follow-up provenance should retain the question the source card already answered');
     assert.equal(await page.locator('[data-followup-use]:checked').count(),0,'Generated follow-ups must require explicit acceptance');
+    assert.equal(await page.locator('[data-followup-toggle-all]').isChecked(),false,'Follow-up bulk selector should begin with generated questions unselected');
+    await page.check('[data-followup-toggle-all]');
+    assert.equal(await page.locator('[data-followup-use]:checked').count(),await page.locator('[data-followup-use]').count(),'Follow-up bulk selector should select every generated question');
+    assert.equal(await page.locator('[data-followup-confirm]').isDisabled(),false,'Selecting all generated questions should enable confirmation');
+    await page.uncheck('[data-followup-toggle-all]');
+    assert.equal(await page.locator('[data-followup-use]:checked').count(),0,'Follow-up bulk selector should clear every generated question');
+    assert.equal(await page.locator('[data-followup-confirm]').isDisabled(),true,'Clearing all generated questions should disable confirmation when no custom question is selected');
     assert.equal(await page.locator('[data-followup-pack="0"]').inputValue(),'full','Follow-up pack selection must default from the new question, not inherit the source sub-pack');
     assert.equal(await page.locator('[data-followup-repeats]').isChecked(),false,'Follow-up settings should suggest Repeats off to avoid hereditary loops');
     assert.equal(await page.locator('[data-followup-custom-row]').count(),1,'Review should begin with one Write your own row');
