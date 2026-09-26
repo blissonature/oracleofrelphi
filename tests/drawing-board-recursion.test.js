@@ -35,7 +35,10 @@ const base='http://127.0.0.1:8000/tarot.html';
     await page.waitForSelector('.relphi-referents-drawer',{state:'detached'});
     await page.waitForSelector('.relphi-board-toast',{state:'visible'});
 
-    assert.ok((await page.locator('.relphi-board-toast').innerText()).includes('Earth opens the next depth six times'));
+    const readingToast=await page.locator('.relphi-board-toast').innerText();
+    assert.ok(readingToast.includes('active black circle opens white'));
+    assert.ok(readingToast.includes('red Earth circle wakes up'));
+    assert.ok(readingToast.includes('Veilva'));
     assert.equal(await page.locator('.relphi-board-toast-action').textContent(),'Enter Level 1');
 
     const configured=await page.evaluate(()=>window.RelphiDrawingBoardOptionsBridge.capture());
@@ -67,7 +70,17 @@ const base='http://127.0.0.1:8000/tarot.html';
     assert.ok((await page.locator('.relphi-recursion-logo-underlay').getAttribute('src')).endsWith('logo.png'));
     assert.equal(await page.locator('.card-row-board>.card-row-item.is-recursion-level-active').count(),3,'Level 1 should expose only its triad on the Board');
     assert.equal(await page.locator('.relphi-recursion-board-depth [data-recursion-depth]').count(),7);
+    assert.equal(await page.locator('.relphi-recursion-board-depth').getAttribute('aria-label'),'Veilva · recursion depth');
     assert.equal(await page.locator('.relphi-recursion-board-depth [data-recursion-depth="1"]').evaluate(node=>node.classList.contains('is-current')),true);
+    const veilvaCell=await page.locator('.relphi-recursion-board-depth [data-recursion-depth="1"]').evaluate(node=>{const r=node.getBoundingClientRect();return {w:r.width,h:r.height,radius:getComputedStyle(node).borderRadius,bg:getComputedStyle(node).backgroundColor};});
+    assert.ok(Math.abs(veilvaCell.w-veilvaCell.h)<1,'Each Veilva rung should be square');
+    assert.equal(veilvaCell.radius,'0px','Veilva should read as a 1×7 ladder, not a string of circles');
+    assert.equal(veilvaCell.bg,'rgb(220, 31, 24)','The active Veilva rung should be red');
+    assert.equal(await page.locator('.relphi-recursion-circle-states .relphi-recursion-state-circle').count(),3);
+    assert.equal(await page.locator('[data-recursion-circle="mem"]').evaluate(node=>node.classList.contains('is-current')),true,'Mem should be the first active logo circle');
+    const activeCircle=await page.locator('[data-recursion-circle="mem"]').evaluate(node=>({bg:getComputedStyle(node).backgroundColor,border:getComputedStyle(node).borderColor}));
+    assert.equal(activeCircle.bg,'rgb(255, 255, 255)','The active logo circle should open white');
+    assert.equal(activeCircle.border,'rgb(17, 17, 17)','The active logo circle should keep a black stroke');
     assert.equal(await page.locator('.relphi-recursion-board-portal').isDisabled(),true,'Earth must remain closed until Mem, Aleph, and Shin are complete');
     assert.equal(await page.locator('.relphi-recursion-board-portal').evaluate(node=>node.parentElement?.classList.contains('card-row-board')),true,'The Earth portal should occupy the logo itself, not float below it');
     assert.equal(await page.locator('.relphi-recursion-board-portal').evaluate(node=>getComputedStyle(node).backgroundColor),'rgb(220, 31, 24)','The logo red circle is the Earth portal');
@@ -97,10 +110,24 @@ const base='http://127.0.0.1:8000/tarot.html';
     await page.evaluate(()=>document.querySelector('.card-row-board>.card-row-item.is-recursion-level-active')?.click());
     await page.waitForSelector('.relphi-attune-reader',{state:'visible'});
 
+    let cardCircleHeightChecked=false;
     async function drawAttuned(){
       await page.waitForSelector('.relphi-attune-reader',{state:'visible'});
       await page.click('[data-attune-random]');
       await page.waitForSelector('.relphi-focus-reader',{state:'visible'});
+      if(!cardCircleHeightChecked){
+        const sizing=await page.evaluate(()=>{
+          const item=document.querySelector('.card-row-board>.card-row-item.is-recursion-level-active.is-recursion-drawn');
+          const face=item?.querySelector('.card-row-card-wrap');
+          const key=item?.dataset?.relphiRecursionElement;
+          const circle=document.querySelector('[data-recursion-circle="'+key+'"]');
+          if(!face||!circle)return null;
+          return {cardH:face.getBoundingClientRect().height,circleH:circle.getBoundingClientRect().height};
+        });
+        assert.ok(sizing,'A drawn recursive card and its logo circle should both be measurable');
+        assert.ok(Math.abs(sizing.cardH-sizing.circleH)<=8,'A recursive card should occupy essentially the full height of its logo circle');
+        cardCircleHeightChecked=true;
+      }
     }
 
     async function nextToAttune(){
@@ -135,6 +162,7 @@ const base='http://127.0.0.1:8000/tarot.html';
       assert.ok((await page.locator('.relphi-recursion-portal-focus').innerText()).includes('Descend'));
       assert.equal(await page.locator('.relphi-recursion-focus-node.is-earth-portal').count(),1);
       assert.equal(await page.locator('.relphi-recursion-focus-node.is-earth-portal').isDisabled(),false);
+      assert.equal(await page.locator('.relphi-recursion-board-portal').evaluate(node=>node.classList.contains('is-ready')),true,'The red Earth circle should visibly wake up when the triad is complete');
       assert.equal(await page.locator('#shortListPanel .card-row-board [data-row-card]').count(),level*3,'Entering Earth must not draw a fourth card on Levels 1–6');
 
       await page.click('[data-recursion-descend]');
@@ -153,9 +181,13 @@ const base='http://127.0.0.1:8000/tarot.html';
     await completeTriad(7);
     assert.equal(await page.locator('#shortListPanel .card-row-board [data-row-card]').count(),21);
 
-    // There is no seventh virtual portal. Earth itself is the 22nd card position.
+    // Level 7 uses the same red circle as the explicit action for card 22.
     assert.equal(await page.locator('.relphi-recursion-focus-node.is-earth-portal').count(),0);
-    await nextToAttune();
+    assert.equal(await page.locator('.relphi-recursion-board-portal').count(),1,'The red logo circle should remain actionable for card 22');
+    assert.equal(await page.locator('.relphi-recursion-board-portal').isDisabled(),false);
+    assert.ok((await page.locator('.relphi-recursion-board-portal').innerText()).includes('Draw card 22'));
+    await page.click('.relphi-recursion-board-portal');
+    await page.waitForSelector('.relphi-attune-reader',{state:'visible'});
     const finalReferent=await page.locator('.relphi-attune-shell h2').textContent();
     assert.ok(finalReferent.includes('Level 7'));
     assert.ok(finalReferent.includes('Earth'));
