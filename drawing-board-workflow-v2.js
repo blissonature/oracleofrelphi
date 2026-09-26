@@ -29,6 +29,8 @@
   let transformEditingUnlocked = false;
   let showPositionStickers = readStickerVisibility();
   let surfaceReadingSession = null;
+  let recursionSession = null;
+  let recursionPortalLevel = 0;
   let attuneIndex = -1;
 
   function panel() { return document.getElementById(PANEL_ID); }
@@ -212,6 +214,53 @@
     rules:{ allowReversals:true, allowRepeats:false, drawScope:'full' }
   };
 
+
+  const RECURSION_ID = 'relphi-recursion-22';
+  const RECURSION_LEVELS = 7;
+  const RECURSION_TRIAD = Object.freeze([
+    { key:'mem', label:'Mem · Water', glyph:'מ', role:'recursion-mem', x:.055 },
+    { key:'aleph', label:'Aleph · Air', glyph:'א', role:'recursion-aleph', x:.355 },
+    { key:'shin', label:'Shin · Fire', glyph:'ש', role:'recursion-shin', x:.655 }
+  ]);
+  function recursionPositions() {
+    const positions=[];
+    let drawOrder=1;
+    for (let level=1;level<=RECURSION_LEVELS;level++) {
+      RECURSION_TRIAD.forEach(item=>{
+        positions.push(position(
+          `recursion-${level}-${item.key}`,
+          `Level ${level} · ${item.label}`,
+          drawOrder++,
+          transform(item.x,.18,.86),
+          { role:item.role, recursionLevel:level, recursionElement:item.key, recursionGlyph:item.glyph }
+        ));
+      });
+      if (level===RECURSION_LEVELS) {
+        positions.push(position(
+          'recursion-7-earth',
+          'Level 7 · Earth · Completion · Seed',
+          drawOrder++,
+          transform(.355,.62,.56),
+          { role:'recursion-earth', recursionLevel:7, recursionElement:'earth', recursionGlyph:'🜃' }
+        ));
+      }
+    }
+    return positions;
+  }
+  const RELPHI_RECURSION = {
+    version:1,
+    id:RECURSION_ID,
+    name:'Relphi Recursion Reading',
+    cardCount:22,
+    positionCount:28,
+    virtualPositionCount:6,
+    source:'shipped',
+    editable:false,
+    recursion:true,
+    positions:recursionPositions(),
+    rules:{ allowReversals:true, allowRepeats:false, drawScope:'full' }
+  };
+
   const SHIPPED = [
     { id:'past-present-future-3', name:'Past · Present · Future', labels:['Past','Present','Future'] },
     { id:'situation-challenge-strategy-3', name:'Situation · Challenge · Strategy', labels:['Situation','Challenge','Strategy'] },
@@ -225,6 +274,7 @@
     SATURN_SQUARE,
     CELTIC_CROSS,
     HOUSE_POLARITIES,
+    RELPHI_RECURSION,
     {version:1,id:'focus-1',name:'Focus',cardCount:1,source:'shipped',editable:false,positions:genericPositions(['Focus']),rules:{allowReversals:true,allowRepeats:false,drawScope:'full'}}
   ]);
 
@@ -689,9 +739,12 @@
     });
   }
 
+  function templateCountLabel(item) {
+    return item?.id===RECURSION_ID ? '28 positions · 22 cards' : String(item?.cardCount || 0);
+  }
   function optionTemplateMarkup(draft) {
     const entries = allTemplates();
-    return `<option value="">Custom</option>${entries.map(item => `<option value="${escapeHtml(item.id)}" ${draft.templateId===item.id?'selected':''}>${item.cardCount} · ${escapeHtml(item.name)}</option>`).join('')}`;
+    return `<option value="">Custom</option>${entries.map(item => `<option value="${escapeHtml(item.id)}" ${draft.templateId===item.id?'selected':''}>${escapeHtml(templateCountLabel(item))} · ${escapeHtml(item.name)}</option>`).join('')}`;
   }
   function packOptions(value) {
     const items = [
@@ -941,9 +994,14 @@
   function templatesMarkup(draft,hasCards) {
     const selected=templateById(draft.templateId||draft.basedOnTemplateId);
     const positions=selected?.positions?.slice?.().sort((a,b)=>a.drawOrder-b.drawOrder) || [];
+    const preview=selected?.id===RECURSION_ID
+      ? '<div class="relphi-recursion-template-note"><strong>Seven recursive levels · 28 positions · 22 cards</strong><span>Mem, Aleph, and Shin repeat at each depth. Earth is the portal between the first six levels; the seventh Earth receives the twenty-second card.</span></div>'
+      : positions.length
+        ? '<ol class="relphi-template-preview">'+positions.map(item=>'<li>'+escapeHtml(item.label)+'</li>').join('')+'</ol>'
+        : '<p class="relphi-referent-empty">Choose a template to preview its referents.</p>';
     return '<section class="relphi-referent-panel"><div class="relphi-options-subhead"><div><strong>Templates</strong><span>Start from an established or saved spread.</span></div></div>'+
       '<label class="relphi-options-field">Template<select id="relphiSpreadTemplateSelect" '+(hasCards?'disabled':'')+'>'+optionTemplateMarkup(draft)+'</select></label>'+
-      (positions.length?'<ol class="relphi-template-preview">'+positions.map(item=>'<li>'+escapeHtml(item.label)+'</li>').join('')+'</ol>':'<p class="relphi-referent-empty">Choose a template to preview its referents.</p>')+
+      preview+
       '</section>';
   }
   function pathPanelMarkup(session,hasCards) {
@@ -1149,6 +1207,8 @@
     optionsSession.surfaceSelected={};
     openTool='';
     surfaceReadingSession=null;
+    recursionSession=null;
+    recursionPortalLevel=0;
     closeAttune();
     closeFocus({acknowledge:false});
     const clear=root.querySelector('#clearShortList');
@@ -1260,6 +1320,276 @@
     });
     if (duration>0) setTimeout(()=>{ if (toast.isConnected) remove(); },duration);
   }
+
+  function recursionLayout() {
+    const layout=currentPrefabState().activeLayout || {};
+    return layout.id===RECURSION_ID || layout.basedOn===RECURSION_ID ? layout : null;
+  }
+  function recursionActive() { return !!recursionLayout(); }
+  function recursionPositionAt(index) {
+    const snap=currentSnapshot() || {};
+    return snap.rowActiveLayout?.positions?.[index] || recursionLayout()?.positions?.[index] || null;
+  }
+  function recursionLevelForIndex(index) {
+    return Number(recursionPositionAt(index)?.recursionLevel) || 0;
+  }
+  function recursionElementForIndex(index) {
+    return String(recursionPositionAt(index)?.recursionElement || '');
+  }
+  function recursionIndicesForLevel(level) {
+    const layout=recursionLayout();
+    if (!layout?.positions?.length) return [];
+    return layout.positions
+      .map((item,index)=>({item,index}))
+      .filter(entry=>Number(entry.item?.recursionLevel)===Number(level))
+      .sort((a,b)=>(Number(a.item?.drawOrder)||0)-(Number(b.item?.drawOrder)||0))
+      .map(entry=>entry.index);
+  }
+  function recursionTriadIndices(level) {
+    return recursionIndicesForLevel(level).filter(index=>recursionElementForIndex(index)!=='earth');
+  }
+  function recursionEarthIndex() {
+    const layout=recursionLayout();
+    return layout?.positions?.findIndex?.(item=>item?.recursionElement==='earth') ?? -1;
+  }
+  function ensureRecursionSession() {
+    if (!recursionActive()) { recursionSession=null; recursionPortalLevel=0; return null; }
+    if (!recursionSession) {
+      let deepest=1;
+      for (let level=1;level<=RECURSION_LEVELS;level++) {
+        if (recursionIndicesForLevel(level).some(index=>!!cardAt(index))) deepest=level;
+      }
+      recursionSession={level:deepest,maxLevel:deepest,complete:recursionEarthIndex()>=0 && !!cardAt(recursionEarthIndex())};
+    }
+    recursionSession.level=clamp(recursionSession.level,1,RECURSION_LEVELS);
+    recursionSession.maxLevel=clamp(Math.max(recursionSession.maxLevel||1,recursionSession.level),1,RECURSION_LEVELS);
+    recursionSession.complete=recursionEarthIndex()>=0 && !!cardAt(recursionEarthIndex());
+    return recursionSession;
+  }
+  function recursionTriadComplete(level) {
+    const triad=recursionTriadIndices(level);
+    return triad.length===3 && triad.every(index=>!!cardAt(index));
+  }
+  function recursionLevelComplete(level) {
+    const indices=recursionIndicesForLevel(level);
+    return !!indices.length && indices.every(index=>!!cardAt(index));
+  }
+  function recursionNextCardIndex(level) {
+    return recursionIndicesForLevel(level).find(index=>!cardAt(index)) ?? null;
+  }
+  function recursionGlyphForIndex(index) {
+    const item=recursionPositionAt(index);
+    return String(item?.recursionGlyph || ({mem:'מ',aleph:'א',shin:'ש',earth:'🜃'}[item?.recursionElement]||''));
+  }
+  function recursionNameForIndex(index) {
+    return ({mem:'Mem',aleph:'Aleph',shin:'Shin',earth:'Earth'}[recursionElementForIndex(index)] || positionLabel(index));
+  }
+  function recursionLevelLabel(level) { return 'Level '+Number(level); }
+  function setRecursionLevel(level,{fit=true}={}) {
+    const session=ensureRecursionSession();
+    const next=clamp(level,1,session?.maxLevel||1);
+    if (!session || next>session.maxLevel) return false;
+    session.level=next;
+    recursionPortalLevel=0;
+    installRecursionBoard(panel());
+    if (fit) setTimeout(zoomExtents,0);
+    return true;
+  }
+  function recursionDepthMarkup(session,compact=false) {
+    if (!session) return '';
+    const buttons=Array.from({length:RECURSION_LEVELS},(_,index)=>{
+      const level=index+1;
+      const opened=level<=session.maxLevel;
+      const current=level===session.level;
+      return '<button type="button" data-recursion-depth="'+level+'" '+(opened?'':'disabled ')+'class="'+(current?'is-current ':'')+(opened?'is-opened':'is-future')+'" aria-label="Level '+level+'">'+(compact?String(level):'<span>'+level+'</span>')+'</button>';
+    }).join('');
+    return '<span class="relphi-recursion-depth-line" aria-hidden="true"></span>'+buttons+
+      (session.complete?'<strong class="relphi-recursion-complete-mark">22 / 22 · complete</strong>':'');
+  }
+  function installRecursionBoard(root=panel()) {
+    if (!root) return;
+    const workspace=root.querySelector('.card-row-workspace');
+    const session=ensureRecursionSession();
+    root.classList.toggle('relphi-recursion-reading',!!session);
+    root.querySelectorAll('.card-row-board>.card-row-item[data-row-index]').forEach(item=>{
+      const index=Number(item.dataset.rowIndex);
+      const level=session ? recursionLevelForIndex(index) : 0;
+      const element=session ? recursionElementForIndex(index) : '';
+      if (level) item.dataset.relphiRecursionLevel=String(level); else delete item.dataset.relphiRecursionLevel;
+      if (element) item.dataset.relphiRecursionElement=element; else delete item.dataset.relphiRecursionElement;
+      item.classList.toggle('is-recursion-level-active',!!session && level===session.level);
+    });
+    if (!workspace) return;
+    let depth=workspace.querySelector('.relphi-recursion-board-depth');
+    let portal=workspace.querySelector('.relphi-recursion-board-portal');
+    if (!session) { depth?.remove(); portal?.remove(); return; }
+    if (!depth) {
+      depth=document.createElement('nav');
+      depth.className='relphi-recursion-board-depth';
+      depth.setAttribute('aria-label','Recursion depth');
+      workspace.appendChild(depth);
+    }
+    depth.innerHTML=recursionDepthMarkup(session,true);
+    depth.querySelectorAll('[data-recursion-depth]').forEach(button=>button.addEventListener('click',()=>{
+      setRecursionLevel(Number(button.dataset.recursionDepth));
+    }));
+    if (session.level<RECURSION_LEVELS) {
+      if (!portal) {
+        portal=document.createElement('button');
+        portal.type='button';
+        portal.className='relphi-recursion-board-portal';
+        workspace.appendChild(portal);
+      }
+      const ready=recursionTriadComplete(session.level);
+      portal.disabled=!ready;
+      portal.dataset.recursionPortal=String(session.level);
+      portal.innerHTML='<span class="relphi-recursion-earth-glyph" aria-hidden="true">🜃</span><strong>Earth</strong><small>'+(ready?'Descend to Level '+(session.level+1):'Mem · Aleph · Shin first')+'</small>';
+      portal.onclick=()=>{
+        if (!ready) return;
+        const last=recursionTriadIndices(session.level).slice(-1)[0];
+        if (Number.isInteger(last) && cardAt(last)) {
+          openFocus(last);
+          setTimeout(()=>openRecursionPortal(session.level),0);
+        }
+      };
+    } else {
+      portal?.remove();
+    }
+  }
+  function renderRecursionDepth(reader) {
+    const session=ensureRecursionSession();
+    const nav=reader?.querySelector('.relphi-recursion-depth');
+    if (!nav || !session) return;
+    nav.hidden=false;
+    nav.innerHTML=recursionDepthMarkup(session,false);
+    nav.querySelectorAll('[data-recursion-depth]').forEach(button=>button.addEventListener('click',()=>{
+      const level=Number(button.dataset.recursionDepth);
+      if (!setRecursionLevel(level)) return;
+      const drawn=recursionIndicesForLevel(level).filter(index=>!!cardAt(index));
+      if (drawn.length) openFocus(drawn[0]);
+      else openAttune(recursionIndicesForLevel(level)[0]);
+    }));
+  }
+  function renderRecursionFocusStrip(reader,index) {
+    const session=ensureRecursionSession();
+    const strip=reader?.querySelector('.relphi-focus-strip');
+    if (!session || !strip) return;
+    const level=recursionLevelForIndex(index) || recursionPortalLevel || session.level;
+    if (level<=session.maxLevel) session.level=level;
+    reader.classList.add('is-recursion-reading');
+    const indices=recursionIndicesForLevel(level);
+    strip.replaceChildren();
+    indices.forEach(nativeIndex=>{
+      const button=document.createElement('button');
+      button.type='button';
+      button.dataset.focusPosition=String(nativeIndex);
+      button.className='relphi-recursion-focus-node';
+      const current=nativeIndex===index && !recursionPortalLevel;
+      button.classList.toggle('is-current',current);
+      button.classList.toggle('is-empty',!cardAt(nativeIndex));
+      button.classList.toggle('is-reversed',focusCardIsReversed(nativeIndex));
+      const art=focusArtImage(cardAt(nativeIndex));
+      if (art) {
+        const img=art.cloneNode(true);
+        img.removeAttribute('loading'); img.removeAttribute('decoding');
+        button.appendChild(img);
+      } else {
+        const glyph=document.createElement('strong');
+        glyph.textContent=recursionGlyphForIndex(nativeIndex);
+        button.appendChild(glyph);
+      }
+      const label=document.createElement('span');
+      label.textContent=recursionNameForIndex(nativeIndex);
+      button.appendChild(label);
+      button.title=positionLabel(nativeIndex);
+      button.setAttribute('aria-label',positionLabel(nativeIndex)+(cardAt(nativeIndex)?'':' · draw this position'));
+      button.addEventListener('click',()=>navigateFocusTo(nativeIndex));
+      strip.appendChild(button);
+    });
+    if (level<RECURSION_LEVELS) {
+      const portal=document.createElement('button');
+      portal.type='button';
+      portal.className='relphi-recursion-focus-node is-earth-portal'+(recursionPortalLevel===level?' is-current':'');
+      portal.dataset.recursionPortal=String(level);
+      portal.disabled=!recursionTriadComplete(level);
+      portal.innerHTML='<strong>🜃</strong><span>Earth</span>';
+      portal.setAttribute('aria-label','Level '+level+' · Earth · descend');
+      portal.addEventListener('click',()=>openRecursionPortal(level));
+      strip.appendChild(portal);
+    }
+    renderRecursionDepth(reader);
+    installRecursionBoard(panel());
+  }
+  function openRecursionPortal(level) {
+    const session=ensureRecursionSession();
+    const reader=document.querySelector('.relphi-focus-reader');
+    if (!session || !reader || level>=RECURSION_LEVELS || !recursionTriadComplete(level)) return false;
+    session.level=level;
+    recursionPortalLevel=level;
+    focusIndex=-1;
+    reader.classList.add('is-recursion-reading','is-recursion-portal');
+    reader.removeAttribute('data-focus-index');
+    reader.setAttribute('aria-label','Level '+level+' · Earth');
+    const position=reader.querySelector('.relphi-focus-position');
+    const reversedBadge=reader.querySelector('.relphi-focus-reversed-badge');
+    if (position) position.textContent='Level '+level+' · Earth';
+    if (reversedBadge) reversedBadge.hidden=true;
+    const portal=reader.querySelector('.relphi-recursion-portal-focus');
+    if (portal) {
+      portal.hidden=false;
+      portal.innerHTML='<span class="relphi-recursion-portal-ring" aria-hidden="true"><span>🜃</span></span><span class="eyebrow">Level '+level+' · Earth</span><h2>Descend</h2><p>Earth does not answer beside Mem, Aleph, and Shin. It opens the same threefold form one octave deeper.</p><button type="button" class="primary" data-recursion-descend>Enter Level '+(level+1)+'</button>';
+      portal.querySelector('[data-recursion-descend]')?.addEventListener('click',()=>descendRecursion(level));
+    }
+    renderRecursionFocusStrip(reader,-1);
+    const next=reader.querySelector('.relphi-focus-next');
+    if (next) next.disabled=true;
+    return true;
+  }
+  function descendRecursion(level) {
+    const session=ensureRecursionSession();
+    if (!session || level>=RECURSION_LEVELS || !recursionTriadComplete(level)) return false;
+    const nextLevel=level+1;
+    session.maxLevel=Math.max(session.maxLevel,nextLevel);
+    session.level=nextLevel;
+    recursionPortalLevel=0;
+    installRecursionBoard(panel());
+    setTimeout(zoomExtents,0);
+    const first=recursionIndicesForLevel(nextLevel)[0];
+    if (Number.isInteger(first)) openAttune(first);
+    return true;
+  }
+  function navigateRecursionFocusBy(delta) {
+    const session=ensureRecursionSession();
+    if (!session) return false;
+    if (recursionPortalLevel) {
+      if (delta<0) {
+        const last=recursionTriadIndices(recursionPortalLevel).slice(-1)[0];
+        if (Number.isInteger(last)) openFocus(last);
+      }
+      return true;
+    }
+    const level=recursionLevelForIndex(focusIndex) || session.level;
+    const order=recursionIndicesForLevel(level);
+    const current=order.indexOf(focusIndex);
+    if (current<0) return true;
+    if (delta<0) {
+      if (current>0) navigateFocusTo(order[current-1]);
+      else if (level>1 && level<=session.maxLevel) {
+        session.level=level-1;
+        const previous=recursionIndicesForLevel(level-1);
+        const target=previous.filter(index=>!!cardAt(index)).slice(-1)[0];
+        if (Number.isInteger(target)) openFocus(target);
+      }
+      return true;
+    }
+    if (current<order.length-1) {
+      navigateFocusTo(order[current+1]);
+      return true;
+    }
+    if (level<RECURSION_LEVELS) openRecursionPortal(level);
+    return true;
+  }
+
   function surfaceGuidance() {
     return 'Attune to each referent before revealing its card. Draw randomly from the assigned pack or search for the physical card you drew. After the initial exploration, new questions are created from what surfaced.';
   }
@@ -1297,7 +1627,7 @@
   function openAttune(index) {
     const root=panel();
     const item=focusItem(index,root);
-    if (!surfaceReadingSession || !root || !isEmptyItem(item)) return false;
+    if (!(surfaceReadingSession || recursionActive()) || !root || !isEmptyItem(item)) return false;
     closeFocus({acknowledge:true});
     closeAttune();
     attuneIndex=index;
@@ -1309,7 +1639,8 @@
     reader.setAttribute('role','dialog');
     reader.setAttribute('aria-modal','true');
     reader.setAttribute('aria-label','Attune to the Referent');
-    reader.innerHTML='<div class="relphi-attune-shell"><button type="button" class="relphi-attune-close" aria-label="Close">×</button><span class="eyebrow">Attune to the Referent</span><h2>'+escapeHtml(positionLabel(index,root))+'</h2><p class="relphi-attune-pack">Assigned pack · '+escapeHtml(SURFACE_PACK_LABELS[Object.keys(SURFACE_PACK_BY_KIND).find(key=>SURFACE_PACK_BY_KIND[key]===scope)] || scope || 'Full deck')+'</p><p class="relphi-attune-note">Stay with the referent on its own first. Notice what it already means to you before you reveal a card.</p><div class="relphi-attune-actions"><button type="button" class="primary" data-attune-random>Draw a random card from the assigned pack</button><button type="button" data-attune-search>Search for a card</button></div><section class="relphi-attune-search" hidden><label>Tarot Ledger search<input type="search" autocomplete="off" placeholder="Search for the card you drew"></label><div class="relphi-attune-search-results"><p>Search the Tarot Ledger to digitize a physical-card reading.</p></div></section></div>';
+    const scopeLabel=SURFACE_PACK_LABELS[Object.keys(SURFACE_PACK_BY_KIND).find(key=>SURFACE_PACK_BY_KIND[key]===scope)] || (scope==='full'?'Full Pack':scope || 'Full Pack');
+    reader.innerHTML='<div class="relphi-attune-shell"><button type="button" class="relphi-attune-close" aria-label="Close">×</button><span class="eyebrow">Attune to the Referent</span><h2>'+escapeHtml(positionLabel(index,root))+'</h2><p class="relphi-attune-pack">Assigned pack · '+escapeHtml(scopeLabel)+'</p><p class="relphi-attune-note">Stay with the referent on its own first. Notice what it already means to you before you reveal a card.</p><div class="relphi-attune-actions"><button type="button" class="primary" data-attune-random>Draw a random card from the assigned pack</button><button type="button" data-attune-search>Search for a card</button></div><section class="relphi-attune-search" hidden><label>Tarot Ledger search<input type="search" autocomplete="off" placeholder="Search for the card you drew"></label><div class="relphi-attune-search-results"><p>Search the Tarot Ledger to digitize a physical-card reading.</p></div></section></div>';
     reader.querySelector('.relphi-attune-close')?.addEventListener('click',closeAttune);
     reader.querySelector('[data-attune-random]')?.addEventListener('click',()=>{
       const target=attuneIndex;
@@ -1370,7 +1701,10 @@
     const draft=clone(session.draft);
     const structural=optionsStructuralChanged(session);
     const surfaceKinds=session.path==='surface' ? selectedSurfaceKinds(session) : [];
+    const recursionRequested=draft.templateId===RECURSION_ID || draft.basedOnTemplateId===RECURSION_ID;
     surfaceReadingSession=surfaceKinds.length ? {kinds:surfaceKinds.slice(),initialCount:surfaceKinds.length,followupsGenerated:false,followupCount:0} : null;
+    recursionSession=recursionRequested ? {level:1,maxLevel:1,complete:false} : null;
+    recursionPortalLevel=0;
     writeStickerVisibility(draft.stickers);
     optionsSession=null;
     root.querySelector('.relphi-reading-options-drawer')?.remove();
@@ -1387,7 +1721,17 @@
     setTimeout(()=>{
       enhance(panel());
       zoomExtents();
-      if (surfaceReadingSession) {
+      if (recursionSession && recursionActive()) {
+        showBoardToast('Seven levels repeat Mem, Aleph, and Shin. Earth opens the next depth six times; the seventh Earth receives the twenty-second card.',{
+          title:'Relphi Recursion Reading',
+          duration:0,
+          actionLabel:'Enter Level 1',
+          onAction:()=>{
+            const first=recursionIndicesForLevel(1)[0];
+            if (Number.isInteger(first)) openAttune(first);
+          }
+        });
+      } else if (surfaceReadingSession) {
         showBoardToast(surfaceGuidance(),{
           title:'See What Surfaces',
           duration:0,
@@ -1535,6 +1879,7 @@
     });
   }
   function renderFocusStrip(reader, index, options = {}) {
+    if (recursionActive()) { renderRecursionFocusStrip(reader,index); return; }
     const order=orderedNativePositionIndices();
     const strip=reader.querySelector('.relphi-focus-strip');
     if (!strip) return;
@@ -1672,6 +2017,10 @@
     const existingReader=document.querySelector('.relphi-focus-reader');
     focusIndex=index;
     if (existingReader) {
+      recursionPortalLevel=0;
+      existingReader.classList.remove('is-recursion-portal');
+      const portal=existingReader.querySelector('.relphi-recursion-portal-focus');
+      if (portal) portal.hidden=true;
       existingReader.dataset.focusIndex=String(index);
       existingReader.setAttribute('aria-label',positionLabel(index,root));
       renderFocusEntry(existingReader,index);
@@ -1685,7 +2034,7 @@
     reader.setAttribute('role','dialog');
     reader.setAttribute('aria-modal','true');
     reader.setAttribute('aria-label',positionLabel(index,root));
-    reader.innerHTML=`<div class="relphi-focus-shell"><section class="relphi-focus-position-panel" aria-label="Reading question or position"><span class="relphi-focus-reversed-badge" hidden>Reversed</span><strong class="relphi-focus-position"></strong><button type="button" class="relphi-focus-close" aria-label="Close focused card">×</button></section><div class="relphi-focus-main"><section class="relphi-focus-art-pane" aria-label="Card art"><div class="relphi-focus-art-frame"><img class="relphi-focus-art" alt=""></div></section><article class="relphi-focus-entry tarot-detail" aria-label="Full Tarot Ledger entry"></article></div><footer><button type="button" class="relphi-focus-prev" aria-label="Previous position">‹</button><div class="relphi-focus-navigator"><div class="relphi-focus-strip" aria-label="Reading positions"></div></div><button type="button" class="relphi-focus-next" aria-label="Next position">›</button></footer></div>`;
+    reader.innerHTML=`<div class="relphi-focus-shell"><section class="relphi-focus-position-panel" aria-label="Reading question or position"><span class="relphi-focus-reversed-badge" hidden>Reversed</span><strong class="relphi-focus-position"></strong><button type="button" class="relphi-focus-close" aria-label="Close focused card">×</button></section><nav class="relphi-recursion-depth" aria-label="Recursion depth" hidden></nav><div class="relphi-focus-main"><section class="relphi-focus-art-pane" aria-label="Card art"><div class="relphi-focus-art-frame"><img class="relphi-focus-art" alt=""></div></section><article class="relphi-focus-entry tarot-detail" aria-label="Full Tarot Ledger entry"></article><section class="relphi-recursion-portal-focus" hidden></section></div><footer><button type="button" class="relphi-focus-prev" aria-label="Previous position">‹</button><div class="relphi-focus-navigator"><div class="relphi-focus-strip" aria-label="Reading positions"></div></div><button type="button" class="relphi-focus-next" aria-label="Next position">›</button></footer></div>`;
     renderFocusEntry(reader,index);
     renderFocusStrip(reader,index,{preserveScroll:false});
     installFocusStripScrub(reader);
@@ -1707,6 +2056,7 @@
     document.querySelector('.relphi-focus-reader')?.remove();
     document.body.classList.remove('relphi-focus-open');
     focusIndex=-1;
+    recursionPortalLevel=0;
     if (acknowledge && isCrossingPosition(leaving)) acknowledgeCelticCrossing();
   }
   function navigateFocusTo(nativeIndex) {
@@ -1715,10 +2065,11 @@
     const leaving=focusIndex;
     if (leaving>=0 && leaving!==next && isCrossingPosition(leaving)) acknowledgeCelticCrossing();
     if (cardAt(next)) openFocus(next);
-    else if (surfaceReadingSession) openAttune(next);
+    else if (surfaceReadingSession || recursionActive()) openAttune(next);
     else drawInto(focusItem(next),next);
   }
   function navigateFocusBy(delta) {
+    if (recursionActive()) return navigateRecursionFocusBy(delta);
     const order=orderedNativePositionIndices();
     if (!order.length) return closeFocus({acknowledge:true});
     const currentIndex=order.indexOf(focusIndex);
@@ -1751,6 +2102,19 @@
   }
   function drawNextLogical(root=panel()) {
     if (!root || activeDraw) return;
+    if (recursionActive()) {
+      const session=ensureRecursionSession();
+      const next=recursionNextCardIndex(session?.level||1);
+      if (next!=null) { openAttune(next); return; }
+      if (session?.level<RECURSION_LEVELS && recursionTriadComplete(session.level)) {
+        const last=recursionTriadIndices(session.level).slice(-1)[0];
+        if (Number.isInteger(last) && cardAt(last)) {
+          openFocus(last);
+          setTimeout(()=>openRecursionPortal(session.level),0);
+        }
+      }
+      return;
+    }
     const next=nextUndrawnNativeIndex(root);
     if (next!=null) { if (surfaceReadingSession) openAttune(next); else drawInto(focusItem(next,root),next); return; }
     if (configuredPositionCount()>0) return;
@@ -1788,7 +2152,7 @@
       }
       if (isEmptyItem(item)) {
         event.preventDefault(); event.stopImmediatePropagation();
-        if (surfaceReadingSession) openAttune(index); else drawInto(item,index);
+        if (surfaceReadingSession || recursionActive()) openAttune(index); else drawInto(item,index);
       }
     },true);
   }
@@ -1812,8 +2176,8 @@
     if (draw && draw.dataset.relphiUnifiedDraw!=='true') {
       draw.dataset.relphiUnifiedDraw='true';
       draw.addEventListener('click',event=>{
-        if (!activeDraw && surfaceReadingSession) {
-          const next=nextUndrawnNativeIndex(root);
+        if (!activeDraw && (surfaceReadingSession || recursionActive())) {
+          const next=recursionActive() ? recursionNextCardIndex(ensureRecursionSession()?.level||1) : nextUndrawnNativeIndex(root);
           if (next!=null) {
             event.preventDefault();
             event.stopImmediatePropagation();
@@ -1841,6 +2205,7 @@
     const isCeltic=id==='celtic-cross-10' || layout.basedOn==='celtic-cross-10';
     root.classList.toggle('relphi-celtic-cross',isCeltic);
     root.classList.toggle('relphi-six-polarities',id==='six-polarities-houses-12' || layout.basedOn==='six-polarities-houses-12');
+    root.classList.toggle('relphi-recursion-layout',id===RECURSION_ID || layout.basedOn===RECURSION_ID);
     const snap=isCeltic?currentSnapshot():null;
     const acknowledged=!!snap?.rowPositionMeta?.some?.(meta=>meta?.celticCrossAcknowledged);
     root.classList.toggle('relphi-celtic-crossed',isCeltic&&acknowledged);
@@ -1862,6 +2227,7 @@
     root.classList.toggle('relphi-hide-position-stickers',!showPositionStickers);
     markSemanticPositions(root);
     updateLayoutClasses(root);
+    installRecursionBoard(root);
     installTopActions(root);
     installPermanentControls(root);
     installPinchZoom(root);
@@ -1871,6 +2237,11 @@
     installBoardCapture(root);
     if (optionsSession) renderOptions(root);
     if (surfaceReadingSession) maybeGenerateSurfaceFollowups(root);
+    if (recursionActive()) {
+      const session=ensureRecursionSession();
+      session.complete=recursionEarthIndex()>=0 && !!cardAt(recursionEarthIndex(),root);
+      installRecursionBoard(root);
+    }
     if (pendingFocusIndex!=null) {
       const target=pendingFocusIndex;
       if (cardAt(target,root)) {
@@ -1900,6 +2271,11 @@
     snapshot.rowDrawDeckSignature='';
     snapshot.cardRowBoardOpen=true;
     bridge.restore(snapshot);
+    if (recursionActive()) {
+      recursionSession={level:1,maxLevel:1,complete:false};
+      recursionPortalLevel=0;
+      setTimeout(()=>installRecursionBoard(panel()),0);
+    }
     return true;
   }
 
@@ -1951,7 +2327,7 @@
         }
         if (isEmptyItem(item)) {
           event.preventDefault(); event.stopImmediatePropagation();
-          drawInto(item,index);
+          if (surfaceReadingSession || recursionActive()) openAttune(index); else drawInto(item,index);
           return;
         }
       }

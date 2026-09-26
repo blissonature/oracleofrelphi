@@ -43,6 +43,7 @@ jobs:
           node --check tests/drawing-board-focus-filmstrip.test.js
           node --check tests/drawing-board-density-question-layout.test.js
           node --check tests/drawing-board-referents.test.js
+          node --check tests/drawing-board-recursion.test.js
       - name: Run static Drawing Board contracts
         run: |
           node tests/drawing-board-single-owner.test.js
@@ -60,6 +61,7 @@ jobs:
           SERVER_PID=$!
           trap 'kill $SERVER_PID || true' EXIT
           node tests/drawing-board-referents.test.js
+          node tests/drawing-board-recursion.test.js
           node tests/drawing-board-crossing-label.test.js
           node tests/drawing-board-reading-text.test.js
           node tests/drawing-board-focus-filmstrip.test.js
