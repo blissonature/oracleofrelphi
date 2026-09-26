@@ -393,7 +393,7 @@
   }
 
   function blankDraft() {
-    return { templateId:'', basedOnTemplateId:'', labels:[], positionPacks:[], pack:'full', stickers:true, reversals:true, repeats:false, templateName:'' };
+    return { templateId:'', basedOnTemplateId:'', labels:[], positionPacks:[], pack:'full', keywordTags:[], keywordMatchMode:'any', stickers:true, reversals:true, repeats:false, templateName:'' };
   }
   function draftFromState() {
     const snap = currentSnapshot() || {};
@@ -408,6 +408,8 @@
         String(snap.rowPositionMeta?.[index]?.drawScope || state.activeLayout?.positions?.[index]?.drawScope || '')
       ),
       pack:String(snap.rowDrawScope || 'full'),
+      keywordTags:Array.isArray(snap.rowSelectedTags) ? snap.rowSelectedTags.slice() : [],
+      keywordMatchMode:snap.rowTagMatchMode==='all' ? 'all' : 'any',
       stickers:showPositionStickers,
       reversals:snap.rowAllowReversals !== false,
       repeats:!!snap.rowAllowRepeats,
@@ -793,10 +795,26 @@
     const items = [
       ['full','Full Pack'],['shown','Shown cards'],['uhn','Universal Human Needs'],['majors','Majors'],
       ['primordial-majors','Primordial Element Majors'],['planetary-majors','Planetary Majors'],['zodiac-majors','Zodiac Majors'],['aces','Aces'],['courts','Courts'],
-      ['pips','Pips'],['decans','Decan pips'],['wands','Wands'],['cups','Cups'],['swords','Swords'],['pentacles','Pentacles / Disks']
+      ['pips','Pips'],['decans','Decan pips'],['wands','Wands'],['cups','Cups'],['swords','Swords'],['pentacles','Pentacles / Disks'],['tags','Keywords / Tags']
     ];
     return items.map(([id,label])=>`<option value="${id}" ${value===id?'selected':''}>${label}</option>`).join('');
   }
+  function keywordDraftMarkup(draft) {
+    if (draft.pack!=='tags') return '';
+    const tags=Array.isArray(draft.keywordTags)?draft.keywordTags:[];
+    const selected=tags.length ? '<div class="relphi-keyword-selected">'+tags.map(tag=>'<button type="button" data-keyword-remove="'+escapeHtml(tag)+'">'+escapeHtml(tag)+' ×</button>').join('')+'</div>' : '';
+    const count=window.RELPHI_KEYWORD_SUBPACK_CONTEXT?.count?.(tags,draft.keywordMatchMode)||0;
+    return '<div class="relphi-keyword-builder" aria-label="Keywords and Tags sub-pack"><label>Find tags<input id="relphiKeywordQuery" type="search" placeholder="Type a tag, e.g. prince" autocomplete="off"></label><div class="relphi-keyword-match-mode"><label><input type="radio" name="relphiKeywordMode" value="any" '+(draft.keywordMatchMode!=='all'?'checked':'')+'> Any</label><label><input type="radio" name="relphiKeywordMode" value="all" '+(draft.keywordMatchMode==='all'?'checked':'')+'> All</label></div><div id="relphiKeywordMatches" class="relphi-keyword-matches"><p>Type to find matching canonical tags.</p></div>'+selected+'<p id="relphiKeywordCount">'+(tags.length?count+' card'+(count===1?'':'s')+' in this sub-pack':'Choose one or more tags.')+'</p></div>';
+  }
+  function renderKeywordMatches(drawer,draft,query) {
+    const host=drawer.querySelector('#relphiKeywordMatches'); if(!host) return;
+    const matches=window.RELPHI_KEYWORD_SUBPACK_CONTEXT?.matches?.(query)||[];
+    host.innerHTML=matches.length ? matches.map(tag=>'<label><input type="checkbox" data-keyword-choice value="'+escapeHtml(tag)+'" '+((draft.keywordTags||[]).includes(tag)?'checked':'')+'> '+escapeHtml(tag)+'</label>').join('') : '<p>'+(query?'No matching tags.':'Type to find matching canonical tags.')+'</p>';
+    host.querySelectorAll('[data-keyword-choice]').forEach(input=>input.addEventListener('change',()=>{
+      const set=new Set(draft.keywordTags||[]); input.checked?set.add(input.value):set.delete(input.value); draft.keywordTags=[...set]; renderOptions(drawer.closest('#shortListPanel')||panel());
+    }));
+  }
+
   function labelsMarkup(labels) {
     const rows=labels.length ? labels : [''];
     return rows.map((label,index)=>`<div class="relphi-label-row" data-label-row="${index}"><span>${index+1}</span><input type="text" value="${escapeHtml(label)}" aria-label="Position ${index+1} label"><button type="button" data-remove-label="${index}" aria-label="Remove position ${index+1}">×</button></div>`).join('');
@@ -1080,7 +1098,7 @@
           referentPathButton('surface','See What Surfaces','Draw symbolic cards to discover what to ask.',session.path,hasCards)+
         '</div>'+
         pathPanelMarkup(session,hasCards)+
-        '<section class="relphi-referent-settings" aria-label="Draw settings"><strong class="relphi-referent-settings-title">Draw settings</strong><div class="relphi-draw-options"><label>Pack<select id="relphiDraftPack">'+packOptions(draft.pack)+'</select></label><label><input id="relphiDraftStickers" type="checkbox" '+(draft.stickers?'checked':'')+' title="Show position stickers"> Show referent stickers</label><label><input id="relphiDraftReversals" type="checkbox" '+(draft.reversals?'checked':'')+'> Reversals</label><label><input id="relphiDraftRepeats" type="checkbox" '+(draft.repeats?'checked':'')+'> Repeats</label></div></section>'+
+        '<section class="relphi-referent-settings" aria-label="Draw settings"><strong class="relphi-referent-settings-title">Draw settings</strong><div class="relphi-draw-options"><label>Pack<select id="relphiDraftPack">'+packOptions(draft.pack)+'</select></label>'+keywordDraftMarkup(draft)+'<label><input id="relphiDraftStickers" type="checkbox" '+(draft.stickers?'checked':'')+' title="Show position stickers"> Show referent stickers</label><label><input id="relphiDraftReversals" type="checkbox" '+(draft.reversals?'checked':'')+'> Reversals</label><label><input id="relphiDraftRepeats" type="checkbox" '+(draft.repeats?'checked':'')+'> Repeats</label></div></section>'+
       '</div>'+
       '<div class="relphi-options-commitbar"><button type="button" id="relphiResetBoard" class="relphi-reset-board">Reset Board</button><span></span><button type="button" id="relphiCancelOptions">Cancel</button><button type="button" id="relphiApplyOptions" class="primary" '+(session.path==='surface'&&!selectedSurfaceKinds(session).length?'disabled':'')+'>Start Reading</button></div>';
     modeTabs.insertAdjacentElement('afterend',drawer);
@@ -1212,7 +1230,11 @@
       renderOptions(root);
     });
 
-    drawer.querySelector('#relphiDraftPack')?.addEventListener('change',event=>{draft.pack=event.target.value;});
+    drawer.querySelector('#relphiDraftPack')?.addEventListener('change',event=>{draft.pack=event.target.value; renderOptions(root);});
+    const keywordQuery=drawer.querySelector('#relphiKeywordQuery');
+    keywordQuery?.addEventListener('input',event=>renderKeywordMatches(drawer,draft,event.target.value));
+    drawer.querySelectorAll('input[name="relphiKeywordMode"]').forEach(input=>input.addEventListener('change',()=>{draft.keywordMatchMode=input.value==='all'?'all':'any'; renderOptions(root);}));
+    drawer.querySelectorAll('[data-keyword-remove]').forEach(button=>button.addEventListener('click',()=>{draft.keywordTags=(draft.keywordTags||[]).filter(tag=>tag!==button.dataset.keywordRemove); renderOptions(root);}));
     drawer.querySelector('#relphiDraftStickers')?.addEventListener('change',event=>{draft.stickers=event.target.checked;});
     drawer.querySelector('#relphiDraftReversals')?.addEventListener('change',event=>{draft.reversals=event.target.checked;});
     drawer.querySelector('#relphiDraftRepeats')?.addEventListener('change',event=>{draft.repeats=event.target.checked;});
@@ -1340,6 +1362,8 @@
     const bridge=optionsBridge(); if (!bridge) return;
     const snap=bridge.capture();
     snap.rowDrawScope=draft.pack;
+    snap.rowSelectedTags=draft.pack==='tags' ? (draft.keywordTags||[]).slice() : [];
+    snap.rowTagMatchMode=draft.keywordMatchMode==='all' ? 'all' : 'any';
     snap.rowAllowRepeats=!!draft.repeats;
     snap.rowAllowReversals=!!draft.reversals;
     snap.rowDrawDeck=[];
