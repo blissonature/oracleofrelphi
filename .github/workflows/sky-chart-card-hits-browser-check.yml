@@ -160,27 +160,46 @@ jobs:
           const chartRulerPresentation=await page.evaluate(()=>{
             const stage=document.querySelector('#skyFoundationA .sky-card-chart-ruler-stage');
             const chart=stage?.querySelector('.sky-card-ruler.is-chart-ruler');
-            const pedestal=stage?.querySelector('.sky-card-chart-ruler-pedestal');
-            const style=chart?getComputedStyle(chart):null,pseudo=chart?getComputedStyle(chart,'::after'):null,pedestalStyle=pedestal?getComputedStyle(pedestal):null;
+            const role=stage?.querySelector('.sky-card-chart-ruler-role');
+            const occupant=chart?.querySelector('.sky-card-ruler-name');
+            const art=chart?.querySelector('.sky-card-ruler-art');
+            const lowerArt=document.querySelector('#skyFoundationA .sky-card-rulers-grid>.sky-card-ruler .sky-card-ruler-art');
+            const grid=document.querySelector('#skyFoundationA .sky-card-rulers-grid');
+            const stageStyle=stage?getComputedStyle(stage):null,chartStyle=chart?getComputedStyle(chart):null,pseudo=chart?getComputedStyle(chart,'::after'):null,roleStyle=role?getComputedStyle(role):null,occupantStyle=occupant?getComputedStyle(occupant):null,artStyle=art?getComputedStyle(art):null,lowerArtStyle=lowerArt?getComputedStyle(lowerArt):null;
+            const sr=stage?.getBoundingClientRect(),gr=grid?.getBoundingClientRect();
             return{
               noteCount:document.querySelectorAll('#skyFoundationA .sky-card-chart-ruler-note').length,
               stage:!!stage,
-              pedestal:(pedestal?.textContent||'').trim(),
-              pedestalBackground:pedestalStyle?.backgroundImage||'',
-              pedestalShadow:pedestalStyle?.boxShadow||'',
-              borderWidth:style?.borderTopWidth||'',
-              borderRadius:style?.borderRadius||'',
-              afterContent:pseudo?.content||''
+              role:(role?.textContent||'').trim(),
+              pedestalCount:stage?.querySelectorAll('.sky-card-chart-ruler-pedestal').length||0,
+              stageBackground:stageStyle?.backgroundImage||'',
+              stageShadow:stageStyle?.boxShadow||'',
+              stageBorder:stageStyle?.borderTopWidth||'',
+              borderWidth:chartStyle?.borderTopWidth||'',
+              borderRadius:chartStyle?.borderRadius||'',
+              afterContent:pseudo?.content||'',
+              roleTransform:roleStyle?.textTransform||'',
+              roleFontSize:parseFloat(roleStyle?.fontSize)||0,
+              occupantFontSize:parseFloat(occupantStyle?.fontSize)||0,
+              chartArtWidth:parseFloat(artStyle?.width)||0,
+              lowerArtWidth:parseFloat(lowerArtStyle?.width)||0,
+              stageToGridGap:sr&&gr?gr.top-sr.bottom:0
             };
           });
           assert.equal(chartRulerPresentation.noteCount,0,'Instructional chart-ruler prose must be removed.');
-          assert.equal(chartRulerPresentation.stage,true,'The chart ruler must have its own pedestal stage.');
-          assert.equal(chartRulerPresentation.pedestal,'Chart Ruler','The pedestal itself must identify the Chart Ruler.');
-          assert.match(chartRulerPresentation.pedestalBackground,/linear-gradient/i,'The pedestal must read as a visual plinth rather than plain text.');
-          assert.notEqual(chartRulerPresentation.pedestalShadow,'none','The chart-ruler pedestal must have dimensional treatment.');
+          assert.equal(chartRulerPresentation.stage,true,'The chart ruler must retain its own centered stage.');
+          assert.equal(chartRulerPresentation.role,'Chart Ruler','The office must be named separately from its occupant.');
+          assert.equal(chartRulerPresentation.pedestalCount,0,'The chart-ruler pedestal must be removed entirely.');
+          assert.ok(chartRulerPresentation.stageBackground==='none'||chartRulerPresentation.stageBackground==='','The centered Chart Ruler stage must stay flat and undecorated.');
+          assert.equal(chartRulerPresentation.stageShadow,'none','The centered Chart Ruler stage must not use a shadow.');
+          assert.equal(chartRulerPresentation.stageBorder,'0px','The centered Chart Ruler stage must not introduce a frame.');
           assert.equal(chartRulerPresentation.borderWidth,'0px','Ruler cards must not put a rounded frame around tarot art.');
           assert.equal(chartRulerPresentation.borderRadius,'0px','Ruler cards must keep crisp unframed geometry.');
           assert.ok(chartRulerPresentation.afterContent==='none'||chartRulerPresentation.afterContent==='normal'||chartRulerPresentation.afterContent==='""','Chart ruler must not invent an ASC badge.');
+          assert.equal(chartRulerPresentation.roleTransform,'uppercase','Chart Ruler should read as a restrained office label.');
+          assert.ok(chartRulerPresentation.occupantFontSize>chartRulerPresentation.roleFontSize,'Mercury must remain the stronger textual identity.');
+          assert.ok(chartRulerPresentation.chartArtWidth>chartRulerPresentation.lowerArtWidth,'The Chart Ruler art should be slightly larger than the six supporting ruler cards.');
+          assert.ok(chartRulerPresentation.stageToGridGap>=10,'Whitespace must visibly separate the Chart Ruler from the supporting 3×2 grid.');
 
           await page.waitForFunction(()=>{const img=document.querySelector('#skyFoundationA .sky-card-ruler-art img');return !!img&&img.complete&&img.naturalWidth>0},{timeout:10000});
           const rulerArt=await page.evaluate(()=>{
@@ -223,12 +242,12 @@ jobs:
               chartBeforeGrid:stage.compareDocumentPosition(grid)&Node.DOCUMENT_POSITION_FOLLOWING?true:false
             };
           });
-          assert.deepEqual(rulerLayout.lowerRowCounts,[3,3],'The six ordinary rulers must remain two rows of three beneath the pedestal.');
+          assert.deepEqual(rulerLayout.lowerRowCounts,[3,3],'The six ordinary rulers must remain two rows of three beneath the Chart Ruler.');
           assert.equal(rulerLayout.lowerCount,6);
-          assert.equal(rulerLayout.lowerHasChart,false,'The chart ruler must live on the pedestal rather than inside the lower grid.');
-          assert.ok(Math.abs(rulerLayout.chartCenter-rulerLayout.stageCenter)<=1,'The chart ruler must be centered on its pedestal stage.');
-          assert.ok(Math.abs(rulerLayout.chartCenter-rulerLayout.gridCenter)<=1,'The chart ruler pedestal must remain centered over the lower six.');
-          assert.equal(rulerLayout.chartBeforeGrid,true,'The chart-ruler pedestal must precede the ordinary ruler grid in DOM order.');
+          assert.equal(rulerLayout.lowerHasChart,false,'The chart ruler must remain isolated above the lower grid.');
+          assert.ok(Math.abs(rulerLayout.chartCenter-rulerLayout.stageCenter)<=1,'The chart ruler must be centered in its dedicated stage.');
+          assert.ok(Math.abs(rulerLayout.chartCenter-rulerLayout.gridCenter)<=1,'The chart ruler must remain centered over the lower six.');
+          assert.equal(rulerLayout.chartBeforeGrid,true,'The Chart Ruler stage must precede the ordinary ruler grid in DOM order.');
 
           const rulerRails=await page.evaluate(()=>{
             const cards=[...document.querySelectorAll('#skyFoundationA .sky-card-ruler')];
