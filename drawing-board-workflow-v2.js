@@ -1137,24 +1137,26 @@
   function astrologyCalculateHereNow() {
     return new Promise((resolve,reject)=>{
       const packet=astrologyWhereWhenPacket();
-      if(!packet.latitude||!packet.longitude)return reject(new Error('Here & Now needs a saved Where and When. Set it once in Sky Chart or Planetary Hours.'));
-      const now=new Date(),pad=n=>String(n).padStart(2,'0');
-      const local=window.luxon?.DateTime?.now?.().setZone?.(packet.timeZone||'UTC');
+      if(!packet.latitude||!packet.longitude)return reject(new Error('Set Where and When before using Here & Now.'));
+      const now=new Date(),pad=n=>String(n).padStart(2,'0'),local=window.luxon?.DateTime?.now?.().setZone?.(packet.timeZone||'UTC');
       const dateTime=local?.isValid?local.toFormat("yyyy-MM-dd'T'HH:mm"):(now.getFullYear()+'-'+pad(now.getMonth()+1)+'-'+pad(now.getDate())+'T'+pad(now.getHours())+':'+pad(now.getMinutes()));
-      const target='currentSky',protectedSnapshot=typeof captureSkySlot==='function'?captureSkySlot(target):null;
-      astrologySetField('skyCalcTarget',target);astrologySetField('skyCreatorTarget',target);astrologySetField('skyCalcDateTime',dateTime);
-      astrologySetField('skyCalcLatitude',packet.latitude);astrologySetField('skyCalcLongitude',packet.longitude);astrologySetField('skyCalcTimeZone',packet.timeZone||'UTC');astrologySetField('skyCalcLocation',packet.location||'Here & Now');astrologySetField('skyCalcName','Here & Now');
-      const run=typeof runSkyCalculation==='function'?runSkyCalculation(target):null;
-      Promise.resolve(run).then(ok=>{
-        try{
-          if(ok===false)throw new Error(document.getElementById('skyCalcStatus')?.textContent||'Here & Now could not be calculated.');
-          const placements=typeof statePlacementsForKind==='function'?clone(statePlacementsForKind(target)||{}):{};
-          if(!Object.keys(placements).length)throw new Error('Here & Now calculated, but no disposable placements were returned.');
-          const payload={name:'Here & Now',placements,calcProfile:{dateTime,timeZone:packet.timeZone||'UTC',latitude:Number(packet.latitude),longitude:Number(packet.longitude),location:packet.location||'Here & Now',source:'here-and-now'}};
-          resolve(payload);
-        }catch(error){reject(error)}
-        finally{if(protectedSnapshot&&typeof restoreSkySlot==='function')restoreSkySlot(target,protectedSnapshot)}
-      }).catch(error=>{if(protectedSnapshot&&typeof restoreSkySlot==='function')restoreSkySlot(target,protectedSnapshot);reject(error)});
+      astrologySetField('skyCalcTarget','chart');astrologySetField('skyCreatorTarget','chart');astrologySetField('skyCalcDateTime',dateTime);astrologySetField('skyCalcLatitude',packet.latitude);astrologySetField('skyCalcLongitude',packet.longitude);astrologySetField('skyCalcTimeZone',packet.timeZone||'UTC');astrologySetField('skyCalcLocation',packet.location||'Here & Now');astrologySetField('skyCalcName','Here & Now');
+      const run=document.getElementById('skyCalcRun');if(!run)return reject(new Error('Sky calculation is unavailable.'));run.click();const started=Date.now();
+      (function wait(){
+        const status=document.getElementById('skyCalcStatus')?.textContent?.trim()||'';
+        if(/^Calculated\b/i.test(status)){
+          const placements={};
+          document.querySelectorAll('#chartPlacements [data-placement-key],#chartPlacements .placement-row').forEach((row,index)=>{
+            const key=row.dataset.placementKey||row.dataset.key||row.querySelector('[data-body]')?.dataset.body||row.querySelector('select')?.value||('placement-'+index);
+            const sign=row.querySelector('[data-field="sign"],select[name*="sign"]')?.value||'',degree=Number(row.querySelector('[data-field="degree"],input[name*="degree"]')?.value),minute=Number(row.querySelector('[data-field="minute"],input[name*="minute"]')?.value);
+            const signIndex=ASTRO_SIGNS.indexOf(sign);if(signIndex>=0)placements[key]={name:key,sign,degree:Number.isFinite(degree)?degree:0,minute:Number.isFinite(minute)?minute:0,longitude:signIndex*30+(Number.isFinite(degree)?degree:0)+(Number.isFinite(minute)?minute:0)/60};
+          });
+          if(Object.keys(placements).length)return resolve({name:'Here & Now',placements,calcProfile:{dateTime,timeZone:packet.timeZone||'UTC',latitude:Number(packet.latitude),longitude:Number(packet.longitude),location:packet.location||'Here & Now',source:'here-and-now'}});
+          try{const payload=JSON.parse(localStorage.getItem('relphiTarotChart')||'null');if(payload?.placements&&Object.keys(payload.placements).length)return resolve({...clone(payload),name:'Here & Now',calcProfile:{...(payload.calcProfile||{}),dateTime,source:'here-and-now'}})}catch(_){}
+          return reject(new Error('Here & Now could not be prepared.'));
+        }
+        if(Date.now()-started>30000)return reject(new Error('Here & Now calculation timed out.'));if(/^(Could not|Enter |Choose )/i.test(status))return reject(new Error(status));setTimeout(wait,120);
+      })();
     });
   }
   async function astrologyResolveSource(source) {
