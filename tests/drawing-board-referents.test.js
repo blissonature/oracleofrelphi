@@ -61,11 +61,12 @@ const base='http://127.0.0.1:8000/tarot.html';
 
     await page.click('[data-referent-path="surface"]');
     const choices=page.locator('[data-surface-choice]');
-    assert.equal(await choices.count(),7,'See What Surfaces should expose one checkbox per question type');
+    assert.equal(await choices.count(),8,'See What Surfaces should expose Full Pack plus each specialist question type');
     assert.deepEqual(await page.locator('.relphi-surface-question-choice strong').allTextContents(),[
-      'Which primordial force?','What is taking root?','What is at work?','How is it showing up?',
+      'Where should I begin?','Which primordial force?','What is taking root?','What is at work?','How is it showing up?',
       'What is needed?','How is it being carried?','What form is it taking?'
     ]);
+    assert.equal(await page.locator('[data-surface-choice="origin"]').count(),1,'Full Pack should be available as the open-ended starting route');
     assert.equal(await page.locator('#relphiSurfaceAll').count(),0,'See What Surfaces should not force a single-or-all control');
     assert.equal(await page.locator('[data-surface-draw]').count(),0,'Question types should be selected before entering the reading, not pre-drawn in Referents');
     assert.equal(await page.locator('#relphiApplyOptions').isDisabled(),true,'Start Reading should wait until at least one question type is chosen');
@@ -123,12 +124,17 @@ const base='http://127.0.0.1:8000/tarot.html';
 
     await page.click('.relphi-focus-next');
     await page.waitForSelector('.relphi-surface-followup-review',{state:'visible'});
-    assert.ok(await page.locator('[data-followup-use]').count()>=2,'Surfaced cards should offer multiple card-linked follow-up choices');
+    assert.ok(await page.locator('[data-followup-use]').count()>=6,'Each surfaced card should offer several distinct card-linked follow-up choices');
     assert.ok((await page.locator('.relphi-followup-question-row small').first().textContent()).startsWith('From '),'Generated follow-ups must name the card that surfaced them');
+    assert.ok((await page.locator('.relphi-followup-question-row small').first().textContent()).includes('Which primordial force?'),'Follow-up provenance should retain the question the source card already answered');
     assert.equal(await page.locator('[data-followup-use]:checked').count(),0,'Generated follow-ups must require explicit acceptance');
+    assert.equal(await page.locator('[data-followup-pack="0"]').inputValue(),'full','Follow-up pack selection must default from the new question, not inherit the source sub-pack');
+    assert.equal(await page.locator('[data-followup-repeats]').isChecked(),false,'Follow-up settings should suggest Repeats off to avoid hereditary loops');
     assert.equal(await page.locator('[data-followup-custom-row]').count(),1,'Review should begin with one Write your own row');
     assert.equal((await page.locator('[data-followup-custom-row] small').first().textContent()).trim(),'Write your own');
 
+    const acceptedGenerated=await page.locator('[data-followup-text="0"]').inputValue();
+    const acceptedPack=await page.locator('[data-followup-pack="0"]').inputValue();
     await page.click('[data-followup-add-custom]');
     assert.equal(await page.locator('[data-followup-custom-row]').count(),2,'Plus must add an additional custom-question row');
     await page.fill('[data-followup-custom-text="0"]','What else do I need to ask here?');
@@ -140,14 +146,15 @@ const base='http://127.0.0.1:8000/tarot.html';
     await page.waitForSelector('.relphi-surface-followup-review',{state:'detached'});
     const afterExploration=await page.evaluate(()=>window.RelphiDrawingBoardOptionsBridge.capture());
     assert.equal(afterExploration.shortListPositionLabels.length,4,'Only accepted generated/custom follow-ups should be appended');
-    assert.ok(afterExploration.shortListPositionLabels[2].startsWith('What does the primordial '),'Accepted generated question should come from the surfaced card');
-    assert.equal(afterExploration.rowPositionMeta[2].drawScope,'primordial-majors','Generated follow-up should retain its suggested sub-pack');
+    assert.equal(afterExploration.shortListPositionLabels[2],acceptedGenerated,'Accepted generated question should be preserved exactly');
+    assert.equal(afterExploration.rowPositionMeta[2].drawScope,acceptedPack,'Accepted follow-up should use the answer pack chosen for that question');
+    assert.equal(acceptedPack,'full','The first unresolved-edge question should open into Full Pack rather than repeat the source sub-pack');
     assert.equal(afterExploration.shortListPositionLabels[3],'What else do I need to ask here?','Accepted Write your own question should become a real referent');
     assert.equal(afterExploration.rowPositionMeta[3].drawScope,'full','Write your own should default to Full Pack unless changed');
 
     await page.click('.relphi-board-toast-action');
     await page.waitForSelector('.relphi-attune-reader',{state:'visible'});
-    assert.ok((await page.locator('.relphi-attune-shell h2').textContent()).startsWith('What does the primordial '),'Accepted follow-up question should enter the same sacred attune/reveal flow');
+    assert.equal(await page.locator('.relphi-attune-shell h2').textContent(),acceptedGenerated,'Accepted follow-up question should enter the same sacred attune/reveal flow');
 
     await page.click('.relphi-attune-close');
     await page.click('#drawingBoardOptionsButton');
