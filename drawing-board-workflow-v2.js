@@ -836,13 +836,13 @@
   const SURFACE_DRAW_KEYS = ['origin','primordial','ace','planet','sign','need','court','pip'];
   const SURFACE_QUESTIONS = Object.freeze({
     origin:'Where should I begin?',
-    primordial:'Which primordial force?',
-    ace:'What is taking root?',
-    planet:'What is at work?',
-    sign:'How is it showing up?',
+    primordial:'What basic force is here?',
+    ace:'What wants to begin?',
+    planet:'What is driving this?',
+    sign:'What style is it taking?',
     need:'What is needed?',
-    court:'How is it being carried?',
-    pip:'What form is it taking?'
+    court:'How is it being handled?',
+    pip:'What is happening in practice?'
   });
   const SURFACE_PACK_LABELS = Object.freeze({
     origin:'Full Pack',
