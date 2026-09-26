@@ -64,9 +64,30 @@
   }
   function prewarm(){const warm=()=>loadLibrary().catch(()=>{});if('requestIdleCallback'in window)requestIdleCallback(warm,{timeout:2500});else setTimeout(warm,800)}
 
-  function status(text,error=false,busy=false){
+  function status(text,error=false,busy=false,factoid=''){
     const node=document.getElementById(STATUS_ID);if(!node)return;
-    node.textContent=text||'';node.dataset.error=error?'true':'false';node.dataset.busy=busy?'true':'false';
+    node.replaceChildren();
+    node.dataset.error=error?'true':'false';node.dataset.busy=busy?'true':'false';
+    if(!text&&!factoid)return;
+    if(text){
+      const line=document.createElement('span');
+      line.className='sky-export-status-line';
+      line.textContent=text;
+      node.appendChild(line);
+    }
+    if(factoid){
+      const fact=document.createElement('span');
+      fact.className='sky-export-factoid';
+      const label=document.createElement('strong');
+      label.textContent='Factoid:';
+      const copy=document.createElement('span');
+      copy.textContent=' '+factoid;
+      fact.append(label,copy);
+      node.appendChild(fact);
+    }
+  }
+  function wheelCopyFactoid(){
+    try{return String(window.RelphiFactoids?.skyExportFactoid?.()||'').trim()}catch(_){return''}
   }
   function setButtonBusy(button,busy){
     if(!button)return;
@@ -264,7 +285,7 @@
     if(preparing)return;
     preparing=true;
     if(button){button.disabled=true;button.setAttribute('aria-busy','true')}
-    status('Preparing wheel copy…',false,true);
+    status('Preparing wheel copy…',false,true,wheelCopyFactoid());
     let built=null;
     try{
       if(!navigator.clipboard?.write||typeof ClipboardItem==='undefined')throw new Error('Image copy is not supported in this browser.');
@@ -314,7 +335,7 @@
     .sky-export-icon-button{appearance:none;display:grid;place-items:center;width:30px;height:30px;padding:0;border:1px solid rgba(31,27,24,.2);border-radius:999px;background:#fff;color:#2d2824;cursor:pointer}.sky-export-icon-button svg{width:17px;height:17px}.sky-export-icon-button .sky-export-spinner{animation:skyExportSpin .8s linear infinite}.sky-export-icon-button:hover,.sky-export-icon-button:focus-visible{outline:none;border-color:#2462d0;box-shadow:0 0 0 2px rgba(36,98,208,.12)}.sky-export-icon-button:disabled{opacity:.82;cursor:wait}.sky-export-icon-button[data-export-ready="true"]{border-color:#2462d0;color:#2462d0}
     .sky-wheel-copy-button{appearance:none;height:30px;padding:0 .72rem;border:1px solid rgba(31,27,24,.18);border-radius:999px;background:#fff;color:#332e2a;font:800 .68rem/1 system-ui,sans-serif;cursor:pointer;white-space:nowrap}.sky-wheel-copy-button:hover,.sky-wheel-copy-button:focus-visible{outline:none;border-color:#6b625a;background:#fffdfa}.sky-wheel-copy-button:disabled{opacity:.7;cursor:wait}
     #skyFoundationFocus .sky-focus-heading-controls{flex:1 1 auto}#skyFoundationFocus .sky-export-wheel-slot{display:flex;align-items:center;justify-content:flex-end;gap:6px;margin-left:auto;order:999}.sky-relationship-heading-actions{display:flex;align-items:center;gap:6px}.sky-relationship-heading-actions button{margin:0}
-    #${STATUS_ID}{flex:1 0 100%;color:#665e57;text-align:right;font:650 .58rem/1.2 system-ui,sans-serif}#${STATUS_ID}:empty{display:none}#${STATUS_ID}[data-error="true"]{color:#b81712}#${STATUS_ID}[data-busy="true"]{margin-top:4px;padding:7px 10px;border-radius:999px;background:#f6f0e8;color:#3e3833;font-size:.68rem;font-weight:800}
+    #${STATUS_ID}{flex:1 0 100%;display:grid;gap:4px;color:#665e57;text-align:right;font:650 .58rem/1.2 system-ui,sans-serif}#${STATUS_ID}:empty{display:none}#${STATUS_ID}[data-error="true"]{color:#b81712}#${STATUS_ID}[data-busy="true"]{margin-top:4px;padding:8px 10px;border-radius:10px;background:#f6f0e8;color:#3e3833;font-size:.68rem;font-weight:800}.sky-export-status-line{display:block}.sky-export-factoid{display:block;color:#625a53;font-weight:650;line-height:1.35}.sky-export-factoid strong{color:#3e3833;font-weight:900}
     .sky-wheel-export-stage{position:relative;background:#fffdf8;color:#2d2824;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}.sky-wheel-export-stage>#skyFoundationWheelMount{position:absolute}
     .sky-export-brand{position:absolute;z-index:4;top:22px;left:50%;transform:translateX(-50%);display:flex;align-items:center;justify-content:center;gap:11px;min-width:248px;padding:7px 12px;border-radius:12px;background:rgba(255,253,248,.96);box-shadow:0 1px 8px rgba(31,27,24,.08)}
     .sky-export-brand-logo{display:block;width:46px;height:46px;object-fit:contain}
