@@ -72,7 +72,8 @@ assert.equal(await page.locator('#skyFoundationFocus > .sky-chart-filter-bar').c
 assert.equal(await page.locator('#skyFoundationFocus > .sky-foundation-focus-heading [data-harmonic-window-input]').count(),1,'Harmonic Window must share the Focus heading line.');
 assert.equal(await page.locator('#skyFoundationFocus > .sky-foundation-focus-heading [data-relationship-display-control]').count(),1,'Display must share the Focus heading line.');
 assert.equal(await page.locator('#skyFoundationRelationships > .sky-foundation-relationships-heading [data-relationship-sort]').count(),1,'Sort must share the Relationships heading line.');
-assert.equal(await page.locator('#skyFoundationRelationships > .sky-foundation-relationships-heading [data-relationship-limit]').count(),1,'Max must share the Relationships heading line.');
+assert.equal(await page.locator('#skyFoundationRelationships > .sky-foundation-relationships-heading [data-relationship-limit-preset]').count(),1,'The visible Max preset control must share the Relationships heading line.');
+assert.equal(await page.locator('#skyFoundationRelationships > .sky-foundation-relationships-heading [data-relationship-limit]').count(),1,'The Custom cardinal-number field must stay owned by the same Max control.');
 
 await page.waitForFunction(()=>{
   const count=document.getElementById('skyFoundationRelationshipCount');
