@@ -2,7 +2,7 @@
 (function(){
 'use strict';
 if(window.RelphiHarmonicOrb)return;
-const DEFAULT_WINDOW=6;
+const DEFAULT_WINDOW=7;
 const MAX_WINDOW=12;
 const WINDOW_STEP=.05;
 const WINDOW_STORAGE_KEY='relphiSkyHarmonicWindowV1';
@@ -21,7 +21,13 @@ const ASPECTS=Object.freeze([
 ]);
 const BY_ID=new Map(ASPECTS.map(aspect=>[aspect.id,aspect]));
 let activeWindow=DEFAULT_WINDOW;
-try{const saved=Number(localStorage.getItem(WINDOW_STORAGE_KEY));if(Number.isFinite(saved)&&saved>=0)activeWindow=Math.min(MAX_WINDOW,saved)}catch(_){}
+try{
+  const stored=localStorage.getItem(WINDOW_STORAGE_KEY);
+  if(stored!==null&&String(stored).trim()!==''){
+    const saved=Number(stored);
+    if(Number.isFinite(saved)&&saved>=0)activeWindow=Math.min(MAX_WINDOW,saved);
+  }
+}catch(_){}
 function clampWindow(value){const n=Number(value);return Number.isFinite(n)&&n>=0?Math.min(MAX_WINDOW,n):DEFAULT_WINDOW}
 function syncVisibleControls(sourceInput=null){
   const value=String(activeWindow),max=String(MAX_WINDOW);
