@@ -4,7 +4,7 @@
 if(!/(^|\/)sky-chart\.html$/.test(location.pathname)||window.__relphiRelationshipLimitV1)return;
 window.__relphiRelationshipLimitV1=true;
 
-const PRESETS=Object.freeze([10,20,50]);
+const PRESETS=Object.freeze([5,10,20,50]);
 const HIDDEN_CLASSES=Object.freeze([
   'sky-foundation-single-sky-cross-hidden','sky-chart-filter-hidden','sky-chart-orb-hidden','sky-orb-filter-hidden',
   'sky-chart-multiselect-hidden','sky-chart-house-multiselect-hidden','sky-chart-aspect-multiselect-hidden',
@@ -29,10 +29,16 @@ function rows(){
 }
 function syncControl(){
   const input=document.querySelector('[data-relationship-limit]');
-  if(!input)return;
+  const select=document.querySelector('[data-relationship-limit-preset]');
+  if(!input||!select)return;
   const next=limit==='all'?'':limit;
   if(input.value!==next)input.value=next;
-  input.placeholder='Max';
+  const preset=limit==='all'?'all':PRESETS.includes(Number(limit))?limit:'custom';
+  if(select.value!==preset)select.value=preset;
+  const custom=preset==='custom';
+  input.hidden=!custom;
+  input.disabled=!custom;
+  input.setAttribute('aria-hidden',custom?'false':'true');
 }
 function installStyles(){
   if(document.getElementById('skyRelationshipLimitV1Styles'))return;
@@ -40,17 +46,24 @@ function installStyles(){
   style.id='skyRelationshipLimitV1Styles';
   style.textContent=`
 .sky-chart-result-limit-hidden{display:none!important}
-#skyFoundationRelationships .sky-relationship-limit-control{display:inline-flex;align-items:center;min-width:0;white-space:nowrap}
+#skyFoundationRelationships .sky-relationship-limit-control{display:inline-flex;align-items:center;gap:5px;min-width:0;white-space:nowrap}
+#skyFoundationRelationships .sky-relationship-limit-label{color:#5f5750;font:800 .62rem/1 system-ui,sans-serif}
+#skyFoundationRelationships .sky-relationship-limit-control>select,
 #skyFoundationRelationships .sky-relationship-limit-control>input{
-  appearance:textfield;-moz-appearance:textfield;width:72px;min-width:72px;height:29px;box-sizing:border-box;margin:0;padding:0 8px;
-  border:1px solid rgba(31,27,24,.18);border-radius:9px;background:#fff;color:#332e2a;
-  font:800 .67rem/1 system-ui,sans-serif;text-align:center
+  height:29px;box-sizing:border-box;margin:0;border:1px solid rgba(31,27,24,.18);border-radius:9px;background:#fff;color:#332e2a;
+  font:800 .67rem/1 system-ui,sans-serif
 }
+#skyFoundationRelationships .sky-relationship-limit-control>select{min-width:68px;padding:0 24px 0 8px;cursor:pointer}
+#skyFoundationRelationships .sky-relationship-limit-control>input{
+  appearance:textfield;-moz-appearance:textfield;width:64px;min-width:64px;padding:0 8px;text-align:center
+}
+#skyFoundationRelationships .sky-relationship-limit-control>input[hidden]{display:none!important}
 #skyFoundationRelationships .sky-relationship-limit-control>input::-webkit-outer-spin-button,
 #skyFoundationRelationships .sky-relationship-limit-control>input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+#skyFoundationRelationships .sky-relationship-limit-control>select:hover,
+#skyFoundationRelationships .sky-relationship-limit-control>select:focus-visible,
 #skyFoundationRelationships .sky-relationship-limit-control>input:hover,
 #skyFoundationRelationships .sky-relationship-limit-control>input:focus-visible{border-color:#6b625a;outline:none}
-#skyFoundationRelationships .sky-relationship-limit-control>input::placeholder{color:#332e2a;opacity:1}
 `;
   document.head.appendChild(style);
 }
@@ -84,6 +97,15 @@ function ensureControl(){
   if(!control){
     control=document.createElement('label');
     control.className='sky-relationship-limit-control';
+    const label=document.createElement('span');
+    label.className='sky-relationship-limit-label';
+    label.textContent='Max';
+    const select=document.createElement('select');
+    select.dataset.relationshipLimitPreset='true';
+    select.setAttribute('aria-label','Maximum shown relationships');
+    [['all','All'],...PRESETS.map(value=>[String(value),String(value)]),['custom','Custom…']].forEach(([value,text])=>{
+      const option=document.createElement('option');option.value=value;option.textContent=text;select.appendChild(option);
+    });
     const input=document.createElement('input');
     input.type='number';
     input.min='1';
@@ -91,23 +113,31 @@ function ensureControl(){
     input.inputMode='numeric';
     input.pattern='[0-9]*';
     input.dataset.relationshipLimit='true';
-    input.setAttribute('aria-label','Maximum shown relationships');
-    input.placeholder='Max';
+    input.setAttribute('aria-label','Custom maximum shown relationships');
+    input.placeholder='1+';
     input.value=limit==='all'?'':limit;
     const commit=()=>{
       const raw=input.value.trim();
-      if(raw===''){setLimit('all');return}
       const number=Number(raw);
       if(Number.isInteger(number)&&number>0){setLimit(String(number));return}
       syncControl();
     };
+    select.addEventListener('change',()=>{
+      if(select.value==='custom'){
+        input.hidden=false;input.disabled=false;input.setAttribute('aria-hidden','false');
+        if(limit==='all'||PRESETS.includes(Number(limit)))input.value='';
+        requestAnimationFrame(()=>input.focus());
+        return;
+      }
+      setLimit(select.value);
+    });
     input.addEventListener('change',commit);
-    input.addEventListener('blur',commit);
+    input.addEventListener('blur',()=>{if(input.value.trim())commit()});
     input.addEventListener('keydown',event=>{
       if(event.key==='Enter'){event.preventDefault();commit();input.blur()}
       if(event.key==='Escape'){event.preventDefault();syncControl();input.blur()}
     });
-    control.appendChild(input);
+    control.append(label,select,input);
   }
   const count=document.getElementById('skyFoundationRelationshipCount');
   const pill=actions.querySelector('.sky-relationship-copy-button,#skyChartRelationshipsExport');
