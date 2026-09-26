@@ -47,12 +47,12 @@
   function ruleKey(scope,target,choice){return [scope,target,choice].join('|')}
   function loadLogic(){
     try{
-      const raw=JSON.parse(sessionStorage.getItem(LOGIC_KEY)||'{}');
+      const raw=JSON.parse(localStorage.getItem(LOGIC_KEY)||'{}');
       Object.entries(raw||{}).forEach(([key,value])=>{if(LOGIC_STATES.includes(value)&&value)logicRules.set(key,value)});
     }catch(_){}
   }
   function saveLogic(){
-    try{sessionStorage.setItem(LOGIC_KEY,JSON.stringify(Object.fromEntries(logicRules)))}catch(_){}
+    try{localStorage.setItem(LOGIC_KEY,JSON.stringify(Object.fromEntries(logicRules)))}catch(_){}
   }
   loadLogic();
 
