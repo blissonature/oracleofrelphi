@@ -273,6 +273,10 @@ function groupedPatternsForResults(){
 function configurationMatchLabel(pattern){
   return pattern.vertices.map(key=>placementWord(vertexLabel(key).id)).join(' · ');
 }
+function configurationHoverPointer(event){
+  const type=String(event?.pointerType||'');
+  return !type||type==='mouse';
+}
 function configurationMatchRow(pattern,index){
   const button=document.createElement('button');
   button.type='button';
@@ -307,7 +311,7 @@ function configurationMatchRow(pattern,index){
     if(!tile)return;
     selectConfigurationMatch(tile,pattern,button);
   });
-  button.addEventListener('pointerenter',()=>highlightPattern(pattern));
+  button.addEventListener('pointerenter',event=>{if(configurationHoverPointer(event))highlightPattern(pattern)});
   button.addEventListener('focus',()=>highlightPattern(pattern));
   return button;
 }
@@ -426,7 +430,7 @@ function resultGroupTile(group,index){
   button.append(thumb,copy);
   button.setAttribute('aria-label',(type?.label||group.type)+', '+group.matches.length+' matches. Expand configuration stack.');
   button.addEventListener('click',event=>{event.preventDefault();openConfiguration(tile,group)});
-  tile.addEventListener('pointerenter',()=>{if(tile.dataset.suppressConfigurationPreview!=='true')highlightPattern(pattern)});
+  tile.addEventListener('pointerenter',event=>{if(configurationHoverPointer(event)&&tile.dataset.suppressConfigurationPreview!=='true')highlightPattern(pattern)});
   tile.addEventListener('focusin',()=>{if(tile.dataset.suppressConfigurationPreview!=='true')highlightPattern(pattern)});
   tile.addEventListener('pointerleave',()=>{
     delete tile.dataset.suppressConfigurationPreview;
