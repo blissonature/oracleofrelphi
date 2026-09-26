@@ -21,7 +21,9 @@
     '11':'friends, groups, hopes',
     '12':'solitude, sorrow, hidden things'
   });
+  const STORAGE_KEY = 'relphiSkyHouseFilterV1';
   const state = { A:new Set(HOUSES), B:new Set(HOUSES) };
+  try { const saved=JSON.parse(localStorage.getItem(STORAGE_KEY)||'null'); if(saved&&typeof saved==='object'){ ['A','B'].forEach(slot=>{ if(Array.isArray(saved[slot])) state[slot]=new Set(saved[slot].map(String).filter(id=>HOUSES.includes(id))); }); } } catch (_) {}
   let queued = false;
   let portalOwner = null;
   let countTimer = 0;
@@ -187,6 +189,7 @@
     document.documentElement.dataset.skyAHouseSelection = `${state.A.size}/${HOUSES.length}`;
     document.documentElement.dataset.skyBHouseSelection = `${state.B.size}/${HOUSES.length}`;
     updateCount();
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify({ A:Array.from(state.A), B:Array.from(state.B) })); } catch (_) {}
     window.dispatchEvent(new CustomEvent('relphi:sky-house-multiselect-changed', { detail:{ A:Array.from(state.A), B:Array.from(state.B) } }));
   }
 
