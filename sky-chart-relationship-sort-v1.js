@@ -340,11 +340,11 @@ function installStyles(){
   const style=document.createElement('style');
   style.id='skyRelationshipSortV1Styles';
   style.textContent=`
-#skyFoundationRelationships .sky-relationship-heading-actions>.sky-relationship-sort-control{display:inline-flex;align-items:center;min-width:0;white-space:nowrap}
+#skyFoundationRelationships .sky-relationship-heading-actions>.sky-relationship-sort-control{display:inline-flex;align-items:center;min-width:0;margin-right:8px;white-space:nowrap}
 #skyFoundationRelationships .sky-relationship-sort-select{appearance:none;-webkit-appearance:none;width:auto;max-width:178px;height:29px;box-sizing:border-box;margin:0;padding:0 27px 0 9px;border:1px solid rgba(31,27,24,.18);border-radius:9px;background:#fff var(--sky-chart-filter-chevron) no-repeat right 7px center/14px 14px;color:#332e2a;font:800 .67rem/1 system-ui,sans-serif;cursor:pointer}
 #skyFoundationRelationships .sky-relationship-sort-select:hover,#skyFoundationRelationships .sky-relationship-sort-select:focus-visible{border-color:#6b625a;outline:none}
 #skyFoundationRelationships .sky-relationship-sort-select[aria-busy="true"]{cursor:progress!important;opacity:.66}
-@media(max-width:620px){#skyFoundationRelationships .sky-relationship-heading-actions>.sky-relationship-sort-control{flex:1 1 0;min-width:0}#skyFoundationRelationships .sky-relationship-sort-select{width:100%;max-width:none;min-width:0}}
+@media(max-width:620px){#skyFoundationRelationships .sky-relationship-heading-actions>.sky-relationship-sort-control{flex:1 1 0;min-width:0;margin-right:0}#skyFoundationRelationships .sky-relationship-sort-select{width:100%;max-width:none;min-width:0}}
 `;
   document.head.appendChild(style);
 }
