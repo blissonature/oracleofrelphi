@@ -67,15 +67,37 @@ const base='http://127.0.0.1:8000/tarot.html';
 
     assert.equal(await page.locator('#shortListPanel').evaluate(node=>node.classList.contains('relphi-recursion-reading')),true);
     assert.equal(await page.locator('.card-row-board>.relphi-recursion-logo-underlay').count(),1,'The Relphi logo should underlay the active recursive level');
-    assert.ok((await page.locator('.relphi-recursion-logo-underlay').getAttribute('src')).endsWith('logo.png'));
+    assert.ok((await page.locator('.relphi-recursion-logo-underlay').getAttribute('src')).endsWith('assets/relphi-logo-tight.svg'),'Recursive Reading should use the tightly cropped logo asset');
+    const logoGeometry=await page.locator('.relphi-recursion-logo-underlay').evaluate(node=>{const r=node.getBoundingClientRect();return {w:r.width,h:r.height};});
+    assert.ok(Math.abs(logoGeometry.w-logoGeometry.h)<1,'The cropped logo should remain square');
     assert.equal(await page.locator('.card-row-board>.card-row-item.is-recursion-level-active').count(),3,'Level 1 should expose only its triad on the Board');
     assert.equal(await page.locator('.relphi-recursion-board-depth [data-recursion-depth]').count(),7);
     assert.equal(await page.locator('.relphi-recursion-board-depth').getAttribute('aria-label'),'Veilva · recursion depth');
+    const veilvaOrder=await page.locator('.relphi-recursion-board-depth [data-relphi-veilva-glyph]').evaluateAll(nodes=>nodes.map(node=>node.dataset.relphiVeilvaGlyph));
+    assert.deepEqual(veilvaOrder,['saturn','jupiter','mars','sun','venus','mercury','moon'],'Veilva should use the traditional seven in canonical order');
+    await page.waitForFunction(()=>[...document.querySelectorAll('.relphi-recursion-board-depth [data-relphi-veilva-glyph]')].every(node=>node.dataset.canonicalFit==='registry-component'));
+    const canonicalVeilva=await page.locator('.relphi-recursion-board-depth [data-relphi-veilva-glyph]').evaluateAll(nodes=>nodes.map(node=>node.dataset.canonicalGlyphId));
+    assert.deepEqual(canonicalVeilva,['saturn','jupiter','mars','sun','venus','mercury','moon'],'Veilva must render through the canonical glyph registry/component');
     assert.equal(await page.locator('.relphi-recursion-board-depth [data-recursion-depth="1"]').evaluate(node=>node.classList.contains('is-current')),true);
     const veilvaCell=await page.locator('.relphi-recursion-board-depth [data-recursion-depth="1"]').evaluate(node=>{const r=node.getBoundingClientRect();return {w:r.width,h:r.height,radius:getComputedStyle(node).borderRadius,bg:getComputedStyle(node).backgroundColor};});
     assert.ok(Math.abs(veilvaCell.w-veilvaCell.h)<1,'Each Veilva rung should be square');
     assert.equal(veilvaCell.radius,'0px','Veilva should read as a 1×7 ladder, not a string of circles');
     assert.equal(veilvaCell.bg,'rgb(220, 31, 24)','The active Veilva rung should be red');
+    await page.waitForFunction(()=>{
+      const input=document.querySelector('#rowZoom');
+      return input && Number(input.min)>0.02;
+    });
+    const recursionZoom=await page.evaluate(()=>({value:Number(document.querySelector('#rowZoom')?.value),min:Number(document.querySelector('#rowZoom')?.min)}));
+    assert.ok(recursionZoom.min>0.02,'Recursive Reading should raise the generic zoom-out floor');
+    await page.evaluate(()=>{
+      const input=document.querySelector('#rowZoom');
+      input.value='0.02';
+      input.dispatchEvent(new Event('input',{bubbles:true}));
+      input.dispatchEvent(new Event('change',{bubbles:true}));
+      document.querySelector('.relphi-zoom-step')?.click();
+    });
+    const clampedZoom=await page.evaluate(()=>Number(document.querySelector('#rowZoom')?.value));
+    assert.ok(clampedZoom>=recursionZoom.min-.001,'Recursive Reading should not zoom out below its fitted layout floor');
     assert.equal(await page.locator('.relphi-recursion-circle-states .relphi-recursion-state-circle').count(),3);
     assert.equal(await page.locator('[data-recursion-circle="mem"]').evaluate(node=>node.classList.contains('is-current')),true,'Mem should be the first active logo circle');
     const activeCircle=await page.locator('[data-recursion-circle="mem"]').evaluate(node=>({bg:getComputedStyle(node).backgroundColor,border:getComputedStyle(node).borderColor}));
