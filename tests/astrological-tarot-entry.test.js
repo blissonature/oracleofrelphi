@@ -16,3 +16,11 @@ assert.match(app,/role="radiogroup" aria-label="Drawing mode"/);
 assert.match(app,/>Mode:<\/strong>/);
 assert.doesNotMatch(app,/drawing-board-mode-tabs/);
 console.log('Crafted Draw exposes the Astrological Tarot Reading setup and preserves pack-selector scroll position.');
+
+assert.match(js,/function astrologyAnalyzeResolved/);
+assert.match(js,/function astrologyCardHits/);
+assert.match(js,/function astrologyPatterns/);
+assert.match(js,/function astrologyQuestionSuggestions/);
+assert.match(js,/Suggested questions/);
+assert.doesNotMatch(js,/Each sky is a disposable reading copy/);
+assert.doesNotMatch(js,/Zodiacal Majors locate houses/);
