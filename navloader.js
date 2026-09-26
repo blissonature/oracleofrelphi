@@ -52,7 +52,7 @@
     if (document.getElementById('relphi-nav-style') || document.querySelector('link[href*="style.css"]')) return;
     const style = document.createElement('style');
     style.id = 'relphi-nav-style';
-    style.textContent = '.menu-container{position:absolute;top:1rem;left:1rem;z-index:999}.logo-btn{background:none;border:0;cursor:pointer;padding:0;width:48px;height:48px;border-radius:50%;display:flex;align-items:center;justify-content:center}.logo-btn img{width:44px;height:44px}.dropdown-menu{display:none;position:absolute;top:56px;left:0;min-width:180px;background:#111;border:2px solid #fff;border-radius:1.25em;box-shadow:0 8px 32px rgba(0,0,0,.26);padding:.7em 0}.dropdown-menu a,.dropdown-menu summary{display:block;color:#fff;text-decoration:none;padding:1em 1.5em;font-size:1.05em;white-space:nowrap}.dropdown-menu a:hover,.dropdown-menu a:focus{background:#dc1f18}.menu-container.active .dropdown-menu a{padding-left:2.25em}@media(max-width:600px){.dropdown-menu{min-width:130px;left:-10px}}';
+    style.textContent = '.menu-container{position:absolute;top:1rem;left:1rem;z-index:999}.menu-container.active{z-index:20000!important}.menu-container.active .dropdown-menu{z-index:20001!important}.logo-btn{background:none;border:0;cursor:pointer;padding:0;width:48px;height:48px;border-radius:50%;display:flex;align-items:center;justify-content:center}.logo-btn img{width:44px;height:44px}.dropdown-menu{display:none;position:absolute;top:56px;left:0;min-width:180px;background:#111;border:2px solid #fff;border-radius:1.25em;box-shadow:0 8px 32px rgba(0,0,0,.26);padding:.7em 0}.dropdown-menu a,.dropdown-menu summary{display:block;color:#fff;text-decoration:none;padding:1em 1.5em;font-size:1.05em;white-space:nowrap}.dropdown-menu a:hover,.dropdown-menu a:focus{background:#dc1f18}.menu-container.active .dropdown-menu a{padding-left:2.25em}@media(max-width:600px){.dropdown-menu{min-width:130px;left:-10px}}';
     document.head.appendChild(style);
   }
 
@@ -144,7 +144,7 @@
 
   function refreshDrawingBoardControlAssets() {
     const link = document.querySelector('link[href^="drawing-board-workflow-v2.css"]');
-    if (link) link.href = 'drawing-board-workflow-v2.css?v=49';
+    if (link) link.href = 'drawing-board-workflow-v2.css?v=55';
     if (!document.getElementById('relphi-drawing-board-collapse-contract')) {
       const style = document.createElement('style');
       style.id = 'relphi-drawing-board-collapse-contract';
@@ -169,7 +169,7 @@
       appendScript('tarot-card-selection-scroll-v1.js?v=2', function () {
         requestAnimationFrame(function () { window.RelphiTarotCardSelectionScroll?.scrollFromLocation(); });
       });
-      appendScript('drawing-board-workflow-v2.js?v=100', function () {
+      appendScript('drawing-board-workflow-v2.js?v=109', function () {
         window.dispatchEvent(new Event('relphi:tarot-enhancements-ready'));
       });
     }
