@@ -334,7 +334,7 @@
     if (!session) return false;
     const base = session.baseline || {};
     const baseLayout = String(base.rowActiveLayout?.id || '');
-    const draftLayout = session.draft.templateId || ((baseLayout==='custom-active' || baseLayout==='see-what-surfaces-active') ? baseLayout : '');
+    const draftLayout = session.draft.templateId || (baseLayout==='custom-active' ? 'custom-active' : '');
     const baseLabels = Array.isArray(base.shortListPositionLabels) ? base.shortListPositionLabels : [];
     const basePacks=baseLabels.map((_,index)=>String(base.rowPositionMeta?.[index]?.drawScope || base.rowActiveLayout?.positions?.[index]?.drawScope || ''));
     const draftPacks=(session.draft.positionPacks||[]).slice(0,session.draft.labels.length).map(value=>String(value||''));
@@ -865,39 +865,6 @@
     court:'courts',
     pip:'pips'
   });
-  const SURFACE_KIND_BY_PACK = Object.freeze(Object.fromEntries(Object.entries(SURFACE_PACK_BY_KIND).map(([kind,pack])=>[pack,kind])));
-  function surfaceBoardActive() {
-    if (surfaceReadingSession) return true;
-    const layout=currentPrefabState().activeLayout || {};
-    if (layout.id==='see-what-surfaces-active' || layout.name==='See What Surfaces') return true;
-    const snap=currentSnapshot() || {};
-    return Array.isArray(snap.rowPositionMeta) && snap.rowPositionMeta.some(meta=>String(meta?.role||'').startsWith('surface-'));
-  }
-  function ensureSurfaceReadingSession() {
-    if (surfaceReadingSession) return surfaceReadingSession;
-    if (!surfaceBoardActive()) return null;
-    const snap=currentSnapshot() || {};
-    const state=currentPrefabState();
-    const labels=Array.isArray(snap.shortListPositionLabels)?snap.shortListPositionLabels:[];
-    const meta=Array.isArray(snap.rowPositionMeta)?snap.rowPositionMeta:[];
-    let initialCount=meta.filter(item=>item?.role==='surface-initial').length;
-    if (!initialCount) initialCount=labels.length;
-    const kinds=labels.slice(0,initialCount).map((_,index)=>{
-      const scope=String(meta[index]?.drawScope || state.activeLayout?.positions?.[index]?.drawScope || 'full');
-      return SURFACE_KIND_BY_PACK[scope] || 'origin';
-    });
-    const hasFollowups=meta.some(item=>item?.role==='surface-followup');
-    surfaceReadingSession={
-      kinds,
-      initialCount,
-      followupsGenerated:hasFollowups,
-      followupSuggestions:[],
-      followupSettings:{reversals:snap.rowAllowReversals!==false,repeats:!!snap.rowAllowRepeats},
-      followupReviewPending:false,
-      followupCount:Math.max(0,labels.length-initialCount)
-    };
-    return surfaceReadingSession;
-  }
   function surfacePlanet(card) {
     return String(card?.astrology?.planet || '').split('/')[0].trim();
   }
@@ -1396,12 +1363,8 @@
       return next;
     }
     const positions=genericPositions(labels);
-    const surfaceMode=draft.templateName==='See What Surfaces';
-    positions.forEach((item,index)=>{
-      item.drawScope=positionPacks[index]||'';
-      if(surfaceMode)item.role='surface-initial';
-    });
-    return {version:1,id:surfaceMode?'see-what-surfaces-active':'custom-active',name:draft.templateName || 'Custom',cardCount:labels.length,source:'custom',editable:!surfaceMode,basedOn:based?.id||null,positions,rules:{allowReversals:draft.reversals,allowRepeats:draft.repeats,drawScope:draft.pack}};
+    positions.forEach((item,index)=>{item.drawScope=positionPacks[index]||'';});
+    return {version:1,id:'custom-active',name:draft.templateName || 'Custom',cardCount:labels.length,source:'custom',editable:true,basedOn:based?.id||null,positions,rules:{allowReversals:draft.reversals,allowRepeats:draft.repeats,drawScope:draft.pack}};
   }
 
   function applyDrawSettings(draft) {
@@ -1468,7 +1431,7 @@
   function openAttune(index) {
     const root=panel();
     const item=focusItem(index,root);
-    if (!ensureSurfaceReadingSession() || !root || !isEmptyItem(item)) return false;
+    if (!surfaceReadingSession || !root || !isEmptyItem(item)) return false;
     closeFocus({acknowledge:true});
     closeAttune();
     attuneIndex=index;
@@ -1642,7 +1605,7 @@
     return true;
   }
   function maybeGenerateSurfaceFollowups(root=panel()) {
-    const session=ensureSurfaceReadingSession();
+    const session=surfaceReadingSession;
     if (!session || session.followupsGenerated || !root) return;
     if (session.kinds.some((_,index)=>!cardAt(index,root))) return;
     const draws={},readings={};
@@ -2014,7 +1977,7 @@
     const leaving=focusIndex;
     if (leaving>=0 && leaving!==next && isCrossingPosition(leaving)) acknowledgeCelticCrossing();
     if (cardAt(next)) openFocus(next);
-    else if (ensureSurfaceReadingSession()) openAttune(next);
+    else if (surfaceReadingSession) openAttune(next);
     else drawInto(focusItem(next),next);
   }
   function navigateFocusBy(delta) {
@@ -2052,7 +2015,7 @@
   function drawNextLogical(root=panel()) {
     if (!root || activeDraw) return;
     const next=nextUndrawnNativeIndex(root);
-    if (next!=null) { if (ensureSurfaceReadingSession()) openAttune(next); else drawInto(focusItem(next,root),next); return; }
+    if (next!=null) { if (surfaceReadingSession) openAttune(next); else drawInto(focusItem(next,root),next); return; }
     if (configuredPositionCount()>0) return;
     const draw=root.querySelector('#drawRandomRowCard');
     if (!draw || draw.disabled) return;
@@ -2088,7 +2051,7 @@
       }
       if (isEmptyItem(item)) {
         event.preventDefault(); event.stopImmediatePropagation();
-        if (ensureSurfaceReadingSession()) openAttune(index); else drawInto(item,index);
+        if (surfaceReadingSession) openAttune(index); else drawInto(item,index);
       }
     },true);
   }
@@ -2109,26 +2072,20 @@
       }
     }
     const draw=root.querySelector('#drawRandomRowCard');
-    if (draw) {
-      const surfaceActive=!!ensureSurfaceReadingSession();
-      draw.textContent=surfaceActive?'Attune':'Draw';
-      draw.title=surfaceActive?'Attune to next referent':'Draw random card';
-      draw.setAttribute('aria-label',surfaceActive?'Attune to next referent':'Draw random card');
-      if (draw.dataset.relphiUnifiedDraw!=='true') {
-        draw.dataset.relphiUnifiedDraw='true';
-        draw.addEventListener('click',event=>{
-          if (!activeDraw && ensureSurfaceReadingSession()) {
-            const next=nextUndrawnNativeIndex(root);
-            if (next!=null) {
-              event.preventDefault();
-              event.stopImmediatePropagation();
-              openAttune(next);
-              return;
-            }
+    if (draw && draw.dataset.relphiUnifiedDraw!=='true') {
+      draw.dataset.relphiUnifiedDraw='true';
+      draw.addEventListener('click',event=>{
+        if (!activeDraw && surfaceReadingSession) {
+          const next=nextUndrawnNativeIndex(root);
+          if (next!=null) {
+            event.preventDefault();
+            event.stopImmediatePropagation();
+            openAttune(next);
+            return;
           }
-          pendingFocusIndex=currentCardCount(root);
-        },true);
-      }
+        }
+        pendingFocusIndex=currentCardCount(root);
+      },true);
     }
   }
   function markSemanticPositions(root) {
@@ -2176,7 +2133,7 @@
     installLockedLayoutPointerGuards(root);
     installBoardCapture(root);
     if (optionsSession) renderOptions(root);
-    if (ensureSurfaceReadingSession()) maybeGenerateSurfaceFollowups(root);
+    if (surfaceReadingSession) maybeGenerateSurfaceFollowups(root);
     if (pendingFocusIndex!=null) {
       const target=pendingFocusIndex;
       if (cardAt(target,root)) {
@@ -2257,7 +2214,7 @@
         }
         if (isEmptyItem(item)) {
           event.preventDefault(); event.stopImmediatePropagation();
-          if (ensureSurfaceReadingSession()) openAttune(index);
+          if (surfaceReadingSession) openAttune(index);
           else drawInto(item,index);
           return;
         }
