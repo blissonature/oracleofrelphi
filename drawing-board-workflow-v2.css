@@ -355,3 +355,50 @@
     margin:.4rem!important;
   }
 }
+
+
+/* Sacred reading setup: See What Surfaces + Attune to the Referent */
+#shortListPanel{position:relative}
+#shortListPanel .relphi-surface-question-choices{display:grid!important;grid-template-columns:1fr!important;gap:.38rem!important}
+#shortListPanel .relphi-surface-question-choice{display:grid!important;grid-template-columns:1.1rem minmax(0,1fr)!important;gap:.55rem!important;align-items:start!important;margin:0!important;padding:.58rem .62rem!important;border:1px solid #ddd4cb!important;border-radius:8px!important;background:#fff!important;color:#2f2925!important;cursor:pointer!important}
+#shortListPanel .relphi-surface-question-choice:has(input:checked){border-color:rgba(184,23,18,.48)!important;background:#fff8f7!important;box-shadow:inset 3px 0 0 var(--relphi-board-red)!important}
+#shortListPanel .relphi-surface-question-choice input{width:1rem!important;height:1rem!important;margin:.14rem 0 0!important;accent-color:var(--relphi-board-red)!important}
+#shortListPanel .relphi-surface-question-choice span{display:grid!important;gap:.12rem!important}
+#shortListPanel .relphi-surface-question-choice strong{font-size:.76rem!important;font-weight:900!important;line-height:1.25!important}
+#shortListPanel .relphi-surface-question-choice small{font-size:.63rem!important;font-weight:650!important;line-height:1.25!important;color:#6b625b!important}
+#shortListPanel .relphi-surface-choice-note{margin:0!important;padding:.55rem .62rem!important;border-left:3px solid #d9cdc4!important;background:#fbf8f4!important;color:#655d56!important;font-size:.69rem!important;line-height:1.38!important}
+#shortListPanel .relphi-options-commitbar .primary:disabled{opacity:.42!important;cursor:not-allowed!important}
+
+#shortListPanel .relphi-board-toast{position:absolute!important;right:clamp(.6rem,2vw,1rem)!important;top:clamp(4.2rem,8vw,5.4rem)!important;z-index:80!important;width:min(25rem,calc(100% - 1.2rem))!important;box-sizing:border-box!important;padding:.78rem 2.3rem .78rem .85rem!important;border:1px solid rgba(184,23,18,.32)!important;border-radius:10px!important;background:#fffdf8!important;box-shadow:0 12px 32px rgba(40,31,26,.18)!important;color:#28221e!important}
+#shortListPanel .relphi-board-toast .eyebrow{display:block!important;margin:0 0 .18rem!important;color:#a61712!important;font-size:.62rem!important;font-weight:950!important;letter-spacing:.09em!important;text-transform:uppercase!important}
+#shortListPanel .relphi-board-toast p{margin:0!important;font-size:.72rem!important;font-weight:650!important;line-height:1.42!important}
+#shortListPanel .relphi-board-toast-close{position:absolute!important;right:.48rem!important;top:.42rem!important;width:1.55rem!important;height:1.55rem!important;padding:0!important;border:0!important;background:transparent!important;color:#5e554f!important;font-size:1.15rem!important;line-height:1!important}
+
+.relphi-attune-reader{position:fixed!important;inset:0!important;z-index:2147482500!important;display:grid!important;place-items:center!important;padding:clamp(.8rem,3vw,1.5rem)!important;background:rgba(31,25,21,.58)!important;backdrop-filter:blur(5px)!important}
+.relphi-attune-shell{position:relative!important;width:min(42rem,100%)!important;max-height:min(42rem,calc(100dvh - 1.6rem))!important;overflow:auto!important;box-sizing:border-box!important;padding:clamp(1.25rem,3.5vw,2rem)!important;border:1px solid #d9cec5!important;border-radius:16px!important;background:#fffdf8!important;box-shadow:0 26px 70px rgba(27,21,17,.28)!important;color:#211c18!important;text-align:center!important}
+.relphi-attune-shell>.eyebrow{display:block!important;margin:0 0 .55rem!important;color:#a61712!important;font-size:.68rem!important;font-weight:950!important;letter-spacing:.11em!important;text-transform:uppercase!important}
+.relphi-attune-shell h2{max-width:34rem!important;margin:.15rem auto .65rem!important;font-family:Georgia,"Times New Roman",serif!important;font-size:clamp(1.55rem,4vw,2.4rem)!important;font-weight:650!important;line-height:1.18!important;text-wrap:balance!important}
+.relphi-attune-pack{margin:.1rem 0 .9rem!important;color:#6c625b!important;font-size:.72rem!important;font-weight:800!important}
+.relphi-attune-note{max-width:31rem!important;margin:0 auto 1.25rem!important;color:#514942!important;font-size:.82rem!important;line-height:1.5!important}
+.relphi-attune-close{position:absolute!important;right:.65rem!important;top:.55rem!important;width:2rem!important;height:2rem!important;padding:0!important;border:0!important;background:transparent!important;color:#5a514a!important;font-size:1.5rem!important;line-height:1!important}
+.relphi-attune-actions{display:grid!important;grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important;gap:.55rem!important;max-width:31rem!important;margin:0 auto!important}
+.relphi-attune-actions button{min-height:3rem!important;padding:.68rem .8rem!important;border:1px solid #bfb5ac!important;border-radius:9px!important;background:#fff!important;color:#211c18!important;font:inherit!important;font-size:.76rem!important;font-weight:900!important}
+.relphi-attune-actions button.primary{border-color:#a61712!important;background:#a61712!important;color:#fff!important}
+.relphi-attune-search{display:grid!important;gap:.55rem!important;margin:1rem auto 0!important;max-width:34rem!important;padding-top:1rem!important;border-top:1px solid #e4dad2!important;text-align:left!important}
+.relphi-attune-search[hidden]{display:none!important}
+.relphi-attune-search label{display:grid!important;gap:.3rem!important;font-size:.7rem!important;font-weight:850!important}
+.relphi-attune-search input{width:100%!important;box-sizing:border-box!important;padding:.65rem .7rem!important;border:1px solid #bfb5ac!important;border-radius:8px!important;background:#fff!important;color:#111!important;font:inherit!important;font-size:.82rem!important}
+.relphi-attune-search-results{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:.42rem!important;max-height:17rem!important;overflow:auto!important}
+.relphi-attune-search-results>p{grid-column:1/-1!important;margin:0!important;padding:.7rem!important;border:1px dashed #d6ccc3!important;border-radius:8px!important;color:#655d56!important;font-size:.72rem!important;line-height:1.4!important}
+.relphi-attune-search-results button{display:grid!important;grid-template-columns:2.35rem minmax(0,1fr)!important;gap:.48rem!important;align-items:center!important;min-height:3.25rem!important;padding:.4rem!important;border:1px solid #ddd4cb!important;border-radius:8px!important;background:#fff!important;color:#2d2723!important;text-align:left!important;font:inherit!important;font-size:.68rem!important;font-weight:800!important}
+.relphi-attune-search-results img{width:2.35rem!important;height:3.2rem!important;object-fit:cover!important;border-radius:3px!important}
+body.relphi-attune-open{overflow:hidden!important}
+
+@media (max-width:640px){
+  #shortListPanel .relphi-board-toast{position:fixed!important;left:.55rem!important;right:.55rem!important;top:auto!important;bottom:max(.55rem,env(safe-area-inset-bottom))!important;width:auto!important;z-index:2147482400!important}
+  .relphi-attune-reader{padding:0!important;place-items:stretch!important}
+  .relphi-attune-shell{width:100vw!important;height:100dvh!important;max-height:100dvh!important;border:0!important;border-radius:0!important;padding:1.15rem .8rem max(1rem,env(safe-area-inset-bottom))!important}
+  .relphi-attune-shell h2{font-size:clamp(1.5rem,7vw,2rem)!important}
+  .relphi-attune-actions{grid-template-columns:1fr!important}
+  .relphi-attune-search-results{grid-template-columns:repeat(2,minmax(0,1fr))!important;max-height:none!important}
+}
