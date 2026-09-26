@@ -875,3 +875,42 @@ html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]) .sky-chart-con
 .sky-configuration-mini-vertex-glyph .relphi-glyph-bubble{
   overflow:visible;
 }
+
+
+/* Configuration geometry scales with the wheel; canonical vertex glyphs do not. */
+.sky-configuration-mini-wheel{
+  position:relative;
+}
+.sky-configuration-mini-wheel>svg{
+  position:relative;
+  z-index:1;
+}
+.sky-configuration-vertex-layer{
+  position:absolute;
+  inset:0;
+  z-index:2;
+  pointer-events:none;
+}
+.sky-configuration-vertex-host{
+  position:absolute;
+  width:38px;
+  height:38px;
+  transform:translate(-50%,-50%);
+  display:grid;
+  place-items:center;
+  overflow:visible;
+}
+.sky-configuration-vertex-host>.sky-configuration-canonical-vertex{
+  display:block;
+  width:38px!important;
+  height:38px!important;
+  min-width:38px;
+  min-height:38px;
+  max-width:38px;
+  max-height:38px;
+  overflow:visible;
+}
+.sky-configuration-mini-point,
+.sky-configuration-mini-vertex-glyph{
+  display:none!important;
+}
