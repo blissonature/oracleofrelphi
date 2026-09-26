@@ -1043,6 +1043,19 @@
     }
     return result.slice(0,MAX_POSITIONS);
   }
+  function astrologySurfaceMarkup(session,disabled=false) {
+    const mode=session.astrologySkyMode==='AB' ? 'AB' : 'A';
+    return '<section class="relphi-referent-panel relphi-astrology-surface">'+
+      '<div class="relphi-options-subhead"><div><strong>Astrological Tarot Reading</strong><span>Connect sky data, then let the cards reveal where the sky is asking for inquiry.</span></div></div>'+
+      '<div class="relphi-astrology-sky-mode" role="radiogroup" aria-label="Sky data">'+
+        '<label><input type="radio" name="relphiAstrologySkyMode" value="A" '+(mode==='A'?'checked ':'')+(disabled?'disabled':'')+'><span><strong>Sky A</strong><small>Read one connected sky.</small></span></label>'+
+        '<label><input type="radio" name="relphiAstrologySkyMode" value="AB" '+(mode==='AB'?'checked ':'')+(disabled?'disabled':'')+'><span><strong>Sky A + Sky B</strong><small>Include the relationship between two skies.</small></span></label>'+
+      '</div>'+
+      '<div class="relphi-astrology-bridge-status"><strong>Sky connection</strong><span data-astrology-sky-status>No Sky Chart data connected yet.</span><button type="button" id="relphiConnectSky" '+(disabled?'disabled':'')+'>Connect from Sky Chart</button></div>'+
+      '<p class="relphi-astrology-note">Zodiacal Majors locate houses. Pips retain their exact sign/decan intervals. Card Hits and concentrations will become candidate questions before you Attune.</p>'+
+      '</section>';
+  }
+
   function bespokeMarkup(draft,hasCards) {
     return '<section class="relphi-referent-panel">'+
       '<div class="relphi-options-subhead"><div><strong>Bespoke</strong><span>Write the referents for this reading.</span></div><button type="button" id="relphiAddPosition" '+(hasCards||draft.labels.length>=MAX_POSITIONS?'disabled':'')+'>Add referent</button></div>'+
@@ -1072,6 +1085,7 @@
     if (session.path==='templates') return templatesMarkup(draft,hasCards);
     if (session.path==='blocks') return '<section class="relphi-referent-panel"><div class="relphi-options-subhead"><div><strong>Building Blocks</strong><span>Choose Relphi symbols deliberately and let them formulate candidate referents.</span></div></div>'+buildingControlsMarkup(session,hasCards)+suggestionMarkup(session,hasCards)+'</section>';
     if (session.path==='surface') return '<section class="relphi-referent-panel"><div class="relphi-options-subhead"><div><strong>See What Surfaces</strong><span>Choose the questions for the first exploration. The cards themselves surface in sacred reading mode.</span></div></div>'+surfaceChoicesMarkup(session,hasCards)+'</section>';
+    if (session.path==='astro') return astrologySurfaceMarkup(session,hasCards);
     return '';
   }
 
@@ -1087,8 +1101,8 @@
     drawer.className='relphi-reading-options-drawer is-reading-options-open relphi-referents-drawer';
     drawer.id='drawingBoardReadingOptions';
     drawer.setAttribute('role','dialog');
-    drawer.setAttribute('aria-label','Drawing Board Referents');
-    drawer.innerHTML = '<div class="relphi-options-heading"><div><span class="eyebrow">Drawing Board</span><h3>Referents</h3></div></div>'+
+    drawer.setAttribute('aria-label','Crafted Draw');
+    drawer.innerHTML = '<div class="relphi-options-heading"><div><span class="eyebrow">Drawing Board</span><h3>Crafted Draw</h3></div></div>'+
       (hasCards ? '<p class="relphi-options-note relphi-options-note-visible">Reset Board before changing referents. The reading structure is locked once cards are drawn.</p>' : '')+
       '<div class="relphi-options-body">'+
         '<div class="relphi-referent-paths" role="list" aria-label="Referent paths">'+
@@ -1096,6 +1110,7 @@
           referentPathButton('templates','Templates','Use a saved or established spread.',session.path,hasCards)+
           referentPathButton('blocks','Building Blocks','Choose elements planets aspects signs and houses.',session.path,hasCards)+
           referentPathButton('surface','See What Surfaces','Draw symbolic cards to discover what to ask.',session.path,hasCards)+
+          referentPathButton('astro','Astrological Tarot Reading','Connect Sky A or Sky A + Sky B and surface questions from exact card hits.',session.path,hasCards)+
         '</div>'+
         pathPanelMarkup(session,hasCards)+
         '<section class="relphi-referent-settings" aria-label="Draw settings"><strong class="relphi-referent-settings-title">Draw settings</strong><div class="relphi-draw-options"><label>Pack<select id="relphiDraftPack">'+packOptions(draft.pack)+'</select></label>'+keywordDraftMarkup(draft)+'<label><input id="relphiDraftStickers" type="checkbox" '+(draft.stickers?'checked':'')+' title="Show position stickers"> Show referent stickers</label><label><input id="relphiDraftReversals" type="checkbox" '+(draft.reversals?'checked':'')+'> Reversals</label><label><input id="relphiDraftRepeats" type="checkbox" '+(draft.repeats?'checked':'')+'> Repeats</label></div></section>'+
@@ -1111,6 +1126,13 @@
       session.suggestionPacks=[];
       renderOptions(root);
     }));
+
+    drawer.querySelectorAll('input[name="relphiAstrologySkyMode"]').forEach(input=>input.addEventListener('change',()=>{session.astrologySkyMode=input.value==='AB'?'AB':'A';}));
+    drawer.querySelector('#relphiConnectSky')?.addEventListener('click',()=>{
+      const payload={mode:session.astrologySkyMode==='AB'?'AB':'A',source:'crafted-draw'};
+      window.dispatchEvent(new CustomEvent('relphi:request-sky-connection',{detail:payload}));
+      showBoardToast('Sky Chart connection requested. The visible reading path is ready for the Sky Chart bridge to supply Sky A'+(payload.mode==='AB'?' and Sky B':'')+'.',{title:'Astrological Tarot Reading',duration:5200});
+    });
 
     const templateSelect = drawer.querySelector('#relphiSpreadTemplateSelect');
     templateSelect?.addEventListener('change',()=>{
@@ -1230,7 +1252,7 @@
       renderOptions(root);
     });
 
-    drawer.querySelector('#relphiDraftPack')?.addEventListener('change',event=>{draft.pack=event.target.value; renderOptions(root);});
+    drawer.querySelector('#relphiDraftPack')?.addEventListener('change',event=>{draft.pack=event.target.value; const body=drawer.querySelector('.relphi-options-body'); const scrollTop=body?.scrollTop||0; renderOptions(root); const next=root.querySelector('.relphi-options-body'); if(next) next.scrollTop=scrollTop;});
     const keywordQuery=drawer.querySelector('#relphiKeywordQuery');
     keywordQuery?.addEventListener('input',event=>renderKeywordMatches(drawer,draft,event.target.value));
     drawer.querySelectorAll('input[name="relphiKeywordMode"]').forEach(input=>input.addEventListener('change',()=>{draft.keywordMatchMode=input.value==='all'?'all':'any'; renderOptions(root);}));
@@ -2355,7 +2377,7 @@
     }
     const options=root.querySelector('#drawingBoardOptionsButton');
     if (options) {
-      options.textContent='Referents';
+      options.textContent='Crafted Draw';
       options.setAttribute('aria-expanded',String(!!optionsSession));
       options.onclick=null;
       if (options.dataset.relphiUnifiedOptions!=='true') {
