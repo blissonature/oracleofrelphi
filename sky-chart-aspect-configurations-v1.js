@@ -158,29 +158,26 @@ function miniConfigurationMarkup(pattern,{compact=false,interactive=true}={}){
 
 async function paintConfigurationMiniGlyphs(root){
   if(!root)return;
-  const component=window.RelphiGlyphComponent,registry=window.RelphiGlyphRegistry;
-  if(!component?.createBubble||!registry)return;
+  const templates=window.RelphiRelationshipGlyphTemplates;
+  if(!templates?.clone)return;
+  const colors=templates.colors||RESULT_COLORS;
   for(const host of root.querySelectorAll('.sky-configuration-vertex-host[data-canonical-placement]')){
     if(host.dataset.canonicalGlyphReady==='true')continue;
-    const id=String(host.dataset.canonicalPlacement||''),sky=String(host.dataset.sky||'A').toUpperCase(),color=RESULT_COLORS[sky]||RESULT_COLORS.A;
-    const entry=registry.get?.(id)||registry.resolve?.(id);
-    if(!entry){console.error('[Sky Chart] Missing canonical configuration glyph:',id);continue}
-    const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
-    svg.setAttribute('viewBox','-32 -32 64 64');
-    svg.setAttribute('width','26');
-    svg.setAttribute('height','26');
-    svg.setAttribute('aria-hidden','true');
-    svg.setAttribute('focusable','false');
-    svg.classList.add('sky-configuration-canonical-vertex');
-    host.replaceChildren(svg);
-    try{
-      const bubble=component.createBubble(svg,entry.id,{radius:13,color,fill:'#fffdf8'});
-      await Promise.resolve(bubble.ready);
-      host.dataset.canonicalGlyphReady='true';
-    }catch(error){
-      console.error('[Sky Chart] Canonical configuration glyph failed:',entry.id,error);
-      host.replaceChildren();
-    }
+    const id=String(host.dataset.canonicalPlacement||''),sky=String(host.dataset.sky||'A').toUpperCase(),color=colors?.[sky]||RESULT_COLORS[sky]||RESULT_COLORS.A;
+    if(!id)continue;
+    let glyph=null;
+    try{glyph=await templates.clone(id,color)}catch(error){console.error('[Sky Chart] Relationship canonical glyph clone failed:',id,error)}
+    if(!glyph)continue;
+    // Relationships already owns the canonical master framing and exact display scale.
+    // For Configuration vertices, reveal the canonical inscription circle that the
+    // Relationships presentation intentionally hides. Do not refit or rescale the art.
+    glyph.querySelectorAll('.relphi-glyph-bubble>circle').forEach(circle=>{
+      circle.style.opacity='1';
+      circle.removeAttribute('aria-hidden');
+    });
+    glyph.dataset.configurationInscribedClone='true';
+    host.replaceChildren(glyph);
+    host.dataset.canonicalGlyphReady='true';
   }
 }
 function aspectColorRail(pattern){
