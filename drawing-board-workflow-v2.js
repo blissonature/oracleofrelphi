@@ -817,6 +817,7 @@
     const suggestions=Array.isArray(session.suggestions)?session.suggestions:[];
     if (!suggestions.length) return '<p class="relphi-referent-empty">Choose or draw building blocks to surface candidate referents.</p>';
     return '<div class="relphi-suggestions-review"><div class="relphi-options-subhead"><strong>Review the referents</strong><span>Edit anything before you begin.</span></div>'+
+      '<label class="relphi-question-master"><input type="checkbox" data-suggestion-toggle-all checked '+(disabled?'disabled':'')+'><span>Select all / none</span></label>'+
       suggestions.map((value,index)=>'<label class="relphi-suggestion-row"><input type="checkbox" data-suggestion-use="'+index+'" checked '+(disabled?'disabled':'')+'><span>'+(index+1)+'</span><input type="text" data-suggestion-text="'+index+'" value="'+escapeHtml(value)+'" '+(disabled?'disabled':'')+'></label>').join('')+
       '<button type="button" id="relphiAcceptSuggestions" '+(disabled?'disabled':'')+'>Use selected referents</button></div>';
   }
@@ -887,9 +888,18 @@
     const selected=session?.surfaceSelected || {};
     return SURFACE_DRAW_KEYS.filter(kind=>!!selected[kind]);
   }
+  function syncQuestionMaster(master, boxes) {
+    if (!master) return;
+    const available=Array.from(boxes||[]).filter(box=>!box.disabled);
+    const selected=available.filter(box=>box.checked).length;
+    master.checked=available.length>0 && selected===available.length;
+    master.indeterminate=selected>0 && selected<available.length;
+  }
   function surfaceChoicesMarkup(session, disabled=false) {
     const selected=session.surfaceSelected || (session.surfaceSelected={});
-    return '<div class="relphi-surface-question-choices" role="group" aria-label="Question types">'+
+    const allSelected=SURFACE_DRAW_KEYS.length>0 && SURFACE_DRAW_KEYS.every(kind=>!!selected[kind]);
+    return '<label class="relphi-question-master"><input type="checkbox" data-surface-toggle-all '+(allSelected?'checked ':'')+(disabled?'disabled':'')+'><span>Select all / none</span></label>'+
+      '<div class="relphi-surface-question-choices" role="group" aria-label="Question types">'+
       SURFACE_DRAW_KEYS.map(kind=>'<label class="relphi-surface-question-choice"><input type="checkbox" data-surface-choice="'+kind+'" '+(selected[kind]?'checked ':'')+(disabled?'disabled':'')+'><span><strong>'+escapeHtml(SURFACE_QUESTIONS[kind])+'</strong><small>'+escapeHtml(SURFACE_PACK_LABELS[kind])+'</small></span></label>').join('')+
       '</div><p class="relphi-surface-choice-note">Choose one or more starting questions. Full Pack can simply show you where to begin.</p>';
   }
@@ -1185,12 +1195,31 @@
       renderOptions(root);
     });
 
-    drawer.querySelectorAll('[data-surface-choice]').forEach(input=>input.addEventListener('change',()=>{
+    const surfaceBoxes=[...drawer.querySelectorAll('[data-surface-choice]')];
+    const surfaceMaster=drawer.querySelector('[data-surface-toggle-all]');
+    const refreshSurfaceSelection=()=>{
       session.surfaceSelected ||= {};
-      session.surfaceSelected[input.dataset.surfaceChoice]=input.checked;
+      surfaceBoxes.forEach(input=>{ session.surfaceSelected[input.dataset.surfaceChoice]=input.checked; });
+      syncQuestionMaster(surfaceMaster,surfaceBoxes);
       const start=drawer.querySelector('#relphiApplyOptions');
       if (start && session.path==='surface') start.disabled=!selectedSurfaceKinds(session).length;
-    }));
+    };
+    surfaceBoxes.forEach(input=>input.addEventListener('change',refreshSurfaceSelection));
+    surfaceMaster?.addEventListener('change',event=>{
+      surfaceBoxes.forEach(input=>{ input.checked=event.currentTarget.checked; });
+      refreshSurfaceSelection();
+    });
+    refreshSurfaceSelection();
+
+    const suggestionBoxes=[...drawer.querySelectorAll('[data-suggestion-use]')];
+    const suggestionMaster=drawer.querySelector('[data-suggestion-toggle-all]');
+    const refreshSuggestionSelection=()=>syncQuestionMaster(suggestionMaster,suggestionBoxes);
+    suggestionBoxes.forEach(input=>input.addEventListener('change',refreshSuggestionSelection));
+    suggestionMaster?.addEventListener('change',event=>{
+      suggestionBoxes.forEach(input=>{ input.checked=event.currentTarget.checked; });
+      refreshSuggestionSelection();
+    });
+    refreshSuggestionSelection();
 
     drawer.querySelectorAll('[data-suggestion-text]').forEach(input=>input.addEventListener('input',()=>{
       session.suggestions[Number(input.dataset.suggestionText)]=input.value;
@@ -1452,7 +1481,9 @@
       '</label>';
   }
   function surfaceReviewSelectionState(review) {
-    const generated=[...review.querySelectorAll('[data-followup-use]')].some(box=>box.checked && String(review.querySelector('[data-followup-text="'+box.dataset.followupUse+'"]')?.value||'').trim());
+    const generatedBoxes=[...review.querySelectorAll('[data-followup-use]')];
+    syncQuestionMaster(review.querySelector('[data-followup-toggle-all]'),generatedBoxes);
+    const generated=generatedBoxes.some(box=>box.checked && String(review.querySelector('[data-followup-text="'+box.dataset.followupUse+'"]')?.value||'').trim());
     const custom=[...review.querySelectorAll('[data-followup-custom-use]')].some(box=>box.checked && String(review.querySelector('[data-followup-custom-text="'+box.dataset.followupCustomUse+'"]')?.value||'').trim());
     const confirm=review.querySelector('[data-followup-confirm]');
     if(confirm)confirm.disabled=!(generated||custom);
@@ -1474,6 +1505,7 @@
       '<button type="button" class="relphi-followup-close" aria-label="Close">×</button>'+
       '<span class="eyebrow">See What Surfaces</span><h2>What do you want to ask next?</h2>'+
       '<p class="relphi-followup-intro">Choose only the questions you agree to ask. Each suggestion comes from an unresolved edge of the exact card that surfaced it; its answer pack is chosen separately.</p>'+
+      '<div class="relphi-followup-generated-head"><strong>Suggested questions</strong><label class="relphi-question-master"><input type="checkbox" data-followup-toggle-all><span>Select all / none</span></label></div>'+
       '<div class="relphi-followup-generated">'+entries.map(surfaceFollowupQuestionRow).join('')+'</div>'+
       '<div class="relphi-followup-custom"><div class="relphi-followup-custom-head"><strong>Write your own</strong><button type="button" data-followup-add-custom aria-label="Add another custom question" title="Add another custom question">+</button></div><div data-followup-custom-list>'+surfaceCustomQuestionRow(0)+'</div></div>'+
       '<fieldset class="relphi-followup-draw-settings"><legend>Suggested follow-up settings · change before confirming</legend><label><input type="checkbox" data-followup-reversals '+(session.followupSettings?.reversals?'checked':'')+'> Reversals</label><label><input type="checkbox" data-followup-repeats '+(session.followupSettings?.repeats?'checked':'')+'> Repeats</label></fieldset>'+
@@ -1489,6 +1521,10 @@
       if(customCount>=MAX_POSITIONS)return;
       review.querySelector('[data-followup-custom-list]')?.insertAdjacentHTML('beforeend',surfaceCustomQuestionRow(customCount++));
       review.querySelector('[data-followup-custom-text="'+(customCount-1)+'"]')?.focus();
+    });
+    review.querySelector('[data-followup-toggle-all]')?.addEventListener('change',event=>{
+      review.querySelectorAll('[data-followup-use]').forEach(box=>{ box.checked=event.currentTarget.checked; });
+      update();
     });
     review.addEventListener('input',event=>{
       const custom=event.target.closest?.('[data-followup-custom-text]');
