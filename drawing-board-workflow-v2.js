@@ -833,8 +833,9 @@
       '</div><button type="button" id="relphiBuildQuestions" '+(disabled?'disabled':'')+'>Surface referents</button>';
   }
   const PIP_NUMBER_BY_RANK = {Two:2,Three:3,Four:4,Five:5,Six:6,Seven:7,Eight:8,Nine:9,Ten:10};
-  const SURFACE_DRAW_KEYS = ['primordial','ace','planet','sign','need','court','pip'];
+  const SURFACE_DRAW_KEYS = ['origin','primordial','ace','planet','sign','need','court','pip'];
   const SURFACE_QUESTIONS = Object.freeze({
+    origin:'Where should I begin?',
     primordial:'Which primordial force?',
     ace:'What is taking root?',
     planet:'What is at work?',
@@ -844,6 +845,7 @@
     pip:'What form is it taking?'
   });
   const SURFACE_PACK_LABELS = Object.freeze({
+    origin:'Full Pack',
     primordial:'Mother-letter Majors',
     ace:'Aces',
     planet:'Planetary Majors',
@@ -853,6 +855,7 @@
     pip:'Pips'
   });
   const SURFACE_PACK_BY_KIND = Object.freeze({
+    origin:'full',
     primordial:'primordial-majors',
     ace:'aces',
     planet:'planetary-majors',
@@ -888,7 +891,7 @@
     const selected=session.surfaceSelected || (session.surfaceSelected={});
     return '<div class="relphi-surface-question-choices" role="group" aria-label="Question types">'+
       SURFACE_DRAW_KEYS.map(kind=>'<label class="relphi-surface-question-choice"><input type="checkbox" data-surface-choice="'+kind+'" '+(selected[kind]?'checked ':'')+(disabled?'disabled':'')+'><span><strong>'+escapeHtml(SURFACE_QUESTIONS[kind])+'</strong><small>'+escapeHtml(SURFACE_PACK_LABELS[kind])+'</small></span></label>').join('')+
-      '</div><p class="relphi-surface-choice-note">Choose each kind of question you agree to ask. You can choose any combination.</p>';
+      '</div><p class="relphi-surface-choice-note">Choose one or more starting questions. Full Pack can simply show you where to begin.</p>';
   }
   function prepareSurfaceDraft(session) {
     const kinds=selectedSurfaceKinds(session);
@@ -904,33 +907,130 @@
   function surfaceCardLabel(card) {
     return String(card?.systems?.golden_dawn_rws?.display_name || card?.systems?.golden_dawn_rws?.title || card?.name || card?.title || card?.card_id || 'Surfaced card').trim();
   }
+  function surfaceOperationWord(interpretation, card) {
+    const text=String(interpretation||'').toLowerCase();
+    const fields=[
+      ['exchange',/exchange|translation|speech|language|signal|communicat/],
+      ['adjustment',/adjust|balance|measure|proportion|reciproc|weigh/],
+      ['force',/command|govern|force|control|domineer|directed/],
+      ['pressure',/pressure|conflict|friction|strain|burden/],
+      ['release',/release|surrender|letting go|dissolv/],
+      ['seed',/seed|root|beginning|first appearance|origin/],
+      ['care',/care|feeling|memory|receptiv|attachment/],
+      ['structure',/structure|boundary|container|stabil|form/],
+      ['relation',/relation|relationship|mutual|shared|between/],
+      ['growth',/growth|increase|expand|enlarge|abundance/],
+      ['distinction',/distinction|cut|clarity|judgment|thought/],
+      ['attraction',/attraction|value|beauty|receive|reception|invitation/],
+      ['action',/action|drive|assert|defen|initiative|movement/],
+      ['pattern',/pattern|system|sequence|coordination|arrangement/]
+    ];
+    return fields.find(([,pattern])=>pattern.test(text))?.[0] ||
+      (card?.card_type==='Court'?'way of carrying this':
+       card?.card_type==='Pip'?'condition':
+       card?.card_type==='Ace'?'seed':'operation');
+  }
+  function surfaceQuestionOptions(kind,card,reading={}) {
+    if(!card)return[];
+    const id=String(card.card_id||'');
+    const reversed=!!reading.reversed;
+    const interpretation=String(reading.interpretation||'').trim();
+    const sourceCardLabel=surfaceCardLabel(card);
+    const sourceQuestion=SURFACE_QUESTIONS[kind]||'';
+    const items=[];
+    const add=(text,pack='full')=>{
+      const clean=String(text||'').replace(/\s+/g,' ').trim();
+      if(!clean || items.some(item=>item.text===clean))return;
+      items.push({text:clean,pack:pack||'full',sourceCardId:id,sourceCardLabel,sourceQuestion});
+    };
+
+    // These are not metadata substitutions. They are unresolved edges of the
+    // actual Relphi operations for these cards, including their reversed state.
+    if(id==='the_magician'){
+      add('What is trying to pass between inside and outside?','full');
+      add('Where is the exchange breaking down?','full');
+      add('What need is this exchange trying to serve?','uhn');
+      add('What concrete condition is this exchange producing?','pips');
+      return items;
+    }
+    if(id==='justice' && reversed){
+      add('Where has adjustment become overcorrection?','full');
+      add('What is being constrained by the attempt to restore balance?','full');
+      add('What need is being protected beneath this correction?','uhn');
+      add('What condition has this overadjustment created?','pips');
+      return items;
+    }
+    if(id==='king_of_swords' && reversed){
+      add('What is this force trying to control?','full');
+      add('What need is being defended through this force?','uhn');
+      add('What condition is this misdirected command creating?','pips');
+      add('How could this force be carried differently?','courts');
+      return items;
+    }
+    if(id==='five_of_swords' && reversed){
+      add('What keeps this pressure repeating?','full');
+      add('What is preventing useful release?','full');
+      add('What need sits underneath this conflict?','uhn');
+      add('How is this unresolved pressure being carried?','courts');
+      return items;
+    }
+
+    const operation=surfaceOperationWord(interpretation,card);
+    if(card.card_type==='Ace'){
+      add('What would allow this '+operation+' to take form?','full');
+      add('What need is drawing this possibility forward?','uhn');
+      add('How could this beginning be carried into action?','courts');
+      add('What concrete condition could grow from it?','pips');
+      return items;
+    }
+    if(card.card_type==='Court'){
+      if(reversed){
+        add('What is this way of carrying the situation trying to control?','full');
+        add('What need is being defended by this way of carrying it?','uhn');
+        add('What condition is this creating in practice?','pips');
+        add('How could this '+operation+' be carried differently?','courts');
+      }else{
+        add('What is this way of carrying the situation trying to accomplish?','full');
+        add('What need is this way of carrying it serving?','uhn');
+        add('What condition is this creating in practice?','pips');
+        add('What other way could this '+operation+' be carried?','courts');
+      }
+      return items;
+    }
+    if(card.card_type==='Pip'){
+      if(reversed){
+        add('What keeps this '+operation+' repeating?','full');
+        add('What is preventing useful change or release?','full');
+        add('What need is caught inside this '+operation+'?','uhn');
+        add('How is this '+operation+' being carried in daily life?','courts');
+      }else{
+        add('What keeps this '+operation+' in place?','full');
+        add('What need is being served or challenged by this '+operation+'?','uhn');
+        add('How is this '+operation+' being carried in daily life?','courts');
+        add('What becomes possible if this '+operation+' changes?','full');
+      }
+      return items;
+    }
+    if(reversed){
+      add('Where is the '+operation+' being blocked, turned inward, or overextended?','full');
+      add('What is this '+operation+' trying to protect or preserve?','uhn');
+      add('What condition is this '+operation+' creating in practice?','pips');
+      add('What would let the '+operation+' move more cleanly?','full');
+    }else{
+      add('What is this '+operation+' making possible?','full');
+      add('What need is this '+operation+' serving?','uhn');
+      add('What condition is this '+operation+' producing in practice?','pips');
+      add('How can this '+operation+' be carried into action?','courts');
+    }
+    return items;
+  }
   function suggestionsFromSurface(session) {
     const draws=session.surfaceDraws || {};
+    const readings=session.surfaceReadings || {};
     const result=[];
-    const push=(kind,text,card)=>{
-      const clean=String(text||'').replace(/\s+/g,' ').trim();
-      if(clean) result.push({text:clean,pack:SURFACE_PACK_BY_KIND[kind]||'',sourceCardId:String(card?.card_id||''),sourceCardLabel:surfaceCardLabel(card)});
-    };
-    const primordial=surfacePrimordialElement(draws.primordial);
-    if (primordial) push('primordial','What does the primordial '+primordial+' principle reveal about this matter?',draws.primordial);
-    if (draws.ace?.element) push('ace','What is taking root materially through '+draws.ace.element+'?',draws.ace);
-    const planet=surfacePlanet(draws.planet);
-    if (planet) push('planet','What is '+planet+' asking me to understand about this matter?',draws.planet);
-    const sign=String(draws.sign?.astrology?.sign||'').trim();
-    if (sign) push('sign','How is '+sign+' shaping the way this situation is being expressed?',draws.sign);
-    const need=surfaceNeed(draws.need);
-    if (need) push('need','What does the unmet need for '+need+' ask me to recognize?',draws.need);
-    if (draws.court) {
-      const formula=surfaceCourtFormula(draws.court);
-      push('court',isPrincessPage(draws.court)
-        ? 'What is ready to become tangible through '+formula+'?'
-        : 'How is '+formula+' carrying this situation?',draws.court);
-    }
-    if (draws.pip) {
-      const number=surfacePipNumber(draws.pip);
-      const form=[draws.pip.element,HOUSE_ORDINALS[number-1] ? HOUSE_ORDINALS[number-1]+' House' : '',MODE_BY_PIP[number]||''].filter(Boolean).join(' · ');
-      push('pip','What form is this taking through '+form+'?',draws.pip);
-    }
+    Object.keys(draws).forEach(kind=>{
+      surfaceQuestionOptions(kind,draws[kind],readings[kind]||{}).forEach(item=>result.push(item));
+    });
     return result.slice(0,MAX_POSITIONS);
   }
   function bespokeMarkup(draft,hasCards) {
@@ -1340,7 +1440,7 @@
     const pack=String(entry?.pack||'full')||'full';
     return '<label class="relphi-followup-question-row" data-followup-row="'+index+'">'+
       '<input type="checkbox" data-followup-use="'+index+'">'+
-      '<span class="relphi-followup-question-copy"><small>From '+escapeHtml(entry?.sourceCardLabel||'surfaced card')+'</small><input type="text" data-followup-text="'+index+'" value="'+escapeHtml(entry?.text||'')+'"></span>'+
+      '<span class="relphi-followup-question-copy"><small>From '+escapeHtml(entry?.sourceCardLabel||'surfaced card')+(entry?.sourceQuestion?' · '+escapeHtml(entry.sourceQuestion):'')+'</small><input type="text" data-followup-text="'+index+'" value="'+escapeHtml(entry?.text||'')+'"></span>'+
       '<select data-followup-pack="'+index+'" aria-label="Pack for follow-up question">'+packOptions(pack)+'</select>'+
       '</label>';
   }
@@ -1373,10 +1473,10 @@
     review.innerHTML='<div class="relphi-followup-shell">'+
       '<button type="button" class="relphi-followup-close" aria-label="Close">×</button>'+
       '<span class="eyebrow">See What Surfaces</span><h2>What do you want to ask next?</h2>'+
-      '<p class="relphi-followup-intro">Choose only the questions you agree to ask. Each suggested question stays linked to the card that surfaced it.</p>'+
+      '<p class="relphi-followup-intro">Choose only the questions you agree to ask. Each suggestion comes from an unresolved edge of the exact card that surfaced it; its answer pack is chosen separately.</p>'+
       '<div class="relphi-followup-generated">'+entries.map(surfaceFollowupQuestionRow).join('')+'</div>'+
       '<div class="relphi-followup-custom"><div class="relphi-followup-custom-head"><strong>Write your own</strong><button type="button" data-followup-add-custom aria-label="Add another custom question" title="Add another custom question">+</button></div><div data-followup-custom-list>'+surfaceCustomQuestionRow(0)+'</div></div>'+
-      '<fieldset class="relphi-followup-draw-settings"><legend>Follow-up draw settings</legend><label><input type="checkbox" data-followup-reversals '+(snap.rowAllowReversals!==false?'checked':'')+'> Reversals</label><label><input type="checkbox" data-followup-repeats '+(snap.rowAllowRepeats?'checked':'')+'> Repeats</label></fieldset>'+
+      '<fieldset class="relphi-followup-draw-settings"><legend>Suggested follow-up settings · change before confirming</legend><label><input type="checkbox" data-followup-reversals '+(session.followupSettings?.reversals?'checked':'')+'> Reversals</label><label><input type="checkbox" data-followup-repeats '+(session.followupSettings?.repeats?'checked':'')+'> Repeats</label></fieldset>'+
       '<div class="relphi-followup-actions"><button type="button" data-followup-skip>Continue without follow-ups</button><button type="button" class="primary" data-followup-confirm disabled>Add selected questions</button></div>'+
       '</div>';
     let customCount=1;
@@ -1470,11 +1570,20 @@
     const session=surfaceReadingSession;
     if (!session || session.followupsGenerated || !root) return;
     if (session.kinds.some((_,index)=>!cardAt(index,root))) return;
-    const draws={};
-    session.kinds.forEach((kind,index)=>{draws[kind]=cardDataAt(index);});
-    const entries=suggestionsFromSurface({surfaceDraws:draws});
+    const draws={},readings={};
+    const ledgerEntries=ledgerBridge()?.drawingBoardReadingEntries?.() || [];
+    session.kinds.forEach((kind,index)=>{
+      draws[kind]=cardDataAt(index);
+      readings[kind]=ledgerEntries[index] || {reversed:focusCardIsReversed(index,root),interpretation:''};
+    });
+    const entries=suggestionsFromSurface({surfaceDraws:draws,surfaceReadings:readings});
+    const snap=currentSnapshot()||{};
     session.followupsGenerated=true;
     session.followupSuggestions=entries;
+    session.followupSettings={
+      reversals:ledgerEntries.slice(0,session.initialCount).some(entry=>entry?.reversed) || snap.rowAllowReversals!==false,
+      repeats:false
+    };
     session.followupReviewPending=true;
     session.followupCount=0;
   }
@@ -1485,7 +1594,7 @@
     const draft=clone(session.draft);
     const structural=optionsStructuralChanged(session);
     const surfaceKinds=session.path==='surface' ? selectedSurfaceKinds(session) : [];
-    surfaceReadingSession=surfaceKinds.length ? {kinds:surfaceKinds.slice(),initialCount:surfaceKinds.length,followupsGenerated:false,followupSuggestions:[],followupReviewPending:false,followupCount:0} : null;
+    surfaceReadingSession=surfaceKinds.length ? {kinds:surfaceKinds.slice(),initialCount:surfaceKinds.length,followupsGenerated:false,followupSuggestions:[],followupSettings:{reversals:draft.reversals,repeats:false},followupReviewPending:false,followupCount:0} : null;
     writeStickerVisibility(draft.stickers);
     optionsSession=null;
     root.querySelector('.relphi-reading-options-drawer')?.remove();
