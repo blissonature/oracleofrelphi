@@ -1198,19 +1198,22 @@
     drawer.querySelectorAll('input[name="relphiAstrologySkyMode"]').forEach(input=>input.addEventListener('change',()=>{session.astrologySkyMode=input.value==='AB'?'AB':'A'; renderOptions(root);}));
     drawer.querySelectorAll('[data-astrology-sky-source]').forEach(select=>select.addEventListener('change',()=>{
       const slot=select.dataset.astrologySkySource==='B'?'B':'A';
-      session[slot==='B'?'astrologySkyBSource':'astrologySkyASource']=select.value==='saved'?'saved':'here-now';
-      renderOptions(root);
+      session[slot==='B'?'astrologySkyBSource':'astrologySkyASource']=select.value||'here-now';
     }));
-    drawer.querySelectorAll('[data-choose-saved-sky]').forEach(button=>button.addEventListener('click',()=>{
-      const slot=button.dataset.chooseSavedSky==='B'?'B':'A';
-      window.dispatchEvent(new CustomEvent('relphi:request-saved-sky',{detail:{slot,source:'crafted-draw'}}));
-      showBoardToast('Choose a saved sky for Sky '+slot+' in Sky Chart.',{title:'Saved Sky',duration:4200});
-    }));
-    drawer.querySelector('#relphiConnectSky')?.addEventListener('click',()=>{
-      const mode=session.astrologySkyMode==='AB'?'AB':'A';
-      const payload={mode,source:'crafted-draw',skyA:{source:session.astrologySkyASource||'here-now'},skyB:mode==='AB'?{source:session.astrologySkyBSource||'here-now'}:null};
-      window.dispatchEvent(new CustomEvent('relphi:request-sky-connection',{detail:payload}));
-      showBoardToast('Astrological reading setup requested with '+(mode==='AB'?'two skies':'one sky')+'.',{title:'Astrological Tarot Reading',duration:5200});
+    drawer.querySelector('#relphiConnectSky')?.addEventListener('click',async()=>{
+      const button=drawer.querySelector('#relphiConnectSky'),mode=session.astrologySkyMode==='AB'?'AB':'A';
+      const status=drawer.querySelector('[data-astrology-sky-status]');
+      if(button){button.disabled=true;button.textContent='Preparing…'} if(status)status.textContent='Resolving the selected sky'+(mode==='AB'?'s':'')+'…';
+      try{
+        const skyA=await astrologyResolveSource(session.astrologySkyASource||'here-now');
+        const skyB=mode==='AB'?await astrologyResolveSource(session.astrologySkyBSource||'here-now'):null;
+        session.astrologyResolved={mode,skyA,skyB,resolvedAt:new Date().toISOString()};
+        window.RELPHI_ASTROLOGICAL_TAROT_CONTEXT=clone(session.astrologyResolved);
+        window.dispatchEvent(new CustomEvent('relphi:astrological-tarot-skies-ready',{detail:clone(session.astrologyResolved)}));
+        if(status)status.textContent=(skyA.name||'Sky A')+(skyB?' + '+(skyB.name||'Sky B'):'')+' ready · '+Object.keys(skyA.placements||{}).length+(skyB?' + '+Object.keys(skyB.placements||{}).length:'')+' placements.';
+        showBoardToast('The selected sky'+(skyB?'s are':' is')+' loaded into the Astrological Tarot Reading. The next draw can now use real placement data.',{title:'Astrological Tarot Reading',duration:6200});
+      }catch(error){if(status)status.textContent=error.message||'The selected sky could not be prepared.';showBoardToast(error.message||'The selected sky could not be prepared.',{title:'Astrological Tarot Reading',duration:6200})}
+      finally{if(button?.isConnected){button.disabled=false;button.textContent='Use These Skies'}}
     });
 
     const templateSelect = drawer.querySelector('#relphiSpreadTemplateSelect');
