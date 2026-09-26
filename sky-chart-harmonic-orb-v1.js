@@ -5,6 +5,7 @@ if(window.RelphiHarmonicOrb)return;
 const DEFAULT_WINDOW=6;
 const MAX_WINDOW=12;
 const WINDOW_STEP=.05;
+const WINDOW_STORAGE_KEY='relphiSkyHarmonicWindowV1';
 const ASPECTS=Object.freeze([
   Object.freeze({id:'conjunction',angle:0,numerator:0,harmonic:1,color:'#e53935'}),
   Object.freeze({id:'semi-sextile',angle:30,numerator:1,harmonic:12,color:'#7c9b49'}),
@@ -20,6 +21,7 @@ const ASPECTS=Object.freeze([
 ]);
 const BY_ID=new Map(ASPECTS.map(aspect=>[aspect.id,aspect]));
 let activeWindow=DEFAULT_WINDOW;
+try{const saved=Number(localStorage.getItem(WINDOW_STORAGE_KEY));if(Number.isFinite(saved)&&saved>=0)activeWindow=Math.min(MAX_WINDOW,saved)}catch(_){}
 function clampWindow(value){const n=Number(value);return Number.isFinite(n)&&n>=0?Math.min(MAX_WINDOW,n):DEFAULT_WINDOW}
 function syncVisibleControls(sourceInput=null){
   const value=String(activeWindow),max=String(MAX_WINDOW);
@@ -34,6 +36,7 @@ function syncVisibleControls(sourceInput=null){
 function setWindow(value,sourceInput=null){
   const next=clampWindow(value),changed=next!==activeWindow;
   activeWindow=next;
+  try{localStorage.setItem(WINDOW_STORAGE_KEY,String(activeWindow))}catch(_){}
   document.documentElement.dataset.skyHarmonicWindow=String(activeWindow);
   syncVisibleControls(sourceInput);
   if(changed)window.dispatchEvent(new CustomEvent('relphi:sky-harmonic-window-model-changed',{detail:{harmonicWindow:activeWindow}}));
