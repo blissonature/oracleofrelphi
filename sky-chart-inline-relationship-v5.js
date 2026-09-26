@@ -50,9 +50,58 @@ function clearReveal(row){if(!row)return;delete row.dataset.inlineRevealField;de
 function cycleReveal(row,field){const rel=relation(row),reveal=row.querySelector(':scope>.inline-rel-detail>.inline-rel-top-reveal');if(!rel||!reveal)return;const sameField=row.dataset.inlineRevealField===field,current=sameField?row.dataset.inlineRevealLevel:'',next=current===''?'name':current==='name'?'referent':'';if(!next){clearReveal(row);return}const info=revealInfo(rel,field);row.dataset.inlineRevealField=field;row.dataset.inlineRevealLevel=next;reveal.dataset.field=field;reveal.dataset.level=next;reveal.style.setProperty('--reveal-color',info.color);reveal.textContent=next==='name'?info.name:info.referent;reveal.hidden=false}
 function fieldFromTopGlyph(node){if(node?.classList.contains('sky-foundation-relationship-glyph--left'))return'left';if(node?.classList.contains('sky-foundation-relationship-glyph--right'))return'right';if(node?.classList.contains('sky-foundation-relationship-glyph--aspect'))return'aspect';return''}
 function decorateTopReveal(row){const fields=[['left','.sky-foundation-relationship-glyph--left'],['aspect','.sky-foundation-relationship-glyph--aspect'],['right','.sky-foundation-relationship-glyph--right']];fields.forEach(([field,selector])=>{const node=row.querySelector(selector);if(!node)return;node.dataset.inlineTopReveal=field;node.setAttribute('title','Tap to reveal name, then meaning')})}
+async function writeInlineClipboard(text){
+  let ok=false;
+  try{if(navigator.clipboard?.writeText){await navigator.clipboard.writeText(text);ok=true}}catch(_){}
+  if(!ok){
+    const area=document.createElement('textarea');area.value=text;area.setAttribute('readonly','');
+    Object.assign(area.style,{position:'fixed',left:'-10000px',top:'0',opacity:'0'});
+    document.body.appendChild(area);area.select();
+    try{ok=document.execCommand('copy')}catch(_){}
+    area.remove();
+  }
+  return ok;
+}
+function serializeExpandedRelationship(row,rel){
+  const lp=position(rel.left),rp=position(rel.right),aspectName=ASPECT_NAMES[rel.aspect]||rel.aspect;
+  const left=rel.left.entry.name+' · '+lp.sign+' '+lp.label+(rel.left.house?' · H'+rel.left.house:'');
+  const right=rel.right.entry.name+' · '+rp.sign+' '+rp.label+(rel.right.house?' · H'+rel.right.house:'');
+  const lines=[left,aspectName+' · '+rel.orb.toFixed(2)+'°',right];
+  const reveal=row.querySelector(':scope>.inline-rel-detail>.inline-rel-top-reveal:not([hidden])');
+  if(reveal?.textContent?.trim())lines.push(reveal.textContent.trim());
+  const detail=row.querySelector(':scope>.inline-rel-detail');
+  if(detail){
+    const clone=detail.cloneNode(true);
+    clone.querySelectorAll('.inline-rel-tile-copy,[hidden]').forEach(node=>node.remove());
+    const body=clone.innerText.replace(/\n{3,}/g,'\n\n').trim();
+    if(body)lines.push(body);
+  }
+  return lines.join('\n');
+}
+function bindInlineTileCopy(row,detail,rel){
+  let button=detail.querySelector(':scope>.inline-rel-tile-copy');
+  if(!button){
+    button=document.createElement('button');
+    button.type='button';
+    button.className='inline-rel-tile-copy';
+    button.textContent='Copy';
+    button.setAttribute('aria-label','Copy this expanded relationship');
+    detail.prepend(button);
+  }
+  if(button.dataset.bound)return;
+  button.dataset.bound='true';
+  button.addEventListener('click',async event=>{
+    event.preventDefault();event.stopPropagation();event.stopImmediatePropagation();
+    const text=serializeExpandedRelationship(row,rel);if(!text)return;
+    if(!await writeInlineClipboard(text))return;
+    button.textContent='Copied';
+    clearTimeout(button.__copyTimer);
+    button.__copyTimer=setTimeout(()=>{if(button.isConnected)button.textContent='Copy'},1100);
+  });
+}
 function close(row){clearReveal(row);const detail=row?.querySelector(':scope>.inline-rel-detail');if(detail)detail.hidden=true;row?.classList.remove('is-inline-expanded');row?.setAttribute('aria-expanded','false')}
 function alignExpandedRow(row){requestAnimationFrame(()=>requestAnimationFrame(()=>{if(!row?.isConnected||!row.classList.contains('is-inline-expanded'))return;const list=row.closest('#skyFoundationRelationshipList');if(!list)return;const style=getComputedStyle(list),scrollable=/(auto|scroll)/.test(style.overflowY)&&list.scrollHeight>list.clientHeight+2,rowRect=row.getBoundingClientRect();if(scrollable){const listRect=list.getBoundingClientRect(),max=Math.max(0,list.scrollHeight-list.clientHeight),target=Math.max(0,Math.min(max,list.scrollTop+rowRect.top-listRect.top-6));list.scrollTop=target}else{window.scrollTo(0,Math.max(0,window.scrollY+rowRect.top-8))}}))}
-function open(row){if(row?.classList.contains('is-inline-expanded')){close(row);openRow=null;return}if(openRow&&openRow!==row)close(openRow);const rel=relation(row);if(!rel)return;openRow=row;row.classList.add('is-inline-expanded');row.setAttribute('aria-expanded','true');decorateTopReveal(row);const signature=`${rel.left.sky}:${rel.left.id}@${rel.left.value.toFixed(7)}|${rel.aspect}|${rel.right.sky}:${rel.right.id}@${rel.right.value.toFixed(7)}`;let detail=row.querySelector(':scope>.inline-rel-detail');if(detail&&detail.dataset.inlineRelationshipSignature===signature){detail.hidden=false;document.getElementById('skySelectedRelationship')?.setAttribute('hidden','');alignExpandedRow(row);return}detail?.remove();detail=document.createElement('div');detail.className='inline-rel-detail';detail.dataset.inlineRelationshipSignature=signature;const ca=card(rel.left),cb=card(rel.right);warmCardArt(ca.image);warmCardArt(cb.image);detail.innerHTML=`<div class="inline-rel-top-reveal" role="status" aria-live="polite" hidden></div><div class="inline-rel-visual">${cardMarkup(rel.left.sky,ca)}${wheelMarkup(rel)}${cardMarkup(rel.right.sky,cb)}</div>${contextMarkup(rel)}`;row.appendChild(detail);document.getElementById('skySelectedRelationship')?.setAttribute('hidden','');alignExpandedRow(row)}
+function open(row){if(row?.classList.contains('is-inline-expanded')){close(row);openRow=null;return}if(openRow&&openRow!==row)close(openRow);const rel=relation(row);if(!rel)return;openRow=row;row.classList.add('is-inline-expanded');row.setAttribute('aria-expanded','true');decorateTopReveal(row);const signature=`${rel.left.sky}:${rel.left.id}@${rel.left.value.toFixed(7)}|${rel.aspect}|${rel.right.sky}:${rel.right.id}@${rel.right.value.toFixed(7)}`;let detail=row.querySelector(':scope>.inline-rel-detail');if(detail&&detail.dataset.inlineRelationshipSignature===signature){detail.hidden=false;bindInlineTileCopy(row,detail,rel);document.getElementById('skySelectedRelationship')?.setAttribute('hidden','');alignExpandedRow(row);return}detail?.remove();detail=document.createElement('div');detail.className='inline-rel-detail';detail.dataset.inlineRelationshipSignature=signature;const ca=card(rel.left),cb=card(rel.right);warmCardArt(ca.image);warmCardArt(cb.image);detail.innerHTML=`<div class="inline-rel-top-reveal" role="status" aria-live="polite" hidden></div><div class="inline-rel-visual">${cardMarkup(rel.left.sky,ca)}${wheelMarkup(rel)}${cardMarkup(rel.right.sky,cb)}</div>${contextMarkup(rel)}`;row.appendChild(detail);bindInlineTileCopy(row,detail,rel);document.getElementById('skySelectedRelationship')?.setAttribute('hidden','');alignExpandedRow(row)}
 function rowFromTarget(target){return target?.closest?.('.sky-foundation-relationship-row[data-relation-index]')||null}
 function touchPointer(event){return event.pointerType==='touch'||event.pointerType==='pen'}
 function onPointerDown(event){if(!touchPointer(event))return;const row=rowFromTarget(event.target);if(!row)return;touchGesture={id:event.pointerId,row,x:event.clientX,y:event.clientY,moved:false}}
