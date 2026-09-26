@@ -740,7 +740,7 @@
   }
 
   function templateCountLabel(item) {
-    return item?.id===RECURSION_ID ? '28 positions · 22 cards' : String(item?.cardCount || 0);
+    return item?.id===RECURSION_ID ? '22 cards' : String(item?.cardCount || 0);
   }
   function optionTemplateMarkup(draft) {
     const entries = allTemplates();
@@ -995,7 +995,7 @@
     const selected=templateById(draft.templateId||draft.basedOnTemplateId);
     const positions=selected?.positions?.slice?.().sort((a,b)=>a.drawOrder-b.drawOrder) || [];
     const preview=selected?.id===RECURSION_ID
-      ? '<div class="relphi-recursion-template-note"><strong>Seven recursive levels · 28 positions · 22 cards</strong><span>Mem, Aleph, and Shin repeat at each depth. Earth is the portal between the first six levels; the seventh Earth receives the twenty-second card.</span></div>'
+      ? '<div class="relphi-recursion-template-note"><strong>Seven recursive levels · 22 cards</strong><span>Mem, Aleph, and Shin repeat at each depth. Earth is the portal between the first six levels; the seventh Earth receives the twenty-second card.</span></div>'
       : positions.length
         ? '<ol class="relphi-template-preview">'+positions.map(item=>'<li>'+escapeHtml(item.label)+'</li>').join('')+'</ol>'
         : '<p class="relphi-referent-empty">Choose a template to preview its referents.</p>';
