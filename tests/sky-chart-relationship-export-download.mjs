@@ -42,16 +42,25 @@ assert.equal(await button.getAttribute('data-relationship-export-owner'),'column
 await page.evaluate(()=>window.RelphiHarmonicOrb?.setWindow?.(window.RelphiHarmonicOrb.maxWindow));
 await page.locator('[data-relationship-sort]').selectOption('most-challenging');
 await page.waitForTimeout(250);
+const preset=page.locator('[data-relationship-limit-preset]');
 const limit=page.locator('[data-relationship-limit]');
+await preset.waitFor({state:'visible'});
+assert.equal(await preset.evaluate(node=>node.closest('.sky-relationship-heading-actions')?.classList.contains('sky-relationship-heading-actions')||false),true,'Max must sit in the Relationships header action cluster beside Copy and Download.');
+assert.equal(await preset.evaluate(node=>Boolean(node.closest('.sky-chart-filter-bar'))),false,'Max must not remain in the filter grid.');
+assert.deepEqual(await preset.locator('option').allTextContents(),['All','5','10','20','50','Custom…'],'Max must expose common presets plus a Custom choice.');
+await preset.selectOption('custom');
 await limit.waitFor({state:'visible'});
-assert.equal(await limit.evaluate(node=>node.closest('.sky-relationship-heading-actions')?.classList.contains('sky-relationship-heading-actions')||false),true,'Limit must sit in the Relationships header action cluster beside Copy and Download.');
-assert.equal(await limit.evaluate(node=>Boolean(node.closest('.sky-chart-filter-bar'))),false,'Limit must not remain in the filter grid.');
-assert.deepEqual(await limit.locator('option').allTextContents(),positive integer Max field,'Relationships must expose an editable positive integer result maximum.');
+assert.equal(await limit.getAttribute('type'),'number','Custom Max must use a cardinal-number field.');
+assert.equal(await limit.getAttribute('min'),'1','Custom Max must accept positive cardinal numbers.');
+await limit.fill('7');
+await limit.press('Enter');
+await page.waitForFunction(()=>document.documentElement.dataset.skyRelationshipLimit==='7');
+assert.equal(await preset.inputValue(),'custom','A non-preset cardinal number must remain represented as Custom.');
+await preset.selectOption('20');
 const eligibleOrder=await page.evaluate(()=>[...document.querySelectorAll('#skyFoundationRelationshipList>.sky-foundation-relationship-row[data-relation-index]')]
   .filter(row=>{const style=getComputedStyle(row);return !row.hidden&&style.display!=='none'&&style.visibility!=='hidden'})
   .map(row=>row.dataset.relationIndex));
 assert.ok(eligibleOrder.length>20,`Fixture must expose more than 20 eligible relationships to test a real cap: ${eligibleOrder.length}`);
-await limit.selectOption('20');
 await page.waitForFunction(()=>document.documentElement.dataset.skyRelationshipLimit==='20');
 await page.waitForFunction(()=>[...document.querySelectorAll('#skyFoundationRelationshipList>.sky-foundation-relationship-row')].filter(row=>{const style=getComputedStyle(row);return !row.hidden&&style.display!=='none'&&style.visibility!=='hidden'}).length===20);
 const cappedOrder=await page.evaluate(()=>[...document.querySelectorAll('#skyFoundationRelationshipList>.sky-foundation-relationship-row[data-relation-index]')]
