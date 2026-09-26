@@ -74,6 +74,13 @@ assert.equal(await page.locator('#skyFoundationFocus > .sky-foundation-focus-hea
 assert.equal(await page.locator('#skyFoundationRelationships > .sky-foundation-relationships-heading [data-relationship-sort]').count(),1,'Sort must share the Relationships heading line.');
 assert.equal(await page.locator('#skyFoundationRelationships > .sky-foundation-relationships-heading [data-relationship-limit-preset]').count(),1,'The visible Max preset control must share the Relationships heading line.');
 assert.equal(await page.locator('#skyFoundationRelationships > .sky-foundation-relationships-heading [data-relationship-limit]').count(),1,'The Custom cardinal-number field must stay owned by the same Max control.');
+const desktopSortMaxGap=await page.locator('#skyFoundationRelationships > .sky-foundation-relationships-heading').evaluate(heading=>{
+  const sort=heading.querySelector('.sky-relationship-sort-control'),max=heading.querySelector('.sky-relationship-limit-control');
+  if(!sort||!max)return -1;
+  const sr=sort.getBoundingClientRect(),mr=max.getBoundingClientRect();
+  return mr.left-sr.right;
+});
+assert.ok(desktopSortMaxGap>=8,`Sort and Max must retain a visible desktop gap; got ${desktopSortMaxGap}px.`);
 
 await page.waitForFunction(()=>{
   const count=document.getElementById('skyFoundationRelationshipCount');
