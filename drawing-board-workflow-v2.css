@@ -610,3 +610,16 @@ body.relphi-attune-open{overflow:hidden!important}
   #shortListPanel .relphi-keyword-builder{grid-template-columns:1fr!important}
   #shortListPanel .relphi-keyword-match-mode{padding-left:0!important}
 }
+
+
+#shortListPanel .relphi-astrology-surface{display:grid!important;gap:.7rem!important}
+#shortListPanel .relphi-astrology-sky-mode{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:.45rem!important}
+#shortListPanel .relphi-astrology-sky-mode>label{display:flex!important;align-items:flex-start!important;gap:.5rem!important;margin:0!important;padding:.6rem!important;border:1px solid #d0c7bf!important;border-radius:9px!important;background:#fff!important;font:inherit!important}
+#shortListPanel .relphi-astrology-sky-mode span{display:grid!important;gap:.12rem!important}
+#shortListPanel .relphi-astrology-sky-mode strong{font-size:.76rem!important}
+#shortListPanel .relphi-astrology-sky-mode small,#shortListPanel .relphi-astrology-note{font-size:.7rem!important;line-height:1.35!important;color:#6b625b!important}
+#shortListPanel .relphi-astrology-bridge-status{display:grid!important;grid-template-columns:minmax(0,1fr) auto!important;gap:.25rem .55rem!important;align-items:center!important;padding:.65rem!important;border:1px solid #d0c7bf!important;border-radius:9px!important;background:var(--relphi-board-paper)!important}
+#shortListPanel .relphi-astrology-bridge-status>strong,#shortListPanel .relphi-astrology-bridge-status>span{grid-column:1!important}
+#shortListPanel .relphi-astrology-bridge-status>button{grid-column:2!important;grid-row:1/3!important;min-height:2.15rem!important;padding:.38rem .65rem!important;border:1.5px solid var(--relphi-board-ink)!important;border-radius:8px!important;background:#fff!important;color:var(--relphi-board-ink)!important;font:inherit!important;font-size:.72rem!important;font-weight:900!important}
+#shortListPanel .relphi-astrology-note{margin:0!important}
+@media(max-width:700px){#shortListPanel .relphi-astrology-sky-mode{grid-template-columns:1fr!important}#shortListPanel .relphi-astrology-bridge-status{grid-template-columns:1fr!important}#shortListPanel .relphi-astrology-bridge-status>button{grid-column:1!important;grid-row:auto!important;justify-self:start!important}}
