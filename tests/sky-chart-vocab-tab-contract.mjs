@@ -36,7 +36,7 @@ assert.match(html,/sky-chart-vocab-tab-v1\.js\?v=85/,'Sky Chart must load the Vo
 assert.match(html,/sky-chart-placement-multiselect-v4\.js\?v=7/,'Sky Chart must load the shared Relationships Placements controller');
 assert.match(html,/sky-chart-harmonic-orb-v1\.js\?v=8/,'Sky Chart must load the shared Harmonic Window model fix');
 assert.match(html,/sky-chart-orb-control-v1\.js\?v=20/,'Relationships must load the Harmonic Window controller with stable match-count semantics');
-assert.match(html,/sky-chart-relationship-limit-v1\.js\?v=11/,'Relationships must load the hybrid preset/custom Max owner after sorting');
+assert.match(html,/sky-chart-relationship-limit-v1\.js\?v=12/,'Relationships must load the Max-default hybrid preset/custom owner after sorting');
 assert.match(html,/sky-chart-relationship-scope-sections-v1\.js\?v=11/,'Relationships Copy must load the result-limit-aware scope serializer');
 assert.match(html,/sky-chart-relationship-export-columns-v1\.js\?v=14/,'Relationships export must load the header-Limit-aware exporter');
 assert.match(html,/sky-chart-foundation-interactions-v1\.css\?v=6/,'Relationships must load the progressive-proof match-count styling');
@@ -176,6 +176,8 @@ assert.match(foundationCss,/#skyFoundationRelationshipCount\[data-count-label="m
 assert.match(foundationCss,/#skyFoundationRelationshipCount\[data-count-label="matches"\]::after\s*\{[\s\S]*content:"matches"/,'The relationship count must visibly append matches');
 assert.match(foundationCss,/\.sky-foundation-harmonic-show-more\s*\{/,'The Harmonic continuation item must be styled as a full-width list item');
 assert.match(relationshipLimit,/const PRESETS=Object\.freeze\(\[5,10,20,50\]\)/,'Result Limit must expose the common Max presets 5, 10, 20, and 50');
+assert.match(relationshipLimit,/\[\['all','Max'\],\.\.\.PRESETS/,'Max must be the visible default option for the uncapped state');
+assert.doesNotMatch(relationshipLimit,/sky-relationship-limit-label|label\.textContent='Max'/,'Max must not be rendered as a separate heading label');
 assert.match(relationshipLimit,/\['custom','Custom…'\]/,'Result Limit must expose Custom as a preset-list choice');
 assert.match(relationshipLimit,/input\.type='number'[\s\S]*input\.min='1'/,'Custom Max must accept positive cardinal numbers');
 assert.match(relationshipLimit,/function ensureHeadingActions\(\)/,'Result Limit must live in the Relationships heading action cluster rather than the filter grid');
