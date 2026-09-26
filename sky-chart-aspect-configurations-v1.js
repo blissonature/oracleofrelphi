@@ -177,13 +177,20 @@ function resultTile(pattern,index){
   tile.addEventListener('pointerenter',()=>highlightPattern(pattern));tile.addEventListener('focusin',()=>highlightPattern(pattern));tile.addEventListener('pointerleave',()=>{if(!tile.classList.contains('is-expanded'))clearPatternHighlight()});tile.addEventListener('focusout',event=>{if(!tile.contains(event.relatedTarget)&&!tile.classList.contains('is-expanded'))clearPatternHighlight()});
   tile.appendChild(button);return tile;
 }
+function configurationFocusActive(){
+  return activeScopes().some(scope=>configurationState[scope]?.size>0);
+}
+function patternsForResults(){
+  return configurationFocusActive()?selectedPatternsForVisibility():patterns;
+}
 function renderResultsPanel(){
   const panel=ensureResultsPanel();if(!panel)return;
-  if(!patterns.length){panel.hidden=true;clearPatternHighlight();openConfigurationTile=null;return}
+  const visiblePatterns=patternsForResults();
+  if(!visiblePatterns.length){panel.hidden=true;clearPatternHighlight();openConfigurationTile=null;return}
   panel.hidden=false;
   const count=panel.querySelector('.sky-configuration-results-count'),grid=panel.querySelector('.sky-configuration-results-grid');
-  if(grid){grid.replaceChildren();patterns.forEach((pattern,index)=>grid.appendChild(resultTile(pattern,index)));openConfigurationTile=null}
-  const currentCount=grid?.querySelectorAll(':scope>.sky-configuration-result-tile').length??patterns.length;
+  if(grid){grid.replaceChildren();visiblePatterns.forEach((pattern,index)=>grid.appendChild(resultTile(pattern,index)));openConfigurationTile=null}
+  const currentCount=grid?.querySelectorAll(':scope>.sky-configuration-result-tile').length??visiblePatterns.length;
   if(count)count.textContent=currentCount+' match'+(currentCount===1?'':'es');
 }
 const CONFIG_STORAGE_KEY='relphiSkyConfigurationMatrixV1';
