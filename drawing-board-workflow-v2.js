@@ -1243,17 +1243,21 @@
     snap.rowDrawDeckSignature='';
     bridge.restore(snap);
   }
-  function showBoardToast(message,{title='Reading ready',duration=7600}={}) {
+  function showBoardToast(message,{title='Reading ready',duration=7600,actionLabel='',onAction=null}={}) {
     const root=panel();
     if (!root || !message) return;
     root.querySelector('.relphi-board-toast')?.remove();
     const toast=document.createElement('aside');
     toast.className='relphi-board-toast';
     toast.setAttribute('role','status');
-    toast.innerHTML='<button type="button" class="relphi-board-toast-close" aria-label="Dismiss">×</button><span class="eyebrow">'+escapeHtml(title)+'</span><p>'+escapeHtml(message)+'</p>';
+    toast.innerHTML='<button type="button" class="relphi-board-toast-close" aria-label="Dismiss">×</button><span class="eyebrow">'+escapeHtml(title)+'</span><p>'+escapeHtml(message)+'</p>'+(actionLabel?'<button type="button" class="relphi-board-toast-action">'+escapeHtml(actionLabel)+'</button>':'');
     root.appendChild(toast);
     const remove=()=>toast.remove();
     toast.querySelector('.relphi-board-toast-close')?.addEventListener('click',remove);
+    toast.querySelector('.relphi-board-toast-action')?.addEventListener('click',()=>{
+      remove();
+      if (typeof onAction==='function') onAction();
+    });
     if (duration>0) setTimeout(()=>{ if (toast.isConnected) remove(); },duration);
   }
   function surfaceGuidance() {
@@ -1384,9 +1388,15 @@
       enhance(panel());
       zoomExtents();
       if (surfaceReadingSession) {
-        showBoardToast(surfaceGuidance(),{title:'See What Surfaces'});
-        const next=nextUndrawnNativeIndex(panel());
-        if (next!=null) setTimeout(()=>openAttune(next),0);
+        showBoardToast(surfaceGuidance(),{
+          title:'See What Surfaces',
+          duration:0,
+          actionLabel:'Begin reading',
+          onAction:()=>{
+            const next=nextUndrawnNativeIndex(panel());
+            if (next!=null) openAttune(next);
+          }
+        });
       } else {
         showBoardToast('Your referents and draw settings are established. The Drawing Board is ready.',{title:'Reading ready',duration:4600});
       }
