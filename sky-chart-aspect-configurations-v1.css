@@ -809,3 +809,31 @@ html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]) .sky-chart-con
 .sky-configuration-result-instance>.sky-configuration-participant>b{
   display:none!important;
 }
+
+
+/* Match the current Relationships canonical glyph geometry exactly: 38px host / 38px SVG. */
+.sky-configuration-result-instance>.sky-configuration-participant{
+  width:38px;
+  height:38px;
+  min-width:38px;
+  min-height:38px;
+}
+.sky-configuration-participant-glyph{
+  width:38px;
+  height:38px;
+  min-width:38px;
+  min-height:38px;
+  max-width:38px;
+  max-height:38px;
+}
+.sky-configuration-participant-glyph>svg[data-relationship-canonical-host]{
+  display:block;
+  width:38px!important;
+  height:38px!important;
+  min-width:38px;
+  min-height:38px;
+  max-width:38px;
+  max-height:38px;
+  overflow:visible;
+  transform:none!important;
+}
