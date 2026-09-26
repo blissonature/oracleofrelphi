@@ -47,7 +47,6 @@ function installStyles(){
   style.textContent=`
 .sky-chart-result-limit-hidden{display:none!important}
 #skyFoundationRelationships .sky-relationship-limit-control{display:inline-flex;align-items:center;gap:5px;min-width:0;white-space:nowrap}
-#skyFoundationRelationships .sky-relationship-limit-label{color:#5f5750;font:800 .62rem/1 system-ui,sans-serif}
 #skyFoundationRelationships .sky-relationship-limit-control>select,
 #skyFoundationRelationships .sky-relationship-limit-control>input{
   height:29px;box-sizing:border-box;margin:0;border:1px solid rgba(31,27,24,.18);border-radius:9px;background:#fff;color:#332e2a;
@@ -97,13 +96,10 @@ function ensureControl(){
   if(!control){
     control=document.createElement('label');
     control.className='sky-relationship-limit-control';
-    const label=document.createElement('span');
-    label.className='sky-relationship-limit-label';
-    label.textContent='Max';
     const select=document.createElement('select');
     select.dataset.relationshipLimitPreset='true';
     select.setAttribute('aria-label','Maximum shown relationships');
-    [['all','All'],...PRESETS.map(value=>[String(value),String(value)]),['custom','Custom…']].forEach(([value,text])=>{
+    [['all','Max'],...PRESETS.map(value=>[String(value),String(value)]),['custom','Custom…']].forEach(([value,text])=>{
       const option=document.createElement('option');option.value=value;option.textContent=text;select.appendChild(option);
     });
     const input=document.createElement('input');
@@ -137,7 +133,7 @@ function ensureControl(){
       if(event.key==='Enter'){event.preventDefault();commit();input.blur()}
       if(event.key==='Escape'){event.preventDefault();syncControl();input.blur()}
     });
-    control.append(label,select,input);
+    control.append(select,input);
   }
   const count=document.getElementById('skyFoundationRelationshipCount');
   const pill=actions.querySelector('.sky-relationship-copy-button,#skyChartRelationshipsExport');
