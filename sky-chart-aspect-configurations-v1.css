@@ -885,3 +885,36 @@ html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]) .sky-chart-con
   font-variant-numeric:tabular-nums;
   white-space:nowrap;
 }
+
+
+/* Canonical glyphs in selectable Configuration match rows. */
+.sky-configuration-match-placements{
+  display:flex;
+  align-items:center;
+  gap:4px;
+  min-width:0;
+  overflow:visible;
+}
+.sky-configuration-match-glyph{
+  display:grid;
+  place-items:center;
+  width:38px;
+  height:38px;
+  min-width:38px;
+  min-height:38px;
+  overflow:visible;
+}
+.sky-configuration-match-glyph>svg[data-relationship-canonical-host]{
+  display:block;
+  width:38px!important;
+  height:38px!important;
+  min-width:38px;
+  min-height:38px;
+  max-width:38px;
+  max-height:38px;
+  overflow:visible;
+  transform:none!important;
+}
+.sky-configuration-match-row.is-selected{
+  box-shadow:inset 0 0 0 1px rgba(31,27,24,.20);
+}
