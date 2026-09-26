@@ -753,148 +753,16 @@ html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]) .sky-chart-con
 }
 
 
-/* Participant identity appears once, at Relationships-scale glyph size. */
-.sky-configuration-result-instance{
-  align-items:center;
-  gap:7px;
-}
-.sky-configuration-result-instance>span{
-  min-height:29px;
-  gap:6px;
-  padding:3px 8px 3px 4px;
-  font:900 1.05rem/1 system-ui,sans-serif;
-}
-.sky-configuration-result-instance>span>b{
-  flex:0 0 21px;
-  min-width:21px;
-  width:21px;
-  height:21px;
-  font:900 .58rem/1 system-ui,sans-serif;
-}
 
 
-/* Canonical configuration participants: color identifies sky; no repeated A/B badges. */
-.sky-configuration-result-instance{
-  display:flex;
-  flex-wrap:wrap;
-  align-items:center;
-  gap:8px;
-}
-.sky-configuration-result-instance>.sky-configuration-participant{
-  display:grid;
-  place-items:center;
-  width:31px;
-  height:31px;
-  min-height:31px;
-  padding:0;
-  border:0;
-  border-radius:0;
-  background:transparent;
-  color:inherit;
-}
-.sky-configuration-participant-glyph{
-  display:grid;
-  place-items:center;
-  width:25px;
-  height:25px;
-  font:800 .68rem/1 system-ui,sans-serif;
-  white-space:nowrap;
-}
-.sky-configuration-participant-glyph>svg{
-  display:block;
-  width:25px;
-  height:25px;
-  overflow:visible;
-}
-.sky-configuration-result-instance>.sky-configuration-participant>b{
-  display:none!important;
-}
-
-
-/* Match the current Relationships canonical glyph geometry exactly: 38px host / 38px SVG. */
-.sky-configuration-result-instance>.sky-configuration-participant{
-  width:38px;
-  height:38px;
-  min-width:38px;
-  min-height:38px;
-}
-.sky-configuration-participant-glyph{
-  width:38px;
-  height:38px;
-  min-width:38px;
-  min-height:38px;
-  max-width:38px;
-  max-height:38px;
-}
-.sky-configuration-participant-glyph>svg[data-relationship-canonical-host]{
-  display:block;
-  width:38px!important;
-  height:38px!important;
-  min-width:38px;
-  min-height:38px;
-  max-width:38px;
-  max-height:38px;
-  overflow:visible;
-  transform:none!important;
-}
-
-
-/* Configuration vertices are identified by their canonical placement glyphs. */
-.sky-configuration-mini-point circle{
-  stroke-width:1.4;
-}
-.sky-configuration-mini-vertex-glyph{
-  pointer-events:none;
-}
-.sky-configuration-mini-vertex-glyph>svg{
-  overflow:visible;
-}
-.sky-configuration-mini-word-fallback{
-  fill:#332e2a;
-  font:800 4.5px/1 system-ui,sans-serif;
-}
-.sky-configuration-result-detail{
-  grid-template-areas:"visual explanation"!important;
-}
-@media(max-width:420px){
-  .sky-configuration-result-detail{
-    grid-template-areas:"visual" "explanation"!important;
-  }
-}
-
-
-/* Canonical circled masters own configuration vertices; do not synthesize or restyle the frame. */
-.sky-configuration-mini-point>circle{display:none!important}
-.sky-configuration-mini-vertex-glyph{
-  pointer-events:none;
-}
-.sky-configuration-mini-vertex-glyph>.relphi-canonical-master-frame{
-  transform-box:fill-box;
-  transform-origin:center;
-}
-.sky-configuration-mini-vertex-glyph .relphi-glyph-bubble{
-  overflow:visible;
-}
-
-
-/* Configuration geometry scales with the wheel; canonical vertex glyphs do not. */
-.sky-configuration-mini-wheel{
-  position:relative;
-}
-.sky-configuration-mini-wheel>svg{
-  position:relative;
-  z-index:1;
-}
-.sky-configuration-vertex-layer{
-  position:absolute;
-  inset:0;
-  z-index:2;
-  pointer-events:none;
-}
+/* Configuration diagrams: preserve the compact thumbnail; expanded vertices use canonical inscribed masters only. */
+.sky-configuration-mini-wheel{position:relative}
+.sky-configuration-mini-wheel>svg{position:relative;z-index:1}
+.sky-configuration-vertex-layer{position:absolute;inset:0;z-index:2;pointer-events:none}
 .sky-configuration-vertex-host{
   position:absolute;
-  width:38px;
-  height:38px;
+  width:26px;
+  height:26px;
   transform:translate(-50%,-50%);
   display:grid;
   place-items:center;
@@ -902,15 +770,18 @@ html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]) .sky-chart-con
 }
 .sky-configuration-vertex-host>.sky-configuration-canonical-vertex{
   display:block;
-  width:38px!important;
-  height:38px!important;
-  min-width:38px;
-  min-height:38px;
-  max-width:38px;
-  max-height:38px;
+  width:26px!important;
+  height:26px!important;
+  min-width:26px;
+  min-height:26px;
+  max-width:26px;
+  max-height:26px;
   overflow:visible;
 }
-.sky-configuration-mini-point,
-.sky-configuration-mini-vertex-glyph{
-  display:none!important;
+.sky-configuration-mini-wheel.is-compact .sky-configuration-mini-point{display:block}
+.sky-configuration-mini-wheel.is-compact .sky-configuration-mini-point circle{stroke-width:1}
+.sky-configuration-mini-wheel.is-compact .sky-configuration-mini-point text{
+  fill:#fff;
+  font:900 5.4px/1 system-ui,sans-serif;
+  pointer-events:none;
 }
