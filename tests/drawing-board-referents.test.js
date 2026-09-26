@@ -98,10 +98,31 @@ const base='http://127.0.0.1:8000/tarot.html';
     assert.equal(await page.locator('.relphi-board-toast-action').textContent(),'Begin reading');
     await page.click('.relphi-board-toast-close');
     await page.waitForSelector('.relphi-board-toast',{state:'detached'});
-    await page.click('#shortListPanel .card-row-board>.card-row-item[data-row-index="0"]');
+    const attuneScrollY=await page.evaluate(()=>{
+      document.body.style.minHeight='2600px';
+      window.scrollTo(0,640);
+      return window.scrollY;
+    });
+    await page.evaluate(()=>document.querySelector('#shortListPanel .card-row-board>.card-row-item[data-row-index="0"]')?.click());
     await page.waitForSelector('.relphi-attune-reader',{state:'visible'});
     assert.equal(await page.locator('#shortListPanel .card-row-board [data-row-card]').count(),0,'Clicking an empty Surface position must enter Attune without drawing a card');
     assert.equal(await page.locator('.relphi-attune-shell h2').textContent(),'What is happening at the root of this?');
+    const attuneViewport=await page.evaluate(()=>({
+      bodyPosition:document.body.style.position,
+      bodyTop:document.body.style.top,
+      overlayTop:document.querySelector('.relphi-attune-reader')?.getBoundingClientRect().top,
+      overlayBottom:document.querySelector('.relphi-attune-reader')?.getBoundingClientRect().bottom,
+      viewportHeight:window.innerHeight
+    }));
+    assert.equal(attuneViewport.bodyPosition,'fixed','Attune should freeze the document at its current scroll position');
+    assert.equal(attuneViewport.bodyTop,(-attuneScrollY)+'px','Attune should preserve the page offset instead of snapping to the top');
+    assert.equal(Math.round(attuneViewport.overlayTop),0,'Attune should begin at the current viewport top');
+    assert.equal(Math.round(attuneViewport.overlayBottom),Math.round(attuneViewport.viewportHeight),'Attune should cover the current viewport');
+    await page.click('.relphi-attune-close');
+    await page.waitForSelector('.relphi-attune-reader',{state:'detached'});
+    assert.ok(Math.abs((await page.evaluate(()=>window.scrollY))-attuneScrollY)<=1,'Closing Attune should restore the exact page scroll position');
+    await page.evaluate(()=>document.querySelector('#shortListPanel .card-row-board>.card-row-item[data-row-index="0"]')?.click());
+    await page.waitForSelector('.relphi-attune-reader',{state:'visible'});
 
     const configured=await page.evaluate(()=>window.RelphiDrawingBoardOptionsBridge.capture());
     assert.deepEqual(configured.shortListPositionLabels.slice(0,2),['What is happening at the root of this?','How is the situation being carried?']);
