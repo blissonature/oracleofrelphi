@@ -102,14 +102,19 @@ const base='http://127.0.0.1:8000/tarot.html';
     await page.waitForSelector('.relphi-attune-reader',{state:'visible'});
     assert.equal(await page.locator('.relphi-attune-shell h2').textContent(),'How is it being carried?');
     await page.click('[data-attune-search]');
-    await page.fill('.relphi-attune-search input','Magician');
+    await page.fill('.relphi-attune-search input','Queen');
     await page.waitForFunction(()=>document.querySelectorAll('.relphi-attune-search-results [data-attune-card]').length>0);
-    const magician=page.locator('.relphi-attune-search-results [data-attune-card]',{hasText:'Magician'}).first();
-    assert.ok(await magician.count(),'Physical-card search should find The Magician in the Tarot Ledger');
-    await magician.click();
+    const physicalChoice=page.locator('.relphi-attune-search-results [data-attune-card]').first();
+    await physicalChoice.click();
 
     await page.waitForSelector('.relphi-focus-reader',{state:'visible'});
     assert.equal(await page.locator('.relphi-focus-position').textContent(),'How is it being carried?');
+    const physicalType=await page.evaluate(()=>{
+      const cards=[...document.querySelectorAll('#shortListPanel .card-row-board [data-row-card]')];
+      const id=cards[1]?.dataset?.rowCard;
+      return window.RELPHI_TAROT_CARDS?.find(card=>card.card_id===id)?.card_type||'';
+    });
+    assert.equal(physicalType,'Court','Physical-card search should stay within the referent\'s assigned pack');
     await page.waitForFunction(()=>{
       const state=window.RelphiDrawingBoardOptionsBridge?.capture?.();
       return (state?.shortListPositionLabels?.length||0)>2;
