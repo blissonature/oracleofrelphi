@@ -395,7 +395,39 @@
 .relphi-attune-search-results img{width:2.35rem!important;height:3.2rem!important;object-fit:cover!important;border-radius:3px!important}
 body.relphi-attune-open{overflow:hidden!important}
 
+.relphi-surface-followup-review{position:fixed!important;inset:0!important;z-index:2147482600!important;display:grid!important;place-items:center!important;padding:clamp(.8rem,3vw,1.5rem)!important;background:rgba(31,25,21,.58)!important;backdrop-filter:blur(5px)!important}
+.relphi-followup-shell{position:relative!important;display:grid!important;gap:.85rem!important;width:min(46rem,100%)!important;max-height:min(46rem,calc(100dvh - 1.6rem))!important;overflow:auto!important;box-sizing:border-box!important;padding:clamp(1.1rem,3vw,1.6rem)!important;border:1px solid #d9cec5!important;border-radius:16px!important;background:#fffdf8!important;box-shadow:0 26px 70px rgba(27,21,17,.28)!important;color:#211c18!important}
+.relphi-followup-shell>.eyebrow{display:block!important;margin:0!important;color:#a61712!important;font-size:.68rem!important;font-weight:950!important;letter-spacing:.11em!important;text-transform:uppercase!important}
+.relphi-followup-shell h2{margin:0!important;font-family:Georgia,"Times New Roman",serif!important;font-size:clamp(1.45rem,4vw,2.15rem)!important;font-weight:650!important;line-height:1.18!important}
+.relphi-followup-intro{margin:-.2rem 0 .15rem!important;color:#5e554e!important;font-size:.78rem!important;line-height:1.45!important}
+.relphi-followup-close{position:absolute!important;right:.65rem!important;top:.55rem!important;width:2rem!important;height:2rem!important;padding:0!important;border:0!important;background:transparent!important;color:#5a514a!important;font-size:1.5rem!important;line-height:1!important}
+.relphi-followup-generated,[data-followup-custom-list]{display:grid!important;gap:.45rem!important}
+.relphi-followup-question-row{display:grid!important;grid-template-columns:1.1rem minmax(0,1fr) minmax(8.5rem,10.5rem)!important;gap:.55rem!important;align-items:center!important;margin:0!important;padding:.55rem!important;border:1px solid #ddd4cb!important;border-radius:9px!important;background:#fff!important}
+.relphi-followup-question-row:has(>input[type="checkbox"]:checked){border-color:rgba(184,23,18,.48)!important;background:#fff8f7!important;box-shadow:inset 3px 0 0 #b81712!important}
+.relphi-followup-question-row>input[type="checkbox"]{width:1rem!important;height:1rem!important;margin:0!important;accent-color:#b81712!important}
+.relphi-followup-question-copy{display:grid!important;gap:.22rem!important;min-width:0!important}
+.relphi-followup-question-copy small{color:#6b625b!important;font-size:.62rem!important;font-weight:800!important;line-height:1.25!important}
+.relphi-followup-question-copy input,.relphi-followup-question-row select{width:100%!important;min-width:0!important;box-sizing:border-box!important;min-height:2.2rem!important;margin:0!important;padding:.42rem .5rem!important;border:1px solid #bfb5ac!important;border-radius:7px!important;background:#fff!important;color:#111!important;font:inherit!important;font-size:.74rem!important}
+.relphi-followup-custom{display:grid!important;gap:.45rem!important;padding-top:.15rem!important;border-top:1px solid #e5ddd4!important}
+.relphi-followup-custom-head{display:flex!important;align-items:center!important;justify-content:space-between!important;gap:.7rem!important}
+.relphi-followup-custom-head strong{font-size:.78rem!important}
+.relphi-followup-custom-head button{display:grid!important;place-items:center!important;width:2.15rem!important;height:2.15rem!important;padding:0!important;border:1px solid #a61712!important;border-radius:999px!important;background:#fff!important;color:#a61712!important;font:900 1.15rem/1 system-ui,sans-serif!important}
+.relphi-followup-draw-settings{display:flex!important;align-items:center!important;gap:.8rem!important;flex-wrap:wrap!important;margin:0!important;padding:.6rem .7rem!important;border:1px solid #ddd4cb!important;border-radius:9px!important;background:#fbf8f4!important}
+.relphi-followup-draw-settings legend{padding:0 .25rem!important;font-size:.7rem!important;font-weight:900!important}
+.relphi-followup-draw-settings label{display:inline-flex!important;align-items:center!important;gap:.35rem!important;margin:0!important;font-size:.72rem!important;font-weight:800!important}
+.relphi-followup-actions{display:flex!important;justify-content:flex-end!important;gap:.5rem!important;flex-wrap:wrap!important}
+.relphi-followup-actions button{min-height:2.45rem!important;margin:0!important;padding:.5rem .75rem!important;border:1px solid #bfb5ac!important;border-radius:8px!important;background:#fff!important;color:#211c18!important;font:inherit!important;font-size:.72rem!important;font-weight:900!important}
+.relphi-followup-actions button.primary{border-color:#a61712!important;background:#a61712!important;color:#fff!important}
+.relphi-followup-actions button:disabled{opacity:.42!important;cursor:not-allowed!important}
+body.relphi-followup-open{overflow:hidden!important}
+
 @media (max-width:640px){
+  .relphi-surface-followup-review{padding:0!important;place-items:stretch!important}
+  .relphi-followup-shell{width:100vw!important;height:100dvh!important;max-height:100dvh!important;border:0!important;border-radius:0!important;padding:1rem .75rem max(1rem,env(safe-area-inset-bottom))!important}
+  .relphi-followup-question-row{grid-template-columns:1.1rem minmax(0,1fr)!important}
+  .relphi-followup-question-row>select{grid-column:2!important}
+  .relphi-followup-actions{display:grid!important;grid-template-columns:1fr!important}
+  .relphi-followup-actions button{width:100%!important}
   #shortListPanel .relphi-board-toast{position:fixed!important;left:.55rem!important;right:.55rem!important;top:auto!important;bottom:max(.55rem,env(safe-area-inset-bottom))!important;width:auto!important;z-index:2147482400!important}
   .relphi-attune-reader{padding:0!important;place-items:stretch!important}
   .relphi-attune-shell{width:100vw!important;height:100dvh!important;max-height:100dvh!important;border:0!important;border-radius:0!important;padding:1.15rem .8rem max(1rem,env(safe-area-inset-bottom))!important}
