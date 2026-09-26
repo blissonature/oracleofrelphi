@@ -258,7 +258,6 @@
     id:RECURSION_ID,
     name:'Relphi Recursive Reading',
     cardCount:22,
-    positionCount:28,
     virtualPositionCount:6,
     source:'shipped',
     editable:false,
