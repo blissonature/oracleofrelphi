@@ -19880,3 +19880,14 @@ html body :is(
   -webkit-mask: none !important;
   overflow: visible !important;
 }
+
+
+/* Relphi brand-control baseline: native controls inherit the site's Montserrat voice.
+   Component rules remain free to define shape, hierarchy, and state. */
+button,
+input,
+select,
+textarea,
+optgroup{font-family:'Montserrat',sans-serif}
+button{font-weight:700}
+button:not(.logo-btn):not([class*="glyph"]):not([class*="icon"]){letter-spacing:0}
