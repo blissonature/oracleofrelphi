@@ -47,6 +47,28 @@
     })
   });
 
+  const SKY_EXPORT_FACTS = Object.freeze({
+    'configuration:grand-trine': 'A Grand Trine is three trines forming one closed triangle.',
+    'configuration:kite': 'A Kite adds an opposition and two sextiles to a Grand Trine.',
+    'configuration:yod': 'A Yod is a sextile base whose two ends converge on one apex through quincunxes.',
+    'configuration:mystic-rectangle': 'A Mystic Rectangle contains two oppositions joined by two trines and two sextiles.',
+    'configuration:t-square': 'A T-Square is an opposition whose two ends both square a third placement.',
+    'configuration:grand-cross': 'A Grand Cross contains two oppositions joined by four squares.',
+    'configuration:minor-grand-trine': 'A Minor Grand Trine combines one trine with two sextiles to a third placement.',
+    'configuration:grand-sextile': 'A Grand Sextile / Star of David contains six sextiles, six trines, and three oppositions in one six-point figure.',
+    'configuration:cradle': 'A Cradle is an opposition supported by two trines and three sextiles.',
+    'configuration:thors-hammer': 'A Thor’s Hammer / Fist of God is a square whose ends converge on an apex through two tri-octiles.',
+    'aspect:conjunction': 'A conjunction places two functions at the same zodiacal longitude.',
+    'aspect:sextile': 'A sextile is a 60° relationship.',
+    'aspect:square': 'A square is a 90° relationship.',
+    'aspect:trine': 'A trine is a 120° relationship.',
+    'aspect:quincunx': 'A quincunx is a 150° relationship.',
+    'aspect:opposition': 'An opposition is a 180° relationship.',
+    'placement:sun': 'The Sun spans about 32 arcminutes, roughly 0.53° of sky.',
+    'placement:moon': 'The Moon spans roughly half a degree of sky, close to the Sun’s apparent size.',
+    'placement:jupiter': 'Jupiter usually spans less than one arcminute as seen from Earth.'
+  });
+
   const CONTEXTS = Object.freeze({
     'planetary-sun-frame': Object.freeze(['sunrise-edge', 'sunrise-standard', 'sun-width', 'horizon-refraction', 'planetary-hour-length']),
     'planetary-moon': Object.freeze(['moon-width', 'angular-units', 'body-center']),
@@ -179,8 +201,43 @@
     bindContextClick('#wandererGrid', 'planetary-wanderers');
   }
 
+  function skyExportContext() {
+    const expandedConfig = document.querySelector('.sky-configuration-result-tile.is-expanded[data-configuration-type]');
+    if (expandedConfig) return 'configuration:' + expandedConfig.dataset.configurationType;
+
+    const expandedRelationship = document.querySelector('.sky-foundation-relationship-row.is-inline-expanded[data-aspect]');
+    if (expandedRelationship) return 'aspect:' + String(expandedRelationship.dataset.aspect || '').toLowerCase();
+
+    const selectedRelationship = document.querySelector('.sky-foundation-relationship-row.is-selected[data-aspect]');
+    if (selectedRelationship) return 'aspect:' + String(selectedRelationship.dataset.aspect || '').toLowerCase();
+
+    try {
+      const origin = window.RelphiSkyFoundationInteractions?.getSelectionOrigin?.();
+      const placement = String(origin?.placement || origin?.id || '').toLowerCase();
+      if (placement) return 'placement:' + placement;
+      const aspect = String(origin?.aspect || '').toLowerCase();
+      if (aspect) return 'aspect:' + aspect;
+    } catch (_) {}
+
+    return 'sky-wheel';
+  }
+
+  function skyExportFactoid() {
+    const context = skyExportContext();
+    if (SKY_EXPORT_FACTS[context]) return SKY_EXPORT_FACTS[context];
+
+    const ids = CONTEXTS['sky-wheel'];
+    if (!ids || !ids.length) return '';
+    const index = cursorFor('sky-wheel') % ids.length;
+    const fact = FACTS[ids[index]];
+    if (!fact) return '';
+    storageSet(STORAGE_PREFIX + 'sky-wheel', String((index + 1) % ids.length));
+    return fact.text;
+  }
+
   function initSkyChart() {
-    observe('#skyFoundationWheelMount', 'sky-wheel', 1100);
+    // Sky Chart factoids belong to the unavoidable wait while preparing a
+    // full wheel copy. Do not interrupt ordinary chart reading with a toast.
   }
 
   function init() {
@@ -195,6 +252,8 @@
     dismiss: removeToast,
     facts: FACTS,
     contexts: CONTEXTS,
+    skyExportContext: skyExportContext,
+    skyExportFactoid: skyExportFactoid,
     get activeContext() { return activeContext; }
   });
 
