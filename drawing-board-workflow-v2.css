@@ -658,3 +658,9 @@ body.relphi-attune-open{overflow:hidden!important}
 #shortListPanel .relphi-astrology-questions{grid-column:1/-1!important}
 #shortListPanel .relphi-astrology-question{display:flex!important;gap:.45rem!important;align-items:flex-start!important;padding:.35rem 0!important;font-size:.72rem!important;line-height:1.35!important}
 @media(max-width:700px){#shortListPanel .relphi-astrology-analysis{grid-template-columns:1fr!important}#shortListPanel .relphi-astrology-questions{grid-column:1!important}}
+
+#shortListPanel .relphi-astrology-sky-sources{display:flex!important;flex-direction:column!important;align-items:flex-start!important;gap:.45rem!important}
+#shortListPanel .relphi-astrology-sky-source{display:block!important;width:100%!important;padding:0!important;border:0!important;background:transparent!important}
+#shortListPanel .relphi-astrology-sky-source select{display:block!important;width:100%!important;min-height:42px!important}
+#shortListPanel .relphi-add-sky{align-self:flex-start!important;margin:0!important}
+#shortListPanel .relphi-astrology-bridge-status{margin-top:.6rem!important}
