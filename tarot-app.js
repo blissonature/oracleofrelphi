@@ -1773,6 +1773,136 @@
   }
   window.RELPHI_CARD_SUBPACK_CONTEXT = cardQuestionGeneratorContext;
 
+
+  // Shared evidence contract for See What Surfaces bridges.
+  // Cards, Sky Chart, Card Hits, and future timing/search tools can exchange
+  // inspectable evidence without coupling their UIs to one another.
+  const RELPHI_EVIDENCE_CONTRACT_VERSION = 1;
+
+  function relphiEvidenceId(prefix, parts = []) {
+    const body = parts.map(value => normalizeSearch(String(value ?? ''))).filter(Boolean).join(':');
+    return body ? `${prefix}:${body}` : prefix;
+  }
+
+  function cardLocatorEvidence(card) {
+    if (!card) return [];
+    const astrology = card.astrology || {};
+    const evidence = [];
+
+    // Zodiacal Majors derive a HOUSE locator. The connected sky supplies the
+    // actual contents of that house; the card does not pretend the house is a sign.
+    if (card.card_type === 'Major' && astrology.attribution_type === 'Sign' && astrology.sign) {
+      const house = Number(astrology.natural_house);
+      if (Number.isInteger(house) && house >= 1 && house <= 12) {
+        evidence.push({
+          id: relphiEvidenceId('house', [house, card.card_id]),
+          kind: 'house-locator',
+          source: 'zodiacal-major',
+          cardId: card.card_id || '',
+          sign: astrology.sign,
+          house,
+          exactness: 'derived'
+        });
+      }
+    }
+
+    // Pips retain their native zodiacal/decan precision. We deliberately do
+    // not divide a house into thirds; Sky Chart resolves what occupies this interval.
+    if (card.card_type === 'Pip' && (astrology.decan || astrology.degree_span || astrology.zodiac_range)) {
+      evidence.push({
+        id: relphiEvidenceId('decan', [astrology.sign, astrology.decan || astrology.degree_span || astrology.zodiac_range, card.card_id]),
+        kind: 'zodiac-locator',
+        source: 'pip-decan',
+        cardId: card.card_id || '',
+        sign: astrology.sign || '',
+        decan: astrology.decan || '',
+        degreeSpan: astrology.degree_span || '',
+        zodiacRange: astrology.zodiac_range || '',
+        decanRuler: astrology.decan_ruler || '',
+        exactness: 'zodiacal-interval'
+      });
+    }
+
+    if (astrology.planet) {
+      evidence.push({
+        id: relphiEvidenceId('planet', [astrology.planet, card.card_id]),
+        kind: 'planet-locator',
+        source: 'card-attribution',
+        cardId: card.card_id || '',
+        planet: astrology.planet,
+        exactness: 'attribution'
+      });
+    }
+    return evidence;
+  }
+
+  function normalizeRelphiCardEvidence(card) {
+    const context = cardQuestionGeneratorContext(card);
+    return {
+      evidenceType: 'card',
+      cardId: context.cardId,
+      cardType: card?.card_type || '',
+      title: card ? title(card) : '',
+      tags: context.tags.slice(),
+      subpacks: context.subpacks.map(item => ({ ...item })),
+      activeKeywordTags: context.activeKeywordTags.slice(),
+      activeKeywordMatchMode: context.activeKeywordMatchMode,
+      locators: cardLocatorEvidence(card)
+    };
+  }
+
+  function normalizeRelphiSkyEvidence(input = {}) {
+    const sky = input && typeof input === 'object' ? input : {};
+    const source = sky.source && typeof sky.source === 'object' ? sky.source : {};
+    const normalized = {
+      evidenceType: 'sky',
+      skyId: String(sky.skyId || sky.id || ''),
+      skyRole: sky.skyRole === 'B' ? 'B' : 'A',
+      source: {
+        tool: String(source.tool || 'sky-chart'),
+        bridge: String(source.bridge || ''),
+        view: String(source.view || ''),
+        focusId: String(source.focusId || '')
+      },
+      object: sky.object && typeof sky.object === 'object' ? { ...sky.object } : null,
+      house: Number.isFinite(Number(sky.house)) ? Number(sky.house) : null,
+      sign: String(sky.sign || ''),
+      degree: Number.isFinite(Number(sky.degree)) ? Number(sky.degree) : null,
+      degreeSpan: String(sky.degreeSpan || ''),
+      relationships: Array.isArray(sky.relationships) ? sky.relationships.map(item => ({ ...item })) : [],
+      configurations: Array.isArray(sky.configurations) ? sky.configurations.map(item => ({ ...item })) : [],
+      cardHits: Array.isArray(sky.cardHits) ? sky.cardHits.map(item => ({ ...item })) : []
+    };
+    return normalized;
+  }
+
+  function createRelphiEvidenceBundle({ source = {}, cards: cardInputs = [], skies = [], derived = [], question = null } = {}) {
+    const cardEvidence = cardInputs.map(input => {
+      if (typeof input === 'string') return cardById(input);
+      return input;
+    }).filter(Boolean).map(normalizeRelphiCardEvidence);
+    const skyEvidence = skies.map(normalizeRelphiSkyEvidence);
+    const sourceInfo = source && typeof source === 'object' ? { ...source } : {};
+    return {
+      schema: 'relphi.see-what-surfaces.evidence',
+      version: RELPHI_EVIDENCE_CONTRACT_VERSION,
+      source: sourceInfo,
+      cards: cardEvidence,
+      skies: skyEvidence,
+      derived: Array.isArray(derived) ? derived.map(item => ({ ...item })) : [],
+      question: question && typeof question === 'object' ? { ...question } : null
+    };
+  }
+
+  window.RELPHI_EVIDENCE_CONTEXT = Object.freeze({
+    schema: 'relphi.see-what-surfaces.evidence',
+    version: RELPHI_EVIDENCE_CONTRACT_VERSION,
+    card: normalizeRelphiCardEvidence,
+    cardLocators: cardLocatorEvidence,
+    sky: normalizeRelphiSkyEvidence,
+    bundle: createRelphiEvidenceBundle
+  });
+
   function keywordSubpackHtml() {
     if (state.rowDrawScope !== 'tags') return '';
     const selected = Array.isArray(state.rowSelectedTags) ? state.rowSelectedTags : [];
