@@ -415,7 +415,7 @@ body.relphi-attune-open{overflow:hidden!important}
 #shortListPanel.relphi-recursion-reading .card-row-board>.card-row-item.is-recursion-level-active:not(.is-recursion-drawn)>.card-row-drop-card{opacity:0!important;border:0!important;background:transparent!important;box-shadow:none!important}
 #shortListPanel.relphi-recursion-reading .card-row-workspace{background-image:radial-gradient(circle at 50% 54%,rgba(255,253,248,.07) 0,rgba(255,253,248,0) 43%),var(--row-table-image,none)!important}
 #shortListPanel.relphi-recursion-reading .card-row-board{position:relative!important}
-#shortListPanel .relphi-recursion-logo-underlay{position:absolute!important;left:150px!important;top:70px!important;z-index:0!important;display:block!important;width:600px!important;height:600px!important;object-fit:contain!important;opacity:.9!important;pointer-events:none!important;user-select:none!important}
+#shortListPanel .relphi-recursion-logo-underlay{position:absolute!important;left:248px!important;top:168px!important;z-index:0!important;display:block!important;width:403px!important;height:403px!important;object-fit:contain!important;opacity:.94!important;pointer-events:none!important;user-select:none!important}
 #shortListPanel .relphi-recursion-circle-states{position:absolute!important;inset:0!important;z-index:1!important;pointer-events:none!important}
 #shortListPanel .relphi-recursion-state-circle{position:absolute!important;display:block!important;width:132px!important;height:132px!important;border:0 solid transparent!important;border-radius:50%!important;background:transparent!important;box-sizing:border-box!important;transform:translate(-50%,-50%)!important;transition:background 160ms ease,border-color 160ms ease,box-shadow 160ms ease!important}
 #shortListPanel .relphi-recursion-state-circle[data-recursion-circle="mem"]{left:366px!important;top:280px!important}
@@ -432,6 +432,8 @@ body.relphi-attune-open{overflow:hidden!important}
 #shortListPanel .relphi-recursion-board-depth button.is-opened:not(.is-current){background:#111!important;color:#fff!important}
 #shortListPanel .relphi-recursion-board-depth button.is-current{background:#dc1f18!important;color:#fff!important;box-shadow:none!important}
 #shortListPanel .relphi-recursion-board-depth button.is-future{opacity:.42!important;background:#fff!important;color:#111!important}
+#shortListPanel .relphi-recursion-board-depth .relphi-veilva-glyph{display:block!important;width:22px!important;height:22px!important;overflow:visible!important;color:currentColor!important;pointer-events:none!important}
+#shortListPanel .relphi-recursion-board-depth .relphi-veilva-glyph .relphi-canonical-glyph{color:currentColor!important}
 #shortListPanel .relphi-recursion-board-depth .relphi-recursion-complete-mark{display:none!important}
 
 
@@ -459,6 +461,7 @@ body.relphi-attune-open{overflow:hidden!important}
 .relphi-recursion-depth button{position:relative!important;z-index:1!important;display:grid!important;place-items:center!important;width:1.65rem!important;height:1.65rem!important;min-width:0!important;min-height:0!important;padding:0!important;border:1px solid #cfbeb1!important;border-radius:50%!important;background:#fffdf8!important;color:#61534b!important;font:inherit!important;font-size:.64rem!important;font-weight:950!important}
 .relphi-recursion-depth button.is-current{border-color:#a61712!important;background:#a61712!important;color:#fff!important;box-shadow:0 0 0 3px #f4e5dc!important}
 .relphi-recursion-depth button.is-future{opacity:.34!important}
+.relphi-recursion-depth .relphi-veilva-glyph{display:block!important;width:1.15rem!important;height:1.15rem!important;overflow:visible!important;color:currentColor!important;pointer-events:none!important}
 .relphi-recursion-complete-mark{position:absolute!important;right:.75rem!important;color:#8d1713!important;font-size:.6rem!important;font-weight:950!important;letter-spacing:.04em!important;text-transform:uppercase!important}
 
 .relphi-focus-reader.is-recursion-reading .relphi-focus-strip{display:grid!important;grid-template-columns:repeat(2,minmax(3.5rem,5rem))!important;grid-template-rows:repeat(2,5.45rem)!important;justify-content:center!important;align-content:center!important;gap:.55rem .7rem!important;width:min(12rem,76vw)!important;min-height:12rem!important;margin:auto!important;padding:1.05rem!important;box-sizing:border-box!important;overflow:visible!important;background:url("logo.png") center/contain no-repeat!important}
