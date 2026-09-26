@@ -153,7 +153,7 @@ function relationNodeKey(node){
 }
 function edgeNodeKey(edge){return relationNodeKey(edge?.row)||`${edgeKey(edge?.left,edge?.right)}:${edge?.aspect||''}`}
 function selectedPatternsForVisibility(){return patterns.filter(pattern=>configurationState[patternScope(pattern)]?.has(pattern.type))}
-function selectedRelationshipKeys(){const keys=new Set();selectedPatternsForVisibility().forEach(pattern=>pattern.edges.forEach(edge=>keys.add(edgeNodeKey(edge))));return keys}
+function selectedRelationshipKeys(){const keys=new Set();selectedPatternsForVisibility().forEach(pattern=>pattern.edges.forEach(edge=>{const edgeScope=relationshipMode(edge?.row);if(configurationState[edgeScope]?.has(pattern.type))keys.add(edgeNodeKey(edge))}));return keys}
 function participates(node){const key=relationNodeKey(node);return!!key&&selectedRelationshipKeys().has(key)}
 function patternsForNode(node){const key=relationNodeKey(node);return key?selectedPatternsForVisibility().filter(pattern=>pattern.edges.some(edge=>edgeNodeKey(edge)===key)):[]}
 function markParticipants(){
