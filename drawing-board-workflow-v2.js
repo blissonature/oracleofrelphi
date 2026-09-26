@@ -1108,16 +1108,15 @@
     throw new Error('Choose a valid sky source.');
   }
   function astrologySurfaceMarkup(session,disabled=false) {
-    const mode=session.astrologySkyMode==='AB' ? 'AB' : 'A';
+    const count=Math.max(0,Math.min(2,Number(session.astrologySkyCount)||0));
     return '<section class="relphi-referent-panel relphi-astrology-surface">'+
-      '<div class="relphi-options-subhead"><div><strong>Astrological Tarot Reading</strong><span>Choose the sky or skies, then let the cards reveal where the astrology is asking for inquiry.</span></div></div>'+
-      '<div class="relphi-astrology-sky-mode relphi-segmented-toggle" role="radiogroup" aria-label="Number of skies">'+
-        '<span class="relphi-segmented-label">Skies:</span>'+
-        '<label class="'+(mode==='A'?'is-active':'')+'"><input type="radio" name="relphiAstrologySkyMode" value="A" '+(mode==='A'?'checked ':'')+(disabled?'disabled':'')+'><span>One</span></label>'+
-        '<label class="'+(mode==='AB'?'is-active':'')+'"><input type="radio" name="relphiAstrologySkyMode" value="AB" '+(mode==='AB'?'checked ':'')+(disabled?'disabled':'')+'><span>Two</span></label>'+
+      '<div class="relphi-options-subhead"><div><strong>Astrological Tarot Reading</strong><span>Add the sky or skies you want this reading to use.</span></div></div>'+
+      '<div class="relphi-astrology-sky-sources">'+
+        (count>0?astrologySkySourceMarkup('A',session,disabled):'')+
+        (count>1?astrologySkySourceMarkup('B',session,disabled):'')+
+        (count<2?'<button type="button" class="relphi-add-sky" data-add-astrology-sky '+(disabled?'disabled':'')+'>+ Add a sky</button>':'')+
       '</div>'+
-      '<div class="relphi-astrology-sky-sources">'+astrologySkySourceMarkup('A',session,disabled)+(mode==='AB'?astrologySkySourceMarkup('B',session,disabled):'')+'</div>'+
-      '<div class="relphi-astrology-bridge-status"><strong>Sky connection</strong><span data-astrology-sky-status>Here & Now is available immediately. Saved Sky choices come from Sky Chart.</span><button type="button" id="relphiConnectSky" '+(disabled?'disabled':'')+'>Use These Skies</button></div>'+
+      (count?'<div class="relphi-astrology-bridge-status"><strong>Sky connection</strong><span data-astrology-sky-status>Each sky is a disposable reading copy. Sky Chart assignments stay unchanged.</span><button type="button" id="relphiConnectSky" '+(disabled?'disabled':'')+'>Use '+(count>1?'These Skies':'This Sky')+'</button></div>':'')+
       '<p class="relphi-astrology-note">Zodiacal Majors locate houses. Pips retain their exact sign/decan intervals. Card Hits and concentrations will become candidate questions before you Attune.</p>'+
       '</section>';
   }
@@ -1193,13 +1192,13 @@
       renderOptions(root);
     }));
 
-    drawer.querySelectorAll('input[name="relphiAstrologySkyMode"]').forEach(input=>input.addEventListener('change',()=>{session.astrologySkyMode=input.value==='AB'?'AB':'A'; renderOptions(root);}));
+    drawer.querySelector('[data-add-astrology-sky]')?.addEventListener('click',()=>{session.astrologySkyCount=Math.min(2,(Number(session.astrologySkyCount)||0)+1);renderOptions(root);});
     drawer.querySelectorAll('[data-astrology-sky-source]').forEach(select=>select.addEventListener('change',()=>{
       const slot=select.dataset.astrologySkySource==='B'?'B':'A';
       session[slot==='B'?'astrologySkyBSource':'astrologySkyASource']=select.value||'here-now';
     }));
     drawer.querySelector('#relphiConnectSky')?.addEventListener('click',async()=>{
-      const button=drawer.querySelector('#relphiConnectSky'),mode=session.astrologySkyMode==='AB'?'AB':'A';
+      const button=drawer.querySelector('#relphiConnectSky'),count=Math.max(1,Math.min(2,Number(session.astrologySkyCount)||1)),mode=count>1?'AB':'A';
       const status=drawer.querySelector('[data-astrology-sky-status]');
       if(button){button.disabled=true;button.textContent='Preparing…'} if(status)status.textContent='Resolving the selected sky'+(mode==='AB'?'s':'')+'…';
       try{
