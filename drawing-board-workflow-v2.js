@@ -1093,11 +1093,21 @@
       (function wait(){
         const status=document.getElementById('skyCalcStatus')?.textContent?.trim()||'';
         if(/^Calculated\b/i.test(status)){
-          document.getElementById('saveChart')?.click();
-          setTimeout(()=>{
-            try{const payload=JSON.parse(localStorage.getItem('relphiTarotChart')||'null');if(payload?.placements&&Object.keys(payload.placements).length)return resolve({...payload,calcProfile:{dateTime,timeZone:packet.timeZone||'UTC',latitude:Number(packet.latitude),longitude:Number(packet.longitude),location:packet.location||'Here & Now',source:'here-and-now'}})}catch(_){}
-            reject(new Error('Here & Now calculated, but its placements could not be read back.'));
-          },0);return;
+          // The Tarot calculator writes the successful result into its live chart state/form.
+          // saveChart() serializes that state to relphiTarotChart, but allow one paint before
+          // saving so dynamically rebuilt placement controls are present for readChartForm().
+          requestAnimationFrame(()=>requestAnimationFrame(()=>{
+            document.getElementById('saveChart')?.click();
+            setTimeout(()=>{
+              try{
+                const payload=JSON.parse(localStorage.getItem('relphiTarotChart')||'null');
+                if(payload?.placements&&Object.keys(payload.placements).length)return resolve({...payload,name:payload.name||'Here & Now',calcProfile:{dateTime,timeZone:packet.timeZone||'UTC',latitude:Number(packet.latitude),longitude:Number(packet.longitude),location:packet.location||'Here & Now',source:'here-and-now'}});
+                const library=astrologySavedSkies(),fresh=[...library].sort((a,b)=>Date.parse(b.savedAt||0)-Date.parse(a.savedAt||0))[0];
+                if(fresh?.placements&&Object.keys(fresh.placements).length)return resolve({...clone(fresh),calcProfile:{...(fresh.calcProfile||{}),dateTime,timeZone:packet.timeZone||'UTC',latitude:Number(packet.latitude),longitude:Number(packet.longitude),location:packet.location||'Here & Now',source:'here-and-now'}});
+              }catch(_){}
+              reject(new Error('Here & Now calculated, but its placements could not be read back.'));
+            },60);
+          }));return;
         }
         if(Date.now()-started>30000)return reject(new Error(status||'Here & Now calculation timed out.'));
         if(/^(Could not|Enter |Choose )/i.test(status))return reject(new Error(status));
