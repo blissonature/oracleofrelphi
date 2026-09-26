@@ -340,9 +340,28 @@ function renderSelectedConfiguration(tile,pattern){
   if(exact)exact.textContent=Number.isFinite(pattern.maxPhase)?pattern.maxPhase.toFixed(2)+'°':'';
   paintConfigurationMiniGlyphs(visual);
 }
+async function copySelectedConfiguration(tile,button){
+  const pattern=tile?.__configurationSelectedPattern;if(!pattern)return;
+  const text='Configurations\n\n'+serializeConfigurationPattern(pattern);
+  let ok=false;
+  try{if(navigator.clipboard?.writeText){await navigator.clipboard.writeText(text);ok=true}}catch(_){}
+  if(!ok){
+    const area=document.createElement('textarea');area.value=text;area.setAttribute('readonly','');
+    Object.assign(area.style,{position:'fixed',left:'-10000px',top:'0',opacity:'0'});
+    document.body.appendChild(area);area.select();
+    try{ok=document.execCommand('copy')}catch(_){}
+    area.remove();
+  }
+  if(ok&&button){
+    const prior=button.textContent;button.textContent='Copied';
+    clearTimeout(button.__copyTimer);
+    button.__copyTimer=setTimeout(()=>{if(button.isConnected)button.textContent=prior||'Copy'},1100);
+  }
+}
 function selectConfigurationMatch(tile,pattern,row){
   tile.querySelectorAll('.sky-configuration-match-row.is-selected').forEach(node=>node.classList.remove('is-selected'));
   row?.classList.add('is-selected');
+  tile.__configurationSelectedPattern=pattern;
   renderSelectedConfiguration(tile,pattern);
   highlightPattern(pattern);
 }
@@ -354,7 +373,9 @@ function openConfiguration(tile,group){
   let detail=tile.querySelector(':scope>.sky-configuration-result-detail');
   if(!detail){
     detail=document.createElement('div');detail.className='sky-configuration-result-detail';
-    detail.innerHTML='<div class="sky-configuration-result-visual"></div><div class="sky-configuration-result-explanation"><div class="sky-configuration-result-structure"><strong>Structure</strong><span></span></div><div class="sky-configuration-result-interpretation"><strong>Interpretation</strong><span></span></div></div>';
+    detail.innerHTML='<button type="button" class="sky-configuration-tile-copy" aria-label="Copy this expanded configuration">Copy</button><div class="sky-configuration-result-visual"></div><div class="sky-configuration-result-explanation"><div class="sky-configuration-result-structure"><strong>Structure</strong><span></span></div><div class="sky-configuration-result-interpretation"><strong>Interpretation</strong><span></span></div></div>';
+    const tileCopy=detail.querySelector('.sky-configuration-tile-copy');
+    tileCopy?.addEventListener('click',event=>{event.preventDefault();event.stopPropagation();copySelectedConfiguration(tile,tileCopy)});
     const matches=document.createElement('div');matches.className='sky-configuration-match-stack';
     const heading=document.createElement('div');heading.className='sky-configuration-match-stack-heading';heading.textContent=group.matches.length+' match'+(group.matches.length===1?'':'es');
     const list=document.createElement('div');list.className='sky-configuration-match-list';
@@ -363,6 +384,11 @@ function openConfiguration(tile,group){
     tile.appendChild(detail);
   }
   detail.hidden=false;
+  const tileCopy=detail.querySelector('.sky-configuration-tile-copy');
+  if(tileCopy&&!tileCopy.dataset.bound){
+    tileCopy.dataset.bound='true';
+    tileCopy.addEventListener('click',event=>{event.preventDefault();event.stopPropagation();copySelectedConfiguration(tile,tileCopy)});
+  }
   paintConfigurationMatchGlyphs(detail);
   const firstRow=detail.querySelector('.sky-configuration-match-row[data-configuration-match="'+CSS.escape(pattern.key)+'"]')||detail.querySelector('.sky-configuration-match-row');
   selectConfigurationMatch(tile,pattern,firstRow);
