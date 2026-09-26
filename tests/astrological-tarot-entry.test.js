@@ -1,0 +1,13 @@
+const assert=require('node:assert/strict');
+const fs=require('node:fs');
+const js=fs.readFileSync('drawing-board-workflow-v2.js','utf8');
+const css=fs.readFileSync('drawing-board-workflow-v2.css','utf8');
+assert.match(js,/Astrological Tarot Reading/);
+assert.match(js,/Sky A \+ Sky B/);
+assert.match(js,/relphiConnectSky/);
+assert.match(js,/relphi:request-sky-connection/);
+assert.match(js,/options\.textContent='Crafted Draw'/);
+assert.match(js,/boardTab\.textContent='Free Draw'/);
+assert.match(js,/const scrollTop=body\?\.scrollTop\|\|0/);
+assert.match(css,/\.relphi-astrology-surface/);
+console.log('Crafted Draw exposes the Astrological Tarot Reading setup and preserves pack-selector scroll position.');
