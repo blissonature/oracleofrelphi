@@ -86,9 +86,10 @@
     const rows=eligibleRows();
     if(!rows.length){clearMarks(wheel);return}
     const matched=explicitRows(rows);
-    // Zero surviving relationships means the user has selected no relationship signal.
-    // That is a neutral wheel state, not "dim the entire chart."
-    const active=matched.length>0&&matched.length<rows.length;
+    // Any explicit reduction is a focus state, including an empty result set.
+    // If nothing survives, keep the wheel in focused mode with zero kept pieces so
+    // the chart reads as intentionally unfilled rather than reverting to full color.
+    const active=matched.length<rows.length;
     wheel.classList.toggle('has-filter-focus',active);
     if(!active){
       clearMarks(wheel);
