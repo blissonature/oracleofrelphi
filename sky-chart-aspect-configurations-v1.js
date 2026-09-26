@@ -99,7 +99,7 @@ function resultPoint(value,radius=47){const angle=(resultNorm(value)-180)*Math.P
 function placementLabel(id){return PLACEMENT_SYMBOLS[id]||window.RelphiGlyphRegistry?.get?.(id)?.fallback||String(id||'').replace(/-/g,' ')}
 function vertexLabel(key){const [sky,id]=String(key||'').split(':');return{sky,id,label:placementLabel(id)}}
 function patternScopeLabel(pattern){const scope=patternScope(pattern);return SCOPES.find(item=>item.id===scope)?.label||scope}
-function structureText(pattern){const recipe=CONFIG_STRUCTURE[pattern.type]||'a compound aspect pattern';const names=pattern.vertices.map(key=>{const item=vertexLabel(key);return 'Sky '+item.sky+' '+item.label}).join(' · ');return recipe+(names?' — '+names:'')}
+function structureText(pattern){return CONFIG_STRUCTURE[pattern.type]||'a compound aspect pattern'}
 function configurationFunction(key){
   const item=vertexLabel(key),meaning=CONFIG_PLACEMENT_MEANING[item.id]||'this function';
   return{...item,meaning,name:item.label};
