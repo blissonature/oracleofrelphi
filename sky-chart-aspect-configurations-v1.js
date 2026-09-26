@@ -565,7 +565,26 @@ function collectGraph(){
   }
   return{windowValue,nodes,edges};
 }
-function getEdge(graph,a,b,aspect){return graph.edges.get(edgeKey(a,b))?.get(aspect)||null}
+function syntheticAxisOpposition(graph,a,b){
+  const [skyA,idA]=String(a||'').split(':'),[skyB,idB]=String(b||'').split(':');
+  if(!skyA||skyA!==skyB)return null;
+  const ids=[idA,idB].sort().join('|');
+  if(ids!=='asc|dsc'&&ids!=='ic|mc')return null;
+  const left=resultVertexRecord(a),right=resultVertexRecord(b);
+  if(!left||!right)return null;
+  const delta=Math.abs(resultNorm(left.value)-resultNorm(right.value));
+  const separation=Math.min(delta,360-delta);
+  const orb=Math.abs(separation-180);
+  const phase=orb*2;
+  if(phase>graph.windowValue+1e-9)return null;
+  return{row:null,aspect:'opposition',phase,left:a,right:b,synthetic:true,syntheticKind:'axis-opposition'};
+}
+function getEdge(graph,a,b,aspect){
+  const direct=graph.edges.get(edgeKey(a,b))?.get(aspect)||null;
+  if(direct)return direct;
+  if(aspect==='opposition')return syntheticAxisOpposition(graph,a,b);
+  return null;
+}
 function required(graph,pairs){const edges=[];for(const [a,b,aspect] of pairs){const edge=getEdge(graph,a,b,aspect);if(!edge)return null;edges.push(edge)}return edges}
 function addPattern(out,type,vertices,edges,meta={}){const key=patternKey(type,vertices);if(out.some(item=>item.key===key))return;const phases=edges.map(edge=>edge.phase).filter(Number.isFinite);out.push({key,type,vertices:vertices.slice(),edges:edges.slice(),maxPhase:phases.length?Math.max(...phases):Number.POSITIVE_INFINITY,meanPhase:phases.length?phases.reduce((sum,value)=>sum+value,0)/phases.length:Number.POSITIVE_INFINITY,...meta})}
 function combinations(items,size){const out=[];function walk(start,pick){if(pick.length===size){out.push(pick.slice());return}for(let i=start;i<=items.length-(size-pick.length);i+=1){pick.push(items[i]);walk(i+1,pick);pick.pop()}}walk(0,[]);return out}
