@@ -207,7 +207,7 @@
 
     stage.appendChild(wheelBrand());
 
-    const wheelMount=document.createElement('div');wheelMount.id='skyFoundationWheelMount';wheelMount.className=sourceMount.className;
+    const wheelMount=document.createElement('div');wheelMount.className=sourceMount.className;wheelMount.dataset.exportWheelMount='true';
     Object.assign(wheelMount.style,{position:'absolute',display:'block',left:`${WHEEL_EXPORT_FRAME.side}px`,top:`${WHEEL_EXPORT_FRAME.top}px`,width:`${wheelWidth}px`,height:`${wheelHeight}px`,minHeight:'0',padding:'0',border:'0',overflow:'visible',background:'transparent'});
     const clone=wheel.cloneNode(true);
     freezeWheelAppearance(wheel,clone);
