@@ -150,8 +150,17 @@ assert.deepEqual(Array.from(registry.shipped, item => item.id), [
   'saturn-square-9',
   'celtic-cross-10',
   'six-polarities-houses-12',
+  'relphi-recursion-22',
   'focus-1'
 ]);
+const recursion = registry.byId('relphi-recursion-22');
+assert.equal(recursion.cardCount, 22);
+assert.equal(recursion.positionCount, 28);
+assert.equal(recursion.virtualPositionCount, 6);
+assert.equal(recursion.positions.length, 22);
+assert.deepEqual(Array.from(recursion.positions.slice(0,3), item => item.recursionElement), ['mem','aleph','shin']);
+assert.equal(recursion.positions.at(-1).recursionElement, 'earth');
+assert.equal(recursion.positions.at(-1).recursionLevel, 7);
 assert.ok(registry.shipped.every(item => item.source === 'shipped' && item.editable === false));
 assert.equal(registry.byId('celtic-cross-11'), null);
 const celtic = registry.byId('celtic-cross-10');
