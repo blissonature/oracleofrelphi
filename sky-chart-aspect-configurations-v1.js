@@ -540,7 +540,43 @@ function getEdge(graph,a,b,aspect){return graph.edges.get(edgeKey(a,b))?.get(asp
 function required(graph,pairs){const edges=[];for(const [a,b,aspect] of pairs){const edge=getEdge(graph,a,b,aspect);if(!edge)return null;edges.push(edge)}return edges}
 function addPattern(out,type,vertices,edges,meta={}){const key=patternKey(type,vertices);if(out.some(item=>item.key===key))return;const phases=edges.map(edge=>edge.phase).filter(Number.isFinite);out.push({key,type,vertices:vertices.slice(),edges:edges.slice(),maxPhase:phases.length?Math.max(...phases):Number.POSITIVE_INFINITY,meanPhase:phases.length?phases.reduce((sum,value)=>sum+value,0)/phases.length:Number.POSITIVE_INFINITY,...meta})}
 function combinations(items,size){const out=[];function walk(start,pick){if(pick.length===size){out.push(pick.slice());return}for(let i=start;i<=items.length-(size-pick.length);i+=1){pick.push(items[i]);walk(i+1,pick);pick.pop()}}walk(0,[]);return out}
-function aspectCounts(graph,vertices){const counts=new Map(),edges=[];for(let i=0;i<vertices.length;i+=1)for(let j=i+1;j<vertices.length;j+=1){const byAspect=graph.edges.get(edgeKey(vertices[i],vertices[j]));if(!byAspect||!byAspect.size)return null;let chosen=null;for(const edge of byAspect.values())if(!chosen||edge.phase<chosen.phase)chosen=edge;if(!chosen)return null;counts.set(chosen.aspect,(counts.get(chosen.aspect)||0)+1);edges.push(chosen)}return{counts,edges}}
+function aspectCounts(graph,vertices,expected=null){
+  const pairs=[];
+  for(let i=0;i<vertices.length;i+=1)for(let j=i+1;j<vertices.length;j+=1){
+    const byAspect=graph.edges.get(edgeKey(vertices[i],vertices[j]));
+    if(!byAspect||!byAspect.size)return null;
+    pairs.push([...byAspect.values()]);
+  }
+  if(!expected){
+    const counts=new Map(),edges=[];
+    for(const options of pairs){
+      let chosen=null;
+      for(const edge of options)if(!chosen||edge.phase<chosen.phase)chosen=edge;
+      if(!chosen)return null;
+      counts.set(chosen.aspect,(counts.get(chosen.aspect)||0)+1);edges.push(chosen);
+    }
+    return{counts,edges};
+  }
+  const target=new Map(Object.entries(expected)),chosen=[];
+  function walk(index,counts){
+    if(index===pairs.length){
+      for(const [aspect,count] of target)if((counts.get(aspect)||0)!==count)return null;
+      return chosen.slice();
+    }
+    for(const edge of pairs[index]){
+      if(!target.has(edge.aspect))continue;
+      const next=(counts.get(edge.aspect)||0)+1;
+      if(next>target.get(edge.aspect))continue;
+      counts.set(edge.aspect,next);chosen.push(edge);
+      const found=walk(index+1,counts);if(found)return found;
+      chosen.pop();if(next===1)counts.delete(edge.aspect);else counts.set(edge.aspect,next-1);
+    }
+    return null;
+  }
+  const edges=walk(0,new Map());if(!edges)return null;
+  const counts=new Map();edges.forEach(edge=>counts.set(edge.aspect,(counts.get(edge.aspect)||0)+1));
+  return{counts,edges};
+}
 function countIs(counts,expected){for(const [aspect,count] of Object.entries(expected))if((counts.get(aspect)||0)!==count)return false;let total=0;for(const count of counts.values())total+=count;return total===Object.values(expected).reduce((sum,value)=>sum+value,0)}
 function detect(){
   const graph=collectGraph(),nodes=[...graph.nodes.keys()],out=[];
@@ -555,16 +591,15 @@ function detect(){
     }
   }
   for(const vertices of combinations(nodes,4)){
-    const info=aspectCounts(graph,vertices);if(!info)continue;
-    if(countIs(info.counts,{opposition:2,trine:2,sextile:2}))addPattern(out,'mystic-rectangle',vertices,info.edges);
-    if(countIs(info.counts,{opposition:2,square:4}))addPattern(out,'grand-cross',vertices,info.edges);
-    if(countIs(info.counts,{trine:3,sextile:2,opposition:1}))addPattern(out,'kite',vertices,info.edges);
-    if(countIs(info.counts,{opposition:1,trine:2,sextile:3}))addPattern(out,'cradle',vertices,info.edges);
+    let info=aspectCounts(graph,vertices,{opposition:2,trine:2,sextile:2});if(info)addPattern(out,'mystic-rectangle',vertices,info.edges);
+    info=aspectCounts(graph,vertices,{opposition:2,square:4});if(info)addPattern(out,'grand-cross',vertices,info.edges);
+    info=aspectCounts(graph,vertices,{trine:3,sextile:2,opposition:1});if(info)addPattern(out,'kite',vertices,info.edges);
+    info=aspectCounts(graph,vertices,{opposition:1,trine:2,sextile:3});if(info)addPattern(out,'cradle',vertices,info.edges);
   }
   const grandTrines=out.filter(pattern=>pattern.type==='grand-trine');
   for(let i=0;i<grandTrines.length;i+=1)for(let j=i+1;j<grandTrines.length;j+=1){
     const union=[...new Set([...grandTrines[i].vertices,...grandTrines[j].vertices])];if(union.length!==6)continue;
-    const info=aspectCounts(graph,union);if(info&&countIs(info.counts,{sextile:6,trine:6,opposition:3}))addPattern(out,'grand-sextile',union,info.edges);
+    const info=aspectCounts(graph,union,{sextile:6,trine:6,opposition:3});if(info)addPattern(out,'grand-sextile',union,info.edges);
   }
   out.sort((a,b)=>a.maxPhase-b.maxPhase||a.meanPhase-b.meanPhase||TYPES.findIndex(type=>type.id===a.type)-TYPES.findIndex(type=>type.id===b.type));
   return{graph,patterns:out};
