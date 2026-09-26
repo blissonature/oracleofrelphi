@@ -60,6 +60,29 @@ const CONFIG_INTERPRETATION=Object.freeze({
   cradle:'An opposition is held inside a supportive web of trines and sextiles. The polarity remains central, but several low-resistance pathways help carry and distribute it.',
   'thors-hammer':'A square concentrates its friction through two tri-octiles onto an apex. The apex becomes the pressure point where accumulated tension is forced into a sharper redirection.'
 });
+const CONFIG_PLACEMENT_MEANING=Object.freeze({
+  sun:'identity and conscious purpose',
+  moon:'feeling, instinct, memory, and emotional need',
+  mercury:'thought, perception, language, and communication',
+  venus:'values, attraction, affection, pleasure, and relating',
+  mars:'drive, assertion, desire, conflict, and action',
+  jupiter:'growth, confidence, meaning, opportunity, and expansion',
+  saturn:'structure, limits, responsibility, time, and commitment',
+  uranus:'freedom, disruption, originality, awakening, and change',
+  neptune:'imagination, sensitivity, surrender, ideals, and vision',
+  pluto:'power, depth, compulsion, elimination, and transformation',
+  chiron:'wounding, healing intelligence, and the capacity to guide healing',
+  asc:'the way experience is entered and immediately embodied',
+  dsc:'the way the other is met in relationship and encounter',
+  mc:'public direction, vocation, visibility, and the role being grown toward',
+  ic:'roots, home, private foundations, and inherited belonging',
+  'north-node':'growth through unfamiliar experience and developing capacity',
+  'south-node':'familiar patterns, inherited capacity, and the known path',
+  lilith:'instinctive autonomy, refusal, exile, and uncompromised desire',
+  'part-of-fortune':'the meeting place of body, feeling, circumstance, and ease',
+  vertex:'encounters that feel consequential or outside ordinary control',
+  'anti-vertex':'what becomes accessible through the back door'
+});
 let openConfigurationTile=null;
 
 function resultNorm(value){return((Number(value)%360)+360)%360}
@@ -77,7 +100,31 @@ function placementLabel(id){return PLACEMENT_SYMBOLS[id]||window.RelphiGlyphRegi
 function vertexLabel(key){const [sky,id]=String(key||'').split(':');return{sky,id,label:placementLabel(id)}}
 function patternScopeLabel(pattern){const scope=patternScope(pattern);return SCOPES.find(item=>item.id===scope)?.label||scope}
 function structureText(pattern){const recipe=CONFIG_STRUCTURE[pattern.type]||'a compound aspect pattern';const names=pattern.vertices.map(key=>{const item=vertexLabel(key);return 'Sky '+item.sky+' '+item.label}).join(' · ');return recipe+(names?' — '+names:'')}
-function interpretationText(pattern){return CONFIG_INTERPRETATION[pattern.type]||'A compound relationship pattern formed by several aspect edges operating together.'}
+function configurationFunction(key){
+  const item=vertexLabel(key),meaning=CONFIG_PLACEMENT_MEANING[item.id]||'this function';
+  return{...item,meaning,name:item.label};
+}
+function joinedFunctions(keys){
+  const items=keys.map(configurationFunction);
+  if(items.length===1)return items[0].meaning;
+  if(items.length===2)return items[0].meaning+' and '+items[1].meaning;
+  return items.slice(0,-1).map(item=>item.meaning).join(', ')+', and '+items.at(-1).meaning;
+}
+function interpretationText(pattern){
+  const apex=pattern.apex&&pattern.vertices.includes(pattern.apex)?pattern.apex:null;
+  const apexInfo=apex?configurationFunction(apex):null;
+  const bases=apex?pattern.vertices.filter(key=>key!==apex):pattern.vertices;
+  if(pattern.type==='t-square'&&apexInfo)return 'The polarity between '+joinedFunctions(bases)+' discharges through '+apexInfo.meaning+'. The apex becomes the place where that opposition demands action, adaptation, or development.';
+  if(pattern.type==='yod'&&apexInfo)return joinedFunctions(bases)+' form the supporting base, while both require continuing adjustment through '+apexInfo.meaning+'. The apex becomes the point where those different demands must be translated into one response.';
+  if(pattern.type==='thors-hammer'&&apexInfo)return 'Friction between '+joinedFunctions(bases)+' is concentrated through '+apexInfo.meaning+'. The apex becomes the pressure point where accumulated tension is forced into a sharper redirection.';
+  if(pattern.type==='minor-grand-trine'&&apexInfo)return joinedFunctions(bases)+' provide an existing channel of ease that becomes usable through '+apexInfo.meaning+', giving the pattern a practical outlet.';
+  if(pattern.type==='grand-trine')return joinedFunctions(pattern.vertices)+' form a self-reinforcing circuit of low-resistance exchange, making these functions especially available to one another.';
+  if(pattern.type==='grand-cross')return joinedFunctions(pattern.vertices)+' form two opposing axes locked together by squares, distributing pressure across all four functions and continually forcing movement among competing demands.';
+  if(pattern.type==='mystic-rectangle')return joinedFunctions(pattern.vertices)+' hold two polarities inside a network of trines and sextiles, giving the tensions several routes for exchange and integration.';
+  if(pattern.type==='cradle')return joinedFunctions(pattern.vertices)+' hold an opposition inside a supportive web of trines and sextiles, preserving the polarity while distributing it through lower-resistance pathways.';
+  if(pattern.type==='grand-sextile')return joinedFunctions(pattern.vertices)+' form a dense six-point network of sextiles, trines, and oppositions, offering many routes for exchange while preserving three opposing axes.';
+  return CONFIG_INTERPRETATION[pattern.type]||'A compound relationship pattern formed by several aspect edges operating together.';
+}
 function miniConfigurationMarkup(pattern,{compact=false,interactive=true}={}){
   const records=new Map(pattern.vertices.map(key=>[key,resultVertexRecord(key)]).filter(([,record])=>record));
   const lines=pattern.edges.map(edge=>{
@@ -152,12 +199,24 @@ function revealConfiguration(tile,pattern){
   if(next==='structure')reveal.textContent=structureText(pattern);
   if(next==='interpretation')reveal.textContent=interpretationText(pattern);
 }
+function nestedConfigurationMarkup(pattern){
+  if(!pattern.nested?.length)return'';
+  return'<div class="sky-configuration-nested"><strong>Contained configurations</strong><div class="sky-configuration-nested-list">'+pattern.nested.map(child=>{
+    const label=TYPE_MAP.get(child.type)?.label||child.type;
+    const exact=Number.isFinite(child.maxPhase)?child.maxPhase.toFixed(2)+'°':'';
+    return'<span class="sky-configuration-nested-item" data-type="'+child.type+'"><b>'+label+'</b><small>'+exact+'</small></span>';
+  }).join('')+'</div></div>';
+}
 function openConfiguration(tile,pattern){
   if(tile.classList.contains('is-expanded')){closeConfigurationTile(tile);return}
   if(openConfigurationTile&&openConfigurationTile!==tile)closeConfigurationTile(openConfigurationTile);
   openConfigurationTile=tile;tile.classList.add('is-expanded');tile.setAttribute('aria-expanded','true');highlightPattern(pattern);
   let detail=tile.querySelector(':scope>.sky-configuration-result-detail');
-  if(!detail){detail=document.createElement('div');detail.className='sky-configuration-result-detail';detail.innerHTML='<div class="sky-configuration-result-reveal" role="status" aria-live="polite" hidden></div><div class="sky-configuration-result-visual">'+miniConfigurationMarkup(pattern)+'</div><div class="sky-configuration-result-instance">'+pattern.vertices.map(key=>{const item=vertexLabel(key);return'<span data-sky="'+item.sky+'"><b>'+item.sky+'</b>'+item.label+'</span>'}).join('')+'</div>';tile.appendChild(detail);const wheel=detail.querySelector('.sky-configuration-mini-wheel');const activate=event=>{event.preventDefault();event.stopPropagation();revealConfiguration(tile,pattern)};wheel?.addEventListener('click',activate);wheel?.addEventListener('keydown',event=>{if(event.key==='Enter'||event.key===' '){activate(event)}})}
+  if(!detail){
+    detail=document.createElement('div');detail.className='sky-configuration-result-detail';
+    detail.innerHTML='<div class="sky-configuration-result-visual">'+miniConfigurationMarkup(pattern,{interactive:false})+'</div><div class="sky-configuration-result-explanation"><div class="sky-configuration-result-structure"><strong>Structure</strong><span>'+structureText(pattern)+'</span></div><div class="sky-configuration-result-interpretation"><strong>Interpretation</strong><span>'+interpretationText(pattern)+'</span></div>'+nestedConfigurationMarkup(pattern)+'</div><div class="sky-configuration-result-instance">'+pattern.vertices.map(key=>{const item=vertexLabel(key);return'<span data-sky="'+item.sky+'"><b>'+item.sky+'</b>'+item.label+'</span>'}).join('')+'</div>';
+    tile.appendChild(detail);
+  }
   detail.hidden=false;
 }
 function resultTile(pattern,index){
@@ -180,9 +239,27 @@ function resultTile(pattern,index){
 function configurationFocusActive(){
   return activeScopes().some(scope=>configurationState[scope]?.size>0);
 }
-function patternsForResults(){
-  return configurationFocusActive()?selectedPatternsForVisibility():patterns;
+function configurationEdgeSignature(edge){return edgeKey(edge.left,edge.right)+':'+String(edge.aspect||'')}
+function containsConfiguration(parent,child){
+  if(!parent||!child||parent.vertices.length<=child.vertices.length)return false;
+  const vertices=new Set(parent.vertices);if(!child.vertices.every(key=>vertices.has(key)))return false;
+  const edges=new Set(parent.edges.map(configurationEdgeSignature));
+  return child.edges.every(edge=>edges.has(configurationEdgeSignature(edge)));
 }
+function hierarchicalPatterns(source){
+  const list=source.map(pattern=>({...pattern,nested:[]}));
+  const parentFor=new Map();
+  list.forEach(child=>{
+    const candidates=list.filter(parent=>containsConfiguration(parent,child)).sort((a,b)=>a.vertices.length-b.vertices.length||a.edges.length-b.edges.length||a.maxPhase-b.maxPhase);
+    if(candidates.length)parentFor.set(child.key,candidates[0].key);
+  });
+  const byKey=new Map(list.map(pattern=>[pattern.key,pattern]));
+  list.forEach(child=>{const parentKey=parentFor.get(child.key);if(parentKey)byKey.get(parentKey)?.nested.push(child)});
+  list.forEach(pattern=>pattern.nested.sort((a,b)=>a.maxPhase-b.maxPhase||a.meanPhase-b.meanPhase));
+  return list.filter(pattern=>!parentFor.has(pattern.key));
+}
+function rawPatternsForResults(){return configurationFocusActive()?selectedPatternsForVisibility():patterns}
+function patternsForResults(){return hierarchicalPatterns(rawPatternsForResults())}
 
 let configurationCopyTimer=0,configurationExportBusy=false,configurationExportLibrary=null;
 function configurationVertexText(key){
@@ -198,7 +275,9 @@ function serializeConfigurationPattern(pattern){
   const exact=Number.isFinite(pattern.maxPhase)?' · max phase '+pattern.maxPhase.toFixed(2)+'°':'';
   const vertices=pattern.vertices.map(configurationVertexText).join(' · ');
   const recipe=CONFIG_STRUCTURE[pattern.type]||'compound aspect pattern';
-  return type+' · '+scope+exact+'\n'+recipe+'\n'+vertices;
+  const interpretation=interpretationText(pattern);
+  const nested=pattern.nested?.length?'\nContained: '+pattern.nested.map(child=>(TYPE_MAP.get(child.type)?.label||child.type)+(Number.isFinite(child.maxPhase)?' '+child.maxPhase.toFixed(2)+'°':'')).join(' · '):'';
+  return type+' · '+scope+exact+'\nStructure: '+recipe+'\n'+vertices+'\nInterpretation: '+interpretation+nested;
 }
 function serializeVisibleConfigurations(){
   const current=patternsForResults();
