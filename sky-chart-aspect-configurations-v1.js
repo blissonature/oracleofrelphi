@@ -42,7 +42,7 @@ function ensureResultsPanel(){
   let panel=document.getElementById(RESULT_PANEL_ID);
   if(!panel){
     panel=document.createElement('section');panel.id=RESULT_PANEL_ID;panel.className='sky-configuration-results-panel';panel.setAttribute('aria-label','Configuration matches');
-    panel.innerHTML='<header class="sky-configuration-results-heading"><div><span class="sky-configuration-results-kicker">Patterns found</span><h2>Configurations</h2></div><span class="sky-configuration-results-count" aria-live="polite"></span></header><div class="sky-configuration-results-grid"></div>';
+    panel.innerHTML='<header class="sky-configuration-results-heading"><h2>Configurations</h2><span class="sky-configuration-results-count" aria-live="polite"></span></header><div class="sky-configuration-results-grid"></div>';
   }
   if(panel.parentElement!==comparison||panel.nextElementSibling!==relationships)comparison.insertBefore(panel,relationships);
   return panel;
