@@ -375,7 +375,10 @@ function openConfiguration(tile,group){
     detail=document.createElement('div');detail.className='sky-configuration-result-detail';
     detail.innerHTML='<button type="button" class="sky-configuration-tile-copy" aria-label="Copy this expanded configuration">Copy</button><div class="sky-configuration-result-visual"></div><div class="sky-configuration-result-explanation"><div class="sky-configuration-result-structure"><strong>Structure</strong><span></span></div><div class="sky-configuration-result-interpretation"><strong>Interpretation</strong><span></span></div></div>';
     const tileCopy=detail.querySelector('.sky-configuration-tile-copy');
-    tileCopy?.addEventListener('click',event=>{event.preventDefault();event.stopPropagation();copySelectedConfiguration(tile,tileCopy)});
+    if(tileCopy){
+      tileCopy.dataset.bound='true';
+      tileCopy.addEventListener('click',event=>{event.preventDefault();event.stopPropagation();copySelectedConfiguration(tile,tileCopy)});
+    }
     const matches=document.createElement('div');matches.className='sky-configuration-match-stack';
     const heading=document.createElement('div');heading.className='sky-configuration-match-stack-heading';heading.textContent=group.matches.length+' match'+(group.matches.length===1?'':'es');
     const list=document.createElement('div');list.className='sky-configuration-match-list';
