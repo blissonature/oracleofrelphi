@@ -1402,7 +1402,7 @@
       const opened=level<=session.maxLevel;
       const current=level===session.level;
       return '<button type="button" data-recursion-depth="'+level+'" '+(opened?'':'disabled ')+'class="'+(current?'is-current ':'')+(opened?'is-opened':'is-future')+'" aria-label="Level '+level+'">'+(compact?String(level):'<span>'+level+'</span>')+'</button>';
-    })).join('');
+    }).join('');
     return '<span class="relphi-recursion-depth-line" aria-hidden="true"></span>'+buttons+
       (session.complete?'<strong class="relphi-recursion-complete-mark">22 / 22 · complete</strong>':'');
   }
