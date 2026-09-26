@@ -182,8 +182,9 @@ function renderResultsPanel(){
   if(!patterns.length){panel.hidden=true;clearPatternHighlight();openConfigurationTile=null;return}
   panel.hidden=false;
   const count=panel.querySelector('.sky-configuration-results-count'),grid=panel.querySelector('.sky-configuration-results-grid');
-  if(count)count.textContent=patterns.length+' match'+(patterns.length===1?'':'es');
   if(grid){grid.replaceChildren();patterns.forEach((pattern,index)=>grid.appendChild(resultTile(pattern,index)));openConfigurationTile=null}
+  const currentCount=grid?.querySelectorAll(':scope>.sky-configuration-result-tile').length??patterns.length;
+  if(count)count.textContent=currentCount+' match'+(currentCount===1?'':'es');
 }
 const CONFIG_STORAGE_KEY='relphiSkyConfigurationMatrixV1';
 const configurationState=Object.fromEntries(SCOPES.map(scope=>[scope.id,new Set()]));
@@ -395,7 +396,19 @@ function start(){
   window.addEventListener('blur',()=>{if(peerHoverRow)peerHoverFrozen=true});
   document.addEventListener('visibilitychange',()=>{if(document.hidden&&peerHoverRow)peerHoverFrozen=true});
   ['relphi:sky-aspect-filter-rendered','relphi:sky-foundation-ready','relphi:sky-intrasky-relationships-ready','relphi:sky-intrasky-b-relationships-ready','relphi:sky-harmonic-window-visibility-changed','relphi:sky-orb-limit-changed','relphi:sky-b-removed','relphi:sky-b-restored','relphi:saved-sky-loaded'].forEach(name=>window.addEventListener(name,()=>{ensureConfigurationObserver();schedule()}));
-  new MutationObserver(records=>{if(records.some(record=>record.addedNodes?.length&&[...record.addedNodes].some(node=>node instanceof Element&&(node.matches?.('.sky-foundation-relationship-row')||node.querySelector?.('.sky-foundation-relationship-row')))))schedule()}).observe(document.getElementById('skyFoundationRoot')||document.body,{childList:true,subtree:true});
+  new MutationObserver(records=>{
+    const relevant=records.some(record=>{
+      if(record.type==='attributes')return record.target instanceof Element&&record.target.matches('.sky-foundation-relationship-row');
+      if(record.type!=='childList')return false;
+      return [...record.addedNodes,...record.removedNodes].some(node=>node instanceof Element&&(node.matches?.('.sky-foundation-relationship-row')||node.querySelector?.('.sky-foundation-relationship-row')));
+    });
+    if(relevant)schedule();
+  }).observe(document.getElementById('skyFoundationRoot')||document.body,{
+    childList:true,
+    subtree:true,
+    attributes:true,
+    attributeFilter:['data-aspect','data-left-placement','data-right-placement','data-left-sky','data-right-sky','data-relationship-mode','data-phase-error','data-source-orb','data-harmonic-order','data-left-house','data-right-house','data-left-sign','data-right-sign']
+  });
   ensureConfigurationObserver();schedule();
 }
 document.readyState==='loading'?document.addEventListener('DOMContentLoaded',start,{once:true}):start();
