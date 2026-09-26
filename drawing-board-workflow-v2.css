@@ -405,14 +405,16 @@ body.relphi-attune-open{overflow:hidden!important}
 }
 
 
-/* Relphi Recursion Reading · seven depths, twenty-eight positions, twenty-two cards */
+/* Relphi Recursive Reading · seven depths, twenty-two cards, six virtual red-circle portals */
 #shortListPanel .relphi-recursion-template-note{display:grid!important;gap:.28rem!important;margin:.55rem 0 0!important;padding:.72rem .78rem!important;border:1px solid rgba(166,23,18,.24)!important;border-left:3px solid #a61712!important;border-radius:8px!important;background:#fffaf3!important;color:#302925!important}
 #shortListPanel .relphi-recursion-template-note strong{font-family:Georgia,"Times New Roman",serif!important;font-size:.9rem!important;font-weight:700!important}
 #shortListPanel .relphi-recursion-template-note span{color:#625851!important;font-size:.7rem!important;line-height:1.45!important}
 
 #shortListPanel.relphi-recursion-reading .card-row-board>.card-row-item[data-relphi-recursion-level]:not(.is-recursion-level-active){display:none!important}
-#shortListPanel.relphi-recursion-reading .card-row-board>.card-row-item.is-recursion-level-active{display:block!important}
+#shortListPanel.relphi-recursion-reading .card-row-board>.card-row-item.is-recursion-level-active{display:block!important;z-index:2!important}
 #shortListPanel.relphi-recursion-reading .card-row-workspace{background-image:radial-gradient(circle at 50% 54%,rgba(255,253,248,.07) 0,rgba(255,253,248,0) 43%),var(--row-table-image,none)!important}
+#shortListPanel.relphi-recursion-reading .card-row-board{position:relative!important}
+#shortListPanel .relphi-recursion-logo-underlay{position:absolute!important;left:150px!important;top:70px!important;z-index:0!important;display:block!important;width:600px!important;height:600px!important;object-fit:contain!important;opacity:.9!important;pointer-events:none!important;user-select:none!important}
 
 #shortListPanel .relphi-recursion-board-depth{position:absolute!important;right:.7rem!important;top:4.35rem!important;z-index:52!important;display:grid!important;grid-template-columns:1fr!important;gap:.28rem!important;align-items:center!important;justify-items:center!important;width:2.1rem!important;padding:.48rem .35rem!important;border:1px solid rgba(255,253,248,.28)!important;border-radius:999px!important;background:rgba(42,24,25,.46)!important;box-shadow:0 6px 18px rgba(0,0,0,.13)!important;backdrop-filter:blur(4px)!important}
 #shortListPanel .relphi-recursion-board-depth .relphi-recursion-depth-line{position:absolute!important;top:.8rem!important;bottom:.8rem!important;left:50%!important;width:1px!important;background:rgba(255,253,248,.3)!important;transform:translateX(-50%)!important;pointer-events:none!important}
@@ -421,14 +423,14 @@ body.relphi-attune-open{overflow:hidden!important}
 #shortListPanel .relphi-recursion-board-depth button.is-future{opacity:.32!important}
 #shortListPanel .relphi-recursion-board-depth .relphi-recursion-complete-mark{display:none!important}
 
-#shortListPanel .relphi-recursion-board-portal{position:absolute!important;left:50%!important;bottom:1.05rem!important;z-index:50!important;display:grid!important;grid-template-columns:auto auto!important;grid-template-rows:auto auto!important;column-gap:.55rem!important;align-items:center!important;min-width:9.7rem!important;min-height:4.5rem!important;padding:.62rem 1rem!important;border:1px solid rgba(255,253,248,.5)!important;border-radius:50%!important;background:radial-gradient(circle,rgba(255,253,248,.94) 0,rgba(255,250,243,.9) 44%,rgba(255,253,248,.15) 72%,rgba(255,253,248,0) 74%)!important;color:#3a2523!important;box-shadow:0 9px 30px rgba(0,0,0,.17)!important;font:inherit!important;text-align:left!important}
+#shortListPanel .relphi-recursion-board-portal{position:absolute!important;left:522px!important;top:452px!important;z-index:4!important;display:grid!important;grid-template-rows:auto auto auto!important;place-items:center!important;gap:.08rem!important;width:142px!important;height:142px!important;min-width:0!important;min-height:0!important;margin:0!important;padding:.5rem!important;box-sizing:border-box!important;border:2px solid rgba(255,255,255,.84)!important;border-radius:50%!important;background:#dc1f18!important;color:#fff!important;box-shadow:0 8px 24px rgba(0,0,0,.24),0 0 0 4px rgba(220,31,24,.18)!important;font:inherit!important;text-align:center!important;transform:translate(-50%,-50%)!important;transition:transform 140ms ease,filter 140ms ease!important}
 #shortListPanel .relphi-recursion-board-portal:not(:disabled){cursor:pointer!important}
-#shortListPanel .relphi-recursion-board-portal:not(:disabled):hover{transform:translateX(-50%) scale(1.035)!important}
-#shortListPanel .relphi-recursion-board-portal:disabled{opacity:.5!important;cursor:default!important}
-#shortListPanel .relphi-recursion-earth-glyph{grid-row:1/3!important;display:grid!important;place-items:center!important;width:2.35rem!important;height:2.35rem!important;border:1px solid rgba(166,23,18,.4)!important;border-radius:50%!important;color:#a61712!important;font-size:1.45rem!important}
-#shortListPanel .relphi-recursion-board-portal strong{align-self:end!important;font-family:Georgia,"Times New Roman",serif!important;font-size:.88rem!important}
-#shortListPanel .relphi-recursion-board-portal small{align-self:start!important;color:#6c5c55!important;font-size:.58rem!important;font-weight:800!important}
-#shortListPanel .relphi-recursion-board-portal{transform:translateX(-50%)!important;transition:transform 140ms ease!important}
+#shortListPanel .relphi-recursion-board-portal:not(:disabled):hover{transform:translate(-50%,-50%) scale(1.04)!important;filter:brightness(1.04)!important}
+#shortListPanel .relphi-recursion-board-portal:disabled{opacity:.72!important;cursor:default!important}
+#shortListPanel .relphi-recursion-earth-glyph{display:grid!important;place-items:center!important;width:2.6rem!important;height:2.6rem!important;border:1px solid rgba(255,255,255,.74)!important;border-radius:50%!important;color:#fff!important;font-size:1.45rem!important}
+#shortListPanel .relphi-recursion-board-portal strong{font-family:Georgia,"Times New Roman",serif!important;font-size:.9rem!important;line-height:1!important}
+#shortListPanel .relphi-recursion-board-portal small{max-width:7rem!important;color:rgba(255,255,255,.9)!important;font-size:.55rem!important;font-weight:850!important;line-height:1.16!important}
+
 
 .relphi-focus-reader.is-recursion-reading .relphi-focus-shell{grid-template-rows:auto auto minmax(0,1fr) auto!important}
 .relphi-recursion-depth{position:relative!important;display:flex!important;align-items:center!important;justify-content:center!important;gap:clamp(.45rem,2vw,1rem)!important;min-height:2.55rem!important;padding:.38rem 1rem!important;border-bottom:1px solid #e5d9cf!important;background:#fffaf3!important}
@@ -439,7 +441,7 @@ body.relphi-attune-open{overflow:hidden!important}
 .relphi-recursion-depth button.is-future{opacity:.34!important}
 .relphi-recursion-complete-mark{position:absolute!important;right:.75rem!important;color:#8d1713!important;font-size:.6rem!important;font-weight:950!important;letter-spacing:.04em!important;text-transform:uppercase!important}
 
-.relphi-focus-reader.is-recursion-reading .relphi-focus-strip{display:grid!important;grid-template-columns:repeat(4,minmax(3.25rem,4.4rem))!important;justify-content:center!important;gap:.48rem!important;overflow:visible!important}
+.relphi-focus-reader.is-recursion-reading .relphi-focus-strip{display:grid!important;grid-template-columns:repeat(2,minmax(3.5rem,5rem))!important;grid-template-rows:repeat(2,5.45rem)!important;justify-content:center!important;align-content:center!important;gap:.55rem .7rem!important;width:min(12rem,76vw)!important;min-height:12rem!important;margin:auto!important;padding:1.05rem!important;box-sizing:border-box!important;overflow:visible!important;background:url("logo.png") center/contain no-repeat!important}
 .relphi-focus-reader.is-recursion-reading .relphi-focus-navigator{overflow:hidden!important}
 .relphi-focus-reader .relphi-recursion-focus-node{position:relative!important;display:grid!important;grid-template-rows:minmax(0,1fr) auto!important;gap:.2rem!important;align-items:center!important;justify-items:center!important;min-width:0!important;height:5.45rem!important;padding:.25rem!important;border:1px solid #d8ccc2!important;border-radius:7px!important;background:#fffdf8!important;color:#3f3530!important;font:inherit!important;box-shadow:none!important;transform:none!important}
 .relphi-focus-reader .relphi-recursion-focus-node img{display:block!important;width:auto!important;height:3.85rem!important;max-width:100%!important;object-fit:contain!important;border-radius:2px!important}
@@ -447,8 +449,10 @@ body.relphi-attune-open{overflow:hidden!important}
 .relphi-focus-reader .relphi-recursion-focus-node>span{overflow:hidden!important;max-width:100%!important;color:#665a53!important;font-size:.55rem!important;font-weight:900!important;line-height:1.1!important;text-overflow:ellipsis!important;white-space:nowrap!important}
 .relphi-focus-reader .relphi-recursion-focus-node.is-current{border-color:#a61712!important;box-shadow:0 0 0 2px rgba(166,23,18,.13)!important}
 .relphi-focus-reader .relphi-recursion-focus-node.is-empty{background:#fbf6ef!important}
-.relphi-focus-reader .relphi-recursion-focus-node.is-earth-portal{border-style:dashed!important;background:radial-gradient(circle,#fffdf8 0,#f8eee5 58%,#fffdf8 100%)!important}
-.relphi-focus-reader .relphi-recursion-focus-node.is-earth-portal:not(:disabled){color:#8f1814!important}
+.relphi-focus-reader .relphi-recursion-focus-node.is-earth-portal{border:2px solid #fff!important;border-radius:50%!important;background:#dc1f18!important;color:#fff!important;box-shadow:0 0 0 3px rgba(220,31,24,.16)!important}
+.relphi-focus-reader .relphi-recursion-focus-node.is-earth-portal>strong{border-color:rgba(255,255,255,.72)!important;color:#fff!important}
+.relphi-focus-reader .relphi-recursion-focus-node.is-earth-portal>span{color:rgba(255,255,255,.92)!important}
+.relphi-focus-reader .relphi-recursion-focus-node.is-earth-portal:not(:disabled){color:#fff!important}
 .relphi-focus-reader .relphi-recursion-focus-node:disabled{opacity:.42!important}
 
 .relphi-recursion-portal-focus[hidden]{display:none!important}
@@ -466,12 +470,12 @@ body.relphi-attune-open{overflow:hidden!important}
 @media (max-width:640px){
   #shortListPanel .relphi-recursion-board-depth{right:.48rem!important;top:4rem!important;width:1.85rem!important;padding:.38rem .28rem!important}
   #shortListPanel .relphi-recursion-board-depth button{width:1.2rem!important;height:1.2rem!important;font-size:.53rem!important}
-  #shortListPanel .relphi-recursion-board-portal{bottom:.65rem!important;min-width:8.4rem!important;min-height:4rem!important;padding:.5rem .8rem!important}
+  #shortListPanel .relphi-recursion-board-portal{width:142px!important;height:142px!important;padding:.45rem!important}
   #shortListPanel .relphi-recursion-earth-glyph{width:2rem!important;height:2rem!important;font-size:1.2rem!important}
   .relphi-recursion-depth{gap:.42rem!important;padding:.32rem .45rem!important}
   .relphi-recursion-depth button{width:1.42rem!important;height:1.42rem!important;font-size:.58rem!important}
   .relphi-recursion-complete-mark{display:none!important}
-  .relphi-focus-reader.is-recursion-reading .relphi-focus-strip{grid-template-columns:repeat(4,minmax(2.8rem,1fr))!important;gap:.28rem!important}
+  .relphi-focus-reader.is-recursion-reading .relphi-focus-strip{grid-template-columns:repeat(2,minmax(2.8rem,1fr))!important;grid-template-rows:repeat(2,4.7rem)!important;width:min(10.5rem,82vw)!important;min-height:10.5rem!important;gap:.28rem .4rem!important;padding:.85rem!important}
   .relphi-focus-reader .relphi-recursion-focus-node{height:4.7rem!important;padding:.18rem!important}
   .relphi-focus-reader .relphi-recursion-focus-node img{height:3.2rem!important}
   .relphi-focus-reader .relphi-recursion-focus-node>strong{width:2rem!important;height:2rem!important;font-size:1.1rem!important}
