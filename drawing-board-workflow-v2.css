@@ -357,6 +357,14 @@
 }
 
 
+/* Bulk selection for generated/suggested question groups */
+.relphi-question-master{display:inline-flex!important;align-items:center!important;gap:.38rem!important;width:max-content!important;max-width:100%!important;margin:0!important;padding:.34rem .52rem!important;border:1px solid #d1c7be!important;border-radius:999px!important;background:#fff!important;color:#4f4741!important;font-size:.68rem!important;font-weight:850!important;line-height:1.2!important;cursor:pointer!important}
+.relphi-question-master input{width:1rem!important;height:1rem!important;margin:0!important;accent-color:#b81712!important}
+.relphi-question-master:has(input:checked){border-color:rgba(184,23,18,.48)!important;background:#fff8f7!important;color:#8f1713!important}
+.relphi-question-master:has(input:disabled){opacity:.5!important;cursor:not-allowed!important}
+.relphi-followup-generated-head{display:flex!important;align-items:center!important;justify-content:space-between!important;gap:.65rem!important;flex-wrap:wrap!important}
+.relphi-followup-generated-head>strong{font-size:.78rem!important}
+
 /* Sacred reading setup: See What Surfaces + Attune to the Referent */
 #shortListPanel{position:relative}
 #shortListPanel .relphi-surface-question-choices{display:grid!important;grid-template-columns:1fr!important;gap:.38rem!important}
