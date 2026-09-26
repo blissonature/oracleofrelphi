@@ -77,7 +77,7 @@ function liveOrigin(slot){
 }
 function isLive(slot){return LIVE_ORIGINS.has(liveOrigin(slot))}
 function rowSky(row,side){const explicit=row.dataset[side==='left'?'leftSky':'rightSky'];if(explicit==='A'||explicit==='B')return explicit;const mode=String(row.dataset.relationshipMode||'A-B');if(mode==='A-A')return'A';if(mode==='B-B')return'B';return side==='left'?'A':'B'}
-function angularLimit(row){const aspect=String(row.dataset.aspect||''),model=window.RelphiHarmonicOrb,entry=model?.byId?.(aspect),harmonic=Number(row.dataset.harmonicOrder||entry?.harmonic||1)||1,input=document.querySelector('[data-harmonic-window-input]'),phase=Number(String(input?.value??model?.defaultWindow??6).replace(',','.')),safe=Number.isFinite(phase)&&phase>=0?phase:Number(model?.defaultWindow)||6;return Math.max(.0001,safe/harmonic)}
+function angularLimit(row){const aspect=String(row.dataset.aspect||''),model=window.RelphiHarmonicOrb,entry=model?.byId?.(aspect),harmonic=Number(row.dataset.harmonicOrder||entry?.harmonic||1)||1,input=document.querySelector('[data-harmonic-window-input]'),phase=Number(String(input?.value??model?.defaultWindow??7).replace(',','.')),safe=Number.isFinite(phase)&&phase>=0?phase:Number(model?.defaultWindow)||6;return Math.max(.0001,safe/harmonic)}
 function julianCenturies(date){return((date.getTime()/DAY+2440587.5)-2451545)/36525}
 function meanNodeLongitude(date){const T=julianCenturies(date);return norm(125.04452-1934.136261*T+.0020708*T*T+(T*T*T)/450000)}
 function meanLilithLongitude(date){
