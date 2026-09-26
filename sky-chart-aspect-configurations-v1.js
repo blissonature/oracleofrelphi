@@ -134,34 +134,28 @@ function miniConfigurationMarkup(pattern,{compact=false,interactive=true}={}){
     return'<line x1="'+a.x+'" y1="'+a.y+'" x2="'+b.x+'" y2="'+b.y+'" class="sky-configuration-mini-aspect" data-aspect="'+edge.aspect+'" style="stroke:'+stroke+'"/>';
   }).join('');
   const radii=[...records.values()].map(record=>{const p=resultPoint(record.value),color=RESULT_COLORS[record.sky]||'#777';return'<line x1="60" y1="60" x2="'+p.x+'" y2="'+p.y+'" class="sky-configuration-mini-radius" style="stroke:'+color+'"/>'}).join('');
-  const points=[...records.values()].map(record=>{const p=resultPoint(record.value),color=RESULT_COLORS[record.sky]||'#777',size=compact?16:20,radius=compact?7.4:9;return'<g class="sky-configuration-mini-point" data-sky="'+record.sky+'" data-placement="'+record.id+'" transform="translate('+p.x+' '+p.y+')"><circle cx="0" cy="0" r="'+radius+'" style="fill:#fffdf8;stroke:'+color+'"/><g class="sky-configuration-mini-vertex-glyph" data-canonical-placement="'+record.id+'" data-sky="'+record.sky+'" data-glyph-size="'+size+'"></g></g>'}).join('');
+  const points=[...records.values()].map(record=>{const p=resultPoint(record.value),radius=compact?7.4:9;return'<g class="sky-configuration-mini-point" data-sky="'+record.sky+'" data-placement="'+record.id+'" transform="translate('+p.x+' '+p.y+')"><g class="sky-configuration-mini-vertex-glyph" data-canonical-placement="'+record.id+'" data-sky="'+record.sky+'" data-canonical-radius="'+radius+'"></g></g>'}).join('');
   const classes='sky-configuration-mini-wheel'+(compact?' is-compact':'');
   const attrs=interactive?' role="button" tabindex="0" aria-label="Reveal configuration name, structure, and interpretation"':' aria-hidden="true"';
   return'<div class="'+classes+'"'+attrs+'><svg viewBox="0 0 120 120" aria-hidden="true"><circle cx="60" cy="60" r="47" class="sky-configuration-mini-ring"/>'+radii+lines+points+'</svg></div>';
 }
 async function paintConfigurationMiniGlyphs(root){
   if(!root)return;
-  const templates=window.RelphiRelationshipGlyphTemplates;
-  const colors=templates?.colors||RESULT_COLORS;
+  const component=window.RelphiGlyphComponent,registry=window.RelphiGlyphRegistry;
+  if(!component?.createBubble||!registry)return;
   for(const slot of root.querySelectorAll('.sky-configuration-mini-vertex-glyph[data-canonical-placement]')){
     if(slot.dataset.canonicalGlyphReady==='true')continue;
-    const id=String(slot.dataset.canonicalPlacement||''),sky=String(slot.dataset.sky||'A').toUpperCase(),color=colors?.[sky]||RESULT_COLORS[sky]||RESULT_COLORS.A,size=Number(slot.dataset.glyphSize)||18;
-    if(!id)continue;
-    let glyph=null;
-    try{glyph=await templates?.clone?.(id,color)}catch(_){}
-    if(glyph){
-      glyph.setAttribute('x',String(-size/2));
-      glyph.setAttribute('y',String(-size/2));
-      glyph.setAttribute('width',String(size));
-      glyph.setAttribute('height',String(size));
-      glyph.style.width=size+'px';
-      glyph.style.height=size+'px';
-      glyph.style.overflow='visible';
-      slot.replaceChildren(glyph);
+    const id=String(slot.dataset.canonicalPlacement||''),sky=String(slot.dataset.sky||'A').toUpperCase(),color=RESULT_COLORS[sky]||RESULT_COLORS.A,radius=Number(slot.dataset.canonicalRadius)||9;
+    const entry=registry.get?.(id)||registry.resolve?.(id);
+    if(!entry){console.error('[Sky Chart] Missing canonical configuration glyph:',id);continue}
+    slot.replaceChildren();
+    try{
+      const bubble=component.createBubble(slot,entry.id,{radius,color,fill:'#fffdf8'});
+      await Promise.resolve(bubble.ready);
       slot.dataset.canonicalGlyphReady='true';
-    }else{
-      const text=document.createElementNS('http://www.w3.org/2000/svg','text');
-      text.setAttribute('x','0');text.setAttribute('y','.35em');text.setAttribute('text-anchor','middle');text.classList.add('sky-configuration-mini-word-fallback');text.textContent=placementWord(id);slot.replaceChildren(text);slot.dataset.canonicalGlyphReady='false';
+      slot.dataset.canonicalGlyphForm='circled-master';
+    }catch(error){
+      console.error('[Sky Chart] Canonical configuration bubble failed:',entry.id,error);
     }
   }
 }
@@ -233,23 +227,6 @@ function nestedConfigurationMarkup(pattern){
     const exact=Number.isFinite(child.maxPhase)?child.maxPhase.toFixed(2)+'°':'';
     return'<span class="sky-configuration-nested-item" data-type="'+child.type+'"><b>'+label+'</b><small>'+exact+'</small></span>';
   }).join('')+'</div></div>';
-}
-async function paintConfigurationParticipantGlyphs(root){
-  if(!root)return;
-  const templates=window.RelphiRelationshipGlyphTemplates;
-  const colors=templates?.colors||RESULT_COLORS;
-  for(const slot of root.querySelectorAll('.sky-configuration-participant-glyph[data-canonical-placement]')){
-    const id=String(slot.dataset.canonicalPlacement||''),sky=String(slot.dataset.sky||'A').toUpperCase(),color=colors?.[sky]||RESULT_COLORS[sky]||RESULT_COLORS.A;
-    if(!id)continue;
-    let glyph=null;
-    try{glyph=await templates?.clone?.(id,color)}catch(_){}
-    if(glyph){
-      glyph.removeAttribute?.('width');glyph.removeAttribute?.('height');
-      slot.replaceChildren(glyph);slot.dataset.canonicalGlyphReady='true';
-    }else{
-      slot.textContent=placementWord(id);slot.dataset.canonicalGlyphReady='false';
-    }
-  }
 }
 function openConfiguration(tile,pattern){
   if(tile.classList.contains('is-expanded')){closeConfigurationTile(tile);return}
