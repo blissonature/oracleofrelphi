@@ -26,9 +26,10 @@ const base='http://127.0.0.1:8000/tarot.html';
 
     const templateCopy=await page.locator('.relphi-recursion-template-note').innerText();
     assert.ok(templateCopy.includes('Seven recursive levels'));
-    assert.ok(templateCopy.includes('28 positions'));
     assert.ok(templateCopy.includes('22 cards'));
-    assert.ok(templateCopy.includes('seventh Earth receives the twenty-second card'));
+    assert.ok(templateCopy.includes('three black circles'));
+    assert.ok(templateCopy.includes('red circle is Earth'));
+    assert.ok(templateCopy.includes('Level 7'));
 
     await page.click('#relphiApplyOptions');
     await page.waitForSelector('.relphi-referents-drawer',{state:'detached'});
@@ -39,8 +40,8 @@ const base='http://127.0.0.1:8000/tarot.html';
 
     const configured=await page.evaluate(()=>window.RelphiDrawingBoardOptionsBridge.capture());
     assert.equal(configured.rowActiveLayout?.id,'relphi-recursion-22');
+    assert.equal(configured.rowActiveLayout?.name,'Relphi Recursive Reading');
     assert.equal(configured.rowActiveLayout?.cardCount,22);
-    assert.equal(configured.rowActiveLayout?.positionCount,28);
     assert.equal(configured.rowActiveLayout?.virtualPositionCount,6);
     assert.equal(configured.shortListPositionLabels.length,22,'Only card-bearing positions belong to the card-slot array');
     assert.equal(configured.rowActiveLayout.positions.length,22,'Six Earth portals must stay virtual rather than becoming empty card slots');
@@ -51,11 +52,25 @@ const base='http://127.0.0.1:8000/tarot.html';
     assert.equal(configured.rowActiveLayout.positions.at(-1).recursionElement,'earth');
     assert.equal(configured.rowActiveLayout.positions.at(-1).recursionLevel,7);
 
+    const levelOne=configured.rowActiveLayout.positions.filter(item=>item.recursionLevel===1);
+    const mem=levelOne.find(item=>item.recursionElement==='mem');
+    const aleph=levelOne.find(item=>item.recursionElement==='aleph');
+    const shin=levelOne.find(item=>item.recursionElement==='shin');
+    const earth=configured.rowActiveLayout.positions.at(-1);
+    assert.equal(mem.transform.y,aleph.transform.y,'Mem and Aleph should occupy the top row of the logo');
+    assert.equal(mem.transform.x,shin.transform.x,'Mem and Shin should occupy the left column of the logo');
+    assert.equal(aleph.transform.x,earth.transform.x,'Aleph and Earth should occupy the right column of the logo');
+    assert.equal(shin.transform.y,earth.transform.y,'Shin and Earth should occupy the bottom row of the logo');
+
     assert.equal(await page.locator('#shortListPanel').evaluate(node=>node.classList.contains('relphi-recursion-reading')),true);
+    assert.equal(await page.locator('.card-row-board>.relphi-recursion-logo-underlay').count(),1,'The Relphi logo should underlay the active recursive level');
+    assert.ok((await page.locator('.relphi-recursion-logo-underlay').getAttribute('src')).endsWith('logo.png'));
     assert.equal(await page.locator('.card-row-board>.card-row-item.is-recursion-level-active').count(),3,'Level 1 should expose only its triad on the Board');
     assert.equal(await page.locator('.relphi-recursion-board-depth [data-recursion-depth]').count(),7);
     assert.equal(await page.locator('.relphi-recursion-board-depth [data-recursion-depth="1"]').evaluate(node=>node.classList.contains('is-current')),true);
     assert.equal(await page.locator('.relphi-recursion-board-portal').isDisabled(),true,'Earth must remain closed until Mem, Aleph, and Shin are complete');
+    assert.equal(await page.locator('.relphi-recursion-board-portal').evaluate(node=>node.parentElement?.classList.contains('card-row-board')),true,'The Earth portal should occupy the logo itself, not float below it');
+    assert.equal(await page.locator('.relphi-recursion-board-portal').evaluate(node=>getComputedStyle(node).backgroundColor),'rgb(220, 31, 24)','The logo red circle is the Earth portal');
 
     await page.click('.relphi-board-toast-action');
     await page.waitForSelector('.relphi-attune-reader',{state:'visible'});
@@ -142,7 +157,7 @@ const base='http://127.0.0.1:8000/tarot.html';
     assert.equal(await page.locator('.relphi-focus-fan').count(),0);
 
     assert.deepEqual(errors,[]);
-    console.log('Relphi Recursion Reading preserves six virtual Earth portals, seven recursive levels, and a terminal twenty-second Earth card.');
+    console.log('Relphi Recursive Reading preserves six virtual Earth portals, seven recursive levels, and a terminal twenty-second Earth card.');
   }finally{
     await browser.close();
   }
