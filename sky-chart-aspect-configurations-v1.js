@@ -107,13 +107,37 @@ function clearPatternHighlight(){
   document.querySelectorAll('.sky-foundation-relationship-row.is-configuration-result-peer').forEach(row=>row.classList.remove('is-configuration-result-peer'));
   document.querySelectorAll('.sky-chart-configuration-line.is-configuration-result-line').forEach(line=>line.classList.remove('is-configuration-result-line'));
   document.querySelector('[data-layer="configurations"]')?.classList.remove('is-result-focus');
+  const wheel=document.querySelector('#skyFoundationWheelMount>.sky-foundation-wheel');
+  wheel?.classList.remove('has-configuration-result-focus');
+  wheel?.querySelectorAll('.is-configuration-result-kept').forEach(node=>node.classList.remove('is-configuration-result-kept'));
 }
 function highlightPattern(pattern){
   clearPatternHighlight();if(!pattern)return;
   const keys=new Set(pattern.edges.map(edge=>edgeNodeKey(edge)));
+  const placements=new Set(),houses=new Set(),signs=new Set(),relationIndexes=new Set();
+  pattern.edges.forEach(edge=>{
+    const row=edge?.row;if(!row)return;
+    const index=String(row.dataset.relationIndex||'');if(index)relationIndexes.add(index);
+    [['left','leftSky','leftPlacement','leftHouse','leftSign'],['right','rightSky','rightPlacement','rightHouse','rightSign']].forEach(([,skyKey,placementKey,houseKey,signKey])=>{
+      const sky=String(row.dataset[skyKey]||'').toUpperCase(),placement=String(row.dataset[placementKey]||''),house=String(row.dataset[houseKey]||''),sign=String(row.dataset[signKey]||'');
+      if((sky==='A'||sky==='B')&&placement)placements.add(sky+':'+placement);
+      if((sky==='A'||sky==='B')&&house)houses.add(sky+':'+house);
+      if(sign!=='')signs.add(sign);
+    });
+  });
   document.querySelectorAll('.sky-foundation-relationship-row').forEach(row=>{if(keys.has(relationNodeKey(row)))row.classList.add('is-configuration-result-peer')});
   const layer=document.querySelector('[data-layer="configurations"]');layer?.classList.add('is-result-focus');
   layer?.querySelectorAll('.sky-chart-configuration-line').forEach(line=>line.classList.toggle('is-configuration-result-line',keys.has(String(line.dataset.configurationKey||''))));
+  const wheel=document.querySelector('#skyFoundationWheelMount>.sky-foundation-wheel');if(!wheel)return;
+  wheel.classList.add('has-configuration-result-focus');
+  wheel.querySelectorAll('[data-layer="aspects"] .sky-foundation-aspect[data-relation-index]').forEach(node=>node.classList.toggle('is-configuration-result-kept',relationIndexes.has(String(node.dataset.relationIndex||''))));
+  wheel.querySelectorAll('[data-layer="placements"] [data-sky][data-placement],[data-layer="leaders"] [data-sky][data-placement]').forEach(node=>node.classList.toggle('is-configuration-result-kept',placements.has(String(node.dataset.sky)+':'+String(node.dataset.placement))));
+  wheel.querySelectorAll('.sky-foundation-house-sector[data-sky][data-house]').forEach(node=>node.classList.toggle('is-configuration-result-kept',houses.has(String(node.dataset.sky)+':'+String(node.dataset.house))));
+  wheel.querySelectorAll('.sky-foundation-sign-sector[data-sign],.sky-foundation-sign-glyph[data-zodiac-sign]').forEach(node=>{
+    let sign=String(node.dataset.sign||'');
+    if(sign===''){const ids=['aries','taurus','gemini','cancer','leo','virgo','libra','scorpio','sagittarius','capricorn','aquarius','pisces'];sign=String(ids.indexOf(String(node.dataset.zodiacSign||'').toLowerCase()))}
+    node.classList.toggle('is-configuration-result-kept',signs.has(sign));
+  });
 }
 function closeConfigurationTile(tile){
   if(!tile)return;tile.classList.remove('is-expanded');tile.setAttribute('aria-expanded','false');const detail=tile.querySelector(':scope>.sky-configuration-result-detail');if(detail)detail.hidden=true;tile.dataset.revealLevel='';clearPatternHighlight();if(openConfigurationTile===tile)openConfigurationTile=null
