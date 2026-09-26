@@ -2371,6 +2371,7 @@
   }
   function installTopActions(root) {
     const boardTab=root.querySelector('#drawingBoardBoardTab');
+    if (boardTab) boardTab.textContent='Free Draw';
     if (boardTab && boardTab.dataset.relphiUnifiedBoardTab!=='true') {
       boardTab.dataset.relphiUnifiedBoardTab='true';
       boardTab.addEventListener('click',event=>{event.preventDefault();event.stopImmediatePropagation();closeOptions(root);},true);
