@@ -328,7 +328,7 @@
   }
   function beginOptionsSession() {
     if (optionsSession) return;
-    optionsSession = { baseline:currentSnapshot(), draft:draftFromState(), path:'templates', building:{element:'',planet:'',aspect:'',sign:'',house:''}, suggestions:[], suggestionPacks:[], surfaceDraws:{}, surfaceSelected:{} };
+    optionsSession = { baseline:currentSnapshot(), draft:draftFromState(), path:'templates', building:{element:'',planet:'',aspect:'',sign:'',house:''}, suggestions:[], suggestionPacks:[], surfaceSelected:{} };
   }
   function optionsStructuralChanged(session = optionsSession) {
     if (!session) return false;
@@ -819,11 +819,6 @@
       suggestions.map((value,index)=>'<label class="relphi-suggestion-row"><input type="checkbox" data-suggestion-use="'+index+'" checked '+(disabled?'disabled':'')+'><span>'+(index+1)+'</span><input type="text" data-suggestion-text="'+index+'" value="'+escapeHtml(value)+'" '+(disabled?'disabled':'')+'></label>').join('')+
       '<button type="button" id="relphiAcceptSuggestions" '+(disabled?'disabled':'')+'>Use selected referents</button></div>';
   }
-  function referentReviewMarkup(draft) {
-    const labels=(draft.labels||[]).map(value=>String(value||'').trim()).filter(Boolean);
-    if (!labels.length) return '';
-    return '<section class="relphi-referent-review"><strong>Current referents</strong><ol>'+labels.map(label=>'<li>'+escapeHtml(label)+'</li>').join('')+'</ol></section>';
-  }
   function buildingControlsMarkup(session, disabled=false) {
     const b=session.building || (session.building={element:'',planet:'',aspect:'',sign:'',house:''});
     const option=(value,current)=>'<option value="'+escapeHtml(value)+'" '+(current===value?'selected':'')+'>'+escapeHtml(value||'Choose…')+'</option>';
@@ -884,19 +879,6 @@
   function surfaceCourtFormula(card) {
     return String(card?.elemental_formula || [card?.rank_element,card?.element].filter(Boolean).join(' of ') || '').trim();
   }
-  function surfaceCardPools() {
-    const cards=Array.isArray(window.RELPHI_TAROT_CARDS)?window.RELPHI_TAROT_CARDS:[];
-    return {
-      primordial:cards.filter(card=>card?.card_type==='Major' && card?.astrology?.attribution_type==='Element' && ['Aleph','Mem','Shin'].includes(String(card?.hebrew?.letter||''))),
-      ace:cards.filter(card=>card?.card_type==='Ace' && card?.element),
-      planet:cards.filter(card=>card?.card_type==='Major' && String(card?.astrology?.attribution_type||'').startsWith('Planet') && surfacePlanet(card)),
-      sign:cards.filter(card=>card?.card_type==='Major' && card?.astrology?.attribution_type==='Sign' && card?.astrology?.sign),
-      need:cards.filter(card=>surfaceNeed(card)),
-      court:cards.filter(card=>card?.card_type==='Court' && surfaceCourtFormula(card)),
-      pip:cards.filter(card=>card?.card_type==='Pip' && surfacePipNumber(card)>=2 && surfacePipNumber(card)<=10)
-    };
-  }
-  function randomFrom(values) { return values?.length ? values[Math.floor(Math.random()*values.length)] : null; }
   function selectedSurfaceKinds(session) {
     const selected=session?.surfaceSelected || {};
     return SURFACE_DRAW_KEYS.filter(kind=>!!selected[kind]);
@@ -946,11 +928,6 @@
       push('pip','What form is this taking through '+form+'?');
     }
     return result.slice(0,MAX_POSITIONS);
-  }
-  function setSurfaceSuggestions(session) {
-    const entries=suggestionsFromSurface(session);
-    session.suggestions=entries.map(item=>item.text);
-    session.suggestionPacks=entries.map(item=>item.pack);
   }
   function bespokeMarkup(draft,hasCards) {
     return '<section class="relphi-referent-panel">'+
@@ -1045,9 +1022,6 @@
       const add=drawer.querySelector('#relphiAddPosition');
       if (add) add.disabled=hasCards || draft.labels.length>=MAX_POSITIONS;
       drawer.querySelector('.relphi-referent-review')?.remove();
-      const review=referentReviewMarkup(draft);
-      const settings=drawer.querySelector('.relphi-referent-settings');
-      if (review && settings) settings.insertAdjacentHTML('beforebegin',review);
     };
     const acceptCommaList=(value)=>{
       const labels=parseBulkQuestions(value);
@@ -1172,7 +1146,6 @@
     optionsSession.draft=blankDraft();
     optionsSession.path='bespoke';
     optionsSession.suggestions=[];
-    optionsSession.surfaceDraws={};
     optionsSession.surfaceSelected={};
     openTool='';
     surfaceReadingSession=null;
@@ -1990,7 +1963,9 @@
       return;
     }
     if (event.key!=='Escape') return;
-    if (reader) closeFocus({acknowledge:true});
+    const attune=document.querySelector('.relphi-attune-reader');
+    if (attune) closeAttune();
+    else if (reader) closeFocus({acknowledge:true});
     else if (optionsSession) closeOptions(panel());
     else if (openTool) { openTool=''; enhance(panel()); }
   });
