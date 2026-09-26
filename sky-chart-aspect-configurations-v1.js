@@ -19,7 +19,7 @@ const TYPES=Object.freeze([
   {id:'t-square',label:'T-Square',vertices:3},
   {id:'grand-cross',label:'Grand Cross / Grand Square',vertices:4},
   {id:'minor-grand-trine',label:'Minor Grand Trine',vertices:3},
-  {id:'grand-sextile',label:'Grand Sextile',vertices:6},
+  {id:'grand-sextile',label:'Grand Sextile / Star of David',vertices:6},
   {id:'cradle',label:'Cradle',vertices:4},
   {id:'thors-hammer',label:"Thor's Hammer / Fist of God",vertices:3}
 ]);
