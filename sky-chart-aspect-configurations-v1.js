@@ -624,6 +624,27 @@ function grandSextileEdges(graph,vertices){
   const edges=required(graph,pairs);
   return edges?{vertices:ordered,edges}:null;
 }
+function grandCrossEdges(graph,vertices){
+  if(vertices.length!==4)return null;
+  const [a,b,c,d]=vertices;
+  const pairings=[
+    [[a,b],[c,d]],
+    [[a,c],[b,d]],
+    [[a,d],[b,c]]
+  ];
+  for(const [[o1a,o1b],[o2a,o2b]] of pairings){
+    const edges=required(graph,[
+      [o1a,o1b,'opposition'],
+      [o2a,o2b,'opposition'],
+      [o1a,o2a,'square'],
+      [o1a,o2b,'square'],
+      [o1b,o2a,'square'],
+      [o1b,o2b,'square']
+    ]);
+    if(edges)return edges;
+  }
+  return null;
+}
 function detect(){
   const graph=collectGraph(),nodes=[...graph.nodes.keys()],out=[];
   for(const [a,b,c] of combinations(nodes,3)){
@@ -638,7 +659,7 @@ function detect(){
   }
   for(const vertices of combinations(nodes,4)){
     let info=aspectCounts(graph,vertices,{opposition:2,trine:2,sextile:2});if(info)addPattern(out,'mystic-rectangle',vertices,info.edges);
-    info=aspectCounts(graph,vertices,{opposition:2,square:4});if(info)addPattern(out,'grand-cross',vertices,info.edges);
+    const grandCross=grandCrossEdges(graph,vertices);if(grandCross)addPattern(out,'grand-cross',vertices,grandCross);
     info=aspectCounts(graph,vertices,{trine:3,sextile:2,opposition:1});if(info)addPattern(out,'kite',vertices,info.edges);
     info=aspectCounts(graph,vertices,{opposition:1,trine:2,sextile:3});if(info)addPattern(out,'cradle',vertices,info.edges);
   }
