@@ -134,14 +134,28 @@ function miniConfigurationMarkup(pattern,{compact=false,interactive=true}={}){
     return'<line x1="'+a.x+'" y1="'+a.y+'" x2="'+b.x+'" y2="'+b.y+'" class="sky-configuration-mini-aspect" data-aspect="'+edge.aspect+'" style="stroke:'+stroke+'"/>';
   }).join('');
   const radii=[...records.values()].map(record=>{const p=resultPoint(record.value),color=RESULT_COLORS[record.sky]||'#777';return'<line x1="60" y1="60" x2="'+p.x+'" y2="'+p.y+'" class="sky-configuration-mini-radius" style="stroke:'+color+'"/>'}).join('');
+  const classes='sky-configuration-mini-wheel'+(compact?' is-compact':'');
+  const attrs=interactive?' role="button" tabindex="0" aria-label="Configuration diagram"':' aria-hidden="true"';
+
+  // Preserve the compact data-derived thumbnail exactly as designed before
+  // inscribed glyph experiments: colored sky vertices with A/B labels.
+  if(compact){
+    const points=[...records.values()].map(record=>{
+      const p=resultPoint(record.value),color=RESULT_COLORS[record.sky]||'#777';
+      return'<g class="sky-configuration-mini-point" data-sky="'+record.sky+'"><circle cx="'+p.x+'" cy="'+p.y+'" r="4.7" style="fill:'+color+';stroke:'+color+'"/><text x="'+p.x+'" y="'+(p.y+.4)+'" text-anchor="middle" dominant-baseline="middle">'+record.sky+'</text></g>';
+    }).join('');
+    return'<div class="'+classes+'"'+attrs+'><svg viewBox="0 0 120 120" aria-hidden="true"><circle cx="60" cy="60" r="47" class="sky-configuration-mini-ring"/>'+radii+lines+points+'</svg></div>';
+  }
+
+  // Expanded diagrams keep geometry in the 120×120 SVG, but canonical
+  // inscribed vertices live in screen space so wheel scaling cannot alter them.
   const vertices=[...records.values()].map(record=>{
     const p=resultPoint(record.value),left=(p.x/120*100).toFixed(4),top=(p.y/120*100).toFixed(4);
     return'<span class="sky-configuration-vertex-host" data-canonical-placement="'+record.id+'" data-sky="'+record.sky+'" style="left:'+left+'%;top:'+top+'%"></span>';
   }).join('');
-  const classes='sky-configuration-mini-wheel'+(compact?' is-compact':'');
-  const attrs=interactive?' role="button" tabindex="0" aria-label="Configuration diagram"':' aria-hidden="true"';
   return'<div class="'+classes+'"'+attrs+'><svg viewBox="0 0 120 120" aria-hidden="true"><circle cx="60" cy="60" r="47" class="sky-configuration-mini-ring"/>'+radii+lines+'</svg><span class="sky-configuration-vertex-layer" aria-hidden="true">'+vertices+'</span></div>';
 }
+
 async function paintConfigurationMiniGlyphs(root){
   if(!root)return;
   const component=window.RelphiGlyphComponent,registry=window.RelphiGlyphRegistry;
@@ -153,19 +167,18 @@ async function paintConfigurationMiniGlyphs(root){
     if(!entry){console.error('[Sky Chart] Missing canonical configuration glyph:',id);continue}
     const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
     svg.setAttribute('viewBox','-32 -32 64 64');
-    svg.setAttribute('width','38');
-    svg.setAttribute('height','38');
+    svg.setAttribute('width','26');
+    svg.setAttribute('height','26');
     svg.setAttribute('aria-hidden','true');
     svg.setAttribute('focusable','false');
     svg.classList.add('sky-configuration-canonical-vertex');
     host.replaceChildren(svg);
     try{
-      const bubble=component.createBubble(svg,entry.id,{radius:19,color,fill:'#fffdf8'});
+      const bubble=component.createBubble(svg,entry.id,{radius:13,color,fill:'#fffdf8'});
       await Promise.resolve(bubble.ready);
       host.dataset.canonicalGlyphReady='true';
-      host.dataset.canonicalGlyphForm='circled-master-38';
     }catch(error){
-      console.error('[Sky Chart] Canonical configuration bubble failed:',entry.id,error);
+      console.error('[Sky Chart] Canonical configuration glyph failed:',entry.id,error);
       host.replaceChildren();
     }
   }
