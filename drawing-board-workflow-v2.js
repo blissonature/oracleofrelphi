@@ -28,6 +28,8 @@
   let openTool = '';
   let transformEditingUnlocked = false;
   let showPositionStickers = readStickerVisibility();
+  let surfaceReadingSession = null;
+  let attuneIndex = -1;
 
   function panel() { return document.getElementById(PANEL_ID); }
   function prefabBridge() { return window.RelphiDrawingBoardPrefabsBridge || null; }
@@ -326,7 +328,7 @@
   }
   function beginOptionsSession() {
     if (optionsSession) return;
-    optionsSession = { baseline:currentSnapshot(), draft:draftFromState(), path:'templates', building:{element:'',planet:'',aspect:'',sign:'',house:''}, suggestions:[], suggestionPacks:[], surfaceDraws:{} };
+    optionsSession = { baseline:currentSnapshot(), draft:draftFromState(), path:'templates', building:{element:'',planet:'',aspect:'',sign:'',house:''}, suggestions:[], suggestionPacks:[], surfaceDraws:{}, surfaceSelected:{} };
   }
   function optionsStructuralChanged(session = optionsSession) {
     if (!session) return false;
@@ -836,6 +838,24 @@
   }
   const PIP_NUMBER_BY_RANK = {Two:2,Three:3,Four:4,Five:5,Six:6,Seven:7,Eight:8,Nine:9,Ten:10};
   const SURFACE_DRAW_KEYS = ['primordial','ace','planet','sign','need','court','pip'];
+  const SURFACE_QUESTIONS = Object.freeze({
+    primordial:'Which primordial force?',
+    ace:'What is taking root?',
+    planet:'What is at work?',
+    sign:'How is it showing up?',
+    need:'What is needed?',
+    court:'How is it being carried?',
+    pip:'What form is it taking?'
+  });
+  const SURFACE_PACK_LABELS = Object.freeze({
+    primordial:'Mother-letter Majors',
+    ace:'Aces',
+    planet:'Planetary Majors',
+    sign:'Zodiac Majors',
+    need:'Universal Human Needs',
+    court:'Courts',
+    pip:'Pips'
+  });
   const SURFACE_PACK_BY_KIND = Object.freeze({
     primordial:'primordial-majors',
     ace:'aces',
@@ -877,26 +897,26 @@
     };
   }
   function randomFrom(values) { return values?.length ? values[Math.floor(Math.random()*values.length)] : null; }
-  function surfaceDrawSummary(session) {
-    const draws=session.surfaceDraws || {};
-    const parts=[];
-    if (draws.primordial) parts.push('<article data-surface-kind="primordial" data-surface-card-type="'+escapeHtml(draws.primordial.card_type||'')+'"><strong>'+escapeHtml(draws.primordial.name)+'</strong><span>Primordial element · '+escapeHtml(surfacePrimordialElement(draws.primordial))+' · Mother-letter Major · three-element layer before Earth</span></article>');
-    if (draws.ace) parts.push('<article data-surface-kind="ace" data-surface-card-type="'+escapeHtml(draws.ace.card_type||'')+'"><strong>'+escapeHtml(draws.ace.name)+'</strong><span>Elemental quaternion · '+escapeHtml(draws.ace.element||'')+' · four-element layer with Earth included</span></article>');
-    if (draws.planet) parts.push('<article data-surface-kind="planet" data-surface-card-type="'+escapeHtml(draws.planet.card_type||'')+'"><strong>'+escapeHtml(draws.planet.name)+'</strong><span>What is at work · '+escapeHtml(surfacePlanet(draws.planet))+'</span></article>');
-    if (draws.sign) parts.push('<article data-surface-kind="sign" data-surface-card-type="'+escapeHtml(draws.sign.card_type||'')+'"><strong>'+escapeHtml(draws.sign.name)+'</strong><span>How it is showing up · '+escapeHtml(draws.sign.astrology?.sign||'')+'</span></article>');
-    if (draws.need) parts.push('<article data-surface-kind="need" data-surface-card-type="'+escapeHtml(draws.need.card_type||'')+'"><strong>'+escapeHtml(draws.need.name)+'</strong><span>What is needed · '+escapeHtml(surfaceNeed(draws.need))+'</span></article>');
-    if (draws.court) {
-      const formula=surfaceCourtFormula(draws.court);
-      const special=isPrincessPage(draws.court)
-        ? 'Next-generation embodiment · Page/Princess · '+formula+' · Earth carries the suit element into tangible form'
-        : 'How it is being carried · '+escapeHtml(draws.court.rank||'Court')+' · '+escapeHtml(formula);
-      parts.push('<article data-surface-kind="court" data-surface-card-type="'+escapeHtml(draws.court.card_type||'')+'" class="'+(isPrincessPage(draws.court)?'is-princess-page':'')+'"><strong>'+escapeHtml(draws.court.name)+'</strong><span>'+special+'</span></article>');
-    }
-    if (draws.pip) {
-      const num=surfacePipNumber(draws.pip);
-      parts.push('<article data-surface-kind="pip" data-surface-card-type="'+escapeHtml(draws.pip.card_type||'')+'"><strong>'+escapeHtml(draws.pip.name)+'</strong><span>What form it is taking · '+escapeHtml(draws.pip.element||'')+' · '+escapeHtml(HOUSE_ORDINALS[num-1]||String(num))+' House · '+escapeHtml(MODE_BY_PIP[num]||'')+'</span></article>');
-    }
-    return parts.length ? '<div class="relphi-surface-draws">'+parts.join('')+'</div>' : '<p class="relphi-referent-empty">Draw from the symbolic sub-packs. The surfaced card suggests the referent; that position then draws its reading card from the same sub-pack. The surfaced card itself does not become part of the reading.</p>';
+  function selectedSurfaceKinds(session) {
+    const selected=session?.surfaceSelected || {};
+    return SURFACE_DRAW_KEYS.filter(kind=>!!selected[kind]);
+  }
+  function surfaceChoicesMarkup(session, disabled=false) {
+    const selected=session.surfaceSelected || (session.surfaceSelected={});
+    return '<div class="relphi-surface-question-choices" role="group" aria-label="Question types">'+
+      SURFACE_DRAW_KEYS.map(kind=>'<label class="relphi-surface-question-choice"><input type="checkbox" data-surface-choice="'+kind+'" '+(selected[kind]?'checked ':'')+(disabled?'disabled':'')+'><span><strong>'+escapeHtml(SURFACE_QUESTIONS[kind])+'</strong><small>'+escapeHtml(SURFACE_PACK_LABELS[kind])+'</small></span></label>').join('')+
+      '</div><p class="relphi-surface-choice-note">Choose each kind of question you agree to ask. You can choose any combination.</p>';
+  }
+  function prepareSurfaceDraft(session) {
+    const kinds=selectedSurfaceKinds(session);
+    if (!kinds.length) return false;
+    const draft=session.draft;
+    draft.labels=kinds.map(kind=>SURFACE_QUESTIONS[kind]);
+    draft.positionPacks=kinds.map(kind=>SURFACE_PACK_BY_KIND[kind]||'');
+    draft.templateId='';
+    draft.basedOnTemplateId='';
+    draft.templateName='See What Surfaces';
+    return true;
   }
   function suggestionsFromSurface(session) {
     const draws=session.surfaceDraws || {};
@@ -955,7 +975,7 @@
     if (session.path==='bespoke') return bespokeMarkup(draft,hasCards);
     if (session.path==='templates') return templatesMarkup(draft,hasCards);
     if (session.path==='blocks') return '<section class="relphi-referent-panel"><div class="relphi-options-subhead"><div><strong>Building Blocks</strong><span>Choose Relphi symbols deliberately and let them formulate candidate referents.</span></div></div>'+buildingControlsMarkup(session,hasCards)+suggestionMarkup(session,hasCards)+'</section>';
-    if (session.path==='surface') return '<section class="relphi-referent-panel"><div class="relphi-options-subhead"><div><strong>See What Surfaces</strong><span>Let the deck choose the symbolic ingredients first.</span></div></div><div class="relphi-surface-actions"><button type="button" data-surface-draw="primordial" '+(hasCards?'disabled':'')+'>Which primordial force?</button><button type="button" data-surface-draw="ace" '+(hasCards?'disabled':'')+'>What is taking root?</button><button type="button" data-surface-draw="planet" '+(hasCards?'disabled':'')+'>What is at work?</button><button type="button" data-surface-draw="sign" '+(hasCards?'disabled':'')+'>How is it showing up?</button><button type="button" data-surface-draw="need" '+(hasCards?'disabled':'')+'>What is needed?</button><button type="button" data-surface-draw="court" '+(hasCards?'disabled':'')+'>How is it being carried?</button><button type="button" data-surface-draw="pip" '+(hasCards?'disabled':'')+'>What form is it taking?</button><button type="button" id="relphiSurfaceAll" '+(hasCards?'disabled':'')+'>Surface all layers</button></div>'+surfaceDrawSummary(session)+suggestionMarkup(session,hasCards)+'</section>';
+    if (session.path==='surface') return '<section class="relphi-referent-panel"><div class="relphi-options-subhead"><div><strong>See What Surfaces</strong><span>Choose the questions for the first exploration. The cards themselves surface in sacred reading mode.</span></div></div>'+surfaceChoicesMarkup(session,hasCards)+'</section>';
     return '';
   }
 
@@ -982,10 +1002,9 @@
           referentPathButton('surface','See What Surfaces','Draw symbolic cards to discover what to ask.',session.path,hasCards)+
         '</div>'+
         pathPanelMarkup(session,hasCards)+
-        referentReviewMarkup(draft)+
         '<section class="relphi-referent-settings" aria-label="Draw settings"><strong class="relphi-referent-settings-title">Draw settings</strong><div class="relphi-draw-options"><label>Pack<select id="relphiDraftPack">'+packOptions(draft.pack)+'</select></label><label><input id="relphiDraftStickers" type="checkbox" '+(draft.stickers?'checked':'')+' title="Show position stickers"> Show referent stickers</label><label><input id="relphiDraftReversals" type="checkbox" '+(draft.reversals?'checked':'')+'> Reversals</label><label><input id="relphiDraftRepeats" type="checkbox" '+(draft.repeats?'checked':'')+'> Repeats</label></div></section>'+
       '</div>'+
-      '<div class="relphi-options-commitbar"><button type="button" id="relphiResetBoard" class="relphi-reset-board">Reset Board</button><span></span><button type="button" id="relphiCancelOptions">Cancel</button><button type="button" id="relphiApplyOptions" class="primary">Start Reading</button></div>';
+      '<div class="relphi-options-commitbar"><button type="button" id="relphiResetBoard" class="relphi-reset-board">Reset Board</button><span></span><button type="button" id="relphiCancelOptions">Cancel</button><button type="button" id="relphiApplyOptions" class="primary" '+(session.path==='surface'&&!selectedSurfaceKinds(session).length?'disabled':'')+'>Start Reading</button></div>';
     modeTabs.insertAdjacentElement('afterend',drawer);
     setBoardMode(root,'referents');
 
@@ -1088,20 +1107,12 @@
       renderOptions(root);
     });
 
-    const redrawSurface = kind => {
-      const pools=surfaceCardPools();
-      session.surfaceDraws ||= {};
-      session.surfaceDraws[kind]=randomFrom(pools[kind]);
-      setSurfaceSuggestions(session);
-      renderOptions(root);
-    };
-    drawer.querySelectorAll('[data-surface-draw]').forEach(button=>button.addEventListener('click',()=>redrawSurface(button.dataset.surfaceDraw)));
-    drawer.querySelector('#relphiSurfaceAll')?.addEventListener('click',()=>{
-      const pools=surfaceCardPools();
-      session.surfaceDraws=Object.fromEntries(SURFACE_DRAW_KEYS.map(kind=>[kind,randomFrom(pools[kind])]));
-      setSurfaceSuggestions(session);
-      renderOptions(root);
-    });
+    drawer.querySelectorAll('[data-surface-choice]').forEach(input=>input.addEventListener('change',()=>{
+      session.surfaceSelected ||= {};
+      session.surfaceSelected[input.dataset.surfaceChoice]=input.checked;
+      const start=drawer.querySelector('#relphiApplyOptions');
+      if (start && session.path==='surface') start.disabled=!selectedSurfaceKinds(session).length;
+    }));
 
     drawer.querySelectorAll('[data-suggestion-text]').forEach(input=>input.addEventListener('input',()=>{
       session.suggestions[Number(input.dataset.suggestionText)]=input.value;
@@ -1133,7 +1144,8 @@
     drawer.querySelector('#relphiResetBoard')?.addEventListener('click',()=>resetBoardFromOptions(root));
     drawer.querySelector('#relphiCancelOptions')?.addEventListener('click',()=>closeOptions(root));
     drawer.querySelector('#relphiApplyOptions')?.addEventListener('click',()=>{
-      if ((session.path==='surface'||session.path==='blocks') && session.suggestions.length) commitSelectedSuggestions();
+      if (session.path==='surface' && !prepareSurfaceDraft(session)) return;
+      if (session.path==='blocks' && session.suggestions.length) commitSelectedSuggestions();
       applyOptions(root);
     });
   }
@@ -1161,7 +1173,10 @@
     optionsSession.path='bespoke';
     optionsSession.suggestions=[];
     optionsSession.surfaceDraws={};
+    optionsSession.surfaceSelected={};
     openTool='';
+    surfaceReadingSession=null;
+    closeAttune();
     closeFocus({acknowledge:false});
     const clear=root.querySelector('#clearShortList');
     if (clear) clear.click();
@@ -1255,10 +1270,125 @@
     snap.rowDrawDeckSignature='';
     bridge.restore(snap);
   }
+  function showBoardToast(message,{title='Reading ready',duration=7600}={}) {
+    const root=panel();
+    if (!root || !message) return;
+    root.querySelector('.relphi-board-toast')?.remove();
+    const toast=document.createElement('aside');
+    toast.className='relphi-board-toast';
+    toast.setAttribute('role','status');
+    toast.innerHTML='<button type="button" class="relphi-board-toast-close" aria-label="Dismiss">×</button><span class="eyebrow">'+escapeHtml(title)+'</span><p>'+escapeHtml(message)+'</p>';
+    root.appendChild(toast);
+    const remove=()=>toast.remove();
+    toast.querySelector('.relphi-board-toast-close')?.addEventListener('click',remove);
+    if (duration>0) setTimeout(()=>{ if (toast.isConnected) remove(); },duration);
+  }
+  function surfaceGuidance() {
+    return 'Attune to each referent before revealing its card. Draw randomly from the assigned pack or search for the physical card you drew. After the initial exploration, new questions are created from what surfaced.';
+  }
+  function cardDataAt(index) {
+    const id=String(cardAt(index)?.dataset?.rowCard || '');
+    return (Array.isArray(window.RELPHI_TAROT_CARDS)?window.RELPHI_TAROT_CARDS:[]).find(card=>card?.card_id===id) || null;
+  }
+  function closeAttune() {
+    document.querySelector('.relphi-attune-reader')?.remove();
+    document.body.classList.remove('relphi-attune-open');
+    attuneIndex=-1;
+  }
+  function renderAttuneSearch(reader, query) {
+    const results=reader.querySelector('.relphi-attune-search-results');
+    if (!results) return;
+    const q=String(query||'').trim();
+    if (!q) { results.innerHTML='<p>Search the Tarot Ledger by card name, title, rank, suit, element, planet, sign, or other indexed term.</p>'; return; }
+    const matches=ledgerBridge()?.searchCards?.(q,24) || [];
+    results.innerHTML=matches.length ? matches.map(card=>'<button type="button" data-attune-card="'+escapeHtml(card.card_id)+'"><img src="'+escapeHtml(card.image||'')+'" alt=""><span>'+escapeHtml(card.title||card.card_id)+'</span></button>').join('') : '<p>No matching cards.</p>';
+    results.querySelectorAll('[data-attune-card]').forEach(button=>button.addEventListener('click',()=>{
+      const target=attuneIndex;
+      const root=panel();
+      const drawnIndex=currentCardCount(root);
+      const cardId=button.dataset.attuneCard || '';
+      if (!Number.isInteger(target) || target<0 || !ledgerBridge()?.addCardToBoard?.(cardId)) return;
+      pendingFocusIndex=drawnIndex;
+      if (target!==drawnIndex) prefabBridge()?.swapPositionSlots?.(drawnIndex,target);
+      closeAttune();
+    }));
+  }
+  function openAttune(index) {
+    const root=panel();
+    const item=focusItem(index,root);
+    if (!surfaceReadingSession || !root || !isEmptyItem(item)) return false;
+    closeFocus({acknowledge:true});
+    closeAttune();
+    attuneIndex=index;
+    const snap=currentSnapshot() || {};
+    const scope=String(snap.rowPositionMeta?.[index]?.drawScope || snap.rowActiveLayout?.positions?.[index]?.drawScope || snap.rowDrawScope || 'full');
+    const reader=document.createElement('section');
+    reader.className='relphi-attune-reader';
+    reader.setAttribute('role','dialog');
+    reader.setAttribute('aria-modal','true');
+    reader.setAttribute('aria-label','Attune to the Referent');
+    reader.innerHTML='<div class="relphi-attune-shell"><button type="button" class="relphi-attune-close" aria-label="Close">×</button><span class="eyebrow">Attune to the Referent</span><h2>'+escapeHtml(positionLabel(index,root))+'</h2><p class="relphi-attune-pack">Assigned pack · '+escapeHtml(SURFACE_PACK_LABELS[Object.keys(SURFACE_PACK_BY_KIND).find(key=>SURFACE_PACK_BY_KIND[key]===scope)] || scope || 'Full deck')+'</p><p class="relphi-attune-note">Stay with the referent on its own first. Notice what it already means to you before you reveal a card.</p><div class="relphi-attune-actions"><button type="button" class="primary" data-attune-random>Draw a random card from the assigned pack</button><button type="button" data-attune-search>Search for a card</button></div><section class="relphi-attune-search" hidden><label>Tarot Ledger search<input type="search" autocomplete="off" placeholder="Search for the card you drew"></label><div class="relphi-attune-search-results"><p>Search the Tarot Ledger to digitize a physical-card reading.</p></div></section></div>';
+    reader.querySelector('.relphi-attune-close')?.addEventListener('click',closeAttune);
+    reader.querySelector('[data-attune-random]')?.addEventListener('click',()=>{
+      const target=attuneIndex;
+      closeAttune();
+      drawInto(focusItem(target,panel()),target);
+    });
+    reader.querySelector('[data-attune-search]')?.addEventListener('click',()=>{
+      const search=reader.querySelector('.relphi-attune-search');
+      search.hidden=false;
+      reader.querySelector('.relphi-attune-search input')?.focus();
+    });
+    reader.querySelector('.relphi-attune-search input')?.addEventListener('input',event=>renderAttuneSearch(reader,event.target.value));
+    document.body.appendChild(reader);
+    document.body.classList.add('relphi-attune-open');
+    return true;
+  }
+  function appendSurfaceFollowups(entries, root=panel()) {
+    const bridge=optionsBridge();
+    if (!bridge || !root || !entries.length) return false;
+    const snap=bridge.capture();
+    const originalLabels=Array.isArray(snap.shortListPositionLabels)?snap.shortListPositionLabels.slice():[];
+    const originalPacks=originalLabels.map((_,index)=>String(snap.rowPositionMeta?.[index]?.drawScope || snap.rowActiveLayout?.positions?.[index]?.drawScope || ''));
+    const labels=originalLabels.concat(entries.map(item=>item.text)).slice(0,MAX_POSITIONS);
+    const packs=originalPacks.concat(entries.map(item=>item.pack)).slice(0,labels.length);
+    const positions=genericPositions(labels);
+    positions.forEach((item,index)=>{item.drawScope=packs[index]||'';});
+    snap.shortListPositionLabels=labels;
+    snap.shortListPositionCardIds=Array.from({length:labels.length},(_,index)=>String(snap.shortListPositionCardIds?.[index]||''));
+    snap.rowEnvelopeLayout={};
+    snap.rowCardTransforms={};
+    snap.rowPositionMeta=positions.map((item,index)=>{
+      snap.rowEnvelopeLayout[index]={x:item.transform.x*CANVAS_W,y:item.transform.y*CANVAS_H};
+      snap.rowCardTransforms[index]={scale:item.transform.scale,rotation:item.transform.rotation||0,zIndex:item.transform.zIndex||1};
+      return {id:item.id,role:index<surfaceReadingSession.initialCount?'surface-initial':'surface-followup',covers:'',crosses:'',drawScope:packs[index]||'',openTransform:null};
+    });
+    snap.rowActiveLayout={version:1,id:'see-what-surfaces-active',name:'See What Surfaces',cardCount:labels.length,source:'custom',editable:false,positions:positions.map((item,index)=>({...item,drawOrder:index+1})),rules:{allowReversals:snap.rowAllowReversals!==false,allowRepeats:!!snap.rowAllowRepeats,drawScope:snap.rowDrawScope||'full'}};
+    snap.rowLayoutLocked=true;
+    bridge.restore(snap);
+    return true;
+  }
+  function maybeGenerateSurfaceFollowups(root=panel()) {
+    const session=surfaceReadingSession;
+    if (!session || session.followupsGenerated || !root) return;
+    if (session.kinds.some((_,index)=>!cardAt(index,root))) return;
+    const draws={};
+    session.kinds.forEach((kind,index)=>{draws[kind]=cardDataAt(index);});
+    const entries=suggestionsFromSurface({surfaceDraws:draws});
+    session.followupsGenerated=true;
+    session.followupCount=entries.length;
+    if (entries.length && appendSurfaceFollowups(entries,root)) {
+      showBoardToast('The first exploration is complete. New referents have surfaced from those cards; continue through them one at a time.',{title:'What surfaced next',duration:6800});
+    }
+  }
+
   function applyOptions(root = panel()) {
     if (!optionsSession || !root) return;
-    const draft=clone(optionsSession.draft);
-    const structural=optionsStructuralChanged(optionsSession);
+    const session=optionsSession;
+    const draft=clone(session.draft);
+    const structural=optionsStructuralChanged(session);
+    const surfaceKinds=session.path==='surface' ? selectedSurfaceKinds(session) : [];
+    surfaceReadingSession=surfaceKinds.length ? {kinds:surfaceKinds.slice(),initialCount:surfaceKinds.length,followupsGenerated:false,followupCount:0} : null;
     writeStickerVisibility(draft.stickers);
     optionsSession=null;
     root.querySelector('.relphi-reading-options-drawer')?.remove();
@@ -1272,7 +1402,17 @@
     } else {
       applyDrawSettings(draft);
     }
-    setTimeout(()=>{ enhance(panel()); zoomExtents(); },0);
+    setTimeout(()=>{
+      enhance(panel());
+      zoomExtents();
+      if (surfaceReadingSession) {
+        showBoardToast(surfaceGuidance(),{title:'See What Surfaces'});
+        const next=nextUndrawnNativeIndex(panel());
+        if (next!=null) setTimeout(()=>openAttune(next),0);
+      } else {
+        showBoardToast('Your referents and draw settings are established. The Drawing Board is ready.',{title:'Reading ready',duration:4600});
+      }
+    },0);
   }
 
   function acknowledgeCelticCrossing() {
@@ -1587,6 +1727,7 @@
     const leaving=focusIndex;
     if (leaving>=0 && leaving!==next && isCrossingPosition(leaving)) acknowledgeCelticCrossing();
     if (cardAt(next)) openFocus(next);
+    else if (surfaceReadingSession) openAttune(next);
     else drawInto(focusItem(next),next);
   }
   function navigateFocusBy(delta) {
@@ -1623,7 +1764,7 @@
   function drawNextLogical(root=panel()) {
     if (!root || activeDraw) return;
     const next=nextUndrawnNativeIndex(root);
-    if (next!=null) { drawInto(focusItem(next,root),next); return; }
+    if (next!=null) { if (surfaceReadingSession) openAttune(next); else drawInto(focusItem(next,root),next); return; }
     if (configuredPositionCount()>0) return;
     const draw=root.querySelector('#drawRandomRowCard');
     if (!draw || draw.disabled) return;
@@ -1658,7 +1799,8 @@
         event.preventDefault(); event.stopImmediatePropagation(); openFocus(index); return;
       }
       if (isEmptyItem(item)) {
-        event.preventDefault(); event.stopImmediatePropagation(); drawInto(item,index);
+        event.preventDefault(); event.stopImmediatePropagation();
+        if (surfaceReadingSession) openAttune(index); else drawInto(item,index);
       }
     },true);
   }
@@ -1681,7 +1823,18 @@
     const draw=root.querySelector('#drawRandomRowCard');
     if (draw && draw.dataset.relphiUnifiedDraw!=='true') {
       draw.dataset.relphiUnifiedDraw='true';
-      draw.addEventListener('click',()=>{ pendingFocusIndex=currentCardCount(root); },true);
+      draw.addEventListener('click',event=>{
+        if (!activeDraw && surfaceReadingSession) {
+          const next=nextUndrawnNativeIndex(root);
+          if (next!=null) {
+            event.preventDefault();
+            event.stopImmediatePropagation();
+            openAttune(next);
+            return;
+          }
+        }
+        pendingFocusIndex=currentCardCount(root);
+      },true);
     }
   }
   function markSemanticPositions(root) {
@@ -1729,6 +1882,7 @@
     installLockedLayoutPointerGuards(root);
     installBoardCapture(root);
     if (optionsSession) renderOptions(root);
+    if (surfaceReadingSession) maybeGenerateSurfaceFollowups(root);
     if (pendingFocusIndex!=null) {
       const target=pendingFocusIndex;
       if (cardAt(target,root)) {
