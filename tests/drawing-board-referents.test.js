@@ -96,8 +96,11 @@ const base='http://127.0.0.1:8000/tarot.html';
     assert.equal(await page.locator('#shortListPanel .card-row-board [data-row-card]').count(),0,'No card should be chosen before the reader reveals it');
     assert.ok((await page.locator('.relphi-board-toast').innerText()).includes('Attune to each referent'),'Board toast should explain the reading mode after settings are established');
     assert.equal(await page.locator('.relphi-board-toast-action').textContent(),'Begin reading');
-    await page.click('.relphi-board-toast-action');
+    await page.click('.relphi-board-toast-close');
+    await page.waitForSelector('.relphi-board-toast',{state:'detached'});
+    await page.click('#shortListPanel .card-row-board>.card-row-item[data-row-index="0"]');
     await page.waitForSelector('.relphi-attune-reader',{state:'visible'});
+    assert.equal(await page.locator('#shortListPanel .card-row-board [data-row-card]').count(),0,'Clicking an empty Surface position must enter Attune without drawing a card');
     assert.equal(await page.locator('.relphi-attune-shell h2').textContent(),'What is happening at the root of this?');
 
     const configured=await page.evaluate(()=>window.RelphiDrawingBoardOptionsBridge.capture());
