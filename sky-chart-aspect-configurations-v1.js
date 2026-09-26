@@ -578,6 +578,23 @@ function aspectCounts(graph,vertices,expected=null){
   return{counts,edges};
 }
 function countIs(counts,expected){for(const [aspect,count] of Object.entries(expected))if((counts.get(aspect)||0)!==count)return false;let total=0;for(const count of counts.values())total+=count;return total===Object.values(expected).reduce((sum,value)=>sum+value,0)}
+function grandSextileEdges(graph,vertices){
+  if(vertices.length!==6)return null;
+  const ordered=vertices.slice().sort((a,b)=>{
+    const av=Number(resultVertexRecord(a)?.value),bv=Number(resultVertexRecord(b)?.value);
+    if(!Number.isFinite(av)&&!Number.isFinite(bv))return String(a).localeCompare(String(b));
+    if(!Number.isFinite(av))return 1;
+    if(!Number.isFinite(bv))return -1;
+    return resultNorm(av)-resultNorm(bv);
+  });
+  if(ordered.some(key=>!Number.isFinite(Number(resultVertexRecord(key)?.value))))return null;
+  const pairs=[];
+  for(let i=0;i<6;i+=1)pairs.push([ordered[i],ordered[(i+1)%6],'sextile']);
+  for(let i=0;i<6;i+=1)pairs.push([ordered[i],ordered[(i+2)%6],'trine']);
+  for(let i=0;i<3;i+=1)pairs.push([ordered[i],ordered[i+3],'opposition']);
+  const edges=required(graph,pairs);
+  return edges?{vertices:ordered,edges}:null;
+}
 function detect(){
   const graph=collectGraph(),nodes=[...graph.nodes.keys()],out=[];
   for(const [a,b,c] of combinations(nodes,3)){
@@ -599,7 +616,7 @@ function detect(){
   const grandTrines=out.filter(pattern=>pattern.type==='grand-trine');
   for(let i=0;i<grandTrines.length;i+=1)for(let j=i+1;j<grandTrines.length;j+=1){
     const union=[...new Set([...grandTrines[i].vertices,...grandTrines[j].vertices])];if(union.length!==6)continue;
-    const info=aspectCounts(graph,union,{sextile:6,trine:6,opposition:3});if(info)addPattern(out,'grand-sextile',union,info.edges);
+    const star=grandSextileEdges(graph,union);if(star)addPattern(out,'grand-sextile',star.vertices,star.edges);
   }
   out.sort((a,b)=>a.maxPhase-b.maxPhase||a.meanPhase-b.meanPhase||TYPES.findIndex(type=>type.id===a.type)-TYPES.findIndex(type=>type.id===b.type));
   return{graph,patterns:out};
