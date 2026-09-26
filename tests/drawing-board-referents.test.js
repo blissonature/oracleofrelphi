@@ -63,8 +63,8 @@ const base='http://127.0.0.1:8000/tarot.html';
     const choices=page.locator('[data-surface-choice]');
     assert.equal(await choices.count(),8,'See What Surfaces should expose Full Pack plus each specialist question type');
     assert.deepEqual(await page.locator('.relphi-surface-question-choice strong').allTextContents(),[
-      'Where should I begin?','What basic force is here?','What wants to begin?','What is driving this?','What style is it taking?',
-      'What is needed?','How is it being handled?','What is happening in practice?'
+      'What should I see first?','What is happening at the root of this?','What is beginning here?','What is moving this from one state to another?','How is this unfolding?',
+      'What need is asking for attention?','How is the situation being carried?','What condition has taken shape?'
     ]);
     assert.equal(await page.locator('[data-surface-choice="origin"]').count(),1,'Full Pack should be available as the open-ended starting route');
     assert.equal(await page.locator('#relphiSurfaceAll').count(),0,'See What Surfaces should not force a single-or-all control');
