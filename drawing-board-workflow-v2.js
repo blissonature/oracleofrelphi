@@ -30,6 +30,7 @@
   let showPositionStickers = readStickerVisibility();
   let surfaceReadingSession = null;
   let attuneIndex = -1;
+  let attuneViewportLock = null;
 
   function panel() { return document.getElementById(PANEL_ID); }
   function prefabBridge() { return window.RelphiDrawingBoardPrefabsBridge || null; }
@@ -1401,9 +1402,42 @@
     const id=String(cardAt(index)?.dataset?.rowCard || '');
     return (Array.isArray(window.RELPHI_TAROT_CARDS)?window.RELPHI_TAROT_CARDS:[]).find(card=>card?.card_id===id) || null;
   }
+  function lockAttuneViewport() {
+    if (attuneViewportLock) return;
+    const body=document.body;
+    const scrollX=window.scrollX || window.pageXOffset || 0;
+    const scrollY=window.scrollY || window.pageYOffset || 0;
+    attuneViewportLock={
+      scrollX,scrollY,
+      position:body.style.position,
+      top:body.style.top,
+      left:body.style.left,
+      right:body.style.right,
+      width:body.style.width
+    };
+    body.style.position='fixed';
+    body.style.top=(-scrollY)+'px';
+    body.style.left=(-scrollX)+'px';
+    body.style.right='0';
+    body.style.width='100%';
+    body.classList.add('relphi-attune-open');
+  }
+  function unlockAttuneViewport() {
+    const lock=attuneViewportLock;
+    const body=document.body;
+    body.classList.remove('relphi-attune-open');
+    if (!lock) return;
+    body.style.position=lock.position;
+    body.style.top=lock.top;
+    body.style.left=lock.left;
+    body.style.right=lock.right;
+    body.style.width=lock.width;
+    attuneViewportLock=null;
+    window.scrollTo(lock.scrollX,lock.scrollY);
+  }
   function closeAttune() {
     document.querySelector('.relphi-attune-reader')?.remove();
-    document.body.classList.remove('relphi-attune-open');
+    unlockAttuneViewport();
     attuneIndex=-1;
   }
   function renderAttuneSearch(reader, query) {
@@ -1457,7 +1491,8 @@
     });
     reader.querySelector('.relphi-attune-search input')?.addEventListener('input',event=>renderAttuneSearch(reader,event.target.value));
     document.body.appendChild(reader);
-    document.body.classList.add('relphi-attune-open');
+    lockAttuneViewport();
+    reader.querySelector('.relphi-attune-shell')?.scrollTo?.(0,0);
     return true;
   }
   function closeSurfaceFollowupReview({keepPending=true}={}) {
