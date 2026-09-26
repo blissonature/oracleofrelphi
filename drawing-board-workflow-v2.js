@@ -1419,6 +1419,28 @@
     keepBoardOpen();
     setTimeout(keepBoardOpen,0);
   }
+  function boardHasCraftedStructure(root = panel()) {
+    const snap=currentSnapshot()||{},state=currentPrefabState()||{};
+    return !!(
+      state.activeLayout?.id ||
+      snap.rowActiveLayout?.id ||
+      (Array.isArray(snap.shortListPositionLabels)&&snap.shortListPositionLabels.some(label=>String(label||'').trim())) ||
+      (Array.isArray(snap.rowPositionMeta)&&snap.rowPositionMeta.length)
+    );
+  }
+  function clearCraftedStructure(root = panel()) {
+    const bridge=optionsBridge();if(!bridge)return;
+    const snap=bridge.capture();if(!snap)return;
+    Object.assign(snap,{
+      shortList:[],shortListSelection:[],shortListPositionLabels:[],shortListPositionCardIds:[],
+      rowEnvelopeLayout:{},rowCardTransforms:{},rowPositionMeta:[],rowActiveLayout:null,
+      rowLayoutLocked:false,rowLayoutDesignMode:false,rowCardReversals:{},rowCardManual:[],
+      rowDrawDeck:[],rowDrawDeckSignature:'',shortListName:'',shortListNotes:'',
+      rowDrawScope:'full',rowAllowRepeats:false,rowAllowReversals:true
+    });
+    bridge.restore(snap);
+    surfaceReadingSession=null;recursionSession=null;recursionPortalLevel=0;
+  }
   function setBoardMode(root = panel(), mode = 'board') {
     if (!root) return;
     const referents=mode==='referents';
@@ -1435,10 +1457,11 @@
       referentsTab.setAttribute('aria-expanded',String(referents));
     }
   }
-  function closeOptions(root = panel()) {
+  function closeOptions(root = panel(), {switchToFree=false} = {}) {
     optionsSession=null;
     root?.querySelector('.relphi-reading-options-drawer')?.remove();
-    setBoardMode(root,'board');
+    if(switchToFree) clearCraftedStructure(root);
+    setBoardMode(root,switchToFree?'board':(boardHasCraftedStructure(root)?'referents':'board'));
   }
   function openOptions(root = panel()) {
     if (!root) return;
@@ -2472,7 +2495,7 @@
     if (boardTab) boardTab.textContent='Free';
     if (boardTab && boardTab.dataset.relphiUnifiedBoardTab!=='true') {
       boardTab.dataset.relphiUnifiedBoardTab='true';
-      boardTab.addEventListener('click',event=>{event.preventDefault();event.stopImmediatePropagation();closeOptions(root);},true);
+      boardTab.addEventListener('click',event=>{event.preventDefault();event.stopImmediatePropagation();closeOptions(root,{switchToFree:true});},true);
     }
     const options=root.querySelector('#drawingBoardOptionsButton');
     if (options) {
@@ -2528,6 +2551,7 @@
     const trigger=document.getElementById('relphiOpenDrawingBoardCurrent');
     if (!initialized) initialized=true;
     boardOpen=trigger?.getAttribute('aria-expanded')==='true';
+    if (!optionsSession) setBoardMode(root,boardHasCraftedStructure(root)?'referents':'board');
     if (!boardOpen) {
       root.hidden=true;
       if (trigger) { trigger.textContent='Open Drawing Board'; trigger.setAttribute('aria-expanded','false'); }
@@ -2604,7 +2628,7 @@
     if (boardTrigger && root?.contains(boardTrigger)) {
       event.preventDefault();
       event.stopImmediatePropagation();
-      closeOptions(root);
+      closeOptions(root,{switchToFree:true});
       return;
     }
     const optionsTrigger=event.target.closest?.('#shortListPanel #drawingBoardOptionsButton');
