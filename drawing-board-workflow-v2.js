@@ -426,7 +426,7 @@
   }
   function beginOptionsSession() {
     if (optionsSession) return;
-    optionsSession = { baseline:currentSnapshot(), draft:draftFromState(), path:'templates', building:{element:'',planet:'',aspect:'',sign:'',house:''}, suggestions:[], suggestionPacks:[], surfaceSelected:{}, sacredCardSource:'digital' };
+    optionsSession = { baseline:currentSnapshot(), draft:draftFromState(), path:'templates', building:{element:'',planet:'',aspect:'',sign:'',house:''}, suggestions:[], suggestionPacks:[], surfaceSelected:{}, sacredCardSource:'' };
   }
   function optionsStructuralChanged(session = optionsSession) {
     if (!session) return false;
@@ -1022,8 +1022,8 @@
     const selected=session.surfaceSelected || (session.surfaceSelected={});
     const selectedCount=SURFACE_DRAW_KEYS.filter(kind=>!!selected[kind]).length;
     const allSelected=selectedCount===SURFACE_DRAW_KEYS.length;
-    const cardSource=session.sacredCardSource==='physical'?'physical':'digital';
-    return '<fieldset class="relphi-sacred-card-source"><legend>Card source</legend>'+
+    const cardSource=session.sacredCardSource==='physical'?'physical':session.sacredCardSource==='digital'?'digital':'';
+    return '<fieldset class="relphi-sacred-card-source"><legend>Card source · choose once for this reading</legend>'+
       '<label class="relphi-sacred-card-source-choice"><input type="radio" name="relphiSacredCardSource" data-sacred-card-source value="digital" '+(cardSource==='digital'?'checked ':'')+(disabled?'disabled':'')+'><span><strong>Digital cards</strong><small>Relphi selects each card from its assigned sub-pack.</small></span></label>'+
       '<label class="relphi-sacred-card-source-choice"><input type="radio" name="relphiSacredCardSource" data-sacred-card-source value="physical" '+(cardSource==='physical'?'checked ':'')+(disabled?'disabled':'')+'><span><strong>Physical deck</strong><small>You draw each card yourself and record what you drew.</small></span></label>'+
       '</fieldset>'+
@@ -1034,7 +1034,7 @@
   }
   function prepareSurfaceDraft(session) {
     const kinds=selectedSurfaceKinds(session);
-    if (!kinds.length) return false;
+    if (!kinds.length || !['digital','physical'].includes(session?.sacredCardSource)) return false;
     const draft=session.draft;
     draft.labels=kinds.map(kind=>SURFACE_QUESTIONS[kind]);
     draft.positionPacks=kinds.map(kind=>SURFACE_PACK_BY_KIND[kind]||'');
@@ -1345,7 +1345,7 @@
         pathPanelMarkup(session,hasCards)+
         drawSettingsMarkup+
       '</div>'+
-      '<div class="relphi-options-commitbar"><span></span><button type="button" id="relphiCancelOptions">Cancel</button><button type="button" id="relphiApplyOptions" class="primary" '+(session.path==='surface'&&!selectedSurfaceKinds(session).length?'disabled':'')+'>Start Reading</button></div>';
+      '<div class="relphi-options-commitbar"><span></span><button type="button" id="relphiCancelOptions">Cancel</button><button type="button" id="relphiApplyOptions" class="primary" '+(session.path==='surface'&&(!selectedSurfaceKinds(session).length||!['digital','physical'].includes(session.sacredCardSource))?'disabled':'')+'>Start Reading</button></div>';
     modeTabs.insertAdjacentElement('afterend',drawer);
     setBoardMode(root,'referents');
 
@@ -1487,6 +1487,8 @@
     const surfaceSelectAll=drawer.querySelector('[data-surface-select-all]');
     drawer.querySelectorAll('[data-sacred-card-source]').forEach(input=>input.addEventListener('change',()=>{
       if(input.checked)session.sacredCardSource=input.value==='physical'?'physical':'digital';
+      const start=drawer.querySelector('#relphiApplyOptions');
+      if(start&&session.path==='surface')start.disabled=!selectedSurfaceKinds(session).length||!['digital','physical'].includes(session.sacredCardSource);
     }));
     const syncSurfaceSelectionUi=()=>{
       const count=selectedSurfaceKinds(session).length;
@@ -1495,7 +1497,7 @@
         surfaceSelectAll.indeterminate=count>0&&count<SURFACE_DRAW_KEYS.length;
       }
       const start=drawer.querySelector('#relphiApplyOptions');
-      if(start&&session.path==='surface')start.disabled=!count;
+      if(start&&session.path==='surface')start.disabled=!count||!['digital','physical'].includes(session.sacredCardSource);
     };
     surfaceChoiceInputs.forEach(input=>input.addEventListener('change',()=>{
       session.surfaceSelected ||= {};
@@ -1613,7 +1615,7 @@
         optionsSession.suggestions=[];
         optionsSession.suggestionPacks=[];
         optionsSession.surfaceSelected={};
-        optionsSession.sacredCardSource='digital';
+        optionsSession.sacredCardSource='';
         optionsSession.baseline=currentSnapshot();
       }
       setBoardMode(next,'referents');
