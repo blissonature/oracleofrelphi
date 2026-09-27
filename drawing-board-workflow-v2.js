@@ -2262,6 +2262,8 @@
         cardCount:Math.max(1,Number(derived.questionCardCount)||1),
         cardIndex:Math.max(0,Number(derived.questionCardIndex)||0),
         linkTo:String(derived.linkTo??''),
+        keywordTags:Array.isArray(derived.keywordTags)?derived.keywordTags.slice():[],
+        keywordMatchMode:derived.keywordMatchMode==='all'?'all':'any',
         allowReversals:derived.reversals!==false,
         allowRepeats:!!derived.repeats
       };
@@ -2278,6 +2280,26 @@
     if(complete)setTimeout(()=>revealCompletedSurfaceBoard(panel()),0);
   }
 
+  function surfaceKeywordMarkup(row,index) {
+    if(String(row.pack||'full')!=='tags')return '';
+    const tags=Array.isArray(row.keywordTags)?row.keywordTags:[];
+    const mode=row.keywordMatchMode==='all'?'all':'any';
+    const selected=tags.length
+      ? '<div class="relphi-surface-keyword-selected">'+tags.map(tag=>'<button type="button" data-surface-tag-remove="'+escapeHtml(tag)+'">'+escapeHtml(tag)+' ×</button>').join('')+'</div>'
+      : '';
+    const count=window.RELPHI_KEYWORD_SUBPACK_CONTEXT?.count?.(tags,mode)||0;
+    return '<section class="relphi-surface-keyword-builder" data-surface-keyword-builder="'+index+'">'+
+      '<label>Find tags<input type="search" data-surface-tag-query autocomplete="off" placeholder="Type a tag, e.g. prince"></label>'+
+      '<div class="relphi-surface-keyword-mode" role="radiogroup" aria-label="Tag matching">'+
+        '<label><input type="radio" name="surfaceTagMode'+index+'" value="any" '+(mode==='any'?'checked':'')+'> Any</label>'+
+        '<label><input type="radio" name="surfaceTagMode'+index+'" value="all" '+(mode==='all'?'checked':'')+'> All</label>'+
+      '</div>'+
+      '<div class="relphi-surface-keyword-matches" data-surface-tag-matches><p>Type to find matching canonical tags.</p></div>'+
+      selected+
+      '<p class="relphi-surface-keyword-count" data-surface-tag-count>'+(tags.length?count+' card'+(count===1?'':'s')+' in this sub-pack':'Choose one or more tags.')+'</p>'+
+    '</section>';
+  }
+
   function surfaceComposerRowMarkup(row,index,rows) {
     const linkOptions=rows.map((other,j)=>j===index?'':'<option value="'+j+'" '+(String(row.linkTo)===String(j)?'selected':'')+'>Question '+(j+1)+'</option>').join('');
     return '<article class="relphi-surface-composer-row" data-surface-composer-row="'+index+'">'+
@@ -2287,7 +2309,9 @@
         '<label>Sub-pack<select data-surface-pack>'+packOptions(row.pack||'full')+'</select></label>'+
         '<label>Cards<input type="number" min="1" max="12" value="'+Math.max(1,Math.min(12,Number(row.cardCount)||1))+'" data-surface-card-count></label>'+
         '<label>Share card with<select data-surface-link><option value="">No link</option>'+linkOptions+'</select></label>'+
-      '</div></div>'+
+      '</div>'+
+      surfaceKeywordMarkup(row,index)+
+      '</div>'+
       '<button type="button" class="relphi-surface-composer-remove" data-surface-remove aria-label="Remove question '+(index+1)+'">×</button>'+
     '</article>';
   }
@@ -2301,9 +2325,11 @@
     const rows=(entries||[]).map(item=>({
       ...clone(item),selected:item.selected!==false,text:String(item.text||''),pack:String(item.pack||'full'),
       cardCount:Math.max(1,Math.min(12,Number(item.cardCount)||1)),linkTo:item.linkTo??'',
+      keywordTags:Array.isArray(item.keywordTags)?item.keywordTags.slice():[],
+      keywordMatchMode:item.keywordMatchMode==='all'?'all':'any',
       reversals:item.reversals!==false,repeats:!!item.repeats
     }));
-    if(!rows.length)rows.push({selected:true,text:'',pack:'full',cardCount:1,linkTo:'',reversals:true,repeats:false,sourceKind:'authored'});
+    if(!rows.length)rows.push({selected:true,text:'',pack:'full',cardCount:1,linkTo:'',keywordTags:[],keywordMatchMode:'any',reversals:true,repeats:false,sourceKind:'authored'});
     let suggestionCursor=0;
     const composer=document.createElement('section');
     composer.className='relphi-surface-question-composer';
@@ -2326,9 +2352,41 @@
         row.pack=article.querySelector('[data-surface-pack]')?.value||'full';
         row.cardCount=Math.max(1,Math.min(12,Number(article.querySelector('[data-surface-card-count]')?.value)||1));
         row.linkTo=article.querySelector('[data-surface-link]')?.value??'';
+        row.keywordTags=Array.isArray(row.keywordTags)?row.keywordTags:[];
+        row.keywordMatchMode=article.querySelector('[name="surfaceTagMode'+index+'"]:checked')?.value==='all'?'all':'any';
       };
       composer.querySelectorAll('[data-surface-composer-row]').forEach((article,index)=>{
+        const row=rows[index];
         ['change','input'].forEach(type=>article.addEventListener(type,()=>syncRow(article,index)));
+        article.querySelector('[data-surface-pack]')?.addEventListener('change',()=>{
+          syncRow(article,index);
+          if(row.pack!=='tags'){row.keywordTags=[];row.keywordMatchMode='any';}
+          render();
+        });
+        const query=article.querySelector('[data-surface-tag-query]');
+        const matchesHost=article.querySelector('[data-surface-tag-matches]');
+        const renderMatches=value=>{
+          if(!matchesHost)return;
+          const matches=window.RELPHI_KEYWORD_SUBPACK_CONTEXT?.matches?.(value)||[];
+          matchesHost.innerHTML=matches.length
+            ? matches.map(tag=>'<label><input type="checkbox" data-surface-tag-choice value="'+escapeHtml(tag)+'" '+((row.keywordTags||[]).includes(tag)?'checked':'')+'> '+escapeHtml(tag)+'</label>').join('')
+            : '<p>'+(value?'No matching tags.':'Type to find matching canonical tags.')+'</p>';
+          matchesHost.querySelectorAll('[data-surface-tag-choice]').forEach(input=>input.addEventListener('change',()=>{
+            const set=new Set(row.keywordTags||[]);
+            input.checked?set.add(input.value):set.delete(input.value);
+            row.keywordTags=[...set];
+            render();
+          }));
+        };
+        query?.addEventListener('input',event=>renderMatches(event.target.value));
+        article.querySelectorAll('[name="surfaceTagMode'+index+'"]').forEach(input=>input.addEventListener('change',()=>{
+          row.keywordMatchMode=input.value==='all'&&input.checked?'all':'any';
+          render();
+        }));
+        article.querySelectorAll('[data-surface-tag-remove]').forEach(button=>button.addEventListener('click',()=>{
+          row.keywordTags=(row.keywordTags||[]).filter(tag=>tag!==button.dataset.surfaceTagRemove);
+          render();
+        }));
         article.querySelector('[data-surface-remove]')?.addEventListener('click',()=>{syncRow(article,index);rows.splice(index,1);render();});
       });
       composer.querySelector('[data-surface-suggest]')?.addEventListener('click',()=>{
@@ -2336,13 +2394,13 @@
         const suggestion=nextSurfaceSuggestion(rows,suggestionCursor);
         if(!suggestion)return;
         suggestionCursor=suggestion.nextCursor;
-        rows.push({...suggestion.candidate,selected:true,cardCount:Math.max(1,Number(suggestion.candidate.cardCount)||1),linkTo:suggestion.candidate.linkTo??'',reversals:suggestion.candidate.reversals!==false,repeats:!!suggestion.candidate.repeats});
+        rows.push({...suggestion.candidate,selected:true,cardCount:Math.max(1,Number(suggestion.candidate.cardCount)||1),linkTo:suggestion.candidate.linkTo??'',keywordTags:Array.isArray(suggestion.candidate.keywordTags)?suggestion.candidate.keywordTags.slice():[],keywordMatchMode:suggestion.candidate.keywordMatchMode==='all'?'all':'any',reversals:suggestion.candidate.reversals!==false,repeats:!!suggestion.candidate.repeats});
         render();
         setTimeout(()=>composer.querySelector('[data-surface-composer-row]:last-child')?.scrollIntoView?.({block:'nearest'}),0);
       });
       composer.querySelector('[data-surface-add]')?.addEventListener('click',()=>{
         composer.querySelectorAll('[data-surface-composer-row]').forEach((article,index)=>syncRow(article,index));
-        rows.push({selected:true,text:'',pack:'full',cardCount:1,linkTo:'',reversals:true,repeats:false,sourceKind:'authored'});
+        rows.push({selected:true,text:'',pack:'full',cardCount:1,linkTo:'',keywordTags:[],keywordMatchMode:'any',reversals:true,repeats:false,sourceKind:'authored'});
         render();
         setTimeout(()=>composer.querySelector('[data-surface-composer-row]:last-child [data-surface-text]')?.focus(),0);
       });
@@ -2357,6 +2415,14 @@
           return row;
         });
         if(!chosen.length){closeSurfaceQuestionComposer({complete:completeOnCancel});return;}
+        const missingTags=chosen.find(row=>row.pack==='tags' && !(row.keywordTags||[]).length && (row.linkTo===''||row.linkTo==null));
+        if(missingTags){
+          const originalIndex=rows.indexOf(missingTags);
+          const target=originalIndex>=0?composer.querySelector('[data-surface-composer-row="'+originalIndex+'"] [data-surface-tag-query]'):composer.querySelector('[data-surface-tag-query]');
+          target?.focus();
+          showBoardToast('Choose at least one keyword or tag for every Keywords / Tags question.',{title:'Keywords / Tags',duration:4200});
+          return;
+        }
         const before=(currentSnapshot()?.shortListPositionLabels||[]).length;
         const count=appendSurfaceFollowups(chosen,root);
         if(!count)return;
@@ -3070,7 +3136,19 @@
     const drawnIndex=currentCardCount(root);
     if (!Number.isInteger(targetIndex)||targetIndex<0) return;
     const snap=optionsBridge()?.capture?.();const meta=snap?.rowPositionMeta?.[targetIndex] || snap?.rowActiveLayout?.positions?.[targetIndex] || {};
-    if(snap && (meta.allowReversals!==undefined || meta.allowRepeats!==undefined)){snap.rowAllowReversals=meta.allowReversals!==false;snap.rowAllowRepeats=!!meta.allowRepeats;snap.rowDrawDeck=[];snap.rowDrawDeckSignature='';optionsBridge()?.restore?.(snap);}
+    if(snap){
+      if(meta.allowReversals!==undefined)snap.rowAllowReversals=meta.allowReversals!==false;
+      if(meta.allowRepeats!==undefined)snap.rowAllowRepeats=!!meta.allowRepeats;
+      if(String(meta.drawScope||'')==='tags'){
+        snap.rowSelectedTags=Array.isArray(meta.keywordTags)?meta.keywordTags.slice():[];
+        snap.rowTagMatchMode=meta.keywordMatchMode==='all'?'all':'any';
+      }else{
+        snap.rowSelectedTags=[];
+        snap.rowTagMatchMode='any';
+      }
+      snap.rowDrawDeck=[];snap.rowDrawDeckSignature='';
+      optionsBridge()?.restore?.(snap);
+    }
     activeDraw=true;
     // Focus belongs to the referent slot, not necessarily the append slot used
     // internally by the native draw.
