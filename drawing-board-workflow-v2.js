@@ -1023,11 +1023,12 @@
     const selectedCount=SURFACE_DRAW_KEYS.filter(kind=>!!selected[kind]).length;
     const allSelected=selectedCount===SURFACE_DRAW_KEYS.length;
     const cardSource=session.sacredCardSource==='physical'?'physical':session.sacredCardSource==='digital'?'digital':'';
-    return '<fieldset class="relphi-sacred-card-source" data-sacred-card-source-group tabindex="-1"><legend>Card source · choose once for this reading</legend>'+
-      '<p class="relphi-sacred-card-source-status" data-sacred-card-source-status hidden>Choose Digital cards or Physical deck before starting the reading.</p>'+
+    const needsSourceReminder=selectedCount>0&&!cardSource;
+    return '<fieldset class="relphi-sacred-card-source" data-sacred-card-source-group><legend>Card source · choose once for this reading</legend>'+
       '<label class="relphi-sacred-card-source-choice"><input type="radio" name="relphiSacredCardSource" data-sacred-card-source value="digital" '+(cardSource==='digital'?'checked ':'')+(disabled?'disabled':'')+'><span><strong>Digital cards</strong><small>Relphi selects each card from its assigned sub-pack.</small></span></label>'+
       '<label class="relphi-sacred-card-source-choice"><input type="radio" name="relphiSacredCardSource" data-sacred-card-source value="physical" '+(cardSource==='physical'?'checked ':'')+(disabled?'disabled':'')+'><span><strong>Physical deck</strong><small>You draw each card yourself and record what you drew.</small></span></label>'+
       '</fieldset>'+
+      '<p class="relphi-sacred-card-source-reminder" data-sacred-card-source-reminder '+(needsSourceReminder?'':'hidden')+'><strong>Card source required.</strong> Choose Digital cards or Physical deck above before starting.</p>'+
       '<div class="relphi-surface-question-choices" role="group" aria-label="Question types">'+
       '<label class="relphi-surface-select-all"><input type="checkbox" data-surface-select-all '+(allSelected?'checked ':'')+(disabled?'disabled':'')+'><span><strong>Select all '+SURFACE_DRAW_KEYS.length+'</strong><small>One probe from every See What Surfaces sub-pack</small></span></label>'+
       SURFACE_DRAW_KEYS.map(kind=>'<label class="relphi-surface-question-choice"><input type="checkbox" data-surface-choice="'+kind+'" '+(selected[kind]?'checked ':'')+(disabled?'disabled':'')+'><span><strong>'+escapeHtml(SURFACE_QUESTIONS[kind])+'</strong><small>'+escapeHtml(SURFACE_PACK_LABELS[kind])+'</small></span></label>').join('')+
@@ -1346,7 +1347,7 @@
         pathPanelMarkup(session,hasCards)+
         drawSettingsMarkup+
       '</div>'+
-      '<div class="relphi-options-commitbar"><span></span><button type="button" id="relphiCancelOptions">Cancel</button><button type="button" id="relphiApplyOptions" class="primary" '+(session.path==='surface'&&!selectedSurfaceKinds(session).length?'disabled':'')+'>Start Reading</button></div>';
+      '<div class="relphi-options-commitbar"><span></span><button type="button" id="relphiCancelOptions">Cancel</button><button type="button" id="relphiApplyOptions" class="primary" '+(session.path==='surface'&&(!selectedSurfaceKinds(session).length||!['digital','physical'].includes(session.sacredCardSource))?'disabled':'')+'>Start Reading</button></div>';
     modeTabs.insertAdjacentElement('afterend',drawer);
     setBoardMode(root,'referents');
 
@@ -1488,19 +1489,22 @@
     const surfaceSelectAll=drawer.querySelector('[data-surface-select-all]');
     drawer.querySelectorAll('[data-sacred-card-source]').forEach(input=>input.addEventListener('change',()=>{
       if(input.checked)session.sacredCardSource=input.value==='physical'?'physical':'digital';
-      const group=drawer.querySelector('[data-sacred-card-source-group]');
-      const status=drawer.querySelector('[data-sacred-card-source-status]');
-      group?.classList.remove('is-required');
-      if(status)status.hidden=true;
+      const reminder=drawer.querySelector('[data-sacred-card-source-reminder]');
+      if(reminder)reminder.hidden=true;
+      const start=drawer.querySelector('#relphiApplyOptions');
+      if(start&&session.path==='surface')start.disabled=!selectedSurfaceKinds(session).length||!['digital','physical'].includes(session.sacredCardSource);
     }));
     const syncSurfaceSelectionUi=()=>{
       const count=selectedSurfaceKinds(session).length;
+      const hasSource=['digital','physical'].includes(session.sacredCardSource);
       if(surfaceSelectAll){
         surfaceSelectAll.checked=count===SURFACE_DRAW_KEYS.length;
         surfaceSelectAll.indeterminate=count>0&&count<SURFACE_DRAW_KEYS.length;
       }
+      const reminder=drawer.querySelector('[data-sacred-card-source-reminder]');
+      if(reminder)reminder.hidden=!(count>0&&!hasSource);
       const start=drawer.querySelector('#relphiApplyOptions');
-      if(start&&session.path==='surface')start.disabled=!count;
+      if(start&&session.path==='surface')start.disabled=!count||!hasSource;
     };
     surfaceChoiceInputs.forEach(input=>input.addEventListener('change',()=>{
       session.surfaceSelected ||= {};
@@ -1549,15 +1553,6 @@
     drawer.querySelector('#relphiDraftRepeats')?.addEventListener('change',event=>{draft.repeats=event.target.checked;});
      drawer.querySelector('#relphiCancelOptions')?.addEventListener('click',()=>closeOptions(root));
     drawer.querySelector('#relphiApplyOptions')?.addEventListener('click',()=>{
-      if(session.path==='surface' && !['digital','physical'].includes(session.sacredCardSource)){
-        const group=drawer.querySelector('[data-sacred-card-source-group]');
-        const status=drawer.querySelector('[data-sacred-card-source-status]');
-        group?.classList.add('is-required');
-        if(status)status.hidden=false;
-        group?.scrollIntoView?.({behavior:'smooth',block:'center'});
-        setTimeout(()=>drawer.querySelector('[data-sacred-card-source]')?.focus(),180);
-        return;
-      }
       if (session.path==='surface' && !prepareSurfaceDraft(session)) return;
       if (session.path==='blocks' && session.suggestions.length) commitSelectedSuggestions();
       if(session.path==='astro'){
