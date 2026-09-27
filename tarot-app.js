@@ -1016,6 +1016,7 @@
       const lightweight = {
         ...snapshot,
         rowTableImage:'',
+        rowEnvelopeImage:'',
         rowEnvelopeArt:{},
         customCardArt:{},
         largeArtOmitted:true
