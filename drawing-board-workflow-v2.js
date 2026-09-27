@@ -426,7 +426,7 @@
   }
   function beginOptionsSession() {
     if (optionsSession) return;
-    optionsSession = { baseline:currentSnapshot(), draft:draftFromState(), path:'templates', building:{element:'',planet:'',aspect:'',sign:'',house:''}, suggestions:[], suggestionPacks:[], surfaceSelected:{} };
+    optionsSession = { baseline:currentSnapshot(), draft:draftFromState(), path:'templates', building:{element:'',planet:'',aspect:'',sign:'',house:''}, suggestions:[], suggestionPacks:[], surfaceSelected:{}, sacredCardSource:'digital' };
   }
   function optionsStructuralChanged(session = optionsSession) {
     if (!session) return false;
@@ -1022,7 +1022,12 @@
     const selected=session.surfaceSelected || (session.surfaceSelected={});
     const selectedCount=SURFACE_DRAW_KEYS.filter(kind=>!!selected[kind]).length;
     const allSelected=selectedCount===SURFACE_DRAW_KEYS.length;
-    return '<div class="relphi-surface-question-choices" role="group" aria-label="Question types">'+
+    const cardSource=session.sacredCardSource==='physical'?'physical':'digital';
+    return '<fieldset class="relphi-sacred-card-source"><legend>Card source</legend>'+
+      '<label class="relphi-sacred-card-source-choice"><input type="radio" name="relphiSacredCardSource" data-sacred-card-source value="digital" '+(cardSource==='digital'?'checked ':'')+(disabled?'disabled':'')+'><span><strong>Digital cards</strong><small>Relphi selects each card from its assigned sub-pack.</small></span></label>'+
+      '<label class="relphi-sacred-card-source-choice"><input type="radio" name="relphiSacredCardSource" data-sacred-card-source value="physical" '+(cardSource==='physical'?'checked ':'')+(disabled?'disabled':'')+'><span><strong>Physical deck</strong><small>You draw each card yourself and record what you drew.</small></span></label>'+
+      '</fieldset>'+
+      '<div class="relphi-surface-question-choices" role="group" aria-label="Question types">'+
       '<label class="relphi-surface-select-all"><input type="checkbox" data-surface-select-all '+(allSelected?'checked ':'')+(disabled?'disabled':'')+'><span><strong>Select all '+SURFACE_DRAW_KEYS.length+'</strong><small>One probe from every See What Surfaces sub-pack</small></span></label>'+
       SURFACE_DRAW_KEYS.map(kind=>'<label class="relphi-surface-question-choice"><input type="checkbox" data-surface-choice="'+kind+'" '+(selected[kind]?'checked ':'')+(disabled?'disabled':'')+'><span><strong>'+escapeHtml(SURFACE_QUESTIONS[kind])+'</strong><small>'+escapeHtml(SURFACE_PACK_LABELS[kind])+'</small></span></label>').join('')+
       '</div><p class="relphi-surface-choice-note">Choose each kind of question you agree to ask. The initial set has one dedicated probe for each of the '+SURFACE_DRAW_KEYS.length+' See What Surfaces sub-packs.</p>';
@@ -1480,6 +1485,9 @@
 
     const surfaceChoiceInputs=Array.from(drawer.querySelectorAll('[data-surface-choice]'));
     const surfaceSelectAll=drawer.querySelector('[data-surface-select-all]');
+    drawer.querySelectorAll('[data-sacred-card-source]').forEach(input=>input.addEventListener('change',()=>{
+      if(input.checked)session.sacredCardSource=input.value==='physical'?'physical':'digital';
+    }));
     const syncSurfaceSelectionUi=()=>{
       const count=selectedSurfaceKinds(session).length;
       if(surfaceSelectAll){
@@ -1605,6 +1613,7 @@
         optionsSession.suggestions=[];
         optionsSession.suggestionPacks=[];
         optionsSession.surfaceSelected={};
+        optionsSession.sacredCardSource='digital';
         optionsSession.baseline=currentSnapshot();
       }
       setBoardMode(next,'referents');
@@ -2306,6 +2315,7 @@
         linkTo:String(derived.linkTo??''),
         keywordTags:Array.isArray(derived.keywordTags)?derived.keywordTags.slice():[],
         keywordMatchMode:derived.keywordMatchMode==='all'?'all':'any',
+        cardSource:String(surfaceReadingSession?.cardSource||derived.cardSource||'digital')==='physical'?'physical':'digital',
         allowReversals:derived.reversals!==false,
         allowRepeats:!!derived.repeats
       };
@@ -2723,6 +2733,29 @@
     return true;
   }
 
+  function stampSacredCardSource(source, root=panel()) {
+    const bridge=optionsBridge();
+    const snap=bridge?.capture?.();
+    if(!bridge||!snap)return false;
+    const cardSource=source==='physical'?'physical':'digital';
+    const count=Math.max(
+      Array.isArray(snap.shortListPositionLabels)?snap.shortListPositionLabels.length:0,
+      Array.isArray(snap.rowPositionMeta)?snap.rowPositionMeta.length:0
+    );
+    snap.rowPositionMeta=Array.from({length:count},(_,index)=>({
+      ...(snap.rowPositionMeta?.[index]||{}),
+      cardSource
+    }));
+    if(snap.rowActiveLayout?.positions){
+      snap.rowActiveLayout={...snap.rowActiveLayout,positions:snap.rowActiveLayout.positions.map((position,index)=>({
+        ...position,
+        cardSource
+      }))};
+    }
+    bridge.restore(snap);
+    return true;
+  }
+
   function applyOptions(root = panel()) {
     if (!optionsSession || !root) return;
     const session=optionsSession;
@@ -2735,13 +2768,14 @@
     if(session.path==='surface'){
       if(!surfaceKinds.length)return;
       writeStickerVisibility(draft.stickers);
-      surfaceReadingSession={kinds:surfaceKinds.slice(),initialCount:surfaceKinds.length,followupsGenerated:false,followupCount:0,followupDecisionPending:false,composerOpen:false,completionShown:false,conclusionOffered:false};
+      surfaceReadingSession={kinds:surfaceKinds.slice(),initialCount:surfaceKinds.length,cardSource:session.sacredCardSource==='physical'?'physical':'digital',followupsGenerated:false,followupCount:0,followupDecisionPending:false,composerOpen:false,completionShown:false,conclusionOffered:false};
       recursionSession=null;recursionPortalLevel=0;
       if(!launchConfiguredReading(root,draft)){
         surfaceReadingSession=null;
         showBoardToast('The See What Surfaces reading could not be established. Your setup has been kept open.',{title:'See What Surfaces',duration:5200});
         return;
       }
+      stampSacredCardSource(surfaceReadingSession.cardSource,root);
       // Start Reading is the only start action. Go directly into the first sacred attunement.
       setTimeout(()=>{const next=nextUndrawnNativeIndex(panel());if(next!=null)openAttune(next);},0);
       return;
