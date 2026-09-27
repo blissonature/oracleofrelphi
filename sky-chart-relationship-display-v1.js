@@ -142,7 +142,7 @@ function syncControl(state=readState()){
   const value=owner.querySelector('[data-relationship-display-value]');
   let text=value?.querySelector('[data-relationship-display-value-text]');
   if(value&&!text){text=document.createElement('span');text.className='sky-relationship-display-value-text';text.dataset.relationshipDisplayValueText='true';value.replaceChildren(text)}
-  if(text)text.textContent=stateSummary(state);
+  if(text){const value=stateSummary(state);text.textContent=value==='All'?'Display':value;}
   const inputs=new Set([
     ...owner.querySelectorAll('[data-shared-display-layer]'),
     ...(popover()?.querySelectorAll('[data-shared-display-layer]')||[])
