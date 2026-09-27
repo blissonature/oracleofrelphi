@@ -839,18 +839,12 @@
     Air:'thought language interpretation choice and exchange',
     Earth:'body work money resources and practical reality'
   };
-  const REFERENT_PLANETS = {
-    Sun:'identity vitality visibility and purpose',
-    Moon:'feeling memory instinct rhythm and need',
-    Mercury:'thought language interpretation exchange and recoverability',
-    Venus:'attraction affection value pleasure and reception',
-    Mars:'action desire conflict defense and severance',
-    Jupiter:'growth participation faith generosity and increase',
-    Saturn:'limits time responsibility consequence and endurance',
-    Uranus:'change disruption invention freedom and awakening',
-    Neptune:'imagination surrender ideals permeability and release',
-    Pluto:'depth power compulsion transformation and irrevocable change'
-  };
+  const REFERENT_PLANETS = Object.fromEntries(
+    Object.entries(window.RELPHI_SYMBOLIC_REFERENCE?.planets || {}).map(([name,record])=>[
+      name,
+      [record.principle,...(record.operations||[])].join(' ').toLowerCase()
+    ])
+  );
   const REFERENT_ASPECTS = {
     Conjunction:'what is operating together',
     Opposition:'what is pulling across an axis',
@@ -1114,7 +1108,8 @@
         if(pd) push('What is the pull toward '+pd.sign+' revealing in this reading?',88+(pd.observed?8:0),'polarity-derived-sign',{...e,derivedSign:pd.sign,bin:pd.index+1,share:pd.share,excess:pd.excess,independentlyObserved:pd.observed,observedCount:pd.observedCount});
       }
       else if(e.kind==='ruler') {
-        push(e.value+' is repeatedly emphasized as ruler. What does that emphasis ask of this reading now?',76+Math.min(16,e.count),'ruler',e);
+        const semanticQuestion=window.RELPHI_SYMBOLIC_REFERENCE?.planetQuestion?.(e.value,'repeated');
+        if(semanticQuestion) push(semanticQuestion,76+Math.min(16,e.count),'ruler',{...e,semanticSource:'relphi-symbolic-reference',principle:window.RELPHI_SYMBOLIC_REFERENCE?.planet?.(e.value)?.principle||''});
       } else if(e.kind==='tag') {
         push(e.value+' is a repeated theme. What does that theme ask of this reading now?',68+Math.min(14,e.count),'tag',e);
       }
