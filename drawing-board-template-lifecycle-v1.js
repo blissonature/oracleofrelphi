@@ -238,6 +238,14 @@
 
     window.RelphiDrawingBoardEnsureTopActions?.(root);
 
+    const topActions = root.querySelector('.drawing-board-top-actions');
+    if (topActions) {
+      if (cardsOnly.parentElement !== topActions) topActions.appendChild(cardsOnly);
+      if (resetBoard.parentElement !== topActions || resetBoard.previousElementSibling !== cardsOnly) {
+        cardsOnly.insertAdjacentElement('afterend', resetBoard);
+      }
+    }
+
     const add = root.querySelector('#addCardPlaceholder');
     const staging = root.querySelector('.card-row-action-staging');
     if (add && staging && add.parentElement !== staging) staging.appendChild(add);
