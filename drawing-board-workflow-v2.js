@@ -2332,7 +2332,14 @@
       });
       composer.querySelector('[data-surface-done]')?.addEventListener('click',()=>{
         composer.querySelectorAll('[data-surface-composer-row]').forEach((article,index)=>syncRow(article,index));
-        const chosen=rows.filter(row=>row.selected&&String(row.text||'').trim());
+        const selectedIndices=rows.map((row,index)=>row.selected&&String(row.text||'').trim()?index:null).filter(index=>index!=null);
+        const remap=new Map(selectedIndices.map((originalIndex,newIndex)=>[originalIndex,newIndex]));
+        const chosen=selectedIndices.map(originalIndex=>{
+          const row=clone(rows[originalIndex]);
+          const linkedOriginal=row.linkTo===''||row.linkTo==null?null:Number(row.linkTo);
+          row.linkTo=Number.isInteger(linkedOriginal)&&remap.has(linkedOriginal)?String(remap.get(linkedOriginal)):'';
+          return row;
+        });
         if(!chosen.length){closeSurfaceQuestionComposer({complete:completeOnCancel});return;}
         const before=(currentSnapshot()?.shortListPositionLabels||[]).length;
         const count=appendSurfaceFollowups(chosen,root);
