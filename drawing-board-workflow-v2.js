@@ -991,6 +991,10 @@
     court:'courts',
     pip:'pips'
   });
+  const SURFACE_INITIAL_PACKS = Object.freeze(SURFACE_DRAW_KEYS.map(kind=>SURFACE_PACK_BY_KIND[kind]).filter(Boolean));
+  if (new Set(SURFACE_INITIAL_PACKS).size !== SURFACE_DRAW_KEYS.length) {
+    console.warn('See What Surfaces initial probes must map one-to-one to dedicated sub-packs.');
+  }
   function surfacePlanet(card) {
     return String(card?.astrology?.planet || '').split('/')[0].trim();
   }
@@ -1016,9 +1020,12 @@
   }
   function surfaceChoicesMarkup(session, disabled=false) {
     const selected=session.surfaceSelected || (session.surfaceSelected={});
+    const selectedCount=SURFACE_DRAW_KEYS.filter(kind=>!!selected[kind]).length;
+    const allSelected=selectedCount===SURFACE_DRAW_KEYS.length;
     return '<div class="relphi-surface-question-choices" role="group" aria-label="Question types">'+
+      '<label class="relphi-surface-select-all"><input type="checkbox" data-surface-select-all '+(allSelected?'checked ':'')+(disabled?'disabled':'')+'><span><strong>Select all '+SURFACE_DRAW_KEYS.length+'</strong><small>One probe from every See What Surfaces sub-pack</small></span></label>'+
       SURFACE_DRAW_KEYS.map(kind=>'<label class="relphi-surface-question-choice"><input type="checkbox" data-surface-choice="'+kind+'" '+(selected[kind]?'checked ':'')+(disabled?'disabled':'')+'><span><strong>'+escapeHtml(SURFACE_QUESTIONS[kind])+'</strong><small>'+escapeHtml(SURFACE_PACK_LABELS[kind])+'</small></span></label>').join('')+
-      '</div><p class="relphi-surface-choice-note">Choose each kind of question you agree to ask. Each probe uses the sub-pack shown beneath it.</p>';
+      '</div><p class="relphi-surface-choice-note">Choose each kind of question you agree to ask. The initial set has one dedicated probe for each of the '+SURFACE_DRAW_KEYS.length+' See What Surfaces sub-packs.</p>';
   }
   function prepareSurfaceDraft(session) {
     const kinds=selectedSurfaceKinds(session);
@@ -1471,12 +1478,30 @@
       renderOptions(root);
     });
 
-    drawer.querySelectorAll('[data-surface-choice]').forEach(input=>input.addEventListener('change',()=>{
+    const surfaceChoiceInputs=Array.from(drawer.querySelectorAll('[data-surface-choice]'));
+    const surfaceSelectAll=drawer.querySelector('[data-surface-select-all]');
+    const syncSurfaceSelectionUi=()=>{
+      const count=selectedSurfaceKinds(session).length;
+      if(surfaceSelectAll){
+        surfaceSelectAll.checked=count===SURFACE_DRAW_KEYS.length;
+        surfaceSelectAll.indeterminate=count>0&&count<SURFACE_DRAW_KEYS.length;
+      }
+      const start=drawer.querySelector('#relphiApplyOptions');
+      if(start&&session.path==='surface')start.disabled=!count;
+    };
+    surfaceChoiceInputs.forEach(input=>input.addEventListener('change',()=>{
       session.surfaceSelected ||= {};
       session.surfaceSelected[input.dataset.surfaceChoice]=input.checked;
-      const start=drawer.querySelector('#relphiApplyOptions');
-      if (start && session.path==='surface') start.disabled=!selectedSurfaceKinds(session).length;
+      syncSurfaceSelectionUi();
     }));
+    surfaceSelectAll?.addEventListener('change',()=>{
+      session.surfaceSelected ||= {};
+      SURFACE_DRAW_KEYS.forEach(kind=>{session.surfaceSelected[kind]=surfaceSelectAll.checked;});
+      surfaceChoiceInputs.forEach(input=>{input.checked=surfaceSelectAll.checked;});
+      surfaceSelectAll.indeterminate=false;
+      syncSurfaceSelectionUi();
+    });
+    syncSurfaceSelectionUi();
 
     drawer.querySelectorAll('[data-suggestion-text]').forEach(input=>input.addEventListener('input',()=>{
       session.suggestions[Number(input.dataset.suggestionText)]=input.value;
