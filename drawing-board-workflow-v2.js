@@ -1346,7 +1346,17 @@
         pathPanelMarkup(session,hasCards)+
         drawSettingsMarkup+
         (session.path==='surface'
-          ? '<aside class="relphi-surface-empty-cue" data-surface-empty-cue '+(selectedSurfaceKinds(session).length?'hidden':'')+'><span><strong>↑ Choose at least one question above</strong><small>Start Reading needs something to ask.</small></span><button type="button" data-surface-select-all-bottom>Select all '+SURFACE_DRAW_KEYS.length+'</button></aside>'
+          ? (()=>{const count=selectedSurfaceKinds(session).length,ready=count>0,source=session.sacredCardSource==='physical'?'Physical':'Digital';return '<aside class="relphi-surface-readiness '+(ready?'is-ready':'')+'" data-surface-readiness role="status" aria-live="polite">'+
+              '<div class="relphi-surface-readiness-rail" aria-label="Reading readiness">'+
+                '<div class="relphi-surface-readiness-step is-complete" data-readiness-step="source"><i aria-hidden="true"></i><strong>Card source</strong><small data-surface-source-status>'+source+'</small></div>'+
+                '<div class="relphi-surface-readiness-step '+(ready?'is-complete':'')+'" data-readiness-step="questions"><i aria-hidden="true"></i><strong>Questions</strong><small data-surface-question-status>'+(ready?count+' selected':'Choose 1+')+'</small></div>'+
+                '<div class="relphi-surface-readiness-step '+(ready?'is-complete is-success':'')+'" data-readiness-step="ready"><i aria-hidden="true"></i><strong>Ready</strong><small data-surface-ready-status>'+(ready?'Minimum met':'Waiting')+'</small></div>'+
+              '</div>'+
+              '<div class="relphi-surface-readiness-message">'+
+                '<span><strong data-surface-readiness-title>'+(ready?'✓ Ready to begin':'↑ Choose at least one question above')+'</strong><small data-surface-readiness-detail>'+(ready?(count+' question'+(count===1?'':'s')+' selected · minimum met'):'One question is enough to craft the reading.')+'</small></span>'+
+                '<button type="button" data-surface-select-all-bottom '+(ready?'hidden':'')+'>Select all '+SURFACE_DRAW_KEYS.length+'</button>'+
+              '</div>'+
+            '</aside>';})()
           : '')+
       '</div>'+
       '<div class="relphi-options-commitbar"><span></span><button type="button" id="relphiCancelOptions">Cancel</button><button type="button" id="relphiApplyOptions" class="primary" '+(session.path==='surface'&&!selectedSurfaceKinds(session).length?'disabled':'')+'>Start Reading</button></div>';
@@ -1490,9 +1500,11 @@
     const surfaceChoiceInputs=Array.from(drawer.querySelectorAll('[data-surface-choice]'));
     const surfaceSelectAll=drawer.querySelector('[data-surface-select-all]');
     const surfaceSelectAllBottom=drawer.querySelector('[data-surface-select-all-bottom]');
-    const surfaceEmptyCue=drawer.querySelector('[data-surface-empty-cue]');
+    const surfaceReadiness=drawer.querySelector('[data-surface-readiness]');
     drawer.querySelectorAll('[data-sacred-card-source]').forEach(input=>input.addEventListener('change',()=>{
       if(input.checked)session.sacredCardSource=input.value==='physical'?'physical':'digital';
+      const sourceStatus=drawer.querySelector('[data-surface-source-status]');
+      if(sourceStatus)sourceStatus.textContent=session.sacredCardSource==='physical'?'Physical':'Digital';
     }));
     const syncSurfaceSelectionUi=()=>{
       const count=selectedSurfaceKinds(session).length;
@@ -1500,7 +1512,24 @@
         surfaceSelectAll.checked=count===SURFACE_DRAW_KEYS.length;
         surfaceSelectAll.indeterminate=count>0&&count<SURFACE_DRAW_KEYS.length;
       }
-      if(surfaceEmptyCue)surfaceEmptyCue.hidden=count>0;
+      if(surfaceReadiness){
+        const ready=count>0;
+        surfaceReadiness.classList.toggle('is-ready',ready);
+        surfaceReadiness.querySelector('[data-readiness-step="questions"]')?.classList.toggle('is-complete',ready);
+        const readyStep=surfaceReadiness.querySelector('[data-readiness-step="ready"]');
+        readyStep?.classList.toggle('is-complete',ready);
+        readyStep?.classList.toggle('is-success',ready);
+        const questionStatus=surfaceReadiness.querySelector('[data-surface-question-status]');
+        const readyStatus=surfaceReadiness.querySelector('[data-surface-ready-status]');
+        const title=surfaceReadiness.querySelector('[data-surface-readiness-title]');
+        const detail=surfaceReadiness.querySelector('[data-surface-readiness-detail]');
+        const selectAllBottom=surfaceReadiness.querySelector('[data-surface-select-all-bottom]');
+        if(questionStatus)questionStatus.textContent=ready?count+' selected':'Choose 1+';
+        if(readyStatus)readyStatus.textContent=ready?'Minimum met':'Waiting';
+        if(title)title.textContent=ready?'✓ Ready to begin':'↑ Choose at least one question above';
+        if(detail)detail.textContent=ready?(count+' question'+(count===1?'':'s')+' selected · minimum met'):'One question is enough to craft the reading.';
+        if(selectAllBottom)selectAllBottom.hidden=ready;
+      }
       const start=drawer.querySelector('#relphiApplyOptions');
       if(start&&session.path==='surface')start.disabled=!count;
     };
