@@ -143,6 +143,8 @@ assert.match(board, /function expandSurfaceEntries/);
 assert.match(board, /questionCardCount/);
 assert.match(board, /followupDecisionPending/);
 assert.match(board, /function closeFocus\(\{acknowledge=true,advanceSurface=true\}/);
+assert.match(board, /requestAnimationFrame\(\(\)=>zoomExtents\(\)\)/);
+assert.match(board, /Returning from Focus is a board reframe boundary/);
 assert.match(board, /only leaving that Focus may advance to follow-up questions/);
 assert.doesNotMatch(board, /pendingFocusIndex==null\) maybeGenerateSurfaceFollowups/);
 assert.match(board, /nextUndrawnNativeIndex\(root\)!=null\)return/);
