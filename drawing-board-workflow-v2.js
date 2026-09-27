@@ -2171,14 +2171,32 @@
     unlockAttuneViewport();
     attuneIndex=-1;
   }
+  function setRecordedCardOrientation(index,reversed) {
+    const bridge=optionsBridge();
+    const snap=bridge?.capture?.();
+    if(!bridge||!snap||!Number.isInteger(index)||index<0)return false;
+    snap.rowCardReversals={...(snap.rowCardReversals||{}),[index]:!!reversed};
+    bridge.restore(snap);
+    return true;
+  }
+
+  function sacredCardSourceAt(index,snap=currentSnapshot()||{}) {
+    const meta=snap.rowPositionMeta?.[index] || snap.rowActiveLayout?.positions?.[index] || {};
+    const source=surfaceReadingSession?.cardSource || meta.cardSource || 'digital';
+    return source==='physical'?'physical':'digital';
+  }
+
   function renderAttuneSearch(reader, query) {
     const results=reader.querySelector('.relphi-attune-search-results');
     if (!results) return;
     const q=String(query||'').trim();
-    if (!q) { results.innerHTML='<p>Search the Tarot Ledger by card name, title, rank, suit, element, planet, sign, or other indexed term.</p>'; return; }
+    if (!q) {
+      results.innerHTML='<p>Search the Tarot Ledger by card name, title, rank, suit, element, planet, sign, or other indexed term.</p>';
+      return;
+    }
     const scope=String(reader.dataset.attuneScope || 'full');
     const matches=ledgerBridge()?.searchCards?.(q,24,scope) || [];
-    results.innerHTML=matches.length ? matches.map(card=>'<button type="button" data-attune-card="'+escapeHtml(card.card_id)+'"><img src="'+escapeHtml(card.image||'')+'" alt=""><span>'+escapeHtml(card.title||card.card_id)+'</span></button>').join('') : '<p>No matching cards.</p>';
+    results.innerHTML=matches.length ? matches.map(card=>'<button type="button" data-attune-card="'+escapeHtml(card.card_id)+'"><img src="'+escapeHtml(card.image||'')+'" alt=""><span>'+escapeHtml(card.title||card.card_id)+'</span></button>').join('') : '<p>No matching cards in the assigned sub-pack.</p>';
     results.querySelectorAll('[data-attune-card]').forEach(button=>button.addEventListener('click',()=>{
       const target=attuneIndex;
       const root=panel();
@@ -2189,10 +2207,14 @@
       const scope=String(reader.dataset.attuneScope || 'full');
       if (!ledgerBridge()?.addCardToBoard?.(cardId,scope)) { pendingFocusIndex=null; return; }
       if (target!==drawnIndex) prefabBridge()?.swapPositionSlots?.(drawnIndex,target);
+      if(reader.dataset.attuneCardSource==='physical'){
+        setRecordedCardOrientation(target,reader.dataset.attuneOrientation==='reversed');
+      }
       closeAttune();
       setTimeout(()=>enhance(panel()),0);
     }));
   }
+
   function openAttune(index) {
     const root=panel();
     const item=focusItem(index,root);
@@ -2205,41 +2227,91 @@
     const scope=String(meta.drawScope || snap.rowDrawScope || 'full');
     const keywordTags=scope==='tags'&&Array.isArray(meta.keywordTags)?meta.keywordTags.filter(Boolean):[];
     const keywordMode=meta.keywordMatchMode==='all'?'all':'any';
+    const cardSource=sacredCardSourceAt(index,snap);
+    const reversalsAllowed=meta.allowReversals ?? (snap.rowAllowReversals!==false);
     const cardCount=Math.max(1,Number(meta.cardCount)||1),linkTo=String(meta.linkTo??'');
     const linkedIndex=linkTo!==''?Number(linkTo):null,linkedCard=Number.isInteger(linkedIndex)?cardAt(linkedIndex,root):null;
+
+    // Keyword sub-packs are question-specific. Load the current question's tags
+    // before either digital drawing or physical-card lookup.
+    if(scope==='tags'){
+      const live=optionsBridge()?.capture?.();
+      if(live){
+        live.rowSelectedTags=keywordTags.slice();
+        live.rowTagMatchMode=keywordMode;
+        live.rowDrawDeck=[];
+        live.rowDrawDeckSignature='';
+        optionsBridge()?.restore?.(live);
+      }
+    }
+
     const reader=document.createElement('section');
     reader.className='relphi-attune-reader';
     reader.dataset.attuneScope=scope;
+    reader.dataset.attuneCardSource=cardSource;
+    reader.dataset.attuneOrientation='upright';
     reader.setAttribute('role','dialog');
     reader.setAttribute('aria-modal','true');
     reader.setAttribute('aria-label','Attune to the Referent');
     const scopeLabel=SURFACE_PACK_LABELS[Object.keys(SURFACE_PACK_BY_KIND).find(key=>SURFACE_PACK_BY_KIND[key]===scope)] || (scope==='full'?'Full Pack':scope || 'Full Pack');
-    reader.innerHTML='<div class="relphi-attune-shell"><button type="button" class="relphi-attune-close" aria-label="Close">×</button><span class="eyebrow">Attune to the Referent</span><h2>'+escapeHtml(positionLabel(index,root))+'</h2><p class="relphi-attune-pack">Assigned pack · '+escapeHtml(scopeLabel)+(keywordTags.length?' · '+escapeHtml(keywordTags.join(keywordMode==='all'?' + ':' / ')):'')+(cardCount>1?' · '+cardCount+' cards':'')+(linkedCard?' · shares Question '+(linkedIndex+1)+' card':'')+'</p><p class="relphi-attune-note">Stay with the referent on its own first. Notice what it already means to you before you reveal a card.</p><div class="relphi-attune-actions"><button type="button" class="primary" data-attune-random>Draw a random card from the assigned pack</button><button type="button" data-attune-search>Search for a card</button></div><section class="relphi-attune-search" hidden><label>Tarot Ledger search<input type="search" autocomplete="off" placeholder="Search for the card you drew"></label><div class="relphi-attune-search-results"><p>Search the Tarot Ledger to digitize a physical-card reading.</p></div></section></div>';
+    const sourceLabel=cardSource==='physical'?'Physical deck':'Digital cards';
+    const packLine='Assigned pack · '+escapeHtml(scopeLabel)+(keywordTags.length?' · '+escapeHtml(keywordTags.join(keywordMode==='all'?' + ':' / ')):'')+(cardCount>1?' · '+cardCount+' cards':'')+(linkedCard?' · shares Question '+(linkedIndex+1)+' card':'')+' · '+sourceLabel;
+
+    let actionMarkup='';
+    let searchMarkup='';
+    if(linkedCard){
+      actionMarkup='<div class="relphi-attune-actions relphi-attune-actions--single"><button type="button" class="primary" data-attune-shared>Continue with the shared card</button></div>';
+    }else if(cardSource==='physical'){
+      actionMarkup='<p class="relphi-attune-physical-instruction">Draw one physical card from the assigned sub-pack. Keep its orientation exactly as drawn, then record it here.</p><div class="relphi-attune-actions relphi-attune-actions--single"><button type="button" class="primary" data-attune-search>Record the card I drew</button></div>';
+      const orientationMarkup=reversalsAllowed
+        ? '<fieldset class="relphi-attune-orientation"><legend>Orientation</legend><label><input type="radio" name="relphiPhysicalOrientation" value="upright" checked> Upright</label><label><input type="radio" name="relphiPhysicalOrientation" value="reversed"> Reversed</label></fieldset>'
+        : '<p class="relphi-attune-orientation-note">Reversals are off for this reading, so this card will be recorded upright.</p>';
+      searchMarkup='<section class="relphi-attune-search" hidden>'+orientationMarkup+'<label>Record physical card<input type="search" autocomplete="off" placeholder="Search for the card you drew"></label><div class="relphi-attune-search-results"><p>Search the Tarot Ledger for the physical card you drew.</p></div></section>';
+    }else{
+      actionMarkup='<div class="relphi-attune-actions relphi-attune-actions--single"><button type="button" class="primary" data-attune-random>Draw digital card</button></div>';
+    }
+
+    reader.innerHTML='<div class="relphi-attune-shell"><button type="button" class="relphi-attune-close" aria-label="Close">×</button><span class="eyebrow">Attune to the Referent</span><h2>'+escapeHtml(positionLabel(index,root))+'</h2><p class="relphi-attune-pack">'+packLine+'</p><p class="relphi-attune-note">Stay with the referent on its own first. Notice what it already means to you before you reveal a card.</p>'+actionMarkup+searchMarkup+'</div>';
+
     reader.querySelector('.relphi-attune-close')?.addEventListener('click',closeAttune);
+
+    reader.querySelector('[data-attune-shared]')?.addEventListener('click',()=>{
+      const target=attuneIndex;
+      const cardId=linkedCard?.dataset?.rowCard || linkedCard?.dataset?.cardId || linkedCard?.getAttribute?.('data-row-card');
+      const sourceScope=String((snap.rowPositionMeta?.[linkedIndex]||{}).drawScope||scope);
+      const linkedReversed=!!snap.rowCardReversals?.[linkedIndex];
+      closeAttune();
+      if(cardId)ledgerBridge()?.addCardToBoard?.(cardId,sourceScope);
+      const drawnIndex=currentCardCount(panel())-1;
+      if(target!==drawnIndex&&drawnIndex>=0)prefabBridge()?.swapPositionSlots?.(drawnIndex,target);
+      setRecordedCardOrientation(target,linkedReversed);
+      pendingFocusIndex=target;
+      setTimeout(()=>enhance(panel()),0);
+    });
+
     reader.querySelector('[data-attune-random]')?.addEventListener('click',()=>{
       const target=attuneIndex;
-      if(linkedCard){
-        const cardId=linkedCard.dataset?.rowCard || linkedCard.dataset?.cardId || linkedCard.getAttribute?.('data-row-card');
-        const sourceScope=String((snap.rowPositionMeta?.[linkedIndex]||{}).drawScope||scope);
-        closeAttune();
-        if(cardId) ledgerBridge()?.addCardToBoard?.(cardId,sourceScope);
-        const drawnIndex=currentCardCount(panel())-1;if(target!==drawnIndex&&drawnIndex>=0)prefabBridge()?.swapPositionSlots?.(drawnIndex,target);
-        setTimeout(()=>enhance(panel()),0);return;
-      }
       closeAttune();
       drawInto(focusItem(target,panel()),target);
     });
+
     reader.querySelector('[data-attune-search]')?.addEventListener('click',()=>{
       const search=reader.querySelector('.relphi-attune-search');
       search.hidden=false;
-      reader.querySelector('.relphi-attune-search input')?.focus();
+      reader.querySelector('.relphi-attune-search input[type="search"]')?.focus();
     });
-    reader.querySelector('.relphi-attune-search input')?.addEventListener('input',event=>renderAttuneSearch(reader,event.target.value));
+
+    reader.querySelectorAll('input[name="relphiPhysicalOrientation"]').forEach(input=>input.addEventListener('change',()=>{
+      if(input.checked)reader.dataset.attuneOrientation=input.value==='reversed'?'reversed':'upright';
+    }));
+    reader.querySelector('.relphi-attune-search input[type="search"]')?.addEventListener('input',event=>renderAttuneSearch(reader,event.target.value));
+
     document.body.appendChild(reader);
     lockAttuneViewport();
     reader.querySelector('.relphi-attune-shell')?.scrollTo?.(0,0);
     return true;
   }
+
   function expandSurfaceEntries(entries, baseIndex) {
     const prepared=entries.map((entry,index)=>{
       const linkToLocal=entry.linkTo===''||entry.linkTo==null?'':Number(entry.linkTo);
