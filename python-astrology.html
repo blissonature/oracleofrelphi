@@ -33,6 +33,19 @@ body{background:var(--py-paper);color:var(--py-ink)}
 .py-controls select,.py-controls input{font:inherit;border:1.5px solid #111;border-radius:.7rem;padding:.5rem .65rem;background:#fff}
 .py-codewrap{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(190px,.8fr);gap:.8rem}
 .py-code,.py-output{margin:0;border-radius:1rem;padding:1rem;min-height:9rem;box-sizing:border-box}
+.py-graphic{border:1.5px solid #111;border-radius:1rem;background:#fffdfb;padding:.8rem;margin:1rem 0;min-height:18rem;display:grid;place-items:center}
+.py-graphic svg{width:min(100%,34rem);height:auto;display:block}
+.py-graphic-note{margin:.65rem 0 0;color:#555;font-size:.84rem;line-height:1.4;text-align:center}
+.py-aspect-line{stroke:#dc1f18;stroke-width:4;stroke-linecap:round}
+.py-aspect-ray{stroke:#111;stroke-width:1.25;opacity:.45}
+.py-aspect-sector{fill:#fff;stroke:#111;stroke-width:1}
+.py-aspect-sector.is-source{fill:#dc1f18}
+.py-aspect-sector.is-target{fill:#111}
+.py-aspect-glyph{font:800 21px system-ui,sans-serif}
+.py-aspect-glyph.light{fill:#fff}
+.py-aspect-label{font:800 12px system-ui,sans-serif;fill:#111}
+.py-aspect-center-title{font:900 16px system-ui,sans-serif;fill:#111}
+.py-aspect-center-sub{font:700 11px system-ui,sans-serif;fill:#666}
 .py-code{white-space:pre-wrap;background:#111;color:#fff;overflow:auto;font:500 .9rem/1.5 ui-monospace,SFMono-Regular,Consolas,monospace}
 .py-output{background:var(--py-soft);border:1.5px solid #111}
 .py-output small{display:block;text-transform:uppercase;font-weight:900;letter-spacing:.08em;margin-bottom:.8rem}
@@ -76,23 +89,55 @@ function values(){
  return out;
 }
 function evaluate(id,v){
- if(id==="opposite-signs")return signs[(signs.indexOf(v.sign)+6)%12];
+ if(id==="major-aspects"){
+   const offsets={Sextile:2,Square:3,Trine:4,Opposition:6};
+   const i=signs.indexOf(v.sign),step=offsets[v.aspect];
+   const forward=signs[(i+step)%12],backward=signs[(i-step+12)%12];
+   return v.aspect==="Opposition" ? forward : backward+" · "+forward;
+ }
  if(id==="day-ruler-deputies"){const o=["Saturn","Jupiter","Mars","Sun","Venus","Mercury","Moon"],i=o.indexOf(v.ruler);return [v.ruler,o[(i+1)%7],o[(i+2)%7]].join(" → ")}
  if(id==="zodiac-longitude")return (signs.indexOf(v.sign)*30+v.degree)+"°";
  if(id==="part-of-fortune"){const n=v.sect==="day"?v.asc+v.moon-v.sun:v.asc+v.sun-v.moon;return ((n%360)+360)%360+"°"}
  if(id==="annual-profections")return signs[(signs.indexOf(v.rising)+v.age)%12];
  return "Concept lesson — interactive model coming next.";
 }
+function renderAspectGraphic(v){
+ const glyphs=["♈","♉","♊","♋","♌","♍","♎","♏","♐","♑","♒","♓"];
+ const offsets={Sextile:2,Square:3,Trine:4,Opposition:6};
+ const degrees={Sextile:60,Square:90,Trine:120,Opposition:180};
+ const source=signs.indexOf(v.sign),step=offsets[v.aspect];
+ const targets=v.aspect==="Opposition"?[(source+step)%12]:[(source-step+12)%12,(source+step)%12];
+ const c=180,r=145,inner=62;
+ const pt=(deg,rad)=>{const a=(deg-90)*Math.PI/180;return [c+rad*Math.cos(a),c+rad*Math.sin(a)]};
+ const wedge=(i)=>{
+   const a0=i*30,a1=(i+1)*30;
+   const [x0,y0]=pt(a0,r),[x1,y1]=pt(a1,r);
+   const cls=i===source?" is-source":targets.includes(i)?" is-target":"";
+   const [tx,ty]=pt(i*30+15,116);
+   const light=i===source||targets.includes(i)?" light":"";
+   return '<g><path class="py-aspect-sector'+cls+'" d="M '+c+' '+c+' L '+x0.toFixed(1)+' '+y0.toFixed(1)+' A '+r+' '+r+' 0 0 1 '+x1.toFixed(1)+' '+y1.toFixed(1)+' Z"></path><text class="py-aspect-glyph'+light+'" x="'+tx.toFixed(1)+'" y="'+ty.toFixed(1)+'" text-anchor="middle" dominant-baseline="middle">'+glyphs[i]+'</text></g>';
+ };
+ const rays=Array.from({length:12},(_,i)=>{const [x,y]=pt(i*30,r);return '<line class="py-aspect-ray" x1="'+c+'" y1="'+c+'" x2="'+x.toFixed(1)+'" y2="'+y.toFixed(1)+'"></line>'}).join("");
+ const [sx,sy]=pt(source*30+15,92);
+ const lines=targets.map(t=>{const [tx,ty]=pt(t*30+15,92);return '<line class="py-aspect-line" x1="'+sx.toFixed(1)+'" y1="'+sy.toFixed(1)+'" x2="'+tx.toFixed(1)+'" y2="'+ty.toFixed(1)+'"></line>'}).join("");
+ const targetNames=targets.map(i=>signs[i]).join(v.aspect==="Opposition"?"":" + ");
+ return '<svg viewBox="0 0 360 360" role="img" aria-label="'+v.aspect+' geometry from '+v.sign+'">'+Array.from({length:12},(_,i)=>wedge(i)).join("")+rays+lines+'<circle cx="180" cy="180" r="'+inner+'" fill="#fffdfb" stroke="#111" stroke-width="1.5"></circle><text class="py-aspect-center-title" x="180" y="175" text-anchor="middle">'+v.aspect+'</text><text class="py-aspect-center-sub" x="180" y="194" text-anchor="middle">'+degrees[v.aspect]+'° · '+targetNames+'</text></svg>';
+}
+function renderGraphic(id,v){
+ if(id==="major-aspects")return renderAspectGraphic(v);
+ return '<div class="py-empty">Graphic model coming next.</div>';
+}
+
 function render(id){
  const lesson=data.lessons[id];
  if(!lesson){lab.innerHTML='<div class="py-empty"><strong>'+labels(id)+'</strong><br/>Catalogued for development.</div>';return}
- lab.innerHTML='<span class="py-status">'+lesson.status+'</span><h2>'+lesson.title+'</h2><p class="py-summary">'+lesson.summary+'</p><p class="py-concept">Python idea: '+lesson.pythonConcept+'</p><div class="py-controls">'+Object.entries(lesson.inputs||{}).map(([n,s])=>control(n,s)).join("")+'</div><div class="py-codewrap"><pre class="py-code"><code>'+lesson.code.replaceAll("&","&amp;").replaceAll("<","&lt;")+'</code></pre><div class="py-output"><small>Output</small><div class="py-result" id="result"></div></div></div>';
- const update=()=>{const v=values();lab.querySelectorAll("[data-out]").forEach(o=>o.textContent=v[o.dataset.out]);document.getElementById("result").textContent=evaluate(id,v)};
+ lab.innerHTML='<span class="py-status">'+lesson.status+'</span><h2>'+lesson.title+'</h2><p class="py-summary">'+lesson.summary+'</p><p class="py-concept">Python idea: '+lesson.pythonConcept+'</p><div class="py-controls">'+Object.entries(lesson.inputs||{}).map(([n,s])=>control(n,s)).join("")+'</div><div class="py-graphic" id="graphic"></div>'+(lesson.note?'<p class="py-graphic-note">'+lesson.note+'</p>':'')+'<div class="py-codewrap"><pre class="py-code"><code>'+lesson.code.replaceAll("&","&amp;").replaceAll("<","&lt;")+'</code></pre><div class="py-output"><small>Output</small><div class="py-result" id="result"></div></div></div>';
+ const update=()=>{const v=values();lab.querySelectorAll("[data-out]").forEach(o=>o.textContent=v[o.dataset.out]);document.getElementById("result").textContent=evaluate(id,v);document.getElementById("graphic").innerHTML=renderGraphic(id,v)};
  lab.querySelectorAll("[data-input]").forEach(el=>el.addEventListener("input",update));update();
  history.replaceState(null,"","#"+id);
 }
 map.addEventListener("click",e=>{const b=e.target.closest("[data-lesson]");if(b)render(b.dataset.lesson)});
-const initial=location.hash.slice(1);render(data.lessons[initial]?initial:"day-ruler-deputies");
+const initial=location.hash.slice(1);render(data.lessons[initial]?initial:"major-aspects");
 })();
 </script>
 <script src="navloader.js"></script>
