@@ -151,11 +151,18 @@ async function assertFreeformClearCardsLeavesZeroSlotBoard(page,expectedCards){
   try {
     const page=await browser.newPage({viewport:{width:390,height:844}});
     await openBoard(page);
+    await page.click('#relphiResetBoard');
+    assert.equal(await page.locator('#drawingBoardBoardTab').getAttribute('aria-checked'),'true','Global Reset Board must keep an empty Free board in Free mode');
+    assert.equal(await page.locator('.relphi-reading-options-drawer').count(),0,'Free-mode reset must not open Crafted settings');
+
     await page.click('#drawingBoardOptionsButton');
     await page.waitForSelector('.relphi-reading-options-drawer.is-reading-options-open',{state:'visible'});
     assert.equal(await page.locator('.relphi-global-board-actions').isVisible(),true,'Drawing Board actions stay visible in Crafted mode');
     assert.equal(await page.locator('#drawRandomRowCard').isVisible(),true,'Draw stays visible in Crafted mode');
     assert.equal(await page.locator('#relphiResetBoard').isVisible(),true,'Reset Board stays visible in Crafted mode');
+    await page.click('#relphiResetBoard');
+    await page.waitForSelector('.relphi-reading-options-drawer.is-reading-options-open',{state:'visible'});
+    assert.equal(await page.locator('#drawingBoardOptionsButton').getAttribute('aria-checked'),'true','Global Reset Board must keep Crafted mode selected when reset from Crafted');
     await page.click('#relphiCancelOptions');
 
     await applyTemplate(page,'past-present-future-3');
