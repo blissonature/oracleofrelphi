@@ -1018,7 +1018,7 @@
     const selected=session.surfaceSelected || (session.surfaceSelected={});
     return '<div class="relphi-surface-question-choices" role="group" aria-label="Question types">'+
       SURFACE_DRAW_KEYS.map(kind=>'<label class="relphi-surface-question-choice"><input type="checkbox" data-surface-choice="'+kind+'" '+(selected[kind]?'checked ':'')+(disabled?'disabled':'')+'><span><strong>'+escapeHtml(SURFACE_QUESTIONS[kind])+'</strong><small>'+escapeHtml(SURFACE_PACK_LABELS[kind])+'</small></span></label>').join('')+
-      '</div><p class="relphi-surface-choice-note">Choose each kind of question you agree to ask. You can choose any combination.</p>';
+      '</div><p class="relphi-surface-choice-note">Choose each kind of question you agree to ask. Each probe uses the sub-pack shown beneath it.</p>';
   }
   function prepareSurfaceDraft(session) {
     const kinds=selectedSurfaceKinds(session);
@@ -1317,6 +1317,9 @@
     drawer.id='drawingBoardReadingOptions';
     drawer.setAttribute('role','region');
     drawer.setAttribute('aria-label','Crafted Draw settings');
+    const drawSettingsMarkup=session.path==='surface'
+      ? '<section class="relphi-referent-settings" aria-label="Draw settings"><strong class="relphi-referent-settings-title">Draw settings</strong><div class="relphi-draw-options relphi-draw-options--surface"><label><input id="relphiDraftStickers" type="checkbox" '+(draft.stickers?'checked':'')+' title="Show position stickers"> Show referent stickers</label><label><input id="relphiDraftReversals" type="checkbox" '+(draft.reversals?'checked':'')+'> Reversals</label><label><input id="relphiDraftRepeats" type="checkbox" '+(draft.repeats?'checked':'')+'> Repeats</label></div></section>'
+      : '<section class="relphi-referent-settings" aria-label="Draw settings"><strong class="relphi-referent-settings-title">Draw settings</strong><div class="relphi-draw-options"><label>Pack<select id="relphiDraftPack">'+packOptions(draft.pack)+'</select></label>'+keywordDraftMarkup(draft)+'<label><input id="relphiDraftStickers" type="checkbox" '+(draft.stickers?'checked':'')+' title="Show position stickers"> Show referent stickers</label><label><input id="relphiDraftReversals" type="checkbox" '+(draft.reversals?'checked':'')+'> Reversals</label><label><input id="relphiDraftRepeats" type="checkbox" '+(draft.repeats?'checked':'')+'> Repeats</label></div></section>';
     drawer.innerHTML = '<div class="relphi-options-heading"><div><span class="eyebrow">Drawing Board</span><h3>Crafted Draw</h3></div></div>'+
       (hasCards ? '<p class="relphi-options-note relphi-options-note-visible">Reset Board before changing referents. The reading structure is locked once cards are drawn.</p>' : '')+
       '<div class="relphi-options-body">'+
@@ -1328,7 +1331,7 @@
           referentPathButton('astro','Astrological Tarot Reading','Connect one or two skies and surface questions from exact card hits.',session.path,hasCards)+
         '</div>'+
         pathPanelMarkup(session,hasCards)+
-        '<section class="relphi-referent-settings" aria-label="Draw settings"><strong class="relphi-referent-settings-title">Draw settings</strong><div class="relphi-draw-options"><label>Pack<select id="relphiDraftPack">'+packOptions(draft.pack)+'</select></label>'+keywordDraftMarkup(draft)+'<label><input id="relphiDraftStickers" type="checkbox" '+(draft.stickers?'checked':'')+' title="Show position stickers"> Show referent stickers</label><label><input id="relphiDraftReversals" type="checkbox" '+(draft.reversals?'checked':'')+'> Reversals</label><label><input id="relphiDraftRepeats" type="checkbox" '+(draft.repeats?'checked':'')+'> Repeats</label></div></section>'+
+        drawSettingsMarkup+
       '</div>'+
       '<div class="relphi-options-commitbar"><span></span><button type="button" id="relphiCancelOptions">Cancel</button><button type="button" id="relphiApplyOptions" class="primary" '+(session.path==='surface'&&!selectedSurfaceKinds(session).length?'disabled':'')+'>Start Reading</button></div>';
     modeTabs.insertAdjacentElement('afterend',drawer);
