@@ -189,6 +189,8 @@ assert.match(css, /relphi-focus-main/);
 assert.match(css, /relphi-board-commandbar/);
 assert.match(css, /relphi-board-command-actions/);
 assert.match(css, /relphi-board-settings-panel/);
+assert.match(css, /relphi-settings-open[^\n]*drawing-board-board-mode/);
+assert.match(css, /display:block!important/);
 assert.match(chromeOwner, /const settingsBody = root\.querySelector\('\.relphi-board-settings-body'\)/);
 assert.match(chromeOwner, /modeSwitch\.insertAdjacentElement\('afterend', drawer\)/);
 assert.match(css, /relphi-free-settings/);
