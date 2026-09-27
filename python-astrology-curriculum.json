@@ -1,0 +1,330 @@
+{
+  "program": {
+    "title": "Python for Astrology",
+    "tagline": "Learn astrology by making its mechanisms executable.",
+    "releaseModel": "open-map-featured-drops"
+  },
+  "courses": [
+    {
+      "code": "AST101",
+      "title": "Zodiac Mechanics",
+      "theme": "Make the zodiac executable.",
+      "lessons": [
+        "opposite-signs",
+        "day-ruler-deputies",
+        "zodiac-longitude",
+        "whole-sign-houses"
+      ]
+    },
+    {
+      "code": "AST102",
+      "title": "Combining Rules",
+      "theme": "Turn isolated rules into chart logic.",
+      "lessons": [
+        "planetary-hours",
+        "lunar-phase"
+      ]
+    },
+    {
+      "code": "AST201",
+      "title": "One Chart as a System",
+      "theme": "Treat a chart as structured data and a network.",
+      "lessons": [
+        "aspect-grid",
+        "dispositor-chains"
+      ]
+    },
+    {
+      "code": "AST202",
+      "title": "Charts Across People and Time",
+      "theme": "Compare charts, transits, and changing sky states.",
+      "lessons": [
+        "transit-calendar"
+      ]
+    },
+    {
+      "code": "AST301",
+      "title": "Configurations and Graphs",
+      "theme": "Find larger structures in aspect networks.",
+      "lessons": [
+        "configuration-detector",
+        "antiscia"
+      ]
+    },
+    {
+      "code": "AST302",
+      "title": "Search, Research, and Discovery",
+      "theme": "Ask reproducible questions across many charts and times.",
+      "lessons": [
+        "rule-engine"
+      ]
+    },
+    {
+      "code": "TRAD101",
+      "title": "Traditional Measures",
+      "theme": "Degree divisions and traditional intervals.",
+      "lessons": [
+        "dodecatemoria",
+        "egyptian-bounds"
+      ]
+    },
+    {
+      "code": "TRAD102",
+      "title": "Lots and Derived Points",
+      "theme": "Sect-aware zodiacal arithmetic.",
+      "lessons": [
+        "part-of-fortune",
+        "part-of-spirit"
+      ]
+    },
+    {
+      "code": "TRAD201",
+      "title": "Time Lords",
+      "theme": "Cycles, nested periods, and interval traversal.",
+      "lessons": [
+        "annual-profections",
+        "zodiacal-releasing"
+      ]
+    },
+    {
+      "code": "TRAD202",
+      "title": "Planetary Condition and Light",
+      "theme": "Solar and lunar relationship logic.",
+      "lessons": [
+        "lunar-application"
+      ]
+    },
+    {
+      "code": "EPH101",
+      "title": "Motion, Vectors, and Rotation",
+      "theme": "The physical language of moving bodies.",
+      "lessons": [
+        "angular-momentum"
+      ]
+    },
+    {
+      "code": "EPH102",
+      "title": "Orientation in Space",
+      "theme": "Describe axes and rotations.",
+      "lessons": [
+        "euler-angles"
+      ]
+    },
+    {
+      "code": "EPH201",
+      "title": "Precession and Nutation",
+      "theme": "Understand why a rotating axis itself moves.",
+      "lessons": [
+        "precession",
+        "nutation"
+      ]
+    },
+    {
+      "code": "EPH202",
+      "title": "Celestial Coordinates",
+      "theme": "Turn directions in space into astronomical coordinates.",
+      "lessons": [
+        "ecliptic-equatorial"
+      ]
+    },
+    {
+      "code": "EPH301",
+      "title": "Changing Reference Frames",
+      "theme": "Epoch, precession, nutation, mean and true frames.",
+      "lessons": [
+        "precession-coordinates"
+      ]
+    },
+    {
+      "code": "EPH302",
+      "title": "Toward a Real Ephemeris",
+      "theme": "Calculate planetary positions instead of merely consuming them.",
+      "lessons": [
+        "julian-date",
+        "keplers-equation"
+      ]
+    },
+    {
+      "code": "LAB401",
+      "title": "Ephemeris Consumer",
+      "theme": "Use trusted astronomical positions correctly.",
+      "lessons": [
+        "ephemeris-data-contract"
+      ]
+    },
+    {
+      "code": "LAB402",
+      "title": "Educational Planet Engine",
+      "theme": "Calculate one body through apparent longitude.",
+      "lessons": [
+        "single-body-engine"
+      ]
+    },
+    {
+      "code": "LAB403",
+      "title": "Relphi Ephemeris",
+      "theme": "Integrate computed sky positions with Relphi.",
+      "lessons": [
+        "chart-generation"
+      ]
+    }
+  ],
+  "lessons": {
+    "opposite-signs": {
+      "title": "Opposite Signs",
+      "course": "AST101",
+      "pythonConcept": "list indexing + modulo 12",
+      "summary": "Add six signs and wrap around the zodiac.",
+      "status": "interactive",
+      "inputs": {
+        "sign": [
+          "Aries",
+          "Taurus",
+          "Gemini",
+          "Cancer",
+          "Leo",
+          "Virgo",
+          "Libra",
+          "Scorpio",
+          "Sagittarius",
+          "Capricorn",
+          "Aquarius",
+          "Pisces"
+        ]
+      },
+      "code": "signs = [\"Aries\",\"Taurus\",\"Gemini\",\"Cancer\",\"Leo\",\"Virgo\",\\n         \"Libra\",\"Scorpio\",\"Sagittarius\",\"Capricorn\",\"Aquarius\",\"Pisces\"]\\n\\ni = signs.index(sign)\\nprint(signs[(i + 6) % 12])"
+    },
+    "day-ruler-deputies": {
+      "title": "Day Ruler Deputies",
+      "course": "AST101",
+      "pythonConcept": "enumerate + modulo",
+      "summary": "Move through the Chaldean order to reveal the next two deputies of each ruler.",
+      "status": "interactive",
+      "inputs": {
+        "ruler": [
+          "Saturn",
+          "Jupiter",
+          "Mars",
+          "Sun",
+          "Venus",
+          "Mercury",
+          "Moon"
+        ]
+      },
+      "code": "order = [\"Saturn\",\"Jupiter\",\"Mars\",\"Sun\",\"Venus\",\"Mercury\",\"Moon\"]\\n\\ni = order.index(ruler)\\nprint(ruler, order[(i+1)%7], order[(i+2)%7])"
+    },
+    "zodiac-longitude": {
+      "title": "Zodiac Longitude",
+      "course": "AST101",
+      "pythonConcept": "indexing + multiplication",
+      "summary": "Turn sign and degree into one 0–360° number.",
+      "status": "interactive",
+      "inputs": {
+        "sign": [
+          "Aries",
+          "Taurus",
+          "Gemini",
+          "Cancer",
+          "Leo",
+          "Virgo",
+          "Libra",
+          "Scorpio",
+          "Sagittarius",
+          "Capricorn",
+          "Aquarius",
+          "Pisces"
+        ],
+        "degree": {
+          "min": 0,
+          "max": 29,
+          "value": 15
+        }
+      },
+      "code": "signs = [\"Aries\",\"Taurus\",\"Gemini\",\"Cancer\",\"Leo\",\"Virgo\",\\n         \"Libra\",\"Scorpio\",\"Sagittarius\",\"Capricorn\",\"Aquarius\",\"Pisces\"]\\n\\nlongitude = signs.index(sign) * 30 + degree\\nprint(longitude)"
+    },
+    "part-of-fortune": {
+      "title": "Part of Fortune",
+      "course": "TRAD102",
+      "pythonConcept": "conditionals + modulo 360",
+      "summary": "Use sect to choose the luminary order, then normalize the result around the circle.",
+      "status": "interactive",
+      "inputs": {
+        "sect": [
+          "day",
+          "night"
+        ],
+        "asc": {
+          "min": 0,
+          "max": 359,
+          "value": 168
+        },
+        "sun": {
+          "min": 0,
+          "max": 359,
+          "value": 195
+        },
+        "moon": {
+          "min": 0,
+          "max": 359,
+          "value": 118
+        }
+      },
+      "code": "if sect == \"day\":\\n    fortune = asc + moon - sun\\nelse:\\n    fortune = asc + sun - moon\\n\\nprint(fortune % 360)"
+    },
+    "annual-profections": {
+      "title": "Annual Profections",
+      "course": "TRAD201",
+      "pythonConcept": "modulo 12",
+      "summary": "Advance one whole sign per year and wrap after twelve.",
+      "status": "interactive",
+      "inputs": {
+        "rising": [
+          "Aries",
+          "Taurus",
+          "Gemini",
+          "Cancer",
+          "Leo",
+          "Virgo",
+          "Libra",
+          "Scorpio",
+          "Sagittarius",
+          "Capricorn",
+          "Aquarius",
+          "Pisces"
+        ],
+        "age": {
+          "min": 0,
+          "max": 99,
+          "value": 40
+        }
+      },
+      "code": "signs = [\"Aries\",\"Taurus\",\"Gemini\",\"Cancer\",\"Leo\",\"Virgo\",\\n         \"Libra\",\"Scorpio\",\"Sagittarius\",\"Capricorn\",\"Aquarius\",\"Pisces\"]\\n\\nstart = signs.index(rising)\\nprint(signs[(start + age) % 12])"
+    },
+    "nutation": {
+      "title": "Nutation",
+      "course": "EPH201",
+      "pythonConcept": "oscillation added to rotation",
+      "summary": "Model the faster wobble riding on top of a slower precessional motion.",
+      "status": "concept",
+      "code": "precession = slow_rotation(t)\\nnutation = amplitude * sin(frequency * t)\\ntrue_axis = apply_nutation(precession, nutation)"
+    }
+  },
+  "launchArc": [
+    "opposite-signs",
+    "day-ruler-deputies",
+    "zodiac-longitude",
+    "whole-sign-houses",
+    "planetary-hours",
+    "part-of-fortune",
+    "dodecatemoria",
+    "annual-profections",
+    "aspect-grid",
+    "dispositor-chains",
+    "lunar-application",
+    "antiscia",
+    "precession",
+    "nutation",
+    "ecliptic-equatorial",
+    "julian-date"
+  ]
+}
