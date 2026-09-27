@@ -2154,6 +2154,8 @@
     const snap=currentSnapshot() || {};
     const meta=snap.rowPositionMeta?.[index] || snap.rowActiveLayout?.positions?.[index] || {};
     const scope=String(meta.drawScope || snap.rowDrawScope || 'full');
+    const keywordTags=scope==='tags'&&Array.isArray(meta.keywordTags)?meta.keywordTags.filter(Boolean):[];
+    const keywordMode=meta.keywordMatchMode==='all'?'all':'any';
     const cardCount=Math.max(1,Number(meta.cardCount)||1),linkTo=String(meta.linkTo??'');
     const linkedIndex=linkTo!==''?Number(linkTo):null,linkedCard=Number.isInteger(linkedIndex)?cardAt(linkedIndex,root):null;
     const reader=document.createElement('section');
@@ -2163,7 +2165,7 @@
     reader.setAttribute('aria-modal','true');
     reader.setAttribute('aria-label','Attune to the Referent');
     const scopeLabel=SURFACE_PACK_LABELS[Object.keys(SURFACE_PACK_BY_KIND).find(key=>SURFACE_PACK_BY_KIND[key]===scope)] || (scope==='full'?'Full Pack':scope || 'Full Pack');
-    reader.innerHTML='<div class="relphi-attune-shell"><button type="button" class="relphi-attune-close" aria-label="Close">×</button><span class="eyebrow">Attune to the Referent</span><h2>'+escapeHtml(positionLabel(index,root))+'</h2><p class="relphi-attune-pack">Assigned pack · '+escapeHtml(scopeLabel)+(cardCount>1?' · '+cardCount+' cards':'')+(linkedCard?' · shares Question '+(linkedIndex+1)+' card':'')+'</p><p class="relphi-attune-note">Stay with the referent on its own first. Notice what it already means to you before you reveal a card.</p><div class="relphi-attune-actions"><button type="button" class="primary" data-attune-random>Draw a random card from the assigned pack</button><button type="button" data-attune-search>Search for a card</button></div><section class="relphi-attune-search" hidden><label>Tarot Ledger search<input type="search" autocomplete="off" placeholder="Search for the card you drew"></label><div class="relphi-attune-search-results"><p>Search the Tarot Ledger to digitize a physical-card reading.</p></div></section></div>';
+    reader.innerHTML='<div class="relphi-attune-shell"><button type="button" class="relphi-attune-close" aria-label="Close">×</button><span class="eyebrow">Attune to the Referent</span><h2>'+escapeHtml(positionLabel(index,root))+'</h2><p class="relphi-attune-pack">Assigned pack · '+escapeHtml(scopeLabel)+(keywordTags.length?' · '+escapeHtml(keywordTags.join(keywordMode==='all'?' + ':' / ')):'')+(cardCount>1?' · '+cardCount+' cards':'')+(linkedCard?' · shares Question '+(linkedIndex+1)+' card':'')+'</p><p class="relphi-attune-note">Stay with the referent on its own first. Notice what it already means to you before you reveal a card.</p><div class="relphi-attune-actions"><button type="button" class="primary" data-attune-random>Draw a random card from the assigned pack</button><button type="button" data-attune-search>Search for a card</button></div><section class="relphi-attune-search" hidden><label>Tarot Ledger search<input type="search" autocomplete="off" placeholder="Search for the card you drew"></label><div class="relphi-attune-search-results"><p>Search the Tarot Ledger to digitize a physical-card reading.</p></div></section></div>';
     reader.querySelector('.relphi-attune-close')?.addEventListener('click',closeAttune);
     reader.querySelector('[data-attune-random]')?.addEventListener('click',()=>{
       const target=attuneIndex;
@@ -2348,6 +2350,7 @@
         '<span class="eyebrow">'+escapeHtml(title)+'</span>'+
         '<h2>Choose what to ask next</h2>'+
         '<p class="relphi-surface-composer-intro">'+escapeHtml(intro)+'</p>'+
+        '<p class="relphi-surface-composer-status" data-surface-composer-status hidden></p>'+
         '<div class="relphi-surface-composer-rows">'+rows.map((row,index)=>surfaceComposerRowMarkup(row,index,rows)).join('')+'</div>'+
         '<div class="relphi-surface-composer-footer"><button type="button" data-surface-suggest>Suggest another question</button><button type="button" data-surface-add>Add my own question</button><span></span><button type="button" data-surface-done class="primary">Add selected questions</button></div>'+
       '</div>';
@@ -2431,6 +2434,8 @@
         if(missingChosenIndex>=0){
           const originalIndex=selectedIndices[missingChosenIndex];
           const target=composer.querySelector('[data-surface-composer-row="'+originalIndex+'"] [data-surface-tag-query]')||composer.querySelector('[data-surface-tag-query]');
+          const status=composer.querySelector('[data-surface-composer-status]');
+          if(status){status.hidden=false;status.textContent='Choose at least one keyword or tag for every Keywords / Tags question.';}
           target?.focus();
           target?.scrollIntoView?.({block:'center'});
           return;
