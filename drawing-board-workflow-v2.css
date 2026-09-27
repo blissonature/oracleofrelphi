@@ -676,3 +676,8 @@ body.relphi-attune-open{overflow:hidden!important}
 #shortListPanel .relphi-polarity-diagnostic{display:grid!important;gap:.2rem!important;margin-top:.65rem!important;padding:.55rem .65rem!important;border:1px dashed currentColor!important;border-radius:7px!important;font-size:.7rem!important;line-height:1.35!important}
 #shortListPanel .relphi-polarity-diagnostic>span,#shortListPanel .relphi-polarity-diagnostic>small{display:block!important}
 #shortListPanel .relphi-polarity-diagnostic>small{opacity:.72!important}
+
+#shortListPanel .relphi-astrology-house-system{display:grid!important;gap:.28rem!important;margin:.55rem 0 .7rem!important}
+#shortListPanel .relphi-astrology-house-system>span{font-size:.72rem!important;font-weight:800!important}
+#shortListPanel .relphi-astrology-house-system select{width:100%!important}
+#shortListPanel .relphi-astrology-house-system small{font-size:.62rem!important;opacity:.7!important}
