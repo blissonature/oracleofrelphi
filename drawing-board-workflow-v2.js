@@ -2153,19 +2153,27 @@
     const astrologyRequested=session.path==='astro'&&!!session.astrologyResolved;
     if(astrologyRequested){writeStickerVisibility(draft.stickers);surfaceReadingSession=null;recursionSession=null;recursionPortalLevel=0;if(!launchConfiguredReading(root,draft)){showBoardToast('The reading layout could not be established. Your Astrological Tarot setup has been kept open.',{title:'Astrological Tarot Reading',duration:5200});return}showBoardToast('Your selected astrological questions are established on the Drawing Board.',{title:'Astrological Tarot Reading',duration:4600});return}
     const recursionRequested=draft.templateId===RECURSION_ID || draft.basedOnTemplateId===RECURSION_ID;
-    // Bespoke is a normal Crafted reading too. Launch it through the same atomic
-    // transition used by Astrological Tarot so the board clear/reset cannot
-    // race the newly established referents back into configuration mode.
-    if(session.path==='bespoke'){
+    // Every ordinary Crafted path must cross the same atomic launch boundary.
+    // Leaving Templates / Building Blocks on the legacy clear-and-reapply path
+    // gives enhance() a chance to reinterpret the new structure as setup state.
+    if(session.path==='bespoke' || session.path==='templates' || session.path==='blocks'){
+      const pathTitle=session.path==='bespoke'?'Bespoke':session.path==='templates'?'Templates':'Building Blocks';
       writeStickerVisibility(draft.stickers);
       surfaceReadingSession=null;
-      recursionSession=null;
+      recursionSession=recursionRequested ? {level:1,maxLevel:1,complete:false} : null;
       recursionPortalLevel=0;
       if(!launchConfiguredReading(root,draft)){
-        showBoardToast('The bespoke reading layout could not be established. Your setup has been kept open.',{title:'Bespoke',duration:5200});
+        showBoardToast('The reading layout could not be established. Your setup has been kept open.',{title:pathTitle,duration:5200});
         return;
       }
-      showBoardToast('Your bespoke referents and draw settings are established on the Drawing Board.',{title:'Bespoke',duration:4600});
+      if(recursionSession && recursionActive()){
+        showBoardToast('Each level takes the shape of the Relphi logo. The active black circle opens white, then holds its card. When Mem, Aleph, and Shin are complete, the red Earth circle wakes up as the portal. Veilva marks the seven depths.',{
+          title:'Relphi Recursive Reading',duration:0,actionLabel:'Enter Level 1',
+          onAction:()=>{const first=recursionIndicesForLevel(1)[0];if(Number.isInteger(first))openAttune(first);}
+        });
+      }else{
+        showBoardToast('Your '+pathTitle.toLowerCase()+' referents and draw settings are established on the Drawing Board.',{title:pathTitle,duration:4600});
+      }
       return;
     }
     surfaceReadingSession=surfaceKinds.length ? {kinds:surfaceKinds.slice(),initialCount:surfaceKinds.length,followupsGenerated:false,followupCount:0} : null;
