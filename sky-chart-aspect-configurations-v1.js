@@ -504,7 +504,8 @@ function configurationVertexText(key){
   if(!record)return 'Sky '+item.sky+' '+item.label;
   const signNames=['Aries','Taurus','Gemini','Cancer','Leo','Virgo','Libra','Scorpio','Sagittarius','Capricorn','Aquarius','Pisces'];
   const sign=Math.floor(resultNorm(record.value)/30),within=resultNorm(record.value)-sign*30,degree=Math.floor(within),minute=Math.floor((within-degree)*60+1e-7);
-  return 'Sky '+item.sky+' '+item.label+' '+degree+'°'+String(minute).padStart(2,'0')+'′ '+signNames[sign];
+  const house=Number(record.house),houseText=Number.isFinite(house)&&house>=1&&house<=12?' · H'+Math.trunc(house):'';
+  return 'Sky '+item.sky+' '+item.label+' '+degree+'°'+String(minute).padStart(2,'0')+'′ '+signNames[sign]+houseText;
 }
 function serializeConfigurationPattern(pattern){
   const type=TYPE_MAP.get(pattern.type)?.label||pattern.type;
