@@ -411,7 +411,9 @@
       positionSettings:Array.from({length:Array.isArray(snap.shortListPositionLabels)?snap.shortListPositionLabels.length:0},(_,index)=>({
         pack:String(snap.rowPositionMeta?.[index]?.drawScope || state.activeLayout?.positions?.[index]?.drawScope || snap.rowDrawScope || 'full'),
         reversals:snap.rowPositionMeta?.[index]?.allowReversals ?? state.activeLayout?.positions?.[index]?.allowReversals ?? (snap.rowAllowReversals !== false),
-        repeats:snap.rowPositionMeta?.[index]?.allowRepeats ?? state.activeLayout?.positions?.[index]?.allowRepeats ?? !!snap.rowAllowRepeats
+        repeats:snap.rowPositionMeta?.[index]?.allowRepeats ?? state.activeLayout?.positions?.[index]?.allowRepeats ?? !!snap.rowAllowRepeats,
+        cardCount:Math.max(1,Number(snap.rowPositionMeta?.[index]?.cardCount ?? state.activeLayout?.positions?.[index]?.cardCount ?? 1)||1),
+        linkTo:String(snap.rowPositionMeta?.[index]?.linkTo ?? state.activeLayout?.positions?.[index]?.linkTo ?? '')
       })),
       pack:String(snap.rowDrawScope || 'full'),
       keywordTags:Array.isArray(snap.rowSelectedTags) ? snap.rowSelectedTags.slice() : [],
@@ -830,14 +832,14 @@
   function labelsMarkup(labels,draft=null) {
     const rows=labels.length ? labels : [''];
     return rows.map((label,index)=>{
-      const inherited=draft?.positionSettings?.[index] || draft?.positionSettings?.[index-1] || {pack:draft?.pack||'full',reversals:draft?.reversals!==false,repeats:!!draft?.repeats};
+      const inherited=draft?.positionSettings?.[index] || draft?.positionSettings?.[index-1] || {pack:draft?.pack||'full',reversals:draft?.reversals!==false,repeats:!!draft?.repeats,cardCount:1,linkTo:''};
       if(draft && !draft.positionSettings?.[index]){
         draft.positionSettings ||= [];
         draft.positionSettings[index]={pack:inherited.pack||'full',reversals:inherited.reversals!==false,repeats:!!inherited.repeats};
         draft.positionPacks ||= []; draft.positionPacks[index]=draft.positionSettings[index].pack;
       }
       const settings=draft?.positionSettings?.[index]||inherited;
-      return `<div class="relphi-label-row relphi-bespoke-question-row" data-label-row="${index}"><span>${index+1}</span><div class="relphi-bespoke-question-main"><input type="text" value="${escapeHtml(label)}" aria-label="Position ${index+1} label"><div class="relphi-bespoke-question-settings"><label>Sub-pack<select data-position-pack="${index}">${packOptions(settings.pack||'full')}</select></label><label><input type="checkbox" data-position-reversals="${index}" ${settings.reversals!==false?'checked':''}> Reversals</label><label><input type="checkbox" data-position-repeats="${index}" ${settings.repeats?'checked':''}> Repeats</label></div></div><button type="button" data-remove-label="${index}" aria-label="Remove position ${index+1}">×</button></div>`;
+      return `<div class="relphi-label-row relphi-bespoke-question-row" data-label-row="${index}"><span>${index+1}</span><div class="relphi-bespoke-question-main"><input type="text" value="${escapeHtml(label)}" aria-label="Position ${index+1} label"><div class="relphi-bespoke-question-settings"><label>Sub-pack<select data-position-pack="${index}">${packOptions(settings.pack||'full')}</select></label><label>Cards<input type="number" min="1" max="12" value="${Math.max(1,Number(settings.cardCount)||1)}" data-position-card-count="${index}" aria-label="Cards to draw for question ${index+1}"></label><label>Share card with<select data-position-link="${index}"><option value="">No link</option>${rows.map((other,j)=>j===index?'':`<option value="${j}" ${String(settings.linkTo)===String(j)?'selected':''}>Question ${j+1}</option>`).join('')}</select></label><label><input type="checkbox" data-position-reversals="${index}" ${settings.reversals!==false?'checked':''}> Reversals</label><label><input type="checkbox" data-position-repeats="${index}" ${settings.repeats?'checked':''}> Repeats</label></div></div><button type="button" data-remove-label="${index}" aria-label="Remove position ${index+1}">×</button></div>`;
     }).join('');
   }
   function parseBulkQuestions(value) {
@@ -1423,10 +1425,12 @@
     });
     drawer.querySelector('#relphiAddPosition')?.addEventListener('click',()=>{
       if (draft.labels.length>=MAX_POSITIONS) return;
-      const previous=draft.positionSettings?.[draft.positionSettings.length-1] || {pack:draft.pack||'full',reversals:draft.reversals!==false,repeats:!!draft.repeats};
+      const previous=draft.positionSettings?.[draft.positionSettings.length-1] || {pack:draft.pack||'full',reversals:draft.reversals!==false,repeats:!!draft.repeats,cardCount:1,linkTo:''};
       draft.labels.push(''); draft.positionPacks?.push?.(previous.pack||'full'); draft.positionSettings ||= []; draft.positionSettings.push({...previous}); markQuestionEditCustom(drawer,draft); renderOptions(root);
     });
     drawer.querySelectorAll('[data-position-pack]').forEach(select=>select.addEventListener('change',()=>{const i=Number(select.dataset.positionPack);draft.positionSettings ||= [];const prior=draft.positionSettings[i]||{};draft.positionSettings[i]={...prior,pack:select.value||'full'};draft.positionPacks ||= [];draft.positionPacks[i]=select.value||'full';}));
+    drawer.querySelectorAll('[data-position-card-count]').forEach(input=>input.addEventListener('change',()=>{const i=Number(input.dataset.positionCardCount);draft.positionSettings ||= [];const prior=draft.positionSettings[i]||{};draft.positionSettings[i]={...prior,cardCount:Math.max(1,Math.min(12,Number(input.value)||1))};}));
+    drawer.querySelectorAll('[data-position-link]').forEach(select=>select.addEventListener('change',()=>{const i=Number(select.dataset.positionLink);draft.positionSettings ||= [];const prior=draft.positionSettings[i]||{};draft.positionSettings[i]={...prior,linkTo:select.value};}));
     drawer.querySelectorAll('[data-position-reversals]').forEach(input=>input.addEventListener('change',()=>{const i=Number(input.dataset.positionReversals);draft.positionSettings ||= [];draft.positionSettings[i]={...(draft.positionSettings[i]||{}),pack:draft.positionPacks?.[i]||draft.pack||'full',reversals:input.checked,repeats:!!draft.positionSettings[i]?.repeats};}));
     drawer.querySelectorAll('[data-position-repeats]').forEach(input=>input.addEventListener('change',()=>{const i=Number(input.dataset.positionRepeats);draft.positionSettings ||= [];draft.positionSettings[i]={...(draft.positionSettings[i]||{}),pack:draft.positionPacks?.[i]||draft.pack||'full',reversals:draft.positionSettings[i]?.reversals!==false,repeats:input.checked};}));
     drawer.querySelector('#relphiTemplateName')?.addEventListener('input',event=>{draft.templateName=event.target.value.slice(0,60);});
@@ -1615,7 +1619,7 @@
     const positionPacks=(draft.positionPacks||[]).slice(0,labels.length).map(value=>String(value||''));
     if (based && based.positions.length===labels.length) {
       const next=clone(based);
-      next.positions.forEach((item,index)=>{const ps=draft.positionSettings?.[index]||{};item.label=labels[index]; item.drawOrder=index+1; item.drawScope=positionPacks[index]||ps.pack||item.drawScope||'';item.allowReversals=ps.reversals ?? draft.reversals;item.allowRepeats=ps.repeats ?? draft.repeats;});
+      next.positions.forEach((item,index)=>{const ps=draft.positionSettings?.[index]||{};item.label=labels[index]; item.drawOrder=index+1; item.drawScope=positionPacks[index]||ps.pack||item.drawScope||'';item.allowReversals=ps.reversals ?? draft.reversals;item.allowRepeats=ps.repeats ?? draft.repeats;item.cardCount=Math.max(1,Number(ps.cardCount)||1);item.linkTo=String(ps.linkTo??'');});
       next.rules={allowReversals:draft.reversals,allowRepeats:draft.repeats,drawScope:draft.pack};
       if (!draft.templateId) {
         next.id='custom-active';
@@ -1627,7 +1631,7 @@
       return next;
     }
     const positions=genericPositions(labels);
-    positions.forEach((item,index)=>{const ps=draft.positionSettings?.[index]||{};item.drawScope=positionPacks[index]||ps.pack||'';item.allowReversals=ps.reversals ?? draft.reversals;item.allowRepeats=ps.repeats ?? draft.repeats;});
+    positions.forEach((item,index)=>{const ps=draft.positionSettings?.[index]||{};item.drawScope=positionPacks[index]||ps.pack||'';item.allowReversals=ps.reversals ?? draft.reversals;item.allowRepeats=ps.repeats ?? draft.repeats;item.cardCount=Math.max(1,Number(ps.cardCount)||1);item.linkTo=String(ps.linkTo??'');});
     return {version:1,id:'custom-active',name:draft.templateName || 'Custom',cardCount:labels.length,source:'custom',editable:true,basedOn:based?.id||null,positions,rules:{allowReversals:draft.reversals,allowRepeats:draft.repeats,drawScope:draft.pack}};
   }
 
@@ -2095,7 +2099,10 @@
     closeAttune();
     attuneIndex=index;
     const snap=currentSnapshot() || {};
-    const scope=String(snap.rowPositionMeta?.[index]?.drawScope || snap.rowActiveLayout?.positions?.[index]?.drawScope || snap.rowDrawScope || 'full');
+    const meta=snap.rowPositionMeta?.[index] || snap.rowActiveLayout?.positions?.[index] || {};
+    const scope=String(meta.drawScope || snap.rowDrawScope || 'full');
+    const cardCount=Math.max(1,Number(meta.cardCount)||1),linkTo=String(meta.linkTo??'');
+    const linkedIndex=linkTo!==''?Number(linkTo):null,linkedCard=Number.isInteger(linkedIndex)?cardAt(linkedIndex,root):null;
     const reader=document.createElement('section');
     reader.className='relphi-attune-reader';
     reader.dataset.attuneScope=scope;
@@ -2103,10 +2110,18 @@
     reader.setAttribute('aria-modal','true');
     reader.setAttribute('aria-label','Attune to the Referent');
     const scopeLabel=SURFACE_PACK_LABELS[Object.keys(SURFACE_PACK_BY_KIND).find(key=>SURFACE_PACK_BY_KIND[key]===scope)] || (scope==='full'?'Full Pack':scope || 'Full Pack');
-    reader.innerHTML='<div class="relphi-attune-shell"><button type="button" class="relphi-attune-close" aria-label="Close">×</button><span class="eyebrow">Attune to the Referent</span><h2>'+escapeHtml(positionLabel(index,root))+'</h2><p class="relphi-attune-pack">Assigned pack · '+escapeHtml(scopeLabel)+'</p><p class="relphi-attune-note">Stay with the referent on its own first. Notice what it already means to you before you reveal a card.</p><div class="relphi-attune-actions"><button type="button" class="primary" data-attune-random>Draw a random card from the assigned pack</button><button type="button" data-attune-search>Search for a card</button></div><section class="relphi-attune-search" hidden><label>Tarot Ledger search<input type="search" autocomplete="off" placeholder="Search for the card you drew"></label><div class="relphi-attune-search-results"><p>Search the Tarot Ledger to digitize a physical-card reading.</p></div></section></div>';
+    reader.innerHTML='<div class="relphi-attune-shell"><button type="button" class="relphi-attune-close" aria-label="Close">×</button><span class="eyebrow">Attune to the Referent</span><h2>'+escapeHtml(positionLabel(index,root))+'</h2><p class="relphi-attune-pack">Assigned pack · '+escapeHtml(scopeLabel)+(cardCount>1?' · '+cardCount+' cards':'')+(linkedCard?' · shares Question '+(linkedIndex+1)+' card':'')+'</p><p class="relphi-attune-note">Stay with the referent on its own first. Notice what it already means to you before you reveal a card.</p><div class="relphi-attune-actions"><button type="button" class="primary" data-attune-random>Draw a random card from the assigned pack</button><button type="button" data-attune-search>Search for a card</button></div><section class="relphi-attune-search" hidden><label>Tarot Ledger search<input type="search" autocomplete="off" placeholder="Search for the card you drew"></label><div class="relphi-attune-search-results"><p>Search the Tarot Ledger to digitize a physical-card reading.</p></div></section></div>';
     reader.querySelector('.relphi-attune-close')?.addEventListener('click',closeAttune);
     reader.querySelector('[data-attune-random]')?.addEventListener('click',()=>{
       const target=attuneIndex;
+      if(linkedCard){
+        const cardId=linkedCard.dataset?.rowCard || linkedCard.dataset?.cardId || linkedCard.getAttribute?.('data-row-card');
+        const sourceScope=String((snap.rowPositionMeta?.[linkedIndex]||{}).drawScope||scope);
+        closeAttune();
+        if(cardId) ledgerBridge()?.addCardToBoard?.(cardId,sourceScope);
+        const drawnIndex=currentCardCount(panel())-1;if(target!==drawnIndex&&drawnIndex>=0)prefabBridge()?.swapPositionSlots?.(drawnIndex,target);
+        setTimeout(()=>enhance(panel()),0);return;
+      }
       closeAttune();
       drawInto(focusItem(target,panel()),target);
     });
