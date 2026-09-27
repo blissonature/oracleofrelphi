@@ -2120,7 +2120,7 @@
     writeStickerVisibility(draft.stickers);
     optionsSession=null;
     root.querySelector('.relphi-reading-options-drawer')?.remove();
-    setBoardMode(root,'board');
+    setBoardMode(root,astrologyRequested?'referents':'board');
     if (structural && currentCardCount(root)===0) {
       const clear=root.querySelector('#clearShortList');
       clear?.click();
@@ -2128,6 +2128,11 @@
       if (prefab.positions.length) prefabBridge()?.applyLayout?.(prefab);
       applyDrawSettings(draft);
     } else {
+      applyDrawSettings(draft);
+    }
+    if(astrologyRequested && currentCardCount(root)===0){
+      const prefab=draftPrefab(draft);
+      if(prefab.positions.length) prefabBridge()?.applyLayout?.(prefab);
       applyDrawSettings(draft);
     }
     setTimeout(()=>{
