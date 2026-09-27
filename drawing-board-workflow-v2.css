@@ -1532,3 +1532,39 @@ body.relphi-attune-open{overflow:hidden!important}
   #shortListPanel .relphi-snap-row{grid-template-columns:1fr!important}
   #shortListPanel .relphi-snap-stepper{justify-content:start!important}
 }
+
+
+/* Appearance is an inline disclosure, matching the Advanced control pattern. */
+#shortListPanel .relphi-board-configuration-trigger{display:none!important}
+#shortListPanel .relphi-board-settings-panel{overflow:hidden!important}
+#shortListPanel .relphi-board-configuration.relphi-appearance-disclosure{
+  position:relative!important;
+  inset:auto!important;
+  z-index:auto!important;
+  display:block!important;
+  width:100%!important;
+  max-height:none!important;
+  margin:0!important;
+  padding:0!important;
+  border:1px solid #ded4cb!important;
+  border-radius:8px!important;
+  background:#fcf9f5!important;
+  box-shadow:none!important;
+  overflow:hidden!important;
+}
+#shortListPanel .relphi-board-configuration.relphi-appearance-disclosure[hidden]{display:none!important}
+#shortListPanel .relphi-appearance-disclosure>summary{
+  cursor:pointer!important;
+  padding:.48rem .58rem!important;
+  color:#453d38!important;
+  font-size:.69rem!important;
+  font-weight:900!important;
+  list-style-position:inside!important;
+}
+#shortListPanel .relphi-appearance-body{
+  display:grid!important;
+  gap:.7rem!important;
+  padding:0 .58rem .62rem!important;
+}
+#shortListPanel .relphi-board-configuration-heading,
+#shortListPanel .relphi-board-configuration-close{display:none!important}
