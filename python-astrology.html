@@ -28,9 +28,14 @@ body{background:var(--py-paper);color:var(--py-ink)}
 .py-status{display:inline-block;border:1px solid #111;border-radius:999px;padding:.25rem .55rem;font-size:.72rem;font-weight:900;text-transform:uppercase;letter-spacing:.06em}
 .py-summary{font-size:1.02rem;line-height:1.5}
 .py-concept{font-weight:800;color:var(--py-red)}
-.py-controls{display:flex;flex-wrap:wrap;gap:.65rem;margin:1rem 0}
-.py-controls label{display:grid;gap:.2rem;font-weight:800;font-size:.82rem}
-.py-controls select,.py-controls input{font:inherit;border:1.5px solid #111;border-radius:.7rem;padding:.5rem .65rem;background:#fff}
+.py-controls{display:grid;gap:.7rem;margin:1rem 0}
+.py-control-card{border:1.5px solid #111;border-radius:1rem;padding:.65rem;background:#fff}
+.py-control-label{display:block;font-weight:900;font-size:.76rem;letter-spacing:.06em;text-transform:uppercase;margin-bottom:.35rem}
+.py-cycler{display:grid;grid-template-columns:2.5rem minmax(0,1fr) 2.5rem;gap:.45rem;align-items:center;border-radius:.9rem;outline:none}
+.py-cycler:focus-visible{box-shadow:0 0 0 3px rgba(220,31,24,.2)}
+.py-cycler-btn{border:1.5px solid #111;border-radius:999px;background:#111;color:#fff;height:2.5rem;font:900 1.25rem/1 system-ui,sans-serif;cursor:pointer}
+.py-cycler-btn:hover,.py-cycler-btn:focus{background:#dc1f18;border-color:#dc1f18;outline:none}
+.py-cycler-value{display:grid;place-items:center;min-height:2.5rem;padding:.35rem .6rem;border:1.5px solid #111;border-radius:.85rem;background:#faf8f7;font-weight:900;text-align:center}
 .py-codewrap{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(190px,.8fr);gap:.8rem}
 .py-code,.py-output{margin:0;border-radius:1rem;padding:1rem;min-height:9rem;box-sizing:border-box}
 .py-graphic{border:1.5px solid #111;border-radius:1rem;background:#fffdfb;padding:.8rem;margin:1rem 0;min-height:18rem;display:grid;place-items:center}
@@ -80,13 +85,47 @@ const labels=id=>data.lessons[id]?.title||id.split("-").map(s=>s[0].toUpperCase(
 map.innerHTML=data.courses.map(c=>'<div class="py-course"><button type="button" data-course="'+c.code+'"><span class="py-course-code">'+c.code+'</span>'+c.title+'<span class="py-course-theme">'+c.theme+'</span></button><div>'+c.lessons.map(id=>'<button type="button" data-lesson="'+id+'">↳ '+labels(id)+'</button>').join("")+'</div></div>').join("");
 
 function control(name,spec){
- if(Array.isArray(spec))return '<label>'+name+'<select data-input="'+name+'">'+spec.map(v=>'<option value="'+v+'">'+v+'</option>').join("")+'</select></label>';
- return '<label>'+name+' <output data-out="'+name+'">'+spec.value+'</output><input data-input="'+name+'" type="range" min="'+spec.min+'" max="'+spec.max+'" value="'+spec.value+'"></label>';
+ const initial=Array.isArray(spec)?spec[0]:spec.value;
+ const kind=Array.isArray(spec)?"list":"number";
+ return '<div class="py-control-card"><span class="py-control-label">'+name+'</span><div class="py-cycler" tabindex="0" data-input="'+name+'" data-kind="'+kind+'"><button type="button" class="py-cycler-btn" data-step="-1" aria-label="Previous '+name+'">‹</button><div class="py-cycler-value" data-value>'+initial+'</div><button type="button" class="py-cycler-btn" data-step="1" aria-label="Next '+name+'">›</button></div></div>';
 }
 function values(){
  const out={};
- lab.querySelectorAll("[data-input]").forEach(el=>out[el.dataset.input]=el.type==="range"?Number(el.value):el.value);
+ lab.querySelectorAll(".py-cycler").forEach(el=>{
+   const raw=el.querySelector("[data-value]").textContent;
+   out[el.dataset.input]=el.dataset.kind==="number"?Number(raw):raw;
+ });
  return out;
+}
+function stepControl(id,cycler,step){
+ const lesson=data.lessons[id],name=cycler.dataset.input,spec=lesson.inputs[name],value=cycler.querySelector("[data-value]");
+ if(Array.isArray(spec)){
+   let i=spec.indexOf(value.textContent);if(i<0)i=0;
+   value.textContent=spec[(i+step+spec.length)%spec.length];
+ }else{
+   let n=Number(value.textContent)+step;
+   if(n>spec.max)n=spec.min;
+   if(n<spec.min)n=spec.max;
+   value.textContent=String(n);
+ }
+}
+function bindCyclers(id,update){
+ const all=[...lab.querySelectorAll(".py-cycler")];
+ all.forEach((cycler,index)=>{
+   cycler.addEventListener("click",e=>{
+     const btn=e.target.closest("[data-step]");if(!btn)return;
+     stepControl(id,cycler,Number(btn.dataset.step));cycler.focus();update();
+   });
+   cycler.addEventListener("keydown",e=>{
+     if(e.key==="ArrowLeft"||e.key==="ArrowRight"){
+       e.preventDefault();stepControl(id,cycler,e.key==="ArrowLeft"?-1:1);update();
+     }else if(e.key==="ArrowUp"||e.key==="ArrowDown"){
+       e.preventDefault();
+       const next=e.key==="ArrowUp"?(all[index-1]||all[all.length-1]):(all[index+1]||all[0]);
+       next.focus();
+     }
+   });
+ });
 }
 function evaluate(id,v){
  if(id==="major-aspects"){
@@ -133,7 +172,7 @@ function render(id){
  if(!lesson){lab.innerHTML='<div class="py-empty"><strong>'+labels(id)+'</strong><br/>Catalogued for development.</div>';return}
  lab.innerHTML='<span class="py-status">'+lesson.status+'</span><h2>'+lesson.title+'</h2><p class="py-summary">'+lesson.summary+'</p><p class="py-concept">Python idea: '+lesson.pythonConcept+'</p><div class="py-controls">'+Object.entries(lesson.inputs||{}).map(([n,s])=>control(n,s)).join("")+'</div><div class="py-graphic" id="graphic"></div>'+(lesson.note?'<p class="py-graphic-note">'+lesson.note+'</p>':'')+'<div class="py-codewrap"><pre class="py-code"><code>'+lesson.code.replaceAll("&","&amp;").replaceAll("<","&lt;")+'</code></pre><div class="py-output"><small>Output</small><div class="py-result" id="result"></div></div></div>';
  const update=()=>{const v=values();lab.querySelectorAll("[data-out]").forEach(o=>o.textContent=v[o.dataset.out]);document.getElementById("result").textContent=evaluate(id,v);document.getElementById("graphic").innerHTML=renderGraphic(id,v)};
- lab.querySelectorAll("[data-input]").forEach(el=>el.addEventListener("input",update));update();
+ bindCyclers(id,update);update();
  history.replaceState(null,"","#"+id);
 }
 map.addEventListener("click",e=>{const b=e.target.closest("[data-lesson]");if(b)render(b.dataset.lesson)});
