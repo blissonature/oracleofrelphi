@@ -218,8 +218,23 @@
       cardsOnly.textContent = 'Clear Cards';
       cardsOnly.title = 'Remove drawn cards and keep the spread positions';
       cardsOnly.setAttribute('aria-label', 'Clear cards and keep spread positions');
+      clear.insertAdjacentElement('beforebegin', cardsOnly);
     }
     cardsOnly.disabled = !bridge()?.getState?.()?.hasCards;
+
+    let resetBoard = root.querySelector('#relphiResetBoard');
+    if (!resetBoard) {
+      resetBoard = document.createElement('button');
+      resetBoard.id = 'relphiResetBoard';
+      resetBoard.type = 'button';
+      resetBoard.className = clear.className;
+      resetBoard.textContent = 'Reset Board';
+      resetBoard.title = 'Reset the board including cards and spread positions';
+      resetBoard.setAttribute('aria-label', 'Reset board including cards and spread positions');
+      cardsOnly.insertAdjacentElement('afterend', resetBoard);
+    } else if (resetBoard.previousElementSibling !== cardsOnly) {
+      cardsOnly.insertAdjacentElement('afterend', resetBoard);
+    }
 
     window.RelphiDrawingBoardEnsureTopActions?.(root);
 
