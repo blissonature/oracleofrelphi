@@ -2718,6 +2718,31 @@
       });
     });
   }
+  function rowZoomAtClientPoint(wrap,nextZoom,clientX,clientY) {
+    const workspace=wrap?.querySelector('.card-row-workspace');
+    const board=wrap?.querySelector('.short-list-row.card-row-board');
+    if(!workspace||!board)return false;
+    const current=rowZoomValue();
+    const next=rowZoomValue(nextZoom);
+    if(Math.abs(next-current)<.000001)return false;
+    const rect=board.getBoundingClientRect();
+    const originText=getComputedStyle(board).transformOrigin.split(/\s+/);
+    const originX=parseFloat(originText[0])||0;
+    const originY=parseFloat(originText[1])||0;
+    const localX=(Number(clientX)-rect.left)/Math.max(.0001,current);
+    const localY=(Number(clientY)-rect.top)/Math.max(.0001,current);
+    const delta=next-current;
+    state.rowPanX=rowPanXValue()+delta*(originX-localX);
+    state.rowPanY=rowPanYValue()+delta*(originY-localY);
+    state.rowZoom=next;
+    const zoomInput=$('rowZoom');
+    const zoomValue=$('rowZoomValue');
+    if(zoomInput)zoomInput.value=String(next);
+    if(zoomValue)zoomValue.textContent=`${Math.round(next*100)}%`;
+    applyCardRowLayoutLive(wrap);
+    return true;
+  }
+
   function bindCardRowWorkspacePan(wrap) {
     const workspace = wrap.querySelector('.card-row-workspace');
     const board = wrap.querySelector('.short-list-row.card-row-board');
@@ -2733,15 +2758,10 @@
       const pinchZoomGesture = !!(event.ctrlKey || event.metaKey);
       if (!pinchZoomGesture) return;
       event.preventDefault();
-      const current = rowZoomValue();
-      const factor = Math.exp(-event.deltaY * .0025);
-      state.rowZoom = rowZoomValue(current * factor);
-      const zoomInput = $('rowZoom');
-      const zoomValue = $('rowZoomValue');
-      if (zoomInput) zoomInput.value = String(rowZoomValue());
-      if (zoomValue) zoomValue.textContent = `${Math.round(rowZoomValue() * 100)}%`;
-      applyCardRowLayoutLive(wrap);
-    }, { passive: false });
+      const current=rowZoomValue();
+      const factor=Math.exp(-event.deltaY*.0025);
+      rowZoomAtClientPoint(wrap,current*factor,event.clientX,event.clientY);
+    }, { passive:false });
     workspace.addEventListener('pointerdown', event => {
       if (event.button !== 0) return;
       const interactive = event.target.closest?.('button, input, textarea, select, label, .card-row-item');
