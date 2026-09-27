@@ -369,7 +369,7 @@
     const bar = filterBar();
     if (!bar) return false;
     bar.querySelector('[data-filter="aspect"]')?.closest('label')?.remove();
-    let owner = bar.querySelector('[data-aspect-filter="combined"]');
+    let owner = document.querySelector('[data-aspect-filter="combined"]');
     if (!owner) owner = createControl();
     if (!owner.isConnected) {
       const orb = bar.querySelector('[data-filter="orb"]')?.closest('label');
