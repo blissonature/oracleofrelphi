@@ -794,25 +794,30 @@
     const background=document.createElement('div');
     background.className='relphi-board-configuration-group relphi-board-background';
     background.innerHTML='<strong>Background</strong>';
-    const shipped=document.createElement('label');
-    shipped.className='relphi-setting-toggle relphi-red-felt-toggle';
-    shipped.innerHTML='<input type="checkbox" '+(isShippedRed?'checked':'')+'> <span>Red felt</span>';
-    shipped.querySelector('input').addEventListener('change',event=>{
+
+    const presetRow=document.createElement('div');
+    presetRow.className='relphi-background-preset-row';
+    const redFelt=document.createElement('button');
+    redFelt.type='button';
+    redFelt.className='relphi-background-preset-swatch'+(isShippedRed?' is-active':'');
+    redFelt.title='Red felt';
+    redFelt.setAttribute('aria-label','Use red felt');
+    redFelt.style.background='#7d1f28';
+    redFelt.addEventListener('click',()=>{
       const bridge=optionsBridge(),snapShot=bridge?.capture?.();if(!bridge||!snapShot)return;
-      if(event.target.checked){
-        snapShot.rowTableColor='#7d1f28';snapShot.rowTableImage='';snapShot.rowEnvelopeColor='#f3f0ea';snapShot.rowEnvelopeImage='';
-        boardBackgroundMode='';
-        bridge.restore(snapShot);
-      }else{
-        // Leaving Red felt is a UI mode change first. Keep the current appearance
-        // until the user chooses a Board / Placeholder color or image.
-        boardBackgroundMode='color';
-      }
+      snapShot.rowTableColor='#7d1f28';
+      snapShot.rowTableImage='';
+      snapShot.rowEnvelopeColor='#f3f0ea';
+      snapShot.rowEnvelopeImage='';
+      boardBackgroundMode='';
+      bridge.restore(snapShot);
       setTimeout(()=>{ensureBoardChrome(root);renderBoardConfiguration(root);},0);
     });
-    background.appendChild(shipped);
+    const redLabel=document.createElement('span');redLabel.textContent='Red felt';
+    presetRow.append(redFelt,redLabel);
+    background.appendChild(presetRow);
 
-    if(!isShippedRed){
+    {
       const mode=document.createElement('div');mode.className='relphi-background-mode';
       const activeMode=boardBackgroundMode || ((snapshot.rowTableImage||snapshot.rowEnvelopeImage)?'image':'color');
       mode.innerHTML='<button type="button" data-background-mode="color" class="'+(activeMode==='color'?'is-active':'')+'">Color</button><button type="button" data-background-mode="image" class="'+(activeMode==='image'?'is-active':'')+'">Image</button>';
