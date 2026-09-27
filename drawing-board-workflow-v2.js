@@ -21,6 +21,7 @@
   let boardOpen = false;
   let initialized = false;
   let optionsSession = null;
+  let craftedReadingActive = false;
   let focusIndex = -1;
   let suppressStripClickUntil = 0;
   let pendingFocusIndex = null;
@@ -1522,25 +1523,25 @@
   }
   function setBoardMode(root = panel(), mode = 'board') {
     if (!root) return;
-    const referents=mode==='referents';
-    root.classList.toggle('relphi-referents-mode',referents);
+    const configuring=mode==='referents',crafted=configuring||mode==='crafted';
+    root.classList.toggle('relphi-referents-mode',configuring);
     const boardTab=root.querySelector('#drawingBoardBoardTab');
     const referentsTab=root.querySelector('#drawingBoardOptionsButton');
     if (boardTab) {
-      boardTab.classList.toggle('is-active',!referents);
-      boardTab.setAttribute('aria-checked',String(!referents));
+      boardTab.classList.toggle('is-active',!crafted);
+      boardTab.setAttribute('aria-checked',String(!crafted));
     }
     if (referentsTab) {
-      referentsTab.classList.toggle('is-active',referents);
-      referentsTab.setAttribute('aria-checked',String(referents));
-      referentsTab.removeAttribute('aria-expanded');
+      referentsTab.classList.toggle('is-active',crafted);
+      referentsTab.setAttribute('aria-checked',String(crafted));
+      referentsTab.setAttribute('aria-expanded',String(configuring));
     }
   }
   function closeOptions(root = panel(), {switchToFree=false} = {}) {
     optionsSession=null;
     root?.querySelector('.relphi-reading-options-drawer')?.remove();
-    if(switchToFree) clearCraftedStructure(root);
-    setBoardMode(root,switchToFree?'board':(boardHasCraftedStructure(root)?'referents':'board'));
+    if(switchToFree){craftedReadingActive=false;clearCraftedStructure(root);}
+    setBoardMode(root,switchToFree?'board':(craftedReadingActive?'crafted':boardHasCraftedStructure(root)?'referents':'board'));
   }
   function openOptions(root = panel()) {
     if (!root) return;
@@ -1550,6 +1551,7 @@
       renderOptions(root);
       return;
     }
+    craftedReadingActive=false;
     beginOptionsSession();
     renderOptions(root);
   }
@@ -2108,13 +2110,14 @@
     const bridge=optionsBridge(),prefabs=prefabBridge(),prefab=draftPrefab(draft);
     const snap=bridge?.capture();
     if(!snap||!prefabs||!prefab.positions.length)return false;
+    craftedReadingActive=true;
     Object.assign(snap,{shortList:[],shortListSelection:[],shortListPositionLabels:[],shortListPositionCardIds:[],rowEnvelopeLayout:{},rowCardTransforms:{},rowPositionMeta:[],rowActiveLayout:null,rowLayoutLocked:false,rowLayoutDesignMode:false,rowCardReversals:{},rowCardManual:[],rowDrawDeck:[],rowDrawDeckSignature:''});
     bridge.restore(snap);
-    if(!prefabs.applyLayout(prefab))return false;
+    if(!prefabs.applyLayout(prefab)){craftedReadingActive=false;return false;}
     applyDrawSettings(draft);
     optionsSession=null;
     root.querySelector('.relphi-reading-options-drawer')?.remove();
-    setBoardMode(root,'board');
+    setBoardMode(root,'crafted');
     const crafted=root.querySelector('#drawingBoardOptionsButton'),free=root.querySelector('#drawingBoardBoardTab');
     crafted?.classList.add('is-active');crafted?.setAttribute('aria-checked','true');
     free?.classList.remove('is-active');free?.setAttribute('aria-checked','false');
@@ -2654,8 +2657,8 @@
     const trigger=document.getElementById('relphiOpenDrawingBoardCurrent');
     if (!initialized) initialized=true;
     boardOpen=trigger?.getAttribute('aria-expanded')==='true';
-    if(!optionsSession && boardHasCraftedStructure(root)) beginOptionsSession();
-    setBoardMode(root,optionsSession?'referents':'board');
+    if(!optionsSession && boardHasCraftedStructure(root) && !craftedReadingActive) beginOptionsSession();
+    setBoardMode(root,optionsSession?'referents':craftedReadingActive?'crafted':'board');
     if (!boardOpen) {
       root.hidden=true;
       if (trigger) { trigger.textContent='Open Drawing Board'; trigger.setAttribute('aria-expanded','false'); }
