@@ -2037,7 +2037,7 @@
   function openAttune(index) {
     const root=panel();
     const item=focusItem(index,root);
-    if (!(surfaceReadingSession || recursionActive()) || !root || !isEmptyItem(item)) return false;
+    if (!(surfaceReadingSession || recursionActive() || craftedReadingActive) || !root || !isEmptyItem(item)) return false;
     closeFocus({acknowledge:true});
     closeAttune();
     attuneIndex=index;
@@ -2556,7 +2556,7 @@
       return;
     }
     const next=nextUndrawnNativeIndex(root);
-    if (next!=null) { if (surfaceReadingSession) openAttune(next); else drawInto(focusItem(next,root),next); return; }
+    if (next!=null) { if (surfaceReadingSession || craftedReadingActive) openAttune(next); else drawInto(focusItem(next,root),next); return; }
     if (configuredPositionCount()>0) return;
     const draw=root.querySelector('#drawRandomRowCard');
     if (!draw || draw.disabled) return;
@@ -2592,7 +2592,7 @@
       }
       if (isEmptyItem(item)) {
         event.preventDefault(); event.stopImmediatePropagation();
-        if (surfaceReadingSession || recursionActive()) openAttune(index); else drawInto(item,index);
+        if (surfaceReadingSession || recursionActive() || craftedReadingActive) openAttune(index); else drawInto(item,index);
       }
     },true);
   }
@@ -2617,7 +2617,7 @@
     if (draw && draw.dataset.relphiUnifiedDraw!=='true') {
       draw.dataset.relphiUnifiedDraw='true';
       draw.addEventListener('click',event=>{
-        if (!activeDraw && (surfaceReadingSession || recursionActive())) {
+        if (!activeDraw && (surfaceReadingSession || recursionActive() || craftedReadingActive)) {
           const next=recursionActive() ? recursionNextCardIndex(ensureRecursionSession()?.level||1) : nextUndrawnNativeIndex(root);
           if (next!=null) {
             event.preventDefault();
