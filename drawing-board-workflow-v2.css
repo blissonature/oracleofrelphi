@@ -701,3 +701,7 @@ body.relphi-attune-open{overflow:hidden!important}
 #shortListPanel .relphi-astrology-question>span{display:grid!important;gap:.16rem!important}
 #shortListPanel .relphi-astrology-question>span>strong{font:inherit!important;font-weight:750!important}
 #shortListPanel .relphi-astrology-question>span>small{color:#7a6f67!important;font-size:.64rem!important;font-weight:700!important}
+
+#shortListPanel .relphi-suggestion-copy{display:grid!important;gap:.14rem!important;min-width:0!important}
+#shortListPanel .relphi-suggestion-copy strong{font-size:.72rem!important;line-height:1.35!important}
+#shortListPanel .relphi-suggestion-copy small{color:#7a6f67!important;font-size:.63rem!important;font-weight:700!important}
