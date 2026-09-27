@@ -689,3 +689,15 @@ body.relphi-attune-open{overflow:hidden!important}
 #shortListPanel .relphi-astrology-question-head{display:flex!important;align-items:center!important;justify-content:space-between!important;gap:.75rem!important}
 #shortListPanel .relphi-astrology-question-head h4{margin:0!important}
 #shortListPanel .relphi-astrology-question-head label{display:inline-flex!important;align-items:center!important;gap:.35rem!important;font-size:.68rem!important;font-weight:800!important;white-space:nowrap!important}
+
+/* Per-referent draw experiments */
+#shortListPanel .relphi-bespoke-question-row{align-items:start!important}
+#shortListPanel .relphi-bespoke-question-main{display:grid!important;gap:.42rem!important;min-width:0!important}
+#shortListPanel .relphi-bespoke-question-main>input{width:100%!important;box-sizing:border-box!important}
+#shortListPanel .relphi-bespoke-question-settings{display:flex!important;flex-wrap:wrap!important;gap:.42rem .7rem!important;align-items:end!important}
+#shortListPanel .relphi-bespoke-question-settings label{display:flex!important;gap:.28rem!important;align-items:center!important;font-size:.66rem!important;font-weight:750!important;color:#625851!important}
+#shortListPanel .relphi-bespoke-question-settings label:first-child{display:grid!important;gap:.18rem!important;min-width:10rem!important}
+#shortListPanel .relphi-bespoke-question-settings select{min-height:2rem!important;padding:.3rem .45rem!important;border:1px solid #cfc4bb!important;border-radius:7px!important;background:#fff!important;font:inherit!important;font-weight:700!important}
+#shortListPanel .relphi-astrology-question>span{display:grid!important;gap:.16rem!important}
+#shortListPanel .relphi-astrology-question>span>strong{font:inherit!important;font-weight:750!important}
+#shortListPanel .relphi-astrology-question>span>small{color:#7a6f67!important;font-size:.64rem!important;font-weight:700!important}
