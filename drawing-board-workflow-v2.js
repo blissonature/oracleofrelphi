@@ -64,12 +64,24 @@
     if(craftedReadingActive||boardHasCraftedStructure(root))return persistedCraftedPath(root)==='bespoke';
     return true;
   }
+  function transformEditingAllowed(root=panel()) {
+    if(!root)return false;
+    if(settingsOpen)return settingsMode==='free' || String(optionsSession?.path||activeCraftedPath||'')==='bespoke';
+    if(craftedReadingActive||boardHasCraftedStructure(root))return persistedCraftedPath(root)==='bespoke';
+    return true;
+  }
+  function syncTransformEditingAvailability(root=panel()) {
+    const allowed=transformEditingAllowed(root);
+    root?.classList.toggle('relphi-transform-editing-unlocked',allowed);
+    return allowed;
+  }
   function syncZoomToolbarVisibility(root=panel()) {
     if(!root)return true;
     const visible=zoomToolbarVisibleForState(root);
     root.classList.toggle('relphi-hide-zoom-toolbar',!visible);
     const toolbar=root.querySelector('.card-row-workspace-toolbar.relphi-board-controller');
     if(toolbar)toolbar.setAttribute('aria-hidden',String(!visible));
+    syncTransformEditingAvailability(root);
     return visible;
   }
   function visibleToolbarHeight(root=panel()) {
@@ -488,7 +500,7 @@
     return String(draft.pack||'full')==='full' &&
       !(draft.keywordTags||[]).length &&
       draft.keywordMatchMode!=='all' &&
-      draft.stickers!==false &&
+      draft.stickers===false &&
       draft.reversals!==false &&
       !draft.repeats;
   }
@@ -542,6 +554,17 @@
     const undo=root.querySelector('#undoShortList');
     const redo=root.querySelector('#redoShortList');
     const draw=root.querySelector('#drawRandomRowCard');
+    let reset=root.querySelector('#relphiResetBoard');
+    if(!reset){
+      reset=document.createElement('button');
+      reset.type='button';
+      reset.id='relphiResetBoard';
+      reset.textContent='Reset Board';
+    }
+    reset.title='Restore default settings';
+    reset.setAttribute('aria-label','Restore default settings');
+    reset.disabled=!boardCanReset(root);
+    topActions.appendChild(reset);
     if(clear){
       clear.textContent='Clear';
       clear.title='Clear the cards without changing settings';
@@ -557,7 +580,7 @@
       settingsPanel=document.createElement('section');
       settingsPanel.className='relphi-board-settings-panel';
       settingsPanel.setAttribute('aria-label','Drawing Board settings');
-      settingsPanel.innerHTML='<div class="relphi-board-settings-top"><button type="button" id="relphiResetBoard" title="Restore default settings" aria-label="Restore default settings">Reset Board</button></div><div class="relphi-board-settings-body"></div>';
+      settingsPanel.innerHTML='<div class="relphi-board-settings-body"></div>';
       bar.insertAdjacentElement('afterend',settingsPanel);
     }
     const body=settingsPanel.querySelector('.relphi-board-settings-body');
@@ -568,12 +591,7 @@
     const commandBottom=Math.max(0,bar.offsetTop+bar.offsetHeight);
     settingsPanel.style.setProperty('--relphi-settings-top',commandBottom+'px');
 
-    const reset=settingsPanel.querySelector('#relphiResetBoard');
-    if(reset){
-      reset.title='Restore default settings';
-      reset.setAttribute('aria-label','Restore default settings');
-      reset.disabled=!boardCanReset(root);
-    }
+    reset.disabled=!boardCanReset(root);
 
     [...root.querySelectorAll('.relphi-global-board-actions')].forEach(node=>node.remove());
     settingsPanel.hidden=!settingsOpen;
@@ -625,16 +643,7 @@
     heading.innerHTML='<strong>Board configuration</strong><span>Position, rotate, scale, snap, and style this board.</span>';
     section.appendChild(heading);
 
-    const unlock=document.createElement('label');
-    unlock.className='relphi-transform-unlock';
-    unlock.innerHTML='<input type="checkbox"> <span><strong>Independent card transforms</strong><small>Allow individual dragging, rotation, and scale.</small></span>';
-    const unlockBox=unlock.querySelector('input');
-    unlockBox.checked=!!transformEditingUnlocked;
-    unlockBox.addEventListener('change',()=>{
-      transformEditingUnlocked=unlockBox.checked;
-      root.classList.toggle('relphi-transform-editing-unlocked',transformEditingUnlocked);
-    });
-    section.appendChild(unlock);
+    syncTransformEditingAvailability(root);
 
     const snaps=document.createElement('div');
     snaps.className='relphi-board-configuration-group';
@@ -671,7 +680,8 @@
     const draft=freeSettingsSession?.draft || (freeSettingsSession={draft:freeSettingsDraftFromState()}).draft;
     const free=document.createElement('section');
     free.className='relphi-free-settings';
-    free.innerHTML='<div class="relphi-free-settings-fields"><label class="relphi-free-pack">Sub-pack<select id="relphiFreePack">'+packOptions(draft.pack||'full')+'</select></label>'+keywordDraftMarkup(draft)+'<div class="relphi-free-toggles"><label><input id="relphiFreeLabels" type="checkbox" '+(draft.stickers!==false?'checked':'')+'> Labels</label><label><input id="relphiFreeReversals" type="checkbox" '+(draft.reversals!==false?'checked':'')+'> Reversals</label><label><input id="relphiFreeRepeats" type="checkbox" '+(draft.repeats?'checked':'')+'> Repeats</label></div></div><div class="relphi-board-settings-footer"><button type="button" id="relphiCancelFreeSettings">Cancel</button><button type="button" id="relphiConfirmFreeSettings" class="primary">Confirm</button></div>';
+    draft.stickers=false;
+    free.innerHTML='<div class="relphi-free-settings-fields"><label class="relphi-free-pack">Sub-pack<select id="relphiFreePack">'+packOptions(draft.pack||'full')+'</select></label>'+keywordDraftMarkup(draft)+'<details class="relphi-draw-advanced"><summary>Advanced</summary><div class="relphi-free-toggles"><label><input id="relphiFreeReversals" type="checkbox" '+(draft.reversals!==false?'checked':'')+'> Reversals</label><label><input id="relphiFreeRepeats" type="checkbox" '+(draft.repeats?'checked':'')+'> Repeats</label></div></details></div><div class="relphi-board-settings-footer"><button type="button" id="relphiCancelFreeSettings">Cancel</button><button type="button" id="relphiConfirmFreeSettings" class="primary">Confirm</button></div>';
     modeSwitch.insertAdjacentElement('afterend',free);
     renderBoardConfiguration(root);
 
@@ -690,7 +700,6 @@
       draft.keywordTags=(draft.keywordTags||[]).filter(tag=>tag!==button.dataset.keywordRemove);
       renderFreeSettings(root);
     }));
-    free.querySelector('#relphiFreeLabels')?.addEventListener('change',event=>{draft.stickers=event.target.checked;});
     free.querySelector('#relphiFreeReversals')?.addEventListener('change',event=>{draft.reversals=event.target.checked;});
     free.querySelector('#relphiFreeRepeats')?.addEventListener('change',event=>{draft.repeats=event.target.checked;});
     free.querySelector('#relphiCancelFreeSettings')?.addEventListener('click',()=>cancelBoardSettings(root));
@@ -752,6 +761,7 @@
   function confirmFreeSettings(root=panel()) {
     if(!root||!freeSettingsSession)return;
     const draft=clone(freeSettingsSession.draft);
+    draft.stickers=false;
     if(craftedReadingActive||boardHasCraftedStructure(root)){
       clearCraftedStructure(root);
       craftedReadingActive=false;
@@ -760,7 +770,7 @@
       recursionPortalLevel=0;
     }
     applyDrawSettings(draft);
-    writeStickerVisibility(draft.stickers!==false);
+    writeStickerVisibility(false);
     boardSetupConfirmed=true;
     activeCraftedPath='';
     settingsOpen=false;
@@ -1010,7 +1020,7 @@
     // Snaps, background, and independent transforms now live in Settings.
     // Keep the zoom bar devoted to zoom itself.
     toolbar.appendChild(zoomRow);
-    root.classList.toggle('relphi-transform-editing-unlocked',transformEditingUnlocked);
+    syncTransformEditingAvailability(root);
     nativeOptions.hidden = true;
     nativeOptions.setAttribute('aria-hidden','true');
     renderBoardConfiguration(root);
@@ -1163,7 +1173,7 @@
         draft.positionPacks ||= []; draft.positionPacks[index]=draft.positionSettings[index].pack;
       }
       const settings=draft?.positionSettings?.[index]||inherited;
-      return `<div class="relphi-label-row relphi-bespoke-question-row" data-label-row="${index}"><span>${index+1}</span><div class="relphi-bespoke-question-main"><input type="text" value="${escapeHtml(label)}" aria-label="Position ${index+1} label"><div class="relphi-bespoke-question-settings"><label>Sub-pack<select data-position-pack="${index}">${packOptions(settings.pack||'full')}</select></label><label>Cards<input type="number" min="1" max="12" value="${Math.max(1,Number(settings.cardCount)||1)}" data-position-card-count="${index}" aria-label="Cards to draw for question ${index+1}"></label><label>Share card with<select data-position-link="${index}"><option value="">No link</option>${rows.map((other,j)=>j===index?'':`<option value="${j}" ${String(settings.linkTo)===String(j)?'selected':''}>Question ${j+1}</option>`).join('')}</select></label><label><input type="checkbox" data-position-reversals="${index}" ${settings.reversals!==false?'checked':''}> Reversals</label><label><input type="checkbox" data-position-repeats="${index}" ${settings.repeats?'checked':''}> Repeats</label></div></div><button type="button" data-remove-label="${index}" aria-label="Remove position ${index+1}">×</button></div>`;
+      return `<div class="relphi-label-row relphi-bespoke-question-row" data-label-row="${index}"><span>${index+1}</span><div class="relphi-bespoke-question-main"><input type="text" value="${escapeHtml(label)}" aria-label="Position ${index+1} label"><div class="relphi-bespoke-question-settings"><label>Sub-pack<select data-position-pack="${index}">${packOptions(settings.pack||'full')}</select></label><label>Cards<input type="number" min="1" max="12" value="${Math.max(1,Number(settings.cardCount)||1)}" data-position-card-count="${index}" aria-label="Cards to draw for question ${index+1}"></label><label>Share card with<select data-position-link="${index}"><option value="">No link</option>${rows.map((other,j)=>j===index?'':`<option value="${j}" ${String(settings.linkTo)===String(j)?'selected':''}>Question ${j+1}</option>`).join('')}</select></label></div><details class="relphi-question-advanced"><summary>Advanced</summary><div><label><input type="checkbox" data-position-reversals="${index}" ${settings.reversals!==false?'checked':''}> Reversals</label><label><input type="checkbox" data-position-repeats="${index}" ${settings.repeats?'checked':''}> Repeats</label></div></details></div><button type="button" data-remove-label="${index}" aria-label="Remove position ${index+1}">×</button></div>`;
     }).join('');
   }
   function parseBulkQuestions(value) {
@@ -1686,9 +1696,11 @@
     drawer.id='drawingBoardReadingOptions';
     drawer.setAttribute('role','region');
     drawer.setAttribute('aria-label','Crafted Draw settings');
+    draft.stickers=true;
+    const advancedDrawSettings='<details class="relphi-draw-advanced"><summary>Advanced</summary><div class="relphi-free-toggles"><label><input id="relphiDraftReversals" type="checkbox" '+(draft.reversals?'checked':'')+'> Reversals</label><label><input id="relphiDraftRepeats" type="checkbox" '+(draft.repeats?'checked':'')+'> Repeats</label></div></details>';
     const drawSettingsMarkup=(session.path==='surface'||session.path==='astro')
-      ? '<section class="relphi-referent-settings" aria-label="Draw settings"><strong class="relphi-referent-settings-title">Draw settings</strong><div class="relphi-draw-options relphi-draw-options--surface"><label><input id="relphiDraftStickers" type="checkbox" '+(draft.stickers?'checked':'')+' title="Show position stickers"> Show referent stickers</label><label><input id="relphiDraftReversals" type="checkbox" '+(draft.reversals?'checked':'')+'> Reversals</label><label><input id="relphiDraftRepeats" type="checkbox" '+(draft.repeats?'checked':'')+'> Repeats</label></div></section>'
-      : '<section class="relphi-referent-settings" aria-label="Draw settings"><strong class="relphi-referent-settings-title">Draw settings</strong><div class="relphi-draw-options"><label>Pack<select id="relphiDraftPack">'+packOptions(draft.pack)+'</select></label>'+keywordDraftMarkup(draft)+'<label><input id="relphiDraftStickers" type="checkbox" '+(draft.stickers?'checked':'')+' title="Show position stickers"> Show referent stickers</label><label><input id="relphiDraftReversals" type="checkbox" '+(draft.reversals?'checked':'')+'> Reversals</label><label><input id="relphiDraftRepeats" type="checkbox" '+(draft.repeats?'checked':'')+'> Repeats</label></div></section>';
+      ? '<section class="relphi-referent-settings" aria-label="Draw settings"><strong class="relphi-referent-settings-title">Draw settings</strong>'+advancedDrawSettings+'</section>'
+      : '<section class="relphi-referent-settings" aria-label="Draw settings"><strong class="relphi-referent-settings-title">Draw settings</strong><div class="relphi-draw-options"><label>Pack<select id="relphiDraftPack">'+packOptions(draft.pack)+'</select></label>'+keywordDraftMarkup(draft)+'</div>'+advancedDrawSettings+'</section>';
     drawer.innerHTML = '<div class="relphi-options-heading"><div><span class="eyebrow">Drawing Board</span><h3>Crafted Draw</h3></div></div>'+
       (hasCards ? '<p class="relphi-options-note relphi-options-note-visible">Reset Board before changing referents. The reading structure is locked once cards are drawn.</p>' : '')+
       '<div class="relphi-options-body">'+
@@ -1803,8 +1815,7 @@
       draft.reversals=chosen.rules?.allowReversals!==false;
       draft.repeats=!!chosen.rules?.allowRepeats;
       session.path='bespoke';
-      transformEditingUnlocked=true;
-      root.classList.add('relphi-transform-editing-unlocked');
+      syncTransformEditingAvailability(root);
       renderOptions(root,{preserveScroll:false});
       showBoardToast('A Bespoke copy is ready to modify. Save it with a name if you want to keep it, or simply continue.',{title:'Template copied',duration:5200});
     });
@@ -1867,8 +1878,22 @@
     drawer.querySelectorAll('[data-position-pack]').forEach(select=>select.addEventListener('change',()=>{const i=Number(select.dataset.positionPack);draft.positionSettings ||= [];const prior=draft.positionSettings[i]||{};draft.positionSettings[i]={...prior,pack:select.value||'full'};draft.positionPacks ||= [];draft.positionPacks[i]=select.value||'full';}));
     drawer.querySelectorAll('[data-position-card-count]').forEach(input=>input.addEventListener('change',()=>{const i=Number(input.dataset.positionCardCount);draft.positionSettings ||= [];const prior=draft.positionSettings[i]||{};draft.positionSettings[i]={...prior,cardCount:Math.max(1,Math.min(12,Number(input.value)||1))};}));
     drawer.querySelectorAll('[data-position-link]').forEach(select=>select.addEventListener('change',()=>{const i=Number(select.dataset.positionLink);draft.positionSettings ||= [];const prior=draft.positionSettings[i]||{};draft.positionSettings[i]={...prior,linkTo:select.value};}));
-    drawer.querySelectorAll('[data-position-reversals]').forEach(input=>input.addEventListener('change',()=>{const i=Number(input.dataset.positionReversals);draft.positionSettings ||= [];draft.positionSettings[i]={...(draft.positionSettings[i]||{}),pack:draft.positionPacks?.[i]||draft.pack||'full',reversals:input.checked,repeats:!!draft.positionSettings[i]?.repeats};}));
-    drawer.querySelectorAll('[data-position-repeats]').forEach(input=>input.addEventListener('change',()=>{const i=Number(input.dataset.positionRepeats);draft.positionSettings ||= [];draft.positionSettings[i]={...(draft.positionSettings[i]||{}),pack:draft.positionPacks?.[i]||draft.pack||'full',reversals:draft.positionSettings[i]?.reversals!==false,repeats:input.checked};}));
+    drawer.querySelectorAll('[data-position-reversals]').forEach(input=>input.addEventListener('change',()=>{
+      const i=Number(input.dataset.positionReversals);draft.positionSettings ||= [];
+      for(let j=i;j<draft.labels.length;j++){
+        const prior=draft.positionSettings[j]||{};
+        draft.positionSettings[j]={...prior,pack:draft.positionPacks?.[j]||prior.pack||draft.pack||'full',reversals:input.checked,repeats:!!prior.repeats};
+      }
+      renderOptions(root);
+    }));
+    drawer.querySelectorAll('[data-position-repeats]').forEach(input=>input.addEventListener('change',()=>{
+      const i=Number(input.dataset.positionRepeats);draft.positionSettings ||= [];
+      for(let j=i;j<draft.labels.length;j++){
+        const prior=draft.positionSettings[j]||{};
+        draft.positionSettings[j]={...prior,pack:draft.positionPacks?.[j]||prior.pack||draft.pack||'full',reversals:prior.reversals!==false,repeats:input.checked};
+      }
+      renderOptions(root);
+    }));
     drawer.querySelector('#relphiTemplateName')?.addEventListener('input',event=>{draft.templateName=event.target.value.slice(0,60);});
     drawer.querySelector('#relphiSaveTemplate')?.addEventListener('click',()=>saveDraftTemplate(root));
 
@@ -1966,7 +1991,6 @@
     keywordQuery?.addEventListener('input',event=>renderKeywordMatches(drawer,draft,event.target.value));
     drawer.querySelectorAll('input[name="relphiKeywordMode"]').forEach(input=>input.addEventListener('change',()=>{draft.keywordMatchMode=input.value==='all'?'all':'any'; renderOptions(root);}));
     drawer.querySelectorAll('[data-keyword-remove]').forEach(button=>button.addEventListener('click',()=>{draft.keywordTags=(draft.keywordTags||[]).filter(tag=>tag!==button.dataset.keywordRemove); renderOptions(root);}));
-    drawer.querySelector('#relphiDraftStickers')?.addEventListener('change',event=>{draft.stickers=event.target.checked;});
     drawer.querySelector('#relphiDraftReversals')?.addEventListener('change',event=>{draft.reversals=event.target.checked;});
     drawer.querySelector('#relphiDraftRepeats')?.addEventListener('change',event=>{draft.repeats=event.target.checked;});
      drawer.querySelector('#relphiCancelOptions')?.addEventListener('click',()=>cancelBoardSettings(root));
@@ -2029,7 +2053,7 @@
     clearCraftedStructure(root);
     const defaults=blankDraft();
     applyDrawSettings(defaults);
-    writeStickerVisibility(true);
+    writeStickerVisibility(false);
 
     const trigger=document.getElementById('relphiOpenDrawingBoardCurrent');
     if(trigger){
@@ -3254,6 +3278,7 @@
     if (!optionsSession || !root) return;
     const session=optionsSession;
     const draft=clone(session.draft);
+    draft.stickers=true;
     const structural=optionsStructuralChanged(session);
     const surfaceKinds=session.path==='surface' ? selectedSurfaceKinds(session) : [];
     if(session.path==='astro'&&!session.astrologyResolved){showBoardToast('Choose and prepare the sky before starting the Astrological Tarot Reading.',{title:'Astrological Tarot Reading',duration:5200});return}
