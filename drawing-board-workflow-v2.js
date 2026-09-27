@@ -1181,10 +1181,15 @@
     const saved=astrologyResolveSavedSky(source);if(saved)return clone(saved);
     throw new Error('Choose a valid sky source.');
   }
+  function astrologyHouseSystemMarkup(session,disabled=false) {
+    const value=session.astrologyHouseSystem||'whole-sign',options=[['whole-sign','Whole Sign'],['equal','Equal'],['placidus','Placidus']];
+    return '<label class="relphi-astrology-house-system"><span>House system</span><select data-astrology-house-system '+(disabled?'disabled':'')+'>'+options.map(([v,n])=>'<option value="'+v+'" '+(value===v?'selected':'')+'>'+n+'</option>').join('')+'</select><small>Chosen for this reading; Saved Skies stay house-system-neutral.</small></label>';
+  }
   function astrologySurfaceMarkup(session,disabled=false) {
     const count=Math.max(0,Math.min(2,Number(session.astrologySkyCount)||0));
     return '<section class="relphi-referent-panel relphi-astrology-surface">'+
       '<div class="relphi-options-subhead"><div><strong>Astrological Tarot Reading</strong></div></div>'+
+      astrologyHouseSystemMarkup(session,disabled)+
       '<div class="relphi-astrology-sky-sources">'+
         (count>0?astrologySkySourceMarkup('A',session,disabled):'')+
         (count>1?astrologySkySourceMarkup('B',session,disabled):'')+
@@ -1269,6 +1274,7 @@
     drawer.querySelector('[data-add-astrology-sky]')?.addEventListener('click',()=>{session.astrologySkyCount=Math.min(2,(Number(session.astrologySkyCount)||0)+1);renderOptions(root);});
     drawer.querySelectorAll('[data-astrology-evidence]').forEach(box=>box.addEventListener('change',()=>{const disabled=new Set(session.astrologyDisabledEvidence||[]);if(box.checked)disabled.delete(box.dataset.astrologyEvidence);else disabled.add(box.dataset.astrologyEvidence);session.astrologyDisabledEvidence=[...disabled];renderOptions(root);}));
     drawer.querySelector('[data-astrology-own-question]')?.addEventListener('input',event=>{session.astrologyOwnQuestion=event.target.value;});
+    drawer.querySelector('[data-astrology-house-system]')?.addEventListener('change',event=>{session.astrologyHouseSystem=event.target.value;session.astrologyAnalysis=null;session.astrologyResolved=null;renderOptions(root);});
     drawer.querySelectorAll('[data-astrology-sky-source]').forEach(select=>select.addEventListener('change',()=>{
       const slot=select.dataset.astrologySkySource==='B'?'B':'A';
       session[slot==='B'?'astrologySkyBSource':'astrologySkyASource']=select.value||'here-now';
@@ -1280,7 +1286,7 @@
       try{
         const skyA=await astrologyResolveSource(session.astrologySkyASource||'here-now');
         const skyB=mode==='AB'?await astrologyResolveSource(session.astrologySkyBSource||'here-now'):null;
-        session.astrologyResolved={mode,skyA,skyB,resolvedAt:new Date().toISOString()};
+        session.astrologyResolved={mode,skyA,skyB,houseSystem:session.astrologyHouseSystem||'whole-sign',resolvedAt:new Date().toISOString()};
         session.astrologyAnalysis=astrologyAnalyzeResolved(skyA,skyB);
         draft.labels=session.astrologyAnalysis.questions.slice(0,3).map(q=>q.text);
         if(!draft.labels.length)draft.labels=['Astrological surface · 1','Astrological surface · 2','Astrological surface · 3'];
