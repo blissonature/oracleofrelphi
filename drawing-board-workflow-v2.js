@@ -1330,7 +1330,7 @@
         pathPanelMarkup(session,hasCards)+
         '<section class="relphi-referent-settings" aria-label="Draw settings"><strong class="relphi-referent-settings-title">Draw settings</strong><div class="relphi-draw-options"><label>Pack<select id="relphiDraftPack">'+packOptions(draft.pack)+'</select></label>'+keywordDraftMarkup(draft)+'<label><input id="relphiDraftStickers" type="checkbox" '+(draft.stickers?'checked':'')+' title="Show position stickers"> Show referent stickers</label><label><input id="relphiDraftReversals" type="checkbox" '+(draft.reversals?'checked':'')+'> Reversals</label><label><input id="relphiDraftRepeats" type="checkbox" '+(draft.repeats?'checked':'')+'> Repeats</label></div></section>'+
       '</div>'+
-      '<div class="relphi-options-commitbar"><button type="button" id="relphiResetBoard" class="relphi-reset-board">Reset Board</button><span></span><button type="button" id="relphiCancelOptions">Cancel</button><button type="button" id="relphiApplyOptions" class="primary" '+(session.path==='surface'&&!selectedSurfaceKinds(session).length?'disabled':'')+'>Start Reading</button></div>';
+      '<div class="relphi-options-commitbar"><span></span><button type="button" id="relphiCancelOptions">Cancel</button><button type="button" id="relphiApplyOptions" class="primary" '+(session.path==='surface'&&!selectedSurfaceKinds(session).length?'disabled':'')+'>Start Reading</button></div>';
     modeTabs.insertAdjacentElement('afterend',drawer);
     setBoardMode(root,'referents');
 
@@ -1506,8 +1506,7 @@
     drawer.querySelector('#relphiDraftStickers')?.addEventListener('change',event=>{draft.stickers=event.target.checked;});
     drawer.querySelector('#relphiDraftReversals')?.addEventListener('change',event=>{draft.reversals=event.target.checked;});
     drawer.querySelector('#relphiDraftRepeats')?.addEventListener('change',event=>{draft.repeats=event.target.checked;});
-    drawer.querySelector('#relphiResetBoard')?.addEventListener('click',()=>resetBoardFromOptions(root));
-    drawer.querySelector('#relphiCancelOptions')?.addEventListener('click',()=>closeOptions(root));
+     drawer.querySelector('#relphiCancelOptions')?.addEventListener('click',()=>closeOptions(root));
     drawer.querySelector('#relphiApplyOptions')?.addEventListener('click',()=>{
       if (session.path==='surface' && !prepareSurfaceDraft(session)) return;
       if (session.path==='blocks' && session.suggestions.length) commitSelectedSuggestions();
@@ -1539,6 +1538,7 @@
   }
 
   function resetBoardFromOptions(root) {
+    if (!optionsSession) beginOptionsSession();
     if (!optionsSession) return;
     optionsSession.draft=blankDraft();
     optionsSession.path='bespoke';
@@ -2964,6 +2964,13 @@
       event.preventDefault();
       event.stopImmediatePropagation();
       clearCardsOnly(root);
+      return;
+    }
+    const resetBoardTrigger=event.target.closest?.('#shortListPanel #relphiResetBoard');
+    if (resetBoardTrigger && root?.contains(resetBoardTrigger)) {
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      resetBoardFromOptions(root);
       return;
     }
     const drawTrigger=event.target.closest?.('#shortListPanel #drawRandomRowCard');
