@@ -1781,3 +1781,19 @@ body.relphi-attune-open{overflow:hidden!important}
     grid-column:1!important;
   }
 }
+
+
+/* Keep desktop Appearance controls compact, matching Reversals / Repeats. */
+@media(min-width:701px){
+  #shortListPanel .relphi-control-toggles{
+    grid-template-columns:repeat(3,minmax(0,1fr))!important;
+    width:min(34rem,100%)!important;
+    max-width:34rem!important;
+  }
+  #shortListPanel .relphi-board-configuration-group:has(.relphi-snap-control){
+    grid-template-columns:repeat(2,minmax(0,1fr))!important;
+    width:min(34rem,100%)!important;
+    max-width:34rem!important;
+    justify-self:start!important;
+  }
+}
