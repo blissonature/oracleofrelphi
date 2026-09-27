@@ -1317,6 +1317,22 @@
     return '';
   }
 
+  function keepAstrologyConnectorInView(root=panel()) {
+    const drawer=root?.querySelector('.relphi-reading-options-drawer');
+    const body=drawer?.querySelector('.relphi-options-body');
+    const bridge=drawer?.querySelector('.relphi-astrology-bridge-status');
+    const button=drawer?.querySelector('#relphiConnectSky');
+    if(!drawer||!body||!bridge||!button)return false;
+    const bodyRect=body.getBoundingClientRect();
+    const bridgeRect=bridge.getBoundingClientRect();
+    const pad=14;
+    const fullyVisible=bridgeRect.top>=bodyRect.top+pad && bridgeRect.bottom<=bodyRect.bottom-pad;
+    if(fullyVisible)return true;
+    const targetTop=body.scrollTop+(bridgeRect.top-bodyRect.top)-Math.max(pad,(bodyRect.height-bridgeRect.height)/2);
+    body.scrollTo({top:Math.max(0,targetTop),behavior:'smooth'});
+    return true;
+  }
+
   function renderOptions(root = panel()) {
     if (!root || !optionsSession) return;
     root.querySelector('.relphi-reading-options-drawer')?.remove();
@@ -1363,6 +1379,9 @@
       '<div class="relphi-options-commitbar"><span></span><button type="button" id="relphiCancelOptions">Cancel</button><button type="button" id="relphiApplyOptions" class="primary" '+(session.path==='surface'&&!selectedSurfaceKinds(session).length?'disabled':'')+'>Start Reading</button></div>';
     modeTabs.insertAdjacentElement('afterend',drawer);
     setBoardMode(root,'referents');
+    if(session.path==='astro' && !session.astrologyAnalysis){
+      requestAnimationFrame(()=>requestAnimationFrame(()=>keepAstrologyConnectorInView(root)));
+    }
 
     drawer.querySelectorAll('[data-referent-path]').forEach(button=>button.addEventListener('click',()=>{
       const nextPath=button.dataset.referentPath || '';
