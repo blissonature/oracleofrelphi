@@ -42,6 +42,7 @@
   let boardSetupConfirmed = false;
   let activeCraftedPath = '';
   let boardConfigurationOpen = false;
+  let boardBackgroundMode = '';
   const BOARD_BACKGROUND_DEFAULT_KEY = 'relphiBoardBackgroundDefaultV1';
   const BOARD_RECENT_COLORS_KEY = 'relphiBoardRecentColorsV1';
   const BOARD_RECENT_IMAGES_KEY = 'relphiBoardRecentImagesV1';
@@ -645,7 +646,7 @@
 
     [...root.querySelectorAll('.relphi-global-board-actions')].forEach(node=>node.remove());
     settingsPanel.hidden=!settingsOpen;
-    if(!settingsOpen)boardConfigurationOpen=false;
+    if(!settingsOpen){boardConfigurationOpen=false;boardBackgroundMode='';}
     root.classList.toggle('relphi-settings-open',settingsOpen);
     const configurationButton=settingsPanel.querySelector('#relphiBoardConfigurationButton');
     if(configurationButton){
@@ -696,7 +697,8 @@
     const tableUpload=root.querySelector('#rowTableImageUpload');
     const tableFile=root.querySelector('#rowTableImageFile');
     const snapshot=currentSnapshot()||{};
-    const usingImage=!!String(snapshot.rowTableImage||'');
+    const activeBackgroundMode=boardBackgroundMode || (String(snapshot.rowTableImage||'') ? 'image' : 'color');
+    const usingImage=activeBackgroundMode==='image';
 
     section.replaceChildren();
     const heading=document.createElement('div');
@@ -768,7 +770,7 @@
       const recents=document.createElement('div');recents.className='relphi-background-image-recents';recents.setAttribute('aria-label','Recent board images');
       recentBoardImages().forEach((item,index)=>{
         const button=document.createElement('button');button.type='button';button.className='relphi-recent-image';button.title=item.name||('Recent image '+(index+1));button.style.backgroundImage='url("'+item.data.replace(/"/g,'%22')+'")';
-        button.addEventListener('click',()=>{const bridge=optionsBridge(),snap=bridge?.capture?.();if(!bridge||!snap)return;snap.rowTableImage=item.data;bridge.restore(snap);setTimeout(()=>{ensureBoardChrome(root);renderBoardConfiguration(root);},0);});
+        button.addEventListener('click',()=>{const bridge=optionsBridge(),snap=bridge?.capture?.();if(!bridge||!snap)return;boardBackgroundMode='image';snap.rowTableImage=item.data;bridge.restore(snap);setTimeout(()=>{ensureBoardChrome(root);renderBoardConfiguration(root);},0);});
         recents.appendChild(button);
       });
       if(recents.children.length)chooser.appendChild(recents);
@@ -793,6 +795,7 @@
     mode.querySelectorAll('[data-background-mode]').forEach(button=>button.addEventListener('click',()=>{
       const next=button.dataset.backgroundMode;
       const bridge=optionsBridge(),snap=bridge?.capture?.();if(!bridge||!snap)return;
+      boardBackgroundMode=next;
       if(next==='color'){
         if(snap.rowTableImage)rememberBoardImage(snap.rowTableImage,'Recent image');
         snap.rowTableImage='';
@@ -808,7 +811,7 @@
     tableFile?.addEventListener('change',()=>{
       const file=tableFile.files?.[0];if(!file)return;
       const reader=new FileReader();
-      reader.addEventListener('load',()=>{rememberBoardImage(String(reader.result||''),file.name);setTimeout(()=>{ensureBoardChrome(root);renderBoardConfiguration(root);},80);},{once:true});
+      reader.addEventListener('load',()=>{boardBackgroundMode='image';rememberBoardImage(String(reader.result||''),file.name);setTimeout(()=>{ensureBoardChrome(root);renderBoardConfiguration(root);},80);},{once:true});
       reader.readAsDataURL(file);
     },{once:true});
   }
