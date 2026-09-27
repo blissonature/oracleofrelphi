@@ -2104,6 +2104,20 @@
     }
   }
 
+  function launchConfiguredReading(root,draft) {
+    const prefab=draftPrefab(draft);
+    if(prefab.positions.length) prefabBridge()?.applyLayout?.(prefab);
+    applyDrawSettings(draft);
+    optionsSession=null;
+    root.querySelector('.relphi-reading-options-drawer')?.remove();
+    setBoardMode(root,'referents');
+    root.classList.remove('relphi-referents-mode');
+    const crafted=root.querySelector('#drawingBoardOptionsButton'),free=root.querySelector('#drawingBoardBoardTab');
+    crafted?.classList.add('is-active');crafted?.setAttribute('aria-checked','true');
+    free?.classList.remove('is-active');free?.setAttribute('aria-checked','false');
+    setTimeout(()=>{markSemanticPositions(root);updateLayoutClasses(root);zoomExtents();},0);
+  }
+
   function applyOptions(root = panel()) {
     if (!optionsSession || !root) return;
     const session=optionsSession;
@@ -2112,6 +2126,7 @@
     const surfaceKinds=session.path==='surface' ? selectedSurfaceKinds(session) : [];
     if(session.path==='astro'&&!session.astrologyResolved){showBoardToast('Choose and prepare the sky before starting the Astrological Tarot Reading.',{title:'Astrological Tarot Reading',duration:5200});return}
     const astrologyRequested=session.path==='astro'&&!!session.astrologyResolved;
+    if(astrologyRequested){writeStickerVisibility(draft.stickers);surfaceReadingSession=null;recursionSession=null;recursionPortalLevel=0;launchConfiguredReading(root,draft);showBoardToast('Your selected astrological questions are established on the Drawing Board.',{title:'Astrological Tarot Reading',duration:4600});return}
     const recursionRequested=draft.templateId===RECURSION_ID || draft.basedOnTemplateId===RECURSION_ID;
     surfaceReadingSession=surfaceKinds.length ? {kinds:surfaceKinds.slice(),initialCount:surfaceKinds.length,followupsGenerated:false,followupCount:0} : null;
     if(astrologyRequested) surfaceReadingSession=null;
@@ -2635,7 +2650,8 @@
     const trigger=document.getElementById('relphiOpenDrawingBoardCurrent');
     if (!initialized) initialized=true;
     boardOpen=trigger?.getAttribute('aria-expanded')==='true';
-    setBoardMode(root,boardHasCraftedStructure(root)?'referents':'board');
+    if(!optionsSession && boardHasCraftedStructure(root)) beginOptionsSession();
+    setBoardMode(root,optionsSession?'referents':'board');
     if (!boardOpen) {
       root.hidden=true;
       if (trigger) { trigger.textContent='Open Drawing Board'; trigger.setAttribute('aria-expanded','false'); }
