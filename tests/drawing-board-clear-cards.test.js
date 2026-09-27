@@ -24,12 +24,14 @@ async function openBoard(page){
     return {
       global:!!draw&&!!reset&&!!global&&draw.parentElement===global&&reset.parentElement===global&&reset.previousElementSibling===draw,
       promoted:!!modes&&global.nextElementSibling===modes,
-      freeClear:!!clear&&!!freeActions&&clear.parentElement===freeActions
+      freeClear:!!clear&&!!freeActions&&clear.parentElement===freeActions,
+      globalRows:document.querySelectorAll('#shortListPanel .relphi-global-board-actions').length
     };
   });
   assert.equal(globalActionPlacement.global,true,'Draw and Reset Board must share the permanent Drawing Board action row');
   assert.equal(globalActionPlacement.promoted,true,'Drawing Board actions must sit above the Free/Crafted mode switch');
   assert.equal(globalActionPlacement.freeClear,true,'Clear Cards remains a Free-mode action');
+  assert.equal(globalActionPlacement.globalRows,1,'Drawing Board must have exactly one global action row');
 }
 
 async function applyTemplate(page,id){
@@ -151,9 +153,16 @@ async function assertFreeformClearCardsLeavesZeroSlotBoard(page,expectedCards){
   try {
     const page=await browser.newPage({viewport:{width:390,height:844}});
     await openBoard(page);
-    await page.click('#relphiResetBoard');
-    assert.equal(await page.locator('#drawingBoardBoardTab').getAttribute('aria-checked'),'true','Global Reset Board must keep an empty Free board in Free mode');
-    assert.equal(await page.locator('.relphi-reading-options-drawer').count(),0,'Free-mode reset must not open Crafted settings');
+    const freeTop=await page.locator('.drawing-board-mode-switch').evaluate(el=>el.getBoundingClientRect().top);
+    for(let i=0;i<3;i+=1){
+      await page.click('#relphiResetBoard');
+      await page.waitForTimeout(50);
+      assert.equal(await page.locator('#drawingBoardBoardTab').getAttribute('aria-checked'),'true','Global Reset Board must keep an empty Free board in Free mode');
+      assert.equal(await page.locator('.relphi-reading-options-drawer').count(),0,'Free-mode reset must not open Crafted settings');
+      assert.equal(await page.locator('#shortListPanel .relphi-global-board-actions').count(),1,'Repeated reset must not create extra global action rows');
+      const nextTop=await page.locator('.drawing-board-mode-switch').evaluate(el=>el.getBoundingClientRect().top);
+      assert.ok(Math.abs(nextTop-freeTop)<1,'Repeated reset must not push Drawing Board chrome downward');
+    }
 
     await page.click('#drawingBoardOptionsButton');
     await page.waitForSelector('.relphi-reading-options-drawer.is-reading-options-open',{state:'visible'});
@@ -163,6 +172,11 @@ async function assertFreeformClearCardsLeavesZeroSlotBoard(page,expectedCards){
     await page.click('#relphiResetBoard');
     await page.waitForSelector('.relphi-reading-options-drawer.is-reading-options-open',{state:'visible'});
     assert.equal(await page.locator('#drawingBoardOptionsButton').getAttribute('aria-checked'),'true','Global Reset Board must keep Crafted mode selected when reset from Crafted');
+    assert.equal(await page.locator('#shortListPanel .relphi-global-board-actions').count(),1,'Crafted reset must keep one global action row');
+    const resetState=await page.evaluate(()=>window.RelphiDrawingBoardOptionsBridge?.capture?.());
+    assert.equal(resetState?.shortList?.length||0,0,'Crafted reset must clear cards');
+    assert.equal(resetState?.shortListPositionLabels?.length||0,0,'Crafted reset must clear referents');
+    assert.equal(resetState?.rowActiveLayout||null,null,'Crafted reset must clear active layout');
     await page.click('#relphiCancelOptions');
 
     await applyTemplate(page,'past-present-future-3');
