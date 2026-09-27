@@ -846,3 +846,319 @@ body.relphi-attune-open{overflow:hidden!important}
 #shortListPanel .relphi-suggestion-copy{display:grid!important;gap:.14rem!important;min-width:0!important}
 #shortListPanel .relphi-suggestion-copy strong{font-size:.72rem!important;line-height:1.35!important}
 #shortListPanel .relphi-suggestion-copy small{color:#7a6f67!important;font-size:.63rem!important;font-weight:700!important}
+
+
+/* Drawing Board command bar + Settings redesign · authoritative chrome */
+#shortListPanel .card-row-drawing-board>summary[hidden]{display:none!important}
+#shortListPanel .relphi-global-board-actions{display:none!important}
+#shortListPanel .relphi-board-commandbar{
+  display:flex!important;
+  align-items:center!important;
+  justify-content:space-between!important;
+  gap:.85rem!important;
+  width:100%!important;
+  box-sizing:border-box!important;
+  margin:0!important;
+  padding:.72rem .82rem!important;
+  border-bottom:1px solid var(--relphi-board-line)!important;
+  background:#fff!important;
+}
+#shortListPanel .relphi-board-command-left{
+  display:flex!important;
+  align-items:center!important;
+  gap:.7rem!important;
+  min-width:0!important;
+}
+#shortListPanel .relphi-board-command-title{
+  display:inline-flex!important;
+  align-items:center!important;
+  gap:.42rem!important;
+  min-width:0!important;
+  color:var(--relphi-board-ink)!important;
+}
+#shortListPanel .relphi-board-command-title>strong{
+  font-size:1rem!important;
+  font-weight:900!important;
+  line-height:1.1!important;
+  white-space:nowrap!important;
+}
+#shortListPanel .relphi-board-command-count{
+  display:inline-grid!important;
+  place-items:center!important;
+  width:1.28rem!important;
+  height:1.28rem!important;
+  border-radius:50%!important;
+  background:#111!important;
+  color:#fff!important;
+  font-size:.66rem!important;
+  font-weight:900!important;
+  line-height:1!important;
+}
+#shortListPanel #relphiBoardSettingsButton{
+  min-height:2.15rem!important;
+  margin:0!important;
+  padding:.4rem .68rem!important;
+  border:1.25px solid #b9afa7!important;
+  border-radius:8px!important;
+  background:#fff!important;
+  color:#312b27!important;
+  font:inherit!important;
+  font-size:.72rem!important;
+  font-weight:850!important;
+  box-shadow:none!important;
+}
+#shortListPanel #relphiBoardSettingsButton.is-active{
+  border-color:var(--relphi-board-red)!important;
+  background:#fff5f3!important;
+  color:#a61712!important;
+}
+#shortListPanel .drawing-board-top-actions.relphi-board-command-actions{
+  display:flex!important;
+  align-items:center!important;
+  justify-content:flex-end!important;
+  gap:.38rem!important;
+  flex:0 0 auto!important;
+  width:auto!important;
+  margin:0!important;
+  padding:0!important;
+  isolation:auto!important;
+  z-index:auto!important;
+}
+#shortListPanel .drawing-board-top-actions.relphi-board-command-actions>button{
+  position:static!important;
+  min-width:0!important;
+  width:auto!important;
+  max-width:none!important;
+  height:auto!important;
+  min-height:2.15rem!important;
+  margin:0!important;
+  padding:.4rem .67rem!important;
+  border:1.25px solid #b9afa7!important;
+  border-radius:8px!important;
+  background:#fff!important;
+  color:#2f2925!important;
+  font:inherit!important;
+  font-size:.72rem!important;
+  font-weight:850!important;
+  line-height:1!important;
+  box-shadow:none!important;
+}
+#shortListPanel .drawing-board-top-actions.relphi-board-command-actions>#clearShortListCardsOnly{order:1!important}
+#shortListPanel .drawing-board-top-actions.relphi-board-command-actions>#undoShortList{order:2!important}
+#shortListPanel .drawing-board-top-actions.relphi-board-command-actions>#redoShortList{order:3!important}
+#shortListPanel .drawing-board-top-actions.relphi-board-command-actions>#drawRandomRowCard{
+  order:4!important;
+  border-color:#b81712!important;
+  background:var(--relphi-board-red)!important;
+  color:#fff!important;
+}
+#shortListPanel .drawing-board-top-actions.relphi-board-command-actions>button:disabled{
+  opacity:.38!important;
+  cursor:default!important;
+}
+#shortListPanel .relphi-board-settings-panel{
+  display:block!important;
+  box-sizing:border-box!important;
+  width:100%!important;
+  margin:0!important;
+  padding:.7rem .82rem .82rem!important;
+  border-bottom:1px solid var(--relphi-board-line)!important;
+  background:#fcf9f5!important;
+}
+#shortListPanel .relphi-board-settings-panel[hidden]{display:none!important}
+#shortListPanel .relphi-board-settings-top{
+  display:flex!important;
+  justify-content:flex-start!important;
+  align-items:center!important;
+  margin:0 0 .55rem!important;
+}
+#shortListPanel #relphiResetBoard{
+  min-height:2.1rem!important;
+  margin:0!important;
+  padding:.38rem .65rem!important;
+  border:1.25px solid rgba(184,23,18,.48)!important;
+  border-radius:8px!important;
+  background:#fff!important;
+  color:#a61712!important;
+  font:inherit!important;
+  font-size:.7rem!important;
+  font-weight:850!important;
+}
+#shortListPanel #relphiResetBoard:disabled{
+  border-color:#d4ccc5!important;
+  color:#958b84!important;
+  opacity:.5!important;
+}
+#shortListPanel .relphi-board-settings-body{
+  display:grid!important;
+  gap:.65rem!important;
+  min-width:0!important;
+}
+#shortListPanel .relphi-board-settings-panel .drawing-board-mode-switch{
+  display:grid!important;
+  grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  align-items:stretch!important;
+  gap:.18rem!important;
+  width:min(20rem,100%)!important;
+  margin:0!important;
+  padding:.2rem!important;
+  border:1px solid #d8cec5!important;
+  border-radius:999px!important;
+  background:#f1ece6!important;
+}
+#shortListPanel .relphi-board-settings-panel .drawing-board-mode-switch .drawing-board-mode-label,
+#shortListPanel .relphi-board-settings-panel .drawing-board-mode-switch .drawing-board-mode-or{display:none!important}
+#shortListPanel .relphi-board-settings-panel .drawing-board-mode-switch>button{
+  min-height:2rem!important;
+  margin:0!important;
+  padding:.35rem .7rem!important;
+  border:0!important;
+  border-radius:999px!important;
+  background:transparent!important;
+  color:#302a26!important;
+  font:inherit!important;
+  font-size:.7rem!important;
+  font-weight:900!important;
+  box-shadow:none!important;
+}
+#shortListPanel .relphi-board-settings-panel .drawing-board-mode-switch>button.is-active{
+  background:#fff!important;
+  color:#111!important;
+  box-shadow:0 1px 4px rgba(0,0,0,.12)!important;
+}
+#shortListPanel.relphi-settings-open .drawing-board-board-mode{display:none!important}
+#shortListPanel .relphi-free-settings{
+  display:grid!important;
+  gap:.75rem!important;
+  min-width:0!important;
+}
+#shortListPanel .relphi-free-settings-fields{
+  display:grid!important;
+  grid-template-columns:minmax(13rem,1fr)!important;
+  gap:.55rem!important;
+  min-width:0!important;
+}
+#shortListPanel .relphi-free-pack{
+  display:grid!important;
+  gap:.24rem!important;
+  max-width:24rem!important;
+  color:#5f5751!important;
+  font-size:.68rem!important;
+  font-weight:850!important;
+}
+#shortListPanel .relphi-free-pack select{
+  width:100%!important;
+  min-height:2.25rem!important;
+  padding:.4rem .55rem!important;
+  border:1px solid #bfb5ac!important;
+  border-radius:7px!important;
+  background:#fff!important;
+  color:#111!important;
+  font:inherit!important;
+  font-size:.72rem!important;
+}
+#shortListPanel .relphi-free-toggles{
+  display:grid!important;
+  grid-template-columns:repeat(3,minmax(0,1fr))!important;
+  gap:.42rem!important;
+  max-width:34rem!important;
+}
+#shortListPanel .relphi-free-toggles>label{
+  display:flex!important;
+  align-items:center!important;
+  gap:.36rem!important;
+  min-height:2.15rem!important;
+  padding:.4rem .52rem!important;
+  border:1px solid #d0c7bf!important;
+  border-radius:7px!important;
+  background:#fff!important;
+  color:#312b27!important;
+  font-size:.69rem!important;
+  font-weight:800!important;
+}
+#shortListPanel .relphi-board-settings-footer,
+#shortListPanel .relphi-board-settings-panel .relphi-options-commitbar{
+  display:grid!important;
+  grid-template-columns:auto 1fr auto!important;
+  gap:.5rem!important;
+  align-items:center!important;
+  width:100%!important;
+  box-sizing:border-box!important;
+  margin:.15rem 0 0!important;
+  padding:.65rem 0 0!important;
+  border-top:1px solid #ded4cb!important;
+  background:transparent!important;
+}
+#shortListPanel .relphi-board-settings-footer>button,
+#shortListPanel .relphi-board-settings-panel .relphi-options-commitbar>button{
+  min-height:2.15rem!important;
+  margin:0!important;
+  padding:.4rem .72rem!important;
+  border:1.25px solid #958b84!important;
+  border-radius:8px!important;
+  background:#fff!important;
+  color:#211d1a!important;
+  font:inherit!important;
+  font-size:.72rem!important;
+  font-weight:900!important;
+}
+#shortListPanel .relphi-board-settings-footer>.primary,
+#shortListPanel .relphi-board-settings-panel .relphi-options-commitbar>.primary{
+  grid-column:3!important;
+  border-color:var(--relphi-board-red)!important;
+  background:var(--relphi-board-red)!important;
+  color:#fff!important;
+}
+#shortListPanel .relphi-board-settings-panel .relphi-reading-options-drawer{
+  position:relative!important;
+  inset:auto!important;
+  display:flex!important;
+  flex-direction:column!important;
+  box-sizing:border-box!important;
+  width:100%!important;
+  max-width:none!important;
+  height:clamp(26rem,62dvh,42rem)!important;
+  min-height:26rem!important;
+  max-height:42rem!important;
+  margin:0!important;
+  padding:0!important;
+  border:0!important;
+  border-radius:0!important;
+  background:transparent!important;
+  box-shadow:none!important;
+  overflow:hidden!important;
+}
+#shortListPanel .relphi-board-settings-panel .relphi-options-body{
+  flex:1 1 auto!important;
+  min-height:0!important;
+  padding:.55rem .15rem .55rem 0!important;
+  overflow-y:auto!important;
+  overflow-x:hidden!important;
+}
+#shortListPanel .relphi-board-settings-panel .relphi-options-heading{display:none!important}
+
+@media(max-width:760px){
+  #shortListPanel .relphi-board-commandbar{
+    align-items:stretch!important;
+    flex-direction:column!important;
+    gap:.55rem!important;
+  }
+  #shortListPanel .relphi-board-command-left{justify-content:space-between!important}
+  #shortListPanel .drawing-board-top-actions.relphi-board-command-actions{
+    display:grid!important;
+    grid-template-columns:repeat(4,minmax(0,1fr))!important;
+    width:100%!important;
+    gap:.3rem!important;
+  }
+  #shortListPanel .drawing-board-top-actions.relphi-board-command-actions>button{
+    width:100%!important;
+    padding:.4rem .32rem!important;
+    font-size:.66rem!important;
+  }
+  #shortListPanel .relphi-board-settings-panel{padding:.6rem!important}
+  #shortListPanel .relphi-board-settings-panel .drawing-board-mode-switch{width:100%!important}
+  #shortListPanel .relphi-free-toggles{grid-template-columns:1fr!important;max-width:none!important}
+  #shortListPanel .relphi-board-settings-panel .relphi-reading-options-drawer{
+    height:clamp(28rem,70dvh,42rem)!important;
+  }
+}
