@@ -185,7 +185,7 @@
       input.checked = selectedScopes.has(input.dataset.aspectScopeChoice);
     });
     const status = owner.querySelector('[data-aspect-filter-summary]');
-    if (status) status.textContent = summary();
+    if (status) { const value=summary(); status.textContent = value === 'All' ? 'Aspects' : value; }
     owner.dataset.selectionCount = String(selected.size);
     owner.dataset.scopeSelectionCount = String(selectedScopes.size);
   }
