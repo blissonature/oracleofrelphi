@@ -459,17 +459,16 @@
   }
   function ensure(){
     const bar=filterBar();
-    if(!bar)return false;
+    const slot=document.querySelector('#skyFoundationFocus .sky-focus-heading-controls');
+    if(!bar||!slot)return false;
     removeLegacyControls(bar);
     let owner=document.querySelector('[data-placement-filter="combined"]');
     if(!owner)owner=createControl();
-    if(!owner.isConnected){
-      const aspect=bar.querySelector('[data-filter="aspect"]')?.closest('label')||bar.querySelector('[data-aspect-filter="combined"]');
-      const houses=bar.querySelector('[data-house-filter="combined"]');
-      if(houses)houses.insertAdjacentElement('beforebegin',owner);
-      else if(aspect)aspect.insertAdjacentElement('afterend',owner);
-      else bar.prepend(owner);
-    }
+    const signs=slot.querySelector('[data-zodiac-filter]');
+    const houses=slot.querySelector('[data-house-filter="combined"]');
+    const actions=slot.querySelector('.sky-export-wheel-slot');
+    const anchor=signs||houses||actions||null;
+    if(owner.parentElement!==slot||owner.nextElementSibling!==anchor)slot.insertBefore(owner,anchor);
     bar.dataset.multiselectPlacementFilters='true';
     return true;
   }
