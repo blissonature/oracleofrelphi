@@ -309,7 +309,7 @@
   }
 
   const state = {
-    mode: 'idle', query: '', selected: null, currentSpread: [], currentSpreadKey: '', chart: {}, currentSky: {}, lastDateField: null, activeCelticCard: null, revealGuideActive: false, revealGuideEnabled: true, crossedLayout: true, positionStickers: true, transitFilters: { aspect:['conjunction','opposition','trine','square','sextile'], house:'all', sign:'all', placement:'all', orb:'3' }, cardFilters: [], shortList: [], shortListUndo: [], shortListRedo: [], shortListSelection: [], shortListSelectMode: false, shortListPositionLabels: [], shortListPositionCardIds: [], rowDrawScope: 'full', rowTagQuery: '', rowSelectedTags: [], rowTagMatchMode: 'any', rowAllowRepeats: false, rowAllowReversals: true, rowDrawDeck: [], rowDrawDeckSignature: '', rowCardReversals: {}, shortListName: '', shortListNotes: '', rowZoom: 1, rowPanX: 0, rowPanY: 0, rowSnapEnabled: true, rowSnapGrid: 'one-eighth', rowRotationSnapEnabled: true, rowRotationSnapDegrees: 15, rowShuffled: false, rowShuffleCount: 0, resultScale: 'medium', resultZoom: 1, resultLayout: 'auto', resultGlyphsVisible: false, rowEnvelopeLayout: {}, rowCardTransforms: {}, rowTransformTarget: 0, rowEnvelopeColor: '#f3f0ea', rowEnvelopeArt: {}, rowTableColor: '#7d1f28', rowTableImage: '', rowCustomArtTarget: '', customCardArt: {}, rowActiveLayout: null, rowPositionMeta: [], rowLayoutDesignMode: false, rowLayoutLocked: false, rowCenterOpen: false, chartName: '', chartNotes: '', currentSkyName: '', currentSkyNotes: '', skyChartMode: 'single', skyBuilderUiMode: 'wizard', skyCreatorTarget: 'chart', skyCreatorDrawerAutoClosed: false, skyEntrySource: { chart:'', currentSky:'' }, skyEntryMethod: { chart:'', currentSky:'' }, skyEntryPendingSource: { chart:'', currentSky:'' }, skyLibrarySelection: { chart:'', currentSky:'' }, relationshipFilterOpenMenu:'', cardRowBoardOpen: true, cardRowSettingsOpen: false
+    mode: 'idle', query: '', selected: null, currentSpread: [], currentSpreadKey: '', chart: {}, currentSky: {}, lastDateField: null, activeCelticCard: null, revealGuideActive: false, revealGuideEnabled: true, crossedLayout: true, positionStickers: true, transitFilters: { aspect:['conjunction','opposition','trine','square','sextile'], house:'all', sign:'all', placement:'all', orb:'3' }, cardFilters: [], shortList: [], shortListUndo: [], shortListRedo: [], shortListSelection: [], shortListSelectMode: false, shortListPositionLabels: [], shortListPositionCardIds: [], rowDrawScope: 'full', rowTagQuery: '', rowSelectedTags: [], rowTagMatchMode: 'any', rowAllowRepeats: false, rowAllowReversals: true, rowDrawDeck: [], rowDrawDeckSignature: '', rowCardReversals: {}, shortListName: '', shortListNotes: '', rowZoom: 1, rowPanX: 0, rowPanY: 0, rowSnapEnabled: true, rowSnapGrid: 'one-eighth', rowRotationSnapEnabled: true, rowRotationSnapDegrees: 15, rowShuffled: false, rowShuffleCount: 0, resultScale: 'medium', resultZoom: 1, resultLayout: 'auto', resultGlyphsVisible: false, rowEnvelopeLayout: {}, rowCardTransforms: {}, rowTransformTarget: 0, rowEnvelopeColor: '#f3f0ea', rowEnvelopeImage: '', rowEnvelopeArt: {}, rowTableColor: '#7d1f28', rowTableImage: '', rowCustomArtTarget: '', customCardArt: {}, rowActiveLayout: null, rowPositionMeta: [], rowLayoutDesignMode: false, rowLayoutLocked: false, rowCenterOpen: false, chartName: '', chartNotes: '', currentSkyName: '', currentSkyNotes: '', skyChartMode: 'single', skyBuilderUiMode: 'wizard', skyCreatorTarget: 'chart', skyCreatorDrawerAutoClosed: false, skyEntrySource: { chart:'', currentSky:'' }, skyEntryMethod: { chart:'', currentSky:'' }, skyEntryPendingSource: { chart:'', currentSky:'' }, skyLibrarySelection: { chart:'', currentSky:'' }, relationshipFilterOpenMenu:'', cardRowBoardOpen: true, cardRowSettingsOpen: false
   };
 
   function escapeHtml(value) {
@@ -905,6 +905,7 @@
       rowLayoutDesignMode: !!state.rowLayoutDesignMode,
       rowLayoutLocked: !!state.rowLayoutLocked,
       rowEnvelopeColor: String(state.rowEnvelopeColor || '#f3f0ea'),
+      rowEnvelopeImage: String(state.rowEnvelopeImage || ''),
       rowEnvelopeArt: cloneBoardValue(state.rowEnvelopeArt, {}),
       rowTableColor: String(state.rowTableColor || '#7d1f28'),
       rowTableImage: String(state.rowTableImage || ''),
@@ -962,6 +963,7 @@
     if (has('resultLayout')) state.resultLayout = snapshot.resultLayout || 'auto';
     if (has('resultGlyphsVisible')) state.resultGlyphsVisible = !!snapshot.resultGlyphsVisible;
     if (has('rowEnvelopeColor')) state.rowEnvelopeColor = String(snapshot.rowEnvelopeColor || '#f3f0ea');
+    if (has('rowEnvelopeImage')) state.rowEnvelopeImage = String(snapshot.rowEnvelopeImage || '');
     if (has('rowEnvelopeArt')) state.rowEnvelopeArt = cloneBoardValue(snapshot.rowEnvelopeArt, {});
     if (has('rowTableColor')) state.rowTableColor = String(snapshot.rowTableColor || '#7d1f28');
     if (has('rowTableImage')) state.rowTableImage = String(snapshot.rowTableImage || '');
@@ -1356,6 +1358,7 @@
       pan: { x: rowPanXValue(), y: rowPanYValue() },
       snapEnabled: !!state.rowSnapEnabled,
       envelopeColor: state.rowEnvelopeColor || '',
+      hasEnvelopeImage: !!state.rowEnvelopeImage,
       tableColor: state.rowTableColor || '',
       hasTableImage: !!state.rowTableImage,
       customEnvelopeArtSlots: Object.keys(state.rowEnvelopeArt || {}).filter(index => state.rowEnvelopeArt[index]),
@@ -2401,9 +2404,10 @@
     const zoom = rowZoomValue();
     const metrics = cardRowBoardMetrics(slotCount);
     const envelopeColor = state.rowEnvelopeColor || '#f3f0ea';
+    const envelopeImage = cssUrlValue(state.rowEnvelopeImage || '');
     const tableColor = state.rowTableColor || '#7d1f28';
     const tableImage = cssUrlValue(state.rowTableImage || '');
-    return `--row-zoom:${zoom};--row-envelope-w:${CARD_ROW_ENVELOPE_W}px;--row-envelope-h:${CARD_ROW_ENVELOPE_H}px;--row-grid-x:${rowSnapStepX().toFixed(2)}px;--row-grid-y:${rowSnapStepY().toFixed(2)}px;--relphi-envelope-bg:${envelopeColor};--relphi-card-envelope-bg:${envelopeColor};--row-table-bg:${tableColor};--row-table-image:${tableImage};width:${metrics.width}px;height:${metrics.height}px;min-height:${metrics.height}px;min-width:${metrics.width}px;transform:translate(${Math.round(rowPanXValue())}px, ${Math.round(rowPanYValue())}px) scale(${zoom});`;
+    return `--row-zoom:${zoom};--row-envelope-w:${CARD_ROW_ENVELOPE_W}px;--row-envelope-h:${CARD_ROW_ENVELOPE_H}px;--row-grid-x:${rowSnapStepX().toFixed(2)}px;--row-grid-y:${rowSnapStepY().toFixed(2)}px;--relphi-envelope-bg:${envelopeColor};--relphi-card-envelope-bg:${envelopeColor};--relphi-envelope-image:${envelopeImage};--row-table-bg:${tableColor};--row-table-image:${tableImage};width:${metrics.width}px;height:${metrics.height}px;min-height:${metrics.height}px;min-width:${metrics.width}px;transform:translate(${Math.round(rowPanXValue())}px, ${Math.round(rowPanYValue())}px) scale(${zoom});`;
   }
   function cardRowItemStyle(index) {
     const pos = rowEnvelopePosition(index);
