@@ -161,8 +161,21 @@ async function assertFreeformClearCardsLeavesZeroSlotBoard(page,expectedCards){
   try {
     const page=await browser.newPage({viewport:{width:390,height:844}});
     await openBoard(page);
+    const workspaceTopBeforeSettings=await page.locator('#shortListPanel .card-row-workspace').evaluate(el=>el.getBoundingClientRect().top);
     await page.click('#relphiBoardSettingsButton');
     await page.waitForSelector('.relphi-board-settings-panel',{state:'visible'});
+    const overlayGeometry=await page.evaluate(()=>{
+      const workspace=document.querySelector('#shortListPanel .card-row-workspace')?.getBoundingClientRect();
+      const settings=document.querySelector('#shortListPanel .relphi-board-settings-panel')?.getBoundingClientRect();
+      return {
+        workspaceTop:workspace?.top||0,
+        overlaps:!!workspace&&!!settings&&settings.bottom>workspace.top&&settings.top<workspace.bottom,
+        position:getComputedStyle(document.querySelector('#shortListPanel .relphi-board-settings-panel')).position
+      };
+    });
+    assert.ok(Math.abs(overlayGeometry.workspaceTop-workspaceTopBeforeSettings)<1,'Opening Settings must not move the Drawing Board workspace');
+    assert.equal(overlayGeometry.overlaps,true,'Settings must cover the Drawing Board workspace');
+    assert.equal(overlayGeometry.position,'absolute','Settings must be an overlay rather than an in-flow panel');
     assert.equal(await page.locator('#relphiResetBoard').isDisabled(),true,'Reset Board starts disabled on an untouched board');
     assert.equal(await page.locator('#drawingBoardBoardTab').getAttribute('aria-checked'),'true','Free is the default settings mode');
     assert.equal(await page.locator('#relphiFreePack').inputValue(),'full','Free defaults to Full Pack');
