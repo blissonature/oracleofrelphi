@@ -45,7 +45,7 @@ function summary(){
 function syncChecks(){
   if(!menu)return;
   menu.querySelectorAll('.sky-chart-zodiac-filter-row input[type="checkbox"]').forEach(input=>{input.checked=selected.has(input.value)});
-  if(button)button.textContent=summary();
+  if(button){const value=summary();button.textContent=value==='All'?'Signs':value;}
 }
 
 function clearAppliedSignFilter(){
