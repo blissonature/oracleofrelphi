@@ -55,9 +55,25 @@ function temporalTrace(sourceSvg){
     'aria-hidden':'true',
     focusable:'false'
   });
-  Array.from(sourceSvg.childNodes).forEach(node=>root.appendChild(node.cloneNode(true)));
-  root.querySelectorAll('[id]').forEach(node=>node.removeAttribute('id'));
-  root.querySelectorAll('text').forEach(node=>node.remove());
+
+  // The collapsed fingerprint is a temporal trace, not a miniature copy of the
+  // entire heptagram. Keep only completed days, the current partial day, the
+  // current partial hour, and the active day/hour ruler glyphs.
+  sourceSvg.querySelectorAll('.sky-ph-week-segment.past,.sky-ph-week-segment.current').forEach(line=>{
+    const clone=line.cloneNode(true);clone.removeAttribute('id');root.appendChild(clone);
+  });
+  const hour=sourceSvg.querySelector('.sky-ph-hour-segment.current');
+  if(hour){const clone=hour.cloneNode(true);clone.removeAttribute('id');root.appendChild(clone)}
+
+  const activePlanets=new Set();
+  sourceSvg.querySelectorAll('.sky-ph-planet.is-day-ruler,.sky-ph-planet.is-hour-ruler').forEach(group=>activePlanets.add(group));
+  activePlanets.forEach(group=>{
+    const clone=group.cloneNode(true);
+    clone.querySelectorAll('[id]').forEach(node=>node.removeAttribute('id'));
+    clone.querySelectorAll('text').forEach(node=>node.remove());
+    root.appendChild(clone);
+  });
+
   return root.childElementCount?root:null;
 }
 function renderWhere(slot,payload){
