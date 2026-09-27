@@ -117,6 +117,127 @@
     })
   });
 
+  const SIGN_AFFAIRS=Object.freeze({
+    Aries:Object.freeze({host:'Mars',element:'Fire',mode:'Cardinal'}),
+    Taurus:Object.freeze({host:'Venus',element:'Earth',mode:'Fixed'}),
+    Gemini:Object.freeze({host:'Mercury',element:'Air',mode:'Mutable'}),
+    Cancer:Object.freeze({host:'Moon',element:'Water',mode:'Cardinal'}),
+    Leo:Object.freeze({host:'Sun',element:'Fire',mode:'Fixed'}),
+    Virgo:Object.freeze({host:'Mercury',element:'Earth',mode:'Mutable'}),
+    Libra:Object.freeze({host:'Venus',element:'Air',mode:'Cardinal'}),
+    Scorpio:Object.freeze({host:'Mars',element:'Water',mode:'Fixed'}),
+    Sagittarius:Object.freeze({host:'Jupiter',element:'Fire',mode:'Mutable'}),
+    Capricorn:Object.freeze({host:'Saturn',element:'Earth',mode:'Cardinal'}),
+    Aquarius:Object.freeze({host:'Saturn',element:'Air',mode:'Fixed'}),
+    Pisces:Object.freeze({host:'Jupiter',element:'Water',mode:'Mutable'})
+  });
+
+  // Traditional seven-planet relationship matrix used by Astrological Tarot.
+  // Element + mode describe the host planet's affairs. Relationship verbs remain
+  // deliberately open while Relphi tests them through metathesis, repetition,
+  // convergence, planetary-hour deputyship, and motion.
+  const TRADITIONAL_RELATIONSHIPS=Object.freeze({
+    relationshipTypes:Object.freeze({
+      domicile:Object.freeze({question:'Who is this planet when it is at home?',status:'established'}),
+      deputy:Object.freeze({question:"Who is this planet when it is away from home working in another planet's government?",status:'research'}),
+      exaltation:Object.freeze({question:"What relationship exists when another ruler's affairs especially support or privilege this planet?",status:'research',doNotAssume:Object.freeze(['trust','superiority'])}),
+      detriment:Object.freeze({question:"What relationship exists when this planet handles the affairs opposite its own homes?",status:'research',doNotAssume:Object.freeze(['distrust','bad'])}),
+      fall:Object.freeze({question:"What relationship exists between this planet and the ruler of the affairs in which it falls?",status:'research',doNotAssume:Object.freeze(['distrust','failure'])})
+    }),
+    profiles:Object.freeze({
+      Moon:Object.freeze({
+        invariant:'Feedback',
+        homes:Object.freeze([{host:'Moon',element:'Water',mode:'Cardinal'}]),
+        exaltation:Object.freeze({host:'Venus',element:'Earth',mode:'Fixed'}),
+        detriment:Object.freeze([{host:'Saturn',element:'Earth',mode:'Cardinal'}]),
+        fall:Object.freeze({host:'Mars',element:'Water',mode:'Fixed'}),
+        deputies:Object.freeze(['Saturn','Jupiter']),
+        motion:Object.freeze({retrograde:false})
+      }),
+      Sun:Object.freeze({
+        invariant:'Identity',
+        homes:Object.freeze([{host:'Sun',element:'Fire',mode:'Fixed'}]),
+        exaltation:Object.freeze({host:'Mars',element:'Fire',mode:'Cardinal'}),
+        detriment:Object.freeze([{host:'Saturn',element:'Air',mode:'Fixed'}]),
+        fall:Object.freeze({host:'Venus',element:'Air',mode:'Cardinal'}),
+        deputies:Object.freeze(['Venus','Mercury']),
+        motion:Object.freeze({retrograde:false})
+      }),
+      Mercury:Object.freeze({
+        invariant:'Understanding',
+        coreHypotheses:Object.freeze(['parser','differentiation','connection','transmission','intelligibility']),
+        capabilityCandidates:Object.freeze(['recognize','distinguish','parse','name','represent','encode','decode','translate','transmit','connect','compare','match','index','reference','sequence','sort','classify','measure','coordinate','navigate','orient','handle','exchange','mediate','negotiate','broker','improvise','circumvent']),
+        homes:Object.freeze([{host:'Mercury',element:'Air',mode:'Mutable'},{host:'Mercury',element:'Earth',mode:'Mutable'}]),
+        exaltation:Object.freeze({host:'Mercury',element:'Earth',mode:'Mutable',convergence:Object.freeze(['domicile','exaltation'])}),
+        detriment:Object.freeze([{host:'Jupiter',element:'Fire',mode:'Mutable'},{host:'Jupiter',element:'Water',mode:'Mutable'}]),
+        fall:Object.freeze({host:'Jupiter',element:'Water',mode:'Mutable',convergence:Object.freeze(['detriment','fall'])}),
+        deputies:Object.freeze(['Moon','Saturn']),
+        motion:Object.freeze({retrograde:true,retrogradeOperation:'reparse_revise',returnOperation:'resume_with_revised_understanding'}),
+        tarot:Object.freeze({card:'Magus',observedOperations:Object.freeze(['speech','handling','exchange','translation','crossing_between_inside_and_outside'])}),
+        mythicRelationships:Object.freeze({son:Object.freeze([]),brother:Object.freeze([]),father:Object.freeze([]),husbandOrLover:Object.freeze([]),loyalCompanion:Object.freeze([])})
+      }),
+      Venus:Object.freeze({
+        invariant:'Affection',
+        homes:Object.freeze([{host:'Venus',element:'Earth',mode:'Fixed'},{host:'Venus',element:'Air',mode:'Cardinal'}]),
+        exaltation:Object.freeze({host:'Jupiter',element:'Water',mode:'Mutable'}),
+        detriment:Object.freeze([{host:'Mars',element:'Water',mode:'Fixed'},{host:'Mars',element:'Fire',mode:'Cardinal'}]),
+        fall:Object.freeze({host:'Mercury',element:'Earth',mode:'Mutable'}),
+        deputies:Object.freeze(['Mercury','Moon']),
+        motion:Object.freeze({retrograde:true,retrogradeOperation:'rerelate',returnOperation:'resume_with_revised_relation'})
+      }),
+      Mars:Object.freeze({
+        invariant:'Protection',
+        homes:Object.freeze([{host:'Mars',element:'Fire',mode:'Cardinal'},{host:'Mars',element:'Water',mode:'Fixed'}]),
+        exaltation:Object.freeze({host:'Saturn',element:'Earth',mode:'Cardinal'}),
+        detriment:Object.freeze([{host:'Venus',element:'Air',mode:'Cardinal'},{host:'Venus',element:'Earth',mode:'Fixed'}]),
+        fall:Object.freeze({host:'Moon',element:'Water',mode:'Cardinal'}),
+        deputies:Object.freeze(['Sun','Venus']),
+        motion:Object.freeze({retrograde:true,retrogradeOperation:'regroup_reposition',returnOperation:'redeploy'})
+      }),
+      Jupiter:Object.freeze({
+        invariant:'Participation',
+        homes:Object.freeze([{host:'Jupiter',element:'Fire',mode:'Mutable'},{host:'Jupiter',element:'Water',mode:'Mutable'}]),
+        exaltation:Object.freeze({host:'Moon',element:'Water',mode:'Cardinal'}),
+        detriment:Object.freeze([{host:'Mercury',element:'Air',mode:'Mutable'},{host:'Mercury',element:'Earth',mode:'Mutable'}]),
+        fall:Object.freeze({host:'Saturn',element:'Earth',mode:'Cardinal'}),
+        deputies:Object.freeze(['Mars','Sun']),
+        motion:Object.freeze({retrograde:true,retrogradeOperation:'participation_becomes_feedback',returnOperation:'reintegrate'})
+      }),
+      Saturn:Object.freeze({
+        invariant:'Freedom',
+        homes:Object.freeze([{host:'Saturn',element:'Earth',mode:'Cardinal'},{host:'Saturn',element:'Air',mode:'Fixed'}]),
+        exaltation:Object.freeze({host:'Venus',element:'Air',mode:'Cardinal'}),
+        detriment:Object.freeze([{host:'Moon',element:'Water',mode:'Cardinal'},{host:'Sun',element:'Fire',mode:'Fixed'}]),
+        fall:Object.freeze({host:'Mars',element:'Fire',mode:'Cardinal'}),
+        deputies:Object.freeze(['Jupiter','Mars']),
+        motion:Object.freeze({retrograde:true,retrogradeOperation:'revisit_boundary',returnOperation:'resume_with_knowingly_inhabitable_boundary'})
+      })
+    })
+  });
+
+  function traditionalProfile(name){
+    return TRADITIONAL_RELATIONSHIPS.profiles[String(name||'').trim()]||null;
+  }
+  function traditionalCondition(name,sign){
+    const profile=traditionalProfile(name),host=SIGN_AFFAIRS[String(sign||'').trim()];
+    if(!profile||!host)return null;
+    const same=(x)=>x&&x.host===host.host&&x.element===host.element&&x.mode===host.mode;
+    const statuses=[];
+    if(profile.homes.some(same))statuses.push('domicile');
+    if(same(profile.exaltation))statuses.push('exaltation');
+    if(profile.detriment.some(same))statuses.push('detriment');
+    if(same(profile.fall))statuses.push('fall');
+    return Object.freeze({planet:String(name),sign:String(sign),host:host.host,element:host.element,mode:host.mode,statuses:Object.freeze(statuses)});
+  }
+  function relationshipQuestion(name,sign){
+    const c=traditionalCondition(name,sign),p=traditionalProfile(name);
+    if(!c||!p)return '';
+    if(c.statuses.includes('domicile'))return 'Who is '+name+' when '+p.invariant.toLowerCase()+' is handling its own '+c.mode+' '+c.element+' affairs?';
+    if(c.statuses.includes('exaltation'))return 'What becomes possible when '+c.host+"'s "+c.mode+' '+c.element+' affairs are entrusted to '+name+'?';
+    if(c.statuses.includes('detriment')||c.statuses.includes('fall'))return 'What does '+name+' discover while handling '+c.host+"'s "+c.mode+' '+c.element+' affairs?';
+    return 'What does '+name+' contribute while working in '+c.host+"'s "+c.mode+' '+c.element+' affairs?';
+  }
+
   const RELATIONSHIPS=Object.freeze({
     mercuryNeptune:Object.freeze({
       axis:'negotium ↔ otium',
@@ -137,11 +258,16 @@
   });
 
   window.RELPHI_SYMBOLIC_REFERENCE=Object.freeze({
-    version:2,
+    version:3,
     planets:PLANETS,
+    signAffairs:SIGN_AFFAIRS,
+    traditionalRelationships:TRADITIONAL_RELATIONSHIPS,
     relationships:RELATIONSHIPS,
     motion:MOTION,
     planet(name){return PLANETS[String(name||'').trim()]||null;},
+    traditionalProfile,
+    traditionalCondition,
+    relationshipQuestion,
     planetQuestion(name,kind='focus'){
       const record=PLANETS[String(name||'').trim()];
       return record?.question?.[kind]||record?.question?.focus||'';
