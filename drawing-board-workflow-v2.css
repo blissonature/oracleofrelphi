@@ -1194,3 +1194,9 @@ body.relphi-attune-open{overflow:hidden!important}
 #shortListPanel.relphi-settings-open.relphi-referents-mode .drawing-board-board-mode{
   display:block!important;
 }
+
+
+/* Guided Crafted paths own their board framing; Free and Bespoke keep manual zoom/tools. */
+#shortListPanel.relphi-hide-zoom-toolbar .card-row-workspace-toolbar.relphi-board-controller{
+  display:none!important;
+}
