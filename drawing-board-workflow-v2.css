@@ -1743,3 +1743,41 @@ body.relphi-attune-open{overflow:hidden!important}
 /* Reversals and Repeats are first-class settings now; Advanced is retired. */
 #shortListPanel .relphi-draw-advanced{display:none!important}
 #shortListPanel .relphi-free-toggles.relphi-draw-promoted{margin:0!important}
+
+
+/* Snaps: match the two-up Reversals / Repeats treatment. */
+#shortListPanel .relphi-board-configuration-group:has(> strong:first-child:nth-last-child(n+1)) .relphi-snap-control{
+  min-width:0!important;
+}
+#shortListPanel .relphi-board-configuration-group:has(.relphi-snap-control){
+  grid-template-columns:repeat(2,minmax(0,1fr))!important;
+}
+#shortListPanel .relphi-board-configuration-group:has(.relphi-snap-control)>strong,
+#shortListPanel .relphi-board-configuration-group:has(.relphi-snap-control)>#resetCardRowLayout{
+  grid-column:1/-1!important;
+}
+#shortListPanel .relphi-snap-control{
+  align-self:start!important;
+}
+#shortListPanel .relphi-snap-control>.relphi-setting-toggle{
+  width:100%!important;
+  box-sizing:border-box!important;
+}
+#shortListPanel .relphi-snap-stepper{
+  width:100%!important;
+  grid-template-columns:2rem minmax(0,1fr) 2rem!important;
+}
+#shortListPanel .relphi-snap-stepper>#rowSnapGridValue,
+#shortListPanel .relphi-snap-stepper>#rowRotationSnapValue{
+  min-width:0!important;
+  width:100%!important;
+}
+@media(max-width:700px){
+  #shortListPanel .relphi-board-configuration-group:has(.relphi-snap-control){
+    grid-template-columns:1fr!important;
+  }
+  #shortListPanel .relphi-board-configuration-group:has(.relphi-snap-control)>strong,
+  #shortListPanel .relphi-board-configuration-group:has(.relphi-snap-control)>#resetCardRowLayout{
+    grid-column:1!important;
+  }
+}
