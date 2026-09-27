@@ -378,6 +378,7 @@ function ensureControl(){
     select.setAttribute('aria-label','Sort relationships');
     select.title='Sort relationships';
     [
+      ['', 'Sort'],
       [MODES.exact,'Most Exact First'],
       [MODES.aspect,'Aspect Type'],
       [MODES.strongest,'Strongest First'],
@@ -394,15 +395,15 @@ function ensureControl(){
       option.textContent=text;
       select.appendChild(option);
     });
-    select.value=mode;
-    select.addEventListener('change',()=>setMode(select.value));
+    select.value='';
+    select.addEventListener('change',()=>{if(!select.value)return;setMode(select.value)});
     control.appendChild(select);
   }
   const sortAnchor=actions.querySelector(':scope>.sky-relationship-limit-control,:scope>#skyFoundationRelationshipCount,:scope>.sky-relationship-copy-button,:scope>#skyChartRelationshipsExport');
   if(control.parentElement!==actions||control.nextElementSibling!==sortAnchor)actions.insertBefore(control,sortAnchor||actions.firstChild);
 
   const select=control.querySelector('select');
-  if(select&&select.value!==mode)select.value=mode;
+  if(select&&select.value&&select.value!==mode)select.value=mode;
   if(select){
     select.setAttribute('aria-busy',busy?'true':'false');
     select.title=busy?'Calculating relationship timing…':'Sort relationships';
