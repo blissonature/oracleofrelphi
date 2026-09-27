@@ -367,13 +367,13 @@
     if(!slot.querySelector(`#${WHEEL_COPY_ID}`)){
       const copy=document.createElement('button');copy.type='button';copy.id=WHEEL_COPY_ID;copy.className='sky-wheel-copy-button';copy.textContent='Copy';copy.setAttribute('aria-label','Copy Zodiac Wheel snapshot');copy.title='Copy Zodiac Wheel snapshot to clipboard';copy.addEventListener('click',()=>copyWheel(copy));slot.appendChild(copy);
     }
-    if(!slot.querySelector(`#${WHEEL_ID}`)){const b=button(WHEEL_ID,'Download wheel snapshot');b.addEventListener('click',()=>exportKind('wheel',b));slot.appendChild(b)}
+    if(!slot.querySelector(`#${WHEEL_ID}`)){const b=button(WHEEL_ID,'Download wheel snapshot');b.textContent='Download';b.addEventListener('click',()=>exportKind('wheel',b));slot.appendChild(b)}
     let state=controls.querySelector(`#${STATUS_ID}`);if(!state){state=document.createElement('span');state.id=STATUS_ID;state.setAttribute('role','status');state.setAttribute('aria-live','polite');controls.appendChild(state)}
   }
   function ensureRelationshipControl(){
     const heading=document.querySelector('#skyFoundationRelationships>.sky-foundation-relationships-heading');if(!heading)return;
     let actions=heading.querySelector('.sky-relationship-heading-actions');if(!actions){actions=document.createElement('span');actions.className='sky-relationship-heading-actions';const copy=[...heading.querySelectorAll('button')].find(b=>/^copy$/i.test(b.textContent.trim()));if(copy){heading.insertBefore(actions,copy);actions.appendChild(copy)}else heading.appendChild(actions)}
-    if(!actions.querySelector(`#${REL_ID}`)){const b=button(REL_ID,'Download Relationships snapshot');b.dataset.relationshipExportOwner='columns-v2';actions.appendChild(b)}
+    if(!actions.querySelector(`#${REL_ID}`)){const b=button(REL_ID,'Download Relationships snapshot');b.textContent='Download';b.dataset.relationshipExportOwner='columns-v2';actions.appendChild(b)}
   }
   function invalidate(){pendingIOS=null;document.querySelectorAll('.sky-export-icon-button[data-export-ready]').forEach(b=>delete b.dataset.exportReady)}
   function ensure(){installStyles();ensureWheelControl();ensureRelationshipControl()}
