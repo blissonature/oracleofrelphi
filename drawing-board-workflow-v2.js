@@ -16,6 +16,7 @@
   const CARD_H = CARD_W * 866 / 500;
   const LABEL_H = 68;
   const GUTTER = 12;
+  const START_EDGE_GUTTER = 4;
   const MAX_POSITIONS = 50; // 10×5 dense packing stays above the supported .32 card scale.
 
   let boardOpen = false;
@@ -585,6 +586,81 @@
     return settingsPanel;
   }
 
+  function boardConfigurationAllowed(root=panel()) {
+    if(!root||!settingsOpen)return false;
+    if(settingsMode==='free')return true;
+    return String(optionsSession?.path||activeCraftedPath||'')==='bespoke';
+  }
+
+  function renderBoardConfiguration(root=panel()) {
+    const settingsPanel=ensureBoardChrome(root);
+    const body=settingsPanel?.querySelector('.relphi-board-settings-body');
+    if(!settingsPanel||!body)return;
+    let section=body.querySelector(':scope > .relphi-board-configuration');
+    if(!section){
+      section=document.createElement('section');
+      section.className='relphi-board-configuration';
+      body.appendChild(section);
+    }
+    section.hidden=!boardConfigurationAllowed(root);
+    if(section.hidden)return;
+
+    const snap=root.querySelector('#rowSnapGridEnabled');
+    const snapMinus=root.querySelector('#rowSnapGridMinus');
+    const snapValue=root.querySelector('#rowSnapGridValue');
+    const snapPlus=root.querySelector('#rowSnapGridPlus');
+    const rotate=root.querySelector('#rowRotationSnapEnabled');
+    const rotateMinus=root.querySelector('#rowRotationSnapMinus');
+    const rotateValue=root.querySelector('#rowRotationSnapValue');
+    const rotatePlus=root.querySelector('#rowRotationSnapPlus');
+    const resetLayout=root.querySelector('#resetCardRowLayout');
+    const envelopeColor=root.querySelector('#rowEnvelopeColor');
+    const tableColor=root.querySelector('#rowTableColor');
+    const tableUpload=root.querySelector('#rowTableImageUpload');
+    const tableReset=root.querySelector('#rowTableImageReset');
+
+    section.replaceChildren();
+    const heading=document.createElement('div');
+    heading.className='relphi-board-configuration-heading';
+    heading.innerHTML='<strong>Board configuration</strong><span>Position, rotate, scale, snap, and style this board.</span>';
+    section.appendChild(heading);
+
+    const unlock=document.createElement('label');
+    unlock.className='relphi-transform-unlock';
+    unlock.innerHTML='<input type="checkbox"> <span><strong>Independent card transforms</strong><small>Allow individual dragging, rotation, and scale.</small></span>';
+    const unlockBox=unlock.querySelector('input');
+    unlockBox.checked=!!transformEditingUnlocked;
+    unlockBox.addEventListener('change',()=>{
+      transformEditingUnlocked=unlockBox.checked;
+      root.classList.toggle('relphi-transform-editing-unlocked',transformEditingUnlocked);
+    });
+    section.appendChild(unlock);
+
+    const snaps=document.createElement('div');
+    snaps.className='relphi-board-configuration-group';
+    snaps.innerHTML='<strong>Snaps</strong>';
+    const posRow=document.createElement('div');posRow.className='relphi-tool-row';
+    posRow.append(controlLabel(snap,'Align'));
+    [snapMinus,snapValue,snapPlus].filter(Boolean).forEach(node=>posRow.appendChild(node));
+    const rotRow=document.createElement('div');rotRow.className='relphi-tool-row';
+    rotRow.append(controlLabel(rotate,'Rotation snap'));
+    [rotateMinus,rotateValue,rotatePlus].filter(Boolean).forEach(node=>rotRow.appendChild(node));
+    snaps.append(posRow,rotRow);
+    if(resetLayout){resetLayout.textContent='Reset layout';snaps.appendChild(resetLayout);}
+    section.appendChild(snaps);
+
+    const background=document.createElement('div');
+    background.className='relphi-board-configuration-group';
+    background.innerHTML='<strong>Background</strong>';
+    if(envelopeColor){const row=document.createElement('div');row.className='relphi-tool-row';row.append(controlLabel(envelopeColor,'Card / placeholder'));background.appendChild(row);}
+    if(tableColor){const row=document.createElement('div');row.className='relphi-tool-row';row.append(controlLabel(tableColor,'Board'));background.appendChild(row);}
+    const imageRow=document.createElement('div');imageRow.className='relphi-tool-row';
+    if(tableUpload){tableUpload.textContent='Upload board image';imageRow.appendChild(tableUpload);}
+    if(tableReset){tableReset.textContent='Remove board image';imageRow.appendChild(tableReset);}
+    if(imageRow.children.length)background.appendChild(imageRow);
+    section.appendChild(background);
+  }
+
   function renderFreeSettings(root=panel()) {
     const settingsPanel=ensureBoardChrome(root);
     const body=settingsPanel?.querySelector('.relphi-board-settings-body');
@@ -597,6 +673,7 @@
     free.className='relphi-free-settings';
     free.innerHTML='<div class="relphi-free-settings-fields"><label class="relphi-free-pack">Sub-pack<select id="relphiFreePack">'+packOptions(draft.pack||'full')+'</select></label>'+keywordDraftMarkup(draft)+'<div class="relphi-free-toggles"><label><input id="relphiFreeLabels" type="checkbox" '+(draft.stickers!==false?'checked':'')+'> Labels</label><label><input id="relphiFreeReversals" type="checkbox" '+(draft.reversals!==false?'checked':'')+'> Reversals</label><label><input id="relphiFreeRepeats" type="checkbox" '+(draft.repeats?'checked':'')+'> Repeats</label></div></div><div class="relphi-board-settings-footer"><button type="button" id="relphiCancelFreeSettings">Cancel</button><button type="button" id="relphiConfirmFreeSettings" class="primary">Confirm</button></div>';
     modeSwitch.insertAdjacentElement('afterend',free);
+    renderBoardConfiguration(root);
 
     free.querySelector('#relphiFreePack')?.addEventListener('change',event=>{
       draft.pack=event.target.value||'full';
@@ -633,6 +710,7 @@
       renderFreeSettings(root);
     }
     ensureBoardChrome(root);
+    renderBoardConfiguration(root);
     syncZoomToolbarVisibility(root);
   }
 
@@ -860,15 +938,18 @@
     const snapshot = bridge.capture();
     const bounds = renderedContentBounds(root);
     const toolbarH = visibleToolbarHeight(root);
-    const availableW = Math.max(1, workspace.clientWidth - GUTTER*2);
-    const availableH = Math.max(1, workspace.clientHeight - toolbarH - GUTTER*2);
+    const availableW = Math.max(1, workspace.clientWidth - START_EDGE_GUTTER*2);
+    const availableH = Math.max(1, workspace.clientHeight - toolbarH - START_EDGE_GUTTER*2);
     const contentW = Math.max(1,bounds.maxX-bounds.minX);
     const contentH = Math.max(1,bounds.maxY-bounds.minY);
     const limits=zoomLimits();
     const zoom = clamp(Math.min(availableW/contentW,availableH/contentH),limits.min,limits.max);
     snapshot.rowZoom = zoom;
-    snapshot.rowPanX = Math.round(GUTTER+(availableW-contentW*zoom)/2-bounds.minX*zoom);
-    snapshot.rowPanY = Math.round(GUTTER+(availableH-contentH*zoom)/2-bounds.minY*zoom);
+    // Fit from the sacred board's upper-left corner instead of centering the spread
+    // inside the remaining canvas. The tiny reveal is intentional: enough board to
+    // register as a surface, without wasting the first view on empty gutter.
+    snapshot.rowPanX = Math.round(START_EDGE_GUTTER-bounds.minX*zoom);
+    snapshot.rowPanY = Math.round(START_EDGE_GUTTER-bounds.minY*zoom);
     bridge.restore(snapshot);
     return true;
   }
@@ -926,57 +1007,13 @@
     if (zoom) { zoom.classList.add('relphi-native-zoom'); zoomRow.appendChild(zoom); }
     if (zoomValue) zoomRow.appendChild(zoomValue);
     zoomRow.append(zoomIn,fit);
-    const tools = document.createElement('div');
-    tools.className='relphi-workspace-tools';
-    tools.innerHTML = `<button type="button" class="relphi-tool-trigger relphi-more-button" data-tool="more" aria-label="More board tools" title="More board tools">…</button><div class="relphi-tool-flyout" hidden></div>`;
-    const flyout = tools.querySelector('.relphi-tool-flyout');
-    const renderFlyout = () => {
-      const open=openTool==='more';
-      flyout.hidden=!open;
-      flyout.replaceChildren();
-      tools.querySelector('.relphi-tool-trigger')?.classList.toggle('is-active',open);
-      if (!open) return;
-      const transformButton=document.createElement('button');
-      transformButton.type='button';
-      transformButton.id='relphiToggleTransformEditing';
-      transformButton.textContent=transformEditingUnlocked?'Lock rotation & scale':'Unlock rotation & scale';
-      transformButton.setAttribute('aria-pressed',String(transformEditingUnlocked));
-      transformButton.addEventListener('click',event=>{
-        event.preventDefault(); event.stopPropagation();
-        transformEditingUnlocked=!transformEditingUnlocked;
-        root.classList.toggle('relphi-transform-editing-unlocked',transformEditingUnlocked);
-        renderFlyout();
-      });
-      flyout.appendChild(transformButton);
-      const snapsHeading=document.createElement('strong'); snapsHeading.textContent='Snaps'; flyout.appendChild(snapsHeading);
-      const posRow=document.createElement('div'); posRow.className='relphi-tool-row';
-      posRow.append(controlLabel(snap,'Position snap'));
-      [snapMinus,snapValue,snapPlus].filter(Boolean).forEach(node=>posRow.appendChild(node));
-      flyout.appendChild(posRow);
-      const rotRow=document.createElement('div'); rotRow.className='relphi-tool-row';
-      rotRow.append(controlLabel(rotate,'Rotation snap'));
-      [rotateMinus,rotateValue,rotatePlus].filter(Boolean).forEach(node=>rotRow.appendChild(node));
-      flyout.appendChild(rotRow);
-      if (resetLayout) { resetLayout.textContent='Reset layout'; flyout.appendChild(resetLayout); }
-      const backgroundHeading=document.createElement('strong'); backgroundHeading.textContent='Background'; flyout.appendChild(backgroundHeading);
-      if (envelopeColor) { const row=document.createElement('div'); row.className='relphi-tool-row'; row.append(controlLabel(envelopeColor,'Card / placeholder')); flyout.appendChild(row); }
-      if (tableColor) { const row=document.createElement('div'); row.className='relphi-tool-row'; row.append(controlLabel(tableColor,'Board')); flyout.appendChild(row); }
-      const imageRow=document.createElement('div'); imageRow.className='relphi-tool-row';
-      if (tableUpload) { tableUpload.textContent='Upload board image'; imageRow.appendChild(tableUpload); }
-      if (tableReset) { tableReset.textContent='Remove board image'; imageRow.appendChild(tableReset); }
-      if (imageRow.children.length) flyout.appendChild(imageRow);
-    };
-    tools.querySelector('.relphi-tool-trigger').addEventListener('click',event => {
-      event.preventDefault(); event.stopPropagation();
-      openTool=openTool==='more'?'':'more';
-      renderFlyout();
-    });
-    zoomRow.appendChild(tools);
+    // Snaps, background, and independent transforms now live in Settings.
+    // Keep the zoom bar devoted to zoom itself.
     toolbar.appendChild(zoomRow);
     root.classList.toggle('relphi-transform-editing-unlocked',transformEditingUnlocked);
-    renderFlyout();
     nativeOptions.hidden = true;
     nativeOptions.setAttribute('aria-hidden','true');
+    renderBoardConfiguration(root);
     syncZoomToolbarVisibility(root);
   }
 
@@ -1580,7 +1617,9 @@
   }
 
   function bespokeMarkup(draft,hasCards) {
+    const clonedFrom=!draft.templateId&&draft.basedOnTemplateId?templateById(draft.basedOnTemplateId):null;
     return '<section class="relphi-referent-panel">'+
+      (clonedFrom?'<div class="relphi-template-clone-note"><strong>Editing a copy of '+escapeHtml(clonedFrom.name)+'</strong><span>The original template stays untouched. Name and save this Bespoke version if you want to keep it; you can also continue without saving.</span></div>':'')+
       '<div class="relphi-options-subhead"><div><strong>Bespoke</strong><span>Write the referents for this reading.</span></div><button type="button" id="relphiAddPosition" '+(hasCards||draft.labels.length>=MAX_POSITIONS?'disabled':'')+'>Add referent</button></div>'+
       '<label class="relphi-bulk-referents">Enter several at once<textarea id="relphiBulkReferents" rows="3" placeholder="Situation, Challenge, Strategy" '+(hasCards?'disabled':'')+'></textarea></label>'+
       '<button type="button" id="relphiParseReferents" '+(hasCards?'disabled':'')+'>Parse comma-separated referents</button>'+
@@ -1599,6 +1638,7 @@
     return '<section class="relphi-referent-panel"><div class="relphi-options-subhead"><div><strong>Templates</strong><span>Start from an established or saved spread.</span></div></div>'+
       '<label class="relphi-options-field">Template<select id="relphiSpreadTemplateSelect" '+(hasCards?'disabled':'')+'>'+optionTemplateMarkup(draft)+'</select></label>'+
       preview+
+      (selected?'<div class="relphi-template-modify"><button type="button" id="relphiModifyTemplate" '+(hasCards?'disabled':'')+'>Modify a copy</button><span>Clones this template into Bespoke so the original remains unchanged.</span></div>':'')+
       '</section>';
   }
   function pathPanelMarkup(session,hasCards) {
@@ -1678,6 +1718,7 @@
       '</div>'+
       '<div class="relphi-options-commitbar"><button type="button" id="relphiCancelOptions">Cancel</button><span></span><button type="button" id="relphiApplyOptions" class="primary" '+(session.path==='surface'&&!selectedSurfaceKinds(session).length?'disabled':'')+'>Confirm</button></div>';
     modeTabs.insertAdjacentElement('afterend',drawer);
+    renderBoardConfiguration(root);
     const nextBody=drawer.querySelector('.relphi-options-body');
     if(nextBody&&Number.isFinite(previousScrollTop))nextBody.scrollTop=previousScrollTop;
     setBoardMode(root,'referents');
@@ -1749,6 +1790,23 @@
         draft.positionPacks=[];
       }
       renderOptions(root);
+    });
+    drawer.querySelector('#relphiModifyTemplate')?.addEventListener('click',()=>{
+      const chosen=templateById(draft.templateId||draft.basedOnTemplateId);
+      if(!chosen||hasCards)return;
+      draft.templateId='';
+      draft.basedOnTemplateId=chosen.id;
+      draft.templateName='';
+      draft.labels=chosen.positions.slice().sort((a,b)=>a.drawOrder-b.drawOrder).map(item=>item.label);
+      draft.positionPacks=chosen.positions.slice().sort((a,b)=>a.drawOrder-b.drawOrder).map(item=>String(item.drawScope||''));
+      draft.pack=chosen.rules?.drawScope||draft.pack||'full';
+      draft.reversals=chosen.rules?.allowReversals!==false;
+      draft.repeats=!!chosen.rules?.allowRepeats;
+      session.path='bespoke';
+      transformEditingUnlocked=true;
+      root.classList.add('relphi-transform-editing-unlocked');
+      renderOptions(root,{preserveScroll:false});
+      showBoardToast('A Bespoke copy is ready to modify. Save it with a name if you want to keep it, or simply continue.',{title:'Template copied',duration:5200});
     });
 
     const labelsList=drawer.querySelector('#relphiPositionLabels');
