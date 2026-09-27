@@ -283,18 +283,14 @@
 
   function ensure() {
     const bar = filterBar();
-    if (!bar) return false;
+    const slot = document.querySelector('#skyFoundationFocus .sky-focus-heading-controls');
+    if (!bar || !slot) return false;
     bar.querySelector('[data-filter="houseA"]')?.closest('label')?.remove();
     bar.querySelector('[data-filter="houseB"]')?.closest('label')?.remove();
     let owner = document.querySelector('[data-house-filter="combined"]');
     if (!owner) owner = createControl();
-    if (!owner.isConnected) {
-      const placements = bar.querySelector('[data-placement-filter="combined"]');
-      const system = bar.querySelector('[data-house-system-filter]')?.closest('label');
-      if (placements) placements.insertAdjacentElement('afterend', owner);
-      else if (system) system.insertAdjacentElement('beforebegin', owner);
-      else bar.appendChild(owner);
-    }
+    const actions=slot.querySelector('.sky-export-wheel-slot');
+    if(owner.parentElement!==slot||owner.nextElementSibling!==actions)slot.insertBefore(owner,actions||null);
     bar.dataset.multiselectHouseFilters = 'true';
     if (!popover()?.querySelector('[data-house-list]')) renderList();
     return true;
