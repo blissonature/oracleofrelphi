@@ -3918,6 +3918,8 @@
     }
   }
 
+  window.RelphiDrawingBoardEnsureTopActions = ensureBoardChrome;
+
   window.addEventListener('click',globalCapture,true);
   document.addEventListener('keydown',event=>{
     const reader=document.querySelector('.relphi-focus-reader');
