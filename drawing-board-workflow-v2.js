@@ -2153,6 +2153,21 @@
     const astrologyRequested=session.path==='astro'&&!!session.astrologyResolved;
     if(astrologyRequested){writeStickerVisibility(draft.stickers);surfaceReadingSession=null;recursionSession=null;recursionPortalLevel=0;if(!launchConfiguredReading(root,draft)){showBoardToast('The reading layout could not be established. Your Astrological Tarot setup has been kept open.',{title:'Astrological Tarot Reading',duration:5200});return}showBoardToast('Your selected astrological questions are established on the Drawing Board.',{title:'Astrological Tarot Reading',duration:4600});return}
     const recursionRequested=draft.templateId===RECURSION_ID || draft.basedOnTemplateId===RECURSION_ID;
+    // Bespoke is a normal Crafted reading too. Launch it through the same atomic
+    // transition used by Astrological Tarot so the board clear/reset cannot
+    // race the newly established referents back into configuration mode.
+    if(session.path==='bespoke'){
+      writeStickerVisibility(draft.stickers);
+      surfaceReadingSession=null;
+      recursionSession=null;
+      recursionPortalLevel=0;
+      if(!launchConfiguredReading(root,draft)){
+        showBoardToast('The bespoke reading layout could not be established. Your setup has been kept open.',{title:'Bespoke',duration:5200});
+        return;
+      }
+      showBoardToast('Your bespoke referents and draw settings are established on the Drawing Board.',{title:'Bespoke',duration:4600});
+      return;
+    }
     surfaceReadingSession=surfaceKinds.length ? {kinds:surfaceKinds.slice(),initialCount:surfaceKinds.length,followupsGenerated:false,followupCount:0} : null;
     if(astrologyRequested) surfaceReadingSession=null;
     recursionSession=recursionRequested ? {level:1,maxLevel:1,complete:false} : null;
