@@ -138,6 +138,36 @@ function evaluate(id,v){
  if(id==="zodiac-longitude")return (signs.indexOf(v.sign)*30+v.degree)+"°";
  if(id==="part-of-fortune"){const n=v.sect==="day"?v.asc+v.moon-v.sun:v.asc+v.sun-v.moon;return ((n%360)+360)%360+"°"}
  if(id==="annual-profections")return signs[(signs.indexOf(v.rising)+v.age)%12];
+ if(id==="dodecatemoria"){
+   const lon=(signs.indexOf(v.sign)*30+v.degree*12)%360;
+   return signs[Math.floor(lon/30)]+" "+(lon%30)+"° · "+lon+"°";
+ }
+ if(id==="monomoiria"){
+   const rulers=["Sun","Venus","Mercury","Moon","Saturn","Jupiter","Mars"];
+   return rulers[v.degree%7];
+ }
+ if(id==="decans-faces")return "Decan "+(Math.floor(v.degree/10)+1);
+ if(id==="whole-sign-house-distance"){
+   return ((signs.indexOf(v.target)-signs.indexOf(v.reference)+12)%12)+1;
+ }
+ if(id==="lot-houses"){
+   const a=Math.floor(v.lot_longitude/30),b=Math.floor(v.planet_longitude/30);
+   return "House "+(((b-a+12)%12)+1);
+ }
+ if(id==="monthly-profections"){
+   const annual=(signs.indexOf(v.rising)+v.age)%12;
+   return signs[(annual+v.month)%12];
+ }
+ if(id==="annual-time-lord"){
+   const rulers={Aries:"Mars",Taurus:"Venus",Gemini:"Mercury",Cancer:"Moon",Leo:"Sun",Virgo:"Mercury",Libra:"Venus",Scorpio:"Mars",Sagittarius:"Jupiter",Capricorn:"Saturn",Aquarius:"Saturn",Pisces:"Jupiter"};
+   const profected=signs[(signs.indexOf(v.rising)+v.age)%12];
+   return profected+" · "+rulers[profected];
+ }
+ if(id==="temporal-hours"){
+   const day=v.daylight_minutes/12,night=(1440-v.daylight_minutes)/12;
+   const fmt=n=>Math.floor(n)+"m "+Math.round((n-Math.floor(n))*60)+"s";
+   return "Day "+fmt(day)+" · Night "+fmt(night);
+ }
  return "Concept lesson — interactive model coming next.";
 }
 function renderAspectGraphic(v){
@@ -232,6 +262,43 @@ function renderGraphic(id,v){
  if(id==="zodiac-longitude")return renderLongitudeWheel(v.sign,v.degree);
  if(id==="annual-profections")return renderProfectionWheel(v.rising,v.age);
  if(id==="part-of-fortune")return renderFortuneWheel(v);
+ if(id==="dodecatemoria"){
+   const lon=(signs.indexOf(v.sign)*30+v.degree*12)%360;
+   return renderLongitudeWheel(signs[Math.floor(lon/30)],lon%30);
+ }
+ if(id==="whole-sign-house-distance"){
+   const start=signs.indexOf(v.reference),target=signs.indexOf(v.target);
+   const house=((target-start+12)%12)+1;
+   return renderProfectionWheel(v.reference,house-1);
+ }
+ if(id==="monthly-profections"){
+   const annual=(signs.indexOf(v.rising)+v.age)%12;
+   const annualSign=signs[annual];
+   return renderProfectionWheel(annualSign,v.month);
+ }
+ if(id==="annual-time-lord"){
+   return renderProfectionWheel(v.rising,v.age);
+ }
+ if(id==="monomoiria"){
+   const rulers=["Sun","Venus","Mercury","Moon","Saturn","Jupiter","Mars"];
+   const glyph={Sun:"☉",Venus:"♀",Mercury:"☿",Moon:"☽",Saturn:"♄",Jupiter:"♃",Mars:"♂"};
+   const ruler=rulers[v.degree%7];
+   return '<div style="text-align:center"><div style="font-size:5rem;line-height:1">'+glyph[ruler]+'</div><strong>'+ruler+'</strong><div class="py-graphic-note">Degree '+v.degree+' → '+ruler+'</div></div>';
+ }
+ if(id==="decans-faces"){
+   const d=Math.floor(v.degree/10);
+   return '<svg viewBox="0 0 360 150" role="img" aria-label="Three equal decans"><rect x="15" y="45" width="110" height="60" rx="12" fill="'+(d===0?"#dc1f18":"#fff")+'" stroke="#111" stroke-width="2"></rect><rect x="125" y="45" width="110" height="60" rx="12" fill="'+(d===1?"#dc1f18":"#fff")+'" stroke="#111" stroke-width="2"></rect><rect x="235" y="45" width="110" height="60" rx="12" fill="'+(d===2?"#dc1f18":"#fff")+'" stroke="#111" stroke-width="2"></rect><text x="70" y="80" text-anchor="middle" font-weight="900" fill="'+(d===0?"#fff":"#111")+'">0–10°</text><text x="180" y="80" text-anchor="middle" font-weight="900" fill="'+(d===1?"#fff":"#111")+'">10–20°</text><text x="290" y="80" text-anchor="middle" font-weight="900" fill="'+(d===2?"#fff":"#111")+'">20–30°</text></svg>';
+ }
+ if(id==="lot-houses"){
+   const lotSign=signs[Math.floor(v.lot_longitude/30)],planetSign=signs[Math.floor(v.planet_longitude/30)];
+   const h=((signs.indexOf(planetSign)-signs.indexOf(lotSign)+12)%12)+1;
+   return renderProfectionWheel(lotSign,h-1);
+ }
+ if(id==="temporal-hours"){
+   const day=v.daylight_minutes/12,night=(1440-v.daylight_minutes)/12;
+   const pct=v.daylight_minutes/1440*100;
+   return '<div style="width:100%;max-width:32rem"><div style="font-weight:900;margin-bottom:.5rem">24-hour day</div><div style="display:flex;height:4rem;border:1.5px solid #111;border-radius:1rem;overflow:hidden"><div style="width:'+pct+'%;background:#fff4bf;display:grid;place-items:center;font-weight:900">Day × 12</div><div style="width:'+(100-pct)+'%;background:#111;color:#fff;display:grid;place-items:center;font-weight:900">Night × 12</div></div><p class="py-graphic-note">Each daylight hour = '+day.toFixed(2)+' min · each night hour = '+night.toFixed(2)+' min</p></div>';
+ }
  return '<div class="py-empty">Graphic model coming next.</div>';
 }
 
