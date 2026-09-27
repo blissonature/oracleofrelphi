@@ -43,6 +43,7 @@
   let activeCraftedPath = '';
   let boardConfigurationOpen = false;
   let boardBackgroundMode = '';
+  const BOARD_TRANSFORM_LOCKS_KEY = 'relphiBoardTransformLocksV1';
   const BOARD_BACKGROUND_DEFAULT_KEY = 'relphiBoardBackgroundDefaultV1';
   const BOARD_RECENT_COLORS_KEY = 'relphiBoardRecentColorsV1';
   const BOARD_RECENT_IMAGES_KEY = 'relphiBoardRecentImagesV1';
@@ -78,6 +79,10 @@
   function syncTransformEditingAvailability(root=panel()) {
     const allowed=transformEditingAllowed(root);
     root?.classList.toggle('relphi-transform-editing-unlocked',allowed);
+    if(allowed)syncTransformLocks(root);
+    else{
+      root?.classList.remove('relphi-drag-unlocked','relphi-rotation-unlocked','relphi-scale-unlocked');
+    }
     return allowed;
   }
   function syncZoomToolbarVisibility(root=panel()) {
@@ -510,6 +515,25 @@
       !draft.repeats;
   }
 
+  function transformLocks() {
+    const saved=safeLocalJson(BOARD_TRANSFORM_LOCKS_KEY,{drag:true,rotation:true,scale:true});
+    return {
+      drag:saved?.drag!==false,
+      rotation:saved?.rotation!==false,
+      scale:saved?.scale!==false
+    };
+  }
+  function writeTransformLocks(value) {
+    try { localStorage.setItem(BOARD_TRANSFORM_LOCKS_KEY,JSON.stringify(value)); } catch (_) {}
+  }
+  function syncTransformLocks(root=panel()) {
+    const locks=transformLocks();
+    root?.classList.toggle('relphi-drag-unlocked',!!locks.drag);
+    root?.classList.toggle('relphi-rotation-unlocked',!!locks.rotation);
+    root?.classList.toggle('relphi-scale-unlocked',!!locks.scale);
+    return locks;
+  }
+
   function safeLocalJson(key,fallback) {
     try { const value=JSON.parse(localStorage.getItem(key)||'null'); return value ?? fallback; } catch (_) { return fallback; }
   }
@@ -525,23 +549,37 @@
   function writeBoardBackgroundDefault(value) {
     try { localStorage.setItem(BOARD_BACKGROUND_DEFAULT_KEY,JSON.stringify(value)); } catch (_) {}
   }
-  function recentBoardColors() {
-    const values=safeLocalJson(BOARD_RECENT_COLORS_KEY,[]);
-    return Array.isArray(values)?values.map(String).filter(Boolean).slice(0,6):[];
+  function normalizeRecent(values,type) {
+    const now=Date.now();
+    return (Array.isArray(values)?values:[]).map((item,index)=>{
+      if(type==='color' && typeof item==='string') return {value:item,pinned:false,lastUsed:now-index};
+      if(type==='image' && item?.data && !('lastUsed' in item)) return {data:item.data,name:item.name||'Image',pinned:false,lastUsed:now-index};
+      return item;
+    }).filter(item=>type==='color'?!!item?.value:!!item?.data);
   }
-  function rememberBoardColor(value) {
+  function pruneRecents(values) {
+    const pinned=values.filter(item=>item.pinned);
+    const loose=values.filter(item=>!item.pinned).sort((a,b)=>(b.lastUsed||0)-(a.lastUsed||0)).slice(0,8);
+    return [...pinned,...loose];
+  }
+  function recentBoardColors() {
+    return pruneRecents(normalizeRecent(safeLocalJson(BOARD_RECENT_COLORS_KEY,[]),'color'));
+  }
+  function rememberBoardColor(value,pinned=null) {
     const color=String(value||'').trim(); if(!color)return;
-    const next=[color,...recentBoardColors().filter(item=>item!==color)].slice(0,6);
+    const existing=recentBoardColors().find(item=>item.value===color);
+    const item={value:color,pinned:pinned==null?!!existing?.pinned:!!pinned,lastUsed:Date.now()};
+    const next=pruneRecents([item,...recentBoardColors().filter(other=>other.value!==color)]);
     try { localStorage.setItem(BOARD_RECENT_COLORS_KEY,JSON.stringify(next)); } catch (_) {}
   }
   function recentBoardImages() {
-    const values=safeLocalJson(BOARD_RECENT_IMAGES_KEY,[]);
-    return Array.isArray(values)?values.filter(item=>item&&item.data).slice(0,4):[];
+    return pruneRecents(normalizeRecent(safeLocalJson(BOARD_RECENT_IMAGES_KEY,[]),'image'));
   }
-  function rememberBoardImage(data,name='Image') {
+  function rememberBoardImage(data,name='Image',pinned=null) {
     const value=String(data||''); if(!value)return;
-    const item={data:value,name:String(name||'Image').slice(0,60)};
-    const next=[item,...recentBoardImages().filter(other=>other.data!==value)].slice(0,4);
+    const existing=recentBoardImages().find(item=>item.data===value);
+    const item={data:value,name:String(name||existing?.name||'Image').slice(0,60),pinned:pinned==null?!!existing?.pinned:!!pinned,lastUsed:Date.now()};
+    const next=pruneRecents([item,...recentBoardImages().filter(other=>other.data!==value)]);
     try { localStorage.setItem(BOARD_RECENT_IMAGES_KEY,JSON.stringify(next)); } catch (_) {}
   }
   function boardCanReset(root=panel()) {
@@ -666,11 +704,17 @@
     const settingsPanel=ensureBoardChrome(root);
     const body=settingsPanel?.querySelector('.relphi-board-settings-body');
     if(!settingsPanel||!body)return;
-    let section=body.querySelector(':scope > .relphi-board-configuration');
+    const host=settingsMode==='free'
+      ? body.querySelector('.relphi-free-settings')
+      : body.querySelector('.relphi-reading-options-drawer');
+    if(!host)return;
+
+    let section=host.querySelector(':scope > .relphi-board-configuration');
     if(!section){
       section=document.createElement('details');
       section.className='relphi-board-configuration relphi-appearance-disclosure';
-      body.appendChild(section);
+      const footer=host.querySelector('.relphi-board-settings-footer,.relphi-options-commitbar');
+      if(footer)host.insertBefore(section,footer); else host.appendChild(section);
     }
     const allowed=boardConfigurationAllowed(root);
     section.hidden=!allowed;
@@ -691,8 +735,7 @@
     const tableUpload=root.querySelector('#rowTableImageUpload');
     const tableFile=root.querySelector('#rowTableImageFile');
     const snapshot=currentSnapshot()||{};
-    const activeBackgroundMode=boardBackgroundMode || (String(snapshot.rowTableImage||'') ? 'image' : 'color');
-    const usingImage=activeBackgroundMode==='image';
+    const isShippedRed=!String(snapshot.rowTableImage||'')&&!String(snapshot.rowEnvelopeImage||'')&&String(snapshot.rowTableColor||'#7d1f28')==='#7d1f28'&&String(snapshot.rowEnvelopeColor||'#f3f0ea')==='#f3f0ea';
 
     section.replaceChildren();
     const summary=document.createElement('summary');
@@ -705,21 +748,39 @@
 
     syncTransformEditingAvailability(root);
 
+    const controlGroup=document.createElement('div');
+    controlGroup.className='relphi-board-configuration-group';
+    controlGroup.innerHTML='<strong>Card controls</strong><div class="relphi-control-toggles"></div>';
+    const controlToggles=controlGroup.querySelector('.relphi-control-toggles');
+    const locks=transformLocks();
+    [['drag','Drag'],['rotation','Rotation'],['scale','Scale']].forEach(([key,label])=>{
+      const row=document.createElement('label');
+      row.innerHTML='<input type="checkbox" '+(locks[key]?'checked':'')+'> '+label;
+      row.querySelector('input').addEventListener('change',event=>{
+        const next=transformLocks();next[key]=event.target.checked;writeTransformLocks(next);syncTransformEditingAvailability(root);renderBoardConfiguration(root);
+      });
+      controlToggles.appendChild(row);
+    });
+    content.appendChild(controlGroup);
+
     const snaps=document.createElement('div');
     snaps.className='relphi-board-configuration-group';
     snaps.innerHTML='<strong>Snaps</strong>';
-    const snapRow=(input,label,minus,value,plus)=>{
-      const row=document.createElement('div'); row.className='relphi-snap-row';
-      const toggle=document.createElement('label'); toggle.className='relphi-snap-toggle';
+    const snapControl=(input,label,minus,value,plus)=>{
+      const wrap=document.createElement('div');wrap.className='relphi-snap-control';
+      const toggle=document.createElement('label');toggle.className='relphi-setting-toggle';
       if(input)toggle.appendChild(input);
       const text=document.createElement('span');text.textContent=label;toggle.appendChild(text);
+      wrap.appendChild(toggle);
       const stepper=document.createElement('div');stepper.className='relphi-snap-stepper';
       [minus,value,plus].filter(Boolean).forEach(node=>stepper.appendChild(node));
-      row.append(toggle,stepper); return row;
+      if(input&&!input.checked)stepper.hidden=true;
+      wrap.appendChild(stepper);
+      return wrap;
     };
     snaps.append(
-      snapRow(snap,'Align',snapMinus,snapValue,snapPlus),
-      snapRow(rotate,'Rotation snap',rotateMinus,rotateValue,rotatePlus)
+      snapControl(snap,'Align',snapMinus,snapValue,snapPlus),
+      snapControl(rotate,'Rotation',rotateMinus,rotateValue,rotatePlus)
     );
     if(resetLayout){
       resetLayout.textContent='Reset layout';
@@ -732,78 +793,92 @@
     const background=document.createElement('div');
     background.className='relphi-board-configuration-group relphi-board-background';
     background.innerHTML='<strong>Background</strong>';
-
-    if(envelopeColor){
-      const placeholder=document.createElement('label');
-      placeholder.className='relphi-swatch-setting';
-      placeholder.appendChild(envelopeColor);
-      const label=document.createElement('span');label.textContent='Placeholder color';placeholder.appendChild(label);
-      background.appendChild(placeholder);
-    }
-
-    const mode=document.createElement('div');
-    mode.className='relphi-background-mode';
-    mode.innerHTML='<button type="button" data-background-mode="color" class="'+(!usingImage?'is-active':'')+'">Color</button><button type="button" data-background-mode="image" class="'+(usingImage?'is-active':'')+'">Image</button>';
-    background.appendChild(mode);
-
-    const chooser=document.createElement('div');
-    chooser.className='relphi-background-chooser';
-    if(!usingImage){
-      const colorRow=document.createElement('label');colorRow.className='relphi-swatch-setting';
-      if(tableColor)colorRow.appendChild(tableColor);
-      const label=document.createElement('span');label.textContent='Board color';colorRow.appendChild(label);
-      chooser.appendChild(colorRow);
-      const recents=document.createElement('div');recents.className='relphi-background-recents';recents.setAttribute('aria-label','Recent board colors');
-      const colors=recentBoardColors();
-      (colors.length?colors:[String(snapshot.rowTableColor||'#7d1f28')]).forEach(color=>{
-        const button=document.createElement('button');button.type='button';button.className='relphi-recent-color';button.title=color;button.setAttribute('aria-label','Use recent color '+color);button.style.background=color;
-        button.addEventListener('click',()=>{if(tableColor){tableColor.value=color;tableColor.dispatchEvent(new Event('input',{bubbles:true}));tableColor.dispatchEvent(new Event('change',{bubbles:true}));}rememberBoardColor(color);setTimeout(()=>{ensureBoardChrome(root);renderBoardConfiguration(root);},0);});
-        recents.appendChild(button);
-      });
-      chooser.appendChild(recents);
-    }else{
-      if(tableUpload){tableUpload.textContent='Choose image';chooser.appendChild(tableUpload);}
-      const recents=document.createElement('div');recents.className='relphi-background-image-recents';recents.setAttribute('aria-label','Recent board images');
-      recentBoardImages().forEach((item,index)=>{
-        const button=document.createElement('button');button.type='button';button.className='relphi-recent-image';button.title=item.name||('Recent image '+(index+1));button.style.backgroundImage='url("'+item.data.replace(/"/g,'%22')+'")';
-        button.addEventListener('click',()=>{const bridge=optionsBridge(),snap=bridge?.capture?.();if(!bridge||!snap)return;boardBackgroundMode='image';snap.rowTableImage=item.data;bridge.restore(snap);setTimeout(()=>{ensureBoardChrome(root);renderBoardConfiguration(root);},0);});
-        recents.appendChild(button);
-      });
-      if(recents.children.length)chooser.appendChild(recents);
-    }
-    background.appendChild(chooser);
-
-    const defaultRow=document.createElement('div');defaultRow.className='relphi-background-default-row';
-    const savedDefault=boardBackgroundDefault();
-    defaultRow.innerHTML='<span>Default: '+(savedDefault.mode==='image'?'image':savedDefault.color)+'</span><button type="button">Use current as default</button>';
-    defaultRow.querySelector('button')?.addEventListener('click',()=>{
-      const snap=currentSnapshot()||{};
-      const next=String(snap.rowTableImage||'')
-        ? {mode:'image',color:String(snap.rowTableColor||'#7d1f28'),image:String(snap.rowTableImage||'')}
-        : {mode:'color',color:String(snap.rowTableColor||'#7d1f28'),image:''};
-      writeBoardBackgroundDefault(next);
-      if(next.mode==='color')rememberBoardColor(next.color);else rememberBoardImage(next.image,'Default');
-      ensureBoardChrome(root);renderBoardConfiguration(root);
+    const shipped=document.createElement('label');
+    shipped.className='relphi-setting-toggle relphi-red-felt-toggle';
+    shipped.innerHTML='<input type="checkbox" '+(isShippedRed?'checked':'')+'> <span>Red felt</span>';
+    shipped.querySelector('input').addEventListener('change',event=>{
+      const bridge=optionsBridge(),snapShot=bridge?.capture?.();if(!bridge||!snapShot)return;
+      if(event.target.checked){
+        snapShot.rowTableColor='#7d1f28';snapShot.rowTableImage='';snapShot.rowEnvelopeColor='#f3f0ea';snapShot.rowEnvelopeImage='';
+        boardBackgroundMode='';
+        bridge.restore(snapShot);
+      }
+      setTimeout(()=>{ensureBoardChrome(root);renderBoardConfiguration(root);},0);
     });
-    background.appendChild(defaultRow);
+    background.appendChild(shipped);
+
+    if(!isShippedRed){
+      const mode=document.createElement('div');mode.className='relphi-background-mode';
+      const activeMode=boardBackgroundMode || ((snapshot.rowTableImage||snapshot.rowEnvelopeImage)?'image':'color');
+      mode.innerHTML='<button type="button" data-background-mode="color" class="'+(activeMode==='color'?'is-active':'')+'">Color</button><button type="button" data-background-mode="image" class="'+(activeMode==='image'?'is-active':'')+'">Image</button>';
+      background.appendChild(mode);
+
+      const rows=document.createElement('div');rows.className='relphi-background-targets';
+      const addColorRow=(label,input)=>{
+        const row=document.createElement('div');row.className='relphi-background-target-row';
+        const labelNode=document.createElement('span');labelNode.textContent=label;
+        const swatch=document.createElement('button');swatch.type='button';swatch.className='relphi-background-target-swatch';swatch.style.background=input?.value||'#fff';swatch.title='Choose '+label.toLowerCase()+' color';
+        swatch.addEventListener('click',()=>input?.click());
+        row.append(labelNode,swatch);
+        if(input){input.hidden=true;row.appendChild(input);}
+        rows.appendChild(row);
+      };
+      const addImageRow=(label,kind)=>{
+        const row=document.createElement('div');row.className='relphi-background-target-row';
+        const labelNode=document.createElement('span');labelNode.textContent=label;
+        const swatch=document.createElement('button');swatch.type='button';swatch.className='relphi-background-target-swatch is-image';swatch.title='Choose '+label.toLowerCase()+' image';
+        const image=kind==='board'?String(snapshot.rowTableImage||''):String(snapshot.rowEnvelopeImage||'');
+        if(image)swatch.style.backgroundImage='url("'+image.replace(/"/g,'%22')+'")';
+        swatch.addEventListener('click',()=>{
+          if(kind==='board')tableUpload?.click();
+          else{
+            let file=section.querySelector('#relphiPlaceholderImageFile');
+            if(!file){file=document.createElement('input');file.type='file';file.accept='image/*';file.hidden=true;file.id='relphiPlaceholderImageFile';section.appendChild(file);}
+            file.onchange=()=>{
+              const chosen=file.files?.[0];if(!chosen)return;
+              const reader=new FileReader();
+              reader.onload=()=>{const bridge=optionsBridge(),s=bridge?.capture?.();if(!bridge||!s)return;s.rowEnvelopeImage=String(reader.result||'');bridge.restore(s);rememberBoardImage(String(reader.result||''),chosen.name);setTimeout(()=>renderBoardConfiguration(root),0);};
+              reader.readAsDataURL(chosen);file.value='';
+            };
+            file.click();
+          }
+        });
+        row.append(labelNode,swatch);rows.appendChild(row);
+      };
+      if(activeMode==='color'){addColorRow('Board',tableColor);addColorRow('Placeholder',envelopeColor);}
+      else{addImageRow('Board','board');addImageRow('Placeholder','placeholder');}
+      background.appendChild(rows);
+
+      const history=document.createElement('div');history.className='relphi-background-history';
+      history.innerHTML='<span>History</span><div class="relphi-background-history-items"></div>';
+      const items=history.querySelector('.relphi-background-history-items');
+      if(activeMode==='color'){
+        recentBoardColors().forEach(item=>{
+          const chip=document.createElement('span');chip.className='relphi-history-chip';
+          const sw=document.createElement('button');sw.type='button';sw.className='relphi-recent-color';sw.style.background=item.value;sw.title=item.value;
+          sw.addEventListener('click',()=>{if(tableColor){tableColor.value=item.value;tableColor.dispatchEvent(new Event('input',{bubbles:true}));tableColor.dispatchEvent(new Event('change',{bubbles:true}));}rememberBoardColor(item.value);setTimeout(()=>renderBoardConfiguration(root),0);});
+          const pin=document.createElement('button');pin.type='button';pin.className='relphi-history-pin';pin.textContent=item.pinned?'📌':'○';pin.title=item.pinned?'Unpin':'Keep';
+          pin.addEventListener('click',()=>{rememberBoardColor(item.value,!item.pinned);renderBoardConfiguration(root);});
+          chip.append(sw,pin);items.appendChild(chip);
+        });
+      }else{
+        recentBoardImages().forEach(item=>{
+          const chip=document.createElement('span');chip.className='relphi-history-chip';
+          const sw=document.createElement('button');sw.type='button';sw.className='relphi-recent-image';sw.style.backgroundImage='url("'+item.data.replace(/"/g,'%22')+'")';sw.title=item.name||'Recent image';
+          sw.addEventListener('click',()=>{const bridge=optionsBridge(),s=bridge?.capture?.();if(!bridge||!s)return;s.rowTableImage=item.data;bridge.restore(s);rememberBoardImage(item.data,item.name);setTimeout(()=>renderBoardConfiguration(root),0);});
+          const pin=document.createElement('button');pin.type='button';pin.className='relphi-history-pin';pin.textContent=item.pinned?'📌':'○';pin.title=item.pinned?'Unpin':'Keep';
+          pin.addEventListener('click',()=>{rememberBoardImage(item.data,item.name,!item.pinned);renderBoardConfiguration(root);});
+          chip.append(sw,pin);items.appendChild(chip);
+        });
+      }
+      if(items.children.length)background.appendChild(history);
+
+      mode.querySelectorAll('[data-background-mode]').forEach(button=>button.addEventListener('click',()=>{boardBackgroundMode=button.dataset.backgroundMode;renderBoardConfiguration(root);}));
+    }
     content.appendChild(background);
 
-    mode.querySelectorAll('[data-background-mode]').forEach(button=>button.addEventListener('click',()=>{
-      const next=button.dataset.backgroundMode;
-      const bridge=optionsBridge(),snap=bridge?.capture?.();if(!bridge||!snap)return;
-      boardBackgroundMode=next;
-      if(next==='color'){
-        if(snap.rowTableImage)rememberBoardImage(snap.rowTableImage,'Recent image');
-        snap.rowTableImage='';
-      }else{
-        const recent=recentBoardImages()[0]||null;
-        if(!snap.rowTableImage&&recent)snap.rowTableImage=recent.data;
-      }
-      bridge.restore(snap);
-      setTimeout(()=>{ensureBoardChrome(root);renderBoardConfiguration(root);},0);
-    }));
-
-    tableColor?.addEventListener('change',()=>{rememberBoardColor(tableColor.value);setTimeout(()=>ensureBoardChrome(root),0);},{once:true});
+    tableColor?.addEventListener('change',()=>{rememberBoardColor(tableColor.value);setTimeout(()=>{ensureBoardChrome(root);renderBoardConfiguration(root);},0);},{once:true});
+    envelopeColor?.addEventListener('change',()=>{rememberBoardColor(envelopeColor.value);setTimeout(()=>{ensureBoardChrome(root);renderBoardConfiguration(root);},0);},{once:true});
     tableFile?.addEventListener('change',()=>{
       const file=tableFile.files?.[0];if(!file)return;
       const reader=new FileReader();
@@ -2201,10 +2276,10 @@
     const bridge=optionsBridge();
     const resetSnapshot=bridge?.capture?.();
     if(bridge&&resetSnapshot){
-      const background=boardBackgroundDefault();
       resetSnapshot.rowEnvelopeColor='#f3f0ea';
-      resetSnapshot.rowTableColor=background.color||'#7d1f28';
-      resetSnapshot.rowTableImage=background.mode==='image' ? String(background.image||'') : '';
+      resetSnapshot.rowEnvelopeImage='';
+      resetSnapshot.rowTableColor='#7d1f28';
+      resetSnapshot.rowTableImage='';
       resetSnapshot.rowSnapEnabled=true;
       resetSnapshot.rowSnapGrid='one-eighth';
       resetSnapshot.rowRotationSnapEnabled=true;
@@ -3977,13 +4052,15 @@
   }
 
   function installLockedLayoutPointerGuards(root) {
+    syncTransformLocks(root);
     root.querySelectorAll('.card-row-board>.card-row-item[data-row-index]>.card-row-drop-card,.card-row-board>.card-row-item[data-row-index]>.card-row-card-wrap').forEach(surface => {
       if (surface.dataset.relphiLockedPointerGuard==='true') return;
       surface.dataset.relphiLockedPointerGuard='true';
       surface.addEventListener('pointerdown', event => {
         if (event.target.closest('button,input,textarea,select,label,[contenteditable="true"],[data-row-transform-handle]')) return;
         const state=currentPrefabState();
-        if (state.locked && !state.designMode) event.stopPropagation();
+        if (state.locked && !state.designMode) { event.stopPropagation(); return; }
+        if (!transformLocks().drag && !event.target.closest('[data-row-transform-handle]')) event.stopPropagation();
       });
     });
   }
