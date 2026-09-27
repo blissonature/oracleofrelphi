@@ -14,13 +14,22 @@ async function openBoard(page){
   if (!(await page.locator('#shortListPanel').isVisible())) await page.click('#relphiOpenDrawingBoardCurrent');
   await page.waitForSelector('#shortListPanel .card-row-workspace-toolbar.relphi-board-controller',{state:'visible'});
   await page.waitForSelector('#relphiResetBoard',{state:'visible'});
-  const resetPlacement=await page.evaluate(() => {
-    const clear=document.querySelector('#clearShortListCardsOnly');
+  const globalActionPlacement=await page.evaluate(() => {
+    const draw=document.querySelector('#drawRandomRowCard');
     const reset=document.querySelector('#relphiResetBoard');
-    const actions=document.querySelector('#shortListPanel .drawing-board-top-actions');
-    return !!clear && !!reset && reset.previousElementSibling===clear && reset.parentElement===actions;
+    const global=document.querySelector('#shortListPanel .relphi-global-board-actions');
+    const modes=document.querySelector('#shortListPanel .drawing-board-mode-switch');
+    const clear=document.querySelector('#clearShortListCardsOnly');
+    const freeActions=document.querySelector('#shortListPanel .drawing-board-top-actions');
+    return {
+      global:!!draw&&!!reset&&!!global&&draw.parentElement===global&&reset.parentElement===global&&reset.previousElementSibling===draw,
+      promoted:!!modes&&global.nextElementSibling===modes,
+      freeClear:!!clear&&!!freeActions&&clear.parentElement===freeActions
+    };
   });
-  assert.equal(resetPlacement,true,'Reset Board must be permanently visible immediately beside Clear Cards');
+  assert.equal(globalActionPlacement.global,true,'Draw and Reset Board must share the permanent Drawing Board action row');
+  assert.equal(globalActionPlacement.promoted,true,'Drawing Board actions must sit above the Free/Crafted mode switch');
+  assert.equal(globalActionPlacement.freeClear,true,'Clear Cards remains a Free-mode action');
 }
 
 async function applyTemplate(page,id){
@@ -142,6 +151,12 @@ async function assertFreeformClearCardsLeavesZeroSlotBoard(page,expectedCards){
   try {
     const page=await browser.newPage({viewport:{width:390,height:844}});
     await openBoard(page);
+    await page.click('#drawingBoardOptionsButton');
+    await page.waitForSelector('.relphi-reading-options-drawer.is-reading-options-open',{state:'visible'});
+    assert.equal(await page.locator('.relphi-global-board-actions').isVisible(),true,'Drawing Board actions stay visible in Crafted mode');
+    assert.equal(await page.locator('#drawRandomRowCard').isVisible(),true,'Draw stays visible in Crafted mode');
+    assert.equal(await page.locator('#relphiResetBoard').isVisible(),true,'Reset Board stays visible in Crafted mode');
+    await page.click('#relphiCancelOptions');
 
     await applyTemplate(page,'past-present-future-3');
     await drawCards(page,3);
