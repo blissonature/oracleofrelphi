@@ -2176,18 +2176,45 @@
     bridge.restore(snap);
     return true;
   }
+  function surfaceReadingComplete(root=panel()) {
+    const session=surfaceReadingSession;
+    if (!session || !session.followupsGenerated || !root) return false;
+    const total=Math.min(MAX_POSITIONS,session.initialCount+session.followupCount);
+    return total>0 && Array.from({length:total},(_,index)=>index).every(index=>!!cardAt(index,root));
+  }
+  function revealCompletedSurfaceBoard(root=panel()) {
+    const session=surfaceReadingSession;
+    if (!session || session.completionShown || !surfaceReadingComplete(root)) return false;
+    session.completionShown=true;
+    closeAttune();
+    closeFocus({acknowledge:true});
+    // Completion belongs on the board, not inside the last card's focus view.
+    // Wait for the final card render/focus transition to settle, then fit every
+    // initial and surfaced card into the visible Drawing Board viewport.
+    setTimeout(()=>{
+      const next=panel();
+      if (!next) return;
+      zoomExtents();
+      showBoardToast('The See What Surfaces reading is complete. All cards are now visible together on the Drawing Board.',{title:'Reading complete',duration:5200});
+    },0);
+    return true;
+  }
   function maybeGenerateSurfaceFollowups(root=panel()) {
     const session=surfaceReadingSession;
-    if (!session || session.followupsGenerated || !root) return;
-    if (session.kinds.some((_,index)=>!cardAt(index,root))) return;
-    const draws={};
-    session.kinds.forEach((kind,index)=>{draws[kind]=cardDataAt(index);});
-    const entries=suggestionsFromSurface({surfaceDraws:draws});
-    session.followupsGenerated=true;
-    session.followupCount=entries.length;
-    if (entries.length && appendSurfaceFollowups(entries,root)) {
-      showBoardToast('The first exploration is complete. New referents have surfaced from those cards; continue through them one at a time.',{title:'What surfaced next',duration:6800});
+    if (!session || !root) return;
+    if (!session.followupsGenerated) {
+      if (session.kinds.some((_,index)=>!cardAt(index,root))) return;
+      const draws={};
+      session.kinds.forEach((kind,index)=>{draws[kind]=cardDataAt(index);});
+      const entries=suggestionsFromSurface({surfaceDraws:draws});
+      session.followupsGenerated=true;
+      session.followupCount=entries.length;
+      if (entries.length && appendSurfaceFollowups(entries,root)) {
+        showBoardToast('The first exploration is complete. New referents have surfaced from those cards; continue through them one at a time.',{title:'What surfaced next',duration:6800});
+        return;
+      }
     }
+    revealCompletedSurfaceBoard(root);
   }
 
   function launchConfiguredReading(root,draft) {
@@ -2242,7 +2269,7 @@
       }
       return;
     }
-    surfaceReadingSession=surfaceKinds.length ? {kinds:surfaceKinds.slice(),initialCount:surfaceKinds.length,followupsGenerated:false,followupCount:0} : null;
+    surfaceReadingSession=surfaceKinds.length ? {kinds:surfaceKinds.slice(),initialCount:surfaceKinds.length,followupsGenerated:false,followupCount:0,completionShown:false} : null;
     if(astrologyRequested) surfaceReadingSession=null;
     recursionSession=recursionRequested ? {level:1,maxLevel:1,complete:false} : null;
     recursionPortalLevel=0;
