@@ -1119,7 +1119,7 @@
     const enabled=new Set(analysis.evidence.map(astrologyEvidenceKey).filter(key=>!disabled.has(key))),questionList=astrologyQuestionSuggestions(analysis,enabled),questions=questionList.map((q,i)=>'<label class="relphi-astrology-question"><input type="checkbox" data-astrology-question="'+i+'" '+(i<3?'checked':'')+'><span>'+escapeHtml(q.text)+'</span></label>').join('');
     session.astrologyVisibleQuestions=questionList;
     const skyChannels=analysis.perSky.map(s=>{const items=s.skyEvidence.filter(x=>['placement','house','aspect','configuration'].includes(x.kind)).map(x=>evidenceBox(x,'<strong>'+escapeHtml(x.value)+'</strong>'+(x.detail?' · '+escapeHtml(x.detail):''))).join('');return items?'<section><h4>Sky evidence · '+escapeHtml(s.name)+'</h4><div class="relphi-evidence-list">'+items+'</div></section>':''}).join('');
-    return '<div class="relphi-astrology-analysis"><section><h4>Card Hits</h4><div class="relphi-evidence-list">'+hits+'</div></section>'+skyChannels+'<section><h4>Patterns & concentrations</h4><div class="relphi-evidence-list">'+summary+'</div>'+diagnostic+'</section><section class="relphi-astrology-questions"><h4>Suggested questions</h4><p class="relphi-question-prompt">Checked evidence is factored into these suggestions. Uncheck anything you do not want the question generator to use.</p>'+questions+'<label class="relphi-astrology-own-question"><span>Your question</span><input type="text" data-astrology-own-question value="'+escapeHtml(session?.astrologyOwnQuestion||'')+'" placeholder="Write your own question…"></label></section></div>';
+    return '<div class="relphi-astrology-analysis"><section><h4>Card Hits</h4><div class="relphi-evidence-list">'+hits+'</div></section>'+skyChannels+'<section><h4>Patterns & concentrations</h4><div class="relphi-evidence-list">'+summary+'</div>'+diagnostic+'</section><section class="relphi-astrology-questions"><div class="relphi-astrology-question-head"><h4>Suggested questions</h4><label><input type="checkbox" data-astrology-select-all> Select all</label></div><p class="relphi-question-prompt">Checked evidence is factored into these suggestions. Uncheck anything you do not want the question generator to use.</p>'+questions+'<label class="relphi-astrology-own-question"><span>Your question</span><input type="text" data-astrology-own-question value="'+escapeHtml(session?.astrologyOwnQuestion||'')+'" placeholder="Write your own question…"></label></section></div>';
   }
   function astrologySavedSkies() {
     try {
@@ -1274,6 +1274,7 @@
     drawer.querySelector('[data-add-astrology-sky]')?.addEventListener('click',()=>{session.astrologySkyCount=Math.min(2,(Number(session.astrologySkyCount)||0)+1);renderOptions(root);});
     drawer.querySelectorAll('[data-astrology-evidence]').forEach(box=>box.addEventListener('change',()=>{const disabled=new Set(session.astrologyDisabledEvidence||[]);if(box.checked)disabled.delete(box.dataset.astrologyEvidence);else disabled.add(box.dataset.astrologyEvidence);session.astrologyDisabledEvidence=[...disabled];renderOptions(root);}));
     drawer.querySelector('[data-astrology-own-question]')?.addEventListener('input',event=>{session.astrologyOwnQuestion=event.target.value;});
+    drawer.querySelector('[data-astrology-select-all]')?.addEventListener('change',event=>drawer.querySelectorAll('[data-astrology-question]').forEach(box=>box.checked=event.target.checked));
     drawer.querySelector('[data-astrology-house-system]')?.addEventListener('change',event=>{session.astrologyHouseSystem=event.target.value;session.astrologyAnalysis=null;session.astrologyResolved=null;renderOptions(root);});
     drawer.querySelectorAll('[data-astrology-sky-source]').forEach(select=>select.addEventListener('change',()=>{
       const slot=select.dataset.astrologySkySource==='B'?'B':'A';
@@ -1398,12 +1399,6 @@
     drawer.querySelectorAll('[data-suggestion-text]').forEach(input=>input.addEventListener('input',()=>{
       session.suggestions[Number(input.dataset.suggestionText)]=input.value;
     }));
-    if(session.path==='astro') {
-      const chosen=Array.from(drawer.querySelectorAll('[data-astrology-question]')).filter(box=>box.checked).map(box=>session.astrologyVisibleQuestions?.[Number(box.dataset.astrologyQuestion)]?.text).filter(Boolean);
-      const own=String(drawer.querySelector('[data-astrology-own-question]')?.value||session.astrologyOwnQuestion||'').trim();
-      if(own)chosen.push(own);
-      if(chosen.length){draft.labels=chosen.slice(0,MAX_POSITIONS);draft.positionPacks=draft.labels.map(()=>draft.pack||'full');}
-    }
     const commitSelectedSuggestions=()=>{
       const chosen=Array.from(drawer.querySelectorAll('[data-suggestion-use]')).filter(box=>box.checked).map(box=>{
         const index=Number(box.dataset.suggestionUse);
@@ -1437,6 +1432,12 @@
     drawer.querySelector('#relphiApplyOptions')?.addEventListener('click',()=>{
       if (session.path==='surface' && !prepareSurfaceDraft(session)) return;
       if (session.path==='blocks' && session.suggestions.length) commitSelectedSuggestions();
+      if(session.path==='astro'){
+        const chosen=Array.from(drawer.querySelectorAll('[data-astrology-question]')).filter(box=>box.checked).map(box=>session.astrologyVisibleQuestions?.[Number(box.dataset.astrologyQuestion)]?.text).filter(Boolean);
+        const own=String(drawer.querySelector('[data-astrology-own-question]')?.value||session.astrologyOwnQuestion||'').trim();if(own)chosen.push(own);
+        if(!chosen.length){showBoardToast('Select at least one suggested question or write your own.',{title:'Astrological Tarot Reading',duration:4200});return}
+        draft.labels=chosen.slice(0,MAX_POSITIONS);draft.positionPacks=draft.labels.map(()=>draft.pack||'full');draft.templateId='';draft.basedOnTemplateId='';draft.templateName='Astrological Tarot Reading';session.astrologyChosenQuestions=draft.labels.slice();
+      }
       applyOptions(root);
     });
   }
@@ -2113,7 +2114,7 @@
     const astrologyRequested=session.path==='astro'&&!!session.astrologyResolved;
     const recursionRequested=draft.templateId===RECURSION_ID || draft.basedOnTemplateId===RECURSION_ID;
     surfaceReadingSession=surfaceKinds.length ? {kinds:surfaceKinds.slice(),initialCount:surfaceKinds.length,followupsGenerated:false,followupCount:0} : null;
-    if(astrologyRequested) surfaceReadingSession={kinds:['astrology','astrology','astrology'],initialCount:3,followupsGenerated:true,followupCount:0,astrology:true,skyContext:clone(session.astrologyResolved)};
+    if(astrologyRequested) surfaceReadingSession=null;
     recursionSession=recursionRequested ? {level:1,maxLevel:1,complete:false} : null;
     recursionPortalLevel=0;
     writeStickerVisibility(draft.stickers);
