@@ -706,7 +706,8 @@
 
   function beginOptionsSession() {
     if (optionsSession) return;
-    optionsSession = { baseline:currentSnapshot(), draft:draftFromState(), path:'templates', building:{element:'',planet:'',aspect:'',sign:'',house:''}, suggestions:[], suggestionPacks:[], surfaceSelected:{}, sacredCardSource:'digital' };
+    const path=activeCraftedPath||'templates';
+    optionsSession = { baseline:currentSnapshot(), draft:draftFromState(), path, building:{element:'',planet:'',aspect:'',sign:'',house:''}, suggestions:[], suggestionPacks:[], surfaceSelected:{}, sacredCardSource:'digital' };
   }
   function optionsStructuralChanged(session = optionsSession) {
     if (!session) return false;
