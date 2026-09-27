@@ -1104,16 +1104,20 @@
         if(p.type==='sign') push('What is the '+p.value+' concentration emphasizing?',90+p.score,'pattern',e);
         else if(p.type==='cluster') push('What is the '+p.value+' cluster concentrating into one issue?',92+p.score,'cluster',e);
         else if(p.type==='configuration') push('What is the '+p.value+' configuration organizing in this reading?',96+p.score,'configuration',e);
-        // Mode, element, and decan concentrations are descriptive facts. Keep them
-        // as evidence for convergence detection; do not turn them into generic draws.
+        else if(p.type==='mode') push('The '+p.value.toLowerCase()+' emphasis is established. What does it ask of this reading now?',84+p.score,'pattern',e);
+        else if(p.type==='element') push('The concentration of '+p.value.toLowerCase()+' is established. What does it ask of this reading now?',82+p.score,'pattern',e);
+        else if(p.type==='decan') push(p.value+' is repeating across this sky. What does that repetition ask of this reading now?',80+p.score,'pattern',e);
       } else if(e.kind==='hit') {
         push('What is '+e.value+' activating in this sky?',70+Math.min(20,e.count*3),'card-hit',e);
       } else if(e.kind==='polarity') {
         const pd=analysis.polarityDiagnostic;
         if(pd) push('What is the pull toward '+pd.sign+' revealing in this reading?',88+(pd.observed?8:0),'polarity-derived-sign',{...e,derivedSign:pd.sign,bin:pd.index+1,share:pd.share,excess:pd.excess,independentlyObserved:pd.observed,observedCount:pd.observedCount});
       }
-      // Repeated rulers and tags remain supporting evidence until another independent
-      // channel makes them a convergence. Repetition alone is not an open question.
+      else if(e.kind==='ruler') {
+        push(e.value+' is repeatedly emphasized as ruler. What does that emphasis ask of this reading now?',76+Math.min(16,e.count),'ruler',e);
+      } else if(e.kind==='tag') {
+        push(e.value+' is a repeated theme. What does that theme ask of this reading now?',68+Math.min(14,e.count),'tag',e);
+      }
     });
     return out.sort((a,b)=>b.score-a.score).slice(0,16);
   }
