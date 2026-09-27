@@ -29,7 +29,7 @@
     }),
     Mercury:Object.freeze({
       principle:'Understanding',
-      operations:Object.freeze(['parsing','differentiation','connection','transmission','intelligibility']),
+      operations:Object.freeze(['parsing','differentiation','connection','transmission','intelligibility','negotiation','negotium']),
       direct:'make distinctions connections and information intelligible',
       retrograde:'revisit and rework distinctions connections information and routes',
       return:'resume understanding with the revised map made by retracing',
@@ -95,13 +95,13 @@
     }),
     Neptune:Object.freeze({
       principle:'Leisure',
-      operations:Object.freeze(['release','play','surrender','completion','wholeness']),
-      direct:'release the grip enough for play completion and the whole to appear',
+      operations:Object.freeze(['release','play','surrender','completion','wholeness','otium','noninstrumental being']),
+      direct:'release the grip of obligation transaction and required production enough for play contemplation completion and the whole to appear',
       retrograde:'reopen what seemed complete without gripping it',
       return:'re-enter the completed pattern as renewed play or wholeness',
       question:Object.freeze({
-        focus:'Where would release make room for play or a more complete whole?',
-        repeated:'Where does the grip need to loosen so the whole can become visible?'
+        focus:'Where would release from obligation or required production make room for play contemplation or a more complete whole?',
+        repeated:'Where does the grip of obligation transaction or production need to loosen so the whole can become visible?'
       })
     }),
     Pluto:Object.freeze({
@@ -117,6 +117,18 @@
     })
   });
 
+  const RELATIONSHIPS=Object.freeze({
+    mercuryNeptune:Object.freeze({
+      axis:'negotium ↔ otium',
+      Mercury:'engagement in what must be parsed differentiated communicated negotiated or dealt with',
+      Neptune:'release from compulsory transactional or productive engagement into noninstrumental being play contemplation and wholeness'
+    }),
+    nonNegotiable:Object.freeze({
+      operation:'a boundary asserted within negotium rather than otium itself',
+      sequence:Object.freeze(['Mercury differentiates the terms','Venus establishes value in the relation','Mars protects the line','Jupiter locates participation in the larger system','Saturn establishes the boundary that preserves freedom','Neptune releases compulsory engagement'])
+    })
+  });
+
   const MOTION=Object.freeze({
     direct:'enact the planetary operation',
     retrograde:'revisit and rework the planetary operation',
@@ -125,8 +137,9 @@
   });
 
   window.RELPHI_SYMBOLIC_REFERENCE=Object.freeze({
-    version:1,
+    version:2,
     planets:PLANETS,
+    relationships:RELATIONSHIPS,
     motion:MOTION,
     planet(name){return PLANETS[String(name||'').trim()]||null;},
     planetQuestion(name,kind='focus'){
