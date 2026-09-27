@@ -240,7 +240,7 @@
     owner.querySelectorAll('[data-placement-choice]').forEach(button=>updateChoice(button));
     if(!owner.contains(menu))menu.querySelectorAll('[data-placement-choice]').forEach(button=>updateChoice(button));
     const status=owner.querySelector('[data-placement-filter-summary]');
-    if(status)status.textContent=combinedSummary();
+    if(status){const value=combinedSummary();status.textContent=value==='All'?'Placements':value;}
   }
   function renderList(){
     const menu=popover(),body=menu?.querySelector('.sky-chart-placement-filter-body');
