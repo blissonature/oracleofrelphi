@@ -688,6 +688,9 @@
     } else {
       closeFocus({ acknowledge:true, advanceSurface:false });
       optionsSession = null;
+      freeSettingsSession = null;
+      settingsBaseline = null;
+      settingsOpen = false;
       root.hidden = true;
       trigger.textContent = 'Open Drawing Board';
       trigger.setAttribute('aria-expanded','false');
@@ -1872,6 +1875,10 @@
   }
 
   function resetBoardFromOptions(root) {
+    return resetBoardGlobal(root);
+  }
+
+  function resetBoardGlobal(root = panel()) {
     if(!root)return false;
     openTool='';
     surfaceReadingSession=null;
@@ -1879,76 +1886,44 @@
     recursionPortalLevel=0;
     pendingFocusIndex=null;
     attuneIndex=-1;
+    craftedReadingActive=false;
+    optionsSession=null;
     document.querySelector('.relphi-surface-question-composer')?.remove();
     root.querySelector('.relphi-board-toast')?.remove();
     closeAttune();
     closeFocus({acknowledge:false,advanceSurface:false});
 
-    craftedReadingActive=false;
-    optionsSession=null;
+    settingsOpen=true;
+    settingsMode='free';
+    boardSetupConfirmed=false;
     clearCraftedStructure(root);
+    const defaults=blankDraft();
+    applyDrawSettings(defaults);
     writeStickerVisibility(true);
-    boardOpen=true;
 
     const trigger=document.getElementById('relphiOpenDrawingBoardCurrent');
     if(trigger){
       trigger.textContent='Close Drawing Board';
       trigger.setAttribute('aria-expanded','true');
     }
+    boardOpen=true;
+    root.hidden=false;
+    root.removeAttribute('hidden');
+    const nativeDrawer=root.querySelector('.card-row-drawing-board');
+    if(nativeDrawer)nativeDrawer.open=true;
 
-    const reopen=()=>{
-      const next=panel();
-      if(!next)return;
-      next.hidden=false;
-      next.removeAttribute('hidden');
-      const drawer=next.querySelector('.card-row-drawing-board');
-      if(drawer)drawer.open=true;
-      optionsSession=null;
-      beginOptionsSession();
-      if(optionsSession){
-        optionsSession.draft=blankDraft();
-        optionsSession.path='bespoke';
-        optionsSession.suggestions=[];
-        optionsSession.suggestionPacks=[];
-        optionsSession.surfaceSelected={};
-        optionsSession.sacredCardSource='digital';
-        optionsSession.baseline=currentSnapshot();
-      }
-      setBoardMode(next,'referents');
-      enhance(next);
+    freeSettingsSession={draft:freeSettingsDraftFromState()};
+    settingsBaseline={
+      snapshot:clone(currentSnapshot()||{}),
+      stickers:true,
+      craftedReadingActive:false,
+      surfaceReadingSession:null,
+      recursionSession:null,
+      recursionPortalLevel:0
     };
-    reopen();
-    return true;
-  }
-  function resetBoardGlobal(root = panel()) {
-    if(!root)return false;
-    const craftedSelected=root.querySelector('#drawingBoardOptionsButton')?.getAttribute('aria-checked')==='true';
-    if(optionsSession || craftedReadingActive || craftedSelected) {
-      resetBoardFromOptions(root);
-      return true;
-    }
-    openTool='';
-    surfaceReadingSession=null;
-    recursionSession=null;
-    recursionPortalLevel=0;
-    closeAttune();
-    closeFocus({acknowledge:false});
-    clearCraftedStructure(root);
-    writeStickerVisibility(true);
-    boardOpen=true;
-    const trigger=document.getElementById('relphiOpenDrawingBoardCurrent');
-    if(trigger){
-      trigger.textContent='Close Drawing Board';
-      trigger.setAttribute('aria-expanded','true');
-    }
-    const next=panel()||root;
-    next.hidden=false;
-    next.removeAttribute('hidden');
-    const drawer=next.querySelector('.card-row-drawing-board');
-    if(drawer)drawer.open=true;
-    setBoardMode(next,'board');
-    ensureGlobalBoardActions(next);
-    enhance(next);
+    setBoardMode(root,'board');
+    ensureBoardChrome(root);
+    renderBoardSettings(root);
     return true;
   }
 
@@ -3103,6 +3078,7 @@
     const snap=bridge?.capture();
     if(!snap||!prefabs||!prefab.positions.length)return false;
     craftedReadingActive=true;
+    markSettingsConfirmed();
     Object.assign(snap,{shortList:[],shortListSelection:[],shortListPositionLabels:[],shortListPositionCardIds:[],rowEnvelopeLayout:{},rowCardTransforms:{},rowPositionMeta:[],rowActiveLayout:null,rowLayoutLocked:false,rowLayoutDesignMode:false,rowCardReversals:{},rowCardManual:[],rowDrawDeck:[],rowDrawDeckSignature:''});
     bridge.restore(snap);
     if(!prefabs.applyLayout(prefab)){craftedReadingActive=false;return false;}
