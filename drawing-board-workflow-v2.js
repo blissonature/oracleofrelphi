@@ -2120,7 +2120,7 @@
     writeStickerVisibility(draft.stickers);
     optionsSession=null;
     root.querySelector('.relphi-reading-options-drawer')?.remove();
-    setBoardMode(root,astrologyRequested?'referents':'board');
+    setBoardMode(root,boardHasCraftedStructure(root)?'referents':'board');
     if (structural && currentCardCount(root)===0) {
       const clear=root.querySelector('#clearShortList');
       clear?.click();
@@ -2635,8 +2635,7 @@
     const trigger=document.getElementById('relphiOpenDrawingBoardCurrent');
     if (!initialized) initialized=true;
     boardOpen=trigger?.getAttribute('aria-expanded')==='true';
-    if (!optionsSession && boardHasCraftedStructure(root)) beginOptionsSession();
-    setBoardMode(root,optionsSession?'referents':'board');
+    setBoardMode(root,boardHasCraftedStructure(root)?'referents':'board');
     if (!boardOpen) {
       root.hidden=true;
       if (trigger) { trigger.textContent='Open Drawing Board'; trigger.setAttribute('aria-expanded','false'); }
