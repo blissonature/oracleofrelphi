@@ -1577,6 +1577,35 @@
     keepBoardOpen();
     setTimeout(keepBoardOpen,0);
   }
+  function resetBoardGlobal(root = panel()) {
+    if(!root)return false;
+    const craftedSelected=root.querySelector('#drawingBoardOptionsButton')?.getAttribute('aria-checked')==='true';
+    if(optionsSession || craftedReadingActive || craftedSelected) {
+      resetBoardFromOptions(root);
+      return true;
+    }
+    openTool='';
+    surfaceReadingSession=null;
+    recursionSession=null;
+    recursionPortalLevel=0;
+    closeAttune();
+    closeFocus({acknowledge:false});
+    clearCraftedStructure(root);
+    writeStickerVisibility(true);
+    boardOpen=true;
+    const trigger=document.getElementById('relphiOpenDrawingBoardCurrent');
+    if(trigger){
+      trigger.textContent='Close Drawing Board';
+      trigger.setAttribute('aria-expanded','true');
+    }
+    root.hidden=false;
+    root.removeAttribute('hidden');
+    setBoardMode(root,'board');
+    enhance(root);
+    setTimeout(()=>enhance(panel()),0);
+    return true;
+  }
+
   function boardHasCraftedStructure(root = panel()) {
     const snap=currentSnapshot()||{},state=currentPrefabState()||{};
     return !!(
@@ -3078,7 +3107,7 @@
     if (resetBoardTrigger && root?.contains(resetBoardTrigger)) {
       event.preventDefault();
       event.stopImmediatePropagation();
-      resetBoardFromOptions(root);
+      resetBoardGlobal(root);
       return;
     }
     const drawTrigger=event.target.closest?.('#shortListPanel #drawRandomRowCard');
