@@ -1182,7 +1182,7 @@
     throw new Error('Choose a valid sky source.');
   }
   function astrologyHouseSystemMarkup(session,disabled=false) {
-    const value=session.astrologyHouseSystem||'whole-sign',options=[['whole-sign','Whole Sign'],['equal','Equal'],['placidus','Placidus']];
+    const value=session.astrologyHouseSystem||'whole-sign',options=[['whole-sign','Whole Sign'],['equal-house','Equal House'],['porphyry','Porphyry'],['placidus','Placidus'],['alcabitius','Alcabitius'],['regiomontanus','Regiomontanus'],['campanus','Campanus'],['koch','Koch']];
     return '<label class="relphi-astrology-house-system"><span>House system</span><select data-astrology-house-system '+(disabled?'disabled':'')+'>'+options.map(([v,n])=>'<option value="'+v+'" '+(value===v?'selected':'')+'>'+n+'</option>').join('')+'</select><small>Chosen for this reading; Saved Skies stay house-system-neutral.</small></label>';
   }
   function astrologySurfaceMarkup(session,disabled=false) {
