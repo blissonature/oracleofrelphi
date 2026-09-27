@@ -3381,7 +3381,7 @@
     art.loading='eager';
     art.classList.toggle('is-reversed',reversed);
     if (previous) previous.replaceWith(art); else frame.appendChild(art);
-    const src=artSource?.currentSrc || artSource?.src || '';
+    const src=artSource?.dataset?.relphiFullSrc || artSource?.currentSrc || artSource?.src || '';
     if (src) art.src=src;
   }
   function renderFocusEntry(reader, index) {
