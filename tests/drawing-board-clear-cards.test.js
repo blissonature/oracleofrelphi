@@ -13,6 +13,14 @@ async function openBoard(page){
   await page.waitForFunction(() => !!window.RelphiDrawingBoardSpreadPrefabs && !!window.RelphiDrawingBoardPrefabsBridge && !!window.RelphiDrawingBoardOptionsBridge,{timeout:20000});
   if (!(await page.locator('#shortListPanel').isVisible())) await page.click('#relphiOpenDrawingBoardCurrent');
   await page.waitForSelector('#shortListPanel .card-row-workspace-toolbar.relphi-board-controller',{state:'visible'});
+  await page.waitForSelector('#relphiResetBoard',{state:'visible'});
+  const resetPlacement=await page.evaluate(() => {
+    const clear=document.querySelector('#clearShortListCardsOnly');
+    const reset=document.querySelector('#relphiResetBoard');
+    const actions=document.querySelector('#shortListPanel .drawing-board-top-actions');
+    return !!clear && !!reset && reset.previousElementSibling===clear && reset.parentElement===actions;
+  });
+  assert.equal(resetPlacement,true,'Reset Board must be permanently visible immediately beside Clear Cards');
 }
 
 async function applyTemplate(page,id){
@@ -56,9 +64,6 @@ async function drawCards(page,count){
 }
 
 async function resetToBlank(page){
-  if (!(await page.locator('#relphiResetBoard').isVisible().catch(()=>false))) {
-    await page.click('#drawingBoardOptionsButton');
-  }
   await page.waitForSelector('#relphiResetBoard',{state:'visible'});
   await page.click('#relphiResetBoard');
   await page.waitForFunction(() => {
