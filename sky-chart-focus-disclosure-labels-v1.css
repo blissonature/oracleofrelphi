@@ -1,0 +1,67 @@
+/* Focus disclosure labels: the collapsed field names the category; detailed state lives inside the popover. */
+#skyFoundationFocus .sky-chart-aspect-filter-label,
+#skyFoundationFocus .sky-chart-placement-filter-label,
+#skyFoundationFocus .sky-chart-house-filter-label,
+#skyFoundationFocus .sky-chart-zodiac-filter-label{
+  display:none!important;
+}
+
+#skyFoundationFocus .sky-chart-aspect-filter-head,
+#skyFoundationFocus .sky-chart-placement-filter-head,
+#skyFoundationFocus .sky-chart-house-filter-head{
+  grid-template-rows:var(--sky-filter-height)!important;
+  grid-template-areas:"field field"!important;
+  gap:0!important;
+}
+
+#skyFoundationFocus .sky-chart-aspect-filter-value,
+#skyFoundationFocus .sky-chart-aspect-filter-toggle,
+#skyFoundationFocus .sky-chart-placement-summary-choices,
+#skyFoundationFocus .sky-chart-placement-filter-toggle,
+#skyFoundationFocus .sky-chart-house-summary-choices,
+#skyFoundationFocus .sky-chart-house-filter-toggle{
+  grid-row:1!important;
+}
+
+#skyFoundationFocus .sky-chart-aspect-filter-value>span,
+#skyFoundationFocus .sky-chart-placement-summary-choices>*,
+#skyFoundationFocus .sky-chart-house-summary-choices>*{
+  display:none!important;
+}
+
+#skyFoundationFocus .sky-chart-aspect-filter-value::before,
+#skyFoundationFocus .sky-chart-placement-summary-choices::before,
+#skyFoundationFocus .sky-chart-house-summary-choices::before{
+  display:block;
+  overflow:hidden;
+  color:var(--sky-filter-control-color,#191613);
+  font:800 .68rem/1.2 system-ui,sans-serif;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+
+#skyFoundationFocus .sky-chart-aspect-filter-value::before{content:"Aspects"}
+#skyFoundationFocus .sky-chart-placement-summary-choices::before{content:"Placements"}
+#skyFoundationFocus .sky-chart-house-summary-choices::before{content:"Houses"}
+
+#skyFoundationFocus .sky-chart-zodiac-filter{
+  grid-template-rows:35px!important;
+  gap:0!important;
+}
+#skyFoundationFocus .sky-chart-zodiac-filter-toggle{
+  font-size:0!important;
+}
+#skyFoundationFocus .sky-chart-zodiac-filter-toggle::before{
+  content:"Zodiac Signs";
+  color:#191613;
+  font:800 .68rem/1.2 system-ui,sans-serif;
+}
+
+/* Selection state stays available to scripts and assistive UI; it simply no longer competes
+   with the category name in the collapsed Focus bar. */
+#skyFoundationFocus .sky-chart-aspect-filter,
+#skyFoundationFocus .sky-chart-placement-filter,
+#skyFoundationFocus .sky-chart-zodiac-filter,
+#skyFoundationFocus .sky-chart-house-filter{
+  align-self:center!important;
+}
