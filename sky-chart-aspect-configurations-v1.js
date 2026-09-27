@@ -170,8 +170,8 @@ function miniConfigurationMarkup(pattern,{compact=false,interactive=true}={}){
   // Expanded diagrams keep geometry in the 120×120 SVG, but canonical
   // inscribed vertices live in screen space so wheel scaling cannot alter them.
   const vertices=[...records.values()].map(record=>{
-    const p=resultPoint(record.value),left=(p.x/120*100).toFixed(4),top=(p.y/120*100).toFixed(4),signColor=resultSignColor(record.sign),houseColor=resultHouseColor(record.house);
-    return'<span class="sky-configuration-vertex-host" data-canonical-placement="'+record.id+'" data-sky="'+record.sky+'" data-sign="'+record.sign+'" data-house="'+(record.house||'')+'" style="left:'+left+'%;top:'+top+'%"><span class="sky-configuration-vertex-rail sky-configuration-vertex-rail-sign" style="background:'+signColor+'"></span><span class="sky-configuration-vertex-glyph"></span><span class="sky-configuration-vertex-rail sky-configuration-vertex-rail-house" style="background:'+houseColor+'"></span></span>';
+    const p=resultPoint(record.value),left=(p.x/120*100).toFixed(4),top=(p.y/120*100).toFixed(4);
+    return'<span class="sky-configuration-vertex-host" data-canonical-placement="'+record.id+'" data-sky="'+record.sky+'" style="left:'+left+'%;top:'+top+'%"></span>';
   }).join('');
   return'<div class="'+classes+'"'+attrs+'><svg viewBox="0 0 120 120" aria-hidden="true"><circle cx="60" cy="60" r="47" class="sky-configuration-mini-ring"/>'+radii+lines+'</svg><span class="sky-configuration-vertex-layer" aria-hidden="true">'+vertices+'</span></div>';
 }
@@ -196,8 +196,7 @@ async function paintConfigurationMiniGlyphs(root){
       circle.removeAttribute('aria-hidden');
     });
     glyph.dataset.configurationInscribedClone='true';
-    const mount=host.querySelector('.sky-configuration-vertex-glyph')||host;
-    mount.replaceChildren(glyph);
+    host.replaceChildren(glyph);
     host.dataset.canonicalGlyphReady='true';
   }
 }
