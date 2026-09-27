@@ -764,13 +764,21 @@ html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]) .sky-chart-con
 .sky-configuration-vertex-host{
   position:absolute;
   width:38px;
-  height:38px;
+  height:46px;
   transform:translate(-50%,-50%);
   display:grid;
+  grid-template-rows:4px 38px 4px;
   place-items:center;
   overflow:visible;
 }
-.sky-configuration-vertex-host>svg[data-relationship-canonical-host]{
+.sky-configuration-vertex-glyph{
+  display:grid;
+  place-items:center;
+  width:38px;
+  height:38px;
+  overflow:visible;
+}
+.sky-configuration-vertex-glyph>svg[data-relationship-canonical-host]{
   display:block;
   width:38px!important;
   height:38px!important;
@@ -781,6 +789,15 @@ html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]) .sky-chart-con
   overflow:visible;
   transform:none!important;
 }
+.sky-configuration-vertex-rail{
+  display:block;
+  width:30px;
+  height:3px;
+  border-radius:999px;
+  box-shadow:0 0 0 1px rgba(255,255,255,.8);
+}
+.sky-configuration-vertex-rail-house{align-self:start}
+.sky-configuration-vertex-rail-sign{align-self:end}
 .sky-configuration-mini-wheel.is-compact .sky-configuration-mini-point{display:block}
 .sky-configuration-mini-wheel.is-compact .sky-configuration-mini-point circle{stroke-width:1}
 .sky-configuration-mini-wheel.is-compact .sky-configuration-mini-point text{
@@ -895,10 +912,28 @@ html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]) .sky-chart-con
 .sky-configuration-match-placements{
   display:flex;
   align-items:center;
-  gap:4px;
+  gap:5px;
   min-width:0;
   overflow:visible;
 }
+.sky-configuration-match-participant{
+  display:grid;
+  grid-template-rows:4px 38px 4px;
+  place-items:center;
+  width:38px;
+  min-width:38px;
+  height:46px;
+  overflow:visible;
+}
+.sky-configuration-match-rail{
+  display:block;
+  width:30px;
+  height:3px;
+  border-radius:999px;
+  box-shadow:0 0 0 1px rgba(255,255,255,.8);
+}
+.sky-configuration-match-rail-sign{align-self:end}
+.sky-configuration-match-rail-house{align-self:start}
 .sky-configuration-match-glyph{
   display:grid;
   place-items:center;
