@@ -3078,10 +3078,10 @@
     const snap=bridge?.capture();
     if(!snap||!prefabs||!prefab.positions.length)return false;
     craftedReadingActive=true;
-    markSettingsConfirmed();
     Object.assign(snap,{shortList:[],shortListSelection:[],shortListPositionLabels:[],shortListPositionCardIds:[],rowEnvelopeLayout:{},rowCardTransforms:{},rowPositionMeta:[],rowActiveLayout:null,rowLayoutLocked:false,rowLayoutDesignMode:false,rowCardReversals:{},rowCardManual:[],rowDrawDeck:[],rowDrawDeckSignature:''});
     bridge.restore(snap);
     if(!prefabs.applyLayout(prefab)){craftedReadingActive=false;return false;}
+    markSettingsConfirmed();
     applyDrawSettings(draft);
     optionsSession=null;
     root.querySelector('.relphi-reading-options-drawer')?.remove();
