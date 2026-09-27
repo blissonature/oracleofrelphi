@@ -41,6 +41,10 @@
   let freeSettingsSession = null;
   let boardSetupConfirmed = false;
   let activeCraftedPath = '';
+  let boardConfigurationOpen = false;
+  const BOARD_BACKGROUND_DEFAULT_KEY = 'relphiBoardBackgroundDefaultV1';
+  const BOARD_RECENT_COLORS_KEY = 'relphiBoardRecentColorsV1';
+  const BOARD_RECENT_IMAGES_KEY = 'relphiBoardRecentImagesV1';
 
   function panel() { return document.getElementById(PANEL_ID); }
   function prefabBridge() { return window.RelphiDrawingBoardPrefabsBridge || null; }
@@ -505,11 +509,57 @@
       !draft.repeats;
   }
 
+  function safeLocalJson(key,fallback) {
+    try { const value=JSON.parse(localStorage.getItem(key)||'null'); return value ?? fallback; } catch (_) { return fallback; }
+  }
+  function boardBackgroundDefault() {
+    const saved=safeLocalJson(BOARD_BACKGROUND_DEFAULT_KEY,null);
+    if(saved && (saved.mode==='color'||saved.mode==='image')) return {
+      mode:saved.mode,
+      color:String(saved.color||'#7d1f28'),
+      image:String(saved.image||'')
+    };
+    return {mode:'color',color:'#7d1f28',image:''};
+  }
+  function writeBoardBackgroundDefault(value) {
+    try { localStorage.setItem(BOARD_BACKGROUND_DEFAULT_KEY,JSON.stringify(value)); } catch (_) {}
+  }
+  function recentBoardColors() {
+    const values=safeLocalJson(BOARD_RECENT_COLORS_KEY,[]);
+    return Array.isArray(values)?values.map(String).filter(Boolean).slice(0,6):[];
+  }
+  function rememberBoardColor(value) {
+    const color=String(value||'').trim(); if(!color)return;
+    const next=[color,...recentBoardColors().filter(item=>item!==color)].slice(0,6);
+    try { localStorage.setItem(BOARD_RECENT_COLORS_KEY,JSON.stringify(next)); } catch (_) {}
+  }
+  function recentBoardImages() {
+    const values=safeLocalJson(BOARD_RECENT_IMAGES_KEY,[]);
+    return Array.isArray(values)?values.filter(item=>item&&item.data).slice(0,4):[];
+  }
+  function rememberBoardImage(data,name='Image') {
+    const value=String(data||''); if(!value)return;
+    const item={data:value,name:String(name||'Image').slice(0,60)};
+    const next=[item,...recentBoardImages().filter(other=>other.data!==value)].slice(0,4);
+    try { localStorage.setItem(BOARD_RECENT_IMAGES_KEY,JSON.stringify(next)); } catch (_) {}
+  }
   function boardCanReset(root=panel()) {
+    const snap=currentSnapshot()||{};
+    const background=boardBackgroundDefault();
+    const backgroundChanged=String(snap.rowTableColor||'#7d1f28')!==String(background.color||'#7d1f28') ||
+      String(snap.rowTableImage||'')!==(background.mode==='image'?String(background.image||''):'');
+    const configurationChanged=String(snap.rowEnvelopeColor||'#f3f0ea')!=='#f3f0ea' ||
+      snap.rowSnapEnabled===false ||
+      String(snap.rowSnapGrid||'one-eighth')!=='one-eighth' ||
+      snap.rowRotationSnapEnabled===false ||
+      Number(snap.rowRotationSnapDegrees||15)!==15 ||
+      backgroundChanged ||
+      Object.keys(snap.rowEnvelopeLayout||{}).length>0 ||
+      Object.keys(snap.rowCardTransforms||{}).length>0;
     return currentCardCount(root)>0 ||
       boardHasCraftedStructure(root) ||
-      boardSetupConfirmed ||
-      !freeSettingsAreDefault();
+      !freeSettingsAreDefault() ||
+      configurationChanged;
   }
 
   function ensureSettingsTransaction(root=panel()) {
@@ -580,7 +630,7 @@
       settingsPanel=document.createElement('section');
       settingsPanel.className='relphi-board-settings-panel';
       settingsPanel.setAttribute('aria-label','Drawing Board settings');
-      settingsPanel.innerHTML='<div class="relphi-board-settings-body"></div>';
+      settingsPanel.innerHTML='<button type="button" id="relphiBoardConfigurationButton" class="relphi-board-configuration-trigger" aria-expanded="false">Board</button><div class="relphi-board-settings-body"></div>';
       bar.insertAdjacentElement('afterend',settingsPanel);
     }
     const body=settingsPanel.querySelector('.relphi-board-settings-body');
@@ -595,7 +645,15 @@
 
     [...root.querySelectorAll('.relphi-global-board-actions')].forEach(node=>node.remove());
     settingsPanel.hidden=!settingsOpen;
+    if(!settingsOpen)boardConfigurationOpen=false;
     root.classList.toggle('relphi-settings-open',settingsOpen);
+    const configurationButton=settingsPanel.querySelector('#relphiBoardConfigurationButton');
+    if(configurationButton){
+      const allowed=boardConfigurationAllowed(root);
+      configurationButton.hidden=!allowed;
+      configurationButton.setAttribute('aria-expanded',String(allowed&&boardConfigurationOpen));
+      configurationButton.classList.toggle('is-active',allowed&&boardConfigurationOpen);
+    }
     const settingsButton=bar.querySelector('#relphiBoardSettingsButton');
     if(settingsButton){
       settingsButton.setAttribute('aria-expanded',String(settingsOpen));
@@ -614,16 +672,17 @@
     const settingsPanel=ensureBoardChrome(root);
     const body=settingsPanel?.querySelector('.relphi-board-settings-body');
     if(!settingsPanel||!body)return;
-    let section=body.querySelector(':scope > .relphi-board-configuration');
+    let section=settingsPanel.querySelector(':scope > .relphi-board-configuration');
     if(!section){
       section=document.createElement('section');
       section.className='relphi-board-configuration';
-      body.appendChild(section);
+      settingsPanel.appendChild(section);
     }
-    section.hidden=!boardConfigurationAllowed(root);
+    const allowed=boardConfigurationAllowed(root);
+    section.hidden=!allowed||!boardConfigurationOpen;
     if(section.hidden)return;
 
-    const snap=root.querySelector('#rowSnapGridEnabled');
+    const snap=root.querySelector('#rowSnapEnabled');
     const snapMinus=root.querySelector('#rowSnapGridMinus');
     const snapValue=root.querySelector('#rowSnapGridValue');
     const snapPlus=root.querySelector('#rowSnapGridPlus');
@@ -635,39 +694,123 @@
     const envelopeColor=root.querySelector('#rowEnvelopeColor');
     const tableColor=root.querySelector('#rowTableColor');
     const tableUpload=root.querySelector('#rowTableImageUpload');
-    const tableReset=root.querySelector('#rowTableImageReset');
+    const tableFile=root.querySelector('#rowTableImageFile');
+    const snapshot=currentSnapshot()||{};
+    const usingImage=!!String(snapshot.rowTableImage||'');
 
     section.replaceChildren();
     const heading=document.createElement('div');
     heading.className='relphi-board-configuration-heading';
-    heading.innerHTML='<strong>Board configuration</strong><span>Position, rotate, scale, snap, and style this board.</span>';
+    heading.innerHTML='<strong>Board configuration</strong><button type="button" class="relphi-board-configuration-close" aria-label="Close board configuration">×</button>';
     section.appendChild(heading);
+    heading.querySelector('.relphi-board-configuration-close')?.addEventListener('click',()=>{boardConfigurationOpen=false;renderBoardConfiguration(root);ensureBoardChrome(root);});
 
     syncTransformEditingAvailability(root);
 
     const snaps=document.createElement('div');
     snaps.className='relphi-board-configuration-group';
     snaps.innerHTML='<strong>Snaps</strong>';
-    const posRow=document.createElement('div');posRow.className='relphi-tool-row';
-    posRow.append(controlLabel(snap,'Align'));
-    [snapMinus,snapValue,snapPlus].filter(Boolean).forEach(node=>posRow.appendChild(node));
-    const rotRow=document.createElement('div');rotRow.className='relphi-tool-row';
-    rotRow.append(controlLabel(rotate,'Rotation snap'));
-    [rotateMinus,rotateValue,rotatePlus].filter(Boolean).forEach(node=>rotRow.appendChild(node));
-    snaps.append(posRow,rotRow);
-    if(resetLayout){resetLayout.textContent='Reset layout';snaps.appendChild(resetLayout);}
+    const snapRow=(input,label,minus,value,plus)=>{
+      const row=document.createElement('div'); row.className='relphi-snap-row';
+      const toggle=document.createElement('label'); toggle.className='relphi-snap-toggle';
+      if(input)toggle.appendChild(input);
+      const text=document.createElement('span');text.textContent=label;toggle.appendChild(text);
+      const stepper=document.createElement('div');stepper.className='relphi-snap-stepper';
+      [minus,value,plus].filter(Boolean).forEach(node=>stepper.appendChild(node));
+      row.append(toggle,stepper); return row;
+    };
+    snaps.append(
+      snapRow(snap,'Align',snapMinus,snapValue,snapPlus),
+      snapRow(rotate,'Rotation snap',rotateMinus,rotateValue,rotatePlus)
+    );
+    if(resetLayout){
+      resetLayout.textContent='Reset layout';
+      resetLayout.title='Make all cards the same size and set them side by side.';
+      resetLayout.setAttribute('aria-label','Reset layout. Make all cards the same size and set them side by side.');
+      snaps.appendChild(resetLayout);
+    }
     section.appendChild(snaps);
 
     const background=document.createElement('div');
-    background.className='relphi-board-configuration-group';
+    background.className='relphi-board-configuration-group relphi-board-background';
     background.innerHTML='<strong>Background</strong>';
-    if(envelopeColor){const row=document.createElement('div');row.className='relphi-tool-row';row.append(controlLabel(envelopeColor,'Card / placeholder'));background.appendChild(row);}
-    if(tableColor){const row=document.createElement('div');row.className='relphi-tool-row';row.append(controlLabel(tableColor,'Board'));background.appendChild(row);}
-    const imageRow=document.createElement('div');imageRow.className='relphi-tool-row';
-    if(tableUpload){tableUpload.textContent='Upload board image';imageRow.appendChild(tableUpload);}
-    if(tableReset){tableReset.textContent='Remove board image';imageRow.appendChild(tableReset);}
-    if(imageRow.children.length)background.appendChild(imageRow);
+
+    if(envelopeColor){
+      const placeholder=document.createElement('label');
+      placeholder.className='relphi-swatch-setting';
+      placeholder.appendChild(envelopeColor);
+      const label=document.createElement('span');label.textContent='Placeholder color';placeholder.appendChild(label);
+      background.appendChild(placeholder);
+    }
+
+    const mode=document.createElement('div');
+    mode.className='relphi-background-mode';
+    mode.innerHTML='<button type="button" data-background-mode="color" class="'+(!usingImage?'is-active':'')+'">Color</button><button type="button" data-background-mode="image" class="'+(usingImage?'is-active':'')+'">Image</button>';
+    background.appendChild(mode);
+
+    const chooser=document.createElement('div');
+    chooser.className='relphi-background-chooser';
+    if(!usingImage){
+      const colorRow=document.createElement('label');colorRow.className='relphi-swatch-setting';
+      if(tableColor)colorRow.appendChild(tableColor);
+      const label=document.createElement('span');label.textContent='Board color';colorRow.appendChild(label);
+      chooser.appendChild(colorRow);
+      const recents=document.createElement('div');recents.className='relphi-background-recents';recents.setAttribute('aria-label','Recent board colors');
+      const colors=recentBoardColors();
+      (colors.length?colors:[String(snapshot.rowTableColor||'#7d1f28')]).forEach(color=>{
+        const button=document.createElement('button');button.type='button';button.className='relphi-recent-color';button.title=color;button.setAttribute('aria-label','Use recent color '+color);button.style.background=color;
+        button.addEventListener('click',()=>{if(tableColor){tableColor.value=color;tableColor.dispatchEvent(new Event('input',{bubbles:true}));tableColor.dispatchEvent(new Event('change',{bubbles:true}));}rememberBoardColor(color);setTimeout(()=>{ensureBoardChrome(root);renderBoardConfiguration(root);},0);});
+        recents.appendChild(button);
+      });
+      chooser.appendChild(recents);
+    }else{
+      if(tableUpload){tableUpload.textContent='Choose image';chooser.appendChild(tableUpload);}
+      const recents=document.createElement('div');recents.className='relphi-background-image-recents';recents.setAttribute('aria-label','Recent board images');
+      recentBoardImages().forEach((item,index)=>{
+        const button=document.createElement('button');button.type='button';button.className='relphi-recent-image';button.title=item.name||('Recent image '+(index+1));button.style.backgroundImage='url("'+item.data.replace(/"/g,'%22')+'")';
+        button.addEventListener('click',()=>{const bridge=optionsBridge(),snap=bridge?.capture?.();if(!bridge||!snap)return;snap.rowTableImage=item.data;bridge.restore(snap);setTimeout(()=>{ensureBoardChrome(root);renderBoardConfiguration(root);},0);});
+        recents.appendChild(button);
+      });
+      if(recents.children.length)chooser.appendChild(recents);
+    }
+    background.appendChild(chooser);
+
+    const defaultRow=document.createElement('div');defaultRow.className='relphi-background-default-row';
+    const savedDefault=boardBackgroundDefault();
+    defaultRow.innerHTML='<span>Default: '+(savedDefault.mode==='image'?'image':savedDefault.color)+'</span><button type="button">Use current as default</button>';
+    defaultRow.querySelector('button')?.addEventListener('click',()=>{
+      const snap=currentSnapshot()||{};
+      const next=String(snap.rowTableImage||'')
+        ? {mode:'image',color:String(snap.rowTableColor||'#7d1f28'),image:String(snap.rowTableImage||'')}
+        : {mode:'color',color:String(snap.rowTableColor||'#7d1f28'),image:''};
+      writeBoardBackgroundDefault(next);
+      if(next.mode==='color')rememberBoardColor(next.color);else rememberBoardImage(next.image,'Default');
+      ensureBoardChrome(root);renderBoardConfiguration(root);
+    });
+    background.appendChild(defaultRow);
     section.appendChild(background);
+
+    mode.querySelectorAll('[data-background-mode]').forEach(button=>button.addEventListener('click',()=>{
+      const next=button.dataset.backgroundMode;
+      const bridge=optionsBridge(),snap=bridge?.capture?.();if(!bridge||!snap)return;
+      if(next==='color'){
+        if(snap.rowTableImage)rememberBoardImage(snap.rowTableImage,'Recent image');
+        snap.rowTableImage='';
+      }else{
+        const recent=recentBoardImages()[0]||null;
+        if(!snap.rowTableImage&&recent)snap.rowTableImage=recent.data;
+      }
+      bridge.restore(snap);
+      setTimeout(()=>{ensureBoardChrome(root);renderBoardConfiguration(root);},0);
+    }));
+
+    tableColor?.addEventListener('change',()=>{rememberBoardColor(tableColor.value);setTimeout(()=>ensureBoardChrome(root),0);},{once:true});
+    tableFile?.addEventListener('change',()=>{
+      const file=tableFile.files?.[0];if(!file)return;
+      const reader=new FileReader();
+      reader.addEventListener('load',()=>{rememberBoardImage(String(reader.result||''),file.name);setTimeout(()=>{ensureBoardChrome(root);renderBoardConfiguration(root);},80);},{once:true});
+      reader.readAsDataURL(file);
+    },{once:true});
   }
 
   function renderFreeSettings(root=panel()) {
@@ -751,6 +894,7 @@
     freeSettingsSession=null;
     settingsBaseline=null;
     settingsOpen=false;
+    boardConfigurationOpen=false;
     root.querySelector('.relphi-reading-options-drawer')?.remove();
     root.querySelector('.relphi-free-settings')?.remove();
     setBoardMode(root,craftedReadingActive||boardHasCraftedStructure(root)?'crafted':'board');
@@ -774,6 +918,7 @@
     boardSetupConfirmed=true;
     activeCraftedPath='';
     settingsOpen=false;
+    boardConfigurationOpen=false;
     settingsMode='free';
     optionsSession=null;
     freeSettingsSession=null;
@@ -2054,6 +2199,21 @@
     const defaults=blankDraft();
     applyDrawSettings(defaults);
     writeStickerVisibility(false);
+    const bridge=optionsBridge();
+    const resetSnapshot=bridge?.capture?.();
+    if(bridge&&resetSnapshot){
+      const background=boardBackgroundDefault();
+      resetSnapshot.rowEnvelopeColor='#f3f0ea';
+      resetSnapshot.rowTableColor=background.color||'#7d1f28';
+      resetSnapshot.rowTableImage=background.mode==='image' ? String(background.image||'') : '';
+      resetSnapshot.rowSnapEnabled=true;
+      resetSnapshot.rowSnapGrid='one-eighth';
+      resetSnapshot.rowRotationSnapEnabled=true;
+      resetSnapshot.rowRotationSnapDegrees=15;
+      resetSnapshot.rowEnvelopeLayout={};
+      resetSnapshot.rowCardTransforms={};
+      bridge.restore(resetSnapshot);
+    }
 
     const trigger=document.getElementById('relphiOpenDrawingBoardCurrent');
     if(trigger){
@@ -4021,6 +4181,17 @@
       return;
     }
     const root=panel();
+    const configurationTrigger=event.target.closest?.('#shortListPanel #relphiBoardConfigurationButton');
+    if(configurationTrigger&&root?.contains(configurationTrigger)){
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      if(boardConfigurationAllowed(root)){
+        boardConfigurationOpen=!boardConfigurationOpen;
+        renderBoardConfiguration(root);
+        ensureBoardChrome(root);
+      }
+      return;
+    }
     const settingsTrigger=event.target.closest?.('#shortListPanel #relphiBoardSettingsButton');
     if(settingsTrigger&&root?.contains(settingsTrigger)){
       event.preventDefault();
