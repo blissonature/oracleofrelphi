@@ -495,7 +495,7 @@ function hierarchicalPatterns(source){
   list.forEach(pattern=>pattern.nested.sort((a,b)=>a.maxPhase-b.maxPhase||a.meanPhase-b.meanPhase));
   return list.filter(pattern=>!parentFor.has(pattern.key));
 }
-function rawPatternsForResults(){return configurationFocusActive()?selectedPatternsForVisibility():patterns}
+function rawPatternsForResults(){return selectedPatternsForVisibility()}
 function patternsForResults(){return hierarchicalPatterns(rawPatternsForResults())}
 
 let configurationCopyTimer=0,configurationExportBusy=false,configurationExportLibrary=null;
