@@ -77,7 +77,7 @@
     owner.querySelectorAll('[data-house-choice]').forEach(updateChoice);
     if (!owner.contains(menu)) menu.querySelectorAll('[data-house-choice]').forEach(updateChoice);
     const status = owner.querySelector('[data-house-filter-summary]');
-    if (status) status.textContent = combinedSummary();
+    if (status) { const value=combinedSummary(); status.textContent = value === 'All' ? 'Houses' : value; }
   }
 
   function choice(scope, target, kind, rowLabel) {
