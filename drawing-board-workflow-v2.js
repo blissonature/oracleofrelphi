@@ -1576,13 +1576,18 @@
     const fullyVisible=bridgeRect.top>=bodyRect.top+pad && bridgeRect.bottom<=bodyRect.bottom-pad;
     if(fullyVisible)return true;
     const targetTop=body.scrollTop+(bridgeRect.top-bodyRect.top)-Math.max(pad,(bodyRect.height-bridgeRect.height)/2);
-    body.scrollTo({top:Math.max(0,targetTop),behavior:'smooth'});
+    // This runs during the same DOM update as the rerender. Never animate it:
+    // delayed/smooth correction lets the new drawer visibly flash at scrollTop 0.
+    body.scrollTop=Math.max(0,targetTop);
     return true;
   }
 
-  function renderOptions(root = panel()) {
+  function renderOptions(root = panel(), {preserveScroll=true} = {}) {
     if (!root || !optionsSession) return;
-    root.querySelector('.relphi-reading-options-drawer')?.remove();
+    const previousDrawer=root.querySelector('.relphi-reading-options-drawer');
+    const previousBody=previousDrawer?.querySelector('.relphi-options-body');
+    const previousScrollTop=preserveScroll&&previousBody ? previousBody.scrollTop : null;
+    previousDrawer?.remove();
     const modeTabs = root.querySelector('.drawing-board-mode-switch');
     if (!modeTabs) return;
     const session=optionsSession;
@@ -1625,20 +1630,25 @@
       '</div>'+
       '<div class="relphi-options-commitbar"><button type="button" id="relphiCancelOptions">Cancel</button><span></span><button type="button" id="relphiApplyOptions" class="primary" '+(session.path==='surface'&&!selectedSurfaceKinds(session).length?'disabled':'')+'>Confirm</button></div>';
     modeTabs.insertAdjacentElement('afterend',drawer);
+    const nextBody=drawer.querySelector('.relphi-options-body');
+    if(nextBody&&Number.isFinite(previousScrollTop))nextBody.scrollTop=previousScrollTop;
     setBoardMode(root,'referents');
-    if(session.path==='astro' && !session.astrologyAnalysis){
-      requestAnimationFrame(()=>requestAnimationFrame(()=>keepAstrologyConnectorInView(root)));
-    }
+    // Resolve the final Astrological viewport before this DOM update paints.
+    // Path changes may choose a new landing position; in-path rerenders preserve it.
+    if(session.path==='astro' && !session.astrologyAnalysis)keepAstrologyConnectorInView(root);
 
     drawer.querySelectorAll('[data-referent-path]').forEach(button=>button.addEventListener('click',()=>{
       const nextPath=button.dataset.referentPath || '';
       session.path=nextPath;
       session.suggestions=[];
       session.suggestionPacks=[];
-      renderOptions(root);
+      renderOptions(root,{preserveScroll:false});
     }));
 
-    drawer.querySelector('[data-add-astrology-sky]')?.addEventListener('click',()=>{session.astrologySkyCount=Math.min(2,(Number(session.astrologySkyCount)||0)+1);renderOptions(root);});
+    drawer.querySelector('[data-add-astrology-sky]')?.addEventListener('click',()=>{
+      session.astrologySkyCount=Math.min(2,(Number(session.astrologySkyCount)||0)+1);
+      renderOptions(root,{preserveScroll:true});
+    });
     drawer.querySelectorAll('[data-astrology-evidence]').forEach(box=>box.addEventListener('change',()=>{const disabled=new Set(session.astrologyDisabledEvidence||[]);if(box.checked)disabled.delete(box.dataset.astrologyEvidence);else disabled.add(box.dataset.astrologyEvidence);session.astrologyDisabledEvidence=[...disabled];renderOptions(root);}));
     drawer.querySelector('[data-astrology-own-question]')?.addEventListener('input',event=>{session.astrologyOwnQuestion=event.target.value;});
     drawer.querySelector('[data-astrology-own-pack]')?.addEventListener('change',event=>{session.astrologyOwnPack=event.target.value||'';});
