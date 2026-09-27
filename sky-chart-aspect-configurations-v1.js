@@ -90,10 +90,30 @@ function resultSource(payload){const source=[payload?.placements,payload?.positi
 function resultRead(slot){try{return JSON.parse(localStorage.getItem(RESULT_KEYS[slot])||'null')}catch(_){return null}}
 function resultLongitude(item){if(Number.isFinite(Number(item?.longitude)))return resultNorm(item.longitude);const signs=['aries','taurus','gemini','cancer','leo','virgo','libra','scorpio','sagittarius','capricorn','aquarius','pisces'],sign=signs.indexOf(String(item?.sign||item?.zodiac||'').trim().toLowerCase());return sign<0?NaN:resultNorm(sign*30+Number(item?.degree||item?.degrees||0)+Number(item?.minute||item?.minutes||0)/60+Number(item?.second||item?.seconds||0)/3600)}
 function resultCanonical(key,item){const registry=window.RelphiGlyphRegistry;for(const candidate of[item?.glyphId,item?.id,item?.name,item?.label,item?.body,item?.planet,item?.point,key]){if(!candidate)continue;const raw=String(candidate).trim(),alias=RESULT_ALIASES[raw.toLowerCase()]||raw,entry=registry?.resolve?.(alias)||registry?.get?.(alias);if(entry)return entry.id}return''}
+function resultHouseFor(sky,id,item){
+  const direct=Number(item?.house??item?.houseNumber??item?.house_number);
+  if(Number.isFinite(direct)&&direct>=1&&direct<=12)return Math.trunc(direct);
+  for(const row of document.querySelectorAll('.sky-foundation-relationship-row')){
+    const leftSky=String(row.dataset.leftSky||'').toUpperCase(),rightSky=String(row.dataset.rightSky||'').toUpperCase();
+    const leftId=String(row.dataset.leftPlacement||''),rightId=String(row.dataset.rightPlacement||'');
+    if(leftSky===sky&&leftId===id){const h=Number(row.dataset.leftHouse);if(Number.isFinite(h)&&h>=1&&h<=12)return Math.trunc(h)}
+    if(rightSky===sky&&rightId===id){const h=Number(row.dataset.rightHouse);if(Number.isFinite(h)&&h>=1&&h<=12)return Math.trunc(h)}
+  }
+  return null;
+}
 function resultVertexRecord(key){
   const [sky,id]=String(key||'').split(':');if(!RESULT_KEYS[sky]||!id)return null;
-  for(const [sourceKey,item] of resultSource(resultRead(sky))){if(!item||typeof item!=='object'||Array.isArray(item))continue;const canonical=resultCanonical(sourceKey,item);if(canonical!==id)continue;const value=resultLongitude(item);if(Number.isFinite(value))return{sky,id,value,label:placementLabel(id)}}
+  for(const [sourceKey,item] of resultSource(resultRead(sky))){if(!item||typeof item!=='object'||Array.isArray(item))continue;const canonical=resultCanonical(sourceKey,item);if(canonical!==id)continue;const value=resultLongitude(item);if(Number.isFinite(value)){const sign=Math.floor(resultNorm(value)/30),house=resultHouseFor(sky,id,item);return{sky,id,value,sign,house,label:placementLabel(id)}}}
   return null;
+}
+function resultSignColor(index){
+  const palette=window.RelphiSkyWheelSpec?.COLORS;
+  const fallback=['#e53935','#f06b32','#f39a2e','#f5be3d','#f1dc43','#a9cf46','#43a85b','#2ca69b','#3285c7','#5961c8','#8c4fb4','#bd438e'];
+  const n=Math.trunc(Number(index));return n>=0&&n<12?(Array.isArray(palette)&&palette.length>=12?palette[n]:fallback[n]):'#777';
+}
+function resultHouseColor(house){
+  const colors=window.RelphiHouseMedallion?.colors;
+  const n=Math.trunc(Number(house));return n>=1&&n<=12&&Array.isArray(colors)&&colors.length>=12?colors[n-1]:'#777';
 }
 function resultPoint(value,radius=47){const angle=(resultNorm(value)-180)*Math.PI/180;return{x:60+radius*Math.cos(angle),y:60+radius*Math.sin(angle)}}
 function placementLabel(id){return PLACEMENT_SYMBOLS[id]||window.RelphiGlyphRegistry?.get?.(id)?.fallback||String(id||'').replace(/-/g,' ')}
@@ -286,13 +306,24 @@ function configurationMatchRow(pattern,index){
   const placements=document.createElement('span');
   placements.className='sky-configuration-match-placements';
   pattern.vertices.forEach(key=>{
-    const item=vertexLabel(key);
+    const item=vertexLabel(key),record=resultVertexRecord(key);
+    const participant=document.createElement('span');
+    participant.className='sky-configuration-match-participant';
+    participant.dataset.sky=item.sky;
+    if(record){participant.dataset.sign=String(record.sign);if(record.house)participant.dataset.house=String(record.house)}
+    const signRail=document.createElement('span');
+    signRail.className='sky-configuration-match-rail sky-configuration-match-rail-sign';
+    signRail.style.background=resultSignColor(record?.sign);
     const glyph=document.createElement('span');
     glyph.className='sky-configuration-match-glyph';
     glyph.dataset.canonicalPlacement=item.id;
     glyph.dataset.sky=item.sky;
     glyph.setAttribute('aria-label','Sky '+item.sky+' '+placementWord(item.id));
-    placements.appendChild(glyph);
+    const houseRail=document.createElement('span');
+    houseRail.className='sky-configuration-match-rail sky-configuration-match-rail-house';
+    houseRail.style.background=resultHouseColor(record?.house);
+    participant.append(signRail,glyph,houseRail);
+    placements.appendChild(participant);
   });
 
   const meta=document.createElement('span');
@@ -464,7 +495,7 @@ function hierarchicalPatterns(source){
   list.forEach(pattern=>pattern.nested.sort((a,b)=>a.maxPhase-b.maxPhase||a.meanPhase-b.meanPhase));
   return list.filter(pattern=>!parentFor.has(pattern.key));
 }
-function rawPatternsForResults(){return configurationFocusActive()?selectedPatternsForVisibility():patterns}
+function rawPatternsForResults(){return selectedPatternsForVisibility()}
 function patternsForResults(){return hierarchicalPatterns(rawPatternsForResults())}
 
 let configurationCopyTimer=0,configurationExportBusy=false,configurationExportLibrary=null;
@@ -473,7 +504,8 @@ function configurationVertexText(key){
   if(!record)return 'Sky '+item.sky+' '+item.label;
   const signNames=['Aries','Taurus','Gemini','Cancer','Leo','Virgo','Libra','Scorpio','Sagittarius','Capricorn','Aquarius','Pisces'];
   const sign=Math.floor(resultNorm(record.value)/30),within=resultNorm(record.value)-sign*30,degree=Math.floor(within),minute=Math.floor((within-degree)*60+1e-7);
-  return 'Sky '+item.sky+' '+item.label+' '+degree+'°'+String(minute).padStart(2,'0')+'′ '+signNames[sign];
+  const house=Number(record.house),houseText=Number.isFinite(house)&&house>=1&&house<=12?' · H'+Math.trunc(house):'';
+  return 'Sky '+item.sky+' '+item.label+' '+degree+'°'+String(minute).padStart(2,'0')+'′ '+signNames[sign]+houseText;
 }
 function serializeConfigurationPattern(pattern){
   const type=TYPE_MAP.get(pattern.type)?.label||pattern.type;

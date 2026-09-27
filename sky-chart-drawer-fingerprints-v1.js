@@ -47,17 +47,33 @@ function placementMount(slot){return window.RelphiSkyCardShell?.get?.(slot)?.pla
 function cardHitsMount(slot){return window.RelphiSkyCardShell?.get?.(slot)?.cardHitsFingerprint||null}
 
 function temporalTrace(sourceSvg){
+  if(sourceSvg?.dataset?.canonicalSourceReady!=='true'||sourceSvg?.dataset?.canonicalHeptagramReady!=='true')return null;
   const root=svg('svg',{
-    viewBox:sourceSvg.getAttribute('viewBox')||'8 8 344 344',
+    viewBox:sourceSvg.getAttribute('viewBox')||'0 0 360 360',
     preserveAspectRatio:'xMidYMid meet',
     class:'sky-where-fingerprint-heptagram',
     'aria-hidden':'true',
     focusable:'false'
   });
-  const week=Array.from(sourceSvg.querySelectorAll('.sky-ph-week-segment'));
+
+  // The collapsed fingerprint is a temporal trace, not a miniature copy of the
+  // entire heptagram. Keep only completed days, the current partial day, the
+  // current partial hour, and the active day/hour ruler glyphs.
+  sourceSvg.querySelectorAll('.sky-ph-week-segment.past,.sky-ph-week-segment.current').forEach(line=>{
+    const clone=line.cloneNode(true);clone.removeAttribute('id');root.appendChild(clone);
+  });
   const hour=sourceSvg.querySelector('.sky-ph-hour-segment.current');
-  week.forEach(line=>{const clone=line.cloneNode(true);clone.removeAttribute('id');root.appendChild(clone)});
   if(hour){const clone=hour.cloneNode(true);clone.removeAttribute('id');root.appendChild(clone)}
+
+  const activePlanets=new Set();
+  sourceSvg.querySelectorAll('.sky-ph-planet.is-day-ruler,.sky-ph-planet.is-hour-ruler').forEach(group=>activePlanets.add(group));
+  activePlanets.forEach(group=>{
+    const clone=group.cloneNode(true);
+    clone.querySelectorAll('[id]').forEach(node=>node.removeAttribute('id'));
+    clone.querySelectorAll('text').forEach(node=>node.remove());
+    root.appendChild(clone);
+  });
+
   return root.childElementCount?root:null;
 }
 function renderWhere(slot,payload){

@@ -54,7 +54,7 @@ function markup(slot,hasProfile){
     <details class="sky-card-drawer" data-sky-drawer="where">
       <summary class="sky-card-drawer-summary" tabindex="-1" aria-hidden="true"><span>Where and When</span></summary>
       <div class="sky-card-drawer-body" id="skyDrawerBody${slot}Where" data-sky-drawer-mount="where">
-        <section class="sky-where-when-summary" data-sky-where-summary="${slot}"${hasProfile?'':' hidden'}><a class="sky-ph-jump" data-sky-heptagram-frame="${slot}" href="planetaryhours.html" aria-label="Open this Sky in Planetary Hours"><svg class="sky-ph-heptagram" data-sky-heptagram="${slot}" data-canonical-source-ready="pending" viewBox="8 8 344 344" role="img" aria-label="Planetary Hours heptagram for Sky ${slot}"></svg></a></section>
+        <section class="sky-where-when-summary" data-sky-where-summary="${slot}"${hasProfile?'':' hidden'}><span class="sky-ph-jump" data-sky-heptagram-frame="${slot}"><svg class="sky-ph-heptagram" data-sky-heptagram="${slot}" data-canonical-source-ready="pending" viewBox="8 8 344 344" role="img" aria-label="Planetary Hours heptagram for Sky ${slot}"></svg></span></section>
         <div class="sky-where-when-editor-mount" id="skyWhereWhenEditor${slot}" data-ww-editor-mount="${slot}" hidden></div>
       </div>
     </details>

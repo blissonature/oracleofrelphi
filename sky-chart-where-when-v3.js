@@ -319,6 +319,11 @@ function partialLine(parent,a,b,fraction,className){const value=Math.max(0,Math.
 async function drawHeptagram(svg,p){
   if(!window.RelphiSkyHeptagramGeometry?.correct||!window.RelphiSkyHeptagramCanonical?.correct)throw new Error('The final heptagram rendering pipeline is unavailable.');
   const dt=window.luxon.DateTime.fromISO(p.instant||p.dateTime,{zone:p.timeZone,setZone:true}),instant=dt.toUTC().toJSDate(),frame=solarFrame(instant,Number(p.latitude),Number(p.longitude),p.timeZone),dayKey=weekdayRuler(frame.start,p.timeZone),rows=planetaryHourRows(frame,dayKey),currentIndex=Math.max(0,rows.findIndex(row=>instant>=row.start&&instant<row.end)),current=rows[currentIndex]||rows[0],weekIndex=Math.max(0,WEEK_PATH.indexOf(dayKey)),dayFraction=Math.max(0,Math.min(1,(instant-frame.start)/(frame.end-frame.start))),hourFraction=Math.max(0,Math.min(1,(instant-current.start)/(current.end-current.start)));
+  delete svg.dataset.canonicalSourceReady;
+  delete svg.dataset.canonicalHeptagramReady;
+  delete svg.dataset.canonicalHeptagramBusy;
+  delete svg.dataset.heptagramGeometryV6;
+  delete svg.dataset.heptagramGeometryV7;
   svg.replaceChildren();svg.appendChild(svgElement('circle',{cx:180,cy:180,r:118,class:'sky-ph-circle'}));svg.appendChild(svgElement('circle',{cx:180,cy:180,r:78,class:'sky-ph-guide'}));
   for(let index=0;index<7;index++){const from=heptagramPoint(WEEK_PATH[index],118),to=heptagramPoint(WEEK_PATH[index+1],118);line(svg,from,to,`sky-ph-week-segment ${index<weekIndex?'past':'future'}`);if(index===weekIndex)partialLine(svg,from,to,dayFraction,'sky-ph-week-segment current')}
   rows.forEach((row,index)=>{const from=heptagramPoint(row.ruler,78),to=heptagramPoint(rows[(index+1)%rows.length].ruler,78);line(svg,from,to,`sky-ph-hour-segment ${index<currentIndex?'past':'future'}`);if(index===currentIndex)partialLine(svg,from,to,hourFraction,'sky-ph-hour-segment current')});
@@ -329,7 +334,7 @@ function planetaryHoursHref(p){const params=new URLSearchParams();params.set('ph
 function summarySignature(p){return[p.instant||p.dateTime,p.latitude,p.longitude,p.timeZone].join('|')}
 async function renderSummary(slot,force=false){
   const state=cardState[slot];if(state.rendering){state.rerender=true;return}state.rendering=true;
-  try{do{state.rerender=false;const p=profileFor(slot),refs=shell(slot);if(!refs)break;if(!completeProfile(p)){refs.summary.hidden=true;state.summarySignature='';break}refs.summary.hidden=false;const frame=refs.heptagram?.closest?.('[data-sky-heptagram-frame]');if(frame){frame.href=planetaryHoursHref(p);frame.title='Open this Sky in Planetary Hours'}const signature=summarySignature(p);if(!force&&signature===state.summarySignature&&refs.heptagram.dataset.canonicalSourceReady==='true')continue;state.summarySignature=signature;refs.heptagram.setAttribute('viewBox',window.matchMedia?.('(max-width:620px)')?.matches?'0 -8 360 368':'0 0 360 360');try{await drawHeptagram(refs.heptagram,p)}catch(error){state.summarySignature='';console.error(error)}}while(state.rerender)}finally{state.rendering=false}
+  try{do{state.rerender=false;const p=profileFor(slot),refs=shell(slot);if(!refs)break;if(!completeProfile(p)){refs.summary.hidden=true;state.summarySignature='';break}refs.summary.hidden=false;const signature=summarySignature(p);if(!force&&signature===state.summarySignature&&refs.heptagram.dataset.canonicalSourceReady==='true')continue;state.summarySignature=signature;refs.heptagram.setAttribute('viewBox',window.matchMedia?.('(max-width:620px)')?.matches?'0 -8 360 368':'0 0 360 360');try{await drawHeptagram(refs.heptagram,p)}catch(error){state.summarySignature='';console.error(error)}}while(state.rerender)}finally{state.rendering=false}
 }
 function scheduleSummary(slot,force=false){const state=cardState[slot];if(state.rendering){state.rerender=true;return}void renderSummary(slot,force)}
 
