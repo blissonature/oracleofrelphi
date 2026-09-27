@@ -457,7 +457,7 @@
       enhance(root);
       if (fit) setTimeout(zoomExtents, 0);
     } else {
-      closeFocus({ acknowledge:true });
+      closeFocus({ acknowledge:true, advanceSurface:false });
       optionsSession = null;
       root.hidden = true;
       trigger.textContent = 'Open Drawing Board';
@@ -2400,7 +2400,7 @@
       return false;
     }
     root.querySelector('.relphi-board-toast')?.remove();
-    closeFocus({acknowledge:true});
+    closeFocus({acknowledge:true,advanceSurface:false});
     return openSurfaceQuestionComposer(unpackSuggestionsForCard(index),{
       title:'Unpack this card',
       intro:'Choose a suggested question or write your own. Nothing is added to the reading until you approve it.',
@@ -2419,7 +2419,7 @@
     if (!session || session.completionShown || !surfaceReadingComplete(root)) return false;
     session.completionShown=true;
     closeAttune();
-    closeFocus({acknowledge:true});
+    closeFocus({acknowledge:true,advanceSurface:false});
     setTimeout(()=>{
       const next=panel();
       if (!next) return;
@@ -2894,7 +2894,7 @@
     const snap=currentSnapshot() || {};
     return positionRoleAt(index,snap)==='crossing' || positionIdAt(index,snap)==='crossing';
   }
-  function closeFocus({acknowledge=true}={}) {
+  function closeFocus({acknowledge=true,advanceSurface=true}={}) {
     const leaving=focusIndex;
     document.querySelector('.relphi-focus-reader')?.remove();
     document.body.classList.remove('relphi-focus-open');
@@ -2905,6 +2905,16 @@
       craftedReadingActive=true;
       optionsSession=null;
       setBoardMode(panel(),'crafted');
+      if(acknowledge && advanceSurface && leaving>=0){
+        setTimeout(()=>{
+          const root=panel(),session=surfaceReadingSession;
+          if(!root||!session||session.composerOpen||document.querySelector('.relphi-focus-reader'))return;
+          // Closing/advancing Focus is the acknowledgement boundary. Never let
+          // render/enhance race ahead of the card the user is still reading.
+          if(nextUndrawnNativeIndex(root)!=null)return;
+          maybeGenerateSurfaceFollowups(root);
+        },0);
+      }
     }
   }
   function navigateFocusTo(nativeIndex) {
@@ -2925,13 +2935,6 @@
     if (delta>0 && current>=order.length-1) {
       if (surfaceReadingSession) {
         closeFocus({acknowledge:true});
-        setTimeout(()=>{
-          const root=panel();
-          maybeGenerateSurfaceFollowups(root);
-          const next=nextUndrawnNativeIndex(root);
-          if(next!=null)openAttune(next);
-          else revealCompletedSurfaceBoard(root);
-        },0);
       } else if (configuredPositionCount()===0) drawNextLogical(panel());
       return;
     }
@@ -3151,10 +3154,8 @@
     installBoardCapture(root);
     if (optionsSession) renderOptions(root);
     else root.querySelector('.relphi-reading-options-drawer')?.remove();
-    // A newly drawn surface card must enter Focus before the surface engine
-    // advances the reading. Otherwise enhance() can see the completed initial
-    // set, append followups, and open the next Attune before pending Focus runs.
-    if (surfaceReadingSession && pendingFocusIndex==null) maybeGenerateSurfaceFollowups(root);
+    // Surface progression is user-paced. Rendering may open the newly drawn
+    // card in Focus, but only leaving that Focus may advance to follow-up questions.
     if (recursionActive()) {
       const session=ensureRecursionSession();
       session.complete=recursionEarthIndex()>=0 && !!cardAt(recursionEarthIndex(),root);
