@@ -1797,3 +1797,12 @@ body.relphi-attune-open{overflow:hidden!important}
     justify-self:start!important;
   }
 }
+
+
+/* Match each Snap option to the exact desktop column width used by Reversals / Repeats. */
+@media(min-width:701px){
+  #shortListPanel .relphi-board-configuration-group:has(.relphi-snap-control){
+    width:min(22.5rem,100%)!important;
+    max-width:22.5rem!important;
+  }
+}
