@@ -685,3 +685,7 @@ body.relphi-attune-open{overflow:hidden!important}
 #shortListPanel .relphi-astrology-house-system{display:inline-grid!important;width:auto!important;max-width:100%!important;justify-items:start!important}
 #shortListPanel .relphi-astrology-house-system select{width:auto!important;min-width:10.5rem!important;max-width:16rem!important;padding:.48rem 2.1rem .48rem .72rem!important;border:1px solid #111!important;border-radius:7px!important;background:#fff!important;color:#111!important;font-family:'Montserrat',sans-serif!important;font-size:.72rem!important;font-weight:700!important;box-shadow:none!important}
 #shortListPanel .relphi-astrology-house-system select:focus{outline:2px solid #dc1f18!important;outline-offset:2px!important}
+
+#shortListPanel .relphi-astrology-question-head{display:flex!important;align-items:center!important;justify-content:space-between!important;gap:.75rem!important}
+#shortListPanel .relphi-astrology-question-head h4{margin:0!important}
+#shortListPanel .relphi-astrology-question-head label{display:inline-flex!important;align-items:center!important;gap:.35rem!important;font-size:.68rem!important;font-weight:800!important;white-space:nowrap!important}
