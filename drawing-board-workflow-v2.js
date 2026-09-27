@@ -2415,12 +2415,12 @@
           return row;
         });
         if(!chosen.length){closeSurfaceQuestionComposer({complete:completeOnCancel});return;}
-        const missingTags=chosen.find(row=>row.pack==='tags' && !(row.keywordTags||[]).length && (row.linkTo===''||row.linkTo==null));
-        if(missingTags){
-          const originalIndex=rows.indexOf(missingTags);
-          const target=originalIndex>=0?composer.querySelector('[data-surface-composer-row="'+originalIndex+'"] [data-surface-tag-query]'):composer.querySelector('[data-surface-tag-query]');
+        const missingChosenIndex=chosen.findIndex(row=>row.pack==='tags' && !(row.keywordTags||[]).length && (row.linkTo===''||row.linkTo==null));
+        if(missingChosenIndex>=0){
+          const originalIndex=selectedIndices[missingChosenIndex];
+          const target=composer.querySelector('[data-surface-composer-row="'+originalIndex+'"] [data-surface-tag-query]')||composer.querySelector('[data-surface-tag-query]');
           target?.focus();
-          showBoardToast('Choose at least one keyword or tag for every Keywords / Tags question.',{title:'Keywords / Tags',duration:4200});
+          target?.scrollIntoView?.({block:'center'});
           return;
         }
         const before=(currentSnapshot()?.shortListPositionLabels||[]).length;
