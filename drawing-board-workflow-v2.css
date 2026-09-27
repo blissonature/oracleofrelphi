@@ -1,3 +1,4 @@
+#shortListPanel:not([hidden]):not(.relphi-board-ready){visibility:hidden!important}
 /* Oracle of Relphi Drawing Board v3: one static enhancement surface. */
 /* Native Drawing Board controls stay invisible until the unified owner converts them.
    The red board remains visible, so there is no board-level FOUC. */
