@@ -3611,6 +3611,9 @@
     document.body.classList.remove('relphi-focus-open');
     focusIndex=-1;
     recursionPortalLevel=0;
+    // Returning from Focus is a board reframe boundary. Recompute extents after
+    // the overlay is gone so newly drawn / positioned cards are brought into view.
+    requestAnimationFrame(()=>zoomExtents());
     if (acknowledge && isCrossingPosition(leaving)) acknowledgeCelticCrossing();
     if(surfaceReadingSession && panel()){
       craftedReadingActive=true;
