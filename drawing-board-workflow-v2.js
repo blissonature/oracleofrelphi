@@ -1094,8 +1094,27 @@
   }
   function astrologyEvidenceKey(item){return item.kind+':'+String(item.id||item.value||'').toLowerCase()}
   function astrologyQuestionSuggestions(analysis,enabledKeys) {
-    const enabled=item=>!enabledKeys||enabledKeys.has(astrologyEvidenceKey(item)),out=[],push=(text,score,source,evidence)=>{if(text&&!out.some(q=>q.text===text))out.push({text,score,source,evidence})};
-    analysis.evidence.filter(enabled).forEach(e=>{if(e.kind==='pattern'){const p=e.raw;if(p.type==='sign')push('What is the '+p.value+' concentration emphasizing?',90+p.score,'pattern',e);else if(p.type==='mode')push('What is the '+p.value.toLowerCase()+' emphasis asking to be handled differently?',84+p.score,'pattern',e);else if(p.type==='element')push('What is the concentration of '+p.value.toLowerCase()+' bringing to the foreground?',82+p.score,'pattern',e);else if(p.type==='decan')push('Why is '+p.value+' repeating across this sky?',80+p.score,'pattern',e);else if(p.type==='cluster')push('What is the '+p.value+' cluster concentrating into one issue?',92+p.score,'cluster',e);else if(p.type==='configuration')push('What is the '+p.value+' configuration organizing in this reading?',96+p.score,'configuration',e)}else if(e.kind==='hit')push('What is '+e.value+' activating in this sky?',70+Math.min(20,e.count*3),'card-hit',e);else if(e.kind==='ruler')push('What is the repeated emphasis on '+e.value+' ruling in this reading?',76+Math.min(16,e.count),'ruler',e);else if(e.kind==='tag')push('What does the repeated theme of '+e.value+' add to the inquiry?',68+Math.min(14,e.count),'tag',e);else if(e.kind==='polarity'){const pd=analysis.polarityDiagnostic;if(pd)push('What is the pull toward '+pd.sign+' revealing in this reading?',88+(pd.observed?8:0),'polarity-derived-sign',{...e,derivedSign:pd.sign,bin:pd.index+1,share:pd.share,excess:pd.excess,independentlyObserved:pd.observed,observedCount:pd.observedCount});else push('How does the '+e.value+' polarity balance shape the inquiry?',74,'polarity',e)}});
+    const enabled=item=>!enabledKeys||enabledKeys.has(astrologyEvidenceKey(item)),out=[];
+    const push=(text,score,source,evidence)=>{if(text&&!out.some(q=>q.text===text))out.push({text,score,source,evidence})};
+    // Evidence is not automatically a question. Only promote evidence whose meaning,
+    // consequence, synthesis, or activation remains unresolved by the sky itself.
+    analysis.evidence.filter(enabled).forEach(e=>{
+      if(e.kind==='pattern'){
+        const p=e.raw;
+        if(p.type==='sign') push('What is the '+p.value+' concentration emphasizing?',90+p.score,'pattern',e);
+        else if(p.type==='cluster') push('What is the '+p.value+' cluster concentrating into one issue?',92+p.score,'cluster',e);
+        else if(p.type==='configuration') push('What is the '+p.value+' configuration organizing in this reading?',96+p.score,'configuration',e);
+        // Mode, element, and decan concentrations are descriptive facts. Keep them
+        // as evidence for convergence detection; do not turn them into generic draws.
+      } else if(e.kind==='hit') {
+        push('What is '+e.value+' activating in this sky?',70+Math.min(20,e.count*3),'card-hit',e);
+      } else if(e.kind==='polarity') {
+        const pd=analysis.polarityDiagnostic;
+        if(pd) push('What is the pull toward '+pd.sign+' revealing in this reading?',88+(pd.observed?8:0),'polarity-derived-sign',{...e,derivedSign:pd.sign,bin:pd.index+1,share:pd.share,excess:pd.excess,independentlyObserved:pd.observed,observedCount:pd.observedCount});
+      }
+      // Repeated rulers and tags remain supporting evidence until another independent
+      // channel makes them a convergence. Repetition alone is not an open question.
+    });
     return out.sort((a,b)=>b.score-a.score).slice(0,16);
   }
   function astrologyAnalyzeResolved(skyA,skyB) {
