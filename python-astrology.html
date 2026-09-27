@@ -10,25 +10,36 @@
 :root{--py-red:#dc1f18;--py-ink:#111;--py-paper:#fffdfb;--py-soft:#f6f2ef}
 body{background:var(--py-paper);color:var(--py-ink)}
 .py-shell{max-width:1180px;margin:2rem auto;padding:0 1rem 4rem}
-.py-hero{text-align:center;max-width:840px;margin:0 auto 1.4rem}
+.py-hero{text-align:left;max-width:980px;margin:0 auto 1.2rem;padding:1rem 1.15rem;border-left:6px solid var(--py-red);background:#fff;border-radius:0 1.2rem 1.2rem 0}
+.py-hero .py-kicker{color:var(--py-red)}
+.py-hero .py-lede{max-width:760px;margin-bottom:.2rem}
 .py-hero h1{font-size:clamp(2.2rem,7vw,5rem);line-height:.94;margin:.15rem 0 .8rem}
 .py-hero .red{color:var(--py-red)}
 .py-kicker{font-weight:900;letter-spacing:.12em;text-transform:uppercase;font-size:.72rem}
 .py-lede{font-size:1.05rem;line-height:1.55}
 .py-start{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.8rem;margin:1rem 0 1.1rem}
-.py-start-card{border:1.5px solid #111;border-radius:1rem;background:#fff;padding:.9rem;text-align:left;cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,.04)}
+.py-start-card{border:1px solid rgba(17,17,17,.16);border-radius:1rem;background:#fff;padding:1rem;text-align:left;cursor:pointer;box-shadow:none}
+.py-start-card:first-child{border:2px solid var(--py-red)}
+.py-start-card:first-child::before{content:"BEST FIRST";display:inline-block;font-size:.64rem;font-weight:900;letter-spacing:.08em;color:#fff;background:var(--py-red);border-radius:999px;padding:.2rem .45rem;margin-bottom:.45rem}
 .py-start-card:hover,.py-start-card:focus{border-color:#dc1f18;outline:none}
 .py-start-card strong{display:block;font-size:1rem;margin-bottom:.25rem}
 .py-start-card span{display:block;color:#555;font-size:.84rem;line-height:1.35}
-.py-guide{border:1.5px solid #111;border-radius:1.2rem;background:#faf8f7;padding:.9rem 1rem;margin:0 0 1rem}
+.py-guide{border:0;border-radius:1.2rem;background:#f4f1ef;padding:1rem 1.1rem;margin:0 0 1.1rem}
+.py-guide>h2{font-size:1.45rem}
+.py-guide>p{max-width:760px}
 .py-guide h2{margin:.1rem 0 .4rem}
 .py-guide-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.65rem;margin-top:.7rem}
 .py-guide-item{background:#fff;border:1px solid rgba(17,17,17,.14);border-radius:.9rem;padding:.7rem}
 .py-guide-item b{display:block;margin-bottom:.2rem}
 .py-guide-item span{font-size:.82rem;color:#555;line-height:1.35}
-.py-grid{display:grid;grid-template-columns:minmax(230px,.72fr) minmax(0,1.5fr);gap:1rem;align-items:start}
+.py-grid{display:grid;grid-template-columns:minmax(0,1fr);gap:1rem;align-items:start}
+.py-map{order:2}
+.py-lab{order:1}
 .py-map,.py-lab{border:1.5px solid #111;border-radius:1.4rem;background:#fff;box-shadow:0 5px 18px rgba(0,0,0,.05)}
-.py-map{padding:.8rem;position:sticky;top:1rem;max-height:calc(100vh - 2rem);overflow:auto}
+.py-map{padding:.8rem;position:static;max-height:none;overflow:visible;border-color:rgba(17,17,17,.22)}
+.py-map-head h2{font-size:1.05rem;margin:.15rem 0}
+.py-map:not(.is-expanded) .py-course{display:none}
+.py-map:not(.is-expanded) #courseMap::before{content:"The full course map is tucked away until you want it.";display:block;color:#666;font-size:.84rem;padding:.35rem 0 .15rem}
 .py-map-head{display:flex;justify-content:space-between;align-items:center;gap:.5rem}
 .py-map-toggle{border:1px solid #111;border-radius:999px;background:#fff;padding:.35rem .6rem;font:inherit;font-weight:800;cursor:pointer}
 .py-map.is-collapsed .py-course{display:none}
@@ -42,11 +53,23 @@ body{background:var(--py-paper);color:var(--py-ink)}
 .py-course button{width:100%;text-align:left;border:0;background:transparent;padding:.3rem 0;cursor:pointer;font:inherit}
 .py-course-code{font-weight:900;color:var(--py-red);margin-right:.45rem}
 .py-course-theme{display:block;color:#555;font-size:.78rem;line-height:1.25;margin-top:.16rem}
-.py-lab{padding:1rem}
+.py-lab{padding:1.2rem;border:2px solid #111;box-shadow:0 8px 24px rgba(0,0,0,.06)}
+.py-lab h2{font-size:clamp(1.7rem,4vw,2.55rem);line-height:1.05}
+.py-summary{font-size:1.05rem;max-width:760px}
+.py-concept{display:inline-block;background:#111;color:#fff;border-radius:999px;padding:.35rem .65rem;font-size:.8rem;margin:.4rem 0 .8rem}
+.py-controls{max-width:720px}
+.py-graphic{min-height:22rem;border:0;background:#f7f4f2}
+.py-codewrap{margin-top:1rem}
+.py-code{border:0}
+.py-output{border:2px solid #111;background:#fff}
+.py-result{color:#dc1f18}
+.py-section-label{font-size:.68rem;font-weight:900;letter-spacing:.1em;text-transform:uppercase;color:#777;margin:1rem 0 .35rem}
+.py-controls-wrap{border-top:1px solid rgba(17,17,17,.12);padding-top:.1rem}
 .py-status{display:inline-block;border:1px solid #111;border-radius:999px;padding:.25rem .55rem;font-size:.72rem;font-weight:900;text-transform:uppercase;letter-spacing:.06em}
 .py-lesson-head{display:flex;justify-content:space-between;gap:.75rem;align-items:flex-start}
 .py-lesson-head h2{margin:.35rem 0}
-.py-why{border-left:4px solid #dc1f18;padding:.6rem .75rem;background:#fff7f4;border-radius:.45rem;margin:.8rem 0;line-height:1.45}
+.py-why{border-left:4px solid #dc1f18;padding:.7rem .8rem;background:#fff7f4;border-radius:.45rem;margin:.8rem 0 1rem;line-height:1.45;max-width:760px}
+.py-why strong{color:#dc1f18}
 .py-next{display:flex;justify-content:space-between;gap:.6rem;margin-top:1rem}
 .py-next button{border:1.5px solid #111;border-radius:999px;background:#111;color:#fff;padding:.55rem .85rem;font:inherit;font-weight:900;cursor:pointer}
 .py-next button:hover,.py-next button:focus{background:#dc1f18;border-color:#dc1f18;outline:none}
@@ -110,7 +133,7 @@ body{background:var(--py-paper);color:var(--py-ink)}
 </div>
 </section>
 <section class="py-grid">
-<aside class="py-map"><div class="py-map-head"><h2>Curriculum</h2><button class="py-map-toggle" type="button" id="mapToggle">Hide map</button></div><div class="py-progress" id="progressText"></div><div id="courseMap">Loading…</div></aside>
+<aside class="py-map"><div class="py-map-head"><h2>Full curriculum</h2><button class="py-map-toggle" type="button" id="mapToggle">Show map</button></div><div class="py-progress" id="progressText"></div><div id="courseMap">Loading…</div></aside>
 <section class="py-lab" id="lessonLab" aria-live="polite"><div class="py-empty">Loading the first lesson…</div></section>
 </section>
 </main>
@@ -362,7 +385,7 @@ function render(id){
  const lesson=data.lessons[id];
  if(!lesson){lab.innerHTML='<div class="py-empty"><strong>'+labels(id)+'</strong><br/>Catalogued for development.</div>';return}
  const order=lessonOrder(),idx=order.indexOf(id),prev=idx>0?order[idx-1]:null,next=idx>=0&&idx<order.length-1?order[idx+1]:null;
- lab.innerHTML='<div class="py-lesson-head"><div><span class="py-status">'+lesson.status+'</span><h2>'+lesson.title+'</h2></div><div class="py-tip">Use ‹ › or your arrow keys.</div></div><p class="py-summary">'+lesson.summary+'</p>'+(whyMap[id]?'<div class="py-why"><strong>Why this is worth opening:</strong> '+whyMap[id]+'</div>':'')+'<p class="py-concept">Python idea: '+lesson.pythonConcept+'</p><div class="py-controls">'+Object.entries(lesson.inputs||{}).map(([n,s])=>control(n,s)).join("")+'</div><div class="py-graphic" id="graphic"></div>'+(lesson.note?'<p class="py-graphic-note">'+lesson.note+'</p>':'')+'<div class="py-codewrap"><pre class="py-code"><code>'+lesson.code.replaceAll("&","&amp;").replaceAll("<","&lt;")+'</code></pre><div class="py-output"><small>Output</small><div class="py-result" id="result"></div></div></div><div class="py-next">'+(prev?'<button type="button" data-jump="'+prev+'">← '+labels(prev)+'</button>':'<span></span>')+(next?'<button type="button" data-jump="'+next+'">'+labels(next)+' →</button>':'')+'</div>';
+ lab.innerHTML='<div class="py-lesson-head"><div><span class="py-status">'+lesson.status+'</span><h2>'+lesson.title+'</h2></div><div class="py-tip">← → changes the focused value</div></div><p class="py-summary">'+lesson.summary+'</p>'+(whyMap[id]?'<div class="py-why"><strong>Why open this:</strong> '+whyMap[id]+'</div>':'')+'<p class="py-concept">Python idea · '+lesson.pythonConcept+'</p><div class="py-section-label">Change one thing</div><div class="py-controls-wrap"><div class="py-controls">'+Object.entries(lesson.inputs||{}).map(([n,s])=>control(n,s)).join("")+'</div></div><div class="py-section-label">Watch what changes</div><div class="py-graphic" id="graphic"></div>'+(lesson.note?'<p class="py-graphic-note">'+lesson.note+'</p>':'')+'<div class="py-section-label">What the rule returns</div><div class="py-output"><small>Output</small><div class="py-result" id="result"></div></div><div class="py-section-label">The same rule in Python</div><pre class="py-code"><code>'+lesson.code.replaceAll("&","&amp;").replaceAll("<","&lt;")+'</code></pre><div class="py-next">'+(prev?'<button type="button" data-jump="'+prev+'">← '+labels(prev)+'</button>':'<span></span>')+(next?'<button type="button" data-jump="'+next+'">'+labels(next)+' →</button>':'')+'</div>';
  const update=()=>{const v=values();lab.querySelectorAll("[data-out]").forEach(o=>o.textContent=v[o.dataset.out]);document.getElementById("result").textContent=evaluate(id,v);document.getElementById("graphic").innerHTML=renderGraphic(id,v)};
  bindCyclers(id,update);update();
  map.querySelectorAll("[data-lesson]").forEach(b=>b.classList.toggle("is-active",b.dataset.lesson===id));
@@ -372,7 +395,7 @@ function render(id){
 map.addEventListener("click",e=>{const b=e.target.closest("[data-lesson]");if(b)render(b.dataset.lesson)});
 document.querySelectorAll("[data-start]").forEach(b=>b.addEventListener("click",()=>render(b.dataset.start)));
 const mapBox=document.querySelector(".py-map"),mapToggle=document.getElementById("mapToggle");
-mapToggle.addEventListener("click",()=>{const collapsed=mapBox.classList.toggle("is-collapsed");mapToggle.textContent=collapsed?"Show map":"Hide map";});
+mapToggle.addEventListener("click",()=>{const expanded=mapBox.classList.toggle("is-expanded");mapToggle.textContent=expanded?"Hide map":"Show map";});
 const initial=location.hash.slice(1);render(data.lessons[initial]?initial:"major-aspects");
 })();
 </script>
