@@ -944,8 +944,8 @@
   function suggestionMarkup(session, disabled=false) {
     const suggestions=Array.isArray(session.suggestions)?session.suggestions:[];
     if (!suggestions.length) return '<p class="relphi-referent-empty">Choose or draw building blocks to surface candidate referents.</p>';
-    return '<div class="relphi-suggestions-review"><div class="relphi-options-subhead"><strong>Review the referents</strong><span>Edit anything before you begin.</span></div>'+
-      suggestions.map((value,index)=>'<label class="relphi-suggestion-row"><input type="checkbox" data-suggestion-use="'+index+'" checked '+(disabled?'disabled':'')+'><span>'+(index+1)+'</span><input type="text" data-suggestion-text="'+index+'" value="'+escapeHtml(value)+'" '+(disabled?'disabled':'')+'></label>').join('')+
+    return '<div class="relphi-suggestions-review"><div class="relphi-options-subhead"><strong>Review the referents</strong><span>Each suggestion includes its proposed sub-pack. Use Bespoke if you want to change the experiment.</span></div>'+
+      suggestions.map((value,index)=>'<label class="relphi-suggestion-row"><input type="checkbox" data-suggestion-use="'+index+'" checked '+(disabled?'disabled':'')+'><span>'+(index+1)+'</span><span class="relphi-suggestion-copy"><strong>'+escapeHtml(value)+'</strong><small>Suggested sub-pack · '+escapeHtml(packLabel(session.suggestionPacks?.[index]||'full'))+'</small></span></label>').join('')+
       '<button type="button" id="relphiAcceptSuggestions" '+(disabled?'disabled':'')+'>Use selected referents</button></div>';
   }
   function buildingControlsMarkup(session, disabled=false) {
@@ -1438,7 +1438,8 @@
     }));
     drawer.querySelector('#relphiBuildQuestions')?.addEventListener('click',()=>{
       session.suggestions=candidateQuestionsFromBlocks(session.building);
-      session.suggestionPacks=session.suggestions.map(()=>draft.pack||'full');
+      const b=session.building||{};const suggestedPack=b.planet?'planetary-majors':b.sign?'zodiac-majors':b.element?'full':'full';
+      session.suggestionPacks=session.suggestions.map(()=>suggestedPack);
       renderOptions(root);
     });
 
