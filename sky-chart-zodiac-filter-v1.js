@@ -136,9 +136,16 @@ function toggleMenu(){menu?.hidden?openMenu():closeMenu()}
 
 function install(){
   const bar=(document.querySelector('#skyFoundationFocus .sky-chart-filter-bar')||document.querySelector('#skyFoundationRelationships .sky-chart-filter-bar'));
-  if(!bar)return;
+  const slot=document.querySelector('#skyFoundationFocus .sky-focus-heading-controls');
+  if(!bar||!slot)return;
   const existing=document.querySelector('[data-zodiac-filter]');
-  if(existing){root=existing;button=root.querySelector('[data-zodiac-summary]');return;}
+  if(existing){
+    root=existing;button=root.querySelector('[data-zodiac-summary]');
+    const houses=slot.querySelector('[data-house-filter="combined"]'),actions=slot.querySelector('.sky-export-wheel-slot');
+    const anchor=houses||actions||null;
+    if(root.parentElement!==slot||root.nextElementSibling!==anchor)slot.insertBefore(root,anchor);
+    return;
+  }
 
   root=document.createElement('div');root.className='sky-chart-zodiac-filter';root.dataset.zodiacFilter='true';
   const label=document.createElement('span');label.className='sky-chart-zodiac-filter-label';label.textContent='Zodiac Signs';
@@ -176,7 +183,8 @@ function install(){
   allButton.addEventListener('click',event=>{event.preventDefault();event.stopPropagation();setSelection(ALL)});
   noneButton.addEventListener('click',event=>{event.preventDefault();event.stopPropagation();setSelection([])});
   root.append(label,button);
-  const placements=bar.querySelector('[data-placement-filter="combined"]');placements?placements.insertAdjacentElement('afterend',root):bar.appendChild(root);
+  const houses=slot.querySelector('[data-house-filter="combined"]'),actions=slot.querySelector('.sky-export-wheel-slot');
+  slot.insertBefore(root,houses||actions||null);
 
   document.addEventListener('pointerdown',event=>{if(!root?.contains(event.target)&&!menu?.contains(event.target))closeMenu()},true);
   window.addEventListener('resize',positionMenu,{passive:true});
