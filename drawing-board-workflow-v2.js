@@ -39,11 +39,54 @@
   let settingsBaseline = null;
   let freeSettingsSession = null;
   let boardSetupConfirmed = false;
+  let activeCraftedPath = '';
 
   function panel() { return document.getElementById(PANEL_ID); }
   function prefabBridge() { return window.RelphiDrawingBoardPrefabsBridge || null; }
   function optionsBridge() { return window.RelphiDrawingBoardOptionsBridge || null; }
   function ledgerBridge() { return window.RelphiTarotLedgerBridge || null; }
+  function persistedCraftedPath(root=panel()) {
+    const snap=currentSnapshot()||{};
+    return String(
+      activeCraftedPath ||
+      snap.rowActiveLayout?.relphiCraftedPath ||
+      snap.rowPositionMeta?.find?.(meta=>meta?.craftedPath)?.craftedPath ||
+      ''
+    );
+  }
+  function zoomToolbarVisibleForState(root=panel()) {
+    if(!root)return true;
+    if(settingsOpen){
+      if(settingsMode==='free')return true;
+      return String(optionsSession?.path||activeCraftedPath||'')==='bespoke';
+    }
+    if(craftedReadingActive||boardHasCraftedStructure(root))return persistedCraftedPath(root)==='bespoke';
+    return true;
+  }
+  function syncZoomToolbarVisibility(root=panel()) {
+    if(!root)return true;
+    const visible=zoomToolbarVisibleForState(root);
+    root.classList.toggle('relphi-hide-zoom-toolbar',!visible);
+    const toolbar=root.querySelector('.card-row-workspace-toolbar.relphi-board-controller');
+    if(toolbar)toolbar.setAttribute('aria-hidden',String(!visible));
+    return visible;
+  }
+  function visibleToolbarHeight(root=panel()) {
+    const toolbar=root?.querySelector('.card-row-workspace-toolbar.relphi-board-controller');
+    return toolbar && getComputedStyle(toolbar).display!=='none' ? toolbar.offsetHeight : 0;
+  }
+  function stampCraftedPath(path,root=panel()) {
+    const bridge=optionsBridge(),snap=bridge?.capture?.();
+    if(!bridge||!snap)return false;
+    const craftedPath=String(path||'');
+    activeCraftedPath=craftedPath;
+    if(snap.rowActiveLayout)snap.rowActiveLayout={...snap.rowActiveLayout,relphiCraftedPath:craftedPath};
+    if(Array.isArray(snap.rowPositionMeta))snap.rowPositionMeta=snap.rowPositionMeta.map(meta=>({...meta,craftedPath}));
+    bridge.restore(snap);
+    syncZoomToolbarVisibility(root);
+    return true;
+  }
+
   function zoomLimits() {
     const limits=optionsBridge()?.zoomLimits || {};
     const min=Number(limits.min),max=Number(limits.max);
@@ -57,8 +100,7 @@
     const workspace=root?.querySelector('.card-row-workspace');
     if (!workspace) return null;
     const bounds=renderedContentBounds(root);
-    const toolbar=root.querySelector('.card-row-workspace-toolbar.relphi-board-controller');
-    const toolbarH=toolbar?.offsetHeight || 52;
+    const toolbarH=visibleToolbarHeight(root);
     const availableW=Math.max(1,workspace.clientWidth-GUTTER*2);
     const availableH=Math.max(1,workspace.clientHeight-toolbarH-GUTTER*2);
     const contentW=Math.max(1,bounds.maxX-bounds.minX);
@@ -591,6 +633,7 @@
       renderFreeSettings(root);
     }
     ensureBoardChrome(root);
+    syncZoomToolbarVisibility(root);
   }
 
   function openBoardSettings(root=panel()) {
@@ -611,6 +654,7 @@
       optionsSession=null;
       if(!freeSettingsSession)freeSettingsSession={draft:freeSettingsDraftFromState()};
     }
+    syncZoomToolbarVisibility(root);
     renderBoardSettings(root);
   }
 
@@ -624,6 +668,7 @@
     root.querySelector('.relphi-free-settings')?.remove();
     setBoardMode(root,craftedReadingActive||boardHasCraftedStructure(root)?'crafted':'board');
     ensureBoardChrome(root);
+    syncZoomToolbarVisibility(root);
   }
 
   function confirmFreeSettings(root=panel()) {
@@ -639,6 +684,7 @@
     applyDrawSettings(draft);
     writeStickerVisibility(draft.stickers!==false);
     boardSetupConfirmed=true;
+    activeCraftedPath='';
     settingsOpen=false;
     settingsMode='free';
     optionsSession=null;
@@ -811,8 +857,7 @@
     if (!root || !workspace || !bridge) return false;
     const snapshot = bridge.capture();
     const bounds = renderedContentBounds(root);
-    const toolbar = root.querySelector('.card-row-workspace-toolbar.relphi-board-controller');
-    const toolbarH = toolbar?.offsetHeight || 52;
+    const toolbarH = visibleToolbarHeight(root);
     const availableW = Math.max(1, workspace.clientWidth - GUTTER*2);
     const availableH = Math.max(1, workspace.clientHeight - toolbarH - GUTTER*2);
     const contentW = Math.max(1,bounds.maxX-bounds.minX);
@@ -930,6 +975,7 @@
     renderFlyout();
     nativeOptions.hidden = true;
     nativeOptions.setAttribute('aria-hidden','true');
+    syncZoomToolbarVisibility(root);
   }
 
   async function writeDrawingBoardClipboard(text) {
@@ -1642,6 +1688,7 @@
       session.path=nextPath;
       session.suggestions=[];
       session.suggestionPacks=[];
+      syncZoomToolbarVisibility(root);
       renderOptions(root,{preserveScroll:false});
     }));
 
@@ -1918,6 +1965,7 @@
     settingsOpen=true;
     settingsMode='free';
     boardSetupConfirmed=false;
+    activeCraftedPath='';
     clearCraftedStructure(root);
     const defaults=blankDraft();
     applyDrawSettings(defaults);
@@ -1973,6 +2021,8 @@
     bridge.restore(snap);
     surfaceReadingSession=null;recursionSession=null;recursionPortalLevel=0;
     pendingFocusIndex=null;attuneIndex=-1;
+    activeCraftedPath='';
+    syncZoomToolbarVisibility(root);
     return true;
   }
   function setBoardMode(root = panel(), mode = 'board') {
@@ -3098,11 +3148,13 @@
   function launchConfiguredReading(root,draft) {
     const bridge=optionsBridge(),prefabs=prefabBridge(),prefab=draftPrefab(draft);
     const snap=bridge?.capture();
+    const craftedPath=String(optionsSession?.path||activeCraftedPath||'');
     if(!snap||!prefabs||!prefab.positions.length)return false;
     craftedReadingActive=true;
     Object.assign(snap,{shortList:[],shortListSelection:[],shortListPositionLabels:[],shortListPositionCardIds:[],rowEnvelopeLayout:{},rowCardTransforms:{},rowPositionMeta:[],rowActiveLayout:null,rowLayoutLocked:false,rowLayoutDesignMode:false,rowCardReversals:{},rowCardManual:[],rowDrawDeck:[],rowDrawDeckSignature:''});
     bridge.restore(snap);
     if(!prefabs.applyLayout(prefab)){craftedReadingActive=false;return false;}
+    stampCraftedPath(craftedPath,root);
     markSettingsConfirmed();
     applyDrawSettings(draft);
     optionsSession=null;
@@ -3787,6 +3839,10 @@
     const trigger=document.getElementById('relphiOpenDrawingBoardCurrent');
     if (!initialized) initialized=true;
     boardOpen=trigger?.getAttribute('aria-expanded')==='true';
+    if(!activeCraftedPath){
+      const snap=currentSnapshot()||{};
+      activeCraftedPath=String(snap.rowActiveLayout?.relphiCraftedPath||snap.rowPositionMeta?.find?.(meta=>meta?.craftedPath)?.craftedPath||'');
+    }
     setBoardMode(root,settingsOpen&&settingsMode==='crafted'?'referents':(craftedReadingActive||boardHasCraftedStructure(root))?'crafted':'board');
     if (!boardOpen) {
       root.hidden=true;
@@ -3803,6 +3859,7 @@
     ensureBoardChrome(root);
     installTopActions(root);
     installPermanentControls(root);
+    syncZoomToolbarVisibility(root);
     installPinchZoom(root);
     installReadingTextArea(root);
     installExportArea(root);
