@@ -735,7 +735,8 @@
     const tableUpload=root.querySelector('#rowTableImageUpload');
     const tableFile=root.querySelector('#rowTableImageFile');
     const snapshot=currentSnapshot()||{};
-    const isShippedRed=!String(snapshot.rowTableImage||'')&&!String(snapshot.rowEnvelopeImage||'')&&String(snapshot.rowTableColor||'#7d1f28')==='#7d1f28'&&String(snapshot.rowEnvelopeColor||'#f3f0ea')==='#f3f0ea';
+    const visuallyShippedRed=!String(snapshot.rowTableImage||'')&&!String(snapshot.rowEnvelopeImage||'')&&String(snapshot.rowTableColor||'#7d1f28')==='#7d1f28'&&String(snapshot.rowEnvelopeColor||'#f3f0ea')==='#f3f0ea';
+    const isShippedRed=visuallyShippedRed && !boardBackgroundMode;
 
     section.replaceChildren();
     const summary=document.createElement('summary');
@@ -802,6 +803,10 @@
         snapShot.rowTableColor='#7d1f28';snapShot.rowTableImage='';snapShot.rowEnvelopeColor='#f3f0ea';snapShot.rowEnvelopeImage='';
         boardBackgroundMode='';
         bridge.restore(snapShot);
+      }else{
+        // Leaving Red felt is a UI mode change first. Keep the current appearance
+        // until the user chooses a Board / Placeholder color or image.
+        boardBackgroundMode='color';
       }
       setTimeout(()=>{ensureBoardChrome(root);renderBoardConfiguration(root);},0);
     });
