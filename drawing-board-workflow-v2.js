@@ -2284,17 +2284,22 @@
     if(String(row.pack||'full')!=='tags')return '';
     const tags=Array.isArray(row.keywordTags)?row.keywordTags:[];
     const mode=row.keywordMatchMode==='all'?'all':'any';
+    const query=String(row.keywordQuery||'');
+    const matches=query ? (window.RELPHI_KEYWORD_SUBPACK_CONTEXT?.matches?.(query)||[]) : [];
     const selected=tags.length
       ? '<div class="relphi-surface-keyword-selected">'+tags.map(tag=>'<button type="button" data-surface-tag-remove="'+escapeHtml(tag)+'">'+escapeHtml(tag)+' ×</button>').join('')+'</div>'
       : '';
+    const matchesMarkup=matches.length
+      ? matches.map(tag=>'<label><input type="checkbox" data-surface-tag-choice value="'+escapeHtml(tag)+'" '+(tags.includes(tag)?'checked':'')+'> '+escapeHtml(tag)+'</label>').join('')
+      : '<p>'+(query?'No matching tags.':'Type to find matching canonical tags.')+'</p>';
     const count=window.RELPHI_KEYWORD_SUBPACK_CONTEXT?.count?.(tags,mode)||0;
     return '<section class="relphi-surface-keyword-builder" data-surface-keyword-builder="'+index+'">'+
-      '<label>Find tags<input type="search" data-surface-tag-query autocomplete="off" placeholder="Type a tag, e.g. prince"></label>'+
+      '<label>Find tags<input type="search" data-surface-tag-query autocomplete="off" placeholder="Type a tag, e.g. prince" value="'+escapeHtml(query)+'"></label>'+
       '<div class="relphi-surface-keyword-mode" role="radiogroup" aria-label="Tag matching">'+
         '<label><input type="radio" name="surfaceTagMode'+index+'" value="any" '+(mode==='any'?'checked':'')+'> Any</label>'+
         '<label><input type="radio" name="surfaceTagMode'+index+'" value="all" '+(mode==='all'?'checked':'')+'> All</label>'+
       '</div>'+
-      '<div class="relphi-surface-keyword-matches" data-surface-tag-matches><p>Type to find matching canonical tags.</p></div>'+
+      '<div class="relphi-surface-keyword-matches" data-surface-tag-matches>'+matchesMarkup+'</div>'+
       selected+
       '<p class="relphi-surface-keyword-count" data-surface-tag-count>'+(tags.length?count+' card'+(count===1?'':'s')+' in this sub-pack':'Choose one or more tags.')+'</p>'+
     '</section>';
@@ -2327,9 +2332,10 @@
       cardCount:Math.max(1,Math.min(12,Number(item.cardCount)||1)),linkTo:item.linkTo??'',
       keywordTags:Array.isArray(item.keywordTags)?item.keywordTags.slice():[],
       keywordMatchMode:item.keywordMatchMode==='all'?'all':'any',
+      keywordQuery:String(item.keywordQuery||''),
       reversals:item.reversals!==false,repeats:!!item.repeats
     }));
-    if(!rows.length)rows.push({selected:true,text:'',pack:'full',cardCount:1,linkTo:'',keywordTags:[],keywordMatchMode:'any',reversals:true,repeats:false,sourceKind:'authored'});
+    if(!rows.length)rows.push({selected:true,text:'',pack:'full',cardCount:1,linkTo:'',keywordTags:[],keywordMatchMode:'any',keywordQuery:'',reversals:true,repeats:false,sourceKind:'authored'});
     let suggestionCursor=0;
     const composer=document.createElement('section');
     composer.className='relphi-surface-question-composer';
@@ -2365,20 +2371,26 @@
         });
         const query=article.querySelector('[data-surface-tag-query]');
         const matchesHost=article.querySelector('[data-surface-tag-matches]');
+        const bindTagChoices=()=>{
+          matchesHost?.querySelectorAll('[data-surface-tag-choice]').forEach(input=>{
+            input.onchange=()=>{
+              const set=new Set(row.keywordTags||[]);
+              input.checked?set.add(input.value):set.delete(input.value);
+              row.keywordTags=[...set];
+              render();
+            };
+          });
+        };
         const renderMatches=value=>{
           if(!matchesHost)return;
           const matches=window.RELPHI_KEYWORD_SUBPACK_CONTEXT?.matches?.(value)||[];
           matchesHost.innerHTML=matches.length
             ? matches.map(tag=>'<label><input type="checkbox" data-surface-tag-choice value="'+escapeHtml(tag)+'" '+((row.keywordTags||[]).includes(tag)?'checked':'')+'> '+escapeHtml(tag)+'</label>').join('')
             : '<p>'+(value?'No matching tags.':'Type to find matching canonical tags.')+'</p>';
-          matchesHost.querySelectorAll('[data-surface-tag-choice]').forEach(input=>input.addEventListener('change',()=>{
-            const set=new Set(row.keywordTags||[]);
-            input.checked?set.add(input.value):set.delete(input.value);
-            row.keywordTags=[...set];
-            render();
-          }));
+          bindTagChoices();
         };
-        query?.addEventListener('input',event=>renderMatches(event.target.value));
+        bindTagChoices();
+        query?.addEventListener('input',event=>{row.keywordQuery=event.target.value;renderMatches(row.keywordQuery);});
         article.querySelectorAll('[name="surfaceTagMode'+index+'"]').forEach(input=>input.addEventListener('change',()=>{
           row.keywordMatchMode=input.value==='all'&&input.checked?'all':'any';
           render();
@@ -2394,7 +2406,7 @@
         const suggestion=nextSurfaceSuggestion(rows,suggestionCursor);
         if(!suggestion)return;
         suggestionCursor=suggestion.nextCursor;
-        rows.push({...suggestion.candidate,selected:true,cardCount:Math.max(1,Number(suggestion.candidate.cardCount)||1),linkTo:suggestion.candidate.linkTo??'',keywordTags:Array.isArray(suggestion.candidate.keywordTags)?suggestion.candidate.keywordTags.slice():[],keywordMatchMode:suggestion.candidate.keywordMatchMode==='all'?'all':'any',reversals:suggestion.candidate.reversals!==false,repeats:!!suggestion.candidate.repeats});
+        rows.push({...suggestion.candidate,selected:true,cardCount:Math.max(1,Number(suggestion.candidate.cardCount)||1),linkTo:suggestion.candidate.linkTo??'',keywordTags:Array.isArray(suggestion.candidate.keywordTags)?suggestion.candidate.keywordTags.slice():[],keywordMatchMode:suggestion.candidate.keywordMatchMode==='all'?'all':'any',keywordQuery:'',reversals:suggestion.candidate.reversals!==false,repeats:!!suggestion.candidate.repeats});
         render();
         setTimeout(()=>composer.querySelector('[data-surface-composer-row]:last-child')?.scrollIntoView?.({block:'nearest'}),0);
       });
