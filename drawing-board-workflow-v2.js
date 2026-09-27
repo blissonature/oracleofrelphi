@@ -1541,44 +1541,52 @@
   }
 
   function resetBoardFromOptions(root) {
-    if (!optionsSession) beginOptionsSession();
-    if (!optionsSession) return;
-    optionsSession.draft=blankDraft();
-    optionsSession.path='bespoke';
-    optionsSession.suggestions=[];
-    optionsSession.surfaceSelected={};
+    if(!root)return false;
     openTool='';
     surfaceReadingSession=null;
     recursionSession=null;
     recursionPortalLevel=0;
+    pendingFocusIndex=null;
+    attuneIndex=-1;
+    document.querySelector('.relphi-surface-question-composer')?.remove();
+    root.querySelector('.relphi-board-toast')?.remove();
     closeAttune();
-    closeFocus({acknowledge:false});
-    const clear=root.querySelector('#clearShortList');
-    if (clear) clear.click();
-    else if (optionsBridge()) {
-      const snap=optionsBridge().capture();
-      Object.assign(snap,{shortList:[],shortListPositionLabels:[],shortListPositionCardIds:[],rowEnvelopeLayout:{},rowCardTransforms:{},rowPositionMeta:[],rowActiveLayout:null,rowLayoutLocked:false,rowLayoutDesignMode:false,rowCardReversals:{},shortListName:'',shortListNotes:'',rowDrawScope:'full',rowAllowRepeats:false,rowAllowReversals:true});
-      optionsBridge().restore(snap);
-    }
-    optionsSession.baseline=currentSnapshot();
+    closeFocus({acknowledge:false,advanceSurface:false});
+
+    craftedReadingActive=false;
+    optionsSession=null;
+    clearCraftedStructure(root);
     writeStickerVisibility(true);
     boardOpen=true;
-    const keepBoardOpen=()=>{
+
+    const trigger=document.getElementById('relphiOpenDrawingBoardCurrent');
+    if(trigger){
+      trigger.textContent='Close Drawing Board';
+      trigger.setAttribute('aria-expanded','true');
+    }
+
+    const reopen=()=>{
       const next=panel();
-      if (!next) return;
+      if(!next)return;
       next.hidden=false;
       next.removeAttribute('hidden');
       const drawer=next.querySelector('.card-row-drawing-board');
-      if (drawer) drawer.open=true;
-      const trigger=document.getElementById('relphiOpenDrawingBoardCurrent');
-      if (trigger) {
-        trigger.textContent='Close Drawing Board';
-        trigger.setAttribute('aria-expanded','true');
+      if(drawer)drawer.open=true;
+      optionsSession=null;
+      beginOptionsSession();
+      if(optionsSession){
+        optionsSession.draft=blankDraft();
+        optionsSession.path='bespoke';
+        optionsSession.suggestions=[];
+        optionsSession.suggestionPacks=[];
+        optionsSession.surfaceSelected={};
+        optionsSession.baseline=currentSnapshot();
       }
+      setBoardMode(next,'referents');
       enhance(next);
     };
-    keepBoardOpen();
-    setTimeout(keepBoardOpen,0);
+    reopen();
+    return true;
   }
   function resetBoardGlobal(root = panel()) {
     if(!root)return false;
@@ -1601,11 +1609,14 @@
       trigger.textContent='Close Drawing Board';
       trigger.setAttribute('aria-expanded','true');
     }
-    root.hidden=false;
-    root.removeAttribute('hidden');
-    setBoardMode(root,'board');
-    enhance(root);
-    setTimeout(()=>enhance(panel()),0);
+    const next=panel()||root;
+    next.hidden=false;
+    next.removeAttribute('hidden');
+    const drawer=next.querySelector('.card-row-drawing-board');
+    if(drawer)drawer.open=true;
+    setBoardMode(next,'board');
+    ensureGlobalBoardActions(next);
+    enhance(next);
     return true;
   }
 
@@ -1619,17 +1630,21 @@
     );
   }
   function clearCraftedStructure(root = panel()) {
-    const bridge=optionsBridge();if(!bridge)return;
-    const snap=bridge.capture();if(!snap)return;
+    const bridge=optionsBridge();if(!bridge)return false;
+    const snap=bridge.capture();if(!snap)return false;
     Object.assign(snap,{
       shortList:[],shortListSelection:[],shortListPositionLabels:[],shortListPositionCardIds:[],
       rowEnvelopeLayout:{},rowCardTransforms:{},rowPositionMeta:[],rowActiveLayout:null,
       rowLayoutLocked:false,rowLayoutDesignMode:false,rowCardReversals:{},rowCardManual:[],
       rowDrawDeck:[],rowDrawDeckSignature:'',shortListName:'',shortListNotes:'',
-      rowDrawScope:'full',rowAllowRepeats:false,rowAllowReversals:true
+      rowDrawScope:'full',rowTagQuery:'',rowSelectedTags:[],rowTagMatchMode:'any',
+      rowAllowRepeats:false,rowAllowReversals:true,rowPanX:0,rowPanY:0,rowTransformTarget:0,
+      cardRowBoardOpen:true
     });
     bridge.restore(snap);
     surfaceReadingSession=null;recursionSession=null;recursionPortalLevel=0;
+    pendingFocusIndex=null;attuneIndex=-1;
+    return true;
   }
   function setBoardMode(root = panel(), mode = 'board') {
     if (!root) return;
@@ -3254,21 +3269,22 @@
   function ensureGlobalBoardActions(root) {
     const modeSwitch=root?.querySelector('.drawing-board-mode-switch');
     if(!root||!modeSwitch)return null;
-    let actions=root.querySelector(':scope > .relphi-global-board-actions');
+
+    const draw=root.querySelector('#drawRandomRowCard');
+    let reset=root.querySelector('#relphiResetBoard');
+    const rows=[...root.querySelectorAll('.relphi-global-board-actions')];
+    let actions=draw?.closest?.('.relphi-global-board-actions') || reset?.closest?.('.relphi-global-board-actions') || rows[0] || null;
+
     if(!actions){
       actions=document.createElement('div');
       actions.className='relphi-global-board-actions';
       actions.setAttribute('role','group');
       actions.setAttribute('aria-label','Drawing Board actions');
-      modeSwitch.insertAdjacentElement('beforebegin',actions);
-    } else if(actions.nextElementSibling!==modeSwitch) {
-      modeSwitch.insertAdjacentElement('beforebegin',actions);
     }
+    if(actions.nextElementSibling!==modeSwitch) modeSwitch.insertAdjacentElement('beforebegin',actions);
 
-    const draw=root.querySelector('#drawRandomRowCard');
     if(draw && draw.parentElement!==actions) actions.appendChild(draw);
 
-    let reset=root.querySelector('#relphiResetBoard');
     if(!reset){
       reset=document.createElement('button');
       reset.id='relphiResetBoard';
@@ -3278,6 +3294,12 @@
       reset.setAttribute('aria-label','Reset board including cards and spread positions');
     }
     if(reset.parentElement!==actions || reset.previousElementSibling!==draw) actions.appendChild(reset);
+
+    // Older enhancement passes could leave empty global-action wrappers behind.
+    // Keep exactly one canonical row so repeated enhancement/reset is layout-idempotent.
+    [...root.querySelectorAll('.relphi-global-board-actions')].forEach(node=>{
+      if(node!==actions)node.remove();
+    });
     return actions;
   }
 
