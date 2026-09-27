@@ -4098,7 +4098,7 @@
     }
     root.hidden=false;
     root.removeAttribute('hidden');
-    if (migrateLegacyDenseAutoLayout(root)) return;
+    if (migrateLegacyDenseAutoLayout(root)) { requestAnimationFrame(()=>enhance(root)); return; }
     root.classList.toggle('relphi-hide-position-stickers',!showPositionStickers);
     markSemanticPositions(root);
     updateLayoutClasses(root);
@@ -4125,6 +4125,7 @@
       session.complete=recursionEarthIndex()>=0 && !!cardAt(recursionEarthIndex(),root);
       installRecursionBoard(root);
     }
+    root.classList.add('relphi-board-ready');
     if (pendingFocusIndex!=null) {
       // pendingFocusIndex is the slot the native draw appended into. A Crafted
       // draw may immediately swap that card into its referent's target slot,
