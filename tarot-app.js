@@ -2127,6 +2127,7 @@
 
   const CARD_ROW_ENVELOPE_W = 174;
   const CARD_ROW_ENVELOPE_H = 390;
+  const CARD_ROW_VISIBLE_CARD_H = Math.round(CARD_ROW_ENVELOPE_W * 866 / 500);
   const CARD_ROW_ZOOM_MIN = .02;
   const CARD_ROW_ZOOM_MAX = 2.4;
   const CARD_ROW_TABLE_COLS = 3;
@@ -2150,7 +2151,13 @@
   function rowRotationSnapDegrees() { const n = Number(state.rowRotationSnapDegrees) || 15; return CARD_ROW_ROTATION_SNAP_STEPS.includes(n) ? n : 15; }
   function stepValueInList(list, current, direction) { const idx = Math.max(0, list.indexOf(current)); return list[Math.max(0, Math.min(list.length - 1, idx + direction))] || current; }
   function rowDefaultStepX() { return CARD_ROW_ENVELOPE_W + CARD_ROW_DEFAULT_GAP_X_PX; }
-  function rowDefaultStepY() { return CARD_ROW_ENVELOPE_H + CARD_ROW_DEFAULT_GAP_Y_PX; }
+  function rowDefaultStepY() {
+    // Free-draw cards tile edge-to-edge in both axes. The 390px envelope keeps
+    // room for placeholder/sticker chrome, but once cards exist the visible
+    // 500×866 card face is the row pitch.
+    const rowHeight=(state.shortList || []).length ? CARD_ROW_VISIBLE_CARD_H : CARD_ROW_ENVELOPE_H;
+    return rowHeight + CARD_ROW_DEFAULT_GAP_Y_PX;
+  }
   function rowSlotCount(itemsLength = (state.shortList || []).length) {
     return Math.max(itemsLength, (state.shortListPositionLabels || []).length, (state.shortListPositionCardIds || []).length, 0);
   }
@@ -2273,7 +2280,7 @@
     if (!slotCount) return { width: Math.max(CARD_ROW_ENVELOPE_W + 48, cardRowAvailableWidth()), height: 240 };
     const count = Math.max(1, slotCount);
     const placeholderOnly = !(state.shortList || []).length;
-    const envelopeHeight = placeholderOnly ? Math.ceil(CARD_ROW_ENVELOPE_W * 866 / 500) + 55 : CARD_ROW_ENVELOPE_H;
+    const envelopeHeight = placeholderOnly ? CARD_ROW_VISIBLE_CARD_H + 55 : CARD_ROW_ENVELOPE_H;
     const positions = Array.from({ length: count }, (_, i) => rowEnvelopePosition(i));
     const extents = positions.map((pos, i) => {
       const t = rowCardTransform(i);
