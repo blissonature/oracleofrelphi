@@ -2188,14 +2188,22 @@
     session.completionShown=true;
     closeAttune();
     closeFocus({acknowledge:true});
-    // Completion belongs on the board, not inside the last card's focus view.
-    // Wait for the final card render/focus transition to settle, then fit every
-    // initial and surfaced card into the visible Drawing Board viewport.
     setTimeout(()=>{
       const next=panel();
       if (!next) return;
       zoomExtents();
-      showBoardToast('The See What Surfaces reading is complete. All cards are now visible together on the Drawing Board.',{title:'Reading complete',duration:5200});
+      showBoardToast('Every surfaced referent has been answered. Review the whole spread together before closing the reading.',{
+        title:'See What Surfaces · Complete',
+        duration:0,
+        actionLabel:'Conclude Reading',
+        onAction:()=>{
+          const active=panel();
+          if(!active)return;
+          zoomExtents();
+          if(surfaceReadingSession)surfaceReadingSession.conclusionOffered=true;
+          showBoardToast('The reading is concluded. The completed spread remains at zoom extents for review.',{title:'Reading concluded',duration:5200});
+        }
+      });
     },0);
     return true;
   }
@@ -2210,7 +2218,11 @@
       session.followupsGenerated=true;
       session.followupCount=entries.length;
       if (entries.length && appendSurfaceFollowups(entries,root)) {
-        showBoardToast('The first exploration is complete. New referents have surfaced from those cards; continue through them one at a time.',{title:'What surfaced next',duration:6800});
+        craftedReadingActive=true;
+        optionsSession=null;
+        setBoardMode(root,'crafted');
+        showBoardToast('The first exploration is complete. New referents have surfaced from those cards.',{title:'What surfaced next',duration:3600});
+        setTimeout(()=>{const next=nextUndrawnNativeIndex(panel());if(next!=null)openAttune(next);},0);
         return;
       }
     }
@@ -2245,6 +2257,20 @@
     if(session.path==='astro'&&!session.astrologyResolved){showBoardToast('Choose and prepare the sky before starting the Astrological Tarot Reading.',{title:'Astrological Tarot Reading',duration:5200});return}
     const astrologyRequested=session.path==='astro'&&!!session.astrologyResolved;
     if(astrologyRequested){writeStickerVisibility(draft.stickers);surfaceReadingSession=null;recursionSession=null;recursionPortalLevel=0;if(!launchConfiguredReading(root,draft)){showBoardToast('The reading layout could not be established. Your Astrological Tarot setup has been kept open.',{title:'Astrological Tarot Reading',duration:5200});return}showBoardToast('Your selected astrological questions are established. Attune to the first referent before revealing its card.',{title:'Astrological Tarot Reading',duration:0,actionLabel:'Attune',onAction:()=>{const next=nextUndrawnNativeIndex(panel());if(next!=null)openAttune(next);}});return}
+    if(session.path==='surface'){
+      if(!surfaceKinds.length)return;
+      writeStickerVisibility(draft.stickers);
+      surfaceReadingSession={kinds:surfaceKinds.slice(),initialCount:surfaceKinds.length,followupsGenerated:false,followupCount:0,completionShown:false,conclusionOffered:false};
+      recursionSession=null;recursionPortalLevel=0;
+      if(!launchConfiguredReading(root,draft)){
+        surfaceReadingSession=null;
+        showBoardToast('The See What Surfaces reading could not be established. Your setup has been kept open.',{title:'See What Surfaces',duration:5200});
+        return;
+      }
+      // Start Reading is the only start action. Go directly into the first sacred attunement.
+      setTimeout(()=>{const next=nextUndrawnNativeIndex(panel());if(next!=null)openAttune(next);},0);
+      return;
+    }
     const recursionRequested=draft.templateId===RECURSION_ID || draft.basedOnTemplateId===RECURSION_ID;
     // Every ordinary Crafted path must cross the same atomic launch boundary.
     // Leaving Templates / Building Blocks on the legacy clear-and-reapply path
@@ -2632,6 +2658,11 @@
     focusIndex=-1;
     recursionPortalLevel=0;
     if (acknowledge && isCrossingPosition(leaving)) acknowledgeCelticCrossing();
+    if(surfaceReadingSession && panel()){
+      craftedReadingActive=true;
+      optionsSession=null;
+      setBoardMode(panel(),'crafted');
+    }
   }
   function navigateFocusTo(nativeIndex) {
     const next=Number(nativeIndex);
@@ -2649,7 +2680,16 @@
     const currentIndex=order.indexOf(focusIndex);
     const current=currentIndex>=0 ? currentIndex : 0;
     if (delta>0 && current>=order.length-1) {
-      if (configuredPositionCount()===0) drawNextLogical(panel());
+      if (surfaceReadingSession) {
+        closeFocus({acknowledge:true});
+        setTimeout(()=>{
+          const root=panel();
+          maybeGenerateSurfaceFollowups(root);
+          const next=nextUndrawnNativeIndex(root);
+          if(next!=null)openAttune(next);
+          else revealCompletedSurfaceBoard(root);
+        },0);
+      } else if (configuredPositionCount()===0) drawNextLogical(panel());
       return;
     }
     const logical=Math.max(0,Math.min(order.length-1,current+delta));
