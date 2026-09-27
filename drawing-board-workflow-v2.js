@@ -520,6 +520,11 @@
     const body=settingsPanel.querySelector('.relphi-board-settings-body');
     if(body && modeSwitch.parentElement!==body)body.appendChild(modeSwitch);
 
+    // Settings is an overlay: anchor it immediately below the command bar
+    // without allowing it to participate in the board's vertical layout.
+    const commandBottom=Math.max(0,bar.offsetTop+bar.offsetHeight);
+    settingsPanel.style.setProperty('--relphi-settings-top',commandBottom+'px');
+
     const reset=settingsPanel.querySelector('#relphiResetBoard');
     if(reset){
       reset.title='Restore default settings';
