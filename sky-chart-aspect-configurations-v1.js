@@ -90,10 +90,30 @@ function resultSource(payload){const source=[payload?.placements,payload?.positi
 function resultRead(slot){try{return JSON.parse(localStorage.getItem(RESULT_KEYS[slot])||'null')}catch(_){return null}}
 function resultLongitude(item){if(Number.isFinite(Number(item?.longitude)))return resultNorm(item.longitude);const signs=['aries','taurus','gemini','cancer','leo','virgo','libra','scorpio','sagittarius','capricorn','aquarius','pisces'],sign=signs.indexOf(String(item?.sign||item?.zodiac||'').trim().toLowerCase());return sign<0?NaN:resultNorm(sign*30+Number(item?.degree||item?.degrees||0)+Number(item?.minute||item?.minutes||0)/60+Number(item?.second||item?.seconds||0)/3600)}
 function resultCanonical(key,item){const registry=window.RelphiGlyphRegistry;for(const candidate of[item?.glyphId,item?.id,item?.name,item?.label,item?.body,item?.planet,item?.point,key]){if(!candidate)continue;const raw=String(candidate).trim(),alias=RESULT_ALIASES[raw.toLowerCase()]||raw,entry=registry?.resolve?.(alias)||registry?.get?.(alias);if(entry)return entry.id}return''}
+function resultHouseFor(sky,id,item){
+  const direct=Number(item?.house??item?.houseNumber??item?.house_number);
+  if(Number.isFinite(direct)&&direct>=1&&direct<=12)return Math.trunc(direct);
+  for(const row of document.querySelectorAll('.sky-foundation-relationship-row')){
+    const leftSky=String(row.dataset.leftSky||'').toUpperCase(),rightSky=String(row.dataset.rightSky||'').toUpperCase();
+    const leftId=String(row.dataset.leftPlacement||''),rightId=String(row.dataset.rightPlacement||'');
+    if(leftSky===sky&&leftId===id){const h=Number(row.dataset.leftHouse);if(Number.isFinite(h)&&h>=1&&h<=12)return Math.trunc(h)}
+    if(rightSky===sky&&rightId===id){const h=Number(row.dataset.rightHouse);if(Number.isFinite(h)&&h>=1&&h<=12)return Math.trunc(h)}
+  }
+  return null;
+}
 function resultVertexRecord(key){
   const [sky,id]=String(key||'').split(':');if(!RESULT_KEYS[sky]||!id)return null;
-  for(const [sourceKey,item] of resultSource(resultRead(sky))){if(!item||typeof item!=='object'||Array.isArray(item))continue;const canonical=resultCanonical(sourceKey,item);if(canonical!==id)continue;const value=resultLongitude(item);if(Number.isFinite(value))return{sky,id,value,label:placementLabel(id)}}
+  for(const [sourceKey,item] of resultSource(resultRead(sky))){if(!item||typeof item!=='object'||Array.isArray(item))continue;const canonical=resultCanonical(sourceKey,item);if(canonical!==id)continue;const value=resultLongitude(item);if(Number.isFinite(value)){const sign=Math.floor(resultNorm(value)/30),house=resultHouseFor(sky,id,item);return{sky,id,value,sign,house,label:placementLabel(id)}}}
   return null;
+}
+function resultSignColor(index){
+  const palette=window.RelphiSkyWheelSpec?.COLORS;
+  const fallback=['#e53935','#f06b32','#f39a2e','#f5be3d','#f1dc43','#a9cf46','#43a85b','#2ca69b','#3285c7','#5961c8','#8c4fb4','#bd438e'];
+  const n=Math.trunc(Number(index));return n>=0&&n<12?(Array.isArray(palette)&&palette.length>=12?palette[n]:fallback[n]):'#777';
+}
+function resultHouseColor(house){
+  const colors=window.RelphiHouseMedallion?.colors;
+  const n=Math.trunc(Number(house));return n>=1&&n<=12&&Array.isArray(colors)&&colors.length>=12?colors[n-1]:'#777';
 }
 function resultPoint(value,radius=47){const angle=(resultNorm(value)-180)*Math.PI/180;return{x:60+radius*Math.cos(angle),y:60+radius*Math.sin(angle)}}
 function placementLabel(id){return PLACEMENT_SYMBOLS[id]||window.RelphiGlyphRegistry?.get?.(id)?.fallback||String(id||'').replace(/-/g,' ')}
@@ -150,8 +170,8 @@ function miniConfigurationMarkup(pattern,{compact=false,interactive=true}={}){
   // Expanded diagrams keep geometry in the 120×120 SVG, but canonical
   // inscribed vertices live in screen space so wheel scaling cannot alter them.
   const vertices=[...records.values()].map(record=>{
-    const p=resultPoint(record.value),left=(p.x/120*100).toFixed(4),top=(p.y/120*100).toFixed(4);
-    return'<span class="sky-configuration-vertex-host" data-canonical-placement="'+record.id+'" data-sky="'+record.sky+'" style="left:'+left+'%;top:'+top+'%"></span>';
+    const p=resultPoint(record.value),left=(p.x/120*100).toFixed(4),top=(p.y/120*100).toFixed(4),signColor=resultSignColor(record.sign),houseColor=resultHouseColor(record.house);
+    return'<span class="sky-configuration-vertex-host" data-canonical-placement="'+record.id+'" data-sky="'+record.sky+'" data-sign="'+record.sign+'" data-house="'+(record.house||'')+'" style="left:'+left+'%;top:'+top+'%"><span class="sky-configuration-vertex-rail sky-configuration-vertex-rail-sign" style="background:'+signColor+'"></span><span class="sky-configuration-vertex-glyph"></span><span class="sky-configuration-vertex-rail sky-configuration-vertex-rail-house" style="background:'+houseColor+'"></span></span>';
   }).join('');
   return'<div class="'+classes+'"'+attrs+'><svg viewBox="0 0 120 120" aria-hidden="true"><circle cx="60" cy="60" r="47" class="sky-configuration-mini-ring"/>'+radii+lines+'</svg><span class="sky-configuration-vertex-layer" aria-hidden="true">'+vertices+'</span></div>';
 }
@@ -176,7 +196,8 @@ async function paintConfigurationMiniGlyphs(root){
       circle.removeAttribute('aria-hidden');
     });
     glyph.dataset.configurationInscribedClone='true';
-    host.replaceChildren(glyph);
+    const mount=host.querySelector('.sky-configuration-vertex-glyph')||host;
+    mount.replaceChildren(glyph);
     host.dataset.canonicalGlyphReady='true';
   }
 }
@@ -286,13 +307,24 @@ function configurationMatchRow(pattern,index){
   const placements=document.createElement('span');
   placements.className='sky-configuration-match-placements';
   pattern.vertices.forEach(key=>{
-    const item=vertexLabel(key);
+    const item=vertexLabel(key),record=resultVertexRecord(key);
+    const participant=document.createElement('span');
+    participant.className='sky-configuration-match-participant';
+    participant.dataset.sky=item.sky;
+    if(record){participant.dataset.sign=String(record.sign);if(record.house)participant.dataset.house=String(record.house)}
+    const signRail=document.createElement('span');
+    signRail.className='sky-configuration-match-rail sky-configuration-match-rail-sign';
+    signRail.style.background=resultSignColor(record?.sign);
     const glyph=document.createElement('span');
     glyph.className='sky-configuration-match-glyph';
     glyph.dataset.canonicalPlacement=item.id;
     glyph.dataset.sky=item.sky;
     glyph.setAttribute('aria-label','Sky '+item.sky+' '+placementWord(item.id));
-    placements.appendChild(glyph);
+    const houseRail=document.createElement('span');
+    houseRail.className='sky-configuration-match-rail sky-configuration-match-rail-house';
+    houseRail.style.background=resultHouseColor(record?.house);
+    participant.append(signRail,glyph,houseRail);
+    placements.appendChild(participant);
   });
 
   const meta=document.createElement('span');
