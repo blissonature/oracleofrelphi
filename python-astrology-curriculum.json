@@ -10,7 +10,7 @@
       "title": "Zodiac Mechanics",
       "theme": "Make the zodiac executable.",
       "lessons": [
-        "opposite-signs",
+        "major-aspects",
         "day-ruler-deputies",
         "zodiac-longitude",
         "whole-sign-houses"
@@ -170,30 +170,6 @@
     }
   ],
   "lessons": {
-    "opposite-signs": {
-      "title": "Opposite Signs",
-      "course": "AST101",
-      "pythonConcept": "list indexing + modulo 12",
-      "summary": "Add six signs and wrap around the zodiac.",
-      "status": "interactive",
-      "inputs": {
-        "sign": [
-          "Aries",
-          "Taurus",
-          "Gemini",
-          "Cancer",
-          "Leo",
-          "Virgo",
-          "Libra",
-          "Scorpio",
-          "Sagittarius",
-          "Capricorn",
-          "Aquarius",
-          "Pisces"
-        ]
-      },
-      "code": "signs = [\"Aries\",\"Taurus\",\"Gemini\",\"Cancer\",\"Leo\",\"Virgo\",\\n         \"Libra\",\"Scorpio\",\"Sagittarius\",\"Capricorn\",\"Aquarius\",\"Pisces\"]\\n\\ni = signs.index(sign)\\nprint(signs[(i + 6) % 12])"
-    },
     "day-ruler-deputies": {
       "title": "Day Ruler Deputies",
       "course": "AST101",
@@ -307,10 +283,41 @@
       "summary": "Model the faster wobble riding on top of a slower precessional motion.",
       "status": "concept",
       "code": "precession = slow_rotation(t)\\nnutation = amplitude * sin(frequency * t)\\ntrue_axis = apply_nutation(precession, nutation)"
+    },
+    "major-aspects": {
+      "title": "Major Aspects",
+      "course": "AST101",
+      "pythonConcept": "offsets + modulo 12",
+      "summary": "Cycle through the major aspect families and watch the zodiac geometry redraw from any starting sign.",
+      "status": "interactive",
+      "inputs": {
+        "sign": [
+          "Aries",
+          "Taurus",
+          "Gemini",
+          "Cancer",
+          "Leo",
+          "Virgo",
+          "Libra",
+          "Scorpio",
+          "Sagittarius",
+          "Capricorn",
+          "Aquarius",
+          "Pisces"
+        ],
+        "aspect": [
+          "Sextile",
+          "Square",
+          "Trine",
+          "Opposition"
+        ]
+      },
+      "code": "signs = [\"Aries\",\"Taurus\",\"Gemini\",\"Cancer\",\"Leo\",\"Virgo\",\\n         \"Libra\",\"Scorpio\",\"Sagittarius\",\"Capricorn\",\"Aquarius\",\"Pisces\"]\\n\\noffsets = {\"Sextile\": 2, \"Square\": 3, \"Trine\": 4, \"Opposition\": 6}\\n\\ni = signs.index(sign)\\nstep = offsets[aspect]\\nprint(signs[(i + step) % 12], signs[(i - step) % 12])",
+      "note": "Conjunction is the zero-step special case: both points occupy the same zodiac position."
     }
   },
   "launchArc": [
-    "opposite-signs",
+    "major-aspects",
     "day-ruler-deputies",
     "zodiac-longitude",
     "whole-sign-houses",
