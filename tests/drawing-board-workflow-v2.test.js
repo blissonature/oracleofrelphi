@@ -22,6 +22,8 @@ assert.match(board, /function draftPrefab/);
 assert.match(board, /Save template/);
 assert.match(board, /Show position stickers/);
 assert.match(board, /Unpack this card/);
+assert.match(board, /relphi-focus-art-actions/);
+assert.doesNotMatch(board, /relphi-focus-position-actions/);
 assert.match(board, /function unpackSurfaceCard/);
 assert.match(board, /derivedFromCard/);
 assert.match(board, /derivedFromReversed/);
