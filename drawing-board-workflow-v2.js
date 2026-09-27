@@ -2187,14 +2187,17 @@
     return true;
   }
   function expandSurfaceEntries(entries, baseIndex) {
-    const prepared=entries.map((entry,index)=>({
-      ...entry,
-      text:String(entry.text||'').trim(),
-      pack:String(entry.pack||'full'),
-      cardCount:Math.max(1,Math.min(12,Number(entry.cardCount)||1)),
-      localIndex:index,
-      linkToLocal:entry.linkTo===''||entry.linkTo==null?'':Number(entry.linkTo)
-    })).filter(entry=>entry.text);
+    const prepared=entries.map((entry,index)=>{
+      const linkToLocal=entry.linkTo===''||entry.linkTo==null?'':Number(entry.linkTo);
+      return {
+        ...entry,
+        text:String(entry.text||'').trim(),
+        pack:String(entry.pack||'full'),
+        cardCount:Number.isInteger(linkToLocal)?1:Math.max(1,Math.min(12,Number(entry.cardCount)||1)),
+        localIndex:index,
+        linkToLocal
+      };
+    }).filter(entry=>entry.text);
     const starts=[];
     let cursor=baseIndex;
     prepared.forEach(entry=>{starts[entry.localIndex]=cursor;cursor+=entry.cardCount;});
