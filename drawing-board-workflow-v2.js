@@ -2873,7 +2873,38 @@
       }
     },true);
   }
+  function ensureGlobalBoardActions(root) {
+    const modeSwitch=root?.querySelector('.drawing-board-mode-switch');
+    if(!root||!modeSwitch)return null;
+    let actions=root.querySelector(':scope > .relphi-global-board-actions');
+    if(!actions){
+      actions=document.createElement('div');
+      actions.className='relphi-global-board-actions';
+      actions.setAttribute('role','group');
+      actions.setAttribute('aria-label','Drawing Board actions');
+      modeSwitch.insertAdjacentElement('beforebegin',actions);
+    } else if(actions.nextElementSibling!==modeSwitch) {
+      modeSwitch.insertAdjacentElement('beforebegin',actions);
+    }
+
+    const draw=root.querySelector('#drawRandomRowCard');
+    if(draw && draw.parentElement!==actions) actions.appendChild(draw);
+
+    let reset=root.querySelector('#relphiResetBoard');
+    if(!reset){
+      reset=document.createElement('button');
+      reset.id='relphiResetBoard';
+      reset.type='button';
+      reset.textContent='Reset Board';
+      reset.title='Reset the board including cards and spread positions';
+      reset.setAttribute('aria-label','Reset board including cards and spread positions');
+    }
+    if(reset.parentElement!==actions || reset.previousElementSibling!==draw) actions.appendChild(reset);
+    return actions;
+  }
+
   function installTopActions(root) {
+    ensureGlobalBoardActions(root);
     const boardTab=root.querySelector('#drawingBoardBoardTab');
     if (boardTab) boardTab.textContent='Free';
     if (boardTab && boardTab.dataset.relphiUnifiedBoardTab!=='true') {
@@ -2948,6 +2979,7 @@
     markSemanticPositions(root);
     updateLayoutClasses(root);
     installRecursionBoard(root);
+    ensureGlobalBoardActions(root);
     installTopActions(root);
     installPermanentControls(root);
     installPinchZoom(root);
