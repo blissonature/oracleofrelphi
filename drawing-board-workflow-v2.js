@@ -2162,9 +2162,13 @@
     if (!bridge || !root || !entries.length) return false;
     const snap=bridge.capture();
     const originalLabels=Array.isArray(snap.shortListPositionLabels)?snap.shortListPositionLabels.slice():[];
-    const originalPacks=originalLabels.map((_,index)=>String(snap.rowPositionMeta?.[index]?.drawScope || snap.rowActiveLayout?.positions?.[index]?.drawScope || ''));
-    const labels=originalLabels.concat(entries.map(item=>item.text)).slice(0,MAX_POSITIONS);
-    const packs=originalPacks.concat(entries.map(item=>item.pack)).slice(0,labels.length);
+    const originalMeta=Array.isArray(snap.rowPositionMeta)?snap.rowPositionMeta.map(item=>clone(item)||{}):[];
+    const originalPacks=originalLabels.map((_,index)=>String(originalMeta[index]?.drawScope || snap.rowActiveLayout?.positions?.[index]?.drawScope || ''));
+    const room=Math.max(0,MAX_POSITIONS-originalLabels.length);
+    const appended=entries.slice(0,room);
+    if(!appended.length)return false;
+    const labels=originalLabels.concat(appended.map(item=>item.text));
+    const packs=originalPacks.concat(appended.map(item=>item.pack||'full'));
     const positions=genericPositions(labels);
     positions.forEach((item,index)=>{item.drawScope=packs[index]||'';});
     snap.shortListPositionLabels=labels;
@@ -2174,13 +2178,76 @@
     snap.rowPositionMeta=positions.map((item,index)=>{
       snap.rowEnvelopeLayout[index]={x:item.transform.x*CANVAS_W,y:item.transform.y*CANVAS_H};
       snap.rowCardTransforms[index]={scale:item.transform.scale,rotation:item.transform.rotation||0,zIndex:item.transform.zIndex||1};
-      return {id:item.id,role:index<surfaceReadingSession.initialCount?'surface-initial':'surface-followup',covers:'',crosses:'',drawScope:packs[index]||'',openTransform:null};
+      const prior=originalMeta[index];
+      if(prior)return {...prior,id:item.id,drawScope:packs[index]||prior.drawScope||'',openTransform:null};
+      const derived=appended[index-originalLabels.length]||{};
+      return {
+        id:item.id,
+        role:index<surfaceReadingSession.initialCount?'surface-initial':'surface-followup',
+        covers:'',
+        crosses:'',
+        drawScope:packs[index]||'full',
+        openTransform:null,
+        sourceKind:String(derived.sourceKind||''),
+        derivedFromPack:String(derived.derivedFromPack||''),
+        derivedFromIndex:Number.isInteger(derived.derivedFromIndex)?derived.derivedFromIndex:null,
+        derivedFromCard:String(derived.derivedFromCard||''),
+        derivedFromReversed:!!derived.derivedFromReversed
+      };
     });
     snap.rowActiveLayout={version:1,id:'see-what-surfaces-active',name:'See What Surfaces',cardCount:labels.length,source:'custom',editable:false,positions:positions.map((item,index)=>({...item,drawOrder:index+1})),rules:{allowReversals:snap.rowAllowReversals!==false,allowRepeats:!!snap.rowAllowRepeats,drawScope:snap.rowDrawScope||'full'}};
     snap.rowLayoutLocked=true;
     bridge.restore(snap);
+    return appended.length;
+  }
+  function unpackSurfaceCard(index) {
+    const session=surfaceReadingSession;
+    const root=panel();
+    if(!session||!root||!Number.isInteger(index)||!cardAt(index,root))return false;
+    const snap=currentSnapshot()||{};
+    const labels=Array.isArray(snap.shortListPositionLabels)?snap.shortListPositionLabels:[];
+    if(labels.length>=MAX_POSITIONS){
+      showBoardToast('This reading has reached the 50-card board limit.',{title:'See What Surfaces',duration:4200});
+      return false;
+    }
+    const card=cardDataAt(index)||{};
+    const cardId=String(card.card_id||cardAt(index,root)?.dataset?.rowCard||'');
+    const title=String(ledgerBridge()?.titleFor?.(cardId)||card.title||card.name||cardId||'this card').trim();
+    const reversed=focusCardIsReversed(index);
+    const sourceMeta=snap.rowPositionMeta?.[index]||snap.rowActiveLayout?.positions?.[index]||{};
+    const sourcePack=String(sourceMeta.drawScope||snap.rowDrawScope||'full');
+    const entry={
+      text:'What is '+title+(reversed?' reversed':'')+' asking me to understand more deeply?',
+      pack:'full',
+      sourceKind:'unpack',
+      derivedFromPack:sourcePack,
+      derivedFromIndex:index,
+      derivedFromCard:cardId,
+      derivedFromReversed:reversed
+    };
+    const targetIndex=labels.length;
+    const appended=appendSurfaceFollowups([entry],root);
+    if(!appended)return false;
+    session.followupsGenerated=true;
+    session.followupCount=Math.max(0,targetIndex-session.initialCount)+appended;
+    session.completionShown=false;
+    session.conclusionOffered=false;
+    craftedReadingActive=true;
+    optionsSession=null;
+    root.querySelector('.relphi-board-toast')?.remove();
+    closeFocus({acknowledge:true});
+    setBoardMode(root,'crafted');
+    setTimeout(()=>{
+      const live=panel();
+      if(!live)return;
+      markSemanticPositions(live);
+      updateLayoutClasses(live);
+      zoomExtents();
+      openAttune(targetIndex);
+    },0);
     return true;
   }
+
   function surfaceReadingComplete(root=panel()) {
     const session=surfaceReadingSession;
     if (!session || !session.followupsGenerated || !root) return false;
@@ -2197,8 +2264,8 @@
       const next=panel();
       if (!next) return;
       zoomExtents();
-      showBoardToast('Every surfaced referent has been answered. Review the whole spread together before closing the reading.',{
-        title:'See What Surfaces · Complete',
+      showBoardToast('Every current referent has been answered. Open any card and choose “Unpack this card” to continue one card at a time, or conclude the reading.',{
+        title:'See What Surfaces · Current branch complete',
         duration:0,
         actionLabel:'Conclude Reading',
         onAction:()=>{
@@ -2452,10 +2519,15 @@
     const entry=reader.querySelector('.relphi-focus-entry');
     const position=reader.querySelector('.relphi-focus-position');
     const reversedBadge=reader.querySelector('.relphi-focus-reversed-badge');
+    const unpack=reader.querySelector('.relphi-focus-unpack');
     const positionText=positionLabel(index);
     reader.classList.toggle('has-long-referent',positionText.length>320);
     if (position) position.textContent=positionText;
     if (reversedBadge) reversedBadge.hidden=!reversed;
+    if (unpack) {
+      const count=Array.isArray((currentSnapshot()||{}).shortListPositionLabels)?(currentSnapshot()||{}).shortListPositionLabels.length:configuredPositionCount();
+      unpack.hidden=!surfaceReadingSession || !card || count>=MAX_POSITIONS;
+    }
     replaceFocusArt(reader,artSource,cardId,reversed);
     if (entry) {
       entry.innerHTML=ledgerBridge()?.renderCardEntry?.(cardId,'Tarot Ledger entry') || '<p>Card entry unavailable.</p>';
@@ -2639,11 +2711,15 @@
     reader.setAttribute('role','dialog');
     reader.setAttribute('aria-modal','true');
     reader.setAttribute('aria-label',positionLabel(index,root));
-    reader.innerHTML=`<div class="relphi-focus-shell"><section class="relphi-focus-position-panel" aria-label="Reading question or position"><span class="relphi-focus-reversed-badge" hidden>Reversed</span><strong class="relphi-focus-position"></strong><button type="button" class="relphi-focus-close" aria-label="Close focused card">×</button></section><nav class="relphi-recursion-depth" aria-label="Recursion depth" hidden></nav><div class="relphi-focus-main"><section class="relphi-focus-art-pane" aria-label="Card art"><div class="relphi-focus-art-frame"><img class="relphi-focus-art" alt=""></div></section><article class="relphi-focus-entry tarot-detail" aria-label="Full Tarot Ledger entry"></article><section class="relphi-recursion-portal-focus" hidden></section></div><footer><button type="button" class="relphi-focus-prev" aria-label="Previous position">‹</button><div class="relphi-focus-navigator"><div class="relphi-focus-strip" aria-label="Reading positions"></div></div><button type="button" class="relphi-focus-next" aria-label="Next position">›</button></footer></div>`;
+    reader.innerHTML=`<div class="relphi-focus-shell"><section class="relphi-focus-position-panel" aria-label="Reading question or position"><span class="relphi-focus-reversed-badge" hidden>Reversed</span><strong class="relphi-focus-position"></strong><div class="relphi-focus-position-actions"><button type="button" class="relphi-focus-unpack" hidden>Unpack this card</button></div><button type="button" class="relphi-focus-close" aria-label="Close focused card">×</button></section><nav class="relphi-recursion-depth" aria-label="Recursion depth" hidden></nav><div class="relphi-focus-main"><section class="relphi-focus-art-pane" aria-label="Card art"><div class="relphi-focus-art-frame"><img class="relphi-focus-art" alt=""></div></section><article class="relphi-focus-entry tarot-detail" aria-label="Full Tarot Ledger entry"></article><section class="relphi-recursion-portal-focus" hidden></section></div><footer><button type="button" class="relphi-focus-prev" aria-label="Previous position">‹</button><div class="relphi-focus-navigator"><div class="relphi-focus-strip" aria-label="Reading positions"></div></div><button type="button" class="relphi-focus-next" aria-label="Next position">›</button></footer></div>`;
     renderFocusEntry(reader,index);
     renderFocusStrip(reader,index,{preserveScroll:false});
     installFocusStripScrub(reader);
     reader.querySelector('.relphi-focus-close').addEventListener('click',()=>closeFocus({acknowledge:true}));
+    reader.querySelector('.relphi-focus-unpack')?.addEventListener('click',()=>{
+      const target=Number(reader.dataset.focusIndex);
+      if(Number.isInteger(target))unpackSurfaceCard(target);
+    });
     reader.querySelector('.relphi-focus-prev').addEventListener('click',()=>navigateFocusBy(-1));
     reader.querySelector('.relphi-focus-next').addEventListener('click',()=>navigateFocusBy(1));
     installFocusSwipe(reader);
