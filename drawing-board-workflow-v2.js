@@ -1345,6 +1345,9 @@
         '</div>'+
         pathPanelMarkup(session,hasCards)+
         drawSettingsMarkup+
+        (session.path==='surface'
+          ? '<aside class="relphi-surface-empty-cue" data-surface-empty-cue '+(selectedSurfaceKinds(session).length?'hidden':'')+'><span><strong>↑ Choose at least one question above</strong><small>Start Reading needs something to ask.</small></span><button type="button" data-surface-select-all-bottom>Select all '+SURFACE_DRAW_KEYS.length+'</button></aside>'
+          : '')+
       '</div>'+
       '<div class="relphi-options-commitbar"><span></span><button type="button" id="relphiCancelOptions">Cancel</button><button type="button" id="relphiApplyOptions" class="primary" '+(session.path==='surface'&&!selectedSurfaceKinds(session).length?'disabled':'')+'>Start Reading</button></div>';
     modeTabs.insertAdjacentElement('afterend',drawer);
@@ -1486,6 +1489,8 @@
 
     const surfaceChoiceInputs=Array.from(drawer.querySelectorAll('[data-surface-choice]'));
     const surfaceSelectAll=drawer.querySelector('[data-surface-select-all]');
+    const surfaceSelectAllBottom=drawer.querySelector('[data-surface-select-all-bottom]');
+    const surfaceEmptyCue=drawer.querySelector('[data-surface-empty-cue]');
     drawer.querySelectorAll('[data-sacred-card-source]').forEach(input=>input.addEventListener('change',()=>{
       if(input.checked)session.sacredCardSource=input.value==='physical'?'physical':'digital';
     }));
@@ -1495,6 +1500,7 @@
         surfaceSelectAll.checked=count===SURFACE_DRAW_KEYS.length;
         surfaceSelectAll.indeterminate=count>0&&count<SURFACE_DRAW_KEYS.length;
       }
+      if(surfaceEmptyCue)surfaceEmptyCue.hidden=count>0;
       const start=drawer.querySelector('#relphiApplyOptions');
       if(start&&session.path==='surface')start.disabled=!count;
     };
@@ -1503,13 +1509,18 @@
       session.surfaceSelected[input.dataset.surfaceChoice]=input.checked;
       syncSurfaceSelectionUi();
     }));
-    surfaceSelectAll?.addEventListener('change',()=>{
+    const setAllSurfaceChoices=checked=>{
       session.surfaceSelected ||= {};
-      SURFACE_DRAW_KEYS.forEach(kind=>{session.surfaceSelected[kind]=surfaceSelectAll.checked;});
-      surfaceChoiceInputs.forEach(input=>{input.checked=surfaceSelectAll.checked;});
-      surfaceSelectAll.indeterminate=false;
+      SURFACE_DRAW_KEYS.forEach(kind=>{session.surfaceSelected[kind]=!!checked;});
+      surfaceChoiceInputs.forEach(input=>{input.checked=!!checked;});
+      if(surfaceSelectAll){
+        surfaceSelectAll.checked=!!checked;
+        surfaceSelectAll.indeterminate=false;
+      }
       syncSurfaceSelectionUi();
-    });
+    };
+    surfaceSelectAll?.addEventListener('change',()=>setAllSurfaceChoices(surfaceSelectAll.checked));
+    surfaceSelectAllBottom?.addEventListener('click',()=>setAllSurfaceChoices(true));
     syncSurfaceSelectionUi();
 
     drawer.querySelectorAll('[data-suggestion-text]').forEach(input=>input.addEventListener('input',()=>{
