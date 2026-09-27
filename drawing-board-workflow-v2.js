@@ -1347,7 +1347,8 @@
         drawSettingsMarkup+
         (session.path==='surface'
           ? (()=>{const count=selectedSurfaceKinds(session).length,ready=count>0,source=session.sacredCardSource==='physical'?'Physical':'Digital';return '<aside class="relphi-surface-readiness '+(ready?'is-ready':'')+'" data-surface-readiness role="status" aria-live="polite">'+
-              '<div class="relphi-surface-readiness-rail" aria-label="Reading readiness">'+
+              '<div class="relphi-surface-readiness-rail" aria-label="Crafted reading progress">'+
+                '<div class="relphi-surface-readiness-step is-complete" data-readiness-step="path"><i aria-hidden="true"></i><strong>Path</strong><small>See What Surfaces</small></div>'+
                 '<div class="relphi-surface-readiness-step is-complete" data-readiness-step="source"><i aria-hidden="true"></i><strong>Card source</strong><small data-surface-source-status>'+source+'</small></div>'+
                 '<div class="relphi-surface-readiness-step '+(ready?'is-complete':'')+'" data-readiness-step="questions"><i aria-hidden="true"></i><strong>Questions</strong><small data-surface-question-status>'+(ready?count+' selected':'Choose 1+')+'</small></div>'+
                 '<div class="relphi-surface-readiness-step '+(ready?'is-complete is-success':'')+'" data-readiness-step="ready"><i aria-hidden="true"></i><strong>Ready</strong><small data-surface-ready-status>'+(ready?'Minimum met':'Waiting')+'</small></div>'+
