@@ -65,7 +65,11 @@
       "theme": "Degree divisions and traditional intervals.",
       "lessons": [
         "dodecatemoria",
-        "egyptian-bounds"
+        "monomoiria",
+        "egyptian-bounds",
+        "decans-faces",
+        "planetary-joys",
+        "whole-sign-house-distance"
       ]
     },
     {
@@ -74,7 +78,9 @@
       "theme": "Sect-aware zodiacal arithmetic.",
       "lessons": [
         "part-of-fortune",
-        "part-of-spirit"
+        "day-night-lots",
+        "lot-houses",
+        "derived-lots"
       ]
     },
     {
@@ -83,7 +89,10 @@
       "theme": "Cycles, nested periods, and interval traversal.",
       "lessons": [
         "annual-profections",
-        "zodiacal-releasing"
+        "monthly-profections",
+        "annual-time-lord",
+        "planetary-years",
+        "planetary-period-calendar"
       ]
     },
     {
@@ -91,7 +100,18 @@
       "title": "Planetary Condition and Light",
       "theme": "Solar and lunar relationship logic.",
       "lessons": [
-        "lunar-application"
+        "solar-phases",
+        "under-beams-combustion-cazimi",
+        "morning-evening-star",
+        "oriental-occidental",
+        "lunar-application",
+        "lunar-separation",
+        "void-of-course",
+        "translation-light",
+        "collection-light",
+        "superior-inferior-speed",
+        "planetary-stations",
+        "heliacal-phenomena"
       ]
     },
     {
@@ -166,6 +186,29 @@
       "theme": "Integrate computed sky positions with Relphi.",
       "lessons": [
         "chart-generation"
+      ]
+    },
+    {
+      "code": "TRAD301",
+      "title": "Ascensional and Directional Measures",
+      "theme": "Measure unequal rising, temporal hours, directed arcs, and distributions.",
+      "lessons": [
+        "rising-times",
+        "ascensional-difference",
+        "temporal-hours",
+        "planetary-hours",
+        "primary-direction-arcs",
+        "circumambulations"
+      ]
+    },
+    {
+      "code": "TRAD302",
+      "title": "Releasing and Nested Time",
+      "theme": "Generate nested periods, angular peaks, and sequence-breaking conditions.",
+      "lessons": [
+        "zodiacal-releasing",
+        "releasing-peak-periods",
+        "loosing-of-the-bond"
       ]
     }
   ],
@@ -314,6 +357,409 @@
       },
       "code": "signs = [\"Aries\",\"Taurus\",\"Gemini\",\"Cancer\",\"Leo\",\"Virgo\",\\n         \"Libra\",\"Scorpio\",\"Sagittarius\",\"Capricorn\",\"Aquarius\",\"Pisces\"]\\n\\noffsets = {\"Sextile\": 2, \"Square\": 3, \"Trine\": 4, \"Opposition\": 6}\\n\\ni = signs.index(sign)\\nstep = offsets[aspect]\\nprint(signs[(i + step) % 12], signs[(i - step) % 12])",
       "note": "Conjunction is the zero-step special case: both points occupy the same zodiac position."
+    },
+    "dodecatemoria": {
+      "title": "Dodecatemoria / Twelfth-Parts",
+      "course": "TRAD101",
+      "pythonConcept": "multiplication + modulo 360",
+      "summary": "Multiply the degree within the sign by twelve, project that distance from the start of the sign, and wrap around the zodiac.",
+      "status": "interactive",
+      "code": "signs = [\"Aries\",\"Taurus\",\"Gemini\",\"Cancer\",\"Leo\",\"Virgo\",\n         \"Libra\",\"Scorpio\",\"Sagittarius\",\"Capricorn\",\"Aquarius\",\"Pisces\"]\n\nsign_start = signs.index(sign) * 30\ntwelfth_part = (sign_start + degree * 12) % 360\nprint(twelfth_part)",
+      "inputs": {
+        "sign": [
+          "Aries",
+          "Taurus",
+          "Gemini",
+          "Cancer",
+          "Leo",
+          "Virgo",
+          "Libra",
+          "Scorpio",
+          "Sagittarius",
+          "Capricorn",
+          "Aquarius",
+          "Pisces"
+        ],
+        "degree": {
+          "min": 0,
+          "max": 29,
+          "value": 17
+        }
+      }
+    },
+    "monomoiria": {
+      "title": "Monomoiria",
+      "course": "TRAD101",
+      "pythonConcept": "cyclic indexing",
+      "summary": "Assign a planetary ruler to each individual degree by cycling through a seven-planet sequence.",
+      "status": "interactive",
+      "code": "rulers = [\"Sun\",\"Venus\",\"Mercury\",\"Moon\",\"Saturn\",\"Jupiter\",\"Mars\"]\nprint(rulers[degree % 7])",
+      "inputs": {
+        "degree": {
+          "min": 0,
+          "max": 29,
+          "value": 0
+        }
+      }
+    },
+    "egyptian-bounds": {
+      "title": "Bounds / Terms",
+      "course": "TRAD101",
+      "pythonConcept": "unequal interval lookup",
+      "summary": "Find which unequal planetary bound contains a given degree. Unlike decans, the intervals are not equal.",
+      "status": "concept",
+      "code": "for start, end, ruler in bounds[sign]:\n    if start <= degree < end:\n        print(ruler)\n        break"
+    },
+    "decans-faces": {
+      "title": "Decans / Faces",
+      "course": "TRAD101",
+      "pythonConcept": "integer division + cyclic rulers",
+      "summary": "Divide each sign into three equal 10° sections, then assign the face ruler from the traditional sequence.",
+      "status": "interactive",
+      "code": "decan = degree // 10\nprint(decan + 1)",
+      "inputs": {
+        "degree": {
+          "min": 0,
+          "max": 29,
+          "value": 17
+        }
+      }
+    },
+    "planetary-joys": {
+      "title": "Planetary Joys",
+      "course": "TRAD101",
+      "pythonConcept": "house-to-planet lookup",
+      "summary": "Represent the traditional planetary joys as a direct house-to-planet mapping.",
+      "status": "concept",
+      "code": "joys = {1:\"Mercury\", 3:\"Moon\", 5:\"Venus\", 6:\"Mars\",\n        9:\"Sun\", 11:\"Jupiter\", 12:\"Saturn\"}\nprint(joys.get(house))"
+    },
+    "whole-sign-house-distance": {
+      "title": "Whole-Sign House Distance",
+      "course": "TRAD101",
+      "pythonConcept": "modulo 12 distance",
+      "summary": "Count signs from one reference sign to another and convert the distance into a whole-sign house number.",
+      "status": "interactive",
+      "code": "distance = (signs.index(target) - signs.index(reference)) % 12\nhouse = distance + 1\nprint(house)",
+      "inputs": {
+        "reference": [
+          "Aries",
+          "Taurus",
+          "Gemini",
+          "Cancer",
+          "Leo",
+          "Virgo",
+          "Libra",
+          "Scorpio",
+          "Sagittarius",
+          "Capricorn",
+          "Aquarius",
+          "Pisces"
+        ],
+        "target": [
+          "Aries",
+          "Taurus",
+          "Gemini",
+          "Cancer",
+          "Leo",
+          "Virgo",
+          "Libra",
+          "Scorpio",
+          "Sagittarius",
+          "Capricorn",
+          "Aquarius",
+          "Pisces"
+        ]
+      }
+    },
+    "day-night-lots": {
+      "title": "Day / Night Reversal of Lots",
+      "course": "TRAD102",
+      "pythonConcept": "conditional formulas",
+      "summary": "Flip the subtraction order of the significators when the Lot formula is sect-dependent.",
+      "status": "concept",
+      "code": "if sect == \"day\":\n    lot = asc + A - B\nelse:\n    lot = asc + B - A\n\nprint(lot % 360)"
+    },
+    "lot-houses": {
+      "title": "Lot Houses",
+      "course": "TRAD102",
+      "pythonConcept": "relative sign distance",
+      "summary": "Once a Lot is calculated, use its sign as a reference and count whole-sign houses from it.",
+      "status": "interactive",
+      "code": "lot_sign = int(lot_longitude // 30)\nplanet_sign = int(planet_longitude // 30)\nhouse = (planet_sign - lot_sign) % 12 + 1\nprint(house)",
+      "inputs": {
+        "lot_longitude": {
+          "min": 0,
+          "max": 359,
+          "value": 120
+        },
+        "planet_longitude": {
+          "min": 0,
+          "max": 359,
+          "value": 275
+        }
+      }
+    },
+    "derived-lots": {
+      "title": "Lots Derived from Lots",
+      "course": "TRAD102",
+      "pythonConcept": "function composition",
+      "summary": "Feed a calculated Lot into another Lot formula, making one derived point an input to the next.",
+      "status": "concept",
+      "code": "fortune = lot(asc, moon, sun)\nderived = lot(asc, fortune, planet)\nprint(derived)"
+    },
+    "monthly-profections": {
+      "title": "Monthly Profections",
+      "course": "TRAD201",
+      "pythonConcept": "nested modular cycles",
+      "summary": "Subdivide the annual profection into a faster sign cycle nested inside the annual time-lord year.",
+      "status": "interactive",
+      "code": "annual = (start + age) % 12\nmonthly = (annual + month) % 12\nprint(signs[monthly])",
+      "inputs": {
+        "rising": [
+          "Aries",
+          "Taurus",
+          "Gemini",
+          "Cancer",
+          "Leo",
+          "Virgo",
+          "Libra",
+          "Scorpio",
+          "Sagittarius",
+          "Capricorn",
+          "Aquarius",
+          "Pisces"
+        ],
+        "age": {
+          "min": 0,
+          "max": 99,
+          "value": 40
+        },
+        "month": {
+          "min": 0,
+          "max": 11,
+          "value": 0
+        }
+      }
+    },
+    "annual-time-lord": {
+      "title": "Annual Time Lord",
+      "course": "TRAD201",
+      "pythonConcept": "lookup composition",
+      "summary": "Find the profected Ascendant sign for the year, then look up that sign's traditional ruler.",
+      "status": "interactive",
+      "code": "profected = signs[(signs.index(rising) + age) % 12]\ntime_lord = rulers[profected]\nprint(profected, time_lord)",
+      "inputs": {
+        "rising": [
+          "Aries",
+          "Taurus",
+          "Gemini",
+          "Cancer",
+          "Leo",
+          "Virgo",
+          "Libra",
+          "Scorpio",
+          "Sagittarius",
+          "Capricorn",
+          "Aquarius",
+          "Pisces"
+        ],
+        "age": {
+          "min": 0,
+          "max": 99,
+          "value": 40
+        }
+      }
+    },
+    "planetary-years": {
+      "title": "Planetary Years",
+      "course": "TRAD201",
+      "pythonConcept": "structured lookup",
+      "summary": "Store minor, mean, and greater planetary periods and retrieve the appropriate measure for a timing procedure.",
+      "status": "concept",
+      "code": "planetary_years = {\n    \"Saturn\": {\"minor\": 30, \"mean\": 43.5, \"greater\": 57},\n    # source-specific values continue here\n}\nprint(planetary_years[planet][period])"
+    },
+    "planetary-period-calendar": {
+      "title": "Days / Months from Planetary Periods",
+      "course": "TRAD201",
+      "pythonConcept": "unit conversion",
+      "summary": "Convert a traditional planetary period into a calendar length while keeping the source convention explicit.",
+      "status": "concept",
+      "code": "days = period_years * days_per_year\nmonths = period_years * months_per_year"
+    },
+    "solar-phases": {
+      "title": "Solar Phases",
+      "course": "TRAD202",
+      "pythonConcept": "relative angular position",
+      "summary": "Measure a planet's longitude relative to the Sun and classify its phase from separation and orientation.",
+      "status": "concept",
+      "code": "separation = (planet - sun) % 360\nprint(separation)"
+    },
+    "under-beams-combustion-cazimi": {
+      "title": "Under the Beams / Combustion / Cazimi",
+      "course": "TRAD202",
+      "pythonConcept": "nested thresholds",
+      "summary": "Classify solar proximity by increasingly tight angular-distance thresholds.",
+      "status": "concept",
+      "code": "distance = shortest_distance(planet, sun)\n\nif distance <= cazimi_orb:\n    state = \"cazimi\"\nelif distance <= combustion_orb:\n    state = \"combust\"\nelif distance <= beams_orb:\n    state = \"under the beams\""
+    },
+    "morning-evening-star": {
+      "title": "Morning vs. Evening Star",
+      "course": "TRAD202",
+      "pythonConcept": "circular ordering + visibility context",
+      "summary": "Compare a planet's position with the Sun to determine whether it is on the morning or evening side, then refine with actual visibility conditions.",
+      "status": "concept",
+      "code": "relative = (planet - sun) % 360\nside = classify_relative_to_sun(relative)"
+    },
+    "oriental-occidental": {
+      "title": "Oriental / Occidental",
+      "course": "TRAD202",
+      "pythonConcept": "planet-specific conditional logic",
+      "summary": "Apply the traditional oriental/occidental rule appropriate to the planet rather than using one rule for every body.",
+      "status": "concept",
+      "code": "state = oriental_or_occidental(planet, sun, planet_class)"
+    },
+    "lunar-application": {
+      "title": "Lunar Application",
+      "course": "TRAD202",
+      "pythonConcept": "forward event search",
+      "summary": "Search forward for the next aspect the Moon perfects with another planet.",
+      "status": "concept",
+      "code": "for future_time in times:\n    if moon_perfects_aspect(future_time):\n        return next_planet"
+    },
+    "lunar-separation": {
+      "title": "Lunar Separation",
+      "course": "TRAD202",
+      "pythonConcept": "reverse event search",
+      "summary": "Search backward for the aspect from which the Moon most recently separated.",
+      "status": "concept",
+      "code": "for past_time in reversed(times):\n    if moon_perfected_aspect(past_time):\n        return previous_planet"
+    },
+    "void-of-course": {
+      "title": "Void of Course",
+      "course": "TRAD202",
+      "pythonConcept": "bounded search",
+      "summary": "Search the Moon's remaining travel in its current sign for a future perfection, stopping at the sign boundary.",
+      "status": "concept",
+      "code": "while moon.sign == current_sign:\n    if moon_perfects_aspect():\n        return False\n    advance_time()\n\nreturn True"
+    },
+    "translation-light": {
+      "title": "Translation of Light",
+      "course": "TRAD202",
+      "pythonConcept": "ordered event sequence",
+      "summary": "Detect a body separating from one planet and then applying to another, carrying the relationship forward in time.",
+      "status": "concept",
+      "code": "if separates_from(A) and then_applies_to(B):\n    translation = True"
+    },
+    "collection-light": {
+      "title": "Collection of Light",
+      "course": "TRAD202",
+      "pythonConcept": "multi-body convergence",
+      "summary": "Detect two planets applying to a slower third body.",
+      "status": "concept",
+      "code": "if applies(A, C) and applies(B, C) and slower(C):\n    collection = True"
+    },
+    "superior-inferior-speed": {
+      "title": "Superior / Inferior Planet Speed Logic",
+      "course": "TRAD202",
+      "pythonConcept": "relative ordering and rates",
+      "summary": "Compare traditional planetary class, ordering, and relative apparent motion rather than treating all planets as dynamically interchangeable.",
+      "status": "concept",
+      "code": "relation = compare_speed_and_order(planet_a, planet_b)"
+    },
+    "planetary-stations": {
+      "title": "Planetary Stations",
+      "course": "TRAD202",
+      "pythonConcept": "rate of change",
+      "summary": "Examine successive longitudes, unwrap the circle correctly, and detect apparent speed approaching zero or changing sign.",
+      "status": "concept",
+      "code": "speed = circular_delta(longitude_today, longitude_tomorrow)\nif abs(speed) < threshold:\n    state = \"near station\""
+    },
+    "heliacal-phenomena": {
+      "title": "Heliacal Phenomena",
+      "course": "TRAD202",
+      "pythonConcept": "multi-variable visibility model",
+      "summary": "Combine solar separation, latitude, local horizon, altitude, and visibility thresholds to model emergence and disappearance.",
+      "status": "concept",
+      "code": "visible = heliacal_visibility(\n    solar_separation, ecliptic_latitude,\n    altitude, horizon, threshold\n)"
+    },
+    "rising-times": {
+      "title": "Rising Times",
+      "course": "TRAD301",
+      "pythonConcept": "tables / interpolation by latitude",
+      "summary": "Map zodiacal arcs to unequal ascensional times. Equal 30° signs do not necessarily rise in equal time.",
+      "status": "concept",
+      "code": "rising_time = interpolate(table[latitude], zodiac_arc)"
+    },
+    "ascensional-difference": {
+      "title": "Ascensional Difference",
+      "course": "TRAD301",
+      "pythonConcept": "reference-frame difference",
+      "summary": "Compare equinoctial measure with the locally rising measure to expose latitude-dependent inequality.",
+      "status": "concept",
+      "code": "difference = local_ascension - equinoctial_ascension"
+    },
+    "temporal-hours": {
+      "title": "Temporal Hours",
+      "course": "TRAD301",
+      "pythonConcept": "interval division",
+      "summary": "Divide daylight and nighttime separately into twelve unequal hours.",
+      "status": "interactive",
+      "code": "day_hour = daylight_minutes / 12\nnight_hour = night_minutes / 12\nprint(day_hour, night_hour)",
+      "inputs": {
+        "daylight_minutes": {
+          "min": 1,
+          "max": 1439,
+          "value": 720
+        }
+      }
+    },
+    "planetary-hours": {
+      "title": "Planetary Hours",
+      "course": "TRAD301",
+      "pythonConcept": "intervals + cyclic indexing",
+      "summary": "Lay the Chaldean planetary sequence over temporal hours, beginning with the weekday ruler.",
+      "status": "concept",
+      "code": "ruler = order[(start_index + hour_number) % 7]"
+    },
+    "primary-direction-arcs": {
+      "title": "Primary-Direction Style Arc Measurements",
+      "course": "TRAD301",
+      "pythonConcept": "arc-to-time mapping",
+      "summary": "Measure a directed celestial arc and convert it to symbolic time according to the chosen directional procedure.",
+      "status": "concept",
+      "code": "time = arc * key\nprint(time)"
+    },
+    "circumambulations": {
+      "title": "Circumambulations / Distributions Through Bounds",
+      "course": "TRAD301",
+      "pythonConcept": "piecewise traversal + state changes",
+      "summary": "Walk a directed point through successive unequal bounds, changing the time lord whenever a boundary is crossed.",
+      "status": "concept",
+      "code": "while arc_remaining > 0:\n    bound = find_bound(position)\n    distance = distance_to_bound_end(position)\n    assign_time_lord(bound.ruler)\n    advance(distance)"
+    },
+    "zodiacal-releasing": {
+      "title": "Zodiacal Releasing",
+      "course": "TRAD302",
+      "pythonConcept": "nested period generation",
+      "summary": "Generate nested sign periods from a starting Lot using planetary period lengths.",
+      "status": "concept",
+      "code": "for level_1 in releasing_periods(starting_lot):\n    for level_2 in subdivide(level_1):\n        yield level_1, level_2"
+    },
+    "releasing-peak-periods": {
+      "title": "Peak Periods in Releasing",
+      "course": "TRAD302",
+      "pythonConcept": "relative angular sign logic",
+      "summary": "Detect angular relationships between the current releasing sign and the sign of the starting Lot.",
+      "status": "concept",
+      "code": "distance = (current_sign - lot_sign) % 12\npeak = distance in {0, 3, 6, 9}"
+    },
+    "loosing-of-the-bond": {
+      "title": "Loosing of the Bond",
+      "course": "TRAD302",
+      "pythonConcept": "conditional sequence mutation",
+      "summary": "Interrupt the ordinary sign-by-sign releasing sequence when the prescribed condition is reached and perform the special jump.",
+      "status": "concept",
+      "code": "if loosing_of_bond_condition:\n    next_sign = special_jump(current_sign)\nelse:\n    next_sign = (current_sign + 1) % 12"
     }
   },
   "launchArc": [
@@ -332,6 +778,16 @@
     "precession",
     "nutation",
     "ecliptic-equatorial",
-    "julian-date"
+    "julian-date",
+    "monomoiria",
+    "egyptian-bounds",
+    "decans-faces",
+    "whole-sign-house-distance",
+    "monthly-profections",
+    "annual-time-lord",
+    "temporal-hours",
+    "circumambulations",
+    "zodiacal-releasing",
+    "loosing-of-the-bond"
   ]
 }
