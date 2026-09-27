@@ -1034,9 +1034,14 @@
   function suggestionsFromSurface(session) {
     const draws=session.surfaceDraws || {};
     const result=[];
-    const push=(kind,text)=>{
+    // The first See What Surfaces cards are probes drawn from deliberately
+    // narrow packs. Once a probe surfaces a referent, its derived question is a
+    // new experiment and must not inherit that probe's pack. Re-open the answer
+    // space to the Full Pack unless a future derivation explicitly supplies a
+    // principled answer scope of its own.
+    const push=(kind,text,pack='full')=>{
       const clean=String(text||'').replace(/\s+/g,' ').trim();
-      if(clean) result.push({text:clean,pack:SURFACE_PACK_BY_KIND[kind]||''});
+      if(clean) result.push({text:clean,pack,sourceKind:kind,derivedFromPack:SURFACE_PACK_BY_KIND[kind]||''});
     };
     const primordial=surfacePrimordialElement(draws.primordial);
     if (primordial) push('primordial','What does the primordial '+primordial+' principle reveal about this matter?');
