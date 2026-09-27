@@ -13,28 +13,29 @@ async function openBoard(page){
   await page.waitForFunction(() => !!window.RelphiDrawingBoardSpreadPrefabs && !!window.RelphiDrawingBoardPrefabsBridge && !!window.RelphiDrawingBoardOptionsBridge,{timeout:20000});
   if (!(await page.locator('#shortListPanel').isVisible())) await page.click('#relphiOpenDrawingBoardCurrent');
   await page.waitForSelector('#shortListPanel .card-row-workspace-toolbar.relphi-board-controller',{state:'visible'});
-  await page.waitForSelector('#relphiResetBoard',{state:'visible'});
-  const globalActionPlacement=await page.evaluate(() => {
-    const draw=document.querySelector('#drawRandomRowCard');
-    const reset=document.querySelector('#relphiResetBoard');
-    const global=document.querySelector('#shortListPanel .relphi-global-board-actions');
-    const modes=document.querySelector('#shortListPanel .drawing-board-mode-switch');
-    const clear=document.querySelector('#clearShortListCardsOnly');
-    const freeActions=document.querySelector('#shortListPanel .drawing-board-top-actions');
+  await page.waitForSelector('#relphiBoardSettingsButton',{state:'visible'});
+  const chrome=await page.evaluate(() => {
+    const bar=document.querySelector('#shortListPanel .relphi-board-commandbar');
+    const actions=bar?.querySelector('.drawing-board-top-actions');
     return {
-      global:!!draw&&!!reset&&!!global&&draw.parentElement===global&&reset.parentElement===global&&reset.previousElementSibling===draw,
-      promoted:!!modes&&global.nextElementSibling===modes,
-      freeClear:!!clear&&!!freeActions&&clear.parentElement===freeActions,
-      globalRows:document.querySelectorAll('#shortListPanel .relphi-global-board-actions').length
+      bar:!!bar,
+      title:bar?.querySelector('.relphi-board-command-title strong')?.textContent?.trim(),
+      actions:Array.from(actions?.querySelectorAll(':scope > button')||[]).map(node=>node.id),
+      labels:Array.from(actions?.querySelectorAll(':scope > button')||[]).map(node=>node.textContent.trim()),
+      settingsExpanded:bar?.querySelector('#relphiBoardSettingsButton')?.getAttribute('aria-expanded'),
+      legacyRows:document.querySelectorAll('#shortListPanel .relphi-global-board-actions').length
     };
   });
-  assert.equal(globalActionPlacement.global,true,'Draw and Reset Board must share the permanent Drawing Board action row');
-  assert.equal(globalActionPlacement.promoted,true,'Drawing Board actions must sit above the Free/Crafted mode switch');
-  assert.equal(globalActionPlacement.freeClear,true,'Clear Cards remains a Free-mode action');
-  assert.equal(globalActionPlacement.globalRows,1,'Drawing Board must have exactly one global action row');
+  assert.equal(chrome.bar,true,'Drawing Board must have one command bar');
+  assert.equal(chrome.title,'Drawing Board','command bar owns the Drawing Board title');
+  assert.deepEqual(chrome.actions,['clearShortListCardsOnly','undoShortList','redoShortList','drawRandomRowCard'],'right actions must be Clear, Undo, Redo, Draw');
+  assert.deepEqual(chrome.labels,['Clear','Undo','Redo','Draw'],'right action labels must match the redesign');
+  assert.equal(chrome.settingsExpanded,'false','Settings starts closed');
+  assert.equal(chrome.legacyRows,0,'legacy global action rows must be removed');
 }
 
 async function applyTemplate(page,id){
+  await page.click('#relphiBoardSettingsButton');
   await page.click('#drawingBoardOptionsButton');
   await page.waitForSelector('#relphiSpreadTemplateSelect',{state:'visible'});
   await page.selectOption('#relphiSpreadTemplateSelect',id);
@@ -45,7 +46,10 @@ async function applyTemplate(page,id){
 async function fillCustomQuestions(page,questions){
   const firstLabel='#relphiPositionLabels .relphi-label-row input';
   if (!(await page.locator(firstLabel).first().isVisible().catch(()=>false))) {
-    if (!(await page.locator('.relphi-reading-options-drawer.is-reading-options-open').count())) await page.click('#drawingBoardOptionsButton');
+    if (!(await page.locator('.relphi-reading-options-drawer.is-reading-options-open').count())) {
+      if (!(await page.locator('#relphiBoardSettingsButton').getAttribute('aria-expanded')==='true')) await page.click('#relphiBoardSettingsButton');
+      await page.click('#drawingBoardOptionsButton');
+    }
     await page.waitForSelector('.relphi-reading-options-drawer.is-reading-options-open',{state:'visible'});
     await page.click('[data-referent-path="bespoke"]');
   }
@@ -75,13 +79,17 @@ async function drawCards(page,count){
 }
 
 async function resetToBlank(page){
+  if ((await page.locator('#relphiBoardSettingsButton').getAttribute('aria-expanded'))!=='true') await page.click('#relphiBoardSettingsButton');
   await page.waitForSelector('#relphiResetBoard',{state:'visible'});
+  assert.equal(await page.locator('#relphiResetBoard').isEnabled(),true,'Reset Board must activate after cards or a confirmed setup');
   await page.click('#relphiResetBoard');
   await page.waitForFunction(() => {
     const state=window.RelphiDrawingBoardPrefabsBridge?.getState?.();
     return state && !state.activeLayout && state.slotCount===0 && state.hasCards===false;
   });
-  if (await page.locator('#relphiApplyOptions').isVisible().catch(()=>false)) await page.click('#relphiApplyOptions');
+  assert.equal(await page.locator('#drawingBoardBoardTab').getAttribute('aria-checked'),'true','Reset restores Free mode');
+  assert.equal(await page.locator('#relphiResetBoard').isDisabled(),true,'Reset disables again after defaults are restored');
+  await page.click('#relphiCancelFreeSettings');
 }
 
 async function boardState(page){
@@ -153,31 +161,23 @@ async function assertFreeformClearCardsLeavesZeroSlotBoard(page,expectedCards){
   try {
     const page=await browser.newPage({viewport:{width:390,height:844}});
     await openBoard(page);
-    const freeTop=await page.locator('.drawing-board-mode-switch').evaluate(el=>el.getBoundingClientRect().top);
-    for(let i=0;i<3;i+=1){
-      await page.click('#relphiResetBoard');
-      await page.waitForTimeout(50);
-      assert.equal(await page.locator('#drawingBoardBoardTab').getAttribute('aria-checked'),'true','Global Reset Board must keep an empty Free board in Free mode');
-      assert.equal(await page.locator('.relphi-reading-options-drawer').count(),0,'Free-mode reset must not open Crafted settings');
-      assert.equal(await page.locator('#shortListPanel .relphi-global-board-actions').count(),1,'Repeated reset must not create extra global action rows');
-      const nextTop=await page.locator('.drawing-board-mode-switch').evaluate(el=>el.getBoundingClientRect().top);
-      assert.ok(Math.abs(nextTop-freeTop)<1,'Repeated reset must not push Drawing Board chrome downward');
-    }
+    await page.click('#relphiBoardSettingsButton');
+    await page.waitForSelector('.relphi-board-settings-panel',{state:'visible'});
+    assert.equal(await page.locator('#relphiResetBoard').isDisabled(),true,'Reset Board starts disabled on an untouched board');
+    assert.equal(await page.locator('#drawingBoardBoardTab').getAttribute('aria-checked'),'true','Free is the default settings mode');
+    assert.equal(await page.locator('#relphiFreePack').inputValue(),'full','Free defaults to Full Pack');
+    await page.selectOption('#relphiFreePack','majors');
+    await page.click('#relphiConfirmFreeSettings');
+    assert.equal(await page.locator('#relphiBoardSettingsButton').getAttribute('aria-expanded'),'false','Confirm closes Settings');
 
-    await page.click('#drawingBoardOptionsButton');
-    await page.waitForSelector('.relphi-reading-options-drawer.is-reading-options-open',{state:'visible'});
-    assert.equal(await page.locator('.relphi-global-board-actions').isVisible(),true,'Drawing Board actions stay visible in Crafted mode');
-    assert.equal(await page.locator('#drawRandomRowCard').isVisible(),true,'Draw stays visible in Crafted mode');
-    assert.equal(await page.locator('#relphiResetBoard').isVisible(),true,'Reset Board stays visible in Crafted mode');
+    await page.click('#relphiBoardSettingsButton');
+    assert.equal(await page.locator('#relphiResetBoard').isEnabled(),true,'Reset activates after a setup is confirmed');
     await page.click('#relphiResetBoard');
-    await page.waitForSelector('.relphi-reading-options-drawer.is-reading-options-open',{state:'visible'});
-    assert.equal(await page.locator('#drawingBoardOptionsButton').getAttribute('aria-checked'),'true','Global Reset Board must keep Crafted mode selected when reset from Crafted');
-    assert.equal(await page.locator('#shortListPanel .relphi-global-board-actions').count(),1,'Crafted reset must keep one global action row');
-    const resetState=await page.evaluate(()=>window.RelphiDrawingBoardOptionsBridge?.capture?.());
-    assert.equal(resetState?.shortList?.length||0,0,'Crafted reset must clear cards');
-    assert.equal(resetState?.shortListPositionLabels?.length||0,0,'Crafted reset must clear referents');
-    assert.equal(resetState?.rowActiveLayout||null,null,'Crafted reset must clear active layout');
-    await page.click('#relphiCancelOptions');
+    assert.equal(await page.locator('#relphiFreePack').inputValue(),'full','Reset restores Full Pack');
+    assert.equal(await page.locator('#relphiFreeLabels').isChecked(),true,'Reset restores Labels');
+    assert.equal(await page.locator('#relphiFreeReversals').isChecked(),true,'Reset restores Reversals');
+    assert.equal(await page.locator('#relphiFreeRepeats').isChecked(),false,'Reset restores Repeats off');
+    await page.click('#relphiCancelFreeSettings');
 
     await applyTemplate(page,'past-present-future-3');
     await drawCards(page,3);
