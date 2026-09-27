@@ -631,7 +631,7 @@
       settingsPanel=document.createElement('section');
       settingsPanel.className='relphi-board-settings-panel';
       settingsPanel.setAttribute('aria-label','Drawing Board settings');
-      settingsPanel.innerHTML='<button type="button" id="relphiBoardConfigurationButton" class="relphi-board-configuration-trigger" aria-expanded="false">Board</button><div class="relphi-board-settings-body"></div>';
+      settingsPanel.innerHTML='<div class="relphi-board-settings-body"></div>';
       bar.insertAdjacentElement('afterend',settingsPanel);
     }
     const body=settingsPanel.querySelector('.relphi-board-settings-body');
@@ -648,13 +648,6 @@
     settingsPanel.hidden=!settingsOpen;
     if(!settingsOpen){boardConfigurationOpen=false;boardBackgroundMode='';}
     root.classList.toggle('relphi-settings-open',settingsOpen);
-    const configurationButton=settingsPanel.querySelector('#relphiBoardConfigurationButton');
-    if(configurationButton){
-      const allowed=boardConfigurationAllowed(root);
-      configurationButton.hidden=!allowed;
-      configurationButton.setAttribute('aria-expanded',String(allowed&&boardConfigurationOpen));
-      configurationButton.classList.toggle('is-active',allowed&&boardConfigurationOpen);
-    }
     const settingsButton=bar.querySelector('#relphiBoardSettingsButton');
     if(settingsButton){
       settingsButton.setAttribute('aria-expanded',String(settingsOpen));
@@ -673,15 +666,16 @@
     const settingsPanel=ensureBoardChrome(root);
     const body=settingsPanel?.querySelector('.relphi-board-settings-body');
     if(!settingsPanel||!body)return;
-    let section=settingsPanel.querySelector(':scope > .relphi-board-configuration');
+    let section=body.querySelector(':scope > .relphi-board-configuration');
     if(!section){
-      section=document.createElement('section');
-      section.className='relphi-board-configuration';
-      settingsPanel.appendChild(section);
+      section=document.createElement('details');
+      section.className='relphi-board-configuration relphi-appearance-disclosure';
+      body.appendChild(section);
     }
     const allowed=boardConfigurationAllowed(root);
-    section.hidden=!allowed||!boardConfigurationOpen;
+    section.hidden=!allowed;
     if(section.hidden)return;
+    section.open=!!boardConfigurationOpen;
 
     const snap=root.querySelector('#rowSnapEnabled');
     const snapMinus=root.querySelector('#rowSnapGridMinus');
@@ -701,11 +695,13 @@
     const usingImage=activeBackgroundMode==='image';
 
     section.replaceChildren();
-    const heading=document.createElement('div');
-    heading.className='relphi-board-configuration-heading';
-    heading.innerHTML='<strong>Board configuration</strong><button type="button" class="relphi-board-configuration-close" aria-label="Close board configuration">×</button>';
-    section.appendChild(heading);
-    heading.querySelector('.relphi-board-configuration-close')?.addEventListener('click',()=>{boardConfigurationOpen=false;renderBoardConfiguration(root);ensureBoardChrome(root);});
+    const summary=document.createElement('summary');
+    summary.textContent='Appearance';
+    section.appendChild(summary);
+    const content=document.createElement('div');
+    content.className='relphi-appearance-body';
+    section.appendChild(content);
+    section.addEventListener('toggle',()=>{boardConfigurationOpen=section.open;},{once:true});
 
     syncTransformEditingAvailability(root);
 
@@ -731,7 +727,7 @@
       resetLayout.setAttribute('aria-label','Reset layout. Make all cards the same size and set them side by side.');
       snaps.appendChild(resetLayout);
     }
-    section.appendChild(snaps);
+    content.appendChild(snaps);
 
     const background=document.createElement('div');
     background.className='relphi-board-configuration-group relphi-board-background';
@@ -790,7 +786,7 @@
       ensureBoardChrome(root);renderBoardConfiguration(root);
     });
     background.appendChild(defaultRow);
-    section.appendChild(background);
+    content.appendChild(background);
 
     mode.querySelectorAll('[data-background-mode]').forEach(button=>button.addEventListener('click',()=>{
       const next=button.dataset.backgroundMode;
@@ -4184,17 +4180,6 @@
       return;
     }
     const root=panel();
-    const configurationTrigger=event.target.closest?.('#shortListPanel #relphiBoardConfigurationButton');
-    if(configurationTrigger&&root?.contains(configurationTrigger)){
-      event.preventDefault();
-      event.stopImmediatePropagation();
-      if(boardConfigurationAllowed(root)){
-        boardConfigurationOpen=!boardConfigurationOpen;
-        renderBoardConfiguration(root);
-        ensureBoardChrome(root);
-      }
-      return;
-    }
     const settingsTrigger=event.target.closest?.('#shortListPanel #relphiBoardSettingsButton');
     if(settingsTrigger&&root?.contains(settingsTrigger)){
       event.preventDefault();
