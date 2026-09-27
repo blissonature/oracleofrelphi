@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Python for Astrology · Oracle of Relphi</title>
+<link href="style.css?v=346" rel="stylesheet"/>
+<link href="favicon.ico" rel="icon" type="image/x-icon"/>
+<style>
+:root{--py-red:#dc1f18;--py-ink:#111;--py-paper:#fffdfb;--py-soft:#f6f2ef}
+body{background:var(--py-paper);color:var(--py-ink)}
+.py-shell{max-width:1180px;margin:2rem auto;padding:0 1rem 4rem}
+.py-hero{text-align:center;max-width:840px;margin:0 auto 1.4rem}
+.py-hero h1{font-size:clamp(2.2rem,7vw,5rem);line-height:.94;margin:.15rem 0 .8rem}
+.py-hero .red{color:var(--py-red)}
+.py-kicker{font-weight:900;letter-spacing:.12em;text-transform:uppercase;font-size:.72rem}
+.py-lede{font-size:1.05rem;line-height:1.55}
+.py-grid{display:grid;grid-template-columns:minmax(230px,.72fr) minmax(0,1.5fr);gap:1rem;align-items:start}
+.py-map,.py-lab{border:1.5px solid #111;border-radius:1.4rem;background:#fff;box-shadow:0 5px 18px rgba(0,0,0,.05)}
+.py-map{padding:.8rem;position:sticky;top:1rem;max-height:calc(100vh - 2rem);overflow:auto}
+.py-map h2,.py-lab h2{margin:.2rem 0 .7rem}
+.py-course{border-top:1px solid rgba(17,17,17,.12);padding:.55rem 0}
+.py-course:first-of-type{border-top:0}
+.py-course button{width:100%;text-align:left;border:0;background:transparent;padding:.3rem 0;cursor:pointer;font:inherit}
+.py-course-code{font-weight:900;color:var(--py-red);margin-right:.45rem}
+.py-course-theme{display:block;color:#555;font-size:.78rem;line-height:1.25;margin-top:.16rem}
+.py-lab{padding:1rem}
+.py-status{display:inline-block;border:1px solid #111;border-radius:999px;padding:.25rem .55rem;font-size:.72rem;font-weight:900;text-transform:uppercase;letter-spacing:.06em}
+.py-summary{font-size:1.02rem;line-height:1.5}
+.py-concept{font-weight:800;color:var(--py-red)}
+.py-controls{display:flex;flex-wrap:wrap;gap:.65rem;margin:1rem 0}
+.py-controls label{display:grid;gap:.2rem;font-weight:800;font-size:.82rem}
+.py-controls select,.py-controls input{font:inherit;border:1.5px solid #111;border-radius:.7rem;padding:.5rem .65rem;background:#fff}
+.py-codewrap{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(190px,.8fr);gap:.8rem}
+.py-code,.py-output{margin:0;border-radius:1rem;padding:1rem;min-height:9rem;box-sizing:border-box}
+.py-code{white-space:pre-wrap;background:#111;color:#fff;overflow:auto;font:500 .9rem/1.5 ui-monospace,SFMono-Regular,Consolas,monospace}
+.py-output{background:var(--py-soft);border:1.5px solid #111}
+.py-output small{display:block;text-transform:uppercase;font-weight:900;letter-spacing:.08em;margin-bottom:.8rem}
+.py-result{font-size:clamp(1.45rem,5vw,2.7rem);font-weight:900;overflow-wrap:anywhere}
+.py-track-strip{display:flex;gap:.45rem;flex-wrap:wrap;justify-content:center;margin:1rem 0}
+.py-track-strip span{border:1px solid #111;border-radius:999px;padding:.35rem .6rem;font-size:.78rem;font-weight:800;background:#fff}
+.py-empty{padding:2rem;text-align:center;color:#555}
+@media(max-width:760px){.py-grid,.py-codewrap{grid-template-columns:1fr}.py-map{position:static;max-height:none}.py-shell{padding:0 .55rem 3rem}}
+</style>
+</head>
+<body>
+<div id="nav-placeholder"></div>
+<main class="py-shell">
+<section class="py-hero">
+<p class="py-kicker">Relphi Learning Lab</p>
+<h1>Python for <span class="red">Astrology</span></h1>
+<p class="py-lede">Learn astrology by making its mechanisms executable. Start with tiny rules you can see immediately, then climb toward traditional techniques, celestial mechanics, and a transparent ephemeris.</p>
+<div class="py-track-strip"><span>Astrology 101–302</span><span>Traditional Astrology</span><span>Ephemeris Foundations</span><span>Build Your Own Ephemeris</span></div>
+</section>
+<section class="py-grid">
+<aside class="py-map"><h2>Curriculum</h2><div id="courseMap">Loading…</div></aside>
+<section class="py-lab" id="lessonLab" aria-live="polite"><div class="py-empty">Loading the first lesson…</div></section>
+</section>
+</main>
+<script>
+(async function(){
+const signs=["Aries","Taurus","Gemini","Cancer","Leo","Virgo","Libra","Scorpio","Sagittarius","Capricorn","Aquarius","Pisces"];
+const response=await fetch("python-astrology-curriculum.json",{cache:"no-store"});
+const data=await response.json();
+const map=document.getElementById("courseMap"),lab=document.getElementById("lessonLab");
+const labels=id=>data.lessons[id]?.title||id.split("-").map(s=>s[0].toUpperCase()+s.slice(1)).join(" ");
+map.innerHTML=data.courses.map(c=>'<div class="py-course"><button type="button" data-course="'+c.code+'"><span class="py-course-code">'+c.code+'</span>'+c.title+'<span class="py-course-theme">'+c.theme+'</span></button><div>'+c.lessons.map(id=>'<button type="button" data-lesson="'+id+'">↳ '+labels(id)+'</button>').join("")+'</div></div>').join("");
+
+function control(name,spec){
+ if(Array.isArray(spec))return '<label>'+name+'<select data-input="'+name+'">'+spec.map(v=>'<option value="'+v+'">'+v+'</option>').join("")+'</select></label>';
+ return '<label>'+name+' <output data-out="'+name+'">'+spec.value+'</output><input data-input="'+name+'" type="range" min="'+spec.min+'" max="'+spec.max+'" value="'+spec.value+'"></label>';
+}
+function values(){
+ const out={};
+ lab.querySelectorAll("[data-input]").forEach(el=>out[el.dataset.input]=el.type==="range"?Number(el.value):el.value);
+ return out;
+}
+function evaluate(id,v){
+ if(id==="opposite-signs")return signs[(signs.indexOf(v.sign)+6)%12];
+ if(id==="day-ruler-deputies"){const o=["Saturn","Jupiter","Mars","Sun","Venus","Mercury","Moon"],i=o.indexOf(v.ruler);return [v.ruler,o[(i+1)%7],o[(i+2)%7]].join(" → ")}
+ if(id==="zodiac-longitude")return (signs.indexOf(v.sign)*30+v.degree)+"°";
+ if(id==="part-of-fortune"){const n=v.sect==="day"?v.asc+v.moon-v.sun:v.asc+v.sun-v.moon;return ((n%360)+360)%360+"°"}
+ if(id==="annual-profections")return signs[(signs.indexOf(v.rising)+v.age)%12];
+ return "Concept lesson — interactive model coming next.";
+}
+function render(id){
+ const lesson=data.lessons[id];
+ if(!lesson){lab.innerHTML='<div class="py-empty"><strong>'+labels(id)+'</strong><br/>Catalogued for development.</div>';return}
+ lab.innerHTML='<span class="py-status">'+lesson.status+'</span><h2>'+lesson.title+'</h2><p class="py-summary">'+lesson.summary+'</p><p class="py-concept">Python idea: '+lesson.pythonConcept+'</p><div class="py-controls">'+Object.entries(lesson.inputs||{}).map(([n,s])=>control(n,s)).join("")+'</div><div class="py-codewrap"><pre class="py-code"><code>'+lesson.code.replaceAll("&","&amp;").replaceAll("<","&lt;")+'</code></pre><div class="py-output"><small>Output</small><div class="py-result" id="result"></div></div></div>';
+ const update=()=>{const v=values();lab.querySelectorAll("[data-out]").forEach(o=>o.textContent=v[o.dataset.out]);document.getElementById("result").textContent=evaluate(id,v)};
+ lab.querySelectorAll("[data-input]").forEach(el=>el.addEventListener("input",update));update();
+ history.replaceState(null,"","#"+id);
+}
+map.addEventListener("click",e=>{const b=e.target.closest("[data-lesson]");if(b)render(b.dataset.lesson)});
+const initial=location.hash.slice(1);render(data.lessons[initial]?initial:"day-ruler-deputies");
+})();
+</script>
+<script src="navloader.js"></script>
+</body>
+</html>
