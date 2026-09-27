@@ -1806,3 +1806,56 @@ body.relphi-attune-open{overflow:hidden!important}
     max-width:22.5rem!important;
   }
 }
+
+
+/* Minimal Background UI: presets and swatches, no full-width Red felt toggle. */
+#shortListPanel .relphi-red-felt-toggle{display:none!important}
+#shortListPanel .relphi-board-background{gap:.42rem!important}
+#shortListPanel .relphi-background-preset-row{
+  display:flex!important;
+  align-items:center!important;
+  gap:.42rem!important;
+  width:max-content!important;
+}
+#shortListPanel .relphi-background-preset-row>span{
+  font-size:.66rem!important;
+  font-weight:800!important;
+  color:#4b433d!important;
+}
+#shortListPanel .relphi-background-preset-swatch{
+  width:2.15rem!important;
+  min-width:2.15rem!important;
+  height:1.6rem!important;
+  margin:0!important;
+  padding:0!important;
+  border:1px solid rgba(17,17,17,.35)!important;
+  border-radius:5px!important;
+  box-shadow:inset 0 0 0 2px rgba(255,255,255,.55)!important;
+}
+#shortListPanel .relphi-background-preset-swatch.is-active{
+  outline:2px solid var(--relphi-board-red)!important;
+  outline-offset:2px!important;
+}
+#shortListPanel .relphi-background-mode{
+  margin:0!important;
+  padding:.12rem!important;
+}
+#shortListPanel .relphi-background-mode>button{
+  min-width:3.9rem!important;
+  min-height:1.7rem!important;
+  padding:.24rem .44rem!important;
+  font-size:.64rem!important;
+}
+#shortListPanel .relphi-background-target-row{
+  grid-template-columns:minmax(5.5rem,7rem) 2.35rem!important;
+  gap:.42rem!important;
+}
+#shortListPanel .relphi-background-target-swatch{
+  width:2.35rem!important;
+  min-width:2.35rem!important;
+  height:1.7rem!important;
+}
+#shortListPanel .relphi-background-history{
+  padding-top:.3rem!important;
+  gap:.25rem!important;
+}
