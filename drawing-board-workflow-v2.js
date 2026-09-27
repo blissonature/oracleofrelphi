@@ -34,6 +34,11 @@
   let recursionPortalLevel = 0;
   let attuneIndex = -1;
   let attuneViewportLock = null;
+  let settingsOpen = false;
+  let settingsMode = 'free';
+  let settingsBaseline = null;
+  let freeSettingsSession = null;
+  let boardSetupConfirmed = false;
 
   function panel() { return document.getElementById(PANEL_ID); }
   function prefabBridge() { return window.RelphiDrawingBoardPrefabsBridge || null; }
@@ -424,6 +429,230 @@
       templateName:String(state.activeLayout?.name || '')
     };
   }
+  function freeSettingsDraftFromState() {
+    const draft=draftFromState();
+    return {
+      pack:draft.pack||'full',
+      keywordTags:Array.isArray(draft.keywordTags)?draft.keywordTags.slice():[],
+      keywordMatchMode:draft.keywordMatchMode==='all'?'all':'any',
+      stickers:draft.stickers!==false,
+      reversals:draft.reversals!==false,
+      repeats:!!draft.repeats
+    };
+  }
+
+  function freeSettingsAreDefault(draft=freeSettingsDraftFromState()) {
+    return String(draft.pack||'full')==='full' &&
+      !(draft.keywordTags||[]).length &&
+      draft.keywordMatchMode!=='all' &&
+      draft.stickers!==false &&
+      draft.reversals!==false &&
+      !draft.repeats;
+  }
+
+  function boardCanReset(root=panel()) {
+    return currentCardCount(root)>0 ||
+      boardHasCraftedStructure(root) ||
+      boardSetupConfirmed ||
+      !freeSettingsAreDefault();
+  }
+
+  function ensureSettingsTransaction(root=panel()) {
+    if(settingsBaseline||!root)return;
+    settingsBaseline={
+      snapshot:clone(currentSnapshot()||{}),
+      stickers:showPositionStickers,
+      craftedReadingActive:!!craftedReadingActive,
+      surfaceReadingSession:clone(surfaceReadingSession),
+      recursionSession:clone(recursionSession),
+      recursionPortalLevel:Number(recursionPortalLevel)||0
+    };
+    settingsMode=(craftedReadingActive||boardHasCraftedStructure(root))?'crafted':'free';
+    freeSettingsSession={draft:freeSettingsDraftFromState()};
+  }
+
+  function ensureBoardChrome(root=panel()) {
+    const boardDrawer=root?.querySelector('.card-row-drawing-board');
+    const summary=boardDrawer?.querySelector(':scope > summary');
+    const boardMode=root?.querySelector('.drawing-board-board-mode');
+    const modeSwitch=root?.querySelector('.drawing-board-mode-switch');
+    const topActions=root?.querySelector('.drawing-board-top-actions');
+    if(!root||!boardDrawer||!summary||!boardMode||!modeSwitch||!topActions)return null;
+
+    boardDrawer.open=true;
+    summary.hidden=true;
+
+    let bar=boardDrawer.querySelector(':scope > .relphi-board-commandbar');
+    if(!bar){
+      bar=document.createElement('div');
+      bar.className='relphi-board-commandbar';
+      bar.innerHTML='<div class="relphi-board-command-left"><div class="relphi-board-command-title"><strong>Drawing Board</strong><span class="relphi-board-command-count">0</span></div><button type="button" id="relphiBoardSettingsButton" aria-expanded="false">Settings</button></div>';
+      summary.insertAdjacentElement('afterend',bar);
+    }
+    const count=bar.querySelector('.relphi-board-command-count');
+    if(count)count.textContent=String(currentCardCount(root));
+
+    topActions.classList.add('relphi-board-command-actions');
+    if(topActions.parentElement!==bar)bar.appendChild(topActions);
+
+    const clear=root.querySelector('#clearShortListCardsOnly');
+    const undo=root.querySelector('#undoShortList');
+    const redo=root.querySelector('#redoShortList');
+    const draw=root.querySelector('#drawRandomRowCard');
+    if(clear){
+      clear.textContent='Clear';
+      clear.title='Clear the cards without changing settings';
+      clear.setAttribute('aria-label','Clear the cards without changing settings');
+      topActions.appendChild(clear);
+    }
+    if(undo){undo.textContent='Undo';undo.classList.remove('board-history-icon');topActions.appendChild(undo);}
+    if(redo){redo.textContent='Redo';redo.classList.remove('board-history-icon');topActions.appendChild(redo);}
+    if(draw){draw.textContent='Draw';draw.title='Draw a card';draw.setAttribute('aria-label','Draw a card');topActions.appendChild(draw);}
+
+    let settingsPanel=boardDrawer.querySelector(':scope > .relphi-board-settings-panel');
+    if(!settingsPanel){
+      settingsPanel=document.createElement('section');
+      settingsPanel.className='relphi-board-settings-panel';
+      settingsPanel.setAttribute('aria-label','Drawing Board settings');
+      settingsPanel.innerHTML='<div class="relphi-board-settings-top"><button type="button" id="relphiResetBoard" title="Restore default settings" aria-label="Restore default settings">Reset Board</button></div><div class="relphi-board-settings-body"></div>';
+      bar.insertAdjacentElement('afterend',settingsPanel);
+    }
+    const body=settingsPanel.querySelector('.relphi-board-settings-body');
+    if(body && modeSwitch.parentElement!==body)body.appendChild(modeSwitch);
+
+    const reset=settingsPanel.querySelector('#relphiResetBoard');
+    if(reset){
+      reset.title='Restore default settings';
+      reset.setAttribute('aria-label','Restore default settings');
+      reset.disabled=!boardCanReset(root);
+    }
+
+    [...root.querySelectorAll('.relphi-global-board-actions')].forEach(node=>node.remove());
+    settingsPanel.hidden=!settingsOpen;
+    root.classList.toggle('relphi-settings-open',settingsOpen);
+    const settingsButton=bar.querySelector('#relphiBoardSettingsButton');
+    if(settingsButton){
+      settingsButton.setAttribute('aria-expanded',String(settingsOpen));
+      settingsButton.classList.toggle('is-active',settingsOpen);
+    }
+    return settingsPanel;
+  }
+
+  function renderFreeSettings(root=panel()) {
+    const settingsPanel=ensureBoardChrome(root);
+    const body=settingsPanel?.querySelector('.relphi-board-settings-body');
+    const modeSwitch=body?.querySelector('.drawing-board-mode-switch');
+    if(!settingsPanel||!body||!modeSwitch)return;
+    body.querySelector('.relphi-reading-options-drawer')?.remove();
+    body.querySelector('.relphi-free-settings')?.remove();
+    const draft=freeSettingsSession?.draft || (freeSettingsSession={draft:freeSettingsDraftFromState()}).draft;
+    const free=document.createElement('section');
+    free.className='relphi-free-settings';
+    free.innerHTML='<div class="relphi-free-settings-fields"><label class="relphi-free-pack">Sub-pack<select id="relphiFreePack">'+packOptions(draft.pack||'full')+'</select></label>'+keywordDraftMarkup(draft)+'<div class="relphi-free-toggles"><label><input id="relphiFreeLabels" type="checkbox" '+(draft.stickers!==false?'checked':'')+'> Labels</label><label><input id="relphiFreeReversals" type="checkbox" '+(draft.reversals!==false?'checked':'')+'> Reversals</label><label><input id="relphiFreeRepeats" type="checkbox" '+(draft.repeats?'checked':'')+'> Repeats</label></div></div><div class="relphi-board-settings-footer"><button type="button" id="relphiCancelFreeSettings">Cancel</button><button type="button" id="relphiConfirmFreeSettings" class="primary">Confirm</button></div>';
+    modeSwitch.insertAdjacentElement('afterend',free);
+
+    free.querySelector('#relphiFreePack')?.addEventListener('change',event=>{
+      draft.pack=event.target.value||'full';
+      if(draft.pack!=='tags'){draft.keywordTags=[];draft.keywordMatchMode='any';}
+      renderFreeSettings(root);
+    });
+    const query=free.querySelector('#relphiKeywordQuery');
+    query?.addEventListener('input',event=>renderKeywordMatches(free,draft,event.target.value,()=>renderFreeSettings(root)));
+    free.querySelectorAll('input[name="relphiKeywordMode"]').forEach(input=>input.addEventListener('change',()=>{
+      draft.keywordMatchMode=input.value==='all'?'all':'any';
+      renderFreeSettings(root);
+    }));
+    free.querySelectorAll('[data-keyword-remove]').forEach(button=>button.addEventListener('click',()=>{
+      draft.keywordTags=(draft.keywordTags||[]).filter(tag=>tag!==button.dataset.keywordRemove);
+      renderFreeSettings(root);
+    }));
+    free.querySelector('#relphiFreeLabels')?.addEventListener('change',event=>{draft.stickers=event.target.checked;});
+    free.querySelector('#relphiFreeReversals')?.addEventListener('change',event=>{draft.reversals=event.target.checked;});
+    free.querySelector('#relphiFreeRepeats')?.addEventListener('change',event=>{draft.repeats=event.target.checked;});
+    free.querySelector('#relphiCancelFreeSettings')?.addEventListener('click',()=>cancelBoardSettings(root));
+    free.querySelector('#relphiConfirmFreeSettings')?.addEventListener('click',()=>confirmFreeSettings(root));
+  }
+
+  function renderBoardSettings(root=panel()) {
+    const settingsPanel=ensureBoardChrome(root);
+    if(!settingsPanel||!settingsOpen)return;
+    setBoardMode(root,settingsMode==='crafted'?'referents':'board');
+    if(settingsMode==='crafted'){
+      settingsPanel.querySelector('.relphi-free-settings')?.remove();
+      if(!optionsSession)beginOptionsSession();
+      renderOptions(root);
+    }else{
+      optionsSession=null;
+      renderFreeSettings(root);
+    }
+    ensureBoardChrome(root);
+  }
+
+  function openBoardSettings(root=panel()) {
+    if(!root)return;
+    if(settingsOpen){cancelBoardSettings(root);return;}
+    settingsOpen=true;
+    ensureSettingsTransaction(root);
+    if(settingsMode==='crafted'&&!optionsSession)beginOptionsSession();
+    renderBoardSettings(root);
+  }
+
+  function switchSettingsMode(mode,root=panel()) {
+    if(!settingsOpen||!root)return;
+    settingsMode=mode==='crafted'?'crafted':'free';
+    if(settingsMode==='crafted'){
+      if(!optionsSession)beginOptionsSession();
+    }else{
+      optionsSession=null;
+      if(!freeSettingsSession)freeSettingsSession={draft:freeSettingsDraftFromState()};
+    }
+    renderBoardSettings(root);
+  }
+
+  function cancelBoardSettings(root=panel()) {
+    if(!root)return;
+    optionsSession=null;
+    freeSettingsSession=null;
+    settingsBaseline=null;
+    settingsOpen=false;
+    root.querySelector('.relphi-reading-options-drawer')?.remove();
+    root.querySelector('.relphi-free-settings')?.remove();
+    setBoardMode(root,craftedReadingActive||boardHasCraftedStructure(root)?'crafted':'board');
+    ensureBoardChrome(root);
+  }
+
+  function confirmFreeSettings(root=panel()) {
+    if(!root||!freeSettingsSession)return;
+    const draft=clone(freeSettingsSession.draft);
+    if(craftedReadingActive||boardHasCraftedStructure(root)){
+      clearCraftedStructure(root);
+      craftedReadingActive=false;
+      surfaceReadingSession=null;
+      recursionSession=null;
+      recursionPortalLevel=0;
+    }
+    applyDrawSettings(draft);
+    writeStickerVisibility(draft.stickers!==false);
+    boardSetupConfirmed=true;
+    settingsOpen=false;
+    settingsMode='free';
+    optionsSession=null;
+    freeSettingsSession=null;
+    settingsBaseline=null;
+    root.querySelector('.relphi-free-settings')?.remove();
+    setBoardMode(root,'board');
+    ensureBoardChrome(root);
+    showBoardToast('Free Draw settings confirmed.',{title:'Drawing Board',duration:2600});
+    setTimeout(()=>enhance(panel()),0);
+  }
+
+  function markSettingsConfirmed() {
+    boardSetupConfirmed=true;
+    settingsOpen=false;
+    settingsBaseline=null;
+    freeSettingsSession=null;
+  }
+
   function beginOptionsSession() {
     if (optionsSession) return;
     optionsSession = { baseline:currentSnapshot(), draft:draftFromState(), path:'templates', building:{element:'',planet:'',aspect:'',sign:'',house:''}, suggestions:[], suggestionPacks:[], surfaceSelected:{}, sacredCardSource:'digital' };
@@ -820,12 +1049,14 @@
     const count=window.RELPHI_KEYWORD_SUBPACK_CONTEXT?.count?.(tags,draft.keywordMatchMode)||0;
     return '<div class="relphi-keyword-builder" aria-label="Keywords and Tags sub-pack"><label>Find tags<input id="relphiKeywordQuery" type="search" placeholder="Type a tag, e.g. prince" autocomplete="off"></label><div class="relphi-keyword-match-mode"><label><input type="radio" name="relphiKeywordMode" value="any" '+(draft.keywordMatchMode!=='all'?'checked':'')+'> Any</label><label><input type="radio" name="relphiKeywordMode" value="all" '+(draft.keywordMatchMode==='all'?'checked':'')+'> All</label></div><div id="relphiKeywordMatches" class="relphi-keyword-matches"><p>Type to find matching canonical tags.</p></div>'+selected+'<p id="relphiKeywordCount">'+(tags.length?count+' card'+(count===1?'':'s')+' in this sub-pack':'Choose one or more tags.')+'</p></div>';
   }
-  function renderKeywordMatches(drawer,draft,query) {
+  function renderKeywordMatches(drawer,draft,query,rerender=null) {
     const host=drawer.querySelector('#relphiKeywordMatches'); if(!host) return;
     const matches=window.RELPHI_KEYWORD_SUBPACK_CONTEXT?.matches?.(query)||[];
     host.innerHTML=matches.length ? matches.map(tag=>'<label><input type="checkbox" data-keyword-choice value="'+escapeHtml(tag)+'" '+((draft.keywordTags||[]).includes(tag)?'checked':'')+'> '+escapeHtml(tag)+'</label>').join('') : '<p>'+(query?'No matching tags.':'Type to find matching canonical tags.')+'</p>';
     host.querySelectorAll('[data-keyword-choice]').forEach(input=>input.addEventListener('change',()=>{
-      const set=new Set(draft.keywordTags||[]); input.checked?set.add(input.value):set.delete(input.value); draft.keywordTags=[...set]; renderOptions(drawer.closest('#shortListPanel')||panel());
+      const set=new Set(draft.keywordTags||[]); input.checked?set.add(input.value):set.delete(input.value); draft.keywordTags=[...set];
+      if(typeof rerender==='function')rerender();
+      else renderOptions(drawer.closest('#shortListPanel')||panel());
     }));
   }
 
