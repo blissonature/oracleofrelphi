@@ -1026,7 +1026,8 @@ body.relphi-attune-open{overflow:hidden!important}
   color:#111!important;
   box-shadow:0 1px 4px rgba(0,0,0,.12)!important;
 }
-#shortListPanel.relphi-settings-open .drawing-board-board-mode{display:none!important}
+#shortListPanel.relphi-settings-open .drawing-board-board-mode,
+#shortListPanel.relphi-settings-open.relphi-referents-mode .drawing-board-board-mode{display:block!important}
 #shortListPanel .relphi-free-settings{
   display:grid!important;
   gap:.75rem!important;
@@ -1161,4 +1162,10 @@ body.relphi-attune-open{overflow:hidden!important}
   #shortListPanel .relphi-board-settings-panel .relphi-reading-options-drawer{
     height:clamp(28rem,70dvh,42rem)!important;
   }
+}
+
+/* Settings remains additive: opening it never replaces the Drawing Board workspace. */
+#shortListPanel.relphi-settings-open .drawing-board-board-mode,
+#shortListPanel.relphi-settings-open.relphi-referents-mode .drawing-board-board-mode{
+  display:block!important;
 }
