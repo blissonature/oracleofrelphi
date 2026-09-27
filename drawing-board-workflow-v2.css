@@ -164,8 +164,8 @@
 
 @media(max-width:700px){
   #shortListPanel .relphi-sacred-card-source{grid-template-columns:1fr!important}
-  #shortListPanel .relphi-surface-empty-cue{align-items:stretch!important;flex-direction:column!important}
-  #shortListPanel .relphi-surface-empty-cue button{width:100%!important}
+  #shortListPanel .relphi-surface-readiness-message{align-items:stretch!important;flex-direction:column!important}
+  #shortListPanel .relphi-surface-readiness-message button{width:100%!important}
   #shortListPanel .card-row-workspace{height:clamp(23rem,58dvh,36rem)!important;min-height:clamp(23rem,58dvh,36rem)!important;max-height:clamp(23rem,58dvh,36rem)!important}
   #shortListPanel .card-row-drawing-board>summary{padding-left:3.6rem!important}
   #shortListPanel .drawing-board-top-actions{gap:.28rem!important;margin:.3rem .35rem!important;width:calc(100% - .7rem)!important}
@@ -421,12 +421,23 @@
 #shortListPanel .relphi-surface-question-choice strong{font-size:.76rem!important;font-weight:900!important;line-height:1.25!important}
 #shortListPanel .relphi-surface-question-choice small{font-size:.63rem!important;font-weight:650!important;line-height:1.25!important;color:#6b625b!important}
 #shortListPanel .relphi-surface-choice-note{margin:0!important;padding:.55rem .62rem!important;border-left:3px solid #d9cdc4!important;background:#fbf8f4!important;color:#655d56!important;font-size:.69rem!important;line-height:1.38!important}
-#shortListPanel .relphi-surface-empty-cue{display:flex!important;align-items:center!important;justify-content:space-between!important;gap:.7rem!important;margin:.1rem 0 0!important;padding:.7rem .75rem!important;border:1px solid rgba(184,23,18,.46)!important;border-left:4px solid var(--relphi-board-red)!important;border-radius:9px!important;background:#fff3f1!important;box-shadow:0 4px 14px rgba(80,32,28,.08)!important;color:#7d1713!important}
-#shortListPanel .relphi-surface-empty-cue[hidden]{display:none!important}
-#shortListPanel .relphi-surface-empty-cue span{display:grid!important;gap:.12rem!important;min-width:0!important}
-#shortListPanel .relphi-surface-empty-cue strong{font-size:.75rem!important;font-weight:950!important;line-height:1.25!important}
-#shortListPanel .relphi-surface-empty-cue small{font-size:.64rem!important;font-weight:650!important;line-height:1.3!important;color:#6d504d!important}
-#shortListPanel .relphi-surface-empty-cue button{flex:0 0 auto!important;min-height:2.2rem!important;padding:.42rem .62rem!important;border:1.5px solid var(--relphi-board-red)!important;border-radius:8px!important;background:var(--relphi-board-red)!important;color:#fff!important;font:inherit!important;font-size:.7rem!important;font-weight:900!important}
+#shortListPanel .relphi-surface-readiness{display:grid!important;gap:.7rem!important;margin:.1rem 0 0!important;padding:.72rem .78rem!important;border:1px solid #ddd1c8!important;border-radius:10px!important;background:#fbf8f4!important;color:#4e4741!important}
+#shortListPanel .relphi-surface-readiness.is-ready{border-color:rgba(184,23,18,.42)!important;background:#fff8f6!important;box-shadow:inset 0 0 0 1px rgba(184,23,18,.06)!important}
+#shortListPanel .relphi-surface-readiness-rail{position:relative!important;display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:.2rem!important;align-items:start!important;padding:.05rem .2rem 0!important}
+#shortListPanel .relphi-surface-readiness-rail::before{content:'';position:absolute!important;left:16.666%!important;right:16.666%!important;top:.48rem!important;height:1px!important;background:#cfc3ba!important;z-index:0!important}
+#shortListPanel .relphi-surface-readiness-step{position:relative!important;z-index:1!important;display:grid!important;justify-items:center!important;gap:.16rem!important;min-width:0!important;text-align:center!important}
+#shortListPanel .relphi-surface-readiness-step i{display:grid!important;place-items:center!important;width:.8rem!important;height:.8rem!important;border:2px solid #b9afa7!important;border-radius:50%!important;background:#fbf8f4!important;box-shadow:0 0 0 3px #fbf8f4!important}
+#shortListPanel .relphi-surface-readiness-step.is-complete i{border-color:var(--relphi-board-red)!important;background:var(--relphi-board-red)!important}
+#shortListPanel .relphi-surface-readiness-step.is-success i::after{content:'✓';color:#fff!important;font-size:.5rem!important;font-style:normal!important;font-weight:950!important;line-height:1!important}
+#shortListPanel .relphi-surface-readiness-step strong{font-size:.65rem!important;font-weight:900!important;line-height:1.15!important;color:#4e4741!important}
+#shortListPanel .relphi-surface-readiness-step small{font-size:.58rem!important;font-weight:650!important;line-height:1.2!important;color:#786f68!important}
+#shortListPanel .relphi-surface-readiness.is-ready .relphi-surface-readiness-rail::before{background:rgba(184,23,18,.42)!important}
+#shortListPanel .relphi-surface-readiness-message{display:flex!important;align-items:center!important;justify-content:space-between!important;gap:.7rem!important;padding:.55rem .6rem!important;border-top:1px solid #e2d8d0!important}
+#shortListPanel .relphi-surface-readiness-message span{display:grid!important;gap:.12rem!important;min-width:0!important}
+#shortListPanel .relphi-surface-readiness-message strong{font-size:.74rem!important;font-weight:950!important;line-height:1.25!important;color:#7d1713!important}
+#shortListPanel .relphi-surface-readiness-message small{font-size:.63rem!important;font-weight:650!important;line-height:1.3!important;color:#6d625b!important}
+#shortListPanel .relphi-surface-readiness-message button{flex:0 0 auto!important;min-height:2.15rem!important;padding:.4rem .6rem!important;border:1.5px solid var(--relphi-board-red)!important;border-radius:8px!important;background:var(--relphi-board-red)!important;color:#fff!important;font:inherit!important;font-size:.69rem!important;font-weight:900!important}
+#shortListPanel .relphi-surface-readiness-message button[hidden]{display:none!important}
 #shortListPanel .relphi-options-commitbar .primary:disabled{opacity:.42!important;cursor:not-allowed!important}
 
 #shortListPanel .relphi-board-toast{position:absolute!important;right:clamp(.6rem,2vw,1rem)!important;top:clamp(4.2rem,8vw,5.4rem)!important;z-index:80!important;width:min(25rem,calc(100% - 1.2rem))!important;box-sizing:border-box!important;padding:.78rem 2.3rem .78rem .85rem!important;border:1px solid rgba(184,23,18,.32)!important;border-radius:10px!important;background:#fffdf8!important;box-shadow:0 12px 32px rgba(40,31,26,.18)!important;color:#28221e!important}
