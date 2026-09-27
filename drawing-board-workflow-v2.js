@@ -2186,6 +2186,35 @@
     reader.querySelector('.relphi-attune-shell')?.scrollTo?.(0,0);
     return true;
   }
+  function expandSurfaceEntries(entries, baseIndex) {
+    const prepared=entries.map((entry,index)=>({
+      ...entry,
+      text:String(entry.text||'').trim(),
+      pack:String(entry.pack||'full'),
+      cardCount:Math.max(1,Math.min(12,Number(entry.cardCount)||1)),
+      localIndex:index,
+      linkToLocal:entry.linkTo===''||entry.linkTo==null?'':Number(entry.linkTo)
+    })).filter(entry=>entry.text);
+    const starts=[];
+    let cursor=baseIndex;
+    prepared.forEach(entry=>{starts[entry.localIndex]=cursor;cursor+=entry.cardCount;});
+    const expanded=[];
+    prepared.forEach(entry=>{
+      const linkedStart=Number.isInteger(entry.linkToLocal)?starts[entry.linkToLocal]:null;
+      for(let cardOffset=0;cardOffset<entry.cardCount;cardOffset++){
+        expanded.push({
+          ...entry,
+          text:entry.cardCount>1 ? entry.text+' · Card '+(cardOffset+1)+' of '+entry.cardCount : entry.text,
+          questionText:entry.text,
+          questionCardIndex:cardOffset,
+          questionCardCount:entry.cardCount,
+          linkTo:Number.isInteger(linkedStart)?String(linkedStart):''
+        });
+      }
+    });
+    return expanded;
+  }
+
   function appendSurfaceFollowups(entries, root=panel()) {
     const bridge=optionsBridge();
     if (!bridge || !root || !entries.length) return false;
@@ -2193,8 +2222,9 @@
     const originalLabels=Array.isArray(snap.shortListPositionLabels)?snap.shortListPositionLabels.slice():[];
     const originalMeta=Array.isArray(snap.rowPositionMeta)?snap.rowPositionMeta.map(item=>clone(item)||{}):[];
     const originalPacks=originalLabels.map((_,index)=>String(originalMeta[index]?.drawScope || snap.rowActiveLayout?.positions?.[index]?.drawScope || ''));
+    const expanded=expandSurfaceEntries(entries,originalLabels.length);
     const room=Math.max(0,MAX_POSITIONS-originalLabels.length);
-    const appended=entries.slice(0,room);
+    const appended=expanded.slice(0,room);
     if(!appended.length)return false;
     const labels=originalLabels.concat(appended.map(item=>item.text));
     const packs=originalPacks.concat(appended.map(item=>item.pack||'full'));
@@ -2221,7 +2251,13 @@
         derivedFromPack:String(derived.derivedFromPack||''),
         derivedFromIndex:Number.isInteger(derived.derivedFromIndex)?derived.derivedFromIndex:null,
         derivedFromCard:String(derived.derivedFromCard||''),
-        derivedFromReversed:!!derived.derivedFromReversed
+        derivedFromReversed:!!derived.derivedFromReversed,
+        questionText:String(derived.questionText||derived.text||''),
+        cardCount:Math.max(1,Number(derived.questionCardCount)||1),
+        cardIndex:Math.max(0,Number(derived.questionCardIndex)||0),
+        linkTo:String(derived.linkTo??''),
+        allowReversals:derived.reversals!==false,
+        allowRepeats:!!derived.repeats
       };
     });
     snap.rowActiveLayout={version:1,id:'see-what-surfaces-active',name:'See What Surfaces',cardCount:labels.length,source:'custom',editable:false,positions:positions.map((item,index)=>({...item,drawOrder:index+1})),rules:{allowReversals:snap.rowAllowReversals!==false,allowRepeats:!!snap.rowAllowRepeats,drawScope:snap.rowDrawScope||'full'}};
@@ -2229,6 +2265,117 @@
     bridge.restore(snap);
     return appended.length;
   }
+
+  function closeSurfaceQuestionComposer({complete=false}={}) {
+    document.querySelector('.relphi-surface-question-composer')?.remove();
+    if(surfaceReadingSession){surfaceReadingSession.composerOpen=false;surfaceReadingSession.followupDecisionPending=false;}
+    if(complete)setTimeout(()=>revealCompletedSurfaceBoard(panel()),0);
+  }
+
+  function surfaceComposerRowMarkup(row,index,rows) {
+    const linkOptions=rows.map((other,j)=>j===index?'':'<option value="'+j+'" '+(String(row.linkTo)===String(j)?'selected':'')+'>Question '+(j+1)+'</option>').join('');
+    return '<article class="relphi-surface-composer-row" data-surface-composer-row="'+index+'">'+
+      '<label class="relphi-surface-composer-select"><input type="checkbox" data-surface-select '+(row.selected!==false?'checked':'')+'><span>Ask</span></label>'+
+      '<div class="relphi-surface-composer-main"><textarea rows="2" data-surface-text aria-label="Question '+(index+1)+'">'+escapeHtml(row.text||'')+'</textarea>'+
+      '<div class="relphi-surface-composer-settings">'+
+        '<label>Sub-pack<select data-surface-pack>'+packOptions(row.pack||'full')+'</select></label>'+
+        '<label>Cards<input type="number" min="1" max="12" value="'+Math.max(1,Math.min(12,Number(row.cardCount)||1))+'" data-surface-card-count></label>'+
+        '<label>Share card with<select data-surface-link><option value="">No link</option>'+linkOptions+'</select></label>'+
+      '</div></div>'+
+      '<button type="button" class="relphi-surface-composer-remove" data-surface-remove aria-label="Remove question '+(index+1)+'">×</button>'+
+    '</article>';
+  }
+
+  function openSurfaceQuestionComposer(entries,{title='Unpack Questions',intro='Choose the questions you want to add to this reading.',completeOnCancel=true}={}) {
+    const root=panel(),session=surfaceReadingSession;
+    if(!root||!session)return false;
+    closeAttune();
+    document.querySelector('.relphi-surface-question-composer')?.remove();
+    session.composerOpen=true;
+    const rows=(entries||[]).map(item=>({
+      ...clone(item),selected:item.selected!==false,text:String(item.text||''),pack:String(item.pack||'full'),
+      cardCount:Math.max(1,Math.min(12,Number(item.cardCount)||1)),linkTo:item.linkTo??'',
+      reversals:item.reversals!==false,repeats:!!item.repeats
+    }));
+    if(!rows.length)rows.push({selected:true,text:'',pack:'full',cardCount:1,linkTo:'',reversals:true,repeats:false,sourceKind:'authored'});
+    const composer=document.createElement('section');
+    composer.className='relphi-surface-question-composer';
+    composer.setAttribute('role','dialog');
+    composer.setAttribute('aria-modal','true');
+    composer.setAttribute('aria-label',title);
+    const render=()=>{
+      composer.innerHTML='<div class="relphi-surface-composer-shell">'+
+        '<button type="button" class="relphi-surface-composer-close" aria-label="Close">×</button>'+
+        '<span class="eyebrow">'+escapeHtml(title)+'</span>'+
+        '<h2>Choose what to ask next</h2>'+
+        '<p class="relphi-surface-composer-intro">'+escapeHtml(intro)+'</p>'+
+        '<div class="relphi-surface-composer-rows">'+rows.map((row,index)=>surfaceComposerRowMarkup(row,index,rows)).join('')+'</div>'+
+        '<div class="relphi-surface-composer-footer"><button type="button" data-surface-add>Add my own question</button><span></span><button type="button" data-surface-done class="primary">Add selected questions</button></div>'+
+      '</div>';
+      const syncRow=(article,index)=>{
+        const row=rows[index];if(!row)return;
+        row.selected=!!article.querySelector('[data-surface-select]')?.checked;
+        row.text=article.querySelector('[data-surface-text]')?.value||'';
+        row.pack=article.querySelector('[data-surface-pack]')?.value||'full';
+        row.cardCount=Math.max(1,Math.min(12,Number(article.querySelector('[data-surface-card-count]')?.value)||1));
+        row.linkTo=article.querySelector('[data-surface-link]')?.value??'';
+      };
+      composer.querySelectorAll('[data-surface-composer-row]').forEach((article,index)=>{
+        ['change','input'].forEach(type=>article.addEventListener(type,()=>syncRow(article,index)));
+        article.querySelector('[data-surface-remove]')?.addEventListener('click',()=>{syncRow(article,index);rows.splice(index,1);render();});
+      });
+      composer.querySelector('[data-surface-add]')?.addEventListener('click',()=>{
+        composer.querySelectorAll('[data-surface-composer-row]').forEach((article,index)=>syncRow(article,index));
+        rows.push({selected:true,text:'',pack:'full',cardCount:1,linkTo:'',reversals:true,repeats:false,sourceKind:'authored'});
+        render();
+        setTimeout(()=>composer.querySelector('[data-surface-composer-row]:last-child [data-surface-text]')?.focus(),0);
+      });
+      composer.querySelector('[data-surface-done]')?.addEventListener('click',()=>{
+        composer.querySelectorAll('[data-surface-composer-row]').forEach((article,index)=>syncRow(article,index));
+        const chosen=rows.filter(row=>row.selected&&String(row.text||'').trim());
+        if(!chosen.length){closeSurfaceQuestionComposer({complete:completeOnCancel});return;}
+        const before=(currentSnapshot()?.shortListPositionLabels||[]).length;
+        const count=appendSurfaceFollowups(chosen,root);
+        if(!count)return;
+        session.followupsGenerated=true;
+        session.followupCount=Math.max(0,before-session.initialCount)+count;
+        session.completionShown=false;
+        session.conclusionOffered=false;
+        session.followupDecisionPending=false;
+        session.composerOpen=false;
+        craftedReadingActive=true;
+        optionsSession=null;
+        composer.remove();
+        setBoardMode(root,'crafted');
+        setTimeout(()=>{
+          const live=panel();if(!live)return;
+          markSemanticPositions(live);updateLayoutClasses(live);zoomExtents();
+          const next=nextUndrawnNativeIndex(live);if(next!=null)openAttune(next);
+        },0);
+      });
+      composer.querySelector('.relphi-surface-composer-close')?.addEventListener('click',()=>closeSurfaceQuestionComposer({complete:completeOnCancel}));
+    };
+    render();
+    document.body.appendChild(composer);
+    return true;
+  }
+
+  function unpackSuggestionsForCard(index) {
+    const root=panel(),snap=currentSnapshot()||{},card=cardDataAt(index)||{};
+    const cardId=String(card.card_id||cardAt(index,root)?.dataset?.rowCard||'');
+    const title=String(ledgerBridge()?.titleFor?.(cardId)||card.title||card.name||cardId||'this card').trim();
+    const reversed=focusCardIsReversed(index);
+    const name=title+(reversed?' reversed':'');
+    const sourceMeta=snap.rowPositionMeta?.[index]||snap.rowActiveLayout?.positions?.[index]||{};
+    const sourcePack=String(sourceMeta.drawScope||snap.rowDrawScope||'full');
+    const base={pack:'full',cardCount:1,linkTo:'',sourceKind:'unpack',derivedFromPack:sourcePack,derivedFromIndex:index,derivedFromCard:cardId,derivedFromReversed:reversed};
+    return [
+      {...base,text:'What is '+name+' asking me to understand more deeply?'},
+      {...base,text:'What part of '+name+' is most important for me to examine now?'},
+      {...base,text:'What would help me work constructively with '+name+'?'}
+    ];
+  }
+
   function unpackSurfaceCard(index) {
     const session=surfaceReadingSession;
     const root=panel();
@@ -2239,47 +2386,18 @@
       showBoardToast('This reading has reached the 50-card board limit.',{title:'See What Surfaces',duration:4200});
       return false;
     }
-    const card=cardDataAt(index)||{};
-    const cardId=String(card.card_id||cardAt(index,root)?.dataset?.rowCard||'');
-    const title=String(ledgerBridge()?.titleFor?.(cardId)||card.title||card.name||cardId||'this card').trim();
-    const reversed=focusCardIsReversed(index);
-    const sourceMeta=snap.rowPositionMeta?.[index]||snap.rowActiveLayout?.positions?.[index]||{};
-    const sourcePack=String(sourceMeta.drawScope||snap.rowDrawScope||'full');
-    const entry={
-      text:'What is '+title+(reversed?' reversed':'')+' asking me to understand more deeply?',
-      pack:'full',
-      sourceKind:'unpack',
-      derivedFromPack:sourcePack,
-      derivedFromIndex:index,
-      derivedFromCard:cardId,
-      derivedFromReversed:reversed
-    };
-    const targetIndex=labels.length;
-    const appended=appendSurfaceFollowups([entry],root);
-    if(!appended)return false;
-    session.followupsGenerated=true;
-    session.followupCount=Math.max(0,targetIndex-session.initialCount)+appended;
-    session.completionShown=false;
-    session.conclusionOffered=false;
-    craftedReadingActive=true;
-    optionsSession=null;
     root.querySelector('.relphi-board-toast')?.remove();
     closeFocus({acknowledge:true});
-    setBoardMode(root,'crafted');
-    setTimeout(()=>{
-      const live=panel();
-      if(!live)return;
-      markSemanticPositions(live);
-      updateLayoutClasses(live);
-      zoomExtents();
-      openAttune(targetIndex);
-    },0);
-    return true;
+    return openSurfaceQuestionComposer(unpackSuggestionsForCard(index),{
+      title:'Unpack this card',
+      intro:'Choose a suggested question or write your own. Nothing is added to the reading until you approve it.',
+      completeOnCancel:true
+    });
   }
 
   function surfaceReadingComplete(root=panel()) {
     const session=surfaceReadingSession;
-    if (!session || !session.followupsGenerated || !root) return false;
+    if (!session || !session.followupsGenerated || session.followupDecisionPending || session.composerOpen || !root) return false;
     const total=Math.min(MAX_POSITIONS,session.initialCount+session.followupCount);
     return total>0 && Array.from({length:total},(_,index)=>index).every(index=>!!cardAt(index,root));
   }
@@ -2293,7 +2411,7 @@
       const next=panel();
       if (!next) return;
       zoomExtents();
-      showBoardToast('Every current referent has been answered. Open any card and choose “Unpack this card” to continue one card at a time, or conclude the reading.',{
+      showBoardToast('Every current referent has been answered. Open any card and choose “Unpack this card” to continue, or conclude the reading.',{
         title:'See What Surfaces · Current branch complete',
         duration:0,
         actionLabel:'Conclude Reading',
@@ -2310,22 +2428,24 @@
   }
   function maybeGenerateSurfaceFollowups(root=panel()) {
     const session=surfaceReadingSession;
-    if (!session || !root) return;
+    if (!session || !root || session.composerOpen) return;
     if (!session.followupsGenerated) {
       if (session.kinds.some((_,index)=>!cardAt(index,root))) return;
       const draws={};
       session.kinds.forEach((kind,index)=>{draws[kind]=cardDataAt(index);});
-      const entries=suggestionsFromSurface({surfaceDraws:draws});
+      const entries=suggestionsFromSurface({surfaceDraws:draws}).map(item=>({...item,cardCount:1,linkTo:'',selected:true}));
       session.followupsGenerated=true;
-      session.followupCount=entries.length;
-      if (entries.length && appendSurfaceFollowups(entries,root)) {
-        craftedReadingActive=true;
-        optionsSession=null;
-        setBoardMode(root,'crafted');
-        showBoardToast('The first exploration is complete. New referents have surfaced from those cards.',{title:'What surfaced next',duration:3600});
-        setTimeout(()=>{const next=nextUndrawnNativeIndex(panel());if(next!=null)openAttune(next);},0);
+      session.followupCount=0;
+      session.followupDecisionPending=true;
+      if(entries.length){
+        openSurfaceQuestionComposer(entries,{
+          title:'What surfaced next',
+          intro:'Relphi has suggestions, but these are options—not automatic follow-ups. Choose what to ask, adjust each draw, or write your own.',
+          completeOnCancel:true
+        });
         return;
       }
+      session.followupDecisionPending=false;
     }
     revealCompletedSurfaceBoard(root);
   }
@@ -2361,7 +2481,7 @@
     if(session.path==='surface'){
       if(!surfaceKinds.length)return;
       writeStickerVisibility(draft.stickers);
-      surfaceReadingSession={kinds:surfaceKinds.slice(),initialCount:surfaceKinds.length,followupsGenerated:false,followupCount:0,completionShown:false,conclusionOffered:false};
+      surfaceReadingSession={kinds:surfaceKinds.slice(),initialCount:surfaceKinds.length,followupsGenerated:false,followupCount:0,followupDecisionPending:false,composerOpen:false,completionShown:false,conclusionOffered:false};
       recursionSession=null;recursionPortalLevel=0;
       if(!launchConfiguredReading(root,draft)){
         surfaceReadingSession=null;
@@ -2396,7 +2516,7 @@
       }
       return;
     }
-    surfaceReadingSession=surfaceKinds.length ? {kinds:surfaceKinds.slice(),initialCount:surfaceKinds.length,followupsGenerated:false,followupCount:0,completionShown:false} : null;
+    surfaceReadingSession=surfaceKinds.length ? {kinds:surfaceKinds.slice(),initialCount:surfaceKinds.length,followupsGenerated:false,followupCount:0,followupDecisionPending:false,composerOpen:false,completionShown:false} : null;
     if(astrologyRequested) surfaceReadingSession=null;
     recursionSession=recursionRequested ? {level:1,maxLevel:1,complete:false} : null;
     recursionPortalLevel=0;
