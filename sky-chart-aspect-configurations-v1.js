@@ -779,7 +779,40 @@ function syncConfigInputs(){
     input.checked=current.checked;input.indeterminate=current.indeterminate;input.disabled=current.available===0;
   });
 }
-function configurationSectionHost(){return document.getElementById('skyRelationshipConfigurationsMenuBody')||popoverBody()}
+function ensureConfigurationControl(){
+  const heading=document.querySelector('#skyFoundationRelationships .sky-foundation-relationships-heading');
+  if(!heading)return null;
+  let actions=heading.querySelector(':scope>.sky-relationship-heading-actions');
+  if(!actions){actions=document.createElement('span');actions.className='sky-relationship-heading-actions';heading.appendChild(actions)}
+  let control=actions.querySelector(':scope>.sky-relationship-configurations-control');
+  if(!control){
+    control=document.createElement('span');control.className='sky-relationship-configurations-control';
+    const button=document.createElement('button');button.type='button';button.className='sky-relationship-configurations-button';button.textContent='Configurations';
+    button.setAttribute('aria-haspopup','dialog');button.setAttribute('aria-expanded','false');button.setAttribute('aria-controls','skyRelationshipConfigurationsMenu');
+    const menu=document.createElement('div');menu.id='skyRelationshipConfigurationsMenu';menu.className='sky-command-config-popover';menu.hidden=true;menu.setAttribute('role','dialog');menu.setAttribute('aria-label','Configurations');
+    const body=document.createElement('div');body.id='skyRelationshipConfigurationsMenuBody';body.className='sky-command-config-popover-body';menu.appendChild(body);document.body.appendChild(menu);
+    const position=()=>{if(menu.hidden)return;const rect=button.getBoundingClientRect(),margin=8,width=Math.min(720,Math.max(380,window.innerWidth-margin*2));menu.style.width=width+'px';menu.style.left=Math.min(window.innerWidth-width-margin,Math.max(margin,rect.left))+'px';const natural=Math.min(menu.scrollHeight,window.innerHeight-margin*2);menu.style.top=Math.max(margin,Math.min(rect.bottom+6,window.innerHeight-natural-margin))+'px'};
+    const close=()=>{menu.hidden=true;button.setAttribute('aria-expanded','false')};
+    button.addEventListener('click',event=>{event.preventDefault();event.stopPropagation();menu.hidden=!menu.hidden;button.setAttribute('aria-expanded',menu.hidden?'false':'true');if(!menu.hidden)requestAnimationFrame(position)});
+    document.addEventListener('pointerdown',event=>{if(!menu.hidden&&!menu.contains(event.target)&&!control.contains(event.target))close()},true);
+    document.addEventListener('keydown',event=>{if(event.key==='Escape'&&!menu.hidden){close();button.focus()}});
+    window.addEventListener('resize',position);window.addEventListener('scroll',position,true);
+    control.appendChild(button);
+  }
+  const aspect=actions.querySelector('[data-aspect-filter="combined"]');
+  const sort=actions.querySelector('.sky-relationship-sort-control');
+  const anchor=sort||actions.querySelector('.sky-relationship-limit-control,#skyFoundationRelationshipCount,.sky-relationship-copy-button,#skyChartRelationshipsExport')||null;
+  if(control.parentElement!==actions||control.nextElementSibling!==anchor)actions.insertBefore(control,anchor);
+  return control;
+}
+function configurationSectionHost(){ensureConfigurationControl();return document.getElementById('skyRelationshipConfigurationsMenuBody')||popoverBody()}
+function updateConfigurationControlLabel(){
+  const button=document.querySelector('.sky-relationship-configurations-button');if(!button)return;
+  const matrix=configurationMatrix();
+  let total=0,selected=0;
+  TYPES.forEach(type=>{SCOPES.forEach(scope=>{const cell=matrix?.[scope.id]?.[type.id];if(cell?.available){total+=1;if(cell.checked)selected+=1}})});
+  button.textContent=selected===0?'Configurations · None':selected===total&&total>0?'Configurations':`Configurations · ${selected}`;
+}
 function renderConfigurationSection(){
   const body=configurationSectionHost();if(!body)return;
   document.querySelectorAll('.sky-chart-configuration-section').forEach(node=>node.remove());
@@ -791,7 +824,7 @@ function renderConfigurationSection(){
   title.append(heading,cols);section.appendChild(title);
   const list=document.createElement('div');list.className='sky-chart-configuration-list';
   list.appendChild(configRow('all','All configurations',true));TYPES.forEach(type=>list.appendChild(configRow(type.id,type.label,false)));
-  section.appendChild(list);body.appendChild(section);syncConfigInputs();
+  section.appendChild(list);body.appendChild(section);syncConfigInputs();updateConfigurationControlLabel();
 }
 function relationIndex(edge){return String(edge?.row?.dataset?.relationIndex||'')}
 function relationNodeKey(node){
@@ -854,7 +887,7 @@ function reconcileFrozenPeerHover(event){
   if(row)highlightPeers(row);else clearPeerHighlight();
 }
 function setSelection(scope,type,checked){
-  setConfigCells(scope,type,checked);saveConfigurationState();syncConfigInputs();renderOverlay();renderResultsPanel();
+  setConfigCells(scope,type,checked);saveConfigurationState();syncConfigInputs();updateConfigurationControlLabel();renderOverlay();renderResultsPanel();
   const matrix=configurationMatrix();
   window.dispatchEvent(new CustomEvent('relphi:sky-configuration-selection-changed',{detail:{matrix,selectedPatterns:selectedPatternsForVisibility().map(pattern=>pattern.key)}}));
 }
@@ -877,6 +910,7 @@ function ensureConfigurationObserver(){
 function schedule(){if(queued)return;queued=true;requestAnimationFrame(refresh)}
 function handleChange(event){const input=event.target.closest?.('[data-configuration-scope][data-configuration-type]');if(!input)return;event.stopPropagation();setSelection(input.dataset.configurationScope,input.dataset.configurationType,input.checked)}
 function start(){
+  ensureConfigurationControl();
   document.addEventListener('change',handleChange,true);
   window.addEventListener('relphi:sky-foundation-clear-selection',()=>{
     clearPatternHighlight();
