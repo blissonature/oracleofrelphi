@@ -2856,7 +2856,10 @@
     installBoardCapture(root);
     if (optionsSession) renderOptions(root);
     else root.querySelector('.relphi-reading-options-drawer')?.remove();
-    if (surfaceReadingSession) maybeGenerateSurfaceFollowups(root);
+    // A newly drawn surface card must enter Focus before the surface engine
+    // advances the reading. Otherwise enhance() can see the completed initial
+    // set, append followups, and open the next Attune before pending Focus runs.
+    if (surfaceReadingSession && pendingFocusIndex==null) maybeGenerateSurfaceFollowups(root);
     if (recursionActive()) {
       const session=ensureRecursionSession();
       session.complete=recursionEarthIndex()>=0 && !!cardAt(recursionEarthIndex(),root);
