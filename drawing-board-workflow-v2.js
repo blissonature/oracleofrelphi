@@ -2304,6 +2304,7 @@
       reversals:item.reversals!==false,repeats:!!item.repeats
     }));
     if(!rows.length)rows.push({selected:true,text:'',pack:'full',cardCount:1,linkTo:'',reversals:true,repeats:false,sourceKind:'authored'});
+    let suggestionCursor=0;
     const composer=document.createElement('section');
     composer.className='relphi-surface-question-composer';
     composer.setAttribute('role','dialog');
@@ -2316,7 +2317,7 @@
         '<h2>Choose what to ask next</h2>'+
         '<p class="relphi-surface-composer-intro">'+escapeHtml(intro)+'</p>'+
         '<div class="relphi-surface-composer-rows">'+rows.map((row,index)=>surfaceComposerRowMarkup(row,index,rows)).join('')+'</div>'+
-        '<div class="relphi-surface-composer-footer"><button type="button" data-surface-add>Add my own question</button><span></span><button type="button" data-surface-done class="primary">Add selected questions</button></div>'+
+        '<div class="relphi-surface-composer-footer"><button type="button" data-surface-suggest>Suggest another question</button><button type="button" data-surface-add>Add my own question</button><span></span><button type="button" data-surface-done class="primary">Add selected questions</button></div>'+
       '</div>';
       const syncRow=(article,index)=>{
         const row=rows[index];if(!row)return;
@@ -2329,6 +2330,15 @@
       composer.querySelectorAll('[data-surface-composer-row]').forEach((article,index)=>{
         ['change','input'].forEach(type=>article.addEventListener(type,()=>syncRow(article,index)));
         article.querySelector('[data-surface-remove]')?.addEventListener('click',()=>{syncRow(article,index);rows.splice(index,1);render();});
+      });
+      composer.querySelector('[data-surface-suggest]')?.addEventListener('click',()=>{
+        composer.querySelectorAll('[data-surface-composer-row]').forEach((article,index)=>syncRow(article,index));
+        const suggestion=nextSurfaceSuggestion(rows,suggestionCursor);
+        if(!suggestion)return;
+        suggestionCursor=suggestion.nextCursor;
+        rows.push({...suggestion.candidate,selected:true,cardCount:Math.max(1,Number(suggestion.candidate.cardCount)||1),linkTo:suggestion.candidate.linkTo??'',reversals:suggestion.candidate.reversals!==false,repeats:!!suggestion.candidate.repeats});
+        render();
+        setTimeout(()=>composer.querySelector('[data-surface-composer-row]:last-child')?.scrollIntoView?.({block:'nearest'}),0);
       });
       composer.querySelector('[data-surface-add]')?.addEventListener('click',()=>{
         composer.querySelectorAll('[data-surface-composer-row]').forEach((article,index)=>syncRow(article,index));
@@ -2385,8 +2395,116 @@
     return [
       {...base,text:'What is '+name+' asking me to understand more deeply?'},
       {...base,text:'What part of '+name+' is most important for me to examine now?'},
-      {...base,text:'What would help me work constructively with '+name+'?'}
+      {...base,text:'What would help me work constructively with '+name+'?'},
+      {...base,text:'What is '+name+' revealing that I have not yet named?'},
+      {...base,text:'What tension inside '+name+' deserves closer attention?'},
+      {...base,text:'What becomes possible if I fully understand '+name+'?'},
+      {...base,text:'What practical response does '+name+' invite from me?'}
     ];
+  }
+
+  function surfacedSuggestionPool(kind) {
+    const session=surfaceReadingSession;
+    if(!session)return [];
+    const index=session.kinds?.indexOf?.(kind);
+    if(!Number.isInteger(index)||index<0)return [];
+    const card=cardDataAt(index)||{};
+    const base={pack:'full',cardCount:1,linkTo:'',sourceKind:kind,derivedFromPack:SURFACE_PACK_BY_KIND[kind]||'',derivedFromIndex:index,derivedFromCard:String(card.card_id||cardAt(index)?.dataset?.rowCard||''),derivedFromReversed:focusCardIsReversed(index)};
+    const make=text=>({...base,text});
+    if(kind==='planet'){
+      const planet=surfacePlanet(card)||'this planet';
+      return [
+        make('What is '+planet+' asking me to understand about this matter?'),
+        make('Where is '+planet+' most active in this matter?'),
+        make('What is '+planet+' asking me to value or reconsider here?'),
+        make('What is being revealed through '+planet+' that I have not yet named?'),
+        make('How can I work more consciously with '+planet+' in this situation?')
+      ];
+    }
+    if(kind==='sign'){
+      const sign=String(card?.astrology?.sign||'').trim()||'this sign';
+      return [
+        make('How is '+sign+' shaping the way this situation is being expressed?'),
+        make('What is '+sign+' making visible about this situation?'),
+        make('Where is the '+sign+' pattern strongest here?'),
+        make('What does '+sign+' ask me to approach differently?'),
+        make('What possibility opens when I work consciously with '+sign+'?')
+      ];
+    }
+    if(kind==='need'){
+      const need=surfaceNeed(card)||'this need';
+      return [
+        make('What does the unmet need for '+need+' ask me to recognize?'),
+        make('Where is the need for '+need+' most alive in this situation?'),
+        make('What is obstructing '+need+' here?'),
+        make('What would genuinely support '+need+' now?'),
+        make('How is '+need+' changing the meaning of this situation?')
+      ];
+    }
+    if(kind==='court'){
+      const formula=surfaceCourtFormula(card)||'this court pattern';
+      return [
+        make('How is '+formula+' carrying this situation?'),
+        make('Where is '+formula+' embodied most clearly here?'),
+        make('What role is '+formula+' asking me to take or recognize?'),
+        make('What is distorted or underdeveloped in '+formula+' here?'),
+        make('How can '+formula+' be expressed more skillfully?')
+      ];
+    }
+    if(kind==='pip'){
+      const number=surfacePipNumber(card);
+      const form=[card?.element,HOUSE_ORDINALS[number-1] ? HOUSE_ORDINALS[number-1]+' House' : '',MODE_BY_PIP[number]||''].filter(Boolean).join(' · ')||'this form';
+      return [
+        make('What form is this taking through '+form+'?'),
+        make('Where is the pattern of '+form+' most concrete right now?'),
+        make('What pressure or movement is '+form+' describing?'),
+        make('What is '+form+' trying to become?'),
+        make('What changes if I respond directly to '+form+'?')
+      ];
+    }
+    if(kind==='ace'){
+      const element=String(card?.element||'').trim()||'this element';
+      return [
+        make('What is taking root materially through '+element+'?'),
+        make('What new beginning is '+element+' offering here?'),
+        make('What seed in '+element+' needs attention now?'),
+        make('What would help this '+element+' beginning develop?'),
+        make('What is the first concrete expression of this '+element+' potential?')
+      ];
+    }
+    if(kind==='primordial'){
+      const element=surfacePrimordialElement(card)||'this primordial principle';
+      return [
+        make('What does the primordial '+element+' principle reveal about this matter?'),
+        make('Where is the primordial '+element+' principle operating most strongly?'),
+        make('What is the '+element+' principle asking me to notice first?'),
+        make('What becomes clearer when I view this through '+element+'?'),
+        make('How should I respond to the '+element+' principle surfacing here?')
+      ];
+    }
+    return [];
+  }
+
+  function nextSurfaceSuggestion(rows, cursor=0) {
+    const normalized=new Set(rows.map(row=>String(row.text||'').replace(/\s+/g,' ').trim().toLowerCase()).filter(Boolean));
+    const sources=[];
+    rows.forEach(row=>{
+      const key=String(row.sourceKind||'');
+      const sourceIndex=Number.isInteger(row.derivedFromIndex)?row.derivedFromIndex:null;
+      const token=key+':'+String(sourceIndex??'');
+      if(key && key!=='authored' && !sources.some(item=>item.token===token)) sources.push({token,key,sourceIndex});
+    });
+    if(!sources.length && surfaceReadingSession?.kinds?.length) surfaceReadingSession.kinds.forEach(key=>sources.push({token:key+':',key,sourceIndex:null}));
+    if(!sources.length)return null;
+    for(let offset=0;offset<sources.length;offset++){
+      const source=sources[(cursor+offset)%sources.length];
+      const pool=source.key==='unpack' && Number.isInteger(source.sourceIndex)
+        ? unpackSuggestionsForCard(source.sourceIndex)
+        : surfacedSuggestionPool(source.key);
+      const candidate=pool.find(item=>!normalized.has(String(item.text||'').replace(/\s+/g,' ').trim().toLowerCase()));
+      if(candidate)return {candidate,nextCursor:(cursor+offset+1)%sources.length};
+    }
+    return null;
   }
 
   function unpackSurfaceCard(index) {
