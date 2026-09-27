@@ -367,17 +367,17 @@
 
   function ensureControl() {
     const bar = filterBar();
-    if (!bar) return false;
+    const heading=document.querySelector('#skyFoundationRelationships .sky-foundation-relationships-heading');
+    if (!bar||!heading) return false;
     bar.querySelector('[data-filter="aspect"]')?.closest('label')?.remove();
+    let actions=heading.querySelector(':scope>.sky-relationship-heading-actions');
+    if(!actions){actions=document.createElement('span');actions.className='sky-relationship-heading-actions';heading.appendChild(actions)}
     let owner = document.querySelector('[data-aspect-filter="combined"]');
     if (!owner) owner = createControl();
-    if (!owner.isConnected) {
-      const orb = bar.querySelector('[data-filter="orb"]')?.closest('label');
-      const placements = bar.querySelector('[data-placement-filter="combined"]');
-      if (orb) orb.insertAdjacentElement('afterend', owner);
-      else if (placements) placements.insertAdjacentElement('beforebegin', owner);
-      else bar.prepend(owner);
-    }
+    const config=actions.querySelector('.sky-relationship-configurations-control');
+    const sort=actions.querySelector('.sky-relationship-sort-control');
+    const anchor=config||sort||actions.firstElementChild||null;
+    if(owner.parentElement!==actions||owner.nextElementSibling!==anchor)actions.insertBefore(owner,anchor);
     bar.dataset.multiselectAspectFilters = 'true';
     if (!popover()?.querySelector('[data-aspect-list]')) renderControl();
     return true;
