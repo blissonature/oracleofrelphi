@@ -180,9 +180,12 @@ function ensureControl(){
   const slot=document.querySelector('#skyFoundationFocus .sky-focus-heading-controls');if(!slot)return false;
   const stray=document.querySelector('#skyFoundationRelationships [data-relationship-display-control],#skyFoundationFocus .sky-chart-filter-bar [data-relationship-display-control]');
   if(stray&&stray.parentElement!==slot)stray.remove();
-  let owner=slot.querySelector(':scope>[data-relationship-display-control]');
+  let owner=document.querySelector('[data-relationship-display-control]');
   if(owner&&!owner.querySelector('[data-shared-display-layer]')){owner.remove();owner=null}
-  if(!owner){owner=createControl();slot.appendChild(owner)}
+  if(!owner)owner=createControl();
+  const harmonic=slot.querySelector('[data-orb-field="true"]'),placement=slot.querySelector('[data-placement-filter="combined"]'),signs=slot.querySelector('[data-zodiac-filter]'),houses=slot.querySelector('[data-house-filter="combined"]'),actions=slot.querySelector('.sky-export-wheel-slot');
+  const anchor=harmonic||placement||signs||houses||actions||slot.firstElementChild||null;
+  if(owner.parentElement!==slot||owner.nextElementSibling!==anchor)slot.insertBefore(owner,anchor);
   syncControl();
   return true;
 }
