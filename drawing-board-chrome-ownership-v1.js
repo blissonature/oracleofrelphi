@@ -99,9 +99,17 @@
   }
 
   function ensureOptions(root) {
-    const workspace = root.querySelector('.card-row-workspace');
     const drawer = root.querySelector('.relphi-reading-options-drawer');
-    if (workspace && drawer && drawer.parentElement !== workspace) workspace.insertAdjacentElement('afterbegin', drawer);
+    const settingsBody = root.querySelector('.relphi-board-settings-body');
+    const modeSwitch = settingsBody?.querySelector('.drawing-board-mode-switch');
+    if (drawer && settingsBody && modeSwitch) {
+      if (drawer.parentElement !== settingsBody || drawer.previousElementSibling !== modeSwitch) {
+        modeSwitch.insertAdjacentElement('afterend', drawer);
+      }
+    } else {
+      const workspace = root.querySelector('.card-row-workspace');
+      if (workspace && drawer && drawer.parentElement !== workspace) workspace.insertAdjacentElement('afterbegin', drawer);
+    }
     window.RelphiDrawingBoardEnsureTopActions?.(root);
   }
 
