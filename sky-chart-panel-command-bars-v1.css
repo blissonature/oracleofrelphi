@@ -1,0 +1,272 @@
+/* Sky Chart panel command bars: compact self-identifying fields with right-flush actions. */
+#skyFoundationFocus>.sky-panel-command-heading,
+#skyFoundationRelationships>.sky-panel-command-heading{
+  display:flex!important;
+  align-items:center!important;
+  gap:18px!important;
+  min-width:0!important;
+  padding:9px 10px!important;
+}
+#skyFoundationFocus>.sky-panel-command-heading>h2,
+#skyFoundationRelationships>.sky-panel-command-heading>h2{
+  flex:0 0 auto!important;
+  margin:0!important;
+  white-space:nowrap!important;
+}
+#skyFoundationFocus .sky-panel-command-controls,
+#skyFoundationRelationships .sky-panel-command-controls{
+  display:flex!important;
+  align-items:center!important;
+  gap:7px!important;
+  min-width:0!important;
+  flex:1 1 auto!important;
+}
+#skyFoundationFocus .sky-panel-command-controls-focus>.sky-export-wheel-slot{
+  margin-left:auto!important;
+}
+#skyFoundationRelationships .sky-panel-command-controls-relationships .sky-command-match-count{
+  margin-left:auto!important;
+}
+#skyFoundationRelationships .sky-panel-command-controls-relationships{
+  width:100%!important;
+}
+#skyFoundationFocus>.sky-chart-filter-bar[hidden]{display:none!important}
+
+/* Remove the old labels above controls when they live in a command bar. */
+#skyFoundationFocus .sky-panel-command-field .sky-chart-placement-filter-label,
+#skyFoundationFocus .sky-panel-command-field .sky-chart-house-filter-label,
+#skyFoundationRelationships .sky-panel-command-field .sky-chart-aspect-filter-label,
+#skyFoundationFocus .sky-panel-command-field .sky-chart-zodiac-filter-label,
+#skyFoundationFocus .sky-panel-command-field .sky-relationship-display-label,
+#skyFoundationFocus .sky-panel-command-field.sky-orb-number-field>span{
+  display:none!important;
+}
+
+/* One-row fields. */
+#skyFoundationFocus .sky-panel-command-field .sky-chart-placement-filter-head,
+#skyFoundationFocus .sky-panel-command-field .sky-chart-house-filter-head,
+#skyFoundationRelationships .sky-panel-command-field .sky-chart-aspect-filter-head{
+  grid-template-rows:35px!important;
+  grid-template-areas:"field field"!important;
+  gap:0!important;
+  min-height:35px!important;
+  height:35px!important;
+}
+#skyFoundationFocus .sky-panel-command-field .sky-chart-placement-summary-choices,
+#skyFoundationFocus .sky-panel-command-field .sky-chart-house-summary-choices,
+#skyFoundationRelationships .sky-panel-command-field .sky-chart-aspect-filter-value,
+#skyFoundationRelationships .sky-panel-command-field .sky-chart-aspect-summary-choices,
+#skyFoundationFocus .sky-panel-command-field .sky-chart-placement-filter-toggle,
+#skyFoundationFocus .sky-panel-command-field .sky-chart-house-filter-toggle,
+#skyFoundationRelationships .sky-panel-command-field .sky-chart-aspect-filter-toggle{
+  grid-row:1!important;
+}
+#skyFoundationFocus .sky-panel-command-field .sky-chart-placement-summary-choices,
+#skyFoundationFocus .sky-panel-command-field .sky-chart-house-summary-choices,
+#skyFoundationRelationships .sky-panel-command-field .sky-chart-aspect-filter-value,
+#skyFoundationRelationships .sky-panel-command-field .sky-chart-aspect-summary-choices{
+  min-width:118px!important;
+  width:auto!important;
+}
+#skyFoundationFocus .sky-chart-zodiac-filter.sky-panel-command-field{
+  display:block!important;
+  min-width:118px!important;
+}
+#skyFoundationFocus .sky-chart-zodiac-filter.sky-panel-command-field .sky-chart-zodiac-filter-toggle{
+  width:100%!important;
+}
+#skyFoundationFocus .sky-relationship-display-control.sky-panel-command-field{
+  min-width:118px!important;
+}
+#skyFoundationFocus .sky-orb-number-field.sky-panel-command-field{
+  display:block!important;
+  min-width:132px!important;
+}
+#skyFoundationFocus .sky-orb-number-field.sky-panel-command-field input{
+  width:132px!important;
+  height:35px!important;
+  box-sizing:border-box!important;
+  padding:0 8px!important;
+  border:1px solid rgba(31,27,24,.2)!important;
+  border-radius:9px!important;
+  background:#fff!important;
+  color:#191613!important;
+  font:800 .68rem/1 system-ui,sans-serif!important;
+}
+
+/* Embedded header until a non-default selection is made. */
+#skyFoundationFocus [data-command-default="true"][data-command-label="Placements"] .sky-chart-placement-summary-choices>*,
+#skyFoundationFocus [data-command-default="true"][data-command-label="Houses"] .sky-chart-house-summary-choices>*,
+#skyFoundationRelationships [data-command-default="true"][data-command-label="Aspects"] :is(.sky-chart-aspect-filter-value,.sky-chart-aspect-summary-choices)>*{
+  display:none!important;
+}
+#skyFoundationFocus [data-command-default="true"][data-command-label="Placements"] .sky-chart-placement-summary-choices::before{content:"Placements"}
+#skyFoundationFocus [data-command-default="true"][data-command-label="Houses"] .sky-chart-house-summary-choices::before{content:"Houses"}
+#skyFoundationRelationships [data-command-default="true"][data-command-label="Aspects"] :is(.sky-chart-aspect-filter-value,.sky-chart-aspect-summary-choices)::before{content:"Aspects"}
+#skyFoundationFocus [data-command-default="true"][data-command-label="Placements"] .sky-chart-placement-summary-choices::before,
+#skyFoundationFocus [data-command-default="true"][data-command-label="Houses"] .sky-chart-house-summary-choices::before,
+#skyFoundationRelationships [data-command-default="true"][data-command-label="Aspects"] :is(.sky-chart-aspect-filter-value,.sky-chart-aspect-summary-choices)::before{
+  display:block!important;
+  color:#191613!important;
+  font:800 .68rem/1.2 system-ui,sans-serif!important;
+  white-space:nowrap!important;
+}
+#skyFoundationFocus .sky-chart-zodiac-filter[data-command-default="true"] .sky-chart-zodiac-filter-toggle{
+  font-size:0!important;
+}
+#skyFoundationFocus .sky-chart-zodiac-filter[data-command-default="true"] .sky-chart-zodiac-filter-toggle::before{
+  content:"Signs";
+  color:#191613;
+  font:800 .68rem/1.2 system-ui,sans-serif;
+}
+#skyFoundationFocus .sky-relationship-display-control[data-command-default="true"] .sky-relationship-display-value-text{
+  font-size:0!important;
+}
+#skyFoundationFocus .sky-relationship-display-control[data-command-default="true"] .sky-relationship-display-value-text::before{
+  content:"Display";
+  color:#191613;
+  font:800 .68rem/1.2 system-ui,sans-serif;
+}
+
+/* Relationships selectors. */
+#skyFoundationRelationships .sky-relationship-configurations-control{
+  position:relative!important;
+  display:inline-flex!important;
+}
+#skyFoundationRelationships .sky-relationship-configurations-button,
+#skyFoundationRelationships .sky-relationship-sort-control>select,
+#skyFoundationRelationships .sky-relationship-limit-control>select{
+  height:35px!important;
+  min-height:35px!important;
+  box-sizing:border-box!important;
+  border:1px solid rgba(31,27,24,.2)!important;
+  border-radius:9px!important;
+  background-color:#fff!important;
+  color:#191613!important;
+  font:800 .68rem/1 system-ui,sans-serif!important;
+}
+#skyFoundationRelationships .sky-relationship-configurations-button{
+  min-width:140px!important;
+  padding:0 31px 0 10px!important;
+  background:#fff var(--sky-chart-filter-chevron) no-repeat right 9px center/15px 15px!important;
+  text-align:left!important;
+  cursor:pointer!important;
+}
+#skyFoundationRelationships .sky-relationship-sort-control{
+  position:relative!important;
+  display:inline-flex!important;
+  min-width:138px!important;
+}
+#skyFoundationRelationships .sky-relationship-sort-control>select{
+  width:100%!important;
+  min-width:138px!important;
+  padding:0 30px 0 9px!important;
+}
+#skyFoundationRelationships .sky-relationship-sort-control[data-command-default="true"]::before{
+  content:"Sort";
+  position:absolute;
+  left:10px;
+  top:50%;
+  z-index:2;
+  transform:translateY(-50%);
+  pointer-events:none;
+  color:#191613;
+  font:800 .68rem/1 system-ui,sans-serif;
+}
+#skyFoundationRelationships .sky-relationship-sort-control[data-command-default="true"]>select{
+  color:transparent!important;
+}
+#skyFoundationRelationships .sky-relationship-limit-control{
+  height:35px!important;
+}
+#skyFoundationRelationships .sky-relationship-limit-control>select{
+  min-width:74px!important;
+  padding:0 28px 0 9px!important;
+}
+#skyFoundationRelationships .sky-relationship-limit-control>input{
+  height:35px!important;
+}
+
+/* Keep Configurations out of the Aspects dropdown; it now has its own disclosure. */
+#skyChartAspectPopover .sky-chart-configuration-section{
+  display:none!important;
+}
+.sky-command-config-popover{
+  position:fixed;
+  z-index:10020;
+  max-height:min(620px,calc(100vh - 24px));
+  overflow:auto;
+  box-sizing:border-box;
+  padding:10px;
+  border:1px solid rgba(31,27,24,.22);
+  border-radius:13px;
+  background:#fffdf8;
+  box-shadow:0 16px 38px rgba(31,27,24,.2);
+}
+.sky-command-config-popover[hidden]{display:none!important}
+.sky-command-config-popover .sky-command-config-clone{display:block!important;margin:0!important}
+
+/* Match count is text, not a pill/control. */
+#skyFoundationRelationships .sky-command-match-count{
+  display:inline!important;
+  min-width:auto!important;
+  padding:0!important;
+  border:0!important;
+  background:transparent!important;
+  box-shadow:none!important;
+  color:#5d554e!important;
+  font:800 .66rem/1 system-ui,sans-serif!important;
+  white-space:nowrap!important;
+}
+#skyFoundationRelationships .sky-command-match-count::after{content:" matches"}
+
+/* Action pills. */
+.sky-command-action-pill,
+#skyFoundationFocus .sky-export-icon-button.sky-command-action-pill,
+#skyFoundationRelationships .sky-export-icon-button.sky-command-action-pill{
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  width:auto!important;
+  min-width:auto!important;
+  height:30px!important;
+  padding:0 .72rem!important;
+  border:1px solid rgba(31,27,24,.18)!important;
+  border-radius:999px!important;
+  background:#fff!important;
+  color:#332e2a!important;
+  font:800 .68rem/1 system-ui,sans-serif!important;
+  white-space:nowrap!important;
+}
+.sky-command-action-pill svg{display:none!important}
+
+/* The old separate Relationships control strip is obsolete once controls live in the heading. */
+#skyFoundationRelationships>.sky-relationship-controls:empty{display:none!important}
+
+@media(max-width:1150px){
+  #skyFoundationFocus>.sky-panel-command-heading,
+  #skyFoundationRelationships>.sky-panel-command-heading{
+    display:grid!important;
+    grid-template-columns:1fr!important;
+    gap:8px!important;
+  }
+  #skyFoundationFocus .sky-panel-command-controls,
+  #skyFoundationRelationships .sky-panel-command-controls{
+    width:100%!important;
+    flex-wrap:wrap!important;
+  }
+}
+@media(max-width:700px){
+  #skyFoundationFocus .sky-panel-command-controls,
+  #skyFoundationRelationships .sky-panel-command-controls{
+    align-items:stretch!important;
+  }
+  #skyFoundationFocus .sky-panel-command-field,
+  #skyFoundationRelationships .sky-panel-command-field{
+    flex:1 1 140px!important;
+  }
+  #skyFoundationFocus .sky-panel-command-controls-focus>.sky-export-wheel-slot,
+  #skyFoundationRelationships .sky-panel-command-controls-relationships .sky-command-match-count{
+    margin-left:0!important;
+  }
+}
