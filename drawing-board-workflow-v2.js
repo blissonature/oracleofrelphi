@@ -2105,17 +2105,21 @@
   }
 
   function launchConfiguredReading(root,draft) {
-    const prefab=draftPrefab(draft);
-    if(prefab.positions.length) prefabBridge()?.applyLayout?.(prefab);
+    const bridge=optionsBridge(),prefabs=prefabBridge(),prefab=draftPrefab(draft);
+    const snap=bridge?.capture();
+    if(!snap||!prefabs||!prefab.positions.length)return false;
+    Object.assign(snap,{shortList:[],shortListSelection:[],shortListPositionLabels:[],shortListPositionCardIds:[],rowEnvelopeLayout:{},rowCardTransforms:{},rowPositionMeta:[],rowActiveLayout:null,rowLayoutLocked:false,rowLayoutDesignMode:false,rowCardReversals:{},rowCardManual:[],rowDrawDeck:[],rowDrawDeckSignature:''});
+    bridge.restore(snap);
+    if(!prefabs.applyLayout(prefab))return false;
     applyDrawSettings(draft);
     optionsSession=null;
     root.querySelector('.relphi-reading-options-drawer')?.remove();
-    setBoardMode(root,'referents');
-    root.classList.remove('relphi-referents-mode');
+    setBoardMode(root,'board');
     const crafted=root.querySelector('#drawingBoardOptionsButton'),free=root.querySelector('#drawingBoardBoardTab');
     crafted?.classList.add('is-active');crafted?.setAttribute('aria-checked','true');
     free?.classList.remove('is-active');free?.setAttribute('aria-checked','false');
     setTimeout(()=>{markSemanticPositions(root);updateLayoutClasses(root);zoomExtents();},0);
+    return true;
   }
 
   function applyOptions(root = panel()) {
@@ -2126,7 +2130,7 @@
     const surfaceKinds=session.path==='surface' ? selectedSurfaceKinds(session) : [];
     if(session.path==='astro'&&!session.astrologyResolved){showBoardToast('Choose and prepare the sky before starting the Astrological Tarot Reading.',{title:'Astrological Tarot Reading',duration:5200});return}
     const astrologyRequested=session.path==='astro'&&!!session.astrologyResolved;
-    if(astrologyRequested){writeStickerVisibility(draft.stickers);surfaceReadingSession=null;recursionSession=null;recursionPortalLevel=0;launchConfiguredReading(root,draft);showBoardToast('Your selected astrological questions are established on the Drawing Board.',{title:'Astrological Tarot Reading',duration:4600});return}
+    if(astrologyRequested){writeStickerVisibility(draft.stickers);surfaceReadingSession=null;recursionSession=null;recursionPortalLevel=0;if(!launchConfiguredReading(root,draft)){showBoardToast('The reading layout could not be established. Your Astrological Tarot setup has been kept open.',{title:'Astrological Tarot Reading',duration:5200});return}showBoardToast('Your selected astrological questions are established on the Drawing Board.',{title:'Astrological Tarot Reading',duration:4600});return}
     const recursionRequested=draft.templateId===RECURSION_ID || draft.basedOnTemplateId===RECURSION_ID;
     surfaceReadingSession=surfaceKinds.length ? {kinds:surfaceKinds.slice(),initialCount:surfaceKinds.length,followupsGenerated:false,followupCount:0} : null;
     if(astrologyRequested) surfaceReadingSession=null;
