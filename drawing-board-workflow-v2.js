@@ -1508,7 +1508,13 @@
   }
   function astrologyHouseSystemMarkup(session,disabled=false) {
     const value=session.astrologyHouseSystem||'whole-sign',options=[['whole-sign','Whole Sign'],['equal-house','Equal House'],['porphyry','Porphyry'],['placidus','Placidus'],['alcabitius','Alcabitius'],['regiomontanus','Regiomontanus'],['campanus','Campanus'],['koch','Koch']];
-    return '<label class="relphi-astrology-house-system"><span>House system</span><select data-astrology-house-system '+(disabled?'disabled':'')+'>'+options.map(([v,n])=>'<option value="'+v+'" '+(value===v?'selected':'')+'>'+n+'</option>').join('')+'</select><small>Chosen for this reading; Saved Skies stay house-system-neutral.</small></label>';
+    return '<details class="relphi-astrology-advanced" data-astrology-advanced '+(session.astrologyAdvanced?'open':'')+'>'+
+      '<summary><strong>Advanced</strong><span>House system · '+escapeHtml(options.find(([v])=>v===value)?.[1]||'Whole Sign')+'</span></summary>'+
+      '<div class="relphi-astrology-advanced-body">'+
+        '<p>Only change this if you intentionally want a different house division for this reading.</p>'+
+        '<label class="relphi-astrology-house-system"><span>House system</span><select data-astrology-house-system '+(disabled?'disabled':'')+'>'+options.map(([v,n])=>'<option value="'+v+'" '+(value===v?'selected':'')+'>'+n+'</option>').join('')+'</select><small>Chosen for this reading; Saved Skies stay house-system-neutral.</small></label>'+
+      '</div>'+
+    '</details>';
   }
   function astrologySurfaceMarkup(session,disabled=false) {
     const count=Math.max(0,Math.min(2,Number(session.astrologySkyCount)||0));
@@ -1637,7 +1643,8 @@
     drawer.querySelector('[data-astrology-own-question]')?.addEventListener('input',event=>{session.astrologyOwnQuestion=event.target.value;});
     drawer.querySelector('[data-astrology-own-pack]')?.addEventListener('change',event=>{session.astrologyOwnPack=event.target.value||'';});
     drawer.querySelector('[data-astrology-select-all]')?.addEventListener('change',event=>drawer.querySelectorAll('[data-astrology-question]').forEach(box=>box.checked=event.target.checked));
-    drawer.querySelector('[data-astrology-house-system]')?.addEventListener('change',event=>{session.astrologyHouseSystem=event.target.value;session.astrologyAnalysis=null;session.astrologyResolved=null;renderOptions(root);});
+    drawer.querySelector('[data-astrology-advanced]')?.addEventListener('toggle',event=>{session.astrologyAdvanced=!!event.currentTarget.open;});
+    drawer.querySelector('[data-astrology-house-system]')?.addEventListener('change',event=>{session.astrologyHouseSystem=event.target.value;session.astrologyAdvanced=true;session.astrologyAnalysis=null;session.astrologyResolved=null;renderOptions(root);});
     drawer.querySelectorAll('[data-astrology-sky-source]').forEach(select=>select.addEventListener('change',()=>{
       const slot=select.dataset.astrologySkySource==='B'?'B':'A';
       session[slot==='B'?'astrologySkyBSource':'astrologySkyASource']=select.value||'here-now';
