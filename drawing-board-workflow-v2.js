@@ -2714,7 +2714,24 @@
     draw.click();
     if (targetIndex!==drawnIndex) prefabBridge()?.swapPositionSlots?.(drawnIndex,targetIndex);
     activeDraw=false;
-    setTimeout(()=>enhance(panel()),0);
+    if(surfaceReadingSession){
+      // The draw itself owns this transition. Wait for the native renderer to
+      // put the card in its referent slot, then show that answer. Nothing else
+      // in the surface workflow may advance until the user presses Next.
+      const expected=targetIndex;
+      let attempts=0;
+      const showDrawnAnswer=()=>{
+        const live=panel();
+        if(live && cardAt(expected,live)){
+          pendingFocusIndex=null;
+          closeAttune();
+          openFocus(expected);
+          return;
+        }
+        if(++attempts<40)setTimeout(showDrawnAnswer,50);
+      };
+      setTimeout(showDrawnAnswer,0);
+    } else setTimeout(()=>enhance(panel()),0);
   }
   function nextUndrawnNativeIndex(root=panel()) {
     return orderedNativePositionIndices().find(index=>!cardAt(index,root) && isEmptyItem(focusItem(index,root))) ?? null;
