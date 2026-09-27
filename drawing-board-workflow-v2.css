@@ -1738,3 +1738,8 @@ body.relphi-attune-open{overflow:hidden!important}
 #shortListPanel .relphi-reading-options-drawer>.relphi-appearance-disclosure{
   margin-top:0!important;
 }
+
+
+/* Reversals and Repeats are first-class settings now; Advanced is retired. */
+#shortListPanel .relphi-draw-advanced{display:none!important}
+#shortListPanel .relphi-free-toggles.relphi-draw-promoted{margin:0!important}
