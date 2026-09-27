@@ -2151,7 +2151,7 @@
     const surfaceKinds=session.path==='surface' ? selectedSurfaceKinds(session) : [];
     if(session.path==='astro'&&!session.astrologyResolved){showBoardToast('Choose and prepare the sky before starting the Astrological Tarot Reading.',{title:'Astrological Tarot Reading',duration:5200});return}
     const astrologyRequested=session.path==='astro'&&!!session.astrologyResolved;
-    if(astrologyRequested){writeStickerVisibility(draft.stickers);surfaceReadingSession=null;recursionSession=null;recursionPortalLevel=0;if(!launchConfiguredReading(root,draft)){showBoardToast('The reading layout could not be established. Your Astrological Tarot setup has been kept open.',{title:'Astrological Tarot Reading',duration:5200});return}showBoardToast('Your selected astrological questions are established on the Drawing Board.',{title:'Astrological Tarot Reading',duration:4600});return}
+    if(astrologyRequested){writeStickerVisibility(draft.stickers);surfaceReadingSession=null;recursionSession=null;recursionPortalLevel=0;if(!launchConfiguredReading(root,draft)){showBoardToast('The reading layout could not be established. Your Astrological Tarot setup has been kept open.',{title:'Astrological Tarot Reading',duration:5200});return}showBoardToast('Your selected astrological questions are established. Attune to the first referent before revealing its card.',{title:'Astrological Tarot Reading',duration:0,actionLabel:'Attune',onAction:()=>{const next=nextUndrawnNativeIndex(panel());if(next!=null)openAttune(next);}});return}
     const recursionRequested=draft.templateId===RECURSION_ID || draft.basedOnTemplateId===RECURSION_ID;
     // Every ordinary Crafted path must cross the same atomic launch boundary.
     // Leaving Templates / Building Blocks on the legacy clear-and-reapply path
@@ -2172,7 +2172,7 @@
           onAction:()=>{const first=recursionIndicesForLevel(1)[0];if(Number.isInteger(first))openAttune(first);}
         });
       }else{
-        showBoardToast('Your '+pathTitle.toLowerCase()+' referents and draw settings are established on the Drawing Board.',{title:pathTitle,duration:4600});
+        showBoardToast('Your '+pathTitle.toLowerCase()+' referents and draw settings are established. Attune to the first referent before revealing its card.',{title:pathTitle,duration:0,actionLabel:'Attune',onAction:()=>{const next=nextUndrawnNativeIndex(panel());if(next!=null)openAttune(next);}});
       }
       return;
     }
