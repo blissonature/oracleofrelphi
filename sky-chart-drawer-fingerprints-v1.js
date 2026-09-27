@@ -47,17 +47,17 @@ function placementMount(slot){return window.RelphiSkyCardShell?.get?.(slot)?.pla
 function cardHitsMount(slot){return window.RelphiSkyCardShell?.get?.(slot)?.cardHitsFingerprint||null}
 
 function temporalTrace(sourceSvg){
+  if(sourceSvg?.dataset?.canonicalSourceReady!=='true'||sourceSvg?.dataset?.canonicalHeptagramReady!=='true')return null;
   const root=svg('svg',{
-    viewBox:sourceSvg.getAttribute('viewBox')||'8 8 344 344',
+    viewBox:sourceSvg.getAttribute('viewBox')||'0 0 360 360',
     preserveAspectRatio:'xMidYMid meet',
     class:'sky-where-fingerprint-heptagram',
     'aria-hidden':'true',
     focusable:'false'
   });
-  const week=Array.from(sourceSvg.querySelectorAll('.sky-ph-week-segment'));
-  const hour=sourceSvg.querySelector('.sky-ph-hour-segment.current');
-  week.forEach(line=>{const clone=line.cloneNode(true);clone.removeAttribute('id');root.appendChild(clone)});
-  if(hour){const clone=hour.cloneNode(true);clone.removeAttribute('id');root.appendChild(clone)}
+  Array.from(sourceSvg.childNodes).forEach(node=>root.appendChild(node.cloneNode(true)));
+  root.querySelectorAll('[id]').forEach(node=>node.removeAttribute('id'));
+  root.querySelectorAll('text').forEach(node=>node.remove());
   return root.childElementCount?root:null;
 }
 function renderWhere(slot,payload){
