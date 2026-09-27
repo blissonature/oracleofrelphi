@@ -399,9 +399,6 @@
 #shortListPanel{position:relative}
 #shortListPanel .relphi-sacred-card-source{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:.45rem!important;margin:0 0 .6rem!important;padding:.55rem!important;border:1px solid #ddd4cb!important;border-radius:9px!important;background:#fbf8f4!important}
 #shortListPanel .relphi-sacred-card-source legend{padding:0 .25rem!important;color:#5f564f!important;font-size:.68rem!important;font-weight:900!important}
-#shortListPanel .relphi-sacred-card-source-reminder{position:sticky!important;top:.25rem!important;z-index:8!important;margin:0 0 .48rem!important;padding:.5rem .62rem!important;border:1px solid rgba(184,23,18,.34)!important;border-left:3px solid #b81712!important;border-radius:7px!important;background:#fff3f1!important;box-shadow:0 4px 12px rgba(57,39,31,.08)!important;color:#7f1814!important;font-size:.67rem!important;line-height:1.35!important}
-#shortListPanel .relphi-sacred-card-source-reminder strong{font-weight:950!important}
-#shortListPanel .relphi-sacred-card-source-reminder[hidden]{display:none!important}
 #shortListPanel .relphi-sacred-card-source-choice{display:grid!important;grid-template-columns:1.1rem minmax(0,1fr)!important;gap:.5rem!important;align-items:start!important;margin:0!important;padding:.58rem .62rem!important;border:1px solid #d8cfc7!important;border-radius:8px!important;background:#fff!important;cursor:pointer!important}
 #shortListPanel .relphi-sacred-card-source-choice:has(input:checked){border-color:rgba(184,23,18,.55)!important;background:#fff4f2!important;box-shadow:inset 3px 0 0 var(--relphi-board-red)!important}
 #shortListPanel .relphi-sacred-card-source-choice input{width:1rem!important;height:1rem!important;margin:.14rem 0 0!important;accent-color:var(--relphi-board-red)!important}
