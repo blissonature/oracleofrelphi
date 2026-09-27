@@ -1569,3 +1569,163 @@ body.relphi-attune-open{overflow:hidden!important}
 }
 #shortListPanel .relphi-board-configuration-heading,
 #shortListPanel .relphi-board-configuration-close{display:none!important}
+
+
+/* Appearance refinements: inline disclosure before commit controls. */
+#shortListPanel .relphi-free-settings>.relphi-appearance-disclosure,
+#shortListPanel .relphi-reading-options-drawer>.relphi-appearance-disclosure{
+  order:98!important;
+  margin:.55rem 0 0!important;
+}
+#shortListPanel .relphi-board-settings-footer,
+#shortListPanel .relphi-options-commitbar{order:99!important}
+
+/* Individual card-control locks. */
+#shortListPanel.relphi-transform-editing-unlocked:not(.relphi-scale-unlocked) [data-row-transform-handle="scale"]{display:none!important;visibility:hidden!important;pointer-events:none!important}
+#shortListPanel.relphi-transform-editing-unlocked:not(.relphi-rotation-unlocked) [data-row-transform-handle="rotate"]{display:none!important;visibility:hidden!important;pointer-events:none!important}
+#shortListPanel:not(.relphi-transform-editing-unlocked) .card-row-transform-box{display:none!important}
+#shortListPanel .relphi-control-toggles{
+  display:grid!important;
+  grid-template-columns:repeat(3,minmax(0,1fr))!important;
+  gap:.42rem!important;
+}
+#shortListPanel .relphi-control-toggles>label,
+#shortListPanel .relphi-setting-toggle{
+  display:flex!important;
+  align-items:center!important;
+  gap:.36rem!important;
+  min-height:2.15rem!important;
+  padding:.4rem .52rem!important;
+  border:1px solid #d0c7bf!important;
+  border-radius:7px!important;
+  background:#fff!important;
+  color:#312b27!important;
+  font-size:.69rem!important;
+  font-weight:800!important;
+}
+
+/* Snap toggles mirror Advanced toggle treatment; steppers live directly below. */
+#shortListPanel .relphi-snap-control{display:grid!important;gap:.32rem!important}
+#shortListPanel .relphi-snap-stepper{
+  display:grid!important;
+  grid-template-columns:2rem minmax(4.4rem,auto) 2rem!important;
+  align-items:center!important;
+  justify-content:start!important;
+  gap:.25rem!important;
+  padding-left:.15rem!important;
+}
+#shortListPanel .relphi-snap-stepper[hidden]{display:none!important}
+#shortListPanel .relphi-snap-stepper>#rowSnapGridValue,
+#shortListPanel .relphi-snap-stepper>#rowRotationSnapValue{
+  width:auto!important;
+  min-width:4.4rem!important;
+  text-align:center!important;
+}
+
+/* Background mode should stay compact on desktop. */
+#shortListPanel .relphi-background-mode{
+  display:inline-grid!important;
+  grid-template-columns:auto auto!important;
+  justify-self:start!important;
+  width:auto!important;
+  max-width:max-content!important;
+}
+#shortListPanel .relphi-background-mode>button{
+  min-width:4.6rem!important;
+  width:auto!important;
+}
+
+/* Board and Placeholder targets intentionally share one aligned responsive grid. */
+#shortListPanel .relphi-background-targets{
+  display:grid!important;
+  grid-template-columns:1fr!important;
+  gap:.42rem!important;
+}
+#shortListPanel .relphi-background-target-row{
+  display:grid!important;
+  grid-template-columns:minmax(6.5rem,8rem) 3rem!important;
+  align-items:center!important;
+  gap:.55rem!important;
+}
+#shortListPanel .relphi-background-target-row>span{
+  font-size:.69rem!important;
+  font-weight:850!important;
+}
+#shortListPanel .relphi-background-target-swatch{
+  width:3rem!important;
+  min-width:3rem!important;
+  height:2rem!important;
+  margin:0!important;
+  padding:0!important;
+  border:1px solid rgba(17,17,17,.34)!important;
+  border-radius:6px!important;
+  background-position:center!important;
+  background-size:cover!important;
+  background-repeat:no-repeat!important;
+  box-shadow:inset 0 0 0 2px rgba(255,255,255,.58)!important;
+}
+#shortListPanel .relphi-background-target-swatch.is-image:empty{
+  background-image:linear-gradient(135deg,#eee 25%,#ddd 25%,#ddd 50%,#eee 50%,#eee 75%,#ddd 75%,#ddd)!important;
+  background-size:8px 8px!important;
+}
+
+/* Global placeholder image, when chosen. Per-position art still takes precedence in native markup. */
+#shortListPanel .card-row-card-wrap,
+#shortListPanel .card-row-drop-card{
+  background-image:var(--relphi-envelope-image,none)!important;
+  background-position:center!important;
+  background-size:cover!important;
+  background-repeat:no-repeat!important;
+}
+
+/* Recent appearance choices use LRU unless pinned. */
+#shortListPanel .relphi-background-history{
+  display:grid!important;
+  gap:.35rem!important;
+  padding-top:.45rem!important;
+  border-top:1px solid #e5ddd5!important;
+}
+#shortListPanel .relphi-background-history>span{
+  color:#665d56!important;
+  font-size:.64rem!important;
+  font-weight:850!important;
+}
+#shortListPanel .relphi-background-history-items{
+  display:flex!important;
+  align-items:flex-start!important;
+  gap:.35rem!important;
+  flex-wrap:wrap!important;
+  max-height:5.4rem!important;
+  overflow:auto!important;
+}
+#shortListPanel .relphi-history-chip{
+  position:relative!important;
+  display:inline-flex!important;
+  align-items:flex-start!important;
+}
+#shortListPanel .relphi-history-pin{
+  position:absolute!important;
+  top:-.28rem!important;
+  right:-.28rem!important;
+  display:grid!important;
+  place-items:center!important;
+  width:1.05rem!important;
+  min-width:1.05rem!important;
+  height:1.05rem!important;
+  margin:0!important;
+  padding:0!important;
+  border:1px solid rgba(17,17,17,.25)!important;
+  border-radius:50%!important;
+  background:#fff!important;
+  color:#332d29!important;
+  font-size:.55rem!important;
+  line-height:1!important;
+}
+
+/* Old default-setting row is intentionally retired. */
+#shortListPanel .relphi-background-default-row{display:none!important}
+
+@media(max-width:700px){
+  #shortListPanel .relphi-control-toggles{grid-template-columns:1fr!important}
+  #shortListPanel .relphi-background-target-row{grid-template-columns:minmax(5.5rem,1fr) 3rem!important}
+}
