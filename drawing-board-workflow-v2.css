@@ -1729,3 +1729,12 @@ body.relphi-attune-open{overflow:hidden!important}
   #shortListPanel .relphi-control-toggles{grid-template-columns:1fr!important}
   #shortListPanel .relphi-background-target-row{grid-template-columns:minmax(5.5rem,1fr) 3rem!important}
 }
+
+
+/* Keep Appearance and Advanced visually contiguous in Settings. */
+#shortListPanel .relphi-free-settings>.relphi-draw-advanced + .relphi-appearance-disclosure,
+#shortListPanel .relphi-reading-options-drawer>.relphi-draw-advanced + .relphi-appearance-disclosure,
+#shortListPanel .relphi-free-settings>.relphi-appearance-disclosure,
+#shortListPanel .relphi-reading-options-drawer>.relphi-appearance-disclosure{
+  margin-top:0!important;
+}
