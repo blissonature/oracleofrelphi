@@ -394,7 +394,7 @@
   }
 
   function blankDraft() {
-    return { templateId:'', basedOnTemplateId:'', labels:[], positionPacks:[], pack:'full', keywordTags:[], keywordMatchMode:'any', stickers:true, reversals:true, repeats:false, templateName:'' };
+    return { templateId:'', basedOnTemplateId:'', labels:[], positionPacks:[], positionSettings:[], pack:'full', keywordTags:[], keywordMatchMode:'any', stickers:true, reversals:true, repeats:false, templateName:'' };
   }
   function draftFromState() {
     const snap = currentSnapshot() || {};
@@ -408,6 +408,11 @@
       positionPacks:Array.from({length:Array.isArray(snap.shortListPositionLabels)?snap.shortListPositionLabels.length:0},(_,index)=>
         String(snap.rowPositionMeta?.[index]?.drawScope || state.activeLayout?.positions?.[index]?.drawScope || '')
       ),
+      positionSettings:Array.from({length:Array.isArray(snap.shortListPositionLabels)?snap.shortListPositionLabels.length:0},(_,index)=>({
+        pack:String(snap.rowPositionMeta?.[index]?.drawScope || state.activeLayout?.positions?.[index]?.drawScope || snap.rowDrawScope || 'full'),
+        reversals:snap.rowPositionMeta?.[index]?.allowReversals ?? state.activeLayout?.positions?.[index]?.allowReversals ?? (snap.rowAllowReversals !== false),
+        repeats:snap.rowPositionMeta?.[index]?.allowRepeats ?? state.activeLayout?.positions?.[index]?.allowRepeats ?? !!snap.rowAllowRepeats
+      })),
       pack:String(snap.rowDrawScope || 'full'),
       keywordTags:Array.isArray(snap.rowSelectedTags) ? snap.rowSelectedTags.slice() : [],
       keywordMatchMode:snap.rowTagMatchMode==='all' ? 'all' : 'any',
@@ -792,6 +797,12 @@
     const entries = allTemplates();
     return `<option value="">Custom</option>${entries.map(item => `<option value="${escapeHtml(item.id)}" ${draft.templateId===item.id?'selected':''}>${escapeHtml(templateCountLabel(item))} · ${escapeHtml(item.name)}</option>`).join('')}`;
   }
+  function packItems(){ return [
+      ['full','Full Pack'],['shown','Shown cards'],['uhn','Universal Human Needs'],['majors','Majors'],
+      ['primordial-majors','Primordial Element Majors'],['planetary-majors','Planetary Majors'],['zodiac-majors','Zodiac Majors'],['aces','Aces'],['courts','Courts'],
+      ['pips','Pips'],['decans','Decan pips'],['wands','Wands'],['cups','Cups'],['swords','Swords'],['pentacles','Pentacles / Disks'],['tags','Keywords / Tags']
+    ]; }
+  function packLabel(value){ return packItems().find(([id])=>id===value)?.[1] || value || 'Full Pack'; }
   function packOptions(value) {
     const items = [
       ['full','Full Pack'],['shown','Shown cards'],['uhn','Universal Human Needs'],['majors','Majors'],
@@ -816,9 +827,18 @@
     }));
   }
 
-  function labelsMarkup(labels) {
+  function labelsMarkup(labels,draft=null) {
     const rows=labels.length ? labels : [''];
-    return rows.map((label,index)=>`<div class="relphi-label-row" data-label-row="${index}"><span>${index+1}</span><input type="text" value="${escapeHtml(label)}" aria-label="Position ${index+1} label"><button type="button" data-remove-label="${index}" aria-label="Remove position ${index+1}">×</button></div>`).join('');
+    return rows.map((label,index)=>{
+      const inherited=draft?.positionSettings?.[index] || draft?.positionSettings?.[index-1] || {pack:draft?.pack||'full',reversals:draft?.reversals!==false,repeats:!!draft?.repeats};
+      if(draft && !draft.positionSettings?.[index]){
+        draft.positionSettings ||= [];
+        draft.positionSettings[index]={pack:inherited.pack||'full',reversals:inherited.reversals!==false,repeats:!!inherited.repeats};
+        draft.positionPacks ||= []; draft.positionPacks[index]=draft.positionSettings[index].pack;
+      }
+      const settings=draft?.positionSettings?.[index]||inherited;
+      return `<div class="relphi-label-row relphi-bespoke-question-row" data-label-row="${index}"><span>${index+1}</span><div class="relphi-bespoke-question-main"><input type="text" value="${escapeHtml(label)}" aria-label="Position ${index+1} label"><div class="relphi-bespoke-question-settings"><label>Sub-pack<select data-position-pack="${index}">${packOptions(settings.pack||'full')}</select></label><label><input type="checkbox" data-position-reversals="${index}" ${settings.reversals!==false?'checked':''}> Reversals</label><label><input type="checkbox" data-position-repeats="${index}" ${settings.repeats?'checked':''}> Repeats</label></div></div><button type="button" data-remove-label="${index}" aria-label="Remove position ${index+1}">×</button></div>`;
+    }).join('');
   }
   function parseBulkQuestions(value) {
     return String(value || '').split(',').map(item=>item.trim()).filter(Boolean).slice(0,MAX_POSITIONS);
@@ -1087,9 +1107,18 @@
     return patterns.sort((a,b)=>b.score-a.score||b.count-a.count).filter((p,i,a)=>a.findIndex(q=>q.type===p.type&&q.value===p.value)===i);
   }
   function astrologyEvidenceKey(item){return item.kind+':'+String(item.id||item.value||'').toLowerCase()}
+  function astrologySuggestedPack(source,evidence) {
+    if(source==='ruler') return 'planetary-majors';
+    if(source==='polarity-derived-sign') return 'zodiac-majors';
+    if(source==='card-hit') return 'full';
+    if(source==='pattern' && evidence?.raw?.type==='sign') return 'zodiac-majors';
+    if(source==='pattern' && evidence?.raw?.type==='decan') return 'decans';
+    if(source==='cluster' || source==='configuration') return 'full';
+    return 'full';
+  }
   function astrologyQuestionSuggestions(analysis,enabledKeys) {
     const enabled=item=>!enabledKeys||enabledKeys.has(astrologyEvidenceKey(item)),out=[];
-    const push=(text,score,source,evidence)=>{if(text&&!out.some(q=>q.text===text))out.push({text,score,source,evidence})};
+    const push=(text,score,source,evidence)=>{if(text&&!out.some(q=>q.text===text)){const pack=astrologySuggestedPack(source,evidence);out.push({text,score,source,evidence,pack,packReason:source});}};
     // Evidence is not automatically a question. Only promote evidence whose meaning,
     // consequence, synthesis, or activation remains unresolved by the sky itself.
     analysis.evidence.filter(enabled).forEach(e=>{
@@ -1135,7 +1164,7 @@
     const pd=analysis.polarityDiagnostic,polarityDetail=pd?' <small class="relphi-polarity-bin">'+pd.winner+' '+(pd.share*100).toFixed(1)+'% · excess '+(pd.excess*100).toFixed(1)+' points → <strong>'+pd.sign+'</strong> · bin '+(pd.index+1)+'/6</small>':'';
     const summary=summaries.map(x=>evidenceBox(x,'<strong>'+escapeHtml(x.value)+'</strong> · '+escapeHtml(x.type)+(x.count?' ×'+x.count:'')+(x.kind==='polarity'?polarityDetail:''))).join('');
     const diagnostic=pd?'<div class="relphi-polarity-diagnostic"><strong>Experimental polarity → sign test</strong><span>'+pd.winner+' selects the '+(pd.winner==='Active'?'Yang':'Yin')+' signs; '+(pd.excess*100).toFixed(1)+'-point excess selects bin '+(pd.index+1)+'/6 → <strong>'+pd.sign+'</strong>.</span><span class="relphi-polarity-test-result"><strong>Independent check:</strong> '+(pd.observed?escapeHtml(pd.sign)+' is independently concentrated ×'+pd.observedCount:'no independent '+escapeHtml(pd.sign)+' concentration')+'.</span><small>Experimental derived-sign evidence — included in the question generator while Polarity is checked.</small></div>':'';
-    const enabled=new Set(analysis.evidence.map(astrologyEvidenceKey).filter(key=>!disabled.has(key))),questionList=astrologyQuestionSuggestions(analysis,enabled),questions=questionList.map((q,i)=>'<label class="relphi-astrology-question"><input type="checkbox" data-astrology-question="'+i+'" '+(i<3?'checked':'')+'><span>'+escapeHtml(q.text)+'</span></label>').join('');
+    const enabled=new Set(analysis.evidence.map(astrologyEvidenceKey).filter(key=>!disabled.has(key))),questionList=astrologyQuestionSuggestions(analysis,enabled),questions=questionList.map((q,i)=>'<label class="relphi-astrology-question"><input type="checkbox" data-astrology-question="'+i+'" '+(i<3?'checked':'')+'><span><strong>'+escapeHtml(q.text)+'</strong><small>Suggested sub-pack · '+escapeHtml(packLabel(q.pack))+'</small></span></label>').join('');
     session.astrologyVisibleQuestions=questionList;
     const skyChannels=analysis.perSky.map(s=>{const items=s.skyEvidence.filter(x=>['placement','house','aspect','configuration'].includes(x.kind)).map(x=>evidenceBox(x,'<strong>'+escapeHtml(x.value)+'</strong>'+(x.detail?' · '+escapeHtml(x.detail):''))).join('');return items?'<section><h4>Sky evidence · '+escapeHtml(s.name)+'</h4><div class="relphi-evidence-list">'+items+'</div></section>':''}).join('');
     return '<div class="relphi-astrology-analysis"><section><h4>Card Hits</h4><div class="relphi-evidence-list">'+hits+'</div></section>'+skyChannels+'<section><h4>Patterns & concentrations</h4><div class="relphi-evidence-list">'+summary+'</div>'+diagnostic+'</section><section class="relphi-astrology-questions"><div class="relphi-astrology-question-head"><h4>Suggested questions</h4><label><input type="checkbox" data-astrology-select-all> Select all</label></div><p class="relphi-question-prompt">Checked evidence is factored into these suggestions. Uncheck anything you do not want the question generator to use.</p>'+questions+'<label class="relphi-astrology-own-question"><span>Your question</span><input type="text" data-astrology-own-question value="'+escapeHtml(session?.astrologyOwnQuestion||'')+'" placeholder="Write your own question…"></label></section></div>';
@@ -1224,7 +1253,7 @@
       '<div class="relphi-options-subhead"><div><strong>Bespoke</strong><span>Write the referents for this reading.</span></div><button type="button" id="relphiAddPosition" '+(hasCards||draft.labels.length>=MAX_POSITIONS?'disabled':'')+'>Add referent</button></div>'+
       '<label class="relphi-bulk-referents">Enter several at once<textarea id="relphiBulkReferents" rows="3" placeholder="Situation, Challenge, Strategy" '+(hasCards?'disabled':'')+'></textarea></label>'+
       '<button type="button" id="relphiParseReferents" '+(hasCards?'disabled':'')+'>Parse comma-separated referents</button>'+
-      '<div id="relphiPositionLabels">'+labelsMarkup(draft.labels)+'</div>'+
+      '<div id="relphiPositionLabels">'+labelsMarkup(draft.labels,draft)+'</div>'+
       '<div class="relphi-template-save"><input id="relphiTemplateName" type="text" maxlength="60" placeholder="Template name" value="'+escapeHtml(draft.templateName)+'" '+(hasCards?'disabled':'')+'><button type="button" id="relphiSaveTemplate" '+(hasCards?'disabled':'')+'>Save template</button></div>'+
       '</section>';
   }
@@ -1389,12 +1418,17 @@
       const index=Number(button.dataset.removeLabel);
       draft.labels.splice(index,1);
       draft.positionPacks?.splice?.(index,1);
+      draft.positionSettings?.splice?.(index,1);
       markQuestionEditCustom(drawer,draft); renderOptions(root);
     });
     drawer.querySelector('#relphiAddPosition')?.addEventListener('click',()=>{
       if (draft.labels.length>=MAX_POSITIONS) return;
-      draft.labels.push(''); draft.positionPacks?.push?.(''); markQuestionEditCustom(drawer,draft); renderOptions(root);
+      const previous=draft.positionSettings?.[draft.positionSettings.length-1] || {pack:draft.pack||'full',reversals:draft.reversals!==false,repeats:!!draft.repeats};
+      draft.labels.push(''); draft.positionPacks?.push?.(previous.pack||'full'); draft.positionSettings ||= []; draft.positionSettings.push({...previous}); markQuestionEditCustom(drawer,draft); renderOptions(root);
     });
+    drawer.querySelectorAll('[data-position-pack]').forEach(select=>select.addEventListener('change',()=>{const i=Number(select.dataset.positionPack);draft.positionSettings ||= [];const prior=draft.positionSettings[i]||{};draft.positionSettings[i]={...prior,pack:select.value||'full'};draft.positionPacks ||= [];draft.positionPacks[i]=select.value||'full';}));
+    drawer.querySelectorAll('[data-position-reversals]').forEach(input=>input.addEventListener('change',()=>{const i=Number(input.dataset.positionReversals);draft.positionSettings ||= [];draft.positionSettings[i]={...(draft.positionSettings[i]||{}),pack:draft.positionPacks?.[i]||draft.pack||'full',reversals:input.checked,repeats:!!draft.positionSettings[i]?.repeats};}));
+    drawer.querySelectorAll('[data-position-repeats]').forEach(input=>input.addEventListener('change',()=>{const i=Number(input.dataset.positionRepeats);draft.positionSettings ||= [];draft.positionSettings[i]={...(draft.positionSettings[i]||{}),pack:draft.positionPacks?.[i]||draft.pack||'full',reversals:draft.positionSettings[i]?.reversals!==false,repeats:input.checked};}));
     drawer.querySelector('#relphiTemplateName')?.addEventListener('input',event=>{draft.templateName=event.target.value.slice(0,60);});
     drawer.querySelector('#relphiSaveTemplate')?.addEventListener('click',()=>saveDraftTemplate(root));
 
@@ -1452,10 +1486,10 @@
       if (session.path==='surface' && !prepareSurfaceDraft(session)) return;
       if (session.path==='blocks' && session.suggestions.length) commitSelectedSuggestions();
       if(session.path==='astro'){
-        const chosen=Array.from(drawer.querySelectorAll('[data-astrology-question]')).filter(box=>box.checked).map(box=>session.astrologyVisibleQuestions?.[Number(box.dataset.astrologyQuestion)]?.text).filter(Boolean);
-        const own=String(drawer.querySelector('[data-astrology-own-question]')?.value||session.astrologyOwnQuestion||'').trim();if(own)chosen.push(own);
+        const chosen=Array.from(drawer.querySelectorAll('[data-astrology-question]')).filter(box=>box.checked).map(box=>session.astrologyVisibleQuestions?.[Number(box.dataset.astrologyQuestion)]).filter(Boolean);
+        const own=String(drawer.querySelector('[data-astrology-own-question]')?.value||session.astrologyOwnQuestion||'').trim();if(own)chosen.push({text:own,pack:draft.pack||'full',source:'authored'});
         if(!chosen.length){showBoardToast('Select at least one suggested question or write your own.',{title:'Astrological Tarot Reading',duration:4200});return}
-        draft.labels=chosen.slice(0,MAX_POSITIONS);draft.positionPacks=draft.labels.map(()=>draft.pack||'full');draft.templateId='';draft.basedOnTemplateId='';draft.templateName='Astrological Tarot Reading';session.astrologyChosenQuestions=draft.labels.slice();
+        const accepted=chosen.slice(0,MAX_POSITIONS);draft.labels=accepted.map(q=>q.text);draft.positionPacks=accepted.map(q=>q.pack||'full');draft.positionSettings=accepted.map(q=>({pack:q.pack||'full',reversals:draft.reversals!==false,repeats:!!draft.repeats,source:q.source||'suggested'}));draft.templateId='';draft.basedOnTemplateId='';draft.templateName='Astrological Tarot Reading';session.astrologyChosenQuestions=accepted.map(q=>({text:q.text,pack:q.pack||'full',source:q.source||'suggested'}));
       }
       applyOptions(root);
     });
@@ -1580,7 +1614,7 @@
     const positionPacks=(draft.positionPacks||[]).slice(0,labels.length).map(value=>String(value||''));
     if (based && based.positions.length===labels.length) {
       const next=clone(based);
-      next.positions.forEach((item,index)=>{item.label=labels[index]; item.drawOrder=index+1; item.drawScope=positionPacks[index]||item.drawScope||'';});
+      next.positions.forEach((item,index)=>{const ps=draft.positionSettings?.[index]||{};item.label=labels[index]; item.drawOrder=index+1; item.drawScope=positionPacks[index]||ps.pack||item.drawScope||'';item.allowReversals=ps.reversals ?? draft.reversals;item.allowRepeats=ps.repeats ?? draft.repeats;});
       next.rules={allowReversals:draft.reversals,allowRepeats:draft.repeats,drawScope:draft.pack};
       if (!draft.templateId) {
         next.id='custom-active';
@@ -1592,7 +1626,7 @@
       return next;
     }
     const positions=genericPositions(labels);
-    positions.forEach((item,index)=>{item.drawScope=positionPacks[index]||'';});
+    positions.forEach((item,index)=>{const ps=draft.positionSettings?.[index]||{};item.drawScope=positionPacks[index]||ps.pack||'';item.allowReversals=ps.reversals ?? draft.reversals;item.allowRepeats=ps.repeats ?? draft.repeats;});
     return {version:1,id:'custom-active',name:draft.templateName || 'Custom',cardCount:labels.length,source:'custom',editable:true,basedOn:based?.id||null,positions,rules:{allowReversals:draft.reversals,allowRepeats:draft.repeats,drawScope:draft.pack}};
   }
 
@@ -2572,6 +2606,8 @@
     const targetIndex=Number.isInteger(suppliedIndex)?suppliedIndex:Number(item.dataset.rowIndex);
     const drawnIndex=currentCardCount(root);
     if (!Number.isInteger(targetIndex)||targetIndex<0) return;
+    const snap=optionsBridge()?.capture?.();const meta=snap?.rowPositionMeta?.[targetIndex] || snap?.rowActiveLayout?.positions?.[targetIndex] || {};
+    if(snap && (meta.allowReversals!==undefined || meta.allowRepeats!==undefined)){snap.rowAllowReversals=meta.allowReversals!==false;snap.rowAllowRepeats=!!meta.allowRepeats;snap.rowDrawDeck=[];snap.rowDrawDeckSignature='';optionsBridge()?.restore?.(snap);}
     activeDraw=true;
     pendingFocusIndex=drawnIndex;
     draw.click();
