@@ -1077,12 +1077,19 @@
       if(!Number.isFinite(lon)&&signIndex>=0)lon=signIndex*30+Number(item.degree||item.degrees||0)+Number(item.minute||item.minutes||0)/60;
       if(!Number.isFinite(lon))return null;lon=((lon%360)+360)%360;if(signIndex<0)signIndex=Math.floor(lon/30);
       const degree=Number.isFinite(Number(item.degree??item.degrees))?Number(item.degree??item.degrees):lon%30;
-      return {key,body:String(item.name||item.label||item.body||item.planet||key),lon,signIndex,sign:ASTRO_SIGNS[signIndex],degree,decan:Math.min(2,Math.floor(degree/10)),mode:ASTRO_MODES[signIndex%3],element:ASTRO_ELEMENTS[signIndex%4]};
+      const body=String(item.name||item.label||item.body||item.planet||key),retrograde=Boolean(item.retrograde||item.isRetrograde||String(item.motion||'').toLowerCase()==='retrograde');
+      return {key,body,lon,signIndex,sign:ASTRO_SIGNS[signIndex],degree,decan:Math.min(2,Math.floor(degree/10)),mode:ASTRO_MODES[signIndex%3],element:ASTRO_ELEMENTS[signIndex%4],retrograde};
     }).filter(Boolean);
   }
   function astrologySkyEvidence(payload,skyName) {
-    const records=astrologyPayloadRecords(payload),out=[],add=(kind,id,value,count=1,detail='')=>out.push({kind,id:skyName+':'+id,value,count,detail,sky:skyName});
-    records.forEach(r=>add('placement','placement:'+r.key,r.body+' in '+r.sign,1,r.sign+' '+r.degree.toFixed(1)+'°'));
+    const records=astrologyPayloadRecords(payload),out=[],add=(kind,id,value,count=1,detail='',extra={})=>out.push({kind,id:skyName+':'+id,value,count,detail,sky:skyName,...extra});
+    records.forEach(r=>{
+      add('placement','placement:'+r.key,r.body+' in '+r.sign,1,r.sign+' '+r.degree.toFixed(1)+'°');
+      const condition=window.RELPHI_SYMBOLIC_REFERENCE?.traditionalCondition?.(r.body,r.sign);
+      if(condition&&(condition.statuses.length||window.RELPHI_SYMBOLIC_REFERENCE?.traditionalProfile?.(r.body))){
+        add('planet-relationship','relationship:'+r.key,r.body+' in '+r.sign,1,[condition.host,condition.mode,condition.element,condition.statuses.join(' + ')||'guest'].filter(Boolean).join(' · '),{planet:r.body,sign:r.sign,condition,retrograde:r.retrograde});
+      }
+    });
     const by=(field)=>{const m=new Map();records.forEach(r=>m.set(r[field],(m.get(r[field])||0)+1));return m};
     [['sign',by('sign')],['mode',by('mode')],['element',by('element')],['decan',by('decan')]].forEach(([kind,map])=>[...map].filter(([,n])=>n>=3).forEach(([v,n])=>add('sky-'+kind,kind+':'+v,kind==='decan'?'Decan '+(Number(v)+1):String(v),n)));
     const p=payload?.placements||payload?.positions||payload?.points||payload?.bodies||{};
@@ -1110,7 +1117,7 @@
   }
   function astrologyEvidenceKey(item){return item.kind+':'+String(item.id||item.value||'').toLowerCase()}
   function astrologySuggestedPack(source,evidence) {
-    if(source==='ruler') return 'planetary-majors';
+    if(source==='ruler' || source==='planet-relationship') return 'planetary-majors';
     if(source==='polarity-derived-sign') return 'zodiac-majors';
     if(source==='card-hit') return 'full';
     if(source==='pattern' && evidence?.raw?.type==='sign') return 'zodiac-majors';
@@ -1137,6 +1144,15 @@
       } else if(e.kind==='polarity') {
         const pd=analysis.polarityDiagnostic;
         if(pd) push('What is the pull toward '+pd.sign+' revealing in this reading?',88+(pd.observed?8:0),'polarity-derived-sign',{...e,derivedSign:pd.sign,bin:pd.index+1,share:pd.share,excess:pd.excess,independentlyObserved:pd.observed,observedCount:pd.observedCount});
+      }
+      else if(e.kind==='planet-relationship') {
+        const ref=window.RELPHI_SYMBOLIC_REFERENCE,condition=e.condition||e.raw?.condition;
+        const semanticQuestion=ref?.relationshipQuestion?.(e.planet||e.raw?.planet,e.sign||e.raw?.sign);
+        if(semanticQuestion) push(semanticQuestion,91+(condition?.statuses?.length||0)*3,'planet-relationship',{...e,semanticSource:'relphi-symbolic-reference',relationshipProfile:ref?.traditionalProfile?.(e.planet||e.raw?.planet)||null});
+        if(e.retrograde){
+          const planet=e.planet||e.raw?.planet,profile=ref?.planet?.(planet);
+          if(profile?.retrograde) push('What is '+planet+' returning to revise while working in '+condition.host+"'s "+condition.mode+' '+condition.element+' affairs?',94,'planet-relationship',{...e,semanticSource:'relphi-symbolic-reference',motion:'retrograde'});
+        }
       }
       else if(e.kind==='ruler') {
         const semanticQuestion=window.RELPHI_SYMBOLIC_REFERENCE?.planetQuestion?.(e.value,'repeated');
