@@ -461,7 +461,7 @@
     const bar=filterBar();
     if(!bar)return false;
     removeLegacyControls(bar);
-    let owner=bar.querySelector('[data-placement-filter="combined"]');
+    let owner=document.querySelector('[data-placement-filter="combined"]');
     if(!owner)owner=createControl();
     if(!owner.isConnected){
       const aspect=bar.querySelector('[data-filter="aspect"]')?.closest('label')||bar.querySelector('[data-aspect-filter="combined"]');
