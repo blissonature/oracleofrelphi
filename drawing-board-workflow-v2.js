@@ -2099,7 +2099,7 @@
       const drawnIndex=currentCardCount(root);
       const cardId=button.dataset.attuneCard || '';
       if (!Number.isInteger(target) || target<0) return;
-      pendingFocusIndex=drawnIndex;
+      pendingFocusIndex=target;
       const scope=String(reader.dataset.attuneScope || 'full');
       if (!ledgerBridge()?.addCardToBoard?.(cardId,scope)) { pendingFocusIndex=null; return; }
       if (target!==drawnIndex) prefabBridge()?.swapPositionSlots?.(drawnIndex,target);
@@ -2708,10 +2708,13 @@
     const snap=optionsBridge()?.capture?.();const meta=snap?.rowPositionMeta?.[targetIndex] || snap?.rowActiveLayout?.positions?.[targetIndex] || {};
     if(snap && (meta.allowReversals!==undefined || meta.allowRepeats!==undefined)){snap.rowAllowReversals=meta.allowReversals!==false;snap.rowAllowRepeats=!!meta.allowRepeats;snap.rowDrawDeck=[];snap.rowDrawDeckSignature='';optionsBridge()?.restore?.(snap);}
     activeDraw=true;
-    pendingFocusIndex=drawnIndex;
+    // Focus belongs to the referent slot, not necessarily the append slot used
+    // internally by the native draw.
+    pendingFocusIndex=targetIndex;
     draw.click();
     if (targetIndex!==drawnIndex) prefabBridge()?.swapPositionSlots?.(drawnIndex,targetIndex);
     activeDraw=false;
+    setTimeout(()=>enhance(panel()),0);
   }
   function nextUndrawnNativeIndex(root=panel()) {
     return orderedNativePositionIndices().find(index=>!cardAt(index,root) && isEmptyItem(focusItem(index,root))) ?? null;
@@ -2866,11 +2869,20 @@
       installRecursionBoard(root);
     }
     if (pendingFocusIndex!=null) {
-      const target=pendingFocusIndex;
+      // pendingFocusIndex is the slot the native draw appended into. A Crafted
+      // draw may immediately swap that card into its referent's target slot,
+      // so resolve the actual occupied slot before opening Focus.
+      let target=pendingFocusIndex;
+      if (!cardAt(target,root) && surfaceReadingSession && Number.isInteger(attuneIndex) && cardAt(attuneIndex,root)) target=attuneIndex;
+      if (!cardAt(target,root) && surfaceReadingSession) {
+        const occupied=orderedNativePositionIndices().filter(index=>!!cardAt(index,root));
+        target=occupied.length ? occupied[occupied.length-1] : target;
+      }
       if (cardAt(target,root)) {
         pendingFocusIndex=null;
         if (configuredPositionCount()===0) zoomExtents();
-        setTimeout(()=>openFocus(target),0);
+        const focusTarget=target;
+        setTimeout(()=>openFocus(focusTarget),0);
       }
     }
   }
