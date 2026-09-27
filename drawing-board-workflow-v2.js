@@ -693,6 +693,7 @@
     root.querySelector('.relphi-free-settings')?.remove();
     setBoardMode(root,'board');
     ensureBoardChrome(root);
+    syncZoomToolbarVisibility(root);
     showBoardToast('Free Draw settings confirmed.',{title:'Drawing Board',duration:2600});
     setTimeout(()=>enhance(panel()),0);
   }
