@@ -286,7 +286,7 @@
     if (!bar) return false;
     bar.querySelector('[data-filter="houseA"]')?.closest('label')?.remove();
     bar.querySelector('[data-filter="houseB"]')?.closest('label')?.remove();
-    let owner = bar.querySelector('[data-house-filter="combined"]');
+    let owner = document.querySelector('[data-house-filter="combined"]');
     if (!owner) owner = createControl();
     if (!owner.isConnected) {
       const placements = bar.querySelector('[data-placement-filter="combined"]');
