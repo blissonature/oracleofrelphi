@@ -450,6 +450,101 @@
   function rwsImagePath(card) { return card?.card_id ? `assets/tarot/rws/${card.card_id}.webp?v=${RWS_ART_VERSION}` : ''; }
   function rwsExportImagePath(card) { return rwsImagePath(card); }
   function rwsImageAlt(card) { return `${title(card)} card art`; }
+
+  // Drawing Board art uses zoom-aware raster tiers. The full RWS asset remains
+  // the source of truth; smaller WebP renditions are generated lazily and cached
+  // only when the board is actually small enough to benefit from them.
+  const ROW_ART_WIDTH_TIERS = Object.freeze([48,64,80,96,128,160,224,320]);
+  const rowArtVariantCache = new Map();
+  const rowArtVariantPending = new Map();
+  function rowArtTierWidth(targetPixels) {
+    const target=Math.max(1,Number(targetPixels)||1);
+    return ROW_ART_WIDTH_TIERS.find(width=>width>=target) || 0;
+  }
+  function rowArtWebpQuality(width) {
+    if(width<=64)return .48;
+    if(width<=96)return .56;
+    if(width<=160)return .66;
+    if(width<=224)return .76;
+    return .84;
+  }
+  function waitForRasterSource(image) {
+    if(image.complete&&image.naturalWidth)return Promise.resolve(image);
+    if(typeof image.decode==='function')return image.decode().then(()=>image).catch(()=>new Promise((resolve,reject)=>{
+      image.addEventListener('load',()=>resolve(image),{once:true});
+      image.addEventListener('error',reject,{once:true});
+    }));
+    return new Promise((resolve,reject)=>{
+      image.addEventListener('load',()=>resolve(image),{once:true});
+      image.addEventListener('error',reject,{once:true});
+    });
+  }
+  function rowArtVariantUrl(cardId,width) {
+    const card=cardById(cardId);
+    const full=card?rwsImagePath(card):'';
+    if(!full||!width)return Promise.resolve(full);
+    const key=`${cardId}:${width}`;
+    if(rowArtVariantCache.has(key))return Promise.resolve(rowArtVariantCache.get(key));
+    if(rowArtVariantPending.has(key))return rowArtVariantPending.get(key);
+    const pending=(async()=>{
+      const source=new Image();
+      source.decoding='async';
+      source.src=full;
+      await waitForRasterSource(source);
+      if(!source.naturalWidth||width>=source.naturalWidth)return full;
+      const height=Math.max(1,Math.round(width*(source.naturalHeight/source.naturalWidth)));
+      const canvas=document.createElement('canvas');
+      canvas.width=width;
+      canvas.height=height;
+      const ctx=canvas.getContext('2d',{alpha:false});
+      if(!ctx)return full;
+      ctx.imageSmoothingEnabled=true;
+      ctx.imageSmoothingQuality=width<=96?'medium':'high';
+      ctx.drawImage(source,0,0,width,height);
+      const blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/webp',rowArtWebpQuality(width)));
+      if(!blob)return full;
+      const url=URL.createObjectURL(blob);
+      rowArtVariantCache.set(key,url);
+      return url;
+    })().catch(()=>full).finally(()=>rowArtVariantPending.delete(key));
+    rowArtVariantPending.set(key,pending);
+    return pending;
+  }
+  function rowArtTargetPixels(image,index) {
+    const cssWidth=Math.max(1,image?.clientWidth||CARD_ROW_ENVELOPE_W);
+    const cardScale=Math.max(.32,Number(rowCardTransform(index)?.scale)||1);
+    const dpr=Math.max(1,Math.min(3,Number(window.devicePixelRatio)||1));
+    return cssWidth*rowZoomValue()*cardScale*dpr*1.08;
+  }
+  function syncBoardArtResolution(wrap=$('shortListPanel')) {
+    const board=wrap?.querySelector('.short-list-row.card-row-board');
+    if(!board)return;
+    board.querySelectorAll(':scope > .card-row-item .or-card-art[data-relphi-adaptive-art="true"]').forEach(image=>{
+      const item=image.closest('.card-row-item[data-row-index]');
+      const index=Number(item?.dataset?.rowIndex);
+      const cardId=String(image.dataset.relphiArtCard||item?.querySelector('[data-row-card]')?.dataset?.rowCard||'');
+      if(!Number.isInteger(index)||!cardId)return;
+      const full=image.dataset.relphiFullSrc||rwsImagePath(cardById(cardId));
+      if(!full)return;
+      image.dataset.relphiFullSrc=full;
+      const tier=rowArtTierWidth(rowArtTargetPixels(image,index));
+      const requested=tier?String(tier):'full';
+      image.dataset.relphiRequestedTier=requested;
+      if(!tier){
+        if(image.dataset.relphiArtTier!=='full'||image.src!==new URL(full,document.baseURI).href){
+          image.src=full;
+          image.dataset.relphiArtTier='full';
+        }
+        return;
+      }
+      if(image.dataset.relphiArtTier===requested)return;
+      rowArtVariantUrl(cardId,tier).then(url=>{
+        if(!image.isConnected||image.dataset.relphiRequestedTier!==requested)return;
+        image.src=url||full;
+        image.dataset.relphiArtTier=(url&&url!==full)?requested:'full';
+      });
+    });
+  }
   const RWS_RESULT_TOP_CROP = {
     'ace_of_cups': 3.01, 'ace_of_pentacles': 3.12, 'ace_of_wands': 1.61, 'death': 2.66,
     'eight_of_cups': 4.07, 'eight_of_pentacles': 2.1, 'eight_of_swords': 1.86, 'eight_of_wands': 1.86,
@@ -760,7 +855,7 @@
     const resultTopCrop = 0;
     const resultCropStyle = resultTopCrop ? ` style="--rws-result-top-crop:${resultTopCrop.toFixed(2)}%;"` : '';
     return `<article class="or-card tarot-card-surface relphi-surface relphi-surface--card ${context === 'short-list' ? 'short-list-card' : ''} ${selected ? 'is-row-selected' : ''} ${detailSelected ? 'is-detail-selected' : ''}" data-id="${escapeHtml(card.card_id)}" data-tags="${escapeHtml(publicTags(card).join('|'))}"${dragAttrs}${resultCropStyle} tabindex="0">
-      <img class="or-card-art relphi-surface-face" src="${escapeHtml(rwsImagePath(card))}" alt="${escapeHtml(rwsImageAlt(card))}" loading="lazy">
+      <img class="or-card-art relphi-surface-face" src="${escapeHtml(rwsImagePath(card))}" alt="${escapeHtml(rwsImageAlt(card))}" loading="lazy"${context === 'short-list' ? ` data-relphi-adaptive-art="true" data-relphi-art-card="${escapeHtml(card.card_id)}" data-relphi-full-src="${escapeHtml(rwsImagePath(card))}" data-relphi-art-tier="full"` : ''}>
       ${inlinePositionSticker}${houseNumberSticker}
       ${glyphTags ? `<div class="or-card-badges relphi-sticker-row">${glyphTags}</div>` : ''}${badge}${placementBubble}
       <div class="or-card-layer relphi-info-layer" data-id="${escapeHtml(card.card_id)}"><div class="or-layer-head relphi-info-static"><span class="or-card-title-banner card-title-link" role="button" tabindex="0" data-card-id="${escapeHtml(card.card_id)}">${layerTitleHtml}</span>${add}</div><div class="or-card-essence${essenceClass}">${escapeHtml(essenceText)}</div><div class="or-layer-scroll relphi-info-scroll"><span>${escapeHtml(nbHyphens(layerText))}</span>${layerSources}</div></div>${placementLayer}
@@ -2799,6 +2894,7 @@
     qsa(':scope > .card-row-item[data-row-index]', board).forEach(item => {
       item.style.cssText = cardRowItemStyle(Number(item.dataset.rowIndex) || 0);
     });
+    syncBoardArtResolution(wrap);
   }
 
   function rowCardManualArray(length = (state.shortList || []).length) {
@@ -3272,6 +3368,7 @@
         placeCardInRow(cardId, slotIndex);
       });
     });
+    requestAnimationFrame(()=>syncBoardArtResolution(wrap));
     document.dispatchEvent(new CustomEvent('relphi:drawing-board-rendered', { detail:drawingBoardPrefabState() }));
   }
   function toggleShortList(id) {
