@@ -779,9 +779,10 @@ function syncConfigInputs(){
     input.checked=current.checked;input.indeterminate=current.indeterminate;input.disabled=current.available===0;
   });
 }
+function configurationSectionHost(){return document.getElementById('skyRelationshipConfigurationsMenuBody')||popoverBody()}
 function renderConfigurationSection(){
-  const body=popoverBody();if(!body)return;
-  body.querySelector('.sky-chart-configuration-section')?.remove();
+  const body=configurationSectionHost();if(!body)return;
+  document.querySelectorAll('.sky-chart-configuration-section').forEach(node=>node.remove());
   const section=document.createElement('section');section.className='sky-chart-configuration-section';section.setAttribute('aria-label','Configurations');
   const title=document.createElement('div');title.className='sky-chart-configuration-title';
   const heading=document.createElement('strong');heading.textContent='Configurations';
@@ -869,7 +870,7 @@ function ensureConfigurationObserver(){
   const body=popoverBody();if(!body||body===observedConfigurationBody)return;
   configurationObserver?.disconnect();observedConfigurationBody=body;
   configurationObserver=new MutationObserver(()=>{
-    if(body.querySelector('[data-aspect-list="matrix"]')&&!body.querySelector('.sky-chart-configuration-section'))schedule();
+    if(body.querySelector('[data-aspect-list="matrix"]')&&!document.querySelector('.sky-chart-configuration-section'))schedule();
   });
   configurationObserver.observe(body,{childList:true});
 }
