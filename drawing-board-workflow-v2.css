@@ -1226,3 +1226,55 @@ body.relphi-attune-open{overflow:hidden!important}
 #shortListPanel .relphi-template-clone-note{display:grid!important;gap:.18rem!important;margin:0 0 .55rem!important;padding:.58rem .65rem!important;border:1px solid #d8cec5!important;border-radius:8px!important;background:#fff8ee!important}
 #shortListPanel .relphi-template-clone-note strong{font-size:.73rem!important}
 #shortListPanel .relphi-template-clone-note span{color:#5f5751!important;font-size:.66rem!important;line-height:1.35!important}
+
+
+/* Reset Board is a command-bar action, immediately before Clear. */
+#shortListPanel .drawing-board-top-actions.relphi-board-command-actions>#relphiResetBoard{order:0!important}
+#shortListPanel .drawing-board-top-actions.relphi-board-command-actions>#relphiResetBoard{
+  border-color:rgba(184,23,18,.48)!important;
+  background:#fff!important;
+  color:#a61712!important;
+}
+
+/* Reversals and repeats are secondary draw controls. */
+#shortListPanel .relphi-draw-advanced,
+#shortListPanel .relphi-question-advanced{
+  margin:0!important;
+  padding:0!important;
+  border:1px solid #ded4cb!important;
+  border-radius:8px!important;
+  background:#fcf9f5!important;
+}
+#shortListPanel .relphi-draw-advanced>summary,
+#shortListPanel .relphi-question-advanced>summary{
+  cursor:pointer!important;
+  padding:.48rem .58rem!important;
+  color:#453d38!important;
+  font-size:.69rem!important;
+  font-weight:900!important;
+  list-style-position:inside!important;
+}
+#shortListPanel .relphi-draw-advanced>.relphi-free-toggles,
+#shortListPanel .relphi-question-advanced>div{
+  display:grid!important;
+  grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  gap:.4rem!important;
+  padding:0 .55rem .55rem!important;
+}
+#shortListPanel .relphi-question-advanced>div>label{
+  display:flex!important;
+  align-items:center!important;
+  gap:.35rem!important;
+  min-height:2rem!important;
+  padding:.36rem .48rem!important;
+  border:1px solid #d8cec5!important;
+  border-radius:7px!important;
+  background:#fff!important;
+  font-size:.67rem!important;
+  font-weight:800!important;
+}
+#shortListPanel .relphi-bespoke-question-main{display:grid!important;gap:.4rem!important}
+@media(max-width:700px){
+  #shortListPanel .relphi-draw-advanced>.relphi-free-toggles,
+  #shortListPanel .relphi-question-advanced>div{grid-template-columns:1fr!important}
+}
