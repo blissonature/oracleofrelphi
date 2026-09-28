@@ -1586,11 +1586,7 @@
     const selectedCount=SURFACE_DRAW_KEYS.filter(kind=>!!selected[kind]).length;
     const allSelected=selectedCount===SURFACE_DRAW_KEYS.length;
     const cardSource=session.sacredCardSource==='physical'?'physical':session.sacredCardSource==='digital'?'digital':'';
-    return '<fieldset class="relphi-sacred-card-source" data-sacred-card-source-group><legend>Card source</legend>'+
-      '<label class="relphi-sacred-card-source-choice"><input type="radio" name="relphiSacredCardSource" data-sacred-card-source value="digital" '+(cardSource!=='physical'?'checked ':'')+(disabled?'disabled':'')+'><span><strong>Digital cards</strong><small>Default · Relphi selects each card from its assigned sub-pack.</small></span></label>'+
-      '<label class="relphi-sacred-card-source-choice"><input type="radio" name="relphiSacredCardSource" data-sacred-card-source value="physical" '+(cardSource==='physical'?'checked ':'')+(disabled?'disabled':'')+'><span><strong>Physical deck</strong><small>Choose this only when you will draw the cards yourself.</small></span></label>'+
-      '</fieldset>'+
-      '<div class="relphi-surface-question-choices" role="group" aria-label="Question types">'+
+    return '<div class="relphi-surface-question-choices" role="group" aria-label="Question types">'+
       '<label class="relphi-surface-select-all"><input type="checkbox" data-surface-select-all '+(allSelected?'checked ':'')+(disabled?'disabled':'')+'><span><strong>Select all '+SURFACE_DRAW_KEYS.length+'</strong><small>One probe from every See What Surfaces sub-pack</small></span></label>'+
       SURFACE_DRAW_KEYS.map(kind=>'<label class="relphi-surface-question-choice"><input type="checkbox" data-surface-choice="'+kind+'" '+(selected[kind]?'checked ':'')+(disabled?'disabled':'')+'><span><strong>'+escapeHtml(SURFACE_QUESTIONS[kind])+'</strong><small>'+escapeHtml(SURFACE_PACK_LABELS[kind])+'</small></span></label>').join('')+
       '</div><p class="relphi-surface-choice-note">Choose each kind of question you agree to ask. The initial set has one dedicated probe for each of the '+SURFACE_DRAW_KEYS.length+' See What Surfaces sub-packs.</p>';
@@ -1926,10 +1922,12 @@
     drawer.setAttribute('role','region');
     drawer.setAttribute('aria-label','Crafted Draw settings');
     draft.stickers=true;
+    if(!['digital','physical'].includes(session.sacredCardSource))session.sacredCardSource='digital';
+    const cardSourceSettings='<fieldset class="relphi-sacred-card-source relphi-sacred-card-source--promoted"><legend>Method</legend><label class="relphi-sacred-card-source-choice"><input type="radio" name="relphiSacredCardSource" data-sacred-card-source value="digital" '+(session.sacredCardSource!=='physical'?'checked ':'')+'><span><strong>Digital</strong><small>Relphi draws the cards.</small></span></label><label class="relphi-sacred-card-source-choice"><input type="radio" name="relphiSacredCardSource" data-sacred-card-source value="physical" '+(session.sacredCardSource==='physical'?'checked ':'')+'><span><strong>Physical</strong><small>You draw and record them.</small></span></label></fieldset>';
     const advancedDrawSettings='<div class="relphi-free-toggles relphi-draw-promoted"><label><input id="relphiDraftReversals" type="checkbox" '+(draft.reversals?'checked':'')+'> Reversals</label><label><input id="relphiDraftRepeats" type="checkbox" '+(draft.repeats?'checked':'')+'> Repeats</label></div>';
     const drawSettingsMarkup=(session.path==='surface'||session.path==='astro')
-      ? '<section class="relphi-referent-settings" aria-label="Draw settings"><strong class="relphi-referent-settings-title">Draw settings</strong>'+advancedDrawSettings+'</section>'
-      : '<section class="relphi-referent-settings" aria-label="Draw settings"><strong class="relphi-referent-settings-title">Draw settings</strong><div class="relphi-draw-options"><label>Pack<select id="relphiDraftPack">'+packOptions(draft.pack)+'</select></label>'+keywordDraftMarkup(draft)+'</div>'+advancedDrawSettings+'</section>';
+      ? '<section class="relphi-referent-settings" aria-label="Draw settings"><strong class="relphi-referent-settings-title">Draw settings</strong>'+cardSourceSettings+advancedDrawSettings+'</section>'
+      : '<section class="relphi-referent-settings" aria-label="Draw settings"><strong class="relphi-referent-settings-title">Draw settings</strong><div class="relphi-draw-options"><label>Pack<select id="relphiDraftPack">'+packOptions(draft.pack)+'</select></label>'+keywordDraftMarkup(draft)+'</div>'+cardSourceSettings+advancedDrawSettings+'</section>';
     drawer.innerHTML = '<div class="relphi-options-heading"><div><span class="eyebrow">Drawing Board</span><h3>Crafted Draw</h3></div></div>'+
       (hasCards ? '<p class="relphi-options-note relphi-options-note-visible">Reset Board before changing referents. The reading structure is locked once cards are drawn.</p>' : '')+
       '<div class="relphi-options-body">'+
@@ -3485,6 +3483,7 @@
     stampCraftedPath(craftedPath,root);
     markSettingsConfirmed();
     applyDrawSettings(draft);
+    stampSacredCardSource(optionsSession?.sacredCardSource==='physical'?'physical':'digital',root);
     optionsSession=null;
     root.querySelector('.relphi-reading-options-drawer')?.remove();
     setBoardMode(root,'crafted');
