@@ -93,7 +93,7 @@ function ensureProxy(actions,key,label,configuration){
     button.addEventListener('click',()=>openAspectSurface(button,configuration));
     actions.insertBefore(button,actions.firstChild);
   }
-  button.textContent=label;
+  if(button.textContent!==label)button.textContent=label;
   button.setAttribute('aria-label',label+' filters');
   return button;
 }
