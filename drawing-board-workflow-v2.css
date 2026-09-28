@@ -1958,3 +1958,9 @@ body.relphi-attune-open{overflow:hidden!important}
     overflow-wrap:anywhere!important;
   }
 }
+
+
+/* Building Blocks now has six controls: keep the desktop grid as three complete two-column rows. */
+#shortListPanel .relphi-building-grid label:last-child{
+  grid-column:auto!important;
+}
