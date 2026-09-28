@@ -15,6 +15,16 @@ window.RELPHI_TAROT_CARDS = [
       "Ace",
       "Root power"
     ],
+    "direct_themes": [
+          "beginning",
+          "start",
+          "inspiration",
+          "initiative",
+          "desire",
+          "energy",
+          "opportunity",
+          "creation"
+    ],
     "astrology": {
       "logic": "Elemental root; not assigned to a decan.",
       "planet": "",
@@ -59,6 +69,16 @@ window.RELPHI_TAROT_CARDS = [
       "Passive",
       "Ace",
       "Root power"
+    ],
+    "direct_themes": [
+          "love",
+          "beginning",
+          "start",
+          "emotion",
+          "connection",
+          "compassion",
+          "joy",
+          "relationship"
     ],
     "astrology": {
       "logic": "Elemental root; not assigned to a decan.",
@@ -105,6 +125,16 @@ window.RELPHI_TAROT_CARDS = [
       "Ace",
       "Root power"
     ],
+    "direct_themes": [
+          "truth",
+          "clarity",
+          "idea",
+          "decision",
+          "beginning",
+          "start",
+          "communication",
+          "breakthrough"
+    ],
     "astrology": {
       "logic": "Elemental root; not assigned to a decan.",
       "planet": "",
@@ -149,6 +179,17 @@ window.RELPHI_TAROT_CARDS = [
       "Passive",
       "Ace",
       "Root power"
+    ],
+    "direct_themes": [
+          "money",
+          "job",
+          "work",
+          "opportunity",
+          "beginning",
+          "start",
+          "health",
+          "home",
+          "resources"
     ],
     "astrology": {
       "logic": "Elemental root; not assigned to a decan.",
@@ -196,6 +237,15 @@ window.RELPHI_TAROT_CARDS = [
       "Mars",
       "Mars",
       "Dominion"
+    ],
+    "direct_themes": [
+          "planning",
+          "choice",
+          "direction",
+          "ambition",
+          "power",
+          "decision",
+          "future"
     ],
     "astrology": {
       "logic": "Golden Dawn decan attribution for numbered minor cards.",
@@ -245,6 +295,14 @@ window.RELPHI_TAROT_CARDS = [
       "Mars",
       "Virtue"
     ],
+    "direct_themes": [
+          "expansion",
+          "progress",
+          "foresight",
+          "travel",
+          "enterprise",
+          "waiting"
+    ],
     "astrology": {
       "logic": "Golden Dawn decan attribution for numbered minor cards.",
       "planet": "Sun",
@@ -292,6 +350,15 @@ window.RELPHI_TAROT_CARDS = [
       "Venus",
       "Mars",
       "Completion"
+    ],
+    "direct_themes": [
+          "celebration",
+          "home",
+          "community",
+          "stability",
+          "completion",
+          "wedding",
+          "reunion"
     ],
     "astrology": {
       "logic": "Golden Dawn decan attribution for numbered minor cards.",
@@ -341,6 +408,14 @@ window.RELPHI_TAROT_CARDS = [
       "Sun",
       "Strife"
     ],
+    "direct_themes": [
+          "conflict",
+          "competition",
+          "struggle",
+          "disagreement",
+          "rivalry",
+          "tension"
+    ],
     "astrology": {
       "logic": "Golden Dawn decan attribution for numbered minor cards.",
       "planet": "Saturn",
@@ -388,6 +463,14 @@ window.RELPHI_TAROT_CARDS = [
       "Jupiter",
       "Sun",
       "Victory"
+    ],
+    "direct_themes": [
+          "success",
+          "victory",
+          "recognition",
+          "achievement",
+          "confidence",
+          "praise"
     ],
     "astrology": {
       "logic": "Golden Dawn decan attribution for numbered minor cards.",
@@ -437,6 +520,14 @@ window.RELPHI_TAROT_CARDS = [
       "Sun",
       "Valour"
     ],
+    "direct_themes": [
+          "defense",
+          "resistance",
+          "courage",
+          "challenge",
+          "boundaries",
+          "persistence"
+    ],
     "astrology": {
       "logic": "Golden Dawn decan attribution for numbered minor cards.",
       "planet": "Mars",
@@ -484,6 +575,15 @@ window.RELPHI_TAROT_CARDS = [
       "Mercury",
       "Jupiter",
       "Swiftness"
+    ],
+    "direct_themes": [
+          "speed",
+          "movement",
+          "travel",
+          "messages",
+          "communication",
+          "progress",
+          "change"
     ],
     "astrology": {
       "logic": "Golden Dawn decan attribution for numbered minor cards.",
@@ -533,6 +633,14 @@ window.RELPHI_TAROT_CARDS = [
       "Jupiter",
       "Strength"
     ],
+    "direct_themes": [
+          "resilience",
+          "persistence",
+          "defense",
+          "exhaustion",
+          "boundaries",
+          "recovery"
+    ],
     "astrology": {
       "logic": "Golden Dawn decan attribution for numbered minor cards.",
       "planet": "Moon",
@@ -580,6 +688,18 @@ window.RELPHI_TAROT_CARDS = [
       "Saturn",
       "Jupiter",
       "Oppression"
+    ],
+    "direct_themes": [
+          "burden",
+          "responsibility",
+          "overwhelm",
+          "work",
+          "pressure",
+          "obligation",
+          "burnout",
+          "culmination",
+          "ending",
+          "change"
     ],
     "astrology": {
       "logic": "Golden Dawn decan attribution for numbered minor cards.",
@@ -629,6 +749,15 @@ window.RELPHI_TAROT_CARDS = [
       "Moon",
       "Love"
     ],
+    "direct_themes": [
+          "love",
+          "relationship",
+          "partnership",
+          "attraction",
+          "union",
+          "connection",
+          "agreement"
+    ],
     "astrology": {
       "logic": "Golden Dawn decan attribution for numbered minor cards.",
       "planet": "Venus",
@@ -676,6 +805,15 @@ window.RELPHI_TAROT_CARDS = [
       "Mercury",
       "Moon",
       "Abundance"
+    ],
+    "direct_themes": [
+          "friendship",
+          "celebration",
+          "community",
+          "reunion",
+          "support",
+          "joy",
+          "social life"
     ],
     "astrology": {
       "logic": "Golden Dawn decan attribution for numbered minor cards.",
@@ -725,6 +863,14 @@ window.RELPHI_TAROT_CARDS = [
       "Moon",
       "Luxury"
     ],
+    "direct_themes": [
+          "boredom",
+          "disinterest",
+          "dissatisfaction",
+          "withdrawal",
+          "stagnation",
+          "missed opportunity"
+    ],
     "astrology": {
       "logic": "Golden Dawn decan attribution for numbered minor cards.",
       "planet": "Moon",
@@ -772,6 +918,14 @@ window.RELPHI_TAROT_CARDS = [
       "Mars",
       "Mars",
       "Disappointment"
+    ],
+    "direct_themes": [
+          "grief",
+          "loss",
+          "regret",
+          "disappointment",
+          "sadness",
+          "mourning"
     ],
     "astrology": {
       "logic": "Golden Dawn decan attribution for numbered minor cards.",
@@ -821,6 +975,15 @@ window.RELPHI_TAROT_CARDS = [
       "Mars",
       "Pleasure"
     ],
+    "direct_themes": [
+          "past",
+          "memory",
+          "childhood",
+          "nostalgia",
+          "reunion",
+          "kindness",
+          "family"
+    ],
     "astrology": {
       "logic": "Golden Dawn decan attribution for numbered minor cards.",
       "planet": "Sun",
@@ -868,6 +1031,14 @@ window.RELPHI_TAROT_CARDS = [
       "Venus",
       "Mars",
       "Debauch"
+    ],
+    "direct_themes": [
+          "choices",
+          "fantasy",
+          "confusion",
+          "temptation",
+          "options",
+          "illusion"
     ],
     "astrology": {
       "logic": "Golden Dawn decan attribution for numbered minor cards.",
@@ -917,6 +1088,15 @@ window.RELPHI_TAROT_CARDS = [
       "Jupiter",
       "Indolence"
     ],
+    "direct_themes": [
+          "departure",
+          "leaving",
+          "withdrawal",
+          "search",
+          "disappointment",
+          "change",
+          "journey"
+    ],
     "astrology": {
       "logic": "Golden Dawn decan attribution for numbered minor cards.",
       "planet": "Saturn",
@@ -965,6 +1145,14 @@ window.RELPHI_TAROT_CARDS = [
       "Jupiter",
       "Happiness"
     ],
+    "direct_themes": [
+          "fulfillment",
+          "satisfaction",
+          "pleasure",
+          "wish",
+          "happiness",
+          "contentment"
+    ],
     "astrology": {
       "logic": "Golden Dawn decan attribution for numbered minor cards.",
       "planet": "Jupiter",
@@ -1012,6 +1200,17 @@ window.RELPHI_TAROT_CARDS = [
       "Mars",
       "Jupiter",
       "Satiety"
+    ],
+    "direct_themes": [
+          "love",
+          "relationship",
+          "marriage",
+          "family",
+          "belonging",
+          "fulfillment",
+          "happiness",
+          "commitment",
+          "culmination"
     ],
     "astrology": {
       "logic": "Golden Dawn decan attribution for numbered minor cards.",
@@ -1066,6 +1265,14 @@ window.RELPHI_TAROT_CARDS = [
       "locked posture",
       "mechanical advantage",
       "one side pinned by the other"
+    ],
+    "direct_themes": [
+          "decision",
+          "indecision",
+          "stalemate",
+          "choice",
+          "avoidance",
+          "conflict"
     ],
     "astrology": {
       "logic": "Golden Dawn decan attribution for numbered minor cards.",
@@ -1128,6 +1335,20 @@ window.RELPHI_TAROT_CARDS = [
       "Venus",
       "Sorrow"
     ],
+    "direct_themes": [
+          "heartbreak",
+          "hurt",
+          "pain",
+          "sorrow",
+          "grief",
+          "betrayal",
+          "rejection",
+          "separation",
+          "breakup",
+          "loss",
+          "conflict",
+          "disappointment"
+    ],
     "astrology": {
       "logic": "Golden Dawn decan attribution for numbered minor cards.",
       "planet": "Saturn",
@@ -1175,6 +1396,14 @@ window.RELPHI_TAROT_CARDS = [
       "Jupiter",
       "Venus",
       "Truce"
+    ],
+    "direct_themes": [
+          "rest",
+          "recovery",
+          "pause",
+          "retreat",
+          "healing",
+          "inactivity"
     ],
     "astrology": {
       "logic": "Golden Dawn decan attribution for numbered minor cards.",
@@ -1224,6 +1453,14 @@ window.RELPHI_TAROT_CARDS = [
       "Saturn",
       "Defeat"
     ],
+    "direct_themes": [
+          "conflict",
+          "defeat",
+          "hostility",
+          "betrayal",
+          "self-interest",
+          "argument"
+    ],
     "astrology": {
       "logic": "Golden Dawn decan attribution for numbered minor cards.",
       "planet": "Venus",
@@ -1271,6 +1508,15 @@ window.RELPHI_TAROT_CARDS = [
       "Mercury",
       "Saturn",
       "Science"
+    ],
+    "direct_themes": [
+          "transition",
+          "departure",
+          "travel",
+          "moving",
+          "recovery",
+          "change",
+          "leaving"
     ],
     "astrology": {
       "logic": "Golden Dawn decan attribution for numbered minor cards.",
@@ -1320,6 +1566,15 @@ window.RELPHI_TAROT_CARDS = [
       "Saturn",
       "Futility"
     ],
+    "direct_themes": [
+          "secrecy",
+          "deception",
+          "theft",
+          "avoidance",
+          "strategy",
+          "betrayal",
+          "lies"
+    ],
     "astrology": {
       "logic": "Golden Dawn decan attribution for numbered minor cards.",
       "planet": "Moon",
@@ -1367,6 +1622,14 @@ window.RELPHI_TAROT_CARDS = [
       "Jupiter",
       "Mercury",
       "Interference"
+    ],
+    "direct_themes": [
+          "restriction",
+          "entrapment",
+          "fear",
+          "powerlessness",
+          "limitation",
+          "isolation"
     ],
     "astrology": {
       "logic": "Golden Dawn decan attribution for numbered minor cards.",
@@ -1416,6 +1679,15 @@ window.RELPHI_TAROT_CARDS = [
       "Mercury",
       "Cruelty"
     ],
+    "direct_themes": [
+          "anxiety",
+          "fear",
+          "worry",
+          "guilt",
+          "nightmare",
+          "distress",
+          "regret"
+    ],
     "astrology": {
       "logic": "Golden Dawn decan attribution for numbered minor cards.",
       "planet": "Mars",
@@ -1463,6 +1735,15 @@ window.RELPHI_TAROT_CARDS = [
       "Sun",
       "Mercury",
       "Ruin"
+    ],
+    "direct_themes": [
+          "ending",
+          "loss",
+          "betrayal",
+          "collapse",
+          "pain",
+          "failure",
+          "culmination"
     ],
     "astrology": {
       "logic": "Golden Dawn decan attribution for numbered minor cards.",
@@ -1512,6 +1793,15 @@ window.RELPHI_TAROT_CARDS = [
       "Saturn",
       "Change"
     ],
+    "direct_themes": [
+          "change",
+          "balance",
+          "money",
+          "work",
+          "adaptation",
+          "juggling",
+          "priorities"
+    ],
     "astrology": {
       "logic": "Golden Dawn decan attribution for numbered minor cards.",
       "planet": "Jupiter",
@@ -1559,6 +1849,15 @@ window.RELPHI_TAROT_CARDS = [
       "Mars",
       "Saturn",
       "Works"
+    ],
+    "direct_themes": [
+          "work",
+          "job",
+          "teamwork",
+          "skill",
+          "collaboration",
+          "learning",
+          "craft"
     ],
     "astrology": {
       "logic": "Golden Dawn decan attribution for numbered minor cards.",
@@ -1608,6 +1907,15 @@ window.RELPHI_TAROT_CARDS = [
       "Saturn",
       "Power"
     ],
+    "direct_themes": [
+          "money",
+          "security",
+          "control",
+          "possession",
+          "saving",
+          "stability",
+          "attachment"
+    ],
     "astrology": {
       "logic": "Golden Dawn decan attribution for numbered minor cards.",
       "planet": "Sun",
@@ -1655,6 +1963,16 @@ window.RELPHI_TAROT_CARDS = [
       "Mercury",
       "Venus",
       "Worry"
+    ],
+    "direct_themes": [
+          "poverty",
+          "money",
+          "hardship",
+          "illness",
+          "isolation",
+          "job loss",
+          "insecurity",
+          "need"
     ],
     "astrology": {
       "logic": "Golden Dawn decan attribution for numbered minor cards.",
@@ -1704,6 +2022,16 @@ window.RELPHI_TAROT_CARDS = [
       "Venus",
       "Success"
     ],
+    "direct_themes": [
+          "money",
+          "giving",
+          "receiving",
+          "charity",
+          "support",
+          "debt",
+          "resources",
+          "fairness"
+    ],
     "astrology": {
       "logic": "Golden Dawn decan attribution for numbered minor cards.",
       "planet": "Moon",
@@ -1751,6 +2079,15 @@ window.RELPHI_TAROT_CARDS = [
       "Saturn",
       "Venus",
       "Failure"
+    ],
+    "direct_themes": [
+          "waiting",
+          "investment",
+          "work",
+          "patience",
+          "assessment",
+          "growth",
+          "results"
     ],
     "astrology": {
       "logic": "Golden Dawn decan attribution for numbered minor cards.",
@@ -1800,6 +2137,15 @@ window.RELPHI_TAROT_CARDS = [
       "Mercury",
       "Prudence"
     ],
+    "direct_themes": [
+          "work",
+          "job",
+          "skill",
+          "learning",
+          "practice",
+          "craft",
+          "employment"
+    ],
     "astrology": {
       "logic": "Golden Dawn decan attribution for numbered minor cards.",
       "planet": "Sun",
@@ -1848,6 +2194,14 @@ window.RELPHI_TAROT_CARDS = [
       "Mercury",
       "Gain"
     ],
+    "direct_themes": [
+          "independence",
+          "money",
+          "success",
+          "security",
+          "self-sufficiency",
+          "comfort"
+    ],
     "astrology": {
       "logic": "Golden Dawn decan attribution for numbered minor cards.",
       "planet": "Venus",
@@ -1895,6 +2249,16 @@ window.RELPHI_TAROT_CARDS = [
       "Mercury",
       "Mercury",
       "Wealth"
+    ],
+    "direct_themes": [
+          "family",
+          "money",
+          "wealth",
+          "inheritance",
+          "home",
+          "legacy",
+          "security",
+          "culmination"
     ],
     "astrology": {
       "logic": "Golden Dawn decan attribution for numbered minor cards.",
@@ -1946,6 +2310,15 @@ window.RELPHI_TAROT_CARDS = [
       "Scorpio",
       "Sagittarius"
     ],
+    "direct_themes": [
+          "travel",
+          "movement",
+          "adventure",
+          "desire",
+          "action",
+          "risk",
+          "departure"
+    ],
     "astrology": {
       "logic": "Court-card zodiac range crossing two signs.",
       "planet": "",
@@ -1995,6 +2368,14 @@ window.RELPHI_TAROT_CARDS = [
       "Pisces",
       "Aries"
     ],
+    "direct_themes": [
+          "confidence",
+          "independence",
+          "attraction",
+          "creativity",
+          "leadership",
+          "passion"
+    ],
     "astrology": {
       "logic": "Court-card zodiac range crossing two signs.",
       "planet": "",
@@ -2043,6 +2424,14 @@ window.RELPHI_TAROT_CARDS = [
       "Air of Fire",
       "Cancer",
       "Leo"
+    ],
+    "direct_themes": [
+          "ambition",
+          "action",
+          "leadership",
+          "energy",
+          "adventure",
+          "impulse"
     ],
     "astrology": {
       "logic": "Court-card zodiac range crossing two signs.",
@@ -2094,6 +2483,14 @@ window.RELPHI_TAROT_CARDS = [
       "Leo",
       "Virgo"
     ],
+    "direct_themes": [
+          "news",
+          "message",
+          "curiosity",
+          "beginning",
+          "enthusiasm",
+          "discovery"
+    ],
     "astrology": {
       "logic": "Princess/Page quadrant logic; not an ordinary decan card.",
       "planet": "",
@@ -2144,6 +2541,15 @@ window.RELPHI_TAROT_CARDS = [
       "Aquarius",
       "Pisces"
     ],
+    "direct_themes": [
+          "romance",
+          "love",
+          "proposal",
+          "invitation",
+          "pursuit",
+          "message",
+          "travel"
+    ],
     "astrology": {
       "logic": "Court-card zodiac range crossing two signs.",
       "planet": "",
@@ -2193,6 +2599,14 @@ window.RELPHI_TAROT_CARDS = [
       "Gemini",
       "Cancer"
     ],
+    "direct_themes": [
+          "care",
+          "compassion",
+          "emotion",
+          "intuition",
+          "support",
+          "love"
+    ],
     "astrology": {
       "logic": "Court-card zodiac range crossing two signs.",
       "planet": "",
@@ -2241,6 +2655,14 @@ window.RELPHI_TAROT_CARDS = [
       "Air of Water",
       "Libra",
       "Scorpio"
+    ],
+    "direct_themes": [
+          "romance",
+          "emotion",
+          "desire",
+          "imagination",
+          "relationship",
+          "attraction"
     ],
     "astrology": {
       "logic": "Court-card zodiac range crossing two signs.",
@@ -2292,6 +2714,14 @@ window.RELPHI_TAROT_CARDS = [
       "Scorpio",
       "Sagittarius"
     ],
+    "direct_themes": [
+          "message",
+          "love",
+          "emotion",
+          "surprise",
+          "beginning",
+          "sensitivity"
+    ],
     "astrology": {
       "logic": "Princess/Page quadrant logic; not an ordinary decan card.",
       "planet": "",
@@ -2342,6 +2772,14 @@ window.RELPHI_TAROT_CARDS = [
       "Taurus",
       "Gemini"
     ],
+    "direct_themes": [
+          "action",
+          "conflict",
+          "speed",
+          "pursuit",
+          "argument",
+          "ambition"
+    ],
     "astrology": {
       "logic": "Court-card zodiac range crossing two signs.",
       "planet": "",
@@ -2391,6 +2829,14 @@ window.RELPHI_TAROT_CARDS = [
       "Virgo",
       "Libra"
     ],
+    "direct_themes": [
+          "truth",
+          "independence",
+          "boundaries",
+          "judgment",
+          "clarity",
+          "separation"
+    ],
     "astrology": {
       "logic": "Court-card zodiac range crossing two signs.",
       "planet": "",
@@ -2439,6 +2885,14 @@ window.RELPHI_TAROT_CARDS = [
       "Air of Air",
       "Capricorn",
       "Aquarius"
+    ],
+    "direct_themes": [
+          "ideas",
+          "strategy",
+          "conflict",
+          "intellect",
+          "communication",
+          "restlessness"
     ],
     "astrology": {
       "logic": "Court-card zodiac range crossing two signs.",
@@ -2490,6 +2944,14 @@ window.RELPHI_TAROT_CARDS = [
       "Aquarius",
       "Pisces"
     ],
+    "direct_themes": [
+          "news",
+          "message",
+          "curiosity",
+          "vigilance",
+          "truth",
+          "communication"
+    ],
     "astrology": {
       "logic": "Princess/Page quadrant logic; not an ordinary decan card.",
       "planet": "",
@@ -2540,6 +3002,14 @@ window.RELPHI_TAROT_CARDS = [
       "Leo",
       "Virgo"
     ],
+    "direct_themes": [
+          "work",
+          "job",
+          "responsibility",
+          "routine",
+          "persistence",
+          "stability"
+    ],
     "astrology": {
       "logic": "Court-card zodiac range crossing two signs.",
       "planet": "",
@@ -2589,6 +3059,15 @@ window.RELPHI_TAROT_CARDS = [
       "Sagittarius",
       "Capricorn"
     ],
+    "direct_themes": [
+          "home",
+          "care",
+          "money",
+          "work",
+          "security",
+          "nurture",
+          "practicality"
+    ],
     "astrology": {
       "logic": "Court-card zodiac range crossing two signs.",
       "planet": "",
@@ -2637,6 +3116,14 @@ window.RELPHI_TAROT_CARDS = [
       "Air of Earth",
       "Aries",
       "Taurus"
+    ],
+    "direct_themes": [
+          "work",
+          "money",
+          "growth",
+          "planning",
+          "responsibility",
+          "ambition"
     ],
     "astrology": {
       "logic": "Court-card zodiac range crossing two signs.",
@@ -2688,6 +3175,15 @@ window.RELPHI_TAROT_CARDS = [
       "Taurus",
       "Gemini"
     ],
+    "direct_themes": [
+          "study",
+          "job",
+          "money",
+          "opportunity",
+          "beginning",
+          "learning",
+          "health"
+    ],
     "astrology": {
       "logic": "Princess/Page quadrant logic; not an ordinary decan card.",
       "planet": "",
@@ -2738,6 +3234,16 @@ window.RELPHI_TAROT_CARDS = [
       "Active",
       "Relphi",
       "Universal Human Needs"
+    ],
+    "direct_themes": [
+          "beginning",
+          "start",
+          "freedom",
+          "risk",
+          "journey",
+          "adventure",
+          "unknown",
+          "opportunity"
     ],
     "astrology": {
       "logic": "Major arcana attribution.",
@@ -2815,6 +3321,15 @@ window.RELPHI_TAROT_CARDS = [
       "Relphi",
       "Universal Human Needs"
     ],
+    "direct_themes": [
+          "skill",
+          "action",
+          "communication",
+          "will",
+          "creation",
+          "initiative",
+          "ability"
+    ],
     "astrology": {
       "logic": "Major arcana attribution.",
       "planet": "Mercury",
@@ -2889,6 +3404,14 @@ window.RELPHI_TAROT_CARDS = [
       "Relphi",
       "Universal Human Needs"
     ],
+    "direct_themes": [
+          "intuition",
+          "secrecy",
+          "mystery",
+          "silence",
+          "hidden knowledge",
+          "waiting"
+    ],
     "astrology": {
       "logic": "Major arcana attribution.",
       "planet": "Moon",
@@ -2961,6 +3484,16 @@ window.RELPHI_TAROT_CARDS = [
       "Passive",
       "Relphi",
       "Universal Human Needs"
+    ],
+    "direct_themes": [
+          "mother",
+          "pregnancy",
+          "fertility",
+          "care",
+          "abundance",
+          "creation",
+          "pleasure",
+          "growth"
     ],
     "astrology": {
       "logic": "Major arcana attribution.",
@@ -3042,6 +3575,15 @@ window.RELPHI_TAROT_CARDS = [
       "Yang arc (Aries through Virgo)",
       "House 1",
       "Nisan"
+    ],
+    "direct_themes": [
+          "father",
+          "authority",
+          "structure",
+          "control",
+          "leadership",
+          "stability",
+          "rules"
     ],
     "astrology": {
       "logic": "Major arcana attribution.",
@@ -3184,6 +3726,15 @@ window.RELPHI_TAROT_CARDS = [
       "House 2",
       "Iyar"
     ],
+    "direct_themes": [
+          "tradition",
+          "marriage",
+          "commitment",
+          "institution",
+          "religion",
+          "teacher",
+          "education"
+    ],
     "astrology": {
       "logic": "Major arcana attribution.",
       "planet": "",
@@ -3310,6 +3861,15 @@ window.RELPHI_TAROT_CARDS = [
       "Yang arc (Aries through Virgo)",
       "House 3",
       "Sivan"
+    ],
+    "direct_themes": [
+          "love",
+          "relationship",
+          "choice",
+          "attraction",
+          "union",
+          "values",
+          "partnership"
     ],
     "astrology": {
       "logic": "Major arcana attribution.",
@@ -3445,6 +4005,15 @@ window.RELPHI_TAROT_CARDS = [
       "Yang arc (Aries through Virgo)",
       "House 4",
       "Tammuz"
+    ],
+    "direct_themes": [
+          "travel",
+          "movement",
+          "control",
+          "determination",
+          "victory",
+          "direction",
+          "journey"
     ],
     "astrology": {
       "logic": "Major arcana attribution.",
@@ -3582,6 +4151,14 @@ window.RELPHI_TAROT_CARDS = [
       "House 5",
       "Av"
     ],
+    "direct_themes": [
+          "courage",
+          "strength",
+          "patience",
+          "self-control",
+          "compassion",
+          "resilience"
+    ],
     "astrology": {
       "logic": "Major arcana attribution.",
       "planet": "",
@@ -3710,6 +4287,15 @@ window.RELPHI_TAROT_CARDS = [
       "House 6",
       "Elul"
     ],
+    "direct_themes": [
+          "solitude",
+          "isolation",
+          "search",
+          "reflection",
+          "withdrawal",
+          "guidance",
+          "wisdom"
+    ],
     "astrology": {
       "logic": "Major arcana attribution.",
       "planet": "",
@@ -3832,6 +4418,14 @@ window.RELPHI_TAROT_CARDS = [
       "Relphi",
       "Universal Human Needs"
     ],
+    "direct_themes": [
+          "change",
+          "cycle",
+          "luck",
+          "turning point",
+          "fate",
+          "opportunity"
+    ],
     "astrology": {
       "logic": "Major arcana attribution.",
       "planet": "Jupiter",
@@ -3910,6 +4504,22 @@ window.RELPHI_TAROT_CARDS = [
       "Yin arc (Libra through Pisces)",
       "House 7",
       "Tishrei"
+    ],
+    "direct_themes": [
+          "justice",
+          "fairness",
+          "balance",
+          "equality",
+          "accountability",
+          "consequences",
+          "judgment",
+          "decision",
+          "law",
+          "legal matters",
+          "dispute",
+          "resolution",
+          "truth",
+          "responsibility"
     ],
     "astrology": {
       "logic": "Major arcana attribution.",
@@ -4034,6 +4644,15 @@ window.RELPHI_TAROT_CARDS = [
       "Relphi",
       "Universal Human Needs"
     ],
+    "direct_themes": [
+          "pause",
+          "waiting",
+          "suspension",
+          "sacrifice",
+          "surrender",
+          "perspective",
+          "delay"
+    ],
     "astrology": {
       "logic": "Major arcana attribution.",
       "planet": "",
@@ -4113,6 +4732,16 @@ window.RELPHI_TAROT_CARDS = [
       "Yin arc (Libra through Pisces)",
       "House 8",
       "Marcheshvan / Cheshvan"
+    ],
+    "direct_themes": [
+          "death",
+          "ending",
+          "change",
+          "transition",
+          "loss",
+          "release",
+          "transformation",
+          "renewal"
     ],
     "astrology": {
       "logic": "Major arcana attribution.",
@@ -4263,6 +4892,15 @@ window.RELPHI_TAROT_CARDS = [
       "House 9",
       "Kislev"
     ],
+    "direct_themes": [
+          "balance",
+          "healing",
+          "moderation",
+          "integration",
+          "patience",
+          "recovery",
+          "harmony"
+    ],
     "astrology": {
       "logic": "Major arcana attribution.",
       "planet": "",
@@ -4391,6 +5029,16 @@ window.RELPHI_TAROT_CARDS = [
       "House 10",
       "Tevet"
     ],
+    "direct_themes": [
+          "addiction",
+          "bondage",
+          "temptation",
+          "control",
+          "obsession",
+          "dependency",
+          "sex",
+          "materialism"
+    ],
     "astrology": {
       "logic": "Major arcana attribution.",
       "planet": "",
@@ -4514,6 +5162,16 @@ window.RELPHI_TAROT_CARDS = [
       "Relphi",
       "Universal Human Needs"
     ],
+    "direct_themes": [
+          "crisis",
+          "collapse",
+          "shock",
+          "disruption",
+          "disaster",
+          "revelation",
+          "change",
+          "loss"
+    ],
     "astrology": {
       "logic": "Major arcana attribution.",
       "planet": "Mars",
@@ -4593,6 +5251,15 @@ window.RELPHI_TAROT_CARDS = [
       "Yin arc (Libra through Pisces)",
       "House 11",
       "Shevat"
+    ],
+    "direct_themes": [
+          "hope",
+          "healing",
+          "recovery",
+          "inspiration",
+          "faith",
+          "renewal",
+          "guidance"
     ],
     "astrology": {
       "logic": "Major arcana attribution.",
@@ -4722,6 +5389,16 @@ window.RELPHI_TAROT_CARDS = [
       "House 12",
       "Adar"
     ],
+    "direct_themes": [
+          "fear",
+          "confusion",
+          "uncertainty",
+          "illusion",
+          "dreams",
+          "secrecy",
+          "anxiety",
+          "unknown"
+    ],
     "astrology": {
       "logic": "Major arcana attribution.",
       "planet": "",
@@ -4842,6 +5519,16 @@ window.RELPHI_TAROT_CARDS = [
       "The Sun",
       "Active"
     ],
+    "direct_themes": [
+          "happiness",
+          "success",
+          "joy",
+          "clarity",
+          "vitality",
+          "child",
+          "celebration",
+          "truth"
+    ],
     "astrology": {
       "logic": "Major arcana attribution.",
       "planet": "Sun",
@@ -4892,6 +5579,16 @@ window.RELPHI_TAROT_CARDS = [
       "Tooth",
       "The Aeon",
       "Active"
+    ],
+    "direct_themes": [
+          "judgment",
+          "awakening",
+          "decision",
+          "reckoning",
+          "return",
+          "calling",
+          "renewal",
+          "accountability"
     ],
     "astrology": {
       "logic": "Major arcana attribution.",
@@ -4945,6 +5642,16 @@ window.RELPHI_TAROT_CARDS = [
       "Passive",
       "Relphi",
       "Universal Human Needs"
+    ],
+    "direct_themes": [
+          "completion",
+          "culmination",
+          "fulfillment",
+          "success",
+          "travel",
+          "ending",
+          "achievement",
+          "wholeness"
     ],
     "astrology": {
       "logic": "Major arcana attribution.",
