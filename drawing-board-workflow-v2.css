@@ -2066,3 +2066,122 @@ body.relphi-attune-open{overflow:hidden!important}
     max-width:100%!important;
   }
 }
+
+
+/* Bespoke per-question controls: uniform headers, with Advanced using the open row space. */
+#shortListPanel .relphi-bespoke-question-main{
+  min-width:0!important;
+}
+#shortListPanel .relphi-bespoke-question-settings>label{
+  display:grid!important;
+  grid-template-columns:1fr!important;
+  align-items:start!important;
+  gap:.2rem!important;
+  min-width:0!important;
+  margin:0!important;
+  color:#625851!important;
+  font-size:.66rem!important;
+  font-weight:800!important;
+  line-height:1.15!important;
+}
+#shortListPanel .relphi-bespoke-question-settings>label:first-child{
+  min-width:0!important;
+}
+#shortListPanel .relphi-bespoke-question-settings select,
+#shortListPanel .relphi-bespoke-question-settings input[type="number"]{
+  width:100%!important;
+  min-width:0!important;
+  box-sizing:border-box!important;
+  margin:0!important;
+}
+#shortListPanel .relphi-question-advanced{
+  margin:0!important;
+  padding:0!important;
+  border:0!important;
+  border-radius:0!important;
+  background:transparent!important;
+}
+#shortListPanel .relphi-question-advanced>summary{
+  width:max-content!important;
+  margin:0!important;
+  padding:0 0 .2rem!important;
+  color:#625851!important;
+  font-size:.66rem!important;
+  font-weight:800!important;
+  line-height:1.15!important;
+}
+#shortListPanel .relphi-question-advanced>div{
+  gap:.35rem!important;
+  padding:0!important;
+}
+#shortListPanel .relphi-question-advanced>div>label{
+  min-height:2rem!important;
+  padding:.34rem .48rem!important;
+}
+
+@media(min-width:701px){
+  #shortListPanel .relphi-bespoke-question-main{
+    display:grid!important;
+    grid-template-columns:minmax(24rem,1.45fr) minmax(14rem,.55fr)!important;
+    column-gap:.75rem!important;
+    row-gap:.42rem!important;
+    align-items:start!important;
+  }
+  #shortListPanel .relphi-bespoke-question-main>input{
+    grid-column:1/-1!important;
+  }
+  #shortListPanel .relphi-bespoke-question-settings{
+    grid-column:1!important;
+    display:grid!important;
+    grid-template-columns:minmax(10rem,1.45fr) minmax(4.5rem,.45fr) minmax(8rem,.8fr)!important;
+    gap:.5rem!important;
+    align-items:start!important;
+    min-width:0!important;
+  }
+  #shortListPanel .relphi-question-advanced{
+    grid-column:2!important;
+    grid-row:2!important;
+    align-self:start!important;
+    justify-self:stretch!important;
+    width:100%!important;
+    max-width:none!important;
+  }
+  #shortListPanel .relphi-question-advanced>div{
+    display:flex!important;
+    flex-wrap:wrap!important;
+    width:100%!important;
+    max-width:none!important;
+  }
+  #shortListPanel .relphi-question-advanced>div>label{
+    flex:0 0 auto!important;
+    width:auto!important;
+  }
+}
+@media(max-width:700px){
+  #shortListPanel .relphi-bespoke-question-main{
+    display:grid!important;
+    grid-template-columns:1fr!important;
+  }
+  #shortListPanel .relphi-bespoke-question-settings{
+    display:grid!important;
+    grid-template-columns:minmax(0,1fr) minmax(6.5rem,.7fr)!important;
+    gap:.45rem!important;
+    align-items:start!important;
+  }
+  #shortListPanel .relphi-bespoke-question-settings>label:first-child{
+    grid-column:1/-1!important;
+  }
+  #shortListPanel .relphi-question-advanced{
+    justify-self:start!important;
+    width:max-content!important;
+    max-width:100%!important;
+  }
+}
+@media(max-width:420px){
+  #shortListPanel .relphi-bespoke-question-settings{
+    grid-template-columns:1fr!important;
+  }
+  #shortListPanel .relphi-bespoke-question-settings>label:first-child{
+    grid-column:auto!important;
+  }
+}
