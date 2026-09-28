@@ -2185,3 +2185,12 @@ body.relphi-attune-open{overflow:hidden!important}
     grid-column:auto!important;
   }
 }
+
+/* The felt is a viewport, never part of the surrounding Drawing Board chrome. */
+#shortListPanel .card-row-workspace{
+  box-sizing:border-box!important;
+  max-width:100%!important;
+  min-width:0!important;
+  contain:paint!important;
+  clip-path:inset(0 round 14px)!important;
+}
