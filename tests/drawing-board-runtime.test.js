@@ -33,6 +33,44 @@ async function boardState(page) {
     snap:window.RelphiDrawingBoardOptionsBridge?.capture?.()
   }));
 }
+async function assertNoClippedBoardControls(page) {
+  const result=await page.evaluate(() => {
+    const root=document.querySelector('#shortListPanel');
+    if(!root)return {ok:false,reason:'no board'};
+    const failures=[];
+    const visible=node=>{
+      const style=getComputedStyle(node);
+      const r=node.getBoundingClientRect();
+      return style.display!=='none' && style.visibility!=='hidden' && r.width>0 && r.height>0;
+    };
+    const within=(node,host,label)=>{
+      if(!node||!host||!visible(node)||!visible(host))return;
+      const r=node.getBoundingClientRect(), h=host.getBoundingClientRect();
+      if(r.left<h.left-1||r.right>h.right+1)failures.push({label,left:r.left,right:r.right,hostLeft:h.left,hostRight:h.right});
+    };
+    const command=root.querySelector('.relphi-board-commandbar');
+    if(command){
+      if(command.scrollWidth>command.clientWidth+1)failures.push({label:'commandbar-horizontal-overflow',scrollWidth:command.scrollWidth,clientWidth:command.clientWidth});
+      const buttons=[...command.querySelectorAll('button')].filter(visible);
+      buttons.forEach(button=>{
+        if(button.scrollWidth>button.clientWidth+1)failures.push({label:'clipped-button',text:button.textContent.trim(),scrollWidth:button.scrollWidth,clientWidth:button.clientWidth});
+        within(button,command,'command-button:'+button.textContent.trim());
+      });
+      for(let i=0;i<buttons.length;i++)for(let j=i+1;j<buttons.length;j++){
+        const a=buttons[i].getBoundingClientRect(),b=buttons[j].getBoundingClientRect();
+        const overlap=a.left<b.right-1&&a.right>b.left+1&&a.top<b.bottom-1&&a.bottom>b.top+1;
+        if(overlap)failures.push({label:'command-button-overlap',a:buttons[i].textContent.trim(),b:buttons[j].textContent.trim()});
+      }
+    }
+    const settings=root.querySelector('.relphi-board-settings-panel');
+    if(settings&&visible(settings)){
+      settings.querySelectorAll('button,label,.relphi-referent-path,.relphi-label-row,.relphi-sacred-card-source-choice,.relphi-surface-question-choice').forEach(node=>within(node,settings,'settings:'+String(node.textContent||node.getAttribute('aria-label')||'').trim().slice(0,80)));
+    }
+    return {ok:failures.length===0,failures};
+  });
+  assert.equal(result.ok,true,JSON.stringify(result.failures));
+}
+
 async function assertContained(page) {
   const result=await page.evaluate(() => {
     const root=document.querySelector('#shortListPanel');
@@ -345,6 +383,37 @@ async function assertReadableFocus(page) {
   await compact.screenshot({path:path.join(out,'drawing-board-mobile-compact-celtic.png'),fullPage:true});
   assert.deepEqual(compactErrors,[]);
   await compact.close();
+
+  // Regression guard: the narrowest phone layout must preserve full control labels.
+  // Use real long labels from the board UI rather than synthetic placeholder text.
+  const narrow=await browser.newPage({viewport:{width:320,height:700}});
+  const narrowErrors=[];
+  narrow.on('pageerror',error=>narrowErrors.push(String(error)));
+  await narrow.goto(base,{waitUntil:'domcontentloaded'});
+  await waitReady(narrow);
+  await openBoard(narrow);
+  await assertNoClippedBoardControls(narrow);
+  assert.equal(await narrow.locator('#relphiResetBoard').textContent(),'Reset Board');
+  await narrow.click('#relphiBoardSettingsButton');
+  await narrow.waitForSelector('.relphi-board-settings-panel',{state:'visible'});
+  await assertNoClippedBoardControls(narrow);
+  await narrow.click('#drawingBoardOptionsButton');
+  await narrow.waitForSelector('.relphi-reading-options-drawer.is-reading-options-open',{state:'visible'});
+  assert.equal(await narrow.getByText('Astrological Tarot Reading',{exact:true}).count(),1,'long Crafted path label should remain intact');
+  await assertNoClippedBoardControls(narrow);
+  await narrow.click('[data-referent-path="bespoke"]');
+  const longQuestion='What is changing in the relationship between the current pressure and the response I am choosing?';
+  const narrowQuestion=narrow.locator('#relphiPositionLabels .relphi-label-row input').first();
+  await narrowQuestion.fill(longQuestion);
+  const questionGeometry=await narrowQuestion.evaluate(input=>{
+    const r=input.getBoundingClientRect(), host=input.closest('.relphi-reading-options-drawer').getBoundingClientRect();
+    return {left:r.left,right:r.right,hostLeft:host.left,hostRight:host.right,value:input.value};
+  });
+  assert.equal(questionGeometry.value,longQuestion);
+  assert.ok(questionGeometry.left>=questionGeometry.hostLeft-1&&questionGeometry.right<=questionGeometry.hostRight+1,'long dynamic question control must remain inside the Crafted drawer');
+  await narrow.screenshot({path:path.join(out,'drawing-board-mobile-320-control-reflow.png'),fullPage:true});
+  assert.deepEqual(narrowErrors,[]);
+  await narrow.close();
 
   const desktop=await browser.newPage({viewport:{width:1440,height:1000}});
   const desktopErrors=[];
