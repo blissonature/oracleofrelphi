@@ -1414,7 +1414,7 @@
         draft.positionPacks ||= []; draft.positionPacks[index]=draft.positionSettings[index].pack;
       }
       const settings=draft?.positionSettings?.[index]||inherited;
-      return `<div class="relphi-label-row relphi-bespoke-question-row" data-label-row="${index}"><span>${index+1}</span><div class="relphi-bespoke-question-main"><input type="text" value="${escapeHtml(label)}" aria-label="Position ${index+1} label"><div class="relphi-bespoke-question-settings"><label>Sub-pack<select data-position-pack="${index}">${packOptions(settings.pack||'full')}</select></label><label>Cards<input type="number" min="1" max="12" value="${Math.max(1,Number(settings.cardCount)||1)}" data-position-card-count="${index}" aria-label="Cards to draw for question ${index+1}"></label><label>Share card with<select data-position-link="${index}"><option value="">No link</option>${rows.map((other,j)=>j===index?'':`<option value="${j}" ${String(settings.linkTo)===String(j)?'selected':''}>Question ${j+1}</option>`).join('')}</select></label></div><details class="relphi-question-advanced"><summary>Advanced</summary><div><label><input type="checkbox" data-position-reversals="${index}" ${settings.reversals!==false?'checked':''}> Reversals</label><label><input type="checkbox" data-position-repeats="${index}" ${settings.repeats?'checked':''}> Repeats</label></div></details></div><button type="button" data-remove-label="${index}" aria-label="Remove position ${index+1}">×</button></div>`;
+      return `<div class="relphi-label-row relphi-bespoke-question-row" data-label-row="${index}"><span>${index+1}</span><div class="relphi-bespoke-question-main"><input type="text" value="${escapeHtml(label)}" aria-label="Position ${index+1} label" data-position-label="${index}"><div class="relphi-bespoke-question-settings"><label>Sub-pack<select data-position-pack="${index}">${packOptions(settings.pack||'full')}</select></label><label>Cards<input type="number" min="1" max="12" value="${Math.max(1,Number(settings.cardCount)||1)}" data-position-card-count="${index}" aria-label="Cards to draw for question ${index+1}"></label><label>Share card with<select data-position-link="${index}"><option value="">No link</option>${rows.map((other,j)=>j===index?'':`<option value="${j}" ${String(settings.linkTo)===String(j)?'selected':''}>Question ${j+1}</option>`).join('')}</select></label></div><details class="relphi-question-advanced"><summary>Advanced</summary><div><label><input type="checkbox" data-position-reversals="${index}" ${settings.reversals!==false?'checked':''}> Reversals</label><label><input type="checkbox" data-position-repeats="${index}" ${settings.repeats?'checked':''}> Repeats</label></div></details></div><button type="button" data-remove-label="${index}" aria-label="Remove position ${index+1}">×</button></div>`;
     }).join('');
   }
   function parseBulkQuestions(value) {
@@ -2062,7 +2062,7 @@
     const labelsList=drawer.querySelector('#relphiPositionLabels');
     const refreshBespokeLabels=()=>{
       if (!labelsList?.isConnected) return;
-      labelsList.innerHTML=labelsMarkup(draft.labels);
+      labelsList.innerHTML=labelsMarkup(draft.labels,draft);
       const add=drawer.querySelector('#relphiAddPosition');
       if (add) add.disabled=hasCards || draft.labels.length>=MAX_POSITIONS;
       drawer.querySelector('.relphi-referent-review')?.remove();
@@ -2079,7 +2079,7 @@
     drawer.querySelector('#relphiParseReferents')?.addEventListener('click',()=>acceptCommaList(drawer.querySelector('#relphiBulkReferents')?.value || ''));
     labelsList?.addEventListener('paste',event=>{
       const row=event.target.closest('.relphi-label-row');
-      if (!row || event.target.tagName!=='INPUT' || Number(row.dataset.labelRow)!==0) return;
+      if (!row || !event.target.matches('[data-position-label]') || Number(row.dataset.labelRow)!==0) return;
       const pasted=event.clipboardData?.getData('text') || '';
       if (!pasted.includes(',') || parseBulkQuestions(pasted).length<2) return;
       event.preventDefault();
@@ -2087,7 +2087,7 @@
     });
     labelsList?.addEventListener('input',event=>{
       const row=event.target.closest('.relphi-label-row');
-      if (!row || event.target.tagName!=='INPUT') return;
+      if (!row || !event.target.matches('[data-position-label]')) return;
       const index=Number(row.dataset.labelRow);
       while (draft.labels.length<=index) draft.labels.push('');
       draft.labels[index]=event.target.value;
@@ -2096,7 +2096,7 @@
     });
     labelsList?.addEventListener('change',event=>{
       const row=event.target.closest('.relphi-label-row');
-      if (!row || event.target.tagName!=='INPUT' || Number(row.dataset.labelRow)!==0) return;
+      if (!row || !event.target.matches('[data-position-label]') || Number(row.dataset.labelRow)!==0) return;
       const value=event.target.value;
       queueMicrotask(()=>{ if (optionsSession && labelsList?.isConnected) acceptCommaList(value); });
     });
