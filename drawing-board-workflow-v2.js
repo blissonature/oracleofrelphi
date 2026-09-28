@@ -1531,7 +1531,7 @@
 
   function referentPathButton(id,label,description,path,disabled=false,expanded=false) {
     const active=path===id;
-    return '<button type="button" aria-pressed="'+(active?'true':'false')+'" aria-expanded="'+(expanded?'true':'false')+'" aria-controls="relphiReferentPanel-'+id+'" class="relphi-referent-path'+(active?' is-active':'')+'" data-referent-path="'+id+'" '+(disabled?'disabled':'')+'><strong>'+escapeHtml(label)+'</strong><span>'+escapeHtml(description)+'</span></button>';
+    return '<button type="button" aria-pressed="'+(active?'true':'false')+'" aria-expanded="'+(expanded?'true':'false')+'" aria-controls="relphiReferentPanel-'+id+'" class="relphi-referent-path'+(active?' is-active':'')+'" data-referent-path="'+id+'" '+(disabled&&!active?'disabled':'')+'><strong>'+escapeHtml(label)+'</strong><span>'+escapeHtml(description)+'</span></button>';
   }
   function candidateQuestionsFromBlocks(blocks={}) {
     const element=String(blocks.element||'');
