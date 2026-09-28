@@ -2864,6 +2864,11 @@
     }, { passive:false });
     workspace.addEventListener('pointerdown', event => {
       if (event.button !== 0) return;
+      // Only gestures that actually begin on the felt may pan the Drawing Board.
+      // The workspace extends beyond the felt on narrow/touch layouts; claiming that
+      // surrounding whitespace breaks ordinary page scrolling.
+      const startedOnFelt = event.target === board || !!event.target.closest?.('.short-list-row.card-row-board');
+      if (!startedOnFelt || !board.contains(event.target)) return;
       const interactive = event.target.closest?.('button, input, textarea, select, label, .card-row-item');
       if (interactive) return;
       event.preventDefault();
