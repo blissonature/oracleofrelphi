@@ -135,8 +135,8 @@
   function driveFromInput(input,commit=false){
     if(commit)normalizeOnCommit(input);
     const max=model()?.maxWindow??12,raw=input.value.trim().replace(',','.'),value=Number(raw);
-    const valid=raw!==''&&Number.isFinite(value)&&value>=0&&value<=max;
-    input.setCustomValidity(valid?'':`Enter a harmonic phase window from 0 to ${max} degrees.`);
+    const quarterStep=Number.isFinite(value)&&Math.abs(value*4-Math.round(value*4))<1e-8;\n    const valid=raw!==''&&Number.isFinite(value)&&value>=.25&&value<=max&&quarterStep;
+    input.setCustomValidity(valid?'':`Enter a harmonic phase window from 0.25 to ${max} degrees in 0.25-degree steps.`);
     input.setAttribute('aria-invalid',valid?'false':'true');
     if(!valid)return;
     input.setAttribute('aria-valuenow',String(value));
@@ -161,8 +161,8 @@
     const input=document.createElement('input'),m=model();
     input.type='number';input.inputMode='decimal';input.autocomplete='off';input.min='.25';input.max=String(m?.maxWindow??12);input.step='.25';input.value=String(Math.round(Math.max(.25,Math.min(m?.maxWindow??12,Number(initialWindow())||.25))*4)/4);
     input.dataset.harmonicWindowInput='true';input.dataset.orbMode='harmonic-phase';
-    input.setAttribute('role','spinbutton');input.setAttribute('aria-valuemin','0');input.setAttribute('aria-valuemax',String(m?.maxWindow??12));input.setAttribute('aria-valuenow',input.value);
-    input.setAttribute('aria-label',`Master harmonic phase window in degrees, maximum ${m?.maxWindow??12}`);
+    input.setAttribute('role','spinbutton');input.setAttribute('aria-valuemin','.25');input.setAttribute('aria-valuemax',String(m?.maxWindow??12));input.setAttribute('aria-valuenow',input.value);
+    input.setAttribute('aria-label',`Harmonic Window in degrees, from 0.25 to ${m?.maxWindow??12}, in 0.25-degree steps`);
     field.append(caption,input);field.style.order='20';
     if(display)slot.insertBefore(field,display.nextSibling);
     else slot.insertBefore(field,wheelActions||null);
