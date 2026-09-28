@@ -6,6 +6,9 @@ const read = name => fs.readFileSync(path.join(root, name), 'utf8');
 const board = read('drawing-board-workflow-v2.js');
 const app = read('tarot-app.js');
 const css = read('drawing-board-workflow-v2.css');
+
+assert.match(css, /card-row-workspace\{[^}]*62svh/, 'Drawing Board workspace should use stable viewport height');
+assert.match(css, /card-row-workspace\{height:clamp\(23rem,58svh,36rem\)/, 'mobile Drawing Board workspace should use svh, not dynamic viewport height');
 const tarotPage = read('tarot.html');
 const skyPage = read('sky-chart.html');
 const hoursPage = read('planetaryhours.html');
