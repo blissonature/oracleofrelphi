@@ -1531,7 +1531,7 @@
 
   function referentPathButton(id,label,description,path,disabled=false) {
     const active=path===id;
-    return '<button type="button" aria-pressed="'+(active?'true':'false')+'" class="relphi-referent-path'+(active?' is-active':'')+'" data-referent-path="'+id+'" '+(disabled?'disabled':'')+'><strong>'+escapeHtml(label)+'</strong><span>'+escapeHtml(description)+'</span></button>';
+    return '<button type="button" aria-pressed="'+(active?'true':'false')+'" aria-expanded="'+(active?'true':'false')+'" aria-controls="relphiReferentPanel-'+id+'" class="relphi-referent-path'+(active?' is-active':'')+'" data-referent-path="'+id+'" '+(disabled?'disabled':'')+'><strong>'+escapeHtml(label)+'</strong><span>'+escapeHtml(description)+'</span></button>';
   }
   function candidateQuestionsFromBlocks(blocks={}) {
     const element=String(blocks.element||'');
@@ -1997,17 +1997,18 @@
     const drawSettingsMarkup=(session.path==='surface'||session.path==='astro')
       ? '<section class="relphi-referent-settings" aria-label="Draw settings"><strong class="relphi-referent-settings-title">Draw settings</strong>'+cardSourceSettings+advancedDrawSettings+'</section>'
       : '<section class="relphi-referent-settings" aria-label="Draw settings"><strong class="relphi-referent-settings-title">Draw settings</strong><div class="relphi-draw-options"><label>Pack<select id="relphiDraftPack">'+packOptions(draft.pack)+'</select></label>'+keywordDraftMarkup(draft)+'</div>'+cardSourceSettings+advancedDrawSettings+'</section>';
+    const activePathPanel=pathPanelMarkup(session,hasCards);
+    const pathEntry=(id,label,description)=>referentPathButton(id,label,description,session.path,hasCards)+(session.path===id?'<div class="relphi-referent-path-drawer" id="relphiReferentPanel-'+id+'" data-referent-path-panel="'+id+'">'+activePathPanel+'</div>':'');
     drawer.innerHTML = '<div class="relphi-options-heading"><div><span class="eyebrow">Drawing Board</span><h3>Crafted Draw</h3></div></div>'+
       (hasCards ? '<p class="relphi-options-note relphi-options-note-visible">Reset Board before changing referents. The reading structure is locked once cards are drawn.</p>' : '')+
       '<div class="relphi-options-body">'+
         '<div class="relphi-referent-paths" role="list" aria-label="Referent paths">'+
-          referentPathButton('bespoke','Bespoke','Write your own referents.',session.path,hasCards)+
-          referentPathButton('templates','Templates','Use a saved or established spread.',session.path,hasCards)+
-          referentPathButton('blocks','Building Blocks','Choose elements planets aspects signs and houses.',session.path,hasCards)+
-          referentPathButton('surface','See What Surfaces','Draw symbolic cards to discover what to ask.',session.path,hasCards)+
-          referentPathButton('astro','Astrological Tarot Reading','Connect one or two skies and surface questions from exact card hits.',session.path,hasCards)+
+          pathEntry('bespoke','Bespoke','Write your own referents.')+
+          pathEntry('templates','Templates','Use a saved or established spread.')+
+          pathEntry('blocks','Building Blocks','Choose elements planets aspects signs houses and Universal Human Needs.')+
+          pathEntry('surface','See What Surfaces','Draw symbolic cards to discover what to ask.')+
+          pathEntry('astro','Astrological Tarot Reading','Connect one or two skies and surface questions from exact card hits.')+
         '</div>'+
-        pathPanelMarkup(session,hasCards)+
         drawSettingsMarkup+
         (session.path==='surface'
           ? (()=>{const count=selectedSurfaceKinds(session).length,ready=count>0,source=session.sacredCardSource==='physical'?'Physical':'Digital';return '<aside class="relphi-surface-readiness '+(ready?'is-ready':'')+'" data-surface-readiness role="status" aria-live="polite">'+
@@ -2029,6 +2030,13 @@
     renderBoardConfiguration(root);
     const nextBody=drawer.querySelector('.relphi-options-body');
     if(nextBody&&Number.isFinite(previousScrollTop))nextBody.scrollTop=previousScrollTop;
+    if(nextBody&&!Number.isFinite(previousScrollTop)){
+      const activePath=drawer.querySelector('[data-referent-path].is-active');
+      if(activePath){
+        const bodyRect=nextBody.getBoundingClientRect(), pathRect=activePath.getBoundingClientRect();
+        nextBody.scrollTop=Math.max(0,nextBody.scrollTop+(pathRect.top-bodyRect.top)-8);
+      }
+    }
     setBoardMode(root,'referents');
     // Resolve the final Astrological viewport before this DOM update paints.
     // Path changes may choose a new landing position; in-path rerenders preserve it.
