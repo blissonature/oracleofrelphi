@@ -317,6 +317,8 @@ async function assertReadableFocus(page) {
     return state && !state.activeLayout && state.slotCount===0 && state.hasCards===false;
   });
   await mobile.waitForSelector('.relphi-reading-options-drawer.is-reading-options-open',{state:'visible'});
+  await mobile.click('[data-referent-path="templates"]');
+  await mobile.waitForSelector('#relphiSpreadTemplateSelect',{state:'visible'});
   await mobile.selectOption('#relphiSpreadTemplateSelect','six-polarities-houses-12');
   await mobile.click('#relphiApplyOptions');
   await mobile.waitForFunction(() => window.RelphiDrawingBoardPrefabsBridge?.getState?.()?.activeLayout?.id === 'six-polarities-houses-12');
@@ -355,8 +357,9 @@ async function assertReadableFocus(page) {
   const desktopOptions=await desktop.locator('.relphi-reading-options-drawer.is-reading-options-open').evaluate(drawer=>{
     const r=drawer.getBoundingClientRect();
     const host=drawer.parentElement.getBoundingClientRect();
-    const firstSection=drawer.querySelector('.relphi-options-body>:first-child');
-    return {left:r.left,right:r.right,viewport:innerWidth,hostLeft:host.left,firstIsLabels:firstSection?.classList.contains('relphi-labels-section') && !!firstSection?.querySelector('#relphiPositionLabels')};
+    const paths=drawer.querySelectorAll('[data-referent-path]');
+    const active=drawer.querySelector('[data-referent-path].is-active');
+    return {left:r.left,right:r.right,viewport:innerWidth,hostLeft:host.left,pathCount:paths.length,activePath:active?.dataset.referentPath||''};
   });
   assert.ok(desktopOptions.left>=desktopOptions.hostLeft-1 && desktopOptions.left<=desktopOptions.hostLeft+20,'Options must open against the left side of its Drawing Board host');
   assert.ok(desktopOptions.left>=0 && desktopOptions.right<=desktopOptions.viewport,'Options must not be cut off horizontally');
@@ -370,8 +373,9 @@ async function assertReadableFocus(page) {
     return offenders;
   });
   assert.deepEqual(optionsOverflow,[],'no Options control may overflow or be clipped by the drawer');
-  assert.equal(desktopOptions.firstIsLabels,true,'Questions / position labels must be the first Options section');
-  assert.equal(await desktop.locator('#relphiPositionLabels').count(),1,'Options must expose the individual position-label editor');
+  assert.equal(desktopOptions.pathCount,4,'Referents must expose the four referent paths and no Draw path');
+  assert.equal(desktopOptions.activePath,'templates','Templates should be the continuity path when Referents first opens');
+  assert.equal(await desktop.locator('#relphiSpreadTemplateSelect').count(),1,'Templates path must expose the spread library');
   await desktop.screenshot({path:path.join(out,'drawing-board-desktop-options-left.png'),fullPage:true});
   await desktop.click('#relphiCancelOptions');
   await applyCeltic(desktop);

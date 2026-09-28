@@ -22,7 +22,7 @@
       status.textContent='This preview needs an exact forty-character commit SHA in ?ref=.';
       return;
     }
-    const staticPreview=`/drawing-board-preview/revisions/${ref}/index.html`;
+    const staticPreview=`https://raw.githack.com/blissonature/oracleofrelphi/${ref}/drawing-board-preview/revisions/${ref}/index.html`;
     try{
       const local=await fetch(staticPreview,{method:'HEAD',cache:'no-store'});
       if(local.ok){
@@ -36,7 +36,7 @@
       const response=await fetch(rawBase+'drawing-board.html',{cache:'no-store'});
       if(!response.ok)throw new Error(`GitHub returned ${response.status}`);
       let html=await response.text();
-      const frameUrl=`/drawing-board-preview/tarot.html?ref=${encodeURIComponent(ref)}&board=workflow-v2&standaloneDrawingBoard=1#tarot`;
+      const frameUrl=`https://raw.githack.com/blissonature/oracleofrelphi/${ref}/drawing-board-preview/tarot.html?ref=${encodeURIComponent(ref)}&board=workflow-v2&standaloneDrawingBoard=1#tarot`;
       html=html.replace(/src=(['"])tarot\.html\?board=workflow-v2&amp;standaloneDrawingBoard=1#tarot\1/i,`src="${frameUrl}"`);
       const base=`<base href="${assetBase}">`;
       if(/<head[^>]*>/i.test(html))html=html.replace(/<head([^>]*)>/i,`<head$1>${base}`);
