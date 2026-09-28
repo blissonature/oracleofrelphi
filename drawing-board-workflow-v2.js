@@ -1480,6 +1480,53 @@
   ];
   const HOUSE_ORDINALS = ['First','Second','Third','Fourth','Fifth','Sixth','Seventh','Eighth','Ninth','Tenth','Eleventh','Twelfth'];
   const REFERENT_UNIVERSAL_HUMAN_NEEDS = ['Identity','Understanding','Affection','Subsistence','Protection','Participation','Freedom','Creation','Leisure'];
+  const REFERENT_NEED_QUESTIONS = Object.freeze({
+    Identity:[
+      {text:'Is this more about who you know yourself to be or about how you are being recognized?',pack:'courts'},
+      {text:'What area of life is asking loudest for a clearer sense of identity?',pack:'zodiac-majors'},
+      {text:'What is the concrete form this identity question is taking?',pack:'pips'}
+    ],
+    Understanding:[
+      {text:'Is this more about what you understand or about you being understood?',pack:'courts'},
+      {text:'What area of life is asking loudest for understanding?',pack:'zodiac-majors'},
+      {text:'What is the nature of the subject requiring understanding?',pack:'pips'}
+    ],
+    Affection:[
+      {text:'Is this more about giving affection or about receiving it?',pack:'courts'},
+      {text:'What area of life is asking loudest for affection?',pack:'zodiac-majors'},
+      {text:'What is the nature of the bond or desire requiring affection?',pack:'pips'}
+    ],
+    Subsistence:[
+      {text:'Is this more about what you need to sustain yourself or about what you are sustaining for others?',pack:'courts'},
+      {text:'What area of life is asking loudest for material or bodily support?',pack:'zodiac-majors'},
+      {text:'What is the concrete need requiring subsistence?',pack:'pips'}
+    ],
+    Protection:[
+      {text:'Is this more about protecting yourself or about protecting someone or something else?',pack:'courts'},
+      {text:'What area of life is asking loudest for protection?',pack:'zodiac-majors'},
+      {text:'What is the nature of the threat or vulnerability requiring protection?',pack:'pips'}
+    ],
+    Participation:[
+      {text:'Is this more about entering into participation or about being invited or received into it?',pack:'courts'},
+      {text:'What area of life is asking loudest for participation?',pack:'zodiac-majors'},
+      {text:'What is the concrete form of participation being asked of you?',pack:'pips'}
+    ],
+    Freedom:[
+      {text:'Is this more about freeing yourself or about allowing someone or something else more freedom?',pack:'courts'},
+      {text:'What area of life is asking loudest for freedom?',pack:'zodiac-majors'},
+      {text:'What is the nature of the constraint requiring freedom?',pack:'pips'}
+    ],
+    Creation:[
+      {text:'Is this more about what you are creating or about what wants to be created through you?',pack:'courts'},
+      {text:'What area of life is asking loudest for creation?',pack:'zodiac-majors'},
+      {text:'What is the nature of the thing asking to be created?',pack:'pips'}
+    ],
+    Leisure:[
+      {text:'Is this more about making room for rest or about allowing yourself to enjoy what is already available?',pack:'courts'},
+      {text:'What area of life is asking loudest for leisure?',pack:'zodiac-majors'},
+      {text:'What concrete form of rest play or spaciousness is being asked for?',pack:'pips'}
+    ]
+  });
   const MODE_BY_PIP = {2:'Cardinal',3:'Cardinal',4:'Cardinal',5:'Fixed',6:'Fixed',7:'Fixed',8:'Mutable',9:'Mutable',10:'Mutable'};
 
   function referentPathButton(id,label,description,path,disabled=false) {
@@ -1508,6 +1555,8 @@
       mode ? mode.toLowerCase()+' movement' : ''
     ].filter(Boolean);
     const compact = subject.length ? subject.join(' through ') : 'this matter';
+    const needOnly=!!need && !element && !planet && !aspect && !sign && !house && !mode;
+    if(needOnly && REFERENT_NEED_QUESTIONS[need]) return REFERENT_NEED_QUESTIONS[need].map(item=>item.text);
     const q1 = planet
       ? 'What is '+planet+' asking me to understand about '+(housePhrase ? housePhrase : (elementPhrase || signPhrase || (need ? 'the need for '+need : 'this matter')))+'?'
       : need
@@ -2150,8 +2199,14 @@
     }));
     drawer.querySelector('#relphiBuildQuestions')?.addEventListener('click',()=>{
       session.suggestions=candidateQuestionsFromBlocks(session.building);
-      const b=session.building||{};const suggestedPack=b.need?'uhn':b.planet?'planetary-majors':b.sign?'zodiac-majors':b.element?'full':'full';
-      session.suggestionPacks=session.suggestions.map(()=>suggestedPack);
+      const b=session.building||{};
+      const needOnly=!!b.need && !b.element && !b.planet && !b.aspect && !b.sign && !Number(b.house||0) && !b.mode;
+      if(needOnly && REFERENT_NEED_QUESTIONS[b.need]){
+        session.suggestionPacks=REFERENT_NEED_QUESTIONS[b.need].map(item=>item.pack);
+      }else{
+        const suggestedPack=b.need?'uhn':b.planet?'planetary-majors':b.sign?'zodiac-majors':b.element?'full':'full';
+        session.suggestionPacks=session.suggestions.map(()=>suggestedPack);
+      }
       renderOptions(root);
     });
 
