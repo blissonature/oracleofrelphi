@@ -455,6 +455,18 @@ async function assertReadableFocus(page) {
   await openBoard(desktop);
   await desktop.click('#drawingBoardOptionsButton');
   await desktop.waitForSelector('.relphi-reading-options-drawer.is-reading-options-open',{state:'visible'});
+  await desktop.click('[data-referent-path="blocks"]');
+  await desktop.waitForSelector('[data-referent-path-panel="blocks"]',{state:'visible'});
+  const blockDrawerPlacement=await desktop.evaluate(()=>{
+    const header=document.querySelector('[data-referent-path="blocks"]');
+    const drawer=document.querySelector('[data-referent-path-panel="blocks"]');
+    return {
+      adjacent:header?.nextElementSibling===drawer,
+      sameParent:header?.parentElement===drawer?.parentElement,
+      beforeNext:!!drawer?.nextElementSibling?.matches?.('[data-referent-path="surface"]')
+    };
+  });
+  assert.deepEqual(blockDrawerPlacement,{adjacent:true,sameParent:true,beforeNext:true},'active Crafted drawer must open immediately after its path header');
   const desktopOptions=await desktop.locator('.relphi-reading-options-drawer.is-reading-options-open').evaluate(drawer=>{
     const r=drawer.getBoundingClientRect();
     const host=drawer.parentElement.getBoundingClientRect();
