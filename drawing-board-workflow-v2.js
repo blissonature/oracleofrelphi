@@ -1529,9 +1529,9 @@
   });
   const MODE_BY_PIP = {2:'Cardinal',3:'Cardinal',4:'Cardinal',5:'Fixed',6:'Fixed',7:'Fixed',8:'Mutable',9:'Mutable',10:'Mutable'};
 
-  function referentPathButton(id,label,description,path,disabled=false) {
+  function referentPathButton(id,label,description,path,disabled=false,expanded=false) {
     const active=path===id;
-    return '<button type="button" aria-pressed="'+(active?'true':'false')+'" aria-expanded="'+(active?'true':'false')+'" aria-controls="relphiReferentPanel-'+id+'" class="relphi-referent-path'+(active?' is-active':'')+'" data-referent-path="'+id+'" '+(disabled?'disabled':'')+'><strong>'+escapeHtml(label)+'</strong><span>'+escapeHtml(description)+'</span></button>';
+    return '<button type="button" aria-pressed="'+(active?'true':'false')+'" aria-expanded="'+(expanded?'true':'false')+'" aria-controls="relphiReferentPanel-'+id+'" class="relphi-referent-path'+(active?' is-active':'')+'" data-referent-path="'+id+'" '+(disabled?'disabled':'')+'><strong>'+escapeHtml(label)+'</strong><span>'+escapeHtml(description)+'</span></button>';
   }
   function candidateQuestionsFromBlocks(blocks={}) {
     const element=String(blocks.element||'');
@@ -1998,7 +1998,10 @@
       ? '<section class="relphi-referent-settings" aria-label="Draw settings"><strong class="relphi-referent-settings-title">Draw settings</strong>'+cardSourceSettings+advancedDrawSettings+'</section>'
       : '<section class="relphi-referent-settings" aria-label="Draw settings"><strong class="relphi-referent-settings-title">Draw settings</strong><div class="relphi-draw-options"><label>Pack<select id="relphiDraftPack">'+packOptions(draft.pack)+'</select></label>'+keywordDraftMarkup(draft)+'</div>'+cardSourceSettings+advancedDrawSettings+'</section>';
     const activePathPanel=pathPanelMarkup(session,hasCards);
-    const pathEntry=(id,label,description)=>referentPathButton(id,label,description,session.path,hasCards)+(session.path===id?'<div class="relphi-referent-path-drawer" id="relphiReferentPanel-'+id+'" data-referent-path-panel="'+id+'">'+activePathPanel+'</div>':'');
+    const pathEntry=(id,label,description)=>{
+      const expanded=session.path===id && !session.pathCollapsed;
+      return referentPathButton(id,label,description,session.path,hasCards,expanded)+(expanded?'<div class="relphi-referent-path-drawer" id="relphiReferentPanel-'+id+'" data-referent-path-panel="'+id+'">'+activePathPanel+'</div>':'');
+    };
     drawer.innerHTML = '<div class="relphi-options-heading"><div><span class="eyebrow">Drawing Board</span><h3>Crafted Draw</h3></div></div>'+
       (hasCards ? '<p class="relphi-options-note relphi-options-note-visible">Reset Board before changing referents. The reading structure is locked once cards are drawn.</p>' : '')+
       '<div class="relphi-options-body">'+
@@ -2010,7 +2013,7 @@
           pathEntry('astro','Astrological Tarot Reading','Connect one or two skies and surface questions from exact card hits.')+
         '</div>'+
         drawSettingsMarkup+
-        (session.path==='surface'
+        (session.path==='surface'&&!session.pathCollapsed
           ? (()=>{const count=selectedSurfaceKinds(session).length,ready=count>0,source=session.sacredCardSource==='physical'?'Physical':'Digital';return '<aside class="relphi-surface-readiness '+(ready?'is-ready':'')+'" data-surface-readiness role="status" aria-live="polite">'+
               '<div class="relphi-surface-readiness-rail" aria-label="Crafted reading progress">'+
                 '<div class="relphi-surface-readiness-step is-complete" data-readiness-step="path"><i aria-hidden="true"></i><strong>Path</strong><small>See What Surfaces</small></div>'+
@@ -2044,9 +2047,14 @@
 
     drawer.querySelectorAll('[data-referent-path]').forEach(button=>button.addEventListener('click',()=>{
       const nextPath=button.dataset.referentPath || '';
-      session.path=nextPath;
-      session.suggestions=[];
-      session.suggestionPacks=[];
+      if(session.path===nextPath){
+        session.pathCollapsed=!session.pathCollapsed;
+      }else{
+        session.path=nextPath;
+        session.pathCollapsed=false;
+        session.suggestions=[];
+        session.suggestionPacks=[];
+      }
       syncZoomToolbarVisibility(root);
       renderOptions(root,{preserveScroll:false});
     }));
