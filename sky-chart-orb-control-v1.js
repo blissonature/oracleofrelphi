@@ -158,7 +158,7 @@
     field=document.createElement('label');field.className='sky-orb-number-field';field.dataset.orbField='true';
     const caption=document.createElement('span');caption.textContent='Harmonic Window';
     const input=document.createElement('input'),m=model();
-    input.type='text';input.inputMode='decimal';input.autocomplete='off';input.value=String(initialWindow());
+    input.type='number';input.inputMode='decimal';input.autocomplete='off';input.min='.25';input.max=String(m?.maxWindow??12);input.step='.25';input.value=String(initialWindow());
     input.dataset.harmonicWindowInput='true';input.dataset.orbMode='harmonic-phase';
     input.setAttribute('role','spinbutton');input.setAttribute('aria-valuemin','0');input.setAttribute('aria-valuemax',String(m?.maxWindow??12));input.setAttribute('aria-valuenow',input.value);
     input.setAttribute('aria-label',`Master harmonic phase window in degrees, maximum ${m?.maxWindow??12}`);
