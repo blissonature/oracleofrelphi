@@ -467,6 +467,13 @@ async function assertReadableFocus(page) {
     };
   });
   assert.deepEqual(blockDrawerPlacement,{adjacent:true,sameParent:true,beforeNext:true},'active Crafted drawer must open immediately after its path header');
+
+  await desktop.click('[data-referent-path="blocks"]');
+  await desktop.waitForSelector('[data-referent-path-panel="blocks"]',{state:'detached'});
+  assert.equal(await desktop.locator('[data-referent-path="blocks"]').getAttribute('aria-expanded'),'false','clicking the active Crafted header should collapse its drawer');
+  await desktop.click('[data-referent-path="blocks"]');
+  await desktop.waitForSelector('[data-referent-path-panel="blocks"]',{state:'visible'});
+  assert.equal(await desktop.locator('[data-referent-path="blocks"]').getAttribute('aria-expanded'),'true','clicking the active Crafted header again should reopen its drawer');
   const desktopOptions=await desktop.locator('.relphi-reading-options-drawer.is-reading-options-open').evaluate(drawer=>{
     const r=drawer.getBoundingClientRect();
     const host=drawer.parentElement.getBoundingClientRect();
