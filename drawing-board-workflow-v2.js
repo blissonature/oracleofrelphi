@@ -1037,7 +1037,7 @@
   function beginOptionsSession() {
     if (optionsSession) return;
     const path=activeCraftedPath||'templates';
-    optionsSession = { baseline:currentSnapshot(), draft:draftFromState(), path, building:{element:'',planet:'',aspect:'',sign:'',house:''}, suggestions:[], suggestionPacks:[], surfaceSelected:{}, sacredCardSource:'digital' };
+    optionsSession = { baseline:currentSnapshot(), draft:draftFromState(), path, building:{element:'',planet:'',aspect:'',sign:'',house:'',need:''}, suggestions:[], suggestionPacks:[], surfaceSelected:{}, sacredCardSource:'digital' };
   }
   function optionsStructuralChanged(session = optionsSession) {
     if (!session) return false;
@@ -1479,6 +1479,7 @@
     'retreat hidden conditions endings isolation and what operates out of view'
   ];
   const HOUSE_ORDINALS = ['First','Second','Third','Fourth','Fifth','Sixth','Seventh','Eighth','Ninth','Tenth','Eleventh','Twelfth'];
+  const REFERENT_UNIVERSAL_HUMAN_NEEDS = ['Identity','Understanding','Affection','Subsistence','Protection','Participation','Freedom','Creation','Leisure'];
   const MODE_BY_PIP = {2:'Cardinal',3:'Cardinal',4:'Cardinal',5:'Fixed',6:'Fixed',7:'Fixed',8:'Mutable',9:'Mutable',10:'Mutable'};
 
   function referentPathButton(id,label,description,path,disabled=false) {
@@ -1492,6 +1493,7 @@
     const sign=String(blocks.sign||'');
     const house=Number(blocks.house)||0;
     const mode=String(blocks.mode||'');
+    const need=String(blocks.need||'');
     const planetPhrase=planet ? REFERENT_PLANETS[planet] || planet.toLowerCase() : '';
     const elementPhrase=element ? REFERENT_ELEMENTS[element] || element.toLowerCase() : '';
     const signPhrase=sign ? REFERENT_SIGNS[sign] || sign.toLowerCase() : '';
@@ -1502,12 +1504,15 @@
       element ? element+' and '+elementPhrase : '',
       housePhrase ? 'the '+HOUSE_ORDINALS[house-1]+' House realm of '+housePhrase : '',
       sign ? sign+' as '+signPhrase : '',
+      need ? 'the universal human need for '+need : '',
       mode ? mode.toLowerCase()+' movement' : ''
     ].filter(Boolean);
     const compact = subject.length ? subject.join(' through ') : 'this matter';
     const q1 = planet
-      ? 'What is '+planet+' asking me to understand about '+(housePhrase ? housePhrase : (elementPhrase || signPhrase || 'this matter'))+'?'
-      : 'What deserves my attention about '+compact+'?';
+      ? 'What is '+planet+' asking me to understand about '+(housePhrase ? housePhrase : (elementPhrase || signPhrase || (need ? 'the need for '+need : 'this matter')))+'?'
+      : need
+        ? 'What does the universal human need for '+need+' ask me to understand here?'
+        : 'What deserves my attention about '+compact+'?';
     const q2 = aspect
       ? 'How should I work with '+aspectPhrase+' in '+(housePhrase || elementPhrase || signPhrase || 'this situation')+'?'
       : 'What is changing or becoming possible through '+compact+'?';
@@ -1515,7 +1520,9 @@
       ? 'What does '+mode.toLowerCase()+' movement ask me to do differently in '+(housePhrase || elementPhrase || 'this situation')+'?'
       : sign
         ? 'How is '+sign+' shaping the way this situation is being expressed?'
-        : 'What practical next question would clarify '+compact+'?';
+        : need
+          ? 'What would better serve the need for '+need+' in this situation?'
+          : 'What practical next question would clarify '+compact+'?';
     return Array.from(new Set([q1,q2,q3].map(q=>q.replace(/\s+/g,' ').trim()))).slice(0,3);
   }
   function suggestionMarkup(session, disabled=false) {
@@ -1526,7 +1533,7 @@
       '<button type="button" id="relphiAcceptSuggestions" '+(disabled?'disabled':'')+'>Use selected referents</button></div>';
   }
   function buildingControlsMarkup(session, disabled=false) {
-    const b=session.building || (session.building={element:'',planet:'',aspect:'',sign:'',house:''});
+    const b=session.building || (session.building={element:'',planet:'',aspect:'',sign:'',house:'',need:''});
     const option=(value,current)=>'<option value="'+escapeHtml(value)+'" '+(current===value?'selected':'')+'>'+escapeHtml(value||'Choose…')+'</option>';
     const options=(values,current)=>option('',current)+values.map(value=>option(value,current)).join('');
     return '<div class="relphi-building-grid">'+
@@ -1535,6 +1542,7 @@
       '<label>Aspect<select data-building-key="aspect" '+(disabled?'disabled':'')+'>'+options(Object.keys(REFERENT_ASPECTS),b.aspect)+'</select></label>'+
       '<label>Sign<select data-building-key="sign" '+(disabled?'disabled':'')+'>'+options(Object.keys(REFERENT_SIGNS),b.sign)+'</select></label>'+
       '<label>House<select data-building-key="house" '+(disabled?'disabled':'')+'>'+option('',String(b.house||''))+HOUSE_ORDINALS.map((name,index)=>'<option value="'+(index+1)+'" '+(String(b.house)===String(index+1)?'selected':'')+'>'+name+' House</option>').join('')+'</select></label>'+
+      '<label>Universal Human Need<select data-building-key="need" '+(disabled?'disabled':'')+'>'+options(REFERENT_UNIVERSAL_HUMAN_NEEDS,b.need)+'</select></label>'+
       '</div><button type="button" id="relphiBuildQuestions" '+(disabled?'disabled':'')+'>Surface referents</button>';
   }
   const PIP_NUMBER_BY_RANK = {Two:2,Three:3,Four:4,Five:5,Six:6,Seven:7,Eight:8,Nine:9,Ten:10};
@@ -2142,7 +2150,7 @@
     }));
     drawer.querySelector('#relphiBuildQuestions')?.addEventListener('click',()=>{
       session.suggestions=candidateQuestionsFromBlocks(session.building);
-      const b=session.building||{};const suggestedPack=b.planet?'planetary-majors':b.sign?'zodiac-majors':b.element?'full':'full';
+      const b=session.building||{};const suggestedPack=b.need?'uhn':b.planet?'planetary-majors':b.sign?'zodiac-majors':b.element?'full':'full';
       session.suggestionPacks=session.suggestions.map(()=>suggestedPack);
       renderOptions(root);
     });
