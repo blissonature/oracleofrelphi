@@ -34,7 +34,7 @@
 
 #shortListPanel .card-row-more-options{display:none!important}
 #shortListPanel .card-row-action-staging{display:none!important}
-#shortListPanel .card-row-workspace{position:relative!important;isolation:isolate!important;width:100%!important;height:clamp(28rem,62vh,40rem)!important;min-height:clamp(28rem,62vh,40rem)!important;max-height:clamp(28rem,62vh,40rem)!important;overflow:hidden!important;border:1px solid rgba(17,17,17,.14)!important;border-radius:14px!important;background-color:var(--row-table-bg,#7d1f28)!important;background-image:var(--row-table-image,none)!important;background-position:center!important;background-size:cover!important;touch-action:pan-x pan-y!important}
+#shortListPanel .card-row-workspace{position:relative!important;isolation:isolate!important;width:100%!important;height:clamp(28rem,62svh,40rem)!important;min-height:clamp(28rem,62svh,40rem)!important;max-height:clamp(28rem,62svh,40rem)!important;overflow:hidden!important;border:1px solid rgba(17,17,17,.14)!important;border-radius:14px!important;background-color:var(--row-table-bg,#7d1f28)!important;background-image:var(--row-table-image,none)!important;background-position:center!important;background-size:cover!important;touch-action:pan-x pan-y!important}
 #shortListPanel .card-row-workspace.relphi-is-pinching,#shortListPanel .card-row-workspace.relphi-is-pinching *{touch-action:none!important;user-select:none!important;-webkit-user-select:none!important}
 #shortListPanel .card-row-workspace>.short-list-row.card-row-board{position:absolute!important;inset:0 auto auto 0!important;margin:0!important;padding:0!important;overflow:visible!important;background:transparent!important;transform-origin:0 0!important}
 #shortListPanel .card-row-workspace>.short-list-row.card-row-board>.card-row-item{position:absolute!important;width:var(--row-envelope-w,174px)!important;min-width:var(--row-envelope-w,174px)!important;max-width:var(--row-envelope-w,174px)!important;height:auto!important;min-height:0!important;margin:0!important;padding:0!important;overflow:visible!important;transform:rotate(var(--row-card-rotation,0deg)) scale(var(--row-card-scale,1))!important;transform-origin:50% 50%!important}
@@ -167,7 +167,7 @@
   #shortListPanel .relphi-sacred-card-source{grid-template-columns:1fr!important}
   #shortListPanel .relphi-surface-readiness-message{align-items:stretch!important;flex-direction:column!important}
   #shortListPanel .relphi-surface-readiness-message button{width:100%!important}
-  #shortListPanel .card-row-workspace{height:clamp(23rem,58dvh,36rem)!important;min-height:clamp(23rem,58dvh,36rem)!important;max-height:clamp(23rem,58dvh,36rem)!important}
+  #shortListPanel .card-row-workspace{height:clamp(23rem,58svh,36rem)!important;min-height:clamp(23rem,58svh,36rem)!important;max-height:clamp(23rem,58svh,36rem)!important}
   #shortListPanel .card-row-drawing-board>summary{padding-left:3.6rem!important}
   #shortListPanel .drawing-board-top-actions{gap:.28rem!important;margin:.3rem .35rem!important;width:calc(100% - .7rem)!important}
   #shortListPanel .drawing-board-top-actions>button{padding:.4rem .48rem!important;font-size:.68rem!important}
