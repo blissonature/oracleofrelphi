@@ -660,8 +660,20 @@
       clear.setAttribute('aria-label','Clear the cards without changing settings');
       topActions.appendChild(clear);
     }
-    if(undo){undo.textContent='Undo';undo.classList.remove('board-history-icon');topActions.appendChild(undo);}
-    if(redo){redo.textContent='Redo';redo.classList.remove('board-history-icon');topActions.appendChild(redo);}
+    if(undo){
+      undo.classList.add('board-history-icon');
+      undo.title='Undo';
+      undo.setAttribute('aria-label','Undo');
+      if(!undo.querySelector('svg')) undo.innerHTML='<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"><path d="M9 7 4 12l5 5"></path><path d="M4 12h9a7 7 0 0 1 7 7"></path></svg>';
+      topActions.appendChild(undo);
+    }
+    if(redo){
+      redo.classList.add('board-history-icon');
+      redo.title='Redo';
+      redo.setAttribute('aria-label','Redo');
+      if(!redo.querySelector('svg')) redo.innerHTML='<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"><path d="m15 7 5 5-5 5"></path><path d="M20 12h-9a7 7 0 0 0-7 7"></path></svg>';
+      topActions.appendChild(redo);
+    }
     if(draw){draw.textContent='Draw';draw.title='Draw a card';draw.setAttribute('aria-label','Draw a card');topActions.appendChild(draw);}
 
     let settingsPanel=boardDrawer.querySelector(':scope > .relphi-board-settings-panel');
