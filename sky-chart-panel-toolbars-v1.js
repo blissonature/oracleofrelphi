@@ -104,15 +104,22 @@ function syncSort(){
   if(!control)return;
   if(!select.dataset.toolbarTouched){
     control.dataset.toolbarPlaceholder='Sort';
-    select.dataset.toolbarVisualPlaceholder='Sort';
     select.setAttribute('aria-label','Sort relationships');
+    const selected=select.selectedOptions?.[0];
+    if(selected&&selected.dataset.toolbarOriginalLabel===undefined){
+      selected.dataset.toolbarOriginalLabel=selected.textContent;
+      selected.textContent='Sort';
+    }
   }
   if(select.dataset.toolbarListener!=='true'){
     select.dataset.toolbarListener='true';
     select.addEventListener('change',()=>{
+      select.querySelectorAll('option[data-toolbar-original-label]').forEach(option=>{
+        option.textContent=option.dataset.toolbarOriginalLabel;
+        delete option.dataset.toolbarOriginalLabel;
+      });
       select.dataset.toolbarTouched='true';
       delete control.dataset.toolbarPlaceholder;
-      delete select.dataset.toolbarVisualPlaceholder;
     });
   }
 }
