@@ -1036,7 +1036,7 @@
 
   function beginOptionsSession() {
     if (optionsSession) return;
-    const path=activeCraftedPath||'templates';
+    const path=activeCraftedPath||'bespoke';
     optionsSession = { baseline:currentSnapshot(), draft:draftFromState(), path, building:{element:'',planet:'',aspect:'',sign:'',house:'',need:''}, suggestions:[], suggestionPacks:[], surfaceSelected:{}, sacredCardSource:'digital' };
   }
   function optionsStructuralChanged(session = optionsSession) {
