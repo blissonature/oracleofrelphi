@@ -135,7 +135,8 @@
   function driveFromInput(input,commit=false){
     if(commit)normalizeOnCommit(input);
     const max=model()?.maxWindow??12,raw=input.value.trim().replace(',','.'),value=Number(raw);
-    const quarterStep=Number.isFinite(value)&&Math.abs(value*4-Math.round(value*4))<1e-8;\n    const valid=raw!==''&&Number.isFinite(value)&&value>=.25&&value<=max&&quarterStep;
+    const quarterStep=Number.isFinite(value)&&Math.abs(value*4-Math.round(value*4))<1e-8;
+    const valid=raw!==''&&Number.isFinite(value)&&value>=.25&&value<=max&&quarterStep;
     input.setCustomValidity(valid?'':`Enter a harmonic phase window from 0.25 to ${max} degrees in 0.25-degree steps.`);
     input.setAttribute('aria-invalid',valid?'false':'true');
     if(!valid)return;
