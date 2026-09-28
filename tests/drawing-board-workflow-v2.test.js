@@ -154,6 +154,14 @@ assert.match(board, /nextUndrawnNativeIndex\(root\)!=null\)return/);
 assert.match(board, /options—not automatic follow-ups/);
 assert.match(board, /Reversals/);
 assert.match(board, /Repeats/);
+
+assert.match(board, /REFERENT_UNIVERSAL_HUMAN_NEEDS = \['Identity','Understanding','Affection','Subsistence','Protection','Participation','Freedom','Creation','Leisure'\]/);
+assert.match(board, /Is this more about what you understand or about you being understood\?/);
+assert.match(board, /What area of life is asking loudest for understanding\?/);
+assert.match(board, /What is the nature of the subject requiring understanding\?/);
+assert.match(board, /pack:'courts'/);
+assert.match(board, /pack:'zodiac-majors'/);
+assert.match(board, /pack:'pips'/);
 assert.match(board, /basedOnTemplateId/);
 assert.match(board, /function markQuestionEditCustom\(drawer,draft\)/);
 assert.match(board, /draft\.templateId='';/);
