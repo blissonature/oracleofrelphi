@@ -129,7 +129,8 @@
   function normalizeOnCommit(input){
     const max=model()?.maxWindow??12,raw=input.value.trim().replace(',','.'),value=Number(raw);
     if(!Number.isFinite(value))return;
-    const bounded=Math.max(.25,Math.min(max,value));\n    input.value=String(Math.round(bounded*4)/4);
+    const bounded=Math.max(.25,Math.min(max,value));
+    input.value=String(Math.round(bounded*4)/4);
   }
   function driveFromInput(input,commit=false){
     if(commit)normalizeOnCommit(input);
