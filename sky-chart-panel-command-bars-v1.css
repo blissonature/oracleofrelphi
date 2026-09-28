@@ -1,5 +1,10 @@
 /* Focus / Relationships control architecture — direct structural rules, no late DOM shim. */
 
+#skyFoundationFocus,
+#skyFoundationRelationships{
+  container-type:inline-size;
+}
+
 #skyFoundationFocus>.sky-foundation-focus-heading,
 #skyFoundationRelationships>.sky-foundation-relationships-heading{
   display:flex!important;
@@ -179,14 +184,58 @@
 #skyFoundationFocus .sky-export-icon-button svg,
 #skyFoundationRelationships #skyChartRelationshipsExport svg{display:none!important}
 
-/* Prefer one row. Only use the title-alone first row when width genuinely runs out. */
-@media(max-width:1040px){
+/* Prefer one row. Fall back based on the panel width, not the browser width. */
+@container (max-width: 760px){
   #skyFoundationFocus>.sky-foundation-focus-heading,
   #skyFoundationRelationships>.sky-foundation-relationships-heading{
-    display:grid!important;grid-template-columns:1fr!important;gap:8px!important;
+    display:grid!important;
+    grid-template-columns:1fr!important;
+    grid-template-rows:auto auto!important;
+    gap:8px!important;
+  }
+  #skyFoundationFocus>.sky-foundation-focus-heading>h2,
+  #skyFoundationRelationships>.sky-foundation-relationships-heading>h2{
+    grid-column:1!important;
+    grid-row:1!important;
   }
   #skyFoundationFocus .sky-focus-heading-controls,
   #skyFoundationRelationships .sky-relationship-heading-actions{
-    width:100%!important;flex-wrap:wrap!important;
+    grid-column:1!important;
+    grid-row:2!important;
+    width:100%!important;
+    min-width:0!important;
+    flex-wrap:wrap!important;
+    justify-content:flex-start!important;
   }
+  #skyFoundationFocus .sky-export-wheel-slot,
+  #skyFoundationRelationships #skyFoundationRelationshipCount{
+    margin-left:auto!important;
+  }
+}
+
+/* At the actual narrow center-column size, keep every control visible instead of
+   allowing later controls to be pushed out of the panel. */
+@container (max-width: 430px){
+  #skyFoundationFocus .sky-focus-heading-controls,
+  #skyFoundationRelationships .sky-relationship-heading-actions{
+    gap:6px!important;
+  }
+  #skyFoundationFocus .sky-relationship-display-control{min-width:88px!important}
+  #skyFoundationFocus .sky-relationship-display-value{width:88px!important;min-width:88px!important;max-width:88px!important}
+  #skyFoundationFocus .sky-orb-number-field{width:64px!important;min-width:64px!important}
+  #skyFoundationFocus .sky-orb-number-field input{width:64px!important}
+  #skyFoundationFocus .sky-chart-placement-filter{min-width:98px!important;flex:1 1 98px!important}
+  #skyFoundationFocus .sky-chart-zodiac-filter{min-width:82px!important}
+  #skyFoundationFocus .sky-chart-zodiac-filter-toggle{width:82px!important}
+  #skyFoundationFocus .sky-chart-house-filter{min-width:88px!important;flex:1 1 88px!important}
+  #skyFoundationFocus .sky-export-wheel-slot{
+    flex:0 0 auto!important;
+    margin-left:auto!important;
+  }
+
+  #skyFoundationRelationships .sky-chart-aspect-filter{min-width:94px!important;flex:1 1 94px!important}
+  #skyFoundationRelationships .sky-relationship-configurations-control{min-width:118px!important;flex:1 1 118px!important}
+  #skyFoundationRelationships .sky-relationship-configurations-button{width:100%!important;min-width:118px!important}
+  #skyFoundationRelationships .sky-relationship-sort-control{min-width:106px!important;flex:1 1 106px!important}
+  #skyFoundationRelationships .sky-relationship-sort-control>select{width:100%!important;min-width:106px!important}
 }
