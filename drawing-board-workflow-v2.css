@@ -1996,3 +1996,27 @@ body.relphi-attune-open{overflow:hidden!important}
 #shortListPanel .relphi-referent-path-drawer>.relphi-referent-panel{
   margin:0!important;
 }
+
+
+/* Crafted path headers are collapsible drawers. */
+#shortListPanel .relphi-referent-path{
+  position:relative!important;
+  grid-template-columns:minmax(0,1fr) auto!important;
+  column-gap:.6rem!important;
+}
+#shortListPanel .relphi-referent-path>strong,
+#shortListPanel .relphi-referent-path>span{
+  grid-column:1!important;
+}
+#shortListPanel .relphi-referent-path::after{
+  content:'▸'!important;
+  grid-column:2!important;
+  grid-row:1 / span 2!important;
+  align-self:center!important;
+  color:#756a62!important;
+  font-size:.78rem!important;
+  line-height:1!important;
+}
+#shortListPanel .relphi-referent-path[aria-expanded="true"]::after{
+  content:'▾'!important;
+}
