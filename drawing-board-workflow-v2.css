@@ -1859,3 +1859,102 @@ body.relphi-attune-open{overflow:hidden!important}
   padding-top:.3rem!important;
   gap:.25rem!important;
 }
+
+
+/* Defensive control sizing: preserve labels, reflow controls, never clip text to keep a row. */
+#shortListPanel .relphi-board-commandbar{
+  flex-wrap:wrap!important;
+  min-width:0!important;
+}
+#shortListPanel .drawing-board-top-actions.relphi-board-command-actions{
+  display:flex!important;
+  flex:0 1 auto!important;
+  flex-wrap:wrap!important;
+  min-width:0!important;
+  max-width:100%!important;
+}
+#shortListPanel .drawing-board-top-actions.relphi-board-command-actions>button:not(.board-history-icon){
+  flex:0 0 auto!important;
+  width:auto!important;
+  min-width:max-content!important;
+  max-width:100%!important;
+  white-space:nowrap!important;
+  overflow:visible!important;
+  text-overflow:clip!important;
+}
+#shortListPanel .drawing-board-top-actions.relphi-board-command-actions>.board-history-icon{
+  flex:0 0 2.25rem!important;
+}
+#shortListPanel #relphiResetBoard{
+  min-width:max-content!important;
+  white-space:nowrap!important;
+}
+
+#shortListPanel .relphi-board-settings-panel,
+#shortListPanel .relphi-board-settings-body,
+#shortListPanel .relphi-free-settings,
+#shortListPanel .relphi-reading-options-drawer,
+#shortListPanel .relphi-options-body,
+#shortListPanel .relphi-referent-panel,
+#shortListPanel .relphi-bespoke-question-main,
+#shortListPanel .relphi-bespoke-question-settings,
+#shortListPanel .relphi-label-row{
+  min-width:0!important;
+}
+#shortListPanel .relphi-referent-path strong,
+#shortListPanel .relphi-referent-path span,
+#shortListPanel .relphi-sacred-card-source-choice span,
+#shortListPanel .relphi-surface-question-choice span,
+#shortListPanel .relphi-surface-select-all span,
+#shortListPanel .relphi-suggestion-copy,
+#shortListPanel .relphi-bespoke-question-settings label{
+  min-width:0!important;
+  overflow-wrap:anywhere!important;
+  word-break:normal!important;
+}
+#shortListPanel .relphi-board-settings-panel button,
+#shortListPanel .relphi-reading-options-drawer button{
+  text-overflow:clip!important;
+}
+#shortListPanel .relphi-options-subhead,
+#shortListPanel .relphi-bespoke-question-settings,
+#shortListPanel .relphi-surface-actions{
+  flex-wrap:wrap!important;
+}
+#shortListPanel .relphi-board-settings-footer>button,
+#shortListPanel .relphi-board-settings-panel .relphi-options-commitbar>button{
+  width:max-content!important;
+  min-width:max-content!important;
+  max-width:100%!important;
+  white-space:nowrap!important;
+}
+
+@media(max-width:760px){
+  #shortListPanel .drawing-board-top-actions.relphi-board-command-actions{
+    display:flex!important;
+    justify-content:flex-start!important;
+    align-items:center!important;
+    width:100%!important;
+    gap:.3rem!important;
+  }
+  #shortListPanel .drawing-board-top-actions.relphi-board-command-actions>button{
+    width:auto!important;
+  }
+}
+@media(max-width:360px){
+  #shortListPanel .relphi-board-commandbar{
+    padding-left:.55rem!important;
+    padding-right:.55rem!important;
+  }
+  #shortListPanel .drawing-board-top-actions.relphi-board-command-actions>button:not(.board-history-icon){
+    padding-left:.52rem!important;
+    padding-right:.52rem!important;
+  }
+  #shortListPanel .relphi-board-settings-panel button:not(.relphi-icon-button):not(.relphi-zoom-step):not(.board-history-icon),
+  #shortListPanel .relphi-reading-options-drawer button:not(.relphi-icon-button):not(.relphi-zoom-step):not(.board-history-icon){
+    height:auto!important;
+    min-height:2.15rem!important;
+    white-space:normal!important;
+    overflow-wrap:anywhere!important;
+  }
+}
