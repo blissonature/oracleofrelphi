@@ -1985,3 +1985,14 @@ body.relphi-attune-open{overflow:hidden!important}
   width:100%!important;
   text-align:left!important;
 }
+
+
+/* Crafted paths are accordion-like: each active drawer belongs directly to its header. */
+#shortListPanel .relphi-referent-path-drawer{
+  display:grid!important;
+  gap:.55rem!important;
+  min-width:0!important;
+}
+#shortListPanel .relphi-referent-path-drawer>.relphi-referent-panel{
+  margin:0!important;
+}
