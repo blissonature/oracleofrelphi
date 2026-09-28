@@ -351,14 +351,26 @@ async function assertReadableFocus(page) {
   await mobile.screenshot({path:path.join(out,'drawing-board-mobile-reset-options.png'),fullPage:true});
 
   const bulkQuestions=['What is changing?','What needs release?','What supports me?'];
-  const firstQuestion=mobile.locator('#relphiPositionLabels .relphi-label-row input').first();
-  await firstQuestion.fill(bulkQuestions.join(', '));
-  await firstQuestion.dispatchEvent('change');
+  await mobile.locator('#relphiBulkReferents').fill(bulkQuestions.join(', '));
+  await mobile.click('#relphiParseReferents');
   await mobile.waitForFunction(count => document.querySelectorAll('#relphiPositionLabels .relphi-label-row').length===count,bulkQuestions.length);
   assert.equal(await mobile.locator('#relphiPositionLabels').count(),1,'Options must show the individual label editor');
-  assert.equal(await mobile.locator('#relphiPositionLabels .relphi-label-row').count(),3,'comma-separated questions should create three individual label fields');
-  assert.deepEqual(await mobile.locator('#relphiPositionLabels .relphi-label-row input').evaluateAll(nodes=>nodes.map(node=>node.value)),bulkQuestions,'individual label fields must mirror the comma-separated first field');
-  await mobile.screenshot({path:path.join(out,'drawing-board-mobile-comma-list-questions.png'),fullPage:true});
+  assert.equal(await mobile.locator('#relphiPositionLabels .relphi-label-row').count(),3,'Parse must create three individual question fields');
+  assert.deepEqual(await mobile.locator('#relphiPositionLabels [data-position-label]').evaluateAll(nodes=>nodes.map(node=>node.value)),bulkQuestions,'parsed questions must populate the individual fields');
+
+  // Regression: per-question controls live inside the same delegated labels container.
+  // Toggling Repeats used to be mistaken for editing Question 1 ("on"), replacing the parsed questions.
+  await mobile.locator('[data-position-repeats="0"]').evaluate(input=>{
+    input.checked=true;
+    input.dispatchEvent(new Event('input',{bubbles:true}));
+    input.dispatchEvent(new Event('change',{bubbles:true}));
+  });
+  await mobile.waitForFunction(count => document.querySelectorAll('#relphiPositionLabels [data-position-label]').length===count,bulkQuestions.length);
+  assert.deepEqual(await mobile.locator('#relphiPositionLabels [data-position-label]').evaluateAll(nodes=>nodes.map(node=>node.value)),bulkQuestions,'turning on per-question Repeats must not overwrite parsed questions');
+
+  await mobile.locator('#relphiDraftRepeats').check();
+  assert.deepEqual(await mobile.locator('#relphiPositionLabels [data-position-label]').evaluateAll(nodes=>nodes.map(node=>node.value)),bulkQuestions,'turning on global Repeats must not overwrite parsed questions');
+  await mobile.screenshot({path:path.join(out,'drawing-board-mobile-parsed-questions-repeats.png'),fullPage:true});
   await mobile.click('#relphiApplyOptions');
   await mobile.waitForFunction(() => {
     const state=window.RelphiDrawingBoardPrefabsBridge?.getState?.();
