@@ -1964,3 +1964,24 @@ body.relphi-attune-open{overflow:hidden!important}
 #shortListPanel .relphi-building-grid label:last-child{
   grid-column:auto!important;
 }
+
+
+/* Generated Building Block referents read as text, not centered controls. */
+#shortListPanel .relphi-suggestions-review .relphi-options-subhead{
+  justify-content:flex-start!important;
+  align-items:flex-start!important;
+  text-align:left!important;
+}
+#shortListPanel .relphi-suggestions-review .relphi-options-subhead>span{
+  width:100%!important;
+  text-align:left!important;
+}
+#shortListPanel .relphi-suggestions-review .relphi-suggestion-copy{
+  justify-items:start!important;
+  text-align:left!important;
+}
+#shortListPanel .relphi-suggestions-review .relphi-suggestion-copy>strong,
+#shortListPanel .relphi-suggestions-review .relphi-suggestion-copy>small{
+  width:100%!important;
+  text-align:left!important;
+}
