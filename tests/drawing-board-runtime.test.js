@@ -158,6 +158,26 @@ async function assertReadableFocus(page) {
   await waitReady(mobile);
   await openBoard(mobile);
   assert.equal(await mobile.locator('#zoomCardRowExtents').count(),1);
+
+  // Height-only mobile viewport changes (browser chrome appearing/disappearing while scrolling)
+  // must not refit the board or change card scale.
+  await mobile.locator('#rowZoom').evaluate(input=>{
+    input.value='0.73';
+    input.dispatchEvent(new Event('input',{bubbles:true}));
+    input.dispatchEvent(new Event('change',{bubbles:true}));
+  });
+  const beforeHeightOnlyResize=await mobile.evaluate(()=>({
+    zoom:window.RelphiDrawingBoardOptionsBridge?.capture?.()?.rowZoom,
+    height:document.querySelector('#shortListPanel .card-row-workspace')?.getBoundingClientRect().height
+  }));
+  await mobile.evaluate(()=>window.dispatchEvent(new Event('resize')));
+  await mobile.waitForTimeout(80);
+  const afterHeightOnlyResize=await mobile.evaluate(()=>({
+    zoom:window.RelphiDrawingBoardOptionsBridge?.capture?.()?.rowZoom,
+    height:document.querySelector('#shortListPanel .card-row-workspace')?.getBoundingClientRect().height
+  }));
+  assert.equal(afterHeightOnlyResize.zoom,beforeHeightOnlyResize.zoom,'height-only resize must not refit Drawing Board zoom');
+  assert.equal(Math.round(afterHeightOnlyResize.height),Math.round(beforeHeightOnlyResize.height),'height-only resize must not change Drawing Board height');
   assert.equal(await mobile.locator('.relphi-tool-trigger[data-tool="more"]').count(),1,'advanced board tools should live behind one ellipsis button');
   assert.equal(await mobile.locator('.relphi-tool-trigger[data-tool="snaps"]').count(),0,'Snaps should not occupy the main zoom toolbar');
   assert.equal(await mobile.locator('.relphi-tool-trigger[data-tool="background"]').count(),0,'Background should not occupy the main zoom toolbar');
