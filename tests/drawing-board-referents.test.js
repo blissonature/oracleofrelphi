@@ -12,6 +12,7 @@ const base='http://127.0.0.1:8000/tarot.html';
     await page.goto(base,{waitUntil:'domcontentloaded',timeout:30000});
     await page.click('#relphiOpenDrawingBoardCurrent');
     await page.waitForSelector('#shortListPanel',{state:'visible',timeout:20000});
+    const diag=await page.evaluate(()=>({panel:document.querySelector('#shortListPanel')?.innerHTML.slice(0,300),drawer:!!document.querySelector('#shortListPanel .card-row-drawing-board'),trigger:document.querySelector('#relphiOpenDrawingBoardCurrent')?.outerHTML,errors:[]})); console.log('BOARD_INIT_DIAG',JSON.stringify(diag));
     await page.waitForSelector('#drawingBoardOptionsButton',{state:'attached',timeout:20000});
     const panel=page.locator('#shortListPanel');
     await panel.waitFor({state:'visible'});
