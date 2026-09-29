@@ -19,6 +19,9 @@ async function openBoard(page) {
   await panel.waitFor({state:'visible'});
   await page.waitForFunction(() => !!document.querySelector('#shortListPanel details.short-list-drawer')?.open);
   await page.waitForSelector('#shortListPanel #zoomCardRowExtents',{timeout:10000});
+  await page.click('#drawingBoardOptionsButton');
+  await page.click('[data-relphi-options-path="templates"]');
+  await page.waitForFunction(() => document.body.innerText.includes('Opening of the Key · First Operation'));
 }
 async function applyCeltic(page) {
   await page.click('#drawingBoardOptionsButton');
