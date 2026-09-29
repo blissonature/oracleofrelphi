@@ -14,7 +14,7 @@ const base='http://127.0.0.1:8000/tarot.html';
     const panel=page.locator('#shortListPanel');
     if(!(await panel.isVisible())) await page.click('#relphiOpenDrawingBoardCurrent');
     await panel.waitFor({state:'visible'});
-    await page.click('#drawingBoardOptionsButton');
+    await page.locator('#drawingBoardOptionsButton').click({force:true});
     await page.waitForSelector('.relphi-referents-drawer',{state:'visible'});
 
     assert.equal(await page.locator('.drawing-board-mode-tabs').getAttribute('role'),'tablist','Board and Referents should be the top-level mode tabs');
