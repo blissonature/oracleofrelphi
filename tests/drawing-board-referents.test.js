@@ -10,7 +10,12 @@ const base='http://127.0.0.1:8000/tarot.html';
     const errors=[];
     page.on('pageerror',error=>errors.push(error?.stack||String(error)));
     await page.goto(base,{waitUntil:'domcontentloaded',timeout:30000});
-    await page.click('#relphiOpenDrawingBoardCurrent');
+    await page.evaluate(()=>{
+      const trigger=document.querySelector('#relphiOpenDrawingBoardCurrent');
+      trigger?.click();
+    });
+    await page.waitForFunction(()=>document.querySelector('#relphiOpenDrawingBoardCurrent')?.getAttribute('aria-expanded')==='true');
+    await page.waitForFunction(()=>!!document.querySelector('#shortListPanel .card-row-drawing-board'),null,{timeout:20000});
     await page.waitForSelector('#shortListPanel',{state:'visible',timeout:20000});
     const diag=await page.evaluate(()=>({panel:document.querySelector('#shortListPanel')?.innerHTML.slice(0,300),drawer:!!document.querySelector('#shortListPanel .card-row-drawing-board'),trigger:document.querySelector('#relphiOpenDrawingBoardCurrent')?.outerHTML,errors:[]})); console.log('BOARD_INIT_DIAG',JSON.stringify(diag));
     await page.waitForSelector('#relphiBoardSettingsButton',{state:'attached',timeout:20000});
