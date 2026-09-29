@@ -14,8 +14,10 @@ async function waitReady(page) {
 }
 async function openBoard(page) {
   const panel=page.locator('#shortListPanel');
-  if (!(await panel.isVisible())) await page.click('#relphiOpenDrawingBoardCurrent');
+  const drawer=page.locator('#shortListPanel details.short-list-drawer');
+  if (!(await panel.isVisible()) || !(await drawer.getAttribute('open'))) await page.click('#relphiOpenDrawingBoardCurrent');
   await panel.waitFor({state:'visible'});
+  await page.waitForFunction(() => !!document.querySelector('#shortListPanel details.short-list-drawer')?.open);
   await page.waitForSelector('#shortListPanel #zoomCardRowExtents',{timeout:10000});
 }
 async function applyCeltic(page) {
