@@ -4417,14 +4417,16 @@
         if(commandDetails)commandDetails.open=true;
         const root=panel();
         if(root){root.hidden=false;root.removeAttribute('hidden');}
-        const bridge=optionsBridge();
-        if(bridge?.capture&&bridge?.restore){
+        const openNative=()=>{
+          const bridge=optionsBridge();
+          if(!bridge?.capture||!bridge?.restore){setTimeout(openNative,25);return;}
           const snap=bridge.capture();
           if(snap){snap.cardRowBoardOpen=true;bridge.restore(snap);}
-        }
-        const legacy=document.getElementById('landingOpenBoard');
-        if(legacy)legacy.click();
-        requestAnimationFrame(()=>setBoardOpen(true,{fit:true}));
+          const legacy=document.getElementById('landingOpenBoard');
+          if(legacy)legacy.click();
+          requestAnimationFrame(()=>setBoardOpen(true,{fit:true}));
+        };
+        openNative();
       } else setBoardOpen(false,{fit:false});
       return;
     }
