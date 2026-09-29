@@ -4,7 +4,7 @@
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <link href="favicon.ico" rel="icon" type="image/x-icon"/>
-  <title>Tarot Ledger · Oracle of Relphi</title>
+  <title>Oracle of Relphi</title>
   <meta name="robots" content="noindex,nofollow,noarchive"/>
   <link href="style.css?v=368" rel="stylesheet"/>
   <link href="drawing-board-workflow-v2.css?v=73" rel="stylesheet"/>
@@ -12,14 +12,10 @@
 <body>
   <div id="nav-placeholder"></div>
   <main class="tarot-app-shell">
-    <section class="tarot-hero compact">
-      <h1>Tarot <span class="red">Ledger</span></h1>
-      <p class="relphi-tool-brandline">an Oracle of Relphi tool</p>
-      <section class="tarot-mode-bar tarot-mode-bar--ledger tarot-mode-bar--hero" aria-label="Tarot Ledger controls">
-        <button id="showAllCards" type="button">Show All Cards</button>
-        <button id="relphiOpenDrawingBoardCurrent" type="button" aria-controls="shortListPanel" aria-expanded="false">Open Drawing Board</button>
-        <button id="clearSearch" type="button" title="Hide card results without clearing the Drawing Board">Hide Cards</button>
-      </section>
+    <section class="tarot-home-actions" aria-label="Primary actions">
+      <button id="showAllCards" type="button">Show All Cards</button>
+      <button id="relphiOpenDrawingBoardCurrent" type="button" aria-controls="shortListPanel" aria-expanded="false">Open Drawing Board</button>
+      <button id="clearSearch" type="button" title="Hide card results without clearing the Drawing Board">Hide Cards</button>
     </section>
 
     <section class="tarot-command-panel tarot-command-panel--primary" aria-label="Tarot search">
@@ -32,6 +28,22 @@
         <button class="clear-keywords-button" type="button" data-clear-search-terms>Clear</button>
       </div>
       <div id="commandMenu" class="command-menu" hidden></div>
+    </section>
+
+    <section class="relphi-ledger-home" aria-label="Oracle of Relphi">
+      <div class="relphi-ledger-home-copy">
+        <p class="anniversary-kicker">Anniversary Edition · Living Architecture</p>
+        <h2 class="relphi-ledger-home-title">Oracle of <span class="red">Relphi</span></h2>
+        <p class="architecture-lede">A living symbolic learning environment for tarot, astrology, planetary timing, glyph literacy, and mythic correspondence.</p>
+        <p class="architecture-sublede">Search the deck here. Use the Relphi logo to search, navigate, and command the rest of the working system.</p>
+      </div>
+      <div class="relphi-ledger-home-tools" aria-label="Relphi instruments">
+        <a href="sky-chart.html"><strong>Sky Chart</strong><span>Build · Compare · Relate</span></a>
+        <a href="planetaryhours.html"><strong>Planetary Hours</strong><span>Day · Hour · Moon</span></a>
+        <a href="glyphs.html"><strong>Glyph Trainer</strong><span>Learn the marks</span></a>
+        <a href="astrology-foundations.html"><strong>Astrology Foundations</strong><span>Planets · Signs · Houses</span></a>
+        <a href="tools.html"><strong>All Tools</strong><span>Explore the full system</span></a>
+      </div>
     </section>
 
     <div class="tarot-mode-bar tarot-mode-bar--ledger" hidden aria-hidden="true">
