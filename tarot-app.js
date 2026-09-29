@@ -10312,7 +10312,7 @@ ${notes || ''}`;
     }
     const landingDraw = $('landingDrawCard'); if (landingDraw) landingDraw.addEventListener('click', event => { event.preventDefault(); showDrawingBoardFromLanding(true); });
     const landingBoard = $('landingOpenBoard'); if (landingBoard) landingBoard.addEventListener('click', event => { event.preventDefault(); showDrawingBoardFromLanding(false); });
-    const currentBoard = $('relphiOpenDrawingBoardCurrent'); if (currentBoard) currentBoard.addEventListener('click', event => { event.preventDefault(); showDrawingBoardFromLanding(false); });
+    const currentBoard = $('relphiOpenDrawingBoardCurrent'); if (currentBoard) currentBoard.addEventListener('click', event => { event.preventDefault(); showDrawingBoardFromLanding(false); }, true);
     const landingLedger = $('landingShowLedger'); if (landingLedger) landingLedger.addEventListener('click', event => { event.preventDefault(); collapseCardRow(); setVisible('shortListPanel', false); state.mode = 'all'; state.query = ''; state.cardFilters = []; state.selected = null; renderBrowse(); showPanel('browsePanel'); $('browsePanel')?.scrollIntoView({ behavior:'smooth', block:'start' }); });
     renderShortList();
     if (state.mode !== 'board' && !drawingBoardHasContent(storedDrawingBoardSnapshot())) { collapseCardRow(); setVisible('shortListPanel', false); const boardTrigger=$('relphiOpenDrawingBoardCurrent'); if(boardTrigger){ boardTrigger.textContent='Open Drawing Board'; boardTrigger.setAttribute('aria-expanded','false'); } }
