@@ -2194,3 +2194,7 @@ body.relphi-attune-open{overflow:hidden!important}
   contain:paint!important;
   clip-path:inset(0 round 14px)!important;
 }
+
+/* Bespoke sacred-reading continuation: keep the construction action present but subordinate. */
+.relphi-bespoke-continue{display:flex;justify-content:center;padding:.55rem .75rem .85rem;}
+.relphi-bespoke-ask-another{font:inherit;border:1px solid currentColor;border-radius:999px;background:transparent;padding:.45rem .85rem;cursor:pointer;}
