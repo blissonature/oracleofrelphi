@@ -4289,6 +4289,7 @@
     ensureBoardChrome(root);
     installTopActions(root);
     installPermanentControls(root);
+    installBespokeContinuation(root);
     syncZoomToolbarVisibility(root);
     installPinchZoom(root);
     installReadingTextArea(root);
@@ -4353,6 +4354,18 @@
       setTimeout(()=>installRecursionBoard(panel()),0);
     }
     return true;
+  }
+
+  function installBespokeContinuation(root=panel()) {
+    if(!root)return;
+    root.querySelector('.relphi-bespoke-continue')?.remove();
+    if(!bespokeEditingAllowed(root)||!craftedReadingActive)return;
+    const board=root.querySelector('.card-row-drawing-board')||root;
+    const wrap=document.createElement('div');
+    wrap.className='relphi-bespoke-continue';
+    wrap.innerHTML='<button type="button" class="relphi-bespoke-ask-another">＋ Ask another question</button>';
+    wrap.querySelector('button').addEventListener('click',promptForBespokeQuestion);
+    board.appendChild(wrap);
   }
 
   function globalCapture(event) {
