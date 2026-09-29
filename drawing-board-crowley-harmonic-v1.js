@@ -1,7 +1,7 @@
 // Crowley harmonic divination helper for the Drawing Board.
 (function(){
   'use strict';
-  if(!/(^|\/)tarot\.html$/.test(location.pathname)) return;
+  if(!location.pathname.endsWith('/tarot.html') && location.pathname !== 'tarot.html') return;
   if(window.__relphiCrowleyHarmonicV1) return;
   window.__relphiCrowleyHarmonicV1=true;
 
