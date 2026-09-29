@@ -4371,6 +4371,10 @@
     if (trigger) {
       event.preventDefault(); event.stopImmediatePropagation();
       const wasOpen=trigger.getAttribute('aria-expanded')==='true';
+      if (!wasOpen) {
+        const legacy=document.getElementById('landingOpenBoard');
+        if (legacy) legacy.click();
+      }
       setBoardOpen(!wasOpen,{fit:!wasOpen});
       return;
     }
