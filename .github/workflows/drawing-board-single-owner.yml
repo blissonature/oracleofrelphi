@@ -30,6 +30,8 @@ jobs:
         run: |
           node --check drawing-board-workflow-v2.js
           node --check navloader.js
+          node --check tarot-app.js
+          node --check drawing-board-crowley-harmonic-v1.js
           node --check tests/drawing-board-single-owner.test.js
           node --check tests/drawing-board-workflow-v2.test.js
           node --check tests/drawing-board-spread-prefabs.test.js
