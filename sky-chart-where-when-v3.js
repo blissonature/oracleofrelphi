@@ -127,7 +127,14 @@ function editorMarkup(slot,p){
 }
 function moveHeptagramIntoEditor(slot){
   const refs=shell(slot),mount=refs?.editor?.querySelector(`[data-ww-heptagram-slot="${slot}"]`),frame=refs?.root?.querySelector(`[data-sky-heptagram-frame="${slot}"]`);
-  if(mount&&frame)mount.prepend(frame);
+  const existingProfile=profileFor(slot);
+  // A fresh Add Sky B editor must begin neutral. Do not carry the shell's
+  // mini-heptagram into the editor until this slot already owns a complete sky.
+  if(!completeProfile(existingProfile)){
+    if(mount)mount.hidden=true;
+    return;
+  }
+  if(mount&&frame){mount.hidden=false;mount.prepend(frame)}
 }
 function restoreHeptagram(slot){const refs=shell(slot),frame=refs?.root?.querySelector(`[data-sky-heptagram-frame="${slot}"]`);if(refs?.summary&&frame&&!refs.summary.contains(frame))refs.summary.prepend(frame)}
 function openEditor(slot,focus=false){
