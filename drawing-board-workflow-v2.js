@@ -4412,12 +4412,10 @@
       event.preventDefault(); event.stopImmediatePropagation();
       const wasOpen=trigger.getAttribute('aria-expanded')==='true';
       if (!wasOpen) {
-        trigger.setAttribute('aria-expanded','false');
-        setTimeout(()=>{
-          const legacy=document.getElementById('landingOpenBoard');
-          if (legacy) legacy.click();
-          setTimeout(()=>setBoardOpen(true,{fit:true}),0);
-        },0);
+        trigger.setAttribute('aria-expanded','true');
+        const legacy=document.getElementById('landingOpenBoard');
+        if (legacy) legacy.click();
+        requestAnimationFrame(()=>setBoardOpen(true,{fit:true}));
       } else setBoardOpen(false,{fit:false});
       return;
     }
