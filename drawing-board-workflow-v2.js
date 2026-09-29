@@ -44,6 +44,7 @@
   let boardConfigurationOpen = false;
   let boardBackgroundMode = '';
   const BOARD_TRANSFORM_LOCKS_KEY = 'relphiBoardTransformLocksV1';
+  const BOARD_CARD_CONTROLS_KEY = 'relphiBoardCardControlsV1';
   const BOARD_BACKGROUND_DEFAULT_KEY = 'relphiBoardBackgroundDefaultV1';
   const BOARD_RECENT_COLORS_KEY = 'relphiBoardRecentColorsV1';
   const BOARD_RECENT_IMAGES_KEY = 'relphiBoardRecentImagesV1';
@@ -70,8 +71,9 @@
     if(craftedReadingActive||boardHasCraftedStructure(root))return persistedCraftedPath(root)==='bespoke';
     return true;
   }
+  function cardControlsEnabled(){ try{return localStorage.getItem(BOARD_CARD_CONTROLS_KEY)!=='false';}catch(_){return true;} }
   function transformEditingAllowed(root=panel()) {
-    if(!root)return false;
+    if(!root||!cardControlsEnabled())return false;
     if(settingsOpen)return settingsMode==='free' || String(optionsSession?.path||activeCraftedPath||'')==='bespoke';
     if(craftedReadingActive||boardHasCraftedStructure(root))return persistedCraftedPath(root)==='bespoke';
     return true;
@@ -785,12 +787,13 @@
 
     const controlGroup=document.createElement('div');
     controlGroup.className='relphi-board-configuration-group';
-    controlGroup.innerHTML='<strong>Card controls</strong><div class="relphi-control-toggles"></div>';
+    controlGroup.innerHTML='<strong>Card controls</strong><label class="relphi-setting-toggle"><input type="checkbox" data-card-controls-master '+(cardControlsEnabled()?'checked':'')+'> Enable card controls</label><div class="relphi-control-toggles"></div>';
+    controlGroup.querySelector('[data-card-controls-master]')?.addEventListener('change',event=>{try{localStorage.setItem(BOARD_CARD_CONTROLS_KEY,String(event.target.checked));}catch(_){}syncTransformEditingAvailability(root);renderBoardConfiguration(root);});
     const controlToggles=controlGroup.querySelector('.relphi-control-toggles');
     const locks=transformLocks();
     [['drag','Drag'],['rotation','Rotation'],['scale','Scale']].forEach(([key,label])=>{
       const row=document.createElement('label');
-      row.innerHTML='<input type="checkbox" '+(locks[key]?'checked':'')+'> '+label;
+      row.innerHTML='<input type="checkbox" '+(locks[key]?'checked':'')+' '+(!cardControlsEnabled()?'disabled':'')+'> '+label;
       row.querySelector('input').addEventListener('change',event=>{
         const next=transformLocks();next[key]=event.target.checked;writeTransformLocks(next);syncTransformEditingAvailability(root);renderBoardConfiguration(root);
       });
@@ -1089,7 +1092,7 @@
       root.classList.add('relphi-board-ready');
       enhance(root);
       requestAnimationFrame(() => root.scrollIntoView({ behavior:'smooth', block:'start' }));
-      if (fit) setTimeout(zoomExtents, 0);
+      if (fit) { requestAnimationFrame(()=>requestAnimationFrame(zoomExtents)); setTimeout(zoomExtents, 180); }
     } else {
       closeFocus({ acknowledge:true, advanceSurface:false });
       optionsSession = null;
@@ -1401,13 +1404,14 @@
       ['pips','Pips'],['decans','Decan pips'],['wands','Wands'],['cups','Cups'],['swords','Swords'],['pentacles','Pentacles / Disks'],['tags','Keywords / Tags']
     ]; }
   function packLabel(value){ return packItems().find(([id])=>id===value)?.[1] || value || 'Full Pack'; }
-  function packOptions(value) {
+  function packOptions(value, {questionByQuestion=false} = {}) {
     const items = [
       ['full','Full Pack'],['shown','Shown cards'],['uhn','Universal Human Needs'],['majors','Majors'],
       ['primordial-majors','Primordial Element Majors'],['planetary-majors','Planetary Majors'],['zodiac-majors','Zodiac Majors'],['aces','Aces'],['courts','Courts'],
       ['pips','Pips'],['decans','Decan pips'],['wands','Wands'],['cups','Cups'],['swords','Swords'],['pentacles','Pentacles / Disks'],['tags','Keywords / Tags']
     ];
-    return items.map(([id,label])=>`<option value="${id}" ${value===id?'selected':''}>${label}</option>`).join('');
+    const prefix=questionByQuestion ? `<option value="question-by-question" ${value==='question-by-question'?'selected':''}>Question by question</option>` : '';
+    return prefix+items.map(([id,label])=>`<option value="${id}" ${value===id?'selected':''}>${label}</option>`).join('');
   }
   function keywordDraftMarkup(draft) {
     if (draft.pack!=='tags') return '';
@@ -1437,7 +1441,7 @@
         draft.positionPacks ||= []; draft.positionPacks[index]=draft.positionSettings[index].pack;
       }
       const settings=draft?.positionSettings?.[index]||inherited;
-      return `<div class="relphi-label-row relphi-bespoke-question-row" data-label-row="${index}"><span>${index+1}</span><div class="relphi-bespoke-question-main"><input type="text" value="${escapeHtml(label)}" aria-label="Position ${index+1} label" data-position-label="${index}"><div class="relphi-bespoke-question-settings"><label>Sub-pack<select data-position-pack="${index}">${packOptions(settings.pack||'full')}</select></label><label>Cards<input type="number" min="1" max="12" value="${Math.max(1,Number(settings.cardCount)||1)}" data-position-card-count="${index}" aria-label="Cards to draw for question ${index+1}"></label><label>Share card with<select data-position-link="${index}"><option value="">No link</option>${rows.map((other,j)=>j===index?'':`<option value="${j}" ${String(settings.linkTo)===String(j)?'selected':''}>Question ${j+1}</option>`).join('')}</select></label></div><details class="relphi-question-advanced"><summary>Advanced</summary><div><label><input type="checkbox" data-position-reversals="${index}" ${settings.reversals!==false?'checked':''}> Reversals</label><label><input type="checkbox" data-position-repeats="${index}" ${settings.repeats?'checked':''}> Repeats</label></div></details></div><button type="button" data-remove-label="${index}" aria-label="Remove position ${index+1}">×</button></div>`;
+      return `<div class="relphi-label-row relphi-bespoke-question-row" data-label-row="${index}"><span>${index+1}</span><div class="relphi-bespoke-question-main"><input type="text" value="${escapeHtml(label)}" aria-label="Position ${index+1} label" data-position-label="${index}"><div class="relphi-bespoke-question-settings"><label>Sub-pack<select data-position-pack="${index}">${packOptions(settings.pack||'full')}</select></label><label>Cards<input type="number" min="1" max="12" value="${Math.max(1,Number(settings.cardCount)||1)}" data-position-card-count="${index}" aria-label="Cards to draw for question ${index+1}"></label><label>Share card with<select data-position-link="${index}"><option value="">No link</option>${rows.map((other,j)=>j===index?'':`<option value="${j}" ${String(settings.linkTo)===String(j)?'selected':''}>Question ${j+1}</option>`).join('')}</select></label></div><details class="relphi-question-advanced"><summary>Advanced</summary><div><label><input type="checkbox" data-position-reversals="${index}" ${settings.reversals!==false?'checked':''}> Reversals</label><label><input type="checkbox" data-position-repeats="${index}" ${settings.repeats?'checked':''}> Repeats</label></div></details></div><div class="relphi-question-order-controls"><button type="button" data-move-label="up" data-label-index="${index}" ${index===0?'disabled':''} aria-label="Move question ${index+1} up">↑</button><button type="button" data-move-label="down" data-label-index="${index}" ${index===rows.length-1?'disabled':''} aria-label="Move question ${index+1} down">↓</button><button type="button" data-remove-label="${index}" aria-label="Remove position ${index+1}">×</button></div></div>`;
     }).join('');
   }
   function parseBulkQuestions(value) {
@@ -2197,6 +2201,17 @@
       queueMicrotask(()=>{ if (optionsSession && labelsList?.isConnected) acceptCommaList(value); });
     });
     labelsList?.addEventListener('click',event=>{
+      const mover=event.target.closest('[data-move-label]');
+      if(mover){
+        const from=Number(mover.dataset.labelIndex),to=mover.dataset.moveLabel==='up'?from-1:from+1;
+        if(to>=0&&to<draft.labels.length){
+          [draft.labels[from],draft.labels[to]]=[draft.labels[to],draft.labels[from]];
+          draft.positionPacks ||= []; [draft.positionPacks[from],draft.positionPacks[to]]=[draft.positionPacks[to],draft.positionPacks[from]];
+          draft.positionSettings ||= []; [draft.positionSettings[from],draft.positionSettings[to]]=[draft.positionSettings[to],draft.positionSettings[from]];
+          markQuestionEditCustom(drawer,draft);renderOptions(root);
+        }
+        return;
+      }
       const button=event.target.closest('[data-remove-label]');
       if (!button) return;
       const index=Number(button.dataset.removeLabel);
@@ -2210,7 +2225,7 @@
       const previous=draft.positionSettings?.[draft.positionSettings.length-1] || {pack:draft.pack||'full',reversals:draft.reversals!==false,repeats:!!draft.repeats,cardCount:1,linkTo:''};
       draft.labels.push(''); draft.positionPacks?.push?.(previous.pack||'full'); draft.positionSettings ||= []; draft.positionSettings.push({...previous}); markQuestionEditCustom(drawer,draft); renderOptions(root);
     });
-    drawer.querySelectorAll('[data-position-pack]').forEach(select=>select.addEventListener('change',()=>{const i=Number(select.dataset.positionPack);draft.positionSettings ||= [];const prior=draft.positionSettings[i]||{};draft.positionSettings[i]={...prior,pack:select.value||'full'};draft.positionPacks ||= [];draft.positionPacks[i]=select.value||'full';}));
+    drawer.querySelectorAll('[data-position-pack]').forEach(select=>select.addEventListener('change',()=>{const i=Number(select.dataset.positionPack);draft.positionSettings ||= [];const prior=draft.positionSettings[i]||{};draft.positionSettings[i]={...prior,pack:select.value||'full'};draft.positionPacks ||= [];draft.positionPacks[i]=select.value||'full';draft.pack='question-by-question';const global=drawer.querySelector('#relphiDraftPack');if(global)global.value='question-by-question';}));
     drawer.querySelectorAll('[data-position-card-count]').forEach(input=>input.addEventListener('change',()=>{const i=Number(input.dataset.positionCardCount);draft.positionSettings ||= [];const prior=draft.positionSettings[i]||{};draft.positionSettings[i]={...prior,cardCount:Math.max(1,Math.min(12,Number(input.value)||1))};}));
     drawer.querySelectorAll('[data-position-link]').forEach(select=>select.addEventListener('change',()=>{const i=Number(select.dataset.positionLink);draft.positionSettings ||= [];const prior=draft.positionSettings[i]||{};draft.positionSettings[i]={...prior,linkTo:select.value};}));
     drawer.querySelectorAll('[data-position-reversals]').forEach(input=>input.addEventListener('change',()=>{
@@ -2327,7 +2342,7 @@
       renderOptions(root);
     });
 
-    drawer.querySelector('#relphiDraftPack')?.addEventListener('change',event=>{draft.pack=event.target.value; const body=drawer.querySelector('.relphi-options-body'); const scrollTop=body?.scrollTop||0; renderOptions(root); const next=root.querySelector('.relphi-options-body'); if(next) next.scrollTop=scrollTop;});
+    drawer.querySelector('#relphiDraftPack')?.addEventListener('change',event=>{draft.pack=event.target.value;if(draft.pack!=='question-by-question'&&session.path==='bespoke'){draft.positionPacks=draft.labels.map(()=>draft.pack);draft.positionSettings=(draft.positionSettings||[]).map(item=>({...item,pack:draft.pack}));} const body=drawer.querySelector('.relphi-options-body'); const scrollTop=body?.scrollTop||0; renderOptions(root); const next=root.querySelector('.relphi-options-body'); if(next) next.scrollTop=scrollTop;});
     const keywordQuery=drawer.querySelector('#relphiKeywordQuery');
     keywordQuery?.addEventListener('input',event=>renderKeywordMatches(drawer,draft,event.target.value));
     drawer.querySelectorAll('input[name="relphiKeywordMode"]').forEach(input=>input.addEventListener('change',()=>{draft.keywordMatchMode=input.value==='all'?'all':'any'; renderOptions(root);}));
@@ -2360,7 +2375,7 @@
     const positions=(based?.positions?.length===draft.labels.length ? clone(based.positions) : genericPositions(draft.labels));
     positions.forEach((item,index)=>{ item.label=draft.labels[index] || `Position ${index+1}`; item.drawOrder=index+1; });
     const id=`custom-${slug(name)}-${draft.labels.length}`;
-    const custom={version:1,id,name,cardCount:draft.labels.length,source:'custom',editable:true,basedOn:based?.id||null,positions,rules:{allowReversals:draft.reversals,allowRepeats:draft.repeats,drawScope:draft.pack}};
+    const custom={version:1,id,name,cardCount:draft.labels.length,source:'custom',editable:true,basedOn:based?.id||null,positions,rules:{allowReversals:draft.reversals,allowRepeats:draft.repeats,drawScope:(draft.pack==='question-by-question'?'full':draft.pack)}};
     const items=readCustomTemplates().filter(item=>item.id!==id);
     items.push(custom); writeCustomTemplates(items);
     draft.templateId=id;
