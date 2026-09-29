@@ -1076,7 +1076,7 @@
     return draftLayout !== baseLayout || JSON.stringify(session.draft.labels) !== JSON.stringify(baseLabels) || JSON.stringify(draftPacks)!==JSON.stringify(basePacks);
   }
 
-  function setBoardOpen(open, { fit = false } = {}) {
+  function setBoardOpen(open, { fit = true } = {}) {
     const root = panel();
     const trigger = document.getElementById('relphiOpenDrawingBoardCurrent');
     boardOpen = !!open;
