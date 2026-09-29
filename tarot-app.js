@@ -4580,6 +4580,18 @@
     if (value.startsWith('/')) { handleSlash(value); return; }
     if (openSkyChartFromPastedSearch(value)) return;
     if (openDateFromSearch(value)) return;
+    // Natural-language questions entered at the Relphi landing surface are readings,
+    // not keyword searches. Establish the exact question as Bespoke position one.
+    if (/\?\s*$/.test(value) && typeof window.RelphiLaunchBespokeQuestion === 'function') {
+      hideCommandMenu();
+      if (window.RelphiLaunchBespokeQuestion(value)) {
+        state.mode='board';
+        state.query='';
+        $('oracleCommand').value='';
+        updateSummary([]);
+        return;
+      }
+    }
     if (!preserveFilters) state.cardFilters = [];
     state.mode = 'search'; state.query = value; showPanel('browsePanel'); setVisible('visibilityPanel', false); hideCommandMenu(); renderBrowse(); if (saveHistory) pushHistory();
   }
