@@ -10310,7 +10310,23 @@ ${notes || ''}`;
       else $('shortListPanel')?.scrollIntoView({ behavior:'smooth', block:'start' });
       updateSummary([]);
     }
-    const currentBoard = $('relphiOpenDrawingBoardCurrent'); if (currentBoard) currentBoard.addEventListener('click', event => { event.preventDefault(); const panel=$('shortListPanel'); const drawer=panel?.querySelector('details.short-list-drawer'); const isOpen=!!drawer?.open && !panel?.hidden; if(isOpen){ collapseCardRow(); setVisible('shortListPanel', false); currentBoard.textContent='Open Drawing Board'; currentBoard.setAttribute('aria-expanded','false'); return; } showDrawingBoardFromLanding(false); });
+    const currentBoard = $('relphiOpenDrawingBoardCurrent');
+    if (currentBoard) currentBoard.addEventListener('click', event => {
+      event.preventDefault();
+      state.mode = 'board';
+      renderShortList();
+      const panel = $('shortListPanel');
+      const drawer = panel?.querySelector('details.short-list-drawer');
+      const opening = !drawer?.open || !!panel?.hidden;
+      if (panel) panel.hidden = !opening;
+      if (drawer) drawer.open = opening;
+      currentBoard.textContent = opening ? 'Close Drawing Board' : 'Open Drawing Board';
+      currentBoard.setAttribute('aria-expanded', opening ? 'true' : 'false');
+      if (opening) {
+        ['browsePanel','visibilityPanel','spreadPanel','datePanel','chartPanel','currentSkyPanel'].forEach(id => setVisible(id, false));
+        requestAnimationFrame(() => panel?.scrollIntoView({ behavior:'smooth', block:'start' }));
+      }
+    });
     const landingDraw = $('landingDrawCard'); if (landingDraw) landingDraw.addEventListener('click', event => { event.preventDefault(); showDrawingBoardFromLanding(true); });
     const landingBoard = $('landingOpenBoard'); if (landingBoard) landingBoard.addEventListener('click', event => { event.preventDefault(); showDrawingBoardFromLanding(false); });
     const landingLedger = $('landingShowLedger'); if (landingLedger) landingLedger.addEventListener('click', event => { event.preventDefault(); collapseCardRow(); setVisible('shortListPanel', false); state.mode = 'all'; state.query = ''; state.cardFilters = []; state.selected = null; renderBrowse(); showPanel('browsePanel'); $('browsePanel')?.scrollIntoView({ behavior:'smooth', block:'start' }); });
