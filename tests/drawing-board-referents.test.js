@@ -13,6 +13,14 @@ const base='http://127.0.0.1:8000/tarot.html';
     await page.waitForFunction(()=>!!window.RelphiDrawingBoardOptionsBridge && !!document.querySelector('#drawingBoardOptionsButton'),null,{timeout:20000});
     const panel=page.locator('#shortListPanel');
     if(!(await panel.isVisible())) await page.click('#relphiOpenDrawingBoardCurrent');
+    const debug=await page.evaluate(()=>({
+      panelHidden:document.querySelector('#shortListPanel')?.hidden,
+      triggerExpanded:document.querySelector('#relphiOpenDrawingBoardCurrent')?.getAttribute('aria-expanded'),
+      legacy:!!document.querySelector('#landingOpenBoard'),
+      drawerOpen:document.querySelector('#shortListPanel .card-row-drawing-board')?.open,
+      mode:document.querySelector('#shortListPanel')?.outerHTML.slice(0,180)
+    }));
+    console.log('DRAWING_BOARD_OPEN_DEBUG',JSON.stringify(debug));
     await panel.waitFor({state:'visible'});
     await page.click('#drawingBoardOptionsButton');
     await page.waitForSelector('.relphi-referents-drawer',{state:'visible'});
