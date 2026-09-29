@@ -3,7 +3,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { chromium } = require('playwright');
 
-const base = process.env.RELPHI_TEST_URL || 'http://127.0.0.1:8000/tarot.html?board=workflow-v2#tarot';
+const base = process.env.RELPHI_TEST_URL || 'http://127.0.0.1:8000/tarot.html?board=workflow-v2#tarot'; // opener contract
 const out = path.resolve(__dirname,'..','test-results');
 fs.mkdirSync(out,{recursive:true});
 let browser;
