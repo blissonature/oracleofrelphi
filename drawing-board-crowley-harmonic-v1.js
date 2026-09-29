@@ -63,13 +63,15 @@
   }
   function ensureGuide(){
     const r=root(); if(!r) return;
+    const nativeDrawer=r.querySelector('.card-row-drawing-board');
+    if(!nativeDrawer) return;
     installStyle();
     let box=document.getElementById('crowleyHarmonicGuide');
     if(!box){
       box=document.createElement('section');box.id='crowleyHarmonicGuide';box.hidden=true;
       box.innerHTML='<strong>Opening of the Key · First Operation</strong><p style="margin:.35rem 0 .7rem"><b>Opening of the Question.</b> The querent must commit to the expected Yod–Heh–Vav–Heh domain before the packet containing the Significator is disclosed.</p>'+domainGateMarkup()+'<div id="crowleyMechanics" hidden><div class="crowley-controls"><label>Significator<select id="crowleyAnchor">'+Array.from({length:12},(_,i)=>'<option value="'+i+'">Position '+(i+1)+'</option>').join('')+'</select></label><label>Card Counting<select id="crowleyCount">'+countOptions()+'</select></label><label>Card Pairing<select id="crowleyPair">'+Array.from({length:6},(_,i)=>'<option value="'+(i+1)+'">±'+(i+1)+'</option>').join('')+'</select></label><button id="crowleyAdvance" type="button">Continue Card Counting</button></div><p id="crowleyHarmonicStatus" aria-live="polite"></p><fieldset><legend><b>Accuracy Test</b></legend><p>After Card Counting and Card Pairing, confirm whether the main lines of the reading are correct.</p><button id="crowleyMainLinesCorrect" type="button">Main lines are correct · continue</button> <button id="crowleyMainLinesWrong" type="button">Main lines are not correct · abandon</button><p id="crowleyAccuracyStatus" aria-live="polite"></p></fieldset></div>';
       const workspace=r.querySelector('.card-row-workspace');
-      if(workspace) workspace.parentNode.insertBefore(box,workspace); else r.appendChild(box);
+      if(workspace) workspace.parentNode.insertBefore(box,workspace); else nativeDrawer.insertAdjacentElement('beforebegin',box);
       box.querySelector('#crowleyLockDomain').addEventListener('click',()=>{
         const sel=box.querySelector('#crowleyExpectedDomain'); expectedDomain=sel.value;
         if(!expectedDomain){box.querySelector('#crowleyDomainStatus').textContent='Choose the question domain before committing.';return;}
