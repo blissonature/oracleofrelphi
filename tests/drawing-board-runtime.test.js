@@ -19,6 +19,7 @@ async function openBoard(page) {
   await panel.waitFor({state:'visible'});
   await page.waitForFunction(() => !!document.querySelector('#shortListPanel details.short-list-drawer')?.open);
   await page.waitForSelector('#shortListPanel #zoomCardRowExtents',{timeout:10000});
+  await page.locator('#relphiBoardSettingsButton').click({force:true});
   await page.locator('#drawingBoardOptionsButton').click({force:true});
   await page.locator('[data-relphi-options-path="templates"]').click({force:true});
   await page.waitForFunction(() => document.body.innerText.includes('Opening of the Key · First Operation'));
