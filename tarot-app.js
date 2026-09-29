@@ -4580,20 +4580,8 @@
     if (value.startsWith('/')) { handleSlash(value); return; }
     if (openSkyChartFromPastedSearch(value)) return;
     if (openDateFromSearch(value)) return;
-    // Natural-language questions entered at the Relphi landing surface are readings,
-    // not keyword searches. Establish the exact question as Bespoke position one.
-    if (/\?\s*$/.test(value) && typeof window.RelphiLaunchBespokeQuestion === 'function') {
-      hideCommandMenu();
-      if (window.RelphiLaunchBespokeQuestion(value)) {
-        state.mode='board';
-        state.query='';
-        $('oracleCommand').value='';
-        updateSummary([]);
-        return;
-      }
-    }
     if (!preserveFilters) state.cardFilters = [];
-    state.mode = 'search'; state.query = value; showPanel('browsePanel'); setVisible('visibilityPanel', false); hideCommandMenu(); renderBrowse(); if (saveHistory) pushHistory();
+    state.mode = 'search'; state.query = value; showPanel('browsePanel'); setVisible('visibilityPanel', false); hideCommandMenu(); renderBrowse(); renderBespokeChoice(value); if (saveHistory) pushHistory();
   }
   function clearSearchKeywordsKeepFilters() {
     state.query = '';
@@ -4685,6 +4673,20 @@
     menu.innerHTML = suggestions.map(([cmd, label]) => `<button type="button" data-command="/${escapeHtml(cmd)}"><span>${escapeHtml(label)}</span><small>/${escapeHtml(cmd)}</small></button>`).join('');
     qsa('button', menu).forEach(btn => btn.addEventListener('click', () => { $('oracleCommand').value = btn.dataset.command; $('oracleCommand').focus(); if (!btn.dataset.command.endsWith(' ')) runSearch(btn.dataset.command); else hideCommandMenu(); }));
   }
+  function renderBespokeChoice(value) {
+    const menu=$('commandMenu');
+    const question=String(value||'').trim();
+    if(!menu||!question||question.startsWith('/')||typeof window.RelphiLaunchBespokeQuestion!=='function')return;
+    menu.hidden=false;
+    menu.innerHTML=`<button type="button" class="relphi-bespoke-choice"><span>Begin a Bespoke Crafted Reading</span><small>Use “${escapeHtml(question)}” as the first question</small></button>`;
+    menu.querySelector('.relphi-bespoke-choice')?.addEventListener('click',()=>{
+      hideCommandMenu();
+      if(window.RelphiLaunchBespokeQuestion(question)){
+        state.mode='board';state.query='';$('oracleCommand').value='';updateSummary([]);
+      }
+    });
+  }
+
   function hideCommandMenu() { $('commandMenu').hidden = true; $('commandMenu').innerHTML = ''; }
 
   const RANK_MODE_GROUPS = { cardinal: ['Two','Three','Four'], fixed: ['Five','Six','Seven'], mutable: ['Eight','Nine','Ten'] };
