@@ -2491,7 +2491,7 @@
       rowLayoutLocked:false,rowLayoutDesignMode:false,rowCardReversals:{},rowCardManual:[],
       rowDrawDeck:[],rowDrawDeckSignature:'',shortListName:'',shortListNotes:'',
       rowDrawScope:'full',rowTagQuery:'',rowSelectedTags:[],rowTagMatchMode:'any',
-      rowAllowRepeats:false,rowAllowReversals:true,rowPanX:0,rowPanY:0,rowTransformTarget:0,
+      rowAllowRepeats:false,rowAllowReversals:true,rowZoom:1,rowPanX:0,rowPanY:0,rowTransformTarget:0,
       cardRowBoardOpen:true
     });
     bridge.restore(snap);
@@ -3637,9 +3637,10 @@
     bridge.restore(snap);
     if(!prefabs.applyLayout(prefab)){craftedReadingActive=false;return false;}
     stampCraftedPath(craftedPath,root);
+    const sacredCardSource=optionsSession?.sacredCardSource==='physical'?'physical':'digital';
     markSettingsConfirmed();
     applyDrawSettings(draft);
-    stampSacredCardSource(optionsSession?.sacredCardSource==='physical'?'physical':'digital',root);
+    stampSacredCardSource(sacredCardSource,root);
     optionsSession=null;
     root.querySelector('.relphi-reading-options-drawer')?.remove();
     setBoardMode(root,'crafted');
