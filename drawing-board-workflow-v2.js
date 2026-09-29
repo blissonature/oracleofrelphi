@@ -1056,16 +1056,14 @@
     boardOpen = !!open;
     if (!root || !trigger) return;
     if (boardOpen) {
-      if (root.hidden) {
-        document.getElementById('landingOpenBoard')?.click();
-        root.hidden = false;
-        root.removeAttribute('hidden');
-      }
-      trigger.textContent = 'Close Drawing Board';
-      trigger.setAttribute('aria-expanded','true');
       root.hidden = false;
       root.removeAttribute('hidden');
+      const drawer = root.querySelector('details.short-list-drawer');
+      if (drawer) drawer.open = true;
+      trigger.textContent = 'Close Drawing Board';
+      trigger.setAttribute('aria-expanded','true');
       enhance(root);
+      requestAnimationFrame(() => root.scrollIntoView({ behavior:'smooth', block:'start' }));
       if (fit) setTimeout(zoomExtents, 0);
     } else {
       closeFocus({ acknowledge:true, advanceSurface:false });
