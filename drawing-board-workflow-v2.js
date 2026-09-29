@@ -4445,8 +4445,11 @@
     const root=panel();
     const text=String(question||'').trim();
     if(!root||!text||!optionsBridge()||!prefabBridge())return false;
-    setBoardOpen(true);
+    // Clear first: clearCraftedStructure restores a snapshot whose board-open
+    // state may predate this launch. Open only after the reset so the launch
+    // cannot be hidden again by that restore.
     if(currentCardCount(root)||boardHasCraftedStructure(root))clearCraftedStructure(root);
+    setBoardOpen(true);
     activeCraftedPath='bespoke';
     optionsSession=null;
     beginOptionsSession();
