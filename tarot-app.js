@@ -10310,11 +10310,12 @@ ${notes || ''}`;
       else $('shortListPanel')?.scrollIntoView({ behavior:'smooth', block:'start' });
       updateSummary([]);
     }
-    const currentBoard = $('relphiOpenDrawingBoardCurrent'); if (currentBoard) currentBoard.addEventListener('click', event => { event.preventDefault(); const panel=$('shortListPanel'); if(panel && !panel.hidden){ collapseCardRow(); setVisible('shortListPanel', false); currentBoard.textContent='Open Drawing Board'; currentBoard.setAttribute('aria-expanded','false'); return; } showDrawingBoardFromLanding(false); });
+    const currentBoard = $('relphiOpenDrawingBoardCurrent'); if (currentBoard) currentBoard.addEventListener('click', event => { event.preventDefault(); const panel=$('shortListPanel'); const drawer=panel?.querySelector('details.short-list-drawer'); const isOpen=!!drawer?.open && !panel?.hidden; if(isOpen){ collapseCardRow(); setVisible('shortListPanel', false); currentBoard.textContent='Open Drawing Board'; currentBoard.setAttribute('aria-expanded','false'); return; } showDrawingBoardFromLanding(false); });
     const landingDraw = $('landingDrawCard'); if (landingDraw) landingDraw.addEventListener('click', event => { event.preventDefault(); showDrawingBoardFromLanding(true); });
     const landingBoard = $('landingOpenBoard'); if (landingBoard) landingBoard.addEventListener('click', event => { event.preventDefault(); showDrawingBoardFromLanding(false); });
     const landingLedger = $('landingShowLedger'); if (landingLedger) landingLedger.addEventListener('click', event => { event.preventDefault(); collapseCardRow(); setVisible('shortListPanel', false); state.mode = 'all'; state.query = ''; state.cardFilters = []; state.selected = null; renderBrowse(); showPanel('browsePanel'); $('browsePanel')?.scrollIntoView({ behavior:'smooth', block:'start' }); });
     renderShortList();
+    if (state.mode !== 'board' && !drawingBoardHasContent(storedDrawingBoardSnapshot())) { collapseCardRow(); setVisible('shortListPanel', false); const boardTrigger=$('relphiOpenDrawingBoardCurrent'); if(boardTrigger){ boardTrigger.textContent='Open Drawing Board'; boardTrigger.setAttribute('aria-expanded','false'); } }
     updateClearKeywordButtons();
     if (isDedicatedSkyChartPage()) requestAnimationFrame(restoreDedicatedSkyChartView);
     else if (!openDateFromHash(initialHash)) updateSummary([]);
