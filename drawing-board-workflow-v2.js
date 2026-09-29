@@ -1058,7 +1058,7 @@
     if (boardOpen) {
       root.hidden = false;
       root.removeAttribute('hidden');
-      const drawer = root.querySelector('details.short-list-drawer');
+      const drawer = root.querySelector('.card-row-drawing-board');
       if (drawer) drawer.open = true;
       trigger.textContent = 'Close Drawing Board';
       trigger.setAttribute('aria-expanded','true');
