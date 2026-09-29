@@ -805,7 +805,7 @@
     for (const variant of variants) {
       const pattern = flexibleTitlePattern(variant);
       if (!pattern) continue;
-      const re = new RegExp('^' + pattern + '\\s*(?:[–—-]|:|\\.)?\\s*(?:(?:is|are)\\s+)?', 'i');
+      const re = new RegExp('^' + pattern + '\\s*(?:[–—:-]|\\.)?\\s*(?:(?:is|are)\\s+)?', 'i');
       const next = value.replace(re, '').trim();
       if (next && next !== value) {
         value = sentenceCaseFragment(next);
