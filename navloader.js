@@ -58,7 +58,7 @@
 
   function initMenu() {
     if (window.RelphiInitMenu) return window.RelphiInitMenu();
-    appendScript('menu.js?v=7');
+    appendScript('menu.js?v=8');
   }
 
   function injectNav(html) {
@@ -209,7 +209,7 @@
     ensureNavStyles();
     loadEnhancements();
     if (document.querySelector('.menu-container')) return initMenu();
-    fetch('nav.html?v=14').then(function (response) { if (!response.ok) throw new Error('Could not load nav.html'); return response.text(); }).then(injectNav).catch(fallbackNav);
+    fetch('nav.html?v=15').then(function (response) { if (!response.ok) throw new Error('Could not load nav.html'); return response.text(); }).then(injectNav).catch(fallbackNav);
   }
 
   if (isTarotContext()) refreshDrawingBoardControlAssets();
