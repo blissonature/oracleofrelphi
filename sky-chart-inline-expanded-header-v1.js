@@ -57,7 +57,7 @@ function installStyle(){
     }
     .sky-foundation-relationship-row.is-inline-expanded .sky-foundation-relationship-placement{
       display:grid!important;
-      grid-template-rows:38px 18px!important;
+      grid-template-rows:subgrid!important;
       align-items:center!important;
       justify-items:center!important;
       align-self:stretch!important;
