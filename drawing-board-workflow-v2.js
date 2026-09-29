@@ -1064,6 +1064,7 @@
       if (drawer) drawer.open = true;
       trigger.textContent = 'Close Drawing Board';
       trigger.setAttribute('aria-expanded','true');
+      root.classList.add('relphi-board-ready');
       enhance(root);
       requestAnimationFrame(() => root.scrollIntoView({ behavior:'smooth', block:'start' }));
       if (fit) setTimeout(zoomExtents, 0);
