@@ -4413,8 +4413,15 @@
       const wasOpen=trigger.getAttribute('aria-expanded')==='true';
       if (!wasOpen) {
         trigger.setAttribute('aria-expanded','true');
-        const legacy=document.getElementById('landingOpenBoard');
-        if (legacy) legacy.click();
+        const commandDetails=document.querySelector('.tarot-command-drawer > details');
+        if(commandDetails)commandDetails.open=true;
+        const root=panel();
+        if(root){root.hidden=false;root.removeAttribute('hidden');}
+        const bridge=optionsBridge();
+        if(bridge?.capture&&bridge?.restore){
+          const snap=bridge.capture();
+          if(snap){snap.cardRowBoardOpen=true;bridge.restore(snap);}
+        }
         requestAnimationFrame(()=>setBoardOpen(true,{fit:true}));
       } else setBoardOpen(false,{fit:false});
       return;
