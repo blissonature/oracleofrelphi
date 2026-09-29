@@ -825,7 +825,7 @@
     const uniqueHitSources = Array.from(new Set((options.hitSources || []).map(item => String(item || '').trim()).filter(Boolean)));
     const hitSourceText = uniqueHitSources.join(' · ');
     const hitLabel = options.hitCount === 1 ? 'placement' : 'placements';
-    const badge = options.hitCount ? `<button class="or-hit-badge" type="button" data-placement-toggle aria-label="Show ${escapeHtml(options.hitCount)} chart ${escapeHtml(hitLabel)}" title="${escapeHtml(hitSourceText || `${options.hitCount} chart ${hitLabel}`)}">×${options.hitCount}</button>` : '';
+    const badge = options.hitCount ? `<button class="or-hit-badge" type="button" data-placement-toggle aria-label="Show ${escapeHtml(options.hitCount)} chart ${escapeHtml(hitLabel)}" title="${escapeHtml(hitSourceText || `${options.hitCount} chart ${hitLabel}`)}">×${options.hitCount}</button>`;
     const addLabel = inShortList ? 'Remove card from Drawing Board' : 'Add card to Drawing Board';
     const add = options.selectable === false ? '' : `<button class="or-card-add or-card-layer-add" type="button" data-shortlist="${escapeHtml(card.card_id)}" aria-pressed="${inShortList?'true':'false'}" aria-label="${addLabel}" title="${addLabel}">${inShortList?'−':'+'}</button>`;
     const layerSources = '';
@@ -2943,7 +2943,7 @@
     cardHtml = cardHtml.replace('<article class="or-card', `<article class="or-card card-row-card${reversed ? ' is-row-reversed' : ''}`);
     cardHtml = cardHtml.replace(' tabindex="0">', ` draggable="true" data-row-card="${escapeHtml(card.card_id)}" data-row-reversed="${reversed ? 'true' : 'false'}" tabindex="0" aria-label="${escapeHtml(title(card))}${reversed ? ', reversed' : ''}">`);
     const reverseLabel = reversed ? 'Set card upright' : 'Reverse card';
-    const reverseButton = rowCardWasAddedManually(index) ? `<button class="card-row-reverse-toggle${reversed ? ' is-active' : ''}" type="button" data-row-reverse="${index}" aria-pressed="${reversed ? 'true' : 'false'}" title="${escapeHtml(reverseLabel)}" aria-label="${escapeHtml(reverseLabel + ': ' + title(card))}">↕</button>` : '';
+    const reverseButton = `<button class="card-row-reverse-toggle${reversed ? ' is-active' : ''}" type="button" data-row-reverse="${index}" aria-pressed="${reversed ? 'true' : 'false'}" title="${escapeHtml(reverseLabel)}" aria-label="${escapeHtml(reverseLabel + ': ' + title(card))}">↕</button>` : '';
     const transformHandles = `<span class="card-row-transform-box" aria-hidden="true"><span class="card-row-scale-handle card-row-scale-handle--nw" data-row-transform-handle="scale" data-corner="nw"></span><span class="card-row-rotate-handle card-row-rotate-handle--ne" data-row-transform-handle="rotate" data-corner="ne"></span><span class="card-row-scale-handle card-row-scale-handle--sw" data-row-transform-handle="scale" data-corner="sw"></span><span class="card-row-scale-handle card-row-scale-handle--se" data-row-transform-handle="scale" data-corner="se"></span></span>`;
     return `<div class="card-row-item${selected ? ' is-row-selected' : ''}${transformTarget ? ' is-transform-target' : ''}${miniDescription ? ' is-description-mini' : ''}${reversed ? ' is-row-reversed' : ''}" data-row-index="${index}" style="${cardRowItemStyle(index)}">${panel}<div class="card-row-card-wrap">${cardHtml}${reverseButton}${transformHandles}</div></div>`;
   }
