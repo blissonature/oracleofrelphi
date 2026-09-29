@@ -18,6 +18,12 @@ const base='http://127.0.0.1:8000/tarot.html';
       triggerExpanded:document.querySelector('#relphiOpenDrawingBoardCurrent')?.getAttribute('aria-expanded'),
       legacy:!!document.querySelector('#landingOpenBoard'),
       drawerOpen:document.querySelector('#shortListPanel .card-row-drawing-board')?.open,
+      display:getComputedStyle(document.querySelector('#shortListPanel')).display,
+      visibility:getComputedStyle(document.querySelector('#shortListPanel')).visibility,
+      opacity:getComputedStyle(document.querySelector('#shortListPanel')).opacity,
+      rect:(()=>{const r=document.querySelector('#shortListPanel').getBoundingClientRect();return {x:r.x,y:r.y,w:r.width,h:r.height}})(),
+      parent:document.querySelector('#shortListPanel')?.parentElement?.className,
+      prev:document.querySelector('#shortListPanel')?.previousElementSibling?.className,
       mode:document.querySelector('#shortListPanel')?.outerHTML.slice(0,180)
     }));
     console.log('DRAWING_BOARD_OPEN_DEBUG',JSON.stringify(debug));
