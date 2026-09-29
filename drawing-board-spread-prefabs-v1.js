@@ -163,6 +163,23 @@
       ]
     },
     {
+      id:'crowley-harmonic-divination-12',
+      name:'Opening of the Key · First Operation',
+      cardCount:12,
+      source:'shipped',
+      editable:false,
+      helper:'crowley-harmonic',
+      positions:Array.from({length:12}, (_, index) => {
+        const angle=(-90 + index*30) * Math.PI / 180;
+        const x=.43 + Math.cos(angle)*.34;
+        const y=.39 + Math.sin(angle)*.31;
+        return position('crowley-' + (index+1), String(index+1), index+1, transform(x,y,0,.43), {
+          harmonicIndex:index
+        });
+      }),
+      rules:{ allowReversals:false, allowRepeats:false, drawScope:'full' }
+    },
+    {
       id:'focus-1',
       name:'Focus',
       cardCount:1,
