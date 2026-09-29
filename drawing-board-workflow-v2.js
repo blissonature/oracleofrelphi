@@ -199,8 +199,10 @@
     const scale=clamp(best?.scale || .52,.32,.62);
     const cardW=CARD_W*scale;
     const rowH=(CARD_H+LABEL_H)*scale;
-    const gapX=cols>1?Math.max(GUTTER,(CANVAS_W-GUTTER*2-cardW*cols)/(cols-1)):0;
-    const gapY=rows>1?Math.max(GUTTER,(CANVAS_H-GUTTER*2-rowH*rows)/(rows-1)):0;
+    // Auto-laid cards pack flush. Spare canvas space belongs after the pack,
+    // not between cards; a gap only appears after the reader deliberately moves one.
+    const gapX=GUTTER;
+    const gapY=GUTTER;
     return labels.map((label,index)=>{
       const col=index%cols,row=Math.floor(index/cols);
       const x=(GUTTER+col*(cardW+gapX))/CANVAS_W;
