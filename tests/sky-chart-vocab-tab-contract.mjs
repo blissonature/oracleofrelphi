@@ -153,6 +153,7 @@ assert.match(vocab,/model\?\.getWindow/,'Vocab must read the Harmonic Window fro
 assert.match(harmonic,/function syncVisibleControls\(sourceInput=null\)/,'The harmonic model must own synchronization of all visible Harmonic Window controllers');
 assert.match(harmonic,/\[data-harmonic-window-input\],\[data-vocab-harmonic-window-input\]/,'Relationships and Vocab must be synchronized from the same model value');
 assert.match(harmonic,/function setWindow\(value,sourceInput=null\)/,'The shared Harmonic Window must support source-aware mirroring while a controller is being edited');
+assert.match(harmonic,/const DEFAULT_WINDOW=3\.5/,'Harmonic Window must start at the balanced 3.5° default');
 assert.match(harmonic,/const WINDOW_STEP=\.05/,'Harmonic Window keyboard stepping must use 0.05° increments');
 assert.match(harmonic,/event\.key!=='ArrowUp'&&event\.key!=='ArrowDown'/,'Harmonic Window must support deliberate Up/Down keyboard stepping');
 assert.match(harmonic,/stepWindow\(input,event\.key==='ArrowUp'\?1:-1\)/,'Arrow keys must drive the shared Harmonic Window model');
@@ -170,7 +171,7 @@ assert.match(harmonic,/relphi:sky-harmonic-window-model-changed/,'The shared mod
 assert.match(orbControl,/const limit=Number\(model\(\)\?\.getWindow/,'Relationships filtering must read the shared model rather than reread its own control as state');
 assert.match(orbControl,/data\.harmonicShowMore='true'/,'Relationships must expose a Harmonic Window continuation item at the bottom of the list');
 assert.match(orbControl,/hiddenByHarmonicWindow\+=1/,'The continuation count must include only relationships excluded by Harmonic Window after other active filters');
-assert.match(orbControl,/m\?\.setWindow\?\.\(m\?\.maxWindow\?\?12\)/,'Clicking Show more must widen the shared Harmonic Window immediately');
+assert.match(orbControl,/Math\.min\(max,current\+1\)/,'Clicking Show more must widen the shared Harmonic Window by one degree at a time');
 assert.match(orbControl,/count\.dataset\.countLabel='matches'/,'Relationship status must identify the qualifying count as matches');
 assert.match(foundationCss,/#skyFoundationRelationshipCount\[data-count-label="matches"\]::before\s*\{[\s\S]*content:attr\(data-match-count\)/,'The visible relationship number must come from stable match state rather than mutable legacy text');
 assert.match(foundationCss,/#skyFoundationRelationshipCount\[data-count-label="matches"\]::after\s*\{[\s\S]*content:"matches"/,'The relationship count must visibly append matches');
