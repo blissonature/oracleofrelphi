@@ -4219,7 +4219,7 @@
       const index=Number(item.dataset.rowIndex);
       if (!Number.isInteger(index)) return;
       if (item.querySelector('[data-row-card]')) {
-        event.preventDefault(); event.stopImmediatePropagation(); openFocus(index); return;
+        event.preventDefault(); openFocus(index); return;
       }
       if (isEmptyItem(item)) {
         event.preventDefault(); event.stopImmediatePropagation();
