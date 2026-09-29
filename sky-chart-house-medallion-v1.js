@@ -28,7 +28,7 @@ function installStyles(){
   style.textContent=`
     .sky-foundation-relationship-copy small.relphi-house-coordinate{
       display:grid!important;
-      grid-template-columns:56px 18px!important;
+      grid-template-columns:38px 14px 18px!important;
       align-items:center!important;
       justify-content:center!important;
       column-gap:4px!important;
@@ -37,10 +37,12 @@ function installStyles(){
       overflow:visible!important;
     }
     .relphi-house-coordinate-value{
+      grid-column:1 / 3;
       display:block;
-      width:56px;
-      min-width:56px;
-      text-align:right;
+      width:auto;
+      min-width:0;
+      justify-self:center;
+      text-align:center;
       white-space:nowrap;
       line-height:18px;
     }
@@ -89,8 +91,8 @@ function installStyles(){
       box-shadow:0 0 0 2px rgba(255,255,255,.9),0 0 0 3px var(--house-color);
     }
     @media(max-width:620px){
-      .sky-foundation-relationship-copy small.relphi-house-coordinate{grid-template-columns:54px 18px!important;column-gap:3px!important}
-      .relphi-house-coordinate-value{width:54px;min-width:54px}
+      .sky-foundation-relationship-copy small.relphi-house-coordinate{grid-template-columns:38px 14px 18px!important;column-gap:3px!important}
+      .relphi-house-coordinate-value{width:auto;min-width:0}
     }
   `;
   document.head.appendChild(style);
