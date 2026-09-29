@@ -44,7 +44,8 @@
   let boardConfigurationOpen = false;
   let boardBackgroundMode = '';
   const BOARD_TRANSFORM_LOCKS_KEY = 'relphiBoardTransformLocksV1';
-  const BOARD_CARD_CONTROLS_KEY = 'relphiBoardCardControlsV1';
+  const BOARD_CARD_CONTROLS_FREE_KEY = 'relphiBoardCardControlsFreeV1';
+  const BOARD_CARD_CONTROLS_BESPOKE_KEY = 'relphiBoardCardControlsBespokeV1';
   const BOARD_BACKGROUND_DEFAULT_KEY = 'relphiBoardBackgroundDefaultV1';
   const BOARD_RECENT_COLORS_KEY = 'relphiBoardRecentColorsV1';
   const BOARD_RECENT_IMAGES_KEY = 'relphiBoardRecentImagesV1';
@@ -71,7 +72,24 @@
     if(craftedReadingActive||boardHasCraftedStructure(root))return persistedCraftedPath(root)==='bespoke';
     return true;
   }
-  function cardControlsEnabled(){ try{return localStorage.getItem(BOARD_CARD_CONTROLS_KEY)!=='false';}catch(_){return true;} }
+  function cardControlsPath(root=panel()) {
+    if(settingsOpen) return settingsMode==='free' ? 'free' : (String(optionsSession?.path||activeCraftedPath||'')==='bespoke' ? 'bespoke' : '');
+    if(craftedReadingActive||boardHasCraftedStructure(root)) return persistedCraftedPath(root)==='bespoke' ? 'bespoke' : '';
+    return 'free';
+  }
+  function cardControlsEnabled(root=panel()){
+    const path=cardControlsPath(root);
+    if(!path)return false;
+    const key=path==='bespoke'?BOARD_CARD_CONTROLS_BESPOKE_KEY:BOARD_CARD_CONTROLS_FREE_KEY;
+    try{return localStorage.getItem(key)!=='false';}catch(_){return true;}
+  }
+  function writeCardControlsEnabled(enabled,root=panel()){
+    const path=cardControlsPath(root);
+    if(!path)return false;
+    const key=path==='bespoke'?BOARD_CARD_CONTROLS_BESPOKE_KEY:BOARD_CARD_CONTROLS_FREE_KEY;
+    try{localStorage.setItem(key,String(!!enabled));}catch(_){}
+    return true;
+  }
   function bespokeEditingAllowed(){ return (optionsSession?.path || activeCraftedPath || 'bespoke') === 'bespoke'; }
   function transformEditingAllowed(root=panel()) {
     if(!root||!cardControlsEnabled())return false;
@@ -790,13 +808,13 @@
 
     const controlGroup=document.createElement('div');
     controlGroup.className='relphi-board-configuration-group';
-    controlGroup.innerHTML='<strong>Card controls</strong><label class="relphi-setting-toggle"><input type="checkbox" data-card-controls-master '+(cardControlsEnabled()?'checked':'')+'> Enable card controls</label><div class="relphi-control-toggles"></div>';
-    controlGroup.querySelector('[data-card-controls-master]')?.addEventListener('change',event=>{try{localStorage.setItem(BOARD_CARD_CONTROLS_KEY,String(event.target.checked));}catch(_){}syncTransformEditingAvailability(root);renderBoardConfiguration(root);});
+    controlGroup.innerHTML='<strong>Card controls</strong><label class="relphi-setting-toggle"><input type="checkbox" data-card-controls-master '+(cardControlsEnabled(root)?'checked':'')+'> Enable card controls</label><div class="relphi-control-toggles"></div>';
+    controlGroup.querySelector('[data-card-controls-master]')?.addEventListener('change',event=>{writeCardControlsEnabled(event.target.checked,root);syncTransformEditingAvailability(root);renderBoardConfiguration(root);});
     const controlToggles=controlGroup.querySelector('.relphi-control-toggles');
     const locks=transformLocks();
     [['drag','Drag'],['rotation','Rotation'],['scale','Scale']].forEach(([key,label])=>{
       const row=document.createElement('label');
-      row.innerHTML='<input type="checkbox" '+(locks[key]?'checked':'')+' '+(!cardControlsEnabled()?'disabled':'')+'> '+label;
+      row.innerHTML='<input type="checkbox" '+(locks[key]?'checked':'')+' '+(!cardControlsEnabled(root)?'disabled':'')+'> '+label;
       row.querySelector('input').addEventListener('change',event=>{
         const next=transformLocks();next[key]=event.target.checked;writeTransformLocks(next);syncTransformEditingAvailability(root);renderBoardConfiguration(root);
       });
