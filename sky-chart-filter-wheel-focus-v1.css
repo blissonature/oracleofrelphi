@@ -1,18 +1,19 @@
 /* Filter bay and wheel share one visual focus language.
    Direct wheel hover/lock isolation remains authoritative while it is active. */
-#skyFoundationWheelMount>.sky-foundation-wheel.has-filter-focus:not(.has-isolation) [data-layer="aspects"] .sky-foundation-aspect,
-#skyFoundationWheelMount>.sky-foundation-wheel.has-filter-focus:not(.has-isolation) [data-layer="placements"] [data-sky][data-placement],
-#skyFoundationWheelMount>.sky-foundation-wheel.has-filter-focus:not(.has-isolation) .sky-foundation-house-sector,
-#skyFoundationWheelMount>.sky-foundation-wheel.has-filter-focus:not(.has-isolation) .sky-foundation-sign-sector,
-#skyFoundationWheelMount>.sky-foundation-wheel.has-filter-focus:not(.has-isolation) .sky-foundation-sign-glyph{
+#skyFoundationWheelMount>.sky-foundation-wheel.has-filter-focus:not(.has-isolation) [data-layer="aspects"] .sky-foundation-aspect{
   opacity:.08;
   transition:opacity .07s ease-out,filter .07s ease-out,stroke-width .07s ease-out;
 }
 
-/* Unrelated leader whiskers add noise without carrying useful filtered context. */
-#skyFoundationWheelMount>.sky-foundation-wheel.has-filter-focus:not(.has-isolation) [data-layer="leaders"] [data-sky][data-placement]{
-  opacity:0;
-  transition:opacity .07s ease-out;
+/* Relationship filters narrow relationships, not chart contents.
+   Placements, their leaders, signs, and houses remain fully visible whether or not
+   they participate in one of the currently visible aspects. */
+#skyFoundationWheelMount>.sky-foundation-wheel.has-filter-focus:not(.has-isolation) [data-layer="placements"] [data-sky][data-placement],
+#skyFoundationWheelMount>.sky-foundation-wheel.has-filter-focus:not(.has-isolation) [data-layer="leaders"] [data-sky][data-placement],
+#skyFoundationWheelMount>.sky-foundation-wheel.has-filter-focus:not(.has-isolation) .sky-foundation-house-sector,
+#skyFoundationWheelMount>.sky-foundation-wheel.has-filter-focus:not(.has-isolation) .sky-foundation-sign-sector,
+#skyFoundationWheelMount>.sky-foundation-wheel.has-filter-focus:not(.has-isolation) .sky-foundation-sign-glyph{
+  opacity:1!important;
 }
 
 #skyFoundationWheelMount>.sky-foundation-wheel.has-filter-focus:not(.has-isolation) .is-filter-kept{
@@ -22,10 +23,6 @@
 #skyFoundationWheelMount>.sky-foundation-wheel.has-filter-focus:not(.has-isolation) [data-layer="aspects"] .sky-foundation-aspect.is-filter-kept{
   stroke-width:4.2;
   filter:drop-shadow(0 0 1.5px rgba(255,255,255,.94));
-}
-
-#skyFoundationWheelMount>.sky-foundation-wheel.has-filter-focus:not(.has-isolation) [data-layer="placements"] [data-sky][data-placement].is-filter-kept{
-  filter:brightness(1.04) saturate(1.08);
 }
 
 @media(prefers-reduced-motion:reduce){
