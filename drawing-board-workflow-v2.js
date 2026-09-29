@@ -3,7 +3,7 @@
 // only the stable Drawing Board UI, shipped spread definitions, and reading flow.
 (function () {
   'use strict';
-  if (!/(^|\/)tarot\.html$/.test(location.pathname)) return;
+  if (!location.pathname.endsWith('/tarot.html') && location.pathname !== 'tarot.html') return;
   if (window.__relphiDrawingBoardUnifiedV3) return;
   window.__relphiDrawingBoardUnifiedV3 = true;
 
