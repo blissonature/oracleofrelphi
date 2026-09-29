@@ -4414,8 +4414,8 @@
       if (!wasOpen) {
         const legacy=document.getElementById('landingOpenBoard');
         if (legacy) legacy.click();
-      }
-      setBoardOpen(!wasOpen,{fit:!wasOpen});
+        setTimeout(()=>setBoardOpen(true,{fit:true}),0);
+      } else setBoardOpen(false,{fit:false});
       return;
     }
     const root=panel();
