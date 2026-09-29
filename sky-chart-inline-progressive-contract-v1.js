@@ -20,6 +20,8 @@ const SIGN_REFERENTS={
   Aquarius:'systems, reform, collective intelligence, detachment, and future orientation',
   Pisces:'surrender, imagination, compassion, permeability, and release'
 };
+const HOUSE_NAMES=['','First House','Second House','Third House','Fourth House','Fifth House','Sixth House','Seventh House','Eighth House','Ninth House','Tenth House','Eleventh House','Twelfth House'];
+const HOUSE_REFERENTS=['','self, embodiment, appearance, approach, and the immediate way life is entered','resources, possessions, money, personal values, and what is held as one’s own','communication, learning, siblings, neighbors, short journeys, and the local environment','home, roots, family, ancestry, privacy, and the foundations of life','creativity, pleasure, romance, children, play, and personal self-expression','work, service, routines, health practices, maintenance, and practical obligations','partnership, contracts, one-to-one relationship, and encounters with the other','shared resources, intimacy, debt, inheritance, vulnerability, and transformation','worldview, religion, philosophy, higher learning, long journeys, and the search for meaning','vocation, public standing, reputation, authority, achievement, and visible responsibility','friends, networks, groups, alliances, hopes, and participation in a larger collective','retreat, hidden processes, solitude, confinement, surrender, spirituality, and closure'];
 const PLACEMENT_REFERENTS={
   sun:'identity, vitality, and conscious purpose',moon:'feelings, instincts, memory, and emotional needs',mercury:'thought, perception, language, and communication',venus:'values, attraction, affection, pleasure, and relating',mars:'drive, assertion, desire, conflict, and action',jupiter:'growth, confidence, meaning, opportunity, and expansion',saturn:'structure, limits, responsibility, time, and commitment',uranus:'freedom, disruption, originality, awakening, and change',neptune:'imagination, sensitivity, surrender, ideals, and vision',pluto:'power, depth, compulsion, elimination, and transformation',chiron:'wounding, healing intelligence, and the capacity to guide healing',asc:'the way a person enters life and is immediately perceived',dsc:'the way a person meets partners and encounters the other',mc:'public direction, vocation, visibility, and the role a person grows toward',ic:'roots, home, private foundations, and inherited belonging','north-node':'growth through unfamiliar experience and developing capacity','south-node':'familiar patterns, inherited capacity, and the known path',lilith:'instinctive autonomy, refusal, exile, and uncompromised desire','part-of-fortune':'the meeting place of body, feeling, circumstance, and ease',vertex:'encounters that feel consequential or outside ordinary control'
 };
@@ -27,9 +29,11 @@ const ASPECT_NAMES={conjunction:'Conjunction','semi-sextile':'Semi-Sextile',octi
 const ASPECT_REFERENTS={conjunction:'the two functions operate together','semi-sextile':'neighboring functions accommodate one another',octile:'focused friction and adjustment',sextile:'a cooperative opening activated through participation',quintile:'creative pattern-making and specialized skill',square:'activating pressure and development',trine:'low-resistance exchange','tri-octile':'accumulated friction and redirection','bi-quintile':'refined creative pattern-making',quincunx:'continuing adjustment and translation',opposition:'awareness through polarity, contrast, and exchange'};
 const FIELDS=[
   ['left-placement','.sky-foundation-relationship-glyph--left'],
+  ['left-house','.sky-foundation-relationship-placement--left .relphi-house-medallion'],
   ['left-sign','.sky-foundation-relationship-placement--left .sky-foundation-relationship-sign'],
   ['aspect','.sky-foundation-relationship-glyph--aspect'],
   ['right-placement','.sky-foundation-relationship-glyph--right'],
+  ['right-house','.sky-foundation-relationship-placement--right .relphi-house-medallion'],
   ['right-sign','.sky-foundation-relationship-placement--right .sky-foundation-relationship-sign']
 ];
 let fastPointerTarget=null;
@@ -44,6 +48,12 @@ function infoFor(row,field){
   if(field==='right-placement'){
     const id=String(row.dataset.rightPlacement||'');return{name:placementName(id),referent:PLACEMENT_REFERENTS[id]||'a calculated placement in Sky B',tone:'b'};
   }
+  if(field==='left-house'){
+    const house=Number(row.dataset.leftHouse),name=HOUSE_NAMES[house]||'House';return{name,referent:HOUSE_REFERENTS[house]||'the life area containing the Sky A placement',tone:'a'};
+  }
+  if(field==='right-house'){
+    const house=Number(row.dataset.rightHouse),name=HOUSE_NAMES[house]||'House';return{name,referent:HOUSE_REFERENTS[house]||'the life area containing the Sky B placement',tone:'b'};
+  }
   if(field==='left-sign'){
     const name=SIGN_NAMES[Number(row.dataset.leftSign)]||'Sign';return{name,referent:SIGN_REFERENTS[name]||'the zodiacal mode containing the Sky A placement',tone:'a'};
   }
@@ -57,7 +67,7 @@ function tokenMarkup(row,field){
   return `<span class="inline-rel-progressive-token" data-inline-progressive-token="${field}" data-inline-progressive-stage="0" data-tone="${info.tone}" hidden><span class="inline-rel-progressive-level inline-rel-progressive-name" data-inline-progressive-level="name" role="button" tabindex="0" aria-expanded="false">${esc(info.name)}</span><span class="inline-rel-progressive-level inline-rel-progressive-referent" data-inline-progressive-level="referent" role="button" tabindex="0" hidden>${esc(info.referent)}</span></span>`;
 }
 function stripMarkup(row){
-  return `<div class="inline-rel-progressive-strip" aria-label="Progressive symbolic reveal"><div class="inline-rel-progressive-side inline-rel-progressive-side-a">${tokenMarkup(row,'left-placement')}${tokenMarkup(row,'left-sign')}</div>${tokenMarkup(row,'aspect')}<div class="inline-rel-progressive-side inline-rel-progressive-side-b">${tokenMarkup(row,'right-placement')}${tokenMarkup(row,'right-sign')}</div></div>`;
+  return `<div class="inline-rel-progressive-strip" aria-label="Progressive symbolic reveal"><div class="inline-rel-progressive-side inline-rel-progressive-side-a">${tokenMarkup(row,'left-placement')}${tokenMarkup(row,'left-house')}${tokenMarkup(row,'left-sign')}</div>${tokenMarkup(row,'aspect')}<div class="inline-rel-progressive-side inline-rel-progressive-side-b">${tokenMarkup(row,'right-placement')}${tokenMarkup(row,'right-house')}${tokenMarkup(row,'right-sign')}</div></div>`;
 }
 function ensureStrip(row){
   if(!row?.classList.contains('is-inline-expanded'))return null;
@@ -139,7 +149,7 @@ function installStyles(){
     .sky-foundation-relationship-row.is-inline-expanded [data-inline-progressive-glyph]:hover{background:rgba(45,39,34,.055)}
     .sky-foundation-relationship-row.is-inline-expanded [data-inline-progressive-glyph]:focus-visible{outline:2px solid currentColor;outline-offset:2px}
     .inline-rel-progressive-strip{grid-column:1/-1;display:grid;grid-template-columns:minmax(0,1fr) minmax(86px,.72fr) minmax(0,1fr);align-items:start;gap:8px;min-width:0}
-    .inline-rel-progressive-side{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));align-items:start;gap:5px;min-width:0}
+    .inline-rel-progressive-side{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));align-items:start;gap:5px;min-width:0}
     .inline-rel-progressive-token{display:grid;justify-items:center;gap:4px;min-width:0;padding:4px 5px;border-radius:7px;background:rgba(45,39,34,.04)}
     .inline-rel-progressive-token[data-tone="a"]{border-top:2px solid #c9211e}.inline-rel-progressive-token[data-tone="b"]{border-top:2px solid #2462d0}.inline-rel-progressive-token[data-tone="aspect"]{border-top:2px solid var(--relationship-stripe,#777)}
     .inline-rel-progressive-token[hidden],.inline-rel-progressive-level[hidden]{display:none!important}
