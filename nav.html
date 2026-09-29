@@ -19,40 +19,47 @@
 <img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==" alt="" hidden onload="this.onload=null;if(/(^|\/)astrology-foundations\.html$/.test(location.pathname)&&!document.querySelector('script[src^=&quot;astrology-foundations-live-fix-v2.js&quot;]')){var s=document.createElement('script');s.src='astrology-foundations-live-fix-v2.js?v=2';document.body.appendChild(s)}"/>
 <img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==" alt="" hidden onload="this.onload=null;if(/(^|\/)(planetaryhours|tarot)\.html$/.test(location.pathname)&&!document.querySelector('script[src^=&quot;standardize-zodiac-wheels.js&quot;]')){var s=document.createElement('script');s.src='standardize-zodiac-wheels.js?v=2';document.body.appendChild(s)}"/>
 <img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==" alt="" hidden onload="this.onload=null;if(/(^|\/)planetaryhours\.html$/.test(location.pathname)&&!document.querySelector('script[src^=&quot;planetary-hours-location-prompt.js&quot;]')){var s=document.createElement('script');s.src='planetary-hours-location-prompt.js?v=2';document.body.appendChild(s)}"/>
-<div class="menu-container anniversary-nav" id="menuContainer">
-  <button class="logo-btn" aria-label="Open navigation menu" aria-controls="dropdownMenu" aria-expanded="false" id="menuButton" type="button">
+<div class="menu-container anniversary-nav relphi-permachrome" id="menuContainer">
+  <button class="logo-btn" aria-label="Open Relphi search and navigation" aria-controls="dropdownMenu" aria-expanded="false" id="menuButton" type="button">
     <img src="logo.png" alt="Oracle of Relphi logo" width="44" height="44"/>
     <span class="nav-brand-text">Oracle of <span>Relphi</span></span>
     <span class="nav-edition-badge">Anniversary</span>
   </button>
-  <nav class="dropdown-menu architecture-menu" id="dropdownMenu" aria-label="Main navigation">
-    <a class="nav-primary-link" href="index.html">Home</a>
-    <a class="nav-primary-link" href="tools.html">All Tools</a>
-    <details class="nav-tool-group" open>
-      <summary>Instruments</summary>
-      <a href="tarot.html"><span>Tarot Ledger</span><small>Search · Draw · Sense</small></a>
-      <a href="sky-chart.html"><span>Sky Chart</span><small>Build · Compare · Relate</small></a>
-      <a href="planetaryhours.html"><span>Planetary Hours</span><small>Day · Hour · Moon</small></a>
-    </details>
-    <details class="nav-tool-group">
-      <summary>Learn</summary>
-      <a href="glyphs.html"><span>Glyph Trainer</span><small>Marks · Letters · Aspects</small></a>
-      <a href="astrology-foundations.html"><span>Astrology Foundations</span><small>Planets · Signs · Houses</small></a>
-      <a href="constellations.html"><span>Constellation Trainer</span><small>Sky patterns</small></a>
-      <a href="guide.html"><span>Guide</span><small>Start here</small></a>
-    </details>
-    <details class="nav-tool-group">
-      <summary>Reference</summary>
-      <a href="mythic-atlas.html"><span>Mythic Atlas</span><small>Gods · Planets · Cards</small></a>
-      <a href="ancient-measures.html"><span>Ancient Measures</span><small>Body · Horizon · Rope</small></a>
-      <a href="rainbow-brand.html"><span>Rainbow Brand</span><small>Color spectrum</small></a>
-    </details>
-    <details class="nav-tool-group">
-      <summary>Studio</summary>
-      <a href="about.html"><span>About</span><small>Creator and purpose</small></a>
-      <a href="services.html"><span>Services</span><small>Learning environments</small></a>
-      <a href="forsacreduseonly.html"><span>For Sacred Use Only</span><small>Use agreement</small></a>
-      <a href="https://ko-fi.com/oracleofrelphi" target="_blank" rel="noopener"><span>Support</span><small>Ko-fi</small></a>
-    </details>
+  <nav class="dropdown-menu architecture-menu relphi-omnibox-panel" id="dropdownMenu" aria-label="Relphi search navigation and commands">
+    <div class="relphi-omnibox-search">
+      <label for="relphiOmnibox" class="visually-hidden">Search Relphi or run a command</label>
+      <input id="relphiOmnibox" type="search" autocomplete="off" spellcheck="false" placeholder="Search Relphi or run a command…" aria-controls="relphiOmniboxResults"/>
+      <span class="relphi-omnibox-hint">Tools · cards · commands</span>
+    </div>
+    <div id="relphiOmniboxResults" class="relphi-omnibox-results" role="listbox" hidden></div>
+    <div id="relphiOmniboxBrowse" class="relphi-omnibox-browse">
+      <section class="relphi-omnibox-section" aria-labelledby="relphiToolsHeading">
+        <h2 id="relphiToolsHeading">Tools</h2>
+        <a data-omnibox-item data-keywords="home oracle relphi start" href="index.html"><span>Home</span><small>Oracle of Relphi</small></a>
+        <a data-omnibox-item data-keywords="tarot ledger cards search draw drawing board" href="tarot.html"><span>Tarot Ledger</span><small>Search · Draw · Sense</small></a>
+        <a data-omnibox-item data-keywords="sky chart astrology natal transit compare relationships" href="sky-chart.html"><span>Sky Chart</span><small>Build · Compare · Relate</small></a>
+        <a data-omnibox-item data-keywords="planetary hours day hour moon timing" href="planetaryhours.html"><span>Planetary Hours</span><small>Day · Hour · Moon</small></a>
+        <a data-omnibox-item data-keywords="glyph trainer symbols letters aspects learn" href="glyphs.html"><span>Glyph Trainer</span><small>Marks · Letters · Aspects</small></a>
+        <a data-omnibox-item data-keywords="astrology foundations planets signs houses learn" href="astrology-foundations.html"><span>Astrology Foundations</span><small>Planets · Signs · Houses</small></a>
+        <a data-omnibox-item data-keywords="constellation trainer stars sky patterns learn" href="constellations.html"><span>Constellation Trainer</span><small>Sky patterns</small></a>
+        <a data-omnibox-item data-keywords="mythic atlas gods planets cards mythology reference" href="mythic-atlas.html"><span>Mythic Atlas</span><small>Gods · Planets · Cards</small></a>
+        <a data-omnibox-item data-keywords="ancient measures body horizon rope reference" href="ancient-measures.html"><span>Ancient Measures</span><small>Body · Horizon · Rope</small></a>
+        <a data-omnibox-item data-keywords="rainbow brand color spectrum reference" href="rainbow-brand.html"><span>Rainbow Brand</span><small>Color spectrum</small></a>
+        <a data-omnibox-item data-keywords="all tools instruments learn reference" href="tools.html"><span>All Tools</span><small>Browse Relphi</small></a>
+      </section>
+      <section class="relphi-omnibox-section" aria-labelledby="relphiCommandsHeading">
+        <h2 id="relphiCommandsHeading">Commands</h2>
+        <button type="button" class="relphi-omnibox-command" data-relphi-command="tarot-search" data-keywords="search tarot cards ledger find"><span>Search Tarot cards</span><small>Use the Tarot Ledger index</small></button>
+        <button type="button" class="relphi-omnibox-command" data-relphi-command="drawing-board" data-keywords="open drawing board tarot draw cards"><span>Open Drawing Board</span><small>Tarot workspace</small></button>
+        <button type="button" class="relphi-omnibox-command" data-relphi-command="show-all-cards" data-keywords="show browse all tarot cards deck"><span>Show all Tarot cards</span><small>Full deck</small></button>
+        <a data-omnibox-item data-keywords="guide help start how to" href="guide.html"><span>Open Guide</span><small>Start here</small></a>
+      </section>
+      <section class="relphi-omnibox-section relphi-omnibox-secondary" aria-labelledby="relphiSiteHeading">
+        <h2 id="relphiSiteHeading">Site</h2>
+        <a data-omnibox-item data-keywords="about creator purpose" href="about.html"><span>About</span></a>
+        <a data-omnibox-item data-keywords="services learning environments" href="services.html"><span>Services</span></a>
+        <a data-omnibox-item data-keywords="sacred use agreement" href="forsacreduseonly.html"><span>For Sacred Use Only</span></a>
+      </section>
+    </div>
   </nav>
 </div>
