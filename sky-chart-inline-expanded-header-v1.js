@@ -66,14 +66,15 @@ function installStyle(){
       min-width:0!important;
     }
     .sky-foundation-relationship-row.is-inline-expanded .sky-foundation-relationship-symbol-pair{
-      display:flex!important;
+      display:grid!important;
+      grid-template-columns:38px 14px 18px!important;
       align-items:center!important;
       justify-content:center!important;
       width:100%!important;
       max-width:100%!important;
       height:38px!important;
       min-width:0!important;
-      gap:4px!important;
+      column-gap:4px!important;
       white-space:nowrap!important;
     }
     .sky-foundation-relationship-row.is-inline-expanded .sky-foundation-relationship-copy{
@@ -85,9 +86,11 @@ function installStyle(){
       overflow:visible!important;
     }
     .sky-foundation-relationship-row.is-inline-expanded .sky-foundation-relationship-copy small{
-      display:flex!important;
+      display:grid!important;
+      grid-template-columns:56px 18px!important;
       align-items:center!important;
       justify-content:center!important;
+      column-gap:4px!important;
       width:100%!important;
       height:18px!important;
       min-width:0!important;
@@ -114,7 +117,7 @@ function installStyle(){
       #skyFoundationRelationshipList:has(> .sky-foundation-relationship-row.is-inline-expanded){
         max-height:none!important;
       }
-      .sky-foundation-relationship-row.is-inline-expanded .sky-foundation-relationship-symbol-pair{gap:2px!important}
+      .sky-foundation-relationship-row.is-inline-expanded .sky-foundation-relationship-symbol-pair{column-gap:3px!important}.sky-foundation-relationship-row.is-inline-expanded .sky-foundation-relationship-copy small{grid-template-columns:54px 18px!important;column-gap:3px!important}
     }
   `;document.head.appendChild(style);
 }
