@@ -1056,6 +1056,8 @@
     boardOpen = !!open;
     if (!root || !trigger) return;
     if (boardOpen) {
+      const commandDetails = document.querySelector('.tarot-command-drawer > details');
+      if (commandDetails) commandDetails.open = true;
       root.hidden = false;
       root.removeAttribute('hidden');
       const drawer = root.querySelector('.card-row-drawing-board');
