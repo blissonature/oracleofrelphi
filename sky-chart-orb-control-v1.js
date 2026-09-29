@@ -129,15 +129,13 @@
   function normalizeOnCommit(input){
     const max=model()?.maxWindow??12,raw=input.value.trim().replace(',','.'),value=Number(raw);
     if(!Number.isFinite(value))return;
-    const bounded=Math.max(.25,Math.min(max,value));
-    input.value=String(Math.round(bounded*4)/4);
+    input.value=String(Math.max(0,Math.min(max,value)));
   }
   function driveFromInput(input,commit=false){
     if(commit)normalizeOnCommit(input);
     const max=model()?.maxWindow??12,raw=input.value.trim().replace(',','.'),value=Number(raw);
-    const quarterStep=Number.isFinite(value)&&Math.abs(value*4-Math.round(value*4))<1e-8;
-    const valid=raw!==''&&Number.isFinite(value)&&value>=.25&&value<=max&&quarterStep;
-    input.setCustomValidity(valid?'':`Enter a harmonic phase window from 0.25 to ${max} degrees in 0.25-degree steps.`);
+    const valid=raw!==''&&Number.isFinite(value)&&value>=0&&value<=max;
+    input.setCustomValidity(valid?'':`Enter a harmonic phase window from 0 to ${max} degrees.`);
     input.setAttribute('aria-invalid',valid?'false':'true');
     if(!valid)return;
     input.setAttribute('aria-valuenow',String(value));
@@ -160,17 +158,17 @@
     field=document.createElement('label');field.className='sky-orb-number-field';field.dataset.orbField='true';
     const caption=document.createElement('span');caption.textContent='Harmonic Window';
     const input=document.createElement('input'),m=model();
-    input.type='number';input.inputMode='decimal';input.autocomplete='off';input.min='.25';input.max=String(m?.maxWindow??12);input.step='.25';input.value=String(Math.round(Math.max(.25,Math.min(m?.maxWindow??12,Number(initialWindow())||.25))*4)/4);
+    input.type='text';input.inputMode='decimal';input.autocomplete='off';input.value=String(initialWindow());
     input.dataset.harmonicWindowInput='true';input.dataset.orbMode='harmonic-phase';
-    input.setAttribute('role','spinbutton');input.setAttribute('aria-valuemin','.25');input.setAttribute('aria-valuemax',String(m?.maxWindow??12));input.setAttribute('aria-valuenow',input.value);
-    input.setAttribute('aria-label',`Harmonic Window in degrees, from 0.25 to ${m?.maxWindow??12}, in 0.25-degree steps`);
+    input.setAttribute('role','spinbutton');input.setAttribute('aria-valuemin','0');input.setAttribute('aria-valuemax',String(m?.maxWindow??12));input.setAttribute('aria-valuenow',input.value);
+    input.setAttribute('aria-label',`Master harmonic phase window in degrees, maximum ${m?.maxWindow??12}`);
     field.append(caption,input);field.style.order='20';
     if(display)slot.insertBefore(field,display.nextSibling);
     else slot.insertBefore(field,wheelActions||null);
     input.addEventListener('input',()=>driveFromInput(input,false));
     input.addEventListener('change',()=>driveFromInput(input,true));
     input.addEventListener('blur',()=>driveFromInput(input,true));
-    driveFromInput(input,true);return true;
+    schedule();return true;
   }
 
   function ensureInstalled(){if(installQueued)return;installQueued=true;requestAnimationFrame(()=>{installQueued=false;install();schedule()})}
