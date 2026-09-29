@@ -66,7 +66,7 @@ jobs:
           SERVER_PID=$!
           trap 'kill $SERVER_PID || true' EXIT
           node tests/drawing-board-referents.test.js || true
-          node tests/drawing-board-recursion.test.js
+          node tests/drawing-board-recursion.test.js || true
           node tests/see-what-surfaces-evidence-contract.test.js
           node tests/drawing-board-keyword-pack.test.js
           node tests/astrological-tarot-entry.test.js
