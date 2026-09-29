@@ -13,7 +13,7 @@ const base='http://127.0.0.1:8000/tarot.html';
     await page.waitForTimeout(500);
     const boot=await page.evaluate(()=>({bridge:!!window.RelphiDrawingBoardOptionsBridge,app:!!window.RelphiTarotLedgerBridge,ready:document.readyState,scripts:[...document.scripts].map(s=>s.src).filter(Boolean),errors:[]}));
     console.log('BOOT_DIAG',JSON.stringify({...boot,errors}));
-    await page.waitForFunction(()=>!!window.RelphiDrawingBoardOptionsBridge,null,{timeout:20000});
+    await page.waitForSelector('#relphiOpenDrawingBoardCurrent',{state:'attached',timeout:20000});
     await page.evaluate(()=>{
       document.querySelector('#relphiOpenDrawingBoardCurrent')?.click();
     });
