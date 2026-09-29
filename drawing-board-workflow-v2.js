@@ -4508,6 +4508,8 @@
     if(question!=null&&String(question).trim())appendBespokeQuestion(question);
   }
 
+  window.RelphiLaunchBespokeQuestion = launchBespokeQuestion;
+  window.RelphiAppendBespokeQuestion = appendBespokeQuestion;
   window.RelphiDrawingBoardEnsureTopActions = ensureBoardChrome;
 
   window.addEventListener('click',globalCapture,true);
