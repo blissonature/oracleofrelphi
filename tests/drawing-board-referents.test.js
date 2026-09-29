@@ -10,9 +10,9 @@ const base='http://127.0.0.1:8000/tarot.html';
     const errors=[];
     page.on('pageerror',error=>errors.push(error?.stack||String(error)));
     await page.goto(base,{waitUntil:'domcontentloaded',timeout:30000});
+    await page.waitForFunction(()=>!!window.RelphiDrawingBoardOptionsBridge,null,{timeout:20000});
     await page.evaluate(()=>{
-      const trigger=document.querySelector('#relphiOpenDrawingBoardCurrent');
-      trigger?.click();
+      document.querySelector('#relphiOpenDrawingBoardCurrent')?.click();
     });
     await page.waitForFunction(()=>document.querySelector('#relphiOpenDrawingBoardCurrent')?.getAttribute('aria-expanded')==='true');
     await page.waitForFunction(()=>!!document.querySelector('#shortListPanel .card-row-drawing-board'),null,{timeout:20000});
