@@ -92,7 +92,7 @@
   }
   function bespokeEditingAllowed(){ return (optionsSession?.path || activeCraftedPath || 'bespoke') === 'bespoke'; }
   function transformEditingAllowed(root=panel()) {
-    if(!root||!cardControlsEnabled())return false;
+    if(!root||!cardControlsEnabled(root))return false;
     if(settingsOpen)return settingsMode==='free' || String(optionsSession?.path||activeCraftedPath||'')==='bespoke';
     if(craftedReadingActive||boardHasCraftedStructure(root))return persistedCraftedPath(root)==='bespoke';
     return true;
