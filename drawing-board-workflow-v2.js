@@ -72,7 +72,7 @@
     return true;
   }
   function cardControlsEnabled(){ try{return localStorage.getItem(BOARD_CARD_CONTROLS_KEY)!=='false';}catch(_){return true;} }
-  function bespokeEditingAllowed(){ return session.path==='bespoke'; }
+  function bespokeEditingAllowed(){ return (optionsSession?.path || activeCraftedPath || 'bespoke') === 'bespoke'; }
   function transformEditingAllowed(root=panel()) {
     if(!root||!cardControlsEnabled())return false;
     if(settingsOpen)return settingsMode==='free' || String(optionsSession?.path||activeCraftedPath||'')==='bespoke';
