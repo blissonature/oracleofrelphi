@@ -4596,6 +4596,10 @@
     else enhance(root);
     return true;
   }
-  if (document.readyState==='loading') document.addEventListener('DOMContentLoaded',()=>{setTimeout(boot,0);setTimeout(boot,120);},{once:true});
-  else { setTimeout(boot,0); setTimeout(boot,120); }
+  function bootUntilReady(attempt=0){
+    if(boot()) return;
+    if(attempt<80) setTimeout(()=>bootUntilReady(attempt+1),100);
+  }
+  if (document.readyState==='loading') document.addEventListener('DOMContentLoaded',()=>bootUntilReady(),{once:true});
+  else bootUntilReady();
 })();
