@@ -1083,7 +1083,7 @@
   function beginOptionsSession() {
     if (optionsSession) return;
     const path=activeCraftedPath||'bespoke';
-    optionsSession = { baseline:currentSnapshot(), draft:draftFromState(), path, building:{element:'',planet:'',aspect:'',sign:'',house:'',need:''}, suggestions:[], suggestionPacks:[], surfaceSelected:{}, sacredCardSource:'digital' };
+    optionsSession = { baseline:currentSnapshot(), draft:draftFromState(), path, building:{element:'',planet:'',aspect:'',sign:'',house:'',need:''}, suggestions:[], suggestionPacks:[], surfaceSelected:{} };
   }
   function optionsStructuralChanged(session = optionsSession) {
     if (!session) return false;
@@ -2040,11 +2040,10 @@
     drawer.setAttribute('aria-label','Crafted Draw settings');
     draft.stickers=true;
     if(!['digital','physical'].includes(session.sacredCardSource))session.sacredCardSource='digital';
-    const cardSourceSettings='<fieldset class="relphi-sacred-card-source relphi-sacred-card-source--promoted"><legend>Method</legend><label class="relphi-sacred-card-source-choice"><input type="radio" name="relphiSacredCardSource" data-sacred-card-source value="digital" '+(session.sacredCardSource!=='physical'?'checked ':'')+'><span><strong>Digital</strong><small>Relphi draws the cards.</small></span></label><label class="relphi-sacred-card-source-choice"><input type="radio" name="relphiSacredCardSource" data-sacred-card-source value="physical" '+(session.sacredCardSource==='physical'?'checked ':'')+'><span><strong>Physical</strong><small>You draw and record them.</small></span></label></fieldset>';
     const advancedDrawSettings='<div class="relphi-free-toggles relphi-draw-promoted"><label><input id="relphiDraftReversals" type="checkbox" '+(draft.reversals?'checked':'')+'> Reversals</label><label><input id="relphiDraftRepeats" type="checkbox" '+(draft.repeats?'checked':'')+'> Repeats</label></div>';
     const drawSettingsMarkup=(session.path==='surface'||session.path==='astro')
-      ? '<section class="relphi-referent-settings" aria-label="Draw settings"><strong class="relphi-referent-settings-title">Draw settings</strong>'+cardSourceSettings+advancedDrawSettings+'</section>'
-      : '<section class="relphi-referent-settings" aria-label="Draw settings"><strong class="relphi-referent-settings-title">Draw settings</strong><div class="relphi-draw-options"><label>Pack<select id="relphiDraftPack">'+packOptions(draft.pack)+'</select></label>'+keywordDraftMarkup(draft)+'</div>'+cardSourceSettings+advancedDrawSettings+'</section>';
+      ? '<section class="relphi-referent-settings" aria-label="Draw settings"><strong class="relphi-referent-settings-title">Draw settings</strong>'+advancedDrawSettings+'</section>'
+      : '<section class="relphi-referent-settings" aria-label="Draw settings"><strong class="relphi-referent-settings-title">Draw settings</strong><div class="relphi-draw-options"><label>Pack<select id="relphiDraftPack">'+packOptions(draft.pack)+'</select></label>'+keywordDraftMarkup(draft)+'</div>'+advancedDrawSettings+'</section>';
     const activePathPanel=pathPanelMarkup(session,hasCards);
     const pathEntry=(id,label,description)=>{
       const expanded=session.path===id && !session.pathCollapsed;
@@ -2062,10 +2061,10 @@
         '</div>'+
         drawSettingsMarkup+
         (session.path==='surface'&&!session.pathCollapsed
-          ? (()=>{const count=selectedSurfaceKinds(session).length,ready=count>0,source=session.sacredCardSource==='physical'?'Physical':'Digital';return '<aside class="relphi-surface-readiness '+(ready?'is-ready':'')+'" data-surface-readiness role="status" aria-live="polite">'+
+          ? (()=>{const count=selectedSurfaceKinds(session).length,ready=count>0;return '<aside class="relphi-surface-readiness '+(ready?'is-ready':'')+'" data-surface-readiness role="status" aria-live="polite">'+
               '<div class="relphi-surface-readiness-rail" aria-label="Crafted reading progress">'+
                 '<div class="relphi-surface-readiness-step is-complete" data-readiness-step="path"><i aria-hidden="true"></i><strong>Path</strong><small>See What Surfaces</small></div>'+
-                '<div class="relphi-surface-readiness-step is-complete" data-readiness-step="source"><i aria-hidden="true"></i><strong>Card source</strong><small data-surface-source-status>'+source+'</small></div>'+
+                '
                 '<div class="relphi-surface-readiness-step '+(ready?'is-complete':'')+'" data-readiness-step="questions"><i aria-hidden="true"></i><strong>Questions</strong><small data-surface-question-status>'+(ready?count+' selected':'Choose 1+')+'</small></div>'+
                 '<div class="relphi-surface-readiness-step '+(ready?'is-complete is-success':'')+'" data-readiness-step="ready"><i aria-hidden="true"></i><strong>Ready</strong><small data-surface-ready-status>'+(ready?'Minimum met':'Waiting')+'</small></div>'+
               '</div>'+
@@ -4530,7 +4529,6 @@
     optionsSession=null;
     beginOptionsSession();
     optionsSession.path='bespoke';
-    optionsSession.sacredCardSource='digital';
     optionsSession.draft={
       ...optionsSession.draft,
       templateId:'',
