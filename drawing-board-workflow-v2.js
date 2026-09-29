@@ -4422,6 +4422,8 @@
           const snap=bridge.capture();
           if(snap){snap.cardRowBoardOpen=true;bridge.restore(snap);}
         }
+        const legacy=document.getElementById('landingOpenBoard');
+        if(legacy)legacy.click();
         requestAnimationFrame(()=>setBoardOpen(true,{fit:true}));
       } else setBoardOpen(false,{fit:false});
       return;
