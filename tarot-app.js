@@ -825,7 +825,7 @@
     const uniqueHitSources = Array.from(new Set((options.hitSources || []).map(item => String(item || '').trim()).filter(Boolean)));
     const hitSourceText = uniqueHitSources.join(' · ');
     const hitLabel = options.hitCount === 1 ? 'placement' : 'placements';
-    const badge = options.hitCount ? `<button class="or-hit-badge" type="button" data-placement-toggle aria-label="Show ${escapeHtml(options.hitCount)} chart ${escapeHtml(hitLabel)}" title="${escapeHtml(hitSourceText || `${options.hitCount} chart ${hitLabel}`)}">×${options.hitCount}</button>`;
+    const badge = options.hitCount ? `<button class="or-hit-badge" type="button" data-placement-toggle aria-label="Show ${escapeHtml(options.hitCount)} chart ${escapeHtml(hitLabel)}" title="${escapeHtml(hitSourceText || `${options.hitCount} chart ${hitLabel}`)}">×${options.hitCount}</button>` : '';
     const addLabel = inShortList ? 'Remove card from Drawing Board' : 'Add card to Drawing Board';
     const add = options.selectable === false ? '' : `<button class="or-card-add or-card-layer-add" type="button" data-shortlist="${escapeHtml(card.card_id)}" aria-pressed="${inShortList?'true':'false'}" aria-label="${addLabel}" title="${addLabel}">${inShortList?'−':'+'}</button>`;
     const layerSources = '';
