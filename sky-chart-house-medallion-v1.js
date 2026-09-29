@@ -27,18 +27,19 @@ function installStyles(){
   style.id=STYLE_ID;
   style.textContent=`
     .sky-foundation-relationship-copy small.relphi-house-coordinate{
-      display:flex!important;
+      display:grid!important;
+      grid-template-columns:56px 18px!important;
       align-items:center!important;
       justify-content:center!important;
-      gap:4px!important;
+      column-gap:4px!important;
       height:18px!important;
       line-height:18px!important;
       overflow:visible!important;
     }
     .relphi-house-coordinate-value{
       display:block;
-      width:50px;
-      min-width:50px;
+      width:56px;
+      min-width:56px;
       text-align:right;
       white-space:nowrap;
       line-height:18px;
@@ -88,8 +89,8 @@ function installStyles(){
       box-shadow:0 0 0 2px rgba(255,255,255,.9),0 0 0 3px var(--house-color);
     }
     @media(max-width:620px){
-      .sky-foundation-relationship-copy small.relphi-house-coordinate{gap:3px!important}
-      .relphi-house-coordinate-value{width:48px;min-width:48px}
+      .sky-foundation-relationship-copy small.relphi-house-coordinate{grid-template-columns:54px 18px!important;column-gap:3px!important}
+      .relphi-house-coordinate-value{width:54px;min-width:54px}
     }
   `;
   document.head.appendChild(style);
@@ -125,7 +126,7 @@ function decorateCoordinate(small,coordinate,house,field,interactive=false){
   if(!value){value=document.createElement('span');value.className='relphi-house-coordinate-value'}
   if(value.textContent!==text)value.textContent=text;
   if(group&&pair&&signSlot){
-    if(signSlot.parentElement!==small||value.parentElement!==small||small.children.length!==2)small.replaceChildren(signSlot,value);
+    if(value.parentElement!==small||signSlot.parentElement!==small||small.children.length!==2||small.firstElementChild!==value)small.replaceChildren(value,signSlot);
     if(marker.parentElement!==pair)pair.appendChild(marker);
     if(pair.lastElementChild!==marker)pair.appendChild(marker);
   }else{
