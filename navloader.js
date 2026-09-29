@@ -23,15 +23,15 @@
   }
 
   function isTarotContext() {
-    return /(^|\/)tarot\.html$/.test(location.pathname) || isTarotPreviewDocument();
+    return location.pathname.endsWith('/tarot.html') || location.pathname === 'tarot.html' || isTarotPreviewDocument();
   }
 
   function isSkyChartContext() {
-    return /(^|\/)sky-chart\.html$/.test(location.pathname) && !isTarotPreviewDocument();
+    return (location.pathname.endsWith('/sky-chart.html') || location.pathname === 'sky-chart.html') && !isTarotPreviewDocument();
   }
 
   function isPlanetaryHoursContext() {
-    return /(^|\/)planetaryhours\.html$/.test(location.pathname);
+    return location.pathname.endsWith('/planetaryhours.html') || location.pathname === 'planetaryhours.html';
   }
 
   function initAnalytics() {
