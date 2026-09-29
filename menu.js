@@ -147,9 +147,17 @@
       event.preventDefault();
       const container = button.closest('.menu-container');
       if (container) {
-        const willOpen = !container.classList.contains('active');
-        setOpen(container, button, willOpen);
-        if (willOpen) setTimeout(function () { container.querySelector('#relphiOmnibox')?.focus(); }, 0);
+        const pageOmnibox = document.getElementById('oracleCommand');
+        const isUnifiedHome = !!pageOmnibox && /(^|\\/)tarot\.html$/.test(window.location.pathname);
+        if (isUnifiedHome) {
+          setOpen(container, button, false);
+          pageOmnibox.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          setTimeout(function () { pageOmnibox.focus(); }, 180);
+        } else {
+          const willOpen = !container.classList.contains('active');
+          setOpen(container, button, willOpen);
+          if (willOpen) setTimeout(function () { container.querySelector('#relphiOmnibox')?.focus(); }, 0);
+        }
       }
       return;
     }
