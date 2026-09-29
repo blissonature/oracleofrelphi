@@ -15,7 +15,11 @@
     <section class="tarot-hero compact">
       <h1>Tarot <span class="red">Ledger</span></h1>
       <p class="relphi-tool-brandline">an Oracle of Relphi tool</p>
-      <p class="tarot-hero-subtitle">Search · study · draw.</p>
+      <section class="tarot-mode-bar tarot-mode-bar--ledger tarot-mode-bar--hero" aria-label="Tarot Ledger controls">
+        <button id="showAllCards" type="button">Show All Cards</button>
+        <button id="relphiOpenDrawingBoardCurrent" type="button" aria-controls="shortListPanel" aria-expanded="false">Open Drawing Board</button>
+        <button id="clearSearch" type="button" title="Hide card results without clearing the Drawing Board">Hide Cards</button>
+      </section>
     </section>
 
     <section class="tarot-command-panel tarot-command-panel--primary" aria-label="Tarot search">
@@ -30,19 +34,16 @@
       <div id="commandMenu" class="command-menu" hidden></div>
     </section>
 
-    <section class="tarot-mode-bar tarot-mode-bar--ledger" aria-label="Tarot Ledger controls">
-      <button id="showAllCards" type="button">Show All Cards</button>
-      <button id="relphiOpenDrawingBoardCurrent" type="button" aria-controls="shortListPanel" aria-expanded="false">Open Drawing Board</button>
+    <div class="tarot-mode-bar tarot-mode-bar--ledger" hidden aria-hidden="true">
       <button id="drawMode" type="button" hidden>Draw Cards</button>
       <button id="dateMode" type="button" hidden>Date Field</button>
       <button id="chartMode" type="button" hidden>Sky Chart</button>
       <button id="currentSkyMode" type="button" hidden>Current Sky</button>
-      <button id="clearSearch" type="button" title="Hide card results without clearing the Drawing Board">Hide Cards</button>
       <button id="clearSearchKeywordsCollapsed" type="button" hidden>Clear keywords only</button>
-      <button id="landingDrawCard" type="button" hidden aria-hidden="true" tabindex="-1">Draw a Card</button>
-      <button id="landingOpenBoard" type="button" hidden aria-hidden="true" tabindex="-1">Open Drawing Board</button>
-      <button id="landingShowLedger" type="button" hidden aria-hidden="true" tabindex="-1">Browse the Ledger</button>
-    </section>
+      <button id="landingDrawCard" type="button" hidden tabindex="-1">Draw a Card</button>
+      <button id="landingOpenBoard" type="button" hidden tabindex="-1">Open Drawing Board</button>
+      <button id="landingShowLedger" type="button" hidden tabindex="-1">Browse the Ledger</button>
+    </div>
 
     <section id="tarotSummary" class="tarot-summary" aria-live="polite">
       <div class="tarot-summary-count" hidden><strong id="resultCount">No</strong><span id="resultNoun"> cards shown</span></div>
