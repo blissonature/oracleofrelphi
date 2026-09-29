@@ -7,7 +7,7 @@
 
   const TEMPLATE_ID='crowley-harmonic-divination-12';
   const ASPECTS={0:['Conjunction','0°'],1:['Adjacent','30°'],2:['Sextile','60°'],3:['Square','90°'],4:['Trine','120°'],5:['Quincunx','150°'],6:['Opposition','180°']};
-  let anchor=0, stride=2, pairRadius=1;
+  let anchor=0, stride=2, pairRadius=1, expectedDomain='', domainLocked=false, revealedDomain='';
 
   function root(){return document.getElementById('shortListPanel');}
   function active(){
@@ -42,6 +42,9 @@
     ];
     return values.map(([v,l])=>'<option value="'+v+'">'+l+'</option>').join('');
   }
+  function domainGateMarkup(){
+    return '<fieldset id="crowleyDomainGate"><legend><b>First Operation · Domain Test</b></legend><p>Before the Significator packet is revealed, commit to the domain of the question.</p><div class="crowley-controls"><label>Expected domain<select id="crowleyExpectedDomain"><option value="">Choose before revealing…</option><option value="Yod">Yod</option><option value="Heh">Heh</option><option value="Vav">Vav</option><option value="Heh-final">Final Heh</option></select></label><button id="crowleyLockDomain" type="button">Commit domain</button></div><div id="crowleyDomainReveal" hidden><p><b>Significator packet:</b> <span id="crowleyActualDomain"></span></p><button id="crowleyCloseReading" type="button" hidden>Close reading</button><button id="crowleyTryAgain" type="button" hidden>Try again</button></div><p id="crowleyDomainStatus" aria-live="polite"></p></fieldset>';
+  }
   function installStyle(){
     if(document.getElementById('crowleyHarmonicStyle')) return;
     const s=document.createElement('style');s.id='crowleyHarmonicStyle';
@@ -51,7 +54,7 @@
       #crowleyHarmonicGuide .crowley-controls{display:flex;gap:10px;flex-wrap:wrap;align-items:end}
       #crowleyHarmonicGuide label{display:grid;gap:4px;font-size:.84rem}
       #crowleyHarmonicGuide select,#crowleyHarmonicGuide button{min-height:40px}
-      #crowleyHarmonicStatus{margin:.65rem 0 0;font-size:.9rem}
+      #crowleyHarmonicStatus,#crowleyDomainStatus{margin:.65rem 0 0;font-size:.9rem}\n      #crowleyDomainGate{margin:0 0 12px;padding:10px;border:1px solid rgba(80,65,50,.18);border-radius:10px}\n      #crowleyMechanics[hidden]{display:none!important}
       #shortListPanel .card-row-item.crowley-anchor .card-row-card-wrap{outline:3px solid var(--relphi-red,#8b1e2d)!important;outline-offset:3px}
       #shortListPanel .card-row-item.crowley-target .card-row-card-wrap{outline:3px dashed #725c16!important;outline-offset:3px}
       #shortListPanel .card-row-item.crowley-pair .card-row-card-wrap{box-shadow:0 0 0 3px rgba(55,83,105,.58)!important}
@@ -64,9 +67,20 @@
     let box=document.getElementById('crowleyHarmonicGuide');
     if(!box){
       box=document.createElement('section');box.id='crowleyHarmonicGuide';box.hidden=true;
-      box.innerHTML='<strong>Opening of the Key · First Operation</strong><p style="margin:.35rem 0 .7rem"><b>Opening of the Question.</b> Choose the Significator position. Use <b>Card Counting</b> to form the narrative string; counting is inclusive, so its geometric movement is count − 1. Use <b>Card Pairing</b> to read cards at equal distances around the Significator. Read both with <b>Elemental Dignities</b>.</p><div class="crowley-controls"><label>Significator<select id="crowleyAnchor">'+Array.from({length:12},(_,i)=>'<option value="'+i+'">Position '+(i+1)+'</option>').join('')+'</select></label><label>Card Counting<select id="crowleyCount">'+countOptions()+'</select></label><label>Card Pairing<select id="crowleyPair">'+Array.from({length:6},(_,i)=>'<option value="'+(i+1)+'">±'+(i+1)+'</option>').join('')+'</select></label><button id="crowleyAdvance" type="button">Continue Card Counting</button></div><p id="crowleyHarmonicStatus" aria-live="polite"></p>';
+      box.innerHTML='<strong>Opening of the Key · First Operation</strong><p style="margin:.35rem 0 .7rem"><b>Opening of the Question.</b> The querent must commit to the expected Yod–Heh–Vav–Heh domain before the packet containing the Significator is disclosed.</p>'+domainGateMarkup()+'<div id="crowleyMechanics" hidden><div class="crowley-controls"><label>Significator<select id="crowleyAnchor">'+Array.from({length:12},(_,i)=>'<option value="'+i+'">Position '+(i+1)+'</option>').join('')+'</select></label><label>Card Counting<select id="crowleyCount">'+countOptions()+'</select></label><label>Card Pairing<select id="crowleyPair">'+Array.from({length:6},(_,i)=>'<option value="'+(i+1)+'">±'+(i+1)+'</option>').join('')+'</select></label><button id="crowleyAdvance" type="button">Continue Card Counting</button></div><p id="crowleyHarmonicStatus" aria-live="polite"></p><fieldset><legend><b>Accuracy Test</b></legend><p>After Card Counting and Card Pairing, confirm whether the main lines of the reading are correct.</p><button id="crowleyMainLinesCorrect" type="button">Main lines are correct · continue</button> <button id="crowleyMainLinesWrong" type="button">Main lines are not correct · abandon</button><p id="crowleyAccuracyStatus" aria-live="polite"></p></fieldset></div>';
       const workspace=r.querySelector('.card-row-workspace')||r.firstElementChild;
       if(workspace) workspace.parentNode.insertBefore(box,workspace); else r.prepend(box);
+      box.querySelector('#crowleyLockDomain').addEventListener('click',()=>{
+        const sel=box.querySelector('#crowleyExpectedDomain'); expectedDomain=sel.value;
+        if(!expectedDomain){box.querySelector('#crowleyDomainStatus').textContent='Choose the question domain before committing.';return;}
+        domainLocked=true; sel.disabled=true; box.querySelector('#crowleyLockDomain').disabled=true;
+        box.querySelector('#crowleyDomainStatus').textContent='Domain committed. Resolve the four packets, then reveal which contains the Significator.';
+        box.querySelector('#crowleyDomainReveal').hidden=false;
+        // Packet identity must come from the real cut/deck state. Until that is wired, never fabricate or randomize it.
+        box.querySelector('#crowleyActualDomain').textContent='Awaiting packet resolution';
+      });
+      box.querySelector('#crowleyMainLinesCorrect').addEventListener('click',()=>{box.querySelector('#crowleyAccuracyStatus').textContent='Accuracy gate passed.';});
+      box.querySelector('#crowleyMainLinesWrong').addEventListener('click',()=>{box.querySelector('#crowleyMechanics').hidden=true;box.querySelector('#crowleyAccuracyStatus').textContent='The divination is abandoned because its main lines do not correspond.';clearMarks();});
       box.querySelector('#crowleyAnchor').addEventListener('change',e=>{anchor=Number(e.target.value)||0;mark();});
       box.querySelector('#crowleyCount').addEventListener('change',e=>{stride=(Number(e.target.value)||3)-1;mark();});
       box.querySelector('#crowleyPair').addEventListener('change',e=>{pairRadius=Number(e.target.value)||1;mark();});
