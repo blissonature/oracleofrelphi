@@ -32,7 +32,7 @@
     cards[left]?.classList.add('crowley-pair'); cards[right]?.classList.add('crowley-pair');
     const a=aspectForStep(stride), pair=aspectForStep((pairRadius*2)%12);
     const status=document.getElementById('crowleyHarmonicStatus');
-    if(status) status.textContent='Count: '+(stride+1)+' inclusive → move '+stride+' → '+a[0]+' '+a[1]+'. Pair ±'+pairRadius+' → separation '+((pairRadius*2)%12||12)+' → '+pair[0]+' '+pair[1]+'.';
+    if(status) status.textContent='Card Counting: '+(stride+1)+' inclusive → move '+stride+' → '+a[0]+' '+a[1]+'. Card Pairing: ±'+pairRadius+' → separation '+((pairRadius*2)%12||12)+' → '+pair[0]+' '+pair[1]+'.';
   }
   function countOptions(){
     const values=[
@@ -64,7 +64,7 @@
     let box=document.getElementById('crowleyHarmonicGuide');
     if(!box){
       box=document.createElement('section');box.id='crowleyHarmonicGuide';box.hidden=true;
-      box.innerHTML='<strong>Crowley harmonic method</strong><p style="margin:.35rem 0 .7rem">Choose the Significator position. Crowley counts inclusively; the effective movement is count − 1. Pairing reads equal distances on either side of the Significator.</p><div class="crowley-controls"><label>Significator<select id="crowleyAnchor">'+Array.from({length:12},(_,i)=>'<option value="'+i+'">Position '+(i+1)+'</option>').join('')+'</select></label><label>Card / count<select id="crowleyCount">'+countOptions()+'</select></label><label>Pair outward<select id="crowleyPair">'+Array.from({length:6},(_,i)=>'<option value="'+(i+1)+'">±'+(i+1)+'</option>').join('')+'</select></label><button id="crowleyAdvance" type="button">Make landed card the new center</button></div><p id="crowleyHarmonicStatus" aria-live="polite"></p>';
+      box.innerHTML='<strong>Opening of the Key · First Operation</strong><p style="margin:.35rem 0 .7rem"><b>Opening of the Question.</b> Choose the Significator position. Use <b>Card Counting</b> to form the narrative string; counting is inclusive, so its geometric movement is count − 1. Use <b>Card Pairing</b> to read cards at equal distances around the Significator. Read both with <b>Elemental Dignities</b>.</p><div class="crowley-controls"><label>Significator<select id="crowleyAnchor">'+Array.from({length:12},(_,i)=>'<option value="'+i+'">Position '+(i+1)+'</option>').join('')+'</select></label><label>Card Counting<select id="crowleyCount">'+countOptions()+'</select></label><label>Card Pairing<select id="crowleyPair">'+Array.from({length:6},(_,i)=>'<option value="'+(i+1)+'">±'+(i+1)+'</option>').join('')+'</select></label><button id="crowleyAdvance" type="button">Continue Card Counting</button></div><p id="crowleyHarmonicStatus" aria-live="polite"></p>';
       const workspace=r.querySelector('.card-row-workspace')||r.firstElementChild;
       if(workspace) workspace.parentNode.insertBefore(box,workspace); else r.prepend(box);
       box.querySelector('#crowleyAnchor').addEventListener('change',e=>{anchor=Number(e.target.value)||0;mark();});
