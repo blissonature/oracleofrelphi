@@ -2036,7 +2036,14 @@
       '</section>';
   }
   function templatesMarkup(draft,hasCards) {
-    const selected=templateById(draft.templateId||draft.basedOnTemplateId);
+    const entries=allTemplates();
+    const requestedId=draft.templateId||draft.basedOnTemplateId;
+    const effectiveId=entries.some(item=>item.id===requestedId)?requestedId:(entries[0]?.id||'');
+    // The select falls back to the first template when the draft has no id.
+    // Preview that same effective selection so the control and preview can
+    // never disagree after Clear.
+    if(!draft.templateId && effectiveId) draft.templateId=effectiveId;
+    const selected=templateById(effectiveId);
     const positions=selected?.positions?.slice?.().sort((a,b)=>a.drawOrder-b.drawOrder) || [];
     const preview=selected?.id===RECURSION_ID
       ? '<div class="relphi-recursion-template-note"><strong>Seven recursive levels · 22 cards</strong><span>Each level uses the Relphi logo: Mem, Aleph, and Shin occupy the three black circles. The red circle is Earth, the portal to the next level; on Level 7 it receives card 22. The seven-level depth control is the 1×7 Veilva.</span></div>'
