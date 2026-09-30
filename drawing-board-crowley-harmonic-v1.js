@@ -136,6 +136,18 @@
     `;
     document.head.appendChild(s);
   }
+  function syncSignificatorFromBoard(box){
+    if(significatorId||!box)return;
+    const entries=window.RelphiTarotLedgerBridge?.drawingBoardReadingEntries?.()||[];
+    if(entries.length!==1)return;
+    const card=entries[0];
+    const id=card?.cardId||card?.card_id;
+    if(!id)return;
+    significatorId=id;
+    box.querySelector('#crowleySignificatorStatus').textContent='Significator: '+(card.title||window.RelphiTarotLedgerBridge?.titleFor?.(id)||'Selected card');
+    box.querySelector('#crowleySignificatorStep').hidden=true;
+    box.querySelector('#crowleyDomainStep').hidden=false;
+  }
   function ensureGuide(){
     const r=root(); if(!r) return;
     const nativeDrawer=r.querySelector('.card-row-drawing-board');
@@ -208,7 +220,7 @@
       box.querySelector('#crowleyCount').value='3';
     }
     box.hidden=!active();
-    if(!box.hidden) mark(); else clearMarks();
+    if(!box.hidden){syncSignificatorFromBoard(box);mark();} else clearMarks();
   }
   function start(){
     operation=1;anchor=0;countValue=3;pairRadius=1;expectedDomain='';domainLocked=false;revealedDomain='';significatorId='';
