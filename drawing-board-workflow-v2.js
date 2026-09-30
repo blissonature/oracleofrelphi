@@ -4359,7 +4359,26 @@
             return;
           }
         }
+        const freeDraw=!(surfaceReadingSession || recursionActive() || craftedReadingActive || boardHasCraftedStructure(root));
         pendingFocusIndex=currentCardCount(root);
+        if(freeDraw){
+          const before=currentCardCount(root);
+          requestAnimationFrame(()=>requestAnimationFrame(()=>{
+            const live=panel();if(!live||currentCardCount(live)<=before)return;
+            const bridge=optionsBridge(),snap=bridge?.capture?.();
+            if(bridge&&snap){
+              const count=currentCardCount(live),scale=1;
+              snap.rowEnvelopeLayout={...(snap.rowEnvelopeLayout||{})};
+              snap.rowCardTransforms={...(snap.rowCardTransforms||{})};
+              for(let i=0;i<count;i++){
+                snap.rowEnvelopeLayout[i]={x:i*CARD_W*scale,y:0};
+                snap.rowCardTransforms[i]={...(snap.rowCardTransforms[i]||{}),scale,rotation:0,zIndex:i+1};
+              }
+              bridge.restore(snap);
+            }
+            requestAnimationFrame(()=>requestAnimationFrame(zoomExtents));
+          }));
+        }
       },true);
     }
     ensureBoardChrome(root);
