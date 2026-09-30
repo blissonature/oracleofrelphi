@@ -2323,3 +2323,8 @@ body.relphi-attune-open{overflow:hidden!important}
 #shortListPanel .relphi-template-save::before{content:none!important;display:none!important}
 
 #shortListPanel #relphiTemplateName.is-unnamed{color:#8a837d!important;font-weight:500!important}
+
+/* The selected Crafted path header already supplies the path identity. */
+#shortListPanel .relphi-path-actions{display:flex!important;justify-content:flex-end!important;margin:0 0 .35rem!important}
+#shortListPanel .relphi-path-actions #relphiAddPosition{width:2rem!important;min-width:2rem!important;height:2rem!important;min-height:2rem!important;margin:0!important;padding:0!important;font-size:0!important}
+#shortListPanel .relphi-path-actions #relphiAddPosition::after{content:'+';font-size:1rem!important;line-height:1!important}
