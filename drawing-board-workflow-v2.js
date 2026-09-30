@@ -516,7 +516,7 @@
   }
 
   function blankDraft() {
-    return { templateId:'', basedOnTemplateId:'', labels:[], positionPacks:[], positionSettings:[], pack:'full', keywordTags:[], keywordMatchMode:'any', stickers:true, reversals:true, repeats:false, templateName:'' };
+    return { templateId:'', basedOnTemplateId:'', labels:[], positionPacks:[], positionSettings:[], pack:'full', keywordTags:[], keywordMatchMode:'any', stickers:true, reversals:true, repeats:false, templateName:'Unnamed Template' };
   }
   function draftFromState() {
     const snap = currentSnapshot() || {};
@@ -1515,11 +1515,11 @@
   function markQuestionEditCustom(drawer,draft) {
     if (draft.templateId) draft.basedOnTemplateId=draft.templateId;
     draft.templateId='';
-    draft.templateName='';
+    draft.templateName='Unnamed Template';
     const templateSelect=drawer.querySelector('#relphiSpreadTemplateSelect');
     if (templateSelect) templateSelect.value='';
     const nameField=drawer.querySelector('#relphiTemplateName');
-    if (nameField) nameField.value='';
+    if (nameField) nameField.value='Unnamed Template';
   }
 
   const REFERENT_ELEMENTS = {
@@ -2019,7 +2019,7 @@
       '<div class="relphi-options-subhead"><div><strong>Bespoke</strong><span>Write the questions for this reading.</span></div><button type="button" id="relphiAddPosition" '+(hasCards||draft.labels.length>=MAX_POSITIONS?'disabled':'')+'>Add question</button></div>'+
       '<p class="relphi-bespoke-comma-note">Commas split the text into separate questions.</p>'+
       '<div id="relphiPositionLabels">'+labelsMarkup(draft.labels,draft)+'</div>'+
-      '<div class="relphi-template-save"><input id="relphiTemplateName" type="text" maxlength="60" placeholder="Template name" value="'+escapeHtml(draft.templateName)+'" '+(hasCards?'disabled':'')+'><button type="button" id="relphiSaveTemplate" '+(hasCards?'disabled':'')+'>Save template</button></div>'+
+      '<div class="relphi-template-save"><input id="relphiTemplateName" type="text" maxlength="60" aria-label="Template name" value="'+escapeHtml(draft.templateName||'Unnamed Template')+'" '+(hasCards?'disabled':'')+'><button type="button" id="relphiSaveTemplate" '+(hasCards?'disabled':'')+'>Save template</button></div>'+
       '</section>';
   }
   function templatesMarkup(draft,hasCards) {
@@ -2424,14 +2424,22 @@
   function saveDraftTemplate(root) {
     if (!optionsSession) return;
     const draft=optionsSession.draft;
-    const name=String(draft.templateName || '').trim();
-    if (!name || !draft.labels.length) return;
+    const requested=String(draft.templateName || '').trim() || 'Unnamed Template';
+    if (!draft.labels.length) return;
+    const existing=readCustomTemplates();
+    let name=requested;
+    if(requested==='Unnamed Template'){
+      const names=new Set(existing.map(item=>String(item.name||'')));
+      let modifier=2;
+      while(names.has(name)) name='Unnamed Template '+modifier++;
+    }
+    draft.templateName=name;
     const based=templateById(draft.templateId || draft.basedOnTemplateId);
     const positions=(based?.positions?.length===draft.labels.length ? clone(based.positions) : genericPositions(draft.labels));
     positions.forEach((item,index)=>{ item.label=draft.labels[index] || `Position ${index+1}`; item.drawOrder=index+1; });
     const id=`custom-${slug(name)}-${draft.labels.length}`;
     const custom={version:1,id,name,cardCount:draft.labels.length,source:'custom',editable:true,basedOn:based?.id||null,positions,rules:{allowReversals:draft.reversals,allowRepeats:draft.repeats,drawScope:(draft.pack==='question-by-question'?'full':draft.pack)}};
-    const items=readCustomTemplates().filter(item=>item.id!==id);
+    const items=existing.filter(item=>item.id!==id);
     items.push(custom); writeCustomTemplates(items);
     draft.templateId=id;
     draft.basedOnTemplateId=id;
