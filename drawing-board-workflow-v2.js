@@ -2009,7 +2009,7 @@
     return '<section class="relphi-referent-panel">'+
       (clonedFrom?'<div class="relphi-template-clone-note"><strong>Editing a copy of '+escapeHtml(clonedFrom.name)+'</strong><span>The original template stays untouched. Name and save this Bespoke version if you want to keep it; you can also continue without saving.</span></div>':'')+
       '<div class="relphi-options-subhead"><div><strong>Bespoke</strong><span>Write the questions for this reading.</span></div><button type="button" id="relphiAddPosition" '+(hasCards||draft.labels.length>=MAX_POSITIONS?'disabled':'')+'>Add question</button></div>'+
-      '<p class="relphi-bespoke-comma-note">You can enter several questions in Question 1. Commas are reserved for separating questions; click anywhere outside the field to split them into editable questions.</p>'+
+      '<p class="relphi-bespoke-comma-note">Commas split the text into separate questions.</p>'+
       '<div id="relphiPositionLabels">'+labelsMarkup(draft.labels,draft)+'</div>'+
       '<div class="relphi-template-save"><input id="relphiTemplateName" type="text" maxlength="60" placeholder="Template name" value="'+escapeHtml(draft.templateName)+'" '+(hasCards?'disabled':'')+'><button type="button" id="relphiSaveTemplate" '+(hasCards?'disabled':'')+'>Save template</button></div>'+
       '</section>';
