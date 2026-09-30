@@ -4522,6 +4522,16 @@
       scrollCardRowToEnd();
       return {card_id:card.card_id,title:title(card),image:rwsImagePath(card)};
     },
+    showOpeningPacket(packet) {
+      const ids=Array.isArray(packet)?packet.filter(id=>cardById(id)):[];
+      if(!ids.length)return false;
+      // Replace the lone Significator display with its actual IHVH packet,
+      // preserving packet order for the face-up Operation I spread.
+      commitShortList(ids,{newCardsManual:false});
+      expandCardRow();
+      setTimeout(()=>fitCardRowToViewport(),0);
+      return true;
+    },
     addCardToBoard(cardId, scope = 'full') {
       const id=String(cardId || '').trim();
       if (!cardById(id)) return false;
