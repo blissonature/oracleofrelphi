@@ -10300,6 +10300,14 @@ ${notes || ''}`;
     function showDrawingBoardFromLanding(draw=false) {
       state.mode = 'board';
       state.cardRowBoardOpen = true;
+      // Publish the open state before renderShortList(). The Drawing Board
+      // enhancement listens to the render event synchronously and uses this
+      // button state to decide whether #shortListPanel should remain visible.
+      const currentBoardTrigger = $('relphiOpenDrawingBoardCurrent');
+      if (currentBoardTrigger) {
+        currentBoardTrigger.textContent = 'Close Drawing Board';
+        currentBoardTrigger.setAttribute('aria-expanded', 'true');
+      }
       const commandDetails = document.querySelector('.tarot-command-drawer > details');
       if (commandDetails) commandDetails.open = true;
       ['browsePanel','visibilityPanel','spreadPanel','datePanel','chartPanel','currentSkyPanel'].forEach(id => setVisible(id, false));
@@ -10322,11 +10330,6 @@ ${notes || ''}`;
       }
       expandCardRow();
 
-      const currentBoardTrigger = $('relphiOpenDrawingBoardCurrent');
-      if (currentBoardTrigger) {
-        currentBoardTrigger.textContent = 'Close Drawing Board';
-        currentBoardTrigger.setAttribute('aria-expanded', 'true');
-      }
       if (draw) drawRandomRowCard();
       else boardPanel?.scrollIntoView({ behavior:'smooth', block:'start' });
       updateSummary([]);
