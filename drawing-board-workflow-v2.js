@@ -2211,15 +2211,18 @@
         draft.labels=[];
         draft.positionPacks=[];
       }
-      // A template choice only updates the Settings preview. Do not recursively
-      // rebuild the entire Settings drawer from inside the select change event;
-      // large/method templates such as Opening of the Key can lock the UI here.
-      const selectedPreview=drawer.querySelector('.relphi-referent-panel');
-      if(selectedPreview){
-        const fresh=document.createElement('div');
-        fresh.innerHTML=templatesMarkup(draft,hasCards);
-        const next=fresh.firstElementChild;
-        if(next)selectedPreview.replaceWith(next);
+      // Keep the live selector in place. Replacing its ancestor during its own
+      // change event leaves the browser processing a detached form control and
+      // can make the page appear frozen. Update only the inert preview content.
+      const panel=templateSelect.closest('.relphi-referent-panel');
+      const oldPreview=panel?.querySelector('.relphi-template-preview,.relphi-recursion-template-note,.relphi-referent-empty');
+      if(oldPreview){
+        const ordered=chosen?.positions?.slice?.().sort((a,b)=>a.drawOrder-b.drawOrder) || [];
+        const next=document.createElement(ordered.length?'ol':'p');
+        next.className=ordered.length?'relphi-template-preview':'relphi-referent-empty';
+        if(ordered.length) ordered.forEach(item=>{const li=document.createElement('li');li.textContent=item.label;next.appendChild(li);});
+        else next.textContent='Choose a template to preview its referents.';
+        oldPreview.replaceWith(next);
       }
     });
     drawer.querySelector('#relphiModifyTemplate')?.addEventListener('click',()=>{
