@@ -2317,3 +2317,7 @@ body.relphi-attune-open{overflow:hidden!important}
 #shortListPanel .relphi-board-settings-body>.relphi-sky-connector{display:flex!important;justify-content:flex-end!important;align-items:center!important;gap:.4rem!important;border:0!important;background:transparent!important;padding:0!important;margin:.35rem 0!important}
 #shortListPanel .relphi-board-settings-body>.relphi-sky-connector select{display:inline-block!important;width:auto!important;max-width:min(100%,18rem)!important;margin:0!important;min-height:34px!important;padding:.32rem 1.8rem .32rem .55rem!important;font-size:.78rem!important;font-weight:700!important;border-radius:8px!important}
 #shortListPanel .relphi-board-settings-body>.relphi-sky-connector [data-sky-rising]{max-width:10rem!important}
+
+/* Bespoke save name is self-explanatory; do not add a redundant visible header. */
+#shortListPanel .relphi-template-save{padding-top:0!important}
+#shortListPanel .relphi-template-save::before{content:none!important;display:none!important}
