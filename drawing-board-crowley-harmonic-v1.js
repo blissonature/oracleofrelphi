@@ -168,7 +168,22 @@
     box.hidden=!active();
     if(!box.hidden) mark(); else clearMarks();
   }
-  window.RelphiCrowleyHarmonicBridge=Object.freeze({getInterpretationContext:()=>interpretationContext(),getReadingReference:()=>({html:readingReferenceMarkup(),sky:window.RelphiSkyConnector?.context?.()||null})});
+  function start(){
+    operation=1;anchor=0;countValue=3;pairRadius=1;expectedDomain='';domainLocked=false;revealedDomain='';
+    ensureGuide();
+    const box=document.getElementById('crowleyHarmonicGuide');
+    if(!box)return false;
+    box.hidden=false;
+    box.querySelector('#crowleyMechanics').hidden=true;
+    const expected=box.querySelector('#crowleyExpectedDomain');
+    if(expected){expected.value='';expected.disabled=false;}
+    const lock=box.querySelector('#crowleyLockDomain');if(lock)lock.disabled=false;
+    box.querySelector('#crowleyDomainReveal').hidden=true;
+    box.querySelector('#crowleyDomainStatus').textContent='Begin with Operation I: commit to the question domain before locating the Significator.';
+    box.scrollIntoView({block:'nearest'});
+    return true;
+  }
+  window.RelphiCrowleyHarmonicBridge=Object.freeze({start,getInterpretationContext:()=>interpretationContext(),getReadingReference:()=>({html:readingReferenceMarkup(),sky:window.RelphiSkyConnector?.context?.()||null})});
   window.addEventListener('relphi:sky-context-change',()=>{if(active())mark();});
   document.addEventListener('change',e=>{if(e.target?.id==='relphiSpreadTemplateSelect') setTimeout(ensureGuide,0);});
   document.addEventListener('relphi:drawing-board-rendered',()=>setTimeout(ensureGuide,0));
