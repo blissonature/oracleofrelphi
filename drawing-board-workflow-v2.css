@@ -2312,3 +2312,8 @@ body.relphi-attune-open{overflow:hidden!important}
 #shortListPanel .relphi-board-settings-body>.relphi-sky-connector{position:relative!important;inset:auto!important;z-index:auto!important;float:none!important;width:auto!important;max-width:none!important;flex:0 0 auto!important;order:0!important;margin:.55rem 0!important}
 #shortListPanel .relphi-board-settings-body>.drawing-board-mode-switch{position:relative!important;z-index:auto!important;flex:0 0 auto!important;order:1!important}
 #shortListPanel .relphi-board-settings-body>.relphi-reading-options-drawer,#shortListPanel .relphi-board-settings-body>.relphi-free-settings{position:relative!important;z-index:auto!important;order:2!important;min-height:0!important}
+
+/* Compact global Sky Connector: selector is its own header, flush right. */
+#shortListPanel .relphi-board-settings-body>.relphi-sky-connector{display:flex!important;justify-content:flex-end!important;align-items:center!important;gap:.4rem!important;border:0!important;background:transparent!important;padding:0!important;margin:.35rem 0!important}
+#shortListPanel .relphi-board-settings-body>.relphi-sky-connector select{display:inline-block!important;width:auto!important;max-width:min(100%,18rem)!important;margin:0!important;min-height:34px!important;padding:.32rem 1.8rem .32rem .55rem!important;font-size:.78rem!important;font-weight:700!important;border-radius:8px!important}
+#shortListPanel .relphi-board-settings-body>.relphi-sky-connector [data-sky-rising]{max-width:10rem!important}
