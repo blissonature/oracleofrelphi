@@ -761,17 +761,24 @@
     const settingsPanel=ensureBoardChrome(root);
     const body=settingsPanel?.querySelector('.relphi-board-settings-body');
     if(!settingsPanel||!body)return;
+    const drawer=settingsMode==='free' ? null : body.querySelector('.relphi-reading-options-drawer');
     const host=settingsMode==='free'
       ? body.querySelector('.relphi-free-settings')
-      : body.querySelector('.relphi-reading-options-drawer');
+      : drawer?.querySelector('.relphi-options-body');
     if(!host)return;
 
     let section=host.querySelector(':scope > .relphi-board-configuration');
     if(!section){
       section=document.createElement('details');
       section.className='relphi-board-configuration relphi-appearance-disclosure';
-      const footer=host.querySelector('.relphi-board-settings-footer,.relphi-options-commitbar');
-      if(footer)host.insertBefore(section,footer); else host.appendChild(section);
+      // Crafted Appearance is ordinary scrolling content. The Confirm/Cancel
+      // commit bar remains outside .relphi-options-body and therefore static.
+      if(settingsMode==='free'){
+        const footer=host.querySelector('.relphi-board-settings-footer');
+        if(footer)host.insertBefore(section,footer); else host.appendChild(section);
+      }else{
+        host.appendChild(section);
+      }
     }
     const allowed=boardConfigurationAllowed(root);
     section.hidden=!allowed;
