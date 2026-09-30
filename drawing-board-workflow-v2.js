@@ -1105,10 +1105,12 @@
     if (optionsSession) return;
     const draft=draftFromState();
     const crowleyActive=draft.templateId==='crowley-harmonic-divination-12'||draft.basedOnTemplateId==='crowley-harmonic-divination-12';
-    const path=crowleyActive?'templates':(activeCraftedPath||'bespoke');
+    const path=crowleyActive?'templates':(activeCraftedPath||'');
     if(crowleyActive)activeCraftedPath='templates';
     if(path==='bespoke' && !draft.templateId) draft.templateName='Unnamed Template';
-    optionsSession = { baseline:currentSnapshot(), draft, path, building:{element:'',planet:'',aspect:'',sign:'',house:'',need:''}, suggestions:[], suggestionPacks:[], surfaceSelected:{} };
+    // Settings always reopen visually collapsed. Keep the last configured path
+    // in state, but never imply that Bespoke (or any other path) was reopened.
+    optionsSession = { baseline:currentSnapshot(), draft, path, pathCollapsed:true, building:{element:'',planet:'',aspect:'',sign:'',house:'',need:''}, suggestions:[], suggestionPacks:[], surfaceSelected:{} };
   }
   function optionsStructuralChanged(session = optionsSession) {
     if (!session) return false;
