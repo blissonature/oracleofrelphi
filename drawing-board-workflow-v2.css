@@ -2226,3 +2226,43 @@ body.relphi-attune-open{overflow:hidden!important}
 #shortListPanel .relphi-board-journal-button{gap:.38rem!important}
 #shortListPanel .relphi-board-journal-button small{font:700 .56rem/1 system-ui,sans-serif!important;text-transform:uppercase!important;letter-spacing:.04em!important}
 #shortListPanel .relphi-board-export-status{display:block!important;min-height:1em!important;margin-top:.35rem!important;color:#655d56!important;font-size:.66rem!important}
+
+
+/* Keep every Bespoke Advanced control inside the drawer at all widths. */
+#shortListPanel .relphi-question-advanced{
+  width:100%!important;
+  max-width:100%!important;
+  min-width:0!important;
+  justify-self:stretch!important;
+  box-sizing:border-box!important;
+}
+#shortListPanel .relphi-question-advanced>.relphi-bespoke-question-settings{
+  display:grid!important;
+  grid-template-columns:repeat(3,minmax(0,1fr))!important;
+  width:100%!important;
+  max-width:100%!important;
+  min-width:0!important;
+  box-sizing:border-box!important;
+  overflow:visible!important;
+}
+#shortListPanel .relphi-question-advanced>.relphi-bespoke-question-settings>label{
+  width:auto!important;
+  min-width:0!important;
+  max-width:100%!important;
+  box-sizing:border-box!important;
+}
+#shortListPanel .relphi-question-advanced>.relphi-bespoke-question-settings>label:nth-last-child(-n+2){
+  display:flex!important;
+  align-items:center!important;
+  justify-content:flex-start!important;
+}
+@media(max-width:700px){
+  #shortListPanel .relphi-question-advanced>.relphi-bespoke-question-settings{
+    grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  }
+}
+@media(max-width:420px){
+  #shortListPanel .relphi-question-advanced>.relphi-bespoke-question-settings{
+    grid-template-columns:1fr!important;
+  }
+}
