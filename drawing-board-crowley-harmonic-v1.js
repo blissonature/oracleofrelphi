@@ -167,13 +167,22 @@
     if(document.getElementById('crowleyHarmonicStyle')) return;
     const s=document.createElement('style');s.id='crowleyHarmonicStyle';
     s.textContent=`
-      #crowleyHarmonicGuide{margin:12px 0;padding:12px;border:1px solid rgba(80,65,50,.22);border-radius:12px;background:rgba(255,253,248,.92)}
+      #crowleyHarmonicGuide{--crowley-ink:var(--ink,#241f1b);--crowley-muted:var(--muted,#6f665e);--crowley-line:rgba(80,65,50,.18);--crowley-paper:rgba(255,253,248,.92);--crowley-accent:var(--relphi-red,#8b1e2d);margin:12px 0;padding:14px;border:1px solid var(--crowley-line);border-radius:14px;background:var(--crowley-paper);color:var(--crowley-ink);font:inherit;line-height:1.45}
       #crowleyHarmonicGuide[hidden]{display:none!important}
+      #crowleyHarmonicGuide strong,#crowleyHarmonicGuide h3,#crowleyHarmonicGuide legend{font-family:inherit;color:inherit}
+      #crowleyHarmonicGuide p{margin:.45rem 0}
       #crowleyHarmonicGuide .crowley-controls{display:flex;gap:10px;flex-wrap:wrap;align-items:end}
-      #crowleyHarmonicGuide label{display:grid;gap:4px;font-size:.84rem}
-      #crowleyHarmonicGuide select,#crowleyHarmonicGuide button{min-height:40px}
-      #crowleyHarmonicStatus,#crowleyDomainStatus{margin:.65rem 0 0;font-size:.9rem}
-      #crowleyHarmonicGuide .crowley-invocation{margin:.65rem 0 1rem;padding:.8rem 1rem;border-left:3px solid rgba(80,65,50,.32);background:rgba(255,255,255,.48);font-style:normal;line-height:1.5}\n      #crowleyDomainGate{margin:0 0 12px;padding:10px;border:1px solid rgba(80,65,50,.18);border-radius:10px}\n      #crowleyMechanics[hidden]{display:none!important}
+      #crowleyHarmonicGuide label{display:grid;gap:5px;font:inherit;font-size:.84rem;color:var(--crowley-muted)}
+      #crowleyHarmonicGuide select,#crowleyHarmonicGuide input{box-sizing:border-box;min-height:40px;padding:.48rem .65rem;border:1px solid var(--crowley-line);border-radius:9px;background:rgba(255,255,255,.72);color:var(--crowley-ink);font:inherit}
+      #crowleyHarmonicGuide button{box-sizing:border-box;min-height:40px;padding:.52rem .8rem;border:1px solid var(--crowley-line);border-radius:9px;background:rgba(255,255,255,.72);color:var(--crowley-ink);font:inherit;font-weight:650;cursor:pointer}
+      #crowleyHarmonicGuide button:hover:not(:disabled),#crowleyHarmonicGuide button:focus-visible{border-color:var(--crowley-accent);outline:none;box-shadow:0 0 0 2px color-mix(in srgb,var(--crowley-accent) 14%,transparent)}
+      #crowleyHarmonicGuide button:disabled{opacity:.5;cursor:default}
+      #crowleyHarmonicGuide button.primary,#crowleyHarmonicGuide #crowleyLockDomain,#crowleyHarmonicGuide #crowleyInvoke,#crowleyHarmonicGuide #crowleyMakeCut,#crowleyHarmonicGuide #crowleyBeginStory,#crowleyHarmonicGuide #crowleyMainLinesCorrect{border-color:var(--crowley-accent);background:var(--crowley-accent);color:#fff}
+      #crowleyHarmonicStatus,#crowleyDomainStatus{margin:.65rem 0 0;font-size:.9rem;color:var(--crowley-muted)}
+      #crowleyHarmonicGuide .crowley-invocation{margin:.65rem 0 1rem;padding:.85rem 1rem;border:1px solid var(--crowley-line);border-left:3px solid var(--crowley-accent);border-radius:0 9px 9px 0;background:rgba(255,255,255,.48);font:inherit;line-height:1.55}
+      #crowleyDomainGate{margin:0 0 12px;padding:12px;border:1px solid var(--crowley-line);border-radius:12px}
+      #crowleyDomainGate legend{padding:0 .35rem}
+      #crowleyMechanics[hidden]{display:none!important}
       #shortListPanel .card-row-item.crowley-anchor .card-row-card-wrap{outline:3px solid var(--relphi-red,#8b1e2d)!important;outline-offset:3px}
       #shortListPanel .card-row-item.crowley-target .card-row-card-wrap{outline:3px dashed #725c16!important;outline-offset:3px}
       #shortListPanel .card-row-item.crowley-pair .card-row-card-wrap{box-shadow:0 0 0 3px rgba(55,83,105,.58)!important}
@@ -210,7 +219,7 @@
     let box=document.getElementById('crowleyHarmonicGuide');
     if(!box){
       box=document.createElement('section');box.id='crowleyHarmonicGuide';box.hidden=true;
-      box.innerHTML='<strong>Opening of the Key</strong><p style="margin:.35rem 0 .7rem">Relphi will reveal this divination one step at a time.</p>'+domainGateMarkup()+'<div id="crowleyMechanics" hidden><div class="crowley-controls"><label>Operation<select id="crowleyOperation">'+OPERATIONS.map(op=>'<option value="'+op.n+'">'+op.n+' · '+op.name+'</option>').join('')+'</select></label><label>Harmonic reference<select id="crowleyAnchor">'+Array.from({length:12},(_,i)=>'<option value="'+i+'">Position '+(i+1)+'</option>').join('')+'</select></label><label>Card Counting<select id="crowleyCount">'+countOptions()+'</select></label><label>Card Pairing<select id="crowleyPair">'+Array.from({length:6},(_,i)=>'<option value="'+(i+1)+'">±'+(i+1)+'</option>').join('')+'</select></label><button id="crowleyAdvance" type="button">Continue Card Counting</button></div><p id="crowleyOperationStatus"></p><div id="crowleyOperationFocus"></div><p id="crowleyHarmonicStatus" aria-live="polite"></p><div id="crowleyReadingReference"></div><fieldset><legend><b>Accuracy Test</b></legend><p>After Card Counting and Card Pairing, confirm whether the main lines of the reading are correct.</p><button id="crowleyMainLinesCorrect" type="button">Main lines are correct · continue</button> <button id="crowleyMainLinesWrong" type="button">Main lines are not correct · abandon</button><p id="crowleyAccuracyStatus" aria-live="polite"></p></fieldset></div>';
+      box.innerHTML='<span class="eyebrow">Crowley Divination Method</span><h3 style="margin:.15rem 0 .35rem">The Opening of the Key</h3><p>Relphi will reveal this divination one step at a time.</p>'+domainGateMarkup()+'<div id="crowleyMechanics" hidden><div class="crowley-controls"><label>Operation<select id="crowleyOperation">'+OPERATIONS.map(op=>'<option value="'+op.n+'">'+op.n+' · '+op.name+'</option>').join('')+'</select></label><label>Harmonic reference<select id="crowleyAnchor">'+Array.from({length:12},(_,i)=>'<option value="'+i+'">Position '+(i+1)+'</option>').join('')+'</select></label><label>Card Counting<select id="crowleyCount">'+countOptions()+'</select></label><label>Card Pairing<select id="crowleyPair">'+Array.from({length:6},(_,i)=>'<option value="'+(i+1)+'">±'+(i+1)+'</option>').join('')+'</select></label><button id="crowleyAdvance" type="button">Continue Card Counting</button></div><p id="crowleyOperationStatus"></p><div id="crowleyOperationFocus"></div><p id="crowleyHarmonicStatus" aria-live="polite"></p><div id="crowleyReadingReference"></div><fieldset><legend><b>Accuracy Test</b></legend><p>After Card Counting and Card Pairing, confirm whether the main lines of the reading are correct.</p><button id="crowleyMainLinesCorrect" type="button">Main lines are correct · continue</button> <button id="crowleyMainLinesWrong" type="button">Main lines are not correct · abandon</button><p id="crowleyAccuracyStatus" aria-live="polite"></p></fieldset></div>';
       const workspace=r.querySelector('.card-row-workspace');
       if(workspace) workspace.parentNode.insertBefore(box,workspace); else nativeDrawer.insertAdjacentElement('beforebegin',box);
       const ledger=()=>window.RelphiTarotLedgerBridge;
