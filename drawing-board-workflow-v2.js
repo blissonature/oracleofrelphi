@@ -4444,16 +4444,21 @@
         if(commandDetails)commandDetails.open=true;
         const root=panel();
         if(root){root.hidden=false;root.removeAttribute('hidden');}
-        const openNative=()=>{
+        // The current board is already the owner. Do not wait indefinitely for
+        // bridge state before showing it: opening the board is a UI action, and
+        // bridge persistence can follow once the bridge is ready.
+        setBoardOpen(true,{fit:true});
+        const persistOpenState=(attempt=0)=>{
           const bridge=optionsBridge();
-          if(!bridge?.capture||!bridge?.restore){setTimeout(openNative,25);return;}
-          const snap=bridge.capture();
-          if(snap){snap.cardRowBoardOpen=true;bridge.restore(snap);}
-          const legacy=document.getElementById('landingOpenBoard');
-          if(legacy)legacy.click();
-          requestAnimationFrame(()=>setBoardOpen(true,{fit:true}));
+          if(bridge?.capture&&bridge?.restore){
+            const snap=bridge.capture();
+            if(snap){snap.cardRowBoardOpen=true;bridge.restore(snap);}
+            setBoardOpen(true,{fit:true});
+            return;
+          }
+          if(attempt<40)setTimeout(()=>persistOpenState(attempt+1),25);
         };
-        openNative();
+        persistOpenState();
       } else setBoardOpen(false,{fit:false});
       return;
     }
