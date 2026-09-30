@@ -4438,26 +4438,6 @@
     // switches to board mode, hides competing panels, rerenders the board, and
     // expands the native drawer. Do not intercept that click here.
     const root=panel();
-        if(root){root.hidden=false;root.removeAttribute('hidden');}
-        // The current board is already the owner. Do not wait indefinitely for
-        // bridge state before showing it: opening the board is a UI action, and
-        // bridge persistence can follow once the bridge is ready.
-        setBoardOpen(true,{fit:true});
-        const persistOpenState=(attempt=0)=>{
-          const bridge=optionsBridge();
-          if(bridge?.capture&&bridge?.restore){
-            const snap=bridge.capture();
-            if(snap){snap.cardRowBoardOpen=true;bridge.restore(snap);}
-            setBoardOpen(true,{fit:true});
-            return;
-          }
-          if(attempt<40)setTimeout(()=>persistOpenState(attempt+1),25);
-        };
-        persistOpenState();
-      } else setBoardOpen(false,{fit:false});
-      return;
-    }
-    const root=panel();
     const settingsTrigger=event.target.closest?.('#shortListPanel #relphiBoardSettingsButton');
     if(settingsTrigger&&root?.contains(settingsTrigger)){
       event.preventDefault();
