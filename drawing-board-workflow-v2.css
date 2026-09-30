@@ -2266,3 +2266,35 @@ body.relphi-attune-open{overflow:hidden!important}
     grid-template-columns:1fr!important;
   }
 }
+
+
+/* Keep Crafted setup and its commit controls inside the visible viewport.
+   The options body owns scrolling; the page must never strand Confirm below it. */
+#shortListPanel .relphi-board-settings-panel{
+  max-height:calc(100dvh - 1rem)!important;
+  min-height:0!important;
+}
+#shortListPanel .relphi-board-settings-panel .relphi-reading-options-drawer{
+  max-height:calc(100dvh - 4.75rem)!important;
+  min-height:0!important;
+  overflow:hidden!important;
+}
+#shortListPanel .relphi-board-settings-panel .relphi-reading-options-drawer .relphi-options-body{
+  overscroll-behavior-y:contain!important;
+  min-height:0!important;
+  overflow-y:auto!important;
+}
+#shortListPanel .relphi-board-settings-panel .relphi-reading-options-drawer .relphi-options-commitbar{
+  flex:0 0 auto!important;
+  position:relative!important;
+  bottom:auto!important;
+  z-index:3!important;
+}
+@media(max-width:700px){
+  #shortListPanel .relphi-board-settings-panel{
+    max-height:calc(100dvh - .5rem)!important;
+  }
+  #shortListPanel .relphi-board-settings-panel .relphi-reading-options-drawer{
+    max-height:calc(100dvh - 3.75rem)!important;
+  }
+}
