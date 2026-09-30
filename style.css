@@ -19950,5 +19950,3 @@ html body .relphi-ledger-home-tools strong{font-size:.78rem}
 html body .relphi-ledger-home-tools span{color:rgba(17,17,17,.58);font-size:.66rem}
 @media(max-width:700px){html body .relphi-ledger-home{grid-template-columns:1fr}html body .relphi-ledger-home-tools{grid-template-columns:1fr 1fr}}
 
-.relphi-home-identity{margin:0 0 .7rem;padding:0;text-align:left}
-.relphi-home-identity h1{margin:0;font-size:clamp(1.55rem,4vw,2.35rem);line-height:1.05;letter-spacing:-.025em}
