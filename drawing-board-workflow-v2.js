@@ -4618,13 +4618,8 @@
       stickers:true
     };
     if(!launchConfiguredReading(root,clone(optionsSession.draft)))return false;
-    showBoardToast('Your question is established as the first referent. Attune before revealing its card.',{
-      title:'Bespoke',
-      duration:0,
-      actionLabel:'Attune',
-      onAction:()=>{const next=nextUndrawnNativeIndex(panel());if(next!=null)openAttune(next);}
-    });
     root.scrollIntoView?.({behavior:'smooth',block:'start'});
+    setTimeout(()=>{const live=panel();if(!live)return;const next=nextUndrawnNativeIndex(live);if(next!=null)openAttune(next);},0);
     return true;
   }
 
