@@ -682,14 +682,9 @@
     if(!bar){
       bar=document.createElement('div');
       bar.className='relphi-board-commandbar';
-      bar.innerHTML='<div class="relphi-board-sky-row" data-relphi-sky-row></div><div class="relphi-board-command-left"><div class="relphi-board-command-title"><strong>Drawing Board</strong><span class="relphi-board-command-count">0</span></div></div><div class="relphi-board-secondary-actions"></div>'; 
+      bar.innerHTML='<div class="relphi-board-command-left"><div class="relphi-board-command-title"><strong>Drawing Board</strong><span class="relphi-board-command-count">0</span></div><button type="button" id="relphiBoardSettingsButton" aria-expanded="false">Settings</button></div>';
       summary.insertAdjacentElement('afterend',bar);
     }
-    const commandLeft=bar.querySelector('.relphi-board-command-left');
-    let secondary=bar.querySelector('.relphi-board-secondary-actions');
-    if(!secondary){secondary=document.createElement('div');secondary.className='relphi-board-secondary-actions';bar.appendChild(secondary)}
-    let settingsButton=root.querySelector('#relphiBoardSettingsButton');
-    if(!settingsButton){settingsButton=document.createElement('button');settingsButton.type='button';settingsButton.id='relphiBoardSettingsButton';settingsButton.textContent='Settings';settingsButton.setAttribute('aria-expanded','false')}
     const count=bar.querySelector('.relphi-board-command-count');
     if(count)count.textContent=String(currentCardCount(root));
 
@@ -710,8 +705,7 @@
     reset.title='Restore default settings';
     reset.setAttribute('aria-label','Restore default settings');
     reset.disabled=!boardCanReset(root);
-    secondary.appendChild(reset);
-    secondary.appendChild(settingsButton);
+    topActions.appendChild(reset);
     if(clear){
       clear.textContent='Clear';
       clear.title='Clear the cards without changing settings';
