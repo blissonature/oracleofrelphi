@@ -2380,15 +2380,15 @@ body.relphi-attune-open{overflow:hidden!important}
 #shortListPanel .drawing-board-top-actions.relphi-board-command-actions #clearShortListCardsOnly{width:auto!important;min-width:4.2rem!important;margin:0!important}
 
 /* Safe command hierarchy: visual placement only; preserve the board's working DOM ownership. */
-#shortListPanel .relphi-board-commandbar{display:grid!important;grid-template-columns:auto auto 1fr!important;grid-template-areas:"title title title" "sky sky sky" "reset settings ." "undo redo clear draw"!important;gap:.45rem!important;align-items:center!important}
+#shortListPanel .relphi-board-commandbar{display:grid!important;grid-template-columns:auto auto 1fr!important;grid-template-areas:"title title sky" "reset settings ." "undo redo clear draw"!important;gap:.45rem!important;align-items:center!important}
 #shortListPanel .relphi-board-command-left,#shortListPanel .drawing-board-top-actions.relphi-board-command-actions{display:contents!important}
 #shortListPanel .relphi-board-command-title{grid-area:title!important}
-#shortListPanel .drawing-board-top-actions>.relphi-sky-connector{grid-area:sky!important;justify-self:stretch!important;width:100%!important;margin:0!important}
-#shortListPanel .drawing-board-top-actions>.relphi-sky-connector select{width:100%!important;max-width:none!important}
+#shortListPanel .drawing-board-top-actions>.relphi-sky-connector{grid-area:sky!important;justify-self:end!important;width:auto!important;margin:0!important}
+#shortListPanel .drawing-board-top-actions>.relphi-sky-connector select{width:auto!important;max-width:12.5rem!important}
 #shortListPanel #relphiResetBoard{grid-area:reset!important;margin:0!important}
 #shortListPanel #relphiBoardSettingsButton{grid-area:settings!important;margin:0!important}
 #shortListPanel #undoShortList{grid-area:undo!important;margin:0!important}
 #shortListPanel #redoShortList{grid-area:redo!important;margin:0!important}
 #shortListPanel #clearShortListCardsOnly{grid-area:clear!important;margin:0!important;min-width:0!important;width:auto!important}
 #shortListPanel #drawRandomRowCard{grid-area:draw!important;margin:0!important}
-@media(max-width:760px){#shortListPanel .relphi-board-commandbar{display:grid!important;grid-template-columns:auto auto auto 1fr!important;grid-template-areas:"title title title title" "sky sky sky sky" "reset settings . ." "undo redo clear draw"!important;gap:.4rem!important}#shortListPanel .relphi-board-command-left,#shortListPanel .drawing-board-top-actions.relphi-board-command-actions{display:contents!important}#shortListPanel .drawing-board-top-actions.relphi-board-command-actions>button{width:auto!important}}
+@media(max-width:760px){#shortListPanel .relphi-board-commandbar{display:grid!important;grid-template-columns:auto auto auto 1fr!important;grid-template-areas:"title title sky sky" "reset settings . ." "undo redo clear draw"!important;gap:.4rem!important}#shortListPanel .relphi-board-command-left,#shortListPanel .drawing-board-top-actions.relphi-board-command-actions{display:contents!important}#shortListPanel .drawing-board-top-actions.relphi-board-command-actions>button{width:auto!important}}
