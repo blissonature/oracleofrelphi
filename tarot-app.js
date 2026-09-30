@@ -830,6 +830,9 @@
     const hitSourceText = uniqueHitSources.join(' · ');
     const hitLabel = options.hitCount === 1 ? 'placement' : 'placements';
     const badge = options.hitCount ? `<button class="or-hit-badge" type="button" data-placement-toggle aria-label="Show ${escapeHtml(options.hitCount)} chart ${escapeHtml(hitLabel)}" title="${escapeHtml(hitSourceText || `${options.hitCount} chart ${hitLabel}`)}">×${options.hitCount}</button>` : '';
+    const connectedSkyEntry = window.RelphiSkyConnector?.tarotActivations?.().find(entry => entry.cardId === card.card_id) || null;
+    const connectedSkyHits = connectedSkyEntry?.hits || [];
+    const connectedSkyMark = connectedSkyHits.length ? `<span class="relphi-connected-sky-mark" data-connected-sky-card="${escapeHtml(card.card_id)}" title="${escapeHtml(connectedSkyHits.map(hit=>hit.reason).join(' · '))}" aria-label="${escapeHtml(connectedSkyHits.length)} connected sky activation${connectedSkyHits.length===1?'':'s'}"><span aria-hidden="true"></span><b>×${connectedSkyHits.length}</b></span>` : '';
     const addLabel = inShortList ? 'Remove card from Drawing Board' : 'Add card to Drawing Board';
     const add = options.selectable === false ? '' : `<button class="or-card-add or-card-layer-add" type="button" data-shortlist="${escapeHtml(card.card_id)}" aria-pressed="${inShortList?'true':'false'}" aria-label="${addLabel}" title="${addLabel}">${inShortList?'−':'+'}</button>`;
     const layerSources = '';
@@ -861,7 +864,7 @@
     return `<article class="or-card tarot-card-surface relphi-surface relphi-surface--card ${context === 'short-list' ? 'short-list-card' : ''} ${selected ? 'is-row-selected' : ''} ${detailSelected ? 'is-detail-selected' : ''}" data-id="${escapeHtml(card.card_id)}" data-tags="${escapeHtml(publicTags(card).join('|'))}"${dragAttrs}${resultCropStyle} tabindex="0">
       <img class="or-card-art relphi-surface-face" src="${escapeHtml(rwsImagePath(card))}" alt="${escapeHtml(rwsImageAlt(card))}" loading="lazy"${context === 'short-list' ? ` data-relphi-adaptive-art="true" data-relphi-art-card="${escapeHtml(card.card_id)}" data-relphi-full-src="${escapeHtml(rwsImagePath(card))}" data-relphi-art-tier="full"` : ''}>
       ${inlinePositionSticker}${houseNumberSticker}
-      ${glyphTags ? `<div class="or-card-badges relphi-sticker-row">${glyphTags}</div>` : ''}${badge}${placementBubble}
+      ${glyphTags ? `<div class="or-card-badges relphi-sticker-row">${glyphTags}</div>` : ''}${badge}${connectedSkyMark}${placementBubble}
       <div class="or-card-layer relphi-info-layer" data-id="${escapeHtml(card.card_id)}"><div class="or-layer-head relphi-info-static"><span class="or-card-title-banner card-title-link" role="button" tabindex="0" data-card-id="${escapeHtml(card.card_id)}">${layerTitleHtml}</span>${add}</div><div class="or-card-essence${essenceClass}">${escapeHtml(essenceText)}</div><div class="or-layer-scroll relphi-info-scroll"><span>${escapeHtml(nbHyphens(layerText))}</span>${layerSources}</div></div>${placementLayer}
     </article>`;
   }
