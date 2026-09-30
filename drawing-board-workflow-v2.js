@@ -2194,35 +2194,24 @@
 
     const templateSelect = drawer.querySelector('#relphiSpreadTemplateSelect');
     templateSelect?.addEventListener('change',()=>{
+      // Selection is draft state only. Do not touch/rebuild DOM from inside the
+      // native select change event; the preview can update on the next render.
       const chosen=templateById(templateSelect.value);
       draft.templateId=templateSelect.value;
       draft.basedOnTemplateId=templateSelect.value;
-      if (chosen) {
+      if(chosen){
         const ordered=chosen.positions.slice().sort((a,b)=>a.drawOrder-b.drawOrder);
         draft.labels=ordered.map(item=>item.label);
         draft.positionPacks=ordered.map(item=>String(item.drawScope||''));
-        draft.pack=chosen.rules?.drawScope || draft.pack;
-        draft.reversals=chosen.rules?.allowReversals !== false;
+        draft.pack=chosen.rules?.drawScope||draft.pack;
+        draft.reversals=chosen.rules?.allowReversals!==false;
         draft.repeats=!!chosen.rules?.allowRepeats;
         draft.templateName=chosen.name;
-      } else {
+      }else{
         draft.basedOnTemplateId='';
         draft.templateName='';
         draft.labels=[];
         draft.positionPacks=[];
-      }
-      // Keep the live selector in place. Replacing its ancestor during its own
-      // change event leaves the browser processing a detached form control and
-      // can make the page appear frozen. Update only the inert preview content.
-      const panel=templateSelect.closest('.relphi-referent-panel');
-      const oldPreview=panel?.querySelector('.relphi-template-preview,.relphi-recursion-template-note,.relphi-referent-empty');
-      if(oldPreview){
-        const ordered=chosen?.positions?.slice?.().sort((a,b)=>a.drawOrder-b.drawOrder) || [];
-        const next=document.createElement(ordered.length?'ol':'p');
-        next.className=ordered.length?'relphi-template-preview':'relphi-referent-empty';
-        if(ordered.length) ordered.forEach(item=>{const li=document.createElement('li');li.textContent=item.label;next.appendChild(li);});
-        else next.textContent='Choose a template to preview its referents.';
-        oldPreview.replaceWith(next);
       }
     });
     drawer.querySelector('#relphiModifyTemplate')?.addEventListener('click',()=>{
