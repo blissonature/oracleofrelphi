@@ -2451,3 +2451,12 @@ body.relphi-attune-open{overflow:hidden!important}
 #shortListPanel .drawing-board-top-actions.relphi-board-command-actions{display:contents!important}
 #shortListPanel #relphiBoardSettingsButton{display:inline-flex!important;grid-area:settings!important;visibility:visible!important}
 #shortListPanel .drawing-board-top-actions>.relphi-sky-connector{display:flex!important;grid-area:sky!important;visibility:visible!important;width:100%!important}
+
+
+/* Vertically center the persistent Settings command label. */
+#shortListPanel #relphiBoardSettingsButton{
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  line-height:1!important;
+}
