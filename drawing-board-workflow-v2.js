@@ -410,11 +410,18 @@
     {
       version:1,
       id:'crowley-harmonic-divination-12',
-      name:'Opening of the Key · First Operation',
+      name:'Opening of the Key · Full Divination',
       cardCount:12,
       source:'shipped',
       editable:false,
       helper:'crowley-harmonic',
+      methodOperations:[
+        {number:1,name:'Opening of the Question',structure:'IHVH · four piles'},
+        {number:2,name:'Development of the Question',structure:'12 astrological houses'},
+        {number:3,name:'Further Development of the Question',structure:'12 zodiac signs'},
+        {number:4,name:'Penultimate Aspects of the Question',structure:'Significator + 36-card ring'},
+        {number:5,name:'Final Result',structure:'10 Tree of Life piles'}
+      ],
       positions:Array.from({length:12}, (_, index) => {
         const angle=(-90 + index*30) * Math.PI / 180;
         const x=.43 + Math.cos(angle)*.34;
