@@ -166,14 +166,6 @@ function installStyles(){
 #skyFoundationFocus .sky-focus-degree-range-reset:hover,
 #skyFoundationFocus .sky-focus-degree-range-reset:focus-visible{background:#f1ece5;outline:none}
 .sky-foundation-wheel.has-degree-focus-range .is-focus-range-muted{opacity:.12}
-.sky-foundation-wheel.has-degree-focus-range [data-layer="aspects"] .is-focus-range-kept{opacity:1}
-.sky-foundation-wheel.has-degree-focus-range [data-layer="placements"] .is-focus-range-kept,
-.sky-foundation-wheel.has-degree-focus-range [data-layer="leaders"] .is-focus-range-kept,
-.sky-foundation-wheel.has-degree-focus-range .sky-foundation-sign-sector.is-focus-range-kept,
-.sky-foundation-wheel.has-degree-focus-range .sky-foundation-sign-glyph.is-focus-range-kept,
-.sky-foundation-wheel.has-degree-focus-range .sky-foundation-house-sector.is-focus-range-kept,
-.sky-foundation-wheel.has-degree-focus-range .sky-foundation-house-number.is-focus-range-kept,
-.sky-foundation-wheel.has-degree-focus-range [data-layer="ticks"] .is-focus-range-kept{opacity:1}
 @media(max-width:620px){
   #skyFoundationFocus .sky-focus-degree-range{grid-column:1/-1;justify-self:stretch;width:100%;justify-content:center}
 }
