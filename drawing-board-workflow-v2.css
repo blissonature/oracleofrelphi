@@ -2328,3 +2328,14 @@ body.relphi-attune-open{overflow:hidden!important}
 #shortListPanel .relphi-path-actions{display:flex!important;justify-content:flex-end!important;margin:0 0 .35rem!important}
 #shortListPanel .relphi-path-actions #relphiAddPosition{width:2rem!important;min-width:2rem!important;height:2rem!important;min-height:2rem!important;margin:0!important;padding:0!important;font-size:0!important}
 #shortListPanel .relphi-path-actions #relphiAddPosition::after{content:'+';font-size:1rem!important;line-height:1!important}
+
+/* Bespoke questions: selection/actions share one compact toolbar; rows devote width to the question. */
+#shortListPanel .relphi-question-toolbar{display:flex!important;align-items:center!important;justify-content:flex-end!important;gap:.32rem!important;margin:0 0 .45rem!important}
+#shortListPanel .relphi-question-toolbar>label{display:flex!important;align-items:center!important;gap:.28rem!important;margin-right:auto!important;font-size:.68rem!important;font-weight:800!important;color:#625950!important}
+#shortListPanel .relphi-question-toolbar input{width:1rem!important;height:1rem!important;margin:0!important}
+#shortListPanel .relphi-question-toolbar button{display:grid!important;place-items:center!important;width:2rem!important;min-width:2rem!important;height:2rem!important;min-height:2rem!important;margin:0!important;padding:0!important;border:1px solid #cfc5bc!important;border-radius:7px!important;background:#fff!important;font:inherit!important;font-size:.9rem!important;font-weight:900!important}
+#shortListPanel .relphi-question-toolbar #relphiAddPosition{background:#f1efed!important;font-size:1rem!important}
+#shortListPanel .relphi-bespoke-question-row{grid-template-columns:2rem minmax(0,1fr)!important;align-items:start!important;gap:.4rem!important}
+#shortListPanel .relphi-question-select{display:flex!important;align-items:center!important;justify-content:center!important;gap:.18rem!important;min-height:2.15rem!important;font-size:.68rem!important;font-weight:900!important}
+#shortListPanel .relphi-question-select input{width:.9rem!important;height:.9rem!important;margin:0!important}
+#shortListPanel .relphi-question-order-controls{display:none!important}
