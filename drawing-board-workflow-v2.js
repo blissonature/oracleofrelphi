@@ -4434,15 +4434,10 @@
   }
 
   function globalCapture(event) {
-    const trigger=event.target.closest?.('#relphiOpenDrawingBoardCurrent');
-    if (trigger) {
-      event.preventDefault(); event.stopImmediatePropagation();
-      const wasOpen=trigger.getAttribute('aria-expanded')==='true';
-      if (!wasOpen) {
-        trigger.setAttribute('aria-expanded','true');
-        const commandDetails=document.querySelector('.tarot-command-drawer > details');
-        if(commandDetails)commandDetails.open=true;
-        const root=panel();
+    // relphiOpenDrawingBoardCurrent is owned by tarot-app.js. Its native handler
+    // switches to board mode, hides competing panels, rerenders the board, and
+    // expands the native drawer. Do not intercept that click here.
+    const root=panel();
         if(root){root.hidden=false;root.removeAttribute('hidden');}
         // The current board is already the owner. Do not wait indefinitely for
         // bridge state before showing it: opening the board is a UI action, and
