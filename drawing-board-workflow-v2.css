@@ -2344,3 +2344,8 @@ body.relphi-attune-open{overflow:hidden!important}
 #shortListPanel .relphi-question-toolbar button{font-size:1.35rem!important;line-height:1!important;font-weight:700!important}
 #shortListPanel .relphi-question-toolbar #relphiAddPosition{font-size:1.35rem!important;line-height:1!important}
 #shortListPanel .relphi-question-toolbar #relphiAddPosition::after{content:none!important;display:none!important}
+
+/* Use the same visual hierarchy as Undo/Redo: large neutral glyphs, dimmed only when disabled. */
+#shortListPanel .relphi-question-toolbar button{width:2.25rem!important;min-width:2.25rem!important;max-width:2.25rem!important;height:2.25rem!important;min-height:2.25rem!important;padding:0!important;background:#fff!important;color:#111!important;font-size:1.8rem!important;font-weight:500!important;line-height:.8!important;border-color:#b9afa7!important}
+#shortListPanel .relphi-question-toolbar button:disabled{color:#8f8f8f!important;opacity:.42!important}
+#shortListPanel .relphi-question-toolbar #relphiAddPosition{background:#fff!important;color:#111!important;font-size:1.8rem!important;font-weight:500!important}
