@@ -56,12 +56,26 @@
   filter:drop-shadow(0 0 6px rgba(20,17,14,.38));
 }
 
-.sky-foundation-wheel.has-isolation [data-focus-piece] {
+.sky-foundation-wheel.has-isolation [data-layer="aspects"] .sky-foundation-aspect {
   opacity:.08;
 }
 
-.sky-foundation-wheel.has-isolation [data-focus-piece].is-kept {
+.sky-foundation-wheel.has-isolation [data-layer="aspects"] .sky-foundation-aspect.is-kept {
   opacity:1;
+}
+
+/* Isolation is relationship emphasis, not chart erasure. Primary chart structure
+   and placements remain fully visible whether or not they participate in the
+   isolated relationship. */
+.sky-foundation-wheel.has-isolation [data-layer="placements"] [data-focus-piece],
+.sky-foundation-wheel.has-isolation [data-layer="leaders"] [data-sky][data-placement],
+.sky-foundation-wheel.has-isolation .sky-foundation-house-sector,
+.sky-foundation-wheel.has-isolation .sky-foundation-house-number,
+.sky-foundation-wheel.has-isolation .sky-foundation-sign-sector,
+.sky-foundation-wheel.has-isolation .sky-foundation-sign-glyph,
+.sky-foundation-wheel.has-isolation [data-layer="ticks"],
+.sky-foundation-wheel.has-isolation [data-layer="outlines"] {
+  opacity:1!important;
 }
 
 .sky-foundation-wheel.has-isolation .sky-foundation-aspect.is-kept {
