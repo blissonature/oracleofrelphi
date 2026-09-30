@@ -2320,7 +2320,11 @@
     const zIndex = Math.max(0, Math.min(100, Number(saved.zIndex) || 1));
     return { scale, rotation, zIndex };
   }
+  function crowleyOpeningActive() {
+    return state.rowActiveLayout?.id === 'crowley-harmonic-divination-12';
+  }
   function rowCardIsReversed(index) {
+    if (crowleyOpeningActive()) return false;
     return !!(state.rowCardReversals && state.rowCardReversals[Math.max(0, Number(index) || 0)]);
   }
   function setRowCardReversed(index, reversed) {
@@ -2337,6 +2341,7 @@
     values.forEach((value, index) => { if (value) state.rowCardReversals[index] = true; });
   }
   function toggleRowCardReversal(index, options = {}) {
+    if (crowleyOpeningActive()) return;
     const i = Math.max(0, Number(index) || 0);
     if (!options.skipUndo) pushBoardUndo();
     setRowCardReversed(i, !rowCardIsReversed(i));
@@ -2958,7 +2963,7 @@
     cardHtml = cardHtml.replace('<article class="or-card', `<article class="or-card card-row-card${reversed ? ' is-row-reversed' : ''}`);
     cardHtml = cardHtml.replace(' tabindex="0">', ` draggable="true" data-row-card="${escapeHtml(card.card_id)}" data-row-reversed="${reversed ? 'true' : 'false'}" tabindex="0" aria-label="${escapeHtml(title(card))}${reversed ? ', reversed' : ''}">`);
     const reverseLabel = reversed ? 'Set card upright' : 'Reverse card';
-    const reverseButton = rowCardWasAddedManually(index) ? `<button class="card-row-reverse-toggle${reversed ? ' is-active' : ''}" type="button" data-row-reverse="${index}" aria-pressed="${reversed ? 'true' : 'false'}" title="${escapeHtml(reverseLabel)}" aria-label="${escapeHtml(reverseLabel + ': ' + title(card))}">↕</button>` : '';
+    const reverseButton = !crowleyOpeningActive() && rowCardWasAddedManually(index) ? `<button class="card-row-reverse-toggle${reversed ? ' is-active' : ''}" type="button" data-row-reverse="${index}" aria-pressed="${reversed ? 'true' : 'false'}" title="${escapeHtml(reverseLabel)}" aria-label="${escapeHtml(reverseLabel + ': ' + title(card))}">↕</button>` : '';
     const transformHandles = `<span class="card-row-transform-box" aria-hidden="true"><span class="card-row-scale-handle card-row-scale-handle--nw" data-row-transform-handle="scale" data-corner="nw"></span><span class="card-row-rotate-handle card-row-rotate-handle--ne" data-row-transform-handle="rotate" data-corner="ne"></span><span class="card-row-scale-handle card-row-scale-handle--sw" data-row-transform-handle="scale" data-corner="sw"></span><span class="card-row-scale-handle card-row-scale-handle--se" data-row-transform-handle="scale" data-corner="se"></span></span>`;
     return `<div class="card-row-item${selected ? ' is-row-selected' : ''}${transformTarget ? ' is-transform-target' : ''}${miniDescription ? ' is-description-mini' : ''}${reversed ? ' is-row-reversed' : ''}" data-row-index="${index}" style="${cardRowItemStyle(index)}">${panel}<div class="card-row-card-wrap">${cardHtml}${reverseButton}${transformHandles}</div></div>`;
   }
