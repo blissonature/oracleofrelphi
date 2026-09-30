@@ -4520,6 +4520,12 @@
     snapshot.rowDrawDeckSignature='';
     snapshot.cardRowBoardOpen=true;
     bridge.restore(snapshot);
+    if (activeLayoutId()==='crowley-harmonic-divination-12') {
+      // Clear starts a fresh Opening while preserving the selected method.
+      // The helper resets ritual state; Reset Board remains the control that
+      // removes the template/settings themselves.
+      setTimeout(()=>window.RelphiCrowleyHarmonicBridge?.start?.(),0);
+    }
     if (recursionActive()) {
       recursionSession={level:1,maxLevel:1,complete:false};
       recursionPortalLevel=0;
