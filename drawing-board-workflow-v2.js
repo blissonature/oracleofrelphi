@@ -2002,7 +2002,7 @@
   function astrologySurfaceMarkup(session,disabled=false) {
     const count=Math.max(0,Math.min(2,Number(session.astrologySkyCount)||0));
     return '<section class="relphi-referent-panel relphi-astrology-surface">'+
-      '<div class="relphi-options-subhead"><div><strong>Astrological Tarot Reading</strong></div></div>'+
+      ''+
       astrologyHouseSystemMarkup(session,disabled)+
       '<div class="relphi-astrology-sky-sources">'+
         (count>0?astrologySkySourceMarkup('A',session,disabled):'')+
@@ -2018,7 +2018,7 @@
     const clonedFrom=!draft.templateId&&draft.basedOnTemplateId?templateById(draft.basedOnTemplateId):null;
     return '<section class="relphi-referent-panel">'+
       (clonedFrom?'<div class="relphi-template-clone-note"><strong>Editing a copy of '+escapeHtml(clonedFrom.name)+'</strong><span>The original template stays untouched. Name and save this Bespoke version if you want to keep it; you can also continue without saving.</span></div>':'')+
-      '<div class="relphi-options-subhead"><div><strong>Bespoke</strong><span>Write the questions for this reading.</span></div><button type="button" id="relphiAddPosition" '+(hasCards||draft.labels.length>=MAX_POSITIONS?'disabled':'')+'>Add question</button></div>'+
+      '<div class="relphi-path-actions"><button type="button" id="relphiAddPosition" '+(hasCards||draft.labels.length>=MAX_POSITIONS?'disabled':'')+'>Add question</button></div>'+
 
       '<div id="relphiPositionLabels">'+labelsMarkup(draft.labels,draft)+'</div>'+
       '<div class="relphi-template-save"><input id="relphiTemplateName" class="'+((draft.templateName||'Unnamed Template')==='Unnamed Template'?'is-unnamed':'')+'" type="text" maxlength="60" aria-label="Template name" value="'+escapeHtml(draft.templateName||'Unnamed Template')+'" '+(hasCards?'disabled':'')+'><button type="button" id="relphiSaveTemplate" '+(hasCards?'disabled':'')+'>Save template</button></div>'+
@@ -2032,7 +2032,7 @@
       : positions.length
         ? '<ol class="relphi-template-preview">'+positions.map(item=>'<li>'+escapeHtml(item.label)+'</li>').join('')+'</ol>'
         : '<p class="relphi-referent-empty">Choose a template to preview its referents.</p>';
-    return '<section class="relphi-referent-panel"><div class="relphi-options-subhead"><div><strong>Templates</strong><span>Start from an established or saved spread.</span></div></div>'+
+    return '<section class="relphi-referent-panel">'+
       '<label class="relphi-options-field">Template<select id="relphiSpreadTemplateSelect" '+(hasCards?'disabled':'')+'>'+optionTemplateMarkup(draft)+'</select></label>'+
       preview+
       (selected?'<div class="relphi-template-modify"><button type="button" id="relphiModifyTemplate" '+(hasCards?'disabled':'')+'>Modify a copy</button><span>Clones this template into Bespoke so the original remains unchanged.</span></div>':'')+
@@ -2043,8 +2043,8 @@
     if (!session.path) return '<p class="relphi-referent-intro">Choose a referent path. Drawing itself stays in the Board tab.</p>';
     if (session.path==='bespoke') return bespokeMarkup(draft,hasCards);
     if (session.path==='templates') return templatesMarkup(draft,hasCards);
-    if (session.path==='blocks') return '<section class="relphi-referent-panel"><div class="relphi-options-subhead"><div><strong>Building Blocks</strong><span>Choose Relphi symbols deliberately and let them formulate candidate referents.</span></div></div>'+buildingControlsMarkup(session,hasCards)+suggestionMarkup(session,hasCards)+'</section>';
-    if (session.path==='surface') return '<section class="relphi-referent-panel"><div class="relphi-options-subhead"><div><strong>See What Surfaces</strong><span>Choose the questions for the first exploration. The cards themselves surface in sacred reading mode.</span></div></div>'+surfaceChoicesMarkup(session,hasCards)+'</section>';
+    if (session.path==='blocks') return '<section class="relphi-referent-panel">'+buildingControlsMarkup(session,hasCards)+suggestionMarkup(session,hasCards)+'</section>';
+    if (session.path==='surface') return '<section class="relphi-referent-panel">'+surfaceChoicesMarkup(session,hasCards)+'</section>';
     if (session.path==='astro') return astrologySurfaceMarkup(session,hasCards);
     return '';
   }
