@@ -2008,9 +2008,8 @@
     const clonedFrom=!draft.templateId&&draft.basedOnTemplateId?templateById(draft.basedOnTemplateId):null;
     return '<section class="relphi-referent-panel">'+
       (clonedFrom?'<div class="relphi-template-clone-note"><strong>Editing a copy of '+escapeHtml(clonedFrom.name)+'</strong><span>The original template stays untouched. Name and save this Bespoke version if you want to keep it; you can also continue without saving.</span></div>':'')+
-      '<div class="relphi-options-subhead"><div><strong>Bespoke</strong><span>Write the referents for this reading.</span></div><button type="button" id="relphiAddPosition" '+(hasCards||draft.labels.length>=MAX_POSITIONS?'disabled':'')+'>Add referent</button></div>'+
-      '<label class="relphi-bulk-referents">Enter several at once<textarea id="relphiBulkReferents" rows="3" placeholder="Situation, Challenge, Strategy" '+(hasCards?'disabled':'')+'></textarea></label>'+
-      '<button type="button" id="relphiParseReferents" '+(hasCards?'disabled':'')+'>Parse comma-separated referents</button>'+
+      '<div class="relphi-options-subhead"><div><strong>Bespoke</strong><span>Write the questions for this reading.</span></div><button type="button" id="relphiAddPosition" '+(hasCards||draft.labels.length>=MAX_POSITIONS?'disabled':'')+'>Add question</button></div>'+
+      '<p class="relphi-bespoke-comma-note">You can enter several questions in Question 1. Commas are reserved for separating questions; click anywhere outside the field to split them into editable questions.</p>'+
       '<div id="relphiPositionLabels">'+labelsMarkup(draft.labels,draft)+'</div>'+
       '<div class="relphi-template-save"><input id="relphiTemplateName" type="text" maxlength="60" placeholder="Template name" value="'+escapeHtml(draft.templateName)+'" '+(hasCards?'disabled':'')+'><button type="button" id="relphiSaveTemplate" '+(hasCards?'disabled':'')+'>Save template</button></div>'+
       '</section>';
@@ -2231,15 +2230,6 @@
       refreshBespokeLabels();
       return true;
     };
-    drawer.querySelector('#relphiParseReferents')?.addEventListener('click',()=>acceptCommaList(drawer.querySelector('#relphiBulkReferents')?.value || ''));
-    labelsList?.addEventListener('paste',event=>{
-      const row=event.target.closest('.relphi-label-row');
-      if (!row || !event.target.matches('[data-position-label]') || Number(row.dataset.labelRow)!==0) return;
-      const pasted=event.clipboardData?.getData('text') || '';
-      if (!pasted.includes(',') || parseBulkQuestions(pasted).length<2) return;
-      event.preventDefault();
-      queueMicrotask(()=>{ if (optionsSession && labelsList?.isConnected) acceptCommaList(pasted); });
-    });
     labelsList?.addEventListener('input',event=>{
       const row=event.target.closest('.relphi-label-row');
       if (!row || !event.target.matches('[data-position-label]')) return;
@@ -2249,10 +2239,12 @@
       draft.positionPacks=[];
       markQuestionEditCustom(drawer,draft);
     });
-    labelsList?.addEventListener('change',event=>{
+    labelsList?.addEventListener('focusout',event=>{
       const row=event.target.closest('.relphi-label-row');
       if (!row || !event.target.matches('[data-position-label]') || Number(row.dataset.labelRow)!==0) return;
       const value=event.target.value;
+      if (!value.includes(',') || parseBulkQuestions(value).length<2) return;
+      // Parse only after Question 1 loses focus so commas never interrupt typing.
       queueMicrotask(()=>{ if (optionsSession && labelsList?.isConnected) acceptCommaList(value); });
     });
     labelsList?.addEventListener('click',event=>{
