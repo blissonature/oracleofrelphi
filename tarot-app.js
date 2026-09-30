@@ -432,8 +432,12 @@
     if (details) details.open = false;
   }
   function expandCardRow() {
-    const details = document.querySelector('#shortListPanel details.short-list-drawer');
-    if (details) details.open = true;
+    const details = document.querySelector('#shortListPanel details.card-row-drawing-board, #shortListPanel details.short-list-drawer');
+    if (details) {
+      details.open = true;
+      details.setAttribute('open','');
+      state.cardRowBoardOpen = true;
+    }
   }
   const CUSTOM_CARD_ART_KEY = 'relphiCustomCardArtV1';
   function readCustomCardArtStore() {
