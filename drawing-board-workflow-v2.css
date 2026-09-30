@@ -2298,3 +2298,12 @@ body.relphi-attune-open{overflow:hidden!important}
     max-height:calc(100dvh - 3.75rem)!important;
   }
 }
+
+/* Relphi-level Sky Connector */
+#shortListPanel .relphi-sky-connector{border:1px solid rgba(35,29,25,.16);border-radius:10px;padding:.7rem .8rem;margin:0 0 .7rem;background:rgba(255,255,255,.55);min-width:0}
+#shortListPanel .relphi-sky-connector-head{display:flex;align-items:center;justify-content:space-between;gap:.75rem;flex-wrap:wrap}
+#shortListPanel .relphi-sky-connector-head>div{display:grid;gap:.12rem;min-width:0}#shortListPanel .relphi-sky-connector-head small,#shortListPanel .relphi-sky-connector p{color:#675e57;font-size:.76rem;margin:.35rem 0 0}
+#shortListPanel .relphi-sky-connector-body{display:grid;gap:.55rem;margin-top:.65rem}#shortListPanel .relphi-sky-source{display:flex;gap:.8rem;flex-wrap:wrap}
+#shortListPanel .relphi-sky-connector label{font-size:.78rem;font-weight:700;min-width:0}#shortListPanel .relphi-sky-connector select{display:block;width:100%;min-width:0;margin-top:.25rem;padding:.42rem .5rem;font:inherit}
+#shortListPanel .relphi-reading-reference{margin-top:.75rem;border-top:1px solid rgba(35,29,25,.14);padding-top:.65rem}#shortListPanel .relphi-reading-reference-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:.45rem}
+#shortListPanel .relphi-reference-tile{border:1px solid rgba(35,29,25,.13);border-radius:8px;padding:.5rem;background:rgba(255,255,255,.5)}#shortListPanel .relphi-reference-token{display:flex;align-items:center;gap:.4rem;font-weight:800}#shortListPanel .relphi-reference-token .house-medallion{display:inline-grid;place-items:center;width:1.75rem;height:1.75rem;border:1px solid currentColor;border-radius:50%}#shortListPanel .relphi-reference-detail{font-size:.72rem;color:#675e57;margin:.3rem 0 0}
