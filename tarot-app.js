@@ -4478,15 +4478,24 @@
         image:rwsImagePath(card)
       }));
     },
-    openingKeyPackets(significatorCardId) {
+    openingKeyDeck(significatorCardId) {
       const id=String(significatorCardId||'').trim();
       const pool=rowDrawPool('full',{ignoreUsed:true});
       if(!id||!pool.some(card=>card.card_id===id))return null;
+      // One shuffle establishes the deck order for Operation I. Cutting must
+      // partition this exact order; it must never shuffle again.
       const deck=shuffleArray(pool.map(card=>card.card_id));
-      const packets=[[],[],[],[]];
-      deck.forEach((cardId,index)=>packets[index%4].push(cardId));
-      const packetIndex=packets.findIndex(packet=>packet.includes(id));
-      return {packetIndex,packet:['Yod','Heh','Vav','Heh-final'][packetIndex],packets:packets.map(packet=>packet.slice())};
+      return {deck,significatorCardId:id};
+    },
+    openingKeyCut(deck, firstCut, rightCut, leftCut) {
+      const cards=Array.isArray(deck)?deck.slice():[];
+      if(cards.length<4)return null;
+      const a=Math.max(1,Math.min(cards.length-1,Number(firstCut)||1));
+      const right=cards.slice(0,a), left=cards.slice(a);
+      const b=Math.max(1,Math.min(right.length-1,Number(rightCut)||1));
+      const d=Math.max(1,Math.min(left.length-1,Number(leftCut)||1));
+      // Four packets from right to left: Yod, Heh, Vav, final Heh.
+      return [right.slice(0,b),right.slice(b),left.slice(0,d),left.slice(d)];
     },
     drawCardForBoard(scope = 'full') {
       const pool=rowDrawPool(scope || 'full',{ignoreUsed:true});
