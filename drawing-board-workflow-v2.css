@@ -2365,3 +2365,6 @@ body.relphi-attune-open{overflow:hidden!important}
 
 /* Add uses exactly the same control box as the other Bespoke toolbar actions. */
 #shortListPanel .relphi-question-toolbar #relphiAddPosition{display:grid!important;place-items:center!important;width:2.25rem!important;min-width:2.25rem!important;max-width:2.25rem!important;height:2.25rem!important;min-height:2.25rem!important;max-height:2.25rem!important;margin:0!important;padding:0!important;border:1px solid #b9afa7!important;border-radius:7px!important;box-sizing:border-box!important}
+
+#shortListPanel .drawing-board-top-actions>.relphi-sky-connector{order:5!important;display:flex!important;align-items:center!important;gap:.35rem!important;margin:0 0 0 auto!important;padding:0!important;border:0!important;background:transparent!important;width:auto!important}
+#shortListPanel .drawing-board-top-actions>.relphi-sky-connector select{width:auto!important;max-width:12.5rem!important;min-height:2.25rem!important;margin:0!important;padding:.42rem 1.8rem .42rem .58rem!important;border:1.25px solid #b9afa7!important;border-radius:8px!important;background:#fff!important;color:#2f2925!important;font-size:.72rem!important;font-weight:850!important}
