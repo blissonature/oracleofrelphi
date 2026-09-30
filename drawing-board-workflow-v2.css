@@ -2357,3 +2357,8 @@ body.relphi-attune-open{overflow:hidden!important}
 #shortListPanel .relphi-stroke-icon>span::after{transform:translate(-50%,-50%) rotate(90deg)!important}
 #shortListPanel .relphi-stroke-plus>span{transform:none!important}
 #shortListPanel .relphi-question-toolbar #relphiAddPosition::after{content:none!important;display:none!important}
+
+/* Cross/plus share the arrows' perceived glyph scale, while every toolbar box stays 2.25rem. */
+#shortListPanel .relphi-stroke-icon>span{width:.82rem!important;height:.82rem!important}
+#shortListPanel .relphi-stroke-icon>span::before,#shortListPanel .relphi-stroke-icon>span::after{width:.82rem!important;height:.14rem!important;border-radius:.08rem!important}
+#shortListPanel .relphi-question-toolbar button:disabled,#shortListPanel .relphi-question-toolbar .relphi-stroke-icon:disabled{color:#9a9a9a!important;opacity:.42!important;background:#fff!important}
