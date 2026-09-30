@@ -2339,3 +2339,8 @@ body.relphi-attune-open{overflow:hidden!important}
 #shortListPanel .relphi-question-select{display:flex!important;align-items:center!important;justify-content:center!important;gap:.18rem!important;min-height:2.15rem!important;font-size:.68rem!important;font-weight:900!important}
 #shortListPanel .relphi-question-select input{width:.9rem!important;height:.9rem!important;margin:0!important}
 #shortListPanel .relphi-question-order-controls{display:none!important}
+
+/* Match Bespoke toolbar glyph scale to the Drawing Board undo/redo controls. */
+#shortListPanel .relphi-question-toolbar button{font-size:1.35rem!important;line-height:1!important;font-weight:700!important}
+#shortListPanel .relphi-question-toolbar #relphiAddPosition{font-size:1.35rem!important;line-height:1!important}
+#shortListPanel .relphi-question-toolbar #relphiAddPosition::after{content:none!important;display:none!important}
