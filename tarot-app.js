@@ -4478,6 +4478,16 @@
         image:rwsImagePath(card)
       }));
     },
+    openingKeyPackets(significatorCardId) {
+      const id=String(significatorCardId||'').trim();
+      const pool=rowDrawPool('full',{ignoreUsed:true});
+      if(!id||!pool.some(card=>card.card_id===id))return null;
+      const deck=shuffleArray(pool.map(card=>card.card_id));
+      const packets=[[],[],[],[]];
+      deck.forEach((cardId,index)=>packets[index%4].push(cardId));
+      const packetIndex=packets.findIndex(packet=>packet.includes(id));
+      return {packetIndex,packet:['Yod','Heh','Vav','Heh-final'][packetIndex],packets:packets.map(packet=>packet.slice())};
+    },
     drawCardForBoard(scope = 'full') {
       const pool=rowDrawPool(scope || 'full',{ignoreUsed:true});
       if(!pool.length)return null;
