@@ -70,6 +70,21 @@
       pair:{...pair,aspect:{...pair.aspect},interpretation:interpretiveRelation(pair.aspect,'pair')}
     };
   }
+  function readingReferenceMarkup(){
+    const entries=[];
+    const sky=window.RelphiSkyConnector;
+    if(operation===2&&sky){
+      const h=sky.houseReference(anchor+1);
+      entries.push('<article class="relphi-reference-tile"><div class="relphi-reference-token"><span class="house-medallion">'+h.houseNumber+'</span><span>'+h.glyph+' '+h.sign+'</span></div><p class="relphi-reference-detail"><b>'+h.houseName+'</b> · '+h.referent+'</p><p class="relphi-reference-detail">'+h.signReferent+'</p><p class="relphi-reference-detail">'+h.fullReferent+'</p></article>');
+    }
+    const count=countHarmonic(countValue),pair=pairHarmonic(pairRadius);
+    entries.push('<article class="relphi-reference-tile"><div class="relphi-reference-token"><span>'+count.aspect.angle+'°</span><span>'+count.aspect.name+' · H'+count.aspect.harmonic+'</span></div><p class="relphi-reference-detail">'+interpretiveRelation(count.aspect,'count')+'</p></article>');
+    entries.push('<article class="relphi-reference-tile"><div class="relphi-reference-token"><span>'+pair.aspect.angle+'°</span><span>'+pair.aspect.name+' · H'+pair.aspect.harmonic+'</span></div><p class="relphi-reference-detail">'+interpretiveRelation(pair.aspect,'pair')+'</p></article>');
+    return '<div class="relphi-reading-reference"><strong>Reading Reference</strong><p class="relphi-reference-detail">Symbols and referents participating in this operation.</p><div class="relphi-reading-reference-grid">'+entries.join('')+'</div></div>';
+  }
+  function renderReadingReference(){
+    const host=document.getElementById('crowleyReadingReference');if(host)host.innerHTML=readingReferenceMarkup();
+  }
   function clearMarks(){
     items().forEach(el=>{el.classList.remove('crowley-anchor','crowley-target','crowley-pair');el.removeAttribute('data-crowley-aspect');});
   }
@@ -92,6 +107,7 @@
     if(opStatus) opStatus.innerHTML='<b>Operation '+op.n+' · '+op.name+'</b> — '+op.field+'. '+op.note;
     const status=document.getElementById('crowleyHarmonicStatus');
     if(status) status.innerHTML='<b>Count '+count.value+'</b> · move '+count.movement+' · '+count.aspect.name+' '+count.aspect.angle+'° (H'+count.aspect.harmonic+'). '+interpretiveRelation(count.aspect,'count')+'<br><b>Pair ±'+pair.radius+'</b> · separation '+(pair.separation||12)+'/12 · '+pair.aspect.name+' '+pair.aspect.angle+'° (H'+pair.aspect.harmonic+'). '+interpretiveRelation(pair.aspect,'pair');
+    renderReadingReference();
   }
   function countOptions(){
     const values=[
@@ -128,7 +144,7 @@
     let box=document.getElementById('crowleyHarmonicGuide');
     if(!box){
       box=document.createElement('section');box.id='crowleyHarmonicGuide';box.hidden=true;
-      box.innerHTML='<strong>Opening of the Key · Full Divination</strong><p style="margin:.35rem 0 .7rem">Five operations: <b>I · Opening of the Question</b> — IHVH four-pile test; <b>II · Development</b> — twelve astrological houses; <b>III · Further Development</b> — twelve zodiac signs; <b>IV · Penultimate Aspects</b> — Significator with the following 36 cards in a ring; <b>V · Final Result</b> — ten Tree of Life piles. Each operation reshuffles and uses counting and pairing.</p><p style="margin:.35rem 0 .7rem"><b>Operation I.</b> Use the nested cuts to form IHVH from right to left; the Significator pile must agree with the question domain before continuing.</p>'+domainGateMarkup()+'<div id="crowleyMechanics" hidden><div class="crowley-controls"><label>Operation<select id="crowleyOperation">'+OPERATIONS.map(op=>'<option value="'+op.n+'">'+op.n+' · '+op.name+'</option>').join('')+'</select></label><label>Harmonic reference<select id="crowleyAnchor">'+Array.from({length:12},(_,i)=>'<option value="'+i+'">Position '+(i+1)+'</option>').join('')+'</select></label><label>Card Counting<select id="crowleyCount">'+countOptions()+'</select></label><label>Card Pairing<select id="crowleyPair">'+Array.from({length:6},(_,i)=>'<option value="'+(i+1)+'">±'+(i+1)+'</option>').join('')+'</select></label><button id="crowleyAdvance" type="button">Continue Card Counting</button></div><p id="crowleyOperationStatus"></p><p id="crowleyHarmonicStatus" aria-live="polite"></p><fieldset><legend><b>Accuracy Test</b></legend><p>After Card Counting and Card Pairing, confirm whether the main lines of the reading are correct.</p><button id="crowleyMainLinesCorrect" type="button">Main lines are correct · continue</button> <button id="crowleyMainLinesWrong" type="button">Main lines are not correct · abandon</button><p id="crowleyAccuracyStatus" aria-live="polite"></p></fieldset></div>';
+      box.innerHTML='<strong>Opening of the Key · Full Divination</strong><p style="margin:.35rem 0 .7rem">Five operations: <b>I · Opening of the Question</b> — IHVH four-pile test; <b>II · Development</b> — twelve astrological houses; <b>III · Further Development</b> — twelve zodiac signs; <b>IV · Penultimate Aspects</b> — Significator with the following 36 cards in a ring; <b>V · Final Result</b> — ten Tree of Life piles. Each operation reshuffles and uses counting and pairing.</p><p style="margin:.35rem 0 .7rem"><b>Operation I.</b> Use the nested cuts to form IHVH from right to left; the Significator pile must agree with the question domain before continuing.</p>'+domainGateMarkup()+'<div id="crowleyMechanics" hidden><div class="crowley-controls"><label>Operation<select id="crowleyOperation">'+OPERATIONS.map(op=>'<option value="'+op.n+'">'+op.n+' · '+op.name+'</option>').join('')+'</select></label><label>Harmonic reference<select id="crowleyAnchor">'+Array.from({length:12},(_,i)=>'<option value="'+i+'">Position '+(i+1)+'</option>').join('')+'</select></label><label>Card Counting<select id="crowleyCount">'+countOptions()+'</select></label><label>Card Pairing<select id="crowleyPair">'+Array.from({length:6},(_,i)=>'<option value="'+(i+1)+'">±'+(i+1)+'</option>').join('')+'</select></label><button id="crowleyAdvance" type="button">Continue Card Counting</button></div><p id="crowleyOperationStatus"></p><p id="crowleyHarmonicStatus" aria-live="polite"></p><div id="crowleyReadingReference"></div><fieldset><legend><b>Accuracy Test</b></legend><p>After Card Counting and Card Pairing, confirm whether the main lines of the reading are correct.</p><button id="crowleyMainLinesCorrect" type="button">Main lines are correct · continue</button> <button id="crowleyMainLinesWrong" type="button">Main lines are not correct · abandon</button><p id="crowleyAccuracyStatus" aria-live="polite"></p></fieldset></div>';
       const workspace=r.querySelector('.card-row-workspace');
       if(workspace) workspace.parentNode.insertBefore(box,workspace); else nativeDrawer.insertAdjacentElement('beforebegin',box);
       box.querySelector('#crowleyLockDomain').addEventListener('click',()=>{
@@ -152,7 +168,8 @@
     box.hidden=!active();
     if(!box.hidden) mark(); else clearMarks();
   }
-  window.RelphiCrowleyHarmonicBridge=Object.freeze({getInterpretationContext:()=>interpretationContext()});
+  window.RelphiCrowleyHarmonicBridge=Object.freeze({getInterpretationContext:()=>interpretationContext(),getReadingReference:()=>({html:readingReferenceMarkup(),sky:window.RelphiSkyConnector?.context?.()||null})});
+  window.addEventListener('relphi:sky-context-change',()=>{if(active())mark();});
   document.addEventListener('change',e=>{if(e.target?.id==='relphiSpreadTemplateSelect') setTimeout(ensureGuide,0);});
   document.addEventListener('relphi:drawing-board-rendered',()=>setTimeout(ensureGuide,0));
   new MutationObserver(()=>ensureGuide()).observe(document.documentElement,{childList:true,subtree:true});
