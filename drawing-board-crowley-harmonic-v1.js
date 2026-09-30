@@ -138,13 +138,12 @@
   }
   function syncSignificatorFromBoard(box){
     if(significatorId||!box)return;
-    const entries=window.RelphiTarotLedgerBridge?.drawingBoardReadingEntries?.()||[];
-    if(entries.length!==1)return;
-    const card=entries[0];
-    const id=card?.cardId||card?.card_id;
-    if(!id)return;
+    const snap=window.RelphiDrawingBoardOptionsBridge?.capture?.()||{};
+    const ids=Array.isArray(snap.shortList)?snap.shortList.filter(Boolean):[];
+    if(ids.length!==1)return;
+    const id=ids[0];
     significatorId=id;
-    box.querySelector('#crowleySignificatorStatus').textContent='Significator: '+(card.title||window.RelphiTarotLedgerBridge?.titleFor?.(id)||'Selected card');
+    box.querySelector('#crowleySignificatorStatus').textContent='Significator: '+(window.RelphiTarotLedgerBridge?.titleFor?.(id)||'Selected card');
     box.querySelector('#crowleySignificatorStep').hidden=true;
     box.querySelector('#crowleyDomainStep').hidden=false;
   }
@@ -161,25 +160,10 @@
       if(workspace) workspace.parentNode.insertBefore(box,workspace); else nativeDrawer.insertAdjacentElement('beforebegin',box);
       const ledger=()=>window.RelphiTarotLedgerBridge;
       const chooseSignificator=card=>{
-        if(!card?.card_id)return;
+        if(!card?.card_id||significatorId)return;
         significatorId=card.card_id;
-        box.querySelector('#crowleySignificatorStatus').textContent='Significator: '+card.title;
-        box.querySelector('#crowleySignificatorStep').hidden=true;
-        box.querySelector('#crowleyDomainStep').hidden=false;
-        box.querySelector('#crowleySignificatorResults').innerHTML='';
-        const domain=box.querySelector('#crowleyExpectedDomain');
-        domain?.focus();
-        box.querySelector('#crowleyDomainStep')?.scrollIntoView({block:'nearest'});
-      };
-      box.querySelector('#crowleyDrawSignificator').addEventListener('click',()=>{
-        const card=ledger()?.drawCardForBoard?.('full');
-        if(!card)return;
-        // Drawing the card rerenders the board and can replace this guide node.
-        // Resolve the live guide after the draw, then advance its Significator step.
         requestAnimationFrame(()=>{
-          const live=document.getElementById('crowleyHarmonicGuide');
-          if(!live)return;
-          significatorId=card.card_id;
+          const live=document.getElementById('crowleyHarmonicGuide');if(!live)return;
           live.querySelector('#crowleySignificatorStatus').textContent='Significator: '+card.title;
           live.querySelector('#crowleySignificatorStep').hidden=true;
           live.querySelector('#crowleyDomainStep').hidden=false;
@@ -187,6 +171,13 @@
           live.querySelector('#crowleyExpectedDomain')?.focus();
           live.querySelector('#crowleyDomainStep')?.scrollIntoView({block:'nearest'});
         });
+      };
+      box.querySelector('#crowleyDrawSignificator').addEventListener('click',()=>{
+        if(significatorId)return;
+        const button=box.querySelector('#crowleyDrawSignificator');button.disabled=true;
+        const card=ledger()?.drawCardForBoard?.('full');
+        if(!card){button.disabled=false;return;}
+        chooseSignificator(card);
       });
       box.querySelector('#crowleySignificatorSearch').addEventListener('input',e=>{
         const q=String(e.target.value||'').trim();
@@ -196,10 +187,21 @@
         host.innerHTML=found.map(card=>'<button type="button" data-crowley-significator="'+card.card_id+'">'+card.title+'</button>').join('');
       });
       box.querySelector('#crowleySignificatorResults').addEventListener('click',e=>{
-        const button=e.target.closest?.('[data-crowley-significator]');if(!button)return;
+        const button=e.target.closest?.('[data-crowley-significator]');if(!button||significatorId)return;
         const card=(ledger()?.searchCards?.(button.textContent,24,'full')||[]).find(item=>item.card_id===button.dataset.crowleySignificator);
         if(!card)return;
-        if(ledger()?.addCardToBoard?.(card.card_id,'full'))chooseSignificator(card);
+        // Record the method state before adding the card: adding it rerenders
+        // the board and replaces this guide node.
+        significatorId=card.card_id;
+        if(!ledger()?.addCardToBoard?.(card.card_id,'full')){significatorId='';return;}
+        requestAnimationFrame(()=>{
+          const live=document.getElementById('crowleyHarmonicGuide');if(!live)return;
+          live.querySelector('#crowleySignificatorStatus').textContent='Significator: '+card.title;
+          live.querySelector('#crowleySignificatorStep').hidden=true;
+          live.querySelector('#crowleyDomainStep').hidden=false;
+          live.querySelector('#crowleySignificatorResults').innerHTML='';
+          live.querySelector('#crowleyExpectedDomain')?.focus();
+        });
       });
       box.querySelector('#crowleyLockDomain').addEventListener('click',()=>{
         const sel=box.querySelector('#crowleyExpectedDomain'); expectedDomain=sel.value;
