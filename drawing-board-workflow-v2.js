@@ -712,6 +712,7 @@
       clear.setAttribute('aria-label','Clear the cards without changing settings');
     }
     const freeMode=!(craftedReadingActive||boardHasCraftedStructure(root));
+    bar.classList.toggle('relphi-board-free-mode',freeMode);
     if(undo)undo.hidden=!freeMode;
     if(redo)redo.hidden=!freeMode;
     if(undo){
