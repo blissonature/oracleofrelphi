@@ -1460,7 +1460,8 @@
   }
   function optionTemplateMarkup(draft) {
     const entries = allTemplates();
-    return `<option value="">Custom</option>${entries.map(item => `<option value="${escapeHtml(item.id)}" ${draft.templateId===item.id?'selected':''}>${escapeHtml(templateCountLabel(item))} · ${escapeHtml(item.name)}</option>`).join('')}`;
+    const selectedId=entries.some(item=>item.id===draft.templateId) ? draft.templateId : (entries[0]?.id||'');
+    return entries.map(item => `<option value="${escapeHtml(item.id)}" ${selectedId===item.id?'selected':''}>${escapeHtml(templateCountLabel(item))} · ${escapeHtml(item.name)}</option>`).join('');
   }
   function packItems(){ return [
       ['full','Full Pack'],['shown','Shown cards'],['uhn','Universal Human Needs'],['majors','Majors'],
