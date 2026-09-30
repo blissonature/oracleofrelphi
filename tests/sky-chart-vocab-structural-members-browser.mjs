@@ -105,13 +105,12 @@ try{
   const showMore=page.locator('#skyFoundationRelationshipList [data-harmonic-show-more]');
   await showMore.waitFor({state:'visible'});
   const showMoreText=(await showMore.textContent()||'').trim();
-  assert.match(showMoreText,/\d+ more beyond 0° Harmonic Window · Show more/,'Narrow Harmonic Window must end with an actionable continuation item.');
+  assert.match(showMoreText,/(more within 1° Harmonic Window|Widen Harmonic Window to 1°) · Show more/,'Narrow Harmonic Window must end with a one-degree continuation item.');
   await showMore.click();
-  const maxWindow=await page.evaluate(()=>String(window.RelphiHarmonicOrb.maxWindow));
-  await page.waitForFunction(value=>document.documentElement.dataset.skyHarmonicWindow===value,maxWindow);
-  assert.equal(await relationshipWindow.inputValue(),maxWindow,'Show more must widen the shared Harmonic Window immediately.');
-  assert.equal(await vocabWindow.inputValue(),maxWindow,'Show more must mirror the widened Harmonic Window into Vocab.');
-  await showMore.waitFor({state:'hidden'});
+  await page.waitForFunction(()=>document.documentElement.dataset.skyHarmonicWindow==='1');
+  assert.equal(await relationshipWindow.inputValue(),'1','Show more must widen the shared Harmonic Window by exactly one degree.');
+  assert.equal(await vocabWindow.inputValue(),'1','Show more must mirror the one-degree widening into Vocab.');
+  assert.equal(await showMore.isVisible(),true,'Show more should remain available while additional relationships exist beyond the next one-degree step.');
 
   await vocabWindow.fill(defaultWindow);
   await page.waitForFunction(value=>document.documentElement.dataset.skyHarmonicWindow===value,defaultWindow);

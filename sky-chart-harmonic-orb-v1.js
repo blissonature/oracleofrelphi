@@ -2,7 +2,7 @@
 (function(){
 'use strict';
 if(window.RelphiHarmonicOrb)return;
-const DEFAULT_WINDOW=7;
+const DEFAULT_WINDOW=3.5;
 const MAX_WINDOW=12;
 const WINDOW_STEP=.05;
 const WINDOW_STORAGE_KEY='relphiSkyHarmonicWindowV1';
@@ -25,7 +25,7 @@ try{
   const stored=localStorage.getItem(WINDOW_STORAGE_KEY);
   if(stored!==null&&String(stored).trim()!==''){
     const saved=Number(stored);
-    if(Number.isFinite(saved)&&saved>=0)activeWindow=Math.min(MAX_WINDOW,saved);
+    if(Number.isFinite(saved)&&saved>0)activeWindow=Math.min(MAX_WINDOW,saved);
   }
 }catch(_){}
 function clampWindow(value){const n=Number(value);return Number.isFinite(n)&&n>=0?Math.min(MAX_WINDOW,n):DEFAULT_WINDOW}

@@ -28,7 +28,7 @@ function installStyles(){
   style.textContent=`
     .sky-foundation-relationship-copy small.relphi-house-coordinate{
       display:grid!important;
-      grid-template-columns:50px 18px!important;
+      grid-template-columns:38px 14px 18px!important;
       align-items:center!important;
       justify-content:center!important;
       column-gap:4px!important;
@@ -37,10 +37,12 @@ function installStyles(){
       overflow:visible!important;
     }
     .relphi-house-coordinate-value{
+      grid-column:1 / 3;
       display:block;
-      width:50px;
-      min-width:50px;
-      text-align:right;
+      width:auto;
+      min-width:0;
+      justify-self:center;
+      text-align:center;
       white-space:nowrap;
       line-height:18px;
     }
@@ -89,8 +91,8 @@ function installStyles(){
       box-shadow:0 0 0 2px rgba(255,255,255,.9),0 0 0 3px var(--house-color);
     }
     @media(max-width:620px){
-      .sky-foundation-relationship-copy small.relphi-house-coordinate{grid-template-columns:48px 18px!important;column-gap:3px!important}
-      .relphi-house-coordinate-value{width:48px;min-width:48px}
+      .sky-foundation-relationship-copy small.relphi-house-coordinate{grid-template-columns:38px 14px 18px!important;column-gap:3px!important}
+      .relphi-house-coordinate-value{width:auto;min-width:0}
     }
   `;
   document.head.appendChild(style);
@@ -114,7 +116,10 @@ function medallion(house,field,interactive=false,existing=null){
 function decorateCoordinate(small,coordinate,house,field,interactive=false){
   if(!(small instanceof HTMLElement))return null;
   const n=validHouse(house);if(!n)return null;
-  const existingMarker=small.querySelector('.relphi-house-medallion');
+  const group=small.closest('.sky-foundation-relationship-placement');
+  const pair=group?.querySelector(':scope>.sky-foundation-relationship-symbol-pair');
+  const signSlot=group?.querySelector('.sky-foundation-relationship-sign')||small.querySelector('.sky-foundation-relationship-sign');
+  const existingMarker=group?.querySelector('.relphi-house-medallion')||small.querySelector('.relphi-house-medallion');
   const marker=medallion(n,field,interactive,existingMarker);
   const text=String(coordinate||'').trim();
   if(small.dataset.relationshipCoordinate!==text)small.dataset.relationshipCoordinate=text;
@@ -122,8 +127,14 @@ function decorateCoordinate(small,coordinate,house,field,interactive=false){
   let value=small.querySelector('.relphi-house-coordinate-value');
   if(!value){value=document.createElement('span');value.className='relphi-house-coordinate-value'}
   if(value.textContent!==text)value.textContent=text;
-  const correct=small.children.length===2&&small.firstElementChild===value&&small.lastElementChild===marker;
-  if(!correct)small.replaceChildren(value,marker);
+  if(group&&pair&&signSlot){
+    if(value.parentElement!==small||signSlot.parentElement!==small||small.children.length!==2||small.firstElementChild!==value)small.replaceChildren(value,signSlot);
+    if(marker.parentElement!==pair)pair.appendChild(marker);
+    if(pair.lastElementChild!==marker)pair.appendChild(marker);
+  }else{
+    const correct=small.children.length===2&&small.firstElementChild===value&&small.lastElementChild===marker;
+    if(!correct)small.replaceChildren(value,marker);
+  }
   return marker;
 }
 function noOp(){}
