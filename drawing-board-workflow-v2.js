@@ -2194,25 +2194,10 @@
 
     const templateSelect = drawer.querySelector('#relphiSpreadTemplateSelect');
     templateSelect?.addEventListener('change',()=>{
-      // Selection is draft state only. Do not touch/rebuild DOM from inside the
-      // native select change event; the preview can update on the next render.
-      const chosen=templateById(templateSelect.value);
+      // Diagnostic isolation: selecting a template must do nothing except remember
+      // its id. Confirm is the first point allowed to resolve/apply template data.
       draft.templateId=templateSelect.value;
       draft.basedOnTemplateId=templateSelect.value;
-      if(chosen){
-        const ordered=chosen.positions.slice().sort((a,b)=>a.drawOrder-b.drawOrder);
-        draft.labels=ordered.map(item=>item.label);
-        draft.positionPacks=ordered.map(item=>String(item.drawScope||''));
-        draft.pack=chosen.rules?.drawScope||draft.pack;
-        draft.reversals=chosen.rules?.allowReversals!==false;
-        draft.repeats=!!chosen.rules?.allowRepeats;
-        draft.templateName=chosen.name;
-      }else{
-        draft.basedOnTemplateId='';
-        draft.templateName='';
-        draft.labels=[];
-        draft.positionPacks=[];
-      }
     });
     drawer.querySelector('#relphiModifyTemplate')?.addEventListener('click',()=>{
       const chosen=templateById(draft.templateId||draft.basedOnTemplateId);
