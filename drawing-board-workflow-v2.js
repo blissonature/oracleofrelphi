@@ -2198,10 +2198,14 @@
 
     const templateSelect = drawer.querySelector('#relphiSpreadTemplateSelect');
     templateSelect?.addEventListener('change',()=>{
-      // Diagnostic isolation: selecting a template must do nothing except remember
-      // its id. Confirm is the first point allowed to resolve/apply template data.
       draft.templateId=templateSelect.value;
       draft.basedOnTemplateId=templateSelect.value;
+      const chosen=templateById(templateSelect.value);
+      draft.templateName=chosen?.name||'';
+      // Selection is safe now that the Opening guide mutation loop is fixed.
+      // Rerender only the settings UI so the selected template preview is current;
+      // applying the board layout still waits for Confirm.
+      renderOptions(root);
     });
     drawer.querySelector('#relphiModifyTemplate')?.addEventListener('click',()=>{
       const chosen=templateById(draft.templateId||draft.basedOnTemplateId);
