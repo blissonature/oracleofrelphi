@@ -155,7 +155,7 @@
     let box=document.getElementById('crowleyHarmonicGuide');
     if(!box){
       box=document.createElement('section');box.id='crowleyHarmonicGuide';box.hidden=true;
-      box.innerHTML='<strong>Opening of the Key · Full Divination</strong><p style="margin:.35rem 0 .7rem">Five operations: <b>I · Opening of the Question</b> — IHVH four-pile test; <b>II · Development</b> — twelve astrological houses; <b>III · Further Development</b> — twelve zodiac signs; <b>IV · Penultimate Aspects</b> — Significator with the following 36 cards in a ring; <b>V · Final Result</b> — ten Tree of Life piles. Each operation reshuffles and uses counting and pairing.</p><p style="margin:.35rem 0 .7rem"><b>Operation I.</b> Use the nested cuts to form IHVH from right to left; the Significator pile must agree with the question domain before continuing.</p>'+domainGateMarkup()+'<div id="crowleyMechanics" hidden><div class="crowley-controls"><label>Operation<select id="crowleyOperation">'+OPERATIONS.map(op=>'<option value="'+op.n+'">'+op.n+' · '+op.name+'</option>').join('')+'</select></label><label>Harmonic reference<select id="crowleyAnchor">'+Array.from({length:12},(_,i)=>'<option value="'+i+'">Position '+(i+1)+'</option>').join('')+'</select></label><label>Card Counting<select id="crowleyCount">'+countOptions()+'</select></label><label>Card Pairing<select id="crowleyPair">'+Array.from({length:6},(_,i)=>'<option value="'+(i+1)+'">±'+(i+1)+'</option>').join('')+'</select></label><button id="crowleyAdvance" type="button">Continue Card Counting</button></div><p id="crowleyOperationStatus"></p><p id="crowleyHarmonicStatus" aria-live="polite"></p><div id="crowleyReadingReference"></div><fieldset><legend><b>Accuracy Test</b></legend><p>After Card Counting and Card Pairing, confirm whether the main lines of the reading are correct.</p><button id="crowleyMainLinesCorrect" type="button">Main lines are correct · continue</button> <button id="crowleyMainLinesWrong" type="button">Main lines are not correct · abandon</button><p id="crowleyAccuracyStatus" aria-live="polite"></p></fieldset></div>';
+      box.innerHTML='<strong>Opening of the Key</strong><p style="margin:.35rem 0 .7rem">Relphi will reveal this divination one step at a time.</p>'+domainGateMarkup()+'<div id="crowleyMechanics" hidden><div class="crowley-controls"><label>Operation<select id="crowleyOperation">'+OPERATIONS.map(op=>'<option value="'+op.n+'">'+op.n+' · '+op.name+'</option>').join('')+'</select></label><label>Harmonic reference<select id="crowleyAnchor">'+Array.from({length:12},(_,i)=>'<option value="'+i+'">Position '+(i+1)+'</option>').join('')+'</select></label><label>Card Counting<select id="crowleyCount">'+countOptions()+'</select></label><label>Card Pairing<select id="crowleyPair">'+Array.from({length:6},(_,i)=>'<option value="'+(i+1)+'">±'+(i+1)+'</option>').join('')+'</select></label><button id="crowleyAdvance" type="button">Continue Card Counting</button></div><p id="crowleyOperationStatus"></p><p id="crowleyHarmonicStatus" aria-live="polite"></p><div id="crowleyReadingReference"></div><fieldset><legend><b>Accuracy Test</b></legend><p>After Card Counting and Card Pairing, confirm whether the main lines of the reading are correct.</p><button id="crowleyMainLinesCorrect" type="button">Main lines are correct · continue</button> <button id="crowleyMainLinesWrong" type="button">Main lines are not correct · abandon</button><p id="crowleyAccuracyStatus" aria-live="polite"></p></fieldset></div>';
       const workspace=r.querySelector('.card-row-workspace');
       if(workspace) workspace.parentNode.insertBefore(box,workspace); else nativeDrawer.insertAdjacentElement('beforebegin',box);
       const ledger=()=>window.RelphiTarotLedgerBridge;
@@ -164,7 +164,7 @@
         significatorId=card.card_id;
         requestAnimationFrame(()=>{
           const live=document.getElementById('crowleyHarmonicGuide');if(!live)return;
-          live.querySelector('#crowleySignificatorStatus').textContent='Significator: '+card.title;
+          live.querySelector('#crowleySignificatorStatus').textContent='Significator selected: '+card.title+' · kept hidden in the deck.';
           live.querySelector('#crowleySignificatorStep').hidden=true;
           live.querySelector('#crowleyDomainStep').hidden=false;
           live.querySelector('#crowleySignificatorResults').innerHTML='';
@@ -198,7 +198,7 @@
         ledger()?.hideOpeningSignificator?.();
         requestAnimationFrame(()=>{
           const live=document.getElementById('crowleyHarmonicGuide');if(!live)return;
-          live.querySelector('#crowleySignificatorStatus').textContent='Significator: '+card.title;
+          live.querySelector('#crowleySignificatorStatus').textContent='Significator selected: '+card.title+' · kept hidden in the deck.';
           live.querySelector('#crowleySignificatorStep').hidden=true;
           live.querySelector('#crowleyDomainStep').hidden=false;
           live.querySelector('#crowleySignificatorResults').innerHTML='';
@@ -248,7 +248,8 @@
           ledger()?.showOpeningPacket?.(packet);
           requestAnimationFrame(()=>{
             const live=document.getElementById('crowleyHarmonicGuide');if(!live)return;
-            live.querySelector('#crowleyDomainStatus').textContent='Domain test passed. The '+revealedDomain+' packet containing the Significator is spread face up. Next: count from the Significator.';
+            live.querySelector('#crowleyDomainGate').innerHTML='<legend><b>First Operation · Success</b></legend><p><b>'+ (ledger()?.titleFor?.(significatorId)||'The Significator') +'</b> was found in <b>'+revealedDomain+'</b>, the domain you committed to. The reading continues.</p><p>Relphi has spread that packet face up in its preserved deck order. The Significator remains the reference point inside this packet. Next, the cards are read as a connected story by counting from the Significator; each count is also mapped onto the twelve-fold harmonic reference so the card-to-card movement carries an aspect relationship.</p><button type="button" id="crowleyBeginStory">Begin card counting</button>';
+            live.querySelector('#crowleyBeginStory')?.addEventListener('click',()=>{live.querySelector('#crowleyDomainGate').innerHTML='<legend><b>First Operation · Card Counting</b></legend><p>Starting from <b>'+ (ledger()?.titleFor?.(significatorId)||'the Significator') +'</b>, Relphi will follow the prescribed count through this packet and build the narrative one landing at a time, showing the harmonic relationship with each move.</p>';});
           });
         } else {
           clearMarks();
