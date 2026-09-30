@@ -164,7 +164,7 @@
     },
     {
       id:'crowley-harmonic-divination-12',
-      name:'Opening of the Key · First Operation',
+      name:'Opening of the Key · Full Divination',
       cardCount:12,
       source:'shipped',
       editable:false,
