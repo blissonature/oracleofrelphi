@@ -2392,3 +2392,26 @@ body.relphi-attune-open{overflow:hidden!important}
 #shortListPanel #clearShortListCardsOnly{grid-area:clear!important;margin:0!important;min-width:0!important;width:auto!important}
 #shortListPanel #drawRandomRowCard{grid-area:draw!important;margin:0!important}
 @media(max-width:760px){#shortListPanel .relphi-board-commandbar{display:grid!important;grid-template-columns:auto auto auto 1fr!important;grid-template-areas:"title title title title" "sky sky sky sky" "reset settings . ." "undo redo clear draw"!important;gap:.4rem!important}#shortListPanel .relphi-board-command-left,#shortListPanel .drawing-board-top-actions.relphi-board-command-actions{display:contents!important}#shortListPanel .drawing-board-top-actions.relphi-board-command-actions>button{width:auto!important}}
+
+
+/* Compact Sky Connector selectors: use the Sky Chart single-chevron language. */
+#shortListPanel .drawing-board-top-actions>.relphi-sky-connector{
+  justify-content:flex-start!important;
+  gap:.4rem!important;
+}
+#shortListPanel .drawing-board-top-actions>.relphi-sky-connector select{
+  appearance:none!important;
+  -webkit-appearance:none!important;
+  width:auto!important;
+  max-width:min(46vw,12rem)!important;
+  min-width:0!important;
+  min-height:2.1rem!important;
+  padding:.34rem 1.65rem .34rem .62rem!important;
+  background-color:#fff!important;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M2 2l4 4 4-4' fill='none' stroke='%23111' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")!important;
+  background-repeat:no-repeat!important;
+  background-position:right .58rem center!important;
+  background-size:.7rem auto!important;
+}
+#shortListPanel .drawing-board-top-actions>.relphi-sky-connector select[data-sky-choice]{max-width:min(48vw,11.5rem)!important}
+#shortListPanel .drawing-board-top-actions>.relphi-sky-connector select[data-sky-ascendant]{max-width:min(38vw,9rem)!important}
