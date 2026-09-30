@@ -6,8 +6,23 @@
   window.__relphiCrowleyHarmonicV1=true;
 
   const TEMPLATE_ID='crowley-harmonic-divination-12';
-  const ASPECTS={0:['Conjunction','0°'],1:['Adjacent','30°'],2:['Sextile','60°'],3:['Square','90°'],4:['Trine','120°'],5:['Quincunx','150°'],6:['Opposition','180°']};
-  let anchor=0, stride=2, pairRadius=1, expectedDomain='', domainLocked=false, revealedDomain='';
+  const ASPECTS={
+    0:{name:'Conjunction',angle:0,harmonic:1},
+    1:{name:'Adjacent / semisextile',angle:30,harmonic:12},
+    2:{name:'Sextile',angle:60,harmonic:6},
+    3:{name:'Square',angle:90,harmonic:4},
+    4:{name:'Trine',angle:120,harmonic:3},
+    5:{name:'Quincunx',angle:150,harmonic:12},
+    6:{name:'Opposition',angle:180,harmonic:2}
+  };
+  const OPERATIONS=[
+    {n:1,name:'The Situation',field:'IHVH · four piles',note:'Nested cuts form Yod · Heh · Vav · Final Heh from right to left. The Significator pile tests the question domain.'},
+    {n:2,name:'Development',field:'12 astrological houses',note:'Deal cyclically into twelve houses. Commit to the expected house before locating the Significator; a cognate house gets one second test.'},
+    {n:3,name:'Further Development',field:'12 zodiac signs',note:'Deal cyclically into twelve signs. Commit to the expected sign before locating the Significator; a cognate sign gets one second test.'},
+    {n:4,name:'Penultimate Aspects',field:'Significator + 36-card ring',note:'Place the Significator centrally and arrange the following 36 cards around it. Decan correspondences remain attached to the small cards.'},
+    {n:5,name:'Final Result',field:'10 Tree of Life piles',note:'Deal cyclically into ten Sephiroth. Commit to the expected Sephira before locating the Significator; an adjacent Sephira gets one second test.'}
+  ];
+  let operation=1, anchor=0, countValue=3, pairRadius=1, expectedDomain='', domainLocked=false, revealedDomain='';
 
   function root(){return document.getElementById('shortListPanel');}
   function active(){
@@ -18,21 +33,45 @@
   }
   function items(){return Array.from(root()?.querySelectorAll('.card-row-board .card-row-item')||[]).slice(0,12);}
   function circularDistance(a,b){const d=Math.abs(a-b)%12;return Math.min(d,12-d);}
-  function aspectForStep(step){return ASPECTS[Math.min(step%12,12-(step%12))]||['Conjunction','0°'];}
+  function aspectForStep(step){
+    const normalized=((Number(step)||0)%12+12)%12;
+    return ASPECTS[Math.min(normalized,12-normalized)]||ASPECTS[0];
+  }
+  function countHarmonic(count){
+    // The landing algorithm and the harmonic discovery are deliberately separate:
+    // inclusive counting moves count-1 cards, while the count VALUE occupies that
+    // many 30° units on the twelve-fold harmonic reference.
+    const value=Math.max(1,Number(count)||1);
+    const step=value%12;
+    return {value,movement:value-1,step,aspect:aspectForStep(step)};
+  }
+  function pairHarmonic(radius){
+    const r=Math.max(1,Number(radius)||1);
+    const separation=(2*r)%12;
+    return {radius:r,separation,aspect:aspectForStep(separation)};
+  }
   function clearMarks(){
     items().forEach(el=>{el.classList.remove('crowley-anchor','crowley-target','crowley-pair');el.removeAttribute('data-crowley-aspect');});
   }
   function mark(){
     clearMarks();
-    const cards=items(); if(cards.length<12) return;
-    const target=(anchor+stride)%12;
-    cards[anchor]?.classList.add('crowley-anchor');
-    cards[target]?.classList.add('crowley-target');
-    const left=(anchor-pairRadius+12)%12, right=(anchor+pairRadius)%12;
-    cards[left]?.classList.add('crowley-pair'); cards[right]?.classList.add('crowley-pair');
-    const a=aspectForStep(stride), pair=aspectForStep((pairRadius*2)%12);
+    const cards=items();
+    const count=countHarmonic(countValue), pair=pairHarmonic(pairRadius);
+    // The twelve visible helper positions are a harmonic reference, not a claim
+    // that every Opening operation physically contains twelve cards.
+    if(cards.length>=12){
+      const target=(anchor+count.movement)%12;
+      cards[anchor]?.classList.add('crowley-anchor');
+      cards[target]?.classList.add('crowley-target');
+      const left=(anchor-pairRadius+12)%12, right=(anchor+pairRadius)%12;
+      cards[left]?.classList.add('crowley-pair'); cards[right]?.classList.add('crowley-pair');
+      cards[target]?.setAttribute('data-crowley-aspect',count.aspect.name);
+    }
+    const op=OPERATIONS[operation-1];
+    const opStatus=document.getElementById('crowleyOperationStatus');
+    if(opStatus) opStatus.innerHTML='<b>Operation '+op.n+' · '+op.name+'</b> — '+op.field+'. '+op.note;
     const status=document.getElementById('crowleyHarmonicStatus');
-    if(status) status.textContent='Card Counting: '+(stride+1)+' inclusive → move '+stride+' → '+a[0]+' '+a[1]+'. Card Pairing: ±'+pairRadius+' → separation '+((pairRadius*2)%12||12)+' → '+pair[0]+' '+pair[1]+'.';
+    if(status) status.textContent='Count '+count.value+' · mechanical movement '+count.movement+' · harmonic step '+count.step+'/12 = '+count.aspect.name+' '+count.aspect.angle+'° (H'+count.aspect.harmonic+'). Pair ±'+pair.radius+' · separation '+(pair.separation||12)+'/12 = '+pair.aspect.name+' '+pair.aspect.angle+'° (H'+pair.aspect.harmonic+').';
   }
   function countOptions(){
     const values=[
@@ -69,7 +108,7 @@
     let box=document.getElementById('crowleyHarmonicGuide');
     if(!box){
       box=document.createElement('section');box.id='crowleyHarmonicGuide';box.hidden=true;
-      box.innerHTML='<strong>Opening of the Key · Full Divination</strong><p style="margin:.35rem 0 .7rem">Five operations: <b>I · Opening of the Question</b> — IHVH four-pile test; <b>II · Development</b> — twelve astrological houses; <b>III · Further Development</b> — twelve zodiac signs; <b>IV · Penultimate Aspects</b> — Significator with the following 36 cards in a ring; <b>V · Final Result</b> — ten Tree of Life piles. Each operation reshuffles and uses counting and pairing.</p><p style="margin:.35rem 0 .7rem"><b>Operation I.</b> Use the nested cuts to form IHVH from right to left; the Significator pile must agree with the question domain before continuing.</p>'+domainGateMarkup()+'<div id="crowleyMechanics" hidden><div class="crowley-controls"><label>Significator<select id="crowleyAnchor">'+Array.from({length:12},(_,i)=>'<option value="'+i+'">Position '+(i+1)+'</option>').join('')+'</select></label><label>Card Counting<select id="crowleyCount">'+countOptions()+'</select></label><label>Card Pairing<select id="crowleyPair">'+Array.from({length:6},(_,i)=>'<option value="'+(i+1)+'">±'+(i+1)+'</option>').join('')+'</select></label><button id="crowleyAdvance" type="button">Continue Card Counting</button></div><p id="crowleyHarmonicStatus" aria-live="polite"></p><fieldset><legend><b>Accuracy Test</b></legend><p>After Card Counting and Card Pairing, confirm whether the main lines of the reading are correct.</p><button id="crowleyMainLinesCorrect" type="button">Main lines are correct · continue</button> <button id="crowleyMainLinesWrong" type="button">Main lines are not correct · abandon</button><p id="crowleyAccuracyStatus" aria-live="polite"></p></fieldset></div>';
+      box.innerHTML='<strong>Opening of the Key · Full Divination</strong><p style="margin:.35rem 0 .7rem">Five operations: <b>I · Opening of the Question</b> — IHVH four-pile test; <b>II · Development</b> — twelve astrological houses; <b>III · Further Development</b> — twelve zodiac signs; <b>IV · Penultimate Aspects</b> — Significator with the following 36 cards in a ring; <b>V · Final Result</b> — ten Tree of Life piles. Each operation reshuffles and uses counting and pairing.</p><p style="margin:.35rem 0 .7rem"><b>Operation I.</b> Use the nested cuts to form IHVH from right to left; the Significator pile must agree with the question domain before continuing.</p>'+domainGateMarkup()+'<div id="crowleyMechanics" hidden><div class="crowley-controls"><label>Operation<select id="crowleyOperation">'+OPERATIONS.map(op=>'<option value="'+op.n+'">'+op.n+' · '+op.name+'</option>').join('')+'</select></label><label>Harmonic reference<select id="crowleyAnchor">'+Array.from({length:12},(_,i)=>'<option value="'+i+'">Position '+(i+1)+'</option>').join('')+'</select></label><label>Card Counting<select id="crowleyCount">'+countOptions()+'</select></label><label>Card Pairing<select id="crowleyPair">'+Array.from({length:6},(_,i)=>'<option value="'+(i+1)+'">±'+(i+1)+'</option>').join('')+'</select></label><button id="crowleyAdvance" type="button">Continue Card Counting</button></div><p id="crowleyOperationStatus"></p><p id="crowleyHarmonicStatus" aria-live="polite"></p><fieldset><legend><b>Accuracy Test</b></legend><p>After Card Counting and Card Pairing, confirm whether the main lines of the reading are correct.</p><button id="crowleyMainLinesCorrect" type="button">Main lines are correct · continue</button> <button id="crowleyMainLinesWrong" type="button">Main lines are not correct · abandon</button><p id="crowleyAccuracyStatus" aria-live="polite"></p></fieldset></div>';
       const workspace=r.querySelector('.card-row-workspace');
       if(workspace) workspace.parentNode.insertBefore(box,workspace); else nativeDrawer.insertAdjacentElement('beforebegin',box);
       box.querySelector('#crowleyLockDomain').addEventListener('click',()=>{
@@ -83,10 +122,11 @@
       });
       box.querySelector('#crowleyMainLinesCorrect').addEventListener('click',()=>{box.querySelector('#crowleyAccuracyStatus').textContent='Accuracy gate passed.';});
       box.querySelector('#crowleyMainLinesWrong').addEventListener('click',()=>{box.querySelector('#crowleyMechanics').hidden=true;box.querySelector('#crowleyAccuracyStatus').textContent='The divination is abandoned because its main lines do not correspond.';clearMarks();});
+      box.querySelector('#crowleyOperation').addEventListener('change',e=>{operation=Math.max(1,Math.min(5,Number(e.target.value)||1));mark();});
       box.querySelector('#crowleyAnchor').addEventListener('change',e=>{anchor=Number(e.target.value)||0;mark();});
-      box.querySelector('#crowleyCount').addEventListener('change',e=>{stride=(Number(e.target.value)||3)-1;mark();});
+      box.querySelector('#crowleyCount').addEventListener('change',e=>{countValue=Number(e.target.value)||3;mark();});
       box.querySelector('#crowleyPair').addEventListener('change',e=>{pairRadius=Number(e.target.value)||1;mark();});
-      box.querySelector('#crowleyAdvance').addEventListener('click',()=>{anchor=(anchor+stride)%12;box.querySelector('#crowleyAnchor').value=String(anchor);mark();});
+      box.querySelector('#crowleyAdvance').addEventListener('click',()=>{anchor=(anchor+countHarmonic(countValue).movement)%12;box.querySelector('#crowleyAnchor').value=String(anchor);mark();});
       box.querySelector('#crowleyCount').value='3';
     }
     box.hidden=!active();
