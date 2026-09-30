@@ -4478,6 +4478,16 @@
         image:rwsImagePath(card)
       }));
     },
+    drawCardForBoard(scope = 'full') {
+      const pool=rowDrawPool(scope || 'full',{ignoreUsed:true});
+      if(!pool.length)return null;
+      const card=pool[randomInt(pool.length)];
+      if(!card)return null;
+      commitShortList([...state.shortList,card.card_id],{newCardsManual:true});
+      expandCardRow();
+      scrollCardRowToEnd();
+      return {card_id:card.card_id,title:title(card),image:rwsImagePath(card)};
+    },
     addCardToBoard(cardId, scope = 'full') {
       const id=String(cardId || '').trim();
       if (!cardById(id)) return false;
