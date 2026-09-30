@@ -1103,8 +1103,10 @@
 
   function beginOptionsSession() {
     if (optionsSession) return;
-    const path=activeCraftedPath||'bespoke';
     const draft=draftFromState();
+    const crowleyActive=draft.templateId==='crowley-harmonic-divination-12'||draft.basedOnTemplateId==='crowley-harmonic-divination-12';
+    const path=crowleyActive?'templates':(activeCraftedPath||'bespoke');
+    if(crowleyActive)activeCraftedPath='templates';
     if(path==='bespoke' && !draft.templateId) draft.templateName='Unnamed Template';
     optionsSession = { baseline:currentSnapshot(), draft, path, building:{element:'',planet:'',aspect:'',sign:'',house:'',need:''}, suggestions:[], suggestionPacks:[], surfaceSelected:{} };
   }
@@ -2036,9 +2038,11 @@
     const positions=selected?.positions?.slice?.().sort((a,b)=>a.drawOrder-b.drawOrder) || [];
     const preview=selected?.id===RECURSION_ID
       ? '<div class="relphi-recursion-template-note"><strong>Seven recursive levels · 22 cards</strong><span>Each level uses the Relphi logo: Mem, Aleph, and Shin occupy the three black circles. The red circle is Earth, the portal to the next level; on Level 7 it receives card 22. The seven-level depth control is the 1×7 Veilva.</span></div>'
-      : positions.length
-        ? '<ol class="relphi-template-preview">'+positions.map(item=>'<li>'+escapeHtml(item.label)+'</li>').join('')+'</ol>'
-        : '<p class="relphi-referent-empty">Choose a template to preview its referents.</p>';
+      : selected?.id==='crowley-harmonic-divination-12'
+        ? '<div class="relphi-recursion-template-note"><strong>Five-operation method · not a 12-position spread</strong><span>I · IHVH four piles · II · 12 houses · III · 12 signs · IV · Significator + 36-card ring · V · 10 Tree of Life piles.</span></div>'
+        : positions.length
+          ? '<ol class="relphi-template-preview">'+positions.map(item=>'<li>'+escapeHtml(item.label)+'</li>').join('')+'</ol>'
+          : '<p class="relphi-referent-empty">Choose a template to preview its referents.</p>';
     return '<section class="relphi-referent-panel">'+
       '<label class="relphi-options-field">Template<select id="relphiSpreadTemplateSelect" '+(hasCards?'disabled':'')+'>'+optionTemplateMarkup(draft)+'</select></label>'+
       preview+
