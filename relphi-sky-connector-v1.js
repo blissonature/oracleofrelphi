@@ -15,12 +15,28 @@ function skyOptions(s){const current=s.enabled?(s.source==='rising'?'__rising__'
 function markup(){const s=state();return'<section class="relphi-sky-connector" aria-label="Sky Connector"><select data-sky-choice aria-label="Sky Connector">'+skyOptions(s)+'</select>'+(s.enabled&&s.source==='rising'?'<select data-sky-ascendant aria-label="Ascendant">'+signOptions(s.ascendantSign)+'</select>':'')+'</section>'}
 function changed(){window.dispatchEvent(new CustomEvent('relphi:sky-context-change',{detail:context()}))}
 function install(){const root=document.getElementById('shortListPanel'),actions=root?.querySelector('.drawing-board-top-actions');if(!root||!actions)return;const existing=root.querySelector('.relphi-sky-connector');if(existing?.parentElement===actions)return;existing?.remove();const box=document.createElement('div');box.innerHTML=markup();const node=box.firstElementChild;actions.appendChild(node);const rerender=()=>{node.remove();install();changed()};node.querySelector('[data-sky-choice]')?.addEventListener('change',e=>{const s=state(),value=e.target.value;if(!value){s.enabled=false;s.source='reference';s.savedSkyId=''}else if(value==='__rising__'){s.enabled=true;s.source='rising';s.savedSkyId=''}else{s.enabled=true;s.source='saved';s.savedSkyId=value;const a=ascendantFrom(selected(s));if(a)s.ascendantSign=a}save(s);rerender()});node.querySelector('[data-sky-ascendant]')?.addEventListener('change',e=>{const s=state();s.enabled=true;s.source='rising';s.ascendantSign=e.target.value||'Aries';save(s);changed()})}
-let queued=false;new MutationObserver(mutations=>{const needsInstall=mutations.some(m=>Array.from(m.addedNodes||[]).some(node=>node.nodeType===1&&(node.classList?.contains('drawing-board-top-actions')||node.querySelector?.('.drawing-board-top-actions'))));if(!needsInstall||queued)return;queued=true;requestAnimationFrame(()=>{queued=false;install()})}).observe(document.documentElement,{childList:true,subtree:true});window.addEventListener('relphi:tarot-enhancements-ready',()=>{install();changed()});function tarotActivations(s=state()){
-  const sky=s.enabled&&s.source==='saved'?selected(s):null;
-  if(!sky)return[];
-  // Preparation API only. The canonical Sky → Tarot resolver will be shared with
-  // Sky Chart's Chart Card Hits before results/focus/board presentation is enabled.
-  return[];
+let queued=false;new MutationObserver(mutations=>{const needsInstall=mutations.some(m=>Array.from(m.addedNodes||[]).some(node=>node.nodeType===1&&(node.classList?.contains('drawing-board-top-actions')||node.querySelector?.('.drawing-board-top-actions'))));if(!needsInstall||queued)return;queued=true;requestAnimationFrame(()=>{queued=false;install()})}).observe(document.documentElement,{childList:true,subtree:true});window.addEventListener('relphi:tarot-enhancements-ready',()=>{install();changed()});const SIGN_RULERS=['Mars','Venus','Mercury','Moon','Sun','Mercury','Venus','Mars','Jupiter','Saturn','Saturn','Jupiter'];
+const EXALTATIONS=['Sun','Moon',null,'Jupiter',null,'Mercury','Saturn',null,null,'Mars',null,'Venus'];
+const DECAN_RULERS=[['Mars','Sun','Venus'],['Mercury','Moon','Saturn'],['Jupiter','Mars','Sun'],['Venus','Mercury','Moon'],['Saturn','Jupiter','Mars'],['Sun','Venus','Mercury'],['Moon','Saturn','Jupiter'],['Mars','Sun','Venus'],['Mercury','Moon','Saturn'],['Jupiter','Mars','Sun'],['Venus','Mercury','Moon'],['Saturn','Jupiter','Mars']];
+const PLANET_ALIASES={asc:'Ascendant',dsc:'Descendant',mc:'Midheaven',ic:'Imum Coeli'};
+function placementEntries(payload){const known=[payload?.placements,payload?.positions,payload?.points,payload?.bodies].find(v=>v&&typeof v==='object'),raw=known||payload||{};return Array.isArray(raw)?raw.map((item,i)=>[String(item?.name||item?.id||i),item]):Object.entries(raw)}
+function longitude(item){if(Number.isFinite(Number(item?.longitude)))return((Number(item.longitude)%360)+360)%360;const sign=SIGNS.findIndex(name=>name.toLowerCase()===String(item?.sign||item?.zodiac||'').toLowerCase());if(sign<0)return NaN;return sign*30+Number(item.degree||item.degrees||0)+Number(item.minute||item.minutes||0)/60}
+function placementName(key,item){const raw=String(item?.name||item?.label||item?.body||item?.planet||item?.point||key||'').trim();return PLANET_ALIASES[raw.toLowerCase()]||raw.replace(/(^|-)([a-z])/g,(_,dash,ch)=>(dash?' ':'')+ch.toUpperCase())}
+function tarotActivations(s=state()){
+  const sky=s.enabled&&s.source==='saved'?selected(s):null;if(!sky)return[];
+  const cards=Array.isArray(window.RELPHI_TAROT_CARDS)?window.RELPHI_TAROT_CARDS:[],byPlanet=new Map(),ledger=new Map();
+  cards.forEach(card=>{const p=String(card?.astrology?.planet||'').trim().toLowerCase();if(p&&!byPlanet.has(p))byPlanet.set(p,card)});
+  const add=(card,kind,reason,hit)=>{if(!card)return;const id=card.card_id;if(!ledger.has(id))ledger.set(id,{cardId:id,cardName:card.name||'',hits:[]});ledger.get(id).hits.push({kind,reason,...hit})};
+  placementEntries(sky).forEach(([key,item])=>{if(!item||typeof item!=='object'||Array.isArray(item))return;const lon=longitude(item);if(!Number.isFinite(lon))return;const planet=placementName(key,item),signIndex=Math.floor(lon/30),degree=lon-signIndex*30,decan=Math.min(2,Math.floor(degree/10)),sign=SIGNS[signIndex],hit={planet,longitude:lon,sign,degree,decan:decan+1};
+    const position=planet+' in '+sign+' at '+Math.floor(degree)+'°'+String(Math.floor((degree%1)*60)).padStart(2,'0')+'′';
+    add(byPlanet.get(planet.toLowerCase()),'direct','Direct placement: '+position+'.',hit);
+    add(byPlanet.get(SIGN_RULERS[signIndex].toLowerCase()),'sign-ruler',SIGN_RULERS[signIndex]+' rules '+sign+', the sign occupied by '+planet+'.',hit);
+    add(byPlanet.get(DECAN_RULERS[signIndex][decan].toLowerCase()),'decan-ruler',DECAN_RULERS[signIndex][decan]+' rules decan '+(decan+1)+' of '+sign+', occupied by '+planet+'.',hit);
+    if(EXALTATIONS[signIndex])add(byPlanet.get(EXALTATIONS[signIndex].toLowerCase()),'exaltation',EXALTATIONS[signIndex]+' is exalted in '+sign+', occupied by '+planet+'.',hit);
+    const decanCard=cards.find(card=>{const cs=String(card?.astrology?.sign||'').toLowerCase(),span=String(card?.astrology?.degree_span||card?.astrology?.zodiac_range||'');if(cs!==sign.toLowerCase())return false;const first=Number((span.match(/(\\d+)/)||[])[1]);return Number.isFinite(first)&&Math.floor(first/10)===decan});
+    add(decanCard,'decan-card',position+' falls in '+sign+' decan '+(decan+1)+'.',hit);
+  });
+  return Array.from(ledger.values()).map(entry=>({...entry,hitCount:entry.hits.length})).sort((a,b)=>b.hitCount-a.hitCount||a.cardName.localeCompare(b.cardName));
 }
 window.RelphiSkyConnector=Object.freeze({state:()=>({...state()}),context,houseReference,tarotActivations,install});install();
 })();
