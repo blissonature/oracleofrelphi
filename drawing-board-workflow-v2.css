@@ -2321,3 +2321,5 @@ body.relphi-attune-open{overflow:hidden!important}
 /* Bespoke save name is self-explanatory; do not add a redundant visible header. */
 #shortListPanel .relphi-template-save{padding-top:0!important}
 #shortListPanel .relphi-template-save::before{content:none!important;display:none!important}
+
+#shortListPanel #relphiTemplateName.is-unnamed{color:#8a837d!important;font-weight:500!important}
