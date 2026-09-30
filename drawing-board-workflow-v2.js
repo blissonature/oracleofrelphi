@@ -3781,8 +3781,12 @@
       Object.assign(snap,{shortList:[],shortListSelection:[],shortListPositionLabels:[],shortListPositionCardIds:[],rowEnvelopeLayout:{},rowCardTransforms:{},rowPositionMeta:[],rowCardReversals:{},rowCardManual:[],rowDrawDeck:[],rowDrawDeckSignature:'',rowLayoutLocked:false,rowLayoutDesignMode:false,rowActiveLayout:{...clone(method),positions:[]}});
       bridge.restore(snap);
       optionsSession=null;
+      markSettingsConfirmed();
       root.querySelector('.relphi-reading-options-drawer')?.remove();
+      root.querySelector('.relphi-free-settings')?.remove();
       setBoardMode(root,'crafted');
+      ensureBoardChrome(root);
+      syncZoomToolbarVisibility(root);
       setTimeout(()=>{
         window.RelphiCrowleyHarmonicBridge?.start?.();
         document.dispatchEvent(new Event('relphi:drawing-board-rendered'));
