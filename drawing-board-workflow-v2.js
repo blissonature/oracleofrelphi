@@ -4517,7 +4517,9 @@
     button.className='relphi-bespoke-continue relphi-bespoke-ask-another';
     button.textContent='＋ Ask another question';
     button.addEventListener('click',promptForBespokeQuestion);
-    draw.insertAdjacentElement('afterend',button);
+    const undo=root.querySelector('#undoShortList');
+    if(undo?.parentElement===actions) actions.insertBefore(button,undo);
+    else actions.insertBefore(button,actions.firstChild);
   }
 
   function globalCapture(event) {
