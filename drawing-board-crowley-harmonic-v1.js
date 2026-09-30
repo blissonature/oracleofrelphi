@@ -50,6 +50,26 @@
     const separation=(2*r)%12;
     return {radius:r,separation,aspect:aspectForStep(separation)};
   }
+  function interpretiveRelation(aspect,kind){
+    const relation={
+      0:'acts as one field: meanings fuse, intensify, or become difficult to separate',
+      30:'sits beside the other with little shared structure: read the adjustment, translation, or blind spot between them',
+      60:'opens a usable channel: the cards can cooperate when the opportunity is taken up',
+      90:'creates active friction: each card presses the other into action, conflict, correction, or decision',
+      120:'moves through an easy common pattern: the cards reinforce and carry one another with relatively little resistance',
+      150:'requires continual recalibration: the cards are connected but do not naturally share a common frame',
+      180:'forms a polarity: read the cards as opposing, mirroring, or completing ends of one axis'
+    }[aspect.angle] || 'forms a harmonic relationship that modifies how the two meanings combine';
+    return (kind==='pair'?'Paired cards':'Counted relationship')+' · '+aspect.name+' ('+aspect.angle+'°, H'+aspect.harmonic+'): '+relation+'.';
+  }
+  function interpretationContext(){
+    const count=countHarmonic(countValue), pair=pairHarmonic(pairRadius), op=OPERATIONS[operation-1];
+    return {
+      operation:{...op},
+      count:{...count,aspect:{...count.aspect},interpretation:interpretiveRelation(count.aspect,'count')},
+      pair:{...pair,aspect:{...pair.aspect},interpretation:interpretiveRelation(pair.aspect,'pair')}
+    };
+  }
   function clearMarks(){
     items().forEach(el=>{el.classList.remove('crowley-anchor','crowley-target','crowley-pair');el.removeAttribute('data-crowley-aspect');});
   }
@@ -71,7 +91,7 @@
     const opStatus=document.getElementById('crowleyOperationStatus');
     if(opStatus) opStatus.innerHTML='<b>Operation '+op.n+' · '+op.name+'</b> — '+op.field+'. '+op.note;
     const status=document.getElementById('crowleyHarmonicStatus');
-    if(status) status.textContent='Count '+count.value+' · mechanical movement '+count.movement+' · harmonic step '+count.step+'/12 = '+count.aspect.name+' '+count.aspect.angle+'° (H'+count.aspect.harmonic+'). Pair ±'+pair.radius+' · separation '+(pair.separation||12)+'/12 = '+pair.aspect.name+' '+pair.aspect.angle+'° (H'+pair.aspect.harmonic+').';
+    if(status) status.innerHTML='<b>Count '+count.value+'</b> · move '+count.movement+' · '+count.aspect.name+' '+count.aspect.angle+'° (H'+count.aspect.harmonic+'). '+interpretiveRelation(count.aspect,'count')+'<br><b>Pair ±'+pair.radius+'</b> · separation '+(pair.separation||12)+'/12 · '+pair.aspect.name+' '+pair.aspect.angle+'° (H'+pair.aspect.harmonic+'). '+interpretiveRelation(pair.aspect,'pair');
   }
   function countOptions(){
     const values=[
@@ -132,6 +152,7 @@
     box.hidden=!active();
     if(!box.hidden) mark(); else clearMarks();
   }
+  window.RelphiCrowleyHarmonicBridge=Object.freeze({getInterpretationContext:()=>interpretationContext()});
   document.addEventListener('change',e=>{if(e.target?.id==='relphiSpreadTemplateSelect') setTimeout(ensureGuide,0);});
   document.addEventListener('relphi:drawing-board-rendered',()=>setTimeout(ensureGuide,0));
   new MutationObserver(()=>ensureGuide()).observe(document.documentElement,{childList:true,subtree:true});
