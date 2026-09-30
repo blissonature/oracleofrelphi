@@ -4526,10 +4526,16 @@
   }
 
   function globalCapture(event) {
-    // relphiOpenDrawingBoardCurrent is owned by tarot-app.js. Its native handler
-    // switches to board mode, hides competing panels, rerenders the board, and
-    // expands the native drawer. Do not intercept that click here.
     const root=panel();
+    const openCloseTrigger=event.target.closest?.('#relphiOpenDrawingBoardCurrent');
+    if(openCloseTrigger){
+      // The workflow owns the visible open/closed state once enhanced. The native
+      // Tarot handler can reopen/rerender the panel, so consume this command here.
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      setBoardOpen(!boardOpen);
+      return;
+    }
     const settingsTrigger=event.target.closest?.('#shortListPanel #relphiBoardSettingsButton');
     if(settingsTrigger&&root?.contains(settingsTrigger)){
       event.preventDefault();
