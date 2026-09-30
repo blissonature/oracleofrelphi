@@ -3752,6 +3752,35 @@
       return;
     }
     const recursionRequested=draft.templateId===RECURSION_ID || draft.basedOnTemplateId===RECURSION_ID;
+    const crowleyRequested=draft.templateId==='crowley-harmonic-divination-12' || draft.basedOnTemplateId==='crowley-harmonic-divination-12';
+    if(session.path==='templates' && crowleyRequested){
+      const method=templateById('crowley-harmonic-divination-12');
+      if(!method)return;
+      // Opening of the Key is a method, not a twelve-question spread. Clear any
+      // Bespoke/question residue and establish only the method identity; its
+      // helper owns the five operations and their changing structures.
+      draft.templateId=method.id;
+      draft.basedOnTemplateId=method.id;
+      draft.labels=[];
+      draft.positionPacks=[];
+      draft.positionSettings=[];
+      draft.templateName=method.name;
+      draft.reversals=false;
+      draft.repeats=false;
+      const bridge=optionsBridge();
+      const snap=bridge?.capture?.();
+      if(!bridge||!snap)return;
+      Object.assign(snap,{shortList:[],shortListSelection:[],shortListPositionLabels:[],shortListPositionCardIds:[],rowEnvelopeLayout:{},rowCardTransforms:{},rowPositionMeta:[],rowCardReversals:{},rowCardManual:[],rowDrawDeck:[],rowDrawDeckSignature:'',rowLayoutLocked:false,rowLayoutDesignMode:false,rowActiveLayout:{...clone(method),positions:[]}});
+      bridge.restore(snap);
+      optionsSession=null;
+      root.querySelector('.relphi-reading-options-drawer')?.remove();
+      setBoardMode(root,'crafted');
+      setTimeout(()=>{
+        window.RelphiCrowleyHarmonicBridge?.start?.();
+        document.dispatchEvent(new Event('relphi:drawing-board-rendered'));
+      },0);
+      return;
+    }
     // Every ordinary Crafted path must cross the same atomic launch boundary.
     // Leaving Templates / Building Blocks on the legacy clear-and-reapply path
     // gives enhance() a chance to reinterpret the new structure as setup state.
