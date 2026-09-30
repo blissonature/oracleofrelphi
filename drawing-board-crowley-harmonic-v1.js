@@ -22,7 +22,7 @@
     {n:4,name:'Penultimate Aspects',field:'Significator + 36-card ring',note:'Place the Significator centrally and arrange the following 36 cards around it. Decan correspondences remain attached to the small cards.'},
     {n:5,name:'Final Result',field:'10 Tree of Life piles',note:'Deal cyclically into ten Sephiroth. Commit to the expected Sephira before locating the Significator; an adjacent Sephira gets one second test.'}
   ];
-  let operation=1, anchor=0, countValue=3, pairRadius=1, expectedDomain='', domainLocked=false, revealedDomain='', significatorId='';
+  let operation=1, anchor=0, countValue=3, pairRadius=1, expectedDomain='', domainLocked=false, revealedDomain='', significatorId='', operationDeck=null;
 
   function root(){return document.getElementById('shortListPanel');}
   function active(){
@@ -118,7 +118,7 @@
     return values.map(([v,l])=>'<option value="'+v+'">'+l+'</option>').join('');
   }
   function domainGateMarkup(){
-    return '<fieldset id="crowleyDomainGate"><legend><b>First Operation · Domain Test</b></legend><div id="crowleySignificatorStep"><p><b>1. Choose the Significator.</b> Draw one digitally or search for the card you intend to use.</p><div class="crowley-controls"><button id="crowleyDrawSignificator" type="button">Digital draw</button><label>Search for a card<input id="crowleySignificatorSearch" type="search" autocomplete="off" placeholder="Card name"></label></div><div id="crowleySignificatorResults"></div><p id="crowleySignificatorStatus" aria-live="polite">No Significator selected.</p></div><div id="crowleyDomainStep" hidden><p><b>2. Commit to the expected domain</b> before locating the Significator in the four packets.</p><div class="crowley-controls"><label>Expected domain<select id="crowleyExpectedDomain"><option value="">Choose before revealing…</option><option value="Yod">Yod</option><option value="Heh">Heh</option><option value="Vav">Vav</option><option value="Heh-final">Final Heh</option></select></label><button id="crowleyLockDomain" type="button">Commit domain</button></div></div><div id="crowleyDomainReveal" hidden><p><b>3. Form the four IHVH packets.</b> Relphi will shuffle the full deck, form the four packets, locate your selected Significator, and test it against the domain you committed to.</p><button type="button" id="crowleyResolvePackets">Shuffle and form packets</button><p><b>Significator packet:</b> <span id="crowleyActualDomain">Not yet formed</span></p></div><p id="crowleyDomainStatus" aria-live="polite"></p></fieldset>';
+    return '<fieldset id="crowleyDomainGate"><legend><b>First Operation · Domain Test</b></legend><div id="crowleySignificatorStep"><p><b>1. Choose the Significator.</b> Draw one digitally or search for the card you intend to use.</p><div class="crowley-controls"><button id="crowleyDrawSignificator" type="button">Digital draw</button><label>Search for a card<input id="crowleySignificatorSearch" type="search" autocomplete="off" placeholder="Card name"></label></div><div id="crowleySignificatorResults"></div><p id="crowleySignificatorStatus" aria-live="polite">No Significator selected.</p></div><div id="crowleyDomainStep" hidden><p><b>2. Commit to the expected domain</b> before locating the Significator in the four packets.</p><div class="crowley-controls"><label>Expected domain<select id="crowleyExpectedDomain"><option value="">Choose before revealing…</option><option value="Yod">Yod</option><option value="Heh">Heh</option><option value="Vav">Vav</option><option value="Heh-final">Final Heh</option></select></label><button id="crowleyLockDomain" type="button">Commit domain</button></div></div><div id="crowleyDomainReveal" hidden><div id="crowleyInvocationStep"><p><b>3. Invocation.</b> Complete the invocation before the deck is shuffled.</p><button type="button" id="crowleyInvoke">Invocation complete · shuffle once</button></div><div id="crowleyCutStep" hidden><p><b>4. Querent cut.</b> Choose the exact cut position. The shuffled deck order is now locked and will not be shuffled again during this operation.</p><div class="crowley-controls"><label>Cut position<input id="crowleyCutRange" type="range" min="1" max="77" value="39"></label><label>Position<input id="crowleyCutNumber" type="number" min="1" max="77" value="39"></label><button type="button" id="crowleyMakeCut">Make cut</button></div><p><b>Significator packet:</b> <span id="crowleyActualDomain">Awaiting cuts</span></p></div></div><p id="crowleyDomainStatus" aria-live="polite"></p></fieldset>';
   }
   function installStyle(){
     if(document.getElementById('crowleyHarmonicStyle')) return;
@@ -208,22 +208,28 @@
         domainLocked=true; sel.disabled=true; box.querySelector('#crowleyLockDomain').disabled=true;
         box.querySelector('#crowleyDomainStatus').textContent='Domain committed. Resolve the four packets, then reveal which contains the Significator.';
         box.querySelector('#crowleyDomainReveal').hidden=false;
-        box.querySelector('#crowleyActualDomain').textContent='Not yet formed';
+        box.querySelector('#crowleyActualDomain').textContent='Awaiting cuts';
       });
-      box.querySelector('#crowleyResolvePackets').addEventListener('click',()=>{
-        if(!domainLocked||!significatorId)return;
-        const result=ledger()?.openingKeyPackets?.(significatorId);
-        if(!result?.packet)return;
-        revealedDomain=result.packet;
-        box.querySelector('#crowleyActualDomain').textContent=revealedDomain;
-        const agrees=revealedDomain===expectedDomain;
-        box.querySelector('#crowleyDomainStatus').textContent=agrees
-          ? 'The Significator is in the committed '+expectedDomain+' packet. The domain test passes; continue with Operation I.'
-          : 'The Significator is in '+revealedDomain+', not the committed '+expectedDomain+' packet. The Opening is abandoned.';
-        box.querySelector('#crowleyMechanics').hidden=!agrees;
-        box.querySelector('#crowleyResolvePackets').disabled=true;
-        if(agrees){operation=1;mark();box.querySelector('#crowleyMechanics')?.scrollIntoView({block:'nearest'});}
-        else clearMarks();
+      box.querySelector('#crowleyInvoke').addEventListener('click',()=>{
+        if(!domainLocked||!significatorId||operationDeck)return;
+        const prepared=ledger()?.openingKeyDeck?.(significatorId);
+        if(!prepared?.deck?.length)return;
+        operationDeck=prepared.deck.slice();
+        box.querySelector('#crowleyInvoke').disabled=true;
+        box.querySelector('#crowleyInvocationStep').hidden=true;
+        box.querySelector('#crowleyCutStep').hidden=false;
+        box.querySelector('#crowleyDomainStatus').textContent='Deck shuffled once and locked. Make the querent cut; no further shuffle is permitted in Operation I.';
+      });
+      const cutRange=box.querySelector('#crowleyCutRange'),cutNumber=box.querySelector('#crowleyCutNumber');
+      cutRange.addEventListener('input',()=>{cutNumber.value=cutRange.value;});
+      cutNumber.addEventListener('input',()=>{const v=Math.max(1,Math.min(77,Number(cutNumber.value)||1));cutRange.value=String(v);});
+      box.querySelector('#crowleyMakeCut').addEventListener('click',()=>{
+        if(!operationDeck)return;
+        const first=Math.max(1,Math.min(77,Number(cutNumber.value)||1));
+        // The querent cut is recorded against the locked deck. Reader cuts are
+        // the next ritual step and are deliberately not skipped here.
+        box.querySelector('#crowleyMakeCut').disabled=true;
+        box.querySelector('#crowleyDomainStatus').textContent='Querent cut recorded at '+first+'. Deck order remains locked. Next: perform the prescribed reader cuts.';
       });
       box.querySelector('#crowleyMainLinesCorrect').addEventListener('click',()=>{box.querySelector('#crowleyAccuracyStatus').textContent='Accuracy gate passed.';});
       box.querySelector('#crowleyMainLinesWrong').addEventListener('click',()=>{box.querySelector('#crowleyMechanics').hidden=true;box.querySelector('#crowleyAccuracyStatus').textContent='The divination is abandoned because its main lines do not correspond.';clearMarks();});
@@ -238,7 +244,7 @@
     if(!box.hidden){syncSignificatorFromBoard(box);mark();} else clearMarks();
   }
   function start(){
-    operation=1;anchor=0;countValue=3;pairRadius=1;expectedDomain='';domainLocked=false;revealedDomain='';significatorId='';
+    operation=1;anchor=0;countValue=3;pairRadius=1;expectedDomain='';domainLocked=false;revealedDomain='';significatorId='';operationDeck=null;
     ensureGuide();
     const box=document.getElementById('crowleyHarmonicGuide');
     if(!box)return false;
