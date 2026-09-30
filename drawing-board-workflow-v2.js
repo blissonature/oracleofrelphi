@@ -1097,7 +1097,9 @@
   function beginOptionsSession() {
     if (optionsSession) return;
     const path=activeCraftedPath||'bespoke';
-    optionsSession = { baseline:currentSnapshot(), draft:draftFromState(), path, building:{element:'',planet:'',aspect:'',sign:'',house:'',need:''}, suggestions:[], suggestionPacks:[], surfaceSelected:{} };
+    const draft=draftFromState();
+    if(path==='bespoke' && !draft.templateId) draft.templateName='Unnamed Template';
+    optionsSession = { baseline:currentSnapshot(), draft, path, building:{element:'',planet:'',aspect:'',sign:'',house:'',need:''}, suggestions:[], suggestionPacks:[], surfaceSelected:{} };
   }
   function optionsStructuralChanged(session = optionsSession) {
     if (!session) return false;
@@ -2209,7 +2211,7 @@
       if(!chosen||hasCards)return;
       draft.templateId='';
       draft.basedOnTemplateId=chosen.id;
-      draft.templateName='';
+      draft.templateName='Unnamed Template';
       draft.labels=chosen.positions.slice().sort((a,b)=>a.drawOrder-b.drawOrder).map(item=>item.label);
       draft.positionPacks=chosen.positions.slice().sort((a,b)=>a.drawOrder-b.drawOrder).map(item=>String(item.drawScope||''));
       draft.pack=chosen.rules?.drawScope||draft.pack||'full';
