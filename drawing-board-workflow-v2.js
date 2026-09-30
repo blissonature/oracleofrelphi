@@ -430,7 +430,7 @@
           id:'crowley-' + (index+1),
           label:String(index+1),
           drawOrder:index+1,
-          transform:transform(x,y,0,.43),
+          transform:transform(x,y,.43,0),
           harmonicIndex:index
         };
       }),
