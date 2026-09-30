@@ -237,9 +237,13 @@
         box.querySelector('#crowleyDomainStatus').textContent=agrees
           ? 'Querent cut at '+first+'. Relphi completed the reader cuts without reshuffling. The Significator is in '+revealedDomain+', matching the committed domain. Continue with Operation I.'
           : 'Querent cut at '+first+'. Relphi completed the reader cuts without reshuffling. The Significator is in '+revealedDomain+', not '+expectedDomain+'. The Opening is abandoned.';
-        box.querySelector('#crowleyMechanics').hidden=!agrees;
-        if(agrees){operation=1;mark();box.querySelector('#crowleyMechanics')?.scrollIntoView({block:'nearest'});}
-        else clearMarks();
+        box.querySelector('#crowleyMechanics').hidden=true;
+        if(agrees){
+          operation=1;
+          // The method, not the querent, owns the mechanics. Do not expose the
+          // diagnostic harmonic/count/pair controls as the next ritual step.
+          box.querySelector('#crowleyDomainStatus').textContent='Querent cut at '+first+'. Relphi completed the reader cuts without reshuffling. The Significator is in '+revealedDomain+', matching the committed domain. Domain test passed.';
+        } else clearMarks();
       });
       box.querySelector('#crowleyMainLinesCorrect').addEventListener('click',()=>{box.querySelector('#crowleyAccuracyStatus').textContent='Accuracy gate passed.';});
       box.querySelector('#crowleyMainLinesWrong').addEventListener('click',()=>{box.querySelector('#crowleyMechanics').hidden=true;box.querySelector('#crowleyAccuracyStatus').textContent='The divination is abandoned because its main lines do not correspond.';clearMarks();});
