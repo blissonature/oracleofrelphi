@@ -2885,18 +2885,26 @@
       const panStartY = rowPanYValue();
       workspace.classList.add('is-panning');
       workspace.setPointerCapture?.(event.pointerId);
+      const pointerId=event.pointerId;
       const move = moveEvent => {
+        if(moveEvent.pointerId!==pointerId)return;
+        // Pan is viewport state only. Move the board as a whole; never touch
+        // card envelope positions while the gesture is in progress.
         state.rowPanX = panStartX + (moveEvent.clientX - startX);
         state.rowPanY = panStartY + (moveEvent.clientY - startY);
-        board.style.cssText = cardRowBoardStyle(rowSlotCount());
+        board.style.transform='translate('+Math.round(rowPanXValue())+'px, '+Math.round(rowPanYValue())+'px) scale('+rowZoomValue()+')';
       };
-      const up = () => {
+      const finish = upEvent => {
+        if(upEvent?.pointerId!==undefined&&upEvent.pointerId!==pointerId)return;
         window.removeEventListener('pointermove', move);
-        window.removeEventListener('pointerup', up);
+        window.removeEventListener('pointerup', finish);
+        window.removeEventListener('pointercancel', finish);
         workspace.classList.remove('is-panning');
+        try { workspace.releasePointerCapture?.(pointerId); } catch(error) {}
       };
       window.addEventListener('pointermove', move);
-      window.addEventListener('pointerup', up, { once: true });
+      window.addEventListener('pointerup', finish);
+      window.addEventListener('pointercancel', finish);
     });
   }
 
