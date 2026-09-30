@@ -758,7 +758,10 @@
       (slot || host).appendChild(library);
 
       const select = library.querySelector('#relphiSpreadTemplateSelect');
-      select.addEventListener('change', () => {
+      select.addEventListener('change', event => {
+        // The current Crafted Settings UI owns this select. Legacy prefab code
+        // must not stage/apply a spread merely because that draft selector changed.
+        if (select.closest('.relphi-reading-options-drawer')) return;
         const live = bridge()?.getState();
         if (live?.locked && !live?.designMode) return schedule();
         const value = select.value;
