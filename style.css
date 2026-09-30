@@ -19950,3 +19950,16 @@ html body .relphi-ledger-home-tools strong{font-size:.78rem}
 html body .relphi-ledger-home-tools span{color:rgba(17,17,17,.58);font-size:.66rem}
 @media(max-width:700px){html body .relphi-ledger-home{grid-template-columns:1fr}html body .relphi-ledger-home-tools{grid-template-columns:1fr 1fr}}
 
+
+/* Drawing Board command hierarchy: preserve native action DOM; arrange visually only. */
+.relphi-board-commandbar{display:grid!important;grid-template-columns:1fr auto!important;gap:.65rem!important}
+.relphi-board-command-left{display:contents!important}
+.relphi-board-command-title{grid-column:1 / -1;grid-row:1}
+.relphi-board-command-actions{display:grid!important;grid-column:1 / -1!important;grid-row:2 / 5!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:.55rem!important;width:100%!important}
+.relphi-board-command-actions .relphi-sky-connector{grid-column:1 / -1!important;grid-row:1!important;width:100%!important}
+.relphi-board-command-actions #relphiResetBoard{grid-column:1!important;grid-row:2!important}
+.relphi-board-command-left #relphiBoardSettingsButton{grid-column:2!important;grid-row:3!important;justify-self:start!important}
+.relphi-board-command-actions #undoShortList{grid-column:1!important;grid-row:3!important}
+.relphi-board-command-actions #redoShortList{grid-column:2!important;grid-row:3!important}
+.relphi-board-command-actions #clearShortListCardsOnly{grid-column:3!important;grid-row:3!important}
+.relphi-board-command-actions #drawRandomRowCard{grid-column:4!important;grid-row:3!important}
