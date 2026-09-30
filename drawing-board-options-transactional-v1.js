@@ -353,8 +353,10 @@
     const target = event.target;
     if (!root || !box || !optionsOpen(root) || !box.contains(target) || !target.matches?.(CORE_CONTROL_SELECTOR)) return;
     event.stopImmediatePropagation();
-    if (target.id === 'relphiSpreadTemplateSelect' && event.type === 'change') draftTemplateChanged(root,target);
-    else refreshDraft(root);
+    // The current workflow owns its Crafted template selector. This legacy
+    // transaction layer must not expand template labels/rules during selection.
+    if (target.id === 'relphiSpreadTemplateSelect') return;
+    refreshDraft(root);
   }
 
   function handleClick(event) {
