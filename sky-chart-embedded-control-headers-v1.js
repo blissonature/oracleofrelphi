@@ -18,6 +18,7 @@ function installStyles(){
 #skyFoundationFocus .sky-chart-placement-filter-label,
 #skyFoundationFocus .sky-chart-zodiac-filter-label,
 #skyFoundationFocus .sky-chart-house-filter-label,
+#skyFoundationFocus .sky-chart-aspect-filter-label,
 #skyFoundationRelationships .sky-chart-aspect-filter-label{
   display:none!important;
 }
@@ -25,17 +26,20 @@ function installStyles(){
 /* Focus controls: one compact visual grammar. */
 #skyFoundationFocus .sky-relationship-display-head,
 #skyFoundationFocus .sky-chart-placement-filter-head,
-#skyFoundationFocus .sky-chart-house-filter-head{
+#skyFoundationFocus .sky-chart-house-filter-head,
+#skyFoundationFocus .sky-chart-aspect-filter-head{
   grid-template-rows:29px!important;
   grid-template-areas:"field field"!important;
   gap:0!important;
 }
 #skyFoundationFocus .sky-chart-placement-summary-choices,
-#skyFoundationFocus .sky-chart-house-summary-choices{
+#skyFoundationFocus .sky-chart-house-summary-choices,
+#skyFoundationFocus .sky-chart-aspect-filter-value{
   grid-row:1!important;
 }
 #skyFoundationFocus .sky-chart-placement-filter-toggle,
-#skyFoundationFocus .sky-chart-house-filter-toggle{
+#skyFoundationFocus .sky-chart-house-filter-toggle,
+#skyFoundationFocus .sky-chart-aspect-filter-toggle{
   grid-row:1!important;
 }
 #skyFoundationFocus .sky-chart-zodiac-filter{
