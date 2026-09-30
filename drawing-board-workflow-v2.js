@@ -690,6 +690,9 @@
 
     topActions.classList.add('relphi-board-command-actions');
     if(topActions.parentElement!==bar)bar.appendChild(topActions);
+    // Sky Connector installs itself into the native action host. Reparenting that
+    // host can happen after its own install event, so explicitly restore it here.
+    window.RelphiSkyConnector?.install?.();
 
     const clear=root.querySelector('#clearShortListCardsOnly');
     const undo=root.querySelector('#undoShortList');
