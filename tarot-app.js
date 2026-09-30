@@ -4535,6 +4535,22 @@
       scrollCardRowToEnd();
       return {card_id:card.card_id,title:title(card),image:rwsImagePath(card)};
     },
+    hideOpeningSignificator() {
+      // A chosen Significator remains conceptually inside the locked deck until
+      // the method calls for its packet to be exposed.
+      if (!(state.shortList || []).length) return true;
+      state.shortList=[];
+      state.shortListSelection=[];
+      state.shortListPositionLabels=[];
+      state.shortListPositionCardIds=[];
+      state.rowCardReversals={};
+      state.rowCardManual=[];
+      state.rowEnvelopeLayout={};
+      state.rowCardTransforms={};
+      state.rowPanX=0; state.rowPanY=0;
+      refreshShortListViews();
+      return true;
+    },
     showOpeningPacket(packet) {
       const ids=Array.isArray(packet)?packet.filter(id=>cardById(id)):[];
       if(!ids.length)return false;
