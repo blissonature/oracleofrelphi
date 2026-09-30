@@ -38,5 +38,20 @@ function tarotActivations(s=state()){
   });
   return Array.from(ledger.values()).map(entry=>({...entry,hitCount:entry.hits.length})).sort((a,b)=>b.hitCount-a.hitCount||a.cardName.localeCompare(b.cardName));
 }
-window.RelphiSkyConnector=Object.freeze({state:()=>({...state()}),context,houseReference,tarotActivations,install});install();
+
+const RANGE_PLACEMENT_REFERENTS={sun:'identity',moon:'feelings and emotional needs',mercury:'thought and communication',venus:'values, affection, attraction, and relating',mars:'drive, assertion, conflict, and action',jupiter:'growth, meaning, opportunity, and expansion',saturn:'structure, limits, responsibility, and time',uranus:'disruption',neptune:'imagination, ideals, permeability, and surrender',pluto:'power, depth, elimination, and transformation',chiron:'wound',asc:'immediate presentation and the way life is entered',dsc:'partnership and encounters with the other',mc:'public visibility',ic:'foundation for home and family','north-node':'growth through unfamiliar experience','south-node':'familiar and inherited patterns',lilith:'instinctive autonomy and refusal','part-of-fortune':'fortune and openings',vertex:'consequential encounters','anti-vertex':'what becomes accessible through the back door'};
+const RANGE_ASPECT_REFERENTS={conjunction:'union','semi-sextile':'accommodation',octile:'focused friction',sextile:'cooperative opening',quintile:'creative pattern-making',square:'activating pressure',trine:'low-resistance flow','tri-octile':'accumulated friction','bi-quintile':'refined creative pattern-making',quincunx:'continuing adjustment',opposition:'polarity'};
+function rangeContains(value,start,end){value=((Number(value)%360)+360)%360;start=((Number(start)%360)+360)%360;end=((Number(end)%360)+360)%360;return start<=end?value>=start&&value<=end:value>=start||value<=end}
+function rangeFocus(start,end,s=state()){
+  const sky=s.enabled&&s.source==='saved'?selected(s):null;if(!sky)return{start,end,placements:[],aspects:[],configurations:[]};
+  const entries=placementEntries(sky).map(([key,item])=>{const value=longitude(item),name=placementName(key,item),id=String(item?.id||item?.glyphId||name).trim().toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');return{key,name,id,value,item}}).filter(x=>Number.isFinite(x.value));
+  const placementsInRange=entries.filter(x=>rangeContains(x.value,start,end)).map(x=>({...x,referent:RANGE_PLACEMENT_REFERENTS[x.id]||''}));
+  const names=new Set(placementsInRange.flatMap(x=>[x.name.toLowerCase(),x.id]));
+  const aspects=[];
+  document.querySelectorAll('.sky-foundation-relationship-row').forEach(row=>{const left=String(row.dataset.leftPlacement||''),right=String(row.dataset.rightPlacement||'');if(!names.has(left.toLowerCase())&&!names.has(right.toLowerCase()))return;const aspect=String(row.dataset.aspect||'');aspects.push({aspect,left,right,referent:RANGE_ASPECT_REFERENTS[aspect]||'',orb:Number(row.dataset.sourceOrb||row.dataset.phaseError||0),element:row})});
+  const configurations=(window.RelphiAspectConfigurations?.patterns||[]).filter(pattern=>pattern.vertices?.some(vertex=>{const id=String(vertex).split(':').pop();return names.has(String(id).toLowerCase())})).map(pattern=>({key:pattern.key,type:pattern.type,vertices:(pattern.vertices||[]).slice(),apex:pattern.apex||null}));
+  return{start:Number(start),end:Number(end),placements:placementsInRange,aspects,configurations};
+}
+
+window.RelphiSkyConnector=Object.freeze({state:()=>({...state()}),context,houseReference,tarotActivations,rangeFocus,install});install();
 })();
