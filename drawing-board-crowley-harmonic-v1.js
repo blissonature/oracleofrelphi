@@ -152,8 +152,12 @@
         if(!card?.card_id)return;
         significatorId=card.card_id;
         box.querySelector('#crowleySignificatorStatus').textContent='Significator: '+card.title;
+        box.querySelector('#crowleySignificatorStep').hidden=true;
         box.querySelector('#crowleyDomainStep').hidden=false;
         box.querySelector('#crowleySignificatorResults').innerHTML='';
+        const domain=box.querySelector('#crowleyExpectedDomain');
+        domain?.focus();
+        box.querySelector('#crowleyDomainStep')?.scrollIntoView({block:'nearest'});
       };
       box.querySelector('#crowleyDrawSignificator').addEventListener('click',()=>{
         const card=ledger()?.drawCardForBoard?.('full');
@@ -204,6 +208,7 @@
     if(expected){expected.value='';expected.disabled=false;}
     const lock=box.querySelector('#crowleyLockDomain');if(lock)lock.disabled=false;
     box.querySelector('#crowleyDomainReveal').hidden=true;
+    box.querySelector('#crowleySignificatorStep').hidden=false;
     box.querySelector('#crowleyDomainStep').hidden=true;
     box.querySelector('#crowleySignificatorStatus').textContent='No Significator selected.';
     box.querySelector('#crowleyDomainStatus').textContent='Begin with Operation I: commit to the question domain before locating the Significator.';
