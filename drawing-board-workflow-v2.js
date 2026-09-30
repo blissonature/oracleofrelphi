@@ -4570,6 +4570,14 @@
       return;
     }
     const item=event.target.closest?.('#shortListPanel .card-row-board>.card-row-item[data-row-index]');
+    const positionSticker=event.target.closest?.('#shortListPanel .card-row-position-panel');
+    if(positionSticker&&root?.contains(positionSticker)&&(craftedReadingActive||surfaceReadingSession||recursionActive()||boardHasCraftedStructure(root))){
+      // Once a reading has begun, its questions/referents are part of the reading record.
+      // A sticker click must not fall through to legacy/custom-layout question editing.
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      return;
+    }
     if (item && root?.contains(item) && !event.target.closest?.('button,input,textarea,select,label,[contenteditable="true"],[data-row-transform-handle]')) {
       const index=Number(item.dataset.rowIndex);
       if (Number.isInteger(index)) {
