@@ -161,7 +161,20 @@
       };
       box.querySelector('#crowleyDrawSignificator').addEventListener('click',()=>{
         const card=ledger()?.drawCardForBoard?.('full');
-        if(card)chooseSignificator(card);
+        if(!card)return;
+        // Drawing the card rerenders the board and can replace this guide node.
+        // Resolve the live guide after the draw, then advance its Significator step.
+        requestAnimationFrame(()=>{
+          const live=document.getElementById('crowleyHarmonicGuide');
+          if(!live)return;
+          significatorId=card.card_id;
+          live.querySelector('#crowleySignificatorStatus').textContent='Significator: '+card.title;
+          live.querySelector('#crowleySignificatorStep').hidden=true;
+          live.querySelector('#crowleyDomainStep').hidden=false;
+          live.querySelector('#crowleySignificatorResults').innerHTML='';
+          live.querySelector('#crowleyExpectedDomain')?.focus();
+          live.querySelector('#crowleyDomainStep')?.scrollIntoView({block:'nearest'});
+        });
       });
       box.querySelector('#crowleySignificatorSearch').addEventListener('input',e=>{
         const q=String(e.target.value||'').trim();
