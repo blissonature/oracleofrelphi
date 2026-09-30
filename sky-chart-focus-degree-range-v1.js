@@ -39,7 +39,11 @@ function intervalSegments(start,end){
   const b=a+width;
   return b<=360?[[a,b]]:[[a,360],[0,b-360]];
 }
-function overlaps(a,b){return a[0]<=b[1]+1e-9&&b[0]<=a[1]+1e-9}
+function overlaps(a,b){
+  // Angular sectors are half-open: [start,end). Merely touching at a boundary
+  // (Virgo ending at 180°, focus beginning at 180°) is not an overlap.
+  return a[0]<b[1]-1e-9&&b[0]<a[1]-1e-9;
+}
 function intervalInFocus(start,end){
   const focus=focusSegments(),segments=intervalSegments(start,end);
   return segments.some(segment=>focus.some(target=>overlaps(segment,target)));
