@@ -2349,3 +2349,11 @@ body.relphi-attune-open{overflow:hidden!important}
 #shortListPanel .relphi-question-toolbar button{width:2.25rem!important;min-width:2.25rem!important;max-width:2.25rem!important;height:2.25rem!important;min-height:2.25rem!important;padding:0!important;background:#fff!important;color:#111!important;font-size:1.8rem!important;font-weight:500!important;line-height:.8!important;border-color:#b9afa7!important}
 #shortListPanel .relphi-question-toolbar button:disabled{color:#8f8f8f!important;opacity:.42!important}
 #shortListPanel .relphi-question-toolbar #relphiAddPosition{background:#fff!important;color:#111!important;font-size:1.8rem!important;font-weight:500!important}
+
+/* Add/delete are one icon geometry: plus is the same crossed strokes rotated 45deg. */
+#shortListPanel .relphi-question-toolbar .relphi-stroke-icon{width:2.25rem!important;min-width:2.25rem!important;max-width:2.25rem!important;height:2.25rem!important;min-height:2.25rem!important;padding:0!important}
+#shortListPanel .relphi-stroke-icon>span{position:relative!important;display:block!important;width:1.18rem!important;height:1.18rem!important;transform:rotate(45deg)!important}
+#shortListPanel .relphi-stroke-icon>span::before,#shortListPanel .relphi-stroke-icon>span::after{content:''!important;position:absolute!important;left:50%!important;top:50%!important;width:1.18rem!important;height:.17rem!important;border-radius:.1rem!important;background:currentColor!important;transform:translate(-50%,-50%)!important}
+#shortListPanel .relphi-stroke-icon>span::after{transform:translate(-50%,-50%) rotate(90deg)!important}
+#shortListPanel .relphi-stroke-plus>span{transform:none!important}
+#shortListPanel .relphi-question-toolbar #relphiAddPosition::after{content:none!important;display:none!important}
