@@ -2415,3 +2415,25 @@ body.relphi-attune-open{overflow:hidden!important}
 }
 #shortListPanel .drawing-board-top-actions>.relphi-sky-connector select[data-sky-choice]{max-width:min(48vw,11.5rem)!important}
 #shortListPanel .drawing-board-top-actions>.relphi-sky-connector select[data-sky-ascendant]{max-width:min(38vw,9rem)!important}
+
+
+/* Connected-sky activation marker. Shared card surface means this appears in
+   Tarot results and Drawing Board; Focus inherits it through the Ledger entry. */
+.relphi-connected-sky-mark{
+  position:absolute;z-index:8;right:.32rem;bottom:.32rem;
+  display:inline-flex;align-items:center;gap:.22rem;
+  min-height:1.35rem;padding:.16rem .34rem;border-radius:999px;
+  background:rgba(255,253,248,.94);border:1px solid rgba(31,27,24,.2);
+  color:#211d19;font:800 .58rem/1 system-ui,sans-serif;
+  box-shadow:0 1px 4px rgba(31,27,24,.16);pointer-events:none
+}
+.relphi-connected-sky-mark>span{
+  display:block;width:1rem;height:1rem;border-radius:50%;
+  background:conic-gradient(from 270deg,
+    #e53935 0deg 30deg,#ef6c00 30deg 60deg,#f9a825 60deg 90deg,
+    #fdd835 90deg 120deg,#7cb342 120deg 150deg,#00897b 150deg 180deg,
+    #00acc1 180deg 210deg,#1e88e5 210deg 240deg,#3949ab 240deg 270deg,
+    #6a1b9a 270deg 300deg,#8e24aa 300deg 330deg,#d81b60 330deg 360deg);
+  transform:rotate(0deg)
+}
+.relphi-connected-sky-mark>b{font:inherit}
