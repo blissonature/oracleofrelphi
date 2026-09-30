@@ -4501,13 +4501,23 @@
   function installBespokeContinuation(root=panel()) {
     if(!root)return;
     root.querySelector('.relphi-bespoke-continue')?.remove();
-    if(!bespokeEditingAllowed(root)||!craftedReadingActive)return;
-    const board=root.querySelector('.card-row-drawing-board')||root;
-    const wrap=document.createElement('div');
-    wrap.className='relphi-bespoke-continue';
-    wrap.innerHTML='<button type="button" class="relphi-bespoke-ask-another">＋ Ask another question</button>';
-    wrap.querySelector('button').addEventListener('click',promptForBespokeQuestion);
-    board.appendChild(wrap);
+    const bespoke=bespokeEditingAllowed(root)&&craftedReadingActive;
+    const draw=root.querySelector('#drawRandomRowCard');
+    if(draw&&bespoke){
+      const complete=nextUndrawnNativeIndex(root)==null;
+      draw.disabled=complete;
+      draw.setAttribute('aria-disabled',String(complete));
+      draw.title=complete?'All Bespoke questions have cards.':'Draw the next Bespoke card';
+    }
+    if(!bespoke)return;
+    const actions=draw?.parentElement;
+    if(!actions)return;
+    const button=document.createElement('button');
+    button.type='button';
+    button.className='relphi-bespoke-continue relphi-bespoke-ask-another';
+    button.textContent='＋ Ask another question';
+    button.addEventListener('click',promptForBespokeQuestion);
+    draw.insertAdjacentElement('afterend',button);
   }
 
   function globalCapture(event) {
