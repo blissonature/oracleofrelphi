@@ -711,6 +711,9 @@
       clear.title='Clear the cards without changing settings';
       clear.setAttribute('aria-label','Clear the cards without changing settings');
     }
+    const freeMode=!(craftedReadingActive||boardHasCraftedStructure(root));
+    if(undo)undo.hidden=!freeMode;
+    if(redo)redo.hidden=!freeMode;
     if(undo){
       undo.classList.add('board-history-icon');
       undo.title='Undo';
