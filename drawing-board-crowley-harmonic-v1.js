@@ -226,10 +226,18 @@
       box.querySelector('#crowleyMakeCut').addEventListener('click',()=>{
         if(!operationDeck)return;
         const first=Math.max(1,Math.min(77,Number(cutNumber.value)||1));
-        // The querent cut is recorded against the locked deck. Reader cuts are
-        // the next ritual step and are deliberately not skipped here.
+        const result=ledger()?.openingKeyReaderCuts?.(operationDeck,first,significatorId);
+        if(!result?.packet)return;
         box.querySelector('#crowleyMakeCut').disabled=true;
-        box.querySelector('#crowleyDomainStatus').textContent='Querent cut recorded at '+first+'. Deck order remains locked. Next: perform the prescribed reader cuts.';
+        revealedDomain=result.packet;
+        box.querySelector('#crowleyActualDomain').textContent=revealedDomain;
+        const agrees=revealedDomain===expectedDomain;
+        box.querySelector('#crowleyDomainStatus').textContent=agrees
+          ? 'Querent cut at '+first+'. Relphi completed the reader cuts without reshuffling. The Significator is in '+revealedDomain+', matching the committed domain. Continue with Operation I.'
+          : 'Querent cut at '+first+'. Relphi completed the reader cuts without reshuffling. The Significator is in '+revealedDomain+', not '+expectedDomain+'. The Opening is abandoned.';
+        box.querySelector('#crowleyMechanics').hidden=!agrees;
+        if(agrees){operation=1;mark();box.querySelector('#crowleyMechanics')?.scrollIntoView({block:'nearest'});}
+        else clearMarks();
       });
       box.querySelector('#crowleyMainLinesCorrect').addEventListener('click',()=>{box.querySelector('#crowleyAccuracyStatus').textContent='Accuracy gate passed.';});
       box.querySelector('#crowleyMainLinesWrong').addEventListener('click',()=>{box.querySelector('#crowleyMechanics').hidden=true;box.querySelector('#crowleyAccuracyStatus').textContent='The divination is abandoned because its main lines do not correspond.';clearMarks();});
