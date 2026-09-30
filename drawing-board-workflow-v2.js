@@ -1388,34 +1388,63 @@
   }
 
   function installExportArea(root) {
-    const drawer = root.querySelector('.card-row-drawing-board');
-    const workspace = root.querySelector('.card-row-workspace');
-    if (!drawer || !workspace) return;
-    const readingText = root.querySelector('#drawing-board-reading-text');
-    const anchor = readingText || workspace;
-    let section = root.querySelector('#drawing-board-post-export');
-    if (!section) {
-      section = document.createElement('section');
-      section.id = 'drawing-board-post-export';
-      section.className = 'relphi-board-export';
-      section.innerHTML = '<header><strong>Save & export</strong><span>Save the visual arrangement, the reading, or portable board data.</span></header><div class="board-options-body"></div>';
+    const drawer=root.querySelector('.card-row-drawing-board');
+    const workspace=root.querySelector('.card-row-workspace');
+    if(!drawer||!workspace)return;
+    const readingText=root.querySelector('#drawing-board-reading-text');
+    const anchor=readingText||workspace;
+    let section=root.querySelector('#drawing-board-post-export');
+    if(!section){
+      section=document.createElement('section');
+      section.id='drawing-board-post-export';
+      section.className='relphi-board-export';
       anchor.insertAdjacentElement('afterend',section);
-    } else if (section.previousElementSibling !== anchor) {
+    }else if(section.previousElementSibling!==anchor){
       anchor.insertAdjacentElement('afterend',section);
     }
-    const destination = section.querySelector('.board-options-body');
-    const labels = {
-      snapshotCardRowArrangement:'Save arranged board (PNG)',
-      downloadRowHtml:'Export reading with art (HTML)',
-      downloadRowTextHtml:'Export reading text (HTML)',
-      downloadRowJson:'Export board data (JSON)',
-      printCardRowImage:'Make card sheet (PNG/JPEG)'
+    section.innerHTML='<header><strong>Save & export</strong><span>Snapshot preserves the current board arrangement. HTML preserves the reading with card art.</span></header><div class="relphi-board-export-actions"></div><small class="relphi-board-export-status" aria-live="polite"></small>';
+    const actions=section.querySelector('.relphi-board-export-actions');
+    const status=section.querySelector('.relphi-board-export-status');
+    const take=(id,label,title)=>{
+      const node=root.querySelector('#'+id);
+      if(!node)return null;
+      node.textContent=label;
+      node.title=title;
+      node.setAttribute('aria-label',title);
+      node.classList.add('relphi-board-export-button');
+      actions.appendChild(node);
+      return node;
     };
-    Object.entries(labels).forEach(([id,label]) => {
-      const node = root.querySelector('#'+id);
-      if (!node || node.parentElement === destination) return;
-      node.textContent = label;
-      destination.appendChild(node);
+    take('snapshotCardRowArrangement','Snapshot','Snapshot the current board arrangement at zoom extents');
+    const copy=document.createElement('button');
+    copy.type='button';
+    copy.className='relphi-board-export-button relphi-board-copy-text';
+    copy.textContent='Copy Text Only';
+    copy.disabled=!(ledgerBridge()?.serializeDrawingBoardReading?.()||'').trim();
+    copy.title='Copy questions and answers only';
+    copy.setAttribute('aria-label','Copy questions and answers only');
+    copy.addEventListener('click',async()=>{
+      const serialized=ledgerBridge()?.serializeDrawingBoardReading?.()||'';
+      const ok=await writeDrawingBoardClipboard(serialized);
+      if(status)status.textContent=ok?'Text copied.':'Copy failed.';
+      if(ok){copy.textContent='Copied';setTimeout(()=>{if(copy.isConnected)copy.textContent='Copy Text Only';},1200);}
+    });
+    actions.appendChild(copy);
+    take('downloadRowHtml','Download HTML','Download the reading as HTML with card art and text');
+    const journal=document.createElement('button');
+    journal.type='button';
+    journal.className='relphi-board-export-button relphi-board-journal-button';
+    journal.textContent='Save to Journal';
+    journal.disabled=true;
+    journal.title='Save to Journal — coming soon';
+    journal.setAttribute('aria-label','Save to Journal — coming soon');
+    journal.innerHTML='<span>Save to Journal</span><small>Coming soon</small>';
+    actions.appendChild(journal);
+
+    // These legacy exports are superseded by the four explicit actions above.
+    ['downloadRowTextHtml','downloadRowJson','printCardRowImage'].forEach(id=>{
+      const node=root.querySelector('#'+id);
+      if(node){node.hidden=true;node.setAttribute('aria-hidden','true');}
     });
   }
 
