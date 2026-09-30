@@ -10295,19 +10295,36 @@ ${notes || ''}`;
     refreshSkyLibrarySelects();
     function showDrawingBoardFromLanding(draw=false) {
       state.mode = 'board';
+      state.cardRowBoardOpen = true;
       const commandDetails = document.querySelector('.tarot-command-drawer > details');
       if (commandDetails) commandDetails.open = true;
-      setVisible('shortListPanel', true);
+      ['browsePanel','visibilityPanel','spreadPanel','datePanel','chartPanel','currentSkyPanel'].forEach(id => setVisible(id, false));
+
+      // Render from native state first. renderShortList() replaces the contents of
+      // #shortListPanel, so visibility/open state must be asserted on the live DOM
+      // after that render rather than only on the element that existed beforehand.
+      renderShortList();
+      const boardPanel = $('shortListPanel');
+      if (boardPanel) {
+        boardPanel.hidden = false;
+        boardPanel.removeAttribute('hidden');
+        boardPanel.style.removeProperty('display');
+        boardPanel.setAttribute('aria-hidden','false');
+        const drawer = boardPanel.querySelector('.card-row-drawing-board');
+        if (drawer) {
+          drawer.open = true;
+          drawer.setAttribute('open','');
+        }
+      }
+      expandCardRow();
+
       const currentBoardTrigger = $('relphiOpenDrawingBoardCurrent');
       if (currentBoardTrigger) {
         currentBoardTrigger.textContent = 'Close Drawing Board';
         currentBoardTrigger.setAttribute('aria-expanded', 'true');
       }
-      ['browsePanel','visibilityPanel','spreadPanel','datePanel','chartPanel','currentSkyPanel'].forEach(id => setVisible(id, false));
-      renderShortList();
-      expandCardRow();
       if (draw) drawRandomRowCard();
-      else $('shortListPanel')?.scrollIntoView({ behavior:'smooth', block:'start' });
+      else boardPanel?.scrollIntoView({ behavior:'smooth', block:'start' });
       updateSummary([]);
     }
     const landingDraw = $('landingDrawCard'); if (landingDraw) landingDraw.addEventListener('click', event => { event.preventDefault(); showDrawingBoardFromLanding(true); });
