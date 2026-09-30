@@ -118,7 +118,7 @@
     return values.map(([v,l])=>'<option value="'+v+'">'+l+'</option>').join('');
   }
   function domainGateMarkup(){
-    return '<fieldset id="crowleyDomainGate"><legend><b>First Operation · Domain Test</b></legend><div id="crowleySignificatorStep"><p><b>1. Choose the Significator.</b> Draw one digitally or search for the card you intend to use.</p><div class="crowley-controls"><button id="crowleyDrawSignificator" type="button">Digital draw</button><label>Search for a card<input id="crowleySignificatorSearch" type="search" autocomplete="off" placeholder="Card name"></label></div><div id="crowleySignificatorResults"></div><p id="crowleySignificatorStatus" aria-live="polite">No Significator selected.</p></div><div id="crowleyDomainStep" hidden><p><b>2. Commit to the expected domain</b> before locating the Significator in the four packets.</p><div class="crowley-controls"><label>Expected domain<select id="crowleyExpectedDomain"><option value="">Choose before revealing…</option><option value="Yod">Yod</option><option value="Heh">Heh</option><option value="Vav">Vav</option><option value="Heh-final">Final Heh</option></select></label><button id="crowleyLockDomain" type="button">Commit domain</button></div></div><div id="crowleyDomainReveal" hidden><p><b>3. Resolve the four IHVH packets.</b> After making the nested cuts, choose the packet that contains the selected Significator.</p><div class="crowley-controls" id="crowleyPacketChoices"><button type="button" data-crowley-packet="Yod">Yod</button><button type="button" data-crowley-packet="Heh">Heh</button><button type="button" data-crowley-packet="Vav">Vav</button><button type="button" data-crowley-packet="Heh-final">Final Heh</button></div><p><b>Significator packet:</b> <span id="crowleyActualDomain">Not yet selected</span></p></div><p id="crowleyDomainStatus" aria-live="polite"></p></fieldset>';
+    return '<fieldset id="crowleyDomainGate"><legend><b>First Operation · Domain Test</b></legend><div id="crowleySignificatorStep"><p><b>1. Choose the Significator.</b> Draw one digitally or search for the card you intend to use.</p><div class="crowley-controls"><button id="crowleyDrawSignificator" type="button">Digital draw</button><label>Search for a card<input id="crowleySignificatorSearch" type="search" autocomplete="off" placeholder="Card name"></label></div><div id="crowleySignificatorResults"></div><p id="crowleySignificatorStatus" aria-live="polite">No Significator selected.</p></div><div id="crowleyDomainStep" hidden><p><b>2. Commit to the expected domain</b> before locating the Significator in the four packets.</p><div class="crowley-controls"><label>Expected domain<select id="crowleyExpectedDomain"><option value="">Choose before revealing…</option><option value="Yod">Yod</option><option value="Heh">Heh</option><option value="Vav">Vav</option><option value="Heh-final">Final Heh</option></select></label><button id="crowleyLockDomain" type="button">Commit domain</button></div></div><div id="crowleyDomainReveal" hidden><p><b>3. Form the four IHVH packets.</b> Relphi will shuffle the full deck, form the four packets, locate your selected Significator, and test it against the domain you committed to.</p><button type="button" id="crowleyResolvePackets">Shuffle and form packets</button><p><b>Significator packet:</b> <span id="crowleyActualDomain">Not yet formed</span></p></div><p id="crowleyDomainStatus" aria-live="polite"></p></fieldset>';
   }
   function installStyle(){
     if(document.getElementById('crowleyHarmonicStyle')) return;
@@ -208,19 +208,22 @@
         domainLocked=true; sel.disabled=true; box.querySelector('#crowleyLockDomain').disabled=true;
         box.querySelector('#crowleyDomainStatus').textContent='Domain committed. Resolve the four packets, then reveal which contains the Significator.';
         box.querySelector('#crowleyDomainReveal').hidden=false;
-        box.querySelector('#crowleyActualDomain').textContent='Not yet selected';
+        box.querySelector('#crowleyActualDomain').textContent='Not yet formed';
       });
-      box.querySelector('#crowleyPacketChoices').addEventListener('click',e=>{
-        const button=e.target.closest?.('[data-crowley-packet]');if(!button||!domainLocked)return;
-        revealedDomain=button.dataset.crowleyPacket;
+      box.querySelector('#crowleyResolvePackets').addEventListener('click',()=>{
+        if(!domainLocked||!significatorId)return;
+        const result=ledger()?.openingKeyPackets?.(significatorId);
+        if(!result?.packet)return;
+        revealedDomain=result.packet;
         box.querySelector('#crowleyActualDomain').textContent=revealedDomain;
         const agrees=revealedDomain===expectedDomain;
         box.querySelector('#crowleyDomainStatus').textContent=agrees
-          ? 'The Significator packet agrees with the committed domain. Continue with Operation I.'
-          : 'The Significator packet does not agree with the committed domain. This Opening does not pass the domain test.';
+          ? 'The Significator is in the committed '+expectedDomain+' packet. The domain test passes; continue with Operation I.'
+          : 'The Significator is in '+revealedDomain+', not the committed '+expectedDomain+' packet. The Opening is abandoned.';
         box.querySelector('#crowleyMechanics').hidden=!agrees;
-        box.querySelectorAll('#crowleyPacketChoices button').forEach(item=>item.disabled=true);
+        box.querySelector('#crowleyResolvePackets').disabled=true;
         if(agrees){operation=1;mark();box.querySelector('#crowleyMechanics')?.scrollIntoView({block:'nearest'});}
+        else clearMarks();
       });
       box.querySelector('#crowleyMainLinesCorrect').addEventListener('click',()=>{box.querySelector('#crowleyAccuracyStatus').textContent='Accuracy gate passed.';});
       box.querySelector('#crowleyMainLinesWrong').addEventListener('click',()=>{box.querySelector('#crowleyMechanics').hidden=true;box.querySelector('#crowleyAccuracyStatus').textContent='The divination is abandoned because its main lines do not correspond.';clearMarks();});
