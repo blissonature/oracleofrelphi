@@ -178,6 +178,7 @@
         const card=ledger()?.drawCardForBoard?.('full');
         if(!card){button.disabled=false;return;}
         chooseSignificator(card);
+        ledger()?.hideOpeningSignificator?.();
       });
       box.querySelector('#crowleySignificatorSearch').addEventListener('input',e=>{
         const q=String(e.target.value||'').trim();
@@ -193,7 +194,8 @@
         // Record the method state before adding the card: adding it rerenders
         // the board and replaces this guide node.
         significatorId=card.card_id;
-        if(!ledger()?.addCardToBoard?.(card.card_id,'full')){significatorId='';return;}
+        // Selection records identity only. The card stays hidden in the deck.
+        ledger()?.hideOpeningSignificator?.();
         requestAnimationFrame(()=>{
           const live=document.getElementById('crowleyHarmonicGuide');if(!live)return;
           live.querySelector('#crowleySignificatorStatus').textContent='Significator: '+card.title;
@@ -248,7 +250,24 @@
             const live=document.getElementById('crowleyHarmonicGuide');if(!live)return;
             live.querySelector('#crowleyDomainStatus').textContent='Domain test passed. The '+revealedDomain+' packet containing the Significator is spread face up. Next: count from the Significator.';
           });
-        } else clearMarks();
+        } else {
+          clearMarks();
+          // Failed domain test ends this attempt cleanly. Preserve the chosen
+          // Significator in method state, but clear every visible card and
+          // return to a fresh Operation I attempt.
+          ledger()?.hideOpeningSignificator?.();
+          expectedDomain='';domainLocked=false;revealedDomain='';operationDeck=null;
+          requestAnimationFrame(()=>{
+            const live=document.getElementById('crowleyHarmonicGuide');if(!live)return;
+            const sel=live.querySelector('#crowleyExpectedDomain');if(sel){sel.value='';sel.disabled=false;}
+            const lock=live.querySelector('#crowleyLockDomain');if(lock)lock.disabled=false;
+            live.querySelector('#crowleyDomainReveal').hidden=true;
+            live.querySelector('#crowleySignificatorStep').hidden=true;
+            live.querySelector('#crowleyDomainStep').hidden=false;
+            live.querySelector('#crowleySignificatorStatus').textContent='Significator remembered: '+(ledger()?.titleFor?.(significatorId)||'Selected card');
+            live.querySelector('#crowleyDomainStatus').textContent='Opening abandoned. Board cleared. Start a fresh Operation I attempt with the same Significator.';
+          });
+        }
       });
       box.querySelector('#crowleyMainLinesCorrect').addEventListener('click',()=>{box.querySelector('#crowleyAccuracyStatus').textContent='Accuracy gate passed.';});
       box.querySelector('#crowleyMainLinesWrong').addEventListener('click',()=>{box.querySelector('#crowleyMechanics').hidden=true;box.querySelector('#crowleyAccuracyStatus').textContent='The divination is abandoned because its main lines do not correspond.';clearMarks();});
