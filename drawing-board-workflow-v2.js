@@ -2021,7 +2021,7 @@
       '<div class="relphi-options-subhead"><div><strong>Bespoke</strong><span>Write the questions for this reading.</span></div><button type="button" id="relphiAddPosition" '+(hasCards||draft.labels.length>=MAX_POSITIONS?'disabled':'')+'>Add question</button></div>'+
       '<p class="relphi-bespoke-comma-note">Commas split the text into separate questions.</p>'+
       '<div id="relphiPositionLabels">'+labelsMarkup(draft.labels,draft)+'</div>'+
-      '<div class="relphi-template-save"><input id="relphiTemplateName" type="text" maxlength="60" aria-label="Template name" value="'+escapeHtml(draft.templateName||'Unnamed Template')+'" '+(hasCards?'disabled':'')+'><button type="button" id="relphiSaveTemplate" '+(hasCards?'disabled':'')+'>Save template</button></div>'+
+      '<div class="relphi-template-save"><input id="relphiTemplateName" class="'+((draft.templateName||'Unnamed Template')==='Unnamed Template'?'is-unnamed':'')+'" type="text" maxlength="60" aria-label="Template name" value="'+escapeHtml(draft.templateName||'Unnamed Template')+'" '+(hasCards?'disabled':'')+'><button type="button" id="relphiSaveTemplate" '+(hasCards?'disabled':'')+'>Save template</button></div>'+
       '</section>';
   }
   function templatesMarkup(draft,hasCards) {
@@ -2301,7 +2301,7 @@
       }
       renderOptions(root);
     }));
-    drawer.querySelector('#relphiTemplateName')?.addEventListener('input',event=>{draft.templateName=event.target.value.slice(0,60);});
+    drawer.querySelector('#relphiTemplateName')?.addEventListener('input',event=>{draft.templateName=event.target.value.slice(0,60);event.target.classList.toggle('is-unnamed',draft.templateName==='Unnamed Template');});
     drawer.querySelector('#relphiSaveTemplate')?.addEventListener('click',()=>saveDraftTemplate(root));
 
     drawer.querySelectorAll('[data-building-key]').forEach(select=>select.addEventListener('change',()=>{
