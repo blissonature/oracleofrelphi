@@ -2211,7 +2211,16 @@
         draft.labels=[];
         draft.positionPacks=[];
       }
-      renderOptions(root);
+      // A template choice only updates the Settings preview. Do not recursively
+      // rebuild the entire Settings drawer from inside the select change event;
+      // large/method templates such as Opening of the Key can lock the UI here.
+      const selectedPreview=drawer.querySelector('.relphi-referent-panel');
+      if(selectedPreview){
+        const fresh=document.createElement('div');
+        fresh.innerHTML=templatesMarkup(draft,hasCards);
+        const next=fresh.firstElementChild;
+        if(next)selectedPreview.replaceWith(next);
+      }
     });
     drawer.querySelector('#relphiModifyTemplate')?.addEventListener('click',()=>{
       const chosen=templateById(draft.templateId||draft.basedOnTemplateId);
