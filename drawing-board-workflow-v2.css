@@ -2437,3 +2437,17 @@ body.relphi-attune-open{overflow:hidden!important}
   transform:rotate(0deg)
 }
 .relphi-connected-sky-mark>b{font:inherit}
+
+
+/* PR205 command chrome repair: valid four-column grid keeps Settings and Sky Connector visible. */
+#shortListPanel .relphi-board-commandbar{
+  display:grid!important;
+  grid-template-columns:auto auto auto minmax(0,1fr)!important;
+  grid-template-areas:"title title title title" "sky sky sky sky" "reset settings . ." "undo redo clear draw"!important;
+  gap:.4rem!important;
+  align-items:center!important;
+}
+#shortListPanel .relphi-board-command-left,
+#shortListPanel .drawing-board-top-actions.relphi-board-command-actions{display:contents!important}
+#shortListPanel #relphiBoardSettingsButton{display:inline-flex!important;grid-area:settings!important;visibility:visible!important}
+#shortListPanel .drawing-board-top-actions>.relphi-sky-connector{display:flex!important;grid-area:sky!important;visibility:visible!important;width:100%!important}
