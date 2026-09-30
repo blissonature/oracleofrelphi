@@ -2209,3 +2209,20 @@ body.relphi-attune-open{overflow:hidden!important}
 #shortListPanel .relphi-board-settings-panel .relphi-reading-options-drawer .relphi-options-body>.relphi-appearance-disclosure:last-child{
   margin-bottom:.75rem!important;
 }
+
+
+/* Drawing Board exports use the same compact pill language as Sky Chart. */
+#shortListPanel .relphi-board-export-actions{display:flex!important;align-items:center!important;gap:.4rem!important;flex-wrap:wrap!important}
+#shortListPanel .relphi-board-export-button{
+  appearance:none!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;
+  min-height:30px!important;margin:0!important;padding:0 .72rem!important;border:1px solid rgba(31,27,24,.18)!important;
+  border-radius:999px!important;background:#fff!important;color:#332e2a!important;font:800 .68rem/1 system-ui,sans-serif!important;
+  white-space:nowrap!important;box-shadow:none!important;cursor:pointer!important
+}
+#shortListPanel .relphi-board-export-button:hover,#shortListPanel .relphi-board-export-button:focus-visible{
+  outline:none!important;border-color:#2462d0!important;box-shadow:0 0 0 2px rgba(36,98,208,.12)!important
+}
+#shortListPanel .relphi-board-export-button:disabled{opacity:.55!important;cursor:not-allowed!important}
+#shortListPanel .relphi-board-journal-button{gap:.38rem!important}
+#shortListPanel .relphi-board-journal-button small{font:700 .56rem/1 system-ui,sans-serif!important;text-transform:uppercase!important;letter-spacing:.04em!important}
+#shortListPanel .relphi-board-export-status{display:block!important;min-height:1em!important;margin-top:.35rem!important;color:#655d56!important;font-size:.66rem!important}
