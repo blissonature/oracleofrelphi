@@ -172,6 +172,18 @@
   window.addEventListener('relphi:sky-context-change',()=>{if(active())mark();});
   document.addEventListener('change',e=>{if(e.target?.id==='relphiSpreadTemplateSelect') setTimeout(ensureGuide,0);});
   document.addEventListener('relphi:drawing-board-rendered',()=>setTimeout(ensureGuide,0));
-  new MutationObserver(()=>ensureGuide()).observe(document.documentElement,{childList:true,subtree:true});
+  let guideQueued=false;
+  const queueGuide=()=>{
+    if(guideQueued)return;
+    guideQueued=true;
+    requestAnimationFrame(()=>{guideQueued=false;ensureGuide();});
+  };
+  new MutationObserver(records=>{
+    // Ignore mutations inside the guide itself. ensureGuide()/mark() writes its
+    // status/reference DOM, which otherwise retriggers this observer forever as
+    // soon as Opening of the Key becomes active.
+    if(records.every(record=>document.getElementById('crowleyHarmonicGuide')?.contains(record.target)))return;
+    queueGuide();
+  }).observe(document.documentElement,{childList:true,subtree:true});
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',ensureGuide,{once:true}); else ensureGuide();
 })();
