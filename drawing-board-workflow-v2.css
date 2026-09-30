@@ -2198,3 +2198,14 @@ body.relphi-attune-open{overflow:hidden!important}
 /* Bespoke sacred-reading continuation: keep the construction action present but subordinate. */
 .relphi-bespoke-continue{display:flex;justify-content:center;padding:.55rem .75rem .85rem;}
 .relphi-bespoke-ask-another{font:inherit;border:1px solid currentColor;border-radius:999px;background:transparent;padding:.45rem .85rem;cursor:pointer;}
+
+
+/* Crafted Appearance is the final item in the scrolling body. Keep enough
+   trailing space that the static Cancel/Confirm bar can never cover it. */
+#shortListPanel .relphi-board-settings-panel .relphi-reading-options-drawer .relphi-options-body{
+  padding-bottom:5.25rem!important;
+  scroll-padding-bottom:5.25rem!important;
+}
+#shortListPanel .relphi-board-settings-panel .relphi-reading-options-drawer .relphi-options-body>.relphi-appearance-disclosure:last-child{
+  margin-bottom:.75rem!important;
+}
