@@ -47,8 +47,11 @@
   }
   function pairHarmonic(radius){
     const r=Math.max(1,Number(radius)||1);
+    // Pair Focus is a three-body relationship: both cards are equally distant
+    // from the Significator, while their mutual separation is twice that distance.
+    const reference=aspectForStep(r);
     const separation=(2*r)%12;
-    return {radius:r,separation,aspect:aspectForStep(separation)};
+    return {radius:r,reference,separation,between:aspectForStep(separation)};
   }
   function interpretiveRelation(aspect,kind){
     const relation={
@@ -67,7 +70,7 @@
     return {
       operation:{...op},
       count:{...count,aspect:{...count.aspect},interpretation:interpretiveRelation(count.aspect,'count')},
-      pair:{...pair,aspect:{...pair.aspect},interpretation:interpretiveRelation(pair.aspect,'pair')}
+      pair:{...pair,reference:{...pair.reference},between:{...pair.between},referenceInterpretation:interpretiveRelation(pair.reference,'count'),betweenInterpretation:interpretiveRelation(pair.between,'pair'),midpoint:'The Significator is the structural midpoint of this equidistant pair.'}
     };
   }
   function readingReferenceMarkup(){
@@ -79,14 +82,14 @@
     }
     const count=countHarmonic(countValue),pair=pairHarmonic(pairRadius);
     entries.push('<article class="relphi-reference-tile"><div class="relphi-reference-token"><span>'+count.aspect.angle+'°</span><span>'+count.aspect.name+' · H'+count.aspect.harmonic+'</span></div><p class="relphi-reference-detail">'+interpretiveRelation(count.aspect,'count')+'</p></article>');
-    entries.push('<article class="relphi-reference-tile"><div class="relphi-reference-token"><span>'+pair.aspect.angle+'°</span><span>'+pair.aspect.name+' · H'+pair.aspect.harmonic+'</span></div><p class="relphi-reference-detail">'+interpretiveRelation(pair.aspect,'pair')+'</p></article>');
+    entries.push('<article class="relphi-reference-tile"><div class="relphi-reference-token"><span>Pair ±'+pair.radius+'</span><span>Three-body Pair Focus</span></div><p class="relphi-reference-detail"><b>Each card ↔ Significator:</b> '+pair.reference.name+' '+pair.reference.angle+'° (H'+pair.reference.harmonic+'). '+interpretiveRelation(pair.reference,'count')+'</p><p class="relphi-reference-detail"><b>Paired card ↔ paired card:</b> '+pair.between.name+' '+pair.between.angle+'° (H'+pair.between.harmonic+'). '+interpretiveRelation(pair.between,'pair')+'</p><p class="relphi-reference-detail"><b>Midpoint:</b> the Significator is the structural halfway point between the equidistant cards.</p></article>');
     return '<div class="relphi-reading-reference"><strong>Reading Reference</strong><p class="relphi-reference-detail">Symbols and referents participating in this operation.</p><div class="relphi-reading-reference-grid">'+entries.join('')+'</div></div>';
   }
   function renderReadingReference(){
     const host=document.getElementById('crowleyReadingReference');if(host)host.innerHTML=readingReferenceMarkup();
   }
   function clearMarks(){
-    items().forEach(el=>{el.classList.remove('crowley-anchor','crowley-target','crowley-pair');el.removeAttribute('data-crowley-aspect');});
+    items().forEach(el=>{el.classList.remove('crowley-anchor','crowley-target','crowley-pair');el.removeAttribute('data-crowley-aspect');el.removeAttribute('data-crowley-reference-aspect');el.removeAttribute('data-crowley-between-aspect');});
   }
   function mark(){
     clearMarks();
@@ -99,14 +102,18 @@
       cards[anchor]?.classList.add('crowley-anchor');
       cards[target]?.classList.add('crowley-target');
       const left=(anchor-pairRadius+12)%12, right=(anchor+pairRadius)%12;
-      cards[left]?.classList.add('crowley-pair'); cards[right]?.classList.add('crowley-pair');
+      cards[left]?.classList.add('crowley-pair','crowley-pair-front'); cards[right]?.classList.add('crowley-pair','crowley-pair-behind');
+      cards[left]?.setAttribute('data-crowley-reference-aspect',pair.reference.name);
+      cards[right]?.setAttribute('data-crowley-reference-aspect',pair.reference.name);
+      cards[left]?.setAttribute('data-crowley-between-aspect',pair.between.name);
+      cards[right]?.setAttribute('data-crowley-between-aspect',pair.between.name);
       cards[target]?.setAttribute('data-crowley-aspect',count.aspect.name);
     }
     const op=OPERATIONS[operation-1];
     const opStatus=document.getElementById('crowleyOperationStatus');
     if(opStatus) opStatus.innerHTML='<b>Operation '+op.n+' · '+op.name+'</b> — '+op.field+'. '+op.note;
     const status=document.getElementById('crowleyHarmonicStatus');
-    if(status) status.innerHTML='<b>Count '+count.value+'</b> · move '+count.movement+' · '+count.aspect.name+' '+count.aspect.angle+'° (H'+count.aspect.harmonic+'). '+interpretiveRelation(count.aspect,'count')+'<br><b>Pair ±'+pair.radius+'</b> · separation '+(pair.separation||12)+'/12 · '+pair.aspect.name+' '+pair.aspect.angle+'° (H'+pair.aspect.harmonic+'). '+interpretiveRelation(pair.aspect,'pair');
+    if(status) status.innerHTML='<b>Story Focus · Count '+count.value+'</b> · move '+count.movement+' · '+count.aspect.name+' '+count.aspect.angle+'° (H'+count.aspect.harmonic+'). '+interpretiveRelation(count.aspect,'count')+'<br><b>Pair Focus · ±'+pair.radius+'</b> · each card ↔ Significator: '+pair.reference.name+' '+pair.reference.angle+'° (H'+pair.reference.harmonic+'); paired cards ↔ each other: '+pair.between.name+' '+pair.between.angle+'° (H'+pair.between.harmonic+'). <b>Midpoint:</b> Significator.';
     renderReadingReference();
   }
   function countOptions(){
