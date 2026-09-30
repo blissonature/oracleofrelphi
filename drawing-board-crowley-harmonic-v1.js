@@ -73,6 +73,41 @@
       pair:{...pair,reference:{...pair.reference},between:{...pair.between},referenceInterpretation:interpretiveRelation(pair.reference,'count'),betweenInterpretation:interpretiveRelation(pair.between,'pair'),midpoint:'The Significator is the structural midpoint of this equidistant pair.'}
     };
   }
+  function operationFocusMarkup(){
+    const op=OPERATIONS[operation-1];
+    const pair=pairHarmonic(pairRadius);
+    const title={
+      1:'Narrative Focus · IHVH',
+      2:'Circumstance Focus · House',
+      3:'Force Focus · Zodiac',
+      4:'Decan Focus · 36-fold field',
+      5:'Sephirotic Focus · Tree of Life'
+    }[operation]||'Opening Focus';
+    const context={
+      1:'Read the validated IHVH packet as the beginning of the affair. Story Focus follows each counted card from the Significator; Pair Focus adds the relationship across the Significator.',
+      2:'Keep the chosen house visible as the containing area of life while Story and Pair Focus move through its cards.',
+      3:'Keep the chosen zodiac sign visible as the containing force while Story and Pair Focus move through its cards.',
+      4:'Keep the active decan and its place in the 36-fold zodiacal field visible. The Significator is the central reference for the surrounding ring.',
+      5:'Keep the active Sephira and its place on the Tree visible as the containing structure while the final Story and Pair Focus are read.'
+    }[operation]||op.note;
+    const field={
+      1:'IHVH packet',
+      2:'House · '+(anchor+1),
+      3:'Zodiac position · '+(anchor+1),
+      4:'Decan field · 36 positions',
+      5:'Tree of Life · Sephira'
+    }[operation];
+    return '<section class="crowley-crafted-focus crowley-crafted-focus--op'+operation+'" aria-label="'+title+'">'+
+      '<header><span class="eyebrow">Operation '+operation+' · '+op.name+'</span><h3>'+title+'</h3><p>'+context+'</p><strong>'+field+'</strong></header>'+
+      '<div class="crowley-focus-modes"><article><b>Story Focus</b><p>Significator ↔ counted card. Show both card referents and the exact relationship referent.</p></article>'+
+      '<article class="crowley-pair-focus"><b>Pair Focus · ±'+pair.radius+'</b><div class="crowley-pair-stack"><span>Front card · referent</span><strong>Significator · referent</strong><span>Behind card · referent</span></div><p><b>Front ↔ Significator:</b> '+pair.reference.name+' · <b>Significator ↔ Behind:</b> '+pair.reference.name+' · <b>Front ↔ Behind:</b> '+pair.between.name+'.</p><p><b>Midpoint:</b> the Significator is the structural halfway point of the pair.</p></article></div>'+
+      '<details class="crowley-focus-summary"><summary>Operation '+operation+' summary</summary><p>As each Story and Pair step is read, keep its card referents, relationship referents, and notes available here for review.</p></details>'+
+      '</section>';
+  }
+  function renderOperationFocus(){
+    const host=document.getElementById('crowleyOperationFocus');
+    if(host)host.innerHTML=operationFocusMarkup();
+  }
   function readingReferenceMarkup(){
     const entries=[];
     const sky=window.RelphiSkyConnector;
@@ -115,6 +150,7 @@
     const status=document.getElementById('crowleyHarmonicStatus');
     if(status) status.innerHTML='<b>Story Focus · Count '+count.value+'</b> · move '+count.movement+' · '+count.aspect.name+' '+count.aspect.angle+'° (H'+count.aspect.harmonic+'). '+interpretiveRelation(count.aspect,'count')+'<br><b>Pair Focus · ±'+pair.radius+'</b> · each card ↔ Significator: '+pair.reference.name+' '+pair.reference.angle+'° (H'+pair.reference.harmonic+'); paired cards ↔ each other: '+pair.between.name+' '+pair.between.angle+'° (H'+pair.between.harmonic+'). <b>Midpoint:</b> Significator.';
     renderReadingReference();
+    renderOperationFocus();
   }
   function countOptions(){
     const values=[
@@ -141,6 +177,17 @@
       #shortListPanel .card-row-item.crowley-anchor .card-row-card-wrap{outline:3px solid var(--relphi-red,#8b1e2d)!important;outline-offset:3px}
       #shortListPanel .card-row-item.crowley-target .card-row-card-wrap{outline:3px dashed #725c16!important;outline-offset:3px}
       #shortListPanel .card-row-item.crowley-pair .card-row-card-wrap{box-shadow:0 0 0 3px rgba(55,83,105,.58)!important}
+      #crowleyOperationFocus{margin-top:12px}
+      .crowley-crafted-focus{display:grid;gap:12px;padding:14px;border:1px solid rgba(80,65,50,.2);border-radius:14px;background:rgba(255,255,255,.58)}
+      .crowley-crafted-focus header h3{margin:.15rem 0 .35rem}.crowley-crafted-focus header p{margin:.25rem 0 .55rem;max-width:72ch}
+      .crowley-focus-modes{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.35fr);gap:12px}
+      .crowley-focus-modes article{padding:12px;border:1px solid rgba(80,65,50,.16);border-radius:12px;background:rgba(255,253,248,.8)}
+      .crowley-pair-stack{display:grid;grid-template-rows:repeat(3,minmax(44px,auto));gap:6px;margin:.65rem 0}
+      .crowley-pair-stack>*{display:grid;place-items:center;padding:8px;border:1px solid rgba(80,65,50,.16);border-radius:9px;text-align:center}
+      .crowley-pair-stack strong{border-color:var(--relphi-red,#8b1e2d)}
+      .crowley-crafted-focus--op4 .crowley-pair-focus{outline:1px solid rgba(80,65,50,.16)}
+      .crowley-focus-summary summary{cursor:pointer;font-weight:700}
+      @media(max-width:720px){.crowley-focus-modes{grid-template-columns:1fr}}
     `;
     document.head.appendChild(s);
   }
@@ -163,7 +210,7 @@
     let box=document.getElementById('crowleyHarmonicGuide');
     if(!box){
       box=document.createElement('section');box.id='crowleyHarmonicGuide';box.hidden=true;
-      box.innerHTML='<strong>Opening of the Key</strong><p style="margin:.35rem 0 .7rem">Relphi will reveal this divination one step at a time.</p>'+domainGateMarkup()+'<div id="crowleyMechanics" hidden><div class="crowley-controls"><label>Operation<select id="crowleyOperation">'+OPERATIONS.map(op=>'<option value="'+op.n+'">'+op.n+' · '+op.name+'</option>').join('')+'</select></label><label>Harmonic reference<select id="crowleyAnchor">'+Array.from({length:12},(_,i)=>'<option value="'+i+'">Position '+(i+1)+'</option>').join('')+'</select></label><label>Card Counting<select id="crowleyCount">'+countOptions()+'</select></label><label>Card Pairing<select id="crowleyPair">'+Array.from({length:6},(_,i)=>'<option value="'+(i+1)+'">±'+(i+1)+'</option>').join('')+'</select></label><button id="crowleyAdvance" type="button">Continue Card Counting</button></div><p id="crowleyOperationStatus"></p><p id="crowleyHarmonicStatus" aria-live="polite"></p><div id="crowleyReadingReference"></div><fieldset><legend><b>Accuracy Test</b></legend><p>After Card Counting and Card Pairing, confirm whether the main lines of the reading are correct.</p><button id="crowleyMainLinesCorrect" type="button">Main lines are correct · continue</button> <button id="crowleyMainLinesWrong" type="button">Main lines are not correct · abandon</button><p id="crowleyAccuracyStatus" aria-live="polite"></p></fieldset></div>';
+      box.innerHTML='<strong>Opening of the Key</strong><p style="margin:.35rem 0 .7rem">Relphi will reveal this divination one step at a time.</p>'+domainGateMarkup()+'<div id="crowleyMechanics" hidden><div class="crowley-controls"><label>Operation<select id="crowleyOperation">'+OPERATIONS.map(op=>'<option value="'+op.n+'">'+op.n+' · '+op.name+'</option>').join('')+'</select></label><label>Harmonic reference<select id="crowleyAnchor">'+Array.from({length:12},(_,i)=>'<option value="'+i+'">Position '+(i+1)+'</option>').join('')+'</select></label><label>Card Counting<select id="crowleyCount">'+countOptions()+'</select></label><label>Card Pairing<select id="crowleyPair">'+Array.from({length:6},(_,i)=>'<option value="'+(i+1)+'">±'+(i+1)+'</option>').join('')+'</select></label><button id="crowleyAdvance" type="button">Continue Card Counting</button></div><p id="crowleyOperationStatus"></p><div id="crowleyOperationFocus"></div><p id="crowleyHarmonicStatus" aria-live="polite"></p><div id="crowleyReadingReference"></div><fieldset><legend><b>Accuracy Test</b></legend><p>After Card Counting and Card Pairing, confirm whether the main lines of the reading are correct.</p><button id="crowleyMainLinesCorrect" type="button">Main lines are correct · continue</button> <button id="crowleyMainLinesWrong" type="button">Main lines are not correct · abandon</button><p id="crowleyAccuracyStatus" aria-live="polite"></p></fieldset></div>';
       const workspace=r.querySelector('.card-row-workspace');
       if(workspace) workspace.parentNode.insertBefore(box,workspace); else nativeDrawer.insertAdjacentElement('beforebegin',box);
       const ledger=()=>window.RelphiTarotLedgerBridge;
@@ -257,7 +304,7 @@
           requestAnimationFrame(()=>{
             const live=document.getElementById('crowleyHarmonicGuide');if(!live)return;
             live.querySelector('#crowleyDomainGate').innerHTML='<legend><b>First Operation · Success</b></legend><p><b>'+ (ledger()?.titleFor?.(significatorId)||'The Significator') +'</b> was found in <b>'+revealedDomain+'</b>, the domain you committed to. The reading continues.</p><p>Relphi has spread that packet face up in its preserved deck order. The Significator remains the reference point inside this packet. Next, the cards are read as a connected story by counting from the Significator; each count is also mapped onto the twelve-fold harmonic reference so the card-to-card movement carries an aspect relationship.</p><button type="button" id="crowleyBeginStory">Begin card counting</button>';
-            live.querySelector('#crowleyBeginStory')?.addEventListener('click',()=>{live.querySelector('#crowleyDomainGate').innerHTML='<legend><b>First Operation · Card Counting</b></legend><p>Starting from <b>'+ (ledger()?.titleFor?.(significatorId)||'the Significator') +'</b>, Relphi will follow the prescribed count through this packet and build the narrative one landing at a time, showing the harmonic relationship with each move.</p>';});
+            live.querySelector('#crowleyBeginStory')?.addEventListener('click',()=>{live.querySelector('#crowleyDomainGate').innerHTML='<legend><b>First Operation · Story Focus</b></legend><p><b>'+ (ledger()?.titleFor?.(significatorId)||'The Significator') +'</b> is the reference. Read the prescribed counted sequence once, then Pair Focus adds the relationships across that reference.</p>';live.querySelector('#crowleyMechanics').hidden=false;mark();live.querySelector('#crowleyOperationFocus')?.scrollIntoView({block:'nearest'});});
           });
         } else {
           clearMarks();
