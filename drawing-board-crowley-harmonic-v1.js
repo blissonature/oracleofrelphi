@@ -22,7 +22,7 @@
     {n:4,name:'Penultimate Aspects',field:'Significator + 36-card ring',note:'Place the Significator centrally and arrange the following 36 cards around it. Decan correspondences remain attached to the small cards.'},
     {n:5,name:'Final Result',field:'10 Tree of Life piles',note:'Deal cyclically into ten Sephiroth. Commit to the expected Sephira before locating the Significator; an adjacent Sephira gets one second test.'}
   ];
-  let operation=1, anchor=0, countValue=3, pairRadius=1, expectedDomain='', domainLocked=false, revealedDomain='';
+  let operation=1, anchor=0, countValue=3, pairRadius=1, expectedDomain='', domainLocked=false, revealedDomain='', significatorId='';
 
   function root(){return document.getElementById('shortListPanel');}
   function active(){
@@ -118,7 +118,7 @@
     return values.map(([v,l])=>'<option value="'+v+'">'+l+'</option>').join('');
   }
   function domainGateMarkup(){
-    return '<fieldset id="crowleyDomainGate"><legend><b>First Operation · Domain Test</b></legend><p>Before the Significator packet is revealed, commit to the domain of the question.</p><div class="crowley-controls"><label>Expected domain<select id="crowleyExpectedDomain"><option value="">Choose before revealing…</option><option value="Yod">Yod</option><option value="Heh">Heh</option><option value="Vav">Vav</option><option value="Heh-final">Final Heh</option></select></label><button id="crowleyLockDomain" type="button">Commit domain</button></div><div id="crowleyDomainReveal" hidden><p><b>Significator packet:</b> <span id="crowleyActualDomain"></span></p><button id="crowleyCloseReading" type="button" hidden>Close reading</button><button id="crowleyTryAgain" type="button" hidden>Try again</button></div><p id="crowleyDomainStatus" aria-live="polite"></p></fieldset>';
+    return '<fieldset id="crowleyDomainGate"><legend><b>First Operation · Domain Test</b></legend><div id="crowleySignificatorStep"><p><b>1. Choose the Significator.</b> Draw one digitally or search for the card you intend to use.</p><div class="crowley-controls"><button id="crowleyDrawSignificator" type="button">Digital draw</button><label>Search for a card<input id="crowleySignificatorSearch" type="search" autocomplete="off" placeholder="Card name"></label></div><div id="crowleySignificatorResults"></div><p id="crowleySignificatorStatus" aria-live="polite">No Significator selected.</p></div><div id="crowleyDomainStep" hidden><p><b>2. Commit to the expected domain</b> before locating the Significator in the four packets.</p><div class="crowley-controls"><label>Expected domain<select id="crowleyExpectedDomain"><option value="">Choose before revealing…</option><option value="Yod">Yod</option><option value="Heh">Heh</option><option value="Vav">Vav</option><option value="Heh-final">Final Heh</option></select></label><button id="crowleyLockDomain" type="button">Commit domain</button></div></div><div id="crowleyDomainReveal" hidden><p><b>Next:</b> form the four IHVH packets with the full deck, then locate the selected Significator.</p><p><b>Significator packet:</b> <span id="crowleyActualDomain">Awaiting packet resolution</span></p></div><p id="crowleyDomainStatus" aria-live="polite"></p></fieldset>';
   }
   function installStyle(){
     if(document.getElementById('crowleyHarmonicStyle')) return;
@@ -147,13 +147,38 @@
       box.innerHTML='<strong>Opening of the Key · Full Divination</strong><p style="margin:.35rem 0 .7rem">Five operations: <b>I · Opening of the Question</b> — IHVH four-pile test; <b>II · Development</b> — twelve astrological houses; <b>III · Further Development</b> — twelve zodiac signs; <b>IV · Penultimate Aspects</b> — Significator with the following 36 cards in a ring; <b>V · Final Result</b> — ten Tree of Life piles. Each operation reshuffles and uses counting and pairing.</p><p style="margin:.35rem 0 .7rem"><b>Operation I.</b> Use the nested cuts to form IHVH from right to left; the Significator pile must agree with the question domain before continuing.</p>'+domainGateMarkup()+'<div id="crowleyMechanics" hidden><div class="crowley-controls"><label>Operation<select id="crowleyOperation">'+OPERATIONS.map(op=>'<option value="'+op.n+'">'+op.n+' · '+op.name+'</option>').join('')+'</select></label><label>Harmonic reference<select id="crowleyAnchor">'+Array.from({length:12},(_,i)=>'<option value="'+i+'">Position '+(i+1)+'</option>').join('')+'</select></label><label>Card Counting<select id="crowleyCount">'+countOptions()+'</select></label><label>Card Pairing<select id="crowleyPair">'+Array.from({length:6},(_,i)=>'<option value="'+(i+1)+'">±'+(i+1)+'</option>').join('')+'</select></label><button id="crowleyAdvance" type="button">Continue Card Counting</button></div><p id="crowleyOperationStatus"></p><p id="crowleyHarmonicStatus" aria-live="polite"></p><div id="crowleyReadingReference"></div><fieldset><legend><b>Accuracy Test</b></legend><p>After Card Counting and Card Pairing, confirm whether the main lines of the reading are correct.</p><button id="crowleyMainLinesCorrect" type="button">Main lines are correct · continue</button> <button id="crowleyMainLinesWrong" type="button">Main lines are not correct · abandon</button><p id="crowleyAccuracyStatus" aria-live="polite"></p></fieldset></div>';
       const workspace=r.querySelector('.card-row-workspace');
       if(workspace) workspace.parentNode.insertBefore(box,workspace); else nativeDrawer.insertAdjacentElement('beforebegin',box);
+      const ledger=()=>window.RelphiTarotLedgerBridge;
+      const chooseSignificator=card=>{
+        if(!card?.card_id)return;
+        significatorId=card.card_id;
+        box.querySelector('#crowleySignificatorStatus').textContent='Significator: '+card.title;
+        box.querySelector('#crowleyDomainStep').hidden=false;
+        box.querySelector('#crowleySignificatorResults').innerHTML='';
+      };
+      box.querySelector('#crowleyDrawSignificator').addEventListener('click',()=>{
+        const card=ledger()?.drawCardForBoard?.('full');
+        if(card)chooseSignificator(card);
+      });
+      box.querySelector('#crowleySignificatorSearch').addEventListener('input',e=>{
+        const q=String(e.target.value||'').trim();
+        const host=box.querySelector('#crowleySignificatorResults');
+        if(q.length<2){host.innerHTML='';return;}
+        const found=ledger()?.searchCards?.(q,8,'full')||[];
+        host.innerHTML=found.map(card=>'<button type="button" data-crowley-significator="'+card.card_id+'">'+card.title+'</button>').join('');
+      });
+      box.querySelector('#crowleySignificatorResults').addEventListener('click',e=>{
+        const button=e.target.closest?.('[data-crowley-significator]');if(!button)return;
+        const card=(ledger()?.searchCards?.(button.textContent,24,'full')||[]).find(item=>item.card_id===button.dataset.crowleySignificator);
+        if(!card)return;
+        if(ledger()?.addCardToBoard?.(card.card_id,'full'))chooseSignificator(card);
+      });
       box.querySelector('#crowleyLockDomain').addEventListener('click',()=>{
         const sel=box.querySelector('#crowleyExpectedDomain'); expectedDomain=sel.value;
         if(!expectedDomain){box.querySelector('#crowleyDomainStatus').textContent='Choose the question domain before committing.';return;}
+        if(!significatorId){box.querySelector('#crowleyDomainStatus').textContent='Choose the Significator first.';return;}
         domainLocked=true; sel.disabled=true; box.querySelector('#crowleyLockDomain').disabled=true;
         box.querySelector('#crowleyDomainStatus').textContent='Domain committed. Resolve the four packets, then reveal which contains the Significator.';
         box.querySelector('#crowleyDomainReveal').hidden=false;
-        // Packet identity must come from the real cut/deck state. Until that is wired, never fabricate or randomize it.
         box.querySelector('#crowleyActualDomain').textContent='Awaiting packet resolution';
       });
       box.querySelector('#crowleyMainLinesCorrect').addEventListener('click',()=>{box.querySelector('#crowleyAccuracyStatus').textContent='Accuracy gate passed.';});
@@ -169,7 +194,7 @@
     if(!box.hidden) mark(); else clearMarks();
   }
   function start(){
-    operation=1;anchor=0;countValue=3;pairRadius=1;expectedDomain='';domainLocked=false;revealedDomain='';
+    operation=1;anchor=0;countValue=3;pairRadius=1;expectedDomain='';domainLocked=false;revealedDomain='';significatorId='';
     ensureGuide();
     const box=document.getElementById('crowleyHarmonicGuide');
     if(!box)return false;
@@ -179,6 +204,8 @@
     if(expected){expected.value='';expected.disabled=false;}
     const lock=box.querySelector('#crowleyLockDomain');if(lock)lock.disabled=false;
     box.querySelector('#crowleyDomainReveal').hidden=true;
+    box.querySelector('#crowleyDomainStep').hidden=true;
+    box.querySelector('#crowleySignificatorStatus').textContent='No Significator selected.';
     box.querySelector('#crowleyDomainStatus').textContent='Begin with Operation I: commit to the question domain before locating the Significator.';
     box.scrollIntoView({block:'nearest'});
     return true;
