@@ -240,9 +240,14 @@
         box.querySelector('#crowleyMechanics').hidden=true;
         if(agrees){
           operation=1;
-          // The method, not the querent, owns the mechanics. Do not expose the
-          // diagnostic harmonic/count/pair controls as the next ritual step.
-          box.querySelector('#crowleyDomainStatus').textContent='Querent cut at '+first+'. Relphi completed the reader cuts without reshuffling. The Significator is in '+revealedDomain+', matching the committed domain. Domain test passed.';
+          // Step 6: immediately spread the actual packet containing the
+          // Significator. This is method progression, not another user choice.
+          const packet=result.packets?.[result.packetIndex]||[];
+          ledger()?.showOpeningPacket?.(packet);
+          requestAnimationFrame(()=>{
+            const live=document.getElementById('crowleyHarmonicGuide');if(!live)return;
+            live.querySelector('#crowleyDomainStatus').textContent='Domain test passed. The '+revealedDomain+' packet containing the Significator is spread face up. Next: count from the Significator.';
+          });
         } else clearMarks();
       });
       box.querySelector('#crowleyMainLinesCorrect').addEventListener('click',()=>{box.querySelector('#crowleyAccuracyStatus').textContent='Accuracy gate passed.';});
