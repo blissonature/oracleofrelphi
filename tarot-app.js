@@ -4497,6 +4497,21 @@
       // Four packets from right to left: Yod, Heh, Vav, final Heh.
       return [right.slice(0,b),right.slice(b),left.slice(0,d),left.slice(d)];
     },
+    openingKeyReaderCuts(deck, firstCut, significatorCardId) {
+      const cards=Array.isArray(deck)?deck.slice():[];
+      if(cards.length<4)return null;
+      const a=Math.max(1,Math.min(cards.length-1,Number(firstCut)||1));
+      const rightSize=a, leftSize=cards.length-a;
+      if(rightSize<2||leftSize<2)return null;
+      // Reader cuts are fresh cut points only. They partition the already locked
+      // order and never call shuffleArray or otherwise reorder the cards.
+      const rightCut=1+randomInt(rightSize-1);
+      const leftCut=1+randomInt(leftSize-1);
+      const packets=this.openingKeyCut(cards,a,rightCut,leftCut);
+      const id=String(significatorCardId||'');
+      const packetIndex=packets.findIndex(packet=>packet.includes(id));
+      return {packets,firstCut:a,rightCut,leftCut,packetIndex,packet:['Yod','Heh','Vav','Heh-final'][packetIndex]||''};
+    },
     drawCardForBoard(scope = 'full') {
       const pool=rowDrawPool(scope || 'full',{ignoreUsed:true});
       if(!pool.length)return null;
