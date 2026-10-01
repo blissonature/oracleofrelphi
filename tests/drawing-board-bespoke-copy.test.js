@@ -6,9 +6,9 @@ const css = fs.readFileSync('drawing-board-workflow-v2.css','utf8');
 
 assert.match(js, /function cardCountOptions\(value\)/);
 assert.match(js, /count===1\?'':'s'/);
-assert.match(js, /<label>Cards<select data-position-card-count=/);
+assert.match(js, /<label>Cards<select class="relphi-select" data-position-card-count=/);
 assert.doesNotMatch(js, /<label>Cards<input type="number"/);
-assert.match(js, /id="relphiCopyBespokeQuestions"/);
+assert.match(js, /id="relphiCopyBespokeQuestions" class="relphi-button relphi-question-copy"/);
 assert.match(js, /function bespokeQuestionsClipboardText\(draft\)/);
 assert.match(js, /Sub-pack:/);
 assert.match(js, /Cards:/);
