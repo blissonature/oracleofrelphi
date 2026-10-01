@@ -43,6 +43,7 @@
   let activeCraftedPath = '';
   let boardConfigurationOpen = false;
   let boardBackgroundMode = '';
+  let sacredResumeGateHandled = false;
   const BOARD_TRANSFORM_LOCKS_KEY = 'relphiBoardTransformLocksV1';
   const BOARD_CARD_CONTROLS_FREE_KEY = 'relphiBoardCardControlsFreeV1';
   const BOARD_CARD_CONTROLS_BESPOKE_KEY = 'relphiBoardCardControlsBespokeV1';
@@ -1123,6 +1124,82 @@
     return draftLayout !== baseLayout || JSON.stringify(session.draft.labels) !== JSON.stringify(baseLabels) || JSON.stringify(draftPacks)!==JSON.stringify(basePacks);
   }
 
+  function interruptedSacredReading(root=panel()) {
+    if(!root)return false;
+    const path=persistedCraftedPath(root);
+    if(!path)return false;
+    const snap=currentSnapshot()||{};
+    const hasLayout=!!snap.rowActiveLayout?.id || (Array.isArray(snap.rowPositionMeta)&&snap.rowPositionMeta.length>0);
+    const hasReferents=Array.isArray(snap.shortListPositionLabels)&&snap.shortListPositionLabels.some(label=>String(label||'').trim());
+    return hasLayout || hasReferents;
+  }
+
+  function removeSacredResumeGate(root=panel()) {
+    root?.querySelector('.relphi-sacred-resume-gate')?.remove();
+    root?.classList.remove('relphi-awaiting-sacred-resume');
+  }
+
+  function resumeSacredReading(root=panel()) {
+    if(!root)return false;
+    removeSacredResumeGate(root);
+    sacredResumeGateHandled=true;
+    craftedReadingActive=true;
+    if(!activeCraftedPath)activeCraftedPath=persistedCraftedPath(root);
+    setBoardMode(root,'crafted');
+    syncZoomToolbarVisibility(root);
+    enhance(root);
+    requestAnimationFrame(()=>requestAnimationFrame(zoomExtents));
+    return true;
+  }
+
+  function concludeSacredReading(root=panel()) {
+    if(!root)return false;
+    removeSacredResumeGate(root);
+    sacredResumeGateHandled=true;
+    closeFocus({acknowledge:true,advanceSurface:false});
+    clearCraftedStructure(root);
+    craftedReadingActive=false;
+    boardSetupConfirmed=false;
+    settingsOpen=false;
+    optionsSession=null;
+    freeSettingsSession=null;
+    settingsBaseline=null;
+    setBoardMode(root,'board');
+    enhance(root);
+    showBoardToast('The Sacred Reading has been concluded.',{title:'Reading concluded',duration:4200});
+    return true;
+  }
+
+  function installSacredResumeGate(root=panel()) {
+    if(!root||sacredResumeGateHandled||!interruptedSacredReading(root))return false;
+    if(root.querySelector('.relphi-sacred-resume-gate'))return true;
+    craftedReadingActive=false;
+    settingsOpen=false;
+    optionsSession=null;
+    root.querySelector('.relphi-reading-options-drawer')?.remove();
+    root.querySelector('.relphi-free-settings')?.remove();
+    root.classList.add('relphi-awaiting-sacred-resume');
+    const gate=document.createElement('aside');
+    gate.className='relphi-sacred-resume-gate relphi-panel';
+    gate.setAttribute('role','dialog');
+    gate.setAttribute('aria-modal','true');
+    gate.setAttribute('aria-labelledby','relphiSacredResumeTitle');
+    gate.innerHTML='<div class="relphi-sacred-resume-card">'+
+      '<span class="relphi-eyebrow">Drawing Board</span>'+
+      '<h3 id="relphiSacredResumeTitle">Sacred Reading Mode</h3>'+
+      '<p>A Sacred Reading is already in progress.</p>'+
+      '<div class="relphi-sacred-resume-actions">'+
+        '<button type="button" class="relphi-button relphi-button--primary" data-sacred-reading-resume>Resume Sacred-Reading Mode</button>'+
+        '<button type="button" class="relphi-button relphi-button--quiet" data-sacred-reading-conclude>Conclude</button>'+
+      '</div>'+
+    '</div>';
+    root.appendChild(gate);
+    gate.querySelector('[data-sacred-reading-resume]')?.addEventListener('click',()=>resumeSacredReading(root));
+    gate.querySelector('[data-sacred-reading-conclude]')?.addEventListener('click',()=>concludeSacredReading(root));
+    gate.querySelector('[data-sacred-reading-resume]')?.focus?.();
+    return true;
+  }
+
   function setBoardOpen(open, { fit = true } = {}) {
     const root = panel();
     const trigger = document.getElementById('relphiOpenDrawingBoardCurrent');
@@ -1139,6 +1216,7 @@
       trigger.setAttribute('aria-expanded','true');
       root.classList.add('relphi-board-ready');
       enhance(root);
+      installSacredResumeGate(root);
       requestAnimationFrame(() => root.scrollIntoView({ behavior:'smooth', block:'start' }));
       if (fit) { requestAnimationFrame(()=>requestAnimationFrame(zoomExtents)); setTimeout(zoomExtents, 180); }
     } else {
@@ -1147,6 +1225,8 @@
       freeSettingsSession = null;
       settingsBaseline = null;
       settingsOpen = false;
+      if(interruptedSacredReading(root))sacredResumeGateHandled=false;
+      removeSacredResumeGate(root);
       root.hidden = true;
       trigger.textContent = 'Open Drawing Board';
       trigger.setAttribute('aria-expanded','false');
@@ -2684,6 +2764,8 @@
     surfaceReadingSession=null;recursionSession=null;recursionPortalLevel=0;
     pendingFocusIndex=null;attuneIndex=-1;
     activeCraftedPath='';
+    removeSacredResumeGate(root);
+    sacredResumeGateHandled=false;
     syncZoomToolbarVisibility(root);
     return true;
   }
@@ -3825,6 +3907,7 @@
     const craftedPath=String(optionsSession?.path||activeCraftedPath||'');
     if(!snap||!prefabs||!prefab.positions.length)return false;
     craftedReadingActive=true;
+    sacredResumeGateHandled=true;
     Object.assign(snap,{shortList:[],shortListSelection:[],shortListPositionLabels:[],shortListPositionCardIds:[],rowEnvelopeLayout:{},rowCardTransforms:{},rowPositionMeta:[],rowActiveLayout:null,rowLayoutLocked:false,rowLayoutDesignMode:false,rowCardReversals:{},rowCardManual:[],rowDrawDeck:[],rowDrawDeckSignature:''});
     bridge.restore(snap);
     if(!prefabs.applyLayout(prefab)){craftedReadingActive=false;return false;}
@@ -4614,6 +4697,7 @@
       installRecursionBoard(root);
     }
     root.classList.add('relphi-board-ready');
+    if(installSacredResumeGate(root))return;
     if (pendingFocusIndex!=null) {
       // pendingFocusIndex is the slot the native draw appended into. A Crafted
       // draw may immediately swap that card into its referent's target slot,
