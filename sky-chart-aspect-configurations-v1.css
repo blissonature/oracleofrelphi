@@ -54,6 +54,19 @@
 .sky-chart-configuration-title-choices>span:nth-child(2){color:#a21b18;background:rgba(201,33,30,.035)}
 .sky-chart-configuration-title-choices>span:nth-child(3){color:#1f55b4;background:rgba(36,98,208,.04)}
 .sky-chart-configuration-title-choices>span:nth-child(4){color:#654a87;background:rgba(101,74,135,.04)}
+.sky-chart-configuration-inevitable{
+  display:flex;
+  align-items:center;
+  gap:7px;
+  min-height:34px;
+  padding:6px 10px;
+  border-bottom:1px solid rgba(31,27,24,.075);
+  background:#fbf8f3;
+  color:#29231e;
+  cursor:pointer;
+  font:750 .67rem/1.15 system-ui,sans-serif;
+}
+.sky-chart-configuration-inevitable input{margin:0}
 .sky-chart-configuration-list{display:block}
 .sky-chart-configuration-choice{
   min-height:34px;
