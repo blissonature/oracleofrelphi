@@ -2660,3 +2660,27 @@ body.relphi-attune-open{overflow:hidden!important}
     flex-direction:column!important;
   }
 }
+
+
+/* Astrological category selection uses the same checkbox language as questions. */
+#shortListPanel .relphi-astrology-category-master,
+#shortListPanel .relphi-astrology-category-toggle{
+  display:inline-flex!important;
+  align-items:center!important;
+  gap:.38rem!important;
+  min-width:0!important;
+  font-size:.68rem!important;
+  font-weight:900!important;
+  cursor:pointer!important;
+}
+#shortListPanel .relphi-astrology-category-master input,
+#shortListPanel .relphi-astrology-category-toggle input{
+  flex:0 0 auto!important;
+  width:1rem!important;
+  height:1rem!important;
+  margin:0!important;
+}
+#shortListPanel .relphi-astrology-category-master strong,
+#shortListPanel .relphi-astrology-category-toggle strong{
+  min-width:0!important;
+}
