@@ -2684,3 +2684,53 @@ body.relphi-attune-open{overflow:hidden!important}
 #shortListPanel .relphi-astrology-category-toggle strong{
   min-width:0!important;
 }
+
+
+/* Astrological evidence bulk controls */
+#shortListPanel .relphi-astrology-evidence-controls{
+  grid-column:1/-1!important;
+  display:grid!important;
+  gap:.5rem!important;
+  padding:.65rem!important;
+  border:1px solid var(--relphi-board-line,#d8cec5)!important;
+  border-radius:9px!important;
+  background:#fffdf9!important;
+}
+#shortListPanel .relphi-astrology-evidence-control-head{
+  display:flex!important;
+  align-items:center!important;
+  justify-content:space-between!important;
+  gap:.75rem!important;
+}
+#shortListPanel .relphi-astrology-evidence-control-head>strong{
+  font-size:.76rem!important;
+  font-weight:900!important;
+}
+#shortListPanel .relphi-astrology-evidence-master,
+#shortListPanel .relphi-astrology-evidence-categories>label{
+  display:inline-flex!important;
+  align-items:center!important;
+  gap:.35rem!important;
+  min-width:0!important;
+  font-size:.66rem!important;
+  font-weight:850!important;
+  cursor:pointer!important;
+}
+#shortListPanel .relphi-astrology-evidence-master input,
+#shortListPanel .relphi-astrology-evidence-categories input{
+  flex:0 0 auto!important;
+  width:1rem!important;
+  height:1rem!important;
+  margin:0!important;
+}
+#shortListPanel .relphi-astrology-evidence-categories{
+  display:flex!important;
+  flex-wrap:wrap!important;
+  gap:.42rem .72rem!important;
+}
+@media(max-width:560px){
+  #shortListPanel .relphi-astrology-evidence-control-head{
+    align-items:flex-start!important;
+    flex-direction:column!important;
+  }
+}
