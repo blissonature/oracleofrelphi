@@ -97,10 +97,10 @@
       4:'Decan field · 36 positions',
       5:'Tree of Life · Sephira'
     }[operation];
-    return '<section class="crowley-crafted-focus crowley-crafted-focus--op'+operation+'" aria-label="'+title+'">'+
-      '<header><span class="eyebrow">Operation '+operation+' · '+op.name+'</span><h3>'+title+'</h3><p>'+context+'</p><strong>'+field+'</strong></header>'+
-      '<div class="crowley-focus-modes"><article><b>Story Focus</b><p>Significator ↔ counted card. Show both card referents and the exact relationship referent.</p></article>'+
-      '<article class="crowley-pair-focus"><b>Pair Focus · ±'+pair.radius+'</b><div class="crowley-pair-stack"><span>Front card · referent</span><strong>Significator · referent</strong><span>Behind card · referent</span></div><p><b>Front ↔ Significator:</b> '+pair.reference.name+' · <b>Significator ↔ Behind:</b> '+pair.reference.name+' · <b>Front ↔ Behind:</b> '+pair.between.name+'.</p><p><b>Midpoint:</b> the Significator is the structural halfway point of the pair.</p></article></div>'+
+    return '<section class="relphi-focus-surface crowley-crafted-focus crowley-crafted-focus--op'+operation+'" aria-label="'+title+'">'+
+      '<header><span class="eyebrow relphi-eyebrow">Operation '+operation+' · '+op.name+'</span><h3 class="relphi-heading">'+title+'</h3><p>'+context+'</p><strong>'+field+'</strong></header>'+
+      '<div class="crowley-focus-modes"><article class="relphi-card"><b>Story Focus</b><p>Significator ↔ counted card. Show both card referents and the exact relationship referent.</p></article>'+
+      '<article class="relphi-card crowley-pair-focus"><b>Pair Focus · ±'+pair.radius+'</b><div class="crowley-pair-stack"><span>Front card · referent</span><strong>Significator · referent</strong><span>Behind card · referent</span></div><p><b>Front ↔ Significator:</b> '+pair.reference.name+' · <b>Significator ↔ Behind:</b> '+pair.reference.name+' · <b>Front ↔ Behind:</b> '+pair.between.name+'.</p><p><b>Midpoint:</b> the Significator is the structural halfway point of the pair.</p></article></div>'+
       '<details class="crowley-focus-summary"><summary>Operation '+operation+' summary</summary><p>As each Story and Pair step is read, keep its card referents, relationship referents, and notes available here for review.</p></details>'+
       '</section>';
   }
@@ -161,39 +161,31 @@
     return values.map(([v,l])=>'<option value="'+v+'">'+l+'</option>').join('');
   }
   function domainGateMarkup(){
-    return '<fieldset id="crowleyDomainGate"><legend><b>First Operation · Domain Test</b></legend><div id="crowleySignificatorStep"><p><b>1. Choose the Significator.</b> Draw one digitally or search for the card you intend to use.</p><div class="crowley-controls"><button id="crowleyDrawSignificator" type="button">Digital draw</button><label>Search for a card<input id="crowleySignificatorSearch" type="search" autocomplete="off" placeholder="Card name"></label></div><div id="crowleySignificatorResults"></div><p id="crowleySignificatorStatus" aria-live="polite">No Significator selected.</p></div><div id="crowleyDomainStep" hidden><p><b>2. Commit to the expected domain</b> before locating the Significator in the four packets.</p><div class="crowley-controls"><label>Expected domain<select id="crowleyExpectedDomain"><option value="">Choose before revealing…</option><option value="Yod">Yod</option><option value="Heh">Heh</option><option value="Vav">Vav</option><option value="Heh-final">Final Heh</option></select></label><button id="crowleyLockDomain" type="button">Commit domain</button></div></div><div id="crowleyDomainReveal" hidden><div id="crowleyInvocationStep"><p><b>3. Invocation.</b> Before the deck is shuffled, say the invocation:</p><blockquote class="crowley-invocation">I invoke thee, I A O, that thou wilt send H R U, the great Angel that is set over the operations of this Secret Wisdom, to lay his hand invisibly upon these consecrated cards of art, that thereby we may obtain true knowledge of hidden things, to the glory of thine ineffable Name. Amen.</blockquote><button type="button" id="crowleyInvoke">I said the invocation · shuffle once</button></div><div id="crowleyCutStep" hidden><p><b>4. Querent cut.</b> Choose the exact cut position. The shuffled deck order is now locked and will not be shuffled again during this operation.</p><div class="crowley-controls"><label>Cut position<input id="crowleyCutRange" type="range" min="1" max="77" value="39"></label><label>Position<input id="crowleyCutNumber" type="number" min="1" max="77" value="39"></label><button type="button" id="crowleyMakeCut">Make cut</button></div><p><b>Significator packet:</b> <span id="crowleyActualDomain">Awaiting cuts</span></p></div></div><p id="crowleyDomainStatus" aria-live="polite"></p></fieldset>';
+    return '<fieldset id="crowleyDomainGate" class="relphi-fieldset"><legend>First Operation · Domain Test</legend><div id="crowleySignificatorStep"><p><b>1. Choose the Significator.</b> Draw one digitally or search for the card you intend to use.</p><div class="crowley-controls relphi-toolbar"><button id="crowleyDrawSignificator" class="relphi-button" type="button">Digital draw</button><label class="relphi-field">Search for a card<input id="crowleySignificatorSearch" class="relphi-input" type="search" autocomplete="off" placeholder="Card name"></label></div><div id="crowleySignificatorResults"></div><p id="crowleySignificatorStatus" aria-live="polite">No Significator selected.</p></div><div id="crowleyDomainStep" hidden><p><b>2. Commit to the expected domain</b> before locating the Significator in the four packets.</p><div class="crowley-controls relphi-toolbar"><label class="relphi-field">Expected domain<select id="crowleyExpectedDomain" class="relphi-select"><option value="">Choose before revealing…</option><option value="Yod">Yod</option><option value="Heh">Heh</option><option value="Vav">Vav</option><option value="Heh-final">Final Heh</option></select></label><button id="crowleyLockDomain" class="relphi-button relphi-button--primary" type="button">Commit domain</button></div></div><div id="crowleyDomainReveal" hidden><div id="crowleyInvocationStep"><p><b>3. Invocation.</b> Before the deck is shuffled, say the invocation:</p><blockquote class="crowley-invocation relphi-card relphi-card--soft">I invoke thee, I A O, that thou wilt send H R U, the great Angel that is set over the operations of this Secret Wisdom, to lay his hand invisibly upon these consecrated cards of art, that thereby we may obtain true knowledge of hidden things, to the glory of thine ineffable Name. Amen.</blockquote><button type="button" id="crowleyInvoke" class="relphi-button relphi-button--primary">I said the invocation · shuffle once</button></div><div id="crowleyCutStep" hidden><p><b>4. Querent cut.</b> Choose the exact cut position. The shuffled deck order is now locked and will not be shuffled again during this operation.</p><div class="crowley-controls relphi-toolbar"><label class="relphi-field">Cut position<input id="crowleyCutRange" class="relphi-range" type="range" min="1" max="77" value="39"></label><label class="relphi-field">Position<input id="crowleyCutNumber" class="relphi-input" type="number" min="1" max="77" value="39"></label><button type="button" id="crowleyMakeCut" class="relphi-button relphi-button--primary">Make cut</button></div><p><b>Significator packet:</b> <span id="crowleyActualDomain">Awaiting cuts</span></p></div></div><p id="crowleyDomainStatus" aria-live="polite"></p></fieldset>';
   }
   function installStyle(){
     if(document.getElementById('crowleyHarmonicStyle')) return;
     const s=document.createElement('style');s.id='crowleyHarmonicStyle';
     s.textContent=`
-      /* Opening of the Key consumes the Drawing Board design-system primitives.
-         Method-specific CSS is layout/state only; typography and controls inherit. */
-      #crowleyHarmonicGuide{margin:.75rem 0;padding:.85rem;border:1px solid var(--relphi-board-line);border-radius:14px;background:var(--relphi-board-paper);color:var(--relphi-board-ink);font:inherit}
+      /* Method CSS is geometry/state only. Reusable visual styling lives in relphi-design-system.css. */
+      #crowleyHarmonicGuide{margin:.75rem 0}
       #crowleyHarmonicGuide[hidden],#crowleyMechanics[hidden]{display:none!important}
-      #crowleyHarmonicGuide .crowley-controls{display:flex;gap:.55rem;flex-wrap:wrap;align-items:end}
-      #crowleyHarmonicGuide label{display:grid;gap:.3rem;font:inherit;font-size:.79rem;font-weight:700}
-      #crowleyHarmonicGuide button,#crowleyHarmonicGuide select,#crowleyHarmonicGuide input[type="search"],#crowleyHarmonicGuide input[type="number"]{min-height:2.35rem;margin:0;padding:.44rem .78rem;border:1.5px solid var(--relphi-board-ink);border-radius:8px;background:#fff;color:var(--relphi-board-ink);font:inherit;font-size:.79rem;font-weight:800;line-height:1.15;box-shadow:none}
-      #crowleyHarmonicGuide button{cursor:pointer;touch-action:manipulation}
-      #crowleyHarmonicGuide button:hover:not(:disabled){border-color:#b81712;color:#a61712}
-      #crowleyHarmonicGuide button:focus-visible,#crowleyHarmonicGuide select:focus-visible,#crowleyHarmonicGuide input:focus-visible{outline:3px solid rgba(220,31,24,.22);outline-offset:2px}
-      #crowleyHarmonicGuide button:disabled{opacity:.42;cursor:default}
-      #crowleyHarmonicGuide fieldset{margin:.7rem 0;padding:.7rem;border:1px solid var(--relphi-board-line);border-radius:12px}
-      #crowleyHarmonicGuide legend{padding:0 .3rem;font:inherit;font-size:.84rem;font-weight:900}
-      #crowleyHarmonicGuide p{font:inherit;line-height:1.45}
-      #crowleyHarmonicStatus,#crowleyDomainStatus{margin:.65rem 0 0;font-size:.84rem}
-      #crowleyHarmonicGuide .crowley-invocation{margin:.65rem 0 1rem;padding:.8rem 1rem;border:1px solid var(--relphi-board-line);border-left:3px solid var(--relphi-board-red);border-radius:0 10px 10px 0;background:var(--relphi-board-soft);font:inherit;line-height:1.5}
+      #crowleyHarmonicGuide .crowley-controls{align-items:end}
+      #crowleyHarmonicGuide p{line-height:1.45}
+      #crowleyHarmonicStatus,#crowleyDomainStatus{margin:.65rem 0 0}
+      #crowleyHarmonicGuide .crowley-invocation{margin:.65rem 0 1rem;border-left:3px solid var(--relphi-board-red)}
       #crowleyDomainGate{margin:0 0 .75rem}
+      #crowleySignificatorResults{display:flex;gap:.35rem;flex-wrap:wrap;margin-top:.4rem}
+      #crowleySignificatorResults>button{all:unset;box-sizing:border-box;min-height:var(--relphi-control-height);padding:.44rem .78rem;border:1.5px solid var(--relphi-board-ink);border-radius:var(--relphi-radius-md);background:var(--relphi-board-surface);color:var(--relphi-board-ink);font:inherit;font-size:var(--relphi-control-font-size);font-weight:800;cursor:pointer}
       #shortListPanel .card-row-item.crowley-anchor .card-row-card-wrap{outline:3px solid var(--relphi-board-red)!important;outline-offset:3px}
       #shortListPanel .card-row-item.crowley-target .card-row-card-wrap{outline:3px dashed #725c16!important;outline-offset:3px}
       #shortListPanel .card-row-item.crowley-pair .card-row-card-wrap{box-shadow:0 0 0 3px rgba(55,83,105,.58)!important}
       #crowleyOperationFocus{margin-top:.75rem}
-      .crowley-crafted-focus{display:grid;gap:.75rem;padding:.85rem;border:1px solid var(--relphi-board-line);border-radius:14px;background:var(--relphi-board-paper);font:inherit}
-      .crowley-crafted-focus header h3{margin:.15rem 0 .35rem;font:inherit;font-size:1rem;font-weight:900}.crowley-crafted-focus header p{margin:.25rem 0 .55rem;max-width:72ch}
+      .crowley-crafted-focus{display:grid;gap:.75rem}
+      .crowley-crafted-focus header h3{margin:.15rem 0 .35rem}.crowley-crafted-focus header p{margin:.25rem 0 .55rem;max-width:72ch}
       .crowley-focus-modes{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.35fr);gap:.75rem}
-      .crowley-focus-modes article{padding:.75rem;border:1px solid var(--relphi-board-line);border-radius:12px;background:#fff}
       .crowley-pair-stack{display:grid;grid-template-rows:repeat(3,minmax(44px,auto));gap:.4rem;margin:.65rem 0}
-      .crowley-pair-stack>*{display:grid;place-items:center;padding:.5rem;border:1px solid var(--relphi-board-line);border-radius:8px;text-align:center}
+      .crowley-pair-stack>*{display:grid;place-items:center;padding:.5rem;border:1px solid var(--relphi-board-line);border-radius:var(--relphi-radius-md);text-align:center}
       .crowley-pair-stack strong{border-color:var(--relphi-board-red)}
       .crowley-focus-summary summary{cursor:pointer;font-weight:800}
       @media(max-width:720px){.crowley-focus-modes{grid-template-columns:1fr}}
@@ -218,8 +210,8 @@
     installStyle();
     let box=document.getElementById('crowleyHarmonicGuide');
     if(!box){
-      box=document.createElement('section');box.id='crowleyHarmonicGuide';box.hidden=true;
-      box.innerHTML='<span class="eyebrow">Crowley Divination Method</span><h3 style="margin:.15rem 0 .35rem">The Opening of the Key</h3><p>Relphi will reveal this divination one step at a time.</p>'+domainGateMarkup()+'<div id="crowleyMechanics" hidden><div class="crowley-controls"><label>Operation<select id="crowleyOperation">'+OPERATIONS.map(op=>'<option value="'+op.n+'">'+op.n+' · '+op.name+'</option>').join('')+'</select></label><label>Harmonic reference<select id="crowleyAnchor">'+Array.from({length:12},(_,i)=>'<option value="'+i+'">Position '+(i+1)+'</option>').join('')+'</select></label><label>Card Counting<select id="crowleyCount">'+countOptions()+'</select></label><label>Card Pairing<select id="crowleyPair">'+Array.from({length:6},(_,i)=>'<option value="'+(i+1)+'">±'+(i+1)+'</option>').join('')+'</select></label><button id="crowleyAdvance" type="button">Continue Card Counting</button></div><p id="crowleyOperationStatus"></p><div id="crowleyOperationFocus"></div><p id="crowleyHarmonicStatus" aria-live="polite"></p><div id="crowleyReadingReference"></div><fieldset><legend><b>Accuracy Test</b></legend><p>After Card Counting and Card Pairing, confirm whether the main lines of the reading are correct.</p><button id="crowleyMainLinesCorrect" type="button">Main lines are correct · continue</button> <button id="crowleyMainLinesWrong" type="button">Main lines are not correct · abandon</button><p id="crowleyAccuracyStatus" aria-live="polite"></p></fieldset></div>';
+      box=document.createElement('section');box.id='crowleyHarmonicGuide';box.className='relphi-panel relphi-stack';box.hidden=true;
+      box.innerHTML='<span class="eyebrow relphi-eyebrow">Crowley Divination Method</span><h3 class="relphi-heading">The Opening of the Key</h3><p>Relphi will reveal this divination one step at a time.</p>'+domainGateMarkup()+'<div id="crowleyMechanics" class="relphi-stack" hidden><div class="crowley-controls relphi-toolbar"><label class="relphi-field">Operation<select id="crowleyOperation" class="relphi-select">'+OPERATIONS.map(op=>'<option value="'+op.n+'">'+op.n+' · '+op.name+'</option>').join('')+'</select></label><label class="relphi-field">Harmonic reference<select id="crowleyAnchor" class="relphi-select">'+Array.from({length:12},(_,i)=>'<option value="'+i+'">Position '+(i+1)+'</option>').join('')+'</select></label><label class="relphi-field">Card Counting<select id="crowleyCount" class="relphi-select">'+countOptions()+'</select></label><label class="relphi-field">Card Pairing<select id="crowleyPair" class="relphi-select">'+Array.from({length:6},(_,i)=>'<option value="'+(i+1)+'">±'+(i+1)+'</option>').join('')+'</select></label><button id="crowleyAdvance" class="relphi-button" type="button">Continue Card Counting</button></div><p id="crowleyOperationStatus"></p><div id="crowleyOperationFocus"></div><p id="crowleyHarmonicStatus" aria-live="polite"></p><div id="crowleyReadingReference"></div><fieldset class="relphi-fieldset"><legend>Accuracy Test</legend><p>After Card Counting and Card Pairing, confirm whether the main lines of the reading are correct.</p><button id="crowleyMainLinesCorrect" class="relphi-button relphi-button--primary" type="button">Main lines are correct · continue</button> <button id="crowleyMainLinesWrong" class="relphi-button" type="button">Main lines are not correct · abandon</button><p id="crowleyAccuracyStatus" aria-live="polite"></p></fieldset></div>';
       const workspace=r.querySelector('.card-row-workspace');
       if(workspace) workspace.parentNode.insertBefore(box,workspace); else nativeDrawer.insertAdjacentElement('beforebegin',box);
       const ledger=()=>window.RelphiTarotLedgerBridge;
@@ -249,7 +241,7 @@
         const host=box.querySelector('#crowleySignificatorResults');
         if(q.length<2){host.innerHTML='';return;}
         const found=ledger()?.searchCards?.(q,8,'full')||[];
-        host.innerHTML=found.map(card=>'<button type="button" data-crowley-significator="'+card.card_id+'">'+card.title+'</button>').join('');
+        host.innerHTML=found.map(card=>'<button class="relphi-button" type="button" data-crowley-significator="'+card.card_id+'">'+card.title+'</button>').join('');
       });
       box.querySelector('#crowleySignificatorResults').addEventListener('click',e=>{
         const button=e.target.closest?.('[data-crowley-significator]');if(!button||significatorId)return;
