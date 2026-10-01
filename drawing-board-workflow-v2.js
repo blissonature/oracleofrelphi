@@ -635,23 +635,36 @@
     const next=pruneRecents([item,...recentBoardImages().filter(other=>other.data!==value)]);
     try { localStorage.setItem(BOARD_RECENT_IMAGES_KEY,JSON.stringify(next)); } catch (_) {}
   }
-  function boardCanReset(root=panel()) {
+  function boardResetReasons(root=panel()) {
     const snap=currentSnapshot()||{};
+    const cards=currentCardCount(root);
+    const crafted=boardHasCraftedStructure(root);
+    const meaningfulGeometry=cards>0||crafted;
     const background=boardBackgroundDefault();
     const backgroundChanged=String(snap.rowTableColor||'#7d1f28')!==String(background.color||'#7d1f28') ||
       String(snap.rowTableImage||'')!==(background.mode==='image'?String(background.image||''):'');
-    const configurationChanged=String(snap.rowEnvelopeColor||'#f3f0ea')!=='#f3f0ea' ||
+    const appearanceChanged=String(snap.rowEnvelopeColor||'#f3f0ea')!=='#f3f0ea' ||
       snap.rowSnapEnabled===false ||
       String(snap.rowSnapGrid||'one-eighth')!=='one-eighth' ||
       snap.rowRotationSnapEnabled===false ||
       Number(snap.rowRotationSnapDegrees||15)!==15 ||
       backgroundChanged ||
+      Object.keys(snap.rowEnvelopeArt||{}).length>0 ||
+      Object.keys(snap.customCardArt||{}).length>0;
+    const geometryChanged=meaningfulGeometry&&(
       Object.keys(snap.rowEnvelopeLayout||{}).length>0 ||
-      Object.keys(snap.rowCardTransforms||{}).length>0;
-    return currentCardCount(root)>0 ||
-      boardHasCraftedStructure(root) ||
-      !freeSettingsAreDefault() ||
-      configurationChanged;
+      Object.keys(snap.rowCardTransforms||{}).length>0
+    );
+    return {
+      cards:cards>0,
+      crafted,
+      drawSettings:!freeSettingsAreDefault(),
+      appearance:appearanceChanged,
+      geometry:geometryChanged
+    };
+  }
+  function boardCanReset(root=panel()) {
+    return Object.values(boardResetReasons(root)).some(Boolean);
   }
 
   function ensureSettingsTransaction(root=panel()) {
@@ -1157,6 +1170,14 @@
     removeSacredResumeGate(root);
     if(!resetBoardGlobal(root,{openSettings:false}))return false;
     sacredResumeGateHandled=true;
+    const reconcile=()=>{
+      const live=panel();
+      if(!live)return;
+      ensureBoardChrome(live);
+      const reset=live.querySelector('#relphiResetBoard');
+      if(reset)reset.disabled=!boardCanReset(live);
+    };
+    requestAnimationFrame(()=>requestAnimationFrame(reconcile));
     showBoardToast('The Sacred Reading has been concluded.',{title:'Reading concluded',duration:4200});
     return true;
   }
