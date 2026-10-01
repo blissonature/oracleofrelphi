@@ -2033,12 +2033,21 @@
     return `<section class="row-tag-subpack" aria-label="Keyword and tag sub-pack"><label class="row-tag-search-label">Tags <input id="rowTagQuery" type="search" value="${escapeHtml(state.rowTagQuery || '')}" placeholder="Type a tag, e.g. prince" autocomplete="off"></label><div class="row-tag-match-mode" role="group" aria-label="How selected tags combine"><label><input type="radio" name="rowTagMatchMode" value="any" ${state.rowTagMatchMode !== 'all' ? 'checked' : ''}> Any</label><label><input type="radio" name="rowTagMatchMode" value="all" ${state.rowTagMatchMode === 'all' ? 'checked' : ''}> All</label></div><div class="row-tag-matches" aria-live="polite">${matchRows}</div>${selectedHtml}<p class="row-tag-pool-count">${selected.length ? `${poolCount} card${poolCount === 1 ? '' : 's'} in this sub-pack` : 'Choose one or more matching tags before drawing.'}</p></section>`;
   }
 
+  function customSubpackByScope(scope) {
+    const id=String(scope||'').replace(/^custom:/,'');
+    if(!id || id===String(scope||'')) return null;
+    const packs=window.RelphiCustomSubpacks?.all?.() || [];
+    return packs.find(pack=>String(pack?.id||'')===id) || null;
+  }
+
   function rowDrawPool(scope, options = {}) {
     const key = scope || state.rowDrawScope || 'full';
     const visible = currentCards();
     const planetaryBodies = new Set(['Sun','Moon','Mercury','Venus','Mars','Jupiter','Saturn']);
     let pool;
-    if (key === 'shown') pool = visible.length ? visible : cards;
+    const custom=customSubpackByScope(key);
+    if (custom) pool=(custom.cardIds||[]).map(cardById).filter(Boolean);
+    else if (key === 'shown') pool = visible.length ? visible : cards;
     else if (key === 'majors') pool = cards.filter(card => card.card_type === 'Major');
     else if (key === 'uhn') pool = UHN_CARD_IDS.map(cardById).filter(Boolean);
     else if (key === 'primordial-majors') pool = cards.filter(card => card.card_type === 'Major' && card.astrology?.attribution_type === 'Element' && ['Aleph','Mem','Shin'].includes(String(card.hebrew?.letter || '')));
