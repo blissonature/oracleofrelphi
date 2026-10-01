@@ -2383,7 +2383,33 @@ body.relphi-attune-open{overflow:hidden!important}
   white-space:nowrap!important;
 }
 #shortListPanel .relphi-bespoke-question-settings select[data-position-card-count]{
-  min-width:6.2rem!important;
+  min-width:0!important;
+}
+
+/* Bespoke Advanced must reflow before controls can collide. */
+#shortListPanel .relphi-question-advanced>.relphi-bespoke-question-settings{
+  grid-template-columns:repeat(auto-fit,minmax(min(100%,8.5rem),1fr))!important;
+  align-items:stretch!important;
+}
+#shortListPanel .relphi-question-advanced>.relphi-bespoke-question-settings>label{
+  min-width:0!important;
+  max-width:100%!important;
+  box-sizing:border-box!important;
+  overflow:hidden!important;
+}
+#shortListPanel .relphi-question-advanced>.relphi-bespoke-question-settings>label:nth-child(-n+3){
+  display:grid!important;
+  grid-template-columns:1fr!important;
+  align-content:start!important;
+  gap:.22rem!important;
+}
+#shortListPanel .relphi-question-advanced>.relphi-bespoke-question-settings select,
+#shortListPanel .relphi-question-advanced>.relphi-bespoke-question-settings input,
+#shortListPanel .relphi-question-advanced>.relphi-bespoke-question-settings button{
+  width:100%!important;
+  min-width:0!important;
+  max-width:100%!important;
+  box-sizing:border-box!important;
 }
 
 #shortListPanel .drawing-board-top-actions>.relphi-sky-connector{order:5!important;display:flex!important;align-items:center!important;gap:.35rem!important;margin:0 0 0 auto!important;padding:0!important;border:0!important;background:transparent!important;width:auto!important}
