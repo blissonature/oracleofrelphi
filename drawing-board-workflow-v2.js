@@ -1540,8 +1540,8 @@
         '   Share card with: '+linkLabel,
         '   Reversals: '+(settings.reversals?'On':'Off'),
         '   Repeats: '+(settings.repeats?'On':'Off')
-      ].join('\\n');
-    }).join('\\n\\n');
+      ].join('\n');
+    }).join('\n\n');
   }
 
   function labelsMarkup(labels,draft=null) {
@@ -1554,7 +1554,7 @@
         draft.positionPacks ||= []; draft.positionPacks[index]=draft.positionSettings[index].pack;
       }
       const settings=draft?.positionSettings?.[index]||inherited;
-      return `<div class="relphi-label-row relphi-bespoke-question-row" data-label-row="${index}"><label class="relphi-question-select"><input type="checkbox" data-question-select="${index}" aria-label="Select question ${index+1}"><span>${index+1}</span></label><div class="relphi-bespoke-question-main"><input type="text" value="${escapeHtml(label)}" ${index===0&&!label?'placeholder="Commas split questions"':''} aria-label="Position ${index+1} label" data-position-label="${index}"><details class="relphi-question-advanced"><summary>Advanced</summary><div class="relphi-bespoke-question-settings"><label>Sub-pack<select data-position-pack="${index}">${packOptions(settings.pack||'full')}</select></label><label>Cards<select class="relphi-select" data-position-card-count="${index}" aria-label="Cards to draw for question ${index+1}">${cardCountOptions(settings.cardCount)}</select></label><label>Share card with<select data-position-link="${index}"><option value="">No link</option>${rows.map((other,j)=>j===index?'':`<option value="${j}" ${String(settings.linkTo)===String(j)?'selected':''}>Question ${j+1}</option>`).join('')}</select></label><label><input type="checkbox" data-position-reversals="${index}" ${settings.reversals!==false?'checked':''}> Reversals</label><label><input type="checkbox" data-position-repeats="${index}" ${settings.repeats?'checked':''}> Repeats</label></div></details></div></div>`;
+      return `<div class="relphi-label-row relphi-bespoke-question-row" data-label-row="${index}"><label class="relphi-question-select"><input type="checkbox" data-question-select="${index}" aria-label="Include question ${index+1} in this reading" title="Checked questions are included when the reading starts"><span>${index+1}</span></label><div class="relphi-bespoke-question-main"><input type="text" value="${escapeHtml(label)}" ${index===0&&!label?'placeholder="Commas split questions"':''} aria-label="Position ${index+1} label" data-position-label="${index}"><details class="relphi-question-advanced"><summary>Advanced</summary><div class="relphi-bespoke-question-settings"><label>Sub-pack<select data-position-pack="${index}">${packOptions(settings.pack||'full')}</select></label><label>Cards<select class="relphi-select" data-position-card-count="${index}" aria-label="Cards to draw for question ${index+1}">${cardCountOptions(settings.cardCount)}</select></label><label>Share card with<select data-position-link="${index}"><option value="">No link</option>${rows.map((other,j)=>j===index?'':`<option value="${j}" ${String(settings.linkTo)===String(j)?'selected':''}>Question ${j+1}</option>`).join('')}</select></label><label><input type="checkbox" data-position-reversals="${index}" ${settings.reversals!==false?'checked':''}> Reversals</label><label><input type="checkbox" data-position-repeats="${index}" ${settings.repeats?'checked':''}> Repeats</label></div></details></div></div>`;
     }).join('');
   }
   function parseBulkQuestions(value) {
@@ -2064,7 +2064,7 @@
     const clonedFrom=!draft.templateId&&draft.basedOnTemplateId?templateById(draft.basedOnTemplateId):null;
     return '<section class="relphi-referent-panel">'+
       (clonedFrom?'<div class="relphi-template-clone-note"><strong>Editing a copy of '+escapeHtml(clonedFrom.name)+'</strong><span>The original template stays untouched. Name and save this Bespoke version if you want to keep it; you can also continue without saving.</span></div>':'')+
-      '<div class="relphi-question-toolbar"><label><input type="checkbox" id="relphiSelectAllQuestions"> <span>Select all</span></label><button type="button" id="relphiCopyBespokeQuestions" class="relphi-button relphi-question-copy" aria-label="Copy all Bespoke questions and advanced settings">Copy</button><button type="button" id="relphiMoveQuestionsUp" aria-label="Move selected questions up">↑</button><button type="button" id="relphiMoveQuestionsDown" aria-label="Move selected questions down">↓</button><button type="button" id="relphiDeleteQuestions" class="relphi-stroke-icon relphi-stroke-x" aria-label="Delete selected questions"><span aria-hidden="true"></span></button><button type="button" id="relphiAddPosition" class="relphi-stroke-icon relphi-stroke-plus" aria-label="Add question" '+(hasCards||draft.labels.length>=MAX_POSITIONS?'disabled':'')+'><span aria-hidden="true"></span></button></div>'+
+      '<div class="relphi-question-toolbar"><label><input type="checkbox" id="relphiSelectAllQuestions" aria-label="Include all questions in this reading"> <span>Select all</span></label><button type="button" id="relphiCopyBespokeQuestions" class="relphi-button relphi-question-copy" aria-label="Copy all Bespoke questions and advanced settings">Copy</button><button type="button" id="relphiMoveQuestionsUp" aria-label="Move selected questions up">↑</button><button type="button" id="relphiMoveQuestionsDown" aria-label="Move selected questions down">↓</button><button type="button" id="relphiDeleteQuestions" class="relphi-stroke-icon relphi-stroke-x" aria-label="Delete selected questions"><span aria-hidden="true"></span></button><button type="button" id="relphiAddPosition" class="relphi-stroke-icon relphi-stroke-plus" aria-label="Add question" '+(hasCards||draft.labels.length>=MAX_POSITIONS?'disabled':'')+'><span aria-hidden="true"></span></button></div>'+
 
       '<div id="relphiPositionLabels">'+labelsMarkup(draft.labels,draft)+'</div>'+
       '<div class="relphi-template-save"><input id="relphiTemplateName" class="'+((draft.templateName||'Unnamed Template')==='Unnamed Template'?'is-unnamed':'')+'" type="text" maxlength="60" aria-label="Template name" value="'+escapeHtml(draft.templateName||'Unnamed Template')+'" '+(hasCards?'disabled':'')+'><button type="button" id="relphiSaveTemplate" '+(hasCards?'disabled':'')+'>Save template</button></div>'+
@@ -3743,6 +3743,29 @@
     revealCompletedSurfaceBoard(root);
   }
 
+  function bespokeLaunchDraftFromSelection(root,draft) {
+    const drawer=root?.querySelector('.relphi-reading-options-drawer');
+    const checked=Array.from(drawer?.querySelectorAll?.('[data-question-select]:checked')||[])
+      .map(input=>Number(input.dataset.questionSelect))
+      .filter(index=>Number.isInteger(index)&&index>=0&&index<draft.labels.length)
+      .sort((a,b)=>a-b);
+    if(!checked.length)return draft;
+
+    const indexMap=new Map(checked.map((originalIndex,nextIndex)=>[originalIndex,nextIndex]));
+    const next=clone(draft);
+    next.labels=checked.map(index=>draft.labels[index]);
+    next.positionPacks=checked.map(index=>draft.positionPacks?.[index] || draft.positionSettings?.[index]?.pack || draft.pack || 'full');
+    next.positionSettings=checked.map(index=>{
+      const settings=clone(draft.positionSettings?.[index] || {});
+      const linkedOriginal=settings.linkTo===''||settings.linkTo==null ? null : Number(settings.linkTo);
+      settings.linkTo=linkedOriginal!=null&&indexMap.has(linkedOriginal) ? String(indexMap.get(linkedOriginal)) : '';
+      settings.pack=settings.pack || next.positionPacks[indexMap.get(index)] || draft.pack || 'full';
+      return settings;
+    });
+    next.pack='question-by-question';
+    return next;
+  }
+
   function launchConfiguredReading(root,draft) {
     const bridge=optionsBridge(),prefabs=prefabBridge(),prefab=draftPrefab(draft);
     const snap=bridge?.capture();
@@ -3793,7 +3816,8 @@
   function applyOptions(root = panel()) {
     if (!optionsSession || !root) return;
     const session=optionsSession;
-    const draft=clone(session.draft);
+    let draft=clone(session.draft);
+    if(session.path==='bespoke')draft=bespokeLaunchDraftFromSelection(root,draft);
     draft.stickers=true;
     const structural=optionsStructuralChanged(session);
     const surfaceKinds=session.path==='surface' ? selectedSurfaceKinds(session) : [];

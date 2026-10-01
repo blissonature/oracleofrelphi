@@ -16,6 +16,13 @@ assert.match(js, /Share card with:/);
 assert.match(js, /Reversals:/);
 assert.match(js, /Repeats:/);
 assert.match(js, /writeDrawingBoardClipboard\(text\)/);
+assert.match(js, /function bespokeLaunchDraftFromSelection\(root,draft\)/);
+assert.match(js, /if\(session\.path==='bespoke'\)draft=bespokeLaunchDraftFromSelection\(root,draft\)/);
+assert.match(js, /querySelectorAll\?\.\('\[data-question-select\]:checked'\)/);
+assert.match(js, /indexMap\.has\(linkedOriginal\)/);
+assert.match(js, /\.join\('\\n'\)/);
+assert.match(js, /\.join\('\\n\\n'\)/);
+assert.doesNotMatch(js, /\.join\('\\\\n'\)/);
 assert.match(css, /#relphiCopyBespokeQuestions/);
 assert.match(css, /select\[data-position-card-count\]/);
 
