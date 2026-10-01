@@ -1494,6 +1494,14 @@
     const readingText=root.querySelector('#drawing-board-reading-text');
     const anchor=readingText||workspace;
     let section=root.querySelector('#drawing-board-post-export');
+
+    // Native export controls own their behavior in tarot-app.js. Preserve those
+    // exact bound nodes before rebuilding this presentation wrapper; replacing
+    // them with innerHTML silently discards their click listeners.
+    const nativeExportIds=['snapshotCardRowArrangement','downloadRowHtml','downloadRowTextHtml','downloadRowJson','printCardRowImage'];
+    const preservedExports=new Map(nativeExportIds.map(id=>[id,root.querySelector('#'+id)]).filter(([,node])=>!!node));
+    preservedExports.forEach(node=>node.remove());
+
     if(!section){
       section=document.createElement('section');
       section.id='drawing-board-post-export';
@@ -1506,7 +1514,7 @@
     const actions=section.querySelector('.relphi-board-export-actions');
     const status=section.querySelector('.relphi-board-export-status');
     const take=(id,label,title)=>{
-      const node=root.querySelector('#'+id);
+      const node=preservedExports.get(id)||root.querySelector('#'+id);
       if(!node)return null;
       node.textContent=label;
       node.title=title;
