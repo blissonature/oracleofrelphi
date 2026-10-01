@@ -1,5 +1,5 @@
 html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]) #skyFoundationB{display:none!important}
-html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]) #skyFoundationRoot{grid-template-columns:minmax(220px,270px) minmax(520px,1fr);grid-template-areas:"a comparison"}
+html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]) #skyFoundationRoot{grid-template-columns:minmax(220px,270px) minmax(0,1fr);grid-template-areas:"a comparison"}
 .sky-slot-presence-button{appearance:none;border:1px solid rgba(31,27,24,.2);border-radius:999px;background:#fff;color:#241f1b;padding:.38rem .65rem;font:800 .64rem/1 system-ui,sans-serif;white-space:nowrap;cursor:pointer}
 .sky-slot-presence-button:hover,.sky-slot-presence-button:focus-visible{background:#f4efe8;border-color:rgba(31,27,24,.4);outline:none}
 .sky-slot-remove{color:#8f1f1b}
@@ -8,7 +8,7 @@ html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]) #skyFoundation
 html[data-sky-last-mode="comparison"] [data-add-sky-b],html[data-sky-b-editing="true"] [data-add-sky-b]{display:none!important}
 /* Keep the authored blue slot tab as Sky B's identity; suppress the redundant plain heading beside it. */
 #skyFoundationB>.sky-foundation-heading .sky-foundation-name{display:none!important}
-#skyFoundationWheelMount>.sky-foundation-single-wheel{display:block;width:100%;height:auto;max-height:min(78vh,900px);overflow:visible}
+#skyFoundationWheelMount>.sky-foundation-single-wheel{display:block;width:min(100%,900px);height:auto;max-height:none;overflow:visible}
 html[data-sky-b-present="false"] #skyFoundationWheelMount>.sky-foundation-wheel:not([data-single-sky="A"]){visibility:hidden!important}
 #skyFoundationWheelMount[data-single-sky-pending="true"]>*{visibility:hidden!important}
 .sky-foundation-single-wheel [data-layer="zodiac"] .sky-foundation-sign-glyph{filter:var(--sky-silver-glow)}
