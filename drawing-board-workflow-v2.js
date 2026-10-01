@@ -1509,6 +1509,41 @@
     }));
   }
 
+  function cardCountOptions(value) {
+    const selected=Math.max(1,Math.min(12,Number(value)||1));
+    return Array.from({length:12},(_,index)=>{
+      const count=index+1;
+      return '<option value="'+count+'" '+(count===selected?'selected':'')+'>'+count+' card'+(count===1?'':'s')+'</option>';
+    }).join('');
+  }
+  function normalizedBespokeQuestionSettings(draft,index) {
+    const prior=draft?.positionSettings?.[index] || {};
+    const fallback=draft?.positionSettings?.[index-1] || {};
+    return {
+      pack:prior.pack || draft?.positionPacks?.[index] || fallback.pack || draft?.pack || 'full',
+      cardCount:Math.max(1,Math.min(12,Number(prior.cardCount ?? fallback.cardCount)||1)),
+      linkTo:String(prior.linkTo ?? ''),
+      reversals:prior.reversals ?? fallback.reversals ?? (draft?.reversals!==false),
+      repeats:prior.repeats ?? fallback.repeats ?? !!draft?.repeats
+    };
+  }
+  function bespokeQuestionsClipboardText(draft) {
+    const labels=Array.isArray(draft?.labels)?draft.labels:[];
+    return labels.map((label,index)=>{
+      const settings=normalizedBespokeQuestionSettings(draft,index);
+      const linkIndex=settings.linkTo===''?null:Number(settings.linkTo);
+      const linkLabel=Number.isInteger(linkIndex)&&linkIndex>=0&&linkIndex<labels.length ? 'Question '+(linkIndex+1) : 'No link';
+      return [
+        (index+1)+'. '+String(label||'').trim(),
+        '   Sub-pack: '+packLabel(settings.pack),
+        '   Cards: '+settings.cardCount,
+        '   Share card with: '+linkLabel,
+        '   Reversals: '+(settings.reversals?'On':'Off'),
+        '   Repeats: '+(settings.repeats?'On':'Off')
+      ].join('\\n');
+    }).join('\\n\\n');
+  }
+
   function labelsMarkup(labels,draft=null) {
     const rows=labels.length ? labels : [''];
     return rows.map((label,index)=>{
@@ -1519,7 +1554,7 @@
         draft.positionPacks ||= []; draft.positionPacks[index]=draft.positionSettings[index].pack;
       }
       const settings=draft?.positionSettings?.[index]||inherited;
-      return `<div class="relphi-label-row relphi-bespoke-question-row" data-label-row="${index}"><label class="relphi-question-select"><input type="checkbox" data-question-select="${index}" aria-label="Select question ${index+1}"><span>${index+1}</span></label><div class="relphi-bespoke-question-main"><input type="text" value="${escapeHtml(label)}" ${index===0&&!label?'placeholder="Commas split questions"':''} aria-label="Position ${index+1} label" data-position-label="${index}"><details class="relphi-question-advanced"><summary>Advanced</summary><div class="relphi-bespoke-question-settings"><label>Sub-pack<select data-position-pack="${index}">${packOptions(settings.pack||'full')}</select></label><label>Cards<input type="number" min="1" max="12" value="${Math.max(1,Number(settings.cardCount)||1)}" data-position-card-count="${index}" aria-label="Cards to draw for question ${index+1}"></label><label>Share card with<select data-position-link="${index}"><option value="">No link</option>${rows.map((other,j)=>j===index?'':`<option value="${j}" ${String(settings.linkTo)===String(j)?'selected':''}>Question ${j+1}</option>`).join('')}</select></label><label><input type="checkbox" data-position-reversals="${index}" ${settings.reversals!==false?'checked':''}> Reversals</label><label><input type="checkbox" data-position-repeats="${index}" ${settings.repeats?'checked':''}> Repeats</label></div></details></div></div>`;
+      return `<div class="relphi-label-row relphi-bespoke-question-row" data-label-row="${index}"><label class="relphi-question-select"><input type="checkbox" data-question-select="${index}" aria-label="Select question ${index+1}"><span>${index+1}</span></label><div class="relphi-bespoke-question-main"><input type="text" value="${escapeHtml(label)}" ${index===0&&!label?'placeholder="Commas split questions"':''} aria-label="Position ${index+1} label" data-position-label="${index}"><details class="relphi-question-advanced"><summary>Advanced</summary><div class="relphi-bespoke-question-settings"><label>Sub-pack<select data-position-pack="${index}">${packOptions(settings.pack||'full')}</select></label><label>Cards<select data-position-card-count="${index}" aria-label="Cards to draw for question ${index+1}">${cardCountOptions(settings.cardCount)}</select></label><label>Share card with<select data-position-link="${index}"><option value="">No link</option>${rows.map((other,j)=>j===index?'':`<option value="${j}" ${String(settings.linkTo)===String(j)?'selected':''}>Question ${j+1}</option>`).join('')}</select></label><label><input type="checkbox" data-position-reversals="${index}" ${settings.reversals!==false?'checked':''}> Reversals</label><label><input type="checkbox" data-position-repeats="${index}" ${settings.repeats?'checked':''}> Repeats</label></div></details></div></div>`;
     }).join('');
   }
   function parseBulkQuestions(value) {
@@ -2029,7 +2064,7 @@
     const clonedFrom=!draft.templateId&&draft.basedOnTemplateId?templateById(draft.basedOnTemplateId):null;
     return '<section class="relphi-referent-panel">'+
       (clonedFrom?'<div class="relphi-template-clone-note"><strong>Editing a copy of '+escapeHtml(clonedFrom.name)+'</strong><span>The original template stays untouched. Name and save this Bespoke version if you want to keep it; you can also continue without saving.</span></div>':'')+
-      '<div class="relphi-question-toolbar"><label><input type="checkbox" id="relphiSelectAllQuestions"> <span>Select all</span></label><button type="button" id="relphiMoveQuestionsUp" aria-label="Move selected questions up">↑</button><button type="button" id="relphiMoveQuestionsDown" aria-label="Move selected questions down">↓</button><button type="button" id="relphiDeleteQuestions" class="relphi-stroke-icon relphi-stroke-x" aria-label="Delete selected questions"><span aria-hidden="true"></span></button><button type="button" id="relphiAddPosition" class="relphi-stroke-icon relphi-stroke-plus" aria-label="Add question" '+(hasCards||draft.labels.length>=MAX_POSITIONS?'disabled':'')+'><span aria-hidden="true"></span></button></div>'+
+      '<div class="relphi-question-toolbar"><label><input type="checkbox" id="relphiSelectAllQuestions"> <span>Select all</span></label><button type="button" id="relphiCopyBespokeQuestions" class="relphi-question-copy" aria-label="Copy all Bespoke questions and advanced settings">Copy</button><button type="button" id="relphiMoveQuestionsUp" aria-label="Move selected questions up">↑</button><button type="button" id="relphiMoveQuestionsDown" aria-label="Move selected questions down">↓</button><button type="button" id="relphiDeleteQuestions" class="relphi-stroke-icon relphi-stroke-x" aria-label="Delete selected questions"><span aria-hidden="true"></span></button><button type="button" id="relphiAddPosition" class="relphi-stroke-icon relphi-stroke-plus" aria-label="Add question" '+(hasCards||draft.labels.length>=MAX_POSITIONS?'disabled':'')+'><span aria-hidden="true"></span></button></div>'+
 
       '<div id="relphiPositionLabels">'+labelsMarkup(draft.labels,draft)+'</div>'+
       '<div class="relphi-template-save"><input id="relphiTemplateName" class="'+((draft.templateName||'Unnamed Template')==='Unnamed Template'?'is-unnamed':'')+'" type="text" maxlength="60" aria-label="Template name" value="'+escapeHtml(draft.templateName||'Unnamed Template')+'" '+(hasCards?'disabled':'')+'><button type="button" id="relphiSaveTemplate" '+(hasCards?'disabled':'')+'>Save template</button></div>'+
@@ -2291,6 +2326,18 @@
     const updateQuestionToolbar=()=>{const selected=selectedQuestionIndexes(),up=drawer.querySelector('#relphiMoveQuestionsUp'),down=drawer.querySelector('#relphiMoveQuestionsDown'),del=drawer.querySelector('#relphiDeleteQuestions'),all=drawer.querySelector('#relphiSelectAllQuestions');const any=selected.length>0,allSelected=selected.length===draft.labels.length&&draft.labels.length>0;if(up)up.disabled=!any||allSelected||selected[0]===0;if(down)down.disabled=!any||allSelected||selected[selected.length-1]===draft.labels.length-1;if(del)del.disabled=!any;if(all){all.checked=selected.length===draft.labels.length&&draft.labels.length>0;all.indeterminate=any&&selected.length<draft.labels.length}};
     drawer.querySelector('#relphiSelectAllQuestions')?.addEventListener('change',event=>{drawer.querySelectorAll('[data-question-select]').forEach(box=>{box.checked=event.target.checked});updateQuestionToolbar()});
     drawer.querySelectorAll('[data-question-select]').forEach(box=>box.addEventListener('change',updateQuestionToolbar));
+    drawer.querySelector('#relphiCopyBespokeQuestions')?.addEventListener('click',async event=>{
+      const button=event.currentTarget;
+      const text=bespokeQuestionsClipboardText(draft);
+      const ok=await writeDrawingBoardClipboard(text);
+      button.textContent=ok?'Copied':'Copy failed';
+      button.setAttribute('aria-label',ok?'Bespoke questions copied':'Copy Bespoke questions failed');
+      window.setTimeout(()=>{
+        if(!button.isConnected)return;
+        button.textContent='Copy';
+        button.setAttribute('aria-label','Copy all Bespoke questions and advanced settings');
+      },1200);
+    });
     updateQuestionToolbar();
     const moveSelectedQuestions=direction=>{const selected=selectedQuestionIndexes();if(!selected.length)return;const order=Array.from({length:draft.labels.length},(_,i)=>i);if(direction<0){for(const i of selected){const p=order.indexOf(i);if(p>0&&!selected.includes(order[p-1]))[order[p-1],order[p]]=[order[p],order[p-1]]}}else{for(const i of selected.slice().reverse()){const p=order.indexOf(i);if(p<order.length-1&&!selected.includes(order[p+1]))[order[p],order[p+1]]=[order[p+1],order[p]]}}draft.labels=order.map(i=>draft.labels[i]);draft.positionPacks=(draft.positionPacks||[]).length?order.map(i=>draft.positionPacks[i]):[];draft.positionSettings=(draft.positionSettings||[]).length?order.map(i=>draft.positionSettings[i]):[];markQuestionEditCustom(drawer,draft);renderOptions(root)};
     drawer.querySelector('#relphiMoveQuestionsUp')?.addEventListener('click',()=>moveSelectedQuestions(-1));
@@ -2302,7 +2349,7 @@
       draft.labels.push(''); draft.positionPacks?.push?.(previous.pack||'full'); draft.positionSettings ||= []; draft.positionSettings.push({...previous}); markQuestionEditCustom(drawer,draft); renderOptions(root);
     });
     drawer.querySelectorAll('[data-position-pack]').forEach(select=>select.addEventListener('change',()=>{const i=Number(select.dataset.positionPack);draft.positionSettings ||= [];const prior=draft.positionSettings[i]||{};draft.positionSettings[i]={...prior,pack:select.value||'full'};draft.positionPacks ||= [];draft.positionPacks[i]=select.value||'full';draft.pack='question-by-question';const global=drawer.querySelector('#relphiDraftPack');if(global)global.value='question-by-question';}));
-    drawer.querySelectorAll('[data-position-card-count]').forEach(input=>input.addEventListener('change',()=>{const i=Number(input.dataset.positionCardCount);draft.positionSettings ||= [];const prior=draft.positionSettings[i]||{};draft.positionSettings[i]={...prior,cardCount:Math.max(1,Math.min(12,Number(input.value)||1))};}));
+    drawer.querySelectorAll('[data-position-card-count]').forEach(select=>select.addEventListener('change',()=>{const i=Number(select.dataset.positionCardCount);draft.positionSettings ||= [];const prior=draft.positionSettings[i]||{};draft.positionSettings[i]={...prior,cardCount:Math.max(1,Math.min(12,Number(select.value)||1))};}));
     drawer.querySelectorAll('[data-position-link]').forEach(select=>select.addEventListener('change',()=>{const i=Number(select.dataset.positionLink);draft.positionSettings ||= [];const prior=draft.positionSettings[i]||{};draft.positionSettings[i]={...prior,linkTo:select.value};}));
     drawer.querySelectorAll('[data-position-reversals]').forEach(input=>input.addEventListener('change',()=>{
       const i=Number(input.dataset.positionReversals);draft.positionSettings ||= [];
