@@ -585,8 +585,12 @@ function renderResultsPanel(){
   paintConfigurationMiniGlyphs(grid);
 }
 const CONFIG_STORAGE_KEY='relphiSkyConfigurationMatrixV1';
+const INEVITABLE_STORAGE_KEY='relphiSkyConfigurationInevitableV1';
+const INEVITABLE_TOOLTIP='Describes how we know the relationship is there, not how real or strong it is.';
 const configurationState=Object.fromEntries(SCOPES.map(scope=>[scope.id,new Set()]));
 (function loadPersistedConfigurationState(){try{const saved=JSON.parse(localStorage.getItem(CONFIG_STORAGE_KEY)||'null');if(!saved||typeof saved!=='object')return;SCOPES.forEach(scope=>{if(Array.isArray(saved[scope.id]))configurationState[scope.id]=new Set(saved[scope.id].filter(type=>TYPE_IDS.includes(type)))})}catch(_){}})();
+let inevitableEnabled=false;
+try{inevitableEnabled=localStorage.getItem(INEVITABLE_STORAGE_KEY)==='true'}catch(_){}
 let patterns=[];
 let queued=false;
 let applying=false;
@@ -627,8 +631,8 @@ function syntheticAxisOpposition(graph,a,b){
   const separation=Math.min(delta,360-delta);
   const orb=Math.abs(separation-180);
   const phase=orb*2;
-  if(phase>graph.windowValue+1e-9)return null;
-  return{row:null,aspect:'opposition',phase,left:a,right:b,synthetic:true,syntheticKind:'axis-opposition'};
+  if(!inevitableEnabled&&phase>graph.windowValue+1e-9)return null;
+  return{row:null,aspect:'opposition',phase,left:a,right:b,entailed:true,origin:'inevitable',synthetic:true,syntheticKind:'axis-opposition'};
 }
 function getEdge(graph,a,b,aspect){
   const direct=graph.edges.get(edgeKey(a,b))?.get(aspect)||null;
@@ -788,6 +792,9 @@ function renderConfigurationSection(){
   const cols=document.createElement('div');cols.className='sky-chart-configuration-title-choices';
   const labels=bActive()?['All','A↔A','B↔B','A↔B']:['All','A↔A'];labels.forEach(text=>{const span=document.createElement('span');span.textContent=text;cols.appendChild(span)});
   title.append(heading,cols);section.appendChild(title);
+  const inevitable=document.createElement('label');inevitable.className='sky-chart-configuration-inevitable';inevitable.title=INEVITABLE_TOOLTIP;
+  const inevitableInput=document.createElement('input');inevitableInput.type='checkbox';inevitableInput.checked=inevitableEnabled;inevitableInput.dataset.configurationInevitable='true';inevitableInput.setAttribute('aria-label','Inevitable');inevitableInput.setAttribute('aria-description',INEVITABLE_TOOLTIP);
+  const inevitableText=document.createElement('span');inevitableText.textContent='Inevitable';inevitable.append(inevitableInput,inevitableText);section.appendChild(inevitable);
   const list=document.createElement('div');list.className='sky-chart-configuration-list';
   list.appendChild(configRow('all','All configurations',true));TYPES.forEach(type=>list.appendChild(configRow(type.id,type.label,false)));
   section.appendChild(list);body.appendChild(section);syncConfigInputs();
@@ -874,7 +881,7 @@ function ensureConfigurationObserver(){
   configurationObserver.observe(body,{childList:true});
 }
 function schedule(){if(queued)return;queued=true;requestAnimationFrame(refresh)}
-function handleChange(event){const input=event.target.closest?.('[data-configuration-scope][data-configuration-type]');if(!input)return;event.stopPropagation();setSelection(input.dataset.configurationScope,input.dataset.configurationType,input.checked)}
+function handleChange(event){const inevitable=event.target.closest?.('[data-configuration-inevitable]');if(inevitable){event.stopPropagation();inevitableEnabled=inevitable.checked;try{localStorage.setItem(INEVITABLE_STORAGE_KEY,String(inevitableEnabled))}catch(_){}schedule();return}const input=event.target.closest?.('[data-configuration-scope][data-configuration-type]');if(!input)return;event.stopPropagation();setSelection(input.dataset.configurationScope,input.dataset.configurationType,input.checked)}
 function start(){
   document.addEventListener('change',handleChange,true);
   window.addEventListener('relphi:sky-foundation-clear-selection',()=>{
