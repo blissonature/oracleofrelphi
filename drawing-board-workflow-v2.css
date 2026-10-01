@@ -2615,3 +2615,48 @@ body.relphi-attune-open{overflow:hidden!important}
   #shortListPanel .relphi-sacred-resume-actions{display:grid!important;grid-template-columns:1fr!important}
   #shortListPanel .relphi-sacred-resume-actions>.relphi-button{width:100%!important}
 }
+
+
+/* Astrological suggested-question bulk selection */
+#shortListPanel .relphi-astrology-question-global-bulk,
+#shortListPanel .relphi-astrology-question-bulk{
+  display:flex!important;
+  align-items:center!important;
+  flex-wrap:wrap!important;
+  gap:.3rem!important;
+}
+#shortListPanel .relphi-astrology-question-global-bulk>.relphi-button,
+#shortListPanel .relphi-astrology-question-bulk>.relphi-button{
+  width:auto!important;
+  min-width:0!important;
+  min-height:1.9rem!important;
+  padding:.28rem .5rem!important;
+  font-size:.64rem!important;
+}
+#shortListPanel .relphi-astrology-question-group{
+  display:grid!important;
+  gap:.08rem!important;
+  margin:.5rem 0 0!important;
+  padding:.5rem .55rem!important;
+  border:1px solid var(--relphi-board-line,#d8cec5)!important;
+  border-radius:8px!important;
+  background:#fcfaf7!important;
+}
+#shortListPanel .relphi-astrology-question-group-head{
+  display:flex!important;
+  align-items:center!important;
+  justify-content:space-between!important;
+  gap:.65rem!important;
+  margin-bottom:.12rem!important;
+}
+#shortListPanel .relphi-astrology-question-group-head>strong{
+  font-size:.68rem!important;
+  font-weight:900!important;
+}
+@media(max-width:560px){
+  #shortListPanel .relphi-astrology-question-head,
+  #shortListPanel .relphi-astrology-question-group-head{
+    align-items:flex-start!important;
+    flex-direction:column!important;
+  }
+}
