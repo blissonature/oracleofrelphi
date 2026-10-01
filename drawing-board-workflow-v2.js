@@ -17,7 +17,7 @@
   const LABEL_H = 68;
   const GUTTER = 0;
   const START_EDGE_GUTTER = 4;
-  const MAX_POSITIONS = 50; // 10×5 dense packing stays above the supported .32 card scale.
+  const MAX_POSITIONS = 78; // One full tarot deck; dense layouts may zoom below card-scale defaults.
 
   let boardOpen = false;
   let initialized = false;
@@ -3885,7 +3885,7 @@
     const snap=currentSnapshot()||{};
     const labels=Array.isArray(snap.shortListPositionLabels)?snap.shortListPositionLabels:[];
     if(labels.length>=MAX_POSITIONS){
-      showBoardToast('This reading has reached the 50-card board limit.',{title:'See What Surfaces',duration:4200});
+      showBoardToast('This reading has reached the 78-card board limit.',{title:'See What Surfaces',duration:4200});
       return false;
     }
     root.querySelector('.relphi-board-toast')?.remove();
