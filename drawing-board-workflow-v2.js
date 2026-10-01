@@ -2116,7 +2116,12 @@
   function astrologySavedSkies() {
     try {
       const list=JSON.parse(localStorage.getItem('relphiSkyLibraryV1')||'[]');
-      return Array.isArray(list) ? list.filter(record=>record&&String(record.name||'').trim()&&record.placements&&Object.keys(record.placements).length) : [];
+      return Array.isArray(list) ? list.filter(record=>{
+        if(!record)return false;
+        const name=String(record.name||record.metadata?.savedSkyName||'').trim();
+        const placements=record.placements||record.positions||record.points||record.bodies||{};
+        return !!name&&!!placements&&Object.keys(placements).length>0;
+      }) : [];
     } catch (_) { return []; }
   }
   function astrologySavedSkyRef(record) {
