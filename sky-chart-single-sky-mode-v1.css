@@ -8,7 +8,7 @@ html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]) #skyFoundation
 html[data-sky-last-mode="comparison"] [data-add-sky-b],html[data-sky-b-editing="true"] [data-add-sky-b]{display:none!important}
 /* Keep the authored blue slot tab as Sky B's identity; suppress the redundant plain heading beside it. */
 #skyFoundationB>.sky-foundation-heading .sky-foundation-name{display:none!important}
-#skyFoundationWheelMount>.sky-foundation-single-wheel{display:block;width:min(100%,900px);height:auto;max-height:none;overflow:visible}
+#skyFoundationWheelMount>.sky-foundation-single-wheel{display:block;width:100%;height:auto;max-height:none;overflow:visible}
 html[data-sky-b-present="false"] #skyFoundationWheelMount>.sky-foundation-wheel:not([data-single-sky="A"]){visibility:hidden!important}
 #skyFoundationWheelMount[data-single-sky-pending="true"]>*{visibility:hidden!important}
 .sky-foundation-single-wheel [data-layer="zodiac"] .sky-foundation-sign-glyph{filter:var(--sky-silver-glow)}
