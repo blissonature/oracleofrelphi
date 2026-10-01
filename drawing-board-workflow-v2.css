@@ -2777,3 +2777,19 @@ body.relphi-attune-open{overflow:hidden!important}
   font-size:.62rem!important;
   line-height:1.35!important;
 }
+
+
+/* On-the-fly Tarot sub-pack builder */
+#shortListPanel .relphi-subpack-control{display:grid!important;grid-template-columns:minmax(0,1fr) auto!important;gap:.35rem!important;align-items:center!important}
+#shortListPanel .relphi-subpack-create{width:32px!important;height:32px!important;padding:0!important;border-radius:50%!important;font-size:1.1rem!important;line-height:1!important}
+.relphi-subpack-builder{width:min(92vw,620px);max-height:82vh;border:1px solid var(--relphi-board-line,#d8cec5);border-radius:16px;padding:0;background:#fff;color:#171412}
+.relphi-subpack-builder::backdrop{background:rgba(20,16,14,.42)}
+.relphi-subpack-builder-card{display:grid;gap:.8rem;padding:1rem;max-height:78vh;overflow:auto}
+.relphi-subpack-builder header,.relphi-subpack-builder footer,.relphi-subpack-members>div:first-child,.relphi-subpack-result-head{display:flex;align-items:center;justify-content:space-between;gap:.6rem}
+.relphi-subpack-builder header h3{margin:.1rem 0 0}.relphi-subpack-builder label{display:grid;gap:.3rem;font-weight:700}
+.relphi-subpack-builder input{font:inherit;min-height:38px;border:1px solid #d8cec5;border-radius:9px;padding:.45rem .6rem}
+.relphi-subpack-results{display:grid;gap:.35rem}.relphi-subpack-result{display:grid;grid-template-columns:38px minmax(0,1fr) auto;align-items:center;gap:.55rem;text-align:left;border:1px solid #e1d8d0;border-radius:10px;background:#fff;padding:.35rem .5rem}
+.relphi-subpack-result[aria-pressed="true"]{box-shadow:inset 0 0 0 1px currentColor}.relphi-subpack-result img{width:38px;height:54px;object-fit:cover;border-radius:4px}
+.relphi-subpack-members{display:grid;gap:.45rem;border-top:1px solid #e6ddd5;padding-top:.7rem}.relphi-subpack-members [data-subpack-members]{display:flex;gap:.35rem;flex-wrap:wrap}
+.relphi-subpack-members [data-member-remove]{border:1px solid #d8cec5;border-radius:999px;background:#fff;padding:.3rem .55rem}
+.relphi-subpack-builder footer span{flex:1}.relphi-subpack-builder button{font:inherit;cursor:pointer}.relphi-subpack-builder footer button{min-height:34px;border:1px solid #d8cec5;border-radius:999px;background:#fff;padding:.35rem .7rem}.relphi-subpack-builder footer .primary{background:#171412;color:#fff;border-color:#171412}
