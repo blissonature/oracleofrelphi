@@ -2119,24 +2119,74 @@
       return Array.isArray(list) ? list.filter(record=>record&&String(record.name||'').trim()&&record.placements&&Object.keys(record.placements).length) : [];
     } catch (_) { return []; }
   }
+  function astrologySavedSkyRef(record) {
+    return String(record?.id||record?.savedSkyId||record?.metadata?.savedSkyId||record?.name||'');
+  }
   function astrologySavedSkyOptions(selectedId) {
     const records=astrologySavedSkies();
-    return records.map(record=>'<option value="saved:'+escapeHtml(String(record.id||record.name))+'" '+(selectedId===String(record.id||record.name)?'selected':'')+'>'+escapeHtml(String(record.name||'Saved sky'))+'</option>').join('');
+    return records.map(record=>{const id=astrologySavedSkyRef(record);return id?'<option value="saved:'+escapeHtml(id)+'" '+(selectedId===id?'selected':'')+'>'+escapeHtml(String(record.name||record.metadata?.savedSkyName||'Saved sky'))+'</option>':'';}).join('');
+  }
+  function astrologySharedConnectorSky() {
+    const live=window.RelphiSkyConnector?.context?.();
+    if(live?.enabled&&live?.source==='saved'&&live.savedSkyId){
+      const record=live.savedSky||astrologySavedSkies().find(item=>astrologySavedSkyRef(item)===String(live.savedSkyId));
+      if(record)return {id:String(live.savedSkyId),name:String(record.name||record.metadata?.savedSkyName||'Connected sky'),record};
+    }
+    try{
+      const connector=JSON.parse(localStorage.getItem('relphiDrawingBoardSkyConnectorV1')||'null');
+      if(connector?.enabled&&connector?.source==='saved'&&connector.savedSkyId){
+        const record=astrologySavedSkies().find(item=>astrologySavedSkyRef(item)===String(connector.savedSkyId));
+        if(record)return {id:String(connector.savedSkyId),name:String(record.name||record.metadata?.savedSkyName||'Connected sky'),record};
+      }
+    }catch(_){}
+    return null;
+  }
+  function astrologySeedFromSharedConnector(session) {
+    if(!session||session.astrologyConnectorSeeded)return;
+    session.astrologyConnectorSeeded=true;
+    const shared=astrologySharedConnectorSky();
+    if(!session.astrologySkyASource){
+      session.astrologySkyASource=shared?'saved:'+shared.id:'here-now';
+    }
+    if(!session.astrologySkyBSource)session.astrologySkyBSource='here-now';
+    if(!Number.isFinite(Number(session.astrologySkyCount))||Number(session.astrologySkyCount)<1)session.astrologySkyCount=1;
+    if(shared&&session.astrologySkyASource==='saved:'+shared.id){
+      session.astrologyInheritedConnectorId=shared.id;
+      session.astrologyInheritedConnectorName=shared.name;
+    }
+  }
+  function invalidateAstrologyConnection(session) {
+    if(!session)return;
+    session.astrologyAnalysis=null;
+    session.astrologyResolved=null;
+    session.astrologyVisibleQuestions=[];
+    session.astrologyQuestionSelection={};
+    session.astrologyDisabledEvidence=[];
   }
   function astrologySkySourceMarkup(slot,session,disabled=false) {
-    const key=slot==='B'?'astrologySkyBSource':'astrologySkyASource';
+    const isB=slot==='B',key=isB?'astrologySkyBSource':'astrologySkyASource';
     const value=session[key]||'here-now';
     const selectedId=value.startsWith('saved:')?value.slice(6):'';
     const records=astrologySavedSkies();
-    return '<label class="relphi-astrology-sky-source"><select aria-label="'+(slot==='B'?'Second sky':'Sky')+'" data-astrology-sky-source="'+slot+'" '+(disabled?'disabled':'')+'>'+
-      '<option value="here-now" '+(value==='here-now'?'selected':'')+'>Here & Now</option>'+
-      (records.length?'<optgroup label="Saved Skies">'+astrologySavedSkyOptions(selectedId)+'</optgroup>':'')+
-      '</select>'+(records.length?'':'<small class="relphi-saved-sky-empty">No Saved Skies were found in the shared Sky Chart library.</small>')+'</label>';
+    const inherited=!isB&&session.astrologyInheritedConnectorId&&selectedId===String(session.astrologyInheritedConnectorId);
+    const label=isB?'Sky B':'Sky A';
+    return '<div class="relphi-astrology-sky-source" data-astrology-sky-slot="'+slot+'">'+
+      '<div class="relphi-astrology-sky-source-head"><strong>'+label+'</strong>'+
+        (inherited?'<span class="relphi-astrology-inherited-sky">Connected · '+escapeHtml(session.astrologyInheritedConnectorName||'Drawing Board')+'</span>':'')+
+        (isB?'<button type="button" class="relphi-button relphi-button--quiet relphi-remove-astrology-sky" data-remove-astrology-sky="B" '+(disabled?'disabled':'')+'>Remove</button>':'')+
+      '</div>'+
+      '<select aria-label="'+(isB?'Second sky':'Primary sky')+'" data-astrology-sky-source="'+slot+'" '+(disabled?'disabled':'')+'>'+
+        '<option value="here-now" '+(value==='here-now'?'selected':'')+'>Here & Now</option>'+
+        (records.length?'<optgroup label="Saved Skies">'+astrologySavedSkyOptions(selectedId)+'</optgroup>':'')+
+      '</select>'+
+      (inherited?'<small class="relphi-astrology-inherited-note">Using the sky already connected to the Drawing Board. Choose another source here to replace it for this reading only.</small>':'')+
+      (records.length?'':'<small class="relphi-saved-sky-empty">No Saved Skies were found in the shared Sky Chart library.</small>')+
+    '</div>';
   }
   function astrologyResolveSavedSky(source) {
     if(!String(source||'').startsWith('saved:')) return null;
     const ref=String(source).slice(6);
-    return astrologySavedSkies().find(record=>String(record.id||record.name)===ref)||null;
+    return astrologySavedSkies().find(record=>astrologySavedSkyRef(record)===ref)||null;
   }
   function astrologyWhereWhenPacket() {
     try {
@@ -2184,14 +2234,15 @@
     '</details>';
   }
   function astrologySurfaceMarkup(session,disabled=false) {
-    const count=Math.max(0,Math.min(2,Number(session.astrologySkyCount)||0));
+    astrologySeedFromSharedConnector(session);
+    const count=Math.max(1,Math.min(2,Number(session.astrologySkyCount)||1));
     return '<section class="relphi-referent-panel relphi-astrology-surface">'+
       ''+
       astrologyHouseSystemMarkup(session,disabled)+
       '<div class="relphi-astrology-sky-sources">'+
         (count>0?astrologySkySourceMarkup('A',session,disabled):'')+
         (count>1?astrologySkySourceMarkup('B',session,disabled):'')+
-        (count<2?'<button type="button" class="relphi-add-sky" data-add-astrology-sky '+(disabled?'disabled':'')+'>+ Add a sky</button>':'')+
+        (count<2?'<button type="button" class="relphi-add-sky" data-add-astrology-sky '+(disabled?'disabled':'')+'>+ Compare a second sky</button>':'')+
       '</div>'+
       (count?'<div class="relphi-astrology-bridge-status"><strong>Sky connection</strong><span data-astrology-sky-status>'+(session.astrologyAnalysis?'Review the evidence below. Select suggested questions or write your own before starting the reading.':'Ready to connect.')+'</span><button type="button" id="relphiConnectSky" '+(disabled?'disabled':'')+'>Use '+(count>1?'These Skies':'This Sky')+'</button></div>':'')+
       (session.astrologyAnalysis?astrologyAnalysisMarkup(session.astrologyAnalysis,session):'')+
@@ -2375,7 +2426,15 @@
     }));
 
     drawer.querySelector('[data-add-astrology-sky]')?.addEventListener('click',()=>{
-      session.astrologySkyCount=Math.min(2,(Number(session.astrologySkyCount)||0)+1);
+      session.astrologySkyCount=2;
+      session.astrologySkyBSource ||= 'here-now';
+      invalidateAstrologyConnection(session);
+      renderOptions(root,{preserveScroll:true});
+    });
+    drawer.querySelector('[data-remove-astrology-sky]')?.addEventListener('click',()=>{
+      session.astrologySkyCount=1;
+      session.astrologySkyBSource='here-now';
+      invalidateAstrologyConnection(session);
       renderOptions(root,{preserveScroll:true});
     });
     const setAstrologyEvidenceEnabled=(keys,enabled)=>{
@@ -2433,6 +2492,8 @@
     drawer.querySelectorAll('[data-astrology-sky-source]').forEach(select=>select.addEventListener('change',()=>{
       const slot=select.dataset.astrologySkySource==='B'?'B':'A';
       session[slot==='B'?'astrologySkyBSource':'astrologySkyASource']=select.value||'here-now';
+      invalidateAstrologyConnection(session);
+      renderOptions(root,{preserveScroll:true});
     }));
     drawer.querySelector('#relphiConnectSky')?.addEventListener('click',async()=>{
       const button=drawer.querySelector('#relphiConnectSky'),count=Math.max(1,Math.min(2,Number(session.astrologySkyCount)||1)),mode=count>1?'AB':'A';
