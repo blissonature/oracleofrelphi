@@ -1024,6 +1024,7 @@
       const nextPayload = calculateSky(slot, selected, date, time);
       writeJson(SLOT_KEYS[slot], nextPayload);
       writeViewState(slot, 'confirmed');
+      window.RelphiSkyCardHitsStructure?.clearRulerFocus?.();
       dispatchSlotChange(slot);
       status(slot, 'Calculated and saved.');
     } catch (error) {
