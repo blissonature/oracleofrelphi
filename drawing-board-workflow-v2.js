@@ -1155,17 +1155,8 @@
   function concludeSacredReading(root=panel()) {
     if(!root)return false;
     removeSacredResumeGate(root);
+    if(!resetBoardGlobal(root,{openSettings:false}))return false;
     sacredResumeGateHandled=true;
-    closeFocus({acknowledge:true,advanceSurface:false});
-    clearCraftedStructure(root);
-    craftedReadingActive=false;
-    boardSetupConfirmed=false;
-    settingsOpen=false;
-    optionsSession=null;
-    freeSettingsSession=null;
-    settingsBaseline=null;
-    setBoardMode(root,'board');
-    enhance(root);
     showBoardToast('The Sacred Reading has been concluded.',{title:'Reading concluded',duration:4200});
     return true;
   }
@@ -2693,7 +2684,7 @@
     return resetBoardGlobal(root);
   }
 
-  function resetBoardGlobal(root = panel()) {
+  function resetBoardGlobal(root = panel(), {openSettings=true} = {}) {
     if(!root)return false;
     openTool='';
     surfaceReadingSession=null;
@@ -2708,7 +2699,7 @@
     closeAttune();
     closeFocus({acknowledge:false,advanceSurface:false});
 
-    settingsOpen=true;
+    settingsOpen=!!openSettings;
     settingsMode='free';
     boardSetupConfirmed=false;
     activeCraftedPath='';
@@ -2719,10 +2710,13 @@
     const bridge=optionsBridge();
     const resetSnapshot=bridge?.capture?.();
     if(bridge&&resetSnapshot){
+      const background=boardBackgroundDefault();
       resetSnapshot.rowEnvelopeColor='#f3f0ea';
       resetSnapshot.rowEnvelopeImage='';
-      resetSnapshot.rowTableColor='#7d1f28';
-      resetSnapshot.rowTableImage='';
+      resetSnapshot.rowEnvelopeArt={};
+      resetSnapshot.customCardArt={};
+      resetSnapshot.rowTableColor=String(background.color||'#7d1f28');
+      resetSnapshot.rowTableImage=background.mode==='image'?String(background.image||''):'';
       resetSnapshot.rowSnapEnabled=true;
       resetSnapshot.rowSnapGrid='one-eighth';
       resetSnapshot.rowRotationSnapEnabled=true;
@@ -2743,18 +2737,32 @@
     const nativeDrawer=root.querySelector('.card-row-drawing-board');
     if(nativeDrawer)nativeDrawer.open=true;
 
-    freeSettingsSession={draft:freeSettingsDraftFromState()};
-    settingsBaseline={
-      snapshot:clone(currentSnapshot()||{}),
-      stickers:true,
-      craftedReadingActive:false,
-      surfaceReadingSession:null,
-      recursionSession:null,
-      recursionPortalLevel:0
-    };
     setBoardMode(root,'board');
-    ensureBoardChrome(root);
-    renderBoardSettings(root);
+    if(openSettings){
+      settingsOpen=true;
+      freeSettingsSession={draft:freeSettingsDraftFromState()};
+      settingsBaseline={
+        snapshot:clone(currentSnapshot()||{}),
+        stickers:false,
+        craftedReadingActive:false,
+        surfaceReadingSession:null,
+        recursionSession:null,
+        recursionPortalLevel:0
+      };
+      ensureBoardChrome(root);
+      renderBoardSettings(root);
+    }else{
+      settingsOpen=false;
+      boardConfigurationOpen=false;
+      optionsSession=null;
+      freeSettingsSession=null;
+      settingsBaseline=null;
+      root.querySelector('.relphi-reading-options-drawer')?.remove();
+      root.querySelector('.relphi-free-settings')?.remove();
+      ensureBoardChrome(root);
+      syncZoomToolbarVisibility(root);
+      enhance(root);
+    }
     return true;
   }
 
