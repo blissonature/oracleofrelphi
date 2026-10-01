@@ -176,7 +176,6 @@
       #crowleyHarmonicGuide .crowley-invocation{margin:.65rem 0 1rem;border-left:3px solid var(--relphi-board-red)}
       #crowleyDomainGate{margin:0 0 .75rem}
       #crowleySignificatorResults{display:flex;gap:.35rem;flex-wrap:wrap;margin-top:.4rem}
-      #crowleySignificatorResults>button{all:unset;box-sizing:border-box;min-height:var(--relphi-control-height);padding:.44rem .78rem;border:1.5px solid var(--relphi-board-ink);border-radius:var(--relphi-radius-md);background:var(--relphi-board-surface);color:var(--relphi-board-ink);font:inherit;font-size:var(--relphi-control-font-size);font-weight:800;cursor:pointer}
       #shortListPanel .card-row-item.crowley-anchor .card-row-card-wrap{outline:3px solid var(--relphi-board-red)!important;outline-offset:3px}
       #shortListPanel .card-row-item.crowley-target .card-row-card-wrap{outline:3px dashed #725c16!important;outline-offset:3px}
       #shortListPanel .card-row-item.crowley-pair .card-row-card-wrap{box-shadow:0 0 0 3px rgba(55,83,105,.58)!important}

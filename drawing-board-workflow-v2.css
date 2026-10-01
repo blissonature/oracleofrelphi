@@ -5,7 +5,6 @@
 #shortListPanel .card-row-workspace-toolbar:not(.relphi-board-controller){visibility:hidden!important;opacity:0!important;pointer-events:none!important}
 #shortListPanel #resetCardRowPan,#shortListPanel .card-row-pan-note{display:none!important}
 
-#shortListPanel{--relphi-board-red:#dc1f18;--relphi-board-ink:#171412;--relphi-board-paper:#fffdf8;--relphi-board-line:#d8cec5;--relphi-board-soft:#f4efe8}
 #shortListPanel[hidden]{display:none!important}
 #shortListPanel .card-row-drawing-board{position:relative!important;margin:.5rem 0 1rem!important;border:1px solid var(--relphi-board-line)!important;border-radius:16px!important;background:#fff!important;overflow:visible!important}
 #shortListPanel .card-row-drawing-board>summary{padding:.7rem .85rem!important;cursor:pointer!important;text-align:left!important}
