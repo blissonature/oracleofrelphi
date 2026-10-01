@@ -2734,3 +2734,46 @@ body.relphi-attune-open{overflow:hidden!important}
     flex-direction:column!important;
   }
 }
+
+
+/* Astrological Reading sky inheritance and compare controls */
+#shortListPanel .relphi-astrology-sky-source{
+  display:grid!important;
+  gap:.3rem!important;
+  width:100%!important;
+  min-width:0!important;
+}
+#shortListPanel .relphi-astrology-sky-source-head{
+  display:flex!important;
+  align-items:center!important;
+  gap:.45rem!important;
+  min-width:0!important;
+}
+#shortListPanel .relphi-astrology-sky-source-head>strong{
+  flex:0 0 auto!important;
+  font-size:.68rem!important;
+  font-weight:900!important;
+}
+#shortListPanel .relphi-astrology-inherited-sky{
+  min-width:0!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+  white-space:nowrap!important;
+  color:#665d56!important;
+  font-size:.63rem!important;
+  font-weight:800!important;
+}
+#shortListPanel .relphi-remove-astrology-sky{
+  margin-left:auto!important;
+  width:auto!important;
+  min-width:0!important;
+  min-height:1.9rem!important;
+  padding:.28rem .5rem!important;
+  font-size:.64rem!important;
+}
+#shortListPanel .relphi-astrology-inherited-note{
+  margin:0!important;
+  color:#746b64!important;
+  font-size:.62rem!important;
+  line-height:1.35!important;
+}
