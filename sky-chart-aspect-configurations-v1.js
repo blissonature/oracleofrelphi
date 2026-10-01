@@ -618,6 +618,16 @@ function collectGraph(){
     let byAspect=edges.get(key);if(!byAspect){byAspect=new Map();edges.set(key,byAspect)}
     const current=byAspect.get(aspect),phase=phaseError(row);if(!current||phase<current.phase)byAspect.set(aspect,{row,aspect,phase,left:left.key,right:right.key});
   }
+  if(inevitableEnabled){
+    const activeSkies=new Set(activeScopes().flatMap(scope=>scope.split('-')));
+    for(const sky of activeSkies)for(const [leftId,rightId] of [['asc','dsc'],['mc','ic']]){
+      const leftKey=nodeKey(sky,leftId),rightKey=nodeKey(sky,rightId);
+      const left=resultVertexRecord(leftKey),right=resultVertexRecord(rightKey);if(!left||!right)continue;
+      nodes.set(leftKey,left);nodes.set(rightKey,right);
+      const key=edgeKey(leftKey,rightKey);let byAspect=edges.get(key);if(!byAspect){byAspect=new Map();edges.set(key,byAspect)}
+      if(!byAspect.has('opposition'))byAspect.set('opposition',{row:null,aspect:'opposition',phase:0,left:leftKey,right:rightKey,entailed:true,origin:'inevitable',synthetic:true,syntheticKind:'axis-opposition'});
+    }
+  }
   return{windowValue,nodes,edges};
 }
 function syntheticAxisOpposition(graph,a,b){
