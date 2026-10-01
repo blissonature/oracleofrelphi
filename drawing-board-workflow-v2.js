@@ -2163,7 +2163,7 @@
       '<div class="relphi-question-controller-head"><strong>Question controller</strong><span id="relphiQuestionControllerStatus">Select one or more questions.</span></div>'+
       '<div class="relphi-question-controller-fields">'+
         '<label>Sub-pack<select id="relphiQuestionControllerPack" class="relphi-select" disabled><option value="">Select questions</option></select></label>'+
-        '<label class="relphi-card-count-controller">Cards<div><input id="relphiQuestionControllerCards" class="relphi-input" type="number" inputmode="numeric" min="1" max="12" step="1" disabled aria-label="Cards per selected question"><span>× Cards</span></div></label>'+
+        '<label class="relphi-card-count-controller">Cards per question<div><input id="relphiQuestionControllerCards" class="relphi-input" type="number" inputmode="numeric" min="1" max="12" step="1" placeholder="—" disabled aria-label="Cards per selected question"><span>× Cards</span></div></label>'+
         '<label>Share card with<select id="relphiQuestionControllerLink" class="relphi-select" disabled><option value="">Select questions</option></select></label>'+
         '<label class="relphi-question-controller-check"><input id="relphiQuestionControllerReversals" type="checkbox" disabled> Reversals</label>'+
         '<label class="relphi-question-controller-check"><input id="relphiQuestionControllerRepeats" type="checkbox" disabled> Repeats</label>'+
@@ -2807,13 +2807,54 @@
     renderBoardSettings(root);
   }
 
+  function expandBespokeDraftForLaunch(draft) {
+    const source=clone(draft);
+    const labels=Array.isArray(source.labels)?source.labels:[];
+    const entries=labels.map((label,index)=>{
+      const settings=normalizedBespokeQuestionSettings(source,index);
+      const linkedIndex=settings.linkTo===''||settings.linkTo==null?null:Number(settings.linkTo);
+      const linked=Number.isInteger(linkedIndex)&&linkedIndex>=0&&linkedIndex<labels.length&&linkedIndex!==index;
+      return {
+        index,
+        text:String(label||'').trim() || 'Question '+(index+1),
+        settings,
+        linkedIndex:linked?linkedIndex:null,
+        count:linked?1:Math.max(1,Math.min(12,Math.trunc(Number(settings.cardCount)||1)))
+      };
+    });
+    const starts=[];
+    let total=0;
+    entries.forEach(entry=>{starts[entry.index]=total;total+=entry.count;});
+    if(total>MAX_POSITIONS)return {draft:null,total};
+
+    const next={...source,labels:[],positionPacks:[],positionSettings:[]};
+    entries.forEach(entry=>{
+      const linkedStart=entry.linkedIndex==null?null:starts[entry.linkedIndex];
+      for(let offset=0;offset<entry.count;offset++){
+        next.labels.push(entry.count>1?entry.text+' · Card '+(offset+1)+' of '+entry.count:entry.text);
+        next.positionPacks.push(entry.settings.pack||'full');
+        next.positionSettings.push({
+          ...entry.settings,
+          cardCount:1,
+          linkTo:Number.isInteger(linkedStart)?String(linkedStart):'',
+          questionText:entry.text,
+          questionIndex:entry.index,
+          questionCardIndex:offset,
+          questionCardCount:entry.count
+        });
+      }
+    });
+    if(next.positionPacks.some((pack,index)=>pack!==next.positionPacks[0]))next.pack='question-by-question';
+    return {draft:next,total};
+  }
+
   function draftPrefab(draft) {
     const based=templateById(draft.templateId || draft.basedOnTemplateId);
     const labels=draft.labels.slice(0,MAX_POSITIONS).map((value,index)=>String(value || `Position ${index+1}`).trim());
     const positionPacks=(draft.positionPacks||[]).slice(0,labels.length).map(value=>String(value||''));
     if (based && based.positions.length===labels.length) {
       const next=clone(based);
-      next.positions.forEach((item,index)=>{const ps=draft.positionSettings?.[index]||{};item.label=labels[index]; item.drawOrder=index+1; item.drawScope=positionPacks[index]||ps.pack||item.drawScope||'';item.allowReversals=ps.reversals ?? draft.reversals;item.allowRepeats=ps.repeats ?? draft.repeats;item.cardCount=Math.max(1,Number(ps.cardCount)||1);item.linkTo=String(ps.linkTo??'');});
+      next.positions.forEach((item,index)=>{const ps=draft.positionSettings?.[index]||{};item.label=labels[index];item.drawOrder=index+1;item.drawScope=positionPacks[index]||ps.pack||item.drawScope||'';item.allowReversals=ps.reversals ?? draft.reversals;item.allowRepeats=ps.repeats ?? draft.repeats;item.cardCount=Math.max(1,Number(ps.cardCount)||1);item.linkTo=String(ps.linkTo??'');item.questionText=String(ps.questionText||labels[index]||'');item.questionIndex=Number.isInteger(ps.questionIndex)?ps.questionIndex:index;item.questionCardIndex=Math.max(0,Number(ps.questionCardIndex)||0);item.questionCardCount=Math.max(1,Number(ps.questionCardCount)||1);});
       next.rules={allowReversals:draft.reversals,allowRepeats:draft.repeats,drawScope:draft.pack};
       if (!draft.templateId) {
         next.id='custom-active';
@@ -2825,7 +2866,7 @@
       return next;
     }
     const positions=genericPositions(labels);
-    positions.forEach((item,index)=>{const ps=draft.positionSettings?.[index]||{};item.drawScope=positionPacks[index]||ps.pack||'';item.allowReversals=ps.reversals ?? draft.reversals;item.allowRepeats=ps.repeats ?? draft.repeats;item.cardCount=Math.max(1,Number(ps.cardCount)||1);item.linkTo=String(ps.linkTo??'');});
+    positions.forEach((item,index)=>{const ps=draft.positionSettings?.[index]||{};item.drawScope=positionPacks[index]||ps.pack||'';item.allowReversals=ps.reversals ?? draft.reversals;item.allowRepeats=ps.repeats ?? draft.repeats;item.cardCount=Math.max(1,Number(ps.cardCount)||1);item.linkTo=String(ps.linkTo??'');item.questionText=String(ps.questionText||labels[index]||'');item.questionIndex=Number.isInteger(ps.questionIndex)?ps.questionIndex:index;item.questionCardIndex=Math.max(0,Number(ps.questionCardIndex)||0);item.questionCardCount=Math.max(1,Number(ps.questionCardCount)||1);});
     return {version:1,id:'custom-active',name:draft.templateName || 'Custom',cardCount:labels.length,source:'custom',editable:true,basedOn:based?.id||null,positions,rules:{allowReversals:draft.reversals,allowRepeats:draft.repeats,drawScope:draft.pack}};
   }
 
@@ -3319,6 +3360,8 @@
     const keywordMode=meta.keywordMatchMode==='all'?'all':'any';
     const reversalsAllowed=meta.allowReversals ?? (snap.rowAllowReversals!==false);
     const cardCount=Math.max(1,Number(meta.cardCount)||1),linkTo=String(meta.linkTo??'');
+    const questionCardCount=Math.max(1,Number(meta.questionCardCount)||cardCount);
+    const questionCardIndex=Math.max(0,Number(meta.questionCardIndex)||0);
     const linkedIndex=linkTo!==''?Number(linkTo):null,linkedCard=Number.isInteger(linkedIndex)?cardAt(linkedIndex,root):null;
 
     // Keyword sub-packs are question-specific. Load the current question's tags
@@ -3344,7 +3387,7 @@
     reader.setAttribute('aria-modal','true');
     reader.setAttribute('aria-label','Attune to the Referent');
     const scopeLabel=SURFACE_PACK_LABELS[Object.keys(SURFACE_PACK_BY_KIND).find(key=>SURFACE_PACK_BY_KIND[key]===scope)] || (scope==='full'?'Full Pack':scope || 'Full Pack');
-    const packLine='Assigned pack · '+escapeHtml(scopeLabel)+(keywordTags.length?' · '+escapeHtml(keywordTags.join(keywordMode==='all'?' + ':' / ')):'')+(cardCount>1?' · '+cardCount+' cards':'')+(linkedCard?' · shares Question '+(linkedIndex+1)+' card':'');
+    const packLine='Assigned pack · '+escapeHtml(scopeLabel)+(keywordTags.length?' · '+escapeHtml(keywordTags.join(keywordMode==='all'?' + ':' / ')):'')+(questionCardCount>1?' · Card '+(questionCardIndex+1)+' of '+questionCardCount:'')+(linkedCard?' · shares Question '+(linkedIndex+1)+' card':'');
 
     let actionMarkup='';
     let searchMarkup='';
@@ -3960,7 +4003,15 @@
   function applyOptions(root = panel()) {
     if (!optionsSession || !root) return;
     const session=optionsSession;
-    const draft=clone(session.draft);
+    let draft=clone(session.draft);
+    if(session.path==='bespoke'){
+      const expanded=expandBespokeDraftForLaunch(draft);
+      if(!expanded.draft){
+        showBoardToast('This Bespoke reading requests '+expanded.total+' cards. The current safety limit is '+MAX_POSITIONS+'. Reduce the card count or number of questions before starting.',{title:'Bespoke',duration:6200});
+        return;
+      }
+      draft=expanded.draft;
+    }
     draft.stickers=true;
     const structural=optionsStructuralChanged(session);
     const surfaceKinds=session.path==='surface' ? selectedSurfaceKinds(session) : [];

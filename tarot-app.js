@@ -2516,6 +2516,20 @@
       }
     };
   }
+  function prefabSemanticPositionMeta(position) {
+    const meta={};
+    [
+      'allowReversals','allowRepeats','cardCount','linkTo',
+      'questionText','questionIndex','questionCardIndex','questionCardCount',
+      'keywordTags','keywordMatchMode','cardSource','sourceKind',
+      'derivedFromPack','derivedFromIndex','derivedFromCard','derivedFromReversed',
+      'craftedPath'
+    ].forEach(key=>{
+      if(position?.[key]!==undefined)meta[key]=cloneBoardValue(position[key],position[key]);
+    });
+    return meta;
+  }
+
   function applyPrefabLayout(prefab, options = {}) {
     if (!prefab || !Array.isArray(prefab.positions) || !prefab.positions.length) return false;
     if ((state.shortList || []).length || (state.rowLayoutLocked && !state.rowLayoutDesignMode)) return false;
@@ -2532,6 +2546,7 @@
       state.rowEnvelopeLayout[index] = { x:transform.x * PREFAB_CANVAS_WIDTH, y:transform.y * PREFAB_CANVAS_HEIGHT };
       state.rowCardTransforms[index] = { scale:transform.scale, rotation:transform.rotation, zIndex:transform.zIndex };
       return {
+        ...prefabSemanticPositionMeta(position),
         id:prefabPositionId(position, index),
         role:position.role || '',
         covers:position.covers || '',
@@ -2573,6 +2588,7 @@
     if (!state.rowLayoutDesignMode || (state.shortList || []).length) return null;
     state.rowActiveLayout = layoutSnapshotFromBoard(details);
     state.rowPositionMeta = state.rowActiveLayout.positions.map(position => ({
+      ...prefabSemanticPositionMeta(position),
       id:position.id,
       role:position.role || '',
       covers:position.covers || '',
