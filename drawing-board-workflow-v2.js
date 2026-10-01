@@ -2181,15 +2181,29 @@
       '<div class="relphi-template-save"><input id="relphiTemplateName" class="'+((draft.templateName||'Unnamed Template')==='Unnamed Template'?'is-unnamed':'')+'" type="text" maxlength="60" aria-label="Template name" value="'+escapeHtml(draft.templateName||'Unnamed Template')+'" '+(hasCards?'disabled':'')+'><button type="button" id="relphiSaveTemplate" '+(hasCards?'disabled':'')+'>Save template</button></div>'+
       '</section>';
   }
+  function hydrateTemplateDraft(draft,template) {
+    if(!draft||!template||!Array.isArray(template.positions))return false;
+    const ordered=template.positions.slice().sort((a,b)=>(Number(a.drawOrder)||0)-(Number(b.drawOrder)||0));
+    draft.templateId=template.id;
+    draft.basedOnTemplateId=template.id;
+    draft.templateName=template.name||'';
+    draft.labels=ordered.map((item,index)=>String(item.label||('Position '+(index+1))));
+    draft.positionPacks=ordered.map(item=>String(item.drawScope||template.rules?.drawScope||''));
+    draft.positionSettings=[];
+    draft.pack=String(template.rules?.drawScope||draft.pack||'full');
+    draft.reversals=template.rules?.allowReversals!==false;
+    draft.repeats=!!template.rules?.allowRepeats;
+    return true;
+  }
+
   function templatesMarkup(draft,hasCards) {
     const entries=allTemplates();
     const requestedId=draft.templateId||draft.basedOnTemplateId;
     const effectiveId=entries.some(item=>item.id===requestedId)?requestedId:(entries[0]?.id||'');
-    // The select falls back to the first template when the draft has no id.
-    // Preview that same effective selection so the control and preview can
-    // never disagree after Clear.
-    if(!draft.templateId && effectiveId) draft.templateId=effectiveId;
+    // Templates are authoritative. Entering this path replaces stale Bespoke
+    // question state with the selected template's own canonical positions.
     const selected=templateById(effectiveId);
+    if(!draft.templateId && selected) hydrateTemplateDraft(draft,selected);
     const positions=selected?.positions?.slice?.().sort((a,b)=>a.drawOrder-b.drawOrder) || [];
     const preview=selected?.id===RECURSION_ID
       ? '<div class="relphi-recursion-template-note"><strong>Seven recursive levels · 22 cards</strong><span>Each level uses the Relphi logo: Mem, Aleph, and Shin occupy the three black circles. The red circle is Earth, the portal to the next level; on Level 7 it receives card 22. The seven-level depth control is the 1×7 Veilva.</span></div>'
@@ -2353,13 +2367,10 @@
 
     const templateSelect = drawer.querySelector('#relphiSpreadTemplateSelect');
     templateSelect?.addEventListener('change',()=>{
-      draft.templateId=templateSelect.value;
-      draft.basedOnTemplateId=templateSelect.value;
       const chosen=templateById(templateSelect.value);
-      draft.templateName=chosen?.name||'';
-      // Selection is safe now that the Opening guide mutation loop is fixed.
+      if(chosen)hydrateTemplateDraft(draft,chosen);
       // Rerender only the settings UI so the selected template preview is current;
-      // applying the board layout still waits for Confirm.
+      // applying the canonical board layout still waits for Confirm.
       renderOptions(root);
     });
     drawer.querySelector('#relphiModifyTemplate')?.addEventListener('click',()=>{
@@ -2850,6 +2861,16 @@
 
   function draftPrefab(draft) {
     const based=templateById(draft.templateId || draft.basedOnTemplateId);
+    if(draft.templateId && based){
+      const canonical=clone(based);
+      canonical.rules={
+        ...(canonical.rules||{}),
+        allowReversals:draft.reversals,
+        allowRepeats:draft.repeats,
+        drawScope:draft.pack||canonical.rules?.drawScope||'full'
+      };
+      return canonical;
+    }
     const labels=draft.labels.slice(0,MAX_POSITIONS).map((value,index)=>String(value || `Position ${index+1}`).trim());
     const positionPacks=(draft.positionPacks||[]).slice(0,labels.length).map(value=>String(value||''));
     if (based && based.positions.length===labels.length) {
