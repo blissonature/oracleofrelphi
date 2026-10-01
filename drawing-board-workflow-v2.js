@@ -1550,11 +1550,17 @@
       const inherited=draft?.positionSettings?.[index] || draft?.positionSettings?.[index-1] || {pack:draft?.pack||'full',reversals:draft?.reversals!==false,repeats:!!draft?.repeats,cardCount:1,linkTo:''};
       if(draft && !draft.positionSettings?.[index]){
         draft.positionSettings ||= [];
-        draft.positionSettings[index]={pack:inherited.pack||'full',reversals:inherited.reversals!==false,repeats:!!inherited.repeats};
-        draft.positionPacks ||= []; draft.positionPacks[index]=draft.positionSettings[index].pack;
+        draft.positionSettings[index]={
+          pack:inherited.pack||'full',
+          reversals:inherited.reversals!==false,
+          repeats:!!inherited.repeats,
+          cardCount:Math.max(1,Math.min(12,Number(inherited.cardCount)||1)),
+          linkTo:String(inherited.linkTo??'')
+        };
+        draft.positionPacks ||= [];
+        draft.positionPacks[index]=draft.positionSettings[index].pack;
       }
-      const settings=draft?.positionSettings?.[index]||inherited;
-      return `<div class="relphi-label-row relphi-bespoke-question-row" data-label-row="${index}"><label class="relphi-question-select"><input type="checkbox" data-question-select="${index}" aria-label="Include question ${index+1} in this reading" title="Checked questions are included when the reading starts"><span>${index+1}</span></label><div class="relphi-bespoke-question-main"><input type="text" value="${escapeHtml(label)}" ${index===0&&!label?'placeholder="Commas split questions"':''} aria-label="Position ${index+1} label" data-position-label="${index}"><details class="relphi-question-advanced"><summary>Advanced</summary><div class="relphi-bespoke-question-settings"><label>Sub-pack<select data-position-pack="${index}">${packOptions(settings.pack||'full')}</select></label><label>Cards<select class="relphi-select" data-position-card-count="${index}" aria-label="Cards to draw for question ${index+1}">${cardCountOptions(settings.cardCount)}</select></label><label>Share card with<select data-position-link="${index}"><option value="">No link</option>${rows.map((other,j)=>j===index?'':`<option value="${j}" ${String(settings.linkTo)===String(j)?'selected':''}>Question ${j+1}</option>`).join('')}</select></label><label><input type="checkbox" data-position-reversals="${index}" ${settings.reversals!==false?'checked':''}> Reversals</label><label><input type="checkbox" data-position-repeats="${index}" ${settings.repeats?'checked':''}> Repeats</label></div></details></div></div>`;
+      return `<div class="relphi-label-row relphi-bespoke-question-row" data-label-row="${index}"><label class="relphi-question-select"><input type="checkbox" data-question-select="${index}" aria-label="Select question ${index+1} for editing"><span>${index+1}</span></label><div class="relphi-bespoke-question-main"><input type="text" value="${escapeHtml(label)}" ${index===0&&!label?'placeholder="Commas split questions"':''} aria-label="Question ${index+1}" data-position-label="${index}"></div></div>`;
     }).join('');
   }
   function parseBulkQuestions(value) {
@@ -2060,12 +2066,29 @@
       '</section>';
   }
 
+  function mixedValue(values) {
+    const normalized=values.map(value=>String(value??''));
+    return normalized.length && normalized.every(value=>value===normalized[0]) ? normalized[0] : '__mixed__';
+  }
+  function bespokeQuestionControllerMarkup(draft) {
+    return '<section class="relphi-question-controller" aria-label="Selected question settings">'+
+      '<div class="relphi-question-controller-head"><strong>Question controller</strong><span id="relphiQuestionControllerStatus">Select one or more questions.</span></div>'+
+      '<div class="relphi-question-controller-fields">'+
+        '<label>Sub-pack<select id="relphiQuestionControllerPack" class="relphi-select" disabled><option value="">Select questions</option></select></label>'+
+        '<label class="relphi-card-count-controller">Cards<div><input id="relphiQuestionControllerCards" class="relphi-input" type="number" inputmode="numeric" min="1" max="12" step="1" disabled aria-label="Cards per selected question"><span>× Cards</span></div></label>'+
+        '<label>Share card with<select id="relphiQuestionControllerLink" class="relphi-select" disabled><option value="">Select questions</option></select></label>'+
+        '<label class="relphi-question-controller-check"><input id="relphiQuestionControllerReversals" type="checkbox" disabled> Reversals</label>'+
+        '<label class="relphi-question-controller-check"><input id="relphiQuestionControllerRepeats" type="checkbox" disabled> Repeats</label>'+
+      '</div>'+
+    '</section>';
+  }
+
   function bespokeMarkup(draft,hasCards) {
     const clonedFrom=!draft.templateId&&draft.basedOnTemplateId?templateById(draft.basedOnTemplateId):null;
     return '<section class="relphi-referent-panel">'+
       (clonedFrom?'<div class="relphi-template-clone-note"><strong>Editing a copy of '+escapeHtml(clonedFrom.name)+'</strong><span>The original template stays untouched. Name and save this Bespoke version if you want to keep it; you can also continue without saving.</span></div>':'')+
-      '<div class="relphi-question-toolbar"><label><input type="checkbox" id="relphiSelectAllQuestions" aria-label="Include all questions in this reading"> <span>Select all</span></label><button type="button" id="relphiCopyBespokeQuestions" class="relphi-button relphi-question-copy" aria-label="Copy all Bespoke questions and advanced settings">Copy</button><button type="button" id="relphiMoveQuestionsUp" aria-label="Move selected questions up">↑</button><button type="button" id="relphiMoveQuestionsDown" aria-label="Move selected questions down">↓</button><button type="button" id="relphiDeleteQuestions" class="relphi-stroke-icon relphi-stroke-x" aria-label="Delete selected questions"><span aria-hidden="true"></span></button><button type="button" id="relphiAddPosition" class="relphi-stroke-icon relphi-stroke-plus" aria-label="Add question" '+(hasCards||draft.labels.length>=MAX_POSITIONS?'disabled':'')+'><span aria-hidden="true"></span></button></div>'+
-
+      '<div class="relphi-question-toolbar"><label><input type="checkbox" id="relphiSelectAllQuestions" aria-label="Select all questions for editing"> <span>Select all</span></label><button type="button" id="relphiCopyBespokeQuestions" class="relphi-button relphi-question-copy" aria-label="Copy all Bespoke questions and advanced settings">Copy</button><button type="button" id="relphiMoveQuestionsUp" aria-label="Move selected questions up">↑</button><button type="button" id="relphiMoveQuestionsDown" aria-label="Move selected questions down">↓</button><button type="button" id="relphiDeleteQuestions" class="relphi-stroke-icon relphi-stroke-x" aria-label="Delete selected questions"><span aria-hidden="true"></span></button><button type="button" id="relphiAddPosition" class="relphi-stroke-icon relphi-stroke-plus" aria-label="Add question" '+(hasCards||draft.labels.length>=MAX_POSITIONS?'disabled':'')+'><span aria-hidden="true"></span></button></div>'+
+      bespokeQuestionControllerMarkup(draft)+
       '<div id="relphiPositionLabels">'+labelsMarkup(draft.labels,draft)+'</div>'+
       '<div class="relphi-template-save"><input id="relphiTemplateName" class="'+((draft.templateName||'Unnamed Template')==='Unnamed Template'?'is-unnamed':'')+'" type="text" maxlength="60" aria-label="Template name" value="'+escapeHtml(draft.templateName||'Unnamed Template')+'" '+(hasCards?'disabled':'')+'><button type="button" id="relphiSaveTemplate" '+(hasCards?'disabled':'')+'>Save template</button></div>'+
       '</section>';
@@ -2323,9 +2346,81 @@
       markQuestionEditCustom(drawer,draft); renderOptions(root);
     });
     const selectedQuestionIndexes=()=>Array.from(drawer.querySelectorAll('[data-question-select]:checked')).map(box=>Number(box.dataset.questionSelect)).filter(Number.isInteger).sort((a,b)=>a-b);
-    const updateQuestionToolbar=()=>{const selected=selectedQuestionIndexes(),up=drawer.querySelector('#relphiMoveQuestionsUp'),down=drawer.querySelector('#relphiMoveQuestionsDown'),del=drawer.querySelector('#relphiDeleteQuestions'),all=drawer.querySelector('#relphiSelectAllQuestions');const any=selected.length>0,allSelected=selected.length===draft.labels.length&&draft.labels.length>0;if(up)up.disabled=!any||allSelected||selected[0]===0;if(down)down.disabled=!any||allSelected||selected[selected.length-1]===draft.labels.length-1;if(del)del.disabled=!any;if(all){all.checked=selected.length===draft.labels.length&&draft.labels.length>0;all.indeterminate=any&&selected.length<draft.labels.length}};
-    drawer.querySelector('#relphiSelectAllQuestions')?.addEventListener('change',event=>{drawer.querySelectorAll('[data-question-select]').forEach(box=>{box.checked=event.target.checked});updateQuestionToolbar()});
-    drawer.querySelectorAll('[data-question-select]').forEach(box=>box.addEventListener('change',updateQuestionToolbar));
+    const controller={
+      status:drawer.querySelector('#relphiQuestionControllerStatus'),
+      pack:drawer.querySelector('#relphiQuestionControllerPack'),
+      cards:drawer.querySelector('#relphiQuestionControllerCards'),
+      link:drawer.querySelector('#relphiQuestionControllerLink'),
+      reversals:drawer.querySelector('#relphiQuestionControllerReversals'),
+      repeats:drawer.querySelector('#relphiQuestionControllerRepeats')
+    };
+    const ensureQuestionSettings=index=>{
+      draft.positionSettings ||= [];
+      const prior=normalizedBespokeQuestionSettings(draft,index);
+      draft.positionSettings[index]={...prior};
+      draft.positionPacks ||= [];
+      draft.positionPacks[index]=prior.pack;
+      return draft.positionSettings[index];
+    };
+    const syncQuestionController=()=>{
+      const selected=selectedQuestionIndexes();
+      const up=drawer.querySelector('#relphiMoveQuestionsUp'),down=drawer.querySelector('#relphiMoveQuestionsDown'),del=drawer.querySelector('#relphiDeleteQuestions'),all=drawer.querySelector('#relphiSelectAllQuestions');
+      const any=selected.length>0,allSelected=selected.length===draft.labels.length&&draft.labels.length>0;
+      if(up)up.disabled=!any||allSelected||selected[0]===0;
+      if(down)down.disabled=!any||allSelected||selected[selected.length-1]===draft.labels.length-1;
+      if(del)del.disabled=!any;
+      if(all){all.checked=allSelected;all.indeterminate=any&&!allSelected}
+      Object.values(controller).forEach(node=>{if(node&&'disabled' in node)node.disabled=!any});
+      if(controller.status)controller.status.textContent=!any?'Select one or more questions.':selected.length===1?'Editing Question '+(selected[0]+1):'Editing '+selected.length+' questions';
+      if(!any){
+        if(controller.pack)controller.pack.innerHTML='<option value="">Select questions</option>';
+        if(controller.cards)controller.cards.value='';
+        if(controller.link)controller.link.innerHTML='<option value="">Select questions</option>';
+        if(controller.reversals){controller.reversals.checked=false;controller.reversals.indeterminate=false}
+        if(controller.repeats){controller.repeats.checked=false;controller.repeats.indeterminate=false}
+        return;
+      }
+      const settings=selected.map(ensureQuestionSettings);
+      const pack=mixedValue(settings.map(item=>item.pack));
+      if(controller.pack){
+        controller.pack.innerHTML=(pack==='__mixed__'?'<option value="__mixed__" selected>Mixed — choose to change</option>':'')+packOptions(pack==='__mixed__'?'':pack);
+        if(pack!=='__mixed__')controller.pack.value=pack;
+      }
+      const cards=mixedValue(settings.map(item=>item.cardCount));
+      if(controller.cards)controller.cards.value=cards==='__mixed__'?'':cards;
+      const links=mixedValue(settings.map(item=>item.linkTo));
+      if(controller.link){
+        controller.link.innerHTML=(links==='__mixed__'?'<option value="__mixed__" selected>Mixed — choose to change</option>':'<option value="">No link</option>')+
+          draft.labels.map((label,index)=>selected.includes(index)?'':`<option value="${index}">Question ${index+1}</option>`).join('');
+        if(links!=='__mixed__')controller.link.value=links;
+      }
+      const reversalValues=settings.map(item=>item.reversals!==false);
+      if(controller.reversals){controller.reversals.checked=reversalValues.every(Boolean);controller.reversals.indeterminate=!reversalValues.every(Boolean)&&reversalValues.some(Boolean)}
+      const repeatValues=settings.map(item=>!!item.repeats);
+      if(controller.repeats){controller.repeats.checked=repeatValues.every(Boolean);controller.repeats.indeterminate=!repeatValues.every(Boolean)&&repeatValues.some(Boolean)}
+    };
+    const applyToSelected=(patch)=>{
+      const selected=selectedQuestionIndexes();
+      if(!selected.length)return;
+      selected.forEach(index=>{
+        const prior=ensureQuestionSettings(index);
+        draft.positionSettings[index]={...prior,...patch};
+        if(patch.pack){draft.positionPacks[index]=patch.pack;draft.pack='question-by-question'}
+      });
+      markQuestionEditCustom(drawer,draft);
+      syncQuestionController();
+    };
+    drawer.querySelector('#relphiSelectAllQuestions')?.addEventListener('change',event=>{drawer.querySelectorAll('[data-question-select]').forEach(box=>{box.checked=event.target.checked});syncQuestionController()});
+    drawer.querySelectorAll('[data-question-select]').forEach(box=>box.addEventListener('change',syncQuestionController));
+    controller.pack?.addEventListener('change',()=>{if(controller.pack.value&&controller.pack.value!=='__mixed__')applyToSelected({pack:controller.pack.value})});
+    controller.cards?.addEventListener('change',()=>{
+      const value=Math.max(1,Math.min(12,Math.trunc(Number(controller.cards.value)||1)));
+      controller.cards.value=String(value);
+      applyToSelected({cardCount:value});
+    });
+    controller.link?.addEventListener('change',()=>{if(controller.link.value!=='__mixed__')applyToSelected({linkTo:controller.link.value})});
+    controller.reversals?.addEventListener('change',()=>{controller.reversals.indeterminate=false;applyToSelected({reversals:controller.reversals.checked})});
+    controller.repeats?.addEventListener('change',()=>{controller.repeats.indeterminate=false;applyToSelected({repeats:controller.repeats.checked})});
     drawer.querySelector('#relphiCopyBespokeQuestions')?.addEventListener('click',async event=>{
       const button=event.currentTarget;
       const text=bespokeQuestionsClipboardText(draft);
@@ -2338,7 +2433,7 @@
         button.setAttribute('aria-label','Copy all Bespoke questions and advanced settings');
       },1200);
     });
-    updateQuestionToolbar();
+    syncQuestionController();
     const moveSelectedQuestions=direction=>{const selected=selectedQuestionIndexes();if(!selected.length)return;const order=Array.from({length:draft.labels.length},(_,i)=>i);if(direction<0){for(const i of selected){const p=order.indexOf(i);if(p>0&&!selected.includes(order[p-1]))[order[p-1],order[p]]=[order[p],order[p-1]]}}else{for(const i of selected.slice().reverse()){const p=order.indexOf(i);if(p<order.length-1&&!selected.includes(order[p+1]))[order[p],order[p+1]]=[order[p+1],order[p]]}}draft.labels=order.map(i=>draft.labels[i]);draft.positionPacks=(draft.positionPacks||[]).length?order.map(i=>draft.positionPacks[i]):[];draft.positionSettings=(draft.positionSettings||[]).length?order.map(i=>draft.positionSettings[i]):[];markQuestionEditCustom(drawer,draft);renderOptions(root)};
     drawer.querySelector('#relphiMoveQuestionsUp')?.addEventListener('click',()=>moveSelectedQuestions(-1));
     drawer.querySelector('#relphiMoveQuestionsDown')?.addEventListener('click',()=>moveSelectedQuestions(1));
@@ -2348,25 +2443,6 @@
       const previous=draft.positionSettings?.[draft.positionSettings.length-1] || {pack:draft.pack||'full',reversals:draft.reversals!==false,repeats:!!draft.repeats,cardCount:1,linkTo:''};
       draft.labels.push(''); draft.positionPacks?.push?.(previous.pack||'full'); draft.positionSettings ||= []; draft.positionSettings.push({...previous}); markQuestionEditCustom(drawer,draft); renderOptions(root);
     });
-    drawer.querySelectorAll('[data-position-pack]').forEach(select=>select.addEventListener('change',()=>{const i=Number(select.dataset.positionPack);draft.positionSettings ||= [];const prior=draft.positionSettings[i]||{};draft.positionSettings[i]={...prior,pack:select.value||'full'};draft.positionPacks ||= [];draft.positionPacks[i]=select.value||'full';draft.pack='question-by-question';const global=drawer.querySelector('#relphiDraftPack');if(global)global.value='question-by-question';}));
-    drawer.querySelectorAll('[data-position-card-count]').forEach(select=>select.addEventListener('change',()=>{const i=Number(select.dataset.positionCardCount);draft.positionSettings ||= [];const prior=draft.positionSettings[i]||{};draft.positionSettings[i]={...prior,cardCount:Math.max(1,Math.min(12,Number(select.value)||1))};}));
-    drawer.querySelectorAll('[data-position-link]').forEach(select=>select.addEventListener('change',()=>{const i=Number(select.dataset.positionLink);draft.positionSettings ||= [];const prior=draft.positionSettings[i]||{};draft.positionSettings[i]={...prior,linkTo:select.value};}));
-    drawer.querySelectorAll('[data-position-reversals]').forEach(input=>input.addEventListener('change',()=>{
-      const i=Number(input.dataset.positionReversals);draft.positionSettings ||= [];
-      for(let j=i;j<draft.labels.length;j++){
-        const prior=draft.positionSettings[j]||{};
-        draft.positionSettings[j]={...prior,pack:draft.positionPacks?.[j]||prior.pack||draft.pack||'full',reversals:input.checked,repeats:!!prior.repeats};
-      }
-      renderOptions(root);
-    }));
-    drawer.querySelectorAll('[data-position-repeats]').forEach(input=>input.addEventListener('change',()=>{
-      const i=Number(input.dataset.positionRepeats);draft.positionSettings ||= [];
-      for(let j=i;j<draft.labels.length;j++){
-        const prior=draft.positionSettings[j]||{};
-        draft.positionSettings[j]={...prior,pack:draft.positionPacks?.[j]||prior.pack||draft.pack||'full',reversals:prior.reversals!==false,repeats:input.checked};
-      }
-      renderOptions(root);
-    }));
     drawer.querySelector('#relphiTemplateName')?.addEventListener('input',event=>{draft.templateName=event.target.value.slice(0,60);event.target.classList.toggle('is-unnamed',draft.templateName==='Unnamed Template');});
     drawer.querySelector('#relphiSaveTemplate')?.addEventListener('click',()=>saveDraftTemplate(root));
 
@@ -3743,29 +3819,6 @@
     revealCompletedSurfaceBoard(root);
   }
 
-  function bespokeLaunchDraftFromSelection(root,draft) {
-    const drawer=root?.querySelector('.relphi-reading-options-drawer');
-    const checked=Array.from(drawer?.querySelectorAll?.('[data-question-select]:checked')||[])
-      .map(input=>Number(input.dataset.questionSelect))
-      .filter(index=>Number.isInteger(index)&&index>=0&&index<draft.labels.length)
-      .sort((a,b)=>a-b);
-    if(!checked.length)return draft;
-
-    const indexMap=new Map(checked.map((originalIndex,nextIndex)=>[originalIndex,nextIndex]));
-    const next=clone(draft);
-    next.labels=checked.map(index=>draft.labels[index]);
-    next.positionPacks=checked.map(index=>draft.positionPacks?.[index] || draft.positionSettings?.[index]?.pack || draft.pack || 'full');
-    next.positionSettings=checked.map(index=>{
-      const settings=clone(draft.positionSettings?.[index] || {});
-      const linkedOriginal=settings.linkTo===''||settings.linkTo==null ? null : Number(settings.linkTo);
-      settings.linkTo=linkedOriginal!=null&&indexMap.has(linkedOriginal) ? String(indexMap.get(linkedOriginal)) : '';
-      settings.pack=settings.pack || next.positionPacks[indexMap.get(index)] || draft.pack || 'full';
-      return settings;
-    });
-    next.pack='question-by-question';
-    return next;
-  }
-
   function launchConfiguredReading(root,draft) {
     const bridge=optionsBridge(),prefabs=prefabBridge(),prefab=draftPrefab(draft);
     const snap=bridge?.capture();
@@ -3816,8 +3869,7 @@
   function applyOptions(root = panel()) {
     if (!optionsSession || !root) return;
     const session=optionsSession;
-    let draft=clone(session.draft);
-    if(session.path==='bespoke')draft=bespokeLaunchDraftFromSelection(root,draft);
+    const draft=clone(session.draft);
     draft.stickers=true;
     const structural=optionsStructuralChanged(session);
     const surfaceKinds=session.path==='surface' ? selectedSurfaceKinds(session) : [];

@@ -2506,3 +2506,74 @@ body.relphi-attune-open{overflow:hidden!important}
   justify-content:center!important;
   line-height:1!important;
 }
+
+
+/* Bespoke question settings live in one selection-aware controller. */
+#shortListPanel .relphi-question-controller{
+  display:grid!important;
+  gap:.5rem!important;
+  margin:0 0 .55rem!important;
+  padding:.58rem!important;
+  border:1px solid #d8cec5!important;
+  border-radius:9px!important;
+  background:#fcf9f5!important;
+}
+#shortListPanel .relphi-question-controller-head{
+  display:flex!important;
+  align-items:baseline!important;
+  justify-content:space-between!important;
+  gap:.75rem!important;
+}
+#shortListPanel .relphi-question-controller-head strong{font-size:.72rem!important}
+#shortListPanel .relphi-question-controller-head span{color:#756b63!important;font-size:.64rem!important;font-weight:700!important}
+#shortListPanel .relphi-question-controller-fields{
+  display:grid!important;
+  grid-template-columns:repeat(auto-fit,minmax(min(100%,8.5rem),1fr))!important;
+  gap:.42rem!important;
+  align-items:end!important;
+}
+#shortListPanel .relphi-question-controller-fields>label{
+  min-width:0!important;
+  display:grid!important;
+  gap:.22rem!important;
+  font-size:.66rem!important;
+  font-weight:800!important;
+  color:#625851!important;
+}
+#shortListPanel .relphi-question-controller-fields select,
+#shortListPanel .relphi-question-controller-fields input[type="number"]{
+  width:100%!important;
+  min-width:0!important;
+  max-width:100%!important;
+  box-sizing:border-box!important;
+}
+#shortListPanel .relphi-card-count-controller>div{
+  display:grid!important;
+  grid-template-columns:minmax(3.1rem,4.4rem) auto!important;
+  align-items:center!important;
+  gap:.35rem!important;
+}
+#shortListPanel .relphi-card-count-controller>div>span{
+  white-space:nowrap!important;
+  color:#453d38!important;
+  font-size:.68rem!important;
+  font-weight:850!important;
+}
+#shortListPanel .relphi-question-controller-fields>.relphi-question-controller-check{
+  display:flex!important;
+  align-items:center!important;
+  align-self:stretch!important;
+  gap:.38rem!important;
+  min-height:2.35rem!important;
+  padding:.4rem .5rem!important;
+  border:1px solid #d8cec5!important;
+  border-radius:7px!important;
+  background:#fff!important;
+  box-sizing:border-box!important;
+}
+#shortListPanel .relphi-question-controller-fields>.relphi-question-controller-check input{
+  width:1rem!important;
+  height:1rem!important;
+  margin:0!important;
+}
+#shortListPanel .relphi-question-advanced{display:none!important}
