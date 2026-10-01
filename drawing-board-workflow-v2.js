@@ -1555,20 +1555,20 @@
     const selectedId=entries.some(item=>item.id===draft.templateId) ? draft.templateId : (entries[0]?.id||'');
     return entries.map(item => `<option value="${escapeHtml(item.id)}" ${selectedId===item.id?'selected':''}>${escapeHtml(templateCountLabel(item))} · ${escapeHtml(item.name)}</option>`).join('');
   }
-  function packItems(){ return [
-      ['full','Full Pack'],['shown','Shown cards'],['uhn','Universal Human Needs'],['majors','Majors'],
-      ['primordial-majors','Primordial Element Majors'],['planetary-majors','Planetary Majors'],['zodiac-majors','Zodiac Majors'],['aces','Aces'],['courts','Courts'],
-      ['pips','Pips'],['decans','Decan pips'],['wands','Wands'],['cups','Cups'],['swords','Swords'],['pentacles','Pentacles / Disks'],['tags','Keywords / Tags']
-    ]; }
-  function packLabel(value){ return packItems().find(([id])=>id===value)?.[1] || value || 'Full Pack'; }
-  function packOptions(value, {questionByQuestion=false} = {}) {
-    const items = [
+  function packItems(){
+    const built=[
       ['full','Full Pack'],['shown','Shown cards'],['uhn','Universal Human Needs'],['majors','Majors'],
       ['primordial-majors','Primordial Element Majors'],['planetary-majors','Planetary Majors'],['zodiac-majors','Zodiac Majors'],['aces','Aces'],['courts','Courts'],
       ['pips','Pips'],['decans','Decan pips'],['wands','Wands'],['cups','Cups'],['swords','Swords'],['pentacles','Pentacles / Disks'],['tags','Keywords / Tags']
     ];
+    const custom=(window.RelphiCustomSubpacks?.all?.()||[]).map(pack=>['custom:'+pack.id,pack.name]);
+    return [...built,...custom];
+  }
+  function packLabel(value){ return packItems().find(([id])=>id===value)?.[1] || value || 'Full Pack'; }
+  function packOptions(value, {questionByQuestion=false} = {}) {
+    const items=packItems();
     const prefix=questionByQuestion ? `<option value="question-by-question" ${value==='question-by-question'?'selected':''}>Question by question</option>` : '';
-    return prefix+items.map(([id,label])=>`<option value="${id}" ${value===id?'selected':''}>${label}</option>`).join('');
+    return prefix+items.map(([id,label])=>`<option value="${escapeHtml(id)}" ${value===id?'selected':''}>${escapeHtml(label)}</option>`).join('');
   }
   function keywordDraftMarkup(draft) {
     if (draft.pack!=='tags') return '';
@@ -2262,7 +2262,7 @@
     return '<section class="relphi-question-controller" aria-label="Selected question settings">'+
       '<div class="relphi-question-controller-head"><strong>Question controller</strong><span id="relphiQuestionControllerStatus">Select one or more questions.</span></div>'+
       '<div class="relphi-question-controller-fields">'+
-        '<label>Sub-pack<select id="relphiQuestionControllerPack" class="relphi-select" disabled><option value="">Select questions</option></select></label>'+
+        '<label>Sub-pack<div class="relphi-subpack-control"><select id="relphiQuestionControllerPack" class="relphi-select" disabled><option value="">Select questions</option></select><button type="button" class="relphi-subpack-create" data-create-subpack aria-label="Create a sub-pack">+</button></div></label>'+
         '<label class="relphi-card-count-controller">Cards per question<div><input id="relphiQuestionControllerCards" class="relphi-input" type="number" inputmode="numeric" min="1" max="12" step="1" placeholder="—" disabled aria-label="Cards per selected question"><span>× Cards</span></div></label>'+
         '<label>Share card with<select id="relphiQuestionControllerLink" class="relphi-select" disabled><option value="">Select questions</option></select></label>'+
         '<label class="relphi-question-controller-check"><input id="relphiQuestionControllerReversals" type="checkbox" disabled> Reversals</label>'+
@@ -2689,6 +2689,13 @@
         button.setAttribute('aria-label','Copy all Bespoke questions and advanced settings');
       },1200);
     });
+    drawer.querySelector('[data-create-subpack]')?.addEventListener('click',()=>window.RelphiCustomSubpacks?.open?.({
+      onSave:pack=>{
+        const scope='custom:'+pack.id;
+        applyToSelected({pack:scope});
+        renderOptions(root);
+      }
+    }));
     syncQuestionController();
     const moveSelectedQuestions=direction=>{const selected=selectedQuestionIndexes();if(!selected.length)return;const order=Array.from({length:draft.labels.length},(_,i)=>i);if(direction<0){for(const i of selected){const p=order.indexOf(i);if(p>0&&!selected.includes(order[p-1]))[order[p-1],order[p]]=[order[p],order[p-1]]}}else{for(const i of selected.slice().reverse()){const p=order.indexOf(i);if(p<order.length-1&&!selected.includes(order[p+1]))[order[p],order[p+1]]=[order[p+1],order[p]]}}draft.labels=order.map(i=>draft.labels[i]);draft.positionPacks=(draft.positionPacks||[]).length?order.map(i=>draft.positionPacks[i]):[];draft.positionSettings=(draft.positionSettings||[]).length?order.map(i=>draft.positionSettings[i]):[];markQuestionEditCustom(drawer,draft);renderOptions(root)};
     drawer.querySelector('#relphiMoveQuestionsUp')?.addEventListener('click',()=>moveSelectedQuestions(-1));
