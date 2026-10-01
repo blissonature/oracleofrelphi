@@ -167,35 +167,35 @@
     if(document.getElementById('crowleyHarmonicStyle')) return;
     const s=document.createElement('style');s.id='crowleyHarmonicStyle';
     s.textContent=`
-      #crowleyHarmonicGuide{--crowley-ink:var(--ink,#241f1b);--crowley-muted:var(--muted,#6f665e);--crowley-line:rgba(80,65,50,.18);--crowley-paper:rgba(255,253,248,.92);--crowley-accent:var(--relphi-red,#8b1e2d);margin:12px 0;padding:14px;border:1px solid var(--crowley-line);border-radius:14px;background:var(--crowley-paper);color:var(--crowley-ink);font:inherit;line-height:1.45}
-      #crowleyHarmonicGuide[hidden]{display:none!important}
-      #crowleyHarmonicGuide strong,#crowleyHarmonicGuide h3,#crowleyHarmonicGuide legend{font-family:inherit;color:inherit}
-      #crowleyHarmonicGuide p{margin:.45rem 0}
-      #crowleyHarmonicGuide .crowley-controls{display:flex;gap:10px;flex-wrap:wrap;align-items:end}
-      #crowleyHarmonicGuide label{display:grid;gap:5px;font:inherit;font-size:.84rem;color:var(--crowley-muted)}
-      #crowleyHarmonicGuide select,#crowleyHarmonicGuide input{box-sizing:border-box;min-height:40px;padding:.48rem .65rem;border:1px solid var(--crowley-line);border-radius:9px;background:rgba(255,255,255,.72);color:var(--crowley-ink);font:inherit}
-      #crowleyHarmonicGuide button{box-sizing:border-box;min-height:40px;padding:.52rem .8rem;border:1px solid var(--crowley-line);border-radius:9px;background:rgba(255,255,255,.72);color:var(--crowley-ink);font:inherit;font-weight:650;cursor:pointer}
-      #crowleyHarmonicGuide button:hover:not(:disabled),#crowleyHarmonicGuide button:focus-visible{border-color:var(--crowley-accent);outline:none;box-shadow:0 0 0 2px color-mix(in srgb,var(--crowley-accent) 14%,transparent)}
-      #crowleyHarmonicGuide button:disabled{opacity:.5;cursor:default}
-      #crowleyHarmonicGuide button.primary,#crowleyHarmonicGuide #crowleyLockDomain,#crowleyHarmonicGuide #crowleyInvoke,#crowleyHarmonicGuide #crowleyMakeCut,#crowleyHarmonicGuide #crowleyBeginStory,#crowleyHarmonicGuide #crowleyMainLinesCorrect{border-color:var(--crowley-accent);background:var(--crowley-accent);color:#fff}
-      #crowleyHarmonicStatus,#crowleyDomainStatus{margin:.65rem 0 0;font-size:.9rem;color:var(--crowley-muted)}
-      #crowleyHarmonicGuide .crowley-invocation{margin:.65rem 0 1rem;padding:.85rem 1rem;border:1px solid var(--crowley-line);border-left:3px solid var(--crowley-accent);border-radius:0 9px 9px 0;background:rgba(255,255,255,.48);font:inherit;line-height:1.55}
-      #crowleyDomainGate{margin:0 0 12px;padding:12px;border:1px solid var(--crowley-line);border-radius:12px}
-      #crowleyDomainGate legend{padding:0 .35rem}
-      #crowleyMechanics[hidden]{display:none!important}
-      #shortListPanel .card-row-item.crowley-anchor .card-row-card-wrap{outline:3px solid var(--relphi-red,#8b1e2d)!important;outline-offset:3px}
+      /* Opening of the Key consumes the Drawing Board design-system primitives.
+         Method-specific CSS is layout/state only; typography and controls inherit. */
+      #crowleyHarmonicGuide{margin:.75rem 0;padding:.85rem;border:1px solid var(--relphi-board-line);border-radius:14px;background:var(--relphi-board-paper);color:var(--relphi-board-ink);font:inherit}
+      #crowleyHarmonicGuide[hidden],#crowleyMechanics[hidden]{display:none!important}
+      #crowleyHarmonicGuide .crowley-controls{display:flex;gap:.55rem;flex-wrap:wrap;align-items:end}
+      #crowleyHarmonicGuide label{display:grid;gap:.3rem;font:inherit;font-size:.79rem;font-weight:700}
+      #crowleyHarmonicGuide button,#crowleyHarmonicGuide select,#crowleyHarmonicGuide input[type="search"],#crowleyHarmonicGuide input[type="number"]{min-height:2.35rem;margin:0;padding:.44rem .78rem;border:1.5px solid var(--relphi-board-ink);border-radius:8px;background:#fff;color:var(--relphi-board-ink);font:inherit;font-size:.79rem;font-weight:800;line-height:1.15;box-shadow:none}
+      #crowleyHarmonicGuide button{cursor:pointer;touch-action:manipulation}
+      #crowleyHarmonicGuide button:hover:not(:disabled){border-color:#b81712;color:#a61712}
+      #crowleyHarmonicGuide button:focus-visible,#crowleyHarmonicGuide select:focus-visible,#crowleyHarmonicGuide input:focus-visible{outline:3px solid rgba(220,31,24,.22);outline-offset:2px}
+      #crowleyHarmonicGuide button:disabled{opacity:.42;cursor:default}
+      #crowleyHarmonicGuide fieldset{margin:.7rem 0;padding:.7rem;border:1px solid var(--relphi-board-line);border-radius:12px}
+      #crowleyHarmonicGuide legend{padding:0 .3rem;font:inherit;font-size:.84rem;font-weight:900}
+      #crowleyHarmonicGuide p{font:inherit;line-height:1.45}
+      #crowleyHarmonicStatus,#crowleyDomainStatus{margin:.65rem 0 0;font-size:.84rem}
+      #crowleyHarmonicGuide .crowley-invocation{margin:.65rem 0 1rem;padding:.8rem 1rem;border:1px solid var(--relphi-board-line);border-left:3px solid var(--relphi-board-red);border-radius:0 10px 10px 0;background:var(--relphi-board-soft);font:inherit;line-height:1.5}
+      #crowleyDomainGate{margin:0 0 .75rem}
+      #shortListPanel .card-row-item.crowley-anchor .card-row-card-wrap{outline:3px solid var(--relphi-board-red)!important;outline-offset:3px}
       #shortListPanel .card-row-item.crowley-target .card-row-card-wrap{outline:3px dashed #725c16!important;outline-offset:3px}
       #shortListPanel .card-row-item.crowley-pair .card-row-card-wrap{box-shadow:0 0 0 3px rgba(55,83,105,.58)!important}
-      #crowleyOperationFocus{margin-top:12px}
-      .crowley-crafted-focus{display:grid;gap:12px;padding:14px;border:1px solid rgba(80,65,50,.2);border-radius:14px;background:rgba(255,255,255,.58)}
-      .crowley-crafted-focus header h3{margin:.15rem 0 .35rem}.crowley-crafted-focus header p{margin:.25rem 0 .55rem;max-width:72ch}
-      .crowley-focus-modes{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.35fr);gap:12px}
-      .crowley-focus-modes article{padding:12px;border:1px solid rgba(80,65,50,.16);border-radius:12px;background:rgba(255,253,248,.8)}
-      .crowley-pair-stack{display:grid;grid-template-rows:repeat(3,minmax(44px,auto));gap:6px;margin:.65rem 0}
-      .crowley-pair-stack>*{display:grid;place-items:center;padding:8px;border:1px solid rgba(80,65,50,.16);border-radius:9px;text-align:center}
-      .crowley-pair-stack strong{border-color:var(--relphi-red,#8b1e2d)}
-      .crowley-crafted-focus--op4 .crowley-pair-focus{outline:1px solid rgba(80,65,50,.16)}
-      .crowley-focus-summary summary{cursor:pointer;font-weight:700}
+      #crowleyOperationFocus{margin-top:.75rem}
+      .crowley-crafted-focus{display:grid;gap:.75rem;padding:.85rem;border:1px solid var(--relphi-board-line);border-radius:14px;background:var(--relphi-board-paper);font:inherit}
+      .crowley-crafted-focus header h3{margin:.15rem 0 .35rem;font:inherit;font-size:1rem;font-weight:900}.crowley-crafted-focus header p{margin:.25rem 0 .55rem;max-width:72ch}
+      .crowley-focus-modes{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.35fr);gap:.75rem}
+      .crowley-focus-modes article{padding:.75rem;border:1px solid var(--relphi-board-line);border-radius:12px;background:#fff}
+      .crowley-pair-stack{display:grid;grid-template-rows:repeat(3,minmax(44px,auto));gap:.4rem;margin:.65rem 0}
+      .crowley-pair-stack>*{display:grid;place-items:center;padding:.5rem;border:1px solid var(--relphi-board-line);border-radius:8px;text-align:center}
+      .crowley-pair-stack strong{border-color:var(--relphi-board-red)}
+      .crowley-focus-summary summary{cursor:pointer;font-weight:800}
       @media(max-width:720px){.crowley-focus-modes{grid-template-columns:1fr}}
     `;
     document.head.appendChild(s);
