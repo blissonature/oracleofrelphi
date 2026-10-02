@@ -14,7 +14,11 @@ const MODES=Object.freeze({
   shortest:'duration-shortest',
   beganMostRecently:'began-most-recently',
   endsSoonest:'ends-soonest',
-  endsLast:'ends-last'
+  endsLast:'ends-last',
+  applying:'applying-first',
+  separating:'separating-first',
+  closing:'closing-first',
+  opening:'opening-first'
 });
 const ASPECT_ORDER=Object.freeze([
   'conjunction','opposition','trine','square','sextile',
@@ -318,7 +322,31 @@ function compareTiming(a,b,key,direction){
   if(bv!=null)return 1;
   return compareExact(a,b);
 }
+function motionFor(row){
+  const snapshot=window.RelphiRelationshipTransitMeta?.motionSnapshotForRow?.(row);
+  if(!snapshot)return null;
+  row.dataset.relationshipPhase=snapshot.phase;
+  row.dataset.relationshipDistance=snapshot.distance;
+  row.dataset.relationshipApplyingRate=String(snapshot.applyingRate);
+  row.dataset.relationshipSeparationRate=String(snapshot.separationRate);
+  return snapshot;
+}
+function compareMotion(a,b,kind){
+  const am=motionFor(a),bm=motionFor(b);
+  const rank=kind==='phase'
+    ?{applying:0,exact:1,steady:2,separating:3}
+    :{closing:0,steady:1,opening:2};
+  const reverse=mode===MODES.separating||mode===MODES.opening;
+  const ar=am?(rank[am[kind]]??9):10,br=bm?(rank[bm[kind]]??9):10;
+  const ordered=reverse?(9-ar)-(9-br):ar-br;
+  if(ordered)return ordered;
+  const av=kind==='phase'?Math.abs(am?.applyingRate??0):Math.abs(am?.separationRate??0);
+  const bv=kind==='phase'?Math.abs(bm?.applyingRate??0):Math.abs(bm?.separationRate??0);
+  return bv-av||compareExact(a,b);
+}
 function compareRows(a,b){
+  if(mode===MODES.applying||mode===MODES.separating)return compareMotion(a,b,'phase');
+  if(mode===MODES.closing||mode===MODES.opening)return compareMotion(a,b,'distance');
   if(mode===MODES.aspect)return compareAspect(a,b);
   if(mode===MODES.strongest)return compareSignificance(a,b,'strength');
   if(mode===MODES.challenging)return compareSignificance(a,b,'challenge');
@@ -387,7 +415,11 @@ function ensureControl(){
       [MODES.shortest,'Shortest Duration'],
       [MODES.beganMostRecently,'Began Most Recently'],
       [MODES.endsSoonest,'Ends Soonest'],
-      [MODES.endsLast,'Ends Last']
+      [MODES.endsLast,'Ends Last'],
+      [MODES.applying,'Applying First'],
+      [MODES.separating,'Separating First'],
+      [MODES.closing,'Closing First'],
+      [MODES.opening,'Opening First']
     ].forEach(([value,text])=>{
       const option=document.createElement('option');
       option.value=value;
@@ -445,7 +477,7 @@ function setMode(next){
   calculationGeneration+=1;
   busy=false;
   ensureControl();
-  if([MODES.longest,MODES.shortest,MODES.beganMostRecently,MODES.endsSoonest,MODES.endsLast].includes(mode)){
+  if([MODES.longest,MODES.shortest,MODES.beganMostRecently,MODES.endsSoonest,MODES.endsLast,MODES.applying,MODES.separating,MODES.closing,MODES.opening].includes(mode)){
     scheduleTransitSort(0);
     return;
   }
@@ -455,7 +487,7 @@ function refreshForRows(){
   invalidateScores();
   if(whereWhenEditing())return;
   ensureControl();
-  if([MODES.longest,MODES.shortest,MODES.beganMostRecently,MODES.endsSoonest,MODES.endsLast].includes(mode)){
+  if([MODES.longest,MODES.shortest,MODES.beganMostRecently,MODES.endsSoonest,MODES.endsLast,MODES.applying,MODES.separating,MODES.closing,MODES.opening].includes(mode)){
     scheduleTransitSort(110);
     return;
   }
