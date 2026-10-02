@@ -2346,15 +2346,20 @@
     '</fieldset>';
   }
 
+  function appendToOuterPathPanel(markup,addition) {
+    const close=markup.lastIndexOf('</section>');
+    return close<0 ? markup+addition : markup.slice(0,close)+addition+markup.slice(close);
+  }
+
   function pathPanelMarkup(session,hasCards) {
     const draft=session.draft;
     if (!session.path) return '<p class="relphi-referent-intro">Choose a referent path. Drawing itself stays in the Board tab.</p>';
     const source=sacredCardSourceMarkup(session,hasCards);
-    if (session.path==='bespoke') return bespokeMarkup(draft,hasCards).replace('</section>',source+'</section>');
-    if (session.path==='templates') return templatesMarkup(draft,hasCards).replace('</section>',source+'</section>');
+    if (session.path==='bespoke') return appendToOuterPathPanel(bespokeMarkup(draft,hasCards),source);
+    if (session.path==='templates') return appendToOuterPathPanel(templatesMarkup(draft,hasCards),source);
     if (session.path==='blocks') return '<section class="relphi-referent-panel">'+buildingControlsMarkup(session,hasCards)+suggestionMarkup(session,hasCards)+source+'</section>';
     if (session.path==='surface') return '<section class="relphi-referent-panel">'+surfaceChoicesMarkup(session,hasCards)+source+'</section>';
-    if (session.path==='astro') return astrologySurfaceMarkup(session,hasCards).replace('</section>',source+'</section>');
+    if (session.path==='astro') return appendToOuterPathPanel(astrologySurfaceMarkup(session,hasCards),source);
     return '';
   }
 
