@@ -22,6 +22,13 @@
     {n:4,name:'Penultimate Aspects',field:'Significator + 36-card ring',note:'Place the Significator centrally and arrange the following 36 cards around it. Decan correspondences remain attached to the small cards.'},
     {n:5,name:'Final Result',field:'10 Tree of Life piles',note:'Deal cyclically into ten Sephiroth. Commit to the expected Sephira before locating the Significator; an adjacent Sephira gets one second test.'}
   ];
+  const DOMAINS=[
+    {id:'Yod',letter:'Yod',element:'Fire',suit:'Wands',core:'Work · business · enterprise',explain:'What you are doing, initiating, building, pursuing, or investing energy into.',terms:['work','job','career','business','enterprise','project','goal','action','activity','ambition','initiative','leadership','creative work','creation','build','launch','purpose','vocation','effort','energy','drive','will','competition','performance','profession','employment','coworker','boss','client','company','startup','study project']},
+    {id:'Heh',letter:'Heh',element:'Water',suit:'Cups',core:'Love · marriage · pleasure',explain:'What is felt, desired, enjoyed, bonded with, or emotionally related to.',terms:['love','marriage','romance','relationship','partner','dating','friendship','friend','family feeling','affection','emotion','feelings','pleasure','enjoyment','desire','intimacy','connection','bond','reconciliation','heart','social','companionship','attraction','crush','sex','sexuality','celebration','happiness','grief']},
+    {id:'Vav',letter:'Vav',element:'Air',suit:'Swords',core:'Trouble · loss · scandal · quarrelling',explain:'What is contested, threatened, disputed, severed, judged, communicated, or mentally fought through.',terms:['trouble','loss','scandal','quarrel','quarrelling','conflict','fight','argument','dispute','legal','lawsuit','court','accusation','gossip','rumor','communication problem','misunderstanding','decision','judgment','strategy','opposition','enemy','breakup','separation','betrayal','crisis','danger','problem','stress','anxiety','competition conflict','complaint','discipline','termination']},
+    {id:'Heh-final',letter:'Final Heh',element:'Earth',suit:'Disks',core:'Money · goods · material matters',explain:'What is owned, paid for, embodied, housed, maintained, exchanged, or made materially real.',terms:['money','cash','income','pay','salary','benefits','debt','loan','bill','rent','mortgage','house','home','property','real estate','goods','purchase','shopping','price','cost','budget','savings','bank','finance','financial','material','possession','object','car','vehicle','food','body','health cost','resource','equipment','contract value','asset','inheritance','payment','sale','buy','sell']}
+  ];
+
   let operation=1, anchor=0, countValue=3, pairRadius=1, expectedDomain='', domainLocked=false, revealedDomain='', significatorId='', operationDeck=null;
 
   function root(){return document.getElementById('shortListPanel');}
@@ -160,8 +167,29 @@
     ];
     return values.map(([v,l])=>'<option value="'+v+'">'+l+'</option>').join('');
   }
+  function domainMatches(query){
+    const tokens=String(query||'').toLowerCase().split(/[,;]+|\s+or\s+/).map(value=>value.trim()).filter(Boolean);
+    if(!tokens.length)return DOMAINS;
+    return DOMAINS.filter(domain=>{
+      const haystack=[domain.id,domain.letter,domain.element,domain.suit,domain.core,domain.explain,...domain.terms].join(' ').toLowerCase();
+      return tokens.some(token=>haystack.includes(token));
+    });
+  }
+  function domainCardsMarkup(query){
+    const matches=domainMatches(query);
+    if(!matches.length)return '<p class="crowley-domain-empty">No direct match. Try a broader word such as work, love, conflict, money, home, career, relationship, or legal.</p>';
+    return matches.map(domain=>'<button type="button" class="crowley-domain-card relphi-card" data-crowley-domain="'+domain.id+'" aria-pressed="'+(expectedDomain===domain.id?'true':'false')+'"><span class="crowley-domain-token"><b>'+domain.letter+'</b><small>'+domain.element+' · '+domain.suit+'</small></span><strong>'+domain.core+'</strong><span>'+domain.explain+'</span></button>').join('');
+  }
+  function renderDomainFilter(box){
+    const input=box?.querySelector('#crowleyDomainSearch'),host=box?.querySelector('#crowleyDomainResults'),selected=box?.querySelector('#crowleyDomainSelection');
+    if(host)host.innerHTML=domainCardsMarkup(input?.value||'');
+    if(selected){
+      const domain=DOMAINS.find(item=>item.id===expectedDomain);
+      selected.textContent=domain?'Selected: '+domain.letter+' · '+domain.element+' — '+domain.core:'No domain selected yet.';
+    }
+  }
   function domainGateMarkup(){
-    return '<fieldset id="crowleyDomainGate" class="relphi-fieldset"><legend>First Operation · Domain Test</legend><div id="crowleySignificatorStep"><p><b>1. Choose the Significator.</b> Draw one digitally or search for the card you intend to use.</p><div class="crowley-controls relphi-toolbar"><button id="crowleyDrawSignificator" class="relphi-button" type="button">Digital draw</button><label class="relphi-field">Search for a card<input id="crowleySignificatorSearch" class="relphi-input" type="search" autocomplete="off" placeholder="Card name"></label></div><div id="crowleySignificatorResults"></div><p id="crowleySignificatorStatus" aria-live="polite">No Significator selected.</p></div><div id="crowleyDomainStep" hidden><p><b>2. Commit to the expected domain</b> before locating the Significator in the four packets.</p><div class="crowley-controls relphi-toolbar"><label class="relphi-field">Expected domain<select id="crowleyExpectedDomain" class="relphi-select"><option value="">Choose before revealing…</option><option value="Yod">Yod</option><option value="Heh">Heh</option><option value="Vav">Vav</option><option value="Heh-final">Final Heh</option></select></label><button id="crowleyLockDomain" class="relphi-button relphi-button--primary" type="button">Commit domain</button></div></div><div id="crowleyDomainReveal" hidden><div id="crowleyInvocationStep"><p><b>3. Invocation.</b> Before the deck is shuffled, say the invocation:</p><blockquote class="crowley-invocation relphi-card relphi-card--soft">I invoke thee, I A O, that thou wilt send H R U, the great Angel that is set over the operations of this Secret Wisdom, to lay his hand invisibly upon these consecrated cards of art, that thereby we may obtain true knowledge of hidden things, to the glory of thine ineffable Name. Amen.</blockquote><button type="button" id="crowleyInvoke" class="relphi-button relphi-button--primary">I said the invocation · shuffle once</button></div><div id="crowleyCutStep" hidden><p><b>4. Querent cut.</b> Choose the exact cut position. The shuffled deck order is now locked and will not be shuffled again during this operation.</p><div class="crowley-controls relphi-toolbar"><label class="relphi-field">Cut position<input id="crowleyCutRange" class="relphi-range" type="range" min="1" max="77" value="39"></label><label class="relphi-field">Position<input id="crowleyCutNumber" class="relphi-input" type="number" min="1" max="77" value="39"></label><button type="button" id="crowleyMakeCut" class="relphi-button relphi-button--primary">Make cut</button></div><p><b>Significator packet:</b> <span id="crowleyActualDomain">Awaiting cuts</span></p></div></div><p id="crowleyDomainStatus" aria-live="polite"></p></fieldset>';
+    return '<fieldset id="crowleyDomainGate" class="relphi-fieldset"><legend>First Operation · Domain Test</legend><div id="crowleySignificatorStep"><p><b>1. Choose the Significator.</b> Draw one digitally or search for the card you intend to use.</p><div class="crowley-controls relphi-toolbar"><button id="crowleyDrawSignificator" class="relphi-button" type="button">Digital draw</button><label class="relphi-field">Search for a card<input id="crowleySignificatorSearch" class="relphi-input" type="search" autocomplete="off" placeholder="Card name"></label></div><div id="crowleySignificatorResults"></div><p id="crowleySignificatorStatus" aria-live="polite">No Significator selected.</p></div><div id="crowleyDomainStep" hidden><p><b>2. Commit to the expected domain</b> before locating the Significator in the four packets.</p><p class="crowley-domain-explainer">The four packets spell <b>Yod · Heh · Vav · Final Heh</b> from right to left. They are the four elemental gates of the First Operation: <b>Fire/Wands</b> for work and enterprise, <b>Water/Cups</b> for love and pleasure, <b>Air/Swords</b> for trouble and conflict, and <b>Earth/Disks</b> for money, goods, and material matters. Search in ordinary language, then choose the domain that best contains the question.</p><label class="relphi-field crowley-domain-search">Filter by what the question is about<input id="crowleyDomainSearch" class="relphi-input" type="search" autocomplete="off" placeholder="Try: career, romance, conflict, rent, legal, home…"></label><div id="crowleyDomainResults" class="crowley-domain-results">'+domainCardsMarkup('')+'</div><input id="crowleyExpectedDomain" type="hidden" value=""><p id="crowleyDomainSelection" class="crowley-domain-selection">No domain selected yet.</p><div class="crowley-controls relphi-toolbar"><button id="crowleyLockDomain" class="relphi-button relphi-button--primary" type="button">Commit domain</button></div></div><div id="crowleyDomainReveal" hidden><div id="crowleyInvocationStep"><p><b>3. Invocation.</b> Before the deck is shuffled, say the invocation:</p><blockquote class="crowley-invocation relphi-card relphi-card--soft">I invoke thee, I A O, that thou wilt send H R U, the great Angel that is set over the operations of this Secret Wisdom, to lay his hand invisibly upon these consecrated cards of art, that thereby we may obtain true knowledge of hidden things, to the glory of thine ineffable Name. Amen.</blockquote><button type="button" id="crowleyInvoke" class="relphi-button relphi-button--primary">I said the invocation · shuffle once</button></div><div id="crowleyCutStep" hidden><p><b>4. Querent cut.</b> Choose the exact cut position. The shuffled deck order is now locked and will not be shuffled again during this operation.</p><div class="crowley-controls relphi-toolbar"><label class="relphi-field">Cut position<input id="crowleyCutRange" class="relphi-range" type="range" min="1" max="77" value="39"></label><label class="relphi-field">Position<input id="crowleyCutNumber" class="relphi-input" type="number" min="1" max="77" value="39"></label><button type="button" id="crowleyMakeCut" class="relphi-button relphi-button--primary">Make cut</button></div><p><b>Significator packet:</b> <span id="crowleyActualDomain">Awaiting cuts</span></p></div></div><p id="crowleyDomainStatus" aria-live="polite"></p></fieldset>';
   }
   function installStyle(){
     if(document.getElementById('crowleyHarmonicStyle')) return;
@@ -223,7 +251,7 @@
           live.querySelector('#crowleySignificatorStep').hidden=true;
           live.querySelector('#crowleyDomainStep').hidden=false;
           live.querySelector('#crowleySignificatorResults').innerHTML='';
-          live.querySelector('#crowleyExpectedDomain')?.focus();
+          live.querySelector('#crowleyDomainSearch')?.focus();
           live.querySelector('#crowleyDomainStep')?.scrollIntoView({block:'nearest'});
         });
       };
@@ -257,14 +285,24 @@
           live.querySelector('#crowleySignificatorStep').hidden=true;
           live.querySelector('#crowleyDomainStep').hidden=false;
           live.querySelector('#crowleySignificatorResults').innerHTML='';
-          live.querySelector('#crowleyExpectedDomain')?.focus();
+          live.querySelector('#crowleyDomainSearch')?.focus();
         });
       });
+      box.querySelector('#crowleyDomainSearch').addEventListener('input',()=>renderDomainFilter(box));
+      box.querySelector('#crowleyDomainResults').addEventListener('click',event=>{
+        const card=event.target.closest?.('[data-crowley-domain]');if(!card||domainLocked)return;
+        expectedDomain=card.dataset.crowleyDomain||'';
+        const hidden=box.querySelector('#crowleyExpectedDomain');if(hidden)hidden.value=expectedDomain;
+        renderDomainFilter(box);
+      });
       box.querySelector('#crowleyLockDomain').addEventListener('click',()=>{
-        const sel=box.querySelector('#crowleyExpectedDomain'); expectedDomain=sel.value;
+        const sel=box.querySelector('#crowleyExpectedDomain'); expectedDomain=expectedDomain||sel?.value||'';
         if(!expectedDomain){box.querySelector('#crowleyDomainStatus').textContent='Choose the question domain before committing.';return;}
         if(!significatorId){box.querySelector('#crowleyDomainStatus').textContent='Choose the Significator first.';return;}
-        domainLocked=true; sel.disabled=true; box.querySelector('#crowleyLockDomain').disabled=true;
+        domainLocked=true;
+        const search=box.querySelector('#crowleyDomainSearch');if(search)search.disabled=true;
+        box.querySelectorAll('[data-crowley-domain]').forEach(node=>node.disabled=true);
+        box.querySelector('#crowleyLockDomain').disabled=true;
         box.querySelector('#crowleyDomainStatus').textContent='Domain committed. Resolve the four packets, then reveal which contains the Significator.';
         box.querySelector('#crowleyDomainReveal').hidden=false;
         box.querySelector('#crowleyActualDomain').textContent='Awaiting cuts';
@@ -315,8 +353,10 @@
           expectedDomain='';domainLocked=false;revealedDomain='';operationDeck=null;
           requestAnimationFrame(()=>{
             const live=document.getElementById('crowleyHarmonicGuide');if(!live)return;
-            const sel=live.querySelector('#crowleyExpectedDomain');if(sel){sel.value='';sel.disabled=false;}
+            const sel=live.querySelector('#crowleyExpectedDomain');if(sel)sel.value='';
+            const search=live.querySelector('#crowleyDomainSearch');if(search){search.value='';search.disabled=false;}
             const lock=live.querySelector('#crowleyLockDomain');if(lock)lock.disabled=false;
+            renderDomainFilter(live);
             live.querySelector('#crowleyDomainReveal').hidden=true;
             live.querySelector('#crowleySignificatorStep').hidden=true;
             live.querySelector('#crowleyDomainStep').hidden=false;
@@ -345,7 +385,10 @@
     box.hidden=false;
     box.querySelector('#crowleyMechanics').hidden=true;
     const expected=box.querySelector('#crowleyExpectedDomain');
-    if(expected){expected.value='';expected.disabled=false;}
+    if(expected)expected.value='';
+    const domainSearch=box.querySelector('#crowleyDomainSearch');
+    if(domainSearch){domainSearch.value='';domainSearch.disabled=false;}
+    renderDomainFilter(box);
     const lock=box.querySelector('#crowleyLockDomain');if(lock)lock.disabled=false;
     box.querySelector('#crowleyDomainReveal').hidden=true;
     box.querySelector('#crowleySignificatorStep').hidden=false;
