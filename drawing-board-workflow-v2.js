@@ -3796,7 +3796,7 @@
     const linkOptions=rows.map((other,j)=>j===index?'':'<option value="'+j+'" '+(String(row.linkTo)===String(j)?'selected':'')+'>Question '+(j+1)+'</option>').join('');
     return '<article class="relphi-surface-composer-row" data-surface-composer-row="'+index+'">'+
       '<label class="relphi-surface-composer-select"><input type="checkbox" data-surface-select '+(row.selected!==false?'checked':'')+'><span>Ask</span></label>'+
-      '<div class="relphi-surface-composer-main"><textarea rows="2" data-surface-text aria-label="Question '+(index+1)+'">'+escapeHtml(row.text||'')+'</textarea>'+
+      '<div class="relphi-surface-composer-main"><textarea rows="2" data-surface-text '+(row.sourceKind==='authored'&&!row.text?'placeholder="Commas split questions" ':'')+'aria-label="Question '+(index+1)+'">'+escapeHtml(row.text||'')+'</textarea>'+
       '<section class="relphi-surface-composer-controls" aria-label="Question '+(index+1)+' draw settings">'+
         '<label>Sub-pack<div class="relphi-surface-subpack-control"><select data-surface-pack>'+packOptions(row.pack||'full')+'</select><button type="button" data-surface-create-subpack aria-label="Create a sub-pack">+</button></div></label>'+
         '<label class="relphi-surface-card-count">Cards per question<div><input type="number" min="1" max="12" step="1" value="'+Math.max(1,Math.min(12,Number(row.cardCount)||1))+'" data-surface-card-count><span>× Cards</span></div></label>'+
@@ -3808,6 +3808,27 @@
       '</div>'+
       '<button type="button" class="relphi-surface-composer-remove" data-surface-remove aria-label="Remove question '+(index+1)+'">×</button>'+
     '</article>';
+  }
+
+  function splitAuthoredSurfaceRow(rows,index,value) {
+    const questions=parseBulkQuestions(value);
+    if(questions.length<2)return false;
+    const source=rows[index];if(!source||source.sourceKind!=='authored')return false;
+    const delta=questions.length-1;
+    const copies=questions.map(text=>({
+      ...clone(source),
+      text,
+      selected:true,
+      sourceKind:'authored',
+      keywordTags:Array.isArray(source.keywordTags)?source.keywordTags.slice():[]
+    }));
+    rows.forEach((row,rowIndex)=>{
+      if(rowIndex===index)return;
+      const linked=row.linkTo===''||row.linkTo==null?null:Number(row.linkTo);
+      if(Number.isInteger(linked)&&linked>index)row.linkTo=String(linked+delta);
+    });
+    rows.splice(index,1,...copies);
+    return true;
   }
 
   function openSurfaceQuestionComposer(entries,{title='Unpack Questions',intro='Choose the questions you want to add to this reading.',completeOnCancel=true}={}) {
@@ -3856,6 +3877,21 @@
       composer.querySelectorAll('[data-surface-composer-row]').forEach((article,index)=>{
         const row=rows[index];
         ['change','input'].forEach(type=>article.addEventListener(type,()=>syncRow(article,index)));
+        article.querySelector('[data-surface-text]')?.addEventListener('focusout',event=>{
+          if(row.sourceKind!=='authored')return;
+          syncRow(article,index);
+          const value=event.target.value;
+          if(!value.includes(',')||parseBulkQuestions(value).length<2)return;
+          // Match Bespoke Question 1: commas are parsed only after typing is
+          // finished, and every resulting question inherits this row's settings.
+          queueMicrotask(()=>{
+            if(!composer.isConnected)return;
+            if(splitAuthoredSurfaceRow(rows,index,value)){
+              render();
+              setTimeout(()=>composer.querySelector('[data-surface-composer-row="'+index+'"] [data-surface-text]')?.focus(),0);
+            }
+          });
+        });
         article.querySelector('[data-surface-pack]')?.addEventListener('change',()=>{
           syncRow(article,index);
           if(row.pack!=='tags'){row.keywordTags=[];row.keywordMatchMode='any';}
