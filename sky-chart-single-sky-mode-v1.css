@@ -40,3 +40,9 @@ html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]) .sky-chart-hou
 @media(max-width:900px){html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]) #skyFoundationRoot{grid-template-columns:1fr;grid-template-areas:"a" "comparison"}}
 @media(max-width:410px){html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]) .sky-chart-placement-list-choices{grid-template-columns:repeat(2,32px)!important}}
 @media(max-width:620px){html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]) #skyFoundationRoot{grid-template-columns:1fr;grid-template-areas:"a" "comparison"}.sky-slot-presence-button{padding:.34rem .55rem;font-size:.6rem}}
+
+@media(max-width:760px){
+html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]) #skyFoundationComparison{overflow:hidden}
+html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]) #skyFoundationWheelMount{width:100%;margin-left:0;padding-left:0;padding-right:0;overflow:hidden}
+html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]) #skyFoundationWheelMount>.sky-foundation-single-wheel{width:100%;max-width:100%;margin-inline:auto}
+}
