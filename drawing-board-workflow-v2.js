@@ -1900,7 +1900,6 @@
     const selected=session.surfaceSelected || (session.surfaceSelected={});
     const selectedCount=SURFACE_DRAW_KEYS.filter(kind=>!!selected[kind]).length;
     const allSelected=selectedCount===SURFACE_DRAW_KEYS.length;
-    const cardSource=session.sacredCardSource==='physical'?'physical':session.sacredCardSource==='digital'?'digital':'';
     return '<div class="relphi-surface-question-choices" role="group" aria-label="Question types">'+
       '<label class="relphi-surface-select-all"><input type="checkbox" data-surface-select-all '+(allSelected?'checked ':'')+(disabled?'disabled':'')+'><span><strong>Select all '+SURFACE_DRAW_KEYS.length+'</strong><small>One probe from every See What Surfaces sub-pack</small></span></label>'+
       SURFACE_DRAW_KEYS.map(kind=>'<label class="relphi-surface-question-choice"><input type="checkbox" data-surface-choice="'+kind+'" '+(selected[kind]?'checked ':'')+(disabled?'disabled':'')+'><span><strong>'+escapeHtml(SURFACE_QUESTIONS[kind])+'</strong><small>'+escapeHtml(SURFACE_PACK_LABELS[kind])+'</small></span></label>').join('')+
@@ -2339,14 +2338,23 @@
       (selected?'<div class="relphi-template-modify"><button type="button" id="relphiModifyTemplate" '+(hasCards?'disabled':'')+'>Modify a copy</button><span>Clones this template into Bespoke so the original remains unchanged.</span></div>':'')+
       '</section>';
   }
+  function sacredCardSourceMarkup(session,disabled=false) {
+    const source=session?.sacredCardSource==='physical'?'physical':'digital';
+    return '<fieldset class="relphi-sacred-card-source"><legend>Drawing method</legend>'+
+      '<label class="relphi-sacred-card-source-choice"><input type="radio" name="relphiSacredCardSource" value="digital" data-sacred-card-source '+(source==='digital'?'checked ':'')+(disabled?'disabled ':'')+'><span><strong>Digital</strong><small>Relphi draws the card from the assigned sub-pack.</small></span></label>'+
+      '<label class="relphi-sacred-card-source-choice"><input type="radio" name="relphiSacredCardSource" value="physical" data-sacred-card-source '+(source==='physical'?'checked ':'')+(disabled?'disabled ':'')+'><span><strong>Manual</strong><small>Draw from your physical deck, then enter the card and orientation.</small></span></label>'+
+    '</fieldset>';
+  }
+
   function pathPanelMarkup(session,hasCards) {
     const draft=session.draft;
     if (!session.path) return '<p class="relphi-referent-intro">Choose a referent path. Drawing itself stays in the Board tab.</p>';
-    if (session.path==='bespoke') return bespokeMarkup(draft,hasCards);
-    if (session.path==='templates') return templatesMarkup(draft,hasCards);
-    if (session.path==='blocks') return '<section class="relphi-referent-panel">'+buildingControlsMarkup(session,hasCards)+suggestionMarkup(session,hasCards)+'</section>';
-    if (session.path==='surface') return '<section class="relphi-referent-panel">'+surfaceChoicesMarkup(session,hasCards)+'</section>';
-    if (session.path==='astro') return astrologySurfaceMarkup(session,hasCards);
+    const source=sacredCardSourceMarkup(session,hasCards);
+    if (session.path==='bespoke') return bespokeMarkup(draft,hasCards).replace('</section>',source+'</section>');
+    if (session.path==='templates') return templatesMarkup(draft,hasCards).replace('</section>',source+'</section>');
+    if (session.path==='blocks') return '<section class="relphi-referent-panel">'+buildingControlsMarkup(session,hasCards)+suggestionMarkup(session,hasCards)+source+'</section>';
+    if (session.path==='surface') return '<section class="relphi-referent-panel">'+surfaceChoicesMarkup(session,hasCards)+source+'</section>';
+    if (session.path==='astro') return astrologySurfaceMarkup(session,hasCards).replace('</section>',source+'</section>');
     return '';
   }
 
