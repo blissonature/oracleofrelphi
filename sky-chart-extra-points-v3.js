@@ -111,6 +111,21 @@
   function enrich(payload){
     if(!payload||!hasBaseSky(payload))return false;
     const before=JSON.stringify(payload),placements=sourceOf(payload),profile=payload.calcProfile&&typeof payload.calcProfile==='object'?payload.calcProfile:{};
+    if(profile.timeUnknown===true){
+      [
+        ['Ascendant','ASC','Rising','AC'],
+        ['Descendant','DSC','DC'],
+        ['Midheaven','Medium Coeli','MC'],
+        ['IC','Imum Coeli'],
+        ['Vertex'],
+        ['Anti-Vertex','Anti Vertex','Antivertex','AVx'],
+        ['Part of Fortune','Fortune','POF','Pars Fortunae']
+      ].forEach(names=>{const entry=findEntry(placements,names);if(entry)delete placements[entry[0]]});
+      payload.houseCusps=[];
+      profile.houseCusps=[];
+      profile.cusps=[];
+      profile.houseSystem='none';
+    }
     const asc=find(placements,['Ascendant','ASC','Rising']),mc=find(placements,['Midheaven','Medium Coeli','MC']),sun=find(placements,['Sun']),moon=find(placements,['Moon']);
     const explicitInstantRaw=profile.instant||profile.dateTime||payload.instant||payload.dateTime;
     const explicitInstant=explicitInstantRaw?new Date(explicitInstantRaw):null;
