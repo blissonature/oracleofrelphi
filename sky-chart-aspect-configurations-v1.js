@@ -631,6 +631,10 @@ function collectGraph(){
   return{windowValue,nodes,edges};
 }
 function syntheticAxisOpposition(graph,a,b){
+  // Entailed axis geometry belongs exclusively to the Inevitable configuration
+  // completion path. With Inevitable off, only an identified relationship row
+  // may supply the opposition through graph.edges.
+  if(!inevitableEnabled)return null;
   const [skyA,idA]=String(a||'').split(':'),[skyB,idB]=String(b||'').split(':');
   if(!skyA||skyA!==skyB)return null;
   const ids=[idA,idB].sort().join('|');
@@ -641,7 +645,6 @@ function syntheticAxisOpposition(graph,a,b){
   const separation=Math.min(delta,360-delta);
   const orb=Math.abs(separation-180);
   const phase=orb*2;
-  if(!inevitableEnabled&&phase>graph.windowValue+1e-9)return null;
   return{row:null,aspect:'opposition',phase,left:a,right:b,entailed:true,origin:'inevitable',synthetic:true,syntheticKind:'axis-opposition'};
 }
 function getEdge(graph,a,b,aspect){
