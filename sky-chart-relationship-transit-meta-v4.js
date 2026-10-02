@@ -314,6 +314,28 @@ function estimatedTimingForSort(row){
   if(Number.isFinite(timing?.startedDaysAgo))row.dataset.transitStartedDaysAgo=String(timing.startedDaysAgo);else delete row.dataset.transitStartedDaysAgo;
   return timing;
 }
+function motionSnapshotForRow(row){
+  if(!row?.isConnected)return null;
+  const model=modelFor(row);
+  if(model.kind!=='dynamic')return null;
+  const half=.01;
+  const before=model.center-half*DAY,after=model.center+half*DAY;
+  const signedNow=Number(model.signedErrorAt(model.center));
+  const signedBefore=Number(model.signedErrorAt(before)),signedAfter=Number(model.signedErrorAt(after));
+  const leftNow=Number(model.valueAt(model.left,model.center)),rightNow=Number(model.valueAt(model.right,model.center));
+  const leftBefore=Number(model.valueAt(model.left,before)),rightBefore=Number(model.valueAt(model.right,before));
+  const leftAfter=Number(model.valueAt(model.left,after)),rightAfter=Number(model.valueAt(model.right,after));
+  if(![signedNow,signedBefore,signedAfter,leftNow,rightNow,leftBefore,rightBefore,leftAfter,rightAfter].every(Number.isFinite))return null;
+  const aspectErrorRate=wrap(signedAfter-signedBefore)/(2*half);
+  const applyingRate=Math.abs(signedBefore)-Math.abs(signedAfter);
+  const separationNow=Math.abs(wrap(rightNow-leftNow));
+  const separationBefore=Math.abs(wrap(rightBefore-leftBefore)),separationAfter=Math.abs(wrap(rightAfter-leftAfter));
+  const separationRate=(separationAfter-separationBefore)/(2*half);
+  const epsilon=1e-5;
+  const phase=Math.abs(signedNow)<epsilon?'exact':applyingRate>epsilon?'applying':applyingRate<-epsilon?'separating':'steady';
+  const distance=Math.abs(separationRate)<epsilon?'steady':separationRate<0?'closing':'opening';
+  return Object.freeze({phase,distance,signedAspectError:signedNow,aspectErrorRate,applyingRate,separation:separationNow,separationRate});
+}
 function clearSortDurationCache(){
   sortDurationCache.clear();
   document.querySelectorAll('#skyFoundationRelationshipList .sky-foundation-relationship-row').forEach(row=>{
@@ -342,6 +364,7 @@ function exportTimingForRow(row){
 }
 window.RelphiRelationshipTransitMeta=Object.freeze({
   estimatedTimingForRow:estimatedTimingForSort,
+  motionSnapshotForRow,
   exportTimingForRow,
   clearDurationCache:clearSortDurationCache
 });
