@@ -2464,7 +2464,7 @@ body.relphi-attune-open{overflow:hidden!important}
 #shortListPanel #redoShortList{grid-area:redo!important;margin:0!important}
 #shortListPanel #clearShortListCardsOnly{grid-area:clear!important;margin:0!important;min-width:0!important;width:auto!important}
 #shortListPanel #drawRandomRowCard{grid-area:draw!important;margin:0!important}
-@media(max-width:760px){#shortListPanel .relphi-board-commandbar{display:grid!important;grid-template-columns:auto auto auto 1fr!important;grid-template-areas:"title title title title" "sky sky sky sky" "reset settings . ." "undo redo clear draw"!important;gap:.4rem!important}#shortListPanel .relphi-board-command-left,#shortListPanel .drawing-board-top-actions.relphi-board-command-actions{display:contents!important}#shortListPanel .drawing-board-top-actions.relphi-board-command-actions>button{width:auto!important}}
+@media(max-width:760px){#shortListPanel .relphi-board-commandbar{display:grid!important;grid-template-columns:auto auto auto 1fr!important;grid-template-areas:"title title title title" "exports exports exports exports" "sky sky sky sky" "reset settings . ." "undo redo clear draw"!important;gap:.4rem!important}#shortListPanel .relphi-board-command-left,#shortListPanel .drawing-board-top-actions.relphi-board-command-actions{display:contents!important}#shortListPanel .drawing-board-top-actions.relphi-board-command-actions>button{width:auto!important}#shortListPanel .relphi-board-commandbar>.relphi-reading-text-actions{justify-self:start!important;width:100%!important;justify-content:flex-start!important}}
 
 
 /* Compact Sky Connector selectors: use the Sky Chart single-chevron language. */
@@ -2516,7 +2516,7 @@ body.relphi-attune-open{overflow:hidden!important}
 #shortListPanel .relphi-board-commandbar{
   display:grid!important;
   grid-template-columns:auto auto auto minmax(0,1fr)!important;
-  grid-template-areas:"title title title title" "sky sky sky sky" "reset settings . ." "undo redo clear draw"!important;
+  grid-template-areas:"title title exports exports" "sky sky sky sky" "reset settings . ." "undo redo clear draw"!important;
   gap:.4rem!important;
   align-items:center!important;
 }
@@ -2524,6 +2524,28 @@ body.relphi-attune-open{overflow:hidden!important}
 #shortListPanel .drawing-board-top-actions.relphi-board-command-actions{display:contents!important}
 #shortListPanel #relphiBoardSettingsButton{display:inline-flex!important;grid-area:settings!important;visibility:visible!important}
 #shortListPanel .drawing-board-top-actions>.relphi-sky-connector{display:flex!important;grid-area:sky!important;visibility:visible!important;width:100%!important}
+#shortListPanel .relphi-board-commandbar>.relphi-reading-text-actions{
+  grid-area:exports!important;
+  justify-self:end!important;
+  align-self:center!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:flex-end!important;
+  gap:.4rem!important;
+  flex-wrap:wrap!important;
+  width:auto!important;
+  margin:0!important;
+}
+#shortListPanel .relphi-board-commandbar>.relphi-reading-text-actions .relphi-copy-reading,
+#shortListPanel .relphi-board-commandbar>.relphi-reading-text-actions .relphi-board-export-button{
+  min-height:2rem!important;
+  margin:0!important;
+  padding:0 .68rem!important;
+  border-radius:999px!important;
+  font-size:.68rem!important;
+  white-space:nowrap!important;
+}
+
 
 
 /* Vertically center the persistent Settings command label. */
