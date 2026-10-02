@@ -12,7 +12,11 @@ assert.match(index,/href="tarot\.html"/);
 
 assert.match(tarot,/<title>Tarot Ledger · Oracle of Relphi<\/title>/);
 assert.match(tarot,/id="tarotLedgerTitle"/);
+assert.match(tarot,/class="tarot-hero compact relphi-ledger-tool-header"/);
+assert.match(tarot,/class="tarot-ledger-page"/);
 assert.match(tarot,/Search Tarot Ledger/);
+assert.doesNotMatch(tarot,/architecture-hero/);
+assert.doesNotMatch(tarot,/anniversary-kicker/);
 assert.doesNotMatch(tarot,/class="relphi-home-content"/);
 assert.doesNotMatch(tarot,/id="relphiHomeTitle"/);
 
