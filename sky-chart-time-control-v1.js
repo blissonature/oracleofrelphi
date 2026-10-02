@@ -139,11 +139,22 @@
     control.querySelector('[data-sky-time-toggle]')?.setAttribute('aria-expanded','false');
     control.querySelector('[data-sky-time-panel]')?.setAttribute('hidden','');
   }
+  function syncDisabled(control){
+    const input=control?.__canonicalInput;if(!input)return;
+    const disabled=input.disabled===true;
+    control.classList.toggle('is-disabled',disabled);
+    control.setAttribute('aria-disabled',disabled?'true':'false');
+    const entry=control.querySelector('[data-sky-time-entry]'),toggle=control.querySelector('[data-sky-time-toggle]');
+    if(entry)entry.disabled=disabled;
+    if(toggle)toggle.disabled=disabled;
+    if(disabled)close(control);
+  }
   function syncFromCanonical(input){
     const control=input.__skyTimeControl;
     if(!control)return;
     setState(control,parseCanonical(input.value));
     syncVisual(control);
+    syncDisabled(control);
   }
 
   function enhance(input){
@@ -189,6 +200,7 @@
       </div>`;
     input.insertAdjacentElement('afterend',control);
     syncVisual(control);
+    syncDisabled(control);
   }
   function enhanceAll(){document.querySelectorAll(TIME_SELECTOR).forEach(enhance)}
 
@@ -261,8 +273,11 @@
   function start(){
     enhanceAll();
     const root=document.getElementById('skyFoundationRoot')||document.body;
-    observer=new MutationObserver(records=>{if(records.some(record=>record.addedNodes.length))requestAnimationFrame(enhanceAll)});
-    observer.observe(root,{childList:true,subtree:true});
+    observer=new MutationObserver(records=>{
+      if(records.some(record=>record.addedNodes.length))requestAnimationFrame(enhanceAll);
+      records.forEach(record=>{if(record.type==='attributes'&&record.attributeName==='disabled'&&record.target.matches?.(TIME_SELECTOR))syncDisabled(record.target.__skyTimeControl)});
+    });
+    observer.observe(root,{childList:true,subtree:true,attributes:true,attributeFilter:['disabled']});
   }
   document.readyState==='loading'?document.addEventListener('DOMContentLoaded',start,{once:true}):start();
 })();
