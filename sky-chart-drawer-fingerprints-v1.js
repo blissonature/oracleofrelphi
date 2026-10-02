@@ -97,7 +97,16 @@ function renderWhere(slot,payload){
   const mount=whereMount(slot);if(!mount)return;
   const refs=window.RelphiSkyCardShell?.get?.(slot),sourceSvg=refs?.heptagram;
   mount.replaceChildren();
-  if(timeUnknown(payload,slot)){whereRetry[slot]=0;mount.hidden=true;mount.removeAttribute('aria-label');return}
+  if(timeUnknown(payload,slot)){
+    whereRetry[slot]=0;
+    const label=document.createElement('span');
+    label.className='sky-where-when-fingerprint-label';
+    label.textContent='Where & When';
+    mount.appendChild(label);
+    mount.hidden=false;
+    mount.setAttribute('aria-label',`Where and When for Sky ${slot}; time of day unknown.`);
+    return;
+  }
   // The full Where and When heptagram is the single source of truth for this
   // fingerprint. Do not independently reject valid rendered geometry because a
   // stored sky uses an older metadata/profile shape.
