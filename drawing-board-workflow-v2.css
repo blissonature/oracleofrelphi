@@ -1667,6 +1667,19 @@ body.relphi-attune-open{overflow:hidden!important}
 #shortListPanel .relphi-board-settings-footer,
 #shortListPanel .relphi-options-commitbar{order:99!important}
 
+/* Bespoke owns its Appearance disclosure because appearance is part of the
+   reusable template, not a global afterthought below the Crafted paths. */
+#shortListPanel .relphi-bespoke-appearance-host{
+  display:block!important;
+  width:100%!important;
+  min-width:0!important;
+  margin:.55rem 0 0!important;
+}
+#shortListPanel .relphi-bespoke-appearance-host>.relphi-appearance-disclosure{
+  width:100%!important;
+  margin:0!important;
+}
+
 /* Individual card-control locks. */
 #shortListPanel.relphi-transform-editing-unlocked:not(.relphi-scale-unlocked) [data-row-transform-handle="scale"]{display:none!important;visibility:hidden!important;pointer-events:none!important}
 #shortListPanel.relphi-transform-editing-unlocked:not(.relphi-rotation-unlocked) [data-row-transform-handle="rotate"]{display:none!important;visibility:hidden!important;pointer-events:none!important}
