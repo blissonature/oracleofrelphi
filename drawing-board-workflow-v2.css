@@ -210,7 +210,8 @@
 #shortListPanel .relphi-board-reading-text{display:grid!important;gap:.65rem!important;margin:.8rem .5rem .5rem!important;padding:.8rem!important;border:1px solid var(--relphi-board-line)!important;border-radius:12px!important;background:var(--relphi-board-paper)!important;color:var(--relphi-board-ink)!important}
 #shortListPanel .relphi-board-reading-text[hidden]{display:none!important}
 #shortListPanel .relphi-board-reading-text>header{display:flex!important;align-items:flex-start!important;justify-content:space-between!important;gap:.7rem!important;flex-wrap:wrap!important;text-align:left!important}
-#shortListPanel .relphi-board-reading-text>header>div{display:grid!important;gap:.12rem!important}
+#shortListPanel .relphi-board-reading-text>header>div:first-child{display:grid!important;gap:.12rem!important}
+#shortListPanel .relphi-reading-text-actions{display:flex!important;align-items:center!important;justify-content:flex-end!important;gap:.4rem!important;flex-wrap:wrap!important}
 #shortListPanel .relphi-board-reading-text>header strong{font-size:.9rem!important}
 #shortListPanel .relphi-board-reading-text>header span{font-size:.7rem!important;color:#655d56!important}
 #shortListPanel .relphi-copy-reading{min-height:2.15rem!important;margin:0!important;padding:.4rem .72rem!important;border:1.5px solid var(--relphi-board-red)!important;border-radius:8px!important;background:var(--relphi-board-red)!important;color:#fff!important;font:inherit!important;font-size:.72rem!important;font-weight:900!important;line-height:1!important}
@@ -221,7 +222,7 @@
 #shortListPanel .relphi-reading-text-association{margin:0!important;color:#655d56!important;font-size:.72rem!important;font-weight:750!important;line-height:1.35!important}
 #shortListPanel .relphi-reading-text-interpretation{margin:.08rem 0 0!important;color:#171412!important;font-size:.82rem!important;line-height:1.48!important}
 #shortListPanel .relphi-copy-reading-status{min-height:1em!important;color:#655d56!important;font-size:.68rem!important}
-@media(max-width:700px){#shortListPanel .relphi-board-reading-text>header{align-items:stretch!important}#shortListPanel .relphi-copy-reading{width:100%!important}}
+@media(max-width:700px){#shortListPanel .relphi-board-reading-text>header{align-items:stretch!important}#shortListPanel .relphi-reading-text-actions{width:100%!important;justify-content:flex-start!important}}
 
 /* Save/export is permanent document chrome below the pannable canvas. */
 #shortListPanel .relphi-board-export{display:grid!important;gap:.65rem!important;margin:.8rem .5rem .5rem!important;padding:.75rem!important;border:1px solid var(--relphi-board-line)!important;border-radius:12px!important;background:var(--relphi-board-paper)!important;color:var(--relphi-board-ink)!important}
@@ -230,7 +231,6 @@
 #shortListPanel .relphi-board-export>header span{font-size:.7rem!important;color:#655d56!important}
 #shortListPanel .relphi-board-export .board-options-body{display:flex!important;align-items:center!important;gap:.4rem!important;flex-wrap:wrap!important}
 #shortListPanel .relphi-board-export button{min-height:2.15rem!important;margin:0!important;padding:.4rem .62rem!important;border:1.25px solid #aaa098!important;border-radius:8px!important;background:#fff!important;color:#111!important;font:inherit!important;font-size:.7rem!important;font-weight:800!important}
-#shortListPanel .relphi-board-export #snapshotCardRowArrangement{border-color:var(--relphi-board-red)!important;background:var(--relphi-board-red)!important;color:#fff!important}
 #shortListPanel .relphi-board-export .drawing-board-snapshot-status{flex:1 0 100%!important}
 
 @media(max-width:700px){
