@@ -278,14 +278,55 @@
     document.head.appendChild(s);
   }
   function syncSignificatorFromBoard(box){
-    if(significatorId||!box)return;
-    const snap=window.RelphiDrawingBoardOptionsBridge?.capture?.()||{};
-    const ids=Array.isArray(snap.shortList)?snap.shortList.filter(Boolean):[];
-    if(ids.length!==1)return;
-    const id=ids[0];
-    rememberSignificator(id);
+    if(!box)return;
+    if(!significatorId)significatorId=storedSignificator();
+    if(!significatorId){
+      const snap=window.RelphiDrawingBoardOptionsBridge?.capture?.()||{};
+      const ids=Array.isArray(snap.shortList)?snap.shortList.filter(Boolean):[];
+      if(ids.length===1)rememberSignificator(ids[0]);
+    }
     renderSignificatorState(box);
   }
+  function rehydrateDomainGate(box){
+    if(!box)return;
+    syncSignificatorFromBoard(box);
+    if(!significatorId)return;
+    const hidden=box.querySelector('#crowleyExpectedDomain');
+    if(hidden)hidden.value=expectedDomain||'';
+    renderDomainFilter(box);
+    const search=box.querySelector('#crowleyDomainSearch');
+    const lock=box.querySelector('#crowleyLockDomain');
+    const reveal=box.querySelector('#crowleyDomainReveal');
+    const invocation=box.querySelector('#crowleyInvocationStep');
+    const invoke=box.querySelector('#crowleyInvoke');
+    const cut=box.querySelector('#crowleyCutStep');
+    if(domainLocked){
+      if(search)search.disabled=true;
+      box.querySelectorAll('[data-crowley-domain]').forEach(node=>node.disabled=true);
+      if(lock)lock.disabled=true;
+      if(reveal)reveal.hidden=false;
+      if(operationDeck){
+        if(invocation)invocation.hidden=true;
+        if(invoke)invoke.disabled=true;
+        if(cut)cut.hidden=false;
+      }else{
+        if(invocation)invocation.hidden=false;
+        if(invoke)invoke.disabled=false;
+        if(cut)cut.hidden=true;
+      }
+    }else{
+      if(search)search.disabled=false;
+      box.querySelectorAll('[data-crowley-domain]').forEach(node=>node.disabled=false);
+      if(lock)lock.disabled=false;
+      if(reveal)reveal.hidden=true;
+      if(invocation)invocation.hidden=false;
+      if(invoke)invoke.disabled=false;
+      if(cut)cut.hidden=true;
+    }
+    const actual=box.querySelector('#crowleyActualDomain');
+    if(actual)actual.textContent=revealedDomain||'Awaiting cuts';
+  }
+
   function ensureGuide(){
     const r=root(); if(!r) return;
     const nativeDrawer=r.querySelector('.card-row-drawing-board');
@@ -312,10 +353,12 @@
       box.querySelector('#crowleyDrawSignificator').addEventListener('click',()=>{
         if(significatorId)return;
         const button=box.querySelector('#crowleyDrawSignificator');button.disabled=true;
-        const card=ledger()?.drawCardForBoard?.('full');
+        const card=ledger()?.drawOpeningSignificator?.('full') || ledger()?.drawCardForBoard?.('full');
         if(!card){button.disabled=false;return;}
         chooseSignificator(card);
-        ledger()?.hideOpeningSignificator?.();
+        // Legacy fallback may have put the card on the board. The dedicated
+        // drawOpeningSignificator path never mutates the board.
+        if(!ledger()?.drawOpeningSignificator)ledger()?.hideOpeningSignificator?.();
       });
       box.querySelector('#crowleySignificatorSearch').addEventListener('input',e=>{
         const q=String(e.target.value||'').trim();
@@ -429,7 +472,7 @@
       box.querySelector('#crowleyCount').value='3';
     }
     box.hidden=!active();
-    if(!box.hidden){syncSignificatorFromBoard(box);mark();} else clearMarks();
+    if(!box.hidden){rehydrateDomainGate(box);mark();} else clearMarks();
   }
   function start(){
     operation=1;anchor=0;countValue=3;pairRadius=1;significatorId=storedSignificator();
