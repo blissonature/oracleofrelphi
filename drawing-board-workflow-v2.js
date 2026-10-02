@@ -2383,13 +2383,9 @@
     drawer.className='relphi-reading-options-drawer is-reading-options-open relphi-referents-drawer';
     drawer.id='drawingBoardReadingOptions';
     drawer.setAttribute('role','region');
-    drawer.setAttribute('aria-label','Crafted Draw settings');
+    drawer.setAttribute('aria-label','Crafted reading paths');
     draft.stickers=true;
     if(!['digital','physical'].includes(session.sacredCardSource))session.sacredCardSource='digital';
-    const advancedDrawSettings='<div class="relphi-free-toggles relphi-draw-promoted"><label><input id="relphiDraftReversals" type="checkbox" '+(draft.reversals?'checked':'')+'> Reversals</label><label><input id="relphiDraftRepeats" type="checkbox" '+(draft.repeats?'checked':'')+'> Repeats</label></div>';
-    const drawSettingsMarkup=(session.path==='surface'||session.path==='astro')
-      ? '<section class="relphi-referent-settings" aria-label="Draw settings"><strong class="relphi-referent-settings-title">Draw settings</strong>'+advancedDrawSettings+'</section>'
-      : '<section class="relphi-referent-settings" aria-label="Draw settings"><strong class="relphi-referent-settings-title">Draw settings</strong><div class="relphi-draw-options"><label>Pack<select id="relphiDraftPack">'+packOptions(draft.pack)+'</select></label>'+keywordDraftMarkup(draft)+'</div>'+advancedDrawSettings+'</section>';
     const activePathPanel=pathPanelMarkup(session,hasCards);
     const pathEntry=(id,label,description)=>{
       const expanded=session.path===id && !session.pathCollapsed;
@@ -2405,7 +2401,6 @@
           pathEntry('surface','See What Surfaces','Draw symbolic cards to discover what to ask.')+
           pathEntry('astro','Astrological Tarot Reading','Connect one or two skies and surface questions from exact card hits.')+
         '</div>'+
-        drawSettingsMarkup+
         (session.path==='surface'&&!session.pathCollapsed
           ? (()=>{const count=selectedSurfaceKinds(session).length,ready=count>0;return '<aside class="relphi-surface-readiness '+(ready?'is-ready':'')+'" data-surface-readiness role="status" aria-live="polite">'+
               '<div class="relphi-surface-readiness-rail" aria-label="Crafted reading progress">'+
@@ -2825,13 +2820,6 @@
       renderOptions(root);
     });
 
-    drawer.querySelector('#relphiDraftPack')?.addEventListener('change',event=>{draft.pack=event.target.value;if(draft.pack!=='question-by-question'&&session.path==='bespoke'){draft.positionPacks=draft.labels.map(()=>draft.pack);draft.positionSettings=(draft.positionSettings||[]).map(item=>({...item,pack:draft.pack}));} const body=drawer.querySelector('.relphi-options-body'); const scrollTop=body?.scrollTop||0; renderOptions(root); const next=root.querySelector('.relphi-options-body'); if(next) next.scrollTop=scrollTop;});
-    const keywordQuery=drawer.querySelector('#relphiKeywordQuery');
-    keywordQuery?.addEventListener('input',event=>renderKeywordMatches(drawer,draft,event.target.value));
-    drawer.querySelectorAll('input[name="relphiKeywordMode"]').forEach(input=>input.addEventListener('change',()=>{draft.keywordMatchMode=input.value==='all'?'all':'any'; renderOptions(root);}));
-    drawer.querySelectorAll('[data-keyword-remove]').forEach(button=>button.addEventListener('click',()=>{draft.keywordTags=(draft.keywordTags||[]).filter(tag=>tag!==button.dataset.keywordRemove); renderOptions(root);}));
-    drawer.querySelector('#relphiDraftReversals')?.addEventListener('change',event=>{draft.reversals=event.target.checked;});
-    drawer.querySelector('#relphiDraftRepeats')?.addEventListener('change',event=>{draft.repeats=event.target.checked;});
      drawer.querySelector('#relphiCancelOptions')?.addEventListener('click',()=>cancelBoardSettings(root));
     drawer.querySelector('#relphiApplyOptions')?.addEventListener('click',()=>{
       if (session.path==='surface' && !prepareSurfaceDraft(session)) return;
