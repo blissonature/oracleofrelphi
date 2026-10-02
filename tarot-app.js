@@ -4560,6 +4560,14 @@
       scrollCardRowToEnd();
       return {card_id:card.card_id,title:title(card),image:rwsImagePath(card)};
     },
+    drawOpeningSignificator(scope = 'full') {
+      // The Significator is a method choice, not a visible board draw. Choose it
+      // from the same eligible pool without mutating Drawing Board state.
+      const pool=rowDrawPool(scope || 'full',{ignoreUsed:true});
+      if(!pool.length)return null;
+      const card=pool[randomInt(pool.length)];
+      return card ? {card_id:card.card_id,title:title(card),image:rwsImagePath(card)} : null;
+    },
     hideOpeningSignificator() {
       // A chosen Significator remains conceptually inside the locked deck until
       // the method calls for its packet to be exposed.
