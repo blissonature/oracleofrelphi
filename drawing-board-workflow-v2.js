@@ -4714,7 +4714,7 @@
     const leaving=focusIndex;
     if (leaving>=0 && leaving!==next && isCrossingPosition(leaving)) acknowledgeCelticCrossing();
     if (cardAt(next)) openFocus(next);
-    else if (surfaceReadingSession || recursionActive()) openAttune(next);
+    else if (surfaceReadingSession || recursionActive() || craftedReadingActive) openAttune(next);
     else drawInto(focusItem(next),next);
   }
   function navigateFocusBy(delta) {
