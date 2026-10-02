@@ -499,7 +499,7 @@ function invalidateTransit(){
   if(whereWhenEditing()){busy=false;return;}
   busy=false;
   window.RelphiRelationshipTransitMeta?.clearDurationCache?.();
-  if([MODES.longest,MODES.shortest,MODES.beganMostRecently,MODES.endsSoonest,MODES.endsLast].includes(mode))scheduleTransitSort(110);
+  if([MODES.longest,MODES.shortest,MODES.beganMostRecently,MODES.endsSoonest,MODES.endsLast,MODES.applying,MODES.separating,MODES.closing,MODES.opening].includes(mode))scheduleTransitSort(110);
 }
 window.RelphiRelationshipSort=Object.freeze({
   axisFamilyKey,
