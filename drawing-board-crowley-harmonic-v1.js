@@ -353,12 +353,13 @@
       box.querySelector('#crowleyDrawSignificator').addEventListener('click',()=>{
         if(significatorId)return;
         const button=box.querySelector('#crowleyDrawSignificator');button.disabled=true;
-        const card=ledger()?.drawOpeningSignificator?.('full') || ledger()?.drawCardForBoard?.('full');
+        const bridge=ledger();
+        const silent=typeof bridge?.drawOpeningSignificator==='function';
+        const card=silent ? bridge.drawOpeningSignificator('full') : bridge?.drawCardForBoard?.('full');
         if(!card){button.disabled=false;return;}
         chooseSignificator(card);
-        // Legacy fallback may have put the card on the board. The dedicated
-        // drawOpeningSignificator path never mutates the board.
-        if(!ledger()?.drawOpeningSignificator)ledger()?.hideOpeningSignificator?.();
+        // Older bridges may only know how to draw visibly; hide that fallback.
+        if(!silent)bridge?.hideOpeningSignificator?.();
       });
       box.querySelector('#crowleySignificatorSearch').addEventListener('input',e=>{
         const q=String(e.target.value||'').trim();
