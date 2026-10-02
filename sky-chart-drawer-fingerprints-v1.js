@@ -45,7 +45,12 @@ function addAxis(root,cx,cy,radius,degree,className){if(!Number.isFinite(degree)
 function whereMount(slot){return window.RelphiSkyCardShell?.get?.(slot)?.whereFingerprint||null}
 function placementMount(slot){return window.RelphiSkyCardShell?.get?.(slot)?.placementFingerprint||null}
 function cardHitsMount(slot){return window.RelphiSkyCardShell?.get?.(slot)?.cardHitsFingerprint||null}
-function timeUnknown(payload){return payload?.calcProfile?.timeUnknown===true||payload?.profile?.timeUnknown===true}
+function timeUnknown(payload,slot){
+  const editor=slot?window.RelphiSkyCardShell?.get?.(slot)?.editor:null;
+  const liveToggle=editor?.querySelector?.('[data-ww-field="time-unknown"]');
+  if(liveToggle)return liveToggle.checked===true;
+  return payload?.calcProfile?.timeUnknown===true||payload?.profile?.timeUnknown===true;
+}
 function unknownRulerPlaceholder(){
   const root=document.createElement('span');
   root.className='sky-card-ruler-fingerprint sky-card-ruler-unknown-fingerprint';
@@ -89,7 +94,7 @@ function renderWhere(slot,payload){
   const mount=whereMount(slot);if(!mount)return;
   const refs=window.RelphiSkyCardShell?.get?.(slot),sourceSvg=refs?.heptagram;
   mount.replaceChildren();
-  if(timeUnknown(payload)){whereRetry[slot]=0;mount.hidden=true;mount.removeAttribute('aria-label');return}
+  if(timeUnknown(payload,slot)){whereRetry[slot]=0;mount.hidden=true;mount.removeAttribute('aria-label');return}
   // The full Where and When heptagram is the single source of truth for this
   // fingerprint. Do not independently reject valid rendered geometry because a
   // stored sky uses an older metadata/profile shape.
@@ -117,7 +122,7 @@ function renderPlacements(slot,payload){
     root.appendChild(svg('line',{x1:a.x,y1:a.y,x2:b.x,y2:b.y,class:'sky-placement-fingerprint-sign-divider'}));
   }
   root.appendChild(svg('circle',{cx,cy,r:inner,fill:'#fffdfa',stroke:'rgba(44,38,33,.28)','stroke-width':'.65'}));
-  if(!timeUnknown(payload)){
+  if(!timeUnknown(payload,slot)){
     addAxis(root,cx,cy,14.6,axisValue(records,['asc','ascendant','rising'],['dsc','descendant']),'sky-placement-fingerprint-axis sky-placement-fingerprint-horizon');
     addAxis(root,cx,cy,14.6,axisValue(records,['mc','midheaven'],['ic','imumcoeli']),'sky-placement-fingerprint-axis sky-placement-fingerprint-meridian');
   }
@@ -134,7 +139,7 @@ function renderPlacements(slot,payload){
 
 function renderCardHits(slot,payload){
   const mount=cardHitsMount(slot);if(!mount)return;
-  if(timeUnknown(payload)){
+  if(timeUnknown(payload,slot)){
     mount.replaceChildren(unknownRulerPlaceholder());
     mount.hidden=false;
     mount.removeAttribute('data-ruler-sign');mount.removeAttribute('data-ruler-house');
@@ -181,6 +186,7 @@ function schedule(){if(queued)return;queued=true;requestAnimationFrame(render)}
 function relevantStorage(event){return !event.key||Object.values(KEYS).includes(event.key)}
 
 window.addEventListener('storage',event=>{if(relevantStorage(event))schedule()});
+document.addEventListener('change',event=>{if(event.target?.matches?.('[data-ww-field="time-unknown"]'))schedule()});
 [
   'relphi:sky-foundation-ready','relphi:sky-heptagram-source-ready','relphi:sky-heptagram-canonical-ready',
   'relphi:sky-live-origin-changed','relphi:saved-sky-active-changed','relphi:saved-sky-library-changed',
