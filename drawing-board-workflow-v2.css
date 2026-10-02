@@ -211,18 +211,79 @@
 #shortListPanel .relphi-board-reading-text[hidden]{display:none!important}
 #shortListPanel .relphi-board-reading-text>header{display:flex!important;align-items:flex-start!important;justify-content:space-between!important;gap:.7rem!important;flex-wrap:wrap!important;text-align:left!important}
 #shortListPanel .relphi-board-reading-text>header>div:first-child{display:grid!important;gap:.12rem!important}
-#shortListPanel .relphi-reading-text-actions{display:flex!important;align-items:center!important;justify-content:flex-end!important;gap:.4rem!important;flex-wrap:wrap!important}
 #shortListPanel .relphi-board-reading-text>header strong{font-size:.9rem!important}
 #shortListPanel .relphi-board-reading-text>header span{font-size:.7rem!important;color:#655d56!important}
-#shortListPanel .relphi-copy-reading{min-height:2.15rem!important;margin:0!important;padding:.4rem .72rem!important;border:1.5px solid var(--relphi-board-red)!important;border-radius:8px!important;background:var(--relphi-board-red)!important;color:#fff!important;font:inherit!important;font-size:.72rem!important;font-weight:900!important;line-height:1!important}
 #shortListPanel .relphi-reading-text-list{display:grid!important;gap:.55rem!important}
 #shortListPanel .relphi-reading-text-card{display:grid!important;gap:.28rem!important;min-width:0!important;max-width:100%!important;padding:.68rem .75rem!important;border:1px solid #ded5cc!important;border-radius:9px!important;background:#fff!important;text-align:left!important;overflow:visible!important}
 #shortListPanel .relphi-reading-text-position{display:block!important;min-width:0!important;max-width:100%!important;max-height:none!important;margin:0!important;color:#5f5751!important;font-size:.7rem!important;font-weight:850!important;line-height:1.25!important;white-space:normal!important;overflow:visible!important;text-overflow:clip!important;overflow-wrap:anywhere!important;word-break:normal!important}
 #shortListPanel .relphi-reading-text-card h3{margin:0!important;color:#171412!important;font-size:.9rem!important;line-height:1.2!important}
 #shortListPanel .relphi-reading-text-association{margin:0!important;color:#655d56!important;font-size:.72rem!important;font-weight:750!important;line-height:1.35!important}
 #shortListPanel .relphi-reading-text-interpretation{margin:.08rem 0 0!important;color:#171412!important;font-size:.82rem!important;line-height:1.48!important}
-#shortListPanel .relphi-copy-reading-status{min-height:1em!important;color:#655d56!important;font-size:.68rem!important}
-@media(max-width:700px){#shortListPanel .relphi-board-reading-text>header{align-items:stretch!important}#shortListPanel .relphi-reading-text-actions{width:100%!important;justify-content:flex-start!important}}
+
+/* Quiet document utilities live between the felt and Reading Text. Draw remains
+   the only red primary action in the Drawing Board command hierarchy. */
+#shortListPanel .relphi-board-document-actions{
+  display:grid!important;
+  grid-template-columns:minmax(0,1fr)!important;
+  gap:.28rem!important;
+  margin:.42rem .5rem .1rem!important;
+  padding:0!important;
+  background:transparent!important;
+}
+#shortListPanel .relphi-board-document-buttons{
+  display:flex!important;
+  align-items:center!important;
+  justify-content:flex-end!important;
+  gap:.4rem!important;
+  flex-wrap:wrap!important;
+}
+#shortListPanel .relphi-board-document-button{
+  appearance:none!important;
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  min-height:2.15rem!important;
+  margin:0!important;
+  padding:.4rem .68rem!important;
+  border:1.25px solid #b9afa7!important;
+  border-radius:8px!important;
+  background:#fff!important;
+  color:#2f2925!important;
+  box-shadow:none!important;
+  font:inherit!important;
+  font-size:.7rem!important;
+  font-weight:850!important;
+  line-height:1!important;
+  white-space:nowrap!important;
+}
+#shortListPanel .relphi-board-document-button:hover,
+#shortListPanel .relphi-board-document-button:focus-visible{
+  outline:none!important;
+  border-color:#81766e!important;
+  background:#fbf8f4!important;
+}
+#shortListPanel .relphi-board-document-button:disabled{
+  opacity:.48!important;
+  cursor:not-allowed!important;
+}
+#shortListPanel .relphi-board-document-status{
+  min-height:.85em!important;
+  color:#655d56!important;
+  font-size:.64rem!important;
+  line-height:1.2!important;
+  text-align:right!important;
+}
+@media(max-width:700px){
+  #shortListPanel .relphi-board-document-actions{margin:.4rem .5rem .05rem!important}
+  #shortListPanel .relphi-board-document-buttons{
+    display:grid!important;
+    grid-template-columns:repeat(2,minmax(0,1fr))!important;
+    gap:.4rem!important;
+  }
+  #shortListPanel .relphi-board-document-button{width:100%!important}
+  #shortListPanel .relphi-board-document-status{text-align:left!important}
+}
+@media(max-width:700px){#shortListPanel .relphi-board-reading-text>header{align-items:stretch!important}}
 
 /* Save/export is permanent document chrome below the pannable canvas. */
 #shortListPanel .relphi-board-export{display:grid!important;gap:.65rem!important;margin:.8rem .5rem .5rem!important;padding:.75rem!important;border:1px solid var(--relphi-board-line)!important;border-radius:12px!important;background:var(--relphi-board-paper)!important;color:var(--relphi-board-ink)!important}
@@ -2464,7 +2525,7 @@ body.relphi-attune-open{overflow:hidden!important}
 #shortListPanel #redoShortList{grid-area:redo!important;margin:0!important}
 #shortListPanel #clearShortListCardsOnly{grid-area:clear!important;margin:0!important;min-width:0!important;width:auto!important}
 #shortListPanel #drawRandomRowCard{grid-area:draw!important;margin:0!important}
-@media(max-width:760px){#shortListPanel .relphi-board-commandbar{display:grid!important;grid-template-columns:auto auto auto 1fr!important;grid-template-areas:"title title title title" "exports exports exports exports" "sky sky sky sky" "reset settings . ." "undo redo clear draw"!important;gap:.4rem!important}#shortListPanel .relphi-board-command-left,#shortListPanel .drawing-board-top-actions.relphi-board-command-actions{display:contents!important}#shortListPanel .drawing-board-top-actions.relphi-board-command-actions>button{width:auto!important}#shortListPanel .relphi-board-commandbar>.relphi-reading-text-actions{justify-self:start!important;width:100%!important;justify-content:flex-start!important}}
+@media(max-width:760px){#shortListPanel .relphi-board-commandbar{display:grid!important;grid-template-columns:auto auto auto 1fr!important;grid-template-areas:"title title title title" "sky sky sky sky" "reset settings . ." "undo redo clear draw"!important;gap:.4rem!important}#shortListPanel .relphi-board-command-left,#shortListPanel .drawing-board-top-actions.relphi-board-command-actions{display:contents!important}#shortListPanel .drawing-board-top-actions.relphi-board-command-actions>button{width:auto!important}}
 
 
 /* Compact Sky Connector selectors: use the Sky Chart single-chevron language. */
@@ -2516,7 +2577,7 @@ body.relphi-attune-open{overflow:hidden!important}
 #shortListPanel .relphi-board-commandbar{
   display:grid!important;
   grid-template-columns:auto auto auto minmax(0,1fr)!important;
-  grid-template-areas:"title title exports exports" "sky sky sky sky" "reset settings . ." "undo redo clear draw"!important;
+  grid-template-areas:"title title title title" "sky sky sky sky" "reset settings . ." "undo redo clear draw"!important;
   gap:.4rem!important;
   align-items:center!important;
 }
@@ -2524,29 +2585,6 @@ body.relphi-attune-open{overflow:hidden!important}
 #shortListPanel .drawing-board-top-actions.relphi-board-command-actions{display:contents!important}
 #shortListPanel #relphiBoardSettingsButton{display:inline-flex!important;grid-area:settings!important;visibility:visible!important}
 #shortListPanel .drawing-board-top-actions>.relphi-sky-connector{display:flex!important;grid-area:sky!important;visibility:visible!important;width:100%!important}
-#shortListPanel .relphi-board-commandbar>.relphi-reading-text-actions{
-  grid-area:exports!important;
-  justify-self:end!important;
-  align-self:center!important;
-  display:flex!important;
-  align-items:center!important;
-  justify-content:flex-end!important;
-  gap:.4rem!important;
-  flex-wrap:wrap!important;
-  width:auto!important;
-  margin:0!important;
-}
-#shortListPanel .relphi-board-commandbar>.relphi-reading-text-actions .relphi-copy-reading,
-#shortListPanel .relphi-board-commandbar>.relphi-reading-text-actions .relphi-board-export-button{
-  min-height:2rem!important;
-  margin:0!important;
-  padding:0 .68rem!important;
-  border-radius:999px!important;
-  font-size:.68rem!important;
-  white-space:nowrap!important;
-}
-
-
 
 /* Vertically center the persistent Settings command label. */
 #shortListPanel #relphiBoardSettingsButton{
