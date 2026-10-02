@@ -272,16 +272,16 @@
   }
 
   const CELTIC_LABELS = [
-    '1 · What covers you',
-    '2 · What crosses you',
-    '3 · What crowns you',
-    '4 · What is beneath you',
-    '5 · What is behind you',
-    '6 · What is before you',
-    '7 · Yourself',
-    '8 · Your house',
-    '9 · Your hopes or fears',
-    '10 · What will come'
+    'What covers you',
+    'What crosses you',
+    'What crowns you',
+    'What is beneath you',
+    'What is behind you',
+    'What is before you',
+    'Yourself',
+    'Your house',
+    'Your hopes or fears',
+    'What will come'
   ];
   const CELTIC_CROSS = {
     version:1,
