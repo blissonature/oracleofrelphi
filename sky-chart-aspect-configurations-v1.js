@@ -826,7 +826,8 @@ function markParticipants(){
   document.querySelectorAll('.sky-foundation-relationship-row,[data-layer="aspects"]>.sky-foundation-aspect').forEach(node=>node.classList.toggle('sky-chart-configuration-participant',keys.has(relationNodeKey(node))));
 }
 function matchingBaseLine(edge){
-  const row=edge.row,index=relationIndex(edge);if(index){const byIndex=document.querySelector(`[data-layer="aspects"]>.sky-foundation-aspect[data-relation-index="${CSS.escape(index)}"]`);if(byIndex)return byIndex}
+  const row=edge?.row,index=relationIndex(edge);if(index){const byIndex=document.querySelector(`[data-layer="aspects"]>.sky-foundation-aspect[data-relation-index="${CSS.escape(index)}"]`);if(byIndex)return byIndex}
+  if(!row)return null;
   const aspect=String(row.dataset.aspect||''),lp=String(row.dataset.leftPlacement||''),rp=String(row.dataset.rightPlacement||''),ls=String(row.dataset.leftSky||''),rs=String(row.dataset.rightSky||'');
   return[...document.querySelectorAll(`[data-layer="aspects"]>.sky-foundation-aspect[data-aspect="${CSS.escape(aspect)}"]`)].find(line=>String(line.dataset.leftPlacement||'')===lp&&String(line.dataset.rightPlacement||'')===rp&&String(line.dataset.leftSky||'')===ls&&String(line.dataset.rightSky||'')===rs)||null;
 }
@@ -838,9 +839,26 @@ function ensureOverlay(){
 function renderOverlay(){
   const layer=ensureOverlay();if(!layer)return;layer.replaceChildren();clearPeerHighlight();markParticipants();
   const chosen=selectedPatternsForVisibility(),seen=new Set();
-  for(const pattern of chosen)for(const edge of pattern.edges){const key=edgeNodeKey(edge);if(seen.has(key))continue;seen.add(key);const base=matchingBaseLine(edge);if(!base)continue;const line=document.createElementNS('http://www.w3.org/2000/svg','line');['x1','y1','x2','y2','stroke'].forEach(name=>{const value=base.getAttribute(name);if(value!=null)line.setAttribute(name,value)});line.setAttribute('vector-effect','non-scaling-stroke');line.classList.add('sky-chart-configuration-line');line.dataset.configurationRelation=relationIndex(edge)||'';line.dataset.configurationKey=key;layer.appendChild(line)}
+  for(const pattern of chosen)for(const edge of pattern.edges){const key=edgeNodeKey(edge);if(seen.has(key))continue;seen.add(key);const base=matchingBaseLine(edge);if(!base)continue;const line=document.createElementNS('http://www.w3.org/2000/svg','line');['x1','y1','x2','y2','stroke'].forEach(name=>{const value=base.getAttribute(name);if(value!=null)line.setAttribute(name,value)});line.setAttribute('vector-effect','non-scaling-stroke');line.classList.add('sky-chart-configuration-line');line.dataset.configurationRelation=relationIndex(edge)||'';line.dataset.configurationKey=key;const row=edge?.row;if(row){line.dataset.relationIndex=String(row.dataset.relationIndex||'');line.dataset.leftSky=String(row.dataset.leftSky||'');line.dataset.rightSky=String(row.dataset.rightSky||'');line.dataset.leftPlacement=String(row.dataset.leftPlacement||'');line.dataset.rightPlacement=String(row.dataset.rightPlacement||'')}layer.appendChild(line)}
   const selectedCount=activeScopes().reduce((sum,scope)=>sum+configurationState[scope].size,0);
   document.documentElement.dataset.skyConfigurationSelection=String(selectedCount);
+  applyConfigurationFocusComposition();
+}
+let configurationFocusState={active:false,indexes:new Set()};
+function applyConfigurationFocusComposition(){
+  const layer=document.querySelector('[data-layer="configurations"]');if(!layer)return;
+  layer.classList.toggle('has-focus-composition',configurationFocusState.active);
+  layer.querySelectorAll('.sky-chart-configuration-line').forEach(line=>{
+    const index=String(line.dataset.relationIndex||line.dataset.configurationRelation||'');
+    const keep=!configurationFocusState.active||(index&&configurationFocusState.indexes.has(index));
+    line.classList.toggle('is-focus-kept',!!keep);
+    line.classList.toggle('is-focus-muted',configurationFocusState.active&&!keep);
+  });
+}
+function receiveConfigurationFocus(event){
+  const detail=event?.detail||{},active=detail.active===true;
+  configurationFocusState={active,indexes:new Set(active?(detail.relationshipIndexes||[]).map(String):[])};
+  applyConfigurationFocusComposition();
 }
 function clearPeerHighlight(){
   document.querySelectorAll('.sky-foundation-relationship-row.is-configuration-peer,.sky-foundation-relationship-row.is-configuration-hover-source').forEach(row=>row.classList.remove('is-configuration-peer','is-configuration-hover-source'));
@@ -894,6 +912,7 @@ function schedule(){if(queued)return;queued=true;requestAnimationFrame(refresh)}
 function handleChange(event){const inevitable=event.target.closest?.('[data-configuration-inevitable]');if(inevitable){event.stopPropagation();inevitableEnabled=inevitable.checked;try{localStorage.setItem(INEVITABLE_STORAGE_KEY,String(inevitableEnabled))}catch(_){}schedule();return}const input=event.target.closest?.('[data-configuration-scope][data-configuration-type]');if(!input)return;event.stopPropagation();setSelection(input.dataset.configurationScope,input.dataset.configurationType,input.checked)}
 function start(){
   document.addEventListener('change',handleChange,true);
+  window.addEventListener('relphi:sky-filter-wheel-focus-changed',receiveConfigurationFocus);
   window.addEventListener('relphi:sky-foundation-clear-selection',()=>{
     clearPatternHighlight();
     clearPeerHighlight();
