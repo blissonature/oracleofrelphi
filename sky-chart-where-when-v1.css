@@ -247,9 +247,15 @@
 .sky-where-when-grid [data-ww-field="date"],
 .sky-where-when-grid [data-ww-field="time"] {
   min-height:40px;
+  font-variant-numeric:tabular-nums;
+}
+.sky-where-when-grid [data-ww-field="date"] {
   padding-left:.55rem;
   padding-right:.55rem;
-  font-variant-numeric:tabular-nums;
+}
+.sky-where-when-grid [data-ww-field="time"] {
+  padding-left:.34rem;
+  padding-right:.18rem;
 }
 
 .sky-where-when-advanced {
