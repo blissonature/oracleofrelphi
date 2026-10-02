@@ -18,7 +18,8 @@ const MODES=Object.freeze({
   applying:'applying-first',
   separating:'separating-first',
   closing:'closing-first',
-  opening:'opening-first'
+  opening:'opening-first',
+  referenceResolution:'reference-resolution'
 });
 const ASPECT_ORDER=Object.freeze([
   'conjunction','opposition','trine','square','sextile',
@@ -344,7 +345,27 @@ function compareMotion(a,b,kind){
   const bv=kind==='phase'?Math.abs(bm?.applyingRate??0):Math.abs(bm?.separationRate??0);
   return bv-av||compareExact(a,b);
 }
+const REFERENCE_RESOLUTION=Object.freeze({
+  asc:100,dsc:100,mc:100,ic:100,
+  vertex:96,'part-of-fortune':96,
+  moon:90,
+  mercury:76,venus:74,sun:72,mars:68,
+  'north-node':58,'south-node':58,lilith:56,
+  jupiter:44,saturn:36,chiron:30,uranus:22,neptune:14,pluto:10
+});
+function referenceResolutionFor(row){
+  const left=normalizedPoint(row?.dataset?.leftPlacement),right=normalizedPoint(row?.dataset?.rightPlacement);
+  const leftValue=REFERENCE_RESOLUTION[left]??40,rightValue=REFERENCE_RESOLUTION[right]??40;
+  const value=Math.max(leftValue,rightValue);
+  row.dataset.referenceResolution=String(value);
+  row.dataset.referenceResolutionEndpoint=leftValue>=rightValue?'left':'right';
+  return value;
+}
+function compareReferenceResolution(a,b){
+  return referenceResolutionFor(b)-referenceResolutionFor(a)||compareExact(a,b);
+}
 function compareRows(a,b){
+  if(mode===MODES.referenceResolution)return compareReferenceResolution(a,b);
   if(mode===MODES.applying||mode===MODES.separating)return compareMotion(a,b,'phase');
   if(mode===MODES.closing||mode===MODES.opening)return compareMotion(a,b,'distance');
   if(mode===MODES.aspect)return compareAspect(a,b);
@@ -419,7 +440,8 @@ function ensureControl(){
       [MODES.applying,'Applying First'],
       [MODES.separating,'Separating First'],
       [MODES.closing,'Closing First'],
-      [MODES.opening,'Opening First']
+      [MODES.opening,'Opening First'],
+      [MODES.referenceResolution,'Highest Reference Resolution']
     ].forEach(([value,text])=>{
       const option=document.createElement('option');
       option.value=value;
@@ -507,6 +529,8 @@ window.RelphiRelationshipSort=Object.freeze({
   mode:currentMode,
   model:SCORE_MODEL,
   scoreRow:relationshipScore,
+  referenceResolutionFor,
+  referenceResolution:REFERENCE_RESOLUTION,
   setMode
 });
 
