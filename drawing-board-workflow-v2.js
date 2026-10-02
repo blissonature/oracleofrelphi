@@ -467,6 +467,36 @@
 
   function currentSnapshot() { return optionsBridge()?.capture?.() || null; }
   function currentPrefabState() { return prefabBridge()?.getState?.() || {}; }
+  function templateAppearanceFromSnapshot(snapshot=currentSnapshot()||{}) {
+    return {
+      tableColor:String(snapshot.rowTableColor||'#7d1f28'),
+      tableImage:String(snapshot.rowTableImage||''),
+      placeholderColor:String(snapshot.rowEnvelopeColor||'#f3f0ea'),
+      placeholderImage:String(snapshot.rowEnvelopeImage||'')
+    };
+  }
+  function normalizedTemplateAppearance(template) {
+    const appearance=template?.appearance;
+    if(!appearance||typeof appearance!=='object')return null;
+    return {
+      tableColor:String(appearance.tableColor||'#7d1f28'),
+      tableImage:String(appearance.tableImage||''),
+      placeholderColor:String(appearance.placeholderColor||'#f3f0ea'),
+      placeholderImage:String(appearance.placeholderImage||'')
+    };
+  }
+  function applyTemplateAppearance(template,root=panel()) {
+    const appearance=normalizedTemplateAppearance(template);
+    const bridge=optionsBridge(),snap=bridge?.capture?.();
+    if(!appearance||!bridge||!snap)return false;
+    snap.rowTableColor=appearance.tableColor;
+    snap.rowTableImage=appearance.tableImage;
+    snap.rowEnvelopeColor=appearance.placeholderColor;
+    snap.rowEnvelopeImage=appearance.placeholderImage;
+    bridge.restore(snap);
+    boardBackgroundMode=appearance.tableImage||appearance.placeholderImage?'image':'color';
+    return true;
+  }
   function activeLayoutId() { return String(currentPrefabState().activeLayout?.id || ''); }
   function currentSlotCount(root = panel()) {
     return Math.max(
@@ -790,9 +820,12 @@
     const body=settingsPanel?.querySelector('.relphi-board-settings-body');
     if(!settingsPanel||!body)return;
     const drawer=settingsMode==='free' ? null : body.querySelector('.relphi-reading-options-drawer');
+    const bespokeAppearanceHost=settingsMode==='crafted' && String(optionsSession?.path||activeCraftedPath||'')==='bespoke'
+      ? drawer?.querySelector('.relphi-bespoke-appearance-host')
+      : null;
     const host=settingsMode==='free'
       ? body.querySelector('.relphi-free-settings')
-      : drawer?.querySelector('.relphi-options-body');
+      : (bespokeAppearanceHost || drawer?.querySelector('.relphi-options-body'));
     if(!host)return;
 
     let section=host.querySelector(':scope > .relphi-board-configuration');
@@ -2297,6 +2330,7 @@
       '<div class="relphi-question-toolbar"><label><input type="checkbox" id="relphiSelectAllQuestions" aria-label="Select all questions for editing"> <span>Select all</span></label><button type="button" id="relphiCopyBespokeQuestions" class="relphi-button relphi-question-copy" aria-label="Copy all Bespoke questions and advanced settings">Copy</button><button type="button" id="relphiMoveQuestionsUp" aria-label="Move selected questions up">↑</button><button type="button" id="relphiMoveQuestionsDown" aria-label="Move selected questions down">↓</button><button type="button" id="relphiDeleteQuestions" class="relphi-stroke-icon relphi-stroke-x" aria-label="Delete selected questions"><span aria-hidden="true"></span></button><button type="button" id="relphiAddPosition" class="relphi-stroke-icon relphi-stroke-plus" aria-label="Add question" '+(hasCards||draft.labels.length>=MAX_POSITIONS?'disabled':'')+'><span aria-hidden="true"></span></button></div>'+
       bespokeQuestionControllerMarkup(draft)+
       '<div id="relphiPositionLabels">'+labelsMarkup(draft.labels,draft)+'</div>'+
+      '<div class="relphi-bespoke-appearance-host"></div>'+
       '<div class="relphi-template-save"><input id="relphiTemplateName" class="'+((draft.templateName||'Unnamed Template')==='Unnamed Template'?'is-unnamed':'')+'" type="text" maxlength="60" aria-label="Template name" value="'+escapeHtml(draft.templateName||'Unnamed Template')+'" '+(hasCards?'disabled':'')+'><button type="button" id="relphiSaveTemplate" '+(hasCards?'disabled':'')+'>Save template</button></div>'+
       '</section>';
   }
@@ -2569,6 +2603,7 @@
       draft.pack=chosen.rules?.drawScope||draft.pack||'full';
       draft.reversals=chosen.rules?.allowReversals!==false;
       draft.repeats=!!chosen.rules?.allowRepeats;
+      applyTemplateAppearance(chosen,root);
       session.path='bespoke';
       syncTransformEditingAvailability(root);
       renderOptions(root,{preserveScroll:false});
@@ -2866,7 +2901,7 @@
     const positions=(based?.positions?.length===draft.labels.length ? clone(based.positions) : genericPositions(draft.labels));
     positions.forEach((item,index)=>{ item.label=draft.labels[index] || `Position ${index+1}`; item.drawOrder=index+1; });
     const id=`custom-${slug(name)}-${draft.labels.length}`;
-    const custom={version:1,id,name,cardCount:draft.labels.length,source:'custom',editable:true,basedOn:based?.id||null,positions,rules:{allowReversals:draft.reversals,allowRepeats:draft.repeats,drawScope:(draft.pack==='question-by-question'?'full':draft.pack)}};
+    const custom={version:1,id,name,cardCount:draft.labels.length,source:'custom',editable:true,basedOn:based?.id||null,positions,rules:{allowReversals:draft.reversals,allowRepeats:draft.repeats,drawScope:(draft.pack==='question-by-question'?'full':draft.pack)},appearance:templateAppearanceFromSnapshot()};
     const items=existing.filter(item=>item.id!==id);
     items.push(custom); writeCustomTemplates(items);
     draft.templateId=id;
@@ -3079,6 +3114,7 @@
       const next=clone(based);
       next.positions.forEach((item,index)=>{const ps=draft.positionSettings?.[index]||{};item.label=labels[index];item.drawOrder=index+1;item.drawScope=positionPacks[index]||ps.pack||item.drawScope||'';item.allowReversals=ps.reversals ?? draft.reversals;item.allowRepeats=ps.repeats ?? draft.repeats;item.cardCount=Math.max(1,Number(ps.cardCount)||1);item.linkTo=String(ps.linkTo??'');item.questionText=String(ps.questionText||labels[index]||'');item.questionIndex=Number.isInteger(ps.questionIndex)?ps.questionIndex:index;item.questionCardIndex=Math.max(0,Number(ps.questionCardIndex)||0);item.questionCardCount=Math.max(1,Number(ps.questionCardCount)||1);});
       next.rules={allowReversals:draft.reversals,allowRepeats:draft.repeats,drawScope:draft.pack};
+      if (!draft.templateId) next.appearance=templateAppearanceFromSnapshot();
       if (!draft.templateId) {
         next.id='custom-active';
         next.name=draft.templateName || 'Custom';
@@ -3090,7 +3126,7 @@
     }
     const positions=genericPositions(labels);
     positions.forEach((item,index)=>{const ps=draft.positionSettings?.[index]||{};item.drawScope=positionPacks[index]||ps.pack||'';item.allowReversals=ps.reversals ?? draft.reversals;item.allowRepeats=ps.repeats ?? draft.repeats;item.cardCount=Math.max(1,Number(ps.cardCount)||1);item.linkTo=String(ps.linkTo??'');item.questionText=String(ps.questionText||labels[index]||'');item.questionIndex=Number.isInteger(ps.questionIndex)?ps.questionIndex:index;item.questionCardIndex=Math.max(0,Number(ps.questionCardIndex)||0);item.questionCardCount=Math.max(1,Number(ps.questionCardCount)||1);});
-    return {version:1,id:'custom-active',name:draft.templateName || 'Custom',cardCount:labels.length,source:'custom',editable:true,basedOn:based?.id||null,positions,rules:{allowReversals:draft.reversals,allowRepeats:draft.repeats,drawScope:draft.pack}};
+    return {version:1,id:'custom-active',name:draft.templateName || 'Custom',cardCount:labels.length,source:'custom',editable:true,basedOn:based?.id||null,positions,rules:{allowReversals:draft.reversals,allowRepeats:draft.repeats,drawScope:draft.pack},appearance:templateAppearanceFromSnapshot()};
   }
 
   function applyDrawSettings(draft) {
@@ -4232,6 +4268,7 @@
     Object.assign(snap,{shortList:[],shortListSelection:[],shortListPositionLabels:[],shortListPositionCardIds:[],rowEnvelopeLayout:{},rowCardTransforms:{},rowPositionMeta:[],rowActiveLayout:null,rowLayoutLocked:false,rowLayoutDesignMode:false,rowCardReversals:{},rowCardManual:[],rowDrawDeck:[],rowDrawDeckSignature:''});
     bridge.restore(snap);
     if(!prefabs.applyLayout(prefab)){craftedReadingActive=false;return false;}
+    applyTemplateAppearance(prefab,root);
     stampCraftedPath(craftedPath,root);
     const sacredCardSource=optionsSession?.sacredCardSource==='physical'?'physical':'digital';
     markSettingsConfirmed();
