@@ -1504,11 +1504,16 @@
   function installExportArea(root) {
     const workspace=root.querySelector('.card-row-workspace');
     const readingText=root.querySelector('#drawing-board-reading-text');
-    const actions=readingText?.querySelector('.relphi-reading-text-actions');
-    if(!workspace||!readingText||!actions)return;
+    const commandbar=root.querySelector('.relphi-board-commandbar');
+    const actions=readingText?.querySelector('.relphi-reading-text-actions') || commandbar?.querySelector('.relphi-reading-text-actions');
+    if(!workspace||!readingText||!commandbar||!actions)return;
+
+    // Keep document actions in the unused upper-right command-bar space rather
+    // than spending vertical room beside Reading Text below the felt.
+    if(actions.parentElement!==commandbar)commandbar.appendChild(actions);
 
     // Native export controls own their behavior in tarot-app.js. Preserve those
-    // exact bound nodes while moving the useful actions beside Reading Text.
+    // exact bound nodes while moving the useful actions into the command bar.
     const nativeExportIds=['snapshotCardRowArrangement','downloadRowHtml','downloadRowTextHtml','downloadRowJson','printCardRowImage'];
     const preservedExports=new Map(nativeExportIds.map(id=>[id,root.querySelector('#'+id)]).filter(([,node])=>!!node));
     preservedExports.forEach(node=>node.remove());
