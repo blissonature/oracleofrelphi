@@ -503,6 +503,16 @@ body.relphi-attune-open{overflow:hidden!important}
 .relphi-surface-composer-select input{width:1rem!important;height:1rem!important;accent-color:#b81712!important}
 .relphi-surface-composer-main{display:grid!important;gap:.55rem!important;min-width:0!important}
 .relphi-surface-composer-main textarea{display:block!important;width:100%!important;min-height:3.8rem!important;resize:vertical!important;padding:.58rem .65rem!important;border:1px solid #cfc5bc!important;border-radius:8px!important;background:#fffdf8!important;color:#171412!important;font-size:.82rem!important;font-weight:700!important;line-height:1.38!important}
+.relphi-surface-composer-controls{display:grid!important;grid-template-columns:minmax(10rem,1.35fr) minmax(8.5rem,.75fr) minmax(10rem,1fr) auto auto!important;gap:.5rem!important;align-items:end!important;padding:.58rem .62rem!important;border:1px solid #e1d8d0!important;border-radius:9px!important;background:#fbf8f4!important}
+.relphi-surface-composer-controls>label{display:grid!important;gap:.24rem!important;min-width:0!important;color:#625950!important;font-size:.64rem!important;font-weight:850!important}
+.relphi-surface-composer-controls select,.relphi-surface-composer-controls input[type="number"]{width:100%!important;min-width:0!important;min-height:2.15rem!important;padding:.38rem .46rem!important;border:1px solid #cfc5bc!important;border-radius:7px!important;background:#fff!important;color:#171412!important;font:inherit!important;font-size:.72rem!important}
+.relphi-surface-subpack-control{display:grid!important;grid-template-columns:minmax(0,1fr) 2.15rem!important;gap:.35rem!important}
+.relphi-surface-subpack-control button{width:2.15rem!important;height:2.15rem!important;padding:0!important;border:1px solid #bfb5ac!important;border-radius:7px!important;background:#fff!important;color:#211c18!important;font:900 1rem/1 Montserrat,Arial,sans-serif!important}
+.relphi-surface-card-count>div{display:grid!important;grid-template-columns:minmax(0,1fr) auto!important;gap:.32rem!important;align-items:center!important}
+.relphi-surface-card-count>div>span{white-space:nowrap!important;color:#746b64!important;font-size:.64rem!important;font-weight:800!important}
+.relphi-surface-toggle{display:flex!important;align-items:center!important;gap:.34rem!important;min-height:2.15rem!important;padding:0 .15rem!important;white-space:nowrap!important}
+.relphi-surface-toggle input[type="checkbox"]{width:1rem!important;height:1rem!important;margin:0!important;accent-color:#b81712!important}
+
 .relphi-surface-composer-advanced{min-width:0!important;margin:0!important;padding:0!important;border:0!important;background:transparent!important}
 .relphi-surface-composer-advanced>summary{display:flex!important;align-items:center!important;justify-content:space-between!important;gap:.7rem!important;min-width:0!important;padding:.22rem .08rem!important;color:#625950!important;cursor:pointer!important;list-style:none!important;user-select:none!important}
 .relphi-surface-composer-advanced>summary::-webkit-details-marker{display:none!important}
@@ -534,6 +544,9 @@ body.relphi-attune-open{overflow:hidden!important}
   .relphi-surface-composer-shell{width:100%!important;max-height:calc(100dvh - .9rem)!important;padding:.8rem!important}
   .relphi-surface-composer-advanced>summary{align-items:flex-start!important}
   .relphi-surface-composer-advanced>summary span{white-space:normal!important;text-align:right!important;line-height:1.25!important}
+  .relphi-surface-composer-controls{grid-template-columns:minmax(0,1fr) minmax(7.2rem,.55fr)!important;align-items:end!important}
+  .relphi-surface-composer-controls>label:nth-child(3){grid-column:1/-1!important}
+  .relphi-surface-toggle{min-height:1.8rem!important}
   .relphi-surface-composer-settings{grid-template-columns:1fr 5.2rem!important}
   .relphi-surface-composer-settings label:last-child{grid-column:1/-1!important}
   .relphi-surface-keyword-builder{grid-template-columns:1fr!important}
