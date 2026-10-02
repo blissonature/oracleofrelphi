@@ -30,7 +30,7 @@
     {id:'Heh-final',letter:'Final Heh',element:'Earth',suit:'Disks',core:'Money · goods · material matters',explain:'What is owned, paid for, embodied, housed, maintained, exchanged, or made materially real.',terms:['money','cash','income','pay','salary','benefits','debt','loan','bill','rent','mortgage','house','home','property','real estate','goods','purchase','shopping','price','cost','budget','savings','bank','finance','financial','material','possession','object','car','vehicle','food','body','health cost','resource','equipment','contract value','asset','inheritance','payment','sale','buy','sell']}
   ];
 
-  let operation=1, anchor=0, countValue=3, pairRadius=1, expectedDomain='', domainLocked=false, revealedDomain='', significatorId='', operationDeck=null;
+  let operation=1, anchor=0, countValue=3, pairRadius=1, expectedDomain='', domainLocked=false, revealedDomain='', significatorId='', operationDeck=null, attemptFailed=false, retrySameSelections=true;
 
   function storedSignificator(){
     try{return String(localStorage.getItem(SIGNIFICATOR_KEY)||'');}catch(_){return '';}
@@ -48,15 +48,18 @@
   }
   function resetAttemptControls(box){
     if(!box)return;
-    expectedDomain='';domainLocked=false;revealedDomain='';operationDeck=null;
+    expectedDomain='';domainLocked=false;revealedDomain='';operationDeck=null;attemptFailed=false;retrySameSelections=true;
     const expected=box.querySelector('#crowleyExpectedDomain');if(expected)expected.value='';
     const search=box.querySelector('#crowleyDomainSearch');if(search){search.value='';search.disabled=false;}
     box.querySelectorAll('[data-crowley-domain]').forEach(node=>node.disabled=false);
+    box.querySelector('#crowleyDomainResults')?.classList.remove('is-locked');
     const lock=box.querySelector('#crowleyLockDomain');if(lock)lock.disabled=false;
     const reveal=box.querySelector('#crowleyDomainReveal');if(reveal)reveal.hidden=true;
     const invocation=box.querySelector('#crowleyInvocationStep');if(invocation)invocation.hidden=false;
     const invoke=box.querySelector('#crowleyInvoke');if(invoke)invoke.disabled=false;
     const cut=box.querySelector('#crowleyCutStep');if(cut)cut.hidden=true;
+    const failure=box.querySelector('#crowleyFailureStep');if(failure)failure.hidden=true;
+    const retry=box.querySelector('#crowleyRetrySameSelections');if(retry)retry.checked=true;
     const cutRange=box.querySelector('#crowleyCutRange');if(cutRange)cutRange.value='39';
     const cutNumber=box.querySelector('#crowleyCutNumber');if(cutNumber)cutNumber.value='39';
     const makeCut=box.querySelector('#crowleyMakeCut');if(makeCut)makeCut.disabled=false;
@@ -241,7 +244,8 @@
         '<details class="crowley-domain-help"><summary>Why four domains?</summary><p>The First Operation divides the deck into four IHVH packets, corresponding in sequence to Fire, Water, Air, and Earth. The choices below are the four question domains used to predict which packet will contain the Significator.</p></details>'+
         '<label class="relphi-field crowley-domain-search">Search by subject<input id="crowleyDomainSearch" class="relphi-input" type="search" autocomplete="off" placeholder="Career, romance, conflict, rent, home…"></label><div id="crowleyDomainResults" class="crowley-domain-results">'+domainCardsMarkup('')+'</div><input id="crowleyExpectedDomain" type="hidden" value=""><p id="crowleyDomainSelection" class="crowley-domain-selection">No domain selected yet.</p><div class="crowley-controls relphi-toolbar"><button id="crowleyLockDomain" class="relphi-button relphi-button--primary" type="button">Commit domain</button></div></div>'+
       '<div id="crowleyDomainReveal" hidden><div id="crowleyInvocationStep"><div class="crowley-step-heading"><strong>Invocation</strong><span>Say the invocation before Relphi shuffles the deck.</span></div><blockquote class="crowley-invocation relphi-card relphi-card--soft">I invoke thee, I A O, that thou wilt send H R U, the great Angel that is set over the operations of this Secret Wisdom, to lay his hand invisibly upon these consecrated cards of art, that thereby we may obtain true knowledge of hidden things, to the glory of thine ineffable Name. Amen.</blockquote><button type="button" id="crowleyInvoke" class="relphi-button relphi-button--primary">Invocation complete · shuffle</button></div>'+
-      '<div id="crowleyCutStep" hidden><div class="crowley-step-heading"><strong>Querent cut</strong><span>Choose the cut position. Relphi keeps the shuffled deck order fixed for this attempt.</span></div><div class="crowley-controls relphi-toolbar"><label class="relphi-field">Cut position<input id="crowleyCutRange" class="relphi-range" type="range" min="1" max="77" value="39"></label><label class="relphi-field">Position<input id="crowleyCutNumber" class="relphi-input" type="number" min="1" max="77" value="39"></label><button type="button" id="crowleyMakeCut" class="relphi-button relphi-button--primary">Make cut</button></div><p><b>Significator packet:</b> <span id="crowleyActualDomain">Awaiting cuts</span></p></div></div><p id="crowleyDomainStatus" aria-live="polite"></p></fieldset>';
+      '<div id="crowleyCutStep" hidden><div class="crowley-step-heading"><strong>Querent cut</strong><span>Choose the cut position. Relphi keeps the shuffled deck order fixed for this attempt.</span></div><div class="crowley-controls relphi-toolbar"><label class="relphi-field">Cut position<input id="crowleyCutRange" class="relphi-range" type="range" min="1" max="77" value="39"></label><label class="relphi-field">Position<input id="crowleyCutNumber" class="relphi-input" type="number" min="1" max="77" value="39"></label><button type="button" id="crowleyMakeCut" class="relphi-button relphi-button--primary">Make cut</button></div><p><b>Significator packet:</b> <span id="crowleyActualDomain">Awaiting cuts</span></p></div>'+
+      '<div id="crowleyFailureStep" class="crowley-failure-step" hidden><div class="crowley-failure-result"><span><small>Found in</small><strong id="crowleyFoundPacket">—</strong></span><span><small>Expected</small><strong id="crowleyExpectedPacket">—</strong></span></div><p>This attempt is abandoned.</p><label class="crowley-retry-toggle"><input id="crowleyRetrySameSelections" type="checkbox" checked> Retry with same Significator and domain</label><button type="button" id="crowleyRetryOpening" class="relphi-button relphi-button--primary">Retry</button></div></div><p id="crowleyDomainStatus" aria-live="polite"></p></fieldset>';
   }
 
   function installStyle(){
@@ -276,6 +280,17 @@
       #crowleyDomainGate .crowley-domain-card{display:grid;gap:.22rem;min-width:0;padding:.52rem .58rem;text-align:left;cursor:pointer}
       #crowleyDomainGate .crowley-domain-card[aria-pressed="true"]{outline:2px solid var(--relphi-board-red);outline-offset:1px}
       #crowleyDomainGate .crowley-domain-card:disabled{cursor:default}
+      #crowleyDomainResults.is-locked{opacity:.42;filter:grayscale(.22)}
+      #crowleyDomainResults.is-locked .crowley-domain-card[aria-pressed="true"]{outline-color:#8d847d}
+      .crowley-failure-step{display:grid;gap:.55rem;margin-top:.7rem;padding:.65rem;border:1px solid #d8cec5;border-radius:9px;background:#fbf8f4}
+      .crowley-failure-step[hidden]{display:none!important}
+      .crowley-failure-result{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.45rem}
+      .crowley-failure-result>span{display:grid;gap:.08rem;padding:.5rem .55rem;border:1px solid #e1d8d0;border-radius:8px;background:#fff}
+      .crowley-failure-result small{color:#746b64;font-size:.6rem;font-weight:800;text-transform:uppercase;letter-spacing:.06em}
+      .crowley-failure-result strong{font-size:.8rem}
+      .crowley-failure-step>p{margin:0!important;font-weight:800!important;color:#4f4741!important}
+      .crowley-retry-toggle{display:flex;align-items:center;gap:.4rem;color:#514942;font-size:.68rem;font-weight:800}
+      .crowley-retry-toggle input{accent-color:var(--relphi-board-red)}
       .crowley-domain-token{display:flex;align-items:baseline;justify-content:space-between;gap:.5rem}
       .crowley-domain-token small{color:#746b64;font-size:.6rem;font-weight:750}
       .crowley-domain-card>strong{font-size:.72rem!important;line-height:1.25!important}
@@ -294,7 +309,7 @@
       .crowley-pair-stack>*{display:grid;place-items:center;padding:.5rem;border:1px solid var(--relphi-board-line);border-radius:var(--relphi-radius-md);text-align:center}
       .crowley-pair-stack strong{border-color:var(--relphi-board-red)}
       .crowley-focus-summary summary{cursor:pointer;font-weight:800}
-      @media(max-width:720px){#crowleyHarmonicGuide{padding:.7rem!important}.crowley-focus-modes,.crowley-domain-results{grid-template-columns:1fr}.crowley-significator-memory{align-items:center}.crowley-step-heading>span{font-size:.7rem}}
+      @media(max-width:720px){#crowleyHarmonicGuide{padding:.7rem!important}.crowley-focus-modes,.crowley-domain-results{grid-template-columns:1fr}.crowley-failure-result{grid-template-columns:1fr 1fr}.crowley-significator-memory{align-items:center}.crowley-step-heading>span{font-size:.7rem}}
     `;
     document.head.appendChild(s);
   }
@@ -321,28 +336,49 @@
     const invocation=box.querySelector('#crowleyInvocationStep');
     const invoke=box.querySelector('#crowleyInvoke');
     const cut=box.querySelector('#crowleyCutStep');
+    const results=box.querySelector('#crowleyDomainResults');
+    const failure=box.querySelector('#crowleyFailureStep');
     if(domainLocked){
       if(search)search.disabled=true;
       box.querySelectorAll('[data-crowley-domain]').forEach(node=>node.disabled=true);
+      results?.classList.add('is-locked');
       if(lock)lock.disabled=true;
       if(reveal)reveal.hidden=false;
-      if(operationDeck){
+      if(attemptFailed){
         if(invocation)invocation.hidden=true;
         if(invoke)invoke.disabled=true;
-        if(cut)cut.hidden=false;
-      }else{
-        if(invocation)invocation.hidden=false;
-        if(invoke)invoke.disabled=false;
         if(cut)cut.hidden=true;
+        if(failure)failure.hidden=false;
+        const found=DOMAINS.find(item=>item.id===revealedDomain);
+        const expected=DOMAINS.find(item=>item.id===expectedDomain);
+        const foundNode=box.querySelector('#crowleyFoundPacket');
+        const expectedNode=box.querySelector('#crowleyExpectedPacket');
+        if(foundNode)foundNode.textContent=(found?.letter||revealedDomain)+(found?' · '+found.element:'');
+        if(expectedNode)expectedNode.textContent=(expected?.letter||expectedDomain)+(expected?' · '+expected.element:'');
+        const retry=box.querySelector('#crowleyRetrySameSelections');if(retry)retry.checked=retrySameSelections;
+        box.querySelector('#crowleyDomainStatus').textContent='Found in '+(found?.letter||revealedDomain)+' packet. Expected '+(expected?.letter||expectedDomain)+'. This attempt is abandoned.';
+      }else{
+        if(failure)failure.hidden=true;
+        if(operationDeck){
+          if(invocation)invocation.hidden=true;
+          if(invoke)invoke.disabled=true;
+          if(cut)cut.hidden=false;
+        }else{
+          if(invocation)invocation.hidden=false;
+          if(invoke)invoke.disabled=false;
+          if(cut)cut.hidden=true;
+        }
       }
     }else{
       if(search)search.disabled=false;
       box.querySelectorAll('[data-crowley-domain]').forEach(node=>node.disabled=false);
+      results?.classList.remove('is-locked');
       if(lock)lock.disabled=false;
       if(reveal)reveal.hidden=true;
       if(invocation)invocation.hidden=false;
       if(invoke)invoke.disabled=false;
       if(cut)cut.hidden=true;
+      if(failure)failure.hidden=true;
     }
     const actual=box.querySelector('#crowleyActualDomain');
     if(actual)actual.textContent=revealedDomain||'Awaiting cuts';
@@ -428,10 +464,40 @@
         domainLocked=true;
         const search=box.querySelector('#crowleyDomainSearch');if(search)search.disabled=true;
         box.querySelectorAll('[data-crowley-domain]').forEach(node=>node.disabled=true);
+        box.querySelector('#crowleyDomainResults')?.classList.add('is-locked');
         box.querySelector('#crowleyLockDomain').disabled=true;
         box.querySelector('#crowleyDomainStatus').textContent='Domain committed. Resolve the four packets, then reveal which contains the Significator.';
         box.querySelector('#crowleyDomainReveal').hidden=false;
         box.querySelector('#crowleyActualDomain').textContent='Awaiting cuts';
+      });
+      box.querySelector('#crowleyRetrySameSelections').addEventListener('change',event=>{retrySameSelections=!!event.target.checked;});
+      box.querySelector('#crowleyRetryOpening').addEventListener('click',()=>{
+        if(!attemptFailed)return;
+        retrySameSelections=box.querySelector('#crowleyRetrySameSelections')?.checked!==false;
+        attemptFailed=false;revealedDomain='';operationDeck=null;
+        const failure=box.querySelector('#crowleyFailureStep');if(failure)failure.hidden=true;
+        const actual=box.querySelector('#crowleyActualDomain');if(actual)actual.textContent='Awaiting cuts';
+        const makeCut=box.querySelector('#crowleyMakeCut');if(makeCut)makeCut.disabled=false;
+        const cutRange=box.querySelector('#crowleyCutRange');if(cutRange)cutRange.value='39';
+        const cutNumber=box.querySelector('#crowleyCutNumber');if(cutNumber)cutNumber.value='39';
+        if(retrySameSelections){
+          domainLocked=true;
+          const reveal=box.querySelector('#crowleyDomainReveal');if(reveal)reveal.hidden=false;
+          const invocation=box.querySelector('#crowleyInvocationStep');if(invocation)invocation.hidden=false;
+          const invoke=box.querySelector('#crowleyInvoke');if(invoke)invoke.disabled=false;
+          const cut=box.querySelector('#crowleyCutStep');if(cut)cut.hidden=true;
+          box.querySelector('#crowleyDomainStatus').textContent='Same Significator and '+(DOMAINS.find(item=>item.id===expectedDomain)?.letter||expectedDomain)+' domain retained. Invoke and reshuffle for the fresh attempt.';
+        }else{
+          expectedDomain='';domainLocked=false;
+          const hidden=box.querySelector('#crowleyExpectedDomain');if(hidden)hidden.value='';
+          const search=box.querySelector('#crowleyDomainSearch');if(search){search.value='';search.disabled=false;}
+          box.querySelectorAll('[data-crowley-domain]').forEach(node=>node.disabled=false);
+          box.querySelector('#crowleyDomainResults')?.classList.remove('is-locked');
+          const lock=box.querySelector('#crowleyLockDomain');if(lock)lock.disabled=false;
+          const reveal=box.querySelector('#crowleyDomainReveal');if(reveal)reveal.hidden=true;
+          renderDomainFilter(box);
+          box.querySelector('#crowleyDomainStatus').textContent='Significator retained. Choose the question domain for the fresh attempt.';
+        }
       });
       box.querySelector('#crowleyInvoke').addEventListener('click',()=>{
         if(!domainLocked||!significatorId||operationDeck)return;
@@ -460,6 +526,7 @@
           : 'Querent cut at '+first+'. Relphi completed the reader cuts without reshuffling. The Significator is in '+revealedDomain+', not '+expectedDomain+'. The Opening is abandoned.';
         box.querySelector('#crowleyMechanics').hidden=true;
         if(agrees){
+          attemptFailed=false;
           operation=1;
           // Step 6: immediately spread the actual packet containing the
           // Significator. This is method progression, not another user choice.
@@ -472,15 +539,17 @@
           });
         } else {
           clearMarks();
-          // Failed domain test ends this attempt cleanly. Preserve the chosen
-          // Significator in method state, but clear every visible card and
-          // return to a fresh Operation I attempt.
+          // Resolve the failed attempt visibly before offering a fresh one.
+          // Keep the committed packet list locked so the user can compare the
+          // prediction with the packet that actually contained the Significator.
+          attemptFailed=true;
+          operationDeck=null;
+          retrySameSelections=true;
           ledger()?.hideOpeningSignificator?.();
           requestAnimationFrame(()=>{
             const live=document.getElementById('crowleyHarmonicGuide');if(!live)return;
-            resetAttemptControls(live);
             renderSignificatorState(live);
-            live.querySelector('#crowleyDomainStatus').textContent='Opening abandoned. Significator retained. Choose the domain again, then invoke and reshuffle for the fresh Operation I attempt.';
+            rehydrateDomainGate(live);
           });
         }
       });
