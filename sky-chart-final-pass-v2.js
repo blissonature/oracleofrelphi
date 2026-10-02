@@ -116,11 +116,30 @@
       source['South Node'] = placementObject('South Node', Number(source['North Node'].longitude) + 180);
     }
 
-    PRESERVE.forEach(name => {
-      if (find(source, [name])) return;
-      const prior = previousPlacement(previous, [name]);
-      if (prior) source[name] = { ...prior };
-    });
+    if (profile.timeUnknown === true) {
+      [
+        ['Ascendant','ASC','Rising','AC'],
+        ['Descendant','DSC','DC'],
+        ['Midheaven','Medium Coeli','MC'],
+        ['IC','Imum Coeli'],
+        ['Vertex'],
+        ['Anti-Vertex','Anti Vertex','Antivertex','AVx'],
+        ['Part of Fortune','Fortune','POF','Pars Fortunae']
+      ].forEach(names => {
+        const entry=findEntry(source,names);
+        if(entry)delete source[entry[0]];
+      });
+      value.houseCusps=[];
+      profile.houseCusps=[];
+      profile.cusps=[];
+      profile.houseSystem='none';
+    } else {
+      PRESERVE.forEach(name => {
+        if (find(source, [name])) return;
+        const prior = previousPlacement(previous, [name]);
+        if (prior) source[name] = { ...prior };
+      });
+    }
 
     const vertex = find(source, ['Vertex']);
     const antiVertexEntry = findEntry(source, ['Anti-Vertex','Anti Vertex','Antivertex','AVx']);
