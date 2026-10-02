@@ -238,7 +238,7 @@
       '<div id="crowleySignificatorStep"><div class="crowley-step-heading"><strong>Significator</strong><span>Choose the card that represents the querent or the matter.</span></div><div class="crowley-controls relphi-toolbar"><button id="crowleyDrawSignificator" class="relphi-button" type="button">Draw digitally</button><label class="relphi-field">Find a card<input id="crowleySignificatorSearch" class="relphi-input" type="search" autocomplete="off" placeholder="Card name"></label></div><div id="crowleySignificatorResults"></div><p id="crowleySignificatorStatus" aria-live="polite">No Significator selected.</p></div>'+
       '<div id="crowleyDomainStep" hidden><div class="crowley-significator-memory"><span><small>Significator</small><strong id="crowleyPersistentSignificator"></strong></span><button type="button" id="crowleyChangeSignificator" class="relphi-button">Change</button></div>'+
         '<div class="crowley-step-heading"><strong>Question domain</strong><span>Choose the domain that best contains the question before the Significator is located in the four packets.</span></div>'+
-        '<details class="crowley-domain-help"><summary>About Yod · Heh · Vav · Final Heh</summary><div class="crowley-domain-key"><span><b>Yod</b><small>Fire · Wands</small>work, action, enterprise</span><span><b>Heh</b><small>Water · Cups</small>love, relationship, pleasure</span><span><b>Vav</b><small>Air · Swords</small>conflict, trouble, dispute</span><span><b>Final Heh</b><small>Earth · Disks</small>money, goods, material matters</span></div></details>'+
+        '<details class="crowley-domain-help"><summary>Why four domains?</summary><p>The First Operation divides the deck into four IHVH packets, corresponding in sequence to Fire, Water, Air, and Earth. The choices below are the four question domains used to predict which packet will contain the Significator.</p></details>'+
         '<label class="relphi-field crowley-domain-search">Search by subject<input id="crowleyDomainSearch" class="relphi-input" type="search" autocomplete="off" placeholder="Career, romance, conflict, rent, home…"></label><div id="crowleyDomainResults" class="crowley-domain-results">'+domainCardsMarkup('')+'</div><input id="crowleyExpectedDomain" type="hidden" value=""><p id="crowleyDomainSelection" class="crowley-domain-selection">No domain selected yet.</p><div class="crowley-controls relphi-toolbar"><button id="crowleyLockDomain" class="relphi-button relphi-button--primary" type="button">Commit domain</button></div></div>'+
       '<div id="crowleyDomainReveal" hidden><div id="crowleyInvocationStep"><div class="crowley-step-heading"><strong>Invocation</strong><span>Say the invocation before Relphi shuffles the deck.</span></div><blockquote class="crowley-invocation relphi-card relphi-card--soft">I invoke thee, I A O, that thou wilt send H R U, the great Angel that is set over the operations of this Secret Wisdom, to lay his hand invisibly upon these consecrated cards of art, that thereby we may obtain true knowledge of hidden things, to the glory of thine ineffable Name. Amen.</blockquote><button type="button" id="crowleyInvoke" class="relphi-button relphi-button--primary">Invocation complete · shuffle</button></div>'+
       '<div id="crowleyCutStep" hidden><div class="crowley-step-heading"><strong>Querent cut</strong><span>Choose the cut position. Relphi keeps the shuffled deck order fixed for this attempt.</span></div><div class="crowley-controls relphi-toolbar"><label class="relphi-field">Cut position<input id="crowleyCutRange" class="relphi-range" type="range" min="1" max="77" value="39"></label><label class="relphi-field">Position<input id="crowleyCutNumber" class="relphi-input" type="number" min="1" max="77" value="39"></label><button type="button" id="crowleyMakeCut" class="relphi-button relphi-button--primary">Make cut</button></div><p><b>Significator packet:</b> <span id="crowleyActualDomain">Awaiting cuts</span></p></div></div><p id="crowleyDomainStatus" aria-live="polite"></p></fieldset>';
@@ -270,13 +270,7 @@
       .crowley-significator-memory button{min-height:1.9rem!important;padding:.3rem .52rem!important;font-size:.66rem!important}
       .crowley-domain-help{margin:0 0 .62rem;border:1px solid #e1d8d0;border-radius:8px;background:#fcfaf7}
       .crowley-domain-help>summary{padding:.46rem .55rem;color:#514942;font-size:.68rem;font-weight:850;cursor:pointer}
-      .crowley-domain-key{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.4rem;padding:0 .55rem .55rem}
-      .crowley-domain-key>span{display:grid;grid-template-columns:auto 1fr;gap:.08rem .35rem;align-items:baseline;padding:.42rem .46rem;border:1px solid #e6ded7;border-radius:7px;background:#fff;color:#5d554f;font-size:.66rem;line-height:1.3}
-      .crowley-domain-key b{color:#211c18;font-size:.7rem}
-      .crowley-domain-key small{color:#746b64;font-size:.6rem;font-weight:750;text-align:right}
-      .crowley-domain-key>span{grid-template-areas:"name meta" "desc desc"}
-      .crowley-domain-key>span>b{grid-area:name}.crowley-domain-key>span>small{grid-area:meta}
-      .crowley-domain-key>span{ }
+      .crowley-domain-help>p{margin:0!important;padding:0 .55rem .55rem!important;color:#655d56!important;font-size:.67rem!important;line-height:1.45!important}
       .crowley-domain-search{display:grid;gap:.3rem;max-width:44rem;font-size:.68rem!important}
       .crowley-domain-results{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.45rem;margin:.52rem 0}
       #crowleyDomainGate .crowley-domain-card{display:grid;gap:.22rem;min-width:0;padding:.52rem .58rem;text-align:left;cursor:pointer}
@@ -300,7 +294,7 @@
       .crowley-pair-stack>*{display:grid;place-items:center;padding:.5rem;border:1px solid var(--relphi-board-line);border-radius:var(--relphi-radius-md);text-align:center}
       .crowley-pair-stack strong{border-color:var(--relphi-board-red)}
       .crowley-focus-summary summary{cursor:pointer;font-weight:800}
-      @media(max-width:720px){#crowleyHarmonicGuide{padding:.7rem!important}.crowley-focus-modes,.crowley-domain-results,.crowley-domain-key{grid-template-columns:1fr}.crowley-significator-memory{align-items:center}.crowley-step-heading>span{font-size:.7rem}}
+      @media(max-width:720px){#crowleyHarmonicGuide{padding:.7rem!important}.crowley-focus-modes,.crowley-domain-results{grid-template-columns:1fr}.crowley-significator-memory{align-items:center}.crowley-step-heading>span{font-size:.7rem}}
     `;
     document.head.appendChild(s);
   }
