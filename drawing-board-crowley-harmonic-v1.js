@@ -203,6 +203,17 @@
       #crowleyHarmonicStatus,#crowleyDomainStatus{margin:.65rem 0 0}
       #crowleyHarmonicGuide .crowley-invocation{margin:.65rem 0 1rem;border-left:3px solid var(--relphi-board-red)}
       #crowleyDomainGate{margin:0 0 .75rem}
+      .crowley-domain-explainer{max-width:78ch;margin:.4rem 0 .8rem}
+      .crowley-domain-search{display:grid;gap:.3rem;max-width:44rem}
+      .crowley-domain-results{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.5rem;margin:.6rem 0}
+      #crowleyDomainGate .crowley-domain-card{display:grid;gap:.28rem;min-width:0;padding:.65rem .72rem;text-align:left;cursor:pointer}
+      #crowleyDomainGate .crowley-domain-card[aria-pressed="true"]{outline:2px solid var(--relphi-board-red);outline-offset:1px}
+      #crowleyDomainGate .crowley-domain-card:disabled{cursor:default}
+      .crowley-domain-token{display:flex;align-items:baseline;justify-content:space-between;gap:.5rem}
+      .crowley-domain-token small{color:#6d645e;font-weight:750}
+      .crowley-domain-card>span:last-child{font-size:.78rem;line-height:1.4;color:#554d47}
+      .crowley-domain-selection{margin:.35rem 0 .6rem;font-weight:800}
+      .crowley-domain-empty{grid-column:1/-1;margin:.2rem 0;color:#655d56}
       #crowleySignificatorResults{display:flex;gap:.35rem;flex-wrap:wrap;margin-top:.4rem}
       #shortListPanel .card-row-item.crowley-anchor .card-row-card-wrap{outline:3px solid var(--relphi-board-red)!important;outline-offset:3px}
       #shortListPanel .card-row-item.crowley-target .card-row-card-wrap{outline:3px dashed #725c16!important;outline-offset:3px}
@@ -215,7 +226,7 @@
       .crowley-pair-stack>*{display:grid;place-items:center;padding:.5rem;border:1px solid var(--relphi-board-line);border-radius:var(--relphi-radius-md);text-align:center}
       .crowley-pair-stack strong{border-color:var(--relphi-board-red)}
       .crowley-focus-summary summary{cursor:pointer;font-weight:800}
-      @media(max-width:720px){.crowley-focus-modes{grid-template-columns:1fr}}
+      @media(max-width:720px){.crowley-focus-modes,.crowley-domain-results{grid-template-columns:1fr}}
     `;
     document.head.appendChild(s);
   }
