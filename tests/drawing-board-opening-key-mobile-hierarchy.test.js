@@ -10,7 +10,9 @@ assert.match(gate[0],/>Significator</);
 assert.match(gate[0],/>Question domain</);
 assert.match(gate[0],/>Invocation</);
 assert.match(gate[0],/>Querent cut</);
-assert.match(gate[0],/About Yod · Heh · Vav · Final Heh/);
+assert.match(gate[0],/Why four domains\?/);
+assert.doesNotMatch(gate[0],/crowley-domain-key/);
+assert.match(gate[0],/The choices below are the four question domains/);
 assert.doesNotMatch(gate[0],/<b>[1234]\./);
 assert.doesNotMatch(gate[0],/Commit to the expected domain/);
 
