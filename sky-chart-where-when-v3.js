@@ -118,7 +118,7 @@ function editorMarkup(slot,p){
     <div class="sky-where-when-scroll-body">
       <div class="sky-where-when-here-now-row"><button class="sky-where-when-button primary sky-where-when-here-now" type="button" data-ww-action="here-and-now">Here and Now</button></div>
       <fieldset class="sky-where-when-section" data-ww-where><legend>Where</legend><div class="sky-where-search-label-row"><label class="sky-where-when-label" for="skyWhereLocation${slot}">Search for a location</label><button class="sky-where-when-button secondary sky-use-here-button" type="button" data-current-location="${slot}" data-ww-action="use-here">Use Here</button></div><div class="sky-where-search-row"><input id="skyWhereLocation${slot}" class="sky-where-when-input" data-ww-field="location-query" type="search" autocomplete="off" value="${escapeHtml(selected?.query||'')}" placeholder="Ex. City, State or Country"><button class="sky-where-when-button secondary" type="button" data-ww-action="search-location">Search</button></div><div class="sky-location-results" aria-live="polite"></div>${confirmationMarkup(selected)}</fieldset>
-      <fieldset class="sky-where-when-section" data-ww-when${disabled}><legend>When</legend><div class="sky-where-when-now-row"><button class="sky-where-when-button secondary sky-use-now-button" type="button" data-ww-action="use-now">Current local time</button><span>Use the current instant at this location.</span></div><div class="sky-where-when-grid"><label class="sky-where-when-label">Date<input class="sky-where-when-input" data-ww-field="date" type="date" value="${escapeHtml(date)}"${disabled}></label><label class="sky-where-when-label">Local time<input class="sky-where-when-input" data-ww-field="time" type="time" value="${escapeHtml(time)}"${disabled}></label></div></fieldset>
+      <fieldset class="sky-where-when-section" data-ww-when${disabled}><legend>When</legend><div class="sky-where-when-now-row"><button class="sky-where-when-button secondary sky-use-now-button" type="button" data-ww-action="use-now">Current local time</button><span>Use the current instant at this location.</span></div><div class="sky-where-when-grid"><label class="sky-where-when-label">Date<input class="sky-where-when-input" data-ww-field="date" type="date" value="${escapeHtml(date)}"${disabled}></label><label class="sky-where-when-label">Local time<input class="sky-where-when-input" data-ww-field="time" type="time" value="${escapeHtml(time)}"${disabled}></label><label class="sky-where-when-label sky-time-unknown-option"><span>Time unknown</span><input data-ww-field="time-unknown" type="checkbox"${p.timeUnknown?' checked':''}${disabled}></label></div></fieldset>
       <details class="sky-where-when-advanced"><summary>Advanced settings</summary><div class="sky-where-when-advanced-body"><label class="sky-where-when-label">Time zone<input class="sky-where-when-input" data-ww-field="timezone" type="text" readonly value="${escapeHtml(selected?.timezone||p.timeZone||'')}"></label><div class="sky-where-when-coordinate-grid"><label class="sky-where-when-label">Latitude<input class="sky-where-when-input" data-ww-field="latitude" type="number" step="0.00001" min="-90" max="90" value="${escapeHtml(displayCoordinate(selected?.latitude??p.latitude))}"></label><label class="sky-where-when-label">Longitude<input class="sky-where-when-input" data-ww-field="longitude" type="number" step="0.00001" min="-180" max="180" value="${escapeHtml(displayCoordinate(selected?.longitude??p.longitude))}"></label></div><div data-ww-paste-inference-host></div></div></details>
       <p class="sky-where-when-status" data-update-now-status aria-live="polite"></p>
     </div>
@@ -162,7 +162,22 @@ function obliquity(date){return Number(window.Astronomy.e_tilt(date).tobl)}
 function ascendantLongitude(date,latitude,longitude){const theta=siderealDegrees(date,longitude)*Math.PI/180,phi=Number(latitude)*Math.PI/180,epsilon=obliquity(date)*Math.PI/180;return norm(Math.atan2(-Math.cos(theta),Math.sin(theta)*Math.cos(epsilon)+Math.tan(phi)*Math.sin(epsilon))*180/Math.PI+180)}
 function midheavenLongitude(date,longitude){const theta=siderealDegrees(date,longitude)*Math.PI/180,epsilon=obliquity(date)*Math.PI/180;return norm(Math.atan2(Math.sin(theta),Math.cos(theta)*Math.cos(epsilon))*180/Math.PI)}
 function placementObject(name,longitude){const value=norm(longitude),signIndex=Math.floor(value/30),within=value-signIndex*30,degree=Math.floor(within),minuteFloat=(within-degree)*60,minute=Math.floor(minuteFloat),second=Math.round((minuteFloat-minute)*60);return{name,longitude:value,sign:SIGNS[signIndex],degree,minute,second}}
+function calculateUnknownTimeSky(slot,selected,date){
+  if(!window.luxon?.DateTime)throw new Error('Time-zone conversion is unavailable.');
+  const start=window.luxon.DateTime.fromISO(`${date}T00:00:00`,{zone:selected.timezone,setZone:true});
+  const end=start.plus({days:1}).minus({seconds:1});
+  if(!start.isValid||!end.isValid)throw new Error('That local date is not valid in the selected time zone.');
+  const startInstant=start.toUTC().toJSDate(),endInstant=end.toUTC().toJSDate(),midInstant=start.plus({hours:12}).toUTC().toJSDate();
+  const placements={};
+  BODIES.filter(name=>name!=='Moon').forEach(name=>{placements[name]=placementObject(name,astronomyLongitude(name,midInstant))});
+  const moonStart=placementObject('Moon',astronomyLongitude('Moon',startInstant)),moonEnd=placementObject('Moon',astronomyLongitude('Moon',endInstant));
+  const existing=payload(slot)||{},metadata=existing.metadata&&typeof existing.metadata==='object'?{...existing.metadata}:{},priorProfile=existing.calcProfile&&typeof existing.calcProfile==='object'?{...existing.calcProfile}:{};
+  metadata.whereWhenSource=selected.source||'manual';metadata.liveNowDisabled=true;metadata.liveNowDisabledReason='time-unknown';
+  delete metadata.liveNowOrigin;delete metadata.liveNowAt;delete metadata.liveAgeAnchorAt;delete metadata.liveNowLatitude;delete metadata.liveNowLongitude;
+  return{...existing,name:existing.name||`Sky ${slot}`,saved:false,placements,houseCusps:[],metadata,calcProfile:{...priorProfile,dateTime:date,instant:'',timeUnknown:true,moonRange:{start:moonStart,end:moonEnd},latitude:String(selected.latitude),longitude:String(selected.longitude),location:selected.canonical,locationQuery:selected.query||selected.canonical,timeZone:selected.timezone,whereWhenSource:selected.source||'manual',houseSystem:'none',houseCusps:[],cusps:[],source:'where-when-v3'},savedAt:new Date().toISOString()};
+}
 function calculateSky(slot,selected,date,time,options={}){
+  if(options.timeUnknown===true)return calculateUnknownTimeSky(slot,selected,date);
   const supplied=String(options.instant||'').trim();
   const dt=supplied?window.luxon?.DateTime?.fromISO(supplied,{setZone:true})?.setZone(selected.timezone):localDateTimeToInstant(date,time,selected.timezone);
   if(!dt?.isValid)throw new Error('The current instant could not be converted to the selected location.');
@@ -248,19 +263,19 @@ function finishCommitted(slot,detail={}){
   requestAnimationFrame(()=>window.RelphiSkyCardShell?.openDrawer?.(slot,'placements'));
 }
 async function submitCalculated(slot,form,options={}){
-  const selected=cardState[slot].selected,date=form.querySelector('[data-ww-field="date"]')?.value||'',time=form.querySelector('[data-ww-field="time"]')?.value||'';
+  const selected=cardState[slot].selected,date=form.querySelector('[data-ww-field="date"]')?.value||'',time=form.querySelector('[data-ww-field="time"]')?.value||'',timeUnknown=form.querySelector('[data-ww-field="time-unknown"]')?.checked===true;
   if(!selected)return status(slot,'Choose a canonical location first.',true);
-  if(!date||!time)return status(slot,'Enter both the local date and local time.',true);
+  if(!date||(!timeUnknown&&!time))return status(slot,timeUnknown?'Enter the local date.':'Enter both the local date and local time.',true);
   setBusy(slot,true);status(slot,'Calculating placements and Planetary Hours…');
   try{
-    const nextPayload=calculateSky(slot,selected,date,time,options);
+    const nextPayload=calculateSky(slot,selected,date,time,{...options,timeUnknown});
     if(!window.RelphiChironEphemeris)throw new Error('The Chiron ephemeris service is unavailable.');
     await window.RelphiChironEphemeris.completePayload(nextPayload);
     if(!window.RelphiChironEphemeris.hasChiron(nextPayload.placements))throw new Error('Chiron could not be calculated for this sky.');
     writeJson(SLOT_KEYS[slot],nextPayload);
     const committed=payload(slot),profile=committed?.calcProfile||{};
     if(String(profile.location||'')!==String(selected.canonical||''))throw new Error('The new Where and When did not persist.');
-    finishCommitted(slot,{source:'where-when',dateTime:`${date}T${time}`,location:selected.canonical});
+    finishCommitted(slot,{source:'where-when',dateTime:timeUnknown?date:`${date}T${time}`,location:selected.canonical});
     if(options.liveOrigin==='use-now'){
       try{localStorage.setItem(`relphiSkyLiveAgeAnchor${slot}`,JSON.stringify({origin:'use-now',at:nextPayload.metadata.liveNowAt}))}catch(_){}
       window.dispatchEvent(new CustomEvent('relphi:sky-live-origin-changed',{detail:{slot,origin:'use-now',at:nextPayload.metadata.liveNowAt}}));
