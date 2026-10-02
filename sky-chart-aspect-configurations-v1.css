@@ -1005,3 +1005,13 @@ html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]) .sky-chart-con
     touch-action:pan-y pinch-zoom;
   }
 }
+
+
+/* Configuration geometry composes with the canonical Focus result. */
+#skyFoundationWheelMount>.sky-foundation-wheel.has-filter-focus [data-layer="configurations"].has-focus-composition .sky-chart-configuration-line{
+  opacity:.08;
+  transition:opacity .07s ease-out;
+}
+#skyFoundationWheelMount>.sky-foundation-wheel.has-filter-focus [data-layer="configurations"].has-focus-composition .sky-chart-configuration-line.is-focus-kept{
+  opacity:1;
+}
