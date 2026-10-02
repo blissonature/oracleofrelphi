@@ -10,7 +10,7 @@ html[data-sky-last-mode="comparison"] [data-add-sky-b],html[data-sky-b-editing="
 #skyFoundationB>.sky-foundation-heading .sky-foundation-name{display:none!important}
 html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]) #skyFoundationComparison{overflow:visible}
 html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]) #skyFoundationWheelMount{width:calc(100% + min(270px,calc((100vw - 28px) * .22)));margin-left:calc(-1 * min(270px,calc((100vw - 28px) * .22)));padding-left:8px;padding-right:8px}
-#skyFoundationWheelMount>.sky-foundation-single-wheel{display:block;width:min(100%,calc(100vh - 190px));height:auto;max-height:none;overflow:visible}
+#skyFoundationWheelMount>.sky-foundation-single-wheel{display:block;width:100%;height:auto;max-height:none;overflow:visible}
 html[data-sky-b-present="false"] #skyFoundationWheelMount>.sky-foundation-wheel:not([data-single-sky="A"]){visibility:hidden!important}
 #skyFoundationWheelMount[data-single-sky-pending="true"]>*{visibility:hidden!important}
 .sky-foundation-single-wheel [data-layer="zodiac"] .sky-foundation-sign-glyph{filter:var(--sky-silver-glow)}
