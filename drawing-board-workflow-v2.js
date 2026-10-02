@@ -1543,6 +1543,7 @@
       node.textContent=label;
       node.title=title;
       node.setAttribute('aria-label',title);
+      node.classList.remove('relphi-board-export-button');
       node.classList.add('relphi-board-document-button');
       actions.appendChild(node);
       return node;
