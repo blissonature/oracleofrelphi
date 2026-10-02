@@ -100,7 +100,7 @@ function renderWhere(slot,payload){
   if(timeUnknown(payload,slot)){
     whereRetry[slot]=0;
     const label=document.createElement('span');
-    label.className='sky-where-when-fingerprint-label';
+    label.className='sky-card-fingerprint-text';
     label.textContent='Where & When';
     mount.appendChild(label);
     mount.hidden=false;
