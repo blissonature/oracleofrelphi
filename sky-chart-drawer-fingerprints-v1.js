@@ -56,7 +56,10 @@ function unknownRulerPlaceholder(){
   root.className='sky-card-ruler-fingerprint sky-card-ruler-unknown-fingerprint';
   root.setAttribute('role','img');
   root.setAttribute('aria-label','Chart Ruler unknown because time of day is unknown.');
-  const question=document.createElement('span');question.className='sky-card-ruler-unknown-question';question.textContent='?';question.setAttribute('aria-hidden','true');root.appendChild(question);
+  root.style.cssText='position:relative;display:grid;place-items:center;width:34px;height:56px;box-sizing:border-box;border:1px solid rgba(31,27,24,.28);border-radius:2px;background:#f7f4ef;color:#4d4640;overflow:hidden;';
+  const label=document.createElement('span');label.textContent='Chart Ruler';label.style.cssText='position:relative;z-index:1;width:28px;text-align:center;font:800 6px/1.05 system-ui,sans-serif;text-transform:uppercase;letter-spacing:.01em;';
+  const question=document.createElement('span');question.textContent='?';question.setAttribute('aria-hidden','true');question.style.cssText='position:absolute;inset:0;display:grid;place-items:center;font:300 34px/1 Georgia,serif;color:rgba(31,27,24,.18);z-index:2;';
+  root.append(label,question);
   return root;
 }
 
