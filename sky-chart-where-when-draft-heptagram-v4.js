@@ -38,6 +38,10 @@ function canonicalLocation(form){
 }
 function packet(slot){
   const form=editor(slot);if(!form)return null;
+  // A planetary day begins at sunrise, so a civil calendar date alone cannot
+  // identify even the day ruler. Unknown time therefore has no temporal
+  // heptagram, rather than a guessed or partial one.
+  if(form.querySelector('[data-ww-field="time-unknown"]')?.checked===true)return null;
   const date=field(form,'date'),time=field(form,'time'),timeZone=field(form,'timezone'),latitudeRaw=field(form,'latitude'),longitudeRaw=field(form,'longitude');
   if(!date||!time||!timeZone||latitudeRaw===''||longitudeRaw==='')return null;
   const latitude=Number(latitudeRaw),longitude=Number(longitudeRaw);if(!Number.isFinite(latitude)||!Number.isFinite(longitude)||latitude<-90||latitude>90||longitude<-180||longitude>180)return null;
