@@ -9,6 +9,10 @@
 .sky-time-toggle:hover,.sky-time-toggle:focus-visible{outline:none;background:#faf6f0}
 .sky-time-toggle i{display:block;width:7px;height:7px;border-right:2px solid currentColor;border-bottom:2px solid currentColor;transform:rotate(45deg) translate(-1px,-1px);transition:transform .12s ease}
 .sky-time-control.is-open .sky-time-toggle i{transform:rotate(225deg) translate(-1px,-1px)}
+.sky-time-control.is-disabled .sky-time-entry-shell{border-color:rgba(31,27,24,.14);background:#ece9e5}
+.sky-time-control.is-disabled .sky-time-entry{background:#ece9e5;color:#8b837c;-webkit-text-fill-color:#8b837c;cursor:not-allowed}
+.sky-time-control.is-disabled .sky-time-toggle{background:#e4e0dc;color:#a29a93;cursor:not-allowed}
+.sky-time-control.is-disabled .sky-time-toggle:hover,.sky-time-control.is-disabled .sky-time-toggle:focus-visible{background:#e4e0dc}
 
 .sky-time-panel{position:absolute;z-index:5000;top:calc(100% + 5px);right:0;width:min(218px,calc(100vw - 24px));box-sizing:border-box;display:grid;grid-template-columns:54px 66px 58px;gap:7px;padding:7px;border:1px solid rgba(31,27,24,.18);border-radius:10px;background:#fffdf9;box-shadow:0 8px 24px rgba(31,27,24,.16)}
 .sky-time-panel[hidden]{display:none!important}
