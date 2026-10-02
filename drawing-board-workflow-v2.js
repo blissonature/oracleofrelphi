@@ -1470,55 +1470,70 @@
     const workspace=root.querySelector('.card-row-workspace');
     if (!workspace) return;
     const entries=ledgerBridge()?.drawingBoardReadingEntries?.() || [];
-    const serialized=ledgerBridge()?.serializeDrawingBoardReading?.() || '';
     let section=root.querySelector('#drawing-board-reading-text');
+    const documentActions=root.querySelector('#drawing-board-document-actions');
+    const anchor=documentActions||workspace;
     if (!section) {
       section=document.createElement('section');
       section.id='drawing-board-reading-text';
       section.className='relphi-board-reading-text';
-      workspace.insertAdjacentElement('afterend',section);
-    } else if (section.previousElementSibling !== workspace) {
-      workspace.insertAdjacentElement('afterend',section);
+      anchor.insertAdjacentElement('afterend',section);
+    } else if (section.previousElementSibling !== anchor) {
+      anchor.insertAdjacentElement('afterend',section);
     }
     section.hidden=!entries.length;
     section.innerHTML=`<header>
       <div><strong>Reading text</strong><span>Question, card, association, and Relphi interpretation.</span></div>
-      <div class="relphi-reading-text-actions">
-        <button type="button" class="relphi-copy-reading" ${entries.length ? '' : 'disabled'}>Copy</button>
-      </div>
     </header>
-    <div class="relphi-reading-text-list">${entries.map(readingTextEntryMarkup).join('')}</div>
-    <small class="relphi-copy-reading-status" aria-live="polite"></small>`;
-    const copy=section.querySelector('.relphi-copy-reading');
-    const status=section.querySelector('.relphi-copy-reading-status');
-    copy?.addEventListener('click',async()=>{
-      const ok=await writeDrawingBoardClipboard(serialized);
-      if (status) status.textContent=ok ? 'Copied.' : 'Copy failed.';
-      if (ok) {
-        copy.textContent='Copied';
-        window.setTimeout(()=>{ if(copy.isConnected) copy.textContent='Copy'; },1200);
-      }
-    });
+    <div class="relphi-reading-text-list">${entries.map(readingTextEntryMarkup).join('')}</div>`;
   }
 
   function installExportArea(root) {
     const workspace=root.querySelector('.card-row-workspace');
     const readingText=root.querySelector('#drawing-board-reading-text');
-    const commandbar=root.querySelector('.relphi-board-commandbar');
-    const actions=readingText?.querySelector('.relphi-reading-text-actions') || commandbar?.querySelector('.relphi-reading-text-actions');
-    if(!workspace||!readingText||!commandbar||!actions)return;
+    if(!workspace||!readingText)return;
 
-    // Keep document actions in the unused upper-right command-bar space rather
-    // than spending vertical room beside Reading Text below the felt.
-    if(actions.parentElement!==commandbar)commandbar.appendChild(actions);
+    // Document actions sit between the felt and Reading Text: close to the
+    // document they act on, but outside the reading itself and away from Draw.
+    let strip=root.querySelector('#drawing-board-document-actions');
+    if(!strip){
+      strip=document.createElement('section');
+      strip.id='drawing-board-document-actions';
+      strip.className='relphi-board-document-actions';
+      workspace.insertAdjacentElement('afterend',strip);
+    }else if(strip.previousElementSibling!==workspace){
+      workspace.insertAdjacentElement('afterend',strip);
+    }
+    if(readingText.previousElementSibling!==strip)strip.insertAdjacentElement('afterend',readingText);
 
-    // Native export controls own their behavior in tarot-app.js. Preserve those
-    // exact bound nodes while moving the useful actions into the command bar.
     const nativeExportIds=['snapshotCardRowArrangement','downloadRowHtml','downloadRowTextHtml','downloadRowJson','printCardRowImage'];
     const preservedExports=new Map(nativeExportIds.map(id=>[id,root.querySelector('#'+id)]).filter(([,node])=>!!node));
     preservedExports.forEach(node=>node.remove());
 
     root.querySelector('#drawing-board-post-export')?.remove();
+    root.querySelector('.relphi-board-commandbar>.relphi-reading-text-actions')?.remove();
+
+    strip.innerHTML='<div class="relphi-board-document-buttons"></div><small class="relphi-board-document-status" aria-live="polite"></small>';
+    const actions=strip.querySelector('.relphi-board-document-buttons');
+    const status=strip.querySelector('.relphi-board-document-status');
+
+    const copy=document.createElement('button');
+    copy.type='button';
+    copy.className='relphi-board-document-button relphi-copy-reading';
+    copy.textContent='Copy';
+    copy.disabled=!(ledgerBridge()?.serializeDrawingBoardReading?.()||'').trim();
+    copy.title='Copy the reading text';
+    copy.setAttribute('aria-label','Copy the reading text');
+    copy.addEventListener('click',async()=>{
+      const serialized=ledgerBridge()?.serializeDrawingBoardReading?.()||'';
+      const ok=await writeDrawingBoardClipboard(serialized);
+      if(status)status.textContent=ok?'Copied.':'Copy failed.';
+      if(ok){
+        copy.textContent='Copied';
+        window.setTimeout(()=>{if(copy.isConnected)copy.textContent='Copy';},1200);
+      }
+    });
+    actions.appendChild(copy);
 
     const take=(id,label,title)=>{
       const node=preservedExports.get(id)||root.querySelector('#'+id);
@@ -1528,24 +1543,23 @@
       node.textContent=label;
       node.title=title;
       node.setAttribute('aria-label',title);
-      node.classList.add('relphi-board-export-button');
+      node.classList.add('relphi-board-document-button');
       actions.appendChild(node);
       return node;
     };
     take('snapshotCardRowArrangement','Snapshot','Snapshot the current board arrangement at zoom extents');
-    take('downloadRowHtml','Download HTML','Download the reading as HTML with card art and text');
+    take('downloadRowHtml','Download','Download the reading as HTML with card art and text');
 
     const journal=document.createElement('button');
     journal.type='button';
-    journal.className='relphi-board-export-button relphi-board-journal-button';
+    journal.className='relphi-board-document-button relphi-board-journal-button';
+    journal.textContent='Save';
     journal.disabled=true;
     journal.title='Save to Journal — coming soon';
     journal.setAttribute('aria-label','Save to Journal — coming soon');
-    journal.innerHTML='<span>Save to Journal</span><small>Coming soon</small>';
     actions.appendChild(journal);
 
-    // Reading Text already owns the single text-copy action. These legacy
-    // exports stay hidden so the header has one clear Copy button.
+    // Copy is the sole text-copy action; these older export variants remain hidden.
     ['downloadRowTextHtml','downloadRowJson','printCardRowImage'].forEach(id=>{
       const node=preservedExports.get(id)||root.querySelector('#'+id);
       if(node){node.hidden=true;node.setAttribute('aria-hidden','true');}
