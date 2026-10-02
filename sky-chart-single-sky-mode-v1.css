@@ -1,5 +1,5 @@
 html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]) #skyFoundationB{display:none!important}
-html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]) #skyFoundationRoot{grid-template-columns:minmax(220px,270px) minmax(0,1fr);grid-template-areas:"a comparison"}
+html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]) #skyFoundationRoot{grid-template-columns:minmax(220px,270px) minmax(0,1fr);grid-template-areas:"a comparison"}\nhtml[data-sky-b-present="false"]:not([data-sky-b-editing="true"]) #skyFoundationComparison{grid-column:1/-1;grid-row:2}
 .sky-slot-presence-button{appearance:none;border:1px solid rgba(31,27,24,.2);border-radius:999px;background:#fff;color:#241f1b;padding:.38rem .65rem;font:800 .64rem/1 system-ui,sans-serif;white-space:nowrap;cursor:pointer}
 .sky-slot-presence-button:hover,.sky-slot-presence-button:focus-visible{background:#f4efe8;border-color:rgba(31,27,24,.4);outline:none}
 .sky-slot-remove{color:#8f1f1b}
