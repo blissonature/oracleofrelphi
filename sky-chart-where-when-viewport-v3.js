@@ -18,10 +18,10 @@ function installStyle(){
     .sky-where-when-here-now-row{padding:0 .62rem .8rem}
     .sky-location-confirmation:not([data-location-source="placement-inference"]) p:first-child{display:none}
     .sky-where-when-status:empty{display:none}
-    .sky-where-when-grid{grid-template-columns:minmax(0,1.07fr) minmax(0,.93fr)}
+    .sky-where-when-grid{grid-template-columns:minmax(0,1.05fr) minmax(0,.95fr)}
     .sky-where-search-row{align-items:end}
     @media(max-width:620px){
-      .sky-where-when-grid{grid-template-columns:minmax(0,1.07fr) minmax(0,.93fr)}
+      .sky-where-when-grid{grid-template-columns:minmax(0,1.05fr) minmax(0,.95fr)}
       .sky-where-when-here-now-row{padding:0 .55rem .69rem}
     }
   `;document.head.appendChild(style);
