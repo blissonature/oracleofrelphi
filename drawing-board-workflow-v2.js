@@ -3570,6 +3570,7 @@
     const keywordTags=scope==='tags'&&Array.isArray(meta.keywordTags)?meta.keywordTags.filter(Boolean):[];
     const keywordMode=meta.keywordMatchMode==='all'?'all':'any';
     const reversalsAllowed=meta.allowReversals ?? (snap.rowAllowReversals!==false);
+    const cardSource=String(meta.cardSource||'digital')==='physical'?'physical':'digital';
     const cardCount=Math.max(1,Number(meta.cardCount)||1),linkTo=String(meta.linkTo??'');
     const questionCardCount=Math.max(1,Number(meta.questionCardCount)||cardCount);
     const questionCardIndex=Math.max(0,Number(meta.questionCardIndex)||0);
@@ -3591,7 +3592,7 @@
     const reader=document.createElement('section');
     reader.className='relphi-attune-reader';
     reader.dataset.attuneScope=scope;
-    reader.dataset.attuneCardSource='on-the-fly';
+    reader.dataset.attuneCardSource=cardSource;
     reader.dataset.attuneSelectedCard='';
     reader.dataset.attuneOrientation='upright';
     reader.setAttribute('role','dialog');
@@ -3604,17 +3605,19 @@
     let searchMarkup='';
     if(linkedCard){
       actionMarkup='<div class="relphi-attune-actions relphi-attune-actions--single"><button type="button" class="primary" data-attune-shared>Continue with the shared card</button></div>';
-    }else{
+    }else if(cardSource==='physical'){
       const orientationMarkup=reversalsAllowed
         ? '<fieldset class="relphi-attune-orientation"><legend>Orientation</legend><label><input type="radio" name="relphiPhysicalOrientation" value="upright" checked> Upright</label><label><input type="radio" name="relphiPhysicalOrientation" value="reversed"> Reversed</label></fieldset>'
         : '<p class="relphi-attune-orientation-note">Reversals are off for this draw.</p>';
-      searchMarkup='<section class="relphi-attune-search">'+
-        '<label>Draw the Next Card<input type="search" autocomplete="off" placeholder="Type the card you drew"></label>'+
-        '<div class="relphi-attune-search-results"><p>Start typing the card you drew. Matches from the current sub-pack will appear here.</p></div>'+
+      searchMarkup='<section class="relphi-attune-search relphi-attune-search--physical">'+
+        '<label>Enter the Card You Drew<input type="search" autocomplete="off" placeholder="Type the card you drew"></label>'+
+        '<div class="relphi-attune-search-results"><p>Start typing the physical card you drew. Matches from the current sub-pack will appear here.</p></div>'+
         orientationMarkup+
         '<details class="relphi-attune-advanced"><summary>Advanced</summary><div><label>Sub-pack<select data-attune-pack>'+packOptions(scope)+'</select></label><label><input type="checkbox" data-attune-reversals '+(reversalsAllowed?'checked':'')+'> Reversals</label><label><input type="checkbox" data-attune-repeats '+((meta.allowRepeats ?? !!snap.rowAllowRepeats)?'checked':'')+'> Repeats</label></div></details>'+
         '</section>';
-      actionMarkup='<div class="relphi-attune-actions"><button type="button" data-attune-random>Just Draw</button><button type="button" class="primary" data-attune-confirm disabled>Confirm</button></div>';
+      actionMarkup='<div class="relphi-attune-actions relphi-attune-actions--single"><button type="button" class="primary" data-attune-confirm disabled>Use This Card</button></div>';
+    }else{
+      actionMarkup='<div class="relphi-attune-actions relphi-attune-actions--single"><button type="button" class="primary" data-attune-random>Draw Card</button></div>';
     }
 
     reader.innerHTML='<div class="relphi-attune-shell"><button type="button" class="relphi-attune-close" aria-label="Close">×</button><span class="eyebrow">Attune to the Referent</span><h2>'+escapeHtml(positionLabel(index,root))+'</h2><p class="relphi-attune-pack">'+packLine+'</p><p class="relphi-attune-note">Stay with the referent on its own first. Notice what it already means to you before you reveal a card.</p>'+actionMarkup+searchMarkup+'</div>';
