@@ -127,7 +127,15 @@ function editorMarkup(slot,p){
 }
 function moveHeptagramIntoEditor(slot){
   const refs=shell(slot),mount=refs?.editor?.querySelector(`[data-ww-heptagram-slot="${slot}"]`),frame=refs?.root?.querySelector(`[data-sky-heptagram-frame="${slot}"]`);
-  if(mount&&frame)mount.prepend(frame);
+  if(!mount||!frame)return;
+  // A fresh Sky B draft has no committed temporal reference. Never move a stale
+  // committed B frame into its editor; the draft heptagram owner will populate
+  // this mount only after the new Where and When fields define a valid moment.
+  if(slot==='B'&&!payload('B')){
+    frame.remove();
+    return;
+  }
+  mount.prepend(frame);
 }
 function restoreHeptagram(slot){const refs=shell(slot),frame=refs?.root?.querySelector(`[data-sky-heptagram-frame="${slot}"]`);if(refs?.summary&&frame&&!refs.summary.contains(frame))refs.summary.prepend(frame)}
 function openEditor(slot,focus=false){
