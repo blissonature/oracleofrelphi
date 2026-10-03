@@ -291,7 +291,10 @@ function selectLocation(slot,source){
   if(confirmation){confirmation.hidden=false;confirmation.dataset.locationSource=packet.source||'search';confirmation.innerHTML=packet.source==='placement-inference'?`<p><strong>Location inferred from pasted placements</strong></p><p class="sky-inferred-location-value">${escapeHtml(packet.canonical)}</p>`:`<p><strong>You searched:</strong> ${escapeHtml(packet.query||packet.canonical)}</p><p><strong>Location found:</strong> ${escapeHtml(packet.canonical)}</p>`}
   card.querySelector('[data-ww-field="timezone"]').value=packet.timezone;card.querySelector('[data-ww-field="latitude"]').value=displayCoordinate(packet.latitude);card.querySelector('[data-ww-field="longitude"]').value=displayCoordinate(packet.longitude);
   const when=card.querySelector('[data-ww-when]');when.disabled=false;when.querySelectorAll('input').forEach(node=>{node.disabled=false});card.querySelector('button[type="submit"]').disabled=false;
-  status(slot,packet.source==='placement-inference'?'Inferred location ready. Review the date and time, then confirm.':'Location confirmed. Enter the local date and time, or use Current local time.');
+  const form=formFor(slot);
+  if(form?.dataset.wwWhenMode==='now')populateCurrentLocalTime(slot,{announce:false});
+  else clearLiveDraft(form);
+  status(slot,packet.source==='placement-inference'?'Inferred location ready. Review When, then confirm.':'Location confirmed.');
   window.dispatchEvent(new CustomEvent('relphi:sky-where-when-location-selected',{detail:{slot,packet:{...packet}}}));
   window.RelphiSkyWhereWhenDraftHeptagram?.render?.(slot,0);
   return true;
@@ -463,21 +466,28 @@ window.RelphiSkyWhereWhen=Object.freeze({
 });
 
 document.addEventListener('click',event=>{
+  const modeChoice=event.target.closest?.('[data-ww-mode-choice]');
+  if(modeChoice){const slot=eventSlot(modeChoice),form=formFor(slot);if(!slot||!form)return;const mode=modeChoice.dataset.wwModeChoice;if(mode==='here-now')void chooseHereAndNow(slot);else{form.dataset.wwMode='other';syncWhereWhenModeUI(form);status(slot,'Choose Where and When.')}return}
+  const whereChoice=event.target.closest?.('[data-ww-where-choice]');
+  if(whereChoice){const slot=eventSlot(whereChoice);if(slot)void setWhereChoice(slot,whereChoice.dataset.wwWhereChoice);return}
+  const whenChoice=event.target.closest?.('[data-ww-when-choice]');
+  if(whenChoice){const slot=eventSlot(whenChoice);if(slot)setWhenChoice(slot,whenChoice.dataset.wwWhenChoice);return}
   const actionNode=event.target.closest?.('[data-ww-action]');if(!actionNode)return;const slot=eventSlot(actionNode);if(!slot)return;const action=actionNode.dataset.wwAction;
-  if(action==='cancel')closeEditor(slot);else if(action==='search-location')void searchLocation(slot);else if(action==='select-location')selectLocation(slot,actionNode);else if(action==='use-here')void useHere(slot,actionNode);else if(action==='use-now')void currentLocalTime(slot);else if(action==='here-and-now')void hereAndNow(slot);
+  if(action==='cancel')closeEditor(slot);else if(action==='search-location')void searchLocation(slot);else if(action==='select-location')selectLocation(slot,actionNode);
 });
 document.addEventListener('change',event=>{
+  const form=event.target.closest?.('.sky-where-when-editor');if(!form)return;
+  if(event.target.matches?.('[data-ww-field="date"],[data-ww-field="time"]')&&form.dataset.wwWhenMode==='enter')clearLiveDraft(form);
   const toggle=event.target.closest?.('[data-ww-field="time-unknown"]');if(!toggle)return;
-  const form=toggle.closest('.sky-where-when-editor');if(!form)return;
-  const unknown=toggle.checked,time=form.querySelector('[data-ww-field="time"]'),now=form.querySelector('[data-ww-action="use-now"]'),slot=form.dataset.slot,mount=form.querySelector(`[data-ww-heptagram-slot="${slot}"]`);
+  const unknown=toggle.checked,time=form.querySelector('[data-ww-field="time"]'),slot=form.dataset.slot,mount=form.querySelector(`[data-ww-heptagram-slot="${slot}"]`);
   if(time)time.disabled=unknown;
-  if(now)now.disabled=unknown;
+  clearLiveDraft(form);
   if(unknown){
     mount?.querySelectorAll('[data-sky-heptagram-frame],[data-draft-where-when-link],[data-draft-where-when],.sky-ph-jump').forEach(node=>node.remove());
   }
   window.RelphiSkyWhereWhenDraftHeptagram?.render?.(slot,0);
 });
-document.addEventListener('submit',event=>{const form=event.target.closest?.('.sky-where-when-editor');if(!form)return;event.preventDefault();void submitForm(form.dataset.slot,form)});
+document.addEventListener('submit',event=>{const form=event.target.closest?.('.sky-where-when-editor');if(!form)return;event.preventDefault();const liveOrigin=String(form.dataset.wwLiveOrigin||''),instant=String(form.dataset.wwInstant||'');void submitForm(form.dataset.slot,form,liveOrigin?{liveOrigin,instant}:{});});
 document.addEventListener('keydown',event=>{if(event.key!=='Enter')return;const input=event.target.closest?.('[data-ww-field="location-query"]');if(!input)return;event.preventDefault();const slot=eventSlot(input);if(slot)void searchLocation(slot)});
 window.addEventListener('relphi:sky-drawer-preparing',event=>{const{slot,drawer}=event.detail||{};if(drawer==='where'&&SLOT_KEYS[slot])openEditor(slot,false)});
 window.addEventListener('relphi:sky-drawer-opened',event=>{const{slot,drawer}=event.detail||{};if(drawer==='where'&&SLOT_KEYS[slot]&&!transactionState.editing.has(slot))openEditor(slot,false)});
