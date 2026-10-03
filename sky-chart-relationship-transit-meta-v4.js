@@ -217,7 +217,7 @@ function motionRows(row){
   row.dataset.relationshipApplyingRate=String(snapshot.applyingRate);row.dataset.relationshipSeparationRate=String(snapshot.separationRate);
   const phase=snapshot.phase==='applying'?'Applying':snapshot.phase==='separating'?'Separating':snapshot.phase==='exact'?'Exact':'Steady';
   const distance=snapshot.distance==='closing'?'Closing':snapshot.distance==='opening'?'Opening':'Steady';
-  return[rowMarkup('Phase',phase),rowMarkup('Distance',distance)];
+  return[rowMarkup('Motion',`${phase} · ${distance}`)];
 }
 function renderTimeline(row,model,timeline){const meta=metaNode(row);if(!meta)return;const exactText=timeline.exacts.length?timeline.exacts.map(dateLabel).join(' · '):'near pass';const motion=motionSummary(model,timeline),passText=timeline.exacts.length===1?'1 exact pass':`${timeline.exacts.length} exact passes`;meta.replaceChildren(...motionRows(row),rowMarkup('Start',dateLabel(timeline.startMs)),rowMarkup('Exact',exactText),rowMarkup('End',dateLabel(timeline.endMs)),rowMarkup('Duration',durationLabel(timeline.durationDays)),rowMarkup('Passes',motion?`${passText} · ${motion}`:passText));meta.dataset.transitReady='true';meta.dataset.transitKind='dynamic';meta.title=`Active from ${dateLabel(timeline.startMs)} to ${dateLabel(timeline.endMs)}; ${durationLabel(timeline.durationDays)} total activation span; ${passText}${motion?`; ${motion}`:''}.`;meta.setAttribute('aria-label',meta.title)}
 function renderUnavailable(row,reason){const meta=metaNode(row);if(!meta)return;meta.replaceChildren(rowMarkup('Timing',reason||'Unavailable'));meta.dataset.transitReady='true';meta.dataset.transitKind='unavailable';meta.title=reason||'Transit timing is unavailable.';meta.setAttribute('aria-label',meta.title)}
