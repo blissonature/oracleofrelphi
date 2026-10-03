@@ -290,9 +290,8 @@ async function submitCalculated(slot,form,options={}){
   setBusy(slot,true);status(slot,'Calculating placements and Planetary Hours…');
   try{
     const nextPayload=calculateSky(slot,selected,date,time,{...options,timeUnknown});
-    if(!window.RelphiChironEphemeris)throw new Error('The Chiron ephemeris service is unavailable.');
-    await window.RelphiChironEphemeris.completePayload(nextPayload);
-    if(!window.RelphiChironEphemeris.hasChiron(nextPayload.placements))throw new Error('Chiron could not be calculated for this sky.');
+    // Chiron is optional at commit time. Stored same-instant Chiron is preserved by calculateSky();
+    // a missing or unavailable live Chiron provider must not prevent the rest of the sky from committing.
     writeJson(SLOT_KEYS[slot],nextPayload);
     const committed=payload(slot),profile=committed?.calcProfile||{};
     if(String(profile.location||'')!==String(selected.canonical||''))throw new Error('The new Where and When did not persist.');
