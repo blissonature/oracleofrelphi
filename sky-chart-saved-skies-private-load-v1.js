@@ -31,6 +31,7 @@ function writeJson(key,value){try{localStorage.setItem(key,JSON.stringify(value)
 function newId(){return `sky-${Date.now().toString(36)}-${Math.random().toString(36).slice(2,8)}`}
 function recordRef(record){return String(record?.id||record?.savedSkyId||record?.metadata?.savedSkyId||`legacy:${normalized(record?.name)}`)}
 function library(){const api=window.RelphiSkySavedSkyIdentity;const list=api?.library?.()||readJson(LIBRARY_KEY,[]);return Array.isArray(list)?list:[]}
+function timeUnknown(payload){return payload?.calcProfile?.timeUnknown===true||payload?.profile?.timeUnknown===true}
 
 function migrateLegacyIds(){
   const list=readJson(LIBRARY_KEY,[]);if(!Array.isArray(list)||!list.length)return;
@@ -66,6 +67,7 @@ function line(parent,a,b,className){parent.appendChild(svg('line',{x1:a.x,y1:a.y
 function partialLine(parent,a,b,fraction,className){const f=Math.max(0,Math.min(1,Number(fraction)||0));line(parent,a,{x:a.x+(b.x-a.x)*f,y:a.y+(b.y-a.y)*f},className)}
 function solarNoonDate(localDate,timeZone){return window.luxon.DateTime.fromISO(`${localDate}T12:00`,{zone:timeZone,setZone:true}).toJSDate()}
 function timingPacket(payload){
+  if(timeUnknown(payload))return null;
   const profile=payload?.calcProfile&&typeof payload.calcProfile==='object'?payload.calcProfile:{};
   const timeZone=String(profile.timeZone||payload?.timeZone||'').trim(),latitude=Number(profile.latitude??payload?.latitude),longitude=Number(profile.longitude??payload?.longitude);
   if(!timeZone||!Number.isFinite(latitude)||!Number.isFinite(longitude)||!window.luxon?.DateTime)return null;
@@ -104,11 +106,11 @@ function annularPath(cx,cy,inner,outer,start,end){const span=norm(end-start)||36
 function axisValue(records,primaryIds,oppositeIds){const primary=records.find(record=>primaryIds.includes(record.id));if(primary)return primary.value;const opposite=records.find(record=>oppositeIds.includes(record.id));return opposite?norm(opposite.value+180):NaN}
 function addAxis(root,cx,cy,radius,degree,className){if(!Number.isFinite(degree))return;const a=polar(cx,cy,radius,degree),b=polar(cx,cy,radius,degree+180);root.appendChild(svg('line',{x1:a.x,y1:a.y,x2:b.x,y2:b.y,class:className}))}
 function placementsFingerprint(payload){
-  const records=placementRecords(payload),ordinary=records.filter(record=>!ANGLE_IDS.has(record.id));if(!records.length)return null;
+  const records=placementRecords(payload),ordinary=records.filter(record=>!ANGLE_IDS.has(record.id)),unknown=timeUnknown(payload);if(!records.length)return null;
   const colors=window.RelphiSkyWheelSpec?.COLORS||FALLBACK_COLORS,skyColor=FALLBACK_SKY,root=svg('svg',{viewBox:'13 0 38 38',preserveAspectRatio:'xMidYMid meet','aria-hidden':'true',focusable:'false',class:'sky-placement-fingerprint-wheel'}),cx=32,cy=19,inner=15,outer=18;
   for(let index=0;index<12;index++){root.appendChild(svg('path',{d:annularPath(cx,cy,inner,outer,index*30,index*30+30),fill:colors[index]||'#ddd','fill-opacity':'.88'}));const a=polar(cx,cy,inner,index*30),b=polar(cx,cy,outer,index*30);root.appendChild(svg('line',{x1:a.x,y1:a.y,x2:b.x,y2:b.y,class:'sky-placement-fingerprint-sign-divider'}))}
   root.appendChild(svg('circle',{cx,cy,r:inner,fill:'#fffdfa',stroke:'rgba(44,38,33,.28)','stroke-width':'.65'}));
-  addAxis(root,cx,cy,14.6,axisValue(records,['asc','ascendant','rising'],['dsc','descendant']),'sky-placement-fingerprint-axis sky-placement-fingerprint-horizon');addAxis(root,cx,cy,14.6,axisValue(records,['mc','midheaven'],['ic','imumcoeli']),'sky-placement-fingerprint-axis sky-placement-fingerprint-meridian');
+  if(!unknown){addAxis(root,cx,cy,14.6,axisValue(records,['asc','ascendant','rising'],['dsc','descendant']),'sky-placement-fingerprint-axis sky-placement-fingerprint-horizon');addAxis(root,cx,cy,14.6,axisValue(records,['mc','midheaven'],['ic','imumcoeli']),'sky-placement-fingerprint-axis sky-placement-fingerprint-meridian')}
   const bins=Array.from({length:12},()=>0);ordinary.forEach(record=>{bins[Math.floor(norm(record.value)/30)]+=1});const silhouette=bins.map((count,index)=>polar(cx,cy,4.7+Math.min(4,count)*2.05,index*30+15));if(ordinary.length)root.appendChild(svg('polygon',{points:silhouette.map(point=>`${point.x.toFixed(2)},${point.y.toFixed(2)}`).join(' '),fill:skyColor,'fill-opacity':'.20',stroke:skyColor,'stroke-opacity':'.58','stroke-width':'.72','stroke-linejoin':'round'}));ordinary.forEach(record=>{const p=polar(cx,cy,12.35,record.value);root.appendChild(svg('circle',{cx:p.x,cy:p.y,r:ordinary.length>18?1.05:1.3,fill:skyColor,stroke:'#fff','stroke-width':'.62'}))});return root;
 }
 
@@ -124,7 +126,7 @@ function displayName(card){return String(card?.name||card?.title||card?.card_nam
 function thumbnailFor(card){const id=encodeURIComponent(card?.card_id||card?.stable_symbol_id||'');return new URL(`assets/tarot/rws/${id}.webp`,document.baseURI).href}
 function associationCards(record){const found=[];if(PLANET_NAMES.has(record.body))found.push(cardForPlanet(record.body));found.push(cardForSign(record.sign),cardForDecan(record),cardForPlanet(SIGN_RULERS[record.signIndex]));const exalted=EXALTATIONS[record.signIndex];if(exalted)found.push(cardForPlanet(exalted));const decanRuler=DECAN_RULERS[record.signIndex]?.[record.decan];if(decanRuler)found.push(cardForPlanet(decanRuler));return found.filter(Boolean)}
 function strongestCard(payload){const tally=new Map();cardRecords(payload).forEach(record=>{const seen=new Set();associationCards(record).forEach(card=>{const id=card.card_id||card.stable_symbol_id;if(!id||seen.has(id))return;seen.add(id);let hit=tally.get(id);if(!hit){hit={id,card,count:0};tally.set(id,hit)}hit.count+=1})});return Array.from(tally.values()).sort((a,b)=>b.count-a.count||displayName(a.card).localeCompare(displayName(b.card)))[0]||null}
-function cardFingerprint(payload){const hit=strongestCard(payload);if(!hit)return null;const strip=document.createElement('span');strip.className='sky-card-hits-fingerprint-strip';const card=document.createElement('span');card.className='sky-card-hits-fingerprint-card';const image=document.createElement('img');image.src=thumbnailFor(hit.card);image.alt='';image.width=22;image.height=38;image.loading='eager';image.decoding='sync';card.appendChild(image);const chip=document.createElement('span');chip.className='sky-card-hits-fingerprint-count';chip.textContent=String(hit.count);card.appendChild(chip);strip.appendChild(card);return strip}
+function cardFingerprint(payload){if(timeUnknown(payload))return null;const hit=strongestCard(payload);if(!hit)return null;const strip=document.createElement('span');strip.className='sky-card-hits-fingerprint-strip';const card=document.createElement('span');card.className='sky-card-hits-fingerprint-card';const image=document.createElement('img');image.src=thumbnailFor(hit.card);image.alt='';image.width=22;image.height=38;image.loading='eager';image.decoding='sync';card.appendChild(image);const chip=document.createElement('span');chip.className='sky-card-hits-fingerprint-count';chip.textContent=String(hit.count);card.appendChild(chip);strip.appendChild(card);return strip}
 
 function piece(part,node){const mount=document.createElement('span');mount.className='sky-saved-fingerprint-piece';mount.dataset.fingerprintPart=part;if(node)mount.appendChild(node);else{const empty=document.createElement('span');empty.className='sky-saved-fingerprint-empty';empty.setAttribute('aria-hidden','true');mount.appendChild(empty)}return mount}
 function triptych(record){const root=document.createElement('span');root.className='sky-saved-fingerprint-triptych';root.setAttribute('aria-hidden','true');root.append(piece('where',whereFingerprint(record)),piece('placements',placementsFingerprint(record)),piece('card',cardFingerprint(record)));return root}

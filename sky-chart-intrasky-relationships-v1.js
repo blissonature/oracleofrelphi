@@ -48,7 +48,7 @@ function ascendant(payload,list){
   const value=Number(profile(payload).ascendant??payload?.ascendant??payload?.asc);return Number.isFinite(value)?norm(value):0;
 }
 function cusps(payload,list){
-  const p=profile(payload);
+  const p=profile(payload);if(p.timeUnknown===true)return[];
   for(const raw of [p.houseCusps,p.cusps,payload?.houseCusps,payload?.cusps,payload?.houses]){
     if(!raw)continue;
     const values=(Array.isArray(raw)?raw:Object.values(raw)).map(item=>typeof item==='object'?Number(item.longitude??item.value??item.cusp):Number(item)).slice(0,12);
@@ -58,6 +58,7 @@ function cusps(payload,list){
   return Array.from({length:12},(_,index)=>norm(start+index*30));
 }
 function houseFor(value,houseCusps){
+  if(!Array.isArray(houseCusps)||houseCusps.length!==12)return null;
   for(let index=0;index<12;index+=1){
     const start=houseCusps[index],span=norm(houseCusps[(index+1)%12]-start)||30;
     if(norm(value-start)<span)return index+1;
@@ -109,12 +110,12 @@ function makeRow(relation,index){
   row.dataset.sourceOrb=relation.orb.toFixed(6);row.dataset.harmonicOrder=String(relation.harmonicOrder);row.dataset.harmonicNumerator=String(relation.harmonicNumerator);
   row.dataset.phaseError=relation.phaseError.toFixed(6);row.dataset.signedPhaseError=relation.signedPhaseError.toFixed(6);row.dataset.harmonicWindow=relation.masterWindow.toFixed(6);
   row.dataset.windowFraction=Number.isFinite(relation.windowFraction)?relation.windowFraction.toFixed(6):String(relation.windowFraction);row.dataset.harmonicCoherence=relation.coherence.toFixed(8);
-  row.dataset.leftHouse=String(relation.left.house);row.dataset.rightHouse=String(relation.right.house);row.dataset.leftSign=String(left.sign);row.dataset.rightSign=String(right.sign);
+  if(relation.left.house!=null)row.dataset.leftHouse=String(relation.left.house);if(relation.right.house!=null)row.dataset.rightHouse=String(relation.right.house);row.dataset.leftSign=String(left.sign);row.dataset.rightSign=String(right.sign);
   row.setAttribute('aria-label',`Sky ${slot} ${relation.left.entry.name} ${relation.aspect.id} ${relation.right.entry.name}, orb ${relation.orb.toFixed(2)} degrees, harmonic ${relation.harmonicOrder}, phase error ${relation.phaseError.toFixed(2)} degrees, coherence ${relation.coherencePercent.toFixed(0)} percent`);
   const leftGlyph=glyphSlot('left',relation.left.entry.name),aspectGlyph=glyphSlot('aspect',relation.aspect.id),rightGlyph=glyphSlot('right',relation.right.entry.name),leftCopy=document.createElement('span'),rightCopy=document.createElement('span');
   leftCopy.className=rightCopy.className='sky-foundation-relationship-copy';
-  leftCopy.innerHTML=`${esc(relation.left.entry.name)}<small>${left.text} ${esc(SIGN_NAMES[left.sign])} · H${relation.left.house}</small>`;
-  rightCopy.innerHTML=`${esc(relation.right.entry.name)}<small>${right.text} ${esc(SIGN_NAMES[right.sign])} · H${relation.right.house} · Orb ${relation.orb.toFixed(2)}°</small>`;
+  leftCopy.innerHTML=`${esc(relation.left.entry.name)}<small>${left.text} ${esc(SIGN_NAMES[left.sign])}${relation.left.house!=null?` · H${relation.left.house}`:''}</small>`;
+  rightCopy.innerHTML=`${esc(relation.right.entry.name)}<small>${right.text} ${esc(SIGN_NAMES[right.sign])}${relation.right.house!=null?` · H${relation.right.house}`:''} · Orb ${relation.orb.toFixed(2)}°</small>`;
   row.append(leftGlyph,leftCopy,aspectGlyph,rightGlyph,rightCopy);return row;
 }
 function annotateInterRows(list){

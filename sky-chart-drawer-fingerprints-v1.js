@@ -45,6 +45,23 @@ function addAxis(root,cx,cy,radius,degree,className){if(!Number.isFinite(degree)
 function whereMount(slot){return window.RelphiSkyCardShell?.get?.(slot)?.whereFingerprint||null}
 function placementMount(slot){return window.RelphiSkyCardShell?.get?.(slot)?.placementFingerprint||null}
 function cardHitsMount(slot){return window.RelphiSkyCardShell?.get?.(slot)?.cardHitsFingerprint||null}
+function timeUnknown(payload,slot){
+  const editor=slot?window.RelphiSkyCardShell?.get?.(slot)?.editor:null;
+  const liveToggle=editor?.querySelector?.('[data-ww-field="time-unknown"]');
+  if(liveToggle)return liveToggle.checked===true;
+  return payload?.calcProfile?.timeUnknown===true||payload?.profile?.timeUnknown===true;
+}
+function unknownRulerPlaceholder(){
+  const root=document.createElement('span');
+  root.className='sky-card-ruler-fingerprint sky-card-ruler-unknown-fingerprint';
+  root.setAttribute('role','img');
+  root.setAttribute('aria-label','Chart Ruler unknown because time of day is unknown.');
+  root.style.cssText='position:relative;display:grid;place-items:center;width:34px;height:56px;box-sizing:border-box;border:1px solid rgba(31,27,24,.28);border-radius:2px;background:#f7f4ef;color:#4d4640;overflow:hidden;';
+  const label=document.createElement('span');label.textContent='Chart Ruler';label.style.cssText='position:relative;z-index:1;width:28px;text-align:center;font:800 6px/1.05 system-ui,sans-serif;text-transform:uppercase;letter-spacing:.01em;';
+  const question=document.createElement('span');question.textContent='?';question.setAttribute('aria-hidden','true');question.style.cssText='position:absolute;inset:0;display:grid;place-items:center;font:300 34px/1 Georgia,serif;color:rgba(31,27,24,.18);z-index:2;';
+  root.append(label,question);
+  return root;
+}
 
 function temporalTrace(sourceSvg){
   if(sourceSvg?.dataset?.canonicalSourceReady!=='true'||sourceSvg?.dataset?.canonicalHeptagramReady!=='true')return null;
@@ -80,6 +97,16 @@ function renderWhere(slot,payload){
   const mount=whereMount(slot);if(!mount)return;
   const refs=window.RelphiSkyCardShell?.get?.(slot),sourceSvg=refs?.heptagram;
   mount.replaceChildren();
+  if(timeUnknown(payload,slot)){
+    whereRetry[slot]=0;
+    const label=document.createElement('span');
+    label.className='sky-card-fingerprint-text';
+    label.textContent='Where & When';
+    mount.appendChild(label);
+    mount.hidden=false;
+    mount.setAttribute('aria-label',`Where and When for Sky ${slot}; time of day unknown.`);
+    return;
+  }
   // The full Where and When heptagram is the single source of truth for this
   // fingerprint. Do not independently reject valid rendered geometry because a
   // stored sky uses an older metadata/profile shape.
@@ -107,8 +134,10 @@ function renderPlacements(slot,payload){
     root.appendChild(svg('line',{x1:a.x,y1:a.y,x2:b.x,y2:b.y,class:'sky-placement-fingerprint-sign-divider'}));
   }
   root.appendChild(svg('circle',{cx,cy,r:inner,fill:'#fffdfa',stroke:'rgba(44,38,33,.28)','stroke-width':'.65'}));
-  addAxis(root,cx,cy,14.6,axisValue(records,['asc','ascendant','rising'],['dsc','descendant']),'sky-placement-fingerprint-axis sky-placement-fingerprint-horizon');
-  addAxis(root,cx,cy,14.6,axisValue(records,['mc','midheaven'],['ic','imumcoeli']),'sky-placement-fingerprint-axis sky-placement-fingerprint-meridian');
+  if(!timeUnknown(payload,slot)){
+    addAxis(root,cx,cy,14.6,axisValue(records,['asc','ascendant','rising'],['dsc','descendant']),'sky-placement-fingerprint-axis sky-placement-fingerprint-horizon');
+    addAxis(root,cx,cy,14.6,axisValue(records,['mc','midheaven'],['ic','imumcoeli']),'sky-placement-fingerprint-axis sky-placement-fingerprint-meridian');
+  }
   const bins=Array.from({length:12},()=>0);
   ordinary.forEach(record=>{bins[Math.floor(norm(record.value)/30)]+=1});
   const silhouette=bins.map((count,index)=>polar(cx,cy,4.7+Math.min(4,count)*2.05,index*30+15));
@@ -122,6 +151,13 @@ function renderPlacements(slot,payload){
 
 function renderCardHits(slot,payload){
   const mount=cardHitsMount(slot);if(!mount)return;
+  if(timeUnknown(payload,slot)){
+    mount.replaceChildren(unknownRulerPlaceholder());
+    mount.hidden=false;
+    mount.removeAttribute('data-ruler-sign');mount.removeAttribute('data-ruler-house');
+    mount.setAttribute('aria-label','Chart Ruler unknown because time of day is unknown.');
+    return;
+  }
   const structure=window.RelphiSkyCardHitsStructure;
   const fingerprint=payload&&structure?.fingerprint?.(payload);
   if(!fingerprint){
@@ -162,6 +198,7 @@ function schedule(){if(queued)return;queued=true;requestAnimationFrame(render)}
 function relevantStorage(event){return !event.key||Object.values(KEYS).includes(event.key)}
 
 window.addEventListener('storage',event=>{if(relevantStorage(event))schedule()});
+document.addEventListener('change',event=>{if(event.target?.matches?.('[data-ww-field="time-unknown"]'))schedule()});
 [
   'relphi:sky-foundation-ready','relphi:sky-heptagram-source-ready','relphi:sky-heptagram-canonical-ready',
   'relphi:sky-live-origin-changed','relphi:saved-sky-active-changed','relphi:saved-sky-library-changed',

@@ -18,10 +18,12 @@ function installStyle(){
     .sky-where-when-here-now-row{padding:0 .62rem .8rem}
     .sky-location-confirmation:not([data-location-source="placement-inference"]) p:first-child{display:none}
     .sky-where-when-status:empty{display:none}
-    .sky-where-when-grid{grid-template-columns:minmax(0,1.12fr) minmax(0,.88fr)}
+    .sky-where-when-grid{grid-template-columns:minmax(0,1.05fr) minmax(0,.95fr)}
+    .sky-where-when-editor [data-ww-field="time"]:disabled{background:#d8d4cf!important;background-color:#d8d4cf!important;color:#817a73!important;-webkit-text-fill-color:#817a73!important;opacity:1!important;cursor:not-allowed!important;border-color:#c7c1bb!important}
+    .sky-where-when-editor [data-ww-field="time"]:disabled::-webkit-calendar-picker-indicator{opacity:.32!important;filter:grayscale(1)!important}
     .sky-where-search-row{align-items:end}
     @media(max-width:620px){
-      .sky-where-when-grid{grid-template-columns:minmax(0,1.12fr) minmax(0,.88fr)}
+      .sky-where-when-grid{grid-template-columns:minmax(0,1.05fr) minmax(0,.95fr)}
       .sky-where-when-here-now-row{padding:0 .55rem .69rem}
     }
   `;document.head.appendChild(style);

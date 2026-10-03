@@ -69,7 +69,7 @@ function ordinaryItems(wheel,slot){
     const id=String(group.dataset.placement||'');
     const leader=leaders.find(line=>line.dataset.placement===id&&Math.abs(num(line.dataset.exactLongitude)-exact)<1e-5)||leaders.find(line=>line.dataset.placement===id);
     if(!leader)return null;
-    return{group,leader,id,index,priority:priority(id),exact:norm(exact),sign:Math.floor(norm(exact)/30)};
+    return{group,leader,id,index,priority:priority(id),exact:norm(exact),sign:Math.floor(norm(exact)/30),authoredLane:num(group.dataset.placementLane),authoredExactRadius:Math.hypot(num(leader.getAttribute('x2'))-center().x,num(leader.getAttribute('y2'))-center().y)};
   }).filter(Boolean).sort((a,b)=>a.exact-b.exact||a.priority-b.priority||a.index-b.index);
 }
 
@@ -98,7 +98,7 @@ function fixedSegments(wheel,slot){
     ...wheel.querySelectorAll(`[data-layer="leaders"] line[data-sky="${slot}"][data-angle]`)
   ].map(parseSegment).filter(Boolean);
 }
-function exactPoint(record,slot){const g=geometry(slot);return polar(g.degree,record.item.exact)}
+function exactPoint(record,slot){const radius=Number(record?.item?.authoredExactRadius),g=geometry(slot);return polar(Number.isFinite(radius)?radius:g.degree,record.item.exact)}
 function segmentFor(record,slot){return{a:record.point,b:record.exactPoint||exactPoint(record,slot)}}
 function forceExact(record,slot){record.display=record.item.exact;record.point=polar(record.lane,record.display);record.offset=0;record.fallback=true;record.exactPoint=exactPoint(record,slot)}
 function leaderCrossings(solution,slot){
@@ -139,7 +139,7 @@ function sanitize(solution,slot,wheel){
 
 function solveSlot(wheel,slot){
   const g=geometry(slot),items=ordinaryItems(wheel,slot);if(!g||!items.length)return{items:[],crossings:0,hits:0};
-  const lane=Number(g.placement?.[0]);if(!Number.isFinite(lane))return{items:[],crossings:0,hits:0};
+  const authoredLane=items.find(item=>Number.isFinite(item.authoredLane))?.authoredLane,lane=Number.isFinite(authoredLane)?authoredLane:Number(g.placement?.[0]);if(!Number.isFinite(lane))return{items:[],crossings:0,hits:0};
   const bySign=new Map();items.forEach(item=>{if(!bySign.has(item.sign))bySign.set(item.sign,[]);bySign.get(item.sign).push(item)});
   let solution=[];for(let sign=0;sign<12;sign++)solution.push(...solveSignGroup(bySign.get(sign)||[],lane));
   solution=sanitize(solution,slot,wheel);

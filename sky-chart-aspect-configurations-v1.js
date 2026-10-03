@@ -585,8 +585,17 @@ function renderResultsPanel(){
   paintConfigurationMiniGlyphs(grid);
 }
 const CONFIG_STORAGE_KEY='relphiSkyConfigurationMatrixV1';
+const INEVITABLE_STORAGE_KEY='relphiSkyConfigurationInevitableV1';
+const INEVITABLE_TOOLTIP='Describes how we know the relationship is there, not how real or strong it is.';
 const configurationState=Object.fromEntries(SCOPES.map(scope=>[scope.id,new Set()]));
 (function loadPersistedConfigurationState(){try{const saved=JSON.parse(localStorage.getItem(CONFIG_STORAGE_KEY)||'null');if(!saved||typeof saved!=='object')return;SCOPES.forEach(scope=>{if(Array.isArray(saved[scope.id]))configurationState[scope.id]=new Set(saved[scope.id].filter(type=>TYPE_IDS.includes(type)))})}catch(_){}})();
+let inevitableEnabled=false;
+// Recovery migration: an earlier Inevitable implementation persisted "true" before
+// its combinatorial path was safe to restore at startup. Never let that stale value
+// block Sky Chart initialization. A fresh user change can enable it after startup.
+try{
+  if(localStorage.getItem(INEVITABLE_STORAGE_KEY)==='true')localStorage.setItem(INEVITABLE_STORAGE_KEY,'false');
+}catch(_){}
 let patterns=[];
 let queued=false;
 let applying=false;
@@ -614,37 +623,53 @@ function collectGraph(){
     let byAspect=edges.get(key);if(!byAspect){byAspect=new Map();edges.set(key,byAspect)}
     const current=byAspect.get(aspect),phase=phaseError(row);if(!current||phase<current.phase)byAspect.set(aspect,{row,aspect,phase,left:left.key,right:right.key});
   }
+  if(inevitableEnabled){
+    const activeSkies=new Set(activeScopes().flatMap(scope=>scope.split('-')));
+    for(const sky of activeSkies)for(const [leftId,rightId] of [['asc','dsc'],['mc','ic'],['north-node','south-node'],['vertex','anti-vertex']]){
+      const leftKey=nodeKey(sky,leftId),rightKey=nodeKey(sky,rightId);
+      const left=resultVertexRecord(leftKey),right=resultVertexRecord(rightKey);if(!left||!right)continue;
+      nodes.set(leftKey,left);nodes.set(rightKey,right);
+      const key=edgeKey(leftKey,rightKey);let byAspect=edges.get(key);if(!byAspect){byAspect=new Map();edges.set(key,byAspect)}
+      if(!byAspect.has('opposition'))byAspect.set('opposition',{row:null,aspect:'opposition',phase:0,left:leftKey,right:rightKey,entailed:true,origin:'entailed',entailedKind:'polar-axis'});
+    }
+  }
   return{windowValue,nodes,edges};
 }
-function syntheticAxisOpposition(graph,a,b){
-  const [skyA,idA]=String(a||'').split(':'),[skyB,idB]=String(b||'').split(':');
-  if(!skyA||skyA!==skyB)return null;
-  const ids=[idA,idB].sort().join('|');
-  if(ids!=='asc|dsc'&&ids!=='ic|mc')return null;
-  const left=resultVertexRecord(a),right=resultVertexRecord(b);
-  if(!left||!right)return null;
-  const delta=Math.abs(resultNorm(left.value)-resultNorm(right.value));
-  const separation=Math.min(delta,360-delta);
-  const orb=Math.abs(separation-180);
-  const phase=orb*2;
-  if(phase>graph.windowValue+1e-9)return null;
-  return{row:null,aspect:'opposition',phase,left:a,right:b,synthetic:true,syntheticKind:'axis-opposition'};
+const INEVITABLE_ASPECTS=Object.freeze({
+  conjunction:{angle:0,harmonic:1},'semi-sextile':{angle:30,harmonic:12},octile:{angle:45,harmonic:8},sextile:{angle:60,harmonic:6},
+  quintile:{angle:72,harmonic:5},square:{angle:90,harmonic:4},trine:{angle:120,harmonic:3},'tri-octile':{angle:135,harmonic:8},
+  'bi-quintile':{angle:144,harmonic:5},quincunx:{angle:150,harmonic:12},opposition:{angle:180,harmonic:2}
+});
+const INEVITABLE_MAX_PHASE=12;
+function completeInevitableGraph(graph){
+  if(!inevitableEnabled)return graph;
+  const vertices=[...graph.nodes.entries()].filter(([,node])=>Number.isFinite(Number(node?.value)));
+  for(let i=0;i<vertices.length;i+=1)for(let j=i+1;j<vertices.length;j+=1){
+    const [a,left]=vertices[i],[b,right]=vertices[j],key=edgeKey(a,b);
+    let byAspect=graph.edges.get(key);if(!byAspect){byAspect=new Map();graph.edges.set(key,byAspect)}
+    const delta=Math.abs(resultNorm(left.value)-resultNorm(right.value)),separation=Math.min(delta,360-delta);
+    let best=null;
+    for(const [aspect,spec] of Object.entries(INEVITABLE_ASPECTS)){
+      if(byAspect.has(aspect))continue;
+      const phase=Math.abs(separation-spec.angle)*spec.harmonic;
+      if(phase>INEVITABLE_MAX_PHASE+1e-9)continue;
+      if(!best||phase<best.phase)best={row:null,aspect,phase,left:a,right:b,entailed:true,origin:'entailed',entailedKind:'configuration-completion'};
+    }
+    if(best)byAspect.set(best.aspect,best);
+    if(!byAspect.size)graph.edges.delete(key);
+  }
+  return graph;
 }
-function getEdge(graph,a,b,aspect){
-  const direct=graph.edges.get(edgeKey(a,b))?.get(aspect)||null;
-  if(direct)return direct;
-  if(aspect==='opposition')return syntheticAxisOpposition(graph,a,b);
-  return null;
-}
+function getEdge(graph,a,b,aspect){return graph.edges.get(edgeKey(a,b))?.get(aspect)||null}
 function required(graph,pairs){const edges=[];for(const [a,b,aspect] of pairs){const edge=getEdge(graph,a,b,aspect);if(!edge)return null;edges.push(edge)}return edges}
 function addPattern(out,type,vertices,edges,meta={}){const key=patternKey(type,vertices);if(out.some(item=>item.key===key))return;const phases=edges.map(edge=>edge.phase).filter(Number.isFinite);out.push({key,type,vertices:vertices.slice(),edges:edges.slice(),maxPhase:phases.length?Math.max(...phases):Number.POSITIVE_INFINITY,meanPhase:phases.length?phases.reduce((sum,value)=>sum+value,0)/phases.length:Number.POSITIVE_INFINITY,...meta})}
 function combinations(items,size){const out=[];function walk(start,pick){if(pick.length===size){out.push(pick.slice());return}for(let i=start;i<=items.length-(size-pick.length);i+=1){pick.push(items[i]);walk(i+1,pick);pick.pop()}}walk(0,[]);return out}
 function aspectCounts(graph,vertices,expected=null){
   const pairs=[];
   for(let i=0;i<vertices.length;i+=1)for(let j=i+1;j<vertices.length;j+=1){
-    const byAspect=graph.edges.get(edgeKey(vertices[i],vertices[j]));
-    if(!byAspect||!byAspect.size)return null;
-    pairs.push([...byAspect.values()]);
+    const a=vertices[i],b=vertices[j],byAspect=graph.edges.get(edgeKey(a,b)),options=byAspect?[...byAspect.values()]:[];
+    if(!options.length)return null;
+    pairs.push(options);
   }
   if(!expected){
     const counts=new Map(),edges=[];
@@ -680,13 +705,13 @@ function countIs(counts,expected){for(const [aspect,count] of Object.entries(exp
 function grandSextileEdges(graph,vertices){
   if(vertices.length!==6)return null;
   const ordered=vertices.slice().sort((a,b)=>{
-    const av=Number(resultVertexRecord(a)?.value),bv=Number(resultVertexRecord(b)?.value);
+    const av=Number(graph.nodes.get(a)?.value),bv=Number(graph.nodes.get(b)?.value);
     if(!Number.isFinite(av)&&!Number.isFinite(bv))return String(a).localeCompare(String(b));
     if(!Number.isFinite(av))return 1;
     if(!Number.isFinite(bv))return -1;
     return resultNorm(av)-resultNorm(bv);
   });
-  if(ordered.some(key=>!Number.isFinite(Number(resultVertexRecord(key)?.value))))return null;
+  if(ordered.some(key=>!Number.isFinite(Number(graph.nodes.get(key)?.value))))return null;
   const pairs=[];
   for(let i=0;i<6;i+=1)pairs.push([ordered[i],ordered[(i+1)%6],'sextile']);
   for(let i=0;i<6;i+=1)pairs.push([ordered[i],ordered[(i+2)%6],'trine']);
@@ -716,7 +741,7 @@ function grandCrossEdges(graph,vertices){
   return null;
 }
 function detect(){
-  const graph=collectGraph(),nodes=[...graph.nodes.keys()],out=[];
+  const graph=completeInevitableGraph(collectGraph()),nodes=[...graph.nodes.keys()],out=[];
   for(const [a,b,c] of combinations(nodes,3)){
     let edges=required(graph,[[a,b,'trine'],[a,c,'trine'],[b,c,'trine']]);if(edges)addPattern(out,'grand-trine',[a,b,c],edges);
     const triple=[[a,b,c],[a,c,b],[b,c,a]];
@@ -788,6 +813,9 @@ function renderConfigurationSection(){
   const cols=document.createElement('div');cols.className='sky-chart-configuration-title-choices';
   const labels=bActive()?['All','A↔A','B↔B','A↔B']:['All','A↔A'];labels.forEach(text=>{const span=document.createElement('span');span.textContent=text;cols.appendChild(span)});
   title.append(heading,cols);section.appendChild(title);
+  const inevitable=document.createElement('label');inevitable.className='sky-chart-configuration-inevitable';inevitable.title=INEVITABLE_TOOLTIP;
+  const inevitableInput=document.createElement('input');inevitableInput.type='checkbox';inevitableInput.checked=inevitableEnabled;inevitableInput.dataset.configurationInevitable='true';inevitableInput.setAttribute('aria-label','Inevitable');inevitableInput.setAttribute('aria-description',INEVITABLE_TOOLTIP);
+  const inevitableText=document.createElement('span');inevitableText.textContent='Inevitable';inevitable.append(inevitableInput,inevitableText);section.appendChild(inevitable);
   const list=document.createElement('div');list.className='sky-chart-configuration-list';
   list.appendChild(configRow('all','All configurations',true));TYPES.forEach(type=>list.appendChild(configRow(type.id,type.label,false)));
   section.appendChild(list);body.appendChild(section);syncConfigInputs();
@@ -809,7 +837,8 @@ function markParticipants(){
   document.querySelectorAll('.sky-foundation-relationship-row,[data-layer="aspects"]>.sky-foundation-aspect').forEach(node=>node.classList.toggle('sky-chart-configuration-participant',keys.has(relationNodeKey(node))));
 }
 function matchingBaseLine(edge){
-  const row=edge.row,index=relationIndex(edge);if(index){const byIndex=document.querySelector(`[data-layer="aspects"]>.sky-foundation-aspect[data-relation-index="${CSS.escape(index)}"]`);if(byIndex)return byIndex}
+  const row=edge?.row,index=relationIndex(edge);if(index){const byIndex=document.querySelector(`[data-layer="aspects"]>.sky-foundation-aspect[data-relation-index="${CSS.escape(index)}"]`);if(byIndex)return byIndex}
+  if(!row)return null;
   const aspect=String(row.dataset.aspect||''),lp=String(row.dataset.leftPlacement||''),rp=String(row.dataset.rightPlacement||''),ls=String(row.dataset.leftSky||''),rs=String(row.dataset.rightSky||'');
   return[...document.querySelectorAll(`[data-layer="aspects"]>.sky-foundation-aspect[data-aspect="${CSS.escape(aspect)}"]`)].find(line=>String(line.dataset.leftPlacement||'')===lp&&String(line.dataset.rightPlacement||'')===rp&&String(line.dataset.leftSky||'')===ls&&String(line.dataset.rightSky||'')===rs)||null;
 }
@@ -820,10 +849,55 @@ function ensureOverlay(){
 }
 function renderOverlay(){
   const layer=ensureOverlay();if(!layer)return;layer.replaceChildren();clearPeerHighlight();markParticipants();
-  const chosen=selectedPatternsForVisibility(),seen=new Set();
-  for(const pattern of chosen)for(const edge of pattern.edges){const key=edgeNodeKey(edge);if(seen.has(key))continue;seen.add(key);const base=matchingBaseLine(edge);if(!base)continue;const line=document.createElementNS('http://www.w3.org/2000/svg','line');['x1','y1','x2','y2','stroke'].forEach(name=>{const value=base.getAttribute(name);if(value!=null)line.setAttribute(name,value)});line.setAttribute('vector-effect','non-scaling-stroke');line.classList.add('sky-chart-configuration-line');line.dataset.configurationRelation=relationIndex(edge)||'';line.dataset.configurationKey=key;layer.appendChild(line)}
+  const chosen=selectedPatternsForVisibility(),linesByEdge=new Map();
+  for(const pattern of chosen)for(const edge of pattern.edges){
+    const key=edgeNodeKey(edge);let line=linesByEdge.get(key);
+    if(!line){
+      const base=matchingBaseLine(edge);if(!base)continue;
+      line=document.createElementNS('http://www.w3.org/2000/svg','line');
+      ['x1','y1','x2','y2','stroke'].forEach(name=>{const value=base.getAttribute(name);if(value!=null)line.setAttribute(name,value)});
+      line.setAttribute('vector-effect','non-scaling-stroke');line.classList.add('sky-chart-configuration-line');
+      line.dataset.configurationRelation=relationIndex(edge)||'';line.dataset.configurationKey=key;
+      const row=edge?.row;if(row){line.dataset.relationIndex=String(row.dataset.relationIndex||'');line.dataset.leftSky=String(row.dataset.leftSky||'');line.dataset.rightSky=String(row.dataset.rightSky||'');line.dataset.leftPlacement=String(row.dataset.leftPlacement||'');line.dataset.rightPlacement=String(row.dataset.rightPlacement||'')}
+      line._configurationPatterns=new Set();linesByEdge.set(key,line);layer.appendChild(line);
+    }
+    line._configurationPatterns.add(pattern.key);
+  }
   const selectedCount=activeScopes().reduce((sum,scope)=>sum+configurationState[scope].size,0);
   document.documentElement.dataset.skyConfigurationSelection=String(selectedCount);
+  applyConfigurationFocusComposition();
+}
+let configurationFocusState={active:false,indexes:new Set()};
+let configurationWheelState={active:false,indexes:new Set()};
+function patternMatchesIndexes(pattern,indexes){
+  if(!indexes)return true;
+  return pattern.edges.some(edge=>{const index=relationIndex(edge);return index&&indexes.has(index)});
+}
+function survivingConfigurationPatterns(){
+  const focusIndexes=configurationFocusState.active?configurationFocusState.indexes:null;
+  const wheelIndexes=configurationWheelState.active?configurationWheelState.indexes:null;
+  if(!focusIndexes&&!wheelIndexes)return null;
+  return new Set(selectedPatternsForVisibility().filter(pattern=>patternMatchesIndexes(pattern,focusIndexes)&&patternMatchesIndexes(pattern,wheelIndexes)).map(pattern=>pattern.key));
+}
+function applyConfigurationFocusComposition(){
+  const layer=document.querySelector('[data-layer="configurations"]');if(!layer)return;
+  const surviving=survivingConfigurationPatterns(),active=!!surviving;
+  layer.classList.toggle('has-focus-composition',active);
+  layer.querySelectorAll('.sky-chart-configuration-line').forEach(line=>{
+    const patternKeys=line._configurationPatterns||new Set(),keep=!active||[...patternKeys].some(key=>surviving.has(key));
+    line.classList.toggle('is-focus-kept',!!keep);
+    line.classList.toggle('is-focus-muted',active&&!keep);
+  });
+}
+function receiveConfigurationFocus(event){
+  const detail=event?.detail||{},active=detail.active===true;
+  configurationFocusState={active,indexes:new Set(active?(detail.relationshipIndexes||[]).map(String):[])};
+  applyConfigurationFocusComposition();
+}
+function receiveConfigurationWheelFilter(event){
+  const detail=event?.detail||{},state=detail.state||null,active=!!state;
+  configurationWheelState={active,indexes:new Set(active?(detail.relationshipIndexes||[]).map(String):[])};
+  applyConfigurationFocusComposition();
 }
 function clearPeerHighlight(){
   document.querySelectorAll('.sky-foundation-relationship-row.is-configuration-peer,.sky-foundation-relationship-row.is-configuration-hover-source').forEach(row=>row.classList.remove('is-configuration-peer','is-configuration-hover-source'));
@@ -874,9 +948,11 @@ function ensureConfigurationObserver(){
   configurationObserver.observe(body,{childList:true});
 }
 function schedule(){if(queued)return;queued=true;requestAnimationFrame(refresh)}
-function handleChange(event){const input=event.target.closest?.('[data-configuration-scope][data-configuration-type]');if(!input)return;event.stopPropagation();setSelection(input.dataset.configurationScope,input.dataset.configurationType,input.checked)}
+function handleChange(event){const inevitable=event.target.closest?.('[data-configuration-inevitable]');if(inevitable){event.stopPropagation();inevitableEnabled=inevitable.checked;try{localStorage.setItem(INEVITABLE_STORAGE_KEY,String(inevitableEnabled))}catch(_){}schedule();return}const input=event.target.closest?.('[data-configuration-scope][data-configuration-type]');if(!input)return;event.stopPropagation();setSelection(input.dataset.configurationScope,input.dataset.configurationType,input.checked)}
 function start(){
   document.addEventListener('change',handleChange,true);
+  window.addEventListener('relphi:sky-filter-wheel-focus-changed',receiveConfigurationFocus);
+  window.addEventListener('relphi:sky-foundation-filter-changed',receiveConfigurationWheelFilter);
   window.addEventListener('relphi:sky-foundation-clear-selection',()=>{
     clearPatternHighlight();
     clearPeerHighlight();

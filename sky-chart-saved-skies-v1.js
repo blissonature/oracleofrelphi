@@ -209,8 +209,8 @@
       const label=active.saved?'Save Changes':'Save Sky',name=active.saved?active.name:(active.name==='New Sky'||active.name==='Where and When'||active.name===`Sky ${openSlot}`||active.name==='Unsaved sky'?'':active.name);
       menu.innerHTML=`<div class="sky-saved-subview-head"><button type="button" class="sky-saved-back" data-sky-menu-back aria-label="Back">‹</button><strong>${label}</strong></div><form class="sky-saved-command-save" data-sky-command-save-form><label><span>Sky name</span><input type="text" maxlength="80" autocomplete="off" data-sky-command-save-name value="${escapeHtml(name)}" placeholder="Name this sky"></label><button type="submit">${label}</button><p data-sky-command-status aria-live="polite"></p></form>`;positionPopover();return;
     }
-    const canAddB=openSlot==='A'&&!window.RelphiSkySlotControls?.hasSkyB?.(),newButton=hasSky?'<button type="button" class="sky-saved-command" data-sky-command="new"><span>New Sky</span></button>':'',saveButton=hasSky?`<button type="button" class="sky-saved-command" data-sky-command="save"><span>${active.saved?'Save Changes':'Save Sky'}</span></button>`:'',addB=canAddB?'<button type="button" class="sky-saved-command" data-sky-command="add-b"><span>Add Sky B</span></button>':'',removeButton=openSlot==='B'?'<button type="button" class="sky-saved-command is-danger" data-sky-command="remove"><span>Remove Sky</span></button>':'';
-    menu.innerHTML=`<div class="sky-saved-command-list">${newButton}<button type="button" class="sky-saved-command" data-sky-command="load"><span>Load Sky</span></button>${saveButton}${addB}${removeButton}</div>`;positionPopover();
+    const hasB=window.RelphiSkySlotControls?.hasStoredSkyB?.()===true,canAddB=openSlot==='A'&&!window.RelphiSkySlotControls?.hasSkyB?.(),newButton=hasSky?'<button type="button" class="sky-saved-command" data-sky-command="new"><span>New Sky</span></button>':'',saveButton=hasSky?`<button type="button" class="sky-saved-command" data-sky-command="save"><span>${active.saved?'Save Changes':'Save Sky'}</span></button>`:'',swapButton=hasB?'<button type="button" class="sky-saved-command" data-sky-command="swap"><span>Swap Sky A ↔ Sky B</span></button>':'',addB=canAddB?'<button type="button" class="sky-saved-command" data-sky-command="add-b"><span>Add Sky B</span></button>':'',removeButton=openSlot==='B'?'<button type="button" class="sky-saved-command is-danger" data-sky-command="remove"><span>Remove Sky</span></button>':'';
+    menu.innerHTML=`<div class="sky-saved-command-list">${newButton}<button type="button" class="sky-saved-command" data-sky-command="load"><span>Load Sky</span></button>${saveButton}${swapButton}${addB}${removeButton}</div>`;positionPopover();
   }
   function triggerFor(slot){return document.querySelector(`#skyFoundation${slot}>.sky-foundation-heading>.sky-card-title-stable [data-saved-sky-trigger]`)||document.querySelector(`#skyFoundation${slot}>.sky-foundation-heading [data-saved-sky-trigger]`)}
   function positionPopover(){
@@ -239,6 +239,7 @@
       if(action==='save'){menuView='save';renderPopover();requestAnimationFrame(()=>popover?.querySelector('[data-sky-command-save-name]')?.focus({preventScroll:true}));return}
       if(action==='new'){close();newSky(slot);schedule();return}
       if(action==='remove'){close();removeSky(slot);schedule();return}
+      if(action==='swap'){close();window.RelphiSkySlotControls?.swapSkies?.();schedule();return}
       if(action==='add-b'){close();addSkyB();schedule();return}
     }
     const deleteButton=event.target.closest?.('[data-saved-delete-ref]'),deleteConfirm=event.target.closest?.('[data-saved-delete-confirm]');

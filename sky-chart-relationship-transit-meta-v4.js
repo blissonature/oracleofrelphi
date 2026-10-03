@@ -96,7 +96,7 @@ function fortuneLongitude(date,slot){
   try{if(window.SunCalc&&Number.isFinite(latitude)&&Number.isFinite(longitude))day=window.SunCalc.getPosition(date,latitude,longitude).altitude>0}catch(_){}
   return norm(day?asc+moon-sun:asc+sun-moon);
 }
-function ephemerisLongitude(id,date,slot){if(id==='north-node')return meanNodeLongitude(date);if(id==='south-node')return norm(meanNodeLongitude(date)+180);if(id==='lilith')return meanLilithLongitude(date);if(id==='vertex')return vertexLongitude(date,slot);if(id==='part-of-fortune')return fortuneLongitude(date,slot);if(id==='asc')return ascendantLongitude(date,slot);if(id==='dsc'){const value=ascendantLongitude(date,slot);return Number.isFinite(value)?norm(value+180):NaN}if(id==='mc')return midheavenLongitude(date,slot);if(id==='ic'){const value=midheavenLongitude(date,slot);return Number.isFinite(value)?norm(value+180):NaN}if(id==='chiron'){try{return Number(window.RelphiChironEphemeris?.calculateSync?.(date)?.longitude)}catch(_){return NaN}}const astronomy=window.Astronomy,bodyName=BODY[id],bodyValue=astronomy?.Body?.[bodyName]||bodyName;if(!bodyName||!astronomy?.GeoVector||!astronomy?.Ecliptic||!bodyValue)return NaN;try{if(id==='moon'&&typeof astronomy.EclipticGeoMoon==='function')return norm(astronomy.EclipticGeoMoon(date).lon);return norm(astronomy.Ecliptic(astronomy.GeoVector(bodyValue,date,true)).elon)}catch(_){return NaN}}
+function ephemerisLongitude(id,date,slot){if(id==='north-node')return meanNodeLongitude(date);if(id==='south-node')return norm(meanNodeLongitude(date)+180);if(id==='lilith')return meanLilithLongitude(date);if(id==='vertex')return vertexLongitude(date,slot);if(id==='part-of-fortune')return fortuneLongitude(date,slot);if(id==='asc')return ascendantLongitude(date,slot);if(id==='dsc'){const value=ascendantLongitude(date,slot);return Number.isFinite(value)?norm(value+180):NaN}if(id==='mc')return midheavenLongitude(date,slot);if(id==='ic'){const value=midheavenLongitude(date,slot);return Number.isFinite(value)?norm(value+180):NaN}if(id==='chiron')return NaNconst astronomy=window.Astronomy,bodyName=BODY[id],bodyValue=astronomy?.Body?.[bodyName]||bodyName;if(!bodyName||!astronomy?.GeoVector||!astronomy?.Ecliptic||!bodyValue)return NaN;try{if(id==='moon'&&typeof astronomy.EclipticGeoMoon==='function')return norm(astronomy.EclipticGeoMoon(date).lon);return norm(astronomy.Ecliptic(astronomy.GeoVector(bodyValue,date,true)).elon)}catch(_){return NaN}}
 function endpoint(row,side){const sky=rowSky(row,side),id=String(row.dataset[side==='left'?'leftPlacement':'rightPlacement']||''),record=findRecord(sky,id),date=profileDate(sky);return{side,sky,id,record,date,live:isLive(sky),timed:!!date}}
 function endpointCanMove(ep){return!!(ep?.date&&Number.isFinite(ephemerisLongitude(ep.id,ep.date,ep.sky)))}
 function bodyName(id){const entry=window.RelphiGlyphRegistry?.get?.(id)||window.RelphiGlyphRegistry?.resolve?.(id);return entry?.name||id}
@@ -206,12 +206,20 @@ function collectTimeline(model){
 }
 function dateLabel(ms){return new Intl.DateTimeFormat(undefined,{month:'short',day:'numeric',year:'numeric'}).format(new Date(ms))}
 function durationLabel(days){if(days<1){const minutes=days*24*60;if(minutes<90)return`${Math.max(1,Math.round(minutes))} min`;return`${Math.max(1,Math.round(days*24*10)/10)} hr`}if(days<14)return`${Math.round(days*10)/10} days`;if(days<75)return`${Math.round(days)} days`;if(days<730)return`${Math.round(days/30.4375*10)/10} months`;return`${Math.round(days/365.25*10)/10} years`}
-function aspectToken(row){return row.querySelector(':scope>.inline-rel-detail .inline-rel-progressive-strip [data-inline-progressive-token="aspect"]')}
-function metaNode(row){const token=aspectToken(row);if(!token)return null;let meta=token.querySelector(':scope>.inline-rel-transit-window');if(!meta){meta=document.createElement('small');meta.className='inline-rel-transit-window';meta.setAttribute('role','status');meta.setAttribute('aria-live','polite');token.appendChild(meta)}return meta}
-function removeMeta(row){row?.querySelector(':scope>.inline-rel-detail .inline-rel-transit-window')?.remove()}
+function timingSlot(row){return row.querySelector(':scope>.inline-rel-detail>[data-inline-relationship-timing]')}
+function metaNode(row){const slot=timingSlot(row);if(!slot)return null;let meta=slot.querySelector(':scope>.inline-rel-transit-window');if(!meta){meta=document.createElement('small');meta.className='inline-rel-transit-window';meta.setAttribute('role','status');meta.setAttribute('aria-live','polite');slot.appendChild(meta)}return meta}
+function removeMeta(row){row?.querySelector(':scope>.inline-rel-detail [data-inline-relationship-timing]>.inline-rel-transit-window')?.remove()}
 function motionSummary(model,timeline){const current=motionAt(model,model.center),rxNow=current.filter(state=>state.retrograde),passStates=timeline.exacts.flatMap(time=>motionAt(model,time)),hasRxReturn=timeline.exacts.length>1&&passStates.some(state=>state.retrograde),parts=[];if(rxNow.length)parts.push(rxNow.map(state=>`${state.name} Rx`).join(' + '));else if(current.length)parts.push(current.map(state=>`${state.name} direct`).join(' + '));if(hasRxReturn)parts.push('retrograde return');return parts.join(' · ')}
 function rowMarkup(label,value){const line=document.createElement('span');line.className='inline-rel-transit-row';const key=document.createElement('b');key.textContent=label;const text=document.createElement('span');text.textContent=value;line.append(key,text);return line}
-function renderTimeline(row,model,timeline){const meta=metaNode(row);if(!meta)return;const exactText=timeline.exacts.length?timeline.exacts.map(dateLabel).join(' · '):'near pass';const motion=motionSummary(model,timeline),passText=timeline.exacts.length===1?'1 exact pass':`${timeline.exacts.length} exact passes`;meta.replaceChildren(rowMarkup('Start',dateLabel(timeline.startMs)),rowMarkup('Exact',exactText),rowMarkup('End',dateLabel(timeline.endMs)),rowMarkup('Duration',durationLabel(timeline.durationDays)),rowMarkup('Passes',motion?`${passText} · ${motion}`:passText));meta.dataset.transitReady='true';meta.dataset.transitKind='dynamic';meta.title=`Active from ${dateLabel(timeline.startMs)} to ${dateLabel(timeline.endMs)}; ${durationLabel(timeline.durationDays)} total activation span; ${passText}${motion?`; ${motion}`:''}.`;meta.setAttribute('aria-label',meta.title)}
+function motionRows(row){
+  const snapshot=window.RelphiRelationshipTransitMeta?.motionSnapshotForRow?.(row);if(!snapshot)return[];
+  row.dataset.relationshipPhase=snapshot.phase;row.dataset.relationshipDistance=snapshot.distance;
+  row.dataset.relationshipApplyingRate=String(snapshot.applyingRate);row.dataset.relationshipSeparationRate=String(snapshot.separationRate);
+  const phase=snapshot.phase==='applying'?'Applying':snapshot.phase==='separating'?'Separating':snapshot.phase==='exact'?'Exact':'Steady';
+  const distance=snapshot.distance==='closing'?'Closing':snapshot.distance==='opening'?'Opening':'Steady';
+  return[rowMarkup('Motion',`${phase} · ${distance}`)];
+}
+function renderTimeline(row,model,timeline){const meta=metaNode(row);if(!meta)return;const exactText=timeline.exacts.length?timeline.exacts.map(dateLabel).join(' · '):'near pass';const motion=motionSummary(model,timeline),passText=timeline.exacts.length===1?'1 exact pass':`${timeline.exacts.length} exact passes`;meta.replaceChildren(...motionRows(row),rowMarkup('Start',dateLabel(timeline.startMs)),rowMarkup('Exact',exactText),rowMarkup('End',dateLabel(timeline.endMs)),rowMarkup('Duration',durationLabel(timeline.durationDays)),rowMarkup('Passes',motion?`${passText} · ${motion}`:passText));meta.dataset.transitReady='true';meta.dataset.transitKind='dynamic';meta.title=`Active from ${dateLabel(timeline.startMs)} to ${dateLabel(timeline.endMs)}; ${durationLabel(timeline.durationDays)} total activation span; ${passText}${motion?`; ${motion}`:''}.`;meta.setAttribute('aria-label',meta.title)}
 function renderUnavailable(row,reason){const meta=metaNode(row);if(!meta)return;meta.replaceChildren(rowMarkup('Timing',reason||'Unavailable'));meta.dataset.transitReady='true';meta.dataset.transitKind='unavailable';meta.title=reason||'Transit timing is unavailable.';meta.setAttribute('aria-label',meta.title)}
 function renderEstimatedTiming(row){
   const timing=estimatedTimingForSort(row),meta=metaNode(row);
@@ -246,9 +254,9 @@ function schedule(){requestAnimationFrame(()=>requestAnimationFrame(decorate))}
 function relevantMutation(record){if(record.type==='attributes'&&record.attributeName==='class'&&record.target?.classList?.contains('sky-foundation-relationship-row'))return true;if(record.type!=='childList')return false;return Array.from(record.addedNodes||[]).some(node=>node.nodeType===1&&(node.matches?.('.sky-foundation-relationship-row,.inline-rel-detail,.inline-rel-progressive-strip')||node.querySelector?.('.inline-rel-detail,.inline-rel-progressive-strip')))}
 function attach(){const list=document.getElementById('skyFoundationRelationshipList');if(!list||list===observedList)return;observer?.disconnect();observedList=list;observer=new MutationObserver(records=>{if(records.some(relevantMutation))schedule()});observer.observe(list,{subtree:true,childList:true,attributes:true,attributeFilter:['class']});schedule()}
 function installStyles(){if(document.getElementById('skyRelationshipTransitMetaV4Styles'))return;document.getElementById('skyRelationshipTransitMetaV3Styles')?.remove();const style=document.createElement('style');style.id='skyRelationshipTransitMetaV4Styles';style.textContent=`
-.inline-rel-progressive-token[data-inline-progressive-token="aspect"]>.inline-rel-transit-window{display:grid!important;width:100%!important;box-sizing:border-box!important;gap:2px!important;margin:1px 0 0!important;padding:4px 1px 0!important;border-top:1px solid rgba(53,47,42,.13)!important;background:none!important;color:#655d56!important;font:750 .48rem/1.2 system-ui,sans-serif!important;font-variant-numeric:tabular-nums!important;text-align:left!important;white-space:normal!important;pointer-events:none!important}
+.inline-rel-timing-slot>.inline-rel-transit-window{display:grid!important;width:100%!important;box-sizing:border-box!important;gap:2px!important;margin:1px 0 0!important;padding:4px 1px 0!important;border-top:1px solid rgba(53,47,42,.13)!important;background:none!important;color:#655d56!important;font:750 .48rem/1.2 system-ui,sans-serif!important;font-variant-numeric:tabular-nums!important;text-align:left!important;white-space:normal!important;pointer-events:none!important}
 .inline-rel-transit-row{display:grid!important;grid-template-columns:auto minmax(0,1fr)!important;gap:4px!important;align-items:start!important;min-width:0!important}.inline-rel-transit-row>b{color:#48413b!important;font:900 .47rem/1.2 system-ui,sans-serif!important}.inline-rel-transit-row>span{min-width:0!important;overflow-wrap:anywhere!important}.inline-rel-transit-window[data-transit-kind="unavailable"]{color:#777!important}
-@media(max-width:620px){.inline-rel-progressive-token[data-inline-progressive-token="aspect"]>.inline-rel-transit-window{font-size:.46rem!important}.inline-rel-transit-row>b{font-size:.45rem!important}}
+@media(max-width:620px){.inline-rel-timing-slot>.inline-rel-transit-window{font-size:.46rem!important}.inline-rel-transit-row>b{font-size:.45rem!important}}
 `;document.head.appendChild(style)}
 const sortDurationCache=new Map();
 function sortDurationSignature(row){
@@ -314,6 +322,28 @@ function estimatedTimingForSort(row){
   if(Number.isFinite(timing?.startedDaysAgo))row.dataset.transitStartedDaysAgo=String(timing.startedDaysAgo);else delete row.dataset.transitStartedDaysAgo;
   return timing;
 }
+function motionSnapshotForRow(row){
+  if(!row?.isConnected)return null;
+  const model=modelFor(row);
+  if(model.kind!=='dynamic')return null;
+  const half=.01;
+  const before=model.center-half*DAY,after=model.center+half*DAY;
+  const signedNow=Number(model.signedErrorAt(model.center));
+  const signedBefore=Number(model.signedErrorAt(before)),signedAfter=Number(model.signedErrorAt(after));
+  const leftNow=Number(model.valueAt(model.left,model.center)),rightNow=Number(model.valueAt(model.right,model.center));
+  const leftBefore=Number(model.valueAt(model.left,before)),rightBefore=Number(model.valueAt(model.right,before));
+  const leftAfter=Number(model.valueAt(model.left,after)),rightAfter=Number(model.valueAt(model.right,after));
+  if(![signedNow,signedBefore,signedAfter,leftNow,rightNow,leftBefore,rightBefore,leftAfter,rightAfter].every(Number.isFinite))return null;
+  const aspectErrorRate=wrap(signedAfter-signedBefore)/(2*half);
+  const applyingRate=Math.abs(signedBefore)-Math.abs(signedAfter);
+  const separationNow=Math.abs(wrap(rightNow-leftNow));
+  const separationBefore=Math.abs(wrap(rightBefore-leftBefore)),separationAfter=Math.abs(wrap(rightAfter-leftAfter));
+  const separationRate=(separationAfter-separationBefore)/(2*half);
+  const epsilon=1e-5;
+  const phase=Math.abs(signedNow)<epsilon?'exact':applyingRate>epsilon?'applying':applyingRate<-epsilon?'separating':'steady';
+  const distance=Math.abs(separationRate)<epsilon?'steady':separationRate<0?'closing':'opening';
+  return Object.freeze({phase,distance,signedAspectError:signedNow,aspectErrorRate,applyingRate,separation:separationNow,separationRate});
+}
 function clearSortDurationCache(){
   sortDurationCache.clear();
   document.querySelectorAll('#skyFoundationRelationshipList .sky-foundation-relationship-row').forEach(row=>{
@@ -342,6 +372,7 @@ function exportTimingForRow(row){
 }
 window.RelphiRelationshipTransitMeta=Object.freeze({
   estimatedTimingForRow:estimatedTimingForSort,
+  motionSnapshotForRow,
   exportTimingForRow,
   clearDurationCache:clearSortDurationCache
 });
@@ -351,7 +382,6 @@ function refreshAfterChironReady(){
   document.querySelectorAll('#skyFoundationRelationshipList .inline-rel-transit-window[data-transit-kind="unavailable"]').forEach(meta=>{meta.dataset.transitReady='false';delete meta.dataset.transitSignature});
   schedule();
 }
-function primeChiron(){const service=window.RelphiChironEphemeris;if(!service?.ready)return;service.ready().then(refreshAfterChironReady).catch(error=>console.error('[Relationship timing Chiron]',error))}
-function start(){installStyles();attach();primeChiron();['relphi:sky-foundation-ready','relphi:sky-foundation-interactions-ready','relphi:sky-harmonic-window-visibility-changed','relphi:sky-live-origin-changed','relphi:sky-intrasky-relationships-ready','relphi:relationship-display-changed'].forEach(name=>window.addEventListener(name,()=>{attach();schedule()}));document.addEventListener('click',event=>{if(event.target.closest('.sky-foundation-relationship-row[data-relation-index]'))schedule()},true)}
+function start(){installStyles();attach();['relphi:sky-foundation-ready','relphi:sky-foundation-interactions-ready','relphi:sky-harmonic-window-visibility-changed','relphi:sky-live-origin-changed','relphi:sky-intrasky-relationships-ready','relphi:relationship-display-changed'].forEach(name=>window.addEventListener(name,()=>{attach();schedule()}));document.addEventListener('click',event=>{if(event.target.closest('.sky-foundation-relationship-row[data-relation-index]'))schedule()},true)}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
 })();

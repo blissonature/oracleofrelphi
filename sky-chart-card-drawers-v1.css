@@ -15,6 +15,7 @@
 
 .sky-card-fingerprint-tab>.sky-drawer-fingerprint{display:grid!important;place-items:center!important;width:52px!important;height:52px!important;min-width:52px!important;min-height:52px!important;max-width:52px!important;max-height:52px!important;margin:0 auto!important;padding:0!important;overflow:visible!important;pointer-events:none!important;opacity:1!important}
 .sky-card-fingerprint-tab>.sky-drawer-fingerprint[hidden]{display:none!important}
+.sky-card-fingerprint-tab .sky-card-fingerprint-text{display:grid;place-items:center;width:43px;height:43px;margin:auto;color:#4e463f;text-align:center;font:800 .62rem/1.15 system-ui,sans-serif;letter-spacing:0;line-height:1.15}
 
 .sky-card-fingerprint-tab .sky-where-fingerprint-heptagram{display:block!important;width:43px!important;height:43px!important;min-width:0!important;min-height:0!important;max-width:43px!important;max-height:43px!important;margin:auto!important;overflow:visible!important;transform:translateY(.5px)!important;transform-origin:center!important}
 .sky-card-fingerprint-tab .sky-where-fingerprint-heptagram .sky-ph-week-segment.past{stroke-width:1.35!important;stroke-dasharray:none!important;stroke-linecap:round!important;opacity:.72!important;vector-effect:non-scaling-stroke}

@@ -14,7 +14,12 @@ const MODES=Object.freeze({
   shortest:'duration-shortest',
   beganMostRecently:'began-most-recently',
   endsSoonest:'ends-soonest',
-  endsLast:'ends-last'
+  endsLast:'ends-last',
+  applying:'applying-first',
+  separating:'separating-first',
+  closing:'closing-first',
+  opening:'opening-first',
+  referenceResolution:'reference-resolution'
 });
 const ASPECT_ORDER=Object.freeze([
   'conjunction','opposition','trine','square','sextile',
@@ -318,7 +323,51 @@ function compareTiming(a,b,key,direction){
   if(bv!=null)return 1;
   return compareExact(a,b);
 }
+function motionFor(row){
+  const snapshot=window.RelphiRelationshipTransitMeta?.motionSnapshotForRow?.(row);
+  if(!snapshot)return null;
+  row.dataset.relationshipPhase=snapshot.phase;
+  row.dataset.relationshipDistance=snapshot.distance;
+  row.dataset.relationshipApplyingRate=String(snapshot.applyingRate);
+  row.dataset.relationshipSeparationRate=String(snapshot.separationRate);
+  return snapshot;
+}
+function compareMotion(a,b,kind){
+  const am=motionFor(a),bm=motionFor(b);
+  const rank=kind==='phase'
+    ?{applying:0,exact:1,steady:2,separating:3}
+    :{closing:0,steady:1,opening:2};
+  const reverse=mode===MODES.separating||mode===MODES.opening;
+  const ar=am?(rank[am[kind]]??9):10,br=bm?(rank[bm[kind]]??9):10;
+  const ordered=reverse?(9-ar)-(9-br):ar-br;
+  if(ordered)return ordered;
+  const av=kind==='phase'?Math.abs(am?.applyingRate??0):Math.abs(am?.separationRate??0);
+  const bv=kind==='phase'?Math.abs(bm?.applyingRate??0):Math.abs(bm?.separationRate??0);
+  return bv-av||compareExact(a,b);
+}
+const REFERENCE_RESOLUTION=Object.freeze({
+  asc:100,dsc:100,mc:100,ic:100,
+  vertex:96,'part-of-fortune':96,
+  moon:90,
+  mercury:76,venus:74,sun:72,mars:68,
+  'north-node':58,'south-node':58,lilith:56,
+  jupiter:44,saturn:36,chiron:30,uranus:22,neptune:14,pluto:10
+});
+function referenceResolutionFor(row){
+  const left=normalizedPoint(row?.dataset?.leftPlacement),right=normalizedPoint(row?.dataset?.rightPlacement);
+  const leftValue=REFERENCE_RESOLUTION[left]??40,rightValue=REFERENCE_RESOLUTION[right]??40;
+  const value=Math.max(leftValue,rightValue);
+  row.dataset.referenceResolution=String(value);
+  row.dataset.referenceResolutionEndpoint=leftValue>=rightValue?'left':'right';
+  return value;
+}
+function compareReferenceResolution(a,b){
+  return referenceResolutionFor(b)-referenceResolutionFor(a)||compareExact(a,b);
+}
 function compareRows(a,b){
+  if(mode===MODES.referenceResolution)return compareReferenceResolution(a,b);
+  if(mode===MODES.applying||mode===MODES.separating)return compareMotion(a,b,'phase');
+  if(mode===MODES.closing||mode===MODES.opening)return compareMotion(a,b,'distance');
   if(mode===MODES.aspect)return compareAspect(a,b);
   if(mode===MODES.strongest)return compareSignificance(a,b,'strength');
   if(mode===MODES.challenging)return compareSignificance(a,b,'challenge');
@@ -341,7 +390,7 @@ function installStyles(){
   style.id='skyRelationshipSortV1Styles';
   style.textContent=`
 #skyFoundationRelationships .sky-relationship-heading-actions>.sky-relationship-sort-control{display:inline-flex;align-items:center;min-width:0;white-space:nowrap}
-#skyFoundationRelationships .sky-relationship-sort-select{appearance:none;-webkit-appearance:none;width:auto;max-width:178px;height:29px;box-sizing:border-box;margin:0;padding:0 27px 0 9px;border:1px solid rgba(31,27,24,.18);border-radius:9px;background:#fff var(--sky-chart-filter-chevron) no-repeat right 7px center/14px 14px;color:#332e2a;font:800 .67rem/1 system-ui,sans-serif;cursor:pointer}
+#skyFoundationRelationships .sky-relationship-sort-select{appearance:none;-webkit-appearance:none;width:100%;max-width:none;min-width:0;height:29px;box-sizing:border-box;margin:0;padding:0 27px 0 9px;border:1px solid rgba(31,27,24,.18);border-radius:9px;background:#fff var(--sky-chart-filter-chevron) no-repeat right 7px center/14px 14px;color:#332e2a;font:800 .67rem/1 system-ui,sans-serif;cursor:pointer}
 #skyFoundationRelationships .sky-relationship-sort-select:hover,#skyFoundationRelationships .sky-relationship-sort-select:focus-visible{border-color:#6b625a;outline:none}
 #skyFoundationRelationships .sky-relationship-sort-select[aria-busy="true"]{cursor:progress!important;opacity:.66}
 @media(max-width:620px){#skyFoundationRelationships .sky-relationship-heading-actions>.sky-relationship-sort-control{flex:1 1 0;min-width:0}#skyFoundationRelationships .sky-relationship-sort-select{width:100%;max-width:none;min-width:0}}
@@ -387,7 +436,12 @@ function ensureControl(){
       [MODES.shortest,'Shortest Duration'],
       [MODES.beganMostRecently,'Began Most Recently'],
       [MODES.endsSoonest,'Ends Soonest'],
-      [MODES.endsLast,'Ends Last']
+      [MODES.endsLast,'Ends Last'],
+      [MODES.applying,'Applying First'],
+      [MODES.separating,'Separating First'],
+      [MODES.closing,'Closing First'],
+      [MODES.opening,'Opening First'],
+      [MODES.referenceResolution,'Highest Reference Resolution']
     ].forEach(([value,text])=>{
       const option=document.createElement('option');
       option.value=value;
@@ -445,7 +499,7 @@ function setMode(next){
   calculationGeneration+=1;
   busy=false;
   ensureControl();
-  if([MODES.longest,MODES.shortest,MODES.beganMostRecently,MODES.endsSoonest,MODES.endsLast].includes(mode)){
+  if([MODES.longest,MODES.shortest,MODES.beganMostRecently,MODES.endsSoonest,MODES.endsLast,MODES.applying,MODES.separating,MODES.closing,MODES.opening].includes(mode)){
     scheduleTransitSort(0);
     return;
   }
@@ -455,7 +509,7 @@ function refreshForRows(){
   invalidateScores();
   if(whereWhenEditing())return;
   ensureControl();
-  if([MODES.longest,MODES.shortest,MODES.beganMostRecently,MODES.endsSoonest,MODES.endsLast].includes(mode)){
+  if([MODES.longest,MODES.shortest,MODES.beganMostRecently,MODES.endsSoonest,MODES.endsLast,MODES.applying,MODES.separating,MODES.closing,MODES.opening].includes(mode)){
     scheduleTransitSort(110);
     return;
   }
@@ -467,7 +521,7 @@ function invalidateTransit(){
   if(whereWhenEditing()){busy=false;return;}
   busy=false;
   window.RelphiRelationshipTransitMeta?.clearDurationCache?.();
-  if([MODES.longest,MODES.shortest,MODES.beganMostRecently,MODES.endsSoonest,MODES.endsLast].includes(mode))scheduleTransitSort(110);
+  if([MODES.longest,MODES.shortest,MODES.beganMostRecently,MODES.endsSoonest,MODES.endsLast,MODES.applying,MODES.separating,MODES.closing,MODES.opening].includes(mode))scheduleTransitSort(110);
 }
 window.RelphiRelationshipSort=Object.freeze({
   axisFamilyKey,
@@ -475,6 +529,8 @@ window.RelphiRelationshipSort=Object.freeze({
   mode:currentMode,
   model:SCORE_MODEL,
   scoreRow:relationshipScore,
+  referenceResolutionFor,
+  referenceResolution:REFERENCE_RESOLUTION,
   setMode
 });
 

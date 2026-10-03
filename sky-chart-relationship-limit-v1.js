@@ -52,7 +52,7 @@ function installStyles(){
   height:29px;box-sizing:border-box;margin:0;border:1px solid rgba(31,27,24,.18);border-radius:9px;background:#fff;color:#332e2a;
   font:800 .67rem/1 system-ui,sans-serif
 }
-#skyFoundationRelationships .sky-relationship-limit-control>select{min-width:68px;padding:0 24px 0 8px;cursor:pointer}
+#skyFoundationRelationships .sky-relationship-limit-control>select{width:76px;min-width:76px;padding:0 20px 0 8px;cursor:pointer}
 #skyFoundationRelationships .sky-relationship-limit-control>input{
   appearance:textfield;-moz-appearance:textfield;width:64px;min-width:64px;padding:0 8px;text-align:center
 }
@@ -122,7 +122,8 @@ function ensureControl(){
       if(select.value==='custom'){
         input.hidden=false;input.disabled=false;input.setAttribute('aria-hidden','false');
         if(limit==='all'||PRESETS.includes(Number(limit)))input.value='';
-        requestAnimationFrame(()=>input.focus());
+        select.value='custom';
+        requestAnimationFrame(()=>{input.hidden=false;input.disabled=false;input.setAttribute('aria-hidden','false');input.focus()});
         return;
       }
       setLimit(select.value);
@@ -180,8 +181,14 @@ function apply(){
   const all=rows(),cap=numericLimit();
   all.forEach(row=>row.classList.remove(CAP_CLASS));
   const eligible=all.filter(row=>!hiddenByOther(row));
-  eligible.forEach((row,index)=>row.classList.toggle(CAP_CLASS,index>=cap));
-  const shown=Math.min(eligible.length,Number.isFinite(cap)?cap:eligible.length);
+  const sections=new Map();
+  eligible.forEach(row=>{
+    const key=String(row.dataset.relationshipMode||'A-B').toUpperCase();
+    if(!sections.has(key))sections.set(key,[]);
+    sections.get(key).push(row);
+  });
+  sections.forEach(section=>section.forEach((row,index)=>row.classList.toggle(CAP_CLASS,index>=cap)));
+  const shown=[...sections.values()].reduce((sum,section)=>sum+Math.min(section.length,Number.isFinite(cap)?cap:section.length),0);
   const hiddenByLimit=Math.max(0,eligible.length-shown);
   const count=document.getElementById('skyFoundationRelationshipCount');
   if(count){

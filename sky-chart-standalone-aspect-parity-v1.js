@@ -25,14 +25,15 @@ function rows(){return [...document.querySelectorAll('#skyFoundationRelationship
 function center(){return window.RelphiSkyWheelSpec?.comparison?.center||{x:600,y:600}}
 function aspectRadius(){return Math.max(1,Number(window.RelphiSkyWheelSpec?.role?.('A')?.inner||166)-1)}
 function longitude(chart,id){
-  const node=chart.querySelector(`[data-layer="placements"] [data-sky="A"][data-placement="${CSS.escape(String(id||''))}"]`);
+  const key=String(id||'');if(key==='moon'){const range=chart.querySelector('[data-layer="placements"] [data-sky="A"][data-placement="moon-range"]');const start=num(range?.dataset?.rangeStart),end=num(range?.dataset?.rangeEnd);if(Number.isFinite(start)&&Number.isFinite(end)){const span=norm(end-start);return norm(start+span/2)}}
+  const node=chart.querySelector(`[data-layer="placements"] [data-sky="A"][data-placement="${CSS.escape(key)}"]`);
   const exact=num(node?.dataset?.exactLongitude??node?.dataset?.angleLongitude);
   return Number.isFinite(exact)?norm(exact):NaN;
 }
 function point(value){const c=center(),radius=aspectRadius(),angle=(norm(value)-180)*Math.PI/180;return{x:c.x+radius*Math.cos(angle),y:c.y+radius*Math.sin(angle)}}
 function copyDataset(line,row,key,target=key){const value=row.dataset[key];if(value!==undefined&&value!=='')line.dataset[target]=value}
 function makeLine(chart,row){
-  const left=longitude(chart,row.dataset.leftPlacement),right=longitude(chart,row.dataset.rightPlacement);if(!Number.isFinite(left)||!Number.isFinite(right))return null;
+  let left=num(row.dataset.leftLongitude),right=num(row.dataset.rightLongitude);if(!Number.isFinite(left))left=longitude(chart,row.dataset.leftPlacement);if(!Number.isFinite(right))right=longitude(chart,row.dataset.rightPlacement);if(!Number.isFinite(left)||!Number.isFinite(right))return null;
   const a=point(left),b=point(right),aspect=String(row.dataset.aspect||'');
   const line=document.createElementNS(NS,'line');
   line.setAttribute('x1',a.x);line.setAttribute('y1',a.y);line.setAttribute('x2',b.x);line.setAttribute('y2',b.y);

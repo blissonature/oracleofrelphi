@@ -53,7 +53,7 @@
     const asc=ascendant(payload,list),system=String(p.houseSystem||payload?.houseSystem||'whole-sign').toLowerCase(),start=system.includes('whole')?Math.floor(asc/30)*30:asc;return Array.from({length:12},(_,index)=>norm(start+index*30));
   }
   function houseFor(value,houseCusps){for(let index=0;index<12;index++){const start=houseCusps[index],span=norm(houseCusps[(index+1)%12]-start)||30;if(norm(value-start)<span)return index+1}return 12}
-  function prepare(payload,slot){const list=records(payload),houseCusps=cusps(payload,list);list.forEach(record=>{record.sky=slot;record.sign=Math.floor(record.value/30);record.house=houseFor(record.value,houseCusps)});return{list,houseCusps}}
+  function prepare(payload,slot){const list=records(payload),timeUnknown=profile(payload).timeUnknown===true,houseCusps=timeUnknown?[]:cusps(payload,list);list.forEach(record=>{record.sky=slot;record.sign=Math.floor(record.value/30);record.house=timeUnknown?null:houseFor(record.value,houseCusps)});return{list,houseCusps,timeUnknown}}
   function relationships(listA,listB){
     const result=[],windowValue=HARMONIC?.windowFromControl?.()??10;
     listA.forEach(left=>listB.forEach(right=>{
@@ -107,11 +107,11 @@
     const selectionCleared=document.getElementById('skyFoundationRoot')?.dataset.relationshipSelectionCleared==='true',selected=selectionCleared?null:document.querySelector('.sky-foundation-relationship-row[aria-current="true"]');const selectedKey=selected?[selected.dataset.leftPlacement,selected.dataset.aspect,selected.dataset.rightPlacement,selected.getAttribute('aria-label')].join('|'):'';
     list.replaceChildren();count.textContent=relations.length+'/'+relations.length;count.dataset.total=String(relations.length);
     relations.forEach((relation,index)=>{
-      const left=coordinate(relation.left),right=coordinate(relation.right),row=document.createElement('button');row.type='button';row.className='sky-foundation-relationship-row';row.dataset.relationshipSelection='true';row.dataset.relationIndex=String(index);row.dataset.relationshipMode='A-B';row.dataset.relationScope='inter';row.dataset.leftSky='A';row.dataset.rightSky='B';row.dataset.aspect=relation.aspect.id;row.dataset.leftPlacement=relation.left.id;row.dataset.rightPlacement=relation.right.id;row.dataset.sourceOrb=relation.orb.toFixed(6);row.dataset.harmonicOrder=String(relation.harmonicOrder);row.dataset.harmonicNumerator=String(relation.harmonicNumerator);row.dataset.phaseError=relation.phaseError.toFixed(6);row.dataset.signedPhaseError=relation.signedPhaseError.toFixed(6);row.dataset.harmonicWindow=relation.masterWindow.toFixed(6);row.dataset.windowFraction=Number.isFinite(relation.windowFraction)?relation.windowFraction.toFixed(6):String(relation.windowFraction);row.dataset.harmonicCoherence=relation.coherence.toFixed(8);row.dataset.leftHouse=String(relation.left.house);row.dataset.rightHouse=String(relation.right.house);row.dataset.leftSign=String(left.sign);row.dataset.rightSign=String(right.sign);row.setAttribute('aria-label',relation.left.entry.name+' '+relation.aspect.id+' '+relation.right.entry.name+', orb '+relation.orb.toFixed(2)+' degrees, harmonic '+relation.harmonicOrder+', phase error '+relation.phaseError.toFixed(2)+' degrees, coherence '+relation.coherencePercent.toFixed(0)+' percent');
+      const left=coordinate(relation.left),right=coordinate(relation.right),row=document.createElement('button');row.type='button';row.className='sky-foundation-relationship-row';row.dataset.relationshipSelection='true';row.dataset.relationIndex=String(index);row.dataset.relationshipMode='A-B';row.dataset.relationScope='inter';row.dataset.leftSky='A';row.dataset.rightSky='B';row.dataset.aspect=relation.aspect.id;row.dataset.leftPlacement=relation.left.id;row.dataset.rightPlacement=relation.right.id;row.dataset.sourceOrb=relation.orb.toFixed(6);row.dataset.harmonicOrder=String(relation.harmonicOrder);row.dataset.harmonicNumerator=String(relation.harmonicNumerator);row.dataset.phaseError=relation.phaseError.toFixed(6);row.dataset.signedPhaseError=relation.signedPhaseError.toFixed(6);row.dataset.harmonicWindow=relation.masterWindow.toFixed(6);row.dataset.windowFraction=Number.isFinite(relation.windowFraction)?relation.windowFraction.toFixed(6):String(relation.windowFraction);row.dataset.harmonicCoherence=relation.coherence.toFixed(8);if(relation.left.house!=null)row.dataset.leftHouse=String(relation.left.house);if(relation.right.house!=null)row.dataset.rightHouse=String(relation.right.house);row.dataset.leftSign=String(left.sign);row.dataset.rightSign=String(right.sign);row.setAttribute('aria-label',relation.left.entry.name+' '+relation.aspect.id+' '+relation.right.entry.name+', orb '+relation.orb.toFixed(2)+' degrees, harmonic '+relation.harmonicOrder+', phase error '+relation.phaseError.toFixed(2)+' degrees, coherence '+relation.coherencePercent.toFixed(0)+' percent');
       const leftGlyph=glyphSlot('left',relation.left.entry.name),aspectGlyph=glyphSlot('aspect',relation.aspect.id),rightGlyph=glyphSlot('right',relation.right.entry.name),leftCopy=document.createElement('span'),rightCopy=document.createElement('span'),leftMeta=document.createElement('small'),rightMeta=document.createElement('small');
       leftCopy.className=rightCopy.className='sky-foundation-relationship-copy';
       leftCopy.append(document.createTextNode(relation.left.entry.name),leftMeta);rightCopy.append(document.createTextNode(relation.right.entry.name),rightMeta);
-      sourceHouseCoordinate(leftMeta,left.text,relation.left.house,'left-house');sourceHouseCoordinate(rightMeta,right.text,relation.right.house,'right-house');
+      if(relation.left.house!=null)sourceHouseCoordinate(leftMeta,left.text,relation.left.house,'left-house');else leftMeta.textContent=left.text;if(relation.right.house!=null)sourceHouseCoordinate(rightMeta,right.text,relation.right.house,'right-house');else rightMeta.textContent=right.text;
       row.append(leftGlyph,leftCopy,aspectGlyph,rightGlyph,rightCopy);list.appendChild(row);
       const key=[row.dataset.leftPlacement,row.dataset.aspect,row.dataset.rightPlacement,row.getAttribute('aria-label')].join('|');if(key===selectedKey)row.setAttribute('aria-current','true');
     });
@@ -135,7 +135,7 @@
       const index=indexes.get(relationKey(line.dataset.leftPlacement,line.dataset.aspect,line.dataset.rightPlacement,line.dataset.orb)),relation=relations[index];
       if(!relation){delete line.dataset.relationIndex;return}
       line.classList.add('sky-foundation-interactive','sky-foundation-aspect');
-      Object.assign(line.dataset,{interactive:'aspect',focusPiece:'aspect',relationIndex:String(index),relationshipMode:'A-B',leftSky:'A',rightSky:'B',aspect:relation.aspect.id,leftPlacement:relation.left.id,rightPlacement:relation.right.id,leftHouse:String(relation.left.house),rightHouse:String(relation.right.house),leftSign:String(relation.left.sign),rightSign:String(relation.right.sign),harmonicOrder:String(relation.harmonicOrder),harmonicNumerator:String(relation.harmonicNumerator),phaseError:relation.phaseError.toFixed(6),harmonicCoherence:relation.coherence.toFixed(8)});
+      Object.assign(line.dataset,{interactive:'aspect',focusPiece:'aspect',relationIndex:String(index),relationshipMode:'A-B',leftSky:'A',rightSky:'B',aspect:relation.aspect.id,leftPlacement:relation.left.id,rightPlacement:relation.right.id,leftHouse:relation.left.house==null?'':String(relation.left.house),rightHouse:relation.right.house==null?'':String(relation.right.house),leftSign:String(relation.left.sign),rightSign:String(relation.right.sign),harmonicOrder:String(relation.harmonicOrder),harmonicNumerator:String(relation.harmonicNumerator),phaseError:relation.phaseError.toFixed(6),harmonicCoherence:relation.coherence.toFixed(8)});
       line.setAttribute('tabindex','0');line.setAttribute('role','button');line.setAttribute('aria-label',`Sky A ${relation.left.entry.name} ${relation.aspect.id} Sky B ${relation.right.entry.name}, harmonic ${relation.harmonicOrder}, phase error ${relation.phaseError.toFixed(2)} degrees`);line.style.pointerEvents='stroke'
     })
   }
@@ -232,7 +232,21 @@
     });
     if(state?.kind==='house'){houses.add(`${state.sky}:${state.value}`);const list=state.sky==='A'?current.listA:current.listB;list.filter(record=>record.house===state.value).forEach(record=>{placements.add(`${state.sky}:${record.id}`);signs.add(record.sign)})}
     if(state?.kind==='sign'){signs.add(state.value);[...current.listA,...current.listB].filter(record=>record.sign===state.value).forEach(record=>placements.add(`${record.sky}:${record.id}`));housesForSign(current.cuspsA,state.value).forEach(house=>houses.add(`A:${house}`));housesForSign(current.cuspsB,state.value).forEach(house=>houses.add(`B:${house}`))}
-    if(state?.kind==='placement'){placements.add(`${state.sky}:${state.value}`);const list=state.sky==='A'?current.listA:current.listB,record=list.find(item=>item.id===state.value);if(record){houses.add(`${state.sky}:${record.house}`);signs.add(record.sign)}}
+    if(state?.kind==='placement'){
+      placements.add(`${state.sky}:${state.value}`);
+      const list=state.sky==='A'?current.listA:current.listB,record=list.find(item=>item.id===state.value);if(record){if(record.house!=null)houses.add(`${state.sky}:${record.house}`);signs.add(record.sign)}
+      // Placement hover is a relationship-model operation, not a DOM-order operation.
+      // Resolve A↔B counterparts from the canonical relation set, then honor the
+      // rendered row's current filter eligibility for that exact relationship.
+      const eligible=new Set();
+      document.querySelectorAll('#skyFoundationRelationshipList>.sky-foundation-relationship-row[data-relation-index]').forEach(row=>{if(String(row.dataset.relationshipMode||'A-B').toUpperCase()==='A-B'&&rowEligibleForWheel(row))eligible.add(relationshipIdentity(row))});
+      current.relations.forEach(relation=>{
+        const identity=`A:${relation.left.id}|${relation.aspect.id}|B:${relation.right.id}`;
+        if(!eligible.has(identity))return;
+        if(state.sky==='A'&&relation.left.id===state.value)placements.add(`B:${relation.right.id}`);
+        if(state.sky==='B'&&relation.right.id===state.value)placements.add(`A:${relation.left.id}`);
+      });
+    }
     return{matched,relationships,placements,houses,signs};
   }
   function kept(node,keep){const type=node.dataset.focusPiece;if(type==='aspect')return keep.relationships.has(relationshipIdentity(node));if(type==='house')return keep.houses.has(`${node.dataset.sky}:${node.dataset.house}`);if(type==='sign')return keep.signs.has(Number(node.dataset.sign));if(type==='placement'||type==='leader')return keep.placements.has(`${node.dataset.sky}:${node.dataset.placement}`);return false}
