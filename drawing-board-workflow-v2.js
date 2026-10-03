@@ -3872,21 +3872,37 @@
       : packOptions(pack).match(/selected[^>]*>([^<]+)/)?.[1] || (pack==='full'?'Full Pack':pack);
     const cards=Math.max(1,Math.min(12,Number(row.cardCount)||1));
     const link=row.linkTo===''||row.linkTo==null?'No link':'Shared card';
-    return packLabel+' · '+cards+' card'+(cards===1?'':'s')+' · '+link;
+    const reversals=row.reversals!==false?'Reversals':'Upright only';
+    const repeats=row.repeats?'Repeats':'No repeats';
+    return packLabel+' · '+cards+' card'+(cards===1?'':'s')+' · '+link+' · '+reversals+' · '+repeats;
+  }
+
+  function surfaceQuestionControllerMarkup(rows,target,defaults) {
+    const editing=target!=='defaults' && Number.isInteger(Number(target)) && rows[Number(target)];
+    const row=editing?rows[Number(target)]:defaults;
+    const index=editing?Number(target):-1;
+    const linkOptions=editing
+      ? '<option value="">No link</option>'+rows.map((other,j)=>j===index?'':'<option value="'+j+'" '+(String(row.linkTo)===String(j)?'selected':'')+'>Question '+(j+1)+'</option>').join('')
+      : '<option value="">No link</option>';
+    const targetOptions='<option value="defaults" '+(!editing?'selected':'')+'>New question defaults</option>'+
+      rows.map((item,j)=>'<option value="'+j+'" '+(editing&&j===index?'selected':'')+'>Question '+(j+1)+'</option>').join('');
+    return '<section class="relphi-surface-question-controller" aria-label="Card options">'+
+      '<div class="relphi-surface-question-controller-head"><span><strong>Card options</strong><small>'+(editing?'Editing Question '+(index+1):'Defaults for new questions')+'</small></span><label>Apply to<select data-surface-controller-target>'+targetOptions+'</select></label></div>'+
+      '<div class="relphi-surface-question-controller-fields">'+
+        '<label>Sub-pack<div class="relphi-surface-subpack-control"><select data-surface-controller-pack>'+packOptions(row.pack||'full')+'</select><button type="button" data-surface-controller-create-subpack aria-label="Create a sub-pack">+</button></div></label>'+
+        '<label class="relphi-surface-card-count">Cards per question<div><input type="number" min="1" max="12" step="1" value="'+Math.max(1,Math.min(12,Number(row.cardCount)||1))+'" data-surface-controller-card-count><span>× Cards</span></div></label>'+
+        '<label>Share card with<select data-surface-controller-link '+(!editing?'disabled':'')+'>'+linkOptions+'</select></label>'+
+        '<label class="relphi-surface-controller-toggle"><input type="checkbox" data-surface-controller-reversals '+(row.reversals!==false?'checked':'')+'> Reversals</label>'+
+        '<label class="relphi-surface-controller-toggle"><input type="checkbox" data-surface-controller-repeats '+(row.repeats?'checked':'')+'> Repeats</label>'+
+      '</div>'+
+    '</section>';
   }
 
   function surfaceComposerRowMarkup(row,index,rows) {
-    const linkOptions=rows.map((other,j)=>j===index?'':'<option value="'+j+'" '+(String(row.linkTo)===String(j)?'selected':'')+'>Question '+(j+1)+'</option>').join('');
     return '<article class="relphi-surface-composer-row" data-surface-composer-row="'+index+'">'+
       '<label class="relphi-surface-composer-select"><input type="checkbox" data-surface-select '+(row.selected!==false?'checked':'')+'><span>Ask</span></label>'+
       '<div class="relphi-surface-composer-main"><textarea rows="2" data-surface-text '+(row.sourceKind==='authored'&&!row.text?'placeholder="Commas split questions" ':'')+'aria-label="Question '+(index+1)+'">'+escapeHtml(row.text||'')+'</textarea>'+
-      '<section class="relphi-surface-composer-controls" aria-label="Question '+(index+1)+' draw settings">'+
-        '<label>Sub-pack<div class="relphi-surface-subpack-control"><select data-surface-pack>'+packOptions(row.pack||'full')+'</select><button type="button" data-surface-create-subpack aria-label="Create a sub-pack">+</button></div></label>'+
-        '<label class="relphi-surface-card-count">Cards per question<div><input type="number" min="1" max="12" step="1" value="'+Math.max(1,Math.min(12,Number(row.cardCount)||1))+'" data-surface-card-count><span>× Cards</span></div></label>'+
-        '<label>Share card with<select data-surface-link><option value="">No link</option>'+linkOptions+'</select></label>'+
-        '<label class="relphi-surface-toggle"><input type="checkbox" data-surface-reversals '+(row.reversals!==false?'checked':'')+'> Reversals</label>'+
-        '<label class="relphi-surface-toggle"><input type="checkbox" data-surface-repeats '+(row.repeats?'checked':'')+'> Repeats</label>'+
-      '</section>'+
+      '<button type="button" class="relphi-surface-options-summary" data-surface-edit-options="'+index+'" aria-label="Edit card options for Question '+(index+1)+'"><span>Card options</span><strong>'+escapeHtml(surfaceComposerAdvancedSummary(row))+'</strong></button>'+
       surfaceKeywordMarkup(row,index)+
       '</div>'+
       '<button type="button" class="relphi-surface-composer-remove" data-surface-remove aria-label="Remove question '+(index+1)+'">×</button>'+
@@ -3928,7 +3944,12 @@
       keywordQuery:String(item.keywordQuery||''),
       reversals:item.reversals!==false,repeats:!!item.repeats
     }));
-    if(!rows.length)rows.push({selected:true,text:'',pack:'full',cardCount:1,linkTo:'',keywordTags:[],keywordMatchMode:'any',keywordQuery:'',reversals:true,repeats:false,sourceKind:'authored'});
+    const defaults={
+      pack:'full',cardCount:1,linkTo:'',keywordTags:[],keywordMatchMode:'any',keywordQuery:'',
+      reversals:true,repeats:false
+    };
+    if(!rows.length)rows.push({selected:true,text:'',...clone(defaults),sourceKind:'authored'});
+    let controllerTarget='defaults';
     let suggestionCursor=0;
     const composer=document.createElement('section');
     composer.className='relphi-surface-question-composer';
@@ -3942,6 +3963,7 @@
         '<h2>Choose what to ask next</h2>'+
         '<p class="relphi-surface-composer-intro">'+escapeHtml(intro)+'</p>'+
         '<p class="relphi-surface-composer-status" data-surface-composer-status hidden></p>'+
+        surfaceQuestionControllerMarkup(rows,controllerTarget,defaults)+
         '<div class="relphi-surface-composer-rows">'+rows.map((row,index)=>surfaceComposerRowMarkup(row,index,rows)).join('')+'</div>'+
         '<div class="relphi-surface-composer-footer"><button type="button" data-surface-suggest>Suggest another question</button><button type="button" data-surface-add>Add my own question</button><span></span><button type="button" data-surface-done class="primary">Add selected questions</button></div>'+
       '</div>';
@@ -3949,14 +3971,28 @@
         const row=rows[index];if(!row)return;
         row.selected=!!article.querySelector('[data-surface-select]')?.checked;
         row.text=article.querySelector('[data-surface-text]')?.value||'';
-        row.pack=article.querySelector('[data-surface-pack]')?.value||'full';
-        row.cardCount=Math.max(1,Math.min(12,Math.trunc(Number(article.querySelector('[data-surface-card-count]')?.value)||1)));
-        row.linkTo=article.querySelector('[data-surface-link]')?.value??'';
-        row.reversals=article.querySelector('[data-surface-reversals]')?.checked!==false;
-        row.repeats=!!article.querySelector('[data-surface-repeats]')?.checked;
         row.keywordTags=Array.isArray(row.keywordTags)?row.keywordTags:[];
         row.keywordMatchMode=article.querySelector('[name="surfaceTagMode'+index+'"]:checked')?.value==='all'?'all':'any';
       };
+      const controllerValue=()=>controllerTarget==='defaults'?defaults:rows[Number(controllerTarget)];
+      const applyControllerPatch=(patch,{rerender=true}={})=>{
+        const target=controllerValue();if(!target)return;
+        Object.assign(target,patch);
+        if(patch.pack && patch.pack!=='tags'){target.keywordTags=[];target.keywordMatchMode='any';target.keywordQuery='';}
+        if(rerender)render();
+      };
+      composer.querySelector('[data-surface-controller-target]')?.addEventListener('change',event=>{controllerTarget=event.target.value||'defaults';render();});
+      composer.querySelector('[data-surface-controller-pack]')?.addEventListener('change',event=>applyControllerPatch({pack:event.target.value||'full'}));
+      composer.querySelector('[data-surface-controller-create-subpack]')?.addEventListener('click',()=>{
+        window.RelphiCustomSubpacks?.open?.({onSave:pack=>applyControllerPatch({pack:'custom:'+pack.id})});
+      });
+      composer.querySelector('[data-surface-controller-card-count]')?.addEventListener('change',event=>{
+        const value=Math.max(1,Math.min(12,Math.trunc(Number(event.target.value)||1)));
+        applyControllerPatch({cardCount:value});
+      });
+      composer.querySelector('[data-surface-controller-link]')?.addEventListener('change',event=>applyControllerPatch({linkTo:event.target.value??''}));
+      composer.querySelector('[data-surface-controller-reversals]')?.addEventListener('change',event=>applyControllerPatch({reversals:!!event.target.checked}));
+      composer.querySelector('[data-surface-controller-repeats]')?.addEventListener('change',event=>applyControllerPatch({repeats:!!event.target.checked}));
       composer.querySelectorAll('[data-surface-composer-row]').forEach((article,index)=>{
         const row=rows[index];
         ['change','input'].forEach(type=>article.addEventListener(type,()=>syncRow(article,index)));
@@ -3975,23 +4011,11 @@
             }
           });
         });
-        article.querySelector('[data-surface-pack]')?.addEventListener('change',()=>{
+        article.querySelector('[data-surface-edit-options]')?.addEventListener('click',()=>{
           syncRow(article,index);
-          if(row.pack!=='tags'){row.keywordTags=[];row.keywordMatchMode='any';}
+          controllerTarget=String(index);
           render();
-        });
-        article.querySelector('[data-surface-create-subpack]')?.addEventListener('click',()=>{
-          syncRow(article,index);
-          window.RelphiCustomSubpacks?.open?.({
-            onSave:pack=>{
-              row.pack='custom:'+pack.id;
-              render();
-            }
-          });
-        });
-        article.querySelector('[data-surface-card-count]')?.addEventListener('change',event=>{
-          row.cardCount=Math.max(1,Math.min(12,Math.trunc(Number(event.target.value)||1)));
-          event.target.value=String(row.cardCount);
+          requestAnimationFrame(()=>composer.querySelector('.relphi-surface-question-controller')?.scrollIntoView?.({block:'nearest'}));
         });
         const query=article.querySelector('[data-surface-tag-query]');
         const matchesHost=article.querySelector('[data-surface-tag-matches]');
@@ -4023,20 +4047,34 @@
           row.keywordTags=(row.keywordTags||[]).filter(tag=>tag!==button.dataset.surfaceTagRemove);
           render();
         }));
-        article.querySelector('[data-surface-remove]')?.addEventListener('click',()=>{syncRow(article,index);rows.splice(index,1);render();});
+        article.querySelector('[data-surface-remove]')?.addEventListener('click',()=>{
+          syncRow(article,index);
+          rows.splice(index,1);
+          rows.forEach(item=>{
+            const linked=item.linkTo===''||item.linkTo==null?null:Number(item.linkTo);
+            if(!Number.isInteger(linked))return;
+            if(linked===index)item.linkTo='';
+            else if(linked>index)item.linkTo=String(linked-1);
+          });
+          if(controllerTarget!=='defaults'){
+            const active=Number(controllerTarget);
+            controllerTarget=active===index?'defaults':String(active>index?active-1:active);
+          }
+          render();
+        });
       });
       composer.querySelector('[data-surface-suggest]')?.addEventListener('click',()=>{
         composer.querySelectorAll('[data-surface-composer-row]').forEach((article,index)=>syncRow(article,index));
         const suggestion=nextSurfaceSuggestion(rows,suggestionCursor);
         if(!suggestion)return;
         suggestionCursor=suggestion.nextCursor;
-        rows.push({...suggestion.candidate,selected:true,cardCount:Math.max(1,Number(suggestion.candidate.cardCount)||1),linkTo:suggestion.candidate.linkTo??'',keywordTags:Array.isArray(suggestion.candidate.keywordTags)?suggestion.candidate.keywordTags.slice():[],keywordMatchMode:suggestion.candidate.keywordMatchMode==='all'?'all':'any',keywordQuery:'',reversals:suggestion.candidate.reversals!==false,repeats:!!suggestion.candidate.repeats});
+        rows.push({...clone(defaults),...suggestion.candidate,selected:true,cardCount:Math.max(1,Number(suggestion.candidate.cardCount??defaults.cardCount)||1),linkTo:suggestion.candidate.linkTo??defaults.linkTo??'',keywordTags:Array.isArray(suggestion.candidate.keywordTags)?suggestion.candidate.keywordTags.slice():Array.isArray(defaults.keywordTags)?defaults.keywordTags.slice():[],keywordMatchMode:suggestion.candidate.keywordMatchMode==='all'?'all':defaults.keywordMatchMode==='all'?'all':'any',keywordQuery:'',reversals:suggestion.candidate.reversals??defaults.reversals,repeats:suggestion.candidate.repeats??defaults.repeats});
         render();
         setTimeout(()=>composer.querySelector('[data-surface-composer-row]:last-child')?.scrollIntoView?.({block:'nearest'}),0);
       });
       composer.querySelector('[data-surface-add]')?.addEventListener('click',()=>{
         composer.querySelectorAll('[data-surface-composer-row]').forEach((article,index)=>syncRow(article,index));
-        rows.push({selected:true,text:'',pack:'full',cardCount:1,linkTo:'',keywordTags:[],keywordMatchMode:'any',keywordQuery:'',reversals:true,repeats:false,sourceKind:'authored'});
+        rows.push({selected:true,text:'',...clone(defaults),linkTo:'',keywordTags:Array.isArray(defaults.keywordTags)?defaults.keywordTags.slice():[],sourceKind:'authored'});
         render();
         setTimeout(()=>composer.querySelector('[data-surface-composer-row]:last-child [data-surface-text]')?.focus(),0);
       });
