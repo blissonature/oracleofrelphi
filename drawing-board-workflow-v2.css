@@ -2908,3 +2908,15 @@ body.relphi-attune-open{overflow:hidden!important}
 #shortListPanel .relphi-referent-path{
   align-self:start!important;
 }
+
+.relphi-clarifier-modal{position:fixed!important;inset:0!important;z-index:100050!important;display:grid!important;place-items:center!important;padding:1rem!important;background:rgba(20,15,12,.58)!important;backdrop-filter:blur(6px)!important}
+.relphi-clarifier-card{position:relative!important;display:grid!important;gap:.68rem!important;width:min(34rem,calc(100vw - 2rem))!important;padding:1rem 1rem 1.05rem!important;border:1px solid #d8cec5!important;border-radius:16px!important;background:#fffdf8!important;box-shadow:0 22px 60px rgba(0,0,0,.28)!important;color:#171412!important}
+.relphi-clarifier-card>.eyebrow{margin:0!important;color:#8a7462!important;font-size:.64rem!important;font-weight:900!important;letter-spacing:.09em!important;text-transform:uppercase!important}
+.relphi-clarifier-card h2{margin:0!important;font-size:1.28rem!important;line-height:1.15!important}
+.relphi-clarifier-card p{margin:0!important;color:#655d56!important;font-size:.82rem!important;line-height:1.45!important}
+.relphi-clarifier-card label{display:grid!important;gap:.32rem!important;font-size:.72rem!important;font-weight:850!important}
+.relphi-clarifier-card textarea{box-sizing:border-box!important;width:100%!important;min-height:6.5rem!important;resize:vertical!important;padding:.72rem .78rem!important;border:1.5px solid #9d9288!important;border-radius:10px!important;background:#fff!important;color:#171412!important;font:inherit!important;line-height:1.4!important;outline:none!important}
+.relphi-clarifier-card textarea:focus{border-color:#a61712!important;box-shadow:0 0 0 3px rgba(166,23,18,.12)!important}
+.relphi-clarifier-actions{display:flex!important;justify-content:flex-end!important;gap:.5rem!important;margin-top:.1rem!important}
+.relphi-clarifier-close{position:absolute!important;top:.72rem!important;right:.72rem!important;display:grid!important;place-items:center!important;width:2rem!important;height:2rem!important;padding:0!important;border:1px solid #c9bfb7!important;border-radius:50%!important;background:#fff!important;color:#171412!important;font-size:1.15rem!important;cursor:pointer!important}
+@media(max-width:600px){.relphi-clarifier-card{padding:.9rem!important}.relphi-clarifier-actions{display:grid!important;grid-template-columns:1fr 1fr!important}.relphi-clarifier-actions button{width:100%!important}}
