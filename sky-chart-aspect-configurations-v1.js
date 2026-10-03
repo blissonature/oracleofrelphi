@@ -620,38 +620,32 @@ function collectGraph(){
   }
   if(inevitableEnabled){
     const activeSkies=new Set(activeScopes().flatMap(scope=>scope.split('-')));
-    for(const sky of activeSkies)for(const [leftId,rightId] of [['asc','dsc'],['mc','ic']]){
+    for(const sky of activeSkies)for(const [leftId,rightId] of [['asc','dsc'],['mc','ic'],['north-node','south-node'],['vertex','anti-vertex']]){
       const leftKey=nodeKey(sky,leftId),rightKey=nodeKey(sky,rightId);
       const left=resultVertexRecord(leftKey),right=resultVertexRecord(rightKey);if(!left||!right)continue;
       nodes.set(leftKey,left);nodes.set(rightKey,right);
       const key=edgeKey(leftKey,rightKey);let byAspect=edges.get(key);if(!byAspect){byAspect=new Map();edges.set(key,byAspect)}
-      if(!byAspect.has('opposition'))byAspect.set('opposition',{row:null,aspect:'opposition',phase:0,left:leftKey,right:rightKey,entailed:true,origin:'inevitable',synthetic:true,syntheticKind:'axis-opposition'});
+      if(!byAspect.has('opposition'))byAspect.set('opposition',{row:null,aspect:'opposition',phase:0,left:leftKey,right:rightKey,entailed:true,origin:'entailed',entailedKind:'polar-axis'});
     }
   }
   return{windowValue,nodes,edges};
 }
-function syntheticAxisOpposition(graph,a,b){
-  // Entailed axis geometry belongs exclusively to the Inevitable configuration
-  // completion path. With Inevitable off, only an identified relationship row
-  // may supply the opposition through graph.edges.
+const INEVITABLE_ASPECTS=Object.freeze({
+  conjunction:{angle:0,harmonic:1},'semi-sextile':{angle:30,harmonic:12},octile:{angle:45,harmonic:8},sextile:{angle:60,harmonic:6},
+  quintile:{angle:72,harmonic:5},square:{angle:90,harmonic:4},trine:{angle:120,harmonic:3},'tri-octile':{angle:135,harmonic:8},
+  'bi-quintile':{angle:144,harmonic:5},quincunx:{angle:150,harmonic:12},opposition:{angle:180,harmonic:2}
+});
+const INEVITABLE_MAX_PHASE=12;
+function entailedEdge(graph,a,b,aspect){
   if(!inevitableEnabled)return null;
-  const [skyA,idA]=String(a||'').split(':'),[skyB,idB]=String(b||'').split(':');
-  if(!skyA||skyA!==skyB)return null;
-  const ids=[idA,idB].sort().join('|');
-  if(ids!=='asc|dsc'&&ids!=='ic|mc')return null;
-  const left=resultVertexRecord(a),right=resultVertexRecord(b);
-  if(!left||!right)return null;
-  const delta=Math.abs(resultNorm(left.value)-resultNorm(right.value));
-  const separation=Math.min(delta,360-delta);
-  const orb=Math.abs(separation-180);
-  const phase=orb*2;
-  return{row:null,aspect:'opposition',phase,left:a,right:b,entailed:true,origin:'inevitable',synthetic:true,syntheticKind:'axis-opposition'};
+  const spec=INEVITABLE_ASPECTS[aspect],left=resultVertexRecord(a),right=resultVertexRecord(b);if(!spec||!left||!right)return null;
+  const delta=Math.abs(resultNorm(left.value)-resultNorm(right.value)),separation=Math.min(delta,360-delta),orb=Math.abs(separation-spec.angle),phase=orb*spec.harmonic;
+  if(phase>INEVITABLE_MAX_PHASE+1e-9)return null;
+  return{row:null,aspect,phase,left:a,right:b,entailed:true,origin:'entailed',entailedKind:'configuration-completion'};
 }
 function getEdge(graph,a,b,aspect){
   const direct=graph.edges.get(edgeKey(a,b))?.get(aspect)||null;
-  if(direct)return direct;
-  if(aspect==='opposition')return syntheticAxisOpposition(graph,a,b);
-  return null;
+  return direct||entailedEdge(graph,a,b,aspect);
 }
 function required(graph,pairs){const edges=[];for(const [a,b,aspect] of pairs){const edge=getEdge(graph,a,b,aspect);if(!edge)return null;edges.push(edge)}return edges}
 function addPattern(out,type,vertices,edges,meta={}){const key=patternKey(type,vertices);if(out.some(item=>item.key===key))return;const phases=edges.map(edge=>edge.phase).filter(Number.isFinite);out.push({key,type,vertices:vertices.slice(),edges:edges.slice(),maxPhase:phases.length?Math.max(...phases):Number.POSITIVE_INFINITY,meanPhase:phases.length?phases.reduce((sum,value)=>sum+value,0)/phases.length:Number.POSITIVE_INFINITY,...meta})}
@@ -659,9 +653,10 @@ function combinations(items,size){const out=[];function walk(start,pick){if(pick
 function aspectCounts(graph,vertices,expected=null){
   const pairs=[];
   for(let i=0;i<vertices.length;i+=1)for(let j=i+1;j<vertices.length;j+=1){
-    const byAspect=graph.edges.get(edgeKey(vertices[i],vertices[j]));
-    if(!byAspect||!byAspect.size)return null;
-    pairs.push([...byAspect.values()]);
+    const a=vertices[i],b=vertices[j],byAspect=graph.edges.get(edgeKey(a,b)),options=byAspect?[...byAspect.values()]:[];
+    if(expected&&inevitableEnabled)for(const aspect of Object.keys(expected)){if(options.some(edge=>edge.aspect===aspect))continue;const edge=entailedEdge(graph,a,b,aspect);if(edge)options.push(edge)}
+    if(!options.length)return null;
+    pairs.push(options);
   }
   if(!expected){
     const counts=new Map(),edges=[];
