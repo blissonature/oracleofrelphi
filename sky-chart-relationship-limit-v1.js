@@ -181,8 +181,14 @@ function apply(){
   const all=rows(),cap=numericLimit();
   all.forEach(row=>row.classList.remove(CAP_CLASS));
   const eligible=all.filter(row=>!hiddenByOther(row));
-  eligible.forEach((row,index)=>row.classList.toggle(CAP_CLASS,index>=cap));
-  const shown=Math.min(eligible.length,Number.isFinite(cap)?cap:eligible.length);
+  const sections=new Map();
+  eligible.forEach(row=>{
+    const key=String(row.dataset.relationshipMode||'A-B').toUpperCase();
+    if(!sections.has(key))sections.set(key,[]);
+    sections.get(key).push(row);
+  });
+  sections.forEach(section=>section.forEach((row,index)=>row.classList.toggle(CAP_CLASS,index>=cap)));
+  const shown=[...sections.values()].reduce((sum,section)=>sum+Math.min(section.length,Number.isFinite(cap)?cap:section.length),0);
   const hiddenByLimit=Math.max(0,eligible.length-shown);
   const count=document.getElementById('skyFoundationRelationshipCount');
   if(count){
