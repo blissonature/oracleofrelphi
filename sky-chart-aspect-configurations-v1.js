@@ -856,19 +856,32 @@ function renderOverlay(){
   applyConfigurationFocusComposition();
 }
 let configurationFocusState={active:false,indexes:new Set()};
+let configurationWheelState={active:false,indexes:new Set()};
+function composedConfigurationIndexes(){
+  if(!configurationFocusState.active&&!configurationWheelState.active)return null;
+  if(configurationFocusState.active&&!configurationWheelState.active)return configurationFocusState.indexes;
+  if(!configurationFocusState.active&&configurationWheelState.active)return configurationWheelState.indexes;
+  return new Set([...configurationFocusState.indexes].filter(index=>configurationWheelState.indexes.has(index)));
+}
 function applyConfigurationFocusComposition(){
   const layer=document.querySelector('[data-layer="configurations"]');if(!layer)return;
-  layer.classList.toggle('has-focus-composition',configurationFocusState.active);
+  const indexes=composedConfigurationIndexes(),active=!!indexes;
+  layer.classList.toggle('has-focus-composition',active);
   layer.querySelectorAll('.sky-chart-configuration-line').forEach(line=>{
     const index=String(line.dataset.relationIndex||line.dataset.configurationRelation||'');
-    const keep=!configurationFocusState.active||(index&&configurationFocusState.indexes.has(index));
+    const keep=!active||(index&&indexes.has(index));
     line.classList.toggle('is-focus-kept',!!keep);
-    line.classList.toggle('is-focus-muted',configurationFocusState.active&&!keep);
+    line.classList.toggle('is-focus-muted',active&&!keep);
   });
 }
 function receiveConfigurationFocus(event){
   const detail=event?.detail||{},active=detail.active===true;
   configurationFocusState={active,indexes:new Set(active?(detail.relationshipIndexes||[]).map(String):[])};
+  applyConfigurationFocusComposition();
+}
+function receiveConfigurationWheelFilter(event){
+  const detail=event?.detail||{},state=detail.state||null,active=!!state;
+  configurationWheelState={active,indexes:new Set(active?(detail.relationshipIndexes||[]).map(String):[])};
   applyConfigurationFocusComposition();
 }
 function clearPeerHighlight(){
@@ -924,6 +937,7 @@ function handleChange(event){const inevitable=event.target.closest?.('[data-conf
 function start(){
   document.addEventListener('change',handleChange,true);
   window.addEventListener('relphi:sky-filter-wheel-focus-changed',receiveConfigurationFocus);
+  window.addEventListener('relphi:sky-foundation-filter-changed',receiveConfigurationWheelFilter);
   window.addEventListener('relphi:sky-foundation-clear-selection',()=>{
     clearPatternHighlight();
     clearPeerHighlight();
