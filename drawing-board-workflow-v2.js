@@ -5297,15 +5297,23 @@
   window.addEventListener('click',globalCapture,true);
   document.addEventListener('keydown',event=>{
     const reader=document.querySelector('.relphi-focus-reader');
+    const attune=document.querySelector('.relphi-attune-reader');
     const target=event.target;
     const editable=!!target && (target.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName || ''));
+    if (attune && !editable && event.key==='ArrowRight') {
+      const action=attune.querySelector('[data-attune-shared], [data-attune-random], [data-attune-confirm]:not(:disabled)');
+      if(action){
+        event.preventDefault();
+        action.click();
+      }
+      return;
+    }
     if (reader && !editable && (event.key==='ArrowLeft' || event.key==='ArrowRight')) {
       event.preventDefault();
       navigateFocusBy(event.key==='ArrowLeft' ? -1 : 1);
       return;
     }
     if (event.key!=='Escape') return;
-    const attune=document.querySelector('.relphi-attune-reader');
     if (attune) closeAttune();
     else if (reader) closeFocus({acknowledge:true});
     else if (optionsSession) { /* Mode is permanent; Escape does not collapse Crafted mode. */ }
