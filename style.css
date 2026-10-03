@@ -9289,6 +9289,15 @@ html body .chart-house-grid .or-card.tarot-card-surface.relphi-surface--card .or
   margin: 0 0 .45rem;
   font-size: .92rem;
 }
+.locked-ingredient-type {
+  display: block;
+  margin: 0 0 .22rem;
+  color: #746b64;
+  font-size: .68rem;
+  font-weight: 900;
+  letter-spacing: .055em;
+  text-transform: uppercase;
+}
 .locked-ingredient-card dl,
 .locked-traditional-meta p,
 .locked-common-lines p {
