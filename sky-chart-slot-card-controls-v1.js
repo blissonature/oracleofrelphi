@@ -235,6 +235,26 @@
     return true;
   }
 
+  function swapSkies(){
+    let rawA=null,rawB=null,ageA=null,ageB=null;
+    try{
+      rawA=localStorage.getItem(SKY_A_KEY);rawB=localStorage.getItem(SKY_B_KEY);
+      ageA=localStorage.getItem(LIVE_AGE_KEYS.A);ageB=localStorage.getItem(LIVE_AGE_KEYS.B);
+      if(!rawA||!rawB)return false;
+      localStorage.setItem(SKY_A_KEY,rawB);localStorage.setItem(SKY_B_KEY,rawA);
+      if(ageB===null)localStorage.removeItem(LIVE_AGE_KEYS.A);else localStorage.setItem(LIVE_AGE_KEYS.A,ageB);
+      if(ageA===null)localStorage.removeItem(LIVE_AGE_KEYS.B);else localStorage.setItem(LIVE_AGE_KEYS.B,ageA);
+    }catch(_){return false}
+    dispatchSkyAStorage(rawB);dispatchSkyBStorage(rawA);
+    let skyA=null,skyB=null;try{skyA=JSON.parse(rawB);skyB=JSON.parse(rawA)}catch(_){}
+    try{window.RelphiSkyCardShell?.sync?.('A',skyA);window.RelphiSkyCardShell?.sync?.('B',skyB)}catch(_){}
+    window.dispatchEvent(new CustomEvent('relphi:sky-slots-swapped',{detail:{A:'B',B:'A'}}));
+    [['A',skyA],['B',skyB]].forEach(([slot,value])=>{
+      const name=String(value?.name||value?.displayName||value?.skyName||value?.title||'Where and When');
+      window.dispatchEvent(new CustomEvent('relphi:sky-name-updated',{detail:{slot,name,source:'swap-skies'}}));
+    });
+    schedule();return true;
+  }
   function sync(){
     queued=false;
     suppressInternalAdd();
@@ -275,6 +295,7 @@
     addSkyB:startAddSkyB,
     removeSkyB,
     promoteSkyBToA,
+    swapSkies,
     hasSkyB:skyBPresent,
     hasStoredSkyB
   });
