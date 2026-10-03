@@ -641,17 +641,26 @@ const INEVITABLE_ASPECTS=Object.freeze({
   'bi-quintile':{angle:144,harmonic:5},quincunx:{angle:150,harmonic:12},opposition:{angle:180,harmonic:2}
 });
 const INEVITABLE_MAX_PHASE=12;
-function entailedEdge(graph,a,b,aspect){
-  if(!inevitableEnabled)return null;
-  const spec=INEVITABLE_ASPECTS[aspect],left=resultVertexRecord(a),right=resultVertexRecord(b);if(!spec||!left||!right)return null;
-  const delta=Math.abs(resultNorm(left.value)-resultNorm(right.value)),separation=Math.min(delta,360-delta),orb=Math.abs(separation-spec.angle),phase=orb*spec.harmonic;
-  if(phase>INEVITABLE_MAX_PHASE+1e-9)return null;
-  return{row:null,aspect,phase,left:a,right:b,entailed:true,origin:'entailed',entailedKind:'configuration-completion'};
+function completeInevitableGraph(graph){
+  if(!inevitableEnabled)return graph;
+  const vertices=[...graph.nodes.entries()].filter(([,node])=>Number.isFinite(Number(node?.value)));
+  for(let i=0;i<vertices.length;i+=1)for(let j=i+1;j<vertices.length;j+=1){
+    const [a,left]=vertices[i],[b,right]=vertices[j],key=edgeKey(a,b);
+    let byAspect=graph.edges.get(key);if(!byAspect){byAspect=new Map();graph.edges.set(key,byAspect)}
+    const delta=Math.abs(resultNorm(left.value)-resultNorm(right.value)),separation=Math.min(delta,360-delta);
+    let best=null;
+    for(const [aspect,spec] of Object.entries(INEVITABLE_ASPECTS)){
+      if(byAspect.has(aspect))continue;
+      const phase=Math.abs(separation-spec.angle)*spec.harmonic;
+      if(phase>INEVITABLE_MAX_PHASE+1e-9)continue;
+      if(!best||phase<best.phase)best={row:null,aspect,phase,left:a,right:b,entailed:true,origin:'entailed',entailedKind:'configuration-completion'};
+    }
+    if(best)byAspect.set(best.aspect,best);
+    if(!byAspect.size)graph.edges.delete(key);
+  }
+  return graph;
 }
-function getEdge(graph,a,b,aspect){
-  const direct=graph.edges.get(edgeKey(a,b))?.get(aspect)||null;
-  return direct||entailedEdge(graph,a,b,aspect);
-}
+function getEdge(graph,a,b,aspect){return graph.edges.get(edgeKey(a,b))?.get(aspect)||null}
 function required(graph,pairs){const edges=[];for(const [a,b,aspect] of pairs){const edge=getEdge(graph,a,b,aspect);if(!edge)return null;edges.push(edge)}return edges}
 function addPattern(out,type,vertices,edges,meta={}){const key=patternKey(type,vertices);if(out.some(item=>item.key===key))return;const phases=edges.map(edge=>edge.phase).filter(Number.isFinite);out.push({key,type,vertices:vertices.slice(),edges:edges.slice(),maxPhase:phases.length?Math.max(...phases):Number.POSITIVE_INFINITY,meanPhase:phases.length?phases.reduce((sum,value)=>sum+value,0)/phases.length:Number.POSITIVE_INFINITY,...meta})}
 function combinations(items,size){const out=[];function walk(start,pick){if(pick.length===size){out.push(pick.slice());return}for(let i=start;i<=items.length-(size-pick.length);i+=1){pick.push(items[i]);walk(i+1,pick);pick.pop()}}walk(0,[]);return out}
@@ -659,7 +668,6 @@ function aspectCounts(graph,vertices,expected=null){
   const pairs=[];
   for(let i=0;i<vertices.length;i+=1)for(let j=i+1;j<vertices.length;j+=1){
     const a=vertices[i],b=vertices[j],byAspect=graph.edges.get(edgeKey(a,b)),options=byAspect?[...byAspect.values()]:[];
-    if(expected&&inevitableEnabled)for(const aspect of Object.keys(expected)){if(options.some(edge=>edge.aspect===aspect))continue;const edge=entailedEdge(graph,a,b,aspect);if(edge)options.push(edge)}
     if(!options.length)return null;
     pairs.push(options);
   }
@@ -697,13 +705,13 @@ function countIs(counts,expected){for(const [aspect,count] of Object.entries(exp
 function grandSextileEdges(graph,vertices){
   if(vertices.length!==6)return null;
   const ordered=vertices.slice().sort((a,b)=>{
-    const av=Number(resultVertexRecord(a)?.value),bv=Number(resultVertexRecord(b)?.value);
+    const av=Number(graph.nodes.get(a)?.value),bv=Number(graph.nodes.get(b)?.value);
     if(!Number.isFinite(av)&&!Number.isFinite(bv))return String(a).localeCompare(String(b));
     if(!Number.isFinite(av))return 1;
     if(!Number.isFinite(bv))return -1;
     return resultNorm(av)-resultNorm(bv);
   });
-  if(ordered.some(key=>!Number.isFinite(Number(resultVertexRecord(key)?.value))))return null;
+  if(ordered.some(key=>!Number.isFinite(Number(graph.nodes.get(key)?.value))))return null;
   const pairs=[];
   for(let i=0;i<6;i+=1)pairs.push([ordered[i],ordered[(i+1)%6],'sextile']);
   for(let i=0;i<6;i+=1)pairs.push([ordered[i],ordered[(i+2)%6],'trine']);
@@ -733,7 +741,7 @@ function grandCrossEdges(graph,vertices){
   return null;
 }
 function detect(){
-  const graph=collectGraph(),nodes=[...graph.nodes.keys()],out=[];
+  const graph=completeInevitableGraph(collectGraph()),nodes=[...graph.nodes.keys()],out=[];
   for(const [a,b,c] of combinations(nodes,3)){
     let edges=required(graph,[[a,b,'trine'],[a,c,'trine'],[b,c,'trine']]);if(edges)addPattern(out,'grand-trine',[a,b,c],edges);
     const triple=[[a,b,c],[a,c,b],[b,c,a]];
