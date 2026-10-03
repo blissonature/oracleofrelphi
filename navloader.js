@@ -23,15 +23,15 @@
   }
 
   function isTarotContext() {
-    return /(^|\/)tarot\.html$/.test(location.pathname) || isTarotPreviewDocument();
+    return location.pathname.endsWith('/tarot.html') || location.pathname === 'tarot.html' || isTarotPreviewDocument();
   }
 
   function isSkyChartContext() {
-    return /(^|\/)sky-chart\.html$/.test(location.pathname) && !isTarotPreviewDocument();
+    return (location.pathname.endsWith('/sky-chart.html') || location.pathname === 'sky-chart.html') && !isTarotPreviewDocument();
   }
 
   function isPlanetaryHoursContext() {
-    return /(^|\/)planetaryhours\.html$/.test(location.pathname);
+    return location.pathname.endsWith('/planetaryhours.html') || location.pathname === 'planetaryhours.html';
   }
 
   function initAnalytics() {
@@ -166,11 +166,15 @@
       appendScript('tarot-date-sky-bridge-v1.js?v=4');
       appendScript('tarot-search-list-v1.js?v=1');
       appendScript('tarot-reversed-copy-v1.js?v=1');
+      appendScript('tarot-custom-subpacks-v1.js?v=1');
       appendScript('tarot-card-selection-scroll-v1.js?v=2', function () {
         requestAnimationFrame(function () { window.RelphiTarotCardSelectionScroll?.scrollFromLocation(); });
       });
-      appendScript('drawing-board-workflow-v2.js?v=143', function () {
-        window.dispatchEvent(new Event('relphi:tarot-enhancements-ready'));
+      appendScript('drawing-board-workflow-v2.js?v=113', function () {
+        appendScript('relphi-sky-connector-v1.js?v=1');
+        appendScript('drawing-board-crowley-harmonic-v1.js?v=3', function () {
+          window.dispatchEvent(new Event('relphi:tarot-enhancements-ready'));
+        });
       });
     }
     if (isPlanetaryHoursContext()) {
@@ -183,13 +187,13 @@
       appendScript('planetary-hours-moon-position-v1.js?v=1');
       appendScript('planetary-hours-active-time-integrity-v1.js?v=3');
     }
-    if (/(^|\/)astrology-foundations\.html$/.test(location.pathname)) {
+    if (location.pathname.endsWith('/astrology-foundations.html') || location.pathname === 'astrology-foundations.html') {
       loadCanonicalGlyphRuntime(function () {
         appendScript('astrology-foundations-canonical-glyphs-v1.js?v=2');
         appendScript('relphi-inline-glyph-consumer-v1.js?v=2');
       });
     }
-    if (/(^|\/)(mythic-atlas|constellations)\.html$/.test(location.pathname)) {
+    if (['/mythic-atlas.html','/constellations.html'].some(name=>location.pathname.endsWith(name)) || ['mythic-atlas.html','constellations.html'].includes(location.pathname)) {
       loadCanonicalGlyphRuntime(function () { appendScript('relphi-inline-glyph-consumer-v1.js?v=2'); });
     }
     if (isSkyChartContext() && document.getElementById('skyFoundationRoot')) appendScript('sky-chart-page-stability-v1.js?v=1');

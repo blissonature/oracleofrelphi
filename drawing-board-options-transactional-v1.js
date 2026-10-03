@@ -353,8 +353,10 @@
     const target = event.target;
     if (!root || !box || !optionsOpen(root) || !box.contains(target) || !target.matches?.(CORE_CONTROL_SELECTOR)) return;
     event.stopImmediatePropagation();
-    if (target.id === 'relphiSpreadTemplateSelect' && event.type === 'change') draftTemplateChanged(root,target);
-    else refreshDraft(root);
+    // The current workflow owns its Crafted template selector. This legacy
+    // transaction layer must not expand template labels/rules during selection.
+    if (target.id === 'relphiSpreadTemplateSelect') return;
+    refreshDraft(root);
   }
 
   function handleClick(event) {
@@ -401,8 +403,17 @@
     requestAnimationFrame(() => requestAnimationFrame(enhance));
   }
 
-  document.addEventListener('input',interceptDraftEvent,true);
-  document.addEventListener('change',interceptDraftEvent,true);
+  // The workflow-v2 Crafted Settings drawer owns its controls and transaction.
+  // Do not install the legacy capture interceptors there; they recursively mutate
+  // label-builder controls while a template select change is still propagating.
+  document.addEventListener('input',event=>{
+    if(event.target?.closest?.('.relphi-reading-options-drawer'))return;
+    interceptDraftEvent(event);
+  },true);
+  document.addEventListener('change',event=>{
+    if(event.target?.closest?.('.relphi-reading-options-drawer'))return;
+    interceptDraftEvent(event);
+  },true);
   document.addEventListener('click',handleClick,true);
   document.addEventListener('relphi:drawing-board-rendered',schedule);
   document.addEventListener('relphi:drawing-board-options-toggle',() => window.setTimeout(schedule,0));

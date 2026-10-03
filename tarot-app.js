@@ -379,10 +379,11 @@
     if (!locked?.ingredient_refs?.length) return '';
     const items = locked.ingredient_refs.map(ref => ({ ref, item: LOCKED_INGREDIENTS[ref] })).filter(entry => entry.item);
     if (!items.length) return '';
-    const baseId = `ingredients-${escapeHtml(card.card_id || 'card')}`;
-    const tabs = items.map((entry, index) => { const id=`${baseId}-${index}`; return `<button id="${id}-tab" class="locked-ingredient-tab ${index === 0 ? 'is-active' : ''}" type="button" role="tab" data-ingredient-tab="${id}" aria-controls="${id}-panel" aria-selected="${index === 0 ? 'true' : 'false'}" tabindex="${index === 0 ? '0' : '-1'}">${escapeHtml(ingredientTypeLabel(entry.ref, entry.item, index))}</button>`; }).join('');
-    const panels = items.map((entry, index) => { const item = entry.item; const id=`${baseId}-${index}`; return `<article id="${id}-panel" class="locked-ingredient-panel ${index === 0 ? 'is-active' : ''}" role="tabpanel" aria-labelledby="${id}-tab" data-ingredient-panel="${id}" ${index === 0 ? '' : 'hidden'}><h4>${escapeHtml(item.name)}</h4><dl><dt>Operation</dt><dd>${escapeHtml(item.operation)}</dd><dt>Question</dt><dd>${escapeHtml(item.question)}</dd><dt>Contribution</dt><dd>${escapeHtml(item.contribution)}</dd></dl></article>`; }).join('');
-    return `<section class="locked-ingredients locked-ingredients--tabs"><h3>Ingredients</h3><div class="locked-ingredient-tabs" role="tablist">${tabs}</div><div class="locked-ingredient-panels">${panels}</div></section>`;
+    const tiles = items.map((entry, index) => {
+      const item = entry.item;
+      return `<article class="locked-ingredient-card"><header><span class="locked-ingredient-type">${escapeHtml(ingredientTypeLabel(entry.ref, item, index))}</span><h4>${escapeHtml(item.name)}</h4></header><p class="locked-ingredient-operation">${escapeHtml(item.operation)}</p><p class="locked-ingredient-question">${escapeHtml(item.question)}</p><p class="locked-ingredient-contribution">${escapeHtml(item.contribution)}</p></article>`;
+    }).join('');
+    return `<section class="locked-ingredients locked-ingredients--tiles"><h3>Ingredients</h3><div class="locked-ingredient-grid">${tiles}</div></section>`;
   }
   function lockedTraditionalTitleHtml(locked) {
     if (!locked) return '';
@@ -432,8 +433,12 @@
     if (details) details.open = false;
   }
   function expandCardRow() {
-    const details = document.querySelector('#shortListPanel details.short-list-drawer');
-    if (details) details.open = true;
+    const details = document.querySelector('#shortListPanel details.card-row-drawing-board, #shortListPanel details.short-list-drawer');
+    if (details) {
+      details.open = true;
+      details.setAttribute('open','');
+      state.cardRowBoardOpen = true;
+    }
   }
   const CUSTOM_CARD_ART_KEY = 'relphiCustomCardArtV1';
   function readCustomCardArtStore() {
@@ -805,7 +810,7 @@
     for (const variant of variants) {
       const pattern = flexibleTitlePattern(variant);
       if (!pattern) continue;
-      const re = new RegExp('^' + pattern + '\\s*(?:[–—-]|:|\\.)?\\s*(?:(?:is|are)\\s+)?', 'i');
+      const re = new RegExp('^' + pattern + '\\s*(?:[–—:-]|\\.)?\\s*(?:(?:is|are)\\s+)?', 'i');
       const next = value.replace(re, '').trim();
       if (next && next !== value) {
         value = sentenceCaseFragment(next);
@@ -826,6 +831,9 @@
     const hitSourceText = uniqueHitSources.join(' · ');
     const hitLabel = options.hitCount === 1 ? 'placement' : 'placements';
     const badge = options.hitCount ? `<button class="or-hit-badge" type="button" data-placement-toggle aria-label="Show ${escapeHtml(options.hitCount)} chart ${escapeHtml(hitLabel)}" title="${escapeHtml(hitSourceText || `${options.hitCount} chart ${hitLabel}`)}">×${options.hitCount}</button>` : '';
+    const connectedSkyEntry = window.RelphiSkyConnector?.tarotActivations?.().find(entry => entry.cardId === card.card_id) || null;
+    const connectedSkyHits = connectedSkyEntry?.hits || [];
+    const connectedSkyMark = connectedSkyHits.length ? `<span class="relphi-connected-sky-mark" data-connected-sky-card="${escapeHtml(card.card_id)}" title="${escapeHtml(connectedSkyHits.map(hit=>hit.reason).join(' · '))}" aria-label="${escapeHtml(connectedSkyHits.length)} connected sky activation${connectedSkyHits.length===1?'':'s'}"><span aria-hidden="true"></span><b>×${connectedSkyHits.length}</b></span>` : '';
     const addLabel = inShortList ? 'Remove card from Drawing Board' : 'Add card to Drawing Board';
     const add = options.selectable === false ? '' : `<button class="or-card-add or-card-layer-add" type="button" data-shortlist="${escapeHtml(card.card_id)}" aria-pressed="${inShortList?'true':'false'}" aria-label="${addLabel}" title="${addLabel}">${inShortList?'−':'+'}</button>`;
     const layerSources = '';
@@ -857,7 +865,7 @@
     return `<article class="or-card tarot-card-surface relphi-surface relphi-surface--card ${context === 'short-list' ? 'short-list-card' : ''} ${selected ? 'is-row-selected' : ''} ${detailSelected ? 'is-detail-selected' : ''}" data-id="${escapeHtml(card.card_id)}" data-tags="${escapeHtml(publicTags(card).join('|'))}"${dragAttrs}${resultCropStyle} tabindex="0">
       <img class="or-card-art relphi-surface-face" src="${escapeHtml(rwsImagePath(card))}" alt="${escapeHtml(rwsImageAlt(card))}" loading="lazy"${context === 'short-list' ? ` data-relphi-adaptive-art="true" data-relphi-art-card="${escapeHtml(card.card_id)}" data-relphi-full-src="${escapeHtml(rwsImagePath(card))}" data-relphi-art-tier="full"` : ''}>
       ${inlinePositionSticker}${houseNumberSticker}
-      ${glyphTags ? `<div class="or-card-badges relphi-sticker-row">${glyphTags}</div>` : ''}${badge}${placementBubble}
+      ${glyphTags ? `<div class="or-card-badges relphi-sticker-row">${glyphTags}</div>` : ''}${badge}${connectedSkyMark}${placementBubble}
       <div class="or-card-layer relphi-info-layer" data-id="${escapeHtml(card.card_id)}"><div class="or-layer-head relphi-info-static"><span class="or-card-title-banner card-title-link" role="button" tabindex="0" data-card-id="${escapeHtml(card.card_id)}">${layerTitleHtml}</span>${add}</div><div class="or-card-essence${essenceClass}">${escapeHtml(essenceText)}</div><div class="or-layer-scroll relphi-info-scroll"><span>${escapeHtml(nbHyphens(layerText))}</span>${layerSources}</div></div>${placementLayer}
     </article>`;
   }
@@ -2026,12 +2034,21 @@
     return `<section class="row-tag-subpack" aria-label="Keyword and tag sub-pack"><label class="row-tag-search-label">Tags <input id="rowTagQuery" type="search" value="${escapeHtml(state.rowTagQuery || '')}" placeholder="Type a tag, e.g. prince" autocomplete="off"></label><div class="row-tag-match-mode" role="group" aria-label="How selected tags combine"><label><input type="radio" name="rowTagMatchMode" value="any" ${state.rowTagMatchMode !== 'all' ? 'checked' : ''}> Any</label><label><input type="radio" name="rowTagMatchMode" value="all" ${state.rowTagMatchMode === 'all' ? 'checked' : ''}> All</label></div><div class="row-tag-matches" aria-live="polite">${matchRows}</div>${selectedHtml}<p class="row-tag-pool-count">${selected.length ? `${poolCount} card${poolCount === 1 ? '' : 's'} in this sub-pack` : 'Choose one or more matching tags before drawing.'}</p></section>`;
   }
 
+  function customSubpackByScope(scope) {
+    const id=String(scope||'').replace(/^custom:/,'');
+    if(!id || id===String(scope||'')) return null;
+    const packs=window.RelphiCustomSubpacks?.all?.() || [];
+    return packs.find(pack=>String(pack?.id||'')===id) || null;
+  }
+
   function rowDrawPool(scope, options = {}) {
     const key = scope || state.rowDrawScope || 'full';
     const visible = currentCards();
     const planetaryBodies = new Set(['Sun','Moon','Mercury','Venus','Mars','Jupiter','Saturn']);
     let pool;
-    if (key === 'shown') pool = visible.length ? visible : cards;
+    const custom=customSubpackByScope(key);
+    if (custom) pool=(custom.cardIds||[]).map(cardById).filter(Boolean);
+    else if (key === 'shown') pool = visible.length ? visible : cards;
     else if (key === 'majors') pool = cards.filter(card => card.card_type === 'Major');
     else if (key === 'uhn') pool = UHN_CARD_IDS.map(cardById).filter(Boolean);
     else if (key === 'primordial-majors') pool = cards.filter(card => card.card_type === 'Major' && card.astrology?.attribution_type === 'Element' && ['Aleph','Mem','Shin'].includes(String(card.hebrew?.letter || '')));
@@ -2313,7 +2330,11 @@
     const zIndex = Math.max(0, Math.min(100, Number(saved.zIndex) || 1));
     return { scale, rotation, zIndex };
   }
+  function crowleyOpeningActive() {
+    return state.rowActiveLayout?.id === 'crowley-harmonic-divination-12';
+  }
   function rowCardIsReversed(index) {
+    if (crowleyOpeningActive()) return false;
     return !!(state.rowCardReversals && state.rowCardReversals[Math.max(0, Number(index) || 0)]);
   }
   function setRowCardReversed(index, reversed) {
@@ -2330,6 +2351,7 @@
     values.forEach((value, index) => { if (value) state.rowCardReversals[index] = true; });
   }
   function toggleRowCardReversal(index, options = {}) {
+    if (crowleyOpeningActive()) return;
     const i = Math.max(0, Number(index) || 0);
     if (!options.skipUndo) pushBoardUndo();
     setRowCardReversed(i, !rowCardIsReversed(i));
@@ -2504,6 +2526,20 @@
       }
     };
   }
+  function prefabSemanticPositionMeta(position) {
+    const meta={};
+    [
+      'allowReversals','allowRepeats','cardCount','linkTo',
+      'questionText','questionIndex','questionCardIndex','questionCardCount',
+      'keywordTags','keywordMatchMode','cardSource','sourceKind',
+      'derivedFromPack','derivedFromIndex','derivedFromCard','derivedFromReversed',
+      'craftedPath'
+    ].forEach(key=>{
+      if(position?.[key]!==undefined)meta[key]=cloneBoardValue(position[key],position[key]);
+    });
+    return meta;
+  }
+
   function applyPrefabLayout(prefab, options = {}) {
     if (!prefab || !Array.isArray(prefab.positions) || !prefab.positions.length) return false;
     if ((state.shortList || []).length || (state.rowLayoutLocked && !state.rowLayoutDesignMode)) return false;
@@ -2520,6 +2556,7 @@
       state.rowEnvelopeLayout[index] = { x:transform.x * PREFAB_CANVAS_WIDTH, y:transform.y * PREFAB_CANVAS_HEIGHT };
       state.rowCardTransforms[index] = { scale:transform.scale, rotation:transform.rotation, zIndex:transform.zIndex };
       return {
+        ...prefabSemanticPositionMeta(position),
         id:prefabPositionId(position, index),
         role:position.role || '',
         covers:position.covers || '',
@@ -2561,6 +2598,7 @@
     if (!state.rowLayoutDesignMode || (state.shortList || []).length) return null;
     state.rowActiveLayout = layoutSnapshotFromBoard(details);
     state.rowPositionMeta = state.rowActiveLayout.positions.map(position => ({
+      ...prefabSemanticPositionMeta(position),
       id:position.id,
       role:position.role || '',
       covers:position.covers || '',
@@ -2878,18 +2916,26 @@
       const panStartY = rowPanYValue();
       workspace.classList.add('is-panning');
       workspace.setPointerCapture?.(event.pointerId);
+      const pointerId=event.pointerId;
       const move = moveEvent => {
+        if(moveEvent.pointerId!==pointerId)return;
+        // Pan is viewport state only. Move the board as a whole; never touch
+        // card envelope positions while the gesture is in progress.
         state.rowPanX = panStartX + (moveEvent.clientX - startX);
         state.rowPanY = panStartY + (moveEvent.clientY - startY);
-        board.style.cssText = cardRowBoardStyle(rowSlotCount());
+        board.style.transform='translate('+Math.round(rowPanXValue())+'px, '+Math.round(rowPanYValue())+'px) scale('+rowZoomValue()+')';
       };
-      const up = () => {
+      const finish = upEvent => {
+        if(upEvent?.pointerId!==undefined&&upEvent.pointerId!==pointerId)return;
         window.removeEventListener('pointermove', move);
-        window.removeEventListener('pointerup', up);
+        window.removeEventListener('pointerup', finish);
+        window.removeEventListener('pointercancel', finish);
         workspace.classList.remove('is-panning');
+        try { workspace.releasePointerCapture?.(pointerId); } catch(error) {}
       };
       window.addEventListener('pointermove', move);
-      window.addEventListener('pointerup', up, { once: true });
+      window.addEventListener('pointerup', finish);
+      window.addEventListener('pointercancel', finish);
     });
   }
 
@@ -2943,7 +2989,7 @@
     cardHtml = cardHtml.replace('<article class="or-card', `<article class="or-card card-row-card${reversed ? ' is-row-reversed' : ''}`);
     cardHtml = cardHtml.replace(' tabindex="0">', ` draggable="true" data-row-card="${escapeHtml(card.card_id)}" data-row-reversed="${reversed ? 'true' : 'false'}" tabindex="0" aria-label="${escapeHtml(title(card))}${reversed ? ', reversed' : ''}">`);
     const reverseLabel = reversed ? 'Set card upright' : 'Reverse card';
-    const reverseButton = rowCardWasAddedManually(index) ? `<button class="card-row-reverse-toggle${reversed ? ' is-active' : ''}" type="button" data-row-reverse="${index}" aria-pressed="${reversed ? 'true' : 'false'}" title="${escapeHtml(reverseLabel)}" aria-label="${escapeHtml(reverseLabel + ': ' + title(card))}">↕</button>` : '';
+    const reverseButton = !crowleyOpeningActive() && rowCardWasAddedManually(index) ? `<button class="card-row-reverse-toggle${reversed ? ' is-active' : ''}" type="button" data-row-reverse="${index}" aria-pressed="${reversed ? 'true' : 'false'}" title="${escapeHtml(reverseLabel)}" aria-label="${escapeHtml(reverseLabel + ': ' + title(card))}">↕</button>` : '';
     const transformHandles = `<span class="card-row-transform-box" aria-hidden="true"><span class="card-row-scale-handle card-row-scale-handle--nw" data-row-transform-handle="scale" data-corner="nw"></span><span class="card-row-rotate-handle card-row-rotate-handle--ne" data-row-transform-handle="rotate" data-corner="ne"></span><span class="card-row-scale-handle card-row-scale-handle--sw" data-row-transform-handle="scale" data-corner="sw"></span><span class="card-row-scale-handle card-row-scale-handle--se" data-row-transform-handle="scale" data-corner="se"></span></span>`;
     return `<div class="card-row-item${selected ? ' is-row-selected' : ''}${transformTarget ? ' is-transform-target' : ''}${miniDescription ? ' is-description-mini' : ''}${reversed ? ' is-row-reversed' : ''}" data-row-index="${index}" style="${cardRowItemStyle(index)}">${panel}<div class="card-row-card-wrap">${cardHtml}${reverseButton}${transformHandles}</div></div>`;
   }
@@ -4279,13 +4325,19 @@
     const arc = (start, end, r) => { const [sx,sy]=polar(start,r), [ex,ey]=polar(end,r); const diff=((end-start)%360+360)%360 || 360; const large=diff>180?1:0; return `M ${sx.toFixed(2)} ${sy.toFixed(2)} A ${r} ${r} 0 ${large} 1 ${ex.toFixed(2)} ${ey.toFixed(2)}`; };
     const ringWedge = (start, end, r1, r2) => { const [sx,sy]=polar(start,r2), [ex,ey]=polar(end,r2), [ix,iy]=polar(end,r1), [jx,jy]=polar(start,r1); const diff=((end-start)%360+360)%360 || 360; const large=diff>180?1:0; return `M ${sx.toFixed(2)} ${sy.toFixed(2)} A ${r2} ${r2} 0 ${large} 1 ${ex.toFixed(2)} ${ey.toFixed(2)} L ${ix.toFixed(2)} ${iy.toFixed(2)} A ${r1} ${r1} 0 ${large} 0 ${jx.toFixed(2)} ${jy.toFixed(2)} Z`; };
     let start=null,end=null,label='';
+    const courtRange=card?.card_type==='Court' ? COURT_RANGES.find(item=>item.id===card.card_id) : null;
     if (shared) {
       start = signIndex[shared.startSign]*30 + shared.startDegree;
       end = signIndex[shared.endSign]*30 + shared.endDegree;
       if (end <= start) end += 360;
       label = shared.label;
+    } else if (courtRange && signIndex[courtRange.start] != null && signIndex[courtRange.end] != null) {
+      start = signIndex[courtRange.start]*30 + courtRange.startDegree;
+      end = signIndex[courtRange.end]*30 + courtRange.endDegree;
+      if (end <= start) end += 360;
+      label = `${courtRange.start} ${courtRange.startDegree}° → ${courtRange.end} ${courtRange.endDegree}°`;
     } else {
-      let m = String(range).match(/(\d+(?:\.\d+)?|zero|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty|thirty) degrees ([A-Za-z]+) through (\d+(?:\.\d+)?|zero|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty|thirty) degrees ([A-Za-z]+)/i);
+      let m = String(range).match(/(\d+(?:\.\d+)?|zero|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty|thirty)\s*(?:°|degrees?)\s*([A-Za-z]+)\s*(?:through|to|→|[-–—])\s*(\d+(?:\.\d+)?|zero|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty|thirty)\s*(?:°|degrees?)\s*([A-Za-z]+)/i);
       if (m && signIndex[m[2]] != null && signIndex[m[4]] != null) {
         start = signIndex[m[2]]*30 + num(m[1]); end = signIndex[m[4]]*30 + num(m[3]); if (end <= start) end += 360; label = `${m[2]} ${num(m[1])}° → ${m[4]} ${num(m[3])}°`;
       } else if (a.sign && signIndex[a.sign] != null) {
@@ -4470,6 +4522,84 @@
         title:title(card),
         image:rwsImagePath(card)
       }));
+    },
+    openingKeyDeck(significatorCardId) {
+      const id=String(significatorCardId||'').trim();
+      const pool=rowDrawPool('full',{ignoreUsed:true});
+      if(!id||!pool.some(card=>card.card_id===id))return null;
+      // One shuffle establishes the deck order for Operation I. Cutting must
+      // partition this exact order; it must never shuffle again.
+      const deck=shuffleArray(pool.map(card=>card.card_id));
+      return {deck,significatorCardId:id};
+    },
+    openingKeyCut(deck, firstCut, rightCut, leftCut) {
+      const cards=Array.isArray(deck)?deck.slice():[];
+      if(cards.length<4)return null;
+      const a=Math.max(1,Math.min(cards.length-1,Number(firstCut)||1));
+      const right=cards.slice(0,a), left=cards.slice(a);
+      const b=Math.max(1,Math.min(right.length-1,Number(rightCut)||1));
+      const d=Math.max(1,Math.min(left.length-1,Number(leftCut)||1));
+      // Four packets from right to left: Yod, Heh, Vav, final Heh.
+      return [right.slice(0,b),right.slice(b),left.slice(0,d),left.slice(d)];
+    },
+    openingKeyReaderCuts(deck, firstCut, significatorCardId) {
+      const cards=Array.isArray(deck)?deck.slice():[];
+      if(cards.length<4)return null;
+      const a=Math.max(1,Math.min(cards.length-1,Number(firstCut)||1));
+      const rightSize=a, leftSize=cards.length-a;
+      if(rightSize<2||leftSize<2)return null;
+      // Reader cuts are fresh cut points only. They partition the already locked
+      // order and never call shuffleArray or otherwise reorder the cards.
+      const rightCut=1+randomInt(rightSize-1);
+      const leftCut=1+randomInt(leftSize-1);
+      const packets=this.openingKeyCut(cards,a,rightCut,leftCut);
+      const id=String(significatorCardId||'');
+      const packetIndex=packets.findIndex(packet=>packet.includes(id));
+      return {packets,firstCut:a,rightCut,leftCut,packetIndex,packet:['Yod','Heh','Vav','Heh-final'][packetIndex]||''};
+    },
+    drawCardForBoard(scope = 'full') {
+      const pool=rowDrawPool(scope || 'full',{ignoreUsed:true});
+      if(!pool.length)return null;
+      const card=pool[randomInt(pool.length)];
+      if(!card)return null;
+      commitShortList([...state.shortList,card.card_id],{newCardsManual:true});
+      expandCardRow();
+      scrollCardRowToEnd();
+      return {card_id:card.card_id,title:title(card),image:rwsImagePath(card)};
+    },
+    drawOpeningSignificator(scope = 'full') {
+      // The Significator is a method choice, not a visible board draw. Choose it
+      // from the same eligible pool without mutating Drawing Board state.
+      const pool=rowDrawPool(scope || 'full',{ignoreUsed:true});
+      if(!pool.length)return null;
+      const card=pool[randomInt(pool.length)];
+      return card ? {card_id:card.card_id,title:title(card),image:rwsImagePath(card)} : null;
+    },
+    hideOpeningSignificator() {
+      // A chosen Significator remains conceptually inside the locked deck until
+      // the method calls for its packet to be exposed.
+      if (!(state.shortList || []).length) return true;
+      state.shortList=[];
+      state.shortListSelection=[];
+      state.shortListPositionLabels=[];
+      state.shortListPositionCardIds=[];
+      state.rowCardReversals={};
+      state.rowCardManual=[];
+      state.rowEnvelopeLayout={};
+      state.rowCardTransforms={};
+      state.rowPanX=0; state.rowPanY=0;
+      refreshShortListViews();
+      return true;
+    },
+    showOpeningPacket(packet) {
+      const ids=Array.isArray(packet)?packet.filter(id=>cardById(id)):[];
+      if(!ids.length)return false;
+      // Replace the lone Significator display with its actual IHVH packet,
+      // preserving packet order for the face-up Operation I spread.
+      commitShortList(ids,{newCardsManual:false});
+      expandCardRow();
+      setTimeout(()=>fitCardRowToViewport(),0);
+      return true;
     },
     addCardToBoard(cardId, scope = 'full') {
       const id=String(cardId || '').trim();
@@ -10295,25 +10425,47 @@ ${notes || ''}`;
     refreshSkyLibrarySelects();
     function showDrawingBoardFromLanding(draw=false) {
       state.mode = 'board';
-      const commandDetails = document.querySelector('.tarot-command-drawer > details');
-      if (commandDetails) commandDetails.open = true;
-      setVisible('shortListPanel', true);
+      state.cardRowBoardOpen = true;
+      // Publish the open state before renderShortList(). The Drawing Board
+      // enhancement listens to the render event synchronously and uses this
+      // button state to decide whether #shortListPanel should remain visible.
       const currentBoardTrigger = $('relphiOpenDrawingBoardCurrent');
       if (currentBoardTrigger) {
         currentBoardTrigger.textContent = 'Close Drawing Board';
         currentBoardTrigger.setAttribute('aria-expanded', 'true');
       }
+      const commandDetails = document.querySelector('.tarot-command-drawer > details');
+      if (commandDetails) commandDetails.open = true;
       ['browsePanel','visibilityPanel','spreadPanel','datePanel','chartPanel','currentSkyPanel'].forEach(id => setVisible(id, false));
+
+      // Render from native state first. renderShortList() replaces the contents of
+      // #shortListPanel, so visibility/open state must be asserted on the live DOM
+      // after that render rather than only on the element that existed beforehand.
       renderShortList();
+      const boardPanel = $('shortListPanel');
+      if (boardPanel) {
+        boardPanel.hidden = false;
+        boardPanel.removeAttribute('hidden');
+        boardPanel.style.removeProperty('display');
+        boardPanel.setAttribute('aria-hidden','false');
+        const drawer = boardPanel.querySelector('.card-row-drawing-board');
+        if (drawer) {
+          drawer.open = true;
+          drawer.setAttribute('open','');
+        }
+      }
       expandCardRow();
+
       if (draw) drawRandomRowCard();
-      else $('shortListPanel')?.scrollIntoView({ behavior:'smooth', block:'start' });
+      else boardPanel?.scrollIntoView({ behavior:'smooth', block:'start' });
       updateSummary([]);
     }
     const landingDraw = $('landingDrawCard'); if (landingDraw) landingDraw.addEventListener('click', event => { event.preventDefault(); showDrawingBoardFromLanding(true); });
     const landingBoard = $('landingOpenBoard'); if (landingBoard) landingBoard.addEventListener('click', event => { event.preventDefault(); showDrawingBoardFromLanding(false); });
+    const currentBoard = $('relphiOpenDrawingBoardCurrent'); if (currentBoard) currentBoard.addEventListener('click', event => { event.preventDefault(); showDrawingBoardFromLanding(false); });
     const landingLedger = $('landingShowLedger'); if (landingLedger) landingLedger.addEventListener('click', event => { event.preventDefault(); collapseCardRow(); setVisible('shortListPanel', false); state.mode = 'all'; state.query = ''; state.cardFilters = []; state.selected = null; renderBrowse(); showPanel('browsePanel'); $('browsePanel')?.scrollIntoView({ behavior:'smooth', block:'start' }); });
     renderShortList();
+    if (state.mode !== 'board' && !drawingBoardHasContent(storedDrawingBoardSnapshot())) { collapseCardRow(); setVisible('shortListPanel', false); const boardTrigger=$('relphiOpenDrawingBoardCurrent'); if(boardTrigger){ boardTrigger.textContent='Open Drawing Board'; boardTrigger.setAttribute('aria-expanded','false'); } }
     updateClearKeywordButtons();
     if (isDedicatedSkyChartPage()) requestAnimationFrame(restoreDedicatedSkyChartView);
     else if (!openDateFromHash(initialHash)) updateSummary([]);
