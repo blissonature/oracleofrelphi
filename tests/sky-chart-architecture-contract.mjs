@@ -50,8 +50,8 @@ assert.match(shell,/relphi:sky-drawer-preparing/,'Where and When must prepare sy
 assert.equal(shell.includes('afterFrames('),false,'Drawer switching must not rely on frame-count timing');
 assert.equal(shell.includes('data-where-prewarming'),false,'Drawer switching must not require a prewarm repair state');
 
-assert.match(whereWhen,/>Here and Now</,'Where and When owns Here and Now');
-assert.match(whereWhen,/>Current local time</,'Where and When owns selected-location current time');
+assert.match(whereWhen,/data-ww-mode-choice="here-now"[^>]*>Here &amp; Now</,'Where and When owns the Here & Now preset');
+assert.match(whereWhen,/data-ww-when-choice="now"[^>]*>Now</,'Where and When owns selected-location Now');
 assert.equal(whereWhen.includes('data-ww-action="use-current-location"'),false,'No competing current-location control should be repaired away later');
 assert.equal(whereWhen.includes('data-final-now'),false,'Legacy final-now control must not exist');
 assert.match(whereWhen,/sky-where-when-footer-actions/,'Footer action structure must be source markup');
@@ -61,10 +61,11 @@ assert.match(whereWhen,/Location inferred from pasted placements/,'Inference con
 assert.match(whereWhen,/window\.RelphiSkyWhereWhen=Object\.freeze/,'Where and When must expose an explicit extension contract');
 assert.match(whereWhen,/finishExternalCommit/,'External placement imports must finish through the controller lifecycle');
 assert.match(whereWhen,/relphi:sky-where-when-location-selected/,'Location state changes must be published explicitly');
-assert.match(whereWhen,/data-ww-action="use-here">Use Here<\/button>/,'Where and When must own a single Use Here browser-location control');
-assert.match(whereWhen,/data-current-location="\$\{slot\}"/,'Use Here must suppress the legacy current-location injector');
-assert.match(whereWhen,/async function useHere\(slot,button\)[\s\S]*currentLocationPacket\(\)[\s\S]*selectLocation\(slot,packet\)/,'Use Here must resolve and apply only browser location state');
-assert.match(whereWhen,/const dateValue=dateField\?\.value\|\|'',timeValue=timeField\?\.value\|\|''[\s\S]*dateField\.value=dateValue[\s\S]*timeField\.value=timeValue/,'Use Here must preserve existing date and time values');
+assert.match(whereWhen,/data-ww-where-choice="mine"[^>]*>My Location<\/button>/,'Where must expose My Location as a first-class choice');
+assert.match(whereWhen,/data-ww-where-choice="search"[^>]*>Search \/ Advanced<\/button>/,'Where must expose Search / Advanced as the alternate choice');
+assert.match(whereWhen,/async function chooseMyLocation\(slot,[\s\S]*currentLocationPacket\(\)[\s\S]*selectLocation\(slot,packet\)/,'My Location must resolve and apply browser location state');
+assert.match(whereWhen,/function populateCurrentLocalTime\(slot,[\s\S]*setZone\(selected\.timezone\)/,'Now must be calculated in the selected Where time zone');
+assert.match(whereWhen,/function chooseHereAndNow\(slot\)[\s\S]*wwWhereMode='mine'[\s\S]*wwWhenMode='now'/,'Here & Now must be the combined preset for My Location + Now');
 
 assert.equal(draft.includes('MutationObserver'),false,'Draft heptagram must render from explicit events, not DOM repair observation');
 assert.equal(draft.includes('preview.before(advanced)'),false,'Draft heptagram must not reorder the editor after creation');
