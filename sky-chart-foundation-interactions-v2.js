@@ -232,7 +232,21 @@
     });
     if(state?.kind==='house'){houses.add(`${state.sky}:${state.value}`);const list=state.sky==='A'?current.listA:current.listB;list.filter(record=>record.house===state.value).forEach(record=>{placements.add(`${state.sky}:${record.id}`);signs.add(record.sign)})}
     if(state?.kind==='sign'){signs.add(state.value);[...current.listA,...current.listB].filter(record=>record.sign===state.value).forEach(record=>placements.add(`${record.sky}:${record.id}`));housesForSign(current.cuspsA,state.value).forEach(house=>houses.add(`A:${house}`));housesForSign(current.cuspsB,state.value).forEach(house=>houses.add(`B:${house}`))}
-    if(state?.kind==='placement'){placements.add(`${state.sky}:${state.value}`);const list=state.sky==='A'?current.listA:current.listB,record=list.find(item=>item.id===state.value);if(record){houses.add(`${state.sky}:${record.house}`);signs.add(record.sign)}}
+    if(state?.kind==='placement'){
+      placements.add(`${state.sky}:${state.value}`);
+      const list=state.sky==='A'?current.listA:current.listB,record=list.find(item=>item.id===state.value);if(record){if(record.house!=null)houses.add(`${state.sky}:${record.house}`);signs.add(record.sign)}
+      // Placement hover is a relationship-model operation, not a DOM-order operation.
+      // Resolve A↔B counterparts from the canonical relation set, then honor the
+      // rendered row's current filter eligibility for that exact relationship.
+      const eligible=new Set();
+      document.querySelectorAll('#skyFoundationRelationshipList>.sky-foundation-relationship-row[data-relation-index]').forEach(row=>{if(String(row.dataset.relationshipMode||'A-B').toUpperCase()==='A-B'&&rowEligibleForWheel(row))eligible.add(relationshipIdentity(row))});
+      current.relations.forEach(relation=>{
+        const identity=`A:${relation.left.id}|${relation.aspect.id}|B:${relation.right.id}`;
+        if(!eligible.has(identity))return;
+        if(state.sky==='A'&&relation.left.id===state.value)placements.add(`B:${relation.right.id}`);
+        if(state.sky==='B'&&relation.right.id===state.value)placements.add(`A:${relation.left.id}`);
+      });
+    }
     return{matched,relationships,placements,houses,signs};
   }
   function kept(node,keep){const type=node.dataset.focusPiece;if(type==='aspect')return keep.relationships.has(relationshipIdentity(node));if(type==='house')return keep.houses.has(`${node.dataset.sky}:${node.dataset.house}`);if(type==='sign')return keep.signs.has(Number(node.dataset.sign));if(type==='placement'||type==='leader')return keep.placements.has(`${node.dataset.sky}:${node.dataset.placement}`);return false}
