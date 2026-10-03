@@ -6,9 +6,7 @@ window.__relphiRelationshipScopeSectionsV1=true;window.__relphiRelationshipScope
 
 const GROUPS=Object.freeze([{mode:'A-B',title:'A↔B',family:'intersky'},{mode:'A-A',title:'A↔A',family:'intrasky'},{mode:'B-B',title:'B↔B',family:'intrasky'}]);
 const FAMILIES=Object.freeze([{id:'intersky',title:'Intersky'},{id:'intrasky',title:'Intrasky'}]);
-const GLOBAL_TIMING_SORTS=new Set(['duration-longest','duration-shortest','ends-soonest','ends-last']);
-const GLOBAL_SIGNIFICANCE_SORTS=new Set(['most-supportive','most-challenging']);
-const GLOBAL_SORTS=new Set(['exact',...GLOBAL_TIMING_SORTS,...GLOBAL_SIGNIFICANCE_SORTS]);
+const GLOBAL_SORTS=new Set(['exact','aspect','strongest','most-challenging','most-supportive','duration-longest','duration-shortest','began-most-recently','ends-soonest','ends-last','applying-first','separating-first','closing-first','opening-first','reference-resolution']);
 const PLACEMENT_SYMBOLS=Object.freeze({sun:'☉',moon:'☽',mercury:'☿',venus:'♀',mars:'♂',jupiter:'♃',saturn:'♄',uranus:'♅',neptune:'♆',pluto:'♇',chiron:'⚷','north-node':'☊','south-node':'☋',lilith:'⚸','part-of-fortune':'⊗',vertex:'Vx','anti-vertex':'AVx',asc:'Asc',dsc:'Dsc',mc:'MC',ic:'IC'});
 const SIGN_SYMBOLS=Object.freeze(['♈','♉','♊','♋','♌','♍','♎','♏','♐','♑','♒','♓']);
 const ASPECT_SYMBOLS=Object.freeze({conjunction:'☌',opposition:'☍',trine:'△',square:'□',sextile:'✶','semi-sextile':'⚺',quincunx:'⚻',octile:'∠','tri-octile':'⚼',quintile:'Q','bi-quintile':'BQ'});
@@ -55,9 +53,8 @@ function groupList(){
   const helpers=[...list.children].filter(node=>node.matches?.('[data-result-limit-show-more],[data-harmonic-show-more]'));
   const other=[...list.children].filter(node=>!node.matches?.('.sky-foundation-relationship-row,[data-result-limit-show-more],[data-harmonic-show-more]')),desired=[...other];
   const sorter=window.RelphiRelationshipSort,sortMode=sorter?.mode?.();
-  // Significance and absolute-duration sorts can answer one question across the whole
-  // visible set. "Began Most Recently" is intentionally excluded: its "ago" value is
-  // measured from each relationship scope's own chart timestamp, so scopes must not mix.
+  // Every relationship sort answers one ranking question across the complete visible
+  // relationship set. Scope remains relationship metadata, not a boundary on ordering.
   if(GLOBAL_SORTS.has(sortMode)){
     desired.push(...rows.slice().sort(globalComparator(sortMode,rows)));
   }else{
