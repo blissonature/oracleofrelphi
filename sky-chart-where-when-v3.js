@@ -200,6 +200,14 @@ function calculateSky(slot,selected,date,time,options={}){
   const houseSystem=localStorage.getItem(SHARED_HOUSE_KEY)||profileFor(slot).houseSystem||'whole-sign';
   const houses=window.RelphiHouseSystems.calculateCusps({system:houseSystem,ascendant:asc,midheaven:mc,siderealDegrees:siderealDegrees(instant,selected.longitude),obliquityDegrees:obliquity(instant),latitude:selected.latitude});
   const existing=options.replaceExisting?{}:(payload(slot)||{}),metadata=existing.metadata&&typeof existing.metadata==='object'?{...existing.metadata}:{},priorProfile=existing.calcProfile&&typeof existing.calcProfile==='object'?{...existing.calcProfile}:{},liveOrigin=String(options.liveOrigin||'');
+  // Chiron may already be a trusted stored placement even when no live Chiron provider is available.
+  // Preserve it only when this calculation represents the same instant. A genuinely new instant must never inherit stale Chiron.
+  const existingInstant=String(priorProfile.instant||existing.instant||'').trim(),nextInstant=dt.toUTC().toISO();
+  if(existingInstant&&Date.parse(existingInstant)===Date.parse(nextInstant)){
+    const source=existing.placements&&typeof existing.placements==='object'?existing.placements:{};
+    const chironKey=Object.keys(source).find(key=>String(source[key]?.name||source[key]?.label||source[key]?.body||source[key]?.planet||source[key]?.point||source[key]?.id||source[key]?.glyphId||key).trim().toLowerCase()==='chiron');
+    if(chironKey&&source[chironKey]&&typeof source[chironKey]==='object')placements[chironKey]=JSON.parse(JSON.stringify(source[chironKey]));
+  }
   delete metadata.savedSkyId;delete metadata.savedSkyName;delete metadata.savedSkyLoadedAt;
   metadata.whereWhenSource=selected.source||'manual';
   if(liveOrigin==='use-now'){
