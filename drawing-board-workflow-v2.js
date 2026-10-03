@@ -5215,7 +5215,7 @@
         }
         if (isEmptyItem(item)) {
           event.preventDefault(); event.stopImmediatePropagation();
-          if (surfaceReadingSession || recursionActive()) openAttune(index); else drawInto(item,index);
+          if (surfaceReadingSession || recursionActive() || craftedReadingActive || boardHasCraftedStructure(root)) openAttune(index); else drawInto(item,index);
           return;
         }
       }
