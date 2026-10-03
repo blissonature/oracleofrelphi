@@ -25,8 +25,13 @@ function installStyles(){
   style.textContent=`
     .sky-where-when-editor{display:grid;grid-template-rows:minmax(0,1fr) auto;min-height:0}
     .sky-where-when-scroll-body{min-height:0;overflow:auto;padding-bottom:.2rem}
-    .sky-where-when-here-now-row{display:flex;align-items:center;padding:.62rem .62rem .18rem}
-    .sky-where-when-here-now{border-radius:999px}
+    .sky-where-when-mode-switch{display:grid;grid-template-columns:1fr 1fr;gap:3px;margin:.15rem .62rem .7rem;padding:3px;border:1px solid rgba(31,27,24,.16);border-radius:999px;background:#f1ece6}
+    .sky-where-when-mode-switch button,.sky-where-when-choice-switch button{appearance:none;min-height:2.05rem;border:0;border-radius:999px;background:transparent;color:#5d554f;font:850 .66rem/1 system-ui,sans-serif;cursor:pointer}
+    .sky-where-when-mode-switch button[aria-pressed="true"],.sky-where-when-choice-switch button[aria-pressed="true"]{background:#fff;color:#211d19;box-shadow:0 1px 3px rgba(31,27,24,.12)}
+    .sky-where-when-choice-switch{display:grid;grid-template-columns:1fr 1fr;gap:3px;margin:0 0 .55rem;padding:3px;border:1px solid rgba(31,27,24,.13);border-radius:999px;background:#f5f1ec}
+    .sky-where-when-other[hidden],.sky-where-when-choice-panel[hidden]{display:none!important}
+    .sky-where-when-mode-note{margin:.1rem .15rem .55rem;color:#756b63;font:700 .62rem/1.35 system-ui,sans-serif}
+    .sky-where-when-section .sky-where-when-advanced{margin-top:.55rem}
     [data-ww-when] .sky-where-when-now-row{display:flex;align-items:center;justify-content:space-between;gap:.45rem}
     [data-ww-when] .sky-where-when-grid{gap:.42rem}
     [data-ww-when] .sky-where-when-input{min-width:0;width:100%;box-sizing:border-box}
@@ -56,7 +61,7 @@ function installStyles(){
     .sky-ph-handoff-clear,.sky-ph-handoff-cancel{border-radius:999px;padding:.68rem 1rem;font:inherit;font-weight:750;cursor:pointer}
     .sky-ph-handoff-clear{background:#fff;color:#dc1f18;border:1px solid #dc1f18}
     .sky-ph-handoff-cancel{background:#fff;color:#333;border:1px solid rgba(31,27,24,.22)}
-    @media(max-width:620px){.sky-where-when-here-now-row{padding:.55rem .55rem .14rem}.sky-where-when-footer{padding:.42rem .55rem .55rem!important}.sky-ph-handoff-slots{grid-template-columns:1fr}}
+    @media(max-width:620px){.sky-where-when-mode-switch{margin:.1rem .55rem .65rem}.sky-where-when-footer{padding:.42rem .55rem .55rem!important}.sky-ph-handoff-slots{grid-template-columns:1fr}}
   `;
   document.head.appendChild(style);
 }
@@ -120,13 +125,44 @@ function editorMarkup(slot,p){
   const selected=currentSelection(slot,p);
   cardState[slot].selected=selected;
   const dateTime=String(p.dateTime||''),date=dateTime.slice(0,10),time=dateTime.slice(11,16),disabled=selected?'':' disabled';
-  return `<form class="sky-where-when-editor" data-slot="${slot}">
+  const metadata=payload(slot)?.metadata||{},liveOrigin=String(metadata.liveNowOrigin||p.liveNowOrigin||'');
+  const whereMode=selected?.source==='current-location'?'mine':'search';
+  const whenMode=liveOrigin?'now':'enter';
+  const mode=whereMode==='mine'&&whenMode==='now'?'here-now':'other';
+  return `<form class="sky-where-when-editor" data-slot="${slot}" data-ww-mode="${mode}" data-ww-where-mode="${whereMode}" data-ww-when-mode="${whenMode}"${liveOrigin?' data-ww-live-origin="use-now"':''}>
     <div class="sky-where-when-scroll-body">
       <div class="sky-where-when-heptagram-slot sky-where-when-heptagram-slot-top" data-ww-heptagram-slot="${slot}"></div>
-      <div class="sky-where-when-here-now-row"><button class="sky-where-when-button primary sky-where-when-here-now" type="button" data-ww-action="here-and-now">Here and Now</button></div>
-      <fieldset class="sky-where-when-section" data-ww-where><legend>Where</legend><div class="sky-where-search-label-row"><label class="sky-where-when-label" for="skyWhereLocation${slot}">Search for a location</label><button class="sky-where-when-button secondary sky-use-here-button" type="button" data-current-location="${slot}" data-ww-action="use-here">Use Here</button></div><div class="sky-where-search-row"><input id="skyWhereLocation${slot}" class="sky-where-when-input" data-ww-field="location-query" type="search" autocomplete="off" value="${escapeHtml(selected?.query||'')}" placeholder="Ex. City, State or Country"><button class="sky-where-when-button secondary" type="button" data-ww-action="search-location">Search</button></div><div class="sky-location-results" aria-live="polite"></div>${confirmationMarkup(selected)}</fieldset>
-      <fieldset class="sky-where-when-section" data-ww-when${disabled}><legend>When</legend><div class="sky-where-when-now-row"><button class="sky-where-when-button secondary sky-use-now-button" type="button" data-ww-action="use-now"${p.timeUnknown?' disabled':''}>Current local time</button><label class="sky-time-unknown-option"><input data-ww-field="time-unknown" type="checkbox"${p.timeUnknown?' checked':''}${disabled}><span>Time unknown</span></label></div><div class="sky-where-when-grid"><label class="sky-where-when-label">Date<input class="sky-where-when-input" data-ww-field="date" type="date" value="${escapeHtml(date)}"${disabled}></label><label class="sky-where-when-label">Local time<input class="sky-where-when-input" data-ww-field="time" type="time" value="${escapeHtml(time)}"${p.timeUnknown?' disabled':disabled}></label></div></fieldset>
-      <details class="sky-where-when-advanced"><summary>Advanced settings</summary><div class="sky-where-when-advanced-body"><label class="sky-where-when-label">Time zone<input class="sky-where-when-input" data-ww-field="timezone" type="text" readonly value="${escapeHtml(selected?.timezone||p.timeZone||'')}"></label><div class="sky-where-when-coordinate-grid"><label class="sky-where-when-label">Latitude<input class="sky-where-when-input" data-ww-field="latitude" type="number" step="0.00001" min="-90" max="90" value="${escapeHtml(displayCoordinate(selected?.latitude??p.latitude))}"></label><label class="sky-where-when-label">Longitude<input class="sky-where-when-input" data-ww-field="longitude" type="number" step="0.00001" min="-180" max="180" value="${escapeHtml(displayCoordinate(selected?.longitude??p.longitude))}"></label></div><div data-ww-paste-inference-host></div></div></details>
+      <div class="sky-where-when-mode-switch" role="group" aria-label="Where and When mode">
+        <button type="button" data-ww-mode-choice="here-now" aria-pressed="${mode==='here-now'}">Here &amp; Now</button>
+        <button type="button" data-ww-mode-choice="other" aria-pressed="${mode==='other'}">Other</button>
+      </div>
+      <div class="sky-where-when-other" data-ww-other${mode==='here-now'?' hidden':''}>
+        <fieldset class="sky-where-when-section" data-ww-where><legend>Where</legend>
+          <div class="sky-where-when-choice-switch" role="group" aria-label="Where">
+            <button type="button" data-ww-where-choice="mine" aria-pressed="${whereMode==='mine'}">My Location</button>
+            <button type="button" data-ww-where-choice="search" aria-pressed="${whereMode==='search'}">Search / Advanced</button>
+          </div>
+          <div class="sky-where-when-choice-panel" data-ww-where-mine${whereMode==='mine'?'':' hidden'}><p class="sky-where-when-mode-note">Use this device’s current location.</p></div>
+          <div class="sky-where-when-choice-panel" data-ww-where-search${whereMode==='search'?'':' hidden'}>
+            <div class="sky-where-search-label-row"><label class="sky-where-when-label" for="skyWhereLocation${slot}">Search for a location</label></div>
+            <div class="sky-where-search-row"><input id="skyWhereLocation${slot}" class="sky-where-when-input" data-ww-field="location-query" type="search" autocomplete="off" value="${escapeHtml(selected?.query||'')}" placeholder="Ex. City, State or Country"><button class="sky-where-when-button secondary" type="button" data-ww-action="search-location">Search</button></div>
+            <div class="sky-location-results" aria-live="polite"></div>
+            <details class="sky-where-when-advanced"><summary>Advanced settings</summary><div class="sky-where-when-advanced-body"><label class="sky-where-when-label">Time zone<input class="sky-where-when-input" data-ww-field="timezone" type="text" readonly value="${escapeHtml(selected?.timezone||p.timeZone||'')}"></label><div class="sky-where-when-coordinate-grid"><label class="sky-where-when-label">Latitude<input class="sky-where-when-input" data-ww-field="latitude" type="number" step="0.00001" min="-90" max="90" value="${escapeHtml(displayCoordinate(selected?.latitude??p.latitude))}"></label><label class="sky-where-when-label">Longitude<input class="sky-where-when-input" data-ww-field="longitude" type="number" step="0.00001" min="-180" max="180" value="${escapeHtml(displayCoordinate(selected?.longitude??p.longitude))}"></label></div><div data-ww-paste-inference-host></div></div></details>
+          </div>
+          ${confirmationMarkup(selected)}
+        </fieldset>
+        <fieldset class="sky-where-when-section" data-ww-when${disabled}><legend>When</legend>
+          <div class="sky-where-when-choice-switch" role="group" aria-label="When">
+            <button type="button" data-ww-when-choice="now" aria-pressed="${whenMode==='now'}">Now</button>
+            <button type="button" data-ww-when-choice="enter" aria-pressed="${whenMode==='enter'}">Enter</button>
+          </div>
+          <div class="sky-where-when-choice-panel" data-ww-when-now${whenMode==='now'?'':' hidden'}><p class="sky-where-when-mode-note">Current local time at the selected Where.</p></div>
+          <div class="sky-where-when-choice-panel" data-ww-when-enter${whenMode==='enter'?'':' hidden'}>
+            <label class="sky-time-unknown-option"><input data-ww-field="time-unknown" type="checkbox"${p.timeUnknown?' checked':''}${disabled}><span>Time unknown</span></label>
+            <div class="sky-where-when-grid"><label class="sky-where-when-label">Date<input class="sky-where-when-input" data-ww-field="date" type="date" value="${escapeHtml(date)}"${disabled}></label><label class="sky-where-when-label">Local time<input class="sky-where-when-input" data-ww-field="time" type="time" value="${escapeHtml(time)}"${p.timeUnknown?' disabled':disabled}></label></div>
+          </div>
+        </fieldset>
+      </div>
       <p class="sky-where-when-status" data-update-now-status aria-live="polite"></p>
     </div>
     <div class="sky-where-when-footer"><div class="sky-where-when-footer-actions"><button class="sky-where-when-button secondary sky-where-when-cancel" type="button" data-ww-action="cancel">Cancel</button><button class="sky-where-when-button primary" type="submit"${disabled}>Use This Where and When</button></div></div>
