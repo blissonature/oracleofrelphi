@@ -332,17 +332,31 @@
   order:2;
 }
 .sky-foundation-relationships-heading>.sky-relationship-heading-actions>.sky-relationship-sort-control{
+  grid-column:1;
   min-width:0;
   width:100%;
 }
+.sky-foundation-relationships-heading>.sky-relationship-heading-actions>.sky-relationship-sort-control>.sky-relationship-sort-select{
+  width:100%;
+  min-width:0;
+  max-width:100%;
+}
 .sky-foundation-relationships-heading>.sky-relationship-heading-actions>.sky-relationship-limit-control{
+  grid-column:2;
   min-width:max-content;
 }
 .sky-foundation-relationships-heading>.sky-relationship-heading-actions>#skyFoundationRelationshipCount{
-  margin-left:auto;
+  grid-column:3;
+  justify-self:end;
+  min-width:82px;
+  margin-left:0;
 }
 .sky-foundation-relationships-heading>.sky-relationship-heading-actions>.sky-relationship-copy-button{
+  grid-column:4;
   margin-left:0!important;
+}
+.sky-foundation-relationships-heading>.sky-relationship-heading-actions>#skyChartRelationshipsExport{
+  grid-column:5;
 }
 
 @media(max-width:620px){
