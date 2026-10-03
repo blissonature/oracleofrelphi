@@ -5136,7 +5136,7 @@
     const button=document.createElement('button');
     button.type='button';
     button.className='relphi-bespoke-continue relphi-bespoke-ask-another';
-    button.textContent='＋ Ask another question';
+    button.textContent='Clarifier';
     button.addEventListener('click',promptForBespokeQuestion);
     const undo=root.querySelector('#undoShortList');
     if(undo?.parentElement===actions) actions.insertBefore(button,undo);
