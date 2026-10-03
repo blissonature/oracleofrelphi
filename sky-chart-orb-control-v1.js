@@ -28,17 +28,11 @@
   }
 
   function setSvgVisibility(node,visible){
-    const hidden=!visible,aria=visible?'false':'true';
-    if(node.hidden!==hidden)node.hidden=hidden;
-    if(node.classList.contains('sky-chart-orb-hidden')!==hidden)node.classList.toggle('sky-chart-orb-hidden',hidden);
-    if(node.getAttribute('aria-hidden')!==aria)node.setAttribute('aria-hidden',aria);
-    if(visible){
-      if(node.style.getPropertyValue('display'))node.style.removeProperty('display');
-      if(node.style.getPropertyValue('pointer-events'))node.style.removeProperty('pointer-events');
-    }else{
-      if(node.style.getPropertyValue('display')!=='none'||node.style.getPropertyPriority('display')!=='important')node.style.setProperty('display','none','important');
-      if(node.style.getPropertyValue('pointer-events')!=='none'||node.style.getPropertyPriority('pointer-events')!=='important')node.style.setProperty('pointer-events','none','important');
-    }
+    node.hidden=!visible;
+    node.classList.toggle('sky-chart-orb-hidden',!visible);
+    node.setAttribute('aria-hidden',visible?'false':'true');
+    if(visible){node.style.removeProperty('display');node.style.removeProperty('pointer-events')}
+    else{node.style.setProperty('display','none','important');node.style.setProperty('pointer-events','none','important')}
   }
 
   function relationshipSlots(row){
@@ -89,15 +83,12 @@
       const hiddenByOther=row.classList.contains('sky-chart-filter-hidden')||row.classList.contains('sky-chart-multiselect-hidden')||row.classList.contains('sky-chart-house-multiselect-hidden')||row.classList.contains('sky-chart-aspect-multiselect-hidden')||row.classList.contains('sky-chart-sign-filter-hidden')||row.classList.contains('sky-foundation-single-sky-cross-hidden');
       if(hiddenByOrb&&!hiddenByWheel&&!hiddenByOther)hiddenByHarmonicWindow+=1;
       const visible=!hiddenByOrb&&!hiddenByWheel&&!hiddenByOther;
-      if(row.classList.contains('sky-chart-orb-hidden')!==hiddenByOrb)row.classList.toggle('sky-chart-orb-hidden',hiddenByOrb);
-      const rowHidden=!visible,rowAria=visible?'false':'true';
-      if(row.hidden!==rowHidden)row.hidden=rowHidden;
-      if(row.getAttribute('aria-hidden')!==rowAria)row.setAttribute('aria-hidden',rowAria);
+      row.classList.toggle('sky-chart-orb-hidden',hiddenByOrb);row.hidden=!visible;row.setAttribute('aria-hidden',visible?'false':'true');
       if(Number.isFinite(phase)){
-        const dynamic=metricsFor(phase,limit),harmonicWindow=limit.toFixed(6),windowFraction=Number.isFinite(dynamic.fraction)?dynamic.fraction.toFixed(6):String(dynamic.fraction),harmonicCoherence=dynamic.coherence.toFixed(8);
-        if(row.dataset.harmonicWindow!==harmonicWindow)row.dataset.harmonicWindow=harmonicWindow;
-        if(row.dataset.windowFraction!==windowFraction)row.dataset.windowFraction=windowFraction;
-        if(row.dataset.harmonicCoherence!==harmonicCoherence)row.dataset.harmonicCoherence=harmonicCoherence;
+        const dynamic=metricsFor(phase,limit);
+        row.dataset.harmonicWindow=limit.toFixed(6);
+        row.dataset.windowFraction=Number.isFinite(dynamic.fraction)?dynamic.fraction.toFixed(6):String(dynamic.fraction);
+        row.dataset.harmonicCoherence=dynamic.coherence.toFixed(8);
       }
       if(visible)visibleIndexes.add(String(row.dataset.relationIndex));
     });
