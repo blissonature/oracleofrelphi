@@ -76,7 +76,7 @@
     queued=false;
     const limit=Number(model()?.getWindow?.()??model()?.defaultWindow??7);
     if(!Number.isFinite(limit))return;
-    const visibleIndexes=new Set(),rows=[...document.querySelectorAll('.sky-foundation-relationship-row[data-relation-index]')],rowsByIndex=new Map(rows.map(row=>[String(row.dataset.relationIndex||''),row]));
+    const visibleIndexes=new Set(),rows=[...document.querySelectorAll('.sky-foundation-relationship-row[data-relation-index]')],identity=node=>`${String(node?.dataset?.relationshipMode||'A-B').toUpperCase()}::${String(node?.dataset?.relationIndex||'')}`,rowsByIndex=new Map(rows.map(row=>[identity(row),row]));
     let hiddenByHarmonicWindow=0;
     rows.forEach(row=>{
       const phase=phaseFromRow(row),hiddenByOrb=Number.isFinite(phase)&&phase>limit,hiddenByWheel=wheelIndexes&&!wheelIndexes.has(String(row.dataset.relationIndex));
@@ -90,13 +90,13 @@
         row.dataset.windowFraction=Number.isFinite(dynamic.fraction)?dynamic.fraction.toFixed(6):String(dynamic.fraction);
         row.dataset.harmonicCoherence=dynamic.coherence.toFixed(8);
       }
-      if(visible)visibleIndexes.add(String(row.dataset.relationIndex));
+      if(visible)visibleIndexes.add(identity(row));
     });
 
     document.querySelectorAll('[data-layer="aspects"] .sky-foundation-aspect').forEach(line=>{
-      const index=String(line.dataset.relationIndex||'');
-      setSvgVisibility(line,index!==''&&visibleIndexes.has(index));
-      const row=index?rowsByIndex.get(index):null;
+      const index=String(line.dataset.relationIndex||''),key=identity(line);
+      setSvgVisibility(line,index!==''&&visibleIndexes.has(key));
+      const row=index?rowsByIndex.get(key):null;
       if(row){line.dataset.harmonicWindow=row.dataset.harmonicWindow||'';line.dataset.harmonicCoherence=row.dataset.harmonicCoherence||''}
     });
 
