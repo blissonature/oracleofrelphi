@@ -78,7 +78,17 @@ function escapeHtml(value){return String(value==null?'':value).replace(/[&<>"']/
 function norm(value){return((Number(value)%360)+360)%360}
 function displayCoordinate(value){return Number.isFinite(Number(value))?Number(value).toFixed(5):''}
 function status(slot,message,error=false){const node=panel(slot)?.querySelector('.sky-where-when-status');if(!node)return;node.textContent=message||'';node.classList.toggle('is-error',!!error)}
-function setBusy(slot,busy){cardState[slot].busy=!!busy;const editor=formFor(slot);if(!editor)return;editor.querySelectorAll('button,input,select,textarea').forEach(node=>{if(node.classList.contains('sky-where-when-cancel'))return;node.disabled=!!busy})}
+function setBusy(slot,busy){
+  cardState[slot].busy=!!busy;const editor=formFor(slot);if(!editor)return;
+  editor.querySelectorAll('button,input,select,textarea').forEach(node=>{if(node.classList.contains('sky-where-when-cancel'))return;node.disabled=!!busy});
+  if(!busy){
+    const selected=!!cardState[slot].selected,when=editor.querySelector('[data-ww-when]'),submit=editor.querySelector('button[type="submit"]'),unknown=editor.querySelector('[data-ww-field="time-unknown"]'),time=editor.querySelector('[data-ww-field="time"]');
+    if(when)when.disabled=!selected;
+    if(submit)submit.disabled=!selected;
+    if(unknown)unknown.disabled=!selected;
+    if(time)time.disabled=!selected||unknown?.checked===true;
+  }
+}
 
 function publishTransactionState(){
   const slots=[...transactionState.editing].sort();
