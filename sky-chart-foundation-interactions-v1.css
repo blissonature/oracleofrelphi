@@ -323,14 +323,20 @@
 
 .sky-foundation-relationships-heading>.sky-relationship-heading-actions{
   grid-column:2/-1;
-  display:flex;
+  display:grid;
+  grid-template-columns:minmax(0,178px) max-content minmax(0,1fr) max-content max-content;
   align-items:center;
-  justify-content:flex-start;
   gap:5px;
   width:100%;
   min-width:0;
   order:2;
-  flex-wrap:nowrap;
+}
+.sky-foundation-relationships-heading>.sky-relationship-heading-actions>.sky-relationship-sort-control{
+  min-width:0;
+  width:100%;
+}
+.sky-foundation-relationships-heading>.sky-relationship-heading-actions>.sky-relationship-limit-control{
+  min-width:max-content;
 }
 .sky-foundation-relationships-heading>.sky-relationship-heading-actions>#skyFoundationRelationshipCount{
   margin-left:auto;
