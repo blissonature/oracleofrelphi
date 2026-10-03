@@ -2920,3 +2920,11 @@ body.relphi-attune-open{overflow:hidden!important}
 .relphi-clarifier-actions{display:flex!important;justify-content:flex-end!important;gap:.5rem!important;margin-top:.1rem!important}
 .relphi-clarifier-close{position:absolute!important;top:.72rem!important;right:.72rem!important;display:grid!important;place-items:center!important;width:2rem!important;height:2rem!important;padding:0!important;border:1px solid #c9bfb7!important;border-radius:50%!important;background:#fff!important;color:#171412!important;font-size:1.15rem!important;cursor:pointer!important}
 @media(max-width:600px){.relphi-clarifier-card{padding:.9rem!important}.relphi-clarifier-actions{display:grid!important;grid-template-columns:1fr 1fr!important}.relphi-clarifier-actions button{width:100%!important}}
+
+/* Clarifier is a persistent command-bar button; center its label like Reset / Settings. */
+#shortListPanel .drawing-board-top-actions.relphi-board-command-actions>.relphi-bespoke-ask-another{
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  line-height:1!important;
+}
