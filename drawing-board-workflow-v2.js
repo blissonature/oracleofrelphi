@@ -1651,15 +1651,25 @@
       return '<option value="'+count+'" '+(count===selected?'selected':'')+'>'+count+' card'+(count===1?'':'s')+'</option>';
     }).join('');
   }
+  function bespokeDefaultQuestionSettings(draft) {
+    const saved=draft?.questionDefaults || {};
+    return {
+      pack:String(saved.pack || draft?.pack || 'full'),
+      cardCount:Math.max(1,Math.min(12,Number(saved.cardCount)||1)),
+      linkTo:String(saved.linkTo ?? ''),
+      reversals:saved.reversals ?? (draft?.reversals!==false),
+      repeats:saved.repeats ?? !!draft?.repeats
+    };
+  }
   function normalizedBespokeQuestionSettings(draft,index) {
     const prior=draft?.positionSettings?.[index] || {};
-    const fallback=draft?.positionSettings?.[index-1] || {};
+    const defaults=bespokeDefaultQuestionSettings(draft);
     return {
-      pack:prior.pack || draft?.positionPacks?.[index] || fallback.pack || draft?.pack || 'full',
-      cardCount:Math.max(1,Math.min(12,Number(prior.cardCount ?? fallback.cardCount)||1)),
-      linkTo:String(prior.linkTo ?? ''),
-      reversals:prior.reversals ?? fallback.reversals ?? (draft?.reversals!==false),
-      repeats:prior.repeats ?? fallback.repeats ?? !!draft?.repeats
+      pack:prior.pack || draft?.positionPacks?.[index] || defaults.pack,
+      cardCount:Math.max(1,Math.min(12,Number(prior.cardCount ?? defaults.cardCount)||1)),
+      linkTo:String(prior.linkTo ?? defaults.linkTo ?? ''),
+      reversals:prior.reversals ?? defaults.reversals,
+      repeats:prior.repeats ?? defaults.repeats
     };
   }
   function bespokeQuestionsClipboardText(draft) {
@@ -1682,7 +1692,8 @@
   function labelsMarkup(labels,draft=null) {
     const rows=labels.length ? labels : [''];
     return rows.map((label,index)=>{
-      const inherited=draft?.positionSettings?.[index] || draft?.positionSettings?.[index-1] || {pack:draft?.pack||'full',reversals:draft?.reversals!==false,repeats:!!draft?.repeats,cardCount:1,linkTo:''};
+      const defaults=bespokeDefaultQuestionSettings(draft);
+      const inherited=draft?.positionSettings?.[index] || defaults;
       if(draft && !draft.positionSettings?.[index]){
         draft.positionSettings ||= [];
         draft.positionSettings[index]={
@@ -2314,14 +2325,15 @@
     return normalized.length && normalized.every(value=>value===normalized[0]) ? normalized[0] : '__mixed__';
   }
   function bespokeQuestionControllerMarkup(draft) {
-    return '<section class="relphi-question-controller" aria-label="Selected question settings">'+
-      '<div class="relphi-question-controller-head"><strong>Question controller</strong><span id="relphiQuestionControllerStatus">Select one or more questions.</span></div>'+
+    const defaults=bespokeDefaultQuestionSettings(draft);
+    return '<section class="relphi-question-controller" aria-label="Question settings">'+
+      '<div class="relphi-question-controller-head"><strong>Question controller</strong><span id="relphiQuestionControllerStatus">Defaults for new questions.</span></div>'+
       '<div class="relphi-question-controller-fields">'+
-        '<label>Sub-pack<div class="relphi-subpack-control"><select id="relphiQuestionControllerPack" class="relphi-select" disabled><option value="">Select questions</option></select><button type="button" class="relphi-subpack-create" data-create-subpack aria-label="Create a sub-pack">+</button></div></label>'+
-        '<label class="relphi-card-count-controller">Cards per question<div><input id="relphiQuestionControllerCards" class="relphi-input" type="number" inputmode="numeric" min="1" max="12" step="1" placeholder="—" disabled aria-label="Cards per selected question"><span>× Cards</span></div></label>'+
-        '<label>Share card with<select id="relphiQuestionControllerLink" class="relphi-select" disabled><option value="">Select questions</option></select></label>'+
-        '<label class="relphi-question-controller-check"><input id="relphiQuestionControllerReversals" type="checkbox" disabled> Reversals</label>'+
-        '<label class="relphi-question-controller-check"><input id="relphiQuestionControllerRepeats" type="checkbox" disabled> Repeats</label>'+
+        '<label>Sub-pack<div class="relphi-subpack-control"><select id="relphiQuestionControllerPack" class="relphi-select">'+packOptions(defaults.pack)+'</select><button type="button" class="relphi-subpack-create" data-create-subpack aria-label="Create a sub-pack">+</button></div></label>'+
+        '<label class="relphi-card-count-controller">Cards per question<div><input id="relphiQuestionControllerCards" class="relphi-input" type="number" inputmode="numeric" min="1" max="12" step="1" value="'+defaults.cardCount+'" aria-label="Cards per new question"><span>× Cards</span></div></label>'+
+        '<label>Share card with<select id="relphiQuestionControllerLink" class="relphi-select"><option value="">No link</option></select></label>'+
+        '<label class="relphi-question-controller-check"><input id="relphiQuestionControllerReversals" type="checkbox" '+(defaults.reversals?'checked':'')+'> Reversals</label>'+
+        '<label class="relphi-question-controller-check"><input id="relphiQuestionControllerRepeats" type="checkbox" '+(defaults.repeats?'checked':'')+'> Repeats</label>'+
       '</div>'+
     '</section>';
   }
@@ -2626,6 +2638,7 @@
       if (!labels.length) return false;
       draft.labels=labels;
       draft.positionPacks=[];
+      draft.positionSettings=[];
       markQuestionEditCustom(drawer,draft);
       refreshBespokeLabels();
       return true;
@@ -2692,14 +2705,15 @@
       if(down)down.disabled=!any||allSelected||selected[selected.length-1]===draft.labels.length-1;
       if(del)del.disabled=!any;
       if(all){all.checked=allSelected;all.indeterminate=any&&!allSelected}
-      Object.values(controller).forEach(node=>{if(node&&'disabled' in node)node.disabled=!any});
-      if(controller.status)controller.status.textContent=!any?'Select one or more questions.':selected.length===1?'Editing Question '+(selected[0]+1):'Editing '+selected.length+' questions';
+      Object.values(controller).forEach(node=>{if(node&&'disabled' in node)node.disabled=false});
+      if(controller.status)controller.status.textContent=!any?'Defaults for new questions.':selected.length===1?'Editing Question '+(selected[0]+1):'Editing '+selected.length+' questions';
       if(!any){
-        if(controller.pack)controller.pack.innerHTML='<option value="">Select questions</option>';
-        if(controller.cards)controller.cards.value='';
-        if(controller.link)controller.link.innerHTML='<option value="">Select questions</option>';
-        if(controller.reversals){controller.reversals.checked=false;controller.reversals.indeterminate=false}
-        if(controller.repeats){controller.repeats.checked=false;controller.repeats.indeterminate=false}
+        const defaults=bespokeDefaultQuestionSettings(draft);
+        if(controller.pack){controller.pack.innerHTML=packOptions(defaults.pack);controller.pack.value=defaults.pack}
+        if(controller.cards)controller.cards.value=String(defaults.cardCount);
+        if(controller.link){controller.link.innerHTML='<option value="">No link</option>';controller.link.value=''}
+        if(controller.reversals){controller.reversals.checked=defaults.reversals;controller.reversals.indeterminate=false}
+        if(controller.repeats){controller.repeats.checked=defaults.repeats;controller.repeats.indeterminate=false}
         return;
       }
       const settings=selected.map(ensureQuestionSettings);
@@ -2723,7 +2737,7 @@
     };
     const applyToSelected=(patch)=>{
       const selected=selectedQuestionIndexes();
-      if(!selected.length)return;
+      if(!selected.length)return false;
       selected.forEach(index=>{
         const prior=ensureQuestionSettings(index);
         draft.positionSettings[index]={...prior,...patch};
@@ -2731,18 +2745,28 @@
       });
       markQuestionEditCustom(drawer,draft);
       syncQuestionController();
+      return true;
     };
+    const applyQuestionDefaults=(patch)=>{
+      draft.questionDefaults={...bespokeDefaultQuestionSettings(draft),...patch,linkTo:''};
+      if(patch.pack)draft.pack=patch.pack;
+      if(patch.reversals!==undefined)draft.reversals=!!patch.reversals;
+      if(patch.repeats!==undefined)draft.repeats=!!patch.repeats;
+      markQuestionEditCustom(drawer,draft);
+      syncQuestionController();
+    };
+    const applyQuestionController=(patch)=>selectedQuestionIndexes().length?applyToSelected(patch):applyQuestionDefaults(patch);
     drawer.querySelector('#relphiSelectAllQuestions')?.addEventListener('change',event=>{drawer.querySelectorAll('[data-question-select]').forEach(box=>{box.checked=event.target.checked});syncQuestionController()});
     drawer.querySelectorAll('[data-question-select]').forEach(box=>box.addEventListener('change',syncQuestionController));
-    controller.pack?.addEventListener('change',()=>{if(controller.pack.value&&controller.pack.value!=='__mixed__')applyToSelected({pack:controller.pack.value})});
+    controller.pack?.addEventListener('change',()=>{if(controller.pack.value&&controller.pack.value!=='__mixed__')applyQuestionController({pack:controller.pack.value})});
     controller.cards?.addEventListener('change',()=>{
       const value=Math.max(1,Math.min(12,Math.trunc(Number(controller.cards.value)||1)));
       controller.cards.value=String(value);
-      applyToSelected({cardCount:value});
+      applyQuestionController({cardCount:value});
     });
-    controller.link?.addEventListener('change',()=>{if(controller.link.value!=='__mixed__')applyToSelected({linkTo:controller.link.value})});
-    controller.reversals?.addEventListener('change',()=>{controller.reversals.indeterminate=false;applyToSelected({reversals:controller.reversals.checked})});
-    controller.repeats?.addEventListener('change',()=>{controller.repeats.indeterminate=false;applyToSelected({repeats:controller.repeats.checked})});
+    controller.link?.addEventListener('change',()=>{if(controller.link.value!=='__mixed__')applyQuestionController({linkTo:controller.link.value})});
+    controller.reversals?.addEventListener('change',()=>{controller.reversals.indeterminate=false;applyQuestionController({reversals:controller.reversals.checked})});
+    controller.repeats?.addEventListener('change',()=>{controller.repeats.indeterminate=false;applyQuestionController({repeats:controller.repeats.checked})});
     drawer.querySelector('#relphiCopyBespokeQuestions')?.addEventListener('click',async event=>{
       const button=event.currentTarget;
       const text=bespokeQuestionsClipboardText(draft);
@@ -2769,8 +2793,8 @@
     drawer.querySelector('#relphiDeleteQuestions')?.addEventListener('click',()=>{const selected=new Set(selectedQuestionIndexes());if(!selected.size)return;draft.labels=draft.labels.filter((_,i)=>!selected.has(i));draft.positionPacks=(draft.positionPacks||[]).filter((_,i)=>!selected.has(i));draft.positionSettings=(draft.positionSettings||[]).filter((_,i)=>!selected.has(i));if(!draft.labels.length)draft.labels=[''];markQuestionEditCustom(drawer,draft);renderOptions(root)});
     drawer.querySelector('#relphiAddPosition')?.addEventListener('click',()=>{
       if (draft.labels.length>=MAX_POSITIONS) return;
-      const previous=draft.positionSettings?.[draft.positionSettings.length-1] || {pack:draft.pack||'full',reversals:draft.reversals!==false,repeats:!!draft.repeats,cardCount:1,linkTo:''};
-      draft.labels.push(''); draft.positionPacks?.push?.(previous.pack||'full'); draft.positionSettings ||= []; draft.positionSettings.push({...previous}); markQuestionEditCustom(drawer,draft); renderOptions(root);
+      const defaults=bespokeDefaultQuestionSettings(draft);
+      draft.labels.push(''); draft.positionPacks?.push?.(defaults.pack||'full'); draft.positionSettings ||= []; draft.positionSettings.push({...defaults,linkTo:''}); markQuestionEditCustom(drawer,draft); renderOptions(root);
     });
     drawer.querySelector('#relphiTemplateName')?.addEventListener('input',event=>{draft.templateName=event.target.value.slice(0,60);event.target.classList.toggle('is-unnamed',draft.templateName==='Unnamed Template');});
     drawer.querySelector('#relphiSaveTemplate')?.addEventListener('click',()=>saveDraftTemplate(root));
