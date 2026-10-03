@@ -381,7 +381,7 @@
     if (!items.length) return '';
     const tiles = items.map((entry, index) => {
       const item = entry.item;
-      return `<article class="locked-ingredient-card"><span class="locked-ingredient-type">${escapeHtml(ingredientTypeLabel(entry.ref, item, index))}</span><h4>${escapeHtml(item.name)}</h4><dl><dt>Operation</dt><dd>${escapeHtml(item.operation)}</dd><dt>Question</dt><dd>${escapeHtml(item.question)}</dd><dt>Contribution</dt><dd>${escapeHtml(item.contribution)}</dd></dl></article>`;
+      return `<article class="locked-ingredient-card"><header><span class="locked-ingredient-type">${escapeHtml(ingredientTypeLabel(entry.ref, item, index))}</span><h4>${escapeHtml(item.name)}</h4></header><p class="locked-ingredient-operation">${escapeHtml(item.operation)}</p><p class="locked-ingredient-question">${escapeHtml(item.question)}</p><p class="locked-ingredient-contribution">${escapeHtml(item.contribution)}</p></article>`;
     }).join('');
     return `<section class="locked-ingredients locked-ingredients--tiles"><h3>Ingredients</h3><div class="locked-ingredient-grid">${tiles}</div></section>`;
   }
