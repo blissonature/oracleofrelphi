@@ -379,10 +379,11 @@
     if (!locked?.ingredient_refs?.length) return '';
     const items = locked.ingredient_refs.map(ref => ({ ref, item: LOCKED_INGREDIENTS[ref] })).filter(entry => entry.item);
     if (!items.length) return '';
-    const baseId = `ingredients-${escapeHtml(card.card_id || 'card')}`;
-    const tabs = items.map((entry, index) => { const id=`${baseId}-${index}`; return `<button id="${id}-tab" class="locked-ingredient-tab ${index === 0 ? 'is-active' : ''}" type="button" role="tab" data-ingredient-tab="${id}" aria-controls="${id}-panel" aria-selected="${index === 0 ? 'true' : 'false'}" tabindex="${index === 0 ? '0' : '-1'}">${escapeHtml(ingredientTypeLabel(entry.ref, entry.item, index))}</button>`; }).join('');
-    const panels = items.map((entry, index) => { const item = entry.item; const id=`${baseId}-${index}`; return `<article id="${id}-panel" class="locked-ingredient-panel ${index === 0 ? 'is-active' : ''}" role="tabpanel" aria-labelledby="${id}-tab" data-ingredient-panel="${id}" ${index === 0 ? '' : 'hidden'}><h4>${escapeHtml(item.name)}</h4><dl><dt>Operation</dt><dd>${escapeHtml(item.operation)}</dd><dt>Question</dt><dd>${escapeHtml(item.question)}</dd><dt>Contribution</dt><dd>${escapeHtml(item.contribution)}</dd></dl></article>`; }).join('');
-    return `<section class="locked-ingredients locked-ingredients--tabs"><h3>Ingredients</h3><div class="locked-ingredient-tabs" role="tablist">${tabs}</div><div class="locked-ingredient-panels">${panels}</div></section>`;
+    const tiles = items.map((entry, index) => {
+      const item = entry.item;
+      return `<article class="locked-ingredient-card"><span class="locked-ingredient-type">${escapeHtml(ingredientTypeLabel(entry.ref, item, index))}</span><h4>${escapeHtml(item.name)}</h4><dl><dt>Operation</dt><dd>${escapeHtml(item.operation)}</dd><dt>Question</dt><dd>${escapeHtml(item.question)}</dd><dt>Contribution</dt><dd>${escapeHtml(item.contribution)}</dd></dl></article>`;
+    }).join('');
+    return `<section class="locked-ingredients locked-ingredients--tiles"><h3>Ingredients</h3><div class="locked-ingredient-grid">${tiles}</div></section>`;
   }
   function lockedTraditionalTitleHtml(locked) {
     if (!locked) return '';
