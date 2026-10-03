@@ -52,7 +52,7 @@ function installStyles(){
   height:29px;box-sizing:border-box;margin:0;border:1px solid rgba(31,27,24,.18);border-radius:9px;background:#fff;color:#332e2a;
   font:800 .67rem/1 system-ui,sans-serif
 }
-#skyFoundationRelationships .sky-relationship-limit-control>select{min-width:68px;padding:0 24px 0 8px;cursor:pointer}
+#skyFoundationRelationships .sky-relationship-limit-control>select{width:58px;min-width:58px;padding:0 20px 0 7px;cursor:pointer}
 #skyFoundationRelationships .sky-relationship-limit-control>input{
   appearance:textfield;-moz-appearance:textfield;width:64px;min-width:64px;padding:0 8px;text-align:center
 }
@@ -122,7 +122,8 @@ function ensureControl(){
       if(select.value==='custom'){
         input.hidden=false;input.disabled=false;input.setAttribute('aria-hidden','false');
         if(limit==='all'||PRESETS.includes(Number(limit)))input.value='';
-        requestAnimationFrame(()=>input.focus());
+        select.value='custom';
+        requestAnimationFrame(()=>{input.hidden=false;input.disabled=false;input.setAttribute('aria-hidden','false');input.focus()});
         return;
       }
       setLimit(select.value);
