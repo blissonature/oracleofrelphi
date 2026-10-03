@@ -3,11 +3,11 @@
 (function () {
   'use strict';
 
-  if (!/(^|\/)(planetaryhours|tarot)\.html$/.test(location.pathname)) return;
+  if (!['/planetaryhours.html','/tarot.html'].some(name=>location.pathname.endsWith(name)) && !['planetaryhours.html','tarot.html'].includes(location.pathname)) return;
   if (window.__relphiCanonicalWheelStandardizerV1) return;
   window.__relphiCanonicalWheelStandardizerV1 = true;
 
-  const IS_PLANETARY_HOURS = /(^|\/)planetaryhours\.html$/.test(location.pathname);
+  const IS_PLANETARY_HOURS = location.pathname.endsWith('/planetaryhours.html') || location.pathname === 'planetaryhours.html';
   const NS = 'http://www.w3.org/2000/svg';
   const IDENTITIES = Object.freeze({
     '☉':'sun','⊙':'sun','☽':'moon','☾':'moon','☿':'mercury','♀':'venus','♂':'mars',

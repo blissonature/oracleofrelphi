@@ -196,7 +196,7 @@ if (fs.existsSync(planetDir) && registry) {
 if (fs.existsSync(componentPath)) {
   const component = text(componentPath);
   if (!component.includes("if (entry.fitMode === 'static-master') return true;")) fail('Static masters are no longer protected from runtime fitting.');
-  if (!component.includes("if (entry.fitMode === 'static-master') return staticMaster")) fail('Static-master draw path is missing.');
+  if (!component.includes("if (entry.fitMode === 'static-master') return commitCanonical(parent, staticMaster(")) fail('Static-master draw path is missing.');
   if (component.includes("entry.id === 'lilith'")) fail('Lilith-specific component logic returned; Lilith must use the shared static-master path.');
   if (component.includes("entry.fitMode === 'lilith'")) fail('Lilith-specific fitting returned; Lilith must not have a bespoke fit mode.');
   if (component.includes("entry.id === 'part-of-fortune'")) fail('Part of Fortune-specific component logic returned; it must use the shared static-master path.');

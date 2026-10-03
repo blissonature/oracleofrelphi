@@ -1,17 +1,27 @@
+#shortListPanel:not([hidden]):not(.relphi-board-ready){visibility:hidden!important}
 /* Oracle of Relphi Drawing Board v3: one static enhancement surface. */
 /* Native Drawing Board controls stay invisible until the unified owner converts them.
    The red board remains visible, so there is no board-level FOUC. */
 #shortListPanel .card-row-workspace-toolbar:not(.relphi-board-controller){visibility:hidden!important;opacity:0!important;pointer-events:none!important}
 #shortListPanel #resetCardRowPan,#shortListPanel .card-row-pan-note{display:none!important}
 
-#shortListPanel{--relphi-board-red:#dc1f18;--relphi-board-ink:#171412;--relphi-board-paper:#fffdf8;--relphi-board-line:#d8cec5;--relphi-board-soft:#f4efe8}
 #shortListPanel[hidden]{display:none!important}
 #shortListPanel .card-row-drawing-board{position:relative!important;margin:.5rem 0 1rem!important;border:1px solid var(--relphi-board-line)!important;border-radius:16px!important;background:#fff!important;overflow:visible!important}
 #shortListPanel .card-row-drawing-board>summary{padding:.7rem .85rem!important;cursor:pointer!important;text-align:left!important}
 #shortListPanel .card-row-drawing-board:not([open])>:not(summary){display:none!important}
 
-#shortListPanel .drawing-board-top-actions{position:relative!important;z-index:1800!important;isolation:isolate!important;display:flex!important;align-items:center!important;gap:.4rem!important;flex-wrap:nowrap!important;width:calc(100% - 1rem)!important;margin:.35rem .5rem!important;pointer-events:auto!important;touch-action:manipulation!important}
-#shortListPanel .drawing-board-top-actions>#drawingBoardOptionsButton{order:0!important;margin-right:auto!important}
+#shortListPanel .drawing-board-mode-switch{display:flex!important;align-items:flex-end!important;gap:0!important;margin:.2rem .5rem 0!important;border-bottom:1px solid var(--relphi-board-line)!important}
+#shortListPanel .drawing-board-mode-switch>button{min-height:2.35rem!important;margin:0 0 -1px!important;padding:.48rem .8rem!important;border:0!important;border-bottom:2px solid transparent!important;border-radius:0!important;background:transparent!important;color:#625a53!important;font:inherit!important;font-size:.76rem!important;font-weight:900!important;box-shadow:none!important;cursor:pointer!important}
+#shortListPanel .drawing-board-mode-switch>button.is-active{border-bottom-color:var(--relphi-board-red)!important;color:#a61712!important}
+#shortListPanel .drawing-board-mode-switch>button:focus-visible{outline:2px solid var(--relphi-board-red)!important;outline-offset:-2px!important}
+#shortListPanel .drawing-board-board-mode{display:block!important}
+#shortListPanel.relphi-referents-mode .drawing-board-board-mode{display:none!important}
+#shortListPanel .relphi-global-board-actions{position:relative!important;z-index:1900!important;display:flex!important;align-items:center!important;gap:.45rem!important;flex-wrap:wrap!important;width:calc(100% - 1rem)!important;margin:.5rem .5rem .35rem!important;pointer-events:auto!important;touch-action:manipulation!important}
+#shortListPanel .relphi-global-board-actions>button{position:relative!important;z-index:1!important;min-height:2.35rem!important;margin:0!important;padding:.44rem .78rem!important;border:1.5px solid var(--relphi-board-ink)!important;border-radius:8px!important;background:#fff!important;color:var(--relphi-board-ink)!important;font:inherit!important;font-size:.79rem!important;font-weight:850!important;line-height:1!important;box-shadow:none!important;white-space:nowrap!important;pointer-events:auto!important;touch-action:manipulation!important}
+#shortListPanel .relphi-global-board-actions>#drawRandomRowCard{border-color:#b81712!important;background:var(--relphi-board-red)!important;color:#fff!important}
+#shortListPanel .relphi-global-board-actions>#relphiResetBoard{border-color:rgba(184,23,18,.55)!important;color:#a61712!important}
+#shortListPanel .relphi-global-board-actions>button:focus-visible{outline:3px solid rgba(220,31,24,.22)!important;outline-offset:2px!important}
+#shortListPanel .drawing-board-top-actions{position:relative!important;z-index:1800!important;isolation:isolate!important;display:flex!important;align-items:center!important;justify-content:flex-start!important;gap:.4rem!important;flex-wrap:wrap!important;width:calc(100% - 1rem)!important;margin:.5rem!important;pointer-events:auto!important;touch-action:manipulation!important}
 #shortListPanel .drawing-board-top-actions>#drawRandomRowCard{order:10!important}
 #shortListPanel .drawing-board-top-actions>#undoShortList{order:11!important}
 #shortListPanel .drawing-board-top-actions>#redoShortList{order:12!important}
@@ -23,7 +33,7 @@
 
 #shortListPanel .card-row-more-options{display:none!important}
 #shortListPanel .card-row-action-staging{display:none!important}
-#shortListPanel .card-row-workspace{position:relative!important;isolation:isolate!important;width:100%!important;height:clamp(28rem,62vh,40rem)!important;min-height:clamp(28rem,62vh,40rem)!important;max-height:clamp(28rem,62vh,40rem)!important;overflow:hidden!important;border:1px solid rgba(17,17,17,.14)!important;border-radius:14px!important;background-color:var(--row-table-bg,#7d1f28)!important;background-image:var(--row-table-image,none)!important;background-position:center!important;background-size:cover!important;touch-action:pan-x pan-y!important}
+#shortListPanel .card-row-workspace{position:relative!important;isolation:isolate!important;width:100%!important;height:clamp(28rem,62svh,40rem)!important;min-height:clamp(28rem,62svh,40rem)!important;max-height:clamp(28rem,62svh,40rem)!important;overflow:hidden!important;border:1px solid rgba(17,17,17,.14)!important;border-radius:14px!important;background-color:var(--row-table-bg,#7d1f28)!important;background-image:var(--row-table-image,none)!important;background-position:center!important;background-size:cover!important;touch-action:pan-x pan-y!important}
 #shortListPanel .card-row-workspace.relphi-is-pinching,#shortListPanel .card-row-workspace.relphi-is-pinching *{touch-action:none!important;user-select:none!important;-webkit-user-select:none!important}
 #shortListPanel .card-row-workspace>.short-list-row.card-row-board{position:absolute!important;inset:0 auto auto 0!important;margin:0!important;padding:0!important;overflow:visible!important;background:transparent!important;transform-origin:0 0!important}
 #shortListPanel .card-row-workspace>.short-list-row.card-row-board>.card-row-item{position:absolute!important;width:var(--row-envelope-w,174px)!important;min-width:var(--row-envelope-w,174px)!important;max-width:var(--row-envelope-w,174px)!important;height:auto!important;min-height:0!important;margin:0!important;padding:0!important;overflow:visible!important;transform:rotate(var(--row-card-rotation,0deg)) scale(var(--row-card-scale,1))!important;transform-origin:50% 50%!important}
@@ -64,7 +74,7 @@
 #shortListPanel .relphi-tool-row button,#shortListPanel .relphi-tool-flyout>button{min-height:1.9rem!important;margin:0!important;padding:.3rem .48rem!important;border:1px solid rgba(17,17,17,.28)!important;border-radius:6px!important;background:#fff!important;color:#111!important;font:inherit!important;font-size:.68rem!important;font-weight:800!important}
 #shortListPanel .relphi-tool-row input[type="color"]{width:2.2rem!important;height:1.8rem!important;padding:.05rem!important;border:1px solid rgba(17,17,17,.22)!important;border-radius:6px!important;background:#fff!important}
 
-#shortListPanel .relphi-reading-options-drawer{position:fixed!important;top:1rem!important;left:1rem!important;right:auto!important;bottom:1rem!important;z-index:1900!important;display:flex!important;flex-direction:column!important;width:min(35rem,calc(100vw - 2rem))!important;max-width:calc(100vw - 2rem)!important;max-height:none!important;margin:0!important;border:1px solid rgba(17,17,17,.24)!important;border-radius:13px!important;background:#fffdf8!important;box-shadow:0 16px 38px rgba(0,0,0,.28)!important;text-align:left!important;overflow:hidden!important}
+#shortListPanel .relphi-reading-options-drawer{position:relative!important;z-index:2!important;display:flex!important;flex-direction:column!important;width:auto!important;max-width:none!important;max-height:none!important;margin:.5rem!important;border:1px solid rgba(17,17,17,.20)!important;border-radius:12px!important;background:#fffdf8!important;box-shadow:none!important;text-align:left!important;overflow:hidden!important}
 #shortListPanel .relphi-options-heading{display:flex!important;align-items:center!important;justify-content:space-between!important;padding:.75rem .85rem .45rem!important;border-bottom:1px solid #e5ddd4!important}
 #shortListPanel .relphi-options-heading .eyebrow{display:block!important;margin:0 0 .12rem!important;color:var(--relphi-board-red)!important;font-size:.6rem!important;font-weight:900!important;letter-spacing:.12em!important;text-transform:uppercase!important}
 #shortListPanel .relphi-options-heading h3{margin:0!important;font-size:1.05rem!important}
@@ -95,13 +105,17 @@
 .relphi-focus-open{overflow:hidden!important}
 .relphi-focus-reader{position:fixed!important;inset:0!important;z-index:100000!important;display:grid!important;place-items:center!important;padding:1.25rem!important;background:rgba(17,12,10,.72)!important;backdrop-filter:blur(8px)!important}
 .relphi-focus-shell{display:grid!important;grid-template-rows:auto minmax(0,1fr) auto!important;width:min(76rem,calc(100vw - 2rem))!important;height:min(54rem,calc(100dvh - 2rem))!important;max-height:calc(100dvh - 2rem)!important;border:1px solid rgba(255,255,255,.5)!important;border-radius:18px!important;background:#fffdf8!important;box-shadow:0 24px 70px rgba(0,0,0,.42)!important;overflow-x:hidden!important;overflow-y:auto!important}
-.relphi-focus-position-panel{display:grid!important;grid-template-columns:2.2rem minmax(0,1fr) 2.2rem!important;align-items:center!important;gap:.6rem!important;box-sizing:border-box!important;min-width:0!important;min-height:0!important;max-height:none!important;padding:.55rem .8rem!important;border-top:2px solid rgba(220,31,24,.48)!important;border-bottom:1px solid #ddd4cb!important;background:#fff8ee!important;text-align:center!important;overflow:visible!important}.relphi-focus-position{grid-column:2!important;min-width:0!important}.relphi-focus-position-panel>.relphi-focus-close{grid-column:3!important;justify-self:end!important;display:grid!important;visibility:visible!important;opacity:1!important;pointer-events:auto!important;z-index:5!important}
+.relphi-focus-position-panel{display:grid!important;grid-template-columns:2.2rem minmax(0,1fr) 2.2rem!important;align-items:center!important;gap:.6rem!important;box-sizing:border-box!important;min-width:0!important;min-height:0!important;max-height:none!important;padding:.55rem .8rem!important;border-top:2px solid rgba(220,31,24,.48)!important;border-bottom:1px solid #ddd4cb!important;background:#fff8ee!important;text-align:center!important;overflow:visible!important}.relphi-focus-position{grid-column:2!important;grid-row:1!important;min-width:0!important;justify-self:center!important;text-align:center!important}.relphi-focus-position-panel>.relphi-focus-close{grid-column:3!important;grid-row:1!important;justify-self:end!important;display:grid!important;visibility:visible!important;opacity:1!important;pointer-events:auto!important;z-index:5!important}
+.relphi-focus-art-actions{display:flex!important;justify-content:center!important;align-items:center!important;width:100%!important;min-height:2.35rem!important;margin:.55rem 0 0!important}
+.relphi-focus-art-actions:has(.relphi-focus-unpack[hidden]){display:none!important}
+.relphi-focus-unpack{min-height:2rem!important;margin:0!important;padding:.38rem .68rem!important;border:1.5px solid #a61712!important;border-radius:999px!important;background:#fff!important;color:#a61712!important;font:inherit!important;font-size:.68rem!important;font-weight:900!important;line-height:1!important;cursor:pointer!important}
+.relphi-focus-unpack:hover,.relphi-focus-unpack:focus-visible{background:#fff3f1!important}
 .relphi-focus-position{display:block!important;width:100%!important;max-width:60rem!important;max-height:none!important;margin:0!important;padding:0!important;border:0!important;background:transparent!important;color:#171412!important;font-size:clamp(1.05rem,1.9vw,1.45rem)!important;font-weight:900!important;line-height:1.24!important;white-space:normal!important;overflow:visible!important;text-overflow:clip!important;overflow-wrap:anywhere!important;word-break:normal!important}
 .relphi-focus-reversed-badge{display:inline-flex!important;align-items:center!important;justify-content:center!important;min-height:1.85rem!important;padding:.28rem .55rem!important;border:1.5px solid #b81712!important;border-radius:999px!important;background:#fff3f1!important;color:#a51612!important;font-size:.68rem!important;font-weight:950!important;letter-spacing:.07em!important;text-transform:uppercase!important;line-height:1!important}
 .relphi-focus-reversed-badge[hidden]{display:none!important}
 .relphi-focus-close{display:grid!important;place-items:center!important;width:2.2rem!important;height:2.2rem!important;margin:0!important;padding:0!important;border:1px solid #bbb1a8!important;border-radius:50%!important;background:#fff!important;color:#111!important;font-size:1.35rem!important}
 .relphi-focus-main{display:grid!important;grid-template-columns:minmax(16rem,.82fr) minmax(0,1.45fr)!important;gap:1rem!important;min-height:0!important;padding:.85rem!important;overflow:hidden!important;touch-action:pan-y!important;background:#fffdf8!important}
-.relphi-focus-art-pane{display:grid!important;box-sizing:border-box!important;place-items:start center!important;min-width:0!important;min-height:0!important;padding:.2rem!important;overflow:auto!important}
+.relphi-focus-art-pane{display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:flex-start!important;box-sizing:border-box!important;min-width:0!important;min-height:0!important;padding:.2rem!important;overflow:auto!important}
 .relphi-focus-art-frame{position:relative!important;display:block!important;box-sizing:border-box!important;width:min(100%,23rem)!important;height:auto!important;aspect-ratio:500/866!important;min-width:0!important;min-height:0!important;max-height:none!important;padding:0!important;overflow:hidden!important}
 .relphi-focus-art{position:absolute!important;inset:0!important;display:block!important;box-sizing:border-box!important;width:100%!important;height:100%!important;max-width:100%!important;max-height:100%!important;object-fit:contain!important;border:0!important;border-radius:0!important;background:transparent!important;box-shadow:none!important;clip-path:none!important;transform:none!important;transform-origin:50% 50%!important}
 .relphi-focus-art.is-reversed{transform:rotate(180deg)!important}
@@ -142,10 +156,17 @@
     aspect-ratio:500/866!important;
     overflow:visible!important
   }
+  .relphi-focus-reader.has-long-referent .relphi-focus-shell{overflow-x:hidden!important;overflow-y:auto!important}
+  .relphi-focus-reader.has-long-referent .relphi-focus-main{min-height:min(38rem,calc(100dvh - 11rem))!important}
+  .relphi-focus-reader.has-long-referent .relphi-focus-art-pane{min-height:min(36rem,calc(100dvh - 13rem))!important}
+  .relphi-focus-reader.has-long-referent .relphi-focus-art-frame{height:min(36rem,calc(100dvh - 13rem))!important}
 }
 
 @media(max-width:700px){
-  #shortListPanel .card-row-workspace{height:clamp(23rem,58dvh,36rem)!important;min-height:clamp(23rem,58dvh,36rem)!important;max-height:clamp(23rem,58dvh,36rem)!important}
+  #shortListPanel .relphi-sacred-card-source{grid-template-columns:1fr!important}
+  #shortListPanel .relphi-surface-readiness-message{align-items:stretch!important;flex-direction:column!important}
+  #shortListPanel .relphi-surface-readiness-message button{width:100%!important}
+  #shortListPanel .card-row-workspace{height:clamp(23rem,58svh,36rem)!important;min-height:clamp(23rem,58svh,36rem)!important;max-height:clamp(23rem,58svh,36rem)!important}
   #shortListPanel .card-row-drawing-board>summary{padding-left:3.6rem!important}
   #shortListPanel .drawing-board-top-actions{gap:.28rem!important;margin:.3rem .35rem!important;width:calc(100% - .7rem)!important}
   #shortListPanel .drawing-board-top-actions>button{padding:.4rem .48rem!important;font-size:.68rem!important}
@@ -189,18 +210,80 @@
 #shortListPanel .relphi-board-reading-text{display:grid!important;gap:.65rem!important;margin:.8rem .5rem .5rem!important;padding:.8rem!important;border:1px solid var(--relphi-board-line)!important;border-radius:12px!important;background:var(--relphi-board-paper)!important;color:var(--relphi-board-ink)!important}
 #shortListPanel .relphi-board-reading-text[hidden]{display:none!important}
 #shortListPanel .relphi-board-reading-text>header{display:flex!important;align-items:flex-start!important;justify-content:space-between!important;gap:.7rem!important;flex-wrap:wrap!important;text-align:left!important}
-#shortListPanel .relphi-board-reading-text>header>div{display:grid!important;gap:.12rem!important}
+#shortListPanel .relphi-board-reading-text>header>div:first-child{display:grid!important;gap:.12rem!important}
 #shortListPanel .relphi-board-reading-text>header strong{font-size:.9rem!important}
 #shortListPanel .relphi-board-reading-text>header span{font-size:.7rem!important;color:#655d56!important}
-#shortListPanel .relphi-copy-reading{min-height:2.15rem!important;margin:0!important;padding:.4rem .72rem!important;border:1.5px solid var(--relphi-board-red)!important;border-radius:8px!important;background:var(--relphi-board-red)!important;color:#fff!important;font:inherit!important;font-size:.72rem!important;font-weight:900!important;line-height:1!important}
 #shortListPanel .relphi-reading-text-list{display:grid!important;gap:.55rem!important}
 #shortListPanel .relphi-reading-text-card{display:grid!important;gap:.28rem!important;min-width:0!important;max-width:100%!important;padding:.68rem .75rem!important;border:1px solid #ded5cc!important;border-radius:9px!important;background:#fff!important;text-align:left!important;overflow:visible!important}
 #shortListPanel .relphi-reading-text-position{display:block!important;min-width:0!important;max-width:100%!important;max-height:none!important;margin:0!important;color:#5f5751!important;font-size:.7rem!important;font-weight:850!important;line-height:1.25!important;white-space:normal!important;overflow:visible!important;text-overflow:clip!important;overflow-wrap:anywhere!important;word-break:normal!important}
 #shortListPanel .relphi-reading-text-card h3{margin:0!important;color:#171412!important;font-size:.9rem!important;line-height:1.2!important}
 #shortListPanel .relphi-reading-text-association{margin:0!important;color:#655d56!important;font-size:.72rem!important;font-weight:750!important;line-height:1.35!important}
 #shortListPanel .relphi-reading-text-interpretation{margin:.08rem 0 0!important;color:#171412!important;font-size:.82rem!important;line-height:1.48!important}
-#shortListPanel .relphi-copy-reading-status{min-height:1em!important;color:#655d56!important;font-size:.68rem!important}
-@media(max-width:700px){#shortListPanel .relphi-board-reading-text>header{align-items:stretch!important}#shortListPanel .relphi-copy-reading{width:100%!important}}
+
+/* Quiet document utilities live between the felt and Reading Text. Draw remains
+   the only red primary action in the Drawing Board command hierarchy. */
+#shortListPanel .relphi-board-document-actions{
+  display:grid!important;
+  grid-template-columns:minmax(0,1fr)!important;
+  gap:.28rem!important;
+  margin:.42rem .5rem .1rem!important;
+  padding:0!important;
+  background:transparent!important;
+}
+#shortListPanel .relphi-board-document-buttons{
+  display:flex!important;
+  align-items:center!important;
+  justify-content:flex-end!important;
+  gap:.4rem!important;
+  flex-wrap:wrap!important;
+}
+#shortListPanel .relphi-board-document-button{
+  appearance:none!important;
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  min-height:2.15rem!important;
+  margin:0!important;
+  padding:.4rem .68rem!important;
+  border:1.25px solid #b9afa7!important;
+  border-radius:8px!important;
+  background:#fff!important;
+  color:#2f2925!important;
+  box-shadow:none!important;
+  font:inherit!important;
+  font-size:.7rem!important;
+  font-weight:850!important;
+  line-height:1!important;
+  white-space:nowrap!important;
+}
+#shortListPanel .relphi-board-document-button:hover,
+#shortListPanel .relphi-board-document-button:focus-visible{
+  outline:none!important;
+  border-color:#81766e!important;
+  background:#fbf8f4!important;
+}
+#shortListPanel .relphi-board-document-button:disabled{
+  opacity:.48!important;
+  cursor:not-allowed!important;
+}
+#shortListPanel .relphi-board-document-status{
+  min-height:.85em!important;
+  color:#655d56!important;
+  font-size:.64rem!important;
+  line-height:1.2!important;
+  text-align:right!important;
+}
+@media(max-width:700px){
+  #shortListPanel .relphi-board-document-actions{margin:.4rem .5rem .05rem!important}
+  #shortListPanel .relphi-board-document-buttons{
+    display:grid!important;
+    grid-template-columns:repeat(2,minmax(0,1fr))!important;
+    gap:.4rem!important;
+  }
+  #shortListPanel .relphi-board-document-button{width:100%!important}
+  #shortListPanel .relphi-board-document-status{text-align:left!important}
+}
+@media(max-width:700px){#shortListPanel .relphi-board-reading-text>header{align-items:stretch!important}}
 
 /* Save/export is permanent document chrome below the pannable canvas. */
 #shortListPanel .relphi-board-export{display:grid!important;gap:.65rem!important;margin:.8rem .5rem .5rem!important;padding:.75rem!important;border:1px solid var(--relphi-board-line)!important;border-radius:12px!important;background:var(--relphi-board-paper)!important;color:var(--relphi-board-ink)!important}
@@ -209,7 +292,6 @@
 #shortListPanel .relphi-board-export>header span{font-size:.7rem!important;color:#655d56!important}
 #shortListPanel .relphi-board-export .board-options-body{display:flex!important;align-items:center!important;gap:.4rem!important;flex-wrap:wrap!important}
 #shortListPanel .relphi-board-export button{min-height:2.15rem!important;margin:0!important;padding:.4rem .62rem!important;border:1.25px solid #aaa098!important;border-radius:8px!important;background:#fff!important;color:#111!important;font:inherit!important;font-size:.7rem!important;font-weight:800!important}
-#shortListPanel .relphi-board-export #snapshotCardRowArrangement{border-color:var(--relphi-board-red)!important;background:var(--relphi-board-red)!important;color:#fff!important}
 #shortListPanel .relphi-board-export .drawing-board-snapshot-status{flex:1 0 100%!important}
 
 @media(max-width:700px){
@@ -241,6 +323,32 @@
 #shortListPanel .relphi-draw-options>label:not(:first-child){min-height:2rem!important;padding:.32rem .42rem!important;font-size:.68rem!important}
 #shortListPanel .relphi-draw-options>label:nth-child(2){font-size:0!important}
 #shortListPanel .relphi-draw-options>label:nth-child(2)::after{content:'Labels';font-size:.68rem!important;font-weight:800!important}
+
+/* See What Surfaces has no Pack field, so its first child is a real checkbox,
+   not the full-width Pack row assumed by the generic Draw settings layout. */
+#shortListPanel .relphi-draw-options--surface>label,
+#shortListPanel .relphi-draw-options--surface>label:first-child,
+#shortListPanel .relphi-draw-options--surface>label:not(:first-child){
+  display:flex!important;
+  grid-column:auto!important;
+  align-items:center!important;
+  justify-content:flex-start!important;
+  gap:.35rem!important;
+  min-width:0!important;
+  width:100%!important;
+  min-height:2rem!important;
+  margin:0!important;
+  padding:.32rem .42rem!important;
+  border:1px solid #d0c7bf!important;
+  border-radius:7px!important;
+  background:#fff!important;
+  font-size:.68rem!important;
+  font-weight:800!important;
+  white-space:normal!important;
+  overflow-wrap:anywhere!important
+}
+#shortListPanel .relphi-draw-options--surface>label:nth-child(2){font-size:.68rem!important}
+#shortListPanel .relphi-draw-options--surface>label:nth-child(2)::after{content:none!important;display:none!important}
 @media(max-width:700px){
   #shortListPanel .relphi-reading-options-drawer{top:.35rem!important;bottom:.35rem!important;left:.35rem!important;width:calc(100% - .7rem)!important;max-width:calc(100% - .7rem)!important}
   #shortListPanel .relphi-draw-options{grid-template-columns:repeat(3,minmax(0,1fr))!important}
@@ -255,3 +363,2568 @@
 
 /* The question / position is ceremonial reading chrome, not Ledger content. Keep it static while the card entry scrolls. */
 .relphi-focus-entry>.eyebrow{display:none!important}
+
+
+/* Tarot Ledger Referents v1 */
+#shortListPanel .relphi-options-note-visible{display:block!important}
+#shortListPanel .relphi-referent-paths{display:grid!important;grid-template-columns:1fr!important;gap:.4rem!important;overflow:visible!important;border:0!important}
+#shortListPanel .relphi-referent-path{display:grid!important;grid-template-columns:1fr!important;gap:.14rem!important;width:100%!important;min-height:3rem!important;margin:0!important;padding:.58rem .7rem!important;border:1px solid #d8cec5!important;border-radius:9px!important;background:#fff!important;color:#3f3934!important;text-align:left!important;font:inherit!important;box-shadow:none!important;white-space:normal!important}
+#shortListPanel .relphi-referent-path strong{font-size:.76rem!important;font-weight:900!important}
+#shortListPanel .relphi-referent-path span{font-size:.65rem!important;font-weight:600!important;line-height:1.3!important;color:#6b625b!important}
+#shortListPanel .relphi-referent-path:hover:not(:disabled){border-color:#b7aaa0!important;background:#fbf7f3!important;color:#171412!important}
+#shortListPanel .relphi-referent-path.is-active{border-color:var(--relphi-board-red)!important;background:#fff8f7!important;color:#a61712!important;box-shadow:inset 3px 0 0 var(--relphi-board-red)!important}
+#shortListPanel .relphi-referent-path:focus-visible{outline:2px solid var(--relphi-board-red)!important;outline-offset:1px!important}
+#shortListPanel .relphi-referent-intro,#shortListPanel .relphi-referent-empty{margin:0!important;padding:.7rem!important;border:1px dashed #d6ccc3!important;border-radius:9px!important;background:#fbf8f4!important;color:#655d56!important;font-size:.73rem!important;line-height:1.4!important}
+#shortListPanel .relphi-referent-panel{display:grid!important;gap:.62rem!important;padding:.7rem!important;border:1px solid #ddd4cb!important;border-radius:10px!important;background:#fff!important}
+#shortListPanel .relphi-referent-panel>strong{font-size:.88rem!important}
+#shortListPanel .relphi-referent-panel>p{margin:0!important;font-size:.73rem!important;line-height:1.4!important;color:#5d554f!important}
+#shortListPanel .relphi-options-subhead>div{display:grid!important;gap:.08rem!important}
+#shortListPanel .relphi-options-subhead>div span,#shortListPanel .relphi-options-subhead>span{font-size:.65rem!important;font-weight:600!important;color:#6b625b!important}
+#shortListPanel .relphi-bulk-referents{display:grid!important;gap:.28rem!important;margin:0!important;font-size:.72rem!important;font-weight:800!important}
+#shortListPanel .relphi-bulk-referents textarea,#shortListPanel .relphi-suggestion-row input[type="text"]{width:100%!important;box-sizing:border-box!important;margin:0!important;padding:.45rem .52rem!important;border:1px solid #bfb5ac!important;border-radius:7px!important;background:#fff!important;color:#111!important;font:inherit!important;font-size:.76rem!important;line-height:1.35!important}
+#shortListPanel #relphiParseReferents,#shortListPanel #relphiBuildQuestions,#shortListPanel #relphiAcceptSuggestions,#shortListPanel .relphi-surface-actions button{min-height:2.15rem!important;margin:0!important;padding:.42rem .62rem!important;border:1px solid #bfb5ac!important;border-radius:7px!important;background:#fff!important;color:#111!important;font:inherit!important;font-size:.72rem!important;font-weight:850!important}
+#shortListPanel .relphi-building-grid{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:.45rem!important}
+#shortListPanel .relphi-building-grid label{display:grid!important;gap:.25rem!important;font-size:.7rem!important;font-weight:800!important}
+#shortListPanel .relphi-building-grid select{width:100%!important;min-height:2.15rem!important;margin:0!important;padding:.36rem .48rem!important;border:1px solid #bfb5ac!important;border-radius:7px!important;background:#fff!important;font:inherit!important;font-size:.74rem!important}
+#shortListPanel .relphi-building-grid label:last-child{grid-column:1/-1!important}
+#shortListPanel .relphi-suggestions-review{display:grid!important;gap:.42rem!important}
+#shortListPanel .relphi-suggestion-row{display:grid!important;grid-template-columns:auto 1.3rem minmax(0,1fr)!important;align-items:center!important;gap:.35rem!important}
+#shortListPanel .relphi-suggestion-row>span{font-size:.68rem!important;font-weight:900!important;text-align:center!important}
+#shortListPanel .relphi-surface-actions{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:.4rem!important}
+#shortListPanel .relphi-surface-actions #relphiSurfaceAll{grid-column:1/-1!important;border-color:var(--relphi-board-red)!important;color:#a61712!important}
+#shortListPanel .relphi-surface-draws{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:.42rem!important}
+#shortListPanel .relphi-surface-draws article{display:grid!important;gap:.16rem!important;padding:.55rem!important;border:1px solid #ddd4cb!important;border-radius:8px!important;background:#fbf8f4!important}
+#shortListPanel .relphi-surface-draws strong{font-size:.72rem!important}
+#shortListPanel .relphi-surface-draws span{font-size:.62rem!important;line-height:1.3!important;color:#655d56!important}
+#shortListPanel .relphi-template-preview,#shortListPanel .relphi-referent-review ol{display:grid!important;gap:.28rem!important;margin:0!important;padding-left:1.4rem!important;font-size:.72rem!important;line-height:1.35!important}
+#shortListPanel .relphi-referent-review{display:grid!important;gap:.35rem!important;padding:.62rem .7rem!important;border-left:3px solid var(--relphi-board-red)!important;border-radius:7px!important;background:#fff8ee!important}
+#shortListPanel .relphi-referent-review>strong{font-size:.75rem!important}
+#shortListPanel .relphi-referent-settings{display:grid!important;gap:.5rem!important;margin:0!important;border-top:1px solid #e4dbd2!important;padding-top:.5rem!important}
+#shortListPanel .relphi-referent-settings-title{display:block!important;font-size:.7rem!important;font-weight:850!important}
+#shortListPanel .relphi-referent-settings .relphi-draw-options{margin-top:0!important}
+@media(max-width:700px){
+  #shortListPanel .drawing-board-mode-switch{margin-left:.4rem!important;margin-right:.4rem!important}
+  #shortListPanel .drawing-board-mode-switch>button{flex:1 1 50%!important;text-align:center!important}
+  #shortListPanel .relphi-global-board-actions{display:grid!important;grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important;gap:.35rem!important;margin:.4rem!important;width:calc(100% - .8rem)!important}
+  #shortListPanel .relphi-global-board-actions>button{width:100%!important}
+  #shortListPanel .drawing-board-top-actions{display:grid!important;grid-template-columns:2.25rem 2.25rem minmax(0,1fr)!important;gap:.35rem!important;margin:.4rem!important;width:calc(100% - .8rem)!important}
+  #shortListPanel .drawing-board-top-actions>#clearShortListCardsOnly{width:100%!important}
+  #shortListPanel .relphi-reading-options-drawer{margin:.4rem!important}
+  #shortListPanel .relphi-options-body{padding:.65rem!important}
+  #shortListPanel .relphi-building-grid,#shortListPanel .relphi-surface-draws{grid-template-columns:1fr!important}
+  #shortListPanel .relphi-building-grid label:last-child,#shortListPanel .relphi-surface-actions #relphiSurfaceAll{grid-column:auto!important}
+}
+
+
+/* Referents mode: authoritative in-flow sizing. Legacy Options rules above must not turn this back into an absolute overlay. */
+#shortListPanel.relphi-referents-mode .relphi-reading-options-drawer{
+  position:relative!important;
+  inset:auto!important;
+  top:auto!important;
+  right:auto!important;
+  bottom:auto!important;
+  left:auto!important;
+  display:flex!important;
+  flex-direction:column!important;
+  box-sizing:border-box!important;
+  width:calc(100% - 1rem)!important;
+  max-width:none!important;
+  height:clamp(30rem,68dvh,44rem)!important;
+  min-height:30rem!important;
+  max-height:44rem!important;
+  margin:.5rem!important;
+}
+#shortListPanel.relphi-referents-mode .relphi-options-body{
+  flex:1 1 auto!important;
+  min-height:0!important;
+  overflow-y:auto!important;
+  overflow-x:hidden!important;
+}
+@media(max-width:700px){
+  #shortListPanel.relphi-referents-mode .relphi-reading-options-drawer{
+    position:relative!important;
+    inset:auto!important;
+    top:auto!important;
+    right:auto!important;
+    bottom:auto!important;
+    left:auto!important;
+    width:calc(100% - .8rem)!important;
+    max-width:none!important;
+    height:clamp(30rem,72dvh,42rem)!important;
+    min-height:30rem!important;
+    max-height:42rem!important;
+    margin:.4rem!important;
+  }
+}
+
+
+/* Sacred reading setup: See What Surfaces + Attune to the Referent */
+#shortListPanel{position:relative}
+#shortListPanel .relphi-sacred-card-source{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:.45rem!important;margin:0 0 .6rem!important;padding:.55rem!important;border:1px solid #ddd4cb!important;border-radius:9px!important;background:#fbf8f4!important}
+#shortListPanel .relphi-sacred-card-source legend{padding:0 .25rem!important;color:#5f564f!important;font-size:.68rem!important;font-weight:900!important}
+#shortListPanel .relphi-sacred-card-source-choice{display:grid!important;grid-template-columns:1.1rem minmax(0,1fr)!important;gap:.5rem!important;align-items:start!important;margin:0!important;padding:.58rem .62rem!important;border:1px solid #d8cfc7!important;border-radius:8px!important;background:#fff!important;cursor:pointer!important}
+#shortListPanel .relphi-sacred-card-source-choice:has(input:checked){border-color:rgba(184,23,18,.55)!important;background:#fff4f2!important;box-shadow:inset 3px 0 0 var(--relphi-board-red)!important}
+#shortListPanel .relphi-sacred-card-source-choice input{width:1rem!important;height:1rem!important;margin:.14rem 0 0!important;accent-color:var(--relphi-board-red)!important}
+#shortListPanel .relphi-sacred-card-source-choice span{display:grid!important;gap:.1rem!important}
+#shortListPanel .relphi-sacred-card-source-choice strong{font-size:.74rem!important;font-weight:950!important;line-height:1.2!important}
+#shortListPanel .relphi-sacred-card-source-choice small{font-size:.62rem!important;font-weight:650!important;line-height:1.28!important;color:#6b625b!important}
+#shortListPanel .relphi-surface-question-choices{display:grid!important;grid-template-columns:1fr!important;gap:.38rem!important}
+#shortListPanel .relphi-surface-select-all{display:grid!important;grid-template-columns:1.1rem minmax(0,1fr)!important;gap:.55rem!important;align-items:start!important;margin:0 0 .08rem!important;padding:.52rem .62rem!important;border:1px solid rgba(184,23,18,.35)!important;border-radius:8px!important;background:#fbf7f2!important;color:#2f2925!important;cursor:pointer!important}
+#shortListPanel .relphi-surface-select-all:has(input:checked){border-color:rgba(184,23,18,.55)!important;background:#fff3f1!important;box-shadow:inset 3px 0 0 var(--relphi-board-red)!important}
+#shortListPanel .relphi-surface-select-all input{width:1rem!important;height:1rem!important;margin:.14rem 0 0!important;accent-color:var(--relphi-board-red)!important}
+#shortListPanel .relphi-surface-select-all span{display:grid!important;gap:.1rem!important}
+#shortListPanel .relphi-surface-select-all strong{font-size:.74rem!important;font-weight:950!important;line-height:1.2!important}
+#shortListPanel .relphi-surface-select-all small{font-size:.62rem!important;font-weight:650!important;line-height:1.25!important;color:#6b625b!important}
+#shortListPanel .relphi-surface-question-choice{display:grid!important;grid-template-columns:1.1rem minmax(0,1fr)!important;gap:.55rem!important;align-items:start!important;margin:0!important;padding:.58rem .62rem!important;border:1px solid #ddd4cb!important;border-radius:8px!important;background:#fff!important;color:#2f2925!important;cursor:pointer!important}
+#shortListPanel .relphi-surface-question-choice:has(input:checked){border-color:rgba(184,23,18,.48)!important;background:#fff8f7!important;box-shadow:inset 3px 0 0 var(--relphi-board-red)!important}
+#shortListPanel .relphi-surface-question-choice input{width:1rem!important;height:1rem!important;margin:.14rem 0 0!important;accent-color:var(--relphi-board-red)!important}
+#shortListPanel .relphi-surface-question-choice span{display:grid!important;gap:.12rem!important}
+#shortListPanel .relphi-surface-question-choice strong{font-size:.76rem!important;font-weight:900!important;line-height:1.25!important}
+#shortListPanel .relphi-surface-question-choice small{font-size:.63rem!important;font-weight:650!important;line-height:1.25!important;color:#6b625b!important}
+#shortListPanel .relphi-surface-choice-note{margin:0!important;padding:.55rem .62rem!important;border-left:3px solid #d9cdc4!important;background:#fbf8f4!important;color:#655d56!important;font-size:.69rem!important;line-height:1.38!important}
+#shortListPanel .relphi-surface-readiness{display:grid!important;gap:.7rem!important;margin:.1rem 0 0!important;padding:.72rem .78rem!important;border:1px solid #ddd1c8!important;border-radius:10px!important;background:#fbf8f4!important;color:#4e4741!important}
+#shortListPanel .relphi-surface-readiness.is-ready{border-color:rgba(184,23,18,.42)!important;background:#fff8f6!important;box-shadow:inset 0 0 0 1px rgba(184,23,18,.06)!important}
+#shortListPanel .relphi-surface-readiness-rail{position:relative!important;display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:.2rem!important;align-items:start!important;padding:.05rem .2rem 0!important}
+#shortListPanel .relphi-surface-readiness-rail::before{content:'';position:absolute!important;left:12.5%!important;right:12.5%!important;top:.48rem!important;height:1px!important;background:#cfc3ba!important;z-index:0!important}
+#shortListPanel .relphi-surface-readiness-step{position:relative!important;z-index:1!important;display:grid!important;justify-items:center!important;gap:.16rem!important;min-width:0!important;text-align:center!important}
+#shortListPanel .relphi-surface-readiness-step i{display:grid!important;place-items:center!important;width:.8rem!important;height:.8rem!important;border:2px solid #b9afa7!important;border-radius:50%!important;background:#fbf8f4!important;box-shadow:0 0 0 3px #fbf8f4!important}
+#shortListPanel .relphi-surface-readiness-step.is-complete i{border-color:var(--relphi-board-red)!important;background:var(--relphi-board-red)!important}
+#shortListPanel .relphi-surface-readiness-step.is-success i::after{content:'✓';color:#fff!important;font-size:.5rem!important;font-style:normal!important;font-weight:950!important;line-height:1!important}
+#shortListPanel .relphi-surface-readiness-step strong{font-size:.65rem!important;font-weight:900!important;line-height:1.15!important;color:#4e4741!important}
+#shortListPanel .relphi-surface-readiness-step small{font-size:.58rem!important;font-weight:650!important;line-height:1.2!important;color:#786f68!important}
+#shortListPanel .relphi-surface-readiness.is-ready .relphi-surface-readiness-rail::before{background:rgba(184,23,18,.42)!important}
+#shortListPanel .relphi-surface-readiness-message{display:flex!important;align-items:center!important;justify-content:space-between!important;gap:.7rem!important;padding:.55rem .6rem!important;border-top:1px solid #e2d8d0!important}
+#shortListPanel .relphi-surface-readiness-message span{display:grid!important;gap:.12rem!important;min-width:0!important}
+#shortListPanel .relphi-surface-readiness-message strong{font-size:.74rem!important;font-weight:950!important;line-height:1.25!important;color:#7d1713!important}
+#shortListPanel .relphi-surface-readiness-message small{font-size:.63rem!important;font-weight:650!important;line-height:1.3!important;color:#6d625b!important}
+#shortListPanel .relphi-surface-readiness-message button{flex:0 0 auto!important;min-height:2.15rem!important;padding:.4rem .6rem!important;border:1.5px solid var(--relphi-board-red)!important;border-radius:8px!important;background:var(--relphi-board-red)!important;color:#fff!important;font:inherit!important;font-size:.69rem!important;font-weight:900!important}
+#shortListPanel .relphi-surface-readiness-message button[hidden]{display:none!important}
+#shortListPanel .relphi-options-commitbar .primary:disabled{opacity:.42!important;cursor:not-allowed!important}
+
+#shortListPanel .relphi-board-toast{position:absolute!important;right:clamp(.6rem,2vw,1rem)!important;top:clamp(4.2rem,8vw,5.4rem)!important;z-index:80!important;width:min(25rem,calc(100% - 1.2rem))!important;box-sizing:border-box!important;padding:.78rem 2.3rem .78rem .85rem!important;border:1px solid rgba(184,23,18,.32)!important;border-radius:10px!important;background:#fffdf8!important;box-shadow:0 12px 32px rgba(40,31,26,.18)!important;color:#28221e!important}
+#shortListPanel .relphi-board-toast .eyebrow{display:block!important;margin:0 0 .18rem!important;color:#a61712!important;font-size:.62rem!important;font-weight:950!important;letter-spacing:.09em!important;text-transform:uppercase!important}
+#shortListPanel .relphi-board-toast p{margin:0!important;font-size:.72rem!important;font-weight:650!important;line-height:1.42!important}
+#shortListPanel .relphi-board-toast-action{margin:.62rem 0 0!important;min-height:2.2rem!important;padding:.45rem .72rem!important;border:1px solid #a61712!important;border-radius:7px!important;background:#a61712!important;color:#fff!important;font:inherit!important;font-size:.7rem!important;font-weight:900!important}
+#shortListPanel .relphi-board-toast-close{position:absolute!important;right:.48rem!important;top:.42rem!important;width:1.55rem!important;height:1.55rem!important;padding:0!important;border:0!important;background:transparent!important;color:#5e554f!important;font-size:1.15rem!important;line-height:1!important}
+
+.relphi-attune-reader{position:fixed!important;inset:0!important;z-index:2147482500!important;display:grid!important;place-items:center!important;padding:clamp(.8rem,3vw,1.5rem)!important;background:rgba(31,25,21,.58)!important;backdrop-filter:blur(5px)!important;font-family:Montserrat,Arial,sans-serif!important}
+.relphi-attune-reader,.relphi-attune-reader *{font-family:Montserrat,Arial,sans-serif!important}
+.relphi-attune-shell{position:relative!important;font-family:Montserrat,Arial,sans-serif!important;width:min(42rem,100%)!important;max-height:min(42rem,calc(100dvh - 1.6rem))!important;overflow:auto!important;box-sizing:border-box!important;padding:clamp(1.25rem,3.5vw,2rem)!important;border:1px solid #d9cec5!important;border-radius:16px!important;background:#fffdf8!important;box-shadow:0 26px 70px rgba(27,21,17,.28)!important;color:#211c18!important;text-align:center!important}
+.relphi-attune-shell>.eyebrow{display:block!important;margin:0 0 .55rem!important;color:#a61712!important;font-size:.68rem!important;font-weight:950!important;letter-spacing:.11em!important;text-transform:uppercase!important}
+.relphi-attune-shell h2{max-width:34rem!important;margin:.15rem auto .65rem!important;font-family:Montserrat,Arial,sans-serif!important;font-size:clamp(1.55rem,4vw,2.4rem)!important;font-weight:650!important;line-height:1.18!important;text-wrap:balance!important}
+.relphi-attune-pack{margin:.1rem 0 .9rem!important;color:#6c625b!important;font-size:.72rem!important;font-weight:800!important}
+.relphi-attune-note{max-width:31rem!important;margin:0 auto 1.25rem!important;color:#514942!important;font-size:.82rem!important;line-height:1.5!important}
+.relphi-attune-close{position:absolute!important;right:.65rem!important;top:.55rem!important;z-index:3!important;width:2rem!important;height:2rem!important;padding:0!important;border:0!important;background:#fffdf8!important;color:#5a514a!important;font-size:1.5rem!important;line-height:1!important}
+.relphi-attune-actions{display:grid!important;grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important;gap:.55rem!important;max-width:31rem!important;margin:0 auto!important}
+.relphi-attune-actions--single{grid-template-columns:minmax(0,1fr)!important}
+.relphi-attune-physical-instruction{max-width:31rem!important;margin:0 auto .85rem!important;padding:.62rem .72rem!important;border-left:3px solid #b81712!important;border-radius:6px!important;background:#fff5f2!important;color:#4f4640!important;font-size:.76rem!important;font-weight:650!important;line-height:1.42!important;text-align:left!important}
+.relphi-attune-actions button{min-height:3rem!important;padding:.68rem .8rem!important;border:1px solid #bfb5ac!important;border-radius:9px!important;background:#fff!important;color:#211c18!important;font:inherit!important;font-size:.76rem!important;font-weight:900!important}
+.relphi-attune-actions button.primary{border-color:#a61712!important;background:#a61712!important;color:#fff!important}
+.relphi-attune-search{display:grid!important;gap:.55rem!important;margin:1rem auto 0!important;max-width:34rem!important;padding-top:1rem!important;border-top:1px solid #e4dad2!important;text-align:left!important}
+.relphi-attune-search[hidden]{display:none!important}
+.relphi-attune-search label{display:grid!important;gap:.3rem!important;font-size:.7rem!important;font-weight:850!important}
+.relphi-attune-orientation{display:flex!important;align-items:center!important;gap:.8rem!important;margin:0!important;padding:.55rem .65rem!important;border:1px solid #d9cec5!important;border-radius:8px!important;background:#fbf8f4!important}
+.relphi-attune-orientation legend{padding:0 .2rem!important;color:#5e554f!important;font-size:.66rem!important;font-weight:900!important}
+.relphi-attune-orientation label{display:inline-flex!important;grid-template-columns:none!important;align-items:center!important;gap:.3rem!important;font-size:.7rem!important;font-weight:850!important}
+.relphi-attune-orientation input{width:auto!important;min-width:1rem!important;height:1rem!important;min-height:0!important;padding:0!important;accent-color:#b81712!important}
+.relphi-attune-orientation-note{margin:0!important;padding:.5rem .62rem!important;border:1px solid #ded5cd!important;border-radius:8px!important;background:#fbf8f4!important;color:#655d56!important;font-size:.69rem!important;line-height:1.35!important}
+.relphi-attune-advanced{margin:0!important;padding:0!important;border:1px solid #d9cec5!important;border-radius:8px!important;background:#fbf8f4!important;overflow:hidden!important}
+.relphi-attune-advanced>summary{display:flex!important;align-items:center!important;gap:.32rem!important;padding:.48rem .62rem!important;color:#5e554f!important;cursor:pointer!important;font-size:.7rem!important;font-weight:850!important;line-height:1.2!important;list-style:none!important;user-select:none!important}
+.relphi-attune-advanced>summary::-webkit-details-marker{display:none!important}
+.relphi-attune-advanced>summary::before{content:'›';display:inline-block!important;font-size:.95rem!important;font-weight:900!important;line-height:1!important;transform:rotate(0deg);transition:transform .12s ease}
+.relphi-attune-advanced[open]>summary::before{transform:rotate(90deg)}
+.relphi-attune-advanced>div{display:grid!important;grid-template-columns:minmax(0,1fr) auto auto!important;gap:.55rem .8rem!important;align-items:end!important;padding:.15rem .62rem .62rem!important;border-top:1px solid #e3dad2!important}
+.relphi-attune-advanced>div>label{display:flex!important;align-items:center!important;gap:.32rem!important;min-width:0!important;margin:0!important;color:#2f2925!important;font-size:.68rem!important;font-weight:850!important}
+.relphi-attune-advanced>div>label:first-child{display:grid!important;grid-template-columns:1fr!important;gap:.22rem!important}
+.relphi-attune-advanced select{width:100%!important;min-width:0!important;min-height:2rem!important;padding:.35rem .45rem!important;border:1px solid #cfc5bc!important;border-radius:7px!important;background:#fff!important;color:#171412!important;font:inherit!important;font-size:.72rem!important}
+.relphi-attune-advanced input[type="checkbox"]{width:1rem!important;min-width:1rem!important;height:1rem!important;min-height:0!important;margin:0!important;padding:0!important;accent-color:#b81712!important}
+@media(max-width:560px){
+  .relphi-attune-advanced>div{grid-template-columns:1fr!important;align-items:start!important}
+}
+
+.relphi-attune-search input{width:100%!important;box-sizing:border-box!important;padding:.65rem .7rem!important;border:1px solid #bfb5ac!important;border-radius:8px!important;background:#fff!important;color:#111!important;font:inherit!important;font-size:.82rem!important}
+.relphi-attune-search-results{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:.42rem!important;max-height:17rem!important;overflow:auto!important}
+.relphi-attune-search-results>p{grid-column:1/-1!important;margin:0!important;padding:.7rem!important;border:1px dashed #d6ccc3!important;border-radius:8px!important;color:#655d56!important;font-size:.72rem!important;line-height:1.4!important}
+.relphi-attune-search-results button{display:grid!important;grid-template-columns:2.35rem minmax(0,1fr)!important;gap:.48rem!important;align-items:center!important;min-height:3.25rem!important;padding:.4rem!important;border:1px solid #ddd4cb!important;border-radius:8px!important;background:#fff!important;color:#2d2723!important;text-align:left!important;font:inherit!important;font-size:.68rem!important;font-weight:800!important}
+.relphi-attune-search-results img{width:2.35rem!important;height:3.2rem!important;object-fit:cover!important;border-radius:3px!important}
+body.relphi-attune-open{overflow:hidden!important}
+
+.relphi-surface-question-composer{position:fixed!important;inset:0!important;z-index:2147482600!important;display:grid!important;place-items:center!important;padding:clamp(.8rem,3vw,1.5rem)!important;background:rgba(31,25,21,.62)!important;backdrop-filter:blur(6px)!important;font-family:Montserrat,Arial,sans-serif!important}
+.relphi-surface-question-composer,.relphi-surface-question-composer *{box-sizing:border-box!important;font-family:Montserrat,Arial,sans-serif!important}
+.relphi-surface-composer-shell{position:relative!important;display:flex!important;flex-direction:column!important;width:min(58rem,100%)!important;max-height:calc(100dvh - 2rem)!important;padding:1.1rem!important;border:1px solid #d9cec5!important;border-radius:16px!important;background:#fffdf8!important;box-shadow:0 26px 70px rgba(27,21,17,.32)!important;color:#211c18!important;overflow:hidden!important}
+.relphi-surface-composer-shell>.eyebrow{display:block!important;margin:0 2.4rem .2rem 0!important;color:#a61712!important;font-size:.67rem!important;font-weight:950!important;letter-spacing:.11em!important;text-transform:uppercase!important}
+.relphi-surface-composer-shell>h2{margin:.05rem 2.5rem .3rem 0!important;font-size:clamp(1.35rem,3vw,2rem)!important;line-height:1.15!important}
+.relphi-surface-composer-intro{margin:0 2rem .9rem 0!important;color:#5e554f!important;font-size:.78rem!important;line-height:1.45!important}
+.relphi-surface-composer-status{margin:0 0 .75rem!important;padding:.48rem .58rem!important;border-left:3px solid #b81712!important;border-radius:6px!important;background:#fff3f1!important;color:#8d1713!important;font-size:.7rem!important;font-weight:800!important;line-height:1.35!important}
+.relphi-surface-composer-status[hidden]{display:none!important}
+.relphi-surface-composer-close{position:absolute!important;right:.7rem!important;top:.65rem!important;width:2rem!important;height:2rem!important;padding:0!important;border:1px solid #c8beb5!important;border-radius:50%!important;background:#fff!important;color:#211c18!important;font-size:1.25rem!important;line-height:1!important}
+.relphi-surface-composer-rows{display:grid!important;gap:.65rem!important;min-height:0!important;overflow:auto!important;padding:.1rem .2rem .25rem 0!important}
+.relphi-surface-composer-row{display:grid!important;grid-template-columns:auto minmax(0,1fr) auto!important;gap:.65rem!important;align-items:start!important;padding:.72rem!important;border:1px solid #ddd4cb!important;border-radius:10px!important;background:#fff!important}
+.relphi-surface-composer-select{display:grid!important;justify-items:center!important;gap:.18rem!important;padding-top:.18rem!important;color:#625950!important;font-size:.62rem!important;font-weight:850!important}
+.relphi-surface-composer-select input{width:1rem!important;height:1rem!important;accent-color:#b81712!important}
+.relphi-surface-composer-main{display:grid!important;gap:.55rem!important;min-width:0!important}
+.relphi-surface-composer-main textarea{display:block!important;width:100%!important;min-height:3.8rem!important;resize:vertical!important;padding:.58rem .65rem!important;border:1px solid #cfc5bc!important;border-radius:8px!important;background:#fffdf8!important;color:#171412!important;font-size:.82rem!important;font-weight:700!important;line-height:1.38!important}
+.relphi-surface-composer-controls{display:grid!important;grid-template-columns:minmax(10rem,1.35fr) minmax(8.5rem,.75fr) minmax(10rem,1fr) auto auto!important;gap:.5rem!important;align-items:end!important;padding:.58rem .62rem!important;border:1px solid #e1d8d0!important;border-radius:9px!important;background:#fbf8f4!important}
+.relphi-surface-composer-controls>label{display:grid!important;gap:.24rem!important;min-width:0!important;color:#625950!important;font-size:.64rem!important;font-weight:850!important}
+.relphi-surface-composer-controls select,.relphi-surface-composer-controls input[type="number"]{width:100%!important;min-width:0!important;min-height:2.15rem!important;padding:.38rem .46rem!important;border:1px solid #cfc5bc!important;border-radius:7px!important;background:#fff!important;color:#171412!important;font:inherit!important;font-size:.72rem!important}
+.relphi-surface-subpack-control{display:grid!important;grid-template-columns:minmax(0,1fr) 2.15rem!important;gap:.35rem!important}
+.relphi-surface-subpack-control button{width:2.15rem!important;height:2.15rem!important;padding:0!important;border:1px solid #bfb5ac!important;border-radius:7px!important;background:#fff!important;color:#211c18!important;font:900 1rem/1 Montserrat,Arial,sans-serif!important}
+.relphi-surface-card-count>div{display:grid!important;grid-template-columns:minmax(0,1fr) auto!important;gap:.32rem!important;align-items:center!important}
+.relphi-surface-card-count>div>span{white-space:nowrap!important;color:#746b64!important;font-size:.64rem!important;font-weight:800!important}
+.relphi-surface-toggle{display:flex!important;align-items:center!important;gap:.34rem!important;min-height:2.15rem!important;padding:0 .15rem!important;white-space:nowrap!important}
+.relphi-surface-toggle input[type="checkbox"]{width:1rem!important;height:1rem!important;margin:0!important;accent-color:#b81712!important}
+
+.relphi-surface-composer-advanced{min-width:0!important;margin:0!important;padding:0!important;border:0!important;background:transparent!important}
+.relphi-surface-composer-advanced>summary{display:flex!important;align-items:center!important;justify-content:space-between!important;gap:.7rem!important;min-width:0!important;padding:.22rem .08rem!important;color:#625950!important;cursor:pointer!important;list-style:none!important;user-select:none!important}
+.relphi-surface-composer-advanced>summary::-webkit-details-marker{display:none!important}
+.relphi-surface-composer-advanced>summary::before{content:'›';flex:0 0 auto!important;font-size:1rem!important;font-weight:900!important;line-height:1!important;transform:rotate(0deg);transition:transform .12s ease}
+.relphi-surface-composer-advanced[open]>summary::before{transform:rotate(90deg)}
+.relphi-surface-composer-advanced>summary strong{flex:0 0 auto!important;font-size:.67rem!important;font-weight:900!important;color:#4f4741!important}
+.relphi-surface-composer-advanced>summary span{min-width:0!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important;text-align:right!important;color:#746b64!important;font-size:.64rem!important;font-weight:650!important}
+.relphi-surface-composer-advanced-body{display:grid!important;gap:.55rem!important;margin:.4rem 0 0!important;padding:.6rem!important;border:1px solid #e1d8d0!important;border-radius:8px!important;background:#fbf8f4!important}
+.relphi-surface-composer-settings{display:grid!important;grid-template-columns:minmax(9rem,1.2fr) minmax(5.5rem,.55fr) minmax(9rem,1fr)!important;gap:.5rem!important}
+.relphi-surface-composer-settings label{display:grid!important;gap:.25rem!important;color:#625950!important;font-size:.64rem!important;font-weight:850!important}
+.relphi-surface-composer-settings select,.relphi-surface-composer-settings input{width:100%!important;min-height:2.25rem!important;padding:.4rem .5rem!important;border:1px solid #cfc5bc!important;border-radius:7px!important;background:#fff!important;color:#171412!important;font:inherit!important;font-size:.72rem!important}
+.relphi-surface-keyword-builder{display:grid!important;grid-template-columns:minmax(0,1fr) auto!important;gap:.45rem .65rem!important;align-items:end!important;padding:.62rem!important;border:1px solid #d8cec5!important;border-radius:9px!important;background:#fbf7f2!important}
+.relphi-surface-keyword-builder>label{display:grid!important;gap:.25rem!important;color:#625950!important;font-size:.64rem!important;font-weight:850!important}
+.relphi-surface-keyword-builder input[type="search"]{width:100%!important;min-width:0!important;min-height:2.25rem!important;padding:.4rem .5rem!important;border:1px solid #cfc5bc!important;border-radius:7px!important;background:#fff!important;color:#171412!important;font:inherit!important;font-size:.72rem!important}
+.relphi-surface-keyword-mode{display:flex!important;align-items:center!important;gap:.6rem!important;min-height:2.25rem!important}
+.relphi-surface-keyword-mode label,.relphi-surface-keyword-matches label{display:inline-flex!important;align-items:center!important;gap:.3rem!important;color:#514942!important;font-size:.68rem!important;font-weight:800!important}
+.relphi-surface-keyword-mode input,.relphi-surface-keyword-matches input{accent-color:#b81712!important}
+.relphi-surface-keyword-matches{grid-column:1/-1!important;display:flex!important;flex-wrap:wrap!important;gap:.35rem!important;max-height:8.5rem!important;overflow:auto!important}
+.relphi-surface-keyword-matches label{padding:.32rem .45rem!important;border:1px solid #ddd4cb!important;border-radius:7px!important;background:#fff!important}
+.relphi-surface-keyword-matches p,.relphi-surface-keyword-count{grid-column:1/-1!important;margin:0!important;color:#6b625b!important;font-size:.67rem!important;line-height:1.35!important}
+.relphi-surface-keyword-selected{grid-column:1/-1!important;display:flex!important;flex-wrap:wrap!important;gap:.35rem!important}
+.relphi-surface-keyword-selected button{min-height:1.9rem!important;padding:.3rem .52rem!important;border:1px solid rgba(220,31,24,.48)!important;border-radius:999px!important;background:#fff!important;color:#a61712!important;font:inherit!important;font-size:.66rem!important;font-weight:900!important}
+.relphi-surface-composer-remove{width:2rem!important;height:2rem!important;padding:0!important;border:1px solid #d4cac2!important;border-radius:50%!important;background:#fff!important;color:#615850!important;font-size:1rem!important}
+.relphi-surface-composer-footer{display:grid!important;grid-template-columns:auto auto 1fr auto!important;gap:.6rem!important;align-items:center!important;margin-top:.8rem!important;padding-top:.8rem!important;border-top:1px solid #e1d7cf!important}
+.relphi-surface-composer-footer button{min-height:2.5rem!important;padding:.48rem .78rem!important;border:1px solid #aaa098!important;border-radius:8px!important;background:#fff!important;color:#171412!important;font-size:.74rem!important;font-weight:900!important}
+.relphi-surface-composer-footer .primary{border-color:#b81712!important;background:#b81712!important;color:#fff!important}
+@media(max-width:700px){
+  .relphi-surface-question-composer{padding:.45rem!important;place-items:stretch!important}
+  .relphi-surface-composer-shell{width:100%!important;max-height:calc(100dvh - .9rem)!important;padding:.8rem!important}
+  .relphi-surface-composer-advanced>summary{align-items:flex-start!important}
+  .relphi-surface-composer-advanced>summary span{white-space:normal!important;text-align:right!important;line-height:1.25!important}
+  .relphi-surface-composer-controls{grid-template-columns:minmax(0,1fr) minmax(7.2rem,.55fr)!important;align-items:end!important}
+  .relphi-surface-composer-controls>label:nth-child(3){grid-column:1/-1!important}
+  .relphi-surface-toggle{min-height:1.8rem!important}
+  .relphi-surface-composer-settings{grid-template-columns:1fr 5.2rem!important}
+  .relphi-surface-composer-settings label:last-child{grid-column:1/-1!important}
+  .relphi-surface-keyword-builder{grid-template-columns:1fr!important}
+  .relphi-surface-keyword-mode{justify-content:flex-start!important}
+  .relphi-surface-keyword-matches{grid-column:1!important;max-height:11rem!important}
+  .relphi-surface-keyword-selected,.relphi-surface-keyword-count{grid-column:1!important}
+  .relphi-surface-composer-footer{grid-template-columns:1fr 1fr!important}
+  .relphi-surface-composer-footer>span{display:none!important}
+  .relphi-surface-composer-footer button{width:100%!important}
+  .relphi-surface-composer-footer [data-surface-done]{grid-column:1/-1!important}
+}
+
+@media (max-width:640px){
+  #shortListPanel .relphi-board-toast{position:fixed!important;left:.55rem!important;right:.55rem!important;top:auto!important;bottom:max(.55rem,env(safe-area-inset-bottom))!important;width:auto!important;z-index:2147482400!important}
+  .relphi-attune-reader{padding:0!important;place-items:stretch!important}
+  .relphi-attune-shell{width:100vw!important;height:100dvh!important;max-height:100dvh!important;border:0!important;border-radius:0!important;padding:1.15rem .8rem max(1rem,env(safe-area-inset-bottom))!important}
+  .relphi-attune-shell h2{font-size:clamp(1.5rem,7vw,2rem)!important}
+  .relphi-attune-actions{grid-template-columns:1fr!important}
+  .relphi-attune-search-results{grid-template-columns:repeat(2,minmax(0,1fr))!important;max-height:none!important}
+}
+
+
+/* Relphi Recursive Reading · seven depths, twenty-two cards, six virtual red-circle portals */
+#shortListPanel .relphi-recursion-template-note{display:grid!important;gap:.28rem!important;margin:.55rem 0 0!important;padding:.72rem .78rem!important;border:1px solid rgba(166,23,18,.24)!important;border-left:3px solid #a61712!important;border-radius:8px!important;background:#fffaf3!important;color:#302925!important}
+#shortListPanel .relphi-recursion-template-note strong{font-family:Georgia,"Times New Roman",serif!important;font-size:.9rem!important;font-weight:700!important}
+#shortListPanel .relphi-recursion-template-note span{color:#625851!important;font-size:.7rem!important;line-height:1.45!important}
+
+#shortListPanel.relphi-recursion-reading .card-row-board>.card-row-item[data-relphi-recursion-level]:not(.is-recursion-level-active){display:none!important}
+#shortListPanel.relphi-recursion-reading .card-row-board>.card-row-item.is-recursion-level-active{display:block!important;z-index:3!important}
+#shortListPanel.relphi-recursion-reading .card-row-board>.card-row-item.is-recursion-level-active:not(.is-recursion-drawn)>.card-row-drop-card{opacity:0!important;border:0!important;background:transparent!important;box-shadow:none!important}
+#shortListPanel.relphi-recursion-reading .card-row-workspace{background-image:radial-gradient(circle at 50% 54%,rgba(255,253,248,.07) 0,rgba(255,253,248,0) 43%),var(--row-table-image,none)!important}
+#shortListPanel.relphi-recursion-reading .card-row-board{position:relative!important}
+#shortListPanel .relphi-recursion-logo-underlay{position:absolute!important;left:248px!important;top:168px!important;z-index:0!important;display:block!important;width:403px!important;height:403px!important;object-fit:contain!important;opacity:.94!important;pointer-events:none!important;user-select:none!important}
+#shortListPanel .relphi-recursion-circle-states{position:absolute!important;inset:0!important;z-index:1!important;pointer-events:none!important}
+#shortListPanel .relphi-recursion-state-circle{position:absolute!important;display:block!important;width:132px!important;height:132px!important;border:0 solid transparent!important;border-radius:50%!important;background:transparent!important;box-sizing:border-box!important;transform:translate(-50%,-50%)!important;transition:background 160ms ease,border-color 160ms ease,box-shadow 160ms ease!important}
+#shortListPanel .relphi-recursion-state-circle[data-recursion-circle="mem"]{left:366px!important;top:280px!important}
+#shortListPanel .relphi-recursion-state-circle[data-recursion-circle="aleph"]{left:528px!important;top:280px!important}
+#shortListPanel .relphi-recursion-state-circle[data-recursion-circle="shin"]{left:366px!important;top:443px!important}
+#shortListPanel .relphi-recursion-state-circle.is-current{border-width:4px!important;border-color:#111!important;background:#fff!important;box-shadow:0 0 0 4px rgba(255,255,255,.45)!important}
+#shortListPanel .relphi-recursion-state-circle.is-drawn,
+#shortListPanel .relphi-recursion-state-circle.is-waiting{background:transparent!important}
+
+#shortListPanel .relphi-recursion-board-depth{position:absolute!important;right:.85rem!important;top:5.2rem!important;z-index:52!important;display:grid!important;grid-template-columns:30px!important;grid-template-rows:repeat(7,30px)!important;gap:0!important;width:30px!important;padding:0!important;border:2px solid #111!important;border-radius:0!important;background:#fff!important;box-shadow:0 6px 18px rgba(0,0,0,.16)!important;overflow:hidden!important}
+#shortListPanel .relphi-recursion-board-depth .relphi-recursion-depth-line{display:none!important}
+#shortListPanel .relphi-recursion-board-depth button{position:relative!important;z-index:1!important;display:grid!important;place-items:center!important;width:30px!important;height:30px!important;min-width:0!important;min-height:0!important;margin:0!important;padding:0!important;border:0!important;border-bottom:1px solid #111!important;border-radius:0!important;background:#fff!important;color:#111!important;font:inherit!important;font-size:.62rem!important;font-weight:950!important;line-height:1!important}
+#shortListPanel .relphi-recursion-board-depth button:last-of-type{border-bottom:0!important}
+#shortListPanel .relphi-recursion-board-depth button.is-opened:not(.is-current){background:#111!important;color:#fff!important}
+#shortListPanel .relphi-recursion-board-depth button.is-current{background:#dc1f18!important;color:#fff!important;box-shadow:none!important}
+#shortListPanel .relphi-recursion-board-depth button.is-future{opacity:.42!important;background:#fff!important;color:#111!important}
+#shortListPanel .relphi-recursion-board-depth .relphi-veilva-glyph{display:block!important;width:22px!important;height:22px!important;overflow:visible!important;color:currentColor!important;pointer-events:none!important}
+#shortListPanel .relphi-recursion-board-depth .relphi-veilva-glyph .relphi-canonical-glyph{color:currentColor!important}
+#shortListPanel .relphi-recursion-board-depth .relphi-recursion-complete-mark{display:none!important}
+
+
+#shortListPanel .relphi-recursion-board-portal{position:absolute!important;left:528px!important;top:443px!important;z-index:4!important;display:grid!important;grid-template-rows:auto auto auto!important;place-items:center!important;gap:.08rem!important;width:132px!important;height:132px!important;min-width:0!important;min-height:0!important;margin:0!important;padding:.45rem!important;box-sizing:border-box!important;border:2px solid rgba(255,255,255,.84)!important;border-radius:50%!important;background:#dc1f18!important;color:#fff!important;box-shadow:0 8px 24px rgba(0,0,0,.24),0 0 0 4px rgba(220,31,24,.16)!important;font:inherit!important;text-align:center!important;transform:translate(-50%,-50%)!important;transition:transform 140ms ease,filter 140ms ease,box-shadow 180ms ease!important}
+#shortListPanel .relphi-recursion-board-portal:not(:disabled){cursor:pointer!important}
+#shortListPanel .relphi-recursion-board-portal:not(:disabled):hover{transform:translate(-50%,-50%) scale(1.04)!important;filter:brightness(1.04)!important}
+#shortListPanel .relphi-recursion-board-portal:disabled{opacity:.76!important;cursor:default!important}
+#shortListPanel .relphi-recursion-board-portal.is-ready{animation:relphi-recursion-portal-ready 1.45s ease-in-out infinite!important}
+#shortListPanel .relphi-recursion-earth-glyph{display:grid!important;place-items:center!important;width:2.35rem!important;height:2.35rem!important;border:1px solid rgba(255,255,255,.74)!important;border-radius:50%!important;color:#fff!important;font-size:1.35rem!important}
+#shortListPanel .relphi-recursion-board-portal strong{font-family:Georgia,"Times New Roman",serif!important;font-size:.88rem!important;line-height:1!important}
+#shortListPanel .relphi-recursion-board-portal small{max-width:6.6rem!important;color:rgba(255,255,255,.92)!important;font-size:.53rem!important;font-weight:850!important;line-height:1.16!important}
+@keyframes relphi-recursion-portal-ready{
+  0%,100%{box-shadow:0 8px 24px rgba(0,0,0,.24),0 0 0 4px rgba(220,31,24,.16),0 0 0 0 rgba(255,255,255,.48)}
+  50%{box-shadow:0 8px 24px rgba(0,0,0,.24),0 0 0 4px rgba(220,31,24,.22),0 0 0 12px rgba(255,255,255,0)}
+}
+@media (prefers-reduced-motion:reduce){
+  #shortListPanel .relphi-recursion-board-portal.is-ready{animation:none!important;box-shadow:0 8px 24px rgba(0,0,0,.24),0 0 0 6px rgba(255,255,255,.36)!important}
+}
+
+
+.relphi-focus-reader.is-recursion-reading .relphi-focus-shell{grid-template-rows:auto auto minmax(0,1fr) auto!important}
+.relphi-recursion-depth{position:relative!important;display:flex!important;align-items:center!important;justify-content:center!important;gap:clamp(.45rem,2vw,1rem)!important;min-height:2.55rem!important;padding:.38rem 1rem!important;border-bottom:1px solid #e5d9cf!important;background:#fffaf3!important}
+.relphi-recursion-depth[hidden]{display:none!important}
+.relphi-recursion-depth .relphi-recursion-depth-line{position:absolute!important;left:calc(50% - min(15rem,38vw))!important;right:calc(50% - min(15rem,38vw))!important;top:50%!important;height:1px!important;background:#d9c9bd!important;pointer-events:none!important}
+.relphi-recursion-depth button{position:relative!important;z-index:1!important;display:grid!important;place-items:center!important;width:1.65rem!important;height:1.65rem!important;min-width:0!important;min-height:0!important;padding:0!important;border:1px solid #cfbeb1!important;border-radius:50%!important;background:#fffdf8!important;color:#61534b!important;font:inherit!important;font-size:.64rem!important;font-weight:950!important}
+.relphi-recursion-depth button.is-current{border-color:#a61712!important;background:#a61712!important;color:#fff!important;box-shadow:0 0 0 3px #f4e5dc!important}
+.relphi-recursion-depth button.is-future{opacity:.34!important}
+.relphi-recursion-depth .relphi-veilva-glyph{display:block!important;width:1.15rem!important;height:1.15rem!important;overflow:visible!important;color:currentColor!important;pointer-events:none!important}
+.relphi-recursion-complete-mark{position:absolute!important;right:.75rem!important;color:#8d1713!important;font-size:.6rem!important;font-weight:950!important;letter-spacing:.04em!important;text-transform:uppercase!important}
+
+.relphi-focus-reader.is-recursion-reading .relphi-focus-strip{display:grid!important;grid-template-columns:repeat(2,minmax(3.5rem,5rem))!important;grid-template-rows:repeat(2,5.45rem)!important;justify-content:center!important;align-content:center!important;gap:.55rem .7rem!important;width:min(12rem,76vw)!important;min-height:12rem!important;margin:auto!important;padding:1.05rem!important;box-sizing:border-box!important;overflow:visible!important;background:url("logo.png") center/contain no-repeat!important}
+.relphi-focus-reader.is-recursion-reading .relphi-focus-navigator{overflow:hidden!important}
+.relphi-focus-reader .relphi-recursion-focus-node{position:relative!important;display:grid!important;grid-template-rows:minmax(0,1fr) auto!important;gap:.2rem!important;align-items:center!important;justify-items:center!important;min-width:0!important;height:5.45rem!important;padding:.25rem!important;border:1px solid #d8ccc2!important;border-radius:7px!important;background:#fffdf8!important;color:#3f3530!important;font:inherit!important;box-shadow:none!important;transform:none!important}
+.relphi-focus-reader .relphi-recursion-focus-node img{display:block!important;width:auto!important;height:3.85rem!important;max-width:100%!important;object-fit:contain!important;border-radius:2px!important}
+.relphi-focus-reader .relphi-recursion-focus-node>strong{display:grid!important;place-items:center!important;width:2.4rem!important;height:2.4rem!important;margin:.25rem 0 0!important;border:1px solid #d6c7bc!important;border-radius:50%!important;font-family:Georgia,"Times New Roman",serif!important;font-size:1.35rem!important;font-weight:500!important}
+.relphi-focus-reader .relphi-recursion-focus-node>span{overflow:hidden!important;max-width:100%!important;color:#665a53!important;font-size:.55rem!important;font-weight:900!important;line-height:1.1!important;text-overflow:ellipsis!important;white-space:nowrap!important}
+.relphi-focus-reader .relphi-recursion-focus-node.is-current{border-color:#a61712!important;box-shadow:0 0 0 2px rgba(166,23,18,.13)!important}
+.relphi-focus-reader .relphi-recursion-focus-node.is-empty{background:#fbf6ef!important}
+.relphi-focus-reader .relphi-recursion-focus-node.is-earth-portal{border:2px solid #fff!important;border-radius:50%!important;background:#dc1f18!important;color:#fff!important;box-shadow:0 0 0 3px rgba(220,31,24,.16)!important}
+.relphi-focus-reader .relphi-recursion-focus-node.is-earth-portal>strong{border-color:rgba(255,255,255,.72)!important;color:#fff!important}
+.relphi-focus-reader .relphi-recursion-focus-node.is-earth-portal>span{color:rgba(255,255,255,.92)!important}
+.relphi-focus-reader .relphi-recursion-focus-node.is-earth-portal:not(:disabled){color:#fff!important}
+.relphi-focus-reader .relphi-recursion-focus-node:disabled{opacity:.42!important}
+
+.relphi-recursion-portal-focus[hidden]{display:none!important}
+.relphi-focus-reader.is-recursion-portal .relphi-focus-art-pane,
+.relphi-focus-reader.is-recursion-portal .relphi-focus-entry{display:none!important}
+.relphi-focus-reader.is-recursion-portal .relphi-focus-main{grid-template-columns:1fr!important;place-items:center!important}
+.relphi-focus-reader.is-recursion-portal .relphi-recursion-portal-focus{grid-column:1/-1!important;display:grid!important;place-items:center!important;align-content:center!important;gap:.42rem!important;width:min(34rem,100%)!important;height:100%!important;min-height:18rem!important;margin:auto!important;padding:2rem!important;box-sizing:border-box!important;text-align:center!important}
+.relphi-recursion-portal-ring{display:grid!important;place-items:center!important;width:clamp(8rem,23vw,12rem)!important;aspect-ratio:1!important;margin:0 auto .45rem!important;border:1px solid rgba(166,23,18,.34)!important;border-radius:50%!important;background:radial-gradient(circle,#fffdf8 0,#fff8ef 48%,rgba(255,253,248,0) 69%)!important;box-shadow:0 0 0 1.2rem rgba(166,23,18,.03),0 0 0 2.5rem rgba(166,23,18,.018)!important}
+.relphi-recursion-portal-ring>span{display:grid!important;place-items:center!important;width:55%!important;aspect-ratio:1!important;border:1px solid rgba(166,23,18,.42)!important;border-radius:50%!important;color:#a61712!important;font-size:clamp(2.4rem,7vw,4rem)!important}
+.relphi-recursion-portal-focus>.eyebrow{color:#a61712!important;font-size:.64rem!important;font-weight:950!important;letter-spacing:.11em!important;text-transform:uppercase!important}
+.relphi-recursion-portal-focus h2{margin:.05rem 0!important;font-family:Georgia,"Times New Roman",serif!important;font-size:clamp(1.8rem,4vw,2.7rem)!important;font-weight:650!important}
+.relphi-recursion-portal-focus p{max-width:29rem!important;margin:.15rem auto .7rem!important;color:#5f554f!important;font-size:.82rem!important;line-height:1.55!important}
+.relphi-recursion-portal-focus button{min-height:2.7rem!important;padding:.62rem 1rem!important;border:1px solid #a61712!important;border-radius:8px!important;background:#a61712!important;color:#fff!important;font:inherit!important;font-size:.73rem!important;font-weight:950!important}
+
+@media (max-width:640px){
+  #shortListPanel .relphi-recursion-board-depth{right:.55rem!important;top:4.75rem!important;grid-template-columns:28px!important;grid-template-rows:repeat(7,28px)!important;width:28px!important}
+  #shortListPanel .relphi-recursion-board-depth button{width:28px!important;height:28px!important;font-size:.56rem!important}
+  #shortListPanel .relphi-recursion-board-portal{width:132px!important;height:132px!important;padding:.42rem!important}
+  #shortListPanel .relphi-recursion-earth-glyph{width:2rem!important;height:2rem!important;font-size:1.2rem!important}
+  .relphi-recursion-depth{gap:.42rem!important;padding:.32rem .45rem!important}
+  .relphi-recursion-depth button{width:1.42rem!important;height:1.42rem!important;font-size:.58rem!important}
+  .relphi-recursion-complete-mark{display:none!important}
+  .relphi-focus-reader.is-recursion-reading .relphi-focus-strip{grid-template-columns:repeat(2,minmax(2.8rem,1fr))!important;grid-template-rows:repeat(2,4.7rem)!important;width:min(10.5rem,82vw)!important;min-height:10.5rem!important;gap:.28rem .4rem!important;padding:.85rem!important}
+  .relphi-focus-reader .relphi-recursion-focus-node{height:4.7rem!important;padding:.18rem!important}
+  .relphi-focus-reader .relphi-recursion-focus-node img{height:3.2rem!important}
+  .relphi-focus-reader .relphi-recursion-focus-node>strong{width:2rem!important;height:2rem!important;font-size:1.1rem!important}
+  .relphi-recursion-portal-focus{padding:1rem!important}
+}
+
+
+/* Keyword / tag sub-pack builder */
+.row-tag-subpack{
+  grid-column:1 / -1;
+  display:grid;
+  gap:.65rem;
+  padding:.8rem;
+  border:1px solid rgba(17,17,17,.18);
+  border-radius:14px;
+  background:rgba(255,255,255,.72);
+}
+.row-tag-search-label{
+  display:grid;
+  gap:.3rem;
+  font-weight:700;
+}
+.row-tag-search-label input{
+  width:100%;
+  min-height:42px;
+  box-sizing:border-box;
+}
+.row-tag-match-mode{
+  display:flex;
+  flex-wrap:wrap;
+  gap:.85rem;
+  align-items:center;
+}
+.row-tag-match-mode label,
+.row-tag-match{
+  display:flex;
+  align-items:center;
+  gap:.4rem;
+}
+.row-tag-matches{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(140px,1fr));
+  gap:.35rem .65rem;
+  max-height:190px;
+  overflow:auto;
+  padding:.15rem;
+}
+.row-tag-match{
+  min-height:32px;
+  padding:.25rem .4rem;
+  border-radius:8px;
+  background:rgba(255,255,255,.78);
+}
+.row-tag-selected{
+  display:flex;
+  flex-wrap:wrap;
+  gap:.4rem;
+}
+.row-tag-selected button{
+  min-height:30px;
+  border-radius:999px;
+  padding:.3rem .65rem;
+}
+.row-tag-empty,
+.row-tag-pool-count{
+  margin:0;
+  font-size:.82rem;
+  line-height:1.35;
+}
+.row-tag-pool-count{
+  font-weight:700;
+}
+
+@media (max-width: 700px){
+  .row-tag-matches{grid-template-columns:1fr 1fr;}
+}
+
+
+/* Keywords / Tags is a first-class Draw Settings panel, not a grid checkbox. */
+#shortListPanel .relphi-draw-options>.relphi-keyword-builder{
+  grid-column:1/-1!important;display:grid!important;grid-template-columns:minmax(0,1fr) auto!important;
+  align-items:end!important;gap:.45rem .7rem!important;min-width:0!important;margin:0!important;padding:.65rem!important;
+  border:1px solid #d0c7bf!important;border-radius:9px!important;background:var(--relphi-board-paper)!important;
+  color:var(--relphi-board-ink)!important;font:inherit!important;font-size:.72rem!important
+}
+#shortListPanel .relphi-keyword-builder>label{display:grid!important;gap:.28rem!important;margin:0!important;font:inherit!important;font-size:.72rem!important;font-weight:800!important}
+#shortListPanel .relphi-keyword-builder input[type="search"]{
+  width:100%!important;min-width:0!important;min-height:2.15rem!important;margin:0!important;padding:.38rem .5rem!important;
+  border:1px solid #bfb5ac!important;border-radius:7px!important;background:#fff!important;color:#111!important;
+  font:inherit!important;font-size:.76rem!important;appearance:auto!important
+}
+#shortListPanel .relphi-keyword-match-mode{display:flex!important;align-items:center!important;gap:.65rem!important;min-height:2.15rem!important;padding:.38rem .5rem!important}
+#shortListPanel .relphi-keyword-match-mode label,#shortListPanel .relphi-keyword-matches label{
+  display:inline-flex!important;align-items:center!important;gap:.32rem!important;margin:0!important;font:inherit!important;font-size:.72rem!important;font-weight:800!important
+}
+#shortListPanel .relphi-keyword-matches{grid-column:1/-1!important;display:flex!important;flex-wrap:wrap!important;gap:.35rem!important;min-width:0!important}
+#shortListPanel .relphi-keyword-matches p,#shortListPanel .relphi-keyword-builder>p{grid-column:1/-1!important;margin:.05rem 0!important;color:#6b625b!important;font:inherit!important;font-size:.7rem!important;line-height:1.35!important}
+#shortListPanel .relphi-keyword-selected{grid-column:1/-1!important;display:flex!important;flex-wrap:wrap!important;gap:.35rem!important}
+#shortListPanel .relphi-keyword-selected button{
+  min-height:1.9rem!important;margin:0!important;padding:.3rem .52rem!important;border:1px solid rgba(220,31,24,.48)!important;
+  border-radius:999px!important;background:#fff!important;color:#a61712!important;font:inherit!important;font-size:.68rem!important;font-weight:900!important;box-shadow:none!important
+}
+#shortListPanel .relphi-reading-options-drawer,
+#shortListPanel .relphi-reading-options-drawer button,
+#shortListPanel .relphi-reading-options-drawer input,
+#shortListPanel .relphi-reading-options-drawer select,
+#shortListPanel .relphi-reading-options-drawer textarea{font-family:'Montserrat',sans-serif!important}
+@media(max-width:700px){
+  #shortListPanel .relphi-keyword-builder{grid-template-columns:1fr!important}
+  #shortListPanel .relphi-keyword-match-mode{padding-left:0!important}
+}
+
+
+#shortListPanel .relphi-astrology-surface{display:grid!important;gap:.7rem!important}
+#shortListPanel .relphi-astrology-sky-mode{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:.45rem!important}
+#shortListPanel .relphi-astrology-sky-mode>label{display:flex!important;align-items:flex-start!important;gap:.5rem!important;margin:0!important;padding:.6rem!important;border:1px solid #d0c7bf!important;border-radius:9px!important;background:#fff!important;font:inherit!important}
+#shortListPanel .relphi-astrology-sky-mode span{display:grid!important;gap:.12rem!important}
+#shortListPanel .relphi-astrology-sky-mode strong{font-size:.76rem!important}
+#shortListPanel .relphi-astrology-sky-mode small,#shortListPanel .relphi-astrology-note{font-size:.7rem!important;line-height:1.35!important;color:#6b625b!important}
+#shortListPanel .relphi-astrology-bridge-status{display:grid!important;grid-template-columns:minmax(0,1fr) auto!important;gap:.25rem .55rem!important;align-items:center!important;padding:.65rem!important;border:1px solid #d0c7bf!important;border-radius:9px!important;background:var(--relphi-board-paper)!important}
+#shortListPanel .relphi-astrology-bridge-status>strong,#shortListPanel .relphi-astrology-bridge-status>span{grid-column:1!important}
+#shortListPanel .relphi-astrology-bridge-status>button{grid-column:2!important;grid-row:1/3!important;min-height:2.15rem!important;padding:.38rem .65rem!important;border:1.5px solid var(--relphi-board-ink)!important;border-radius:8px!important;background:#fff!important;color:var(--relphi-board-ink)!important;font:inherit!important;font-size:.72rem!important;font-weight:900!important}
+#shortListPanel .relphi-astrology-note{margin:0!important}
+@media(max-width:700px){#shortListPanel .relphi-astrology-sky-mode{grid-template-columns:1fr!important}#shortListPanel .relphi-astrology-bridge-status{grid-template-columns:1fr!important}#shortListPanel .relphi-astrology-bridge-status>button{grid-column:1!important;grid-row:auto!important;justify-self:start!important}}
+
+#shortListPanel .relphi-astrology-sky-sources{display:grid!important;gap:.5rem!important}
+#shortListPanel .relphi-astrology-sky-source{display:grid!important;grid-template-columns:minmax(0,1fr) minmax(9rem,auto)!important;gap:.35rem .65rem!important;align-items:center!important;padding:.65rem!important;border:1px solid #d0c7bf!important;border-radius:9px!important;background:#fff!important}
+#shortListPanel .relphi-astrology-sky-source>span{display:grid!important;gap:.1rem!important}
+#shortListPanel .relphi-astrology-sky-source small,#shortListPanel .relphi-saved-sky-slot span{font-size:.68rem!important;color:#6b625b!important}
+#shortListPanel .relphi-astrology-sky-source select{min-height:2.2rem!important;padding:.35rem .5rem!important;border:1px solid #b9afa7!important;border-radius:8px!important;background:#fff!important;font:inherit!important;font-size:.72rem!important;font-weight:800!important}
+#shortListPanel .relphi-saved-sky-slot{grid-column:1/-1!important;display:flex!important;align-items:center!important;gap:.5rem!important}
+#shortListPanel .relphi-saved-sky-slot[hidden]{display:none!important}
+#shortListPanel .relphi-saved-sky-slot button{min-height:2rem!important;padding:.32rem .58rem!important;border:1.5px solid var(--relphi-board-ink)!important;border-radius:8px!important;background:#fff!important;color:var(--relphi-board-ink)!important;font:inherit!important;font-size:.7rem!important;font-weight:900!important}
+@media(max-width:700px){#shortListPanel .relphi-astrology-sky-source{grid-template-columns:1fr!important}#shortListPanel .relphi-saved-sky-slot{grid-column:1!important;align-items:flex-start!important;flex-direction:column!important}}
+
+#shortListPanel .drawing-board-mode-switch{align-items:center!important}
+#shortListPanel .drawing-board-mode-label{font-size:.76rem!important;font-weight:900!important;color:var(--relphi-board-ink)!important}
+#shortListPanel .drawing-board-mode-or{font-size:.7rem!important;font-weight:700!important;color:#6b625b!important}
+
+#shortListPanel .relphi-astrology-sky-mode.relphi-segmented-toggle{display:flex!important;grid-template-columns:none!important;align-items:center!important;gap:0!important;width:max-content!important;max-width:100%!important;padding:2px!important;border:1px solid #c9c0b8!important;border-radius:999px!important;background:#f4f0ec!important}
+#shortListPanel .relphi-segmented-toggle .relphi-segmented-label{padding:0 .5rem!important;font-size:.7rem!important;font-weight:900!important;color:#554d47!important}
+#shortListPanel .relphi-segmented-toggle>label{display:block!important;margin:0!important;padding:0!important;border:0!important;border-radius:999px!important;background:transparent!important}
+#shortListPanel .relphi-segmented-toggle>label>input{position:absolute!important;opacity:0!important;pointer-events:none!important}
+#shortListPanel .relphi-segmented-toggle>label>span{display:block!important;padding:.34rem .65rem!important;border-radius:999px!important;font-size:.7rem!important;font-weight:900!important;line-height:1!important;cursor:pointer!important}
+#shortListPanel .relphi-segmented-toggle>label.is-active>span{background:var(--relphi-board-ink)!important;color:#fff!important}
+
+#shortListPanel .relphi-add-sky{justify-self:start!important;min-height:2.15rem!important;padding:.38rem .72rem!important;border:1.5px solid var(--relphi-board-ink)!important;border-radius:8px!important;background:#fff!important;color:var(--relphi-board-ink)!important;font:inherit!important;font-size:.72rem!important;font-weight:900!important}
+#shortListPanel .drawing-board-mode-switch{display:grid!important;grid-template-columns:1fr 1fr!important;gap:0!important;width:min(18rem,100%)!important;padding:3px!important;border:1px solid #ddd4ca!important;border-radius:999px!important;background:#f4f0ec!important}
+#shortListPanel .drawing-board-mode-switch .drawing-board-mode-label,#shortListPanel .drawing-board-mode-switch .drawing-board-mode-or{display:none!important}
+#shortListPanel .drawing-board-mode-switch>button{min-height:2.15rem!important;margin:0!important;padding:.38rem .7rem!important;border:0!important;border-radius:999px!important;background:transparent!important;color:#211d1a!important;box-shadow:none!important;font:inherit!important;font-size:.72rem!important;font-weight:900!important}
+#shortListPanel .drawing-board-mode-switch>button.is-active{background:#fff!important;color:#111!important;box-shadow:0 1px 4px rgba(0,0,0,.12)!important}
+
+#shortListPanel .relphi-astrology-analysis{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:.6rem!important}
+#shortListPanel .relphi-astrology-analysis>section{padding:.65rem!important;border:1px solid #d0c7bf!important;border-radius:9px!important;background:#fff!important}
+#shortListPanel .relphi-astrology-analysis h4{margin:0 0 .45rem!important;font-size:.76rem!important}
+#shortListPanel .relphi-astrology-analysis ol{margin:0!important;padding-left:1.25rem!important;font-size:.7rem!important;line-height:1.4!important}
+#shortListPanel .relphi-astrology-questions{grid-column:1/-1!important}
+#shortListPanel .relphi-astrology-question{display:flex!important;gap:.45rem!important;align-items:flex-start!important;padding:.35rem 0!important;font-size:.72rem!important;line-height:1.35!important}
+@media(max-width:700px){#shortListPanel .relphi-astrology-analysis{grid-template-columns:1fr!important}#shortListPanel .relphi-astrology-questions{grid-column:1!important}}
+
+#shortListPanel .relphi-astrology-sky-sources{display:flex!important;flex-direction:column!important;align-items:flex-start!important;gap:.45rem!important}
+#shortListPanel .relphi-astrology-sky-source{display:block!important;width:100%!important;padding:0!important;border:0!important;background:transparent!important}
+#shortListPanel .relphi-astrology-sky-source select{display:block!important;width:100%!important;min-height:42px!important}
+#shortListPanel .relphi-add-sky{align-self:flex-start!important;margin:0!important}
+#shortListPanel .relphi-astrology-bridge-status{margin-top:.6rem!important}
+
+#shortListPanel .relphi-question-prompt{margin:0 0 .55rem!important;font-size:.72rem!important;line-height:1.4!important}
+#shortListPanel .relphi-astrology-own-question{display:grid!important;grid-template-columns:minmax(0,1.6fr) minmax(10rem,.8fr)!important;align-items:end!important;gap:.55rem!important;margin-top:.7rem!important;padding-top:.65rem!important;border-top:1px solid #e2d8d0!important;font-size:.72rem!important;font-weight:700!important}
+#shortListPanel .relphi-astrology-own-question label{display:grid!important;gap:.25rem!important;min-width:0!important}
+#shortListPanel .relphi-astrology-own-question label>span{color:#625950!important;font-size:.64rem!important;font-weight:850!important}
+#shortListPanel .relphi-astrology-own-question input,#shortListPanel .relphi-astrology-own-question select{min-width:0!important;width:100%!important;min-height:2.25rem!important;box-sizing:border-box!important;padding:.4rem .5rem!important;border:1px solid #bfb5ac!important;border-radius:7px!important;background:#fff!important;color:#171412!important;font:inherit!important;font-size:.72rem!important}
+#shortListPanel .relphi-astrology-own-question select:focus,#shortListPanel .relphi-astrology-own-question input:focus{outline:2px solid #dc1f18!important;outline-offset:2px!important}
+@media(max-width:700px){#shortListPanel .relphi-astrology-own-question{grid-template-columns:1fr!important}}
+
+#shortListPanel .relphi-evidence-list{display:grid!important;gap:.3rem!important}
+#shortListPanel .relphi-astrology-evidence{display:flex!important;align-items:flex-start!important;gap:.42rem!important;font-size:.7rem!important;line-height:1.35!important}
+#shortListPanel .relphi-astrology-evidence input{flex:0 0 auto!important;margin-top:.12rem!important}
+
+#shortListPanel .relphi-polarity-diagnostic{display:grid!important;gap:.2rem!important;margin-top:.65rem!important;padding:.55rem .65rem!important;border:1px dashed currentColor!important;border-radius:7px!important;font-size:.7rem!important;line-height:1.35!important}
+#shortListPanel .relphi-polarity-diagnostic>span,#shortListPanel .relphi-polarity-diagnostic>small{display:block!important}
+#shortListPanel .relphi-polarity-diagnostic>small{opacity:.72!important}
+
+#shortListPanel .relphi-astrology-advanced{margin:0!important;padding:0!important;border:1px solid #ddd4cb!important;border-radius:8px!important;background:#fbf8f4!important;overflow:hidden!important}
+#shortListPanel .relphi-astrology-advanced>summary{display:flex!important;align-items:center!important;justify-content:space-between!important;gap:.65rem!important;padding:.5rem .6rem!important;cursor:pointer!important;list-style:none!important;color:#5e554e!important}
+#shortListPanel .relphi-astrology-advanced>summary::-webkit-details-marker{display:none!important}
+#shortListPanel .relphi-astrology-advanced>summary::before{content:'›';flex:0 0 auto!important;font-size:.95rem!important;font-weight:900!important;line-height:1!important;transition:transform .12s ease}
+#shortListPanel .relphi-astrology-advanced[open]>summary::before{transform:rotate(90deg)}
+#shortListPanel .relphi-astrology-advanced>summary strong{font-size:.68rem!important;font-weight:900!important}
+#shortListPanel .relphi-astrology-advanced>summary span{margin-left:auto!important;min-width:0!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important;text-align:right!important;font-size:.63rem!important;font-weight:650!important;color:#746b64!important}
+#shortListPanel .relphi-astrology-advanced-body{display:grid!important;gap:.45rem!important;padding:.55rem .62rem .62rem!important;border-top:1px solid #e3dad2!important;background:#fffdf9!important}
+#shortListPanel .relphi-astrology-advanced-body>p{margin:0!important;color:#6b625b!important;font-size:.65rem!important;line-height:1.35!important}
+#shortListPanel .relphi-astrology-house-system{display:grid!important;gap:.28rem!important;margin:.1rem 0 0!important}
+#shortListPanel .relphi-astrology-house-system>span{font-size:.72rem!important;font-weight:800!important}
+#shortListPanel .relphi-astrology-house-system select{width:100%!important}
+#shortListPanel .relphi-astrology-house-system small{font-size:.62rem!important;opacity:.7!important}
+
+#shortListPanel .relphi-astrology-house-system{display:inline-grid!important;width:auto!important;max-width:100%!important;justify-items:start!important}
+#shortListPanel .relphi-astrology-house-system select{width:auto!important;min-width:10.5rem!important;max-width:16rem!important;padding:.48rem 2.1rem .48rem .72rem!important;border:1px solid #111!important;border-radius:7px!important;background:#fff!important;color:#111!important;font-family:'Montserrat',sans-serif!important;font-size:.72rem!important;font-weight:700!important;box-shadow:none!important}
+#shortListPanel .relphi-astrology-house-system select:focus{outline:2px solid #dc1f18!important;outline-offset:2px!important}
+
+#shortListPanel .relphi-astrology-question-head{display:flex!important;align-items:center!important;justify-content:space-between!important;gap:.75rem!important}
+#shortListPanel .relphi-astrology-question-head h4{margin:0!important}
+#shortListPanel .relphi-astrology-question-head label{display:inline-flex!important;align-items:center!important;gap:.35rem!important;font-size:.68rem!important;font-weight:800!important;white-space:nowrap!important}
+
+/* Per-referent draw experiments */
+#shortListPanel .relphi-bespoke-question-row{align-items:start!important}
+#shortListPanel .relphi-bespoke-question-main{display:grid!important;gap:.42rem!important;min-width:0!important}
+#shortListPanel .relphi-bespoke-question-main>input{width:100%!important;box-sizing:border-box!important}
+#shortListPanel .relphi-bespoke-question-settings{display:flex!important;flex-wrap:wrap!important;gap:.42rem .7rem!important;align-items:end!important}
+#shortListPanel .relphi-bespoke-question-settings label{display:flex!important;gap:.28rem!important;align-items:center!important;font-size:.66rem!important;font-weight:750!important;color:#625851!important}
+#shortListPanel .relphi-bespoke-question-settings label:first-child{display:grid!important;gap:.18rem!important;min-width:10rem!important}
+#shortListPanel .relphi-bespoke-question-settings select{min-height:2rem!important;padding:.3rem .45rem!important;border:1px solid #cfc4bb!important;border-radius:7px!important;background:#fff!important;font:inherit!important;font-weight:700!important}
+#shortListPanel .relphi-astrology-question>span{display:grid!important;gap:.16rem!important}
+#shortListPanel .relphi-astrology-question>span>strong{font:inherit!important;font-weight:750!important}
+#shortListPanel .relphi-astrology-question>span>small{color:#7a6f67!important;font-size:.64rem!important;font-weight:700!important}
+
+#shortListPanel .relphi-suggestion-copy{display:grid!important;gap:.14rem!important;min-width:0!important}
+#shortListPanel .relphi-suggestion-copy strong{font-size:.72rem!important;line-height:1.35!important}
+#shortListPanel .relphi-suggestion-copy small{color:#7a6f67!important;font-size:.63rem!important;font-weight:700!important}
+
+
+/* Drawing Board command bar + Settings redesign · authoritative chrome */
+#shortListPanel .card-row-drawing-board>summary[hidden]{display:none!important}
+#shortListPanel .relphi-global-board-actions{display:none!important}
+#shortListPanel .relphi-board-commandbar{
+  display:flex!important;
+  align-items:center!important;
+  justify-content:space-between!important;
+  gap:.85rem!important;
+  width:100%!important;
+  box-sizing:border-box!important;
+  margin:0!important;
+  padding:.72rem .82rem!important;
+  border-bottom:1px solid var(--relphi-board-line)!important;
+  background:#fff!important;
+}
+#shortListPanel .relphi-board-command-left{
+  display:flex!important;
+  align-items:center!important;
+  gap:.7rem!important;
+  min-width:0!important;
+}
+#shortListPanel .relphi-board-command-title{
+  display:inline-flex!important;
+  align-items:center!important;
+  gap:.42rem!important;
+  min-width:0!important;
+  color:var(--relphi-board-ink)!important;
+}
+#shortListPanel .relphi-board-command-title>strong{
+  font-size:1rem!important;
+  font-weight:900!important;
+  line-height:1.1!important;
+  white-space:nowrap!important;
+}
+#shortListPanel .relphi-board-command-count{
+  display:inline-grid!important;
+  place-items:center!important;
+  width:1.28rem!important;
+  height:1.28rem!important;
+  border-radius:50%!important;
+  background:#111!important;
+  color:#fff!important;
+  font-size:.66rem!important;
+  font-weight:900!important;
+  line-height:1!important;
+}
+#shortListPanel #relphiBoardSettingsButton{
+  min-height:2.15rem!important;
+  margin:0!important;
+  padding:.4rem .68rem!important;
+  border:1.25px solid #b9afa7!important;
+  border-radius:8px!important;
+  background:#fff!important;
+  color:#312b27!important;
+  font:inherit!important;
+  font-size:.72rem!important;
+  font-weight:850!important;
+  box-shadow:none!important;
+}
+#shortListPanel #relphiBoardSettingsButton.is-active{
+  border-color:var(--relphi-board-red)!important;
+  background:#fff5f3!important;
+  color:#a61712!important;
+}
+#shortListPanel .drawing-board-top-actions.relphi-board-command-actions{
+  display:flex!important;
+  align-items:center!important;
+  justify-content:flex-end!important;
+  gap:.38rem!important;
+  flex:0 0 auto!important;
+  width:auto!important;
+  margin:0!important;
+  padding:0!important;
+  isolation:auto!important;
+  z-index:auto!important;
+}
+#shortListPanel .drawing-board-top-actions.relphi-board-command-actions>button{
+  position:static!important;
+  min-width:0!important;
+  width:auto!important;
+  max-width:none!important;
+  height:auto!important;
+  min-height:2.15rem!important;
+  margin:0!important;
+  padding:.4rem .67rem!important;
+  border:1.25px solid #b9afa7!important;
+  border-radius:8px!important;
+  background:#fff!important;
+  color:#2f2925!important;
+  font:inherit!important;
+  font-size:.72rem!important;
+  font-weight:850!important;
+  line-height:1!important;
+  box-shadow:none!important;
+}
+#shortListPanel .drawing-board-top-actions.relphi-board-command-actions>#clearShortListCardsOnly{order:1!important}
+#shortListPanel .drawing-board-top-actions.relphi-board-command-actions>#undoShortList{order:2!important}
+#shortListPanel .drawing-board-top-actions.relphi-board-command-actions>#redoShortList{order:3!important}
+#shortListPanel .drawing-board-top-actions.relphi-board-command-actions>#drawRandomRowCard{
+  order:4!important;
+  border-color:#b81712!important;
+  background:var(--relphi-board-red)!important;
+  color:#fff!important;
+}
+#shortListPanel .drawing-board-top-actions.relphi-board-command-actions>button:disabled{
+  opacity:.38!important;
+  cursor:default!important;
+}
+#shortListPanel .relphi-board-settings-panel{
+  position:absolute!important;
+  top:var(--relphi-settings-top,3.65rem)!important;
+  left:.5rem!important;
+  right:.5rem!important;
+  z-index:2400!important;
+  display:block!important;
+  box-sizing:border-box!important;
+  width:auto!important;
+  max-height:calc(100% - var(--relphi-settings-top,3.65rem) - .5rem)!important;
+  margin:0!important;
+  padding:.7rem .82rem .82rem!important;
+  border:1px solid var(--relphi-board-line)!important;
+  border-radius:12px!important;
+  background:#fcf9f5!important;
+  box-shadow:0 12px 34px rgba(39,29,23,.18)!important;
+  overflow:hidden!important;
+}
+#shortListPanel .relphi-board-settings-panel[hidden]{display:none!important}
+#shortListPanel .relphi-board-settings-top{
+  display:flex!important;
+  justify-content:flex-start!important;
+  align-items:center!important;
+  margin:0 0 .55rem!important;
+}
+#shortListPanel #relphiResetBoard{
+  min-height:2.1rem!important;
+  margin:0!important;
+  padding:.38rem .65rem!important;
+  border:1.25px solid rgba(184,23,18,.48)!important;
+  border-radius:8px!important;
+  background:#fff!important;
+  color:#a61712!important;
+  font:inherit!important;
+  font-size:.7rem!important;
+  font-weight:850!important;
+}
+#shortListPanel #relphiResetBoard:disabled{
+  border-color:#d4ccc5!important;
+  color:#958b84!important;
+  opacity:.5!important;
+}
+#shortListPanel .relphi-board-settings-body{
+  display:grid!important;
+  gap:.65rem!important;
+  min-width:0!important;
+  max-height:inherit!important;
+  overflow:hidden!important;
+}
+#shortListPanel .relphi-board-settings-panel .drawing-board-mode-switch{
+  display:grid!important;
+  grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  align-items:stretch!important;
+  gap:.18rem!important;
+  width:min(20rem,100%)!important;
+  margin:0!important;
+  padding:.2rem!important;
+  border:1px solid #d8cec5!important;
+  border-radius:999px!important;
+  background:#f1ece6!important;
+}
+#shortListPanel .relphi-board-settings-panel .drawing-board-mode-switch .drawing-board-mode-label,
+#shortListPanel .relphi-board-settings-panel .drawing-board-mode-switch .drawing-board-mode-or{display:none!important}
+#shortListPanel .relphi-board-settings-panel .drawing-board-mode-switch>button{
+  min-height:2rem!important;
+  margin:0!important;
+  padding:.35rem .7rem!important;
+  border:0!important;
+  border-radius:999px!important;
+  background:transparent!important;
+  color:#302a26!important;
+  font:inherit!important;
+  font-size:.7rem!important;
+  font-weight:900!important;
+  box-shadow:none!important;
+}
+#shortListPanel .relphi-board-settings-panel .drawing-board-mode-switch>button.is-active{
+  background:#fff!important;
+  color:#111!important;
+  box-shadow:0 1px 4px rgba(0,0,0,.12)!important;
+}
+#shortListPanel.relphi-settings-open .drawing-board-board-mode,
+#shortListPanel.relphi-settings-open.relphi-referents-mode .drawing-board-board-mode{display:block!important}
+#shortListPanel .relphi-free-settings{
+  display:grid!important;
+  gap:.75rem!important;
+  min-width:0!important;
+}
+#shortListPanel .relphi-free-settings-fields{
+  display:grid!important;
+  grid-template-columns:minmax(13rem,1fr)!important;
+  gap:.55rem!important;
+  min-width:0!important;
+}
+#shortListPanel .relphi-free-pack{
+  display:grid!important;
+  gap:.24rem!important;
+  max-width:24rem!important;
+  color:#5f5751!important;
+  font-size:.68rem!important;
+  font-weight:850!important;
+}
+#shortListPanel .relphi-free-pack select{
+  width:100%!important;
+  min-height:2.25rem!important;
+  padding:.4rem .55rem!important;
+  border:1px solid #bfb5ac!important;
+  border-radius:7px!important;
+  background:#fff!important;
+  color:#111!important;
+  font:inherit!important;
+  font-size:.72rem!important;
+}
+#shortListPanel .relphi-free-toggles{
+  display:grid!important;
+  grid-template-columns:repeat(3,minmax(0,1fr))!important;
+  gap:.42rem!important;
+  max-width:34rem!important;
+}
+#shortListPanel .relphi-free-toggles>label{
+  display:flex!important;
+  align-items:center!important;
+  gap:.36rem!important;
+  min-height:2.15rem!important;
+  padding:.4rem .52rem!important;
+  border:1px solid #d0c7bf!important;
+  border-radius:7px!important;
+  background:#fff!important;
+  color:#312b27!important;
+  font-size:.69rem!important;
+  font-weight:800!important;
+}
+#shortListPanel .relphi-board-settings-footer,
+#shortListPanel .relphi-board-settings-panel .relphi-options-commitbar{
+  display:grid!important;
+  grid-template-columns:auto 1fr auto!important;
+  gap:.5rem!important;
+  align-items:center!important;
+  width:100%!important;
+  box-sizing:border-box!important;
+  margin:.15rem 0 0!important;
+  padding:.65rem 0 0!important;
+  border-top:1px solid #ded4cb!important;
+  background:transparent!important;
+}
+#shortListPanel .relphi-board-settings-footer>button,
+#shortListPanel .relphi-board-settings-panel .relphi-options-commitbar>button{
+  min-height:2.15rem!important;
+  margin:0!important;
+  padding:.4rem .72rem!important;
+  border:1.25px solid #958b84!important;
+  border-radius:8px!important;
+  background:#fff!important;
+  color:#211d1a!important;
+  font:inherit!important;
+  font-size:.72rem!important;
+  font-weight:900!important;
+}
+#shortListPanel .relphi-board-settings-footer>.primary,
+#shortListPanel .relphi-board-settings-panel .relphi-options-commitbar>.primary{
+  grid-column:3!important;
+  border-color:var(--relphi-board-red)!important;
+  background:var(--relphi-board-red)!important;
+  color:#fff!important;
+}
+#shortListPanel .relphi-board-settings-panel .relphi-reading-options-drawer{
+  position:relative!important;
+  inset:auto!important;
+  display:flex!important;
+  flex-direction:column!important;
+  box-sizing:border-box!important;
+  width:100%!important;
+  max-width:none!important;
+  height:clamp(26rem,62dvh,42rem)!important;
+  min-height:26rem!important;
+  max-height:42rem!important;
+  margin:0!important;
+  padding:0!important;
+  border:0!important;
+  border-radius:0!important;
+  background:transparent!important;
+  box-shadow:none!important;
+  overflow:hidden!important;
+}
+#shortListPanel .relphi-board-settings-panel .relphi-options-body{
+  flex:1 1 auto!important;
+  min-height:0!important;
+  padding:.55rem .15rem .55rem 0!important;
+  overflow-y:auto!important;
+  overflow-x:hidden!important;
+}
+#shortListPanel .relphi-board-settings-panel .relphi-options-heading{display:none!important}
+
+@media(max-width:760px){
+  #shortListPanel .relphi-board-commandbar{
+    align-items:stretch!important;
+    flex-direction:column!important;
+    gap:.55rem!important;
+  }
+  #shortListPanel .relphi-board-command-left{justify-content:space-between!important}
+  #shortListPanel .drawing-board-top-actions.relphi-board-command-actions{
+    display:grid!important;
+    grid-template-columns:repeat(4,minmax(0,1fr))!important;
+    width:100%!important;
+    gap:.3rem!important;
+  }
+  #shortListPanel .drawing-board-top-actions.relphi-board-command-actions>button{
+    width:100%!important;
+    padding:.4rem .32rem!important;
+    font-size:.66rem!important;
+  }
+  #shortListPanel .relphi-board-settings-panel{
+    left:.35rem!important;
+    right:.35rem!important;
+    padding:.6rem!important;
+    max-height:calc(100% - var(--relphi-settings-top,5.8rem) - .35rem)!important;
+  }
+  #shortListPanel .relphi-board-settings-panel .drawing-board-mode-switch{width:100%!important}
+  #shortListPanel .relphi-free-toggles{grid-template-columns:1fr!important;max-width:none!important}
+  #shortListPanel .relphi-board-settings-panel .relphi-reading-options-drawer{
+    height:clamp(28rem,70dvh,42rem)!important;
+  }
+}
+
+/* Settings remains additive: opening it never replaces the Drawing Board workspace. */
+#shortListPanel.relphi-settings-open .drawing-board-board-mode,
+#shortListPanel.relphi-settings-open.relphi-referents-mode .drawing-board-board-mode{
+  display:block!important;
+}
+
+
+/* Guided Crafted paths own their board framing; Free and Bespoke keep manual zoom/tools. */
+#shortListPanel.relphi-hide-zoom-toolbar .card-row-workspace-toolbar.relphi-board-controller{
+  display:none!important;
+}
+
+
+/* Board configuration belongs in Settings, and is available only to Free/Bespoke boards. */
+#shortListPanel .relphi-board-configuration{display:grid!important;gap:.65rem!important;margin:.1rem 0 0!important;padding:.7rem!important;border:1px solid #d8cec5!important;border-radius:10px!important;background:#fff!important}
+#shortListPanel .relphi-board-configuration[hidden]{display:none!important}
+#shortListPanel .relphi-board-configuration-heading{display:grid!important;gap:.12rem!important}
+#shortListPanel .relphi-board-configuration-heading>strong{font-size:.78rem!important}
+#shortListPanel .relphi-board-configuration-heading>span{color:#665d56!important;font-size:.66rem!important}
+#shortListPanel .relphi-transform-unlock{display:flex!important;align-items:center!important;gap:.5rem!important;margin:0!important;padding:.5rem!important;border:1px solid #ddd3ca!important;border-radius:8px!important;background:#fcf9f5!important}
+#shortListPanel .relphi-transform-unlock>span{display:grid!important;gap:.08rem!important}
+#shortListPanel .relphi-transform-unlock strong{font-size:.7rem!important}
+#shortListPanel .relphi-transform-unlock small{color:#675e57!important;font-size:.62rem!important}
+#shortListPanel .relphi-board-configuration-group{display:grid!important;gap:.4rem!important;padding-top:.5rem!important;border-top:1px solid #e5ddd5!important}
+#shortListPanel .relphi-board-configuration-group>strong{font-size:.73rem!important}
+#shortListPanel .relphi-board-configuration .relphi-tool-row{display:flex!important;align-items:center!important;gap:.35rem!important;flex-wrap:wrap!important}
+#shortListPanel .relphi-board-configuration .relphi-tool-row>label{display:inline-flex!important;align-items:center!important;gap:.35rem!important;margin:0!important;font-size:.68rem!important;font-weight:800!important}
+#shortListPanel .relphi-board-configuration .relphi-tool-row button,
+#shortListPanel .relphi-board-configuration>#resetCardRowLayout,
+#shortListPanel .relphi-board-configuration-group>#resetCardRowLayout{min-height:1.95rem!important;margin:0!important;padding:.32rem .5rem!important;border:1px solid #c8beb6!important;border-radius:7px!important;background:#fff!important;color:#111!important;font:inherit!important;font-size:.67rem!important;font-weight:800!important}
+#shortListPanel .relphi-board-configuration input[type="color"]{width:2.25rem!important;height:1.85rem!important;padding:.05rem!important;border:1px solid #c8beb6!important;border-radius:6px!important;background:#fff!important}
+#shortListPanel .relphi-template-modify{display:flex!important;align-items:center!important;gap:.55rem!important;flex-wrap:wrap!important;margin:.45rem 0 0!important;padding:.55rem!important;border:1px solid #ddd3ca!important;border-radius:8px!important;background:#fcf9f5!important}
+#shortListPanel .relphi-template-modify button{min-height:2rem!important;margin:0!important;padding:.36rem .58rem!important;border:1.25px solid #a61712!important;border-radius:7px!important;background:#fff!important;color:#a61712!important;font:inherit!important;font-size:.69rem!important;font-weight:900!important}
+#shortListPanel .relphi-template-modify span{color:#665d56!important;font-size:.66rem!important}
+#shortListPanel .relphi-template-clone-note{display:grid!important;gap:.18rem!important;margin:0 0 .55rem!important;padding:.58rem .65rem!important;border:1px solid #d8cec5!important;border-radius:8px!important;background:#fff8ee!important}
+#shortListPanel .relphi-template-clone-note strong{font-size:.73rem!important}
+#shortListPanel .relphi-template-clone-note span{color:#5f5751!important;font-size:.66rem!important;line-height:1.35!important}
+
+
+/* Reset Board is a command-bar action, immediately before Clear. */
+#shortListPanel .drawing-board-top-actions.relphi-board-command-actions>#relphiResetBoard{order:0!important}
+#shortListPanel .drawing-board-top-actions.relphi-board-command-actions>#relphiResetBoard{
+  border-color:rgba(184,23,18,.48)!important;
+  background:#fff!important;
+  color:#a61712!important;
+}
+
+/* Reversals and repeats are secondary draw controls. */
+#shortListPanel .relphi-draw-advanced,
+#shortListPanel .relphi-question-advanced{
+  margin:0!important;
+  padding:0!important;
+  border:1px solid #ded4cb!important;
+  border-radius:8px!important;
+  background:#fcf9f5!important;
+}
+#shortListPanel .relphi-draw-advanced>summary,
+#shortListPanel .relphi-question-advanced>summary{
+  cursor:pointer!important;
+  padding:.48rem .58rem!important;
+  color:#453d38!important;
+  font-size:.69rem!important;
+  font-weight:900!important;
+  list-style-position:inside!important;
+}
+#shortListPanel .relphi-draw-advanced>.relphi-free-toggles,
+#shortListPanel .relphi-question-advanced>div{
+  display:grid!important;
+  grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  gap:.4rem!important;
+  padding:0 .55rem .55rem!important;
+}
+#shortListPanel .relphi-question-advanced>div>label{
+  display:flex!important;
+  align-items:center!important;
+  gap:.35rem!important;
+  min-height:2rem!important;
+  padding:.36rem .48rem!important;
+  border:1px solid #d8cec5!important;
+  border-radius:7px!important;
+  background:#fff!important;
+  font-size:.67rem!important;
+  font-weight:800!important;
+}
+#shortListPanel .relphi-bespoke-question-main{display:grid!important;gap:.4rem!important}
+@media(max-width:700px){
+  #shortListPanel .relphi-draw-advanced>.relphi-free-toggles,
+  #shortListPanel .relphi-question-advanced>div{grid-template-columns:1fr!important}
+}
+
+
+/* Board configuration is a compact popover opened from the Settings upper-right corner. */
+#shortListPanel .relphi-board-settings-panel{overflow:visible!important}
+#shortListPanel .relphi-board-configuration-trigger{
+  position:absolute!important;
+  top:.7rem!important;
+  right:.82rem!important;
+  z-index:4!important;
+  min-height:2rem!important;
+  margin:0!important;
+  padding:.35rem .65rem!important;
+  border:1.25px solid #b9afa7!important;
+  border-radius:8px!important;
+  background:#fff!important;
+  color:#2f2925!important;
+  font:inherit!important;
+  font-size:.7rem!important;
+  font-weight:900!important;
+  box-shadow:none!important;
+}
+#shortListPanel .relphi-board-configuration-trigger.is-active{
+  border-color:var(--relphi-board-red)!important;
+  color:var(--relphi-board-red)!important;
+  background:#fff7f6!important;
+}
+#shortListPanel .relphi-board-configuration-trigger[hidden]{display:none!important}
+#shortListPanel .relphi-board-configuration{
+  position:absolute!important;
+  top:3.35rem!important;
+  right:.82rem!important;
+  z-index:8!important;
+  display:grid!important;
+  gap:.7rem!important;
+  width:min(26rem,calc(100% - 1.64rem))!important;
+  max-height:calc(100% - 4rem)!important;
+  margin:0!important;
+  padding:.75rem!important;
+  border:1px solid #d8cec5!important;
+  border-radius:10px!important;
+  background:#fffdf9!important;
+  box-shadow:0 14px 34px rgba(39,29,23,.22)!important;
+  overflow:auto!important;
+}
+#shortListPanel .relphi-board-configuration[hidden]{display:none!important}
+#shortListPanel .relphi-board-configuration-heading{
+  display:flex!important;
+  align-items:center!important;
+  justify-content:space-between!important;
+  gap:.6rem!important;
+}
+#shortListPanel .relphi-board-configuration-heading>strong{font-size:.78rem!important}
+#shortListPanel .relphi-board-configuration-close{
+  display:grid!important;
+  place-items:center!important;
+  width:1.9rem!important;
+  height:1.9rem!important;
+  margin:0!important;
+  padding:0!important;
+  border:1px solid #c8beb6!important;
+  border-radius:50%!important;
+  background:#fff!important;
+  color:#111!important;
+  font:inherit!important;
+  font-size:1rem!important;
+  font-weight:900!important;
+}
+#shortListPanel .relphi-board-configuration-group{
+  display:grid!important;
+  gap:.48rem!important;
+  padding-top:.58rem!important;
+  border-top:1px solid #e5ddd5!important;
+}
+#shortListPanel .relphi-board-configuration-group>strong{font-size:.72rem!important}
+#shortListPanel .relphi-snap-row{
+  display:grid!important;
+  grid-template-columns:minmax(7rem,1fr) auto!important;
+  align-items:center!important;
+  gap:.55rem!important;
+}
+#shortListPanel .relphi-snap-toggle{
+  display:flex!important;
+  align-items:center!important;
+  gap:.38rem!important;
+  margin:0!important;
+  font-size:.69rem!important;
+  font-weight:850!important;
+}
+#shortListPanel .relphi-snap-stepper{
+  display:grid!important;
+  grid-template-columns:2rem 4.2rem 2rem!important;
+  align-items:center!important;
+  gap:.25rem!important;
+}
+#shortListPanel .relphi-snap-stepper>button{
+  width:2rem!important;
+  min-width:2rem!important;
+  height:2rem!important;
+  margin:0!important;
+  padding:0!important;
+  border:1px solid #c8beb6!important;
+  border-radius:7px!important;
+  background:#fff!important;
+  color:#111!important;
+  font:inherit!important;
+  font-size:.8rem!important;
+  font-weight:900!important;
+}
+#shortListPanel .relphi-snap-stepper>#rowSnapGridValue,
+#shortListPanel .relphi-snap-stepper>#rowRotationSnapValue{
+  display:block!important;
+  width:4.2rem!important;
+  min-width:4.2rem!important;
+  margin:0!important;
+  text-align:center!important;
+  font-size:.72rem!important;
+  font-weight:750!important;
+  white-space:nowrap!important;
+}
+#shortListPanel .relphi-board-configuration #resetCardRowLayout{
+  width:100%!important;
+  min-height:2rem!important;
+  margin:.05rem 0 0!important;
+  padding:.35rem .55rem!important;
+  border:1px solid #c8beb6!important;
+  border-radius:7px!important;
+  background:#fff!important;
+  color:#111!important;
+  font:inherit!important;
+  font-size:.68rem!important;
+  font-weight:850!important;
+}
+#shortListPanel .relphi-swatch-setting{
+  display:flex!important;
+  align-items:center!important;
+  gap:.48rem!important;
+  margin:0!important;
+  font-size:.68rem!important;
+  font-weight:850!important;
+}
+#shortListPanel .relphi-swatch-setting input[type="color"]{
+  order:0!important;
+  width:2.65rem!important;
+  min-width:2.65rem!important;
+  height:2rem!important;
+  padding:.05rem!important;
+  border:1px solid #c8beb6!important;
+  border-radius:6px!important;
+  background:#fff!important;
+}
+#shortListPanel .relphi-swatch-setting>span{order:1!important}
+#shortListPanel .relphi-background-mode{
+  display:grid!important;
+  grid-template-columns:1fr 1fr!important;
+  gap:.2rem!important;
+  padding:.18rem!important;
+  border:1px solid #d8cec5!important;
+  border-radius:999px!important;
+  background:#f1ece6!important;
+}
+#shortListPanel .relphi-background-mode>button{
+  min-height:1.95rem!important;
+  margin:0!important;
+  padding:.32rem .55rem!important;
+  border:0!important;
+  border-radius:999px!important;
+  background:transparent!important;
+  color:#342e2a!important;
+  font:inherit!important;
+  font-size:.68rem!important;
+  font-weight:900!important;
+}
+#shortListPanel .relphi-background-mode>button.is-active{
+  background:#fff!important;
+  box-shadow:0 1px 4px rgba(0,0,0,.12)!important;
+}
+#shortListPanel .relphi-background-chooser{display:grid!important;gap:.45rem!important}
+#shortListPanel .relphi-background-chooser>#rowTableImageUpload{
+  justify-self:start!important;
+  min-height:2rem!important;
+  margin:0!important;
+  padding:.35rem .58rem!important;
+  border:1px solid #c8beb6!important;
+  border-radius:7px!important;
+  background:#fff!important;
+  color:#111!important;
+  font:inherit!important;
+  font-size:.68rem!important;
+  font-weight:850!important;
+}
+#shortListPanel .relphi-background-recents,
+#shortListPanel .relphi-background-image-recents{
+  display:flex!important;
+  align-items:center!important;
+  gap:.35rem!important;
+  flex-wrap:wrap!important;
+}
+#shortListPanel .relphi-recent-color{
+  width:1.8rem!important;
+  min-width:1.8rem!important;
+  height:1.8rem!important;
+  margin:0!important;
+  padding:0!important;
+  border:1px solid rgba(17,17,17,.38)!important;
+  border-radius:6px!important;
+  box-shadow:inset 0 0 0 2px rgba(255,255,255,.65)!important;
+}
+#shortListPanel .relphi-recent-image{
+  width:3rem!important;
+  min-width:3rem!important;
+  height:2rem!important;
+  margin:0!important;
+  padding:0!important;
+  border:1px solid rgba(17,17,17,.32)!important;
+  border-radius:6px!important;
+  background-position:center!important;
+  background-size:cover!important;
+  background-repeat:no-repeat!important;
+}
+#shortListPanel .relphi-background-default-row{
+  display:flex!important;
+  align-items:center!important;
+  justify-content:space-between!important;
+  gap:.5rem!important;
+  padding-top:.45rem!important;
+  border-top:1px solid #e5ddd5!important;
+}
+#shortListPanel .relphi-background-default-row>span{
+  min-width:0!important;
+  color:#665d56!important;
+  font-size:.64rem!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+  white-space:nowrap!important;
+}
+#shortListPanel .relphi-background-default-row>button{
+  flex:none!important;
+  min-height:1.9rem!important;
+  margin:0!important;
+  padding:.32rem .5rem!important;
+  border:1px solid #c8beb6!important;
+  border-radius:7px!important;
+  background:#fff!important;
+  color:#111!important;
+  font:inherit!important;
+  font-size:.64rem!important;
+  font-weight:850!important;
+}
+@media(max-width:700px){
+  #shortListPanel .relphi-board-configuration-trigger{top:.6rem!important;right:.6rem!important}
+  #shortListPanel .relphi-board-configuration{top:3.2rem!important;right:.6rem!important;width:calc(100% - 1.2rem)!important}
+  #shortListPanel .relphi-snap-row{grid-template-columns:1fr!important}
+  #shortListPanel .relphi-snap-stepper{justify-content:start!important}
+}
+
+
+/* Appearance is an inline disclosure, matching the Advanced control pattern. */
+#shortListPanel .relphi-board-configuration-trigger{display:none!important}
+#shortListPanel .relphi-board-settings-panel{overflow:hidden!important}
+#shortListPanel .relphi-board-configuration.relphi-appearance-disclosure{
+  position:relative!important;
+  inset:auto!important;
+  z-index:auto!important;
+  display:block!important;
+  width:100%!important;
+  max-height:none!important;
+  margin:0!important;
+  padding:0!important;
+  border:1px solid #ded4cb!important;
+  border-radius:8px!important;
+  background:#fcf9f5!important;
+  box-shadow:none!important;
+  overflow:hidden!important;
+}
+#shortListPanel .relphi-board-configuration.relphi-appearance-disclosure[hidden]{display:none!important}
+#shortListPanel .relphi-appearance-disclosure>summary{
+  cursor:pointer!important;
+  padding:.48rem .58rem!important;
+  color:#453d38!important;
+  font-size:.69rem!important;
+  font-weight:900!important;
+  list-style-position:inside!important;
+}
+#shortListPanel .relphi-appearance-body{
+  display:grid!important;
+  gap:.7rem!important;
+  padding:0 .58rem .62rem!important;
+}
+#shortListPanel .relphi-board-configuration-heading,
+#shortListPanel .relphi-board-configuration-close{display:none!important}
+
+
+/* Appearance refinements: inline disclosure before commit controls. */
+#shortListPanel .relphi-free-settings>.relphi-appearance-disclosure,
+#shortListPanel .relphi-reading-options-drawer>.relphi-appearance-disclosure{
+  order:98!important;
+  margin:.55rem 0 0!important;
+}
+#shortListPanel .relphi-board-settings-footer,
+#shortListPanel .relphi-options-commitbar{order:99!important}
+
+/* Bespoke owns its Appearance disclosure because appearance is part of the
+   reusable template, not a global afterthought below the Crafted paths. */
+#shortListPanel .relphi-bespoke-appearance-host{
+  display:block!important;
+  width:100%!important;
+  min-width:0!important;
+  margin:.55rem 0 0!important;
+}
+#shortListPanel .relphi-bespoke-appearance-host>.relphi-appearance-disclosure{
+  width:100%!important;
+  margin:0!important;
+}
+
+/* Individual card-control locks. */
+#shortListPanel.relphi-transform-editing-unlocked:not(.relphi-scale-unlocked) [data-row-transform-handle="scale"]{display:none!important;visibility:hidden!important;pointer-events:none!important}
+#shortListPanel.relphi-transform-editing-unlocked:not(.relphi-rotation-unlocked) [data-row-transform-handle="rotate"]{display:none!important;visibility:hidden!important;pointer-events:none!important}
+#shortListPanel:not(.relphi-transform-editing-unlocked) .card-row-transform-box{display:none!important}
+#shortListPanel .relphi-control-toggles{
+  display:grid!important;
+  grid-template-columns:repeat(3,minmax(0,1fr))!important;
+  gap:.42rem!important;
+}
+#shortListPanel .relphi-control-toggles>label,
+#shortListPanel .relphi-setting-toggle{
+  display:flex!important;
+  align-items:center!important;
+  gap:.36rem!important;
+  min-height:2.15rem!important;
+  padding:.4rem .52rem!important;
+  border:1px solid #d0c7bf!important;
+  border-radius:7px!important;
+  background:#fff!important;
+  color:#312b27!important;
+  font-size:.69rem!important;
+  font-weight:800!important;
+}
+
+/* Snap toggles mirror Advanced toggle treatment; steppers live directly below. */
+#shortListPanel .relphi-snap-control{display:grid!important;gap:.32rem!important}
+#shortListPanel .relphi-snap-stepper{
+  display:grid!important;
+  grid-template-columns:2rem minmax(4.4rem,auto) 2rem!important;
+  align-items:center!important;
+  justify-content:start!important;
+  gap:.25rem!important;
+  padding-left:.15rem!important;
+}
+#shortListPanel .relphi-snap-stepper[hidden]{display:none!important}
+#shortListPanel .relphi-snap-stepper>#rowSnapGridValue,
+#shortListPanel .relphi-snap-stepper>#rowRotationSnapValue{
+  width:auto!important;
+  min-width:4.4rem!important;
+  text-align:center!important;
+}
+
+/* Background mode should stay compact on desktop. */
+#shortListPanel .relphi-background-mode{
+  display:inline-grid!important;
+  grid-template-columns:auto auto!important;
+  justify-self:start!important;
+  width:auto!important;
+  max-width:max-content!important;
+}
+#shortListPanel .relphi-background-mode>button{
+  min-width:4.6rem!important;
+  width:auto!important;
+}
+
+/* Board and Placeholder targets intentionally share one aligned responsive grid. */
+#shortListPanel .relphi-background-targets{
+  display:grid!important;
+  grid-template-columns:1fr!important;
+  gap:.42rem!important;
+}
+#shortListPanel .relphi-background-target-row{
+  display:grid!important;
+  grid-template-columns:minmax(6.5rem,8rem) 3rem!important;
+  align-items:center!important;
+  gap:.55rem!important;
+}
+#shortListPanel .relphi-background-target-row>span{
+  font-size:.69rem!important;
+  font-weight:850!important;
+}
+#shortListPanel .relphi-background-target-swatch{
+  width:3rem!important;
+  min-width:3rem!important;
+  height:2rem!important;
+  margin:0!important;
+  padding:0!important;
+  border:1px solid rgba(17,17,17,.34)!important;
+  border-radius:6px!important;
+  background-position:center!important;
+  background-size:cover!important;
+  background-repeat:no-repeat!important;
+  box-shadow:inset 0 0 0 2px rgba(255,255,255,.58)!important;
+}
+#shortListPanel .relphi-background-target-swatch.is-image:empty{
+  background-image:linear-gradient(135deg,#eee 25%,#ddd 25%,#ddd 50%,#eee 50%,#eee 75%,#ddd 75%,#ddd)!important;
+  background-size:8px 8px!important;
+}
+
+/* Global placeholder image, when chosen. Per-position art still takes precedence in native markup. */
+#shortListPanel .card-row-card-wrap,
+#shortListPanel .card-row-drop-card{
+  background-image:var(--relphi-envelope-image,none)!important;
+  background-position:center!important;
+  background-size:cover!important;
+  background-repeat:no-repeat!important;
+}
+
+/* Recent appearance choices use LRU unless pinned. */
+#shortListPanel .relphi-background-history{
+  display:grid!important;
+  gap:.35rem!important;
+  padding-top:.45rem!important;
+  border-top:1px solid #e5ddd5!important;
+}
+#shortListPanel .relphi-background-history>span{
+  color:#665d56!important;
+  font-size:.64rem!important;
+  font-weight:850!important;
+}
+#shortListPanel .relphi-background-history-items{
+  display:flex!important;
+  align-items:flex-start!important;
+  gap:.35rem!important;
+  flex-wrap:wrap!important;
+  max-height:5.4rem!important;
+  overflow:auto!important;
+}
+#shortListPanel .relphi-history-chip{
+  position:relative!important;
+  display:inline-flex!important;
+  align-items:flex-start!important;
+}
+#shortListPanel .relphi-history-pin{
+  position:absolute!important;
+  top:-.28rem!important;
+  right:-.28rem!important;
+  display:grid!important;
+  place-items:center!important;
+  width:1.05rem!important;
+  min-width:1.05rem!important;
+  height:1.05rem!important;
+  margin:0!important;
+  padding:0!important;
+  border:1px solid rgba(17,17,17,.25)!important;
+  border-radius:50%!important;
+  background:#fff!important;
+  color:#332d29!important;
+  font-size:.55rem!important;
+  line-height:1!important;
+}
+
+/* Old default-setting row is intentionally retired. */
+#shortListPanel .relphi-background-default-row{display:none!important}
+
+@media(max-width:700px){
+  #shortListPanel .relphi-control-toggles{grid-template-columns:1fr!important}
+  #shortListPanel .relphi-background-target-row{grid-template-columns:minmax(5.5rem,1fr) 3rem!important}
+}
+
+
+/* Keep Appearance and Advanced visually contiguous in Settings. */
+#shortListPanel .relphi-free-settings>.relphi-draw-advanced + .relphi-appearance-disclosure,
+#shortListPanel .relphi-reading-options-drawer>.relphi-draw-advanced + .relphi-appearance-disclosure,
+#shortListPanel .relphi-free-settings>.relphi-appearance-disclosure,
+#shortListPanel .relphi-reading-options-drawer>.relphi-appearance-disclosure{
+  margin-top:0!important;
+}
+
+
+/* Reversals and Repeats are first-class settings now; Advanced is retired. */
+#shortListPanel .relphi-draw-advanced{display:none!important}
+#shortListPanel .relphi-free-toggles.relphi-draw-promoted{margin:0!important}
+
+
+/* Snaps: match the two-up Reversals / Repeats treatment. */
+#shortListPanel .relphi-board-configuration-group:has(> strong:first-child:nth-last-child(n+1)) .relphi-snap-control{
+  min-width:0!important;
+}
+#shortListPanel .relphi-board-configuration-group:has(.relphi-snap-control){
+  grid-template-columns:repeat(2,minmax(0,1fr))!important;
+}
+#shortListPanel .relphi-board-configuration-group:has(.relphi-snap-control)>strong,
+#shortListPanel .relphi-board-configuration-group:has(.relphi-snap-control)>#resetCardRowLayout{
+  grid-column:1/-1!important;
+}
+#shortListPanel .relphi-snap-control{
+  align-self:start!important;
+}
+#shortListPanel .relphi-snap-control>.relphi-setting-toggle{
+  width:100%!important;
+  box-sizing:border-box!important;
+}
+#shortListPanel .relphi-snap-stepper{
+  width:100%!important;
+  grid-template-columns:2rem minmax(0,1fr) 2rem!important;
+}
+#shortListPanel .relphi-snap-stepper>#rowSnapGridValue,
+#shortListPanel .relphi-snap-stepper>#rowRotationSnapValue{
+  min-width:0!important;
+  width:100%!important;
+}
+@media(max-width:700px){
+  #shortListPanel .relphi-board-configuration-group:has(.relphi-snap-control){
+    grid-template-columns:1fr!important;
+  }
+  #shortListPanel .relphi-board-configuration-group:has(.relphi-snap-control)>strong,
+  #shortListPanel .relphi-board-configuration-group:has(.relphi-snap-control)>#resetCardRowLayout{
+    grid-column:1!important;
+  }
+}
+
+
+/* Keep desktop Appearance controls compact, matching Reversals / Repeats. */
+@media(min-width:701px){
+  #shortListPanel .relphi-control-toggles{
+    grid-template-columns:repeat(3,minmax(0,1fr))!important;
+    width:min(34rem,100%)!important;
+    max-width:34rem!important;
+  }
+  #shortListPanel .relphi-board-configuration-group:has(.relphi-snap-control){
+    grid-template-columns:repeat(2,minmax(0,1fr))!important;
+    width:min(34rem,100%)!important;
+    max-width:34rem!important;
+    justify-self:start!important;
+  }
+}
+
+
+/* Match each Snap option to the exact desktop column width used by Reversals / Repeats. */
+@media(min-width:701px){
+  #shortListPanel .relphi-board-configuration-group:has(.relphi-snap-control){
+    width:min(22.5rem,100%)!important;
+    max-width:22.5rem!important;
+  }
+}
+
+
+/* Minimal Background UI: presets and swatches, no full-width Red felt toggle. */
+#shortListPanel .relphi-red-felt-toggle{display:none!important}
+#shortListPanel .relphi-board-background{gap:.42rem!important}
+#shortListPanel .relphi-background-preset-row{
+  display:flex!important;
+  align-items:center!important;
+  gap:.42rem!important;
+  width:max-content!important;
+}
+#shortListPanel .relphi-background-preset-row>span{
+  font-size:.66rem!important;
+  font-weight:800!important;
+  color:#4b433d!important;
+}
+#shortListPanel .relphi-background-preset-swatch{
+  width:2.15rem!important;
+  min-width:2.15rem!important;
+  height:1.6rem!important;
+  margin:0!important;
+  padding:0!important;
+  border:1px solid rgba(17,17,17,.35)!important;
+  border-radius:5px!important;
+  box-shadow:inset 0 0 0 2px rgba(255,255,255,.55)!important;
+}
+#shortListPanel .relphi-background-preset-swatch.is-active{
+  outline:2px solid var(--relphi-board-red)!important;
+  outline-offset:2px!important;
+}
+#shortListPanel .relphi-background-mode{
+  margin:0!important;
+  padding:.12rem!important;
+}
+#shortListPanel .relphi-background-mode>button{
+  min-width:3.9rem!important;
+  min-height:1.7rem!important;
+  padding:.24rem .44rem!important;
+  font-size:.64rem!important;
+}
+#shortListPanel .relphi-background-target-row{
+  grid-template-columns:minmax(5.5rem,7rem) 2.35rem!important;
+  gap:.42rem!important;
+}
+#shortListPanel .relphi-background-target-swatch{
+  width:2.35rem!important;
+  min-width:2.35rem!important;
+  height:1.7rem!important;
+}
+#shortListPanel .relphi-background-history{
+  padding-top:.3rem!important;
+  gap:.25rem!important;
+}
+
+
+/* Defensive control sizing: preserve labels, reflow controls, never clip text to keep a row. */
+#shortListPanel .relphi-board-commandbar{
+  flex-wrap:wrap!important;
+  min-width:0!important;
+}
+#shortListPanel .drawing-board-top-actions.relphi-board-command-actions{
+  display:flex!important;
+  flex:0 1 auto!important;
+  flex-wrap:wrap!important;
+  min-width:0!important;
+  max-width:100%!important;
+}
+#shortListPanel .drawing-board-top-actions.relphi-board-command-actions>button:not(.board-history-icon){
+  flex:0 0 auto!important;
+  width:auto!important;
+  min-width:max-content!important;
+  max-width:100%!important;
+  white-space:nowrap!important;
+  overflow:visible!important;
+  text-overflow:clip!important;
+}
+#shortListPanel .drawing-board-top-actions.relphi-board-command-actions>.board-history-icon{
+  flex:0 0 2.25rem!important;
+}
+#shortListPanel #relphiResetBoard{
+  min-width:max-content!important;
+  white-space:nowrap!important;
+}
+
+#shortListPanel .relphi-board-settings-panel,
+#shortListPanel .relphi-board-settings-body,
+#shortListPanel .relphi-free-settings,
+#shortListPanel .relphi-reading-options-drawer,
+#shortListPanel .relphi-options-body,
+#shortListPanel .relphi-referent-panel,
+#shortListPanel .relphi-bespoke-question-main,
+#shortListPanel .relphi-bespoke-question-settings,
+#shortListPanel .relphi-label-row{
+  min-width:0!important;
+}
+#shortListPanel .relphi-referent-path strong,
+#shortListPanel .relphi-referent-path span,
+#shortListPanel .relphi-sacred-card-source-choice span,
+#shortListPanel .relphi-surface-question-choice span,
+#shortListPanel .relphi-surface-select-all span,
+#shortListPanel .relphi-suggestion-copy,
+#shortListPanel .relphi-bespoke-question-settings label{
+  min-width:0!important;
+  overflow-wrap:anywhere!important;
+  word-break:normal!important;
+}
+#shortListPanel .relphi-board-settings-panel button,
+#shortListPanel .relphi-reading-options-drawer button{
+  text-overflow:clip!important;
+}
+#shortListPanel .relphi-options-subhead,
+#shortListPanel .relphi-bespoke-question-settings,
+#shortListPanel .relphi-surface-actions{
+  flex-wrap:wrap!important;
+}
+#shortListPanel .relphi-board-settings-footer>button,
+#shortListPanel .relphi-board-settings-panel .relphi-options-commitbar>button{
+  width:max-content!important;
+  min-width:max-content!important;
+  max-width:100%!important;
+  white-space:nowrap!important;
+}
+
+@media(max-width:760px){
+  #shortListPanel .drawing-board-top-actions.relphi-board-command-actions{
+    display:flex!important;
+    justify-content:flex-start!important;
+    align-items:center!important;
+    width:100%!important;
+    gap:.3rem!important;
+  }
+  #shortListPanel .drawing-board-top-actions.relphi-board-command-actions>button{
+    width:auto!important;
+  }
+}
+@media(max-width:360px){
+  #shortListPanel .relphi-board-commandbar{
+    padding-left:.55rem!important;
+    padding-right:.55rem!important;
+  }
+  #shortListPanel .drawing-board-top-actions.relphi-board-command-actions>button:not(.board-history-icon){
+    padding-left:.52rem!important;
+    padding-right:.52rem!important;
+  }
+  #shortListPanel .relphi-board-settings-panel button:not(.relphi-icon-button):not(.relphi-zoom-step):not(.board-history-icon),
+  #shortListPanel .relphi-reading-options-drawer button:not(.relphi-icon-button):not(.relphi-zoom-step):not(.board-history-icon){
+    height:auto!important;
+    min-height:2.15rem!important;
+    white-space:normal!important;
+    overflow-wrap:anywhere!important;
+  }
+}
+
+
+/* Building Blocks now has six controls: keep the desktop grid as three complete two-column rows. */
+#shortListPanel .relphi-building-grid label:last-child{
+  grid-column:auto!important;
+}
+
+
+/* Generated Building Block referents read as text, not centered controls. */
+#shortListPanel .relphi-suggestions-review .relphi-options-subhead{
+  justify-content:flex-start!important;
+  align-items:flex-start!important;
+  text-align:left!important;
+}
+#shortListPanel .relphi-suggestions-review .relphi-options-subhead>span{
+  width:100%!important;
+  text-align:left!important;
+}
+#shortListPanel .relphi-suggestions-review .relphi-suggestion-copy{
+  justify-items:start!important;
+  text-align:left!important;
+}
+#shortListPanel .relphi-suggestions-review .relphi-suggestion-copy>strong,
+#shortListPanel .relphi-suggestions-review .relphi-suggestion-copy>small{
+  width:100%!important;
+  text-align:left!important;
+}
+
+
+/* Crafted paths are accordion-like: each active drawer belongs directly to its header. */
+#shortListPanel .relphi-referent-path-drawer{
+  display:grid!important;
+  gap:.55rem!important;
+  min-width:0!important;
+}
+#shortListPanel .relphi-referent-path-drawer>.relphi-referent-panel{
+  margin:0!important;
+}
+
+
+/* Crafted path headers are collapsible drawers. */
+#shortListPanel .relphi-referent-path{
+  position:relative!important;
+  grid-template-columns:minmax(0,1fr) auto!important;
+  column-gap:.6rem!important;
+}
+#shortListPanel .relphi-referent-path>strong,
+#shortListPanel .relphi-referent-path>span{
+  grid-column:1!important;
+}
+#shortListPanel .relphi-referent-path::after{
+  content:'▸'!important;
+  grid-column:2!important;
+  grid-row:1 / span 2!important;
+  align-self:center!important;
+  color:#756a62!important;
+  font-size:.78rem!important;
+  line-height:1!important;
+}
+#shortListPanel .relphi-referent-path[aria-expanded="true"]::after{
+  content:'▾'!important;
+}
+
+
+/* Per-question Reversals / Repeats are tiny switches, not full-width setting cards. */
+#shortListPanel .relphi-question-advanced{
+  width:max-content!important;
+  max-width:100%!important;
+  justify-self:start!important;
+}
+#shortListPanel .relphi-question-advanced>summary{
+  width:max-content!important;
+  padding:.38rem .48rem!important;
+  white-space:nowrap!important;
+}
+#shortListPanel .relphi-question-advanced>div{
+  display:flex!important;
+  flex-wrap:wrap!important;
+  width:max-content!important;
+  max-width:100%!important;
+  gap:.32rem!important;
+  padding:0 .42rem .42rem!important;
+}
+#shortListPanel .relphi-question-advanced>div>label{
+  display:inline-flex!important;
+  flex:0 0 auto!important;
+  justify-content:flex-start!important;
+  width:auto!important;
+  min-width:0!important;
+  min-height:1.8rem!important;
+  padding:.28rem .42rem!important;
+  gap:.32rem!important;
+  white-space:nowrap!important;
+}
+#shortListPanel .relphi-question-advanced>div>label>input[type="checkbox"]{
+  flex:0 0 auto!important;
+  width:1rem!important;
+  min-width:1rem!important;
+  height:1rem!important;
+  margin:0!important;
+}
+@media(max-width:700px){
+  #shortListPanel .relphi-question-advanced>div{
+    display:flex!important;
+    width:max-content!important;
+    max-width:100%!important;
+  }
+}
+
+
+/* Bespoke per-question controls: uniform headers, with Advanced using the open row space. */
+#shortListPanel .relphi-bespoke-question-main{
+  min-width:0!important;
+}
+#shortListPanel .relphi-bespoke-question-settings>label{
+  display:grid!important;
+  grid-template-columns:1fr!important;
+  align-items:start!important;
+  gap:.2rem!important;
+  min-width:0!important;
+  margin:0!important;
+  color:#625851!important;
+  font-size:.66rem!important;
+  font-weight:800!important;
+  line-height:1.15!important;
+}
+#shortListPanel .relphi-bespoke-question-settings>label:first-child{
+  min-width:0!important;
+}
+#shortListPanel .relphi-bespoke-question-settings select,
+#shortListPanel .relphi-bespoke-question-settings input[type="number"]{
+  width:100%!important;
+  min-width:0!important;
+  box-sizing:border-box!important;
+  margin:0!important;
+}
+#shortListPanel .relphi-question-advanced{
+  margin:0!important;
+  padding:0!important;
+  border:0!important;
+  border-radius:0!important;
+  background:transparent!important;
+}
+#shortListPanel .relphi-question-advanced>summary{
+  width:max-content!important;
+  margin:0!important;
+  padding:0 0 .2rem!important;
+  color:#625851!important;
+  font-size:.66rem!important;
+  font-weight:800!important;
+  line-height:1.15!important;
+}
+#shortListPanel .relphi-question-advanced>div{
+  gap:.35rem!important;
+  padding:0!important;
+}
+#shortListPanel .relphi-question-advanced>div>label{
+  min-height:2rem!important;
+  padding:.34rem .48rem!important;
+}
+
+@media(min-width:701px){
+  #shortListPanel .relphi-bespoke-question-main{
+    display:grid!important;
+    grid-template-columns:minmax(24rem,1.45fr) minmax(14rem,.55fr)!important;
+    column-gap:.75rem!important;
+    row-gap:.42rem!important;
+    align-items:start!important;
+  }
+  #shortListPanel .relphi-bespoke-question-main>input{
+    grid-column:1/-1!important;
+  }
+  #shortListPanel .relphi-bespoke-question-settings{
+    grid-column:1!important;
+    display:grid!important;
+    grid-template-columns:minmax(10rem,1.45fr) minmax(4.5rem,.45fr) minmax(8rem,.8fr)!important;
+    gap:.5rem!important;
+    align-items:start!important;
+    min-width:0!important;
+  }
+  #shortListPanel .relphi-question-advanced{
+    grid-column:2!important;
+    grid-row:2!important;
+    align-self:start!important;
+    justify-self:stretch!important;
+    width:100%!important;
+    max-width:none!important;
+  }
+  #shortListPanel .relphi-question-advanced>div{
+    display:flex!important;
+    flex-wrap:wrap!important;
+    width:100%!important;
+    max-width:none!important;
+  }
+  #shortListPanel .relphi-question-advanced>div>label{
+    flex:0 0 auto!important;
+    width:auto!important;
+  }
+}
+@media(max-width:700px){
+  #shortListPanel .relphi-bespoke-question-main{
+    display:grid!important;
+    grid-template-columns:1fr!important;
+  }
+  #shortListPanel .relphi-bespoke-question-settings{
+    display:grid!important;
+    grid-template-columns:minmax(0,1fr) minmax(6.5rem,.7fr)!important;
+    gap:.45rem!important;
+    align-items:start!important;
+  }
+  #shortListPanel .relphi-bespoke-question-settings>label:first-child{
+    grid-column:1/-1!important;
+  }
+  #shortListPanel .relphi-question-advanced{
+    justify-self:start!important;
+    width:max-content!important;
+    max-width:100%!important;
+  }
+}
+@media(max-width:420px){
+  #shortListPanel .relphi-bespoke-question-settings{
+    grid-template-columns:1fr!important;
+  }
+  #shortListPanel .relphi-bespoke-question-settings>label:first-child{
+    grid-column:auto!important;
+  }
+}
+
+/* The felt is a viewport, never part of the surrounding Drawing Board chrome. */
+#shortListPanel .card-row-workspace{
+  box-sizing:border-box!important;
+  max-width:100%!important;
+  min-width:0!important;
+  contain:paint!important;
+  clip-path:inset(0 round 14px)!important;
+}
+
+/* Bespoke sacred-reading continuation: keep the construction action present but subordinate. */
+.relphi-bespoke-continue{display:flex;justify-content:center;padding:.55rem .75rem .85rem;}
+.relphi-bespoke-ask-another{font:inherit;border:1px solid currentColor;border-radius:999px;background:transparent;padding:.45rem .85rem;cursor:pointer;}
+
+
+/* Crafted Appearance is the final item in the scrolling body. Keep enough
+   trailing space that the static Cancel/Confirm bar can never cover it. */
+#shortListPanel .relphi-board-settings-panel .relphi-reading-options-drawer .relphi-options-body{
+  padding-bottom:5.25rem!important;
+  scroll-padding-bottom:5.25rem!important;
+}
+#shortListPanel .relphi-board-settings-panel .relphi-reading-options-drawer .relphi-options-body>.relphi-appearance-disclosure:last-child{
+  margin-bottom:.75rem!important;
+}
+
+
+/* Drawing Board exports use the same compact pill language as Sky Chart. */
+#shortListPanel .relphi-board-export-actions{display:flex!important;align-items:center!important;gap:.4rem!important;flex-wrap:wrap!important}
+#shortListPanel .relphi-board-export-button{
+  appearance:none!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;
+  min-height:30px!important;margin:0!important;padding:0 .72rem!important;border:1px solid rgba(31,27,24,.18)!important;
+  border-radius:999px!important;background:#fff!important;color:#332e2a!important;font:800 .68rem/1 system-ui,sans-serif!important;
+  white-space:nowrap!important;box-shadow:none!important;cursor:pointer!important
+}
+#shortListPanel .relphi-board-export-button:hover,#shortListPanel .relphi-board-export-button:focus-visible{
+  outline:none!important;border-color:#2462d0!important;box-shadow:0 0 0 2px rgba(36,98,208,.12)!important
+}
+#shortListPanel .relphi-board-export-button:disabled{opacity:.55!important;cursor:not-allowed!important}
+#shortListPanel .relphi-board-journal-button{gap:.38rem!important}
+#shortListPanel .relphi-board-journal-button small{font:700 .56rem/1 system-ui,sans-serif!important;text-transform:uppercase!important;letter-spacing:.04em!important}
+#shortListPanel .relphi-board-export-status{display:block!important;min-height:1em!important;margin-top:.35rem!important;color:#655d56!important;font-size:.66rem!important}
+
+
+/* Keep every Bespoke Advanced control inside the drawer at all widths. */
+#shortListPanel .relphi-question-advanced{
+  width:100%!important;
+  max-width:100%!important;
+  min-width:0!important;
+  justify-self:stretch!important;
+  box-sizing:border-box!important;
+}
+#shortListPanel .relphi-question-advanced>.relphi-bespoke-question-settings{
+  display:grid!important;
+  grid-template-columns:repeat(3,minmax(0,1fr))!important;
+  width:100%!important;
+  max-width:100%!important;
+  min-width:0!important;
+  box-sizing:border-box!important;
+  overflow:visible!important;
+}
+#shortListPanel .relphi-question-advanced>.relphi-bespoke-question-settings>label{
+  width:auto!important;
+  min-width:0!important;
+  max-width:100%!important;
+  box-sizing:border-box!important;
+}
+#shortListPanel .relphi-question-advanced>.relphi-bespoke-question-settings>label:nth-last-child(-n+2){
+  display:flex!important;
+  align-items:center!important;
+  justify-content:flex-start!important;
+}
+@media(max-width:700px){
+  #shortListPanel .relphi-question-advanced>.relphi-bespoke-question-settings{
+    grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  }
+}
+@media(max-width:420px){
+  #shortListPanel .relphi-question-advanced>.relphi-bespoke-question-settings{
+    grid-template-columns:1fr!important;
+  }
+}
+
+
+/* Keep Crafted setup and its commit controls inside the visible viewport.
+   The options body owns scrolling; the page must never strand Confirm below it. */
+#shortListPanel .relphi-board-settings-panel{
+  max-height:calc(100dvh - 1rem)!important;
+  min-height:0!important;
+}
+#shortListPanel .relphi-board-settings-panel .relphi-reading-options-drawer{
+  max-height:calc(100dvh - 4.75rem)!important;
+  min-height:0!important;
+  overflow:hidden!important;
+}
+#shortListPanel .relphi-board-settings-panel .relphi-reading-options-drawer .relphi-options-body{
+  overscroll-behavior-y:contain!important;
+  min-height:0!important;
+  overflow-y:auto!important;
+}
+#shortListPanel .relphi-board-settings-panel .relphi-reading-options-drawer .relphi-options-commitbar{
+  flex:0 0 auto!important;
+  position:relative!important;
+  bottom:auto!important;
+  z-index:3!important;
+}
+@media(max-width:700px){
+  #shortListPanel .relphi-board-settings-panel{
+    max-height:calc(100dvh - .5rem)!important;
+  }
+  #shortListPanel .relphi-board-settings-panel .relphi-reading-options-drawer{
+    max-height:calc(100dvh - 3.75rem)!important;
+  }
+}
+
+/* Relphi-level Sky Connector */
+#shortListPanel .relphi-sky-connector{border:1px solid rgba(35,29,25,.16);border-radius:10px;padding:.7rem .8rem;margin:0 0 .7rem;background:rgba(255,255,255,.55);min-width:0}
+#shortListPanel .relphi-sky-connector-head{display:flex;align-items:center;justify-content:space-between;gap:.75rem;flex-wrap:wrap}
+#shortListPanel .relphi-sky-connector-head>div{display:grid;gap:.12rem;min-width:0}#shortListPanel .relphi-sky-connector-head small,#shortListPanel .relphi-sky-connector p{color:#675e57;font-size:.76rem;margin:.35rem 0 0}
+#shortListPanel .relphi-sky-connector-body{display:grid;gap:.55rem;margin-top:.65rem}#shortListPanel .relphi-sky-source{display:flex;gap:.8rem;flex-wrap:wrap}
+#shortListPanel .relphi-sky-connector label{font-size:.78rem;font-weight:700;min-width:0}#shortListPanel .relphi-sky-connector select{display:block;width:100%;min-width:0;margin-top:.25rem;padding:.42rem .5rem;font:inherit}
+#shortListPanel .relphi-reading-reference{margin-top:.75rem;border-top:1px solid rgba(35,29,25,.14);padding-top:.65rem}#shortListPanel .relphi-reading-reference-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:.45rem}
+#shortListPanel .relphi-reference-tile{border:1px solid rgba(35,29,25,.13);border-radius:8px;padding:.5rem;background:rgba(255,255,255,.5)}#shortListPanel .relphi-reference-token{display:flex;align-items:center;gap:.4rem;font-weight:800}#shortListPanel .relphi-reference-token .house-medallion{display:inline-grid;place-items:center;width:1.75rem;height:1.75rem;border:1px solid currentColor;border-radius:50%}#shortListPanel .relphi-reference-detail{font-size:.72rem;color:#675e57;margin:.3rem 0 0}
+
+/* Sky Connector is global Drawing Board context and must remain in normal flow. */
+#shortListPanel .relphi-board-settings-body>.relphi-sky-connector{position:relative!important;inset:auto!important;z-index:auto!important;float:none!important;width:auto!important;max-width:none!important;flex:0 0 auto!important;order:0!important;margin:.55rem 0!important}
+#shortListPanel .relphi-board-settings-body>.drawing-board-mode-switch{position:relative!important;z-index:auto!important;flex:0 0 auto!important;order:1!important}
+#shortListPanel .relphi-board-settings-body>.relphi-reading-options-drawer,#shortListPanel .relphi-board-settings-body>.relphi-free-settings{position:relative!important;z-index:auto!important;order:2!important;min-height:0!important}
+
+/* Compact global Sky Connector: selector is its own header, flush right. */
+#shortListPanel .relphi-board-settings-body>.relphi-sky-connector{display:flex!important;justify-content:flex-end!important;align-items:center!important;gap:.4rem!important;border:0!important;background:transparent!important;padding:0!important;margin:.35rem 0!important}
+#shortListPanel .relphi-board-settings-body>.relphi-sky-connector select{display:inline-block!important;width:auto!important;max-width:min(100%,18rem)!important;margin:0!important;min-height:34px!important;padding:.32rem 1.8rem .32rem .55rem!important;font-size:.78rem!important;font-weight:700!important;border-radius:8px!important}
+#shortListPanel .relphi-board-settings-body>.relphi-sky-connector [data-sky-rising]{max-width:10rem!important}
+
+/* Bespoke save name is self-explanatory; do not add a redundant visible header. */
+#shortListPanel .relphi-template-save{padding-top:0!important}
+#shortListPanel .relphi-template-save::before{content:none!important;display:none!important}
+
+#shortListPanel #relphiTemplateName.is-unnamed{color:#8a837d!important;font-weight:500!important}
+
+/* The selected Crafted path header already supplies the path identity. */
+#shortListPanel .relphi-path-actions{display:flex!important;justify-content:flex-end!important;margin:0 0 .35rem!important}
+#shortListPanel .relphi-path-actions #relphiAddPosition{width:2rem!important;min-width:2rem!important;height:2rem!important;min-height:2rem!important;margin:0!important;padding:0!important;font-size:0!important}
+#shortListPanel .relphi-path-actions #relphiAddPosition::after{content:'+';font-size:1rem!important;line-height:1!important}
+
+/* Bespoke questions: selection/actions share one compact toolbar; rows devote width to the question. */
+#shortListPanel .relphi-question-toolbar{display:flex!important;align-items:center!important;justify-content:flex-end!important;gap:.32rem!important;margin:0 0 .45rem!important}
+#shortListPanel .relphi-question-toolbar>label{display:flex!important;align-items:center!important;gap:.28rem!important;margin-right:auto!important;font-size:.68rem!important;font-weight:800!important;color:#625950!important}
+#shortListPanel .relphi-question-toolbar input{width:1rem!important;height:1rem!important;margin:0!important}
+#shortListPanel .relphi-question-toolbar button{display:grid!important;place-items:center!important;width:2rem!important;min-width:2rem!important;height:2rem!important;min-height:2rem!important;margin:0!important;padding:0!important;border:1px solid #cfc5bc!important;border-radius:7px!important;background:#fff!important;font:inherit!important;font-size:.9rem!important;font-weight:900!important}
+#shortListPanel .relphi-question-toolbar #relphiAddPosition{background:#f1efed!important;font-size:1rem!important}
+#shortListPanel .relphi-bespoke-question-row{grid-template-columns:2rem minmax(0,1fr)!important;align-items:start!important;gap:.4rem!important}
+#shortListPanel .relphi-question-select{display:flex!important;align-items:center!important;justify-content:center!important;gap:.18rem!important;min-height:2.15rem!important;font-size:.68rem!important;font-weight:900!important}
+#shortListPanel .relphi-question-select input{width:.9rem!important;height:.9rem!important;margin:0!important}
+#shortListPanel .relphi-question-order-controls{display:none!important}
+
+/* Match Bespoke toolbar glyph scale to the Drawing Board undo/redo controls. */
+#shortListPanel .relphi-question-toolbar button{font-size:1.35rem!important;line-height:1!important;font-weight:700!important}
+#shortListPanel .relphi-question-toolbar #relphiAddPosition{font-size:1.35rem!important;line-height:1!important}
+#shortListPanel .relphi-question-toolbar #relphiAddPosition::after{content:none!important;display:none!important}
+
+/* Use the same visual hierarchy as Undo/Redo: large neutral glyphs, dimmed only when disabled. */
+#shortListPanel .relphi-question-toolbar button{width:2.25rem!important;min-width:2.25rem!important;max-width:2.25rem!important;height:2.25rem!important;min-height:2.25rem!important;padding:0!important;background:#fff!important;color:#111!important;font-size:1.8rem!important;font-weight:500!important;line-height:.8!important;border-color:#b9afa7!important}
+#shortListPanel .relphi-question-toolbar button:disabled{color:#8f8f8f!important;opacity:.42!important}
+#shortListPanel .relphi-question-toolbar #relphiAddPosition{background:#fff!important;color:#111!important;font-size:1.8rem!important;font-weight:500!important}
+
+/* Add/delete are one icon geometry: plus is the same crossed strokes rotated 45deg. */
+#shortListPanel .relphi-question-toolbar .relphi-stroke-icon{width:2.25rem!important;min-width:2.25rem!important;max-width:2.25rem!important;height:2.25rem!important;min-height:2.25rem!important;padding:0!important}
+#shortListPanel .relphi-stroke-icon>span{position:relative!important;display:block!important;width:1.18rem!important;height:1.18rem!important;transform:rotate(45deg)!important}
+#shortListPanel .relphi-stroke-icon>span::before,#shortListPanel .relphi-stroke-icon>span::after{content:''!important;position:absolute!important;left:50%!important;top:50%!important;width:1.18rem!important;height:.17rem!important;border-radius:.1rem!important;background:currentColor!important;transform:translate(-50%,-50%)!important}
+#shortListPanel .relphi-stroke-icon>span::after{transform:translate(-50%,-50%) rotate(90deg)!important}
+#shortListPanel .relphi-stroke-plus>span{transform:none!important}
+#shortListPanel .relphi-question-toolbar #relphiAddPosition::after{content:none!important;display:none!important}
+
+/* Cross/plus share the arrows' perceived glyph scale, while every toolbar box stays 2.25rem. */
+#shortListPanel .relphi-stroke-icon>span{width:.82rem!important;height:.82rem!important}
+#shortListPanel .relphi-stroke-icon>span::before,#shortListPanel .relphi-stroke-icon>span::after{width:.82rem!important;height:.14rem!important;border-radius:.08rem!important}
+#shortListPanel .relphi-question-toolbar button:disabled,#shortListPanel .relphi-question-toolbar .relphi-stroke-icon:disabled{color:#9a9a9a!important;opacity:.42!important;background:#fff!important}
+
+/* Add uses exactly the same control box as the other Bespoke toolbar actions. */
+#shortListPanel .relphi-question-toolbar #relphiAddPosition{display:grid!important;place-items:center!important;width:2.25rem!important;min-width:2.25rem!important;max-width:2.25rem!important;height:2.25rem!important;min-height:2.25rem!important;max-height:2.25rem!important;margin:0!important;padding:0!important;border:1px solid #b9afa7!important;border-radius:7px!important;box-sizing:border-box!important}
+
+/* Copy is a text action; unlike the glyph controls it must not be forced into a square. */
+#shortListPanel .relphi-question-toolbar #relphiCopyBespokeQuestions{
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  width:auto!important;
+  min-width:3.6rem!important;
+  max-width:none!important;
+  height:2.25rem!important;
+  min-height:2.25rem!important;
+  padding:0 .65rem!important;
+  color:#2f2925!important;
+  font-size:.68rem!important;
+  font-weight:850!important;
+  line-height:1!important;
+  white-space:nowrap!important;
+}
+#shortListPanel .relphi-bespoke-question-settings select[data-position-card-count]{
+  min-width:0!important;
+}
+
+/* Bespoke Advanced must reflow before controls can collide. */
+#shortListPanel .relphi-question-advanced>.relphi-bespoke-question-settings{
+  grid-template-columns:repeat(auto-fit,minmax(min(100%,8.5rem),1fr))!important;
+  align-items:stretch!important;
+}
+#shortListPanel .relphi-question-advanced>.relphi-bespoke-question-settings>label{
+  min-width:0!important;
+  max-width:100%!important;
+  box-sizing:border-box!important;
+  overflow:hidden!important;
+}
+#shortListPanel .relphi-question-advanced>.relphi-bespoke-question-settings>label:nth-child(-n+3){
+  display:grid!important;
+  grid-template-columns:1fr!important;
+  align-content:start!important;
+  gap:.22rem!important;
+}
+#shortListPanel .relphi-question-advanced>.relphi-bespoke-question-settings select,
+#shortListPanel .relphi-question-advanced>.relphi-bespoke-question-settings input,
+#shortListPanel .relphi-question-advanced>.relphi-bespoke-question-settings button{
+  width:100%!important;
+  min-width:0!important;
+  max-width:100%!important;
+  box-sizing:border-box!important;
+}
+
+#shortListPanel .drawing-board-top-actions>.relphi-sky-connector{order:5!important;display:flex!important;align-items:center!important;gap:.35rem!important;margin:0 0 0 auto!important;padding:0!important;border:0!important;background:transparent!important;width:auto!important}
+#shortListPanel .drawing-board-top-actions>.relphi-sky-connector select{width:auto!important;max-width:12.5rem!important;min-height:2.25rem!important;margin:0!important;padding:.42rem 1.8rem .42rem .58rem!important;border:1.25px solid #b9afa7!important;border-radius:8px!important;background:#fff!important;color:#2f2925!important;font-size:.72rem!important;font-weight:850!important}
+
+/* Drawing Board command hierarchy: Sky Connector / Reset+Settings / history+Clear+Draw. */
+#shortListPanel .relphi-board-commandbar{display:flex!important;flex-direction:column!important;align-items:stretch!important}
+#shortListPanel .relphi-board-sky-row{display:flex!important;justify-content:flex-end!important;width:100%!important;margin:0 0 .45rem!important}
+#shortListPanel .relphi-board-sky-row>.relphi-sky-connector{display:flex!important;justify-content:flex-end!important;gap:.35rem!important;width:auto!important;margin:0!important;padding:0!important;border:0!important;background:transparent!important}
+#shortListPanel .relphi-board-sky-row>.relphi-sky-connector select{width:auto!important;max-width:12.5rem!important;min-height:2.25rem!important;margin:0!important}
+#shortListPanel .relphi-board-secondary-actions{display:flex!important;align-items:center!important;justify-content:space-between!important;gap:.55rem!important;width:100%!important;margin:.4rem 0!important}
+#shortListPanel .relphi-board-secondary-actions #relphiResetBoard,#shortListPanel .relphi-board-secondary-actions #relphiBoardSettingsButton{margin:0!important}
+#shortListPanel .drawing-board-top-actions.relphi-board-command-actions{display:flex!important;align-items:center!important;justify-content:flex-start!important;gap:.4rem!important;width:100%!important}
+#shortListPanel .drawing-board-top-actions.relphi-board-command-actions #clearShortListCardsOnly{width:auto!important;min-width:4.2rem!important;margin:0!important}
+
+/* Safe command hierarchy: visual placement only; preserve the board's working DOM ownership. */
+#shortListPanel .relphi-board-commandbar{display:grid!important;grid-template-columns:auto auto 1fr!important;grid-template-areas:"title title title" "sky sky sky" "reset settings ." "undo redo clear draw"!important;gap:.45rem!important;align-items:center!important}
+#shortListPanel .relphi-board-command-left,#shortListPanel .drawing-board-top-actions.relphi-board-command-actions{display:contents!important}
+#shortListPanel .relphi-board-command-title{grid-area:title!important}
+#shortListPanel .drawing-board-top-actions>.relphi-sky-connector{grid-area:sky!important;justify-self:stretch!important;width:100%!important;margin:0!important}
+#shortListPanel .drawing-board-top-actions>.relphi-sky-connector select{width:100%!important;max-width:none!important}
+#shortListPanel #relphiResetBoard{grid-area:reset!important;margin:0!important}
+#shortListPanel #relphiBoardSettingsButton{grid-area:settings!important;margin:0!important}
+#shortListPanel #undoShortList{grid-area:undo!important;margin:0!important}
+#shortListPanel #redoShortList{grid-area:redo!important;margin:0!important}
+#shortListPanel #clearShortListCardsOnly{grid-area:clear!important;margin:0!important;min-width:0!important;width:auto!important}
+#shortListPanel #drawRandomRowCard{grid-area:draw!important;margin:0!important}
+@media(max-width:760px){#shortListPanel .relphi-board-commandbar{display:grid!important;grid-template-columns:auto auto auto 1fr!important;grid-template-areas:"title title title title" "sky sky sky sky" "reset settings . ." "undo redo clear draw"!important;gap:.4rem!important}#shortListPanel .relphi-board-command-left,#shortListPanel .drawing-board-top-actions.relphi-board-command-actions{display:contents!important}#shortListPanel .drawing-board-top-actions.relphi-board-command-actions>button{width:auto!important}}
+
+
+/* Compact Sky Connector selectors: use the Sky Chart single-chevron language. */
+#shortListPanel .drawing-board-top-actions>.relphi-sky-connector{
+  justify-content:flex-start!important;
+  gap:.4rem!important;
+}
+#shortListPanel .drawing-board-top-actions>.relphi-sky-connector select{
+  appearance:none!important;
+  -webkit-appearance:none!important;
+  width:auto!important;
+  max-width:min(46vw,12rem)!important;
+  min-width:0!important;
+  min-height:2.1rem!important;
+  padding:.34rem 1.65rem .34rem .62rem!important;
+  background-color:#fff!important;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M2 2l4 4 4-4' fill='none' stroke='%23111' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")!important;
+  background-repeat:no-repeat!important;
+  background-position:right .58rem center!important;
+  background-size:.7rem auto!important;
+}
+#shortListPanel .drawing-board-top-actions>.relphi-sky-connector select[data-sky-choice]{max-width:min(48vw,11.5rem)!important}
+#shortListPanel .drawing-board-top-actions>.relphi-sky-connector select[data-sky-ascendant]{max-width:min(38vw,9rem)!important}
+
+
+/* Connected-sky activation marker. Shared card surface means this appears in
+   Tarot results and Drawing Board; Focus inherits it through the Ledger entry. */
+.relphi-connected-sky-mark{
+  position:absolute;z-index:8;right:.32rem;bottom:.32rem;
+  display:inline-flex;align-items:center;gap:.22rem;
+  min-height:1.35rem;padding:.16rem .34rem;border-radius:999px;
+  background:rgba(255,253,248,.94);border:1px solid rgba(31,27,24,.2);
+  color:#211d19;font:800 .58rem/1 system-ui,sans-serif;
+  box-shadow:0 1px 4px rgba(31,27,24,.16);pointer-events:none
+}
+.relphi-connected-sky-mark>span{
+  display:block;width:1rem;height:1rem;border-radius:50%;
+  background:conic-gradient(from 270deg,
+    #e53935 0deg 30deg,#ef6c00 30deg 60deg,#f9a825 60deg 90deg,
+    #fdd835 90deg 120deg,#7cb342 120deg 150deg,#00897b 150deg 180deg,
+    #00acc1 180deg 210deg,#1e88e5 210deg 240deg,#3949ab 240deg 270deg,
+    #6a1b9a 270deg 300deg,#8e24aa 300deg 330deg,#d81b60 330deg 360deg);
+  transform:rotate(0deg)
+}
+.relphi-connected-sky-mark>b{font:inherit}
+
+
+/* PR205 command chrome repair: valid four-column grid keeps Settings and Sky Connector visible. */
+#shortListPanel .relphi-board-commandbar{
+  display:grid!important;
+  grid-template-columns:auto auto auto minmax(0,1fr)!important;
+  grid-template-areas:"title title title title" "sky sky sky sky" "reset settings . ." "undo redo clear draw"!important;
+  gap:.4rem!important;
+  align-items:center!important;
+}
+#shortListPanel .relphi-board-command-left,
+#shortListPanel .drawing-board-top-actions.relphi-board-command-actions{display:contents!important}
+#shortListPanel #relphiBoardSettingsButton{display:inline-flex!important;grid-area:settings!important;visibility:visible!important}
+#shortListPanel .drawing-board-top-actions>.relphi-sky-connector{display:flex!important;grid-area:sky!important;visibility:visible!important;width:100%!important}
+
+/* Vertically center the persistent Settings command label. */
+#shortListPanel #relphiBoardSettingsButton{
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  line-height:1!important;
+}
+
+
+/* Bespoke question settings live in one selection-aware controller. */
+#shortListPanel .relphi-question-controller{
+  display:grid!important;
+  gap:.5rem!important;
+  margin:0 0 .55rem!important;
+  padding:.58rem!important;
+  border:1px solid #d8cec5!important;
+  border-radius:9px!important;
+  background:#fcf9f5!important;
+}
+#shortListPanel .relphi-question-controller-head{
+  display:flex!important;
+  align-items:baseline!important;
+  justify-content:space-between!important;
+  gap:.75rem!important;
+}
+#shortListPanel .relphi-question-controller-head strong{font-size:.72rem!important}
+#shortListPanel .relphi-question-controller-head span{color:#756b63!important;font-size:.64rem!important;font-weight:700!important}
+#shortListPanel .relphi-question-controller-fields{
+  display:grid!important;
+  grid-template-columns:repeat(auto-fit,minmax(min(100%,8.5rem),1fr))!important;
+  gap:.42rem!important;
+  align-items:end!important;
+}
+#shortListPanel .relphi-question-controller-fields>label{
+  min-width:0!important;
+  display:grid!important;
+  gap:.22rem!important;
+  font-size:.66rem!important;
+  font-weight:800!important;
+  color:#625851!important;
+}
+#shortListPanel .relphi-question-controller-fields select,
+#shortListPanel .relphi-question-controller-fields input[type="number"]{
+  width:100%!important;
+  min-width:0!important;
+  max-width:100%!important;
+  box-sizing:border-box!important;
+}
+#shortListPanel .relphi-card-count-controller>div{
+  display:grid!important;
+  grid-template-columns:minmax(3.1rem,4.4rem) auto!important;
+  align-items:center!important;
+  gap:.35rem!important;
+}
+#shortListPanel .relphi-card-count-controller>div>span{
+  white-space:nowrap!important;
+  color:#453d38!important;
+  font-size:.68rem!important;
+  font-weight:850!important;
+}
+#shortListPanel .relphi-question-controller-fields>.relphi-question-controller-check{
+  display:flex!important;
+  align-items:center!important;
+  align-self:stretch!important;
+  gap:.38rem!important;
+  min-height:2.35rem!important;
+  padding:.4rem .5rem!important;
+  border:1px solid #d8cec5!important;
+  border-radius:7px!important;
+  background:#fff!important;
+  box-sizing:border-box!important;
+}
+#shortListPanel .relphi-question-controller-fields>.relphi-question-controller-check input{
+  width:1rem!important;
+  height:1rem!important;
+  margin:0!important;
+}
+#shortListPanel .relphi-question-advanced{display:none!important}
+
+
+/* Interrupted Sacred Reading lifecycle gate. */
+#shortListPanel.relphi-awaiting-sacred-resume{position:relative!important}
+#shortListPanel .relphi-sacred-resume-gate{
+  position:absolute!important;
+  inset:0!important;
+  z-index:80!important;
+  display:grid!important;
+  place-items:start center!important;
+  padding:5.2rem 1rem 1rem!important;
+  border:0!important;
+  border-radius:inherit!important;
+  background:rgba(255,253,249,.88)!important;
+  backdrop-filter:blur(3px)!important;
+  -webkit-backdrop-filter:blur(3px)!important;
+  box-sizing:border-box!important;
+}
+#shortListPanel .relphi-sacred-resume-card{
+  display:grid!important;
+  gap:.6rem!important;
+  width:min(31rem,100%)!important;
+  padding:1rem!important;
+  border:1px solid var(--relphi-board-line,#d8cec5)!important;
+  border-radius:12px!important;
+  background:#fff!important;
+  box-shadow:0 18px 44px rgba(39,29,23,.18)!important;
+  box-sizing:border-box!important;
+}
+#shortListPanel .relphi-sacred-resume-card h3{margin:0!important;font-size:1.08rem!important}
+#shortListPanel .relphi-sacred-resume-card p{margin:0!important;color:#625851!important;font-size:.76rem!important;line-height:1.45!important}
+#shortListPanel .relphi-sacred-resume-actions{display:flex!important;flex-wrap:wrap!important;gap:.5rem!important;margin-top:.2rem!important}
+#shortListPanel .relphi-sacred-resume-actions>.relphi-button{min-height:2.35rem!important}
+@media(max-width:560px){
+  #shortListPanel .relphi-sacred-resume-gate{padding:4.5rem .7rem .7rem!important}
+  #shortListPanel .relphi-sacred-resume-actions{display:grid!important;grid-template-columns:1fr!important}
+  #shortListPanel .relphi-sacred-resume-actions>.relphi-button{width:100%!important}
+}
+
+
+/* Astrological suggested-question bulk selection */
+#shortListPanel .relphi-astrology-question-global-bulk,
+#shortListPanel .relphi-astrology-question-bulk{
+  display:flex!important;
+  align-items:center!important;
+  flex-wrap:wrap!important;
+  gap:.3rem!important;
+}
+#shortListPanel .relphi-astrology-question-global-bulk>.relphi-button,
+#shortListPanel .relphi-astrology-question-bulk>.relphi-button{
+  width:auto!important;
+  min-width:0!important;
+  min-height:1.9rem!important;
+  padding:.28rem .5rem!important;
+  font-size:.64rem!important;
+}
+#shortListPanel .relphi-astrology-question-group{
+  display:grid!important;
+  gap:.08rem!important;
+  margin:.5rem 0 0!important;
+  padding:.5rem .55rem!important;
+  border:1px solid var(--relphi-board-line,#d8cec5)!important;
+  border-radius:8px!important;
+  background:#fcfaf7!important;
+}
+#shortListPanel .relphi-astrology-question-group-head{
+  display:flex!important;
+  align-items:center!important;
+  justify-content:space-between!important;
+  gap:.65rem!important;
+  margin-bottom:.12rem!important;
+}
+#shortListPanel .relphi-astrology-question-group-head>strong{
+  font-size:.68rem!important;
+  font-weight:900!important;
+}
+@media(max-width:560px){
+  #shortListPanel .relphi-astrology-question-head,
+  #shortListPanel .relphi-astrology-question-group-head{
+    align-items:flex-start!important;
+    flex-direction:column!important;
+  }
+}
+
+
+/* Astrological category selection uses the same checkbox language as questions. */
+#shortListPanel .relphi-astrology-category-master,
+#shortListPanel .relphi-astrology-category-toggle{
+  display:inline-flex!important;
+  align-items:center!important;
+  gap:.38rem!important;
+  min-width:0!important;
+  font-size:.68rem!important;
+  font-weight:900!important;
+  cursor:pointer!important;
+}
+#shortListPanel .relphi-astrology-category-master input,
+#shortListPanel .relphi-astrology-category-toggle input{
+  flex:0 0 auto!important;
+  width:1rem!important;
+  height:1rem!important;
+  margin:0!important;
+}
+#shortListPanel .relphi-astrology-category-master strong,
+#shortListPanel .relphi-astrology-category-toggle strong{
+  min-width:0!important;
+}
+
+
+/* Astrological evidence bulk controls */
+#shortListPanel .relphi-astrology-evidence-controls{
+  grid-column:1/-1!important;
+  display:grid!important;
+  gap:.5rem!important;
+  padding:.65rem!important;
+  border:1px solid var(--relphi-board-line,#d8cec5)!important;
+  border-radius:9px!important;
+  background:#fffdf9!important;
+}
+#shortListPanel .relphi-astrology-evidence-control-head{
+  display:flex!important;
+  align-items:center!important;
+  justify-content:space-between!important;
+  gap:.75rem!important;
+}
+#shortListPanel .relphi-astrology-evidence-control-head>strong{
+  font-size:.76rem!important;
+  font-weight:900!important;
+}
+#shortListPanel .relphi-astrology-evidence-master,
+#shortListPanel .relphi-astrology-evidence-categories>label{
+  display:inline-flex!important;
+  align-items:center!important;
+  gap:.35rem!important;
+  min-width:0!important;
+  font-size:.66rem!important;
+  font-weight:850!important;
+  cursor:pointer!important;
+}
+#shortListPanel .relphi-astrology-evidence-master input,
+#shortListPanel .relphi-astrology-evidence-categories input{
+  flex:0 0 auto!important;
+  width:1rem!important;
+  height:1rem!important;
+  margin:0!important;
+}
+#shortListPanel .relphi-astrology-evidence-categories{
+  display:flex!important;
+  flex-wrap:wrap!important;
+  gap:.42rem .72rem!important;
+}
+@media(max-width:560px){
+  #shortListPanel .relphi-astrology-evidence-control-head{
+    align-items:flex-start!important;
+    flex-direction:column!important;
+  }
+}
+
+
+/* Astrological Reading sky inheritance and compare controls */
+#shortListPanel .relphi-astrology-sky-source{
+  display:grid!important;
+  gap:.3rem!important;
+  width:100%!important;
+  min-width:0!important;
+}
+#shortListPanel .relphi-astrology-sky-source-head{
+  display:flex!important;
+  align-items:center!important;
+  gap:.45rem!important;
+  min-width:0!important;
+}
+#shortListPanel .relphi-astrology-sky-source-head>strong{
+  flex:0 0 auto!important;
+  font-size:.68rem!important;
+  font-weight:900!important;
+}
+#shortListPanel .relphi-astrology-inherited-sky{
+  min-width:0!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+  white-space:nowrap!important;
+  color:#665d56!important;
+  font-size:.63rem!important;
+  font-weight:800!important;
+}
+#shortListPanel .relphi-remove-astrology-sky{
+  margin-left:auto!important;
+  width:auto!important;
+  min-width:0!important;
+  min-height:1.9rem!important;
+  padding:.28rem .5rem!important;
+  font-size:.64rem!important;
+}
+#shortListPanel .relphi-astrology-inherited-note{
+  margin:0!important;
+  color:#746b64!important;
+  font-size:.62rem!important;
+  line-height:1.35!important;
+}
+
+
+/* On-the-fly Tarot sub-pack builder */
+#shortListPanel .relphi-subpack-control{display:grid!important;grid-template-columns:minmax(0,1fr) auto!important;gap:.35rem!important;align-items:center!important}
+#shortListPanel .relphi-subpack-create{width:32px!important;height:32px!important;padding:0!important;border-radius:50%!important;font-size:1.1rem!important;line-height:1!important}
+.relphi-subpack-builder{width:min(92vw,620px);max-height:82vh;border:1px solid var(--relphi-board-line,#d8cec5);border-radius:16px;padding:0;background:#fff;color:#171412}
+.relphi-subpack-builder::backdrop{background:rgba(20,16,14,.42)}
+.relphi-subpack-builder-card{display:grid;gap:.8rem;padding:1rem;max-height:78vh;overflow:auto}
+.relphi-subpack-builder header,.relphi-subpack-builder footer,.relphi-subpack-members>div:first-child,.relphi-subpack-result-head{display:flex;align-items:center;justify-content:space-between;gap:.6rem}
+.relphi-subpack-builder header h3{margin:.1rem 0 0}.relphi-subpack-builder label{display:grid;gap:.3rem;font-weight:700}
+.relphi-subpack-builder input{font:inherit;min-height:38px;border:1px solid #d8cec5;border-radius:9px;padding:.45rem .6rem}
+.relphi-subpack-results{display:grid;gap:.35rem}.relphi-subpack-result{display:grid;grid-template-columns:38px minmax(0,1fr) auto;align-items:center;gap:.55rem;text-align:left;border:1px solid #e1d8d0;border-radius:10px;background:#fff;padding:.35rem .5rem}
+.relphi-subpack-result[aria-pressed="true"]{box-shadow:inset 0 0 0 1px currentColor}.relphi-subpack-result img{width:38px;height:54px;object-fit:cover;border-radius:4px}
+.relphi-subpack-members{display:grid;gap:.45rem;border-top:1px solid #e6ddd5;padding-top:.7rem}.relphi-subpack-members [data-subpack-members]{display:flex;gap:.35rem;flex-wrap:wrap}
+.relphi-subpack-members [data-member-remove]{border:1px solid #d8cec5;border-radius:999px;background:#fff;padding:.3rem .55rem}
+.relphi-subpack-builder footer span{flex:1}.relphi-subpack-builder button{font:inherit;cursor:pointer}.relphi-subpack-builder footer button{min-height:34px;border:1px solid #d8cec5;border-radius:999px;background:#fff;padding:.35rem .7rem}.relphi-subpack-builder footer .primary{background:#171412;color:#fff;border-color:#171412}
+
+
+/* Crafted path tiles stay content-sized when lower shared settings are absent. */
+#shortListPanel .relphi-board-settings-panel .relphi-reading-options-drawer .relphi-options-body{
+  align-content:start!important;
+  grid-auto-rows:max-content!important;
+}
+#shortListPanel .relphi-referent-paths{
+  grid-auto-rows:max-content!important;
+  align-content:start!important;
+  align-self:start!important;
+}
+#shortListPanel .relphi-referent-path{
+  align-self:start!important;
+}
+
+.relphi-clarifier-modal{position:fixed!important;inset:0!important;z-index:100050!important;display:grid!important;place-items:center!important;padding:1rem!important;background:rgba(20,15,12,.58)!important;backdrop-filter:blur(6px)!important}
+.relphi-clarifier-card{position:relative!important;display:grid!important;gap:.68rem!important;width:min(34rem,calc(100vw - 2rem))!important;padding:1rem 1rem 1.05rem!important;border:1px solid #d8cec5!important;border-radius:16px!important;background:#fffdf8!important;box-shadow:0 22px 60px rgba(0,0,0,.28)!important;color:#171412!important}
+.relphi-clarifier-card>.eyebrow{margin:0!important;color:#8a7462!important;font-size:.64rem!important;font-weight:900!important;letter-spacing:.09em!important;text-transform:uppercase!important}
+.relphi-clarifier-card h2{margin:0!important;font-size:1.28rem!important;line-height:1.15!important}
+.relphi-clarifier-card p{margin:0!important;color:#655d56!important;font-size:.82rem!important;line-height:1.45!important}
+.relphi-clarifier-card label{display:grid!important;gap:.32rem!important;font-size:.72rem!important;font-weight:850!important}
+.relphi-clarifier-card textarea{box-sizing:border-box!important;width:100%!important;min-height:6.5rem!important;resize:vertical!important;padding:.72rem .78rem!important;border:1.5px solid #9d9288!important;border-radius:10px!important;background:#fff!important;color:#171412!important;font:inherit!important;line-height:1.4!important;outline:none!important}
+.relphi-clarifier-card textarea:focus{border-color:#a61712!important;box-shadow:0 0 0 3px rgba(166,23,18,.12)!important}
+.relphi-clarifier-actions{display:flex!important;justify-content:flex-end!important;gap:.5rem!important;margin-top:.1rem!important}
+.relphi-clarifier-close{position:absolute!important;top:.72rem!important;right:.72rem!important;display:grid!important;place-items:center!important;width:2rem!important;height:2rem!important;padding:0!important;border:1px solid #c9bfb7!important;border-radius:50%!important;background:#fff!important;color:#171412!important;font-size:1.15rem!important;cursor:pointer!important}
+@media(max-width:600px){.relphi-clarifier-card{padding:.9rem!important}.relphi-clarifier-actions{display:grid!important;grid-template-columns:1fr 1fr!important}.relphi-clarifier-actions button{width:100%!important}}
+
+/* Clarifier is a persistent command-bar button; center its label like Reset / Settings. */
+#shortListPanel .drawing-board-top-actions.relphi-board-command-actions>.relphi-bespoke-ask-another{
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  line-height:1!important;
+}

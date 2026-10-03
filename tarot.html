@@ -6,23 +6,29 @@
   <link href="favicon.ico" rel="icon" type="image/x-icon"/>
   <title>Tarot Ledger · Oracle of Relphi</title>
   <meta name="robots" content="noindex,nofollow,noarchive"/>
-  <link href="style.css?v=367" rel="stylesheet"/>
-  <link href="drawing-board-workflow-v2.css?v=49" rel="stylesheet"/>
+  <link href="style.css?v=368" rel="stylesheet"/>
+  <link href="relphi-design-system.css?v=1" rel="stylesheet"/>
+  <link href="drawing-board-workflow-v2.css?v=75" rel="stylesheet"/>
 </head>
-<body>
+<body class="tarot-ledger-page">
   <div id="nav-placeholder"></div>
   <main class="tarot-app-shell">
-    <section class="tarot-hero compact">
-      <h1>Tarot <span class="red">Ledger</span></h1>
+    <section class="tarot-hero compact relphi-ledger-tool-header" aria-labelledby="tarotLedgerTitle">
+      <h1 id="tarotLedgerTitle">Tarot <span class="red">Ledger</span></h1>
       <p class="relphi-tool-brandline">an Oracle of Relphi tool</p>
-      <p class="tarot-hero-subtitle">Search · study · draw.</p>
+      <p class="tarot-hero-subtitle">Search the deck · Inspect correspondences · Build readings.</p>
+    </section>
+    <section class="tarot-home-actions" aria-label="Primary actions">
+      <button id="showAllCards" type="button">Show All Cards</button>
+      <button id="relphiOpenDrawingBoardCurrent" type="button" aria-controls="shortListPanel" aria-expanded="false">Open Drawing Board</button>
+      <button id="clearSearch" type="button" title="Hide card results without clearing the Drawing Board">Hide Cards</button>
     </section>
 
-    <section class="tarot-command-panel tarot-command-panel--primary" aria-label="Tarot search">
+    <section class="tarot-command-panel tarot-command-panel--primary" aria-label="Search Tarot Ledger">
       <label class="command-label visually-hidden" for="oracleCommand">Search Tarot Ledger</label>
       <div class="command-row">
         <div class="search-input-wrap">
-          <input id="oracleCommand" type="search" placeholder="Ex. Saturn, Libra, Sorrow, Lamed, Cups" autocomplete="off"/>
+          <input id="oracleCommand" type="search" placeholder="Search Tarot Ledger: cards, planets, signs, ranks, themes, or commands" autocomplete="off"/>
         </div>
         <button id="runCommand" type="button">Search</button>
         <button class="clear-keywords-button" type="button" data-clear-search-terms>Clear</button>
@@ -30,19 +36,16 @@
       <div id="commandMenu" class="command-menu" hidden></div>
     </section>
 
-    <section class="tarot-mode-bar tarot-mode-bar--ledger" aria-label="Tarot Ledger controls">
-      <button id="showAllCards" type="button">Show All Cards</button>
-      <button id="relphiOpenDrawingBoardCurrent" type="button" aria-controls="shortListPanel" aria-expanded="false">Open Drawing Board</button>
+    <div class="tarot-mode-bar tarot-mode-bar--ledger" hidden aria-hidden="true">
       <button id="drawMode" type="button" hidden>Draw Cards</button>
       <button id="dateMode" type="button" hidden>Date Field</button>
       <button id="chartMode" type="button" hidden>Sky Chart</button>
       <button id="currentSkyMode" type="button" hidden>Current Sky</button>
-      <button id="clearSearch" type="button" title="Hide card results without clearing the Drawing Board">Hide Cards</button>
       <button id="clearSearchKeywordsCollapsed" type="button" hidden>Clear keywords only</button>
-      <button id="landingDrawCard" type="button" hidden aria-hidden="true" tabindex="-1">Draw a Card</button>
-      <button id="landingOpenBoard" type="button" hidden aria-hidden="true" tabindex="-1">Open Drawing Board</button>
-      <button id="landingShowLedger" type="button" hidden aria-hidden="true" tabindex="-1">Browse the Ledger</button>
-    </section>
+      <button id="landingDrawCard" type="button" hidden tabindex="-1">Draw a Card</button>
+      <button id="landingOpenBoard" type="button" hidden tabindex="-1">Open Drawing Board</button>
+      <button id="landingShowLedger" type="button" hidden tabindex="-1">Browse the Ledger</button>
+    </div>
 
     <section id="tarotSummary" class="tarot-summary" aria-live="polite">
       <div class="tarot-summary-count" hidden><strong id="resultCount">No</strong><span id="resultNoun"> cards shown</span></div>
@@ -348,14 +351,43 @@
     </section>
   
     <section id="shortListPanel" class="short-list-panel" hidden aria-label="Drawing Board"></section>
+
+
   </main>
 
-  <script src="navloader.js?v=114"></script>
+  <script>
+function copyQuestionCard(card) {
+  document.querySelectorAll('.question-card').forEach(function(c) {
+    c.classList.remove('card-copied');
+    const icon = c.querySelector('.copy-icon');
+    const copied = c.querySelector('.copied-text');
+    if (icon) icon.hidden = false;
+    if (copied) copied.hidden = true;
+  });
+
+  const text = card.querySelector('.question-text').innerText;
+  navigator.clipboard.writeText(text);
+
+  card.classList.add('card-copied');
+  const icon = card.querySelector('.copy-icon');
+  const copied = card.querySelector('.copied-text');
+  if (icon) icon.hidden = true;
+  if (copied) copied.hidden = false;
+  setTimeout(function() {
+    card.classList.remove('card-copied');
+    if (icon) icon.hidden = false;
+    if (copied) copied.hidden = true;
+  }, 1300);
+}
+
+  </script>
+  <script src="navloader.js?v=125"></script>
   <script src="tarot-cards.js"></script>
+  <script src="relphi-symbolic-reference.js?v=3"></script>
   <script src="relphi-locked-interpretations.js?v=207"></script>
   <script src="relphi-rising-sign-house-offset-effects.js?v=219"></script>
   <script src="vendor/astronomy-engine/astronomy.browser.min.js"></script>
   <script src="relphi-house-systems.js?v=317"></script>
-  <script src="tarot-app.js?v=385"></script>
+  <script src="tarot-app.js?v=390"></script>
 </body>
 </html>
