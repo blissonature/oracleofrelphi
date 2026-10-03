@@ -3,15 +3,10 @@
 #skyFoundationWheelMount>.sky-foundation-wheel.has-filter-focus:not(.has-isolation) [data-layer="aspects"] .sky-foundation-aspect,
 #skyFoundationWheelMount>.sky-foundation-wheel.has-filter-focus:not(.has-isolation) [data-layer="placements"] [data-sky][data-placement],
 #skyFoundationWheelMount>.sky-foundation-wheel.has-filter-focus:not(.has-isolation) .sky-foundation-house-sector,
+#skyFoundationWheelMount>.sky-foundation-wheel.has-filter-focus:not(.has-isolation) .sky-foundation-sign-sector,
 #skyFoundationWheelMount>.sky-foundation-wheel.has-filter-focus:not(.has-isolation) .sky-foundation-sign-glyph{
   opacity:.08;
   transition:opacity .07s ease-out,filter .07s ease-out,stroke-width .07s ease-out;
-}
-
-#skyFoundationWheelMount>.sky-foundation-wheel.has-filter-focus:not(.has-isolation) .sky-foundation-sign-sector:not(.is-filter-kept){
-  opacity:1;
-  fill-opacity:.08;
-  transition:fill-opacity .07s ease-out;
 }
 
 /* Unrelated leader whiskers add noise without carrying useful filtered context. */
