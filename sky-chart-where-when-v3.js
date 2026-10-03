@@ -350,38 +350,71 @@ async function submitForm(slot,form,options={}){
   }
   await submitCalculated(slot,form,options);
 }
-async function currentLocalTime(slot){
-  const selected=cardState[slot].selected,form=formFor(slot);if(!selected||!form)return status(slot,'Choose a location first.',true);
-  const now=window.luxon?.DateTime?.now(),local=now?.isValid?now.setZone(selected.timezone):null;if(!local?.isValid)return status(slot,'The current instant could not be converted to that location.',true);
-  form.querySelector('[data-ww-field="date"]').value=local.toFormat('yyyy-MM-dd');form.querySelector('[data-ww-field="time"]').value=local.toFormat('HH:mm');window.RelphiSkyWhereWhenDraftHeptagram?.render?.(slot,0);
-  await submitForm(slot,form,{liveOrigin:'use-now',instant:now.toUTC().toISO()});
+function syncWhereWhenModeUI(form){
+  if(!form)return;
+  const mode=form.dataset.wwMode||'other',whereMode=form.dataset.wwWhereMode||'search',whenMode=form.dataset.wwWhenMode||'enter';
+  form.querySelectorAll('[data-ww-mode-choice]').forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.wwModeChoice===mode)));
+  form.querySelector('[data-ww-other]')?.toggleAttribute('hidden',mode==='here-now');
+  form.querySelectorAll('[data-ww-where-choice]').forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.wwWhereChoice===whereMode)));
+  form.querySelector('[data-ww-where-mine]')?.toggleAttribute('hidden',whereMode!=='mine');
+  form.querySelector('[data-ww-where-search]')?.toggleAttribute('hidden',whereMode!=='search');
+  form.querySelectorAll('[data-ww-when-choice]').forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.wwWhenChoice===whenMode)));
+  form.querySelector('[data-ww-when-now]')?.toggleAttribute('hidden',whenMode!=='now');
+  form.querySelector('[data-ww-when-enter]')?.toggleAttribute('hidden',whenMode!=='enter');
 }
-async function useHere(slot,button){
-  const form=formFor(slot);if(!form)return;
-  const dateField=form.querySelector('[data-ww-field="date"]'),timeField=form.querySelector('[data-ww-field="time"]');
-  const dateValue=dateField?.value||'',timeValue=timeField?.value||'';
-  if(button){button.disabled=true;button.setAttribute('aria-busy','true')}
-  status(slot,'Finding your current browser location…');
+function clearLiveDraft(form){
+  if(!form)return;
+  delete form.dataset.wwLiveOrigin;
+  delete form.dataset.wwInstant;
+}
+function populateCurrentLocalTime(slot,{announce=true}={}){
+  const selected=cardState[slot].selected,form=formFor(slot);if(!selected||!form){if(announce)status(slot,'Choose Where first.',true);return false}
+  const now=window.luxon?.DateTime?.now(),local=now?.isValid?now.setZone(selected.timezone):null;if(!local?.isValid){if(announce)status(slot,'The current instant could not be converted to that location.',true);return false}
+  const unknown=form.querySelector('[data-ww-field="time-unknown"]');if(unknown)unknown.checked=false;
+  const date=form.querySelector('[data-ww-field="date"]'),time=form.querySelector('[data-ww-field="time"]');
+  if(date)date.value=local.toFormat('yyyy-MM-dd');if(time){time.disabled=false;time.value=local.toFormat('HH:mm')}
+  form.dataset.wwLiveOrigin='use-now';form.dataset.wwInstant=now.toUTC().toISO();
+  window.RelphiSkyWhereWhenDraftHeptagram?.render?.(slot,0);
+  if(announce)status(slot,'Now is set to the current local time at '+selected.canonical+'.');
+  return true;
+}
+async function chooseMyLocation(slot,{announce=true}={}){
+  const form=formFor(slot);if(!form)return false;
+  const dateField=form.querySelector('[data-ww-field="date"]'),timeField=form.querySelector('[data-ww-field="time"]'),dateValue=dateField?.value||'',timeValue=timeField?.value||'';
+  setBusy(slot,true);if(announce)status(slot,'Finding your current browser location…');
   try{
     const packet=await currentLocationPacket();
+    setBusy(slot,false);
     if(!selectLocation(slot,packet))throw new Error('Current browser location could not be applied.');
-    if(dateField)dateField.value=dateValue;
-    if(timeField)timeField.value=timeValue;
-    status(slot,'Current browser location applied. Date and time unchanged.');
+    if(form.dataset.wwWhenMode==='now')populateCurrentLocalTime(slot,{announce:false});
+    else{if(dateField)dateField.value=dateValue;if(timeField)timeField.value=timeValue;clearLiveDraft(form)}
+    if(announce)status(slot,'My Location is set to '+packet.canonical+'.');
+    return true;
   }catch(error){
-    status(slot,error?.code===1?'Location permission was denied.':error?.message||'Current browser location could not be resolved.',true);
-  }finally{
-    if(button){button.disabled=false;button.removeAttribute('aria-busy')}
+    setBusy(slot,false);
+    if(announce)status(slot,error?.code===1?'Location permission was denied.':error?.message||'Current browser location could not be resolved.',true);
+    return false;
   }
 }
-async function hereAndNow(slot){
-  const form=formFor(slot);if(!form)return;setBusy(slot,true);status(slot,'Using your current location and the current instant…');
-  try{
-    const packet=await currentLocationPacket();selectLocation(slot,packet);
-    const now=window.luxon?.DateTime?.now(),local=now?.isValid?now.setZone(packet.timezone):null;if(!local?.isValid)throw new Error('The current instant could not be converted to your location.');
-    form.querySelector('[data-ww-field="date"]').value=local.toFormat('yyyy-MM-dd');form.querySelector('[data-ww-field="time"]').value=local.toFormat('HH:mm');setBusy(slot,false);
-    await submitForm(slot,form,{liveOrigin:'use-now',instant:now.toUTC().toISO()});
-  }catch(error){setBusy(slot,false);status(slot,error?.code===1?'Location permission was denied.':error?.message||'Here and Now could not be resolved.',true)}
+async function chooseHereAndNow(slot){
+  const form=formFor(slot);if(!form)return false;
+  form.dataset.wwMode='here-now';form.dataset.wwWhereMode='mine';form.dataset.wwWhenMode='now';syncWhereWhenModeUI(form);
+  const ok=await chooseMyLocation(slot,{announce:false});
+  if(!ok){form.dataset.wwMode='other';syncWhereWhenModeUI(form);return false}
+  populateCurrentLocalTime(slot,{announce:false});
+  status(slot,'Here & Now is ready. Confirm to use your current location and current instant.');
+  return true;
+}
+async function setWhereChoice(slot,choice){
+  const form=formFor(slot);if(!form)return;
+  form.dataset.wwWhereMode=choice==='mine'?'mine':'search';syncWhereWhenModeUI(form);
+  if(form.dataset.wwWhereMode==='mine')await chooseMyLocation(slot);
+}
+function setWhenChoice(slot,choice){
+  const form=formFor(slot);if(!form)return;
+  form.dataset.wwWhenMode=choice==='now'?'now':'enter';syncWhereWhenModeUI(form);
+  if(form.dataset.wwWhenMode==='now')populateCurrentLocalTime(slot);
+  else{clearLiveDraft(form);status(slot,'Enter the local date and time for the selected Where.');window.RelphiSkyWhereWhenDraftHeptagram?.render?.(slot,0)}
 }
 
 function weekdayRuler(instant,timeZone){return WEEKDAY_RULERS[window.luxon.DateTime.fromJSDate(instant).setZone(timeZone).weekday]||'sun'}
