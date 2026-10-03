@@ -248,6 +248,7 @@
     dispatchSkyAStorage(rawB);dispatchSkyBStorage(rawA);
     let skyA=null,skyB=null;try{skyA=JSON.parse(rawB);skyB=JSON.parse(rawA)}catch(_){}
     try{window.RelphiSkyCardShell?.sync?.('A',skyA);window.RelphiSkyCardShell?.sync?.('B',skyB)}catch(_){}
+    [['A',skyA],['B',skyB]].forEach(([slot,value])=>window.dispatchEvent(new CustomEvent('relphi:saved-sky-loaded',{detail:{slot,id:String(value?.metadata?.savedSkyId||''),name:String(value?.name||value?.displayName||value?.skyName||value?.title||''),source:'swap-skies'}})));
     window.dispatchEvent(new CustomEvent('relphi:sky-slots-swapped',{detail:{A:'B',B:'A'}}));
     [['A',skyA],['B',skyB]].forEach(([slot,value])=>{
       const name=String(value?.name||value?.displayName||value?.skyName||value?.title||'Where and When');
