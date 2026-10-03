@@ -205,7 +205,10 @@
     const count = Math.max(1, labels.length);
     if (count <= 12) return legacyGenericPositions(labels);
     let best=null;
-    const maxCols=Math.min(10,count);
+    // Dense layouts should use the full board footprint. Do not impose an
+    // arbitrary ten-column ceiling: for large readings, an extra column can
+    // remove an entire row and substantially increase card scale.
+    const maxCols=count;
     for (let cols=3;cols<=maxCols;cols++) {
       const rows=Math.ceil(count/cols);
       const scaleX=(CANVAS_W-GUTTER*2-GUTTER*Math.max(0,cols-1))/(CARD_W*cols);
