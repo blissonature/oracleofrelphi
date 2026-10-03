@@ -2369,7 +2369,7 @@
           ? '<ol class="relphi-template-preview">'+positions.map(item=>'<li>'+escapeHtml(item.label)+'</li>').join('')+'</ol>'
           : '<p class="relphi-referent-empty">Choose a template to preview its referents.</p>';
     return '<section class="relphi-referent-panel">'+
-      '<label class="relphi-options-field">Template<select id="relphiSpreadTemplateSelect" '+(hasCards?'disabled':'')+'>'+optionTemplateMarkup(draft)+'</select></label>'+
+      '<label class="relphi-options-field relphi-template-selector"><span class="sr-only">Choose template</span><select id="relphiSpreadTemplateSelect" aria-label="Choose template" '+(hasCards?'disabled':'')+'>'+optionTemplateMarkup(draft)+'</select></label>'+
       preview+
       (selected?'<div class="relphi-template-modify"><button type="button" id="relphiModifyTemplate" '+(hasCards?'disabled':'')+'>Modify a copy</button><span>Clones this template into Bespoke so the original remains unchanged.</span></div>':'')+
       '</section>';
