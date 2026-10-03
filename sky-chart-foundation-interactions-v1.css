@@ -324,7 +324,7 @@
 .sky-foundation-relationships-heading>.sky-relationship-heading-actions{
   grid-column:2/-1;
   display:grid;
-  grid-template-columns:230px max-content minmax(82px,1fr) max-content max-content;
+  grid-template-columns:minmax(0,230px) max-content minmax(88px,1fr) max-content max-content;
   align-items:center;
   gap:5px;
   width:100%;
@@ -348,8 +348,10 @@
 .sky-foundation-relationships-heading>.sky-relationship-heading-actions>#skyFoundationRelationshipCount{
   grid-column:3;
   justify-self:end;
-  min-width:82px;
+  min-width:88px;
+  max-width:100%;
   margin-left:0;
+  white-space:nowrap;
 }
 .sky-foundation-relationships-heading>.sky-relationship-heading-actions>.sky-relationship-copy-button{
   grid-column:4;
