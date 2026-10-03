@@ -849,27 +849,42 @@ function ensureOverlay(){
 }
 function renderOverlay(){
   const layer=ensureOverlay();if(!layer)return;layer.replaceChildren();clearPeerHighlight();markParticipants();
-  const chosen=selectedPatternsForVisibility(),seen=new Set();
-  for(const pattern of chosen)for(const edge of pattern.edges){const key=edgeNodeKey(edge);if(seen.has(key))continue;seen.add(key);const base=matchingBaseLine(edge);if(!base)continue;const line=document.createElementNS('http://www.w3.org/2000/svg','line');['x1','y1','x2','y2','stroke'].forEach(name=>{const value=base.getAttribute(name);if(value!=null)line.setAttribute(name,value)});line.setAttribute('vector-effect','non-scaling-stroke');line.classList.add('sky-chart-configuration-line');line.dataset.configurationRelation=relationIndex(edge)||'';line.dataset.configurationKey=key;const row=edge?.row;if(row){line.dataset.relationIndex=String(row.dataset.relationIndex||'');line.dataset.leftSky=String(row.dataset.leftSky||'');line.dataset.rightSky=String(row.dataset.rightSky||'');line.dataset.leftPlacement=String(row.dataset.leftPlacement||'');line.dataset.rightPlacement=String(row.dataset.rightPlacement||'')}layer.appendChild(line)}
+  const chosen=selectedPatternsForVisibility(),linesByEdge=new Map();
+  for(const pattern of chosen)for(const edge of pattern.edges){
+    const key=edgeNodeKey(edge);let line=linesByEdge.get(key);
+    if(!line){
+      const base=matchingBaseLine(edge);if(!base)continue;
+      line=document.createElementNS('http://www.w3.org/2000/svg','line');
+      ['x1','y1','x2','y2','stroke'].forEach(name=>{const value=base.getAttribute(name);if(value!=null)line.setAttribute(name,value)});
+      line.setAttribute('vector-effect','non-scaling-stroke');line.classList.add('sky-chart-configuration-line');
+      line.dataset.configurationRelation=relationIndex(edge)||'';line.dataset.configurationKey=key;
+      const row=edge?.row;if(row){line.dataset.relationIndex=String(row.dataset.relationIndex||'');line.dataset.leftSky=String(row.dataset.leftSky||'');line.dataset.rightSky=String(row.dataset.rightSky||'');line.dataset.leftPlacement=String(row.dataset.leftPlacement||'');line.dataset.rightPlacement=String(row.dataset.rightPlacement||'')}
+      line._configurationPatterns=new Set();linesByEdge.set(key,line);layer.appendChild(line);
+    }
+    line._configurationPatterns.add(pattern.key);
+  }
   const selectedCount=activeScopes().reduce((sum,scope)=>sum+configurationState[scope].size,0);
   document.documentElement.dataset.skyConfigurationSelection=String(selectedCount);
   applyConfigurationFocusComposition();
 }
 let configurationFocusState={active:false,indexes:new Set()};
 let configurationWheelState={active:false,indexes:new Set()};
-function composedConfigurationIndexes(){
-  if(!configurationFocusState.active&&!configurationWheelState.active)return null;
-  if(configurationFocusState.active&&!configurationWheelState.active)return configurationFocusState.indexes;
-  if(!configurationFocusState.active&&configurationWheelState.active)return configurationWheelState.indexes;
-  return new Set([...configurationFocusState.indexes].filter(index=>configurationWheelState.indexes.has(index)));
+function patternMatchesIndexes(pattern,indexes){
+  if(!indexes)return true;
+  return pattern.edges.some(edge=>{const index=relationIndex(edge);return index&&indexes.has(index)});
+}
+function survivingConfigurationPatterns(){
+  const focusIndexes=configurationFocusState.active?configurationFocusState.indexes:null;
+  const wheelIndexes=configurationWheelState.active?configurationWheelState.indexes:null;
+  if(!focusIndexes&&!wheelIndexes)return null;
+  return new Set(selectedPatternsForVisibility().filter(pattern=>patternMatchesIndexes(pattern,focusIndexes)&&patternMatchesIndexes(pattern,wheelIndexes)).map(pattern=>pattern.key));
 }
 function applyConfigurationFocusComposition(){
   const layer=document.querySelector('[data-layer="configurations"]');if(!layer)return;
-  const indexes=composedConfigurationIndexes(),active=!!indexes;
+  const surviving=survivingConfigurationPatterns(),active=!!surviving;
   layer.classList.toggle('has-focus-composition',active);
   layer.querySelectorAll('.sky-chart-configuration-line').forEach(line=>{
-    const index=String(line.dataset.relationIndex||line.dataset.configurationRelation||'');
-    const keep=!active||(index&&indexes.has(index));
+    const patternKeys=line._configurationPatterns||new Set(),keep=!active||[...patternKeys].some(key=>surviving.has(key));
     line.classList.toggle('is-focus-kept',!!keep);
     line.classList.toggle('is-focus-muted',active&&!keep);
   });
