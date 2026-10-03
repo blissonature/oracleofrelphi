@@ -5310,8 +5310,32 @@
   }
 
   function promptForBespokeQuestion() {
-    const question=window.prompt('Ask another question');
-    if(question!=null&&String(question).trim())appendBespokeQuestion(question);
+    document.querySelector('.relphi-clarifier-modal')?.remove();
+    const modal=document.createElement('section');
+    modal.className='relphi-clarifier-modal';
+    modal.setAttribute('role','dialog');
+    modal.setAttribute('aria-modal','true');
+    modal.setAttribute('aria-labelledby','relphiClarifierTitle');
+    modal.innerHTML='<div class="relphi-clarifier-card"><button type="button" class="relphi-clarifier-close" aria-label="Close">×</button><span class="eyebrow">Clarifier</span><h2 id="relphiClarifierTitle">Ask a clarifying question</h2><p>What do you want to clarify from this reading?</p><label><span>Question</span><textarea id="relphiClarifierInput" rows="3" placeholder="Type your clarifying question…"></textarea></label><div class="relphi-clarifier-actions"><button type="button" class="relphi-button" data-clarifier-cancel>Cancel</button><button type="button" class="relphi-button relphi-button--primary" data-clarifier-add disabled>Add clarifier</button></div></div>';
+    const close=()=>modal.remove();
+    const input=modal.querySelector('#relphiClarifierInput');
+    const add=modal.querySelector('[data-clarifier-add]');
+    input?.addEventListener('input',()=>{add.disabled=!String(input.value||'').trim();});
+    modal.querySelector('.relphi-clarifier-close')?.addEventListener('click',close);
+    modal.querySelector('[data-clarifier-cancel]')?.addEventListener('click',close);
+    modal.addEventListener('click',event=>{if(event.target===modal)close();});
+    modal.addEventListener('keydown',event=>{
+      if(event.key==='Escape'){event.preventDefault();close();return;}
+      if(event.key==='Enter'&&(event.metaKey||event.ctrlKey)&&!add.disabled){event.preventDefault();add.click();}
+    });
+    add?.addEventListener('click',()=>{
+      const question=String(input?.value||'').trim();
+      if(!question)return;
+      close();
+      appendBespokeQuestion(question);
+    });
+    document.body.appendChild(modal);
+    requestAnimationFrame(()=>input?.focus());
   }
 
   window.RelphiLaunchBespokeQuestion = launchBespokeQuestion;
