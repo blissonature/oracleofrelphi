@@ -2782,7 +2782,7 @@
     drawer.querySelector('[data-create-subpack]')?.addEventListener('click',()=>window.RelphiCustomSubpacks?.open?.({
       onSave:pack=>{
         const scope='custom:'+pack.id;
-        applyToSelected({pack:scope});
+        applyQuestionController({pack:scope});
         renderOptions(root);
       }
     }));
