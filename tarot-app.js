@@ -4325,13 +4325,19 @@
     const arc = (start, end, r) => { const [sx,sy]=polar(start,r), [ex,ey]=polar(end,r); const diff=((end-start)%360+360)%360 || 360; const large=diff>180?1:0; return `M ${sx.toFixed(2)} ${sy.toFixed(2)} A ${r} ${r} 0 ${large} 1 ${ex.toFixed(2)} ${ey.toFixed(2)}`; };
     const ringWedge = (start, end, r1, r2) => { const [sx,sy]=polar(start,r2), [ex,ey]=polar(end,r2), [ix,iy]=polar(end,r1), [jx,jy]=polar(start,r1); const diff=((end-start)%360+360)%360 || 360; const large=diff>180?1:0; return `M ${sx.toFixed(2)} ${sy.toFixed(2)} A ${r2} ${r2} 0 ${large} 1 ${ex.toFixed(2)} ${ey.toFixed(2)} L ${ix.toFixed(2)} ${iy.toFixed(2)} A ${r1} ${r1} 0 ${large} 0 ${jx.toFixed(2)} ${jy.toFixed(2)} Z`; };
     let start=null,end=null,label='';
+    const courtRange=card?.card_type==='Court' ? COURT_RANGES.find(item=>item.id===card.card_id) : null;
     if (shared) {
       start = signIndex[shared.startSign]*30 + shared.startDegree;
       end = signIndex[shared.endSign]*30 + shared.endDegree;
       if (end <= start) end += 360;
       label = shared.label;
+    } else if (courtRange && signIndex[courtRange.start] != null && signIndex[courtRange.end] != null) {
+      start = signIndex[courtRange.start]*30 + courtRange.startDegree;
+      end = signIndex[courtRange.end]*30 + courtRange.endDegree;
+      if (end <= start) end += 360;
+      label = `${courtRange.start} ${courtRange.startDegree}° → ${courtRange.end} ${courtRange.endDegree}°`;
     } else {
-      let m = String(range).match(/(\d+(?:\.\d+)?|zero|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty|thirty) degrees ([A-Za-z]+) through (\d+(?:\.\d+)?|zero|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty|thirty) degrees ([A-Za-z]+)/i);
+      let m = String(range).match(/(\d+(?:\.\d+)?|zero|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty|thirty)\s*(?:°|degrees?)\s*([A-Za-z]+)\s*(?:through|to|→|[-–—])\s*(\d+(?:\.\d+)?|zero|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty|thirty)\s*(?:°|degrees?)\s*([A-Za-z]+)/i);
       if (m && signIndex[m[2]] != null && signIndex[m[4]] != null) {
         start = signIndex[m[2]]*30 + num(m[1]); end = signIndex[m[4]]*30 + num(m[3]); if (end <= start) end += 360; label = `${m[2]} ${num(m[1])}° → ${m[4]} ${num(m[3])}°`;
       } else if (a.sign && signIndex[a.sign] != null) {
