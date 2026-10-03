@@ -638,7 +638,7 @@ const INEVITABLE_ASPECTS=Object.freeze({
 const INEVITABLE_MAX_PHASE=12;
 function entailedEdge(graph,a,b,aspect){
   if(!inevitableEnabled)return null;
-  const spec=INEVITABLE_ASPECTS[aspect],left=graph.nodes.get(a),right=graph.nodes.get(b);if(!spec||!left||!right)return null;
+  const spec=INEVITABLE_ASPECTS[aspect],left=resultVertexRecord(a),right=resultVertexRecord(b);if(!spec||!left||!right)return null;
   const delta=Math.abs(resultNorm(left.value)-resultNorm(right.value)),separation=Math.min(delta,360-delta),orb=Math.abs(separation-spec.angle),phase=orb*spec.harmonic;
   if(phase>INEVITABLE_MAX_PHASE+1e-9)return null;
   return{row:null,aspect,phase,left:a,right:b,entailed:true,origin:'entailed',entailedKind:'configuration-completion'};
@@ -692,13 +692,13 @@ function countIs(counts,expected){for(const [aspect,count] of Object.entries(exp
 function grandSextileEdges(graph,vertices){
   if(vertices.length!==6)return null;
   const ordered=vertices.slice().sort((a,b)=>{
-    const av=Number(graph.nodes.get(a)?.value),bv=Number(graph.nodes.get(b)?.value);
+    const av=Number(resultVertexRecord(a)?.value),bv=Number(resultVertexRecord(b)?.value);
     if(!Number.isFinite(av)&&!Number.isFinite(bv))return String(a).localeCompare(String(b));
     if(!Number.isFinite(av))return 1;
     if(!Number.isFinite(bv))return -1;
     return resultNorm(av)-resultNorm(bv);
   });
-  if(ordered.some(key=>!Number.isFinite(Number(graph.nodes.get(key)?.value))))return null;
+  if(ordered.some(key=>!Number.isFinite(Number(resultVertexRecord(key)?.value))))return null;
   const pairs=[];
   for(let i=0;i<6;i+=1)pairs.push([ordered[i],ordered[(i+1)%6],'sextile']);
   for(let i=0;i<6;i+=1)pairs.push([ordered[i],ordered[(i+2)%6],'trine']);
