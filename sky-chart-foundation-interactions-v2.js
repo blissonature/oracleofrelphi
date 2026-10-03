@@ -449,8 +449,22 @@
     bind();applyState();window.dispatchEvent(new Event('relphi:sky-foundation-interactions-ready'));
   }
   function schedule(){if(refreshQueued)return;refreshQueued=true;requestAnimationFrame(refresh)}
+  function clearComparisonIsolation(source='sky-b-removed'){
+    lockedState=null;
+    hoverState=null;
+    rowLockedState=null;
+    rowHoverState=null;
+    selectionOrigin=null;
+    wheelOnlyExternal=false;
+    const root=document.getElementById('skyFoundationRoot');
+    if(root)delete root.dataset.relationshipSelectionCleared;
+    applyState();
+    clearSelectionMarks();
+    window.dispatchEvent(new CustomEvent('relphi:sky-foundation-clear-selection',{detail:{source}}));
+  }
   function start(){
     window.addEventListener('relphi:sky-foundation-ready',schedule);
+    window.addEventListener('relphi:sky-b-removed',()=>clearComparisonIsolation('sky-b-removed'));
     window.addEventListener('relphi:sky-orb-limit-changed',schedule);
     [
       'relphi:sky-aspect-multiselect-changed',
