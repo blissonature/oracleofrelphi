@@ -219,8 +219,7 @@ function attachObserver(list){
 function start(){
   installStyles();cleanupUnauthorizedScopeUI();schedule();reorderPlacementLedgers();
   ['relphi:sky-foundation-interactions-ready','relphi:sky-foundation-ready'].forEach(name=>window.addEventListener(name,()=>{schedule();reorderPlacementLedgers()}));
-  ['relphi:sky-placement-multiselect-changed','relphi:sky-house-multiselect-changed','relphi:sky-aspect-multiselect-changed','relphi:sky-zodiac-filter-changed','relphi:sky-harmonic-window-visibility-changed','relphi:relationship-display-changed'].forEach(name=>window.addEventListener(name,scheduleCount));
-  window.addEventListener('relphi:relationship-sort-changed',()=>{const list=document.getElementById('skyFoundationRelationshipList');if(list)sortRows(list);scheduleCount()});
+  ['relphi:sky-placement-multiselect-changed','relphi:sky-house-multiselect-changed','relphi:sky-aspect-multiselect-changed','relphi:sky-zodiac-filter-changed','relphi:sky-harmonic-window-visibility-changed','relphi:relationship-display-changed','relphi:relationship-sort-changed'].forEach(name=>window.addEventListener(name,scheduleCount));
 }
 document.readyState==='loading'?document.addEventListener('DOMContentLoaded',start,{once:true}):start();
 })();
