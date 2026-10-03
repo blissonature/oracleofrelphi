@@ -218,10 +218,14 @@
       cardsOnly.textContent = 'Clear Cards';
       cardsOnly.title = 'Remove drawn cards and keep the spread positions';
       cardsOnly.setAttribute('aria-label', 'Clear cards and keep spread positions');
+      clear.insertAdjacentElement('beforebegin', cardsOnly);
     }
     cardsOnly.disabled = !bridge()?.getState?.()?.hasCards;
 
     window.RelphiDrawingBoardEnsureTopActions?.(root);
+
+    const topActions = root.querySelector('.drawing-board-top-actions');
+    if (topActions && cardsOnly.parentElement !== topActions) topActions.appendChild(cardsOnly);
 
     const add = root.querySelector('#addCardPlaceholder');
     const staging = root.querySelector('.card-row-action-staging');

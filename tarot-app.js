@@ -309,7 +309,7 @@
   }
 
   const state = {
-    mode: 'idle', query: '', selected: null, currentSpread: [], currentSpreadKey: '', chart: {}, currentSky: {}, lastDateField: null, activeCelticCard: null, revealGuideActive: false, revealGuideEnabled: true, crossedLayout: true, positionStickers: true, transitFilters: { aspect:['conjunction','opposition','trine','square','sextile'], house:'all', sign:'all', placement:'all', orb:'3' }, cardFilters: [], shortList: [], shortListUndo: [], shortListRedo: [], shortListSelection: [], shortListSelectMode: false, shortListPositionLabels: [], shortListPositionCardIds: [], rowDrawScope: 'full', rowAllowRepeats: false, rowAllowReversals: true, rowDrawDeck: [], rowDrawDeckSignature: '', rowCardReversals: {}, shortListName: '', shortListNotes: '', rowZoom: 1, rowPanX: 0, rowPanY: 0, rowSnapEnabled: true, rowSnapGrid: 'one-eighth', rowRotationSnapEnabled: true, rowRotationSnapDegrees: 15, rowShuffled: false, rowShuffleCount: 0, resultScale: 'medium', resultZoom: 1, resultLayout: 'auto', resultGlyphsVisible: false, rowEnvelopeLayout: {}, rowCardTransforms: {}, rowTransformTarget: 0, rowEnvelopeColor: '#f3f0ea', rowEnvelopeArt: {}, rowTableColor: '#7d1f28', rowTableImage: '', rowCustomArtTarget: '', customCardArt: {}, rowActiveLayout: null, rowPositionMeta: [], rowLayoutDesignMode: false, rowLayoutLocked: false, rowCenterOpen: false, chartName: '', chartNotes: '', currentSkyName: '', currentSkyNotes: '', skyChartMode: 'single', skyBuilderUiMode: 'wizard', skyCreatorTarget: 'chart', skyCreatorDrawerAutoClosed: false, skyEntrySource: { chart:'', currentSky:'' }, skyEntryMethod: { chart:'', currentSky:'' }, skyEntryPendingSource: { chart:'', currentSky:'' }, skyLibrarySelection: { chart:'', currentSky:'' }, relationshipFilterOpenMenu:'', cardRowBoardOpen: true, cardRowSettingsOpen: false
+    mode: 'idle', query: '', selected: null, currentSpread: [], currentSpreadKey: '', chart: {}, currentSky: {}, lastDateField: null, activeCelticCard: null, revealGuideActive: false, revealGuideEnabled: true, crossedLayout: true, positionStickers: true, transitFilters: { aspect:['conjunction','opposition','trine','square','sextile'], house:'all', sign:'all', placement:'all', orb:'3' }, cardFilters: [], shortList: [], shortListUndo: [], shortListRedo: [], shortListSelection: [], shortListSelectMode: false, shortListPositionLabels: [], shortListPositionCardIds: [], rowDrawScope: 'full', rowTagQuery: '', rowSelectedTags: [], rowTagMatchMode: 'any', rowAllowRepeats: false, rowAllowReversals: true, rowDrawDeck: [], rowDrawDeckSignature: '', rowCardReversals: {}, shortListName: '', shortListNotes: '', rowZoom: 1, rowPanX: 0, rowPanY: 0, rowSnapEnabled: true, rowSnapGrid: 'one-eighth', rowRotationSnapEnabled: true, rowRotationSnapDegrees: 15, rowShuffled: false, rowShuffleCount: 0, resultScale: 'medium', resultZoom: 1, resultLayout: 'auto', resultGlyphsVisible: false, rowEnvelopeLayout: {}, rowCardTransforms: {}, rowTransformTarget: 0, rowEnvelopeColor: '#f3f0ea', rowEnvelopeImage: '', rowEnvelopeArt: {}, rowTableColor: '#7d1f28', rowTableImage: '', rowCustomArtTarget: '', customCardArt: {}, rowActiveLayout: null, rowPositionMeta: [], rowLayoutDesignMode: false, rowLayoutLocked: false, rowCenterOpen: false, chartName: '', chartNotes: '', currentSkyName: '', currentSkyNotes: '', skyChartMode: 'single', skyBuilderUiMode: 'wizard', skyCreatorTarget: 'chart', skyCreatorDrawerAutoClosed: false, skyEntrySource: { chart:'', currentSky:'' }, skyEntryMethod: { chart:'', currentSky:'' }, skyEntryPendingSource: { chart:'', currentSky:'' }, skyLibrarySelection: { chart:'', currentSky:'' }, relationshipFilterOpenMenu:'', cardRowBoardOpen: true, cardRowSettingsOpen: false
   };
 
   function escapeHtml(value) {
@@ -379,10 +379,11 @@
     if (!locked?.ingredient_refs?.length) return '';
     const items = locked.ingredient_refs.map(ref => ({ ref, item: LOCKED_INGREDIENTS[ref] })).filter(entry => entry.item);
     if (!items.length) return '';
-    const baseId = `ingredients-${escapeHtml(card.card_id || 'card')}`;
-    const tabs = items.map((entry, index) => { const id=`${baseId}-${index}`; return `<button id="${id}-tab" class="locked-ingredient-tab ${index === 0 ? 'is-active' : ''}" type="button" role="tab" data-ingredient-tab="${id}" aria-controls="${id}-panel" aria-selected="${index === 0 ? 'true' : 'false'}" tabindex="${index === 0 ? '0' : '-1'}">${escapeHtml(ingredientTypeLabel(entry.ref, entry.item, index))}</button>`; }).join('');
-    const panels = items.map((entry, index) => { const item = entry.item; const id=`${baseId}-${index}`; return `<article id="${id}-panel" class="locked-ingredient-panel ${index === 0 ? 'is-active' : ''}" role="tabpanel" aria-labelledby="${id}-tab" data-ingredient-panel="${id}" ${index === 0 ? '' : 'hidden'}><h4>${escapeHtml(item.name)}</h4><dl><dt>Operation</dt><dd>${escapeHtml(item.operation)}</dd><dt>Question</dt><dd>${escapeHtml(item.question)}</dd><dt>Contribution</dt><dd>${escapeHtml(item.contribution)}</dd></dl></article>`; }).join('');
-    return `<section class="locked-ingredients locked-ingredients--tabs"><h3>Ingredients</h3><div class="locked-ingredient-tabs" role="tablist">${tabs}</div><div class="locked-ingredient-panels">${panels}</div></section>`;
+    const tiles = items.map((entry, index) => {
+      const item = entry.item;
+      return `<article class="locked-ingredient-card"><header><span class="locked-ingredient-type">${escapeHtml(ingredientTypeLabel(entry.ref, item, index))}</span><h4>${escapeHtml(item.name)}</h4></header><p class="locked-ingredient-operation">${escapeHtml(item.operation)}</p><p class="locked-ingredient-question">${escapeHtml(item.question)}</p><p class="locked-ingredient-contribution">${escapeHtml(item.contribution)}</p></article>`;
+    }).join('');
+    return `<section class="locked-ingredients locked-ingredients--tiles"><h3>Ingredients</h3><div class="locked-ingredient-grid">${tiles}</div></section>`;
   }
   function lockedTraditionalTitleHtml(locked) {
     if (!locked) return '';
@@ -432,8 +433,12 @@
     if (details) details.open = false;
   }
   function expandCardRow() {
-    const details = document.querySelector('#shortListPanel details.short-list-drawer');
-    if (details) details.open = true;
+    const details = document.querySelector('#shortListPanel details.card-row-drawing-board, #shortListPanel details.short-list-drawer');
+    if (details) {
+      details.open = true;
+      details.setAttribute('open','');
+      state.cardRowBoardOpen = true;
+    }
   }
   const CUSTOM_CARD_ART_KEY = 'relphiCustomCardArtV1';
   function readCustomCardArtStore() {
@@ -450,6 +455,101 @@
   function rwsImagePath(card) { return card?.card_id ? `assets/tarot/rws/${card.card_id}.webp?v=${RWS_ART_VERSION}` : ''; }
   function rwsExportImagePath(card) { return rwsImagePath(card); }
   function rwsImageAlt(card) { return `${title(card)} card art`; }
+
+  // Drawing Board art uses zoom-aware raster tiers. The full RWS asset remains
+  // the source of truth; smaller WebP renditions are generated lazily and cached
+  // only when the board is actually small enough to benefit from them.
+  const ROW_ART_WIDTH_TIERS = Object.freeze([48,64,80,96,128,160,224,320]);
+  const rowArtVariantCache = new Map();
+  const rowArtVariantPending = new Map();
+  function rowArtTierWidth(targetPixels) {
+    const target=Math.max(1,Number(targetPixels)||1);
+    return ROW_ART_WIDTH_TIERS.find(width=>width>=target) || 0;
+  }
+  function rowArtWebpQuality(width) {
+    if(width<=64)return .48;
+    if(width<=96)return .56;
+    if(width<=160)return .66;
+    if(width<=224)return .76;
+    return .84;
+  }
+  function waitForRasterSource(image) {
+    if(image.complete&&image.naturalWidth)return Promise.resolve(image);
+    if(typeof image.decode==='function')return image.decode().then(()=>image).catch(()=>new Promise((resolve,reject)=>{
+      image.addEventListener('load',()=>resolve(image),{once:true});
+      image.addEventListener('error',reject,{once:true});
+    }));
+    return new Promise((resolve,reject)=>{
+      image.addEventListener('load',()=>resolve(image),{once:true});
+      image.addEventListener('error',reject,{once:true});
+    });
+  }
+  function rowArtVariantUrl(cardId,width) {
+    const card=cardById(cardId);
+    const full=card?rwsImagePath(card):'';
+    if(!full||!width)return Promise.resolve(full);
+    const key=`${cardId}:${width}`;
+    if(rowArtVariantCache.has(key))return Promise.resolve(rowArtVariantCache.get(key));
+    if(rowArtVariantPending.has(key))return rowArtVariantPending.get(key);
+    const pending=(async()=>{
+      const source=new Image();
+      source.decoding='async';
+      source.src=full;
+      await waitForRasterSource(source);
+      if(!source.naturalWidth||width>=source.naturalWidth)return full;
+      const height=Math.max(1,Math.round(width*(source.naturalHeight/source.naturalWidth)));
+      const canvas=document.createElement('canvas');
+      canvas.width=width;
+      canvas.height=height;
+      const ctx=canvas.getContext('2d',{alpha:false});
+      if(!ctx)return full;
+      ctx.imageSmoothingEnabled=true;
+      ctx.imageSmoothingQuality=width<=96?'medium':'high';
+      ctx.drawImage(source,0,0,width,height);
+      const blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/webp',rowArtWebpQuality(width)));
+      if(!blob)return full;
+      const url=URL.createObjectURL(blob);
+      rowArtVariantCache.set(key,url);
+      return url;
+    })().catch(()=>full).finally(()=>rowArtVariantPending.delete(key));
+    rowArtVariantPending.set(key,pending);
+    return pending;
+  }
+  function rowArtTargetPixels(image,index) {
+    const cssWidth=Math.max(1,image?.clientWidth||CARD_ROW_ENVELOPE_W);
+    const cardScale=Math.max(.32,Number(rowCardTransform(index)?.scale)||1);
+    const dpr=Math.max(1,Math.min(3,Number(window.devicePixelRatio)||1));
+    return cssWidth*rowZoomValue()*cardScale*dpr*1.08;
+  }
+  function syncBoardArtResolution(wrap=$('shortListPanel')) {
+    const board=wrap?.querySelector('.short-list-row.card-row-board');
+    if(!board)return;
+    board.querySelectorAll(':scope > .card-row-item .or-card-art[data-relphi-adaptive-art="true"]').forEach(image=>{
+      const item=image.closest('.card-row-item[data-row-index]');
+      const index=Number(item?.dataset?.rowIndex);
+      const cardId=String(image.dataset.relphiArtCard||item?.querySelector('[data-row-card]')?.dataset?.rowCard||'');
+      if(!Number.isInteger(index)||!cardId)return;
+      const full=image.dataset.relphiFullSrc||rwsImagePath(cardById(cardId));
+      if(!full)return;
+      image.dataset.relphiFullSrc=full;
+      const tier=rowArtTierWidth(rowArtTargetPixels(image,index));
+      const requested=tier?String(tier):'full';
+      image.dataset.relphiRequestedTier=requested;
+      if(!tier){
+        if(image.dataset.relphiArtTier!=='full'||image.src!==new URL(full,document.baseURI).href){
+          image.src=full;
+          image.dataset.relphiArtTier='full';
+        }
+        return;
+      }
+      if(image.dataset.relphiArtTier===requested)return;
+      rowArtVariantUrl(cardId,tier).then(url=>{
+        if(!image.isConnected||image.dataset.relphiRequestedTier!==requested)return;
+        image.src=url||full;
+        image.dataset.relphiArtTier=(url&&url!==full)?requested:'full';
+      });
+    });
+  }
   const RWS_RESULT_TOP_CROP = {
     'ace_of_cups': 3.01, 'ace_of_pentacles': 3.12, 'ace_of_wands': 1.61, 'death': 2.66,
     'eight_of_cups': 4.07, 'eight_of_pentacles': 2.1, 'eight_of_swords': 1.86, 'eight_of_wands': 1.86,
@@ -710,7 +810,7 @@
     for (const variant of variants) {
       const pattern = flexibleTitlePattern(variant);
       if (!pattern) continue;
-      const re = new RegExp('^' + pattern + '\\s*(?:[–—-]|:|\\.)?\\s*(?:(?:is|are)\\s+)?', 'i');
+      const re = new RegExp('^' + pattern + '\\s*(?:[–—:-]|\\.)?\\s*(?:(?:is|are)\\s+)?', 'i');
       const next = value.replace(re, '').trim();
       if (next && next !== value) {
         value = sentenceCaseFragment(next);
@@ -731,6 +831,9 @@
     const hitSourceText = uniqueHitSources.join(' · ');
     const hitLabel = options.hitCount === 1 ? 'placement' : 'placements';
     const badge = options.hitCount ? `<button class="or-hit-badge" type="button" data-placement-toggle aria-label="Show ${escapeHtml(options.hitCount)} chart ${escapeHtml(hitLabel)}" title="${escapeHtml(hitSourceText || `${options.hitCount} chart ${hitLabel}`)}">×${options.hitCount}</button>` : '';
+    const connectedSkyEntry = window.RelphiSkyConnector?.tarotActivations?.().find(entry => entry.cardId === card.card_id) || null;
+    const connectedSkyHits = connectedSkyEntry?.hits || [];
+    const connectedSkyMark = connectedSkyHits.length ? `<span class="relphi-connected-sky-mark" data-connected-sky-card="${escapeHtml(card.card_id)}" title="${escapeHtml(connectedSkyHits.map(hit=>hit.reason).join(' · '))}" aria-label="${escapeHtml(connectedSkyHits.length)} connected sky activation${connectedSkyHits.length===1?'':'s'}"><span aria-hidden="true"></span><b>×${connectedSkyHits.length}</b></span>` : '';
     const addLabel = inShortList ? 'Remove card from Drawing Board' : 'Add card to Drawing Board';
     const add = options.selectable === false ? '' : `<button class="or-card-add or-card-layer-add" type="button" data-shortlist="${escapeHtml(card.card_id)}" aria-pressed="${inShortList?'true':'false'}" aria-label="${addLabel}" title="${addLabel}">${inShortList?'−':'+'}</button>`;
     const layerSources = '';
@@ -760,9 +863,9 @@
     const resultTopCrop = 0;
     const resultCropStyle = resultTopCrop ? ` style="--rws-result-top-crop:${resultTopCrop.toFixed(2)}%;"` : '';
     return `<article class="or-card tarot-card-surface relphi-surface relphi-surface--card ${context === 'short-list' ? 'short-list-card' : ''} ${selected ? 'is-row-selected' : ''} ${detailSelected ? 'is-detail-selected' : ''}" data-id="${escapeHtml(card.card_id)}" data-tags="${escapeHtml(publicTags(card).join('|'))}"${dragAttrs}${resultCropStyle} tabindex="0">
-      <img class="or-card-art relphi-surface-face" src="${escapeHtml(rwsImagePath(card))}" alt="${escapeHtml(rwsImageAlt(card))}" loading="lazy">
+      <img class="or-card-art relphi-surface-face" src="${escapeHtml(rwsImagePath(card))}" alt="${escapeHtml(rwsImageAlt(card))}" loading="lazy"${context === 'short-list' ? ` data-relphi-adaptive-art="true" data-relphi-art-card="${escapeHtml(card.card_id)}" data-relphi-full-src="${escapeHtml(rwsImagePath(card))}" data-relphi-art-tier="full"` : ''}>
       ${inlinePositionSticker}${houseNumberSticker}
-      ${glyphTags ? `<div class="or-card-badges relphi-sticker-row">${glyphTags}</div>` : ''}${badge}${placementBubble}
+      ${glyphTags ? `<div class="or-card-badges relphi-sticker-row">${glyphTags}</div>` : ''}${badge}${connectedSkyMark}${placementBubble}
       <div class="or-card-layer relphi-info-layer" data-id="${escapeHtml(card.card_id)}"><div class="or-layer-head relphi-info-static"><span class="or-card-title-banner card-title-link" role="button" tabindex="0" data-card-id="${escapeHtml(card.card_id)}">${layerTitleHtml}</span>${add}</div><div class="or-card-essence${essenceClass}">${escapeHtml(essenceText)}</div><div class="or-layer-scroll relphi-info-scroll"><span>${escapeHtml(nbHyphens(layerText))}</span>${layerSources}</div></div>${placementLayer}
     </article>`;
   }
@@ -780,6 +883,9 @@
       shortListName: String(state.shortListName || ''),
       shortListNotes: String(state.shortListNotes || ''),
       rowDrawScope: state.rowDrawScope || 'full',
+      rowTagQuery: String(state.rowTagQuery || ''),
+      rowSelectedTags: Array.isArray(state.rowSelectedTags) ? state.rowSelectedTags.slice() : [],
+      rowTagMatchMode: state.rowTagMatchMode === 'all' ? 'all' : 'any',
       rowAllowRepeats: !!state.rowAllowRepeats,
       rowAllowReversals: !!state.rowAllowReversals,
       rowDrawDeck: (state.rowDrawDeck || []).slice(),
@@ -807,6 +913,7 @@
       rowLayoutDesignMode: !!state.rowLayoutDesignMode,
       rowLayoutLocked: !!state.rowLayoutLocked,
       rowEnvelopeColor: String(state.rowEnvelopeColor || '#f3f0ea'),
+      rowEnvelopeImage: String(state.rowEnvelopeImage || ''),
       rowEnvelopeArt: cloneBoardValue(state.rowEnvelopeArt, {}),
       rowTableColor: String(state.rowTableColor || '#7d1f28'),
       rowTableImage: String(state.rowTableImage || ''),
@@ -833,6 +940,9 @@
     if (has('shortListName')) state.shortListName = String(snapshot.shortListName || '').slice(0, 80);
     if (has('shortListNotes')) state.shortListNotes = String(snapshot.shortListNotes || '').slice(0, 4000);
     if (has('rowDrawScope')) state.rowDrawScope = snapshot.rowDrawScope || 'full';
+    if (has('rowTagQuery')) state.rowTagQuery = String(snapshot.rowTagQuery || '').slice(0, 120);
+    if (has('rowSelectedTags')) state.rowSelectedTags = Array.isArray(snapshot.rowSelectedTags) ? snapshot.rowSelectedTags.map(String).filter(Boolean).slice(0, 24) : [];
+    if (has('rowTagMatchMode')) state.rowTagMatchMode = snapshot.rowTagMatchMode === 'all' ? 'all' : 'any';
     if (has('rowAllowRepeats')) state.rowAllowRepeats = !!snapshot.rowAllowRepeats;
     if (has('rowAllowReversals')) state.rowAllowReversals = !!snapshot.rowAllowReversals;
     if (has('rowDrawDeck')) state.rowDrawDeck = Array.isArray(snapshot.rowDrawDeck) ? snapshot.rowDrawDeck.slice() : [];
@@ -861,6 +971,7 @@
     if (has('resultLayout')) state.resultLayout = snapshot.resultLayout || 'auto';
     if (has('resultGlyphsVisible')) state.resultGlyphsVisible = !!snapshot.resultGlyphsVisible;
     if (has('rowEnvelopeColor')) state.rowEnvelopeColor = String(snapshot.rowEnvelopeColor || '#f3f0ea');
+    if (has('rowEnvelopeImage')) state.rowEnvelopeImage = String(snapshot.rowEnvelopeImage || '');
     if (has('rowEnvelopeArt')) state.rowEnvelopeArt = cloneBoardValue(snapshot.rowEnvelopeArt, {});
     if (has('rowTableColor')) state.rowTableColor = String(snapshot.rowTableColor || '#7d1f28');
     if (has('rowTableImage')) state.rowTableImage = String(snapshot.rowTableImage || '');
@@ -913,6 +1024,7 @@
       const lightweight = {
         ...snapshot,
         rowTableImage:'',
+        rowEnvelopeImage:'',
         rowEnvelopeArt:{},
         customCardArt:{},
         largeArtOmitted:true
@@ -1054,6 +1166,9 @@
     state.rowLayoutDesignMode = false;
     state.rowLayoutLocked = false;
     state.rowDrawScope = 'full';
+    state.rowTagQuery = '';
+    state.rowSelectedTags = [];
+    state.rowTagMatchMode = 'any';
     state.rowAllowRepeats = false;
     state.rowAllowReversals = true;
     state.rowCenterOpen = false;
@@ -1247,10 +1362,12 @@
       scope: selected.length ? 'selected' : 'full row',
       count: active.length,
       notes: state.shortListNotes || '',
+      activeSubpack: { scope: state.rowDrawScope || 'full', tags: state.rowDrawScope === 'tags' ? (state.rowSelectedTags || []).slice() : [], matchMode: state.rowTagMatchMode === 'all' ? 'all' : 'any' },
       zoom: state.rowZoom || 1,
       pan: { x: rowPanXValue(), y: rowPanYValue() },
       snapEnabled: !!state.rowSnapEnabled,
       envelopeColor: state.rowEnvelopeColor || '',
+      hasEnvelopeImage: !!state.rowEnvelopeImage,
       tableColor: state.rowTableColor || '',
       hasTableImage: !!state.rowTableImage,
       customEnvelopeArtSlots: Object.keys(state.rowEnvelopeArt || {}).filter(index => state.rowEnvelopeArt[index]),
@@ -1258,7 +1375,7 @@
       layout: state.rowEnvelopeLayout || {},
       transforms: state.rowCardTransforms || {},
       stats: rowStats(active),
-      cards: active.map((card, i) => ({ position: state.shortListPositionLabels[i] || String(i+1), positionStickerCardId: state.shortListPositionCardIds?.[i] || '', cardId: card.card_id, title: title(card), reversed: rowCardIsReversed(i), orientation: rowCardIsReversed(i) ? 'reversed' : 'upright', transform: rowCardTransform(i), association: drawingBoardAssociationText(card), interpretation: rowCardInterpretation(card, i) }))
+      cards: active.map((card, i) => ({ position: state.shortListPositionLabels[i] || String(i+1), positionStickerCardId: state.shortListPositionCardIds?.[i] || '', cardId: card.card_id, title: title(card), reversed: rowCardIsReversed(i), orientation: rowCardIsReversed(i) ? 'reversed' : 'upright', transform: rowCardTransform(i), association: drawingBoardAssociationText(card), interpretation: rowCardInterpretation(card, i), tags: canonicalCardTags(card), subpackMemberships: cardSubpackMemberships(card) }))
     };
   }
 
@@ -1678,14 +1795,263 @@
     if (canvas.toBlob) canvas.toBlob(blob=>{ void finish(blob); }, 'image/png'); else void finish(null);
   }
 
+  const BUILTIN_SUBPACK_DEFINITIONS = [
+    ['uhn','Universal Human Needs', card => UHN_ORDER.has(card?.card_id)],
+    ['majors','Majors', card => card?.card_type === 'Major'],
+    ['primordial-majors','Primordial Element Majors', card => card?.card_type === 'Major' && card.astrology?.attribution_type === 'Element' && ['Aleph','Mem','Shin'].includes(String(card.hebrew?.letter || ''))],
+    ['planetary-majors','Planetary Majors', card => card?.card_type === 'Major' && new Set(['Sun','Moon','Mercury','Venus','Mars','Jupiter','Saturn']).has(card.astrology?.planet)],
+    ['zodiac-majors','Zodiac Majors', card => card?.card_type === 'Major' && !!card.astrology?.sign],
+    ['aces','Aces', card => card?.card_type === 'Ace'],
+    ['courts','Courts', card => card?.card_type === 'Court'],
+    ['pips','Pips', card => card?.card_type === 'Pip'],
+    ['decans','Decan pips', card => card?.card_type === 'Pip' && !!card.astrology?.decan],
+    ['wands','Wands', card => card?.suit === 'Wands'],
+    ['cups','Cups', card => card?.suit === 'Cups'],
+    ['swords','Swords', card => card?.suit === 'Swords'],
+    ['pentacles','Pentacles / Disks', card => card?.suit === 'Pentacles']
+  ];
+
+  function splitCanonicalTagValue(value) {
+    return String(value || '').split(/[,/]/).map(part => part.trim()).filter(Boolean);
+  }
+
+  function canonicalCardTags(card) {
+    if (!card) return [];
+    const values = [
+      ...(Array.isArray(card.tags) ? card.tags : []),
+      card.rank, card.rws_rank, card.card_type, card.arcana, card.suit, card.thoth_suit,
+      card.element, card.rank_element, card.elemental_formula, card.polarity,
+      ...splitCanonicalTagValue(card.astrology?.planet),
+      ...splitCanonicalTagValue(card.astrology?.sign),
+      ...splitCanonicalTagValue(card.astrology?.sign_ruler),
+      ...splitCanonicalTagValue(card.astrology?.decan_ruler),
+      card.astrology?.decan,
+      card.hebrew?.letter,
+      card.hebrew?.letter_name
+    ].flatMap(value => splitCanonicalTagValue(value));
+    const seen = new Set();
+    return values.filter(value => {
+      const key = normalizeSearch(value);
+      if (!key || seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  }
+
+  function canonicalTagCatalog() {
+    const byKey = new Map();
+    cards.forEach(card => canonicalCardTags(card).forEach(tag => {
+      const key = normalizeSearch(tag);
+      if (!byKey.has(key)) byKey.set(key, tag);
+    }));
+    return [...byKey.values()].sort((a,b) => a.localeCompare(b, undefined, { sensitivity:'base', numeric:true }));
+  }
+
+  function matchingCanonicalTags(query = state.rowTagQuery) {
+    const needle = normalizeSearch(query);
+    if (!needle) return [];
+    return canonicalTagCatalog().filter(tag => normalizeSearch(tag).includes(needle)).slice(0, 40);
+  }
+
+  function cardMatchesSelectedTags(card, tags = state.rowSelectedTags, mode = state.rowTagMatchMode) {
+    const selected = (Array.isArray(tags) ? tags : []).map(normalizeSearch).filter(Boolean);
+    if (!selected.length) return false;
+    const cardTags = new Set(canonicalCardTags(card).map(normalizeSearch));
+    return mode === 'all' ? selected.every(tag => cardTags.has(tag)) : selected.some(tag => cardTags.has(tag));
+  }
+
+  function cardSubpackMemberships(card) {
+    if (!card) return [];
+    const memberships = BUILTIN_SUBPACK_DEFINITIONS
+      .filter(([, , test]) => test(card))
+      .map(([key,label]) => ({ key, label, kind:'built-in' }));
+    canonicalCardTags(card).forEach(tag => memberships.push({ key:`tag:${normalizeSearch(tag)}`, label:tag, kind:'tag' }));
+    return memberships;
+  }
+
+  function cardQuestionGeneratorContext(card) {
+    return {
+      cardId: card?.card_id || '',
+      tags: canonicalCardTags(card),
+      subpacks: cardSubpackMemberships(card),
+      activeKeywordTags: state.rowDrawScope === 'tags' ? (state.rowSelectedTags || []).slice() : [],
+      activeKeywordMatchMode: state.rowTagMatchMode === 'all' ? 'all' : 'any'
+    };
+  }
+  window.RELPHI_CARD_SUBPACK_CONTEXT = cardQuestionGeneratorContext;
+  window.RELPHI_KEYWORD_SUBPACK_CONTEXT = Object.freeze({
+    catalog: () => canonicalTagCatalog().slice(),
+    matches: query => {
+      const needle = normalizeSearch(query);
+      if (!needle) return [];
+      return canonicalTagCatalog().filter(tag => normalizeSearch(tag).includes(needle)).slice(0, 40);
+    },
+    count: (tags, mode = 'any') => cards.filter(card => cardMatchesSelectedTags(card, tags, mode === 'all' ? 'all' : 'any')).length
+  });
+
+
+  // Shared evidence contract for See What Surfaces bridges.
+  // Cards, Sky Chart, Card Hits, and future timing/search tools can exchange
+  // inspectable evidence without coupling their UIs to one another.
+  const RELPHI_EVIDENCE_CONTRACT_VERSION = 1;
+
+  function relphiEvidenceId(prefix, parts = []) {
+    const body = parts.map(value => normalizeSearch(String(value ?? ''))).filter(Boolean).join(':');
+    return body ? `${prefix}:${body}` : prefix;
+  }
+
+  function cardLocatorEvidence(card) {
+    if (!card) return [];
+    const astrology = card.astrology || {};
+    const evidence = [];
+
+    // Zodiacal Majors derive a HOUSE locator. The connected sky supplies the
+    // actual contents of that house; the card does not pretend the house is a sign.
+    if (card.card_type === 'Major' && astrology.attribution_type === 'Sign' && astrology.sign) {
+      const house = Number(astrology.natural_house);
+      if (Number.isInteger(house) && house >= 1 && house <= 12) {
+        evidence.push({
+          id: relphiEvidenceId('house', [house, card.card_id]),
+          kind: 'house-locator',
+          source: 'zodiacal-major',
+          cardId: card.card_id || '',
+          sign: astrology.sign,
+          house,
+          exactness: 'derived'
+        });
+      }
+    }
+
+    // Pips retain their native zodiacal/decan precision. We deliberately do
+    // not divide a house into thirds; Sky Chart resolves what occupies this interval.
+    if (card.card_type === 'Pip' && (astrology.decan || astrology.degree_span || astrology.zodiac_range)) {
+      evidence.push({
+        id: relphiEvidenceId('decan', [astrology.sign, astrology.decan || astrology.degree_span || astrology.zodiac_range, card.card_id]),
+        kind: 'zodiac-locator',
+        source: 'pip-decan',
+        cardId: card.card_id || '',
+        sign: astrology.sign || '',
+        decan: astrology.decan || '',
+        degreeSpan: astrology.degree_span || '',
+        zodiacRange: astrology.zodiac_range || '',
+        decanRuler: astrology.decan_ruler || '',
+        exactness: 'zodiacal-interval'
+      });
+    }
+
+    if (astrology.planet) {
+      evidence.push({
+        id: relphiEvidenceId('planet', [astrology.planet, card.card_id]),
+        kind: 'planet-locator',
+        source: 'card-attribution',
+        cardId: card.card_id || '',
+        planet: astrology.planet,
+        exactness: 'attribution'
+      });
+    }
+    return evidence;
+  }
+
+  function normalizeRelphiCardEvidence(card) {
+    const context = cardQuestionGeneratorContext(card);
+    return {
+      evidenceType: 'card',
+      cardId: context.cardId,
+      cardType: card?.card_type || '',
+      title: card ? title(card) : '',
+      tags: context.tags.slice(),
+      subpacks: context.subpacks.map(item => ({ ...item })),
+      activeKeywordTags: context.activeKeywordTags.slice(),
+      activeKeywordMatchMode: context.activeKeywordMatchMode,
+      locators: cardLocatorEvidence(card)
+    };
+  }
+
+  function normalizeRelphiSkyEvidence(input = {}) {
+    const sky = input && typeof input === 'object' ? input : {};
+    const source = sky.source && typeof sky.source === 'object' ? sky.source : {};
+    const normalized = {
+      evidenceType: 'sky',
+      skyId: String(sky.skyId || sky.id || ''),
+      skyRole: sky.skyRole === 'B' ? 'B' : 'A',
+      source: {
+        tool: String(source.tool || 'sky-chart'),
+        bridge: String(source.bridge || ''),
+        view: String(source.view || ''),
+        focusId: String(source.focusId || '')
+      },
+      object: sky.object && typeof sky.object === 'object' ? { ...sky.object } : null,
+      house: Number.isFinite(Number(sky.house)) ? Number(sky.house) : null,
+      sign: String(sky.sign || ''),
+      degree: Number.isFinite(Number(sky.degree)) ? Number(sky.degree) : null,
+      degreeSpan: String(sky.degreeSpan || ''),
+      relationships: Array.isArray(sky.relationships) ? sky.relationships.map(item => ({ ...item })) : [],
+      configurations: Array.isArray(sky.configurations) ? sky.configurations.map(item => ({ ...item })) : [],
+      cardHits: Array.isArray(sky.cardHits) ? sky.cardHits.map(item => ({ ...item })) : []
+    };
+    return normalized;
+  }
+
+  function createRelphiEvidenceBundle({ source = {}, cards: cardInputs = [], skies = [], derived = [], question = null } = {}) {
+    const cardEvidence = cardInputs.map(input => {
+      if (typeof input === 'string') return cardById(input);
+      return input;
+    }).filter(Boolean).map(normalizeRelphiCardEvidence);
+    const skyEvidence = skies.map(normalizeRelphiSkyEvidence);
+    const sourceInfo = source && typeof source === 'object' ? { ...source } : {};
+    return {
+      schema: 'relphi.see-what-surfaces.evidence',
+      version: RELPHI_EVIDENCE_CONTRACT_VERSION,
+      source: sourceInfo,
+      cards: cardEvidence,
+      skies: skyEvidence,
+      derived: Array.isArray(derived) ? derived.map(item => ({ ...item })) : [],
+      question: question && typeof question === 'object' ? { ...question } : null
+    };
+  }
+
+  window.RELPHI_EVIDENCE_CONTEXT = Object.freeze({
+    schema: 'relphi.see-what-surfaces.evidence',
+    version: RELPHI_EVIDENCE_CONTRACT_VERSION,
+    card: normalizeRelphiCardEvidence,
+    cardLocators: cardLocatorEvidence,
+    sky: normalizeRelphiSkyEvidence,
+    bundle: createRelphiEvidenceBundle
+  });
+
+  function keywordSubpackHtml() {
+    if (state.rowDrawScope !== 'tags') return '';
+    const selected = Array.isArray(state.rowSelectedTags) ? state.rowSelectedTags : [];
+    const matches = matchingCanonicalTags();
+    const matchRows = matches.length
+      ? matches.map(tag => {
+          const checked = selected.some(value => normalizeSearch(value) === normalizeSearch(tag));
+          return `<label class="row-tag-match"><input type="checkbox" data-row-tag-choice value="${escapeHtml(tag)}" ${checked ? 'checked' : ''}> <span>${escapeHtml(tag)}</span></label>`;
+        }).join('')
+      : (state.rowTagQuery ? '<p class="row-tag-empty">No matching tags yet. Try another word.</p>' : '<p class="row-tag-empty">Type a tag to build this sub-pack.</p>');
+    const selectedHtml = selected.length ? `<div class="row-tag-selected" aria-label="Selected tags">${selected.map(tag => `<button type="button" data-row-tag-remove="${escapeHtml(tag)}" title="Remove ${escapeHtml(tag)}">${escapeHtml(tag)} ×</button>`).join('')}</div>` : '';
+    const poolCount = selected.length ? rowDrawPool('tags', { ignoreUsed:true }).length : 0;
+    return `<section class="row-tag-subpack" aria-label="Keyword and tag sub-pack"><label class="row-tag-search-label">Tags <input id="rowTagQuery" type="search" value="${escapeHtml(state.rowTagQuery || '')}" placeholder="Type a tag, e.g. prince" autocomplete="off"></label><div class="row-tag-match-mode" role="group" aria-label="How selected tags combine"><label><input type="radio" name="rowTagMatchMode" value="any" ${state.rowTagMatchMode !== 'all' ? 'checked' : ''}> Any</label><label><input type="radio" name="rowTagMatchMode" value="all" ${state.rowTagMatchMode === 'all' ? 'checked' : ''}> All</label></div><div class="row-tag-matches" aria-live="polite">${matchRows}</div>${selectedHtml}<p class="row-tag-pool-count">${selected.length ? `${poolCount} card${poolCount === 1 ? '' : 's'} in this sub-pack` : 'Choose one or more matching tags before drawing.'}</p></section>`;
+  }
+
+  function customSubpackByScope(scope) {
+    const id=String(scope||'').replace(/^custom:/,'');
+    if(!id || id===String(scope||'')) return null;
+    const packs=window.RelphiCustomSubpacks?.all?.() || [];
+    return packs.find(pack=>String(pack?.id||'')===id) || null;
+  }
+
   function rowDrawPool(scope, options = {}) {
     const key = scope || state.rowDrawScope || 'full';
     const visible = currentCards();
     const planetaryBodies = new Set(['Sun','Moon','Mercury','Venus','Mars','Jupiter','Saturn']);
     let pool;
-    if (key === 'shown') pool = visible.length ? visible : cards;
+    const custom=customSubpackByScope(key);
+    if (custom) pool=(custom.cardIds||[]).map(cardById).filter(Boolean);
+    else if (key === 'shown') pool = visible.length ? visible : cards;
     else if (key === 'majors') pool = cards.filter(card => card.card_type === 'Major');
     else if (key === 'uhn') pool = UHN_CARD_IDS.map(cardById).filter(Boolean);
+    else if (key === 'primordial-majors') pool = cards.filter(card => card.card_type === 'Major' && card.astrology?.attribution_type === 'Element' && ['Aleph','Mem','Shin'].includes(String(card.hebrew?.letter || '')));
     else if (key === 'planetary-majors') pool = cards.filter(card => card.card_type === 'Major' && planetaryBodies.has(card.astrology?.planet));
     else if (key === 'zodiac-majors') pool = cards.filter(card => card.card_type === 'Major' && !!card.astrology?.sign);
     else if (key === 'aces') pool = cards.filter(card => card.card_type === 'Ace');
@@ -1696,6 +2062,7 @@
     else if (key === 'cups') pool = cards.filter(card => card.suit === 'Cups');
     else if (key === 'swords') pool = cards.filter(card => card.suit === 'Swords');
     else if (key === 'pentacles') pool = cards.filter(card => card.suit === 'Pentacles');
+    else if (key === 'tags') pool = cards.filter(card => cardMatchesSelectedTags(card));
     else pool = cards;
     if (!state.rowAllowRepeats && !options.ignoreUsed) {
       const used = new Set([...(state.shortList || []), ...(state.shortListPositionCardIds || [])]);
@@ -1726,12 +2093,23 @@
     return next;
   }
 
-  function rowDrawSignature() {
-    const key = state.rowDrawScope || 'full';
+  function positionDrawScope(index) {
+    return String(
+      state.rowPositionMeta?.[index]?.drawScope ||
+      state.rowActiveLayout?.positions?.[index]?.drawScope ||
+      state.rowDrawScope ||
+      'full'
+    );
+  }
+
+  function rowDrawSignature(scope = state.rowDrawScope || 'full') {
+    const key = scope || 'full';
     const visibleIds = key === 'shown' ? currentCards().map(card => card.card_id).join('|') : '';
     return JSON.stringify({
       scope: key,
       shown: visibleIds,
+      tags: key === 'tags' ? (state.rowSelectedTags || []).map(normalizeSearch).sort() : [],
+      tagMode: key === 'tags' && state.rowTagMatchMode === 'all' ? 'all' : 'any',
       repeats: !!state.rowAllowRepeats,
       reversals: !!state.rowAllowReversals
     });
@@ -1743,21 +2121,21 @@
     state.rowShuffleCount = 0;
   }
 
-  function buildRowDrawDeck() {
-    const pool = rowDrawPool(state.rowDrawScope);
+  function buildRowDrawDeck(scope = state.rowDrawScope || 'full') {
+    const pool = rowDrawPool(scope);
     const entries = pool.map(card => ({
       cardId: card.card_id,
       reversed: !!state.rowAllowReversals && randomInt(2) === 1
     }));
     state.rowDrawDeck = shuffleArray(entries);
-    state.rowDrawDeckSignature = rowDrawSignature();
+    state.rowDrawDeckSignature = rowDrawSignature(scope);
     state.rowShuffleCount = (Number(state.rowShuffleCount) || 0) + 1;
     return state.rowDrawDeck;
   }
 
-  function drawFromRowDeck() {
-    const signature = rowDrawSignature();
-    if (!Array.isArray(state.rowDrawDeck) || state.rowDrawDeckSignature !== signature) buildRowDrawDeck();
+  function drawFromRowDeck(scope = state.rowDrawScope || 'full') {
+    const signature = rowDrawSignature(scope);
+    if (!Array.isArray(state.rowDrawDeck) || state.rowDrawDeckSignature !== signature) buildRowDrawDeck(scope);
     const used = new Set([...(state.shortList || []), ...(state.shortListPositionCardIds || [])]);
     while (state.rowDrawDeck.length) {
       const entry = state.rowDrawDeck.shift();
@@ -1782,9 +2160,11 @@
       if (status) status.textContent = 'Finish the layout design before drawing cards.';
       return;
     }
+    const index = (state.shortList || []).length;
+    const drawScope = positionDrawScope(index);
     let draw;
     if (state.rowAllowRepeats) {
-      const pool = rowDrawPool(state.rowDrawScope);
+      const pool = rowDrawPool(drawScope);
       if (!pool.length) {
         const status = $('downloadStatus');
         if (status) status.textContent = 'No cards are available in that pack.';
@@ -1792,7 +2172,7 @@
       }
       draw = randomRowDraw(pool, !!state.rowAllowReversals);
     } else {
-      draw = drawFromRowDeck();
+      draw = drawFromRowDeck(drawScope);
       if (!draw?.card) {
         const status = $('downloadStatus');
         if (status) status.textContent = 'The current draw pile is exhausted. Clear the board or allow repeats to keep drawing.';
@@ -1801,7 +2181,6 @@
       }
     }
     if (!draw?.card) return;
-    const index = (state.shortList || []).length;
     commitShortList([...state.shortList, draw.card.card_id], { newCardsManual:false });
     setRowCardReversed(index, !!draw.reversed);
     refreshShortListViews();
@@ -1864,6 +2243,7 @@
 
   const CARD_ROW_ENVELOPE_W = 174;
   const CARD_ROW_ENVELOPE_H = 390;
+  const CARD_ROW_VISIBLE_CARD_H = Math.round(CARD_ROW_ENVELOPE_W * 866 / 500);
   const CARD_ROW_ZOOM_MIN = .02;
   const CARD_ROW_ZOOM_MAX = 2.4;
   const CARD_ROW_TABLE_COLS = 3;
@@ -1887,7 +2267,13 @@
   function rowRotationSnapDegrees() { const n = Number(state.rowRotationSnapDegrees) || 15; return CARD_ROW_ROTATION_SNAP_STEPS.includes(n) ? n : 15; }
   function stepValueInList(list, current, direction) { const idx = Math.max(0, list.indexOf(current)); return list[Math.max(0, Math.min(list.length - 1, idx + direction))] || current; }
   function rowDefaultStepX() { return CARD_ROW_ENVELOPE_W + CARD_ROW_DEFAULT_GAP_X_PX; }
-  function rowDefaultStepY() { return CARD_ROW_ENVELOPE_H + CARD_ROW_DEFAULT_GAP_Y_PX; }
+  function rowDefaultStepY() {
+    // Free-draw cards tile edge-to-edge in both axes. The 390px envelope keeps
+    // room for placeholder/sticker chrome, but once cards exist the visible
+    // 500×866 card face is the row pitch.
+    const rowHeight=(state.shortList || []).length ? CARD_ROW_VISIBLE_CARD_H : CARD_ROW_ENVELOPE_H;
+    return rowHeight + CARD_ROW_DEFAULT_GAP_Y_PX;
+  }
   function rowSlotCount(itemsLength = (state.shortList || []).length) {
     return Math.max(itemsLength, (state.shortListPositionLabels || []).length, (state.shortListPositionCardIds || []).length, 0);
   }
@@ -1944,7 +2330,11 @@
     const zIndex = Math.max(0, Math.min(100, Number(saved.zIndex) || 1));
     return { scale, rotation, zIndex };
   }
+  function crowleyOpeningActive() {
+    return state.rowActiveLayout?.id === 'crowley-harmonic-divination-12';
+  }
   function rowCardIsReversed(index) {
+    if (crowleyOpeningActive()) return false;
     return !!(state.rowCardReversals && state.rowCardReversals[Math.max(0, Number(index) || 0)]);
   }
   function setRowCardReversed(index, reversed) {
@@ -1961,6 +2351,7 @@
     values.forEach((value, index) => { if (value) state.rowCardReversals[index] = true; });
   }
   function toggleRowCardReversal(index, options = {}) {
+    if (crowleyOpeningActive()) return;
     const i = Math.max(0, Number(index) || 0);
     if (!options.skipUndo) pushBoardUndo();
     setRowCardReversed(i, !rowCardIsReversed(i));
@@ -2010,7 +2401,7 @@
     if (!slotCount) return { width: Math.max(CARD_ROW_ENVELOPE_W + 48, cardRowAvailableWidth()), height: 240 };
     const count = Math.max(1, slotCount);
     const placeholderOnly = !(state.shortList || []).length;
-    const envelopeHeight = placeholderOnly ? Math.ceil(CARD_ROW_ENVELOPE_W * 866 / 500) + 55 : CARD_ROW_ENVELOPE_H;
+    const envelopeHeight = placeholderOnly ? CARD_ROW_VISIBLE_CARD_H + 55 : CARD_ROW_ENVELOPE_H;
     const positions = Array.from({ length: count }, (_, i) => rowEnvelopePosition(i));
     const extents = positions.map((pos, i) => {
       const t = rowCardTransform(i);
@@ -2036,9 +2427,10 @@
     const zoom = rowZoomValue();
     const metrics = cardRowBoardMetrics(slotCount);
     const envelopeColor = state.rowEnvelopeColor || '#f3f0ea';
+    const envelopeImage = cssUrlValue(state.rowEnvelopeImage || '');
     const tableColor = state.rowTableColor || '#7d1f28';
     const tableImage = cssUrlValue(state.rowTableImage || '');
-    return `--row-zoom:${zoom};--row-envelope-w:${CARD_ROW_ENVELOPE_W}px;--row-envelope-h:${CARD_ROW_ENVELOPE_H}px;--row-grid-x:${rowSnapStepX().toFixed(2)}px;--row-grid-y:${rowSnapStepY().toFixed(2)}px;--relphi-envelope-bg:${envelopeColor};--relphi-card-envelope-bg:${envelopeColor};--row-table-bg:${tableColor};--row-table-image:${tableImage};width:${metrics.width}px;height:${metrics.height}px;min-height:${metrics.height}px;min-width:${metrics.width}px;transform:translate(${Math.round(rowPanXValue())}px, ${Math.round(rowPanYValue())}px) scale(${zoom});`;
+    return `--row-zoom:${zoom};--row-envelope-w:${CARD_ROW_ENVELOPE_W}px;--row-envelope-h:${CARD_ROW_ENVELOPE_H}px;--row-grid-x:${rowSnapStepX().toFixed(2)}px;--row-grid-y:${rowSnapStepY().toFixed(2)}px;--relphi-envelope-bg:${envelopeColor};--relphi-card-envelope-bg:${envelopeColor};--relphi-envelope-image:${envelopeImage};--row-table-bg:${tableColor};--row-table-image:${tableImage};width:${metrics.width}px;height:${metrics.height}px;min-height:${metrics.height}px;min-width:${metrics.width}px;transform:translate(${Math.round(rowPanXValue())}px, ${Math.round(rowPanYValue())}px) scale(${zoom});`;
   }
   function cardRowItemStyle(index) {
     const pos = rowEnvelopePosition(index);
@@ -2114,7 +2506,7 @@
           zIndex:transform.zIndex
         })
       };
-      ['role','covers','crosses'].forEach(key => { if (meta[key]) result[key] = String(meta[key]); });
+      ['role','covers','crosses','drawScope'].forEach(key => { if (meta[key]) result[key] = String(meta[key]); });
       if (meta.openTransform) result.openTransform = normalizedPrefabTransform(meta.openTransform);
       return result;
     });
@@ -2134,6 +2526,20 @@
       }
     };
   }
+  function prefabSemanticPositionMeta(position) {
+    const meta={};
+    [
+      'allowReversals','allowRepeats','cardCount','linkTo',
+      'questionText','questionIndex','questionCardIndex','questionCardCount',
+      'keywordTags','keywordMatchMode','cardSource','sourceKind',
+      'derivedFromPack','derivedFromIndex','derivedFromCard','derivedFromReversed',
+      'craftedPath'
+    ].forEach(key=>{
+      if(position?.[key]!==undefined)meta[key]=cloneBoardValue(position[key],position[key]);
+    });
+    return meta;
+  }
+
   function applyPrefabLayout(prefab, options = {}) {
     if (!prefab || !Array.isArray(prefab.positions) || !prefab.positions.length) return false;
     if ((state.shortList || []).length || (state.rowLayoutLocked && !state.rowLayoutDesignMode)) return false;
@@ -2150,10 +2556,12 @@
       state.rowEnvelopeLayout[index] = { x:transform.x * PREFAB_CANVAS_WIDTH, y:transform.y * PREFAB_CANVAS_HEIGHT };
       state.rowCardTransforms[index] = { scale:transform.scale, rotation:transform.rotation, zIndex:transform.zIndex };
       return {
+        ...prefabSemanticPositionMeta(position),
         id:prefabPositionId(position, index),
         role:position.role || '',
         covers:position.covers || '',
         crosses:position.crosses || '',
+        drawScope:String(position.drawScope || ''),
         openTransform:position.openTransform ? normalizedPrefabTransform(position.openTransform) : null
       };
     });
@@ -2190,10 +2598,12 @@
     if (!state.rowLayoutDesignMode || (state.shortList || []).length) return null;
     state.rowActiveLayout = layoutSnapshotFromBoard(details);
     state.rowPositionMeta = state.rowActiveLayout.positions.map(position => ({
+      ...prefabSemanticPositionMeta(position),
       id:position.id,
       role:position.role || '',
       covers:position.covers || '',
       crosses:position.crosses || '',
+      drawScope:String(position.drawScope || ''),
       openTransform:position.openTransform || null
     }));
     state.rowLayoutDesignMode = false;
@@ -2446,6 +2856,31 @@
       });
     });
   }
+  function rowZoomAtClientPoint(wrap,nextZoom,clientX,clientY) {
+    const workspace=wrap?.querySelector('.card-row-workspace');
+    const board=wrap?.querySelector('.short-list-row.card-row-board');
+    if(!workspace||!board)return false;
+    const current=rowZoomValue();
+    const next=rowZoomValue(nextZoom);
+    if(Math.abs(next-current)<.000001)return false;
+    const rect=board.getBoundingClientRect();
+    const originText=getComputedStyle(board).transformOrigin.split(/\s+/);
+    const originX=parseFloat(originText[0])||0;
+    const originY=parseFloat(originText[1])||0;
+    const localX=(Number(clientX)-rect.left)/Math.max(.0001,current);
+    const localY=(Number(clientY)-rect.top)/Math.max(.0001,current);
+    const delta=next-current;
+    state.rowPanX=rowPanXValue()+delta*(originX-localX);
+    state.rowPanY=rowPanYValue()+delta*(originY-localY);
+    state.rowZoom=next;
+    const zoomInput=$('rowZoom');
+    const zoomValue=$('rowZoomValue');
+    if(zoomInput)zoomInput.value=String(next);
+    if(zoomValue)zoomValue.textContent=`${Math.round(next*100)}%`;
+    applyCardRowLayoutLive(wrap);
+    return true;
+  }
+
   function bindCardRowWorkspacePan(wrap) {
     const workspace = wrap.querySelector('.card-row-workspace');
     const board = wrap.querySelector('.short-list-row.card-row-board');
@@ -2461,17 +2896,17 @@
       const pinchZoomGesture = !!(event.ctrlKey || event.metaKey);
       if (!pinchZoomGesture) return;
       event.preventDefault();
-      const current = rowZoomValue();
-      const factor = Math.exp(-event.deltaY * .0025);
-      state.rowZoom = rowZoomValue(current * factor);
-      const zoomInput = $('rowZoom');
-      const zoomValue = $('rowZoomValue');
-      if (zoomInput) zoomInput.value = String(rowZoomValue());
-      if (zoomValue) zoomValue.textContent = `${Math.round(rowZoomValue() * 100)}%`;
-      applyCardRowLayoutLive(wrap);
-    }, { passive: false });
+      const current=rowZoomValue();
+      const factor=Math.exp(-event.deltaY*.0025);
+      rowZoomAtClientPoint(wrap,current*factor,event.clientX,event.clientY);
+    }, { passive:false });
     workspace.addEventListener('pointerdown', event => {
       if (event.button !== 0) return;
+      // Only gestures that actually begin on the felt may pan the Drawing Board.
+      // The workspace extends beyond the felt on narrow/touch layouts; claiming that
+      // surrounding whitespace breaks ordinary page scrolling.
+      const startedOnFelt = event.target === board || !!event.target.closest?.('.short-list-row.card-row-board');
+      if (!startedOnFelt || !board.contains(event.target)) return;
       const interactive = event.target.closest?.('button, input, textarea, select, label, .card-row-item');
       if (interactive) return;
       event.preventDefault();
@@ -2481,18 +2916,26 @@
       const panStartY = rowPanYValue();
       workspace.classList.add('is-panning');
       workspace.setPointerCapture?.(event.pointerId);
+      const pointerId=event.pointerId;
       const move = moveEvent => {
+        if(moveEvent.pointerId!==pointerId)return;
+        // Pan is viewport state only. Move the board as a whole; never touch
+        // card envelope positions while the gesture is in progress.
         state.rowPanX = panStartX + (moveEvent.clientX - startX);
         state.rowPanY = panStartY + (moveEvent.clientY - startY);
-        board.style.cssText = cardRowBoardStyle(rowSlotCount());
+        board.style.transform='translate('+Math.round(rowPanXValue())+'px, '+Math.round(rowPanYValue())+'px) scale('+rowZoomValue()+')';
       };
-      const up = () => {
+      const finish = upEvent => {
+        if(upEvent?.pointerId!==undefined&&upEvent.pointerId!==pointerId)return;
         window.removeEventListener('pointermove', move);
-        window.removeEventListener('pointerup', up);
+        window.removeEventListener('pointerup', finish);
+        window.removeEventListener('pointercancel', finish);
         workspace.classList.remove('is-panning');
+        try { workspace.releasePointerCapture?.(pointerId); } catch(error) {}
       };
       window.addEventListener('pointermove', move);
-      window.addEventListener('pointerup', up, { once: true });
+      window.addEventListener('pointerup', finish);
+      window.addEventListener('pointercancel', finish);
     });
   }
 
@@ -2507,6 +2950,7 @@
     qsa(':scope > .card-row-item[data-row-index]', board).forEach(item => {
       item.style.cssText = cardRowItemStyle(Number(item.dataset.rowIndex) || 0);
     });
+    syncBoardArtResolution(wrap);
   }
 
   function rowCardManualArray(length = (state.shortList || []).length) {
@@ -2545,7 +2989,7 @@
     cardHtml = cardHtml.replace('<article class="or-card', `<article class="or-card card-row-card${reversed ? ' is-row-reversed' : ''}`);
     cardHtml = cardHtml.replace(' tabindex="0">', ` draggable="true" data-row-card="${escapeHtml(card.card_id)}" data-row-reversed="${reversed ? 'true' : 'false'}" tabindex="0" aria-label="${escapeHtml(title(card))}${reversed ? ', reversed' : ''}">`);
     const reverseLabel = reversed ? 'Set card upright' : 'Reverse card';
-    const reverseButton = rowCardWasAddedManually(index) ? `<button class="card-row-reverse-toggle${reversed ? ' is-active' : ''}" type="button" data-row-reverse="${index}" aria-pressed="${reversed ? 'true' : 'false'}" title="${escapeHtml(reverseLabel)}" aria-label="${escapeHtml(reverseLabel + ': ' + title(card))}">↕</button>` : '';
+    const reverseButton = !crowleyOpeningActive() && rowCardWasAddedManually(index) ? `<button class="card-row-reverse-toggle${reversed ? ' is-active' : ''}" type="button" data-row-reverse="${index}" aria-pressed="${reversed ? 'true' : 'false'}" title="${escapeHtml(reverseLabel)}" aria-label="${escapeHtml(reverseLabel + ': ' + title(card))}">↕</button>` : '';
     const transformHandles = `<span class="card-row-transform-box" aria-hidden="true"><span class="card-row-scale-handle card-row-scale-handle--nw" data-row-transform-handle="scale" data-corner="nw"></span><span class="card-row-rotate-handle card-row-rotate-handle--ne" data-row-transform-handle="rotate" data-corner="ne"></span><span class="card-row-scale-handle card-row-scale-handle--sw" data-row-transform-handle="scale" data-corner="sw"></span><span class="card-row-scale-handle card-row-scale-handle--se" data-row-transform-handle="scale" data-corner="se"></span></span>`;
     return `<div class="card-row-item${selected ? ' is-row-selected' : ''}${transformTarget ? ' is-transform-target' : ''}${miniDescription ? ' is-description-mini' : ''}${reversed ? ' is-row-reversed' : ''}" data-row-index="${index}" style="${cardRowItemStyle(index)}">${panel}<div class="card-row-card-wrap">${cardHtml}${reverseButton}${transformHandles}</div></div>`;
   }
@@ -2670,8 +3114,8 @@
     const optionsOpen = !!(optionsWasOpen || state.cardRowSettingsOpen);
     const boardStatsHtml = items.length ? rowStatsHtml(items, selectedItems) : '';
     const boardHtml = `${items.length ? '' : '<p class="short-list-empty card-row-board-empty">Draw a card or add placeholders. The board is ready.</p>'}<div class="card-row-workspace" style="${cardRowWorkspaceStyle(displaySlots)}" aria-label="Pan-and-zoom Drawing Board workspace"><div class="card-row-workspace-toolbar"><label class="card-row-zoom-label" title="Zoom the board">Zoom <input id="rowZoom" type="range" min="${CARD_ROW_ZOOM_MIN}" max="${CARD_ROW_ZOOM_MAX}" step="0.01" value="${rowZoom}"><span id="rowZoomValue">${Math.round(rowZoom * 100)}%</span></label><button type="button" id="resetCardRowPan" title="Center the Drawing Board">Center</button><span class="card-row-pan-note">Drag the table background to pan. Position stickers appear only when you add a placeholder or type a sticker.</span></div><div class="short-list-row card-row-board" style="${cardRowBoardStyle(displaySlots)}" aria-label="Movable Drawing Board">${Array.from({ length: displaySlots }).map((_, i) => { const card = items[i]; const envelopeArt = rowEnvelopeArtFor(i); const panel = rowPositionPanelHtml(i, { force: !card }); if (card) { return rowCardEnvelopeHtml(card, i, panel); } return `<div class="card-row-item card-row-placeholder-item" data-row-index="${i}" data-row-placeholder="${i}" style="${cardRowItemStyle(i)}">${panel}<div class="card-row-drop-card${envelopeArt ? ' has-custom-envelope-art' : ''}" tabindex="0">${envelopeArt ? `<img src="${escapeHtml(envelopeArt)}" alt="Custom placeholder art for position ${i + 1}">` : '<span class="card-row-drop-card-inner">Position placeholder</span>'}</div></div>`; }).join('')}</div></div>${boardStatsHtml}`;
-    const moreOptionsHtml = `<details class="card-row-more-options card-row-settings-panel"><summary>More Board Options</summary><div class="card-row-tools card-row-composer"><label class="card-row-name-label">Name <input id="rowName" type="text" value="${escapeHtml(rowName)}" placeholder="Reading name"></label><label class="card-row-position-label">Position stickers <input id="rowPositionLabels" type="text" list="rowStickerPresetList" value="${escapeHtml(positionValue)}" placeholder="Type stickers, or choose a spread…"><datalist id="rowStickerPresetList">${STICKER_PRESETS.map(preset => `<option value="${escapeHtml(stickerPresetDisplay(preset))}">${escapeHtml(preset.labels.join(', '))}</option>`).join('')}</datalist></label><label class="card-row-draw-scope-label">Pack <select id="rowDrawScope">${option('full','Full Pack')}${option('shown','Shown cards')}${option('uhn','Universal Human Needs')}${option('majors','Majors')}${option('planetary-majors','Planetary Majors')}${option('zodiac-majors','Zodiac Majors')}${option('aces','Aces')}${option('courts','Courts')}${option('pips','Pips')}${option('decans','Decan pips')}${option('wands','Wands')}${option('cups','Cups')}${option('swords','Swords')}${option('pentacles','Pentacles / Disks')}</select></label><label class="spread-toggle"><input id="rowAllowRepeats" type="checkbox" ${state.rowAllowRepeats ? 'checked' : ''}> Repeats</label><label class="spread-toggle"><input id="rowSnapEnabled" type="checkbox" ${state.rowSnapEnabled ? 'checked' : ''}> Align</label><label class="spread-toggle"><input id="rowRotationSnapEnabled" type="checkbox" ${state.rowRotationSnapEnabled ? 'checked' : ''}> Rotation snap</label><span class="card-row-snap-steppers"><button type="button" id="rowSnapGridMinus" aria-label="Smaller alignment snap">−</button><span id="rowSnapGridValue">${escapeHtml(rowSnapGrid().label)}</span><button type="button" id="rowSnapGridPlus" aria-label="Larger alignment snap">+</button><button type="button" id="rowRotationSnapMinus" aria-label="Smaller rotation snap">−</button><span id="rowRotationSnapValue">${rowRotationSnapDegrees()}°</span><button type="button" id="rowRotationSnapPlus" aria-label="Larger rotation snap">+</button></span><label class="card-row-color-label">Placeholder color <input id="rowEnvelopeColor" type="color" value="${escapeHtml(state.rowEnvelopeColor || '#f3f0ea')}"></label><label class="card-row-table-color-label">Table <input id="rowTableColor" type="color" value="${escapeHtml(state.rowTableColor || '#7d1f28')}"></label><button type="button" id="rowTableImageUpload">Upload table image</button><button type="button" id="rowTableImageReset" ${state.rowTableImage ? '' : 'disabled'}>Reset table</button><button type="button" id="resetCardRowLayout" ${displaySlots ? '' : 'disabled'}>Reset layout</button><button type="button" id="resetRowCardTransform" ${displaySlots ? '' : 'disabled'}>Reset selected card</button><button type="button" id="selectAllRow" ${items.length ? '' : 'disabled'}>Select all</button><button type="button" id="clearRowSelection" ${state.shortListSelection.length ? '' : 'disabled'}>Clear selection</button><button type="button" id="snapshotCardRowArrangement" ${displaySlots ? '' : 'disabled'}>Snapshot</button><button type="button" id="downloadRowHtml" ${items.length ? '' : 'disabled'}>Board with art</button><button type="button" id="downloadRowTextHtml" ${items.length ? '' : 'disabled'}>Text only</button><button type="button" id="downloadRowJson" ${items.length ? '' : 'disabled'}>Board data</button><button type="button" id="printCardRowImage" ${items.length ? '' : 'disabled'}>Image</button><label class="card-row-notes-label">Notes <textarea id="rowNotes" rows="1" placeholder="Board notes">${escapeHtml(rowNotes)}</textarea></label><input id="rowTableImageFile" type="file" accept="image/*" hidden></div></details>`;
-    wrap.innerHTML = `<details class="short-list-drawer card-row-drawing-board"><summary><strong>Drawing Board <span class="card-row-count">${items.length}</span></strong></summary><div class="drawing-board-top-actions" aria-label="Drawing Board actions"><button type="button" id="drawingBoardOptionsButton" aria-controls="drawingBoardReadingOptions" aria-expanded="false">Options</button><button type="button" id="drawRandomRowCard" title="Draw random card" aria-label="Draw random card">Draw</button><button type="button" id="undoShortList" class="board-history-icon" ${state.shortListUndo.length ? '' : 'disabled'} title="Undo" aria-label="Undo"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"><path d="M9 7 4 12l5 5"></path><path d="M4 12h9a7 7 0 0 1 7 7"></path></svg></button><button type="button" id="redoShortList" class="board-history-icon" ${state.shortListRedo.length ? '' : 'disabled'} title="Redo" aria-label="Redo"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"><path d="m15 7 5 5-5 5"></path><path d="M20 12h-9a7 7 0 0 0-7 7"></path></svg></button><button type="button" id="clearShortListCardsOnly" ${items.length ? '' : 'disabled'} title="Remove drawn cards and keep the spread positions" aria-label="Clear cards and keep spread positions">Clear Cards</button></div><span class="short-list-actions card-row-icon-toolbar card-row-action-staging" aria-label="Drawing Board staging controls" hidden><button type="button" id="addCardPlaceholder" title="Add placeholder" aria-label="Add placeholder">Add placeholder</button><label class="quick-reversal-toggle" title="Allow reversed cards in future draws"><input id="rowAllowReversalsQuick" type="checkbox" ${state.rowAllowReversals ? 'checked' : ''}> Reversals</label><button type="button" id="clearShortList" ${displaySlots ? '' : 'disabled'} title="Clear board" aria-label="Clear Drawing Board">Clear</button></span>${moreOptionsHtml}${boardHtml}</details>`;
+    const moreOptionsHtml = `<details class="card-row-more-options card-row-settings-panel"><summary>More Board Options</summary><div class="card-row-tools card-row-composer"><label class="card-row-name-label">Name <input id="rowName" type="text" value="${escapeHtml(rowName)}" placeholder="Reading name"></label><label class="card-row-position-label">Position stickers <input id="rowPositionLabels" type="text" list="rowStickerPresetList" value="${escapeHtml(positionValue)}" placeholder="Type stickers, or choose a spread…"><datalist id="rowStickerPresetList">${STICKER_PRESETS.map(preset => `<option value="${escapeHtml(stickerPresetDisplay(preset))}">${escapeHtml(preset.labels.join(', '))}</option>`).join('')}</datalist></label><label class="card-row-draw-scope-label">Pack <select id="rowDrawScope">${option('full','Full Pack')}${option('shown','Shown cards')}${option('uhn','Universal Human Needs')}${option('majors','Majors')}${option('primordial-majors','Primordial Element Majors')}${option('planetary-majors','Planetary Majors')}${option('zodiac-majors','Zodiac Majors')}${option('aces','Aces')}${option('courts','Courts')}${option('pips','Pips')}${option('decans','Decan pips')}${option('wands','Wands')}${option('cups','Cups')}${option('swords','Swords')}${option('pentacles','Pentacles / Disks')}${option('tags','Keywords / Tags')}</select></label>${keywordSubpackHtml()}<label class="spread-toggle"><input id="rowAllowRepeats" type="checkbox" ${state.rowAllowRepeats ? 'checked' : ''}> Repeats</label><label class="spread-toggle"><input id="rowSnapEnabled" type="checkbox" ${state.rowSnapEnabled ? 'checked' : ''}> Align</label><label class="spread-toggle"><input id="rowRotationSnapEnabled" type="checkbox" ${state.rowRotationSnapEnabled ? 'checked' : ''}> Rotation snap</label><span class="card-row-snap-steppers"><button type="button" id="rowSnapGridMinus" aria-label="Smaller alignment snap">−</button><span id="rowSnapGridValue">${escapeHtml(rowSnapGrid().label)}</span><button type="button" id="rowSnapGridPlus" aria-label="Larger alignment snap">+</button><button type="button" id="rowRotationSnapMinus" aria-label="Smaller rotation snap">−</button><span id="rowRotationSnapValue">${rowRotationSnapDegrees()}°</span><button type="button" id="rowRotationSnapPlus" aria-label="Larger rotation snap">+</button></span><label class="card-row-color-label">Placeholder color <input id="rowEnvelopeColor" type="color" value="${escapeHtml(state.rowEnvelopeColor || '#f3f0ea')}"></label><label class="card-row-table-color-label">Table <input id="rowTableColor" type="color" value="${escapeHtml(state.rowTableColor || '#7d1f28')}"></label><button type="button" id="rowTableImageUpload">Upload table image</button><button type="button" id="rowTableImageReset" ${state.rowTableImage ? '' : 'disabled'}>Reset table</button><button type="button" id="resetCardRowLayout" ${displaySlots ? '' : 'disabled'}>Reset layout</button><button type="button" id="resetRowCardTransform" ${displaySlots ? '' : 'disabled'}>Reset selected card</button><button type="button" id="selectAllRow" ${items.length ? '' : 'disabled'}>Select all</button><button type="button" id="clearRowSelection" ${state.shortListSelection.length ? '' : 'disabled'}>Clear selection</button><button type="button" id="snapshotCardRowArrangement" ${displaySlots ? '' : 'disabled'}>Snapshot</button><button type="button" id="downloadRowHtml" ${items.length ? '' : 'disabled'}>Board with art</button><button type="button" id="downloadRowTextHtml" ${items.length ? '' : 'disabled'}>Text only</button><button type="button" id="downloadRowJson" ${items.length ? '' : 'disabled'}>Board data</button><button type="button" id="printCardRowImage" ${items.length ? '' : 'disabled'}>Image</button><label class="card-row-notes-label">Notes <textarea id="rowNotes" rows="1" placeholder="Board notes">${escapeHtml(rowNotes)}</textarea></label><input id="rowTableImageFile" type="file" accept="image/*" hidden></div></details>`;
+    wrap.innerHTML = `<details class="short-list-drawer card-row-drawing-board"><summary><strong>Drawing Board <span class="card-row-count">${items.length}</span></strong></summary><div class="drawing-board-mode-switch" role="radiogroup" aria-label="Drawing mode"><strong class="drawing-board-mode-label">Mode:</strong><button type="button" id="drawingBoardBoardTab" role="radio" aria-checked="true" class="is-active">Free</button><span class="drawing-board-mode-or" aria-hidden="true">or</span><button type="button" id="drawingBoardOptionsButton" role="radio" aria-controls="drawingBoardReadingOptions" aria-checked="false" aria-expanded="false">Crafted</button></div><div class="drawing-board-board-mode" aria-label="Free Draw"><div class="drawing-board-top-actions" aria-label="Board actions"><button type="button" id="drawRandomRowCard" title="Draw random card" aria-label="Draw random card">Draw</button><button type="button" id="undoShortList" class="board-history-icon" ${state.shortListUndo.length ? '' : 'disabled'} title="Undo" aria-label="Undo"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"><path d="M9 7 4 12l5 5"></path><path d="M4 12h9a7 7 0 0 1 7 7"></path></svg></button><button type="button" id="redoShortList" class="board-history-icon" ${state.shortListRedo.length ? '' : 'disabled'} title="Redo" aria-label="Redo"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"><path d="m15 7 5 5-5 5"></path><path d="M20 12h-9a7 7 0 0 0-7 7"></path></svg></button><button type="button" id="clearShortListCardsOnly" ${items.length ? '' : 'disabled'} title="Remove drawn cards and keep the spread positions" aria-label="Clear cards and keep spread positions">Clear Cards</button></div><span class="short-list-actions card-row-icon-toolbar card-row-action-staging" aria-label="Drawing Board staging controls" hidden><button type="button" id="addCardPlaceholder" title="Add placeholder" aria-label="Add placeholder">Add placeholder</button><label class="quick-reversal-toggle" title="Allow reversed cards in future draws"><input id="rowAllowReversalsQuick" type="checkbox" ${state.rowAllowReversals ? 'checked' : ''}> Reversals</label><button type="button" id="clearShortList" ${displaySlots ? '' : 'disabled'} title="Clear board" aria-label="Clear Drawing Board">Clear</button></span>${moreOptionsHtml}${boardHtml}</div></details>`;
     bindRenderedDrawingBoardActions(wrap);
     const renderedBoardDrawer = wrap.querySelector('.card-row-drawing-board');
     if (renderedBoardDrawer) {
@@ -2835,7 +3279,45 @@
         renderShortList();
       });
     }
-    const scope = $('rowDrawScope'); if (scope) scope.addEventListener('change', () => { state.rowDrawScope = scope.value; resetRowDrawDeck(); renderShortList(); });
+    const scope = $('rowDrawScope'); if (scope) scope.addEventListener('change', () => {
+      state.rowDrawScope = scope.value;
+      if (scope.value !== 'tags') state.rowTagQuery = '';
+      resetRowDrawDeck();
+      renderShortList();
+    });
+    const tagQuery = $('rowTagQuery');
+    if (tagQuery) tagQuery.addEventListener('input', () => {
+      state.rowTagQuery = tagQuery.value.slice(0, 120);
+      resetRowDrawDeck();
+      renderShortList();
+      const next = $('rowTagQuery');
+      if (next) {
+        next.focus({ preventScroll:true });
+        try { next.setSelectionRange(next.value.length, next.value.length); } catch (error) {}
+      }
+    });
+    qsa('[data-row-tag-choice]', wrap).forEach(input => input.addEventListener('change', () => {
+      const value = input.value;
+      const current = Array.isArray(state.rowSelectedTags) ? state.rowSelectedTags.slice() : [];
+      state.rowSelectedTags = input.checked
+        ? [...current.filter(tag => normalizeSearch(tag) !== normalizeSearch(value)), value]
+        : current.filter(tag => normalizeSearch(tag) !== normalizeSearch(value));
+      resetRowDrawDeck();
+      renderShortList();
+    }));
+    qsa('[data-row-tag-remove]', wrap).forEach(button => button.addEventListener('click', event => {
+      event.preventDefault();
+      const value = button.dataset.rowTagRemove || '';
+      state.rowSelectedTags = (state.rowSelectedTags || []).filter(tag => normalizeSearch(tag) !== normalizeSearch(value));
+      resetRowDrawDeck();
+      renderShortList();
+    }));
+    qsa('input[name="rowTagMatchMode"]', wrap).forEach(input => input.addEventListener('change', () => {
+      if (!input.checked) return;
+      state.rowTagMatchMode = input.value === 'all' ? 'all' : 'any';
+      resetRowDrawDeck();
+      renderShortList();
+    }));
     const repeats = $('rowAllowRepeats'); if (repeats) repeats.addEventListener('change', () => { state.rowAllowRepeats = repeats.checked; resetRowDrawDeck(); renderShortList(); });
     const reversals = $('rowAllowReversals'); if (reversals) reversals.addEventListener('change', () => { state.rowAllowReversals = reversals.checked; resetRowDrawDeck(); renderShortList(); });
     const quickReversals = $('rowAllowReversalsQuick'); if (quickReversals) quickReversals.addEventListener('change', () => { state.rowAllowReversals = quickReversals.checked; resetRowDrawDeck(); renderShortList(); });
@@ -2942,6 +3424,7 @@
         placeCardInRow(cardId, slotIndex);
       });
     });
+    requestAnimationFrame(()=>syncBoardArtResolution(wrap));
     document.dispatchEvent(new CustomEvent('relphi:drawing-board-rendered', { detail:drawingBoardPrefabState() }));
   }
   function toggleShortList(id) {
@@ -3842,13 +4325,19 @@
     const arc = (start, end, r) => { const [sx,sy]=polar(start,r), [ex,ey]=polar(end,r); const diff=((end-start)%360+360)%360 || 360; const large=diff>180?1:0; return `M ${sx.toFixed(2)} ${sy.toFixed(2)} A ${r} ${r} 0 ${large} 1 ${ex.toFixed(2)} ${ey.toFixed(2)}`; };
     const ringWedge = (start, end, r1, r2) => { const [sx,sy]=polar(start,r2), [ex,ey]=polar(end,r2), [ix,iy]=polar(end,r1), [jx,jy]=polar(start,r1); const diff=((end-start)%360+360)%360 || 360; const large=diff>180?1:0; return `M ${sx.toFixed(2)} ${sy.toFixed(2)} A ${r2} ${r2} 0 ${large} 1 ${ex.toFixed(2)} ${ey.toFixed(2)} L ${ix.toFixed(2)} ${iy.toFixed(2)} A ${r1} ${r1} 0 ${large} 0 ${jx.toFixed(2)} ${jy.toFixed(2)} Z`; };
     let start=null,end=null,label='';
+    const courtRange=card?.card_type==='Court' ? COURT_RANGES.find(item=>item.id===card.card_id) : null;
     if (shared) {
       start = signIndex[shared.startSign]*30 + shared.startDegree;
       end = signIndex[shared.endSign]*30 + shared.endDegree;
       if (end <= start) end += 360;
       label = shared.label;
+    } else if (courtRange && signIndex[courtRange.start] != null && signIndex[courtRange.end] != null) {
+      start = signIndex[courtRange.start]*30 + courtRange.startDegree;
+      end = signIndex[courtRange.end]*30 + courtRange.endDegree;
+      if (end <= start) end += 360;
+      label = `${courtRange.start} ${courtRange.startDegree}° → ${courtRange.end} ${courtRange.endDegree}°`;
     } else {
-      let m = String(range).match(/(\d+(?:\.\d+)?|zero|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty|thirty) degrees ([A-Za-z]+) through (\d+(?:\.\d+)?|zero|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty|thirty) degrees ([A-Za-z]+)/i);
+      let m = String(range).match(/(\d+(?:\.\d+)?|zero|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty|thirty)\s*(?:°|degrees?)\s*([A-Za-z]+)\s*(?:through|to|→|[-–—])\s*(\d+(?:\.\d+)?|zero|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty|thirty)\s*(?:°|degrees?)\s*([A-Za-z]+)/i);
       if (m && signIndex[m[2]] != null && signIndex[m[4]] != null) {
         start = signIndex[m[2]]*30 + num(m[1]); end = signIndex[m[4]]*30 + num(m[3]); if (end <= start) end += 360; label = `${m[2]} ${num(m[1])}° → ${m[4]} ${num(m[3])}°`;
       } else if (a.sign && signIndex[a.sign] != null) {
@@ -4024,6 +4513,104 @@
     drawingBoardReadingEntries() {
       return drawingBoardReadingEntries().map(entry => ({ ...entry }));
     },
+    searchCards(query, limit = 24, scope = 'full') {
+      const needle = normalizeSearch(String(query || ''));
+      if (!needle) return [];
+      const max = Math.max(1, Math.min(60, Number(limit) || 24));
+      return rowDrawPool(scope || 'full',{ignoreUsed:true}).filter(card => normalizeSearch(compactText(card) + ' ' + cardSearchTokens(card)).includes(needle)).slice(0, max).map(card => ({
+        card_id:card.card_id,
+        title:title(card),
+        image:rwsImagePath(card)
+      }));
+    },
+    openingKeyDeck(significatorCardId) {
+      const id=String(significatorCardId||'').trim();
+      const pool=rowDrawPool('full',{ignoreUsed:true});
+      if(!id||!pool.some(card=>card.card_id===id))return null;
+      // One shuffle establishes the deck order for Operation I. Cutting must
+      // partition this exact order; it must never shuffle again.
+      const deck=shuffleArray(pool.map(card=>card.card_id));
+      return {deck,significatorCardId:id};
+    },
+    openingKeyCut(deck, firstCut, rightCut, leftCut) {
+      const cards=Array.isArray(deck)?deck.slice():[];
+      if(cards.length<4)return null;
+      const a=Math.max(1,Math.min(cards.length-1,Number(firstCut)||1));
+      const right=cards.slice(0,a), left=cards.slice(a);
+      const b=Math.max(1,Math.min(right.length-1,Number(rightCut)||1));
+      const d=Math.max(1,Math.min(left.length-1,Number(leftCut)||1));
+      // Four packets from right to left: Yod, Heh, Vav, final Heh.
+      return [right.slice(0,b),right.slice(b),left.slice(0,d),left.slice(d)];
+    },
+    openingKeyReaderCuts(deck, firstCut, significatorCardId) {
+      const cards=Array.isArray(deck)?deck.slice():[];
+      if(cards.length<4)return null;
+      const a=Math.max(1,Math.min(cards.length-1,Number(firstCut)||1));
+      const rightSize=a, leftSize=cards.length-a;
+      if(rightSize<2||leftSize<2)return null;
+      // Reader cuts are fresh cut points only. They partition the already locked
+      // order and never call shuffleArray or otherwise reorder the cards.
+      const rightCut=1+randomInt(rightSize-1);
+      const leftCut=1+randomInt(leftSize-1);
+      const packets=this.openingKeyCut(cards,a,rightCut,leftCut);
+      const id=String(significatorCardId||'');
+      const packetIndex=packets.findIndex(packet=>packet.includes(id));
+      return {packets,firstCut:a,rightCut,leftCut,packetIndex,packet:['Yod','Heh','Vav','Heh-final'][packetIndex]||''};
+    },
+    drawCardForBoard(scope = 'full') {
+      const pool=rowDrawPool(scope || 'full',{ignoreUsed:true});
+      if(!pool.length)return null;
+      const card=pool[randomInt(pool.length)];
+      if(!card)return null;
+      commitShortList([...state.shortList,card.card_id],{newCardsManual:true});
+      expandCardRow();
+      scrollCardRowToEnd();
+      return {card_id:card.card_id,title:title(card),image:rwsImagePath(card)};
+    },
+    drawOpeningSignificator(scope = 'full') {
+      // The Significator is a method choice, not a visible board draw. Choose it
+      // from the same eligible pool without mutating Drawing Board state.
+      const pool=rowDrawPool(scope || 'full',{ignoreUsed:true});
+      if(!pool.length)return null;
+      const card=pool[randomInt(pool.length)];
+      return card ? {card_id:card.card_id,title:title(card),image:rwsImagePath(card)} : null;
+    },
+    hideOpeningSignificator() {
+      // A chosen Significator remains conceptually inside the locked deck until
+      // the method calls for its packet to be exposed.
+      if (!(state.shortList || []).length) return true;
+      state.shortList=[];
+      state.shortListSelection=[];
+      state.shortListPositionLabels=[];
+      state.shortListPositionCardIds=[];
+      state.rowCardReversals={};
+      state.rowCardManual=[];
+      state.rowEnvelopeLayout={};
+      state.rowCardTransforms={};
+      state.rowPanX=0; state.rowPanY=0;
+      refreshShortListViews();
+      return true;
+    },
+    showOpeningPacket(packet) {
+      const ids=Array.isArray(packet)?packet.filter(id=>cardById(id)):[];
+      if(!ids.length)return false;
+      // Replace the lone Significator display with its actual IHVH packet,
+      // preserving packet order for the face-up Operation I spread.
+      commitShortList(ids,{newCardsManual:false});
+      expandCardRow();
+      setTimeout(()=>fitCardRowToViewport(),0);
+      return true;
+    },
+    addCardToBoard(cardId, scope = 'full') {
+      const id=String(cardId || '').trim();
+      if (!cardById(id)) return false;
+      if (!rowDrawPool(scope || 'full',{ignoreUsed:true}).some(card=>card.card_id===id)) return false;
+      if (!state.rowAllowRepeats && state.shortList.includes(id)) return false;
+      commitShortList([...state.shortList,id],{newCardsManual:true});
+      expandCardRow();
+      scrollCardRowToEnd();
+      return true;
+    },
     serializeDrawingBoardReading() {
       return serializeDrawingBoardReadingText();
     },
@@ -4124,7 +4711,7 @@
     if (openSkyChartFromPastedSearch(value)) return;
     if (openDateFromSearch(value)) return;
     if (!preserveFilters) state.cardFilters = [];
-    state.mode = 'search'; state.query = value; showPanel('browsePanel'); setVisible('visibilityPanel', false); hideCommandMenu(); renderBrowse(); if (saveHistory) pushHistory();
+    state.mode = 'search'; state.query = value; showPanel('browsePanel'); setVisible('visibilityPanel', false); hideCommandMenu(); renderBrowse(); renderBespokeChoice(value); if (saveHistory) pushHistory();
   }
   function clearSearchKeywordsKeepFilters() {
     state.query = '';
@@ -4216,6 +4803,20 @@
     menu.innerHTML = suggestions.map(([cmd, label]) => `<button type="button" data-command="/${escapeHtml(cmd)}"><span>${escapeHtml(label)}</span><small>/${escapeHtml(cmd)}</small></button>`).join('');
     qsa('button', menu).forEach(btn => btn.addEventListener('click', () => { $('oracleCommand').value = btn.dataset.command; $('oracleCommand').focus(); if (!btn.dataset.command.endsWith(' ')) runSearch(btn.dataset.command); else hideCommandMenu(); }));
   }
+  function renderBespokeChoice(value) {
+    const menu=$('commandMenu');
+    const question=String(value||'').trim();
+    if(!menu||!question||question.startsWith('/')||typeof window.RelphiLaunchBespokeQuestion!=='function')return;
+    menu.hidden=false;
+    menu.innerHTML=`<button type="button" class="relphi-bespoke-choice"><span>Begin a Bespoke Crafted Reading</span><small>Use “${escapeHtml(question)}” as the first question</small></button>`;
+    menu.querySelector('.relphi-bespoke-choice')?.addEventListener('click',()=>{
+      hideCommandMenu();
+      if(window.RelphiLaunchBespokeQuestion(question)){
+        state.mode='board';state.query='';$('oracleCommand').value='';updateSummary([]);
+      }
+    });
+  }
+
   function hideCommandMenu() { $('commandMenu').hidden = true; $('commandMenu').innerHTML = ''; }
 
   const RANK_MODE_GROUPS = { cardinal: ['Two','Three','Four'], fixed: ['Five','Six','Seven'], mutable: ['Eight','Nine','Ten'] };
@@ -8060,6 +8661,8 @@ ${notes || ''}`;
       setSkyEntrySource(target, consumeSkyPendingEntrySource(target, 'calculated'));
       updateSkyCreatorDeleteStoredButton();
       skyCalcStatus(`Calculated ${skyCreatorLabel(target)} for ${timestampLabelInZone(date, profile.timeZone)} at ${Number(latitude).toFixed(4)}, ${Number(longitude).toFixed(4)}${profile.timeZone ? ` (${profile.timeZone})` : ''}. Stored Rising, Midheaven, ${skyHouseSystemLabel(houseSystem)} houses, and planetary retrograde/station states. ${risingLabel}.${selectedStoredRecordId ? ' The loaded stored sky was updated.' : ''}`);
+      window.RELPHI_LAST_SKY_CALCULATION={target,label,notes,placements:cloneSkySlotValue(placements),calcProfile:cloneSkySlotValue(profile),calculatedAt:new Date().toISOString()};
+      window.dispatchEvent(new CustomEvent('relphi:sky-calculated',{detail:window.RELPHI_LAST_SKY_CALCULATION}));
       return true;
     } catch (error) {
       restoreSkySlot(protectedKind, protectedSnapshot);
@@ -9822,25 +10425,47 @@ ${notes || ''}`;
     refreshSkyLibrarySelects();
     function showDrawingBoardFromLanding(draw=false) {
       state.mode = 'board';
-      const commandDetails = document.querySelector('.tarot-command-drawer > details');
-      if (commandDetails) commandDetails.open = true;
-      setVisible('shortListPanel', true);
+      state.cardRowBoardOpen = true;
+      // Publish the open state before renderShortList(). The Drawing Board
+      // enhancement listens to the render event synchronously and uses this
+      // button state to decide whether #shortListPanel should remain visible.
       const currentBoardTrigger = $('relphiOpenDrawingBoardCurrent');
       if (currentBoardTrigger) {
         currentBoardTrigger.textContent = 'Close Drawing Board';
         currentBoardTrigger.setAttribute('aria-expanded', 'true');
       }
+      const commandDetails = document.querySelector('.tarot-command-drawer > details');
+      if (commandDetails) commandDetails.open = true;
       ['browsePanel','visibilityPanel','spreadPanel','datePanel','chartPanel','currentSkyPanel'].forEach(id => setVisible(id, false));
+
+      // Render from native state first. renderShortList() replaces the contents of
+      // #shortListPanel, so visibility/open state must be asserted on the live DOM
+      // after that render rather than only on the element that existed beforehand.
       renderShortList();
+      const boardPanel = $('shortListPanel');
+      if (boardPanel) {
+        boardPanel.hidden = false;
+        boardPanel.removeAttribute('hidden');
+        boardPanel.style.removeProperty('display');
+        boardPanel.setAttribute('aria-hidden','false');
+        const drawer = boardPanel.querySelector('.card-row-drawing-board');
+        if (drawer) {
+          drawer.open = true;
+          drawer.setAttribute('open','');
+        }
+      }
       expandCardRow();
+
       if (draw) drawRandomRowCard();
-      else $('shortListPanel')?.scrollIntoView({ behavior:'smooth', block:'start' });
+      else boardPanel?.scrollIntoView({ behavior:'smooth', block:'start' });
       updateSummary([]);
     }
     const landingDraw = $('landingDrawCard'); if (landingDraw) landingDraw.addEventListener('click', event => { event.preventDefault(); showDrawingBoardFromLanding(true); });
     const landingBoard = $('landingOpenBoard'); if (landingBoard) landingBoard.addEventListener('click', event => { event.preventDefault(); showDrawingBoardFromLanding(false); });
+    const currentBoard = $('relphiOpenDrawingBoardCurrent'); if (currentBoard) currentBoard.addEventListener('click', event => { event.preventDefault(); showDrawingBoardFromLanding(false); });
     const landingLedger = $('landingShowLedger'); if (landingLedger) landingLedger.addEventListener('click', event => { event.preventDefault(); collapseCardRow(); setVisible('shortListPanel', false); state.mode = 'all'; state.query = ''; state.cardFilters = []; state.selected = null; renderBrowse(); showPanel('browsePanel'); $('browsePanel')?.scrollIntoView({ behavior:'smooth', block:'start' }); });
     renderShortList();
+    if (state.mode !== 'board' && !drawingBoardHasContent(storedDrawingBoardSnapshot())) { collapseCardRow(); setVisible('shortListPanel', false); const boardTrigger=$('relphiOpenDrawingBoardCurrent'); if(boardTrigger){ boardTrigger.textContent='Open Drawing Board'; boardTrigger.setAttribute('aria-expanded','false'); } }
     updateClearKeywordButtons();
     if (isDedicatedSkyChartPage()) requestAnimationFrame(restoreDedicatedSkyChartView);
     else if (!openDateFromHash(initialHash)) updateSummary([]);

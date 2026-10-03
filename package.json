@@ -1,0 +1,10 @@
+{
+  "private": true,
+  "scripts": {
+    "styles:build": "sass styles/relphi-design-system.scss relphi-design-system.css --style=compressed --no-source-map",
+    "styles:watch": "sass --watch styles/relphi-design-system.scss:relphi-design-system.css --style=expanded --no-source-map"
+  },
+  "devDependencies": {
+    "sass": "^1.90.0"
+  }
+}

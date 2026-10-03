@@ -9274,36 +9274,63 @@ html body .chart-house-grid .or-card.tarot-card-surface.relphi-surface--card .or
 }
 .locked-ingredient-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
-  gap: .75rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: .85rem;
   align-items: stretch;
 }
 .locked-ingredient-card {
-  border: 1px solid rgba(17,17,17,.14);
-  border-radius: .85rem;
-  background: rgba(255,255,255,.72);
-  padding: .75rem;
   min-width: 0;
+  padding: .9rem .95rem 1rem;
+  border: 1px solid rgba(101,70,30,.16);
+  border-radius: 1rem;
+  background: rgba(255,253,248,.78);
+  box-shadow: 0 1px 0 rgba(255,255,255,.7) inset;
+}
+.locked-ingredient-card header {
+  display: grid;
+  gap: .16rem;
+  margin: 0 0 .62rem;
+  padding: 0 0 .58rem;
+  border-bottom: 1px solid rgba(101,70,30,.12);
 }
 .locked-ingredient-card h4 {
-  margin: 0 0 .45rem;
-  font-size: .92rem;
-}
-.locked-ingredient-card dl,
-.locked-traditional-meta p,
-.locked-common-lines p {
   margin: 0;
+  color: #241b14;
+  font-size: 1rem;
+  line-height: 1.18;
 }
-.locked-ingredient-card dt {
-  font-weight: 900;
-  font-size: .72rem;
-  letter-spacing: .04em;
+.locked-ingredient-type {
+  display: block;
+  color: #8a7462;
+  font-size: .64rem;
+  font-weight: 850;
+  letter-spacing: .075em;
   text-transform: uppercase;
-  margin-top: .45rem;
 }
-.locked-ingredient-card dd {
-  margin: .12rem 0 0;
-  line-height: 1.34;
+.locked-ingredient-operation,
+.locked-ingredient-question,
+.locked-ingredient-contribution {
+  margin: 0;
+  line-height: 1.46;
+}
+.locked-ingredient-operation {
+  color: #4f443b;
+  font-size: .78rem;
+  font-weight: 750;
+}
+.locked-ingredient-question {
+  margin-top: .48rem;
+  color: #6a5e54;
+  font-size: .76rem;
+  font-style: italic;
+}
+.locked-ingredient-contribution {
+  margin-top: .56rem;
+  color: #2f2925;
+  font-size: .79rem;
+}
+@media (max-width: 760px) {
+  .locked-ingredient-grid { grid-template-columns: 1fr; }
 }
 .locked-interpretation-comparison {
   display: grid;
@@ -19873,4 +19900,41 @@ html body :is(
   mask: none !important;
   -webkit-mask: none !important;
   overflow: visible !important;
+}
+
+
+/* Tarot Ledger promotion: instrument-page actions and header only. */
+.tarot-ledger-page .tarot-home-actions{
+  display:flex;
+  flex-wrap:wrap;
+  justify-content:center;
+  gap:.55rem;
+  margin:.15rem auto .7rem;
+}
+.tarot-ledger-page .tarot-home-actions button{
+  appearance:none;
+  border:1px solid rgba(17,17,17,.18);
+  border-radius:999px;
+  background:#fff;
+  color:#111;
+  padding:.58rem .9rem;
+  font:inherit;
+  font-size:.82rem;
+  font-weight:850;
+  cursor:pointer;
+}
+.tarot-ledger-page .tarot-home-actions button:hover,
+.tarot-ledger-page .tarot-home-actions button:focus-visible{
+  border-color:#dc1f18;
+  outline:2px solid rgba(220,31,24,.22);
+  outline-offset:2px;
+}
+.tarot-ledger-page .relphi-ledger-tool-header{
+  margin-bottom:.8rem;
+}
+.tarot-ledger-page .relphi-ledger-tool-header h1{
+  margin-bottom:.15rem;
+}
+.tarot-ledger-page .relphi-ledger-tool-header .relphi-tool-brandline{
+  margin:.1rem 0 .2rem;
 }

@@ -3,7 +3,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { chromium } = require('playwright');
 
-const base = process.env.RELPHI_TEST_URL || 'http://127.0.0.1:8000/tarot.html?board=workflow-v2#tarot';
+const base = process.env.RELPHI_TEST_URL || 'http://127.0.0.1:8000/tarot.html?board=workflow-v2#tarot'; // opener contract
 const out = path.resolve(__dirname,'..','test-results');
 fs.mkdirSync(out,{recursive:true});
 let browser;
@@ -14,9 +14,15 @@ async function waitReady(page) {
 }
 async function openBoard(page) {
   const panel=page.locator('#shortListPanel');
-  if (!(await panel.isVisible())) await page.click('#relphiOpenDrawingBoardCurrent');
+  const drawer=page.locator('#shortListPanel details.short-list-drawer');
+  if (!(await panel.isVisible()) || !(await drawer.getAttribute('open'))) await page.click('#relphiOpenDrawingBoardCurrent');
   await panel.waitFor({state:'visible'});
+  await page.waitForFunction(() => !!document.querySelector('#shortListPanel details.short-list-drawer')?.open);
   await page.waitForSelector('#shortListPanel #zoomCardRowExtents',{timeout:10000});
+  await page.locator('#relphiBoardSettingsButton').click({force:true});
+  await page.locator('#drawingBoardOptionsButton').click({force:true});
+  await page.locator('[data-relphi-options-path="templates"]').click({force:true});
+  await page.waitForFunction(() => document.body.innerText.includes('Opening of the Key · First Operation'));
 }
 async function applyCeltic(page) {
   await page.click('#drawingBoardOptionsButton');
@@ -33,6 +39,44 @@ async function boardState(page) {
     snap:window.RelphiDrawingBoardOptionsBridge?.capture?.()
   }));
 }
+async function assertNoClippedBoardControls(page) {
+  const result=await page.evaluate(() => {
+    const root=document.querySelector('#shortListPanel');
+    if(!root)return {ok:false,reason:'no board'};
+    const failures=[];
+    const visible=node=>{
+      const style=getComputedStyle(node);
+      const r=node.getBoundingClientRect();
+      return style.display!=='none' && style.visibility!=='hidden' && r.width>0 && r.height>0;
+    };
+    const within=(node,host,label)=>{
+      if(!node||!host||!visible(node)||!visible(host))return;
+      const r=node.getBoundingClientRect(), h=host.getBoundingClientRect();
+      if(r.left<h.left-1||r.right>h.right+1)failures.push({label,left:r.left,right:r.right,hostLeft:h.left,hostRight:h.right});
+    };
+    const command=root.querySelector('.relphi-board-commandbar');
+    if(command){
+      if(command.scrollWidth>command.clientWidth+1)failures.push({label:'commandbar-horizontal-overflow',scrollWidth:command.scrollWidth,clientWidth:command.clientWidth});
+      const buttons=[...command.querySelectorAll('button')].filter(visible);
+      buttons.forEach(button=>{
+        if(button.scrollWidth>button.clientWidth+1)failures.push({label:'clipped-button',text:button.textContent.trim(),scrollWidth:button.scrollWidth,clientWidth:button.clientWidth});
+        within(button,command,'command-button:'+button.textContent.trim());
+      });
+      for(let i=0;i<buttons.length;i++)for(let j=i+1;j<buttons.length;j++){
+        const a=buttons[i].getBoundingClientRect(),b=buttons[j].getBoundingClientRect();
+        const overlap=a.left<b.right-1&&a.right>b.left+1&&a.top<b.bottom-1&&a.bottom>b.top+1;
+        if(overlap)failures.push({label:'command-button-overlap',a:buttons[i].textContent.trim(),b:buttons[j].textContent.trim()});
+      }
+    }
+    const settings=root.querySelector('.relphi-board-settings-panel');
+    if(settings&&visible(settings)){
+      settings.querySelectorAll('button,label,.relphi-referent-path,.relphi-label-row,.relphi-sacred-card-source-choice,.relphi-surface-question-choice').forEach(node=>within(node,settings,'settings:'+String(node.textContent||node.getAttribute('aria-label')||'').trim().slice(0,80)));
+    }
+    return {ok:failures.length===0,failures};
+  });
+  assert.equal(result.ok,true,JSON.stringify(result.failures));
+}
+
 async function assertContained(page) {
   const result=await page.evaluate(() => {
     const root=document.querySelector('#shortListPanel');
@@ -120,6 +164,26 @@ async function assertReadableFocus(page) {
   await waitReady(mobile);
   await openBoard(mobile);
   assert.equal(await mobile.locator('#zoomCardRowExtents').count(),1);
+
+  // Height-only mobile viewport changes (browser chrome appearing/disappearing while scrolling)
+  // must not refit the board or change card scale.
+  await mobile.locator('#rowZoom').evaluate(input=>{
+    input.value='0.73';
+    input.dispatchEvent(new Event('input',{bubbles:true}));
+    input.dispatchEvent(new Event('change',{bubbles:true}));
+  });
+  const beforeHeightOnlyResize=await mobile.evaluate(()=>({
+    zoom:window.RelphiDrawingBoardOptionsBridge?.capture?.()?.rowZoom,
+    height:document.querySelector('#shortListPanel .card-row-workspace')?.getBoundingClientRect().height
+  }));
+  await mobile.evaluate(()=>window.dispatchEvent(new Event('resize')));
+  await mobile.waitForTimeout(80);
+  const afterHeightOnlyResize=await mobile.evaluate(()=>({
+    zoom:window.RelphiDrawingBoardOptionsBridge?.capture?.()?.rowZoom,
+    height:document.querySelector('#shortListPanel .card-row-workspace')?.getBoundingClientRect().height
+  }));
+  assert.equal(afterHeightOnlyResize.zoom,beforeHeightOnlyResize.zoom,'height-only resize must not refit Drawing Board zoom');
+  assert.equal(Math.round(afterHeightOnlyResize.height),Math.round(beforeHeightOnlyResize.height),'height-only resize must not change Drawing Board height');
   assert.equal(await mobile.locator('.relphi-tool-trigger[data-tool="more"]').count(),1,'advanced board tools should live behind one ellipsis button');
   assert.equal(await mobile.locator('.relphi-tool-trigger[data-tool="snaps"]').count(),0,'Snaps should not occupy the main zoom toolbar');
   assert.equal(await mobile.locator('.relphi-tool-trigger[data-tool="background"]').count(),0,'Background should not occupy the main zoom toolbar');
@@ -293,14 +357,26 @@ async function assertReadableFocus(page) {
   await mobile.screenshot({path:path.join(out,'drawing-board-mobile-reset-options.png'),fullPage:true});
 
   const bulkQuestions=['What is changing?','What needs release?','What supports me?'];
-  const firstQuestion=mobile.locator('#relphiPositionLabels .relphi-label-row input').first();
-  await firstQuestion.fill(bulkQuestions.join(', '));
-  await firstQuestion.dispatchEvent('change');
+  await mobile.locator('#relphiBulkReferents').fill(bulkQuestions.join(', '));
+  await mobile.click('#relphiParseReferents');
   await mobile.waitForFunction(count => document.querySelectorAll('#relphiPositionLabels .relphi-label-row').length===count,bulkQuestions.length);
   assert.equal(await mobile.locator('#relphiPositionLabels').count(),1,'Options must show the individual label editor');
-  assert.equal(await mobile.locator('#relphiPositionLabels .relphi-label-row').count(),3,'comma-separated questions should create three individual label fields');
-  assert.deepEqual(await mobile.locator('#relphiPositionLabels .relphi-label-row input').evaluateAll(nodes=>nodes.map(node=>node.value)),bulkQuestions,'individual label fields must mirror the comma-separated first field');
-  await mobile.screenshot({path:path.join(out,'drawing-board-mobile-comma-list-questions.png'),fullPage:true});
+  assert.equal(await mobile.locator('#relphiPositionLabels .relphi-label-row').count(),3,'Parse must create three individual question fields');
+  assert.deepEqual(await mobile.locator('#relphiPositionLabels [data-position-label]').evaluateAll(nodes=>nodes.map(node=>node.value)),bulkQuestions,'parsed questions must populate the individual fields');
+
+  // Regression: per-question controls live inside the same delegated labels container.
+  // Toggling Repeats used to be mistaken for editing Question 1 ("on"), replacing the parsed questions.
+  await mobile.locator('[data-position-repeats="0"]').evaluate(input=>{
+    input.checked=true;
+    input.dispatchEvent(new Event('input',{bubbles:true}));
+    input.dispatchEvent(new Event('change',{bubbles:true}));
+  });
+  await mobile.waitForFunction(count => document.querySelectorAll('#relphiPositionLabels [data-position-label]').length===count,bulkQuestions.length);
+  assert.deepEqual(await mobile.locator('#relphiPositionLabels [data-position-label]').evaluateAll(nodes=>nodes.map(node=>node.value)),bulkQuestions,'turning on per-question Repeats must not overwrite parsed questions');
+
+  await mobile.locator('#relphiDraftRepeats').check();
+  assert.deepEqual(await mobile.locator('#relphiPositionLabels [data-position-label]').evaluateAll(nodes=>nodes.map(node=>node.value)),bulkQuestions,'turning on global Repeats must not overwrite parsed questions');
+  await mobile.screenshot({path:path.join(out,'drawing-board-mobile-parsed-questions-repeats.png'),fullPage:true});
   await mobile.click('#relphiApplyOptions');
   await mobile.waitForFunction(() => {
     const state=window.RelphiDrawingBoardPrefabsBridge?.getState?.();
@@ -317,6 +393,8 @@ async function assertReadableFocus(page) {
     return state && !state.activeLayout && state.slotCount===0 && state.hasCards===false;
   });
   await mobile.waitForSelector('.relphi-reading-options-drawer.is-reading-options-open',{state:'visible'});
+  await mobile.click('[data-referent-path="templates"]');
+  await mobile.waitForSelector('#relphiSpreadTemplateSelect',{state:'visible'});
   await mobile.selectOption('#relphiSpreadTemplateSelect','six-polarities-houses-12');
   await mobile.click('#relphiApplyOptions');
   await mobile.waitForFunction(() => window.RelphiDrawingBoardPrefabsBridge?.getState?.()?.activeLayout?.id === 'six-polarities-houses-12');
@@ -344,6 +422,37 @@ async function assertReadableFocus(page) {
   assert.deepEqual(compactErrors,[]);
   await compact.close();
 
+  // Regression guard: the narrowest phone layout must preserve full control labels.
+  // Use real long labels from the board UI rather than synthetic placeholder text.
+  const narrow=await browser.newPage({viewport:{width:320,height:700}});
+  const narrowErrors=[];
+  narrow.on('pageerror',error=>narrowErrors.push(String(error)));
+  await narrow.goto(base,{waitUntil:'domcontentloaded'});
+  await waitReady(narrow);
+  await openBoard(narrow);
+  await assertNoClippedBoardControls(narrow);
+  assert.equal(await narrow.locator('#relphiResetBoard').textContent(),'Reset Board');
+  await narrow.click('#relphiBoardSettingsButton');
+  await narrow.waitForSelector('.relphi-board-settings-panel',{state:'visible'});
+  await assertNoClippedBoardControls(narrow);
+  await narrow.click('#drawingBoardOptionsButton');
+  await narrow.waitForSelector('.relphi-reading-options-drawer.is-reading-options-open',{state:'visible'});
+  assert.equal(await narrow.getByText('Astrological Tarot Reading',{exact:true}).count(),1,'long Crafted path label should remain intact');
+  await assertNoClippedBoardControls(narrow);
+  await narrow.click('[data-referent-path="bespoke"]');
+  const longQuestion='What is changing in the relationship between the current pressure and the response I am choosing?';
+  const narrowQuestion=narrow.locator('#relphiPositionLabels .relphi-label-row input').first();
+  await narrowQuestion.fill(longQuestion);
+  const questionGeometry=await narrowQuestion.evaluate(input=>{
+    const r=input.getBoundingClientRect(), host=input.closest('.relphi-reading-options-drawer').getBoundingClientRect();
+    return {left:r.left,right:r.right,hostLeft:host.left,hostRight:host.right,value:input.value};
+  });
+  assert.equal(questionGeometry.value,longQuestion);
+  assert.ok(questionGeometry.left>=questionGeometry.hostLeft-1&&questionGeometry.right<=questionGeometry.hostRight+1,'long dynamic question control must remain inside the Crafted drawer');
+  await narrow.screenshot({path:path.join(out,'drawing-board-mobile-320-control-reflow.png'),fullPage:true});
+  assert.deepEqual(narrowErrors,[]);
+  await narrow.close();
+
   const desktop=await browser.newPage({viewport:{width:1440,height:1000}});
   const desktopErrors=[];
   desktop.on('pageerror',error=>desktopErrors.push(String(error)));
@@ -352,11 +461,31 @@ async function assertReadableFocus(page) {
   await openBoard(desktop);
   await desktop.click('#drawingBoardOptionsButton');
   await desktop.waitForSelector('.relphi-reading-options-drawer.is-reading-options-open',{state:'visible'});
+  await desktop.click('[data-referent-path="blocks"]');
+  await desktop.waitForSelector('[data-referent-path-panel="blocks"]',{state:'visible'});
+  const blockDrawerPlacement=await desktop.evaluate(()=>{
+    const header=document.querySelector('[data-referent-path="blocks"]');
+    const drawer=document.querySelector('[data-referent-path-panel="blocks"]');
+    return {
+      adjacent:header?.nextElementSibling===drawer,
+      sameParent:header?.parentElement===drawer?.parentElement,
+      beforeNext:!!drawer?.nextElementSibling?.matches?.('[data-referent-path="surface"]')
+    };
+  });
+  assert.deepEqual(blockDrawerPlacement,{adjacent:true,sameParent:true,beforeNext:true},'active Crafted drawer must open immediately after its path header');
+
+  await desktop.click('[data-referent-path="blocks"]');
+  await desktop.waitForSelector('[data-referent-path-panel="blocks"]',{state:'detached'});
+  assert.equal(await desktop.locator('[data-referent-path="blocks"]').getAttribute('aria-expanded'),'false','clicking the active Crafted header should collapse its drawer');
+  await desktop.click('[data-referent-path="blocks"]');
+  await desktop.waitForSelector('[data-referent-path-panel="blocks"]',{state:'visible'});
+  assert.equal(await desktop.locator('[data-referent-path="blocks"]').getAttribute('aria-expanded'),'true','clicking the active Crafted header again should reopen its drawer');
   const desktopOptions=await desktop.locator('.relphi-reading-options-drawer.is-reading-options-open').evaluate(drawer=>{
     const r=drawer.getBoundingClientRect();
     const host=drawer.parentElement.getBoundingClientRect();
-    const firstSection=drawer.querySelector('.relphi-options-body>:first-child');
-    return {left:r.left,right:r.right,viewport:innerWidth,hostLeft:host.left,firstIsLabels:firstSection?.classList.contains('relphi-labels-section') && !!firstSection?.querySelector('#relphiPositionLabels')};
+    const paths=drawer.querySelectorAll('[data-referent-path]');
+    const active=drawer.querySelector('[data-referent-path].is-active');
+    return {left:r.left,right:r.right,viewport:innerWidth,hostLeft:host.left,pathCount:paths.length,activePath:active?.dataset.referentPath||''};
   });
   assert.ok(desktopOptions.left>=desktopOptions.hostLeft-1 && desktopOptions.left<=desktopOptions.hostLeft+20,'Options must open against the left side of its Drawing Board host');
   assert.ok(desktopOptions.left>=0 && desktopOptions.right<=desktopOptions.viewport,'Options must not be cut off horizontally');
@@ -370,8 +499,9 @@ async function assertReadableFocus(page) {
     return offenders;
   });
   assert.deepEqual(optionsOverflow,[],'no Options control may overflow or be clipped by the drawer');
-  assert.equal(desktopOptions.firstIsLabels,true,'Questions / position labels must be the first Options section');
-  assert.equal(await desktop.locator('#relphiPositionLabels').count(),1,'Options must expose the individual position-label editor');
+  assert.equal(desktopOptions.pathCount,4,'Referents must expose the four referent paths and no Draw path');
+  assert.equal(desktopOptions.activePath,'templates','Templates should be the continuity path when Referents first opens');
+  assert.equal(await desktop.locator('#relphiSpreadTemplateSelect').count(),1,'Templates path must expose the spread library');
   await desktop.screenshot({path:path.join(out,'drawing-board-desktop-options-left.png'),fullPage:true});
   await desktop.click('#relphiCancelOptions');
   await applyCeltic(desktop);
