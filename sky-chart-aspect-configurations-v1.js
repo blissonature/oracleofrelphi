@@ -590,7 +590,12 @@ const INEVITABLE_TOOLTIP='Describes how we know the relationship is there, not h
 const configurationState=Object.fromEntries(SCOPES.map(scope=>[scope.id,new Set()]));
 (function loadPersistedConfigurationState(){try{const saved=JSON.parse(localStorage.getItem(CONFIG_STORAGE_KEY)||'null');if(!saved||typeof saved!=='object')return;SCOPES.forEach(scope=>{if(Array.isArray(saved[scope.id]))configurationState[scope.id]=new Set(saved[scope.id].filter(type=>TYPE_IDS.includes(type)))})}catch(_){}})();
 let inevitableEnabled=false;
-try{inevitableEnabled=localStorage.getItem(INEVITABLE_STORAGE_KEY)==='true'}catch(_){}
+// Recovery migration: an earlier Inevitable implementation persisted "true" before
+// its combinatorial path was safe to restore at startup. Never let that stale value
+// block Sky Chart initialization. A fresh user change can enable it after startup.
+try{
+  if(localStorage.getItem(INEVITABLE_STORAGE_KEY)==='true')localStorage.setItem(INEVITABLE_STORAGE_KEY,'false');
+}catch(_){}
 let patterns=[];
 let queued=false;
 let applying=false;
