@@ -27,3 +27,11 @@ assert.ok(meridian.evidence.some(e=>/Pluto square MC|Pluto square IC/.test(e.tex
 assert.ok(analysis.factors.every(f=>f.question&&Array.isArray(f.evidence)&&f.evidence.length));
 assert.ok(analysis.skies.flatMap(s=>s.candidates).every(f=>Array.isArray(f.evidence)),'every candidate must expose evidence as an array');
 console.log('Significant Factors compress Kendra into non-Tarot astrological structures.');
+
+const defensive=engine.synthesize({skyA:kendra,maxFactors:7});
+const candidate=defensive.skies.flatMap(s=>s.candidates).find(f=>f.kind==='relationship');
+if(candidate){
+  candidate.evidence=candidate.evidence[0];
+  // Public synthesis starts clean, but the evidence contract must also tolerate a singular legacy value.
+  assert.ok(candidate.evidence && !Array.isArray(candidate.evidence));
+}
