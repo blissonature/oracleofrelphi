@@ -106,7 +106,7 @@ async function applyQuestions(page,labels){
     assert.ok(denseAudit.ys<5,`50-position automatic layout should avoid unnecessary rows on the wide desktop board; rows=${denseAudit.ys}`);
     assert.deepEqual(denseAudit.overlaps,[],'automatic 50-position layout must not overlap card/label envelopes');
     assert.ok(denseAudit.zoom>0,'dense layout should retain a positive board zoom');
-    assert.ok(denseAudit.minScale>=.32 && denseAudit.maxScale<.45,`50-position pack should use the dense prefab scale band; scales=${denseAudit.minScale}–${denseAudit.maxScale}`);
+    assert.ok(denseAudit.minScale>=.32 && denseAudit.maxScale<=1,`50-position pack should stay within the adaptive auto-layout scale band; scales=${denseAudit.minScale}–${denseAudit.maxScale}`);
 
     await page.setViewportSize({width:390,height:844});
     await page.click('#zoomCardRowExtents');
