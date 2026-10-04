@@ -141,8 +141,9 @@
   appearance:none;
   position:relative;
   display:grid;
-  grid-template-columns:minmax(0,1fr) 20px;
-  grid-template-areas:"name check" "meta check";
+  grid-template-columns:minmax(0,1fr) auto 20px;
+  grid-template-areas:"name retro check" "meta retro check";
+  column-gap:6px;
   align-items:center;
   width:100%;
   min-width:0;
@@ -329,15 +330,13 @@
 .sky-saved-command-list:first-child{padding-top:6px}
 
 .sky-saved-retrogrades{
-  grid-area:meta;
+  grid-area:retro;
   justify-self:end;
   align-self:end;
   display:inline-flex;
   align-items:center;
   gap:3px;
-  max-width:48%;
   margin-top:2px;
-  margin-left:8px;
   white-space:nowrap;
   pointer-events:none;
 }
