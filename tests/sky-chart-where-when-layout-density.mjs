@@ -121,6 +121,7 @@ const metrics=await editor.evaluate(form=>{
     hereNowHeight:r(hereNow).height,
     confirmHeight:r(confirm).height,
     hereNowSecondary:hereNow.classList.contains('secondary'),
+    hereNowRowDisplay:getComputedStyle(hereNow.closest('.sky-where-when-here-now-row')).display,
     whenVisiblePixels:Math.max(0,Math.min(bodyRect.bottom,whenRect.bottom)-Math.max(bodyRect.top,whenRect.top)),
     dateStartsInsideBody:dateRect.top<bodyRect.bottom-4,
     bodyMaxHeight:parseFloat(getComputedStyle(body).maxHeight)||0,
@@ -162,6 +163,7 @@ assert.ok(metrics.confirmWidth>metrics.cancelWidth*1.9,'Confirm action should ke
 assert.ok(Math.abs(metrics.hereNowWidth-metrics.confirmWidth)<=1.5,`Here and Now should match the confirm action width (${metrics.hereNowWidth}/${metrics.confirmWidth}).`);
 assert.ok(Math.abs(metrics.hereNowHeight-metrics.confirmHeight)<=1.5,`Here and Now should match the confirm action height (${metrics.hereNowHeight}/${metrics.confirmHeight}).`);
 assert.equal(metrics.hereNowSecondary,true,'Here and Now should use the secondary action style.');
+assert.equal(metrics.hereNowRowDisplay,'flex','Here and Now must not replace the compact editor row with a new grid layout.');
 assert.ok(metrics.whenVisiblePixels>=90,`At least the useful top of When should show without scrolling, got ${metrics.whenVisiblePixels}px.`);
 assert.equal(metrics.dateStartsInsideBody,true,'The date field should begin inside the default visible Where/When scroll viewport.');
 assert.ok(metrics.bodyMaxHeight>=390,`The scroll body should receive the space recovered from the footer, got max-height ${metrics.bodyMaxHeight}px.`);
