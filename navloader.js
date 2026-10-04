@@ -172,7 +172,7 @@
       });
       appendScript('relphi-astrology-significance-v2.js?v=3', function () {
         appendScript('drawing-board-workflow-v2.js?v=122', function () {
-        appendScript('relphi-sky-connector-v1.js?v=1');
+        appendScript('relphi-sky-connector-v1.js?v=2');
           appendScript('drawing-board-crowley-harmonic-v1.js?v=3', function () {
             window.dispatchEvent(new Event('relphi:tarot-enhancements-ready'));
           });
