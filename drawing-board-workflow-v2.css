@@ -188,8 +188,6 @@
   .relphi-focus-strip>button{flex-basis:2.7rem!important;width:2.7rem!important;height:3.45rem!important}
 }
 @media(max-width:430px){
-  #shortListPanel .drawing-board-top-actions>#clearShortListCardsOnly{font-size:0!important}
-  #shortListPanel .drawing-board-top-actions>#clearShortListCardsOnly::after{content:'Clear';font-size:.68rem!important}
   #shortListPanel .relphi-workspace-tools{gap:.18rem!important}
   #shortListPanel .relphi-zoom-step:first-child{display:none!important}
   #shortListPanel .relphi-tool-flyout{left:auto!important;right:0!important;width:min(20rem,calc(100vw - 1.4rem))!important}
