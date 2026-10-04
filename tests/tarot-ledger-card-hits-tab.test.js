@@ -5,8 +5,9 @@ const html = fs.readFileSync('tarot.html','utf8');
 const app = fs.readFileSync('tarot-app.js','utf8');
 const css = fs.readFileSync('tarot-sky-connector-v1.css','utf8');
 
-assert.match(html,/id="ledgerSkyHitsTab"[^>]+role="tab"[^>]+Card Hits from Sky/);
-assert.match(html,/id="cardHitsPanel"[^>]+role="tabpanel"/);
+assert.match(html,/id="showSkyCardHits"[^>]+aria-controls="cardHitsPanel"[^>]+Card Hits from Sky/);
+assert.doesNotMatch(html,/ledgerSkyHitsTab|ledgerCardsTab|tarot-ledger-tabs/);
+assert.match(html,/id="cardHitsPanel"/);
 assert.match(html,/id="cardHitsList"/);
 assert.match(html,/id="cardHitsDetail"/);
 
@@ -25,4 +26,4 @@ assert.match(css,/.tarot-ledger-tabs/);
 assert.match(css,/.tarot-card-hit-row/);
 assert.match(css,/.tarot-card-hit-evidence/);
 
-console.log('Tarot Ledger Card Hits from Sky tab is wired to Sky Connector evidence.');
+console.log('Tarot Ledger Card Hits from Sky action is wired to Sky Connector evidence without a redundant tab system.');
