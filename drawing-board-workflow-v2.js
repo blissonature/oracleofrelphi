@@ -2177,23 +2177,8 @@
     if(kind==='tag')return {id:'themes',label:'Themes'};
     return {id:'other',label:'Other'};
   }
-  function astrologyEvidenceControlsMarkup(analysis,disabled) {
-    const groups=[];
-    analysis.evidence.forEach(item=>{
-      const category=astrologyEvidenceCategory(item);
-      let group=groups.find(entry=>entry.id===category.id);
-      if(!group){group={...category,items:[]};groups.push(group);}
-      group.items.push(item);
-    });
-    const activeGroups=groups.filter(group=>group.items.some(item=>['hit','placement','house','aspect','configuration','planet-relationship','pattern','ruler','polarity','tag'].includes(String(item.kind||''))));
-    const allItems=activeGroups.flatMap(group=>group.items);
-    const enabledCount=allItems.filter(item=>!disabled.has(astrologyEvidenceKey(item))).length;
-    const masterChecked=allItems.length&&enabledCount===allItems.length?' checked':'';
-    return '<section class="relphi-astrology-evidence-controls"><div class="relphi-astrology-evidence-control-head"><strong>Evidence</strong><label class="relphi-astrology-evidence-master"><input type="checkbox" data-astrology-evidence-master'+masterChecked+'> <span>All evidence</span></label></div><div class="relphi-astrology-evidence-categories">'+activeGroups.map(group=>{const count=group.items.filter(item=>!disabled.has(astrologyEvidenceKey(item))).length;const checked=count===group.items.length&&group.items.length?' checked':'';return '<label><input type="checkbox" data-astrology-evidence-category="'+escapeHtml(group.id)+'"'+checked+'><span>'+escapeHtml(group.label)+'</span></label>';}).join('')+'</div></section>';
-  }
   function astrologyAnalysisMarkup(analysis,session) {
-    if(!analysis)return '';const disabled=new Set(session?.astrologyDisabledEvidence||[]),checked=item=>disabled.has(astrologyEvidenceKey(item))?'':' checked';
-    const evidenceBox=(item,label)=>{const category=astrologyEvidenceCategory(item);return '<label class="relphi-astrology-evidence"><input type="checkbox" data-astrology-evidence="'+escapeHtml(astrologyEvidenceKey(item))+'" data-astrology-evidence-category-id="'+escapeHtml(category.id)+'"'+checked(item)+'><span>'+label+'</span></label>';};
+    if(!analysis)return '';
     const factorMarkup=(analysis.factors||[]).map((factor,index)=>{
       const evidenceItems=Array.isArray(factor.evidence)?factor.evidence:(factor.evidence?[factor.evidence]:[]);
       return '<article class="relphi-astrology-factor relphi-card relphi-card--soft" data-factor-index="'+index+'">'+
@@ -2206,15 +2191,14 @@
     }).join('');
     const summaries=[...analysis.patterns.map((p,i)=>({kind:'pattern',id:p.type+':'+p.value+':'+i,value:p.value,count:p.count||0,type:p.type})),...analysis.topRulers.map(x=>({...x,kind:'ruler',id:x.value,type:'ruler'})),...(analysis.polarity.Active||analysis.polarity.Passive?[{kind:'polarity',id:'active-passive',value:'Active '+analysis.polarity.Active+' · Passive '+analysis.polarity.Passive,count:analysis.polarity.Active+analysis.polarity.Passive,type:'polarity'}]:[]),...analysis.topTags.slice(0,10).map(x=>({...x,kind:'tag',id:x.value,type:'tag'}))].sort((a,b)=>(b.count||0)-(a.count||0));
     const pd=analysis.polarityDiagnostic,polarityDetail=pd?' <small class="relphi-polarity-bin">'+pd.winner+' '+(pd.share*100).toFixed(1)+'% · excess '+(pd.excess*100).toFixed(1)+' points → <strong>'+pd.sign+'</strong> · bin '+(pd.index+1)+'/6</small>':'';
-    const summary=summaries.map(x=>evidenceBox(x,'<strong>'+escapeHtml(x.value)+'</strong> · '+escapeHtml(x.type)+(x.count?' ×'+x.count:'')+(x.kind==='polarity'?polarityDetail:''))).join('');
+    const summary=summaries.map(x=>'<li><strong>'+escapeHtml(x.value)+'</strong> · '+escapeHtml(x.type)+(x.count?' ×'+x.count:'')+(x.kind==='polarity'?polarityDetail:'')+'</li>').join('');
     const diagnostic=pd?'<div class="relphi-polarity-diagnostic"><strong>Experimental polarity → sign test</strong><span>'+pd.winner+' selects the '+(pd.winner==='Active'?'Yang':'Yin')+' signs; '+(pd.excess*100).toFixed(1)+'-point excess selects bin '+(pd.index+1)+'/6 → <strong>'+pd.sign+'</strong>.</span><span class="relphi-polarity-test-result"><strong>Independent check:</strong> '+(pd.observed?escapeHtml(pd.sign)+' is independently concentrated ×'+pd.observedCount:'no independent '+escapeHtml(pd.sign)+' concentration')+'.</span><small>Experimental derived-sign evidence — included in the question generator while Polarity is checked.</small></div>':'';
-    const enabled=new Set(analysis.evidence.map(astrologyEvidenceKey).filter(key=>!disabled.has(key))),questionList=astrologyQuestionSuggestions(analysis,enabled),questions=astrologyQuestionGroupsMarkup(questionList,session);
+    const questionList=astrologyQuestionSuggestions(analysis,null),questions=astrologyQuestionGroupsMarkup(questionList,session);
     session.astrologyVisibleQuestions=questionList;
-    const skyChannels=analysis.perSky.map(s=>{const items=s.skyEvidence.filter(x=>['placement','house','aspect','configuration'].includes(x.kind)).map(x=>evidenceBox(x,'<strong>'+escapeHtml(x.value)+'</strong>'+(x.detail?' · '+escapeHtml(x.detail):''))).join('');return items?'<section><h4>Sky evidence · '+escapeHtml(s.name)+'</h4><div class="relphi-evidence-list">'+items+'</div></section>':''}).join('');
+    const skyChannels=analysis.perSky.map(s=>{const items=s.skyEvidence.filter(x=>['placement','house','aspect','configuration'].includes(x.kind));if(!items.length)return '';return '<details class="relphi-astrology-raw-sky"><summary>Inspect raw sky evidence · '+escapeHtml(s.name)+' <small>'+items.length+' data points</small></summary><ul>'+items.map(x=>'<li><strong>'+escapeHtml(x.value)+'</strong>'+(x.detail?' · '+escapeHtml(x.detail):'')+'</li>').join('')+'</ul></details>';}).join('');
     const ownPack=String(session?.astrologyOwnPack||'');
     const ownPackOptions='<option value="">Choose sub-pack…</option>'+packOptions(ownPack);
-    const evidenceControls=astrologyEvidenceControlsMarkup(analysis,disabled);
-    return '<div class="relphi-astrology-analysis">'+evidenceControls+'<section class="relphi-astrology-significant-factors"><div class="relphi-astrology-factor-head"><div><h4>Significant Factors</h4><small>'+((analysis.factors||[]).length)+' organizing factor'+((analysis.factors||[]).length===1?'':'s')+' synthesized from sky evidence</small></div></div><div class="relphi-astrology-factor-list">'+factorMarkup+'</div></section>'+skyChannels+'<section><h4>Raw astrological evidence</h4><div class="relphi-evidence-list">'+summary+'</div>'+diagnostic+'</section><section class="relphi-astrology-questions"><div class="relphi-astrology-question-head"><h4>Suggested questions</h4><label class="relphi-astrology-category-master"><input type="checkbox" data-astrology-category-master> <strong>All categories</strong></label></div><p class="relphi-question-prompt">Checked evidence is factored into these suggestions. Check or clear a category box to change every question in that category at once. The All categories box controls the entire suggestion set. Accepting a generated question also accepts its assigned sub-pack. To use a different sub-pack, author your own question below.</p>'+questions+'<div class="relphi-astrology-own-question"><label><span>Your question</span><input type="text" data-astrology-own-question value="'+escapeHtml(session?.astrologyOwnQuestion||'')+'" placeholder="Write your own question…"></label><label><span>Sub-pack</span><select data-astrology-own-pack>'+ownPackOptions+'</select></label></div></section></div>';
+    return '<div class="relphi-astrology-analysis"><section class="relphi-astrology-significant-factors"><div class="relphi-astrology-factor-head"><div><h4>Significant Factors</h4><small>'+((analysis.factors||[]).length)+' organizing factor'+((analysis.factors||[]).length===1?'':'s')+' synthesized from sky evidence</small></div></div><div class="relphi-astrology-factor-list">'+factorMarkup+'</div></section>'+(skyChannels||summary||diagnostic?'<section class="relphi-astrology-technical"><details><summary>Technical evidence <small>Optional</small></summary>'+skyChannels+(summary?'<h5>Derived patterns</h5><ul class="relphi-astrology-derived-evidence">'+summary+'</ul>':'')+diagnostic+'</details></section>':'')+'<section class="relphi-astrology-questions"><div class="relphi-astrology-question-head"><h4>Suggested questions</h4><label class="relphi-astrology-category-master"><input type="checkbox" data-astrology-category-master> <strong>All categories</strong></label></div><p class="relphi-question-prompt">These questions come from the synthesized factors above. Choose the ones you want to explore. Accepting a generated question also accepts its assigned sub-pack; you can also write your own.</p>'+questions+'<div class="relphi-astrology-own-question"><label><span>Your question</span><input type="text" data-astrology-own-question value="'+escapeHtml(session?.astrologyOwnQuestion||'')+'" placeholder="Write your own question…"></label><label><span>Sub-pack</span><select data-astrology-own-pack>'+ownPackOptions+'</select></label></div></section></div>';
   }
   function astrologySavedSkies() {
     try {
@@ -2555,23 +2539,6 @@
       session.astrologySkyBSource='here-now';
       invalidateAstrologyConnection(session);
       renderOptions(root,{preserveScroll:true});
-    });
-    const setAstrologyEvidenceEnabled=(keys,enabled)=>{
-      const disabled=new Set(session.astrologyDisabledEvidence||[]);
-      keys.forEach(key=>{if(enabled)disabled.delete(key);else disabled.add(key);});
-      session.astrologyDisabledEvidence=[...disabled];
-    };
-    drawer.querySelectorAll('[data-astrology-evidence]').forEach(box=>box.addEventListener('change',()=>{setAstrologyEvidenceEnabled([box.dataset.astrologyEvidence],box.checked);renderOptions(root);}));
-    drawer.querySelectorAll('[data-astrology-evidence-category]').forEach(toggle=>toggle.addEventListener('change',()=>{
-      const category=toggle.dataset.astrologyEvidenceCategory;
-      const keys=(session.astrologyAnalysis?.evidence||[]).filter(item=>astrologyEvidenceCategory(item).id===category).map(astrologyEvidenceKey);
-      setAstrologyEvidenceEnabled(keys,toggle.checked);
-      renderOptions(root);
-    }));
-    drawer.querySelector('[data-astrology-evidence-master]')?.addEventListener('change',event=>{
-      const keys=(session.astrologyAnalysis?.evidence||[]).filter(item=>['hit','placement','house','aspect','configuration','planet-relationship','pattern','ruler','polarity','tag'].includes(String(item.kind||''))).map(astrologyEvidenceKey);
-      setAstrologyEvidenceEnabled(keys,event.target.checked);
-      renderOptions(root);
     });
     drawer.querySelector('[data-astrology-own-question]')?.addEventListener('input',event=>{session.astrologyOwnQuestion=event.target.value;});
     drawer.querySelector('[data-astrology-own-pack]')?.addEventListener('change',event=>{session.astrologyOwnPack=event.target.value||'';});
