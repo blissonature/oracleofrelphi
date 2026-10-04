@@ -12,6 +12,8 @@ function sample(name,offset,profile){
 const skyA=sample('Alpha sky',0,{dateTime:'1985-10-08T04:37',instant:'1985-10-08T08:37:00.000Z',location:'Malden, Massachusetts, United States',timeZone:'America/New_York',latitude:42.4251,longitude:-71.0662});
 const skyB=sample('Beta sky',29.27,{dateTime:'2026-09-10T21:00',instant:'2026-09-11T03:00:00.000Z',location:'Salt Lake City, Utah, United States',timeZone:'America/Denver',latitude:40.7608,longitude:-111.891});
 const saved={...structuredClone(skyA),id:'saved-alpha',name:'Saved Alpha',metadata:{savedSkyId:'saved-alpha',savedSkyName:'Saved Alpha'}};
+saved.placements.Mercury.retrograde=true;
+saved.placements.Saturn.retrograde=true;
 const legacySaved={...structuredClone(skyA),id:'legacy-sage',name:'Legacy Sage Event',calcProfile:{},instant:'2021-05-22T16:15:00.000Z',notes:'Motion state sampled around 2021-05-22T16:15:00.000Z. Location: Malden, Massachusetts, United States. Time zone: America/New_York. latitude 42.4251 and longitude -71.0662',metadata:{savedSkyId:'legacy-sage',savedSkyName:'Legacy Sage Event'}};
 
 const browser=await chromium.launch({headless:true});
@@ -78,6 +80,10 @@ try{
   // the hidden source heptagram and the visible microheptagram fingerprint.
   await page.locator('[data-saved-sky-trigger="B"]').click();
   await page.waitForSelector('#skySavedSkiesPopover .sky-saved-list',{timeout:5000});
+  const savedAlphaRow=page.locator('#skySavedSkiesPopover [data-saved-sky-ref="saved-alpha"]');
+  assert.equal(await savedAlphaRow.locator('.sky-saved-retrograde').count(),2,'Saved sky should expose both stored retrograde placements at a glance.');
+  assert.equal(await savedAlphaRow.locator('.sky-saved-retrogrades').getAttribute('aria-label'),'Retrograde: Mercury, Saturn');
+  await page.waitForFunction(()=>document.querySelectorAll('#skySavedSkiesPopover [data-saved-sky-ref="saved-alpha"] [data-canonical-glyph-id]').length>=2,null,{timeout:5000});
   await page.locator('#skySavedSkiesPopover [data-saved-sky-ref="legacy-sage"]').click();
   await page.waitForFunction(()=>JSON.parse(localStorage.getItem('relphiSkyChartB')||'null')?.metadata?.savedSkyId==='legacy-sage',null,{timeout:5000});
   await page.waitForFunction(()=>{
