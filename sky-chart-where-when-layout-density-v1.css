@@ -28,8 +28,8 @@
   margin:0 auto!important;
 }
 
-/* The draft heptagram and its caption are one link. Keep the caption below the
-   preview, but give it the same light pill language as the Cancel action. */
+/* The draft heptagram itself is the Planetary Hours link. Keep the hit target
+   visually quiet so it reads as the chart, not a second text action. */
 .sky-where-when-editor .sky-where-when-heptagram-slot .sky-ph-jump{
   display:grid!important;
   place-items:center!important;
@@ -106,6 +106,40 @@
     gap:4px!important;
   }
   .sky-where-when-editor .sky-where-when-footer-actions .sky-where-when-button{
+    padding:.58rem .34rem!important;
+    font-size:.62rem!important;
+  }
+}
+
+
+/* Match the top shortcut to the confirm action's geometry while keeping it
+   visually secondary. Both rows use the same narrow-card grid contract. */
+.sky-where-when-editor .sky-where-when-here-now-row{
+  display:grid!important;
+  grid-template-columns:minmax(62px,.78fr) minmax(0,2.22fr)!important;
+  gap:5px!important;
+  width:100%!important;
+  padding:.45rem .62rem .18rem!important;
+  box-sizing:border-box!important;
+}
+.sky-where-when-editor .sky-where-when-here-now{
+  grid-column:2!important;
+  width:100%!important;
+  min-width:0!important;
+  margin:0!important;
+  padding:.6rem .48rem!important;
+  font-size:.64rem!important;
+  line-height:1!important;
+}
+.sky-where-when-editor .sky-where-when-heptagram-slot .sky-ph-jump-title{
+  display:none!important;
+}
+@container (max-width:285px){
+  .sky-where-when-editor .sky-where-when-here-now-row{
+    grid-template-columns:minmax(58px,.72fr) minmax(0,2.28fr)!important;
+    gap:4px!important;
+  }
+  .sky-where-when-editor .sky-where-when-here-now{
     padding:.58rem .34rem!important;
     font-size:.62rem!important;
   }
