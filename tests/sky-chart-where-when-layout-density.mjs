@@ -86,7 +86,8 @@ const jump=editor.locator('.sky-where-when-heptagram-slot > .sky-ph-jump[data-dr
 assert.equal(await jump.count(),1,'Draft Planetary Hours preview should be one link block.');
 assert.equal(await jump.evaluate(node=>node.tagName),'A');
 assert.equal(await jump.locator('.sky-where-when-draft-heptagram').count(),1,'The heptagram must live inside the Planetary Hours link.');
-assert.equal((await jump.locator('.sky-ph-jump-title').textContent()).trim(),'Jump to this time in Planetary Hours');
+assert.equal(await jump.locator('.sky-ph-jump-title').count(),0,'The heptagram link should not add a text caption.');
+assert.equal(await jump.getAttribute('aria-label'),'Open this time in Planetary Hours');
 assert.equal(await editor.locator('.sky-where-when-ph-jump').count(),0,'The old separate brown text link must not return.');
 
 const metrics=await editor.evaluate(form=>{
@@ -102,6 +103,7 @@ const metrics=await editor.evaluate(form=>{
   const heptagram=slot.querySelector('.sky-where-when-draft-heptagram');
   const confirm=footer.querySelector('button[type="submit"]');
   const cancel=footer.querySelector('.sky-where-when-cancel');
+  const hereNow=form.querySelector('.sky-where-when-here-now');
   const r=node=>node.getBoundingClientRect();
   const formRect=r(form),bodyRect=r(body),whereRect=r(where),whenRect=r(when),dateRect=r(date),timeRect=r(time),searchRect=r(search);
   const formStyle=getComputedStyle(form);
@@ -115,6 +117,10 @@ const metrics=await editor.evaluate(form=>{
     confirmScrollWidth:confirm.scrollWidth,
     cancelWidth:r(cancel).width,
     confirmWidth:r(confirm).width,
+    hereNowWidth:r(hereNow).width,
+    hereNowHeight:r(hereNow).height,
+    confirmHeight:r(confirm).height,
+    hereNowSecondary:hereNow.classList.contains('secondary'),
     whenVisiblePixels:Math.max(0,Math.min(bodyRect.bottom,whenRect.bottom)-Math.max(bodyRect.top,whenRect.top)),
     dateStartsInsideBody:dateRect.top<bodyRect.bottom-4,
     bodyMaxHeight:parseFloat(getComputedStyle(body).maxHeight)||0,
@@ -130,6 +136,20 @@ const metrics=await editor.evaluate(form=>{
 });
 
 console.log('WHERE_WHEN_LAYOUT_METRICS',JSON.stringify(metrics));
+await page.evaluate(()=>{
+  window.RelphiSkyWhereWhen.selectPacket('B',{
+    source:'current-location',
+    query:'My current location',
+    canonical:'Current location',
+    latitude:40.7608,
+    longitude:-111.8910,
+    timezone:'America/Denver'
+  });
+});
+assert.equal(await editor.locator('[data-ww-field="location-query"]').inputValue(),'My current location');
+assert.equal(await editor.locator('[data-ww-field="location-query"]').evaluate(node=>node.classList.contains('is-current-location')),true,'Current-location text should render muted.');
+assert.equal((await editor.locator('[data-current-location]').textContent()).trim(),'My current location');
+
 await panel.screenshot({path:'sky-chart-where-when-layout-density.png'});
 
 assert.ok(metrics.cardWidth<=272,'Comparison Sky cards should remain in the narrow-card layout used by the screenshot.');
@@ -139,6 +159,9 @@ assert.ok(metrics.slotHeight<210,`Heptagram slot should not reserve a large empt
 assert.ok(metrics.footerHeight<255,`Footer should stay compact enough to return vertical room to When, got ${metrics.footerHeight}px.`);
 assert.ok(metrics.confirmScrollWidth<=metrics.confirmClientWidth+1,`Confirm label must fit inside its button (${metrics.confirmScrollWidth}/${metrics.confirmClientWidth}).`);
 assert.ok(metrics.confirmWidth>metrics.cancelWidth*1.9,'Confirm action should keep the intended roughly 2× width of Cancel.');
+assert.ok(Math.abs(metrics.hereNowWidth-metrics.confirmWidth)<=1.5,`Here and Now should match the confirm action width (${metrics.hereNowWidth}/${metrics.confirmWidth}).`);
+assert.ok(Math.abs(metrics.hereNowHeight-metrics.confirmHeight)<=1.5,`Here and Now should match the confirm action height (${metrics.hereNowHeight}/${metrics.confirmHeight}).`);
+assert.equal(metrics.hereNowSecondary,true,'Here and Now should use the secondary action style.');
 assert.ok(metrics.whenVisiblePixels>=90,`At least the useful top of When should show without scrolling, got ${metrics.whenVisiblePixels}px.`);
 assert.equal(metrics.dateStartsInsideBody,true,'The date field should begin inside the default visible Where/When scroll viewport.');
 assert.ok(metrics.bodyMaxHeight>=390,`The scroll body should receive the space recovered from the footer, got max-height ${metrics.bodyMaxHeight}px.`);
