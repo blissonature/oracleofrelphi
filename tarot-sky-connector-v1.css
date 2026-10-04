@@ -1,0 +1,147 @@
+/* Tarot Ledger Sky Connector · global context above Drawing Board */
+.relphi-ledger-sky-connector-host{
+  display:flex;
+  justify-content:flex-end;
+  align-items:center;
+  min-height:2.2rem;
+  margin:0 0 .45rem;
+}
+.relphi-ledger-sky-connector-host:empty{display:none}
+.relphi-ledger-sky-connector-host>.relphi-sky-connector{
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  gap:.4rem;
+  min-width:0;
+}
+.relphi-ledger-sky-connector-host .relphi-sky-connector select{
+  appearance:none;
+  -webkit-appearance:none;
+  width:auto;
+  max-width:min(48vw,14rem);
+  min-width:0;
+  min-height:2.1rem;
+  margin:0;
+  padding:.34rem 1.65rem .34rem .62rem;
+  border:1px solid rgba(31,27,24,.22);
+  border-radius:8px;
+  background-color:#fff;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M2 2l4 4 4-4' fill='none' stroke='%23111' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;
+  background-position:right .58rem center;
+  background-size:.7rem auto;
+  color:#211d19;
+  font:700 .78rem/1.2 system-ui,sans-serif;
+}
+.relphi-ledger-sky-connector-host [data-sky-ascendant]{max-width:min(38vw,9rem)}
+.relphi-connected-sky-entry{
+  margin:.8rem 0 0;
+  padding:.7rem .78rem;
+  border:1px solid rgba(31,27,24,.14);
+  border-radius:9px;
+  background:#fbf8f3;
+}
+.relphi-connected-sky-entry-head{
+  display:flex;
+  align-items:baseline;
+  justify-content:space-between;
+  gap:.6rem;
+  flex-wrap:wrap;
+}
+.relphi-connected-sky-entry-head h3{margin:0;font-size:.82rem}
+.relphi-connected-sky-entry-head small{color:#6f665f;font-size:.68rem;font-weight:650}
+.relphi-connected-sky-entry ul{margin:.45rem 0 0;padding-left:1.05rem}
+.relphi-connected-sky-entry li{margin:.2rem 0;color:#4d453f;font-size:.72rem;line-height:1.35}
+@media(max-width:620px){
+  .relphi-ledger-sky-connector-host{justify-content:stretch}
+  .relphi-ledger-sky-connector-host>.relphi-sky-connector{width:100%;justify-content:flex-end;flex-wrap:wrap}
+  .relphi-ledger-sky-connector-host .relphi-sky-connector select{max-width:100%}
+}
+
+
+/* Tarot Ledger Card Hits view */
+#showSkyCardHits.is-active{
+  border-color:#8f1d18;
+  background:#fff7f5;
+  color:#8f1d18;
+}
+.tarot-card-hits-panel{
+  display:grid;
+  gap:.7rem;
+  margin-top:.25rem;
+}
+.tarot-card-hits-panel[hidden]{display:none!important}
+.tarot-card-hits-head{
+  display:flex;
+  justify-content:space-between;
+  gap:1rem;
+  align-items:start;
+}
+.tarot-card-hits-head h2{margin:.08rem 0 .15rem}
+.tarot-card-hits-head p{margin:.1rem 0;color:#6b625b}
+.tarot-card-hits-list{
+  display:grid;
+  gap:.6rem;
+}
+.tarot-card-hit-row{
+  display:grid;
+  grid-template-columns:minmax(7rem,9.5rem) minmax(0,1fr);
+  gap:.7rem;
+  align-items:start;
+  padding:.65rem;
+  border:1px solid rgba(31,27,24,.14);
+  border-radius:10px;
+  background:#fffdf8;
+}
+.tarot-card-hit-card .or-card{
+  width:100%!important;
+  min-width:0!important;
+  max-width:none!important;
+}
+.tarot-card-hit-evidence{
+  min-width:0;
+  padding:.1rem 0;
+}
+.tarot-card-hit-evidence-head{
+  display:flex;
+  justify-content:space-between;
+  gap:.6rem;
+  align-items:center;
+}
+.tarot-card-hit-title{
+  appearance:none;
+  padding:0;
+  border:0;
+  background:transparent;
+  color:#211d19;
+  font:900 .82rem/1.2 system-ui,sans-serif;
+  text-align:left;
+  cursor:pointer;
+}
+.tarot-card-hit-title:hover,
+.tarot-card-hit-title:focus-visible{text-decoration:underline}
+.tarot-card-hit-evidence-head>span{
+  flex:0 0 auto;
+  min-width:1.8rem;
+  padding:.18rem .38rem;
+  border:1px solid rgba(31,27,24,.16);
+  border-radius:999px;
+  background:#f7f1ea;
+  color:#5d554e;
+  font:800 .64rem/1 system-ui,sans-serif;
+  text-align:center;
+}
+.tarot-card-hit-evidence ul{
+  margin:.45rem 0 0;
+  padding-left:1rem;
+}
+.tarot-card-hit-evidence li{
+  margin:.25rem 0;
+  color:#514941;
+  font-size:.72rem;
+  line-height:1.35;
+}
+.tarot-card-hits-detail:empty{display:none}
+@media(max-width:660px){
+  .tarot-card-hit-row{grid-template-columns:5.7rem minmax(0,1fr);gap:.55rem;padding:.5rem}
+}

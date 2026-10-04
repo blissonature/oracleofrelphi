@@ -52,7 +52,7 @@
   }
 
   function runRelphiCommand(command, query) {
-    const onTarot = /(^|\/)tarot\.html$/.test(location.pathname) || window.__relphiTarotPreviewDocument === true;
+    const onTarot = location.pathname.endsWith('/tarot.html') || location.pathname === 'tarot.html' || window.__relphiTarotPreviewDocument === true;
     if (command === 'tarot-search') {
       if (!onTarot) { location.href = tarotPageUrl(query); return; }
       const input = document.getElementById('oracleCommand');
@@ -135,7 +135,7 @@
   }
 
   function loadAstrologyFoundationEnhancements() {
-    if (!/(^|\/)astrology-foundations\.html$/.test(window.location.pathname)) return;
+    if (!window.location.pathname.endsWith('/astrology-foundations.html') && window.location.pathname !== 'astrology-foundations.html') return;
     // navloader.js owns the one canonical glyph runtime and study-glyph consumer.
     appendScript('astrology-foundations-mobile-signs.js?v=2');
     appendScript('astrology-foundations-consistency.js?v=1');
@@ -148,7 +148,7 @@
       const container = button.closest('.menu-container');
       if (container) {
         const pageOmnibox = document.getElementById('oracleCommand');
-        const isUnifiedHome = !!pageOmnibox && /(^|\\/)tarot\.html$/.test(window.location.pathname);
+        const isUnifiedHome = !!pageOmnibox && (window.location.pathname.endsWith('/tarot.html') || window.location.pathname === 'tarot.html');
         if (isUnifiedHome) {
           setOpen(container, button, false);
           pageOmnibox.scrollIntoView({ behavior: 'smooth', block: 'center' });

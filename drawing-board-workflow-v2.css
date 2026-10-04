@@ -5,7 +5,6 @@
 #shortListPanel .card-row-workspace-toolbar:not(.relphi-board-controller){visibility:hidden!important;opacity:0!important;pointer-events:none!important}
 #shortListPanel #resetCardRowPan,#shortListPanel .card-row-pan-note{display:none!important}
 
-#shortListPanel{--relphi-board-red:#dc1f18;--relphi-board-ink:#171412;--relphi-board-paper:#fffdf8;--relphi-board-line:#d8cec5;--relphi-board-soft:#f4efe8}
 #shortListPanel[hidden]{display:none!important}
 #shortListPanel .card-row-drawing-board{position:relative!important;margin:.5rem 0 1rem!important;border:1px solid var(--relphi-board-line)!important;border-radius:16px!important;background:#fff!important;overflow:visible!important}
 #shortListPanel .card-row-drawing-board>summary{padding:.7rem .85rem!important;cursor:pointer!important;text-align:left!important}
@@ -211,18 +210,80 @@
 #shortListPanel .relphi-board-reading-text{display:grid!important;gap:.65rem!important;margin:.8rem .5rem .5rem!important;padding:.8rem!important;border:1px solid var(--relphi-board-line)!important;border-radius:12px!important;background:var(--relphi-board-paper)!important;color:var(--relphi-board-ink)!important}
 #shortListPanel .relphi-board-reading-text[hidden]{display:none!important}
 #shortListPanel .relphi-board-reading-text>header{display:flex!important;align-items:flex-start!important;justify-content:space-between!important;gap:.7rem!important;flex-wrap:wrap!important;text-align:left!important}
-#shortListPanel .relphi-board-reading-text>header>div{display:grid!important;gap:.12rem!important}
+#shortListPanel .relphi-board-reading-text>header>div:first-child{display:grid!important;gap:.12rem!important}
 #shortListPanel .relphi-board-reading-text>header strong{font-size:.9rem!important}
 #shortListPanel .relphi-board-reading-text>header span{font-size:.7rem!important;color:#655d56!important}
-#shortListPanel .relphi-copy-reading{min-height:2.15rem!important;margin:0!important;padding:.4rem .72rem!important;border:1.5px solid var(--relphi-board-red)!important;border-radius:8px!important;background:var(--relphi-board-red)!important;color:#fff!important;font:inherit!important;font-size:.72rem!important;font-weight:900!important;line-height:1!important}
 #shortListPanel .relphi-reading-text-list{display:grid!important;gap:.55rem!important}
 #shortListPanel .relphi-reading-text-card{display:grid!important;gap:.28rem!important;min-width:0!important;max-width:100%!important;padding:.68rem .75rem!important;border:1px solid #ded5cc!important;border-radius:9px!important;background:#fff!important;text-align:left!important;overflow:visible!important}
 #shortListPanel .relphi-reading-text-position{display:block!important;min-width:0!important;max-width:100%!important;max-height:none!important;margin:0!important;color:#5f5751!important;font-size:.7rem!important;font-weight:850!important;line-height:1.25!important;white-space:normal!important;overflow:visible!important;text-overflow:clip!important;overflow-wrap:anywhere!important;word-break:normal!important}
 #shortListPanel .relphi-reading-text-card h3{margin:0!important;color:#171412!important;font-size:.9rem!important;line-height:1.2!important}
 #shortListPanel .relphi-reading-text-association{margin:0!important;color:#655d56!important;font-size:.72rem!important;font-weight:750!important;line-height:1.35!important}
 #shortListPanel .relphi-reading-text-interpretation{margin:.08rem 0 0!important;color:#171412!important;font-size:.82rem!important;line-height:1.48!important}
-#shortListPanel .relphi-copy-reading-status{min-height:1em!important;color:#655d56!important;font-size:.68rem!important}
-@media(max-width:700px){#shortListPanel .relphi-board-reading-text>header{align-items:stretch!important}#shortListPanel .relphi-copy-reading{width:100%!important}}
+
+/* Quiet document utilities live between the felt and Reading Text. Draw remains
+   the only red primary action in the Drawing Board command hierarchy. */
+#shortListPanel .relphi-board-document-actions{
+  display:grid!important;
+  grid-template-columns:minmax(0,1fr)!important;
+  gap:.28rem!important;
+  margin:.42rem .5rem .1rem!important;
+  padding:0!important;
+  background:transparent!important;
+}
+#shortListPanel .relphi-board-document-buttons{
+  display:flex!important;
+  align-items:center!important;
+  justify-content:flex-end!important;
+  gap:.4rem!important;
+  flex-wrap:wrap!important;
+}
+#shortListPanel .relphi-board-document-button{
+  appearance:none!important;
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  min-height:2.15rem!important;
+  margin:0!important;
+  padding:.4rem .68rem!important;
+  border:1.25px solid #b9afa7!important;
+  border-radius:8px!important;
+  background:#fff!important;
+  color:#2f2925!important;
+  box-shadow:none!important;
+  font:inherit!important;
+  font-size:.7rem!important;
+  font-weight:850!important;
+  line-height:1!important;
+  white-space:nowrap!important;
+}
+#shortListPanel .relphi-board-document-button:hover,
+#shortListPanel .relphi-board-document-button:focus-visible{
+  outline:none!important;
+  border-color:#81766e!important;
+  background:#fbf8f4!important;
+}
+#shortListPanel .relphi-board-document-button:disabled{
+  opacity:.48!important;
+  cursor:not-allowed!important;
+}
+#shortListPanel .relphi-board-document-status{
+  min-height:.85em!important;
+  color:#655d56!important;
+  font-size:.64rem!important;
+  line-height:1.2!important;
+  text-align:right!important;
+}
+@media(max-width:700px){
+  #shortListPanel .relphi-board-document-actions{margin:.4rem .5rem .05rem!important}
+  #shortListPanel .relphi-board-document-buttons{
+    display:grid!important;
+    grid-template-columns:repeat(2,minmax(0,1fr))!important;
+    gap:.4rem!important;
+  }
+  #shortListPanel .relphi-board-document-button{width:100%!important}
+  #shortListPanel .relphi-board-document-status{text-align:left!important}
+}
+@media(max-width:700px){#shortListPanel .relphi-board-reading-text>header{align-items:stretch!important}}
 
 /* Save/export is permanent document chrome below the pannable canvas. */
 #shortListPanel .relphi-board-export{display:grid!important;gap:.65rem!important;margin:.8rem .5rem .5rem!important;padding:.75rem!important;border:1px solid var(--relphi-board-line)!important;border-radius:12px!important;background:var(--relphi-board-paper)!important;color:var(--relphi-board-ink)!important}
@@ -231,7 +292,6 @@
 #shortListPanel .relphi-board-export>header span{font-size:.7rem!important;color:#655d56!important}
 #shortListPanel .relphi-board-export .board-options-body{display:flex!important;align-items:center!important;gap:.4rem!important;flex-wrap:wrap!important}
 #shortListPanel .relphi-board-export button{min-height:2.15rem!important;margin:0!important;padding:.4rem .62rem!important;border:1.25px solid #aaa098!important;border-radius:8px!important;background:#fff!important;color:#111!important;font:inherit!important;font-size:.7rem!important;font-weight:800!important}
-#shortListPanel .relphi-board-export #snapshotCardRowArrangement{border-color:var(--relphi-board-red)!important;background:var(--relphi-board-red)!important;color:#fff!important}
 #shortListPanel .relphi-board-export .drawing-board-snapshot-status{flex:1 0 100%!important}
 
 @media(max-width:700px){
@@ -468,6 +528,20 @@
 .relphi-attune-orientation label{display:inline-flex!important;grid-template-columns:none!important;align-items:center!important;gap:.3rem!important;font-size:.7rem!important;font-weight:850!important}
 .relphi-attune-orientation input{width:auto!important;min-width:1rem!important;height:1rem!important;min-height:0!important;padding:0!important;accent-color:#b81712!important}
 .relphi-attune-orientation-note{margin:0!important;padding:.5rem .62rem!important;border:1px solid #ded5cd!important;border-radius:8px!important;background:#fbf8f4!important;color:#655d56!important;font-size:.69rem!important;line-height:1.35!important}
+.relphi-attune-advanced{margin:0!important;padding:0!important;border:1px solid #d9cec5!important;border-radius:8px!important;background:#fbf8f4!important;overflow:hidden!important}
+.relphi-attune-advanced>summary{display:flex!important;align-items:center!important;gap:.32rem!important;padding:.48rem .62rem!important;color:#5e554f!important;cursor:pointer!important;font-size:.7rem!important;font-weight:850!important;line-height:1.2!important;list-style:none!important;user-select:none!important}
+.relphi-attune-advanced>summary::-webkit-details-marker{display:none!important}
+.relphi-attune-advanced>summary::before{content:'›';display:inline-block!important;font-size:.95rem!important;font-weight:900!important;line-height:1!important;transform:rotate(0deg);transition:transform .12s ease}
+.relphi-attune-advanced[open]>summary::before{transform:rotate(90deg)}
+.relphi-attune-advanced>div{display:grid!important;grid-template-columns:minmax(0,1fr) auto auto!important;gap:.55rem .8rem!important;align-items:end!important;padding:.15rem .62rem .62rem!important;border-top:1px solid #e3dad2!important}
+.relphi-attune-advanced>div>label{display:flex!important;align-items:center!important;gap:.32rem!important;min-width:0!important;margin:0!important;color:#2f2925!important;font-size:.68rem!important;font-weight:850!important}
+.relphi-attune-advanced>div>label:first-child{display:grid!important;grid-template-columns:1fr!important;gap:.22rem!important}
+.relphi-attune-advanced select{width:100%!important;min-width:0!important;min-height:2rem!important;padding:.35rem .45rem!important;border:1px solid #cfc5bc!important;border-radius:7px!important;background:#fff!important;color:#171412!important;font:inherit!important;font-size:.72rem!important}
+.relphi-attune-advanced input[type="checkbox"]{width:1rem!important;min-width:1rem!important;height:1rem!important;min-height:0!important;margin:0!important;padding:0!important;accent-color:#b81712!important}
+@media(max-width:560px){
+  .relphi-attune-advanced>div{grid-template-columns:1fr!important;align-items:start!important}
+}
+
 .relphi-attune-search input{width:100%!important;box-sizing:border-box!important;padding:.65rem .7rem!important;border:1px solid #bfb5ac!important;border-radius:8px!important;background:#fff!important;color:#111!important;font:inherit!important;font-size:.82rem!important}
 .relphi-attune-search-results{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:.42rem!important;max-height:17rem!important;overflow:auto!important}
 .relphi-attune-search-results>p{grid-column:1/-1!important;margin:0!important;padding:.7rem!important;border:1px dashed #d6ccc3!important;border-radius:8px!important;color:#655d56!important;font-size:.72rem!important;line-height:1.4!important}
@@ -490,6 +564,16 @@ body.relphi-attune-open{overflow:hidden!important}
 .relphi-surface-composer-select input{width:1rem!important;height:1rem!important;accent-color:#b81712!important}
 .relphi-surface-composer-main{display:grid!important;gap:.55rem!important;min-width:0!important}
 .relphi-surface-composer-main textarea{display:block!important;width:100%!important;min-height:3.8rem!important;resize:vertical!important;padding:.58rem .65rem!important;border:1px solid #cfc5bc!important;border-radius:8px!important;background:#fffdf8!important;color:#171412!important;font-size:.82rem!important;font-weight:700!important;line-height:1.38!important}
+.relphi-surface-composer-controls{display:grid!important;grid-template-columns:minmax(10rem,1.35fr) minmax(8.5rem,.75fr) minmax(10rem,1fr) auto auto!important;gap:.5rem!important;align-items:end!important;padding:.58rem .62rem!important;border:1px solid #e1d8d0!important;border-radius:9px!important;background:#fbf8f4!important}
+.relphi-surface-composer-controls>label{display:grid!important;gap:.24rem!important;min-width:0!important;color:#625950!important;font-size:.64rem!important;font-weight:850!important}
+.relphi-surface-composer-controls select,.relphi-surface-composer-controls input[type="number"]{width:100%!important;min-width:0!important;min-height:2.15rem!important;padding:.38rem .46rem!important;border:1px solid #cfc5bc!important;border-radius:7px!important;background:#fff!important;color:#171412!important;font:inherit!important;font-size:.72rem!important}
+.relphi-surface-subpack-control{display:grid!important;grid-template-columns:minmax(0,1fr) 2.15rem!important;gap:.35rem!important}
+.relphi-surface-subpack-control button{width:2.15rem!important;height:2.15rem!important;padding:0!important;border:1px solid #bfb5ac!important;border-radius:7px!important;background:#fff!important;color:#211c18!important;font:900 1rem/1 Montserrat,Arial,sans-serif!important}
+.relphi-surface-card-count>div{display:grid!important;grid-template-columns:minmax(0,1fr) auto!important;gap:.32rem!important;align-items:center!important}
+.relphi-surface-card-count>div>span{white-space:nowrap!important;color:#746b64!important;font-size:.64rem!important;font-weight:800!important}
+.relphi-surface-toggle{display:flex!important;align-items:center!important;gap:.34rem!important;min-height:2.15rem!important;padding:0 .15rem!important;white-space:nowrap!important}
+.relphi-surface-toggle input[type="checkbox"]{width:1rem!important;height:1rem!important;margin:0!important;accent-color:#b81712!important}
+
 .relphi-surface-composer-advanced{min-width:0!important;margin:0!important;padding:0!important;border:0!important;background:transparent!important}
 .relphi-surface-composer-advanced>summary{display:flex!important;align-items:center!important;justify-content:space-between!important;gap:.7rem!important;min-width:0!important;padding:.22rem .08rem!important;color:#625950!important;cursor:pointer!important;list-style:none!important;user-select:none!important}
 .relphi-surface-composer-advanced>summary::-webkit-details-marker{display:none!important}
@@ -521,6 +605,9 @@ body.relphi-attune-open{overflow:hidden!important}
   .relphi-surface-composer-shell{width:100%!important;max-height:calc(100dvh - .9rem)!important;padding:.8rem!important}
   .relphi-surface-composer-advanced>summary{align-items:flex-start!important}
   .relphi-surface-composer-advanced>summary span{white-space:normal!important;text-align:right!important;line-height:1.25!important}
+  .relphi-surface-composer-controls{grid-template-columns:minmax(0,1fr) minmax(7.2rem,.55fr)!important;align-items:end!important}
+  .relphi-surface-composer-controls>label:nth-child(3){grid-column:1/-1!important}
+  .relphi-surface-toggle{min-height:1.8rem!important}
   .relphi-surface-composer-settings{grid-template-columns:1fr 5.2rem!important}
   .relphi-surface-composer-settings label:last-child{grid-column:1/-1!important}
   .relphi-surface-keyword-builder{grid-template-columns:1fr!important}
@@ -1580,6 +1667,19 @@ body.relphi-attune-open{overflow:hidden!important}
 #shortListPanel .relphi-board-settings-footer,
 #shortListPanel .relphi-options-commitbar{order:99!important}
 
+/* Bespoke owns its Appearance disclosure because appearance is part of the
+   reusable template, not a global afterthought below the Crafted paths. */
+#shortListPanel .relphi-bespoke-appearance-host{
+  display:block!important;
+  width:100%!important;
+  min-width:0!important;
+  margin:.55rem 0 0!important;
+}
+#shortListPanel .relphi-bespoke-appearance-host>.relphi-appearance-disclosure{
+  width:100%!important;
+  margin:0!important;
+}
+
 /* Individual card-control locks. */
 #shortListPanel.relphi-transform-editing-unlocked:not(.relphi-scale-unlocked) [data-row-transform-handle="scale"]{display:none!important;visibility:hidden!important;pointer-events:none!important}
 #shortListPanel.relphi-transform-editing-unlocked:not(.relphi-rotation-unlocked) [data-row-transform-handle="rotate"]{display:none!important;visibility:hidden!important;pointer-events:none!important}
@@ -2198,3 +2298,718 @@ body.relphi-attune-open{overflow:hidden!important}
 /* Bespoke sacred-reading continuation: keep the construction action present but subordinate. */
 .relphi-bespoke-continue{display:flex;justify-content:center;padding:.55rem .75rem .85rem;}
 .relphi-bespoke-ask-another{font:inherit;border:1px solid currentColor;border-radius:999px;background:transparent;padding:.45rem .85rem;cursor:pointer;}
+
+
+/* Crafted Appearance is the final item in the scrolling body. Keep enough
+   trailing space that the static Cancel/Confirm bar can never cover it. */
+#shortListPanel .relphi-board-settings-panel .relphi-reading-options-drawer .relphi-options-body{
+  padding-bottom:5.25rem!important;
+  scroll-padding-bottom:5.25rem!important;
+}
+#shortListPanel .relphi-board-settings-panel .relphi-reading-options-drawer .relphi-options-body>.relphi-appearance-disclosure:last-child{
+  margin-bottom:.75rem!important;
+}
+
+
+/* Drawing Board exports use the same compact pill language as Sky Chart. */
+#shortListPanel .relphi-board-export-actions{display:flex!important;align-items:center!important;gap:.4rem!important;flex-wrap:wrap!important}
+#shortListPanel .relphi-board-export-button{
+  appearance:none!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;
+  min-height:30px!important;margin:0!important;padding:0 .72rem!important;border:1px solid rgba(31,27,24,.18)!important;
+  border-radius:999px!important;background:#fff!important;color:#332e2a!important;font:800 .68rem/1 system-ui,sans-serif!important;
+  white-space:nowrap!important;box-shadow:none!important;cursor:pointer!important
+}
+#shortListPanel .relphi-board-export-button:hover,#shortListPanel .relphi-board-export-button:focus-visible{
+  outline:none!important;border-color:#2462d0!important;box-shadow:0 0 0 2px rgba(36,98,208,.12)!important
+}
+#shortListPanel .relphi-board-export-button:disabled{opacity:.55!important;cursor:not-allowed!important}
+#shortListPanel .relphi-board-journal-button{gap:.38rem!important}
+#shortListPanel .relphi-board-journal-button small{font:700 .56rem/1 system-ui,sans-serif!important;text-transform:uppercase!important;letter-spacing:.04em!important}
+#shortListPanel .relphi-board-export-status{display:block!important;min-height:1em!important;margin-top:.35rem!important;color:#655d56!important;font-size:.66rem!important}
+
+
+/* Keep every Bespoke Advanced control inside the drawer at all widths. */
+#shortListPanel .relphi-question-advanced{
+  width:100%!important;
+  max-width:100%!important;
+  min-width:0!important;
+  justify-self:stretch!important;
+  box-sizing:border-box!important;
+}
+#shortListPanel .relphi-question-advanced>.relphi-bespoke-question-settings{
+  display:grid!important;
+  grid-template-columns:repeat(3,minmax(0,1fr))!important;
+  width:100%!important;
+  max-width:100%!important;
+  min-width:0!important;
+  box-sizing:border-box!important;
+  overflow:visible!important;
+}
+#shortListPanel .relphi-question-advanced>.relphi-bespoke-question-settings>label{
+  width:auto!important;
+  min-width:0!important;
+  max-width:100%!important;
+  box-sizing:border-box!important;
+}
+#shortListPanel .relphi-question-advanced>.relphi-bespoke-question-settings>label:nth-last-child(-n+2){
+  display:flex!important;
+  align-items:center!important;
+  justify-content:flex-start!important;
+}
+@media(max-width:700px){
+  #shortListPanel .relphi-question-advanced>.relphi-bespoke-question-settings{
+    grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  }
+}
+@media(max-width:420px){
+  #shortListPanel .relphi-question-advanced>.relphi-bespoke-question-settings{
+    grid-template-columns:1fr!important;
+  }
+}
+
+
+/* Keep Crafted setup and its commit controls inside the visible viewport.
+   The options body owns scrolling; the page must never strand Confirm below it. */
+#shortListPanel .relphi-board-settings-panel{
+  max-height:calc(100dvh - 1rem)!important;
+  min-height:0!important;
+}
+#shortListPanel .relphi-board-settings-panel .relphi-reading-options-drawer{
+  max-height:calc(100dvh - 4.75rem)!important;
+  min-height:0!important;
+  overflow:hidden!important;
+}
+#shortListPanel .relphi-board-settings-panel .relphi-reading-options-drawer .relphi-options-body{
+  overscroll-behavior-y:contain!important;
+  min-height:0!important;
+  overflow-y:auto!important;
+}
+#shortListPanel .relphi-board-settings-panel .relphi-reading-options-drawer .relphi-options-commitbar{
+  flex:0 0 auto!important;
+  position:relative!important;
+  bottom:auto!important;
+  z-index:3!important;
+}
+@media(max-width:700px){
+  #shortListPanel .relphi-board-settings-panel{
+    max-height:calc(100dvh - .5rem)!important;
+  }
+  #shortListPanel .relphi-board-settings-panel .relphi-reading-options-drawer{
+    max-height:calc(100dvh - 3.75rem)!important;
+  }
+}
+
+/* Relphi-level Sky Connector */
+#shortListPanel .relphi-sky-connector{border:1px solid rgba(35,29,25,.16);border-radius:10px;padding:.7rem .8rem;margin:0 0 .7rem;background:rgba(255,255,255,.55);min-width:0}
+#shortListPanel .relphi-sky-connector-head{display:flex;align-items:center;justify-content:space-between;gap:.75rem;flex-wrap:wrap}
+#shortListPanel .relphi-sky-connector-head>div{display:grid;gap:.12rem;min-width:0}#shortListPanel .relphi-sky-connector-head small,#shortListPanel .relphi-sky-connector p{color:#675e57;font-size:.76rem;margin:.35rem 0 0}
+#shortListPanel .relphi-sky-connector-body{display:grid;gap:.55rem;margin-top:.65rem}#shortListPanel .relphi-sky-source{display:flex;gap:.8rem;flex-wrap:wrap}
+#shortListPanel .relphi-sky-connector label{font-size:.78rem;font-weight:700;min-width:0}#shortListPanel .relphi-sky-connector select{display:block;width:100%;min-width:0;margin-top:.25rem;padding:.42rem .5rem;font:inherit}
+#shortListPanel .relphi-reading-reference{margin-top:.75rem;border-top:1px solid rgba(35,29,25,.14);padding-top:.65rem}#shortListPanel .relphi-reading-reference-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:.45rem}
+#shortListPanel .relphi-reference-tile{border:1px solid rgba(35,29,25,.13);border-radius:8px;padding:.5rem;background:rgba(255,255,255,.5)}#shortListPanel .relphi-reference-token{display:flex;align-items:center;gap:.4rem;font-weight:800}#shortListPanel .relphi-reference-token .house-medallion{display:inline-grid;place-items:center;width:1.75rem;height:1.75rem;border:1px solid currentColor;border-radius:50%}#shortListPanel .relphi-reference-detail{font-size:.72rem;color:#675e57;margin:.3rem 0 0}
+
+/* Sky Connector is global Drawing Board context and must remain in normal flow. */
+#shortListPanel .relphi-board-settings-body>.relphi-sky-connector{position:relative!important;inset:auto!important;z-index:auto!important;float:none!important;width:auto!important;max-width:none!important;flex:0 0 auto!important;order:0!important;margin:.55rem 0!important}
+#shortListPanel .relphi-board-settings-body>.drawing-board-mode-switch{position:relative!important;z-index:auto!important;flex:0 0 auto!important;order:1!important}
+#shortListPanel .relphi-board-settings-body>.relphi-reading-options-drawer,#shortListPanel .relphi-board-settings-body>.relphi-free-settings{position:relative!important;z-index:auto!important;order:2!important;min-height:0!important}
+
+/* Compact global Sky Connector: selector is its own header, flush right. */
+#shortListPanel .relphi-board-settings-body>.relphi-sky-connector{display:flex!important;justify-content:flex-end!important;align-items:center!important;gap:.4rem!important;border:0!important;background:transparent!important;padding:0!important;margin:.35rem 0!important}
+#shortListPanel .relphi-board-settings-body>.relphi-sky-connector select{display:inline-block!important;width:auto!important;max-width:min(100%,18rem)!important;margin:0!important;min-height:34px!important;padding:.32rem 1.8rem .32rem .55rem!important;font-size:.78rem!important;font-weight:700!important;border-radius:8px!important}
+#shortListPanel .relphi-board-settings-body>.relphi-sky-connector [data-sky-rising]{max-width:10rem!important}
+
+/* Bespoke save name is self-explanatory; do not add a redundant visible header. */
+#shortListPanel .relphi-template-save{padding-top:0!important}
+#shortListPanel .relphi-template-save::before{content:none!important;display:none!important}
+
+#shortListPanel #relphiTemplateName.is-unnamed{color:#8a837d!important;font-weight:500!important}
+
+/* The selected Crafted path header already supplies the path identity. */
+#shortListPanel .relphi-path-actions{display:flex!important;justify-content:flex-end!important;margin:0 0 .35rem!important}
+#shortListPanel .relphi-path-actions #relphiAddPosition{width:2rem!important;min-width:2rem!important;height:2rem!important;min-height:2rem!important;margin:0!important;padding:0!important;font-size:0!important}
+#shortListPanel .relphi-path-actions #relphiAddPosition::after{content:'+';font-size:1rem!important;line-height:1!important}
+
+/* Bespoke questions: selection/actions share one compact toolbar; rows devote width to the question. */
+#shortListPanel .relphi-question-toolbar{display:flex!important;align-items:center!important;justify-content:flex-end!important;gap:.32rem!important;margin:0 0 .45rem!important}
+#shortListPanel .relphi-question-toolbar>label{display:flex!important;align-items:center!important;gap:.28rem!important;margin-right:auto!important;font-size:.68rem!important;font-weight:800!important;color:#625950!important}
+#shortListPanel .relphi-question-toolbar input{width:1rem!important;height:1rem!important;margin:0!important}
+#shortListPanel .relphi-question-toolbar button{display:grid!important;place-items:center!important;width:2rem!important;min-width:2rem!important;height:2rem!important;min-height:2rem!important;margin:0!important;padding:0!important;border:1px solid #cfc5bc!important;border-radius:7px!important;background:#fff!important;font:inherit!important;font-size:.9rem!important;font-weight:900!important}
+#shortListPanel .relphi-question-toolbar #relphiAddPosition{background:#f1efed!important;font-size:1rem!important}
+#shortListPanel .relphi-bespoke-question-row{grid-template-columns:2rem minmax(0,1fr)!important;align-items:start!important;gap:.4rem!important}
+#shortListPanel .relphi-question-select{display:flex!important;align-items:center!important;justify-content:center!important;gap:.18rem!important;min-height:2.15rem!important;font-size:.68rem!important;font-weight:900!important}
+#shortListPanel .relphi-question-select input{width:.9rem!important;height:.9rem!important;margin:0!important}
+#shortListPanel .relphi-question-order-controls{display:none!important}
+
+/* Match Bespoke toolbar glyph scale to the Drawing Board undo/redo controls. */
+#shortListPanel .relphi-question-toolbar button{font-size:1.35rem!important;line-height:1!important;font-weight:700!important}
+#shortListPanel .relphi-question-toolbar #relphiAddPosition{font-size:1.35rem!important;line-height:1!important}
+#shortListPanel .relphi-question-toolbar #relphiAddPosition::after{content:none!important;display:none!important}
+
+/* Use the same visual hierarchy as Undo/Redo: large neutral glyphs, dimmed only when disabled. */
+#shortListPanel .relphi-question-toolbar button{width:2.25rem!important;min-width:2.25rem!important;max-width:2.25rem!important;height:2.25rem!important;min-height:2.25rem!important;padding:0!important;background:#fff!important;color:#111!important;font-size:1.8rem!important;font-weight:500!important;line-height:.8!important;border-color:#b9afa7!important}
+#shortListPanel .relphi-question-toolbar button:disabled{color:#8f8f8f!important;opacity:.42!important}
+#shortListPanel .relphi-question-toolbar #relphiAddPosition{background:#fff!important;color:#111!important;font-size:1.8rem!important;font-weight:500!important}
+
+/* Add/delete are one icon geometry: plus is the same crossed strokes rotated 45deg. */
+#shortListPanel .relphi-question-toolbar .relphi-stroke-icon{width:2.25rem!important;min-width:2.25rem!important;max-width:2.25rem!important;height:2.25rem!important;min-height:2.25rem!important;padding:0!important}
+#shortListPanel .relphi-stroke-icon>span{position:relative!important;display:block!important;width:1.18rem!important;height:1.18rem!important;transform:rotate(45deg)!important}
+#shortListPanel .relphi-stroke-icon>span::before,#shortListPanel .relphi-stroke-icon>span::after{content:''!important;position:absolute!important;left:50%!important;top:50%!important;width:1.18rem!important;height:.17rem!important;border-radius:.1rem!important;background:currentColor!important;transform:translate(-50%,-50%)!important}
+#shortListPanel .relphi-stroke-icon>span::after{transform:translate(-50%,-50%) rotate(90deg)!important}
+#shortListPanel .relphi-stroke-plus>span{transform:none!important}
+#shortListPanel .relphi-question-toolbar #relphiAddPosition::after{content:none!important;display:none!important}
+
+/* Cross/plus share the arrows' perceived glyph scale, while every toolbar box stays 2.25rem. */
+#shortListPanel .relphi-stroke-icon>span{width:.82rem!important;height:.82rem!important}
+#shortListPanel .relphi-stroke-icon>span::before,#shortListPanel .relphi-stroke-icon>span::after{width:.82rem!important;height:.14rem!important;border-radius:.08rem!important}
+#shortListPanel .relphi-question-toolbar button:disabled,#shortListPanel .relphi-question-toolbar .relphi-stroke-icon:disabled{color:#9a9a9a!important;opacity:.42!important;background:#fff!important}
+
+/* Add uses exactly the same control box as the other Bespoke toolbar actions. */
+#shortListPanel .relphi-question-toolbar #relphiAddPosition{display:grid!important;place-items:center!important;width:2.25rem!important;min-width:2.25rem!important;max-width:2.25rem!important;height:2.25rem!important;min-height:2.25rem!important;max-height:2.25rem!important;margin:0!important;padding:0!important;border:1px solid #b9afa7!important;border-radius:7px!important;box-sizing:border-box!important}
+
+/* Copy is a text action; unlike the glyph controls it must not be forced into a square. */
+#shortListPanel .relphi-question-toolbar #relphiCopyBespokeQuestions{
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  width:auto!important;
+  min-width:3.6rem!important;
+  max-width:none!important;
+  height:2.25rem!important;
+  min-height:2.25rem!important;
+  padding:0 .65rem!important;
+  color:#2f2925!important;
+  font-size:.68rem!important;
+  font-weight:850!important;
+  line-height:1!important;
+  white-space:nowrap!important;
+}
+#shortListPanel .relphi-bespoke-question-settings select[data-position-card-count]{
+  min-width:0!important;
+}
+
+/* Bespoke Advanced must reflow before controls can collide. */
+#shortListPanel .relphi-question-advanced>.relphi-bespoke-question-settings{
+  grid-template-columns:repeat(auto-fit,minmax(min(100%,8.5rem),1fr))!important;
+  align-items:stretch!important;
+}
+#shortListPanel .relphi-question-advanced>.relphi-bespoke-question-settings>label{
+  min-width:0!important;
+  max-width:100%!important;
+  box-sizing:border-box!important;
+  overflow:hidden!important;
+}
+#shortListPanel .relphi-question-advanced>.relphi-bespoke-question-settings>label:nth-child(-n+3){
+  display:grid!important;
+  grid-template-columns:1fr!important;
+  align-content:start!important;
+  gap:.22rem!important;
+}
+#shortListPanel .relphi-question-advanced>.relphi-bespoke-question-settings select,
+#shortListPanel .relphi-question-advanced>.relphi-bespoke-question-settings input,
+#shortListPanel .relphi-question-advanced>.relphi-bespoke-question-settings button{
+  width:100%!important;
+  min-width:0!important;
+  max-width:100%!important;
+  box-sizing:border-box!important;
+}
+
+#shortListPanel .drawing-board-top-actions>.relphi-sky-connector{order:5!important;display:flex!important;align-items:center!important;gap:.35rem!important;margin:0 0 0 auto!important;padding:0!important;border:0!important;background:transparent!important;width:auto!important}
+#shortListPanel .drawing-board-top-actions>.relphi-sky-connector select{width:auto!important;max-width:12.5rem!important;min-height:2.25rem!important;margin:0!important;padding:.42rem 1.8rem .42rem .58rem!important;border:1.25px solid #b9afa7!important;border-radius:8px!important;background:#fff!important;color:#2f2925!important;font-size:.72rem!important;font-weight:850!important}
+
+/* Drawing Board command hierarchy: Sky Connector / Reset+Settings / history+Clear+Draw. */
+#shortListPanel .relphi-board-commandbar{display:flex!important;flex-direction:column!important;align-items:stretch!important}
+#shortListPanel .relphi-board-sky-row{display:flex!important;justify-content:flex-end!important;width:100%!important;margin:0 0 .45rem!important}
+#shortListPanel .relphi-board-sky-row>.relphi-sky-connector{display:flex!important;justify-content:flex-end!important;gap:.35rem!important;width:auto!important;margin:0!important;padding:0!important;border:0!important;background:transparent!important}
+#shortListPanel .relphi-board-sky-row>.relphi-sky-connector select{width:auto!important;max-width:12.5rem!important;min-height:2.25rem!important;margin:0!important}
+#shortListPanel .relphi-board-secondary-actions{display:flex!important;align-items:center!important;justify-content:space-between!important;gap:.55rem!important;width:100%!important;margin:.4rem 0!important}
+#shortListPanel .relphi-board-secondary-actions #relphiResetBoard,#shortListPanel .relphi-board-secondary-actions #relphiBoardSettingsButton{margin:0!important}
+#shortListPanel .drawing-board-top-actions.relphi-board-command-actions{display:flex!important;align-items:center!important;justify-content:flex-start!important;gap:.4rem!important;width:100%!important}
+#shortListPanel .drawing-board-top-actions.relphi-board-command-actions #clearShortListCardsOnly{width:auto!important;min-width:4.2rem!important;margin:0!important}
+
+/* Safe command hierarchy: visual placement only; preserve the board's working DOM ownership. */
+#shortListPanel .relphi-board-commandbar{display:grid!important;grid-template-columns:auto auto 1fr!important;grid-template-areas:"title title title" "sky sky sky" "reset settings ." "undo redo clear draw"!important;gap:.45rem!important;align-items:center!important}
+#shortListPanel .relphi-board-command-left,#shortListPanel .drawing-board-top-actions.relphi-board-command-actions{display:contents!important}
+#shortListPanel .relphi-board-command-title{grid-area:title!important}
+#shortListPanel .drawing-board-top-actions>.relphi-sky-connector{grid-area:sky!important;justify-self:stretch!important;width:100%!important;margin:0!important}
+#shortListPanel .drawing-board-top-actions>.relphi-sky-connector select{width:100%!important;max-width:none!important}
+#shortListPanel #relphiResetBoard{grid-area:reset!important;margin:0!important}
+#shortListPanel #relphiBoardSettingsButton{grid-area:settings!important;margin:0!important}
+#shortListPanel #undoShortList{grid-area:undo!important;margin:0!important}
+#shortListPanel #redoShortList{grid-area:redo!important;margin:0!important}
+#shortListPanel #clearShortListCardsOnly{grid-area:clear!important;margin:0!important;min-width:0!important;width:auto!important}
+#shortListPanel #drawRandomRowCard{grid-area:draw!important;margin:0!important}
+@media(max-width:760px){#shortListPanel .relphi-board-commandbar{display:grid!important;grid-template-columns:auto auto auto 1fr!important;grid-template-areas:"title title title title" "sky sky sky sky" "reset settings . ." "undo redo clear draw"!important;gap:.4rem!important}#shortListPanel .relphi-board-command-left,#shortListPanel .drawing-board-top-actions.relphi-board-command-actions{display:contents!important}#shortListPanel .drawing-board-top-actions.relphi-board-command-actions>button{width:auto!important}}
+
+
+/* Compact Sky Connector selectors: use the Sky Chart single-chevron language. */
+#shortListPanel .drawing-board-top-actions>.relphi-sky-connector{
+  justify-content:flex-start!important;
+  gap:.4rem!important;
+}
+#shortListPanel .drawing-board-top-actions>.relphi-sky-connector select{
+  appearance:none!important;
+  -webkit-appearance:none!important;
+  width:auto!important;
+  max-width:min(46vw,12rem)!important;
+  min-width:0!important;
+  min-height:2.1rem!important;
+  padding:.34rem 1.65rem .34rem .62rem!important;
+  background-color:#fff!important;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M2 2l4 4 4-4' fill='none' stroke='%23111' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")!important;
+  background-repeat:no-repeat!important;
+  background-position:right .58rem center!important;
+  background-size:.7rem auto!important;
+}
+#shortListPanel .drawing-board-top-actions>.relphi-sky-connector select[data-sky-choice]{max-width:min(48vw,11.5rem)!important}
+#shortListPanel .drawing-board-top-actions>.relphi-sky-connector select[data-sky-ascendant]{max-width:min(38vw,9rem)!important}
+
+
+/* Connected-sky activation marker. Shared card surface means this appears in
+   Tarot results and Drawing Board; Focus inherits it through the Ledger entry. */
+.relphi-connected-sky-mark{
+  position:absolute;z-index:8;right:.32rem;bottom:.32rem;
+  display:inline-flex;align-items:center;gap:.22rem;
+  min-height:1.35rem;padding:.16rem .34rem;border-radius:999px;
+  background:rgba(255,253,248,.94);border:1px solid rgba(31,27,24,.2);
+  color:#211d19;font:800 .58rem/1 system-ui,sans-serif;
+  box-shadow:0 1px 4px rgba(31,27,24,.16);pointer-events:none
+}
+.relphi-connected-sky-mark>span{
+  display:block;width:1rem;height:1rem;border-radius:50%;
+  background:conic-gradient(from 270deg,
+    #e53935 0deg 30deg,#ef6c00 30deg 60deg,#f9a825 60deg 90deg,
+    #fdd835 90deg 120deg,#7cb342 120deg 150deg,#00897b 150deg 180deg,
+    #00acc1 180deg 210deg,#1e88e5 210deg 240deg,#3949ab 240deg 270deg,
+    #6a1b9a 270deg 300deg,#8e24aa 300deg 330deg,#d81b60 330deg 360deg);
+  transform:rotate(0deg)
+}
+.relphi-connected-sky-mark>b{font:inherit}
+
+
+/* PR205 command chrome repair: valid four-column grid keeps Settings and Sky Connector visible. */
+#shortListPanel .relphi-board-commandbar{
+  display:grid!important;
+  grid-template-columns:auto auto auto minmax(0,1fr)!important;
+  grid-template-areas:"title title title title" "sky sky sky sky" "reset settings . ." "undo redo clear draw"!important;
+  gap:.4rem!important;
+  align-items:center!important;
+}
+#shortListPanel .relphi-board-command-left,
+#shortListPanel .drawing-board-top-actions.relphi-board-command-actions{display:contents!important}
+#shortListPanel #relphiBoardSettingsButton{display:inline-flex!important;grid-area:settings!important;visibility:visible!important}
+#shortListPanel .drawing-board-top-actions>.relphi-sky-connector{display:flex!important;grid-area:sky!important;visibility:visible!important;width:100%!important}
+
+/* Vertically center the persistent Settings command label. */
+#shortListPanel #relphiBoardSettingsButton{
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  line-height:1!important;
+}
+
+
+/* Bespoke question settings live in one selection-aware controller. */
+#shortListPanel .relphi-question-controller{
+  display:grid!important;
+  gap:.5rem!important;
+  margin:0 0 .55rem!important;
+  padding:.58rem!important;
+  border:1px solid #d8cec5!important;
+  border-radius:9px!important;
+  background:#fcf9f5!important;
+}
+#shortListPanel .relphi-question-controller-head{
+  display:flex!important;
+  align-items:baseline!important;
+  justify-content:space-between!important;
+  gap:.75rem!important;
+}
+#shortListPanel .relphi-question-controller-head strong{font-size:.72rem!important}
+#shortListPanel .relphi-question-controller-head span{color:#756b63!important;font-size:.64rem!important;font-weight:700!important}
+#shortListPanel .relphi-question-controller-fields{
+  display:grid!important;
+  grid-template-columns:repeat(auto-fit,minmax(min(100%,8.5rem),1fr))!important;
+  gap:.42rem!important;
+  align-items:end!important;
+}
+#shortListPanel .relphi-question-controller-fields>label{
+  min-width:0!important;
+  display:grid!important;
+  gap:.22rem!important;
+  font-size:.66rem!important;
+  font-weight:800!important;
+  color:#625851!important;
+}
+#shortListPanel .relphi-question-controller-fields select,
+#shortListPanel .relphi-question-controller-fields input[type="number"]{
+  width:100%!important;
+  min-width:0!important;
+  max-width:100%!important;
+  box-sizing:border-box!important;
+}
+#shortListPanel .relphi-card-count-controller>div{
+  display:grid!important;
+  grid-template-columns:minmax(3.1rem,4.4rem) auto!important;
+  align-items:center!important;
+  gap:.35rem!important;
+}
+#shortListPanel .relphi-card-count-controller>div>span{
+  white-space:nowrap!important;
+  color:#453d38!important;
+  font-size:.68rem!important;
+  font-weight:850!important;
+}
+#shortListPanel .relphi-question-controller-fields>.relphi-question-controller-check{
+  display:flex!important;
+  align-items:center!important;
+  align-self:stretch!important;
+  gap:.38rem!important;
+  min-height:2.35rem!important;
+  padding:.4rem .5rem!important;
+  border:1px solid #d8cec5!important;
+  border-radius:7px!important;
+  background:#fff!important;
+  box-sizing:border-box!important;
+}
+#shortListPanel .relphi-question-controller-fields>.relphi-question-controller-check input{
+  width:1rem!important;
+  height:1rem!important;
+  margin:0!important;
+}
+#shortListPanel .relphi-question-advanced{display:none!important}
+
+
+/* Interrupted Sacred Reading lifecycle gate. */
+#shortListPanel.relphi-awaiting-sacred-resume{position:relative!important}
+#shortListPanel .relphi-sacred-resume-gate{
+  position:absolute!important;
+  inset:0!important;
+  z-index:80!important;
+  display:grid!important;
+  place-items:start center!important;
+  padding:5.2rem 1rem 1rem!important;
+  border:0!important;
+  border-radius:inherit!important;
+  background:rgba(255,253,249,.88)!important;
+  backdrop-filter:blur(3px)!important;
+  -webkit-backdrop-filter:blur(3px)!important;
+  box-sizing:border-box!important;
+}
+#shortListPanel .relphi-sacred-resume-card{
+  display:grid!important;
+  gap:.6rem!important;
+  width:min(31rem,100%)!important;
+  padding:1rem!important;
+  border:1px solid var(--relphi-board-line,#d8cec5)!important;
+  border-radius:12px!important;
+  background:#fff!important;
+  box-shadow:0 18px 44px rgba(39,29,23,.18)!important;
+  box-sizing:border-box!important;
+}
+#shortListPanel .relphi-sacred-resume-card h3{margin:0!important;font-size:1.08rem!important}
+#shortListPanel .relphi-sacred-resume-card p{margin:0!important;color:#625851!important;font-size:.76rem!important;line-height:1.45!important}
+#shortListPanel .relphi-sacred-resume-actions{display:flex!important;flex-wrap:wrap!important;gap:.5rem!important;margin-top:.2rem!important}
+#shortListPanel .relphi-sacred-resume-actions>.relphi-button{min-height:2.35rem!important}
+@media(max-width:560px){
+  #shortListPanel .relphi-sacred-resume-gate{padding:4.5rem .7rem .7rem!important}
+  #shortListPanel .relphi-sacred-resume-actions{display:grid!important;grid-template-columns:1fr!important}
+  #shortListPanel .relphi-sacred-resume-actions>.relphi-button{width:100%!important}
+}
+
+
+/* Astrological suggested-question bulk selection */
+#shortListPanel .relphi-astrology-question-global-bulk,
+#shortListPanel .relphi-astrology-question-bulk{
+  display:flex!important;
+  align-items:center!important;
+  flex-wrap:wrap!important;
+  gap:.3rem!important;
+}
+#shortListPanel .relphi-astrology-question-global-bulk>.relphi-button,
+#shortListPanel .relphi-astrology-question-bulk>.relphi-button{
+  width:auto!important;
+  min-width:0!important;
+  min-height:1.9rem!important;
+  padding:.28rem .5rem!important;
+  font-size:.64rem!important;
+}
+#shortListPanel .relphi-astrology-question-group{
+  display:grid!important;
+  gap:.08rem!important;
+  margin:.5rem 0 0!important;
+  padding:.5rem .55rem!important;
+  border:1px solid var(--relphi-board-line,#d8cec5)!important;
+  border-radius:8px!important;
+  background:#fcfaf7!important;
+}
+#shortListPanel .relphi-astrology-question-group-head{
+  display:flex!important;
+  align-items:center!important;
+  justify-content:space-between!important;
+  gap:.65rem!important;
+  margin-bottom:.12rem!important;
+}
+#shortListPanel .relphi-astrology-question-group-head>strong{
+  font-size:.68rem!important;
+  font-weight:900!important;
+}
+@media(max-width:560px){
+  #shortListPanel .relphi-astrology-question-head,
+  #shortListPanel .relphi-astrology-question-group-head{
+    align-items:flex-start!important;
+    flex-direction:column!important;
+  }
+}
+
+
+/* Astrological category selection uses the same checkbox language as questions. */
+#shortListPanel .relphi-astrology-category-master,
+#shortListPanel .relphi-astrology-category-toggle{
+  display:inline-flex!important;
+  align-items:center!important;
+  gap:.38rem!important;
+  min-width:0!important;
+  font-size:.68rem!important;
+  font-weight:900!important;
+  cursor:pointer!important;
+}
+#shortListPanel .relphi-astrology-category-master input,
+#shortListPanel .relphi-astrology-category-toggle input{
+  flex:0 0 auto!important;
+  width:1rem!important;
+  height:1rem!important;
+  margin:0!important;
+}
+#shortListPanel .relphi-astrology-category-master strong,
+#shortListPanel .relphi-astrology-category-toggle strong{
+  min-width:0!important;
+}
+
+
+/* Astrological evidence bulk controls */
+#shortListPanel .relphi-astrology-evidence-controls{
+  grid-column:1/-1!important;
+  display:grid!important;
+  gap:.5rem!important;
+  padding:.65rem!important;
+  border:1px solid var(--relphi-board-line,#d8cec5)!important;
+  border-radius:9px!important;
+  background:#fffdf9!important;
+}
+#shortListPanel .relphi-astrology-evidence-control-head{
+  display:flex!important;
+  align-items:center!important;
+  justify-content:space-between!important;
+  gap:.75rem!important;
+}
+#shortListPanel .relphi-astrology-evidence-control-head>strong{
+  font-size:.76rem!important;
+  font-weight:900!important;
+}
+#shortListPanel .relphi-astrology-evidence-master,
+#shortListPanel .relphi-astrology-evidence-categories>label{
+  display:inline-flex!important;
+  align-items:center!important;
+  gap:.35rem!important;
+  min-width:0!important;
+  font-size:.66rem!important;
+  font-weight:850!important;
+  cursor:pointer!important;
+}
+#shortListPanel .relphi-astrology-evidence-master input,
+#shortListPanel .relphi-astrology-evidence-categories input{
+  flex:0 0 auto!important;
+  width:1rem!important;
+  height:1rem!important;
+  margin:0!important;
+}
+#shortListPanel .relphi-astrology-evidence-categories{
+  display:flex!important;
+  flex-wrap:wrap!important;
+  gap:.42rem .72rem!important;
+}
+@media(max-width:560px){
+  #shortListPanel .relphi-astrology-evidence-control-head{
+    align-items:flex-start!important;
+    flex-direction:column!important;
+  }
+}
+
+
+/* Astrological Reading sky inheritance and compare controls */
+#shortListPanel .relphi-astrology-sky-source{
+  display:grid!important;
+  gap:.3rem!important;
+  width:100%!important;
+  min-width:0!important;
+}
+#shortListPanel .relphi-astrology-sky-source-head{
+  display:flex!important;
+  align-items:center!important;
+  gap:.45rem!important;
+  min-width:0!important;
+}
+#shortListPanel .relphi-astrology-sky-source-head>strong{
+  flex:0 0 auto!important;
+  font-size:.68rem!important;
+  font-weight:900!important;
+}
+#shortListPanel .relphi-astrology-inherited-sky{
+  min-width:0!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+  white-space:nowrap!important;
+  color:#665d56!important;
+  font-size:.63rem!important;
+  font-weight:800!important;
+}
+#shortListPanel .relphi-remove-astrology-sky{
+  margin-left:auto!important;
+  width:auto!important;
+  min-width:0!important;
+  min-height:1.9rem!important;
+  padding:.28rem .5rem!important;
+  font-size:.64rem!important;
+}
+#shortListPanel .relphi-astrology-inherited-note{
+  margin:0!important;
+  color:#746b64!important;
+  font-size:.62rem!important;
+  line-height:1.35!important;
+}
+
+
+/* On-the-fly Tarot sub-pack builder */
+#shortListPanel .relphi-subpack-control{display:grid!important;grid-template-columns:minmax(0,1fr) auto!important;gap:.35rem!important;align-items:center!important}
+#shortListPanel .relphi-subpack-create{width:32px!important;height:32px!important;padding:0!important;border-radius:50%!important;font-size:1.1rem!important;line-height:1!important}
+.relphi-subpack-builder{width:min(92vw,620px);max-height:82vh;border:1px solid var(--relphi-board-line,#d8cec5);border-radius:16px;padding:0;background:#fff;color:#171412}
+.relphi-subpack-builder::backdrop{background:rgba(20,16,14,.42)}
+.relphi-subpack-builder-card{display:grid;gap:.8rem;padding:1rem;max-height:78vh;overflow:auto}
+.relphi-subpack-builder header,.relphi-subpack-builder footer,.relphi-subpack-members>div:first-child,.relphi-subpack-result-head{display:flex;align-items:center;justify-content:space-between;gap:.6rem}
+.relphi-subpack-builder header h3{margin:.1rem 0 0}.relphi-subpack-builder label{display:grid;gap:.3rem;font-weight:700}
+.relphi-subpack-builder input{font:inherit;min-height:38px;border:1px solid #d8cec5;border-radius:9px;padding:.45rem .6rem}
+.relphi-subpack-results{display:grid;gap:.35rem}.relphi-subpack-result{display:grid;grid-template-columns:38px minmax(0,1fr) auto;align-items:center;gap:.55rem;text-align:left;border:1px solid #e1d8d0;border-radius:10px;background:#fff;padding:.35rem .5rem}
+.relphi-subpack-result[aria-pressed="true"]{box-shadow:inset 0 0 0 1px currentColor}.relphi-subpack-result img{width:38px;height:54px;object-fit:cover;border-radius:4px}
+.relphi-subpack-members{display:grid;gap:.45rem;border-top:1px solid #e6ddd5;padding-top:.7rem}.relphi-subpack-members [data-subpack-members]{display:flex;gap:.35rem;flex-wrap:wrap}
+.relphi-subpack-members [data-member-remove]{border:1px solid #d8cec5;border-radius:999px;background:#fff;padding:.3rem .55rem}
+.relphi-subpack-builder footer span{flex:1}.relphi-subpack-builder button{font:inherit;cursor:pointer}.relphi-subpack-builder footer button{min-height:34px;border:1px solid #d8cec5;border-radius:999px;background:#fff;padding:.35rem .7rem}.relphi-subpack-builder footer .primary{background:#171412;color:#fff;border-color:#171412}
+
+
+/* Crafted path tiles stay content-sized when lower shared settings are absent. */
+#shortListPanel .relphi-board-settings-panel .relphi-reading-options-drawer .relphi-options-body{
+  align-content:start!important;
+  grid-auto-rows:max-content!important;
+}
+#shortListPanel .relphi-referent-paths{
+  grid-auto-rows:max-content!important;
+  align-content:start!important;
+  align-self:start!important;
+}
+#shortListPanel .relphi-referent-path{
+  align-self:start!important;
+}
+
+.relphi-clarifier-modal{position:fixed!important;inset:0!important;z-index:100050!important;display:grid!important;place-items:center!important;padding:1rem!important;background:rgba(20,15,12,.58)!important;backdrop-filter:blur(6px)!important}
+.relphi-clarifier-card{position:relative!important;display:grid!important;gap:.68rem!important;width:min(34rem,calc(100vw - 2rem))!important;padding:1rem 1rem 1.05rem!important;border:1px solid #d8cec5!important;border-radius:16px!important;background:#fffdf8!important;box-shadow:0 22px 60px rgba(0,0,0,.28)!important;color:#171412!important}
+.relphi-clarifier-card>.eyebrow{margin:0!important;color:#8a7462!important;font-size:.64rem!important;font-weight:900!important;letter-spacing:.09em!important;text-transform:uppercase!important}
+.relphi-clarifier-card h2{margin:0!important;font-size:1.28rem!important;line-height:1.15!important}
+.relphi-clarifier-card p{margin:0!important;color:#655d56!important;font-size:.82rem!important;line-height:1.45!important}
+.relphi-clarifier-card label{display:grid!important;gap:.32rem!important;font-size:.72rem!important;font-weight:850!important}
+.relphi-clarifier-card textarea{box-sizing:border-box!important;width:100%!important;min-height:6.5rem!important;resize:vertical!important;padding:.72rem .78rem!important;border:1.5px solid #9d9288!important;border-radius:10px!important;background:#fff!important;color:#171412!important;font:inherit!important;line-height:1.4!important;outline:none!important}
+.relphi-clarifier-card textarea:focus{border-color:#a61712!important;box-shadow:0 0 0 3px rgba(166,23,18,.12)!important}
+.relphi-clarifier-actions{display:flex!important;justify-content:flex-end!important;gap:.5rem!important;margin-top:.1rem!important}
+.relphi-clarifier-close{position:absolute!important;top:.72rem!important;right:.72rem!important;display:grid!important;place-items:center!important;width:2rem!important;height:2rem!important;padding:0!important;border:1px solid #c9bfb7!important;border-radius:50%!important;background:#fff!important;color:#171412!important;font-size:1.15rem!important;cursor:pointer!important}
+@media(max-width:600px){.relphi-clarifier-card{padding:.9rem!important}.relphi-clarifier-actions{display:grid!important;grid-template-columns:1fr 1fr!important}.relphi-clarifier-actions button{width:100%!important}}
+
+/* Clarifier is a persistent command-bar button; center its label like Reset / Settings. */
+#shortListPanel .drawing-board-top-actions.relphi-board-command-actions>.relphi-bespoke-ask-another{
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  line-height:1!important;
+}
+
+
+#shortListPanel .relphi-astrology-significant-factors{align-self:start!important;background:var(--relphi-board-paper,#fffdf8)!important}
+#shortListPanel .relphi-astrology-factor-head{display:flex!important;align-items:flex-start!important;justify-content:space-between!important;gap:.65rem!important;margin-bottom:.65rem!important}
+#shortListPanel .relphi-astrology-factor-head h4{margin:0 0 .12rem!important;font-size:.8rem!important;letter-spacing:-.01em!important}
+#shortListPanel .relphi-astrology-factor-head small{display:block!important;color:var(--relphi-board-muted,#625a53)!important;font-size:.64rem!important;line-height:1.3!important}
+#shortListPanel .relphi-astrology-factor-list{display:grid!important;gap:.5rem!important}
+#shortListPanel .relphi-astrology-factor{padding:.62rem .68rem!important;border:1px solid var(--relphi-board-line,#d8cec5)!important;border-radius:var(--relphi-radius-lg,12px)!important;background:var(--relphi-board-surface,#fff)!important;box-shadow:none!important}
+#shortListPanel .relphi-astrology-factor:first-child{background:var(--relphi-board-soft,#f4efe8)!important}
+#shortListPanel .relphi-astrology-factor-title{display:grid!important;grid-template-columns:1.5rem minmax(0,1fr)!important;gap:.45rem!important;align-items:center!important}
+#shortListPanel .relphi-astrology-factor-title>strong{font-size:.76rem!important;line-height:1.25!important;color:var(--relphi-board-ink,#171412)!important}
+#shortListPanel .relphi-astrology-factor-number{display:grid!important;place-items:center!important;width:1.5rem!important;height:1.5rem!important;border-radius:999px!important;background:var(--relphi-board-red,#dc1f18)!important;color:#fff!important;font-size:.66rem!important;font-weight:850!important;line-height:1!important}
+#shortListPanel .relphi-astrology-factor-claim{margin:.42rem 0 0 1.95rem!important;color:var(--relphi-board-ink,#171412)!important;font-size:.71rem!important;line-height:1.38!important}
+#shortListPanel .relphi-astrology-factor-evidence{margin:.46rem 0 0 1.95rem!important;border-top:1px solid var(--relphi-board-line,#d8cec5)!important;padding-top:.38rem!important}
+#shortListPanel .relphi-astrology-factor-evidence>summary{display:flex!important;align-items:center!important;justify-content:space-between!important;gap:.5rem!important;cursor:pointer!important;color:var(--relphi-board-muted,#625a53)!important;font-size:.65rem!important;font-weight:800!important;list-style:none!important}
+#shortListPanel .relphi-astrology-factor-evidence>summary::-webkit-details-marker{display:none!important}
+#shortListPanel .relphi-astrology-factor-evidence>summary:before{content:'›'!important;display:inline-block!important;margin-right:.24rem!important;font-size:.9rem!important;line-height:.7!important;transform-origin:center!important}
+#shortListPanel .relphi-astrology-factor-evidence[open]>summary:before{transform:rotate(90deg)!important}
+#shortListPanel .relphi-astrology-factor-evidence>summary>span{margin-right:auto!important}
+#shortListPanel .relphi-astrology-factor-evidence>summary>small{font-size:.6rem!important;font-weight:700!important;color:var(--relphi-board-muted,#625a53)!important;white-space:nowrap!important}
+#shortListPanel .relphi-astrology-factor-evidence>ul{margin:.42rem 0 0!important;padding:.45rem .55rem .45rem 1.15rem!important;border-radius:var(--relphi-radius-md,8px)!important;background:var(--relphi-board-paper,#fffdf8)!important;color:var(--relphi-board-muted,#625a53)!important;font-size:.64rem!important;line-height:1.4!important}
+#shortListPanel .relphi-astrology-factor-evidence>ul>li+li{margin-top:.18rem!important}
+@media(max-width:700px){
+  #shortListPanel .relphi-astrology-factor-claim,
+  #shortListPanel .relphi-astrology-factor-evidence{margin-left:0!important}
+}
+
+#shortListPanel .relphi-astrology-evidence-controls{display:none!important}
+#shortListPanel .relphi-astrology-technical{grid-column:1/-1!important;background:var(--relphi-board-paper,#fffdf8)!important}
+#shortListPanel .relphi-astrology-technical>details>summary,
+#shortListPanel .relphi-astrology-raw-sky>summary{cursor:pointer!important;font-size:.7rem!important;font-weight:800!important;color:var(--relphi-board-muted,#625a53)!important}
+#shortListPanel .relphi-astrology-technical>details>summary small,
+#shortListPanel .relphi-astrology-raw-sky>summary small{font-size:.6rem!important;font-weight:700!important;margin-left:.25rem!important}
+#shortListPanel .relphi-astrology-raw-sky{margin-top:.55rem!important;padding-top:.5rem!important;border-top:1px solid var(--relphi-board-line,#d8cec5)!important}
+#shortListPanel .relphi-astrology-raw-sky ul,
+#shortListPanel .relphi-astrology-derived-evidence{margin:.45rem 0 0!important;padding-left:1.15rem!important;font-size:.65rem!important;line-height:1.42!important;color:var(--relphi-board-muted,#625a53)!important}
+#shortListPanel .relphi-astrology-technical h5{margin:.7rem 0 .25rem!important;font-size:.67rem!important}
+
+#shortListPanel .relphi-astrology-technical-disclosure>summary{
+  display:flex!important;
+  align-items:center!important;
+  justify-content:space-between!important;
+  gap:.75rem!important;
+  min-height:2.35rem!important;
+  padding:.55rem .65rem!important;
+  border:1px solid var(--relphi-board-line,#d8cec5)!important;
+  border-radius:var(--relphi-radius-md,8px)!important;
+  background:var(--relphi-board-surface,#fff)!important;
+  color:var(--relphi-board-ink,#171412)!important;
+  cursor:pointer!important;
+  list-style:none!important;
+}
+#shortListPanel .relphi-astrology-technical-disclosure>summary::-webkit-details-marker{display:none!important}
+#shortListPanel .relphi-astrology-technical-label{font-size:.72rem!important;font-weight:800!important}
+#shortListPanel .relphi-astrology-technical-action{
+  display:inline-flex!important;
+  align-items:center!important;
+  gap:.28rem!important;
+  color:var(--relphi-board-red,#dc1f18)!important;
+  font-size:.65rem!important;
+  font-weight:800!important;
+  white-space:nowrap!important;
+}
+#shortListPanel .relphi-astrology-technical-chevron{
+  font-size:1rem!important;
+  line-height:.7!important;
+  transform-origin:center!important;
+}
+#shortListPanel .relphi-astrology-technical-disclosure[open] .relphi-astrology-technical-chevron{transform:rotate(90deg)!important}
+#shortListPanel .relphi-astrology-technical-disclosure[open] .relphi-astrology-technical-action-text{font-size:0!important}
+#shortListPanel .relphi-astrology-technical-disclosure[open] .relphi-astrology-technical-action-text:after{content:'Hide'!important;font-size:.65rem!important}
+#shortListPanel .relphi-astrology-technical-disclosure[open]>summary{margin-bottom:.55rem!important}
+#shortListPanel .relphi-astrology-raw-sky>summary{
+  display:grid!important;
+  grid-template-columns:minmax(0,1fr) auto auto!important;
+  align-items:center!important;
+  gap:.45rem!important;
+  padding:.45rem .5rem!important;
+  border-radius:var(--relphi-radius-md,8px)!important;
+  background:var(--relphi-board-soft,#f4efe8)!important;
+  list-style:none!important;
+}
+#shortListPanel .relphi-astrology-raw-sky>summary::-webkit-details-marker{display:none!important}
+#shortListPanel .relphi-astrology-raw-chevron{font-size:.95rem!important;line-height:.7!important}
+#shortListPanel .relphi-astrology-raw-sky[open] .relphi-astrology-raw-chevron{transform:rotate(90deg)!important}

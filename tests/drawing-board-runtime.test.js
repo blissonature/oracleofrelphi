@@ -3,7 +3,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { chromium } = require('playwright');
 
-const base = process.env.RELPHI_TEST_URL || 'http://127.0.0.1:8000/tarot.html?board=workflow-v2#tarot';
+const base = process.env.RELPHI_TEST_URL || 'http://127.0.0.1:8000/tarot.html?board=workflow-v2#tarot'; // opener contract
 const out = path.resolve(__dirname,'..','test-results');
 fs.mkdirSync(out,{recursive:true});
 let browser;
@@ -14,9 +14,15 @@ async function waitReady(page) {
 }
 async function openBoard(page) {
   const panel=page.locator('#shortListPanel');
-  if (!(await panel.isVisible())) await page.click('#relphiOpenDrawingBoardCurrent');
+  const drawer=page.locator('#shortListPanel details.short-list-drawer');
+  if (!(await panel.isVisible()) || !(await drawer.getAttribute('open'))) await page.click('#relphiOpenDrawingBoardCurrent');
   await panel.waitFor({state:'visible'});
+  await page.waitForFunction(() => !!document.querySelector('#shortListPanel details.short-list-drawer')?.open);
   await page.waitForSelector('#shortListPanel #zoomCardRowExtents',{timeout:10000});
+  await page.locator('#relphiBoardSettingsButton').click({force:true});
+  await page.locator('#drawingBoardOptionsButton').click({force:true});
+  await page.locator('[data-relphi-options-path="templates"]').click({force:true});
+  await page.waitForFunction(() => document.body.innerText.includes('Opening of the Key · First Operation'));
 }
 async function applyCeltic(page) {
   await page.click('#drawingBoardOptionsButton');

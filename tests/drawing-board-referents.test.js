@@ -8,13 +8,25 @@ const base='http://127.0.0.1:8000/tarot.html';
   try{
     const page=await browser.newPage({viewport:{width:430,height:860}});
     const errors=[];
-    page.on('pageerror',error=>errors.push(error?.stack||String(error)));
+    page.on('pageerror',error=>{errors.push(error?.stack||String(error));console.log('PAGE_ERROR',error?.stack||String(error));});
     await page.goto(base,{waitUntil:'domcontentloaded',timeout:30000});
-    await page.waitForFunction(()=>!!window.RelphiDrawingBoardOptionsBridge && !!document.querySelector('#drawingBoardOptionsButton'),null,{timeout:20000});
+    await page.waitForTimeout(500);
+    const boot=await page.evaluate(()=>({bridge:!!window.RelphiDrawingBoardOptionsBridge,app:!!window.RelphiTarotLedgerBridge,ready:document.readyState,scripts:[...document.scripts].map(s=>s.src).filter(Boolean),errors:[]}));
+    console.log('BOOT_DIAG',JSON.stringify({...boot,errors}));
+    await page.waitForSelector('#relphiOpenDrawingBoardCurrent',{state:'attached',timeout:20000});
+    await page.evaluate(()=>{
+      document.querySelector('#relphiOpenDrawingBoardCurrent')?.click();
+    });
+    await page.waitForFunction(()=>document.querySelector('#relphiOpenDrawingBoardCurrent')?.getAttribute('aria-expanded')==='true');
+    await page.waitForFunction(()=>!!document.querySelector('#shortListPanel .card-row-drawing-board'),null,{timeout:20000});
+    await page.waitForSelector('#shortListPanel',{state:'visible',timeout:20000});
+    const diag=await page.evaluate(()=>({panel:document.querySelector('#shortListPanel')?.innerHTML.slice(0,300),drawer:!!document.querySelector('#shortListPanel .card-row-drawing-board'),trigger:document.querySelector('#relphiOpenDrawingBoardCurrent')?.outerHTML,errors:[]})); console.log('BOARD_INIT_DIAG',JSON.stringify(diag));
+    await page.waitForSelector('#relphiBoardSettingsButton',{state:'attached',timeout:20000});
+    await page.locator('#relphiBoardSettingsButton').click({force:true});
+    await page.waitForSelector('#drawingBoardOptionsButton',{state:'attached',timeout:20000});
     const panel=page.locator('#shortListPanel');
-    if(!(await panel.isVisible())) await page.click('#relphiOpenDrawingBoardCurrent');
     await panel.waitFor({state:'visible'});
-    await page.click('#drawingBoardOptionsButton');
+    await page.locator('#drawingBoardOptionsButton').click({force:true});
     await page.waitForSelector('.relphi-referents-drawer',{state:'visible'});
 
     assert.equal(await page.locator('.drawing-board-mode-tabs').getAttribute('role'),'tablist','Board and Referents should be the top-level mode tabs');

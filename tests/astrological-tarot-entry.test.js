@@ -4,7 +4,9 @@ const js=fs.readFileSync('drawing-board-workflow-v2.js','utf8');
 const css=fs.readFileSync('drawing-board-workflow-v2.css','utf8');
 const app=fs.readFileSync('tarot-app.js','utf8');
 assert.match(js,/Astrological Tarot Reading/);
-assert.match(js,/Sky A \+ Sky B/);
+assert.match(js,/\+ Compare a second sky/);
+assert.match(js,/data-remove-astrology-sky="B"/);
+assert.match(js,/Connected · /);
 assert.match(js,/relphiConnectSky/);
 assert.match(js,/RELPHI_ASTROLOGICAL_TAROT_CONTEXT/);
 assert.match(js,/options\.textContent='Crafted'/);
@@ -29,3 +31,22 @@ assert.match(app,/relphi:sky-calculated/);
 assert.doesNotMatch(js,/<strong>Sky '\+slot\+'<\/strong>/);
 assert.match(js,/Use '\+\(count>1\?'These Skies':'This Sky'\)/);
 assert.doesNotMatch(js,/Connect Sky A or Sky A \+ Sky B/);
+
+assert.match(js,/relphi-astrology-factor-number/);
+assert.match(js,/Why this factor/);
+assert.match(js,/organizing factor/);
+assert.match(css,/\.relphi-astrology-factor-list/);
+assert.match(css,/\.relphi-astrology-factor-number/);
+assert.match(css,/var\(--relphi-board-red/);
+
+assert.doesNotMatch(js,/data-astrology-evidence="/);
+assert.doesNotMatch(js,/data-astrology-evidence-master/);
+assert.match(js,/Technical evidence/);
+assert.match(js,/Raw sky evidence/);
+
+assert.match(js,/astrologyOwnPack\|\|'full'/);
+assert.doesNotMatch(js,/Choose sub-pack…/);
+
+assert.doesNotMatch(js,/astrologyDisabledEvidence/);
+assert.doesNotMatch(js,/astrologyEvidenceKey/);
+assert.doesNotMatch(js,/astrologyEvidenceCategory/);

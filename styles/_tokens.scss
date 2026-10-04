@@ -1,0 +1,48 @@
+// Oracle of Relphi design-system tokens.
+// SASS values are the authoring source; CSS custom properties are the runtime contract.
+$red: #dc1f18 !default;
+$red-dark: #a61712 !default;
+$ink: #171412 !default;
+$muted: #625a53 !default;
+$paper: #fffdf8 !default;
+$surface: #ffffff !default;
+$soft: #f4efe8 !default;
+$line: #d8cec5 !default;
+$line-strong: #bfb5ac !default;
+
+$space-1: .25rem !default;
+$space-2: .4rem !default;
+$space-3: .55rem !default;
+$space-4: .75rem !default;
+$space-5: 1rem !default;
+
+$radius-sm: 7px !default;
+$radius-md: 8px !default;
+$radius-lg: 12px !default;
+$radius-xl: 14px !default;
+
+:root,
+.relphi-ui,
+#shortListPanel {
+  --relphi-board-red: #{$red};
+  --relphi-board-red-dark: #{$red-dark};
+  --relphi-board-ink: #{$ink};
+  --relphi-board-muted: #{$muted};
+  --relphi-board-paper: #{$paper};
+  --relphi-board-surface: #{$surface};
+  --relphi-board-soft: #{$soft};
+  --relphi-board-line: #{$line};
+  --relphi-board-line-strong: #{$line-strong};
+  --relphi-space-1: #{$space-1};
+  --relphi-space-2: #{$space-2};
+  --relphi-space-3: #{$space-3};
+  --relphi-space-4: #{$space-4};
+  --relphi-space-5: #{$space-5};
+  --relphi-radius-sm: #{$radius-sm};
+  --relphi-radius-md: #{$radius-md};
+  --relphi-radius-lg: #{$radius-lg};
+  --relphi-radius-xl: #{$radius-xl};
+  --relphi-control-height: 2.35rem;
+  --relphi-control-font-size: .79rem;
+  --relphi-focus-ring: 0 0 0 3px rgba(220,31,24,.22);
+}
