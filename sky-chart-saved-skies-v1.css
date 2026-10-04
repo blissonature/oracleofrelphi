@@ -327,3 +327,38 @@
   outline:none;background:#e9e2da;color:#1f1b18
 }
 .sky-saved-command-list:first-child{padding-top:6px}
+
+.sky-saved-retrogrades{
+  grid-area:meta;
+  justify-self:end;
+  align-self:end;
+  display:inline-flex;
+  align-items:center;
+  gap:3px;
+  max-width:48%;
+  margin-top:2px;
+  margin-left:8px;
+  white-space:nowrap;
+  pointer-events:none;
+}
+.sky-saved-retrograde{
+  position:relative;
+  display:inline-grid;
+  place-items:center;
+  width:17px;
+  height:17px;
+  color:#514941;
+}
+.sky-saved-retrograde svg{
+  display:block;
+  width:14px;
+  height:14px;
+  overflow:visible;
+}
+.sky-saved-retrograde-mark{
+  position:absolute;
+  right:-3px;
+  bottom:-3px;
+  font:800 8px/1 Georgia,serif;
+  color:#8b1714;
+}
