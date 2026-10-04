@@ -262,7 +262,7 @@
   function meridianFactor(rs,aspects,sky){
     const mc=rs.find(r=>r.body==='MC'),ic=rs.find(r=>r.body==='IC');if(!mc&&!ic)return null;
     const ev=[],entities=['meridian','MC','IC'];
-    const axisBodies=rs.filter(r=>r.house===4||r.house===10||['North Node','South Node'].includes(r.body)&&(r.sign===mc?.sign||r.sign===ic?.sign));
+    const axisBodies=rs.filter(r=>!r.isAngle&&((r.isPlanet&&[4,10].includes(r.house))||(['North Node','South Node'].includes(r.body)&&[4,10].includes(r.house))));
     axisBodies.forEach(r=>{ev.push(evidence(sky+':meridian-occupant:'+r.id,'axis-occupancy',r.body+' occupies the '+(r.house===4?'H4/IC':'H10/MC')+' side',[r.body,r.sign,'meridian'],1.6));entities.push(r.body,r.sign)});
     const pressure=[];
     rs.filter(r=>r.isPlanet).forEach(r=>{
@@ -284,11 +284,12 @@
     if(ev.length<2)return null;
     const pressureNames=[...new Set(pressure.map(r=>r.body))];
     const occupiedNames=[...new Set(axisBodies.map(r=>r.body))];
-    let claim='The meridian is reinforced by '+occupiedNames.join(', ');
-    if(pressureNames.length)claim+=(occupiedNames.length?' while ':'')+pressureNames.join(', ')+' bears directly on the axis';
-    claim+='.';
+    let claim='';
+    if(occupiedNames.length&&pressureNames.length)claim=occupiedNames.join(', ')+' occupy the meridian while '+pressureNames.join(', ')+' directly aspect that axis.';
+    else if(occupiedNames.length)claim=occupiedNames.join(', ')+' materially occupy the meridian axis.';
+    else claim=pressureNames.join(', ')+' repeatedly aspect the meridian axis.';
     return factor('axis','Reinforced meridian complex',claim,
-      'How is this reinforced home–direction axis asking to be lived or redirected?',
+      'What has changed in how you live the tension between '+(occupiedNames.join(' / ')||'the meridian')+' and '+(pressureNames.join(' / ')||'the forces acting on it')+'?',
       92+Math.min(9,ev.reduce((s,x)=>s+x.weight,0)/2),ev,entities,{occupants:occupiedNames,pressure:pressureNames});
   }
   function horizonFactor(rs,aspects,sky){
