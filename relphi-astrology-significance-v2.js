@@ -150,6 +150,68 @@
     }
     return out;
   }
+  function clusterRelationshipFactors(rs,aspects,sky){
+    const groups=[];
+    for(const field of ['sign','house']){
+      const map=new Map();
+      rs.filter(r=>r.isPlanet).forEach(r=>{
+        const raw=r[field];if(raw==null)return;
+        const value=String(raw),key=field+':'+value;
+        if(!map.has(key))map.set(key,{field,value,members:[]});
+        map.get(key).members.push(r);
+      });
+      map.forEach(group=>{if(group.members.length>=3)groups.push(group)});
+    }
+    const out=[],seen=new Set();
+    for(let i=0;i<groups.length;i++)for(let j=i+1;j<groups.length;j++){
+      const left=groups[i],right=groups[j];
+      // Avoid describing the same bodies twice merely because a stellium also shares a house.
+      const leftIds=new Set(left.members.map(r=>r.id)),rightIds=new Set(right.members.map(r=>r.id));
+      if([...leftIds].some(id=>rightIds.has(id)))continue;
+      const cross=aspects.filter(a=>
+        (leftIds.has(a.a.id)&&rightIds.has(a.b.id))||(leftIds.has(a.b.id)&&rightIds.has(a.a.id))
+      );
+      const byType=new Map();
+      cross.forEach(a=>{if(!byType.has(a.name))byType.set(a.name,[]);byType.get(a.name).push(a)});
+      for(const [aspectName,links] of byType){
+        if(links.length<3)continue;
+        const leftParticipants=new Set(),rightParticipants=new Set();
+        links.forEach(a=>{
+          const la=leftIds.has(a.a.id)?a.a:a.b,rb=rightIds.has(a.a.id)?a.a:a.b;
+          leftParticipants.add(la.id);rightParticipants.add(rb.id);
+        });
+        const leftCoverage=leftParticipants.size/left.members.length,rightCoverage=rightParticipants.size/right.members.length;
+        if(leftCoverage<.5||rightCoverage<.5)continue;
+        const signature=[
+          [...leftIds].sort().join(','),[...rightIds].sort().join(','),aspectName
+        ].sort().join('|');
+        if(seen.has(signature))continue;seen.add(signature);
+        const label=g=>g.field==='house'?'House '+g.value:g.value;
+        const leftLabel=label(left),rightLabel=label(right);
+        const placementEvidence=[
+          ...left.members.map(r=>evidence(sky+':'+left.field+':'+left.value+':'+r.id,'placement',r.body+' in '+leftLabel,[r.body,leftLabel],1)),
+          ...right.members.map(r=>evidence(sky+':'+right.field+':'+right.value+':'+r.id,'placement',r.body+' in '+rightLabel,[r.body,rightLabel],1))
+        ];
+        const aspectEvidence=links.map(a=>evidence(
+          sky+':cluster-aspect:'+norm(a.a.body)+':'+norm(a.b.body)+':'+a.name,
+          'aspect',a.a.body+' '+a.name+' '+a.b.body+' · orb '+a.orb.toFixed(2)+'°',
+          [a.a.body,a.b.body,a.a.sign,a.b.sign],2.4
+        ));
+        const avgOrb=links.reduce((sum,a)=>sum+a.orb,0)/links.length;
+        const luminary=links.some(a=>['Sun','Moon'].includes(a.a.body)||['Sun','Moon'].includes(a.b.body));
+        const title=leftLabel+'–'+rightLabel+' cluster '+aspectName;
+        const claim='The '+leftLabel+' and '+rightLabel+' concentrations form one '+aspectName+' structure: '+links.length+' direct cross-links bind the two clusters.';
+        out.push(factor('cluster-relationship',title,claim,
+          'What is the '+leftLabel+'–'+rightLabel+' '+aspectName+' requiring these concentrated parts of the chart to work out together?',
+          104+links.length*1.8+(leftCoverage+rightCoverage)*3+(luminary?3:0)-avgOrb*.4,
+          [...placementEvidence,...aspectEvidence],
+          [leftLabel,rightLabel,...left.members.map(r=>r.body),...right.members.map(r=>r.body)],
+          {aspectName,left:{field:left.field,value:left.value,bodies:left.members.map(r=>r.body),coverage:leftCoverage},right:{field:right.field,value:right.value,bodies:right.members.map(r=>r.body),coverage:rightCoverage},links:links.map(a=>({a:a.a.body,b:a.b.body,orb:a.orb}))}
+        ));
+      }
+    }
+    return out;
+  }
   function configurationFactors(payload,rs,sky){
     return suppliedConfigurations(payload).map((cfg,i)=>{
       const name=clean(cfg.name||cfg.type||cfg.label||'Configuration');
@@ -279,7 +341,7 @@
       const novelty=1-Math.max(maxEvidence,maxEntity*.72);
       candidate.novelty=novelty;candidate.adjustedScore=candidate.score*(.45+.55*novelty);
       if(maxEvidence>=.72)continue;
-      if(maxEntity>=.84&&candidate.kind==='concentration')continue;
+      if(maxEntity>=.84&&['concentration','relationship'].includes(candidate.kind))continue;
       if(candidate.adjustedScore<55)continue;
       selected.push(candidate);
     }
@@ -297,6 +359,7 @@
     candidates.push(horizonFactor(rs,aspects,skyName));
     candidates.push(...dignityPolarityFactors(rs,aspects,skyName));
     candidates.push(temporalFactor(payload,rs,skyName));
+    candidates.push(...clusterRelationshipFactors(rs,aspects,skyName));
     candidates.push(...concentrationFactors(rs,skyName));
     candidates.push(...rawAspectStructure(rs,aspects,skyName));
     return {name:skyName,records:rs,aspects,candidates:candidates.filter(Boolean)};
@@ -317,5 +380,5 @@
     const factors=selectFactors(candidates,Math.max(1,Math.min(7,Number(input.maxFactors)||7)));
     return {version:2,skies,factors,coverage:factors.coverage||0,candidateCount:candidates.length};
   }
-  return {SIGNS,RULER,records,calculatedAspects,synthesize};
+  return {SIGNS,RULER,records,calculatedAspects,clusterRelationshipFactors,synthesize};
 });
