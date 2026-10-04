@@ -44,3 +44,6 @@ assert.doesNotMatch(js,/data-astrology-evidence-master/);
 assert.match(js,/Technical evidence/);
 assert.match(js,/Inspect raw sky evidence/);
 assert.match(js,/astrologyQuestionSuggestions\(analysis,null\)/);
+
+assert.match(js,/astrologyOwnPack\|\|'full'/);
+assert.doesNotMatch(js,/Choose sub-pack…/);
