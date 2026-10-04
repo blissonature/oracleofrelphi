@@ -11,19 +11,21 @@ assert.match(html,/id="cardHitsPanel"/);
 assert.match(html,/id="cardHitsList"/);
 assert.match(html,/id="cardHitsDetail"/);
 
-assert.match(app,/function openSkyHitsTab()/);
-assert.match(app,/state.mode='sky-hits'/);
-assert.match(app,/function renderSkyCardHits()/);
-assert.match(app,/window.RelphiSkyConnector?.tarotActivations?.()/);
-assert.match(app,/renderCardSurface(card,{context:'sky-hits',selectable:false})/);
+assert.match(app,/function openSkyHitsView\(\)/);
+assert.match(app,/state\.mode='sky-hits'/);
+assert.match(app,/function renderSkyCardHits\(\)/);
+assert.match(app,/window\.RelphiSkyConnector\?\.tarotActivations\?\.\(\)/);
+assert.match(app,/renderCardSurface\(card,\{context:'sky-hits',selectable:false\}\)/);
 assert.match(app,/data-card-hit-detail/);
-assert.match(app,/cardDetailHtml(card,'Card Hit from Sky')/);
+assert.match(app,/cardDetailHtml\(card,'Card Hit from Sky'\)/);
 assert.match(app,/mode === 'sky-hits'/);
-assert.match(app,/renderSkyCardHits()/);
-assert.match(app,/['card hits','Card Hits from Sky']/);
+assert.match(app,/renderSkyCardHits\(\)/);
+assert.match(app,/\['card hits','Card Hits from Sky'\]/);
+assert.match(app,/\$\('showSkyCardHits'\)/);
 
-assert.match(css,/.tarot-ledger-tabs/);
-assert.match(css,/.tarot-card-hit-row/);
-assert.match(css,/.tarot-card-hit-evidence/);
+assert.doesNotMatch(css,/\.tarot-ledger-tabs/);
+assert.match(css,/#showSkyCardHits\.is-active/);
+assert.match(css,/\.tarot-card-hit-row/);
+assert.match(css,/\.tarot-card-hit-evidence/);
 
 console.log('Tarot Ledger Card Hits from Sky action is wired to Sky Connector evidence without a redundant tab system.');
