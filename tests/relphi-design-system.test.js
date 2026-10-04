@@ -42,7 +42,7 @@ assert.match(tokens, /--relphi-control-height-compact/);
   '.relphi-focus-surface'
 ].forEach(name => assert.ok(components.includes(name), 'missing SASS primitive '+name));
 ['primary','secondary','utility','danger'].forEach(role => {
-  assert.match(components,new RegExp('&--'+role+'\\\\s*\\\\{'),'missing SASS action role '+role);
+  assert.match(components,new RegExp('&--'+role+'\\s*\\{'),'missing SASS action role '+role);
 });
 
 assert.ok(tarotHtml.indexOf('relphi-design-system.css?v=2') < tarotHtml.indexOf('drawing-board-workflow-v2.css?v=75'));
