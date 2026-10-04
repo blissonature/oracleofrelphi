@@ -34,7 +34,6 @@ assert.match(tokens, /--relphi-control-height-compact/);
   '.relphi-tabs',
   '.relphi-drawer',
   '.relphi-fingerprint',
-  '.relphi-fingerprint--vertical',
   '.relphi-badge',
   '.relphi-heading',
   '.relphi-eyebrow',
@@ -44,6 +43,7 @@ assert.match(tokens, /--relphi-control-height-compact/);
 ['primary','secondary','utility','danger'].forEach(role => {
   assert.match(components,new RegExp('&--'+role+'\\s*\\{'),'missing SASS action role '+role);
 });
+assert.match(components,/&--vertical\s*\{/,'missing SASS fingerprint vertical modifier');
 
 assert.ok(tarotHtml.indexOf('relphi-design-system.css?v=2') < tarotHtml.indexOf('drawing-board-workflow-v2.css?v=75'));
 assert.ok(skyHtml.includes('relphi-design-system.css?v=2'),'Sky Chart must consume the shared Relphi design system');
