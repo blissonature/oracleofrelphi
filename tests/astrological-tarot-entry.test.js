@@ -47,3 +47,7 @@ assert.match(js,/astrologyQuestionSuggestions\(analysis,null\)/);
 
 assert.match(js,/astrologyOwnPack\|\|'full'/);
 assert.doesNotMatch(js,/Choose sub-pack…/);
+
+assert.doesNotMatch(js,/astrologyDisabledEvidence/);
+assert.doesNotMatch(js,/astrologyEvidenceKey/);
+assert.doesNotMatch(js,/astrologyEvidenceCategory/);
