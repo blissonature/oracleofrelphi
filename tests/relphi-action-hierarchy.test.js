@@ -40,11 +40,11 @@ assert.match(boardJs,/relphi-icon-button--utility/);
 
 // Where & When semantics: commit / high-level shortcut / utilities.
 assert.match(skyJs,/sky-where-when-here-now[^"]*relphi-button--secondary/);
-assert.match(skyJs,/data-ww-action="use-here"[^>]*relphi-button--utility/);
-assert.match(skyJs,/data-ww-action="search-location"[^>]*relphi-button--utility/);
+assert.match(skyJs,/relphi-button--utility[^>]*data-ww-action="use-here"/);
+assert.match(skyJs,/relphi-button--utility[^>]*data-ww-action="search-location"/);
 assert.match(skyJs,/sky-use-now-button[^"]*relphi-button--utility/);
 assert.match(skyJs,/sky-where-when-cancel[^"]*relphi-button--secondary/);
-assert.match(skyJs,/type="submit"[^>]*relphi-button--primary/);
+assert.match(skyJs,/relphi-button--primary[^>]*type="submit"/);
 
 // Feature CSS may arrange semantic actions, but may not invent their skin.
 assertNoFeatureSkin(boardCss,'#relphiBoardSettingsButton','Drawing Board Settings');
