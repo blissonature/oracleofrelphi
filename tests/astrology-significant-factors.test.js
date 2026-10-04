@@ -24,6 +24,7 @@ assert.doesNotMatch(JSON.stringify(analysis),/tarot|card-hit|seven_of_cups/i);
 const meridian=analysis.factors.find(f=>f.kind==='axis'&&/meridian/i.test(f.title));
 assert.ok(meridian.evidence.some(e=>/Venus square MC|Venus square IC/.test(e.text)));
 assert.ok(meridian.evidence.some(e=>/Pluto square MC|Pluto square IC/.test(e.text)));
+assert.ok(!meridian.evidence.some(e=>/MC occupies|IC occupies/.test(e.text)),'angles should not count themselves as reinforcement');
 assert.ok(!meridian.evidence.some(e=>/MC occupies|IC occupies/.test(e.text)),'the meridian must not count its own angles as reinforcement');
 const clusterSquare=analysis.factors.find(f=>f.kind==='cluster-relationship'&&/Libra–Capricorn cluster square/.test(f.title));
 assert.ok(clusterSquare,'Libra and Capricorn stellia should synthesize into one square structure');
