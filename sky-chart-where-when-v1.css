@@ -124,6 +124,12 @@
   cursor:default;
 }
 
+.sky-where-when-input.is-current-location {
+  background:#f2eee8;
+  color:#8b837c;
+  -webkit-text-fill-color:#8b837c;
+}
+
 .sky-where-search-row {
   display:grid;
   grid-template-columns:minmax(0,1fr) auto;
