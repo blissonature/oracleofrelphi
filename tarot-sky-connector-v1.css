@@ -59,35 +59,11 @@
 }
 
 
-/* Tarot Ledger primary views */
-.tarot-ledger-tabs{
-  display:flex;
-  align-items:end;
-  gap:.3rem;
-  margin:.35rem 0 .65rem;
-  border-bottom:1px solid rgba(31,27,24,.16);
-}
-.tarot-ledger-tabs [role="tab"]{
-  appearance:none;
-  margin:0 0 -1px;
-  padding:.48rem .72rem;
-  border:1px solid transparent;
-  border-bottom-color:rgba(31,27,24,.16);
-  border-radius:8px 8px 0 0;
-  background:transparent;
-  color:#6b625b;
-  font:800 .72rem/1.2 system-ui,sans-serif;
-  cursor:pointer;
-}
-.tarot-ledger-tabs [role="tab"][aria-selected="true"]{
-  border-color:rgba(31,27,24,.16);
-  border-bottom-color:#fffdf8;
-  background:#fffdf8;
-  color:#211d19;
-}
-.tarot-ledger-tabs [role="tab"]:focus-visible{
-  outline:2px solid #9d1f1a;
-  outline-offset:1px;
+/* Tarot Ledger Card Hits view */
+#showSkyCardHits.is-active{
+  border-color:#8f1d18;
+  background:#fff7f5;
+  color:#8f1d18;
 }
 .tarot-card-hits-panel{
   display:grid;
@@ -167,7 +143,5 @@
 }
 .tarot-card-hits-detail:empty{display:none}
 @media(max-width:660px){
-  .tarot-ledger-tabs{overflow-x:auto}
-  .tarot-ledger-tabs [role="tab"]{white-space:nowrap}
   .tarot-card-hit-row{grid-template-columns:5.7rem minmax(0,1fr);gap:.55rem;padding:.5rem}
 }
