@@ -106,7 +106,8 @@
     walk(payload);return found;
   }
   function factor(kind,title,claim,question,score,ev,entities,meta={}){
-    return {kind,title,claim,question,score,evidence:ev,entities:[...new Set(entities||[])],meta};
+    const evidenceList=Array.isArray(ev)?ev:(ev?[ev]:[]);
+    return {kind,title,claim,question,score,evidence:evidenceList,entities:[...new Set(entities||[])],meta};
   }
   function dispositionFactor(rs,sky){
     const asc=rs.find(r=>r.body==='Ascendant');if(!asc)return null;
@@ -258,7 +259,7 @@
     return strong.map((a,i)=>factor('relationship',a.a.body+' '+a.name+' '+a.b.body,
       a.a.body+' and '+a.b.body+' are tied by a close '+a.name+'.',
       'What is the '+a.a.body+'–'+a.b.body+' '+a.name+' requiring these two principles to do together?',
-      79-a.orb*2,evidence(sky+':close-aspect:'+i,'aspect',a.a.body+' '+a.name+' '+a.b.body+' · orb '+a.orb.toFixed(2)+'°',[a.a.body,a.b.body,a.a.sign,a.b.sign],2),[a.a.body,a.b.body,a.a.sign,a.b.sign],{aspect:a}));
+      79-a.orb*2,[evidence(sky+':close-aspect:'+i,'aspect',a.a.body+' '+a.name+' '+a.b.body+' · orb '+a.orb.toFixed(2)+'°',[a.a.body,a.b.body,a.a.sign,a.b.sign],2)],[a.a.body,a.b.body,a.a.sign,a.b.sign],{aspect:a}));
   }
   function overlap(a,b){
     const A=new Set(a.entities.map(norm)),B=new Set(b.entities.map(norm));if(!A.size||!B.size)return 0;
