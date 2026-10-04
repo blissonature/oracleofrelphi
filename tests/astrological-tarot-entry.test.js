@@ -31,3 +31,10 @@ assert.match(app,/relphi:sky-calculated/);
 assert.doesNotMatch(js,/<strong>Sky '\+slot\+'<\/strong>/);
 assert.match(js,/Use '\+\(count>1\?'These Skies':'This Sky'\)/);
 assert.doesNotMatch(js,/Connect Sky A or Sky A \+ Sky B/);
+
+assert.match(js,/relphi-astrology-factor-number/);
+assert.match(js,/Why this factor/);
+assert.match(js,/organizing factor/);
+assert.match(css,/\.relphi-astrology-factor-list/);
+assert.match(css,/\.relphi-astrology-factor-number/);
+assert.match(css,/var\(--relphi-board-red/);
