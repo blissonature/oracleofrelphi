@@ -43,7 +43,7 @@ if(candidate){
 
 const unrelated={name:'Unrelated clusters',placements:{
   Sun:{sign:'Aries',degree:1,house:1},Mercury:{sign:'Aries',degree:12,house:1},Venus:{sign:'Aries',degree:23,house:1},
-  Mars:{sign:'Cancer',degree:2,house:4},Jupiter:{sign:'Cancer',degree:14,house:4},Saturn:{sign:'Cancer',degree:26,house:4},
+  Mars:{sign:'Virgo',degree:2,house:4},Jupiter:{sign:'Virgo',degree:14,house:4},Saturn:{sign:'Virgo',degree:26,house:4},
   Asc:{name:'Ascendant',sign:'Virgo',degree:10,house:1},MC:{name:'Medium Coeli',sign:'Gemini',degree:10,house:10}
 }};
 const unrelatedAnalysis=engine.synthesize({skyA:unrelated,maxFactors:7});
