@@ -26,7 +26,6 @@ function installStyles(){
     .sky-where-when-editor{display:grid;grid-template-rows:minmax(0,1fr) auto;min-height:0}
     .sky-where-when-scroll-body{min-height:0;overflow:auto;padding-bottom:.2rem}
     .sky-where-when-here-now-row{display:flex;align-items:center;padding:.62rem .62rem .18rem}
-    .sky-where-when-here-now{border-radius:999px}
     [data-ww-when] .sky-where-when-now-row{display:flex;align-items:center;justify-content:space-between;gap:.45rem}
     [data-ww-when] .sky-where-when-grid{gap:.42rem}
     [data-ww-when] .sky-where-when-input{min-width:0;width:100%;box-sizing:border-box}
@@ -35,7 +34,6 @@ function installStyles(){
     [data-ww-field="time"]:disabled{opacity:.48;background:#eeeae4;color:#8b837c;cursor:not-allowed}
     .sky-where-search-label-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:.45rem;align-items:center}
     .sky-where-search-label-row .sky-where-when-label{display:block}
-    .sky-use-here-button{padding:.42rem .68rem;font-size:.62rem}
     .sky-inferred-location-value{font-weight:800}
     .sky-where-when-footer{position:relative;display:grid!important;grid-template-columns:minmax(0,1fr)!important;grid-template-rows:auto auto!important;gap:.5rem!important;width:100%;padding:.45rem .62rem .62rem!important;box-sizing:border-box;background:#fffdf8;border-top:1px solid rgba(31,27,24,.12);z-index:2}
     .sky-where-when-footer-actions{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,2fr);gap:.48rem;width:100%}
