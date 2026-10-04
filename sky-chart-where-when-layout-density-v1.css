@@ -112,35 +112,15 @@
 }
 
 
-/* Match the top shortcut to the confirm action's geometry while keeping it
-   visually secondary. Both rows use the same narrow-card grid contract. */
-.sky-where-when-editor .sky-where-when-here-now-row{
-  display:grid!important;
-  grid-template-columns:minmax(62px,.78fr) minmax(0,2.22fr)!important;
-  gap:5px!important;
-  width:100%!important;
-  padding:.45rem .62rem .18rem!important;
-  box-sizing:border-box!important;
-}
+/* Match the confirm action's approximate width without changing the editor's
+   existing flex layout or adding another layout column. */
 .sky-where-when-editor .sky-where-when-here-now{
-  grid-column:2!important;
-  width:100%!important;
-  min-width:0!important;
-  margin:0!important;
+  width:74%!important;
+  margin-left:auto!important;
   padding:.6rem .48rem!important;
   font-size:.64rem!important;
   line-height:1!important;
 }
 .sky-where-when-editor .sky-where-when-heptagram-slot .sky-ph-jump-title{
   display:none!important;
-}
-@container (max-width:285px){
-  .sky-where-when-editor .sky-where-when-here-now-row{
-    grid-template-columns:minmax(58px,.72fr) minmax(0,2.28fr)!important;
-    gap:4px!important;
-  }
-  .sky-where-when-editor .sky-where-when-here-now{
-    padding:.58rem .34rem!important;
-    font-size:.62rem!important;
-  }
 }
