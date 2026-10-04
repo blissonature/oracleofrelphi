@@ -2954,3 +2954,14 @@ body.relphi-attune-open{overflow:hidden!important}
   #shortListPanel .relphi-astrology-factor-claim,
   #shortListPanel .relphi-astrology-factor-evidence{margin-left:0!important}
 }
+
+#shortListPanel .relphi-astrology-evidence-controls{display:none!important}
+#shortListPanel .relphi-astrology-technical{grid-column:1/-1!important;background:var(--relphi-board-paper,#fffdf8)!important}
+#shortListPanel .relphi-astrology-technical>details>summary,
+#shortListPanel .relphi-astrology-raw-sky>summary{cursor:pointer!important;font-size:.7rem!important;font-weight:800!important;color:var(--relphi-board-muted,#625a53)!important}
+#shortListPanel .relphi-astrology-technical>details>summary small,
+#shortListPanel .relphi-astrology-raw-sky>summary small{font-size:.6rem!important;font-weight:700!important;margin-left:.25rem!important}
+#shortListPanel .relphi-astrology-raw-sky{margin-top:.55rem!important;padding-top:.5rem!important;border-top:1px solid var(--relphi-board-line,#d8cec5)!important}
+#shortListPanel .relphi-astrology-raw-sky ul,
+#shortListPanel .relphi-astrology-derived-evidence{margin:.45rem 0 0!important;padding-left:1.15rem!important;font-size:.65rem!important;line-height:1.42!important;color:var(--relphi-board-muted,#625a53)!important}
+#shortListPanel .relphi-astrology-technical h5{margin:.7rem 0 .25rem!important;font-size:.67rem!important}
