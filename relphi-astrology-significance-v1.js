@@ -265,8 +265,9 @@
     const A=new Set(a.entities.map(norm)),B=new Set(b.entities.map(norm));if(!A.size||!B.size)return 0;
     let shared=0;A.forEach(x=>{if(B.has(x))shared++});return shared/Math.min(A.size,B.size);
   }
+  function evidenceList(value){return Array.isArray(value)?value:(value?[value]:[])}
   function evidenceOverlap(a,b){
-    const A=new Set(a.evidence.map(e=>e.id)),B=new Set(b.evidence.map(e=>e.id));if(!A.size||!B.size)return 0;
+    const A=new Set(evidenceList(a?.evidence).map(e=>e.id)),B=new Set(evidenceList(b?.evidence).map(e=>e.id));if(!A.size||!B.size)return 0;
     let shared=0;A.forEach(x=>{if(B.has(x))shared++});return shared/Math.min(A.size,B.size);
   }
   function selectFactors(candidates,max=7){
@@ -282,8 +283,8 @@
       if(candidate.adjustedScore<55)continue;
       selected.push(candidate);
     }
-    const total=new Set(candidates.flatMap(c=>c.evidence.map(e=>e.id))).size||1;
-    const covered=new Set(selected.flatMap(c=>c.evidence.map(e=>e.id))).size;
+    const total=new Set(candidates.flatMap(c=>evidenceList(c?.evidence).map(e=>e.id))).size||1;
+    const covered=new Set(selected.flatMap(c=>evidenceList(c?.evidence).map(e=>e.id))).size;
     selected.coverage=Math.min(1,covered/total);
     return selected;
   }
