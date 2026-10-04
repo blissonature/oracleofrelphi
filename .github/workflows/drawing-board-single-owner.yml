@@ -7,7 +7,7 @@ on:
   pull_request:
     paths:
       - 'drawing-board-workflow-v2.js'
-      - 'relphi-astrology-significance-v1.js'
+      - 'relphi-astrology-significance-v2.js'
       - 'drawing-board-workflow-v2.css'
       - 'drawing-board.html'
       - 'navloader.js'
