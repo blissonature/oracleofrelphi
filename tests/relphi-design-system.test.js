@@ -23,10 +23,6 @@ assert.match(tokens, /--relphi-control-height-compact/);
 
 [
   '.relphi-button',
-  '.relphi-button--primary',
-  '.relphi-button--secondary',
-  '.relphi-button--utility',
-  '.relphi-button--danger',
   '.relphi-control--compact',
   '.relphi-icon-button',
   '.relphi-icon-button--utility',
@@ -45,6 +41,9 @@ assert.match(tokens, /--relphi-control-height-compact/);
   '.relphi-toolbar',
   '.relphi-focus-surface'
 ].forEach(name => assert.ok(components.includes(name), 'missing SASS primitive '+name));
+['primary','secondary','utility','danger'].forEach(role => {
+  assert.match(components,new RegExp('&--'+role+'\\\\s*\\\\{'),'missing SASS action role '+role);
+});
 
 assert.ok(tarotHtml.indexOf('relphi-design-system.css?v=2') < tarotHtml.indexOf('drawing-board-workflow-v2.css?v=75'));
 assert.ok(skyHtml.includes('relphi-design-system.css?v=2'),'Sky Chart must consume the shared Relphi design system');
