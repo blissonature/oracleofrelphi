@@ -4748,6 +4748,7 @@
     state.mode = 'all'; state.query = ''; state.cardFilters = []; $('oracleCommand').value = ''; showPanel('browsePanel'); setVisible('visibilityPanel', false); renderBrowse(); pushHistory();
   }
   function clearToIdle() {
+    setLedgerTabSelection('cards');
     collapseCardRow();
     state.mode = 'idle'; state.query = ''; state.selected = null; state.cardFilters = []; $('oracleCommand').value = ''; showPanel(null); updateSummary([]); hideCommandMenu(); pushHistory();
   }
@@ -4811,6 +4812,7 @@
   }
 
   function runSearch(raw, saveHistory = true, preserveFilters = false) {
+    setLedgerTabSelection('cards');
     const value = (raw ?? $('oracleCommand').value).trim();
     if (!value) { clearToIdle(); return; }
     if (value.startsWith('/')) { handleSlash(value); return; }
@@ -10305,8 +10307,9 @@ ${notes || ''}`;
   function applyHistory(snapshot) {
     state.suppressHistory = true;
     const mode = snapshot?.mode || 'idle';
-    if (mode === 'all') { state.mode = 'all'; state.query = ''; $('oracleCommand').value = ''; showPanel('browsePanel'); setVisible('visibilityPanel', false); renderBrowse(); }
-    else if (mode === 'search') { state.mode = 'search'; state.query = snapshot.query || ''; $('oracleCommand').value = state.query; showPanel('browsePanel'); renderBrowse(); }
+    if (mode === 'all') { setLedgerTabSelection('cards'); state.mode = 'all'; state.query = ''; $('oracleCommand').value = ''; showPanel('browsePanel'); setVisible('visibilityPanel', false); renderBrowse(); }
+    else if (mode === 'search') { setLedgerTabSelection('cards'); state.mode = 'search'; state.query = snapshot.query || ''; $('oracleCommand').value = state.query; showPanel('browsePanel'); renderBrowse(); }
+    else if (mode === 'sky-hits') { setLedgerTabSelection('sky-hits'); state.mode='sky-hits'; state.query=''; if($('oracleCommand'))$('oracleCommand').value=''; showPanel('cardHitsPanel'); renderSkyCardHits(); }
     else if (mode === 'spread') { state.mode = 'spread'; showPanel('spreadPanel'); updateSummary(state.currentSpread); renderSpread(); }
     else if (mode === 'date') { state.mode = 'date'; showPanel('datePanel'); updateSummary([]); }
     else if (mode === 'chart' || mode === 'currentSky') { state.mode = 'chart'; showPanel('chartPanel'); setVisible('currentSkyPanel', !isDedicatedSkyChartPage()); updateSummary([]); renderSkyCreator(); renderChartForm(); renderCurrentSkyForm(); renderChart(); renderCurrentSky(); }
@@ -10559,7 +10562,7 @@ ${notes || ''}`;
       }
       const commandDetails = document.querySelector('.tarot-command-drawer > details');
       if (commandDetails) commandDetails.open = true;
-      ['browsePanel','visibilityPanel','spreadPanel','datePanel','chartPanel','currentSkyPanel'].forEach(id => setVisible(id, false));
+      ['browsePanel','cardHitsPanel','visibilityPanel','spreadPanel','datePanel','chartPanel','currentSkyPanel'].forEach(id => setVisible(id, false));
 
       // Render from native state first. renderShortList() replaces the contents of
       // #shortListPanel, so visibility/open state must be asserted on the live DOM
@@ -10590,7 +10593,8 @@ ${notes || ''}`;
       event.preventDefault();
       if(button.dataset.ledgerTab==='sky-hits')openSkyHitsTab();else openCardsTab();
     }));
-    const landingLedger = $('landingShowLedger'); if (landingLedger) landingLedger.addEventListener('click', event => { event.preventDefault(); collapseCardRow(); setVisible('shortListPanel', false); state.mode = 'all'; state.query = ''; state.cardFilters = []; state.selected = null; renderBrowse(); showPanel('browsePanel'); $('browsePanel')?.scrollIntoView({ behavior:'smooth', block:'start' }); });
+    const landingLedger = $('landingShowLedger'); if (landingLedger) landingLedger.addEventListener('click', event => { event.preventDefault(); setLedgerTabSelection('cards'); collapseCardRow(); setVisible('shortListPanel', false); state.mode = 'all'; state.query = ''; state.cardFilters = []; state.selected = null; renderBrowse(); showPanel('browsePanel'); $('browsePanel')?.scrollIntoView({ behavior:'smooth', block:'start' }); });
+    setLedgerTabSelection(state.mode==='sky-hits'?'sky-hits':'cards');
     renderShortList();
     if (state.mode !== 'board' && !drawingBoardHasContent(storedDrawingBoardSnapshot())) { collapseCardRow(); setVisible('shortListPanel', false); const boardTrigger=$('relphiOpenDrawingBoardCurrent'); if(boardTrigger){ boardTrigger.textContent='Open Drawing Board'; boardTrigger.setAttribute('aria-expanded','false'); } }
     updateClearKeywordButtons();
