@@ -2196,8 +2196,8 @@
     const questionList=astrologyQuestionSuggestions(analysis,null),questions=astrologyQuestionGroupsMarkup(questionList,session);
     session.astrologyVisibleQuestions=questionList;
     const skyChannels=analysis.perSky.map(s=>{const items=s.skyEvidence.filter(x=>['placement','house','aspect','configuration'].includes(x.kind));if(!items.length)return '';return '<details class="relphi-astrology-raw-sky"><summary><span>Raw sky evidence · '+escapeHtml(s.name)+'</span><small>'+items.length+' data points</small><span class="relphi-astrology-raw-chevron" aria-hidden="true">›</span></summary><ul>'+items.map(x=>'<li><strong>'+escapeHtml(x.value)+'</strong>'+(x.detail?' · '+escapeHtml(x.detail):'')+'</li>').join('')+'</ul></details>';}).join('');
-    const ownPack=String(session?.astrologyOwnPack||'');
-    const ownPackOptions='<option value="">Choose sub-pack…</option>'+packOptions(ownPack);
+    const ownPack=String(session?.astrologyOwnPack||'full');
+    const ownPackOptions=packOptions(ownPack);
     return '<div class="relphi-astrology-analysis"><section class="relphi-astrology-significant-factors"><div class="relphi-astrology-factor-head"><div><h4>Significant Factors</h4><small>'+((analysis.factors||[]).length)+' organizing factor'+((analysis.factors||[]).length===1?'':'s')+' synthesized from sky evidence</small></div></div><div class="relphi-astrology-factor-list">'+factorMarkup+'</div></section>'+(skyChannels||summary||diagnostic?'<section class="relphi-astrology-technical"><details class="relphi-astrology-technical-disclosure"><summary><span class="relphi-astrology-technical-label">Technical evidence</span><span class="relphi-astrology-technical-action"><span class="relphi-astrology-technical-action-text">Show</span><span class="relphi-astrology-technical-chevron" aria-hidden="true">›</span></span></summary>'+skyChannels+(summary?'<h5>Derived patterns</h5><ul class="relphi-astrology-derived-evidence">'+summary+'</ul>':'')+diagnostic+'</details></section>':'')+'<section class="relphi-astrology-questions"><div class="relphi-astrology-question-head"><h4>Suggested questions</h4><label class="relphi-astrology-category-master"><input type="checkbox" data-astrology-category-master> <strong>All categories</strong></label></div><p class="relphi-question-prompt">These questions come from the synthesized factors above. Choose the ones you want to explore. Accepting a generated question also accepts its assigned sub-pack; you can also write your own.</p>'+questions+'<div class="relphi-astrology-own-question"><label><span>Your question</span><input type="text" data-astrology-own-question value="'+escapeHtml(session?.astrologyOwnQuestion||'')+'" placeholder="Write your own question…"></label><label><span>Sub-pack</span><select data-astrology-own-pack>'+ownPackOptions+'</select></label></div></section></div>';
   }
   function astrologySavedSkies() {
@@ -2541,7 +2541,7 @@
       renderOptions(root,{preserveScroll:true});
     });
     drawer.querySelector('[data-astrology-own-question]')?.addEventListener('input',event=>{session.astrologyOwnQuestion=event.target.value;});
-    drawer.querySelector('[data-astrology-own-pack]')?.addEventListener('change',event=>{session.astrologyOwnPack=event.target.value||'';});
+    drawer.querySelector('[data-astrology-own-pack]')?.addEventListener('change',event=>{session.astrologyOwnPack=event.target.value||'full';});
     const rememberAstrologyQuestionSelection=box=>{
       const index=Number(box.dataset.astrologyQuestion),question=session.astrologyVisibleQuestions?.[index];
       if(!question)return;
@@ -2905,7 +2905,7 @@
       if(session.path==='astro'){
         const chosen=Array.from(drawer.querySelectorAll('[data-astrology-question]')).filter(box=>box.checked).map(box=>session.astrologyVisibleQuestions?.[Number(box.dataset.astrologyQuestion)]).filter(Boolean);
         const own=String(drawer.querySelector('[data-astrology-own-question]')?.value||session.astrologyOwnQuestion||'').trim();
-        const ownPack=String(drawer.querySelector('[data-astrology-own-pack]')?.value||session.astrologyOwnPack||'');
+        const ownPack=String(drawer.querySelector('[data-astrology-own-pack]')?.value||session.astrologyOwnPack||'full');
         if(own&&!ownPack){showBoardToast('Choose a sub-pack for your authored question.',{title:'Astrological Tarot Reading',duration:4200});drawer.querySelector('[data-astrology-own-pack]')?.focus();return}
         if(own)chosen.push({text:own,pack:ownPack,source:'authored'});
         if(!chosen.length){showBoardToast('Select at least one suggested question or write your own.',{title:'Astrological Tarot Reading',duration:4200});return}
