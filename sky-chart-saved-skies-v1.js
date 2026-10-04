@@ -13,6 +13,7 @@
   const LIBRARY_KEY='relphiSkyLibraryV1';
   const SLOT_KEYS={A:'relphiSkyChartA',B:'relphiSkyChartB'};
   const GENERIC_NAMES=new Set(['','current sky','sky a','sky b','standalone sky','comparison','unnamed sky','untitled sky','new sky','where and when']);
+  const RETRO_ORDER=['Mercury','Venus','Mars','Jupiter','Saturn','Uranus','Neptune','Pluto','Chiron'];
   let openSlot=null,queued=false,popover=null;
   let deletePendingRef='',menuView='commands';
 
@@ -192,6 +193,32 @@
   }
   function addSkyB(){window.RelphiSkySlotControls?.addSkyB?.()}
   function shortMeta(record){const profile=record?.calcProfile&&typeof record.calcProfile==='object'?record.calcProfile:{},date=String(profile.dateTime||record?.dateTime||'').slice(0,10),location=String(profile.location||record?.location||'').trim();return[date,location].filter(Boolean).join(' · ')}
+  function isRetrogradePlacement(item){
+    if(!item||typeof item!=='object')return false;
+    if(item.retrograde===true||item.isRetrograde===true)return true;
+    if(String(item.motion||'').trim().toLowerCase()==='retrograde')return true;
+    const speed=Number(item.longitudeSpeed??item.speedLongitude??item.speed);
+    return Number.isFinite(speed)&&speed<0;
+  }
+  function retrogradeNames(record){
+    const source=placementSource(record);
+    return RETRO_ORDER.filter(name=>{
+      const hit=Object.entries(source).find(([key,item])=>normalize(item?.name||item?.label||item?.body||item?.planet||key)===normalize(name));
+      return !!hit&&isRetrogradePlacement(hit[1]);
+    });
+  }
+  function retrogradeMarkup(record){
+    const names=retrogradeNames(record);if(!names.length)return'';
+    return '<span class="sky-saved-retrogrades" aria-label="Retrograde: '+escapeHtml(names.join(', '))+'">'+names.map(name=>'<span class="sky-saved-retrograde" title="'+escapeHtml(name)+' retrograde"><svg viewBox="-12 -12 24 24" aria-hidden="true" data-saved-retro-glyph="'+escapeHtml(normalize(name))+'"></svg><span class="sky-saved-retrograde-mark" aria-hidden="true">℞</span></span>').join('')+'</span>';
+  }
+  function renderRetrogradeGlyphs(root){
+    const registry=window.RelphiGlyphRegistry,component=window.RelphiGlyphComponent;if(!registry||!component)return;
+    root?.querySelectorAll?.('[data-saved-retro-glyph]').forEach(svg=>{
+      if(svg.dataset.savedRetroReady==='true')return;
+      const id=svg.dataset.savedRetroGlyph,entry=registry.get?.(id)||registry.resolve?.(id);if(!entry)return;
+      svg.dataset.savedRetroReady='true';void component.draw(svg,entry.id,{radius:8,padding:1,color:'#514941'}).catch(()=>{delete svg.dataset.savedRetroReady});
+    });
+  }
   function escapeHtml(value){return String(value??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]))}
 
   function ensurePopover(){
@@ -202,8 +229,8 @@
     const active=identity(openSlot),value=payload(openSlot),hasSky=hasPlacements(value),records=library();
     if(menuView==='load'){
       const activeRef=active.record?recordRef(active.record):'';
-      const items=records.length?records.map(record=>{const ref=recordRef(record),meta=shortMeta(record),current=ref===activeRef,name=String(record.name||'Saved sky'),confirming=ref===deletePendingRef;const confirmation=confirming?`<div class="sky-saved-delete-confirmation" role="group" aria-label="Delete ${escapeHtml(name)}?"><span>Delete this saved sky?</span><button type="button" data-saved-delete-cancel>Cancel</button><button type="button" class="is-danger" data-saved-delete-confirm="${escapeHtml(ref)}">Delete</button></div>`:'';return `<div class="sky-saved-list-row${current?' is-active':''}${confirming?' is-confirming-delete':''}"><button type="button" class="sky-saved-list-item" data-saved-sky-ref="${escapeHtml(ref)}" aria-label="Load ${escapeHtml(name)} into Sky ${openSlot}"><span class="sky-saved-list-name">${escapeHtml(name)}</span>${meta?`<span class="sky-saved-list-meta">${escapeHtml(meta)}</span>`:''}<span class="sky-saved-list-check" aria-hidden="true">${current?'✓':''}</span></button><button type="button" class="sky-saved-list-delete" data-saved-delete-ref="${escapeHtml(ref)}" aria-label="Delete ${escapeHtml(name)} from Saved skies" title="Delete from Saved skies">×</button>${confirmation}</div>`}).join(''):'<p class="sky-saved-empty">No saved skies yet.</p>';
-      menu.innerHTML=`<div class="sky-saved-subview-head"><button type="button" class="sky-saved-back" data-sky-menu-back aria-label="Back">‹</button><strong>Load Sky</strong></div><div class="sky-saved-list">${items}</div>`;positionPopover();return;
+      const items=records.length?records.map(record=>{const ref=recordRef(record),meta=shortMeta(record),retro=retrogradeMarkup(record),current=ref===activeRef,name=String(record.name||'Saved sky'),confirming=ref===deletePendingRef;const confirmation=confirming?`<div class="sky-saved-delete-confirmation" role="group" aria-label="Delete ${escapeHtml(name)}?"><span>Delete this saved sky?</span><button type="button" data-saved-delete-cancel>Cancel</button><button type="button" class="is-danger" data-saved-delete-confirm="${escapeHtml(ref)}">Delete</button></div>`:'';return `<div class="sky-saved-list-row${current?' is-active':''}${confirming?' is-confirming-delete':''}"><button type="button" class="sky-saved-list-item" data-saved-sky-ref="${escapeHtml(ref)}" aria-label="Load ${escapeHtml(name)} into Sky ${openSlot}"><span class="sky-saved-list-name">${escapeHtml(name)}</span>${meta?`<span class="sky-saved-list-meta">${escapeHtml(meta)}</span>`:''}${retro}<span class="sky-saved-list-check" aria-hidden="true">${current?'✓':''}</span></button><button type="button" class="sky-saved-list-delete" data-saved-delete-ref="${escapeHtml(ref)}" aria-label="Delete ${escapeHtml(name)} from Saved skies" title="Delete from Saved skies">×</button>${confirmation}</div>`}).join(''):'<p class="sky-saved-empty">No saved skies yet.</p>';
+      menu.innerHTML=`<div class="sky-saved-subview-head"><button type="button" class="sky-saved-back" data-sky-menu-back aria-label="Back">‹</button><strong>Load Sky</strong></div><div class="sky-saved-list">${items}</div>`;renderRetrogradeGlyphs(menu);positionPopover();return;
     }
     if(menuView==='save'){
       const label=active.saved?'Save Changes':'Save Sky',name=active.saved?active.name:(active.name==='New Sky'||active.name==='Where and When'||active.name===`Sky ${openSlot}`||active.name==='Unsaved sky'?'':active.name);
