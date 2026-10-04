@@ -18,12 +18,17 @@ assert.ok(analysis.factors.length>=4&&analysis.factors.length<=7);
 const text=analysis.factors.map(f=>f.title+' '+f.claim).join('\n');
 assert.match(text,/Chart-ruler dispositor structure/);
 assert.match(text,/Empowered polarity/);
-assert.match(text,/Libra|House 5|Mercury conjunct Sun|Mercury conjunct Mars/);
+assert.match(text,/Libra–Capricorn cluster square/);
 assert.match(text,/Reinforced meridian complex/);
 assert.doesNotMatch(JSON.stringify(analysis),/tarot|card-hit|seven_of_cups/i);
 const meridian=analysis.factors.find(f=>f.kind==='axis'&&/meridian/i.test(f.title));
 assert.ok(meridian.evidence.some(e=>/Venus square MC|Venus square IC/.test(e.text)));
 assert.ok(meridian.evidence.some(e=>/Pluto square MC|Pluto square IC/.test(e.text)));
+const clusterSquare=analysis.factors.find(f=>f.kind==='cluster-relationship'&&/Libra–Capricorn cluster square/.test(f.title));
+assert.ok(clusterSquare,'Libra and Capricorn stellia should synthesize into one square structure');
+assert.ok(clusterSquare.meta.links.length>=3,'cluster relationship requires multiple direct cross-links');
+assert.ok(clusterSquare.meta.left.coverage>=.5&&clusterSquare.meta.right.coverage>=.5,'both clusters must materially participate');
+assert.ok(!analysis.factors.some(f=>f.kind==='concentration'&&/Libra|Capricorn/.test(f.title)),'combined cluster relationship should suppress redundant concentration factors');
 assert.ok(analysis.factors.every(f=>f.question&&Array.isArray(f.evidence)&&f.evidence.length));
 assert.ok(analysis.skies.flatMap(s=>s.candidates).every(f=>Array.isArray(f.evidence)),'every candidate must expose evidence as an array');
 console.log('Significant Factors compress Kendra into non-Tarot astrological structures.');
@@ -35,3 +40,11 @@ if(candidate){
   // Public synthesis starts clean, but the evidence contract must also tolerate a singular legacy value.
   assert.ok(candidate.evidence && !Array.isArray(candidate.evidence));
 }
+
+const unrelated={name:'Unrelated clusters',placements:{
+  Sun:{sign:'Aries',degree:1,house:1},Mercury:{sign:'Aries',degree:12,house:1},Venus:{sign:'Aries',degree:23,house:1},
+  Mars:{sign:'Cancer',degree:2,house:4},Jupiter:{sign:'Cancer',degree:14,house:4},Saturn:{sign:'Cancer',degree:26,house:4},
+  Asc:{name:'Ascendant',sign:'Virgo',degree:10,house:1},MC:{name:'Medium Coeli',sign:'Gemini',degree:10,house:10}
+}};
+const unrelatedAnalysis=engine.synthesize({skyA:unrelated,maxFactors:7});
+assert.ok(!unrelatedAnalysis.factors.some(f=>f.kind==='cluster-relationship'),'two concentrations without enough actual cross-aspects must remain separate');
