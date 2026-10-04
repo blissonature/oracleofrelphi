@@ -86,10 +86,9 @@
     const rows=eligibleRows();
     if(!rows.length){clearMarks(wheel);return}
     const matched=explicitRows(rows);
-    // Any explicit reduction is a focus state, including an empty result set.
-    // If nothing survives, keep the wheel in focused mode with zero kept pieces so
-    // the chart reads as intentionally unfilled rather than reverting to full color.
-    const active=matched.length<rows.length;
+    // An empty relationship result means "show no aspect lines", not "isolate nothing".
+    // Keep the wheel neutral so placements, signs, and houses remain fully legible.
+    const active=matched.length>0&&matched.length<rows.length;
     wheel.classList.toggle('has-filter-focus',active);
     if(!active){
       clearMarks(wheel);
