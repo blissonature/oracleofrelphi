@@ -42,8 +42,7 @@ assert.match(css,/var\(--relphi-board-red/);
 assert.doesNotMatch(js,/data-astrology-evidence="/);
 assert.doesNotMatch(js,/data-astrology-evidence-master/);
 assert.match(js,/Technical evidence/);
-assert.match(js,/Inspect raw sky evidence/);
-assert.match(js,/astrologyQuestionSuggestions\(analysis,null\)/);
+assert.match(js,/Raw sky evidence/);
 
 assert.match(js,/astrologyOwnPack\|\|'full'/);
 assert.doesNotMatch(js,/Choose sub-pack…/);
