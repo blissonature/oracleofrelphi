@@ -75,9 +75,6 @@
   width:100%!important;
   min-width:0!important;
   margin:0!important;
-  padding:.6rem .48rem!important;
-  font-size:.64rem!important;
-  line-height:1!important;
 }
 
 /* Sky cards are containers and can be ~270px wide even on a wide desktop. Size
@@ -86,10 +83,6 @@
   .sky-where-when-editor .sky-where-when-footer-actions{
     grid-template-columns:minmax(58px,.72fr) minmax(0,2.28fr)!important;
     gap:4px!important;
-  }
-  .sky-where-when-editor .sky-where-when-footer-actions .sky-where-when-button{
-    padding:.58rem .34rem!important;
-    font-size:.62rem!important;
   }
 }
 
