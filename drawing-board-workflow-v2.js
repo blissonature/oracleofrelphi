@@ -2052,7 +2052,6 @@
     const cfg=payload?.configurations||payload?.aspectConfigurations||payload?.patterns?.configurations||[];(Array.isArray(cfg)?cfg:[]).forEach(x=>patterns.push({type:'configuration',value:String(x.name||x.type||x.label||'Configuration'),count:Number(x.members?.length||x.points?.length||3),score:7}));
     return patterns.sort((a,b)=>b.score-a.score||b.count-a.count).filter((p,i,a)=>a.findIndex(q=>q.type===p.type&&q.value===p.value)===i);
   }
-  function astrologyEvidenceKey(item){return item.kind+':'+String(item.id||item.value||'').toLowerCase()}
   function astrologySuggestedPack(source,evidence) {
     if(source==='ruler' || source==='planet-relationship') return 'planetary-majors';
     if(source==='polarity-derived-sign') return 'zodiac-majors';
@@ -2062,15 +2061,15 @@
     if(source==='cluster' || source==='configuration') return 'full';
     return 'full';
   }
-  function astrologyQuestionSuggestions(analysis,enabledKeys) {
+  function astrologyQuestionSuggestions(analysis) {
     if(Array.isArray(analysis?.factors)&&analysis.factors.length){
       return analysis.factors.slice(0,7).map((factor,index)=>({text:factor.question||('What is '+factor.title+' asking of this reading?'),score:Number(factor.adjustedScore||factor.score||100)-index*.01,source:'significant-factor',evidence:factor,pack:'full',packReason:'significant-factor',factor}));
     }
-    const enabled=item=>!enabledKeys||enabledKeys.has(astrologyEvidenceKey(item)),out=[];
+    const out=[];
     const push=(text,score,source,evidence)=>{if(text&&!out.some(q=>q.text===text)){const pack=astrologySuggestedPack(source,evidence);out.push({text,score,source,evidence,pack,packReason:source});}};
     // Evidence is not automatically a question. Only promote evidence whose meaning,
     // consequence, synthesis, or activation remains unresolved by the sky itself.
-    analysis.evidence.filter(enabled).forEach(e=>{
+    analysis.evidence.forEach(e=>{
       if(e.kind==='pattern'){
         const p=e.raw;
         if(p.type==='sign') push('What is the '+p.value+' concentration emphasizing?',90+p.score,'pattern',e);
@@ -2162,21 +2161,6 @@
       return '<section class="relphi-astrology-question-group" data-astrology-question-group="'+escapeHtml(group.id)+'"><div class="relphi-astrology-question-group-head"><label class="relphi-astrology-category-toggle"><input type="checkbox" data-astrology-category-toggle="'+escapeHtml(group.id)+'"'+categoryChecked+'><strong>'+escapeHtml(group.label)+'</strong></label></div>'+group.items.map(({question,index})=>'<label class="relphi-astrology-question"><input type="checkbox" data-astrology-question="'+index+'" data-astrology-question-category="'+escapeHtml(group.id)+'" '+(astrologyQuestionIsSelected(session,question,index)?'checked':'')+'><span><strong>'+escapeHtml(question.text)+'</strong><small>'+escapeHtml(packLabel(question.pack))+'</small></span></label>').join('')+'</section>';
     }).join('');
   }
-  function astrologyEvidenceCategory(item) {
-    const kind=String(item?.kind||'');
-    if(kind==='significant-factor')return {id:'significant-factors',label:'Significant factors'};
-    if(kind==='hit')return {id:'card-hits',label:'Card Hits'};
-    if(kind==='placement')return {id:'placements',label:'Placements'};
-    if(kind==='house')return {id:'houses',label:'Houses'};
-    if(kind==='aspect')return {id:'aspects',label:'Aspects'};
-    if(kind==='configuration')return {id:'configurations',label:'Configurations'};
-    if(kind==='planet-relationship')return {id:'planet-relationships',label:'Planet relationships'};
-    if(kind==='pattern')return {id:'patterns',label:'Patterns'};
-    if(kind==='ruler')return {id:'rulers',label:'Rulers'};
-    if(kind==='polarity')return {id:'polarity',label:'Polarity'};
-    if(kind==='tag')return {id:'themes',label:'Themes'};
-    return {id:'other',label:'Other'};
-  }
   function astrologyAnalysisMarkup(analysis,session) {
     if(!analysis)return '';
     const factorMarkup=(analysis.factors||[]).map((factor,index)=>{
@@ -2193,7 +2177,7 @@
     const pd=analysis.polarityDiagnostic,polarityDetail=pd?' <small class="relphi-polarity-bin">'+pd.winner+' '+(pd.share*100).toFixed(1)+'% · excess '+(pd.excess*100).toFixed(1)+' points → <strong>'+pd.sign+'</strong> · bin '+(pd.index+1)+'/6</small>':'';
     const summary=summaries.map(x=>'<li><strong>'+escapeHtml(x.value)+'</strong> · '+escapeHtml(x.type)+(x.count?' ×'+x.count:'')+(x.kind==='polarity'?polarityDetail:'')+'</li>').join('');
     const diagnostic=pd?'<div class="relphi-polarity-diagnostic"><strong>Experimental polarity → sign test</strong><span>'+pd.winner+' selects the '+(pd.winner==='Active'?'Yang':'Yin')+' signs; '+(pd.excess*100).toFixed(1)+'-point excess selects bin '+(pd.index+1)+'/6 → <strong>'+pd.sign+'</strong>.</span><span class="relphi-polarity-test-result"><strong>Independent check:</strong> '+(pd.observed?escapeHtml(pd.sign)+' is independently concentrated ×'+pd.observedCount:'no independent '+escapeHtml(pd.sign)+' concentration')+'.</span><small>Experimental derived-sign evidence — retained only in the optional technical evidence.</small></div>':'';
-    const questionList=astrologyQuestionSuggestions(analysis,null),questions=astrologyQuestionGroupsMarkup(questionList,session);
+    const questionList=astrologyQuestionSuggestions(analysis),questions=astrologyQuestionGroupsMarkup(questionList,session);
     session.astrologyVisibleQuestions=questionList;
     const skyChannels=analysis.perSky.map(s=>{const items=s.skyEvidence.filter(x=>['placement','house','aspect','configuration'].includes(x.kind));if(!items.length)return '';return '<details class="relphi-astrology-raw-sky"><summary><span>Raw sky evidence · '+escapeHtml(s.name)+'</span><small>'+items.length+' data points</small><span class="relphi-astrology-raw-chevron" aria-hidden="true">›</span></summary><ul>'+items.map(x=>'<li><strong>'+escapeHtml(x.value)+'</strong>'+(x.detail?' · '+escapeHtml(x.detail):'')+'</li>').join('')+'</ul></details>';}).join('');
     const ownPack=String(session?.astrologyOwnPack||'full');
@@ -2253,7 +2237,6 @@
     session.astrologyResolved=null;
     session.astrologyVisibleQuestions=[];
     session.astrologyQuestionSelection={};
-    session.astrologyDisabledEvidence=[];
   }
   function astrologySkySourceMarkup(slot,session,disabled=false) {
     const isB=slot==='B',key=isB?'astrologySkyBSource':'astrologySkyASource';
