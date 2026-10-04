@@ -852,6 +852,48 @@
     '</section>';
   }
 
+  function renderSkyCardHits() {
+    const panel=$('cardHitsPanel'),listRoot=$('cardHitsList'),detail=$('cardHitsDetail'),summary=$('cardHitsSummary');
+    if(!panel||!listRoot||!detail||!summary)return;
+    const context=connectedSkyContext();
+    const entries=window.RelphiSkyConnector?.tarotActivations?.()||[];
+    const rows=entries.map(entry=>({entry,card:cardById(entry.cardId)})).filter(item=>item.card)
+      .sort((a,b)=>(b.entry.hitCount||0)-(a.entry.hitCount||0)||searchDisplayOrder(a.card)-searchDisplayOrder(b.card)||title(a.card).localeCompare(title(b.card)));
+    if(!context?.enabled||context?.source!=='saved'||!context?.savedSky){
+      summary.textContent='Choose a saved sky in Sky Connector to explore its Card Hits.';
+      listRoot.innerHTML='<p class="empty-state">Card Hits from Sky uses the active saved sky as evidence. Connect one above to begin.</p>';
+      detail.innerHTML='';
+      return;
+    }
+    const totalHits=rows.reduce((sum,item)=>sum+(item.entry.hitCount||item.entry.hits?.length||0),0);
+    summary.textContent=rows.length
+      ? connectedSkyName()+' activates '+rows.length+' card'+(rows.length===1?'':'s')+' through '+totalHits+' hit'+(totalHits===1?'':'s')+'.'
+      : connectedSkyName()+' has no Card Hits under the current connector rules.';
+    if(!rows.length){
+      listRoot.innerHTML='<p class="empty-state">No cards are activated by this sky under the current Card Hits rules.</p>';
+      detail.innerHTML='';
+      return;
+    }
+    listRoot.innerHTML=rows.map(({entry,card})=>{
+      const reasons=(entry.hits||[]).map(hit=>'<li>'+escapeHtml(hit.reason||hit.kind||'Sky activation')+'</li>').join('');
+      return '<article class="tarot-card-hit-row" data-card-hit-row="'+escapeHtml(card.card_id)+'">'+
+        '<div class="tarot-card-hit-card">'+renderCardSurface(card,{context:'sky-hits',selectable:false})+'</div>'+
+        '<div class="tarot-card-hit-evidence"><div class="tarot-card-hit-evidence-head"><button type="button" class="tarot-card-hit-title" data-card-hit-detail="'+escapeHtml(card.card_id)+'">'+escapeHtml(title(card))+'</button><span>×'+String(entry.hitCount||entry.hits?.length||0)+'</span></div><ul>'+reasons+'</ul></div>'+
+      '</article>';
+    }).join('');
+    listRoot.querySelectorAll('[data-card-hit-detail]').forEach(button=>button.addEventListener('click',()=>{
+      const card=cardById(button.dataset.cardHitDetail);
+      if(!card)return;
+      detail.innerHTML=cardDetailHtml(card,'Card Hit from Sky');
+      bindCardEntry(detail);
+      detail.scrollIntoView({behavior:'smooth',block:'nearest'});
+    }));
+    if(rows[0]?.card){
+      detail.innerHTML=cardDetailHtml(rows[0].card,'Card Hit from Sky');
+      bindCardEntry(detail);
+    }
+  }
+
   function renderCardSurface(card, options={}) {
     const context = options.context || 'browse';
     const glyphTags = context === 'short-list' ? '' : renderGlyphChips(card);
@@ -3692,10 +3734,33 @@
     history.replaceState(snapshot, '', location.pathname + location.search + '#' + hash);
   }
   function showPanel(id) {
-    ['browsePanel','visibilityPanel','spreadPanel','datePanel','chartPanel','currentSkyPanel'].forEach(panel => setVisible(panel, false));
+    ['browsePanel','cardHitsPanel','visibilityPanel','spreadPanel','datePanel','chartPanel','currentSkyPanel'].forEach(panel => setVisible(panel, false));
     if (id) setVisible(id, true);
     updateClearKeywordButtons();
   }
+  function setLedgerTabSelection(id='') {
+    document.querySelectorAll('[data-ledger-tab]').forEach(button=>{
+      const selected=(id==='sky-hits'&&button.dataset.ledgerTab==='sky-hits')||(id!=='sky-hits'&&button.dataset.ledgerTab==='cards');
+      button.setAttribute('aria-selected',selected?'true':'false');
+      button.classList.toggle('is-active',selected);
+    });
+  }
+  function openCardsTab() {
+    setLedgerTabSelection('cards');
+    if (state.mode==='idle') { state.mode='all'; state.query=''; state.cardFilters=[]; }
+    showPanel('browsePanel');
+    renderBrowse();
+    pushHistory();
+  }
+  function openSkyHitsTab() {
+    state.mode='sky-hits';
+    state.query='';
+    setLedgerTabSelection('sky-hits');
+    showPanel('cardHitsPanel');
+    renderSkyCardHits();
+    pushHistory();
+  }
+
   function updateSummary(list) {
     const count = list.length;
     const summaryModes = ['idle', 'all', 'search'];
@@ -4679,6 +4744,7 @@
 
 
   function showAll() {
+    setLedgerTabSelection('cards');
     state.mode = 'all'; state.query = ''; state.cardFilters = []; $('oracleCommand').value = ''; showPanel('browsePanel'); setVisible('visibilityPanel', false); renderBrowse(); pushHistory();
   }
   function clearToIdle() {
@@ -4813,6 +4879,7 @@
     const lower = text.toLowerCase();
     if (!text || lower === 'show all' || lower === 'all') { showAll(); return; }
     if (lower === 'connector' || lower === 'sky connector' || lower === 'connect sky') { focusSkyConnector(); hideCommandMenu(); return; }
+    if (lower === 'card hits' || lower === 'card hits from sky' || lower === 'sky card hits') { openSkyHitsTab(); hideCommandMenu(); return; }
     if (lower === 'connected sky' || lower === 'sky activations' || lower === 'sky hits') { runSearch('connected sky'); return; }
     if (lower.startsWith('draw')) { openSpread(); return; }
     if (lower.startsWith('spell')) { const spellText = text.replace(/^spell\s*/i, ''); if (spellText && openSpellSequence(spellText)) return; updateSummary([]); hideCommandMenu(); return; }
@@ -4841,7 +4908,7 @@
     if (!raw.startsWith('/')) return [];
     const term = raw.slice(1).trim().toLowerCase();
     const base = [
-      ['show all','Show All Cards'], ['draw','Draw Cards'], ['connector','Sky Connector'], ['connected sky','Search Connected Sky Cards'], ['date ','Look Up a Date'], ['spell ','Spell Hebrew letters as cards'], ['chart','Chart Placement'], ['card ','Look Up a Card'], ['planet ','Filter by Planet'], ['sign ','Filter by Sign'], ['theme ','Search a Theme'], ['rising ','Add Rising Sign']
+      ['show all','Show All Cards'], ['draw','Draw Cards'], ['connector','Sky Connector'], ['card hits','Card Hits from Sky'], ['connected sky','Search Connected Sky Cards'], ['date ','Look Up a Date'], ['spell ','Spell Hebrew letters as cards'], ['chart','Chart Placement'], ['card ','Look Up a Card'], ['planet ','Filter by Planet'], ['sign ','Filter by Sign'], ['theme ','Search a Theme'], ['rising ','Add Rising Sign']
     ];
     return base.filter(([cmd, label]) => !term || cmd.includes(term) || label.toLowerCase().includes(term)).slice(0, 8);
   }
@@ -4870,7 +4937,8 @@
   function hideCommandMenu() { $('commandMenu').hidden = true; $('commandMenu').innerHTML = ''; }
 
   window.addEventListener('relphi:sky-context-change',()=>{
-    if (state.mode === 'all' || state.mode === 'search') renderBrowse();
+    if (state.mode === 'sky-hits') renderSkyCardHits();
+    else if (state.mode === 'all' || state.mode === 'search') renderBrowse();
     else if (state.selected) renderDetail(state.selected);
   });
 
@@ -10518,6 +10586,10 @@ ${notes || ''}`;
     const landingDraw = $('landingDrawCard'); if (landingDraw) landingDraw.addEventListener('click', event => { event.preventDefault(); showDrawingBoardFromLanding(true); });
     const landingBoard = $('landingOpenBoard'); if (landingBoard) landingBoard.addEventListener('click', event => { event.preventDefault(); showDrawingBoardFromLanding(false); });
     const currentBoard = $('relphiOpenDrawingBoardCurrent'); if (currentBoard) currentBoard.addEventListener('click', event => { event.preventDefault(); showDrawingBoardFromLanding(false); });
+    document.querySelectorAll('[data-ledger-tab]').forEach(button=>button.addEventListener('click',event=>{
+      event.preventDefault();
+      if(button.dataset.ledgerTab==='sky-hits')openSkyHitsTab();else openCardsTab();
+    }));
     const landingLedger = $('landingShowLedger'); if (landingLedger) landingLedger.addEventListener('click', event => { event.preventDefault(); collapseCardRow(); setVisible('shortListPanel', false); state.mode = 'all'; state.query = ''; state.cardFilters = []; state.selected = null; renderBrowse(); showPanel('browsePanel'); $('browsePanel')?.scrollIntoView({ behavior:'smooth', block:'start' }); });
     renderShortList();
     if (state.mode !== 'board' && !drawingBoardHasContent(storedDrawingBoardSnapshot())) { collapseCardRow(); setVisible('shortListPanel', false); const boardTrigger=$('relphiOpenDrawingBoardCurrent'); if(boardTrigger){ boardTrigger.textContent='Open Drawing Board'; boardTrigger.setAttribute('aria-expanded','false'); } }
