@@ -821,6 +821,37 @@
     if (value) value = sentenceCaseFragment(value);
     return value;
   }
+  function connectedSkyActivationForCard(card) {
+    if (!card) return null;
+    return window.RelphiSkyConnector?.tarotActivations?.().find(entry => entry.cardId === card.card_id) || null;
+  }
+  function connectedSkyContext() {
+    return window.RelphiSkyConnector?.context?.() || null;
+  }
+  function connectedSkyName() {
+    const context = connectedSkyContext();
+    return String(context?.savedSky?.name || context?.savedSky?.metadata?.savedSkyName || (context?.source === 'rising' ? ((context?.ascendantSign || 'Aries') + ' Ascendant') : 'Connected sky'));
+  }
+  function isConnectedSkyQuery(value) {
+    const q = normalizeSearch(String(value || '').replace(/^\//,''));
+    return ['connected sky','sky activation','sky activations','sky hit','sky hits','connector cards'].includes(q);
+  }
+  function connectedSkyCards() {
+    const activations = window.RelphiSkyConnector?.tarotActivations?.() || [];
+    return activations.map(entry => ({ entry, card:cardById(entry.cardId) })).filter(item => item.card)
+      .sort((a,b)=>(b.entry.hitCount||0)-(a.entry.hitCount||0)||searchDisplayOrder(a.card)-searchDisplayOrder(b.card)||title(a.card).localeCompare(title(b.card)))
+      .map(item => item.card);
+  }
+  function connectedSkyEntryHtml(card) {
+    const entry = connectedSkyActivationForCard(card);
+    const hits = entry?.hits || [];
+    if (!hits.length) return '';
+    return '<section class="relphi-connected-sky-entry" aria-label="Connected Sky evidence">'+
+      '<div class="relphi-connected-sky-entry-head"><h3>Connected Sky</h3><small>'+escapeHtml(connectedSkyName())+' · '+hits.length+' activation'+(hits.length===1?'':'s')+'</small></div>'+
+      '<ul>'+hits.map(hit=>'<li>'+escapeHtml(hit.reason||hit.kind||'Sky activation')+'</li>').join('')+'</ul>'+
+    '</section>';
+  }
+
   function renderCardSurface(card, options={}) {
     const context = options.context || 'browse';
     const glyphTags = context === 'short-list' ? '' : renderGlyphChips(card);
@@ -831,7 +862,7 @@
     const hitSourceText = uniqueHitSources.join(' · ');
     const hitLabel = options.hitCount === 1 ? 'placement' : 'placements';
     const badge = options.hitCount ? `<button class="or-hit-badge" type="button" data-placement-toggle aria-label="Show ${escapeHtml(options.hitCount)} chart ${escapeHtml(hitLabel)}" title="${escapeHtml(hitSourceText || `${options.hitCount} chart ${hitLabel}`)}">×${options.hitCount}</button>` : '';
-    const connectedSkyEntry = window.RelphiSkyConnector?.tarotActivations?.().find(entry => entry.cardId === card.card_id) || null;
+    const connectedSkyEntry = connectedSkyActivationForCard(card);
     const connectedSkyHits = connectedSkyEntry?.hits || [];
     const connectedSkyMark = connectedSkyHits.length ? `<span class="relphi-connected-sky-mark" data-connected-sky-card="${escapeHtml(card.card_id)}" title="${escapeHtml(connectedSkyHits.map(hit=>hit.reason).join(' · '))}" aria-label="${escapeHtml(connectedSkyHits.length)} connected sky activation${connectedSkyHits.length===1?'':'s'}"><span aria-hidden="true"></span><b>×${connectedSkyHits.length}</b></span>` : '';
     const addLabel = inShortList ? 'Remove card from Drawing Board' : 'Add card to Drawing Board';
@@ -3599,6 +3630,7 @@
     const raw = state.query.trim().replace(/^\//, '');
     const query = normalizeSearch(raw);
     if (!query) return [];
+    if (isConnectedSkyQuery(raw)) return connectedSkyCards();
     const ordered = orderedCardTokenResults(raw);
     if (ordered.length) return ordered;
     const courtCode = courtRanksForCode(String(raw || '').trim().toUpperCase().replace(/\s+/g, ''));
@@ -3679,6 +3711,8 @@
       if (state.lastDateField?.query && state.query === state.lastDateField.query) {
         const date = new Date(state.lastDateField.date + 'T12:00:00');
         $('activeSummary').textContent = `Date lookup for ${date.toLocaleDateString(undefined, { weekday:'long', year:'numeric', month:'long', day:'numeric' })}.`;
+      } else if (isConnectedSkyQuery(state.query)) {
+        $('activeSummary').textContent = `Cards activated by ${connectedSkyName()}.`;
       } else {
         $('activeSummary').textContent = `Search results for “${state.query}”.`;
       }
@@ -4459,6 +4493,7 @@
             </div>
             ${lockedIngredientsHtml(card)}
           </section>
+          ${connectedSkyEntryHtml(card)}
           ${lockedInterpretationComparisonHtml(card)}
           ${zodiacRangeGraphicHtml(card)}
           ${signList(card.astrology?.sign).length === 1 && SIGN_DATA[card.astrology?.sign] ? `<p class="generated-note">${escapeHtml(dignityLine(card.astrology.sign))}</p>` : ''}
@@ -4517,7 +4552,12 @@
       const needle = normalizeSearch(String(query || ''));
       if (!needle) return [];
       const max = Math.max(1, Math.min(60, Number(limit) || 24));
-      return rowDrawPool(scope || 'full',{ignoreUsed:true}).filter(card => normalizeSearch(compactText(card) + ' ' + cardSearchTokens(card)).includes(needle)).slice(0, max).map(card => ({
+      const eligible = rowDrawPool(scope || 'full',{ignoreUsed:true});
+      const eligibleIds = new Set(eligible.map(card=>card.card_id));
+      const pool = isConnectedSkyQuery(query)
+        ? connectedSkyCards().filter(card => eligibleIds.has(card.card_id))
+        : eligible.filter(card => normalizeSearch(compactText(card) + ' ' + cardSearchTokens(card)).includes(needle));
+      return pool.slice(0, max).map(card => ({
         card_id:card.card_id,
         title:title(card),
         image:rwsImagePath(card)
@@ -4760,10 +4800,20 @@
     return true;
   }
 
+  function focusSkyConnector() {
+    const host = document.getElementById('relphiLedgerSkyConnectorHost');
+    const select = host?.querySelector('[data-sky-choice]');
+    if (!host || !select) return false;
+    host.scrollIntoView({ behavior:'smooth', block:'center' });
+    select.focus({ preventScroll:true });
+    return true;
+  }
   function handleSlash(value) {
     const text = value.slice(1).trim();
     const lower = text.toLowerCase();
     if (!text || lower === 'show all' || lower === 'all') { showAll(); return; }
+    if (lower === 'connector' || lower === 'sky connector' || lower === 'connect sky') { focusSkyConnector(); hideCommandMenu(); return; }
+    if (lower === 'connected sky' || lower === 'sky activations' || lower === 'sky hits') { runSearch('connected sky'); return; }
     if (lower.startsWith('draw')) { openSpread(); return; }
     if (lower.startsWith('spell')) { const spellText = text.replace(/^spell\s*/i, ''); if (spellText && openSpellSequence(spellText)) return; updateSummary([]); hideCommandMenu(); return; }
     if (lower.startsWith('date')) { const dateText = text.replace(/^date\s*/i, ''); if (dateText && openDateFromSearch(dateText)) return; openDate(); return; }
@@ -4791,7 +4841,7 @@
     if (!raw.startsWith('/')) return [];
     const term = raw.slice(1).trim().toLowerCase();
     const base = [
-      ['show all','Show All Cards'], ['draw','Draw Cards'], ['date ','Look Up a Date'], ['spell ','Spell Hebrew letters as cards'], ['chart','Chart Placement'], ['card ','Look Up a Card'], ['planet ','Filter by Planet'], ['sign ','Filter by Sign'], ['theme ','Search a Theme'], ['rising ','Add Rising Sign']
+      ['show all','Show All Cards'], ['draw','Draw Cards'], ['connector','Sky Connector'], ['connected sky','Search Connected Sky Cards'], ['date ','Look Up a Date'], ['spell ','Spell Hebrew letters as cards'], ['chart','Chart Placement'], ['card ','Look Up a Card'], ['planet ','Filter by Planet'], ['sign ','Filter by Sign'], ['theme ','Search a Theme'], ['rising ','Add Rising Sign']
     ];
     return base.filter(([cmd, label]) => !term || cmd.includes(term) || label.toLowerCase().includes(term)).slice(0, 8);
   }
@@ -4818,6 +4868,11 @@
   }
 
   function hideCommandMenu() { $('commandMenu').hidden = true; $('commandMenu').innerHTML = ''; }
+
+  window.addEventListener('relphi:sky-context-change',()=>{
+    if (state.mode === 'all' || state.mode === 'search') renderBrowse();
+    else if (state.selected) renderDetail(state.selected);
+  });
 
   const RANK_MODE_GROUPS = { cardinal: ['Two','Three','Four'], fixed: ['Five','Six','Seven'], mutable: ['Eight','Nine','Ten'] };
   function rankInput(value) { return document.querySelector(`input[data-filter-group="rank"][value="${value}"]`); }
