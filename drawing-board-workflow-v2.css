@@ -26,9 +26,8 @@
 #shortListPanel .drawing-board-top-actions>#undoShortList{order:11!important}
 #shortListPanel .drawing-board-top-actions>#redoShortList{order:12!important}
 #shortListPanel .drawing-board-top-actions>#clearShortListCardsOnly{order:13!important}
-#shortListPanel .drawing-board-top-actions>button{position:relative!important;z-index:1!important;min-height:2.25rem!important;margin:0!important;padding:.42rem .68rem!important;border:1.5px solid var(--relphi-board-ink)!important;border-radius:8px!important;background:#fff!important;color:var(--relphi-board-ink)!important;font:inherit!important;font-size:.78rem!important;font-weight:800!important;line-height:1!important;box-shadow:none!important;white-space:nowrap!important;pointer-events:auto!important;touch-action:manipulation!important}
-#shortListPanel .drawing-board-top-actions>#drawRandomRowCard{border-color:#b81712!important;background:var(--relphi-board-red)!important;color:#fff!important}
-#shortListPanel .drawing-board-top-actions>.board-history-icon{display:inline-grid!important;place-items:center!important;width:2.25rem!important;min-width:2.25rem!important;max-width:2.25rem!important;height:2.25rem!important;padding:0!important}
+#shortListPanel .drawing-board-top-actions>button{position:relative!important;z-index:1!important;margin:0!important;white-space:nowrap!important;pointer-events:auto!important;touch-action:manipulation!important}
+#shortListPanel .drawing-board-top-actions>.board-history-icon{display:inline-grid!important;place-items:center!important;padding:0!important}
 #shortListPanel button:disabled{opacity:.42!important;cursor:default!important}
 
 #shortListPanel .card-row-more-options{display:none!important}
@@ -170,7 +169,7 @@
   #shortListPanel .card-row-drawing-board>summary{padding-left:3.6rem!important}
   #shortListPanel .drawing-board-top-actions{gap:.28rem!important;margin:.3rem .35rem!important;width:calc(100% - .7rem)!important}
   #shortListPanel .drawing-board-top-actions>button{padding:.4rem .48rem!important;font-size:.68rem!important}
-  #shortListPanel .drawing-board-top-actions>.board-history-icon{width:2.1rem!important;min-width:2.1rem!important;height:2.1rem!important}
+  
   #shortListPanel .card-row-workspace-toolbar.relphi-board-controller{left:.4rem!important;bottom:.4rem!important;max-width:calc(100% - .8rem)!important;padding:.3rem!important;gap:.25rem!important}
   #shortListPanel .relphi-zoom-row{gap:.22rem!important}
   #shortListPanel .relphi-zoom-row #rowZoom{width:min(25vw,6rem)!important;min-width:3.5rem!important}
@@ -991,24 +990,6 @@ body.relphi-attune-open{overflow:hidden!important}
   font-weight:900!important;
   line-height:1!important;
 }
-#shortListPanel #relphiBoardSettingsButton{
-  min-height:2.15rem!important;
-  margin:0!important;
-  padding:.4rem .68rem!important;
-  border:1.25px solid #b9afa7!important;
-  border-radius:8px!important;
-  background:#fff!important;
-  color:#312b27!important;
-  font:inherit!important;
-  font-size:.72rem!important;
-  font-weight:850!important;
-  box-shadow:none!important;
-}
-#shortListPanel #relphiBoardSettingsButton.is-active{
-  border-color:var(--relphi-board-red)!important;
-  background:#fff5f3!important;
-  color:#a61712!important;
-}
 #shortListPanel .drawing-board-top-actions.relphi-board-command-actions{
   display:flex!important;
   align-items:center!important;
@@ -1027,28 +1008,12 @@ body.relphi-attune-open{overflow:hidden!important}
   width:auto!important;
   max-width:none!important;
   height:auto!important;
-  min-height:2.15rem!important;
   margin:0!important;
-  padding:.4rem .67rem!important;
-  border:1.25px solid #b9afa7!important;
-  border-radius:8px!important;
-  background:#fff!important;
-  color:#2f2925!important;
-  font:inherit!important;
-  font-size:.72rem!important;
-  font-weight:850!important;
-  line-height:1!important;
-  box-shadow:none!important;
 }
 #shortListPanel .drawing-board-top-actions.relphi-board-command-actions>#clearShortListCardsOnly{order:1!important}
 #shortListPanel .drawing-board-top-actions.relphi-board-command-actions>#undoShortList{order:2!important}
 #shortListPanel .drawing-board-top-actions.relphi-board-command-actions>#redoShortList{order:3!important}
-#shortListPanel .drawing-board-top-actions.relphi-board-command-actions>#drawRandomRowCard{
-  order:4!important;
-  border-color:#b81712!important;
-  background:var(--relphi-board-red)!important;
-  color:#fff!important;
-}
+#shortListPanel .drawing-board-top-actions.relphi-board-command-actions>#drawRandomRowCard{order:4!important}
 #shortListPanel .drawing-board-top-actions.relphi-board-command-actions>button:disabled{
   opacity:.38!important;
   cursor:default!important;
@@ -1077,23 +1042,6 @@ body.relphi-attune-open{overflow:hidden!important}
   justify-content:flex-start!important;
   align-items:center!important;
   margin:0 0 .55rem!important;
-}
-#shortListPanel #relphiResetBoard{
-  min-height:2.1rem!important;
-  margin:0!important;
-  padding:.38rem .65rem!important;
-  border:1.25px solid rgba(184,23,18,.48)!important;
-  border-radius:8px!important;
-  background:#fff!important;
-  color:#a61712!important;
-  font:inherit!important;
-  font-size:.7rem!important;
-  font-weight:850!important;
-}
-#shortListPanel #relphiResetBoard:disabled{
-  border-color:#d4ccc5!important;
-  color:#958b84!important;
-  opacity:.5!important;
 }
 #shortListPanel .relphi-board-settings-body{
   display:grid!important;
@@ -1318,11 +1266,6 @@ body.relphi-attune-open{overflow:hidden!important}
 
 /* Reset Board is a command-bar action, immediately before Clear. */
 #shortListPanel .drawing-board-top-actions.relphi-board-command-actions>#relphiResetBoard{order:0!important}
-#shortListPanel .drawing-board-top-actions.relphi-board-command-actions>#relphiResetBoard{
-  border-color:rgba(184,23,18,.48)!important;
-  background:#fff!important;
-  color:#a61712!important;
-}
 
 /* Reversals and repeats are secondary draw controls. */
 #shortListPanel .relphi-draw-advanced,
@@ -1983,7 +1926,7 @@ body.relphi-attune-open{overflow:hidden!important}
   text-overflow:clip!important;
 }
 #shortListPanel .drawing-board-top-actions.relphi-board-command-actions>.board-history-icon{
-  flex:0 0 2.25rem!important;
+  flex:0 0 var(--relphi-control-height-compact)!important;
 }
 #shortListPanel #relphiResetBoard{
   min-width:max-content!important;
@@ -2045,10 +1988,6 @@ body.relphi-attune-open{overflow:hidden!important}
   #shortListPanel .relphi-board-commandbar{
     padding-left:.55rem!important;
     padding-right:.55rem!important;
-  }
-  #shortListPanel .drawing-board-top-actions.relphi-board-command-actions>button:not(.board-history-icon){
-    padding-left:.52rem!important;
-    padding-right:.52rem!important;
   }
   #shortListPanel .relphi-board-settings-panel button:not(.relphi-icon-button):not(.relphi-zoom-step):not(.board-history-icon),
   #shortListPanel .relphi-reading-options-drawer button:not(.relphi-icon-button):not(.relphi-zoom-step):not(.board-history-icon){
