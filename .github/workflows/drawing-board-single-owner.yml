@@ -7,6 +7,7 @@ on:
   pull_request:
     paths:
       - 'drawing-board-workflow-v2.js'
+      - 'relphi-astrology-significance-v1.js'
       - 'drawing-board-workflow-v2.css'
       - 'drawing-board.html'
       - 'navloader.js'
@@ -16,6 +17,7 @@ on:
       - 'planetaryhours.html'
       - 'style.css'
       - 'tests/drawing-board-*.js'
+      - 'tests/astrology-significant-factors.test.js'
       - '.github/workflows/drawing-board-single-owner.yml'
 
 jobs:
@@ -29,6 +31,7 @@ jobs:
       - name: Syntax check unified Drawing Board
         run: |
           node --check drawing-board-workflow-v2.js
+          node --check relphi-astrology-significance-v1.js
           node --check navloader.js
           node --check tarot-app.js
           node --check drawing-board-crowley-harmonic-v1.js
@@ -49,12 +52,14 @@ jobs:
           node --check tests/see-what-surfaces-evidence-contract.test.js
           node --check tests/drawing-board-keyword-pack.test.js
           node --check tests/astrological-tarot-entry.test.js
+          node --check tests/astrology-significant-factors.test.js
       - name: Run static Drawing Board contracts
         run: |
           node tests/drawing-board-single-owner.test.js || true
           node tests/drawing-board-workflow-v2.test.js || true
           node tests/drawing-board-spread-prefabs.test.js || true
           node tests/drawing-board-bulk-questions.test.js || true
+          node tests/astrology-significant-factors.test.js
       - name: Install browser acceptance runner
         run: |
           npm install --no-save playwright@1.55.0
