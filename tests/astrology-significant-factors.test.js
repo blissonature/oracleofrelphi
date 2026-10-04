@@ -24,5 +24,6 @@ assert.doesNotMatch(JSON.stringify(analysis),/tarot|card-hit|seven_of_cups/i);
 const meridian=analysis.factors.find(f=>f.kind==='axis'&&/meridian/i.test(f.title));
 assert.ok(meridian.evidence.some(e=>/Venus square MC|Venus square IC/.test(e.text)));
 assert.ok(meridian.evidence.some(e=>/Pluto square MC|Pluto square IC/.test(e.text)));
-assert.ok(analysis.factors.every(f=>f.question&&f.evidence.length));
+assert.ok(analysis.factors.every(f=>f.question&&Array.isArray(f.evidence)&&f.evidence.length));
+assert.ok(analysis.skies.flatMap(s=>s.candidates).every(f=>Array.isArray(f.evidence)),'every candidate must expose evidence as an array');
 console.log('Significant Factors compress Kendra into non-Tarot astrological structures.');
