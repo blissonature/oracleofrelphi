@@ -38,3 +38,9 @@ assert.match(js,/organizing factor/);
 assert.match(css,/\.relphi-astrology-factor-list/);
 assert.match(css,/\.relphi-astrology-factor-number/);
 assert.match(css,/var\(--relphi-board-red/);
+
+assert.doesNotMatch(js,/data-astrology-evidence="/);
+assert.doesNotMatch(js,/data-astrology-evidence-master/);
+assert.match(js,/Technical evidence/);
+assert.match(js,/Inspect raw sky evidence/);
+assert.match(js,/astrologyQuestionSuggestions\(analysis,null\)/);
