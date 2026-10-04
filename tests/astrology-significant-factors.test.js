@@ -1,5 +1,5 @@
 const assert=require('node:assert/strict');
-const engine=require('../relphi-astrology-significance-v1.js');
+const engine=require('../relphi-astrology-significance-v2.js');
 
 const kendra={name:'Kendra',placements:{
   Sun:{sign:'Libra',degree:2+56/60,house:5},Moon:{sign:'Leo',degree:20+16/60,house:4},
