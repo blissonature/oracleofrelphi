@@ -3605,6 +3605,37 @@
     return true;
   }
 
+  function openCraftedFocusWhenReady(index,{attempts=40,delay=50}={}) {
+    const target=Number(index);
+    if(!Number.isInteger(target)||target<0)return false;
+    pendingFocusIndex=target;
+    let tries=0;
+    const reveal=()=>{
+      const live=panel();
+      if(!live)return;
+      const reader=document.querySelector('.relphi-focus-reader');
+      if(reader&&Number(reader.dataset.focusIndex)===target){
+        pendingFocusIndex=null;
+        return;
+      }
+      if(cardAt(target,live)){
+        pendingFocusIndex=null;
+        closeAttune();
+        openFocus(target);
+        return;
+      }
+      if(++tries<attempts){
+        setTimeout(reveal,delay);
+        return;
+      }
+      // Keep the pending target intact so the next native Drawing Board render
+      // can still complete the handoff through enhance().
+      enhance(live);
+    };
+    setTimeout(reveal,0);
+    return true;
+  }
+
   function sacredCardSourceAt(index,snap=currentSnapshot()||{}) {
     const meta=snap.rowPositionMeta?.[index] || snap.rowActiveLayout?.positions?.[index] || {};
     const source=surfaceReadingSession?.cardSource || meta.cardSource || 'digital';
@@ -3709,8 +3740,7 @@
       const drawnIndex=currentCardCount(panel())-1;
       if(target!==drawnIndex&&drawnIndex>=0)prefabBridge()?.swapPositionSlots?.(drawnIndex,target);
       setRecordedCardOrientation(target,linkedReversed);
-      pendingFocusIndex=target;
-      setTimeout(()=>enhance(panel()),0);
+      openCraftedFocusWhenReady(target);
     });
 
     reader.querySelector('[data-attune-random]')?.addEventListener('click',()=>{
@@ -3729,7 +3759,7 @@
       if(target!==drawnIndex)prefabBridge()?.swapPositionSlots?.(drawnIndex,target);
       setRecordedCardOrientation(target,reader.dataset.attuneOrientation==='reversed');
       closeAttune();
-      setTimeout(()=>enhance(panel()),0);
+      openCraftedFocusWhenReady(target);
     });
     reader.querySelector('[data-attune-pack]')?.addEventListener('change',event=>{
       reader.dataset.attuneScope=event.target.value||'full';
@@ -4870,23 +4900,11 @@
     draw.click();
     if (targetIndex!==drawnIndex) prefabBridge()?.swapPositionSlots?.(drawnIndex,targetIndex);
     activeDraw=false;
-    if(surfaceReadingSession){
-      // The draw itself owns this transition. Wait for the native renderer to
-      // put the card in its referent slot, then show that answer. Nothing else
-      // in the surface workflow may advance until the user presses Next.
-      const expected=targetIndex;
-      let attempts=0;
-      const showDrawnAnswer=()=>{
-        const live=panel();
-        if(live && cardAt(expected,live)){
-          pendingFocusIndex=null;
-          closeAttune();
-          openFocus(expected);
-          return;
-        }
-        if(++attempts<40)setTimeout(showDrawnAnswer,50);
-      };
-      setTimeout(showDrawnAnswer,0);
+    if(surfaceReadingSession || recursionActive() || craftedReadingActive){
+      // Every Crafted reading owns an Attune -> Focus boundary. The native board
+      // may paint the newly drawn card asynchronously, so do not drop back to
+      // the board just because the target slot is empty on the first tick.
+      openCraftedFocusWhenReady(targetIndex);
     } else setTimeout(()=>enhance(panel()),0);
   }
   function nextUndrawnNativeIndex(root=panel()) {
