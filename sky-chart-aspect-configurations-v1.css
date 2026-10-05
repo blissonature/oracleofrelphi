@@ -770,9 +770,6 @@ html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]) .sky-chart-con
   font:900 5.4px/1 system-ui,sans-serif;
   pointer-events:none;
 }
-.sky-configuration-match-row.is-selected{
-  box-shadow:inset 0 0 0 1px rgba(31,27,24,.20);
-}
 
 
 /* One tile per configuration type, with explicit ×N marker and stack affordance. */
@@ -921,6 +918,9 @@ html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]) .sky-chart-con
   max-height:38px;
   overflow:visible;
   transform:none!important;
+}
+.sky-configuration-match-row.is-selected{
+  box-shadow:inset 0 0 0 1px rgba(31,27,24,.20);
 }
 
 
