@@ -61,7 +61,18 @@
       .filter(scopeEligible);
   }
 
-  function explicitRows(rows){return rows.filter(row=>!excludedByExplicitFilter(row))}
+  function configurationSelectionActive(){
+    return Number(document.documentElement.dataset.skyConfigurationSelection||0)>0;
+  }
+
+  function configurationParticipates(row){
+    const api=window.RelphiAspectConfigurations;
+    return !configurationSelectionActive()||typeof api?.participates!=='function'||api.participates(row);
+  }
+
+  function explicitRows(rows){
+    return rows.filter(row=>!excludedByExplicitFilter(row)).filter(configurationParticipates);
+  }
 
   function signNumber(node){
     if(node.dataset.sign!==undefined&&node.dataset.sign!=='')return Number(node.dataset.sign);
