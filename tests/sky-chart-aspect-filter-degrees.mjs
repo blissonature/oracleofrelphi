@@ -31,7 +31,7 @@ try{
   await page.waitForSelector('#skyChartAspectPopover:not([hidden]) [data-aspect-list="matrix"]',{timeout:10000});
   await page.waitForFunction(()=>document.querySelectorAll('#skyChartAspectPopover .sky-filter-symbol-aspect[data-canonical-glyph]').length===11,null,{timeout:10000});
 
-  const audit=await page.locator('#skyChartAspectPopover .sky-chart-aspect-list-item[data-aspect-list-item]:not([data-aspect-list-item="all"])').evaluateAll(rows=>rows.map(row=>{
+  const audit=await page.locator('#skyChartAspectPopover .sky-chart-aspect-list-item[data-aspect-list-item]:not([data-aspect-list-item="all"]):not([data-aspect-list-item^="group:"])').evaluateAll(rows=>rows.map(row=>{
     const label=row.querySelector('.sky-chart-aspect-list-label');
     const glyph=label?.querySelector('.sky-filter-symbol-aspect');
     const degree=label?.querySelector('.sky-chart-aspect-degree');
