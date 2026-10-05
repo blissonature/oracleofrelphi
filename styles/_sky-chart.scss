@@ -33,3 +33,16 @@
   box-shadow: var(--relphi-selected-ring);
   outline: none;
 }
+
+// Once a child configuration is selected, suppress its siblings so the inspected
+// configuration becomes the clear figure and the remaining matches become context.
+.sky-configuration-match-list:has(.sky-configuration-match-row.is-selected) {
+  .sky-configuration-match-row:not(.is-selected) {
+    opacity: var(--relphi-relationship-focus-muted-opacity);
+    transition: opacity var(--relphi-relationship-focus-transition);
+  }
+
+  .sky-configuration-match-row.is-selected {
+    opacity: 1;
+  }
+}
