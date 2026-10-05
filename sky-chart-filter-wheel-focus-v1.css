@@ -19,11 +19,6 @@
   opacity:1!important;
 }
 
-#skyFoundationWheelMount>.sky-foundation-wheel.has-filter-focus:not(.has-isolation) [data-layer="aspects"] .sky-foundation-aspect.is-filter-kept{
-  stroke-width:4.2;
-  filter:drop-shadow(0 0 1.5px rgba(255,255,255,.94));
-}
-
 #skyFoundationWheelMount>.sky-foundation-wheel.has-filter-focus:not(.has-isolation) [data-layer="placements"] [data-sky][data-placement].is-filter-kept{
   filter:brightness(1.04) saturate(1.08);
 }
