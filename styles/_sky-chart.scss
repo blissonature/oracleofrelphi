@@ -25,3 +25,11 @@
       stroke-width var(--relphi-relationship-focus-transition);
   }
 }
+
+// Selected child configuration is a persistent selection state, not a hover skin.
+.sky-configuration-match-row.is-selected {
+  border-color: var(--relphi-selected-border);
+  background: var(--relphi-selected-surface);
+  box-shadow: var(--relphi-selected-ring);
+  outline: none;
+}
