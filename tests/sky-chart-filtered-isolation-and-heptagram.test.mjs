@@ -24,3 +24,13 @@ test('the undrawn weekly heptagram path is dotted while traced time stays solid'
   assert.match(html,/sky-chart-heptagram-geometry-v1\.css\?v=2/);
   assert.match(html,/sky-chart-orb-control-v1\.js\?v=4/);
 });
+
+
+test('configuration overlay does not double-stroke ordinary aspects and only appears for emphasis',()=>{
+  const configurations=fs.readFileSync(path.join(root,'sky-chart-aspect-configurations-v1.css'),'utf8');
+  assert.match(configurations,/\.sky-chart-configuration-line\{[^}]*stroke-width:4\.25;[^}]*opacity:0;/s);
+  assert.match(configurations,/\.is-peer-hover \.sky-chart-configuration-line\.is-configuration-peer-line\{[^}]*opacity:\.96;/s);
+  assert.doesNotMatch(configurations,/has-focus-composition \.sky-chart-configuration-line/);
+  assert.match(html,/sky-chart-aspect-configurations-v1\.css\?v=34/);
+  assert.match(html,/sky-chart-filter-wheel-focus-v1\.js\?v=9/);
+});

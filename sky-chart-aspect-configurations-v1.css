@@ -92,7 +92,7 @@
 .sky-chart-configuration-line{
   stroke-width:4.25;
   stroke-linecap:round;
-  opacity:.96;
+  opacity:0;
   filter:drop-shadow(0 0 1.25px #fffdf8);
   pointer-events:none;
 }
@@ -108,9 +108,7 @@
 }
 .sky-chart-configuration-overlay.is-peer-hover .sky-chart-configuration-line{opacity:.16}
 .sky-chart-configuration-overlay.is-peer-hover .sky-chart-configuration-line.is-configuration-peer-line{
-  opacity:1;
-  stroke-width:6.5;
-  filter:drop-shadow(0 0 2px #fffdf8);
+  opacity:.96;
 }
 @media(max-width:410px){
   .sky-chart-configuration-title,.sky-chart-configuration-choice{grid-template-columns:minmax(0,1fr) 136px}
@@ -262,12 +260,6 @@ html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]) .sky-chart-con
   position:relative;
   z-index:2;
   box-shadow:inset 0 0 0 2px rgba(31,27,24,.34),0 2px 8px rgba(31,27,24,.07);
-}
-.sky-chart-configuration-overlay.is-result-focus .sky-chart-configuration-line{opacity:.12}
-.sky-chart-configuration-overlay.is-result-focus .sky-chart-configuration-line.is-configuration-result-line{
-  opacity:1;
-  stroke-width:6.25;
-  filter:drop-shadow(0 0 2px #fffdf8);
 }
 @media(max-width:620px){
   .sky-configuration-results-panel{margin:14px 0 12px;padding:10px;border-radius:13px}
@@ -587,29 +579,6 @@ html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]) .sky-chart-con
   grid-template-columns:minmax(0,1fr)!important;
 }
 
-
-/* Configuration-result focus on the main wheel. */
-#skyFoundationWheelMount>.sky-foundation-wheel.has-configuration-result-focus:not(.has-isolation) [data-layer="aspects"] .sky-foundation-aspect,
-#skyFoundationWheelMount>.sky-foundation-wheel.has-configuration-result-focus:not(.has-isolation) [data-layer="placements"] [data-sky][data-placement],
-#skyFoundationWheelMount>.sky-foundation-wheel.has-configuration-result-focus:not(.has-isolation) .sky-foundation-house-sector,
-#skyFoundationWheelMount>.sky-foundation-wheel.has-configuration-result-focus:not(.has-isolation) .sky-foundation-sign-sector,
-#skyFoundationWheelMount>.sky-foundation-wheel.has-configuration-result-focus:not(.has-isolation) .sky-foundation-sign-glyph{
-  opacity:.08;
-  transition:opacity .07s ease-out,filter .07s ease-out,stroke-width .07s ease-out;
-}
-#skyFoundationWheelMount>.sky-foundation-wheel.has-configuration-result-focus:not(.has-isolation) [data-layer="leaders"] [data-sky][data-placement]{
-  opacity:0;
-}
-#skyFoundationWheelMount>.sky-foundation-wheel.has-configuration-result-focus:not(.has-isolation) .is-configuration-result-kept{
-  opacity:1!important;
-}
-#skyFoundationWheelMount>.sky-foundation-wheel.has-configuration-result-focus:not(.has-isolation) [data-layer="aspects"] .sky-foundation-aspect.is-configuration-result-kept{
-  stroke-width:4.2;
-  filter:drop-shadow(0 0 1.5px rgba(255,255,255,.94));
-}
-#skyFoundationWheelMount>.sky-foundation-wheel.has-configuration-result-focus:not(.has-isolation) [data-layer="placements"] [data-sky][data-placement].is-configuration-result-kept{
-  filter:brightness(1.04) saturate(1.08);
-}
 
 
 /* Configuration result header actions mirror Relationships. */
@@ -1006,12 +975,3 @@ html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]) .sky-chart-con
   }
 }
 
-
-/* Configuration geometry composes with the canonical Focus result. */
-#skyFoundationWheelMount>.sky-foundation-wheel.has-filter-focus [data-layer="configurations"].has-focus-composition .sky-chart-configuration-line{
-  opacity:.08;
-  transition:opacity .07s ease-out;
-}
-#skyFoundationWheelMount>.sky-foundation-wheel.has-filter-focus [data-layer="configurations"].has-focus-composition .sky-chart-configuration-line.is-focus-kept{
-  opacity:1;
-}

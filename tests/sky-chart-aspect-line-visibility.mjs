@@ -61,7 +61,40 @@ const configAA=grandTrineConfig.locator('[data-configuration-scope="A-A"]');
 await configAA.evaluate(input=>{input.checked=true;input.dispatchEvent(new Event('change',{bubbles:true}))});
 assert.ok((await page.evaluate(()=>window.RelphiAspectConfigurations?.matrix?.()['A-A']||[])).includes('grand-trine'),'A↔A configuration selection must be represented in the configuration matrix.');
 assert.equal((await page.evaluate(()=>window.RelphiAspectConfigurations?.matrix?.()['B-B']||[])).includes('grand-trine'),false,'A↔A configuration selection must not select B↔B.');
+
 await configAA.evaluate(input=>{input.checked=false;input.dispatchEvent(new Event('change',{bubbles:true}))});
+
+// Merely enabling a Configuration must not bold its constituent aspects. The base
+// aspect is already the neutral rendering; the configuration overlay is reserved
+// for an actual emphasis state.
+const availableConfiguration=await page.evaluate(()=>{
+  const api=window.RelphiAspectConfigurations;
+  const pattern=api?.patterns?.[0];
+  return pattern?{type:pattern.type,scope:api.scopeForPattern(pattern)}:null;
+});
+assert.ok(availableConfiguration,'Fixture must detect at least one configuration.');
+const availableConfigurationInput=page.locator(
+  '#skyChartAspectPopover [data-configuration-row="'+availableConfiguration.type+'"] [data-configuration-scope="'+availableConfiguration.scope+'"]'
+);
+await availableConfigurationInput.evaluate(input=>{input.checked=true;input.dispatchEvent(new Event('change',{bubbles:true}))});
+await page.waitForTimeout(80);
+const neutralConfigurationPaint=await page.evaluate(()=>{
+  const overlay=[...document.querySelectorAll('[data-layer="configurations"] .sky-chart-configuration-line')];
+  const participants=[...document.querySelectorAll('[data-layer="aspects"]>.sky-foundation-aspect.sky-chart-configuration-participant:not(.sky-foundation-aspect-hit)')];
+  return{
+    overlayCount:overlay.length,
+    overlayOpacity:[...new Set(overlay.map(line=>getComputedStyle(line).opacity))],
+    participantCount:participants.length,
+    participantWidths:[...new Set(participants.map(line=>getComputedStyle(line).strokeWidth))],
+    participantFilters:[...new Set(participants.map(line=>getComputedStyle(line).filter))]
+  };
+});
+assert.ok(neutralConfigurationPaint.overlayCount>0,'Selected Configuration must retain addressable overlay geometry.');
+assert.deepEqual(neutralConfigurationPaint.overlayOpacity,['0'],'Unfocused Configuration overlay must not double-stroke its base aspects.');
+assert.ok(neutralConfigurationPaint.participantCount>0,'Selected Configuration must identify its base aspect participants.');
+assert.deepEqual(neutralConfigurationPaint.participantWidths,['2.1px'],'Configuration participants must begin at the ordinary desktop aspect weight.');
+assert.ok(neutralConfigurationPaint.participantFilters.every(value=>value==='none'),'Configuration participants must begin without a bolding glow.');
+await availableConfigurationInput.evaluate(input=>{input.checked=false;input.dispatchEvent(new Event('change',{bubbles:true}))});
 
 await page.waitForSelector('#skyFoundationFocus [data-relationship-display-control]',{timeout:10000});
 await page.waitForSelector('#skyFoundationFocus [data-harmonic-window-input]',{timeout:10000});
