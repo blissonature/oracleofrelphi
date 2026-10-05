@@ -90,10 +90,10 @@
 .sky-chart-configuration-choices .sky-chart-aspect-matrix-choice>span{display:none}
 .sky-chart-configuration-overlay{pointer-events:none}
 .sky-chart-configuration-line{
-  stroke-width:4.25;
+  stroke-width:2.1;
   stroke-linecap:round;
-  opacity:.96;
-  filter:drop-shadow(0 0 1.25px #fffdf8);
+  opacity:.62;
+  filter:none;
   pointer-events:none;
 }
 .sky-foundation-relationship-row.is-configuration-peer{
@@ -108,9 +108,9 @@
 }
 .sky-chart-configuration-overlay.is-peer-hover .sky-chart-configuration-line{opacity:.16}
 .sky-chart-configuration-overlay.is-peer-hover .sky-chart-configuration-line.is-configuration-peer-line{
-  opacity:1;
-  stroke-width:6.5;
-  filter:drop-shadow(0 0 2px #fffdf8);
+  opacity:.96;
+  stroke-width:4.25;
+  filter:drop-shadow(0 0 1.25px #fffdf8);
 }
 @media(max-width:410px){
   .sky-chart-configuration-title,.sky-chart-configuration-choice{grid-template-columns:minmax(0,1fr) 136px}
