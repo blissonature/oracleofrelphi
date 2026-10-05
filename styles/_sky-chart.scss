@@ -46,3 +46,15 @@
     opacity: 1;
   }
 }
+
+// Expanded configuration tile is the figure; sibling result tiles recede.
+.sky-configuration-results-grid:has(> .sky-configuration-result-tile.is-expanded) {
+  > .sky-configuration-result-tile:not(.is-expanded) {
+    opacity: var(--relphi-relationship-focus-muted-opacity);
+    transition: opacity var(--relphi-relationship-focus-transition);
+  }
+
+  > .sky-configuration-result-tile.is-expanded {
+    opacity: 1;
+  }
+}
