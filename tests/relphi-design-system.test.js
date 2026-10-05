@@ -43,3 +43,12 @@ assert.doesNotMatch(crowley, /#crowleySignificatorResults>button\{/);
 assert.doesNotMatch(boardCss, /#shortListPanel\{--relphi-board-red:/);
 
 console.log('Relphi SASS design-system foundation is canonical and Opening consumes it.');
+
+const skyHtml = fs.readFileSync('sky-chart.html','utf8');
+const skyScss = fs.readFileSync('styles/_sky-chart.scss','utf8');
+const configCss = fs.readFileSync('sky-chart-aspect-configurations-v1.css','utf8');
+assert.match(skyHtml, /relphi-design-system\.css\?v=2/, 'Sky Chart must load the shared SASS design system');
+assert.match(skyScss, /has-configuration-result-focus/, 'configuration focus must be authored in SASS');
+assert.match(skyScss, /--relphi-relationship-focus-muted-opacity/, 'configuration focus must consume shared focus tokens');
+assert.doesNotMatch(configCss, /has-configuration-result-focus/, 'feature CSS must not reskin configuration focus');
+assert.doesNotMatch(configCss, /is-result-focus \.sky-chart-configuration-line/, 'configuration overlay focus must stay in SASS');
