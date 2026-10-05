@@ -177,6 +177,7 @@
       'relphi:sky-aspect-multiselect-changed',
       'relphi:sky-zodiac-filter-changed',
       'relphi:sky-configuration-selection-changed',
+      'relphi:sky-configurations-detected',
       'relphi:sky-aspect-visibility-applied'
     ].forEach(name=>window.addEventListener(name,schedule));
     document.addEventListener('change',event=>{
