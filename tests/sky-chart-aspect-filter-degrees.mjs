@@ -13,8 +13,9 @@ const skyA=sample('A',0,{dateTime:'1985-10-08T04:37',instant:'1985-10-08T08:37:0
 const skyB=sample('B',29.27,{dateTime:'2026-08-02T02:07',instant:'2026-08-02T08:07:00.000Z',location:'Salt Lake City, Utah, United States',timeZone:'America/Denver',latitude:40.7608,longitude:-111.891});
 
 const expected=[
-  ['conjunction','0°'],['semi-sextile','30°'],['octile','45°'],['sextile','60°'],['quintile','72°'],['square','90°'],
-  ['trine','120°'],['tri-octile','135°'],['bi-quintile','144°'],['quincunx','150°'],['opposition','180°']
+  ['conjunction','0°'],['opposition','180°'],['trine','120°'],['square','90°'],['sextile','60°'],
+  ['semi-sextile','30°'],['octile','45°'],['tri-octile','135°'],['quincunx','150°'],
+  ['quintile','72°'],['bi-quintile','144°']
 ];
 
 const browser=await chromium.launch({headless:true});
