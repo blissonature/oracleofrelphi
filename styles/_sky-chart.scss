@@ -1,0 +1,27 @@
+@use "tokens" as *;
+
+// Sky Chart relationship-focus states use the same authored SASS contract as the
+// rest of Relphi. Feature CSS must not redefine these visual states.
+.sky-chart-configuration-overlay.is-result-focus {
+  .sky-chart-configuration-line {
+    opacity: var(--relphi-relationship-focus-muted-opacity);
+    transition: opacity var(--relphi-relationship-focus-transition),
+      filter var(--relphi-relationship-focus-transition),
+      stroke-width var(--relphi-relationship-focus-transition);
+
+    &.is-configuration-result-line {
+      opacity: var(--relphi-configuration-line-opacity);
+      stroke-width: var(--relphi-configuration-line-width);
+      filter: drop-shadow(0 0 1.25px var(--relphi-board-paper));
+    }
+  }
+}
+
+#skyFoundationWheelMount > .sky-foundation-wheel.has-configuration-result-focus:not(.has-isolation) {
+  [data-layer="aspects"] .sky-foundation-aspect {
+    opacity: var(--relphi-relationship-focus-muted-opacity);
+    transition: opacity var(--relphi-relationship-focus-transition),
+      filter var(--relphi-relationship-focus-transition),
+      stroke-width var(--relphi-relationship-focus-transition);
+  }
+}
