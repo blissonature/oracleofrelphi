@@ -25,36 +25,3 @@
       stroke-width var(--relphi-relationship-focus-transition);
   }
 }
-
-// Selected child configuration is a persistent selection state, not a hover skin.
-.sky-configuration-match-row.is-selected {
-  border-color: var(--relphi-selected-border);
-  background: var(--relphi-selected-surface);
-  box-shadow: var(--relphi-selected-ring);
-  outline: none;
-}
-
-// Once a child configuration is selected, suppress its siblings so the inspected
-// configuration becomes the clear figure and the remaining matches become context.
-.sky-configuration-match-list:has(.sky-configuration-match-row.is-selected) {
-  .sky-configuration-match-row:not(.is-selected) {
-    opacity: var(--relphi-relationship-focus-muted-opacity);
-    transition: opacity var(--relphi-relationship-focus-transition);
-  }
-
-  .sky-configuration-match-row.is-selected {
-    opacity: 1;
-  }
-}
-
-// Expanded configuration tile is the figure; sibling result tiles recede.
-.sky-configuration-results-grid:has(> .sky-configuration-result-tile.is-expanded) {
-  > .sky-configuration-result-tile:not(.is-expanded) {
-    opacity: var(--relphi-relationship-focus-muted-opacity);
-    transition: opacity var(--relphi-relationship-focus-transition);
-  }
-
-  > .sky-configuration-result-tile.is-expanded {
-    opacity: 1;
-  }
-}
