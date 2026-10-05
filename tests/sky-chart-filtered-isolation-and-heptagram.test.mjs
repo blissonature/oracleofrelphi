@@ -7,6 +7,7 @@ const root=path.resolve(import.meta.dirname,'..');
 const orb=fs.readFileSync(path.join(root,'sky-chart-orb-control-v1.js'),'utf8');
 const heptagramCss=fs.readFileSync(path.join(root,'sky-chart-heptagram-geometry-v1.css'),'utf8');
 const html=fs.readFileSync(path.join(root,'sky-chart.html'),'utf8');
+const wheelFocus=fs.readFileSync(path.join(root,'sky-chart-filter-wheel-focus-v1.js'),'utf8');
 
 test('placement isolation cannot keep endpoints whose relationships are filtered out',()=>{
   assert.match(orb,/function reconcilePlacementIsolation\(rows,visibleIndexes\)/);
@@ -23,4 +24,14 @@ test('the undrawn weekly heptagram path is dotted while traced time stays solid'
   assert.match(heptagramCss,/\.sky-ph-week-segment\.current\{[^}]*stroke-dasharray:none/);
   assert.match(html,/sky-chart-heptagram-geometry-v1\.css\?v=2/);
   assert.match(html,/sky-chart-orb-control-v1\.js\?v=4/);
+});
+
+
+test('configuration choices participate in the canonical Focus wheel recession',()=>{
+  assert.match(wheelFocus,/dataset\.skyConfigurationSelection/);
+  assert.match(wheelFocus,/RelphiAspectConfigurations/);
+  assert.match(wheelFocus,/api\.participates\(row\)/);
+  assert.match(wheelFocus,/filter\(configurationParticipates\)/);
+  assert.match(wheelFocus,/relphi:sky-configurations-detected/);
+  assert.match(html,/sky-chart-filter-wheel-focus-v1\.js\?v=8/);
 });
