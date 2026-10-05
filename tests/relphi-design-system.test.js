@@ -55,3 +55,4 @@ assert.doesNotMatch(configCss, /is-result-focus \.sky-chart-configuration-line/,
 assert.match(skyScss, /\.sky-configuration-match-row\.is-selected/, 'selected configuration child must use the shared SASS state');
 assert.doesNotMatch(configCss, /\.sky-configuration-match-row\.is-selected/, 'feature CSS must not style selected configuration children');
 assert.match(skyScss, /match-list:has\(\.sky-configuration-match-row\.is-selected\)/, 'selected configuration child must suppress sibling matches');
+assert.match(skyScss, /results-grid:has\(> \.sky-configuration-result-tile\.is-expanded\)/, 'expanded configuration must suppress sibling result tiles');
