@@ -574,6 +574,8 @@ function bindConfigurationActions(panel){
 }
 function renderResultsPanel(){
   const panel=ensureResultsPanel();if(!panel)return;
+  // Rebuilding results invalidates any pattern-specific emphasis owned by the old tiles.
+  clearPatternHighlight();
   const visiblePatterns=patternsForResults(),groups=groupedPatternsForResults();
   if(!visiblePatterns.length){panel.hidden=true;clearPatternHighlight();openConfigurationTile=null;return}
   panel.hidden=false;
