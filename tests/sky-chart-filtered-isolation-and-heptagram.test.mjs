@@ -7,7 +7,6 @@ const root=path.resolve(import.meta.dirname,'..');
 const orb=fs.readFileSync(path.join(root,'sky-chart-orb-control-v1.js'),'utf8');
 const heptagramCss=fs.readFileSync(path.join(root,'sky-chart-heptagram-geometry-v1.css'),'utf8');
 const html=fs.readFileSync(path.join(root,'sky-chart.html'),'utf8');
-const wheelFocus=fs.readFileSync(path.join(root,'sky-chart-filter-wheel-focus-v1.js'),'utf8');
 
 test('placement isolation cannot keep endpoints whose relationships are filtered out',()=>{
   assert.match(orb,/function reconcilePlacementIsolation\(rows,visibleIndexes\)/);
@@ -27,11 +26,10 @@ test('the undrawn weekly heptagram path is dotted while traced time stays solid'
 });
 
 
-test('configuration choices participate in the canonical Focus wheel recession',()=>{
-  assert.match(wheelFocus,/dataset\.skyConfigurationSelection/);
-  assert.match(wheelFocus,/RelphiAspectConfigurations/);
-  assert.match(wheelFocus,/api\.participates\(row\)/);
-  assert.match(wheelFocus,/filter\(configurationParticipates\)/);
-  assert.match(wheelFocus,/relphi:sky-configurations-detected/);
-  assert.match(html,/sky-chart-filter-wheel-focus-v1\.js\?v=8/);
+test('configuration overlay begins at ordinary aspect weight and only bolds on focus',()=>{
+  const configurations=fs.readFileSync(path.join(root,'sky-chart-aspect-configurations-v1.css'),'utf8');
+  assert.match(configurations,/\.sky-chart-configuration-line\{[^}]*stroke-width:2\.1;[^}]*opacity:\.62;[^}]*filter:none;/s);
+  assert.match(configurations,/\.is-peer-hover \.sky-chart-configuration-line\.is-configuration-peer-line\{[^}]*opacity:\.96;[^}]*stroke-width:4\.25;/s);
+  assert.match(html,/sky-chart-aspect-configurations-v1\.css\?v=31/);
+  assert.match(html,/sky-chart-filter-wheel-focus-v1\.js\?v=9/);
 });
