@@ -52,3 +52,5 @@ assert.match(skyScss, /has-configuration-result-focus/, 'configuration focus mus
 assert.match(skyScss, /--relphi-relationship-focus-muted-opacity/, 'configuration focus must consume shared focus tokens');
 assert.doesNotMatch(configCss, /has-configuration-result-focus/, 'feature CSS must not reskin configuration focus');
 assert.doesNotMatch(configCss, /is-result-focus \.sky-chart-configuration-line/, 'configuration overlay focus must stay in SASS');
+assert.match(skyScss, /\.sky-configuration-match-row\.is-selected/, 'selected configuration child must use the shared SASS state');
+assert.doesNotMatch(configCss, /\.sky-configuration-match-row\.is-selected/, 'feature CSS must not style selected configuration children');
