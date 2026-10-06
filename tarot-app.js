@@ -639,18 +639,14 @@
   }
   function titleWithBreaksHtml(card) { return escapeHtml(title(card)).replace(/\//g, '/<wbr>'); }
 
-  function celticCrossActive() {
-    const layout=state.rowActiveLayout;
-    return layout?.id==='celtic-cross-10' || layout?.basedOn==='celtic-cross-10';
-  }
-  function celticCompactCardDescription(card,index=0) {
-    if (!celticCrossActive()) return '';
+  const COMPACT_CARD_DESCRIPTION_SCALE_THRESHOLD = 0.72;
+  function compactCardDescription(card,index=0) {
     const phrase=relphiDefaultSensePhrase(card);
     if (!phrase) return '';
     return rowCardIsReversed(index) ? `Reversed · ${phrase}` : phrase;
   }
   function rowCardInterpretation(card, index = 0) {
-    // Position stickers carry the Celtic Cross role. The card layer remains the
+    // Position stickers carry spread roles. The description layer remains the
     // card's own Relphi-derived interpretation rather than inventing a position
     // interpretation and appending it to the card.
     return layerInterpretationForOrientation(card, rowCardIsReversed(index));
@@ -3215,7 +3211,7 @@
     const selected = state.shortListSelection.includes(card.card_id);
     const transformTarget = index === rowTransformTargetIndex(rowSlotCount());
     const transform = rowCardTransform(index);
-    const miniDescription = Number(transform?.scale) > 0 && Number(transform.scale) < 0.72;
+    const miniDescription = Number(transform?.scale) > 0 && Number(transform.scale) < COMPACT_CARD_DESCRIPTION_SCALE_THRESHOLD;
     const reversed = rowCardIsReversed(index);
     let cardHtml = renderCardSurface(card, {
       context: 'short-list',
@@ -3224,7 +3220,7 @@
       selectable: true,
       layerText: rowCardInterpretation(card, index),
       layerTitle: `${title(card)}${reversed ? ' · Reversed' : ''}`,
-      essenceText: celticCompactCardDescription(card,index)
+      essenceText: miniDescription ? compactCardDescription(card,index) : ''
     });
     cardHtml = cardHtml.replace('<article class="or-card', `<article class="or-card card-row-card${reversed ? ' is-row-reversed' : ''}`);
     cardHtml = cardHtml.replace(' tabindex="0">', ` draggable="true" data-row-card="${escapeHtml(card.card_id)}" data-row-reversed="${reversed ? 'true' : 'false'}" tabindex="0" aria-label="${escapeHtml(title(card))}${reversed ? ', reversed' : ''}">`);
