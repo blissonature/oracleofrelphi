@@ -258,14 +258,14 @@
   }
   function domainGateMarkup(){
     return '<fieldset id="crowleyDomainGate" class="relphi-fieldset"><legend>Operation I · Question domain</legend>'+
-      '<div id="crowleySignificatorStep"><div class="crowley-step-heading"><strong>Significator</strong><span>Choose the card that represents the querent or the matter.</span></div><div class="crowley-controls relphi-toolbar"><button id="crowleyDrawSignificator" class="relphi-button" type="button">Draw digitally</button><label class="relphi-field">Find a card<input id="crowleySignificatorSearch" class="relphi-input" type="search" autocomplete="off" placeholder="Card name"></label></div><div id="crowleySignificatorResults"></div><p id="crowleySignificatorStatus" aria-live="polite">No Significator selected.</p></div>'+
+      '<div id="crowleySignificatorStep"><div class="crowley-step-heading"><strong>Significator</strong><span>Choose the card that represents the Querent, using your knowledge or judgment of their character rather than physical characteristics.</span></div><div class="crowley-controls relphi-toolbar"><button id="crowleyDrawSignificator" class="relphi-button" type="button">Draw digitally</button><label class="relphi-field">Find a card<input id="crowleySignificatorSearch" class="relphi-input" type="search" autocomplete="off" placeholder="Card name"></label></div><div id="crowleySignificatorResults"></div><p id="crowleySignificatorStatus" aria-live="polite">No Significator selected.</p></div>'+
       '<div id="crowleyDomainStep" hidden><div class="crowley-significator-memory"><span><small>Significator</small><strong id="crowleyPersistentSignificator"></strong></span><button type="button" id="crowleyChangeSignificator" class="relphi-button">Change</button></div>'+
         '<div class="crowley-step-heading"><strong>Question domain</strong><span>Choose the domain that best contains the question before the Significator is located in the four packets.</span></div>'+
         '<details class="crowley-domain-help"><summary>Why four domains?</summary><p>The First Operation divides the deck into four IHVH packets, corresponding in sequence to Fire, Water, Air, and Earth. The choices below are the four question domains used to predict which packet will contain the Significator.</p></details>'+
         '<label class="relphi-field crowley-domain-search">Search by subject<input id="crowleyDomainSearch" class="relphi-input" type="search" autocomplete="off" placeholder="Career, romance, conflict, rent, home…"></label><div id="crowleyDomainResults" class="crowley-domain-results">'+domainCardsMarkup('')+'</div><input id="crowleyExpectedDomain" type="hidden" value=""><p id="crowleyDomainSelection" class="crowley-domain-selection">No domain selected yet.</p><div class="crowley-controls relphi-toolbar"><button id="crowleyLockDomain" class="relphi-button relphi-button--primary" type="button">Commit domain</button></div></div>'+
       '<div id="crowleyDomainReveal" hidden><div id="crowleyInvocationStep"><div class="crowley-step-heading"><strong>Invocation</strong><span>Say the invocation before Relphi shuffles the deck.</span></div><blockquote class="crowley-invocation relphi-card relphi-card--soft">I invoke thee, I A O, that thou wilt send H R U, the great Angel that is set over the operations of this Secret Wisdom, to lay his hand invisibly upon these consecrated cards of art, that thereby we may obtain true knowledge of hidden things, to the glory of thine ineffable Name. Amen.</blockquote><button type="button" id="crowleyInvoke" class="relphi-button relphi-button--primary">Invocation complete · shuffle</button></div>'+
       '<div id="crowleyCutStep" hidden><div class="crowley-step-heading"><strong>Querent cut</strong><span>Choose the cut position. Relphi keeps the shuffled deck order fixed for this attempt.</span></div><div class="crowley-controls relphi-toolbar"><label class="relphi-field">Cut position<input id="crowleyCutRange" class="relphi-range" type="range" min="1" max="77" value="39"></label><label class="relphi-field">Position<input id="crowleyCutNumber" class="relphi-input" type="number" min="1" max="77" value="39"></label><button type="button" id="crowleyMakeCut" class="relphi-button relphi-button--primary">Make cut</button></div><p><b>Significator packet:</b> <span id="crowleyActualDomain">Awaiting cuts</span></p></div>'+
-      '<div id="crowleyFailureStep" class="crowley-failure-step" hidden><div class="crowley-failure-result"><span><small>Found in</small><strong id="crowleyFoundPacket">—</strong></span><span><small>Expected</small><strong id="crowleyExpectedPacket">—</strong></span></div><p>This attempt is abandoned.</p><label class="crowley-retry-toggle"><input id="crowleyRetrySameSelections" type="checkbox" checked> Retry with same Significator and domain</label><button type="button" id="crowleyRetryOpening" class="relphi-button relphi-button--primary">Retry</button></div></div><p id="crowleyDomainStatus" aria-live="polite"></p></fieldset>';
+      '<div id="crowleyFailureStep" class="crowley-failure-step" hidden><div class="crowley-failure-result"><span><small>Found in</small><strong id="crowleyFoundPacket">—</strong></span><span><small>Expected</small><strong id="crowleyExpectedPacket">—</strong></span></div><p>The divination is abandoned. Operation I has no cognate-domain second chance.</p></div></div><p id="crowleyDomainStatus" aria-live="polite"></p></fieldset>';
   }
 
 
@@ -635,35 +635,6 @@
         box.querySelector('#crowleyDomainReveal').hidden=false;
         box.querySelector('#crowleyActualDomain').textContent='Awaiting cuts';
       });
-      box.querySelector('#crowleyRetrySameSelections').addEventListener('change',event=>{retrySameSelections=!!event.target.checked;});
-      box.querySelector('#crowleyRetryOpening').addEventListener('click',()=>{
-        if(!attemptFailed)return;
-        retrySameSelections=box.querySelector('#crowleyRetrySameSelections')?.checked!==false;
-        attemptFailed=false;revealedDomain='';operationDeck=null;
-        const failure=box.querySelector('#crowleyFailureStep');if(failure)failure.hidden=true;
-        const actual=box.querySelector('#crowleyActualDomain');if(actual)actual.textContent='Awaiting cuts';
-        const makeCut=box.querySelector('#crowleyMakeCut');if(makeCut)makeCut.disabled=false;
-        const cutRange=box.querySelector('#crowleyCutRange');if(cutRange)cutRange.value='39';
-        const cutNumber=box.querySelector('#crowleyCutNumber');if(cutNumber)cutNumber.value='39';
-        if(retrySameSelections){
-          domainLocked=true;
-          const reveal=box.querySelector('#crowleyDomainReveal');if(reveal)reveal.hidden=false;
-          const invocation=box.querySelector('#crowleyInvocationStep');if(invocation)invocation.hidden=false;
-          const invoke=box.querySelector('#crowleyInvoke');if(invoke)invoke.disabled=false;
-          const cut=box.querySelector('#crowleyCutStep');if(cut)cut.hidden=true;
-          box.querySelector('#crowleyDomainStatus').textContent='Same Significator and '+(DOMAINS.find(item=>item.id===expectedDomain)?.letter||expectedDomain)+' domain retained. Invoke and reshuffle for the fresh attempt.';
-        }else{
-          expectedDomain='';domainLocked=false;
-          const hidden=box.querySelector('#crowleyExpectedDomain');if(hidden)hidden.value='';
-          const search=box.querySelector('#crowleyDomainSearch');if(search){search.value='';search.disabled=false;}
-          box.querySelectorAll('[data-crowley-domain]').forEach(node=>node.disabled=false);
-          box.querySelector('#crowleyDomainResults')?.classList.remove('is-locked');
-          const lock=box.querySelector('#crowleyLockDomain');if(lock)lock.disabled=false;
-          const reveal=box.querySelector('#crowleyDomainReveal');if(reveal)reveal.hidden=true;
-          renderDomainFilter(box);
-          box.querySelector('#crowleyDomainStatus').textContent='Significator retained. Choose the question domain for the fresh attempt.';
-        }
-      });
       box.querySelector('#crowleyInvoke').addEventListener('click',()=>{
         if(!domainLocked||!significatorId||operationDeck)return;
         const prepared=ledger()?.openingKeyDeck?.(significatorId);
@@ -709,7 +680,7 @@
           // prediction with the packet that actually contained the Significator.
           attemptFailed=true;
           operationDeck=null;
-          retrySameSelections=true;
+          retrySameSelections=false;
           ledger()?.hideOpeningSignificator?.();
           requestAnimationFrame(()=>{
             const live=document.getElementById('crowleyHarmonicGuide');if(!live)return;
