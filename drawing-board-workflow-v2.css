@@ -49,11 +49,8 @@
 #shortListPanel .card-row-placeholder-item>.card-row-drop-card>.card-row-drop-card-inner{padding:.6rem!important;font-size:.68rem!important;font-weight:800!important;text-align:center!important;opacity:.72!important}
 #shortListPanel .card-row-card-wrap::before,#shortListPanel .card-row-card-wrap::after,#shortListPanel .card-row-drop-card::before,#shortListPanel .card-row-drop-card::after{content:none!important;display:none!important}
 
-/* Traditional crossing rotates the card face but not its position label. */
-#shortListPanel.relphi-celtic-crossed .card-row-board>.card-row-item[data-relphi-position-id="crossing"]{transform:scale(var(--row-card-scale,1))!important}
-#shortListPanel.relphi-celtic-crossed .card-row-board>.card-row-item[data-relphi-position-id="crossing"]>.card-row-card-wrap,
-#shortListPanel.relphi-celtic-crossed .card-row-board>.card-row-item[data-relphi-position-id="crossing"]>.card-row-drop-card{transform:rotate(90deg)!important;transform-origin:50% 50%!important}
-#shortListPanel.relphi-celtic-crossed .card-row-board>.card-row-item[data-relphi-position-id="crossing"]>.card-row-position-panel{left:calc(50% + 2.4rem)!important;right:auto!important;top:0!important;bottom:auto!important;width:7rem!important;max-width:7rem!important;min-width:7rem!important;margin:0!important;transform:none!important;text-align:center!important}
+/* Position stickers belong to the card geometry: the item rotates as one unit,
+   so the sticker stays attached to the card's top edge and shares its orientation. */
 
 #shortListPanel .card-row-workspace-toolbar.relphi-board-controller{position:absolute!important;left:.65rem!important;bottom:.65rem!important;right:auto!important;top:auto!important;z-index:1500!important;display:flex!important;align-items:flex-end!important;gap:.4rem!important;width:auto!important;max-width:calc(100% - 1.3rem)!important;margin:0!important;padding:.38rem!important;border:1px solid rgba(17,17,17,.22)!important;border-radius:11px!important;background:rgba(255,253,248,.94)!important;box-shadow:0 8px 24px rgba(0,0,0,.18)!important;backdrop-filter:blur(8px)!important}
 #shortListPanel .relphi-zoom-row{display:flex!important;align-items:center!important;gap:.3rem!important;min-width:0!important}
