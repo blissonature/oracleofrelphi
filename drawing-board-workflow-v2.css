@@ -3060,3 +3060,18 @@ body.relphi-attune-open{overflow:hidden!important}
   opacity:.48!important;
   cursor:not-allowed!important;
 }
+
+/* The Bespoke Add button uses explicit SVG geometry so both strokes are identical and truly centered. */
+#shortListPanel .relphi-question-toolbar #relphiAddPosition>span{display:none!important}
+#shortListPanel .relphi-question-toolbar #relphiAddPosition>svg{
+  display:block!important;
+  width:.92rem!important;
+  height:.92rem!important;
+  overflow:visible!important;
+  fill:none!important;
+  stroke:currentColor!important;
+  stroke-width:2.4!important;
+  stroke-linecap:round!important;
+  stroke-linejoin:round!important;
+  shape-rendering:geometricPrecision!important;
+}
