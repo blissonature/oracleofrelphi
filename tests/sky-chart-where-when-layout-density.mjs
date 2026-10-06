@@ -88,6 +88,9 @@ assert.equal(await jump.evaluate(node=>node.tagName),'A');
 assert.equal(await jump.locator('.sky-where-when-draft-heptagram').count(),1,'The heptagram must live inside the Planetary Hours link.');
 assert.equal(await jump.locator('.sky-ph-jump-title').count(),0,'The heptagram link should not add a text caption.');
 assert.equal(await jump.getAttribute('aria-label'),'Open this time in Planetary Hours');
+assert.equal(await editor.locator('.sky-where-when-heptagram-slot > .sky-ph-jump').count(),1,'The editor must expose exactly one heptagram link.');
+assert.equal(await editor.locator('[data-sky-heptagram-frame]').count(),0,'The committed heptagram frame must stay out of the editor.');
+assert.equal(await panel.locator('[data-sky-where-summary="B"] [data-sky-heptagram-frame="B"]').count(),1,'The committed heptagram must remain owned by the summary.');
 assert.equal(await editor.locator('.sky-where-when-ph-jump').count(),0,'The old separate brown text link must not return.');
 
 const metrics=await editor.evaluate(form=>{
