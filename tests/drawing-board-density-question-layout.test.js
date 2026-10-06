@@ -49,6 +49,30 @@ async function applyQuestions(page,labels){
     await openBoard(page);
 
     await resetBoard(page);
+    await applyQuestions(page,['One','Two','Three','Four']);
+    const fourPack=await page.evaluate(()=>{
+      const snap=window.RelphiDrawingBoardOptionsBridge.capture();
+      return {
+        columns:new Set(Object.values(snap.rowEnvelopeLayout||{}).map(point=>Math.round(Number(point.x)))).size,
+        rows:new Set(Object.values(snap.rowEnvelopeLayout||{}).map(point=>Math.round(Number(point.y)))).size
+      };
+    });
+    assert.equal(fourPack.columns,4,'four portrait cards on the wide desktop board should stay on one row');
+    assert.equal(fourPack.rows,1,'four portrait cards on the wide desktop board should not be forced into a 2×2 grid');
+
+    await resetBoard(page);
+    await applyQuestions(page,Array.from({length:18},(_,i)=>`Question ${i+1}`));
+    const eighteenPack=await page.evaluate(()=>{
+      const snap=window.RelphiDrawingBoardOptionsBridge.capture();
+      return {
+        columns:new Set(Object.values(snap.rowEnvelopeLayout||{}).map(point=>Math.round(Number(point.x)))).size,
+        rows:new Set(Object.values(snap.rowEnvelopeLayout||{}).map(point=>Math.round(Number(point.y)))).size
+      };
+    });
+    assert.equal(eighteenPack.columns,9,'18 portrait cards should use the live wide-board geometry rather than a fixed six-column canvas pack');
+    assert.equal(eighteenPack.rows,2,'18 portrait cards should use two rows when that yields the largest cards');
+
+    await resetBoard(page);
     const dense=Array.from({length:50},(_,i)=>`Question ${i+1}: what relationship or pattern is most important to understand in this position now`);
     await applyQuestions(page,dense);
 
@@ -78,11 +102,11 @@ async function applyQuestions(page,labels){
       const scales=Object.values(snap.rowCardTransforms||{}).map(item=>Number(item?.scale)).filter(Number.isFinite);
       return {xs:xs.length,ys:ys.length,overlaps,zoom:Number(snap.rowZoom)||0,minScale:scales.length?Math.min(...scales):1,maxScale:scales.length?Math.max(...scales):1};
     });
-    assert.equal(denseAudit.xs,10,`50-position automatic layout should use a 10-column comfortable pack; columns=${denseAudit.xs}`);
-    assert.equal(denseAudit.ys,5,`50-position automatic layout should use five rows; rows=${denseAudit.ys}`);
+    assert.ok(denseAudit.xs>10,`50-position automatic layout should derive a wider pack from the live desktop board; columns=${denseAudit.xs}`);
+    assert.ok(denseAudit.ys<5,`50-position automatic layout should avoid unnecessary rows on the wide desktop board; rows=${denseAudit.ys}`);
     assert.deepEqual(denseAudit.overlaps,[],'automatic 50-position layout must not overlap card/label envelopes');
     assert.ok(denseAudit.zoom>0,'dense layout should retain a positive board zoom');
-    assert.ok(denseAudit.minScale>=.32 && denseAudit.maxScale<.45,`50-position pack should use the dense prefab scale band; scales=${denseAudit.minScale}–${denseAudit.maxScale}`);
+    assert.ok(denseAudit.minScale>=.32 && denseAudit.maxScale<=1,`50-position pack should stay within the adaptive auto-layout scale band; scales=${denseAudit.minScale}–${denseAudit.maxScale}`);
 
     await page.setViewportSize({width:390,height:844});
     await page.click('#zoomCardRowExtents');

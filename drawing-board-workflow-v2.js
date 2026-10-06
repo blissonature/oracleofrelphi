@@ -201,58 +201,132 @@
     const scale = rows <= 3 ? .62 : .52;
     return labels.map((label,index) => position(`position-${index+1}`,label,index+1,transform(xs[index%cols],ys[Math.floor(index/cols)],scale)));
   }
-  function genericPositions(labels) {
-    const count = Math.max(1, labels.length);
-    if (count <= 12) return legacyGenericPositions(labels);
+  function autoLayoutMetrics(root = panel()) {
+    const workspace=root?.querySelector('.card-row-workspace');
+    const toolbarH=visibleToolbarHeight(root);
+    const availableW=Math.max(1,(workspace?.clientWidth || CANVAS_W)-START_EDGE_GUTTER*2);
+    const availableH=Math.max(1,(workspace?.clientHeight || CANVAS_H)-toolbarH-START_EDGE_GUTTER*2);
+    let envelopeW=CARD_W;
+    let faceH=CARD_H;
+    let labelFootprint=LABEL_H;
+    const snap=currentSnapshot() || {};
+    const zoom=Math.max(.0001,Number(snap.rowZoom)||1);
+    root?.querySelectorAll('.card-row-board>.card-row-item').forEach(item=>{
+      const index=Number(item.dataset.rowIndex);
+      const transformState=snap.rowCardTransforms?.[index] || {};
+      const rotation=Math.abs(Number(transformState.rotation)||0)%180;
+      if (rotation>1 && Math.abs(rotation-180)>1) return;
+      const cardScale=Math.max(.0001,Number(transformState.scale)||1);
+      const divisor=zoom*cardScale;
+      const cssWidth=parseFloat(getComputedStyle(item).width);
+      if(Number.isFinite(cssWidth)&&cssWidth>0) envelopeW=Math.max(envelopeW,cssWidth);
+      const face=item.querySelector('.card-row-card-wrap,.card-row-drop-card');
+      const sticker=item.querySelector(':scope>.card-row-position-panel');
+      const faceRect=face?.getBoundingClientRect();
+      const stickerRect=sticker?.getBoundingClientRect();
+      if(faceRect?.width>0&&faceRect?.height>0){
+        envelopeW=Math.max(envelopeW,faceRect.width/divisor);
+        faceH=Math.max(faceH,faceRect.height/divisor);
+      }
+      if(stickerRect?.height>0){
+        const measured=faceRect?.height>0
+          ? Math.max(stickerRect.height,(faceRect.top-stickerRect.top))/divisor
+          : stickerRect.height/divisor;
+        labelFootprint=Math.max(labelFootprint,measured);
+      }
+    });
+    return {
+      availableW,
+      availableH,
+      envelopeW:Math.max(1,envelopeW),
+      faceH:Math.max(1,faceH),
+      labelFootprint:Math.max(0,labelFootprint)
+    };
+  }
+
+  function fixedCanvasGenericPositions(labels) {
+    const count=Math.max(1,labels.length);
+    if(count<=12)return legacyGenericPositions(labels);
     let best=null;
-    // Dense layouts should use the full board footprint. Do not impose an
-    // arbitrary ten-column ceiling: for large readings, an extra column can
-    // remove an entire row and substantially increase card scale.
-    const maxCols=count;
-    for (let cols=3;cols<=maxCols;cols++) {
+    for(let cols=3;cols<=count;cols++){
       const rows=Math.ceil(count/cols);
       const scaleX=(CANVAS_W-GUTTER*2-GUTTER*Math.max(0,cols-1))/(CARD_W*cols);
       const scaleY=(CANVAS_H-GUTTER*2-GUTTER*Math.max(0,rows-1))/((CARD_H+LABEL_H)*rows);
       const scale=Math.min(.62,scaleX,scaleY);
-      if (!best || scale>best.scale+.002 || (Math.abs(scale-best.scale)<=.002 && cols<best.cols)) best={cols,rows,scale};
+      if(!best||scale>best.scale+.002||(Math.abs(scale-best.scale)<=.002&&cols<best.cols))best={cols,rows,scale};
     }
-    const cols=best?.cols || 4;
-    const rows=best?.rows || Math.ceil(count/cols);
-    const scale=clamp(best?.scale || .52,.32,.62);
+    const cols=best?.cols||4;
+    const rows=best?.rows||Math.ceil(count/cols);
+    const scale=clamp(best?.scale||.52,.32,.62);
     const cardW=CARD_W*scale;
     const rowH=(CARD_H+LABEL_H)*scale;
-    // Auto-laid cards pack flush. Spare canvas space belongs after the pack,
-    // not between cards; a gap only appears after the reader deliberately moves one.
-    const gapX=GUTTER;
-    const gapY=GUTTER;
     return labels.map((label,index)=>{
       const col=index%cols,row=Math.floor(index/cols);
-      const x=(GUTTER+col*(cardW+gapX))/CANVAS_W;
-      const y=(GUTTER+LABEL_H*scale+row*(rowH+gapY))/CANVAS_H;
+      return position(
+        `position-${index+1}`,
+        label,
+        index+1,
+        transform((GUTTER+col*cardW)/CANVAS_W,(GUTTER+LABEL_H*scale+row*rowH)/CANVAS_H,scale)
+      );
+    });
+  }
+
+  function genericPositions(labels) {
+    const count=Math.max(1,labels.length);
+    const metrics=autoLayoutMetrics();
+    const positionH=metrics.faceH+metrics.labelFootprint;
+    let best=null;
+    // Test every real row/column arrangement against the live board rectangle.
+    // The cards themselves supply the envelope dimensions; the board supplies
+    // the available rectangle. No count breakpoint decides the shape.
+    for(let cols=1;cols<=count;cols++){
+      const rows=Math.ceil(count/cols);
+      const fitX=metrics.availableW/(metrics.envelopeW*cols);
+      const fitY=metrics.availableH/(positionH*rows);
+      const fit=Math.min(fitX,fitY);
+      if(
+        !best ||
+        fit>best.fit+.002 ||
+        (Math.abs(fit-best.fit)<=.002 && rows<best.rows) ||
+        (Math.abs(fit-best.fit)<=.002 && rows===best.rows && cols<best.cols)
+      ) best={cols,rows,fit};
+    }
+    const cols=best?.cols||count;
+    const rows=best?.rows||1;
+    const scale=clamp(Math.min(1,best?.fit||1),.32,1);
+    const cardW=metrics.envelopeW*scale;
+    const rowH=positionH*scale;
+    const labelOffset=metrics.labelFootprint*scale;
+    return labels.map((label,index)=>{
+      const col=index%cols,row=Math.floor(index/cols);
+      const x=(col*cardW)/CANVAS_W;
+      const y=(labelOffset+row*rowH)/CANVAS_H;
       return position(`position-${index+1}`,label,index+1,transform(x,y,scale));
     });
   }
-  function legacyDenseAutoLayout(layout) {
+
+  function previousAutoLayout(layout) {
     const positions=Array.isArray(layout?.positions)?layout.positions.slice().sort((a,b)=>Number(a.drawOrder)-Number(b.drawOrder)):[];
-    if (layout?.id!=='custom-active' || positions.length<=12) return false;
-    const labels=positions.map((item,index)=>String(item.label || `Position ${index+1}`));
-    const expected=legacyGenericPositions(labels);
+    if(layout?.id!=='custom-active'||!positions.length)return false;
+    const labels=positions.map((item,index)=>String(item.label||`Position ${index+1}`));
+    const candidates=[legacyGenericPositions(labels),fixedCanvasGenericPositions(labels)];
     const close=(a,b)=>Math.abs(Number(a)-Number(b))<.0015;
-    return positions.every((item,index)=>{
-      const actual=item?.transform || {};
-      const old=expected[index]?.transform || {};
+    return candidates.some(expected=>positions.every((item,index)=>{
+      const actual=item?.transform||{};
+      const old=expected[index]?.transform||{};
       return close(actual.x,old.x)&&close(actual.y,old.y)&&close(actual.scale,old.scale)&&close(actual.rotation||0,old.rotation||0);
-    });
+    }));
   }
+
   function migrateLegacyDenseAutoLayout(root) {
     const state=currentPrefabState();
     const layout=state.activeLayout;
-    if (!root || !layout || !legacyDenseAutoLayout(layout)) return false;
+    if(!root||!layout||!previousAutoLayout(layout))return false;
     const bridge=optionsBridge();
     const snap=bridge?.capture?.();
-    if (!snap) return false;
+    if(!snap)return false;
     const ordered=layout.positions.slice().sort((a,b)=>Number(a.drawOrder)-Number(b.drawOrder));
-    const packed=genericPositions(ordered.map((item,index)=>String(item.label || `Position ${index+1}`)));
+    const packed=genericPositions(ordered.map((item,index)=>String(item.label||`Position ${index+1}`)));
     const nextLayout=clone(layout);
     nextLayout.positions=ordered.map((item,index)=>({
       ...clone(item),
