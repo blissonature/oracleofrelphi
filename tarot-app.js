@@ -305,7 +305,7 @@
     const need = rel.need ? `<p class="uhn-need"><strong>Need:</strong> ${escapeHtml(rel.need)}</p>` : '';
     const position = UHN_ORDER.get(card.card_id);
     const positionText = position === 0 ? 'origin a₀' : `interval a${toSubscript(position)}`;
-    return `<section class="uhn-panel system-card"><h3>Relphi-derived interpretation</h3><p>${escapeHtml(interpretation)}</p><p class="generated-note">Universal Human Needs · Planetary interval harmonics · ${escapeHtml(positionText)} of a${toSubscript(UHN_CARD_IDS.length - 1)}</p>${need}${interval}${formula ? `<p class="uhn-formula-line"><strong>Ingredients:</strong> <code>${escapeHtml(formula)}</code></p>` : ''}</section>`;
+    return `<section class="uhn-panel system-card"><h3>Relphi-derived interpretation</h3><p>${escapeHtml(interpretation)}</p><p class="generated-note">Universal Human Needs · Planetary interval harmonics · ${escapeHtml(positionText)} of a${toSubscript(UHN_CARD_IDS.length - 1)}</p>${need}${interval}${formula ? `<p class="uhn-formula-line"><strong>Formula:</strong> <code>${escapeHtml(formula)}</code></p>` : ''}</section>`;
   }
 
   const state = {
