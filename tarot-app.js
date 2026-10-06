@@ -319,6 +319,15 @@
   function slug(value) { return String(value || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''); }
   function toSubscript(value) { return String(value).replace(/[0-9]/g, ch => '₀₁₂₃₄₅₆₇₈₉'[Number(ch)] || ch); }
   const LOCKED_INTERPRETATION_DATA = window.RELPHI_LOCKED_INTERPRETATIONS || { ingredient_definitions: {}, cards: [] };
+  const RELPHI_CARD_SENSE_DATA = window.RELPHI_CARD_SENSES || { cards: [] };
+  const RELPHI_CARD_SENSE_INDEX = new Map((RELPHI_CARD_SENSE_DATA.cards || []).map(entry => [String(entry.card_id || ''), entry]));
+  function relphiDefaultSensePhrase(card) {
+    const entry = RELPHI_CARD_SENSE_INDEX.get(String(card?.card_id || ''));
+    if (!entry) return '';
+    const key = String(entry.default_sense_key || '');
+    const sense = (entry.senses || []).find(item => String(item?.key || '') === key) || (entry.senses || [])[0] || null;
+    return String(sense?.panel_phrase || sense?.label || '').trim();
+  }
   const LOCKED_INGREDIENTS = LOCKED_INTERPRETATION_DATA.ingredient_definitions || {};
   const LOCKED_CARD_INDEX = (() => {
     const index = new Map();
@@ -602,33 +611,21 @@
   }
   function titleWithBreaksHtml(card) { return escapeHtml(title(card)).replace(/\//g, '/<wbr>'); }
 
-  const CELTIC_POSITION_INTERPRETIVE_LENS = Object.freeze({
-    covering:'As what covers you, this is the condition presently surrounding the matter—the atmosphere already in effect.',
-    crossing:'As what crosses you, this is the counterforce, complication, or leverage that changes how the central situation can move.',
-    crowning:'As what crowns you, this is the conscious aim, ideal, or possibility being held above the matter.',
-    beneath:'As what is beneath you, this is the root condition—the less-visible foundation supporting what is happening.',
-    behind:'As what is behind you, this is a receding influence that still conditions the present.',
-    before:'As what is before you, this is the influence now entering the next phase of the situation.',
-    self:'As yourself, this describes your stance inside the matter—how you are meeting, carrying, or identifying with it.',
-    house:'As your house, this describes the surrounding field: other people, circumstances, and the environment answering the situation.',
-    'hopes-fears':'As your hopes or fears, this is emotionally charged enough to be desired, dreaded, or both.',
-    outcome:'As what will come, this describes where the present pattern tends to lead if nothing essential changes.'
-  });
-  function celticPositionRole(index = 0) {
+  function celticCrossActive() {
     const layout=state.rowActiveLayout;
-    if (layout?.id!=='celtic-cross-10' && layout?.basedOn!=='celtic-cross-10') return '';
-    const meta=state.rowPositionMeta?.[index] || layout?.positions?.[index] || {};
-    return String(meta.role || meta.id || '').trim();
+    return layout?.id==='celtic-cross-10' || layout?.basedOn==='celtic-cross-10';
   }
-  function celticPositionInterpretation(card,index=0) {
-    const role=celticPositionRole(index);
-    const lens=CELTIC_POSITION_INTERPRETIVE_LENS[role] || '';
-    if(!lens)return '';
-    const base=String(layerInterpretationForOrientation(card,rowCardIsReversed(index))||'').trim();
-    return [base,lens].filter(Boolean).join(' ');
+  function celticCompactCardDescription(card,index=0) {
+    if (!celticCrossActive()) return '';
+    const phrase=relphiDefaultSensePhrase(card);
+    if (!phrase) return '';
+    return rowCardIsReversed(index) ? `Reversed · ${phrase}` : phrase;
   }
   function rowCardInterpretation(card, index = 0) {
-    return celticPositionInterpretation(card,index) || layerInterpretationForOrientation(card, rowCardIsReversed(index));
+    // Position stickers carry the Celtic Cross role. The card layer remains the
+    // card's own Relphi-derived interpretation rather than inventing a position
+    // interpretation and appending it to the card.
+    return layerInterpretationForOrientation(card, rowCardIsReversed(index));
   }
   function thothTitle(card) { return card?.systems?.thoth?.display_name || card?.name || ''; }
   function cardById(id) { return cards.find(card => card.card_id === id) || null; }
@@ -865,8 +862,8 @@
     const layerTitle = String(options.layerTitle || normalizedTitle(card)).trim();
     const rawLayerText = String(options.layerText || layerInterpretation(card)).trim();
     const layerText = stripLeadingCardTitle(rawLayerText, card, layerTitle);
-    const essenceText = cardEssenceLabel(card);
-    const essenceClass = card.card_type === 'Major' ? ' or-card-essence--major' : '';
+    const essenceText = String(options.essenceText || cardEssenceLabel(card)).trim();
+    const essenceClass = card.card_type === 'Major' && !options.essenceText ? ' or-card-essence--major' : '';
     const dragAttrs = context === 'short-list'
       ? ' draggable="true" data-row-card="' + escapeHtml(card.card_id) + '"'
       : (context === 'browse' ? ' draggable="true" data-drag-card="' + escapeHtml(card.card_id) + '"' : '');
@@ -3198,7 +3195,8 @@
       positionLabel: '',
       selectable: true,
       layerText: rowCardInterpretation(card, index),
-      layerTitle: `${title(card)}${reversed ? ' · Reversed' : ''}`
+      layerTitle: `${title(card)}${reversed ? ' · Reversed' : ''}`,
+      essenceText: celticCompactCardDescription(card,index)
     });
     cardHtml = cardHtml.replace('<article class="or-card', `<article class="or-card card-row-card${reversed ? ' is-row-reversed' : ''}`);
     cardHtml = cardHtml.replace(' tabindex="0">', ` draggable="true" data-row-card="${escapeHtml(card.card_id)}" data-row-reversed="${reversed ? 'true' : 'false'}" tabindex="0" aria-label="${escapeHtml(title(card))}${reversed ? ', reversed' : ''}">`);
