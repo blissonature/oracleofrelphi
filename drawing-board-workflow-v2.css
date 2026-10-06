@@ -3075,3 +3075,39 @@ body.relphi-attune-open{overflow:hidden!important}
   stroke-linejoin:round!important;
   shape-rendering:geometricPrecision!important;
 }
+
+/* Bespoke move/delete/add controls are one icon family: same box, stroke, optical scale, and disabled treatment. */
+#shortListPanel .relphi-question-toolbar-actions>.relphi-question-icon-button{
+  display:grid!important;
+  place-items:center!important;
+  width:2.25rem!important;
+  min-width:2.25rem!important;
+  max-width:2.25rem!important;
+  height:2.25rem!important;
+  min-height:2.25rem!important;
+  max-height:2.25rem!important;
+  margin:0!important;
+  padding:0!important;
+  border:1px solid #b9afa7!important;
+  border-radius:7px!important;
+  background:#fff!important;
+  color:#111!important;
+  box-sizing:border-box!important;
+}
+#shortListPanel .relphi-question-toolbar-actions>.relphi-question-icon-button>svg{
+  display:block!important;
+  width:1rem!important;
+  height:1rem!important;
+  overflow:visible!important;
+  fill:none!important;
+  stroke:currentColor!important;
+  stroke-width:2.35!important;
+  stroke-linecap:round!important;
+  stroke-linejoin:round!important;
+  shape-rendering:geometricPrecision!important;
+}
+#shortListPanel .relphi-question-toolbar-actions>.relphi-question-icon-button:disabled{
+  color:#9a9a9a!important;
+  opacity:.42!important;
+  background:#fff!important;
+}
