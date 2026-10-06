@@ -142,36 +142,7 @@
   max-width:100%;
   min-width:0;
   box-sizing:border-box;
-  border:0;
-  border-radius:999px;
-  background:#202020;
-  color:#fff;
-  padding:.64rem .82rem;
-  font:900 .68rem/1 system-ui,sans-serif;
-  cursor:pointer;
   white-space:nowrap;
-}
-
-.sky-where-when-button.primary {
-  background:#c9211e;
-}
-
-.sky-where-when-button.secondary {
-  border:1px solid rgba(31,27,24,.24);
-  background:#fff;
-  color:#211d19;
-}
-
-.sky-where-when-button:hover,
-.sky-where-when-button:focus-visible {
-  filter:brightness(.94);
-  outline:3px solid rgba(201,33,30,.18);
-  outline-offset:2px;
-}
-
-.sky-where-when-button:disabled {
-  cursor:not-allowed;
-  opacity:.45;
 }
 
 .sky-where-when-grid [data-ww-field="time"]:disabled {

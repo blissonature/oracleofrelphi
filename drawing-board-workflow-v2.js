@@ -729,7 +729,7 @@
     if(!bar){
       bar=document.createElement('div');
       bar.className='relphi-board-commandbar';
-      bar.innerHTML='<div class="relphi-board-command-left"><div class="relphi-board-command-title"><strong>Drawing Board</strong><span class="relphi-board-command-count">0</span></div><button type="button" id="relphiBoardSettingsButton" aria-expanded="false">Settings</button></div>';
+      bar.innerHTML='<div class="relphi-board-command-left"><div class="relphi-board-command-title"><strong>Drawing Board</strong><span class="relphi-board-command-count">0</span></div><button type="button" id="relphiBoardSettingsButton" class="relphi-button relphi-button--secondary relphi-control--compact" aria-expanded="false">Settings</button></div>';
       summary.insertAdjacentElement('afterend',bar);
     }
     const count=bar.querySelector('.relphi-board-command-count');
@@ -750,13 +750,16 @@
       reset=document.createElement('button');
       reset.type='button';
       reset.id='relphiResetBoard';
+      reset.className='relphi-button relphi-button--danger relphi-control--compact';
       reset.textContent='Reset Board';
     }
+    reset.classList.add('relphi-button','relphi-button--danger','relphi-control--compact');
     reset.title='Restore default settings';
     reset.setAttribute('aria-label','Restore default settings');
     reset.disabled=!boardCanReset(root);
     topActions.appendChild(reset);
     if(clear){
+      clear.classList.add('relphi-button','relphi-button--utility','relphi-control--compact');
       clear.textContent='Clear';
       clear.title='Clear the cards without changing settings';
       clear.setAttribute('aria-label','Clear the cards without changing settings');
@@ -766,21 +769,21 @@
     if(undo)undo.hidden=!freeMode;
     if(redo)redo.hidden=!freeMode;
     if(undo){
-      undo.classList.add('board-history-icon');
+      undo.classList.add('board-history-icon','relphi-icon-button','relphi-icon-button--utility','relphi-control--compact');
       undo.title='Undo';
       undo.setAttribute('aria-label','Undo');
       if(!undo.querySelector('svg')) undo.innerHTML='<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"><path d="M9 7 4 12l5 5"></path><path d="M4 12h9a7 7 0 0 1 7 7"></path></svg>';
       topActions.appendChild(undo);
     }
     if(redo){
-      redo.classList.add('board-history-icon');
+      redo.classList.add('board-history-icon','relphi-icon-button','relphi-icon-button--utility','relphi-control--compact');
       redo.title='Redo';
       redo.setAttribute('aria-label','Redo');
       if(!redo.querySelector('svg')) redo.innerHTML='<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"><path d="m15 7 5 5-5 5"></path><path d="M20 12h-9a7 7 0 0 0-7 7"></path></svg>';
       topActions.appendChild(redo);
     }
     if(clear)topActions.appendChild(clear);
-    if(draw){draw.textContent='Draw';draw.title='Draw a card';draw.setAttribute('aria-label','Draw a card');topActions.appendChild(draw);}
+    if(draw){draw.classList.add('relphi-button','relphi-button--primary','relphi-control--compact');draw.textContent='Draw';draw.title='Draw a card';draw.setAttribute('aria-label','Draw a card');topActions.appendChild(draw);}
 
     let settingsPanel=boardDrawer.querySelector(':scope > .relphi-board-settings-panel');
     if(!settingsPanel){
@@ -806,6 +809,7 @@
     root.classList.toggle('relphi-settings-open',settingsOpen);
     const settingsButton=bar.querySelector('#relphiBoardSettingsButton');
     if(settingsButton){
+      settingsButton.classList.add('relphi-button','relphi-button--secondary','relphi-control--compact');
       settingsButton.setAttribute('aria-expanded',String(settingsOpen));
       settingsButton.classList.toggle('is-active',settingsOpen);
     }

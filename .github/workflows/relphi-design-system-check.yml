@@ -1,0 +1,51 @@
+name: Relphi design system check
+
+on:
+  pull_request:
+    paths:
+      - 'styles/**'
+      - 'relphi-design-system.css'
+      - 'tarot.html'
+      - 'sky-chart.html'
+      - 'drawing-board-workflow-v2.js'
+      - 'drawing-board-workflow-v2.css'
+      - 'sky-chart-where-when-v3.js'
+      - 'sky-chart-where-when-v1.css'
+      - 'sky-chart-where-when-layout-density-v1.css'
+      - 'tests/relphi-design-system.test.js'
+      - 'tests/relphi-action-hierarchy.test.js'
+      - '.github/workflows/relphi-design-system-check.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'styles/**'
+      - 'relphi-design-system.css'
+      - 'tarot.html'
+      - 'sky-chart.html'
+      - 'drawing-board-workflow-v2.js'
+      - 'drawing-board-workflow-v2.css'
+      - 'sky-chart-where-when-v3.js'
+      - 'sky-chart-where-when-v1.css'
+      - 'sky-chart-where-when-layout-density-v1.css'
+      - 'tests/relphi-design-system.test.js'
+      - 'tests/relphi-action-hierarchy.test.js'
+      - '.github/workflows/relphi-design-system-check.yml'
+
+jobs:
+  brand-contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install Sass compiler
+        run: npm install --no-save --package-lock=false sass@1.90.0
+      - name: Verify generated CSS matches Sass source
+        run: |
+          npm run styles:build
+          git diff --exit-code -- relphi-design-system.css
+      - name: Verify design-system consumers and action hierarchy
+        run: |
+          node tests/relphi-design-system.test.js
+          node tests/relphi-action-hierarchy.test.js
