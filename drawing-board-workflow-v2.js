@@ -203,12 +203,13 @@
   }
   function singleRowPositions(labels) {
     const count=Math.max(1,labels.length);
-    const scale=count<=5?.88:Math.min(.88,(CANVAS_W/(CARD_W*count))*.92);
-    const cardWidth=(CARD_W*scale)/CANVAS_W;
+    const usableWidth=CANVAS_W-(START_EDGE_GUTTER*2);
+    const scale=Math.min(.88,usableWidth/(CARD_W*count));
+    const cardWidth=CARD_W*scale;
     const totalWidth=cardWidth*count;
-    const gap=count>1?Math.max(0,(1-totalWidth)/(count+1)):0;
+    const startX=(CANVAS_W-totalWidth)/2;
     return labels.map((label,index)=>{
-      const x=gap+index*(cardWidth+gap);
+      const x=(startX+(index*cardWidth))/CANVAS_W;
       return position(`position-${index+1}`,label,index+1,transform(x,.24,scale));
     });
   }
@@ -350,7 +351,7 @@
   ];
   const HOUSE_POLARITIES = {
     version:1,id:'six-polarities-houses-12',name:'Six Polarities · Houses',cardCount:12,source:'shipped',editable:false,
-    positions:genericPositions(HOUSE_POLARITY_LABELS).map((item,index) => ({ ...item, id:`polarity-${index + 1}` })),
+    positions:singleRowPositions(HOUSE_POLARITY_LABELS).map((item,index) => ({ ...item, id:`polarity-${index + 1}` })),
     rules:{ allowReversals:true, allowRepeats:false, drawScope:'full' }
   };
 
@@ -414,10 +415,10 @@
     { id:'situation-challenge-strategy-3', name:'Situation · Challenge · Strategy', labels:['Situation','Challenge','Strategy'] },
     { id:'choice-path-3', name:'Choice Path', labels:['Option A','Option B','Advice'] },
     { id:'relationship-check-in-5', name:'Relationship Check-In', labels:['You','Other','Bond','Challenge','Next step'] },
-    { id:'hope-and-comfort-5', name:'Hope and Comfort', labels:['Confusion','Comfort','Lesson','Support','Next step'], singleRow:true }
+    { id:'hope-and-comfort-5', name:'Hope and Comfort', labels:['Confusion','Comfort','Lesson','Support','Next step'] }
   ].map(item => ({
     version:1,id:item.id,name:item.name,cardCount:item.labels.length,source:'shipped',editable:false,
-    positions:item.singleRow?singleRowPositions(item.labels):genericPositions(item.labels),rules:{ allowReversals:true,allowRepeats:false,drawScope:'full' }
+    positions:singleRowPositions(item.labels),rules:{ allowReversals:true,allowRepeats:false,drawScope:'full' }
   })).concat([
     SATURN_SQUARE,
     CELTIC_CROSS,
@@ -452,7 +453,7 @@
       }),
       rules:{allowReversals:false,allowRepeats:false,drawScope:'full'}
     },
-    {version:1,id:'focus-1',name:'Focus',cardCount:1,source:'shipped',editable:false,positions:genericPositions(['Focus']),rules:{allowReversals:true,allowRepeats:false,drawScope:'full'}}
+    {version:1,id:'focus-1',name:'Focus',cardCount:1,source:'shipped',editable:false,positions:singleRowPositions(['Focus']),rules:{allowReversals:true,allowRepeats:false,drawScope:'full'}}
   ]);
 
   function readCustomTemplates() {
