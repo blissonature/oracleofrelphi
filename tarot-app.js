@@ -1747,14 +1747,19 @@
     const maxX = Number.isFinite(bounds.maxX) ? bounds.maxX : CARD_ROW_ENVELOPE_W;
     const maxY = Number.isFinite(bounds.maxY) ? bounds.maxY : CARD_ROW_ENVELOPE_H;
     const baseMargin = 24;
-    const baseHeaderH = state.shortListNotes ? 124 : 88;
+    const nominalHeaderH = state.shortListNotes ? 124 : 88;
     const brandFooterH = 0;
-    const scale = drawingBoardSnapshotScale(maxX-minX,maxY-minY,baseHeaderH,brandFooterH,baseMargin);
+    const scale = drawingBoardSnapshotScale(maxX-minX,maxY-minY,nominalHeaderH,brandFooterH,baseMargin);
     const chromeScale=Math.max(1,Math.min(1.35,scale));
     const margin=Math.round(baseMargin*chromeScale);
+    const canvasWidth=Math.ceil((maxX-minX)*scale+margin*2);
+    const narrowHeader=canvasWidth<Math.round(560*chromeScale);
+    const baseHeaderH=state.shortListNotes
+      ? (narrowHeader?164:124)
+      : (narrowHeader?118:88);
     const headerH=Math.round(baseHeaderH*chromeScale);
     const canvas = document.createElement('canvas');
-    canvas.width = Math.ceil((maxX - minX) * scale + margin * 2);
+    canvas.width = canvasWidth;
     canvas.height = Math.ceil((maxY - minY) * scale + margin * 2 + headerH);
     const ctx = canvas.getContext('2d');
     if (!ctx) throw new Error('Unable to create the snapshot canvas.');
@@ -1778,14 +1783,13 @@
 
     const titleText=`${state.shortListName ? state.shortListName + ' · ' : ''}Drawing Board`;
     const oracleText='Oracle of ';
-    const topGap=18*chromeScale;
     const rightX=canvas.width-margin;
     const contentW=Math.max(1,canvas.width-(margin*2));
-    const brandAreaW=Math.max(120*chromeScale,contentW*.54);
-    const titleAreaW=Math.max(100*chromeScale,contentW-brandAreaW-topGap);
 
     const brandTextX=headerLogoX+headerLogoSize+9*chromeScale;
-    const brandTextMaxW=Math.max(56*chromeScale,brandAreaW-(headerLogoSize+9*chromeScale));
+    const brandTextMaxW=narrowHeader
+      ? Math.max(90*chromeScale,contentW-(headerLogoSize+9*chromeScale))
+      : Math.max(56*chromeScale,contentW*.48-(headerLogoSize+9*chromeScale));
     let brandFontSize=17*chromeScale;
     const brandMin=11.5*chromeScale;
     while(brandFontSize>brandMin){
@@ -1803,6 +1807,7 @@
     ctx.fillStyle='#dc1f18';
     ctx.fillText('Relphi',brandTextX+oracleW,brandTextY);
 
+    const titleAreaW=narrowHeader?contentW:contentW*.46;
     let titleFontSize=20*chromeScale;
     const titleMin=12*chromeScale;
     while(titleFontSize>titleMin){
@@ -1813,20 +1818,25 @@
     ctx.textAlign='right';
     ctx.fillStyle='#111';
     ctx.font=`900 ${titleFontSize}px Montserrat, Arial, sans-serif`;
-    const titleY=topRowY+(headerLogoSize-titleFontSize)/2;
+    const titleY=narrowHeader
+      ? (58*chromeScale)
+      : (topRowY+(headerLogoSize-titleFontSize)/2);
     ctx.fillText(titleText,rightX,titleY);
 
-    // Metadata gets its own row so it can never collide with either lockup.
-    ctx.textAlign='center';
+    // Narrow exports stack the title below the brand instead of compressing
+    // two lockups into the same row. Wide exports keep the left/right header.
+    ctx.textAlign=narrowHeader?'right':'center';
     ctx.font=`650 ${10.5*chromeScale}px Montserrat, Arial, sans-serif`;
     ctx.fillStyle='#655d56';
     const metaText=`${localTimestampLabel(createdAt)} · ${slots} position${slots === 1 ? '' : 's'}`;
-    ctx.fillText(metaText,canvas.width/2,58*chromeScale);
+    const metaY=(narrowHeader?86:58)*chromeScale;
+    ctx.fillText(metaText,narrowHeader?rightX:canvas.width/2,metaY);
     if (state.shortListNotes) {
       ctx.textAlign='left';
       ctx.font = `600 ${12*chromeScale}px Montserrat, Arial, sans-serif`;
       ctx.fillStyle = '#332f2b';
-      wrapCanvasLines(ctx, state.shortListNotes, canvas.width - margin * 2, 2).forEach((line, li) => ctx.fillText(line, margin, (78 + li * 16)*chromeScale));
+      const notesY=(narrowHeader?112:78)*chromeScale;
+      wrapCanvasLines(ctx, state.shortListNotes, canvas.width - margin * 2, 2).forEach((line, li) => ctx.fillText(line, margin, notesY + li * 16*chromeScale));
     }
     const cards = state.shortList.map(cardById);
     const tableImage = state.rowTableImage ? await loadCanvasSafeImage(state.rowTableImage) : null;
