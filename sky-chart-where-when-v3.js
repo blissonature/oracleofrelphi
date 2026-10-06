@@ -209,6 +209,10 @@ function calculateSky(slot,selected,date,time,options={}){
     if(chironKey&&source[chironKey]&&typeof source[chironKey]==='object')placements[chironKey]=JSON.parse(JSON.stringify(source[chironKey]));
   }
   delete metadata.savedSkyId;delete metadata.savedSkyName;delete metadata.savedSkyLoadedAt;
+  // A known local time is an explicit transition out of unknown-time mode.
+  // Do not let a saved sky's prior uncertainty state survive underneath the new angles.
+  priorProfile.timeUnknown=false;
+  delete priorProfile.moonRange;
   metadata.whereWhenSource=selected.source||'manual';
   if(liveOrigin==='use-now'){
     delete metadata.liveNowDisabled;delete metadata.liveNowDisabledReason;delete metadata.liveNowMigrated;
