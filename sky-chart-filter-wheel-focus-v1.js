@@ -10,7 +10,6 @@
     'sky-chart-filter-hidden',
     'sky-chart-multiselect-hidden',
     'sky-chart-house-multiselect-hidden',
-    'sky-chart-aspect-multiselect-hidden',
     'sky-chart-sign-filter-hidden'
   ]);
   const ORB_HIDDEN_CLASSES=new Set(['sky-chart-orb-hidden','sky-orb-filter-hidden']);
@@ -48,6 +47,9 @@
     if(row.classList.contains('sky-foundation-single-sky-cross-hidden'))return true;
     for(const className of row.classList){
       if(ORB_HIDDEN_CLASSES.has(className))continue;
+      // Aspect visibility controls the pickup sticks only. It must never turn
+      // placements, signs, or houses into a derived "kept/not kept" focus set.
+      if(className==='sky-chart-aspect-multiselect-hidden')continue;
       if(EXPLICIT_HIDDEN_CLASSES.has(className))return true;
       if(className.includes('multiselect-hidden'))return true;
       if(className.includes('filter-hidden'))return true;
