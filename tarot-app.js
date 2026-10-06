@@ -1674,11 +1674,14 @@
   }
   function drawingBoardSnapshotScale(contentW, contentH, headerH, brandFooterH, margin) {
     const mobile = !!window.matchMedia?.('(max-width:700px)').matches || Number(navigator.maxTouchPoints || 0) > 1;
-    const maxDimension = mobile ? 4096 : 8192;
-    const maxPixels = mobile ? 12000000 : 24000000;
+    const maxDimension = mobile ? 6144 : 10000;
+    const maxPixels = mobile ? 22000000 : 42000000;
     const fixedW = margin * 2;
     const fixedH = margin * 2 + headerH + brandFooterH;
-    let scale = 1.08;
+    // Snapshot is an export, not a screenshot of the current CSS pixel density.
+    // Render substantially above 1× so card art and the small Celtic Cross labels
+    // stay crisp/readable when the PNG is opened or shared.
+    let scale = mobile ? 1.8 : 2.25;
     scale = Math.min(scale,
       Math.max(.001,(maxDimension-fixedW)/Math.max(1,contentW)),
       Math.max(.001,(maxDimension-fixedH)/Math.max(1,contentH))
@@ -1706,15 +1709,20 @@
     const minY = Number.isFinite(bounds.minY) ? bounds.minY : 0;
     const maxX = Number.isFinite(bounds.maxX) ? bounds.maxX : CARD_ROW_ENVELOPE_W;
     const maxY = Number.isFinite(bounds.maxY) ? bounds.maxY : CARD_ROW_ENVELOPE_H;
-    const margin = 24;
-    const headerH = state.shortListNotes ? 108 : 72;
+    const baseMargin = 24;
+    const baseHeaderH = state.shortListNotes ? 108 : 72;
     const brandFooterH = 0;
-    const scale = drawingBoardSnapshotScale(maxX-minX,maxY-minY,headerH,brandFooterH,margin);
+    const scale = drawingBoardSnapshotScale(maxX-minX,maxY-minY,baseHeaderH,brandFooterH,baseMargin);
+    const chromeScale=Math.max(1,Math.min(2,scale));
+    const margin=Math.round(baseMargin*chromeScale);
+    const headerH=Math.round(baseHeaderH*chromeScale);
     const canvas = document.createElement('canvas');
     canvas.width = Math.ceil((maxX - minX) * scale + margin * 2);
     canvas.height = Math.ceil((maxY - minY) * scale + margin * 2 + headerH);
     const ctx = canvas.getContext('2d');
     if (!ctx) throw new Error('Unable to create the snapshot canvas.');
+    ctx.imageSmoothingEnabled=true;
+    ctx.imageSmoothingQuality='high';
     ctx.fillStyle = state.rowTableColor || '#7d1f28';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
@@ -1725,15 +1733,15 @@
     ctx.lineWidth=1;
     ctx.beginPath();ctx.moveTo(0,headerH-.5);ctx.lineTo(canvas.width,headerH-.5);ctx.stroke();
 
-    const headerLogoSize=46;
+    const headerLogoSize=46*chromeScale;
     const headerLogoX=margin;
-    const headerLogoY=Math.max(10,(72-headerLogoSize)/2);
+    const headerLogoY=Math.max(10*chromeScale,(72*chromeScale-headerLogoSize)/2);
     drawRelphiLogoMark(ctx,headerLogoX,headerLogoY,headerLogoSize);
-    const brandTextX=headerLogoX+headerLogoSize+12;
-    const brandTextY=headerLogoY+9;
+    const brandTextX=headerLogoX+headerLogoSize+12*chromeScale;
+    const brandTextY=headerLogoY+9*chromeScale;
     ctx.textAlign='left';
     ctx.textBaseline='top';
-    ctx.font='800 17px Montserrat, Arial, sans-serif';
+    ctx.font=`800 ${17*chromeScale}px Montserrat, Arial, sans-serif`;
     ctx.fillStyle='#111';
     const oracleText='Oracle of ';
     ctx.fillText(oracleText,brandTextX,brandTextY);
@@ -1743,16 +1751,16 @@
 
     ctx.textAlign='right';
     ctx.fillStyle = '#111';
-    ctx.font = '900 20px Montserrat, Arial, sans-serif';
-    ctx.fillText(`${state.shortListName ? state.shortListName + ' · ' : ''}Drawing Board`, canvas.width-margin, 14);
-    ctx.font = '650 11px Montserrat, Arial, sans-serif';
+    ctx.font = `900 ${20*chromeScale}px Montserrat, Arial, sans-serif`;
+    ctx.fillText(`${state.shortListName ? state.shortListName + ' · ' : ''}Drawing Board`, canvas.width-margin, 14*chromeScale);
+    ctx.font = `650 ${11*chromeScale}px Montserrat, Arial, sans-serif`;
     ctx.fillStyle = '#655d56';
-    ctx.fillText(`${localTimestampLabel(createdAt)} · ${slots} position${slots === 1 ? '' : 's'}`, canvas.width-margin, 43);
+    ctx.fillText(`${localTimestampLabel(createdAt)} · ${slots} position${slots === 1 ? '' : 's'}`, canvas.width-margin, 43*chromeScale);
     if (state.shortListNotes) {
       ctx.textAlign='left';
-      ctx.font = '600 12px Montserrat, Arial, sans-serif';
+      ctx.font = `600 ${12*chromeScale}px Montserrat, Arial, sans-serif`;
       ctx.fillStyle = '#332f2b';
-      wrapCanvasLines(ctx, state.shortListNotes, canvas.width - margin * 2, 2).forEach((line, li) => ctx.fillText(line, margin, 66 + li * 16));
+      wrapCanvasLines(ctx, state.shortListNotes, canvas.width - margin * 2, 2).forEach((line, li) => ctx.fillText(line, margin, (66 + li * 16)*chromeScale));
     }
     const cards = state.shortList.map(cardById);
     const tableImage = state.rowTableImage ? await loadCanvasSafeImage(state.rowTableImage) : null;
