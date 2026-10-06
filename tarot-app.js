@@ -1539,30 +1539,32 @@
   }
   function drawPositionPanelOnCanvas(ctx, label, x, y, w, h) {
     ctx.save();
+    const density=Math.max(1,Math.min(2.5,h/54));
     ctx.fillStyle = '#fff';
     ctx.strokeStyle = 'rgba(17,17,17,.48)';
-    ctx.lineWidth = 1.2;
-    drawRoundedRect(ctx, x, y, w, h, 10);
+    ctx.lineWidth = 1.2*density;
+    drawRoundedRect(ctx, x, y, w, h, 10*density);
     ctx.fill();
     ctx.stroke();
     const text = String(label || '').trim();
     if (text) {
-      const maxW = w - 18;
-      let fontSize = text.length > 76 ? 10 : text.length > 52 ? 11 : text.length > 30 ? 12 : 13;
+      const maxW = w - 18*density;
+      let fontSize = (text.length > 76 ? 10 : text.length > 52 ? 11 : text.length > 30 ? 12 : 13)*density;
+      const minFont=8*density;
       let lines;
       do {
         ctx.font = `800 ${fontSize}px Montserrat, Arial, sans-serif`;
         lines = wrapCanvasLines(ctx, text, maxW, 3);
-        if (lines.length <= 3 || fontSize <= 8) break;
-        fontSize -= 1;
-      } while (fontSize > 8);
-      const lh = fontSize + 3;
+        if (lines.length <= 3 || fontSize <= minFont) break;
+        fontSize -= density;
+      } while (fontSize > minFont);
+      const lh = fontSize + 3*density;
       const total = lines.length * lh;
       ctx.fillStyle = '#111';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'top';
       ctx.font = `800 ${fontSize}px Montserrat, Arial, sans-serif`;
-      const startY = y + Math.max(5, (h - total) / 2);
+      const startY = y + Math.max(5*density, (h - total) / 2);
       lines.slice(0,3).forEach((line, li) => ctx.fillText(line, x + w / 2, startY + li * lh));
     }
     ctx.restore();
@@ -1791,37 +1793,59 @@
       const card = cards[i];
       const position = String(state.shortListPositionLabels[i] || `Position ${i + 1}`).trim();
       const t = rowCardTransform(i);
-      ctx.save();
+      const meta=state.rowPositionMeta?.[i]||{};
+      const isCrossing=(meta.role==='crossing'||meta.id==='crossing')&&Math.abs(Number(t.rotation)||0)===90;
       const centerX = x + groupW / 2;
       const centerY = y + (CARD_ROW_ENVELOPE_H * scale) / 2;
+
+      // The live Celtic Cross keeps the item/sticker upright and rotates only the card face.
+      ctx.save();
       ctx.translate(centerX, centerY);
-      ctx.rotate((t.rotation || 0) * Math.PI / 180);
+      if(!isCrossing)ctx.rotate((t.rotation || 0) * Math.PI / 180);
       ctx.scale(t.scale || 1, t.scale || 1);
       ctx.translate(-centerX, -centerY);
+
       ctx.fillStyle = state.rowEnvelopeColor || '#fff';
       ctx.strokeStyle = '#111';
-      ctx.lineWidth = 1.5;
-      drawRoundedRect(ctx, x, y, groupW, CARD_ROW_ENVELOPE_H * scale, 14);
+      ctx.lineWidth = 1.5*scale;
+      drawRoundedRect(ctx, x, y, groupW, CARD_ROW_ENVELOPE_H * scale, 14*scale);
       ctx.fill();
       ctx.stroke();
-      drawPositionPanelOnCanvas(ctx, position, x + 12 * scale, y + 12 * scale, groupW - 24 * scale, positionH);
+
       const artX = x + (groupW - cardW) / 2;
       const artY = y + 12 * scale + positionH + gap;
       const img = images[i];
+
+      // Match the live crossing sticker: upright, attached at the right edge of the crossing card.
+      if(isCrossing){
+        const stickerW=Math.min(groupW*.72,140*scale);
+        const stickerX=x+groupW*.5+38*scale;
+        const stickerY=y+12*scale;
+        drawPositionPanelOnCanvas(ctx,position,stickerX,stickerY,stickerW,positionH);
+      }else{
+        drawPositionPanelOnCanvas(ctx, position, x + 12 * scale, y + 12 * scale, groupW - 24 * scale, positionH);
+      }
+
       if (!card) {
         ctx.fillStyle = '#fff';
         ctx.strokeStyle = 'rgba(17,17,17,.55)';
-        ctx.setLineDash([8, 7]);
-        drawRoundedRect(ctx, artX, artY, cardW, cardH, 12);
+        ctx.setLineDash([8*scale, 7*scale]);
+        drawRoundedRect(ctx, artX, artY, cardW, cardH, 12*scale);
         ctx.fill();
         ctx.stroke();
         ctx.setLineDash([]);
       }
+
       if (img) {
         const s = Math.min(cardW / img.width, cardH / img.height);
         const w = img.width * s, h = img.height * s;
         ctx.save();
-        if (card && rowCardIsReversed(i)) {
+        if(isCrossing){
+          ctx.translate(artX+cardW/2,artY+cardH/2);
+          ctx.rotate(Math.PI/2);
+          if(card&&rowCardIsReversed(i))ctx.rotate(Math.PI);
+          ctx.drawImage(img,-w/2,-h/2,w,h);
+        }else if (card && rowCardIsReversed(i)) {
           ctx.translate(artX + cardW / 2, artY + cardH / 2);
           ctx.rotate(Math.PI);
           ctx.drawImage(img, -w / 2, -h / 2, w, h);
@@ -1834,10 +1858,11 @@
         ctx.font = `900 ${13 * scale}px Montserrat, Arial, sans-serif`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText('Undrawn', artX + cardW / 2, artY + cardH / 2 - 8);
+        ctx.fillText('Undrawn', artX + cardW / 2, artY + cardH / 2 - 8*scale);
         ctx.font = `700 ${10 * scale}px Montserrat, Arial, sans-serif`;
-        ctx.fillText('card envelope', artX + cardW / 2, artY + cardH / 2 + 12);
+        ctx.fillText('card envelope', artX + cardW / 2, artY + cardH / 2 + 12*scale);
       }
+
       if (card) {
         ctx.fillStyle = '#111';
         ctx.font = `800 ${12 * scale}px Montserrat, Arial, sans-serif`;
