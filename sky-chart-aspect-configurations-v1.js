@@ -623,7 +623,9 @@ function collectGraph(){
     let byAspect=edges.get(key);if(!byAspect){byAspect=new Map();edges.set(key,byAspect)}
     const current=byAspect.get(aspect),phase=phaseError(row);if(!current||phase<current.phase)byAspect.set(aspect,{row,aspect,phase,left:left.key,right:right.key});
   }
-  if(inevitableEnabled){
+  // Canonical polar axes are exact by construction and must always be available
+  // to compound-configuration detection, even when optional Inevitable completion is off.
+  // They remain synthetic here only; ordinary Relationships still suppress these rows.
     const activeSkies=new Set(activeScopes().flatMap(scope=>scope.split('-')));
     for(const sky of activeSkies)for(const [leftId,rightId] of [['asc','dsc'],['mc','ic'],['north-node','south-node'],['vertex','anti-vertex']]){
       const leftKey=nodeKey(sky,leftId),rightKey=nodeKey(sky,rightId);
@@ -632,7 +634,6 @@ function collectGraph(){
       const key=edgeKey(leftKey,rightKey);let byAspect=edges.get(key);if(!byAspect){byAspect=new Map();edges.set(key,byAspect)}
       if(!byAspect.has('opposition'))byAspect.set('opposition',{row:null,aspect:'opposition',phase:0,left:leftKey,right:rightKey,entailed:true,origin:'entailed',entailedKind:'polar-axis'});
     }
-  }
   return{windowValue,nodes,edges};
 }
 const INEVITABLE_ASPECTS=Object.freeze({
