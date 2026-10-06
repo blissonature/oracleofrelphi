@@ -65,9 +65,13 @@
     );
   }
   function zoomToolbarVisibleForState(root=panel()) {
-    // Zoom is a viewport control, not an editing privilege. If wheel/pinch zoom
-    // is available, the visible zoom gizmo must remain available in every spread.
-    return !!root;
+    if(!root)return true;
+    if(settingsOpen){
+      if(settingsMode==='free')return true;
+      return String(optionsSession?.path||activeCraftedPath||'')==='bespoke';
+    }
+    if(craftedReadingActive||boardHasCraftedStructure(root))return persistedCraftedPath(root)==='bespoke';
+    return true;
   }
   function cardControlsPath(root=panel()) {
     if(settingsOpen) return settingsMode==='free' ? 'free' : (String(optionsSession?.path||activeCraftedPath||'')==='bespoke' ? 'bespoke' : '');
@@ -1322,6 +1326,7 @@
     };
     const begin = event => {
       if (event.touches.length !== 2) return;
+      if (!zoomToolbarVisibleForState(root)) return;
       const input = control();
       if (!input) return;
       pinching = true;
