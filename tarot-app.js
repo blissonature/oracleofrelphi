@@ -4596,6 +4596,28 @@
       for(let step=1;step<=36;step++)ring.push(cards[(at+step)%cards.length]);
       return {significatorCardId:sig,ring};
     },
+    openingKeyCountForCard(cardId) {
+      const card=cardById(String(cardId||''));
+      if(!card)return null;
+      if(card.card_type==='Ace'||card.rank==='Ace')return 11;
+      const rank=String(card.rank||'').toLowerCase();
+      if(card.card_type==='Court'){
+        if(rank==='princess'||rank==='page')return 7;
+        if(['knight','queen','prince','king'].includes(rank))return 4;
+      }
+      if(card.card_type==='Pip'){
+        const pips={two:2,three:3,four:4,five:5,six:6,seven:7,eight:8,nine:9,ten:10};
+        if(pips[rank])return pips[rank];
+        const n=Number(card.rank);if(n>=2&&n<=10)return n;
+      }
+      if(card.arcana==='Major'||card.card_type==='Major'){
+        const type=String(card.astrology?.attribution_type||'').toLowerCase();
+        if(type==='element')return 3;
+        if(type==='planet')return 9;
+        if(type==='sign')return 12;
+      }
+      return null;
+    },
     drawCardForBoard(scope = 'full') {
       const pool=rowDrawPool(scope || 'full',{ignoreUsed:true});
       if(!pool.length)return null;
