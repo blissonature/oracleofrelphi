@@ -1672,12 +1672,16 @@
     const createdAt = new Date();
     const positions = Array.from({ length: slots }, (_, i) => rowEnvelopePosition(i));
     const bounds = drawingBoardArrangementBounds(slots);
-    const minX = Math.min(bounds.minX, 0);
-    const minY = Math.min(bounds.minY, 0);
-    const maxX = Math.max(bounds.maxX, CARD_ROW_ENVELOPE_W);
-    const maxY = Math.max(bounds.maxY, CARD_ROW_ENVELOPE_H);
-    const margin = 36;
-    const headerH = state.shortListNotes ? 118 : 82;
+    // Snapshot means zoom extents: crop to the actual arrangement, not the
+    // board's logical 0,0 origin. Prefab coordinates can intentionally begin
+    // hundreds of pixels from that origin, which otherwise creates a huge
+    // empty field around an otherwise compact spread.
+    const minX = Number.isFinite(bounds.minX) ? bounds.minX : 0;
+    const minY = Number.isFinite(bounds.minY) ? bounds.minY : 0;
+    const maxX = Number.isFinite(bounds.maxX) ? bounds.maxX : CARD_ROW_ENVELOPE_W;
+    const maxY = Number.isFinite(bounds.maxY) ? bounds.maxY : CARD_ROW_ENVELOPE_H;
+    const margin = 24;
+    const headerH = state.shortListNotes ? 108 : 72;
     const brandFooterH = 54;
     const scale = drawingBoardSnapshotScale(maxX-minX,maxY-minY,headerH,brandFooterH,margin);
     const canvas = document.createElement('canvas');
@@ -1687,18 +1691,27 @@
     if (!ctx) throw new Error('Unable to create the snapshot canvas.');
     ctx.fillStyle = state.rowTableColor || '#7d1f28';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // Keep document metadata in its own Relphi paper strip instead of floating
+    // dark text over the felt.
+    ctx.fillStyle = '#fffdf9';
+    ctx.fillRect(0,0,canvas.width,headerH);
+    ctx.strokeStyle='rgba(17,17,17,.18)';
+    ctx.lineWidth=1;
+    ctx.beginPath();ctx.moveTo(0,headerH-.5);ctx.lineTo(canvas.width,headerH-.5);ctx.stroke();
+
     ctx.fillStyle = '#111';
-    ctx.font = '900 22px Montserrat, Arial, sans-serif';
+    ctx.font = '900 20px Montserrat, Arial, sans-serif';
     ctx.textAlign = 'left';
     ctx.textBaseline = 'top';
-    ctx.fillText(`${state.shortListName ? state.shortListName + ' · ' : ''}Drawing Board arrangement`, margin, 22);
-    ctx.font = '600 12px Montserrat, Arial, sans-serif';
-    ctx.fillStyle = '#555';
-    ctx.fillText(`Snapshot ${localTimestampLabel(createdAt)} · ${slots} envelope${slots === 1 ? '' : 's'} · ${Math.round((state.rowZoom || 1) * 100)}% view`, margin, 50);
+    ctx.fillText(`${state.shortListName ? state.shortListName + ' · ' : ''}Drawing Board`, margin, 16);
+    ctx.font = '650 11px Montserrat, Arial, sans-serif';
+    ctx.fillStyle = '#655d56';
+    ctx.fillText(`${localTimestampLabel(createdAt)} · ${slots} position${slots === 1 ? '' : 's'}`, margin, 43);
     if (state.shortListNotes) {
-      ctx.font = '600 13px Montserrat, Arial, sans-serif';
-      ctx.fillStyle = '#222';
-      wrapCanvasLines(ctx, state.shortListNotes, canvas.width - margin * 2, 2).forEach((line, li) => ctx.fillText(line, margin, 74 + li * 18));
+      ctx.font = '600 12px Montserrat, Arial, sans-serif';
+      ctx.fillStyle = '#332f2b';
+      wrapCanvasLines(ctx, state.shortListNotes, canvas.width - margin * 2, 2).forEach((line, li) => ctx.fillText(line, margin, 66 + li * 16));
     }
     const cards = state.shortList.map(cardById);
     const tableImage = state.rowTableImage ? await loadCanvasSafeImage(state.rowTableImage) : null;
