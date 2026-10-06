@@ -26,5 +26,11 @@ assert.match(tarot,/openingKeyFreshDeck\(significatorCardId\)/);
 assert.match(tarot,/openingKeyQuerentCut\(deck, cutPosition\)/);
 assert.match(tarot,/openingKeyDealStacks\(deck, stackCount, significatorCardId\)/);
 assert.match(tarot,/openingKeyRing36\(deck, significatorCardId\)/);
+assert.match(tarot,/openingKeyCountForCard\(cardId\)/);
+assert.match(js,/function items\(\)\{return Array\.from\(root\(\)\?\.querySelectorAll\('\.card-row-board \.card-row-item'\)\|\|\[\]\);\}/);
+assert.match(js,/id="crowleyDirection"/);
+assert.match(js,/syncCurrentCardCount\(box\)/);
+assert.match(js,/significatorAnchor/);
+assert.match(js,/activePacket/);
 
 console.log('Opening of the Key follows a sequential five-operation workflow, gives cognate second tests only where the method calls for them, and keeps Operation I failure terminal.');
