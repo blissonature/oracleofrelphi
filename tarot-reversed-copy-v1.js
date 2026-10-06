@@ -148,9 +148,14 @@
   }
 
   function applyBoard(root = document) {
+    const activeLayout=window.RelphiDrawingBoardPrefabsBridge?.getState?.()?.activeLayout;
+    const contextualCeltic=activeLayout?.id==='celtic-cross-10' || activeLayout?.basedOn==='celtic-cross-10';
     boardCards(root).forEach(item => {
       const cardNode = item.querySelector('[data-row-card]');
       if (!cardNode || !isReversed(item, cardNode)) return;
+      // tarot-app already composes reversed meaning with the Celtic position.
+      // Do not replace that contextual reading with the generic reversed copy.
+      if(contextualCeltic)return;
       const id = cardNode.dataset.rowCard || cardNode.dataset.id || '';
       const meaning = derive(id);
       if (!meaning) return;

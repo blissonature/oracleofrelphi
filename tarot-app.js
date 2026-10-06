@@ -305,7 +305,7 @@
     const need = rel.need ? `<p class="uhn-need"><strong>Need:</strong> ${escapeHtml(rel.need)}</p>` : '';
     const position = UHN_ORDER.get(card.card_id);
     const positionText = position === 0 ? 'origin a₀' : `interval a${toSubscript(position)}`;
-    return `<section class="uhn-panel system-card"><h3>Relphi-derived interpretation</h3><p>${escapeHtml(interpretation)}</p><p class="generated-note">Universal Human Needs · Planetary interval harmonics · ${escapeHtml(positionText)} of a${toSubscript(UHN_CARD_IDS.length - 1)}</p>${need}${interval}${formula ? `<p class="uhn-formula-line"><strong>Ingredients:</strong> <code>${escapeHtml(formula)}</code></p>` : ''}</section>`;
+    return `<section class="uhn-panel system-card"><h3>Relphi-derived interpretation</h3><p>${escapeHtml(interpretation)}</p><p class="generated-note">Universal Human Needs · Planetary interval harmonics · ${escapeHtml(positionText)} of a${toSubscript(UHN_CARD_IDS.length - 1)}</p>${need}${interval}${formula ? `<p class="uhn-formula-line"><strong>Formula:</strong> <code>${escapeHtml(formula)}</code></p>` : ''}</section>`;
   }
 
   const state = {
@@ -319,6 +319,43 @@
   function slug(value) { return String(value || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''); }
   function toSubscript(value) { return String(value).replace(/[0-9]/g, ch => '₀₁₂₃₄₅₆₇₈₉'[Number(ch)] || ch); }
   const LOCKED_INTERPRETATION_DATA = window.RELPHI_LOCKED_INTERPRETATIONS || { ingredient_definitions: {}, cards: [] };
+  const RELPHI_CARD_SENSE_DATA = window.RELPHI_CARD_SENSES || { cards: [] };
+  const RELPHI_CARD_SENSE_INDEX = (() => {
+    const index=new Map();
+    const add=(value,entry)=>{
+      const key=normalizeSearch(String(value||''));
+      if(key&&!index.has(key))index.set(key,entry);
+    };
+    (RELPHI_CARD_SENSE_DATA.cards || []).forEach(entry=>{
+      add(entry.card_id,entry);
+      add(entry.name,entry);
+      String(entry.name||'').split('/').forEach(part=>add(part.trim(),entry));
+    });
+    return index;
+  })();
+  function relphiCardSenseEntry(card) {
+    if(!card)return null;
+    const candidates=[
+      card.card_id,
+      card.name,
+      title(card),
+      normalizedTitle(card),
+      card.systems?.golden_dawn_rws?.display_name,
+      card.systems?.thoth?.display_name
+    ].filter(Boolean);
+    for(const candidate of candidates){
+      const entry=RELPHI_CARD_SENSE_INDEX.get(normalizeSearch(candidate));
+      if(entry)return entry;
+    }
+    return null;
+  }
+  function relphiDefaultSensePhrase(card) {
+    const entry = relphiCardSenseEntry(card);
+    if (!entry) return '';
+    const key = String(entry.default_sense_key || '');
+    const sense = (entry.senses || []).find(item => String(item?.key || '') === key) || (entry.senses || [])[0] || null;
+    return String(sense?.panel_phrase || sense?.label || '').trim();
+  }
   const LOCKED_INGREDIENTS = LOCKED_INTERPRETATION_DATA.ingredient_definitions || {};
   const LOCKED_CARD_INDEX = (() => {
     const index = new Map();
@@ -602,7 +639,16 @@
   }
   function titleWithBreaksHtml(card) { return escapeHtml(title(card)).replace(/\//g, '/<wbr>'); }
 
+  const COMPACT_CARD_DESCRIPTION_SCALE_THRESHOLD = 0.72;
+  function compactCardDescription(card,index=0) {
+    const phrase=relphiDefaultSensePhrase(card);
+    if (!phrase) return '';
+    return rowCardIsReversed(index) ? `Reversed · ${phrase}` : phrase;
+  }
   function rowCardInterpretation(card, index = 0) {
+    // Position stickers carry spread roles. The description layer remains the
+    // card's own Relphi-derived interpretation rather than inventing a position
+    // interpretation and appending it to the card.
     return layerInterpretationForOrientation(card, rowCardIsReversed(index));
   }
   function thothTitle(card) { return card?.systems?.thoth?.display_name || card?.name || ''; }
@@ -840,8 +886,8 @@
     const layerTitle = String(options.layerTitle || normalizedTitle(card)).trim();
     const rawLayerText = String(options.layerText || layerInterpretation(card)).trim();
     const layerText = stripLeadingCardTitle(rawLayerText, card, layerTitle);
-    const essenceText = cardEssenceLabel(card);
-    const essenceClass = card.card_type === 'Major' ? ' or-card-essence--major' : '';
+    const essenceText = String(options.essenceText || cardEssenceLabel(card)).trim();
+    const essenceClass = card.card_type === 'Major' && !options.essenceText ? ' or-card-essence--major' : '';
     const dragAttrs = context === 'short-list'
       ? ' draggable="true" data-row-card="' + escapeHtml(card.card_id) + '"'
       : (context === 'browse' ? ' draggable="true" data-drag-card="' + escapeHtml(card.card_id) + '"' : '');
@@ -1306,6 +1352,32 @@
     logo:'logo.png',
     website:'https://oracleofrelphi.com/'
   });
+  function drawRelphiLogoMark(ctx,x,y,size){
+    // Proportions measured from the supplied 1024×1024 Relphi logo:
+    // outer black frame ≈ 685×683 px, 43 px border;
+    // dot diameter ≈ 227 px; centers at ~28.9% / 70.9%.
+    const s=Math.max(1,Number(size)||1);
+    const border=s*(43/684);
+    const r=s*(113.5/684);
+    const left=x+s*((368-170)/684);
+    const right=x+s*((655.5-170)/684);
+    const top=y+s*((354.5-158)/684);
+    const bottom=y+s*((643.5-158)/684);
+    ctx.save();
+    ctx.fillStyle='#fff';
+    ctx.fillRect(x,y,s,s);
+    ctx.strokeStyle='#000';
+    ctx.lineWidth=border;
+    ctx.strokeRect(x+border/2,y+border/2,s-border,s-border);
+    ctx.fillStyle='#000';
+    [[left,top],[right,top],[left,bottom]].forEach(([cx,cy])=>{
+      ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.fill();
+    });
+    ctx.fillStyle='#dc1f18';
+    ctx.beginPath();ctx.arc(right,bottom,r,0,Math.PI*2);ctx.fill();
+    ctx.restore();
+  }
+
   function drawRelphiExportBrand(ctx, canvas, height = 54, logoImage = null) {
     const h=Math.max(46,Number(height)||54);
     const y=canvas.height-h;
@@ -1466,6 +1538,26 @@
   function loadImage(src) {
     return new Promise((resolve, reject) => { const img = new Image(); img.onload = () => resolve(img); img.onerror = reject; img.src = src; });
   }
+  async function loadCanvasSafeImage(src) {
+    const value=String(src||'').trim();
+    if(!value)return null;
+    if(/^data:/i.test(value)||/^blob:/i.test(value))return loadImage(value).catch(()=>null);
+    try{
+      const response=await fetch(value,{cache:'force-cache'});
+      if(!response.ok)throw new Error('image fetch failed');
+      const blob=await response.blob();
+      const dataUrl=await new Promise((resolve,reject)=>{
+        const reader=new FileReader();
+        reader.onload=()=>resolve(String(reader.result||''));
+        reader.onerror=reject;
+        reader.readAsDataURL(blob);
+      });
+      return dataUrl?await loadImage(dataUrl):null;
+    }catch(error){
+      console.warn('Skipping canvas-unsafe Drawing Board image.',value,error);
+      return null;
+    }
+  }
   function drawRoundedRect(ctx, x, y, w, h, r) {
     ctx.beginPath();
     ctx.moveTo(x+r, y); ctx.lineTo(x+w-r, y); ctx.quadraticCurveTo(x+w, y, x+w, y+r);
@@ -1491,33 +1583,70 @@
     }
     return lines;
   }
+  function fitCanvasText(ctx,text,maxWidth,maxHeight,{weight=800,maxFont=16,minFont=8,maxLines=3,lineGap=3}={}) {
+    const value=String(text||'').trim();
+    if(!value)return {fontSize:maxFont,lines:[],lineHeight:maxFont+lineGap};
+    let fontSize=maxFont;
+    while(fontSize>=minFont){
+      ctx.font=`${weight} ${fontSize}px Montserrat, Arial, sans-serif`;
+      const lines=wrapCanvasLines(ctx,value,maxWidth,maxLines);
+      const lineHeight=fontSize+lineGap;
+      const fitsWidth=lines.every(line=>ctx.measureText(line).width<=maxWidth+.5);
+      const fitsHeight=lines.length*lineHeight<=maxHeight+.5;
+      const unclipped=!lines.some(line=>line.endsWith('…'));
+      if(fitsWidth&&fitsHeight&&unclipped)return {fontSize,lines,lineHeight};
+      fontSize-=.5;
+    }
+    ctx.font=`${weight} ${minFont}px Montserrat, Arial, sans-serif`;
+    const lines=wrapCanvasLines(ctx,value,maxWidth,maxLines);
+    return {fontSize:minFont,lines,lineHeight:minFont+lineGap};
+  }
+  function drawSmartCenteredText(ctx,text,x,y,w,h,options={}) {
+    const density=Math.max(1,Number(options.density)||1);
+    const maxFont=(options.maxFont||16)*density;
+    const minFont=(options.minFont||8)*density;
+    const lineGap=(options.lineGap==null?3:options.lineGap)*density;
+    const padX=(options.padX==null?9:options.padX)*density;
+    const padY=(options.padY==null?5:options.padY)*density;
+    const fit=fitCanvasText(ctx,text,Math.max(1,w-padX*2),Math.max(1,h-padY*2),{
+      weight:options.weight||800,
+      maxFont,minFont,
+      maxLines:options.maxLines||3,
+      lineGap
+    });
+    ctx.save();
+    ctx.fillStyle=options.color||'#111';
+    ctx.textAlign='center';
+    ctx.textBaseline='top';
+    ctx.font=`${options.weight||800} ${fit.fontSize}px Montserrat, Arial, sans-serif`;
+    const total=fit.lines.length*fit.lineHeight;
+    const startY=y+Math.max(padY,(h-total)/2);
+    fit.lines.forEach((line,index)=>ctx.fillText(line,x+w/2,startY+index*fit.lineHeight));
+    ctx.restore();
+    return fit;
+  }
+
   function drawPositionPanelOnCanvas(ctx, label, x, y, w, h) {
     ctx.save();
+    const density=Math.max(1,Math.min(2.5,h/54));
     ctx.fillStyle = '#fff';
     ctx.strokeStyle = 'rgba(17,17,17,.48)';
-    ctx.lineWidth = 1.2;
-    drawRoundedRect(ctx, x, y, w, h, 10);
+    ctx.lineWidth = 1.2*density;
+    drawRoundedRect(ctx, x, y, w, h, 10*density);
     ctx.fill();
     ctx.stroke();
     const text = String(label || '').trim();
     if (text) {
-      const maxW = w - 18;
-      let fontSize = text.length > 76 ? 10 : text.length > 52 ? 11 : text.length > 30 ? 12 : 13;
-      let lines;
-      do {
-        ctx.font = `800 ${fontSize}px Montserrat, Arial, sans-serif`;
-        lines = wrapCanvasLines(ctx, text, maxW, 3);
-        if (lines.length <= 3 || fontSize <= 8) break;
-        fontSize -= 1;
-      } while (fontSize > 8);
-      const lh = fontSize + 3;
-      const total = lines.length * lh;
-      ctx.fillStyle = '#111';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'top';
-      ctx.font = `800 ${fontSize}px Montserrat, Arial, sans-serif`;
-      const startY = y + Math.max(5, (h - total) / 2);
-      lines.slice(0,3).forEach((line, li) => ctx.fillText(line, x + w / 2, startY + li * lh));
+      drawSmartCenteredText(ctx,text,x,y,w,h,{
+        density,
+        weight:800,
+        maxFont:13,
+        minFont:7,
+        maxLines:5,
+        lineGap:2.5,
+        padX:9,
+        padY:5
+      });
     }
     ctx.restore();
   }
@@ -1628,11 +1757,14 @@
   }
   function drawingBoardSnapshotScale(contentW, contentH, headerH, brandFooterH, margin) {
     const mobile = !!window.matchMedia?.('(max-width:700px)').matches || Number(navigator.maxTouchPoints || 0) > 1;
-    const maxDimension = mobile ? 4096 : 8192;
-    const maxPixels = mobile ? 12000000 : 24000000;
+    const maxDimension = mobile ? 6144 : 10000;
+    const maxPixels = mobile ? 22000000 : 42000000;
     const fixedW = margin * 2;
     const fixedH = margin * 2 + headerH + brandFooterH;
-    let scale = 1.08;
+    // Snapshot is an export, not a screenshot of the current CSS pixel density.
+    // Render substantially above 1× so card art and the small Celtic Cross labels
+    // stay crisp/readable when the PNG is opened or shared.
+    let scale = mobile ? 1.8 : 2.25;
     scale = Math.min(scale,
       Math.max(.001,(maxDimension-fixedW)/Math.max(1,contentW)),
       Math.max(.001,(maxDimension-fixedH)/Math.max(1,contentH))
@@ -1652,35 +1784,108 @@
     const createdAt = new Date();
     const positions = Array.from({ length: slots }, (_, i) => rowEnvelopePosition(i));
     const bounds = drawingBoardArrangementBounds(slots);
-    const minX = Math.min(bounds.minX, 0);
-    const minY = Math.min(bounds.minY, 0);
-    const maxX = Math.max(bounds.maxX, CARD_ROW_ENVELOPE_W);
-    const maxY = Math.max(bounds.maxY, CARD_ROW_ENVELOPE_H);
-    const margin = 36;
-    const headerH = state.shortListNotes ? 118 : 82;
-    const brandFooterH = 54;
-    const scale = drawingBoardSnapshotScale(maxX-minX,maxY-minY,headerH,brandFooterH,margin);
+    // Snapshot means zoom extents: crop to the actual arrangement, not the
+    // board's logical 0,0 origin. Prefab coordinates can intentionally begin
+    // hundreds of pixels from that origin, which otherwise creates a huge
+    // empty field around an otherwise compact spread.
+    const minX = Number.isFinite(bounds.minX) ? bounds.minX : 0;
+    const minY = Number.isFinite(bounds.minY) ? bounds.minY : 0;
+    const maxX = Number.isFinite(bounds.maxX) ? bounds.maxX : CARD_ROW_ENVELOPE_W;
+    const maxY = Number.isFinite(bounds.maxY) ? bounds.maxY : CARD_ROW_ENVELOPE_H;
+    const baseMargin = 24;
+    const nominalHeaderH = state.shortListNotes ? 124 : 88;
+    const brandFooterH = 0;
+    const scale = drawingBoardSnapshotScale(maxX-minX,maxY-minY,nominalHeaderH,brandFooterH,baseMargin);
+    const chromeScale=Math.max(1,Math.min(1.35,scale));
+    const margin=Math.round(baseMargin*chromeScale);
+    const canvasWidth=Math.ceil((maxX-minX)*scale+margin*2);
+    const narrowHeader=canvasWidth<Math.round(560*chromeScale);
+    const baseHeaderH=state.shortListNotes
+      ? (narrowHeader?164:124)
+      : (narrowHeader?118:88);
+    const headerH=Math.round(baseHeaderH*chromeScale);
     const canvas = document.createElement('canvas');
-    canvas.width = Math.ceil((maxX - minX) * scale + margin * 2);
-    canvas.height = Math.ceil((maxY - minY) * scale + margin * 2 + headerH + brandFooterH);
+    canvas.width = canvasWidth;
+    canvas.height = Math.ceil((maxY - minY) * scale + margin * 2 + headerH);
     const ctx = canvas.getContext('2d');
+    if (!ctx) throw new Error('Unable to create the snapshot canvas.');
+    ctx.imageSmoothingEnabled=true;
+    ctx.imageSmoothingQuality='high';
     ctx.fillStyle = state.rowTableColor || '#7d1f28';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
-    ctx.fillStyle = '#111';
-    ctx.font = '900 22px Montserrat, Arial, sans-serif';
-    ctx.textAlign = 'left';
-    ctx.textBaseline = 'top';
-    ctx.fillText(`${state.shortListName ? state.shortListName + ' · ' : ''}Drawing Board arrangement`, margin, 22);
-    ctx.font = '600 12px Montserrat, Arial, sans-serif';
-    ctx.fillStyle = '#555';
-    ctx.fillText(`Snapshot ${localTimestampLabel(createdAt)} · ${slots} envelope${slots === 1 ? '' : 's'} · ${Math.round((state.rowZoom || 1) * 100)}% view`, margin, 50);
+
+    // One Relphi document header: crisp brand lockup at left, document title at right.
+    ctx.fillStyle = '#fffdf9';
+    ctx.fillRect(0,0,canvas.width,headerH);
+    ctx.strokeStyle='rgba(17,17,17,.18)';
+    ctx.lineWidth=1;
+    ctx.beginPath();ctx.moveTo(0,headerH-.5);ctx.lineTo(canvas.width,headerH-.5);ctx.stroke();
+
+    const headerLogoSize=34*chromeScale;
+    const headerLogoX=margin;
+    const topRowY=10*chromeScale;
+    const headerLogoY=topRowY;
+    drawRelphiLogoMark(ctx,headerLogoX,headerLogoY,headerLogoSize);
+
+    const titleText=`${state.shortListName ? state.shortListName + ' · ' : ''}Drawing Board`;
+    const oracleText='Oracle of ';
+    const rightX=canvas.width-margin;
+    const contentW=Math.max(1,canvas.width-(margin*2));
+
+    const brandTextX=headerLogoX+headerLogoSize+9*chromeScale;
+    const brandTextMaxW=narrowHeader
+      ? Math.max(90*chromeScale,contentW-(headerLogoSize+9*chromeScale))
+      : Math.max(56*chromeScale,contentW*.48-(headerLogoSize+9*chromeScale));
+    let brandFontSize=17*chromeScale;
+    const brandMin=11.5*chromeScale;
+    while(brandFontSize>brandMin){
+      ctx.font=`800 ${brandFontSize}px Montserrat, Arial, sans-serif`;
+      if(ctx.measureText(oracleText+'Relphi').width<=brandTextMaxW)break;
+      brandFontSize-=.5*chromeScale;
+    }
+    const brandTextY=headerLogoY+(headerLogoSize-brandFontSize)/2;
+    ctx.textAlign='left';
+    ctx.textBaseline='top';
+    ctx.font=`800 ${brandFontSize}px Montserrat, Arial, sans-serif`;
+    ctx.fillStyle='#111';
+    ctx.fillText(oracleText,brandTextX,brandTextY);
+    const oracleW=ctx.measureText(oracleText).width;
+    ctx.fillStyle='#dc1f18';
+    ctx.fillText('Relphi',brandTextX+oracleW,brandTextY);
+
+    const titleAreaW=narrowHeader?contentW:contentW*.46;
+    let titleFontSize=20*chromeScale;
+    const titleMin=12*chromeScale;
+    while(titleFontSize>titleMin){
+      ctx.font=`900 ${titleFontSize}px Montserrat, Arial, sans-serif`;
+      if(ctx.measureText(titleText).width<=titleAreaW)break;
+      titleFontSize-=.5*chromeScale;
+    }
+    ctx.textAlign='right';
+    ctx.fillStyle='#111';
+    ctx.font=`900 ${titleFontSize}px Montserrat, Arial, sans-serif`;
+    const titleY=narrowHeader
+      ? (58*chromeScale)
+      : (topRowY+(headerLogoSize-titleFontSize)/2);
+    ctx.fillText(titleText,rightX,titleY);
+
+    // Narrow exports stack the title below the brand instead of compressing
+    // two lockups into the same row. Wide exports keep the left/right header.
+    ctx.textAlign=narrowHeader?'right':'center';
+    ctx.font=`650 ${10.5*chromeScale}px Montserrat, Arial, sans-serif`;
+    ctx.fillStyle='#655d56';
+    const metaText=`${localTimestampLabel(createdAt)} · ${slots} position${slots === 1 ? '' : 's'}`;
+    const metaY=(narrowHeader?86:58)*chromeScale;
+    ctx.fillText(metaText,narrowHeader?rightX:canvas.width/2,metaY);
     if (state.shortListNotes) {
-      ctx.font = '600 13px Montserrat, Arial, sans-serif';
-      ctx.fillStyle = '#222';
-      wrapCanvasLines(ctx, state.shortListNotes, canvas.width - margin * 2, 2).forEach((line, li) => ctx.fillText(line, margin, 74 + li * 18));
+      ctx.textAlign='left';
+      ctx.font = `600 ${12*chromeScale}px Montserrat, Arial, sans-serif`;
+      ctx.fillStyle = '#332f2b';
+      const notesY=(narrowHeader?112:78)*chromeScale;
+      wrapCanvasLines(ctx, state.shortListNotes, canvas.width - margin * 2, 2).forEach((line, li) => ctx.fillText(line, margin, notesY + li * 16*chromeScale));
     }
     const cards = state.shortList.map(cardById);
-    const tableImage = state.rowTableImage ? await loadImage(state.rowTableImage).catch(() => null) : null;
+    const tableImage = state.rowTableImage ? await loadCanvasSafeImage(state.rowTableImage) : null;
     if (tableImage) {
       const bgX = margin;
       const bgY = headerH;
@@ -1690,14 +1895,12 @@
       const w = tableImage.width * s, h = tableImage.height * s;
       ctx.drawImage(tableImage, bgX + (bgW - w) / 2, bgY + (bgH - h) / 2, w, h);
     }
-    const [brandLogoImage, images] = await Promise.all([
-      loadImage(RELPHI_EXPORT_BRAND.logo).catch(() => null),
-      Promise.all(Array.from({ length: slots }, (_, i) => {
-        const card = cards[i];
-        const envelopeArt = rowEnvelopeArtFor(i);
-        return card ? loadImage(rwsExportImagePath(card)).catch(() => null) : envelopeArt ? loadImage(envelopeArt).catch(() => null) : Promise.resolve(null);
-      }))
-    ]);
+    const images = await Promise.all(Array.from({ length: slots }, (_, i) => {
+      const card = cards[i];
+      const envelopeArt = rowEnvelopeArtFor(i);
+      return card ? loadCanvasSafeImage(rwsExportImagePath(card)) : envelopeArt ? loadCanvasSafeImage(envelopeArt) : Promise.resolve(null);
+    }));
+
     const groupW = CARD_ROW_ENVELOPE_W * scale;
     const positionH = 54 * scale;
     const gap = 10 * scale;
@@ -1710,32 +1913,40 @@
       const card = cards[i];
       const position = String(state.shortListPositionLabels[i] || `Position ${i + 1}`).trim();
       const t = rowCardTransform(i);
-      ctx.save();
       const centerX = x + groupW / 2;
       const centerY = y + (CARD_ROW_ENVELOPE_H * scale) / 2;
+
+      // Snapshot mirrors the board: card + position sticker are one geometric
+      // unit, so arbitrary user rotation keeps the sticker at the card's top.
+      ctx.save();
       ctx.translate(centerX, centerY);
       ctx.rotate((t.rotation || 0) * Math.PI / 180);
       ctx.scale(t.scale || 1, t.scale || 1);
       ctx.translate(-centerX, -centerY);
+
       ctx.fillStyle = state.rowEnvelopeColor || '#fff';
       ctx.strokeStyle = '#111';
-      ctx.lineWidth = 1.5;
-      drawRoundedRect(ctx, x, y, groupW, CARD_ROW_ENVELOPE_H * scale, 14);
+      ctx.lineWidth = 1.5*scale;
+      drawRoundedRect(ctx, x, y, groupW, CARD_ROW_ENVELOPE_H * scale, 14*scale);
       ctx.fill();
       ctx.stroke();
-      drawPositionPanelOnCanvas(ctx, position, x + 12 * scale, y + 12 * scale, groupW - 24 * scale, positionH);
+
       const artX = x + (groupW - cardW) / 2;
       const artY = y + 12 * scale + positionH + gap;
       const img = images[i];
+
+      drawPositionPanelOnCanvas(ctx, position, x + 12 * scale, y + 12 * scale, groupW - 24 * scale, positionH);
+
       if (!card) {
         ctx.fillStyle = '#fff';
         ctx.strokeStyle = 'rgba(17,17,17,.55)';
-        ctx.setLineDash([8, 7]);
-        drawRoundedRect(ctx, artX, artY, cardW, cardH, 12);
+        ctx.setLineDash([8*scale, 7*scale]);
+        drawRoundedRect(ctx, artX, artY, cardW, cardH, 12*scale);
         ctx.fill();
         ctx.stroke();
         ctx.setLineDash([]);
       }
+
       if (img) {
         const s = Math.min(cardW / img.width, cardH / img.height);
         const w = img.width * s, h = img.height * s;
@@ -1753,46 +1964,63 @@
         ctx.font = `900 ${13 * scale}px Montserrat, Arial, sans-serif`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText('Undrawn', artX + cardW / 2, artY + cardH / 2 - 8);
+        ctx.fillText('Undrawn', artX + cardW / 2, artY + cardH / 2 - 8*scale);
         ctx.font = `700 ${10 * scale}px Montserrat, Arial, sans-serif`;
-        ctx.fillText('card envelope', artX + cardW / 2, artY + cardH / 2 + 12);
+        ctx.fillText('card envelope', artX + cardW / 2, artY + cardH / 2 + 12*scale);
       }
+
       if (card) {
-        ctx.fillStyle = '#111';
-        ctx.font = `800 ${12 * scale}px Montserrat, Arial, sans-serif`;
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'top';
-        wrapCanvasLines(ctx, `${title(card)}${rowCardIsReversed(i) ? ' · Reversed' : ''}`, groupW - 16 * scale, 2).forEach((line, li) => ctx.fillText(line, x + groupW / 2, artY + cardH + 10 * scale + li * 15 * scale));
+        const titleText=`${title(card)}${rowCardIsReversed(i) ? ' · Reversed' : ''}`;
+        const titleY=artY+cardH+6*scale;
+        const titleH=Math.max(22*scale,(y+CARD_ROW_ENVELOPE_H*scale)-titleY-6*scale);
+        drawSmartCenteredText(ctx,titleText,x+6*scale,titleY,groupW-12*scale,titleH,{
+          density:scale,
+          weight:800,
+          maxFont:12.5,
+          minFont:7.5,
+          maxLines:4,
+          lineGap:2.25,
+          padX:2,
+          padY:2
+        });
       }
       ctx.restore();
     });
-    drawRelphiExportBrand(ctx,canvas,brandFooterH,brandLogoImage);
-    const finish = async blob => {
-      const filename = `drawing-board-arrangement-${localTimestampSlug(createdAt)}.png`;
-      if (!blob) {
-        const a = document.createElement('a');
-        a.href = canvas.toDataURL('image/png');
-        a.download = filename;
-        document.body.appendChild(a); a.click(); a.remove(); return;
+    const filename = `drawing-board-arrangement-${localTimestampSlug(createdAt)}.png`;
+    const blob = canvas.toBlob ? await new Promise((resolve,reject)=>{
+      try {
+        canvas.toBlob(value=>value ? resolve(value) : reject(new Error('Browser returned an empty PNG snapshot.')), 'image/png');
+      } catch (error) {
+        reject(error);
       }
-      const file = typeof File === 'function' ? new File([blob],filename,{type:'image/png',lastModified:Date.now()}) : null;
-      if (file && navigator.share && (!navigator.canShare || navigator.canShare({files:[file]}))) {
-        try {
-          await navigator.share({files:[file],title:'Drawing Board arrangement'});
-          return;
-        } catch (error) {
-          if (error?.name === 'AbortError') return;
-          console.warn('Drawing Board share failed; falling back to download.',error);
-        }
-      }
-      const url = URL.createObjectURL(blob);
+    }) : null;
+    if (!blob) {
       const a = document.createElement('a');
-      a.href = url; a.download = filename; a.rel = 'noopener'; document.body.appendChild(a); a.click(); a.remove();
-      const status = $('downloadStatus');
-      if (status) status.innerHTML = `Arrangement snapshot created. If it did not save automatically, use this link: <a href="${url}" download="${filename}">${filename}</a>`;
-      window.setTimeout(()=>URL.revokeObjectURL(url),60000);
-    };
-    if (canvas.toBlob) canvas.toBlob(blob=>{ void finish(blob); }, 'image/png'); else void finish(null);
+      a.href = canvas.toDataURL('image/png');
+      a.download = filename;
+      document.body.appendChild(a); a.click(); a.remove();
+      return true;
+    }
+    const file = typeof File === 'function' ? new File([blob],filename,{type:'image/png',lastModified:Date.now()}) : null;
+    const coarsePointer = !!window.matchMedia?.('(pointer:coarse)').matches;
+    const narrowViewport = !!window.matchMedia?.('(max-width:820px)').matches;
+    const mobileShareTarget = coarsePointer && narrowViewport;
+    if (mobileShareTarget && file && navigator.share && (!navigator.canShare || navigator.canShare({files:[file]}))) {
+      try {
+        await navigator.share({files:[file],title:'Drawing Board arrangement'});
+        return true;
+      } catch (error) {
+        if (error?.name === 'AbortError') return true;
+        console.warn('Drawing Board share failed; falling back to download.',error);
+      }
+    }
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = filename; a.rel = 'noopener'; document.body.appendChild(a); a.click(); a.remove();
+    const status = $('downloadStatus');
+    if (status) status.innerHTML = `Arrangement snapshot created. If it did not save automatically, use this link: <a href="${url}" download="${filename}">${filename}</a>`;
+    window.setTimeout(()=>URL.revokeObjectURL(url),60000);
+    return true;
   }
 
   // Stable bridge for relocated Drawing Board document chrome. The native
@@ -2897,6 +3125,9 @@
       window.addEventListener('resize', () => applyCardRowLayoutLive(wrap));
     }
     workspace.addEventListener('wheel', event => {
+      // Guided Crafted readings are already fitted to their prescribed layout.
+      // Only Free and Bespoke expose board zoom/pan.
+      if (wrap.classList.contains('relphi-hide-zoom-toolbar')) return;
       // Two-finger trackpad scrolling should scroll the page/area, not zoom the table.
       // Trackpad pinch-to-zoom is reported by Chromium/Edge as a wheel event with ctrlKey.
       // Some platforms use metaKey for zoom gestures, so accept either modifier.
@@ -2909,6 +3140,7 @@
     }, { passive:false });
     workspace.addEventListener('pointerdown', event => {
       if (event.button !== 0) return;
+      if (wrap.classList.contains('relphi-hide-zoom-toolbar')) return;
       // Only gestures that actually begin on the felt may pan the Drawing Board.
       // The workspace extends beyond the felt on narrow/touch layouts; claiming that
       // surrounding whitespace breaks ordinary page scrolling.
@@ -2983,7 +3215,7 @@
     const selected = state.shortListSelection.includes(card.card_id);
     const transformTarget = index === rowTransformTargetIndex(rowSlotCount());
     const transform = rowCardTransform(index);
-    const miniDescription = Number(transform?.scale) > 0 && Number(transform.scale) < 0.72;
+    const miniDescription = Number(transform?.scale) > 0 && Number(transform.scale) < COMPACT_CARD_DESCRIPTION_SCALE_THRESHOLD;
     const reversed = rowCardIsReversed(index);
     let cardHtml = renderCardSurface(card, {
       context: 'short-list',
@@ -2991,7 +3223,8 @@
       positionLabel: '',
       selectable: true,
       layerText: rowCardInterpretation(card, index),
-      layerTitle: `${title(card)}${reversed ? ' · Reversed' : ''}`
+      layerTitle: `${title(card)}${reversed ? ' · Reversed' : ''}`,
+      essenceText: miniDescription ? compactCardDescription(card,index) : ''
     });
     cardHtml = cardHtml.replace('<article class="or-card', `<article class="or-card card-row-card${reversed ? ' is-row-reversed' : ''}`);
     cardHtml = cardHtml.replace(' tabindex="0">', ` draggable="true" data-row-card="${escapeHtml(card.card_id)}" data-row-reversed="${reversed ? 'true' : 'false'}" tabindex="0" aria-label="${escapeHtml(title(card))}${reversed ? ', reversed' : ''}">`);
@@ -4563,6 +4796,60 @@
       const id=String(significatorCardId||'');
       const packetIndex=packets.findIndex(packet=>packet.includes(id));
       return {packets,firstCut:a,rightCut,leftCut,packetIndex,packet:['Yod','Heh','Vav','Heh-final'][packetIndex]||''};
+    },
+    openingKeyFreshDeck(significatorCardId) {
+      const id=String(significatorCardId||'').trim();
+      const pool=rowDrawPool('full',{ignoreUsed:true});
+      if(!id||!pool.some(card=>card.card_id===id))return null;
+      return {deck:shuffleArray(pool.map(card=>card.card_id)),significatorCardId:id};
+    },
+    openingKeyQuerentCut(deck, cutPosition) {
+      const cards=Array.isArray(deck)?deck.slice():[];
+      if(cards.length<2)return null;
+      const cut=Math.max(1,Math.min(cards.length-1,Number(cutPosition)||1));
+      // A cut changes the starting point without changing cyclic card order.
+      return cards.slice(cut).concat(cards.slice(0,cut));
+    },
+    openingKeyDealStacks(deck, stackCount, significatorCardId) {
+      const cards=Array.isArray(deck)?deck.slice():[];
+      const count=Math.max(2,Math.min(12,Number(stackCount)||2));
+      if(cards.length<count)return null;
+      const stacks=Array.from({length:count},()=>[]);
+      cards.forEach((id,index)=>stacks[index%count].push(id));
+      const sig=String(significatorCardId||'');
+      const stackIndex=stacks.findIndex(stack=>stack.includes(sig));
+      return {stacks,stackIndex};
+    },
+    openingKeyRing36(deck, significatorCardId) {
+      const cards=Array.isArray(deck)?deck.slice():[];
+      const sig=String(significatorCardId||'');
+      const at=cards.indexOf(sig);
+      if(at<0||cards.length<37)return null;
+      const ring=[];
+      for(let step=1;step<=36;step++)ring.push(cards[(at+step)%cards.length]);
+      return {significatorCardId:sig,ring};
+    },
+    openingKeyCountForCard(cardId) {
+      const card=cardById(String(cardId||''));
+      if(!card)return null;
+      if(card.card_type==='Ace'||card.rank==='Ace')return 11;
+      const rank=String(card.rank||'').toLowerCase();
+      if(card.card_type==='Court'){
+        if(rank==='princess'||rank==='page')return 7;
+        if(['knight','queen','prince','king'].includes(rank))return 4;
+      }
+      if(card.card_type==='Pip'){
+        const pips={two:2,three:3,four:4,five:5,six:6,seven:7,eight:8,nine:9,ten:10};
+        if(pips[rank])return pips[rank];
+        const n=Number(card.rank);if(n>=2&&n<=10)return n;
+      }
+      if(card.arcana==='Major'||card.card_type==='Major'){
+        const type=String(card.astrology?.attribution_type||'').toLowerCase();
+        if(type==='element')return 3;
+        if(type==='planet')return 9;
+        if(type==='sign')return 12;
+      }
+      return null;
     },
     drawCardForBoard(scope = 'full') {
       const pool=rowDrawPool(scope || 'full',{ignoreUsed:true});

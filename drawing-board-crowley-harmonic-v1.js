@@ -30,7 +30,27 @@
     {id:'Heh-final',letter:'Final Heh',element:'Earth',suit:'Disks',core:'Money · goods · material matters',explain:'What is owned, paid for, embodied, housed, maintained, exchanged, or made materially real.',terms:['money','cash','income','pay','salary','benefits','debt','loan','bill','rent','mortgage','house','home','property','real estate','goods','purchase','shopping','price','cost','budget','savings','bank','finance','financial','material','possession','object','car','vehicle','food','body','health cost','resource','equipment','contract value','asset','inheritance','payment','sale','buy','sell']}
   ];
 
-  let operation=1, anchor=0, countValue=3, pairRadius=1, expectedDomain='', domainLocked=false, revealedDomain='', significatorId='', operationDeck=null, attemptFailed=false, retrySameSelections=true;
+  const HOUSES=[
+    ['1st','Self · body · appearance · beginnings'],['2nd','Money · possessions · values'],['3rd','Communication · siblings · short travel'],
+    ['4th','Home · family · roots'],['5th','Creativity · children · pleasure · romance'],['6th','Work · health · service · daily routine'],
+    ['7th','Partnerships · marriage · open enemies'],['8th','Death · transformation · other people’s money · sex'],['9th','Philosophy · long travel · higher education · religion'],
+    ['10th','Career · reputation · public life'],['11th','Friends · hopes · groups · social concerns'],['12th','Hidden matters · isolation · the unconscious']
+  ];
+  const SIGNS=[
+    ['Aries','Initiative · beginnings · self · conflict'],['Taurus','Stability · material matters · beauty · possessions'],
+    ['Gemini','Communication · duality · intellect · siblings'],['Cancer','Home · emotion · past'],['Leo','Creativity · will · leadership · children'],
+    ['Virgo','Analysis · service · health · craftsmanship'],['Libra','Balance · relationships · justice · aesthetics'],
+    ['Scorpio','Transformation · death · sex · occult · power'],['Sagittarius','Philosophy · travel · expansion · religion · law'],
+    ['Capricorn','Ambition · career · authority · material goals'],['Aquarius','Groups · ideals · rebellion · future'],['Pisces','Spirituality · illusion · sacrifice · unconscious']
+  ];
+  const SEPHIROTH=[
+    ['Kether','Crown · highest cause'],['Chokmah','Wisdom · initial impulse'],['Binah','Understanding · form · limitation'],
+    ['Chesed','Mercy · expansion · help'],['Geburah','Severity · conflict · what must be cut away'],['Tiphareth','Beauty · harmony · central issue'],
+    ['Netzach','Victory · feeling · desire'],['Hod','Splendour · intellect · communication'],['Yesod','Foundation · hidden forces'],['Malkuth','Kingdom · material outcome']
+  ];
+
+  let operation=1, anchor=0, significatorAnchor=0, countDirection=1, countValue=3, pairRadius=1, expectedDomain='', domainLocked=false, revealedDomain='', significatorId='', operationDeck=null, attemptFailed=false, retrySameSelections=true;
+  let activePacket=[], operationDeckState=null, operationStackResult=null, expectedStackIndex=-1, secondStackIndex=-1;
 
   function storedSignificator(){
     try{return String(localStorage.getItem(SIGNIFICATOR_KEY)||'');}catch(_){return '';}
@@ -86,7 +106,7 @@
     const state=window.RelphiDrawingBoardPrefabsBridge?.getState?.();
     return state?.activeLayout?.id===TEMPLATE_ID || state?.currentLayout?.id===TEMPLATE_ID;
   }
-  function items(){return Array.from(root()?.querySelectorAll('.card-row-board .card-row-item')||[]).slice(0,12);}
+  function items(){return Array.from(root()?.querySelectorAll('.card-row-board .card-row-item')||[]);}
   function circularDistance(a,b){const d=Math.abs(a-b)%12;return Math.min(d,12-d);}
   function aspectForStep(step){
     const normalized=((Number(step)||0)%12+12)%12;
@@ -187,11 +207,12 @@
     const count=countHarmonic(countValue), pair=pairHarmonic(pairRadius);
     // The twelve visible helper positions are a harmonic reference, not a claim
     // that every Opening operation physically contains twelve cards.
-    if(cards.length>=12){
-      const target=(anchor+count.movement)%12;
+    if(cards.length){
+      const len=cards.length;
+      const target=((anchor+(countDirection*count.movement))%len+len)%len;
       cards[anchor]?.classList.add('crowley-anchor');
       cards[target]?.classList.add('crowley-target');
-      const left=(anchor-pairRadius+12)%12, right=(anchor+pairRadius)%12;
+      const left=((significatorAnchor-pairRadius)%len+len)%len, right=(significatorAnchor+pairRadius)%len;
       cards[left]?.classList.add('crowley-pair','crowley-pair-front'); cards[right]?.classList.add('crowley-pair','crowley-pair-behind');
       cards[left]?.setAttribute('data-crowley-reference-aspect',pair.reference.name);
       cards[right]?.setAttribute('data-crowley-reference-aspect',pair.reference.name);
@@ -203,7 +224,7 @@
     const opStatus=document.getElementById('crowleyOperationStatus');
     if(opStatus) opStatus.innerHTML='<b>Operation '+op.n+' · '+op.name+'</b> — '+op.field+'. '+op.note;
     const status=document.getElementById('crowleyHarmonicStatus');
-    if(status) status.innerHTML='<b>Story Focus · Count '+count.value+'</b> · move '+count.movement+' · '+count.aspect.name+' '+count.aspect.angle+'° (H'+count.aspect.harmonic+'). '+interpretiveRelation(count.aspect,'count')+'<br><b>Pair Focus · ±'+pair.radius+'</b> · each card ↔ Significator: '+pair.reference.name+' '+pair.reference.angle+'° (H'+pair.reference.harmonic+'); paired cards ↔ each other: '+pair.between.name+' '+pair.between.angle+'° (H'+pair.between.harmonic+'). <b>Midpoint:</b> Significator.';
+    if(status) status.innerHTML='<b>Story Focus · Count '+count.value+'</b> · move '+(countDirection<0?'left ':'right ')+count.movement+' · '+count.aspect.name+' '+count.aspect.angle+'° (H'+count.aspect.harmonic+'). '+interpretiveRelation(count.aspect,'count')+'<br><b>Pair Focus · ±'+pair.radius+'</b> · each card ↔ Significator: '+pair.reference.name+' '+pair.reference.angle+'° (H'+pair.reference.harmonic+'); paired cards ↔ each other: '+pair.between.name+' '+pair.between.angle+'° (H'+pair.between.harmonic+'). <b>Midpoint:</b> Significator.';
     renderReadingReference();
     renderOperationFocus();
   }
@@ -238,14 +259,195 @@
   }
   function domainGateMarkup(){
     return '<fieldset id="crowleyDomainGate" class="relphi-fieldset"><legend>Operation I · Question domain</legend>'+
-      '<div id="crowleySignificatorStep"><div class="crowley-step-heading"><strong>Significator</strong><span>Choose the card that represents the querent or the matter.</span></div><div class="crowley-controls relphi-toolbar"><button id="crowleyDrawSignificator" class="relphi-button" type="button">Draw digitally</button><label class="relphi-field">Find a card<input id="crowleySignificatorSearch" class="relphi-input" type="search" autocomplete="off" placeholder="Card name"></label></div><div id="crowleySignificatorResults"></div><p id="crowleySignificatorStatus" aria-live="polite">No Significator selected.</p></div>'+
+      '<div id="crowleySignificatorStep"><div class="crowley-step-heading"><strong>Significator</strong><span>Choose the card that represents the Querent, using your knowledge or judgment of their character rather than physical characteristics.</span></div><div class="crowley-controls relphi-toolbar"><button id="crowleyDrawSignificator" class="relphi-button" type="button">Draw digitally</button><label class="relphi-field">Find a card<input id="crowleySignificatorSearch" class="relphi-input" type="search" autocomplete="off" placeholder="Card name"></label></div><div id="crowleySignificatorResults"></div><p id="crowleySignificatorStatus" aria-live="polite">No Significator selected.</p></div>'+
       '<div id="crowleyDomainStep" hidden><div class="crowley-significator-memory"><span><small>Significator</small><strong id="crowleyPersistentSignificator"></strong></span><button type="button" id="crowleyChangeSignificator" class="relphi-button">Change</button></div>'+
         '<div class="crowley-step-heading"><strong>Question domain</strong><span>Choose the domain that best contains the question before the Significator is located in the four packets.</span></div>'+
         '<details class="crowley-domain-help"><summary>Why four domains?</summary><p>The First Operation divides the deck into four IHVH packets, corresponding in sequence to Fire, Water, Air, and Earth. The choices below are the four question domains used to predict which packet will contain the Significator.</p></details>'+
         '<label class="relphi-field crowley-domain-search">Search by subject<input id="crowleyDomainSearch" class="relphi-input" type="search" autocomplete="off" placeholder="Career, romance, conflict, rent, home…"></label><div id="crowleyDomainResults" class="crowley-domain-results">'+domainCardsMarkup('')+'</div><input id="crowleyExpectedDomain" type="hidden" value=""><p id="crowleyDomainSelection" class="crowley-domain-selection">No domain selected yet.</p><div class="crowley-controls relphi-toolbar"><button id="crowleyLockDomain" class="relphi-button relphi-button--primary" type="button">Commit domain</button></div></div>'+
       '<div id="crowleyDomainReveal" hidden><div id="crowleyInvocationStep"><div class="crowley-step-heading"><strong>Invocation</strong><span>Say the invocation before Relphi shuffles the deck.</span></div><blockquote class="crowley-invocation relphi-card relphi-card--soft">I invoke thee, I A O, that thou wilt send H R U, the great Angel that is set over the operations of this Secret Wisdom, to lay his hand invisibly upon these consecrated cards of art, that thereby we may obtain true knowledge of hidden things, to the glory of thine ineffable Name. Amen.</blockquote><button type="button" id="crowleyInvoke" class="relphi-button relphi-button--primary">Invocation complete · shuffle</button></div>'+
       '<div id="crowleyCutStep" hidden><div class="crowley-step-heading"><strong>Querent cut</strong><span>Choose the cut position. Relphi keeps the shuffled deck order fixed for this attempt.</span></div><div class="crowley-controls relphi-toolbar"><label class="relphi-field">Cut position<input id="crowleyCutRange" class="relphi-range" type="range" min="1" max="77" value="39"></label><label class="relphi-field">Position<input id="crowleyCutNumber" class="relphi-input" type="number" min="1" max="77" value="39"></label><button type="button" id="crowleyMakeCut" class="relphi-button relphi-button--primary">Make cut</button></div><p><b>Significator packet:</b> <span id="crowleyActualDomain">Awaiting cuts</span></p></div>'+
-      '<div id="crowleyFailureStep" class="crowley-failure-step" hidden><div class="crowley-failure-result"><span><small>Found in</small><strong id="crowleyFoundPacket">—</strong></span><span><small>Expected</small><strong id="crowleyExpectedPacket">—</strong></span></div><p>This attempt is abandoned.</p><label class="crowley-retry-toggle"><input id="crowleyRetrySameSelections" type="checkbox" checked> Retry with same Significator and domain</label><button type="button" id="crowleyRetryOpening" class="relphi-button relphi-button--primary">Retry</button></div></div><p id="crowleyDomainStatus" aria-live="polite"></p></fieldset>';
+      '<div id="crowleyFailureStep" class="crowley-failure-step" hidden><div class="crowley-failure-result"><span><small>Found in</small><strong id="crowleyFoundPacket">—</strong></span><span><small>Expected</small><strong id="crowleyExpectedPacket">—</strong></span></div><p>The divination is abandoned. Operation I has no cognate-domain second chance.</p></div></div><p id="crowleyDomainStatus" aria-live="polite"></p></fieldset>';
+  }
+
+
+  function choiceOptions(items,placeholder){
+    return '<option value="">'+placeholder+'</option>'+items.map((item,index)=>'<option value="'+index+'">'+(index+1)+' · '+item[0]+' — '+item[1]+'</option>').join('');
+  }
+  function syncPacketControls(box,packet){
+    activePacket=Array.isArray(packet)?packet.slice():[];
+    const anchorSelect=box?.querySelector('#crowleyAnchor');
+    if(anchorSelect){
+      anchorSelect.innerHTML=activePacket.map((id,index)=>'<option value="'+index+'">'+(index+1)+' · '+(window.RelphiTarotLedgerBridge?.titleFor?.(id)||id)+'</option>').join('');
+      anchorSelect.value=String(anchor);
+    }
+    const pairSelect=box?.querySelector('#crowleyPair');
+    if(pairSelect){
+      const max=Math.max(1,Math.floor((activePacket.length-1)/2));
+      pairSelect.innerHTML=Array.from({length:max},(_,i)=>'<option value="'+(i+1)+'">±'+(i+1)+'</option>').join('');
+      pairRadius=Math.min(pairRadius,max);
+      pairSelect.value=String(pairRadius);
+    }
+    syncCurrentCardCount(box);
+  }
+  function syncCurrentCardCount(box){
+    const id=activePacket[anchor];
+    const derived=window.RelphiTarotLedgerBridge?.openingKeyCountForCard?.(id);
+    if(Number.isFinite(derived)){
+      countValue=derived;
+      const count=box?.querySelector('#crowleyCount');
+      if(count)count.value=String(derived);
+    }
+  }
+  function operationStageMarkup(op){
+    const source=op===2?HOUSES:op===3?SIGNS:op===5?SEPHIROTH:null;
+    const noun=op===2?'house':op===3?'sign':op===5?'Sephira':'';
+    const heading=OPERATIONS[op-1];
+    if(op===4){
+      return '<fieldset class="relphi-fieldset crowley-operation-stage" data-crowley-operation-stage="4"><legend>Operation IV · Penultimate Aspects</legend>'+
+        '<p>Reshuffle the full deck, invoke, and let the Querent cut. Relphi then locates the Significator and takes the <b>36 cards following it</b> in preserved deck order.</p>'+
+        '<blockquote class="crowley-invocation relphi-card relphi-card--soft">I invoke thee, I A O, that thou wilt send H R U, the great Angel that is set over the operations of this Secret Wisdom, to lay his hand invisibly upon these consecrated cards of art, that thereby we may obtain true knowledge of hidden things, to the glory of thine ineffable Name. Amen.</blockquote>'+
+        '<button type="button" class="relphi-button relphi-button--primary" data-crowley-fresh-deck>Invocation complete · shuffle</button>'+
+        '<div class="crowley-stage-cut" hidden><label class="relphi-field">Querent cut position<input class="relphi-input" data-crowley-stage-cut type="number" min="1" max="77" value="39"></label><button type="button" class="relphi-button relphi-button--primary" data-crowley-build-ring>Make cut · form 36-card ring</button></div>'+
+        '<p class="crowley-stage-status" aria-live="polite"></p></fieldset>';
+    }
+    if(!source)return '';
+    const special=op===5
+      ? 'Choose the Sephira where you expect the Significator before looking. Crowley explicitly notes that failure here does <b>not necessarily</b> mean the divination has gone astray.'
+      : 'Choose the '+noun+' where you expect the Significator <b>before looking</b>. If it is absent, you may test one cognate '+noun+'. A second failure abandons the divination.';
+    return '<fieldset class="relphi-fieldset crowley-operation-stage" data-crowley-operation-stage="'+op+'"><legend>Operation '+op+' · '+heading.name+'</legend>'+
+      '<p>'+special+'</p>'+
+      '<label class="relphi-field">Expected '+noun+'<select class="relphi-select" data-crowley-expected-stack>'+choiceOptions(source,'Choose '+noun)+'</select></label>'+
+      '<blockquote class="crowley-invocation relphi-card relphi-card--soft">I invoke thee, I A O, that thou wilt send H R U, the great Angel that is set over the operations of this Secret Wisdom, to lay his hand invisibly upon these consecrated cards of art, that thereby we may obtain true knowledge of hidden things, to the glory of thine ineffable Name. Amen.</blockquote>'+
+      '<button type="button" class="relphi-button relphi-button--primary" data-crowley-fresh-deck>Invocation complete · shuffle</button>'+
+      '<div class="crowley-stage-cut" hidden><label class="relphi-field">Querent cut position<input class="relphi-input" data-crowley-stage-cut type="number" min="1" max="77" value="39"></label><button type="button" class="relphi-button relphi-button--primary" data-crowley-deal-stacks>Make cut · deal '+source.length+' stacks</button></div>'+
+      '<div class="crowley-cognate-step" hidden><p>The Significator is not in your first choice. Choose one cognate '+noun+' for the permitted second test.</p><label class="relphi-field">Cognate '+noun+'<select class="relphi-select" data-crowley-second-stack>'+choiceOptions(source,'Choose cognate '+noun)+'</select></label><button type="button" class="relphi-button relphi-button--primary" data-crowley-test-second>Test cognate '+noun+'</button></div>'+
+      '<div class="crowley-operation-five-failure" hidden><p>The Significator is not in the expected Sephira. In Operation V this does not necessarily invalidate the divination.</p><button type="button" class="relphi-button relphi-button--primary" data-crowley-use-actual>Proceed with the actual Sephira</button> <button type="button" class="relphi-button" data-crowley-abandon>Abandon</button></div>'+
+      '<p class="crowley-stage-status" aria-live="polite"></p></fieldset>';
+  }
+  function renderOperationStage(box,op){
+    operation=op;
+    anchor=0;
+    operationDeckState=null;operationStackResult=null;expectedStackIndex=-1;secondStackIndex=-1;
+    const host=box?.querySelector('#crowleyMethodStage');if(!host)return;
+    host.innerHTML=operationStageMarkup(op);
+    box.querySelector('#crowleyMechanics').hidden=true;
+    const select=box.querySelector('#crowleyOperation');if(select)select.value=String(op);
+    clearMarks();
+    host.scrollIntoView({block:'nearest'});
+  }
+  function beginPacketReading(box,packet,label){
+    const ledger=window.RelphiTarotLedgerBridge;
+    const ids=Array.isArray(packet)?packet.slice():[];
+    ledger?.showOpeningPacket?.(ids);
+    activePacket=ids;
+    significatorAnchor=Math.max(0,ids.indexOf(significatorId));
+    anchor=significatorAnchor;
+    pairRadius=1;
+    countDirection=1;
+    box.querySelector('#crowleyMechanics').hidden=false;
+    const opSelect=box.querySelector('#crowleyOperation');if(opSelect)opSelect.value=String(operation);
+    const status=box.querySelector('#crowleyAccuracyStatus');if(status)status.textContent='';
+    syncPacketControls(box,ids);
+    const direction=box.querySelector('#crowleyDirection');if(direction)direction.value='1';
+    const host=box.querySelector('#crowleyMethodStage');
+    if(host)host.innerHTML='<fieldset class="relphi-fieldset crowley-operation-stage"><legend>Operation '+operation+' · '+OPERATIONS[operation-1].name+'</legend><p><b>'+label+'</b> contains the Significator. Relphi has spread that packet in preserved order. Count and pair it before continuing.</p></fieldset>';
+    mark();
+  }
+  function completeOperation(box){
+    if(operation<5){renderOperationStage(box,operation+1);return;}
+    box.querySelector('#crowleyMechanics').hidden=true;
+    const host=box.querySelector('#crowleyMethodStage');
+    if(host)host.innerHTML='<fieldset class="relphi-fieldset crowley-operation-stage"><legend>Opening of the Key · Complete</legend><p>All five operations have been completed in sequence.</p></fieldset>';
+    clearMarks();
+  }
+  function bindOperationStages(box){
+    const host=box.querySelector('#crowleyMethodStage');if(!host||host.dataset.crowleyBound==='true')return;
+    host.dataset.crowleyBound='true';
+    host.addEventListener('change',event=>{
+      if(event.target.matches('[data-crowley-expected-stack]'))expectedStackIndex=event.target.value===''?-1:Number(event.target.value);
+      if(event.target.matches('[data-crowley-second-stack]'))secondStackIndex=event.target.value===''?-1:Number(event.target.value);
+    });
+    host.addEventListener('click',event=>{
+      const button=event.target.closest('button');if(!button)return;
+      const ledger=window.RelphiTarotLedgerBridge;
+      const stage=host.querySelector('[data-crowley-operation-stage]');
+      const status=host.querySelector('.crowley-stage-status');
+      if(button.matches('[data-crowley-fresh-deck]')){
+        if(operation!==4&&expectedStackIndex<0){if(status)status.textContent='Choose the expected '+(operation===2?'house':operation===3?'sign':'Sephira')+' before shuffling.';return;}
+        const prepared=ledger?.openingKeyFreshDeck?.(significatorId);
+        if(!prepared?.deck?.length){if(status)status.textContent='Could not prepare the full deck.';return;}
+        operationDeckState=prepared.deck.slice();
+        button.disabled=true;
+        const cut=stage?.querySelector('.crowley-stage-cut');if(cut)cut.hidden=false;
+        if(status)status.textContent='Deck shuffled once and locked. The Querent now cuts.';
+        return;
+      }
+      if(button.matches('[data-crowley-deal-stacks]')){
+        if(!operationDeckState)return;
+        const cutAt=Math.max(1,Math.min(77,Number(stage.querySelector('[data-crowley-stage-cut]')?.value)||39));
+        const cutDeck=ledger?.openingKeyQuerentCut?.(operationDeckState,cutAt);
+        const count=operation===5?10:12;
+        operationStackResult=ledger?.openingKeyDealStacks?.(cutDeck,count,significatorId);
+        if(!operationStackResult||operationStackResult.stackIndex<0)return;
+        button.disabled=true;
+        const actual=operationStackResult.stackIndex;
+        const source=operation===2?HOUSES:operation===3?SIGNS:SEPHIROTH;
+        if(actual===expectedStackIndex){
+          if(status)status.textContent='Confirmed: the Significator is in '+source[actual][0]+'.';
+          beginPacketReading(box,operationStackResult.stacks[actual],source[actual][0]);
+        }else if(operation===5){
+          if(status)status.textContent='The Significator is not in '+source[expectedStackIndex][0]+'. Crowley says this failure does not necessarily imply the divination has gone astray.';
+          const fail=stage.querySelector('.crowley-operation-five-failure');if(fail)fail.hidden=false;
+        }else{
+          if(status)status.textContent='First test failed. The Significator is not in '+source[expectedStackIndex][0]+'. Choose one cognate '+(operation===2?'house':'sign')+' without revealing the actual stack.';
+          const cog=stage.querySelector('.crowley-cognate-step');if(cog)cog.hidden=false;
+          const second=stage.querySelector('[data-crowley-second-stack]');
+          if(second)Array.from(second.options).forEach(opt=>{if(opt.value!==''&&Number(opt.value)===expectedStackIndex)opt.disabled=true;});
+        }
+        return;
+      }
+      if(button.matches('[data-crowley-test-second]')){
+        if(!operationStackResult||secondStackIndex<0)return;
+        const source=operation===2?HOUSES:SIGNS;
+        const actual=operationStackResult.stackIndex;
+        button.disabled=true;
+        if(secondStackIndex===actual){
+          if(status)status.textContent='Cognate test confirmed: the Significator is in '+source[actual][0]+'.';
+          beginPacketReading(box,operationStackResult.stacks[actual],source[actual][0]);
+        }else{
+          if(status)status.textContent='Second failure. The Significator is in neither the first choice nor the cognate choice. The divination is abandoned.';
+          box.querySelector('#crowleyMechanics').hidden=true;clearMarks();
+        }
+        return;
+      }
+      if(button.matches('[data-crowley-use-actual]')){
+        if(!operationStackResult)return;
+        const actual=operationStackResult.stackIndex;
+        beginPacketReading(box,operationStackResult.stacks[actual],SEPHIROTH[actual][0]);
+        return;
+      }
+      if(button.matches('[data-crowley-abandon]')){
+        if(status)status.textContent='The divination is abandoned.';box.querySelector('#crowleyMechanics').hidden=true;clearMarks();return;
+      }
+      if(button.matches('[data-crowley-build-ring]')){
+        if(!operationDeckState)return;
+        const cutAt=Math.max(1,Math.min(77,Number(stage.querySelector('[data-crowley-stage-cut]')?.value)||39));
+        const cutDeck=ledger?.openingKeyQuerentCut?.(operationDeckState,cutAt);
+        const ring=ledger?.openingKeyRing36?.(cutDeck,significatorId);
+        if(!ring?.ring?.length)return;
+        button.disabled=true;
+        // Board order is Significator followed by the 36-card ring sequence.
+        const ringPacket=[significatorId].concat(ring.ring);
+        ledger?.showOpeningPacket?.(ringPacket);
+        activePacket=ringPacket;significatorAnchor=0;anchor=0;pairRadius=1;countDirection=1;
+        box.querySelector('#crowleyMechanics').hidden=false;
+        syncPacketControls(box,ringPacket);
+        const direction=box.querySelector('#crowleyDirection');if(direction)direction.value='1';
+        const opSelect=box.querySelector('#crowleyOperation');if(opSelect)opSelect.value='4';
+        if(status)status.textContent='The Significator has been set as the reference and the 36 following cards preserved in ring order. Count and pair this field.';
+        mark();
+      }
+    });
   }
 
   function installStyle(){
@@ -392,9 +594,10 @@
     let box=document.getElementById('crowleyHarmonicGuide');
     if(!box){
       box=document.createElement('section');box.id='crowleyHarmonicGuide';box.className='relphi-panel relphi-stack';box.hidden=true;
-      box.innerHTML='<span class="eyebrow relphi-eyebrow">Crowley Divination Method</span><h3 class="relphi-heading">The Opening of the Key</h3><p class="crowley-method-intro">Relphi keeps the method in sequence and reveals only the part you need now.</p>'+domainGateMarkup()+'<div id="crowleyMechanics" class="relphi-stack" hidden><div class="crowley-controls relphi-toolbar"><label class="relphi-field">Operation<select id="crowleyOperation" class="relphi-select">'+OPERATIONS.map(op=>'<option value="'+op.n+'">'+op.n+' · '+op.name+'</option>').join('')+'</select></label><label class="relphi-field">Harmonic reference<select id="crowleyAnchor" class="relphi-select">'+Array.from({length:12},(_,i)=>'<option value="'+i+'">Position '+(i+1)+'</option>').join('')+'</select></label><label class="relphi-field">Card Counting<select id="crowleyCount" class="relphi-select">'+countOptions()+'</select></label><label class="relphi-field">Card Pairing<select id="crowleyPair" class="relphi-select">'+Array.from({length:6},(_,i)=>'<option value="'+(i+1)+'">±'+(i+1)+'</option>').join('')+'</select></label><button id="crowleyAdvance" class="relphi-button" type="button">Continue Card Counting</button></div><p id="crowleyOperationStatus"></p><div id="crowleyOperationFocus"></div><p id="crowleyHarmonicStatus" aria-live="polite"></p><div id="crowleyReadingReference"></div><fieldset class="relphi-fieldset"><legend>Accuracy Test</legend><p>After Card Counting and Card Pairing, confirm whether the main lines of the reading are correct.</p><button id="crowleyMainLinesCorrect" class="relphi-button relphi-button--primary" type="button">Main lines are correct · continue</button> <button id="crowleyMainLinesWrong" class="relphi-button" type="button">Main lines are not correct · abandon</button><p id="crowleyAccuracyStatus" aria-live="polite"></p></fieldset></div>';
+      box.innerHTML='<span class="eyebrow relphi-eyebrow">Crowley Divination Method</span><h3 class="relphi-heading">The Opening of the Key</h3><p class="crowley-method-intro">Relphi keeps the method in sequence and reveals only the part you need now.</p>'+domainGateMarkup()+'<div id="crowleyMethodStage"></div><div id="crowleyMechanics" class="relphi-stack" hidden><div class="crowley-controls relphi-toolbar"><label class="relphi-field" hidden>Operation<select id="crowleyOperation" class="relphi-select">'+OPERATIONS.map(op=>'<option value="'+op.n+'">'+op.n+' · '+op.name+'</option>').join('')+'</select></label><label class="relphi-field">Current card<select id="crowleyAnchor" class="relphi-select"></select></label><label class="relphi-field">Direction<select id="crowleyDirection" class="relphi-select"><option value="1">Right / forward</option><option value="-1">Left / backward</option></select></label><label class="relphi-field">Card Counting<select id="crowleyCount" class="relphi-select">'+countOptions()+'</select></label><label class="relphi-field">Card Pairing<select id="crowleyPair" class="relphi-select">'+Array.from({length:6},(_,i)=>'<option value="'+(i+1)+'">±'+(i+1)+'</option>').join('')+'</select></label><button id="crowleyAdvance" class="relphi-button" type="button">Continue Card Counting</button></div><p id="crowleyOperationStatus"></p><div id="crowleyOperationFocus"></div><p id="crowleyHarmonicStatus" aria-live="polite"></p><div id="crowleyReadingReference"></div><fieldset class="relphi-fieldset"><legend>Accuracy Test</legend><p>After Card Counting and Card Pairing, confirm whether the main lines of the reading are correct.</p><button id="crowleyMainLinesCorrect" class="relphi-button relphi-button--primary" type="button">Main lines are correct · continue</button> <button id="crowleyMainLinesWrong" class="relphi-button" type="button">Main lines are not correct · abandon</button><p id="crowleyAccuracyStatus" aria-live="polite"></p></fieldset></div>';
       const workspace=r.querySelector('.card-row-workspace');
       if(workspace) workspace.parentNode.insertBefore(box,workspace); else nativeDrawer.insertAdjacentElement('beforebegin',box);
+      bindOperationStages(box);
       const ledger=()=>window.RelphiTarotLedgerBridge;
       const chooseSignificator=card=>{
         if(!card?.card_id||significatorId)return;
@@ -470,35 +673,6 @@
         box.querySelector('#crowleyDomainReveal').hidden=false;
         box.querySelector('#crowleyActualDomain').textContent='Awaiting cuts';
       });
-      box.querySelector('#crowleyRetrySameSelections').addEventListener('change',event=>{retrySameSelections=!!event.target.checked;});
-      box.querySelector('#crowleyRetryOpening').addEventListener('click',()=>{
-        if(!attemptFailed)return;
-        retrySameSelections=box.querySelector('#crowleyRetrySameSelections')?.checked!==false;
-        attemptFailed=false;revealedDomain='';operationDeck=null;
-        const failure=box.querySelector('#crowleyFailureStep');if(failure)failure.hidden=true;
-        const actual=box.querySelector('#crowleyActualDomain');if(actual)actual.textContent='Awaiting cuts';
-        const makeCut=box.querySelector('#crowleyMakeCut');if(makeCut)makeCut.disabled=false;
-        const cutRange=box.querySelector('#crowleyCutRange');if(cutRange)cutRange.value='39';
-        const cutNumber=box.querySelector('#crowleyCutNumber');if(cutNumber)cutNumber.value='39';
-        if(retrySameSelections){
-          domainLocked=true;
-          const reveal=box.querySelector('#crowleyDomainReveal');if(reveal)reveal.hidden=false;
-          const invocation=box.querySelector('#crowleyInvocationStep');if(invocation)invocation.hidden=false;
-          const invoke=box.querySelector('#crowleyInvoke');if(invoke)invoke.disabled=false;
-          const cut=box.querySelector('#crowleyCutStep');if(cut)cut.hidden=true;
-          box.querySelector('#crowleyDomainStatus').textContent='Same Significator and '+(DOMAINS.find(item=>item.id===expectedDomain)?.letter||expectedDomain)+' domain retained. Invoke and reshuffle for the fresh attempt.';
-        }else{
-          expectedDomain='';domainLocked=false;
-          const hidden=box.querySelector('#crowleyExpectedDomain');if(hidden)hidden.value='';
-          const search=box.querySelector('#crowleyDomainSearch');if(search){search.value='';search.disabled=false;}
-          box.querySelectorAll('[data-crowley-domain]').forEach(node=>node.disabled=false);
-          box.querySelector('#crowleyDomainResults')?.classList.remove('is-locked');
-          const lock=box.querySelector('#crowleyLockDomain');if(lock)lock.disabled=false;
-          const reveal=box.querySelector('#crowleyDomainReveal');if(reveal)reveal.hidden=true;
-          renderDomainFilter(box);
-          box.querySelector('#crowleyDomainStatus').textContent='Significator retained. Choose the question domain for the fresh attempt.';
-        }
-      });
       box.querySelector('#crowleyInvoke').addEventListener('click',()=>{
         if(!domainLocked||!significatorId||operationDeck)return;
         const prepared=ledger()?.openingKeyDeck?.(significatorId);
@@ -544,7 +718,7 @@
           // prediction with the packet that actually contained the Significator.
           attemptFailed=true;
           operationDeck=null;
-          retrySameSelections=true;
+          retrySameSelections=false;
           ledger()?.hideOpeningSignificator?.();
           requestAnimationFrame(()=>{
             const live=document.getElementById('crowleyHarmonicGuide');if(!live)return;
@@ -553,25 +727,27 @@
           });
         }
       });
-      box.querySelector('#crowleyMainLinesCorrect').addEventListener('click',()=>{box.querySelector('#crowleyAccuracyStatus').textContent='Accuracy gate passed.';});
+      box.querySelector('#crowleyMainLinesCorrect').addEventListener('click',()=>{box.querySelector('#crowleyAccuracyStatus').textContent='Operation '+operation+' complete.';completeOperation(box);});
       box.querySelector('#crowleyMainLinesWrong').addEventListener('click',()=>{box.querySelector('#crowleyMechanics').hidden=true;box.querySelector('#crowleyAccuracyStatus').textContent='The divination is abandoned because its main lines do not correspond.';clearMarks();});
-      box.querySelector('#crowleyOperation').addEventListener('change',e=>{operation=Math.max(1,Math.min(5,Number(e.target.value)||1));mark();});
-      box.querySelector('#crowleyAnchor').addEventListener('change',e=>{anchor=Number(e.target.value)||0;mark();});
+      box.querySelector('#crowleyOperation').addEventListener('change',e=>{const requested=Math.max(1,Math.min(5,Number(e.target.value)||1));if(requested===operation)mark();else e.target.value=String(operation);});
+      box.querySelector('#crowleyAnchor').addEventListener('change',e=>{anchor=Number(e.target.value)||0;syncCurrentCardCount(box);mark();});
+      box.querySelector('#crowleyDirection').addEventListener('change',e=>{countDirection=Number(e.target.value)<0?-1:1;mark();});
       box.querySelector('#crowleyCount').addEventListener('change',e=>{countValue=Number(e.target.value)||3;mark();});
       box.querySelector('#crowleyPair').addEventListener('change',e=>{pairRadius=Number(e.target.value)||1;mark();});
-      box.querySelector('#crowleyAdvance').addEventListener('click',()=>{anchor=(anchor+countHarmonic(countValue).movement)%12;box.querySelector('#crowleyAnchor').value=String(anchor);mark();});
+      box.querySelector('#crowleyAdvance').addEventListener('click',()=>{const len=Math.max(1,activePacket.length||items().length);anchor=((anchor+(countDirection*countHarmonic(countValue).movement))%len+len)%len;box.querySelector('#crowleyAnchor').value=String(anchor);syncCurrentCardCount(box);mark();});
       box.querySelector('#crowleyCount').value='3';
     }
     box.hidden=!active();
     if(!box.hidden){rehydrateDomainGate(box);mark();} else clearMarks();
   }
   function start(){
-    operation=1;anchor=0;countValue=3;pairRadius=1;significatorId=storedSignificator();
+    operation=1;anchor=0;significatorAnchor=0;countDirection=1;countValue=3;pairRadius=1;activePacket=[];significatorId=storedSignificator();
     ensureGuide();
     const box=document.getElementById('crowleyHarmonicGuide');
     if(!box)return false;
     box.hidden=false;
     box.querySelector('#crowleyMechanics').hidden=true;
+    const stage=box.querySelector('#crowleyMethodStage');if(stage)stage.innerHTML='';
     resetAttemptControls(box);
     renderSignificatorState(box);
     box.querySelector('#crowleyDomainStatus').textContent=significatorId
