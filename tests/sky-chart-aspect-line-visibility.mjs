@@ -281,6 +281,33 @@ assert.ok(zeroAspectWheel.placementOpacity>.9,'Placements must remain fully legi
 assert.ok(zeroAspectWheel.houseOpacity>.9,'Houses must remain fully legible when all aspects are hidden.');
 assert.ok(zeroAspectWheel.signOpacity>.9,'Signs must remain fully legible when all aspects are hidden.');
 
+// Partial aspect filtering must also leave non-aspect chart structure fully illuminated.
+await page.evaluate(()=>{
+  const rows=[...document.querySelectorAll('#skyFoundationRelationshipList>.sky-foundation-relationship-row[data-relation-index]')];
+  rows.forEach((row,index)=>row.classList.toggle('sky-chart-aspect-multiselect-hidden',index%2===0));
+  const control=document.querySelector('[data-aspect-filter="combined"]');
+  if(control)control.dataset.selectionCount='5';
+  document.documentElement.dataset.skyAspectSelection='5/11';
+  window.dispatchEvent(new CustomEvent('relphi:sky-aspect-visibility-applied'));
+});
+await page.waitForTimeout(80);
+const partialAspectWheel=await page.evaluate(()=>{
+  const wheel=document.querySelector('.sky-foundation-wheel');
+  const house=wheel?.querySelector('.sky-foundation-house-sector[data-sky="B"][data-house="3"]')||wheel?.querySelector('.sky-foundation-house-sector');
+  const placement=wheel?.querySelector('[data-layer="placements"] [data-sky][data-placement]');
+  const sign=wheel?.querySelector('.sky-foundation-sign-sector,.sky-foundation-sign-glyph');
+  return{
+    focused:wheel?.classList.contains('has-filter-focus')||false,
+    houseOpacity:house?Number(getComputedStyle(house).opacity):1,
+    placementOpacity:placement?Number(getComputedStyle(placement).opacity):1,
+    signOpacity:sign?Number(getComputedStyle(sign).opacity):1
+  };
+});
+assert.equal(partialAspectWheel.focused,false,'Partial aspect filtering must not put the wheel into focus-dimming mode.');
+assert.ok(partialAspectWheel.houseOpacity>.9,'Houses must remain fully legible during aspect filtering.');
+assert.ok(partialAspectWheel.placementOpacity>.9,'Placements must remain fully legible during aspect filtering.');
+assert.ok(partialAspectWheel.signOpacity>.9,'Signs must remain fully legible during aspect filtering.');
+
 // Regression: canonical polar axes must complete configurations even with Inevitable off.
 await page.evaluate(()=>{
   localStorage.setItem('relphiSkyConfigurationInevitableV1','false');
