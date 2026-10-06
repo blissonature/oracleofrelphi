@@ -1595,9 +1595,9 @@
         density,
         weight:800,
         maxFont:13,
-        minFont:8.5,
-        maxLines:3,
-        lineGap:3,
+        minFont:7,
+        maxLines:5,
+        lineGap:2.5,
         padX:9,
         padY:5
       });
@@ -1750,7 +1750,7 @@
     const baseHeaderH = state.shortListNotes ? 108 : 72;
     const brandFooterH = 0;
     const scale = drawingBoardSnapshotScale(maxX-minX,maxY-minY,baseHeaderH,brandFooterH,baseMargin);
-    const chromeScale=Math.max(1,Math.min(2,scale));
+    const chromeScale=Math.max(1,Math.min(1.35,scale));
     const margin=Math.round(baseMargin*chromeScale);
     const headerH=Math.round(baseHeaderH*chromeScale);
     const canvas = document.createElement('canvas');
@@ -1770,30 +1770,51 @@
     ctx.lineWidth=1;
     ctx.beginPath();ctx.moveTo(0,headerH-.5);ctx.lineTo(canvas.width,headerH-.5);ctx.stroke();
 
-    const headerLogoSize=38*chromeScale;
+    const headerLogoSize=34*chromeScale;
     const headerLogoX=margin;
-    const headerLogoY=Math.max(10*chromeScale,(72*chromeScale-headerLogoSize)/2);
+    const headerLogoY=Math.max(8*chromeScale,(72*chromeScale-headerLogoSize)/2);
     drawRelphiLogoMark(ctx,headerLogoX,headerLogoY,headerLogoSize);
-    const brandTextX=headerLogoX+headerLogoSize+10*chromeScale;
-    const brandFontSize=18*chromeScale;
+
+    const headerGap=14*chromeScale;
+    const leftAreaW=Math.max(120*chromeScale,canvas.width*.44-margin-headerGap);
+    const brandTextX=headerLogoX+headerLogoSize+9*chromeScale;
+    const brandTextMaxW=Math.max(60*chromeScale,leftAreaW-(headerLogoSize+9*chromeScale));
+    let brandFontSize=17*chromeScale;
+    const brandMin=11*chromeScale;
+    const oracleText='Oracle of ';
+    while(brandFontSize>brandMin){
+      ctx.font=`800 ${brandFontSize}px Montserrat, Arial, sans-serif`;
+      if(ctx.measureText(oracleText+'Relphi').width<=brandTextMaxW)break;
+      brandFontSize-=.5*chromeScale;
+    }
     const brandTextY=headerLogoY+(headerLogoSize-brandFontSize)/2;
     ctx.textAlign='left';
     ctx.textBaseline='top';
     ctx.font=`800 ${brandFontSize}px Montserrat, Arial, sans-serif`;
     ctx.fillStyle='#111';
-    const oracleText='Oracle of ';
     ctx.fillText(oracleText,brandTextX,brandTextY);
     const oracleW=ctx.measureText(oracleText).width;
     ctx.fillStyle='#dc1f18';
     ctx.fillText('Relphi',brandTextX+oracleW,brandTextY);
 
+    const titleText=`${state.shortListName ? state.shortListName + ' · ' : ''}Drawing Board`;
+    const rightX=canvas.width-margin;
+    const rightAreaW=Math.max(120*chromeScale,canvas.width*.50-margin);
+    let titleFontSize=20*chromeScale;
+    const titleMin=12*chromeScale;
+    while(titleFontSize>titleMin){
+      ctx.font=`900 ${titleFontSize}px Montserrat, Arial, sans-serif`;
+      if(ctx.measureText(titleText).width<=rightAreaW)break;
+      titleFontSize-=.5*chromeScale;
+    }
     ctx.textAlign='right';
     ctx.fillStyle = '#111';
-    ctx.font = `900 ${20*chromeScale}px Montserrat, Arial, sans-serif`;
-    ctx.fillText(`${state.shortListName ? state.shortListName + ' · ' : ''}Drawing Board`, canvas.width-margin, 14*chromeScale);
-    ctx.font = `650 ${11*chromeScale}px Montserrat, Arial, sans-serif`;
+    ctx.font = `900 ${titleFontSize}px Montserrat, Arial, sans-serif`;
+    ctx.fillText(titleText,rightX,12*chromeScale);
+    ctx.font = `650 ${10.5*chromeScale}px Montserrat, Arial, sans-serif`;
     ctx.fillStyle = '#655d56';
-    ctx.fillText(`${localTimestampLabel(createdAt)} · ${slots} position${slots === 1 ? '' : 's'}`, canvas.width-margin, 43*chromeScale);
+    const metaText=`${localTimestampLabel(createdAt)} · ${slots} position${slots === 1 ? '' : 's'}`;
+    ctx.fillText(metaText,rightX,41*chromeScale);
     if (state.shortListNotes) {
       ctx.textAlign='left';
       ctx.font = `600 ${12*chromeScale}px Montserrat, Arial, sans-serif`;
@@ -1893,9 +1914,9 @@
           density:scale,
           weight:800,
           maxFont:12.5,
-          minFont:8.5,
-          maxLines:3,
-          lineGap:2.5,
+          minFont:7.5,
+          maxLines:4,
+          lineGap:2.25,
           padX:2,
           padY:2
         });
