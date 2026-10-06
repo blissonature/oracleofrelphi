@@ -24,6 +24,7 @@ function installStyle(){
     .sky-where-when-heptagram-slot [data-sky-heptagram-frame] .sky-ph-heptagram{display:block;width:100%;height:auto}
     .sky-where-when-draft-heptagram{display:block!important;width:min(100%,176px)!important;height:auto!important;max-height:176px!important;overflow:visible!important;margin:0 auto!important}
     .sky-where-when-heptagram-slot .sky-ph-jump{justify-self:center;max-width:100%;margin:0 auto}
+    .sky-where-when-heptagram-slot .sky-ph-jump-title{white-space:nowrap}
   `;document.head.appendChild(node);
 }
 function editor(slot){return document.querySelector(`.sky-where-when-editor[data-slot="${slot}"]`)}
