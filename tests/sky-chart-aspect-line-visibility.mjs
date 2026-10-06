@@ -308,7 +308,7 @@ assert.ok(partialAspectWheel.houseOpacity>.9,'Houses must remain fully legible d
 assert.ok(partialAspectWheel.placementOpacity>.9,'Placements must remain fully legible during aspect filtering.');
 assert.ok(partialAspectWheel.signOpacity>.9,'Signs must remain fully legible during aspect filtering.');
 
-// Regression: canonical polar axes must complete configurations even with Inevitable off.
+// Regression: an inevitable polar axis can be known without being shown as a configuration.
 await page.evaluate(()=>{
   localStorage.setItem('relphiSkyConfigurationInevitableV1','false');
   localStorage.setItem('relphiSkyChartA',JSON.stringify({
@@ -338,9 +338,22 @@ await page.evaluate(()=>{
 });
 await page.waitForFunction(()=>window.RelphiAspectConfigurations?.patterns?.some(pattern=>pattern.type==='grand-cross'&&pattern.vertices.includes('A:asc')&&pattern.vertices.includes('A:dsc')));
 const polarCross=await page.evaluate(()=>window.RelphiAspectConfigurations.patterns.find(pattern=>pattern.type==='grand-cross'&&pattern.vertices.includes('A:asc')&&pattern.vertices.includes('A:dsc')));
-assert.ok(polarCross,'ASC–DSC must complete the Mercury–Pluto Grand Cross without enabling Inevitable.');
+assert.ok(polarCross,'ASC–DSC must remain detectable as the structural completion of the Mercury–Pluto Grand Cross.');
 assert.equal(polarCross.edges.filter(edge=>edge.aspect==='opposition').length,2,'Grand Cross must contain both opposition axes.');
-assert.ok(polarCross.edges.some(edge=>edge.entailedKind==='polar-axis'),'Grand Cross must include the synthetic polar-axis opposition.');
+assert.ok(polarCross.edges.some(edge=>edge.entailedKind==='polar-axis'),'Grand Cross must identify the synthetic polar-axis opposition as inevitable.');
+
+const grandCrossChoice=page.locator('[data-configuration-scope="A-A"][data-configuration-type="grand-cross"]');
+await grandCrossChoice.waitFor({state:'attached'});
+if(!(await grandCrossChoice.isChecked()))await grandCrossChoice.check();
+await page.waitForSelector('[data-configuration-inevitable-show-more]',{state:'visible'});
+assert.equal(await page.locator('.sky-configuration-result-tile[data-configuration-type="grand-cross"]').count(),0,'Inevitable-off must suppress the Grand Cross tile that depends on the polar-axis opposition.');
+assert.match(await page.locator('[data-configuration-inevitable-show-more]').textContent(),/1 more using inevitable relationships/i);
+assert.equal(await page.locator('[data-configuration-inevitable]').isChecked(),false,'The Inevitable configuration toggle must remain off until the user opts in.');
+
+await page.locator('[data-configuration-inevitable-show-more]').click();
+await page.waitForSelector('.sky-configuration-result-tile[data-configuration-type="grand-cross"]',{state:'visible'});
+assert.equal(await page.locator('[data-configuration-inevitable]').isChecked(),true,'Show more must enable Inevitable configurations.');
+assert.equal(await page.evaluate(()=>localStorage.getItem('relphiSkyConfigurationInevitableV1')),'true','Show more must persist the Inevitable configuration preference.');
 
 await page.screenshot({path:'sky-chart-aspect-line-visibility.png',fullPage:true});
 assert.deepEqual(errors,[]);
