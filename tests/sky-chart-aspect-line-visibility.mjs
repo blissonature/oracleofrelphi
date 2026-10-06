@@ -254,6 +254,40 @@ await page.waitForTimeout(50);
 assert.equal(await page.locator('.sky-foundation-wheel').evaluate(wheel=>wheel.classList.contains('has-isolation')),false);
 assert.equal(await page.locator('.sky-foundation-aspect.is-row-hovered:not(.sky-foundation-aspect-hit)').count(),0);
 
+// Regression: canonical polar axes must complete configurations even with Inevitable off.
+await page.evaluate(()=>{
+  localStorage.setItem('relphiSkyConfigurationInevitableV1','false');
+  localStorage.setItem('relphiSkyChartA',JSON.stringify({
+    placements:{
+      Mercury:{name:'Mercury',longitude:46.233333},
+      Pluto:{name:'Pluto',longitude:226.633333},
+      Ascendant:{name:'Ascendant',longitude:137.2},
+      Descendant:{name:'Descendant',longitude:317.2}
+    }
+  }));
+  const list=document.querySelector('#skyFoundationRelationshipList');
+  list.replaceChildren();
+  const row=(left,right,aspect,phase)=>{
+    const node=document.createElement('div');
+    node.className='sky-foundation-relationship-row';
+    Object.assign(node.dataset,{relationshipMode:'A-A',leftSky:'A',rightSky:'A',leftPlacement:left,rightPlacement:right,aspect,phaseError:String(phase),harmonicOrder:'1'});
+    return node;
+  };
+  list.append(
+    row('mercury','pluto','opposition',0.8),
+    row('mercury','asc','square',3.87),
+    row('pluto','asc','square',2.27),
+    row('mercury','dsc','square',3.87),
+    row('pluto','dsc','square',2.27)
+  );
+  window.RelphiAspectConfigurations?.refresh?.();
+});
+await page.waitForFunction(()=>window.RelphiAspectConfigurations?.patterns?.some(pattern=>pattern.type==='grand-cross'&&pattern.vertices.includes('A:asc')&&pattern.vertices.includes('A:dsc')));
+const polarCross=await page.evaluate(()=>window.RelphiAspectConfigurations.patterns.find(pattern=>pattern.type==='grand-cross'&&pattern.vertices.includes('A:asc')&&pattern.vertices.includes('A:dsc')));
+assert.ok(polarCross,'ASC–DSC must complete the Mercury–Pluto Grand Cross without enabling Inevitable.');
+assert.equal(polarCross.edges.filter(edge=>edge.aspect==='opposition').length,2,'Grand Cross must contain both opposition axes.');
+assert.ok(polarCross.edges.some(edge=>edge.entailedKind==='polar-axis'),'Grand Cross must include the synthetic polar-axis opposition.');
+
 await page.screenshot({path:'sky-chart-aspect-line-visibility.png',fullPage:true});
 assert.deepEqual(errors,[]);
 await browser.close();
