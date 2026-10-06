@@ -1281,7 +1281,11 @@ body.relphi-attune-open{overflow:hidden!important}
 }
 
 
-/* Zoom is a viewport control and remains available in every Drawing Board spread. */
+/* Guided Crafted paths own their board framing; Free and Bespoke keep manual zoom/tools. */
+#shortListPanel.relphi-hide-zoom-toolbar .card-row-workspace-toolbar.relphi-board-controller{
+  display:none!important;
+}
+
 
 /* Board configuration belongs in Settings, and is available only to Free/Bespoke boards. */
 #shortListPanel .relphi-board-configuration{display:grid!important;gap:.65rem!important;margin:.1rem 0 0!important;padding:.7rem!important;border:1px solid #d8cec5!important;border-radius:10px!important;background:#fff!important}
