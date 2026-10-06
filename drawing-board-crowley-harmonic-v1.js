@@ -30,7 +30,27 @@
     {id:'Heh-final',letter:'Final Heh',element:'Earth',suit:'Disks',core:'Money · goods · material matters',explain:'What is owned, paid for, embodied, housed, maintained, exchanged, or made materially real.',terms:['money','cash','income','pay','salary','benefits','debt','loan','bill','rent','mortgage','house','home','property','real estate','goods','purchase','shopping','price','cost','budget','savings','bank','finance','financial','material','possession','object','car','vehicle','food','body','health cost','resource','equipment','contract value','asset','inheritance','payment','sale','buy','sell']}
   ];
 
+  const HOUSES=[
+    ['1st','Self · body · appearance · beginnings'],['2nd','Money · possessions · values'],['3rd','Communication · siblings · short travel'],
+    ['4th','Home · family · roots'],['5th','Creativity · children · pleasure · romance'],['6th','Work · health · service · daily routine'],
+    ['7th','Partnerships · marriage · open enemies'],['8th','Death · transformation · other people’s money · sex'],['9th','Philosophy · long travel · higher education · religion'],
+    ['10th','Career · reputation · public life'],['11th','Friends · hopes · groups · social concerns'],['12th','Hidden matters · isolation · the unconscious']
+  ];
+  const SIGNS=[
+    ['Aries','Initiative · beginnings · self · conflict'],['Taurus','Stability · material matters · beauty · possessions'],
+    ['Gemini','Communication · duality · intellect · siblings'],['Cancer','Home · emotion · past'],['Leo','Creativity · will · leadership · children'],
+    ['Virgo','Analysis · service · health · craftsmanship'],['Libra','Balance · relationships · justice · aesthetics'],
+    ['Scorpio','Transformation · death · sex · occult · power'],['Sagittarius','Philosophy · travel · expansion · religion · law'],
+    ['Capricorn','Ambition · career · authority · material goals'],['Aquarius','Groups · ideals · rebellion · future'],['Pisces','Spirituality · illusion · sacrifice · unconscious']
+  ];
+  const SEPHIROTH=[
+    ['Kether','Crown · highest cause'],['Chokmah','Wisdom · initial impulse'],['Binah','Understanding · form · limitation'],
+    ['Chesed','Mercy · expansion · help'],['Geburah','Severity · conflict · what must be cut away'],['Tiphareth','Beauty · harmony · central issue'],
+    ['Netzach','Victory · feeling · desire'],['Hod','Splendour · intellect · communication'],['Yesod','Foundation · hidden forces'],['Malkuth','Kingdom · material outcome']
+  ];
+
   let operation=1, anchor=0, countValue=3, pairRadius=1, expectedDomain='', domainLocked=false, revealedDomain='', significatorId='', operationDeck=null, attemptFailed=false, retrySameSelections=true;
+  let operationDeckState=null, operationStackResult=null, expectedStackIndex=-1, secondStackIndex=-1;
 
   function storedSignificator(){
     try{return String(localStorage.getItem(SIGNIFICATOR_KEY)||'');}catch(_){return '';}
@@ -248,6 +268,150 @@
       '<div id="crowleyFailureStep" class="crowley-failure-step" hidden><div class="crowley-failure-result"><span><small>Found in</small><strong id="crowleyFoundPacket">—</strong></span><span><small>Expected</small><strong id="crowleyExpectedPacket">—</strong></span></div><p>This attempt is abandoned.</p><label class="crowley-retry-toggle"><input id="crowleyRetrySameSelections" type="checkbox" checked> Retry with same Significator and domain</label><button type="button" id="crowleyRetryOpening" class="relphi-button relphi-button--primary">Retry</button></div></div><p id="crowleyDomainStatus" aria-live="polite"></p></fieldset>';
   }
 
+
+  function choiceOptions(items,placeholder){
+    return '<option value="">'+placeholder+'</option>'+items.map((item,index)=>'<option value="'+index+'">'+(index+1)+' · '+item[0]+' — '+item[1]+'</option>').join('');
+  }
+  function operationStageMarkup(op){
+    const source=op===2?HOUSES:op===3?SIGNS:op===5?SEPHIROTH:null;
+    const noun=op===2?'house':op===3?'sign':op===5?'Sephira':'';
+    const heading=OPERATIONS[op-1];
+    if(op===4){
+      return '<fieldset class="relphi-fieldset crowley-operation-stage" data-crowley-operation-stage="4"><legend>Operation IV · Penultimate Aspects</legend>'+
+        '<p>Reshuffle the full deck, invoke, and let the Querent cut. Relphi then locates the Significator and takes the <b>36 cards following it</b> in preserved deck order.</p>'+
+        '<blockquote class="crowley-invocation relphi-card relphi-card--soft">I invoke thee, I A O, that thou wilt send H R U, the great Angel that is set over the operations of this Secret Wisdom, to lay his hand invisibly upon these consecrated cards of art, that thereby we may obtain true knowledge of hidden things, to the glory of thine ineffable Name. Amen.</blockquote>'+
+        '<button type="button" class="relphi-button relphi-button--primary" data-crowley-fresh-deck>Invocation complete · shuffle</button>'+
+        '<div class="crowley-stage-cut" hidden><label class="relphi-field">Querent cut position<input class="relphi-input" data-crowley-stage-cut type="number" min="1" max="77" value="39"></label><button type="button" class="relphi-button relphi-button--primary" data-crowley-build-ring>Make cut · form 36-card ring</button></div>'+
+        '<p class="crowley-stage-status" aria-live="polite"></p></fieldset>';
+    }
+    if(!source)return '';
+    const special=op===5
+      ? 'Choose the Sephira where you expect the Significator before looking. Crowley explicitly notes that failure here does <b>not necessarily</b> mean the divination has gone astray.'
+      : 'Choose the '+noun+' where you expect the Significator <b>before looking</b>. If it is absent, you may test one cognate '+noun+'. A second failure abandons the divination.';
+    return '<fieldset class="relphi-fieldset crowley-operation-stage" data-crowley-operation-stage="'+op+'"><legend>Operation '+op+' · '+heading.name+'</legend>'+
+      '<p>'+special+'</p>'+
+      '<label class="relphi-field">Expected '+noun+'<select class="relphi-select" data-crowley-expected-stack>'+choiceOptions(source,'Choose '+noun)+'</select></label>'+
+      '<blockquote class="crowley-invocation relphi-card relphi-card--soft">I invoke thee, I A O, that thou wilt send H R U, the great Angel that is set over the operations of this Secret Wisdom, to lay his hand invisibly upon these consecrated cards of art, that thereby we may obtain true knowledge of hidden things, to the glory of thine ineffable Name. Amen.</blockquote>'+
+      '<button type="button" class="relphi-button relphi-button--primary" data-crowley-fresh-deck>Invocation complete · shuffle</button>'+
+      '<div class="crowley-stage-cut" hidden><label class="relphi-field">Querent cut position<input class="relphi-input" data-crowley-stage-cut type="number" min="1" max="77" value="39"></label><button type="button" class="relphi-button relphi-button--primary" data-crowley-deal-stacks>Make cut · deal '+source.length+' stacks</button></div>'+
+      '<div class="crowley-cognate-step" hidden><p>The Significator is not in your first choice. Choose one cognate '+noun+' for the permitted second test.</p><label class="relphi-field">Cognate '+noun+'<select class="relphi-select" data-crowley-second-stack>'+choiceOptions(source,'Choose cognate '+noun)+'</select></label><button type="button" class="relphi-button relphi-button--primary" data-crowley-test-second>Test cognate '+noun+'</button></div>'+
+      '<div class="crowley-operation-five-failure" hidden><p>The Significator is not in the expected Sephira. In Operation V this does not necessarily invalidate the divination.</p><button type="button" class="relphi-button relphi-button--primary" data-crowley-use-actual>Proceed with the actual Sephira</button> <button type="button" class="relphi-button" data-crowley-abandon>Abandon</button></div>'+
+      '<p class="crowley-stage-status" aria-live="polite"></p></fieldset>';
+  }
+  function renderOperationStage(box,op){
+    operation=op;
+    anchor=0;
+    operationDeckState=null;operationStackResult=null;expectedStackIndex=-1;secondStackIndex=-1;
+    const host=box?.querySelector('#crowleyMethodStage');if(!host)return;
+    host.innerHTML=operationStageMarkup(op);
+    box.querySelector('#crowleyMechanics').hidden=true;
+    const select=box.querySelector('#crowleyOperation');if(select)select.value=String(op);
+    clearMarks();
+    host.scrollIntoView({block:'nearest'});
+  }
+  function beginPacketReading(box,packet,label){
+    const ledger=window.RelphiTarotLedgerBridge;
+    ledger?.showOpeningPacket?.(packet);
+    box.querySelector('#crowleyMechanics').hidden=false;
+    const opSelect=box.querySelector('#crowleyOperation');if(opSelect)opSelect.value=String(operation);
+    const status=box.querySelector('#crowleyAccuracyStatus');if(status)status.textContent='';
+    const host=box.querySelector('#crowleyMethodStage');
+    if(host)host.innerHTML='<fieldset class="relphi-fieldset crowley-operation-stage"><legend>Operation '+operation+' · '+OPERATIONS[operation-1].name+'</legend><p><b>'+label+'</b> contains the Significator. Relphi has spread that packet in preserved order. Count and pair it before continuing.</p></fieldset>';
+    mark();
+  }
+  function completeOperation(box){
+    if(operation<5){renderOperationStage(box,operation+1);return;}
+    box.querySelector('#crowleyMechanics').hidden=true;
+    const host=box.querySelector('#crowleyMethodStage');
+    if(host)host.innerHTML='<fieldset class="relphi-fieldset crowley-operation-stage"><legend>Opening of the Key · Complete</legend><p>All five operations have been completed in sequence.</p></fieldset>';
+    clearMarks();
+  }
+  function bindOperationStages(box){
+    const host=box.querySelector('#crowleyMethodStage');if(!host||host.dataset.crowleyBound==='true')return;
+    host.dataset.crowleyBound='true';
+    host.addEventListener('change',event=>{
+      if(event.target.matches('[data-crowley-expected-stack]'))expectedStackIndex=event.target.value===''?-1:Number(event.target.value);
+      if(event.target.matches('[data-crowley-second-stack]'))secondStackIndex=event.target.value===''?-1:Number(event.target.value);
+    });
+    host.addEventListener('click',event=>{
+      const button=event.target.closest('button');if(!button)return;
+      const ledger=window.RelphiTarotLedgerBridge;
+      const stage=host.querySelector('[data-crowley-operation-stage]');
+      const status=host.querySelector('.crowley-stage-status');
+      if(button.matches('[data-crowley-fresh-deck]')){
+        if(operation!==4&&expectedStackIndex<0){if(status)status.textContent='Choose the expected '+(operation===2?'house':operation===3?'sign':'Sephira')+' before shuffling.';return;}
+        const prepared=ledger?.openingKeyFreshDeck?.(significatorId);
+        if(!prepared?.deck?.length){if(status)status.textContent='Could not prepare the full deck.';return;}
+        operationDeckState=prepared.deck.slice();
+        button.disabled=true;
+        const cut=stage?.querySelector('.crowley-stage-cut');if(cut)cut.hidden=false;
+        if(status)status.textContent='Deck shuffled once and locked. The Querent now cuts.';
+        return;
+      }
+      if(button.matches('[data-crowley-deal-stacks]')){
+        if(!operationDeckState)return;
+        const cutAt=Math.max(1,Math.min(77,Number(stage.querySelector('[data-crowley-stage-cut]')?.value)||39));
+        const cutDeck=ledger?.openingKeyQuerentCut?.(operationDeckState,cutAt);
+        const count=operation===5?10:12;
+        operationStackResult=ledger?.openingKeyDealStacks?.(cutDeck,count,significatorId);
+        if(!operationStackResult||operationStackResult.stackIndex<0)return;
+        button.disabled=true;
+        const actual=operationStackResult.stackIndex;
+        const source=operation===2?HOUSES:operation===3?SIGNS:SEPHIROTH;
+        if(actual===expectedStackIndex){
+          if(status)status.textContent='Confirmed: the Significator is in '+source[actual][0]+'.';
+          beginPacketReading(box,operationStackResult.stacks[actual],source[actual][0]);
+        }else if(operation===5){
+          if(status)status.textContent='The Significator is not in '+source[expectedStackIndex][0]+'. Crowley says this failure does not necessarily imply the divination has gone astray.';
+          const fail=stage.querySelector('.crowley-operation-five-failure');if(fail)fail.hidden=false;
+        }else{
+          if(status)status.textContent='First test failed. The Significator is not in '+source[expectedStackIndex][0]+'. Choose one cognate '+(operation===2?'house':'sign')+' without revealing the actual stack.';
+          const cog=stage.querySelector('.crowley-cognate-step');if(cog)cog.hidden=false;
+          const second=stage.querySelector('[data-crowley-second-stack]');
+          if(second)Array.from(second.options).forEach(opt=>{if(opt.value!==''&&Number(opt.value)===expectedStackIndex)opt.disabled=true;});
+        }
+        return;
+      }
+      if(button.matches('[data-crowley-test-second]')){
+        if(!operationStackResult||secondStackIndex<0)return;
+        const source=operation===2?HOUSES:SIGNS;
+        const actual=operationStackResult.stackIndex;
+        button.disabled=true;
+        if(secondStackIndex===actual){
+          if(status)status.textContent='Cognate test confirmed: the Significator is in '+source[actual][0]+'.';
+          beginPacketReading(box,operationStackResult.stacks[actual],source[actual][0]);
+        }else{
+          if(status)status.textContent='Second failure. The Significator is in neither the first choice nor the cognate choice. The divination is abandoned.';
+          box.querySelector('#crowleyMechanics').hidden=true;clearMarks();
+        }
+        return;
+      }
+      if(button.matches('[data-crowley-use-actual]')){
+        if(!operationStackResult)return;
+        const actual=operationStackResult.stackIndex;
+        beginPacketReading(box,operationStackResult.stacks[actual],SEPHIROTH[actual][0]);
+        return;
+      }
+      if(button.matches('[data-crowley-abandon]')){
+        if(status)status.textContent='The divination is abandoned.';box.querySelector('#crowleyMechanics').hidden=true;clearMarks();return;
+      }
+      if(button.matches('[data-crowley-build-ring]')){
+        if(!operationDeckState)return;
+        const cutAt=Math.max(1,Math.min(77,Number(stage.querySelector('[data-crowley-stage-cut]')?.value)||39));
+        const cutDeck=ledger?.openingKeyQuerentCut?.(operationDeckState,cutAt);
+        const ring=ledger?.openingKeyRing36?.(cutDeck,significatorId);
+        if(!ring?.ring?.length)return;
+        button.disabled=true;
+        // Board order is Significator followed by the 36-card ring sequence.
+        ledger?.showOpeningPacket?.([significatorId].concat(ring.ring));
+        box.querySelector('#crowleyMechanics').hidden=false;
+        const opSelect=box.querySelector('#crowleyOperation');if(opSelect)opSelect.value='4';
+        if(status)status.textContent='The Significator has been set as the reference and the 36 following cards preserved in ring order. Count and pair this field.';
+        mark();
+      }
+    });
+  }
+
   function installStyle(){
     if(document.getElementById('crowleyHarmonicStyle')) return;
     const s=document.createElement('style');s.id='crowleyHarmonicStyle';
@@ -392,9 +556,10 @@
     let box=document.getElementById('crowleyHarmonicGuide');
     if(!box){
       box=document.createElement('section');box.id='crowleyHarmonicGuide';box.className='relphi-panel relphi-stack';box.hidden=true;
-      box.innerHTML='<span class="eyebrow relphi-eyebrow">Crowley Divination Method</span><h3 class="relphi-heading">The Opening of the Key</h3><p class="crowley-method-intro">Relphi keeps the method in sequence and reveals only the part you need now.</p>'+domainGateMarkup()+'<div id="crowleyMechanics" class="relphi-stack" hidden><div class="crowley-controls relphi-toolbar"><label class="relphi-field">Operation<select id="crowleyOperation" class="relphi-select">'+OPERATIONS.map(op=>'<option value="'+op.n+'">'+op.n+' · '+op.name+'</option>').join('')+'</select></label><label class="relphi-field">Harmonic reference<select id="crowleyAnchor" class="relphi-select">'+Array.from({length:12},(_,i)=>'<option value="'+i+'">Position '+(i+1)+'</option>').join('')+'</select></label><label class="relphi-field">Card Counting<select id="crowleyCount" class="relphi-select">'+countOptions()+'</select></label><label class="relphi-field">Card Pairing<select id="crowleyPair" class="relphi-select">'+Array.from({length:6},(_,i)=>'<option value="'+(i+1)+'">±'+(i+1)+'</option>').join('')+'</select></label><button id="crowleyAdvance" class="relphi-button" type="button">Continue Card Counting</button></div><p id="crowleyOperationStatus"></p><div id="crowleyOperationFocus"></div><p id="crowleyHarmonicStatus" aria-live="polite"></p><div id="crowleyReadingReference"></div><fieldset class="relphi-fieldset"><legend>Accuracy Test</legend><p>After Card Counting and Card Pairing, confirm whether the main lines of the reading are correct.</p><button id="crowleyMainLinesCorrect" class="relphi-button relphi-button--primary" type="button">Main lines are correct · continue</button> <button id="crowleyMainLinesWrong" class="relphi-button" type="button">Main lines are not correct · abandon</button><p id="crowleyAccuracyStatus" aria-live="polite"></p></fieldset></div>';
+      box.innerHTML='<span class="eyebrow relphi-eyebrow">Crowley Divination Method</span><h3 class="relphi-heading">The Opening of the Key</h3><p class="crowley-method-intro">Relphi keeps the method in sequence and reveals only the part you need now.</p>'+domainGateMarkup()+'<div id="crowleyMethodStage"></div><div id="crowleyMechanics" class="relphi-stack" hidden><div class="crowley-controls relphi-toolbar"><label class="relphi-field" hidden>Operation<select id="crowleyOperation" class="relphi-select">'+OPERATIONS.map(op=>'<option value="'+op.n+'">'+op.n+' · '+op.name+'</option>').join('')+'</select></label><label class="relphi-field">Harmonic reference<select id="crowleyAnchor" class="relphi-select">'+Array.from({length:12},(_,i)=>'<option value="'+i+'">Position '+(i+1)+'</option>').join('')+'</select></label><label class="relphi-field">Card Counting<select id="crowleyCount" class="relphi-select">'+countOptions()+'</select></label><label class="relphi-field">Card Pairing<select id="crowleyPair" class="relphi-select">'+Array.from({length:6},(_,i)=>'<option value="'+(i+1)+'">±'+(i+1)+'</option>').join('')+'</select></label><button id="crowleyAdvance" class="relphi-button" type="button">Continue Card Counting</button></div><p id="crowleyOperationStatus"></p><div id="crowleyOperationFocus"></div><p id="crowleyHarmonicStatus" aria-live="polite"></p><div id="crowleyReadingReference"></div><fieldset class="relphi-fieldset"><legend>Accuracy Test</legend><p>After Card Counting and Card Pairing, confirm whether the main lines of the reading are correct.</p><button id="crowleyMainLinesCorrect" class="relphi-button relphi-button--primary" type="button">Main lines are correct · continue</button> <button id="crowleyMainLinesWrong" class="relphi-button" type="button">Main lines are not correct · abandon</button><p id="crowleyAccuracyStatus" aria-live="polite"></p></fieldset></div>';
       const workspace=r.querySelector('.card-row-workspace');
       if(workspace) workspace.parentNode.insertBefore(box,workspace); else nativeDrawer.insertAdjacentElement('beforebegin',box);
+      bindOperationStages(box);
       const ledger=()=>window.RelphiTarotLedgerBridge;
       const chooseSignificator=card=>{
         if(!card?.card_id||significatorId)return;
@@ -553,9 +718,9 @@
           });
         }
       });
-      box.querySelector('#crowleyMainLinesCorrect').addEventListener('click',()=>{box.querySelector('#crowleyAccuracyStatus').textContent='Accuracy gate passed.';});
+      box.querySelector('#crowleyMainLinesCorrect').addEventListener('click',()=>{box.querySelector('#crowleyAccuracyStatus').textContent='Operation '+operation+' complete.';completeOperation(box);});
       box.querySelector('#crowleyMainLinesWrong').addEventListener('click',()=>{box.querySelector('#crowleyMechanics').hidden=true;box.querySelector('#crowleyAccuracyStatus').textContent='The divination is abandoned because its main lines do not correspond.';clearMarks();});
-      box.querySelector('#crowleyOperation').addEventListener('change',e=>{operation=Math.max(1,Math.min(5,Number(e.target.value)||1));mark();});
+      box.querySelector('#crowleyOperation').addEventListener('change',e=>{const requested=Math.max(1,Math.min(5,Number(e.target.value)||1));if(requested===operation)mark();else e.target.value=String(operation);});
       box.querySelector('#crowleyAnchor').addEventListener('change',e=>{anchor=Number(e.target.value)||0;mark();});
       box.querySelector('#crowleyCount').addEventListener('change',e=>{countValue=Number(e.target.value)||3;mark();});
       box.querySelector('#crowleyPair').addEventListener('change',e=>{pairRadius=Number(e.target.value)||1;mark();});
@@ -572,6 +737,7 @@
     if(!box)return false;
     box.hidden=false;
     box.querySelector('#crowleyMechanics').hidden=true;
+    const stage=box.querySelector('#crowleyMethodStage');if(stage)stage.innerHTML='';
     resetAttemptControls(box);
     renderSignificatorState(box);
     box.querySelector('#crowleyDomainStatus').textContent=significatorId
