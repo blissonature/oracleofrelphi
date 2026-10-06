@@ -130,7 +130,7 @@ function editorMarkup(slot,p){
     <div class="sky-where-when-footer"><div class="sky-where-when-footer-actions"><button class="sky-where-when-button secondary sky-where-when-cancel relphi-button relphi-button--secondary relphi-control--compact" type="button" data-ww-action="cancel">Cancel</button><button class="sky-where-when-button primary relphi-button relphi-button--primary relphi-control--compact" type="submit"${disabled}>Use This Where and When</button></div></div>
   </form>`;
 }
-function moveHeptagramIntoEditor(slot){
+function keepCommittedHeptagramInSummary(slot){
   const refs=shell(slot),frame=refs?.root?.querySelector(`[data-sky-heptagram-frame="${slot}"]`);
   // The committed heptagram belongs to the summary. The editor has its own
   // draft heptagram owner, so never move the committed frame into the editor.
@@ -141,7 +141,7 @@ function openEditor(slot,focus=false){
   const refs=shell(slot);if(!refs)return;
   beginWhereWhen(slot);
   refs.editor.innerHTML=editorMarkup(slot,profileFor(slot));
-  moveHeptagramIntoEditor(slot);
+  keepCommittedHeptagramInSummary(slot);
   window.RelphiSkyCardShell.setEditorExpanded(slot,true);
   window.dispatchEvent(new CustomEvent('relphi:sky-where-when-editor-ready',{detail:{slot,form:formFor(slot)}}));
   if(focus)requestAnimationFrame(()=>formFor(slot)?.querySelector('[data-ww-field="location-query"]')?.focus());
