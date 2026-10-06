@@ -1466,6 +1466,26 @@
   function loadImage(src) {
     return new Promise((resolve, reject) => { const img = new Image(); img.onload = () => resolve(img); img.onerror = reject; img.src = src; });
   }
+  async function loadCanvasSafeImage(src) {
+    const value=String(src||'').trim();
+    if(!value)return null;
+    if(/^data:/i.test(value)||/^blob:/i.test(value))return loadImage(value).catch(()=>null);
+    try{
+      const response=await fetch(value,{cache:'force-cache'});
+      if(!response.ok)throw new Error('image fetch failed');
+      const blob=await response.blob();
+      const dataUrl=await new Promise((resolve,reject)=>{
+        const reader=new FileReader();
+        reader.onload=()=>resolve(String(reader.result||''));
+        reader.onerror=reject;
+        reader.readAsDataURL(blob);
+      });
+      return dataUrl?await loadImage(dataUrl):null;
+    }catch(error){
+      console.warn('Skipping canvas-unsafe Drawing Board image.',value,error);
+      return null;
+    }
+  }
   function drawRoundedRect(ctx, x, y, w, h, r) {
     ctx.beginPath();
     ctx.moveTo(x+r, y); ctx.lineTo(x+w-r, y); ctx.quadraticCurveTo(x+w, y, x+w, y+r);
@@ -1681,7 +1701,7 @@
       wrapCanvasLines(ctx, state.shortListNotes, canvas.width - margin * 2, 2).forEach((line, li) => ctx.fillText(line, margin, 74 + li * 18));
     }
     const cards = state.shortList.map(cardById);
-    const tableImage = state.rowTableImage ? await loadImage(state.rowTableImage).catch(() => null) : null;
+    const tableImage = state.rowTableImage ? await loadCanvasSafeImage(state.rowTableImage) : null;
     if (tableImage) {
       const bgX = margin;
       const bgY = headerH;
@@ -1692,11 +1712,11 @@
       ctx.drawImage(tableImage, bgX + (bgW - w) / 2, bgY + (bgH - h) / 2, w, h);
     }
     const [brandLogoImage, images] = await Promise.all([
-      loadImage(RELPHI_EXPORT_BRAND.logo).catch(() => null),
+      loadCanvasSafeImage(RELPHI_EXPORT_BRAND.logo),
       Promise.all(Array.from({ length: slots }, (_, i) => {
         const card = cards[i];
         const envelopeArt = rowEnvelopeArtFor(i);
-        return card ? loadImage(rwsExportImagePath(card)).catch(() => null) : envelopeArt ? loadImage(envelopeArt).catch(() => null) : Promise.resolve(null);
+        return card ? loadCanvasSafeImage(rwsExportImagePath(card)) : envelopeArt ? loadCanvasSafeImage(envelopeArt) : Promise.resolve(null);
       }))
     ]);
     const groupW = CARD_ROW_ENVELOPE_W * scale;
