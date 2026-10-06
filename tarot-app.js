@@ -1735,15 +1735,16 @@
     ctx.lineWidth=1;
     ctx.beginPath();ctx.moveTo(0,headerH-.5);ctx.lineTo(canvas.width,headerH-.5);ctx.stroke();
 
-    const headerLogoSize=46*chromeScale;
+    const headerLogoSize=38*chromeScale;
     const headerLogoX=margin;
     const headerLogoY=Math.max(10*chromeScale,(72*chromeScale-headerLogoSize)/2);
     drawRelphiLogoMark(ctx,headerLogoX,headerLogoY,headerLogoSize);
-    const brandTextX=headerLogoX+headerLogoSize+12*chromeScale;
-    const brandTextY=headerLogoY+9*chromeScale;
+    const brandTextX=headerLogoX+headerLogoSize+10*chromeScale;
+    const brandFontSize=18*chromeScale;
+    const brandTextY=headerLogoY+(headerLogoSize-brandFontSize)/2;
     ctx.textAlign='left';
     ctx.textBaseline='top';
-    ctx.font=`800 ${17*chromeScale}px Montserrat, Arial, sans-serif`;
+    ctx.font=`800 ${brandFontSize}px Montserrat, Arial, sans-serif`;
     ctx.fillStyle='#111';
     const oracleText='Oracle of ';
     ctx.fillText(oracleText,brandTextX,brandTextY);
