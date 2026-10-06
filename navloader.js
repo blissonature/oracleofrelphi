@@ -172,7 +172,7 @@
       });
       appendScript('drawing-board-workflow-v2.js?v=120', function () {
         appendScript('relphi-sky-connector-v1.js?v=2');
-        appendScript('drawing-board-crowley-harmonic-v1.js?v=4', function () {
+        appendScript('drawing-board-crowley-harmonic-v1.js?v=5', function () {
           window.dispatchEvent(new Event('relphi:tarot-enhancements-ready'));
         });
       });
