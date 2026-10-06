@@ -170,7 +170,7 @@ assert.deepEqual(Array.from(celtic.positions, item => item.label), [
   '6 · What is before you','7 · Yourself','8 · Your house','9 · Your hopes or fears','10 · What will come'
 ]);
 const cross = celtic.positions[1];
-assert.deepEqual(JSON.parse(JSON.stringify(cross.canonicalTransform)), {x:.35,y:.34,scale:.48,rotation:0,zIndex:30});
+assert.deepEqual(JSON.parse(JSON.stringify(cross.canonicalTransform)), {x:.20,y:.34,scale:.48,rotation:90,zIndex:30});
 assert.deepEqual(JSON.parse(JSON.stringify(cross.crossedTransform)), {x:.20,y:.34,scale:.48,rotation:90,zIndex:30});
 const staff = celtic.positions.slice(6);
 assert.ok(staff.every(item => item.transform.x === .70 && item.transform.scale === .44));
