@@ -1804,7 +1804,10 @@
       return true;
     }
     const file = typeof File === 'function' ? new File([blob],filename,{type:'image/png',lastModified:Date.now()}) : null;
-    if (file && navigator.share && (!navigator.canShare || navigator.canShare({files:[file]}))) {
+    const coarsePointer = !!window.matchMedia?.('(pointer:coarse)').matches;
+    const narrowViewport = !!window.matchMedia?.('(max-width:820px)').matches;
+    const mobileShareTarget = coarsePointer && narrowViewport;
+    if (mobileShareTarget && file && navigator.share && (!navigator.canShare || navigator.canShare({files:[file]}))) {
       try {
         await navigator.share({files:[file],title:'Drawing Board arrangement'});
         return true;
