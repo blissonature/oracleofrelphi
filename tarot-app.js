@@ -1795,6 +1795,13 @@
     if (canvas.toBlob) canvas.toBlob(blob=>{ void finish(blob); }, 'image/png'); else void finish(null);
   }
 
+  // Stable bridge for relocated Drawing Board document chrome. The native
+  // renderer owns snapshot generation; enhancement layers may move the button
+  // without depending on a listener attached before that move.
+  window.RelphiDrawingBoardSnapshot = Object.freeze({
+    download: downloadCardRowArrangementSnapshot
+  });
+
   const BUILTIN_SUBPACK_DEFINITIONS = [
     ['uhn','Universal Human Needs', card => UHN_ORDER.has(card?.card_id)],
     ['majors','Majors', card => card?.card_type === 'Major'],
