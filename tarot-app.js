@@ -320,9 +320,37 @@
   function toSubscript(value) { return String(value).replace(/[0-9]/g, ch => '₀₁₂₃₄₅₆₇₈₉'[Number(ch)] || ch); }
   const LOCKED_INTERPRETATION_DATA = window.RELPHI_LOCKED_INTERPRETATIONS || { ingredient_definitions: {}, cards: [] };
   const RELPHI_CARD_SENSE_DATA = window.RELPHI_CARD_SENSES || { cards: [] };
-  const RELPHI_CARD_SENSE_INDEX = new Map((RELPHI_CARD_SENSE_DATA.cards || []).map(entry => [String(entry.card_id || ''), entry]));
+  const RELPHI_CARD_SENSE_INDEX = (() => {
+    const index=new Map();
+    const add=(value,entry)=>{
+      const key=normalizeSearch(String(value||''));
+      if(key&&!index.has(key))index.set(key,entry);
+    };
+    (RELPHI_CARD_SENSE_DATA.cards || []).forEach(entry=>{
+      add(entry.card_id,entry);
+      add(entry.name,entry);
+      String(entry.name||'').split('/').forEach(part=>add(part.trim(),entry));
+    });
+    return index;
+  })();
+  function relphiCardSenseEntry(card) {
+    if(!card)return null;
+    const candidates=[
+      card.card_id,
+      card.name,
+      title(card),
+      normalizedTitle(card),
+      card.systems?.golden_dawn_rws?.display_name,
+      card.systems?.thoth?.display_name
+    ].filter(Boolean);
+    for(const candidate of candidates){
+      const entry=RELPHI_CARD_SENSE_INDEX.get(normalizeSearch(candidate));
+      if(entry)return entry;
+    }
+    return null;
+  }
   function relphiDefaultSensePhrase(card) {
-    const entry = RELPHI_CARD_SENSE_INDEX.get(String(card?.card_id || ''));
+    const entry = relphiCardSenseEntry(card);
     if (!entry) return '';
     const key = String(entry.default_sense_key || '');
     const sense = (entry.senses || []).find(item => String(item?.key || '') === key) || (entry.senses || [])[0] || null;
