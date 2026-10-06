@@ -131,21 +131,10 @@ function editorMarkup(slot,p){
   </form>`;
 }
 function moveHeptagramIntoEditor(slot){
-  const refs=shell(slot),mount=refs?.editor?.querySelector(`[data-ww-heptagram-slot="${slot}"]`),frame=refs?.root?.querySelector(`[data-sky-heptagram-frame="${slot}"]`);
-  if(!mount||!frame)return;
-  // A fresh Sky B draft has no committed temporal reference. Never move a stale
-  // committed B frame into its editor; the draft heptagram owner will populate
-  // this mount only after the new Where and When fields define a valid moment.
-  const timeUnknown=refs.editor?.querySelector('[data-ww-field="time-unknown"]')?.checked===true;
-  if(timeUnknown){
-    frame.remove();
-    return;
-  }
-  if(slot==='B'&&!payload('B')){
-    frame.remove();
-    return;
-  }
-  mount.prepend(frame);
+  const refs=shell(slot),frame=refs?.root?.querySelector(`[data-sky-heptagram-frame="${slot}"]`);
+  // The committed heptagram belongs to the summary. The editor has its own
+  // draft heptagram owner, so never move the committed frame into the editor.
+  if(refs?.summary&&frame&&!refs.summary.contains(frame))refs.summary.prepend(frame);
 }
 function restoreHeptagram(slot){const refs=shell(slot),frame=refs?.root?.querySelector(`[data-sky-heptagram-frame="${slot}"]`);if(refs?.summary&&frame&&!refs.summary.contains(frame))refs.summary.prepend(frame)}
 function openEditor(slot,focus=false){
