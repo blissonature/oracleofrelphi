@@ -86,8 +86,8 @@
     // Aspect selection owns whether aspect geometry is present, not whether
     // the rest of the chart is visually isolated. Zero selected aspects is a
     // neutral wheel state even before row-hidden classes finish propagating.
-    const aspectControl=document.querySelector('[data-aspect-filter="combined"]');
-    if(aspectControl?.dataset.selectionCount==='0'){
+    const matrixSelection=String(document.documentElement.dataset.skyAspectSelection||'');
+    if(matrixSelection.startsWith('0/')){
       clearMarks(wheel);
       window.dispatchEvent(new CustomEvent('relphi:sky-filter-wheel-focus-changed',{detail:{active:false,visible:0,total:eligibleRows().length,relationshipIndexes:[]}}));
       return;
