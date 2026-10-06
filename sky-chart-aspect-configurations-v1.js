@@ -572,14 +572,33 @@ function bindConfigurationActions(panel){
   if(copy&&!copy.dataset.bound){copy.dataset.bound='true';copy.addEventListener('click',event=>{event.preventDefault();event.stopPropagation();copyVisibleConfigurations(copy)})}
   if(download&&!download.dataset.bound){download.dataset.bound='true';download.addEventListener('click',event=>{event.preventDefault();event.stopPropagation();downloadVisibleConfigurations(download)})}
 }
+function inevitableMoreButton(hiddenCount){
+  const button=document.createElement('button');
+  button.type='button';button.className='sky-configuration-inevitable-show-more';button.dataset.configurationInevitableShowMore='true';
+  button.textContent=hiddenCount+' more using inevitable relationships · Show more';
+  button.setAttribute('aria-label','Show '+hiddenCount+' more configuration'+(hiddenCount===1?'':'s')+' by enabling Inevitable configurations');
+  button.addEventListener('click',event=>{
+    event.preventDefault();event.stopPropagation();
+    inevitableEnabled=true;
+    try{localStorage.setItem(INEVITABLE_STORAGE_KEY,'true')}catch(_){}
+    document.querySelectorAll('[data-configuration-inevitable]').forEach(input=>{input.checked=true});
+    renderConfigurationSection();renderOverlay();renderResultsPanel();
+    window.dispatchEvent(new CustomEvent('relphi:sky-configuration-inevitable-changed',{detail:{enabled:true}}));
+  });
+  return button;
+}
 function renderResultsPanel(){
   const panel=ensureResultsPanel();if(!panel)return;
-  const visiblePatterns=patternsForResults(),groups=groupedPatternsForResults();
-  if(!visiblePatterns.length){panel.hidden=true;clearPatternHighlight();openConfigurationTile=null;return}
+  const visiblePatterns=patternsForResults(),groups=groupedPatternsForResults(),hiddenInevitable=hierarchicalPatterns(hiddenInevitablePatterns());
+  if(!visiblePatterns.length&&!hiddenInevitable.length){panel.hidden=true;clearPatternHighlight();openConfigurationTile=null;return}
   panel.hidden=false;
   bindConfigurationActions(panel);
   const count=panel.querySelector('.sky-configuration-results-count'),grid=panel.querySelector('.sky-configuration-results-grid');
-  if(grid){grid.replaceChildren();groups.forEach((group,index)=>grid.appendChild(resultGroupTile(group,index)));openConfigurationTile=null}
+  if(grid){
+    grid.replaceChildren();groups.forEach((group,index)=>grid.appendChild(resultGroupTile(group,index)));
+    if(hiddenInevitable.length)grid.appendChild(inevitableMoreButton(hiddenInevitable.length));
+    openConfigurationTile=null;
+  }
   const currentCount=visiblePatterns.length;
   if(count)count.textContent=currentCount+' match'+(currentCount===1?'':'es');
   paintConfigurationMiniGlyphs(grid);
@@ -623,7 +642,9 @@ function collectGraph(){
     let byAspect=edges.get(key);if(!byAspect){byAspect=new Map();edges.set(key,byAspect)}
     const current=byAspect.get(aspect),phase=phaseError(row);if(!current||phase<current.phase)byAspect.set(aspect,{row,aspect,phase,left:left.key,right:right.key});
   }
-  if(inevitableEnabled){
+  // Canonical polar axes are exact by construction and must always be available
+  // to compound-configuration detection, even when optional Inevitable completion is off.
+  // They remain synthetic here only; ordinary Relationships still suppress these rows.
     const activeSkies=new Set(activeScopes().flatMap(scope=>scope.split('-')));
     for(const sky of activeSkies)for(const [leftId,rightId] of [['asc','dsc'],['mc','ic'],['north-node','south-node'],['vertex','anti-vertex']]){
       const leftKey=nodeKey(sky,leftId),rightKey=nodeKey(sky,rightId);
@@ -632,7 +653,6 @@ function collectGraph(){
       const key=edgeKey(leftKey,rightKey);let byAspect=edges.get(key);if(!byAspect){byAspect=new Map();edges.set(key,byAspect)}
       if(!byAspect.has('opposition'))byAspect.set('opposition',{row:null,aspect:'opposition',phase:0,left:leftKey,right:rightKey,entailed:true,origin:'entailed',entailedKind:'polar-axis'});
     }
-  }
   return{windowValue,nodes,edges};
 }
 const INEVITABLE_ASPECTS=Object.freeze({
@@ -641,8 +661,8 @@ const INEVITABLE_ASPECTS=Object.freeze({
   'bi-quintile':{angle:144,harmonic:5},quincunx:{angle:150,harmonic:12},opposition:{angle:180,harmonic:2}
 });
 const INEVITABLE_MAX_PHASE=12;
-function completeInevitableGraph(graph){
-  if(!inevitableEnabled)return graph;
+function completeInevitableGraph(graph,includeInevitable=inevitableEnabled){
+  if(!includeInevitable)return graph;
   const vertices=[...graph.nodes.entries()].filter(([,node])=>Number.isFinite(Number(node?.value)));
   for(let i=0;i<vertices.length;i+=1)for(let j=i+1;j<vertices.length;j+=1){
     const [a,left]=vertices[i],[b,right]=vertices[j],key=edgeKey(a,b);
@@ -740,8 +760,8 @@ function grandCrossEdges(graph,vertices){
   }
   return null;
 }
-function detect(){
-  const graph=completeInevitableGraph(collectGraph()),nodes=[...graph.nodes.keys()],out=[];
+function detect(includeInevitable=inevitableEnabled){
+  const graph=completeInevitableGraph(collectGraph(),includeInevitable),nodes=[...graph.nodes.keys()],out=[];
   for(const [a,b,c] of combinations(nodes,3)){
     let edges=required(graph,[[a,b,'trine'],[a,c,'trine'],[b,c,'trine']]);if(edges)addPattern(out,'grand-trine',[a,b,c],edges);
     const triple=[[a,b,c],[a,c,b],[b,c,a]];
@@ -828,7 +848,10 @@ function relationNodeKey(node){
   return aspect&&left&&right?`${edgeKey(left,right)}:${aspect}`:'';
 }
 function edgeNodeKey(edge){return relationNodeKey(edge?.row)||`${edgeKey(edge?.left,edge?.right)}:${edge?.aspect||''}`}
-function selectedPatternsForVisibility(){return patterns.filter(pattern=>configurationState[patternScope(pattern)]?.has(pattern.type))}
+function patternRequiresInevitable(pattern){return!!pattern?.edges?.some(edge=>edge?.entailed===true)}
+function selectedPatternsByConfiguration(){return patterns.filter(pattern=>configurationState[patternScope(pattern)]?.has(pattern.type))}
+function selectedPatternsForVisibility(){return selectedPatternsByConfiguration().filter(pattern=>inevitableEnabled||!patternRequiresInevitable(pattern))}
+function hiddenInevitablePatterns(){return inevitableEnabled?[]:selectedPatternsByConfiguration().filter(pattern=>patternRequiresInevitable(pattern))}
 function selectedRelationshipKeys(){const keys=new Set();selectedPatternsForVisibility().forEach(pattern=>pattern.edges.forEach(edge=>{const edgeScope=relationshipMode(edge?.row);if(configurationState[edgeScope]?.has(pattern.type))keys.add(edgeNodeKey(edge))}));return keys}
 function participates(node){const key=relationNodeKey(node);return!!key&&selectedRelationshipKeys().has(key)}
 function patternsForNode(node){const key=relationNodeKey(node);return key?selectedPatternsForVisibility().filter(pattern=>pattern.edges.some(edge=>edgeNodeKey(edge)===key)):[]}
@@ -932,7 +955,7 @@ function setSelection(scope,type,checked){
   window.dispatchEvent(new CustomEvent('relphi:sky-configuration-selection-changed',{detail:{matrix,selectedPatterns:selectedPatternsForVisibility().map(pattern=>pattern.key)}}));
 }
 function refresh(){queued=false;if(applying)return;applying=true;try{
-  decorateSimpleGroups();const result=detect();patterns=result.patterns;renderConfigurationSection();renderResultsPanel();
+  decorateSimpleGroups();const result=detect(true);patterns=result.patterns;renderConfigurationSection();renderResultsPanel();
   window.RelphiAspectConfigurations=Object.freeze({
     types:TYPES,patterns:patterns.slice(),harmonicWindow:result.graph.windowValue,refresh:schedule,participates,
     selectedPatterns:()=>selectedPatternsForVisibility().slice(),matrix:()=>configurationMatrix(),scopeForPattern:patternScope

@@ -254,6 +254,107 @@ await page.waitForTimeout(50);
 assert.equal(await page.locator('.sky-foundation-wheel').evaluate(wheel=>wheel.classList.contains('has-isolation')),false);
 assert.equal(await page.locator('.sky-foundation-aspect.is-row-hovered:not(.sky-foundation-aspect-hit)').count(),0);
 
+// Zero selected aspects should remove the pickup sticks without dimming the chart itself.
+await page.evaluate(()=>{
+  const control=document.querySelector('[data-aspect-filter="combined"]');
+  if(!control)throw new Error('Aspect control missing');
+  control.dataset.selectionCount='0';
+  const wheel=document.querySelector('.sky-foundation-wheel');
+  wheel?.classList.add('has-filter-focus');
+  window.dispatchEvent(new CustomEvent('relphi:sky-aspect-visibility-applied'));
+});
+await page.waitForFunction(()=>!document.querySelector('.sky-foundation-wheel')?.classList.contains('has-filter-focus'));
+const zeroAspectWheel=await page.evaluate(()=>{
+  const wheel=document.querySelector('.sky-foundation-wheel');
+  const placement=wheel?.querySelector('[data-layer="placements"] [data-sky][data-placement]');
+  const house=wheel?.querySelector('.sky-foundation-house-sector');
+  const sign=wheel?.querySelector('.sky-foundation-sign-sector,.sky-foundation-sign-glyph');
+  return{
+    focused:wheel?.classList.contains('has-filter-focus')||false,
+    placementOpacity:placement?Number(getComputedStyle(placement).opacity):1,
+    houseOpacity:house?Number(getComputedStyle(house).opacity):1,
+    signOpacity:sign?Number(getComputedStyle(sign).opacity):1
+  };
+});
+assert.equal(zeroAspectWheel.focused,false,'Zero selected aspects must leave the wheel in a neutral focus state.');
+assert.ok(zeroAspectWheel.placementOpacity>.9,'Placements must remain fully legible when all aspects are hidden.');
+assert.ok(zeroAspectWheel.houseOpacity>.9,'Houses must remain fully legible when all aspects are hidden.');
+assert.ok(zeroAspectWheel.signOpacity>.9,'Signs must remain fully legible when all aspects are hidden.');
+
+// Partial aspect filtering must also leave non-aspect chart structure fully illuminated.
+await page.evaluate(()=>{
+  const rows=[...document.querySelectorAll('#skyFoundationRelationshipList>.sky-foundation-relationship-row[data-relation-index]')];
+  rows.forEach((row,index)=>row.classList.toggle('sky-chart-aspect-multiselect-hidden',index%2===0));
+  const control=document.querySelector('[data-aspect-filter="combined"]');
+  if(control)control.dataset.selectionCount='5';
+  document.documentElement.dataset.skyAspectSelection='5/11';
+  window.dispatchEvent(new CustomEvent('relphi:sky-aspect-visibility-applied'));
+});
+await page.waitForTimeout(80);
+const partialAspectWheel=await page.evaluate(()=>{
+  const wheel=document.querySelector('.sky-foundation-wheel');
+  const house=wheel?.querySelector('.sky-foundation-house-sector[data-sky="B"][data-house="3"]')||wheel?.querySelector('.sky-foundation-house-sector');
+  const placement=wheel?.querySelector('[data-layer="placements"] [data-sky][data-placement]');
+  const sign=wheel?.querySelector('.sky-foundation-sign-sector,.sky-foundation-sign-glyph');
+  return{
+    focused:wheel?.classList.contains('has-filter-focus')||false,
+    houseOpacity:house?Number(getComputedStyle(house).opacity):1,
+    placementOpacity:placement?Number(getComputedStyle(placement).opacity):1,
+    signOpacity:sign?Number(getComputedStyle(sign).opacity):1
+  };
+});
+assert.equal(partialAspectWheel.focused,false,'Partial aspect filtering must not put the wheel into focus-dimming mode.');
+assert.ok(partialAspectWheel.houseOpacity>.9,'Houses must remain fully legible during aspect filtering.');
+assert.ok(partialAspectWheel.placementOpacity>.9,'Placements must remain fully legible during aspect filtering.');
+assert.ok(partialAspectWheel.signOpacity>.9,'Signs must remain fully legible during aspect filtering.');
+
+// Regression: an inevitable polar axis can be known without being shown as a configuration.
+await page.evaluate(()=>{
+  localStorage.setItem('relphiSkyConfigurationInevitableV1','false');
+  localStorage.setItem('relphiSkyChartA',JSON.stringify({
+    placements:{
+      Mercury:{name:'Mercury',longitude:46.233333},
+      Pluto:{name:'Pluto',longitude:226.633333},
+      Ascendant:{name:'Ascendant',longitude:137.2},
+      Descendant:{name:'Descendant',longitude:317.2}
+    }
+  }));
+  const list=document.querySelector('#skyFoundationRelationshipList');
+  list.replaceChildren();
+  const row=(left,right,aspect,phase)=>{
+    const node=document.createElement('div');
+    node.className='sky-foundation-relationship-row';
+    Object.assign(node.dataset,{relationshipMode:'A-A',leftSky:'A',rightSky:'A',leftPlacement:left,rightPlacement:right,aspect,phaseError:String(phase),harmonicOrder:'1'});
+    return node;
+  };
+  list.append(
+    row('mercury','pluto','opposition',0.8),
+    row('mercury','asc','square',3.87),
+    row('pluto','asc','square',2.27),
+    row('mercury','dsc','square',3.87),
+    row('pluto','dsc','square',2.27)
+  );
+  window.RelphiAspectConfigurations?.refresh?.();
+});
+await page.waitForFunction(()=>window.RelphiAspectConfigurations?.patterns?.some(pattern=>pattern.type==='grand-cross'&&pattern.vertices.includes('A:asc')&&pattern.vertices.includes('A:dsc')));
+const polarCross=await page.evaluate(()=>window.RelphiAspectConfigurations.patterns.find(pattern=>pattern.type==='grand-cross'&&pattern.vertices.includes('A:asc')&&pattern.vertices.includes('A:dsc')));
+assert.ok(polarCross,'ASC–DSC must remain detectable as the structural completion of the Mercury–Pluto Grand Cross.');
+assert.equal(polarCross.edges.filter(edge=>edge.aspect==='opposition').length,2,'Grand Cross must contain both opposition axes.');
+assert.ok(polarCross.edges.some(edge=>edge.entailedKind==='polar-axis'),'Grand Cross must identify the synthetic polar-axis opposition as inevitable.');
+
+const grandCrossChoice=page.locator('[data-configuration-scope="A-A"][data-configuration-type="grand-cross"]');
+await grandCrossChoice.waitFor({state:'attached'});
+if(!(await grandCrossChoice.isChecked()))await grandCrossChoice.check();
+await page.waitForSelector('[data-configuration-inevitable-show-more]',{state:'visible'});
+assert.equal(await page.locator('.sky-configuration-result-tile[data-configuration-type="grand-cross"]').count(),0,'Inevitable-off must suppress the Grand Cross tile that depends on the polar-axis opposition.');
+assert.match(await page.locator('[data-configuration-inevitable-show-more]').textContent(),/1 more using inevitable relationships/i);
+assert.equal(await page.locator('[data-configuration-inevitable]').isChecked(),false,'The Inevitable configuration toggle must remain off until the user opts in.');
+
+await page.locator('[data-configuration-inevitable-show-more]').click();
+await page.waitForSelector('.sky-configuration-result-tile[data-configuration-type="grand-cross"]',{state:'visible'});
+assert.equal(await page.locator('[data-configuration-inevitable]').isChecked(),true,'Show more must enable Inevitable configurations.');
+assert.equal(await page.evaluate(()=>localStorage.getItem('relphiSkyConfigurationInevitableV1')),'true','Show more must persist the Inevitable configuration preference.');
+
 await page.screenshot({path:'sky-chart-aspect-line-visibility.png',fullPage:true});
 assert.deepEqual(errors,[]);
 await browser.close();

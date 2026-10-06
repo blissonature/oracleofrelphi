@@ -1015,3 +1015,28 @@ html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]) .sky-chart-con
 #skyFoundationWheelMount>.sky-foundation-wheel.has-filter-focus [data-layer="configurations"].has-focus-composition .sky-chart-configuration-line.is-focus-kept{
   opacity:1;
 }
+
+
+/* Boundary reminder: mirrors the Relationships Harmonic Window "show more" affordance. */
+.sky-configuration-inevitable-show-more{
+  appearance:none;
+  grid-column:1/-1;
+  width:100%;
+  box-sizing:border-box;
+  margin:0;
+  padding:9px 11px;
+  border:1px dashed rgba(31,27,24,.22);
+  border-radius:9px;
+  background:#fbf8f3;
+  color:#5f5750;
+  text-align:center;
+  cursor:pointer;
+  font:800 .66rem/1.25 system-ui,sans-serif;
+}
+.sky-configuration-inevitable-show-more:hover,
+.sky-configuration-inevitable-show-more:focus-visible{
+  outline:none;
+  border-color:rgba(31,27,24,.38);
+  background:#f6f0e8;
+  color:#29231e;
+}

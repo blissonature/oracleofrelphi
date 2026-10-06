@@ -10,7 +10,6 @@
     'sky-chart-filter-hidden',
     'sky-chart-multiselect-hidden',
     'sky-chart-house-multiselect-hidden',
-    'sky-chart-aspect-multiselect-hidden',
     'sky-chart-sign-filter-hidden'
   ]);
   const ORB_HIDDEN_CLASSES=new Set(['sky-chart-orb-hidden','sky-orb-filter-hidden']);
@@ -48,6 +47,9 @@
     if(row.classList.contains('sky-foundation-single-sky-cross-hidden'))return true;
     for(const className of row.classList){
       if(ORB_HIDDEN_CLASSES.has(className))continue;
+      // Aspect visibility controls the pickup sticks only. It must never turn
+      // placements, signs, or houses into a derived "kept/not kept" focus set.
+      if(className==='sky-chart-aspect-multiselect-hidden')continue;
       if(EXPLICIT_HIDDEN_CLASSES.has(className))return true;
       if(className.includes('multiselect-hidden'))return true;
       if(className.includes('filter-hidden'))return true;
@@ -82,6 +84,16 @@
     if(!wheel)return;
 
     wheel.querySelectorAll('.is-filter-kept').forEach(node=>node.classList.remove('is-filter-kept'));
+
+    // Aspect selection owns whether aspect geometry is present, not whether
+    // the rest of the chart is visually isolated. Zero selected aspects is a
+    // neutral wheel state even before row-hidden classes finish propagating.
+    const matrixSelection=String(document.documentElement.dataset.skyAspectSelection||'');
+    if(matrixSelection.startsWith('0/')){
+      clearMarks(wheel);
+      window.dispatchEvent(new CustomEvent('relphi:sky-filter-wheel-focus-changed',{detail:{active:false,visible:0,total:eligibleRows().length,relationshipIndexes:[]}}));
+      return;
+    }
 
     const rows=eligibleRows();
     if(!rows.length){clearMarks(wheel);return}
