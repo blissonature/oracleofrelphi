@@ -76,4 +76,39 @@ for(let i=0;i<2;i++){const visible=page.locator('#skyWhereWhenNamePrompt:not([hi
 await page.waitForTimeout(1400);assert.deepEqual(await page.evaluate(()=>({...window.__wwTransactionCounts})),countsAfterCommit,'The removed one-second polling loop must not restart rendering after the committed rebuild.');
 assert.equal(await page.locator('#skyFoundationA [data-saved-sky-trigger="A"]').count(),1,'Sky A must have exactly one title/menu trigger.');
 assert.equal(await page.locator('#skyFoundationB [data-saved-sky-trigger="B"]').count(),1,'Sky B must have exactly one title/menu trigger.');
+
+
+// Regression: a sky that was committed with unknown time must become fully known-time again.
+await whereTabA.click();
+const unknownEditor=page.locator('#skyFoundationA .sky-where-when-editor');await unknownEditor.waitFor();
+const unknownToggle=unknownEditor.locator('[data-ww-field="time-unknown"]');
+if(!(await unknownToggle.isChecked()))await unknownToggle.check();
+await unknownEditor.locator('[data-ww-field="date"]').fill('1985-10-08');
+await unknownEditor.locator('button[type="submit"]').click();
+await page.waitForFunction(()=>JSON.parse(localStorage.getItem('relphiSkyChartA')).calcProfile.timeUnknown===true);
+let unknownStored=await page.evaluate(()=>JSON.parse(localStorage.getItem('relphiSkyChartA')));
+assert.equal(unknownStored.calcProfile.houseSystem,'none','Unknown-time commit should suppress houses.');
+assert.equal(unknownStored.houseCusps.length,0,'Unknown-time commit should clear house cusps.');
+assert.ok(unknownStored.calcProfile.moonRange,'Unknown-time commit should preserve the Moon range.');
+
+await whereTabA.click();
+const knownEditor=page.locator('#skyFoundationA .sky-where-when-editor');await knownEditor.waitFor();
+const knownToggle=knownEditor.locator('[data-ww-field="time-unknown"]');
+assert.equal(await knownToggle.isChecked(),true,'Reopened unknown-time sky should show Time unknown checked.');
+await knownToggle.uncheck();
+await page.evaluate(()=>{const input=document.querySelector('#skyFoundationA [data-ww-field="time"]');input.value='04:37';input.dispatchEvent(new Event('input',{bubbles:true}));input.dispatchEvent(new Event('change',{bubbles:true}))});
+await knownEditor.locator('button[type="submit"]').click();
+await page.waitForFunction(()=>JSON.parse(localStorage.getItem('relphiSkyChartA')).calcProfile.timeUnknown===false);
+const knownStored=await page.evaluate(()=>JSON.parse(localStorage.getItem('relphiSkyChartA')));
+assert.equal(knownStored.calcProfile.timeUnknown,false,'Known-time commit must explicitly clear the unknown-time flag.');
+assert.equal('moonRange' in knownStored.calcProfile,false,'Known-time commit must remove the unknown-time Moon range.');
+assert.notEqual(knownStored.calcProfile.houseSystem,'none','Known-time commit must restore a real house system.');
+assert.equal(knownStored.calcProfile.houseCusps.length,12,'Known-time commit must restore 12 house cusps.');
+assert.ok(knownStored.placements.Ascendant&&knownStored.placements.Midheaven,'Known-time commit must restore chart angles.');
+
+await whereTabA.click();
+const reopenedKnown=page.locator('#skyFoundationA .sky-where-when-editor');await reopenedKnown.waitFor();
+assert.equal(await reopenedKnown.locator('[data-ww-field="time-unknown"]').isChecked(),false,'Reopened known-time sky must keep Time unknown off.');
+await whereTabA.click();
+await page.waitForFunction(()=>document.documentElement.dataset.skyWhereWhenEditing==='false');
 assert.deepEqual(errors,[]);await browser.close();console.log('Where and When transaction stability passed.');
