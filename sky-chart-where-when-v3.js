@@ -197,9 +197,12 @@ function calculateSky(slot,selected,date,time,options={}){
   BODIES.forEach(name=>{placements[name]=placementObject(name,astronomyLongitude(name,instant))});
   const asc=ascendantLongitude(instant,selected.latitude,selected.longitude),mc=midheavenLongitude(instant,selected.longitude);
   placements.Ascendant=placementObject('Ascendant',asc);placements.Midheaven=placementObject('Midheaven',mc);
-  const houseSystem=localStorage.getItem(SHARED_HOUSE_KEY)||profileFor(slot).houseSystem||'whole-sign';
+  const storedHouseSystem=String(profileFor(slot).houseSystem||'').trim();
+  const houseSystem=localStorage.getItem(SHARED_HOUSE_KEY)||(storedHouseSystem&&storedHouseSystem!=='none'?storedHouseSystem:'whole-sign');
   const houses=window.RelphiHouseSystems.calculateCusps({system:houseSystem,ascendant:asc,midheaven:mc,siderealDegrees:siderealDegrees(instant,selected.longitude),obliquityDegrees:obliquity(instant),latitude:selected.latitude});
   const existing=options.replaceExisting?{}:(payload(slot)||{}),metadata=existing.metadata&&typeof existing.metadata==='object'?{...existing.metadata}:{},priorProfile=existing.calcProfile&&typeof existing.calcProfile==='object'?{...existing.calcProfile}:{},liveOrigin=String(options.liveOrigin||'');
+  // A known-time calculation must not inherit unknown-time state from the prior working copy.
+  delete priorProfile.timeUnknown;delete priorProfile.moonRange;
   // Chiron may already be a trusted stored placement even when no live Chiron provider is available.
   // Preserve it only when this calculation represents the same instant. A genuinely new instant must never inherit stale Chiron.
   const existingInstant=String(priorProfile.instant||existing.instant||'').trim(),nextInstant=dt.toUTC().toISO();
@@ -214,12 +217,12 @@ function calculateSky(slot,selected,date,time,options={}){
     delete metadata.liveNowDisabled;delete metadata.liveNowDisabledReason;delete metadata.liveNowMigrated;
     delete priorProfile.savedSkyId;delete priorProfile.savedSkyName;
     metadata.name='Now';metadata.title='Now';metadata.liveNowOrigin='use-now';metadata.liveNowAt=dt.toUTC().toISO();metadata.liveAgeAnchorAt=metadata.liveNowAt;metadata.liveNowLatitude=String(selected.latitude);metadata.liveNowLongitude=String(selected.longitude);
-    return{...existing,name:'Now',title:'Now',displayName:'Now',skyName:'Now',saved:false,placements,houseCusps:houses.cusps,metadata,calcProfile:{...priorProfile,name:'Now',title:'Now',dateTime:dt.toFormat("yyyy-MM-dd'T'HH:mm"),instant:metadata.liveNowAt,latitude:String(selected.latitude),longitude:String(selected.longitude),location:selected.canonical,locationQuery:selected.query||selected.canonical,timeZone:selected.timezone,whereWhenSource:selected.source||'manual',houseSystem:houses.system||houseSystem,houseCusps:houses.cusps,cusps:houses.cusps,houseSystemNote:houses.note,source:'where-when-v3',liveNowOrigin:'use-now',liveNowAt:metadata.liveNowAt},savedAt:new Date().toISOString()};
+    return{...existing,name:'Now',title:'Now',displayName:'Now',skyName:'Now',saved:false,placements,houseCusps:houses.cusps,metadata,calcProfile:{...priorProfile,name:'Now',title:'Now',dateTime:dt.toFormat("yyyy-MM-dd'T'HH:mm"),instant:metadata.liveNowAt,timeUnknown:false,latitude:String(selected.latitude),longitude:String(selected.longitude),location:selected.canonical,locationQuery:selected.query||selected.canonical,timeZone:selected.timezone,whereWhenSource:selected.source||'manual',houseSystem:houses.system||houseSystem,houseCusps:houses.cusps,cusps:houses.cusps,houseSystemNote:houses.note,source:'where-when-v3',liveNowOrigin:'use-now',liveNowAt:metadata.liveNowAt},savedAt:new Date().toISOString()};
   }
   delete metadata.liveNowOrigin;delete metadata.liveNowAt;delete metadata.liveAgeAnchorAt;delete metadata.liveNowLatitude;delete metadata.liveNowLongitude;delete metadata.liveNowMigrated;
   metadata.liveNowDisabled=true;metadata.liveNowDisabledReason='custom-where-when';
   delete priorProfile.liveNowOrigin;delete priorProfile.liveNowAt;
-  return{...existing,name:existing.name||`Sky ${slot}`,saved:false,placements,houseCusps:houses.cusps,metadata,calcProfile:{...priorProfile,dateTime:`${date}T${time}`,instant:dt.toUTC().toISO(),latitude:String(selected.latitude),longitude:String(selected.longitude),location:selected.canonical,locationQuery:selected.query||selected.canonical,timeZone:selected.timezone,whereWhenSource:selected.source||'manual',houseSystem:houses.system||houseSystem,houseCusps:houses.cusps,cusps:houses.cusps,houseSystemNote:houses.note,source:'where-when-v3'},savedAt:new Date().toISOString()};
+  return{...existing,name:existing.name||`Sky ${slot}`,saved:false,placements,houseCusps:houses.cusps,metadata,calcProfile:{...priorProfile,dateTime:`${date}T${time}`,instant:dt.toUTC().toISO(),timeUnknown:false,latitude:String(selected.latitude),longitude:String(selected.longitude),location:selected.canonical,locationQuery:selected.query||selected.canonical,timeZone:selected.timezone,whereWhenSource:selected.source||'manual',houseSystem:houses.system||houseSystem,houseCusps:houses.cusps,cusps:houses.cusps,houseSystemNote:houses.note,source:'where-when-v3'},savedAt:new Date().toISOString()};
 }
 function dispatchSlotChange(slot){try{window.dispatchEvent(new StorageEvent('storage',{key:SLOT_KEYS[slot],newValue:localStorage.getItem(SLOT_KEYS[slot]),storageArea:localStorage}))}catch(_){const event=new Event('storage');Object.defineProperty(event,'key',{value:SLOT_KEYS[slot]});window.dispatchEvent(event)}}
 function normalizePacket(packet){
