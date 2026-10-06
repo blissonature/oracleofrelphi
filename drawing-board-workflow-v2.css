@@ -2992,9 +2992,28 @@ body.relphi-attune-open{overflow:hidden!important}
   max-height:2rem!important;
   padding:0!important;
   border-radius:50%!important;
-  font-size:1.12rem!important;
-  font-weight:650!important;
   line-height:1!important;
+}
+#shortListPanel .relphi-question-toolbar-pack>.relphi-subpack-create>span{
+  position:relative!important;
+  display:block!important;
+  width:.74rem!important;
+  height:.74rem!important;
+}
+#shortListPanel .relphi-question-toolbar-pack>.relphi-subpack-create>span::before,
+#shortListPanel .relphi-question-toolbar-pack>.relphi-subpack-create>span::after{
+  content:''!important;
+  position:absolute!important;
+  left:50%!important;
+  top:50%!important;
+  width:.74rem!important;
+  height:.14rem!important;
+  border-radius:.07rem!important;
+  background:currentColor!important;
+  transform:translate(-50%,-50%)!important;
+}
+#shortListPanel .relphi-question-toolbar-pack>.relphi-subpack-create>span::after{
+  transform:translate(-50%,-50%) rotate(90deg)!important;
 }
 #shortListPanel .relphi-question-toolbar-cards{
   display:flex!important;
