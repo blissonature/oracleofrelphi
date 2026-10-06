@@ -310,7 +310,7 @@
       position('covering', CELTIC_LABELS[0], 1, transform(.20,.34,.48,0,20), { role:'covering' }),
       position('crossing', CELTIC_LABELS[1], 2, transform(.20,.34,.48,90,30), {
         role:'crossing', crosses:'covering',
-        canonicalTransform:transform(.35,.34,.48,0,30),
+        canonicalTransform:transform(.20,.34,.48,90,30),
         crossedTransform:transform(.20,.34,.48,90,30)
       }),
       position('crowning', CELTIC_LABELS[2], 3, transform(.20,.02,.48,0,4), { role:'crowning' }),
