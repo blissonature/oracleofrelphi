@@ -49,8 +49,8 @@
     ['Netzach','Victory · feeling · desire'],['Hod','Splendour · intellect · communication'],['Yesod','Foundation · hidden forces'],['Malkuth','Kingdom · material outcome']
   ];
 
-  let operation=1, anchor=0, countValue=3, pairRadius=1, expectedDomain='', domainLocked=false, revealedDomain='', significatorId='', operationDeck=null, attemptFailed=false, retrySameSelections=true;
-  let operationDeckState=null, operationStackResult=null, expectedStackIndex=-1, secondStackIndex=-1;
+  let operation=1, anchor=0, significatorAnchor=0, countDirection=1, countValue=3, pairRadius=1, expectedDomain='', domainLocked=false, revealedDomain='', significatorId='', operationDeck=null, attemptFailed=false, retrySameSelections=true;
+  let activePacket=[], operationDeckState=null, operationStackResult=null, expectedStackIndex=-1, secondStackIndex=-1;
 
   function storedSignificator(){
     try{return String(localStorage.getItem(SIGNIFICATOR_KEY)||'');}catch(_){return '';}
@@ -106,7 +106,7 @@
     const state=window.RelphiDrawingBoardPrefabsBridge?.getState?.();
     return state?.activeLayout?.id===TEMPLATE_ID || state?.currentLayout?.id===TEMPLATE_ID;
   }
-  function items(){return Array.from(root()?.querySelectorAll('.card-row-board .card-row-item')||[]).slice(0,12);}
+  function items(){return Array.from(root()?.querySelectorAll('.card-row-board .card-row-item')||[]);}
   function circularDistance(a,b){const d=Math.abs(a-b)%12;return Math.min(d,12-d);}
   function aspectForStep(step){
     const normalized=((Number(step)||0)%12+12)%12;
@@ -207,11 +207,12 @@
     const count=countHarmonic(countValue), pair=pairHarmonic(pairRadius);
     // The twelve visible helper positions are a harmonic reference, not a claim
     // that every Opening operation physically contains twelve cards.
-    if(cards.length>=12){
-      const target=(anchor+count.movement)%12;
+    if(cards.length){
+      const len=cards.length;
+      const target=((anchor+(countDirection*count.movement))%len+len)%len;
       cards[anchor]?.classList.add('crowley-anchor');
       cards[target]?.classList.add('crowley-target');
-      const left=(anchor-pairRadius+12)%12, right=(anchor+pairRadius)%12;
+      const left=((significatorAnchor-pairRadius)%len+len)%len, right=(significatorAnchor+pairRadius)%len;
       cards[left]?.classList.add('crowley-pair','crowley-pair-front'); cards[right]?.classList.add('crowley-pair','crowley-pair-behind');
       cards[left]?.setAttribute('data-crowley-reference-aspect',pair.reference.name);
       cards[right]?.setAttribute('data-crowley-reference-aspect',pair.reference.name);
@@ -223,7 +224,7 @@
     const opStatus=document.getElementById('crowleyOperationStatus');
     if(opStatus) opStatus.innerHTML='<b>Operation '+op.n+' · '+op.name+'</b> — '+op.field+'. '+op.note;
     const status=document.getElementById('crowleyHarmonicStatus');
-    if(status) status.innerHTML='<b>Story Focus · Count '+count.value+'</b> · move '+count.movement+' · '+count.aspect.name+' '+count.aspect.angle+'° (H'+count.aspect.harmonic+'). '+interpretiveRelation(count.aspect,'count')+'<br><b>Pair Focus · ±'+pair.radius+'</b> · each card ↔ Significator: '+pair.reference.name+' '+pair.reference.angle+'° (H'+pair.reference.harmonic+'); paired cards ↔ each other: '+pair.between.name+' '+pair.between.angle+'° (H'+pair.between.harmonic+'). <b>Midpoint:</b> Significator.';
+    if(status) status.innerHTML='<b>Story Focus · Count '+count.value+'</b> · move '+(countDirection<0?'left ':'right ')+count.movement+' · '+count.aspect.name+' '+count.aspect.angle+'° (H'+count.aspect.harmonic+'). '+interpretiveRelation(count.aspect,'count')+'<br><b>Pair Focus · ±'+pair.radius+'</b> · each card ↔ Significator: '+pair.reference.name+' '+pair.reference.angle+'° (H'+pair.reference.harmonic+'); paired cards ↔ each other: '+pair.between.name+' '+pair.between.angle+'° (H'+pair.between.harmonic+'). <b>Midpoint:</b> Significator.';
     renderReadingReference();
     renderOperationFocus();
   }
@@ -272,6 +273,31 @@
   function choiceOptions(items,placeholder){
     return '<option value="">'+placeholder+'</option>'+items.map((item,index)=>'<option value="'+index+'">'+(index+1)+' · '+item[0]+' — '+item[1]+'</option>').join('');
   }
+  function syncPacketControls(box,packet){
+    activePacket=Array.isArray(packet)?packet.slice():[];
+    const anchorSelect=box?.querySelector('#crowleyAnchor');
+    if(anchorSelect){
+      anchorSelect.innerHTML=activePacket.map((id,index)=>'<option value="'+index+'">'+(index+1)+' · '+(window.RelphiTarotLedgerBridge?.titleFor?.(id)||id)+'</option>').join('');
+      anchorSelect.value=String(anchor);
+    }
+    const pairSelect=box?.querySelector('#crowleyPair');
+    if(pairSelect){
+      const max=Math.max(1,Math.floor((activePacket.length-1)/2));
+      pairSelect.innerHTML=Array.from({length:max},(_,i)=>'<option value="'+(i+1)+'">±'+(i+1)+'</option>').join('');
+      pairRadius=Math.min(pairRadius,max);
+      pairSelect.value=String(pairRadius);
+    }
+    syncCurrentCardCount(box);
+  }
+  function syncCurrentCardCount(box){
+    const id=activePacket[anchor];
+    const derived=window.RelphiTarotLedgerBridge?.openingKeyCountForCard?.(id);
+    if(Number.isFinite(derived)){
+      countValue=derived;
+      const count=box?.querySelector('#crowleyCount');
+      if(count)count.value=String(derived);
+    }
+  }
   function operationStageMarkup(op){
     const source=op===2?HOUSES:op===3?SIGNS:op===5?SEPHIROTH:null;
     const noun=op===2?'house':op===3?'sign':op===5?'Sephira':'';
@@ -311,10 +337,18 @@
   }
   function beginPacketReading(box,packet,label){
     const ledger=window.RelphiTarotLedgerBridge;
-    ledger?.showOpeningPacket?.(packet);
+    const ids=Array.isArray(packet)?packet.slice():[];
+    ledger?.showOpeningPacket?.(ids);
+    activePacket=ids;
+    significatorAnchor=Math.max(0,ids.indexOf(significatorId));
+    anchor=significatorAnchor;
+    pairRadius=1;
+    countDirection=1;
     box.querySelector('#crowleyMechanics').hidden=false;
     const opSelect=box.querySelector('#crowleyOperation');if(opSelect)opSelect.value=String(operation);
     const status=box.querySelector('#crowleyAccuracyStatus');if(status)status.textContent='';
+    syncPacketControls(box,ids);
+    const direction=box.querySelector('#crowleyDirection');if(direction)direction.value='1';
     const host=box.querySelector('#crowleyMethodStage');
     if(host)host.innerHTML='<fieldset class="relphi-fieldset crowley-operation-stage"><legend>Operation '+operation+' · '+OPERATIONS[operation-1].name+'</legend><p><b>'+label+'</b> contains the Significator. Relphi has spread that packet in preserved order. Count and pair it before continuing.</p></fieldset>';
     mark();
@@ -403,8 +437,12 @@
         if(!ring?.ring?.length)return;
         button.disabled=true;
         // Board order is Significator followed by the 36-card ring sequence.
-        ledger?.showOpeningPacket?.([significatorId].concat(ring.ring));
+        const ringPacket=[significatorId].concat(ring.ring);
+        ledger?.showOpeningPacket?.(ringPacket);
+        activePacket=ringPacket;significatorAnchor=0;anchor=0;pairRadius=1;countDirection=1;
         box.querySelector('#crowleyMechanics').hidden=false;
+        syncPacketControls(box,ringPacket);
+        const direction=box.querySelector('#crowleyDirection');if(direction)direction.value='1';
         const opSelect=box.querySelector('#crowleyOperation');if(opSelect)opSelect.value='4';
         if(status)status.textContent='The Significator has been set as the reference and the 36 following cards preserved in ring order. Count and pair this field.';
         mark();
@@ -556,7 +594,7 @@
     let box=document.getElementById('crowleyHarmonicGuide');
     if(!box){
       box=document.createElement('section');box.id='crowleyHarmonicGuide';box.className='relphi-panel relphi-stack';box.hidden=true;
-      box.innerHTML='<span class="eyebrow relphi-eyebrow">Crowley Divination Method</span><h3 class="relphi-heading">The Opening of the Key</h3><p class="crowley-method-intro">Relphi keeps the method in sequence and reveals only the part you need now.</p>'+domainGateMarkup()+'<div id="crowleyMethodStage"></div><div id="crowleyMechanics" class="relphi-stack" hidden><div class="crowley-controls relphi-toolbar"><label class="relphi-field" hidden>Operation<select id="crowleyOperation" class="relphi-select">'+OPERATIONS.map(op=>'<option value="'+op.n+'">'+op.n+' · '+op.name+'</option>').join('')+'</select></label><label class="relphi-field">Harmonic reference<select id="crowleyAnchor" class="relphi-select">'+Array.from({length:12},(_,i)=>'<option value="'+i+'">Position '+(i+1)+'</option>').join('')+'</select></label><label class="relphi-field">Card Counting<select id="crowleyCount" class="relphi-select">'+countOptions()+'</select></label><label class="relphi-field">Card Pairing<select id="crowleyPair" class="relphi-select">'+Array.from({length:6},(_,i)=>'<option value="'+(i+1)+'">±'+(i+1)+'</option>').join('')+'</select></label><button id="crowleyAdvance" class="relphi-button" type="button">Continue Card Counting</button></div><p id="crowleyOperationStatus"></p><div id="crowleyOperationFocus"></div><p id="crowleyHarmonicStatus" aria-live="polite"></p><div id="crowleyReadingReference"></div><fieldset class="relphi-fieldset"><legend>Accuracy Test</legend><p>After Card Counting and Card Pairing, confirm whether the main lines of the reading are correct.</p><button id="crowleyMainLinesCorrect" class="relphi-button relphi-button--primary" type="button">Main lines are correct · continue</button> <button id="crowleyMainLinesWrong" class="relphi-button" type="button">Main lines are not correct · abandon</button><p id="crowleyAccuracyStatus" aria-live="polite"></p></fieldset></div>';
+      box.innerHTML='<span class="eyebrow relphi-eyebrow">Crowley Divination Method</span><h3 class="relphi-heading">The Opening of the Key</h3><p class="crowley-method-intro">Relphi keeps the method in sequence and reveals only the part you need now.</p>'+domainGateMarkup()+'<div id="crowleyMethodStage"></div><div id="crowleyMechanics" class="relphi-stack" hidden><div class="crowley-controls relphi-toolbar"><label class="relphi-field" hidden>Operation<select id="crowleyOperation" class="relphi-select">'+OPERATIONS.map(op=>'<option value="'+op.n+'">'+op.n+' · '+op.name+'</option>').join('')+'</select></label><label class="relphi-field">Current card<select id="crowleyAnchor" class="relphi-select"></select></label><label class="relphi-field">Direction<select id="crowleyDirection" class="relphi-select"><option value="1">Right / forward</option><option value="-1">Left / backward</option></select></label><label class="relphi-field">Card Counting<select id="crowleyCount" class="relphi-select">'+countOptions()+'</select></label><label class="relphi-field">Card Pairing<select id="crowleyPair" class="relphi-select">'+Array.from({length:6},(_,i)=>'<option value="'+(i+1)+'">±'+(i+1)+'</option>').join('')+'</select></label><button id="crowleyAdvance" class="relphi-button" type="button">Continue Card Counting</button></div><p id="crowleyOperationStatus"></p><div id="crowleyOperationFocus"></div><p id="crowleyHarmonicStatus" aria-live="polite"></p><div id="crowleyReadingReference"></div><fieldset class="relphi-fieldset"><legend>Accuracy Test</legend><p>After Card Counting and Card Pairing, confirm whether the main lines of the reading are correct.</p><button id="crowleyMainLinesCorrect" class="relphi-button relphi-button--primary" type="button">Main lines are correct · continue</button> <button id="crowleyMainLinesWrong" class="relphi-button" type="button">Main lines are not correct · abandon</button><p id="crowleyAccuracyStatus" aria-live="polite"></p></fieldset></div>';
       const workspace=r.querySelector('.card-row-workspace');
       if(workspace) workspace.parentNode.insertBefore(box,workspace); else nativeDrawer.insertAdjacentElement('beforebegin',box);
       bindOperationStages(box);
@@ -692,17 +730,18 @@
       box.querySelector('#crowleyMainLinesCorrect').addEventListener('click',()=>{box.querySelector('#crowleyAccuracyStatus').textContent='Operation '+operation+' complete.';completeOperation(box);});
       box.querySelector('#crowleyMainLinesWrong').addEventListener('click',()=>{box.querySelector('#crowleyMechanics').hidden=true;box.querySelector('#crowleyAccuracyStatus').textContent='The divination is abandoned because its main lines do not correspond.';clearMarks();});
       box.querySelector('#crowleyOperation').addEventListener('change',e=>{const requested=Math.max(1,Math.min(5,Number(e.target.value)||1));if(requested===operation)mark();else e.target.value=String(operation);});
-      box.querySelector('#crowleyAnchor').addEventListener('change',e=>{anchor=Number(e.target.value)||0;mark();});
+      box.querySelector('#crowleyAnchor').addEventListener('change',e=>{anchor=Number(e.target.value)||0;syncCurrentCardCount(box);mark();});
+      box.querySelector('#crowleyDirection').addEventListener('change',e=>{countDirection=Number(e.target.value)<0?-1:1;mark();});
       box.querySelector('#crowleyCount').addEventListener('change',e=>{countValue=Number(e.target.value)||3;mark();});
       box.querySelector('#crowleyPair').addEventListener('change',e=>{pairRadius=Number(e.target.value)||1;mark();});
-      box.querySelector('#crowleyAdvance').addEventListener('click',()=>{anchor=(anchor+countHarmonic(countValue).movement)%12;box.querySelector('#crowleyAnchor').value=String(anchor);mark();});
+      box.querySelector('#crowleyAdvance').addEventListener('click',()=>{const len=Math.max(1,activePacket.length||items().length);anchor=((anchor+(countDirection*countHarmonic(countValue).movement))%len+len)%len;box.querySelector('#crowleyAnchor').value=String(anchor);syncCurrentCardCount(box);mark();});
       box.querySelector('#crowleyCount').value='3';
     }
     box.hidden=!active();
     if(!box.hidden){rehydrateDomainGate(box);mark();} else clearMarks();
   }
   function start(){
-    operation=1;anchor=0;countValue=3;pairRadius=1;significatorId=storedSignificator();
+    operation=1;anchor=0;significatorAnchor=0;countDirection=1;countValue=3;pairRadius=1;activePacket=[];significatorId=storedSignificator();
     ensureGuide();
     const box=document.getElementById('crowleyHarmonicGuide');
     if(!box)return false;
