@@ -43,6 +43,7 @@ jobs:
           node --check tests/drawing-board-crossing-label.test.js
           node --check tests/drawing-board-reading-text.test.js
           node --check tests/drawing-board-focus-filmstrip.test.js
+          node --check tests/drawing-board-attune-focus-navigation.test.js
           node --check tests/drawing-board-density-question-layout.test.js
           node --check tests/drawing-board-referents.test.js
           node --check tests/drawing-board-recursion.test.js
@@ -55,6 +56,7 @@ jobs:
           node tests/drawing-board-workflow-v2.test.js || true
           node tests/drawing-board-spread-prefabs.test.js || true
           node tests/drawing-board-bulk-questions.test.js || true
+          node tests/drawing-board-attune-focus-navigation.test.js
       - name: Install browser acceptance runner
         run: |
           npm install --no-save playwright@1.55.0
