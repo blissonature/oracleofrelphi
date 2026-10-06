@@ -632,8 +632,8 @@ body.relphi-attune-open{overflow:hidden!important}
 
 /* Relphi Recursive Reading · seven depths, twenty-two cards, six virtual red-circle portals */
 #shortListPanel .relphi-recursion-template-note{display:grid!important;gap:.28rem!important;margin:.55rem 0 0!important;padding:.72rem .78rem!important;border:1px solid rgba(166,23,18,.24)!important;border-left:3px solid #a61712!important;border-radius:8px!important;background:#fffaf3!important;color:#302925!important}
-#shortListPanel .relphi-recursion-template-note strong{font-family:Georgia,"Times New Roman",serif!important;font-size:.9rem!important;font-weight:700!important}
-#shortListPanel .relphi-recursion-template-note span{color:#625851!important;font-size:.7rem!important;line-height:1.45!important}
+#shortListPanel .relphi-recursion-template-note strong{font-family:'Montserrat',Arial,sans-serif!important;font-size:.82rem!important;font-weight:850!important;line-height:1.25!important;letter-spacing:0!important}
+#shortListPanel .relphi-recursion-template-note span{font-family:'Montserrat',Arial,sans-serif!important;color:#625851!important;font-size:.68rem!important;font-weight:600!important;line-height:1.4!important}
 
 #shortListPanel.relphi-recursion-reading .card-row-board>.card-row-item[data-relphi-recursion-level]:not(.is-recursion-level-active){display:none!important}
 #shortListPanel.relphi-recursion-reading .card-row-board>.card-row-item.is-recursion-level-active{display:block!important;z-index:3!important}
