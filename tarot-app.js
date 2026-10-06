@@ -1747,7 +1747,7 @@
     const maxX = Number.isFinite(bounds.maxX) ? bounds.maxX : CARD_ROW_ENVELOPE_W;
     const maxY = Number.isFinite(bounds.maxY) ? bounds.maxY : CARD_ROW_ENVELOPE_H;
     const baseMargin = 24;
-    const baseHeaderH = state.shortListNotes ? 108 : 72;
+    const baseHeaderH = state.shortListNotes ? 124 : 88;
     const brandFooterH = 0;
     const scale = drawingBoardSnapshotScale(maxX-minX,maxY-minY,baseHeaderH,brandFooterH,baseMargin);
     const chromeScale=Math.max(1,Math.min(1.35,scale));
@@ -1772,16 +1772,22 @@
 
     const headerLogoSize=34*chromeScale;
     const headerLogoX=margin;
-    const headerLogoY=Math.max(8*chromeScale,(72*chromeScale-headerLogoSize)/2);
+    const topRowY=10*chromeScale;
+    const headerLogoY=topRowY;
     drawRelphiLogoMark(ctx,headerLogoX,headerLogoY,headerLogoSize);
 
-    const headerGap=14*chromeScale;
-    const leftAreaW=Math.max(120*chromeScale,canvas.width*.44-margin-headerGap);
-    const brandTextX=headerLogoX+headerLogoSize+9*chromeScale;
-    const brandTextMaxW=Math.max(60*chromeScale,leftAreaW-(headerLogoSize+9*chromeScale));
-    let brandFontSize=17*chromeScale;
-    const brandMin=11*chromeScale;
+    const titleText=`${state.shortListName ? state.shortListName + ' · ' : ''}Drawing Board`;
     const oracleText='Oracle of ';
+    const topGap=18*chromeScale;
+    const rightX=canvas.width-margin;
+    const contentW=Math.max(1,canvas.width-(margin*2));
+    const brandAreaW=Math.max(120*chromeScale,contentW*.54);
+    const titleAreaW=Math.max(100*chromeScale,contentW-brandAreaW-topGap);
+
+    const brandTextX=headerLogoX+headerLogoSize+9*chromeScale;
+    const brandTextMaxW=Math.max(56*chromeScale,brandAreaW-(headerLogoSize+9*chromeScale));
+    let brandFontSize=17*chromeScale;
+    const brandMin=11.5*chromeScale;
     while(brandFontSize>brandMin){
       ctx.font=`800 ${brandFontSize}px Montserrat, Arial, sans-serif`;
       if(ctx.measureText(oracleText+'Relphi').width<=brandTextMaxW)break;
@@ -1797,29 +1803,30 @@
     ctx.fillStyle='#dc1f18';
     ctx.fillText('Relphi',brandTextX+oracleW,brandTextY);
 
-    const titleText=`${state.shortListName ? state.shortListName + ' · ' : ''}Drawing Board`;
-    const rightX=canvas.width-margin;
-    const rightAreaW=Math.max(120*chromeScale,canvas.width*.50-margin);
     let titleFontSize=20*chromeScale;
     const titleMin=12*chromeScale;
     while(titleFontSize>titleMin){
       ctx.font=`900 ${titleFontSize}px Montserrat, Arial, sans-serif`;
-      if(ctx.measureText(titleText).width<=rightAreaW)break;
+      if(ctx.measureText(titleText).width<=titleAreaW)break;
       titleFontSize-=.5*chromeScale;
     }
     ctx.textAlign='right';
-    ctx.fillStyle = '#111';
-    ctx.font = `900 ${titleFontSize}px Montserrat, Arial, sans-serif`;
-    ctx.fillText(titleText,rightX,12*chromeScale);
-    ctx.font = `650 ${10.5*chromeScale}px Montserrat, Arial, sans-serif`;
-    ctx.fillStyle = '#655d56';
+    ctx.fillStyle='#111';
+    ctx.font=`900 ${titleFontSize}px Montserrat, Arial, sans-serif`;
+    const titleY=topRowY+(headerLogoSize-titleFontSize)/2;
+    ctx.fillText(titleText,rightX,titleY);
+
+    // Metadata gets its own row so it can never collide with either lockup.
+    ctx.textAlign='center';
+    ctx.font=`650 ${10.5*chromeScale}px Montserrat, Arial, sans-serif`;
+    ctx.fillStyle='#655d56';
     const metaText=`${localTimestampLabel(createdAt)} · ${slots} position${slots === 1 ? '' : 's'}`;
-    ctx.fillText(metaText,rightX,41*chromeScale);
+    ctx.fillText(metaText,canvas.width/2,58*chromeScale);
     if (state.shortListNotes) {
       ctx.textAlign='left';
       ctx.font = `600 ${12*chromeScale}px Montserrat, Arial, sans-serif`;
       ctx.fillStyle = '#332f2b';
-      wrapCanvasLines(ctx, state.shortListNotes, canvas.width - margin * 2, 2).forEach((line, li) => ctx.fillText(line, margin, (66 + li * 16)*chromeScale));
+      wrapCanvasLines(ctx, state.shortListNotes, canvas.width - margin * 2, 2).forEach((line, li) => ctx.fillText(line, margin, (78 + li * 16)*chromeScale));
     }
     const cards = state.shortList.map(cardById);
     const tableImage = state.rowTableImage ? await loadCanvasSafeImage(state.rowTableImage) : null;
