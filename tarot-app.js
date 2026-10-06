@@ -1306,6 +1306,27 @@
     logo:'logo.png',
     website:'https://oracleofrelphi.com/'
   });
+  function drawRelphiLogoMark(ctx,x,y,size){
+    const s=Math.max(1,Number(size)||1);
+    const border=s*.065;
+    const inset=s*.14;
+    const dot=s*.255;
+    const left=x+inset+dot/2;
+    const right=x+s-inset-dot/2;
+    const top=y+inset+dot/2;
+    const bottom=y+s-inset-dot/2;
+    ctx.save();
+    ctx.fillStyle='#fff';
+    ctx.strokeStyle='#000';
+    ctx.lineWidth=border;
+    ctx.strokeRect(x+border/2,y+border/2,s-border,s-border);
+    ctx.beginPath();ctx.arc(left,top,dot/2,0,Math.PI*2);ctx.fillStyle='#000';ctx.fill();
+    ctx.beginPath();ctx.arc(right,top,dot/2,0,Math.PI*2);ctx.fill();
+    ctx.beginPath();ctx.arc(left,bottom,dot/2,0,Math.PI*2);ctx.fill();
+    ctx.beginPath();ctx.arc(right,bottom,dot/2,0,Math.PI*2);ctx.fillStyle='#dc1f18';ctx.fill();
+    ctx.restore();
+  }
+
   function drawRelphiExportBrand(ctx, canvas, height = 54, logoImage = null) {
     const h=Math.max(46,Number(height)||54);
     const y=canvas.height-h;
@@ -1692,22 +1713,38 @@
     ctx.fillStyle = state.rowTableColor || '#7d1f28';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    // One Relphi document header: title at left, brand lockup at right.
+    // One Relphi document header: crisp brand lockup at left, document title at right.
     ctx.fillStyle = '#fffdf9';
     ctx.fillRect(0,0,canvas.width,headerH);
     ctx.strokeStyle='rgba(17,17,17,.18)';
     ctx.lineWidth=1;
     ctx.beginPath();ctx.moveTo(0,headerH-.5);ctx.lineTo(canvas.width,headerH-.5);ctx.stroke();
 
+    const headerLogoSize=40;
+    const headerLogoX=margin;
+    const headerLogoY=Math.max(10,(72-headerLogoSize)/2);
+    drawRelphiLogoMark(ctx,headerLogoX,headerLogoY,headerLogoSize);
+    const brandTextX=headerLogoX+headerLogoSize+12;
+    const brandTextY=headerLogoY+9;
+    ctx.textAlign='left';
+    ctx.textBaseline='top';
+    ctx.font='800 14px Montserrat, Arial, sans-serif';
+    ctx.fillStyle='#111';
+    const oracleText='Oracle of ';
+    ctx.fillText(oracleText,brandTextX,brandTextY);
+    const oracleW=ctx.measureText(oracleText).width;
+    ctx.fillStyle='#dc1f18';
+    ctx.fillText('Relphi',brandTextX+oracleW,brandTextY);
+
+    ctx.textAlign='right';
     ctx.fillStyle = '#111';
     ctx.font = '900 20px Montserrat, Arial, sans-serif';
-    ctx.textAlign = 'left';
-    ctx.textBaseline = 'top';
-    ctx.fillText(`${state.shortListName ? state.shortListName + ' · ' : ''}Drawing Board`, margin, 15);
+    ctx.fillText(`${state.shortListName ? state.shortListName + ' · ' : ''}Drawing Board`, canvas.width-margin, 14);
     ctx.font = '650 11px Montserrat, Arial, sans-serif';
     ctx.fillStyle = '#655d56';
-    ctx.fillText(`${localTimestampLabel(createdAt)} · ${slots} position${slots === 1 ? '' : 's'}`, margin, 43);
+    ctx.fillText(`${localTimestampLabel(createdAt)} · ${slots} position${slots === 1 ? '' : 's'}`, canvas.width-margin, 43);
     if (state.shortListNotes) {
+      ctx.textAlign='left';
       ctx.font = '600 12px Montserrat, Arial, sans-serif';
       ctx.fillStyle = '#332f2b';
       wrapCanvasLines(ctx, state.shortListNotes, canvas.width - margin * 2, 2).forEach((line, li) => ctx.fillText(line, margin, 66 + li * 16));
@@ -1723,37 +1760,11 @@
       const w = tableImage.width * s, h = tableImage.height * s;
       ctx.drawImage(tableImage, bgX + (bgW - w) / 2, bgY + (bgH - h) / 2, w, h);
     }
-    const [brandLogoImage, images] = await Promise.all([
-      loadCanvasSafeImage(RELPHI_EXPORT_BRAND.logo),
-      Promise.all(Array.from({ length: slots }, (_, i) => {
-        const card = cards[i];
-        const envelopeArt = rowEnvelopeArtFor(i);
-        return card ? loadCanvasSafeImage(rwsExportImagePath(card)) : envelopeArt ? loadCanvasSafeImage(envelopeArt) : Promise.resolve(null);
-      }))
-    ]);
-    // Complete the top-row lockup only after the export-safe logo is available.
-    ctx.save();
-    const brandLogoSize=28;
-    const brandPadRight=margin;
-    ctx.font='800 13px Montserrat, Arial, sans-serif';
-    const oracle='Oracle of ';
-    const relphi='Relphi';
-    const brandTextW=ctx.measureText(oracle).width;
-    ctx.font='800 13px Montserrat, Arial, sans-serif';
-    const relphiW=ctx.measureText(relphi).width;
-    const brandWidth=(brandLogoImage?brandLogoSize+9:0)+brandTextW+relphiW;
-    const brandX=Math.max(margin,canvas.width-brandPadRight-brandWidth);
-    const brandY=17;
-    if(brandLogoImage)ctx.drawImage(brandLogoImage,brandX,brandY-5,brandLogoSize,brandLogoSize);
-    const textX=brandX+(brandLogoImage?brandLogoSize+9:0);
-    ctx.textAlign='left';
-    ctx.textBaseline='top';
-    ctx.font='800 13px Montserrat, Arial, sans-serif';
-    ctx.fillStyle='#111';
-    ctx.fillText(oracle,textX,brandY);
-    ctx.fillStyle='#dc1f18';
-    ctx.fillText(relphi,textX+brandTextW,brandY);
-    ctx.restore();
+    const images = await Promise.all(Array.from({ length: slots }, (_, i) => {
+      const card = cards[i];
+      const envelopeArt = rowEnvelopeArtFor(i);
+      return card ? loadCanvasSafeImage(rwsExportImagePath(card)) : envelopeArt ? loadCanvasSafeImage(envelopeArt) : Promise.resolve(null);
+    }));
 
     const groupW = CARD_ROW_ENVELOPE_W * scale;
     const positionH = 54 * scale;
