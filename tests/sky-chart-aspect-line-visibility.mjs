@@ -254,6 +254,33 @@ await page.waitForTimeout(50);
 assert.equal(await page.locator('.sky-foundation-wheel').evaluate(wheel=>wheel.classList.contains('has-isolation')),false);
 assert.equal(await page.locator('.sky-foundation-aspect.is-row-hovered:not(.sky-foundation-aspect-hit)').count(),0);
 
+// Zero selected aspects should remove the pickup sticks without dimming the chart itself.
+await page.evaluate(()=>{
+  const control=document.querySelector('[data-aspect-filter="combined"]');
+  if(!control)throw new Error('Aspect control missing');
+  control.dataset.selectionCount='0';
+  const wheel=document.querySelector('.sky-foundation-wheel');
+  wheel?.classList.add('has-filter-focus');
+  window.dispatchEvent(new CustomEvent('relphi:sky-aspect-visibility-applied'));
+});
+await page.waitForFunction(()=>!document.querySelector('.sky-foundation-wheel')?.classList.contains('has-filter-focus'));
+const zeroAspectWheel=await page.evaluate(()=>{
+  const wheel=document.querySelector('.sky-foundation-wheel');
+  const placement=wheel?.querySelector('[data-layer="placements"] [data-sky][data-placement]');
+  const house=wheel?.querySelector('.sky-foundation-house-sector');
+  const sign=wheel?.querySelector('.sky-foundation-sign-sector,.sky-foundation-sign-glyph');
+  return{
+    focused:wheel?.classList.contains('has-filter-focus')||false,
+    placementOpacity:placement?Number(getComputedStyle(placement).opacity):1,
+    houseOpacity:house?Number(getComputedStyle(house).opacity):1,
+    signOpacity:sign?Number(getComputedStyle(sign).opacity):1
+  };
+});
+assert.equal(zeroAspectWheel.focused,false,'Zero selected aspects must leave the wheel in a neutral focus state.');
+assert.ok(zeroAspectWheel.placementOpacity>.9,'Placements must remain fully legible when all aspects are hidden.');
+assert.ok(zeroAspectWheel.houseOpacity>.9,'Houses must remain fully legible when all aspects are hidden.');
+assert.ok(zeroAspectWheel.signOpacity>.9,'Signs must remain fully legible when all aspects are hidden.');
+
 // Regression: canonical polar axes must complete configurations even with Inevitable off.
 await page.evaluate(()=>{
   localStorage.setItem('relphiSkyConfigurationInevitableV1','false');
