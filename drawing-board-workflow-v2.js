@@ -201,6 +201,18 @@
     const scale = rows <= 3 ? .62 : .52;
     return labels.map((label,index) => position(`position-${index+1}`,label,index+1,transform(xs[index%cols],ys[Math.floor(index/cols)],scale)));
   }
+  function singleRowPositions(labels) {
+    const count=Math.max(1,labels.length);
+    const scale=count<=5?.88:Math.min(.88,(CANVAS_W/(CARD_W*count))*.92);
+    const cardWidth=(CARD_W*scale)/CANVAS_W;
+    const totalWidth=cardWidth*count;
+    const gap=count>1?Math.max(0,(1-totalWidth)/(count+1)):0;
+    return labels.map((label,index)=>{
+      const x=gap+index*(cardWidth+gap);
+      return position(`position-${index+1}`,label,index+1,transform(x,.24,scale));
+    });
+  }
+
   function genericPositions(labels) {
     const count = Math.max(1, labels.length);
     if (count <= 12) return legacyGenericPositions(labels);
@@ -402,10 +414,10 @@
     { id:'situation-challenge-strategy-3', name:'Situation · Challenge · Strategy', labels:['Situation','Challenge','Strategy'] },
     { id:'choice-path-3', name:'Choice Path', labels:['Option A','Option B','Advice'] },
     { id:'relationship-check-in-5', name:'Relationship Check-In', labels:['You','Other','Bond','Challenge','Next step'] },
-    { id:'hope-and-comfort-5', name:'Hope and Comfort', labels:['Confusion','Comfort','Lesson','Support','Next step'] }
+    { id:'hope-and-comfort-5', name:'Hope and Comfort', labels:['Confusion','Comfort','Lesson','Support','Next step'], singleRow:true }
   ].map(item => ({
     version:1,id:item.id,name:item.name,cardCount:item.labels.length,source:'shipped',editable:false,
-    positions:genericPositions(item.labels),rules:{ allowReversals:true,allowRepeats:false,drawScope:'full' }
+    positions:item.singleRow?singleRowPositions(item.labels):genericPositions(item.labels),rules:{ allowReversals:true,allowRepeats:false,drawScope:'full' }
   })).concat([
     SATURN_SQUARE,
     CELTIC_CROSS,
