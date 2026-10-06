@@ -2928,3 +2928,134 @@ body.relphi-attune-open{overflow:hidden!important}
   justify-content:center!important;
   line-height:1!important;
 }
+
+
+/* Bespoke card options occupy the intentional middle slot in the top question toolbar. */
+#shortListPanel .relphi-question-toolbar{
+  display:grid!important;
+  grid-template-columns:max-content minmax(0,1fr) max-content!important;
+  align-items:center!important;
+  gap:.45rem!important;
+}
+#shortListPanel .relphi-question-toolbar>.relphi-question-select-all{
+  margin:0!important;
+  white-space:nowrap!important;
+}
+#shortListPanel .relphi-question-toolbar-settings{
+  min-width:0!important;
+  display:flex!important;
+  align-items:center!important;
+  gap:.38rem!important;
+  overflow:visible!important;
+}
+#shortListPanel .relphi-question-toolbar-pack{
+  flex:1 1 12rem!important;
+  min-width:8.8rem!important;
+  display:grid!important;
+  grid-template-columns:minmax(0,1fr) 2.05rem!important;
+  align-items:center!important;
+  gap:.3rem!important;
+}
+#shortListPanel .relphi-question-toolbar-settings select,
+#shortListPanel .relphi-question-toolbar-settings input[type="number"]{
+  box-sizing:border-box!important;
+  min-height:2.15rem!important;
+  height:2.15rem!important;
+  margin:0!important;
+  border:1px solid #9e958d!important;
+  border-radius:7px!important;
+  background:#fff!important;
+  color:#171412!important;
+  font:inherit!important;
+  font-size:.7rem!important;
+  font-weight:800!important;
+}
+#shortListPanel .relphi-question-toolbar-settings select{
+  width:100%!important;
+  min-width:0!important;
+  padding:.32rem 1.55rem .32rem .52rem!important;
+}
+#shortListPanel .relphi-question-toolbar-pack>.relphi-subpack-create{
+  display:grid!important;
+  place-items:center!important;
+  width:2.05rem!important;
+  min-width:2.05rem!important;
+  max-width:2.05rem!important;
+  height:2.05rem!important;
+  min-height:2.05rem!important;
+  max-height:2.05rem!important;
+  padding:0!important;
+  border-radius:50%!important;
+  font-size:1.15rem!important;
+  font-weight:650!important;
+  line-height:1!important;
+}
+#shortListPanel .relphi-question-toolbar-cards{
+  flex:0 0 auto!important;
+  display:flex!important;
+  align-items:center!important;
+  gap:.28rem!important;
+  margin:0!important;
+  white-space:nowrap!important;
+  color:#4f4741!important;
+  font-size:.66rem!important;
+  font-weight:850!important;
+}
+#shortListPanel .relphi-question-toolbar-cards>input{
+  width:3.15rem!important;
+  min-width:3.15rem!important;
+  max-width:3.15rem!important;
+  padding:.3rem .4rem!important;
+}
+#shortListPanel .relphi-question-toolbar-link{
+  flex:1 1 10.5rem!important;
+  min-width:7.8rem!important;
+  margin:0!important;
+}
+#shortListPanel .relphi-question-toolbar-check{
+  flex:0 0 auto!important;
+  display:inline-flex!important;
+  align-items:center!important;
+  gap:.26rem!important;
+  margin:0!important;
+  white-space:nowrap!important;
+  color:#5b514a!important;
+  font-size:.65rem!important;
+  font-weight:850!important;
+}
+#shortListPanel .relphi-question-toolbar-check input{
+  width:.95rem!important;
+  height:.95rem!important;
+  margin:0!important;
+}
+#shortListPanel .relphi-question-toolbar-actions{
+  display:flex!important;
+  align-items:center!important;
+  gap:.32rem!important;
+}
+@media(max-width:980px){
+  #shortListPanel .relphi-question-toolbar{
+    grid-template-columns:max-content minmax(0,1fr)!important;
+  }
+  #shortListPanel .relphi-question-toolbar-actions{
+    grid-column:2!important;
+    justify-self:end!important;
+  }
+  #shortListPanel .relphi-question-toolbar-settings{
+    flex-wrap:wrap!important;
+  }
+}
+@media(max-width:700px){
+  #shortListPanel .relphi-question-toolbar{
+    grid-template-columns:1fr!important;
+    align-items:start!important;
+  }
+  #shortListPanel .relphi-question-toolbar>.relphi-question-select-all,
+  #shortListPanel .relphi-question-toolbar-settings,
+  #shortListPanel .relphi-question-toolbar-actions{
+    grid-column:1!important;
+  }
+  #shortListPanel .relphi-question-toolbar-actions{
+    justify-self:end!important;
+  }
+}
