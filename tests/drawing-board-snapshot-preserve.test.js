@@ -4,6 +4,9 @@ const fs = require('node:fs');
 const js = fs.readFileSync('drawing-board-workflow-v2.js','utf8');
 
 assert.match(js,/const nativeExportIds=\['snapshotCardRowArrangement'/);
+assert.match(js,/RelphiDrawingBoardSnapshot\?\.download/);
+assert.match(js,/relphiSnapshotBridgeBound/);
+assert.match(js,/stopImmediatePropagation/);
 assert.match(js,/const preservedExports=new Map/);
 assert.match(js,/preservedExports\.forEach\(node=>node\.remove\(\)\)/);
 assert.match(js,/const node=preservedExports\.get\(id\)\|\|root\.querySelector/);

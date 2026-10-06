@@ -144,7 +144,7 @@
 
   function refreshDrawingBoardControlAssets() {
     const link = document.querySelector('link[href^="drawing-board-workflow-v2.css"]');
-    if (link) link.href = 'drawing-board-workflow-v2.css?v=75';
+    if (link) link.href = 'drawing-board-workflow-v2.css?v=86';
     if (!document.getElementById('relphi-drawing-board-collapse-contract')) {
       const style = document.createElement('style');
       style.id = 'relphi-drawing-board-collapse-contract';
@@ -165,14 +165,14 @@
       refreshDrawingBoardControlAssets();
       appendScript('tarot-date-sky-bridge-v1.js?v=4');
       appendScript('tarot-search-list-v1.js?v=1');
-      appendScript('tarot-reversed-copy-v1.js?v=1');
+      appendScript('tarot-reversed-copy-v1.js?v=2');
       appendScript('tarot-custom-subpacks-v1.js?v=2');
       appendScript('tarot-card-selection-scroll-v1.js?v=2', function () {
         requestAnimationFrame(function () { window.RelphiTarotCardSelectionScroll?.scrollFromLocation(); });
       });
-      appendScript('drawing-board-workflow-v2.js?v=114', function () {
+      appendScript('drawing-board-workflow-v2.js?v=126', function () {
         appendScript('relphi-sky-connector-v1.js?v=2');
-        appendScript('drawing-board-crowley-harmonic-v1.js?v=4', function () {
+        appendScript('drawing-board-crowley-harmonic-v1.js?v=6', function () {
           window.dispatchEvent(new Event('relphi:tarot-enhancements-ready'));
         });
       });

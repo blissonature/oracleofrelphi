@@ -201,6 +201,19 @@
     const scale = rows <= 3 ? .62 : .52;
     return labels.map((label,index) => position(`position-${index+1}`,label,index+1,transform(xs[index%cols],ys[Math.floor(index/cols)],scale)));
   }
+  function singleRowPositions(labels) {
+    const count=Math.max(1,labels.length);
+    const usableWidth=CANVAS_W-(START_EDGE_GUTTER*2);
+    const scale=Math.min(.88,usableWidth/(CARD_W*count));
+    const cardWidth=CARD_W*scale;
+    const totalWidth=cardWidth*count;
+    const startX=(CANVAS_W-totalWidth)/2;
+    return labels.map((label,index)=>{
+      const x=(startX+(index*cardWidth))/CANVAS_W;
+      return position(`position-${index+1}`,label,index+1,transform(x,.24,scale));
+    });
+  }
+
   function genericPositions(labels) {
     const count = Math.max(1, labels.length);
     if (count <= 12) return legacyGenericPositions(labels);
@@ -297,13 +310,13 @@
       position('covering', CELTIC_LABELS[0], 1, transform(.20,.34,.48,0,20), { role:'covering' }),
       position('crossing', CELTIC_LABELS[1], 2, transform(.20,.34,.48,90,30), {
         role:'crossing', crosses:'covering',
-        canonicalTransform:transform(.35,.34,.48,0,30),
+        canonicalTransform:transform(.20,.34,.48,90,30),
         crossedTransform:transform(.20,.34,.48,90,30)
       }),
       position('crowning', CELTIC_LABELS[2], 3, transform(.20,.02,.48,0,4), { role:'crowning' }),
       position('beneath', CELTIC_LABELS[3], 4, transform(.20,.66,.48,0,4), { role:'beneath' }),
       position('behind', CELTIC_LABELS[4], 5, transform(.015,.34,.48,0,4), { role:'behind' }),
-      position('before', CELTIC_LABELS[5], 6, transform(.49,.34,.48,0,4), { role:'before' }),
+      position('before', CELTIC_LABELS[5], 6, transform(.385,.34,.48,0,4), { role:'before' }),
       position('self', CELTIC_LABELS[6], 7, transform(.70,.69,.44,0,4), { role:'self' }),
       position('house', CELTIC_LABELS[7], 8, transform(.70,.46,.44,0,4), { role:'house' }),
       position('hopes-fears', CELTIC_LABELS[8], 9, transform(.70,.23,.44,0,4), { role:'hopes-fears' }),
@@ -338,7 +351,7 @@
   ];
   const HOUSE_POLARITIES = {
     version:1,id:'six-polarities-houses-12',name:'Six Polarities · Houses',cardCount:12,source:'shipped',editable:false,
-    positions:genericPositions(HOUSE_POLARITY_LABELS).map((item,index) => ({ ...item, id:`polarity-${index + 1}` })),
+    positions:singleRowPositions(HOUSE_POLARITY_LABELS).map((item,index) => ({ ...item, id:`polarity-${index + 1}` })),
     rules:{ allowReversals:true, allowRepeats:false, drawScope:'full' }
   };
 
@@ -405,7 +418,7 @@
     { id:'hope-and-comfort-5', name:'Hope and Comfort', labels:['Confusion','Comfort','Lesson','Support','Next step'] }
   ].map(item => ({
     version:1,id:item.id,name:item.name,cardCount:item.labels.length,source:'shipped',editable:false,
-    positions:genericPositions(item.labels),rules:{ allowReversals:true,allowRepeats:false,drawScope:'full' }
+    positions:singleRowPositions(item.labels),rules:{ allowReversals:true,allowRepeats:false,drawScope:'full' }
   })).concat([
     SATURN_SQUARE,
     CELTIC_CROSS,
@@ -440,7 +453,7 @@
       }),
       rules:{allowReversals:false,allowRepeats:false,drawScope:'full'}
     },
-    {version:1,id:'focus-1',name:'Focus',cardCount:1,source:'shipped',editable:false,positions:genericPositions(['Focus']),rules:{allowReversals:true,allowRepeats:false,drawScope:'full'}}
+    {version:1,id:'focus-1',name:'Focus',cardCount:1,source:'shipped',editable:false,positions:singleRowPositions(['Focus']),rules:{allowReversals:true,allowRepeats:false,drawScope:'full'}}
   ]);
 
   function readCustomTemplates() {
@@ -1313,6 +1326,7 @@
     };
     const begin = event => {
       if (event.touches.length !== 2) return;
+      if (!zoomToolbarVisibleForState(root)) return;
       const input = control();
       if (!input) return;
       pinching = true;
@@ -1584,7 +1598,30 @@
       actions.appendChild(node);
       return node;
     };
-    take('snapshotCardRowArrangement','Snapshot','Snapshot the current board arrangement at zoom extents');
+    const snapshotButton=take('snapshotCardRowArrangement','Snapshot','Snapshot the current board arrangement at zoom extents');
+    if(snapshotButton && snapshotButton.dataset.relphiSnapshotBridgeBound!=='true'){
+      snapshotButton.dataset.relphiSnapshotBridgeBound='true';
+      snapshotButton.addEventListener('click',async event=>{
+        const action=window.RelphiDrawingBoardSnapshot?.download;
+        if(typeof action!=='function')return;
+        // The button may have been relocated after tarot-app bound its native
+        // listener. Own this click at the document-chrome layer so it cannot
+        // become inert when that native render node is moved or replaced.
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        snapshotButton.disabled=true;
+        if(status)status.textContent='Creating snapshot…';
+        try{
+          const ok=await action();
+          if(status)status.textContent=ok===false?'Snapshot failed.':'Snapshot ready.';
+        }catch(error){
+          console.error('Drawing Board snapshot failed.',error);
+          if(status)status.textContent='Snapshot failed: '+String(error?.message||error||'unknown error').replace(/\s+/g,' ').slice(0,120);
+        }finally{
+          if(snapshotButton.isConnected)snapshotButton.disabled=false;
+        }
+      },true);
+    }
     take('downloadRowHtml','Download','Download the reading as HTML with card art and text');
 
     const journal=document.createElement('button');
@@ -1652,13 +1689,14 @@
     }).join('');
   }
   function bespokeDefaultQuestionSettings(draft) {
-    const saved=draft?.questionDefaults || {};
+    const pack=String(draft?.pack||'full');
     return {
-      pack:String(saved.pack || draft?.pack || 'full'),
-      cardCount:Math.max(1,Math.min(12,Number(saved.cardCount)||1)),
-      linkTo:String(saved.linkTo ?? ''),
-      reversals:saved.reversals ?? (draft?.reversals!==false),
-      repeats:saved.repeats ?? !!draft?.repeats
+      // New questions use the reading's baseline, never the last toolbar edit.
+      pack:pack&&pack!=='question-by-question'?pack:'full',
+      cardCount:1,
+      linkTo:'',
+      reversals:draft?.reversals!==false,
+      repeats:!!draft?.repeats
     };
   }
   function normalizedBespokeQuestionSettings(draft,index) {
@@ -2326,24 +2364,20 @@
   }
   function bespokeQuestionControllerMarkup(draft) {
     const defaults=bespokeDefaultQuestionSettings(draft);
-    return '<section class="relphi-question-controller" aria-label="Question settings">'+
-      '<div class="relphi-question-controller-head"><strong>Question controller</strong><span id="relphiQuestionControllerStatus">Defaults for new questions.</span></div>'+
-      '<div class="relphi-question-controller-fields">'+
-        '<label>Sub-pack<div class="relphi-subpack-control"><select id="relphiQuestionControllerPack" class="relphi-select">'+packOptions(defaults.pack)+'</select><button type="button" class="relphi-subpack-create" data-create-subpack aria-label="Create a sub-pack">+</button></div></label>'+
-        '<label class="relphi-card-count-controller">Cards per question<div><input id="relphiQuestionControllerCards" class="relphi-input" type="number" inputmode="numeric" min="1" max="12" step="1" value="'+defaults.cardCount+'" aria-label="Cards per new question"><span>× Cards</span></div></label>'+
-        '<label>Share card with<select id="relphiQuestionControllerLink" class="relphi-select"><option value="">No link</option></select></label>'+
-        '<label class="relphi-question-controller-check"><input id="relphiQuestionControllerReversals" type="checkbox" '+(defaults.reversals?'checked':'')+'> Reversals</label>'+
-        '<label class="relphi-question-controller-check"><input id="relphiQuestionControllerRepeats" type="checkbox" '+(defaults.repeats?'checked':'')+'> Repeats</label>'+
-      '</div>'+
-    '</section>';
+    return '<div class="relphi-question-toolbar-settings" aria-label="Card options for selected questions">'+
+      '<div class="relphi-question-toolbar-pack" title="Sub-pack"><select id="relphiQuestionControllerPack" class="relphi-select" aria-label="Sub-pack">'+packOptions(defaults.pack)+'</select><button type="button" class="relphi-subpack-create" data-create-subpack aria-label="Create a sub-pack"><span aria-hidden="true"></span></button></div>'+
+      '<label class="relphi-question-toolbar-cards" title="Cards per question"><input id="relphiQuestionControllerCards" class="relphi-input" type="number" inputmode="numeric" min="1" max="12" step="1" value="'+defaults.cardCount+'" aria-label="Cards per selected question"><span>× Cards</span></label>'+
+      '<label class="relphi-question-toolbar-link" title="Share card with"><select id="relphiQuestionControllerLink" class="relphi-select" aria-label="Share card with"><option value="">No link</option></select></label>'+
+      '<label class="relphi-question-toolbar-check"><input id="relphiQuestionControllerReversals" type="checkbox" '+(defaults.reversals?'checked':'')+'> <span>Reversals</span></label>'+
+      '<label class="relphi-question-toolbar-check"><input id="relphiQuestionControllerRepeats" type="checkbox" '+(defaults.repeats?'checked':'')+'> <span>Repeats</span></label>'+
+    '</div>';
   }
 
   function bespokeMarkup(draft,hasCards) {
     const clonedFrom=!draft.templateId&&draft.basedOnTemplateId?templateById(draft.basedOnTemplateId):null;
     return '<section class="relphi-referent-panel">'+
       (clonedFrom?'<div class="relphi-template-clone-note"><strong>Editing a copy of '+escapeHtml(clonedFrom.name)+'</strong><span>The original template stays untouched. Name and save this Bespoke version if you want to keep it; you can also continue without saving.</span></div>':'')+
-      '<div class="relphi-question-toolbar"><label><input type="checkbox" id="relphiSelectAllQuestions" aria-label="Select all questions for editing"> <span>Select all</span></label><button type="button" id="relphiCopyBespokeQuestions" class="relphi-button relphi-question-copy" aria-label="Copy all Bespoke questions and advanced settings">Copy</button><button type="button" id="relphiMoveQuestionsUp" aria-label="Move selected questions up">↑</button><button type="button" id="relphiMoveQuestionsDown" aria-label="Move selected questions down">↓</button><button type="button" id="relphiDeleteQuestions" class="relphi-stroke-icon relphi-stroke-x" aria-label="Delete selected questions"><span aria-hidden="true"></span></button><button type="button" id="relphiAddPosition" class="relphi-stroke-icon relphi-stroke-plus" aria-label="Add question" '+(hasCards||draft.labels.length>=MAX_POSITIONS?'disabled':'')+'><span aria-hidden="true"></span></button></div>'+
-      bespokeQuestionControllerMarkup(draft)+
+      '<div class="relphi-question-toolbar"><label class="relphi-question-select-all"><input type="checkbox" id="relphiSelectAllQuestions" aria-label="Select all questions for editing"> <span>Select all</span></label>'+bespokeQuestionControllerMarkup(draft)+'<div class="relphi-question-toolbar-actions"><button type="button" id="relphiCopyBespokeQuestions" class="relphi-button relphi-question-copy" aria-label="Copy all Bespoke questions and advanced settings">Copy</button><button type="button" id="relphiMoveQuestionsUp" class="relphi-question-icon-button" aria-label="Move selected questions up"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 18V6M7 11l5-5 5 5"></path></svg></button><button type="button" id="relphiMoveQuestionsDown" class="relphi-question-icon-button" aria-label="Move selected questions down"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 6v12M7 13l5 5 5-5"></path></svg></button><button type="button" id="relphiDeleteQuestions" class="relphi-question-icon-button" aria-label="Delete selected questions"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M7 7l10 10M17 7L7 17"></path></svg></button><button type="button" id="relphiAddPosition" class="relphi-question-icon-button" aria-label="Add question" '+(hasCards||draft.labels.length>=MAX_POSITIONS?'disabled':'')+'><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 6v12M6 12h12"></path></svg></button></div></div>'+
       '<div id="relphiPositionLabels">'+labelsMarkup(draft.labels,draft)+'</div>'+
       '<div class="relphi-bespoke-appearance-host"></div>'+
       '<div class="relphi-template-save"><input id="relphiTemplateName" class="'+((draft.templateName||'Unnamed Template')==='Unnamed Template'?'is-unnamed':'')+'" type="text" maxlength="60" aria-label="Template name" value="'+escapeHtml(draft.templateName||'Unnamed Template')+'" '+(hasCards?'disabled':'')+'><button type="button" id="relphiSaveTemplate" '+(hasCards?'disabled':'')+'>Save template</button></div>'+
@@ -2682,12 +2716,12 @@
     });
     const selectedQuestionIndexes=()=>Array.from(drawer.querySelectorAll('[data-question-select]:checked')).map(box=>Number(box.dataset.questionSelect)).filter(Number.isInteger).sort((a,b)=>a-b);
     const controller={
-      status:drawer.querySelector('#relphiQuestionControllerStatus'),
       pack:drawer.querySelector('#relphiQuestionControllerPack'),
       cards:drawer.querySelector('#relphiQuestionControllerCards'),
       link:drawer.querySelector('#relphiQuestionControllerLink'),
       reversals:drawer.querySelector('#relphiQuestionControllerReversals'),
-      repeats:drawer.querySelector('#relphiQuestionControllerRepeats')
+      repeats:drawer.querySelector('#relphiQuestionControllerRepeats'),
+      createPack:drawer.querySelector('[data-create-subpack]')
     };
     const ensureQuestionSettings=index=>{
       draft.positionSettings ||= [];
@@ -2705,15 +2739,14 @@
       if(down)down.disabled=!any||allSelected||selected[selected.length-1]===draft.labels.length-1;
       if(del)del.disabled=!any;
       if(all){all.checked=allSelected;all.indeterminate=any&&!allSelected}
-      Object.values(controller).forEach(node=>{if(node&&'disabled' in node)node.disabled=false});
-      if(controller.status)controller.status.textContent=!any?'Defaults for new questions.':selected.length===1?'Editing Question '+(selected[0]+1):'Editing '+selected.length+' questions';
+      Object.values(controller).forEach(node=>{if(node&&'disabled' in node)node.disabled=!any});
       if(!any){
-        const defaults=bespokeDefaultQuestionSettings(draft);
-        if(controller.pack){controller.pack.innerHTML=packOptions(defaults.pack);controller.pack.value=defaults.pack}
-        if(controller.cards)controller.cards.value=String(defaults.cardCount);
+        const baseline=bespokeDefaultQuestionSettings(draft);
+        if(controller.pack){controller.pack.innerHTML=packOptions(baseline.pack);controller.pack.value=baseline.pack}
+        if(controller.cards)controller.cards.value=String(baseline.cardCount);
         if(controller.link){controller.link.innerHTML='<option value="">No link</option>';controller.link.value=''}
-        if(controller.reversals){controller.reversals.checked=defaults.reversals;controller.reversals.indeterminate=false}
-        if(controller.repeats){controller.repeats.checked=defaults.repeats;controller.repeats.indeterminate=false}
+        if(controller.reversals){controller.reversals.checked=baseline.reversals;controller.reversals.indeterminate=false}
+        if(controller.repeats){controller.repeats.checked=baseline.repeats;controller.repeats.indeterminate=false}
         return;
       }
       const settings=selected.map(ensureQuestionSettings);
@@ -2747,15 +2780,7 @@
       syncQuestionController();
       return true;
     };
-    const applyQuestionDefaults=(patch)=>{
-      draft.questionDefaults={...bespokeDefaultQuestionSettings(draft),...patch,linkTo:''};
-      if(patch.pack)draft.pack=patch.pack;
-      if(patch.reversals!==undefined)draft.reversals=!!patch.reversals;
-      if(patch.repeats!==undefined)draft.repeats=!!patch.repeats;
-      markQuestionEditCustom(drawer,draft);
-      syncQuestionController();
-    };
-    const applyQuestionController=(patch)=>selectedQuestionIndexes().length?applyToSelected(patch):applyQuestionDefaults(patch);
+    const applyQuestionController=(patch)=>selectedQuestionIndexes().length?applyToSelected(patch):false;
     drawer.querySelector('#relphiSelectAllQuestions')?.addEventListener('change',event=>{drawer.querySelectorAll('[data-question-select]').forEach(box=>{box.checked=event.target.checked});syncQuestionController()});
     drawer.querySelectorAll('[data-question-select]').forEach(box=>box.addEventListener('change',syncQuestionController));
     controller.pack?.addEventListener('change',()=>{if(controller.pack.value&&controller.pack.value!=='__mixed__')applyQuestionController({pack:controller.pack.value})});

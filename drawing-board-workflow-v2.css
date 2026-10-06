@@ -49,11 +49,8 @@
 #shortListPanel .card-row-placeholder-item>.card-row-drop-card>.card-row-drop-card-inner{padding:.6rem!important;font-size:.68rem!important;font-weight:800!important;text-align:center!important;opacity:.72!important}
 #shortListPanel .card-row-card-wrap::before,#shortListPanel .card-row-card-wrap::after,#shortListPanel .card-row-drop-card::before,#shortListPanel .card-row-drop-card::after{content:none!important;display:none!important}
 
-/* Traditional crossing rotates the card face but not its position label. */
-#shortListPanel.relphi-celtic-crossed .card-row-board>.card-row-item[data-relphi-position-id="crossing"]{transform:scale(var(--row-card-scale,1))!important}
-#shortListPanel.relphi-celtic-crossed .card-row-board>.card-row-item[data-relphi-position-id="crossing"]>.card-row-card-wrap,
-#shortListPanel.relphi-celtic-crossed .card-row-board>.card-row-item[data-relphi-position-id="crossing"]>.card-row-drop-card{transform:rotate(90deg)!important;transform-origin:50% 50%!important}
-#shortListPanel.relphi-celtic-crossed .card-row-board>.card-row-item[data-relphi-position-id="crossing"]>.card-row-position-panel{left:calc(50% + 2.4rem)!important;right:auto!important;top:0!important;bottom:auto!important;width:7rem!important;max-width:7rem!important;min-width:7rem!important;margin:0!important;transform:none!important;text-align:center!important}
+/* Position stickers belong to the card geometry: the item rotates as one unit,
+   so the sticker stays attached to the card's top edge and shares its orientation. */
 
 #shortListPanel .card-row-workspace-toolbar.relphi-board-controller{position:absolute!important;left:.65rem!important;bottom:.65rem!important;right:auto!important;top:auto!important;z-index:1500!important;display:flex!important;align-items:flex-end!important;gap:.4rem!important;width:auto!important;max-width:calc(100% - 1.3rem)!important;margin:0!important;padding:.38rem!important;border:1px solid rgba(17,17,17,.22)!important;border-radius:11px!important;background:rgba(255,253,248,.94)!important;box-shadow:0 8px 24px rgba(0,0,0,.18)!important;backdrop-filter:blur(8px)!important}
 #shortListPanel .relphi-zoom-row{display:flex!important;align-items:center!important;gap:.3rem!important;min-width:0!important}
@@ -632,8 +629,8 @@ body.relphi-attune-open{overflow:hidden!important}
 
 /* Relphi Recursive Reading · seven depths, twenty-two cards, six virtual red-circle portals */
 #shortListPanel .relphi-recursion-template-note{display:grid!important;gap:.28rem!important;margin:.55rem 0 0!important;padding:.72rem .78rem!important;border:1px solid rgba(166,23,18,.24)!important;border-left:3px solid #a61712!important;border-radius:8px!important;background:#fffaf3!important;color:#302925!important}
-#shortListPanel .relphi-recursion-template-note strong{font-family:Georgia,"Times New Roman",serif!important;font-size:.9rem!important;font-weight:700!important}
-#shortListPanel .relphi-recursion-template-note span{color:#625851!important;font-size:.7rem!important;line-height:1.45!important}
+#shortListPanel .relphi-recursion-template-note strong{font-family:'Montserrat',Arial,sans-serif!important;font-size:.82rem!important;font-weight:850!important;line-height:1.25!important;letter-spacing:0!important}
+#shortListPanel .relphi-recursion-template-note span{font-family:'Montserrat',Arial,sans-serif!important;color:#625851!important;font-size:.68rem!important;font-weight:600!important;line-height:1.4!important}
 
 #shortListPanel.relphi-recursion-reading .card-row-board>.card-row-item[data-relphi-recursion-level]:not(.is-recursion-level-active){display:none!important}
 #shortListPanel.relphi-recursion-reading .card-row-board>.card-row-item.is-recursion-level-active{display:block!important;z-index:3!important}
@@ -2927,4 +2924,217 @@ body.relphi-attune-open{overflow:hidden!important}
   align-items:center!important;
   justify-content:center!important;
   line-height:1!important;
+}
+
+
+/* Bespoke card options occupy the intentional middle slot in one top row. */
+#shortListPanel .relphi-question-toolbar{
+  display:grid!important;
+  grid-template-columns:max-content minmax(0,1fr) max-content!important;
+  align-items:center!important;
+  gap:.45rem!important;
+  width:100%!important;
+  min-width:0!important;
+}
+#shortListPanel .relphi-question-toolbar>.relphi-question-select-all{
+  margin:0!important;
+  white-space:nowrap!important;
+}
+#shortListPanel .relphi-question-toolbar-settings{
+  min-width:0!important;
+  display:grid!important;
+  grid-template-columns:minmax(7.5rem,1.25fr) max-content minmax(6.75rem,.9fr) max-content max-content!important;
+  align-items:center!important;
+  gap:.34rem!important;
+  white-space:nowrap!important;
+  overflow-x:auto!important;
+  overflow-y:hidden!important;
+  scrollbar-width:none!important;
+}
+#shortListPanel .relphi-question-toolbar-settings::-webkit-scrollbar{display:none!important}
+#shortListPanel .relphi-question-toolbar-pack{
+  min-width:0!important;
+  display:grid!important;
+  grid-template-columns:minmax(0,1fr) 2rem!important;
+  align-items:center!important;
+  gap:.28rem!important;
+}
+#shortListPanel .relphi-question-toolbar-settings select,
+#shortListPanel .relphi-question-toolbar-settings input[type="number"]{
+  box-sizing:border-box!important;
+  min-height:2.15rem!important;
+  height:2.15rem!important;
+  margin:0!important;
+  border:1px solid #9e958d!important;
+  border-radius:7px!important;
+  background:#fff!important;
+  color:#171412!important;
+  font:inherit!important;
+  font-size:.7rem!important;
+  font-weight:800!important;
+}
+#shortListPanel .relphi-question-toolbar-settings select{
+  width:100%!important;
+  min-width:0!important;
+  padding:.32rem 1.45rem .32rem .48rem!important;
+}
+#shortListPanel .relphi-question-toolbar-pack>.relphi-subpack-create{
+  display:grid!important;
+  place-items:center!important;
+  width:2rem!important;
+  min-width:2rem!important;
+  max-width:2rem!important;
+  height:2rem!important;
+  min-height:2rem!important;
+  max-height:2rem!important;
+  padding:0!important;
+  border-radius:50%!important;
+  line-height:1!important;
+}
+#shortListPanel .relphi-question-toolbar-pack>.relphi-subpack-create>span{
+  position:relative!important;
+  display:block!important;
+  width:.74rem!important;
+  height:.74rem!important;
+}
+#shortListPanel .relphi-question-toolbar-pack>.relphi-subpack-create>span::before,
+#shortListPanel .relphi-question-toolbar-pack>.relphi-subpack-create>span::after{
+  content:''!important;
+  position:absolute!important;
+  left:50%!important;
+  top:50%!important;
+  width:.74rem!important;
+  height:.14rem!important;
+  border-radius:.07rem!important;
+  background:currentColor!important;
+  transform:translate(-50%,-50%)!important;
+}
+#shortListPanel .relphi-question-toolbar-pack>.relphi-subpack-create>span::after{
+  transform:translate(-50%,-50%) rotate(90deg)!important;
+}
+#shortListPanel .relphi-question-toolbar-cards{
+  display:flex!important;
+  align-items:center!important;
+  gap:.24rem!important;
+  margin:0!important;
+  white-space:nowrap!important;
+  color:#4f4741!important;
+  font-size:.64rem!important;
+  font-weight:850!important;
+}
+#shortListPanel .relphi-question-toolbar-cards>input{
+  width:3rem!important;
+  min-width:3rem!important;
+  max-width:3rem!important;
+  padding:.3rem .38rem!important;
+}
+#shortListPanel .relphi-question-toolbar-link{
+  min-width:0!important;
+  margin:0!important;
+}
+#shortListPanel .relphi-question-toolbar-check{
+  display:inline-flex!important;
+  align-items:center!important;
+  gap:.24rem!important;
+  margin:0!important;
+  white-space:nowrap!important;
+  color:#5b514a!important;
+  font-size:.64rem!important;
+  font-weight:850!important;
+}
+#shortListPanel .relphi-question-toolbar-check input{
+  width:.92rem!important;
+  height:.92rem!important;
+  margin:0!important;
+}
+#shortListPanel .relphi-question-toolbar-actions{
+  display:flex!important;
+  align-items:center!important;
+  flex-wrap:nowrap!important;
+  gap:.32rem!important;
+}
+#shortListPanel .relphi-question-toolbar-settings :disabled{
+  opacity:.48!important;
+  cursor:not-allowed!important;
+}
+
+/* The Bespoke Add button uses explicit SVG geometry so both strokes are identical and truly centered. */
+#shortListPanel .relphi-question-toolbar #relphiAddPosition>span{display:none!important}
+#shortListPanel .relphi-question-toolbar #relphiAddPosition>svg{
+  display:block!important;
+  width:1.14rem!important;
+  height:1.14rem!important;
+  overflow:visible!important;
+  fill:none!important;
+  stroke:currentColor!important;
+  stroke-width:2.4!important;
+  stroke-linecap:round!important;
+  stroke-linejoin:round!important;
+  shape-rendering:geometricPrecision!important;
+}
+
+/* Bespoke move/delete/add controls are one icon family: same box, stroke, optical scale, and disabled treatment. */
+#shortListPanel .relphi-question-toolbar-actions>.relphi-question-icon-button{
+  display:grid!important;
+  place-items:center!important;
+  width:2.25rem!important;
+  min-width:2.25rem!important;
+  max-width:2.25rem!important;
+  height:2.25rem!important;
+  min-height:2.25rem!important;
+  max-height:2.25rem!important;
+  margin:0!important;
+  padding:0!important;
+  border:1px solid #b9afa7!important;
+  border-radius:7px!important;
+  background:#fff!important;
+  color:#111!important;
+  box-sizing:border-box!important;
+}
+#shortListPanel .relphi-question-toolbar-actions>.relphi-question-icon-button>svg{
+  display:block!important;
+  width:1.14rem!important;
+  height:1.14rem!important;
+  overflow:visible!important;
+  fill:none!important;
+  stroke:currentColor!important;
+  stroke-width:2.35!important;
+  stroke-linecap:round!important;
+  stroke-linejoin:round!important;
+  shape-rendering:geometricPrecision!important;
+}
+#shortListPanel .relphi-question-toolbar-actions>.relphi-question-icon-button:disabled{
+  color:#9a9a9a!important;
+  opacity:.42!important;
+  background:#fff!important;
+}
+
+
+/* Crafted path disclosure uses the exact Sky Connector single-chevron geometry. */
+#shortListPanel .relphi-referent-path{
+  position:relative!important;
+  padding-right:2.15rem!important;
+}
+#shortListPanel .relphi-referent-path::after{
+  content:''!important;
+  position:absolute!important;
+  right:.72rem!important;
+  top:50%!important;
+  width:.7rem!important;
+  height:.47rem!important;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M2 2l4 4 4-4' fill='none' stroke='%23111' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")!important;
+  background-repeat:no-repeat!important;
+  background-position:center!important;
+  background-size:.7rem auto!important;
+  transform:translateY(-50%)!important;
+  transform-origin:center!important;
+  transition:transform .14s ease!important;
+  opacity:.78!important;
+  pointer-events:none!important;
+}
+#shortListPanel .relphi-referent-path[aria-expanded="true"]::after{
+  transform:translateY(-50%) rotate(180deg)!important;
+}
+#shortListPanel .relphi-referent-path:disabled::after{
+  opacity:.35!important;
 }
