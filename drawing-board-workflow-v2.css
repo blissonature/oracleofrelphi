@@ -3065,8 +3065,8 @@ body.relphi-attune-open{overflow:hidden!important}
 #shortListPanel .relphi-question-toolbar #relphiAddPosition>span{display:none!important}
 #shortListPanel .relphi-question-toolbar #relphiAddPosition>svg{
   display:block!important;
-  width:.92rem!important;
-  height:.92rem!important;
+  width:1.14rem!important;
+  height:1.14rem!important;
   overflow:visible!important;
   fill:none!important;
   stroke:currentColor!important;
@@ -3096,8 +3096,8 @@ body.relphi-attune-open{overflow:hidden!important}
 }
 #shortListPanel .relphi-question-toolbar-actions>.relphi-question-icon-button>svg{
   display:block!important;
-  width:1.28rem!important;
-  height:1.28rem!important;
+  width:1.14rem!important;
+  height:1.14rem!important;
   overflow:visible!important;
   fill:none!important;
   stroke:currentColor!important;
