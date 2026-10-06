@@ -1682,18 +1682,17 @@
     const maxY = Number.isFinite(bounds.maxY) ? bounds.maxY : CARD_ROW_ENVELOPE_H;
     const margin = 24;
     const headerH = state.shortListNotes ? 108 : 72;
-    const brandFooterH = 54;
+    const brandFooterH = 0;
     const scale = drawingBoardSnapshotScale(maxX-minX,maxY-minY,headerH,brandFooterH,margin);
     const canvas = document.createElement('canvas');
     canvas.width = Math.ceil((maxX - minX) * scale + margin * 2);
-    canvas.height = Math.ceil((maxY - minY) * scale + margin * 2 + headerH + brandFooterH);
+    canvas.height = Math.ceil((maxY - minY) * scale + margin * 2 + headerH);
     const ctx = canvas.getContext('2d');
     if (!ctx) throw new Error('Unable to create the snapshot canvas.');
     ctx.fillStyle = state.rowTableColor || '#7d1f28';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    // Keep document metadata in its own Relphi paper strip instead of floating
-    // dark text over the felt.
+    // One Relphi document header: title at left, brand lockup at right.
     ctx.fillStyle = '#fffdf9';
     ctx.fillRect(0,0,canvas.width,headerH);
     ctx.strokeStyle='rgba(17,17,17,.18)';
@@ -1704,7 +1703,7 @@
     ctx.font = '900 20px Montserrat, Arial, sans-serif';
     ctx.textAlign = 'left';
     ctx.textBaseline = 'top';
-    ctx.fillText(`${state.shortListName ? state.shortListName + ' · ' : ''}Drawing Board`, margin, 16);
+    ctx.fillText(`${state.shortListName ? state.shortListName + ' · ' : ''}Drawing Board`, margin, 15);
     ctx.font = '650 11px Montserrat, Arial, sans-serif';
     ctx.fillStyle = '#655d56';
     ctx.fillText(`${localTimestampLabel(createdAt)} · ${slots} position${slots === 1 ? '' : 's'}`, margin, 43);
@@ -1732,6 +1731,30 @@
         return card ? loadCanvasSafeImage(rwsExportImagePath(card)) : envelopeArt ? loadCanvasSafeImage(envelopeArt) : Promise.resolve(null);
       }))
     ]);
+    // Complete the top-row lockup only after the export-safe logo is available.
+    ctx.save();
+    const brandLogoSize=28;
+    const brandPadRight=margin;
+    ctx.font='800 13px Montserrat, Arial, sans-serif';
+    const oracle='Oracle of ';
+    const relphi='Relphi';
+    const brandTextW=ctx.measureText(oracle).width;
+    ctx.font='800 13px Montserrat, Arial, sans-serif';
+    const relphiW=ctx.measureText(relphi).width;
+    const brandWidth=(brandLogoImage?brandLogoSize+9:0)+brandTextW+relphiW;
+    const brandX=Math.max(margin,canvas.width-brandPadRight-brandWidth);
+    const brandY=17;
+    if(brandLogoImage)ctx.drawImage(brandLogoImage,brandX,brandY-5,brandLogoSize,brandLogoSize);
+    const textX=brandX+(brandLogoImage?brandLogoSize+9:0);
+    ctx.textAlign='left';
+    ctx.textBaseline='top';
+    ctx.font='800 13px Montserrat, Arial, sans-serif';
+    ctx.fillStyle='#111';
+    ctx.fillText(oracle,textX,brandY);
+    ctx.fillStyle='#dc1f18';
+    ctx.fillText(relphi,textX+brandTextW,brandY);
+    ctx.restore();
+
     const groupW = CARD_ROW_ENVELOPE_W * scale;
     const positionH = 54 * scale;
     const gap = 10 * scale;
@@ -1800,7 +1823,6 @@
       }
       ctx.restore();
     });
-    drawRelphiExportBrand(ctx,canvas,brandFooterH,brandLogoImage);
     const filename = `drawing-board-arrangement-${localTimestampSlug(createdAt)}.png`;
     const blob = canvas.toBlob ? await new Promise((resolve,reject)=>{
       try {
