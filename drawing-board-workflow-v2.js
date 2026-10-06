@@ -1584,7 +1584,30 @@
       actions.appendChild(node);
       return node;
     };
-    take('snapshotCardRowArrangement','Snapshot','Snapshot the current board arrangement at zoom extents');
+    const snapshotButton=take('snapshotCardRowArrangement','Snapshot','Snapshot the current board arrangement at zoom extents');
+    if(snapshotButton && snapshotButton.dataset.relphiSnapshotBridgeBound!=='true'){
+      snapshotButton.dataset.relphiSnapshotBridgeBound='true';
+      snapshotButton.addEventListener('click',async event=>{
+        const action=window.RelphiDrawingBoardSnapshot?.download;
+        if(typeof action!=='function')return;
+        // The button may have been relocated after tarot-app bound its native
+        // listener. Own this click at the document-chrome layer so it cannot
+        // become inert when that native render node is moved or replaced.
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        snapshotButton.disabled=true;
+        if(status)status.textContent='Creating snapshot…';
+        try{
+          await action();
+          if(status)status.textContent='Snapshot ready.';
+        }catch(error){
+          console.error('Drawing Board snapshot failed.',error);
+          if(status)status.textContent='Snapshot failed.';
+        }finally{
+          if(snapshotButton.isConnected)snapshotButton.disabled=false;
+        }
+      },true);
+    }
     take('downloadRowHtml','Download','Download the reading as HTML with card art and text');
 
     const journal=document.createElement('button');
