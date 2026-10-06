@@ -28,8 +28,8 @@
   margin:0 auto!important;
 }
 
-/* The draft heptagram and its caption are one link. Keep the caption below the
-   preview, but give it the same light pill language as the Cancel action. */
+/* The draft heptagram itself is the Planetary Hours link. Keep the hit target
+   visually quiet so it reads as the chart, not a second text action. */
 .sky-where-when-editor .sky-where-when-heptagram-slot .sky-ph-jump{
   display:grid!important;
   place-items:center!important;
@@ -109,4 +109,18 @@
     padding:.58rem .34rem!important;
     font-size:.62rem!important;
   }
+}
+
+
+/* Match the confirm action's approximate width without changing the editor's
+   existing flex layout or adding another layout column. */
+.sky-where-when-editor .sky-where-when-here-now{
+  width:74%!important;
+  margin-left:auto!important;
+  padding:.6rem .48rem!important;
+  font-size:.64rem!important;
+  line-height:1!important;
+}
+.sky-where-when-editor .sky-where-when-heptagram-slot .sky-ph-jump-title{
+  display:none!important;
 }
