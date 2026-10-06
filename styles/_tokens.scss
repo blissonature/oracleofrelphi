@@ -2,7 +2,6 @@
 // SASS values are the authoring source; CSS custom properties are the runtime contract.
 $red: #dc1f18 !default;
 $red-dark: #a61712 !default;
-$red-soft: #fff5f3 !default;
 $ink: #171412 !default;
 $muted: #625a53 !default;
 $paper: #fffdf8 !default;
@@ -45,9 +44,5 @@ $radius-xl: 14px !default;
   --relphi-radius-xl: #{$radius-xl};
   --relphi-control-height: 2.35rem;
   --relphi-control-font-size: .79rem;
-  --relphi-control-height-compact: 2.15rem;
-  --relphi-control-font-size-compact: .72rem;
-  --relphi-action-active-bg: #{$red-soft};
-  --relphi-action-danger-border: rgba(166,23,18,.48);
   --relphi-focus-ring: 0 0 0 3px rgba(220,31,24,.22);
 }
