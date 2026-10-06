@@ -2351,7 +2351,7 @@
   function bespokeQuestionControllerMarkup(draft) {
     const defaults=bespokeDefaultQuestionSettings(draft);
     return '<div class="relphi-question-toolbar-settings" aria-label="Card options for selected questions">'+
-      '<div class="relphi-question-toolbar-pack" title="Sub-pack"><select id="relphiQuestionControllerPack" class="relphi-select" aria-label="Sub-pack">'+packOptions(defaults.pack)+'</select><button type="button" class="relphi-subpack-create" data-create-subpack aria-label="Create a sub-pack">+</button></div>'+
+      '<div class="relphi-question-toolbar-pack" title="Sub-pack"><select id="relphiQuestionControllerPack" class="relphi-select" aria-label="Sub-pack">'+packOptions(defaults.pack)+'</select><button type="button" class="relphi-subpack-create" data-create-subpack aria-label="Create a sub-pack"><span aria-hidden="true"></span></button></div>'+
       '<label class="relphi-question-toolbar-cards" title="Cards per question"><input id="relphiQuestionControllerCards" class="relphi-input" type="number" inputmode="numeric" min="1" max="12" step="1" value="'+defaults.cardCount+'" aria-label="Cards per selected question"><span>× Cards</span></label>'+
       '<label class="relphi-question-toolbar-link" title="Share card with"><select id="relphiQuestionControllerLink" class="relphi-select" aria-label="Share card with"><option value="">No link</option></select></label>'+
       '<label class="relphi-question-toolbar-check"><input id="relphiQuestionControllerReversals" type="checkbox" '+(defaults.reversals?'checked':'')+'> <span>Reversals</span></label>'+
