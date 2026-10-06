@@ -4564,6 +4564,38 @@
       const packetIndex=packets.findIndex(packet=>packet.includes(id));
       return {packets,firstCut:a,rightCut,leftCut,packetIndex,packet:['Yod','Heh','Vav','Heh-final'][packetIndex]||''};
     },
+    openingKeyFreshDeck(significatorCardId) {
+      const id=String(significatorCardId||'').trim();
+      const pool=rowDrawPool('full',{ignoreUsed:true});
+      if(!id||!pool.some(card=>card.card_id===id))return null;
+      return {deck:shuffleArray(pool.map(card=>card.card_id)),significatorCardId:id};
+    },
+    openingKeyQuerentCut(deck, cutPosition) {
+      const cards=Array.isArray(deck)?deck.slice():[];
+      if(cards.length<2)return null;
+      const cut=Math.max(1,Math.min(cards.length-1,Number(cutPosition)||1));
+      // A cut changes the starting point without changing cyclic card order.
+      return cards.slice(cut).concat(cards.slice(0,cut));
+    },
+    openingKeyDealStacks(deck, stackCount, significatorCardId) {
+      const cards=Array.isArray(deck)?deck.slice():[];
+      const count=Math.max(2,Math.min(12,Number(stackCount)||2));
+      if(cards.length<count)return null;
+      const stacks=Array.from({length:count},()=>[]);
+      cards.forEach((id,index)=>stacks[index%count].push(id));
+      const sig=String(significatorCardId||'');
+      const stackIndex=stacks.findIndex(stack=>stack.includes(sig));
+      return {stacks,stackIndex};
+    },
+    openingKeyRing36(deck, significatorCardId) {
+      const cards=Array.isArray(deck)?deck.slice():[];
+      const sig=String(significatorCardId||'');
+      const at=cards.indexOf(sig);
+      if(at<0||cards.length<37)return null;
+      const ring=[];
+      for(let step=1;step<=36;step++)ring.push(cards[(at+step)%cards.length]);
+      return {significatorCardId:sig,ring};
+    },
     drawCardForBoard(scope = 'full') {
       const pool=rowDrawPool(scope || 'full',{ignoreUsed:true});
       if(!pool.length)return null;
