@@ -1793,15 +1793,14 @@
       const card = cards[i];
       const position = String(state.shortListPositionLabels[i] || `Position ${i + 1}`).trim();
       const t = rowCardTransform(i);
-      const meta=state.rowPositionMeta?.[i]||{};
-      const isCrossing=(meta.role==='crossing'||meta.id==='crossing')&&Math.abs(Number(t.rotation)||0)===90;
       const centerX = x + groupW / 2;
       const centerY = y + (CARD_ROW_ENVELOPE_H * scale) / 2;
 
-      // The live Celtic Cross keeps the item/sticker upright and rotates only the card face.
+      // Snapshot mirrors the board: card + position sticker are one geometric
+      // unit, so arbitrary user rotation keeps the sticker at the card's top.
       ctx.save();
       ctx.translate(centerX, centerY);
-      if(!isCrossing)ctx.rotate((t.rotation || 0) * Math.PI / 180);
+      ctx.rotate((t.rotation || 0) * Math.PI / 180);
       ctx.scale(t.scale || 1, t.scale || 1);
       ctx.translate(-centerX, -centerY);
 
@@ -1816,15 +1815,7 @@
       const artY = y + 12 * scale + positionH + gap;
       const img = images[i];
 
-      // Match the live crossing sticker: upright, attached at the right edge of the crossing card.
-      if(isCrossing){
-        const stickerW=Math.min(groupW*.72,140*scale);
-        const stickerX=x+groupW*.5+38*scale;
-        const stickerY=y+12*scale;
-        drawPositionPanelOnCanvas(ctx,position,stickerX,stickerY,stickerW,positionH);
-      }else{
-        drawPositionPanelOnCanvas(ctx, position, x + 12 * scale, y + 12 * scale, groupW - 24 * scale, positionH);
-      }
+      drawPositionPanelOnCanvas(ctx, position, x + 12 * scale, y + 12 * scale, groupW - 24 * scale, positionH);
 
       if (!card) {
         ctx.fillStyle = '#fff';
@@ -1840,12 +1831,7 @@
         const s = Math.min(cardW / img.width, cardH / img.height);
         const w = img.width * s, h = img.height * s;
         ctx.save();
-        if(isCrossing){
-          ctx.translate(artX+cardW/2,artY+cardH/2);
-          ctx.rotate(Math.PI/2);
-          if(card&&rowCardIsReversed(i))ctx.rotate(Math.PI);
-          ctx.drawImage(img,-w/2,-h/2,w,h);
-        }else if (card && rowCardIsReversed(i)) {
+        if (card && rowCardIsReversed(i)) {
           ctx.translate(artX + cardW / 2, artY + cardH / 2);
           ctx.rotate(Math.PI);
           ctx.drawImage(img, -w / 2, -h / 2, w, h);
