@@ -1307,23 +1307,28 @@
     website:'https://oracleofrelphi.com/'
   });
   function drawRelphiLogoMark(ctx,x,y,size){
+    // Proportions measured from the supplied 1024×1024 Relphi logo:
+    // outer black frame ≈ 685×683 px, 43 px border;
+    // dot diameter ≈ 227 px; centers at ~28.9% / 70.9%.
     const s=Math.max(1,Number(size)||1);
-    const border=s*.065;
-    const inset=s*.14;
-    const dot=s*.255;
-    const left=x+inset+dot/2;
-    const right=x+s-inset-dot/2;
-    const top=y+inset+dot/2;
-    const bottom=y+s-inset-dot/2;
+    const border=s*(43/684);
+    const r=s*(113.5/684);
+    const left=x+s*((368-170)/684);
+    const right=x+s*((655.5-170)/684);
+    const top=y+s*((354.5-158)/684);
+    const bottom=y+s*((643.5-158)/684);
     ctx.save();
     ctx.fillStyle='#fff';
+    ctx.fillRect(x,y,s,s);
     ctx.strokeStyle='#000';
     ctx.lineWidth=border;
     ctx.strokeRect(x+border/2,y+border/2,s-border,s-border);
-    ctx.beginPath();ctx.arc(left,top,dot/2,0,Math.PI*2);ctx.fillStyle='#000';ctx.fill();
-    ctx.beginPath();ctx.arc(right,top,dot/2,0,Math.PI*2);ctx.fill();
-    ctx.beginPath();ctx.arc(left,bottom,dot/2,0,Math.PI*2);ctx.fill();
-    ctx.beginPath();ctx.arc(right,bottom,dot/2,0,Math.PI*2);ctx.fillStyle='#dc1f18';ctx.fill();
+    ctx.fillStyle='#000';
+    [[left,top],[right,top],[left,bottom]].forEach(([cx,cy])=>{
+      ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.fill();
+    });
+    ctx.fillStyle='#dc1f18';
+    ctx.beginPath();ctx.arc(right,bottom,r,0,Math.PI*2);ctx.fill();
     ctx.restore();
   }
 
@@ -1720,7 +1725,7 @@
     ctx.lineWidth=1;
     ctx.beginPath();ctx.moveTo(0,headerH-.5);ctx.lineTo(canvas.width,headerH-.5);ctx.stroke();
 
-    const headerLogoSize=40;
+    const headerLogoSize=46;
     const headerLogoX=margin;
     const headerLogoY=Math.max(10,(72-headerLogoSize)/2);
     drawRelphiLogoMark(ctx,headerLogoX,headerLogoY,headerLogoSize);
