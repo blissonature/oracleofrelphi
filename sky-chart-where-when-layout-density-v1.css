@@ -28,19 +28,17 @@
   margin:0 auto!important;
 }
 
-/* The draft heptagram and its caption are one link. Keep the caption below the
-   preview, but give it the same light pill language as the Cancel action. */
+/* The heptagram itself is the Planetary Hours link. */
 .sky-where-when-editor .sky-where-when-heptagram-slot .sky-ph-jump{
   display:grid!important;
   place-items:center!important;
-  gap:3px!important;
-  width:auto!important;
-  max-width:100%!important;
+  width:176px!important;
+  max-width:min(100%,176px)!important;
   min-width:0!important;
   margin:0 auto!important;
   padding:0!important;
   border:0!important;
-  border-radius:0!important;
+  border-radius:50%!important;
   background:transparent!important;
   box-shadow:none!important;
   color:#191512!important;
@@ -50,30 +48,14 @@
   cursor:pointer!important;
 }
 .sky-where-when-editor .sky-where-when-heptagram-slot .sky-ph-jump-title{
-  order:2!important;
-  display:block!important;
-  box-sizing:border-box!important;
-  margin:0!important;
-  padding:.38rem .62rem!important;
-  border:1px solid rgba(31,27,24,.24)!important;
-  border-radius:999px!important;
-  background:#fff!important;
-  color:#211d19!important;
-  font:850 .60rem/1 system-ui,sans-serif!important;
-  text-align:center!important;
-  text-decoration:none!important;
-  white-space:nowrap!important;
+  display:none!important;
 }
-/* Match the Cancel button's hover/focus treatment exactly: keep the pill's
-   normal border/background and use the same brightness + red focus halo. */
-.sky-where-when-editor .sky-where-when-heptagram-slot .sky-ph-jump:hover .sky-ph-jump-title,
-.sky-where-when-editor .sky-where-when-heptagram-slot .sky-ph-jump:focus-visible .sky-ph-jump-title{
-  filter:brightness(.94)!important;
-  outline:3px solid rgba(201,33,30,.18)!important;
-  outline-offset:2px!important;
+.sky-where-when-editor .sky-where-when-heptagram-slot .sky-ph-jump:hover{
+  filter:brightness(.97)!important;
 }
 .sky-where-when-editor .sky-where-when-heptagram-slot .sky-ph-jump:focus-visible{
-  outline:none!important;
+  outline:2px solid #2462d0!important;
+  outline-offset:3px!important;
 }
 
 /* Give the scrolling Where/When body back the space that was being reserved by
@@ -93,9 +75,6 @@
   width:100%!important;
   min-width:0!important;
   margin:0!important;
-  padding:.6rem .48rem!important;
-  font-size:.64rem!important;
-  line-height:1!important;
 }
 
 /* Sky cards are containers and can be ~270px wide even on a wide desktop. Size
@@ -105,8 +84,21 @@
     grid-template-columns:minmax(58px,.72fr) minmax(0,2.28fr)!important;
     gap:4px!important;
   }
-  .sky-where-when-editor .sky-where-when-footer-actions .sky-where-when-button{
-    padding:.58rem .34rem!important;
-    font-size:.62rem!important;
-  }
+}
+
+
+/* Here and Now mirrors the confirm action's width and height while remaining secondary. */
+.sky-where-when-editor .sky-where-when-here-now{
+  width:74%!important;
+  min-width:0!important;
+  margin-left:auto!important;
+}
+
+/* Current-location provenance stays editable but visually inactive until the user types a new search. */
+.sky-where-when-editor [data-ww-field="location-query"].is-current-location{
+  background:#e2dfdb!important;
+  background-color:#e2dfdb!important;
+  color:#817a73!important;
+  -webkit-text-fill-color:#817a73!important;
+  border-color:#c7c1bb!important;
 }
