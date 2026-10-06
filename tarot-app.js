@@ -3125,6 +3125,9 @@
       window.addEventListener('resize', () => applyCardRowLayoutLive(wrap));
     }
     workspace.addEventListener('wheel', event => {
+      // Guided Crafted readings are already fitted to their prescribed layout.
+      // Only Free and Bespoke expose board zoom/pan.
+      if (wrap.classList.contains('relphi-hide-zoom-toolbar')) return;
       // Two-finger trackpad scrolling should scroll the page/area, not zoom the table.
       // Trackpad pinch-to-zoom is reported by Chromium/Edge as a wheel event with ctrlKey.
       // Some platforms use metaKey for zoom gestures, so accept either modifier.
@@ -3137,6 +3140,7 @@
     }, { passive:false });
     workspace.addEventListener('pointerdown', event => {
       if (event.button !== 0) return;
+      if (wrap.classList.contains('relphi-hide-zoom-toolbar')) return;
       // Only gestures that actually begin on the felt may pan the Drawing Board.
       // The workspace extends beyond the felt on narrow/touch layouts; claiming that
       // surrounding whitespace breaks ordinary page scrolling.
