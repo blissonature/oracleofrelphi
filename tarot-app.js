@@ -1733,7 +1733,7 @@
     const brandTextY=headerLogoY+9;
     ctx.textAlign='left';
     ctx.textBaseline='top';
-    ctx.font='800 14px Montserrat, Arial, sans-serif';
+    ctx.font='800 17px Montserrat, Arial, sans-serif';
     ctx.fillStyle='#111';
     const oracleText='Oracle of ';
     ctx.fillText(oracleText,brandTextX,brandTextY);
