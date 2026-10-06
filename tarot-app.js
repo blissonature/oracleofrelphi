@@ -602,8 +602,33 @@
   }
   function titleWithBreaksHtml(card) { return escapeHtml(title(card)).replace(/\//g, '/<wbr>'); }
 
+  const CELTIC_POSITION_INTERPRETIVE_LENS = Object.freeze({
+    covering:'As what covers you, this is the condition presently surrounding the matter—the atmosphere already in effect.',
+    crossing:'As what crosses you, this is the counterforce, complication, or leverage that changes how the central situation can move.',
+    crowning:'As what crowns you, this is the conscious aim, ideal, or possibility being held above the matter.',
+    beneath:'As what is beneath you, this is the root condition—the less-visible foundation supporting what is happening.',
+    behind:'As what is behind you, this is a receding influence that still conditions the present.',
+    before:'As what is before you, this is the influence now entering the next phase of the situation.',
+    self:'As yourself, this describes your stance inside the matter—how you are meeting, carrying, or identifying with it.',
+    house:'As your house, this describes the surrounding field: other people, circumstances, and the environment answering the situation.',
+    'hopes-fears':'As your hopes or fears, this is emotionally charged enough to be desired, dreaded, or both.',
+    outcome:'As what will come, this describes where the present pattern tends to lead if nothing essential changes.'
+  });
+  function celticPositionRole(index = 0) {
+    const layout=state.rowActiveLayout;
+    if (layout?.id!=='celtic-cross-10' && layout?.basedOn!=='celtic-cross-10') return '';
+    const meta=state.rowPositionMeta?.[index] || layout?.positions?.[index] || {};
+    return String(meta.role || meta.id || '').trim();
+  }
+  function celticPositionInterpretation(card,index=0) {
+    const role=celticPositionRole(index);
+    const lens=CELTIC_POSITION_INTERPRETIVE_LENS[role] || '';
+    if(!lens)return '';
+    const base=String(layerInterpretationForOrientation(card,rowCardIsReversed(index))||'').trim();
+    return [base,lens].filter(Boolean).join(' ');
+  }
   function rowCardInterpretation(card, index = 0) {
-    return layerInterpretationForOrientation(card, rowCardIsReversed(index));
+    return celticPositionInterpretation(card,index) || layerInterpretationForOrientation(card, rowCardIsReversed(index));
   }
   function thothTitle(card) { return card?.systems?.thoth?.display_name || card?.name || ''; }
   function cardById(id) { return cards.find(card => card.card_id === id) || null; }
