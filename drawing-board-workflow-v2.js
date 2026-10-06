@@ -65,13 +65,9 @@
     );
   }
   function zoomToolbarVisibleForState(root=panel()) {
-    if(!root)return true;
-    if(settingsOpen){
-      if(settingsMode==='free')return true;
-      return String(optionsSession?.path||activeCraftedPath||'')==='bespoke';
-    }
-    if(craftedReadingActive||boardHasCraftedStructure(root))return persistedCraftedPath(root)==='bespoke';
-    return true;
+    // Zoom is a viewport control, not an editing privilege. If wheel/pinch zoom
+    // is available, the visible zoom gizmo must remain available in every spread.
+    return !!root;
   }
   function cardControlsPath(root=panel()) {
     if(settingsOpen) return settingsMode==='free' ? 'free' : (String(optionsSession?.path||activeCraftedPath||'')==='bespoke' ? 'bespoke' : '');
