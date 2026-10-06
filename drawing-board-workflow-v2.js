@@ -1611,11 +1611,11 @@
         snapshotButton.disabled=true;
         if(status)status.textContent='Creating snapshot…';
         try{
-          await action();
-          if(status)status.textContent='Snapshot ready.';
+          const ok=await action();
+          if(status)status.textContent=ok===false?'Snapshot failed.':'Snapshot ready.';
         }catch(error){
           console.error('Drawing Board snapshot failed.',error);
-          if(status)status.textContent='Snapshot failed.';
+          if(status)status.textContent='Snapshot failed: '+String(error?.message||error||'unknown error').replace(/\s+/g,' ').slice(0,120);
         }finally{
           if(snapshotButton.isConnected)snapshotButton.disabled=false;
         }
