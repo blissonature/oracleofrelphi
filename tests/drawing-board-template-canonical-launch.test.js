@@ -19,4 +19,12 @@ for(const id of ['covering','crossing','crowning','beneath','behind','before','s
   assert.match(celtic[0],new RegExp("position\\('"+id+"'"));
 }
 
-console.log('Templates launch their canonical layouts; Celtic Cross retains all 10 positions.');
+
+assert.match(js,/function singleRowPositions\(labels\)/);
+assert.match(js,/const startX=\(CANVAS_W-totalWidth\)\/2/);
+assert.match(js,/startX\+\(index\*cardWidth\)/);
+assert.match(js,/positions:singleRowPositions\(item\.labels\)/);
+assert.match(js,/positions:singleRowPositions\(HOUSE_POLARITY_LABELS\)/);
+assert.match(js,/id:'focus-1'[\s\S]*?positions:singleRowPositions\(\['Focus'\]\)/);
+
+console.log('Templates launch their canonical layouts; standard spreads pack flush in one row while special layouts remain canonical.');
