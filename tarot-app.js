@@ -1537,6 +1537,49 @@
     }
     return lines;
   }
+  function fitCanvasText(ctx,text,maxWidth,maxHeight,{weight=800,maxFont=16,minFont=8,maxLines=3,lineGap=3}={}) {
+    const value=String(text||'').trim();
+    if(!value)return {fontSize:maxFont,lines:[],lineHeight:maxFont+lineGap};
+    let fontSize=maxFont;
+    while(fontSize>=minFont){
+      ctx.font=`${weight} ${fontSize}px Montserrat, Arial, sans-serif`;
+      const lines=wrapCanvasLines(ctx,value,maxWidth,maxLines);
+      const lineHeight=fontSize+lineGap;
+      const fitsWidth=lines.every(line=>ctx.measureText(line).width<=maxWidth+.5);
+      const fitsHeight=lines.length*lineHeight<=maxHeight+.5;
+      const unclipped=!lines.some(line=>line.endsWith('…'));
+      if(fitsWidth&&fitsHeight&&unclipped)return {fontSize,lines,lineHeight};
+      fontSize-=.5;
+    }
+    ctx.font=`${weight} ${minFont}px Montserrat, Arial, sans-serif`;
+    const lines=wrapCanvasLines(ctx,value,maxWidth,maxLines);
+    return {fontSize:minFont,lines,lineHeight:minFont+lineGap};
+  }
+  function drawSmartCenteredText(ctx,text,x,y,w,h,options={}) {
+    const density=Math.max(1,Number(options.density)||1);
+    const maxFont=(options.maxFont||16)*density;
+    const minFont=(options.minFont||8)*density;
+    const lineGap=(options.lineGap==null?3:options.lineGap)*density;
+    const padX=(options.padX==null?9:options.padX)*density;
+    const padY=(options.padY==null?5:options.padY)*density;
+    const fit=fitCanvasText(ctx,text,Math.max(1,w-padX*2),Math.max(1,h-padY*2),{
+      weight:options.weight||800,
+      maxFont,minFont,
+      maxLines:options.maxLines||3,
+      lineGap
+    });
+    ctx.save();
+    ctx.fillStyle=options.color||'#111';
+    ctx.textAlign='center';
+    ctx.textBaseline='top';
+    ctx.font=`${options.weight||800} ${fit.fontSize}px Montserrat, Arial, sans-serif`;
+    const total=fit.lines.length*fit.lineHeight;
+    const startY=y+Math.max(padY,(h-total)/2);
+    fit.lines.forEach((line,index)=>ctx.fillText(line,x+w/2,startY+index*fit.lineHeight));
+    ctx.restore();
+    return fit;
+  }
+
   function drawPositionPanelOnCanvas(ctx, label, x, y, w, h) {
     ctx.save();
     const density=Math.max(1,Math.min(2.5,h/54));
@@ -1548,24 +1591,16 @@
     ctx.stroke();
     const text = String(label || '').trim();
     if (text) {
-      const maxW = w - 18*density;
-      let fontSize = (text.length > 76 ? 10 : text.length > 52 ? 11 : text.length > 30 ? 12 : 13)*density;
-      const minFont=8*density;
-      let lines;
-      do {
-        ctx.font = `800 ${fontSize}px Montserrat, Arial, sans-serif`;
-        lines = wrapCanvasLines(ctx, text, maxW, 3);
-        if (lines.length <= 3 || fontSize <= minFont) break;
-        fontSize -= density;
-      } while (fontSize > minFont);
-      const lh = fontSize + 3*density;
-      const total = lines.length * lh;
-      ctx.fillStyle = '#111';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'top';
-      ctx.font = `800 ${fontSize}px Montserrat, Arial, sans-serif`;
-      const startY = y + Math.max(5*density, (h - total) / 2);
-      lines.slice(0,3).forEach((line, li) => ctx.fillText(line, x + w / 2, startY + li * lh));
+      drawSmartCenteredText(ctx,text,x,y,w,h,{
+        density,
+        weight:800,
+        maxFont:13,
+        minFont:8.5,
+        maxLines:3,
+        lineGap:3,
+        padX:9,
+        padY:5
+      });
     }
     ctx.restore();
   }
@@ -1851,11 +1886,19 @@
       }
 
       if (card) {
-        ctx.fillStyle = '#111';
-        ctx.font = `800 ${12 * scale}px Montserrat, Arial, sans-serif`;
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'top';
-        wrapCanvasLines(ctx, `${title(card)}${rowCardIsReversed(i) ? ' · Reversed' : ''}`, groupW - 16 * scale, 2).forEach((line, li) => ctx.fillText(line, x + groupW / 2, artY + cardH + 10 * scale + li * 15 * scale));
+        const titleText=`${title(card)}${rowCardIsReversed(i) ? ' · Reversed' : ''}`;
+        const titleY=artY+cardH+6*scale;
+        const titleH=Math.max(22*scale,(y+CARD_ROW_ENVELOPE_H*scale)-titleY-6*scale);
+        drawSmartCenteredText(ctx,titleText,x+6*scale,titleY,groupW-12*scale,titleH,{
+          density:scale,
+          weight:800,
+          maxFont:12.5,
+          minFont:8.5,
+          maxLines:3,
+          lineGap:2.5,
+          padX:2,
+          padY:2
+        });
       }
       ctx.restore();
     });
