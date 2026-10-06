@@ -20,9 +20,18 @@
   box-shadow: var(--relphi-focus-ring);
 }
 
+.relphi-control--compact {
+  --relphi-control-height: var(--relphi-control-height-compact);
+  --relphi-control-font-size: var(--relphi-control-font-size-compact);
+}
+
 .relphi-button {
   @include control-shell;
   padding: .44rem .78rem;
+  border-color: var(--relphi-board-line-strong);
+  background: var(--relphi-board-surface);
+  color: var(--relphi-board-ink);
+  font-weight: 850;
   cursor: pointer;
   touch-action: manipulation;
 
@@ -33,20 +42,74 @@
 
   &:focus-visible { @include focus-ring; }
   &:disabled { opacity: .42; cursor: default; }
+
   &.is-active,
-  &[aria-pressed="true"] { border-color: var(--relphi-board-red); color: var(--relphi-board-red-dark); }
+  &[aria-pressed="true"] {
+    border-color: var(--relphi-board-red);
+    background: var(--relphi-action-active-bg);
+    color: var(--relphi-board-red-dark);
+  }
 
   &--primary {
     border-color: var(--relphi-board-red);
     background: var(--relphi-board-red);
     color: #fff;
 
-    &:hover:not(:disabled) { border-color: var(--relphi-board-red-dark); background: var(--relphi-board-red-dark); color: #fff; }
+    &:hover:not(:disabled) {
+      border-color: var(--relphi-board-red-dark);
+      background: var(--relphi-board-red-dark);
+      color: #fff;
+    }
+
+    &.is-active,
+    &[aria-pressed="true"] {
+      border-color: var(--relphi-board-red-dark);
+      background: var(--relphi-board-red);
+      color: #fff;
+    }
+  }
+
+  &--secondary {
+    border-color: var(--relphi-board-line-strong);
+    background: var(--relphi-board-surface);
+    color: var(--relphi-board-ink);
+    font-weight: 850;
+  }
+
+  &--utility {
+    border-color: var(--relphi-board-line-strong);
+    background: var(--relphi-board-surface);
+    color: var(--relphi-board-ink);
+    font-weight: 800;
+
+    &:hover:not(:disabled) {
+      border-color: var(--relphi-board-line-strong);
+      background: var(--relphi-board-soft);
+      color: var(--relphi-board-ink);
+    }
+  }
+
+  &--danger {
+    border-color: var(--relphi-action-danger-border);
+    background: var(--relphi-board-surface);
+    color: var(--relphi-board-red-dark);
+
+    &:hover:not(:disabled) {
+      border-color: var(--relphi-board-red-dark);
+      background: var(--relphi-action-active-bg);
+      color: var(--relphi-board-red-dark);
+    }
   }
 
   &--quiet { border-color: var(--relphi-board-line-strong); }
-}
 
+  &.relphi-control--compact {
+    min-height: var(--relphi-control-height-compact);
+    padding: .4rem .68rem;
+    font-size: var(--relphi-control-font-size-compact);
+    line-height: 1;
+  }
+}
 .relphi-icon-button {
   @include control-shell;
   display: inline-grid;
@@ -69,6 +132,22 @@
     stroke-linecap: round;
     stroke-linejoin: round;
   }
+}
+
+.relphi-icon-button--utility {
+  border-color: var(--relphi-board-line-strong);
+  background: var(--relphi-board-surface);
+  color: var(--relphi-board-ink);
+
+  &:hover:not(:disabled) {
+    background: var(--relphi-board-soft);
+  }
+}
+
+.relphi-icon-button.relphi-control--compact {
+  width: var(--relphi-control-height-compact);
+  min-width: var(--relphi-control-height-compact);
+  height: var(--relphi-control-height-compact);
 }
 
 .relphi-field {
