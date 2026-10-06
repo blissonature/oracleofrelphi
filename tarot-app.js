@@ -1664,6 +1664,7 @@
     canvas.width = Math.ceil((maxX - minX) * scale + margin * 2);
     canvas.height = Math.ceil((maxY - minY) * scale + margin * 2 + headerH + brandFooterH);
     const ctx = canvas.getContext('2d');
+    if (!ctx) throw new Error('Unable to create the snapshot canvas.');
     ctx.fillStyle = state.rowTableColor || '#7d1f28';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     ctx.fillStyle = '#111';
@@ -1767,32 +1768,38 @@
       ctx.restore();
     });
     drawRelphiExportBrand(ctx,canvas,brandFooterH,brandLogoImage);
-    const finish = async blob => {
-      const filename = `drawing-board-arrangement-${localTimestampSlug(createdAt)}.png`;
-      if (!blob) {
-        const a = document.createElement('a');
-        a.href = canvas.toDataURL('image/png');
-        a.download = filename;
-        document.body.appendChild(a); a.click(); a.remove(); return;
+    const filename = `drawing-board-arrangement-${localTimestampSlug(createdAt)}.png`;
+    const blob = canvas.toBlob ? await new Promise((resolve,reject)=>{
+      try {
+        canvas.toBlob(value=>value ? resolve(value) : reject(new Error('Browser returned an empty PNG snapshot.')), 'image/png');
+      } catch (error) {
+        reject(error);
       }
-      const file = typeof File === 'function' ? new File([blob],filename,{type:'image/png',lastModified:Date.now()}) : null;
-      if (file && navigator.share && (!navigator.canShare || navigator.canShare({files:[file]}))) {
-        try {
-          await navigator.share({files:[file],title:'Drawing Board arrangement'});
-          return;
-        } catch (error) {
-          if (error?.name === 'AbortError') return;
-          console.warn('Drawing Board share failed; falling back to download.',error);
-        }
-      }
-      const url = URL.createObjectURL(blob);
+    }) : null;
+    if (!blob) {
       const a = document.createElement('a');
-      a.href = url; a.download = filename; a.rel = 'noopener'; document.body.appendChild(a); a.click(); a.remove();
-      const status = $('downloadStatus');
-      if (status) status.innerHTML = `Arrangement snapshot created. If it did not save automatically, use this link: <a href="${url}" download="${filename}">${filename}</a>`;
-      window.setTimeout(()=>URL.revokeObjectURL(url),60000);
-    };
-    if (canvas.toBlob) canvas.toBlob(blob=>{ void finish(blob); }, 'image/png'); else void finish(null);
+      a.href = canvas.toDataURL('image/png');
+      a.download = filename;
+      document.body.appendChild(a); a.click(); a.remove();
+      return true;
+    }
+    const file = typeof File === 'function' ? new File([blob],filename,{type:'image/png',lastModified:Date.now()}) : null;
+    if (file && navigator.share && (!navigator.canShare || navigator.canShare({files:[file]}))) {
+      try {
+        await navigator.share({files:[file],title:'Drawing Board arrangement'});
+        return true;
+      } catch (error) {
+        if (error?.name === 'AbortError') return true;
+        console.warn('Drawing Board share failed; falling back to download.',error);
+      }
+    }
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = filename; a.rel = 'noopener'; document.body.appendChild(a); a.click(); a.remove();
+    const status = $('downloadStatus');
+    if (status) status.innerHTML = `Arrangement snapshot created. If it did not save automatically, use this link: <a href="${url}" download="${filename}">${filename}</a>`;
+    window.setTimeout(()=>URL.revokeObjectURL(url),60000);
+    return true;
   }
 
   // Stable bridge for relocated Drawing Board document chrome. The native
