@@ -2349,24 +2349,21 @@
   }
   function bespokeQuestionControllerMarkup(draft) {
     const defaults=bespokeDefaultQuestionSettings(draft);
-    return '<section class="relphi-question-controller" aria-label="Question settings">'+
-      '<div class="relphi-question-controller-head"><strong>Question controller</strong><span id="relphiQuestionControllerStatus">Defaults for new questions.</span></div>'+
-      '<div class="relphi-question-controller-fields">'+
-        '<label>Sub-pack<div class="relphi-subpack-control"><select id="relphiQuestionControllerPack" class="relphi-select">'+packOptions(defaults.pack)+'</select><button type="button" class="relphi-subpack-create" data-create-subpack aria-label="Create a sub-pack">+</button></div></label>'+
-        '<label class="relphi-card-count-controller">Cards per question<div><input id="relphiQuestionControllerCards" class="relphi-input" type="number" inputmode="numeric" min="1" max="12" step="1" value="'+defaults.cardCount+'" aria-label="Cards per new question"><span>× Cards</span></div></label>'+
-        '<label>Share card with<select id="relphiQuestionControllerLink" class="relphi-select"><option value="">No link</option></select></label>'+
-        '<label class="relphi-question-controller-check"><input id="relphiQuestionControllerReversals" type="checkbox" '+(defaults.reversals?'checked':'')+'> Reversals</label>'+
-        '<label class="relphi-question-controller-check"><input id="relphiQuestionControllerRepeats" type="checkbox" '+(defaults.repeats?'checked':'')+'> Repeats</label>'+
-      '</div>'+
-    '</section>';
+    return '<div class="relphi-question-toolbar-settings" aria-label="Card options for new or selected questions">'+
+      '<div class="relphi-question-toolbar-pack" title="Sub-pack"><span class="sr-only">Sub-pack</span><select id="relphiQuestionControllerPack" class="relphi-select" aria-label="Sub-pack">'+packOptions(defaults.pack)+'</select><button type="button" class="relphi-subpack-create" data-create-subpack aria-label="Create a sub-pack">+</button></div>'+
+      '<label class="relphi-question-toolbar-cards" title="Cards per question"><span class="sr-only">Cards per question</span><input id="relphiQuestionControllerCards" class="relphi-input" type="number" inputmode="numeric" min="1" max="12" step="1" value="'+defaults.cardCount+'" aria-label="Cards per new question"><span>× Cards</span></label>'+
+      '<label class="relphi-question-toolbar-link" title="Share card with"><span class="sr-only">Share card with</span><select id="relphiQuestionControllerLink" class="relphi-select" aria-label="Share card with"><option value="">No link</option></select></label>'+
+      '<label class="relphi-question-toolbar-check"><input id="relphiQuestionControllerReversals" type="checkbox" '+(defaults.reversals?'checked':'')+'> <span>Reversals</span></label>'+
+      '<label class="relphi-question-toolbar-check"><input id="relphiQuestionControllerRepeats" type="checkbox" '+(defaults.repeats?'checked':'')+'> <span>Repeats</span></label>'+
+      '<span id="relphiQuestionControllerStatus" class="sr-only" aria-live="polite">Defaults for new questions.</span>'+
+    '</div>';
   }
 
   function bespokeMarkup(draft,hasCards) {
     const clonedFrom=!draft.templateId&&draft.basedOnTemplateId?templateById(draft.basedOnTemplateId):null;
     return '<section class="relphi-referent-panel">'+
       (clonedFrom?'<div class="relphi-template-clone-note"><strong>Editing a copy of '+escapeHtml(clonedFrom.name)+'</strong><span>The original template stays untouched. Name and save this Bespoke version if you want to keep it; you can also continue without saving.</span></div>':'')+
-      '<div class="relphi-question-toolbar"><label><input type="checkbox" id="relphiSelectAllQuestions" aria-label="Select all questions for editing"> <span>Select all</span></label><button type="button" id="relphiCopyBespokeQuestions" class="relphi-button relphi-question-copy" aria-label="Copy all Bespoke questions and advanced settings">Copy</button><button type="button" id="relphiMoveQuestionsUp" aria-label="Move selected questions up">↑</button><button type="button" id="relphiMoveQuestionsDown" aria-label="Move selected questions down">↓</button><button type="button" id="relphiDeleteQuestions" class="relphi-stroke-icon relphi-stroke-x" aria-label="Delete selected questions"><span aria-hidden="true"></span></button><button type="button" id="relphiAddPosition" class="relphi-stroke-icon relphi-stroke-plus" aria-label="Add question" '+(hasCards||draft.labels.length>=MAX_POSITIONS?'disabled':'')+'><span aria-hidden="true"></span></button></div>'+
-      bespokeQuestionControllerMarkup(draft)+
+      '<div class="relphi-question-toolbar"><label class="relphi-question-select-all"><input type="checkbox" id="relphiSelectAllQuestions" aria-label="Select all questions for editing"> <span>Select all</span></label>'+bespokeQuestionControllerMarkup(draft)+'<div class="relphi-question-toolbar-actions"><button type="button" id="relphiCopyBespokeQuestions" class="relphi-button relphi-question-copy" aria-label="Copy all Bespoke questions and advanced settings">Copy</button><button type="button" id="relphiMoveQuestionsUp" aria-label="Move selected questions up">↑</button><button type="button" id="relphiMoveQuestionsDown" aria-label="Move selected questions down">↓</button><button type="button" id="relphiDeleteQuestions" class="relphi-stroke-icon relphi-stroke-x" aria-label="Delete selected questions"><span aria-hidden="true"></span></button><button type="button" id="relphiAddPosition" class="relphi-stroke-icon relphi-stroke-plus" aria-label="Add question" '+(hasCards||draft.labels.length>=MAX_POSITIONS?'disabled':'')+'><span aria-hidden="true"></span></button></div></div>'+
       '<div id="relphiPositionLabels">'+labelsMarkup(draft.labels,draft)+'</div>'+
       '<div class="relphi-bespoke-appearance-host"></div>'+
       '<div class="relphi-template-save"><input id="relphiTemplateName" class="'+((draft.templateName||'Unnamed Template')==='Unnamed Template'?'is-unnamed':'')+'" type="text" maxlength="60" aria-label="Template name" value="'+escapeHtml(draft.templateName||'Unnamed Template')+'" '+(hasCards?'disabled':'')+'><button type="button" id="relphiSaveTemplate" '+(hasCards?'disabled':'')+'>Save template</button></div>'+
