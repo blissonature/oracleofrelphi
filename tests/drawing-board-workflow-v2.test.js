@@ -30,6 +30,8 @@ assert.match(board, /relphi-question-toolbar-actions/);
 assert.doesNotMatch(board, /<section class="relphi-question-controller"/);
 assert.match(css, /grid-template-columns:max-content minmax\(0,1fr\) max-content/);
 assert.match(css, /relphi-question-toolbar-pack/);
+assert.match(css, /M2 2l4 4 4-4/);
+assert.match(css, /\.relphi-referent-path\[aria-expanded="true"\]::after/);
 assert.match(css, /grid-template-columns:minmax\(7\.5rem,1\.25fr\) max-content minmax\(6\.75rem,\.9fr\) max-content max-content/);
 assert.doesNotMatch(board, /Defaults for new questions\./);
 assert.doesNotMatch(board, /applyQuestionDefaults/);
