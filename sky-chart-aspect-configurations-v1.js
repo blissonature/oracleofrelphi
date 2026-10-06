@@ -589,7 +589,7 @@ function inevitableMoreButton(hiddenCount){
 }
 function renderResultsPanel(){
   const panel=ensureResultsPanel();if(!panel)return;
-  const visiblePatterns=patternsForResults(),groups=groupedPatternsForResults(),hiddenInevitable=hiddenInevitablePatterns();
+  const visiblePatterns=patternsForResults(),groups=groupedPatternsForResults(),hiddenInevitable=hierarchicalPatterns(hiddenInevitablePatterns());
   if(!visiblePatterns.length&&!hiddenInevitable.length){panel.hidden=true;clearPatternHighlight();openConfigurationTile=null;return}
   panel.hidden=false;
   bindConfigurationActions(panel);
