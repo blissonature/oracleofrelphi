@@ -1675,13 +1675,14 @@
     }).join('');
   }
   function bespokeDefaultQuestionSettings(draft) {
-    const saved=draft?.questionDefaults || {};
+    const pack=String(draft?.pack||'full');
     return {
-      pack:String(saved.pack || draft?.pack || 'full'),
-      cardCount:Math.max(1,Math.min(12,Number(saved.cardCount)||1)),
-      linkTo:String(saved.linkTo ?? ''),
-      reversals:saved.reversals ?? (draft?.reversals!==false),
-      repeats:saved.repeats ?? !!draft?.repeats
+      // New questions use the reading's baseline, never the last toolbar edit.
+      pack:pack&&pack!=='question-by-question'?pack:'full',
+      cardCount:1,
+      linkTo:'',
+      reversals:draft?.reversals!==false,
+      repeats:!!draft?.repeats
     };
   }
   function normalizedBespokeQuestionSettings(draft,index) {
@@ -2349,13 +2350,12 @@
   }
   function bespokeQuestionControllerMarkup(draft) {
     const defaults=bespokeDefaultQuestionSettings(draft);
-    return '<div class="relphi-question-toolbar-settings" aria-label="Card options for new or selected questions">'+
-      '<div class="relphi-question-toolbar-pack" title="Sub-pack"><span class="sr-only">Sub-pack</span><select id="relphiQuestionControllerPack" class="relphi-select" aria-label="Sub-pack">'+packOptions(defaults.pack)+'</select><button type="button" class="relphi-subpack-create" data-create-subpack aria-label="Create a sub-pack">+</button></div>'+
-      '<label class="relphi-question-toolbar-cards" title="Cards per question"><span class="sr-only">Cards per question</span><input id="relphiQuestionControllerCards" class="relphi-input" type="number" inputmode="numeric" min="1" max="12" step="1" value="'+defaults.cardCount+'" aria-label="Cards per new question"><span>× Cards</span></label>'+
-      '<label class="relphi-question-toolbar-link" title="Share card with"><span class="sr-only">Share card with</span><select id="relphiQuestionControllerLink" class="relphi-select" aria-label="Share card with"><option value="">No link</option></select></label>'+
+    return '<div class="relphi-question-toolbar-settings" aria-label="Card options for selected questions">'+
+      '<div class="relphi-question-toolbar-pack" title="Sub-pack"><select id="relphiQuestionControllerPack" class="relphi-select" aria-label="Sub-pack">'+packOptions(defaults.pack)+'</select><button type="button" class="relphi-subpack-create" data-create-subpack aria-label="Create a sub-pack">+</button></div>'+
+      '<label class="relphi-question-toolbar-cards" title="Cards per question"><input id="relphiQuestionControllerCards" class="relphi-input" type="number" inputmode="numeric" min="1" max="12" step="1" value="'+defaults.cardCount+'" aria-label="Cards per selected question"><span>× Cards</span></label>'+
+      '<label class="relphi-question-toolbar-link" title="Share card with"><select id="relphiQuestionControllerLink" class="relphi-select" aria-label="Share card with"><option value="">No link</option></select></label>'+
       '<label class="relphi-question-toolbar-check"><input id="relphiQuestionControllerReversals" type="checkbox" '+(defaults.reversals?'checked':'')+'> <span>Reversals</span></label>'+
       '<label class="relphi-question-toolbar-check"><input id="relphiQuestionControllerRepeats" type="checkbox" '+(defaults.repeats?'checked':'')+'> <span>Repeats</span></label>'+
-      '<span id="relphiQuestionControllerStatus" class="sr-only" aria-live="polite">Defaults for new questions.</span>'+
     '</div>';
   }
 
@@ -2702,12 +2702,12 @@
     });
     const selectedQuestionIndexes=()=>Array.from(drawer.querySelectorAll('[data-question-select]:checked')).map(box=>Number(box.dataset.questionSelect)).filter(Number.isInteger).sort((a,b)=>a-b);
     const controller={
-      status:drawer.querySelector('#relphiQuestionControllerStatus'),
       pack:drawer.querySelector('#relphiQuestionControllerPack'),
       cards:drawer.querySelector('#relphiQuestionControllerCards'),
       link:drawer.querySelector('#relphiQuestionControllerLink'),
       reversals:drawer.querySelector('#relphiQuestionControllerReversals'),
-      repeats:drawer.querySelector('#relphiQuestionControllerRepeats')
+      repeats:drawer.querySelector('#relphiQuestionControllerRepeats'),
+      createPack:drawer.querySelector('[data-create-subpack]')
     };
     const ensureQuestionSettings=index=>{
       draft.positionSettings ||= [];
@@ -2725,15 +2725,14 @@
       if(down)down.disabled=!any||allSelected||selected[selected.length-1]===draft.labels.length-1;
       if(del)del.disabled=!any;
       if(all){all.checked=allSelected;all.indeterminate=any&&!allSelected}
-      Object.values(controller).forEach(node=>{if(node&&'disabled' in node)node.disabled=false});
-      if(controller.status)controller.status.textContent=!any?'Defaults for new questions.':selected.length===1?'Editing Question '+(selected[0]+1):'Editing '+selected.length+' questions';
+      Object.values(controller).forEach(node=>{if(node&&'disabled' in node)node.disabled=!any});
       if(!any){
-        const defaults=bespokeDefaultQuestionSettings(draft);
-        if(controller.pack){controller.pack.innerHTML=packOptions(defaults.pack);controller.pack.value=defaults.pack}
-        if(controller.cards)controller.cards.value=String(defaults.cardCount);
+        const baseline=bespokeDefaultQuestionSettings(draft);
+        if(controller.pack){controller.pack.innerHTML=packOptions(baseline.pack);controller.pack.value=baseline.pack}
+        if(controller.cards)controller.cards.value=String(baseline.cardCount);
         if(controller.link){controller.link.innerHTML='<option value="">No link</option>';controller.link.value=''}
-        if(controller.reversals){controller.reversals.checked=defaults.reversals;controller.reversals.indeterminate=false}
-        if(controller.repeats){controller.repeats.checked=defaults.repeats;controller.repeats.indeterminate=false}
+        if(controller.reversals){controller.reversals.checked=baseline.reversals;controller.reversals.indeterminate=false}
+        if(controller.repeats){controller.repeats.checked=baseline.repeats;controller.repeats.indeterminate=false}
         return;
       }
       const settings=selected.map(ensureQuestionSettings);
@@ -2767,15 +2766,7 @@
       syncQuestionController();
       return true;
     };
-    const applyQuestionDefaults=(patch)=>{
-      draft.questionDefaults={...bespokeDefaultQuestionSettings(draft),...patch,linkTo:''};
-      if(patch.pack)draft.pack=patch.pack;
-      if(patch.reversals!==undefined)draft.reversals=!!patch.reversals;
-      if(patch.repeats!==undefined)draft.repeats=!!patch.repeats;
-      markQuestionEditCustom(drawer,draft);
-      syncQuestionController();
-    };
-    const applyQuestionController=(patch)=>selectedQuestionIndexes().length?applyToSelected(patch):applyQuestionDefaults(patch);
+    const applyQuestionController=(patch)=>selectedQuestionIndexes().length?applyToSelected(patch):false;
     drawer.querySelector('#relphiSelectAllQuestions')?.addEventListener('change',event=>{drawer.querySelectorAll('[data-question-select]').forEach(box=>{box.checked=event.target.checked});syncQuestionController()});
     drawer.querySelectorAll('[data-question-select]').forEach(box=>box.addEventListener('change',syncQuestionController));
     controller.pack?.addEventListener('change',()=>{if(controller.pack.value&&controller.pack.value!=='__mixed__')applyQuestionController({pack:controller.pack.value})});
