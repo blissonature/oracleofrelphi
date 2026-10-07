@@ -84,8 +84,8 @@ function buildSingleWheel(listA,cuspsA){
   const z=noHousesA
     ?{...cmp.zodiac,inner:gA.inner,outer:cmp.zodiac.outer,glyphRadius:cmp.zodiac.glyphRadius+4,glyphLane:unknownSignGlyphLane}
     :cmp.zodiac;
-  const placementInset=(Number(cmp.placementBubbleRadius)||19.7)+8;
-  const unknownPlacementLane=z.outer-placementInset;
+  const canonicalLeaderGap=Math.abs(Number(gA.placement?.[0])-Number(gA.degree));
+  const unknownPlacementLane=z.outer-canonicalLeaderGap;
   const gStandalone=noHousesA
     ?{...gA,inner:z.inner,outer:z.outer,degree:z.outer,placement:gA.placement.map(()=>unknownPlacementLane),edge:z.outer,side:'inner',uncircledPlacements:true}
     :gA;
