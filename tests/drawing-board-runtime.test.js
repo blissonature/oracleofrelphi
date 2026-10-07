@@ -164,6 +164,18 @@ async function assertReadableFocus(page) {
   await waitReady(mobile);
   await openBoard(mobile);
   assert.equal(await mobile.locator('#zoomCardRowExtents').count(),1);
+  const mobileConfirmGeometry=await mobile.locator('#relphiApplyOptions').evaluate(button=>{
+    const rect=button.getBoundingClientRect();
+    const viewport=window.visualViewport;
+    const viewportTop=Number(viewport?.offsetTop)||0;
+    const viewportBottom=viewportTop+(Number(viewport?.height)||window.innerHeight);
+    return {top:rect.top,bottom:rect.bottom,viewportTop,viewportBottom};
+  });
+  assert.ok(
+    mobileConfirmGeometry.top>=mobileConfirmGeometry.viewportTop-1 &&
+    mobileConfirmGeometry.bottom<=mobileConfirmGeometry.viewportBottom+1,
+    'Crafted Confirm must remain inside the visible mobile viewport'
+  );
 
   // Height-only mobile viewport changes (browser chrome appearing/disappearing while scrolling)
   // must not refit the board or change card scale.
