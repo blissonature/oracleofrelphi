@@ -3257,51 +3257,100 @@ body.relphi-attune-open{overflow:hidden!important}
 }
 
 
-/* Mobile Bespoke keeps card settings visible instead of letting the desktop
-   middle toolbar column collapse between Select all and the action buttons. */
+/* Mobile Bespoke is two compact toolbar rows: question actions first,
+   selected-question card settings immediately beneath them. */
 @media(max-width:700px){
   #shortListPanel .relphi-question-toolbar{
-    grid-template-columns:minmax(0,1fr)!important;
-    align-items:stretch!important;
-    gap:.5rem!important;
+    display:grid!important;
+    grid-template-columns:max-content minmax(0,1fr)!important;
+    grid-template-areas:
+      "select actions"
+      "settings settings"!important;
+    align-items:center!important;
+    gap:.42rem .32rem!important;
   }
   #shortListPanel .relphi-question-toolbar>.relphi-question-select-all{
+    grid-area:select!important;
     justify-self:start!important;
     width:auto!important;
     max-width:100%!important;
+    margin:0!important;
+  }
+  #shortListPanel .relphi-question-toolbar-actions{
+    grid-area:actions!important;
+    width:auto!important;
+    max-width:100%!important;
+    justify-self:end!important;
+    justify-content:flex-end!important;
+    flex-wrap:nowrap!important;
+    gap:.24rem!important;
+    overflow:visible!important;
   }
   #shortListPanel .relphi-question-toolbar-settings{
+    grid-area:settings!important;
     width:100%!important;
     max-width:100%!important;
-    grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important;
-    gap:.42rem!important;
-    overflow:visible!important;
-    white-space:normal!important;
+    display:grid!important;
+    grid-template-columns:minmax(5.6rem,1.35fr) max-content minmax(4.4rem,1fr) max-content max-content!important;
+    align-items:center!important;
+    gap:.25rem!important;
+    overflow-x:auto!important;
+    overflow-y:hidden!important;
+    white-space:nowrap!important;
+    scrollbar-width:none!important;
   }
   #shortListPanel .relphi-question-toolbar-pack{
-    grid-column:1/-1!important;
+    grid-column:auto!important;
+    grid-template-columns:minmax(0,1fr) 1.9rem!important;
+    gap:.2rem!important;
+  }
+  #shortListPanel .relphi-question-toolbar-pack>.relphi-subpack-create{
+    width:1.9rem!important;
+    min-width:1.9rem!important;
+    max-width:1.9rem!important;
+    height:1.9rem!important;
+    min-height:1.9rem!important;
+    max-height:1.9rem!important;
   }
   #shortListPanel .relphi-question-toolbar-cards{
-    grid-column:1!important;
+    grid-column:auto!important;
     min-width:0!important;
+    gap:.12rem!important;
+  }
+  #shortListPanel .relphi-question-toolbar-cards>input{
+    width:2.65rem!important;
+    min-width:2.65rem!important;
+    max-width:2.65rem!important;
+  }
+  #shortListPanel .relphi-question-toolbar-cards>span{
+    font-size:0!important;
+  }
+  #shortListPanel .relphi-question-toolbar-cards>span::after{
+    content:'×'!important;
+    font-size:.72rem!important;
   }
   #shortListPanel .relphi-question-toolbar-link{
-    grid-column:2!important;
+    grid-column:auto!important;
     min-width:0!important;
   }
   #shortListPanel .relphi-question-toolbar-link>select{
     width:100%!important;
+    min-width:0!important;
   }
   #shortListPanel .relphi-question-toolbar-check{
     min-width:0!important;
     min-height:2rem!important;
+    gap:.12rem!important;
+    font-size:0!important;
   }
-  #shortListPanel .relphi-question-toolbar-actions{
-    width:100%!important;
-    max-width:100%!important;
-    justify-content:flex-end!important;
-    flex-wrap:wrap!important;
-    overflow:visible!important;
+  #shortListPanel .relphi-question-toolbar-check>span{font-size:0!important}
+  #shortListPanel .relphi-question-toolbar-check:has(#relphiQuestionControllerReversals)>span::after{
+    content:'Rev'!important;
+    font-size:.68rem!important;
+  }
+  #shortListPanel .relphi-question-toolbar-check:has(#relphiQuestionControllerRepeats)>span::after{
+    content:'Rep'!important;
+    font-size:.68rem!important;
   }
 }
 
