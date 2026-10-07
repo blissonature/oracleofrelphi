@@ -59,6 +59,22 @@ const base=process.env.RELPHI_TEST_URL||'http://127.0.0.1:8000/tarot.html?board=
     assert.equal(geometry.cards,true,'Cards per question must be visible on mobile');
     assert.equal(geometry.link,true,'Share card with must be visible on mobile');
 
+    const toolbarRows=await page.evaluate(()=>{
+      const rect=selector=>document.querySelector(selector)?.getBoundingClientRect();
+      const select=rect('.relphi-question-select-all');
+      const actions=rect('.relphi-question-toolbar-actions');
+      const settings=rect('.relphi-question-toolbar-settings');
+      const toolbar=rect('.relphi-question-toolbar');
+      return {
+        selectTop:select?.top,actionsTop:actions?.top,settingsTop:settings?.top,
+        toolbarHeight:toolbar?.height,settingsHeight:settings?.height
+      };
+    });
+    assert.ok(Math.abs(toolbarRows.selectTop-toolbarRows.actionsTop)<8,'Select all and question actions must share the first mobile toolbar row');
+    assert.ok(toolbarRows.settingsTop>toolbarRows.selectTop+20,'card settings must occupy one second toolbar row beneath question actions');
+    assert.ok(toolbarRows.settingsHeight<55,'mobile card settings must remain one compact row, not stack into multiple rows');
+    assert.ok(toolbarRows.toolbarHeight<115,'Bespoke mobile controls must remain a compact two-row toolbar');
+
     const undersizedMobileFields=await page.evaluate(()=>{
       const controls=Array.from(document.querySelectorAll('#shortListPanel.relphi-settings-open .relphi-board-settings-panel input, #shortListPanel.relphi-settings-open .relphi-board-settings-panel textarea, #shortListPanel.relphi-settings-open .relphi-board-settings-panel select'));
       const excluded=new Set(['checkbox','radio','color','range','button','submit','reset','hidden']);
