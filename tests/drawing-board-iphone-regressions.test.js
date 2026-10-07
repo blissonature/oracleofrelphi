@@ -180,6 +180,58 @@ async function assertFocusReadingView(page) {
   assert.equal(optionsHit.hit,'drawingBoardOptionsButton','Options touch target must not be covered by another layer');
   await page.locator('#drawingBoardOptionsButton').tap();
   await page.waitForSelector('.relphi-reading-options-drawer.is-reading-options-open',{state:'visible'});
+
+  // Browsing Templates must not overwrite Bespoke. Only "Modify a copy" may
+  // intentionally carry template questions into the Bespoke editor.
+  await page.locator('[data-referent-path="templates"]').tap();
+  await page.waitForSelector('#relphiSpreadTemplateSelect',{state:'visible'});
+  await page.selectOption('#relphiSpreadTemplateSelect','celtic-cross-10');
+  await page.locator('[data-referent-path="bespoke"]').tap();
+  await page.waitForSelector('#relphiPositionLabels [data-position-label="0"]',{state:'visible'});
+  assert.equal(
+    await page.locator('#relphiPositionLabels [data-position-label="0"]').inputValue(),
+    '',
+    'ordinary path switching must not copy template questions into Bespoke'
+  );
+
+  const mobileCardControls=await page.evaluate(()=>{
+    const toolbar=document.querySelector('.relphi-question-toolbar-settings');
+    const pack=document.querySelector('#relphiQuestionControllerPack');
+    const cards=document.querySelector('#relphiQuestionControllerCards');
+    const link=document.querySelector('#relphiQuestionControllerLink');
+    const visible=node=>{
+      if(!node)return false;
+      const r=node.getBoundingClientRect(),s=getComputedStyle(node);
+      return s.display!=='none'&&s.visibility!=='hidden'&&r.width>20&&r.height>20;
+    };
+    return {
+      toolbarVisible:visible(toolbar),
+      toolbarWidth:toolbar?.getBoundingClientRect().width||0,
+      packVisible:visible(pack),
+      cardsVisible:visible(cards),
+      linkVisible:visible(link)
+    };
+  });
+  assert.equal(mobileCardControls.toolbarVisible,true,'Bespoke card settings toolbar must be visible on mobile');
+  assert.ok(mobileCardControls.toolbarWidth>200,'Bespoke card settings toolbar must receive usable mobile width');
+  assert.equal(mobileCardControls.packVisible,true,'mobile Bespoke must expose Sub-pack');
+  assert.equal(mobileCardControls.cardsVisible,true,'mobile Bespoke must expose Cards per question');
+  assert.equal(mobileCardControls.linkVisible,true,'mobile Bespoke must expose Share card with');
+
+  await page.locator('[data-referent-path="templates"]').tap();
+  await page.waitForSelector('#relphiModifyTemplate',{state:'visible'});
+  await page.locator('#relphiModifyTemplate').tap();
+  await page.waitForSelector('[data-referent-path="bespoke"][aria-pressed="true"]',{state:'visible'});
+  assert.equal(
+    await page.locator('#relphiPositionLabels [data-position-label="0"]').inputValue(),
+    'What covers you',
+    '"Modify a copy" must remain the explicit template-to-Bespoke bridge'
+  );
+  await page.locator('#relphiPositionLabels [data-question-select="0"]').check();
+  assert.equal(await page.locator('#relphiQuestionControllerPack').isEnabled(),true,'selected Bespoke question must allow Sub-pack changes');
+  assert.equal(await page.locator('#relphiQuestionControllerCards').isEnabled(),true,'selected Bespoke question must allow card-count changes');
+  assert.equal(await page.locator('#relphiQuestionControllerLink').isEnabled(),true,'selected Bespoke question must allow shared-card linking');
+
   await page.screenshot({path:path.join(out,'drawing-board-mobile-options-open.png'),fullPage:true});
   await page.locator('#relphiCancelOptions').tap();
   await page.waitForSelector('.relphi-reading-options-drawer',{state:'detached'});
