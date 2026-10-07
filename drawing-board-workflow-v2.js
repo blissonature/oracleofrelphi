@@ -593,6 +593,35 @@
       templateName:String(state.activeLayout?.name || '')
     };
   }
+  function cleanDraftForOptionsPath(seed={}) {
+    const next=blankDraft();
+    next.pack=String(seed.pack||'full');
+    next.keywordTags=Array.isArray(seed.keywordTags)?seed.keywordTags.slice():[];
+    next.keywordMatchMode=seed.keywordMatchMode==='all'?'all':'any';
+    next.stickers=seed.stickers!==false;
+    next.reversals=seed.reversals!==false;
+    next.repeats=!!seed.repeats;
+    return next;
+  }
+  function restoreOptionsPathDraft(session,path) {
+    const key=String(path||'');
+    const saved=key&&session?.pathDrafts?.[key];
+    return saved ? clone(saved) : cleanDraftForOptionsPath(session?.pathSeedDraft||session?.draft||{});
+  }
+  function switchOptionsPath(session,nextPath) {
+    if(!session)return false;
+    const current=String(session.path||'');
+    const next=String(nextPath||'');
+    session.pathDrafts ||= {};
+    if(current)session.pathDrafts[current]=clone(session.draft);
+    session.path=next;
+    session.draft=restoreOptionsPathDraft(session,next);
+    session.pathCollapsed=false;
+    session.suggestions=[];
+    session.suggestionPacks=[];
+    return true;
+  }
+
   function freeSettingsDraftFromState() {
     const draft=draftFromState();
     return {
@@ -1198,9 +1227,13 @@
     const path=crowleyActive?'templates':(activeCraftedPath||'');
     if(crowleyActive)activeCraftedPath='templates';
     if(path==='bespoke' && !draft.templateId) draft.templateName='Unnamed Template';
+    // Each Crafted path owns its own draft. Browsing a template must never
+    // overwrite Bespoke questions; "Modify a copy" is the explicit bridge.
+    const pathDrafts={};
+    if(path)pathDrafts[path]=clone(draft);
     // Settings always reopen visually collapsed. Keep the last configured path
     // in state, but never imply that Bespoke (or any other path) was reopened.
-    optionsSession = { baseline:currentSnapshot(), draft, path, pathCollapsed:true, building:{element:'',planet:'',aspect:'',sign:'',house:'',need:''}, suggestions:[], suggestionPacks:[], surfaceSelected:{} };
+    optionsSession = { baseline:currentSnapshot(), draft, path, pathCollapsed:true, pathSeedDraft:cleanDraftForOptionsPath(draft), pathDrafts, building:{element:'',planet:'',aspect:'',sign:'',house:'',need:''}, suggestions:[], suggestionPacks:[], surfaceSelected:{} };
   }
   function optionsStructuralChanged(session = optionsSession) {
     if (!session) return false;
@@ -2559,10 +2592,7 @@
       if(session.path===nextPath){
         session.pathCollapsed=!session.pathCollapsed;
       }else{
-        session.path=nextPath;
-        session.pathCollapsed=false;
-        session.suggestions=[];
-        session.suggestionPacks=[];
+        switchOptionsPath(session,nextPath);
       }
       syncZoomToolbarVisibility(root);
       renderOptions(root,{preserveScroll:false});
@@ -2671,16 +2701,23 @@
     drawer.querySelector('#relphiModifyTemplate')?.addEventListener('click',()=>{
       const chosen=templateById(draft.templateId||draft.basedOnTemplateId);
       if(!chosen||hasCards)return;
-      draft.templateId='';
-      draft.basedOnTemplateId=chosen.id;
-      draft.templateName='Unnamed Template';
-      draft.labels=chosen.positions.slice().sort((a,b)=>a.drawOrder-b.drawOrder).map(item=>item.label);
-      draft.positionPacks=chosen.positions.slice().sort((a,b)=>a.drawOrder-b.drawOrder).map(item=>String(item.drawScope||''));
-      draft.pack=chosen.rules?.drawScope||draft.pack||'full';
-      draft.reversals=chosen.rules?.allowReversals!==false;
-      draft.repeats=!!chosen.rules?.allowRepeats;
-      applyTemplateAppearance(chosen,root);
+      session.pathDrafts ||= {};
+      session.pathDrafts.templates=clone(draft);
+      const bespokeDraft=clone(draft);
+      bespokeDraft.templateId='';
+      bespokeDraft.basedOnTemplateId=chosen.id;
+      bespokeDraft.templateName='Unnamed Template';
+      bespokeDraft.labels=chosen.positions.slice().sort((a,b)=>a.drawOrder-b.drawOrder).map(item=>item.label);
+      bespokeDraft.positionPacks=chosen.positions.slice().sort((a,b)=>a.drawOrder-b.drawOrder).map(item=>String(item.drawScope||''));
+      bespokeDraft.positionSettings=[];
+      bespokeDraft.pack=chosen.rules?.drawScope||bespokeDraft.pack||'full';
+      bespokeDraft.reversals=chosen.rules?.allowReversals!==false;
+      bespokeDraft.repeats=!!chosen.rules?.allowRepeats;
       session.path='bespoke';
+      session.pathCollapsed=false;
+      session.draft=bespokeDraft;
+      session.pathDrafts.bespoke=clone(bespokeDraft);
+      applyTemplateAppearance(chosen,root);
       syncTransformEditingAvailability(root);
       renderOptions(root,{preserveScroll:false});
       showBoardToast('A Bespoke copy is ready to modify. Save it with a name if you want to keep it, or simply continue.',{title:'Template copied',duration:5200});
