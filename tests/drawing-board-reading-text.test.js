@@ -62,6 +62,16 @@ async function applyCeltic(page){
     assert.doesNotMatch(visibleText,/Same card, same ingredients, inverted orientation/i,'generic reversed boilerplate must not be shown');
     assert.doesNotMatch(visibleText,/Begin with the card.s raw symbolism/i,'orientation-method boilerplate must not be shown');
     assert.match(await card.locator('.relphi-reading-text-interpretation').innerText(),/\S/,'specific reversed interpretation must remain');
+    const canonicalReversed=await page.evaluate(()=>{
+      const entry=window.RelphiTarotLedgerBridge.drawingBoardReadingEntries()[0];
+      return {
+        reading:entry.interpretation,
+        canonical:window.RelphiTarotReversedMeanings?.meaningFor?.(entry.cardId)||''
+      };
+    });
+    assert.ok(canonicalReversed.canonical,'canonical Relphi reversed meaning must be available');
+    assert.equal(canonicalReversed.reading,canonicalReversed.canonical,'Reading text must use the canonical card-specific Relphi reversed interpretation');
+    assert.doesNotMatch(canonicalReversed.reading,/reversed shows its core operation turning inward, meeting obstruction, becoming overextended, or returning for correction/i,'generic repeated reversal preamble must not regress into Reading text');
 
     const serialized=await page.evaluate(()=>window.RelphiTarotLedgerBridge.serializeDrawingBoardReading());
     assert.match(serialized,/What covers you/);
