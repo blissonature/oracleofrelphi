@@ -182,13 +182,34 @@ async function assertReadableFocus(page) {
     const viewport=window.visualViewport;
     const viewportTop=Number(viewport?.offsetTop)||0;
     const viewportBottom=viewportTop+(Number(viewport?.height)||window.innerHeight);
-    return {top:rect.top,bottom:rect.bottom,viewportTop,viewportBottom};
+    const panel=button.closest('.relphi-board-settings-panel');
+    return {
+      top:rect.top,bottom:rect.bottom,viewportTop,viewportBottom,
+      panelPosition:panel?getComputedStyle(panel).position:''
+    };
   });
+  assert.equal(mobileConfirmGeometry.panelPosition,'fixed','mobile Drawing Board Settings must be viewport-fixed');
   assert.ok(
     mobileConfirmGeometry.top>=mobileConfirmGeometry.viewportTop-1 &&
     mobileConfirmGeometry.bottom<=mobileConfirmGeometry.viewportBottom+1,
     'Crafted Confirm must remain inside the visible mobile viewport'
   );
+  const mobileSettingsScrollResult=await mobile.evaluate(()=>{
+    const body=document.querySelector('#shortListPanel .relphi-reading-options-drawer .relphi-options-body');
+    const confirm=document.querySelector('#relphiApplyOptions');
+    const before=confirm?.getBoundingClientRect();
+    const pageBefore=window.scrollY;
+    if(body)body.scrollTop=Math.max(0,body.scrollHeight-body.clientHeight);
+    const after=confirm?.getBoundingClientRect();
+    return {
+      pageBefore,pageAfter:window.scrollY,
+      beforeTop:before?.top,beforeBottom:before?.bottom,
+      afterTop:after?.top,afterBottom:after?.bottom
+    };
+  });
+  assert.equal(mobileSettingsScrollResult.pageAfter,mobileSettingsScrollResult.pageBefore,'scrolling Crafted options must not scroll the page');
+  assert.equal(Math.round(mobileSettingsScrollResult.afterTop),Math.round(mobileSettingsScrollResult.beforeTop),'Confirm must stay anchored while Crafted options scroll');
+  assert.equal(Math.round(mobileSettingsScrollResult.afterBottom),Math.round(mobileSettingsScrollResult.beforeBottom),'Confirm bottom must stay anchored while Crafted options scroll');
 
   // Height-only mobile viewport changes (browser chrome appearing/disappearing while scrolling)
   // must not refit the board or change card scale.
