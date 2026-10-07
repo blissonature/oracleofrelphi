@@ -35,6 +35,7 @@
   let recursionPortalLevel = 0;
   let attuneIndex = -1;
   let attuneViewportLock = null;
+  let focusViewportLock = null;
   let settingsOpen = false;
   let settingsMode = 'free';
   let settingsBaseline = null;
@@ -3527,46 +3528,9 @@
     const level=recursionLevelForIndex(index) || recursionPortalLevel || session.level;
     if (level<=session.maxLevel) session.level=level;
     reader.classList.add('is-recursion-reading');
-    const indices=recursionIndicesForLevel(level);
+    // The recursive board already is the four-part map. Focus should be the
+    // card-reading surface, not a second miniature copy of that same diagram.
     strip.replaceChildren();
-    indices.forEach(nativeIndex=>{
-      const button=document.createElement('button');
-      button.type='button';
-      button.dataset.focusPosition=String(nativeIndex);
-      button.className='relphi-recursion-focus-node';
-      const current=nativeIndex===index && !recursionPortalLevel;
-      button.classList.toggle('is-current',current);
-      button.classList.toggle('is-empty',!cardAt(nativeIndex));
-      button.classList.toggle('is-reversed',focusCardIsReversed(nativeIndex));
-      const art=focusArtImage(cardAt(nativeIndex));
-      if (art) {
-        const img=art.cloneNode(true);
-        img.removeAttribute('loading'); img.removeAttribute('decoding');
-        button.appendChild(img);
-      } else {
-        const glyph=document.createElement('strong');
-        glyph.textContent=recursionGlyphForIndex(nativeIndex);
-        button.appendChild(glyph);
-      }
-      const label=document.createElement('span');
-      label.textContent=recursionNameForIndex(nativeIndex);
-      button.appendChild(label);
-      button.title=positionLabel(nativeIndex);
-      button.setAttribute('aria-label',positionLabel(nativeIndex)+(cardAt(nativeIndex)?'':' · draw this position'));
-      button.addEventListener('click',()=>navigateFocusTo(nativeIndex));
-      strip.appendChild(button);
-    });
-    if (level<RECURSION_LEVELS) {
-      const portal=document.createElement('button');
-      portal.type='button';
-      portal.className='relphi-recursion-focus-node is-earth-portal'+(recursionPortalLevel===level?' is-current':'');
-      portal.dataset.recursionPortal=String(level);
-      portal.disabled=!recursionTriadComplete(level);
-      portal.innerHTML='<strong>🜃</strong><span>Earth</span>';
-      portal.setAttribute('aria-label','Level '+level+' · Earth · descend');
-      portal.addEventListener('click',()=>openRecursionPortal(level));
-      strip.appendChild(portal);
-    }
     renderRecursionDepth(reader);
     installRecursionBoard(panel());
   }
@@ -3647,6 +3611,38 @@
     const id=String(cardAt(index)?.dataset?.rowCard || '');
     return (Array.isArray(window.RELPHI_TAROT_CARDS)?window.RELPHI_TAROT_CARDS:[]).find(card=>card?.card_id===id) || null;
   }
+  function lockFocusViewport() {
+    if (focusViewportLock) return;
+    const body=document.body;
+    const scrollX=window.scrollX || window.pageXOffset || 0;
+    const scrollY=window.scrollY || window.pageYOffset || 0;
+    focusViewportLock={
+      scrollX,scrollY,
+      position:body.style.position,
+      top:body.style.top,
+      left:body.style.left,
+      right:body.style.right,
+      width:body.style.width
+    };
+    body.style.position='fixed';
+    body.style.top=(-scrollY)+'px';
+    body.style.left=(-scrollX)+'px';
+    body.style.right='0';
+    body.style.width='100%';
+  }
+  function unlockFocusViewport() {
+    const lock=focusViewportLock;
+    const body=document.body;
+    if (!lock) return;
+    body.style.position=lock.position;
+    body.style.top=lock.top;
+    body.style.left=lock.left;
+    body.style.right=lock.right;
+    body.style.width=lock.width;
+    focusViewportLock=null;
+    window.scrollTo(lock.scrollX,lock.scrollY);
+  }
+
   function lockAttuneViewport() {
     if (attuneViewportLock) return;
     const body=document.body;
@@ -4849,6 +4845,7 @@
       renderFocusEntry(existingReader,index);
       renderFocusStrip(existingReader,index,{preserveScroll:true});
       document.body.classList.add('relphi-focus-open');
+      lockFocusViewport();
       return true;
     }
     const reader=document.createElement('section');
@@ -4871,6 +4868,7 @@
     installFocusSwipe(reader);
     document.body.appendChild(reader);
     document.body.classList.add('relphi-focus-open');
+    lockFocusViewport();
     return true;
   }
   function isCrossingPosition(index) {
@@ -4882,6 +4880,7 @@
     const leaving=focusIndex;
     document.querySelector('.relphi-focus-reader')?.remove();
     document.body.classList.remove('relphi-focus-open');
+    unlockFocusViewport();
     focusIndex=-1;
     recursionPortalLevel=0;
     // Returning from Focus is a board reframe boundary. Recompute extents after
