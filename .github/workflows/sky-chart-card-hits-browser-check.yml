@@ -143,6 +143,11 @@ jobs:
           await page.locator('#skyFoundationA [data-card-ruler]').first().click();
           assert.ok(await page.evaluate(()=>!!document.documentElement.dataset.skyCardRulerFocus),'Clicking ruler art must activate Card Hits ruler focus.');
           await page.locator('#skyFoundationRelationships .sky-foundation-relationships-heading').click({position:{x:5,y:5}});
+          await page.waitForFunction(id=>{
+            const wheel=document.querySelector('.sky-foundation-wheel');
+            const placement=document.querySelector(`#skyFoundationWheelMount [data-layer="placements"] [data-sky="A"][data-placement="${CSS.escape(id)}"]`);
+            return !document.documentElement.hasAttribute('data-sky-card-ruler-focus')&&wheel?.classList.contains('has-isolation')&&placement?.classList.contains('is-selected');
+          },priorPlacementId);
           assert.equal(await page.evaluate(()=>document.documentElement.hasAttribute('data-sky-card-ruler-focus')),false,'Clicking elsewhere must clear Card Hits ruler focus.');
           assert.equal(await page.evaluate(()=>document.querySelector('.sky-foundation-wheel')?.classList.contains('has-isolation')),true,'Clearing Card Hits ruler focus must preserve the prior locked wheel focus.');
           assert.equal(await page.locator(`#skyFoundationWheelMount [data-layer="placements"] [data-sky="A"][data-placement="${priorPlacementId}"]`).evaluate(node=>node.classList.contains('is-selected')),true,'The exact pre-Card-Hits placement must remain selected after ruler dismissal.');
