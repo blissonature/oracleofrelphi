@@ -66,6 +66,7 @@ const state=await page.evaluate(()=>{
     signGlyphLane:Number(wheel.dataset.singleSkySignGlyphLane),
     ordinaryZodiacInner:Number(spec.comparison.zodiac.inner),
     ordinaryZodiacOuter:Number(spec.comparison.zodiac.outer),
+    placementBubbleRadius:Number(spec.comparison.placementBubbleRadius),
     houseSectors:wheel.querySelectorAll('[data-layer="a-houses"] .sky-foundation-house-sector').length,
     houseNumbers:wheel.querySelectorAll('[data-layer="a-houses"] .sky-foundation-house-number').length,
     anglePlacements:wheel.querySelectorAll('[data-layer="placements"] [data-angle-axis="true"]').length,
@@ -73,7 +74,7 @@ const state=await page.evaluate(()=>{
     outlines,
     moonRange:wheel.querySelectorAll('.sky-foundation-moon-range').length,
     placementLanes:placements.map(node=>Number(node.dataset.placementLane)),
-    placementMedallions:placements.map(node=>({mode:node.dataset.placementMedallion||'',opacity:node.querySelector('.relphi-glyph-bubble>circle')?.style.opacity||'',ariaHidden:node.querySelector('.relphi-glyph-bubble>circle')?.getAttribute('aria-hidden')||''})),
+    placementMedallions:placements.map(node=>({present:!!node.querySelector('.relphi-glyph-bubble>circle'),radius:Number(node.querySelector('.relphi-glyph-bubble>circle')?.getAttribute('r')||0)})),
     leaderLengths:[...wheel.querySelectorAll('[data-layer="leaders"] line[data-sky="A"][data-placement]')].map(line=>Math.hypot(Number(line.getAttribute('x2'))-Number(line.getAttribute('x1')),Number(line.getAttribute('y2'))-Number(line.getAttribute('y1')))),
     placementCount:placements.length,
     viewBox:wheel.getAttribute('viewBox')
@@ -87,12 +88,13 @@ assert.equal(state.houseNumbers,0,'Unknown-time standalone must not paint house 
 assert.equal(state.anglePlacements,0,'Unknown-time standalone must not paint chart angles.');
 assert.equal(state.signs,12,'Unknown-time standalone must keep all twelve zodiac sectors.');
 assert.ok(state.inner<state.ordinaryZodiacInner,'The zodiac must expand inward into the unavailable house territory.');
-assert.equal(state.outer,state.ordinaryZodiacOuter,'The expanded zodiac should preserve the canonical outer zodiac boundary.');
+assert.ok(state.outer>state.ordinaryZodiacOuter,'Unknown-time zodiac color must extend beyond the ordinary zodiac edge into the placement zone.');
+assert.ok(Math.abs((state.outer-state.ordinaryZodiacOuter)-state.placementBubbleRadius)<1,'The colored extension should cover approximately one placement-bubble radius.');
 assert.ok(state.placementLane<state.outer&&state.placementLane>state.signGlyphLane,'The primary placement lane must sit just inside the zodiac outer edge, beyond the sign glyph lane.');
 assert.ok(state.signGlyphLane<(state.inner+state.outer)/2,'Unknown-time sign glyphs must shift inward from the zodiac midpoint.');
 assert.ok(state.placementCount>0,'The fixture must render planetary placements.');
 assert.ok(state.placementLanes.every(value=>Number.isFinite(value)&&value<state.outer&&value>state.signGlyphLane),'The collision pass must preserve the inside-edge placement lane.');
-assert.ok(state.placementMedallions.every(item=>item.mode==='none'&&item.opacity==='0'&&item.ariaHidden==='true'),'Unknown-time placements must not paint white backing medallions that form a ghost ring.');
+assert.ok(state.placementMedallions.every(item=>item.present&&item.radius>0),'Unknown-time placements must retain the canonical inscribed placement circles for optical centering and scale.');
 assert.ok(state.leaderLengths.length>0,'Unknown-time fixture must render placement leaders.');
 assert.ok(state.leaderLengths.every(length=>Math.abs(length-36)<0.75),'Unknown-time placement leaders must match the canonical 36-unit Sky Chart leader gap.');
 assert.equal(state.outlines.length,2,'Unknown-time standalone should draw only the two zodiac boundaries.');
