@@ -228,7 +228,7 @@ const base='http://127.0.0.1:8000/tarot.html';
 
     // Opened depths remain revisitable without flattening the reading into a 22-card filmstrip.
     assert.equal(await page.locator('.relphi-recursion-depth [data-recursion-depth]:not(:disabled)').count(),7);
-    assert.equal(await page.locator('.relphi-focus-strip [data-focus-position]').count(),4,'Focus View should show only the current recursive level');
+    assert.equal(await page.locator('.relphi-focus-strip [data-focus-position]').count(),0,'Recursive Focus should not duplicate the board as a miniature logo navigator');
     assert.equal(await page.locator('.relphi-focus-fan').count(),0);
 
     assert.deepEqual(errors,[]);
