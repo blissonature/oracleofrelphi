@@ -151,12 +151,6 @@
       style.textContent = '#shortListPanel .card-row-drawing-board:not([open])>summary>:not(strong){display:none!important}#shortListPanel .card-row-board-empty{font-size:0!important}#shortListPanel .card-row-board-empty::after{content:"Choose referents or draw a card. The board is ready.";font-size:.78rem!important}body.relphi-focus-open .relphi-focus-reader .relphi-focus-card-host>.relphi-focused-card .or-card-add,body.relphi-focus-open .relphi-focus-reader .relphi-focus-card-host>.relphi-focused-card .card-row-reverse-toggle,body.relphi-focus-open .relphi-focus-reader .relphi-focus-card-host>.relphi-focused-card .card-row-transform-box{display:none!important;visibility:hidden!important;opacity:0!important;pointer-events:none!important}';
       document.head.appendChild(style);
     }
-    if (!document.getElementById('relphi-drawing-board-mobile-canvas-width')) {
-      const style = document.createElement('style');
-      style.id = 'relphi-drawing-board-mobile-canvas-width';
-      style.textContent = '@media(max-width:700px){#shortListPanel .card-row-workspace{width:calc(100% + 1.2rem)!important;max-width:none!important;margin-left:-.6rem!important;margin-right:-.6rem!important}#shortListPanel.relphi-celtic-cross .card-row-board{translate:-6px 0!important}}';
-      document.head.appendChild(style);
-    }
   }
 
   function loadEnhancements() {
