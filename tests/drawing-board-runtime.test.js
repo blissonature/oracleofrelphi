@@ -164,6 +164,19 @@ async function assertReadableFocus(page) {
   await waitReady(mobile);
   await openBoard(mobile);
   assert.equal(await mobile.locator('#zoomCardRowExtents').count(),1);
+  const mobileWorkspaceGeometry=await mobile.evaluate(()=>{
+    const drawer=document.querySelector('#shortListPanel .card-row-drawing-board');
+    const workspace=document.querySelector('#shortListPanel .drawing-board-board-mode > .card-row-workspace');
+    if(!drawer||!workspace)return null;
+    const d=drawer.getBoundingClientRect(), w=workspace.getBoundingClientRect();
+    return {drawerLeft:d.left,drawerRight:d.right,workspaceLeft:w.left,workspaceRight:w.right};
+  });
+  assert.ok(mobileWorkspaceGeometry,'mobile Drawing Board workspace geometry should resolve');
+  assert.ok(
+    mobileWorkspaceGeometry.workspaceLeft>=mobileWorkspaceGeometry.drawerLeft+6 &&
+    mobileWorkspaceGeometry.workspaceRight<=mobileWorkspaceGeometry.drawerRight-6,
+    'mobile Drawing Board felt must stay inset inside the rounded board container'
+  );
   const mobileConfirmGeometry=await mobile.locator('#relphiApplyOptions').evaluate(button=>{
     const rect=button.getBoundingClientRect();
     const viewport=window.visualViewport;
