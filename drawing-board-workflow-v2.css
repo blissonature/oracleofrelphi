@@ -3254,3 +3254,52 @@ body.relphi-attune-open{overflow:hidden!important}
     padding-bottom:max(.15rem,env(safe-area-inset-bottom))!important;
   }
 }
+
+
+/* Mobile Bespoke keeps card settings visible instead of letting the desktop
+   middle toolbar column collapse between Select all and the action buttons. */
+@media(max-width:700px){
+  #shortListPanel .relphi-question-toolbar{
+    grid-template-columns:minmax(0,1fr)!important;
+    align-items:stretch!important;
+    gap:.5rem!important;
+  }
+  #shortListPanel .relphi-question-toolbar>.relphi-question-select-all{
+    justify-self:start!important;
+    width:auto!important;
+    max-width:100%!important;
+  }
+  #shortListPanel .relphi-question-toolbar-settings{
+    width:100%!important;
+    max-width:100%!important;
+    grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important;
+    gap:.42rem!important;
+    overflow:visible!important;
+    white-space:normal!important;
+  }
+  #shortListPanel .relphi-question-toolbar-pack{
+    grid-column:1/-1!important;
+  }
+  #shortListPanel .relphi-question-toolbar-cards{
+    grid-column:1!important;
+    min-width:0!important;
+  }
+  #shortListPanel .relphi-question-toolbar-link{
+    grid-column:2!important;
+    min-width:0!important;
+  }
+  #shortListPanel .relphi-question-toolbar-link>select{
+    width:100%!important;
+  }
+  #shortListPanel .relphi-question-toolbar-check{
+    min-width:0!important;
+    min-height:2rem!important;
+  }
+  #shortListPanel .relphi-question-toolbar-actions{
+    width:100%!important;
+    max-width:100%!important;
+    justify-content:flex-end!important;
+    flex-wrap:wrap!important;
+    overflow:visible!important;
+  }
+}
