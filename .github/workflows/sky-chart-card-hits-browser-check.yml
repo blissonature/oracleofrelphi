@@ -132,6 +132,22 @@ jobs:
           assert.equal(state.directFingerprint?.oldGlyph,false);
           assert.equal(state.directFingerprint?.oldHouseMedallion,false);
           assert.equal(state.directFingerprint?.cardMedia,'fingerprint-local-eager');
+
+          // Verify the reported interaction before legacy visual assertions below.
+          await page.locator('#skyFoundationA [data-sky-drawer-tab="card-hits"]').click({force:true});
+          await page.waitForSelector('#skyFoundationA .sky-card-hits-structure',{state:'visible'});
+          await page.evaluate(()=>document.querySelector('.sky-foundation-wheel')?.classList.add('has-filter-focus'));
+          await page.locator('#skyFoundationA [data-card-ruler]').first().click();
+          assert.ok(await page.evaluate(()=>!!document.documentElement.dataset.skyCardRulerFocus),'Clicking ruler art must activate Card Hits ruler focus.');
+          await page.locator('#skyFoundationRelationships .sky-foundation-relationships-heading').click({position:{x:5,y:5}});
+          assert.equal(await page.evaluate(()=>document.documentElement.hasAttribute('data-sky-card-ruler-focus')),false,'Clicking elsewhere must clear Card Hits ruler focus.');
+          assert.equal(await page.evaluate(()=>document.querySelector('.sky-foundation-wheel')?.classList.contains('has-filter-focus')),true,'Clearing Card Hits ruler focus must preserve the prior wheel focus.');
+          await page.locator('#skyFoundationA [data-card-ruler]').first().click();
+          await page.locator('#skyFoundationA [data-card-hits-view="houses"]').click();
+          assert.equal(await page.evaluate(()=>document.documentElement.hasAttribute('data-sky-card-ruler-focus')),false,'Leaving Rulers for Houses must clear Card Hits ruler focus.');
+          console.log('RULER_FOCUS_CLEAR_OK');
+          await page.locator('#skyFoundationA [data-sky-drawer-tab="card-hits"]').click({force:true});
+
           assert.match(state.directFingerprint?.cardSrc||'',/\/assets\/tarot\/rws\/.+\.webp$/);
           assert.equal((state.directFingerprint?.cardSrc||'').includes('wsrv.nl'),false);
           assert.equal(state.directFingerprint?.cardStyle?.objectFit,'contain');
@@ -156,20 +172,6 @@ jobs:
           console.log('CARD_HITS_DRAWER '+JSON.stringify(drawer));
           assert.equal(drawer.open,true);
           assert.equal(drawer.structure,true);
-
-          // Ruler focus is temporary and must yield to any outside pointer action
-          // without erasing the chart focus that existed underneath it.
-          await page.evaluate(()=>document.querySelector('.sky-foundation-wheel')?.classList.add('has-filter-focus'));
-          await page.locator('#skyFoundationA [data-card-ruler]').first().click();
-          assert.ok(await page.evaluate(()=>!!document.documentElement.dataset.skyCardRulerFocus),'Clicking ruler art must activate Card Hits ruler focus.');
-          await page.locator('#skyFoundationRelationships .sky-foundation-relationships-heading').click({position:{x:5,y:5}});
-          assert.equal(await page.evaluate(()=>document.documentElement.hasAttribute('data-sky-card-ruler-focus')),false,'Clicking elsewhere must clear Card Hits ruler focus.');
-          assert.equal(await page.evaluate(()=>document.querySelector('.sky-foundation-wheel')?.classList.contains('has-filter-focus')),true,'Clearing Card Hits ruler focus must preserve the prior wheel focus.');
-          await page.locator('#skyFoundationA [data-card-ruler]').first().click();
-          await page.locator('#skyFoundationA [data-card-hits-view="houses"]').click();
-          assert.equal(await page.evaluate(()=>document.documentElement.hasAttribute('data-sky-card-ruler-focus')),false,'Leaving Rulers for Houses must clear Card Hits ruler focus.');
-          await page.locator('#skyFoundationA [data-card-hits-view="rulers"]').click();
-          console.log('RULER_FOCUS_CLEAR_OK');
 
           const chartRulerPresentation=await page.evaluate(()=>{
             const stage=document.querySelector('#skyFoundationA .sky-card-chart-ruler-stage');
