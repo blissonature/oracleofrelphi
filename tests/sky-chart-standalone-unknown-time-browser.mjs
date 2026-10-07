@@ -63,6 +63,7 @@ const state=await page.evaluate(()=>{
     inner:Number(wheel.dataset.singleSkyInnerRadius),
     outer:Number(wheel.dataset.singleSkyOuterRadius),
     placementLane:Number(wheel.dataset.singleSkyPlacementLane),
+    signGlyphLane:Number(wheel.dataset.singleSkySignGlyphLane),
     ordinaryZodiacInner:Number(spec.comparison.zodiac.inner),
     ordinaryZodiacOuter:Number(spec.comparison.zodiac.outer),
     houseSectors:wheel.querySelectorAll('[data-layer="a-houses"] .sky-foundation-house-sector').length,
@@ -72,22 +73,25 @@ const state=await page.evaluate(()=>{
     outlines,
     moonRange:wheel.querySelectorAll('.sky-foundation-moon-range').length,
     placementLanes:placements.map(node=>Number(node.dataset.placementLane)),
+    leaderLengths:[...wheel.querySelectorAll('[data-layer="leaders"] line[data-sky="A"][data-placement]')].map(line=>Math.hypot(Number(line.getAttribute('x2'))-Number(line.getAttribute('x1')),Number(line.getAttribute('y2'))-Number(line.getAttribute('y1')))),
     placementCount:placements.length,
     viewBox:wheel.getAttribute('viewBox')
   };
 });
 
 assert.equal(state.geometry,'standalone-unknown-time');
-assert.equal(state.ringOrder,'A-zodiac-expanded-placements-outer');
+assert.equal(state.ringOrder,'A-zodiac-expanded-placements-inner-edge');
 assert.equal(state.houseSectors,0,'Unknown-time standalone must not paint house sectors.');
 assert.equal(state.houseNumbers,0,'Unknown-time standalone must not paint house numbers.');
 assert.equal(state.anglePlacements,0,'Unknown-time standalone must not paint chart angles.');
 assert.equal(state.signs,12,'Unknown-time standalone must keep all twelve zodiac sectors.');
 assert.ok(state.inner<state.ordinaryZodiacInner,'The zodiac must expand inward into the unavailable house territory.');
 assert.equal(state.outer,state.ordinaryZodiacOuter,'The expanded zodiac should preserve the canonical outer zodiac boundary.');
-assert.ok(state.placementLane>state.outer,'The primary placement lane must sit outside the expanded zodiac.');
+assert.ok(state.placementLane<state.outer&&state.placementLane>state.signGlyphLane,'The primary placement lane must sit just inside the zodiac outer edge, beyond the sign glyph lane.');
+assert.ok(state.signGlyphLane<(state.inner+state.outer)/2,'Unknown-time sign glyphs must shift inward from the zodiac midpoint.');
 assert.ok(state.placementCount>0,'The fixture must render planetary placements.');
-assert.ok(state.placementLanes.every(value=>Number.isFinite(value)&&value>state.outer),'The collision pass must preserve the outside placement lane.');
+assert.ok(state.placementLanes.every(value=>Number.isFinite(value)&&value<state.outer&&value>state.signGlyphLane),'The collision pass must preserve the inside-edge placement lane.');
+assert.ok(state.leaderLengths.length>0&&Math.max(...state.leaderLengths)<40,'Unknown-time placement leaders must stay short.');
 assert.equal(state.outlines.length,2,'Unknown-time standalone should draw only the two zodiac boundaries.');
 assert.ok(state.moonRange>0,'Unknown-time standalone must keep the Moon range.');
 const relevantErrors=errors.filter(text=>/Sky Chart foundation render failed|standalone unknown-time|unknown-time composition/i.test(text));
