@@ -6,6 +6,7 @@ on:
       - 'sky-chart.html'
       - 'sky-chart-foundation-v2.js'
       - 'sky-chart-single-sky-layout-v1.js'
+      - 'sky-chart-placement-house-system-v1.js'
       - 'tests/sky-chart-standalone-unknown-time-browser.mjs'
       - '.github/workflows/sky-chart-standalone-unknown-time-check.yml'
   push:
@@ -15,6 +16,7 @@ on:
       - 'sky-chart.html'
       - 'sky-chart-foundation-v2.js'
       - 'sky-chart-single-sky-layout-v1.js'
+      - 'sky-chart-placement-house-system-v1.js'
       - 'tests/sky-chart-standalone-unknown-time-browser.mjs'
       - '.github/workflows/sky-chart-standalone-unknown-time-check.yml'
 
