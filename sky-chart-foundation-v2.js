@@ -74,7 +74,100 @@ function addUnknownMoonRange(layerLeaders,layerPlacements,slot,payload,g,obstacl
 }
 function addAngles(layerLeaders,layerPlacements,slot,list,cusps,g,obstacles,jobs){const color=spec()?.SKY?.[slot]||'#333',frameRadius=19,half=frameRadius+1.2,clearance=6,angleGap=Number(comparison()?.angleGap)||17;list.filter(record=>ANGLE_IDS.has(record.id)).forEach(record=>{let chosen=null;for(const lane of g.angle||[]){const p=polar(lane,record.value),candidate={kind:'square',x:p.x,y:p.y,half};if(lane-half-clearance<=g.inner||lane+half+clearance>=g.outer||obstacleCollision(candidate,obstacles,clearance))continue;chosen={lane,p,candidate};break}if(!chosen){const lane=Number(g.angle?.[0]),p=polar(lane,record.value);chosen={lane,p,candidate:{kind:'square',x:p.x,y:p.y,half},fallback:true}}const labelSide=g.side==='inner'?chosen.lane-angleGap:chosen.lane+angleGap,lineStart=Math.min(g.edge,labelSide),lineEnd=Math.max(g.edge,labelSide);if(lineEnd>lineStart)radialLine(layerLeaders,lineStart,lineEnd,record.value,{stroke:color,class:'sky-foundation-angle-axis','stroke-width':'2.6','vector-effect':'non-scaling-stroke','data-sky':slot,'data-placement':record.id,'data-angle':record.id,'data-exact-longitude':record.value.toFixed(8),'data-angle-lane':chosen.lane,'data-axis-extreme':g.side,'data-axis-edge-radius':g.edge});const host=svg('g',{transform:`translate(${chosen.p.x} ${chosen.p.y})`,'data-sky':slot,'data-placement':record.id,'data-angle-axis':'true','data-house':houseFor(record.value,cusps)||'','data-angle-lane':chosen.lane,'data-angle-longitude':record.value.toFixed(8),'data-exact-longitude':record.value.toFixed(8),'data-angle-extreme':g.side,'data-angle-lane-fallback':chosen.fallback?'true':'false'});layerPlacements.appendChild(host);obstacles.push(chosen.candidate);jobs.push(drawBubble(host,record.id,{radius:frameRadius,padding:1,color,strokeWidth:2.35},true).catch(error=>glyphFailure(host,error)))})}
 function buildWheel(listA,listB,cuspsA,cuspsB){const shared=spec(),cmp=comparison(),gA=geometry('A'),gB=geometry('B');if(!shared||!cmp||!gA||!gB)throw new Error('Shared Sky wheel specification is unavailable.');const noHousesA=cuspsA.length!==12,noHousesB=cuspsB.length!==12,z={...cmp.zodiac,inner:noHousesA?gA.inner:cmp.zodiac.inner,outer:noHousesB?gB.outer:cmp.zodiac.outer,glyphRadius:cmp.zodiac.glyphRadius+(noHousesA&&noHousesB?4:0)},leaderA=Math.abs(Number(gA.placement?.[0])-Number(gA.degree)),leaderB=Math.abs(Number(gB.placement?.[0])-Number(gB.degree)),gANoHouses=noHousesA?{...gA,inner:z.inner,outer:z.outer,degree:noHousesB?z.inner:z.outer,placement:gA.placement.map((radius,index)=>(noHousesB?z.inner:z.outer)+(noHousesB?1:-1)*(index===0?leaderA:Math.abs(Number(radius)-Number(gA.degree)))),edge:noHousesB?z.inner:z.outer,side:noHousesB?'inner':'outer'}:gA,gBNoHouses=noHousesB?{...gB,inner:z.inner,outer:z.outer,degree:noHousesA?z.outer:z.inner,placement:gB.placement.map((radius,index)=>(noHousesA?z.outer:z.inner)+(noHousesA?-1:1)*(index===0?leaderB:Math.abs(Number(radius)-Number(gB.degree)))),edge:noHousesA?z.outer:z.inner,side:noHousesA?'outer':'inner'}:gB,houseGeometry=noHousesA&&noHousesB?'none':noHousesA?'b-only':noHousesB?'a-only':'comparison',c=center(),outerRadius=Math.max(gANoHouses.outer,gBNoHouses.outer,z.outer),chart=svg('svg',{viewBox:cmp.viewBox.join(' '),role:'img','aria-label':'Sky A and Sky B rainbow comparison wheel',class:'sky-foundation-wheel relphi-canonical-ready','data-ring-order':'A-inner-B-outer','data-inner-sky':'A','data-outer-sky':'B','data-wheel-spec':'relphi-sky-wheel-v1','data-house-geometry':houseGeometry});chart.appendChild(svg('circle',{cx:c.x,cy:c.y,r:outerRadius+8,fill:'#fffdf8',stroke:'rgba(31,27,24,.14)'}));const layers={};['a-houses','zodiac','b-houses','ticks','aspects','outlines','leaders','placements'].forEach(name=>{layers[name]=svg('g',{'data-layer':name});chart.appendChild(layers[name])});const jobs=[],obstacles=[];houseLayer(layers['a-houses'],'A',cuspsA,gANoHouses,obstacles);houseLayer(layers['b-houses'],'B',cuspsB,gBNoHouses,obstacles);addZodiac(layers.zodiac,obstacles,jobs,z);[gANoHouses.inner,z.inner,z.outer,gBNoHouses.outer].filter((radius,index,list)=>list.indexOf(radius)===index).forEach(radius=>layers.outlines.appendChild(svg('circle',{cx:c.x,cy:c.y,r:radius,class:'sky-foundation-ring'})));for(let degree=0;degree<360;degree+=1){const length=degree%10===0?12:degree%5===0?8:5,className=degree%10===0?'sky-foundation-tick sky-foundation-tick-major':'sky-foundation-tick';const tickA=gANoHouses.side==='inner'?[gANoHouses.degree,gANoHouses.degree+length]:[gANoHouses.degree-length,gANoHouses.degree],tickB=gBNoHouses.side==='inner'?[gBNoHouses.degree,gBNoHouses.degree+length]:[gBNoHouses.degree-length,gBNoHouses.degree];radialLine(layers.ticks,tickA[0],tickA[1],degree,{class:className});radialLine(layers.ticks,tickB[0],tickB[1],degree,{class:className})}relationships(listA,listB).forEach(relation=>aspectLine(layers.aspects,relation,'A','B',null,cuspsA,cuspsB));intraskyRelationships(listA,'A').forEach((relation,index)=>aspectLine(layers.aspects,relation,'A','A',`AA-${index}`,cuspsA,cuspsB));intraskyRelationships(listB,'B').forEach((relation,index)=>aspectLine(layers.aspects,relation,'B','B',`BB-${index}`,cuspsA,cuspsB));addOrdinary(layers.leaders,layers.placements,'A',listA,cuspsA,gANoHouses,obstacles,jobs);addUnknownMoonRange(layers.leaders,layers.placements,'A',read(KEYS.A),gANoHouses,obstacles,jobs);addOrdinary(layers.leaders,layers.placements,'B',listB,cuspsB,gBNoHouses,obstacles,jobs);addUnknownMoonRange(layers.leaders,layers.placements,'B',read(KEYS.B),gBNoHouses,obstacles,jobs);addAngles(layers.leaders,layers.placements,'A',listA,cuspsA,gANoHouses,obstacles,jobs);addAngles(layers.leaders,layers.placements,'B',listB,cuspsB,gBNoHouses,obstacles,jobs);window.RelphiPlacementCollisionOrder?.arrange?.(chart);chart.dataset.finalGeometryReady='true';return{chart,jobs}}
-function buildSingleWheel(listA,cuspsA){const shared=spec(),cmp=comparison(),gA=geometry('A');if(!shared||!cmp||!gA)throw new Error('Shared Sky wheel specification is unavailable.');const c=center(),outerRadius=cmp.zodiac.outer,pad=28,standaloneViewBox=[c.x-outerRadius-pad,c.y-outerRadius-pad,(outerRadius+pad)*2,(outerRadius+pad)*2],chart=svg('svg',{viewBox:standaloneViewBox.join(' '),role:'img','aria-label':'Sky A zodiac wheel',class:'sky-foundation-wheel relphi-canonical-ready','data-ring-order':'A-houses-inner-zodiac-outer','data-inner-sky':'A','data-wheel-spec':'relphi-sky-wheel-v1','data-single-sky':'A','data-wheel-geometry':'standalone'});chart.appendChild(svg('circle',{cx:c.x,cy:c.y,r:outerRadius+8,fill:'#fffdf8',stroke:'rgba(31,27,24,.14)'}));const layers={};['a-houses','zodiac','ticks','aspects','outlines','leaders','placements'].forEach(name=>{layers[name]=svg('g',{'data-layer':name});chart.appendChild(layers[name])});const jobs=[],obstacles=[];houseLayer(layers['a-houses'],'A',cuspsA,gA,obstacles);addZodiac(layers.zodiac,obstacles,jobs);[gA.inner,cmp.zodiac.inner,cmp.zodiac.outer].forEach(radius=>layers.outlines.appendChild(svg('circle',{cx:c.x,cy:c.y,r:radius,class:'sky-foundation-ring'})));for(let degree=0;degree<360;degree+=1){const length=degree%10===0?12:degree%5===0?8:5,className=degree%10===0?'sky-foundation-tick sky-foundation-tick-major':'sky-foundation-tick';radialLine(layers.ticks,gA.degree-length,gA.degree,degree,{class:className})}intraskyRelationships(listA,'A').forEach((relation,index)=>aspectLine(layers.aspects,relation,'A','A',`AA-${index}`,cuspsA,[]));addOrdinary(layers.leaders,layers.placements,'A',listA,cuspsA,gA,obstacles,jobs);addUnknownMoonRange(layers.leaders,layers.placements,'A',read(KEYS.A),gA,obstacles,jobs);addAngles(layers.leaders,layers.placements,'A',listA,cuspsA,gA,obstacles,jobs);window.RelphiPlacementCollisionOrder?.arrange?.(chart);chart.dataset.finalGeometryReady='true';return{chart,jobs}}
+function buildSingleWheel(listA,cuspsA){
+  const shared=spec(),cmp=comparison(),gA=geometry('A');
+  if(!shared||!cmp||!gA)throw new Error('Shared Sky wheel specification is unavailable.');
+
+  const noHousesA=!Array.isArray(cuspsA)||cuspsA.length!==12;
+  const c=center();
+  const z=noHousesA
+    ?{...cmp.zodiac,inner:gA.inner,outer:cmp.zodiac.outer,glyphRadius:cmp.zodiac.glyphRadius+4}
+    :cmp.zodiac;
+  const leaderA=Math.abs(Number(gA.placement?.[0])-Number(gA.degree));
+  const gStandalone=noHousesA
+    ?{...gA,inner:z.inner,outer:z.outer,degree:z.outer,placement:gA.placement.map((radius,index)=>z.outer+(index===0?leaderA:Math.abs(Number(radius)-Number(gA.degree)))),edge:z.outer,side:'outer'}
+    :gA;
+
+  const placementOuter=Math.max(...(gStandalone.placement||[]).map(Number).filter(Number.isFinite),z.outer);
+  const outerRadius=Math.max(z.outer,placementOuter+(Number(cmp.placementBubbleRadius)||19.7));
+  const pad=24,standaloneViewBox=[c.x-outerRadius-pad,c.y-outerRadius-pad,(outerRadius+pad)*2,(outerRadius+pad)*2];
+  const chart=svg('svg',{
+    viewBox:standaloneViewBox.join(' '),
+    role:'img',
+    'aria-label':'Sky A zodiac wheel',
+    class:'sky-foundation-wheel relphi-canonical-ready',
+    'data-ring-order':noHousesA?'A-zodiac-expanded-placements-outer':'A-houses-inner-zodiac-outer',
+    'data-inner-sky':'A',
+    'data-wheel-spec':'relphi-sky-wheel-v1',
+    'data-single-sky':'A',
+    'data-wheel-geometry':noHousesA?'standalone-unknown-time':'standalone',
+    'data-single-sky-placement-lane':String(gStandalone.placement?.[0]??''),
+    'data-single-sky-degree-radius':String(gStandalone.degree??''),
+    'data-single-sky-inner-radius':String(gStandalone.inner??''),
+    'data-single-sky-outer-radius':String(gStandalone.outer??'')
+  });
+
+  chart.appendChild(svg('circle',{cx:c.x,cy:c.y,r:outerRadius+8,fill:'#fffdf8',stroke:'rgba(31,27,24,.14)'}));
+  const layers={};
+  ['a-houses','zodiac','ticks','aspects','outlines','leaders','placements'].forEach(name=>{
+    layers[name]=svg('g',{'data-layer':name});chart.appendChild(layers[name]);
+  });
+  const jobs=[],obstacles=[];
+
+  if(!noHousesA)houseLayer(layers['a-houses'],'A',cuspsA,gStandalone,obstacles);
+  addZodiac(layers.zodiac,obstacles,jobs,z);
+
+  const outlineRadii=noHousesA?[z.inner,z.outer]:[gStandalone.inner,z.inner,z.outer];
+  [...new Set(outlineRadii.map(Number).filter(Number.isFinite))].forEach(radius=>{
+    layers.outlines.appendChild(svg('circle',{cx:c.x,cy:c.y,r:radius,class:'sky-foundation-ring'}));
+  });
+
+  for(let degree=0;degree<360;degree+=1){
+    const length=degree%10===0?12:degree%5===0?8:5;
+    const className=degree%10===0?'sky-foundation-tick sky-foundation-tick-major':'sky-foundation-tick';
+    radialLine(layers.ticks,gStandalone.degree-length,gStandalone.degree,degree,{class:className});
+  }
+
+  const aspectRadius=Math.max(1,gStandalone.inner-1);
+  intraskyRelationships(listA,'A').forEach((relation,index)=>{
+    const from=polar(aspectRadius,relation.left.value),to=polar(aspectRadius,relation.right.value);
+    const attrs={
+      x1:from.x,y1:from.y,x2:to.x,y2:to.y,
+      stroke:relation.aspect.color,
+      class:'sky-foundation-aspect',
+      'data-aspect':relation.aspect.id,
+      'data-left-placement':relation.left.id,
+      'data-right-placement':relation.right.id,
+      'data-left-sky':'A',
+      'data-right-sky':'A',
+      'data-relationship-mode':'A-A',
+      'data-orb':relation.orb.toFixed(6),
+      'data-left-house':'',
+      'data-right-house':'',
+      'data-left-sign':Math.floor(norm(relation.left.value)/30),
+      'data-right-sign':Math.floor(norm(relation.right.value)/30),
+      'data-interactive':'aspect',
+      'data-focus-piece':'aspect',
+      'data-relation-index':`AA-${index}`,
+      tabindex:'0',
+      role:'button',
+      'aria-label':`Sky A ${relation.left.entry?.name||relation.left.id} ${relation.aspect.id} Sky A ${relation.right.entry?.name||relation.right.id}`
+    };
+    if(Number.isFinite(relation.harmonicOrder))attrs['data-harmonic-order']=String(relation.harmonicOrder);
+    if(Number.isFinite(relation.harmonicNumerator))attrs['data-harmonic-numerator']=String(relation.harmonicNumerator);
+    if(Number.isFinite(relation.phaseError))attrs['data-phase-error']=relation.phaseError.toFixed(6);
+    if(Number.isFinite(relation.harmonicCoherence??relation.coherence))attrs['data-harmonic-coherence']=Number(relation.harmonicCoherence??relation.coherence).toFixed(8);
+    layers.aspects.appendChild(svg('line',attrs));
+  });
+
+  addOrdinary(layers.leaders,layers.placements,'A',listA,cuspsA,gStandalone,obstacles,jobs);
+  addUnknownMoonRange(layers.leaders,layers.placements,'A',read(KEYS.A),gStandalone,obstacles,jobs);
+  if(!noHousesA)addAngles(layers.leaders,layers.placements,'A',listA,cuspsA,gStandalone,obstacles,jobs);
+
+  window.RelphiPlacementCollisionOrder?.arrange?.(chart);
+  chart.dataset.finalGeometryReady='true';
+  return{chart,jobs};
+}
 function signature(a,b){try{return JSON.stringify([a,b,requestedOrb()])}catch(_){return String(Date.now())}}
 function whereWhenEditing(){return document.documentElement.dataset.skyWhereWhenEditing==='true'}
 async function render(force=false){if(whereWhenEditing())return;if(rendering){const queuedSignature=signature(read(KEYS.A),read(KEYS.B));if(queuedSignature!==renderingSignature)rerender=true;return}const root=shell();if(!root)return;const registry=window.RelphiGlyphRegistry,component=window.RelphiGlyphComponent;if(!registry||!component?.draw||!component?.createBubble||!spec()){setTimeout(()=>render(true),20);return}const payloadA=read(KEYS.A),payloadB=read(KEYS.B),nextSignature=signature(payloadA,payloadB);if(!force&&nextSignature===lastSignature)return;rendering=true;renderingSignature=nextSignature;rerender=false;try{const listA=records(payloadA),listB=records(payloadB),cuspsA=houseCusps(payloadA,listA),cuspsB=houseCusps(payloadB,listB),cardJobs=[...renderCard('A',payloadA,listA,cuspsA),...renderCard('B',payloadB,listB,cuspsB)],mount=document.getElementById('skyFoundationWheelMount');if(!listA.length){mount.innerHTML='<p class="sky-foundation-empty">Sky A needs approved canonical placements.</p>';await Promise.allSettled(cardJobs)}else if(!listB.length){delete mount.dataset.comparisonYieldedToSingleSky;const wheel=buildSingleWheel(listA,cuspsA);await Promise.allSettled([...cardJobs,...wheel.jobs]);if(!records(read(KEYS.B)).length)mount.replaceChildren(wheel.chart);else rerender=true}else{delete mount.dataset.comparisonYieldedToSingleSky;const wheel=buildWheel(listA,listB,cuspsA,cuspsB);await Promise.allSettled([...cardJobs,...wheel.jobs]);if(records(read(KEYS.B)).length)mount.replaceChildren(wheel.chart);else{const single=buildSingleWheel(listA,cuspsA);await Promise.allSettled(single.jobs);mount.replaceChildren(single.chart)}}root.setAttribute('aria-busy','false');lastSignature=nextSignature;window.dispatchEvent(new Event('relphi:sky-foundation-ready'))}catch(error){console.error('Sky Chart foundation render failed:',error);const mount=document.getElementById('skyFoundationWheelMount');if(records(read(KEYS.B)).length)mount.innerHTML='<p class="sky-foundation-empty">The canonical foundation could not render.</p>';else window.dispatchEvent(new CustomEvent('relphi:sky-comparison-yielded',{detail:{mode:'A-A',error:true}}))}finally{rendering=false;renderingSignature='';if(rerender)requestAnimationFrame(()=>render())}}
