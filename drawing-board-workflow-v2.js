@@ -727,6 +727,28 @@
     freeSettingsSession={draft:freeSettingsDraftFromState()};
   }
 
+  function syncSettingsViewportHeight(root=panel()) {
+    const settingsPanel=root?.querySelector('.card-row-drawing-board > .relphi-board-settings-panel');
+    if(!settingsPanel || settingsPanel.hidden)return;
+    const viewport=window.visualViewport;
+    const viewportTop=Number(viewport?.offsetTop)||0;
+    const viewportHeight=Number(viewport?.height)||window.innerHeight||document.documentElement.clientHeight||0;
+    const viewportBottom=viewportTop+viewportHeight;
+    const panelTop=settingsPanel.getBoundingClientRect().top;
+    const available=Math.max(0,Math.floor(viewportBottom-Math.max(panelTop,viewportTop)-8));
+    settingsPanel.style.setProperty('--relphi-settings-viewport-height',available+'px');
+  }
+
+  function installSettingsViewportGuard(root=panel()) {
+    if(!root || root.dataset.relphiSettingsViewportGuard==='true')return;
+    root.dataset.relphiSettingsViewportGuard='true';
+    const sync=()=>{if(settingsOpen)syncSettingsViewportHeight(root);};
+    window.addEventListener('resize',sync,{passive:true});
+    window.addEventListener('scroll',sync,{passive:true});
+    window.visualViewport?.addEventListener('resize',sync,{passive:true});
+    window.visualViewport?.addEventListener('scroll',sync,{passive:true});
+  }
+
   function ensureBoardChrome(root=panel()) {
     const boardDrawer=root?.querySelector('.card-row-drawing-board');
     const summary=boardDrawer?.querySelector(':scope > summary');
@@ -817,6 +839,11 @@
     settingsPanel.hidden=!settingsOpen;
     if(!settingsOpen){boardConfigurationOpen=false;boardBackgroundMode='';}
     root.classList.toggle('relphi-settings-open',settingsOpen);
+    installSettingsViewportGuard(root);
+    if(settingsOpen){
+      syncSettingsViewportHeight(root);
+      requestAnimationFrame(()=>syncSettingsViewportHeight(root));
+    }
     const settingsButton=bar.querySelector('#relphiBoardSettingsButton');
     if(settingsButton){
       settingsButton.setAttribute('aria-expanded',String(settingsOpen));
