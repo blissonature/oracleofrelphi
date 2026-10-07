@@ -59,7 +59,7 @@ function squareCircle(square,circle,clearance){const dx=Math.max(Math.abs(square
 function squareSquare(a,b,clearance){return Math.abs(a.x-b.x)<a.half+b.half+clearance&&Math.abs(a.y-b.y)<a.half+b.half+clearance}
 function obstacleCollision(candidate,obstacles,clearance){return obstacles.some(obstacle=>obstacle.kind==='square'?squareSquare(candidate,obstacle,clearance):squareCircle(candidate,obstacle,clearance))}
 function houseLayer(parent,slot,cusps,g,obstacles){if(!Array.isArray(cusps)||cusps.length!==12)return;const colors=spec()?.COLORS||[],color=spec()?.SKY?.[slot]||'#333',opacity=comparison()?.houseFillOpacity??.5;cusps.forEach((start,index)=>{const end=cusps[(index+1)%12],mid=start+(norm(end-start)||30)/2;parent.appendChild(svg('path',{d:annular(g.inner,g.outer,start,end),fill:colors[index]||'#ddd','fill-opacity':opacity,class:'sky-foundation-house-sector','data-sky':slot,'data-house':String(index+1)}));radialLine(parent,g.inner,g.outer,end,{stroke:color,class:'sky-foundation-divider'});const p=polar((g.inner+g.outer)/2,mid),text=svg('text',{x:p.x,y:p.y,class:'sky-foundation-house-number'});text.textContent=String(index+1);parent.appendChild(text);obstacles.push({kind:'circle',x:p.x,y:p.y,r:11})})}
-function addZodiac(layer,obstacles,jobs,zodiacGeometry=null){const shared=spec(),z=zodiacGeometry||comparison()?.zodiac;if(!shared||!z)return;for(let index=0;index<12;index+=1){const id=shared.SIGNS[index],start=index*30;layer.appendChild(svg('path',{d:annular(z.inner,z.outer,start,start+30),fill:shared.COLORS[index],'fill-opacity':z.fillOpacity,class:'sky-foundation-sign-sector','data-sign':String(index),'data-zodiac-sign':id}));radialLine(layer,z.inner,z.outer,start,{stroke:'#423b35','stroke-width':'1.35','vector-effect':'non-scaling-stroke'});const p=polar((z.inner+z.outer)/2,start+15),radius=Number(z.glyphRadius)||19,host=svg('g',{transform:`translate(${p.x} ${p.y})`,class:'sky-foundation-sign-glyph','data-zodiac-sign':id});layer.appendChild(host);obstacles.push({kind:'circle',x:p.x,y:p.y,r:radius+1});jobs.push(drawBubble(host,id,{radius,padding:1,color:'#171717',strokeWidth:z.strokeWidth||2.35},true).catch(error=>glyphFailure(host,error)))}}
+function addZodiac(layer,obstacles,jobs,zodiacGeometry=null){const shared=spec(),z=zodiacGeometry||comparison()?.zodiac;if(!shared||!z)return;const glyphLane=Number.isFinite(Number(z.glyphLane))?Number(z.glyphLane):(Number(z.inner)+Number(z.outer))/2;for(let index=0;index<12;index+=1){const id=shared.SIGNS[index],start=index*30;layer.appendChild(svg('path',{d:annular(z.inner,z.outer,start,start+30),fill:shared.COLORS[index],'fill-opacity':z.fillOpacity,class:'sky-foundation-sign-sector','data-sign':String(index),'data-zodiac-sign':id}));radialLine(layer,z.inner,z.outer,start,{stroke:'#423b35','stroke-width':'1.35','vector-effect':'non-scaling-stroke'});const p=polar(glyphLane,start+15),radius=Number(z.glyphRadius)||19,host=svg('g',{transform:`translate(${p.x} ${p.y})`,class:'sky-foundation-sign-glyph','data-zodiac-sign':id,'data-sign-glyph-lane':glyphLane});layer.appendChild(host);obstacles.push({kind:'circle',x:p.x,y:p.y,r:radius+1});jobs.push(drawBubble(host,id,{radius,padding:1,color:'#171717',strokeWidth:z.strokeWidth||2.35},true).catch(error=>glyphFailure(host,error)))}}
 function addOrdinary(layerLeaders,layerPlacements,slot,list,cusps,g,obstacles,jobs){const color=spec()?.SKY?.[slot]||'#333',lane=Number(g.placement?.[0]),bubbleRadius=Number(comparison()?.placementBubbleRadius)||17.2;if(!Number.isFinite(lane))return;list.filter(record=>!ANGLE_IDS.has(record.id)).forEach(record=>{const exact=polar(g.degree,record.value),display=polar(lane,record.value);layerLeaders.appendChild(svg('line',{x1:display.x,y1:display.y,x2:exact.x,y2:exact.y,stroke:color,class:'sky-foundation-leader','data-sky':slot,'data-placement':record.id,'data-exact-longitude':record.value.toFixed(8)}));const host=svg('g',{transform:`translate(${display.x} ${display.y})`,'data-sky':slot,'data-placement':record.id,'data-house':houseFor(record.value,cusps)||'','data-placement-lane':lane,'data-display-longitude':record.value.toFixed(8),'data-exact-longitude':record.value.toFixed(8)});layerPlacements.appendChild(host);obstacles.push({kind:'circle',x:display.x,y:display.y,r:bubbleRadius});jobs.push(drawBubble(host,record.id,{radius:Number(comparison()?.placementRadius)||16,padding:1,color,fill:'#fffdf8',strokeWidth:2.35}).catch(error=>glyphFailure(host,error)))})}
 function addUnknownMoonRange(layerLeaders,layerPlacements,slot,payload,g,obstacles,jobs){
   const range=moonRangeRecords(payload);if(!range)return;
@@ -80,12 +80,14 @@ function buildSingleWheel(listA,cuspsA){
 
   const noHousesA=!Array.isArray(cuspsA)||cuspsA.length!==12;
   const c=center();
+  const unknownSignGlyphLane=gA.inner+(cmp.zodiac.outer-gA.inner)*.36;
   const z=noHousesA
-    ?{...cmp.zodiac,inner:gA.inner,outer:cmp.zodiac.outer,glyphRadius:cmp.zodiac.glyphRadius+4}
+    ?{...cmp.zodiac,inner:gA.inner,outer:cmp.zodiac.outer,glyphRadius:cmp.zodiac.glyphRadius+4,glyphLane:unknownSignGlyphLane}
     :cmp.zodiac;
-  const leaderA=Math.abs(Number(gA.placement?.[0])-Number(gA.degree));
+  const placementInset=(Number(cmp.placementBubbleRadius)||19.7)+8;
+  const unknownPlacementLane=z.outer-placementInset;
   const gStandalone=noHousesA
-    ?{...gA,inner:z.inner,outer:z.outer,degree:z.outer,placement:gA.placement.map((radius,index)=>z.outer+(index===0?leaderA:Math.abs(Number(radius)-Number(gA.degree)))),edge:z.outer,side:'outer'}
+    ?{...gA,inner:z.inner,outer:z.outer,degree:z.outer,placement:gA.placement.map(()=>unknownPlacementLane),edge:z.outer,side:'inner'}
     :gA;
 
   const placementOuter=Math.max(...(gStandalone.placement||[]).map(Number).filter(Number.isFinite),z.outer);
@@ -96,7 +98,7 @@ function buildSingleWheel(listA,cuspsA){
     role:'img',
     'aria-label':'Sky A zodiac wheel',
     class:'sky-foundation-wheel relphi-canonical-ready',
-    'data-ring-order':noHousesA?'A-zodiac-expanded-placements-outer':'A-houses-inner-zodiac-outer',
+    'data-ring-order':noHousesA?'A-zodiac-expanded-placements-inner-edge':'A-houses-inner-zodiac-outer',
     'data-inner-sky':'A',
     'data-wheel-spec':'relphi-sky-wheel-v1',
     'data-single-sky':'A',
@@ -104,7 +106,8 @@ function buildSingleWheel(listA,cuspsA){
     'data-single-sky-placement-lane':String(gStandalone.placement?.[0]??''),
     'data-single-sky-degree-radius':String(gStandalone.degree??''),
     'data-single-sky-inner-radius':String(gStandalone.inner??''),
-    'data-single-sky-outer-radius':String(gStandalone.outer??'')
+    'data-single-sky-outer-radius':String(gStandalone.outer??''),
+    'data-single-sky-sign-glyph-lane':String(noHousesA?z.glyphLane:'')
   });
 
   chart.appendChild(svg('circle',{cx:c.x,cy:c.y,r:outerRadius+8,fill:'#fffdf8',stroke:'rgba(31,27,24,.14)'}));
