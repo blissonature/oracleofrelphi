@@ -3138,3 +3138,45 @@ body.relphi-attune-open{overflow:hidden!important}
 #shortListPanel .relphi-referent-path:disabled::after{
   opacity:.35!important;
 }
+
+
+/* Mobile Crafted settings must fit the live visual viewport. The board can begin
+   below browser chrome or other page content, so 100dvh alone is not the
+   available height below the settings panel's actual top edge. */
+@media(max-width:700px){
+  #shortListPanel.relphi-settings-open.relphi-referents-mode .relphi-board-settings-panel{
+    height:var(--relphi-settings-viewport-height,calc(100dvh - var(--relphi-settings-top,5.8rem) - .5rem))!important;
+    max-height:var(--relphi-settings-viewport-height,calc(100dvh - var(--relphi-settings-top,5.8rem) - .5rem))!important;
+    min-height:0!important;
+  }
+  #shortListPanel.relphi-settings-open.relphi-referents-mode .relphi-board-settings-body{
+    display:flex!important;
+    flex-direction:column!important;
+    height:100%!important;
+    max-height:100%!important;
+    min-height:0!important;
+    overflow:hidden!important;
+  }
+  #shortListPanel.relphi-settings-open.relphi-referents-mode .relphi-board-settings-body>.drawing-board-mode-switch,
+  #shortListPanel.relphi-settings-open.relphi-referents-mode .relphi-board-settings-body>.relphi-sky-connector{
+    flex:0 0 auto!important;
+  }
+  #shortListPanel.relphi-settings-open.relphi-referents-mode .relphi-board-settings-panel .relphi-reading-options-drawer{
+    flex:1 1 auto!important;
+    height:auto!important;
+    min-height:0!important;
+    max-height:none!important;
+    overflow:hidden!important;
+  }
+  #shortListPanel.relphi-settings-open.relphi-referents-mode .relphi-board-settings-panel .relphi-reading-options-drawer .relphi-options-body{
+    flex:1 1 auto!important;
+    min-height:0!important;
+    overflow-y:auto!important;
+    -webkit-overflow-scrolling:touch!important;
+  }
+  #shortListPanel.relphi-settings-open.relphi-referents-mode .relphi-board-settings-panel .relphi-reading-options-drawer .relphi-options-commitbar{
+    flex:0 0 auto!important;
+    position:relative!important;
+    bottom:auto!important;
+  }
+}
