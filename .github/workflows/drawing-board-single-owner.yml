@@ -37,6 +37,7 @@ jobs:
           node --check tests/drawing-board-spread-prefabs.test.js
           node --check tests/drawing-board-runtime.test.js
           node --check tests/drawing-board-iphone-regressions.test.js
+          node --check tests/drawing-board-bespoke-mobile-regression.test.js
           node --check tests/drawing-board-alignment.test.js
           node --check tests/drawing-board-bulk-questions.test.js
           node --check tests/drawing-board-clear-cards.test.js
@@ -65,6 +66,7 @@ jobs:
           python3 -m http.server 8000 --bind 127.0.0.1 >/tmp/relphi-http.log 2>&1 &
           SERVER_PID=$!
           trap 'kill $SERVER_PID || true' EXIT
+          node tests/drawing-board-bespoke-mobile-regression.test.js
           node tests/drawing-board-referents.test.js || true
           node tests/drawing-board-recursion.test.js || true
           node tests/see-what-surfaces-evidence-contract.test.js
