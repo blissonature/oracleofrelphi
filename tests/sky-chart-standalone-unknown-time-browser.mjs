@@ -77,6 +77,7 @@ const state=await page.evaluate(()=>{
     placementMedallions:placements.map(node=>({present:!!node.querySelector('.relphi-glyph-bubble>circle'),radius:Number(node.querySelector('.relphi-glyph-bubble>circle')?.getAttribute('r')||0)})),
     leaderLengths:[...wheel.querySelectorAll('[data-layer="leaders"] line[data-sky="A"][data-placement]')].map(line=>Math.hypot(Number(line.getAttribute('x2'))-Number(line.getAttribute('x1')),Number(line.getAttribute('y2'))-Number(line.getAttribute('y1')))),
     placementCount:placements.length,
+    background:[...wheel.children].filter(node=>node.tagName?.toLowerCase()==='circle'&&node.dataset?.wheelBackground).map(node=>({mode:node.dataset.wheelBackground,r:Number(node.getAttribute('r')),stroke:node.getAttribute('stroke')})),
     viewBox:wheel.getAttribute('viewBox')
   };
 });
@@ -98,6 +99,7 @@ assert.ok(state.placementMedallions.every(item=>item.present&&item.radius>0),'Un
 assert.ok(state.leaderLengths.length>0,'Unknown-time fixture must render placement leaders.');
 assert.ok(state.leaderLengths.every(length=>Math.abs(length-36)<0.75),'Unknown-time placement leaders must match the canonical 36-unit Sky Chart leader gap.');
 assert.equal(state.outlines.length,2,'Unknown-time standalone should draw only the two zodiac boundaries.');
+assert.deepEqual(state.background,[{mode:'unknown-time-center',r:state.inner,stroke:'none'}],'Unknown-time standalone must not paint a full white background rim outside the zodiac.');
 assert.ok(state.moonRange>0,'Unknown-time standalone must keep the Moon range.');
 const relevantErrors=errors.filter(text=>/Sky Chart foundation render failed|standalone unknown-time|unknown-time composition/i.test(text));
 assert.deepEqual(relevantErrors,[]);
