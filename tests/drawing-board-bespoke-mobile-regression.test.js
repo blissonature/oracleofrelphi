@@ -59,6 +59,18 @@ const base=process.env.RELPHI_TEST_URL||'http://127.0.0.1:8000/tarot.html?board=
     assert.equal(geometry.cards,true,'Cards per question must be visible on mobile');
     assert.equal(geometry.link,true,'Share card with must be visible on mobile');
 
+    const undersizedMobileFields=await page.evaluate(()=>{
+      const controls=Array.from(document.querySelectorAll('#shortListPanel.relphi-settings-open .relphi-board-settings-panel input, #shortListPanel.relphi-settings-open .relphi-board-settings-panel textarea, #shortListPanel.relphi-settings-open .relphi-board-settings-panel select'));
+      const excluded=new Set(['checkbox','radio','color','range','button','submit','reset','hidden']);
+      return controls.filter(node=>{
+        if(node.tagName==='INPUT'&&excluded.has((node.getAttribute('type')||'text').toLowerCase()))return false;
+        const style=getComputedStyle(node),rect=node.getBoundingClientRect();
+        if(style.display==='none'||style.visibility==='hidden'||rect.width<1||rect.height<1)return false;
+        return parseFloat(style.fontSize)<16;
+      }).map(node=>({tag:node.tagName,id:node.id,type:node.getAttribute('type'),fontSize:getComputedStyle(node).fontSize}));
+    });
+    assert.deepEqual(undersizedMobileFields,[],'visible mobile Drawing Board form controls must not fall below 16px and trigger iOS focus zoom');
+
     await page.locator('#relphiPositionLabels [data-question-select="0"]').check();
     assert.equal(await page.locator('#relphiQuestionControllerPack').isEnabled(),true,'selected question must allow Sub-pack changes');
     assert.equal(await page.locator('#relphiQuestionControllerCards').isEnabled(),true,'selected question must allow card-count changes');
