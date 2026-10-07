@@ -93,7 +93,8 @@ assert.ok(state.signGlyphLane<(state.inner+state.outer)/2,'Unknown-time sign gly
 assert.ok(state.placementCount>0,'The fixture must render planetary placements.');
 assert.ok(state.placementLanes.every(value=>Number.isFinite(value)&&value<state.outer&&value>state.signGlyphLane),'The collision pass must preserve the inside-edge placement lane.');
 assert.ok(state.placementMedallions.every(item=>item.mode==='none'&&item.opacity==='0'&&item.ariaHidden==='true'),'Unknown-time placements must not paint white backing medallions that form a ghost ring.');
-assert.ok(state.leaderLengths.length>0&&Math.max(...state.leaderLengths)<40,'Unknown-time placement leaders must stay short.');
+assert.ok(state.leaderLengths.length>0,'Unknown-time fixture must render placement leaders.');
+assert.ok(state.leaderLengths.every(length=>Math.abs(length-36)<0.75),'Unknown-time placement leaders must match the canonical 36-unit Sky Chart leader gap.');
 assert.equal(state.outlines.length,2,'Unknown-time standalone should draw only the two zodiac boundaries.');
 assert.ok(state.moonRange>0,'Unknown-time standalone must keep the Moon range.');
 const relevantErrors=errors.filter(text=>/Sky Chart foundation render failed|standalone unknown-time|unknown-time composition/i.test(text));
