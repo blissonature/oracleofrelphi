@@ -92,7 +92,7 @@ assert.ok(state.inner<state.ordinaryZodiacInner,'The zodiac must expand inward i
 assert.ok(state.outer>state.ordinaryZodiacOuter,'Unknown-time zodiac color must extend beyond the ordinary zodiac edge into the placement zone.');
 assert.ok(Math.abs((state.outer-state.ordinaryZodiacOuter)-state.placementBubbleRadius)<1,'The colored extension should cover approximately one placement-bubble radius.');
 assert.ok(state.placementLane<state.outer&&state.placementLane>state.signGlyphLane,'The primary placement lane must sit just inside the zodiac outer edge, beyond the sign glyph lane.');
-assert.ok(state.signGlyphLane<(state.inner+state.outer)/2,'Unknown-time sign glyphs must shift inward from the zodiac midpoint.');
+assert.ok(Math.abs(state.signGlyphLane-(state.inner+state.outer)/2)<0.5,'Unknown-time sign glyphs must sit at the zodiac-band midpoint.');
 assert.ok(state.placementCount>0,'The fixture must render planetary placements.');
 assert.ok(state.placementLanes.every(value=>Number.isFinite(value)&&value<state.outer&&value>state.signGlyphLane),'The collision pass must preserve the inside-edge placement lane.');
 assert.ok(state.placementMedallions.every(item=>item.present&&item.radius>0),'Unknown-time placements must retain the canonical inscribed placement circles for optical centering and scale.');
