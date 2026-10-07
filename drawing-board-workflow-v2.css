@@ -3192,3 +3192,65 @@ body.relphi-attune-open{overflow:hidden!important}
     margin-right:.5rem!important;
   }
 }
+
+
+/* On phones, Settings is a viewport sheet, not a document-positioned overlay.
+   The page may be long, but the settings controls must never move away with it. */
+@media(max-width:700px){
+  #shortListPanel.relphi-settings-open .relphi-board-settings-panel{
+    position:fixed!important;
+    top:max(.5rem,env(safe-area-inset-top))!important;
+    bottom:max(.5rem,env(safe-area-inset-bottom))!important;
+    left:.5rem!important;
+    right:.5rem!important;
+    width:auto!important;
+    height:auto!important;
+    min-height:0!important;
+    max-height:none!important;
+    margin:0!important;
+    overflow:hidden!important;
+    z-index:10020!important;
+  }
+  #shortListPanel.relphi-settings-open .relphi-board-settings-body{
+    display:flex!important;
+    flex-direction:column!important;
+    height:100%!important;
+    max-height:100%!important;
+    min-height:0!important;
+    overflow:hidden!important;
+  }
+  #shortListPanel.relphi-settings-open .relphi-board-settings-body>.drawing-board-mode-switch,
+  #shortListPanel.relphi-settings-open .relphi-board-settings-body>.relphi-sky-connector{
+    flex:0 0 auto!important;
+  }
+  #shortListPanel.relphi-settings-open .relphi-free-settings,
+  #shortListPanel.relphi-settings-open .relphi-reading-options-drawer{
+    flex:1 1 auto!important;
+    min-height:0!important;
+    max-height:none!important;
+  }
+  #shortListPanel.relphi-settings-open .relphi-free-settings{
+    overflow-y:auto!important;
+    overscroll-behavior:contain!important;
+    -webkit-overflow-scrolling:touch!important;
+  }
+  #shortListPanel.relphi-settings-open .relphi-board-settings-panel .relphi-reading-options-drawer{
+    height:auto!important;
+    overflow:hidden!important;
+  }
+  #shortListPanel.relphi-settings-open .relphi-board-settings-panel .relphi-options-body{
+    flex:1 1 auto!important;
+    min-height:0!important;
+    overflow-y:auto!important;
+    overflow-x:hidden!important;
+    overscroll-behavior:contain!important;
+    -webkit-overflow-scrolling:touch!important;
+  }
+  #shortListPanel.relphi-settings-open .relphi-board-settings-panel .relphi-options-commitbar{
+    position:relative!important;
+    inset:auto!important;
+    flex:0 0 auto!important;
+    margin-top:.25rem!important;
+    padding-bottom:max(.15rem,env(safe-area-inset-bottom))!important;
+  }
+}
