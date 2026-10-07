@@ -82,7 +82,7 @@ function buildSingleWheel(listA,cuspsA){
   const c=center();
   const canonicalLeaderGap=Math.abs(Number(gA.placement?.[0])-Number(gA.degree));
   const unknownOuter=cmp.zodiac.outer+(Number(cmp.placementBubbleRadius)||19.7);
-  const unknownSignGlyphLane=gA.inner+(unknownOuter-gA.inner)*.34;
+  const unknownSignGlyphLane=(gA.inner+unknownOuter)/2;
   const z=noHousesA
     ?{...cmp.zodiac,inner:gA.inner,outer:unknownOuter,glyphRadius:cmp.zodiac.glyphRadius+4,glyphLane:unknownSignGlyphLane}
     :cmp.zodiac;
