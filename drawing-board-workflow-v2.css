@@ -634,6 +634,9 @@ body.relphi-attune-open{overflow:hidden!important}
 
 #shortListPanel.relphi-recursion-reading .card-row-board>.card-row-item[data-relphi-recursion-level]:not(.is-recursion-level-active){display:none!important}
 #shortListPanel.relphi-recursion-reading .card-row-board>.card-row-item.is-recursion-level-active{display:block!important;z-index:3!important}
+/* The logo is the recursive position map. Ordinary position stickers duplicate
+   that geometry and float over the mark, so recursive cards do not show them. */
+#shortListPanel.relphi-recursion-reading .card-row-board>.card-row-item[data-relphi-recursion-level]>.card-row-position-panel{display:none!important}
 #shortListPanel.relphi-recursion-reading .card-row-board>.card-row-item.is-recursion-level-active:not(.is-recursion-drawn)>.card-row-drop-card{opacity:0!important;border:0!important;background:transparent!important;box-shadow:none!important}
 #shortListPanel.relphi-recursion-reading .card-row-workspace{background-image:radial-gradient(circle at 50% 54%,rgba(255,253,248,.07) 0,rgba(255,253,248,0) 43%),var(--row-table-image,none)!important}
 #shortListPanel.relphi-recursion-reading .card-row-board{position:relative!important}
@@ -687,7 +690,9 @@ body.relphi-attune-open{overflow:hidden!important}
 .relphi-recursion-complete-mark{position:absolute!important;right:.75rem!important;color:#8d1713!important;font-size:.6rem!important;font-weight:950!important;letter-spacing:.04em!important;text-transform:uppercase!important}
 
 .relphi-focus-reader.is-recursion-reading .relphi-focus-strip{display:grid!important;grid-template-columns:repeat(2,minmax(3.5rem,5rem))!important;grid-template-rows:repeat(2,5.45rem)!important;justify-content:center!important;align-content:center!important;gap:.55rem .7rem!important;width:min(12rem,76vw)!important;min-height:12rem!important;margin:auto!important;padding:1.05rem!important;box-sizing:border-box!important;overflow:visible!important;background:url("logo.png") center/contain no-repeat!important}
-.relphi-focus-reader.is-recursion-reading .relphi-focus-navigator{overflow:hidden!important}
+.relphi-focus-reader.is-recursion-reading .relphi-focus-navigator{display:none!important}
+.relphi-focus-reader.is-recursion-reading .relphi-focus-prev{grid-column:1!important}
+.relphi-focus-reader.is-recursion-reading .relphi-focus-next{grid-column:3!important}
 .relphi-focus-reader .relphi-recursion-focus-node{position:relative!important;display:grid!important;grid-template-rows:minmax(0,1fr) auto!important;gap:.2rem!important;align-items:center!important;justify-items:center!important;min-width:0!important;height:5.45rem!important;padding:.25rem!important;border:1px solid #d8ccc2!important;border-radius:7px!important;background:#fffdf8!important;color:#3f3530!important;font:inherit!important;box-shadow:none!important;transform:none!important}
 .relphi-focus-reader .relphi-recursion-focus-node img{display:block!important;width:auto!important;height:3.85rem!important;max-width:100%!important;object-fit:contain!important;border-radius:2px!important}
 .relphi-focus-reader .relphi-recursion-focus-node>strong{display:grid!important;place-items:center!important;width:2.4rem!important;height:2.4rem!important;margin:.25rem 0 0!important;border:1px solid #d6c7bc!important;border-radius:50%!important;font-family:Georgia,"Times New Roman",serif!important;font-size:1.35rem!important;font-weight:500!important}
@@ -720,10 +725,6 @@ body.relphi-attune-open{overflow:hidden!important}
   .relphi-recursion-depth{gap:.42rem!important;padding:.32rem .45rem!important}
   .relphi-recursion-depth button{width:1.42rem!important;height:1.42rem!important;font-size:.58rem!important}
   .relphi-recursion-complete-mark{display:none!important}
-  .relphi-focus-reader.is-recursion-reading .relphi-focus-strip{grid-template-columns:repeat(2,minmax(2.8rem,1fr))!important;grid-template-rows:repeat(2,4.7rem)!important;width:min(10.5rem,82vw)!important;min-height:10.5rem!important;gap:.28rem .4rem!important;padding:.85rem!important}
-  .relphi-focus-reader .relphi-recursion-focus-node{height:4.7rem!important;padding:.18rem!important}
-  .relphi-focus-reader .relphi-recursion-focus-node img{height:3.2rem!important}
-  .relphi-focus-reader .relphi-recursion-focus-node>strong{width:2rem!important;height:2rem!important;font-size:1.1rem!important}
   .relphi-recursion-portal-focus{padding:1rem!important}
 }
 
