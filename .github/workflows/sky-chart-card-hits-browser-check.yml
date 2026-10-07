@@ -138,7 +138,15 @@ jobs:
           await page.waitForSelector('#skyFoundationA .sky-card-hits-structure',{state:'visible'});
           const priorPlacement=page.locator('#skyFoundationWheelMount [data-layer="placements"] [data-sky="A"][data-placement]').first();
           const priorPlacementId=await priorPlacement.getAttribute('data-placement');
-          await priorPlacement.click();
+          const priorSnapshot=await page.evaluate(id=>{
+            const api=window.RelphiSkyFoundationInteractions;
+            if(!api?.toggleWheel||!api?.captureFocus)throw new Error('Foundation focus snapshot API unavailable');
+            api.toggleWheel({kind:'placement',sky:'A',value:id,source:'card-hits-regression'});
+            return api.captureFocus();
+          },priorPlacementId);
+          console.log('PRIOR_FOUNDATION_FOCUS '+JSON.stringify(priorSnapshot));
+          assert.equal(priorSnapshot?.lockedState?.kind,'placement');
+          assert.equal(priorSnapshot?.lockedState?.value,priorPlacementId);
           assert.equal(await page.evaluate(()=>document.querySelector('.sky-foundation-wheel')?.classList.contains('has-isolation')),true,'Fixture must begin with a real locked wheel focus.');
           await page.locator('#skyFoundationA [data-card-ruler]').first().click();
           assert.ok(await page.evaluate(()=>!!document.documentElement.dataset.skyCardRulerFocus),'Clicking ruler art must activate Card Hits ruler focus.');
