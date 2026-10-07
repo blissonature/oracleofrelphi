@@ -3303,3 +3303,14 @@ body.relphi-attune-open{overflow:hidden!important}
     overflow:visible!important;
   }
 }
+
+
+/* iOS Safari magnifies focused form controls below 16px. Keep actual mobile
+   editing surfaces at 16px so focusing a field does not zoom/pan the page. */
+@media(max-width:700px){
+  #shortListPanel.relphi-settings-open .relphi-board-settings-panel input:not([type="checkbox"]):not([type="radio"]):not([type="color"]):not([type="range"]):not([type="button"]):not([type="submit"]):not([type="reset"]):not([type="hidden"]),
+  #shortListPanel.relphi-settings-open .relphi-board-settings-panel textarea,
+  #shortListPanel.relphi-settings-open .relphi-board-settings-panel select{
+    font-size:16px!important;
+  }
+}
