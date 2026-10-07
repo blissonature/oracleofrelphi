@@ -397,12 +397,30 @@
     if(!wheelOnlyExternal)return false;
     lockedState=null;hoverState=null;rowLockedState=null;rowHoverState=null;selectionOrigin=null;applyState();wheelOnlyExternal=false;return true;
   }
+  function cloneFocusValue(value){return value==null?null:JSON.parse(JSON.stringify(value))}
+  function captureFocus(){return Object.freeze({
+    lockedState:cloneFocusValue(lockedState),
+    rowLockedState:cloneFocusValue(rowLockedState),
+    selectionOrigin:cloneFocusValue(selectionOrigin),
+    wheelOnlyExternal:!!wheelOnlyExternal
+  })}
+  function restoreFocus(snapshot){
+    if(!snapshot||typeof snapshot!=='object')return false;
+    lockedState=cloneFocusValue(snapshot.lockedState);
+    rowLockedState=cloneFocusValue(snapshot.rowLockedState);
+    selectionOrigin=cloneFocusValue(snapshot.selectionOrigin);
+    hoverState=null;rowHoverState=null;wheelOnlyExternal=!!snapshot.wheelOnlyExternal;
+    applyState();
+    return!!(lockedState||rowLockedState);
+  }
   function getSelectionOrigin(){return selectionOrigin?{...selectionOrigin}:null}
   window.RelphiSkyFoundationInteractions=Object.freeze({
     previewWheel:previewExternalWheel,
     clearWheelPreview:clearExternalWheelPreview,
     toggleWheel:toggleExternalWheel,
     clearWheel:clearExternalWheel,
+    captureFocus,
+    restoreFocus,
     getSelectionOrigin
   });
   function bind(){

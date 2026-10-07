@@ -132,6 +132,39 @@ jobs:
           assert.equal(state.directFingerprint?.oldGlyph,false);
           assert.equal(state.directFingerprint?.oldHouseMedallion,false);
           assert.equal(state.directFingerprint?.cardMedia,'fingerprint-local-eager');
+
+          // Verify the reported interaction before legacy visual assertions below.
+          await page.locator('#skyFoundationA [data-sky-drawer-tab="card-hits"]').click({force:true});
+          await page.waitForSelector('#skyFoundationA .sky-card-hits-structure',{state:'visible'});
+          const priorPlacement=page.locator('#skyFoundationWheelMount [data-layer="placements"] [data-sky="A"][data-placement]').first();
+          const priorPlacementId=await priorPlacement.getAttribute('data-placement');
+          const priorSnapshot=await page.evaluate(id=>{
+            const api=window.RelphiSkyFoundationInteractions;
+            if(!api?.toggleWheel||!api?.captureFocus)throw new Error('Foundation focus snapshot API unavailable');
+            api.toggleWheel({kind:'placement',sky:'A',value:id,source:'card-hits-regression'});
+            return api.captureFocus();
+          },priorPlacementId);
+          console.log('PRIOR_FOUNDATION_FOCUS '+JSON.stringify(priorSnapshot));
+          assert.equal(priorSnapshot?.lockedState?.kind,'placement');
+          assert.equal(priorSnapshot?.lockedState?.value,priorPlacementId);
+          assert.equal(await page.evaluate(()=>document.querySelector('.sky-foundation-wheel')?.classList.contains('has-isolation')),true,'Fixture must begin with a real locked wheel focus.');
+          await page.locator('#skyFoundationA [data-card-ruler]').first().click();
+          assert.ok(await page.evaluate(()=>!!document.documentElement.dataset.skyCardRulerFocus),'Clicking ruler art must activate Card Hits ruler focus.');
+          await page.locator('#skyFoundationRelationships .sky-foundation-relationships-heading').click({position:{x:5,y:5}});
+          await page.waitForFunction(id=>{
+            const wheel=document.querySelector('.sky-foundation-wheel');
+            const placement=document.querySelector(`#skyFoundationWheelMount [data-layer="placements"] [data-sky="A"][data-placement="${CSS.escape(id)}"]`);
+            return !document.documentElement.hasAttribute('data-sky-card-ruler-focus')&&wheel?.classList.contains('has-isolation')&&placement?.classList.contains('is-selected');
+          },priorPlacementId);
+          assert.equal(await page.evaluate(()=>document.documentElement.hasAttribute('data-sky-card-ruler-focus')),false,'Clicking elsewhere must clear Card Hits ruler focus.');
+          assert.equal(await page.evaluate(()=>document.querySelector('.sky-foundation-wheel')?.classList.contains('has-isolation')),true,'Clearing Card Hits ruler focus must preserve the prior locked wheel focus.');
+          assert.equal(await page.locator(`#skyFoundationWheelMount [data-layer="placements"] [data-sky="A"][data-placement="${priorPlacementId}"]`).evaluate(node=>node.classList.contains('is-selected')),true,'The exact pre-Card-Hits placement must remain selected after ruler dismissal.');
+          await page.locator('#skyFoundationA [data-card-ruler]').first().click();
+          await page.locator('#skyFoundationA [data-card-hits-view="houses"]').click();
+          assert.equal(await page.evaluate(()=>document.documentElement.hasAttribute('data-sky-card-ruler-focus')),false,'Leaving Rulers for Houses must clear Card Hits ruler focus.');
+          console.log('RULER_FOCUS_CLEAR_OK');
+          await page.locator('#skyFoundationA [data-sky-drawer-tab="card-hits"]').click({force:true});
+
           assert.match(state.directFingerprint?.cardSrc||'',/\/assets\/tarot\/rws\/.+\.webp$/);
           assert.equal((state.directFingerprint?.cardSrc||'').includes('wsrv.nl'),false);
           assert.equal(state.directFingerprint?.cardStyle?.objectFit,'contain');
