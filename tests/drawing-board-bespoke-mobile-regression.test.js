@@ -67,10 +67,12 @@ const base=process.env.RELPHI_TEST_URL||'http://127.0.0.1:8000/tarot.html?board=
       const toolbar=rect('.relphi-question-toolbar');
       return {
         selectTop:select?.top,actionsTop:actions?.top,settingsTop:settings?.top,
+        selectCenter:select?select.top+select.height/2:null,
+        actionsCenter:actions?actions.top+actions.height/2:null,
         toolbarHeight:toolbar?.height,settingsHeight:settings?.height
       };
     });
-    assert.ok(Math.abs(toolbarRows.selectTop-toolbarRows.actionsTop)<8,'Select all and question actions must share the first mobile toolbar row');
+    assert.ok(Math.abs(toolbarRows.selectCenter-toolbarRows.actionsCenter)<8,'Select all and question actions must share the first mobile toolbar row');
     assert.ok(toolbarRows.settingsTop>toolbarRows.selectTop+20,'card settings must occupy one second toolbar row beneath question actions');
     assert.ok(toolbarRows.settingsHeight<55,'mobile card settings must remain one compact row, not stack into multiple rows');
     assert.ok(toolbarRows.toolbarHeight<115,'Bespoke mobile controls must remain a compact two-row toolbar');
