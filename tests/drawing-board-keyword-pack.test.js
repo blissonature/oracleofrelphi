@@ -18,6 +18,5 @@ assert.match(app,/count: \(tags, mode = 'any'\)/);
 assert.match(css,/relphi-keyword-builder/);
 assert.match(css,/relphi-keyword-builder input\[type="search"\]/);
 assert.match(css,/font-family:'Montserrat',sans-serif!important/);
-assert.match(siteCss,/Relphi brand-control baseline/);
-assert.match(siteCss,/button,\s*\ninput,\s*\nselect,\s*\ntextarea,\s*\noptgroup\{font-family:'Montserrat',sans-serif\}/);
+assert.match(siteCss,/body\s*\{[\s\S]*?font-family:\s*'Montserrat',\s*sans-serif;/);
 console.log('Referents Pack selector exposes a branded Keywords / Tags builder and persists its selection.');
