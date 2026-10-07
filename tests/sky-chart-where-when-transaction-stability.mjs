@@ -108,6 +108,7 @@ const unknownGeometry=await page.evaluate(()=>{
     inner:Number(wheel.dataset.singleSkyInnerRadius),
     outer:Number(wheel.dataset.singleSkyOuterRadius),
     placementLane:Number(wheel.dataset.singleSkyPlacementLane),
+    signGlyphLane:Number(wheel.dataset.singleSkySignGlyphLane),
     ordinaryZodiacInner:Number(spec.comparison.zodiac.inner),
     houseSectors:wheel.querySelectorAll('[data-layer="a-houses"] .sky-foundation-house-sector').length,
     anglePlacements:wheel.querySelectorAll('[data-layer="placements"] [data-angle-axis="true"]').length,
@@ -117,13 +118,14 @@ const unknownGeometry=await page.evaluate(()=>{
   };
 });
 assert.equal(unknownGeometry.geometry,'standalone-unknown-time');
-assert.equal(unknownGeometry.ringOrder,'A-zodiac-expanded-placements-outer');
+assert.equal(unknownGeometry.ringOrder,'A-zodiac-expanded-placements-inner-edge');
 assert.equal(unknownGeometry.houseSectors,0,'Unknown-time standalone wheel must not retain phantom house sectors.');
 assert.equal(unknownGeometry.anglePlacements,0,'Unknown-time standalone wheel must not render chart angles.');
 assert.equal(unknownGeometry.signs,12,'Unknown-time standalone wheel must retain all twelve zodiac sectors.');
 assert.ok(unknownGeometry.inner<unknownGeometry.ordinaryZodiacInner,'Unknown-time zodiac must expand inward into the unavailable house territory.');
-assert.ok(unknownGeometry.placementLane>unknownGeometry.outer,'Unknown-time placement lane must sit outside the expanded zodiac.');
-assert.ok(unknownGeometry.placementLanes.every(value=>value>unknownGeometry.outer),'Collision layout must preserve the outside placement lane.');
+assert.ok(unknownGeometry.placementLane<unknownGeometry.outer&&unknownGeometry.placementLane>unknownGeometry.signGlyphLane,'Unknown-time placement lane must sit just inside the zodiac outer edge.');
+assert.ok(unknownGeometry.signGlyphLane<(unknownGeometry.inner+unknownGeometry.outer)/2,'Unknown-time sign glyphs must sit inward of the zodiac midpoint.');
+assert.ok(unknownGeometry.placementLanes.every(value=>value<unknownGeometry.outer&&value>unknownGeometry.signGlyphLane),'Collision layout must preserve the inside-edge placement lane.');
 assert.ok(unknownGeometry.moonRange>0,'Unknown-time standalone wheel must retain its Moon range.');
 
 await whereTabA.click();
