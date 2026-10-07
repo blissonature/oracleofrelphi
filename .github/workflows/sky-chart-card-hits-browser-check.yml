@@ -218,6 +218,22 @@ jobs:
           assert.ok(rulerArt.naturalWidth>0);
           assert.equal(rulerArt.media,'local-ruler-art');
 
+          // Ruler art is a temporary wheel focus: any click elsewhere clears only
+          // the Card Hits focus and reveals the pre-existing wheel state beneath it.
+          const firstRuler=page.locator('#skyFoundationA [data-card-ruler]').first();
+          await page.evaluate(()=>document.querySelector('.sky-foundation-wheel')?.classList.add('has-filter-focus'));
+          await firstRuler.click();
+          assert.ok(await page.evaluate(()=>!!document.documentElement.dataset.skyCardRulerFocus),'Clicking ruler art must activate Card Hits ruler focus.');
+          await page.locator('#skyFoundationRelationships .sky-foundation-relationships-heading').click({position:{x:5,y:5}});
+          assert.equal(await page.evaluate(()=>document.documentElement.hasAttribute('data-sky-card-ruler-focus')),false,'Clicking elsewhere must clear Card Hits ruler focus.');
+          assert.equal(await page.evaluate(()=>document.querySelector('.sky-foundation-wheel')?.classList.contains('has-filter-focus')),true,'Clearing Card Hits ruler focus must preserve the prior wheel focus.');
+          await firstRuler.click();
+          await page.locator('#skyFoundationA [data-card-hits-view="houses"]').click();
+          assert.equal(await page.evaluate(()=>document.documentElement.hasAttribute('data-sky-card-ruler-focus')),false,'Leaving Rulers for Houses must clear Card Hits ruler focus.');
+
+          // Return to Rulers for the remaining ruler presentation checks.
+          await page.locator('#skyFoundationA [data-card-hits-view="rulers"]').click();
+
           const rulerLayout=await page.evaluate(()=>{
             const root=document.querySelector('#skyFoundationA .sky-card-hits-structure');
             const stage=root.querySelector('.sky-card-chart-ruler-stage');
