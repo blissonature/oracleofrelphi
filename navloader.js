@@ -144,7 +144,7 @@
 
   function refreshDrawingBoardControlAssets() {
     const link = document.querySelector('link[href^="drawing-board-workflow-v2.css"]');
-    if (link) link.href = 'drawing-board-workflow-v2.css?v=91';
+    if (link) link.href = 'drawing-board-workflow-v2.css?v=92';
     if (!document.getElementById('relphi-drawing-board-collapse-contract')) {
       const style = document.createElement('style');
       style.id = 'relphi-drawing-board-collapse-contract';
@@ -164,7 +164,7 @@
       appendScript('tarot-card-selection-scroll-v1.js?v=2', function () {
         requestAnimationFrame(function () { window.RelphiTarotCardSelectionScroll?.scrollFromLocation(); });
       });
-      appendScript('drawing-board-workflow-v2.js?v=128', function () {
+      appendScript('drawing-board-workflow-v2.js?v=129', function () {
         appendScript('relphi-sky-connector-v1.js?v=2');
         appendScript('drawing-board-crowley-harmonic-v1.js?v=6', function () {
           window.dispatchEvent(new Event('relphi:tarot-enhancements-ready'));
