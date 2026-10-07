@@ -73,6 +73,7 @@ const state=await page.evaluate(()=>{
     outlines,
     moonRange:wheel.querySelectorAll('.sky-foundation-moon-range').length,
     placementLanes:placements.map(node=>Number(node.dataset.placementLane)),
+    placementMedallions:placements.map(node=>({mode:node.dataset.placementMedallion||'',opacity:node.querySelector('.relphi-glyph-bubble>circle')?.style.opacity||'',ariaHidden:node.querySelector('.relphi-glyph-bubble>circle')?.getAttribute('aria-hidden')||''})),
     leaderLengths:[...wheel.querySelectorAll('[data-layer="leaders"] line[data-sky="A"][data-placement]')].map(line=>Math.hypot(Number(line.getAttribute('x2'))-Number(line.getAttribute('x1')),Number(line.getAttribute('y2'))-Number(line.getAttribute('y1')))),
     placementCount:placements.length,
     viewBox:wheel.getAttribute('viewBox')
@@ -91,6 +92,7 @@ assert.ok(state.placementLane<state.outer&&state.placementLane>state.signGlyphLa
 assert.ok(state.signGlyphLane<(state.inner+state.outer)/2,'Unknown-time sign glyphs must shift inward from the zodiac midpoint.');
 assert.ok(state.placementCount>0,'The fixture must render planetary placements.');
 assert.ok(state.placementLanes.every(value=>Number.isFinite(value)&&value<state.outer&&value>state.signGlyphLane),'The collision pass must preserve the inside-edge placement lane.');
+assert.ok(state.placementMedallions.every(item=>item.mode==='none'&&item.opacity==='0'&&item.ariaHidden==='true'),'Unknown-time placements must not paint white backing medallions that form a ghost ring.');
 assert.ok(state.leaderLengths.length>0&&Math.max(...state.leaderLengths)<40,'Unknown-time placement leaders must stay short.');
 assert.equal(state.outlines.length,2,'Unknown-time standalone should draw only the two zodiac boundaries.');
 assert.ok(state.moonRange>0,'Unknown-time standalone must keep the Moon range.');
