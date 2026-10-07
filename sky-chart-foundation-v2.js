@@ -111,7 +111,13 @@ function buildSingleWheel(listA,cuspsA){
     'data-single-sky-sign-glyph-lane':String(noHousesA?z.glyphLane:'')
   });
 
-  chart.appendChild(svg('circle',{cx:c.x,cy:c.y,r:outerRadius+8,fill:'#fffdf8',stroke:'rgba(31,27,24,.14)'}));
+  chart.appendChild(svg('circle',{
+    cx:c.x,cy:c.y,
+    r:noHousesA?z.inner:outerRadius+8,
+    fill:'#fffdf8',
+    stroke:noHousesA?'none':'rgba(31,27,24,.14)',
+    'data-wheel-background':noHousesA?'unknown-time-center':'standalone'
+  }));
   const layers={};
   ['a-houses','zodiac','ticks','aspects','outlines','leaders','placements'].forEach(name=>{
     layers[name]=svg('g',{'data-layer':name});chart.appendChild(layers[name]);
