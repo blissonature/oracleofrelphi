@@ -3180,3 +3180,15 @@ body.relphi-attune-open{overflow:hidden!important}
     bottom:auto!important;
   }
 }
+
+
+/* Mobile Drawing Board felt follows the same inner gutter as the board chrome.
+   Never let the table surface touch or cross the rounded container edge. */
+@media(max-width:700px){
+  #shortListPanel .drawing-board-board-mode>.card-row-workspace{
+    width:calc(100% - 1rem)!important;
+    max-width:calc(100% - 1rem)!important;
+    margin-left:.5rem!important;
+    margin-right:.5rem!important;
+  }
+}
