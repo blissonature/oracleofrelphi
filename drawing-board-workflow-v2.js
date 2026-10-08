@@ -333,12 +333,12 @@
     'Past Body', 'Present Body', 'Future Body',
     'Past Spirit', 'Present Spirit', 'Future Spirit'
   ];
-  // A compact three-by-three field; zoomExtents sizes the whole grid to the
-  // available viewport, while .74 retains room for the position stickers.
+  // Three rows provide independent space for each card's top-edge sticker.
+  // zoomExtents fits the complete nine-card field to the viewport.
   const SATURN_POINTS = [
     [.22,.025],[.40,.025],[.58,.025],
-    [.22,.35],[.40,.35],[.58,.35],
-    [.22,.675],[.40,.675],[.58,.675]
+    [.22,.385],[.40,.385],[.58,.385],
+    [.22,.745],[.40,.745],[.58,.745]
   ];
   const SATURN_SQUARE = {
     version:1,id:'saturn-square-9',name:'Saturn Square',cardCount:9,source:'shipped',editable:false,
