@@ -35,6 +35,25 @@
     the_world: 'Completion becomes a closed system or an unfinished ending. Structure, duty, time, and mastery can harden around what is already complete—or refuse the final boundary that would let the next cycle begin.'
   });
 
+  const COURT_SPECIFIC_REVERSED = Object.freeze({
+    knight_of_wands: 'Fire of Fire no longer charges straight outward. Commanding will can be called back, relinquished, or redirected before force becomes action; the reversal changes who or what receives the flame, rather than merely weakening courage.',
+    queen_of_wands: 'Water of Fire changes from containing and sustaining passion to releasing what it has held. A receptive command of desire can open its boundaries, cease feeding a flame, or return energy to its source without denying its warmth.',
+    prince_of_wands: 'Air of Fire interrupts its own forward-moving vision. An inspired course can be questioned, revised, or redirected as thought takes the reins from momentum; the reversal turns propulsion into reconsideration rather than simply stalled ambition.',
+    princess_of_wands: 'Earth of Fire alters the passage from spark into embodiment. A promising initiative may be unplanted, reshaped, or returned to preparation so that its eventual form differs from the one first imagined.',
+    knight_of_cups: 'Fire of Water redirects the active pursuit of feeling. An emotional offer may be withdrawn, a longing renounced, or desire put into a different relationship; the reversal concerns where the seeking current now flows.',
+    queen_of_cups: 'Water of Water loosens the reflecting vessel. Feeling once mirrored or absorbed can be returned to its owner, released, or distinguished from the self; the reversal separates receptivity from indefinite emotional containment.',
+    prince_of_cups: 'Air of Water changes the interpretation or direction of feeling. A carefully imagined connection may be reconsidered, its promise renamed, or its emotional strategy abandoned when the story no longer fits what is felt.',
+    princess_of_cups: 'Earth of Water reopens the form given to a feeling. An attachment, message, or tender possibility may remain unexpressed, be returned to the inner world, or find a different vessel before it becomes real.',
+    knight_of_swords: 'Fire of Air draws back or redirects the decisive strike. An argument can be retracted, a pursuit halted, or intellectual force turned toward correcting its own premise rather than defeating another position.',
+    queen_of_swords: 'Water of Air changes how discernment is held. A hard distinction may soften into renewed listening, or an absorbed narrative may be released so a boundary can be redrawn without carrying another person\'s judgment.',
+    prince_of_swords: 'Air of Air turns analysis back upon its own machinery. A strategy, judgment, or ingenious argument may be dismantled or revised, making room for uncertainty where reasoning once insisted on command.',
+    princess_of_swords: 'Earth of Air alters how a message becomes a fact on the ground. A conclusion may be withheld, evidence reexamined, or a proposed boundary reworked before thought is fixed into action.',
+    knight_of_disks: 'Fire of Earth redirects the drive to cultivate and secure. Sustained material effort can be stopped, transferred, or brought to harvest rather than continued by duty alone; the reversal changes what labor is serving.',
+    queen_of_disks: 'Water of Earth loosens the hold of material caretaking. Resources and bodily support may be offered outward, reclaimed for the self, or allowed to change hands instead of remaining within one protective enclosure.',
+    prince_of_disks: 'Air of Earth revises the plan by which value is built. A practical system can be dismantled, its pace recalculated, or its resources assigned to a different end when steady growth no longer answers the real need.',
+    princess_of_disks: 'Earth of Earth shifts what is ready to take form. A material beginning may be delayed by choice, returned to seed, transplanted, or released from its original container so it can grow under different conditions.'
+  });
+
   const PIP_SPECIFIC_REVERSED = Object.freeze({
     ace_of_swords: 'A distinction once ready to be cut may be sheathed, withdrawn, or reconsidered. Air returns from declaration to discernment: an argument can be suspended, a judgment revoked, or a boundary redrawn rather than sharpened further.',
     two_of_swords: 'The held balance of opposing thoughts begins to shift. The Moon in Libra can release a stalemate through a choice, disclosure, or changed terms; peace achieved by suspension no longer has to remain motionless.',
@@ -172,7 +191,7 @@
     if (MAJOR_REVERSED[card.card_id]) return MAJOR_REVERSED[card.card_id];
     if (card.card_type === 'Ace') return PIP_SPECIFIC_REVERSED[card.card_id] || ACE_REVERSED[card.element] || 'The elemental seed is present, but access to it is delayed, distorted, or not yet embodied.';
     if (card.card_type === 'Pip') return PIP_SPECIFIC_REVERSED[card.card_id] || derivePip(card);
-    if (card.card_type === 'Court') return deriveCourt(card);
+    if (card.card_type === 'Court') return COURT_SPECIFIC_REVERSED[card.card_id] || deriveCourt(card);
     return 'The card’s usual operation has turned inward and needs to be brought back into proportion before it can move cleanly.';
   }
 
