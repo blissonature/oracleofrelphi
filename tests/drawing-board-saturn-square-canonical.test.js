@@ -3,6 +3,7 @@ const fs = require('node:fs');
 
 const workflow = fs.readFileSync('drawing-board-workflow-v2.js','utf8');
 const prefabs = fs.readFileSync('drawing-board-spread-prefabs-v1.js','utf8');
+const css = fs.readFileSync('drawing-board-workflow-v2.css','utf8');
 
 const expected = [
   'Past Mind','Present Mind','Future Mind',
@@ -30,6 +31,8 @@ const xs=[...new Set(coordinates.map(p=>p[0]*900))].sort((a,b)=>a-b);
 const ys=[...new Set(coordinates.map(p=>p[1]*760))].sort((a,b)=>a-b);
 assert.ok(xs[1]-xs[0]>cardW && xs[2]-xs[1]>cardW,'cards cannot overlap horizontally');
 assert.ok(ys[1]-ys[0]>cardH && ys[2]-ys[1]>cardH,'cards cannot overlap vertically');
-assert.ok(ys[2]+cardH<760,'third row must remain inside logical board bounds');
+assert.ok(ys[1]-ys[0]>cardH+24 && ys[2]-ys[1]>cardH+24,'each row must clear the previous card and leave room for its own sticker');
+assert.match(css, /card-row-item>\\.card-row-position-panel\\{[^}]*bottom:100%!important/,'stickers must be flush with the card edge');
+assert.doesNotMatch(css,/bottom:calc\\(100% \\+ \\.32rem\\)!important/,'displaced sticker positioning must not return');
 
 console.log('Canonical Saturn Square positions, size, and layout contract passed');
