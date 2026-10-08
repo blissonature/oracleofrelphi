@@ -62,7 +62,22 @@ try{
 
   const control=page.locator('.sky-relationship-export-houses');
   assert.equal((await control.locator('summary').textContent()||'').trim(),'Houses B','Unknown-time Sky A must not be offered as a house-bearing export source.');
+  await page.setViewportSize({width:390,height:844});
   await control.locator('summary').click();
+  await page.waitForFunction(()=>{
+    const details=document.querySelector('.sky-relationship-export-houses');
+    const menu=details?.querySelector('.sky-relationship-export-house-menu');
+    if(!details?.open||!menu)return false;
+    const r=menu.getBoundingClientRect();
+    return r.width>0&&r.height>0&&r.left>=8&&r.right<=window.innerWidth-8&&r.top>=8&&r.bottom<=window.innerHeight-8;
+  },null,{timeout:3000});
+  const mobileMenuBounds=await page.evaluate(()=>{
+    const r=document.querySelector('.sky-relationship-export-house-menu').getBoundingClientRect();
+    return{left:r.left,right:r.right,top:r.top,bottom:r.bottom,width:innerWidth,height:innerHeight};
+  });
+  assert.ok(mobileMenuBounds.left>=8&&mobileMenuBounds.right<=mobileMenuBounds.width-8,'House export menu must stay inside the mobile viewport horizontally.');
+  assert.ok(mobileMenuBounds.top>=8&&mobileMenuBounds.bottom<=mobileMenuBounds.height-8,'House export menu must stay inside the mobile viewport vertically.');
+  await page.setViewportSize({width:1440,height:1000});
   const aToggle=control.locator('[data-export-house-slot="A"]');
   const bToggle=control.locator('[data-export-house-slot="B"]');
   assert.equal(await aToggle.isDisabled(),true,'Unknown-time Sky A house export toggle must be disabled.');
