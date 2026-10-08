@@ -101,43 +101,53 @@ try{
   assert.deepEqual(badResponses.filter(item=>/relphi-glyph-registry|relphi-glyph-component|sky-chart-wheel-spec|sky-chart-foundation-v2/.test(item.url)),[]);
   console.log('Rawgithack WebKit Sky Chart startup completed.',JSON.stringify(state));
 
-  // A rawgithack preview can open in a fresh browser context with no Oracle of Relphi
-  // localStorage. That state must resolve visibly rather than looking like a hung shell.
-  await page.evaluate(()=>{
-    localStorage.removeItem('relphiSkyChartA');
-    localStorage.removeItem('relphiSkyChartB');
-    localStorage.removeItem('relphiSkyChartLastModeV1');
+  // A rawgithack preview can open in a completely fresh browser context with no
+  // Oracle of Relphi storage at all. Verify that state separately from startup recovery.
+  const emptyContext=await browser.newContext({
+    viewport:{width:390,height:844},
+    userAgent:'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1'
   });
-  await page.reload({waitUntil:'domcontentloaded',timeout:30000});
-  await page.waitForSelector('#skyFoundationRoot[aria-busy="false"]',{timeout:20000});
-  const emptyState=await page.evaluate(()=>{
-    const a=document.querySelector('#skyFoundationA');
-    const mount=document.getElementById('skyFoundationWheelMount');
-    const placementEmpty=a?.querySelector('.sky-foundation-empty');
-    const wheelEmpty=mount?.querySelector('.sky-foundation-empty');
-    const visible=node=>{
-      if(!node)return false;
-      const style=getComputedStyle(node),r=node.getBoundingClientRect();
-      return style.display!=='none'&&style.visibility!=='hidden'&&Number(style.opacity)!==0&&r.width>0&&r.height>0;
-    };
-    return{
-      busy:document.getElementById('skyFoundationRoot')?.getAttribute('aria-busy'),
-      aName:(a?.querySelector('.sky-foundation-name')?.textContent||'').trim(),
-      hasCardShell:!!a?.querySelector('[data-sky-card-drawers="A"]'),
-      placementEmptyText:(placementEmpty?.textContent||'').trim(),
-      placementEmptyVisible:visible(placementEmpty),
-      wheelEmptyText:(wheelEmpty?.textContent||'').trim(),
-      wheelEmptyVisible:visible(wheelEmpty),
-      bodyText:(document.body.innerText||'').slice(0,1200)
-    };
-  });
-  console.log('RAWGITHACK_WEBKIT_EMPTY_STATE',JSON.stringify(emptyState,null,2));
-  assert.equal(emptyState.busy,'false');
-  assert.equal(emptyState.hasCardShell,true,'Fresh rawgithack storage must still initialize the Sky A card shell.');
-  assert.equal(emptyState.placementEmptyVisible,true,'Fresh rawgithack storage must visibly explain that Sky A has no placements.');
-  assert.match(emptyState.placementEmptyText,/No approved canonical placements/i);
-  assert.equal(emptyState.wheelEmptyVisible,true,'Fresh rawgithack storage must visibly explain why the wheel is empty.');
-  assert.match(emptyState.wheelEmptyText,/Sky A needs approved canonical placements/i);
+  try{
+    const emptyPage=await emptyContext.newPage();
+    await emptyPage.goto(url,{waitUntil:'domcontentloaded',timeout:30000});
+    const gate=emptyPage.getByText('Open the page',{exact:true});
+    if(await gate.count()){
+      await gate.click();
+      await emptyPage.waitForLoadState('domcontentloaded',{timeout:30000}).catch(()=>{});
+    }
+    await emptyPage.waitForSelector('#skyFoundationRoot[aria-busy="false"]',{timeout:20000});
+    const emptyState=await emptyPage.evaluate(()=>{
+      const a=document.querySelector('#skyFoundationA');
+      const mount=document.getElementById('skyFoundationWheelMount');
+      const placementEmpty=a?.querySelector('.sky-foundation-empty');
+      const wheelEmpty=mount?.querySelector('.sky-foundation-empty');
+      const visible=node=>{
+        if(!node)return false;
+        const style=getComputedStyle(node),r=node.getBoundingClientRect();
+        return style.display!=='none'&&style.visibility!=='hidden'&&Number(style.opacity)!==0&&r.width>0&&r.height>0;
+      };
+      return{
+        busy:document.getElementById('skyFoundationRoot')?.getAttribute('aria-busy'),
+        aName:(a?.querySelector('.sky-foundation-name')?.textContent||'').trim(),
+        hasCardShell:!!a?.querySelector('[data-sky-card-drawers="A"]'),
+        placementEmptyText:(placementEmpty?.textContent||'').trim(),
+        placementEmptyVisible:visible(placementEmpty),
+        wheelEmptyText:(wheelEmpty?.textContent||'').trim(),
+        wheelEmptyVisible:visible(wheelEmpty),
+        bodyText:(document.body.innerText||'').slice(0,1200)
+      };
+    });
+    console.log('RAWGITHACK_WEBKIT_EMPTY_STATE',JSON.stringify(emptyState,null,2));
+    assert.equal(emptyState.busy,'false');
+    assert.equal(emptyState.aName,'Sky A');
+    assert.equal(emptyState.hasCardShell,true,'Fresh rawgithack storage must still initialize the Sky A card shell.');
+    assert.equal(emptyState.placementEmptyVisible,true,'Fresh rawgithack storage must visibly explain that Sky A has no placements.');
+    assert.match(emptyState.placementEmptyText,/No approved canonical placements/i);
+    assert.equal(emptyState.wheelEmptyVisible,true,'Fresh rawgithack storage must visibly explain why the wheel is empty.');
+    assert.match(emptyState.wheelEmptyText,/Sky A needs approved canonical placements/i);
+  }finally{
+    await emptyContext.close();
+  }
 }finally{
   await browser.close();
 }
