@@ -54,3 +54,10 @@ jobs:
         env:
           RELPHI_PREVIEW_SHA: ${{ github.event.pull_request.head.sha }}
         run: node tests/sky-chart-rawgithack-webkit-smoke.mjs
+      - name: Upload mobile house export menu
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sky-chart-house-export-menu-mobile
+          path: sky-chart-house-export-menu-mobile.png
+          if-no-files-found: ignore
