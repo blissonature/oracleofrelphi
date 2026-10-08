@@ -77,6 +77,7 @@ try{
   });
   assert.ok(mobileMenuBounds.left>=8&&mobileMenuBounds.right<=mobileMenuBounds.width-8,'House export menu must stay inside the mobile viewport horizontally.');
   assert.ok(mobileMenuBounds.top>=8&&mobileMenuBounds.bottom<=mobileMenuBounds.height-8,'House export menu must stay inside the mobile viewport vertically.');
+  await page.screenshot({path:'sky-chart-house-export-menu-mobile.png',fullPage:false});
   await page.setViewportSize({width:1440,height:1000});
   const aToggle=control.locator('[data-export-house-slot="A"]');
   const bToggle=control.locator('[data-export-house-slot="B"]');
