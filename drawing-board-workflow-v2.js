@@ -326,19 +326,23 @@
     rules:{ allowReversals:true, allowRepeats:false, drawScope:'full' }
   };
 
+  // Canonical Saturn Square: columns Past/Present/Future, rows Mind/Body/Spirit.
+  // Position numbering is rendered by the template list; labels stay unnumbered.
   const SATURN_LABELS = [
-    '1 · The structure', '2 · The pressure', '3 · The limit',
-    '4 · What is tested', '5 · The center', '6 · What matures',
-    '7 · Responsibility', '8 · Discipline', '9 · Integration'
+    'Past Mind', 'Present Mind', 'Future Mind',
+    'Past Body', 'Present Body', 'Future Body',
+    'Past Spirit', 'Present Spirit', 'Future Spirit'
   ];
+  // Three rows provide independent space for each card's top-edge sticker.
+  // zoomExtents fits the complete nine-card field to the viewport.
   const SATURN_POINTS = [
-    [.04,.04],[.36,.04],[.68,.04],
-    [.04,.37],[.36,.37],[.68,.37],
-    [.04,.70],[.36,.70],[.68,.70]
+    [.245,.025],[.405,.025],[.565,.025],
+    [.245,.405],[.405,.405],[.565,.405],
+    [.245,.785],[.405,.785],[.565,.785]
   ];
   const SATURN_SQUARE = {
     version:1,id:'saturn-square-9',name:'Saturn Square',cardCount:9,source:'shipped',editable:false,
-    positions:SATURN_LABELS.map((label,index) => position(`saturn-${index + 1}`,label,index + 1,transform(SATURN_POINTS[index][0],SATURN_POINTS[index][1],.58))),
+    positions:SATURN_LABELS.map((label,index) => position(`saturn-${index + 1}`,label,index + 1,transform(SATURN_POINTS[index][0],SATURN_POINTS[index][1],.74))),
     rules:{ allowReversals:true, allowRepeats:false, drawScope:'full' }
   };
 

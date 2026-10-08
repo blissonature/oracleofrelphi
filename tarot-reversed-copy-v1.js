@@ -11,28 +11,90 @@
   let applying = false;
 
   const MAJOR_REVERSED = Object.freeze({
-    the_fool: 'Breakthrough is trapped inside the system or erupts sideways. Freedom becomes flight, disruption without direction, or refusal of the continuity needed to make a new pattern real.',
-    the_magician: 'Mercury’s act of naming and directing signal loops back on itself. Skill, speech, choice, or intention can fragment, manipulate, or stall until the message and the will behind it agree.',
-    the_high_priestess: 'Receptivity turns into withholding or projection. Memory, intuition, secrecy, and the unseen can flood the inner field or become so sealed that nothing can pass through.',
-    the_empress: 'Venusian generation loses proportion. Care, beauty, pleasure, fertility, money, or affection can become smothering, excessive, withheld, or disconnected from what actually nourishes.',
-    the_emperor: 'Protective structure hardens or fails. Boundary can become domination, defensiveness, brittle control, or an inability to use force cleanly enough to keep life safe.',
-    the_hierophant: 'Transmission hardens into doctrine or loses its living chain. Teaching, tradition, value, and embodied practice can become obedience without understanding—or rejection before the lesson has been metabolized.',
-    the_lovers: 'Mercurial exchange splits into mixed signals. Choice, relationship, language, and mirroring can become projection or indecision until the parties say what they actually mean.',
-    the_chariot: 'Containment becomes armor. Feeling and memory may be driven, suppressed, or overprotected, so forward motion depends on restoring an inner container that can hold contrary forces without clamping them down.',
-    strength: 'Solar courage becomes performance, suppression, or depletion. Appetite, anger, sexuality, visibility, or creative heat needs integration rather than domination.',
-    the_hermit: 'Discernment contracts into isolation or perfectionism. Analysis and service can become endless correction, withdrawal, or fear of contamination until the signal is simple enough to carry.',
-    wheel_of_fortune: 'Jupiterian increase becomes inflation or repetition. Opportunity, meaning, luck, and expansion can keep turning without integration, making the cycle larger without making it wiser.',
-    justice: 'Balance becomes scorekeeping, avoidance, or a frozen verdict. Relation and consequence need to be reweighed so reciprocity is restored instead of merely appearing equal.',
-    the_hanged_man: 'Suspension loses its purpose. Surrender becomes stagnation, escape, martyrdom, or indefinite waiting until the pause reveals what must actually be released.',
-    death: 'The ending is being held in place. Grief, desire, attachment, or survival force keeps circulating beneath the surface because transformation cannot complete until something is allowed to die.',
-    temperance: 'Integration becomes dilution or overmixing. Meaning, faith, movement, and difference blur together until the right proportions—and the boundary between unlike things—are restored.',
-    the_devil: 'Capricornian structure begins to loosen its grip. Bondage, compulsion, control, or material fixation is being exposed so that what has hardened can be released or consciously renegotiated.',
-    the_tower: 'The protective structure is rupturing from within. Force that was contained, denied, or misdirected breaks through as crisis, defensiveness, or collapse so the false boundary can no longer pretend to be stable.',
-    the_star: 'Future vision loses its vessel. Hope, distance, community, and pattern can become abstraction, dissociation, or idealism that cannot land until possibility is given a form.',
-    the_moon: 'Vision and feeling lose reliable edges. Dream, fear, projection, longing, and memory can blend into fog until the image is separated from the thing it represents.',
-    the_sun: 'Visibility turns into overexposure or dimming. Confidence, identity, vitality, and recognition lose their center until radiance comes from presence rather than performance.',
-    judgement: 'The call to transformation is heard below the surface but not yet answered. Compulsion, grief, power, or awakening can repeat as pressure until what is being summoned is consciously named.',
-    the_world: 'Completion becomes a closed system or an unfinished ending. Structure, duty, time, and mastery can harden around what is already complete—or refuse the final boundary that would let the next cycle begin.'
+    the_fool: 'The leap out of the known changes direction: an uncommitted beginning is recalled before it becomes a journey, or a wandering possibility acquires a chosen destination. The Fool\'s freedom remains, but novelty alone no longer decides the course.',
+    the_magician: 'The act of making a thought operative is undone or revised. Mercury brings a declaration back into consideration: a promise can be withdrawn, a message corrected, or a technique relinquished when the words no longer serve the intention.',
+    the_high_priestess: 'The veil between the known and unknown begins to part. What had been held in silence, intuition, or secrecy becomes speakable or available to conscious examination; the reversal changes access to knowledge without requiring every mystery to be solved.',
+    the_empress: 'The flow of generation is brought to a boundary. Venus may cease producing or nourishing an established form so that an offspring, relationship, or creation can develop apart from its source; care changes from provision to allowing independence.',
+    the_emperor: 'The command structure releases its claim to unquestioned authority. Aries redirects protective force toward self-rule or shared decision, allowing a law, boundary, or hierarchy to be revised rather than enforced simply because it exists.',
+    the_hierophant: 'An inherited teaching loses its status as an obligatory form. Taurus turns transmission into personal examination: a student may depart from doctrine, reinterpret a tradition, or keep its living value without retaining its old institution.',
+    the_lovers: 'A joining becomes a distinction. Gemini separates voices, commitments, or alternatives that had been treated as one; the reversal is the moment choice becomes possible through differentiation rather than through automatic agreement.',
+    the_chariot: 'The forces held together by sheer direction are permitted to move separately. Cancer changes victory through containment into a choice to stop driving, release the armor, or relinquish a destination that demanded too much enclosure.',
+    strength: 'The need to master the living force gives way to relationship with it. Leo\'s heat is neither conquered nor performed: desire, anger, or courage can be acknowledged without demanding dominance over oneself or another.',
+    the_hermit: 'The inward search reaches its threshold and turns outward. Virgoan discernment leaves private examination to offer its finding, request assistance, or enter imperfect participation; wisdom no longer requires continuing isolation.',
+    wheel_of_fortune: 'The turning cycle is interrupted or its direction changes. Jupiterian increase no longer carries the situation along its established momentum; an apparent rise can reverse, or recurrence can be broken by recognizing the pattern.',
+    justice: 'A settled balance is reopened because its terms no longer hold. Libra asks that evidence, responsibility, and unequal consequences be reweighed; the reversal is reconsideration of the measure itself, not simply an unfair verdict.',
+    the_hanged_man: 'Suspension ends or loses its claim on the person held there. Neptune\'s surrender gives way to a recovered agency: sacrifice can be declined, the old viewpoint put into practice, or waiting stopped without pretending the pause taught nothing.',
+    death: 'The process of ending changes course. Scorpio may return what was thought finished for one final reckoning, or free a person from an ending they have kept reenacting; reversal concerns whether the separation is undone or finally completed.',
+    temperance: 'A mixture is separated into its constituent forces. Sagittarius restores differences that compromise had blurred, allowing purposes or parties to take distinct directions rather than treating harmony as endless blending.',
+    the_devil: 'A binding arrangement begins to lose its authority. Capricorn\'s dependencies become visible as constructed ties that can be renegotiated, refused, or broken; reclaiming choice is the reversal of bondage, not simply another form of captivity.',
+    the_tower: 'The collapse of a false structure is interrupted, contained, or turned into deliberate dismantling. Mars can direct the force of rupture toward removing what is unsound before destruction takes everything with it; the reversal changes the manner of breakdown, not the need to face instability.',
+    the_star: 'A distant ideal becomes an immediate responsibility. Aquarius draws hope down from the imagined future into a specific act, commitment, or reachable relationship; possibility reverses from projection into something that can be tested in the world.',
+    the_moon: 'The enchantment of an uncertain image begins to break. Pisces permits dream, fear, or projection to be distinguished from what actually stands before us; the reversal is an emergence from obscurity, not deeper obscurity by default.',
+    the_sun: 'The light that made a person or situation visible is dimmed or turned away. Leo\'s recognition may be withdrawn, a public certainty questioned, or something once obvious pass out of view; reversal changes the availability of illumination.',
+    judgement: 'A summons once treated as final is recalled or answered differently. Pluto\'s call to reckon with the past may be resisted, revised, or transformed into release from an old sentence; what had been pronounced irreversible becomes open to another decision.',
+    the_world: 'A completed order reopens at its boundary. Saturn\'s finished structure ceases to be the only possible world: a role can end, a closed cycle begin again, or an established whole yield space for what lies beyond it.'
+  });
+
+  const COURT_SPECIFIC_REVERSED = Object.freeze({
+    knight_of_wands: 'Fire of Fire ceases to recognize escalation as leadership. The one who had been driving the charge can hand initiative to others and discover that authority survives without constant demonstration of force.',
+    queen_of_wands: 'Water of Fire stops sustaining another person\'s blaze. The capacity to hold intensity becomes the capacity to cool it: hospitality, loyalty, or attraction may remain while the emotional fuel that kept it burning is no longer supplied.',
+    prince_of_wands: 'Air of Fire subjects inspiration to contradiction. A dazzling plan meets competing possibilities, and the first vision loses its monopoly; the reversal is the breaking of a compelling direction into choices that must be compared.',
+    princess_of_wands: 'Earth of Fire is a seed that refuses its assigned vessel. An emerging talent or venture changes the conditions under which it will become tangible; the reversal is germination elsewhere, not merely a late beginning.',
+    knight_of_cups: 'Fire of Water abandons the quest for an ideal feeling as something to conquer. The suitor, seeker, or champion of a desire ceases pursuing an image and faces what affection actually asks of them.',
+    queen_of_cups: 'Water of Water ceases to function as an undifferentiated mirror. One person\'s feeling can be separated from another\'s; empathy becomes recognition of whose emotion it is, rather than endless absorption.',
+    prince_of_cups: 'Air of Water interrupts the narrative that organized desire. Seduction, longing, or an imagined future loses its persuasive story, and feeling must be understood without the explanation that previously made it seem inevitable.',
+    princess_of_cups: 'Earth of Water brings an unspoken tenderness to a threshold of expression. Instead of quietly becoming an attachment or promise, the feeling asks for a different concrete gesture—or is acknowledged without being promised.',
+    knight_of_swords: 'Fire of Air loses the privilege of the first strike. The argument that once drove events must answer a counterargument; the reversal turns attack into accountability for the words already launched.',
+    queen_of_swords: 'Water of Air stops holding a judgment as an enduring emotional truth. Grief-informed discernment can become fresh perception, allowing a person or situation to be seen without the old verdict governing every detail.',
+    prince_of_swords: 'Air of Air multiplies distinctions until the ruling theory dismantles itself. What seemed like a decisive intellectual strategy becomes several incompatible claims, exposing assumptions that need testing rather than another clever conclusion.',
+    princess_of_swords: 'Earth of Air refuses to turn a suspicion into an established fact. Observation stays provisional, evidence is sought, and a boundary or accusation is withheld until language has sufficient ground beneath it.',
+    knight_of_disks: 'Fire of Earth reaches the point where perseverance no longer means progress. The cultivator stops tending an unresponsive field and redirects labor toward what can actually grow; endurance gives way to an assessment of yield.',
+    queen_of_disks: 'Water of Earth distinguishes nourishment from possession. Care that once protected by holding resources close can become provision that permits independence, releasing someone from the obligation to remain inside the caregiver\'s shelter.',
+    prince_of_disks: 'Air of Earth breaks a dependable production cycle into its component decisions. The builder questions efficiency, ownership, and purpose separately, replacing automatic continuation with a redesigned material process.',
+    princess_of_disks: 'Earth of Earth reveals that a formed possibility is not yet an obligation to produce. The seed may be stored, transplanted, or deliberately left dormant; the reversal protects potential from premature commitment.'
+  });
+
+  const PIP_SPECIFIC_REVERSED = Object.freeze({
+    ace_of_swords: 'The raised blade is lowered before the judgment becomes binding. Air\'s power to distinguish remains, but finality gives way to investigation and the possibility that the original distinction was mistaken.',
+    two_of_swords: 'The equilibrium of indecision is deliberately disturbed. The Moon in Libra turns the protection of peace into the risk of choice: movement is possible once perfect balance is no longer required.',
+    three_of_swords: 'The separation marked by sorrow ceases to be absolute. Saturn in Libra allows contact or comprehension across an old division, even when the event that caused the hurt cannot be undone.',
+    four_of_swords: 'The ceasefire reaches its appointed end. Jupiter in Libra returns suspended disagreement to active dialogue, testing whether the quiet established genuine agreement or merely postponed a decision.',
+    five_of_swords: 'The loser rejects the contest\'s definition of worth. Venus in Aquarius makes defeat reversible not by claiming a hidden victory but by leaving the terms under which dignity was measured.',
+    six_of_swords: 'A convincing theory becomes a question again. Mercury in Aquarius exposes the limits of its own model; the apparent certainty of analysis gives way to a new experiment.',
+    seven_of_swords: 'A futile strategy is abandoned rather than perfected. The Moon in Aquarius redirects ingenuity away from evasion and toward a goal that can survive contact with reality.',
+    eight_of_swords: 'The interlocking constraints begin to come apart. Jupiter in Gemini opens alternative routes through a field of conflicting claims, so agency returns as the tangle is distinguished thread by thread.',
+    nine_of_swords: 'The cutting word is deprived of its continuing authority. Mars in Gemini interrupts repeated accusation through refusal, retraction, or correction; cruelty no longer dictates the terms of thought.',
+    ten_of_swords: 'The sentence of ruin is reopened after it seemed final. The Sun in Gemini reveals overlooked continuities and possible futures, overturning the conclusion that nothing can follow the ending.',
+    ace_of_pentacles: 'The offered seed is reclaimed before planting. Earthly possibility remains intact while the decision to invest, accept, or commit returns to the person who controls the resources.',
+    two_of_pentacles: 'The juggling stops because the cycle\'s rules are changed. Jupiter in Capricorn transforms adaptability into a stable allocation: a recurring demand no longer requires a fresh concession every time.',
+    three_of_pentacles: 'The blueprint is reopened after work has begun. Mars in Capricorn changes cooperation from obedient execution to a renegotiation of roles, standards, and the result being built.',
+    four_of_pentacles: 'The locked store is opened. The Sun in Capricorn converts power held through possession into power exercised through access, transfer, or the voluntary surrender of exclusive control.',
+    five_of_pentacles: 'An uncertain shortage becomes a solvable material question. Mercury in Taurus changes worry into verification, assistance, and specific choices about what is needed.',
+    six_of_pentacles: 'Success is brought back into exchange. The Moon in Taurus tests whether what was gained can circulate as mutual support instead of remaining proof of one person\'s security.',
+    seven_of_pentacles: 'The verdict of failure is suspended. Saturn in Taurus distinguishes a dead investment from a slow-growing one, allowing deliberate replanting or abandonment instead of repeating the same frustrated effort.',
+    eight_of_pentacles: 'The craftsperson stops polishing a method that has become its own end. The Sun in Virgo returns attention from faultless repetition to the purpose the practice was meant to serve.',
+    nine_of_pentacles: 'The owner becomes free to part with what has been gained. Venus in Virgo transforms accumulation into discernment about which possessions sustain independence and which now demand its sacrifice.',
+    ten_of_pentacles: 'The inherited order is treated as revisable rather than permanent. Mercury in Virgo separates continuity of care from continuity of ownership, opening established wealth or obligations to new terms.',
+    ace_of_wands: 'The spark is contained before it becomes a declaration. Fire remains capable of ignition, but initiative passes from spontaneous discharge to choosing a worthy occasion; the reversal is conservation of the first impulse.',
+    two_of_wands: 'Dominion meets the limit of its jurisdiction. Mars in Aries can still initiate, but the right to direct another\'s course is withdrawn; self-command replaces command over the field.',
+    three_of_wands: 'A venture that has already been set in motion must return to its founding purpose. The Sun in Aries reverses outward expansion into an examination of why the work was begun, separating conviction from momentum.',
+    four_of_wands: 'The ceremony of completion is interrupted by unfinished participation. Venus in Aries changes a settled celebration into an open agreement: those included in the structure regain a say in its terms.',
+    five_of_wands: 'Strife loses its organizing center. Saturn in Leo no longer holds competitors in one contest, allowing energies previously defined by opposition to separate and find independent expression.',
+    six_of_wands: 'The acclaim of victory is returned to its audience for judgment. Jupiter in Leo changes public triumph into an examination of whom the recognition excluded and whether the celebrated result merits the crown.',
+    seven_of_wands: 'A defended height is voluntarily vacated. Mars in Leo transforms bravery from holding ground against all challengers to deciding that the contest itself no longer defines honor.',
+    eight_of_wands: 'The message is intercepted before consequence outruns intention. Mercury in Sagittarius converts swift transmission into recall, revision, or a pause that allows meaning to catch up with velocity.',
+    nine_of_wands: 'The watch ends. The Moon in Sagittarius permits a vigilant survivor to lay down the anticipatory defense, marking the shift from surviving the next challenge to inhabiting the safety already reached.',
+    ten_of_wands: 'The carrier refuses to serve as the structure that holds every obligation together. Saturn in Sagittarius changes oppression through redistribution: the task must find more hands, a smaller scope, or its conclusion.',
+    ace_of_cups: 'The chalice is turned from taking in toward pouring out. Water\'s potential becomes an act of offering, emptying, or declining to receive; the reversal changes the flow rather than assuming the feeling is damaged.',
+    two_of_cups: 'A union makes room for two separate wills. Venus in Cancer changes emotional joining into differentiation, so affection need not imply consent to every shared arrangement.',
+    three_of_cups: 'The chorus breaks into distinct voices. Mercury in Cancer transforms communal agreement into the recognition of experiences that celebration had gathered under a single shared account.',
+    four_of_cups: 'The closed circle of familiar satisfaction is breached by an unfamiliar offering. The Moon in Cancer permits the protected emotional world to change without requiring its history to be disowned.',
+    five_of_cups: 'The disappointing outcome loses its power to organize every feeling. Mars in Scorpio stops returning force to what was lost, allowing grief to become memory and attachment to find a living object.',
+    six_of_cups: 'A remembered pleasure stops being the template for present affection. The Sun in Scorpio reveals what the memory concealed, allowing tenderness for the past without restoring its former conditions.',
+    seven_of_cups: 'The spell of competing desires is broken by a concrete choice. Venus in Scorpio relinquishes the fascination of infinite possibilities, accepting the limits and consequences of one real attachment.',
+    eight_of_cups: 'A departure is interrupted by the discovery that the abandoned matter is unfinished. Saturn in Pisces turns withdrawal back toward responsibility for what still needs to be felt, said, or resolved.',
+    nine_of_cups: 'Contentment crosses the boundary of the self. Jupiter in Pisces transforms private gratification into sharing, generosity, or the recognition that a fulfilled wish need not keep expanding.',
+    ten_of_cups: 'The claim of complete harmony is reopened. Mars in Pisces makes visible the effort needed to sustain emotional agreement; a supposedly finished arrangement must reckon with what one party could not receive or contribute.'
   });
 
   const ACE_REVERSED = Object.freeze({
@@ -127,9 +189,9 @@
     const card = typeof cardOrId === 'string' ? cardById(cardOrId) : cardOrId;
     if (!card) return '';
     if (MAJOR_REVERSED[card.card_id]) return MAJOR_REVERSED[card.card_id];
-    if (card.card_type === 'Ace') return ACE_REVERSED[card.element] || 'The elemental seed is present, but access to it is delayed, distorted, or not yet embodied.';
-    if (card.card_type === 'Pip') return derivePip(card);
-    if (card.card_type === 'Court') return deriveCourt(card);
+    if (card.card_type === 'Ace') return PIP_SPECIFIC_REVERSED[card.card_id] || ACE_REVERSED[card.element] || 'The elemental seed is present, but access to it is delayed, distorted, or not yet embodied.';
+    if (card.card_type === 'Pip') return PIP_SPECIFIC_REVERSED[card.card_id] || derivePip(card);
+    if (card.card_type === 'Court') return COURT_SPECIFIC_REVERSED[card.card_id] || deriveCourt(card);
     return 'The card’s usual operation has turned inward and needs to be brought back into proportion before it can move cleanly.';
   }
 

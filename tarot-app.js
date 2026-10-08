@@ -1804,9 +1804,13 @@
       ? (narrowHeader?164:124)
       : (narrowHeader?118:88);
     const headerH=Math.round(baseHeaderH*chromeScale);
+    // Preserve visible separation between Saturn Square rows in exported images.
+    // Each position label belongs to the card immediately beneath it.
+    const isSaturnSquareSnapshot = state.rowActiveLayout?.id === 'saturn-square-9' || state.rowActiveLayout?.basedOn === 'saturn-square-9';
+    const saturnRowSeparation = isSaturnSquareSnapshot && slots === 9 ? 18 * scale : 0;
     const canvas = document.createElement('canvas');
     canvas.width = canvasWidth;
-    canvas.height = Math.ceil((maxY - minY) * scale + margin * 2 + headerH);
+    canvas.height = Math.ceil((maxY - minY) * scale + margin * 2 + headerH + saturnRowSeparation * 2);
     const ctx = canvas.getContext('2d');
     if (!ctx) throw new Error('Unable to create the snapshot canvas.');
     ctx.imageSmoothingEnabled=true;
@@ -1903,13 +1907,13 @@
 
     const groupW = CARD_ROW_ENVELOPE_W * scale;
     const positionH = 54 * scale;
-    const gap = 10 * scale;
+    const gap = isSaturnSquareSnapshot ? 0 : 10 * scale;
     const cardW = 160 * scale;
     const cardH = 277 * scale;
     Array.from({ length: slots }, (_, i) => i).forEach(i => {
       const pos = positions[i];
       const x = margin + (pos.x - minX) * scale;
-      const y = margin + headerH + (pos.y - minY) * scale;
+      const y = margin + headerH + (pos.y - minY) * scale + saturnRowSeparation * Math.floor(i / 3);
       const card = cards[i];
       const position = String(state.shortListPositionLabels[i] || `Position ${i + 1}`).trim();
       const t = rowCardTransform(i);
@@ -4430,7 +4434,11 @@
     return cleanSentence(pieces.join(' '));
   }
   function layerInterpretationForOrientation(card, reversed = false) {
-    return reversed ? reversedDerivedMeaning(card) : layerInterpretation(card);
+    if (!reversed) return layerInterpretation(card);
+    // The Drawing Board summary, copy and exports must use the same canonical
+    // reversed interpretation as the board's card layer and focus reader.
+    return window.RelphiTarotReversedMeanings?.meaningFor?.(card?.card_id)
+      || reversedDerivedMeaning(card);
   }
   function manualLayerInterpretation(card) {
     const map = {
