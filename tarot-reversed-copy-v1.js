@@ -36,6 +36,15 @@
   });
 
   const PIP_SPECIFIC_REVERSED = Object.freeze({
+    ace_of_cups: 'The capacity to receive feeling is present, but its opening may be guarded, flooded, or held back. Water has not disappeared; the vessel needs a boundary that lets affection and care enter without demanding either complete exposure or complete closure.',
+    two_of_cups: 'An offered connection does not yet become mutual exchange. Venus in Cancer may protect the bond by concealing a need or giving more than can be received in return; affection requires room for both people to answer freely.',
+    three_of_cups: 'Shared feeling struggles to find a common language. Mercury in Cancer can turn belonging into assumptions, unspoken expectations, or conversations that circle around what matters; communion is restored by making room for each voice instead of presuming agreement.',
+    four_of_cups: 'Emotional security has become too enclosed to remain receptive. The Moon in Cancer protects what is familiar, yet the same shelter can screen out a needed change or offering; comfort must open enough to receive without losing its roots.',
+    five_of_cups: 'Pain threatens to become the only bond with what was lost. Mars in Scorpio can keep grief active as blame, struggle, or defensive attachment; the reversal asks whether that force can protect what still matters instead of repeatedly reopening the wound.',
+    six_of_cups: 'Recognition of past affection is unsettled: memory may idealize what was, or an old bond may be ready to be understood differently. The Sun in Scorpio exposes where loyalty, tenderness, and identity have become entangled; returning to the past need not mean remaining inside it.',
+    seven_of_cups: 'Desire casts images that are difficult to distinguish from what can truly be shared. Venus in Scorpio may cling to a compelling possibility or fear the vulnerability of choosing one real connection; clarity comes from testing attraction against reciprocity and consequence.',
+    eight_of_cups: 'Leaving and remaining are both held under the weight of an unmet need. Saturn in Pisces may turn necessary withdrawal into prolonged endurance, guilt, or resignation; the reversal asks whether a boundary can be made consciously rather than through silent depletion.',
+    nine_of_cups: 'Pleasure or fulfillment is available, yet it may not be trusted, shared, or allowed to settle. Jupiter in Pisces can enlarge longing beyond what any satisfaction can hold; the reversal asks what would make enough genuinely receivable instead of endlessly deferred or consumed.',
     ten_of_cups: 'The emotional field is saturated, but fullness no longer guarantees nourishment. Under Mars in Pisces, feeling may be pushed beyond its capacity to contain or express it, becoming overwhelm, forced harmony, or exhaustion. The question is what needs release, rather than how to hold on to the appearance of completion.'
   });
 
@@ -131,7 +140,7 @@
     const card = typeof cardOrId === 'string' ? cardById(cardOrId) : cardOrId;
     if (!card) return '';
     if (MAJOR_REVERSED[card.card_id]) return MAJOR_REVERSED[card.card_id];
-    if (card.card_type === 'Ace') return ACE_REVERSED[card.element] || 'The elemental seed is present, but access to it is delayed, distorted, or not yet embodied.';
+    if (card.card_type === 'Ace') return PIP_SPECIFIC_REVERSED[card.card_id] || ACE_REVERSED[card.element] || 'The elemental seed is present, but access to it is delayed, distorted, or not yet embodied.';
     if (card.card_type === 'Pip') return PIP_SPECIFIC_REVERSED[card.card_id] || derivePip(card);
     if (card.card_type === 'Court') return deriveCourt(card);
     return 'The card’s usual operation has turned inward and needs to be brought back into proportion before it can move cleanly.';
