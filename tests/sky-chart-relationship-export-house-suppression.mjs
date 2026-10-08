@@ -55,7 +55,7 @@ try{
     };
   },{a:skyA,b:skyB});
 
-  await page.goto('http://127.0.0.1:4173/sky-chart.html',{waitUntil:'networkidle'});
+  await page.goto('http://127.0.0.1:4173/sky-chart.html',{waitUntil:'domcontentloaded'});
   await page.waitForSelector('#skyFoundationRoot[aria-busy="false"]',{timeout:20000});
   await page.waitForFunction(()=>document.querySelectorAll('#skyFoundationRelationshipList>.sky-foundation-relationship-row[data-relation-index]').length>5,null,{timeout:20000});
   await page.waitForSelector('.sky-relationship-export-houses summary',{timeout:10000});
