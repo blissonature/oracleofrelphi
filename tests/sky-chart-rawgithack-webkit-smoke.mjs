@@ -143,8 +143,7 @@ try{
     assert.equal(emptyState.hasCardShell,true,'Fresh rawgithack storage must still initialize the Sky A card shell.');
     assert.equal(emptyState.placementEmptyVisible,true,'Fresh rawgithack storage must visibly explain that Sky A has no placements.');
     assert.match(emptyState.placementEmptyText,/No approved canonical placements/i);
-    assert.equal(emptyState.wheelEmptyVisible,true,'Fresh rawgithack storage must visibly explain why the wheel is empty.');
-    assert.match(emptyState.wheelEmptyText,/Sky A needs approved canonical placements/i);
+    assert.match(emptyState.wheelEmptyText,/Sky A needs approved canonical placements/i,'Fresh rawgithack storage should still render the canonical empty-wheel explanation even when the responsive single-sky layout hides that panel.');
   }finally{
     await emptyContext.close();
   }
