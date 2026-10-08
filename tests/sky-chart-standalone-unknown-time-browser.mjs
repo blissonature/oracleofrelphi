@@ -75,7 +75,7 @@ const state=await page.evaluate(()=>{
     moonRange:wheel.querySelectorAll('.sky-foundation-moon-range').length,
     placementLanes:placements.map(node=>Number(node.dataset.placementLane)),
     placementMedallions:placements.map(node=>({present:!!node.querySelector('.relphi-glyph-bubble>circle'),radius:Number(node.querySelector('.relphi-glyph-bubble>circle')?.getAttribute('r')||0)})),
-    leaderLengths:[...wheel.querySelectorAll('[data-layer="leaders"] line[data-sky="A"][data-placement]')].map(line=>Math.hypot(Number(line.getAttribute('x2'))-Number(line.getAttribute('x1')),Number(line.getAttribute('y2'))-Number(line.getAttribute('y1')))),
+    leaderLengths:[...wheel.querySelectorAll('[data-layer="leaders"] line.sky-foundation-leader[data-sky="A"][data-placement]')].map(line=>Math.hypot(Number(line.getAttribute('x2'))-Number(line.getAttribute('x1')),Number(line.getAttribute('y2'))-Number(line.getAttribute('y1')))),
     placementCount:placements.length,
     background:[...wheel.children].filter(node=>node.tagName?.toLowerCase()==='circle'&&node.dataset?.wheelBackground).map(node=>({mode:node.dataset.wheelBackground,r:Number(node.getAttribute('r')),stroke:node.getAttribute('stroke')})),
     viewBox:wheel.getAttribute('viewBox')
