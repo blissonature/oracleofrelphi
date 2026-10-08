@@ -54,6 +54,11 @@ try{
   },skyA);
 
   await page.goto(url,{waitUntil:'domcontentloaded',timeout:30000});
+  const interstitial=page.getByText('Open the page',{exact:true});
+  if(await interstitial.count()){
+    await interstitial.click();
+    await page.waitForLoadState('domcontentloaded',{timeout:30000}).catch(()=>{});
+  }
   let ready=true;
   try{
     await page.waitForSelector('#skyFoundationRoot[aria-busy="false"]',{timeout:20000});
