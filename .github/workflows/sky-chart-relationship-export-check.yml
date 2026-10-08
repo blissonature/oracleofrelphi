@@ -8,6 +8,7 @@ on:
       - 'sky-chart-relationship-export-columns-v1.js'
       - 'sky-chart-relationship-copy-v1.js'
       - 'sky-chart-inline-relationship-copy-v1.js'
+      - 'sky-chart-inline-relationship-v5.js'
       - 'sky-chart-relationship-scope-sections-v1.js'
       - 'sky-chart-relationship-limit-v1.js'
       - 'tests/sky-chart-glyph-copy-houses.mjs'
@@ -23,6 +24,7 @@ on:
       - 'sky-chart-relationship-export-columns-v1.js'
       - 'sky-chart-relationship-copy-v1.js'
       - 'sky-chart-inline-relationship-copy-v1.js'
+      - 'sky-chart-inline-relationship-v5.js'
       - 'sky-chart-relationship-scope-sections-v1.js'
       - 'sky-chart-relationship-limit-v1.js'
       - 'tests/sky-chart-glyph-copy-houses.mjs'
@@ -44,6 +46,7 @@ jobs:
           node --check sky-chart-relationship-export-columns-v1.js
           node --check sky-chart-relationship-copy-v1.js
           node --check sky-chart-inline-relationship-copy-v1.js
+          node --check sky-chart-inline-relationship-v5.js
           node --check sky-chart-relationship-scope-sections-v1.js
           node --check sky-chart-relationship-limit-v1.js
           node --check tests/sky-chart-glyph-copy-houses.mjs
