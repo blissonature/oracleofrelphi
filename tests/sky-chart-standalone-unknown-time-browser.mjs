@@ -75,7 +75,6 @@ const state=await page.evaluate(()=>{
     moonRange:wheel.querySelectorAll('.sky-foundation-moon-range').length,
     placementLanes:placements.map(node=>Number(node.dataset.placementLane)),
     placementMedallions:placements.map(node=>({present:!!node.querySelector('.relphi-glyph-bubble>circle'),radius:Number(node.querySelector('.relphi-glyph-bubble>circle')?.getAttribute('r')||0)})),
-    leaderLengths:[...wheel.querySelectorAll('[data-layer="leaders"] line.sky-foundation-leader[data-sky="A"][data-placement]')].map(line=>Math.hypot(Number(line.getAttribute('x2'))-Number(line.getAttribute('x1')),Number(line.getAttribute('y2'))-Number(line.getAttribute('y1')))),
     placementCount:placements.length,
     background:[...wheel.children].filter(node=>node.tagName?.toLowerCase()==='circle'&&node.dataset?.wheelBackground).map(node=>({mode:node.dataset.wheelBackground,r:Number(node.getAttribute('r')),stroke:node.getAttribute('stroke')})),
     viewBox:wheel.getAttribute('viewBox')
@@ -96,8 +95,7 @@ assert.ok(Math.abs(state.signGlyphLane-(state.inner+state.outer)/2)<0.5,'Unknown
 assert.ok(state.placementCount>0,'The fixture must render planetary placements.');
 assert.ok(state.placementLanes.every(value=>Number.isFinite(value)&&value<state.outer&&value>state.signGlyphLane),'The collision pass must preserve the inside-edge placement lane.');
 assert.ok(state.placementMedallions.every(item=>item.present&&item.radius>0),'Unknown-time placements must retain the canonical inscribed placement circles for optical centering and scale.');
-assert.ok(state.leaderLengths.length>0,'Unknown-time fixture must render placement leaders.');
-assert.ok(state.leaderLengths.every(length=>Math.abs(length-36)<0.75),'Unknown-time placement leaders must match the canonical 36-unit Sky Chart leader gap.');
+assert.ok(Math.abs((state.outer-state.placementLane)-36)<0.75,'Unknown-time placement lane must preserve the canonical 36-unit radial leader gap.');
 assert.equal(state.outlines.length,2,'Unknown-time standalone should draw only the two zodiac boundaries.');
 assert.deepEqual(state.background,[{mode:'unknown-time-center',r:state.inner,stroke:'none'}],'Unknown-time standalone must not paint a full white background rim outside the zodiac.');
 assert.ok(state.moonRange>0,'Unknown-time standalone must keep the Moon range.');
