@@ -100,6 +100,17 @@ try{
   }));
   assert.deepEqual(afterCopyScreen,onScreenBHouseData,'Export suppression must not alter on-screen relationship house data.');
 
+  const tileRow=page.locator('#skyFoundationRelationshipList>.sky-foundation-relationship-row[data-relationship-mode="A-B"]:visible').filter({has:page.locator('[data-sky="B"]')}).first();
+  await tileRow.click();
+  const tileCopy=tileRow.locator(':scope>.inline-rel-detail:not([hidden])>.inline-rel-tile-copy');
+  await tileCopy.waitFor({state:'visible',timeout:5000});
+  await page.evaluate(()=>{window.__relphiCopiedText=''});
+  await tileCopy.click();
+  await page.waitForFunction(()=>Boolean(window.__relphiCopiedText),null,{timeout:3000});
+  const tileText=await page.evaluate(()=>window.__relphiCopiedText);
+  assert.equal(/\bH(?:[1-9]|1[0-2])\b/.test(tileText),false,'Expanded relationship tile copy must omit suppressed B house tokens.');
+  assert.equal(/First House|Second House|Third House|Fourth House|Fifth House|Sixth House|Seventh House|Eighth House|Ninth House|Tenth House|Eleventh House|Twelfth House/.test(tileText),false,'Expanded relationship tile copy must omit suppressed B house names.');
+
   await page.locator('#skyChartRelationshipsExport').click();
   await page.waitForFunction(()=>Boolean(window.__relphiHouseExportSnapshot),null,{timeout:8000});
   const png=await page.evaluate(()=>window.__relphiHouseExportSnapshot);
