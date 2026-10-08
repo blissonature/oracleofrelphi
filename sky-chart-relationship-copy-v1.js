@@ -25,12 +25,111 @@
   ]);
   const LONG_PRESS_MS=430;
   const LONG_PRESS_MOVE_PX=12;
+  const EXPORT_HOUSE_KEY='relphiRelationshipExportHouseInfoV1';
   let feedbackTimer=0;
   let longPress=null;
   let suppressClickUntil=0;
   let suppressClickRow=null;
   let selectedIsolation=null;
   let houseSelections={A:[...ALL_HOUSES],B:[...ALL_HOUSES]};
+  let exportHouseState=loadExportHouseState();
+
+  function readSky(slot){try{return JSON.parse(localStorage.getItem(slot==='A'?'relphiSkyChartA':'relphiSkyChartB')||'null')}catch(_){return null}}
+  function loadExportHouseState(){
+    try{
+      const raw=JSON.parse(localStorage.getItem(EXPORT_HOUSE_KEY)||'{}');
+      return{A:raw?.A!==false,B:raw?.B!==false};
+    }catch(_){return{A:true,B:true}}
+  }
+  function saveExportHouseState(){try{localStorage.setItem(EXPORT_HOUSE_KEY,JSON.stringify(exportHouseState))}catch(_){}}
+  function houseExportAvailable(slot){
+    const sky=readSky(slot);if(!sky)return false;
+    const p=sky.calcProfile&&typeof sky.calcProfile==='object'?sky.calcProfile:{};
+    if(p.timeUnknown===true||String(p.houseSystem||sky.houseSystem||'').toLowerCase()==='none')return false;
+    const cusps=[p.houseCusps,p.cusps,sky.houseCusps,sky.cusps].find(value=>Array.isArray(value)&&value.length===12);
+    if(cusps)return true;
+    return!![...document.querySelectorAll('#skyFoundationRelationshipList .sky-foundation-relationship-row[data-relation-index]')].find(row=>{
+      const mode=relationshipMode(row);
+      if(slot==='A'){
+        if(mode==='A-A')return Number(row.dataset.leftHouse)>=1||Number(row.dataset.rightHouse)>=1;
+        if(mode==='A-B')return Number(row.dataset.leftHouse)>=1;
+      }else{
+        if(mode==='B-B')return Number(row.dataset.leftHouse)>=1||Number(row.dataset.rightHouse)>=1;
+        if(mode==='A-B')return Number(row.dataset.rightHouse)>=1;
+      }
+      return false;
+    });
+  }
+  function includeExportHouse(slot){return exportHouseState[slot]!==false&&houseExportAvailable(slot)}
+  function exportHouseStateSnapshot(){return{A:includeExportHouse('A'),B:includeExportHouse('B')}}
+  function setExportHouse(slot,value){
+    if(!['A','B'].includes(slot))return;
+    exportHouseState={...exportHouseState,[slot]:!!value};
+    saveExportHouseState();
+    syncExportHouseControl();
+    window.dispatchEvent(new CustomEvent('relphi:relationship-export-house-info-changed',{detail:exportHouseStateSnapshot()}));
+  }
+  function exportHouseSummary(){
+    const available=['A','B'].filter(houseExportAvailable);
+    if(!available.length)return'Houses —';
+    const enabled=available.filter(includeExportHouse);
+    if(!enabled.length)return'Houses off';
+    return`Houses ${enabled.join('+')}`;
+  }
+  function relationshipSideSky(row,side){
+    const explicit=String(row?.dataset?.[side==='left'?'leftSky':'rightSky']||'').toUpperCase();
+    if(explicit==='A'||explicit==='B')return explicit;
+    const mode=relationshipMode(row);
+    if(mode==='A-A')return'A';
+    if(mode==='B-B')return'B';
+    return side==='left'?'A':'B';
+  }
+  function syncExportHouseControl(){
+    const details=document.querySelector('.sky-relationship-export-houses');
+    if(!details)return;
+    const summary=details.querySelector('summary');
+    if(summary){
+      summary.textContent=exportHouseSummary();
+      summary.setAttribute('aria-label',`House information in relationship exports: ${summary.textContent.replace(/^Houses\s*/,'')||'none'}`);
+    }
+    ['A','B'].forEach(slot=>{
+      const input=details.querySelector(`[data-export-house-slot="${slot}"]`);
+      if(!input)return;
+      const available=houseExportAvailable(slot);
+      input.disabled=!available;
+      input.checked=available&&exportHouseState[slot]!==false;
+      const label=input.closest('label');
+      if(label){
+        label.dataset.unavailable=available?'false':'true';
+        const note=label.querySelector('.sky-relationship-export-house-note');
+        if(note)note.textContent=available?'':'no houses';
+      }
+    });
+  }
+  function ensureExportHouseControl(heading,actions){
+    if(!heading||!actions)return null;
+    let details=heading.querySelector('.sky-relationship-export-houses');
+    if(!details){
+      details=document.createElement('details');
+      details.className='sky-relationship-export-houses';
+      details.innerHTML=`<summary>Houses</summary><div class="sky-relationship-export-house-menu" role="group" aria-label="House information in relationship exports"><strong>Include house info</strong><label><input type="checkbox" data-export-house-slot="A"><span>Sky A</span><small class="sky-relationship-export-house-note"></small></label><label><input type="checkbox" data-export-house-slot="B"><span>Sky B</span><small class="sky-relationship-export-house-note"></small></label><small>Copy + Download only</small></div>`;
+      details.addEventListener('change',event=>{
+        const input=event.target.closest?.('[data-export-house-slot]');
+        if(!input)return;
+        setExportHouse(String(input.dataset.exportHouseSlot||'').toUpperCase(),input.checked);
+      });
+      actions.insertBefore(details,actions.querySelector('.sky-relationship-copy-button')||actions.firstChild);
+    }
+    syncExportHouseControl();
+    return details;
+  }
+  window.RelphiRelationshipExportHouses=Object.freeze({
+    include:includeExportHouse,
+    available:houseExportAvailable,
+    state:exportHouseStateSnapshot,
+    set:setExportHouse,
+    sync:syncExportHouseControl
+  });
 
   function installStyles(){
     if(document.getElementById('skyRelationshipCopyStylesV4'))return;
@@ -41,6 +140,17 @@
       .sky-relationship-copy-button{margin-left:auto;padding:.38rem .68rem;border:1px solid rgba(31,27,24,.18);border-radius:999px;background:#fff;color:#332e2a;font:800 .68rem/1 system-ui,sans-serif;cursor:pointer;white-space:nowrap}
       .sky-relationship-heading-actions .sky-relationship-copy-button{margin-left:0}
       .sky-relationship-copy-button:hover,.sky-relationship-copy-button:focus-visible{border-color:#6b625a;outline:0;background:#fffdfa}
+      .sky-relationship-export-houses{position:relative;margin:0}
+      .sky-relationship-export-houses>summary{list-style:none;padding:.38rem .62rem;border:1px solid rgba(31,27,24,.18);border-radius:999px;background:#fff;color:#332e2a;font:800 .68rem/1 system-ui,sans-serif;cursor:pointer;white-space:nowrap}
+      .sky-relationship-export-houses>summary::-webkit-details-marker{display:none}
+      .sky-relationship-export-houses>summary:hover,.sky-relationship-export-houses>summary:focus-visible{border-color:#6b625a;outline:0;background:#fffdfa}
+      .sky-relationship-export-house-menu{position:absolute;right:0;top:calc(100% + 6px);z-index:80;display:grid;gap:7px;min-width:178px;padding:10px;border:1px solid rgba(31,27,24,.16);border-radius:10px;background:#fffdf8;box-shadow:0 10px 28px rgba(31,27,24,.16);color:#332e2a;font:700 .72rem/1.2 system-ui,sans-serif}
+      .sky-relationship-export-house-menu>strong{font-size:.7rem}
+      .sky-relationship-export-house-menu>label{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:7px;min-height:24px}
+      .sky-relationship-export-house-menu>label[data-unavailable="true"]{opacity:.48}
+      .sky-relationship-export-house-menu input{margin:0}
+      .sky-relationship-export-house-note{font-size:.62rem;font-weight:650;color:#746b63}
+      .sky-relationship-export-house-menu>small:last-child{padding-top:2px;border-top:1px solid rgba(31,27,24,.09);font-size:.62rem;font-weight:650;color:#746b63}
       .sky-foundation-relationship-row{-webkit-touch-callout:none;touch-action:pan-y}
       .sky-foundation-relationship-row svg,.sky-foundation-relationship-glyph,.sky-foundation-relationship-sign{-webkit-user-select:none;user-select:none}
       .sky-foundation-relationship-copy,.sky-foundation-relationship-orb{-webkit-user-select:text;user-select:text}
@@ -53,6 +163,7 @@
     const heading=document.querySelector('#skyFoundationRelationships .sky-foundation-relationships-heading');
     if(!heading)return null;
     const actions=heading.querySelector('.sky-relationship-heading-actions');
+    if(actions)ensureExportHouseControl(heading,actions);
     let button=heading.querySelector('.sky-relationship-copy-button');
     if(button){
       if(actions&&button.parentElement!==actions)actions.insertBefore(button,actions.querySelector('#skyChartRelationshipsExport')||null);
@@ -109,8 +220,9 @@
     const leftSign=SIGN_SYMBOLS[Number(row.dataset.leftSign)]||'',rightSign=SIGN_SYMBOLS[Number(row.dataset.rightSign)]||'';
     const leftCoordinate=coordinate(row,'left'),rightCoordinate=coordinate(row,'right');
     const leftHouse=Number(row.dataset.leftHouse),rightHouse=Number(row.dataset.rightHouse);
-    const leftHouseToken=Number.isInteger(leftHouse)&&leftHouse>=1&&leftHouse<=12?` H${leftHouse}`:'';
-    const rightHouseToken=Number.isInteger(rightHouse)&&rightHouse>=1&&rightHouse<=12?` H${rightHouse}`:'';
+    const leftSlot=relationshipSideSky(row,'left'),rightSlot=relationshipSideSky(row,'right');
+    const leftHouseToken=includeExportHouse(leftSlot)&&Number.isInteger(leftHouse)&&leftHouse>=1&&leftHouse<=12?` H${leftHouse}`:'';
+    const rightHouseToken=includeExportHouse(rightSlot)&&Number.isInteger(rightHouse)&&rightHouse>=1&&rightHouse<=12?` H${rightHouse}`:'';
     const aspectSymbol=ASPECT_SYMBOLS[aspect]||aspect;
     if(!leftId||!rightId||!leftCoordinate||!rightCoordinate)return'';
     return `${placementSymbol(leftId)} in ${leftSign} ${leftCoordinate}${leftHouseToken}  ${aspectSymbol}  ${placementSymbol(rightId)} in ${rightSign} ${rightCoordinate}${rightHouseToken}`.replace(/\s+/g,' ').trim();
@@ -139,10 +251,10 @@
   }
   function copyContext(){
     if(selectedIsolation?.kind==='house'&&selectedIsolation?.mode==='selected'&&['A','B'].includes(selectedIsolation.sky)){
-      return `Sky ${selectedIsolation.sky} · House ${selectedIsolation.value}`;
+      return includeExportHouse(selectedIsolation.sky)?`Sky ${selectedIsolation.sky} · House ${selectedIsolation.value}`:'';
     }
     const a=normalizedHouses(houseSelections.A),b=normalizedHouses(houseSelections.B);
-    return [housePhrase('A',a),housePhrase('B',b)].filter(Boolean).join(' · ');
+    return [includeExportHouse('A')?housePhrase('A',a):'',includeExportHouse('B')?housePhrase('B',b):''].filter(Boolean).join(' · ');
   }
   function serializeBlock(rows){
     const sections=groupedRows(rows).map(({group,rows:sectionRows})=>{
@@ -297,6 +409,6 @@
   });
 
   function schedule(){requestAnimationFrame(ensureButton)}
-  ['relphi:sky-foundation-ready','relphi:sky-foundation-interactions-ready'].forEach(name=>window.addEventListener(name,schedule));
+  ['relphi:sky-foundation-ready','relphi:sky-foundation-interactions-ready','relphi:sky-where-when-committed','relphi:saved-sky-loaded','relphi:sky-b-added','relphi:sky-b-removed'].forEach(name=>window.addEventListener(name,schedule));
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',schedule,{once:true});else schedule();
 })();
