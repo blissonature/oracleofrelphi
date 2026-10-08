@@ -326,10 +326,12 @@
     rules:{ allowReversals:true, allowRepeats:false, drawScope:'full' }
   };
 
+  // Canonical Saturn Square: columns Past/Present/Future, rows Mind/Body/Spirit.
+  // Position numbering is rendered by the template list; labels stay unnumbered.
   const SATURN_LABELS = [
-    '1 · The structure', '2 · The pressure', '3 · The limit',
-    '4 · What is tested', '5 · The center', '6 · What matures',
-    '7 · Responsibility', '8 · Discipline', '9 · Integration'
+    'Past Mind', 'Present Mind', 'Future Mind',
+    'Past Body', 'Present Body', 'Future Body',
+    'Past Spirit', 'Present Spirit', 'Future Spirit'
   ];
   const SATURN_POINTS = [
     [.04,.04],[.36,.04],[.68,.04],
