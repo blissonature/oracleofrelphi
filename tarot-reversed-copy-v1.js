@@ -35,6 +35,10 @@
     the_world: 'Completion becomes a closed system or an unfinished ending. Structure, duty, time, and mastery can harden around what is already complete—or refuse the final boundary that would let the next cycle begin.'
   });
 
+  const PIP_SPECIFIC_REVERSED = Object.freeze({
+    ten_of_cups: 'The emotional field is saturated, but fullness no longer guarantees nourishment. Under Mars in Pisces, feeling may be pushed beyond its capacity to contain or express it, becoming overwhelm, forced harmony, or exhaustion. The question is what needs release, rather than how to hold on to the appearance of completion.'
+  });
+
   const ACE_REVERSED = Object.freeze({
     Fire: 'The seed of Fire is present, but ignition is delayed or misdirected. Desire, courage, anger, visibility, or creative force has not yet found a clean way into action.',
     Water: 'The seed of Water is present, but receptivity is obstructed or overflowing its container. Feeling, memory, care, or attachment needs a cleaner channel before it can circulate.',
@@ -128,7 +132,7 @@
     if (!card) return '';
     if (MAJOR_REVERSED[card.card_id]) return MAJOR_REVERSED[card.card_id];
     if (card.card_type === 'Ace') return ACE_REVERSED[card.element] || 'The elemental seed is present, but access to it is delayed, distorted, or not yet embodied.';
-    if (card.card_type === 'Pip') return derivePip(card);
+    if (card.card_type === 'Pip') return PIP_SPECIFIC_REVERSED[card.card_id] || derivePip(card);
     if (card.card_type === 'Court') return deriveCourt(card);
     return 'The card’s usual operation has turned inward and needs to be brought back into proportion before it can move cleanly.';
   }
