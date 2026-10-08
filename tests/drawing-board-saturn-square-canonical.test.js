@@ -17,4 +17,19 @@ assert.doesNotMatch(labels[1], /The structure|The pressure|The limit|What is tes
 for (const label of expected) {
   assert.ok(prefabs.includes("'" + label + "'"), 'prefab should agree with workflow: ' + label);
 }
-console.log('Canonical Saturn Square positions and single-numbering contract passed');
+
+const pointsMatch=workflow.match(/const SATURN_POINTS = \[([\s\S]*?)\];/);
+assert.ok(pointsMatch,'Saturn Square must define grid coordinates');
+const coordinates=[...pointsMatch[1].matchAll(/\[([\d.]+),([\d.]+)\]/g)].map(m=>[Number(m[1]),Number(m[2])]);
+assert.equal(coordinates.length,9);
+assert.equal(new Set(coordinates.map(p=>p[0])).size,3,'exactly three columns');
+assert.equal(new Set(coordinates.map(p=>p[1])).size,3,'exactly three rows');
+assert.match(workflow,/transform\(SATURN_POINTS\[index\]\[0\],SATURN_POINTS\[index\]\[1\],\.74\)/);
+const cardW=174*.74,cardH=174*866/500*.74;
+const xs=[...new Set(coordinates.map(p=>p[0]*900))].sort((a,b)=>a-b);
+const ys=[...new Set(coordinates.map(p=>p[1]*760))].sort((a,b)=>a-b);
+assert.ok(xs[1]-xs[0]>cardW && xs[2]-xs[1]>cardW,'cards cannot overlap horizontally');
+assert.ok(ys[1]-ys[0]>cardH && ys[2]-ys[1]>cardH,'cards cannot overlap vertically');
+assert.ok(ys[2]+cardH<760,'third row must remain inside logical board bounds');
+
+console.log('Canonical Saturn Square positions, size, and layout contract passed');
