@@ -450,7 +450,7 @@ document.addEventListener('click',e=>{
   'relphi:sky-where-when-committed',
   'relphi:sky-name-updated',
   'relphi:relationship-limit-changed',
-  'relphi:relationship-limit-applied'
+  'relphi:relationship-limit-applied',
   'relphi:relationship-export-house-info-changed'
 ].forEach(eventName=>window.addEventListener(eventName,()=>{pending=null}));
 load().catch(()=>{});
