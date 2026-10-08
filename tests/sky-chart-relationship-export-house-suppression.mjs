@@ -100,7 +100,7 @@ try{
   }));
   assert.deepEqual(afterCopyScreen,onScreenBHouseData,'Export suppression must not alter on-screen relationship house data.');
 
-  const tileRow=page.locator('#skyFoundationRelationshipList>.sky-foundation-relationship-row[data-relationship-mode="A-B"]:visible').filter({has:page.locator('[data-sky="B"]')}).first();
+  const tileRow=page.locator('#skyFoundationRelationshipList>.sky-foundation-relationship-row[data-relationship-mode="A-B"][data-right-sky="B"]:visible').first();
   await tileRow.click();
   const tileCopy=tileRow.locator(':scope>.inline-rel-detail:not([hidden])>.inline-rel-tile-copy');
   await tileCopy.waitFor({state:'visible',timeout:5000});
