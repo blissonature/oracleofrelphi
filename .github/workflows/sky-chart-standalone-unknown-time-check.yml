@@ -1,0 +1,48 @@
+name: Sky Chart standalone unknown-time check
+
+on:
+  pull_request:
+    paths:
+      - 'sky-chart.html'
+      - 'sky-chart-foundation-v2.js'
+      - 'sky-chart-single-sky-layout-v1.js'
+      - 'sky-chart-placement-house-system-v1.js'
+      - 'tests/sky-chart-standalone-unknown-time-browser.mjs'
+      - '.github/workflows/sky-chart-standalone-unknown-time-check.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - 'sky-chart.html'
+      - 'sky-chart-foundation-v2.js'
+      - 'sky-chart-single-sky-layout-v1.js'
+      - 'sky-chart-placement-house-system-v1.js'
+      - 'tests/sky-chart-standalone-unknown-time-browser.mjs'
+      - '.github/workflows/sky-chart-standalone-unknown-time-check.yml'
+
+jobs:
+  browser-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: JavaScript syntax
+        run: |
+          node --check sky-chart-foundation-v2.js
+          node --check sky-chart-single-sky-layout-v1.js
+          node --check tests/sky-chart-standalone-unknown-time-browser.mjs
+      - name: Install Chromium
+        run: |
+          npm install --no-save playwright@1.52.0
+          npx playwright install --with-deps chromium
+      - name: Run standalone unknown-time assertions
+        run: |
+          python3 -m http.server 4173 > /tmp/sky-chart-server.log 2>&1 &
+          node tests/sky-chart-standalone-unknown-time-browser.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: sky-chart-standalone-unknown-time
+          path: sky-chart-standalone-unknown-time.png

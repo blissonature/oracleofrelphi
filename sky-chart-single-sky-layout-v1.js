@@ -1,13 +1,14 @@
-// Single-sky wheel layout v6: preserve one radial lane and separate only placements whose rendered bubbles actually collide.
+// Single-sky wheel layout v7: preserve the renderer's live radial geometry and separate only placements whose rendered bubbles collide.
 (function(){
 'use strict';
-if(!/(^|\/)sky-chart\.html$/.test(location.pathname)||window.__relphiSkySingleSkyLayoutV6)return;
+if(!/(^|\/)sky-chart\.html$/.test(location.pathname)||window.__relphiSkySingleSkyLayoutV7)return;
 window.__relphiSkySingleSkyLayoutV1=true;
 window.__relphiSkySingleSkyLayoutV2=true;
 window.__relphiSkySingleSkyLayoutV3=true;
 window.__relphiSkySingleSkyLayoutV4=true;
 window.__relphiSkySingleSkyLayoutV5=true;
 window.__relphiSkySingleSkyLayoutV6=true;
+window.__relphiSkySingleSkyLayoutV7=true;
 
 const EPS=1e-6;
 const SIGN_MARGIN=.35;
@@ -19,7 +20,11 @@ const num=value=>{const n=Number(value);return Number.isFinite(n)?n:NaN};
 const norm=value=>((Number(value)%360)+360)%360;
 function spec(){return window.RelphiSkyWheelSpec||null}
 function comparison(){return spec()?.comparison||null}
-function role(){return spec()?.role?.('A')||null}
+function activeGeometry(wheel){
+  const placementLane=num(wheel?.dataset?.singleSkyPlacementLane),degree=num(wheel?.dataset?.singleSkyDegreeRadius),inner=num(wheel?.dataset?.singleSkyInnerRadius),outer=num(wheel?.dataset?.singleSkyOuterRadius);
+  if([placementLane,degree,inner,outer].every(Number.isFinite))return{placement:[placementLane],degree,inner,outer};
+  return spec()?.role?.(slotFor(wheel))||null;
+}
 function center(){return comparison()?.center||{x:600,y:600}}
 function polar(radius,degree){const c=center(),angle=(norm(degree)-180)*Math.PI/180;return{x:c.x+radius*Math.cos(angle),y:c.y+radius*Math.sin(angle)}}
 function singleWheel(){return document.querySelector('#skyFoundationWheelMount>svg.sky-foundation-wheel[data-single-sky]')}
@@ -42,7 +47,7 @@ function ordinaryItems(wheel,slot){
     return leader?{group,leader,id,index,exact:norm(exact),display:norm(exact),sign:Math.floor(norm(exact)/30),radius:radiusOf(group)}:null;
   }).filter(Boolean).sort((a,b)=>a.exact-b.exact||a.index-b.index);
 }
-function placementLane(){const lane=Number(role()?.placement?.[0]);return Number.isFinite(lane)?lane:287}
+function placementLane(wheel){const lane=Number(activeGeometry(wheel)?.placement?.[0]);return Number.isFinite(lane)?lane:287}
 function bounds(item,wrap=false){
   const shift=wrap&&item.sign===0?360:0;
   return{min:item.sign*30+SIGN_MARGIN+shift,max:(item.sign+1)*30-SIGN_MARGIN+shift};
@@ -75,7 +80,7 @@ function relax(items,lane){
   return items;
 }
 function protectHouseNumbers(wheel){
-  const c=center(),g=role();if(!g)return;
+  const c=center(),g=activeGeometry(wheel);if(!g)return;
   const radius=(Number(g.inner)+Number(g.outer))/2;
   wheel.querySelectorAll('[data-layer="a-houses"] .sky-foundation-house-number,[data-layer="a-houses"] .sky-placement-mini-house-number').forEach(node=>{
     const x=num(node.getAttribute('x')),y=num(node.getAttribute('y')),dx=x-c.x,dy=y-c.y,length=Math.hypot(dx,dy);if(!Number.isFinite(length)||length===0)return;
@@ -84,9 +89,10 @@ function protectHouseNumbers(wheel){
 }
 function applyPlacements(wheel){
   const slot=slotFor(wheel),items=ordinaryItems(wheel,slot);if(!items.length)return;
-  const lane=placementLane();relax(items,lane);
+  const g=activeGeometry(wheel);if(!g)return;
+  const lane=placementLane(wheel);relax(items,lane);
   items.forEach((item,index)=>{
-    const point=polar(lane,item.display),exact=polar(Number(role()?.degree)||323,item.exact);
+    const point=polar(lane,item.display),exact=polar(Number(g.degree)||323,item.exact);
     item.group.setAttribute('transform',`translate(${point.x.toFixed(3)} ${point.y.toFixed(3)})`);
     item.group.dataset.displayLongitude=norm(item.display).toFixed(8);
     item.group.dataset.placementLane=lane.toFixed(3);
@@ -97,9 +103,9 @@ function applyPlacements(wheel){
     item.leader.setAttribute('x1',point.x.toFixed(3));item.leader.setAttribute('y1',point.y.toFixed(3));
     item.leader.setAttribute('x2',exact.x.toFixed(3));item.leader.setAttribute('y2',exact.y.toFixed(3));
     item.leader.dataset.displayLongitude=norm(item.display).toFixed(8);
-    item.leader.dataset.leaderRouting='standalone-measured-single-lane-v6';
+    item.leader.dataset.leaderRouting='standalone-measured-live-geometry-v7';
   });
-  wheel.dataset.singleSkyCollisionLayout='measured-single-lane-v6';
+  wheel.dataset.singleSkyCollisionLayout='measured-live-geometry-v7';
 }
 function apply(){
   queued=false;if(arranging)return;

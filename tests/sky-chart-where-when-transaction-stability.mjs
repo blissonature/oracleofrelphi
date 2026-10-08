@@ -91,6 +91,43 @@ assert.equal(unknownStored.calcProfile.houseSystem,'none','Unknown-time commit s
 assert.equal(unknownStored.houseCusps.length,0,'Unknown-time commit should clear house cusps.');
 assert.ok(unknownStored.calcProfile.moonRange,'Unknown-time commit should preserve the Moon range.');
 
+// Standalone unknown-time composition: zodiac expands into the unavailable house space
+// and the planetary placement lane moves outside the zodiac instead of leaving a ghost house ring.
+await page.evaluate(()=>{
+  localStorage.removeItem('relphiSkyChartB');
+  window.dispatchEvent(new CustomEvent('relphi:sky-b-removed'));
+});
+await page.waitForFunction(()=>document.querySelector('#skyFoundationWheelMount>svg[data-single-sky="A"]')?.dataset.wheelGeometry==='standalone-unknown-time');
+const unknownGeometry=await page.evaluate(()=>{
+  const wheel=document.querySelector('#skyFoundationWheelMount>svg[data-single-sky="A"]');
+  const spec=window.RelphiSkyWheelSpec;
+  const placements=[...wheel.querySelectorAll('[data-layer="placements"]>g[data-sky="A"][data-placement]:not([data-angle-axis="true"])')];
+  return{
+    geometry:wheel.dataset.wheelGeometry,
+    ringOrder:wheel.dataset.ringOrder,
+    inner:Number(wheel.dataset.singleSkyInnerRadius),
+    outer:Number(wheel.dataset.singleSkyOuterRadius),
+    placementLane:Number(wheel.dataset.singleSkyPlacementLane),
+    signGlyphLane:Number(wheel.dataset.singleSkySignGlyphLane),
+    ordinaryZodiacInner:Number(spec.comparison.zodiac.inner),
+    houseSectors:wheel.querySelectorAll('[data-layer="a-houses"] .sky-foundation-house-sector').length,
+    anglePlacements:wheel.querySelectorAll('[data-layer="placements"] [data-angle-axis="true"]').length,
+    signs:wheel.querySelectorAll('[data-layer="zodiac"] .sky-foundation-sign-sector').length,
+    moonRange:wheel.querySelectorAll('.sky-foundation-moon-range').length,
+    placementLanes:placements.map(node=>Number(node.dataset.placementLane))
+  };
+});
+assert.equal(unknownGeometry.geometry,'standalone-unknown-time');
+assert.equal(unknownGeometry.ringOrder,'A-zodiac-expanded-placements-inner-edge');
+assert.equal(unknownGeometry.houseSectors,0,'Unknown-time standalone wheel must not retain phantom house sectors.');
+assert.equal(unknownGeometry.anglePlacements,0,'Unknown-time standalone wheel must not render chart angles.');
+assert.equal(unknownGeometry.signs,12,'Unknown-time standalone wheel must retain all twelve zodiac sectors.');
+assert.ok(unknownGeometry.inner<unknownGeometry.ordinaryZodiacInner,'Unknown-time zodiac must expand inward into the unavailable house territory.');
+assert.ok(unknownGeometry.placementLane<unknownGeometry.outer&&unknownGeometry.placementLane>unknownGeometry.signGlyphLane,'Unknown-time placement lane must sit just inside the zodiac outer edge.');
+assert.ok(Math.abs(unknownGeometry.signGlyphLane-(unknownGeometry.inner+unknownGeometry.outer)/2)<0.5,'Unknown-time sign glyphs must sit at the zodiac-band midpoint.');
+assert.ok(unknownGeometry.placementLanes.every(value=>value<unknownGeometry.outer&&value>unknownGeometry.signGlyphLane),'Collision layout must preserve the inside-edge placement lane.');
+assert.ok(unknownGeometry.moonRange>0,'Unknown-time standalone wheel must retain its Moon range.');
+
 await whereTabA.click();
 const knownEditor=page.locator('#skyFoundationA .sky-where-when-editor');await knownEditor.waitFor();
 const knownToggle=knownEditor.locator('[data-ww-field="time-unknown"]');
