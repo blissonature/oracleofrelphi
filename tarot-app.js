@@ -4430,7 +4430,11 @@
     return cleanSentence(pieces.join(' '));
   }
   function layerInterpretationForOrientation(card, reversed = false) {
-    return reversed ? reversedDerivedMeaning(card) : layerInterpretation(card);
+    if (!reversed) return layerInterpretation(card);
+    // The Drawing Board summary, copy and exports must use the same canonical
+    // reversed interpretation as the board's card layer and focus reader.
+    return window.RelphiTarotReversedMeanings?.meaningFor?.(card?.card_id)
+      || reversedDerivedMeaning(card);
   }
   function manualLayerInterpretation(card) {
     const map = {
