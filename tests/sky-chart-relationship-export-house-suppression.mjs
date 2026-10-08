@@ -91,7 +91,8 @@ try{
   await page.waitForFunction(()=>Boolean(window.__relphiCopiedText),null,{timeout:3000});
   const suppressedCopy=await page.evaluate(()=>window.__relphiCopiedText);
   assert.match(suppressedCopy,/Relationships/);
-  assert.equal(/\bH(?:[1-9]|1[0-2])\b/.test(suppressedCopy),false,'Copy must omit all house tokens when A is unknown-time and B house export is suppressed.');
+  assert.equal(/\bH(?:[1-9]|1[0-2])\b/.test(suppressedCopy),false,'Copy must omit compact H# house tokens when A is unknown-time and B house export is suppressed.');
+  assert.equal(/First House|Second House|Third House|Fourth House|Fifth House|Sixth House|Seventh House|Eighth House|Ninth House|Tenth House|Eleventh House|Twelfth House/.test(suppressedCopy),false,'Copy must omit semantic house names and meanings when Sky B house export is suppressed.');
 
   const afterCopyScreen=await page.evaluate(()=>({
     rows:[...document.querySelectorAll('#skyFoundationRelationshipList>.sky-foundation-relationship-row')].filter(row=>Number(row.dataset.rightHouse)>=1||String(row.dataset.relationshipMode||'').toUpperCase()==='B-B'&&Number(row.dataset.leftHouse)>=1).length,
@@ -112,7 +113,7 @@ try{
   await page.locator('.sky-relationship-copy-button').click();
   await page.waitForFunction(()=>Boolean(window.__relphiCopiedText),null,{timeout:3000});
   const restoredCopy=await page.evaluate(()=>window.__relphiCopiedText);
-  assert.match(restoredCopy,/\bH(?:[1-9]|1[0-2])\b/,'Re-enabling Sky B house export must restore valid B house tokens.');
+  assert.ok(/\bH(?:[1-9]|1[0-2])\b/.test(restoredCopy)||/First House|Second House|Third House|Fourth House|Fifth House|Sixth House|Seventh House|Eighth House|Ninth House|Tenth House|Eleventh House|Twelfth House/.test(restoredCopy),'Re-enabling Sky B house export must restore house information in the active copy format.');
 
   const relevantErrors=errors.filter(message=>!/Unexpected identifier ['"]astronomy['"]/.test(message));
   assert.deepEqual(relevantErrors,[]);
