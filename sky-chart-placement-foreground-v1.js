@@ -14,13 +14,13 @@ function installStyle(){
   if(document.getElementById(STYLE_ID))return;
   const style=document.createElement('style');style.id=STYLE_ID;
   style.textContent=`
-#skyFoundationWheelMount>.sky-foundation-wheel [data-layer="placements"]>g[data-placement-foreground="true"]{
+#skyFoundationWheelMount>.sky-foundation-wheel:not(.has-isolation) [data-layer="placements"]>g[data-placement-foreground="true"]{
   opacity:1!important;
   visibility:visible!important;
   pointer-events:all!important;
   filter:brightness(1.08) saturate(1.12) drop-shadow(0 0 3px rgba(255,255,255,.98)) drop-shadow(0 0 6px rgba(40,40,40,.18))!important;
 }
-#skyFoundationWheelMount>.sky-foundation-wheel [data-layer="leaders"]>line[data-placement-foreground="true"]{
+#skyFoundationWheelMount>.sky-foundation-wheel:not(.has-isolation) [data-layer="leaders"]>line[data-placement-foreground="true"]{
   opacity:1!important;
   visibility:visible!important;
 }

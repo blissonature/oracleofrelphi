@@ -412,7 +412,7 @@
   function captureMove(event){
     if(!event.target.closest?.('#skyFoundationWheelMount'))return;
     event.stopImmediatePropagation();
-    if(locked()){clearFast(false,true);return}
+    if(locked())return; // The foundation controller owns persistent selection classes.
 
     const node=directNode(event.target);
     if(node){
@@ -434,7 +434,7 @@
   function captureOut(event){
     if(!event.target.closest?.('#skyFoundationWheelMount'))return;
     event.stopImmediatePropagation();
-    if(locked()){clearFast(false,true);return}
+    if(locked())return; // The foundation controller owns persistent selection classes.
     const related=event.relatedTarget instanceof Element?event.relatedTarget:null;
     if(related?.closest('#skyFoundationWheelMount'))return;
     immediate(null);

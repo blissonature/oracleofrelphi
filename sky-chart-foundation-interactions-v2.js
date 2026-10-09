@@ -247,6 +247,36 @@
         if(state.sky==='B'&&relation.right.id===state.value)placements.add(`A:${relation.left.id}`);
       });
     }
+    // Rendered aspect geometry is the authority for wheel isolation. Relationship
+    // rows can be filtered, reordered or temporarily hidden independently of lines.
+    // Build the visible endpoints from the actual line being displayed so an
+    // isolated aspect never loses its two placements.
+    if(state&&(state.kind==='placement'||state.kind==='aspect')){
+      const lineVisible=line=>{
+        if(line.hidden||line.style.display==='none')return false;
+        const skip=['sky-chart-filter-hidden','sky-chart-orb-hidden','sky-orb-filter-hidden',
+          'sky-chart-multiselect-hidden','sky-chart-aspect-multiselect-hidden',
+          'sky-chart-house-multiselect-hidden','sky-chart-sign-filter-hidden',
+          'sky-chart-semantic-hidden'];
+        return !skip.some(name=>line.classList.contains(name));
+      };
+      document.querySelectorAll('#skyFoundationWheelMount [data-layer="aspects"] > line.sky-foundation-aspect:not(.sky-foundation-aspect-hit)').forEach(line=>{
+        if(!lineVisible(line))return;
+        const identity=relationshipIdentity(line),slots=relationshipSlots(line);
+        const left=String(line.dataset.leftPlacement||''),right=String(line.dataset.rightPlacement||'');
+        if(!left||!right||!identity)return;
+        const matches=state.kind==='aspect'?identity===String(state.value):
+          (slots.left===state.sky&&left===state.value)||(slots.right===state.sky&&right===state.value);
+        if(!matches)return;
+        relationships.add(identity);
+        for(const [slot,id,side] of [[slots.left,left,'left'],[slots.right,right,'right']]){
+          placements.add(slot+':'+id);
+          const house=line.dataset[side+'House'],sign=line.dataset[side+'Sign'];
+          if(house!==undefined&&house!=='')houses.add(slot+':'+house);
+          if(sign!==undefined&&sign!=='')signs.add(Number(sign));
+        }
+      });
+    }
     return{matched,relationships,placements,houses,signs};
   }
   function kept(node,keep){const type=node.dataset.focusPiece;if(type==='aspect')return keep.relationships.has(relationshipIdentity(node));if(type==='house')return keep.houses.has(`${node.dataset.sky}:${node.dataset.house}`);if(type==='sign')return keep.signs.has(Number(node.dataset.sign));if(type==='placement'||type==='leader')return keep.placements.has(`${node.dataset.sky}:${node.dataset.placement}`);return false}
