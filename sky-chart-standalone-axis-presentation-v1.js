@@ -6,6 +6,19 @@
   window.__relphiSkyStandaloneAxisPresentationV1=true;
 
   const ANGLES=['asc','dsc','mc','ic'];
+  function installAngleStyles(){
+    if(document.getElementById('skyAngleReadableInteractionStyle'))return;
+    const style=document.createElement('style');
+    style.id='skyAngleReadableInteractionStyle';
+    style.textContent=`
+#skyFoundationWheelMount .sky-foundation-wheel [data-layer="placements"] > g[data-angle-axis="true"]{cursor:pointer;pointer-events:bounding-box}
+#skyFoundationWheelMount .sky-foundation-wheel [data-layer="placements"] > g[data-angle-axis="true"] text{opacity:1!important;fill:#202020!important;font-weight:900!important;paint-order:stroke;stroke:#fffdf8!important;stroke-width:2.2px!important;stroke-linejoin:round;pointer-events:all}
+#skyFoundationWheelMount .sky-foundation-wheel.has-isolation [data-layer="placements"] > g[data-angle-axis="true"].is-kept{opacity:1!important;filter:drop-shadow(0 0 3px #fff) drop-shadow(0 0 5px rgba(0,0,0,.75))!important}
+#skyFoundationWheelMount .sky-foundation-wheel [data-layer="placements"] > g[data-angle-axis="true"]:is(:hover,:focus-visible,.is-hovered,.is-selected){opacity:1!important;filter:drop-shadow(0 0 3px #fff) drop-shadow(0 0 6px rgba(0,0,0,.8))!important}
+`;
+    document.head.appendChild(style);
+  }
+
   const norm=value=>((Number(value)%360)+360)%360;
   function point(center,radius,degree){
     const angle=(norm(degree)-180)*Math.PI/180;
@@ -13,6 +26,7 @@
   }
 
   function apply(){
+    installAngleStyles();
     const wheel=document.querySelector('#skyFoundationWheelMount .sky-foundation-single-wheel[data-single-sky]');
     const spec=window.RelphiSkyWheelSpec;
     if(!wheel||!spec?.mini?.center||!spec?.miniRole)return;
@@ -27,6 +41,8 @@
       const line=wheel.querySelector(`[data-layer="leaders"] [data-angle="${id}"]`);
       const degree=Number(line?.dataset?.exactLongitude??host?.dataset?.exactLongitude);
       if(!host||!line||!Number.isFinite(degree))return;
+      host.style.pointerEvents='bounding-box';
+      host.querySelectorAll('text').forEach(label=>{label.style.pointerEvents='all'});
 
       const innerPoint=point(center,inward,degree);
       const edgePoint=point(center,edge,degree);
