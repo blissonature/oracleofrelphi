@@ -299,7 +299,7 @@
     return{
       kind:'relationship-row',
       index:index||null,
-      key:`${leftSky}:${leftId}|${aspect}|${rightSky}:${rightId}`,
+      key:relationshipIdentity(row),
       aspect,
       left:{sky:leftSky,id:leftId,house:Number(row.dataset.leftHouse),sign:Number(row.dataset.leftSign)},
       right:{sky:rightSky,id:rightId,house:Number(row.dataset.rightHouse),sign:Number(row.dataset.rightSign)}
