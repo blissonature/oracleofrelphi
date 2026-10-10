@@ -13,8 +13,21 @@ function longitudeAt(date){if(!(date instanceof Date)||!Number.isFinite(date.get
 function placementObject(longitude){const value=norm(longitude),signIndex=Math.floor(value/30),within=value-signIndex*30,degree=Math.floor(within),minuteFloat=(within-degree)*60,minute=Math.floor(minuteFloat),second=Math.round((minuteFloat-minute)*60);return{name:'Chiron',id:'chiron',glyphId:'chiron',longitude:value,sign:SIGNS[signIndex],degree,minute,second,source:'jpl-horizons-local-ephemeris'};}
 function source(payload){if(!payload||typeof payload!=='object')return null;if(payload.placements&&typeof payload.placements==='object'&&!Array.isArray(payload.placements))return payload.placements;payload.placements={};return payload.placements;}
 function hasChiron(placements){return Object.entries(placements||{}).some(([key,item])=>String(item?.name||item?.label||item?.id||key).toLowerCase().replace(/[^a-z0-9]/g,'')==='chiron');}
-function instantFor(payload){const p=payload?.calcProfile&&typeof payload.calcProfile==='object'?payload.calcProfile:{},raw=p.instant||p.dateTime||payload?.instant||payload?.dateTime;if(!raw)return null;const date=new Date(raw);return Number.isFinite(date.getTime())?date:null;}
+function instantFor(payload){
+  const p=payload?.calcProfile&&typeof payload.calcProfile==='object'?payload.calcProfile:{};
+  if(p.timeUnknown===true){
+    const day=String(p.dateTime||payload?.dateTime||'').slice(0,10);
+    if(!/^\d{4}-\d{2}-\d{2}$/.test(day))return null;
+    const localNoon=window.luxon?.DateTime?.fromISO(day+'T12:00:00',{zone:p.timeZone||'UTC',setZone:true});
+    const date=localNoon?.isValid?localNoon.toJSDate():new Date(day+'T12:00:00Z');
+    return Number.isFinite(date.getTime())?date:null;
+  }
+  const raw=p.instant||p.dateTime||payload?.instant||payload?.dateTime;
+  if(!raw)return null;
+  const date=new Date(raw);
+  return Number.isFinite(date.getTime())?date:null;
+}
 function calculate(date){return placementObject(longitudeAt(date));}
-async function completePayload(payload){const placements=source(payload);if(!placements||hasChiron(placements))return false;const instant=instantFor(payload);if(!instant)return false;placements.Chiron=calculate(instant);const profile=payload.calcProfile&&typeof payload.calcProfile==='object'?payload.calcProfile:{};profile.extraPoints={...(profile.extraPoints||{}),chiron:'calculated',chironSource:'NASA/JPL Horizons local ephemeris'};payload.calcProfile=profile;return true;}
+async function completePayload(payload){const placements=source(payload);if(!placements||hasChiron(placements))return false;const instant=instantFor(payload);if(!instant)return false;try{placements.Chiron=calculate(instant)}catch(error){if(!/outside the local ephemeris range|ephemeris data are unavailable/.test(String(error?.message||'')))throw error;const profile=payload.calcProfile&&typeof payload.calcProfile==='object'?payload.calcProfile:{};profile.extraPoints={...(profile.extraPoints||{}),chiron:'unavailable',chironSource:'No local Chiron ephemeris for this date'};payload.calcProfile=profile;return false;}const profile=payload.calcProfile&&typeof payload.calcProfile==='object'?payload.calcProfile:{};profile.extraPoints={...(profile.extraPoints||{}),chiron:'calculated',chironSource:'NASA/JPL Horizons local ephemeris',...(profile.timeUnknown===true?{chironTiming:'approximate-local-noon'}:{})};payload.calcProfile=profile;return true;}
 window.RelphiChironEphemeris=Object.freeze({calculate,completePayload,hasChiron,longitudeAt});
 })();

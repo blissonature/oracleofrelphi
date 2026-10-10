@@ -1,0 +1,28 @@
+name: Generate historical Chiron ephemeris
+on:
+  push:
+    branches: [chiron-historical-fallback-1776]
+    paths:
+      - '.github/workflows/historical-chiron.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: chiron-historical-fallback-1776
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Fetch daily Chiron positions from NASA/JPL Horizons
+        run: node scripts/generate-chiron-ephemeris.mjs
+      - name: Commit generated data to historical branch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add relphi-chiron-ephemeris-data-v1.js
+          git diff --cached --quiet || (git commit -m "Generate 1700–2150 Chiron ephemeris from JPL Horizons" && git push)
