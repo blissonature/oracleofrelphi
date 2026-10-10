@@ -62,10 +62,13 @@ async function writeInlineClipboard(text){
   }
   return ok;
 }
+function exportHouseIncluded(slot){try{return window.RelphiRelationshipExportHouses?.include?.(slot)!==false}catch(_){return true}}
 function serializeExpandedRelationship(row,rel){
   const lp=position(rel.left),rp=position(rel.right),aspectName=ASPECT_NAMES[rel.aspect]||rel.aspect;
-  const left=rel.left.entry.name+' · '+lp.sign+' '+lp.label+(rel.left.house?' · H'+rel.left.house:'');
-  const right=rel.right.entry.name+' · '+rp.sign+' '+rp.label+(rel.right.house?' · H'+rel.right.house:'');
+  const leftHouse=exportHouseIncluded(rel.left.sky)&&rel.left.house?' · H'+rel.left.house:'';
+  const rightHouse=exportHouseIncluded(rel.right.sky)&&rel.right.house?' · H'+rel.right.house:'';
+  const left=rel.left.entry.name+' · '+lp.sign+' '+lp.label+leftHouse;
+  const right=rel.right.entry.name+' · '+rp.sign+' '+rp.label+rightHouse;
   const lines=[left,aspectName+' · '+rel.orb.toFixed(2)+'°',right];
   const reveal=row.querySelector(':scope>.inline-rel-detail>.inline-rel-top-reveal:not([hidden])');
   if(reveal?.textContent?.trim())lines.push(reveal.textContent.trim());
@@ -73,6 +76,9 @@ function serializeExpandedRelationship(row,rel){
   if(detail){
     const clone=detail.cloneNode(true);
     clone.querySelectorAll('.inline-rel-tile-copy,[hidden]').forEach(node=>node.remove());
+    const contexts=[...clone.querySelectorAll('.inline-rel-house-context>span')];
+    if(contexts[0]&&!exportHouseIncluded(rel.left.sky))contexts[0].textContent=`Sky ${rel.left.sky} · ${lp.sign} ${lp.label}`;
+    if(contexts[1]&&!exportHouseIncluded(rel.right.sky))contexts[1].textContent=`Sky ${rel.right.sky} · ${rp.sign} ${rp.label}`;
     const body=String(clone.textContent||'').replace(/[ \t]+/g,' ').replace(/\n{3,}/g,'\n\n').trim();
     if(body)lines.push(body);
   }

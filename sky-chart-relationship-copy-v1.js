@@ -25,12 +25,56 @@
   ]);
   const LONG_PRESS_MS=430;
   const LONG_PRESS_MOVE_PX=12;
+  const EXPORT_HOUSE_KEY='relphiRelationshipExportHouseInfoV1';
   let feedbackTimer=0;
   let longPress=null;
   let suppressClickUntil=0;
   let suppressClickRow=null;
   let selectedIsolation=null;
   let houseSelections={A:[...ALL_HOUSES],B:[...ALL_HOUSES]};
+  let exportHouseState=loadExportHouseState();
+
+  function readSky(slot){try{return JSON.parse(localStorage.getItem(slot==='A'?'relphiSkyChartA':'relphiSkyChartB')||'null')}catch(_){return null}}
+  function loadExportHouseState(){
+    try{
+      const raw=JSON.parse(localStorage.getItem(EXPORT_HOUSE_KEY)||'{}');
+      return{A:raw?.A!==false,B:raw?.B!==false};
+    }catch(_){return{A:true,B:true}}
+  }
+  function saveExportHouseState(){try{localStorage.setItem(EXPORT_HOUSE_KEY,JSON.stringify(exportHouseState))}catch(_){}}
+  function houseExportAvailable(slot){
+    const sky=readSky(slot);if(!sky)return false;
+    const p=sky.calcProfile&&typeof sky.calcProfile==='object'?sky.calcProfile:{};
+    if(p.timeUnknown===true||String(p.houseSystem||sky.houseSystem||'').toLowerCase()==='none')return false;
+    const cusps=[p.houseCusps,p.cusps,sky.houseCusps,sky.cusps].find(value=>Array.isArray(value)&&value.length===12);
+    if(cusps)return true;
+    return!![...document.querySelectorAll('#skyFoundationRelationshipList .sky-foundation-relationship-row[data-relation-index]')].find(row=>{
+      const mode=relationshipMode(row);
+      if(slot==='A'){
+        if(mode==='A-A')return Number(row.dataset.leftHouse)>=1||Number(row.dataset.rightHouse)>=1;
+        if(mode==='A-B')return Number(row.dataset.leftHouse)>=1;
+      }else{
+        if(mode==='B-B')return Number(row.dataset.leftHouse)>=1||Number(row.dataset.rightHouse)>=1;
+        if(mode==='A-B')return Number(row.dataset.rightHouse)>=1;
+      }
+      return false;
+    });
+  }
+  function includeExportHouse(slot){return exportHouseState[slot]!==false&&houseExportAvailable(slot)}
+  function exportHouseStateSnapshot(){return{A:includeExportHouse('A'),B:includeExportHouse('B')}}
+  function setExportHouse(slot,value){
+    if(!['A','B'].includes(slot))return;
+    exportHouseState={...exportHouseState,[slot]:!!value};
+    saveExportHouseState();
+    window.dispatchEvent(new CustomEvent('relphi:relationship-export-house-info-changed',{detail:exportHouseStateSnapshot()}));
+  }
+  window.RelphiRelationshipExportHouses=Object.freeze({
+    include:includeExportHouse,
+    available:houseExportAvailable,
+    state:exportHouseStateSnapshot,
+    set:setExportHouse,
+    sync:()=>{}
+  });
 
   function installStyles(){
     if(document.getElementById('skyRelationshipCopyStylesV4'))return;
@@ -53,6 +97,7 @@
     const heading=document.querySelector('#skyFoundationRelationships .sky-foundation-relationships-heading');
     if(!heading)return null;
     const actions=heading.querySelector('.sky-relationship-heading-actions');
+    heading.querySelector('.sky-relationship-export-houses')?.remove();
     let button=heading.querySelector('.sky-relationship-copy-button');
     if(button){
       if(actions&&button.parentElement!==actions)actions.insertBefore(button,actions.querySelector('#skyChartRelationshipsExport')||null);
@@ -109,8 +154,9 @@
     const leftSign=SIGN_SYMBOLS[Number(row.dataset.leftSign)]||'',rightSign=SIGN_SYMBOLS[Number(row.dataset.rightSign)]||'';
     const leftCoordinate=coordinate(row,'left'),rightCoordinate=coordinate(row,'right');
     const leftHouse=Number(row.dataset.leftHouse),rightHouse=Number(row.dataset.rightHouse);
-    const leftHouseToken=Number.isInteger(leftHouse)&&leftHouse>=1&&leftHouse<=12?` H${leftHouse}`:'';
-    const rightHouseToken=Number.isInteger(rightHouse)&&rightHouse>=1&&rightHouse<=12?` H${rightHouse}`:'';
+    const leftSlot=relationshipSideSky(row,'left'),rightSlot=relationshipSideSky(row,'right');
+    const leftHouseToken=includeExportHouse(leftSlot)&&Number.isInteger(leftHouse)&&leftHouse>=1&&leftHouse<=12?` H${leftHouse}`:'';
+    const rightHouseToken=includeExportHouse(rightSlot)&&Number.isInteger(rightHouse)&&rightHouse>=1&&rightHouse<=12?` H${rightHouse}`:'';
     const aspectSymbol=ASPECT_SYMBOLS[aspect]||aspect;
     if(!leftId||!rightId||!leftCoordinate||!rightCoordinate)return'';
     return `${placementSymbol(leftId)} in ${leftSign} ${leftCoordinate}${leftHouseToken}  ${aspectSymbol}  ${placementSymbol(rightId)} in ${rightSign} ${rightCoordinate}${rightHouseToken}`.replace(/\s+/g,' ').trim();
@@ -139,10 +185,10 @@
   }
   function copyContext(){
     if(selectedIsolation?.kind==='house'&&selectedIsolation?.mode==='selected'&&['A','B'].includes(selectedIsolation.sky)){
-      return `Sky ${selectedIsolation.sky} · House ${selectedIsolation.value}`;
+      return includeExportHouse(selectedIsolation.sky)?`Sky ${selectedIsolation.sky} · House ${selectedIsolation.value}`:'';
     }
     const a=normalizedHouses(houseSelections.A),b=normalizedHouses(houseSelections.B);
-    return [housePhrase('A',a),housePhrase('B',b)].filter(Boolean).join(' · ');
+    return [includeExportHouse('A')?housePhrase('A',a):'',includeExportHouse('B')?housePhrase('B',b):''].filter(Boolean).join(' · ');
   }
   function serializeBlock(rows){
     const sections=groupedRows(rows).map(({group,rows:sectionRows})=>{
@@ -297,6 +343,6 @@
   });
 
   function schedule(){requestAnimationFrame(ensureButton)}
-  ['relphi:sky-foundation-ready','relphi:sky-foundation-interactions-ready'].forEach(name=>window.addEventListener(name,schedule));
+  ['relphi:sky-foundation-ready','relphi:sky-foundation-interactions-ready','relphi:sky-where-when-committed','relphi:saved-sky-loaded','relphi:sky-b-added','relphi:sky-b-removed'].forEach(name=>window.addEventListener(name,schedule));
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',schedule,{once:true});else schedule();
 })();

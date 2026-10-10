@@ -1,0 +1,33 @@
+name: Sky Chart rawgithack WebKit smoke
+
+on:
+  pull_request:
+    paths:
+      - 'sky-chart.html'
+      - 'relphi-glyph-registry-v1.js'
+      - 'relphi-glyph-component-v1.js'
+      - 'sky-chart-wheel-spec-v1.js'
+      - 'sky-chart-card-shell-v2.js'
+      - 'sky-chart-foundation-v2.js'
+      - 'sky-chart-relationship-copy-v1.js'
+      - 'tests/sky-chart-rawgithack-webkit-smoke.mjs'
+      - '.github/workflows/sky-chart-rawgithack-webkit-smoke.yml'
+
+jobs:
+  webkit-smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: JavaScript syntax
+        run: node --check tests/sky-chart-rawgithack-webkit-smoke.mjs
+      - name: Install WebKit
+        run: |
+          npm install --no-save playwright@1.52.0
+          npx playwright install --with-deps webkit
+      - name: Verify rawgithack startup in WebKit
+        env:
+          RELPHI_PREVIEW_SHA: ${{ github.event.pull_request.head.sha }}
+        run: node tests/sky-chart-rawgithack-webkit-smoke.mjs

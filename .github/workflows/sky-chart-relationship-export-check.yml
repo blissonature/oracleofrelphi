@@ -7,10 +7,13 @@ on:
       - 'sky-chart-export-v2.js'
       - 'sky-chart-relationship-export-columns-v1.js'
       - 'sky-chart-relationship-copy-v1.js'
+      - 'sky-chart-inline-relationship-copy-v1.js'
+      - 'sky-chart-inline-relationship-v5.js'
       - 'sky-chart-relationship-scope-sections-v1.js'
       - 'sky-chart-relationship-limit-v1.js'
       - 'tests/sky-chart-glyph-copy-houses.mjs'
       - 'tests/sky-chart-relationship-export-download.mjs'
+      - 'tests/sky-chart-relationship-export-house-suppression.mjs'
       - '.github/workflows/sky-chart-relationship-export-check.yml'
   push:
     branches:
@@ -20,10 +23,13 @@ on:
       - 'sky-chart-export-v2.js'
       - 'sky-chart-relationship-export-columns-v1.js'
       - 'sky-chart-relationship-copy-v1.js'
+      - 'sky-chart-inline-relationship-copy-v1.js'
+      - 'sky-chart-inline-relationship-v5.js'
       - 'sky-chart-relationship-scope-sections-v1.js'
       - 'sky-chart-relationship-limit-v1.js'
       - 'tests/sky-chart-glyph-copy-houses.mjs'
       - 'tests/sky-chart-relationship-export-download.mjs'
+      - 'tests/sky-chart-relationship-export-house-suppression.mjs'
       - '.github/workflows/sky-chart-relationship-export-check.yml'
 
 jobs:
@@ -39,10 +45,13 @@ jobs:
           node --check sky-chart-export-v2.js
           node --check sky-chart-relationship-export-columns-v1.js
           node --check sky-chart-relationship-copy-v1.js
+          node --check sky-chart-inline-relationship-copy-v1.js
+          node --check sky-chart-inline-relationship-v5.js
           node --check sky-chart-relationship-scope-sections-v1.js
           node --check sky-chart-relationship-limit-v1.js
           node --check tests/sky-chart-glyph-copy-houses.mjs
           node --check tests/sky-chart-relationship-export-download.mjs
+          node --check tests/sky-chart-relationship-export-house-suppression.mjs
       - name: Install browser dependencies
         run: |
           npm install --no-save playwright@1.52.0 luxon@3 suncalc@1.9.0
@@ -50,5 +59,6 @@ jobs:
       - name: Run Relationships download assertions
         run: |
           python3 -m http.server 4173 > /tmp/sky-chart-relationship-export-server.log 2>&1 &
+          node tests/sky-chart-relationship-export-house-suppression.mjs
           node tests/sky-chart-glyph-copy-houses.mjs
           node tests/sky-chart-relationship-export-download.mjs
