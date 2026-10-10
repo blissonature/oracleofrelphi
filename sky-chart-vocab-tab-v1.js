@@ -205,6 +205,7 @@ function ascendant(value,records){
 }
 function cusps(value,records){
   const p=profile(value);
+  if(p.timeUnknown===true)return[];
   for(const raw of [p.houseCusps,p.cusps,value?.houseCusps,value?.cusps,value?.houses]){
     if(!raw)continue;
     const values=(Array.isArray(raw)?raw:Object.values(raw)).map(item=>typeof item==='object'?Number(item.longitude??item.value??item.cusp):Number(item)).slice(0,12);
@@ -993,7 +994,7 @@ function renderStructures(container,list,permitted,slot){
     return Number(bStellium)-Number(aStellium)||b.length-a.length||a[0].value-b[0].value;
   });
   const visibleSignPairs=SIGN_POLARITIES.filter(pair=>signPairVisible(slot,pair,permitted,showAll));
-  const visibleHousePairs=HOUSE_POLARITIES.filter(pair=>housePairVisible(slot,pair,permitted,showAll));
+  const visibleHousePairs=profile(payload(slot)).timeUnknown===true?[]:HOUSE_POLARITIES.filter(pair=>housePairVisible(slot,pair,permitted,showAll));
   if(!visiblePolarities.length&&!visibleClusters.length&&!visibleSignPairs.length&&!visibleHousePairs.length)return;
 
   const heading=document.createElement('div');heading.className='sky-vocab-structures-heading';heading.textContent='Structures';container.appendChild(heading);
@@ -1064,6 +1065,36 @@ function renderAxisPair(container,list,aId,bId,slot){
   if(a)appendSentence(container,phrasePlacement(a),[a],slot);
   if(b)appendSentence(container,phrasePlacement(b),[b],slot);
 }
+function unknownMoonRange(slot){
+  const p=profile(payload(slot));
+  const range=p.moonRange;
+  if(p.timeUnknown!==true||!range?.start||!range?.end)return null;
+  const from=longitude(range.start),to=longitude(range.end);
+  if(!Number.isFinite(from)||!Number.isFinite(to))return null;
+  return{from,to};
+}
+function moonRangeCoordinate(value){
+  const sign=Math.floor(norm(value)/30);
+  const within=norm(value)-sign*30,degree=Math.floor(within);
+  const minutes=Math.floor((within-degree)*60+1e-7);
+  return{sign,display:degree+'°'+String(minutes).padStart(2,'0')+'′'};
+}
+function appendUnknownMoonRange(container,slot){
+  const range=unknownMoonRange(slot);if(!range)return false;
+  const start=moonRangeCoordinate(range.from),end=moonRangeCoordinate(range.to);
+  const line=document.createElement('div');
+  line.className='sky-vocab-line';
+  line.dataset.vocabMoonRange='true';
+  // Draw the Moon through the existing canonical token renderer.
+  line.append(token({id:'moon',glyphId:'moon',name:'Moon',referent:placementReferent({id:'moon',name:'Moon'})},'placement',true));
+  line.append(document.createTextNode(' has an uncertain longitude from '+start.display+' '));
+  line.append(token(signInfo(start.sign),'sign'));
+  line.append(document.createTextNode(' to '+end.display+' '));
+  line.append(token(signInfo(end.sign),'sign'));
+  line.append(document.createTextNode('. The birth time is unknown; neither position is assigned as exact.'));
+  container.appendChild(line);
+  return true;
+}
 function renderFullPlacements(container,list,slot){
   const nodes=list.filter(record=>categoryOf(record)==='nodes');
   if(nodes.length)createVocabGroup(container,slot,'placements-nodes',CATEGORY_LABELS.nodes,body=>renderGroup(body,list,'nodes',slot));
@@ -1077,8 +1108,12 @@ function renderFullPlacements(container,list,slot){
   });
 
   ['luminaries','planets','other'].forEach(category=>{
-    if(!list.some(record=>categoryOf(record)===category))return;
-    createVocabGroup(container,slot,'placements-'+category,CATEGORY_LABELS[category],body=>renderGroup(body,list,category,slot));
+    const moonRange=category==='luminaries'&&!!unknownMoonRange(slot)&&!list.some(record=>record.id==='moon');
+    if(!list.some(record=>categoryOf(record)===category)&&!moonRange)return;
+    createVocabGroup(container,slot,'placements-'+category,CATEGORY_LABELS[category],body=>{
+      renderGroup(body,list,category,slot);
+      if(moonRange)appendUnknownMoonRange(body,slot);
+    });
   });
 }
 function vocabLineContext(line){
