@@ -41,7 +41,7 @@ try{
     localStorage.setItem('relphiSkyChartA',JSON.stringify(a));
     localStorage.setItem('relphiSkyChartB',JSON.stringify(b));
     localStorage.setItem('relphiSkyChartLastModeV1','comparison');
-    localStorage.removeItem('relphiRelationshipExportHouseInfoV1');
+    localStorage.setItem('relphiRelationshipExportHouseInfoV1',JSON.stringify({A:true,B:false}));
     window.htmlToImage={
       toBlob:async node=>{
         window.__relphiHouseExportSnapshot={
@@ -58,32 +58,9 @@ try{
   await page.goto('http://127.0.0.1:4173/sky-chart.html',{waitUntil:'domcontentloaded'});
   await page.waitForSelector('#skyFoundationRoot[aria-busy="false"]',{timeout:20000});
   await page.waitForFunction(()=>document.querySelectorAll('#skyFoundationRelationshipList>.sky-foundation-relationship-row[data-relation-index]').length>5,null,{timeout:20000});
-  await page.waitForSelector('.sky-relationship-export-houses summary',{timeout:10000});
-
-  const control=page.locator('.sky-relationship-export-houses');
-  assert.equal((await control.locator('summary').textContent()||'').trim(),'Houses B','Unknown-time Sky A must not be offered as a house-bearing export source.');
-  await page.setViewportSize({width:390,height:844});
-  await control.locator('summary').click();
-  await page.waitForFunction(()=>{
-    const details=document.querySelector('.sky-relationship-export-houses');
-    const menu=details?.querySelector('.sky-relationship-export-house-menu');
-    if(!details?.open||!menu)return false;
-    const r=menu.getBoundingClientRect();
-    return r.width>0&&r.height>0&&r.left>=8&&r.right<=window.innerWidth-8&&r.top>=8&&r.bottom<=window.innerHeight-8;
-  },null,{timeout:3000});
-  const mobileMenuBounds=await page.evaluate(()=>{
-    const r=document.querySelector('.sky-relationship-export-house-menu').getBoundingClientRect();
-    return{left:r.left,right:r.right,top:r.top,bottom:r.bottom,width:innerWidth,height:innerHeight};
-  });
-  assert.ok(mobileMenuBounds.left>=8&&mobileMenuBounds.right<=mobileMenuBounds.width-8,'House export menu must stay inside the mobile viewport horizontally.');
-  assert.ok(mobileMenuBounds.top>=8&&mobileMenuBounds.bottom<=mobileMenuBounds.height-8,'House export menu must stay inside the mobile viewport vertically.');
-  await page.screenshot({path:'sky-chart-house-export-menu-mobile.png',fullPage:false});
-  await page.setViewportSize({width:1440,height:1000});
-  const aToggle=control.locator('[data-export-house-slot="A"]');
-  const bToggle=control.locator('[data-export-house-slot="B"]');
-  assert.equal(await aToggle.isDisabled(),true,'Unknown-time Sky A house export toggle must be disabled.');
-  assert.equal(await bToggle.isDisabled(),false,'Known-time Sky B house export toggle must remain available.');
-  assert.equal(await bToggle.isChecked(),true,'Known-time Sky B houses should be included by default.');
+  assert.equal(await page.locator('.sky-relationship-export-houses').count(),0,'Relationships toolbar must not render a Houses export control.');
+  const exportState=await page.evaluate(()=>window.RelphiRelationshipExportHouses?.state?.());
+  assert.deepEqual(exportState,{A:false,B:false},'Unknown-time A has no exportable houses and stored Sky B suppression remains active.');
 
   const onScreenBHouseData=await page.evaluate(()=>({
     rows:[...document.querySelectorAll('#skyFoundationRelationshipList>.sky-foundation-relationship-row')].filter(row=>Number(row.dataset.rightHouse)>=1||String(row.dataset.relationshipMode||'').toUpperCase()==='B-B'&&Number(row.dataset.leftHouse)>=1).length,
@@ -134,8 +111,7 @@ try{
   assert.equal(png.medallions,0,'PNG export must remove suppressed Sky B house medallions from cloned relationship rows.');
   assert.deepEqual(png.houseConcepts,[],'PNG export must omit suppressed Sky B house concept chips.');
 
-  if(!(await control.evaluate(node=>node.open)))await control.locator('summary').click();
-  await bToggle.check();
+  await page.evaluate(()=>window.RelphiRelationshipExportHouses?.set?.('B',true));
   await page.evaluate(()=>{window.__relphiCopiedText=''});
   await page.locator('.sky-relationship-copy-button').click();
   await page.waitForFunction(()=>Boolean(window.__relphiCopiedText),null,{timeout:3000});
@@ -144,7 +120,7 @@ try{
 
   const relevantErrors=errors.filter(message=>!/Unexpected identifier ['"]astronomy['"]/.test(message));
   assert.deepEqual(relevantErrors,[]);
-  console.log('Relationship exports can suppress house information per sky without changing the live chart.');
+  console.log('Relationship export house suppression remains functional without a visible Houses toolbar control.');
 }finally{
   await browser.close();
 }
