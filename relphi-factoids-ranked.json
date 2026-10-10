@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "purpose": "Ranked, nonredundant embodied sky-orientation factoids for Oracle of Relphi. Rank 1 is most worthy to share.",
+  "ranking_policy": "Prioritize usable embodied conversions, surprising insight, factual reliability, and novelty. Compare new entries with existing ones before adding; avoid duplicate principles and near-identical variations. Re-rank after every addition.",
+  "factoids": [
+    {
+      "id": "ruler-angular-scale",
+      "date_added": "2026-10-10",
+      "rank": 1,
+      "title": "A ruler becomes a celestial protractor",
+      "fact": "Hold a ruler about 57.3 cm (22.6 in) from your eye: 1 cm spans approximately 1° of sky, and 1 mm spans about 6 arcminutes.",
+      "application": "Use a measured physical length to feel the scale of chart angles; 5 mm is approximately the apparent width of the Moon.",
+      "caveat": "Hold the ruler perpendicular to the line of sight; this measures apparent angular separation, not necessarily ecliptic-longitude differences.",
+      "sources": [
+        "https://en.wikipedia.org/wiki/Small-angle_approximation"
+      ]
+    }
+  ]
+}
