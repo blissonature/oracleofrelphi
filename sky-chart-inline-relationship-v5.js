@@ -50,7 +50,7 @@ function clearReveal(row){if(!row)return;delete row.dataset.inlineRevealField;de
 function syncTimingReveal(row){
  const reveal=row.querySelector(':scope>.inline-rel-detail>.inline-rel-top-reveal');if(!reveal)return;
  const slot=reveal.querySelector('[data-inline-relationship-timing]');
- const globalReferents=document.documentElement.dataset.skyVocabReferents==='true';
+ const globalReferents=document.documentElement.dataset.skyVocabReferents==='true'||(()=>{try{return JSON.parse(localStorage.getItem('relphiSkyVocabDisplayV1')||'{}').referents===true}catch(_){return false}})();
  const aspectRevealed=row.dataset.inlineRevealField==='aspect'&&!!row.dataset.inlineRevealLevel;
  const show=globalReferents||aspectRevealed;
  if(slot)slot.hidden=!show;
