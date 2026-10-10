@@ -282,10 +282,10 @@ async function submitCalculated(slot,form,options={}){
   setBusy(slot,true);status(slot,'Calculating placements and Planetary Hours…');
   try{
     const nextPayload=calculateSky(slot,selected,date,time,{...options,timeUnknown});
-    if(!window.RelphiChironEphemeris)throw new Error('The Chiron ephemeris service is unavailable.');
+    // Chiron is optional when the local ephemeris cannot cover this date.
     status(slot,'Calculating Chiron…');
-    await window.RelphiChironEphemeris.completePayload(nextPayload);
-    if(!window.RelphiChironEphemeris.hasChiron(nextPayload.placements))throw new Error('Chiron could not be calculated for this sky.');
+    if(window.RelphiChironEphemeris)await window.RelphiChironEphemeris.completePayload(nextPayload);
+    // A sky without Chiron remains valid; never synthesize a position.
     writeJson(SLOT_KEYS[slot],nextPayload);
     const committed=payload(slot),profile=committed?.calcProfile||{};
     if(String(profile.location||'')!==String(selected.canonical||''))throw new Error('The new Where and When did not persist.');
@@ -468,9 +468,9 @@ cardState[slot].selected=selected;
 try{
 const nextPayload=calculateSky(slot,selected,handoff.date,handoff.time,{replaceExisting:true});
 if(handoff.name){nextPayload.name=handoff.name;nextPayload.title=handoff.name;nextPayload.displayName=handoff.name;nextPayload.skyName=handoff.name}
-if(!window.RelphiChironEphemeris)throw new Error('The Chiron ephemeris service is unavailable.');
-await window.RelphiChironEphemeris.completePayload(nextPayload);
-if(!window.RelphiChironEphemeris.hasChiron(nextPayload.placements))throw new Error('Chiron could not be calculated for this sky.');
+// Chiron is optional when the local ephemeris cannot cover this date.
+if(window.RelphiChironEphemeris)await window.RelphiChironEphemeris.completePayload(nextPayload);
+// A sky without Chiron remains valid; never synthesize a position.
 if(choice.clearBoth){localStorage.removeItem(SLOT_KEYS.A);localStorage.removeItem(SLOT_KEYS.B)}
 writeJson(SLOT_KEYS[slot],nextPayload);
 const hasB=!choice.clearBoth&&(slot==='B'||slotHasPlacements('B'));
