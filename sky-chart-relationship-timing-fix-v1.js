@@ -205,8 +205,8 @@ function rowMarkup(label,value){const line=document.createElement('span');line.c
 function patchExpanded(){
   queued=false;installApi();
   const row=document.querySelector('#skyFoundationRelationshipList .sky-foundation-relationship-row.is-inline-expanded');if(!row)return;
-  const meta=row.querySelector(':scope>.inline-rel-detail>[data-inline-relationship-timing]>.inline-rel-transit-window')
-    ||row.querySelector(':scope>.inline-rel-detail .inline-rel-progressive-strip [data-inline-progressive-token="aspect"]>.inline-rel-transit-window');
+  const meta=row.querySelector(':scope>.inline-rel-detail .inline-rel-progressive-strip [data-inline-progressive-token="aspect"]>[data-inline-relationship-timing]>.inline-rel-transit-window')
+    ||row.querySelector(':scope>.inline-rel-detail>[data-inline-relationship-timing]>.inline-rel-transit-window');
   if(!meta||meta.dataset.transitKind!=='unavailable')return;
   const timing=timingForRow(row);if(!timing)return;
   const exactText=timing.timeline.exacts.length?timing.timeline.exacts.map(dateLabel).join(' · '):'near pass',passText=timing.timeline.exacts.length===1?'1 exact pass':`${timing.timeline.exacts.length} exact passes`;
