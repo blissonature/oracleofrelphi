@@ -66,89 +66,14 @@
     if(!['A','B'].includes(slot))return;
     exportHouseState={...exportHouseState,[slot]:!!value};
     saveExportHouseState();
-    syncExportHouseControl();
     window.dispatchEvent(new CustomEvent('relphi:relationship-export-house-info-changed',{detail:exportHouseStateSnapshot()}));
-  }
-  function exportHouseSummary(){
-    const available=['A','B'].filter(houseExportAvailable);
-    if(!available.length)return'Houses —';
-    const enabled=available.filter(includeExportHouse);
-    if(!enabled.length)return'Houses off';
-    return`Houses ${enabled.join('+')}`;
-  }
-  function relationshipSideSky(row,side){
-    const explicit=String(row?.dataset?.[side==='left'?'leftSky':'rightSky']||'').toUpperCase();
-    if(explicit==='A'||explicit==='B')return explicit;
-    const mode=relationshipMode(row);
-    if(mode==='A-A')return'A';
-    if(mode==='B-B')return'B';
-    return side==='left'?'A':'B';
-  }
-  function syncExportHouseControl(){
-    const details=document.querySelector('.sky-relationship-export-houses');
-    if(!details)return;
-    const summary=details.querySelector('summary');
-    if(summary){
-      summary.textContent=exportHouseSummary();
-      summary.setAttribute('aria-label',`House information in relationship exports: ${summary.textContent.replace(/^Houses\s*/,'')||'none'}`);
-    }
-    ['A','B'].forEach(slot=>{
-      const input=details.querySelector(`[data-export-house-slot="${slot}"]`);
-      if(!input)return;
-      const available=houseExportAvailable(slot);
-      input.disabled=!available;
-      input.checked=available&&exportHouseState[slot]!==false;
-      const label=input.closest('label');
-      if(label){
-        label.dataset.unavailable=available?'false':'true';
-        const note=label.querySelector('.sky-relationship-export-house-note');
-        if(note)note.textContent=available?'':'no houses';
-      }
-    });
-  }
-  function positionExportHouseMenu(details){
-    if(!details?.open)return;
-    const summary=details.querySelector('summary'),menu=details.querySelector('.sky-relationship-export-house-menu');
-    if(!summary||!menu)return;
-    const edge=12,gap=6,trigger=summary.getBoundingClientRect();
-    menu.style.left='0px';menu.style.top='0px';
-    const width=Math.min(menu.offsetWidth||178,Math.max(120,window.innerWidth-edge*2));
-    const left=Math.max(edge,Math.min(trigger.left,window.innerWidth-width-edge));
-    const below=trigger.bottom+gap,menuHeight=menu.offsetHeight||120;
-    const top=below+menuHeight<=window.innerHeight-edge
-      ?below
-      :Math.max(edge,trigger.top-gap-menuHeight);
-    menu.style.left=Math.round(left)+'px';
-    menu.style.top=Math.round(top)+'px';
-    menu.style.maxWidth=Math.max(120,window.innerWidth-edge*2)+'px';
-  }
-  function scheduleExportHouseMenuPosition(details){
-    requestAnimationFrame(()=>positionExportHouseMenu(details));
-  }
-  function ensureExportHouseControl(heading,actions){
-    if(!heading||!actions)return null;
-    let details=heading.querySelector('.sky-relationship-export-houses');
-    if(!details){
-      details=document.createElement('details');
-      details.className='sky-relationship-export-houses';
-      details.innerHTML=`<summary>Houses</summary><div class="sky-relationship-export-house-menu" role="group" aria-label="House information in relationship exports"><strong>Include house info</strong><label><input type="checkbox" data-export-house-slot="A"><span>Sky A</span><small class="sky-relationship-export-house-note"></small></label><label><input type="checkbox" data-export-house-slot="B"><span>Sky B</span><small class="sky-relationship-export-house-note"></small></label><small>Copy + Download only</small></div>`;
-      details.addEventListener('change',event=>{
-        const input=event.target.closest?.('[data-export-house-slot]');
-        if(!input)return;
-        setExportHouse(String(input.dataset.exportHouseSlot||'').toUpperCase(),input.checked);
-      });
-      details.addEventListener('toggle',()=>{if(details.open)scheduleExportHouseMenuPosition(details)});
-      actions.insertBefore(details,actions.querySelector('.sky-relationship-copy-button')||actions.firstChild);
-    }
-    syncExportHouseControl();
-    return details;
   }
   window.RelphiRelationshipExportHouses=Object.freeze({
     include:includeExportHouse,
     available:houseExportAvailable,
     state:exportHouseStateSnapshot,
     set:setExportHouse,
-    sync:syncExportHouseControl
+    sync:()=>{}
   });
 
   function installStyles(){
@@ -160,17 +85,6 @@
       .sky-relationship-copy-button{margin-left:auto;padding:.38rem .68rem;border:1px solid rgba(31,27,24,.18);border-radius:999px;background:#fff;color:#332e2a;font:800 .68rem/1 system-ui,sans-serif;cursor:pointer;white-space:nowrap}
       .sky-relationship-heading-actions .sky-relationship-copy-button{margin-left:0}
       .sky-relationship-copy-button:hover,.sky-relationship-copy-button:focus-visible{border-color:#6b625a;outline:0;background:#fffdfa}
-      .sky-relationship-export-houses{position:relative;margin:0}
-      .sky-relationship-export-houses>summary{list-style:none;padding:.38rem .62rem;border:1px solid rgba(31,27,24,.18);border-radius:999px;background:#fff;color:#332e2a;font:800 .68rem/1 system-ui,sans-serif;cursor:pointer;white-space:nowrap}
-      .sky-relationship-export-houses>summary::-webkit-details-marker{display:none}
-      .sky-relationship-export-houses>summary:hover,.sky-relationship-export-houses>summary:focus-visible{border-color:#6b625a;outline:0;background:#fffdfa}
-      .sky-relationship-export-house-menu{position:fixed;left:12px;top:12px;z-index:180;display:grid;gap:7px;width:max-content;min-width:178px;max-width:calc(100vw - 24px);box-sizing:border-box;padding:10px;border:1px solid rgba(31,27,24,.16);border-radius:10px;background:#fffdf8;box-shadow:0 10px 28px rgba(31,27,24,.16);color:#332e2a;font:700 .72rem/1.2 system-ui,sans-serif}
-      .sky-relationship-export-house-menu>strong{font-size:.7rem}
-      .sky-relationship-export-house-menu>label{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:7px;min-height:24px}
-      .sky-relationship-export-house-menu>label[data-unavailable="true"]{opacity:.48}
-      .sky-relationship-export-house-menu input{margin:0}
-      .sky-relationship-export-house-note{font-size:.62rem;font-weight:650;color:#746b63}
-      .sky-relationship-export-house-menu>small:last-child{padding-top:2px;border-top:1px solid rgba(31,27,24,.09);font-size:.62rem;font-weight:650;color:#746b63}
       .sky-foundation-relationship-row{-webkit-touch-callout:none;touch-action:pan-y}
       .sky-foundation-relationship-row svg,.sky-foundation-relationship-glyph,.sky-foundation-relationship-sign{-webkit-user-select:none;user-select:none}
       .sky-foundation-relationship-copy,.sky-foundation-relationship-orb{-webkit-user-select:text;user-select:text}
@@ -183,7 +97,7 @@
     const heading=document.querySelector('#skyFoundationRelationships .sky-foundation-relationships-heading');
     if(!heading)return null;
     const actions=heading.querySelector('.sky-relationship-heading-actions');
-    if(actions)ensureExportHouseControl(heading,actions);
+    heading.querySelector('.sky-relationship-export-houses')?.remove();
     let button=heading.querySelector('.sky-relationship-copy-button');
     if(button){
       if(actions&&button.parentElement!==actions)actions.insertBefore(button,actions.querySelector('#skyChartRelationshipsExport')||null);
@@ -428,12 +342,6 @@
     requestAnimationFrame(ensureButton);
   });
 
-  function repositionOpenExportHouseMenu(){
-    const details=document.querySelector('.sky-relationship-export-houses[open]');
-    if(details)scheduleExportHouseMenuPosition(details);
-  }
-  window.addEventListener('resize',repositionOpenExportHouseMenu,{passive:true});
-  window.addEventListener('scroll',repositionOpenExportHouseMenu,{passive:true,capture:true});
   function schedule(){requestAnimationFrame(ensureButton)}
   ['relphi:sky-foundation-ready','relphi:sky-foundation-interactions-ready','relphi:sky-where-when-committed','relphi:saved-sky-loaded','relphi:sky-b-added','relphi:sky-b-removed'].forEach(name=>window.addEventListener(name,schedule));
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',schedule,{once:true});else schedule();
