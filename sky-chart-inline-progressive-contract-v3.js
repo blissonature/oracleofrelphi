@@ -50,6 +50,9 @@ function ensureStrip(row){
   detail.querySelector(':scope>.inline-rel-top-reveal')?.remove();
   detail.querySelector(':scope>.inline-rel-house-context')?.remove();
   let strip=detail.querySelector(':scope>.inline-rel-progressive-strip');if(!strip){detail.insertAdjacentHTML('afterbegin',stripMarkup(row));strip=detail.querySelector(':scope>.inline-rel-progressive-strip')}
+  const aspectToken=strip?.querySelector('[data-inline-progressive-token="aspect"]');
+  const timingSlot=detail.querySelector('[data-inline-relationship-timing]');
+  if(aspectToken&&timingSlot&&timingSlot.parentElement!==aspectToken)aspectToken.appendChild(timingSlot);
   GLYPH_FIELDS.forEach(([field,selector])=>{const glyph=row.querySelector(selector);if(!glyph)return;glyph.dataset.inlineProgressiveGlyph=field;glyph.setAttribute('title','Reveal name')});
   decorateTopHouseTrigger(row,'left');decorateTopHouseTrigger(row,'right');return strip;
 }
@@ -96,6 +99,7 @@ function installStyles(){
     .inline-rel-progressive-side{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));align-items:start;gap:5px;min-width:0}
     .inline-rel-progressive-side>[data-inline-progressive-token$="-placement"]{grid-column:1}.inline-rel-progressive-side>[data-inline-progressive-token$="-sign"]{grid-column:2}.inline-rel-progressive-side>[data-inline-progressive-token$="-house"]{grid-column:3}
     .inline-rel-progressive-strip>[data-inline-progressive-token="aspect"]{grid-column:2}
+    .inline-rel-progressive-strip>[data-inline-progressive-token="aspect"]>[data-inline-relationship-timing]{width:100%;min-width:0}
     .inline-rel-progressive-token{grid-row:1;display:grid;justify-items:center;gap:4px;min-width:0;padding:4px 5px;border-radius:7px;background:rgba(45,39,34,.04);cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
     .inline-rel-progressive-token[data-tone="a"]{border-top:2px solid #c9211e}.inline-rel-progressive-token[data-tone="b"]{border-top:2px solid #2462d0}.inline-rel-progressive-token[data-tone="aspect"]{border-top:2px solid var(--relationship-stripe,#777)}
     .inline-rel-progressive-token[hidden],.inline-rel-progressive-level[hidden]{display:none!important}
