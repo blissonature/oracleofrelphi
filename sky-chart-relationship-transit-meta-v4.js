@@ -250,7 +250,15 @@ function calculate(row,token){
 }
 function clearCollapsed(){document.querySelectorAll('#skyFoundationRelationshipList .sky-foundation-relationship-row:not(.is-inline-expanded)').forEach(removeMeta)}
 function decorate(){clearCollapsed();const row=document.querySelector('#skyFoundationRelationshipList .sky-foundation-relationship-row.is-inline-expanded');if(!row)return;const model=modelFor(row);if(model.kind==='static'){removeMeta(row);return}const meta=metaNode(row);if(!meta){requestAnimationFrame(decorate);return}const liveSignature=['A','B'].map(slot=>`${slot}:${liveOrigin(slot)}:${profileDate(slot)?.toISOString()||''}`).join('|'),signature=[row.dataset.relationIndex,row.dataset.aspect,row.dataset.leftPlacement,row.dataset.rightPlacement,document.querySelector('[data-harmonic-window-input]')?.value||'',liveSignature].join('|');if(meta.dataset.transitSignature===signature&&meta.dataset.transitReady==='true')return;meta.dataset.transitSignature=signature;meta.dataset.transitReady='false';meta.dataset.transitKind='loading';meta.replaceChildren(rowMarkup('Timing','Calculating…'));const token=++generation,run=()=>calculate(row,token);if('requestIdleCallback'in window)requestIdleCallback(run,{timeout:90});else setTimeout(run,20)}
-function schedule(){requestAnimationFrame(()=>requestAnimationFrame(decorate))}
+function safeDecorate(){
+  try{decorate()}
+  catch(error){
+    console.error('[Relationship timing render]',error);
+    const row=document.querySelector('#skyFoundationRelationshipList .sky-foundation-relationship-row.is-inline-expanded');
+    if(row){const meta=metaNode(row);if(meta){meta.replaceChildren(rowMarkup('Timing','Calculation error'));meta.dataset.transitKind='error';meta.dataset.transitReady='true'}}
+  }
+}
+function schedule(){requestAnimationFrame(()=>requestAnimationFrame(safeDecorate))}
 function relevantMutation(record){if(record.type==='attributes'&&record.attributeName==='class'&&record.target?.classList?.contains('sky-foundation-relationship-row'))return true;if(record.type!=='childList')return false;return Array.from(record.addedNodes||[]).some(node=>node.nodeType===1&&(node.matches?.('.sky-foundation-relationship-row,.inline-rel-detail,.inline-rel-progressive-strip')||node.querySelector?.('.inline-rel-detail,.inline-rel-progressive-strip')))}
 function attach(){const list=document.getElementById('skyFoundationRelationshipList');if(!list||list===observedList)return;observer?.disconnect();observedList=list;observer=new MutationObserver(records=>{if(records.some(relevantMutation))schedule()});observer.observe(list,{subtree:true,childList:true,attributes:true,attributeFilter:['class']});schedule()}
 function installStyles(){if(document.getElementById('skyRelationshipTransitMetaV4Styles'))return;document.getElementById('skyRelationshipTransitMetaV3Styles')?.remove();const style=document.createElement('style');style.id='skyRelationshipTransitMetaV4Styles';style.textContent=`
@@ -382,6 +390,6 @@ function refreshAfterChironReady(){
   document.querySelectorAll('#skyFoundationRelationshipList .inline-rel-transit-window[data-transit-kind="unavailable"]').forEach(meta=>{meta.dataset.transitReady='false';delete meta.dataset.transitSignature});
   schedule();
 }
-function start(){installStyles();attach();['relphi:sky-foundation-ready','relphi:sky-foundation-interactions-ready','relphi:sky-harmonic-window-visibility-changed','relphi:sky-live-origin-changed','relphi:sky-intrasky-relationships-ready','relphi:relationship-display-changed'].forEach(name=>window.addEventListener(name,()=>{attach();schedule()}));document.addEventListener('click',event=>{if(event.target.closest('.sky-foundation-relationship-row[data-relation-index]'))schedule()},true)}
+function start(){installStyles();attach();window.addEventListener('relphi:relationship-tile-opened',schedule);['relphi:sky-foundation-ready','relphi:sky-foundation-interactions-ready','relphi:sky-harmonic-window-visibility-changed','relphi:sky-live-origin-changed','relphi:sky-intrasky-relationships-ready','relphi:relationship-display-changed'].forEach(name=>window.addEventListener(name,()=>{attach();schedule()}));document.addEventListener('click',event=>{if(event.target.closest('.sky-foundation-relationship-row[data-relation-index]'))schedule()},true)}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
 })();
