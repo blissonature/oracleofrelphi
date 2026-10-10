@@ -374,7 +374,8 @@ window.RelphiRelationshipTransitMeta=Object.freeze({
   estimatedTimingForRow:estimatedTimingForSort,
   motionSnapshotForRow,
   exportTimingForRow,
-  clearDurationCache:clearSortDurationCache
+  clearDurationCache:clearSortDurationCache,
+  refreshExpanded:()=>{attach();schedule()}
 });
 
 function refreshAfterChironReady(){
