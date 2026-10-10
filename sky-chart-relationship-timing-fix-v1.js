@@ -174,28 +174,6 @@ function scheduleSortRefresh(){
   sortQueued=true;
   requestAnimationFrame(()=>{sortQueued=false;applySort()});
 }
-function writeTiming(row,timing){
-  if(Number.isFinite(timing?.durationDays))row.dataset.transitDurationDays=String(timing.durationDays);else delete row.dataset.transitDurationDays;
-  if(Number.isFinite(timing?.endsInDays))row.dataset.transitEndsInDays=String(timing.endsInDays);else delete row.dataset.transitEndsInDays;
-  if(Number.isFinite(timing?.startedDaysAgo))row.dataset.transitStartedDaysAgo=String(timing.startedDaysAgo);else delete row.dataset.transitStartedDaysAgo;
-  scheduleSortRefresh();
-}
-function estimatedTimingForRow(row){const timing=timingForRow(row);writeTiming(row,timing);return timing}
-function clearDurationCache(){
-  cache.clear();
-  document.querySelectorAll('#skyFoundationRelationshipList .sky-foundation-relationship-row').forEach(row=>{delete row.dataset.transitDurationDays;delete row.dataset.transitEndsInDays;delete row.dataset.transitStartedDaysAgo});
-}
-// Only the transit metadata module publishes RelphiRelationshipTransitMeta.
-function applySort(){
-  const list=document.getElementById('skyFoundationRelationshipList'),compare=window.RelphiRelationshipSort?.compareRows;if(!list||typeof compare!=='function')return;
-  const rows=[...list.querySelectorAll(':scope>.sky-foundation-relationship-row')];rows.sort((a,b)=>compare(a,b));rows.forEach(row=>list.appendChild(row));
-}
-function durationLabel(days){if(days<1){const minutes=days*24*60;if(minutes<90)return`${Math.max(1,Math.round(minutes))} min`;return`${Math.max(1,Math.round(days*24*10)/10)} hr`}if(days<14)return`${Math.round(days*10)/10} days`;if(days<75)return`${Math.round(days)} days`;if(days<730)return`${Math.round(days/30.4375*10)/10} months`;return`${Math.round(days/365.25*10)/10} years`}
-function dateLabel(ms){return new Intl.DateTimeFormat(undefined,{month:'short',day:'numeric',year:'numeric'}).format(new Date(ms))}
-function rowMarkup(label,value){const line=document.createElement('span');line.className='inline-rel-transit-row';const key=document.createElement('b');key.textContent=label;const text=document.createElement('span');text.textContent=value;line.append(key,text);return line}
-// Timing display is owned exclusively by sky-chart-relationship-transit-meta-v4.js.
-// This module supplies calculated-point timing fallback and sorting only.
-function invalidate(){cache.clear()}
 function primeChiron(){
   const service=window.RelphiChironEphemeris;if(!service?.ready)return;
   service.ready().then(()=>{
