@@ -69,6 +69,18 @@ try{
   for(const label of ['Start','Exact','End','Duration','Passes'])assert.ok(state.text.includes(label),`timing tile should include ${label}: ${state.text}`);
   assert.ok(!state.text.includes('unavailable'),'timing tile should not say unavailable');
   assert.ok(state.chironReady,'Swiss Chiron ephemeris should be ready');
+  const timingPlacement=await page.evaluate(()=>{
+    const row=[...document.querySelectorAll('#skyFoundationRelationshipList .sky-foundation-relationship-row')].find(node=>{
+      const pair=new Set([node.dataset.leftPlacement,node.dataset.rightPlacement]);
+      return node.dataset.relationshipMode==='B-B'&&node.dataset.aspect==='opposition'&&pair.has('venus')&&pair.has('chiron');
+    });
+    const meta=row?.querySelector('.inline-rel-transit-window');
+    const aspect=meta?.closest('[data-inline-progressive-token="aspect"]');
+    const standalone=row?.querySelector(':scope>.inline-rel-detail>[data-inline-relationship-timing]');
+    return{insideAspect:!!aspect,standalone:!!standalone,aspectText:aspect?.textContent||''};
+  });
+  assert.equal(timingPlacement.insideAspect,true,`timing must render inside the Aspect text box: ${JSON.stringify(timingPlacement)}`);
+  assert.equal(timingPlacement.standalone,false,`timing must not remain as a separate block below the cards: ${JSON.stringify(timingPlacement)}`);
 
   // Expanding one row must not leak its timing/cards into Copy while Display is Glyphs.
   const glyphCopyState=await page.evaluate(()=>{
