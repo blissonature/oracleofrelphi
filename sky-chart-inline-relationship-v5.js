@@ -48,13 +48,14 @@ function contextMarkup(rel){const lp=position(rel.left),rp=position(rel.right);r
 function revealInfo(rel,field){if(field==='left')return{name:rel.left.entry.name,referent:PLACEMENT_REFERENTS[rel.left.id]||`a calculated placement in Sky ${rel.left.sky}`,color:COLORS[rel.left.sky]};if(field==='right')return{name:rel.right.entry.name,referent:PLACEMENT_REFERENTS[rel.right.id]||`a calculated placement in Sky ${rel.right.sky}`,color:COLORS[rel.right.sky]};const name=ASPECT_NAMES[rel.aspect]||rel.aspect;return{name,referent:ASPECT_REFERENTS[rel.aspect]||'a measured relationship between the two placements',color:'var(--relationship-stripe,#777)'}}
 function clearReveal(row){if(!row)return;delete row.dataset.inlineRevealField;delete row.dataset.inlineRevealLevel;const reveal=row.querySelector(':scope>.inline-rel-detail>.inline-rel-top-reveal');if(reveal){reveal.hidden=true;reveal.querySelector('.inline-rel-reveal-text')?.replaceChildren();reveal.removeAttribute('style');delete reveal.dataset.level;delete reveal.dataset.field}}
 function syncTimingReveal(row){
-  const reveal=row.querySelector(':scope>.inline-rel-detail>.inline-rel-top-reveal');if(!reveal)return;
-  const globalReferents=document.documentElement.dataset.skyVocabReferents==='true';
-  const aspectRevealed=row.dataset.inlineRevealField==='aspect'&&!!row.dataset.inlineRevealLevel;
-  const show=globalReferents||aspectRevealed;
-  const slot=reveal.querySelector('[data-inline-relationship-timing]');if(slot)slot.hidden=!show;
-  if(show){reveal.hidden=false;reveal.dataset.field='aspect';reveal.style.setProperty('--reveal-color','var(--relationship-stripe,#777)')}
-  else if(!row.dataset.inlineRevealLevel){reveal.hidden=true;delete reveal.dataset.field}
+ const reveal=row.querySelector(':scope>.inline-rel-detail>.inline-rel-top-reveal');if(!reveal)return;
+ const slot=reveal.querySelector('[data-inline-relationship-timing]');
+ const globalReferents=document.documentElement.dataset.skyVocabReferents==='true';
+ const aspectRevealed=row.dataset.inlineRevealField==='aspect'&&!!row.dataset.inlineRevealLevel;
+ const show=globalReferents||aspectRevealed;
+ if(slot)slot.hidden=!show;
+ if(show){reveal.hidden=false;reveal.dataset.field='aspect';reveal.style.setProperty('--reveal-color','var(--relationship-stripe,#777)')}
+ else if(!row.dataset.inlineRevealLevel){reveal.hidden=true;delete reveal.dataset.field}
 }
 function cycleReveal(row,field){const rel=relation(row),reveal=row.querySelector(':scope>.inline-rel-detail>.inline-rel-top-reveal');if(!rel||!reveal)return;const sameField=row.dataset.inlineRevealField===field,current=sameField?row.dataset.inlineRevealLevel:'',next=current===''?'name':current==='name'?'referent':'';if(!next){clearReveal(row);syncTimingReveal(row);return}const info=revealInfo(rel,field);row.dataset.inlineRevealField=field;row.dataset.inlineRevealLevel=next;reveal.dataset.field=field;reveal.dataset.level=next;reveal.style.setProperty('--reveal-color',info.color);reveal.querySelector('.inline-rel-reveal-text').textContent=next==='name'?info.name:info.referent;reveal.hidden=false;syncTimingReveal(row)}
 function fieldFromTopGlyph(node){if(node?.classList.contains('sky-foundation-relationship-glyph--left'))return'left';if(node?.classList.contains('sky-foundation-relationship-glyph--right'))return'right';if(node?.classList.contains('sky-foundation-relationship-glyph--aspect'))return'aspect';return''}
