@@ -382,6 +382,6 @@ function refreshAfterChironReady(){
   document.querySelectorAll('#skyFoundationRelationshipList .inline-rel-transit-window[data-transit-kind="unavailable"]').forEach(meta=>{meta.dataset.transitReady='false';delete meta.dataset.transitSignature});
   schedule();
 }
-function start(){installStyles();attach();['relphi:sky-foundation-ready','relphi:sky-foundation-interactions-ready','relphi:sky-harmonic-window-visibility-changed','relphi:sky-live-origin-changed','relphi:sky-intrasky-relationships-ready','relphi:relationship-display-changed'].forEach(name=>window.addEventListener(name,()=>{attach();schedule()}));document.addEventListener('click',event=>{if(event.target.closest('.sky-foundation-relationship-row[data-relation-index]'))schedule()},true)}
+function start(){window.RelphiChironEphemeris?.ready?.().then(refreshAfterChironReady).catch(error=>console.error('[Relationship timing Chiron]',error));installStyles();attach();['relphi:sky-foundation-ready','relphi:sky-foundation-interactions-ready','relphi:sky-harmonic-window-visibility-changed','relphi:sky-live-origin-changed','relphi:sky-intrasky-relationships-ready','relphi:relationship-display-changed'].forEach(name=>window.addEventListener(name,()=>{attach();schedule()}));document.addEventListener('click',event=>{if(event.target.closest('.sky-foundation-relationship-row[data-relation-index]'))schedule()},true)}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
 })();
