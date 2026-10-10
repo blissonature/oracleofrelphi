@@ -134,11 +134,15 @@
     window.setTimeout(()=>{if(pending[slot]&&Date.now()-pending[slot].created>=4500)pending[slot]=null},4700);
   },true);
 
-  window.addEventListener('storage',event=>{
-    const slot=event.key===SLOT_KEYS.A?'A':event.key===SLOT_KEYS.B?'B':null;if(!slot||!pending[slot])return;
+  // Only commit a Saved Sky after Where and When has finished its asynchronous
+  // Chiron calculation and persisted the complete working payload. Generic
+  // storage events can fire while the calculation is still in progress.
+  window.addEventListener('relphi:sky-working-copy-updated',event=>{
+    const slot=event.detail?.slot;
+    if(!SLOT_KEYS[slot]||!pending[slot]||event.detail?.source!=='where-when')return;
+    const value=payload(slot);
+    if(!value||!window.RelphiChironEphemeris?.hasChiron?.(value.placements))return;
     const request=pending[slot];pending[slot]=null;
-    const value=payload(slot),source=String(value?.calcProfile?.source||'');
-    if(!['where-when-v1','where-when-v2'].includes(source))return;
     saveCalculatedSky(slot,request);
   });
 
