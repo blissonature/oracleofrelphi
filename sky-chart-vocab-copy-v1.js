@@ -53,22 +53,29 @@ function serializeNode(node){
 function serializePanel(panel){
   if(!(panel instanceof HTMLElement))return'';
   const paragraph=panel.querySelector('[data-sky-vocab-paragraph]');if(!paragraph)return'';
-  const slot=String(panel.dataset.skyVocabPanel||slotFor(panel)).toUpperCase(),lines=[`${skyName(slot)} — Vocab`,''];
-  [...paragraph.children].forEach(node=>{
-    if(node.hidden)return;
-    const value=serializeNode(node);if(!value)return;
+  const slot=String(panel.dataset.skyVocabPanel||slotFor(panel)).toUpperCase();
+  const lines=[skyName(slot)+' — Vocab',''];
+  const blank=()=>{if(lines.length&&lines[lines.length-1]!=='')lines.push('')};
+  const heading=value=>{blank();lines.push(value,'')};
+  const addLine=node=>{const value=serializeNode(node);if(value)lines.push(value)};
+  for(const node of paragraph.children){
+    if(node.hidden)continue;
     if(node.matches('.sky-vocab-structures-heading,.sky-vocab-placements-heading')){
-      if(lines[lines.length-1]!=='')lines.push('');
-      lines.push(value.toUpperCase(),'');
-      return;
+      heading(clean(node.textContent).toUpperCase());
+      continue;
     }
-    if(node.matches('.sky-vocab-structure-subheading')){
-      if(lines[lines.length-1]!=='')lines.push('');
-      lines.push(value,'');
-      return;
+    if(node.matches('.sky-vocab-group')){
+      const title=node.querySelector(':scope > summary .sky-vocab-group-title');
+      if(title)heading(clean(title.textContent));
+      // Group previews are display summaries, not additional copied content.
+      // Each semantic entry must be serialized individually, whether expanded or collapsed.
+      const body=node.querySelector(':scope > .sky-vocab-group-body');
+      if(body)body.querySelectorAll('.sky-vocab-line').forEach(addLine);
+      continue;
     }
-    lines.push(value);
-  });
+    if(node.matches('.sky-vocab-line'))addLine(node);
+    else addLine(node);
+  }
   return lines.join('\n').replace(/\n{3,}/g,'\n\n').trim();
 }
 async function writeClipboard(text){
