@@ -500,6 +500,9 @@
   function start(){
     window.addEventListener('relphi:sky-foundation-ready',schedule);
     window.addEventListener('relphi:sky-orb-limit-changed',schedule);
+    // Standalone parity replaces aspect DOM nodes after the initial focus pass.
+    // Rebind their focus metadata and reapply locked/dim state on the finished lines.
+    window.addEventListener('relphi:sky-single-sky-aspects-rendered',schedule);
     [
       'relphi:sky-aspect-multiselect-changed',
       'relphi:sky-placement-multiselect-changed',
