@@ -22,7 +22,7 @@ const TIMING_MODES=new Set(['duration-longest','duration-shortest','began-most-r
 const cache=new Map();
 const readCache={A:{raw:null,value:null},B:{raw:null,value:null}};
 const recordCache=new WeakMap(),profileDateCache=new WeakMap(),liveOriginCache=new WeakMap();
-let observer=null,queued=false,sortQueued=false,baseApi=null;
+let sortQueued=false;
 
 const norm=value=>((Number(value)%360)+360)%360;
 const wrap=value=>((Number(value)+540)%360)-180;
@@ -181,20 +181,11 @@ function writeTiming(row,timing){
   scheduleSortRefresh();
 }
 function estimatedTimingForRow(row){const timing=timingForRow(row);writeTiming(row,timing);return timing}
-function exportTimingForRow(row){
-  const original=baseApi?.exportTimingForRow?.(row);if(original?.kind==='dynamic')return original;
-  const timing=timingForRow(row);if(!timing)return original||{kind:'unavailable',reason:'Timing unavailable.'};
-  return{kind:'dynamic',startMs:timing.timeline.startMs,endMs:timing.timeline.endMs,exacts:[...timing.timeline.exacts],durationDays:timing.durationDays,passCount:timing.timeline.exacts.length,motion:'',timingConvention:'calculated-point-fallback'};
-}
 function clearDurationCache(){
-  cache.clear();baseApi?.clearDurationCache?.();
+  cache.clear();
   document.querySelectorAll('#skyFoundationRelationshipList .sky-foundation-relationship-row').forEach(row=>{delete row.dataset.transitDurationDays;delete row.dataset.transitEndsInDays;delete row.dataset.transitStartedDaysAgo});
 }
-function installApi(){
-  const current=window.RelphiRelationshipTransitMeta;if(current?.__timingFixV1)return;
-  baseApi=current||null;
-  window.RelphiRelationshipTransitMeta=Object.freeze({...(current||{}),__timingFixV1:true,estimatedTimingForRow,exportTimingForRow,clearDurationCache});
-}
+// Only the transit metadata module publishes RelphiRelationshipTransitMeta.
 function applySort(){
   const list=document.getElementById('skyFoundationRelationshipList'),compare=window.RelphiRelationshipSort?.compareRows;if(!list||typeof compare!=='function')return;
   const rows=[...list.querySelectorAll(':scope>.sky-foundation-relationship-row')];rows.sort((a,b)=>compare(a,b));rows.forEach(row=>list.appendChild(row));
@@ -204,7 +195,7 @@ function dateLabel(ms){return new Intl.DateTimeFormat(undefined,{month:'short',d
 function rowMarkup(label,value){const line=document.createElement('span');line.className='inline-rel-transit-row';const key=document.createElement('b');key.textContent=label;const text=document.createElement('span');text.textContent=value;line.append(key,text);return line}
 // Timing display is owned exclusively by sky-chart-relationship-transit-meta-v4.js.
 // This module supplies calculated-point timing fallback and sorting only.
-function invalidate(){cache.clear();installApi()}
+function invalidate(){cache.clear()}
 function primeChiron(){
   const service=window.RelphiChironEphemeris;if(!service?.ready)return;
   service.ready().then(()=>{
@@ -214,7 +205,6 @@ function primeChiron(){
   }).catch(error=>console.error('[Relationship timing Chiron]',error));
 }
 function start(){
-  installApi();
   window.addEventListener('relphi:relationship-sort-changed',scheduleSortRefresh);
   ['relphi:sky-foundation-ready','relphi:sky-foundation-interactions-ready','relphi:sky-intrasky-relationships-ready','relphi:sky-intrasky-b-relationships-ready','relphi:sky-harmonic-window-visibility-changed','relphi:sky-live-origin-changed','relphi:relationship-display-changed'].forEach(name=>window.addEventListener(name,()=>{invalidate();scheduleSortRefresh()}));
   primeChiron();
