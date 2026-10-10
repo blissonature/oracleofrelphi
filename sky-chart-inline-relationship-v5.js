@@ -145,6 +145,7 @@ function observeRows(){
   rowObserver.observe(list,{childList:true,subtree:false});
 }
 window.addEventListener('relphi:selected-relationship-rendered',suppress);
+window.addEventListener('relphi:relationship-display-changed',()=>document.querySelectorAll('#skyFoundationRelationshipList .sky-foundation-relationship-row.is-inline-expanded').forEach(syncTimingReveal));
 window.addEventListener('relphi:sky-foundation-ready',()=>{if(openRow&&!openRow.isConnected)openRow=null;warmCurrentCardArt();suppress();observeRows();initializeRows()});
 window.addEventListener('relphi:sky-intrasky-relationships-ready',()=>initializeRows());
 window.addEventListener('relphi:sky-intrasky-b-relationships-ready',()=>initializeRows());
