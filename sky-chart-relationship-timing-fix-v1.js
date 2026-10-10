@@ -202,24 +202,14 @@ function applySort(){
 function durationLabel(days){if(days<1){const minutes=days*24*60;if(minutes<90)return`${Math.max(1,Math.round(minutes))} min`;return`${Math.max(1,Math.round(days*24*10)/10)} hr`}if(days<14)return`${Math.round(days*10)/10} days`;if(days<75)return`${Math.round(days)} days`;if(days<730)return`${Math.round(days/30.4375*10)/10} months`;return`${Math.round(days/365.25*10)/10} years`}
 function dateLabel(ms){return new Intl.DateTimeFormat(undefined,{month:'short',day:'numeric',year:'numeric'}).format(new Date(ms))}
 function rowMarkup(label,value){const line=document.createElement('span');line.className='inline-rel-transit-row';const key=document.createElement('b');key.textContent=label;const text=document.createElement('span');text.textContent=value;line.append(key,text);return line}
-function patchExpanded(){
-  queued=false;installApi();
-  const row=document.querySelector('#skyFoundationRelationshipList .sky-foundation-relationship-row.is-inline-expanded');if(!row)return;
-  const meta=row.querySelector(':scope>.inline-rel-detail .inline-rel-progressive-strip [data-inline-progressive-token="aspect"]>.inline-rel-transit-window');
-  if(!meta||meta.dataset.transitKind!=='unavailable')return;
-  const timing=timingForRow(row);if(!timing)return;
-  const exactText=timing.timeline.exacts.length?timing.timeline.exacts.map(dateLabel).join(' · '):'near pass',passText=timing.timeline.exacts.length===1?'1 exact pass':`${timing.timeline.exacts.length} exact passes`;
-  meta.replaceChildren(rowMarkup('Start',dateLabel(timing.timeline.startMs)),rowMarkup('Exact',exactText),rowMarkup('End',dateLabel(timing.timeline.endMs)),rowMarkup('Duration',durationLabel(timing.durationDays)),rowMarkup('Passes',passText));
-  meta.dataset.transitReady='true';meta.dataset.transitKind='dynamic';meta.title=`Active from ${dateLabel(timing.timeline.startMs)} to ${dateLabel(timing.timeline.endMs)}; ${durationLabel(timing.durationDays)} current activation window.`;meta.setAttribute('aria-label',meta.title);
-}
-function schedulePatch(delay=0){if(queued)return;queued=true;setTimeout(()=>requestAnimationFrame(patchExpanded),delay)}
-function invalidate(){cache.clear();installApi();schedulePatch(30)}
+// Timing display is owned exclusively by sky-chart-relationship-transit-meta-v4.js.
+// This module supplies calculated-point timing fallback and sorting only.
+function invalidate(){cache.clear();installApi()}
 function primeChiron(){
   const service=window.RelphiChironEphemeris;if(!service?.ready)return;
   service.ready().then(()=>{
     invalidate();
     document.querySelectorAll('#skyFoundationRelationshipList .inline-rel-transit-window[data-transit-kind="unavailable"]').forEach(meta=>{meta.dataset.transitReady='false';delete meta.dataset.transitSignature});
-    schedulePatch(0);
     const sort=window.RelphiRelationshipSort,mode=sort?.mode?.();if(TIMING_MODES.has(mode))sort.setMode?.(mode);
   }).catch(error=>console.error('[Relationship timing Chiron]',error));
 }
@@ -227,8 +217,6 @@ function start(){
   installApi();
   window.addEventListener('relphi:relationship-sort-changed',scheduleSortRefresh);
   ['relphi:sky-foundation-ready','relphi:sky-foundation-interactions-ready','relphi:sky-intrasky-relationships-ready','relphi:sky-intrasky-b-relationships-ready','relphi:sky-harmonic-window-visibility-changed','relphi:sky-live-origin-changed','relphi:relationship-display-changed'].forEach(name=>window.addEventListener(name,()=>{invalidate();scheduleSortRefresh()}));
-  document.addEventListener('click',event=>{if(event.target.closest?.('.sky-foundation-relationship-row[data-relation-index]'))schedulePatch(80)},true);
-  const list=document.getElementById('skyFoundationRelationshipList');if(list){observer=new MutationObserver(()=>schedulePatch(60));observer.observe(list,{subtree:true,childList:true,attributes:true,attributeFilter:['class','data-transit-kind']})}
   primeChiron();
 }
 document.readyState==='loading'?document.addEventListener('DOMContentLoaded',start,{once:true}):start();
