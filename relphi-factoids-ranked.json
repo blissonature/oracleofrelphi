@@ -1,18 +1,174 @@
 {
   "schema_version": 1,
   "purpose": "Ranked, nonredundant embodied sky-orientation factoids for Oracle of Relphi. Rank 1 is most worthy to share.",
-  "ranking_policy": "Prioritize usable embodied conversions, surprising insight, factual reliability, and novelty. Compare new entries with existing ones before adding; avoid duplicate principles and near-identical variations. Re-rank after every addition.",
+  "ranking_policy": "Prioritize usable embodied conversions, surprising insight, factual reliability, and novelty. Compare new entries with existing ones before adding; avoid duplicate principles and near-identical variations. Re-rank after every addition. Earlier historical selections are preserved; new daily additions must be genuinely distinct.",
   "factoids": [
+    {
+      "id": "moon-width-per-hour",
+      "date_added": "2026-09-25",
+      "rank": 1,
+      "title": "The Moon travels about one Moon-width per hour",
+      "fact": "Relative to the background stars, the Moon advances about 0.55° per hour, roughly its apparent half-degree diameter.",
+      "application": "Watch its position against nearby stars change over a few hours.",
+      "caveat": "Its speed and apparent size vary; compare against stars rather than the horizon.",
+      "sources": [
+        "https://openstax.org/books/astronomy-2e/pages/4-5-phases-and-motions-of-the-moon"
+      ]
+    },
+    {
+      "id": "polaris-latitude",
+      "date_added": "2026-09-27",
+      "rank": 2,
+      "title": "Polaris measures your northern latitude",
+      "fact": "In the Northern Hemisphere, Polaris's altitude above a level northern horizon is approximately your latitude north.",
+      "application": "Estimate latitude by measuring the North Star's height with a hand or angular ruler.",
+      "caveat": "Polaris is not exactly at the celestial pole; local horizon obstructions can interfere.",
+      "sources": [
+        "https://oceanservice.noaa.gov/education/tutorial_geodesy/geo02_hist.html"
+      ]
+    },
     {
       "id": "ruler-angular-scale",
       "date_added": "2026-10-10",
-      "rank": 1,
+      "rank": 3,
       "title": "A ruler becomes a celestial protractor",
-      "fact": "Hold a ruler about 57.3 cm (22.6 in) from your eye: 1 cm spans approximately 1° of sky, and 1 mm spans about 6 arcminutes.",
-      "application": "Use a measured physical length to feel the scale of chart angles; 5 mm is approximately the apparent width of the Moon.",
-      "caveat": "Hold the ruler perpendicular to the line of sight; this measures apparent angular separation, not necessarily ecliptic-longitude differences.",
+      "fact": "Hold a ruler 57.3 cm (22.6 in) from your eye: 1 cm spans about 1° and 1 mm spans about 6′.",
+      "application": "Measure small apparent separations directly instead of guessing finger widths.",
+      "caveat": "Hold it perpendicular to your line of sight; apparent angular separation is not necessarily ecliptic longitude separation.",
       "sources": [
         "https://en.wikipedia.org/wiki/Small-angle_approximation"
+      ]
+    },
+    {
+      "id": "sun-two-widths-daily",
+      "date_added": "2026-10-03",
+      "rank": 4,
+      "title": "The Sun advances two Sun-widths a day",
+      "fact": "The Sun shifts roughly 1° eastward along the ecliptic each day, about twice its apparent half-degree diameter.",
+      "application": "Picture the Sun taking roughly one month to cross a 30° zodiac sign.",
+      "caveat": "This is relative to background stars and cannot be watched directly beside the Sun; orbital speed varies.",
+      "sources": [
+        "https://openstax.org/books/astronomy-2e/pages/4-2-the-seasons"
+      ]
+    },
+    {
+      "id": "stars-four-minutes",
+      "date_added": "2026-10-04",
+      "rank": 5,
+      "title": "The stars run four minutes ahead each night",
+      "fact": "At the same clock time on successive nights, the background stars appear about 1° farther west, or reach a given position about four minutes earlier.",
+      "application": "Anticipate seasonal constellation changes: roughly two hours earlier after a month.",
+      "caveat": "Approximate because a sidereal day is 23 h 56 min 4 s; use a fixed observing location and solar clock time.",
+      "sources": [
+        "https://en.wikipedia.org/wiki/Sidereal_time"
+      ]
+    },
+    {
+      "id": "venus-elongation-limit",
+      "date_added": "2026-10-07",
+      "rank": 6,
+      "title": "Venus cannot reach a solar sextile",
+      "fact": "Seen from Earth, Venus stays within about 47° of the Sun, so it cannot form a 60° geocentric longitude separation from the Sun.",
+      "application": "Look for Venus within roughly five fist-widths of the sunset or sunrise Sun's direction; understand why some Sun–Venus aspects never occur.",
+      "caveat": "Maximum elongation varies; never look toward the Sun with optical instruments.",
+      "sources": [
+        "https://science.nasa.gov/venus/"
+      ]
+    },
+    {
+      "id": "fist-ten-degrees",
+      "date_added": "2026-09-26",
+      "rank": 7,
+      "title": "A fist is ten degrees of sky",
+      "fact": "Your clenched fist at arm's length spans about 10° of sky, so three fists approximate one 30° zodiac sign.",
+      "application": "Estimate angular distance without equipment.",
+      "caveat": "Individual anatomy and arm length affect the calibration.",
+      "sources": [
+        "https://science.nasa.gov/skywatching/"
+      ]
+    },
+    {
+      "id": "equinox-shadow-latitude",
+      "date_added": "2026-10-05",
+      "rank": 8,
+      "title": "An equinox shadow can reveal latitude",
+      "fact": "At true solar noon near an equinox, the Sun's altitude is approximately 90° minus the magnitude of your latitude; a vertical stick and its shadow reveal that altitude.",
+      "application": "Measure the stick's height and shadow length to estimate your latitude.",
+      "caveat": "Use level ground and true solar noon; this simple relation assumes a location where the Sun culminates toward the equator and ignores refraction.",
+      "sources": [
+        "https://www.noaa.gov/jetstream"
+      ]
+    },
+    {
+      "id": "solar-solstice-swing",
+      "date_added": "2026-10-08",
+      "rank": 9,
+      "title": "The noon Sun swings about 47° between solstices",
+      "fact": "At mid-northern and mid-southern latitudes, the Sun's noon altitude changes by about 46.9° between the June and December solstices, twice Earth's 23.44° axial tilt.",
+      "application": "Observe the seasonal change in the Sun's height and your noon shadow.",
+      "caveat": "The simple altitude swing applies where the Sun remains on the same side of the zenith at culmination.",
+      "sources": [
+        "https://science.nasa.gov/earth/facts/"
+      ]
+    },
+    {
+      "id": "pinky-one-degree",
+      "date_added": "2026-09-30",
+      "rank": 10,
+      "title": "A pinky is about one degree",
+      "fact": "The width of your little finger at arm's length is roughly 1°; the Moon's apparent diameter is about half that.",
+      "application": "Use your body to visualize one-degree aspect orbs.",
+      "caveat": "Hand dimensions vary, and chart longitude differences do not always equal visual sky separation.",
+      "sources": [
+        "https://science.nasa.gov/skywatching/"
+      ]
+    },
+    {
+      "id": "earth-turns-fifteen",
+      "date_added": "2026-10-02",
+      "rank": 11,
+      "title": "One hour of sky rotation is fifteen degrees",
+      "fact": "Earth's rotation makes the stellar sky turn about 15° per hour, or roughly half a zodiac sign.",
+      "application": "Connect a familiar hour of time with an angular turn of the sky.",
+      "caveat": "This is rotation about the celestial pole; actual apparent displacement on the sky depends on declination.",
+      "sources": [
+        "https://en.wikipedia.org/wiki/Sidereal_time"
+      ]
+    },
+    {
+      "id": "latitude-nautical-mile",
+      "date_added": "2026-10-06",
+      "rank": 12,
+      "title": "One minute of latitude is roughly one nautical mile",
+      "fact": "One arcminute of latitude on Earth spans about one nautical mile (1.852 km), so a degree spans roughly 60 nautical miles.",
+      "application": "Connect the arcminutes of coordinates with distances you could travel north or south.",
+      "caveat": "The length of a minute of latitude varies slightly with latitude because Earth is not spherical.",
+      "sources": [
+        "https://oceanservice.noaa.gov/facts/nautical-mile.html"
+      ]
+    },
+    {
+      "id": "noon-shadow-meridian",
+      "date_added": "2026-10-06",
+      "rank": 13,
+      "title": "A noon shadow marks the meridian",
+      "fact": "At true solar noon, a vertical stick's shadow lies along the local north–south line.",
+      "application": "Find a local cardinal axis using only sunlight and a vertical stick.",
+      "caveat": "The shadow may point north or south; solar noon usually differs from 12:00 civil time.",
+      "sources": [
+        "https://www.noaa.gov/jetstream"
+      ]
+    },
+    {
+      "id": "moon-relative-motion",
+      "date_added": "2026-10-09",
+      "rank": 14,
+      "title": "Two motions carry the Moon in opposite directions",
+      "fact": "The stellar sky turns west at about 15° per hour while the Moon advances east relative to stars at about 0.55° per hour.",
+      "application": "Compare the Moon to a nearby star to distinguish Earth's rotation from lunar orbital motion.",
+      "caveat": "This synthesizes two existing rules; the apparent path across the horizon varies with sky position.",
+      "sources": [
+        "https://openstax.org/books/astronomy-2e/pages/4-5-phases-and-motions-of-the-moon"
       ]
     }
   ]
