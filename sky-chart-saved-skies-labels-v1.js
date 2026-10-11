@@ -56,14 +56,18 @@ function installStyle(){
 
 function dateTime(record){
   const p=profile(record),zone=String(p.timeZone||record?.timeZone||'').trim(),instant=String(p.instant||record?.instant||'').trim(),raw=String(p.dateTime||record?.dateTime||'').trim();
+  const unknown=p.timeUnknown===true||record?.profile?.timeUnknown===true||record?.timeUnknown===true;
   if(window.luxon?.DateTime){
     try{
       let dt=null;
-      if(instant){dt=window.luxon.DateTime.fromISO(instant,{setZone:true});if(dt?.isValid&&zone)dt=dt.setZone(zone)}
+      // Unknown-time skies retain their calendar date; their stored midnight is a placeholder.
+      if(unknown&&raw)dt=window.luxon.DateTime.fromISO(raw,zone?{zone,setZone:true}:{setZone:true});
+      else if(instant){dt=window.luxon.DateTime.fromISO(instant,{setZone:true});if(dt?.isValid&&zone)dt=dt.setZone(zone)}
       else if(raw){dt=window.luxon.DateTime.fromISO(raw,zone?{zone,setZone:true}:{setZone:true})}
-      if(dt?.isValid)return dt.toFormat('MMM d, yyyy · h:mm a ZZZZ');
+      if(dt?.isValid)return unknown?`${dt.toFormat('MMM d, yyyy')} · unknown time`:dt.toFormat('MMM d, yyyy · h:mm a ZZZZ');
     }catch(_){}
   }
+  if(unknown){const date=String(raw||instant).slice(0,10);return[date,'unknown time'].filter(Boolean).join(' · ')}
   if(raw)return raw.replace('T',' · ');
   if(instant){const parsed=new Date(instant);if(!Number.isNaN(parsed.getTime()))return parsed.toLocaleString()}
   return'';
