@@ -216,36 +216,36 @@
   }
 
   function genericPositions(labels) {
-    const count = Math.max(1, labels.length);
-    if (count <= 12) return legacyGenericPositions(labels);
+    const count=Math.max(1,labels.length);
+    if(count<=12)return legacyGenericPositions(labels);
+    const workspace=panel()?.querySelector('.card-row-workspace');
+    const width=Math.max(1,workspace?.clientWidth || CANVAS_W);
+    const height=Math.max(1,(workspace?.clientHeight || CANVAS_H)-visibleToolbarHeight());
+    const margins=START_EDGE_GUTTER*2;
+    // Optimize the *visible* card width, not the scale on a fixed 900x760
+    // logical canvas. Include room for wrapped position text in every row.
+    const stickerHeight=LABEL_H;
     let best=null;
-    // Dense layouts should use the full board footprint. Do not impose an
-    // arbitrary ten-column ceiling: for large readings, an extra column can
-    // remove an entire row and substantially increase card scale.
-    const maxCols=count;
-    for (let cols=3;cols<=maxCols;cols++) {
+    for(let cols=1;cols<=count;cols++){
       const rows=Math.ceil(count/cols);
-      const scaleX=(CANVAS_W-GUTTER*2-GUTTER*Math.max(0,cols-1))/(CARD_W*cols);
-      const scaleY=(CANVAS_H-GUTTER*2-GUTTER*Math.max(0,rows-1))/((CARD_H+LABEL_H)*rows);
-      const scale=Math.min(.62,scaleX,scaleY);
-      if (!best || scale>best.scale+.002 || (Math.abs(scale-best.scale)<=.002 && cols<best.cols)) best={cols,rows,scale};
+      const fit=Math.min((width-margins)/(cols*CARD_W),(height-margins)/(rows*(CARD_H+stickerHeight)));
+      if(!best || fit>best.fit+1e-6 || (Math.abs(fit-best.fit)<1e-6 && cols<best.cols))
+        best={cols,rows,fit};
     }
-    const cols=best?.cols || 4;
-    const rows=best?.rows || Math.ceil(count/cols);
-    const scale=clamp(best?.scale || .52,.32,.62);
-    const cardW=CARD_W*scale;
-    const rowH=(CARD_H+LABEL_H)*scale;
-    // Auto-laid cards pack flush. Spare canvas space belongs after the pack,
-    // not between cards; a gap only appears after the reader deliberately moves one.
-    const gapX=GUTTER;
-    const gapY=GUTTER;
+    // Layout uses normalized logical coordinates; zoomExtents provides the
+    // final fit. Keeping this scale unconstrained by the old .62 ceiling lets
+    // the viewport and the full card-plus-sticker footprint govern size.
+    const scale=Math.min(1,(CANVAS_W-margins)/(best.cols*CARD_W),(CANVAS_H-margins)/(best.rows*(CARD_H+stickerHeight)));
+    const cardW=CARD_W*scale,rowH=(CARD_H+stickerHeight)*scale;
+    const gapX=0,gapY=0;
     return labels.map((label,index)=>{
-      const col=index%cols,row=Math.floor(index/cols);
-      const x=(GUTTER+col*(cardW+gapX))/CANVAS_W;
-      const y=(GUTTER+LABEL_H*scale+row*(rowH+gapY))/CANVAS_H;
+      const col=index%best.cols,row=Math.floor(index/best.cols);
+      const x=(START_EDGE_GUTTER+col*(cardW+gapX))/CANVAS_W;
+      const y=(START_EDGE_GUTTER+stickerHeight*scale+row*(rowH+gapY))/CANVAS_H;
       return position(`position-${index+1}`,label,index+1,transform(x,y,scale));
     });
   }
+
   function legacyDenseAutoLayout(layout) {
     const positions=Array.isArray(layout?.positions)?layout.positions.slice().sort((a,b)=>Number(a.drawOrder)-Number(b.drawOrder)):[];
     if (layout?.id!=='custom-active' || positions.length<=12) return false;
