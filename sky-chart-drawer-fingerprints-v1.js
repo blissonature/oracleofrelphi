@@ -63,8 +63,10 @@ function unknownRulerPlaceholder(){
   return root;
 }
 
-function temporalTrace(sourceSvg){
+function microHeptagram(sourceSvg){
   if(sourceSvg?.dataset?.canonicalSourceReady!=='true'||sourceSvg?.dataset?.canonicalHeptagramReady!=='true')return null;
+  // This is the completed miniheptagram, scaled down as one composition.
+  // Reuse its seven canonical planetary glyphs, both time paths, and day/hour states.
   const root=svg('svg',{
     viewBox:sourceSvg.getAttribute('viewBox')||'0 0 360 360',
     preserveAspectRatio:'xMidYMid meet',
@@ -72,26 +74,10 @@ function temporalTrace(sourceSvg){
     'aria-hidden':'true',
     focusable:'false'
   });
-
-  // The collapsed fingerprint is a temporal trace, not a miniature copy of the
-  // entire heptagram. Keep only completed days, the current partial day, the
-  // current partial hour, and the active day/hour ruler glyphs.
-  sourceSvg.querySelectorAll('.sky-ph-week-segment.past,.sky-ph-week-segment.current').forEach(line=>{
-    const clone=line.cloneNode(true);clone.removeAttribute('id');root.appendChild(clone);
-  });
-  const hour=sourceSvg.querySelector('.sky-ph-hour-segment.current');
-  if(hour){const clone=hour.cloneNode(true);clone.removeAttribute('id');root.appendChild(clone)}
-
-  const activePlanets=new Set();
-  sourceSvg.querySelectorAll('.sky-ph-planet.is-day-ruler,.sky-ph-planet.is-hour-ruler').forEach(group=>activePlanets.add(group));
-  activePlanets.forEach(group=>{
-    const clone=group.cloneNode(true);
-    clone.querySelectorAll('[id]').forEach(node=>node.removeAttribute('id'));
-    clone.querySelectorAll('text').forEach(node=>node.remove());
-    root.appendChild(clone);
-  });
-
-  return root.childElementCount?root:null;
+  Array.from(sourceSvg.children).forEach(child=>root.appendChild(child.cloneNode(true)));
+  // The small copy must not duplicate document identities from its source.
+  root.querySelectorAll('[id]').forEach(node=>node.removeAttribute('id'));
+  return root.querySelectorAll('.sky-ph-planet').length===7?root:null;
 }
 function renderWhere(slot,payload){
   const mount=whereMount(slot);if(!mount)return;
@@ -111,11 +97,11 @@ function renderWhere(slot,payload){
   // fingerprint. Do not independently reject valid rendered geometry because a
   // stored sky uses an older metadata/profile shape.
   if(!payload||!sourceSvg){whereRetry[slot]=0;mount.hidden=true;mount.removeAttribute('aria-label');return}
-  const trace=temporalTrace(sourceSvg);
+  const trace=microHeptagram(sourceSvg);
   if(!trace){mount.hidden=true;mount.removeAttribute('aria-label');if(whereRetry[slot]<24){whereRetry[slot]+=1;window.setTimeout(schedule,50)}return}
   whereRetry[slot]=0;
   mount.appendChild(trace);mount.hidden=false;
-  mount.setAttribute('aria-label',`Where and When fingerprint for Sky ${slot}: week progress and current planetary-hour segment.`);
+  mount.setAttribute('aria-label',`Where and When fingerprint for Sky ${slot}: seven planetary glyphs, weekly heptagram and planetary-hour path.`);
 }
 
 function renderPlacements(slot,payload){
