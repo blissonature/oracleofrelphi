@@ -49,7 +49,10 @@ async function inspect(width,height,suffix){
       x2:Number(line.getAttribute('x2')),y2:Number(line.getAttribute('y2'))
     }));
     const placementColors=Array.from(document.querySelectorAll('[data-layer="placements"] > [data-sky]')).map(host=>{
-      const expected=host.dataset.sky==='A'?'rgb(201, 33, 30)':'rgb(36, 98, 208)';
+      const isAngle=host.dataset.angleAxis==='true';
+      const expectedColor=host.dataset.sky==='A'?'rgb(201, 33, 30)':'rgb(36, 98, 208)';
+      const expected=isAngle?'rgb(255, 255, 255)':expectedColor;
+      const pill=host.querySelector(':scope > .relphi-glyph-bubble > .sky-foundation-angle-pill');
       const art=host.querySelector('.relphi-canonical-glyph');
       const painted=art?[...(art.matches('path,circle,ellipse,rect,polygon,polyline,line,text')?[art]:[]),...Array.from(art.querySelectorAll('path,circle,ellipse,rect,polygon,polyline,line,text'))].filter(node=>{
         if(node.matches('text'))return true;
@@ -63,7 +66,7 @@ async function inspect(width,height,suffix){
         const usesStroke=node.getAttribute('stroke')&&node.getAttribute('stroke')!=='none';
         return(usesFill&&style.fill!==expected)||(usesStroke&&style.stroke!==expected);
       });
-      return{sky:host.dataset.sky,id:host.dataset.placement,expected,painted:painted.length,wrong:wrong.length};
+      return{sky:host.dataset.sky,id:host.dataset.placement,isAngle,expected,painted:painted.length,wrong:wrong.length,pill:!!pill,pillColor:pill?getComputedStyle(pill).fill:null,expectedColor};
     });
     return{
       zodiac,
@@ -99,6 +102,10 @@ async function inspect(width,height,suffix){
   assert.ok(state.placementColors.length>0);
   assert.ok(state.placementColors.every(item=>item.painted>0));
   assert.deepEqual(state.placementColors.filter(item=>item.wrong),[]);
+  const angleColors=state.placementColors.filter(item=>item.isAngle);
+  assert.equal(angleColors.length,state.angleCount,'Every chart angle must be represented in the paint audit');
+  assert.ok(angleColors.every(item=>item.pill&&item.pillColor===item.expectedColor),'Each angle has a red/blue pill behind white canonical text');
+  assert.ok(state.placementColors.filter(item=>!item.isAngle).every(item=>!item.pill),'Ordinary placements must not acquire angle pills');
   assert.equal(state.diagnostics,0);
   assert.deepEqual(errors,[]);
   await page.screenshot({path:`sky-chart-single-canon-${suffix}.png`,fullPage:true,animations:'disabled'});
