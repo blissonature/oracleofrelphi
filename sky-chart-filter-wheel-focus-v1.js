@@ -41,9 +41,8 @@
     return selected.has(relationshipMode(row));
   }
 
-  // Harmonic Window and relationship-scope switches are deliberately excluded here.
-  // They control tolerance/which relationship families are present; neither should dim
-  // unrelated placements, houses, or signs or visually thicken the surviving aspects.
+  // Keep broad candidate eligibility separate from actual visible matches.
+  // Aspect, placement, and Harmonic Window filters jointly determine the kept endpoints.
   function excludedByExplicitFilter(row){
     if(row.classList.contains('sky-foundation-single-sky-cross-hidden'))return true;
     for(const className of row.classList){
@@ -100,9 +99,8 @@
     // the highlighted aspect endpoints after the Harmonic Window is applied.
     const matched=explicitlyMatched.filter(row=>!row.hidden&&
       !Array.from(ORB_HIDDEN_CLASSES).some(name=>row.classList.contains(name)));
-    // An empty relationship result means "show no aspect lines", not "isolate nothing".
-    // Keep the wheel neutral so placements, signs, and houses remain fully legible.
-    const active=explicitlyMatched.length>0&&explicitlyMatched.length<rows.length;
+    // If nothing matches, leave the neutral empty-result presentation unchanged.
+    const active=matched.length>0&&matched.length<rows.length;
     wheel.classList.toggle('has-filter-focus',active);
     if(!active){
       clearMarks(wheel);
