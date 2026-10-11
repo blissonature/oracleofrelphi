@@ -41,9 +41,8 @@
     return selected.has(relationshipMode(row));
   }
 
-  // Harmonic Window and relationship-scope switches are deliberately excluded here.
-  // They control tolerance/which relationship families are present; neither should dim
-  // unrelated placements, houses, or signs or visually thicken the surviving aspects.
+  // Keep broad candidate eligibility separate from actual visible matches.
+  // Aspect, placement, and Harmonic Window filters jointly determine the kept endpoints.
   function excludedByExplicitFilter(row){
     if(row.classList.contains('sky-foundation-single-sky-cross-hidden'))return true;
     for(const className of row.classList){
@@ -95,9 +94,12 @@
 
     const rows=eligibleRows();
     if(!rows.length){clearMarks(wheel);return}
-    const matched=explicitRows(rows);
-    // An empty relationship result means "show no aspect lines", not "isolate nothing".
-    // Keep the wheel neutral so placements, signs, and houses remain fully legible.
+    const explicitlyMatched=explicitRows(rows);
+    // The visible relationship list, not the wider candidate pool, owns
+    // the highlighted aspect endpoints after the Harmonic Window is applied.
+    const matched=explicitlyMatched.filter(row=>!row.hidden&&
+      !Array.from(ORB_HIDDEN_CLASSES).some(name=>row.classList.contains(name)));
+    // If nothing matches, leave the neutral empty-result presentation unchanged.
     const active=matched.length>0&&matched.length<rows.length;
     wheel.classList.toggle('has-filter-focus',active);
     if(!active){
@@ -176,7 +178,8 @@
       'relphi:sky-aspect-multiselect-changed',
       'relphi:sky-zodiac-filter-changed',
       'relphi:sky-configuration-selection-changed',
-      'relphi:sky-aspect-visibility-applied'
+      'relphi:sky-aspect-visibility-applied',
+      'relphi:sky-harmonic-window-visibility-changed'
     ].forEach(name=>window.addEventListener(name,schedule));
     document.addEventListener('change',event=>{
       if(event.target.closest?.('#skyFoundationFocus .sky-chart-filter-bar,#skyFoundationRelationships .sky-chart-filter-bar')&&!event.target.matches?.('[data-harmonic-window-input]'))schedule();
