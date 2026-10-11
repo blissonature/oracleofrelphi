@@ -17,6 +17,11 @@
 .sky-card-fingerprint-tab>.sky-drawer-fingerprint[hidden]{display:none!important}
 .sky-card-fingerprint-tab .sky-card-fingerprint-text{display:grid;place-items:center;width:43px;height:43px;margin:auto;color:#4e463f;text-align:center;font:800 .62rem/1.15 system-ui,sans-serif;letter-spacing:0;line-height:1.15}
 
+/* SVG source strokes use vector-effect:non-scaling-stroke for the large chart.
+   In the 52px micro copy, let ALL strokes and dash intervals scale with its
+   source viewBox instead of remaining 2–6 screen pixels wide. */
+.sky-card-fingerprint-tab .sky-where-fingerprint-heptagram *{vector-effect:none!important}
+.sky-card-fingerprint-tab .sky-where-fingerprint-heptagram .sky-ph-micro-idle-node{stroke:none!important;filter:none!important}
 /* Preserve the miniheptagram's proportions and scaling, including its source line weights. */
 .sky-card-fingerprint-tab .sky-where-fingerprint-heptagram{display:block!important;width:52px!important;height:52px!important;min-width:0!important;min-height:0!important;max-width:52px!important;max-height:52px!important;margin:auto!important;overflow:visible!important;transform:translateY(.5px)!important;transform-origin:center!important}
 
