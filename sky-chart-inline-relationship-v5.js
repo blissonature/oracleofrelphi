@@ -73,7 +73,14 @@ function serializeExpandedRelationship(row,rel){
   if(detail){
     const clone=detail.cloneNode(true);
     clone.querySelectorAll('.inline-rel-tile-copy,[hidden]').forEach(node=>node.remove());
-    const body=String(clone.textContent||'').replace(/[ \t]+/g,' ').replace(/\n{3,}/g,'\n\n').trim();
+    // textContent joins neighboring labels and values without separators.
+    // Serialize leaf text nodes with explicit spaces, independent of visual layout.
+    const parts=[],walker=document.createTreeWalker(clone,NodeFilter.SHOW_TEXT);
+    while(walker.nextNode()){
+      const value=String(walker.currentNode.nodeValue||'').replace(/\\s+/g,' ').trim();
+      if(value)parts.push(value);
+    }
+    const body=parts.join(' ').trim();
     if(body)lines.push(body);
   }
   return lines.join('\n');
