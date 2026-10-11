@@ -95,10 +95,14 @@
 
     const rows=eligibleRows();
     if(!rows.length){clearMarks(wheel);return}
-    const matched=explicitRows(rows);
+    const explicitlyMatched=explicitRows(rows);
+    // The visible relationship list, not the wider candidate pool, owns
+    // the highlighted aspect endpoints after the Harmonic Window is applied.
+    const matched=explicitlyMatched.filter(row=>!row.hidden&&
+      !Array.from(ORB_HIDDEN_CLASSES).some(name=>row.classList.contains(name)));
     // An empty relationship result means "show no aspect lines", not "isolate nothing".
     // Keep the wheel neutral so placements, signs, and houses remain fully legible.
-    const active=matched.length>0&&matched.length<rows.length;
+    const active=explicitlyMatched.length>0&&explicitlyMatched.length<rows.length;
     wheel.classList.toggle('has-filter-focus',active);
     if(!active){
       clearMarks(wheel);
@@ -176,7 +180,8 @@
       'relphi:sky-aspect-multiselect-changed',
       'relphi:sky-zodiac-filter-changed',
       'relphi:sky-configuration-selection-changed',
-      'relphi:sky-aspect-visibility-applied'
+      'relphi:sky-aspect-visibility-applied',
+      'relphi:sky-harmonic-window-visibility-changed'
     ].forEach(name=>window.addEventListener(name,schedule));
     document.addEventListener('change',event=>{
       if(event.target.closest?.('#skyFoundationFocus .sky-chart-filter-bar,#skyFoundationRelationships .sky-chart-filter-bar')&&!event.target.matches?.('[data-harmonic-window-input]'))schedule();
