@@ -77,7 +77,7 @@ function serializeExpandedRelationship(row,rel){
     // Serialize leaf text nodes with explicit spaces, independent of visual layout.
     const parts=[],walker=document.createTreeWalker(clone,NodeFilter.SHOW_TEXT);
     while(walker.nextNode()){
-      const value=String(walker.currentNode.nodeValue||'').replace(/\\s+/g,' ').trim();
+      const value=String(walker.currentNode.nodeValue||'').replace(/\s+/g,' ').trim();
       if(value)parts.push(value);
     }
     const body=parts.join(' ').trim();
