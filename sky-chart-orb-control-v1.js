@@ -43,11 +43,13 @@
     };
   }
 
+  function relationshipKey(node){return `${String(node?.dataset?.relationshipMode||'A-B').toUpperCase()}::${String(node?.dataset?.relationIndex||'')}`}
+
   function reconcilePlacementIsolation(rows,visibleIndexes){
     if(wheelState?.kind!=='placement')return;
     const target=`${wheelState.sky}:${wheelState.value}`,kept=new Set([target]);
     rows.forEach(row=>{
-      if(!visibleIndexes.has(String(row.dataset.relationIndex)))return;
+      if(!visibleIndexes.has(relationshipKey(row)))return;
       const slots=relationshipSlots(row),left=`${slots.left}:${row.dataset.leftPlacement}`,right=`${slots.right}:${row.dataset.rightPlacement}`;
       if(left!==target&&right!==target)return;
       kept.add(left);kept.add(right);
@@ -76,7 +78,7 @@
     queued=false;
     const limit=Number(model()?.getWindow?.()??model()?.defaultWindow??7);
     if(!Number.isFinite(limit))return;
-    const visibleIndexes=new Set(),rows=[...document.querySelectorAll('.sky-foundation-relationship-row[data-relation-index]')],identity=node=>`${String(node?.dataset?.relationshipMode||'A-B').toUpperCase()}::${String(node?.dataset?.relationIndex||'')}`,rowsByIndex=new Map(rows.map(row=>[identity(row),row]));
+    const visibleIndexes=new Set(),rows=[...document.querySelectorAll('.sky-foundation-relationship-row[data-relation-index]')],identity=relationshipKey,rowsByIndex=new Map(rows.map(row=>[identity(row),row]));
     let hiddenByHarmonicWindow=0;
     rows.forEach(row=>{
       const phase=phaseFromRow(row),hiddenByOrb=Number.isFinite(phase)&&phase>limit,hiddenByWheel=wheelIndexes&&!wheelIndexes.has(String(row.dataset.relationIndex));
