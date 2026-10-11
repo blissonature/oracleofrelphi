@@ -65,8 +65,8 @@ function unknownRulerPlaceholder(){
 
 function microHeptagram(sourceSvg){
   if(sourceSvg?.dataset?.canonicalSourceReady!=='true'||sourceSvg?.dataset?.canonicalHeptagramReady!=='true')return null;
-  // This is the completed miniheptagram, scaled down as one composition.
-  // Reuse its seven canonical planetary glyphs, both time paths, and day/hour states.
+  // Reuse the miniheptagram's finished geometry and active canonical ruler glyphs.
+  // Inactive ruler glyphs become simple position markers at this small size.
   const root=svg('svg',{
     viewBox:sourceSvg.getAttribute('viewBox')||'0 0 360 360',
     preserveAspectRatio:'xMidYMid meet',
@@ -77,6 +77,25 @@ function microHeptagram(sourceSvg){
   Array.from(sourceSvg.children).forEach(child=>root.appendChild(child.cloneNode(true)));
   // The small copy must not duplicate document identities from its source.
   root.querySelectorAll('[id]').forEach(node=>node.removeAttribute('id'));
+  // At thumbnail size, inactive planetary masters are indistinguishable. Keep
+  // their seven positions as small solid circles; enlarge only the live rulers.
+  root.querySelectorAll('.sky-ph-planet').forEach(group=>{
+    const active=group.classList.contains('is-day-ruler')||group.classList.contains('is-hour-ruler');
+    const mount=group.querySelector(':scope > .sky-ph-node-glyph');
+    if(!mount)return;
+    if(!active){
+      mount.replaceChildren(svg('circle',{cx:0,cy:0,r:10,fill:'currentColor',class:'sky-ph-micro-idle-node','aria-hidden':'true'}));
+      group.dataset.microRuler='inactive';
+      return;
+    }
+    // Uniformly scale the existing canonical bubble, artwork and day halo;
+    // never redraw or substitute any of the Master Glyph List identities.
+    const master=mount.querySelector(':scope > [data-master-glyph-unit]');
+    if(master){
+      master.setAttribute('transform',`${master.getAttribute('transform')||''} scale(1.45)`);
+      group.dataset.microRuler='active';
+    }
+  });
   return root.querySelectorAll('.sky-ph-planet').length===7?root:null;
 }
 function renderWhere(slot,payload){
@@ -101,7 +120,7 @@ function renderWhere(slot,payload){
   if(!trace){mount.hidden=true;mount.removeAttribute('aria-label');if(whereRetry[slot]<24){whereRetry[slot]+=1;window.setTimeout(schedule,50)}return}
   whereRetry[slot]=0;
   mount.appendChild(trace);mount.hidden=false;
-  mount.setAttribute('aria-label',`Where and When fingerprint for Sky ${slot}: seven planetary glyphs, weekly heptagram and planetary-hour path.`);
+  mount.setAttribute('aria-label',`Where and When fingerprint for Sky ${slot}: seven planetary ruler positions, highlighted day/hour glyphs, weekly heptagram and planetary-hour path.`);
 }
 
 function renderPlacements(slot,payload){
