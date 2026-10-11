@@ -22,6 +22,11 @@
    source viewBox instead of remaining 2–6 screen pixels wide. */
 .sky-card-fingerprint-tab .sky-where-fingerprint-heptagram *{vector-effect:none!important}
 .sky-card-fingerprint-tab .sky-where-fingerprint-heptagram .sky-ph-micro-idle-node{stroke:none!important;filter:none!important}
+/* Source glows are measured in screen pixels, not SVG units. Suppress them
+   in the miniature so the enlarged active glyphs stay legible, not blurry. */
+.sky-card-fingerprint-tab .sky-where-fingerprint-heptagram .sky-ph-day-ruler-ring,
+.sky-card-fingerprint-tab .sky-where-fingerprint-heptagram .sky-ph-planet.is-day-ruler .sky-ph-node-glyph,
+.sky-card-fingerprint-tab .sky-where-fingerprint-heptagram .sky-ph-planet.is-hour-ruler .relphi-glyph-bubble>circle{filter:none!important}
 /* Preserve the miniheptagram's proportions and scaling, including its source line weights. */
 .sky-card-fingerprint-tab .sky-where-fingerprint-heptagram{display:block!important;width:52px!important;height:52px!important;min-width:0!important;min-height:0!important;max-width:52px!important;max-height:52px!important;margin:auto!important;overflow:visible!important;transform:translateY(.5px)!important;transform-origin:center!important}
 
