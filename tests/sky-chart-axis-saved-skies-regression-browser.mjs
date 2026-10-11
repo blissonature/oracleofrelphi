@@ -62,16 +62,26 @@ try{
       const style=getComputedStyle(line),stroke=String(style.stroke||'').toLowerCase();
       return stroke&&stroke!=='none'&&stroke!=='transparent'&&style.visibility!=='hidden'&&style.display!=='none'&&Number(style.opacity||1)>0;
     });
-    return[slot,{exists:!!mount,hidden:mount?.hidden,heptagram:!!heptagram,width:rect?.width||0,height:rect?.height||0,weekLines:weekLines.length,visibleWeekLines:visibleWeekLines.length}];
+    const source=window.RelphiSkyCardShell?.get?.(slot)?.heptagram;
+    const planetaryGlyphs=heptagram?.querySelectorAll('.sky-ph-planet .relphi-canonical-glyph').length||0;
+    const sourceGlyphs=source?.querySelectorAll('.sky-ph-planet .relphi-canonical-glyph').length||0;
+    const hourLines=heptagram?.querySelectorAll('.sky-ph-hour-segment').length||0;
+    const sourceHourLines=source?.querySelectorAll('.sky-ph-hour-segment').length||0;
+    return[slot,{exists:!!mount,hidden:mount?.hidden,heptagram:!!heptagram,width:rect?.width||0,height:rect?.height||0,weekLines:weekLines.length,visibleWeekLines:visibleWeekLines.length,sourceWeekLines:source?.querySelectorAll('.sky-ph-week-segment').length||0,planetaryGlyphs,sourceGlyphs,hourLines,sourceHourLines,duplicateIds:heptagram?.querySelectorAll('[id]').length||0}];
   })));
   for(const slot of ['A','B']){
     const thumb=drawerHeptagrams[slot];
     assert.equal(thumb.exists,true,`Sky ${slot} Where/When thumbprint mount should exist: ${JSON.stringify(thumb)}`);
     assert.equal(thumb.hidden,false,`Sky ${slot} Where/When thumbprint should not be hidden: ${JSON.stringify(thumb)}`);
     assert.equal(thumb.heptagram,true,`Sky ${slot} microheptagram should exist: ${JSON.stringify(thumb)}`);
-    assert.ok(thumb.width>=40&&thumb.height>=40,`Sky ${slot} microheptagram should occupy its visible tab: ${JSON.stringify(thumb)}`);
+    assert.ok(thumb.width>=51&&thumb.height>=51,`Sky ${slot} microheptagram should occupy its 52px fingerprint tab: ${JSON.stringify(thumb)}`);
     assert.ok(thumb.weekLines>=7,`Sky ${slot} microheptagram should retain the weekly star geometry: ${JSON.stringify(thumb)}`);
     assert.equal(thumb.visibleWeekLines,thumb.weekLines,`Sky ${slot} microheptagram lines should be visibly painted: ${JSON.stringify(thumb)}`);
+    assert.equal(thumb.weekLines,thumb.sourceWeekLines,`Sky ${slot} microheptagram must copy all seven-week path segments: ${JSON.stringify(thumb)}`);
+    assert.equal(thumb.planetaryGlyphs,7,`Sky ${slot} microheptagram must retain all seven canonical planet glyphs: ${JSON.stringify(thumb)}`);
+    assert.equal(thumb.planetaryGlyphs,thumb.sourceGlyphs,`Sky ${slot} microheptagram must have all the source glyphs: ${JSON.stringify(thumb)}`);
+    assert.equal(thumb.hourLines,thumb.sourceHourLines,`Sky ${slot} microheptagram must copy every planetary-hour path segment: ${JSON.stringify(thumb)}`);
+    assert.equal(thumb.duplicateIds,0,`Sky ${slot} microheptagram must not duplicate source IDs: ${JSON.stringify(thumb)}`);
   }
 
   // Loading an older Saved Sky into an already-mounted Sky B must rebuild both
@@ -86,12 +96,13 @@ try{
   },null,{timeout:10000});
   const loadedLegacyB=await page.evaluate(()=>{
     const refs=window.RelphiSkyCardShell?.get?.('B'),source=refs?.heptagram,thumb=refs?.whereFingerprint?.querySelector('.sky-where-fingerprint-heptagram'),rect=thumb?.getBoundingClientRect();
-    return{sourceReady:source?.dataset.canonicalSourceReady,sourceWeek:source?.querySelectorAll('.sky-ph-week-segment').length||0,thumb:!!thumb,width:rect?.width||0,height:rect?.height||0};
+    return{sourceReady:source?.dataset.canonicalSourceReady,sourceWeek:source?.querySelectorAll('.sky-ph-week-segment').length||0,thumb:!!thumb,width:rect?.width||0,height:rect?.height||0,glyphs:thumb?.querySelectorAll('.sky-ph-planet .relphi-canonical-glyph').length||0};
   });
   assert.equal(loadedLegacyB.sourceReady,'true',`Loaded legacy Sky B must rebuild its source heptagram: ${JSON.stringify(loadedLegacyB)}`);
   assert.ok(loadedLegacyB.sourceWeek>=7,`Loaded legacy Sky B source must contain weekly heptagram geometry: ${JSON.stringify(loadedLegacyB)}`);
   assert.equal(loadedLegacyB.thumb,true,`Loaded legacy Sky B must display its microheptagram: ${JSON.stringify(loadedLegacyB)}`);
-  assert.ok(loadedLegacyB.width>=40&&loadedLegacyB.height>=40,`Loaded legacy Sky B microheptagram must occupy the visible tab: ${JSON.stringify(loadedLegacyB)}`);
+  assert.equal(loadedLegacyB.glyphs,7,'Loaded Sky B microheptagram must restore all seven canonical planetary glyphs.');
+  assert.ok(loadedLegacyB.width>=51&&loadedLegacyB.height>=51,`Loaded legacy Sky B microheptagram must occupy the visible tab: ${JSON.stringify(loadedLegacyB)}`);
 
   await page.locator('[data-saved-sky-trigger="B"]').click();
   await page.waitForSelector('#skySavedSkiesPopover .sky-saved-list',{timeout:5000});
