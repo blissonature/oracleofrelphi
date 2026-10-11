@@ -1,0 +1,11 @@
+const assert=require('node:assert/strict');
+const fs=require('node:fs');
+const js=fs.readFileSync('drawing-board-workflow-v2.js','utf8');
+const css=fs.readFileSync('drawing-board-workflow-v2.css','utf8');
+assert.match(js,/const width=Math\.max\(1,workspace\?\.clientWidth \|\| CANVAS_W\)/);
+assert.match(js,/for\(let cols=1;cols<=count;cols\+\+\)/);
+assert.match(js,/fit=Math\.min\(\(width-margins\)\/\(cols\*CARD_W\)/);
+assert.match(js,/previous dense pack chose columns against a fixed canvas/);
+const sticker=css.split('\n').find(x=>x.startsWith('#shortListPanel .card-row-workspace .card-row-item>.card-row-position-panel{'));
+for(const x of ['left:0!important','right:0!important','width:100%!important','box-sizing:border-box!important','bottom:100%!important'])assert.ok(sticker.includes(x),x);
+console.log('Viewport fit and position sticker contracts passed');
