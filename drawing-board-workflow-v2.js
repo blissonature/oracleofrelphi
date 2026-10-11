@@ -248,16 +248,34 @@
 
   function legacyDenseAutoLayout(layout) {
     const positions=Array.isArray(layout?.positions)?layout.positions.slice().sort((a,b)=>Number(a.drawOrder)-Number(b.drawOrder)):[];
-    if (layout?.id!=='custom-active' || positions.length<=12) return false;
-    const labels=positions.map((item,index)=>String(item.label || `Position ${index+1}`));
-    const expected=legacyGenericPositions(labels);
+    if(layout?.id!=='custom-active'||positions.length<=12)return false;
+    const labels=positions.map((item,index)=>String(item.label||`Position ${index+1}`));
     const close=(a,b)=>Math.abs(Number(a)-Number(b))<.0015;
-    return positions.every((item,index)=>{
-      const actual=item?.transform || {};
-      const old=expected[index]?.transform || {};
+    const matches=expected=>positions.every((item,index)=>{
+      const actual=item?.transform||{},old=expected[index]?.transform||{};
       return close(actual.x,old.x)&&close(actual.y,old.y)&&close(actual.scale,old.scale)&&close(actual.rotation||0,old.rotation||0);
     });
+    if(matches(legacyGenericPositions(labels)))return true;
+    // The previous dense pack chose columns against a fixed canvas. Recognize
+    // its untouched arrangement so existing 6x3 readings can be repacked too.
+    let best=null;
+    for(let cols=3;cols<=positions.length;cols++){
+      const rows=Math.ceil(positions.length/cols);
+      const scaleX=(CANVAS_W-GUTTER*2-GUTTER*Math.max(0,cols-1))/(CARD_W*cols);
+      const scaleY=(CANVAS_H-GUTTER*2-GUTTER*Math.max(0,rows-1))/((CARD_H+LABEL_H)*rows);
+      const scale=Math.min(.62,scaleX,scaleY);
+      if(!best||scale>best.scale+.002||(Math.abs(scale-best.scale)<=.002&&cols<best.cols))best={cols,scale};
+    }
+    const scale=clamp(best?.scale||.52,.32,.62);
+    const cardW=CARD_W*scale,rowH=(CARD_H+LABEL_H)*scale;
+    return matches(labels.map((label,index)=>{
+      const col=index%best.cols,row=Math.floor(index/best.cols);
+      return position(`position-${index+1}`,label,index+1,transform(
+        (GUTTER+col*(cardW+GUTTER))/CANVAS_W,
+        (GUTTER+LABEL_H*scale+row*(rowH+GUTTER))/CANVAS_H,scale));
+    }));
   }
+
   function migrateLegacyDenseAutoLayout(root) {
     const state=currentPrefabState();
     const layout=state.activeLayout;
