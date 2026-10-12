@@ -21,6 +21,16 @@
    In the 52px micro copy, let ALL strokes and dash intervals scale with its
    source viewBox instead of remaining 2–6 screen pixels wide. */
 .sky-card-fingerprint-tab .sky-where-fingerprint-heptagram *{vector-effect:none!important}
+/* The miniheptagram's 2.5/6 future path dashes shrink to subpixel marks at
+   52px. Set a micro-only optical dash pattern in the source viewBox units:
+   13/20 -> about 1.9px dashes and 2.9px gaps on screen. */
+.sky-card-fingerprint-tab .sky-where-fingerprint-heptagram .sky-ph-week-segment.future{
+  stroke:#77736e!important;
+  stroke-width:6!important;
+  stroke-dasharray:13 20!important;
+  stroke-linecap:round!important;
+  opacity:.75!important;
+}
 .sky-card-fingerprint-tab .sky-where-fingerprint-heptagram .sky-ph-micro-idle-node{stroke:none!important;filter:none!important}
 /* Source glows are measured in screen pixels, not SVG units. Suppress them
    in the miniature so the enlarged active glyphs stay legible, not blurry. */
