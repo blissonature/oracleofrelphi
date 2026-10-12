@@ -74,9 +74,15 @@ try{
     const futureWeek=heptagram?.querySelector('.sky-ph-week-segment.future');
     const dashEffect=futureWeek?getComputedStyle(futureWeek).vectorEffect:'';
     const dashPattern=futureWeek?getComputedStyle(futureWeek).strokeDasharray:'';
+    const dashUnits=dashPattern.match(/[\\d.]+/g)?.map(Number)||[];
+    const viewBox=heptagram?.viewBox?.baseVal;
+    const visualScale=Math.min((rect?.width||0)/(viewBox?.width||360),(rect?.height||0)/(viewBox?.height||360));
+    const futureDashPixels=dashUnits[0]*visualScale;
+    const futureGapPixels=dashUnits[1]*visualScale;
+    const futureStrokePixels=(futureWeek?parseFloat(getComputedStyle(futureWeek).strokeWidth):0)*visualScale;
     const hourLines=heptagram?.querySelectorAll('.sky-ph-hour-segment').length||0;
     const sourceHourLines=source?.querySelectorAll('.sky-ph-hour-segment').length||0;
-    return[slot,{exists:!!mount,hidden:mount?.hidden,heptagram:!!heptagram,width:rect?.width||0,height:rect?.height||0,weekLines:weekLines.length,visibleWeekLines:visibleWeekLines.length,sourceWeekLines:source?.querySelectorAll('.sky-ph-week-segment').length||0,planetaryGlyphs,sourceGlyphs,activeCount:active.length,inactiveCount:inactive.length,inactiveDots,correctlyScaled,noInactiveGlyphs,weekStroke,dashEffect,dashPattern,hourLines,sourceHourLines,duplicateIds:heptagram?.querySelectorAll('[id]').length||0}];
+    return[slot,{exists:!!mount,hidden:mount?.hidden,heptagram:!!heptagram,width:rect?.width||0,height:rect?.height||0,weekLines:weekLines.length,visibleWeekLines:visibleWeekLines.length,sourceWeekLines:source?.querySelectorAll('.sky-ph-week-segment').length||0,planetaryGlyphs,sourceGlyphs,activeCount:active.length,inactiveCount:inactive.length,inactiveDots,correctlyScaled,noInactiveGlyphs,weekStroke,dashEffect,dashPattern,futureDashPixels,futureGapPixels,futureStrokePixels,hourLines,sourceHourLines,duplicateIds:heptagram?.querySelectorAll('[id]').length||0}];
   })));
   for(const slot of ['A','B']){
     const thumb=drawerHeptagrams[slot];
@@ -97,6 +103,11 @@ try{
     assert.equal(thumb.weekStroke,'none',`Sky ${slot} micro line widths must scale with the 52px viewBox: ${JSON.stringify(thumb)}`);
     assert.equal(thumb.dashEffect,'none',`Sky ${slot} dashed strokes must scale with the viewBox: ${JSON.stringify(thumb)}`);
     assert.notEqual(thumb.dashPattern,'none',`Sky ${slot} future path must retain its dash pattern: ${JSON.stringify(thumb)}`);
+    // A nonempty strokeDasharray is not enough: the previous 2.5/6 unit
+    // pattern rendered as subpixel dashes and appeared completely solid.
+    assert.ok(thumb.futureDashPixels>=1.5&&thumb.futureDashPixels<=2.3,`Sky ${slot} future dashes must be visible at 52px: ${JSON.stringify(thumb)}`);
+    assert.ok(thumb.futureGapPixels>=2.4&&thumb.futureGapPixels<=3.4,`Sky ${slot} future dash gaps must remain distinct at 52px: ${JSON.stringify(thumb)}`);
+    assert.ok(thumb.futureStrokePixels>=.75&&thumb.futureStrokePixels<=1.1,`Sky ${slot} future dashed stroke should be fine but visible: ${JSON.stringify(thumb)}`);
     assert.equal(thumb.hourLines,thumb.sourceHourLines,`Sky ${slot} microheptagram must copy every planetary-hour path segment: ${JSON.stringify(thumb)}`);
     assert.equal(thumb.duplicateIds,0,`Sky ${slot} microheptagram must not duplicate source IDs: ${JSON.stringify(thumb)}`);
   }
