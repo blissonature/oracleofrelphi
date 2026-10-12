@@ -74,7 +74,7 @@ try{
     const futureWeek=heptagram?.querySelector('.sky-ph-week-segment.future');
     const dashEffect=futureWeek?getComputedStyle(futureWeek).vectorEffect:'';
     const dashPattern=futureWeek?getComputedStyle(futureWeek).strokeDasharray:'';
-    const dashUnits=dashPattern.match(/[\\d.]+/g)?.map(Number)||[];
+    const dashUnits=dashPattern.match(/[0-9.]+/g)?.map(Number)||[];
     const viewBox=heptagram?.viewBox?.baseVal;
     const visualScale=Math.min((rect?.width||0)/(viewBox?.width||360),(rect?.height||0)/(viewBox?.height||360));
     const futureDashPixels=dashUnits[0]*visualScale;
