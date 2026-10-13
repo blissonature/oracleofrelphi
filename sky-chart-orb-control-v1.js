@@ -68,7 +68,8 @@
       button.dataset.harmonicShowMore='true';
       button.addEventListener('click',event=>{
         event.preventDefault();event.stopPropagation();
-        const m=model();m?.setWindow?.(m?.maxWindow??12);
+        const m=model(),current=Number(m?.getWindow?.()??m?.defaultWindow??7),max=Number(m?.maxWindow??12);
+        m?.setWindow?.(Math.min(max,Math.floor(current)+1));
         schedule();
       });
       list.appendChild(button);
@@ -116,9 +117,10 @@
     const more=ensureShowMoreRow(),max=Number(model()?.maxWindow??12);
     if(more){
       const canReveal=limit<max&&hiddenByHarmonicWindow>0;
+      const next=Math.min(max,Math.floor(limit)+1);
       more.hidden=!canReveal;
-      more.textContent=canReveal?`${hiddenByHarmonicWindow} more beyond ${Number(limit.toFixed(2))}° Harmonic Window · Show more`:'';
-      more.setAttribute('aria-label',canReveal?`Show ${hiddenByHarmonicWindow} more relationships by increasing Harmonic Window to ${max} degrees`:'Show more relationships');
+      more.textContent=canReveal?`${hiddenByHarmonicWindow} more beyond ${Number(limit.toFixed(2))}° · Increase to ${next}°`:'';
+      more.setAttribute('aria-label',canReveal?`Increase Harmonic Window to ${next} degrees to reveal additional relationships`:'Show more relationships');
     }
     document.documentElement.dataset.skyHarmonicWindow=String(limit);
 
