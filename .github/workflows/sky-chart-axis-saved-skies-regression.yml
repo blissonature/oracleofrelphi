@@ -4,6 +4,8 @@ on:
   pull_request:
     paths:
       - 'sky-chart-leader-integrity-v1.js'
+      - 'sky-chart-drawer-fingerprints-v1.js'
+      - 'sky-chart-card-drawers-v1.css'
       - 'sky-chart-saved-skies-v1.js'
       - 'sky-chart-saved-skies-private-load-v1.js'
       - 'sky-chart-saved-skies-labels-v1.js'
@@ -24,6 +26,7 @@ jobs:
       - name: JavaScript syntax
         run: |
           node --check sky-chart-leader-integrity-v1.js
+          node --check sky-chart-drawer-fingerprints-v1.js
           node --check sky-chart-saved-skies-v1.js
           node --check sky-chart-saved-skies-private-load-v1.js
           node --check sky-chart-saved-skies-labels-v1.js

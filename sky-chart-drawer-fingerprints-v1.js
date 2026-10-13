@@ -63,8 +63,10 @@ function unknownRulerPlaceholder(){
   return root;
 }
 
-function temporalTrace(sourceSvg){
+function microHeptagram(sourceSvg){
   if(sourceSvg?.dataset?.canonicalSourceReady!=='true'||sourceSvg?.dataset?.canonicalHeptagramReady!=='true')return null;
+  // Reuse the miniheptagram's finished geometry and active canonical ruler glyphs.
+  // Inactive ruler glyphs become simple position markers at this small size.
   const root=svg('svg',{
     viewBox:sourceSvg.getAttribute('viewBox')||'0 0 360 360',
     preserveAspectRatio:'xMidYMid meet',
@@ -72,26 +74,29 @@ function temporalTrace(sourceSvg){
     'aria-hidden':'true',
     focusable:'false'
   });
-
-  // The collapsed fingerprint is a temporal trace, not a miniature copy of the
-  // entire heptagram. Keep only completed days, the current partial day, the
-  // current partial hour, and the active day/hour ruler glyphs.
-  sourceSvg.querySelectorAll('.sky-ph-week-segment.past,.sky-ph-week-segment.current').forEach(line=>{
-    const clone=line.cloneNode(true);clone.removeAttribute('id');root.appendChild(clone);
+  Array.from(sourceSvg.children).forEach(child=>root.appendChild(child.cloneNode(true)));
+  // The small copy must not duplicate document identities from its source.
+  root.querySelectorAll('[id]').forEach(node=>node.removeAttribute('id'));
+  // At thumbnail size, inactive planetary masters are indistinguishable. Keep
+  // their seven positions as small solid circles; enlarge only the live rulers.
+  root.querySelectorAll('.sky-ph-planet').forEach(group=>{
+    const active=group.classList.contains('is-day-ruler')||group.classList.contains('is-hour-ruler');
+    const mount=group.querySelector(':scope > .sky-ph-node-glyph');
+    if(!mount)return;
+    if(!active){
+      mount.replaceChildren(svg('circle',{cx:0,cy:0,r:10,fill:'currentColor',class:'sky-ph-micro-idle-node','aria-hidden':'true'}));
+      group.dataset.microRuler='inactive';
+      return;
+    }
+    // Uniformly scale the existing canonical bubble, artwork and day halo;
+    // never redraw or substitute any of the Master Glyph List identities.
+    const master=mount.querySelector(':scope > [data-master-glyph-unit]');
+    if(master){
+      master.setAttribute('transform',`${master.getAttribute('transform')||''} scale(1.45)`);
+      group.dataset.microRuler='active';
+    }
   });
-  const hour=sourceSvg.querySelector('.sky-ph-hour-segment.current');
-  if(hour){const clone=hour.cloneNode(true);clone.removeAttribute('id');root.appendChild(clone)}
-
-  const activePlanets=new Set();
-  sourceSvg.querySelectorAll('.sky-ph-planet.is-day-ruler,.sky-ph-planet.is-hour-ruler').forEach(group=>activePlanets.add(group));
-  activePlanets.forEach(group=>{
-    const clone=group.cloneNode(true);
-    clone.querySelectorAll('[id]').forEach(node=>node.removeAttribute('id'));
-    clone.querySelectorAll('text').forEach(node=>node.remove());
-    root.appendChild(clone);
-  });
-
-  return root.childElementCount?root:null;
+  return root.querySelectorAll('.sky-ph-planet').length===7?root:null;
 }
 function renderWhere(slot,payload){
   const mount=whereMount(slot);if(!mount)return;
@@ -111,11 +116,11 @@ function renderWhere(slot,payload){
   // fingerprint. Do not independently reject valid rendered geometry because a
   // stored sky uses an older metadata/profile shape.
   if(!payload||!sourceSvg){whereRetry[slot]=0;mount.hidden=true;mount.removeAttribute('aria-label');return}
-  const trace=temporalTrace(sourceSvg);
+  const trace=microHeptagram(sourceSvg);
   if(!trace){mount.hidden=true;mount.removeAttribute('aria-label');if(whereRetry[slot]<24){whereRetry[slot]+=1;window.setTimeout(schedule,50)}return}
   whereRetry[slot]=0;
   mount.appendChild(trace);mount.hidden=false;
-  mount.setAttribute('aria-label',`Where and When fingerprint for Sky ${slot}: week progress and current planetary-hour segment.`);
+  mount.setAttribute('aria-label',`Where and When fingerprint for Sky ${slot}: seven planetary ruler positions, highlighted day/hour glyphs, weekly heptagram and planetary-hour path.`);
 }
 
 function renderPlacements(slot,payload){
