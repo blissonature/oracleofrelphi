@@ -35,3 +35,12 @@ test('intermediate placement popup survives wheel refresh and intercepts pointer
  assert.match(focus,/event\.stopImmediatePropagation\(\)/);
  assert.match(focus,/event\.key==='Escape'/);
 });
+
+test('revealed placement name is title cased and popover stays anchored in viewport',()=>{
+ assert.match(focus,/rawName\.replace\(\/\\b\[a-z\]\/g,letter=>letter\.toUpperCase\(\)\)/);
+ assert.match(focus,/rect\.bottom\+12/);
+ assert.match(focus,/rect\.top-height-12/);
+ assert.match(focus,/panel\.style\.left/);
+ assert.match(focus,/panel\.style\.top/);
+ assert.match(css,/text-align:left!important/);
+});
