@@ -262,7 +262,9 @@
   }
   function keepFor(state){
     const id=stateKey(state);
-    const cached=cache.keepCache.get(id);
+    // Placement counterpart visibility changes independently of pointer position.
+    // Recompute each hover so a previous filtered result cannot remain cached.
+    const cached=state.kind==='placement'?null:cache.keepCache.get(id);
     if(cached)return cached;
 
     const matched=new Set(),identities=new Set(),placements=new Set(),houses=new Set(),signs=new Set();
@@ -274,6 +276,30 @@
         signs.add(end.sign);
       }
     });
+    if(state.kind==='placement'){
+      // The fast-path line index may lag the independently rendered A-A/B-B
+      // relationship rows. Use their scoped endpoints as an additional source,
+      // but never resurrect a relationship filtered from the wheel.
+      const target=key(state.sky,state.value);
+      const hiddenClasses=['sky-chart-filter-hidden','sky-chart-multiselect-hidden',
+        'sky-chart-house-multiselect-hidden','sky-chart-aspect-multiselect-hidden',
+        'sky-chart-sign-filter-hidden','sky-chart-orb-hidden','sky-orb-filter-hidden',
+        'sky-chart-semantic-hidden','sky-foundation-single-sky-cross-hidden'];
+      document.querySelectorAll('#skyFoundationRelationshipList > .sky-foundation-relationship-row[data-relation-index]').forEach(row=>{
+        if(hiddenClasses.some(name=>row.classList.contains(name)))return;
+        const slots=relationshipSlots(row);
+        const left=key(slots.left,row.dataset.leftPlacement),right=key(slots.right,row.dataset.rightPlacement);
+        if(left!==target&&right!==target)return;
+        const identity=relationshipIdentity(row);
+        if(!identity)return;
+        const lines=cache.focus.aspect.get(identity);
+        if(!lines||!Array.from(lines).some(lineEligible))return;
+        for(const endpoint of [left,right])placements.add(endpoint);
+        lines.forEach(line=>{if(lineEligible(line))identities.add(identity)});
+        const address=String(row.dataset.relationIndex||'');
+        if(address)matched.add(address);
+      });
+    }
 
     if(state.kind==='house'){
       houses.add(key(state.sky,state.value));
@@ -309,7 +335,7 @@
     if(state.kind==='aspect')placements.forEach(value=>cache.focus.placement.get(value)?.forEach(node=>endpoints.add(node)));
 
     const result={matched,identities,placements,houses,signs,nodes,exact,endpoints};
-    cache.keepCache.set(id,result);
+    if(state.kind!=='placement')cache.keepCache.set(id,result);
     return result;
   }
 
