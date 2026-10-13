@@ -135,7 +135,7 @@
     const wheel=document.querySelector('#skyFoundationWheelMount > .sky-foundation-wheel');
     if(!wheel)return;
 
-    closePopup();
+    // Never dismiss the reveal dialog merely because wheel state recalculates.
     wheel.querySelectorAll('.is-filter-kept,.is-filter-intermediate').forEach(node=>node.classList.remove('is-filter-kept','is-filter-intermediate'));
 
     // Aspect selection owns whether aspect geometry is present, not whether
@@ -169,7 +169,6 @@
     matched.forEach(row=>{
       const index=String(row.dataset.relationIndex||'');
       if(index)relations.add(index);
-      const slots=relationshipSlots(row);
       const keys=endpoints(row),value=phase(row);
       // Only already-visible relationship lines establish full emphasis.
       const shown=!row.hidden&&!row.classList.contains('sky-chart-orb-hidden')&&
@@ -216,6 +215,14 @@
 
   function start(){
     document.addEventListener('click',onPlacementClick,true);
+    document.addEventListener('keydown',event=>{
+      if(event.key!=='Enter'&&event.key!==' ')return;
+      const marker=event.target.closest?.('#skyFoundationWheelMount [data-layer="placements"] [data-sky][data-placement].is-filter-intermediate');
+      if(!marker)return;
+      event.preventDefault();event.stopImmediatePropagation();
+      const key=`${marker.dataset.sky}:${marker.dataset.placement}`,required=hiddenNearest.get(key);
+      if(Number.isFinite(required))openPopup(marker,key,required);
+    },true);
     document.addEventListener('pointerdown',event=>{if(popup&&!event.target.closest?.('.sky-focus-hidden-aspect-popover')&&!event.target.closest?.('.is-filter-intermediate'))closePopup()},true);
     document.addEventListener('keydown',event=>{if(event.key==='Escape')closePopup()});
     observeRows();
