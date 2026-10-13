@@ -20,6 +20,24 @@
 #skyFoundationWheelMount>.sky-foundation-wheel.has-filter-focus:not(.has-isolation) [data-layer="leaders"] [data-sky][data-placement].is-filter-kept{
   opacity:1!important;
 }
+#skyFoundationWheelMount>.sky-foundation-wheel.has-filter-focus:not(.has-isolation) [data-layer="placements"] [data-sky][data-placement].is-filter-intermediate,
+#skyFoundationWheelMount>.sky-foundation-wheel.has-filter-focus:not(.has-isolation) [data-layer="leaders"] [data-sky][data-placement].is-filter-intermediate{
+  opacity:.7!important;
+}
+#skyFoundationWheelMount>.sky-foundation-wheel.has-filter-focus:not(.has-isolation) [data-layer="placements"] [data-sky][data-placement].is-filter-intermediate{cursor:pointer}
+.sky-focus-hidden-aspect-popover{
+ position:fixed;z-index:10050;width:min(300px,calc(100vw - 16px));
+ box-sizing:border-box;background:#fffdfa;color:#241f1b;border:1px solid #a49a90;
+ border-radius:12px;padding:12px;box-shadow:0 5px 20px rgba(0,0,0,.2);
+ font:600 13px/1.45 Montserrat,system-ui,sans-serif;
+}
+.sky-focus-hidden-aspect-popover p{margin:0 0 12px}
+.sky-focus-hidden-aspect-actions{display:flex;justify-content:flex-end;gap:8px;flex-wrap:wrap}
+.sky-focus-hidden-aspect-actions button{
+ font:700 12px/1.25 Montserrat,system-ui,sans-serif;border:1px solid #8a827a;
+ border-radius:999px;padding:7px 12px;background:#fffdfa;color:#241f1b;cursor:pointer;
+}
+.sky-focus-hidden-aspect-actions button:last-child{background:#c9211e;border-color:#c9211e;color:#fff}
 @media(prefers-reduced-motion:reduce){
   #skyFoundationWheelMount>.sky-foundation-wheel.has-filter-focus:not(.has-isolation) [data-layer="aspects"] .sky-foundation-aspect{transition:none}
 }
