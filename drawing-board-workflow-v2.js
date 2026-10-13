@@ -4751,9 +4751,9 @@
     function wrap(text,font,maxWidth) {
       context.font=font;
       const rows=[];
-      String(text||'').split(/\\n/).forEach(paragraph=>{
+      String(text||'').split(/\n/).forEach(paragraph=>{
         let line='';
-        for (const word of paragraph.split(/\\s+/).filter(Boolean)) {
+        for (const word of paragraph.split(/\s+/).filter(Boolean)) {
           const trial=line?line+' '+word:word;
           if (line && context.measureText(trial).width>maxWidth) {rows.push(line);line=word;}
           else line=trial;
@@ -4772,14 +4772,17 @@
     const contentHeight=pad+headerHeight+positionLines.length*42+35+artHeight+50+titleLines.length*52+20+meaningLines.length*40+pad+footerHeight;
     canvas.height=Math.max(1200,contentHeight);
     context.fillStyle='#fffdf8';context.fillRect(0,0,width,canvas.height);
-    context.fillStyle='#5e2020';context.textAlign='left';
+    context.fillStyle='#171412';context.textAlign='left';
     context.drawImage(logo,pad,pad,72,72);
     context.font='700 32px '+fontFamily;
-    context.fillText('Oracle of Relphi',pad+90,pad+47);
-    context.strokeStyle='#e6ddd5';context.lineWidth=2;
+    context.fillText('Oracle of ',pad+90,pad+47);
+    const brandLead=context.measureText('Oracle of ').width;
+    context.fillStyle='#dc1f18';
+    context.fillText('Relphi',pad+90+brandLead,pad+47);
+    context.strokeStyle='#d8cec5';context.lineWidth=2;
     context.beginPath();context.moveTo(pad,pad+headerHeight-13);context.lineTo(width-pad,pad+headerHeight-13);context.stroke();
     let y=pad+headerHeight+28;
-    context.fillStyle='#5e2020';context.font=positionFont;context.textAlign='center';
+    context.fillStyle='#dc1f18';context.font=positionFont;context.textAlign='center';
     positionLines.forEach(line=>{context.fillText(line,width/2,y);y+=42;});
     y+=34;
     context.save();
@@ -4787,14 +4790,14 @@
     else context.drawImage(exportImage,(width-artWidth)/2,y,artWidth,artHeight);
     context.restore();
     y+=artHeight+50;
-    context.fillStyle='#201b1b';context.font=titleFont;
+    context.fillStyle='#171412';context.font=titleFont;
     titleLines.forEach(line=>{context.fillText(line,width/2,y);y+=52;});
     y+=20;context.textAlign='left';context.font=meaningFont;
     meaningLines.forEach(line=>{context.fillText(line,pad,y);y+=40;});
     const footerY=canvas.height-footerHeight;
-    context.strokeStyle='#e6ddd5';
+    context.strokeStyle='#d8cec5';
     context.beginPath();context.moveTo(pad,footerY);context.lineTo(width-pad,footerY);context.stroke();
-    context.fillStyle='#5e2020';context.font='600 24px '+fontFamily;context.textAlign='center';
+    context.fillStyle='#dc1f18';context.font='600 24px '+fontFamily;context.textAlign='center';
     context.fillText('oracleofrelphi.com',width/2,footerY+47);
     return new Promise((resolve,reject)=>canvas.toBlob(blob=>blob?resolve(blob):reject(new Error('Could not create PNG.')),'image/png'));
   }
