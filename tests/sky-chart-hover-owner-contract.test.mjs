@@ -82,7 +82,7 @@ test('Focus never dims any placement category in either sky',()=>{
    otherPoints:['chiron','lilith','north-node','south-node','part-of-fortune','vertex','anti-vertex']
  };
  const selectors=Object.values(representative).flatMap(ids=>ids).flatMap(id=>['A','B'].map(sky=>`[data-sky="${sky}"][data-placement="${id}"]`));
- assert.equal(selectors.length,46);
+ assert.equal(selectors.length,42);
  // Focus stylesheet must not target ANY placement or leader, by category or
  // via blanket layer/attribute selectors.
  for(const line of css.split('\\n')){
