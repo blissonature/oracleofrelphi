@@ -42,7 +42,8 @@
   }
 
   // Keep broad candidate eligibility separate from actual visible matches.
-  // Aspect, placement, and Harmonic Window filters jointly determine the kept endpoints.
+  // Explicit aspect, placement, house and sign filters determine visual focus.
+  // Harmonic Window is a relationship visibility control only.
   function excludedByExplicitFilter(row){
     if(row.classList.contains('sky-foundation-single-sky-cross-hidden'))return true;
     for(const className of row.classList){
@@ -95,10 +96,10 @@
     const rows=eligibleRows();
     if(!rows.length){clearMarks(wheel);return}
     const explicitlyMatched=explicitRows(rows);
-    // The visible relationship list, not the wider candidate pool, owns
-    // the highlighted aspect endpoints after the Harmonic Window is applied.
-    const matched=explicitlyMatched.filter(row=>!row.hidden&&
-      !Array.from(ORB_HIDDEN_CLASSES).some(name=>row.classList.contains(name)));
+    // Only explicit filter choices can change wheel brightness. The
+    // Harmonic Window hides aspect relationships, never planetary placements.
+    // row.hidden and orb-hidden classes are deliberately excluded here.
+    const matched=explicitlyMatched;
     // If nothing matches, leave the neutral empty-result presentation unchanged.
     const active=matched.length>0&&matched.length<rows.length;
     wheel.classList.toggle('has-filter-focus',active);
