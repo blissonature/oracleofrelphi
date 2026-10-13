@@ -93,3 +93,11 @@ test('Focus never dims any placement category in either sky',()=>{
  assert.doesNotMatch(focus,/\[data-layer="placements"\]/);
  assert.doesNotMatch(focus,/\[data-layer="leaders"\]/);
 });
+
+test('leader integrity must not reintroduce Focus-menu dimming after page load',()=>{
+ const leader=fs.readFileSync('sky-chart-leader-integrity-v1.js','utf8');
+ const html=fs.readFileSync('sky-chart.html','utf8');
+ assert.doesNotMatch(leader,/has-filter-focus[^\\n]*leaders/);
+ assert.match(leader,/has-isolation[^\\n]*leaders/);
+ assert.match(html,/sky-chart-leader-integrity-v1\\.js\\?v=5/);
+});
