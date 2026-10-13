@@ -103,7 +103,8 @@
       if(row){line.dataset.harmonicWindow=row.dataset.harmonicWindow||'';line.dataset.harmonicCoherence=row.dataset.harmonicCoherence||''}
     });
 
-    reconcilePlacementIsolation(rows,visibleIndexes);
+    // No placement or leader highlighting here: Harmonic Window owns only
+    // relationship rows and aspect-line visibility.
     const count=document.getElementById('skyFoundationRelationshipCount'),empty=document.getElementById('skyFoundationRelationshipEmpty');
     if(count){
       count.textContent=String(visibleIndexes.size);
