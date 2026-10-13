@@ -26,3 +26,12 @@ test('reveal is explicit, whole-degree, and never exceeds model maximum',()=>{
 test('preview loads updated implementations',()=>{
  for(const suffix of ['sky-chart-filter-wheel-focus-v1.js?v=16','sky-chart-filter-wheel-focus-v1.css?v=4','sky-chart-orb-control-v1.js?v=29'])assert.ok(html.includes(suffix));
 });
+
+test('intermediate placement popup survives wheel refresh and intercepts pointer input',()=>{
+ const sync=focus.slice(focus.indexOf('function sync()'),focus.indexOf('function whereWhenEditing()'));
+ assert.doesNotMatch(sync,/closePopup\(\)/);
+ assert.match(focus,/addEventListener\('pointerdown',onPlacementClick,true\)/);
+ assert.match(focus,/addEventListener\('click',onPlacementClick,true\)/);
+ assert.match(focus,/event\.stopImmediatePropagation\(\)/);
+ assert.match(focus,/event\.key==='Escape'/);
+});
