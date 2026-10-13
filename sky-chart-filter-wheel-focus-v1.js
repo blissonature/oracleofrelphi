@@ -102,15 +102,21 @@
       return;
     }
 
-    const relations=new Set();
+    const relations=new Set(),placements=new Set();
     matched.forEach(row=>{
       const index=String(row.dataset.relationIndex||'');
       if(index)relations.add(index);
+      const slots=relationshipSlots(row);
+      if(row.dataset.leftPlacement)placements.add(`${slots.left}:${row.dataset.leftPlacement}`);
+      if(row.dataset.rightPlacement)placements.add(`${slots.right}:${row.dataset.rightPlacement}`);
     });
-    // Focus-menu filters may emphasize eligible aspects, but never set
-    // planetary, leader, house, or sign visual-focus markers.
+    // Emphasis belongs to BOTH ends of every matching relationship, not
+    // exclusively to the placement category selected in the Focus menu.
     wheel.querySelectorAll('[data-layer="aspects"] .sky-foundation-aspect[data-relation-index]').forEach(node=>{
       node.classList.toggle('is-filter-kept',relations.has(String(node.dataset.relationIndex)));
+    });
+    wheel.querySelectorAll('[data-layer="placements"] [data-sky][data-placement], [data-layer="leaders"] [data-sky][data-placement]').forEach(node=>{
+      node.classList.toggle('is-filter-kept',placements.has(`${node.dataset.sky}:${node.dataset.placement}`));
     });
 
     document.documentElement.dataset.skyFilterWheelFocus=`${matched.length}/${rows.length}`;
