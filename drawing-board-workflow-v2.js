@@ -4684,6 +4684,110 @@
       entry.scrollTop=0;
     }
   }
+
+  // Focus exports use the same canonical reading entry as the board's existing text export.
+  function focusExportData(reader) {
+    const index=Number(reader?.dataset.focusIndex);
+    if (!Number.isInteger(index) || !cardAt(index)) return null;
+    const card=cardAt(index);
+    const cardId=String(card.dataset.rowCard||'');
+    const reversed=focusCardIsReversed(index);
+    const entries=ledgerBridge()?.drawingBoardReadingEntries?.() || [];
+    const source=entries.find(item=>Number(item.index)===index || Number(item.positionIndex)===index)
+      || entries[index] || {};
+    const entry=reader.querySelector('.relphi-focus-entry');
+    const title=String(ledgerBridge()?.titleFor?.(cardId) || source.title || cardId.replace(/_/g,' ')).trim();
+    const upright=entry?.querySelector('.locked-relphi-priority,.uhn-panel');
+    const reversedSection=entry?.querySelector('[data-relphi-focus-reversed] p');
+    const interpretation=reversed
+      ? String(reversedSection?.textContent || window.RelphiTarotReversedMeanings?.meaningFor?.(cardId) || source.interpretation || '').trim()
+      : String(source.interpretation || upright?.textContent || '').trim();
+    const image=reader.querySelector('.relphi-focus-art');
+    return {position:positionLabel(index),title,reversed,interpretation,image};
+  }
+  function focusExportText(data) {
+    return [data.position,data.title+(data.reversed?' · reversed':''),data.interpretation].filter(Boolean).join('\n\n');
+  }
+  async function focusExportPng(data) {
+    if (!data?.image?.src) throw new Error('Card artwork is unavailable.');
+    await data.image.decode?.();
+    const width=900, pad=56, artWidth=360, artHeight=624;
+    const canvas=document.createElement('canvas');
+    canvas.width=width;
+    const context=canvas.getContext('2d');
+    if (!context) throw new Error('PNG rendering is unavailable.');
+    const lines=[];
+    function wrap(text,font,maxWidth) {
+      context.font=font;
+      const rows=[];
+      String(text||'').split(/\n/).forEach(paragraph=>{
+        let line='';
+        for (const word of paragraph.split(/\s+/).filter(Boolean)) {
+          const trial=line?line+' '+word:word;
+          if (line && context.measureText(trial).width>maxWidth) {rows.push(line);line=word;}
+          else line=trial;
+        }
+        rows.push(line);
+      });
+      return rows;
+    }
+    const positionLines=wrap(data.position,'bold 28px Georgia',width-pad*2);
+    const titleLines=wrap(data.title+(data.reversed?' · reversed':''),'bold 36px Georgia',width-pad*2);
+    const meaningLines=wrap(data.interpretation,'25px Georgia',width-pad*2);
+    canvas.height=Math.max(1100,pad*3+positionLines.length*40+artHeight+titleLines.length*50+meaningLines.length*38+100);
+    context.fillStyle='#fffdf8';context.fillRect(0,0,width,canvas.height);
+    let y=pad+30;
+    context.fillStyle='#5e2020';context.font='bold 28px Georgia';context.textAlign='center';
+    positionLines.forEach(line=>{context.fillText(line,width/2,y);y+=40;});
+    y+=22;
+    context.save();
+    if (data.reversed) {context.translate(width/2,y+artHeight/2);context.rotate(Math.PI);context.drawImage(data.image,-artWidth/2,-artHeight/2,artWidth,artHeight);}
+    else context.drawImage(data.image,(width-artWidth)/2,y,artWidth,artHeight);
+    context.restore();
+    y+=artHeight+50;
+    context.fillStyle='#201b1b';context.font='bold 36px Georgia';
+    titleLines.forEach(line=>{context.fillText(line,width/2,y);y+=50;});
+    y+=18;context.textAlign='left';context.font='25px Georgia';
+    meaningLines.forEach(line=>{context.fillText(line,pad,y);y+=38;});
+    return new Promise((resolve,reject)=>canvas.toBlob(blob=>blob?resolve(blob):reject(new Error('Could not create PNG.')),'image/png'));
+  }
+  function installFocusExports(reader) {
+    const shell=reader.querySelector('.relphi-focus-shell');
+    if (!shell) return;
+    const actions=document.createElement('div');
+    actions.className='relphi-focus-export-actions';
+    actions.setAttribute('aria-label','Single card export');
+    const status=document.createElement('span');
+    status.className='relphi-focus-export-status';
+    status.setAttribute('role','status');
+    const action=(label,handler)=>{
+      const button=document.createElement('button');button.type='button';button.textContent=label;
+      button.addEventListener('click',async()=>{
+        button.disabled=true;status.textContent='';
+        try {const data=focusExportData(reader);if (!data) throw new Error('No card selected.');await handler(data);status.textContent=label+' complete.';}
+        catch(error){status.textContent=error?.message || 'Export failed.';}
+        finally{button.disabled=false;}
+      });
+      actions.appendChild(button);
+    };
+    action('Copy Text',async data=>{if(!await writeDrawingBoardClipboard(focusExportText(data)))throw new Error('Unable to copy text.');});
+    action('Copy PNG',async data=>{
+      if (!navigator.clipboard?.write || !window.ClipboardItem)throw new Error('PNG clipboard is unsupported in this browser.');
+      const blob=await focusExportPng(data);
+      await navigator.clipboard.write([new ClipboardItem({'image/png':blob})]);
+    });
+    action('Download PNG',async data=>{
+      const blob=await focusExportPng(data);
+      const url=URL.createObjectURL(blob);
+      const link=document.createElement('a');
+      link.href=url;link.download=(data.title.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'') || 'tarot-card')+(data.reversed?'-reversed':'')+'.png';
+      document.body.appendChild(link);link.click();link.remove();
+      setTimeout(()=>URL.revokeObjectURL(url),1000);
+    });
+    actions.appendChild(status);
+    shell.insertBefore(actions,shell.querySelector('footer'));
+  }
+
   function keepFocusStripCurrentVisible(strip, centerCurrent = false) {
     requestAnimationFrame(()=>{
       if (!strip?.isConnected) return;
@@ -4862,6 +4966,7 @@
     renderFocusEntry(reader,index);
     renderFocusStrip(reader,index,{preserveScroll:false});
     installFocusStripScrub(reader);
+    installFocusExports(reader);
     reader.querySelector('.relphi-focus-close').addEventListener('click',()=>closeFocus({acknowledge:true}));
     reader.querySelector('.relphi-focus-unpack')?.addEventListener('click',()=>{
       const target=Number(reader.dataset.focusIndex);
