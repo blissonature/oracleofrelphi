@@ -14,7 +14,6 @@
     'sky-chart-sign-filter-hidden'
   ]);
   const ORB_HIDDEN_CLASSES=new Set(['sky-chart-orb-hidden','sky-orb-filter-hidden']);
-  const SIGNS=['aries','taurus','gemini','cancer','leo','virgo','libra','scorpio','sagittarius','capricorn','aquarius','pisces'];
   let queued=false;
   let observer=null;
   let observedList=null;
@@ -63,12 +62,6 @@
 
   function explicitRows(rows){return rows.filter(row=>!excludedByExplicitFilter(row))}
 
-  function signNumber(node){
-    if(node.dataset.sign!==undefined&&node.dataset.sign!=='')return Number(node.dataset.sign);
-    const id=String(node.dataset.zodiacSign||'').toLowerCase();
-    return SIGNS.indexOf(id);
-  }
-
   function clearMarks(wheel){
     wheel?.classList.remove('has-filter-focus');
     wheel?.querySelectorAll('.is-filter-kept').forEach(node=>node.classList.remove('is-filter-kept'));
@@ -110,39 +103,14 @@
     }
 
     const relations=new Set();
-    const placements=new Set();
-    const houses=new Set();
-    const signs=new Set();
-
     matched.forEach(row=>{
       const index=String(row.dataset.relationIndex||'');
       if(index)relations.add(index);
-      const slots=relationshipSlots(row);
-      const left=String(row.dataset.leftPlacement||'');
-      const right=String(row.dataset.rightPlacement||'');
-      if(left)placements.add(`${slots.left}:${left}`);
-      if(right)placements.add(`${slots.right}:${right}`);
-      if(row.dataset.leftHouse)houses.add(`${slots.left}:${row.dataset.leftHouse}`);
-      if(row.dataset.rightHouse)houses.add(`${slots.right}:${row.dataset.rightHouse}`);
-      if(row.dataset.leftSign!=='')signs.add(Number(row.dataset.leftSign));
-      if(row.dataset.rightSign!=='')signs.add(Number(row.dataset.rightSign));
     });
-
+    // Focus-menu filters may emphasize eligible aspects, but never set
+    // planetary, leader, house, or sign visual-focus markers.
     wheel.querySelectorAll('[data-layer="aspects"] .sky-foundation-aspect[data-relation-index]').forEach(node=>{
       node.classList.toggle('is-filter-kept',relations.has(String(node.dataset.relationIndex)));
-    });
-
-    wheel.querySelectorAll('[data-layer="placements"] [data-sky][data-placement], [data-layer="leaders"] [data-sky][data-placement]').forEach(node=>{
-      node.classList.toggle('is-filter-kept',placements.has(`${node.dataset.sky}:${node.dataset.placement}`));
-    });
-
-    wheel.querySelectorAll('.sky-foundation-house-sector[data-sky][data-house],[data-focus-piece="house"][data-sky][data-house]').forEach(node=>{
-      node.classList.toggle('is-filter-kept',houses.has(`${node.dataset.sky}:${node.dataset.house}`));
-    });
-
-    wheel.querySelectorAll('.sky-foundation-sign-sector,.sky-foundation-sign-glyph').forEach(node=>{
-      const sign=signNumber(node);
-      node.classList.toggle('is-filter-kept',Number.isInteger(sign)&&signs.has(sign));
     });
 
     document.documentElement.dataset.skyFilterWheelFocus=`${matched.length}/${rows.length}`;
