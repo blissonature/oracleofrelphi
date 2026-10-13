@@ -4721,7 +4721,7 @@
       exportUrl.protocol=location.protocol;
       exportUrl.host=location.host;
       const previewBase=location.pathname.slice(0,location.pathname.lastIndexOf('/')+1);
-      exportUrl.pathname=previewBase+originalUrl.pathname.replace(/^\\//,'');
+      exportUrl.pathname=previewBase+originalUrl.pathname.replace(/^[/]/,'');
     }
     const exportImage=new Image();
     exportImage.crossOrigin='anonymous';
