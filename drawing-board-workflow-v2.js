@@ -4712,6 +4712,25 @@
     if (!data?.image?.src) throw new Error('Card artwork is unavailable.');
     if (!data.image.complete) await new Promise((resolve,reject)=>{data.image.addEventListener('load',resolve,{once:true});data.image.addEventListener('error',reject,{once:true});});
     if (!data.image.naturalWidth) throw new Error('Card artwork could not be loaded.');
+    // A displayed image may be loaded without CORS permission and taint a canvas.
+    // Load a separate export image with CORS enabled, preferring this preview's
+    // origin for assets whose source points at the production Relphi domain.
+    const originalUrl=new URL(data.image.currentSrc || data.image.src,location.href);
+    const exportUrl=new URL(originalUrl.href);
+    if (originalUrl.hostname==='oracleofrelphi.com' || originalUrl.hostname==='www.oracleofrelphi.com') {
+      exportUrl.protocol=location.protocol;
+      exportUrl.host=location.host;
+      const previewBase=location.pathname.slice(0,location.pathname.lastIndexOf('/')+1);
+      exportUrl.pathname=previewBase+originalUrl.pathname.replace(/^\\//,'');
+    }
+    const exportImage=new Image();
+    exportImage.crossOrigin='anonymous';
+    exportImage.src=exportUrl.href;
+    try {
+      await exportImage.decode();
+    } catch (_) {
+      throw new Error('Card artwork cannot be exported from this preview origin. Please use a same-origin preview.');
+    }
     const width=900, pad=56, artWidth=360, artHeight=624;
     const canvas=document.createElement('canvas');
     canvas.width=width;
@@ -4742,8 +4761,8 @@
     positionLines.forEach(line=>{context.fillText(line,width/2,y);y+=40;});
     y+=22;
     context.save();
-    if (data.reversed) {context.translate(width/2,y+artHeight/2);context.rotate(Math.PI);context.drawImage(data.image,-artWidth/2,-artHeight/2,artWidth,artHeight);}
-    else context.drawImage(data.image,(width-artWidth)/2,y,artWidth,artHeight);
+    if (data.reversed) {context.translate(width/2,y+artHeight/2);context.rotate(Math.PI);context.drawImage(exportImage,-artWidth/2,-artHeight/2,artWidth,artHeight);}
+    else context.drawImage(exportImage,(width-artWidth)/2,y,artWidth,artHeight);
     context.restore();
     y+=artHeight+50;
     context.fillStyle='#201b1b';context.font='bold 36px Georgia';
