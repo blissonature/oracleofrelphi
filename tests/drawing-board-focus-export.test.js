@@ -1,0 +1,15 @@
+const fs=require('node:fs');const assert=require('node:assert/strict');
+const js=fs.readFileSync('drawing-board-workflow-v2.js','utf8');
+const css=fs.readFileSync('drawing-board-workflow-v2.css','utf8');
+assert.match(js,/function focusExportData\(reader\)/);
+assert.match(js,/function focusExportText\(data\)/);
+assert.match(js,/function focusExportPng\(data\)/);
+assert.match(js,/function installFocusExports\(reader\)/);
+assert.match(js,/installFocusExports\(reader\);/);
+for(const action of ['Copy Text','Copy PNG','Download PNG'])assert.ok(js.includes("action('"+action+"'"),action);
+assert.match(js,/data\.reversed[\s\S]*?context\.rotate\(Math\.PI\)/);
+assert.match(js,/navigator\.clipboard\.write\(/);
+assert.match(js,/URL\.createObjectURL\(blob\)/);
+assert.match(css,/\.relphi-focus-export-actions/);
+assert.match(js,/take\('downloadRowHtml','Download'/);
+console.log('Focus single-card exports are wired without replacing whole-spread exports.');
