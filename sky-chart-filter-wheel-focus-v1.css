@@ -10,6 +10,16 @@
   stroke-width:4.2;
   filter:drop-shadow(0 0 1.5px rgba(255,255,255,.94));
 }
+/* Focus placement emphasis: every relationship endpoint stays bright.
+   Other placements and their leaders remain legible at 40% illumination. */
+#skyFoundationWheelMount>.sky-foundation-wheel.has-filter-focus:not(.has-isolation) [data-layer="placements"] [data-sky][data-placement],
+#skyFoundationWheelMount>.sky-foundation-wheel.has-filter-focus:not(.has-isolation) [data-layer="leaders"] [data-sky][data-placement]{
+  opacity:.4!important;
+}
+#skyFoundationWheelMount>.sky-foundation-wheel.has-filter-focus:not(.has-isolation) [data-layer="placements"] [data-sky][data-placement].is-filter-kept,
+#skyFoundationWheelMount>.sky-foundation-wheel.has-filter-focus:not(.has-isolation) [data-layer="leaders"] [data-sky][data-placement].is-filter-kept{
+  opacity:1!important;
+}
 @media(prefers-reduced-motion:reduce){
   #skyFoundationWheelMount>.sky-foundation-wheel.has-filter-focus:not(.has-isolation) [data-layer="aspects"] .sky-foundation-aspect{transition:none}
 }
