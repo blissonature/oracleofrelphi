@@ -4693,7 +4693,7 @@
     const cardId=String(card.dataset.rowCard||'');
     const reversed=focusCardIsReversed(index);
     const entries=ledgerBridge()?.drawingBoardReadingEntries?.() || [];
-    const source=entries.find(item=>Number(item.index)===index || Number(item.positionIndex)===index)
+    const source=entries.find(item=>item?.cardId===cardId && String(item?.position||'')===positionLabel(index))
       || entries[index] || {};
     const entry=reader.querySelector('.relphi-focus-entry');
     const title=String(ledgerBridge()?.titleFor?.(cardId) || source.title || cardId.replace(/_/g,' ')).trim();
@@ -4710,7 +4710,8 @@
   }
   async function focusExportPng(data) {
     if (!data?.image?.src) throw new Error('Card artwork is unavailable.');
-    await data.image.decode?.();
+    if (!data.image.complete) await new Promise((resolve,reject)=>{data.image.addEventListener('load',resolve,{once:true});data.image.addEventListener('error',reject,{once:true});});
+    if (!data.image.naturalWidth) throw new Error('Card artwork could not be loaded.');
     const width=900, pad=56, artWidth=360, artHeight=624;
     const canvas=document.createElement('canvas');
     canvas.width=width;
