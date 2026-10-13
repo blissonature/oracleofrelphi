@@ -44,3 +44,15 @@ test('persistent placement selection honors visible intersky/intrasky relationsh
 test('selected placement with no visible counterparts keeps only its own orb',()=>{
  assert.deepEqual(reconcile('selected',[]),['B:dsc']);
 });
+
+test('Harmonic Window must not mutate placement highlights, even on selection',()=>{
+ const apply=source.slice(source.indexOf('  function apply(){'),source.indexOf('  function schedule(){'));
+ assert.doesNotMatch(apply,/reconcilePlacementIsolation\(/);
+ assert.doesNotMatch(apply,/classList\.toggle\('is-kept'/);
+});
+test('Wheel brightness ignores Harmonic Window row-hidden state',()=>{
+ const focus=fs.readFileSync('sky-chart-filter-wheel-focus-v1.js','utf8');
+ assert.match(focus,/const matched=explicitlyMatched;/);
+ assert.doesNotMatch(focus,/const matched=explicitlyMatched\.filter/);
+ assert.match(focus,/const active=matched\.length>0&&matched\.length<rows\.length/);
+});
