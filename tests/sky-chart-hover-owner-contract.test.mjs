@@ -56,3 +56,18 @@ test('Wheel brightness ignores Harmonic Window row-hidden state',()=>{
  assert.doesNotMatch(focus,/const matched=explicitlyMatched\.filter/);
  assert.match(focus,/const active=matched\.length>0&&matched\.length<rows\.length/);
 });
+
+test('all Focus menu filters leave placements, leaders, houses and signs undimmed',()=>{
+ const css=fs.readFileSync('sky-chart-filter-wheel-focus-v1.css','utf8');
+ const js=fs.readFileSync('sky-chart-filter-wheel-focus-v1.js','utf8');
+ assert.match(css,/has-filter-focus:not\(\.has-isolation\) \[data-layer="aspects"\]/);
+ assert.doesNotMatch(css,/has-filter-focus[^\\n{]*\[data-layer="placements"\]/);
+ assert.doesNotMatch(css,/has-filter-focus[^\\n{]*\[data-layer="leaders"\]/);
+ assert.doesNotMatch(css,/has-filter-focus[^\\n{]*sky-foundation-house-sector/);
+ assert.doesNotMatch(css,/has-filter-focus[^\\n{]*sky-foundation-sign-sector/);
+ assert.doesNotMatch(js,/placements\.has\(/);
+ assert.doesNotMatch(js,/houses\.has\(/);
+ assert.doesNotMatch(js,/signs\.has\(/);
+ assert.match(js,/const explicitlyMatched=explicitRows\(rows\)/);
+ assert.match(js,/node\.classList\.toggle\('is-filter-kept',relations\.has\(/);
+});
