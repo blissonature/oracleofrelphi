@@ -57,43 +57,31 @@ test('Wheel brightness ignores Harmonic Window row-hidden state',()=>{
  assert.match(focus,/const active=matched\.length>0&&matched\.length<rows\.length/);
 });
 
-test('all Focus menu filters leave placements, leaders, houses and signs undimmed',()=>{
+test('Focus uses relationship endpoints and keeps all other placements visible',()=>{
  const css=fs.readFileSync('sky-chart-filter-wheel-focus-v1.css','utf8');
  const js=fs.readFileSync('sky-chart-filter-wheel-focus-v1.js','utf8');
- assert.match(css,/has-filter-focus:not\(\.has-isolation\) \[data-layer="aspects"\]/);
- assert.doesNotMatch(css,/has-filter-focus[^\\n{]*\[data-layer="placements"\]/);
- assert.doesNotMatch(css,/has-filter-focus[^\\n{]*\[data-layer="leaders"\]/);
- assert.doesNotMatch(css,/has-filter-focus[^\\n{]*sky-foundation-house-sector/);
- assert.doesNotMatch(css,/has-filter-focus[^\\n{]*sky-foundation-sign-sector/);
- assert.doesNotMatch(js,/placements\.has\(/);
- assert.doesNotMatch(js,/houses\.has\(/);
- assert.doesNotMatch(js,/signs\.has\(/);
- assert.match(js,/const explicitlyMatched=explicitRows\(rows\)/);
- assert.match(js,/node\.classList\.toggle\('is-filter-kept',relations\.has\(/);
+ assert.match(js,/const relations=new Set\(\),placements=new Set\(\)/);
+ assert.match(js,/row\.dataset\.leftPlacement\)placements\.add/);
+ assert.match(js,/row\.dataset\.rightPlacement\)placements\.add/);
+ assert.match(js,/placements\.has\(/);
+ assert.match(css,/opacity:\.4!important/);
+ assert.match(css,/opacity:1!important/);
+ assert.doesNotMatch(css,/sky-foundation-house-sector/);
+ assert.doesNotMatch(css,/sky-foundation-sign-sector/);
 });
 
-test('Focus never dims any placement category in either sky',()=>{
- const css=fs.readFileSync('sky-chart-filter-wheel-focus-v1.css','utf8');
- const focus=fs.readFileSync('sky-chart-filter-wheel-focus-v1.js','utf8');
- const representative={
-   luminaries:['sun','moon'],
-   planets:['mercury','venus','mars','jupiter','saturn','uranus','neptune','pluto'],
-   angles:['asc','dsc','mc','ic'],
-   otherPoints:['chiron','lilith','north-node','south-node','part-of-fortune','vertex','anti-vertex']
- };
- const selectors=Object.values(representative).flatMap(ids=>ids).flatMap(id=>['A','B'].map(sky=>`[data-sky="${sky}"][data-placement="${id}"]`));
- assert.equal(selectors.length,42);
- // Focus stylesheet must not target ANY placement or leader, by category or
- // via blanket layer/attribute selectors.
- for(const line of css.split('\\n')){
-   if(!line.includes('has-filter-focus'))continue;
-   assert.doesNotMatch(line,/placements|leaders|data-placement|data-angle|sky-foundation-placement/);
- }
- assert.doesNotMatch(focus,/\.classList\.toggle\('is-filter-kept',placements/);
- assert.doesNotMatch(focus,/\[data-layer="placements"\]/);
- assert.doesNotMatch(focus,/\[data-layer="leaders"\]/);
+test('Focus endpoint logic treats all placement categories and both skies equally',()=>{
+ const js=fs.readFileSync('sky-chart-filter-wheel-focus-v1.js','utf8');
+ const groups=[
+  ['sun','moon'],['mercury','venus','mars','jupiter','saturn','uranus','neptune','pluto'],
+  ['asc','dsc','mc','ic'],['chiron','lilith','north-node','south-node','part-of-fortune','vertex','anti-vertex']
+ ];
+ assert.equal(groups.flat().length,21);
+ assert.match(js,/slots\.left/);
+ assert.match(js,/slots\.right/);
+ assert.match(js,/\[data-layer="placements"\]/);
+ assert.match(js,/\[data-layer="leaders"\]/);
 });
-
 test('leader integrity must not reintroduce Focus-menu dimming after page load',()=>{
  const leader=fs.readFileSync('sky-chart-leader-integrity-v1.js','utf8');
  const html=fs.readFileSync('sky-chart.html','utf8');
