@@ -17,7 +17,7 @@
     style.id='skyLeaderIntegrityV2Style';
     style.textContent=`
       /* Marker and leader are one visual unit. Only a missing/hidden endpoint may
-         make its leader disappear. Dim endpoints keep equally dim leaders. */
+         make its leader disappear. Direct wheel isolation may dim both endpoint and leader. */
       [data-layer="leaders"] > line[data-leader-orphan="true"],
       [data-layer="leaders"] > line[data-endpoint-hidden="true"]{
         opacity:0!important;
@@ -28,14 +28,6 @@
         visibility:visible!important;
       }
       .sky-foundation-wheel.has-isolation [data-layer="leaders"] > line[data-placement].is-kept{
-        opacity:1!important;
-        visibility:visible!important;
-      }
-      .sky-foundation-wheel.has-filter-focus:not(.has-isolation) [data-layer="leaders"] > line[data-placement]:not(.is-filter-kept){
-        opacity:.08!important;
-        visibility:visible!important;
-      }
-      .sky-foundation-wheel.has-filter-focus:not(.has-isolation) [data-layer="leaders"] > line[data-placement].is-filter-kept{
         opacity:1!important;
         visibility:visible!important;
       }
