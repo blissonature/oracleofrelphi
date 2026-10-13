@@ -214,6 +214,9 @@
   }
 
   function start(){
+    // Capture pointer activation before the foundation wheel's own click handler
+    // can lock an orb or trigger a competing focus refresh.
+    document.addEventListener('pointerdown',onPlacementClick,true);
     document.addEventListener('click',onPlacementClick,true);
     document.addEventListener('keydown',event=>{
       if(event.key!=='Enter'&&event.key!==' ')return;
