@@ -90,7 +90,9 @@
     panel.setAttribute('role','dialog');
     panel.setAttribute('aria-label','Reveal qualifying relationship');
     const label=document.createElement('p');
-    label.textContent=`${key.slice(2).replace(/[-_]/g,' ')} has a matching relationship beyond your current ${Number(current.toFixed(2))}° Harmonic Window. Increase to ${target}° to reveal it.`;
+    const rawName=key.split(':').slice(1).join(':').replace(/[-_]/g,' ');
+    const placementName=rawName.replace(/\b[a-z]/g,letter=>letter.toUpperCase());
+    label.textContent=`${placementName} has a matching relationship beyond your current ${Number(current.toFixed(2))}° Harmonic Window. Increase to ${target}° to reveal it.`;
     const actions=document.createElement('div');actions.className='sky-focus-hidden-aspect-actions';
     const dismiss=document.createElement('button');dismiss.type='button';dismiss.textContent='Dismiss';
     const increase=document.createElement('button');increase.type='button';increase.textContent=`Increase to ${target}°`;
@@ -106,9 +108,18 @@
     actions.append(dismiss,increase);panel.append(label,actions);
     document.body.appendChild(panel);popup=panel;
     const rect=marker.getBoundingClientRect();
-    const width=panel.getBoundingClientRect().width;
-    panel.style.left=`${Math.max(8,Math.min(window.innerWidth-width-8,rect.left+rect.width/2-width/2))}px`;
-    panel.style.top=`${Math.max(8,Math.min(window.innerHeight-panel.offsetHeight-8,rect.bottom+8))}px`;
+    const bounds=panel.getBoundingClientRect(),width=bounds.width,height=bounds.height;
+    const wheel=document.querySelector('#skyFoundationWheelMount');
+    const area=wheel?.getBoundingClientRect();
+    const margin=12,viewportWidth=window.innerWidth,viewportHeight=window.innerHeight;
+    const left=Math.max(margin,Math.min(viewportWidth-width-margin,rect.left+rect.width/2-width/2));
+    // Prefer below the selected orb, then above it. Stay inside the viewport.
+    const below=rect.bottom+12,above=rect.top-height-12;
+    let top=below+height<=viewportHeight-margin?below:above>=margin?above:Math.max(margin,Math.min(viewportHeight-height-margin,below));
+    // Avoid centering the message over the chart when the orb is near its edge.
+    if(area&&rect.left<area.left+area.width/2&&left+width>area.right)top=Math.max(margin,Math.min(viewportHeight-height-margin,top));
+    panel.style.left=`${left}px`;
+    panel.style.top=`${top}px`;
     dismiss.focus();
   }
   function onPlacementClick(event){
