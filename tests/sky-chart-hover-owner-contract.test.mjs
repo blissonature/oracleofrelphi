@@ -71,3 +71,25 @@ test('all Focus menu filters leave placements, leaders, houses and signs undimme
  assert.match(js,/const explicitlyMatched=explicitRows\(rows\)/);
  assert.match(js,/node\.classList\.toggle\('is-filter-kept',relations\.has\(/);
 });
+
+test('Focus never dims any placement category in either sky',()=>{
+ const css=fs.readFileSync('sky-chart-filter-wheel-focus-v1.css','utf8');
+ const focus=fs.readFileSync('sky-chart-filter-wheel-focus-v1.js','utf8');
+ const representative={
+   luminaries:['sun','moon'],
+   planets:['mercury','venus','mars','jupiter','saturn','uranus','neptune','pluto'],
+   angles:['asc','dsc','mc','ic'],
+   otherPoints:['chiron','lilith','north-node','south-node','part-of-fortune','vertex','anti-vertex']
+ };
+ const selectors=Object.values(representative).flatMap(ids=>ids).flatMap(id=>['A','B'].map(sky=>`[data-sky="${sky}"][data-placement="${id}"]`));
+ assert.equal(selectors.length,46);
+ // Focus stylesheet must not target ANY placement or leader, by category or
+ // via blanket layer/attribute selectors.
+ for(const line of css.split('\\n')){
+   if(!line.includes('has-filter-focus'))continue;
+   assert.doesNotMatch(line,/placements|leaders|data-placement|data-angle|sky-foundation-placement/);
+ }
+ assert.doesNotMatch(focus,/\.classList\.toggle\('is-filter-kept',placements/);
+ assert.doesNotMatch(focus,/\[data-layer="placements"\]/);
+ assert.doesNotMatch(focus,/\[data-layer="leaders"\]/);
+});
