@@ -3315,3 +3315,10 @@ body.relphi-attune-open{overflow:hidden!important}
     font-size:16px!important;
   }
 }
+
+/* Single-card Focus exports; spread-level document actions remain outside Focus. */
+.relphi-focus-export-actions{display:flex!important;justify-content:center!important;align-items:center!important;flex-wrap:wrap!important;gap:.45rem!important;padding:.45rem .75rem!important;border-top:1px solid #e4d7d0!important;background:#fffdf8!important}
+.relphi-focus-export-actions button{min-height:2.2rem!important;padding:.4rem .8rem!important;border:1px solid #a61712!important;border-radius:7px!important;background:#fff!important;color:#78130f!important;font:inherit!important;font-size:.78rem!important;font-weight:700!important;cursor:pointer!important}
+.relphi-focus-export-actions button:disabled{opacity:.55!important;cursor:wait!important}
+.relphi-focus-export-status{font-size:.72rem!important;color:#665a53!important}
+@media(max-width:650px){.relphi-focus-export-actions{padding:.35rem!important;gap:.3rem!important}.relphi-focus-export-actions button{font-size:.7rem!important;padding:.35rem .5rem!important}}
