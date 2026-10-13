@@ -293,9 +293,9 @@
         const identity=relationshipIdentity(row);
         if(!identity)return;
         const lines=cache.focus.aspect.get(identity);
-        if(!lines||!Array.from(lines).some(lineEligible))return;
+        if(lines&&!Array.from(lines).some(lineEligible))return;
         for(const endpoint of [left,right])placements.add(endpoint);
-        lines.forEach(line=>{if(lineEligible(line))identities.add(identity)});
+        Array.from(lines||[]).forEach(line=>{if(lineEligible(line))identities.add(identity)});
         const address=String(row.dataset.relationIndex||'');
         if(address)matched.add(address);
       });
