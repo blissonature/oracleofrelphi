@@ -4724,18 +4724,36 @@
     try { await exportImage.decode(); }
     catch (_) { throw new Error('Bundled card artwork could not be loaded for export.'); }
     if (!exportImage.naturalWidth) throw new Error('Bundled card artwork is unavailable.');
+    // The PNG is a standalone branded reading. Load the existing Relphi mark
+    // from this preview's origin so the canvas remains origin-clean.
+    const logo=new Image();
+    logo.crossOrigin='anonymous';
+    logo.src=new URL('assets/relphi-logo-tight.svg',document.baseURI).href;
+    try { await logo.decode(); }
+    catch (_) { throw new Error('Oracle of Relphi logo could not be loaded for export.'); }
+    if (!logo.naturalWidth) throw new Error('Oracle of Relphi logo is unavailable.');
+    // Match the site's Montserrat family before measuring or painting any text.
+    if (document.fonts?.load) {
+      try {
+        await Promise.all([
+          document.fonts.load('700 30px Montserrat'),
+          document.fonts.load('600 26px Montserrat'),
+          document.fonts.load('400 24px Montserrat')
+        ]);
+      } catch (_) {}
+    }
     const width=900, pad=56, artWidth=360, artHeight=624;
     const canvas=document.createElement('canvas');
     canvas.width=width;
     const context=canvas.getContext('2d');
     if (!context) throw new Error('PNG rendering is unavailable.');
-    const lines=[];
+    const fontFamily='Montserrat, Arial, sans-serif';
     function wrap(text,font,maxWidth) {
       context.font=font;
       const rows=[];
-      String(text||'').split(/\n/).forEach(paragraph=>{
+      String(text||'').split(/\\n/).forEach(paragraph=>{
         let line='';
-        for (const word of paragraph.split(/\s+/).filter(Boolean)) {
+        for (const word of paragraph.split(/\\s+/).filter(Boolean)) {
           const trial=line?line+' '+word:word;
           if (line && context.measureText(trial).width>maxWidth) {rows.push(line);line=word;}
           else line=trial;
@@ -4744,24 +4762,40 @@
       });
       return rows;
     }
-    const positionLines=wrap(data.position,'bold 28px Georgia',width-pad*2);
-    const titleLines=wrap(data.title+(data.reversed?' · reversed':''),'bold 36px Georgia',width-pad*2);
-    const meaningLines=wrap(data.interpretation,'25px Georgia',width-pad*2);
-    canvas.height=Math.max(1100,pad*3+positionLines.length*40+artHeight+titleLines.length*50+meaningLines.length*38+100);
+    const positionFont='700 29px '+fontFamily;
+    const titleFont='700 38px '+fontFamily;
+    const meaningFont='400 25px '+fontFamily;
+    const positionLines=wrap(data.position,positionFont,width-pad*2);
+    const titleLines=wrap(data.title+(data.reversed?' · reversed':''),titleFont,width-pad*2);
+    const meaningLines=wrap(data.interpretation,meaningFont,width-pad*2);
+    const headerHeight=116, footerHeight=105;
+    const contentHeight=pad+headerHeight+positionLines.length*42+35+artHeight+50+titleLines.length*52+20+meaningLines.length*40+pad+footerHeight;
+    canvas.height=Math.max(1200,contentHeight);
     context.fillStyle='#fffdf8';context.fillRect(0,0,width,canvas.height);
-    let y=pad+30;
-    context.fillStyle='#5e2020';context.font='bold 28px Georgia';context.textAlign='center';
-    positionLines.forEach(line=>{context.fillText(line,width/2,y);y+=40;});
-    y+=22;
+    context.fillStyle='#5e2020';context.textAlign='left';
+    context.drawImage(logo,pad,pad,72,72);
+    context.font='700 32px '+fontFamily;
+    context.fillText('Oracle of Relphi',pad+90,pad+47);
+    context.strokeStyle='#e6ddd5';context.lineWidth=2;
+    context.beginPath();context.moveTo(pad,pad+headerHeight-13);context.lineTo(width-pad,pad+headerHeight-13);context.stroke();
+    let y=pad+headerHeight+28;
+    context.fillStyle='#5e2020';context.font=positionFont;context.textAlign='center';
+    positionLines.forEach(line=>{context.fillText(line,width/2,y);y+=42;});
+    y+=34;
     context.save();
     if (data.reversed) {context.translate(width/2,y+artHeight/2);context.rotate(Math.PI);context.drawImage(exportImage,-artWidth/2,-artHeight/2,artWidth,artHeight);}
     else context.drawImage(exportImage,(width-artWidth)/2,y,artWidth,artHeight);
     context.restore();
     y+=artHeight+50;
-    context.fillStyle='#201b1b';context.font='bold 36px Georgia';
-    titleLines.forEach(line=>{context.fillText(line,width/2,y);y+=50;});
-    y+=18;context.textAlign='left';context.font='25px Georgia';
-    meaningLines.forEach(line=>{context.fillText(line,pad,y);y+=38;});
+    context.fillStyle='#201b1b';context.font=titleFont;
+    titleLines.forEach(line=>{context.fillText(line,width/2,y);y+=52;});
+    y+=20;context.textAlign='left';context.font=meaningFont;
+    meaningLines.forEach(line=>{context.fillText(line,pad,y);y+=40;});
+    const footerY=canvas.height-footerHeight;
+    context.strokeStyle='#e6ddd5';
+    context.beginPath();context.moveTo(pad,footerY);context.lineTo(width-pad,footerY);context.stroke();
+    context.fillStyle='#5e2020';context.font='600 24px '+fontFamily;context.textAlign='center';
+    context.fillText('oracleofrelphi.com',width/2,footerY+47);
     return new Promise((resolve,reject)=>canvas.toBlob(blob=>blob?resolve(blob):reject(new Error('Could not create PNG.')),'image/png'));
   }
   function installFocusExports(reader) {
