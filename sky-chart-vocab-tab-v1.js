@@ -1437,19 +1437,8 @@ function positionDropdown(){
   const {slot,kind}=openDropdownState,owner=dropdownOwner(slot,kind),menu=dropdownMenu(slot,kind),field=owner?.querySelector('[data-vocab-dropdown-toggle]');
   if(!owner||!menu||!field||menu.hidden)return;
   const previousScroll=menu.scrollTop;
-  const rect=field.getBoundingClientRect(),margin=12,gap=5;
-  const targetWidth=kind==='placements'?350:kind==='houses'?430:kind==='signs'?330:260;
-  const width=Math.max(220,Math.min(targetWidth,window.innerWidth-margin*2));
-  menu.style.height='auto';menu.style.maxHeight='none';menu.style.overflowY='hidden';
-  const natural=Math.ceil(menu.scrollHeight+2);
-  const below=Math.max(0,window.innerHeight-margin-rect.bottom-gap);
-  const above=Math.max(0,rect.top-gap-margin);
-  const useBelow=below>=natural||(below>=above&&above<natural);
-  const space=useBelow?below:above;
-  const height=Math.min(natural,space);
-  const top=useBelow?rect.bottom+gap:rect.top-gap-height;
-  const left=Math.min(window.innerWidth-width-margin,Math.max(margin,rect.left));
-  Object.assign(menu.style,{position:'fixed',width:width+'px',height:height+'px',maxHeight:height+'px',overflowY:natural>height?'auto':'hidden',left:left+'px',top:top+'px',zIndex:'10050'});
+  const width=kind==='placements'?350:kind==='houses'?430:kind==='signs'?330:260;
+  window.RelphiSkyDropdownPosition(menu,field,width);
   if(previousScroll)menu.scrollTop=Math.min(previousScroll,Math.max(0,menu.scrollHeight-menu.clientHeight));
 }
 function scheduleDropdownPosition(event){
