@@ -24,7 +24,8 @@
     return Object.fromEntries(Object.entries(source).filter(([key,item])=>item&&typeof item==='object'&&!Array.isArray(item)&&!/^(calcProfile|metadata|profile|location|notes|houseCusps|cusps|houses)$/i.test(key)&&(Number.isFinite(Number(item.longitude))||item.sign||item.zodiac)));
   }
   function hasPlacements(value){return Object.keys(placementSource(value)).length>0}
-  function library(){const list=readJson(LIBRARY_KEY,[]);return Array.isArray(list)?list.filter(record=>record&&String(record.name||'').trim()&&hasPlacements(record)):[]}
+  function hasSavableSky(value){const p=value?.calcProfile||value?.profile||value||{};return hasPlacements(value)||((p.timeUnknown===true||value?.timeUnknown===true)&&Boolean(p.dateTime||value?.dateTime)&&Boolean(p.timeZone||value?.timeZone))}
+  function library(){const list=readJson(LIBRARY_KEY,[]);return Array.isArray(list)?list.filter(record=>record&&String(record.name||'').trim()&&hasSavableSky(record)):[]}
   function recordRef(record){return String(record?.id||record?.savedSkyId||record?.metadata?.savedSkyId||`legacy:${normalize(record?.name)}`)}
   function newId(){return `sky-${Date.now().toString(36)}-${Math.random().toString(36).slice(2,8)}`}
   function candidateName(value){
@@ -49,7 +50,7 @@
   }
   function saveAs(slot,name){
     const value=payload(slot);
-    if(!value||!hasPlacements(value))return{ok:false,message:'There is no sky to save.'};
+    if(!value||!hasSavableSky(value))return{ok:false,message:'There is no sky to save.'};
     const clean=String(name||'').trim();
     if(!clean)return{ok:false,message:'Give this sky a name.'};
     const records=library();
