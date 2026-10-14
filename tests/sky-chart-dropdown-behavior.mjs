@@ -15,7 +15,8 @@ function checkGeometry(a,m,w=330){
   const ar=a.getBoundingClientRect(),x=parseFloat(m.style.left),y=parseFloat(m.style.top),width=parseFloat(m.style.width),height=parseFloat(m.style.height);
   assert.ok(x>=0&&x+width<=window.innerWidth,'horizontal bounds');
   assert.ok(y>=0&&y+height<=window.innerHeight,'vertical bounds');
-  assert.ok(y>=ar.bottom||y+height<=ar.top,'never cover anchor');
+  assert.ok(y>=ar.bottom,'dropdown must remain below anchor');
+  assert.equal(m.dataset.openDirection,'below','dropdown must never flip above');
   return {x,y,width,height};
 }
 checkGeometry(anchor(320,100),menu(400));
