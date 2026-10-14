@@ -236,9 +236,6 @@ function handleLegacyAspectPass(event){
   schedule();
 }
 function start(){
-  const style=document.createElement('style');style.id='skyBySignAspectChoiceStyles';
-  style.textContent=`.sky-chart-aspect-matrix-list .sky-chart-aspect-list-header,.sky-chart-aspect-matrix-list .sky-chart-aspect-list-item{grid-template-columns:minmax(105px,1fr) minmax(105px,auto) 64px!important}.sky-chart-by-sign-heading{text-align:center;font-size:11px;white-space:nowrap}.sky-chart-by-sign-choice{display:flex;align-items:center;justify-content:center;gap:3px;min-width:64px;font:700 10px/1 Montserrat,system-ui,sans-serif}.sky-chart-by-sign-choice input{margin:0;min-width:16px;min-height:16px;accent-color:#c9211e}.sky-chart-aspect-matrix-list .sky-chart-aspect-list-item:not(:has(.sky-chart-by-sign-choice))::after{content:'';display:block;min-width:64px}`;
-  document.head.appendChild(style);
   schedule();document.addEventListener('change',handleChange);
   ['relphi:sky-foundation-ready','relphi:sky-foundation-interactions-ready','relphi:sky-intrasky-relationships-ready','relphi:sky-intrasky-b-relationships-ready','relphi:sky-single-sky-aspects-rendered','relphi:sky-placement-multiselect-changed','relphi:sky-house-multiselect-changed','relphi:sky-foundation-filter-changed','relphi:sky-b-removed','relphi:sky-b-restored','relphi:sky-configuration-selection-changed','relphi:sky-configurations-detected'].forEach(name=>window.addEventListener(name,schedule));
   window.addEventListener('relphi:sky-aspect-multiselect-changed',handleLegacyAspectPass);
