@@ -85,18 +85,25 @@ function closeMenu(){
   button?.setAttribute('aria-expanded','false');
 }
 
-function positionMenu(){
-  // The dropdown is anchored to its own toggle. No viewport-based positioning
-  // can place it over the control needed to collapse it.
-  if(!menu||menu.hidden)return;
-  menu.style.removeProperty('left');
-  menu.style.removeProperty('top');
-  menu.style.removeProperty('bottom');
-  menu.style.removeProperty('height');
-  menu.style.removeProperty('max-height');
-  menu.style.removeProperty('overflow-y');
-  menu.style.removeProperty('width');
+// One owner for all Sky Chart dropdown geometry, including Vocab menus.
+function positionSkyDropdown(menu,button,targetWidth=330){
+  if(!menu||!button||menu.hidden)return;
+  const rect=button.getBoundingClientRect(),margin=12,gap=5;
+  const width=Math.min(targetWidth,window.innerWidth-margin*2);
+  menu.style.height='auto';menu.style.maxHeight='none';menu.style.overflowY='hidden';
+  const natural=Math.ceil(menu.scrollHeight+2);
+  const below=Math.max(0,window.innerHeight-margin-rect.bottom-gap);
+  const above=Math.max(0,rect.top-gap-margin);
+  const useBelow=below>=natural||(below>=above&&above<natural);
+  const available=useBelow?below:above;
+  const height=Math.max(0,Math.min(natural,available));
+  const top=useBelow?rect.bottom+gap:rect.top-gap-height;
+  const left=Math.min(window.innerWidth-width-margin,Math.max(margin,rect.left));
+  Object.assign(menu.style,{position:'fixed',width:width+'px',height:height+'px',maxHeight:height+'px',overflowY:natural>height?'auto':'hidden',left:left+'px',top:top+'px',bottom:'auto'});
+  menu.dataset.openDirection=useBelow?'below':'above';
 }
+window.RelphiSkyDropdownPosition=positionSkyDropdown;
+function positionMenu(){positionSkyDropdown(menu,button,330)}
 
 function openMenu(){
   if(!menu)return;
@@ -142,7 +149,7 @@ function install(){
     });
   });
 
-  menu.appendChild(list);root.appendChild(menu);
+  menu.appendChild(list);document.body.appendChild(menu);
   button.addEventListener('click',toggleMenu);
   allButton.addEventListener('click',event=>{event.preventDefault();event.stopPropagation();setSelection(ALL)});
   noneButton.addEventListener('click',event=>{event.preventDefault();event.stopPropagation();setSelection([])});
