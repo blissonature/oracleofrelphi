@@ -15,7 +15,7 @@ for(const name of ['sky-chart-zodiac-filter-v1.js','sky-chart-vocab-tab-v1.js','
   assert.match(read(name),/window\.RelphiSkyDropdownPosition\(/,name+' must delegate geometry');
 }
 for(const name of ['sky-chart-zodiac-filter-v1.js','sky-chart-vocab-tab-v1.js','sky-chart-placement-multiselect-v4.js','sky-chart-house-multiselect-v2.js']){
-  assert.match(read(name),/window\\.RelphiSkyDropdownLifecycle\\.register\\(/,name+' must register shared lifecycle');
+  assert.match(read(name),/window\.RelphiSkyDropdownLifecycle\.register\(/,name+' must register shared lifecycle');
 }
 assert.doesNotMatch(read('sky-chart-zodiac-filter-v1.css'),/position:absolute;top:100%;left:0;bottom:auto/);
 console.log('Canonical dropdown ownership contract passed');
