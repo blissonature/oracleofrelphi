@@ -149,6 +149,27 @@ async function applyQuestions(page,labels){
     assert.equal(migrated.activeId,'custom-active','dense migration must preserve the active reading identity');
 
     await resetBoard(page);
+    await applyQuestions(page,[
+      'Which primordial force?',
+      'What is taking root?',
+      'What is at work?',
+      'How is it showing up?',
+      'What is needed?',
+      'How is it being carried?',
+      'What form is it taking?'
+    ]);
+    const sevenCardAudit=await page.evaluate(()=>{
+      const snap=window.RelphiDrawingBoardOptionsBridge.capture();
+      const scales=Object.values(snap.rowCardTransforms||{}).map(item=>Number(item?.scale)).filter(Number.isFinite);
+      const xs=[...new Set(Object.values(snap.rowEnvelopeLayout||{}).map(p=>Math.round(Number(p.x))))];
+      const ys=[...new Set(Object.values(snap.rowEnvelopeLayout||{}).map(p=>Math.round(Number(p.y))))];
+      return {minScale:Math.min(...scales),maxScale:Math.max(...scales),cols:xs.length,rows:ys.length};
+    });
+    assert.ok(sevenCardAudit.minScale>.62,`7-position question-defined reading should use the board to make cards larger than the legacy .62 band; audit=${JSON.stringify(sevenCardAudit)}`);
+    assert.equal(sevenCardAudit.cols,3,'7-position reading should choose the largest-card 3-column pack');
+    assert.equal(sevenCardAudit.rows,3,'7-position reading should use three rows');
+
+    await resetBoard(page);
     const short='What matters here?';
     const long=('Is the apparent world governed by an intelligence that mistakes itself for ultimate reality and then reproduces that mistake through memory repetition symbolic inheritance and the apparent continuity of individual experience while consciousness mistakes inherited structures for independent beings and patterned recurrence for external agency? '.repeat(5)).trim();
     assert.ok(long.length>1200,'long-question fixture must exceed the former 1000 character clamp');

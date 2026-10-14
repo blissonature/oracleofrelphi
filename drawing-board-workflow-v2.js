@@ -217,32 +217,37 @@
 
   function genericPositions(labels) {
     const count = Math.max(1, labels.length);
-    if (count <= 12) return legacyGenericPositions(labels);
     let best=null;
-    // Dense layouts should use the full board footprint. Do not impose an
-    // arbitrary ten-column ceiling: for large readings, an extra column can
-    // remove an entire row and substantially increase card scale.
-    const maxCols=count;
-    for (let cols=3;cols<=maxCols;cols++) {
+    // Question-defined layouts know their complete position count before the
+    // reading begins. Use that information at every density: choose the grid
+    // that makes the cards as large as the board permits instead of retaining
+    // the old fixed .88/.74/.62 bands for 1–12 positions.
+    const maxScale=count===1 ? 1 : .88;
+    const minCols=count===1 ? 1 : 2;
+    for (let cols=minCols;cols<=count;cols++) {
       const rows=Math.ceil(count/cols);
-      const scaleX=(CANVAS_W-GUTTER*2-GUTTER*Math.max(0,cols-1))/(CARD_W*cols);
-      const scaleY=(CANVAS_H-GUTTER*2-GUTTER*Math.max(0,rows-1))/((CARD_H+LABEL_H)*rows);
-      const scale=Math.min(.62,scaleX,scaleY);
+      const scaleX=(CANVAS_W-GUTTER*2)/(CARD_W*cols);
+      const scaleY=(CANVAS_H-GUTTER*2)/((CARD_H+LABEL_H)*rows);
+      const scale=Math.min(maxScale,scaleX,scaleY);
+      // Prefer the larger cards. When scales are effectively tied, prefer the
+      // narrower grid so a partial final row does not spread unnecessarily.
       if (!best || scale>best.scale+.002 || (Math.abs(scale-best.scale)<=.002 && cols<best.cols)) best={cols,rows,scale};
     }
-    const cols=best?.cols || 4;
-    const rows=best?.rows || Math.ceil(count/cols);
-    const scale=clamp(best?.scale || .52,.32,.62);
+    const cols=best?.cols || 1;
+    const rows=best?.rows || count;
+    const scale=clamp(best?.scale || maxScale,.32,maxScale);
     const cardW=CARD_W*scale;
     const rowH=(CARD_H+LABEL_H)*scale;
-    // Auto-laid cards pack flush. Spare canvas space belongs after the pack,
-    // not between cards; a gap only appears after the reader deliberately moves one.
-    const gapX=GUTTER;
-    const gapY=GUTTER;
+    const totalW=cardW*cols;
+    const totalH=rowH*rows;
+    // Center the complete known layout in the canonical board. Cards remain
+    // flush; unused board area stays outside the pack rather than becoming gaps.
+    const startX=Math.max(GUTTER,(CANVAS_W-totalW)/2);
+    const startY=Math.max(GUTTER,(CANVAS_H-totalH)/2);
     return labels.map((label,index)=>{
       const col=index%cols,row=Math.floor(index/cols);
-      const x=(GUTTER+col*(cardW+gapX))/CANVAS_W;
-      const y=(GUTTER+LABEL_H*scale+row*(rowH+gapY))/CANVAS_H;
+      const x=(startX+col*cardW)/CANVAS_W;
+      const y=(startY+LABEL_H*scale+row*rowH)/CANVAS_H;
       return position(`position-${index+1}`,label,index+1,transform(x,y,scale));
     });
   }
