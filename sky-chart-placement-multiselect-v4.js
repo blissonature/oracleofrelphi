@@ -392,14 +392,7 @@
     const owner=portalOwner,menu=popover(),head=portalAnchor?.isConnected?portalAnchor:owner?.querySelector('.sky-chart-placement-filter-head');
     if(!isOpen(owner)||!menu?.classList.contains('is-portaled')||!head)return;
     if(remeasureWidth||!lockedPopoverWidth)lockedPopoverWidth=stablePopoverWidth();
-    const rect=head.getBoundingClientRect();
-    const margin=12,width=lockedPopoverWidth;
-    const left=Math.min(window.innerWidth-width-margin,Math.max(margin,rect.left+rect.width/2-width/2));
-    const below=window.innerHeight-rect.bottom-margin;
-    const above=rect.top-margin;
-    const maxHeight=Math.max(220,Math.min(560,Math.max(below,above)));
-    const top=below<280&&above>below?Math.max(margin,rect.top-maxHeight-6):Math.min(window.innerHeight-maxHeight-margin,rect.bottom+6);
-    Object.assign(menu.style,{width:`${width}px`,maxHeight:`${maxHeight}px`,left:`${left}px`,top:`${Math.max(margin,top)}px`});
+    window.RelphiSkyDropdownPosition(menu,head,lockedPopoverWidth);
   }
   function schedulePosition(remeasureWidth=false){
     if(positionQueued)return;
