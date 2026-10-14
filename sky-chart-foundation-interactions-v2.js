@@ -520,6 +520,7 @@
   function start(){
     window.addEventListener('relphi:sky-foundation-ready',schedule);
     window.addEventListener('relphi:sky-orb-limit-changed',schedule);
+    window.addEventListener('relphi:sky-by-sign-changed',schedule);
     [
       'relphi:sky-aspect-multiselect-changed',
       'relphi:sky-placement-multiselect-changed',
