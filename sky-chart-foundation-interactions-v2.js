@@ -60,12 +60,32 @@
       const distance=separation(left.value,right.value);
       ASPECTS.forEach(aspect=>{const relation=HARMONIC?.relation?.(left,right,aspect,distance,windowValue);if(relation)result.push(relation)})
     }));
+    // By-sign relationships are distinct from harmonic-degree matches.
+    // Include sign-only pairs even if their phase error exceeds the maximum window.
+    const bySign=window.RelphiSkyBySign;
+    if(bySign?.selected?.size){
+      const existing=new Set(result.map(r=>`${r.left.id}|${r.aspect.id}|${r.right.id}`));
+      listA.forEach(left=>listB.forEach(right=>{
+        const distance=separation(left.value,right.value);
+        const steps=Math.min((left.sign-right.sign+12)%12,(right.sign-left.sign+12)%12);
+        ASPECTS.forEach(aspect=>{
+          if(!bySign.enabled(aspect.id)||bySign.steps[aspect.id]!==steps)return;
+          const key=`${left.id}|${aspect.id}|${right.id}`;
+          if(existing.has(key))return;
+          const metrics=HARMONIC?.metrics?.(distance,aspect,12);
+          if(!metrics)return;
+          result.push({left,right,aspect,distance,orb:metrics.ordinaryOrb,...metrics,
+            temporal:HARMONIC.motion(metrics,left.angularVelocity,right.angularVelocity),bySignOnly:true});
+          existing.add(key);
+        });
+      }));
+    }
     return result.sort((a,b)=>a.phaseError-b.phaseError||a.harmonicOrder-b.harmonicOrder||a.orb-b.orb);
   }
   function relationshipSignature(relations){
     return relations.map(relation=>[
       relation.left.id,relation.aspect.id,relation.right.id,relation.orb.toFixed(6),
-      relation.harmonicOrder,relation.harmonicNumerator,relation.phaseError.toFixed(6),
+      relation.harmonicOrder,relation.harmonicNumerator,relation.phaseError.toFixed(6),relation.bySignOnly?'sign':'degree',
       relation.signedPhaseError.toFixed(6),relation.masterWindow.toFixed(6),
       Number.isFinite(relation.windowFraction)?relation.windowFraction.toFixed(6):String(relation.windowFraction),
       relation.coherence.toFixed(8),relation.left.house,relation.right.house,relation.left.sign,relation.right.sign
@@ -107,12 +127,12 @@
     const selectionCleared=document.getElementById('skyFoundationRoot')?.dataset.relationshipSelectionCleared==='true',selected=selectionCleared?null:document.querySelector('.sky-foundation-relationship-row[aria-current="true"]');const selectedKey=selected?[selected.dataset.leftPlacement,selected.dataset.aspect,selected.dataset.rightPlacement,selected.getAttribute('aria-label')].join('|'):'';
     list.replaceChildren();count.textContent=relations.length+'/'+relations.length;count.dataset.total=String(relations.length);
     relations.forEach((relation,index)=>{
-      const left=coordinate(relation.left),right=coordinate(relation.right),row=document.createElement('button');row.type='button';row.className='sky-foundation-relationship-row';row.dataset.relationshipSelection='true';row.dataset.relationIndex=String(index);row.dataset.relationshipMode='A-B';row.dataset.relationScope='inter';row.dataset.leftSky='A';row.dataset.rightSky='B';row.dataset.aspect=relation.aspect.id;row.dataset.leftPlacement=relation.left.id;row.dataset.rightPlacement=relation.right.id;row.dataset.sourceOrb=relation.orb.toFixed(6);row.dataset.harmonicOrder=String(relation.harmonicOrder);row.dataset.harmonicNumerator=String(relation.harmonicNumerator);row.dataset.phaseError=relation.phaseError.toFixed(6);row.dataset.signedPhaseError=relation.signedPhaseError.toFixed(6);row.dataset.harmonicWindow=relation.masterWindow.toFixed(6);row.dataset.windowFraction=Number.isFinite(relation.windowFraction)?relation.windowFraction.toFixed(6):String(relation.windowFraction);row.dataset.harmonicCoherence=relation.coherence.toFixed(8);if(relation.left.house!=null)row.dataset.leftHouse=String(relation.left.house);if(relation.right.house!=null)row.dataset.rightHouse=String(relation.right.house);row.dataset.leftSign=String(left.sign);row.dataset.rightSign=String(right.sign);row.setAttribute('aria-label',relation.left.entry.name+' '+relation.aspect.id+' '+relation.right.entry.name+', orb '+relation.orb.toFixed(2)+' degrees, harmonic '+relation.harmonicOrder+', phase error '+relation.phaseError.toFixed(2)+' degrees, coherence '+relation.coherencePercent.toFixed(0)+' percent');
+      const left=coordinate(relation.left),right=coordinate(relation.right),row=document.createElement('button');row.type='button';row.className='sky-foundation-relationship-row';row.dataset.relationshipSelection='true';row.dataset.relationIndex=String(index);row.dataset.relationshipMode='A-B';row.dataset.relationScope='inter';row.dataset.leftSky='A';row.dataset.rightSky='B';row.dataset.aspect=relation.aspect.id;if(relation.bySignOnly)row.dataset.bySignOnly='true';row.dataset.leftPlacement=relation.left.id;row.dataset.rightPlacement=relation.right.id;row.dataset.sourceOrb=relation.orb.toFixed(6);row.dataset.harmonicOrder=String(relation.harmonicOrder);row.dataset.harmonicNumerator=String(relation.harmonicNumerator);row.dataset.phaseError=relation.phaseError.toFixed(6);row.dataset.signedPhaseError=relation.signedPhaseError.toFixed(6);row.dataset.harmonicWindow=relation.masterWindow.toFixed(6);row.dataset.windowFraction=Number.isFinite(relation.windowFraction)?relation.windowFraction.toFixed(6):String(relation.windowFraction);row.dataset.harmonicCoherence=relation.coherence.toFixed(8);if(relation.left.house!=null)row.dataset.leftHouse=String(relation.left.house);if(relation.right.house!=null)row.dataset.rightHouse=String(relation.right.house);row.dataset.leftSign=String(left.sign);row.dataset.rightSign=String(right.sign);row.setAttribute('aria-label',relation.left.entry.name+' '+relation.aspect.id+' '+relation.right.entry.name+(relation.bySignOnly?', by sign':', orb '+relation.orb.toFixed(2)+' degrees, harmonic '+relation.harmonicOrder+', phase error '+relation.phaseError.toFixed(2)+' degrees, coherence '+relation.coherencePercent.toFixed(0)+' percent'));
       const leftGlyph=glyphSlot('left',relation.left.entry.name),aspectGlyph=glyphSlot('aspect',relation.aspect.id),rightGlyph=glyphSlot('right',relation.right.entry.name),leftCopy=document.createElement('span'),rightCopy=document.createElement('span'),leftMeta=document.createElement('small'),rightMeta=document.createElement('small');
       leftCopy.className=rightCopy.className='sky-foundation-relationship-copy';
       leftCopy.append(document.createTextNode(relation.left.entry.name),leftMeta);rightCopy.append(document.createTextNode(relation.right.entry.name),rightMeta);
       if(relation.left.house!=null)sourceHouseCoordinate(leftMeta,left.text,relation.left.house,'left-house');else leftMeta.textContent=left.text;if(relation.right.house!=null)sourceHouseCoordinate(rightMeta,right.text,relation.right.house,'right-house');else rightMeta.textContent=right.text;
-      row.append(leftGlyph,leftCopy,aspectGlyph,rightGlyph,rightCopy);list.appendChild(row);
+      row.append(leftGlyph,leftCopy,aspectGlyph,rightGlyph,rightCopy);if(relation.bySignOnly){const tag=document.createElement('small');tag.className='sky-by-sign-label';tag.textContent='By Sign';row.appendChild(tag)}list.appendChild(row);
       const key=[row.dataset.leftPlacement,row.dataset.aspect,row.dataset.rightPlacement,row.getAttribute('aria-label')].join('|');if(key===selectedKey)row.setAttribute('aria-current','true');
     });
   }
@@ -505,7 +525,8 @@
       'relphi:sky-placement-multiselect-changed',
       'relphi:sky-house-multiselect-changed',
       'relphi:sky-zodiac-filter-changed',
-      'relphi:sky-harmonic-window-visibility-changed'
+      'relphi:sky-harmonic-window-visibility-changed',
+      'relphi:sky-by-sign-changed'
     ].forEach(name=>window.addEventListener(name,reapplyInteractionState));
     if(document.getElementById('skyFoundationRoot')?.getAttribute('aria-busy')==='false')schedule()
   }
