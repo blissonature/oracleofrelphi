@@ -51,25 +51,6 @@ function installStyle(){
 .sky-saved-fingerprint-piece{display:grid;place-items:center;width:48px;height:48px;min-width:0;overflow:visible}
 .sky-saved-fingerprint-piece[data-fingerprint-part="card"]{width:30px}
 .sky-saved-fingerprint-piece svg{display:block;width:44px;height:44px;max-width:100%;max-height:100%;overflow:visible}
-/* Match the approved Sky Card microheptagram at the picker size. */
-#skySavedSkiesPopover .sky-saved-microheptagram *{vector-effect:none!important}
-#skySavedSkiesPopover .sky-saved-microheptagram .sky-ph-week-segment,
-#skySavedSkiesPopover .sky-saved-microheptagram .sky-ph-hour-segment{
-  stroke-width:5!important;stroke-dasharray:none!important;stroke-linecap:round!important;filter:none!important
-}
-#skySavedSkiesPopover .sky-saved-microheptagram .sky-ph-week-segment.future,
-#skySavedSkiesPopover .sky-saved-microheptagram .sky-ph-hour-segment.future{
-  stroke:#77736e!important;opacity:.7!important
-}
-#skySavedSkiesPopover .sky-saved-microheptagram .sky-ph-week-segment.past,
-#skySavedSkiesPopover .sky-saved-microheptagram .sky-ph-week-segment.current,
-#skySavedSkiesPopover .sky-saved-microheptagram .sky-ph-hour-segment.current{
-  stroke:#c9211e!important;opacity:1!important
-}
-#skySavedSkiesPopover .sky-saved-microheptagram .sky-ph-day-ruler-ring,
-#skySavedSkiesPopover .sky-saved-microheptagram .sky-ph-node-glyph,
-#skySavedSkiesPopover .sky-saved-microheptagram .relphi-glyph-bubble>circle{filter:none!important}
-#skySavedSkiesPopover .sky-saved-microheptagram .sky-ph-micro-idle-node{stroke:none!important;filter:none!important}
 .sky-saved-fingerprint-piece .sky-card-hits-fingerprint-strip{display:grid;place-items:center}
 .sky-saved-fingerprint-piece .sky-card-hits-fingerprint-card{position:relative;display:block;width:22px;height:38px}
 .sky-saved-fingerprint-piece .sky-card-hits-fingerprint-card img{display:block;width:22px;height:38px;object-fit:cover;border-radius:2px}
