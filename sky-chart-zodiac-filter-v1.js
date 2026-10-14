@@ -86,36 +86,16 @@ function closeMenu(){
 }
 
 function positionMenu(){
-  if(!menu||menu.hidden||!button)return;
-  const rect=button.getBoundingClientRect(),margin=12,gap=5;
-  const width=Math.max(220,Math.min(330,window.innerWidth-margin*2));
-  const left=Math.max(margin,Math.min(rect.left,window.innerWidth-width-margin));
-  menu.style.width=`${width}px`;
-
-  // Let the menu use its natural height whenever the viewport can hold it. Only turn
-  // on scrolling when the full sign list genuinely cannot fit on screen.
-  menu.style.height='auto';
-  menu.style.maxHeight='none';
-  menu.style.overflowY='hidden';
-  const style=getComputedStyle(menu);
-  const borderHeight=(parseFloat(style.borderTopWidth)||0)+(parseFloat(style.borderBottomWidth)||0);
-  const naturalHeight=Math.ceil(menu.scrollHeight+borderHeight);
-  // Keep the toggle/chevron unobstructed even when neither side can fit
-  // the menu at its natural height. Constrain the menu to one side only.
-  const belowSpace=Math.max(0,window.innerHeight-margin-(rect.bottom+gap));
-  const aboveSpace=Math.max(0,rect.top-gap-margin);
-  const useBelow=belowSpace>=naturalHeight||(belowSpace>=aboveSpace&&aboveSpace<naturalHeight);
-  const sideSpace=useBelow?belowSpace:aboveSpace;
-  const renderedHeight=Math.min(naturalHeight,sideSpace);
-  menu.style.height=renderedHeight+'px';
-  menu.style.maxHeight=renderedHeight+'px';
-  menu.style.overflowY=naturalHeight>renderedHeight?'auto':'hidden';
-  const top=useBelow?rect.bottom+gap:rect.top-gap-renderedHeight;
-
-  menu.style.left=`${left}px`;
-  menu.style.top=`${top}px`;
-  menu.style.bottom='auto';
-  menu.dataset.openDirection=top<rect.top?'above':'below';
+  // The dropdown is anchored to its own toggle. No viewport-based positioning
+  // can place it over the control needed to collapse it.
+  if(!menu||menu.hidden)return;
+  menu.style.removeProperty('left');
+  menu.style.removeProperty('top');
+  menu.style.removeProperty('bottom');
+  menu.style.removeProperty('height');
+  menu.style.removeProperty('max-height');
+  menu.style.removeProperty('overflow-y');
+  menu.style.removeProperty('width');
 }
 
 function openMenu(){
@@ -162,7 +142,7 @@ function install(){
     });
   });
 
-  menu.appendChild(list);document.body.appendChild(menu);
+  menu.appendChild(list);root.appendChild(menu);
   button.addEventListener('click',toggleMenu);
   allButton.addEventListener('click',event=>{event.preventDefault();event.stopPropagation();setSelection(ALL)});
   noneButton.addEventListener('click',event=>{event.preventDefault();event.stopPropagation();setSelection([])});
