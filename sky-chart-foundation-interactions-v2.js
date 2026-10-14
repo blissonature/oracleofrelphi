@@ -132,7 +132,7 @@
       leftCopy.className=rightCopy.className='sky-foundation-relationship-copy';
       leftCopy.append(document.createTextNode(relation.left.entry.name),leftMeta);rightCopy.append(document.createTextNode(relation.right.entry.name),rightMeta);
       if(relation.left.house!=null)sourceHouseCoordinate(leftMeta,left.text,relation.left.house,'left-house');else leftMeta.textContent=left.text;if(relation.right.house!=null)sourceHouseCoordinate(rightMeta,right.text,relation.right.house,'right-house');else rightMeta.textContent=right.text;
-      row.append(leftGlyph,leftCopy,aspectGlyph,rightGlyph,rightCopy);if(relation.bySignOnly){const tag=document.createElement('small');tag.className='sky-by-sign-label';tag.textContent='By Sign';row.appendChild(tag)}list.appendChild(row);
+      row.append(leftGlyph,leftCopy,aspectGlyph,rightGlyph,rightCopy);list.appendChild(row);
       const key=[row.dataset.leftPlacement,row.dataset.aspect,row.dataset.rightPlacement,row.getAttribute('aria-label')].join('|');if(key===selectedKey)row.setAttribute('aria-current','true');
     });
   }
