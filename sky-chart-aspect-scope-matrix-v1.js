@@ -115,8 +115,7 @@ function signChoice(id){
   const wrap=document.createElement('label');wrap.className='sky-chart-by-sign-choice';
   const input=document.createElement('input');input.type='checkbox';input.dataset.skyBySign=id;
   input.setAttribute('aria-label',id==='all'?'By Sign: all seven aspects':`By Sign: ${id}`);
-  const caption=document.createElement('span');caption.textContent=id==='all'?'By Sign':'';
-  wrap.append(input,caption);return wrap;
+  wrap.append(input);return wrap;
 }
 function renderPopover(){
   const body=popover()?.querySelector('.sky-chart-aspect-filter-body');if(!body)return;
@@ -127,16 +126,17 @@ function renderPopover(){
   const labels=bActive()?['All','A↔A','B↔B','A↔B']:['All','A↔A'];
   labels.forEach(text=>{const span=document.createElement('span');span.textContent=text;cols.appendChild(span)});
   const signHeader=document.createElement('span');signHeader.className='sky-chart-by-sign-heading';signHeader.textContent='By Sign';
-  header.append(title,cols,signHeader);list.append(header,matrixRow('all','All aspects',true));
-  const master=list.lastElementChild;master.appendChild(signChoice('all'));
+  header.append(title,signHeader,cols);list.append(header,matrixRow('all','All aspects',true));
+  const master=list.lastElementChild;master.insertBefore(signChoice('all'),master.querySelector('.sky-chart-aspect-list-choices'));
   GROUPS.forEach(group=>{
     const groupRow=matrixRow('group:'+group.id,group.label,true);
     groupRow.classList.add('sky-chart-aspect-category-row');
     groupRow.dataset.aspectCategory=group.id;
+    if(group.id==='major'||group.id==='minor')groupRow.insertBefore(signChoice('group:'+group.id),groupRow.querySelector('.sky-chart-aspect-list-choices'));
     list.appendChild(groupRow);
     group.aspects.forEach(id=>{
       const aspect=ASPECTS.find(item=>item.id===id);
-      if(aspect){const row=matrixRow(aspect.id,aspect.label,false,aspect.angle);if(SIGN_ASPECTS.includes(aspect.id))row.appendChild(signChoice(aspect.id));list.appendChild(row)}
+      if(aspect){const row=matrixRow(aspect.id,aspect.label,false,aspect.angle);if(SIGN_ASPECTS.includes(aspect.id))row.insertBefore(signChoice(aspect.id),row.querySelector('.sky-chart-aspect-list-choices'));list.appendChild(row)}
     });
   });
   body.replaceChildren(list);
@@ -156,8 +156,10 @@ function renderClosedSummary(owner){
 function updateInputs(){
   document.querySelectorAll('[data-sky-by-sign]').forEach(input=>{
     const id=input.dataset.skyBySign;
-    input.checked=id==='all'?signSelected.size===SIGN_ASPECTS.length:signSelected.has(id);
-    input.indeterminate=id==='all'&&signSelected.size>0&&signSelected.size<SIGN_ASPECTS.length;
+    const ids=id==='all'?SIGN_ASPECTS:id.startsWith('group:')?(GROUP_MAP.get(id.slice(6))?.aspects||[]).filter(value=>SIGN_ASPECTS.includes(value)):[id];
+    const count=ids.filter(value=>signSelected.has(value)).length;
+    input.checked=ids.length>0&&count===ids.length;
+    input.indeterminate=count>0&&count<ids.length;
   });
   document.querySelectorAll('[data-aspect-matrix-scope][data-aspect-matrix-aspect]').forEach(input=>{
     const current=cellState(input.dataset.aspectMatrixScope,input.dataset.aspectMatrixAspect);
@@ -220,8 +222,8 @@ function handleChange(event){
   const signInput=event.target.closest?.('[data-sky-by-sign]');
   if(signInput){
     const id=signInput.dataset.skyBySign;
-    if(id==='all'){signSelected.clear();if(signInput.checked)SIGN_ASPECTS.forEach(item=>signSelected.add(item))}
-    else if(signInput.checked)signSelected.add(id);else signSelected.delete(id);
+    const ids=id==='all'?SIGN_ASPECTS:id.startsWith('group:')?(GROUP_MAP.get(id.slice(6))?.aspects||[]).filter(value=>SIGN_ASPECTS.includes(value)):[id];
+    ids.forEach(value=>signInput.checked?signSelected.add(value):signSelected.delete(value));
     try{localStorage.setItem(SIGN_STORAGE,JSON.stringify([...signSelected]))}catch(_){}
     applyMatrix();window.dispatchEvent(new CustomEvent('relphi:sky-by-sign-changed',{detail:{selected:[...signSelected]}}));return;
   }
