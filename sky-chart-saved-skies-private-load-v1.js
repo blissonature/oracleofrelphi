@@ -8,9 +8,6 @@ window.__relphiSkySavedSkiesPrivateLoadV1=true;
 
 const NS='http://www.w3.org/2000/svg';
 const LIBRARY_KEY='relphiSkyLibraryV1';
-const CHALDEAN=['saturn','jupiter','mars','sun','venus','mercury','moon'];
-const WEEK_PATH=['sun','moon','mars','mercury','jupiter','venus','saturn','sun'];
-const WEEKDAY_RULERS={1:'moon',2:'mars',3:'mercury',4:'jupiter',5:'venus',6:'saturn',7:'sun'};
 const SIGN_NAMES=['Aries','Taurus','Gemini','Cancer','Leo','Virgo','Libra','Scorpio','Sagittarius','Capricorn','Aquarius','Pisces'];
 const SIGN_RULERS=['Mars','Venus','Mercury','Moon','Sun','Mercury','Venus','Mars','Jupiter','Saturn','Saturn','Jupiter'];
 const EXALTATIONS=['Sun','Moon','','Jupiter','','Mercury','Saturn','','','Mars','','Venus'];
@@ -62,10 +59,6 @@ function installStyle(){
 }
 
 function svg(name,attrs={}){const node=document.createElementNS(NS,name);Object.entries(attrs).forEach(([key,value])=>node.setAttribute(key,String(value)));return node}
-function point(key,radius,cx=180,cy=180){const index=CHALDEAN.indexOf(key),angle=(-90+index*(360/7))*Math.PI/180;return{x:cx+Math.cos(angle)*radius,y:cy+Math.sin(angle)*radius}}
-function line(parent,a,b,className){parent.appendChild(svg('line',{x1:a.x,y1:a.y,x2:b.x,y2:b.y,class:className}))}
-function partialLine(parent,a,b,fraction,className){const f=Math.max(0,Math.min(1,Number(fraction)||0));line(parent,a,{x:a.x+(b.x-a.x)*f,y:a.y+(b.y-a.y)*f},className)}
-function solarNoonDate(localDate,timeZone){return window.luxon.DateTime.fromISO(`${localDate}T12:00`,{zone:timeZone,setZone:true}).toJSDate()}
 function timingPacket(payload){
   if(timeUnknown(payload))return null;
   const profile=payload?.calcProfile&&typeof payload.calcProfile==='object'?payload.calcProfile:{};
@@ -76,18 +69,6 @@ function timingPacket(payload){
   if(!instant){const raw=String(profile.dateTime||payload?.dateTime||'').trim();if(raw){const local=window.luxon.DateTime.fromISO(raw,{zone:timeZone,setZone:true});if(local.isValid)instant=local.toUTC().toJSDate()}}
   return instant?{timeZone,latitude,longitude,instant}:null;
 }
-function solarFrame(packet){
-  if(!window.SunCalc||!window.luxon?.DateTime)return null;
-  const local=window.luxon.DateTime.fromJSDate(packet.instant).setZone(packet.timeZone),todayDate=local.toFormat('yyyy-MM-dd'),previousDate=local.minus({days:1}).toFormat('yyyy-MM-dd'),nextDate=local.plus({days:1}).toFormat('yyyy-MM-dd');
-  const today=SunCalc.getTimes(solarNoonDate(todayDate,packet.timeZone),packet.latitude,packet.longitude),previous=SunCalc.getTimes(solarNoonDate(previousDate,packet.timeZone),packet.latitude,packet.longitude),next=SunCalc.getTimes(solarNoonDate(nextDate,packet.timeZone),packet.latitude,packet.longitude);
-  const valid=value=>value instanceof Date&&!Number.isNaN(value.getTime());if(![today.sunrise,today.sunset,previous.sunrise,previous.sunset,next.sunrise].every(valid))return null;
-  return packet.instant>=today.sunrise?{start:today.sunrise,sunrise:today.sunrise,sunset:today.sunset,end:next.sunrise}:{start:previous.sunrise,sunrise:previous.sunrise,sunset:previous.sunset,end:today.sunrise};
-}
-function weekdayRuler(instant,timeZone){const weekday=window.luxon.DateTime.fromJSDate(instant).setZone(timeZone).weekday;return WEEKDAY_RULERS[weekday]||'sun'}
-function rotateHours(dayKey){const start=CHALDEAN.indexOf(dayKey);return Array.from({length:24},(_,index)=>CHALDEAN[(start+index)%7])}
-function planetaryHours(frame,dayKey){const sequence=rotateHours(dayKey),daylight=frame.sunset-frame.sunrise,night=frame.end-frame.sunset,dayLength=daylight/12,nightLength=night/12;return Array.from({length:24},(_,index)=>{const bright=index<12,start=bright?frame.sunrise.getTime()+index*dayLength:frame.sunset.getTime()+(index-12)*nightLength;return{ruler:sequence[index],start:new Date(start),end:new Date(start+(bright?dayLength:nightLength))}})}
-// Saved Skies never construct their own heptagram. Use the same source builder
-// and canonical glyph correction as the Where and When Sky Card.
 function whereFingerprint(payload){
   if(timeUnknown(payload))return null;
   const packet=timingPacket(payload),builder=window.RelphiSkyWhereWhenDraftHeptagram?.buildPreview;
