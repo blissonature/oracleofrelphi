@@ -21,7 +21,8 @@ const ASPECTS=Object.freeze([
 const IDS=Object.freeze(ASPECTS.map(item=>item.id));
 const SIGN_ASPECTS=Object.freeze(['conjunction','semi-sextile','sextile','square','trine','quincunx','opposition']);
 const SIGN_STEPS=Object.freeze({conjunction:0,'semi-sextile':1,sextile:2,square:3,trine:4,quincunx:5,opposition:6});
-const SIGN_STORAGE='relphiSkyAspectBySignV1';
+// New By Sign preferences start disabled; preserve choices only after explicit selection in this version.
+const SIGN_STORAGE='relphiSkyAspectBySignV2';
 const signSelected=new Set();
 try{const saved=JSON.parse(localStorage.getItem(SIGN_STORAGE)||'[]');if(Array.isArray(saved))saved.filter(id=>SIGN_ASPECTS.includes(id)).forEach(id=>signSelected.add(id))}catch(_){}
 window.RelphiSkyBySign={selected:signSelected,steps:SIGN_STEPS,enabled:id=>signSelected.has(id)};
