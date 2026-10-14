@@ -19,14 +19,14 @@ function installStyle(){
     }
     .sky-foundation-relationship-row.is-inline-expanded{
       grid-template-columns:repeat(3,minmax(0,1fr))!important;
-      grid-template-areas:"left aspect right" "left orb right" "detail detail detail"!important;
-      grid-template-rows:38px 18px auto!important;
+      grid-template-areas:"left aspect right" "left orb right" "left timing right" "detail detail detail"!important;
+      grid-template-rows:38px 18px auto auto!important;
       min-height:64px!important;
     }
     .sky-foundation-relationship-row.is-inline-expanded>.inline-rel-detail{
       grid-area:detail!important;
       grid-column:1/-1!important;
-      grid-row:3!important;
+      grid-row:4!important;
       position:relative!important;
       min-width:0!important;
       width:100%!important;
@@ -110,6 +110,26 @@ function installStyle(){
       min-width:40px!important;
       line-height:18px!important;
     }
+    .sky-foundation-relationship-row.is-inline-expanded>.inline-rel-timing-slot{
+      grid-area:timing!important;grid-column:2!important;grid-row:3!important;
+      position:relative!important;display:block!important;min-width:0!important;
+      margin:2px 0 6px!important;padding:0 2px!important;align-self:start!important;
+      text-align:center!important;
+    }
+    .sky-foundation-relationship-row.is-inline-expanded>.inline-rel-timing-slot .inline-rel-transit-window{
+      text-align:center!important;font-size:.48rem!important;
+      padding:2px 0!important;margin:0!important;
+    }
+    .sky-foundation-relationship-row.is-inline-expanded>.inline-rel-timing-slot .inline-rel-transit-row{
+      display:flex!important;flex-wrap:wrap!important;justify-content:center!important;
+      gap:2px 4px!important;text-align:center!important;
+    }
+    .sky-foundation-relationship-glyph[data-sky-rx="true"]{position:relative}
+    .sky-foundation-relationship-glyph[data-sky-rx="true"]::after{
+      content:"℞";position:absolute;right:-2px;bottom:-5px;
+      font:800 10px/1 serif;color:inherit;
+      background:#fffdfa;border-radius:2px;pointer-events:none;
+    }
     @media(max-width:620px){
       #skyFoundationRelationshipList:has(> .sky-foundation-relationship-row.is-inline-expanded){
         max-height:none!important;
@@ -130,9 +150,24 @@ function normalizeAspect(row){
   const orb=pair.querySelector(':scope>.sky-foundation-relationship-orb');
   if(glyph)row.appendChild(glyph);if(orb)row.appendChild(orb);pair.remove();
 }
+function normalizeTiming(row){
+  const slot=row.querySelector(':scope>.inline-rel-detail [data-inline-relationship-timing]');
+  if(slot&&row.classList.contains('is-inline-expanded'))row.appendChild(slot);
+}
+function markRetrograde(row){
+  for(const side of ['left','right']){
+    const sky=String(row.dataset[side+'Sky']||'').toUpperCase();
+    const placement=row.dataset[side+'Placement'];
+    const host=row.querySelector(':scope>.sky-foundation-relationship-placement--'+side);
+    const glyph=host?.querySelector('.sky-foundation-relationship-glyph--'+side);
+    if(!glyph)continue;
+    const isRx=!!(sky&&placement&&window.RelphiSkyRetrograde?.forPlacement?.(sky,placement));
+    if(isRx)glyph.dataset.skyRx='true';else delete glyph.dataset.skyRx;
+  }
+}
 function apply(row){
   if(!row?.matches?.('.sky-foundation-relationship-row'))return;
-  normalizeSide(row,'left');normalizeSide(row,'right');normalizeAspect(row);
+  normalizeSide(row,'left');normalizeSide(row,'right');normalizeAspect(row);normalizeTiming(row);markRetrograde(row);
   if(row.classList.contains('is-inline-expanded'))row.dataset.inlineExpandedHeader='two-tier';
   else delete row.dataset.inlineExpandedHeader;
 }
