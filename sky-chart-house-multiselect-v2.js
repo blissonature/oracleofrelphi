@@ -306,17 +306,7 @@
     ['relphi:sky-foundation-ready','relphi:sky-foundation-interactions-ready','relphi:sky-placement-multiselect-changed','relphi:sky-aspect-multiselect-changed','relphi:sky-single-sky-aspects-rendered','relphi:sky-b-removed','relphi:sky-b-restored'].forEach(name => window.addEventListener(name, schedule));
     window.addEventListener('relphi:sky-foundation-filter-changed', filterChanged);
     document.addEventListener('change', handleChange);
-    document.addEventListener('pointerdown', event => {
-      if (!isOpen(portalOwner)) return;
-      if (portalOwner.contains(event.target) || popover()?.contains(event.target)) return;
-      close(portalOwner);
-    }, true);
-    document.addEventListener('keydown', event => {
-      if (event.key !== 'Escape' || !isOpen(portalOwner)) return;
-      const owner = portalOwner;
-      close(owner);
-      owner.querySelector('[data-house-filter-toggle]')?.focus();
-    });
+    window.RelphiSkyDropdownLifecycle.register('houses',{owner:()=>portalOwner,anchor:()=>portalOwner?.querySelector('[data-house-filter-toggle]'),menu:()=>popover(),isOpen:()=>isOpen(portalOwner),close:()=>{if(portalOwner)close(portalOwner)}});
     window.addEventListener('resize', position);
     window.addEventListener('scroll', position, true);
     window.addEventListener('storage', event => { if (!event.key || event.key === 'relphiSkyChartB') schedule(); });
