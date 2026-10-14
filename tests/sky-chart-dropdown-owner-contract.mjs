@@ -3,7 +3,7 @@ import fs from 'node:fs';
 const read=name=>fs.readFileSync(new URL('../'+name,import.meta.url),'utf8');
 const html=read('sky-chart.html');
 const owner=read('sky-chart-dropdown-position-v1.js');
-assert.match(html,/sky-chart-dropdown-position-v1\.js\?v=2/);
+assert.match(html,/sky-chart-dropdown-position-v1\.js\?v=3/);
 assert.ok(html.indexOf('sky-chart-dropdown-position-v1.js')<html.indexOf('sky-chart-placement-multiselect-v4.js'));
 assert.match(owner,/window\.RelphiSkyDropdownPosition=position/);
 assert.match(owner,/window\.RelphiSkyDropdownLifecycle=Object.freeze/);
