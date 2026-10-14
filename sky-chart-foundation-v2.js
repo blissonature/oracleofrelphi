@@ -34,16 +34,6 @@ function requestedOrb(){const input=document.querySelector('[data-filter="orb"]'
 function source(payload){if(!payload||typeof payload!=='object')return[];const known=[payload.placements,payload.positions,payload.points,payload.bodies].find(value=>value&&typeof value==='object'),raw=known||payload;if(Array.isArray(raw))return raw.map((item,index)=>[String(item?.name||item?.label||item?.id||index),item]);return Object.entries(raw).filter(([key,item])=>item&&typeof item==='object'&&!Array.isArray(item)&&!/^(calcProfile|metadata|profile|location|notes|houseCusps|cusps|houses)$/i.test(key)&&(Number.isFinite(Number(item.longitude))||item.sign||item.zodiac))}
 function longitude(item){if(Number.isFinite(Number(item?.longitude)))return norm(item.longitude);const signs=spec()?.SIGNS||[],sign=signs.indexOf(String(item?.sign||item?.zodiac||'').trim().toLowerCase());return sign<0?NaN:norm(sign*30+Number(item?.degree||item?.degrees||0)+Number(item?.minute||item?.minutes||0)/60+Number(item?.second||item?.seconds||0)/3600)}
 function canonicalEntry(key,item){const registry=window.RelphiGlyphRegistry;if(!registry)return null;for(const candidate of[item?.glyphId,item?.id,item?.name,item?.label,item?.body,item?.planet,item?.point,key]){if(candidate==null)continue;const raw=String(candidate).trim(),id=ALIASES[raw.toLowerCase()]||raw,entry=registry.resolve?.(id)||registry.get?.(id);if(entry?.asset||APPROVED_COMPONENT_MASTERS.has(entry?.id))return entry}return null}
-function placementRetrograde(item){
-  if(!item||typeof item!=='object')return false;
-  if(typeof item.retrograde==='boolean')return item.retrograde;
-  if(typeof item.isRetrograde==='boolean')return item.isRetrograde;
-  const motion=String(item.motion??item.direction??'').trim().toLowerCase();
-  if(['retrograde','rx','retrograding'].includes(motion))return true;
-  if(['direct','stationary-direct','stationary'].includes(motion))return false;
-  const speed=item.longitudeSpeed??item.speedLongitude??item.longitudinalSpeed??item.speed??item.velocity;
-  return speed!==null&&speed!==undefined&&speed!==''&&Number.isFinite(Number(speed))&&Number(speed)<0;
-}
 const MOTION_BODIES=new Set(['mercury','venus','mars','jupiter','saturn','uranus','neptune','pluto','sun','moon']);
 function motionLongitude(id,date){
   const astronomy=window.Astronomy;
