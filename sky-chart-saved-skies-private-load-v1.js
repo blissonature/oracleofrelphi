@@ -86,49 +86,24 @@ function solarFrame(packet){
 function weekdayRuler(instant,timeZone){const weekday=window.luxon.DateTime.fromJSDate(instant).setZone(timeZone).weekday;return WEEKDAY_RULERS[weekday]||'sun'}
 function rotateHours(dayKey){const start=CHALDEAN.indexOf(dayKey);return Array.from({length:24},(_,index)=>CHALDEAN[(start+index)%7])}
 function planetaryHours(frame,dayKey){const sequence=rotateHours(dayKey),daylight=frame.sunset-frame.sunrise,night=frame.end-frame.sunset,dayLength=daylight/12,nightLength=night/12;return Array.from({length:24},(_,index)=>{const bright=index<12,start=bright?frame.sunrise.getTime()+index*dayLength:frame.sunset.getTime()+(index-12)*nightLength;return{ruler:sequence[index],start:new Date(start),end:new Date(start+(bright?dayLength:nightLength))}})}
-const HEPTAGRAM_COLORS={saturn:'#8c7a42',jupiter:'#41752f',mars:'#c9211e',sun:'#d08a00',venus:'#b23b79',mercury:'#277390',moon:'#58628a'};
-function savedSkyRuler(root,key,dayKey,hourKey){
-  const p=point(key,142),day=key===dayKey,hour=key===hourKey;
-  const group=svg('g',{class:`sky-ph-planet sky-ph-${key}${day?' is-day-ruler':''}${hour?' is-hour-ruler':''}`,style:`color:${HEPTAGRAM_COLORS[key]}`});
-  const mount=svg('g',{transform:`translate(${p.x} ${p.y})`,class:'sky-ph-node-glyph'});
-  group.appendChild(mount);root.appendChild(group);
-  // All seven positions use canonical source glyphs; the shared fingerprint renderer decides thumbnail treatment.
-  const registry=window.RelphiGlyphRegistry,component=window.RelphiGlyphComponent;
-  const entry=registry?.get?.(key)||registry?.resolve?.(key);
-  if(!entry||!component?.createBubble)return;
-  const master=svg('g',{transform:`scale(${17/19})`,'data-master-glyph-unit':'true'});
-  mount.appendChild(master);
-  if(day){
-    for(const [radius,width] of [[23,1.9],[27,1.35]]){
-      master.appendChild(svg('circle',{cx:0,cy:0,r:radius,fill:'none',stroke:HEPTAGRAM_COLORS[key],'stroke-width':width,class:'sky-ph-day-ruler-ring'}));
-    }
-  }
-  try{
-    const bubble=component.createBubble(master,entry.id,{
-      radius:19,padding:1,color:hour?HEPTAGRAM_COLORS[key]:'#fff',
-      fill:hour?'#fff':HEPTAGRAM_COLORS[key],strokeWidth:hour?2.8:2.35
-    });
-    bubble.circle?.setAttribute('stroke',HEPTAGRAM_COLORS[key]);
-    Promise.resolve(bubble.ready).catch(error=>console.error('[Saved Sky ruler glyph]',error));
-  }catch(error){console.error('[Saved Sky ruler glyph]',error)}
-}
+// Saved Skies never construct their own heptagram. Use the same source builder
+// and canonical glyph correction as the Where and When Sky Card.
 function whereFingerprint(payload){
   if(timeUnknown(payload))return null;
-  const packet=timingPacket(payload),frame=packet&&solarFrame(packet);if(!packet||!frame)return null;
-  const dayKey=weekdayRuler(frame.start,packet.timeZone),rows=planetaryHours(frame,dayKey);let currentIndex=rows.findIndex(row=>packet.instant>=row.start&&packet.instant<row.end);if(currentIndex<0)currentIndex=0;
-  const current=rows[currentIndex],weekIndex=Math.max(0,WEEK_PATH.indexOf(dayKey)),dayFraction=Math.max(0,Math.min(1,(packet.instant-frame.start)/(frame.end-frame.start))),hourFraction=Math.max(0,Math.min(1,(packet.instant-current.start)/(current.end-current.start)));
-  const root=svg('svg',{viewBox:'0 0 360 360',preserveAspectRatio:'xMidYMid meet',class:'sky-where-fingerprint-heptagram sky-saved-microheptagram','aria-hidden':'true',focusable:'false'});
-  for(let index=0;index<7;index++){const from=point(WEEK_PATH[index],142),to=point(WEEK_PATH[index+1],142);line(root,from,to,`sky-ph-week-segment ${index<weekIndex?'past':'future'}`);if(index===weekIndex)partialLine(root,from,to,dayFraction,'sky-ph-week-segment current')}
-  CHALDEAN.forEach((key,index)=>line(root,point(key,142),point(CHALDEAN[(index+1)%7],142),'sky-ph-hour-segment future'));
-  partialLine(root,point(current.ruler,142),point(CHALDEAN[(CHALDEAN.indexOf(current.ruler)+1)%7],142),hourFraction,'sky-ph-hour-segment current');
-  CHALDEAN.forEach(key=>savedSkyRuler(root,key,dayKey,current.ruler));
-  root.dataset.dayRuler=dayKey;root.dataset.hourRuler=current.ruler;
-  root.dataset.canonicalSourceReady='true';root.dataset.canonicalHeptagramReady='true';
-  const shared=window.RelphiSkyMicroHeptagram;
-  if(typeof shared!=='function')return null;
-  const miniature=shared(root);
-  if(miniature)miniature.classList.add('sky-saved-microheptagram');
-  return miniature;
+  const packet=timingPacket(payload),builder=window.RelphiSkyWhereWhenDraftHeptagram?.buildPreview;
+  if(!packet||typeof builder!=='function')return null;
+  const source=builder(packet);if(!source)return null;
+  const mount=document.createElement('span');mount.className='sky-saved-canonical-heptagram';
+  const canonical=window.RelphiSkyHeptagramCanonical;
+  if(typeof canonical?.correct!=='function')return mount;
+  Promise.resolve(canonical.correct(source)).then(()=>{
+    if(!mount.isConnected)return;
+    source.dataset.canonicalSourceReady='true';
+    source.dataset.canonicalHeptagramReady='true';
+    const miniature=window.RelphiSkyMicroHeptagram?.(source);
+    if(miniature){miniature.classList.add('sky-saved-microheptagram');mount.replaceChildren(miniature)}
+  }).catch(error=>console.error('[Saved Sky canonical heptagram]',error));
+  return mount;
 }
 function placementSource(payload){if(!payload||typeof payload!=='object')return[];const known=[payload.placements,payload.positions,payload.points,payload.bodies].find(value=>value&&typeof value==='object'),raw=known||payload;if(Array.isArray(raw))return raw.map((item,index)=>[String(item?.name||item?.label||item?.id||index),item]);return Object.entries(raw).filter(([key,item])=>item&&typeof item==='object'&&!Array.isArray(item)&&!/^(calcProfile|metadata|profile|location|notes|houseCusps|cusps|houses)$/i.test(key))}
 function longitude(item){if(Number.isFinite(Number(item?.longitude)))return norm(item.longitude);const sign=SIGN_NAMES.findIndex(name=>name.toLowerCase()===String(item?.sign||item?.zodiac||'').trim().toLowerCase());return sign<0?NaN:norm(sign*30+Number(item?.degree||item?.degrees||0)+Number(item?.minute||item?.minutes||0)/60+Number(item?.second||item?.seconds||0)/3600)}
