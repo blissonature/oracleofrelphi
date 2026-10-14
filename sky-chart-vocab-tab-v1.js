@@ -1880,28 +1880,7 @@ document.addEventListener('pointerdown',clearVocabWheelContextFromBlank,true);
 ].forEach(name=>window.addEventListener(name,schedule));
 window.addEventListener('storage',event=>{if(!event.key||Object.values(KEYS).includes(event.key)||event.key===DISPLAY_KEY)schedule()});
 window.addEventListener('pageshow',schedule);
-// Outside dragging scrolls the page; only an outside tap dismisses.
-let vocabOutsidePointer=null;
-document.addEventListener('pointerdown',event=>{
-  if(!openDropdownState)return;
-  const {slot,kind}=openDropdownState,owner=dropdownOwner(slot,kind),menu=dropdownMenu(slot,kind);
-  const path=typeof event.composedPath==='function'?event.composedPath():[];
-  if(path.includes(owner)||path.includes(menu)||owner?.contains(event.target)||menu?.contains(event.target)){
-    vocabOutsidePointer=null;return;
-  }
-  vocabOutsidePointer={id:event.pointerId,x:event.clientX,y:event.clientY,moved:false};
-},true);
-document.addEventListener('pointermove',event=>{
-  if(vocabOutsidePointer?.id!==event.pointerId)return;
-  if(Math.hypot(event.clientX-vocabOutsidePointer.x,event.clientY-vocabOutsidePointer.y)>8)vocabOutsidePointer.moved=true;
-},true);
-document.addEventListener('pointerup',event=>{
-  if(vocabOutsidePointer?.id!==event.pointerId)return;
-  const start=vocabOutsidePointer;vocabOutsidePointer=null;
-  if(!start.moved&&Math.hypot(event.clientX-start.x,event.clientY-start.y)<=8)closeDropdown();
-},true);
-document.addEventListener('pointercancel',()=>{vocabOutsidePointer=null},true);
-document.addEventListener('keydown',event=>{if(event.key==='Escape')closeDropdown()});
+window.RelphiSkyDropdownLifecycle.register('vocab',{owner:()=>openDropdownState?dropdownOwner(openDropdownState.slot,openDropdownState.kind):null,anchor:()=>openDropdownState?dropdownOwner(openDropdownState.slot,openDropdownState.kind)?.querySelector('[data-vocab-dropdown-toggle]'):null,menu:()=>openDropdownState?dropdownMenu(openDropdownState.slot,openDropdownState.kind):null,isOpen:()=>!!openDropdownState,close:closeDropdown});
 window.addEventListener('resize',scheduleDropdownPosition);
 window.addEventListener('scroll',scheduleDropdownPosition,true);
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)schedule()});
