@@ -173,7 +173,7 @@ function updateCount(){
     if(count)count.textContent=`${shown}/${rows.length}`;if(empty)empty.hidden=shown!==0;
   });
 }
-function visible(node){const mode=relationshipMode(node);if(!activeScopes().includes(mode))return false;const aspect=normalize(node?.dataset?.aspect||'');if(!aspect)return true;const anySelected=activeScopes().some(scope=>state[scope]?.size>0);if(!anySelected)return false;if(window.RelphiAspectConfigurations?.participates?.(node))return true;return!!state[mode]?.has(aspect)}
+function visible(node){const mode=relationshipMode(node);if(!activeScopes().includes(mode))return false;const aspect=normalize(node?.dataset?.aspect||'');if(node?.dataset?.bySignOnly==='true')return signSelected.has(aspect);if(!aspect)return true;const anySelected=activeScopes().some(scope=>state[scope]?.size>0);if(!anySelected)return false;if(window.RelphiAspectConfigurations?.participates?.(node))return true;return!!state[mode]?.has(aspect)}
 function applyMatrix({announce=true}={}){
   applying=true;
   document.querySelectorAll('.sky-foundation-relationship-row,[data-layer="aspects"]>.sky-foundation-aspect').forEach(node=>node.classList.toggle('sky-chart-aspect-multiselect-hidden',!visible(node)));
@@ -181,8 +181,8 @@ function applyMatrix({announce=true}={}){
   const matrix=Object.fromEntries(SCOPES.map(scope=>[scope.id,IDS.filter(id=>state[scope.id].has(id))]));
   try{localStorage.setItem(STORAGE_KEY,JSON.stringify(matrix))}catch(_){}
   const active=new Set(activeScopes());
-  const scopes=SCOPES.filter(scope=>active.has(scope.id)&&state[scope.id].size>0).map(scope=>scope.id);
-  const selected=IDS.filter(id=>SCOPES.some(scope=>active.has(scope.id)&&state[scope.id].has(id)));
+  const scopes=SCOPES.filter(scope=>active.has(scope.id)&&(state[scope.id].size>0||signSelected.size>0)).map(scope=>scope.id);
+  const selected=IDS.filter(id=>signSelected.has(id)||SCOPES.some(scope=>active.has(scope.id)&&state[scope.id].has(id)));
   document.documentElement.dataset.skyAspectMatrix='ready';
   document.documentElement.dataset.skyAspectMultiselect='ready';
   document.documentElement.dataset.skyAspectSelection=`${selected.length}/${IDS.length}`;
@@ -223,7 +223,7 @@ function handleChange(event){
     if(id==='all'){signSelected.clear();if(signInput.checked)SIGN_ASPECTS.forEach(item=>signSelected.add(item))}
     else if(signInput.checked)signSelected.add(id);else signSelected.delete(id);
     try{localStorage.setItem(SIGN_STORAGE,JSON.stringify([...signSelected]))}catch(_){}
-    updateInputs();window.dispatchEvent(new CustomEvent('relphi:sky-by-sign-changed',{detail:{selected:[...signSelected]}}));return;
+    applyMatrix();window.dispatchEvent(new CustomEvent('relphi:sky-by-sign-changed',{detail:{selected:[...signSelected]}}));return;
   }
   const input=event.target.closest?.('[data-aspect-matrix-scope][data-aspect-matrix-aspect]');if(!input)return;
   setCells(input.dataset.aspectMatrixScope,input.dataset.aspectMatrixAspect,input.checked);applyMatrix();
