@@ -531,17 +531,7 @@
 
     ['relphi:sky-foundation-ready','relphi:sky-foundation-interactions-ready','relphi:sky-single-sky-aspects-rendered','relphi:sky-b-removed','relphi:sky-b-restored'].forEach(name=>window.addEventListener(name,scheduleRefresh));
     document.addEventListener('click',handleLogicClick);
-    document.addEventListener('pointerdown',event=>{
-      if(!isOpen(portalOwner))return;
-      if(eventInsidePlacementUI(event))return;
-      close(portalOwner);
-    },true);
-    document.addEventListener('keydown',event=>{
-      if(event.key!=='Escape'||!isOpen(portalOwner))return;
-      const owner=portalOwner,focusTarget=portalAnchor?.querySelector?.('[data-vocab-shared-placement-toggle]')||owner.querySelector('[data-placement-filter-toggle]');
-      close(owner);
-      focusTarget?.focus();
-    });
+    window.RelphiSkyDropdownLifecycle.register('placements',{owner:()=>portalOwner,anchor:()=>portalAnchor?.querySelector?.('[data-vocab-shared-placement-toggle]')||portalOwner?.querySelector('[data-placement-filter-toggle]'),menu:()=>popover(),isOpen:()=>isOpen(portalOwner),close:()=>{if(portalOwner)close(portalOwner)}});
     window.addEventListener('resize',()=>schedulePosition(true));
     window.addEventListener('scroll',event=>{
       if(!isOpen(portalOwner))return;
