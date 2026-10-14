@@ -83,12 +83,12 @@
     const visibleIndexes=new Set(),rows=[...document.querySelectorAll('.sky-foundation-relationship-row[data-relation-index]')],identity=relationshipKey,rowsByIndex=new Map(rows.map(row=>[identity(row),row]));
     let hiddenByHarmonicWindow=0;
     rows.forEach(row=>{
-      const phase=phaseFromRow(row),hiddenByOrb=Number.isFinite(phase)&&phase>limit,hiddenByWheel=wheelIndexes&&!wheelIndexes.has(String(row.dataset.relationIndex));
+      const phase=phaseFromRow(row),hiddenByOrb=row.dataset.bySignOnly!=='true'&&Number.isFinite(phase)&&phase>limit,hiddenByWheel=wheelIndexes&&!wheelIndexes.has(String(row.dataset.relationIndex));
       const hiddenByOther=row.classList.contains('sky-chart-filter-hidden')||row.classList.contains('sky-chart-multiselect-hidden')||row.classList.contains('sky-chart-house-multiselect-hidden')||row.classList.contains('sky-chart-aspect-multiselect-hidden')||row.classList.contains('sky-chart-sign-filter-hidden')||row.classList.contains('sky-foundation-single-sky-cross-hidden');
       if(hiddenByOrb&&!hiddenByWheel&&!hiddenByOther)hiddenByHarmonicWindow+=1;
       const visible=!hiddenByOrb&&!hiddenByWheel&&!hiddenByOther;
       row.classList.toggle('sky-chart-orb-hidden',hiddenByOrb);row.hidden=!visible;row.setAttribute('aria-hidden',visible?'false':'true');
-      if(Number.isFinite(phase)){
+      if(Number.isFinite(phase)&&row.dataset.bySignOnly!=='true'){
         const dynamic=metricsFor(phase,limit);
         row.dataset.harmonicWindow=limit.toFixed(6);
         row.dataset.windowFraction=Number.isFinite(dynamic.fraction)?dynamic.fraction.toFixed(6):String(dynamic.fraction);
