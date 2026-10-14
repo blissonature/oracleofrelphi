@@ -28,7 +28,8 @@
     return Object.fromEntries(Object.entries(source).filter(([key,item])=>item&&typeof item==='object'&&!Array.isArray(item)&&!/^(calcProfile|metadata|profile|location|notes|houseCusps|cusps|houses)$/i.test(key)&&(Number.isFinite(Number(item.longitude))||item.sign||item.zodiac)));
   }
   function hasPlacements(value){return Object.keys(placementSource(value)).length>0}
-  function library(){const list=readJson(LIBRARY_KEY,[]);return Array.isArray(list)?list.filter(record=>record&&String(record.name||'').trim()&&hasPlacements(record)):[]}
+  function hasSavableSky(value){const p=value?.calcProfile||value?.profile||value||{};return hasPlacements(value)||((p.timeUnknown===true||value?.timeUnknown===true)&&Boolean(p.dateTime||value?.dateTime)&&Boolean(p.timeZone||value?.timeZone))}
+  function library(){const list=readJson(LIBRARY_KEY,[]);return Array.isArray(list)?list.filter(record=>record&&String(record.name||'').trim()&&hasSavableSky(record)):[]}
   function writeLibrary(list){return writeJson(LIBRARY_KEY,list)}
   function recordRef(record){return String(record?.id||record?.savedSkyId||record?.metadata?.savedSkyId||`legacy:${normalize(record?.name)}`)}
   function newId(){return `sky-${Date.now().toString(36)}-${Math.random().toString(36).slice(2,8)}`}
@@ -76,7 +77,7 @@
     return null;
   }
   function matchingRecord(value,records){
-    if(!value||!hasPlacements(value))return null;
+    if(!value||!hasSavableSky(value))return null;
     const explicit=explicitRecord(value,records);if(explicit)return explicit;
     const signature=skySettingsSignature(value);
     return records.find(record=>skySettingsSignature(record)===signature)||null;
@@ -199,7 +200,7 @@
   }
   function renderPopover(){
     const menu=ensurePopover();if(!openSlot)return;
-    const active=identity(openSlot),value=payload(openSlot),hasSky=hasPlacements(value),records=library();
+    const active=identity(openSlot),value=payload(openSlot),hasSky=hasSavableSky(value),records=library();
     if(menuView==='load'){
       const activeRef=active.record?recordRef(active.record):'';
       const items=records.length?records.map(record=>{const ref=recordRef(record),meta=shortMeta(record),current=ref===activeRef,name=String(record.name||'Saved sky'),confirming=ref===deletePendingRef;const confirmation=confirming?`<div class="sky-saved-delete-confirmation" role="group" aria-label="Delete ${escapeHtml(name)}?"><span>Delete this saved sky?</span><button type="button" data-saved-delete-cancel>Cancel</button><button type="button" class="is-danger" data-saved-delete-confirm="${escapeHtml(ref)}">Delete</button></div>`:'';return `<div class="sky-saved-list-row${current?' is-active':''}${confirming?' is-confirming-delete':''}"><button type="button" class="sky-saved-list-item" data-saved-sky-ref="${escapeHtml(ref)}" aria-label="Load ${escapeHtml(name)} into Sky ${openSlot}"><span class="sky-saved-list-name">${escapeHtml(name)}</span>${meta?`<span class="sky-saved-list-meta">${escapeHtml(meta)}</span>`:''}<span class="sky-saved-list-check" aria-hidden="true">${current?'✓':''}</span></button><button type="button" class="sky-saved-list-delete" data-saved-delete-ref="${escapeHtml(ref)}" aria-label="Delete ${escapeHtml(name)} from Saved skies" title="Delete from Saved skies">×</button>${confirmation}</div>`}).join(''):'<p class="sky-saved-empty">No saved skies yet.</p>';
