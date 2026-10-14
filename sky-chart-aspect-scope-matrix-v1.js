@@ -19,6 +19,12 @@ const ASPECTS=Object.freeze([
   {id:'opposition',label:'Opposition',angle:180}
 ]);
 const IDS=Object.freeze(ASPECTS.map(item=>item.id));
+const SIGN_ASPECTS=Object.freeze(['conjunction','semi-sextile','sextile','square','trine','quincunx','opposition']);
+const SIGN_STEPS=Object.freeze({conjunction:0,'semi-sextile':1,sextile:2,square:3,trine:4,quincunx:5,opposition:6});
+const SIGN_STORAGE='relphiSkyAspectBySignV1';
+const signSelected=new Set();
+try{const saved=JSON.parse(localStorage.getItem(SIGN_STORAGE)||'[]');if(Array.isArray(saved))saved.filter(id=>SIGN_ASPECTS.includes(id)).forEach(id=>signSelected.add(id))}catch(_){}
+window.RelphiSkyBySign={selected:signSelected,steps:SIGN_STEPS,enabled:id=>signSelected.has(id)};
 const GROUPS=Object.freeze([
   {id:'major',label:'Major',aspects:['conjunction','opposition','trine','square','sextile']},
   {id:'minor',label:'Minor',aspects:['semi-sextile','octile','tri-octile','quincunx']},
@@ -105,6 +111,13 @@ function matrixRow(aspect,labelText,master=false,angle=null){
   choices.append(choice('all',aspect,`${labelText}: all relationship scopes`),...scopes.map(scope=>choice(scope.id,aspect,`${labelText}: ${scope.label}`)));
   row.append(label,choices);return row;
 }
+function signChoice(id){
+  const wrap=document.createElement('label');wrap.className='sky-chart-by-sign-choice';
+  const input=document.createElement('input');input.type='checkbox';input.dataset.skyBySign=id;
+  input.setAttribute('aria-label',id==='all'?'By Sign: all seven aspects':`By Sign: ${id}`);
+  const caption=document.createElement('span');caption.textContent=id==='all'?'By Sign':'';
+  wrap.append(input,caption);return wrap;
+}
 function renderPopover(){
   const body=popover()?.querySelector('.sky-chart-aspect-filter-body');if(!body)return;
   const list=document.createElement('div');list.className='sky-chart-aspect-list sky-chart-aspect-matrix-list';list.dataset.aspectList='matrix';
@@ -113,7 +126,9 @@ function renderPopover(){
   const cols=document.createElement('div');cols.className='sky-chart-aspect-list-header-choices';
   const labels=bActive()?['All','A↔A','B↔B','A↔B']:['All','A↔A'];
   labels.forEach(text=>{const span=document.createElement('span');span.textContent=text;cols.appendChild(span)});
-  header.append(title,cols);list.append(header,matrixRow('all','All aspects',true));
+  const signHeader=document.createElement('span');signHeader.className='sky-chart-by-sign-heading';signHeader.textContent='By Sign';
+  header.append(title,cols,signHeader);list.append(header,matrixRow('all','All aspects',true));
+  const master=list.lastElementChild;master.appendChild(signChoice('all'));
   GROUPS.forEach(group=>{
     const groupRow=matrixRow('group:'+group.id,group.label,true);
     groupRow.classList.add('sky-chart-aspect-category-row');
@@ -121,7 +136,7 @@ function renderPopover(){
     list.appendChild(groupRow);
     group.aspects.forEach(id=>{
       const aspect=ASPECTS.find(item=>item.id===id);
-      if(aspect)list.appendChild(matrixRow(aspect.id,aspect.label,false,aspect.angle));
+      if(aspect){const row=matrixRow(aspect.id,aspect.label,false,aspect.angle);if(SIGN_ASPECTS.includes(aspect.id))row.appendChild(signChoice(aspect.id));list.appendChild(row)}
     });
   });
   body.replaceChildren(list);
@@ -139,6 +154,11 @@ function renderClosedSummary(owner){
   summary.replaceChildren(choice('all','all','All aspects in all relationship scopes',true),...scopes.map(scope=>choice(scope.id,'all',`All aspects in ${scope.label}`,true)));
 }
 function updateInputs(){
+  document.querySelectorAll('[data-sky-by-sign]').forEach(input=>{
+    const id=input.dataset.skyBySign;
+    input.checked=id==='all'?signSelected.size===SIGN_ASPECTS.length:signSelected.has(id);
+    input.indeterminate=id==='all'&&signSelected.size>0&&signSelected.size<SIGN_ASPECTS.length;
+  });
   document.querySelectorAll('[data-aspect-matrix-scope][data-aspect-matrix-aspect]').forEach(input=>{
     const current=cellState(input.dataset.aspectMatrixScope,input.dataset.aspectMatrixAspect);
     input.checked=current.checked;input.indeterminate=current.indeterminate;input.disabled=current.available===0;
@@ -197,6 +217,14 @@ function ensureUI(){
   renderClosedSummary(owner);if(!popover()?.querySelector('[data-aspect-list="matrix"]'))renderPopover();ensureMenuObserver();updateInputs();return true;
 }
 function handleChange(event){
+  const signInput=event.target.closest?.('[data-sky-by-sign]');
+  if(signInput){
+    const id=signInput.dataset.skyBySign;
+    if(id==='all'){signSelected.clear();if(signInput.checked)SIGN_ASPECTS.forEach(item=>signSelected.add(item))}
+    else if(signInput.checked)signSelected.add(id);else signSelected.delete(id);
+    try{localStorage.setItem(SIGN_STORAGE,JSON.stringify([...signSelected]))}catch(_){}
+    updateInputs();window.dispatchEvent(new CustomEvent('relphi:sky-by-sign-changed',{detail:{selected:[...signSelected]}}));return;
+  }
   const input=event.target.closest?.('[data-aspect-matrix-scope][data-aspect-matrix-aspect]');if(!input)return;
   setCells(input.dataset.aspectMatrixScope,input.dataset.aspectMatrixAspect,input.checked);applyMatrix();
 }
@@ -208,6 +236,9 @@ function handleLegacyAspectPass(event){
   schedule();
 }
 function start(){
+  const style=document.createElement('style');style.id='skyBySignAspectChoiceStyles';
+  style.textContent=`.sky-chart-aspect-matrix-list .sky-chart-aspect-list-header,.sky-chart-aspect-matrix-list .sky-chart-aspect-list-item{grid-template-columns:minmax(105px,1fr) minmax(105px,auto) 64px!important}.sky-chart-by-sign-heading{text-align:center;font-size:11px;white-space:nowrap}.sky-chart-by-sign-choice{display:flex;align-items:center;justify-content:center;gap:3px;min-width:64px;font:700 10px/1 Montserrat,system-ui,sans-serif}.sky-chart-by-sign-choice input{margin:0;min-width:16px;min-height:16px;accent-color:#c9211e}.sky-chart-aspect-matrix-list .sky-chart-aspect-list-item:not(:has(.sky-chart-by-sign-choice))::after{content:'';display:block;min-width:64px}`;
+  document.head.appendChild(style);
   schedule();document.addEventListener('change',handleChange);
   ['relphi:sky-foundation-ready','relphi:sky-foundation-interactions-ready','relphi:sky-intrasky-relationships-ready','relphi:sky-intrasky-b-relationships-ready','relphi:sky-single-sky-aspects-rendered','relphi:sky-placement-multiselect-changed','relphi:sky-house-multiselect-changed','relphi:sky-foundation-filter-changed','relphi:sky-b-removed','relphi:sky-b-restored','relphi:sky-configuration-selection-changed','relphi:sky-configurations-detected'].forEach(name=>window.addEventListener(name,schedule));
   window.addEventListener('relphi:sky-aspect-multiselect-changed',handleLegacyAspectPass);
