@@ -19,33 +19,33 @@
 
 /* At 52px, give the microheptagram one consistent fine line weight.
    Gray paths are solid; the traced week and current hour are red without
-   thickening the current day. These overrides affect only the fingerprint. */
-.sky-card-fingerprint-tab .sky-where-fingerprint-heptagram *{vector-effect:none!important}
-.sky-card-fingerprint-tab .sky-where-fingerprint-heptagram .sky-ph-week-segment,
-.sky-card-fingerprint-tab .sky-where-fingerprint-heptagram .sky-ph-hour-segment{
+   thickening the current day. Shared by the Sky Card fingerprint and Saved Skies picker. */
+:is(.sky-card-fingerprint-tab, #skySavedSkiesPopover) .sky-where-fingerprint-heptagram *{vector-effect:none!important}
+:is(.sky-card-fingerprint-tab, #skySavedSkiesPopover) .sky-where-fingerprint-heptagram .sky-ph-week-segment,
+:is(.sky-card-fingerprint-tab, #skySavedSkiesPopover) .sky-where-fingerprint-heptagram .sky-ph-hour-segment{
   stroke-width:5!important;
   stroke-dasharray:none!important;
   stroke-linecap:round!important;
   filter:none!important;
 }
-.sky-card-fingerprint-tab .sky-where-fingerprint-heptagram .sky-ph-week-segment.future,
-.sky-card-fingerprint-tab .sky-where-fingerprint-heptagram .sky-ph-hour-segment.future,
-.sky-card-fingerprint-tab .sky-where-fingerprint-heptagram .sky-ph-hour-segment.past{
+:is(.sky-card-fingerprint-tab, #skySavedSkiesPopover) .sky-where-fingerprint-heptagram .sky-ph-week-segment.future,
+:is(.sky-card-fingerprint-tab, #skySavedSkiesPopover) .sky-where-fingerprint-heptagram .sky-ph-hour-segment.future,
+:is(.sky-card-fingerprint-tab, #skySavedSkiesPopover) .sky-where-fingerprint-heptagram .sky-ph-hour-segment.past{
   stroke:#77736e!important;
   opacity:.7!important;
 }
-.sky-card-fingerprint-tab .sky-where-fingerprint-heptagram .sky-ph-week-segment.past,
-.sky-card-fingerprint-tab .sky-where-fingerprint-heptagram .sky-ph-week-segment.current,
-.sky-card-fingerprint-tab .sky-where-fingerprint-heptagram .sky-ph-hour-segment.current{
+:is(.sky-card-fingerprint-tab, #skySavedSkiesPopover) .sky-where-fingerprint-heptagram .sky-ph-week-segment.past,
+:is(.sky-card-fingerprint-tab, #skySavedSkiesPopover) .sky-where-fingerprint-heptagram .sky-ph-week-segment.current,
+:is(.sky-card-fingerprint-tab, #skySavedSkiesPopover) .sky-where-fingerprint-heptagram .sky-ph-hour-segment.current{
   stroke:#c9211e!important;
   opacity:1!important;
 }
-.sky-card-fingerprint-tab .sky-where-fingerprint-heptagram .sky-ph-micro-idle-node{stroke:none!important;filter:none!important}
+:is(.sky-card-fingerprint-tab, #skySavedSkiesPopover) .sky-where-fingerprint-heptagram .sky-ph-micro-idle-node{stroke:none!important;filter:none!important}
 /* Source glows are measured in screen pixels, not SVG units. Suppress them
    in the miniature so the enlarged active glyphs stay legible, not blurry. */
-.sky-card-fingerprint-tab .sky-where-fingerprint-heptagram .sky-ph-day-ruler-ring,
-.sky-card-fingerprint-tab .sky-where-fingerprint-heptagram .sky-ph-planet.is-day-ruler .sky-ph-node-glyph,
-.sky-card-fingerprint-tab .sky-where-fingerprint-heptagram .sky-ph-planet.is-hour-ruler .relphi-glyph-bubble>circle{filter:none!important}
+:is(.sky-card-fingerprint-tab, #skySavedSkiesPopover) .sky-where-fingerprint-heptagram .sky-ph-day-ruler-ring,
+:is(.sky-card-fingerprint-tab, #skySavedSkiesPopover) .sky-where-fingerprint-heptagram .sky-ph-planet.is-day-ruler .sky-ph-node-glyph,
+:is(.sky-card-fingerprint-tab, #skySavedSkiesPopover) .sky-where-fingerprint-heptagram .sky-ph-planet.is-hour-ruler .relphi-glyph-bubble>circle{filter:none!important}
 /* Preserve the miniheptagram's proportions and scaling, including its source line weights. */
 .sky-card-fingerprint-tab .sky-where-fingerprint-heptagram{display:block!important;width:52px!important;height:52px!important;min-width:0!important;min-height:0!important;max-width:52px!important;max-height:52px!important;margin:auto!important;overflow:visible!important;transform:translateY(.5px)!important;transform-origin:center!important}
 
