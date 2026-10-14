@@ -117,3 +117,20 @@ html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]) .sky-chart-asp
   grid-template-columns:minmax(88px,1fr) 51px 68px!important;
  }
 }
+
+/* Compact sign-only indicator belongs with the aspect, never below either placement. */
+.sky-foundation-relationship-row[data-by-sign-only="true"] .sky-foundation-relationship-glyph--aspect{
+  position:relative;
+}
+.sky-foundation-relationship-row[data-by-sign-only="true"] .sky-foundation-relationship-glyph--aspect::after{
+  content:"sign";
+  position:absolute;
+  left:50%;
+  bottom:-11px;
+  transform:translateX(-50%);
+  font:700 8px/1 system-ui,sans-serif;
+  letter-spacing:.01em;
+  color:var(--relationship-aspect-color);
+  text-transform:lowercase;
+  pointer-events:none;
+}
