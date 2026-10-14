@@ -4,6 +4,8 @@
 if(window.RelphiSkyDropdownPosition)return;
 function position(menu,anchor,targetWidth=330){
   if(!menu||!anchor||menu.hidden)return;
+  // Do not display a detached dropdown if its collapse control has left view.
+  if(!anchor.isConnected)return;
   const rect=anchor.getBoundingClientRect(),margin=12,gap=6;
   const width=Math.min(targetWidth,Math.max(0,window.innerWidth-margin*2));
   menu.style.height='auto';menu.style.maxHeight='none';menu.style.overflowY='hidden';
