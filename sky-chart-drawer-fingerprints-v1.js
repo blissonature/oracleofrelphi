@@ -98,6 +98,7 @@ function microHeptagram(sourceSvg){
   });
   return root.querySelectorAll('.sky-ph-planet').length===7?root:null;
 }
+window.RelphiSkyMicroHeptagram = microHeptagram;
 function renderWhere(slot,payload){
   const mount=whereMount(slot);if(!mount)return;
   const refs=window.RelphiSkyCardShell?.get?.(slot),sourceSvg=refs?.heptagram;

@@ -305,6 +305,9 @@
   }
   function finishSlot(payload) {
     if (!hasPlacements(payload)) return;
+    const slot = state.editingSlot === 'skyB' ? 'B' : 'A';
+    const isNewSky = !hasPlacements(state.editingSlot === 'skyB' ? state.skyB : state.skyA);
+    const shouldOfferSave = isNewSky && state.quickPurpose !== 'now' && state.quickPurpose !== 'birth';
     payload = { ...payload, name:(state.quickPurpose === 'birth' ? 'My birth chart' : state.pendingName) || automaticName(payload) };
     payload = state.calculating
       ? { ...payload, calcProfile:calculationProfileFromFields(payload) }
@@ -313,6 +316,7 @@
     if (state.editingSlot === 'skyA') { state.skyA = payload; if (hasPlacements(state.skyB)) writeJson(SLOT_KEYS.skyB, state.skyB); state.step = hasPlacements(state.skyB) ? 'completeBoth' : 'completeA'; }
     else { state.skyB = payload; if (state.skyA) writeJson(SLOT_KEYS.skyA, state.skyA); state.step = 'completeBoth'; }
     state.calculating = false; state.quickPurpose = ''; closeCalculator(); render();
+    if (shouldOfferSave) setTimeout(function () { window.RelphiSkySaveNameDialog?.open?.(slot); }, 0);
   }
   function watchCalculation() {
     clearTimeout(pollTimer);

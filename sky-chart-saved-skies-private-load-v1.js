@@ -31,7 +31,7 @@ function writeJson(key,value){try{localStorage.setItem(key,JSON.stringify(value)
 function newId(){return `sky-${Date.now().toString(36)}-${Math.random().toString(36).slice(2,8)}`}
 function recordRef(record){return String(record?.id||record?.savedSkyId||record?.metadata?.savedSkyId||`legacy:${normalized(record?.name)}`)}
 function library(){const api=window.RelphiSkySavedSkyIdentity;const list=api?.library?.()||readJson(LIBRARY_KEY,[]);return Array.isArray(list)?list:[]}
-function timeUnknown(payload){return payload?.calcProfile?.timeUnknown===true||payload?.profile?.timeUnknown===true}
+function timeUnknown(payload){return payload?.calcProfile?.timeUnknown===true||payload?.profile?.timeUnknown===true||payload?.timeUnknown===true}
 
 function migrateLegacyIds(){
   const list=readJson(LIBRARY_KEY,[]);if(!Array.isArray(list)||!list.length)return;
@@ -92,11 +92,11 @@ function savedSkyRuler(root,key,dayKey,hourKey){
   const group=svg('g',{class:`sky-ph-planet sky-ph-${key}${day?' is-day-ruler':''}${hour?' is-hour-ruler':''}`,style:`color:${HEPTAGRAM_COLORS[key]}`});
   const mount=svg('g',{transform:`translate(${p.x} ${p.y})`,class:'sky-ph-node-glyph'});
   group.appendChild(mount);root.appendChild(group);
-  if(!day&&!hour){mount.appendChild(svg('circle',{cx:0,cy:0,r:10,fill:'currentColor',class:'sky-ph-micro-idle-node'}));return}
+  // All seven positions use canonical source glyphs; the shared fingerprint renderer decides thumbnail treatment.
   const registry=window.RelphiGlyphRegistry,component=window.RelphiGlyphComponent;
   const entry=registry?.get?.(key)||registry?.resolve?.(key);
   if(!entry||!component?.createBubble)return;
-  const master=svg('g',{transform:`scale(${17/19*1.45})`,'data-master-glyph-unit':'true'});
+  const master=svg('g',{transform:`scale(${17/19})`,'data-master-glyph-unit':'true'});
   mount.appendChild(master);
   if(day){
     for(const [radius,width] of [[23,1.9],[27,1.35]]){
@@ -113,6 +113,7 @@ function savedSkyRuler(root,key,dayKey,hourKey){
   }catch(error){console.error('[Saved Sky ruler glyph]',error)}
 }
 function whereFingerprint(payload){
+  if(timeUnknown(payload))return null;
   const packet=timingPacket(payload),frame=packet&&solarFrame(packet);if(!packet||!frame)return null;
   const dayKey=weekdayRuler(frame.start,packet.timeZone),rows=planetaryHours(frame,dayKey);let currentIndex=rows.findIndex(row=>packet.instant>=row.start&&packet.instant<row.end);if(currentIndex<0)currentIndex=0;
   const current=rows[currentIndex],weekIndex=Math.max(0,WEEK_PATH.indexOf(dayKey)),dayFraction=Math.max(0,Math.min(1,(packet.instant-frame.start)/(frame.end-frame.start))),hourFraction=Math.max(0,Math.min(1,(packet.instant-current.start)/(current.end-current.start)));
@@ -122,7 +123,12 @@ function whereFingerprint(payload){
   partialLine(root,point(current.ruler,142),point(CHALDEAN[(CHALDEAN.indexOf(current.ruler)+1)%7],142),hourFraction,'sky-ph-hour-segment current');
   CHALDEAN.forEach(key=>savedSkyRuler(root,key,dayKey,current.ruler));
   root.dataset.dayRuler=dayKey;root.dataset.hourRuler=current.ruler;
-  return root;
+  root.dataset.canonicalSourceReady='true';root.dataset.canonicalHeptagramReady='true';
+  const shared=window.RelphiSkyMicroHeptagram;
+  if(typeof shared!=='function')return null;
+  const miniature=shared(root);
+  if(miniature)miniature.classList.add('sky-saved-microheptagram');
+  return miniature;
 }
 function placementSource(payload){if(!payload||typeof payload!=='object')return[];const known=[payload.placements,payload.positions,payload.points,payload.bodies].find(value=>value&&typeof value==='object'),raw=known||payload;if(Array.isArray(raw))return raw.map((item,index)=>[String(item?.name||item?.label||item?.id||index),item]);return Object.entries(raw).filter(([key,item])=>item&&typeof item==='object'&&!Array.isArray(item)&&!/^(calcProfile|metadata|profile|location|notes|houseCusps|cusps|houses)$/i.test(key))}
 function longitude(item){if(Number.isFinite(Number(item?.longitude)))return norm(item.longitude);const sign=SIGN_NAMES.findIndex(name=>name.toLowerCase()===String(item?.sign||item?.zodiac||'').trim().toLowerCase());return sign<0?NaN:norm(sign*30+Number(item?.degree||item?.degrees||0)+Number(item?.minute||item?.minutes||0)/60+Number(item?.second||item?.seconds||0)/3600)}
