@@ -178,7 +178,25 @@ function install(){
   root.append(label,button);
   const placements=bar.querySelector('[data-placement-filter="combined"]');placements?placements.insertAdjacentElement('afterend',root):bar.appendChild(root);
 
-  document.addEventListener('pointerdown',event=>{if(!root?.contains(event.target)&&!menu?.contains(event.target))closeMenu()},true);
+  // An outside tap dismisses the menu; an outside drag scrolls the page
+  // without losing the open menu or its selected signs.
+  let outsideStart=null;
+  document.addEventListener('pointerdown',event=>{
+    if(menu?.hidden||root?.contains(event.target)||menu?.contains(event.target)){
+      outsideStart=null;return;
+    }
+    outsideStart={id:event.pointerId,x:event.clientX,y:event.clientY,moved:false};
+  },true);
+  document.addEventListener('pointermove',event=>{
+    if(!outsideStart||event.pointerId!==outsideStart.id)return;
+    if(Math.hypot(event.clientX-outsideStart.x,event.clientY-outsideStart.y)>8)outsideStart.moved=true;
+  },true);
+  document.addEventListener('pointerup',event=>{
+    if(!outsideStart||event.pointerId!==outsideStart.id)return;
+    const start=outsideStart;outsideStart=null;
+    if(!start.moved&&Math.hypot(event.clientX-start.x,event.clientY-start.y)<=8)closeMenu();
+  },true);
+  document.addEventListener('pointercancel',()=>{outsideStart=null},true);
   window.addEventListener('resize',positionMenu,{passive:true});
   window.addEventListener('scroll',positionMenu,{passive:true,capture:true});
   document.addEventListener('keydown',event=>{if(event.key==='Escape')closeMenu()});
