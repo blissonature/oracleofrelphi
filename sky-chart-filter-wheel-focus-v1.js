@@ -14,10 +14,11 @@
     'sky-chart-sign-filter-hidden'
   ]);
   const ORB_HIDDEN_CLASSES=new Set(['sky-chart-orb-hidden','sky-orb-filter-hidden']);
-  const SIGNS=['aries','taurus','gemini','cancer','leo','virgo','libra','scorpio','sagittarius','capricorn','aquarius','pisces'];
   let queued=false;
   let observer=null;
   let observedList=null;
+  let hiddenNearest=new Map();
+  let popup=null;
 
   function relationshipSlots(row){
     const mode=row.dataset.relationshipMode||document.documentElement.dataset.skyRelationshipMode||'A-B';
@@ -42,7 +43,8 @@
   }
 
   // Keep broad candidate eligibility separate from actual visible matches.
-  // Aspect, placement, and Harmonic Window filters jointly determine the kept endpoints.
+  // Explicit aspect, placement, house and sign filters determine visual focus.
+  // Harmonic Window is a relationship visibility control only.
   function excludedByExplicitFilter(row){
     if(row.classList.contains('sky-foundation-single-sky-cross-hidden'))return true;
     for(const className of row.classList){
@@ -62,15 +64,75 @@
 
   function explicitRows(rows){return rows.filter(row=>!excludedByExplicitFilter(row))}
 
-  function signNumber(node){
-    if(node.dataset.sign!==undefined&&node.dataset.sign!=='')return Number(node.dataset.sign);
-    const id=String(node.dataset.zodiacSign||'').toLowerCase();
-    return SIGNS.indexOf(id);
+  function phase(row){
+    const explicit=row.dataset.phaseError;
+    if(explicit!==undefined&&explicit!==''){
+      const n=Number(explicit);if(Number.isFinite(n))return n;
+    }
+    const orb=Number(row.dataset.sourceOrb??row.dataset.orb);
+    const order=Number(row.dataset.harmonicOrder);
+    return Number.isFinite(orb)&&Number.isFinite(order)&&order>0?Math.abs(orb*order):NaN;
+  }
+  function endpoints(row){
+    const slots=relationshipSlots(row);
+    return [row.dataset.leftPlacement?`${slots.left}:${row.dataset.leftPlacement}`:null,
+      row.dataset.rightPlacement?`${slots.right}:${row.dataset.rightPlacement}`:null].filter(Boolean);
+  }
+  function closePopup(){popup?.remove();popup=null}
+  function openPopup(marker,key,required){
+    closePopup();
+    const current=Number(window.RelphiHarmonicOrb?.getWindow?.()??7);
+    const max=Number(window.RelphiHarmonicOrb?.maxWindow??12);
+    const target=Math.min(max,Math.max(Math.ceil(required-1e-8),Math.floor(current)+1));
+    if(!Number.isFinite(target)||target<=current)return;
+    const panel=document.createElement('div');
+    panel.className='sky-focus-hidden-aspect-popover';
+    panel.setAttribute('role','dialog');
+    panel.setAttribute('aria-label','Reveal qualifying relationship');
+    const label=document.createElement('p');
+    const rawName=key.split(':').slice(1).join(':').replace(/[-_]/g,' ');
+    const placementName=rawName.replace(/\b[a-z]/g,letter=>letter.toUpperCase());
+    label.textContent=`${placementName} has a matching relationship beyond your current ${Number(current.toFixed(2))}° Harmonic Window. Increase to ${target}° to reveal it.`;
+    const actions=document.createElement('div');actions.className='sky-focus-hidden-aspect-actions';
+    const dismiss=document.createElement('button');dismiss.type='button';dismiss.textContent='Dismiss';
+    const increase=document.createElement('button');increase.type='button';increase.textContent=`Increase to ${target}°`;
+    dismiss.addEventListener('click',closePopup);
+    increase.addEventListener('click',()=>{
+      closePopup();
+      window.RelphiHarmonicOrb?.setWindow?.(target);
+      const input=document.querySelector('[data-harmonic-window-input]');
+      if(input){input.value=String(target);input.setAttribute('aria-valuenow',String(target))}
+      window.dispatchEvent(new CustomEvent('relphi:sky-harmonic-window-model-changed',{detail:{harmonicWindow:target}}));
+      schedule();
+    });
+    actions.append(dismiss,increase);panel.append(label,actions);
+    document.body.appendChild(panel);popup=panel;
+    const rect=marker.getBoundingClientRect();
+    const bounds=panel.getBoundingClientRect(),width=bounds.width,height=bounds.height;
+    const margin=12,viewportWidth=window.innerWidth,viewportHeight=window.innerHeight;
+    const left=Math.max(margin,Math.min(viewportWidth-width-margin,rect.left+rect.width/2-width/2));
+    // Prefer below the selected orb, then above it. Stay inside the viewport.
+    const below=rect.bottom+12,above=rect.top-height-12;
+    let top=below+height<=viewportHeight-margin?below:above>=margin?above:Math.max(margin,Math.min(viewportHeight-height-margin,below));
+    panel.style.left=`${left}px`;
+    panel.style.top=`${top}px`;
+    dismiss.focus();
+  }
+  function onPlacementClick(event){
+    const marker=event.target.closest?.('#skyFoundationWheelMount [data-layer="placements"] [data-sky][data-placement]');
+    if(!marker||!marker.classList.contains('is-filter-intermediate'))return;
+    const key=`${marker.dataset.sky}:${marker.dataset.placement}`;
+    const required=hiddenNearest.get(key);
+    if(!Number.isFinite(required))return;
+    event.preventDefault();event.stopPropagation();event.stopImmediatePropagation();
+    openPopup(marker,key,required);
   }
 
   function clearMarks(wheel){
     wheel?.classList.remove('has-filter-focus');
     wheel?.querySelectorAll('.is-filter-kept').forEach(node=>node.classList.remove('is-filter-kept'));
+    hiddenNearest.clear();closePopup();
+    wheel?.querySelectorAll('.is-filter-intermediate').forEach(node=>node.classList.remove('is-filter-intermediate'));
     document.documentElement.removeAttribute('data-sky-filter-wheel-focus');
   }
 
@@ -80,7 +142,8 @@
     const wheel=document.querySelector('#skyFoundationWheelMount > .sky-foundation-wheel');
     if(!wheel)return;
 
-    wheel.querySelectorAll('.is-filter-kept').forEach(node=>node.classList.remove('is-filter-kept'));
+    // Never dismiss the reveal dialog merely because wheel state recalculates.
+    wheel.querySelectorAll('.is-filter-kept,.is-filter-intermediate').forEach(node=>node.classList.remove('is-filter-kept','is-filter-intermediate'));
 
     // Aspect selection owns whether aspect geometry is present, not whether
     // the rest of the chart is visually isolated. Zero selected aspects is a
@@ -95,10 +158,10 @@
     const rows=eligibleRows();
     if(!rows.length){clearMarks(wheel);return}
     const explicitlyMatched=explicitRows(rows);
-    // The visible relationship list, not the wider candidate pool, owns
-    // the highlighted aspect endpoints after the Harmonic Window is applied.
-    const matched=explicitlyMatched.filter(row=>!row.hidden&&
-      !Array.from(ORB_HIDDEN_CLASSES).some(name=>row.classList.contains(name)));
+    // Only explicit filter choices can change wheel brightness. The
+    // Harmonic Window hides aspect relationships, never planetary placements.
+    // row.hidden and orb-hidden classes are deliberately excluded here.
+    const matched=explicitlyMatched;
     // If nothing matches, leave the neutral empty-result presentation unchanged.
     const active=matched.length>0&&matched.length<rows.length;
     wheel.classList.toggle('has-filter-focus',active);
@@ -108,40 +171,30 @@
       return;
     }
 
-    const relations=new Set();
-    const placements=new Set();
-    const houses=new Set();
-    const signs=new Set();
-
+    const relations=new Set(),placements=new Set(),hiddenCandidates=new Map();
+    const currentWindow=Number(window.RelphiHarmonicOrb?.getWindow?.()??7);
     matched.forEach(row=>{
       const index=String(row.dataset.relationIndex||'');
       if(index)relations.add(index);
-      const slots=relationshipSlots(row);
-      const left=String(row.dataset.leftPlacement||'');
-      const right=String(row.dataset.rightPlacement||'');
-      if(left)placements.add(`${slots.left}:${left}`);
-      if(right)placements.add(`${slots.right}:${right}`);
-      if(row.dataset.leftHouse)houses.add(`${slots.left}:${row.dataset.leftHouse}`);
-      if(row.dataset.rightHouse)houses.add(`${slots.right}:${row.dataset.rightHouse}`);
-      if(row.dataset.leftSign!=='')signs.add(Number(row.dataset.leftSign));
-      if(row.dataset.rightSign!=='')signs.add(Number(row.dataset.rightSign));
+      const keys=endpoints(row),value=phase(row);
+      // Only already-visible relationship lines establish full emphasis.
+      const shown=!row.hidden&&!row.classList.contains('sky-chart-orb-hidden')&&
+        !row.classList.contains('sky-orb-filter-hidden');
+      if(shown)keys.forEach(key=>placements.add(key));
+      else if(Number.isFinite(value)&&value>currentWindow)keys.forEach(key=>{
+        hiddenCandidates.set(key,Math.min(value,hiddenCandidates.get(key)??Infinity));
+      });
     });
-
+    // Emphasis belongs to BOTH ends of every matching relationship, not
+    // exclusively to the placement category selected in the Focus menu.
     wheel.querySelectorAll('[data-layer="aspects"] .sky-foundation-aspect[data-relation-index]').forEach(node=>{
       node.classList.toggle('is-filter-kept',relations.has(String(node.dataset.relationIndex)));
     });
-
+    hiddenNearest=new Map([...hiddenCandidates].filter(([key])=>!placements.has(key)));
     wheel.querySelectorAll('[data-layer="placements"] [data-sky][data-placement], [data-layer="leaders"] [data-sky][data-placement]').forEach(node=>{
-      node.classList.toggle('is-filter-kept',placements.has(`${node.dataset.sky}:${node.dataset.placement}`));
-    });
-
-    wheel.querySelectorAll('.sky-foundation-house-sector[data-sky][data-house],[data-focus-piece="house"][data-sky][data-house]').forEach(node=>{
-      node.classList.toggle('is-filter-kept',houses.has(`${node.dataset.sky}:${node.dataset.house}`));
-    });
-
-    wheel.querySelectorAll('.sky-foundation-sign-sector,.sky-foundation-sign-glyph').forEach(node=>{
-      const sign=signNumber(node);
-      node.classList.toggle('is-filter-kept',Number.isInteger(sign)&&signs.has(sign));
+      const key=`${node.dataset.sky}:${node.dataset.placement}`;
+      node.classList.toggle('is-filter-kept',placements.has(key));
+      node.classList.toggle('is-filter-intermediate',hiddenNearest.has(key));
     });
 
     document.documentElement.dataset.skyFilterWheelFocus=`${matched.length}/${rows.length}`;
@@ -168,6 +221,20 @@
   }
 
   function start(){
+    // Capture pointer activation before the foundation wheel's own click handler
+    // can lock an orb or trigger a competing focus refresh.
+    document.addEventListener('pointerdown',onPlacementClick,true);
+    document.addEventListener('click',onPlacementClick,true);
+    document.addEventListener('keydown',event=>{
+      if(event.key!=='Enter'&&event.key!==' ')return;
+      const marker=event.target.closest?.('#skyFoundationWheelMount [data-layer="placements"] [data-sky][data-placement].is-filter-intermediate');
+      if(!marker)return;
+      event.preventDefault();event.stopImmediatePropagation();
+      const key=`${marker.dataset.sky}:${marker.dataset.placement}`,required=hiddenNearest.get(key);
+      if(Number.isFinite(required))openPopup(marker,key,required);
+    },true);
+    document.addEventListener('pointerdown',event=>{if(popup&&!event.target.closest?.('.sky-focus-hidden-aspect-popover')&&!event.target.closest?.('.is-filter-intermediate'))closePopup()},true);
+    document.addEventListener('keydown',event=>{if(event.key==='Escape')closePopup()});
     observeRows();
     [
       'relphi:sky-foundation-ready',

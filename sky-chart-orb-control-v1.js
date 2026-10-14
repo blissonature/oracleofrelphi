@@ -43,16 +43,26 @@
     };
   }
 
+  function relationshipKey(node){return `${String(node?.dataset?.relationshipMode||'A-B').toUpperCase()}::${String(node?.dataset?.relationIndex||'')}`}
   function reconcilePlacementIsolation(rows,visibleIndexes){
-    if(wheelState?.kind!=='placement')return;
+    // The foundation interaction controller owns live hover highlighting.
+    // This reconciliation is reserved for persistent selections.
+    if(wheelState?.kind!=='placement'||wheelState?.mode==='hover')return;
     const target=`${wheelState.sky}:${wheelState.value}`,kept=new Set([target]);
     rows.forEach(row=>{
-      if(!visibleIndexes.has(String(row.dataset.relationIndex)))return;
+      if(!visibleIndexes.has(relationshipKey(row)))return;
       const slots=relationshipSlots(row),left=`${slots.left}:${row.dataset.leftPlacement}`,right=`${slots.right}:${row.dataset.rightPlacement}`;
       if(left!==target&&right!==target)return;
       kept.add(left);kept.add(right);
     });
     document.querySelectorAll('#skyFoundationWheelMount [data-focus-piece="placement"],#skyFoundationWheelMount [data-focus-piece="leader"]').forEach(node=>node.classList.toggle('is-kept',kept.has(`${node.dataset.sky}:${node.dataset.placement}`)));
+  }
+
+  function nextRevealWindow(rows,current,max){
+    const candidates=rows.filter(row=>row.dataset.bySignOnly!=='true'&&!row.classList.contains('sky-chart-filter-hidden')&&!row.classList.contains('sky-chart-multiselect-hidden')&&!row.classList.contains('sky-chart-house-multiselect-hidden')&&!row.classList.contains('sky-chart-aspect-multiselect-hidden')&&!row.classList.contains('sky-chart-sign-filter-hidden')&&!row.classList.contains('sky-foundation-single-sky-cross-hidden')&&(!wheelIndexes||wheelIndexes.has(String(row.dataset.relationIndex))))
+      .map(phaseFromRow).filter(phase=>Number.isFinite(phase)&&phase>current+1e-8&&phase<=max+1e-8);
+    if(!candidates.length)return null;
+    return Math.min(max,Math.max(Math.floor(current)+1,Math.ceil(Math.min(...candidates)-1e-8)));
   }
 
   function ensureShowMoreRow(){
@@ -65,7 +75,10 @@
       button.dataset.harmonicShowMore='true';
       button.addEventListener('click',event=>{
         event.preventDefault();event.stopPropagation();
-        const m=model();m?.setWindow?.(m?.maxWindow??12);
+        const m=model(),current=Number(m?.getWindow?.()??m?.defaultWindow??7),max=Number(m?.maxWindow??12);
+        const rows=[...document.querySelectorAll('.sky-foundation-relationship-row[data-relation-index]')];
+        const next=nextRevealWindow(rows,current,max);
+        if(next!==null&&next>current)m?.setWindow?.(next);
         schedule();
       });
       list.appendChild(button);
@@ -76,15 +89,15 @@
     queued=false;
     const limit=Number(model()?.getWindow?.()??model()?.defaultWindow??7);
     if(!Number.isFinite(limit))return;
-    const visibleIndexes=new Set(),rows=[...document.querySelectorAll('.sky-foundation-relationship-row[data-relation-index]')],identity=node=>`${String(node?.dataset?.relationshipMode||'A-B').toUpperCase()}::${String(node?.dataset?.relationIndex||'')}`,rowsByIndex=new Map(rows.map(row=>[identity(row),row]));
+    const visibleIndexes=new Set(),rows=[...document.querySelectorAll('.sky-foundation-relationship-row[data-relation-index]')],identity=relationshipKey,rowsByIndex=new Map(rows.map(row=>[identity(row),row]));
     let hiddenByHarmonicWindow=0;
     rows.forEach(row=>{
-      const phase=phaseFromRow(row),hiddenByOrb=Number.isFinite(phase)&&phase>limit,hiddenByWheel=wheelIndexes&&!wheelIndexes.has(String(row.dataset.relationIndex));
+      const phase=phaseFromRow(row),hiddenByOrb=row.dataset.bySignOnly!=='true'&&Number.isFinite(phase)&&phase>limit,hiddenByWheel=wheelIndexes&&!wheelIndexes.has(String(row.dataset.relationIndex));
       const hiddenByOther=row.classList.contains('sky-chart-filter-hidden')||row.classList.contains('sky-chart-multiselect-hidden')||row.classList.contains('sky-chart-house-multiselect-hidden')||row.classList.contains('sky-chart-aspect-multiselect-hidden')||row.classList.contains('sky-chart-sign-filter-hidden')||row.classList.contains('sky-foundation-single-sky-cross-hidden');
       if(hiddenByOrb&&!hiddenByWheel&&!hiddenByOther)hiddenByHarmonicWindow+=1;
       const visible=!hiddenByOrb&&!hiddenByWheel&&!hiddenByOther;
       row.classList.toggle('sky-chart-orb-hidden',hiddenByOrb);row.hidden=!visible;row.setAttribute('aria-hidden',visible?'false':'true');
-      if(Number.isFinite(phase)){
+      if(Number.isFinite(phase)&&row.dataset.bySignOnly!=='true'){
         const dynamic=metricsFor(phase,limit);
         row.dataset.harmonicWindow=limit.toFixed(6);
         row.dataset.windowFraction=Number.isFinite(dynamic.fraction)?dynamic.fraction.toFixed(6):String(dynamic.fraction);
@@ -100,7 +113,8 @@
       if(row){line.dataset.harmonicWindow=row.dataset.harmonicWindow||'';line.dataset.harmonicCoherence=row.dataset.harmonicCoherence||''}
     });
 
-    reconcilePlacementIsolation(rows,visibleIndexes);
+    // No placement or leader highlighting here: Harmonic Window owns only
+    // relationship rows and aspect-line visibility.
     const count=document.getElementById('skyFoundationRelationshipCount'),empty=document.getElementById('skyFoundationRelationshipEmpty');
     if(count){
       count.textContent=String(visibleIndexes.size);
@@ -111,10 +125,11 @@
     if(empty)empty.hidden=visibleIndexes.size!==0||hiddenByHarmonicWindow>0;
     const more=ensureShowMoreRow(),max=Number(model()?.maxWindow??12);
     if(more){
-      const canReveal=limit<max&&hiddenByHarmonicWindow>0;
+      const next=nextRevealWindow(rows,limit,max);
+      const canReveal=next!==null&&next>limit&&hiddenByHarmonicWindow>0;
       more.hidden=!canReveal;
-      more.textContent=canReveal?`${hiddenByHarmonicWindow} more beyond ${Number(limit.toFixed(2))}° Harmonic Window · Show more`:'';
-      more.setAttribute('aria-label',canReveal?`Show ${hiddenByHarmonicWindow} more relationships by increasing Harmonic Window to ${max} degrees`:'Show more relationships');
+      more.textContent=canReveal?`${hiddenByHarmonicWindow} more beyond ${Number(limit.toFixed(2))}° · Increase to ${next}°`:'';
+      more.setAttribute('aria-label',canReveal?`Increase Harmonic Window to ${next} degrees to reveal additional relationships`:'Show more relationships');
     }
     document.documentElement.dataset.skyHarmonicWindow=String(limit);
 

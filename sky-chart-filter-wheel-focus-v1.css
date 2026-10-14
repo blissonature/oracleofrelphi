@@ -1,38 +1,44 @@
-/* Filter bay and wheel share one visual focus language.
-   Direct wheel hover/lock isolation remains authoritative while it is active. */
-#skyFoundationWheelMount>.sky-foundation-wheel.has-filter-focus:not(.has-isolation) [data-layer="aspects"] .sky-foundation-aspect,
-#skyFoundationWheelMount>.sky-foundation-wheel.has-filter-focus:not(.has-isolation) [data-layer="placements"] [data-sky][data-placement],
-#skyFoundationWheelMount>.sky-foundation-wheel.has-filter-focus:not(.has-isolation) .sky-foundation-house-sector,
-#skyFoundationWheelMount>.sky-foundation-wheel.has-filter-focus:not(.has-isolation) .sky-foundation-sign-sector,
-#skyFoundationWheelMount>.sky-foundation-wheel.has-filter-focus:not(.has-isolation) .sky-foundation-sign-glyph{
+/* Focus-menu filtering changes relationship/aspect presentation only.
+   Planets, their leaders, signs and houses retain their normal appearance.
+   Direct wheel hover or locked selection keeps its separate isolation rules. */
+#skyFoundationWheelMount>.sky-foundation-wheel.has-filter-focus:not(.has-isolation) [data-layer="aspects"] .sky-foundation-aspect{
   opacity:.08;
   transition:opacity .07s ease-out,filter .07s ease-out,stroke-width .07s ease-out;
 }
-
-/* Unrelated leader whiskers add noise without carrying useful filtered context. */
-#skyFoundationWheelMount>.sky-foundation-wheel.has-filter-focus:not(.has-isolation) [data-layer="leaders"] [data-sky][data-placement]{
-  opacity:0;
-  transition:opacity .07s ease-out;
-}
-
-#skyFoundationWheelMount>.sky-foundation-wheel.has-filter-focus:not(.has-isolation) .is-filter-kept{
-  opacity:1!important;
-}
-
 #skyFoundationWheelMount>.sky-foundation-wheel.has-filter-focus:not(.has-isolation) [data-layer="aspects"] .sky-foundation-aspect.is-filter-kept{
+  opacity:1!important;
   stroke-width:4.2;
   filter:drop-shadow(0 0 1.5px rgba(255,255,255,.94));
 }
-
-#skyFoundationWheelMount>.sky-foundation-wheel.has-filter-focus:not(.has-isolation) [data-layer="placements"] [data-sky][data-placement].is-filter-kept{
-  filter:brightness(1.04) saturate(1.08);
+/* Focus placement emphasis: every relationship endpoint stays bright.
+   Other placements and their leaders remain legible at 40% illumination. */
+#skyFoundationWheelMount>.sky-foundation-wheel.has-filter-focus:not(.has-isolation) [data-layer="placements"] [data-sky][data-placement],
+#skyFoundationWheelMount>.sky-foundation-wheel.has-filter-focus:not(.has-isolation) [data-layer="leaders"] [data-sky][data-placement]{
+  opacity:.4!important;
 }
-
+#skyFoundationWheelMount>.sky-foundation-wheel.has-filter-focus:not(.has-isolation) [data-layer="placements"] [data-sky][data-placement].is-filter-kept,
+#skyFoundationWheelMount>.sky-foundation-wheel.has-filter-focus:not(.has-isolation) [data-layer="leaders"] [data-sky][data-placement].is-filter-kept{
+  opacity:1!important;
+}
+#skyFoundationWheelMount>.sky-foundation-wheel.has-filter-focus:not(.has-isolation) [data-layer="placements"] [data-sky][data-placement].is-filter-intermediate,
+#skyFoundationWheelMount>.sky-foundation-wheel.has-filter-focus:not(.has-isolation) [data-layer="leaders"] [data-sky][data-placement].is-filter-intermediate{
+  opacity:.7!important;
+}
+#skyFoundationWheelMount>.sky-foundation-wheel.has-filter-focus:not(.has-isolation) [data-layer="placements"] [data-sky][data-placement].is-filter-intermediate{cursor:pointer}
+.sky-focus-hidden-aspect-popover{
+ position:fixed;z-index:10050;width:min(300px,calc(100vw - 16px));
+ box-sizing:border-box;background:#fffdfa;color:#241f1b;border:1px solid #a49a90;
+ border-radius:12px;padding:12px;box-shadow:0 5px 20px rgba(0,0,0,.2);
+ text-align:left!important;
+ font:600 13px/1.45 Montserrat,system-ui,sans-serif;
+}
+.sky-focus-hidden-aspect-popover p{margin:0 0 12px;text-align:left!important;max-width:none}
+.sky-focus-hidden-aspect-actions{display:flex;justify-content:flex-end;gap:8px;flex-wrap:wrap;align-items:center}
+.sky-focus-hidden-aspect-actions button{
+ font:700 12px/1.25 Montserrat,system-ui,sans-serif;border:1px solid #8a827a;
+ border-radius:999px;padding:7px 12px;background:#fffdfa;color:#241f1b;cursor:pointer;
+}
+.sky-focus-hidden-aspect-actions button:last-child{background:#c9211e;border-color:#c9211e;color:#fff}
 @media(prefers-reduced-motion:reduce){
-  #skyFoundationWheelMount>.sky-foundation-wheel.has-filter-focus [data-layer="aspects"] .sky-foundation-aspect,
-  #skyFoundationWheelMount>.sky-foundation-wheel.has-filter-focus [data-layer="placements"] [data-sky][data-placement],
-  #skyFoundationWheelMount>.sky-foundation-wheel.has-filter-focus [data-layer="leaders"] [data-sky][data-placement],
-  #skyFoundationWheelMount>.sky-foundation-wheel.has-filter-focus .sky-foundation-house-sector,
-  #skyFoundationWheelMount>.sky-foundation-wheel.has-filter-focus .sky-foundation-sign-sector,
-  #skyFoundationWheelMount>.sky-foundation-wheel.has-filter-focus .sky-foundation-sign-glyph{transition:none}
+  #skyFoundationWheelMount>.sky-foundation-wheel.has-filter-focus:not(.has-isolation) [data-layer="aspects"] .sky-foundation-aspect{transition:none}
 }

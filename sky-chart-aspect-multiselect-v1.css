@@ -77,3 +77,57 @@ html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]) .sky-chart-asp
     grid-template-columns:repeat(2,34px);
   }
 }
+
+/* By Sign sits between aspect names and unchanged scope checkbox columns. */
+.sky-chart-aspect-matrix-list .sky-chart-aspect-list-header,
+.sky-chart-aspect-matrix-list .sky-chart-aspect-list-item{
+  grid-template-columns:minmax(105px,1fr) 62px 148px!important;
+}
+.sky-chart-aspect-matrix-list .sky-chart-by-sign-heading{
+  text-align:center;white-space:nowrap;font:850 .58rem/1.1 Montserrat,system-ui,sans-serif;
+}
+.sky-chart-aspect-matrix-list .sky-chart-by-sign-choice{
+  display:flex;justify-content:center;align-items:center;min-width:0;
+  height:100%;min-height:34px;box-sizing:border-box;
+  border-left:1px solid rgba(31,27,24,.07);
+}
+.sky-chart-aspect-matrix-list .sky-chart-aspect-list-choices{
+  grid-column:3;
+}
+.sky-chart-aspect-matrix-list .sky-chart-aspect-list-item:not(:has(.sky-chart-by-sign-choice))::before{
+  content:'';grid-column:2;grid-row:1;min-width:0;
+}
+.sky-by-sign-label{
+  align-self:center;white-space:nowrap;font:750 .57rem/1.2 Montserrat,system-ui,sans-serif;
+  color:inherit;opacity:.75;
+}
+@media(max-width:410px){
+ .sky-chart-aspect-matrix-list .sky-chart-aspect-list-header,
+ .sky-chart-aspect-matrix-list .sky-chart-aspect-list-item{
+    grid-template-columns:minmax(88px,1fr) 51px 136px!important;
+ }
+}
+html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]) .sky-chart-aspect-matrix-list .sky-chart-aspect-list-header,
+html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]) .sky-chart-aspect-matrix-list .sky-chart-aspect-list-item{
+  grid-template-columns:minmax(105px,1fr) 62px 74px!important;
+}
+@media(max-width:410px){
+ html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]) .sky-chart-aspect-matrix-list .sky-chart-aspect-list-header,
+ html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]) .sky-chart-aspect-matrix-list .sky-chart-aspect-list-item{
+  grid-template-columns:minmax(88px,1fr) 51px 68px!important;
+ }
+}
+
+
+.sky-foundation-relationship-row[data-by-sign-only="true"] .sky-foundation-relationship-glyph--aspect::after{
+  content:"sign";
+  position:absolute;
+  left:50%;
+  bottom:-11px;
+  transform:translateX(-50%);
+  font:700 8px/1 system-ui,sans-serif;
+  letter-spacing:.01em;
+  color:var(--relationship-aspect-color);
+  text-transform:lowercase;
+  pointer-events:none;
+}
