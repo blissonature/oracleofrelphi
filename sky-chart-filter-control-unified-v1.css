@@ -114,3 +114,14 @@
   body.sky-chart-page :is(#skyFoundationFocus,#skyFoundationRelationships,.sky-vocab-panel) .sky-chart-placement-summary-choices input[type="checkbox"],
   body.sky-chart-page :is(#skyFoundationFocus,#skyFoundationRelationships,.sky-vocab-panel) .sky-chart-house-summary-choices input[type="checkbox"]{flex-basis:13px!important;width:13px!important;height:13px!important}
 }
+
+/* On touchscreens, every Focus toolbar surface outside the open menu
+   yields vertical drags to the page, including labels and closed controls. */
+@media (pointer:coarse){
+  #skyFoundationFocus .sky-chart-filter-bar,
+  #skyFoundationFocus .sky-chart-filter-bar *,
+  #skyFoundationRelationships .sky-chart-filter-bar,
+  #skyFoundationRelationships .sky-chart-filter-bar *{
+    touch-action:pan-y pinch-zoom!important;
+  }
+}
