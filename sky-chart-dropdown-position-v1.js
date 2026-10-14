@@ -18,7 +18,7 @@ function position(menu,anchor,targetWidth=330){
   const height=Math.min(natural,available);
   const top=rect.bottom+gap;
   const left=Math.min(window.innerWidth-width-margin,Math.max(margin,rect.left+rect.width/2-width/2));
-  Object.assign(menu.style,{position:'fixed',width:width+'px',height:height+'px',maxHeight:height+'px',overflowY:natural>height?'auto':'hidden',left:left+'px',top:top+'px',bottom:'auto'});
+  Object.assign(menu.style,{position:'fixed',width:width+'px',height:height+'px',maxHeight:height+'px',overflowY:natural>height?'auto':'hidden',touchAction:'pan-y',overscrollBehaviorY:'contain',left:left+'px',top:top+'px',bottom:'auto'});
   menu.dataset.openDirection='below';
 }
 // Shared outside-tap and Escape lifecycle. Filter modules own selection state only.
@@ -33,19 +33,19 @@ function inside(event,config){
 document.addEventListener('pointerdown',event=>{
   const candidates=active().filter(config=>!inside(event,config));
   outside=candidates.length?{id:event.pointerId,x:event.clientX,y:event.clientY,moved:false,candidates}:null;
-},true);
+},{capture:true,passive:true});
 document.addEventListener('pointermove',event=>{
   if(!outside||outside.id!==event.pointerId)return;
   if(Math.hypot(event.clientX-outside.x,event.clientY-outside.y)>8)outside.moved=true;
-},true);
+},{capture:true,passive:true});
 document.addEventListener('pointerup',event=>{
   if(!outside||outside.id!==event.pointerId)return;
   const gesture=outside;outside=null;
   if(!gesture.moved&&Math.hypot(event.clientX-gesture.x,event.clientY-gesture.y)<=8){
     gesture.candidates.forEach(config=>{if(config.isOpen?.())config.close?.()});
   }
-},true);
-document.addEventListener('pointercancel',()=>{outside=null},true);
+},{capture:true,passive:true});
+document.addEventListener('pointercancel',()=>{outside=null},{capture:true,passive:true});
 document.addEventListener('keydown',event=>{
   if(event.key==='Escape')active().forEach(config=>config.close?.(true));
 });
