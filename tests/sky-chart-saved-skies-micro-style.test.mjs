@@ -19,15 +19,14 @@ test('picker uses full weekly and hourly geometry with seven ruler positions',()
  assert.match(render,/17\/19\*1\.45/);
  assert.match(render,/component\.createBubble\(master,entry\.id/);
 });
-test('picker styling has solid gray future paths and one red weight',()=>{
- const block=js.slice(js.indexOf('/* Match the approved Sky Card'),js.indexOf('.sky-saved-fingerprint-piece .sky-card-hits-fingerprint-strip'));
- assert.match(block,/stroke-width:5!important;stroke-dasharray:none!important/);
+test('picker and Sky Card share one canonical microheptagram style',()=>{
+ const css=fs.readFileSync('sky-chart-card-drawers-v1.css','utf8');
+ const block=css.slice(css.indexOf('/* At 52px'),css.indexOf('/* Preserve the miniheptagram'));
+ assert.match(block,/:is\(\.sky-card-fingerprint-tab, #skySavedSkiesPopover\) \.sky-where-fingerprint-heptagram/);
+ assert.match(block,/stroke-width:5!important/);
  assert.match(block,/stroke:#77736e!important/);
  assert.match(block,/stroke:#c9211e!important/);
- assert.match(block,/sky-ph-week-segment\.current/);
- assert.match(block,/sky-ph-hour-segment\.current/);
- assert.match(block,/sky-saved-microheptagram \*\{vector-effect:none!important\}/);
- assert.doesNotMatch(block,/stroke-dasharray:[^n]/);
+ assert.doesNotMatch(js,/\/\* Match the approved Sky Card microheptagram/);
 });
 test('new renderer is loaded with a fresh cache key',()=>{
  assert.match(html,/sky-chart-saved-skies-private-load-v1\.js\?v=5/);
