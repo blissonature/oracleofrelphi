@@ -100,26 +100,17 @@ function positionMenu(){
   const style=getComputedStyle(menu);
   const borderHeight=(parseFloat(style.borderTopWidth)||0)+(parseFloat(style.borderBottomWidth)||0);
   const naturalHeight=Math.ceil(menu.scrollHeight+borderHeight);
-  const availableHeight=Math.max(180,window.innerHeight-margin*2);
-  const needsScroll=naturalHeight>availableHeight;
-  const renderedHeight=needsScroll?availableHeight:naturalHeight;
-
-  if(needsScroll){
-    menu.style.height=`${availableHeight}px`;
-    menu.style.maxHeight=`${availableHeight}px`;
-    menu.style.overflowY='auto';
-  }else{
-    menu.style.height='auto';
-    menu.style.maxHeight='none';
-    menu.style.overflowY='hidden';
-  }
-
-  const belowTop=rect.bottom+gap;
-  const aboveTop=rect.top-renderedHeight-gap;
-  let top;
-  if(belowTop+renderedHeight<=window.innerHeight-margin)top=belowTop;
-  else if(aboveTop>=margin)top=aboveTop;
-  else top=Math.min(Math.max(margin,rect.top-renderedHeight/2),Math.max(margin,window.innerHeight-renderedHeight-margin));
+  // Keep the toggle/chevron unobstructed even when neither side can fit
+  // the menu at its natural height. Constrain the menu to one side only.
+  const belowSpace=Math.max(0,window.innerHeight-margin-(rect.bottom+gap));
+  const aboveSpace=Math.max(0,rect.top-gap-margin);
+  const useBelow=belowSpace>=naturalHeight||(belowSpace>=aboveSpace&&aboveSpace<naturalHeight);
+  const sideSpace=useBelow?belowSpace:aboveSpace;
+  const renderedHeight=Math.min(naturalHeight,sideSpace);
+  menu.style.height=renderedHeight+'px';
+  menu.style.maxHeight=renderedHeight+'px';
+  menu.style.overflowY=naturalHeight>renderedHeight?'auto':'hidden';
+  const top=useBelow?rect.bottom+gap:rect.top-gap-renderedHeight;
 
   menu.style.left=`${left}px`;
   menu.style.top=`${top}px`;
