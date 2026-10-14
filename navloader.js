@@ -122,7 +122,7 @@
       if (retry < 2) { setTimeout(function () { loadSkyBuilder(retry + 1); }, 250); return; }
       showPreviewLoadFailure();
     };
-    appendScript('sky-chart-builder-v4.js?v=18' + suffix, function () { waitForSkyBuilder(Date.now(), retryOrFail); }, retryOrFail);
+    appendScript('sky-chart-builder-v4.js?v=19' + suffix, function () { waitForSkyBuilder(Date.now(), retryOrFail); }, retryOrFail);
   }
 
   function ensureCanonicalSkyBootStyle() {
