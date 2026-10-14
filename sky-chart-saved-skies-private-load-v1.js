@@ -31,7 +31,7 @@ function writeJson(key,value){try{localStorage.setItem(key,JSON.stringify(value)
 function newId(){return `sky-${Date.now().toString(36)}-${Math.random().toString(36).slice(2,8)}`}
 function recordRef(record){return String(record?.id||record?.savedSkyId||record?.metadata?.savedSkyId||`legacy:${normalized(record?.name)}`)}
 function library(){const api=window.RelphiSkySavedSkyIdentity;const list=api?.library?.()||readJson(LIBRARY_KEY,[]);return Array.isArray(list)?list:[]}
-function timeUnknown(payload){return payload?.calcProfile?.timeUnknown===true||payload?.profile?.timeUnknown===true}
+function timeUnknown(payload){return payload?.calcProfile?.timeUnknown===true||payload?.profile?.timeUnknown===true||payload?.timeUnknown===true}
 
 function migrateLegacyIds(){
   const list=readJson(LIBRARY_KEY,[]);if(!Array.isArray(list)||!list.length)return;
@@ -113,6 +113,7 @@ function savedSkyRuler(root,key,dayKey,hourKey){
   }catch(error){console.error('[Saved Sky ruler glyph]',error)}
 }
 function whereFingerprint(payload){
+  if(timeUnknown(payload))return null;
   const packet=timingPacket(payload),frame=packet&&solarFrame(packet);if(!packet||!frame)return null;
   const dayKey=weekdayRuler(frame.start,packet.timeZone),rows=planetaryHours(frame,dayKey);let currentIndex=rows.findIndex(row=>packet.instant>=row.start&&packet.instant<row.end);if(currentIndex<0)currentIndex=0;
   const current=rows[currentIndex],weekIndex=Math.max(0,WEEK_PATH.indexOf(dayKey)),dayFraction=Math.max(0,Math.min(1,(packet.instant-frame.start)/(frame.end-frame.start))),hourFraction=Math.max(0,Math.min(1,(packet.instant-current.start)/(current.end-current.start)));
