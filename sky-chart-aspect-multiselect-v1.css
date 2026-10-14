@@ -118,10 +118,7 @@ html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]) .sky-chart-asp
  }
 }
 
-/* Compact sign-only indicator belongs with the aspect, never below either placement. */
-.sky-foundation-relationship-row[data-by-sign-only="true"] .sky-foundation-relationship-glyph--aspect{
-  position:relative;
-}
+
 .sky-foundation-relationship-row[data-by-sign-only="true"] .sky-foundation-relationship-glyph--aspect::after{
   content:"sign";
   position:absolute;
