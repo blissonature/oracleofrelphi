@@ -57,8 +57,7 @@ function retrogradeAtInstant(record,payload){
   return ((after-before+540)%360)-180 < -1e-5;
 }
 function retrogradeMark(){
-  // One typographic sign composed from Montserrat R and x, not two inline letters.
-  return '<svg class="sky-rx-composite" viewBox="0 0 23 25" role="img" aria-label="retrograde"><text x="1" y="18" font-family="Montserrat,system-ui,sans-serif" font-size="21" font-weight="750">R</text><text x="11.2" y="23" font-family="Montserrat,system-ui,sans-serif" font-size="13" font-weight="750">x</text></svg>';
+  return '<img class="sky-rx-master" src="assets/planet-glyphs/retrograde.svg" alt="Retrograde" width="21" height="21" decoding="async">';
 }
 window.RelphiSkyRetrogradeMark=retrogradeMark;
 function recordRetrograde(record,payload){
