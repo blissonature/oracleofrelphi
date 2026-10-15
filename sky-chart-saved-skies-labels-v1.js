@@ -65,27 +65,27 @@ function installStyle(){
   #skySavedSkiesPopover .sky-saved-fingerprint-copy-name{font-size:.65rem}
   #skySavedSkiesPopover .sky-saved-fingerprint-copy-when,
   #skySavedSkiesPopover .sky-saved-fingerprint-copy-where{font-size:.54rem}
-  /* Four columns remain within the picker: triptych, identity, selection, delete. */
+  /* Match the actual artwork widths instead of squeezing a 128px triptych into 90px. */
   #skySavedSkiesPopover .sky-saved-list-row{grid-template-columns:minmax(0,1fr) 25px!important}
   #skySavedSkiesPopover .sky-saved-list-item[data-private-sky-fingerprint="true"]{
-    grid-template-columns:90px minmax(0,1fr) 14px!important;
+    grid-template-columns:132px minmax(0,1fr) 14px!important;
     grid-template-areas:"fingerprint copy check"!important;
-    column-gap:5px!important;min-width:0!important;width:100%!important;
-    padding:5px!important;
+    column-gap:6px!important;min-width:0!important;width:100%!important;
+    padding:6px!important;box-sizing:border-box!important;
   }
   #skySavedSkiesPopover .sky-saved-fingerprint-triptych{
-    display:grid!important;grid-template-columns:30px 30px 20px!important;
-    gap:5px!important;width:90px!important;max-width:90px!important;
+    display:grid!important;grid-template-columns:44px 44px 28px!important;
+    gap:6px!important;width:128px!important;max-width:128px!important;
     min-width:0!important;align-items:center!important;
   }
   #skySavedSkiesPopover .sky-saved-fingerprint-piece{
-    width:30px!important;height:34px!important;min-width:0!important;
+    width:44px!important;height:44px!important;min-width:0!important;
   }
-  #skySavedSkiesPopover .sky-saved-fingerprint-piece[data-fingerprint-part="card"]{width:20px!important}
-  #skySavedSkiesPopover .sky-saved-fingerprint-piece svg{
-    width:30px!important;height:30px!important;
+  #skySavedSkiesPopover .sky-saved-fingerprint-piece[data-fingerprint-part="card"]{width:28px!important}
+  #skySavedSkiesPopover .sky-saved-fingerprint-piece svg{width:44px!important;height:44px!important}
+  #skySavedSkiesPopover .sky-saved-fingerprint-copy{
+    min-width:0!important;max-width:100%!important;overflow:hidden!important;
   }
-  #skySavedSkiesPopover .sky-saved-fingerprint-copy{min-width:0!important;overflow:hidden!important}
 }
 `;
   document.head.appendChild(style);
