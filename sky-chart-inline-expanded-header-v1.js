@@ -129,7 +129,7 @@ function installStyle(){
       position:absolute;right:-3px;bottom:-5px;width:13px;height:14px;
       display:block;background:#fffdfa;border-radius:2px;pointer-events:none;
     }
-    .sky-rx-glyph-overlay .sky-rx-composite{display:block;width:100%;height:100%;fill:currentColor;overflow:visible}
+    .sky-rx-glyph-overlay .sky-rx-master{display:block;width:100%;height:100%;fill:currentColor;overflow:visible}
 
     @media(max-width:620px){
       #skyFoundationRelationshipList:has(> .sky-foundation-relationship-row.is-inline-expanded){
