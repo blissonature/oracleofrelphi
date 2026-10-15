@@ -306,9 +306,16 @@ async function submitForm(slot,form,options={}){
   }
   await submitCalculated(slot,form,options);
 }
+function enableKnownTime(form){
+  const toggle=form.querySelector('[data-ww-field="time-unknown"]');
+  if(toggle?.checked){toggle.checked=false;toggle.dispatchEvent(new Event('change',{bubbles:true}));}
+  const time=form.querySelector('[data-ww-field="time"]');if(time)time.disabled=false;
+  const now=form.querySelector('[data-ww-action="use-now"]');if(now)now.disabled=false;
+}
 async function currentLocalTime(slot){
   const selected=cardState[slot].selected,form=formFor(slot);if(!selected||!form)return status(slot,'Choose a location first.',true);
   const now=window.luxon?.DateTime?.now(),local=now?.isValid?now.setZone(selected.timezone):null;if(!local?.isValid)return status(slot,'The current instant could not be converted to that location.',true);
+  enableKnownTime(form);
   form.querySelector('[data-ww-field="date"]').value=local.toFormat('yyyy-MM-dd');form.querySelector('[data-ww-field="time"]').value=local.toFormat('HH:mm');window.RelphiSkyWhereWhenDraftHeptagram?.render?.(slot,0);
   await submitForm(slot,form,{liveOrigin:'use-now',instant:now.toUTC().toISO()});
 }
@@ -335,6 +342,7 @@ async function hereAndNow(slot){
   try{
     const packet=await currentLocationPacket();selectLocation(slot,packet);
     const now=window.luxon?.DateTime?.now(),local=now?.isValid?now.setZone(packet.timezone):null;if(!local?.isValid)throw new Error('The current instant could not be converted to your location.');
+    enableKnownTime(form);
     form.querySelector('[data-ww-field="date"]').value=local.toFormat('yyyy-MM-dd');form.querySelector('[data-ww-field="time"]').value=local.toFormat('HH:mm');setBusy(slot,false);
     await submitForm(slot,form,{liveOrigin:'use-now',instant:now.toUTC().toISO()});
   }catch(error){setBusy(slot,false);status(slot,error?.code===1?'Location permission was denied.':error?.message||'Here and Now could not be resolved.',true)}
