@@ -31,6 +31,22 @@ function installStyle(){
   min-height:64px!important;
   padding:6px 8px!important;
 }
+#skySavedSkiesPopover .sky-saved-microheptagram *{vector-effect:none!important}
+#skySavedSkiesPopover .sky-saved-microheptagram .sky-ph-week-segment,
+#skySavedSkiesPopover .sky-saved-microheptagram .sky-ph-hour-segment{
+  stroke-width:5!important;stroke-dasharray:none!important;stroke-linecap:round!important;filter:none!important;
+}
+#skySavedSkiesPopover .sky-saved-microheptagram .sky-ph-week-segment.future,
+#skySavedSkiesPopover .sky-saved-microheptagram .sky-ph-hour-segment.future{
+  stroke:#77736e!important;opacity:.7!important;
+}
+#skySavedSkiesPopover .sky-saved-microheptagram .sky-ph-week-segment.past,
+#skySavedSkiesPopover .sky-saved-microheptagram .sky-ph-week-segment.current,
+#skySavedSkiesPopover .sky-saved-microheptagram .sky-ph-hour-segment.current{
+  stroke:#c9211e!important;opacity:1!important;
+}
+#skySavedSkiesPopover .sky-saved-microheptagram .sky-ph-day-ruler-ring,
+#skySavedSkiesPopover .sky-saved-microheptagram .sky-ph-node-glyph{filter:none!important}
 #skySavedSkiesPopover .sky-saved-fingerprint-copy{
   grid-area:copy;display:grid;align-content:center;gap:2px;min-width:0;text-align:left
 }
