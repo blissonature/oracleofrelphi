@@ -126,8 +126,8 @@ function installStyle(){
     }
     .sky-foundation-relationship-glyph[data-sky-rx="true"]{position:relative}
     .sky-foundation-relationship-glyph[data-sky-rx="true"]::after{
-      content:"℞";position:absolute;right:-2px;bottom:-5px;
-      font:800 10px/1 serif;color:inherit;
+      content:"Rx";position:absolute;right:-2px;bottom:-5px;
+      font:800 10px/1 Montserrat,system-ui,sans-serif;color:inherit;
       background:#fffdfa;border-radius:2px;pointer-events:none;
     }
     @media(max-width:620px){
