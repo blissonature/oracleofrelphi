@@ -163,13 +163,15 @@ function markRetrograde(row){
     const glyph=host?.querySelector('.sky-foundation-relationship-glyph--'+side);
     if(!glyph)continue;
     const isRx=!!(sky&&placement&&window.RelphiSkyRetrograde?.forPlacement?.(sky,placement));
-    glyph.querySelector(':scope>.sky-rx-glyph-overlay')?.remove();
+    const overlay=glyph.querySelector(':scope>.sky-rx-glyph-overlay');
     if(isRx){
       glyph.dataset.skyRx='true';
-      const overlay=document.createElement('span');overlay.className='sky-rx-glyph-overlay';
-      overlay.innerHTML=window.RelphiSkyRetrogradeMark?.()||'';
-      glyph.appendChild(overlay);
-    }else delete glyph.dataset.skyRx;
+      if(!overlay){
+        const mark=document.createElement('span');mark.className='sky-rx-glyph-overlay';
+        mark.innerHTML=window.RelphiSkyRetrogradeMark?.()||'';
+        glyph.appendChild(mark);
+      }
+    }else{delete glyph.dataset.skyRx;overlay?.remove()}
   }
 }
 function apply(row){
