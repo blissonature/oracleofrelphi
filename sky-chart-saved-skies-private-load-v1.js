@@ -92,7 +92,7 @@ function savedSkyRuler(root,key,dayKey,hourKey){
   const group=svg('g',{class:`sky-ph-planet sky-ph-${key}${day?' is-day-ruler':''}${hour?' is-hour-ruler':''}`,style:`color:${HEPTAGRAM_COLORS[key]}`});
   const mount=svg('g',{transform:`translate(${p.x} ${p.y})`,class:'sky-ph-node-glyph'});
   group.appendChild(mount);root.appendChild(group);
-  if(!day&&!hour){mount.appendChild(svg('circle',{cx:0,cy:0,r:10,fill:'currentColor',class:'sky-ph-micro-idle-node'}));return}
+  if(!day&&!hour)return;
   const registry=window.RelphiGlyphRegistry,component=window.RelphiGlyphComponent;
   const entry=registry?.get?.(key)||registry?.resolve?.(key);
   if(!entry||!component?.createBubble)return;
