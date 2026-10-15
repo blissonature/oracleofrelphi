@@ -125,11 +125,12 @@ function installStyle(){
       gap:2px 4px!important;text-align:center!important;
     }
     .sky-foundation-relationship-glyph[data-sky-rx="true"]{position:relative}
-    .sky-foundation-relationship-glyph[data-sky-rx="true"]::after{
-      content:"Rx";position:absolute;right:-2px;bottom:-5px;
-      font:800 10px/1 Montserrat,system-ui,sans-serif;color:inherit;
-      background:#fffdfa;border-radius:2px;pointer-events:none;
+    .sky-foundation-relationship-glyph>.sky-rx-glyph-overlay{
+      position:absolute;right:-3px;bottom:-5px;width:13px;height:14px;
+      display:block;background:#fffdfa;border-radius:2px;pointer-events:none;
     }
+    .sky-rx-glyph-overlay .sky-rx-composite{display:block;width:100%;height:100%;fill:currentColor;overflow:visible}
+
     @media(max-width:620px){
       #skyFoundationRelationshipList:has(> .sky-foundation-relationship-row.is-inline-expanded){
         max-height:none!important;
@@ -162,7 +163,13 @@ function markRetrograde(row){
     const glyph=host?.querySelector('.sky-foundation-relationship-glyph--'+side);
     if(!glyph)continue;
     const isRx=!!(sky&&placement&&window.RelphiSkyRetrograde?.forPlacement?.(sky,placement));
-    if(isRx)glyph.dataset.skyRx='true';else delete glyph.dataset.skyRx;
+    glyph.querySelector(':scope>.sky-rx-glyph-overlay')?.remove();
+    if(isRx){
+      glyph.dataset.skyRx='true';
+      const overlay=document.createElement('span');overlay.className='sky-rx-glyph-overlay';
+      overlay.innerHTML=window.RelphiSkyRetrogradeMark?.()||'';
+      glyph.appendChild(overlay);
+    }else delete glyph.dataset.skyRx;
   }
 }
 function apply(row){
