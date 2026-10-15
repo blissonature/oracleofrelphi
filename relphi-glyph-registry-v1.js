@@ -46,6 +46,7 @@
     ['south-node','South Node',['south node','descending node','☋','so'],null,1.18,0,0.3,'☋','symbol','400'],
     ['lilith','Lilith',['lilith','black moon lilith','bml','⚸'],'assets/planet-glyphs/lilith.svg',1,0,0,null,'static-master'],
     ['part-of-fortune','Part of Fortune',['part of fortune','fortune','pars fortunae','pof','⊗','pa'],'assets/planet-glyphs/part-of-fortune.svg',1,0,0,null,'static-master'],
+    ['retrograde','Retrograde',['retrograde','rx','℞'],'assets/planet-glyphs/retrograde.svg',1,0,0,null,'static-master'],
     ['vertex','Vertex',['vertex','vx'],null,1,0,0,'Vx','letter','700'],
     ['anti-vertex','Anti-Vertex',['anti-vertex','anti vertex','antivertex','avx'],'assets/planet-glyphs/anti-vertex.svg',1,0,0,'AVx','letter','700'],
     ['asc','Ascendant',['asc','ascendant','rising','ac'],null,1,0,0,'Asc','letter','700'],
