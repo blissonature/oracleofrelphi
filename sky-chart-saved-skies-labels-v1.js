@@ -49,6 +49,27 @@ function installStyle(){
   #skySavedSkiesPopover .sky-saved-fingerprint-copy-name{font-size:.65rem}
   #skySavedSkiesPopover .sky-saved-fingerprint-copy-when,
   #skySavedSkiesPopover .sky-saved-fingerprint-copy-where{font-size:.54rem}
+  /* Four columns remain within the picker: triptych, identity, selection, delete. */
+  #skySavedSkiesPopover .sky-saved-list-row{grid-template-columns:minmax(0,1fr) 25px!important}
+  #skySavedSkiesPopover .sky-saved-list-item[data-private-sky-fingerprint="true"]{
+    grid-template-columns:90px minmax(0,1fr) 14px!important;
+    grid-template-areas:"fingerprint copy check"!important;
+    column-gap:5px!important;min-width:0!important;width:100%!important;
+    padding:5px!important;
+  }
+  #skySavedSkiesPopover .sky-saved-fingerprint-triptych{
+    display:grid!important;grid-template-columns:30px 30px 20px!important;
+    gap:5px!important;width:90px!important;max-width:90px!important;
+    min-width:0!important;align-items:center!important;
+  }
+  #skySavedSkiesPopover .sky-saved-fingerprint-piece{
+    width:30px!important;height:34px!important;min-width:0!important;
+  }
+  #skySavedSkiesPopover .sky-saved-fingerprint-piece[data-fingerprint-part="card"]{width:20px!important}
+  #skySavedSkiesPopover .sky-saved-fingerprint-piece svg{
+    width:30px!important;height:30px!important;
+  }
+  #skySavedSkiesPopover .sky-saved-fingerprint-copy{min-width:0!important;overflow:hidden!important}
 }
 `;
   document.head.appendChild(style);
