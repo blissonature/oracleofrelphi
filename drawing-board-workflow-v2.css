@@ -3423,3 +3423,22 @@ body.relphi-attune-open{overflow:hidden!important}
     padding-bottom:max(.5rem,env(safe-area-inset-bottom))!important;
   }
 }
+
+@media(max-width:700px){
+  html body #shortListPanel.relphi-settings-open .relphi-board-settings-panel .relphi-free-settings .relphi-free-settings-fields{
+    flex:1 1 auto!important;
+    min-height:0!important;
+    overflow-y:auto!important;
+    overscroll-behavior:contain!important;
+    -webkit-overflow-scrolling:touch!important;
+  }
+  html body #shortListPanel.relphi-settings-open .relphi-board-settings-panel .relphi-free-settings .relphi-board-settings-footer{
+    position:relative!important;
+    flex:0 0 auto!important;
+    margin:0!important;
+    margin-top:auto!important;
+    padding:.55rem .65rem max(.5rem,env(safe-area-inset-bottom))!important;
+    background:#fffdf8!important;
+    border-top:1px solid rgba(17,17,17,.2)!important;
+  }
+}
