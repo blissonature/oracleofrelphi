@@ -34,6 +34,54 @@ function requestedOrb(){const input=document.querySelector('[data-filter="orb"]'
 function source(payload){if(!payload||typeof payload!=='object')return[];const known=[payload.placements,payload.positions,payload.points,payload.bodies].find(value=>value&&typeof value==='object'),raw=known||payload;if(Array.isArray(raw))return raw.map((item,index)=>[String(item?.name||item?.label||item?.id||index),item]);return Object.entries(raw).filter(([key,item])=>item&&typeof item==='object'&&!Array.isArray(item)&&!/^(calcProfile|metadata|profile|location|notes|houseCusps|cusps|houses)$/i.test(key)&&(Number.isFinite(Number(item.longitude))||item.sign||item.zodiac))}
 function longitude(item){if(Number.isFinite(Number(item?.longitude)))return norm(item.longitude);const signs=spec()?.SIGNS||[],sign=signs.indexOf(String(item?.sign||item?.zodiac||'').trim().toLowerCase());return sign<0?NaN:norm(sign*30+Number(item?.degree||item?.degrees||0)+Number(item?.minute||item?.minutes||0)/60+Number(item?.second||item?.seconds||0)/3600)}
 function canonicalEntry(key,item){const registry=window.RelphiGlyphRegistry;if(!registry)return null;for(const candidate of[item?.glyphId,item?.id,item?.name,item?.label,item?.body,item?.planet,item?.point,key]){if(candidate==null)continue;const raw=String(candidate).trim(),id=ALIASES[raw.toLowerCase()]||raw,entry=registry.resolve?.(id)||registry.get?.(id);if(entry?.asset||APPROVED_COMPONENT_MASTERS.has(entry?.id))return entry}return null}
+const MOTION_BODIES=new Set(['mercury','venus','mars','jupiter','saturn','uranus','neptune','pluto','sun','moon']);
+function motionLongitude(id,date){
+  const astronomy=window.Astronomy;
+  if(!astronomy)return NaN;
+  const name=id.charAt(0).toUpperCase()+id.slice(1);
+  try{
+    if(id==='moon'&&typeof astronomy.EclipticGeoMoon==='function')return norm(astronomy.EclipticGeoMoon(date).lon);
+    return norm(astronomy.Ecliptic(astronomy.GeoVector(name,date,true)).elon);
+  }catch(_){return NaN}
+}
+function retrogradeAtInstant(record,payload){
+  if(!MOTION_BODIES.has(record.id))return false;
+  const instant=profile(payload).instant;
+  if(typeof instant!=='string'||!instant)return false;
+  const epoch=Date.parse(instant);
+  if(!Number.isFinite(epoch))return false;
+  // A one-day central difference gives a stable longitude trend even at 0/360.
+  const before=motionLongitude(record.id,new Date(epoch-12*3600000));
+  const after=motionLongitude(record.id,new Date(epoch+12*3600000));
+  if(!Number.isFinite(before)||!Number.isFinite(after))return false;
+  return ((after-before+540)%360)-180 < -1e-5;
+}
+function retrogradeMark(){
+  return '<img class="sky-rx-master" src="assets/planet-glyphs/retrograde.svg" alt="Retrograde" width="21" height="21" decoding="async">';
+}
+window.RelphiSkyRetrogradeMark=retrogradeMark;
+function recordRetrograde(record,payload){
+  const item=record.item;
+  if(item&&typeof item==='object'){
+    if(typeof item.retrograde==='boolean')return item.retrograde;
+    if(typeof item.isRetrograde==='boolean')return item.isRetrograde;
+    const motion=String(item.motion??item.direction??'').trim().toLowerCase();
+    if(['retrograde','rx','retrograding'].includes(motion))return true;
+    if(['direct','stationary-direct','stationary'].includes(motion))return false;
+    const speed=item.longitudeSpeed??item.speedLongitude??item.longitudinalSpeed??item.speed??item.velocity;
+    if(speed!==null&&speed!==undefined&&speed!==''&&Number.isFinite(Number(speed)))return Number(speed)<0;
+  }
+  return retrogradeAtInstant(record,payload);
+}
+function retrogradeForSkyPlacement(slot,id){
+  try{
+    const payload=JSON.parse(localStorage.getItem(KEYS[slot])||'null');
+    if(!payload)return false;
+    const record=records(payload).find(item=>item.id===id);
+    return record?recordRetrograde(record,payload):false;
+  }catch(_){return false}
+}
+window.RelphiSkyRetrograde={forPlacement:retrogradeForSkyPlacement};
 function records(payload){const seen=new Set();return source(payload).map(([key,item])=>{const entry=canonicalEntry(key,item),value=longitude(item);if(!entry||!Number.isFinite(value)||seen.has(entry.id))return null;seen.add(entry.id);return{key,item,entry,id:entry.id,value}}).filter(Boolean).sort((a,b)=>{const ai=ORDER.indexOf(a.id),bi=ORDER.indexOf(b.id);return(ai<0?999:ai)-(bi<0?999:bi)||a.value-b.value})}
 function profile(payload){return payload?.calcProfile&&typeof payload.calcProfile==='object'?payload.calcProfile:{}}
 function ascendant(payload,list){const record=list.find(item=>item.id==='asc');if(record)return record.value;const value=Number(profile(payload).ascendant??payload?.ascendant??payload?.asc);return Number.isFinite(value)?norm(value):0}
@@ -48,7 +96,7 @@ function glyphFailure(host,error){host.dataset.relphiGlyphError=error?.message||
 function placementHouseMarker(house){const marker=window.RelphiHouseMedallion?.create?.(house,'',false);if(!marker)throw new Error('House medallion source primitive is unavailable.');return marker}
 function moonRangeRecords(payload){const range=profile(payload).moonRange;if(profile(payload).timeUnknown!==true||!range?.start||!range?.end)return null;const start=longitude(range.start),end=longitude(range.end);return Number.isFinite(start)&&Number.isFinite(end)?{start,end}:null}
 function moonRangeText(payload){const range=moonRangeRecords(payload);if(!range)return'';const format=value=>{const p=coordinate({value});return{...p,label:`${p.text} ${SIGN_NAMES[p.sign]}`}},start=format(range.start),end=format(range.end);return start.sign===end.sign?`${start.text}–${end.text} ${SIGN_NAMES[start.sign]}`:`${start.label} – ${end.label}`}
-function renderCard(slot,payload,list,cusps){const panel=document.getElementById(`skyFoundation${slot}`);if(!panel)return[];panel.querySelector('.sky-foundation-name').textContent=payload?.name||`Sky ${slot}`;const refs=window.RelphiSkyCardShell?.ensure?.(slot,payload),mount=refs?.placements||panel.querySelector('.sky-foundation-body');mount.replaceChildren();const moonRange=moonRangeRecords(payload);if(!list.length&&!moonRange){mount.innerHTML='<p class="sky-foundation-empty">No approved canonical placements are available for this sky.</p>';return[]}const ledger=document.createElement('div');ledger.className='sky-foundation-ledger';mount.appendChild(ledger);const color=spec()?.SKY?.[slot]||'#333',jobs=[],hasHouses=profile(payload).timeUnknown!==true;list.forEach(record=>{const position=coordinate(record),house=hasHouses?houseFor(record.value,cusps):0,row=document.createElement('div');row.className='sky-foundation-row';row.innerHTML=`<svg viewBox="-20 -20 40 40" aria-label="${esc(record.entry.name)}"></svg><span class="sky-foundation-row-name">${esc(record.entry.name)}</span><span class="sky-foundation-coordinate">${position.text} ${SIGN_NAMES[position.sign]}</span>${hasHouses?`<span class="sky-foundation-house relphi-placement-house-medallion-host" data-house="${house}"></span>`:''}`;if(hasHouses)row.querySelector('.sky-foundation-house')?.appendChild(placementHouseMarker(house));ledger.appendChild(row);const host=row.querySelector('svg');jobs.push(drawCanonical(host,record.id,{radius:16,padding:1,color}).catch(error=>glyphFailure(host,error)))});if(moonRange){const entry=window.RelphiGlyphRegistry?.resolve?.('moon')||window.RelphiGlyphRegistry?.get?.('moon'),row=document.createElement('div');row.className='sky-foundation-row sky-foundation-row--range';row.dataset.placement='moon-range';row.innerHTML=`<svg viewBox="-20 -20 40 40" aria-label="Moon"></svg><span class="sky-foundation-row-name">Moon</span><span class="sky-foundation-coordinate">${esc(moonRangeText(payload))}</span>`;const mercuryRow=[...ledger.children].find(node=>String(node.querySelector?.('.sky-foundation-row-name')?.textContent||'').trim()==='Mercury');if(mercuryRow)ledger.insertBefore(row,mercuryRow);else ledger.appendChild(row);const host=row.querySelector('svg');if(entry?.id)jobs.push(drawCanonical(host,entry.id,{radius:16,padding:1,color}).catch(error=>glyphFailure(host,error)))}return jobs}
+function renderCard(slot,payload,list,cusps){const panel=document.getElementById(`skyFoundation${slot}`);if(!panel)return[];panel.querySelector('.sky-foundation-name').textContent=payload?.name||`Sky ${slot}`;const refs=window.RelphiSkyCardShell?.ensure?.(slot,payload),mount=refs?.placements||panel.querySelector('.sky-foundation-body');mount.replaceChildren();const moonRange=moonRangeRecords(payload);if(!list.length&&!moonRange){mount.innerHTML='<p class="sky-foundation-empty">No approved canonical placements are available for this sky.</p>';return[]}const ledger=document.createElement('div');ledger.className='sky-foundation-ledger';mount.appendChild(ledger);const color=spec()?.SKY?.[slot]||'#333',jobs=[],hasHouses=profile(payload).timeUnknown!==true;list.forEach(record=>{const position=coordinate(record),house=hasHouses?houseFor(record.value,cusps):0,row=document.createElement('div');row.className='sky-foundation-row';row.innerHTML=`<svg viewBox="-20 -20 40 40" aria-label="${esc(record.entry.name)}"></svg><span class="sky-foundation-row-name">${esc(record.entry.name)}${recordRetrograde(record,payload)?' <span class="sky-placement-rx">${retrogradeMark()}</span>':''}</span><span class="sky-foundation-coordinate">${position.text} ${SIGN_NAMES[position.sign]}</span>${hasHouses?`<span class="sky-foundation-house relphi-placement-house-medallion-host" data-house="${house}"></span>`:''}`;if(hasHouses)row.querySelector('.sky-foundation-house')?.appendChild(placementHouseMarker(house));ledger.appendChild(row);const host=row.querySelector('svg');jobs.push(drawCanonical(host,record.id,{radius:16,padding:1,color}).catch(error=>glyphFailure(host,error)))});if(moonRange){const entry=window.RelphiGlyphRegistry?.resolve?.('moon')||window.RelphiGlyphRegistry?.get?.('moon'),row=document.createElement('div');row.className='sky-foundation-row sky-foundation-row--range';row.dataset.placement='moon-range';row.innerHTML=`<svg viewBox="-20 -20 40 40" aria-label="Moon"></svg><span class="sky-foundation-row-name">Moon</span><span class="sky-foundation-coordinate">${esc(moonRangeText(payload))}</span>`;const mercuryRow=[...ledger.children].find(node=>String(node.querySelector?.('.sky-foundation-row-name')?.textContent||'').trim()==='Mercury');if(mercuryRow)ledger.insertBefore(row,mercuryRow);else ledger.appendChild(row);const host=row.querySelector('svg');if(entry?.id)jobs.push(drawCanonical(host,entry.id,{radius:16,padding:1,color}).catch(error=>glyphFailure(host,error)))}return jobs}
 function relationships(a,b){const result=[],limit=Math.min(180,requestedOrb()),same=a===b;a.forEach((left,i)=>b.forEach((right,j)=>{if(same&&j<=i)return;if(same&&redundantIntraskyPair(left.id,right.id))return;const distance=separation(left.value,right.value);ASPECTS.forEach(aspect=>{const orb=Math.abs(distance-aspect.angle);if(orb<=limit)result.push({left,right,aspect,orb})})}));return result.sort((x,y)=>x.orb-y.orb)}
 function redundantIntraskyPair(left,right){return REDUNDANT_INTRASKY_PAIRS.has([String(left||''),String(right||'')].sort().join('|'))}
 function intraskyRelationships(list,slot){const harmonic=window.RelphiHarmonicOrb,aspects=harmonic?.aspects||[],windowValue=Number(harmonic?.maxWindow)||12,result=[];for(let i=0;i<list.length;i+=1)for(let j=i+1;j<list.length;j+=1){const left=list[i],right=list[j];if(redundantIntraskyPair(left.id,right.id))continue;const distance=separation(left.value,right.value);aspects.forEach(aspect=>{const relation=harmonic?.relation?.(left,right,aspect,distance,windowValue);if(relation)result.push({...relation,scope:slot==='A'?'intra-a':'intra-b'})})}return result.sort((a,b)=>a.phaseError-b.phaseError||a.harmonicOrder-b.harmonicOrder||a.orb-b.orb)}

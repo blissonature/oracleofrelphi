@@ -31,6 +31,22 @@ function installStyle(){
   min-height:64px!important;
   padding:6px 8px!important;
 }
+#skySavedSkiesPopover .sky-saved-microheptagram *{vector-effect:none!important}
+#skySavedSkiesPopover .sky-saved-microheptagram .sky-ph-week-segment,
+#skySavedSkiesPopover .sky-saved-microheptagram .sky-ph-hour-segment{
+  stroke-width:5!important;stroke-dasharray:none!important;stroke-linecap:round!important;filter:none!important;
+}
+#skySavedSkiesPopover .sky-saved-microheptagram .sky-ph-week-segment.future,
+#skySavedSkiesPopover .sky-saved-microheptagram .sky-ph-hour-segment.future{
+  stroke:#77736e!important;opacity:.7!important;
+}
+#skySavedSkiesPopover .sky-saved-microheptagram .sky-ph-week-segment.past,
+#skySavedSkiesPopover .sky-saved-microheptagram .sky-ph-week-segment.current,
+#skySavedSkiesPopover .sky-saved-microheptagram .sky-ph-hour-segment.current{
+  stroke:#c9211e!important;opacity:1!important;
+}
+#skySavedSkiesPopover .sky-saved-microheptagram .sky-ph-day-ruler-ring,
+#skySavedSkiesPopover .sky-saved-microheptagram .sky-ph-node-glyph{filter:none!important}
 #skySavedSkiesPopover .sky-saved-fingerprint-copy{
   grid-area:copy;display:grid;align-content:center;gap:2px;min-width:0;text-align:left
 }
@@ -49,6 +65,27 @@ function installStyle(){
   #skySavedSkiesPopover .sky-saved-fingerprint-copy-name{font-size:.65rem}
   #skySavedSkiesPopover .sky-saved-fingerprint-copy-when,
   #skySavedSkiesPopover .sky-saved-fingerprint-copy-where{font-size:.54rem}
+  /* Match the actual artwork widths instead of squeezing a 128px triptych into 90px. */
+  #skySavedSkiesPopover .sky-saved-list-row{grid-template-columns:minmax(0,1fr) 25px!important}
+  #skySavedSkiesPopover .sky-saved-list-item[data-private-sky-fingerprint="true"]{
+    grid-template-columns:132px minmax(0,1fr) 14px!important;
+    grid-template-areas:"fingerprint copy check"!important;
+    column-gap:6px!important;min-width:0!important;width:100%!important;
+    padding:6px!important;box-sizing:border-box!important;
+  }
+  #skySavedSkiesPopover .sky-saved-fingerprint-triptych{
+    display:grid!important;grid-template-columns:44px 44px 28px!important;
+    gap:6px!important;width:128px!important;max-width:128px!important;
+    min-width:0!important;align-items:center!important;
+  }
+  #skySavedSkiesPopover .sky-saved-fingerprint-piece{
+    width:44px!important;height:44px!important;min-width:0!important;
+  }
+  #skySavedSkiesPopover .sky-saved-fingerprint-piece[data-fingerprint-part="card"]{width:28px!important}
+  #skySavedSkiesPopover .sky-saved-fingerprint-piece svg{width:44px!important;height:44px!important}
+  #skySavedSkiesPopover .sky-saved-fingerprint-copy{
+    min-width:0!important;max-width:100%!important;overflow:hidden!important;
+  }
 }
 `;
   document.head.appendChild(style);
