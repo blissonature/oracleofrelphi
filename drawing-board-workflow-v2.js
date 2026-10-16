@@ -266,9 +266,7 @@
     const rowH=(CARD_H+LABEL_H)*scale;
     return labels.map((label,index)=>{
       const col=index%cols,row=Math.floor(index/cols);
-      const cardsInRow=Math.min(cols,count-row*cols);
-      const rowOffset=(cols-cardsInRow)*cardW/2;
-      const x=(START_EDGE_GUTTER+rowOffset+col*cardW)/CANVAS_W;
+      const x=(START_EDGE_GUTTER+col*cardW)/CANVAS_W;
       const y=(START_EDGE_GUTTER+LABEL_H*scale+row*rowH)/CANVAS_H;
       return position(`position-${index+1}`,label,index+1,transform(x,y,scale));
     });
