@@ -15,5 +15,14 @@ test('Sky A and Sky B Where and When sections retain full opacity when locked',(
  assert.match(editor,/function editorMarkup\(slot,p\)/);
  assert.match(editor,/time\.disabled=unknown/);
  const html=read('sky-chart.html');
- for(const v of ['sky-chart-where-when-v1.css?v=9','sky-chart-time-control-v1.css?v=8','sky-chart-where-when-viewport-v3.js?v=2','sky-chart-where-when-v3.js?v=13'])assert.ok(html.includes(v));
+ for(const v of ['sky-chart-where-when-v1.css?v=10','sky-chart-time-control-v1.css?v=8','sky-chart-where-when-viewport-v3.js?v=2','sky-chart-where-when-v3.js?v=14'])assert.ok(html.includes(v));
+});
+
+test('Current location uses its action button without graying or filling the search field',()=>{
+ const editor=read('sky-chart-where-when-v3.js');
+ const css=read('sky-chart-where-when-v1.css');
+ assert.match(editor,/value="\$\{escapeHtml\(selected\?\.source==='current-location'\?'':selected\?\.query\|\|''\)\}"/);
+ assert.match(editor,/queryInput\.value=packet\.source==='current-location'\?'':packet\.query\|\|''/);
+ assert.doesNotMatch(css,/\.sky-where-when-input\.is-current-location\s*\{/);
+ assert.match(editor,/data-ww-action="use-here">My current location/);
 });
