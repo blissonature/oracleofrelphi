@@ -22,3 +22,10 @@ test('Sky A and Sky B placement rows interpolate the canonical Retrograde SVG ra
  assert.match(js,/renderCard\('A'/);
  assert.match(js,/renderCard\('B'/);
 });
+
+test('Placement Retrograde image is scaled for readable lettering while preserving its canonical artboard',()=>{
+ const css=fs.readFileSync('sky-chart-foundation-v1.css','utf8');
+ assert.match(css,/\.sky-foundation-row-name \.sky-placement-rx\{[^}]*width:1\.8em;height:1\.8em/);
+ assert.match(css,/\.sky-foundation-row-name \.sky-rx-master\{[^}]*width:100%;height:100%/);
+ assert.ok(html.includes('sky-chart-foundation-v1.css?v=19'));
+});
