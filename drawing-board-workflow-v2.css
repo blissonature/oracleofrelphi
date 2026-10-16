@@ -3382,3 +3382,44 @@ body.relphi-attune-open{overflow:hidden!important}
     border-top:1px solid rgba(17,17,17,.2)!important;
   }
 }
+
+/* Mobile settings sheet: always show the mode switch, and pin whichever
+   mode's actions are active to the exact bottom of the visible sheet. */
+@media(max-width:700px){
+  html body #shortListPanel.relphi-settings-open .relphi-board-settings-panel .relphi-board-settings-body>.drawing-board-mode-switch{
+    display:grid!important;
+    visibility:visible!important;
+    opacity:1!important;
+    order:0!important;
+    position:relative!important;
+    flex:0 0 auto!important;
+    align-self:center!important;
+    z-index:12!important;
+    margin:.45rem auto!important;
+  }
+  html body #shortListPanel.relphi-settings-open .relphi-board-settings-panel .relphi-board-settings-body{
+    justify-content:flex-start!important;
+    gap:0!important;
+    padding:0!important;
+  }
+  html body #shortListPanel.relphi-settings-open .relphi-board-settings-panel .relphi-board-settings-body>.relphi-free-settings{
+    order:1!important;
+    flex:1 1 0%!important;
+    min-height:0!important;
+    display:flex!important;
+    flex-direction:column!important;
+    overflow:auto!important;
+    margin:0!important;
+  }
+  html body #shortListPanel.relphi-settings-open .relphi-board-settings-panel .relphi-board-settings-body>.relphi-reading-options-drawer{
+    order:1!important;
+    flex:1 1 0%!important;
+    min-height:0!important;
+    margin:0!important;
+  }
+  html body #shortListPanel.relphi-settings-open .relphi-board-settings-panel .relphi-board-settings-body .relphi-options-commitbar{
+    margin-top:auto!important;
+    margin-bottom:0!important;
+    padding-bottom:max(.5rem,env(safe-area-inset-bottom))!important;
+  }
+}
