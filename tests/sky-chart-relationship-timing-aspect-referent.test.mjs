@@ -22,5 +22,7 @@ test('compact layout removes timing band and moves Copy to available header spac
   assert.match(header,/padding-top:8px!important/);
   assert.match(header,/\.inline-rel-tile-copy\{[\s\S]*?top:-34px;/);
   assert.match(header,/\[data-inline-progressive-token="aspect"\] \.inline-rel-transit-window/);
+  assert.match(header,/width:min\(100%,112px\)!important/);
+  assert.match(header,/max-width:62px!important/);
   assert.ok(html.includes('sky-chart-inline-expanded-header-v1.js?v=12'));
 });
