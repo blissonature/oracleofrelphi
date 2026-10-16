@@ -228,7 +228,6 @@
   }
   function genericPositions(labels) {
     const count=Math.max(1,labels.length);
-    if(count<=3)return legacyGenericPositions(labels);
     const viewport=autoLayoutViewport();
     let best=null;
     // Choose columns for the visible felt, not a fixed four-column grid.
@@ -259,7 +258,9 @@
     const rowH=(CARD_H+LABEL_H)*scale;
     return labels.map((label,index)=>{
       const col=index%cols,row=Math.floor(index/cols);
-      const x=(START_EDGE_GUTTER+col*cardW)/CANVAS_W;
+      const cardsInRow=Math.min(cols,count-row*cols);
+      const rowOffset=(cols-cardsInRow)*cardW/2;
+      const x=(START_EDGE_GUTTER+rowOffset+col*cardW)/CANVAS_W;
       const y=(START_EDGE_GUTTER+LABEL_H*scale+row*rowH)/CANVAS_H;
       return position(`position-${index+1}`,label,index+1,transform(x,y,scale));
     });
@@ -4397,8 +4398,24 @@
     revealCompletedSurfaceBoard(root);
   }
 
+  function usesAuthoredSpreadGeometry(prefab) {
+    const protectedIds=new Set(['saturn-square-9','celtic-cross-10',RECURSION_ID]);
+    return protectedIds.has(prefab?.id) || protectedIds.has(prefab?.basedOn);
+  }
+  function adaptiveReadingPrefab(prefab) {
+    if(!prefab || usesAuthoredSpreadGeometry(prefab) || !Array.isArray(prefab.positions))return prefab;
+    const ordered=prefab.positions.map((entry,index)=>({entry,index}))
+      .sort((a,b)=>(Number(a.entry.drawOrder)||a.index+1)-(Number(b.entry.drawOrder)||b.index+1));
+    const fitted=genericPositions(ordered.map(({entry},index)=>String(entry.label||`Position ${index+1}`)));
+    const transformed=ordered.map(({entry,index},order)=>({
+      index,entry:{...entry,transform:fitted[order].transform,openTransform:null}
+    }));
+    const positions=prefab.positions.slice();
+    transformed.forEach(({index,entry})=>{positions[index]=entry;});
+    return {...prefab,positions};
+  }
   function launchConfiguredReading(root,draft) {
-    const bridge=optionsBridge(),prefabs=prefabBridge(),prefab=draftPrefab(draft);
+    const bridge=optionsBridge(),prefabs=prefabBridge(),prefab=adaptiveReadingPrefab(draftPrefab(draft));
     const snap=bridge?.capture();
     const craftedPath=String(optionsSession?.path||activeCraftedPath||'');
     if(!snap||!prefabs||!prefab.positions.length)return false;
