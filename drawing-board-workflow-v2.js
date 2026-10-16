@@ -240,8 +240,11 @@
         viewport.height/((CARD_H+LABEL_H)*rows)
       );
       const unused=cols*rows-count;
-      if(!best || fit>best.fit+.0001 ||
-        (Math.abs(fit-best.fit)<=.0001 && (unused<best.unused || (unused===best.unused && cols<best.cols)))){
+      // Near-equal scale is not a reason to abandon the board's vertical space:
+      // a short mobile felt otherwise chooses three tiny cards across one row.
+      const nearEqual=best && Math.abs(fit-best.fit)<=Math.max(fit,best.fit)*.035;
+      if(!best || (!nearEqual && fit>best.fit) ||
+        (nearEqual && (unused<best.unused || (unused===best.unused && cols<best.cols)))){
         best={cols,rows,fit,unused};
       }
     }
