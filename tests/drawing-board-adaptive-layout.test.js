@@ -40,8 +40,8 @@ assert.deepEqual(dimensions(mobile.genericPositions(labels(12))),{cols:4,rows:3}
 const threeMobile=mobile.genericPositions(labels(3));
 assert.equal(new Set(threeMobile.map(p=>p.transform.y.toFixed(6))).size,2,
   'three mobile placeholders use two rows rather than a tiny three-across strip');
-assert.ok(Math.abs(threeMobile[2].transform.x-(threeMobile[0].transform.x+threeMobile[1].transform.x)/2)<.00001,
-  'the last position is centered in its partial row');
+assert.equal(threeMobile[2].transform.x,threeMobile[0].transform.x,
+  'an incomplete second row stays left-aligned with the first row');
 
 const authoredStart=source.indexOf('  function usesAuthoredSpreadGeometry(prefab) {');
 const authoredEnd=source.indexOf('  function launchConfiguredReading(root,draft)',authoredStart);
