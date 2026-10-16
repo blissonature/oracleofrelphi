@@ -229,11 +229,16 @@
   function genericPositions(labels) {
     const count=Math.max(1,labels.length);
     const viewport=autoLayoutViewport();
+    // Portrait phone readings of three should occupy two columns. A single
+    // three-card strip wastes the felt's height even when its mathematical
+    // bounding-box score wins by a small margin.
+    const portraitThree=count===3 && viewport.width<480 && viewport.height>viewport.width;
     let best=null;
     // Choose columns for the visible felt, not a fixed four-column grid.
     // Maximize the rendered card-plus-sticker size; prefer fewer empty slots
     // and then fewer columns when two arrangements fit equally well.
     for(let cols=1;cols<=count;cols++){
+      if(portraitThree && cols!==2)continue;
       const rows=Math.ceil(count/cols);
       const fit=Math.min(
         viewport.width/(CARD_W*cols),
