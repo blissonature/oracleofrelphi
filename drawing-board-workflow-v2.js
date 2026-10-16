@@ -895,6 +895,26 @@
     }
     const body=settingsPanel.querySelector('.relphi-board-settings-body');
     if(body && modeSwitch.parentElement!==body)body.appendChild(modeSwitch);
+    // Dedicated mobile header is owned by the settings sheet. The native tabs
+    // can be hidden by legacy board-mode styles; these controls must not be.
+    if(body && !body.querySelector('.relphi-mobile-settings-paths')){
+      const tabs=document.createElement('nav');
+      tabs.className='relphi-mobile-settings-paths';
+      tabs.setAttribute('aria-label','Drawing Board reading path');
+      tabs.innerHTML='<button type="button" data-mobile-settings-mode="free">Free</button><button type="button" data-mobile-settings-mode="crafted">Crafted</button>';
+      body.prepend(tabs);
+      tabs.addEventListener('click',event=>{
+        const choice=event.target.closest('[data-mobile-settings-mode]');
+        if(choice) switchSettingsMode(choice.dataset.mobileSettingsMode,root);
+      });
+    }
+    const mobilePaths=body?.querySelector('.relphi-mobile-settings-paths');
+    mobilePaths?.querySelectorAll('[data-mobile-settings-mode]').forEach(button=>{
+      const active=button.dataset.mobileSettingsMode===settingsMode;
+      button.classList.toggle('is-active',active);
+      button.setAttribute('aria-pressed',String(active));
+    });
+
 
     // Settings is an overlay: anchor it immediately below the command bar
     // without allowing it to participate in the board's vertical layout.
