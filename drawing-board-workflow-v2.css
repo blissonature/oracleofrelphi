@@ -3532,3 +3532,43 @@ body.relphi-attune-open{overflow:hidden!important}
     padding:.5rem .65rem!important;
   }
 }
+
+/* Compact anchored settings: one native mode switch and natural content height. */
+@media(max-width:700px){
+  html body #shortListPanel.relphi-settings-open .relphi-board-settings-panel{
+    display:block!important;height:auto!important;min-height:0!important;
+    max-height:min(68svh,34rem)!important;overflow-y:auto!important;
+    overscroll-behavior:contain!important;-webkit-overflow-scrolling:touch!important;
+  }
+  html body #shortListPanel.relphi-settings-open .relphi-board-settings-panel .relphi-board-settings-body{
+    display:flex!important;flex-direction:column!important;
+    height:auto!important;max-height:none!important;min-height:0!important;
+    overflow:visible!important;gap:.35rem!important;
+  }
+  html body #shortListPanel.relphi-settings-open .relphi-board-settings-body>.drawing-board-mode-switch{
+    display:grid!important;visibility:visible!important;position:relative!important;
+    flex:0 0 auto!important;order:0!important;margin:.4rem auto!important;
+    z-index:3!important;
+  }
+  html body #shortListPanel.relphi-settings-open .relphi-board-settings-panel .relphi-free-settings,
+  html body #shortListPanel.relphi-settings-open .relphi-board-settings-panel .relphi-reading-options-drawer{
+    display:block!important;flex:0 0 auto!important;
+    height:auto!important;max-height:none!important;min-height:0!important;
+    overflow:visible!important;margin:0!important;
+  }
+  html body #shortListPanel.relphi-settings-open .relphi-board-settings-panel .relphi-free-settings .relphi-free-settings-fields,
+  html body #shortListPanel.relphi-settings-open .relphi-board-settings-panel .relphi-reading-options-drawer .relphi-options-body{
+    display:block!important;flex:none!important;overflow:visible!important;
+    min-height:0!important;height:auto!important;
+    padding-bottom:.5rem!important;
+  }
+  html body #shortListPanel.relphi-settings-open .relphi-board-settings-panel .relphi-free-settings .relphi-free-settings-fields{
+    display:grid!important;align-content:start!important;
+  }
+  html body #shortListPanel.relphi-settings-open .relphi-board-settings-panel .relphi-board-settings-footer,
+  html body #shortListPanel.relphi-settings-open .relphi-board-settings-panel .relphi-options-commitbar{
+    position:static!important;display:flex!important;
+    flex:0 0 auto!important;min-height:0!important;
+    margin:0!important;padding:.5rem .65rem!important;
+  }
+}
