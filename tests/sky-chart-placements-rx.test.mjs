@@ -11,5 +11,14 @@ test('Sky Card retrograde marker uses explicit motion or stored-instant fallback
  assert.match(js,/profile\(payload\)\.instant/);
  assert.match(js,/GeoVector\(name,date,true\)/);
  assert.match(js,/recordRetrograde\(record,payload\)/);
- assert.ok(html.includes('sky-chart-foundation-v2.js?v=31'));
+ assert.ok(html.includes('sky-chart-foundation-v2.js?v=36'));
+});
+
+test('Sky A and Sky B placement rows interpolate the canonical Retrograde SVG rather than printing template syntax',()=>{
+ assert.match(js,/function retrogradeMark\(\)\{[\s\S]*?assets\/planet-glyphs\/retrograde\.svg/);
+ assert.match(js,/recordRetrograde\(record,payload\)\?\` <span class="sky-placement-rx">\$\{retrogradeMark\(\)\}<\/span>\`:''/);
+ assert.doesNotMatch(js,/recordRetrograde\(record,payload\)\?' <span class="sky-placement-rx">/);
+ assert.match(js,/function renderCard\(slot,payload,list,cusps\)/);
+ assert.match(js,/renderCard\('A'/);
+ assert.match(js,/renderCard\('B'/);
 });
