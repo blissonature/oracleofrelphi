@@ -19,8 +19,8 @@ function installStyle(){
     .sky-location-confirmation:not([data-location-source="placement-inference"]) p:first-child{display:none}
     .sky-where-when-status:empty{display:none}
     .sky-where-when-grid{grid-template-columns:minmax(0,1.05fr) minmax(0,.95fr)}
-    .sky-where-when-editor [data-ww-field="time"]:disabled{background:#d8d4cf!important;background-color:#d8d4cf!important;color:#817a73!important;-webkit-text-fill-color:#817a73!important;opacity:1!important;cursor:not-allowed!important;border-color:#c7c1bb!important}
-    .sky-where-when-editor [data-ww-field="time"]:disabled::-webkit-calendar-picker-indicator{opacity:.32!important;filter:grayscale(1)!important}
+    .sky-where-when-editor [data-ww-field="time"]:disabled{background:#fff!important;background-color:#fff!important;color:#49413a!important;-webkit-text-fill-color:#49413a!important;opacity:1!important;cursor:not-allowed!important;border-color:rgba(31,27,24,.23)!important}
+    .sky-where-when-editor [data-ww-field="time"]:disabled::-webkit-calendar-picker-indicator{opacity:1!important;filter:none!important}
     .sky-where-search-row{align-items:end}
     @media(max-width:620px){
       .sky-where-when-grid{grid-template-columns:minmax(0,1.05fr) minmax(0,.95fr)}

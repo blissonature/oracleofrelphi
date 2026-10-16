@@ -84,8 +84,9 @@
   font:900 .78rem/1.2 system-ui,sans-serif;
 }
 
+/* Keep Where and When section legible even when its inputs are temporarily locked. */
 .sky-where-when-section[disabled] {
-  opacity:.5;
+  opacity:1;
 }
 
 .sky-where-when-label {
@@ -122,12 +123,6 @@
   background:#f2eee8;
   color:#514941;
   cursor:default;
-}
-
-.sky-where-when-input.is-current-location {
-  background:#f2eee8;
-  color:#8b837c;
-  -webkit-text-fill-color:#8b837c;
 }
 
 .sky-where-search-row {
@@ -182,10 +177,10 @@
 
 .sky-where-when-grid [data-ww-field="time"]:disabled {
   cursor:not-allowed;
-  opacity:.48;
-  background:#eeeae4;
-  color:#8b837c;
-  -webkit-text-fill-color:#8b837c;
+  opacity:1;
+  background:#fff;
+  color:#49413a;
+  -webkit-text-fill-color:#49413a;
 }
 
 .sky-location-results {
