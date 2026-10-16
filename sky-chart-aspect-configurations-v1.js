@@ -131,20 +131,58 @@ function joinedFunctions(keys){
   if(items.length===2)return items[0].meaning+' and '+items[1].meaning;
   return items.slice(0,-1).map(item=>item.meaning).join(', ')+', and '+items.at(-1).meaning;
 }
+function configurationRoleDescription(key){
+  const info=configurationFunction(key),record=resultVertexRecord(key);
+  const signs=['Aries','Taurus','Gemini','Cancer','Leo','Virgo','Libra','Scorpio','Sagittarius','Capricorn','Aquarius','Pisces'];
+  const sign=record&&Number.isInteger(record.sign)?signs[record.sign]:null;
+  const house=record?.house;
+  return 'Sky '+info.sky+' '+placementWord(info.id)+(sign?' in '+sign:'')+(house?' (house '+house+')':'')+' ('+info.meaning+')';
+}
+function configurationEdgePairs(pattern,aspect){
+  return pattern.edges.filter(edge=>edge.aspect===aspect).map(edge=>[edge.left,edge.right]);
+}
+function configurationOppositionText(pattern){
+  const pairs=configurationEdgePairs(pattern,'opposition');
+  return pairs.length?pairs.map(pair=>configurationRoleDescription(pair[0])+' opposite '+configurationRoleDescription(pair[1])).join('; '):'';
+}
+function configurationApex(pattern,aspects){
+  if(pattern.apex&&pattern.vertices.includes(pattern.apex))return pattern.apex;
+  const counts=new Map(pattern.vertices.map(key=>[key,0]));
+  pattern.edges.filter(edge=>aspects.includes(edge.aspect)).forEach(edge=>{
+    counts.set(edge.left,(counts.get(edge.left)||0)+1);
+    counts.set(edge.right,(counts.get(edge.right)||0)+1);
+  });
+  const matches=[...counts].filter(([,count])=>count===2);
+  return matches.length===1?matches[0][0]:null;
+}
 function interpretationText(pattern){
-  const apex=pattern.apex&&pattern.vertices.includes(pattern.apex)?pattern.apex:null;
-  const apexInfo=apex?configurationFunction(apex):null;
-  const bases=apex?pattern.vertices.filter(key=>key!==apex):pattern.vertices;
-  if(pattern.type==='t-square'&&apexInfo)return 'The polarity between '+joinedFunctions(bases)+' discharges through '+apexInfo.meaning+'. The apex becomes the place where that opposition demands action, adaptation, or development.';
-  if(pattern.type==='yod'&&apexInfo)return joinedFunctions(bases)+' form the supporting base, while both require continuing adjustment through '+apexInfo.meaning+'. The apex becomes the point where those different demands must be translated into one response.';
-  if(pattern.type==='thors-hammer'&&apexInfo)return 'Friction between '+joinedFunctions(bases)+' is concentrated through '+apexInfo.meaning+'. The apex becomes the pressure point where accumulated tension is forced into a sharper redirection.';
-  if(pattern.type==='minor-grand-trine'&&apexInfo)return joinedFunctions(bases)+' provide an existing channel of ease that becomes usable through '+apexInfo.meaning+', giving the pattern a practical outlet.';
-  if(pattern.type==='grand-trine')return joinedFunctions(pattern.vertices)+' form a self-reinforcing circuit of low-resistance exchange, making these functions especially available to one another.';
-  if(pattern.type==='grand-cross')return joinedFunctions(pattern.vertices)+' form two opposing axes locked together by squares, distributing pressure across all four functions and continually forcing movement among competing demands.';
-  if(pattern.type==='mystic-rectangle')return joinedFunctions(pattern.vertices)+' hold two polarities inside a network of trines and sextiles, giving the tensions several routes for exchange and integration.';
-  if(pattern.type==='cradle')return joinedFunctions(pattern.vertices)+' hold an opposition inside a supportive web of trines and sextiles, preserving the polarity while distributing it through lower-resistance pathways.';
-  if(pattern.type==='grand-sextile')return joinedFunctions(pattern.vertices)+' form a dense six-point network of sextiles, trines, and oppositions, offering many routes for exchange while preserving three opposing axes.';
-  return CONFIG_INTERPRETATION[pattern.type]||'A compound relationship pattern formed by several aspect edges operating together.';
+  const points=pattern.vertices.map(configurationRoleDescription).join('; ');
+  const opposition=configurationOppositionText(pattern);
+  const apexTypes={'t-square':['square'],yod:['quincunx'],'thors-hammer':['tri-octile'],'minor-grand-trine':['sextile']};
+  const apex=configurationApex(pattern,apexTypes[pattern.type]||[]);
+  const apexText=apex?configurationRoleDescription(apex):'';
+  const base=apex?pattern.vertices.filter(key=>key!==apex).map(configurationRoleDescription).join(' and '):'';
+  const scope=patternScopeLabel(pattern);
+  const lead='In '+scope+', '+points+'. ';
+  switch(pattern.type){
+    case 'kite':{
+      const opposing=configurationEdgePairs(pattern,'opposition')[0];
+      const trines=configurationEdgePairs(pattern,'trine');
+      const grandTrineKeys=pattern.vertices.filter(key=>trines.filter(pair=>pair.includes(key)).length===2);
+      const outlet=opposing?.find(key=>!grandTrineKeys.includes(key));
+      return lead+'The grand-trine circuit links '+(grandTrineKeys.length===3?grandTrineKeys.map(configurationRoleDescription).join('; '):'the three trine-connected placements')+'. '+(opposition?'Its directional axis is '+opposition+'. ':'')+(outlet?'The opposing outlet, '+configurationRoleDescription(outlet)+', brings the flowing circuit into a focused encounter.':'The opposition directs the otherwise self-contained flow.');
+    }
+    case 'grand-trine':return lead+'These three functions reinforce one another through trines, creating an accessible circuit that can operate without much external pressure.';
+    case 'yod':return lead+'The sextile base of '+base+' requires two different adjustments toward '+apexText+', where their demands converge.';
+    case 't-square':return lead+(opposition?'The opposing axis is '+opposition+'. ':'')+'Both sides square '+apexText+', concentrating pressure and requiring a response through that function.';
+    case 'thors-hammer':return lead+'The square between '+base+' converges through two sesquiquadrates on '+apexText+', concentrating friction at that point.';
+    case 'minor-grand-trine':return lead+'The trine between '+base+' is made more usable through two sextiles to '+apexText+'.';
+    case 'mystic-rectangle':return lead+'The two polarities are '+opposition+'. Trines and sextiles connect the opposing axes, allowing tension and support to coexist.';
+    case 'grand-cross':return lead+'The opposing axes are '+opposition+'. Four squares distribute pressure across all four placements.';
+    case 'grand-sextile':return lead+'Its three opposing axes are '+opposition+'. The sextiles and trines provide multiple paths for cooperation among these specific functions.';
+    case 'cradle':return lead+'The central polarity is '+opposition+'. The remaining trines and sextiles provide routes to contain and redistribute its tension.';
+    default:return lead+(CONFIG_INTERPRETATION[pattern.type]||'The participating functions form a compound aspect pattern.');
+  }
 }
 function miniConfigurationMarkup(pattern,{compact=false,interactive=true}={}){
   const records=new Map(pattern.vertices.map(key=>[key,resultVertexRecord(key)]).filter(([,record])=>record));
