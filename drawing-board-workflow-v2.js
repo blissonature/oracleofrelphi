@@ -244,7 +244,7 @@
       // a short mobile felt otherwise chooses three tiny cards across one row.
       const nearEqual=best && Math.abs(fit-best.fit)<=Math.max(fit,best.fit)*.035;
       if(!best || (!nearEqual && fit>best.fit) ||
-        (nearEqual && (unused<best.unused || (unused===best.unused && cols<best.cols)))){
+        (nearEqual && (cols<best.cols || (cols===best.cols && unused<best.unused)))){
         best={cols,rows,fit,unused};
       }
     }
