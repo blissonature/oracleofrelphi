@@ -125,9 +125,11 @@
 }
 
 .sky-where-when-input.is-current-location {
-  background:#f2eee8;
-  color:#8b837c;
-  -webkit-text-fill-color:#8b837c;
+  /* A resolved location remains an editable search query, not a disabled field. */
+  background:#fff;
+  color:#27221e;
+  -webkit-text-fill-color:currentColor;
+  cursor:text;
 }
 
 .sky-where-search-row {
