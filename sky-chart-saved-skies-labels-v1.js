@@ -31,6 +31,29 @@ function installStyle(){
   min-height:64px!important;
   padding:6px 8px!important;
 }
+/* Global .sky-ph-heptagram has min-height:270px. At 44px wide, the
+   preserved SVG aspect ratio centers its drawing in that tall viewport,
+   visually shifting it into a different Saved Sky row. Constrain the actual
+   SVG viewport, not the row or the source geometry. */
+#skySavedSkiesPopover .sky-saved-canonical-heptagram{
+  display:grid!important;
+  place-items:center!important;
+  width:44px!important;
+  height:44px!important;
+  min-width:0!important;
+  min-height:0!important;
+}
+#skySavedSkiesPopover .sky-saved-canonical-heptagram > svg.sky-saved-microheptagram{
+  display:block!important;
+  width:44px!important;
+  height:44px!important;
+  min-width:0!important;
+  min-height:0!important;
+  max-width:44px!important;
+  max-height:44px!important;
+  margin:0!important;
+  transform:none!important;
+}
 #skySavedSkiesPopover .sky-saved-microheptagram *{vector-effect:none!important}
 #skySavedSkiesPopover .sky-saved-microheptagram .sky-ph-week-segment,
 #skySavedSkiesPopover .sky-saved-microheptagram .sky-ph-hour-segment{
@@ -83,6 +106,10 @@ function installStyle(){
   }
   #skySavedSkiesPopover .sky-saved-fingerprint-piece[data-fingerprint-part="card"]{width:28px!important}
   #skySavedSkiesPopover .sky-saved-fingerprint-piece svg{width:44px!important;height:44px!important}
+  #skySavedSkiesPopover .sky-saved-canonical-heptagram,
+  #skySavedSkiesPopover .sky-saved-canonical-heptagram > svg.sky-saved-microheptagram{
+    width:44px!important;height:44px!important;min-height:0!important;
+  }
   #skySavedSkiesPopover .sky-saved-fingerprint-copy{
     min-width:0!important;max-width:100%!important;overflow:hidden!important;
   }
