@@ -19,25 +19,25 @@ function installStyle(){
     }
     .sky-foundation-relationship-row.is-inline-expanded{
       grid-template-columns:repeat(3,minmax(0,1fr))!important;
-      grid-template-areas:"left aspect right" "left orb right" "left timing right" "detail detail detail"!important;
-      grid-template-rows:38px 18px auto auto!important;
+      grid-template-areas:"left aspect right" "left orb right" "detail detail detail"!important;
+      grid-template-rows:38px 18px auto!important;
       min-height:64px!important;
     }
     .sky-foundation-relationship-row.is-inline-expanded>.inline-rel-detail{
       grid-area:detail!important;
       grid-column:1/-1!important;
-      grid-row:4!important;
+      grid-row:3!important;
       position:relative!important;
       min-width:0!important;
       width:100%!important;
       box-sizing:border-box!important;
-      padding-top:40px!important;
+      padding-top:8px!important;
     }
     .sky-foundation-relationship-row.is-inline-expanded .inline-rel-tile-copy{
       appearance:none;
       position:absolute;
-      top:8px;
-      right:8px;
+      top:-34px;
+      right:4px;
       z-index:5;
       min-height:28px;
       padding:0 10px;
@@ -110,19 +110,31 @@ function installStyle(){
       min-width:40px!important;
       line-height:18px!important;
     }
-    .sky-foundation-relationship-row.is-inline-expanded>.inline-rel-timing-slot{
-      grid-area:timing!important;grid-column:2!important;grid-row:3!important;
-      position:relative!important;display:block!important;min-width:0!important;
-      margin:2px 0 6px!important;padding:0 2px!important;align-self:start!important;
-      text-align:center!important;
+    /* The aspect's referent and its transit timing share one progressive
+       text field. Do not reserve a separate timing row above the strip. */
+    .sky-foundation-relationship-row.is-inline-expanded
+      [data-inline-progressive-token="aspect"]>[data-inline-relationship-timing]{
+      display:block!important;position:static!important;grid-area:auto!important;
+      width:100%!important;min-width:0!important;margin:4px 0 0!important;
+      padding:4px 0 0!important;border-top:1px solid rgba(53,47,42,.14)!important;
+      pointer-events:none!important;cursor:default!important;
     }
-    .sky-foundation-relationship-row.is-inline-expanded>.inline-rel-timing-slot .inline-rel-transit-window{
-      text-align:center!important;font-size:.48rem!important;
-      padding:2px 0!important;margin:0!important;
+    .sky-foundation-relationship-row.is-inline-expanded
+      [data-inline-progressive-token="aspect"] .inline-rel-transit-window{
+      display:grid!important;gap:2px!important;width:100%!important;
+      min-width:0!important;padding:0!important;margin:0!important;
+      border:0!important;background:transparent!important;
+      font-size:.49rem!important;line-height:1.24!important;
+      text-align:left!important;white-space:normal!important;
     }
-    .sky-foundation-relationship-row.is-inline-expanded>.inline-rel-timing-slot .inline-rel-transit-row{
-      display:flex!important;flex-wrap:wrap!important;justify-content:center!important;
-      gap:2px 4px!important;text-align:center!important;
+    .sky-foundation-relationship-row.is-inline-expanded
+      [data-inline-progressive-token="aspect"] .inline-rel-transit-row{
+      display:grid!important;grid-template-columns:auto minmax(0,1fr)!important;
+      gap:2px 4px!important;align-items:start!important;text-align:left!important;
+    }
+    .sky-foundation-relationship-row.is-inline-expanded
+      [data-inline-progressive-token="aspect"] .inline-rel-transit-row>span{
+      overflow-wrap:anywhere!important;
     }
     .sky-foundation-relationship-glyph[data-sky-rx="true"]{position:relative}
     .sky-foundation-relationship-glyph[data-sky-rx-owner="A"]{color:#c9211e}
@@ -155,8 +167,12 @@ function normalizeAspect(row){
   if(glyph)row.appendChild(glyph);if(orb)row.appendChild(orb);pair.remove();
 }
 function normalizeTiming(row){
-  const slot=row.querySelector(':scope>.inline-rel-detail [data-inline-relationship-timing]');
-  if(slot&&row.classList.contains('is-inline-expanded'))row.appendChild(slot);
+  if(!row.classList.contains('is-inline-expanded'))return;
+  const detail=row.querySelector(':scope>.inline-rel-detail');
+  const aspect=detail?.querySelector('.inline-rel-progressive-strip [data-inline-progressive-token="aspect"]');
+  const slot=row.querySelector(':scope>[data-inline-relationship-timing]')||
+    detail?.querySelector('[data-inline-relationship-timing]');
+  if(slot&&aspect&&slot.parentElement!==aspect)aspect.appendChild(slot);
 }
 function markRetrograde(row){
   for(const side of ['left','right']){
