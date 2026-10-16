@@ -34,6 +34,7 @@ jobs:
           node --check drawing-board-crowley-harmonic-v1.js
           node --check tests/drawing-board-single-owner.test.js
           node --check tests/drawing-board-workflow-v2.test.js
+          node --check tests/drawing-board-adaptive-layout.test.js
           node --check tests/drawing-board-spread-prefabs.test.js
           node --check tests/drawing-board-runtime.test.js
           node --check tests/drawing-board-iphone-regressions.test.js
@@ -55,6 +56,7 @@ jobs:
         run: |
           node tests/drawing-board-single-owner.test.js || true
           node tests/drawing-board-workflow-v2.test.js || true
+          node tests/drawing-board-adaptive-layout.test.js
           node tests/drawing-board-spread-prefabs.test.js || true
           node tests/drawing-board-bulk-questions.test.js || true
       - name: Install browser acceptance runner

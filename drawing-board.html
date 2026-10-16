@@ -23,6 +23,20 @@
         var doc=frame.contentDocument;
         if(!win||!doc||!doc.head)return;
 
+        // A preview of Drawing Board must open the board, not the Tarot Ledger
+        // landing page. Wait until the native click listener is installed.
+        var previewOpenAttempts=0;
+        function openPreviewBoard(){
+          var trigger=doc.getElementById('relphiOpenDrawingBoardCurrent');
+          if(doc.readyState==='complete' && trigger && win.RelphiDrawingBoardOptionsBridge
+             && win.RelphiDrawingBoardPrefabsBridge && win.__relphiDrawingBoardUnifiedV3){
+            if(trigger.getAttribute('aria-expanded')!=='true')trigger.click();
+            return;
+          }
+          if(++previewOpenAttempts<60)win.setTimeout(openPreviewBoard,200);
+        }
+        openPreviewBoard();
+
         var style=doc.createElement('style');
         style.id='drawing-board-celtic-readable-v32';
         style.textContent=`
