@@ -136,6 +136,25 @@ function installStyle(){
       [data-inline-progressive-token="aspect"] .inline-rel-transit-row>span{
       overflow-wrap:anywhere!important;
     }
+    /* The expanded card, its aspect referent and the isolated relationship
+       should be readable together without consuming a full scrolling pane. */
+    .sky-foundation-relationship-row.is-inline-expanded .inline-rel-detail{
+      row-gap:5px!important;
+      padding-bottom:5px!important;
+    }
+    .sky-foundation-relationship-row.is-inline-expanded .inline-rel-visual{
+      grid-template-columns:minmax(54px,70px) minmax(100px,1fr) minmax(54px,70px)!important;
+      gap:7px!important;
+    }
+    .sky-foundation-relationship-row.is-inline-expanded .inline-rel-wheel-stage{
+      width:min(100%,112px)!important;
+    }
+    .sky-foundation-relationship-row.is-inline-expanded .inline-rel-card-art{
+      max-width:62px!important;
+    }
+    .sky-foundation-relationship-row.is-inline-expanded .inline-rel-progressive-strip{
+      gap:5px!important;
+    }
     .sky-foundation-relationship-glyph[data-sky-rx="true"]{position:relative}
     .sky-foundation-relationship-glyph[data-sky-rx-owner="A"]{color:#c9211e}
     .sky-foundation-relationship-glyph[data-sky-rx-owner="B"]{color:#2462d0}
