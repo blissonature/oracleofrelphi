@@ -32,7 +32,7 @@ function installStyles(){
     [data-ww-when] .sky-where-when-input{min-width:0;width:100%;box-sizing:border-box}
     .sky-time-unknown-option{display:inline-flex;align-items:center;gap:.32rem;white-space:nowrap;color:#4f4842;font:800 .62rem/1 system-ui,sans-serif;cursor:pointer}
     .sky-time-unknown-option input{margin:0}
-    [data-ww-field="time"]:disabled{opacity:.48;background:#eeeae4;color:#8b837c;cursor:not-allowed}
+    [data-ww-field="time"]:disabled{opacity:1;background:#fff;color:#49413a;cursor:not-allowed}
     .sky-where-search-label-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:.45rem;align-items:center}
     .sky-where-search-label-row .sky-where-when-label{display:block}
     .sky-use-here-button{padding:.42rem .68rem;font-size:.62rem}
