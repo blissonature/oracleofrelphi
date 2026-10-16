@@ -6,7 +6,7 @@ const html=fs.readFileSync('sky-chart.html','utf8');
 test('Relationship Retrograde uses transparent canonical mask with sky-owned color',()=>{
  assert.match(js,/sky-rx-owner="A"\]\{color:#c9211e\}/);
  assert.match(js,/sky-rx-owner="B"\]\{color:#2462d0\}/);
- assert.match(js,/right:-3px;bottom:-6px;width:20px;height:20px/);
+ assert.match(js,/right:-3px;bottom:0px;width:20px;height:20px/);
  assert.match(js,/background-color:currentColor/);
  assert.match(js,/-webkit-mask:url\("assets\/planet-glyphs\/retrograde.svg"\)/);
  assert.match(js,/mask:url\("assets\/planet-glyphs\/retrograde.svg"\)/);
@@ -14,5 +14,5 @@ test('Relationship Retrograde uses transparent canonical mask with sky-owned col
  assert.match(js,/glyph.dataset.skyRxOwner=sky/);
  assert.match(js,/delete glyph.dataset.skyRxOwner/);
  assert.doesNotMatch(js,/mark.innerHTML=window.RelphiSkyRetrogradeMark/);
- assert.ok(html.includes('sky-chart-inline-expanded-header-v1.js?v=10'));
+ assert.ok(html.includes('sky-chart-inline-expanded-header-v1.js?v=11'));
 });
