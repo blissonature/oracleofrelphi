@@ -104,6 +104,11 @@
   }
 
   function placementSymbol(id){return PLACEMENT_SYMBOLS[id]||window.RelphiGlyphRegistry?.get?.(id)?.fallback||id}
+  function placementWithMotion(row,side,id){
+    const sky=String(row.dataset[side+'Sky']||'').toUpperCase();
+    const retrograde=sky&&id&&window.RelphiSkyRetrograde?.forPlacement?.(sky,id);
+    return placementSymbol(id)+(retrograde?' Rx':'');
+  }
   function serializeRow(row){
     const leftId=row.dataset.leftPlacement||'',rightId=row.dataset.rightPlacement||'',aspect=row.dataset.aspect||'';
     const leftSign=SIGN_SYMBOLS[Number(row.dataset.leftSign)]||'',rightSign=SIGN_SYMBOLS[Number(row.dataset.rightSign)]||'';
@@ -113,7 +118,7 @@
     const rightHouseToken=Number.isInteger(rightHouse)&&rightHouse>=1&&rightHouse<=12?` H${rightHouse}`:'';
     const aspectSymbol=ASPECT_SYMBOLS[aspect]||aspect;
     if(!leftId||!rightId||!leftCoordinate||!rightCoordinate)return'';
-    return `${placementSymbol(leftId)} in ${leftSign} ${leftCoordinate}${leftHouseToken}  ${aspectSymbol}  ${placementSymbol(rightId)} in ${rightSign} ${rightCoordinate}${rightHouseToken}`.replace(/\s+/g,' ').trim();
+    return `${placementWithMotion(row,'left',leftId)} in ${leftSign} ${leftCoordinate}${leftHouseToken}  ${aspectSymbol}  ${placementWithMotion(row,'right',rightId)} in ${rightSign} ${rightCoordinate}${rightHouseToken}`.replace(/\s+/g,' ').trim();
   }
 
   function relationshipMode(row){
