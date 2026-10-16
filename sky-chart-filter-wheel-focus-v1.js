@@ -78,6 +78,22 @@
     return [row.dataset.leftPlacement?`${slots.left}:${row.dataset.leftPlacement}`:null,
       row.dataset.rightPlacement?`${slots.right}:${row.dataset.rightPlacement}`:null].filter(Boolean);
   }
+  // A-A and B-B wheel lines can be enumerated in a different order from
+  // their relationship rows. Match the actual aspect endpoints, not just the
+  // render-local relationIndex (which can be stale during a redraw).
+  function relationshipIdentity(node){
+    const left=String(node?.dataset?.leftPlacement||'').trim();
+    const right=String(node?.dataset?.rightPlacement||'').trim();
+    const aspect=String(node?.dataset?.aspect||'').trim();
+    if(!left||!right||!aspect)return '';
+    const slots=relationshipSlots(node);
+    if(slots.left===slots.right){
+      const [first,second]=[left,right].sort();
+      return `${slots.left}:${first}|${aspect}|${slots.right}:${second}`;
+    }
+    return `${slots.left}:${left}|${aspect}|${slots.right}:${right}`;
+  }
+
   function closePopup(){popup?.remove();popup=null}
   function openPopup(marker,key,required){
     closePopup();
@@ -171,11 +187,13 @@
       return;
     }
 
-    const relations=new Set(),placements=new Set(),hiddenCandidates=new Map();
+    const relations=new Set(),identities=new Set(),placements=new Set(),hiddenCandidates=new Map();
     const currentWindow=Number(window.RelphiHarmonicOrb?.getWindow?.()??7);
     matched.forEach(row=>{
       const index=String(row.dataset.relationIndex||'');
       if(index)relations.add(index);
+      const identity=relationshipIdentity(row);
+      if(identity)identities.add(identity);
       const keys=endpoints(row),value=phase(row);
       // Only already-visible relationship lines establish full emphasis.
       const shown=!row.hidden&&!row.classList.contains('sky-chart-orb-hidden')&&
@@ -187,8 +205,12 @@
     });
     // Emphasis belongs to BOTH ends of every matching relationship, not
     // exclusively to the placement category selected in the Focus menu.
-    wheel.querySelectorAll('[data-layer="aspects"] .sky-foundation-aspect[data-relation-index]').forEach(node=>{
-      node.classList.toggle('is-filter-kept',relations.has(String(node.dataset.relationIndex)));
+    wheel.querySelectorAll('[data-layer="aspects"] .sky-foundation-aspect').forEach(node=>{
+      const identity=relationshipIdentity(node);
+      // A matching identity takes precedence over a possibly recycled index.
+      // Index-only fallback remains for older aspect nodes without endpoints.
+      const kept=identity?identities.has(identity):relations.has(String(node.dataset.relationIndex||''));
+      node.classList.toggle('is-filter-kept',kept);
     });
     hiddenNearest=new Map([...hiddenCandidates].filter(([key])=>!placements.has(key)));
     wheel.querySelectorAll('[data-layer="placements"] [data-sky][data-placement], [data-layer="leaders"] [data-sky][data-placement]').forEach(node=>{
