@@ -5341,6 +5341,50 @@
     root.classList.toggle('relphi-celtic-crossed',isCeltic&&acknowledged);
   }
 
+  let freeAutoLayoutBusy=false;
+  function fitFreeReadingGrid(root=panel()) {
+    if(freeAutoLayoutBusy || !root || settingsOpen || craftedReadingActive || boardHasCraftedStructure(root))return false;
+    const bridge=optionsBridge(),snap=bridge?.capture?.();
+    if(!snap)return false;
+    const count=Array.isArray(snap.shortList)?snap.shortList.length:0;
+    if(!count)return false;
+    const positions=genericPositions(Array.from({length:count},(_,i)=>'Card '+(i+1)));
+    const signature=count+'|'+Math.round(autoLayoutViewport().width)+'|'+Math.round(autoLayoutViewport().height);
+    if(root.dataset.relphiFreeGridSignature===signature)return false;
+    // Free mode's untouched, automatically arranged cards may be reflowed.
+    // Never replace a layout after the reader has manually moved or rotated it.
+    const previousCount=Number(root.dataset.relphiFreeGridCount)||0;
+    const existing=snap.rowEnvelopeLayout||{},transforms=snap.rowCardTransforms||{};
+    const old=previousCount?genericPositions(Array.from({length:previousCount},(_,i)=>'Card '+(i+1))):[];
+    const managed=root.dataset.relphiFreeGridManaged==='true';
+    if(!managed && Object.keys(existing).length)return false;
+    if(managed && Object.entries(transforms).some(([key,v])=>Number(v.rotation||0)!==0))return false;
+    if(managed && Object.keys(existing).length && previousCount){
+      // A reader's subsequent rearrangement takes ownership away from auto-fit.
+      const oldSaved=root.dataset.relphiFreeGridCoordinates;
+      if(oldSaved){
+        let expected;try{expected=JSON.parse(oldSaved);}catch(_){expected={};}
+        if(Object.entries(expected).some(([i,p])=>Math.abs(Number(existing[i]?.x)-p.x)>1||Math.abs(Number(existing[i]?.y)-p.y)>1))return false;
+      }
+    }
+    freeAutoLayoutBusy=true;
+    try{
+      snap.rowEnvelopeLayout={};snap.rowCardTransforms={};
+      positions.forEach((item,i)=>{
+        snap.rowEnvelopeLayout[i]={x:item.transform.x*CANVAS_W,y:item.transform.y*CANVAS_H};
+        snap.rowCardTransforms[i]={scale:item.transform.scale,rotation:0,zIndex:1};
+      });
+      snap.rowPanX=0;snap.rowPanY=0;snap.rowZoom=1;
+      root.dataset.relphiFreeGridSignature=signature;
+      root.dataset.relphiFreeGridCount=String(count);
+      root.dataset.relphiFreeGridManaged='true';
+      root.dataset.relphiFreeGridCoordinates=JSON.stringify(snap.rowEnvelopeLayout);
+      bridge.restore(snap);
+      requestAnimationFrame(()=>zoomExtents());
+      return true;
+    }finally{freeAutoLayoutBusy=false;}
+  }
+
   function enhance(root = panel()) {
     if (!root) return;
     const trigger=document.getElementById('relphiOpenDrawingBoardCurrent');
@@ -5359,6 +5403,7 @@
     root.hidden=false;
     root.removeAttribute('hidden');
     if (migrateLegacyDenseAutoLayout(root)) { requestAnimationFrame(()=>enhance(root)); return; }
+    if (fitFreeReadingGrid(root)) { requestAnimationFrame(()=>enhance(root)); return; }
     root.classList.toggle('relphi-hide-position-stickers',!showPositionStickers);
     markSemanticPositions(root);
     updateLayoutClasses(root);
