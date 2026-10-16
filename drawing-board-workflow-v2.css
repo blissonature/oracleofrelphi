@@ -3476,3 +3476,59 @@ body.relphi-attune-open{overflow:hidden!important}
     margin-top:0!important;flex-shrink:0!important;
   }
 }
+
+/* Mobile settings are an anchored, compact popover, not a full-screen sheet.
+   The board remains visible and the path selector is the first row. */
+@media(max-width:700px){
+  html body #shortListPanel.relphi-settings-open .relphi-board-settings-panel{
+    position:absolute!important;
+    top:var(--relphi-settings-top,4rem)!important;
+    left:.5rem!important;
+    right:.5rem!important;
+    bottom:auto!important;
+    width:calc(100% - 1rem)!important;
+    height:auto!important;
+    max-height:min(68svh,34rem)!important;
+    margin:0!important;
+    padding:0!important;
+    border-radius:12px!important;
+    overflow:hidden!important;
+    z-index:10020!important;
+    box-shadow:0 8px 22px rgba(17,17,17,.18)!important;
+  }
+  html body #shortListPanel.relphi-settings-open .relphi-board-settings-panel .relphi-board-settings-body{
+    display:flex!important;
+    flex-direction:column!important;
+    height:auto!important;
+    max-height:min(68svh,34rem)!important;
+    min-height:0!important;
+    overflow:hidden!important;
+    gap:0!important;
+  }
+  html body #shortListPanel.relphi-settings-open .relphi-board-settings-panel .relphi-mobile-settings-paths{
+    margin:.5rem auto!important;
+    flex:0 0 auto!important;
+  }
+  html body #shortListPanel.relphi-settings-open .relphi-board-settings-panel .relphi-free-settings,
+  html body #shortListPanel.relphi-settings-open .relphi-board-settings-panel .relphi-reading-options-drawer{
+    flex:1 1 auto!important;
+    min-height:0!important;
+    height:auto!important;
+    max-height:calc(min(68svh,34rem) - 4rem)!important;
+    overflow:hidden!important;
+  }
+  html body #shortListPanel.relphi-settings-open .relphi-board-settings-panel .relphi-free-settings .relphi-free-settings-fields,
+  html body #shortListPanel.relphi-settings-open .relphi-board-settings-panel .relphi-reading-options-drawer .relphi-options-body{
+    min-height:0!important;
+    flex:1 1 auto!important;
+    overflow-y:auto!important;
+    overscroll-behavior:contain!important;
+    -webkit-overflow-scrolling:touch!important;
+  }
+  html body #shortListPanel.relphi-settings-open .relphi-board-settings-panel .relphi-board-settings-footer,
+  html body #shortListPanel.relphi-settings-open .relphi-board-settings-panel .relphi-options-commitbar{
+    flex:0 0 auto!important;
+    margin:0!important;
+    padding:.5rem .65rem!important;
+  }
+}
