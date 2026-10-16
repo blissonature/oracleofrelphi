@@ -1214,6 +1214,11 @@
     ensureSettingsTransaction(root);
     if(settingsMode==='crafted'&&!optionsSession)beginOptionsSession();
     renderBoardSettings(root);
+    // The popover is anchored below the board command bar; bring its header
+    // into view instead of opening a screen-covering modal at the scroll point.
+    if(window.matchMedia('(max-width:700px)').matches){
+      root.querySelector('.relphi-board-commandbar')?.scrollIntoView?.({block:'start',behavior:'instant'});
+    }
   }
 
   function switchSettingsMode(mode,root=panel()) {
