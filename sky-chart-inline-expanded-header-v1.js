@@ -128,7 +128,7 @@ function installStyle(){
     .sky-foundation-relationship-glyph[data-sky-rx-owner="A"]{color:#c9211e}
     .sky-foundation-relationship-glyph[data-sky-rx-owner="B"]{color:#2462d0}
     .sky-foundation-relationship-glyph>.sky-rx-glyph-overlay{
-      position:absolute;right:-9px;bottom:-12px;width:36px;height:36px;
+      position:absolute;right:-3px;bottom:-6px;width:20px;height:20px;
       display:block;pointer-events:none;background-color:currentColor;
       -webkit-mask:url("assets/planet-glyphs/retrograde.svg") center/contain no-repeat;
       mask:url("assets/planet-glyphs/retrograde.svg") center/contain no-repeat;
