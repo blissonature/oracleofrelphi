@@ -215,56 +215,79 @@
     });
   }
 
+  function autoLayoutViewport() {
+    const root=panel();
+    const workspace=root?.querySelector('.card-row-workspace');
+    const hasVisibleWorkspace=!!(workspace?.clientWidth && workspace?.clientHeight);
+    const width=hasVisibleWorkspace ? workspace.clientWidth : (root?.clientWidth || CANVAS_W);
+    const height=hasVisibleWorkspace ? workspace.clientHeight-visibleToolbarHeight(root) : CANVAS_H;
+    return {
+      width:Math.max(1,width-START_EDGE_GUTTER*2),
+      height:Math.max(1,height-START_EDGE_GUTTER*2)
+    };
+  }
   function genericPositions(labels) {
-    const count = Math.max(1, labels.length);
-    if (count <= 12) return legacyGenericPositions(labels);
+    const count=Math.max(1,labels.length);
+    if(count<=3)return legacyGenericPositions(labels);
+    const viewport=autoLayoutViewport();
     let best=null;
-    // Dense layouts should use the full board footprint. Do not impose an
-    // arbitrary ten-column ceiling: for large readings, an extra column can
-    // remove an entire row and substantially increase card scale.
-    const maxCols=count;
-    for (let cols=3;cols<=maxCols;cols++) {
+    // Choose columns for the visible felt, not a fixed four-column grid.
+    // Maximize the rendered card-plus-sticker size; prefer fewer empty slots
+    // and then fewer columns when two arrangements fit equally well.
+    for(let cols=1;cols<=count;cols++){
       const rows=Math.ceil(count/cols);
-      const scaleX=(CANVAS_W-GUTTER*2-GUTTER*Math.max(0,cols-1))/(CARD_W*cols);
-      const scaleY=(CANVAS_H-GUTTER*2-GUTTER*Math.max(0,rows-1))/((CARD_H+LABEL_H)*rows);
-      const scale=Math.min(.62,scaleX,scaleY);
-      if (!best || scale>best.scale+.002 || (Math.abs(scale-best.scale)<=.002 && cols<best.cols)) best={cols,rows,scale};
+      const fit=Math.min(
+        viewport.width/(CARD_W*cols),
+        viewport.height/((CARD_H+LABEL_H)*rows)
+      );
+      const unused=cols*rows-count;
+      if(!best || fit>best.fit+.0001 ||
+        (Math.abs(fit-best.fit)<=.0001 && (unused<best.unused || (unused===best.unused && cols<best.cols)))){
+        best={cols,rows,fit,unused};
+      }
     }
-    const cols=best?.cols || 4;
-    const rows=best?.rows || Math.ceil(count/cols);
-    const scale=clamp(best?.scale || .52,.32,.62);
+    const cols=best?.cols||count;
+    const rows=best?.rows||1;
+    // Scale the logical coordinates into the board's 900 x 760 reference
+    // space; zoomExtents subsequently expands the whole pack to the felt.
+    const scale=clamp(Math.min(
+      .88,
+      (CANVAS_W-START_EDGE_GUTTER*2)/(CARD_W*cols),
+      (CANVAS_H-START_EDGE_GUTTER*2)/((CARD_H+LABEL_H)*rows)
+    ),.32,.88);
     const cardW=CARD_W*scale;
     const rowH=(CARD_H+LABEL_H)*scale;
-    // Auto-laid cards pack flush. Spare canvas space belongs after the pack,
-    // not between cards; a gap only appears after the reader deliberately moves one.
-    const gapX=GUTTER;
-    const gapY=GUTTER;
     return labels.map((label,index)=>{
       const col=index%cols,row=Math.floor(index/cols);
-      const x=(GUTTER+col*(cardW+gapX))/CANVAS_W;
-      const y=(GUTTER+LABEL_H*scale+row*(rowH+gapY))/CANVAS_H;
+      const x=(START_EDGE_GUTTER+col*cardW)/CANVAS_W;
+      const y=(START_EDGE_GUTTER+LABEL_H*scale+row*rowH)/CANVAS_H;
       return position(`position-${index+1}`,label,index+1,transform(x,y,scale));
     });
   }
-  function legacyDenseAutoLayout(layout) {
+  function legacyDenseAutoLayout(layout,snapshot) {
     const positions=Array.isArray(layout?.positions)?layout.positions.slice().sort((a,b)=>Number(a.drawOrder)-Number(b.drawOrder)):[];
-    if (layout?.id!=='custom-active' || positions.length<=12) return false;
+    if (layout?.id!=='custom-active' || positions.length<4) return false;
     const labels=positions.map((item,index)=>String(item.label || `Position ${index+1}`));
     const expected=legacyGenericPositions(labels);
     const close=(a,b)=>Math.abs(Number(a)-Number(b))<.0015;
+    const closePx=(a,b)=>Math.abs(Number(a)-Number(b))<1;
     return positions.every((item,index)=>{
       const actual=item?.transform || {};
       const old=expected[index]?.transform || {};
-      return close(actual.x,old.x)&&close(actual.y,old.y)&&close(actual.scale,old.scale)&&close(actual.rotation||0,old.rotation||0);
+      const location=snapshot?.rowEnvelopeLayout?.[index];
+      const card=snapshot?.rowCardTransforms?.[index];
+      // Respect personal placement, scaling and rotation rather than rewriting it.
+      return close(actual.x,old.x)&&close(actual.y,old.y)&&close(actual.scale,old.scale)&&close(actual.rotation||0,old.rotation||0)
+        && (!location || (closePx(location.x,old.x*CANVAS_W)&&closePx(location.y,old.y*CANVAS_H)))
+        && (!card || (close(card.scale,old.scale)&&close(card.rotation||0,old.rotation||0)));
     });
   }
   function migrateLegacyDenseAutoLayout(root) {
     const state=currentPrefabState();
     const layout=state.activeLayout;
-    if (!root || !layout || !legacyDenseAutoLayout(layout)) return false;
     const bridge=optionsBridge();
     const snap=bridge?.capture?.();
-    if (!snap) return false;
+    if (!root || !layout || !snap || !legacyDenseAutoLayout(layout,snap)) return false;
     const ordered=layout.positions.slice().sort((a,b)=>Number(a.drawOrder)-Number(b.drawOrder));
     const packed=genericPositions(ordered.map((item,index)=>String(item.label || `Position ${index+1}`)));
     const nextLayout=clone(layout);
