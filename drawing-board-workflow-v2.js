@@ -3757,6 +3757,27 @@
     }));
   }
 
+  function revealReaderQuestion(reader,selector){
+    if(!reader)return;
+    const shell=reader.querySelector('.relphi-attune-shell,.relphi-focus-shell');
+    // Return to the beginning of the question without scrolling the page behind it.
+    const show=()=>{
+      if(!reader.isConnected)return;
+      if(shell) shell.scrollTop=0;
+      const main=reader.querySelector('.relphi-focus-main,.relphi-options-body');
+      if(main) main.scrollTop=0;
+      const target=reader.querySelector(selector);
+      if(target){
+        let parent=target.parentElement;
+        while(parent&&parent!==reader){
+          if(parent.scrollTop>0)parent.scrollTop=0;
+          parent=parent.parentElement;
+        }
+      }
+    };
+    show();
+    requestAnimationFrame(show);
+  }
   function openAttune(index) {
     const root=panel();
     const item=focusItem(index,root);
@@ -3869,7 +3890,7 @@
 
     document.body.appendChild(reader);
     lockAttuneViewport();
-    reader.querySelector('.relphi-attune-shell')?.scrollTo?.(0,0);
+    revealReaderQuestion(reader,'.relphi-attune-shell h2');
     return true;
   }
 
@@ -5056,6 +5077,7 @@
       renderFocusStrip(existingReader,index,{preserveScroll:true});
       document.body.classList.add('relphi-focus-open');
       lockFocusViewport();
+      revealReaderQuestion(existingReader,'.relphi-focus-position-panel');
       return true;
     }
     const reader=document.createElement('section');
@@ -5080,6 +5102,7 @@
     document.body.appendChild(reader);
     document.body.classList.add('relphi-focus-open');
     lockFocusViewport();
+    revealReaderQuestion(reader,'.relphi-focus-position-panel');
     return true;
   }
   function isCrossingPosition(index) {
