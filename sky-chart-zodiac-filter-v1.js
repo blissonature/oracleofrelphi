@@ -85,47 +85,7 @@ function closeMenu(){
   button?.setAttribute('aria-expanded','false');
 }
 
-function positionMenu(){
-  if(!menu||menu.hidden||!button)return;
-  const rect=button.getBoundingClientRect(),margin=12,gap=5;
-  const width=Math.max(220,Math.min(330,window.innerWidth-margin*2));
-  const left=Math.max(margin,Math.min(rect.left,window.innerWidth-width-margin));
-  menu.style.width=`${width}px`;
-
-  // Let the menu use its natural height whenever the viewport can hold it. Only turn
-  // on scrolling when the full sign list genuinely cannot fit on screen.
-  menu.style.height='auto';
-  menu.style.maxHeight='none';
-  menu.style.overflowY='hidden';
-  const style=getComputedStyle(menu);
-  const borderHeight=(parseFloat(style.borderTopWidth)||0)+(parseFloat(style.borderBottomWidth)||0);
-  const naturalHeight=Math.ceil(menu.scrollHeight+borderHeight);
-  const availableHeight=Math.max(180,window.innerHeight-margin*2);
-  const needsScroll=naturalHeight>availableHeight;
-  const renderedHeight=needsScroll?availableHeight:naturalHeight;
-
-  if(needsScroll){
-    menu.style.height=`${availableHeight}px`;
-    menu.style.maxHeight=`${availableHeight}px`;
-    menu.style.overflowY='auto';
-  }else{
-    menu.style.height='auto';
-    menu.style.maxHeight='none';
-    menu.style.overflowY='hidden';
-  }
-
-  const belowTop=rect.bottom+gap;
-  const aboveTop=rect.top-renderedHeight-gap;
-  let top;
-  if(belowTop+renderedHeight<=window.innerHeight-margin)top=belowTop;
-  else if(aboveTop>=margin)top=aboveTop;
-  else top=Math.min(Math.max(margin,rect.top-renderedHeight/2),Math.max(margin,window.innerHeight-renderedHeight-margin));
-
-  menu.style.left=`${left}px`;
-  menu.style.top=`${top}px`;
-  menu.style.bottom='auto';
-  menu.dataset.openDirection=top<rect.top?'above':'below';
-}
+function positionMenu(){window.RelphiSkyDropdownPosition(menu,button,330)}
 
 function openMenu(){
   if(!menu)return;
@@ -178,10 +138,9 @@ function install(){
   root.append(label,button);
   const placements=bar.querySelector('[data-placement-filter="combined"]');placements?placements.insertAdjacentElement('afterend',root):bar.appendChild(root);
 
-  document.addEventListener('pointerdown',event=>{if(!root?.contains(event.target)&&!menu?.contains(event.target))closeMenu()},true);
+  window.RelphiSkyDropdownLifecycle.register('zodiac',{owner:()=>root,anchor:()=>button,menu:()=>menu,isOpen:()=>!!menu&&!menu.hidden,close:closeMenu});
   window.addEventListener('resize',positionMenu,{passive:true});
   window.addEventListener('scroll',positionMenu,{passive:true,capture:true});
-  document.addEventListener('keydown',event=>{if(event.key==='Escape')closeMenu()});
   syncChecks();
 }
 

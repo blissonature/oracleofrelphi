@@ -1437,12 +1437,8 @@ function positionDropdown(){
   const {slot,kind}=openDropdownState,owner=dropdownOwner(slot,kind),menu=dropdownMenu(slot,kind),field=owner?.querySelector('[data-vocab-dropdown-toggle]');
   if(!owner||!menu||!field||menu.hidden)return;
   const previousScroll=menu.scrollTop;
-  const rect=field.getBoundingClientRect(),margin=kind==='houses'?8:12,targetWidth=kind==='placements'?350:kind==='houses'?430:kind==='signs'?330:260,width=Math.max(220,Math.min(targetWidth,window.innerWidth-margin*2)),below=window.innerHeight-rect.bottom-margin,above=rect.top-margin;
-  menu.style.height='auto';menu.style.maxHeight='none';menu.style.overflowY='hidden';
-  const natural=Math.ceil(menu.scrollHeight+2),available=Math.max(180,window.innerHeight-margin*2),rendered=Math.min(natural,available);
-  if(natural>available){menu.style.height=available+'px';menu.style.maxHeight=available+'px';menu.style.overflowY='auto'}
-  const useAbove=below<Math.min(220,rendered)&&above>below,top=useAbove?Math.max(margin,rect.top-rendered-5):Math.min(window.innerHeight-rendered-margin,rect.bottom+5),left=Math.min(window.innerWidth-width-margin,Math.max(margin,rect.left));
-  Object.assign(menu.style,{position:'fixed',width:width+'px',left:left+'px',top:Math.max(margin,top)+'px',zIndex:'10050'});
+  const width=kind==='placements'?350:kind==='houses'?430:kind==='signs'?330:260;
+  window.RelphiSkyDropdownPosition(menu,field,width);
   if(previousScroll)menu.scrollTop=Math.min(previousScroll,Math.max(0,menu.scrollHeight-menu.clientHeight));
 }
 function scheduleDropdownPosition(event){
@@ -1884,13 +1880,7 @@ document.addEventListener('pointerdown',clearVocabWheelContextFromBlank,true);
 ].forEach(name=>window.addEventListener(name,schedule));
 window.addEventListener('storage',event=>{if(!event.key||Object.values(KEYS).includes(event.key)||event.key===DISPLAY_KEY)schedule()});
 window.addEventListener('pageshow',schedule);
-document.addEventListener('pointerdown',event=>{
-  if(!openDropdownState)return;
-  const {slot,kind}=openDropdownState,owner=dropdownOwner(slot,kind),menu=dropdownMenu(slot,kind),path=typeof event.composedPath==='function'?event.composedPath():[];
-  if(path.includes(owner)||path.includes(menu)||owner?.contains(event.target)||menu?.contains(event.target))return;
-  closeDropdown();
-},true);
-document.addEventListener('keydown',event=>{if(event.key==='Escape')closeDropdown()});
+window.RelphiSkyDropdownLifecycle.register('vocab',{owner:()=>openDropdownState?dropdownOwner(openDropdownState.slot,openDropdownState.kind):null,anchor:()=>openDropdownState?dropdownOwner(openDropdownState.slot,openDropdownState.kind)?.querySelector('[data-vocab-dropdown-toggle]'):null,menu:()=>openDropdownState?dropdownMenu(openDropdownState.slot,openDropdownState.kind):null,isOpen:()=>!!openDropdownState,close:closeDropdown});
 window.addEventListener('resize',scheduleDropdownPosition);
 window.addEventListener('scroll',scheduleDropdownPosition,true);
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)schedule()});

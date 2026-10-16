@@ -1,0 +1,41 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import vm from 'node:vm';
+const source=fs.readFileSync(new URL('../sky-chart-dropdown-position-v1.js',import.meta.url),'utf8');
+const listeners=new Map();
+const document={addEventListener(type,fn){(listeners.get(type)||listeners.set(type,[]).get(type)).push(fn)}};
+const window={innerWidth:390,innerHeight:844};
+const context={window,document,getComputedStyle:()=>({borderTopWidth:'1px',borderBottomWidth:'1px'}),Math,parseFloat};
+vm.runInNewContext(source,context);
+const dispatch=(type,event={})=>(listeners.get(type)||[]).forEach(fn=>fn(event));
+const anchor=(left,top,width=36,height=40)=>({isConnected:true,getBoundingClientRect:()=>({left,top,width,height,right:left+width,bottom:top+height}),contains:()=>false});
+const menu=(natural=500)=>({hidden:false,style:{},dataset:{},scrollHeight:natural,contains:()=>false});
+function checkGeometry(a,m,w=330){
+  window.RelphiSkyDropdownPosition(m,a,w);
+  const ar=a.getBoundingClientRect(),x=parseFloat(m.style.left),y=parseFloat(m.style.top),width=parseFloat(m.style.width),height=parseFloat(m.style.height);
+  assert.ok(x>=0&&x+width<=window.innerWidth,'horizontal bounds');
+  assert.ok(y>=0&&y+height<=window.innerHeight,'vertical bounds');
+  assert.ok(y>=ar.bottom,'dropdown must remain below anchor');
+  assert.equal(m.dataset.openDirection,'below','dropdown must never flip above');
+  return {x,y,width,height};
+}
+checkGeometry(anchor(320,100),menu(400));
+checkGeometry(anchor(20,700),menu(500));
+checkGeometry(anchor(130,400),menu(800));
+window.innerWidth=320;window.innerHeight=568;
+const mobile=menu(650),rect=checkGeometry(anchor(280,275),mobile);
+assert.equal(mobile.style.overflowY,'auto');
+assert.ok(rect.height>0);
+let closes=0,open=true;
+const target={};const a=anchor(40,40),m=menu();
+const unregister=window.RelphiSkyDropdownLifecycle.register('test',{owner:()=>a,anchor:()=>a,menu:()=>m,isOpen:()=>open,close:()=>{closes++;open=false}});
+function pointer(type,x,y,id=1,hit=target){dispatch(type,{pointerId:id,clientX:x,clientY:y,target:hit,composedPath:()=>[hit]})}
+pointer('pointerdown',200,200);pointer('pointermove',200,250);pointer('pointerup',200,250);
+assert.equal(closes,0,'outside drag must not close');
+pointer('pointerdown',200,200);pointer('pointerup',200,200);
+assert.equal(closes,1,'outside tap closes');
+open=true;pointer('pointerdown',200,200,2,a);pointer('pointerup',200,200,2,a);
+assert.equal(closes,1,'anchor tap is not outside');
+dispatch('keydown',{key:'Escape'});assert.equal(closes,2,'Escape closes');
+unregister();
+console.log('Dropdown geometry and gesture behavior: PASS');

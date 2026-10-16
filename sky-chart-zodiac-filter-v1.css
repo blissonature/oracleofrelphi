@@ -27,3 +27,4 @@
 .sky-chart-zodiac-filter-row input[type="checkbox"]:focus-visible{outline:2px solid #625a52;outline-offset:2px}
 .sky-chart-sign-filter-hidden{display:none!important}
 @media(max-width:620px){.sky-chart-zodiac-filter-menu{width:min(330px,calc(100vw - 24px))}.sky-chart-zodiac-filter-name{padding:7px 8px;font-size:.63rem}.sky-chart-zodiac-filter-copy{gap:4px}.sky-chart-sign-list-figure::before{margin-right:4px}}
+

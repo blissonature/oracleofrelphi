@@ -273,21 +273,7 @@
     const menu = popover();
     const head = owner?.querySelector('.sky-chart-aspect-filter-head');
     if (!isOpen(owner) || !menu?.classList.contains('is-portaled') || !head) return;
-    const rect = head.getBoundingClientRect();
-    const margin = 12;
-    const width = Math.min(270, Math.max(240, window.innerWidth - margin * 2));
-    const left = Math.min(window.innerWidth - width - margin, Math.max(margin, rect.left + rect.width / 2 - width / 2));
-    const roomBelow = window.innerHeight - rect.bottom - margin;
-    const roomAbove = rect.top - margin;
-    const maxHeight = Math.max(220, Math.min(520, Math.max(roomBelow, roomAbove)));
-    const placeAbove = roomBelow < 260 && roomAbove > roomBelow;
-    const top = placeAbove ? Math.max(margin, rect.top - maxHeight - 6) : Math.min(window.innerHeight - maxHeight - margin, rect.bottom + 6);
-    Object.assign(menu.style, {
-      width:`${width}px`,
-      maxHeight:`${maxHeight}px`,
-      left:`${left}px`,
-      top:`${Math.max(margin, top)}px`
-    });
+    window.RelphiSkyDropdownPosition?.(menu,owner.querySelector('[data-aspect-filter-toggle]')||head,270);
   }
 
   function open(owner) {
@@ -404,14 +390,6 @@
     if (!hover) schedule();
   }
 
-  function closeOutside(event) {
-    const owner = portalOwner;
-    const menu = popover();
-    if (!isOpen(owner)) return;
-    if (owner.contains(event.target) || menu?.contains(event.target)) return;
-    close(owner);
-  }
-
 
 
   function start() {
@@ -433,7 +411,7 @@
     window.addEventListener('relphi:sky-foundation-filter-changed', filterChanged);
 
     document.addEventListener('change', handleChange);
-    document.addEventListener('pointerdown', closeOutside, true);
+    window.RelphiSkyDropdownLifecycle?.register('aspects',{owner:()=>portalOwner,anchor:()=>portalOwner?.querySelector('[data-aspect-filter-toggle]'),menu:popover,isOpen:()=>isOpen(portalOwner),close:()=>close(portalOwner)});
     document.addEventListener('keydown', event => {
       if (event.key !== 'Escape' || !isOpen(portalOwner)) return;
       const owner = portalOwner;

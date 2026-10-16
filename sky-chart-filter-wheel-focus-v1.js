@@ -236,6 +236,15 @@
     document.addEventListener('pointerdown',event=>{if(popup&&!event.target.closest?.('.sky-focus-hidden-aspect-popover')&&!event.target.closest?.('.is-filter-intermediate'))closePopup()},true);
     document.addEventListener('keydown',event=>{if(event.key==='Escape')closePopup()});
     observeRows();
+    // Pinch zoom can replace the wheel SVG without changing any Focus controls.
+    // Reapply the existing filter state whenever the rendered wheel is replaced.
+    const wheelMount=document.getElementById('skyFoundationWheelMount');
+    if(wheelMount){
+      const wheelObserver=new MutationObserver(records=>{
+        if(records.some(record=>record.type==='childList'))schedule();
+      });
+      wheelObserver.observe(wheelMount,{childList:true});
+    }
     [
       'relphi:sky-foundation-ready',
       'relphi:sky-foundation-interactions-ready',

@@ -208,42 +208,7 @@
     const menu = popover();
     const head = owner?.querySelector('.sky-chart-house-filter-head');
     if (!isOpen(owner) || !menu?.classList.contains('is-portaled') || !head) return;
-    const rect = head.getBoundingClientRect();
-    const margin = 8;
-    const width = Math.min(430, Math.max(280, window.innerWidth - margin * 2));
-    const left = Math.min(window.innerWidth - width - margin, Math.max(margin, rect.left + rect.width / 2 - width / 2));
-    menu.style.width = `${width}px`;
-
-    // Measure the natural outer height with scrolling disabled. scrollHeight includes
-    // padding but not borders, so include the border box explicitly before deciding
-    // whether the viewport actually requires a scrollbar.
-    menu.style.height = 'auto';
-    menu.style.maxHeight = 'none';
-    menu.style.overflowY = 'hidden';
-    const style = getComputedStyle(menu);
-    const borderHeight = (parseFloat(style.borderTopWidth) || 0) + (parseFloat(style.borderBottomWidth) || 0);
-    const naturalHeight = Math.ceil(menu.scrollHeight + borderHeight);
-    const availableHeight = Math.max(220, window.innerHeight - margin * 2);
-    const needsScroll = naturalHeight > availableHeight;
-    const renderedHeight = needsScroll ? availableHeight : naturalHeight;
-
-    if (needsScroll) {
-      menu.style.height = `${availableHeight}px`;
-      menu.style.maxHeight = `${availableHeight}px`;
-      menu.style.overflowY = 'auto';
-    } else {
-      menu.style.height = 'auto';
-      menu.style.maxHeight = 'none';
-      menu.style.overflowY = 'hidden';
-    }
-
-    const belowTop = rect.bottom + 6;
-    const aboveTop = rect.top - renderedHeight - 6;
-    let top;
-    if (belowTop + renderedHeight <= window.innerHeight - margin) top = belowTop;
-    else if (aboveTop >= margin) top = aboveTop;
-    else top = Math.min(Math.max(margin, rect.top - renderedHeight / 2), Math.max(margin, window.innerHeight - renderedHeight - margin));
-    Object.assign(menu.style, { left:`${left}px`, top:`${top}px` });
+    window.RelphiSkyDropdownPosition(menu,head,430);
   }
 
   function open(owner) {
@@ -341,17 +306,7 @@
     ['relphi:sky-foundation-ready','relphi:sky-foundation-interactions-ready','relphi:sky-placement-multiselect-changed','relphi:sky-aspect-multiselect-changed','relphi:sky-single-sky-aspects-rendered','relphi:sky-b-removed','relphi:sky-b-restored'].forEach(name => window.addEventListener(name, schedule));
     window.addEventListener('relphi:sky-foundation-filter-changed', filterChanged);
     document.addEventListener('change', handleChange);
-    document.addEventListener('pointerdown', event => {
-      if (!isOpen(portalOwner)) return;
-      if (portalOwner.contains(event.target) || popover()?.contains(event.target)) return;
-      close(portalOwner);
-    }, true);
-    document.addEventListener('keydown', event => {
-      if (event.key !== 'Escape' || !isOpen(portalOwner)) return;
-      const owner = portalOwner;
-      close(owner);
-      owner.querySelector('[data-house-filter-toggle]')?.focus();
-    });
+    window.RelphiSkyDropdownLifecycle.register('houses',{owner:()=>portalOwner,anchor:()=>portalOwner?.querySelector('[data-house-filter-toggle]'),menu:()=>popover(),isOpen:()=>isOpen(portalOwner),close:()=>{if(portalOwner)close(portalOwner)}});
     window.addEventListener('resize', position);
     window.addEventListener('scroll', position, true);
     window.addEventListener('storage', event => { if (!event.key || event.key === 'relphiSkyChartB') schedule(); });
