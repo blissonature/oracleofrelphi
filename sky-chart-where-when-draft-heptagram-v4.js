@@ -84,6 +84,6 @@ function start(){
   installStyle();document.addEventListener('input',event=>{const form=event.target.closest?.('.sky-where-when-editor');if(form&&event.target.matches?.('[data-ww-field]'))schedule(form.dataset.slot,35)},true);document.addEventListener('change',event=>{const form=event.target.closest?.('.sky-where-when-editor');if(form&&event.target.matches?.('[data-ww-field]'))schedule(form.dataset.slot,10)},true);
   window.addEventListener('relphi:sky-where-when-editor-ready',event=>schedule(event.detail?.slot,0));window.addEventListener('relphi:sky-drawer-closed',event=>{if(event.detail?.drawer==='where'){const slot=event.detail?.slot;clearTimeout(timers[slot]);renderToken[slot]=(renderToken[slot]||0)+1}});
 }
-window.RelphiSkyWhereWhenDraftHeptagram=Object.freeze({render:schedule,refresh:()=>['A','B'].forEach(slot=>schedule(slot,0)),renderNow});
+window.RelphiSkyWhereWhenDraftHeptagram=Object.freeze({render:schedule,refresh:()=>['A','B'].forEach(slot=>schedule(slot,0)),renderNow,buildPreview});
 document.readyState==='loading'?document.addEventListener('DOMContentLoaded',start,{once:true}):start();
 })();

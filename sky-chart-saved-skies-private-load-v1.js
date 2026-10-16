@@ -8,9 +8,6 @@ window.__relphiSkySavedSkiesPrivateLoadV1=true;
 
 const NS='http://www.w3.org/2000/svg';
 const LIBRARY_KEY='relphiSkyLibraryV1';
-const CHALDEAN=['saturn','jupiter','mars','sun','venus','mercury','moon'];
-const WEEK_PATH=['sun','moon','mars','mercury','jupiter','venus','saturn','sun'];
-const WEEKDAY_RULERS={1:'moon',2:'mars',3:'mercury',4:'jupiter',5:'venus',6:'saturn',7:'sun'};
 const SIGN_NAMES=['Aries','Taurus','Gemini','Cancer','Leo','Virgo','Libra','Scorpio','Sagittarius','Capricorn','Aquarius','Pisces'];
 const SIGN_RULERS=['Mars','Venus','Mercury','Moon','Sun','Mercury','Venus','Mars','Jupiter','Saturn','Saturn','Jupiter'];
 const EXALTATIONS=['Sun','Moon','','Jupiter','','Mercury','Saturn','','','Mars','','Venus'];
@@ -31,7 +28,7 @@ function writeJson(key,value){try{localStorage.setItem(key,JSON.stringify(value)
 function newId(){return `sky-${Date.now().toString(36)}-${Math.random().toString(36).slice(2,8)}`}
 function recordRef(record){return String(record?.id||record?.savedSkyId||record?.metadata?.savedSkyId||`legacy:${normalized(record?.name)}`)}
 function library(){const api=window.RelphiSkySavedSkyIdentity;const list=api?.library?.()||readJson(LIBRARY_KEY,[]);return Array.isArray(list)?list:[]}
-function timeUnknown(payload){return payload?.calcProfile?.timeUnknown===true||payload?.profile?.timeUnknown===true}
+function timeUnknown(payload){return payload?.calcProfile?.timeUnknown===true||payload?.profile?.timeUnknown===true||payload?.timeUnknown===true}
 
 function migrateLegacyIds(){
   const list=readJson(LIBRARY_KEY,[]);if(!Array.isArray(list)||!list.length)return;
@@ -62,10 +59,6 @@ function installStyle(){
 }
 
 function svg(name,attrs={}){const node=document.createElementNS(NS,name);Object.entries(attrs).forEach(([key,value])=>node.setAttribute(key,String(value)));return node}
-function point(key,radius,cx=180,cy=180){const index=CHALDEAN.indexOf(key),angle=(-90+index*(360/7))*Math.PI/180;return{x:cx+Math.cos(angle)*radius,y:cy+Math.sin(angle)*radius}}
-function line(parent,a,b,className){parent.appendChild(svg('line',{x1:a.x,y1:a.y,x2:b.x,y2:b.y,class:className}))}
-function partialLine(parent,a,b,fraction,className){const f=Math.max(0,Math.min(1,Number(fraction)||0));line(parent,a,{x:a.x+(b.x-a.x)*f,y:a.y+(b.y-a.y)*f},className)}
-function solarNoonDate(localDate,timeZone){return window.luxon.DateTime.fromISO(`${localDate}T12:00`,{zone:timeZone,setZone:true}).toJSDate()}
 function timingPacket(payload){
   if(timeUnknown(payload))return null;
   const profile=payload?.calcProfile&&typeof payload.calcProfile==='object'?payload.calcProfile:{};
@@ -76,53 +69,22 @@ function timingPacket(payload){
   if(!instant){const raw=String(profile.dateTime||payload?.dateTime||'').trim();if(raw){const local=window.luxon.DateTime.fromISO(raw,{zone:timeZone,setZone:true});if(local.isValid)instant=local.toUTC().toJSDate()}}
   return instant?{timeZone,latitude,longitude,instant}:null;
 }
-function solarFrame(packet){
-  if(!window.SunCalc||!window.luxon?.DateTime)return null;
-  const local=window.luxon.DateTime.fromJSDate(packet.instant).setZone(packet.timeZone),todayDate=local.toFormat('yyyy-MM-dd'),previousDate=local.minus({days:1}).toFormat('yyyy-MM-dd'),nextDate=local.plus({days:1}).toFormat('yyyy-MM-dd');
-  const today=SunCalc.getTimes(solarNoonDate(todayDate,packet.timeZone),packet.latitude,packet.longitude),previous=SunCalc.getTimes(solarNoonDate(previousDate,packet.timeZone),packet.latitude,packet.longitude),next=SunCalc.getTimes(solarNoonDate(nextDate,packet.timeZone),packet.latitude,packet.longitude);
-  const valid=value=>value instanceof Date&&!Number.isNaN(value.getTime());if(![today.sunrise,today.sunset,previous.sunrise,previous.sunset,next.sunrise].every(valid))return null;
-  return packet.instant>=today.sunrise?{start:today.sunrise,sunrise:today.sunrise,sunset:today.sunset,end:next.sunrise}:{start:previous.sunrise,sunrise:previous.sunrise,sunset:previous.sunset,end:today.sunrise};
-}
-function weekdayRuler(instant,timeZone){const weekday=window.luxon.DateTime.fromJSDate(instant).setZone(timeZone).weekday;return WEEKDAY_RULERS[weekday]||'sun'}
-function rotateHours(dayKey){const start=CHALDEAN.indexOf(dayKey);return Array.from({length:24},(_,index)=>CHALDEAN[(start+index)%7])}
-function planetaryHours(frame,dayKey){const sequence=rotateHours(dayKey),daylight=frame.sunset-frame.sunrise,night=frame.end-frame.sunset,dayLength=daylight/12,nightLength=night/12;return Array.from({length:24},(_,index)=>{const bright=index<12,start=bright?frame.sunrise.getTime()+index*dayLength:frame.sunset.getTime()+(index-12)*nightLength;return{ruler:sequence[index],start:new Date(start),end:new Date(start+(bright?dayLength:nightLength))}})}
-const HEPTAGRAM_COLORS={saturn:'#8c7a42',jupiter:'#41752f',mars:'#c9211e',sun:'#d08a00',venus:'#b23b79',mercury:'#277390',moon:'#58628a'};
-function savedSkyRuler(root,key,dayKey,hourKey){
-  const p=point(key,142),day=key===dayKey,hour=key===hourKey;
-  const group=svg('g',{class:`sky-ph-planet sky-ph-${key}${day?' is-day-ruler':''}${hour?' is-hour-ruler':''}`,style:`color:${HEPTAGRAM_COLORS[key]}`});
-  const mount=svg('g',{transform:`translate(${p.x} ${p.y})`,class:'sky-ph-node-glyph'});
-  group.appendChild(mount);root.appendChild(group);
-  if(!day&&!hour)return;
-  const registry=window.RelphiGlyphRegistry,component=window.RelphiGlyphComponent;
-  const entry=registry?.get?.(key)||registry?.resolve?.(key);
-  if(!entry||!component?.createBubble)return;
-  const master=svg('g',{transform:`scale(${17/19*1.45})`,'data-master-glyph-unit':'true'});
-  mount.appendChild(master);
-  if(day){
-    for(const [radius,width] of [[23,1.9],[27,1.35]]){
-      master.appendChild(svg('circle',{cx:0,cy:0,r:radius,fill:'none',stroke:HEPTAGRAM_COLORS[key],'stroke-width':width,class:'sky-ph-day-ruler-ring'}));
-    }
-  }
-  try{
-    const bubble=component.createBubble(master,entry.id,{
-      radius:19,padding:1,color:hour?HEPTAGRAM_COLORS[key]:'#fff',
-      fill:hour?'#fff':HEPTAGRAM_COLORS[key],strokeWidth:hour?2.8:2.35
-    });
-    bubble.circle?.setAttribute('stroke',HEPTAGRAM_COLORS[key]);
-    Promise.resolve(bubble.ready).catch(error=>console.error('[Saved Sky ruler glyph]',error));
-  }catch(error){console.error('[Saved Sky ruler glyph]',error)}
-}
 function whereFingerprint(payload){
-  const packet=timingPacket(payload),frame=packet&&solarFrame(packet);if(!packet||!frame)return null;
-  const dayKey=weekdayRuler(frame.start,packet.timeZone),rows=planetaryHours(frame,dayKey);let currentIndex=rows.findIndex(row=>packet.instant>=row.start&&packet.instant<row.end);if(currentIndex<0)currentIndex=0;
-  const current=rows[currentIndex],weekIndex=Math.max(0,WEEK_PATH.indexOf(dayKey)),dayFraction=Math.max(0,Math.min(1,(packet.instant-frame.start)/(frame.end-frame.start))),hourFraction=Math.max(0,Math.min(1,(packet.instant-current.start)/(current.end-current.start)));
-  const root=svg('svg',{viewBox:'0 0 360 360',preserveAspectRatio:'xMidYMid meet',class:'sky-where-fingerprint-heptagram sky-saved-microheptagram','aria-hidden':'true',focusable:'false'});
-  for(let index=0;index<7;index++){const from=point(WEEK_PATH[index],142),to=point(WEEK_PATH[index+1],142);line(root,from,to,`sky-ph-week-segment ${index<weekIndex?'past':'future'}`);if(index===weekIndex)partialLine(root,from,to,dayFraction,'sky-ph-week-segment current')}
-  CHALDEAN.forEach((key,index)=>line(root,point(key,142),point(CHALDEAN[(index+1)%7],142),'sky-ph-hour-segment future'));
-  partialLine(root,point(current.ruler,142),point(CHALDEAN[(CHALDEAN.indexOf(current.ruler)+1)%7],142),hourFraction,'sky-ph-hour-segment current');
-  CHALDEAN.forEach(key=>savedSkyRuler(root,key,dayKey,current.ruler));
-  root.dataset.dayRuler=dayKey;root.dataset.hourRuler=current.ruler;
-  return root;
+  if(timeUnknown(payload))return null;
+  const packet=timingPacket(payload),builder=window.RelphiSkyWhereWhenDraftHeptagram?.buildPreview;
+  if(!packet||typeof builder!=='function')return null;
+  const source=builder(packet);if(!source)return null;
+  const mount=document.createElement('span');mount.className='sky-saved-canonical-heptagram';
+  const canonical=window.RelphiSkyHeptagramCanonical;
+  if(typeof canonical?.correct!=='function')return mount;
+  Promise.resolve(canonical.correct(source)).then(()=>{
+    if(!mount.isConnected)return;
+    source.dataset.canonicalSourceReady='true';
+    source.dataset.canonicalHeptagramReady='true';
+    const miniature=window.RelphiSkyMicroHeptagram?.(source);
+    if(miniature){miniature.classList.add('sky-saved-microheptagram');mount.replaceChildren(miniature)}
+  }).catch(error=>console.error('[Saved Sky canonical heptagram]',error));
+  return mount;
 }
 function placementSource(payload){if(!payload||typeof payload!=='object')return[];const known=[payload.placements,payload.positions,payload.points,payload.bodies].find(value=>value&&typeof value==='object'),raw=known||payload;if(Array.isArray(raw))return raw.map((item,index)=>[String(item?.name||item?.label||item?.id||index),item]);return Object.entries(raw).filter(([key,item])=>item&&typeof item==='object'&&!Array.isArray(item)&&!/^(calcProfile|metadata|profile|location|notes|houseCusps|cusps|houses)$/i.test(key))}
 function longitude(item){if(Number.isFinite(Number(item?.longitude)))return norm(item.longitude);const sign=SIGN_NAMES.findIndex(name=>name.toLowerCase()===String(item?.sign||item?.zodiac||'').trim().toLowerCase());return sign<0?NaN:norm(sign*30+Number(item?.degree||item?.degrees||0)+Number(item?.minute||item?.minutes||0)/60+Number(item?.second||item?.seconds||0)/3600)}

@@ -66,38 +66,19 @@ function unknownRulerPlaceholder(){
 function microHeptagram(sourceSvg){
   if(sourceSvg?.dataset?.canonicalSourceReady!=='true'||sourceSvg?.dataset?.canonicalHeptagramReady!=='true')return null;
   // Reuse the miniheptagram's finished geometry and active canonical ruler glyphs.
-  // Inactive ruler glyphs become simple position markers at this small size.
-  const root=svg('svg',{
-    viewBox:sourceSvg.getAttribute('viewBox')||'0 0 360 360',
-    preserveAspectRatio:'xMidYMid meet',
-    class:'sky-where-fingerprint-heptagram',
-    'aria-hidden':'true',
-    focusable:'false'
-  });
-  Array.from(sourceSvg.children).forEach(child=>root.appendChild(child.cloneNode(true)));
-  // The small copy must not duplicate document identities from its source.
+  // Preserve the finished canonical SVG without thumbnail-specific changes.
+  // Only its containing element determines the displayed size.
+  const root=sourceSvg.cloneNode(true);
+  root.classList.add('sky-where-fingerprint-heptagram');
+  root.classList.remove('sky-where-when-draft-heptagram');
+  root.removeAttribute('style');
+  root.removeAttribute('role');
+  root.setAttribute('aria-hidden','true');
+  root.setAttribute('focusable','false');
   root.querySelectorAll('[id]').forEach(node=>node.removeAttribute('id'));
-  // At thumbnail size, inactive planetary masters are indistinguishable. Keep
-  // their seven positions as small solid circles; enlarge only the live rulers.
-  root.querySelectorAll('.sky-ph-planet').forEach(group=>{
-    const active=group.classList.contains('is-day-ruler')||group.classList.contains('is-hour-ruler');
-    const mount=group.querySelector(':scope > .sky-ph-node-glyph');
-    if(!mount)return;
-    if(!active){
-      mount.replaceChildren(svg('circle',{cx:0,cy:0,r:10,fill:'currentColor',class:'sky-ph-micro-idle-node','aria-hidden':'true'}));
-      group.dataset.microRuler='inactive';
-      return;
-    }
-    // Uniformly scale the existing canonical bubble, artwork and day halo;
-    // never redraw or substitute any of the Master Glyph List identities.
-    const master=mount.querySelector(':scope > [data-master-glyph-unit]');
-    if(master){
-      master.setAttribute('transform',`${master.getAttribute('transform')||''} scale(1.45)`);
-      group.dataset.microRuler='active';
-    }
-  });
-  return root.querySelectorAll('.sky-ph-planet').length===7?root:null;
+  return root;
 }
+window.RelphiSkyMicroHeptagram = microHeptagram;
 function renderWhere(slot,payload){
   const mount=whereMount(slot);if(!mount)return;
   const refs=window.RelphiSkyCardShell?.get?.(slot),sourceSvg=refs?.heptagram;
