@@ -795,6 +795,8 @@
     const viewportTop=Number(viewport?.offsetTop)||0;
     const viewportHeight=Number(viewport?.height)||window.innerHeight||document.documentElement.clientHeight||0;
     const viewportBottom=viewportTop+viewportHeight;
+    settingsPanel.style.setProperty('--relphi-settings-visual-top',viewportTop+'px');
+    settingsPanel.style.setProperty('--relphi-settings-visible-height',Math.max(180,Math.floor(viewportHeight))+'px');
     const panelTop=settingsPanel.getBoundingClientRect().top;
     const available=Math.max(0,Math.floor(viewportBottom-Math.max(panelTop,viewportTop)-8));
     settingsPanel.style.setProperty('--relphi-settings-viewport-height',available+'px');
