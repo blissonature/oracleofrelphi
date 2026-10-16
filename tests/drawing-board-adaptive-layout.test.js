@@ -31,8 +31,8 @@ function dimensions(cards) {
 const desktop=setup(1140,580);
 const twelve=desktop.genericPositions(labels(12));
 assert.deepEqual(dimensions(twelve),{cols:6,rows:2},'wide workspace should arrange 12 cards six wide and two high');
-assert.deepEqual(twelve.map(p=>p.drawOrder),Array.from({length:12},(_,i)=>i+1),'card order preserved');
-assert.deepEqual(desktop.genericPositions(labels(6)).map(p=>p.transform.y),Array(6).fill(desktop.genericPositions(labels(6))[0].transform.y),'six cards occupy one row on a wide workspace');
+assert.deepEqual(Array.from(twelve,p=>p.drawOrder),Array.from({length:12},(_,i)=>i+1),'card order preserved');
+assert.deepEqual(dimensions(desktop.genericPositions(labels(6))),{cols:6,rows:1},'six cards occupy one row on a wide workspace');
 
 const mobile=setup(360,530);
 assert.deepEqual(dimensions(mobile.genericPositions(labels(12))),{cols:4,rows:3},'narrow workspace should choose a taller configuration');
