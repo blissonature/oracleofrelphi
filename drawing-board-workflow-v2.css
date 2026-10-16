@@ -3572,3 +3572,26 @@ body.relphi-attune-open{overflow:hidden!important}
     margin:0!important;padding:.5rem .65rem!important;
   }
 }
+
+/* Keep the question header visible and prevent Safari pull-to-refresh gestures
+   from escaping an open Attune or Focus reader. */
+html:has(.relphi-attune-reader),html:has(.relphi-focus-reader){
+  overscroll-behavior-y:none!important;
+}
+body:has(.relphi-attune-reader),body:has(.relphi-focus-reader){
+  overscroll-behavior-y:none!important;
+}
+.relphi-attune-reader,.relphi-focus-reader{
+  overscroll-behavior:contain!important;
+  touch-action:pan-y!important;
+}
+.relphi-attune-shell,.relphi-focus-shell{
+  overscroll-behavior-y:contain!important;
+  -webkit-overflow-scrolling:touch!important;
+}
+@media(max-width:700px){
+  .relphi-focus-position-panel{
+    position:sticky!important;top:0!important;z-index:8!important;
+    background:#fffdf8!important;
+  }
+}
