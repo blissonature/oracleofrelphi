@@ -2,6 +2,18 @@
 <html lang="en" data-sky-b-present="false" data-sky-last-mode="single">
 <head>
   <meta charset="utf-8">
+  <script>
+  // The exact-revision preview loader injects a jsDelivr base. Its SVG/CSS/JS
+  // responses can be blocked; use an equivalent commit-pinned CORS asset origin.
+  // This runs only inside the preview route and has no production effect.
+  (function(){
+    if(!/(^|\\/)sky-chart-preview\\/sky-chart\\.html$/.test(location.pathname))return;
+    const ref=new URLSearchParams(location.search).get('ref')||'';
+    if(!/^[a-f0-9]{40}$/i.test(ref))return;
+    const base=document.querySelector('head > base[href*="cdn.jsdelivr.net/gh/blissonature/oracleofrelphi@"]');
+    if(base)base.href='https://raw.githack.com/blissonature/oracleofrelphi/'+ref+'/';
+  })();
+  </script>
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Sky Chart · Oracle of Relphi</title>
   <meta name="robots" content="noindex,nofollow,noarchive">
