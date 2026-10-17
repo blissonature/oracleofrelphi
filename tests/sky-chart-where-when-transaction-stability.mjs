@@ -165,4 +165,28 @@ const reopenedKnown=page.locator('#skyFoundationA .sky-where-when-editor');await
 assert.equal(await reopenedKnown.locator('[data-ww-field="time-unknown"]').isChecked(),false,'Reopened known-time sky must keep Time unknown off.');
 await whereTabA.click();
 await page.waitForFunction(()=>document.documentElement.dataset.skyWhereWhenEditing==='false');
+// Now at a searched/historical location must work independently of Here.
+// Confirmed Now skies must recalculate moving placements when refreshed.
+await whereTabA.click();
+const liveEditor=page.locator('#skyFoundationA .sky-where-when-editor');
+await liveEditor.waitFor();
+assert.equal(await liveEditor.locator('[data-ww-field="here"]').isChecked(),false);
+await liveEditor.locator('[data-ww-field="now"]').check();
+await page.waitForFunction(()=>!!document.querySelector('#skyFoundationA [data-ww-now-value]')?.textContent?.includes('America/New_York'));
+await liveEditor.locator('button[type="submit"]').click();
+await page.waitForFunction(()=>JSON.parse(localStorage.getItem('relphiSkyChartA'))?.metadata?.liveContinuous===true,{timeout:15000});
+const liveCommitted=await page.evaluate(()=>JSON.parse(localStorage.getItem('relphiSkyChartA')));
+assert.equal(liveCommitted.metadata.liveNowOrigin,'use-now');
+assert.equal(liveCommitted.calcProfile.timeZone,'America/New_York','Now should retain a non-Here location.');
+assert.ok(Math.abs(Date.parse(liveCommitted.calcProfile.instant)-Date.now())<60000,'Now should commit a fresh instant.');
+const oldLiveInstant=liveCommitted.calcProfile.instant;
+await page.evaluate(()=>{
+  const key='relphiSkyChartA',value=JSON.parse(localStorage.getItem(key));
+  value.calcProfile.instant=new Date(Date.now()-120000).toISOString();
+  localStorage.setItem(key,JSON.stringify(value));
+  void window.RelphiSkyWhereWhen.refreshContinuous('A');
+});
+await page.waitForFunction(old=>{const sky=JSON.parse(localStorage.getItem('relphiSkyChartA'));return sky.metadata?.liveContinuous===true&&sky.calcProfile?.instant!==old&&Math.abs(Date.parse(sky.calcProfile.instant)-Date.now())<60000},oldLiveInstant,{timeout:15000});
+assert.equal((await page.evaluate(()=>JSON.parse(localStorage.getItem('relphiSkyChartA')))).calcProfile.timeZone,'America/New_York');
+
 assert.deepEqual(errors,[]);await browser.close();console.log('Where and When transaction stability passed.');
