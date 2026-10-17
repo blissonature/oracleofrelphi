@@ -305,14 +305,19 @@ function calculateSky(slot,selected,date,time,options={}){
   if(liveOrigin==='use-now'){
     delete metadata.liveNowDisabled;delete metadata.liveNowDisabledReason;delete metadata.liveNowMigrated;
     delete priorProfile.savedSkyId;delete priorProfile.savedSkyName;
+    delete metadata.capturedNowAt;
     metadata.liveContinuous=options.continuousNow===true;
     metadata.name='Now';metadata.title='Now';metadata.liveNowOrigin='use-now';metadata.liveNowAt=dt.toUTC().toISO();metadata.liveAgeAnchorAt=metadata.liveNowAt;metadata.liveNowLatitude=String(selected.latitude);metadata.liveNowLongitude=String(selected.longitude);
     return{...existing,name:'Now',title:'Now',displayName:'Now',skyName:'Now',saved:false,placements,houseCusps:houses.cusps,metadata,calcProfile:{...priorProfile,name:'Now',title:'Now',dateTime:dt.toFormat("yyyy-MM-dd'T'HH:mm"),instant:metadata.liveNowAt,timeUnknown:false,latitude:String(selected.latitude),longitude:String(selected.longitude),location:selected.canonical,locationQuery:selected.query||selected.canonical,timeZone:selected.timezone,whereWhenSource:selected.source||'manual',houseSystem:houses.system||houseSystem,houseCusps:houses.cusps,cusps:houses.cusps,houseSystemNote:houses.note,source:'where-when-v3',liveNowOrigin:'use-now',liveNowAt:metadata.liveNowAt},savedAt:new Date().toISOString()};
   }
   delete metadata.liveContinuous;delete metadata.liveNowOrigin;delete metadata.liveNowAt;delete metadata.liveAgeAnchorAt;delete metadata.liveNowLatitude;delete metadata.liveNowLongitude;delete metadata.liveNowMigrated;
-  metadata.liveNowDisabled=true;metadata.liveNowDisabledReason='custom-where-when';
+  if(options.snapshotNow){
+    metadata.capturedNowAt=nextInstant;
+    metadata.name='Now';metadata.title='Now';
+  }else delete metadata.capturedNowAt;
+  metadata.liveNowDisabled=true;metadata.liveNowDisabledReason=options.snapshotNow?'fixed-now-snapshot':'custom-where-when';
   delete priorProfile.liveNowOrigin;delete priorProfile.liveNowAt;
-  return{...existing,name:existing.name||`Sky ${slot}`,saved:false,placements,houseCusps:houses.cusps,metadata,calcProfile:{...priorProfile,dateTime:`${date}T${time}`,instant:dt.toUTC().toISO(),timeUnknown:false,latitude:String(selected.latitude),longitude:String(selected.longitude),location:selected.canonical,locationQuery:selected.query||selected.canonical,timeZone:selected.timezone,whereWhenSource:selected.source||'manual',houseSystem:houses.system||houseSystem,houseCusps:houses.cusps,cusps:houses.cusps,houseSystemNote:houses.note,source:'where-when-v3'},savedAt:new Date().toISOString()};
+  return{...existing,name:options.snapshotNow?'Now':existing.name||`Sky ${slot}`,title:options.snapshotNow?'Now':existing.title,displayName:options.snapshotNow?'Now':existing.displayName,skyName:options.snapshotNow?'Now':existing.skyName,saved:false,placements,houseCusps:houses.cusps,metadata,calcProfile:{...priorProfile,dateTime:options.snapshotNow?dt.toFormat("yyyy-MM-dd'T'HH:mm"):`${date}T${time}`,instant:dt.toUTC().toISO(),timeUnknown:false,latitude:String(selected.latitude),longitude:String(selected.longitude),location:selected.canonical,locationQuery:selected.query||selected.canonical,timeZone:selected.timezone,whereWhenSource:selected.source||'manual',houseSystem:houses.system||houseSystem,houseCusps:houses.cusps,cusps:houses.cusps,houseSystemNote:houses.note,source:'where-when-v3'},savedAt:new Date().toISOString()};
 }
 function dispatchSlotChange(slot){try{window.dispatchEvent(new StorageEvent('storage',{key:SLOT_KEYS[slot],newValue:localStorage.getItem(SLOT_KEYS[slot]),storageArea:localStorage}))}catch(_){const event=new Event('storage');Object.defineProperty(event,'key',{value:SLOT_KEYS[slot]});window.dispatchEvent(event)}}
 function normalizePacket(packet){
@@ -385,7 +390,8 @@ async function submitCalculated(slot,form,options={}){
   if(!date||(!timeUnknown&&!time))return status(slot,timeUnknown?'Enter the local date.':'Enter both the local date and local time.',true);
   setBusy(slot,true);status(slot,'Calculating placements and Planetary Hours…');
   try{
-    const effectiveOptions=modeValue(form,'now')?{...options,timeUnknown:false,liveOrigin:'use-now',instant:window.luxon.DateTime.now().toUTC().toISO(),continuousNow:true}:{...options,timeUnknown};
+    const isNow=modeValue(form,'now'),isLive=isNow&&modeValue(form,'live');
+    const effectiveOptions=isNow?{...options,timeUnknown:false,liveOrigin:isLive?'use-now':'',instant:isLive?window.luxon.DateTime.now().toUTC().toISO():form.dataset.nowInstant,continuousNow:isLive,snapshotNow:!isLive}:{...options,timeUnknown};
     const nextPayload=calculateSky(slot,selected,date,time,effectiveOptions);
     // Chiron is optional when the local ephemeris cannot cover this date.
     status(slot,'Calculating Chiron…');
@@ -396,6 +402,11 @@ async function submitCalculated(slot,form,options={}){
     if(String(profile.location||'')!==String(selected.canonical||''))throw new Error('The new Where and When did not persist.');
     finishCommitted(slot,{source:'where-when',dateTime:timeUnknown?date:`${date}T${time}`,location:selected.canonical});
     if(!timeUnknown)scheduleSummary(slot,true);
+    if(effectiveOptions.snapshotNow){
+      try{localStorage.removeItem(`relphiSkyLiveAgeAnchor${slot}`)}catch(_){}
+      window.dispatchEvent(new CustomEvent('relphi:sky-live-origin-changed',{detail:{slot,origin:null,reason:'fixed-now-snapshot'}}));
+      window.dispatchEvent(new CustomEvent('relphi:sky-name-updated',{detail:{slot,name:'Now',source:'fixed-now-snapshot'}}));
+    }
     if(effectiveOptions.liveOrigin==='use-now'){
       try{localStorage.setItem(`relphiSkyLiveAgeAnchor${slot}`,JSON.stringify({origin:'use-now',at:nextPayload.metadata.liveNowAt}))}catch(_){}
       window.dispatchEvent(new CustomEvent('relphi:sky-live-origin-changed',{detail:{slot,origin:'use-now',at:nextPayload.metadata.liveNowAt}}));
@@ -523,8 +534,8 @@ function livingTick(){
   if(document.hidden)return;
   for(const slot of ['A','B']){
     const form=formFor(slot);
-    if(form&&modeValue(form,'now'))updateNowFields(slot);
-    if(form&&modeValue(form,'now')&&liveTick%15===0)window.RelphiSkyWhereWhenDraftHeptagram?.render?.(slot,0);
+    if(form&&modeValue(form,'now')&&modeValue(form,'live'))updateNowFields(slot);
+    if(form&&modeValue(form,'now')&&modeValue(form,'live')&&liveTick%15===0)window.RelphiSkyWhereWhenDraftHeptagram?.render?.(slot,0);
   }
   if(Date.now()-lastContinuousCheck>=10000){
     lastContinuousCheck=Date.now();
