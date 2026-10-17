@@ -183,6 +183,8 @@ await liveEditor.waitFor();
 assert.equal(await liveEditor.locator('[data-ww-field="here"]').isChecked(),false);
 await liveEditor.locator('[data-ww-field="now"]').check();
 await page.waitForFunction(()=>!!document.querySelector('#skyFoundationA [data-ww-now-value]')?.textContent?.includes('America/New_York'));
+assert.equal(await liveEditor.locator('[data-ww-field="live"]').isChecked(),false,'Now alone must hold one instant.');
+await liveEditor.locator('[data-ww-field="live"]').check();
 await liveEditor.locator('button[type="submit"]').click();
 await page.waitForFunction(()=>{const m=JSON.parse(localStorage.getItem('relphiSkyChartA'))?.metadata;return m?.liveContinuous===true&&m?.liveNowOrigin==='use-now'},null,{timeout:15000});
 const liveCommitted=await page.evaluate(()=>JSON.parse(localStorage.getItem('relphiSkyChartA')));
