@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 const ref=process.env.PREVIEW_REF;
 assert.match(ref||'',/^[0-9a-f]{40}$/,'A commit SHA is required');
 const urls=[
-  ['githack',`https://raw.githack.com/blissonature/oracleofrelphi/${ref}/sky-chart.html`],
+  ['preview',`https://oracleofrelphi.com/sky-chart-preview/sky-chart.html?ref=${ref}`],
   ['deployed', 'https://oracleofrelphi.com/sky-chart.html']
 ];
 const signs=['Aries','Taurus','Gemini','Cancer','Leo','Virgo','Libra','Scorpio','Sagittarius','Capricorn','Aquarius','Pisces'];
@@ -40,7 +40,7 @@ try{
    }});
    console.log(kind.toUpperCase(),JSON.stringify({state,errors:errors.slice(0,15),failures:failures.slice(0,30)}));
    await page.screenshot({path:`sky-remote-${kind}.png`,fullPage:true});
-   if(kind==='githack'&&(!state.wheelCount||state.mountVisible==='hidden'||state.rootBusy!=='false'||errors.length)){failed=true;console.error('FAILED: raw.githack preview did not display a ready wheel');}
+   if(kind==='preview'&&(!state.wheelCount||state.mountVisible==='hidden'||state.rootBusy!=='false'||errors.length)){failed=true;console.error('FAILED: hosted exact-revision preview did not display a ready wheel');}
   }catch(e){failed=true;console.error(kind+' FAILED '+e.message);await page.screenshot({path:`sky-remote-${kind}.png`,fullPage:true}).catch(()=>{})}
   await ctx.close();
  }
