@@ -49,7 +49,7 @@ function serializeToken(tokenNode){
 // when they represent separate Vocab terms. Preserve authored whitespace and
 // punctuation; only restore missing word boundaries across DOM fragments.
 function needsWordSpace(before,after){
-  return /[\\p{L}\\p{N})\\]]$/u.test(before)&&/^[\\p{L}\\p{N}]/u.test(after);
+  return /[\p{L}\p{N})\]]$/u.test(before)&&/^[\p{L}\p{N}]/u.test(after);
 }
 function semanticText(node){
   if(node.nodeType===Node.TEXT_NODE)return node.nodeValue||'';
