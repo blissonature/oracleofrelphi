@@ -178,7 +178,7 @@ function onSubmit(event){
   const slot=form.dataset.slot||slotFromNode(form);
   if(!KEYS[slot])return;
   const before=localStorage.getItem(KEYS[slot])||'';
-  watchForChange(slot,before,()=>clearLive(slot,'custom-where-when'),8000);
+  watchForChange(slot,before,()=>{if(read(slot)?.metadata?.liveNowOrigin!=='use-now')clearLive(slot,'custom-where-when')},8000);
 }
 
 function onSkyNameUpdated(event){
