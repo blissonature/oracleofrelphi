@@ -42,5 +42,5 @@ jobs:
           name: sky-chart-here-now-mobile
           path: |
             sky-chart-here-now-manual-mobile.png
-            sky-chart-here-now-live-mobile.png
+            sky-chart-here-now-refreshed-mobile.png
           if-no-files-found: ignore
