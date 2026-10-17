@@ -45,8 +45,8 @@ function packet(slot){
   const date=field(form,'date'),time=field(form,'time'),timeZone=field(form,'timezone'),latitudeRaw=field(form,'latitude'),longitudeRaw=field(form,'longitude');
   if(!date||!time||!timeZone||latitudeRaw===''||longitudeRaw==='')return null;
   const latitude=Number(latitudeRaw),longitude=Number(longitudeRaw);if(!Number.isFinite(latitude)||!Number.isFinite(longitude)||latitude<-90||latitude>90||longitude<-180||longitude>180)return null;
-  const DateTime=window.luxon?.DateTime;if(!DateTime)return null;const live=form.querySelector('[data-ww-field="now"]')?.checked===true;const local=live?DateTime.now().setZone(timeZone):DateTime.fromISO(`${date}T${time}`,{zone:timeZone,setZone:true});if(!local.isValid)return null;
-  return{date:live?local.toFormat('yyyy-MM-dd'):date,time:live?local.toFormat('HH:mm'):time,timeZone,latitude,longitude,location:canonicalLocation(form),instant:local.toUTC().toJSDate(),instantIso:local.toUTC().toISO()};
+  const DateTime=window.luxon?.DateTime;if(!DateTime)return null;const now=form.querySelector('[data-ww-field="now"]')?.checked===true,live=now&&form.querySelector('[data-ww-field="live"]')?.checked===true;const held=String(form.dataset.nowInstant||'');const local=now?(live?DateTime.now().setZone(timeZone):DateTime.fromISO(held,{setZone:true}).setZone(timeZone)):DateTime.fromISO(`${date}T${time}`,{zone:timeZone,setZone:true});if(!local.isValid)return null;
+  return{date:now?local.toFormat('yyyy-MM-dd'):date,time:now?local.toFormat('HH:mm'):time,timeZone,latitude,longitude,location:canonicalLocation(form),instant:local.toUTC().toJSDate(),instantIso:local.toUTC().toISO()};
 }
 function solarNoonDate(localDate,timeZone){return window.luxon.DateTime.fromISO(`${localDate}T12:00`,{zone:timeZone,setZone:true}).toJSDate()}
 function solarFrame(p){
