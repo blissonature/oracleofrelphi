@@ -184,7 +184,7 @@ assert.equal(await liveEditor.locator('[data-ww-field="here"]').isChecked(),fals
 await liveEditor.locator('[data-ww-field="now"]').check();
 await page.waitForFunction(()=>!!document.querySelector('#skyFoundationA [data-ww-now-value]')?.textContent?.includes('America/New_York'));
 await liveEditor.locator('button[type="submit"]').click();
-await page.waitForFunction(()=>JSON.parse(localStorage.getItem('relphiSkyChartA'))?.metadata?.liveContinuous===true,{timeout:15000});
+await page.waitForFunction(()=>{const m=JSON.parse(localStorage.getItem('relphiSkyChartA'))?.metadata;return m?.liveContinuous===true&&m?.liveNowOrigin==='use-now'},null,{timeout:15000});
 const liveCommitted=await page.evaluate(()=>JSON.parse(localStorage.getItem('relphiSkyChartA')));
 assert.equal(liveCommitted.metadata.liveNowOrigin,'use-now');
 assert.equal(liveCommitted.calcProfile.timeZone,'America/New_York','Now should retain a non-Here location.');
