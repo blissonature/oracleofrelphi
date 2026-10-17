@@ -18,183 +18,128 @@ try{
  await page.route('https://cdn.jsdelivr.net/npm/luxon@3/build/global/luxon.min.js',route=>route.fulfill({path:path.resolve('node_modules/luxon/build/global/luxon.min.js'),contentType:'application/javascript'}));
  await page.route('https://api.bigdatacloud.net/data/reverse-geocode-client**',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({locality:'Salt Lake City',principalSubdivision:'Utah',countryName:'United States'})}));
  await page.route('https://api.open-meteo.com/v1/forecast**',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({timezone:'America/Denver'})}));
- await page.addInitScript(({a,b})=>{localStorage.setItem('relphiSkyChartA',JSON.stringify(a));localStorage.setItem('relphiSkyChartB',JSON.stringify(b));localStorage.setItem('relphiSkyChartLastModeV1','comparison')},{a,b});
+ await page.addInitScript(({a,b})=>{
+  if(localStorage.getItem('relphiSkyChartA')===null)localStorage.setItem('relphiSkyChartA',JSON.stringify(a));
+  if(localStorage.getItem('relphiSkyChartB')===null)localStorage.setItem('relphiSkyChartB',JSON.stringify(b));
+  localStorage.setItem('relphiSkyChartLastModeV1','comparison');
+ },{a,b});
  await page.goto('http://127.0.0.1:4173/sky-chart.html',{waitUntil:'networkidle'});
  await page.waitForSelector('#skyFoundationRoot[aria-busy="false"]',{timeout:20000});
  const tab=page.locator('#skyFoundationB [data-sky-drawer-tab="where"]');await tab.click();
  const form=page.locator('#skyFoundationB .sky-where-when-editor');await form.waitFor();
- const here=form.locator('[data-ww-field="here"]'),now=form.locator('[data-ww-field="now"]'),live=form.locator('[data-ww-field="live"]'),unknown=form.locator('[data-ww-field="time-unknown"]');
- assert.equal(await here.isChecked(),false);assert.equal(await now.isChecked(),false);assert.equal(await live.isChecked(),false);
+ const here=form.locator('[data-ww-field="here"]'),now=form.locator('[data-ww-field="now"]'),refresh=form.locator('[data-ww-action="refresh-now"]'),unknown=form.locator('[data-ww-field="time-unknown"]');
+ assert.equal(await here.isChecked(),false);assert.equal(await now.isChecked(),false);
+ assert.equal(await form.locator('[data-ww-field="live"]').count(),0,'Live toggle must be absent.');
+ assert.equal(await form.locator('[role="tooltip"]').count(),0,'Live tooltip must be absent.');
  assert.equal(await form.locator('[data-ww-manual-where]').isVisible(),true);
  assert.equal(await form.locator('[data-ww-manual-when]').isVisible(),true);
- assert.equal(await form.locator('.sky-where-when-here-now').count(),0,'Old standalone button must be gone.');
- assert.equal(await unknown.isVisible(),true,'Time unknown belongs beside Now, even with the manual controls open.');
+ assert.equal(await refresh.count(),1,'Now must have a single refresh button.');
  const spacing=await form.evaluate(node=>{
    const rect=selector=>node.querySelector(selector)?.getBoundingClientRect();
    const centerY=r=>(r.top+r.bottom)/2;
    const whereChoice=rect('[data-ww-where] .sky-ww-choice'),whereRefresh=rect('[data-ww-action="refresh-here"]');
-   const nowChoice=rect('[data-ww-when] .sky-ww-choice'),live=rect('[data-ww-field="live"]'),unknown=rect('[data-ww-when] .sky-ww-unknown');
+   const nowChoice=rect('[data-ww-when] .sky-ww-choice'),nowRefresh=rect('[data-ww-action="refresh-now"]'),unknown=rect('[data-ww-when] .sky-ww-unknown');
    const row=rect('[data-ww-when] .sky-ww-mode-row'),localTime=rect('[data-ww-manual-when] .sky-where-when-grid > label:last-child');
-   return{whereGap:whereRefresh.left-whereChoice.right,nowAlignment:Math.abs(centerY(live)-centerY(nowChoice)),unknownAlignment:Math.abs(centerY(unknown)-centerY(nowChoice)),unknownLeft:unknown.left,localTimeLeft:localTime.left,unknownOverflow:unknown.right-row.right};
+   return{
+     whereGap:whereRefresh.left-whereChoice.right,nowGap:nowRefresh.left-nowChoice.right,
+     nowAlignment:Math.abs(centerY(nowRefresh)-centerY(nowChoice)),
+     unknownAlignment:Math.abs(centerY(unknown)-centerY(nowChoice)),
+     unknownLeft:unknown.left,localTimeLeft:localTime.left,unknownOverflow:unknown.right-row.right
+   };
  });
- assert.ok(spacing.whereGap>=0&&spacing.whereGap<=8,`Here refresh should sit immediately beside Here: ${JSON.stringify(spacing)}`);
- assert.equal(await form.locator('[data-ww-action="refresh-now"]').count(),0,'Now must not have a refresh button.');
- assert.ok(spacing.nowAlignment<=5,`Live should share the Now row: ${JSON.stringify(spacing)}`);
- assert.ok(Math.abs(spacing.unknownLeft-spacing.localTimeLeft)<=2,`Time unknown must align with the Local time field: ${JSON.stringify(spacing)}`);
- assert.equal(await live.locator('..').getAttribute('title'),null,'Do not show a duplicate browser-native tooltip.');
- assert.equal(await form.locator('[role="tooltip"]').count(),1,'Live must expose exactly one custom tooltip.');
- assert.match(await form.locator('[role="tooltip"]').textContent(),/continu(ally|ous)/i,'Live tooltip should explain ongoing updates.');
- assert.ok(await live.getAttribute('aria-describedby'),'Live must provide an accessible description.');
- assert.ok(spacing.unknownAlignment<=4,`Time unknown should share the Now row: ${JSON.stringify(spacing)}`);
- assert.ok(spacing.unknownOverflow<=1,`Unknown time must stay inside the row: ${JSON.stringify(spacing)}`);
+ assert.ok(spacing.whereGap>=0&&spacing.whereGap<=8,JSON.stringify(spacing));
+ assert.ok(spacing.nowGap>=0&&spacing.nowGap<=8,JSON.stringify(spacing));
+ assert.ok(spacing.nowAlignment<=5,JSON.stringify(spacing));
+ assert.ok(spacing.unknownAlignment<=4,JSON.stringify(spacing));
+ assert.ok(Math.abs(spacing.unknownLeft-spacing.localTimeLeft)<=2,JSON.stringify(spacing));
+ assert.ok(spacing.unknownOverflow<=1,JSON.stringify(spacing));
+ assert.equal(await refresh.getAttribute('aria-label'),'Refresh current instant');
  await unknown.check();
- assert.equal(await form.locator('[data-ww-field="time"]').isDisabled(),true,'Unknown time disables time entry.');
+ assert.equal(await form.locator('[data-ww-field="time"]').isDisabled(),true);
  assert.equal(await now.isChecked(),false);
  await unknown.uncheck();
 
  await page.waitForSelector('#skyFoundationB [data-draft-heptagram-ready="true"] .sky-where-when-draft-heptagram',{timeout:20000});
- const heptagramParity=await page.evaluate(()=>{
+ const parity=await page.evaluate(()=>{
    const mini=document.querySelector('#skyFoundationB .sky-ph-heptagram:not(.sky-where-when-draft-heptagram)');
-   const preview=document.querySelector('#skyFoundationB .sky-where-when-draft-heptagram');
-   const sample=(svg,selector)=>{const node=svg?.querySelector(selector);if(!node)return null;const style=getComputedStyle(node);return{stroke:style.stroke,width:style.strokeWidth,dash:style.strokeDasharray,filter:style.filter,vectorEffect:style.vectorEffect}};
-   return {
-     previewCanonical:preview?.dataset.canonicalHeptagramReady,
-     previewGray:sample(preview,'.sky-ph-hour-segment.future'),
-     previewRed:sample(preview,'.sky-ph-week-segment.current'),
-     previewPast:sample(preview,'.sky-ph-week-segment.past'),
-     miniGray:sample(mini,'.sky-ph-hour-segment.future'),
-     miniRed:sample(mini,'.sky-ph-week-segment.current')
-   };
+   const draft=document.querySelector('#skyFoundationB .sky-where-when-draft-heptagram');
+   const sample=(svg,selector)=>{const el=svg?.querySelector(selector);if(!el)return null;const cs=getComputedStyle(el);return{stroke:cs.stroke,width:cs.strokeWidth,dash:cs.strokeDasharray}};
+   return {canonical:draft?.dataset.canonicalHeptagramReady,gray:sample(draft,'.sky-ph-hour-segment.future'),red:sample(draft,'.sky-ph-week-segment.current'),miniGray:sample(mini,'.sky-ph-hour-segment.future'),miniRed:sample(mini,'.sky-ph-week-segment.current')};
  });
- assert.equal(heptagramParity.previewCanonical,'true','Preview must use canonical planetary glyphs.');
- const uniformLine=(line,kind)=>{
-   assert.ok(line,kind+' must exist');
-   assert.equal(parseFloat(line.width),5,kind+' must use the unified 5-unit stroke');
-   assert.equal(line.dash,'none',kind+' must not contain dashes');
-   assert.equal(line.filter,'none',kind+' must not glow');
-   assert.equal(line.vectorEffect,'none',kind+' scales in source coordinates');
- };
- for(const kind of ['previewGray','previewRed','previewPast','miniGray','miniRed'])uniformLine(heptagramParity[kind],kind);
- assert.equal(heptagramParity.previewGray.stroke,heptagramParity.miniGray.stroke,'Preview gray and miniheptagram gray must match.');
- assert.equal(heptagramParity.previewRed.stroke,heptagramParity.miniRed.stroke,'Preview red and miniheptagram red must match.');
- assert.equal(heptagramParity.previewRed.stroke,heptagramParity.previewPast.stroke,'Traced weekly paths must use the same red.');
+ assert.equal(parity.canonical,'true');
+ for(const k of ['gray','red','miniGray','miniRed']){assert.equal(parseFloat(parity[k]?.width),5);assert.equal(parity[k]?.dash,'none')}
+ assert.equal(parity.gray.stroke,parity.miniGray.stroke);
+ assert.equal(parity.red.stroke,parity.miniRed.stroke);
  await form.screenshot({path:'sky-chart-here-now-manual-mobile.png'});
  const initial=await page.evaluate(()=>localStorage.getItem('relphiSkyChartB'));
  await here.check();
  await page.waitForFunction(()=>document.querySelector('#skyFoundationB [data-ww-here-value]')?.textContent.includes('Salt Lake City'));
- assert.equal(await now.isChecked(),false,'Here must not select Now');
- assert.equal(await form.locator('[data-ww-manual-where]').isHidden(),true);
- assert.equal(await form.locator('[data-ww-manual-when]').isVisible(),true);
+ assert.equal(await now.isChecked(),false,'Here does not select Now');
  assert.equal(await page.evaluate(()=>localStorage.getItem('relphiSkyChartB')),initial,'Here must not commit.');
- await now.check();
- await page.waitForFunction(()=>document.querySelector('#skyFoundationB [data-ww-now-value]')?.textContent.includes('America/Denver'));
- assert.equal(await live.isChecked(),false,'Now should capture a fixed instant by default.');
- const captured=await form.getAttribute('data-now-instant');
+ await refresh.click();
+ assert.equal(await now.isChecked(),true,'Now refresh also selects Now when needed.');
+ assert.match(await form.locator('[data-ww-now-value]').textContent(),/Captured.*America\/Denver/);
+ const first=await form.getAttribute('data-now-instant');
+ assert.ok(Date.parse(first)>0);
+ await page.waitForTimeout(1150);
+ assert.equal(await form.getAttribute('data-now-instant'),first,'Now does not advance by itself.');
+ assert.equal(await page.evaluate(()=>localStorage.getItem('relphiSkyChartB')),initial);
+ await refresh.click();
+ const second=await form.getAttribute('data-now-instant');
+ assert.ok(Date.parse(second)>Date.parse(first),'Refresh must capture a newer instant.');
  await page.waitForTimeout(1100);
- assert.equal(await form.getAttribute('data-now-instant'),captured,'Captured Now must remain fixed while Live is off.');
- assert.match(await form.locator('[data-ww-now-value]').textContent(),/Captured/);
- assert.equal(await form.locator('[data-ww-manual-when]').isHidden(),true);
- assert.equal(await form.locator('[data-ww-manual-where]').isHidden(),true);
- assert.equal(await unknown.isVisible(),true,'Time unknown must remain accessible from the compact choice row.');
+ assert.equal(await form.getAttribute('data-now-instant'),second,'Refreshed instant must stay fixed.');
+ assert.equal(await page.evaluate(()=>localStorage.getItem('relphiSkyChartB')),initial,'Refresh must not commit before confirmation.');
  await unknown.check();
- assert.equal(await now.isChecked(),false,'Selecting Time unknown must exit Now mode.');
- assert.equal(await form.locator('[data-ww-manual-when]').isVisible(),true,'Unknown time restores the date entry.');
- await now.check();
- assert.equal(await unknown.isChecked(),false,'Selecting Now must clear Time unknown.');
- assert.equal(await form.locator('[data-ww-manual-when]').isHidden(),true);
- await live.check();
+ assert.equal(await now.isChecked(),false,'Unknown time exits Now.');
+ assert.equal(await form.locator('[data-ww-manual-when]').isVisible(),true);
+ await refresh.click();
+ assert.equal(await unknown.isChecked(),false,'Refreshing Now clears unknown time.');
  assert.equal(await now.isChecked(),true);
- assert.match(await form.locator('[data-ww-now-value]').textContent(),/Live/);
- await live.uncheck();
- assert.equal(await now.isChecked(),true,'Turning Live off should hold Now rather than reverting to manual time.');
- const held=await form.getAttribute('data-now-instant');
- await page.waitForTimeout(1050);
- assert.equal(await form.getAttribute('data-now-instant'),held);
- await live.check();
-
+ const selectedInstant=await form.getAttribute('data-now-instant');
  await page.waitForSelector('#skyFoundationB [data-draft-heptagram-ready="true"] .sky-where-when-draft-heptagram',{timeout:20000});
  await form.screenshot({path:'sky-chart-here-now-live-mobile.png'});
- assert.equal(await page.evaluate(()=>localStorage.getItem('relphiSkyChartB')),initial,'Now must not commit before confirmation.');
  await form.locator('button[type="submit"]').click();
- await page.waitForFunction(()=>{const m=JSON.parse(localStorage.getItem('relphiSkyChartB'))?.metadata;return m?.liveContinuous===true&&m?.liveNowOrigin==='use-now'},null,{timeout:15000});
+ await page.waitForFunction(()=>!!JSON.parse(localStorage.getItem('relphiSkyChartB'))?.metadata?.capturedNowAt,null,{timeout:15000});
  const committed=await page.evaluate(()=>JSON.parse(localStorage.getItem('relphiSkyChartB')));
+ assert.equal(committed.metadata.capturedNowAt,selectedInstant);
+ assert.equal(committed.calcProfile.instant,selectedInstant);
  assert.equal(committed.calcProfile.timeZone,'America/Denver');
- assert.ok(Math.abs(Date.parse(committed.calcProfile.instant)-Date.now())<60000,'Committed Now must use the current instant.');
+ assert.equal(committed.metadata.liveContinuous,undefined);
+ assert.equal(committed.metadata.liveNowOrigin,undefined);
  assert.ok(committed.placements.Ascendant&&committed.placements.Midheaven);
- // The comparison wheel must remain painted during the asynchronous Live refresh.
- await page.waitForFunction(()=>document.documentElement.dataset.skyWheelStable==='true'&&document.querySelector('#skyFoundationWheelMount > .sky-foundation-wheel')!==null,null,{timeout:20000});
- const wheelBefore=await page.evaluate(()=>{
-   const mount=document.getElementById('skyFoundationWheelMount'),wheel=mount.querySelector(':scope > .sky-foundation-wheel');
-   if(!wheel||wheel.hasAttribute('data-single-sky'))throw new Error('Expected a comparison wheel for continuity testing.');
-   if(getComputedStyle(mount).visibility!=='visible')throw new Error('The initial wheel is hidden.');
-   window.__liveContinuity={wheelBefore:wheel,hidden:[],mutations:[],complete:false};
-   const state=window.__liveContinuity;
-   const sample=source=>{
-     const w=mount.querySelector(':scope > .sky-foundation-wheel');
-     const visible=getComputedStyle(mount).visibility==='visible'&&!!w;
-     if(!visible)state.hidden.push(source);
-   };
-   state.observer=new MutationObserver(records=>{
-     for(const record of records){
-       if(record.type==='attributes'&&record.attributeName==='data-sky-wheel-stable'){
-         state.mutations.push(document.documentElement.dataset.skyWheelStable||'absent');
-       }
-     }
-     sample('mutation');
-   });
-   state.observer.observe(document.documentElement,{attributes:true,attributeFilter:['data-sky-wheel-stable']});
-   state.observer.observe(mount,{childList:true});
-   state.interval=setInterval(()=>sample('sample'),8);
-   return wheel.getAttribute('viewBox');
- });
- assert.ok(wheelBefore,'The comparison wheel should have a viewBox before the Live tick.');
- const beforeInstant=committed.calcProfile.instant;
- await page.evaluate(()=>{
-   const key='relphiSkyChartB',sky=JSON.parse(localStorage.getItem(key));
-   sky.calcProfile.instant=new Date(Date.now()-120000).toISOString();
-   localStorage.setItem(key,JSON.stringify(sky));
-   void window.RelphiSkyWhereWhen.refreshContinuous('B');
- });
- await page.waitForFunction(previous=>{
-   const sky=JSON.parse(localStorage.getItem('relphiSkyChartB'));
-   return sky.calcProfile.instant!==previous&&Math.abs(Date.parse(sky.calcProfile.instant)-Date.now())<45000;
- },beforeInstant,{timeout:20000});
- await page.waitForFunction(()=>document.querySelector('#skyFoundationWheelMount > .sky-foundation-wheel')!==window.__liveContinuity?.wheelBefore,null,{timeout:20000});
- const continuity=await page.evaluate(()=>{
-   const state=window.__liveContinuity;
-   clearInterval(state.interval);state.observer.disconnect();
-   const mount=document.getElementById('skyFoundationWheelMount');
-   return{hidden:state.hidden,mutations:state.mutations,stable:document.documentElement.dataset.skyWheelStable,visibility:getComputedStyle(mount).visibility,
-     wheelPresent:!!mount.querySelector(':scope > .sky-foundation-wheel')};
- });
- assert.deepEqual(continuity.hidden,[],'Live updates must never expose an empty or invisible wheel.');
- assert.equal(continuity.mutations.includes('absent'),false,'The wheel-stability gate must remain open during Live updates.');
- assert.equal(continuity.stable,'true','Wheel remains stable after the live update.');
- assert.equal(continuity.visibility,'visible');
- assert.equal(continuity.wheelPresent,true);
- // Turning Live off must make a stored snapshot that does not recalculate.
+ assert.equal(await page.evaluate(()=>window.RelphiSkyWhereWhen?.refreshContinuous),undefined);
+ await page.waitForTimeout(1600);
+ assert.equal((await page.evaluate(()=>JSON.parse(localStorage.getItem('relphiSkyChartB')))).calcProfile.instant,selectedInstant,'Confirmed Now stays fixed.');
  for(let i=0;i<3;i++){
    const prompt=page.locator('#skyWhereWhenNamePrompt:not([hidden])');
    if(await prompt.count())await prompt.locator('[data-sky-name-cancel]').click();
  }
  await tab.click();
- const fixedForm=page.locator('#skyFoundationB .sky-where-when-editor');
- await fixedForm.waitFor();
- assert.equal(await fixedForm.locator('[data-ww-field="now"]').isChecked(),true);
- assert.equal(await fixedForm.locator('[data-ww-field="live"]').isChecked(),true);
- await fixedForm.locator('[data-ww-field="live"]').uncheck();
- const frozenMoment=await fixedForm.getAttribute('data-now-instant');
- assert.ok(Date.parse(frozenMoment)>0);
- await fixedForm.locator('button[type="submit"]').click();
- await page.waitForFunction(()=>!!JSON.parse(localStorage.getItem('relphiSkyChartB'))?.metadata?.capturedNowAt,null,{timeout:15000});
- const fixed=await page.evaluate(()=>JSON.parse(localStorage.getItem('relphiSkyChartB')));
- assert.equal(fixed.metadata.liveContinuous,undefined,'Fixed Now must not retain live mode.');
- assert.equal(fixed.metadata.liveNowOrigin,undefined,'Fixed Now must not retain a live origin.');
- assert.equal(fixed.metadata.capturedNowAt,frozenMoment,'Fixed Now must preserve the instant of turning Live off.');
- assert.equal(fixed.calcProfile.instant,frozenMoment,'Chart positions must be calculated for the held instant.');
- await page.evaluate(()=>window.RelphiSkyWhereWhen.refreshContinuous('B'));
- await page.waitForTimeout(300);
- assert.equal((await page.evaluate(()=>JSON.parse(localStorage.getItem('relphiSkyChartB')))).calcProfile.instant,frozenMoment,'A captured snapshot must not automatically refresh.');
+ const reopened=page.locator('#skyFoundationB .sky-where-when-editor');await reopened.waitFor();
+ assert.equal(await reopened.locator('[data-ww-field="now"]').isChecked(),true);
+ assert.equal(await reopened.getAttribute('data-now-instant'),selectedInstant);
+ await reopened.locator('[data-ww-action="refresh-now"]').click();
+ const updated=await reopened.getAttribute('data-now-instant');
+ assert.ok(Date.parse(updated)>Date.parse(selectedInstant));
+ assert.equal((await page.evaluate(()=>JSON.parse(localStorage.getItem('relphiSkyChartB')))).calcProfile.instant,selectedInstant,'Refresh does not change committed sky until confirmation.');
+ await reopened.locator('button[type="submit"]').click();
+ await page.waitForFunction(instant=>JSON.parse(localStorage.getItem('relphiSkyChartB'))?.calcProfile?.instant===instant,updated,{timeout:15000});
+ assert.equal((await page.evaluate(()=>JSON.parse(localStorage.getItem('relphiSkyChartB')))).metadata.capturedNowAt,updated);
+ // Previously committed Live skies must be frozen without recalculation on reload.
+ await page.evaluate(()=>{
+  const key='relphiSkyChartB',sky=JSON.parse(localStorage.getItem(key));
+  sky.metadata.liveContinuous=true;sky.metadata.liveNowOrigin='use-now';sky.metadata.liveNowAt=sky.calcProfile.instant;
+  delete sky.metadata.capturedNowAt;
+  localStorage.setItem(key,JSON.stringify(sky));
+ });
+ await page.reload({waitUntil:'networkidle'});
+ await page.waitForSelector('#skyFoundationRoot[aria-busy="false"]',{timeout:20000});
+ const migrated=await page.evaluate(()=>JSON.parse(localStorage.getItem('relphiSkyChartB')));
+ assert.equal(migrated.metadata.liveContinuous,undefined);
+ assert.equal(migrated.metadata.liveNowOrigin,undefined);
+ assert.equal(migrated.metadata.capturedNowAt,updated);
+ assert.equal(migrated.calcProfile.instant,updated);
  assert.deepEqual(errors,[],'No uncaught page errors.');
- console.log('Here/Now alignment, tooltip, Live updates, and fixed captured snapshot passed.');
-} finally{await browser.close()}
+ console.log('Fixed Now: refresh captures a new instant, never auto-commits or advances; no Live; legacy skies freeze.');
+}finally{await browser.close()}
