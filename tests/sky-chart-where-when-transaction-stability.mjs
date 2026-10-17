@@ -184,6 +184,12 @@ assert.equal(await liveEditor.locator('[data-ww-field="here"]').isChecked(),fals
 await liveEditor.locator('[data-ww-field="now"]').check();
 await page.waitForFunction(()=>!!document.querySelector('#skyFoundationA [data-ww-now-value]')?.textContent?.includes('America/New_York'));
 await liveEditor.locator('button[type="submit"]').click();
+await page.waitForTimeout(750);
+console.log('NOW_COMMIT_DIAGNOSTIC',JSON.stringify(await page.evaluate(()=>{
+  const sky=JSON.parse(localStorage.getItem('relphiSkyChartA'));
+  const form=document.querySelector('#skyFoundationA .sky-where-when-editor');
+  return {name:sky?.name,metadata:sky?.metadata,source:sky?.calcProfile?.source,instant:sky?.calcProfile?.instant,selectedNow:form?.querySelector('[data-ww-field="now"]')?.checked,formPresent:!!form,status:form?.querySelector('.sky-where-when-status')?.textContent};
+})));
 await page.waitForFunction(()=>{const m=JSON.parse(localStorage.getItem('relphiSkyChartA'))?.metadata;return m?.liveContinuous===true&&m?.liveNowOrigin==='use-now'},null,{timeout:15000});
 const liveCommitted=await page.evaluate(()=>JSON.parse(localStorage.getItem('relphiSkyChartA')));
 assert.equal(liveCommitted.metadata.liveNowOrigin,'use-now');
