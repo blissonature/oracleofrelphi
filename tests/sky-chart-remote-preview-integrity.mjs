@@ -51,12 +51,13 @@ try{
        const current=hepta?.querySelector('.sky-ph-week-segment.current');
        const read=n=>{if(!n)return null;const cs=getComputedStyle(n);return{color:cs.stroke,width:cs.strokeWidth,dash:cs.strokeDasharray}};
        const mount=document.getElementById('skyFoundationWheelMount');
-       return{canonical:hepta?.dataset.canonicalHeptagramReady,liveToggle:!!document.querySelector('#skyFoundationB .sky-where-when-editor [data-ww-field="live"]'),
+       return{canonical:hepta?.dataset.canonicalHeptagramReady,nowRefresh:!!document.querySelector('#skyFoundationB .sky-where-when-editor [data-ww-action="refresh-now"]'),liveToggle:!!document.querySelector('#skyFoundationB .sky-where-when-editor [data-ww-field="live"]'),
          future:read(future),current:read(current),wheelVisible:getComputedStyle(mount).visibility};
      });
      console.log('PREVIEW WHERE/WHEN DESIGN',JSON.stringify(detail));
      assert.equal(detail.canonical,'true');
-     assert.equal(detail.liveToggle,true);
+     assert.equal(detail.nowRefresh,true);
+     assert.equal(detail.liveToggle,false);
      assert.equal(detail.wheelVisible,'visible');
      assert.equal(detail.future?.dash,'none');
      assert.equal(detail.current?.dash,'none');
