@@ -41,7 +41,9 @@ try{
  assert.equal(await form.locator('[data-ww-action="refresh-now"]').count(),0,'Now must not have a refresh button.');
  assert.ok(spacing.nowAlignment<=5,`Live should share the Now row: ${JSON.stringify(spacing)}`);
  assert.ok(Math.abs(spacing.unknownLeft-spacing.localTimeLeft)<=2,`Time unknown must align with the Local time field: ${JSON.stringify(spacing)}`);
- assert.match(await live.locator('..').getAttribute('title'),/updates the sky/i,'Live provides a tooltip.');
+ assert.equal(await live.locator('..').getAttribute('title'),null,'Do not show a duplicate browser-native tooltip.');
+ assert.equal(await form.locator('[role="tooltip"]').count(),1,'Live must expose exactly one custom tooltip.');
+ assert.match(await form.locator('[role="tooltip"]').textContent(),/continu(ally|ous)/i,'Live tooltip should explain ongoing updates.');
  assert.ok(await live.getAttribute('aria-describedby'),'Live must provide an accessible description.');
  assert.ok(spacing.unknownAlignment<=4,`Time unknown should share the Now row: ${JSON.stringify(spacing)}`);
  assert.ok(spacing.unknownOverflow<=1,`Unknown time must stay inside the row: ${JSON.stringify(spacing)}`);
