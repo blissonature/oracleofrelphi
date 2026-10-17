@@ -172,10 +172,13 @@ function onCaptureClick(event){
 function onSubmit(event){
   const form=event.target?.closest?.('.sky-where-when-editor');
   if(!form)return;
+  // Explicit Now submissions are live calculations, not historical edits.
+  // The Where and When controller owns their fresh origin marker.
+  if(form.querySelector('[data-ww-field="now"]')?.checked===true)return;
   const slot=form.dataset.slot||slotFromNode(form);
   if(!KEYS[slot])return;
   const before=localStorage.getItem(KEYS[slot])||'';
-  watchForChange(slot,before,()=>clearLive(slot,'custom-where-when'),8000);
+  watchForChange(slot,before,()=>{if(read(slot)?.metadata?.liveNowOrigin!=='use-now')clearLive(slot,'custom-where-when')},8000);
 }
 
 function onSkyNameUpdated(event){

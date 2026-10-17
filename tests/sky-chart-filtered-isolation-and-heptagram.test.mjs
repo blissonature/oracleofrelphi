@@ -17,10 +17,12 @@ test('placement isolation cannot keep endpoints whose relationships are filtered
   assert.match(orb,/reconcilePlacementIsolation\(rows,visibleIndexes\)/);
 });
 
-test('the undrawn weekly heptagram path is dotted while traced time stays solid',()=>{
-  assert.match(heptagramCss,/\.sky-ph-week-segment\.future\{stroke-dasharray:2\.5 6;stroke-linecap:round\}/);
-  assert.match(heptagramCss,/\.sky-ph-week-segment\.past\{[^}]*stroke-dasharray:none/);
-  assert.match(heptagramCss,/\.sky-ph-week-segment\.current\{[^}]*stroke-dasharray:none/);
-  assert.match(html,/sky-chart-heptagram-geometry-v1\.css\?v=2/);
-  assert.match(html,/sky-chart-orb-control-v1\.js\?v=4/);
+test('untraced heptagram paths are solid gray and all traced paths share a red stroke',()=>{
+  assert.match(heptagramCss,/stroke-dasharray:none!important/);
+  assert.match(heptagramCss,/stroke-width:5!important/);
+  assert.match(heptagramCss,/stroke:#77736e!important/);
+  assert.match(heptagramCss,/stroke:#c9211e!important/);
+  assert.doesNotMatch(heptagramCss,/stroke-dasharray:\s*[\d.]+/);
+  assert.match(html,/sky-chart-heptagram-geometry-v1\.css\?v=3/);
+  assert.match(html,/sky-chart-orb-control-v1\.js\?v=31/);
 });

@@ -1,0 +1,31 @@
+name: Sky Chart exact preview integrity
+on:
+  pull_request:
+    paths:
+      - 'sky-chart-preview/sky-chart.html'
+      - 'sky-chart.html'
+      - 'sky-chart-heptagram-geometry-v1.css'
+      - 'tests/sky-chart-remote-preview-integrity.mjs'
+      - '.github/workflows/sky-chart-preview-integrity.yml'
+jobs:
+  preview-browser:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install Playwright
+        run: |
+          npm install --no-save playwright@1.52.0
+          npx playwright install --with-deps chromium
+      - name: Check served preview and deployed page
+        env:
+          PREVIEW_REF: ${{ github.event.pull_request.head.sha }}
+        run: node tests/sky-chart-remote-preview-integrity.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: sky-chart-served-preview
+          path: sky-remote-*.png
+          if-no-files-found: ignore
