@@ -454,13 +454,56 @@ async function renderSummary(slot,force=false){
 }
 function scheduleSummary(slot,force=false){const state=cardState[slot];if(state.rendering){state.rerender=true;return}void renderSummary(slot,force)}
 
+// Committed Now skies remain living while this tab is visible. Historical/manual
+// charts never enter this loop. A 60-second cadence moves fast angles and points
+// without rebuilding the entire wheel every second.
+const continuousBusy={A:false,B:false};
+async function refreshContinuousSky(slot){
+  if(continuousBusy[slot]||document.hidden||transactionState.editing.size)return;
+  const before=payload(slot),metadata=before?.metadata,prior=before?.calcProfile;
+  if(metadata?.liveContinuous!==true||metadata.liveNowOrigin!=='use-now'||!completeProfile(prior)||prior.timeUnknown)return;
+  const previousInstant=Date.parse(prior.instant||'');
+  if(Number.isFinite(previousInstant)&&Date.now()-previousInstant<55000)return;
+  const selected=currentSelection(slot,prior);if(!selected)return;
+  const token=localStorage.getItem(SLOT_KEYS[slot]);
+  continuousBusy[slot]=true;
+  try{
+    const now=window.luxon?.DateTime?.now(),local=now?.setZone(selected.timezone);
+    if(!local?.isValid)return;
+    const next=calculateSky(slot,selected,local.toFormat('yyyy-MM-dd'),local.toFormat('HH:mm'),{liveOrigin:'use-now',continuousNow:true,instant:now.toUTC().toISO()});
+    if(window.RelphiChironEphemeris)await window.RelphiChironEphemeris.completePayload(next);
+    // A user may load another sky or start editing while the ephemeris is running.
+    if(document.hidden||transactionState.editing.size||localStorage.getItem(SLOT_KEYS[slot])!==token)return;
+    writeJson(SLOT_KEYS[slot],next);
+    dispatchSlotChange(slot);
+    window.dispatchEvent(new CustomEvent('relphi:sky-live-origin-changed',{detail:{slot,origin:'use-now',at:next.metadata.liveNowAt}}));
+    window.dispatchEvent(new CustomEvent('relphi:sky-working-copy-updated',{detail:{slot,source:'continuous-now',dateTime:next.calcProfile.dateTime,location:selected.canonical}}));
+    scheduleSummary(slot,true);
+  }catch(error){console.warn('Live Sky refresh paused:',error)}
+  finally{continuousBusy[slot]=false}
+}
+let liveTick=0,lastContinuousCheck=0;
+function livingTick(){
+  if(document.hidden)return;
+  for(const slot of ['A','B']){
+    const form=formFor(slot);
+    if(form&&modeValue(form,'now'))updateNowFields(slot);
+    if(form&&modeValue(form,'now')&&liveTick%15===0)window.RelphiSkyWhereWhenDraftHeptagram?.render?.(slot,0);
+  }
+  if(Date.now()-lastContinuousCheck>=10000){
+    lastContinuousCheck=Date.now();
+    for(const slot of ['A','B'])void refreshContinuousSky(slot);
+  }
+  liveTick++;
+}
 window.RelphiSkyWhereWhen=Object.freeze({
   form:formFor,
   selectPacket:(slot,packet)=>selectLocation(slot,packet),
   finishExternalCommit:(slot,detail)=>finishCommitted(slot,detail),
   status,
   setBusy,
-  profile:profileFor
+  profile:profileFor,
+  refreshContinuous:refreshContinuousSky
 });
 
 document.addEventListener('click',event=>{
@@ -588,7 +631,7 @@ window.addEventListener('relphi:sky-foundation-ready',()=>{scheduleSummary('A');
 window.addEventListener('relphi:sky-name-updated',event=>{const slot=event.detail?.slot;if(SLOT_KEYS[slot]){window.RelphiSkyCardShell?.sync?.(slot,payload(slot));scheduleSummary(slot,true)}});
 window.addEventListener('resize',()=>{['A','B'].forEach(slot=>{const svg=shell(slot)?.heptagram;if(svg&&svg.dataset.canonicalSourceReady==='true')svg.setAttribute('viewBox',window.matchMedia?.('(max-width:620px)')?.matches?'0 -8 360 368':'0 0 360 360')})},{passive:true});
 function recoverWhereWhen(){reconcileWhereWhenTransaction();['A','B'].forEach(slot=>{window.RelphiSkyCardShell?.ensure?.(slot,payload(slot));scheduleSummary(slot,true)})}
-function start(){installStyles();['A','B'].forEach(slot=>{shell(slot);scheduleSummary(slot)});schedulePlanetaryHoursHandoff()}
+function start(){installStyles();['A','B'].forEach(slot=>{shell(slot);scheduleSummary(slot)});schedulePlanetaryHoursHandoff();setInterval(livingTick,1000);livingTick()}
 window.addEventListener('relphi:sky-session-recovered',recoverWhereWhen);
 document.readyState==='loading'?document.addEventListener('DOMContentLoaded',start,{once:true}):start();
 })();
