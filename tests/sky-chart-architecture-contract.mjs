@@ -55,12 +55,12 @@ assert.match(whereWhen,/data-ww-field="now"/,'When owns an independent Now check
 assert.match(whereWhen,/data-ww-manual-where/,'Location search is a conditional section');
 assert.match(whereWhen,/data-ww-manual-when/,'Manual date/time is a conditional section');
 assert.match(whereWhen,/data-ww-action="refresh-here"/,'Here has its own refresh affordance');
-assert.equal(whereWhen.includes('data-ww-action="refresh-now"'),false,'Now has no manual refresh button');
-assert.match(whereWhen,/data-ww-field="live"/,'Live is an independent checkbox.');
-assert.match(whereWhen,/role="tooltip"/,'Live control has an accessible explanatory tooltip.');
-assert.match(whereWhen,/snapshotNow:!isLive/,'Now must default to a fixed instant.');
-assert.match(whereWhen,/function refreshContinuousSky/,'Now mode recalculates moving placements');
-assert.match(whereWhen,/transactionState\.editing\.size/,'Live calculation must not disturb an active transaction');
+assert.match(whereWhen,/data-ww-action="refresh-now"/,'Now has an explicit refresh button.');
+assert.equal(whereWhen.includes('data-ww-field="live"'),false,'No Live toggle remains.');
+assert.match(whereWhen,/function refreshNow\(slot\)/,'Refresh captures a new instant on demand.');
+assert.match(whereWhen,/snapshotNow:true/,'Now commits a fixed instant.');
+assert.equal(whereWhen.includes('function refreshContinuousSky'),false,'No continuous recalculation function remains.');
+assert.equal(whereWhen.includes('setInterval(livingTick'),false,'No Live update timer remains.');
 assert.equal(whereWhen.includes('data-ww-action="use-current-location"'),false,'No competing current-location control should be repaired away later');
 assert.equal(whereWhen.includes('data-final-now'),false,'Legacy final-now control must not exist');
 assert.match(whereWhen,/sky-where-when-footer-actions/,'Footer action structure must be source markup');
