@@ -1,8 +1,42 @@
-/* The weekly star reaches the planetary nodes; traced time is solid and the undrawn week is dotted. */
+/* Canonical heptagram stroke contract: microheptagram styling at every size.
+   Use SVG-coordinate stroke widths so the same geometry scales proportionally
+   from Saved Skies thumbnails to the full Where and When heptagram.
+   The weekly path is red once traced (past or current); untraced paths are
+   solid gray. Never emphasize today's line with a heavier stroke or glow. */
 .sky-ph-heptagram{max-height:none}
-.sky-ph-week-segment.future,
-.sky-ph-hour-segment.future,
-.sky-ph-hour-segment.past{stroke:#9a948e;stroke-width:2;opacity:.52}
-.sky-ph-week-segment.future{stroke-dasharray:2.5 6;stroke-linecap:round}
-.sky-ph-week-segment.past{stroke-width:2;opacity:.56;stroke-dasharray:none}
-.sky-ph-week-segment.current{stroke-width:5.5;opacity:1;stroke-dasharray:none;stroke-linecap:round}
+.sky-ph-heptagram .sky-ph-week-segment,
+.sky-ph-heptagram .sky-ph-hour-segment,
+.sky-where-fingerprint-heptagram .sky-ph-week-segment,
+.sky-where-fingerprint-heptagram .sky-ph-hour-segment,
+.sky-saved-microheptagram .sky-ph-week-segment,
+.sky-saved-microheptagram .sky-ph-hour-segment{
+  stroke-width:5!important;
+  stroke-dasharray:none!important;
+  stroke-linecap:round!important;
+  vector-effect:none!important;
+  filter:none!important;
+}
+.sky-ph-heptagram .sky-ph-week-segment.future,
+.sky-ph-heptagram .sky-ph-hour-segment.future,
+.sky-ph-heptagram .sky-ph-hour-segment.past,
+.sky-where-fingerprint-heptagram .sky-ph-week-segment.future,
+.sky-where-fingerprint-heptagram .sky-ph-hour-segment.future,
+.sky-where-fingerprint-heptagram .sky-ph-hour-segment.past,
+.sky-saved-microheptagram .sky-ph-week-segment.future,
+.sky-saved-microheptagram .sky-ph-hour-segment.future,
+.sky-saved-microheptagram .sky-ph-hour-segment.past{
+  stroke:#77736e!important;
+  opacity:.7!important;
+}
+.sky-ph-heptagram .sky-ph-week-segment.past,
+.sky-ph-heptagram .sky-ph-week-segment.current,
+.sky-ph-heptagram .sky-ph-hour-segment.current,
+.sky-where-fingerprint-heptagram .sky-ph-week-segment.past,
+.sky-where-fingerprint-heptagram .sky-ph-week-segment.current,
+.sky-where-fingerprint-heptagram .sky-ph-hour-segment.current,
+.sky-saved-microheptagram .sky-ph-week-segment.past,
+.sky-saved-microheptagram .sky-ph-week-segment.current,
+.sky-saved-microheptagram .sky-ph-hour-segment.current{
+  stroke:#c9211e!important;
+  opacity:1!important;
+}
