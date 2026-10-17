@@ -1,0 +1,54 @@
+import {chromium} from 'playwright';
+import assert from 'node:assert/strict';
+import path from 'node:path';
+const signs=['Aries','Taurus','Gemini','Cancer','Leo','Virgo','Libra','Scorpio','Sagittarius','Capricorn','Aquarius','Pisces'];
+const point=(name,longitude)=>{const value=((longitude%360)+360)%360,within=value%30;return{name,longitude:value,sign:signs[Math.floor(value/30)],degree:Math.floor(within),minute:Math.floor((within%1)*60),second:0}};
+function sky(name,offset,dateTime,instant,location,timeZone,latitude,longitude){
+ const asc=(168.38+offset)%360,cusps=Array.from({length:12},(_,i)=>(asc+i*30)%360);
+ const raw={Sun:195,Moon:118.42,Mercury:206.17,Venus:169.88,Mars:167.87,Jupiter:307.15,Saturn:235.57,Uranus:254.85,Neptune:271.02,Pluto:213.88,Ascendant:168.38,Midheaven:76.28};
+ return{name,houseSystem:'equal-house',houseCusps:cusps,calcProfile:{dateTime,instant,location,locationQuery:location,timeZone,latitude,longitude,houseCusps:cusps,houseSystem:'equal-house'},placements:Object.fromEntries(Object.entries(raw).map(([k,v])=>[k,point(k,v+offset)]))};
+}
+const a=sky('Past sky',0,'1985-10-08T04:37','1985-10-08T08:37:00Z','Malden, Massachusetts, United States','America/New_York',42.4251,-71.0662);
+const b=sky('Second sky',29.27,'2026-08-27T08:00','2026-08-27T14:00:00Z','Salt Lake City, Utah, United States','America/Denver',40.7608,-111.891);
+const browser=await chromium.launch({headless:true});
+try{
+ const context=await browser.newContext({viewport:{width:390,height:844},geolocation:{latitude:40.7608,longitude:-111.891},permissions:['geolocation'],timezoneId:'America/Denver'});
+ const page=await context.newPage(),errors=[];page.on('pageerror',error=>errors.push(error.message));
+ await page.route('https://unpkg.com/suncalc@1.9.0/suncalc.js',route=>route.fulfill({path:path.resolve('node_modules/suncalc/suncalc.js'),contentType:'application/javascript'}));
+ await page.route('https://cdn.jsdelivr.net/npm/luxon@3/build/global/luxon.min.js',route=>route.fulfill({path:path.resolve('node_modules/luxon/build/global/luxon.min.js'),contentType:'application/javascript'}));
+ await page.route('https://api.bigdatacloud.net/data/reverse-geocode-client**',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({locality:'Salt Lake City',principalSubdivision:'Utah',countryName:'United States'})}));
+ await page.route('https://api.open-meteo.com/v1/forecast**',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({timezone:'America/Denver'})}));
+ await page.addInitScript(({a,b})=>{localStorage.setItem('relphiSkyChartA',JSON.stringify(a));localStorage.setItem('relphiSkyChartB',JSON.stringify(b));localStorage.setItem('relphiSkyChartLastModeV1','comparison')},{a,b});
+ await page.goto('http://127.0.0.1:4173/sky-chart.html',{waitUntil:'networkidle'});
+ await page.waitForSelector('#skyFoundationRoot[aria-busy="false"]',{timeout:20000});
+ const tab=page.locator('#skyFoundationB [data-sky-drawer-tab="where"]');await tab.click();
+ const form=page.locator('#skyFoundationB .sky-where-when-editor');await form.waitFor();
+ const here=form.locator('[data-ww-field="here"]'),now=form.locator('[data-ww-field="now"]');
+ assert.equal(await here.isChecked(),false);assert.equal(await now.isChecked(),false);
+ assert.equal(await form.locator('[data-ww-manual-where]').isVisible(),true);
+ assert.equal(await form.locator('[data-ww-manual-when]').isVisible(),true);
+ assert.equal(await form.locator('.sky-where-when-here-now').count(),0,'Old standalone button must be gone.');
+ await page.waitForSelector('#skyFoundationB [data-draft-heptagram-ready="true"] .sky-where-when-draft-heptagram',{timeout:20000});
+ await form.screenshot({path:'sky-chart-here-now-manual-mobile.png'});
+ const initial=await page.evaluate(()=>localStorage.getItem('relphiSkyChartB'));
+ await here.check();
+ await page.waitForFunction(()=>document.querySelector('#skyFoundationB [data-ww-here-value]')?.textContent.includes('Salt Lake City'));
+ assert.equal(await now.isChecked(),false,'Here must not select Now');
+ assert.equal(await form.locator('[data-ww-manual-where]').isHidden(),true);
+ assert.equal(await form.locator('[data-ww-manual-when]').isVisible(),true);
+ assert.equal(await page.evaluate(()=>localStorage.getItem('relphiSkyChartB')),initial,'Here must not commit.');
+ await now.check();
+ await page.waitForFunction(()=>document.querySelector('#skyFoundationB [data-ww-now-value]')?.textContent.includes('America/Denver'));
+ assert.equal(await form.locator('[data-ww-manual-when]').isHidden(),true);
+ assert.equal(await form.locator('[data-ww-manual-where]').isHidden(),true);
+ await page.waitForSelector('#skyFoundationB [data-draft-heptagram-ready="true"] .sky-where-when-draft-heptagram',{timeout:20000});
+ await form.screenshot({path:'sky-chart-here-now-live-mobile.png'});
+ assert.equal(await page.evaluate(()=>localStorage.getItem('relphiSkyChartB')),initial,'Now must not commit before confirmation.');
+ await form.locator('button[type="submit"]').click();
+ await page.waitForFunction(()=>{const m=JSON.parse(localStorage.getItem('relphiSkyChartB'))?.metadata;return m?.liveContinuous===true&&m?.liveNowOrigin==='use-now'},null,{timeout:15000});
+ const committed=await page.evaluate(()=>JSON.parse(localStorage.getItem('relphiSkyChartB')));
+ assert.equal(committed.calcProfile.timeZone,'America/Denver');
+ assert.ok(Math.abs(Date.parse(committed.calcProfile.instant)-Date.now())<60000,'Committed Now must use the current instant.');
+ assert.ok(committed.placements.Ascendant&&committed.placements.Midheaven);
+ console.log('Independent Here/Now modes, preview and live commit passed.');
+} finally{await browser.close()}
