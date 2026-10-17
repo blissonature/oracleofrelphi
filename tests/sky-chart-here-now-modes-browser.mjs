@@ -23,11 +23,29 @@ try{
  await page.waitForSelector('#skyFoundationRoot[aria-busy="false"]',{timeout:20000});
  const tab=page.locator('#skyFoundationB [data-sky-drawer-tab="where"]');await tab.click();
  const form=page.locator('#skyFoundationB .sky-where-when-editor');await form.waitFor();
- const here=form.locator('[data-ww-field="here"]'),now=form.locator('[data-ww-field="now"]');
+ const here=form.locator('[data-ww-field="here"]'),now=form.locator('[data-ww-field="now"]'),unknown=form.locator('[data-ww-field="time-unknown"]');
  assert.equal(await here.isChecked(),false);assert.equal(await now.isChecked(),false);
  assert.equal(await form.locator('[data-ww-manual-where]').isVisible(),true);
  assert.equal(await form.locator('[data-ww-manual-when]').isVisible(),true);
  assert.equal(await form.locator('.sky-where-when-here-now').count(),0,'Old standalone button must be gone.');
+ assert.equal(await unknown.isVisible(),true,'Time unknown belongs beside Now, even with the manual controls open.');
+ const spacing=await form.evaluate(node=>{
+   const rect=selector=>node.querySelector(selector)?.getBoundingClientRect();
+   const centerY=r=>(r.top+r.bottom)/2;
+   const whereChoice=rect('[data-ww-where] .sky-ww-choice'),whereRefresh=rect('[data-ww-action="refresh-here"]');
+   const nowChoice=rect('[data-ww-when] .sky-ww-choice'),nowRefresh=rect('[data-ww-action="refresh-now"]'),unknown=rect('[data-ww-when] .sky-ww-unknown');
+   const row=rect('[data-ww-when] .sky-ww-mode-row');
+   return{whereGap:whereRefresh.left-whereChoice.right,nowGap:nowRefresh.left-nowChoice.right,unknownAlignment:Math.abs(centerY(unknown)-centerY(nowChoice)),unknownClearance:unknown.left-nowRefresh.right,unknownOverflow:unknown.right-row.right};
+ });
+ assert.ok(spacing.whereGap>=0&&spacing.whereGap<=8,`Here refresh should sit immediately beside Here: ${JSON.stringify(spacing)}`);
+ assert.ok(spacing.nowGap>=0&&spacing.nowGap<=8,`Now refresh should sit immediately beside Now: ${JSON.stringify(spacing)}`);
+ assert.ok(spacing.unknownAlignment<=4,`Time unknown should share the Now row: ${JSON.stringify(spacing)}`);
+ assert.ok(spacing.unknownClearance>=1&&spacing.unknownOverflow<=1,`Neither checkbox nor refresh should collide or overflow: ${JSON.stringify(spacing)}`);
+ await unknown.check();
+ assert.equal(await form.locator('[data-ww-field="time"]').isDisabled(),true,'Unknown time disables time entry.');
+ assert.equal(await now.isChecked(),false);
+ await unknown.uncheck();
+
  await page.waitForSelector('#skyFoundationB [data-draft-heptagram-ready="true"] .sky-where-when-draft-heptagram',{timeout:20000});
  await form.screenshot({path:'sky-chart-here-now-manual-mobile.png'});
  const initial=await page.evaluate(()=>localStorage.getItem('relphiSkyChartB'));
@@ -41,6 +59,14 @@ try{
  await page.waitForFunction(()=>document.querySelector('#skyFoundationB [data-ww-now-value]')?.textContent.includes('America/Denver'));
  assert.equal(await form.locator('[data-ww-manual-when]').isHidden(),true);
  assert.equal(await form.locator('[data-ww-manual-where]').isHidden(),true);
+ assert.equal(await unknown.isVisible(),true,'Time unknown must remain accessible from the compact choice row.');
+ await unknown.check();
+ assert.equal(await now.isChecked(),false,'Selecting Time unknown must exit Now mode.');
+ assert.equal(await form.locator('[data-ww-manual-when]').isVisible(),true,'Unknown time restores the date entry.');
+ await now.check();
+ assert.equal(await unknown.isChecked(),false,'Selecting Now must clear Time unknown.');
+ assert.equal(await form.locator('[data-ww-manual-when]').isHidden(),true);
+
  await page.waitForSelector('#skyFoundationB [data-draft-heptagram-ready="true"] .sky-where-when-draft-heptagram',{timeout:20000});
  await form.screenshot({path:'sky-chart-here-now-live-mobile.png'});
  assert.equal(await page.evaluate(()=>localStorage.getItem('relphiSkyChartB')),initial,'Now must not commit before confirmation.');
