@@ -274,7 +274,7 @@ function calculateUnknownTimeSky(slot,selected,date){
   const moonStart=placementObject('Moon',astronomyLongitude('Moon',startInstant)),moonEnd=placementObject('Moon',astronomyLongitude('Moon',endInstant));
   const existing=payload(slot)||{},metadata=existing.metadata&&typeof existing.metadata==='object'?{...existing.metadata}:{},priorProfile=existing.calcProfile&&typeof existing.calcProfile==='object'?{...existing.calcProfile}:{};
   metadata.whereWhenSource=selected.source||'manual';metadata.liveNowDisabled=true;metadata.liveNowDisabledReason='time-unknown';
-  delete metadata.liveContinuous;delete metadata.liveNowOrigin;delete metadata.liveNowAt;delete metadata.liveAgeAnchorAt;delete metadata.liveNowLatitude;delete metadata.liveNowLongitude;
+  delete metadata.capturedNowAt;delete metadata.liveContinuous;delete metadata.liveNowOrigin;delete metadata.liveNowAt;delete metadata.liveAgeAnchorAt;delete metadata.liveNowLatitude;delete metadata.liveNowLongitude;
   return{...existing,name:existing.name||`Sky ${slot}`,saved:false,placements,houseCusps:[],metadata,calcProfile:{...priorProfile,dateTime:date,instant:'',timeUnknown:true,moonRange:{start:moonStart,end:moonEnd},latitude:String(selected.latitude),longitude:String(selected.longitude),location:selected.canonical,locationQuery:selected.query||selected.canonical,timeZone:selected.timezone,whereWhenSource:selected.source||'manual',houseSystem:'none',houseCusps:[],cusps:[],source:'where-when-v3'},savedAt:new Date().toISOString()};
 }
 function calculateSky(slot,selected,date,time,options={}){
