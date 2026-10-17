@@ -109,7 +109,7 @@ const metrics=await editor.evaluate(form=>{
   const here=form.querySelector('[data-ww-field="here"]');
   const now=form.querySelector('[data-ww-field="now"]');
   const hereRefresh=form.querySelector('[data-ww-action="refresh-here"]');
-  const nowRefresh=form.querySelector('[data-ww-action="refresh-now"]');
+  const live=form.querySelector('[data-ww-field="live"]');
   const r=node=>node.getBoundingClientRect();
   const formRect=r(form),bodyRect=r(body),whereRect=r(where),whenRect=r(when),dateRect=r(date),timeRect=r(time),searchRect=r(search);
   const formStyle=getComputedStyle(form);
@@ -124,7 +124,7 @@ const metrics=await editor.evaluate(form=>{
     cancelWidth:r(cancel).width,
     confirmWidth:r(confirm).width,
     hereRefreshWidth:r(hereRefresh).width,
-    nowRefreshWidth:r(nowRefresh).width,
+    liveWidth:r(live).width,
     hereChecked:here.checked,
     nowChecked:now.checked,
     confirmHeight:r(confirm).height,
@@ -169,7 +169,7 @@ assert.ok(metrics.footerHeight<255,`Footer should stay compact enough to return 
 assert.ok(metrics.confirmScrollWidth<=metrics.confirmClientWidth+1,`Confirm label must fit inside its button (${metrics.confirmScrollWidth}/${metrics.confirmClientWidth}).`);
 assert.ok(metrics.confirmWidth>metrics.cancelWidth*1.9,'Confirm action should keep the intended roughly 2× width of Cancel.');
 assert.ok(metrics.hereRefreshWidth>=24&&metrics.hereRefreshWidth<=32,'Here refresh should be a compact icon.');
-assert.ok(metrics.nowRefreshWidth>=24&&metrics.nowRefreshWidth<=32,'Now refresh should be a compact icon.');
+assert.ok(metrics.liveWidth>=15&&metrics.liveWidth<=20,'Live should have a compact checkbox.');
 assert.deepEqual(metrics.modeRows,['flex','flex'],'Where and When should each have a compact choice row.');
 assert.ok(metrics.whenVisiblePixels>=90,`At least the useful top of When should show without scrolling, got ${metrics.whenVisiblePixels}px.`);
 assert.equal(metrics.dateStartsInsideBody,true,'Manual date remains within the scrolling editor.');
