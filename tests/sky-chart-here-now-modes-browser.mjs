@@ -98,7 +98,7 @@ try{
  assert.equal(await now.isChecked(),true);
  const selectedInstant=await form.getAttribute('data-now-instant');
  await page.waitForSelector('#skyFoundationB [data-draft-heptagram-ready="true"] .sky-where-when-draft-heptagram',{timeout:20000});
- await form.screenshot({path:'sky-chart-here-now-live-mobile.png'});
+ await form.screenshot({path:'sky-chart-here-now-refreshed-mobile.png'});
  await form.locator('button[type="submit"]').click();
  await page.waitForFunction(()=>!!JSON.parse(localStorage.getItem('relphiSkyChartB'))?.metadata?.capturedNowAt,null,{timeout:15000});
  const committed=await page.evaluate(()=>JSON.parse(localStorage.getItem('relphiSkyChartB')));
