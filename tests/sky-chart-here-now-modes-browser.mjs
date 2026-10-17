@@ -96,6 +96,57 @@ try{
  assert.equal(committed.calcProfile.timeZone,'America/Denver');
  assert.ok(Math.abs(Date.parse(committed.calcProfile.instant)-Date.now())<60000,'Committed Now must use the current instant.');
  assert.ok(committed.placements.Ascendant&&committed.placements.Midheaven);
+ // The comparison wheel must remain painted during the asynchronous Live refresh.
+ await page.waitForFunction(()=>document.documentElement.dataset.skyWheelStable==='true'&&document.querySelector('#skyFoundationWheelMount > .sky-foundation-wheel')!==null,null,{timeout:20000});
+ const wheelBefore=await page.evaluate(()=>{
+   const mount=document.getElementById('skyFoundationWheelMount'),wheel=mount.querySelector(':scope > .sky-foundation-wheel');
+   if(!wheel||wheel.hasAttribute('data-single-sky'))throw new Error('Expected a comparison wheel for continuity testing.');
+   if(getComputedStyle(mount).visibility!=='visible')throw new Error('The initial wheel is hidden.');
+   window.__liveContinuity={wheelBefore:wheel,hidden:[],mutations:[],complete:false};
+   const state=window.__liveContinuity;
+   const sample=source=>{
+     const w=mount.querySelector(':scope > .sky-foundation-wheel');
+     const visible=getComputedStyle(mount).visibility==='visible'&&!!w;
+     if(!visible)state.hidden.push(source);
+   };
+   state.observer=new MutationObserver(records=>{
+     for(const record of records){
+       if(record.type==='attributes'&&record.attributeName==='data-sky-wheel-stable'){
+         state.mutations.push(document.documentElement.dataset.skyWheelStable||'absent');
+       }
+     }
+     sample('mutation');
+   });
+   state.observer.observe(document.documentElement,{attributes:true,attributeFilter:['data-sky-wheel-stable']});
+   state.observer.observe(mount,{childList:true});
+   state.interval=setInterval(()=>sample('sample'),8);
+   return wheel.getAttribute('viewBox');
+ });
+ assert.ok(wheelBefore,'The comparison wheel should have a viewBox before the Live tick.');
+ const beforeInstant=committed.calcProfile.instant;
+ await page.evaluate(()=>{
+   const key='relphiSkyChartB',sky=JSON.parse(localStorage.getItem(key));
+   sky.calcProfile.instant=new Date(Date.now()-120000).toISOString();
+   localStorage.setItem(key,JSON.stringify(sky));
+   void window.RelphiSkyWhereWhen.refreshContinuous('B');
+ });
+ await page.waitForFunction(previous=>{
+   const sky=JSON.parse(localStorage.getItem('relphiSkyChartB'));
+   return sky.calcProfile.instant!==previous&&Math.abs(Date.parse(sky.calcProfile.instant)-Date.now())<45000;
+ },beforeInstant,{timeout:20000});
+ await page.waitForFunction(()=>document.querySelector('#skyFoundationWheelMount > .sky-foundation-wheel')!==window.__liveContinuity?.wheelBefore,null,{timeout:20000});
+ const continuity=await page.evaluate(()=>{
+   const state=window.__liveContinuity;
+   clearInterval(state.interval);state.observer.disconnect();
+   const mount=document.getElementById('skyFoundationWheelMount');
+   return{hidden:state.hidden,mutations:state.mutations,stable:document.documentElement.dataset.skyWheelStable,visibility:getComputedStyle(mount).visibility,
+     wheelPresent:!!mount.querySelector(':scope > .sky-foundation-wheel')};
+ });
+ assert.deepEqual(continuity.hidden,[],'Live updates must never expose an empty or invisible wheel.');
+ assert.equal(continuity.mutations.includes('absent'),false,'The wheel-stability gate must remain open during Live updates.');
+ assert.equal(continuity.stable,'true','Wheel remains stable after the live update.');
+ assert.equal(continuity.visibility,'visible');
+ assert.equal(continuity.wheelPresent,true);
  // Turning Live off must make a stored snapshot that does not recalculate.
  for(let i=0;i<3;i++){
    const prompt=page.locator('#skyWhereWhenNamePrompt:not([hidden])');
