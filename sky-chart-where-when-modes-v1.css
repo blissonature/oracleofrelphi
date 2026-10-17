@@ -21,3 +21,29 @@
 .sky-where-when-editor .sky-ww-manual{gap:5px}
 .sky-where-when-editor .sky-where-when-mode .sky-where-when-grid{gap:5px}
 .sky-where-when-editor .sky-where-when-mode .sky-location-confirmation{margin-top:1px}
+
+/* Match the When choice row to the Date/Local time grid below it. */
+.sky-where-when-editor .sky-ww-when-row{
+  display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,.95fr);
+  column-gap:5px;align-items:center;min-width:0
+}
+.sky-where-when-editor .sky-ww-when-row .sky-ww-mode-primary{gap:5px;min-width:0}
+.sky-where-when-editor .sky-ww-when-row .sky-ww-choice{gap:4px;font-size:.72rem;min-width:0}
+.sky-where-when-editor .sky-ww-when-row .sky-ww-choice input{flex:0 0 16px;width:16px;height:16px}
+.sky-where-when-editor .sky-ww-when-row .sky-ww-unknown{
+  margin-left:0;min-width:0;justify-self:start;font-size:.60rem;gap:3px
+}
+.sky-where-when-editor .sky-ww-when-row .sky-ww-unknown input{flex:0 0 13px;width:13px;height:13px}
+.sky-where-when-editor .sky-ww-live{position:relative}
+.sky-where-when-editor .sky-ww-live .sky-ww-tooltip{
+  position:absolute;bottom:calc(100% + 8px);left:-55px;z-index:40;
+  width:184px;box-sizing:border-box;padding:8px 9px;
+  border:1px solid rgba(31,27,24,.24);border-radius:8px;
+  background:#2b2825;color:#fff;box-shadow:0 5px 16px rgba(0,0,0,.2);
+  font:650 .65rem/1.35 system-ui,sans-serif;white-space:normal;
+  opacity:0;visibility:hidden;pointer-events:none;transition:opacity .15s ease
+}
+.sky-where-when-editor .sky-ww-live:hover .sky-ww-tooltip,
+.sky-where-when-editor .sky-ww-live:focus-within .sky-ww-tooltip{
+  opacity:1;visibility:visible
+}
