@@ -40,6 +40,7 @@ function installStyles(){
     .sky-where-when-footer{position:relative;display:grid!important;grid-template-columns:minmax(0,1fr)!important;grid-template-rows:auto auto!important;gap:.5rem!important;width:100%;padding:.45rem .62rem .62rem!important;box-sizing:border-box;background:#fffdf8;border-top:1px solid rgba(31,27,24,.12);z-index:2}
     .sky-where-when-footer-actions{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,2fr);gap:.48rem;width:100%}
     .sky-where-when-footer-actions .sky-where-when-button{width:100%;min-width:0;margin:0}
+    .sky-where-when-here-now-action{width:100%;min-width:0;margin:0;font-weight:750}
     .sky-ph-handoff-dialog{width:min(680px,calc(100vw - 2rem));max-width:680px;border:2px solid #dc1f18;border-radius:1.3rem;padding:0;background:#fffdf8;color:#1f1b18;box-shadow:0 24px 70px rgba(0,0,0,.28)}
     .sky-ph-handoff-dialog::backdrop{background:rgba(17,14,12,.48);backdrop-filter:blur(2px)}
     .sky-ph-handoff-inner{padding:1.2rem;display:grid;gap:1rem}
@@ -140,7 +141,7 @@ function editorMarkup(slot,p){
       <details class="sky-where-when-advanced"><summary>Advanced settings</summary><div class="sky-where-when-advanced-body"><label class="sky-where-when-label">Time zone<input class="sky-where-when-input" data-ww-field="timezone" type="text" readonly value="${escapeHtml(selected?.timezone||p.timeZone||'')}"></label><div class="sky-where-when-coordinate-grid"><label class="sky-where-when-label">Latitude<input class="sky-where-when-input" data-ww-field="latitude" type="number" step="0.00001" min="-90" max="90" value="${escapeHtml(displayCoordinate(selected?.latitude??p.latitude))}"></label><label class="sky-where-when-label">Longitude<input class="sky-where-when-input" data-ww-field="longitude" type="number" step="0.00001" min="-180" max="180" value="${escapeHtml(displayCoordinate(selected?.longitude??p.longitude))}"></label></div><div data-ww-paste-inference-host></div></div></details>
       <p class="sky-where-when-status" data-update-now-status aria-live="polite"></p>
     </div>
-    <div class="sky-where-when-footer"><div class="sky-where-when-footer-actions"><button class="sky-where-when-button secondary sky-where-when-cancel" type="button" data-ww-action="cancel">Cancel</button><button class="sky-where-when-button primary" type="submit"${disabled}>Use This Where and When</button></div></div>
+    <div class="sky-where-when-footer"><div class="sky-where-when-footer-actions"><button class="sky-where-when-button secondary sky-where-when-cancel" type="button" data-ww-action="cancel">Cancel</button><button class="sky-where-when-button primary" type="submit"${disabled}>Use This Where and When</button></div><button class="sky-where-when-button secondary sky-where-when-here-now-action" type="button" data-ww-action="here-and-now">Here and Now</button></div>
   </form>`;
 }
 
@@ -447,13 +448,23 @@ async function useHere(slot,button){
   }
 }
 async function hereAndNow(slot){
-  const form=formFor(slot);if(!form)return;setBusy(slot,true);status(slot,'Using your current location and the current instant…');
+  const form=formFor(slot);if(!form)return;
+  setBusy(slot,true);status(slot,'Finding your location and capturing the current instant…');
   try{
-    const packet=await currentLocationPacket();selectLocation(slot,packet);
-    const now=window.luxon?.DateTime?.now(),local=now?.isValid?now.setZone(packet.timezone):null;if(!local?.isValid)throw new Error('The current instant could not be converted to your location.');
+    const packet=await currentLocationPacket();
+    if(!form.isConnected)return;
+    if(!selectLocation(slot,packet))throw new Error('Current browser location could not be applied.');
+    const now=window.luxon?.DateTime?.now(),local=now?.isValid?now.setZone(packet.timezone):null;
+    if(!local?.isValid)throw new Error('The current instant could not be converted to your location.');
     enableKnownTime(form);
-    form.querySelector('[data-ww-field="date"]').value=local.toFormat('yyyy-MM-dd');form.querySelector('[data-ww-field="time"]').value=local.toFormat('HH:mm');setBusy(slot,false);
-    await submitForm(slot,form,{snapshotNow:true,instant:now.toUTC().toISO()});
+    const here=form.querySelector('[data-ww-field="here"]'),nowToggle=form.querySelector('[data-ww-field="now"]');
+    if(here)here.checked=true;
+    if(nowToggle)nowToggle.checked=true;
+    form.dataset.nowInstant=now.toUTC().toISO();
+    updateNowFields(slot);
+    syncModes(slot);
+    setBusy(slot,false);
+    await submitForm(slot,form,{snapshotNow:true,instant:form.dataset.nowInstant});
   }catch(error){setBusy(slot,false);status(slot,error?.code===1?'Location permission was denied.':error?.message||'Here and Now could not be resolved.',true)}
 }
 
