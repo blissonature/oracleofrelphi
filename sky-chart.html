@@ -7,7 +7,7 @@
   // responses can be blocked; use an equivalent commit-pinned CORS asset origin.
   // This runs only inside the preview route and has no production effect.
   (function(){
-    if(!/(^|\\/)sky-chart-preview\\/sky-chart\\.html$/.test(location.pathname))return;
+    if(!location.pathname.endsWith('/sky-chart-preview/sky-chart.html'))return;
     const ref=new URLSearchParams(location.search).get('ref')||'';
     if(!/^[a-f0-9]{40}$/i.test(ref))return;
     const base=document.querySelector('head > base[href*="cdn.jsdelivr.net/gh/blissonature/oracleofrelphi@"]');
