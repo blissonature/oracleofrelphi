@@ -145,6 +145,11 @@ assert.ok(Math.abs(unknownGeometry.signGlyphLane-(unknownGeometry.inner+unknownG
 assert.ok(unknownGeometry.placementLanes.every(value=>value<unknownGeometry.outer&&value>unknownGeometry.signGlyphLane),'Collision layout must preserve the inside-edge placement lane.');
 assert.ok(unknownGeometry.moonRange>0,'Unknown-time standalone wheel must retain its Moon range.');
 
+await page.waitForTimeout(200);
+for(let i=0;i<3;i++){
+  const prompt=page.locator('#skyWhereWhenNamePrompt:not([hidden])');
+  if(await prompt.count())await prompt.locator('[data-sky-name-cancel]').click();
+}
 await whereTabA.click();
 const knownEditor=page.locator('#skyFoundationA .sky-where-when-editor');await knownEditor.waitFor();
 const knownToggle=knownEditor.locator('[data-ww-field="time-unknown"]');
@@ -160,6 +165,11 @@ assert.notEqual(knownStored.calcProfile.houseSystem,'none','Known-time commit mu
 assert.equal(knownStored.calcProfile.houseCusps.length,12,'Known-time commit must restore 12 house cusps.');
 assert.ok(knownStored.placements.Ascendant&&knownStored.placements.Midheaven,'Known-time commit must restore chart angles.');
 
+await page.waitForTimeout(200);
+for(let i=0;i<3;i++){
+  const prompt=page.locator('#skyWhereWhenNamePrompt:not([hidden])');
+  if(await prompt.count())await prompt.locator('[data-sky-name-cancel]').click();
+}
 await whereTabA.click();
 const reopenedKnown=page.locator('#skyFoundationA .sky-where-when-editor');await reopenedKnown.waitFor();
 assert.equal(await reopenedKnown.locator('[data-ww-field="time-unknown"]').isChecked(),false,'Reopened known-time sky must keep Time unknown off.');
