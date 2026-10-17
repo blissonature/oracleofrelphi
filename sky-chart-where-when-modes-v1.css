@@ -1,6 +1,7 @@
 /* Independent Where/Here and When/Now choices. Narrow Sky cards are the sizing context. */
-.sky-where-when-editor .sky-where-when-mode{gap:5px!important;padding:9px 10px 10px!important}
-.sky-where-when-editor .sky-ww-mode-row{display:flex;align-items:center;justify-content:space-between;min-height:29px;gap:8px}
+.sky-where-when-editor .sky-where-when-mode{gap:4px!important;padding:7px 10px 8px!important}
+.sky-where-when-editor .sky-ww-mode-row{display:flex;align-items:center;justify-content:flex-start;min-height:28px;gap:6px;min-width:0}
+.sky-where-when-editor .sky-ww-mode-primary{display:inline-flex;align-items:center;flex:0 0 auto;gap:5px;min-width:0}
 .sky-where-when-editor .sky-ww-choice{display:inline-flex;align-items:center;gap:7px;min-height:28px;color:#24201c;font:850 .79rem/1.2 system-ui,sans-serif;cursor:pointer}
 .sky-where-when-editor .sky-ww-choice input{width:17px;height:17px;margin:0;accent-color:#c9211e;cursor:pointer}
 .sky-where-when-editor .sky-ww-choice:focus-within{outline:2px solid rgba(201,33,30,.2);outline-offset:3px;border-radius:4px}
@@ -15,6 +16,8 @@
 .sky-where-when-editor [data-ww-manual-when][hidden],
 .sky-where-when-editor [data-ww-here-value][hidden],
 .sky-where-when-editor [data-ww-now-value][hidden]{display:none!important}
-.sky-where-when-editor .sky-ww-manual .sky-time-unknown-option{justify-self:end;min-height:24px}
+.sky-where-when-editor .sky-ww-mode-row .sky-ww-unknown{margin-left:auto;min-height:28px;min-width:0;flex:0 1 auto;font-size:.60rem;gap:4px;white-space:nowrap}
+.sky-where-when-editor .sky-ww-mode-row .sky-ww-unknown input{flex:none}
+.sky-where-when-editor .sky-ww-manual{gap:5px}
 .sky-where-when-editor .sky-where-when-mode .sky-where-when-grid{gap:5px}
 .sky-where-when-editor .sky-where-when-mode .sky-location-confirmation{margin-top:1px}
