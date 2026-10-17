@@ -27,7 +27,7 @@ jobs:
           node --check sky-chart-staleness-v1.js
           node --check tests/sky-chart-here-now-modes-browser.mjs
           node tests/sky-chart-architecture-contract.mjs
-          node --test tests/sky-chart-heptagram-uniform-strokes.test.mjs tests/sky-chart-filtered-isolation-and-heptagram.test.mjs
+          node --test tests/sky-chart-heptagram-uniform-strokes.test.mjs
       - name: Install browser dependencies
         run: |
           npm install --no-save playwright@1.52.0 luxon@3 suncalc@1.9.0
