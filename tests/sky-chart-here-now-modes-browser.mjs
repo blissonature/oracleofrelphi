@@ -94,5 +94,29 @@ try{
  assert.equal(committed.calcProfile.timeZone,'America/Denver');
  assert.ok(Math.abs(Date.parse(committed.calcProfile.instant)-Date.now())<60000,'Committed Now must use the current instant.');
  assert.ok(committed.placements.Ascendant&&committed.placements.Midheaven);
- console.log('Independent Here/Now modes, preview and live commit passed.');
+ // Turning Live off must make a stored snapshot that does not recalculate.
+ for(let i=0;i<3;i++){
+   const prompt=page.locator('#skyWhereWhenNamePrompt:not([hidden])');
+   if(await prompt.count())await prompt.locator('[data-sky-name-cancel]').click();
+ }
+ await tab.click();
+ const fixedForm=page.locator('#skyFoundationB .sky-where-when-editor');
+ await fixedForm.waitFor();
+ assert.equal(await fixedForm.locator('[data-ww-field="now"]').isChecked(),true);
+ assert.equal(await fixedForm.locator('[data-ww-field="live"]').isChecked(),true);
+ await fixedForm.locator('[data-ww-field="live"]').uncheck();
+ const frozenMoment=await fixedForm.getAttribute('data-now-instant');
+ assert.ok(Date.parse(frozenMoment)>0);
+ await fixedForm.locator('button[type="submit"]').click();
+ await page.waitForFunction(()=>!!JSON.parse(localStorage.getItem('relphiSkyChartB'))?.metadata?.capturedNowAt,null,{timeout:15000});
+ const fixed=await page.evaluate(()=>JSON.parse(localStorage.getItem('relphiSkyChartB')));
+ assert.equal(fixed.metadata.liveContinuous,undefined,'Fixed Now must not retain live mode.');
+ assert.equal(fixed.metadata.liveNowOrigin,undefined,'Fixed Now must not retain a live origin.');
+ assert.equal(fixed.metadata.capturedNowAt,frozenMoment,'Fixed Now must preserve the instant of turning Live off.');
+ assert.equal(fixed.calcProfile.instant,frozenMoment,'Chart positions must be calculated for the held instant.');
+ await page.evaluate(()=>window.RelphiSkyWhereWhen.refreshContinuous('B'));
+ await page.waitForTimeout(300);
+ assert.equal((await page.evaluate(()=>JSON.parse(localStorage.getItem('relphiSkyChartB')))).calcProfile.instant,frozenMoment,'A captured snapshot must not automatically refresh.');
+ assert.deepEqual(errors,[],'No uncaught page errors.');
+ console.log('Here/Now alignment, tooltip, Live updates, and fixed captured snapshot passed.');
 } finally{await browser.close()}
