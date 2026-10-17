@@ -1,0 +1,20 @@
+/* Independent Where/Here and When/Now choices. Narrow Sky cards are the sizing context. */
+.sky-where-when-editor .sky-where-when-mode{gap:5px!important;padding:9px 10px 10px!important}
+.sky-where-when-editor .sky-ww-mode-row{display:flex;align-items:center;justify-content:space-between;min-height:29px;gap:8px}
+.sky-where-when-editor .sky-ww-choice{display:inline-flex;align-items:center;gap:7px;min-height:28px;color:#24201c;font:850 .79rem/1.2 system-ui,sans-serif;cursor:pointer}
+.sky-where-when-editor .sky-ww-choice input{width:17px;height:17px;margin:0;accent-color:#c9211e;cursor:pointer}
+.sky-where-when-editor .sky-ww-choice:focus-within{outline:2px solid rgba(201,33,30,.2);outline-offset:3px;border-radius:4px}
+.sky-where-when-editor .sky-ww-refresh{appearance:none;display:grid;place-items:center;flex:0 0 28px;width:28px;height:28px;padding:4px;border:1px solid rgba(31,27,24,.18);border-radius:999px;background:#fff;color:#625951;cursor:pointer}
+.sky-where-when-editor .sky-ww-refresh svg{display:block;width:17px;height:17px}
+.sky-where-when-editor .sky-ww-refresh:hover,.sky-where-when-editor .sky-ww-refresh:focus-visible{color:#c9211e;outline:2px solid rgba(201,33,30,.15);outline-offset:1px}
+.sky-where-when-editor .sky-ww-refresh:disabled{opacity:.4;cursor:not-allowed}
+.sky-where-when-editor .sky-ww-mode-value{margin:0;padding:0 1px;color:#514941;font:650 .67rem/1.35 system-ui,sans-serif;overflow-wrap:anywhere}
+.sky-where-when-editor .sky-ww-mode-value.sky-ww-clock{font-variant-numeric:tabular-nums;color:#24201c}
+.sky-where-when-editor .sky-ww-manual{display:grid;gap:7px;min-width:0;max-width:100%}
+.sky-where-when-editor [data-ww-manual-where][hidden],
+.sky-where-when-editor [data-ww-manual-when][hidden],
+.sky-where-when-editor [data-ww-here-value][hidden],
+.sky-where-when-editor [data-ww-now-value][hidden]{display:none!important}
+.sky-where-when-editor .sky-ww-manual .sky-time-unknown-option{justify-self:end;min-height:24px}
+.sky-where-when-editor .sky-where-when-mode .sky-where-when-grid{gap:5px}
+.sky-where-when-editor .sky-where-when-mode .sky-location-confirmation{margin-top:1px}
