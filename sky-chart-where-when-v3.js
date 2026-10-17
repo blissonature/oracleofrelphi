@@ -122,8 +122,7 @@ function editorMarkup(slot,p){
   const dateTime=String(p.dateTime||''),date=dateTime.slice(0,10),time=dateTime.slice(11,16),disabled=selected?'':' disabled';
   const savedMetadata=payload(slot)?.metadata||{};
   const here=selected?.source==='current-location',now=!p.timeUnknown&&(savedMetadata.liveNowOrigin==='use-now'||!!savedMetadata.capturedNowAt);
-  const live=now&&savedMetadata.liveContinuous===true&&savedMetadata.liveNowOrigin==='use-now';
-  const moment=now?(live?new Date().toISOString():String(savedMetadata.capturedNowAt||savedMetadata.liveNowAt||p.instant||'')):'';
+  const moment=now?String(savedMetadata.capturedNowAt||savedMetadata.liveNowAt||p.instant||''):'';
   const nowMoment=Number.isFinite(Date.parse(moment))?moment:'';
   return `<form class="sky-where-when-editor" data-slot="${slot}" data-now-instant="${escapeHtml(nowMoment)}">
     <div class="sky-where-when-scroll-body">
@@ -134,7 +133,7 @@ function editorMarkup(slot,p){
         <div class="sky-ww-manual" data-ww-manual-where${here?' hidden':''}><label class="sky-where-when-label" for="skyWhereLocation${slot}">Search for a location</label><div class="sky-where-search-row"><input id="skyWhereLocation${slot}" class="sky-where-when-input${selected?.source==='current-location'?' is-current-location':''}" data-ww-field="location-query" type="search" autocomplete="off" value="${escapeHtml(selected?.source==='current-location'?'':selected?.query||'')}" placeholder="Ex. City, State or Country"><button class="sky-where-when-button secondary" type="button" data-ww-action="search-location">Search</button></div><div class="sky-location-results" aria-live="polite"></div>${confirmationMarkup(selected)}</div>
       </fieldset>
       <fieldset class="sky-where-when-section sky-where-when-mode" data-ww-when${disabled}><legend>When</legend>
-        <div class="sky-ww-mode-row sky-ww-when-row"><span class="sky-ww-mode-primary"><label class="sky-ww-choice"><input data-ww-field="now" type="checkbox"${now?' checked':''}${disabled}><span>Now</span></label><label class="sky-ww-choice sky-ww-live"><input data-ww-field="live" type="checkbox"${live?' checked':''}${disabled} aria-describedby="skyLiveHelp${slot}"><span>Live</span><span class="sky-ww-tooltip" id="skyLiveHelp${slot}" role="tooltip">Live continually updates the sky. Off holds the captured moment.</span></label></span><label class="sky-time-unknown-option sky-ww-unknown"><input data-ww-field="time-unknown" type="checkbox"${p.timeUnknown?' checked':''}${disabled}><span>Time unknown</span></label></div>
+        <div class="sky-ww-mode-row sky-ww-when-row"><span class="sky-ww-mode-primary"><label class="sky-ww-choice"><input data-ww-field="now" type="checkbox"${now?' checked':''}${disabled}><span>Now</span></label><button class="sky-ww-refresh" type="button" data-ww-action="refresh-now"${disabled} aria-label="Refresh current instant" title="Capture current instant"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6v5h-5M4 18v-5h5M18 10A7 7 0 0 0 6 7L4 9M6 14a7 7 0 0 0 12 3l2-2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button></span><label class="sky-time-unknown-option sky-ww-unknown"><input data-ww-field="time-unknown" type="checkbox"${p.timeUnknown?' checked':''}${disabled}><span>Time unknown</span></label></div>
         <p class="sky-ww-mode-value sky-ww-clock" data-ww-now-value${now?'':' hidden'} role="timer" aria-live="off"></p>
         <div class="sky-ww-manual" data-ww-manual-when${now?' hidden':''}><div class="sky-where-when-grid"><label class="sky-where-when-label">Date<input class="sky-where-when-input" data-ww-field="date" type="date" value="${escapeHtml(date)}"${disabled}></label><label class="sky-where-when-label">Local time<input class="sky-where-when-input" data-ww-field="time" type="time" value="${escapeHtml(time)}"${p.timeUnknown?' disabled':disabled}></label></div></div>
       </fieldset>
@@ -149,29 +148,28 @@ function modeValue(form,name){return form?.querySelector('[data-ww-field="'+name
 function captureMoment(form){if(form)form.dataset.nowInstant=new Date().toISOString()}
 function syncModes(slot){
   const form=formFor(slot);if(!form)return;
-  const here=modeValue(form,'here'),now=modeValue(form,'now'),live=modeValue(form,'live');
+  const here=modeValue(form,'here'),now=modeValue(form,'now');
   const manualWhere=form.querySelector('[data-ww-manual-where]'),manualWhen=form.querySelector('[data-ww-manual-when]');
   if(manualWhere)manualWhere.hidden=here;
   if(manualWhen)manualWhen.hidden=now;
   const hereValue=form.querySelector('[data-ww-here-value]'),nowValue=form.querySelector('[data-ww-now-value]');
   if(hereValue){hereValue.hidden=!here;hereValue.textContent=here?cardState[slot].selected?.canonical||'Finding your location…':''}
   if(nowValue)nowValue.hidden=!now;
-  form.classList.toggle('sky-ww-is-live',now&&live);
   if(now)updateNowFields(slot);
   window.RelphiSkyWhereWhenDraftHeptagram?.render?.(slot,0);
 }
 function updateNowFields(slot){
   const form=formFor(slot);if(!form||!modeValue(form,'now'))return;
-  const selected=cardState[slot].selected,live=modeValue(form,'live'),DateTime=window.luxon?.DateTime;
+  const selected=cardState[slot].selected,DateTime=window.luxon?.DateTime;
   if(!selected?.timezone||!DateTime)return;
   if(!form.dataset.nowInstant)captureMoment(form);
-  const instant=live?DateTime.now():DateTime.fromISO(form.dataset.nowInstant,{setZone:true});
+  const instant=DateTime.fromISO(form.dataset.nowInstant,{setZone:true});
   if(!instant?.isValid)return;
   const local=instant.setZone(selected.timezone);if(!local?.isValid)return;
   const date=form.querySelector('[data-ww-field="date"]'),time=form.querySelector('[data-ww-field="time"]'),summary=form.querySelector('[data-ww-now-value]');
   if(date)date.value=local.toFormat('yyyy-MM-dd');
   if(time)time.value=local.toFormat('HH:mm');
-  if(summary)summary.textContent=(live?'● Live · ':'Captured · ')+local.toFormat('ccc, LLL d · h:mm:ss a')+' · '+selected.timezone;
+  if(summary)summary.textContent='Captured · '+local.toFormat('ccc, LLL d · h:mm:ss a')+' · '+selected.timezone;
 }
 async function checkHere(slot){
   const form=formFor(slot),here=form?.querySelector('[data-ww-field="here"]');
@@ -191,45 +189,44 @@ async function checkHere(slot){
 }
 function updateMode(slot,kind,checked){
   const form=formFor(slot);if(!form)return;
-  const now=form.querySelector('[data-ww-field="now"]'),live=form.querySelector('[data-ww-field="live"]');
   if(kind==='here'){
     if(checked){syncModes(slot);void checkHere(slot)}
     else{syncModes(slot);status(slot,'Search for a location, or keep the selected location.')}
     return;
   }
-  if((kind==='now'||kind==='live')&&checked&&!cardState[slot].selected){
-    form.querySelector('[data-ww-field="'+kind+'"]').checked=false;
-    return status(slot,'Choose a location before using Now or Live.',true);
+  if(kind!=='now')return;
+  if(checked&&!cardState[slot].selected){
+    form.querySelector('[data-ww-field="now"]').checked=false;
+    return status(slot,'Choose a location before using Now.',true);
   }
-  if(kind==='live'){
-    if(checked){
-      if(!now.checked){
-        form.dataset.manualDate=form.querySelector('[data-ww-field="date"]')?.value||'';
-        form.dataset.manualTime=form.querySelector('[data-ww-field="time"]')?.value||'';
-        now.checked=true;enableKnownTime(form);
-      }
-      if(!form.dataset.nowInstant)captureMoment(form);
-      status(slot,'Live is on. The sky will continue updating after confirmation.');
-    }else{
-      captureMoment(form);
-      status(slot,'Live is off. This instant is held until you choose another.');
-    }
-  }else if(kind==='now'){
-    if(checked){
-      enableKnownTime(form);
-      form.dataset.manualDate=form.querySelector('[data-ww-field="date"]')?.value||'';
-      form.dataset.manualTime=form.querySelector('[data-ww-field="time"]')?.value||'';
-      captureMoment(form);
-      status(slot,'Current moment captured. Enable Live for continuous updates.');
-    }else{
-      live.checked=false;delete form.dataset.nowInstant;
-      const date=form.querySelector('[data-ww-field="date"]'),time=form.querySelector('[data-ww-field="time"]');
-      if(date&&form.dataset.manualDate)date.value=form.dataset.manualDate;
-      if(time&&form.dataset.manualTime)time.value=form.dataset.manualTime;
-      status(slot,'Custom date and time selected.');
-    }
+  if(checked){
+    enableKnownTime(form);
+    form.dataset.manualDate=form.querySelector('[data-ww-field="date"]')?.value||'';
+    form.dataset.manualTime=form.querySelector('[data-ww-field="time"]')?.value||'';
+    captureMoment(form);
+    status(slot,'Current instant captured. Refresh to capture a different instant.');
+  }else{
+    delete form.dataset.nowInstant;
+    const date=form.querySelector('[data-ww-field="date"]'),time=form.querySelector('[data-ww-field="time"]');
+    if(date&&form.dataset.manualDate)date.value=form.dataset.manualDate;
+    if(time&&form.dataset.manualTime)time.value=form.dataset.manualTime;
+    status(slot,'Custom date and time selected.');
   }
   syncModes(slot);
+}
+function refreshNow(slot){
+  const form=formFor(slot);if(!form)return;
+  const toggle=form.querySelector('[data-ww-field="now"]');
+  if(!toggle)return;
+  if(!toggle.checked){
+    toggle.checked=true;
+    updateMode(slot,'now',true);
+    return;
+  }
+  captureMoment(form);
+  updateNowFields(slot);
+  window.RelphiSkyWhereWhenDraftHeptagram?.render?.(slot,0);
+  status(slot,'Current instant refreshed. Confirm to apply it to the chart.');
 }
 function keepCommittedHeptagramInSummary(slot){
   const refs=shell(slot),frame=refs?.root?.querySelector(`[data-sky-heptagram-frame="${slot}"]`);
@@ -390,8 +387,8 @@ async function submitCalculated(slot,form,options={}){
   if(!date||(!timeUnknown&&!time))return status(slot,timeUnknown?'Enter the local date.':'Enter both the local date and local time.',true);
   setBusy(slot,true);status(slot,'Calculating placements and Planetary Hours…');
   try{
-    const isNow=modeValue(form,'now'),isLive=isNow&&modeValue(form,'live');
-    const effectiveOptions=isNow?{...options,timeUnknown:false,liveOrigin:isLive?'use-now':'',instant:isLive?window.luxon.DateTime.now().toUTC().toISO():form.dataset.nowInstant,continuousNow:isLive,snapshotNow:!isLive}:{...options,timeUnknown};
+    const isNow=modeValue(form,'now');
+    const effectiveOptions=isNow?{...options,timeUnknown:false,liveOrigin:'',instant:form.dataset.nowInstant,snapshotNow:true}:{...options,timeUnknown};
     const nextPayload=calculateSky(slot,selected,date,time,effectiveOptions);
     // Chiron is optional when the local ephemeris cannot cover this date.
     status(slot,'Calculating Chiron…');
@@ -406,11 +403,6 @@ async function submitCalculated(slot,form,options={}){
       try{localStorage.removeItem(`relphiSkyLiveAgeAnchor${slot}`)}catch(_){}
       window.dispatchEvent(new CustomEvent('relphi:sky-live-origin-changed',{detail:{slot,origin:null,reason:'fixed-now-snapshot'}}));
       window.dispatchEvent(new CustomEvent('relphi:sky-name-updated',{detail:{slot,name:'Now',source:'fixed-now-snapshot'}}));
-    }
-    if(effectiveOptions.liveOrigin==='use-now'){
-      try{localStorage.setItem(`relphiSkyLiveAgeAnchor${slot}`,JSON.stringify({origin:'use-now',at:nextPayload.metadata.liveNowAt}))}catch(_){}
-      window.dispatchEvent(new CustomEvent('relphi:sky-live-origin-changed',{detail:{slot,origin:'use-now',at:nextPayload.metadata.liveNowAt}}));
-      window.dispatchEvent(new CustomEvent('relphi:sky-name-updated',{detail:{slot,name:'Now',source:'use-now'}}));
     }
   }catch(error){setBusy(slot,false);status(slot,error.message||'The Sky could not be calculated.',true)}
 }
@@ -434,7 +426,7 @@ async function currentLocalTime(slot){
   const now=window.luxon?.DateTime?.now(),local=now?.isValid?now.setZone(selected.timezone):null;if(!local?.isValid)return status(slot,'The current instant could not be converted to that location.',true);
   enableKnownTime(form);
   form.querySelector('[data-ww-field="date"]').value=local.toFormat('yyyy-MM-dd');form.querySelector('[data-ww-field="time"]').value=local.toFormat('HH:mm');window.RelphiSkyWhereWhenDraftHeptagram?.render?.(slot,0);
-  await submitForm(slot,form,{liveOrigin:'use-now',instant:now.toUTC().toISO()});
+  await submitForm(slot,form,{snapshotNow:true,instant:now.toUTC().toISO()});
 }
 async function useHere(slot,button){
   const form=formFor(slot);if(!form)return;
@@ -461,7 +453,7 @@ async function hereAndNow(slot){
     const now=window.luxon?.DateTime?.now(),local=now?.isValid?now.setZone(packet.timezone):null;if(!local?.isValid)throw new Error('The current instant could not be converted to your location.');
     enableKnownTime(form);
     form.querySelector('[data-ww-field="date"]').value=local.toFormat('yyyy-MM-dd');form.querySelector('[data-ww-field="time"]').value=local.toFormat('HH:mm');setBusy(slot,false);
-    await submitForm(slot,form,{liveOrigin:'use-now',instant:now.toUTC().toISO()});
+    await submitForm(slot,form,{snapshotNow:true,instant:now.toUTC().toISO()});
   }catch(error){setBusy(slot,false);status(slot,error?.code===1?'Location permission was denied.':error?.message||'Here and Now could not be resolved.',true)}
 }
 
@@ -505,43 +497,18 @@ function scheduleSummary(slot,force=false){const state=cardState[slot];if(state.
 // charts never enter this loop. A 60-second cadence moves fast angles and points
 // without rebuilding the entire wheel every second.
 const continuousBusy={A:false,B:false};
-async function refreshContinuousSky(slot){
-  if(continuousBusy[slot]||document.hidden||transactionState.editing.size)return;
-  const before=payload(slot),metadata=before?.metadata,prior=before?.calcProfile;
-  if(metadata?.liveContinuous!==true||metadata.liveNowOrigin!=='use-now'||metadata.savedSkyId||metadata.savedSkyLoadedAt||before.saved===true||!completeProfile(prior)||prior.timeUnknown)return;
-  const previousInstant=Date.parse(prior.instant||'');
-  if(Number.isFinite(previousInstant)&&Date.now()-previousInstant<55000)return;
-  const selected=currentSelection(slot,prior);if(!selected)return;
-  const token=localStorage.getItem(SLOT_KEYS[slot]);
-  continuousBusy[slot]=true;
-  try{
-    const now=window.luxon?.DateTime?.now(),local=now?.setZone(selected.timezone);
-    if(!local?.isValid)return;
-    const next=calculateSky(slot,selected,local.toFormat('yyyy-MM-dd'),local.toFormat('HH:mm'),{liveOrigin:'use-now',continuousNow:true,instant:now.toUTC().toISO()});
-    if(window.RelphiChironEphemeris)await window.RelphiChironEphemeris.completePayload(next);
-    // A user may load another sky or start editing while the ephemeris is running.
-    if(document.hidden||transactionState.editing.size||localStorage.getItem(SLOT_KEYS[slot])!==token)return;
-    writeJson(SLOT_KEYS[slot],next);
-    dispatchSlotChange(slot);
-    window.dispatchEvent(new CustomEvent('relphi:sky-live-origin-changed',{detail:{slot,origin:'use-now',at:next.metadata.liveNowAt}}));
-    window.dispatchEvent(new CustomEvent('relphi:sky-working-copy-updated',{detail:{slot,source:'continuous-now',dateTime:next.calcProfile.dateTime,location:selected.canonical}}));
-    scheduleSummary(slot,true);
-  }catch(error){console.warn('Live Sky refresh paused:',error)}
-  finally{continuousBusy[slot]=false}
-}
-let liveTick=0,lastContinuousCheck=0;
-function livingTick(){
-  if(document.hidden)return;
-  for(const slot of ['A','B']){
-    const form=formFor(slot);
-    if(form&&modeValue(form,'now')&&modeValue(form,'live'))updateNowFields(slot);
-    if(form&&modeValue(form,'now')&&modeValue(form,'live')&&liveTick%15===0)window.RelphiSkyWhereWhenDraftHeptagram?.render?.(slot,0);
-  }
-  if(Date.now()-lastContinuousCheck>=10000){
-    lastContinuousCheck=Date.now();
-    for(const slot of ['A','B'])void refreshContinuousSky(slot);
-  }
-  liveTick++;
+function freezeLegacyLiveSky(slot){
+  const value=payload(slot),meta=value?.metadata||{};
+  if(meta.liveNowOrigin!=='use-now'&&meta.liveContinuous!==true)return;
+  const captured=String(value?.calcProfile?.instant||meta.liveNowAt||'');
+  const metadata={...meta};
+  delete metadata.liveContinuous;delete metadata.liveNowOrigin;delete metadata.liveNowAt;
+  delete metadata.liveAgeAnchorAt;delete metadata.liveNowLatitude;delete metadata.liveNowLongitude;
+  if(Number.isFinite(Date.parse(captured)))metadata.capturedNowAt=captured;
+  metadata.liveNowDisabled=true;metadata.liveNowDisabledReason='fixed-now-snapshot';
+  const calcProfile={...value.calcProfile};delete calcProfile.liveNowOrigin;delete calcProfile.liveNowAt;
+  writeJson(SLOT_KEYS[slot],{...value,metadata,calcProfile});
+  try{localStorage.removeItem(`relphiSkyLiveAgeAnchor${slot}`)}catch(_){}
 }
 window.RelphiSkyWhereWhen=Object.freeze({
   form:formFor,
@@ -549,22 +516,21 @@ window.RelphiSkyWhereWhen=Object.freeze({
   finishExternalCommit:(slot,detail)=>finishCommitted(slot,detail),
   status,
   setBusy,
-  profile:profileFor,
-  refreshContinuous:refreshContinuousSky
+  profile:profileFor
 });
 
 document.addEventListener('click',event=>{
   const actionNode=event.target.closest?.('[data-ww-action]');if(!actionNode)return;const slot=eventSlot(actionNode);if(!slot)return;const action=actionNode.dataset.wwAction;
-  if(action==='cancel')closeEditor(slot);else if(action==='search-location')void searchLocation(slot);else if(action==='select-location')selectLocation(slot,actionNode);else if(action==='refresh-here'){const toggle=formFor(slot)?.querySelector('[data-ww-field="here"]');if(toggle&&!toggle.checked){toggle.checked=true;syncModes(slot)}void checkHere(slot)}else if(action==='use-here')void useHere(slot,actionNode);else if(action==='use-now')void currentLocalTime(slot);else if(action==='here-and-now')void hereAndNow(slot);
+  if(action==='cancel')closeEditor(slot);else if(action==='search-location')void searchLocation(slot);else if(action==='select-location')selectLocation(slot,actionNode);else if(action==='refresh-here'){const toggle=formFor(slot)?.querySelector('[data-ww-field="here"]');if(toggle&&!toggle.checked){toggle.checked=true;syncModes(slot)}void checkHere(slot)}else if(action==='refresh-now')refreshNow(slot);else if(action==='use-here')void useHere(slot,actionNode);else if(action==='use-now')void currentLocalTime(slot);else if(action==='here-and-now')void hereAndNow(slot);
 });
 document.addEventListener('change',event=>{
-  const modeToggle=event.target.closest?.('[data-ww-field="here"],[data-ww-field="now"],[data-ww-field="live"]');
+  const modeToggle=event.target.closest?.('[data-ww-field="here"],[data-ww-field="now"]');
   if(modeToggle){const form=modeToggle.closest('.sky-where-when-editor');if(form)updateMode(form.dataset.slot,modeToggle.dataset.wwField,modeToggle.checked);return}
   const toggle=event.target.closest?.('[data-ww-field="time-unknown"]');if(!toggle)return;
   const form=toggle.closest('.sky-where-when-editor');if(!form)return;
   const unknown=toggle.checked,time=form.querySelector('[data-ww-field="time"]'),now=form.querySelector('[data-ww-field="now"]'),slot=form.dataset.slot,mount=form.querySelector(`[data-ww-heptagram-slot="${slot}"]`);
-  // Unknown time and a live instant cannot both be selected.
-  if(unknown&&now?.checked){now.checked=false;form.querySelector('[data-ww-field="live"]').checked=false;delete form.dataset.nowInstant;syncModes(slot)}
+  // Unknown time and a captured instant are mutually exclusive.
+  if(unknown&&now?.checked){now.checked=false;delete form.dataset.nowInstant;syncModes(slot)}
   if(time)time.disabled=unknown;
   if(unknown){
     mount?.querySelectorAll('[data-sky-heptagram-frame],[data-draft-where-when-link],[data-draft-where-when],.sky-ph-jump').forEach(node=>node.remove());
@@ -679,7 +645,7 @@ window.addEventListener('relphi:sky-foundation-ready',()=>{scheduleSummary('A');
 window.addEventListener('relphi:sky-name-updated',event=>{const slot=event.detail?.slot;if(SLOT_KEYS[slot]){window.RelphiSkyCardShell?.sync?.(slot,payload(slot));scheduleSummary(slot,true)}});
 window.addEventListener('resize',()=>{['A','B'].forEach(slot=>{const svg=shell(slot)?.heptagram;if(svg&&svg.dataset.canonicalSourceReady==='true')svg.setAttribute('viewBox',window.matchMedia?.('(max-width:620px)')?.matches?'0 -8 360 368':'0 0 360 360')})},{passive:true});
 function recoverWhereWhen(){reconcileWhereWhenTransaction();['A','B'].forEach(slot=>{window.RelphiSkyCardShell?.ensure?.(slot,payload(slot));scheduleSummary(slot,true)})}
-function start(){installStyles();['A','B'].forEach(slot=>{shell(slot);scheduleSummary(slot)});schedulePlanetaryHoursHandoff();setInterval(livingTick,1000);livingTick()}
+function start(){installStyles();['A','B'].forEach(slot=>{freezeLegacyLiveSky(slot);shell(slot);scheduleSummary(slot)});schedulePlanetaryHoursHandoff()}
 window.addEventListener('relphi:sky-session-recovered',recoverWhereWhen);
 document.readyState==='loading'?document.addEventListener('DOMContentLoaded',start,{once:true}):start();
 })();
