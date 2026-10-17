@@ -34,7 +34,7 @@ try{
    const centerY=r=>(r.top+r.bottom)/2;
    const whereChoice=rect('[data-ww-where] .sky-ww-choice'),whereRefresh=rect('[data-ww-action="refresh-here"]');
    const nowChoice=rect('[data-ww-when] .sky-ww-choice'),live=rect('[data-ww-field="live"]'),unknown=rect('[data-ww-when] .sky-ww-unknown');
-   const row=rect('[data-ww-when] .sky-ww-mode-row'),localTime=rect('[data-ww-field="time"]');
+   const row=rect('[data-ww-when] .sky-ww-mode-row'),localTime=rect('[data-ww-manual-when] .sky-where-when-grid > label:last-child');
    return{whereGap:whereRefresh.left-whereChoice.right,nowAlignment:Math.abs(centerY(live)-centerY(nowChoice)),unknownAlignment:Math.abs(centerY(unknown)-centerY(nowChoice)),unknownLeft:unknown.left,localTimeLeft:localTime.left,unknownOverflow:unknown.right-row.right};
  });
  assert.ok(spacing.whereGap>=0&&spacing.whereGap<=8,`Here refresh should sit immediately beside Here: ${JSON.stringify(spacing)}`);
