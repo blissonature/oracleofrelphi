@@ -2,6 +2,16 @@
 <html lang="en" data-sky-b-present="false" data-sky-last-mode="single">
 <head>
   <meta charset="utf-8">
+  <script>
+  // Resolve revision-pinned preview assets without the jsDelivr SVG/CSS blocks.
+  (function(){
+    if(!location.pathname.endsWith('/sky-chart-preview/sky-chart.html'))return;
+    const ref=new URLSearchParams(location.search).get('ref')||'';
+    if(!/^[a-f0-9]{40}$/i.test(ref))return;
+    const base=document.querySelector('head > base[href*="cdn.jsdelivr.net/gh/blissonature/oracleofrelphi@"]');
+    if(base)base.href='https://raw.githack.com/blissonature/oracleofrelphi/'+ref+'/';
+  })();
+  </script>
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Sky Chart · Oracle of Relphi</title>
   <meta name="robots" content="noindex,nofollow,noarchive">
@@ -123,7 +133,7 @@
   <script src="sky-chart-placement-popover-cleanup-v1.js?v=1"></script>
   <script src="sky-chart-placement-compact-v1.js?v=4"></script>
   <script src="sky-chart-vocab-tab-v1.js?v=98"></script>
-  <script src="sky-chart-vocab-copy-v1.js?v=2"></script>
+  <script src="sky-chart-vocab-copy-v1.js?v=3"></script>
   <script src="sky-chart-aspect-multiselect-v1.js?v=9"></script>
   <script src="sky-chart-aspect-scope-matrix-v1.js?v=19"></script>
   <script src="sky-chart-aspect-configurations-v1.js?v=40"></script>
