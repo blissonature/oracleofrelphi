@@ -41,6 +41,29 @@ try{
    console.log(kind.toUpperCase(),JSON.stringify({state,errors:errors.slice(0,15),failures:failures.slice(0,30)}));
    await page.screenshot({path:`sky-remote-${kind}.png`,fullPage:true});
    if(kind==='preview'&&(!state.wheelCount||state.mountVisible==='hidden'||state.rootBusy!=='false'||errors.length)){failed=true;console.error('FAILED: hosted exact-revision preview did not display a ready wheel');}
+   if(kind==='preview'&&!failed){
+     await page.locator('#skyFoundationB [data-sky-drawer-tab="where"]').click();
+     await page.waitForSelector('#skyFoundationB .sky-where-when-editor [data-ww-field="live"]',{timeout:15000});
+     await page.waitForSelector('#skyFoundationB [data-draft-heptagram-ready="true"] .sky-where-when-draft-heptagram',{timeout:20000});
+     const detail=await page.evaluate(()=>{
+       const hepta=document.querySelector('#skyFoundationB .sky-where-when-draft-heptagram');
+       const future=hepta?.querySelector('.sky-ph-week-segment.future');
+       const current=hepta?.querySelector('.sky-ph-week-segment.current');
+       const read=n=>{if(!n)return null;const cs=getComputedStyle(n);return{color:cs.stroke,width:cs.strokeWidth,dash:cs.strokeDasharray}};
+       const mount=document.getElementById('skyFoundationWheelMount');
+       return{canonical:hepta?.dataset.canonicalHeptagramReady,liveToggle:!!document.querySelector('#skyFoundationB .sky-where-when-editor [data-ww-field="live"]'),
+         future:read(future),current:read(current),wheelVisible:getComputedStyle(mount).visibility};
+     });
+     console.log('PREVIEW WHERE/WHEN DESIGN',JSON.stringify(detail));
+     assert.equal(detail.canonical,'true');
+     assert.equal(detail.liveToggle,true);
+     assert.equal(detail.wheelVisible,'visible');
+     assert.equal(detail.future?.dash,'none');
+     assert.equal(detail.current?.dash,'none');
+     assert.equal(parseFloat(detail.future?.width),5);
+     assert.equal(parseFloat(detail.current?.width),5);
+     await page.screenshot({path:'sky-remote-preview-open.png',fullPage:true});
+   }
   }catch(e){failed=true;console.error(kind+' FAILED '+e.message);await page.screenshot({path:`sky-remote-${kind}.png`,fullPage:true}).catch(()=>{})}
   await ctx.close();
  }
