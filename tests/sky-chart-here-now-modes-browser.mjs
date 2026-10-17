@@ -140,6 +140,22 @@ try{
  assert.equal(migrated.metadata.liveNowOrigin,undefined);
  assert.equal(migrated.metadata.capturedNowAt,updated);
  assert.equal(migrated.calcProfile.instant,updated);
+ // One-click Here and Now must capture both browser location and a fixed instant.
+ await page.locator('#skyFoundationB [data-sky-drawer-tab="where"]').click();
+ const oneClick=page.locator('#skyFoundationB .sky-where-when-editor');
+ await oneClick.waitFor();
+ const instantBeforeClick=Date.now();
+ await oneClick.locator('[data-ww-action="here-and-now"]').click();
+ await page.waitForFunction(()=>{const sky=JSON.parse(localStorage.getItem('relphiSkyChartB'));return sky?.metadata?.capturedNowAt&&sky?.metadata?.whereWhenSource==='current-location'},null,{timeout:20000});
+ const oneClickSky=await page.evaluate(()=>JSON.parse(localStorage.getItem('relphiSkyChartB')));
+ assert.equal(oneClickSky.metadata.liveContinuous,undefined);
+ assert.equal(oneClickSky.metadata.liveNowOrigin,undefined);
+ assert.equal(oneClickSky.calcProfile.timeZone,'America/Denver');
+ assert.ok(Math.abs(Date.parse(oneClickSky.calcProfile.instant)-instantBeforeClick)<60000);
+ assert.equal(oneClickSky.calcProfile.instant,oneClickSky.metadata.capturedNowAt);
+ assert.equal(oneClickSky.calcProfile.latitude,'40.7608');
+ await page.waitForTimeout(1300);
+ assert.equal((await page.evaluate(()=>JSON.parse(localStorage.getItem('relphiSkyChartB')))).calcProfile.instant,oneClickSky.calcProfile.instant,'Here and Now must not enable Live updates.');
  assert.deepEqual(errors,[],'No uncaught page errors.');
  console.log('Fixed Now: refresh captures a new instant, never auto-commits or advances; no Live; legacy skies freeze.');
 }finally{await browser.close()}
