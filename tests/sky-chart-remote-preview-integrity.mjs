@@ -43,7 +43,7 @@ try{
    if(kind==='preview'&&(!state.wheelCount||state.mountVisible==='hidden'||state.rootBusy!=='false'||errors.length)){failed=true;console.error('FAILED: hosted exact-revision preview did not display a ready wheel');}
    if(kind==='preview'&&!failed){
      await page.locator('#skyFoundationB [data-sky-drawer-tab="where"]').click();
-     await page.waitForSelector('#skyFoundationB .sky-where-when-editor [data-ww-field="live"]',{timeout:15000});
+     await page.waitForSelector('#skyFoundationB .sky-where-when-editor [data-ww-action="refresh-now"]',{timeout:15000});
      await page.waitForSelector('#skyFoundationB [data-draft-heptagram-ready="true"] .sky-where-when-draft-heptagram',{timeout:20000});
      const detail=await page.evaluate(()=>{
        const hepta=document.querySelector('#skyFoundationB .sky-where-when-draft-heptagram');
