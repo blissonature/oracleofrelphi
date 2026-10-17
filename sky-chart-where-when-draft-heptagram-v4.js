@@ -45,8 +45,8 @@ function packet(slot){
   const date=field(form,'date'),time=field(form,'time'),timeZone=field(form,'timezone'),latitudeRaw=field(form,'latitude'),longitudeRaw=field(form,'longitude');
   if(!date||!time||!timeZone||latitudeRaw===''||longitudeRaw==='')return null;
   const latitude=Number(latitudeRaw),longitude=Number(longitudeRaw);if(!Number.isFinite(latitude)||!Number.isFinite(longitude)||latitude<-90||latitude>90||longitude<-180||longitude>180)return null;
-  const DateTime=window.luxon?.DateTime;if(!DateTime)return null;const local=DateTime.fromISO(`${date}T${time}`,{zone:timeZone,setZone:true});if(!local.isValid)return null;
-  return{date,time,timeZone,latitude,longitude,location:canonicalLocation(form),instant:local.toUTC().toJSDate(),instantIso:local.toUTC().toISO()};
+  const DateTime=window.luxon?.DateTime;if(!DateTime)return null;const live=form.querySelector('[data-ww-field="now"]')?.checked===true;const local=live?DateTime.now().setZone(timeZone):DateTime.fromISO(`${date}T${time}`,{zone:timeZone,setZone:true});if(!local.isValid)return null;
+  return{date:live?local.toFormat('yyyy-MM-dd'):date,time:live?local.toFormat('HH:mm'):time,timeZone,latitude,longitude,location:canonicalLocation(form),instant:local.toUTC().toJSDate(),instantIso:local.toUTC().toISO()};
 }
 function solarNoonDate(localDate,timeZone){return window.luxon.DateTime.fromISO(`${localDate}T12:00`,{zone:timeZone,setZone:true}).toJSDate()}
 function solarFrame(p){
@@ -73,11 +73,11 @@ function buildPreview(p){
 function planetaryHoursHref(p){const params=new URLSearchParams();params.set('phShare','1');params.set('lat',String(p.latitude));params.set('lon',String(p.longitude));params.set('tz',p.timeZone);if(p.location)params.set('loc',p.location);if(p.instantIso)params.set('dt',p.instantIso);return'planetaryhours.html#'+params.toString()}
 function clearDraft(target){target?.querySelectorAll('[data-draft-where-when-link="true"],[data-draft-where-when="true"],.sky-where-when-ph-jump').forEach(node=>node.remove());target?.removeAttribute('data-draft-heptagram-ready')}
 async function renderNow(slot){
-  timers[slot]=0;const token=++renderToken[slot],form=editor(slot),target=mount(slot);if(!form||!target)return;const p=packet(slot);clearDraft(target);if(!p)return;
+  timers[slot]=0;const token=++renderToken[slot],form=editor(slot),target=mount(slot);if(!form||!target)return;const p=packet(slot);if(!p){clearDraft(target);return}
   try{
-    const preview=buildPreview(p);if(!preview)return;const jump=document.createElement('a');jump.className='sky-ph-jump';jump.dataset.draftWhereWhenLink='true';jump.href=planetaryHoursHref(p);jump.setAttribute('aria-label','Open this time in Planetary Hours');preview.style.visibility='hidden';jump.append(preview);target.append(jump);
-    const canonical=window.RelphiSkyHeptagramCanonical;if(canonical?.correct)await canonical.correct(preview);if(token!==renderToken[slot]||!preview.isConnected)return;preview.style.visibility='visible';target.dataset.draftHeptagramReady='true';
-  }catch(error){clearDraft(target);console.error('Where/When moment preview failed:',error)}
+    const preview=buildPreview(p);if(!preview)return;const jump=document.createElement('a');jump.className='sky-ph-jump';jump.dataset.draftWhereWhenLink='true';jump.href=planetaryHoursHref(p);jump.setAttribute('aria-label','Open this time in Planetary Hours');preview.style.visibility='hidden';jump.style.position='absolute';jump.style.pointerEvents='none';jump.append(preview);target.append(jump);
+    const canonical=window.RelphiSkyHeptagramCanonical;if(canonical?.correct)await canonical.correct(preview);if(token!==renderToken[slot]||!preview.isConnected){jump.remove();return}target.querySelectorAll('[data-draft-where-when-link="true"]').forEach(old=>{if(old!==jump)old.remove()});jump.style.position='';jump.style.pointerEvents='';preview.style.visibility='visible';target.dataset.draftHeptagramReady='true';
+  }catch(error){if(token===renderToken[slot])clearDraft(target);console.error('Where/When moment preview failed:',error)}
 }
 function schedule(slot,delay=0){if(!slot||!(slot in timers))return;clearTimeout(timers[slot]);timers[slot]=window.setTimeout(()=>void renderNow(slot),delay)}
 function start(){
