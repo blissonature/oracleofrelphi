@@ -461,7 +461,7 @@ const continuousBusy={A:false,B:false};
 async function refreshContinuousSky(slot){
   if(continuousBusy[slot]||document.hidden||transactionState.editing.size)return;
   const before=payload(slot),metadata=before?.metadata,prior=before?.calcProfile;
-  if(metadata?.liveContinuous!==true||metadata.liveNowOrigin!=='use-now'||!completeProfile(prior)||prior.timeUnknown)return;
+  if(metadata?.liveContinuous!==true||metadata.liveNowOrigin!=='use-now'||metadata.savedSkyId||metadata.savedSkyLoadedAt||before.saved===true||!completeProfile(prior)||prior.timeUnknown)return;
   const previousInstant=Date.parse(prior.instant||'');
   if(Number.isFinite(previousInstant)&&Date.now()-previousInstant<55000)return;
   const selected=currentSelection(slot,prior);if(!selected)return;
