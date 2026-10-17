@@ -6,6 +6,52 @@
   window.__relphiSkyStandaloneAxisPresentationV1=true;
 
   const ANGLES=['asc','dsc','mc','ic'];
+  function installAngleStyles(){
+    if(document.getElementById('skyAngleReadableInteractionStyle'))return;
+    const style=document.createElement('style');
+    style.id='skyAngleReadableInteractionStyle';
+    style.textContent=`
+#skyFoundationWheelMount .sky-foundation-wheel [data-layer="placements"] > g[data-angle-axis="true"]{cursor:pointer;pointer-events:bounding-box}
+#skyFoundationWheelMount .sky-foundation-wheel [data-layer="placements"] > g[data-angle-axis="true"] .sky-angle-pill{pointer-events:all}
+#skyFoundationWheelMount .sky-foundation-wheel [data-layer="placements"] > g[data-angle-axis="true"] .relphi-canonical-glyph text{opacity:1!important;fill:#fff!important;stroke:none!important;font-weight:900!important;pointer-events:all}
+#skyFoundationWheelMount .sky-foundation-wheel.has-isolation [data-layer="placements"] > g[data-angle-axis="true"].is-kept{opacity:1!important;filter:drop-shadow(0 0 3px #fff) drop-shadow(0 0 5px rgba(0,0,0,.75))!important}
+#skyFoundationWheelMount .sky-foundation-wheel [data-layer="placements"] > g[data-angle-axis="true"]:is(:hover,:focus-visible,.is-hovered,.is-selected){opacity:1!important;filter:drop-shadow(0 0 3px #fff) drop-shadow(0 0 6px rgba(0,0,0,.8))!important}
+`;
+    document.head.appendChild(style);
+  }
+
+  function decorateAnglePills(wheel){
+    wheel.querySelectorAll('[data-layer="placements"] > g[data-angle-axis="true"][data-sky]').forEach(host=>{
+      const bubble=host.querySelector(':scope > .relphi-glyph-bubble');
+      const canonical=bubble?.querySelector('.relphi-canonical-glyph');
+      if(!bubble||!canonical)return; // Never fabricate a replacement for the master artwork.
+      const sky=host.dataset.sky==='B'?'B':'A';
+      let background=bubble.querySelector(':scope > .sky-angle-pill');
+      if(!background){
+        background=document.createElementNS('http://www.w3.org/2000/svg','rect');
+        background.classList.add('sky-angle-pill');
+        bubble.insertBefore(background,canonical);
+      }
+      // Canonical artwork stays mounted and intact; the rectangle is presentation only.
+      // Use the canonical art bounds to fit all four labels without substituting text.
+      let bounds;
+      try{bounds=canonical.getBBox()}catch(_){return}
+      if(!Number.isFinite(bounds.width)||!Number.isFinite(bounds.height)||bounds.width<=0)return;
+      const padX=9,padY=6;
+      background.setAttribute('x',String(bounds.x-padX));
+      background.setAttribute('y',String(bounds.y-padY));
+      background.setAttribute('width',String(bounds.width+padX*2));
+      background.setAttribute('height',String(bounds.height+padY*2));
+      background.setAttribute('rx','8');
+      background.setAttribute('ry','8');
+      background.setAttribute('fill',sky==='A'?'#c9211e':'#2462d0');
+      background.setAttribute('stroke','#fff');
+      background.setAttribute('stroke-width','1.4');
+      background.style.pointerEvents='all';
+      host.style.pointerEvents='bounding-box';
+    });
+  }
+
   const norm=value=>((Number(value)%360)+360)%360;
   function point(center,radius,degree){
     const angle=(norm(degree)-180)*Math.PI/180;
@@ -13,7 +59,10 @@
   }
 
   function apply(){
-    const wheel=document.querySelector('#skyFoundationWheelMount .sky-foundation-single-wheel[data-single-sky]');
+    installAngleStyles();
+    const wheel=document.querySelector('#skyFoundationWheelMount .sky-foundation-wheel');
+    if(wheel)decorateAnglePills(wheel);
+    if(!wheel?.matches('.sky-foundation-single-wheel[data-single-sky]'))return;
     const spec=window.RelphiSkyWheelSpec;
     if(!wheel||!spec?.mini?.center||!spec?.miniRole)return;
     const center=spec.mini.center;
@@ -27,6 +76,8 @@
       const line=wheel.querySelector(`[data-layer="leaders"] [data-angle="${id}"]`);
       const degree=Number(line?.dataset?.exactLongitude??host?.dataset?.exactLongitude);
       if(!host||!line||!Number.isFinite(degree))return;
+      host.style.pointerEvents='bounding-box';
+      host.querySelectorAll('text').forEach(label=>{label.style.pointerEvents='all'});
 
       const innerPoint=point(center,inward,degree);
       const edgePoint=point(center,edge,degree);
