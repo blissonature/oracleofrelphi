@@ -53,6 +53,31 @@ try{
  await unknown.uncheck();
 
  await page.waitForSelector('#skyFoundationB [data-draft-heptagram-ready="true"] .sky-where-when-draft-heptagram',{timeout:20000});
+ const heptagramParity=await page.evaluate(()=>{
+   const mini=document.querySelector('#skyFoundationB .sky-ph-heptagram:not(.sky-where-when-draft-heptagram)');
+   const preview=document.querySelector('#skyFoundationB .sky-where-when-draft-heptagram');
+   const sample=(svg,selector)=>{const node=svg?.querySelector(selector);if(!node)return null;const style=getComputedStyle(node);return{stroke:style.stroke,width:style.strokeWidth,dash:style.strokeDasharray,filter:style.filter,vectorEffect:style.vectorEffect}};
+   return {
+     previewCanonical:preview?.dataset.canonicalHeptagramReady,
+     previewGray:sample(preview,'.sky-ph-hour-segment.future'),
+     previewRed:sample(preview,'.sky-ph-week-segment.current'),
+     previewPast:sample(preview,'.sky-ph-week-segment.past'),
+     miniGray:sample(mini,'.sky-ph-hour-segment.future'),
+     miniRed:sample(mini,'.sky-ph-week-segment.current')
+   };
+ });
+ assert.equal(heptagramParity.previewCanonical,'true','Preview must use canonical planetary glyphs.');
+ const uniformLine=(line,kind)=>{
+   assert.ok(line,kind+' must exist');
+   assert.equal(parseFloat(line.width),5,kind+' must use the unified 5-unit stroke');
+   assert.equal(line.dash,'none',kind+' must not contain dashes');
+   assert.equal(line.filter,'none',kind+' must not glow');
+   assert.equal(line.vectorEffect,'none',kind+' scales in source coordinates');
+ };
+ for(const kind of ['previewGray','previewRed','previewPast','miniGray','miniRed'])uniformLine(heptagramParity[kind],kind);
+ assert.equal(heptagramParity.previewGray.stroke,heptagramParity.miniGray.stroke,'Preview gray and miniheptagram gray must match.');
+ assert.equal(heptagramParity.previewRed.stroke,heptagramParity.miniRed.stroke,'Preview red and miniheptagram red must match.');
+ assert.equal(heptagramParity.previewRed.stroke,heptagramParity.previewPast.stroke,'Traced weekly paths must use the same red.');
  await form.screenshot({path:'sky-chart-here-now-manual-mobile.png'});
  const initial=await page.evaluate(()=>localStorage.getItem('relphiSkyChartB'));
  await here.check();
