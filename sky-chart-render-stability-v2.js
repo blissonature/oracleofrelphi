@@ -17,7 +17,22 @@ function showAfterFoundation(){show();clearTimeout(revealTimer);revealTimer=wind
 
 hide();
 window.addEventListener('relphi:sky-orb-limit-changed',hide,{capture:true});
-window.addEventListener('storage',event=>{if(!event.key||event.key==='relphiSkyChartA'||event.key==='relphiSkyChartB')hide()},{capture:true});
+// A Live tick builds a complete off-DOM wheel before the foundation atomically
+// swaps it in. Keep the existing wheel painted throughout that asynchronous work.
+function isContinuousLiveTick(event){
+  if(!wheelReady()||!['relphiSkyChartA','relphiSkyChartB'].includes(event.key))return false;
+  try{
+    const raw=event.newValue||localStorage.getItem(event.key);
+    const value=JSON.parse(raw||'null');
+    return value?.metadata?.liveContinuous===true&&value?.metadata?.liveNowOrigin==='use-now'&&value?.saved!==true;
+  }catch(_){return false}
+}
+window.addEventListener('storage',event=>{
+  if(!event.key||event.key==='relphiSkyChartA'||event.key==='relphiSkyChartB'){
+    if(isContinuousLiveTick(event))return;
+    hide();
+  }
+},{capture:true});
 window.addEventListener('relphi:sky-foundation-ready',showAfterFoundation);
 window.addEventListener('relphi:sky-foundation-interactions-ready',show);
 if(document.getElementById('skyFoundationRoot')?.getAttribute('aria-busy')==='false')show();
