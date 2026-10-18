@@ -118,7 +118,7 @@ const base='http://127.0.0.1:8000/tarot.html';
       window.scrollTo(0,640);
       return window.scrollY;
     });
-    await page.evaluate(()=>document.querySelector('.relphi-board-toast-action')?.click());
+    await page.evaluate(()=>{const action=document.querySelector('.relphi-board-toast-action');if(action)action.click();else document.querySelector('.card-row-board>.card-row-item.is-recursion-level-active')?.click()});
     await page.waitForSelector('.relphi-attune-reader',{state:'visible'});
     assert.ok((await page.locator('.relphi-attune-shell h2').textContent()).includes('Mem'));
     const recursionAttuneViewport=await page.evaluate(()=>({
