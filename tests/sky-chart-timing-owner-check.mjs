@@ -4,7 +4,7 @@ const html=fs.readFileSync('sky-chart.html','utf8');
 const transit=fs.readFileSync('sky-chart-relationship-transit-meta-v4.js','utf8');
 assert.equal((html.match(/<script src="sky-chart-relationship-transit-meta-v4.js/g)||[]).length,1);
 assert.doesNotMatch(html,/src="sky-chart-relationship-timing-fix-v1.js/,'legacy timing API and DOM writer must not load');
-assert.match(transit,/RelphiChironEphemeris\?\.calculateSync\?\.\(date\)/);
+assert.match(transit,/service\?\.longitudeAt/);
 assert.match(transit,/window.RelphiRelationshipTransitMeta=Object.freeze\(/);
 assert.match(transit,/estimatedTimingForRow:estimatedTimingForSort/);
 assert.match(transit,/exportTimingForRow,/);
