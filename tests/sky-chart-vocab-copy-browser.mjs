@@ -48,6 +48,40 @@ try{
   assert.ok(direct.includes('Vertex'),'Custom Relphi letter glyphs must serialize to their semantic names.');
   assert.ok(!direct.includes('[object SVG'),`Copy must never expose raw SVG objects: ${direct}`);
 
+  // Adjacent styled Vocab elements have no DOM text separator; the copied
+  // sentence must restore word boundaries without inserting spaces before
+  // commas, periods, parentheses, or within numerals.
+  const adjacent=await page.evaluate(()=>{
+    const panel=document.createElement('div');
+    panel.dataset.skyVocabPanel='A';
+    const paragraph=document.createElement('div');
+    paragraph.dataset.skyVocabParagraph='';
+    panel.appendChild(paragraph);
+    const line=document.createElement('div');
+    line.className='sky-vocab-line';
+    const span=text=>{const node=document.createElement('span');node.textContent=text;return node};
+    line.append(
+      span('Venus'),span('represents'),span('pleasure'),span(', '),
+      span('connection'),span(' and '),span('value'),span('.')
+    );
+    paragraph.appendChild(line);
+    const nested=document.createElement('div');
+    nested.className='sky-vocab-line';
+    const outer=document.createElement('span');
+    outer.append(span('Mercury'),span('communicates'));
+    nested.append(outer,span(' with '),span('clarity'),span(' ('),span('Gemini'),span(')'),span('.'));
+    paragraph.appendChild(nested);
+    const number=document.createElement('div');number.className='sky-vocab-line';
+    number.append(span('Sun'),span(' at '),span('15°'),span(' Libra'),span('.'));
+    paragraph.appendChild(number);
+    return window.RelphiVocabCopySerializer.serializePanel(panel);
+  });
+  assert.ok(adjacent.includes('Venus represents pleasure, connection and value.'),`Adjacent Vocab labels must be separated: ${adjacent}`);
+  assert.ok(adjacent.includes('Mercury communicates with clarity (Gemini).'),`Nested inline nodes must retain proper spacing: ${adjacent}`);
+  assert.ok(adjacent.includes('Sun at 15° Libra.'),`Degrees, signs, and punctuation must retain their intended spacing: ${adjacent}`);
+  assert.equal(adjacent.includes('Venusrepresents'),false);
+
+
   const liveTitle=await page.evaluate(()=>{
     const key='relphiSkyChartA',value=JSON.parse(localStorage.getItem(key)||'null'),at=new Date(Date.now()-11*60*1000).toISOString();
     value.name='Now';value.title='Now';value.displayName='Now';value.skyName='Now';
