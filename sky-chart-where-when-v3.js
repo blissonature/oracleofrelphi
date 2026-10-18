@@ -133,10 +133,10 @@ function editorMarkup(slot,p){
         <p class="sky-ww-mode-value" data-ww-here-value${here?'':' hidden'}>${escapeHtml(here?selected.canonical:'')}</p>
         <div class="sky-ww-manual" data-ww-manual-where${here?' hidden':''}><label class="sky-where-when-label" for="skyWhereLocation${slot}">Search for a location</label><div class="sky-where-search-row"><input id="skyWhereLocation${slot}" class="sky-where-when-input${selected?.source==='current-location'?' is-current-location':''}" data-ww-field="location-query" type="search" autocomplete="off" value="${escapeHtml(selected?.source==='current-location'?'':selected?.query||'')}" placeholder="Ex. City, State or Country"><button class="sky-where-when-button secondary" type="button" data-ww-action="search-location">Search</button></div><div class="sky-location-results" aria-live="polite"></div>${confirmationMarkup(selected)}</div>
       </fieldset>
-      <fieldset class="sky-where-when-section sky-where-when-mode" data-ww-when${disabled}><legend>When</legend>
-        <div class="sky-ww-mode-row sky-ww-when-row"><span class="sky-ww-mode-primary"><label class="sky-ww-choice"><input data-ww-field="now" type="checkbox"${now?' checked':''}${disabled}><span>Now</span></label><button class="sky-ww-refresh" type="button" data-ww-action="refresh-now"${disabled} aria-label="Refresh current instant" title="Capture current instant"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6v5h-5M4 18v-5h5M18 10A7 7 0 0 0 6 7L4 9M6 14a7 7 0 0 0 12 3l2-2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button></span><label class="sky-time-unknown-option sky-ww-unknown"><input data-ww-field="time-unknown" type="checkbox"${p.timeUnknown?' checked':''}${disabled}><span>Time unknown</span></label></div>
+      <fieldset class="sky-where-when-section sky-where-when-mode" data-ww-when><legend>When</legend>
+        <div class="sky-ww-mode-row sky-ww-when-row"><span class="sky-ww-mode-primary"><label class="sky-ww-choice"><input data-ww-field="now" type="checkbox"${now?' checked':''}><span>Now</span></label><button class="sky-ww-refresh" type="button" data-ww-action="refresh-now" aria-label="Refresh current instant" title="Capture current instant"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6v5h-5M4 18v-5h5M18 10A7 7 0 0 0 6 7L4 9M6 14a7 7 0 0 0 12 3l2-2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button></span><label class="sky-time-unknown-option sky-ww-unknown"><input data-ww-field="time-unknown" type="checkbox"${p.timeUnknown?' checked':''}><span>Time unknown</span></label></div>
         <p class="sky-ww-mode-value sky-ww-clock" data-ww-now-value${now?'':' hidden'} role="timer" aria-live="off"></p>
-        <div class="sky-ww-manual" data-ww-manual-when${now?' hidden':''}><div class="sky-where-when-grid"><label class="sky-where-when-label">Date<input class="sky-where-when-input" data-ww-field="date" type="date" value="${escapeHtml(date)}"${disabled}></label><label class="sky-where-when-label">Local time<input class="sky-where-when-input" data-ww-field="time" type="time" value="${escapeHtml(time)}"${p.timeUnknown?' disabled':disabled}></label></div></div>
+        <div class="sky-ww-manual" data-ww-manual-when${now?' hidden':''}><div class="sky-where-when-grid"><label class="sky-where-when-label">Date<input class="sky-where-when-input" data-ww-field="date" type="date" value="${escapeHtml(date)}"></label><label class="sky-where-when-label">Local time<input class="sky-where-when-input" data-ww-field="time" type="time" value="${escapeHtml(time)}"${p.timeUnknown?' disabled':''}></label></div></div>
       </fieldset>
       <details class="sky-where-when-advanced"><summary>Advanced settings</summary><div class="sky-where-when-advanced-body"><label class="sky-where-when-label">Time zone<input class="sky-where-when-input" data-ww-field="timezone" type="text" readonly value="${escapeHtml(selected?.timezone||p.timeZone||'')}"></label><div class="sky-where-when-coordinate-grid"><label class="sky-where-when-label">Latitude<input class="sky-where-when-input" data-ww-field="latitude" type="number" step="0.00001" min="-90" max="90" value="${escapeHtml(displayCoordinate(selected?.latitude??p.latitude))}"></label><label class="sky-where-when-label">Longitude<input class="sky-where-when-input" data-ww-field="longitude" type="number" step="0.00001" min="-180" max="180" value="${escapeHtml(displayCoordinate(selected?.longitude??p.longitude))}"></label></div><div data-ww-paste-inference-host></div></div></details>
       <p class="sky-where-when-status" data-update-now-status aria-live="polite"></p>
@@ -162,15 +162,16 @@ function syncModes(slot){
 function updateNowFields(slot){
   const form=formFor(slot);if(!form||!modeValue(form,'now'))return;
   const selected=cardState[slot].selected,DateTime=window.luxon?.DateTime;
-  if(!selected?.timezone||!DateTime)return;
+  if(!DateTime)return;
   if(!form.dataset.nowInstant)captureMoment(form);
   const instant=DateTime.fromISO(form.dataset.nowInstant,{setZone:true});
   if(!instant?.isValid)return;
-  const local=instant.setZone(selected.timezone);if(!local?.isValid)return;
+  const timezone=selected?.timezone||DateTime.local().zoneName;
+  const local=instant.setZone(timezone);if(!local?.isValid)return;
   const date=form.querySelector('[data-ww-field="date"]'),time=form.querySelector('[data-ww-field="time"]'),summary=form.querySelector('[data-ww-now-value]');
   if(date)date.value=local.toFormat('yyyy-MM-dd');
   if(time)time.value=local.toFormat('HH:mm');
-  if(summary)summary.textContent='Captured · '+local.toFormat('ccc, LLL d · h:mm:ss a')+' · '+selected.timezone;
+  if(summary)summary.textContent='Captured · '+local.toFormat('ccc, LLL d · h:mm:ss a')+' · '+timezone;
 }
 async function checkHere(slot){
   const form=formFor(slot),here=form?.querySelector('[data-ww-field="here"]');
@@ -196,10 +197,6 @@ function updateMode(slot,kind,checked){
     return;
   }
   if(kind!=='now')return;
-  if(checked&&!cardState[slot].selected){
-    form.querySelector('[data-ww-field="now"]').checked=false;
-    return status(slot,'Choose a location before using Now.',true);
-  }
   if(checked){
     enableKnownTime(form);
     form.dataset.manualDate=form.querySelector('[data-ww-field="date"]')?.value||'';
