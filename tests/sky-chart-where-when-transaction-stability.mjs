@@ -35,20 +35,38 @@ const whereTabA=page.locator('#skyFoundationA [data-sky-drawer-tab="where"]'),wh
 
 await whereTabA.click();
 const firstEditorA=page.locator('#skyFoundationA .sky-where-when-editor');await firstEditorA.waitFor();
-const useHere=firstEditorA.locator('[data-ww-action="use-here"]');
-assert.equal(await useHere.count(),1,'Where must expose exactly one Use Here button.');
-assert.equal((await useHere.textContent()).trim(),'Use Here');
-assert.equal(await firstEditorA.locator('[data-current-location]').count(),1,'Legacy current-location injection must not create a second browser-location button.');
+const here=firstEditorA.locator('[data-ww-field="here"]');
+const now=firstEditorA.locator('[data-ww-field="now"]');
+assert.equal(await here.count(),1,'Where must expose one Here checkbox.');
+assert.equal(await now.count(),1,'When must expose one Now checkbox.');
+assert.equal(await firstEditorA.locator('[data-ww-action="refresh-here"]').count(),1);
+assert.equal(await firstEditorA.locator('[data-ww-action="refresh-now"]').count(),1);
+assert.equal(await firstEditorA.locator('[data-ww-field="live"]').count(),0);
+assert.equal(await here.isChecked(),false,'Historical location starts in manual mode.');
+assert.equal(await now.isChecked(),false,'Historical time starts in manual mode.');
 const beforeUseHere=await firstEditorA.evaluate(form=>({date:form.querySelector('[data-ww-field="date"]')?.value||'',time:form.querySelector('[data-ww-field="time"]')?.value||'',stored:localStorage.getItem('relphiSkyChartA')}));
-await useHere.click();
+await here.check();
 await page.waitForFunction(()=>document.querySelector('#skyFoundationA [data-ww-field="timezone"]')?.value==='America/Denver');
+await page.waitForFunction(()=>document.querySelector('#skyFoundationA [data-ww-here-value]')?.textContent?.includes('Salt Lake City'));
 const afterUseHere=await firstEditorA.evaluate(form=>({date:form.querySelector('[data-ww-field="date"]')?.value||'',time:form.querySelector('[data-ww-field="time"]')?.value||'',lat:Number(form.querySelector('[data-ww-field="latitude"]')?.value),lon:Number(form.querySelector('[data-ww-field="longitude"]')?.value),query:form.querySelector('[data-ww-field="location-query"]')?.value||'',stored:localStorage.getItem('relphiSkyChartA')}));
-assert.equal(afterUseHere.date,beforeUseHere.date,'Use Here must not change the date field.');
-assert.equal(afterUseHere.time,beforeUseHere.time,'Use Here must not change the time field.');
-assert.ok(Math.abs(afterUseHere.lat-40.7608)<1e-5&&Math.abs(afterUseHere.lon+111.891)<1e-5,'Use Here must apply browser coordinates.');
-assert.equal(afterUseHere.stored,beforeUseHere.stored,'Use Here must not commit or recalculate the sky before confirmation.');
-const footerContract=await firstEditorA.evaluate(form=>{const footer=form.querySelector('.sky-where-when-footer');return{hasHeptagramMount:!!footer?.querySelector('[data-ww-heptagram-slot="A"]'),hasCommittedFrame:!!footer?.querySelector('[data-sky-heptagram-frame="A"]'),buttons:[...footer.querySelectorAll('.sky-where-when-footer-actions button')].map(button=>button.textContent.trim()),advancedBeforeFooter:!!form.querySelector('.sky-where-when-advanced')&&!!(form.querySelector('.sky-where-when-advanced').compareDocumentPosition(footer)&Node.DOCUMENT_POSITION_FOLLOWING)}});
-assert.equal(footerContract.hasHeptagramMount,true);assert.equal(footerContract.hasCommittedFrame,true);assert.deepEqual(footerContract.buttons,['Cancel','Use This Where and When']);assert.equal(footerContract.advancedBeforeFooter,true);
+assert.equal(afterUseHere.date,beforeUseHere.date,'Here must not change historical date.');
+assert.equal(afterUseHere.time,beforeUseHere.time,'Here must not change historical time.');
+assert.ok(Math.abs(afterUseHere.lat-40.7608)<1e-5&&Math.abs(afterUseHere.lon+111.891)<1e-5,'Here must apply browser coordinates.');
+assert.equal(afterUseHere.query,'','Current location must not be misrepresented as a search query.');
+assert.equal(afterUseHere.stored,beforeUseHere.stored,'Checking Here must not commit the sky.');
+assert.equal(await firstEditorA.locator('[data-ww-manual-where]').isHidden(),true,'Here hides only manual location search.');
+assert.equal(await firstEditorA.locator('[data-ww-manual-when]').isVisible(),true,'Here leaves historical date/time visible.');
+await now.check();
+await page.waitForFunction(()=>document.querySelector('#skyFoundationA [data-ww-now-value]')?.textContent?.includes('America/Denver'));
+assert.equal(await firstEditorA.locator('[data-ww-manual-when]').isHidden(),true,'Now hides manual date/time.');
+assert.equal(await firstEditorA.locator('[data-ww-manual-where]').isHidden(),true,'Now must not change Here.');
+assert.equal(await firstEditorA.evaluate(()=>localStorage.getItem('relphiSkyChartA')),beforeUseHere.stored,'Now must not commit until confirmation.');
+await now.uncheck();
+assert.equal(await firstEditorA.locator('[data-ww-manual-when]').isVisible(),true,'Unchecking Now restores manual date/time.');
+await here.uncheck();
+assert.equal(await firstEditorA.locator('[data-ww-manual-where]').isVisible(),true,'Unchecking Here restores search.');
+const footerContract=await firstEditorA.evaluate(form=>{const footer=form.querySelector('.sky-where-when-footer');return{hasHeptagramMount:!!form.querySelector('.sky-where-when-scroll-body [data-ww-heptagram-slot="A"]'),hasCommittedFrame:!!form.querySelector('[data-sky-heptagram-frame="A"]'),buttons:[...footer.querySelectorAll('.sky-where-when-footer-actions button')].map(button=>button.textContent.trim()),advancedBeforeFooter:!!form.querySelector('.sky-where-when-advanced')&&!!(form.querySelector('.sky-where-when-advanced').compareDocumentPosition(footer)&Node.DOCUMENT_POSITION_FOLLOWING)}});
+assert.equal(footerContract.hasHeptagramMount,true);assert.equal(footerContract.hasCommittedFrame,false);assert.deepEqual(footerContract.buttons,['Cancel','Use This Where and When']);assert.equal(footerContract.advancedBeforeFooter,true);
 await page.evaluate(()=>{document.querySelector('#skyFoundationWheelMount>.sky-foundation-wheel').dataset.unchangedCloseMarker='keep'});
 const countsBeforeUnchangedClose=await page.evaluate(()=>({...window.__wwTransactionCounts}));await whereTabA.click();
 await page.waitForFunction(()=>!document.querySelector('#skyFoundationA .sky-where-when-editor')&&document.documentElement.dataset.skyWhereWhenEditing==='false');await page.waitForTimeout(500);
@@ -128,6 +146,11 @@ assert.ok(Math.abs(unknownGeometry.signGlyphLane-(unknownGeometry.inner+unknownG
 assert.ok(unknownGeometry.placementLanes.every(value=>value<unknownGeometry.outer&&value>unknownGeometry.signGlyphLane),'Collision layout must preserve the inside-edge placement lane.');
 assert.ok(unknownGeometry.moonRange>0,'Unknown-time standalone wheel must retain its Moon range.');
 
+await page.waitForTimeout(200);
+for(let i=0;i<3;i++){
+  const prompt=page.locator('#skyWhereWhenNamePrompt:not([hidden])');
+  if(await prompt.count())await prompt.locator('[data-sky-name-cancel]').click();
+}
 await whereTabA.click();
 const knownEditor=page.locator('#skyFoundationA .sky-where-when-editor');await knownEditor.waitFor();
 const knownToggle=knownEditor.locator('[data-ww-field="time-unknown"]');
@@ -143,9 +166,38 @@ assert.notEqual(knownStored.calcProfile.houseSystem,'none','Known-time commit mu
 assert.equal(knownStored.calcProfile.houseCusps.length,12,'Known-time commit must restore 12 house cusps.');
 assert.ok(knownStored.placements.Ascendant&&knownStored.placements.Midheaven,'Known-time commit must restore chart angles.');
 
+await page.waitForTimeout(200);
+for(let i=0;i<3;i++){
+  const prompt=page.locator('#skyWhereWhenNamePrompt:not([hidden])');
+  if(await prompt.count())await prompt.locator('[data-sky-name-cancel]').click();
+}
 await whereTabA.click();
 const reopenedKnown=page.locator('#skyFoundationA .sky-where-when-editor');await reopenedKnown.waitFor();
 assert.equal(await reopenedKnown.locator('[data-ww-field="time-unknown"]').isChecked(),false,'Reopened known-time sky must keep Time unknown off.');
 await whereTabA.click();
 await page.waitForFunction(()=>document.documentElement.dataset.skyWhereWhenEditing==='false');
+// Now at a searched/historical location is independent of Here and never runs continuously.
+await whereTabA.click();
+const nowEditor=page.locator('#skyFoundationA .sky-where-when-editor');
+await nowEditor.waitFor();
+assert.equal(await nowEditor.locator('[data-ww-field="here"]').isChecked(),false);
+assert.equal(await nowEditor.locator('[data-ww-field="live"]').count(),0);
+await nowEditor.locator('[data-ww-action="refresh-now"]').click();
+assert.equal(await nowEditor.locator('[data-ww-field="now"]').isChecked(),true);
+await page.waitForFunction(()=>!!document.querySelector('#skyFoundationA [data-ww-now-value]')?.textContent?.includes('America/New_York'));
+const pickedInstant=await nowEditor.getAttribute('data-now-instant');
+await page.waitForTimeout(1100);
+assert.equal(await nowEditor.getAttribute('data-now-instant'),pickedInstant);
+await nowEditor.locator('[data-ww-action="refresh-now"]').click();
+const refreshedInstant=await nowEditor.getAttribute('data-now-instant');
+assert.ok(Date.parse(refreshedInstant)>Date.parse(pickedInstant));
+await nowEditor.locator('button[type="submit"]').click();
+await page.waitForFunction(instant=>JSON.parse(localStorage.getItem('relphiSkyChartA'))?.metadata?.capturedNowAt===instant,refreshedInstant,{timeout:15000});
+const nowCommitted=await page.evaluate(()=>JSON.parse(localStorage.getItem('relphiSkyChartA')));
+assert.equal(nowCommitted.calcProfile.timeZone,'America/New_York','Now retains an independent non-Here location.');
+assert.equal(nowCommitted.calcProfile.instant,refreshedInstant);
+assert.equal(nowCommitted.metadata.liveContinuous,undefined);
+assert.equal(nowCommitted.metadata.liveNowOrigin,undefined);
+await page.waitForTimeout(1200);
+assert.equal((await page.evaluate(()=>JSON.parse(localStorage.getItem('relphiSkyChartA')))).calcProfile.instant,refreshedInstant);
 assert.deepEqual(errors,[]);await browser.close();console.log('Where and When transaction stability passed.');

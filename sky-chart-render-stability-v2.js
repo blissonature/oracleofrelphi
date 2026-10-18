@@ -9,7 +9,14 @@ window.__relphiSkyRenderStabilityV1=true;
 
 const root=document.documentElement;
 let revealTimer=0;
-function hide(){clearTimeout(revealTimer);delete root.dataset.skyWheelStable}
+function hide(){
+  clearTimeout(revealTimer);
+  // Once a complete wheel is painted, recalculations must never blank it.
+  // The foundation prepares new glyphs off-DOM and swaps them in atomically.
+  const mount=document.getElementById('skyFoundationWheelMount');
+  if(root.dataset.skyWheelStable==='true'&&mount?.querySelector(':scope > .sky-foundation-wheel'))return;
+  delete root.dataset.skyWheelStable;
+}
 function wheelReady(){const foundation=document.getElementById('skyFoundationRoot'),wheel=document.querySelector('#skyFoundationWheelMount > .sky-foundation-wheel');return!!wheel&&foundation?.getAttribute('aria-busy')==='false'}
 function reveal(){if(wheelReady())root.dataset.skyWheelStable='true'}
 function show(){requestAnimationFrame(()=>requestAnimationFrame(reveal))}
@@ -17,7 +24,10 @@ function showAfterFoundation(){show();clearTimeout(revealTimer);revealTimer=wind
 
 hide();
 window.addEventListener('relphi:sky-orb-limit-changed',hide,{capture:true});
-window.addEventListener('storage',event=>{if(!event.key||event.key==='relphiSkyChartA'||event.key==='relphiSkyChartB')hide()},{capture:true});
+// Keep every previously painted wheel visible while another version is prepared.
+window.addEventListener('storage',event=>{
+  if(!event.key||event.key==='relphiSkyChartA'||event.key==='relphiSkyChartB')hide();
+},{capture:true});
 window.addEventListener('relphi:sky-foundation-ready',showAfterFoundation);
 window.addEventListener('relphi:sky-foundation-interactions-ready',show);
 if(document.getElementById('skyFoundationRoot')?.getAttribute('aria-busy')==='false')show();

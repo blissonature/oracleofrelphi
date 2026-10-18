@@ -1,4 +1,4 @@
-// Live Where and When preview. Renders directly into the footer-owned heptagram mount.
+// Fixed-instant Where and When preview. Renders directly into the footer-owned heptagram mount.
 (function(){
 'use strict';
 if(!/(^|\/)sky-chart\.html$/.test(location.pathname)||window.__relphiSkyWhereWhenDraftHeptagramV4)return;
@@ -25,6 +25,10 @@ function installStyle(){
     .sky-where-when-draft-heptagram{display:block!important;width:min(100%,176px)!important;height:auto!important;max-height:176px!important;overflow:visible!important;margin:0 auto!important}
     .sky-where-when-heptagram-slot .sky-ph-jump{justify-self:center;max-width:100%;margin:0 auto}
     .sky-where-when-heptagram-slot .sky-ph-jump-title{white-space:nowrap}
+    .sky-ww-planetary-rulers{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;margin:0 auto -3px;color:#2a2623;font:700 11px/1.35 system-ui,sans-serif;white-space:nowrap}
+    .sky-ww-planetary-ruler{display:inline-flex;align-items:center;gap:4px}
+    .sky-ww-planetary-ruler-art{width:19px;height:19px;overflow:visible;flex:none}
+    .sky-ww-planetary-ruler-dot{color:#a69e96;font-size:14px;font-weight:500}
   `;document.head.appendChild(node);
 }
 function editor(slot){return document.querySelector(`.sky-where-when-editor[data-slot="${slot}"]`)}
@@ -45,8 +49,8 @@ function packet(slot){
   const date=field(form,'date'),time=field(form,'time'),timeZone=field(form,'timezone'),latitudeRaw=field(form,'latitude'),longitudeRaw=field(form,'longitude');
   if(!date||!time||!timeZone||latitudeRaw===''||longitudeRaw==='')return null;
   const latitude=Number(latitudeRaw),longitude=Number(longitudeRaw);if(!Number.isFinite(latitude)||!Number.isFinite(longitude)||latitude<-90||latitude>90||longitude<-180||longitude>180)return null;
-  const DateTime=window.luxon?.DateTime;if(!DateTime)return null;const local=DateTime.fromISO(`${date}T${time}`,{zone:timeZone,setZone:true});if(!local.isValid)return null;
-  return{date,time,timeZone,latitude,longitude,location:canonicalLocation(form),instant:local.toUTC().toJSDate(),instantIso:local.toUTC().toISO()};
+  const DateTime=window.luxon?.DateTime;if(!DateTime)return null;const now=form.querySelector('[data-ww-field="now"]')?.checked===true;const held=String(form.dataset.nowInstant||'');const local=now?DateTime.fromISO(held,{setZone:true}).setZone(timeZone):DateTime.fromISO(`${date}T${time}`,{zone:timeZone,setZone:true});if(!local.isValid)return null;
+  return{date:now?local.toFormat('yyyy-MM-dd'):date,time:now?local.toFormat('HH:mm'):time,timeZone,latitude,longitude,location:canonicalLocation(form),instant:local.toUTC().toJSDate(),instantIso:local.toUTC().toISO()};
 }
 function solarNoonDate(localDate,timeZone){return window.luxon.DateTime.fromISO(`${localDate}T12:00`,{zone:timeZone,setZone:true}).toJSDate()}
 function solarFrame(p){
@@ -68,16 +72,30 @@ function buildPreview(p){
   const root=svg('svg',{viewBox:'0 0 360 360',preserveAspectRatio:'xMidYMid meet',class:'sky-ph-heptagram sky-where-when-draft-heptagram',role:'img','aria-label':`Draft Where and When heptagram. ${dayKey} planetary day; ${current.ruler} planetary hour.`});root.dataset.draftWhereWhen='true';root.appendChild(svg('circle',{cx:180,cy:180,r:142,class:'sky-ph-circle'}));root.appendChild(svg('circle',{cx:180,cy:180,r:142,class:'sky-ph-guide'}));
   for(let index=0;index<7;index++){const from=point(WEEK_PATH[index],142),to=point(WEEK_PATH[index+1],142);line(root,from,to,`sky-ph-week-segment ${index<weekIndex?'past':'future'}`);if(index===weekIndex)partialLine(root,from,to,dayFraction,'sky-ph-week-segment current')}
   for(let index=0;index<7;index++)line(root,point(CHALDEAN[index],142),point(CHALDEAN[(index+1)%7],142),'sky-ph-hour-segment future');
-  partialLine(root,point(current.ruler,142),point(CHALDEAN[(CHALDEAN.indexOf(current.ruler)+1)%7],142),hourFraction,'sky-ph-hour-segment current');CHALDEAN.forEach(key=>root.appendChild(planetGroup(key,dayKey,current.ruler)));return root;
+  partialLine(root,point(current.ruler,142),point(CHALDEAN[(CHALDEAN.indexOf(current.ruler)+1)%7],142),hourFraction,'sky-ph-hour-segment current');CHALDEAN.forEach(key=>root.appendChild(planetGroup(key,dayKey,current.ruler)));root.dataset.planetaryDay=dayKey;root.dataset.planetaryHour=current.ruler;return root;
 }
 function planetaryHoursHref(p){const params=new URLSearchParams();params.set('phShare','1');params.set('lat',String(p.latitude));params.set('lon',String(p.longitude));params.set('tz',p.timeZone);if(p.location)params.set('loc',p.location);if(p.instantIso)params.set('dt',p.instantIso);return'planetaryhours.html#'+params.toString()}
-function clearDraft(target){target?.querySelectorAll('[data-draft-where-when-link="true"],[data-draft-where-when="true"],.sky-where-when-ph-jump').forEach(node=>node.remove());target?.removeAttribute('data-draft-heptagram-ready')}
+function rulerLabel(dayKey,hourKey){
+  const label=document.createElement('div');label.className='sky-ww-planetary-rulers';label.dataset.planetaryRulers='true';
+  const title=key=>key.charAt(0).toUpperCase()+key.slice(1);
+  for(const [key,role] of [[dayKey,'Day'],[hourKey,'Hour']]){
+    const item=document.createElement('span');item.className='sky-ww-planetary-ruler';item.dataset.ruler=key;item.dataset.role=role.toLowerCase();
+    const mark=document.createElementNS(NS,'svg');mark.classList.add('sky-ww-planetary-ruler-art');mark.setAttribute('viewBox','0 0 40 40');mark.setAttribute('aria-hidden','true');
+    const anchor=svg('g',{transform:'translate(20 20)'});
+    mark.append(anchor);item.append(mark,document.createTextNode(title(key)+' '+role));label.append(item);
+    if(role==='Day'){const divider=document.createElement('span');divider.className='sky-ww-planetary-ruler-dot';divider.textContent='·';label.append(divider)}
+    const drawing=window.RelphiGlyphComponent?.draw?.(anchor,key,{radius:17,color:COLORS[key],padding:1});
+    if(drawing?.catch)drawing.catch(error=>console.warn('Day/Hour glyph unavailable',error));
+  }
+  return label;
+}
+function clearDraft(target){target?.querySelectorAll('[data-planetary-rulers="true"],[data-draft-where-when-link="true"],[data-draft-where-when="true"],.sky-where-when-ph-jump').forEach(node=>node.remove());target?.removeAttribute('data-draft-heptagram-ready')}
 async function renderNow(slot){
-  timers[slot]=0;const token=++renderToken[slot],form=editor(slot),target=mount(slot);if(!form||!target)return;const p=packet(slot);clearDraft(target);if(!p)return;
+  timers[slot]=0;const token=++renderToken[slot],form=editor(slot),target=mount(slot);if(!form||!target)return;const p=packet(slot);if(!p){clearDraft(target);return}
   try{
-    const preview=buildPreview(p);if(!preview)return;const jump=document.createElement('a');jump.className='sky-ph-jump';jump.dataset.draftWhereWhenLink='true';jump.href=planetaryHoursHref(p);jump.setAttribute('aria-label','Open this time in Planetary Hours');preview.style.visibility='hidden';jump.append(preview);target.append(jump);
-    const canonical=window.RelphiSkyHeptagramCanonical;if(canonical?.correct)await canonical.correct(preview);if(token!==renderToken[slot]||!preview.isConnected)return;preview.style.visibility='visible';target.dataset.draftHeptagramReady='true';
-  }catch(error){clearDraft(target);console.error('Where/When moment preview failed:',error)}
+    const preview=buildPreview(p);if(!preview)return;const jump=document.createElement('a');jump.className='sky-ph-jump';jump.dataset.draftWhereWhenLink='true';jump.href=planetaryHoursHref(p);jump.setAttribute('aria-label','Open this time in Planetary Hours');preview.style.visibility='hidden';jump.style.position='absolute';jump.style.pointerEvents='none';jump.append(preview);target.append(jump);
+    const canonical=window.RelphiSkyHeptagramCanonical;if(canonical?.correct)await canonical.correct(preview);if(token!==renderToken[slot]||!preview.isConnected){jump.remove();return}target.querySelectorAll('[data-draft-where-when-link="true"],[data-planetary-rulers="true"]').forEach(old=>{if(old!==jump)old.remove()});target.insertBefore(rulerLabel(preview.dataset.planetaryDay,preview.dataset.planetaryHour),jump);jump.style.position='';jump.style.pointerEvents='';preview.style.visibility='visible';target.dataset.draftHeptagramReady='true';
+  }catch(error){if(token===renderToken[slot])clearDraft(target);console.error('Where/When moment preview failed:',error)}
 }
 function schedule(slot,delay=0){if(!slot||!(slot in timers))return;clearTimeout(timers[slot]);timers[slot]=window.setTimeout(()=>void renderNow(slot),delay)}
 function start(){

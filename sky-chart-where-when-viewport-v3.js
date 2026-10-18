@@ -14,7 +14,8 @@ function installStyle(){
     /* Do not permanently reserve a scrollbar lane inside a narrow Sky card.
        The body may scroll when it genuinely needs to, but when it fits its
        fields should reclaim the full content width. */
-    .sky-where-when-scroll-body{scrollbar-gutter:auto;padding-bottom:0}
+    .sky-where-when-editor{grid-template-rows:max-content auto!important;height:auto!important;max-height:none!important}
+    .sky-where-when-scroll-body{scrollbar-gutter:auto;padding-bottom:0;max-height:none!important;overflow:visible!important}
     .sky-where-when-here-now-row{padding:0 .62rem .8rem}
     .sky-location-confirmation:not([data-location-source="placement-inference"]) p:first-child{display:none}
     .sky-where-when-status:empty{display:none}
@@ -28,16 +29,14 @@ function installStyle(){
     }
   `;document.head.appendChild(style);
 }
-function numberPx(value){const parsed=parseFloat(value);return Number.isFinite(parsed)?parsed:0}
+// The editor must grow with its content. At browser zoom a visual-viewport
+// height cap shrinks the card and hides the miniheptagram behind nested scrolling.
+// Let the page scroll instead of putting a scrollbar inside Where and When.
 function sizeEditor(form){
-  const body=form?.querySelector('.sky-where-when-scroll-body'),footer=form?.querySelector('.sky-where-when-footer');if(!body||!footer)return;
-  const viewport=window.visualViewport?.height||window.innerHeight||800,rect=form.getBoundingClientRect(),formStyle=getComputedStyle(form),footerHeight=footer.getBoundingClientRect().height;
-  const chrome=numberPx(formStyle.paddingTop)+numberPx(formStyle.paddingBottom)+numberPx(formStyle.rowGap)+4;
-  const available=Math.max(220,viewport-Math.max(0,rect.top)-footerHeight-chrome);
-  body.style.maxHeight=`${Math.floor(available)}px`;
+  const body=form?.querySelector('.sky-where-when-scroll-body');
+  if(body)body.style.removeProperty('max-height');
 }
-function sizeAll(){queued=false;document.querySelectorAll('.sky-where-when-editor').forEach(sizeEditor)}
-function schedule(){if(queued)return;queued=true;requestAnimationFrame(sizeAll)}
-function start(){installStyle();sizeAll();window.addEventListener('relphi:sky-where-when-editor-ready',schedule);window.addEventListener('resize',schedule,{passive:true});window.visualViewport?.addEventListener('resize',schedule,{passive:true})}
+function sizeAll(){document.querySelectorAll('.sky-where-when-editor').forEach(sizeEditor)}
+function start(){installStyle();sizeAll();window.addEventListener('relphi:sky-where-when-editor-ready',sizeAll)}
 document.readyState==='loading'?document.addEventListener('DOMContentLoaded',start,{once:true}):start();
 })();

@@ -112,15 +112,10 @@
 }
 
 
-/* Match the confirm action's approximate width without changing the editor's
-   existing flex layout or adding another layout column. */
-.sky-where-when-editor .sky-where-when-here-now{
-  width:74%!important;
-  margin-left:auto!important;
-  padding:.6rem .48rem!important;
-  font-size:.64rem!important;
-  line-height:1!important;
-}
 .sky-where-when-editor .sky-where-when-heptagram-slot .sky-ph-jump-title{
   display:none!important;
 }
+
+/* Keep the one-click control above Where and the miniheptagram after When. */
+.sky-where-when-editor .sky-where-when-one-click{display:flex!important;align-items:center;justify-content:center;gap:6px;min-height:33px;width:100%;margin:0 0 5px!important;padding:5px 8px!important;font-size:.70rem!important;font-weight:700!important}
+.sky-where-when-editor .sky-where-when-one-click svg{width:16px;height:16px;flex:none}

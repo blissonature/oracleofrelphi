@@ -1,0 +1,46 @@
+name: Sky Chart Here and Now modes check
+on:
+  pull_request:
+    paths:
+      - 'sky-chart.html'
+      - 'sky-chart-where-when-v3.js'
+      - 'sky-chart-where-when-modes-v1.css'
+      - 'sky-chart-where-when-draft-heptagram-v4.js'
+      - 'sky-chart-heptagram-geometry-v1.css'
+      - 'tests/sky-chart-heptagram-uniform-strokes.test.mjs'
+      - 'tests/sky-chart-filtered-isolation-and-heptagram.test.mjs'
+      - 'sky-chart-staleness-v1.js'
+      - 'tests/sky-chart-here-now-modes-browser.mjs'
+      - '.github/workflows/sky-chart-here-now-modes-check.yml'
+jobs:
+  here-now-browser:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: JavaScript syntax checks
+        run: |
+          node --check sky-chart-where-when-v3.js
+          node --check sky-chart-where-when-draft-heptagram-v4.js
+          node --check sky-chart-staleness-v1.js
+          node --check tests/sky-chart-here-now-modes-browser.mjs
+          node tests/sky-chart-architecture-contract.mjs
+          node --test tests/sky-chart-heptagram-uniform-strokes.test.mjs
+      - name: Install browser dependencies
+        run: |
+          npm install --no-save playwright@1.52.0 luxon@3 suncalc@1.9.0
+          npx playwright install --with-deps chromium
+      - name: Verify Where Here and When Now interactions
+        run: |
+          python3 -m http.server 4173 > /tmp/sky-chart-modes-server.log 2>&1 &
+          node tests/sky-chart-here-now-modes-browser.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: sky-chart-here-now-mobile
+          path: |
+            sky-chart-here-now-manual-mobile.png
+            sky-chart-here-now-refreshed-mobile.png
+          if-no-files-found: ignore

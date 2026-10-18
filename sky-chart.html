@@ -2,6 +2,18 @@
 <html lang="en" data-sky-b-present="false" data-sky-last-mode="single">
 <head>
   <meta charset="utf-8">
+  <script>
+  // The exact-revision preview loader injects a jsDelivr base. Its SVG/CSS/JS
+  // responses can be blocked; use an equivalent commit-pinned CORS asset origin.
+  // This runs only inside the preview route and has no production effect.
+  (function(){
+    if(!location.pathname.endsWith('/sky-chart-preview/sky-chart.html'))return;
+    const ref=new URLSearchParams(location.search).get('ref')||'';
+    if(!/^[a-f0-9]{40}$/i.test(ref))return;
+    const base=document.querySelector('head > base[href*="cdn.jsdelivr.net/gh/blissonature/oracleofrelphi@"]');
+    if(base)base.href='https://raw.githack.com/blissonature/oracleofrelphi/'+ref+'/';
+  })();
+  </script>
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Sky Chart · Oracle of Relphi</title>
   <meta name="robots" content="noindex,nofollow,noarchive">
@@ -24,10 +36,11 @@
   <link rel="stylesheet" href="sky-chart-house-multiselect-v1.css?v=4">
   <link rel="stylesheet" href="sky-chart-final-integrated-v1.css?v=3">
   <link rel="stylesheet" href="sky-chart-highlight-without-filtering-v1.css?v=2">
-  <link rel="stylesheet" href="sky-chart-heptagram-geometry-v1.css?v=2">
+  <link rel="stylesheet" href="sky-chart-heptagram-geometry-v1.css?v=3">
   <link rel="stylesheet" href="sky-chart-heptagram-canonical-v1.css?v=9">
   <link rel="stylesheet" href="sky-chart-card-drawers-v1.css?v=19">
-  <link rel="stylesheet" href="sky-chart-where-when-layout-density-v1.css?v=4">
+  <link rel="stylesheet" href="sky-chart-where-when-layout-density-v1.css?v=6">
+<link rel="stylesheet" href="sky-chart-where-when-modes-v1.css?v=4">
   <link rel="stylesheet" href="sky-chart-drawer-collapse-v1.css?v=1">
   <link rel="stylesheet" href="sky-chart-filter-neutral-final-v1.css?v=2">
   <link rel="stylesheet" href="sky-chart-aspect-multiselect-v1.css?v=10">
@@ -80,7 +93,7 @@
   <script src="sky-chart-coordinate-precision-v1.js?v=7"></script>
   <script src="sky-chart-harmonic-orb-v1.js?v=10"></script>
   <script src="sky-chart-harmonic-window-ceiling-v1.js?v=1"></script>
-  <script src="sky-chart-render-stability-v2.js?v=1"></script>
+  <script src="sky-chart-render-stability-v2.js?v=3"></script>
   <script src="sky-chart-placement-collision-order-v1.js?v=8"></script>
   <script src="sky-chart-card-shell-v2.js?v=3"></script>
   <script src="sky-chart-quick-copy-v2.js?v=1"></script>
@@ -98,10 +111,10 @@
   <script src="sky-chart-relationship-copy-v1.js?v=8"></script>
   <script src="sky-chart-heptagram-geometry-v1.js?v=9"></script>
   <script src="sky-chart-heptagram-canonical-v1.js?v=17"></script>
-  <script src="sky-chart-where-when-v3.js?v=13"></script>
-  <script src="sky-chart-where-when-draft-heptagram-v4.js?v=5"></script>
+  <script src="sky-chart-where-when-v3.js?v=23"></script>
+  <script src="sky-chart-where-when-draft-heptagram-v4.js?v=9"></script>
   <script src="sky-chart-where-when-paste-inference-v2.js?v=1"></script>
-  <script src="sky-chart-where-when-viewport-v3.js?v=1"></script>
+  <script src="sky-chart-where-when-viewport-v3.js?v=2"></script>
   <script src="sky-chart-time-control-v1.js?v=4"></script>
   <script src="sky-chart-location-search-v2.js?v=1"></script>
   <script src="sky-chart-card-hits-drawer-v3.js?v=30"></script>

@@ -38,8 +38,10 @@ function installStyles(){
     .sky-use-here-button{padding:.42rem .68rem;font-size:.62rem}
     .sky-inferred-location-value{font-weight:800}
     .sky-where-when-footer{position:relative;display:grid!important;grid-template-columns:minmax(0,1fr)!important;grid-template-rows:auto auto!important;gap:.5rem!important;width:100%;padding:.45rem .62rem .62rem!important;box-sizing:border-box;background:#fffdf8;border-top:1px solid rgba(31,27,24,.12);z-index:2}
-    .sky-where-when-footer-actions{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,2fr);gap:.48rem;width:100%}
+    .sky-where-when-footer .sky-where-when-footer-actions{display:grid!important;grid-template-columns:minmax(62px,.78fr) minmax(0,2.22fr)!important;gap:.3rem!important;width:100%;align-items:center}
     .sky-where-when-footer-actions .sky-where-when-button{width:100%;min-width:0;margin:0}
+    .sky-where-when-one-click{display:flex;align-items:center;justify-content:center;gap:.4rem;min-height:34px;width:100%;margin:0 0 4px;font-size:.72rem;font-weight:700}
+    .sky-where-when-one-click svg{width:16px;height:16px;flex:none}
     .sky-ph-handoff-dialog{width:min(680px,calc(100vw - 2rem));max-width:680px;border:2px solid #dc1f18;border-radius:1.3rem;padding:0;background:#fffdf8;color:#1f1b18;box-shadow:0 24px 70px rgba(0,0,0,.28)}
     .sky-ph-handoff-dialog::backdrop{background:rgba(17,14,12,.48);backdrop-filter:blur(2px)}
     .sky-ph-handoff-inner{padding:1.2rem;display:grid;gap:1rem}
@@ -120,17 +122,111 @@ function editorMarkup(slot,p){
   const selected=currentSelection(slot,p);
   cardState[slot].selected=selected;
   const dateTime=String(p.dateTime||''),date=dateTime.slice(0,10),time=dateTime.slice(11,16),disabled=selected?'':' disabled';
-  return `<form class="sky-where-when-editor" data-slot="${slot}">
+  const savedMetadata=payload(slot)?.metadata||{};
+  const here=selected?.source==='current-location',now=!p.timeUnknown&&(savedMetadata.liveNowOrigin==='use-now'||!!savedMetadata.capturedNowAt);
+  const moment=now?String(savedMetadata.capturedNowAt||savedMetadata.liveNowAt||p.instant||''):'';
+  const nowMoment=Number.isFinite(Date.parse(moment))?moment:'';
+  return `<form class="sky-where-when-editor" data-slot="${slot}" data-now-instant="${escapeHtml(nowMoment)}">
     <div class="sky-where-when-scroll-body">
-      <div class="sky-where-when-heptagram-slot sky-where-when-heptagram-slot-top" data-ww-heptagram-slot="${slot}"></div>
-      <div class="sky-where-when-here-now-row"><button class="sky-where-when-button secondary sky-where-when-here-now" type="button" data-ww-action="here-and-now">Here and Now</button></div>
-      <fieldset class="sky-where-when-section" data-ww-where><legend>Where</legend><div class="sky-where-search-label-row"><label class="sky-where-when-label" for="skyWhereLocation${slot}">Search for a location</label><button class="sky-where-when-button secondary sky-use-here-button" type="button" data-current-location="${slot}" data-ww-action="use-here">My current location</button></div><div class="sky-where-search-row"><input id="skyWhereLocation${slot}" class="sky-where-when-input${selected?.source==='current-location'?' is-current-location':''}" data-ww-field="location-query" type="search" autocomplete="off" value="${escapeHtml(selected?.source==='current-location'?'':selected?.query||'')}" placeholder="Ex. City, State or Country"><button class="sky-where-when-button secondary" type="button" data-ww-action="search-location">Search</button></div><div class="sky-location-results" aria-live="polite"></div>${confirmationMarkup(selected)}</fieldset>
-      <fieldset class="sky-where-when-section" data-ww-when${disabled}><legend>When</legend><div class="sky-where-when-now-row"><button class="sky-where-when-button secondary sky-use-now-button" type="button" data-ww-action="use-now"${p.timeUnknown?' disabled':''}>Current local time</button><label class="sky-time-unknown-option"><input data-ww-field="time-unknown" type="checkbox"${p.timeUnknown?' checked':''}${disabled}><span>Time unknown</span></label></div><div class="sky-where-when-grid"><label class="sky-where-when-label">Date<input class="sky-where-when-input" data-ww-field="date" type="date" value="${escapeHtml(date)}"${disabled}></label><label class="sky-where-when-label">Local time<input class="sky-where-when-input" data-ww-field="time" type="time" value="${escapeHtml(time)}"${p.timeUnknown?' disabled':disabled}></label></div></fieldset>
+      <button class="sky-where-when-button secondary sky-where-when-one-click" type="button" data-ww-action="here-and-now"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6v5h-5M4 18v-5h5M18 10A7 7 0 0 0 6 7L4 9M6 14a7 7 0 0 0 12 3l2-2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span>1-Click Here and Now</span></button>
+      <fieldset class="sky-where-when-section sky-where-when-mode" data-ww-where><legend>Where</legend>
+        <div class="sky-ww-mode-row"><span class="sky-ww-mode-primary"><label class="sky-ww-choice"><input data-ww-field="here" type="checkbox"${here?' checked':''}><span>Here</span></label><button class="sky-ww-refresh" type="button" data-ww-action="refresh-here" aria-label="Refresh current location" title="Refresh current location"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6v5h-5M4 18v-5h5M18 10A7 7 0 0 0 6 7L4 9M6 14a7 7 0 0 0 12 3l2-2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button></span></div>
+        <p class="sky-ww-mode-value" data-ww-here-value${here?'':' hidden'}>${escapeHtml(here?selected.canonical:'')}</p>
+        <div class="sky-ww-manual" data-ww-manual-where${here?' hidden':''}><label class="sky-where-when-label" for="skyWhereLocation${slot}">Search for a location</label><div class="sky-where-search-row"><input id="skyWhereLocation${slot}" class="sky-where-when-input${selected?.source==='current-location'?' is-current-location':''}" data-ww-field="location-query" type="search" autocomplete="off" value="${escapeHtml(selected?.source==='current-location'?'':selected?.query||'')}" placeholder="Ex. City, State or Country"><button class="sky-where-when-button secondary" type="button" data-ww-action="search-location">Search</button></div><div class="sky-location-results" aria-live="polite"></div>${confirmationMarkup(selected)}</div>
+      </fieldset>
+      <fieldset class="sky-where-when-section sky-where-when-mode" data-ww-when><legend>When</legend>
+        <div class="sky-ww-mode-row sky-ww-when-row"><span class="sky-ww-mode-primary"><label class="sky-ww-choice"><input data-ww-field="now" type="checkbox"${now?' checked':''}><span>Now</span></label><button class="sky-ww-refresh" type="button" data-ww-action="refresh-now" aria-label="Refresh current instant" title="Capture current instant"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6v5h-5M4 18v-5h5M18 10A7 7 0 0 0 6 7L4 9M6 14a7 7 0 0 0 12 3l2-2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button></span><label class="sky-time-unknown-option sky-ww-unknown"><input data-ww-field="time-unknown" type="checkbox"${p.timeUnknown?' checked':''}><span>Time unknown</span></label></div>
+        <p class="sky-ww-mode-value sky-ww-clock" data-ww-now-value${now?'':' hidden'} role="timer" aria-live="off"></p>
+        <div class="sky-ww-manual" data-ww-manual-when${now?' hidden':''}><div class="sky-where-when-grid"><label class="sky-where-when-label">Date<input class="sky-where-when-input" data-ww-field="date" type="date" value="${escapeHtml(date)}"></label><label class="sky-where-when-label">Local time<input class="sky-where-when-input" data-ww-field="time" type="time" value="${escapeHtml(time)}"${p.timeUnknown?' disabled':''}></label></div></div>
+      </fieldset>
       <details class="sky-where-when-advanced"><summary>Advanced settings</summary><div class="sky-where-when-advanced-body"><label class="sky-where-when-label">Time zone<input class="sky-where-when-input" data-ww-field="timezone" type="text" readonly value="${escapeHtml(selected?.timezone||p.timeZone||'')}"></label><div class="sky-where-when-coordinate-grid"><label class="sky-where-when-label">Latitude<input class="sky-where-when-input" data-ww-field="latitude" type="number" step="0.00001" min="-90" max="90" value="${escapeHtml(displayCoordinate(selected?.latitude??p.latitude))}"></label><label class="sky-where-when-label">Longitude<input class="sky-where-when-input" data-ww-field="longitude" type="number" step="0.00001" min="-180" max="180" value="${escapeHtml(displayCoordinate(selected?.longitude??p.longitude))}"></label></div><div data-ww-paste-inference-host></div></div></details>
       <p class="sky-where-when-status" data-update-now-status aria-live="polite"></p>
+      <div class="sky-where-when-heptagram-slot" data-ww-heptagram-slot="${slot}"></div>
     </div>
     <div class="sky-where-when-footer"><div class="sky-where-when-footer-actions"><button class="sky-where-when-button secondary sky-where-when-cancel" type="button" data-ww-action="cancel">Cancel</button><button class="sky-where-when-button primary" type="submit"${disabled}>Use This Where and When</button></div></div>
   </form>`;
+}
+
+function modeValue(form,name){return form?.querySelector('[data-ww-field="'+name+'"]')?.checked===true}
+function captureMoment(form){if(form)form.dataset.nowInstant=new Date().toISOString()}
+function syncModes(slot){
+  const form=formFor(slot);if(!form)return;
+  const here=modeValue(form,'here'),now=modeValue(form,'now');
+  const manualWhere=form.querySelector('[data-ww-manual-where]'),manualWhen=form.querySelector('[data-ww-manual-when]');
+  if(manualWhere)manualWhere.hidden=here;
+  if(manualWhen)manualWhen.hidden=now;
+  const hereValue=form.querySelector('[data-ww-here-value]'),nowValue=form.querySelector('[data-ww-now-value]');
+  if(hereValue){hereValue.hidden=!here;hereValue.textContent=here?cardState[slot].selected?.canonical||'Finding your location…':''}
+  if(nowValue)nowValue.hidden=!now;
+  if(now)updateNowFields(slot);
+  window.RelphiSkyWhereWhenDraftHeptagram?.render?.(slot,0);
+}
+function updateNowFields(slot){
+  const form=formFor(slot);if(!form||!modeValue(form,'now'))return;
+  const selected=cardState[slot].selected,DateTime=window.luxon?.DateTime;
+  if(!DateTime)return;
+  if(!form.dataset.nowInstant)captureMoment(form);
+  const instant=DateTime.fromISO(form.dataset.nowInstant,{setZone:true});
+  if(!instant?.isValid)return;
+  const timezone=selected?.timezone||DateTime.local().zoneName;
+  const local=instant.setZone(timezone);if(!local?.isValid)return;
+  const date=form.querySelector('[data-ww-field="date"]'),time=form.querySelector('[data-ww-field="time"]'),summary=form.querySelector('[data-ww-now-value]');
+  if(date)date.value=local.toFormat('yyyy-MM-dd');
+  if(time)time.value=local.toFormat('HH:mm');
+  if(summary)summary.textContent='Captured · '+local.toFormat('ccc, LLL d · h:mm:ss a')+' · '+timezone;
+}
+async function checkHere(slot){
+  const form=formFor(slot),here=form?.querySelector('[data-ww-field="here"]');
+  if(!form||!here?.checked)return;
+  status(slot,'Finding your current browser location…');
+  try{
+    const packet=await currentLocationPacket();
+    if(!form.isConnected||!here.checked)return;
+    if(!selectLocation(slot,packet))throw new Error('Current location could not be applied.');
+    syncModes(slot);
+    status(slot,'');
+  }catch(error){
+    if(!form.isConnected)return;
+    here.checked=false;syncModes(slot);
+    status(slot,error?.code===1?'Location permission was denied.':error?.message||'Current location could not be resolved.',true);
+  }
+}
+function updateMode(slot,kind,checked){
+  const form=formFor(slot);if(!form)return;
+  if(kind==='here'){
+    if(checked){syncModes(slot);void checkHere(slot)}
+    else{syncModes(slot);status(slot,'Search for a location, or keep the selected location.')}
+    return;
+  }
+  if(kind!=='now')return;
+  if(checked){
+    enableKnownTime(form);
+    form.dataset.manualDate=form.querySelector('[data-ww-field="date"]')?.value||'';
+    form.dataset.manualTime=form.querySelector('[data-ww-field="time"]')?.value||'';
+    captureMoment(form);
+    status(slot,'Current instant captured. Refresh to capture a different instant.');
+  }else{
+    delete form.dataset.nowInstant;
+    const date=form.querySelector('[data-ww-field="date"]'),time=form.querySelector('[data-ww-field="time"]');
+    if(date&&form.dataset.manualDate)date.value=form.dataset.manualDate;
+    if(time&&form.dataset.manualTime)time.value=form.dataset.manualTime;
+    status(slot,'Custom date and time selected.');
+  }
+  syncModes(slot);
+}
+function refreshNow(slot){
+  const form=formFor(slot);if(!form)return;
+  const toggle=form.querySelector('[data-ww-field="now"]');
+  if(!toggle)return;
+  if(!toggle.checked){
+    toggle.checked=true;
+    updateMode(slot,'now',true);
+    return;
+  }
+  captureMoment(form);
+  updateNowFields(slot);
+  window.RelphiSkyWhereWhenDraftHeptagram?.render?.(slot,0);
+  status(slot,'Current instant refreshed. Confirm to apply it to the chart.');
 }
 function keepCommittedHeptagramInSummary(slot){
   const refs=shell(slot),frame=refs?.root?.querySelector(`[data-sky-heptagram-frame="${slot}"]`);
@@ -145,6 +241,7 @@ function openEditor(slot,focus=false){
   refs.editor.innerHTML=editorMarkup(slot,profileFor(slot));
   keepCommittedHeptagramInSummary(slot);
   window.RelphiSkyCardShell.setEditorExpanded(slot,true);
+  syncModes(slot);
   window.dispatchEvent(new CustomEvent('relphi:sky-where-when-editor-ready',{detail:{slot,form:formFor(slot)}}));
   if(focus)requestAnimationFrame(()=>formFor(slot)?.querySelector('[data-ww-field="location-query"]')?.focus());
 }
@@ -174,7 +271,7 @@ function calculateUnknownTimeSky(slot,selected,date){
   const moonStart=placementObject('Moon',astronomyLongitude('Moon',startInstant)),moonEnd=placementObject('Moon',astronomyLongitude('Moon',endInstant));
   const existing=payload(slot)||{},metadata=existing.metadata&&typeof existing.metadata==='object'?{...existing.metadata}:{},priorProfile=existing.calcProfile&&typeof existing.calcProfile==='object'?{...existing.calcProfile}:{};
   metadata.whereWhenSource=selected.source||'manual';metadata.liveNowDisabled=true;metadata.liveNowDisabledReason='time-unknown';
-  delete metadata.liveNowOrigin;delete metadata.liveNowAt;delete metadata.liveAgeAnchorAt;delete metadata.liveNowLatitude;delete metadata.liveNowLongitude;
+  delete metadata.capturedNowAt;delete metadata.liveContinuous;delete metadata.liveNowOrigin;delete metadata.liveNowAt;delete metadata.liveAgeAnchorAt;delete metadata.liveNowLatitude;delete metadata.liveNowLongitude;
   return{...existing,name:existing.name||`Sky ${slot}`,saved:false,placements,houseCusps:[],metadata,calcProfile:{...priorProfile,dateTime:date,instant:'',timeUnknown:true,moonRange:{start:moonStart,end:moonEnd},latitude:String(selected.latitude),longitude:String(selected.longitude),location:selected.canonical,locationQuery:selected.query||selected.canonical,timeZone:selected.timezone,whereWhenSource:selected.source||'manual',houseSystem:'none',houseCusps:[],cusps:[],source:'where-when-v3'},savedAt:new Date().toISOString()};
 }
 function calculateSky(slot,selected,date,time,options={}){
@@ -205,13 +302,19 @@ function calculateSky(slot,selected,date,time,options={}){
   if(liveOrigin==='use-now'){
     delete metadata.liveNowDisabled;delete metadata.liveNowDisabledReason;delete metadata.liveNowMigrated;
     delete priorProfile.savedSkyId;delete priorProfile.savedSkyName;
+    delete metadata.capturedNowAt;
+    metadata.liveContinuous=options.continuousNow===true;
     metadata.name='Now';metadata.title='Now';metadata.liveNowOrigin='use-now';metadata.liveNowAt=dt.toUTC().toISO();metadata.liveAgeAnchorAt=metadata.liveNowAt;metadata.liveNowLatitude=String(selected.latitude);metadata.liveNowLongitude=String(selected.longitude);
     return{...existing,name:'Now',title:'Now',displayName:'Now',skyName:'Now',saved:false,placements,houseCusps:houses.cusps,metadata,calcProfile:{...priorProfile,name:'Now',title:'Now',dateTime:dt.toFormat("yyyy-MM-dd'T'HH:mm"),instant:metadata.liveNowAt,timeUnknown:false,latitude:String(selected.latitude),longitude:String(selected.longitude),location:selected.canonical,locationQuery:selected.query||selected.canonical,timeZone:selected.timezone,whereWhenSource:selected.source||'manual',houseSystem:houses.system||houseSystem,houseCusps:houses.cusps,cusps:houses.cusps,houseSystemNote:houses.note,source:'where-when-v3',liveNowOrigin:'use-now',liveNowAt:metadata.liveNowAt},savedAt:new Date().toISOString()};
   }
-  delete metadata.liveNowOrigin;delete metadata.liveNowAt;delete metadata.liveAgeAnchorAt;delete metadata.liveNowLatitude;delete metadata.liveNowLongitude;delete metadata.liveNowMigrated;
-  metadata.liveNowDisabled=true;metadata.liveNowDisabledReason='custom-where-when';
+  delete metadata.liveContinuous;delete metadata.liveNowOrigin;delete metadata.liveNowAt;delete metadata.liveAgeAnchorAt;delete metadata.liveNowLatitude;delete metadata.liveNowLongitude;delete metadata.liveNowMigrated;
+  if(options.snapshotNow){
+    metadata.capturedNowAt=nextInstant;
+    metadata.name='Now';metadata.title='Now';
+  }else delete metadata.capturedNowAt;
+  metadata.liveNowDisabled=true;metadata.liveNowDisabledReason=options.snapshotNow?'fixed-now-snapshot':'custom-where-when';
   delete priorProfile.liveNowOrigin;delete priorProfile.liveNowAt;
-  return{...existing,name:existing.name||`Sky ${slot}`,saved:false,placements,houseCusps:houses.cusps,metadata,calcProfile:{...priorProfile,dateTime:`${date}T${time}`,instant:dt.toUTC().toISO(),timeUnknown:false,latitude:String(selected.latitude),longitude:String(selected.longitude),location:selected.canonical,locationQuery:selected.query||selected.canonical,timeZone:selected.timezone,whereWhenSource:selected.source||'manual',houseSystem:houses.system||houseSystem,houseCusps:houses.cusps,cusps:houses.cusps,houseSystemNote:houses.note,source:'where-when-v3'},savedAt:new Date().toISOString()};
+  return{...existing,name:options.snapshotNow?'Now':existing.name||`Sky ${slot}`,title:options.snapshotNow?'Now':existing.title,displayName:options.snapshotNow?'Now':existing.displayName,skyName:options.snapshotNow?'Now':existing.skyName,saved:false,placements,houseCusps:houses.cusps,metadata,calcProfile:{...priorProfile,dateTime:options.snapshotNow?dt.toFormat("yyyy-MM-dd'T'HH:mm"):`${date}T${time}`,instant:dt.toUTC().toISO(),timeUnknown:false,latitude:String(selected.latitude),longitude:String(selected.longitude),location:selected.canonical,locationQuery:selected.query||selected.canonical,timeZone:selected.timezone,whereWhenSource:selected.source||'manual',houseSystem:houses.system||houseSystem,houseCusps:houses.cusps,cusps:houses.cusps,houseSystemNote:houses.note,source:'where-when-v3'},savedAt:new Date().toISOString()};
 }
 function dispatchSlotChange(slot){try{window.dispatchEvent(new StorageEvent('storage',{key:SLOT_KEYS[slot],newValue:localStorage.getItem(SLOT_KEYS[slot]),storageArea:localStorage}))}catch(_){const event=new Event('storage');Object.defineProperty(event,'key',{value:SLOT_KEYS[slot]});window.dispatchEvent(event)}}
 function normalizePacket(packet){
@@ -247,7 +350,9 @@ function selectLocation(slot,source){
   if(confirmation){confirmation.hidden=false;confirmation.dataset.locationSource=packet.source||'search';confirmation.innerHTML=packet.source==='placement-inference'?`<p><strong>Location inferred from pasted placements</strong></p><p class="sky-inferred-location-value">${escapeHtml(packet.canonical)}</p>`:`<p><strong>You searched:</strong> ${escapeHtml(packet.query||packet.canonical)}</p><p><strong>Location found:</strong> ${escapeHtml(packet.canonical)}</p>`}
   card.querySelector('[data-ww-field="timezone"]').value=packet.timezone;card.querySelector('[data-ww-field="latitude"]').value=displayCoordinate(packet.latitude);card.querySelector('[data-ww-field="longitude"]').value=displayCoordinate(packet.longitude);
   const when=card.querySelector('[data-ww-when]');when.disabled=false;when.querySelectorAll('input').forEach(node=>{node.disabled=false});card.querySelector('button[type="submit"]').disabled=false;
-  status(slot,packet.source==='placement-inference'?'Inferred location ready. Review the date and time, then confirm.':'Location confirmed. Enter the local date and time, or use Current local time.');
+  const hereToggle=card.querySelector('[data-ww-field="here"]');if(hereToggle)hereToggle.checked=packet.source==='current-location';
+  syncModes(slot);
+  status(slot,packet.source==='placement-inference'?'Inferred location ready. Review the date and time, then confirm.':'Location confirmed. Review the time and preview, then confirm.');
   window.dispatchEvent(new CustomEvent('relphi:sky-where-when-location-selected',{detail:{slot,packet:{...packet}}}));
   window.RelphiSkyWhereWhenDraftHeptagram?.render?.(slot,0);
   return true;
@@ -276,12 +381,15 @@ function finishCommitted(slot,detail={}){
   requestAnimationFrame(()=>window.RelphiSkyCardShell?.openDrawer?.(slot,'placements'));
 }
 async function submitCalculated(slot,form,options={}){
-  const selected=cardState[slot].selected,date=form.querySelector('[data-ww-field="date"]')?.value||'',time=form.querySelector('[data-ww-field="time"]')?.value||'',timeUnknown=form.querySelector('[data-ww-field="time-unknown"]')?.checked===true;
+  const selected=cardState[slot].selected; if(modeValue(form,'now'))updateNowFields(slot);
+  const date=form.querySelector('[data-ww-field="date"]')?.value||'',time=form.querySelector('[data-ww-field="time"]')?.value||'',timeUnknown=!modeValue(form,'now')&&form.querySelector('[data-ww-field="time-unknown"]')?.checked===true;
   if(!selected)return status(slot,'Choose a canonical location first.',true);
   if(!date||(!timeUnknown&&!time))return status(slot,timeUnknown?'Enter the local date.':'Enter both the local date and local time.',true);
   setBusy(slot,true);status(slot,'Calculating placements and Planetary Hours…');
   try{
-    const nextPayload=calculateSky(slot,selected,date,time,{...options,timeUnknown});
+    const isNow=modeValue(form,'now');
+    const effectiveOptions=isNow?{...options,timeUnknown:false,liveOrigin:'',instant:form.dataset.nowInstant,snapshotNow:true}:{...options,timeUnknown};
+    const nextPayload=calculateSky(slot,selected,date,time,effectiveOptions);
     // Chiron is optional when the local ephemeris cannot cover this date.
     status(slot,'Calculating Chiron…');
     if(window.RelphiChironEphemeris)await window.RelphiChironEphemeris.completePayload(nextPayload);
@@ -291,10 +399,10 @@ async function submitCalculated(slot,form,options={}){
     if(String(profile.location||'')!==String(selected.canonical||''))throw new Error('The new Where and When did not persist.');
     finishCommitted(slot,{source:'where-when',dateTime:timeUnknown?date:`${date}T${time}`,location:selected.canonical});
     if(!timeUnknown)scheduleSummary(slot,true);
-    if(options.liveOrigin==='use-now'){
-      try{localStorage.setItem(`relphiSkyLiveAgeAnchor${slot}`,JSON.stringify({origin:'use-now',at:nextPayload.metadata.liveNowAt}))}catch(_){}
-      window.dispatchEvent(new CustomEvent('relphi:sky-live-origin-changed',{detail:{slot,origin:'use-now',at:nextPayload.metadata.liveNowAt}}));
-      window.dispatchEvent(new CustomEvent('relphi:sky-name-updated',{detail:{slot,name:'Now',source:'use-now'}}));
+    if(effectiveOptions.snapshotNow){
+      try{localStorage.removeItem(`relphiSkyLiveAgeAnchor${slot}`)}catch(_){}
+      window.dispatchEvent(new CustomEvent('relphi:sky-live-origin-changed',{detail:{slot,origin:null,reason:'fixed-now-snapshot'}}));
+      window.dispatchEvent(new CustomEvent('relphi:sky-name-updated',{detail:{slot,name:'Now',source:'fixed-now-snapshot'}}));
     }
   }catch(error){setBusy(slot,false);status(slot,error.message||'The Sky could not be calculated.',true)}
 }
@@ -318,7 +426,7 @@ async function currentLocalTime(slot){
   const now=window.luxon?.DateTime?.now(),local=now?.isValid?now.setZone(selected.timezone):null;if(!local?.isValid)return status(slot,'The current instant could not be converted to that location.',true);
   enableKnownTime(form);
   form.querySelector('[data-ww-field="date"]').value=local.toFormat('yyyy-MM-dd');form.querySelector('[data-ww-field="time"]').value=local.toFormat('HH:mm');window.RelphiSkyWhereWhenDraftHeptagram?.render?.(slot,0);
-  await submitForm(slot,form,{liveOrigin:'use-now',instant:now.toUTC().toISO()});
+  await submitForm(slot,form,{snapshotNow:true,instant:now.toUTC().toISO()});
 }
 async function useHere(slot,button){
   const form=formFor(slot);if(!form)return;
@@ -339,13 +447,23 @@ async function useHere(slot,button){
   }
 }
 async function hereAndNow(slot){
-  const form=formFor(slot);if(!form)return;setBusy(slot,true);status(slot,'Using your current location and the current instant…');
+  const form=formFor(slot);if(!form)return;
+  setBusy(slot,true);status(slot,'Finding your location and capturing the current instant…');
   try{
-    const packet=await currentLocationPacket();selectLocation(slot,packet);
-    const now=window.luxon?.DateTime?.now(),local=now?.isValid?now.setZone(packet.timezone):null;if(!local?.isValid)throw new Error('The current instant could not be converted to your location.');
+    const packet=await currentLocationPacket();
+    if(!form.isConnected)return;
+    if(!selectLocation(slot,packet))throw new Error('Current browser location could not be applied.');
+    const now=window.luxon?.DateTime?.now(),local=now?.isValid?now.setZone(packet.timezone):null;
+    if(!local?.isValid)throw new Error('The current instant could not be converted to your location.');
     enableKnownTime(form);
-    form.querySelector('[data-ww-field="date"]').value=local.toFormat('yyyy-MM-dd');form.querySelector('[data-ww-field="time"]').value=local.toFormat('HH:mm');setBusy(slot,false);
-    await submitForm(slot,form,{liveOrigin:'use-now',instant:now.toUTC().toISO()});
+    const here=form.querySelector('[data-ww-field="here"]'),nowToggle=form.querySelector('[data-ww-field="now"]');
+    if(here)here.checked=true;
+    if(nowToggle)nowToggle.checked=true;
+    form.dataset.nowInstant=now.toUTC().toISO();
+    updateNowFields(slot);
+    syncModes(slot);
+    setBusy(slot,false);
+    await submitForm(slot,form,{snapshotNow:true,instant:form.dataset.nowInstant});
   }catch(error){setBusy(slot,false);status(slot,error?.code===1?'Location permission was denied.':error?.message||'Here and Now could not be resolved.',true)}
 }
 
@@ -385,6 +503,23 @@ async function renderSummary(slot,force=false){
 }
 function scheduleSummary(slot,force=false){const state=cardState[slot];if(state.rendering){state.rerender=true;return}void renderSummary(slot,force)}
 
+// Committed Now skies remain living while this tab is visible. Historical/manual
+// charts never enter this loop. A 60-second cadence moves fast angles and points
+// without rebuilding the entire wheel every second.
+const continuousBusy={A:false,B:false};
+function freezeLegacyLiveSky(slot){
+  const value=payload(slot),meta=value?.metadata||{};
+  if(meta.liveNowOrigin!=='use-now'&&meta.liveContinuous!==true)return;
+  const captured=String(value?.calcProfile?.instant||meta.liveNowAt||'');
+  const metadata={...meta};
+  delete metadata.liveContinuous;delete metadata.liveNowOrigin;delete metadata.liveNowAt;
+  delete metadata.liveAgeAnchorAt;delete metadata.liveNowLatitude;delete metadata.liveNowLongitude;
+  if(Number.isFinite(Date.parse(captured)))metadata.capturedNowAt=captured;
+  metadata.liveNowDisabled=true;metadata.liveNowDisabledReason='fixed-now-snapshot';
+  const calcProfile={...value.calcProfile};delete calcProfile.liveNowOrigin;delete calcProfile.liveNowAt;
+  writeJson(SLOT_KEYS[slot],{...value,metadata,calcProfile});
+  try{localStorage.removeItem(`relphiSkyLiveAgeAnchor${slot}`)}catch(_){}
+}
 window.RelphiSkyWhereWhen=Object.freeze({
   form:formFor,
   selectPacket:(slot,packet)=>selectLocation(slot,packet),
@@ -396,14 +531,17 @@ window.RelphiSkyWhereWhen=Object.freeze({
 
 document.addEventListener('click',event=>{
   const actionNode=event.target.closest?.('[data-ww-action]');if(!actionNode)return;const slot=eventSlot(actionNode);if(!slot)return;const action=actionNode.dataset.wwAction;
-  if(action==='cancel')closeEditor(slot);else if(action==='search-location')void searchLocation(slot);else if(action==='select-location')selectLocation(slot,actionNode);else if(action==='use-here')void useHere(slot,actionNode);else if(action==='use-now')void currentLocalTime(slot);else if(action==='here-and-now')void hereAndNow(slot);
+  if(action==='cancel')closeEditor(slot);else if(action==='search-location')void searchLocation(slot);else if(action==='select-location')selectLocation(slot,actionNode);else if(action==='refresh-here'){const toggle=formFor(slot)?.querySelector('[data-ww-field="here"]');if(toggle&&!toggle.checked){toggle.checked=true;syncModes(slot)}void checkHere(slot)}else if(action==='refresh-now')refreshNow(slot);else if(action==='use-here')void useHere(slot,actionNode);else if(action==='use-now')void currentLocalTime(slot);else if(action==='here-and-now')void hereAndNow(slot);
 });
 document.addEventListener('change',event=>{
+  const modeToggle=event.target.closest?.('[data-ww-field="here"],[data-ww-field="now"]');
+  if(modeToggle){const form=modeToggle.closest('.sky-where-when-editor');if(form)updateMode(form.dataset.slot,modeToggle.dataset.wwField,modeToggle.checked);return}
   const toggle=event.target.closest?.('[data-ww-field="time-unknown"]');if(!toggle)return;
   const form=toggle.closest('.sky-where-when-editor');if(!form)return;
-  const unknown=toggle.checked,time=form.querySelector('[data-ww-field="time"]'),now=form.querySelector('[data-ww-action="use-now"]'),slot=form.dataset.slot,mount=form.querySelector(`[data-ww-heptagram-slot="${slot}"]`);
+  const unknown=toggle.checked,time=form.querySelector('[data-ww-field="time"]'),now=form.querySelector('[data-ww-field="now"]'),slot=form.dataset.slot,mount=form.querySelector(`[data-ww-heptagram-slot="${slot}"]`);
+  // Unknown time and a captured instant are mutually exclusive.
+  if(unknown&&now?.checked){now.checked=false;delete form.dataset.nowInstant;syncModes(slot)}
   if(time)time.disabled=unknown;
-  if(now)now.disabled=unknown;
   if(unknown){
     mount?.querySelectorAll('[data-sky-heptagram-frame],[data-draft-where-when-link],[data-draft-where-when],.sky-ph-jump').forEach(node=>node.remove());
   }
@@ -517,7 +655,7 @@ window.addEventListener('relphi:sky-foundation-ready',()=>{scheduleSummary('A');
 window.addEventListener('relphi:sky-name-updated',event=>{const slot=event.detail?.slot;if(SLOT_KEYS[slot]){window.RelphiSkyCardShell?.sync?.(slot,payload(slot));scheduleSummary(slot,true)}});
 window.addEventListener('resize',()=>{['A','B'].forEach(slot=>{const svg=shell(slot)?.heptagram;if(svg&&svg.dataset.canonicalSourceReady==='true')svg.setAttribute('viewBox',window.matchMedia?.('(max-width:620px)')?.matches?'0 -8 360 368':'0 0 360 360')})},{passive:true});
 function recoverWhereWhen(){reconcileWhereWhenTransaction();['A','B'].forEach(slot=>{window.RelphiSkyCardShell?.ensure?.(slot,payload(slot));scheduleSummary(slot,true)})}
-function start(){installStyles();['A','B'].forEach(slot=>{shell(slot);scheduleSummary(slot)});schedulePlanetaryHoursHandoff()}
+function start(){installStyles();['A','B'].forEach(slot=>{freezeLegacyLiveSky(slot);shell(slot);scheduleSummary(slot)});schedulePlanetaryHoursHandoff()}
 window.addEventListener('relphi:sky-session-recovered',recoverWhereWhen);
 document.readyState==='loading'?document.addEventListener('DOMContentLoaded',start,{once:true}):start();
 })();

@@ -106,7 +106,10 @@ const metrics=await editor.evaluate(form=>{
   const heptagram=slot.querySelector('.sky-where-when-draft-heptagram');
   const confirm=footer.querySelector('button[type="submit"]');
   const cancel=footer.querySelector('.sky-where-when-cancel');
-  const hereNow=form.querySelector('.sky-where-when-here-now');
+  const here=form.querySelector('[data-ww-field="here"]');
+  const now=form.querySelector('[data-ww-field="now"]');
+  const hereRefresh=form.querySelector('[data-ww-action="refresh-here"]');
+  const nowRefresh=form.querySelector('[data-ww-action="refresh-now"]');
   const r=node=>node.getBoundingClientRect();
   const formRect=r(form),bodyRect=r(body),whereRect=r(where),whenRect=r(when),dateRect=r(date),timeRect=r(time),searchRect=r(search);
   const formStyle=getComputedStyle(form);
@@ -120,11 +123,12 @@ const metrics=await editor.evaluate(form=>{
     confirmScrollWidth:confirm.scrollWidth,
     cancelWidth:r(cancel).width,
     confirmWidth:r(confirm).width,
-    hereNowWidth:r(hereNow).width,
-    hereNowHeight:r(hereNow).height,
+    hereRefreshWidth:r(hereRefresh).width,
+    nowRefreshWidth:r(nowRefresh).width,
+    hereChecked:here.checked,
+    nowChecked:now.checked,
     confirmHeight:r(confirm).height,
-    hereNowSecondary:hereNow.classList.contains('secondary'),
-    hereNowRowDisplay:getComputedStyle(hereNow.closest('.sky-where-when-here-now-row')).display,
+    modeRows:[...form.querySelectorAll('.sky-ww-mode-row')].map(n=>getComputedStyle(n).display),
     whenVisiblePixels:Math.max(0,Math.min(bodyRect.bottom,whenRect.bottom)-Math.max(bodyRect.top,whenRect.top)),
     dateStartsInsideBody:dateRect.top<bodyRect.bottom-4,
     bodyMaxHeight:parseFloat(getComputedStyle(body).maxHeight)||0,
@@ -150,9 +154,10 @@ await page.evaluate(()=>{
     timezone:'America/Denver'
   });
 });
-assert.equal(await editor.locator('[data-ww-field="location-query"]').inputValue(),'My current location');
-assert.equal(await editor.locator('[data-ww-field="location-query"]').evaluate(node=>node.classList.contains('is-current-location')),true,'Current-location text should render muted.');
-assert.equal((await editor.locator('[data-current-location]').textContent()).trim(),'My current location');
+assert.equal(await editor.locator('[data-ww-field="location-query"]').inputValue(),'','Current browser coordinates must not appear as a misleading search query.');
+assert.equal(await editor.locator('[data-ww-field="here"]').isChecked(),true,'Current-location selection enables Here.');
+assert.equal(await editor.locator('[data-ww-manual-where]').isHidden(),true,'Here hides the search form.');
+assert.equal((await editor.locator('[data-ww-here-value]').textContent()).trim(),'Current location');
 
 await panel.screenshot({path:'sky-chart-where-when-layout-density.png'});
 
@@ -163,12 +168,11 @@ assert.ok(metrics.slotHeight<210,`Heptagram slot should not reserve a large empt
 assert.ok(metrics.footerHeight<255,`Footer should stay compact enough to return vertical room to When, got ${metrics.footerHeight}px.`);
 assert.ok(metrics.confirmScrollWidth<=metrics.confirmClientWidth+1,`Confirm label must fit inside its button (${metrics.confirmScrollWidth}/${metrics.confirmClientWidth}).`);
 assert.ok(metrics.confirmWidth>metrics.cancelWidth*1.9,'Confirm action should keep the intended roughly 2× width of Cancel.');
-assert.ok(Math.abs(metrics.hereNowWidth-metrics.confirmWidth)<=1.5,`Here and Now should match the confirm action width (${metrics.hereNowWidth}/${metrics.confirmWidth}).`);
-assert.ok(Math.abs(metrics.hereNowHeight-metrics.confirmHeight)<=1.5,`Here and Now should match the confirm action height (${metrics.hereNowHeight}/${metrics.confirmHeight}).`);
-assert.equal(metrics.hereNowSecondary,true,'Here and Now should use the secondary action style.');
-assert.equal(metrics.hereNowRowDisplay,'flex','Here and Now must not replace the compact editor row with a new grid layout.');
+assert.ok(metrics.hereRefreshWidth>=24&&metrics.hereRefreshWidth<=32,'Here refresh should be a compact icon.');
+assert.ok(metrics.nowRefreshWidth>=24&&metrics.nowRefreshWidth<=32,'Now refresh should be a compact icon.');
+assert.deepEqual(metrics.modeRows,['flex','flex'],'Where and When should each have a compact choice row.');
 assert.ok(metrics.whenVisiblePixels>=90,`At least the useful top of When should show without scrolling, got ${metrics.whenVisiblePixels}px.`);
-assert.equal(metrics.dateStartsInsideBody,true,'The date field should begin inside the default visible Where/When scroll viewport.');
+assert.equal(metrics.dateStartsInsideBody,true,'Manual date remains within the scrolling editor.');
 assert.ok(metrics.bodyMaxHeight>=390,`The scroll body should receive the space recovered from the footer, got max-height ${metrics.bodyMaxHeight}px.`);
 assert.equal(metrics.scrollbarGutter,'auto','Where/When must not reserve a permanent scrollbar lane in a narrow Sky card.');
 assert.ok(Math.abs(metrics.expectedContentRight-metrics.whereRight)<=1.5,`Where should use the full editor content width; right gap is ${metrics.expectedContentRight-metrics.whereRight}px.`);
