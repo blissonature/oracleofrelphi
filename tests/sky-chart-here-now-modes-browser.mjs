@@ -227,7 +227,7 @@ try{
    sky.metadata.whereWhenSource='current-location';
    localStorage.setItem(key,JSON.stringify(sky));
  });
- await page.reload({waitUntil:'networkidle'});
+ await page.reload({waitUntil:'domcontentloaded'});
  await page.waitForSelector('#skyFoundationRoot[aria-busy="false"]',{timeout:20000});
  await page.waitForTimeout(400);
  assert.equal(await page.locator('#skyFoundationB .sky-where-when-summary').isVisible(),false,'Unknown-time sky must not display a prior temporal heptagram.');
