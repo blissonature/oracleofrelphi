@@ -28,6 +28,18 @@ try{
  const tab=page.locator('#skyFoundationB [data-sky-drawer-tab="where"]');await tab.click();
  const form=page.locator('#skyFoundationB .sky-where-when-editor');await form.waitFor();
  const here=form.locator('[data-ww-field="here"]'),now=form.locator('[data-ww-field="now"]'),refresh=form.locator('[data-ww-action="refresh-now"]'),unknown=form.locator('[data-ww-field="time-unknown"]');
+ // A blank Sky must offer When controls and the one-click action immediately.
+ const emptyCard=page.locator('#skyFoundationA [data-sky-drawer-tab="where"]');
+ await page.evaluate(()=>localStorage.removeItem('relphiSkyChartA'));
+ // Verify the authored footer contract in the open editor at mobile card width.
+ const footerInitially=await form.evaluate(node=>{
+   const row=node.querySelector('.sky-where-when-footer-actions');
+   return{labels:[...row.querySelectorAll('button')].map(button=>button.textContent.trim()),
+     columns:getComputedStyle(row).gridTemplateColumns.split(' ').length};
+ });
+ assert.deepEqual(footerInitially.labels,['Cancel','Here and Now','Use This Where and When']);
+ assert.equal(footerInitially.columns,3,'Even a narrow mobile card must show three action columns.');
+
  assert.equal(await here.isChecked(),false);assert.equal(await now.isChecked(),false);
  assert.equal(await form.locator('[data-ww-field="live"]').count(),0,'Live toggle must be absent.');
  assert.equal(await form.locator('[role="tooltip"]').count(),0,'Live tooltip must be absent.');
