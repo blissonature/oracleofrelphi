@@ -189,8 +189,8 @@ const base='http://127.0.0.1:8000/tarot.html';
 
       assert.ok((await page.locator('.relphi-recursion-portal-focus').innerText()).includes('Earth'));
       assert.ok((await page.locator('.relphi-recursion-portal-focus').innerText()).includes('Descend'));
-      assert.equal(await page.locator('.relphi-recursion-focus-node.is-earth-portal').count(),1);
-      assert.equal(await page.locator('.relphi-recursion-focus-node.is-earth-portal').isDisabled(),false);
+      assert.equal(await page.locator('.relphi-recursion-portal-ring').count(),1,'Earth must occupy the portal ring within Focus');
+      assert.equal(await page.locator('[data-recursion-descend]').isDisabled(),false,'Completed triad enables descent');
       assert.equal(await page.locator('.relphi-recursion-board-portal').evaluate(node=>node.classList.contains('is-ready')),true,'The red Earth circle should visibly wake up when the triad is complete');
       assert.equal(await page.locator('#shortListPanel .card-row-board [data-row-card]').count(),level*3,'Entering Earth must not draw a fourth card on Levels 1–3');
 
