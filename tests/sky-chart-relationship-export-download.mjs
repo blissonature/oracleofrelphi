@@ -35,6 +35,28 @@ await page.addInitScript(({a,b})=>{
 await page.goto('http://127.0.0.1:4173/sky-chart.html',{waitUntil:'networkidle'});
 await page.waitForSelector('#skyFoundationRoot[aria-busy="false"]',{timeout:20000});
 await page.waitForSelector('#skyFoundationRelationshipList .sky-foundation-relationship-row',{timeout:20000});
+// The Relationships clipboard must identify both skies and describe the Focus state.
+await page.evaluate(()=>{
+  window.__relationshipCopyText='';
+  const original=document.execCommand.bind(document);
+  document.execCommand=function(command,...args){
+    if(command==='copy'){
+      window.__relationshipCopyText=document.querySelector('textarea[aria-hidden="true"]')?.value||'';
+      return true;
+    }
+    return original(command,...args);
+  };
+});
+await page.locator('.sky-relationship-copy-button').click();
+const copiedRelationships=await page.evaluate(()=>window.__relationshipCopyText);
+assert.match(copiedRelationships,/Sky A: Alpha sky/);
+assert.match(copiedRelationships,/Sky B: Beta sky/);
+assert.match(copiedRelationships,/Focus\\n/);
+assert.match(copiedRelationships,/Harmonic Window: /);
+assert.match(copiedRelationships,/Aspects: /);
+assert.match(copiedRelationships,/Placements: /);
+assert.match(copiedRelationships,/Zodiac Signs: /);
+assert.match(copiedRelationships,/Houses: /);
 const button=page.locator('#skyChartRelationshipsExport');
 await button.waitFor({state:'visible',timeout:10000});
 assert.equal(await button.getAttribute('data-relationship-export-owner'),'columns-v2');
