@@ -63,7 +63,7 @@ try{
       return node.dataset.relationshipMode==='B-B'&&node.dataset.aspect==='opposition'&&pair.has('venus')&&pair.has('chiron');
     });
     const meta=row?.querySelector('.inline-rel-transit-window');
-    return{kind:meta?.dataset.transitKind||'',text:meta?.textContent||'',chironReady:Number.isFinite(window.RelphiChironEphemeris?.longitudeAt?.(new Date(instant)))};
+    return{kind:meta?.dataset.transitKind||'',text:meta?.textContent||'',chironReady:Number.isFinite(window.RelphiChironEphemeris?.longitudeAt?.(new Date('2026-09-10T18:00:00.000Z')))};
   });
   assert.equal(state.kind,'dynamic',`Venus–Chiron tile should show dynamic timing: ${JSON.stringify(state)}`);
   for(const label of ['Start','Exact','End','Duration','Passes'])assert.ok(state.text.includes(label),`timing tile should include ${label}: ${state.text}`);
