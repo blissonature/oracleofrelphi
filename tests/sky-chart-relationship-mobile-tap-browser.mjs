@@ -113,5 +113,5 @@ async function runMobileTap(browserType,label){
   }
 }
 
-await runMobileTap(chromium,'Chromium');
+if(!process.argv.includes('--webkit-only'))await runMobileTap(chromium,'Chromium');
 await runMobileTap(webkit,'WebKit');
