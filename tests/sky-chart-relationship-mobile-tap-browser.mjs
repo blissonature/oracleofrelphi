@@ -50,7 +50,21 @@ async function runMobileTap(browserType,label){
     // touchscreen dispatch. Exercise actual user taps on WebKit; Chromium below
     // retains fine-grained down/move/up and compatibility-click assertions.
     if(label==='WebKit'){
+      await page.evaluate(()=>{
+        window.__webkitTouchTrace=[];
+        for(const kind of ['pointerdown','pointermove','pointerup','pointercancel','touchstart','touchend','click']){
+          document.addEventListener(kind,e=>{
+            const row=e.target.closest?.('.sky-foundation-relationship-row');
+            window.__webkitTouchTrace.push({kind,pointerType:e.pointerType||'',index:row?.dataset.relationIndex||'',expanded:row?.getAttribute('aria-expanded')||'',trusted:e.isTrusted});
+          },{capture:true});
+        }
+      });
       await row.tap();
+      await page.waitForTimeout(450);
+      console.log('WEBKIT_TAP_EVENTS',JSON.stringify(await page.evaluate(()=>{
+        const row=document.querySelector('#skyFoundationRelationshipList>.sky-foundation-relationship-row[data-relation-index]');
+        return{events:window.__webkitTouchTrace,expandedCount:document.querySelectorAll('.sky-foundation-relationship-row.is-inline-expanded').length,row:row?.outerHTML?.slice(0,350)};
+      })));
       await page.waitForFunction(()=>Boolean(document.querySelector('#skyFoundationRelationshipList>.sky-foundation-relationship-row.is-inline-expanded')),null,{timeout:5000});
       assert.equal(await row.getAttribute('aria-expanded'),'true',label+': native first touch should expand');
       await row.tap();
