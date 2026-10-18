@@ -63,12 +63,12 @@ try{
       return node.dataset.relationshipMode==='B-B'&&node.dataset.aspect==='opposition'&&pair.has('venus')&&pair.has('chiron');
     });
     const meta=row?.querySelector('.inline-rel-transit-window');
-    return{kind:meta?.dataset.transitKind||'',text:meta?.textContent||'',chironReady:!!window.RelphiChironEphemeris?.isReady?.()};
+    return{kind:meta?.dataset.transitKind||'',text:meta?.textContent||'',chironReady:Number.isFinite(window.RelphiChironEphemeris?.longitudeAt?.(new Date(instant)))};
   });
   assert.equal(state.kind,'dynamic',`Venus–Chiron tile should show dynamic timing: ${JSON.stringify(state)}`);
   for(const label of ['Start','Exact','End','Duration','Passes'])assert.ok(state.text.includes(label),`timing tile should include ${label}: ${state.text}`);
   assert.ok(!state.text.includes('unavailable'),'timing tile should not say unavailable');
-  assert.ok(state.chironReady,'Swiss Chiron ephemeris should be ready');
+  assert.ok(state.chironReady,'Local Horizons Chiron ephemeris should supply a real longitude');
 
   // Expanding one row must not leak its timing/cards into Copy while Display is Glyphs.
   const glyphCopyState=await page.evaluate(()=>{
