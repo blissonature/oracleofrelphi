@@ -109,6 +109,12 @@ function bindInlineTileCopy(row,detail,rel){
 function close(row){clearReveal(row);const detail=row?.querySelector(':scope>.inline-rel-detail');if(detail)detail.hidden=true;row?.classList.remove('is-inline-expanded');row?.setAttribute('aria-expanded','false')}
 function open(row){if(row?.classList.contains('is-inline-expanded')){close(row);openRow=null;return}if(openRow&&openRow!==row)close(openRow);const rel=relation(row);if(!rel)return;openRow=row;row.classList.add('is-inline-expanded');row.setAttribute('aria-expanded','true');decorateTopReveal(row);const signature=`${rel.left.sky}:${rel.left.id}@${rel.left.value.toFixed(7)}|${rel.aspect}|${rel.right.sky}:${rel.right.id}@${rel.right.value.toFixed(7)}`;let detail=row.querySelector(':scope>.inline-rel-detail');if(detail&&detail.dataset.inlineRelationshipSignature===signature){detail.hidden=false;bindInlineTileCopy(row,detail,rel);document.getElementById('skySelectedRelationship')?.setAttribute('hidden','');return}detail?.remove();detail=document.createElement('div');detail.className='inline-rel-detail';detail.dataset.inlineRelationshipSignature=signature;const ca=card(rel.left),cb=card(rel.right);warmCardArt(ca.image);warmCardArt(cb.image);detail.innerHTML=`<div class="inline-rel-top-reveal" role="status" aria-live="polite" hidden></div><div class="inline-rel-visual">${cardMarkup(rel.left.sky,ca)}${wheelMarkup(rel)}${cardMarkup(rel.right.sky,cb)}</div>${contextMarkup(rel)}`;row.appendChild(detail);bindInlineTileCopy(row,detail,rel);document.getElementById('skySelectedRelationship')?.setAttribute('hidden','')}
 function rowFromTarget(target){return target?.closest?.('.sky-foundation-relationship-row[data-relation-index]')||null}
+function sameRelationship(a,b){
+  if(a===b)return true;
+  if(!a?.dataset?.relationIndex||!b?.dataset?.relationIndex)return false;
+  return ['relationIndex','relationshipMode','aspect','leftSky','rightSky','leftPlacement','rightPlacement']
+    .every(key=>String(a.dataset[key]||'')===String(b.dataset[key]||''));
+}
 function touchPointer(event){return event.pointerType==='touch'||event.pointerType==='pen'}
 function onPointerDown(event){if(!touchPointer(event)||event.target.closest?.('.inline-rel-tile-copy'))return;const row=rowFromTarget(event.target);if(!row)return;touchGesture={id:event.pointerId,row,x:event.clientX,y:event.clientY,moved:false}}
 function onPointerMove(event){if(!touchGesture||touchGesture.id!==event.pointerId)return;const dx=event.clientX-touchGesture.x,dy=event.clientY-touchGesture.y;if(Math.hypot(dx,dy)>10)touchGesture.moved=true}
@@ -118,13 +124,13 @@ function onPointerUp(event){
   const gesture=touchGesture;touchGesture=null;
   if(gesture.moved||event.target.closest?.('[data-inline-ledger]'))return;
   if(event.target.closest?.('.inline-rel-tile-copy'))return;
-  const row=rowFromTarget(event.target);if(!row||row!==gesture.row)return;
+  const row=rowFromTarget(event.target);if(!row||!sameRelationship(row,gesture.row))return;
   open(row);suppressClickRow=row;suppressClickAt=performance.now();
 }
 function onClick(event){
   if(event.target.closest?.('.inline-rel-tile-copy'))return;
   const row=rowFromTarget(event.target);
-  if(row&&row===suppressClickRow&&performance.now()-suppressClickAt<900){event.preventDefault();event.stopImmediatePropagation();suppressClickRow=null;return}
+  if(row&&sameRelationship(row,suppressClickRow)&&performance.now()-suppressClickAt<900){event.preventDefault();event.stopImmediatePropagation();suppressClickRow=null;return}
   suppressClickRow=null;
   const ledger=event.target.closest('[data-inline-ledger]');if(ledger){event.stopImmediatePropagation();return}
   const topGlyph=event.target.closest('[data-inline-top-reveal],.sky-foundation-relationship-glyph--left,.sky-foundation-relationship-glyph--aspect,.sky-foundation-relationship-glyph--right'),revealRow=topGlyph?.closest('.sky-foundation-relationship-row.is-inline-expanded');
