@@ -102,6 +102,24 @@ assert.ok(state.moonRange>0,'Unknown-time standalone must keep the Moon range.')
 const relevantErrors=errors.filter(text=>/Sky Chart foundation render failed|standalone unknown-time|unknown-time composition/i.test(text));
 assert.deepEqual(relevantErrors,[]);
 
+// The synthetic Moon range must participate in the same isolation as ordinary placements.
+const moonFocus=await page.evaluate(()=>{
+  const wheel=document.querySelector('#skyFoundationWheelMount>svg[data-single-sky="A"]');
+  const moon=wheel.querySelector('[data-layer="placements"] [data-placement="moon-range"]');
+  const fragments=[...wheel.querySelectorAll('[data-layer="leaders"] [data-placement="moon-range"]')];
+  const api=window.RelphiSkyFoundationInteractions;
+  const before={piece:moon?.dataset.focusPiece,fragments:fragments.map(n=>n.dataset.focusPiece)};
+  api.toggleWheel({kind:'placement',sky:'A',value:'pluto'});
+  const result={...before,dimmed:getComputedStyle(moon).opacity,fragmentOpacity:fragments.map(n=>getComputedStyle(n).opacity)};
+  api.clearWheel();
+  result.restored=getComputedStyle(moon).opacity;
+  return result;
+});
+assert.equal(moonFocus.piece,'placement','Unknown-time Moon range must register as a focusable placement.');
+assert.ok(moonFocus.fragments.every(x=>x==='leader'),'Unknown-time Moon range boundaries must be focus-controlled.');
+assert.ok(Number(moonFocus.dimmed)<.2,'Unknown-time Moon must dim when unrelated Pluto is selected: '+JSON.stringify(moonFocus));
+assert.ok(moonFocus.fragmentOpacity.every(x=>Number(x)<.2),'Unknown-time Moon range lines must dim with its symbol.');
+assert.ok(Number(moonFocus.restored)>.9,'Unknown-time Moon must restore after clearing focus.');
 await page.screenshot({path:'sky-chart-standalone-unknown-time.png',fullPage:true});
 await browser.close();
 console.log('Standalone unknown-time composition passed.');
