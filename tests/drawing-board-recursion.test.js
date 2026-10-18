@@ -17,7 +17,8 @@ const base='http://127.0.0.1:8000/tarot.html';
     const panel=page.locator('#shortListPanel');
     if(!(await panel.isVisible())) await page.click('#relphiOpenDrawingBoardCurrent');
     await panel.waitFor({state:'visible'});
-    await page.locator('#drawingBoardOptionsButton').evaluate(button=>button.click()); // Programmatic path tests reading engine independently of commandbar visibility.
+    await page.click('#relphiBoardSettingsButton');
+    await page.locator('#drawingBoardOptionsButton').click();
     await page.waitForSelector('.relphi-referents-drawer',{state:'visible'});
 
     await page.click('[data-referent-path="templates"]');
