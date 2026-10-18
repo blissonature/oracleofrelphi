@@ -119,3 +119,35 @@
 /* Keep the one-click control above Where and the miniheptagram after When. */
 .sky-where-when-editor .sky-where-when-one-click{display:flex!important;align-items:center;justify-content:center;gap:6px;min-height:33px;width:100%;margin:0 0 5px!important;padding:5px 8px!important;font-size:.70rem!important;font-weight:700!important}
 .sky-where-when-editor .sky-where-when-one-click svg{width:16px;height:16px;flex:none}
+
+/* Narrow screens: date/time native controls must not compete for one row.
+   Give them independent full-width lines and intrinsic minimum sizes. */
+@media(max-width:620px){
+  .sky-where-when-editor [data-ww-manual-when] .sky-where-when-grid{
+    display:grid!important;
+    grid-template-columns:minmax(0,1fr)!important;
+    gap:9px!important;
+  }
+  .sky-where-when-editor [data-ww-manual-when] .sky-where-when-label,
+  .sky-where-when-editor [data-ww-manual-when] [data-ww-field="date"],
+  .sky-where-when-editor [data-ww-manual-when] [data-ww-field="time"]{
+    display:block;min-width:0;max-width:100%;width:100%;box-sizing:border-box;
+  }
+  /* One shared two-column control grammar: checkbox + text, then refresh. */
+  .sky-where-when-editor .sky-ww-mode-primary,
+  .sky-where-when-editor .sky-ww-when-row .sky-ww-mode-primary{
+    display:grid!important;grid-template-columns:76px 28px!important;
+    align-items:center!important;gap:6px!important;width:max-content;
+  }
+  .sky-where-when-editor .sky-ww-mode-primary .sky-ww-choice,
+  .sky-where-when-editor .sky-ww-when-row .sky-ww-mode-primary .sky-ww-choice{
+    display:grid!important;grid-template-columns:17px minmax(0,1fr)!important;
+    gap:7px!important;align-items:center!important;font-size:.79rem!important;
+  }
+  .sky-where-when-editor .sky-ww-mode-primary .sky-ww-choice input{
+    width:17px!important;height:17px!important;margin:0!important;
+  }
+  .sky-where-when-editor .sky-ww-mode-primary .sky-ww-refresh{
+    width:28px!important;height:28px!important;margin:0!important;
+  }
+}
