@@ -1,0 +1,21 @@
+name: Sky Chart single timing owner
+on:
+  pull_request:
+    paths:
+      - 'sky-chart-relationship-transit-meta-v4.js'
+      - 'sky-chart.html'
+      - 'tests/sky-chart-timing-owner-check.mjs'
+      - '.github/workflows/sky-chart-timing-single-owner.yml'
+jobs:
+  timing-owner:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate single owner and Chiron coverage
+        run: |
+          node --check sky-chart-relationship-transit-meta-v4.js
+          node tests/sky-chart-timing-owner-check.mjs
+          node tests/sky-chart-relationship-timing-coverage.mjs
