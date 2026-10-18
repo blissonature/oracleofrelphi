@@ -127,9 +127,11 @@ function suppressCloneHouseInfo(clone,row){
   for(const side of ['left','right']){
     if(includeHouse(slot(row,side)))continue;
     const group=clone.querySelector('.sky-foundation-relationship-placement--'+side);
-    const small=group?.querySelector('.sky-foundation-relationship-copy small');
+    const small=group?.querySelector('.sky-foundation-relationship-copy small')||(
+      side==='left'?clone.querySelector(':scope > .sky-foundation-relationship-copy:nth-child(2) small'):clone.querySelector(':scope > .sky-foundation-relationship-copy:nth-child(5) small')
+    );
     if(!small)continue;
-    const coordinate=String(small.dataset.relationshipCoordinate||small.textContent||'').match(/\\d{1,2}°\\d{2}′/)?.[0]||'';
+    const coordinate=String(small.dataset.relationshipCoordinate||small.textContent||'').match(/\d{1,2}°\d{2}′/)?.[0]||'';
     small.classList.remove('relphi-house-coordinate');
     if(coordinate)small.replaceChildren(document.createTextNode(coordinate));
     else small.querySelectorAll('.relphi-house-medallion').forEach(node=>node.remove());
