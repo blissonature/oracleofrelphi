@@ -29,8 +29,6 @@ try{
  const form=page.locator('#skyFoundationB .sky-where-when-editor');await form.waitFor();
  const here=form.locator('[data-ww-field="here"]'),now=form.locator('[data-ww-field="now"]'),refresh=form.locator('[data-ww-action="refresh-now"]'),unknown=form.locator('[data-ww-field="time-unknown"]');
  // A blank Sky must offer When controls and the one-click action immediately.
- const emptyCard=page.locator('#skyFoundationA [data-sky-drawer-tab="where"]');
- await page.evaluate(()=>localStorage.removeItem('relphiSkyChartA'));
  // Verify the authored footer contract in the open editor at mobile card width.
  const footerInitially=await form.evaluate(node=>{
    const row=node.querySelector('.sky-where-when-footer-actions');
