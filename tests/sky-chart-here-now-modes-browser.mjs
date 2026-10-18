@@ -67,14 +67,17 @@ try{
      whereGap:whereRefresh.left-whereChoice.right,nowGap:nowRefresh.left-nowChoice.right,
      nowAlignment:Math.abs(centerY(nowRefresh)-centerY(nowChoice)),
      unknownAlignment:Math.abs(centerY(unknown)-centerY(nowChoice)),
-     unknownLeft:unknown.left,localTimeLeft:localTime.left,unknownOverflow:unknown.right-row.right
+     unknownLeft:unknown.left,localTimeLeft:localTime.left,unknownOverflow:unknown.right-row.right,
+     dateRect:(()=>{const r=rect('[data-ww-manual-when] .sky-where-when-grid > label:first-child');return {left:r.left,right:r.right,top:r.top,bottom:r.bottom}})(),
+     timeRect:{left:localTime.left,right:localTime.right,top:localTime.top,bottom:localTime.bottom}
    };
  });
  assert.ok(spacing.whereGap>=0&&spacing.whereGap<=8,JSON.stringify(spacing));
  assert.ok(spacing.nowGap>=0&&spacing.nowGap<=8,JSON.stringify(spacing));
  assert.ok(spacing.nowAlignment<=5,JSON.stringify(spacing));
  assert.ok(spacing.unknownAlignment<=4,JSON.stringify(spacing));
- assert.ok(Math.abs(spacing.unknownLeft-spacing.localTimeLeft)<=2,JSON.stringify(spacing));
+ assert.ok(spacing.timeRect.top>=spacing.dateRect.bottom,JSON.stringify(spacing));
+ assert.ok(spacing.timeRect.left>=spacing.dateRect.left-2&&spacing.timeRect.right<=spacing.dateRect.right+2,JSON.stringify(spacing));
  assert.ok(spacing.unknownOverflow<=1,JSON.stringify(spacing));
  assert.equal(await refresh.getAttribute('aria-label'),'Refresh current instant');
  await unknown.check();
