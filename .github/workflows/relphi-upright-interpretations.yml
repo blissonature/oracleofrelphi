@@ -1,0 +1,18 @@
+name: Relphi 78 upright interpretations
+on:
+  pull_request:
+    paths:
+      - 'relphi-locked-interpretations.js'
+      - 'tests/tarot-upright-meaning-quality.test.js'
+      - '.github/workflows/relphi-upright-interpretations.yml'
+jobs:
+  upright:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: |
+          node --check relphi-locked-interpretations.js
+          node tests/tarot-upright-meaning-quality.test.js
