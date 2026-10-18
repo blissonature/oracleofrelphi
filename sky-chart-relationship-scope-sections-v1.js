@@ -99,7 +99,8 @@ function focusInformation(){
   const controls=[
     ['Display',value('[data-relationship-display-value-text]')],
     ['Harmonic Window',Number.isFinite(Number(windowValue))?String(windowValue)+'°':document.querySelector('[data-harmonic-window-input]')?.value||''],
-    ['Aspects',value('[data-aspect-filter-summary]')],
+    ['Aspects',value('[data-aspect-filter-summary]')||'None selected'],
+    ['Relationship scopes',[...document.querySelectorAll('[data-aspect-scope-choice]:checked')].map(el=>el.getAttribute('aria-label')||el.closest('label')?.textContent?.trim()||el.value).filter(Boolean).join(' · ')||'None selected'],
     ['Placements',value('[data-placement-filter-summary]')],
     ['Zodiac Signs',value('[data-zodiac-summary]')],
     ['Houses',value('[data-house-filter-summary]')],
