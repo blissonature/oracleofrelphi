@@ -1,0 +1,11 @@
+/* Four-world Recursive Reading overrides the legacy seven-planet depth presentation. */
+#shortListPanel .relphi-recursion-board-depth {
+  grid-template-rows:repeat(4,30px)!important;
+}
+#shortListPanel .relphi-recursion-world-mark,
+.relphi-recursion-depth .relphi-recursion-world-mark {
+  display:grid!important;place-items:center!important;
+  width:1.3rem!important;height:1.3rem!important;
+  font:900 .78rem/1 system-ui,sans-serif!important;
+  color:inherit!important;pointer-events:none!important;
+}
