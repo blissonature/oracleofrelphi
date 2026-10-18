@@ -34,6 +34,11 @@ const base='http://127.0.0.1:8000/tarot.html';
 
     await page.click('#relphiApplyOptions');
     await page.waitForSelector('.relphi-referents-drawer',{state:'detached'});
+    console.log('RECURSION_AFTER_APPLY',JSON.stringify(await page.evaluate(()=>{
+      const state=window.RelphiDrawingBoardOptionsBridge?.capture?.();
+      const toast=document.querySelector('.relphi-board-toast');
+      return {id:state?.rowActiveLayout?.id,count:state?.rowActiveLayout?.positions?.length,cardCount:state?.rowActiveLayout?.cardCount,boardClass:document.querySelector('#shortListPanel')?.className,toast:toast?.outerHTML?.slice(0,600),settings:!!document.querySelector('.relphi-board-settings-panel')};
+    })));
     await page.waitForSelector('.relphi-board-toast',{state:'visible'});
 
     const readingToast=await page.locator('.relphi-board-toast').innerText();
