@@ -27,7 +27,22 @@ function instantFor(payload){
   const date=new Date(raw);
   return Number.isFinite(date.getTime())?date:null;
 }
-function calculate(date){return placementObject(longitudeAt(date));}
+function motionAt(date){
+  const epoch=date instanceof Date?date.getTime():NaN;
+  if(!Number.isFinite(epoch))throw new Error('Chiron motion requires a valid chart instant.');
+  const before=longitudeAt(new Date(epoch-12*3600000));
+  const after=longitudeAt(new Date(epoch+12*3600000));
+  // Unwrap at 0 Aries; the central interval spans exactly one day.
+  const longitudeSpeed=((after-before+540)%360)-180;
+  return{longitudeSpeed,retrograde:longitudeSpeed < -1e-5};
+}
+function calculate(date){
+  const point=placementObject(longitudeAt(date));
+  try{Object.assign(point,motionAt(date))}catch(error){
+    if(!/outside the local ephemeris range/.test(String(error?.message||'')))throw error;
+  }
+  return point;
+}
 async function completePayload(payload){const placements=source(payload);if(!placements||hasChiron(placements))return false;const instant=instantFor(payload);if(!instant)return false;try{placements.Chiron=calculate(instant)}catch(error){if(!/outside the local ephemeris range|ephemeris data are unavailable/.test(String(error?.message||'')))throw error;const profile=payload.calcProfile&&typeof payload.calcProfile==='object'?payload.calcProfile:{};profile.extraPoints={...(profile.extraPoints||{}),chiron:'unavailable',chironSource:'No local Chiron ephemeris for this date'};payload.calcProfile=profile;return false;}const profile=payload.calcProfile&&typeof payload.calcProfile==='object'?payload.calcProfile:{};profile.extraPoints={...(profile.extraPoints||{}),chiron:'calculated',chironSource:'NASA/JPL Horizons local ephemeris',...(profile.timeUnknown===true?{chironTiming:'approximate-local-noon'}:{})};payload.calcProfile=profile;return true;}
-window.RelphiChironEphemeris=Object.freeze({calculate,completePayload,hasChiron,longitudeAt});
+window.RelphiChironEphemeris=Object.freeze({calculate,completePayload,hasChiron,longitudeAt,motionAt,instantFor});
 })();
