@@ -1,0 +1,22 @@
+name: Debug Chiron timing browser
+on:
+  pull_request:
+    paths:
+      - 'tests/sky-chart-timing-diagnostics.mjs'
+      - '.github/workflows/sky-chart-timing-diagnostics.yml'
+jobs:
+  debug:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install Chromium
+        run: |
+          npm install --no-save playwright@1.52.0
+          npx playwright install --with-deps chromium
+      - name: Inspect Chiron timing
+        run: |
+          python3 -m http.server 4173 >/tmp/relphi-timing.log 2>&1 &
+          node tests/sky-chart-timing-diagnostics.mjs
