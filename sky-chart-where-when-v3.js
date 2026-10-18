@@ -38,7 +38,7 @@ function installStyles(){
     .sky-use-here-button{padding:.42rem .68rem;font-size:.62rem}
     .sky-inferred-location-value{font-weight:800}
     .sky-where-when-footer{position:relative;display:grid!important;grid-template-columns:minmax(0,1fr)!important;grid-template-rows:auto auto!important;gap:.5rem!important;width:100%;padding:.45rem .62rem .62rem!important;box-sizing:border-box;background:#fffdf8;border-top:1px solid rgba(31,27,24,.12);z-index:2}
-    .sky-where-when-footer-actions{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.25fr) minmax(0,2.2fr);gap:.35rem;width:100%;align-items:center}
+    .sky-where-when-footer .sky-where-when-footer-actions{display:grid!important;grid-template-columns:minmax(0,1fr) minmax(0,1.15fr) minmax(0,2.4fr)!important;gap:.3rem!important;width:100%;align-items:center}
     .sky-where-when-footer-actions .sky-where-when-button{width:100%;min-width:0;margin:0}
     .sky-where-when-here-now-action{width:100%;min-width:0;margin:0;padding-inline:3px!important;font-size:.66rem!important;font-weight:600!important;white-space:normal;line-height:1.12}
     .sky-ph-handoff-dialog{width:min(680px,calc(100vw - 2rem));max-width:680px;border:2px solid #dc1f18;border-radius:1.3rem;padding:0;background:#fffdf8;color:#1f1b18;box-shadow:0 24px 70px rgba(0,0,0,.28)}
