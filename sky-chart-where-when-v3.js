@@ -38,9 +38,10 @@ function installStyles(){
     .sky-use-here-button{padding:.42rem .68rem;font-size:.62rem}
     .sky-inferred-location-value{font-weight:800}
     .sky-where-when-footer{position:relative;display:grid!important;grid-template-columns:minmax(0,1fr)!important;grid-template-rows:auto auto!important;gap:.5rem!important;width:100%;padding:.45rem .62rem .62rem!important;box-sizing:border-box;background:#fffdf8;border-top:1px solid rgba(31,27,24,.12);z-index:2}
-    .sky-where-when-footer .sky-where-when-footer-actions{display:grid!important;grid-template-columns:minmax(0,1fr) minmax(0,1.15fr) minmax(0,2.4fr)!important;gap:.3rem!important;width:100%;align-items:center}
+    .sky-where-when-footer .sky-where-when-footer-actions{display:grid!important;grid-template-columns:minmax(62px,.78fr) minmax(0,2.22fr)!important;gap:.3rem!important;width:100%;align-items:center}
     .sky-where-when-footer-actions .sky-where-when-button{width:100%;min-width:0;margin:0}
-    .sky-where-when-here-now-action{width:100%;min-width:0;margin:0;padding-inline:3px!important;font-size:.66rem!important;font-weight:600!important;white-space:normal;line-height:1.12}
+    .sky-where-when-one-click{display:flex;align-items:center;justify-content:center;gap:.4rem;min-height:34px;width:100%;margin:0 0 4px;font-size:.72rem;font-weight:700}
+    .sky-where-when-one-click svg{width:16px;height:16px;flex:none}
     .sky-ph-handoff-dialog{width:min(680px,calc(100vw - 2rem));max-width:680px;border:2px solid #dc1f18;border-radius:1.3rem;padding:0;background:#fffdf8;color:#1f1b18;box-shadow:0 24px 70px rgba(0,0,0,.28)}
     .sky-ph-handoff-dialog::backdrop{background:rgba(17,14,12,.48);backdrop-filter:blur(2px)}
     .sky-ph-handoff-inner{padding:1.2rem;display:grid;gap:1rem}
@@ -127,7 +128,7 @@ function editorMarkup(slot,p){
   const nowMoment=Number.isFinite(Date.parse(moment))?moment:'';
   return `<form class="sky-where-when-editor" data-slot="${slot}" data-now-instant="${escapeHtml(nowMoment)}">
     <div class="sky-where-when-scroll-body">
-      <div class="sky-where-when-heptagram-slot sky-where-when-heptagram-slot-top" data-ww-heptagram-slot="${slot}"></div>
+      <button class="sky-where-when-button secondary sky-where-when-one-click" type="button" data-ww-action="here-and-now"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6v5h-5M4 18v-5h5M18 10A7 7 0 0 0 6 7L4 9M6 14a7 7 0 0 0 12 3l2-2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span>1-Click Here and Now</span></button>
       <fieldset class="sky-where-when-section sky-where-when-mode" data-ww-where><legend>Where</legend>
         <div class="sky-ww-mode-row"><span class="sky-ww-mode-primary"><label class="sky-ww-choice"><input data-ww-field="here" type="checkbox"${here?' checked':''}><span>Here</span></label><button class="sky-ww-refresh" type="button" data-ww-action="refresh-here" aria-label="Refresh current location" title="Refresh current location"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6v5h-5M4 18v-5h5M18 10A7 7 0 0 0 6 7L4 9M6 14a7 7 0 0 0 12 3l2-2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button></span></div>
         <p class="sky-ww-mode-value" data-ww-here-value${here?'':' hidden'}>${escapeHtml(here?selected.canonical:'')}</p>
@@ -138,10 +139,11 @@ function editorMarkup(slot,p){
         <p class="sky-ww-mode-value sky-ww-clock" data-ww-now-value${now?'':' hidden'} role="timer" aria-live="off"></p>
         <div class="sky-ww-manual" data-ww-manual-when${now?' hidden':''}><div class="sky-where-when-grid"><label class="sky-where-when-label">Date<input class="sky-where-when-input" data-ww-field="date" type="date" value="${escapeHtml(date)}"></label><label class="sky-where-when-label">Local time<input class="sky-where-when-input" data-ww-field="time" type="time" value="${escapeHtml(time)}"${p.timeUnknown?' disabled':''}></label></div></div>
       </fieldset>
+      <div class="sky-where-when-heptagram-slot" data-ww-heptagram-slot="${slot}"></div>
       <details class="sky-where-when-advanced"><summary>Advanced settings</summary><div class="sky-where-when-advanced-body"><label class="sky-where-when-label">Time zone<input class="sky-where-when-input" data-ww-field="timezone" type="text" readonly value="${escapeHtml(selected?.timezone||p.timeZone||'')}"></label><div class="sky-where-when-coordinate-grid"><label class="sky-where-when-label">Latitude<input class="sky-where-when-input" data-ww-field="latitude" type="number" step="0.00001" min="-90" max="90" value="${escapeHtml(displayCoordinate(selected?.latitude??p.latitude))}"></label><label class="sky-where-when-label">Longitude<input class="sky-where-when-input" data-ww-field="longitude" type="number" step="0.00001" min="-180" max="180" value="${escapeHtml(displayCoordinate(selected?.longitude??p.longitude))}"></label></div><div data-ww-paste-inference-host></div></div></details>
       <p class="sky-where-when-status" data-update-now-status aria-live="polite"></p>
     </div>
-    <div class="sky-where-when-footer"><div class="sky-where-when-footer-actions"><button class="sky-where-when-button secondary sky-where-when-cancel" type="button" data-ww-action="cancel">Cancel</button><button class="sky-where-when-button secondary sky-where-when-here-now-action" type="button" data-ww-action="here-and-now">Here and Now</button><button class="sky-where-when-button primary" type="submit"${disabled}>Use This Where and When</button></div></div>
+    <div class="sky-where-when-footer"><div class="sky-where-when-footer-actions"><button class="sky-where-when-button secondary sky-where-when-cancel" type="button" data-ww-action="cancel">Cancel</button><button class="sky-where-when-button primary" type="submit"${disabled}>Use This Where and When</button></div></div>
   </form>`;
 }
 
