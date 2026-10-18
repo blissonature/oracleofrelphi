@@ -105,7 +105,7 @@ function focusInformation(){
     ['Zodiac Signs',value('[data-zodiac-summary]')],
     ['Houses',value('[data-house-filter-summary]')],
     ['Sort',selected('.sky-relationship-sort-select')],
-    ['Max',selected('[data-relationship-limit-preset]')||document.querySelector('[data-relationship-limit]')?.value||'']
+    ['Max',(()=>{const applied=window.RelphiRelationshipLimit?.get?.();return applied==='all'?'Max':applied||selected('[data-relationship-limit-preset]')||document.querySelector('[data-relationship-limit]')?.value||''})()]
   ];
   return controls.filter(([,v])=>String(v).trim()).map(([k,v])=>k+': '+v);
 }
