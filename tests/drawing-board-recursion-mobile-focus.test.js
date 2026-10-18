@@ -23,7 +23,7 @@ const base='http://127.0.0.1:8000/tarot.html?board=workflow-v2#tarot';
     await page.locator('#drawingBoardOptionsButton').tap();
     await page.locator('[data-referent-path="templates"]').tap();
     await page.waitForSelector('#relphiSpreadTemplateSelect',{state:'visible'});
-    await page.selectOption('#relphiSpreadTemplateSelect','relphi-recursion-22');
+    await page.selectOption('#relphiSpreadTemplateSelect','relphi-recursion-13');
     await page.locator('#relphiApplyOptions').tap();
 
     await page.waitForFunction(()=>document.querySelector('#shortListPanel')?.classList.contains('relphi-recursion-reading'));
