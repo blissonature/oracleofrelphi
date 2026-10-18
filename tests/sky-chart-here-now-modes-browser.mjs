@@ -145,6 +145,16 @@ try{
  const oneClick=page.locator('#skyFoundationB .sky-where-when-editor');
  await oneClick.waitFor();
  const instantBeforeClick=Date.now();
+ const footerOrder=await oneClick.evaluate(form=>{
+  const actions=form.querySelector('.sky-where-when-footer-actions');
+  const buttons=[...actions.querySelectorAll('button')];
+  const measures=buttons.map(button=>({action:button.dataset.wwAction||'submit',width:button.getBoundingClientRect().width,centerY:button.getBoundingClientRect().top+button.getBoundingClientRect().height/2}));
+  return{buttons:measures,hereNowInsideRow:!!actions.querySelector('[data-ww-action="here-and-now"]')};
+ });
+ assert.equal(footerOrder.hereNowInsideRow,true,'Here and Now must share the footer action row.');
+ assert.deepEqual(footerOrder.buttons.map(button=>button.action),['cancel','here-and-now','submit']);
+ assert.ok(footerOrder.buttons[2].width>footerOrder.buttons[1].width,'Use This Where and When must remain the dominant action.');
+ assert.ok(Math.abs(footerOrder.buttons[2].centerY-footerOrder.buttons[1].centerY)<3,'Here and Now must not occupy a second footer row.');
  await oneClick.locator('[data-ww-action="here-and-now"]').click();
  await page.waitForFunction(()=>{const sky=JSON.parse(localStorage.getItem('relphiSkyChartB'));return sky?.metadata?.capturedNowAt&&sky?.metadata?.whereWhenSource==='current-location'},null,{timeout:20000});
  const oneClickSky=await page.evaluate(()=>JSON.parse(localStorage.getItem('relphiSkyChartB')));
