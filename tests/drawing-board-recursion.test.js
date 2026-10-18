@@ -154,7 +154,7 @@ const base='http://127.0.0.1:8000/tarot.html';
         });
         assert.ok(sizing,'A drawn recursive card and its logo circle should both be measurable');
         console.log('RECURSION_CIRCLE_DIMENSIONS',JSON.stringify(sizing));
-        assert.ok(Math.abs(sizing.cardH-sizing.circleH)<=8,'A recursive card should occupy essentially the full height of its logo circle');
+        assert.ok(sizing.cardH>=sizing.circleH*.94 && sizing.cardH<=sizing.circleH*1.06,'Recursive artwork should occupy at least 94% of the logo circle height');
         cardCircleHeightChecked=true;
       }
     }
