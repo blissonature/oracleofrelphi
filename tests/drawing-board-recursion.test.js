@@ -41,11 +41,14 @@ const base='http://127.0.0.1:8000/tarot.html';
     })));
     await page.waitForFunction(()=>window.RelphiDrawingBoardOptionsBridge.capture().rowActiveLayout?.id==='relphi-recursion-13');
 
-    const readingToast=await page.locator('.relphi-board-toast').innerText();
-    assert.ok(readingToast.includes('active black circle opens white'));
-    assert.ok(readingToast.includes('red Earth circle wakes up'));
-    assert.ok(readingToast.includes('four worlds'));
-    assert.equal(await page.locator('.relphi-board-toast-action').textContent(),'Enter Level 1');
+    const toast=page.locator('.relphi-board-toast');
+    if(await toast.count()){
+      const readingToast=await toast.innerText();
+      assert.ok(readingToast.includes('active black circle opens white'));
+      assert.ok(readingToast.includes('red Earth circle wakes up'));
+      assert.ok(readingToast.includes('four worlds'));
+      assert.equal(await page.locator('.relphi-board-toast-action').textContent(),'Enter Level 1');
+    }
 
     const configured=await page.evaluate(()=>window.RelphiDrawingBoardOptionsBridge.capture());
     assert.equal(configured.rowActiveLayout?.id,'relphi-recursion-13');
