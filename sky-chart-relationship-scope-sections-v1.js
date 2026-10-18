@@ -97,7 +97,7 @@ function focusInformation(){
   const selected=selector=>{const element=document.querySelector(selector);return element?.selectedOptions?.[0]?.textContent?.trim()||element?.value||''};
   const windowValue=window.RelphiHarmonicOrb?.getWindow?.();
   const controls=[
-    ['Display',selected('[data-sky-display-select],#skyChartDisplayMode,[data-focus-display] select')],
+    ['Display',value('[data-relationship-display-value-text]')],
     ['Harmonic Window',Number.isFinite(Number(windowValue))?String(windowValue)+'°':document.querySelector('[data-harmonic-window-input]')?.value||''],
     ['Aspects',value('[data-aspect-filter-summary]')],
     ['Placements',value('[data-placement-filter-summary]')],
