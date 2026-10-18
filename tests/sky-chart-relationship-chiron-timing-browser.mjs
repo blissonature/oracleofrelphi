@@ -150,7 +150,8 @@ try{
           const leftHouse=Number(row.dataset.leftHouse),rightHouse=Number(row.dataset.rightHouse);
           const leftHouseToken=Number.isInteger(leftHouse)&&leftHouse>=1&&leftHouse<=12?` H${leftHouse}`:'';
           const rightHouseToken=Number.isInteger(rightHouse)&&rightHouse>=1&&rightHouse<=12?` H${rightHouse}`:'';
-          return `${placementSymbols[left]||left} in ${signSymbols[Number(row.dataset.leftSign)]||''} ${coordinate(row,'left')}${leftHouseToken} ${aspectSymbols[aspect]||aspect} ${placementSymbols[right]||right} in ${signSymbols[Number(row.dataset.rightSign)]||''} ${coordinate(row,'right')}${rightHouseToken}`.replace(/\s+/g,' ').trim();
+          const motion=(side,id)=>{const explicit=String(row.dataset[side+'Sky']||'').toUpperCase(),scope=String(row.dataset.relationshipMode||'').toUpperCase(),sky=explicit==='A'||explicit==='B'?explicit:scope==='A-A'?'A':scope==='B-B'?'B':side==='left'?'A':'B';return window.RelphiSkyRetrograde?.forPlacement?.(sky,id)?' Rx':''};
+          return `${placementSymbols[left]||left}${motion('left',left)} in ${signSymbols[Number(row.dataset.leftSign)]||''} ${coordinate(row,'left')}${leftHouseToken} ${aspectSymbols[aspect]||aspect} ${placementSymbols[right]||right}${motion('right',right)} in ${signSymbols[Number(row.dataset.rightSign)]||''} ${coordinate(row,'right')}${rightHouseToken}`.replace(/\s+/g,' ').trim();
         })
         .filter(Boolean);
     });
