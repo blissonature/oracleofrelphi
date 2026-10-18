@@ -44,7 +44,12 @@ try{
     window.htmlToImage={
       toBlob:async node=>{
         window.__relphiHouseExportSnapshot={
-          leftMedallions:node.querySelectorAll('.rex-row .sky-foundation-relationship-placement--left .relphi-house-medallion').length,
+          unknownMedallions:[...node.querySelectorAll('.rex-row')].reduce((sum,row)=>{
+            const mode=String(row.dataset.relationshipMode||'').toUpperCase(),left=String(row.dataset.leftSky||'').toUpperCase(),right=String(row.dataset.rightSky||'').toUpperCase();
+            const skyLeft=left==='A'||left==='B'?left:mode==='B-B'?'B':'A';
+            const skyRight=right==='A'||right==='B'?right:mode==='A-A'?'A':'B';
+            return sum+(skyLeft==='A'?row.querySelectorAll('.sky-foundation-relationship-placement--left .relphi-house-medallion').length:0)+(skyRight==='A'?row.querySelectorAll('.sky-foundation-relationship-placement--right .relphi-house-medallion').length:0);
+          },0),
           houseConcepts:[...node.querySelectorAll('.rex-chip strong')].map(n=>(n.textContent||'').trim()).filter(text=>/House$/.test(text)),
           rows:node.querySelectorAll('.rex-row').length
         };
@@ -98,7 +103,7 @@ try{
   await page.waitForFunction(()=>Boolean(window.__relphiHouseExportSnapshot),null,{timeout:12000});
   const png=await page.evaluate(()=>window.__relphiHouseExportSnapshot);
   assert.ok(png.rows>0,'PNG export must include a relationship.');
-  assert.equal(png.leftMedallions,0,'PNG clone must discard unknown-time house medallions.');
+  assert.equal(png.unknownMedallions,0,'PNG clone must discard unknown-time house medallions but retain known-time ones.');
   assert.ok(png.houseConcepts.includes('Fifth House'),'PNG must preserve known-time B house concepts.');
   assert.ok(!png.houseConcepts.includes('Seventh House'),'PNG must omit unknown-time A house concepts.');
   assert.equal(await row.locator('.sky-foundation-relationship-placement--left .relphi-house-medallion').count(),onScreenStale,'PNG must leave the live chart unchanged.');
