@@ -89,6 +89,15 @@ try{
    const sample=(svg,selector)=>{const el=svg?.querySelector(selector);if(!el)return null;const cs=getComputedStyle(el);return{stroke:cs.stroke,width:cs.strokeWidth,dash:cs.strokeDasharray}};
    return {canonical:draft?.dataset.canonicalHeptagramReady,gray:sample(draft,'.sky-ph-hour-segment.future'),red:sample(draft,'.sky-ph-week-segment.current'),miniGray:sample(mini,'.sky-ph-hour-segment.future'),miniRed:sample(mini,'.sky-ph-week-segment.current')};
  });
+ const rulers=await form.locator('[data-planetary-rulers="true"]').evaluate(node=>({
+   day:node.querySelector('[data-role="day"]')?.textContent,
+   hour:node.querySelector('[data-role="hour"]')?.textContent,
+   icons:[...node.querySelectorAll('.sky-ww-planetary-ruler-art')].map(svg=>svg.querySelector('[data-canonical-glyph-id]')!==null),
+   order:node.compareDocumentPosition(node.parentElement.querySelector('.sky-where-when-draft-heptagram'))&4
+ }));
+ assert.match(rulers.day,/ Day$/);
+ assert.match(rulers.hour,/ Hour$/);
+ assert.equal(rulers.order,4,'Ruler labels precede heptagram.');
  assert.equal(parity.canonical,'true');
  for(const k of ['gray','red','miniGray','miniRed']){assert.equal(parseFloat(parity[k]?.width),5);assert.equal(parity[k]?.dash,'none')}
  assert.equal(parity.gray.stroke,parity.miniGray.stroke);
