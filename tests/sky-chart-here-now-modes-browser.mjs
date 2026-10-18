@@ -35,8 +35,21 @@ try{
    return{labels:[...row.querySelectorAll('button')].map(button=>button.textContent.trim()),
      columns:getComputedStyle(row).gridTemplateColumns.split(' ').length};
  });
- assert.deepEqual(footerInitially.labels,['Cancel','Here and Now','Use This Where and When']);
- assert.equal(footerInitially.columns,3,'Even a narrow mobile card must show three action columns.');
+ assert.deepEqual(footerInitially.labels,['Cancel','Use This Where and When']);
+ assert.equal(footerInitially.columns,2,'The footer must contain only the original Cancel and Use buttons.');
+ const topOrder=await form.evaluate(node=>{
+   const body=node.querySelector('.sky-where-when-scroll-body');
+   const relevant=[...body.children].filter(el=>el.matches('.sky-where-when-one-click,[data-ww-where],[data-ww-when],[data-ww-heptagram-slot]'));
+   const button=body.querySelector('.sky-where-when-one-click');
+   return{order:relevant.map(el=>el.dataset.wwAction==='here-and-now'?'here-and-now':el.hasAttribute('data-ww-where')?'where':el.hasAttribute('data-ww-when')?'when':'heptagram'),
+     buttonCount:node.querySelectorAll('[data-ww-action="here-and-now"]').length,
+     buttonIcon:!!button?.querySelector('svg'),
+     buttonVisible:button?.getBoundingClientRect().height>0};
+ });
+ assert.equal(topOrder.buttonCount,1,'One-click Here and Now must exist exactly once.');
+ assert.deepEqual(topOrder.order,['here-and-now','where','when','heptagram']);
+ assert.equal(topOrder.buttonIcon,true,'The single button must contain its refresh icon.');
+ assert.equal(topOrder.buttonVisible,true,'The top action must be visible.');
 
  assert.equal(await here.isChecked(),false);assert.equal(await now.isChecked(),false);
  assert.equal(await form.locator('[data-ww-field="live"]').count(),0,'Live toggle must be absent.');
@@ -155,16 +168,8 @@ try{
  const oneClick=page.locator('#skyFoundationB .sky-where-when-editor');
  await oneClick.waitFor();
  const instantBeforeClick=Date.now();
- const footerOrder=await oneClick.evaluate(form=>{
-  const actions=form.querySelector('.sky-where-when-footer-actions');
-  const buttons=[...actions.querySelectorAll('button')];
-  const measures=buttons.map(button=>({action:button.dataset.wwAction||'submit',width:button.getBoundingClientRect().width,centerY:button.getBoundingClientRect().top+button.getBoundingClientRect().height/2}));
-  return{buttons:measures,hereNowInsideRow:!!actions.querySelector('[data-ww-action="here-and-now"]')};
- });
- assert.equal(footerOrder.hereNowInsideRow,true,'Here and Now must share the footer action row.');
- assert.deepEqual(footerOrder.buttons.map(button=>button.action),['cancel','here-and-now','submit']);
- assert.ok(footerOrder.buttons[2].width>footerOrder.buttons[1].width,'Use This Where and When must remain the dominant action.');
- assert.ok(Math.abs(footerOrder.buttons[2].centerY-footerOrder.buttons[1].centerY)<3,'Here and Now must not occupy a second footer row.');
+ assert.equal(await oneClick.locator('[data-ww-action="here-and-now"]').count(),1);
+ assert.deepEqual(await oneClick.locator('.sky-where-when-footer-actions button').allTextContents(),['Cancel','Use This Where and When']);
  await oneClick.locator('[data-ww-action="here-and-now"]').click();
  await page.waitForFunction(()=>{const sky=JSON.parse(localStorage.getItem('relphiSkyChartB'));return sky?.metadata?.capturedNowAt&&sky?.metadata?.whereWhenSource==='current-location'},null,{timeout:20000});
  const oneClickSky=await page.evaluate(()=>JSON.parse(localStorage.getItem('relphiSkyChartB')));
