@@ -11,7 +11,7 @@ const HIDDEN_CLASSES=Object.freeze([
   'sky-chart-zodiac-filter-hidden','sky-chart-sign-filter-hidden','sky-chart-semantic-hidden'
 ]);
 const CAP_CLASS='sky-chart-result-limit-hidden';
-let limit='all',queued=false,listObserver=null,observedList=null,lastState='';
+let limit='all',editingCustom=false,queued=false,listObserver=null,observedList=null,lastState='';
 
 function normalize(value){
   const text=String(value??'all').trim().toLowerCase();
@@ -31,9 +31,10 @@ function syncControl(){
   const input=document.querySelector('[data-relationship-limit]');
   const select=document.querySelector('[data-relationship-limit-preset]');
   if(!input||!select)return;
+  // A list refresh must not cancel an in-progress Custom selection or typing.
+  const preset=editingCustom?'custom':limit==='all'?'all':PRESETS.includes(Number(limit))?limit:'custom';
   const next=limit==='all'?'':limit;
-  if(input.value!==next)input.value=next;
-  const preset=limit==='all'?'all':PRESETS.includes(Number(limit))?limit:'custom';
+  if(!editingCustom&&input.value!==next)input.value=next;
   if(select.value!==preset)select.value=preset;
   const custom=preset==='custom';
   input.hidden=!custom;
@@ -116,10 +117,12 @@ function ensureControl(){
       const raw=input.value.trim();
       const number=Number(raw);
       if(Number.isInteger(number)&&number>0){setLimit(String(number));return}
+      editingCustom=false;
       syncControl();
     };
     select.addEventListener('change',()=>{
       if(select.value==='custom'){
+        editingCustom=true;
         input.hidden=false;input.disabled=false;input.setAttribute('aria-hidden','false');
         if(limit==='all'||PRESETS.includes(Number(limit)))input.value='';
         select.value='custom';
@@ -132,7 +135,7 @@ function ensureControl(){
     input.addEventListener('blur',()=>{if(input.value.trim())commit()});
     input.addEventListener('keydown',event=>{
       if(event.key==='Enter'){event.preventDefault();commit();input.blur()}
-      if(event.key==='Escape'){event.preventDefault();syncControl();input.blur()}
+      if(event.key==='Escape'){event.preventDefault();editingCustom=false;syncControl();input.blur()}
     });
     control.append(select,input);
   }
@@ -166,6 +169,7 @@ function nextLimit(){
 }
 function revealMore(){if(limit!=='all')setLimit(nextLimit())}
 function setLimit(value){
+  editingCustom=false;
   const next=normalize(value);
   if(next===limit){syncControl();schedule();return limit}
   limit=next;
@@ -181,14 +185,9 @@ function apply(){
   const all=rows(),cap=numericLimit();
   all.forEach(row=>row.classList.remove(CAP_CLASS));
   const eligible=all.filter(row=>!hiddenByOther(row));
-  const sections=new Map();
-  eligible.forEach(row=>{
-    const key=String(row.dataset.relationshipMode||'A-B').toUpperCase();
-    if(!sections.has(key))sections.set(key,[]);
-    sections.get(key).push(row);
-  });
-  sections.forEach(section=>section.forEach((row,index)=>row.classList.toggle(CAP_CLASS,index>=cap)));
-  const shown=[...sections.values()].reduce((sum,section)=>sum+Math.min(section.length,Number.isFinite(cap)?cap:section.length),0);
+  // Max applies once to the complete ranked set, not once per relationship scope.
+  eligible.forEach((row,index)=>row.classList.toggle(CAP_CLASS,index>=cap));
+  const shown=Math.min(eligible.length,Number.isFinite(cap)?cap:eligible.length);
   const hiddenByLimit=Math.max(0,eligible.length-shown);
   const count=document.getElementById('skyFoundationRelationshipCount');
   if(count){

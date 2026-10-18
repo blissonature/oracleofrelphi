@@ -67,17 +67,23 @@ try{
      whereGap:whereRefresh.left-whereChoice.right,nowGap:nowRefresh.left-nowChoice.right,
      nowAlignment:Math.abs(centerY(nowRefresh)-centerY(nowChoice)),
      unknownAlignment:Math.abs(centerY(unknown)-centerY(nowChoice)),
-     unknownLeft:unknown.left,localTimeLeft:localTime.left,unknownOverflow:unknown.right-row.right
+     unknownLeft:unknown.left,localTimeLeft:localTime.left,unknownOverflow:unknown.right-row.right,
+     dateRect:(()=>{const r=rect('[data-ww-manual-when] .sky-where-when-grid > label:first-child');return {left:r.left,right:r.right,top:r.top,bottom:r.bottom}})(),
+     timeRect:{left:localTime.left,right:localTime.right,top:localTime.top,bottom:localTime.bottom}
    };
  });
  assert.ok(spacing.whereGap>=0&&spacing.whereGap<=8,JSON.stringify(spacing));
  assert.ok(spacing.nowGap>=0&&spacing.nowGap<=8,JSON.stringify(spacing));
  assert.ok(spacing.nowAlignment<=5,JSON.stringify(spacing));
  assert.ok(spacing.unknownAlignment<=4,JSON.stringify(spacing));
- assert.ok(Math.abs(spacing.unknownLeft-spacing.localTimeLeft)<=2,JSON.stringify(spacing));
+ assert.ok(spacing.timeRect.top>=spacing.dateRect.bottom,JSON.stringify(spacing));
+ assert.ok(spacing.timeRect.left>=spacing.dateRect.left-2&&spacing.timeRect.right<=spacing.dateRect.right+2,JSON.stringify(spacing));
  assert.ok(spacing.unknownOverflow<=1,JSON.stringify(spacing));
  assert.equal(await refresh.getAttribute('aria-label'),'Refresh current instant');
  await unknown.check();
+ await page.waitForTimeout(250);
+ assert.equal(await form.locator('[data-draft-where-when-link]').count(),0,'Unknown time must clear the temporal draft heptagram.');
+ assert.equal(await form.locator('[data-planetary-rulers]').count(),0,'Unknown time must clear former day/hour labels.');
  assert.equal(await form.locator('[data-ww-field="time"]').isDisabled(),true);
  assert.equal(await now.isChecked(),false);
  await unknown.uncheck();
@@ -210,6 +216,24 @@ try{
  assert.equal(oneClickSky.calcProfile.latitude,'40.7608');
  await page.waitForTimeout(1300);
  assert.equal((await page.evaluate(()=>JSON.parse(localStorage.getItem('relphiSkyChartB')))).calcProfile.instant,oneClickSky.calcProfile.instant,'Here and Now must not enable Live updates.');
+ // Replacing a timed sky with an unknown-time sky must never retain its
+ // planetary-day/hour image, even if legacy profile fields retain an instant.
+ await page.evaluate(()=>{
+   const key='relphiSkyChartB',sky=JSON.parse(localStorage.getItem(key));
+   sky.calcProfile.timeUnknown=true;
+   sky.calcProfile.location='Malden, Massachusetts, United States';
+   sky.calcProfile.latitude='42.4251';sky.calcProfile.longitude='-71.0662';
+   sky.calcProfile.timeZone='America/New_York';
+   sky.metadata.whereWhenSource='current-location';
+   localStorage.setItem(key,JSON.stringify(sky));
+ });
+ await page.reload({waitUntil:'domcontentloaded'});
+ await page.waitForSelector('#skyFoundationRoot[aria-busy="false"]',{timeout:20000});
+ await page.waitForTimeout(400);
+ assert.equal(await page.locator('#skyFoundationB .sky-where-when-summary').isVisible(),false,'Unknown-time sky must not display a prior temporal heptagram.');
+ await page.locator('#skyFoundationB [data-sky-drawer-tab="where"]').click();
+ await page.waitForFunction(()=>document.querySelector('#skyFoundationB [data-ww-here-value]')?.textContent?.includes('Salt Lake City'),null,{timeout:20000});
+ assert.equal(await page.locator('#skyFoundationB [data-ww-field="here"]').isChecked(),true);
  assert.deepEqual(errors,[],'No uncaught page errors.');
  console.log('Fixed Now: refresh captures a new instant, never auto-commits or advances; no Live; legacy skies freeze.');
 }finally{await browser.close()}

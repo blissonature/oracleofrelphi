@@ -169,6 +169,14 @@ function installStyle(){
       #skyFoundationRelationshipList:has(> .sky-foundation-relationship-row.is-inline-expanded){
         max-height:none!important;
       }
+      /* Keep Copy on its own row above the expanded art, clear of Sky B's medallion. */
+      .sky-foundation-relationship-row.is-inline-expanded>.inline-rel-detail{
+        padding-top:45px!important;
+      }
+      .sky-foundation-relationship-row.is-inline-expanded .inline-rel-tile-copy{
+        top:7px!important;right:8px!important;
+        min-height:30px!important;
+      }
       .sky-foundation-relationship-row.is-inline-expanded .sky-foundation-relationship-symbol-pair{gap:2px!important}
     }
   `;document.head.appendChild(style);

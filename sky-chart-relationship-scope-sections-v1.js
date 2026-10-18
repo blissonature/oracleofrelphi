@@ -84,6 +84,34 @@ function visibleRows(){const out=[];for(const row of document.querySelectorAll('
 function serializeSection(rows){const out=[];let semantic=false;for(const row of rows){const item=serializeRow(row);if(!item.text)continue;out.push(item.text);if(item.semantic)semantic=true}return out.join(semantic?'\n\n':'\n')}
 function groupForMode(value){return GROUPS.find(group=>group.mode===value)||null}
 function familyForGroup(group){return FAMILIES.find(family=>family.id===group?.family)||null}
+function skyIdentity(slot){
+  let payload=null;
+  try{payload=JSON.parse(localStorage.getItem('relphiSkyChart'+slot)||'null')}catch(_){}
+  let title='';
+  try{title=String(window.RelphiSkyCardTitle?.nameFor?.(slot,payload)||'').trim()}catch(_){}
+  const metadata=payload?.metadata||{};
+  return title||String(metadata.savedSkyName||payload?.name||payload?.displayName||payload?.skyName||payload?.title||'').trim()||'Unnamed sky';
+}
+function focusInformation(){
+  const value=selector=>String(document.querySelector(selector)?.textContent||'').trim().replace(/\s+/g,' ');
+  const selected=selector=>{const element=document.querySelector(selector);return element?.selectedOptions?.[0]?.textContent?.trim()||element?.value||''};
+  const windowValue=window.RelphiHarmonicOrb?.getWindow?.();
+  const controls=[
+    ['Display',value('[data-relationship-display-value-text]')],
+    ['Harmonic Window',Number.isFinite(Number(windowValue))?String(windowValue)+'°':document.querySelector('[data-harmonic-window-input]')?.value||''],
+    ['Aspects',value('[data-aspect-filter-summary]')||'None selected'],
+    ['Relationship scopes',[...document.querySelectorAll('[data-aspect-scope-choice]:checked')].map(el=>el.getAttribute('aria-label')||el.closest('label')?.textContent?.trim()||el.value).filter(Boolean).join(' · ')||'None selected'],
+    ['Placements',value('[data-placement-filter-summary]')],
+    ['Zodiac Signs',value('[data-zodiac-summary]')],
+    ['Houses',value('[data-house-filter-summary]')],
+    ['Sort',selected('.sky-relationship-sort-select')],
+    ['Max',(()=>{const applied=window.RelphiRelationshipLimit?.get?.();return applied==='all'?'Max':applied||selected('[data-relationship-limit-preset]')||document.querySelector('[data-relationship-limit]')?.value||''})()]
+  ];
+  return controls.filter(([,v])=>String(v).trim()).map(([k,v])=>k+': '+v);
+}
+function relationshipsCopyHeader(){
+  return ['Relationships','Sky A: '+skyIdentity('A'),'Sky B: '+skyIdentity('B'),'','Focus',...focusInformation()].join('\n');
+}
 function serializeDisplayOrder(rows){
   const blocks=[];let currentMode='',bucket=[];
   const flush=()=>{
@@ -94,7 +122,7 @@ function serializeDisplayOrder(rows){
   };
   for(const row of rows){const rowMode=mode(row);if(currentMode&&rowMode!==currentMode)flush();currentMode=rowMode;bucket.push(row)}
   flush();
-  return blocks.length?`Relationships\n\n${blocks.join('\n\n')}`:'';
+  return blocks.length?`${relationshipsCopyHeader()}\n\n${blocks.join('\n\n')}`:'';
 }
 function serializeAll(){
   const rows=visibleRows(),sortMode=window.RelphiRelationshipSort?.mode?.();
@@ -105,7 +133,7 @@ function serializeAll(){
     for(const group of GROUPS){if(group.family!==family.id)continue;const body=serializeSection(rows.filter(r=>mode(r)===group.mode));if(body)sections.push(`${group.title}\n${body}`)}
     if(sections.length)families.push(`${family.title}\n\n${sections.join('\n\n')}`);
   }
-  return families.length?`Relationships\n\n${families.join('\n\n')}`:'';
+  return families.length?`${relationshipsCopyHeader()}\n\n${families.join('\n\n')}`:'';
 }
 function legacyCopy(text){const active=document.activeElement;let ta=null;try{ta=document.createElement('textarea');ta.value=text;ta.setAttribute('aria-hidden','true');Object.assign(ta.style,{position:'fixed',left:'0',top:'0',width:'1px',height:'1px',padding:'0',border:'0',opacity:'0',fontSize:'16px'});document.body.appendChild(ta);try{ta.focus({preventScroll:true})}catch(_){ta.focus()}ta.select();ta.setSelectionRange(0,ta.value.length);return document.execCommand('copy')===true}catch(_){return false}finally{ta?.remove();try{active?.focus?.({preventScroll:true})}catch(_){try{active?.focus?.()}catch(__){}}}}
 async function writeClipboard(text){if(legacyCopy(text))return true;if(!navigator.clipboard?.writeText)return false;let timer=0;try{const timeout=new Promise(resolve=>{timer=window.setTimeout(()=>resolve(false),900)});const copy=Promise.resolve(navigator.clipboard.writeText(text)).then(()=>true,()=>false);return await Promise.race([copy,timeout])}catch(_){return false}finally{clearTimeout(timer)}}

@@ -242,6 +242,8 @@ function openEditor(slot,focus=false){
   keepCommittedHeptagramInSummary(slot);
   window.RelphiSkyCardShell.setEditorExpanded(slot,true);
   syncModes(slot);
+  // A persisted 'Here' tag is not a fresh geolocation result for this editing session.
+  if(formFor(slot)?.querySelector('[data-ww-field="here"]')?.checked)void checkHere(slot);
   window.dispatchEvent(new CustomEvent('relphi:sky-where-when-editor-ready',{detail:{slot,form:formFor(slot)}}));
   if(focus)requestAnimationFrame(()=>formFor(slot)?.querySelector('[data-ww-field="location-query"]')?.focus());
 }
@@ -499,7 +501,7 @@ function planetaryHoursHref(p){const params=new URLSearchParams();params.set('ph
 function summarySignature(p){return[p.instant||p.dateTime,p.latitude,p.longitude,p.timeZone].join('|')}
 async function renderSummary(slot,force=false){
   const state=cardState[slot];if(state.rendering){state.rerender=true;return}state.rendering=true;
-  try{do{state.rerender=false;const p=profileFor(slot),refs=shell(slot);if(!refs)break;if(!completeProfile(p)){refs.summary.hidden=true;state.summarySignature='';break}refs.summary.hidden=false;const signature=summarySignature(p);if(!force&&signature===state.summarySignature&&refs.heptagram.dataset.canonicalSourceReady==='true')continue;state.summarySignature=signature;refs.heptagram.setAttribute('viewBox',window.matchMedia?.('(max-width:620px)')?.matches?'0 -8 360 368':'0 0 360 360');try{await drawHeptagram(refs.heptagram,p)}catch(error){state.summarySignature='';console.error(error)}}while(state.rerender)}finally{state.rendering=false}
+  try{do{state.rerender=false;const p=profileFor(slot),refs=shell(slot);if(!refs)break;if(p?.timeUnknown===true||!completeProfile(p)){refs.summary.hidden=true;state.summarySignature='';refs.heptagram.replaceChildren();delete refs.heptagram.dataset.canonicalSourceReady;break}refs.summary.hidden=false;const signature=summarySignature(p);if(!force&&signature===state.summarySignature&&refs.heptagram.dataset.canonicalSourceReady==='true')continue;state.summarySignature=signature;refs.heptagram.setAttribute('viewBox',window.matchMedia?.('(max-width:620px)')?.matches?'0 -8 360 368':'0 0 360 360');try{await drawHeptagram(refs.heptagram,p)}catch(error){state.summarySignature='';console.error(error)}}while(state.rerender)}finally{state.rendering=false}
 }
 function scheduleSummary(slot,force=false){const state=cardState[slot];if(state.rendering){state.rerender=true;return}void renderSummary(slot,force)}
 
