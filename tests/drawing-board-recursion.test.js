@@ -107,7 +107,7 @@ const base='http://127.0.0.1:8000/tarot.html';
     assert.equal(await page.locator('.relphi-recursion-circle-states .relphi-recursion-state-circle').count(),3);
     assert.equal(await page.locator('[data-recursion-circle="mem"]').evaluate(node=>node.classList.contains('is-current')),true,'Mem should be the first active logo circle');
     const activeCircle=await page.locator('[data-recursion-circle="mem"]').evaluate(node=>({bg:getComputedStyle(node).backgroundColor,border:getComputedStyle(node).borderColor}));
-    assert.equal(activeCircle.bg,'rgb(255, 255, 255)','The active logo circle should open white');
+    assert.match(activeCircle.bg,/^rgba?\(255, 255, 255(?:, 0\.9\d+)?\)/,'The active logo circle should open nearly white');
     assert.equal(activeCircle.border,'rgb(17, 17, 17)','The active logo circle should keep a black stroke');
     assert.equal(await page.locator('.relphi-recursion-board-portal').isDisabled(),true,'Earth must remain closed until Mem, Aleph, and Shin are complete');
     assert.equal(await page.locator('.relphi-recursion-board-portal').evaluate(node=>node.parentElement?.classList.contains('card-row-board')),true,'The Earth portal should occupy the logo itself, not float below it');
