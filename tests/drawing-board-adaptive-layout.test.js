@@ -37,6 +37,33 @@ assert.deepEqual(dimensions(desktop.genericPositions(labels(6))),{cols:6,rows:1}
 const mobile=setup(360,530);
 assert.deepEqual(dimensions(mobile.genericPositions(labels(12))),{cols:4,rows:3},'narrow workspace should choose a taller configuration');
 
+const threeMobile=mobile.genericPositions(labels(3));
+assert.equal(new Set(threeMobile.map(p=>p.transform.y.toFixed(6))).size,2,
+  'three mobile placeholders use two rows rather than a tiny three-across strip');
+assert.equal(threeMobile[2].transform.x,threeMobile[0].transform.x,
+  'an incomplete second row stays left-aligned with the first row');
+
+const authoredStart=source.indexOf('  function usesAuthoredSpreadGeometry(prefab) {');
+const authoredEnd=source.indexOf('  function launchConfiguredReading(root,draft)',authoredStart);
+assert.ok(authoredStart>=0 && authoredEnd>authoredStart,'reading paths use shared adaptive geometry');
+const authoredCode=source.slice(authoredStart,authoredEnd);
+const authoredContext={
+  RECURSION_ID:'relphi-recursion-22',
+  genericPositions:mobile.genericPositions,
+  ...{Set}
+};
+const {adaptiveReadingPrefab}=vm.runInNewContext(authoredCode+'\n({adaptiveReadingPrefab})',authoredContext);
+for(const name of ['building-blocks','astrological-tarot','see-what-surfaces','custom-active']){
+  const prefab={id:name,positions:labels(3).map((label,i)=>({id:'q'+i,label,drawOrder:i+1,transform:{x:i/3,y:0,scale:.3}}))};
+  const adapted=adaptiveReadingPrefab(prefab);
+  assert.equal(new Set(adapted.positions.map(p=>p.transform.y.toFixed(6))).size,2,
+    name+' should use the shared adaptive 2-row mobile layout');
+}
+for(const id of ['saturn-square-9','celtic-cross-10','relphi-recursion-22']){
+  const prefab={id,positions:[{id:'q1',label:'Question',drawOrder:1,transform:{x:.123,y:.456,scale:.5}}]};
+  assert.equal(adaptiveReadingPrefab(prefab),prefab,id+' should retain authored geometry');
+}
+
 const old=desktop.legacyGenericPositions(labels(12));
 const snapshot={
   rowEnvelopeLayout:Object.fromEntries(old.map((p,i)=>[i,{x:p.transform.x*900,y:p.transform.y*760}])),

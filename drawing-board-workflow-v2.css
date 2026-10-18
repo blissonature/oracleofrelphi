@@ -3322,3 +3322,276 @@ body.relphi-attune-open{overflow:hidden!important}
 .relphi-focus-export-actions button:disabled{opacity:.55!important;cursor:wait!important}
 .relphi-focus-export-status{font-size:.72rem!important;color:#665a53!important}
 @media(max-width:650px){.relphi-focus-export-actions{padding:.35rem!important;gap:.3rem!important}.relphi-focus-export-actions button{font-size:.7rem!important;padding:.35rem .5rem!important}}
+
+/* Crafted settings on phones: a static viewport panel with a non-scrolling
+   confirmation bar. Only the questions/settings body scrolls. */
+@media(max-width:700px){
+  html body #shortListPanel.relphi-settings-open .relphi-board-settings-panel{
+    position:fixed!important;
+    top:var(--relphi-settings-visual-top,0px)!important;
+    left:0!important;
+    right:0!important;
+    bottom:auto!important;
+    width:100%!important;
+    height:var(--relphi-settings-visible-height,100dvh)!important;
+    max-height:var(--relphi-settings-visible-height,100dvh)!important;
+    margin:0!important;
+    border-radius:12px!important;
+    box-sizing:border-box!important;
+    display:flex!important;
+    flex-direction:column!important;
+    overflow:hidden!important;
+    z-index:10020!important;
+  }
+  html body #shortListPanel.relphi-settings-open .relphi-board-settings-panel .relphi-board-settings-body{
+    display:flex!important;
+    flex-direction:column!important;
+    flex:1 1 auto!important;
+    height:100%!important;
+    min-height:0!important;
+    max-height:100%!important;
+    overflow:hidden!important;
+  }
+  html body #shortListPanel.relphi-settings-open .relphi-board-settings-panel .relphi-reading-options-drawer{
+    display:flex!important;
+    flex-direction:column!important;
+    flex:1 1 auto!important;
+    height:0!important;
+    min-height:0!important;
+    max-height:none!important;
+    overflow:hidden!important;
+  }
+  html body #shortListPanel.relphi-settings-open .relphi-board-settings-panel .relphi-reading-options-drawer .relphi-options-body{
+    display:block!important;
+    flex:1 1 0%!important;
+    min-height:0!important;
+    overflow-y:auto!important;
+    overscroll-behavior:contain!important;
+    -webkit-overflow-scrolling:touch!important;
+    padding-bottom:1rem!important;
+  }
+  html body #shortListPanel.relphi-settings-open .relphi-board-settings-panel .relphi-reading-options-drawer .relphi-options-commitbar{
+    position:relative!important;
+    bottom:auto!important;
+    flex:0 0 auto!important;
+    z-index:5!important;
+    min-height:3.5rem!important;
+    margin:0!important;
+    padding:.55rem .65rem max(.75rem,env(safe-area-inset-bottom))!important;
+    background:#fffdf8!important;
+    border-top:1px solid rgba(17,17,17,.2)!important;
+  }
+}
+
+/* Mobile settings sheet: always show the mode switch, and pin whichever
+   mode's actions are active to the exact bottom of the visible sheet. */
+@media(max-width:700px){
+  html body #shortListPanel.relphi-settings-open .relphi-board-settings-panel .relphi-board-settings-body>.drawing-board-mode-switch{
+    display:grid!important;
+    visibility:visible!important;
+    opacity:1!important;
+    order:0!important;
+    position:relative!important;
+    flex:0 0 auto!important;
+    align-self:center!important;
+    z-index:12!important;
+    margin:.45rem auto!important;
+  }
+  html body #shortListPanel.relphi-settings-open .relphi-board-settings-panel .relphi-board-settings-body{
+    justify-content:flex-start!important;
+    gap:0!important;
+    padding:0!important;
+  }
+  html body #shortListPanel.relphi-settings-open .relphi-board-settings-panel .relphi-board-settings-body>.relphi-free-settings{
+    order:1!important;
+    flex:1 1 0%!important;
+    min-height:0!important;
+    display:flex!important;
+    flex-direction:column!important;
+    overflow:auto!important;
+    margin:0!important;
+  }
+  html body #shortListPanel.relphi-settings-open .relphi-board-settings-panel .relphi-board-settings-body>.relphi-reading-options-drawer{
+    order:1!important;
+    flex:1 1 0%!important;
+    min-height:0!important;
+    margin:0!important;
+  }
+  html body #shortListPanel.relphi-settings-open .relphi-board-settings-panel .relphi-board-settings-body .relphi-options-commitbar{
+    margin-top:auto!important;
+    margin-bottom:0!important;
+    padding-bottom:max(.5rem,env(safe-area-inset-bottom))!important;
+  }
+}
+
+@media(max-width:700px){
+  html body #shortListPanel.relphi-settings-open .relphi-board-settings-panel .relphi-free-settings .relphi-free-settings-fields{
+    flex:1 1 auto!important;
+    min-height:0!important;
+    overflow-y:auto!important;
+    overscroll-behavior:contain!important;
+    -webkit-overflow-scrolling:touch!important;
+  }
+  html body #shortListPanel.relphi-settings-open .relphi-board-settings-panel .relphi-free-settings .relphi-board-settings-footer{
+    position:relative!important;
+    flex:0 0 auto!important;
+    margin:0!important;
+    margin-top:auto!important;
+    padding:.55rem .65rem max(.5rem,env(safe-area-inset-bottom))!important;
+    background:#fffdf8!important;
+    border-top:1px solid rgba(17,17,17,.2)!important;
+  }
+}
+
+/* Restored mobile settings navigation, independent of legacy hidden tabs. */
+#shortListPanel .relphi-mobile-settings-paths{display:none}
+@media(max-width:700px){
+  html body #shortListPanel.relphi-settings-open .relphi-board-settings-panel .relphi-mobile-settings-paths{
+    display:grid!important;grid-template-columns:1fr 1fr!important;gap:.2rem!important;
+    flex:0 0 auto!important;order:0!important;position:relative!important;
+    width:calc(100% - 1.25rem)!important;margin:.5rem auto .4rem!important;
+    padding:3px!important;border:1px solid #d8cec5!important;border-radius:999px!important;
+    background:#f1ece6!important;z-index:30!important;visibility:visible!important;
+  }
+  html body #shortListPanel.relphi-settings-open .relphi-mobile-settings-paths button{
+    min-height:2.5rem!important;border:0!important;border-radius:999px!important;
+    background:transparent!important;color:#29231f!important;font:inherit!important;
+    font-size:.92rem!important;font-weight:800!important;
+  }
+  html body #shortListPanel.relphi-settings-open .relphi-mobile-settings-paths button.is-active{
+    background:#fff!important;box-shadow:0 2px 9px rgba(17,17,17,.13)!important;
+  }
+  html body #shortListPanel.relphi-settings-open .relphi-board-settings-body>.drawing-board-mode-switch{
+    display:none!important;
+  }
+  html body #shortListPanel.relphi-settings-open .relphi-board-settings-panel .relphi-free-settings .relphi-free-settings-fields{
+    flex:1 1 0%!important;align-content:start!important;grid-auto-rows:max-content!important;
+    gap:.6rem!important;padding:.35rem .65rem .5rem!important;
+  }
+  html body #shortListPanel.relphi-settings-open .relphi-board-settings-panel .relphi-free-settings .relphi-free-pack,
+  html body #shortListPanel.relphi-settings-open .relphi-board-settings-panel .relphi-free-settings .relphi-free-toggles label{
+    min-height:0!important;height:auto!important;padding:.65rem .8rem!important;
+  }
+  html body #shortListPanel.relphi-settings-open .relphi-board-settings-panel .relphi-free-settings .relphi-board-settings-footer{
+    margin-top:0!important;flex-shrink:0!important;
+  }
+}
+
+/* Mobile settings are an anchored, compact popover, not a full-screen sheet.
+   The board remains visible and the path selector is the first row. */
+@media(max-width:700px){
+  html body #shortListPanel.relphi-settings-open .relphi-board-settings-panel{
+    position:absolute!important;
+    top:var(--relphi-settings-top,4rem)!important;
+    left:.5rem!important;
+    right:.5rem!important;
+    bottom:auto!important;
+    width:calc(100% - 1rem)!important;
+    height:auto!important;
+    max-height:min(68svh,34rem)!important;
+    margin:0!important;
+    padding:0!important;
+    border-radius:12px!important;
+    overflow:hidden!important;
+    z-index:10020!important;
+    box-shadow:0 8px 22px rgba(17,17,17,.18)!important;
+  }
+  html body #shortListPanel.relphi-settings-open .relphi-board-settings-panel .relphi-board-settings-body{
+    display:flex!important;
+    flex-direction:column!important;
+    height:auto!important;
+    max-height:min(68svh,34rem)!important;
+    min-height:0!important;
+    overflow:hidden!important;
+    gap:0!important;
+  }
+  html body #shortListPanel.relphi-settings-open .relphi-board-settings-panel .relphi-mobile-settings-paths{
+    margin:.5rem auto!important;
+    flex:0 0 auto!important;
+  }
+  html body #shortListPanel.relphi-settings-open .relphi-board-settings-panel .relphi-free-settings,
+  html body #shortListPanel.relphi-settings-open .relphi-board-settings-panel .relphi-reading-options-drawer{
+    flex:1 1 auto!important;
+    min-height:0!important;
+    height:auto!important;
+    max-height:calc(min(68svh,34rem) - 4rem)!important;
+    overflow:hidden!important;
+  }
+  html body #shortListPanel.relphi-settings-open .relphi-board-settings-panel .relphi-free-settings .relphi-free-settings-fields,
+  html body #shortListPanel.relphi-settings-open .relphi-board-settings-panel .relphi-reading-options-drawer .relphi-options-body{
+    min-height:0!important;
+    flex:1 1 auto!important;
+    overflow-y:auto!important;
+    overscroll-behavior:contain!important;
+    -webkit-overflow-scrolling:touch!important;
+  }
+  html body #shortListPanel.relphi-settings-open .relphi-board-settings-panel .relphi-board-settings-footer,
+  html body #shortListPanel.relphi-settings-open .relphi-board-settings-panel .relphi-options-commitbar{
+    flex:0 0 auto!important;
+    margin:0!important;
+    padding:.5rem .65rem!important;
+  }
+}
+
+/* Compact anchored settings: one native mode switch and natural content height. */
+@media(max-width:700px){
+  html body #shortListPanel.relphi-settings-open .relphi-board-settings-panel{
+    display:block!important;height:auto!important;min-height:0!important;
+    max-height:min(68svh,34rem)!important;overflow-y:auto!important;
+    overscroll-behavior:contain!important;-webkit-overflow-scrolling:touch!important;
+  }
+  html body #shortListPanel.relphi-settings-open .relphi-board-settings-panel .relphi-board-settings-body{
+    display:flex!important;flex-direction:column!important;
+    height:auto!important;max-height:none!important;min-height:0!important;
+    overflow:visible!important;gap:.35rem!important;
+  }
+  html body #shortListPanel.relphi-settings-open .relphi-board-settings-body>.drawing-board-mode-switch{
+    display:grid!important;visibility:visible!important;position:relative!important;
+    flex:0 0 auto!important;order:0!important;margin:.4rem auto!important;
+    z-index:3!important;
+  }
+  html body #shortListPanel.relphi-settings-open .relphi-board-settings-panel .relphi-free-settings,
+  html body #shortListPanel.relphi-settings-open .relphi-board-settings-panel .relphi-reading-options-drawer{
+    display:block!important;flex:0 0 auto!important;
+    height:auto!important;max-height:none!important;min-height:0!important;
+    overflow:visible!important;margin:0!important;
+  }
+  html body #shortListPanel.relphi-settings-open .relphi-board-settings-panel .relphi-free-settings .relphi-free-settings-fields,
+  html body #shortListPanel.relphi-settings-open .relphi-board-settings-panel .relphi-reading-options-drawer .relphi-options-body{
+    display:block!important;flex:none!important;overflow:visible!important;
+    min-height:0!important;height:auto!important;
+    padding-bottom:.5rem!important;
+  }
+  html body #shortListPanel.relphi-settings-open .relphi-board-settings-panel .relphi-free-settings .relphi-free-settings-fields{
+    display:grid!important;align-content:start!important;
+  }
+  html body #shortListPanel.relphi-settings-open .relphi-board-settings-panel .relphi-board-settings-footer,
+  html body #shortListPanel.relphi-settings-open .relphi-board-settings-panel .relphi-options-commitbar{
+    position:static!important;display:flex!important;
+    flex:0 0 auto!important;min-height:0!important;
+    margin:0!important;padding:.5rem .65rem!important;
+  }
+}
+
+/* Keep the question header visible and prevent Safari pull-to-refresh gestures
+   from escaping an open Attune or Focus reader. */
+html:has(.relphi-attune-reader),html:has(.relphi-focus-reader){
+  overscroll-behavior-y:none!important;
+}
+body:has(.relphi-attune-reader),body:has(.relphi-focus-reader){
+  overscroll-behavior-y:none!important;
+}
+.relphi-attune-reader,.relphi-focus-reader{
+  overscroll-behavior:contain!important;
+  touch-action:pan-y!important;
+}
+.relphi-attune-shell,.relphi-focus-shell{
+  overscroll-behavior-y:contain!important;
+  -webkit-overflow-scrolling:touch!important;
+}
+@media(max-width:700px){
+  .relphi-focus-position-panel{
+    position:sticky!important;top:0!important;z-index:8!important;
+    background:#fffdf8!important;
+  }
+}
