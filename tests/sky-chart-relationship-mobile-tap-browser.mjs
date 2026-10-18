@@ -46,6 +46,20 @@ async function runMobileTap(browserType,label){
     const row=page.locator('#skyFoundationRelationshipList>.sky-foundation-relationship-row[data-relation-index="'+rowIndex+'"]');
     await page.evaluate(()=>document.querySelector('#skyFoundationRelationshipList>.sky-foundation-relationship-row[data-relation-index]:not([hidden])')?.scrollIntoView({block:'center'}));
 
+    // Playwright's synthesized PointerEvent is not equivalent to WebKit's native
+    // touchscreen dispatch. Exercise actual user taps on WebKit; Chromium below
+    // retains fine-grained down/move/up and compatibility-click assertions.
+    if(label==='WebKit'){
+      await row.tap();
+      await page.waitForFunction(()=>Boolean(document.querySelector('#skyFoundationRelationshipList>.sky-foundation-relationship-row.is-inline-expanded')),null,{timeout:5000});
+      assert.equal(await row.getAttribute('aria-expanded'),'true',label+': native first touch should expand');
+      await row.tap();
+      await page.waitForFunction(()=>!document.querySelector('#skyFoundationRelationshipList>.sky-foundation-relationship-row.is-inline-expanded'),null,{timeout:5000});
+      assert.equal(await row.getAttribute('aria-expanded'),'false',label+': native second touch should collapse');
+      console.log(label+': native touchscreen tap expands and collapses sorted relationship tiles');
+      return;
+    }
+
     // A vertical drag belongs to native scrolling and must not activate the row.
     const pan={pointerType:'touch',pointerId:41,isPrimary:true,clientX:120,clientY:300,buttons:1};
     await row.dispatchEvent('pointerdown',pan);
