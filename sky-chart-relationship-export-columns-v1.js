@@ -120,6 +120,21 @@ function slot(row,side){
   const mode=String(row.dataset.relationshipMode||'A-B').toUpperCase();
   return mode==='A-A'?'A':mode==='B-B'?'B':side==='left'?'A':'B';
 }
+function includeHouse(slot){
+  return window.RelphiRelationshipExportHouses?.include?.(slot)===true;
+}
+function suppressCloneHouseInfo(clone,row){
+  for(const side of ['left','right']){
+    if(includeHouse(slot(row,side)))continue;
+    const group=clone.querySelector('.sky-foundation-relationship-placement--'+side);
+    const small=group?.querySelector('.sky-foundation-relationship-copy small');
+    if(!small)continue;
+    const coordinate=String(small.dataset.relationshipCoordinate||small.textContent||'').match(/\\d{1,2}°\\d{2}′/)?.[0]||'';
+    small.classList.remove('relphi-house-coordinate');
+    if(coordinate)small.replaceChildren(document.createTextNode(coordinate));
+    else small.querySelectorAll('.relphi-house-medallion').forEach(node=>node.remove());
+  }
+}
 function entries(s){
   const packet=read(s)||{};
   const points=[packet.placements,packet.positions,packet.points,packet.bodies].find(v=>v&&typeof v==='object')||packet;
@@ -204,20 +219,18 @@ function concepts(row){
   const li=+row.dataset.leftSign,ri=+row.dataset.rightSign,lh=+row.dataset.leftHouse,rh=+row.dataset.rightHouse;
   const aspect=String(row.dataset.aspect||''),orb=Number(row.dataset.sourceOrb);
   const lp=String(row.dataset.leftPlacement||''),rp=String(row.dataset.rightPlacement||'');
-  n.append(
-    chip(pname(lp),coord(row,'left'),PLACEMENT_MEAN[lp]||'','a'),
-    chip(SIGNS[li],'',SIGN_MEAN[li]||'','a'),
-    chip(HOUSE_NAMES[lh]||'House','',HOUSE_MEAN[lh]||'','a'),
-    chip(ASPECT_NAME[aspect]||aspect,Number.isFinite(orb)?orb.toFixed(2)+'°':'',ASPECT_MEAN[aspect]||'','asp'),
-    chip(pname(rp),coord(row,'right'),PLACEMENT_MEAN[rp]||'','b'),
-    chip(SIGNS[ri],'',SIGN_MEAN[ri]||'','b'),
-    chip(HOUSE_NAMES[rh]||'House','',HOUSE_MEAN[rh]||'','b')
-  );
+  const left=[chip(pname(lp),coord(row,'left'),PLACEMENT_MEAN[lp]||'','a'),chip(SIGNS[li],'',SIGN_MEAN[li]||'','a')];
+  if(includeHouse(slot(row,'left'))&&Number.isInteger(lh)&&lh>=1&&lh<=12)left.push(chip(HOUSE_NAMES[lh], '', HOUSE_MEAN[lh]||'','a'));
+  const aspectChip=chip(ASPECT_NAME[aspect]||aspect,Number.isFinite(orb)?orb.toFixed(2)+'°':'',ASPECT_MEAN[aspect]||'','asp');
+  const right=[chip(pname(rp),coord(row,'right'),PLACEMENT_MEAN[rp]||'','b'),chip(SIGNS[ri],'',SIGN_MEAN[ri]||'','b')];
+  if(includeHouse(slot(row,'right'))&&Number.isInteger(rh)&&rh>=1&&rh<=12)right.push(chip(HOUSE_NAMES[rh], '', HOUSE_MEAN[rh]||'','b'));
+  n.style.gridTemplateColumns=`repeat(${left.length},minmax(0,1fr)) minmax(92px,1.12fr) repeat(${right.length},minmax(0,1fr))`;
+  n.append(...left,aspectChip,...right);
   timing(row).forEach(text=>{
     const p=document.createElement('p');
     p.className='rex-time';
     p.textContent=text;
-    n.children[3].appendChild(p);
+    aspectChip.appendChild(p);
   });
   return n;
 }
@@ -338,6 +351,7 @@ async function build(){
       clone.removeAttribute('aria-current');
       clone.querySelector(':scope>.inline-rel-detail')?.remove();
       clone.querySelectorAll('[id]').forEach(n=>n.removeAttribute('id'));
+      suppressCloneHouseInfo(clone,row);
       clone.appendChild(concepts(row));
       const v=visual(row);
       if(v)clone.appendChild(v);
