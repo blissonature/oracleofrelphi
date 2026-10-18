@@ -51,7 +51,7 @@ await page.locator('.sky-relationship-copy-button').click();
 const copiedRelationships=await page.evaluate(()=>window.__relationshipCopyText);
 assert.match(copiedRelationships,/Sky A: Alpha sky/);
 assert.match(copiedRelationships,/Sky B: Beta sky/);
-assert.match(copiedRelationships,/Focus\\n/);
+assert.match(copiedRelationships,/Focus\n/);
 assert.match(copiedRelationships,/Harmonic Window: /);
 assert.match(copiedRelationships,/Aspects: /);
 assert.match(copiedRelationships,/Placements: /);
