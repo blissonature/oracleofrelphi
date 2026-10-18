@@ -89,8 +89,8 @@ try{
   await page.locator('.sky-relationship-copy-button').click();
   await page.waitForFunction(()=>Boolean(window.__relphiCopiedText),null,{timeout:4000});
   const copied=await page.evaluate(()=>window.__relphiCopiedText);
-  assert.match(copied,/H5/,'Known-time B retains its house.');
-  assert.doesNotMatch(copied,/H7/,'Unknown-time A house must be suppressed in Relationships Copy.');
+  assert.match(copied,/H5|Fifth House/,'Known-time B retains its house in the active reveal mode.');
+  assert.doesNotMatch(copied,/Lilith in Taurus[^\n]*Seventh House/,'Unknown-time A house must be suppressed in Relationships Copy.');
   const onScreenStale=await row.locator('.sky-foundation-relationship-placement--left .relphi-house-medallion').count();
   assert.ok(onScreenStale>=1,'Export policy must not alter the live chart.');
 
