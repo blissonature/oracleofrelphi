@@ -1,0 +1,20 @@
+name: Drawing Board adaptive geometry acceptance
+on:
+  pull_request:
+    paths:
+      - 'drawing-board-workflow-v2.js'
+      - 'drawing-board-workflow-v2.css'
+      - 'tests/drawing-board-adaptive-layout.test.js'
+      - '.github/workflows/drawing-board-adaptive-acceptance.yml'
+jobs:
+  geometry:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate script and adaptive layouts
+        run: |
+          node --check drawing-board-workflow-v2.js
+          node tests/drawing-board-adaptive-layout.test.js
