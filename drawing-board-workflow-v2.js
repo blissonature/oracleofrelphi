@@ -228,21 +228,28 @@
   }
   function genericPositions(labels) {
     const count=Math.max(1,labels.length);
-    if(count<=3)return legacyGenericPositions(labels);
     const viewport=autoLayoutViewport();
+    // Portrait phone readings of three should occupy two columns. A single
+    // three-card strip wastes the felt's height even when its mathematical
+    // bounding-box score wins by a small margin.
+    const portraitThree=count===3 && viewport.width<480 && viewport.height>viewport.width;
     let best=null;
     // Choose columns for the visible felt, not a fixed four-column grid.
     // Maximize the rendered card-plus-sticker size; prefer fewer empty slots
     // and then fewer columns when two arrangements fit equally well.
     for(let cols=1;cols<=count;cols++){
+      if(portraitThree && cols!==2)continue;
       const rows=Math.ceil(count/cols);
       const fit=Math.min(
         viewport.width/(CARD_W*cols),
         viewport.height/((CARD_H+LABEL_H)*rows)
       );
       const unused=cols*rows-count;
-      if(!best || fit>best.fit+.0001 ||
-        (Math.abs(fit-best.fit)<=.0001 && (unused<best.unused || (unused===best.unused && cols<best.cols)))){
+      // Near-equal scale is not a reason to abandon the board's vertical space:
+      // a short mobile felt otherwise chooses three tiny cards across one row.
+      const nearEqual=best && Math.abs(fit-best.fit)<=Math.max(fit,best.fit)*.035;
+      if(!best || (!nearEqual && fit>best.fit) ||
+        (nearEqual && (cols<best.cols || (cols===best.cols && unused<best.unused)))){
         best={cols,rows,fit,unused};
       }
     }
@@ -259,7 +266,9 @@
     const rowH=(CARD_H+LABEL_H)*scale;
     return labels.map((label,index)=>{
       const col=index%cols,row=Math.floor(index/cols);
-      const x=(START_EDGE_GUTTER+col*cardW)/CANVAS_W;
+      const rowCount=Math.min(cols,count-row*cols);
+      const rowInset=(cols-rowCount)*cardW/2;
+      const x=(START_EDGE_GUTTER+rowInset+col*cardW)/CANVAS_W;
       const y=(START_EDGE_GUTTER+LABEL_H*scale+row*rowH)/CANVAS_H;
       return position(`position-${index+1}`,label,index+1,transform(x,y,scale));
     });
@@ -791,6 +800,8 @@
     const viewportTop=Number(viewport?.offsetTop)||0;
     const viewportHeight=Number(viewport?.height)||window.innerHeight||document.documentElement.clientHeight||0;
     const viewportBottom=viewportTop+viewportHeight;
+    settingsPanel.style.setProperty('--relphi-settings-visual-top',viewportTop+'px');
+    settingsPanel.style.setProperty('--relphi-settings-visible-height',Math.max(180,Math.floor(viewportHeight))+'px');
     const panelTop=settingsPanel.getBoundingClientRect().top;
     const available=Math.max(0,Math.floor(viewportBottom-Math.max(panelTop,viewportTop)-8));
     settingsPanel.style.setProperty('--relphi-settings-viewport-height',available+'px');
@@ -884,7 +895,6 @@
     }
     const body=settingsPanel.querySelector('.relphi-board-settings-body');
     if(body && modeSwitch.parentElement!==body)body.appendChild(modeSwitch);
-
     // Settings is an overlay: anchor it immediately below the command bar
     // without allowing it to participate in the board's vertical layout.
     const commandBottom=Math.max(0,bar.offsetTop+bar.offsetHeight);
@@ -1183,6 +1193,11 @@
     ensureSettingsTransaction(root);
     if(settingsMode==='crafted'&&!optionsSession)beginOptionsSession();
     renderBoardSettings(root);
+    // The popover is anchored below the board command bar; bring its header
+    // into view instead of opening a screen-covering modal at the scroll point.
+    if(window.matchMedia('(max-width:700px)').matches){
+      root.querySelector('.relphi-board-commandbar')?.scrollIntoView?.({block:'start',behavior:'instant'});
+    }
   }
 
   function switchSettingsMode(mode,root=panel()) {
@@ -3744,6 +3759,27 @@
     }));
   }
 
+  function revealReaderQuestion(reader,selector){
+    if(!reader)return;
+    const shell=reader.querySelector('.relphi-attune-shell,.relphi-focus-shell');
+    // Return to the beginning of the question without scrolling the page behind it.
+    const show=()=>{
+      if(!reader.isConnected)return;
+      if(shell) shell.scrollTop=0;
+      const main=reader.querySelector('.relphi-focus-main,.relphi-options-body');
+      if(main) main.scrollTop=0;
+      const target=reader.querySelector(selector);
+      if(target){
+        let parent=target.parentElement;
+        while(parent&&parent!==reader){
+          if(parent.scrollTop>0)parent.scrollTop=0;
+          parent=parent.parentElement;
+        }
+      }
+    };
+    show();
+    requestAnimationFrame(show);
+  }
   function openAttune(index) {
     const root=panel();
     const item=focusItem(index,root);
@@ -3856,7 +3892,7 @@
 
     document.body.appendChild(reader);
     lockAttuneViewport();
-    reader.querySelector('.relphi-attune-shell')?.scrollTo?.(0,0);
+    revealReaderQuestion(reader,'.relphi-attune-shell h2');
     return true;
   }
 
@@ -4397,8 +4433,24 @@
     revealCompletedSurfaceBoard(root);
   }
 
+  function usesAuthoredSpreadGeometry(prefab) {
+    const protectedIds=new Set(['saturn-square-9','celtic-cross-10',RECURSION_ID]);
+    return protectedIds.has(prefab?.id) || protectedIds.has(prefab?.basedOn);
+  }
+  function adaptiveReadingPrefab(prefab) {
+    if(!prefab || usesAuthoredSpreadGeometry(prefab) || !Array.isArray(prefab.positions))return prefab;
+    const ordered=prefab.positions.map((entry,index)=>({entry,index}))
+      .sort((a,b)=>(Number(a.entry.drawOrder)||a.index+1)-(Number(b.entry.drawOrder)||b.index+1));
+    const fitted=genericPositions(ordered.map(({entry},index)=>String(entry.label||`Position ${index+1}`)));
+    const transformed=ordered.map(({entry,index},order)=>({
+      index,entry:{...entry,transform:fitted[order].transform,openTransform:null}
+    }));
+    const positions=prefab.positions.slice();
+    transformed.forEach(({index,entry})=>{positions[index]=entry;});
+    return {...prefab,positions};
+  }
   function launchConfiguredReading(root,draft) {
-    const bridge=optionsBridge(),prefabs=prefabBridge(),prefab=draftPrefab(draft);
+    const bridge=optionsBridge(),prefabs=prefabBridge(),prefab=adaptiveReadingPrefab(draftPrefab(draft));
     const snap=bridge?.capture();
     const craftedPath=String(optionsSession?.path||activeCraftedPath||'');
     if(!snap||!prefabs||!prefab.positions.length)return false;
@@ -5027,6 +5079,7 @@
       renderFocusStrip(existingReader,index,{preserveScroll:true});
       document.body.classList.add('relphi-focus-open');
       lockFocusViewport();
+      revealReaderQuestion(existingReader,'.relphi-focus-position-panel');
       return true;
     }
     const reader=document.createElement('section');
@@ -5051,6 +5104,7 @@
     document.body.appendChild(reader);
     document.body.classList.add('relphi-focus-open');
     lockFocusViewport();
+    revealReaderQuestion(reader,'.relphi-focus-position-panel');
     return true;
   }
   function isCrossingPosition(index) {
@@ -5314,6 +5368,50 @@
     root.classList.toggle('relphi-celtic-crossed',isCeltic&&acknowledged);
   }
 
+  let freeAutoLayoutBusy=false;
+  function fitFreeReadingGrid(root=panel()) {
+    if(freeAutoLayoutBusy || !root || settingsOpen || craftedReadingActive || boardHasCraftedStructure(root))return false;
+    const bridge=optionsBridge(),snap=bridge?.capture?.();
+    if(!snap)return false;
+    const count=Array.isArray(snap.shortList)?snap.shortList.length:0;
+    if(!count)return false;
+    const positions=genericPositions(Array.from({length:count},(_,i)=>'Card '+(i+1)));
+    const signature=count+'|'+Math.round(autoLayoutViewport().width)+'|'+Math.round(autoLayoutViewport().height);
+    if(root.dataset.relphiFreeGridSignature===signature)return false;
+    // Free mode's untouched, automatically arranged cards may be reflowed.
+    // Never replace a layout after the reader has manually moved or rotated it.
+    const previousCount=Number(root.dataset.relphiFreeGridCount)||0;
+    const existing=snap.rowEnvelopeLayout||{},transforms=snap.rowCardTransforms||{};
+    const old=previousCount?genericPositions(Array.from({length:previousCount},(_,i)=>'Card '+(i+1))):[];
+    const managed=root.dataset.relphiFreeGridManaged==='true';
+    if(!managed && Object.keys(existing).length)return false;
+    if(managed && Object.entries(transforms).some(([key,v])=>Number(v.rotation||0)!==0))return false;
+    if(managed && Object.keys(existing).length && previousCount){
+      // A reader's subsequent rearrangement takes ownership away from auto-fit.
+      const oldSaved=root.dataset.relphiFreeGridCoordinates;
+      if(oldSaved){
+        let expected;try{expected=JSON.parse(oldSaved);}catch(_){expected={};}
+        if(Object.entries(expected).some(([i,p])=>Math.abs(Number(existing[i]?.x)-p.x)>1||Math.abs(Number(existing[i]?.y)-p.y)>1))return false;
+      }
+    }
+    freeAutoLayoutBusy=true;
+    try{
+      snap.rowEnvelopeLayout={};snap.rowCardTransforms={};
+      positions.forEach((item,i)=>{
+        snap.rowEnvelopeLayout[i]={x:item.transform.x*CANVAS_W,y:item.transform.y*CANVAS_H};
+        snap.rowCardTransforms[i]={scale:item.transform.scale,rotation:0,zIndex:1};
+      });
+      snap.rowPanX=0;snap.rowPanY=0;snap.rowZoom=1;
+      root.dataset.relphiFreeGridSignature=signature;
+      root.dataset.relphiFreeGridCount=String(count);
+      root.dataset.relphiFreeGridManaged='true';
+      root.dataset.relphiFreeGridCoordinates=JSON.stringify(snap.rowEnvelopeLayout);
+      bridge.restore(snap);
+      requestAnimationFrame(()=>zoomExtents());
+      return true;
+    }finally{freeAutoLayoutBusy=false;}
+  }
+
   function enhance(root = panel()) {
     if (!root) return;
     const trigger=document.getElementById('relphiOpenDrawingBoardCurrent');
@@ -5332,6 +5430,7 @@
     root.hidden=false;
     root.removeAttribute('hidden');
     if (migrateLegacyDenseAutoLayout(root)) { requestAnimationFrame(()=>enhance(root)); return; }
+    if (fitFreeReadingGrid(root)) { requestAnimationFrame(()=>enhance(root)); return; }
     root.classList.toggle('relphi-hide-position-stickers',!showPositionStickers);
     markSemanticPositions(root);
     updateLayoutClasses(root);
