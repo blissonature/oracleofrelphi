@@ -45,10 +45,27 @@ function serializeToken(tokenNode){
   }
   return lead+parts.join(' ');
 }
+// textContent concatenates adjacent inline elements with no separator, even
+// when they represent separate Vocab terms. Preserve authored whitespace and
+// punctuation; only restore missing word boundaries across DOM fragments.
+function needsWordSpace(before,after){
+  return /[\p{L}\p{N})\]]$/u.test(before)&&/^[\p{L}\p{N}]/u.test(after);
+}
+function semanticText(node){
+  if(node.nodeType===Node.TEXT_NODE)return node.nodeValue||'';
+  if(node.nodeType!==Node.ELEMENT_NODE)return'';
+  if(node.matches?.('.sky-vocab-token'))return serializeToken(node);
+  let text='';
+  node.childNodes.forEach(child=>{
+    const part=semanticText(child);
+    if(!part)return;
+    if(needsWordSpace(text,part))text+=' ';
+    text+=part;
+  });
+  return text;
+}
 function serializeNode(node){
-  const clone=node.cloneNode(true);
-  clone.querySelectorAll('.sky-vocab-token').forEach(token=>token.replaceWith(document.createTextNode(serializeToken(token))));
-  return clean(clone.textContent);
+  return clean(semanticText(node));
 }
 function serializePanel(panel){
   if(!(panel instanceof HTMLElement))return'';
