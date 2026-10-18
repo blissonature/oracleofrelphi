@@ -81,6 +81,9 @@ try{
  assert.ok(spacing.unknownOverflow<=1,JSON.stringify(spacing));
  assert.equal(await refresh.getAttribute('aria-label'),'Refresh current instant');
  await unknown.check();
+ await page.waitForTimeout(250);
+ assert.equal(await form.locator('[data-draft-where-when-link]').count(),0,'Unknown time must clear the temporal draft heptagram.');
+ assert.equal(await form.locator('[data-planetary-rulers]').count(),0,'Unknown time must clear former day/hour labels.');
  assert.equal(await form.locator('[data-ww-field="time"]').isDisabled(),true);
  assert.equal(await now.isChecked(),false);
  await unknown.uncheck();
