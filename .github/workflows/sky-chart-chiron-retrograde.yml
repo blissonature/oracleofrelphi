@@ -1,0 +1,34 @@
+name: Sky Chart Chiron retrograde
+on:
+  pull_request:
+    paths:
+      - 'relphi-chiron-ephemeris-v1.js'
+      - 'sky-chart-foundation-v2.js'
+      - 'sky-chart-relationship-export-columns-v1.js'
+      - 'sky-chart.html'
+      - 'tests/sky-chart-chiron-retrograde.test.mjs'
+      - 'tests/sky-chart-chiron-retrograde-browser.mjs'
+      - '.github/workflows/sky-chart-chiron-retrograde.yml'
+jobs:
+  chiron-rx:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: JavaScript syntax and ephemeris motion tests
+        run: |
+          node --check relphi-chiron-ephemeris-v1.js
+          node --check sky-chart-foundation-v2.js
+          node --check sky-chart-relationship-export-columns-v1.js
+          node --test tests/sky-chart-chiron-retrograde.test.mjs
+      - name: Install browser dependencies
+        run: |
+          npm install --no-save playwright@1.52.0 luxon@3 suncalc@1.9.0
+          npx playwright install --with-deps chromium
+      - name: Sky Card, Relationships Copy and PNG browser checks
+        run: |
+          python3 -m http.server 4173 >/tmp/sky-chart-chiron-rx.log 2>&1 &
+          node tests/sky-chart-chiron-retrograde-browser.mjs
