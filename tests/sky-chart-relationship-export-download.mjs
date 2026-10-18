@@ -80,11 +80,16 @@ await limit.fill('7');
 await limit.press('Enter');
 await page.waitForFunction(()=>document.documentElement.dataset.skyRelationshipLimit==='7');
 assert.equal(await preset.inputValue(),'custom','A non-preset cardinal number must remain represented as Custom.');
-await preset.selectOption('20');
+await page.locator('.sky-relationship-copy-button').click();
+assert.match(await page.evaluate(()=>window.__relationshipCopyText),/Max: 7(?:\n|$)/,'A custom limit must export its applied number, not the Custom menu label.');
+await preset.selectOption('all');
+await page.waitForFunction(()=>document.documentElement.dataset.skyRelationshipLimit==='all');
+await page.waitForFunction(()=>![...document.querySelectorAll('#skyFoundationRelationshipList>.sky-foundation-relationship-row')].some(row=>row.classList.contains('sky-chart-result-limit-hidden')));
 const eligibleOrder=await page.evaluate(()=>[...document.querySelectorAll('#skyFoundationRelationshipList>.sky-foundation-relationship-row[data-relation-index]')]
   .filter(row=>{const style=getComputedStyle(row);return !row.hidden&&style.display!=='none'&&style.visibility!=='hidden'})
   .map(row=>row.dataset.relationIndex));
 assert.ok(eligibleOrder.length>20,`Fixture must expose more than 20 eligible relationships to test a real cap: ${eligibleOrder.length}`);
+await preset.selectOption('20');
 await page.waitForFunction(()=>document.documentElement.dataset.skyRelationshipLimit==='20');
 await page.waitForFunction(()=>[...document.querySelectorAll('#skyFoundationRelationshipList>.sky-foundation-relationship-row')].filter(row=>{const style=getComputedStyle(row);return !row.hidden&&style.display!=='none'&&style.visibility!=='hidden'}).length===20);
 const cappedOrder=await page.evaluate(()=>[...document.querySelectorAll('#skyFoundationRelationshipList>.sky-foundation-relationship-row[data-relation-index]')]
@@ -137,6 +142,7 @@ const copyButton=page.locator('.sky-relationship-copy-button');
 await copyButton.click();
 await page.waitForFunction(()=>Boolean(window.__relphiLimitCopiedText),null,{timeout:3000});
 assert.equal((await copyButton.textContent()||'').trim(),'Copied 20','Copy feedback must confirm that only the 20 capped relationships were copied.');
+assert.match(await page.evaluate(()=>window.__relphiLimitCopiedText),/Max: 20(?:\n|$)/,'The clipboard must include the applied Max of 20.');
 
 await button.click();
 await page.waitForTimeout(3000);
