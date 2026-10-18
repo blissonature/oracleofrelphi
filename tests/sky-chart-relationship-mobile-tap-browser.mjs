@@ -41,8 +41,10 @@ async function runMobileTap(browserType,label){
     await page.waitForFunction(()=>document.documentElement.dataset.skyRelationshipSort==='ends-last',null,{timeout:45000});
     await page.waitForFunction(()=>document.querySelector('select[data-relationship-sort]')?.getAttribute('aria-busy')==='false',null,{timeout:45000});
 
-    const row=page.locator('#skyFoundationRelationshipList>.sky-foundation-relationship-row[data-relation-index]:visible').first();
-    await row.scrollIntoViewIfNeeded();
+    const first=page.locator('#skyFoundationRelationshipList>.sky-foundation-relationship-row[data-relation-index]:visible').first();
+    const rowIndex=await first.getAttribute('data-relation-index');
+    const row=page.locator('#skyFoundationRelationshipList>.sky-foundation-relationship-row[data-relation-index="'+rowIndex+'"]');
+    await page.evaluate(()=>document.querySelector('#skyFoundationRelationshipList>.sky-foundation-relationship-row[data-relation-index]:not([hidden])')?.scrollIntoView({block:'center'}));
 
     // A vertical drag belongs to native scrolling and must not activate the row.
     const pan={pointerType:'touch',pointerId:41,isPrimary:true,clientX:120,clientY:300,buttons:1};
