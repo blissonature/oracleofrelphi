@@ -102,6 +102,26 @@ try{
  for(const k of ['gray','red','miniGray','miniRed']){assert.equal(parseFloat(parity[k]?.width),5);assert.equal(parity[k]?.dash,'none')}
  assert.equal(parity.gray.stroke,parity.miniGray.stroke);
  assert.equal(parity.red.stroke,parity.miniRed.stroke);
+ const naturalHeight=await form.evaluate(form=>{
+   const body=form.querySelector('.sky-where-when-scroll-body'),mini=body.querySelector('[data-ww-heptagram-slot]');
+   const style=getComputedStyle(body),f=form.getBoundingClientRect(),b=body.getBoundingClientRect(),m=mini.getBoundingClientRect();
+   return{overflow:style.overflowY,maxHeight:style.maxHeight,formBottom:f.bottom,bodyBottom:b.bottom,miniBottom:m.bottom,bodyScrollHeight:body.scrollHeight,bodyClientHeight:body.clientHeight};
+ });
+ assert.notEqual(naturalHeight.overflow,'auto','No nested editor scroll should hide the heptagram.');
+ assert.ok(naturalHeight.miniBottom<=naturalHeight.bodyBottom+2,JSON.stringify(naturalHeight));
+ assert.ok(naturalHeight.bodyScrollHeight<=naturalHeight.bodyClientHeight+2,JSON.stringify(naturalHeight));
+ await page.setViewportSize({width:390,height:420});
+ await page.waitForTimeout(350);
+ const zoomFit=await form.evaluate(form=>{
+   const body=form.querySelector('.sky-where-when-scroll-body'),mini=body.querySelector('[data-ww-heptagram-slot]');
+   return{overflow:getComputedStyle(body).overflowY,bodyHeight:body.getBoundingClientRect().height,
+      miniBottom:mini.getBoundingClientRect().bottom,bodyBottom:body.getBoundingClientRect().bottom,
+      scrollHeight:body.scrollHeight,clientHeight:body.clientHeight};
+ });
+ assert.notEqual(zoomFit.overflow,'auto','Short viewport must not introduce nested scroll.');
+ assert.ok(zoomFit.miniBottom<=zoomFit.bodyBottom+2,JSON.stringify(zoomFit));
+ assert.ok(zoomFit.scrollHeight<=zoomFit.clientHeight+2,JSON.stringify(zoomFit));
+ await page.setViewportSize({width:390,height:844});
  await form.screenshot({path:'sky-chart-here-now-manual-mobile.png'});
  const initial=await page.evaluate(()=>localStorage.getItem('relphiSkyChartB'));
  await here.check();
