@@ -1,0 +1,26 @@
+name: Sky Chart retrograde copy
+on:
+  pull_request:
+    paths:
+      - 'sky-chart-inline-relationship-copy-v1.js'
+      - 'sky-chart-quick-copy-v2.js'
+      - 'sky-chart-relationship-copy-v1.js'
+      - 'sky-chart-relationship-scope-sections-v1.js'
+      - 'sky-chart.html'
+      - 'tests/sky-chart-*copy-rx.test.mjs'
+      - '.github/workflows/sky-chart-rx-copy-check.yml'
+jobs:
+  rx-copy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Source and copy-contract checks
+        run: |
+          node --check sky-chart-inline-relationship-copy-v1.js
+          node --check sky-chart-quick-copy-v2.js
+          node --check sky-chart-relationship-copy-v1.js
+          node --check sky-chart-relationship-scope-sections-v1.js
+          node --test tests/sky-chart-placements-copy-rx.test.mjs tests/sky-chart-relationships-copy-rx.test.mjs

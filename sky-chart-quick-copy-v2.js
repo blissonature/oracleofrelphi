@@ -30,7 +30,7 @@ function copied(button,label='Copy'){if(!button)return;button.dataset.copyState=
 function failed(button,label='Copy'){if(!button)return;button.textContent='Copy failed';window.setTimeout(()=>{if(button.isConnected)button.textContent=label},1600)}
 function placementMarkdown(view){
   const slot=slotFor(view),name=skyName(slot);
-  const rows=[...view.querySelectorAll('.sky-foundation-row')].map(row=>{const body=clean(row.querySelector('.sky-foundation-row-name')?.textContent),coordinate=clean(row.querySelector('.sky-foundation-coordinate')?.textContent),houseHost=row.querySelector('.sky-foundation-house'),houseNumber=clean(houseHost?.dataset?.house),house=houseNumber?`H${houseNumber}`:clean(houseHost?.textContent);if(!body)return'';return`- **${body}** — ${[coordinate,house].filter(Boolean).join(' · ')}`}).filter(Boolean);
+  const rows=[...view.querySelectorAll('.sky-foundation-row')].map(row=>{const nameNode=row.querySelector('.sky-foundation-row-name'),body=clean(nameNode?.textContent)+(nameNode?.querySelector('.sky-placement-rx')?' Rx':''),coordinate=clean(row.querySelector('.sky-foundation-coordinate')?.textContent),houseHost=row.querySelector('.sky-foundation-house'),houseNumber=clean(houseHost?.dataset?.house),house=houseNumber?`H${houseNumber}`:clean(houseHost?.textContent);if(!body)return'';return`- **${body}** — ${[coordinate,house].filter(Boolean).join(' · ')}`}).filter(Boolean);
   return rows.length?[`### ${name} — Placements`,'',...rows].join('\n'):'';
 }
 function cardHitMarkdown(section){
