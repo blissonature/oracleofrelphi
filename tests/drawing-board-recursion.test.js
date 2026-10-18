@@ -39,7 +39,7 @@ const base='http://127.0.0.1:8000/tarot.html';
       const toast=document.querySelector('.relphi-board-toast');
       return {id:state?.rowActiveLayout?.id,count:state?.rowActiveLayout?.positions?.length,cardCount:state?.rowActiveLayout?.cardCount,boardClass:document.querySelector('#shortListPanel')?.className,toast:toast?.outerHTML?.slice(0,600),settings:!!document.querySelector('.relphi-board-settings-panel')};
     })));
-    await page.waitForSelector('.relphi-board-toast',{state:'visible'});
+    await page.waitForFunction(()=>window.RelphiDrawingBoardOptionsBridge.capture().rowActiveLayout?.id==='relphi-recursion-13');
 
     const readingToast=await page.locator('.relphi-board-toast').innerText();
     assert.ok(readingToast.includes('active black circle opens white'));
