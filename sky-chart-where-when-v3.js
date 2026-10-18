@@ -184,7 +184,7 @@ async function checkHere(slot){
     if(!form.isConnected||!here.checked)return;
     if(!selectLocation(slot,packet))throw new Error('Current location could not be applied.');
     syncModes(slot);
-    status(slot,'Current location ready. Review the preview, then confirm.');
+    status(slot,'');
   }catch(error){
     if(!form.isConnected)return;
     here.checked=false;syncModes(slot);
