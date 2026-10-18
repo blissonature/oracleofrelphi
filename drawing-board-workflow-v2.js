@@ -393,9 +393,9 @@
   };
 
 
-  const RECURSION_ID = 'relphi-recursion-22';
-  const RECURSION_LEVELS = 7;
-  const RECURSION_VEILVA_BODIES = Object.freeze(['saturn','jupiter','mars','sun','venus','mercury','moon']);
+  const RECURSION_ID = 'relphi-recursion-13'; // Keep former 22-card saved layouts intact as historical readings.
+  const RECURSION_LEVELS = 4;
+  const RECURSION_WORLDS = Object.freeze(['Atziluth','Beriah','Yetzirah','Assiah']);
   const RECURSION_LOGO_GEOMETRY = Object.freeze({
     // Transform coordinates are the unscaled card-envelope top-lefts.
     // At the canonical .44 card scale, each card face is centered inside one logo circle.
@@ -424,11 +424,11 @@
       });
       if (level===RECURSION_LEVELS) {
         positions.push(position(
-          'recursion-7-earth',
-          'Level 7 · Earth · Completion · Seed',
+          'recursion-4-earth',
+          'Level 4 · Earth · Completion · Seed',
           drawOrder++,
           transform(RECURSION_LOGO_GEOMETRY.earth.x,RECURSION_LOGO_GEOMETRY.earth.y,.44),
-          { role:'recursion-earth', recursionLevel:7, recursionElement:'earth', recursionGlyph:'🜃' }
+          { role:'recursion-earth', recursionLevel:4, recursionElement:'earth', recursionGlyph:'🜃' }
         ));
       }
     }
@@ -438,8 +438,8 @@
     version:1,
     id:RECURSION_ID,
     name:'Relphi Recursive Reading',
-    cardCount:22,
-    virtualPositionCount:6,
+    cardCount:13,
+    virtualPositionCount:3,
     source:'shipped',
     editable:false,
     recursion:true,
@@ -1744,7 +1744,7 @@
   }
 
   function templateCountLabel(item) {
-    return item?.id===RECURSION_ID ? '22 cards' : String(item?.cardCount || 0);
+    return item?.id===RECURSION_ID ? '13 cards' : String(item?.cardCount || 0);
   }
   function optionTemplateMarkup(draft) {
     const entries = allTemplates();
@@ -2511,7 +2511,7 @@
     if(!draft.templateId && selected) hydrateTemplateDraft(draft,selected);
     const positions=selected?.positions?.slice?.().sort((a,b)=>a.drawOrder-b.drawOrder) || [];
     const preview=selected?.id===RECURSION_ID
-      ? '<div class="relphi-recursion-template-note"><strong>Seven recursive levels · 22 cards</strong><span>Each level uses the Relphi logo: Mem, Aleph, and Shin occupy the three black circles. The red circle is Earth, the portal to the next level; on Level 7 it receives card 22. The seven-level depth control is the 1×7 Veilva.</span></div>'
+      ? '<div class="relphi-recursion-template-note"><strong>Four recursive levels · 13 cards</strong><span>Each level uses the Relphi logo: Mem, Aleph, and Shin occupy the three black circles. The red circle is Earth, the portal to the next level; on Level 4 it receives card 13. The four depths follow the Kabbalistic worlds: Atziluth, Beriah, Yetzirah, and Assiah.</span></div>'
       : selected?.id==='crowley-harmonic-divination-12'
         ? '<div class="relphi-recursion-template-note"><strong>Five-operation method · not a 12-position spread</strong><span>I · IHVH four piles · II · 12 houses · III · 12 signs · IV · Significator + 36-card ring · V · 10 Tree of Life piles.</span></div>'
         : positions.length
@@ -3398,12 +3398,11 @@
       const level=index+1;
       const opened=level<=session.maxLevel;
       const current=level===session.level;
-      const body=RECURSION_VEILVA_BODIES[index];
-      const name=body.charAt(0).toUpperCase()+body.slice(1);
-      return '<button type="button" data-recursion-depth="'+level+'" '+(opened?'':'disabled ')+'class="'+(current?'is-current ':'')+(opened?'is-opened':'is-future')+'" aria-label="Level '+level+' · '+name+'" title="Level '+level+' · '+name+'"><svg class="relphi-veilva-glyph" data-relphi-veilva-glyph="'+body+'" viewBox="-14 -14 28 28" aria-hidden="true"></svg></button>';
+      const name=RECURSION_WORLDS[index];
+      return '<button type="button" data-recursion-depth="'+level+'" '+(opened?'':'disabled ')+'class="'+(current?'is-current ':'')+(opened?'is-opened':'is-future')+'" aria-label="Level '+level+' · '+name+'" title="Level '+level+' · '+name+'"><span class="relphi-recursion-world-mark" aria-hidden="true">'+level+'</span></button>';
     }).join('');
     return '<span class="relphi-recursion-depth-line" aria-hidden="true"></span>'+buttons+
-      (session.complete?'<strong class="relphi-recursion-complete-mark">22 / 22 · complete</strong>':'');
+      (session.complete?'<strong class="relphi-recursion-complete-mark">13 / 13 · complete</strong>':'');
   }
   function hydrateVeilvaGlyphs(root,attempt=0) {
     if (!root?.querySelectorAll) return;
@@ -3481,12 +3480,12 @@
     });
     if (!depth) {
       depth=document.createElement('nav');
-      depth.className='relphi-recursion-board-depth relphi-veilva';
-      depth.setAttribute('aria-label','Veilva · recursion depth');
+      depth.className='relphi-recursion-board-depth relphi-worlds';
+      depth.setAttribute('aria-label','Four worlds · recursion depth');
       workspace.appendChild(depth);
     }
     depth.innerHTML=recursionDepthMarkup(session,true);
-    hydrateVeilvaGlyphs(depth);
+    
     depth.querySelectorAll('[data-recursion-depth]').forEach(button=>button.addEventListener('click',()=>{
       setRecursionLevel(Number(button.dataset.recursionDepth));
     }));
@@ -3529,8 +3528,8 @@
         portal.disabled=!ready;
         portal.classList.toggle('is-ready',ready);
         portal.classList.toggle('is-locked',!ready);
-        portal.dataset.recursionPortal='7';
-        portal.innerHTML='<span class="relphi-recursion-earth-glyph" aria-hidden="true">🜃</span><strong>Earth</strong><small>'+(ready?'Draw card 22':'Mem · Aleph · Shin first')+'</small>';
+        portal.dataset.recursionPortal=String(RECURSION_LEVELS);
+        portal.innerHTML='<span class="relphi-recursion-earth-glyph" aria-hidden="true">🜃</span><strong>Earth</strong><small>'+(ready?'Draw card 13':'Mem · Aleph · Shin first')+'</small>';
         portal.onclick=()=>{
           if (ready && Number.isInteger(earthIndex) && earthIndex>=0) openAttune(earthIndex);
         };
@@ -3554,7 +3553,7 @@
     if (!nav || !session) return;
     nav.hidden=false;
     nav.innerHTML=recursionDepthMarkup(session,false);
-    hydrateVeilvaGlyphs(nav);
+    
     nav.querySelectorAll('[data-recursion-depth]').forEach(button=>button.addEventListener('click',()=>{
       const level=Number(button.dataset.recursionDepth);
       if (!setRecursionLevel(level)) return;
@@ -4579,7 +4578,7 @@
         return;
       }
       if(recursionSession && recursionActive()){
-        showBoardToast('Each level takes the shape of the Relphi logo. The active black circle opens white, then holds its card. When Mem, Aleph, and Shin are complete, the red Earth circle wakes up as the portal. Veilva marks the seven depths.',{
+        showBoardToast('Each level takes the shape of the Relphi logo. The active black circle opens white, then holds its card. When Mem, Aleph, and Shin are complete, the red Earth circle wakes up as the portal. The four worlds mark the depths.',{
           title:'Relphi Recursive Reading',duration:0,actionLabel:'Enter Level 1',
           onAction:()=>{const first=recursionIndicesForLevel(1)[0];if(Number.isInteger(first))openAttune(first);}
         });
@@ -4614,7 +4613,7 @@
       enhance(panel());
       zoomExtents();
       if (recursionSession && recursionActive()) {
-        showBoardToast('Each level takes the shape of the Relphi logo. The active black circle opens white, then holds its card. When Mem, Aleph, and Shin are complete, the red Earth circle wakes up as the portal. Veilva marks the seven depths.',{
+        showBoardToast('Each level takes the shape of the Relphi logo. The active black circle opens white, then holds its card. When Mem, Aleph, and Shin are complete, the red Earth circle wakes up as the portal. The four worlds mark the depths.',{
           title:'Relphi Recursive Reading',
           duration:0,
           actionLabel:'Enter Level 1',
