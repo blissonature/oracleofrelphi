@@ -116,22 +116,6 @@
   display:none!important;
 }
 
-/* Three actions on a single compact row. This stylesheet loads after the
-   editor's inline rules, so it owns the actual narrow-card layout. */
-.sky-where-when-editor .sky-where-when-footer-actions{
-  grid-template-columns:minmax(0,.78fr) minmax(0,1.08fr) minmax(0,2.35fr)!important;
-  gap:4px!important;
-}
-.sky-where-when-editor .sky-where-when-footer-actions .sky-where-when-here-now-action{
-  padding:.32rem .12rem!important;
-  font-size:.56rem!important;
-  font-weight:600!important;
-  line-height:1.12!important;
-  white-space:normal!important;
-}
-@container (max-width:285px){
-  .sky-where-when-editor .sky-where-when-footer-actions{
-    grid-template-columns:minmax(0,.68fr) minmax(0,1.05fr) minmax(0,2.35fr)!important;
-    gap:3px!important;
-  }
-}
+/* Keep the one-click control above Where and the miniheptagram after When. */
+.sky-where-when-editor .sky-where-when-one-click{display:flex!important;align-items:center;justify-content:center;gap:6px;min-height:33px;width:100%;margin:0 0 5px!important;padding:5px 8px!important;font-size:.70rem!important;font-weight:700!important}
+.sky-where-when-editor .sky-where-when-one-click svg{width:16px;height:16px;flex:none}
