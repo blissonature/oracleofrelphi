@@ -98,6 +98,20 @@ function skyIdentity(slot){
   const metadata=payload?.metadata||{};
   return title||String(metadata.savedSkyName||payload?.name||payload?.displayName||payload?.skyName||payload?.title||'').trim()||'Unnamed sky';
 }
+function skyIsPresent(slot){
+  let value=null;
+  try{value=JSON.parse(localStorage.getItem('relphiSkyChart'+slot)||'null')}catch(_){}
+  if(!value||typeof value!=='object')return false;
+  // A stored placeholder is not a loaded sky. Use actual placements rather
+  // than the existence of the slot key or its generic display name.
+  for(const key of ['placements','positions','points','bodies']){
+    const collection=value[key];
+    if(!collection||typeof collection!=='object')continue;
+    if(Object.values(collection).some(item=>item&&typeof item==='object'&&
+      (Number.isFinite(Number(item.longitude))||String(item.sign||item.zodiac||'').trim())))return true;
+  }
+  return false;
+}
 function focusInformation(){
   const value=selector=>String(document.querySelector(selector)?.textContent||'').trim().replace(/\s+/g,' ');
   const selected=selector=>{const element=document.querySelector(selector);return element?.selectedOptions?.[0]?.textContent?.trim()||element?.value||''};
@@ -116,7 +130,7 @@ function focusInformation(){
   return controls.filter(([,v])=>String(v).trim()).map(([k,v])=>k+': '+v);
 }
 function relationshipsCopyHeader(){
-  return ['Relationships','Sky A: '+skyIdentity('A'),'Sky B: '+skyIdentity('B'),'','Focus',...focusInformation()].join('\n');
+  return ['Relationships','Sky A: '+skyIdentity('A'),...(skyIsPresent('B')?['Sky B: '+skyIdentity('B')]:[]),'','Focus',...focusInformation()].join('\n');
 }
 function serializeDisplayOrder(rows){
   const blocks=[];let currentMode='',bucket=[];
