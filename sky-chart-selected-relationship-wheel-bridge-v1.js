@@ -8,7 +8,11 @@
   function installHitTargets() {
     document.querySelectorAll('[data-layer="aspects"] > line[data-relation-index]:not(.sky-foundation-aspect-hit)').forEach(function (line) {
       line.classList.add('sky-foundation-aspect');
-      if (line.dataset.hitTargetInstalled === 'true') return;
+      // Rebuild the hit target after a relationship redraw; copied endpoint
+      // and index data otherwise refer to the previous render.
+      const existing = line.nextElementSibling;
+      if (existing?.classList?.contains('sky-foundation-aspect-hit')) existing.remove();
+      delete line.dataset.hitTargetInstalled;
       line.dataset.hitTargetInstalled = 'true';
       const hit = line.cloneNode(false);
       hit.removeAttribute('class');
