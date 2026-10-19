@@ -258,6 +258,9 @@ test('custom ink color is saved, restored, and can be selected again after a pre
  reopened=mount(reopened.data.get(STORAGE_KEY));
  assert.equal(reopened.state().color,'#2347ca');
  assert.equal(reopened.get('customColor').value,'#ef8143');
+ reopened.get('customColor').click();
+ assert.equal(reopened.state().color,'#ef8143');
+ assert.equal(reopened.get('customSwatch').getAttribute('data-selected'),'true');
  reopened.get('customColor').emit('input',{target:reopened.get('customColor')});
  assert.equal(reopened.state().color,'#ef8143');
 });
