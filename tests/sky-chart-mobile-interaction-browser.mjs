@@ -69,6 +69,7 @@ assert.ok(touchAspect,'a real aspect stroke must be hit-testable on mobile');
 await page.touchscreen.tap(touchAspect.x,touchAspect.y);
 await page.waitForTimeout(850);
 let state=await focus();
+console.log('PHYSICAL ASPECT STATE',touchAspect,state,await page.evaluate(()=>[...document.querySelectorAll('#skyFoundationWheelMount [data-layer="aspects"] > line.sky-foundation-aspect:not(.sky-foundation-aspect-hit)')].slice(0,16).map(n=>({key:n.dataset.leftPlacement+'-'+n.dataset.aspect+'-'+n.dataset.rightPlacement,kept:n.classList.contains('is-kept'),hidden:n.hidden,style:n.getAttribute('style'),classes:n.getAttribute('class'),row:document.querySelector('.sky-foundation-relationship-row[data-relation-index="'+n.dataset.relationIndex+'"]')?.getAttribute('class')}))));
 assert.ok(state.active,'touch aspect must persist after finger release and compatibility-click delay');
 assert.ok(state.keptAspects.length>0,'touch aspect must keep an aspect line');
 assert.ok(state.keptEndpoints.length>=2,'touch aspect must keep both endpoints');
