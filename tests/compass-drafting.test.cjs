@@ -188,9 +188,9 @@ test('angle snap quantizes the left caliper and pencil, but not the free mode',(
  t.get('snap').checked=true;t.get('snap').emit('change',{target:t.get('snap')});
  t.drag('left',{x:550,y:390},target);
  near(t.state().a,Math.PI/6,.00001);
- const penTarget={x:c.x+180*Math.cos(raw),y:c.y+180*Math.sin(raw)};
+ const penAngle=Math.PI*47/180,penTarget={x:c.x+180*Math.cos(penAngle),y:c.y+180*Math.sin(penAngle)};
  t.drag('pen',{x:0,y:0},penTarget);
- near(t.state().a,Math.PI/6,.00001);
+ near(t.state().a,Math.PI/4,.00001);
  assert.equal(t.state().strokes.length,1);
 });
 test('radius snap quantizes holder movement and radius slider to 5 units',()=>{
