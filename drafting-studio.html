@@ -150,6 +150,7 @@ footer{font-size:11px;color:#797168;text-align:center;padding:21px}
           <div class="buttons" style="margin-top:8px">
             <button class="btn" id="leftTurn">↺ Rotate 15°</button>
             <button class="btn" id="rightTurn">↻ Rotate 15°</button>
+            <button class="btn" id="recenter" style="grid-column:1/-1">Recenter compass</button>
           </div>
           <label class="check"><input type="checkbox" id="snap"> Snap rotation to 15° (left point)</label>
           <label class="check"><input type="checkbox" id="showGrid" checked> Graph paper</label>
@@ -213,7 +214,7 @@ function save(){if(!storageEnabled)return;try{localStorage.setItem(KEY,JSON.stri
 function load(){try{const s=JSON.parse(localStorage.getItem(KEY)||"null");if(!s||!Array.isArray(s.strokes))return;
  if(!s.c||!Number.isFinite(s.c.x)||!Number.isFinite(s.c.y))return;
  state={...state,...s,c:{x:s.c.x,y:s.c.y},strokes:s.strokes.filter(v=>Array.isArray(v.points)&&v.points.length>0).slice(0,1000)};
- state.r=clamp(Number(state.r)||180,25,365);state.a=Number(state.a)||0;
+ state.r=clamp(Number(state.r)||180,25,365);state.a=Number(state.a)||0;state.a=Math.atan2(Math.sin(state.a),Math.cos(state.a));
 }catch(e){note("Saved sheet could not be loaded.")}}
 function syncControls(){
  $("radius").value=state.r;$("radiusValue").textContent=String(Math.round(state.r));
@@ -270,7 +271,7 @@ function addPoint(s,p){const last=s.points[s.points.length-1];if(!last||dist(p,l
 function penMove(a,r){
  const fromA=state.a,fromR=state.r,delta=shortest(fromA,a),steps=Math.max(1,Math.ceil(Math.max(Math.abs(delta)*Math.max(fromR,r),Math.abs(r-fromR))/4));
  for(let i=1;i<=steps;i++){const t=i/steps,ang=fromA+delta*t,rad=fromR+(r-fromR)*t;if(activeStroke)addPoint(activeStroke,polar(state.c,rad,ang))}
- state.a=fromA+delta;state.r=r;
+ state.a=Math.atan2(Math.sin(fromA+delta),Math.cos(fromA+delta));state.r=r;
 }
 function pointerDown(e){
  const handle=e.target.closest("[data-handle]");if(!handle)return;
@@ -318,7 +319,7 @@ function sampleSweep(degrees){
  const dir=state.cw?1:-1,turn=degrees*Math.PI/180*dir,n=Math.max(24,Math.round(Math.abs(degrees)*1.4));
  const r0=state.r,r1=state.spiral?clamp(r0+state.pitch*degrees/360,25,365):r0;
  const points=[];for(let i=0;i<=n;i++){const t=i/n;points.push(polar(state.c,r0+(r1-r0)*t,state.a+turn*t))}
- commitStrokes([stroke(points)]);state.a+=turn;state.r=r1;render();save();
+ commitStrokes([stroke(points)]);state.a=Math.atan2(Math.sin(state.a+turn),Math.cos(state.a+turn));state.r=r1;render();save();
 }
 function perfectCircle(){const points=[];for(let i=0;i<=240;i++)points.push(polar(state.c,state.r,state.a+i*Math.PI*2/240));commitStrokes([stroke(points)])}
 function gcd(a,b){while(b){const t=a%b;a=b;b=t}return a}
@@ -374,8 +375,9 @@ $("quarter").addEventListener("click",()=>sampleSweep(90));
 $("revolution").addEventListener("click",()=>sampleSweep(360));
 $("circle").addEventListener("click",perfectCircle);
 $("star").addEventListener("click",starPolygon);
-$("leftTurn").addEventListener("click",()=>{state.a-=Math.PI/12;render();save()});
-$("rightTurn").addEventListener("click",()=>{state.a+=Math.PI/12;render();save()});
+$("leftTurn").addEventListener("click",()=>{state.a=Math.atan2(Math.sin(state.a-Math.PI/12),Math.cos(state.a-Math.PI/12));render();save()});
+$("rightTurn").addEventListener("click",()=>{state.a=Math.atan2(Math.sin(state.a+Math.PI/12),Math.cos(state.a+Math.PI/12));render();save()});
+$("recenter").addEventListener("click",()=>{state.c={x:550,y:390};render();save();note("Compass moved back to the center of the sheet.")});
 $("radius").addEventListener("input",e=>{state.r=Number(e.target.value);render();save()});
 $("weight").addEventListener("input",e=>{state.weight=Number(e.target.value);$("weightValue").textContent=state.weight;save()});
 $("spiral").addEventListener("change",e=>{state.spiral=e.target.checked;save()});
@@ -395,7 +397,8 @@ document.addEventListener("keydown",e=>{
 function fitView(){
  const box=stage.getBoundingClientRect(),ratio=box.width/Math.max(1,box.height);
  // On phones crop unused margins instead of shrinking every handle. Keep the center around the compass.
- if(ratio<.78){const h=850,w=clamp(850*ratio,490,650);svg.setAttribute("viewBox",fmt(550-w/2)+" 10 "+fmt(w)+" "+fmt(h))}
+ if(window.innerWidth<=600){const h=690,w=clamp(690*ratio,490,780);svg.setAttribute("viewBox",fmt(550-w/2)+" 40 "+fmt(w)+" "+fmt(h))}
+ else if(ratio<.78){const h=850,w=clamp(850*ratio,490,650);svg.setAttribute("viewBox",fmt(550-w/2)+" 10 "+fmt(w)+" "+fmt(h))}
  else if(ratio<1.12){svg.setAttribute("viewBox","100 0 900 780")}
  else svg.setAttribute("viewBox","0 0 1100 740");
 }
