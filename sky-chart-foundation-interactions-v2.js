@@ -507,30 +507,28 @@
       const graphic=wheel.querySelector('.sky-foundation-wheel');
       const rect=graphic?.getBoundingClientRect();
       if(!rect)return;
-      const radius=Math.min(rect.width,rect.height)*0.27;
-      const inCenter=Math.hypot(touch.clientX-(rect.left+rect.width/2),touch.clientY-(rect.top+rect.height/2))<radius;
-      if(inCenter){
-        if(lockedState)clearFromWhitespace();
-      }else{
-        // iOS targets the 28px transparent SVG hit stroke, while
-        // nearestAspect() only accepts a 9px distance from the thin line.
-        // Preserve the hit-target's original line across touchend.
-        let hit=nearestAspect({clientX:touch.clientX,clientY:touch.clientY});
-        if(!hit){
-          const target=start.target?.closest?.('[data-layer="aspects"] > line');
-          if(target){
-            const candidate=target.classList.contains('sky-foundation-aspect-hit')
-              ?target.previousElementSibling:target;
-            if(candidate?.matches?.('line.sky-foundation-aspect:not(.sky-foundation-aspect-hit)')&&!candidate.hidden&&getComputedStyle(candidate).display!=='none')hit=candidate;
-          }
-        }
-        if(!hit)return;
+      // The center-clear region geometrically overlaps aspect lines.
+      // Resolve an aspect hit BEFORE interpreting a tap as whitespace.
+      const target=start.target?.closest?.('[data-layer="aspects"] > line');
+      let hit=null;
+      if(target){
+        const candidate=target.classList.contains('sky-foundation-aspect-hit')
+          ?target.previousElementSibling:target;
+        if(candidate?.matches?.('line.sky-foundation-aspect:not(.sky-foundation-aspect-hit)')&&getComputedStyle(candidate).display!=='none')hit=candidate;
+      }
+      if(!hit)hit=nearestAspect({clientX:touch.clientX,clientY:touch.clientY});
+      if(hit){
         const next=specFrom(hit);
         if(!next?.value)return;
         rowLockedState=null;rowHoverState=null;
         if(same(lockedState,next)){lockedState=null;selectionOrigin=null}
         else{lockedState=next;selectionOrigin=originFromNode(hit,next)}
         hoverState=null;applyState();
+      }else{
+        const radius=Math.min(rect.width,rect.height)*0.27;
+        const inCenter=Math.hypot(touch.clientX-(rect.left+rect.width/2),touch.clientY-(rect.top+rect.height/2))<radius;
+        if(!inCenter)return;
+        if(lockedState)clearFromWhitespace();
       }
       // Prevent iOS from delivering a second synthetic click that toggles
       // or clears the selection after touchend.
