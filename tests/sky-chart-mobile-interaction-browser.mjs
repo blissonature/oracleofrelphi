@@ -79,8 +79,8 @@ const focus=()=>page.evaluate(()=>{
 await page.evaluate(()=>{window.__focusTrace=[];window.addEventListener('relphi:sky-foundation-filter-changed',e=>{window.__focusTrace.push({event:'filter',state:e.detail?.state});});for(const type of ['click','pointerdown','pointerup','pointercancel'])window.addEventListener(type,e=>window.__focusTrace.push({event:type,kind:e.target.closest?.('[data-interactive]')?.dataset.interactive,what:e.target.closest?.('[data-interactive]')?.getAttribute('aria-label'),trusted:e.isTrusted,pointer:e.pointerType}),true);});
 // Wheel exploration must not mutate the user's explicit House or Zodiac Signs
 // checkbox selections. These are filters, not alternate owners of tap state.
-await page.waitForSelector('#skyChartHousePopover [data-house-choice]',{timeout:10000});
-await page.waitForSelector('#skyChartZodiacFilterMenu .sky-chart-zodiac-filter-row input[type="checkbox"]',{timeout:10000});
+await page.waitForFunction(()=>document.querySelectorAll('#skyChartHousePopover [data-house-choice]').length>=24,{timeout:10000});
+await page.waitForFunction(()=>document.querySelectorAll('#skyChartZodiacFilterMenu .sky-chart-zodiac-filter-row input[type="checkbox"]').length===12,{timeout:10000});
 const filterSnapshot=()=>page.evaluate(()=>({
   houses:[...document.querySelectorAll('#skyChartHousePopover [data-house-choice]')]
     .map(input=>[input.dataset.houseChoice,input.dataset.houseScope,input.dataset.houseTarget,String(input.checked)].join(':')).sort(),
