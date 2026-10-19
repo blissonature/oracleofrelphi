@@ -49,6 +49,12 @@ const findTouchPoint=async(kind)=>page.evaluate((kind)=>{
           .some(line=>line.dataset.leftSky===slot&&line.dataset.leftHouse===h||line.dataset.rightSky===slot&&line.dataset.rightHouse===h);
         if(!eligible)continue;
       }
+      if(kind==='sign'){
+        const sign=top.dataset.sign;
+        const eligible=[...wheel.querySelectorAll('[data-layer="aspects"] > line.sky-foundation-aspect:not(.sky-foundation-aspect-hit)')]
+          .some(line=>(line.dataset.leftSign===sign||line.dataset.rightSign===sign)&&getComputedStyle(line).display!=='none');
+        if(!eligible)continue;
+      }
       if(kind==='aspect'&&(!top.dataset.leftPlacement||!top.dataset.rightPlacement))continue;
       return{x,y,sky:top.dataset.sky,house:top.dataset.house,sign:top.dataset.sign,
         leftSky:top.dataset.leftSky,left:top.dataset.leftPlacement,aspect:top.dataset.aspect,
@@ -96,6 +102,7 @@ assert.ok(touchSign,'a sign sector must be hit-testable on mobile');
 await page.touchscreen.tap(touchSign.x,touchSign.y);
 await page.waitForTimeout(850);
 state=await focus();
+console.log('PHYSICAL SIGN STATE',touchSign,state,await page.evaluate(()=>window.__mobileTestLastFilter));
 assert.ok(state.active,'touch sign must persist after release');
 assert.ok(state.selected.some(n=>n.kind==='sign'&&n.sign===touchSign.sign),'touch sign replaces house selection');
 assert.ok(state.keptAspects.some(n=>n.leftSign===touchSign.sign||n.rightSign===touchSign.sign),'sign must keep its matching aspect lines');
