@@ -490,6 +490,15 @@
       touchAspectActivated=false;
       if(!touchActivation)return;
       hoverState=null;rowHoverState=null;
+      // A center tap dismisses a locked selection on pointerdown, before
+      // SVG hit strokes or the synthesized click can reinterpret the tap.
+      if(lockedState&&event.target.closest?.('#skyFoundationWheelMount')){
+        const wheel=document.querySelector('#skyFoundationWheelMount .sky-foundation-wheel');
+        const rect=wheel?.getBoundingClientRect();
+        if(rect&&Math.hypot(event.clientX-(rect.left+rect.width/2),event.clientY-(rect.top+rect.height/2))<Math.min(rect.width,rect.height)*0.27){
+          touchAspectActivated=true;clearFromWhitespace();return;
+        }
+      }
       const hit=event.target.closest?.('#skyFoundationWheelMount [data-interactive="aspect"]');
       if(!hit)return;
       const next=specFrom(hit);
@@ -536,21 +545,19 @@
       wheelOnlyExternal=false;
       const row=event.target.closest?.('.sky-foundation-relationship-row[data-relation-index]');
       if(row)return;
-      // On an isolated wheel, a tap away from the single selected visible
-      // aspect must dismiss it. nearestAspect() otherwise picks a dimmed line
-      // even from visually empty space, replacing isolation with a false hit.
-      if(lockedState?.kind==='aspect'&&event.target.closest?.('#skyFoundationWheelMount')){
-        const selected=[...document.querySelectorAll('#skyFoundationWheelMount [data-layer="aspects"] > line.is-kept:not(.sky-foundation-aspect-hit)')];
-        const x=event.clientX,y=event.clientY;
-        const nearSelected=selected.some(line=>{
-          const m=line.getScreenCTM?.();if(!m)return false;
-          const x1=Number(line.getAttribute('x1')),y1=Number(line.getAttribute('y1')),x2=Number(line.getAttribute('x2')),y2=Number(line.getAttribute('y2'));
-          if(![x1,y1,x2,y2].every(Number.isFinite))return false;
-          const ax=m.a*x1+m.c*y1+m.e,ay=m.b*x1+m.d*y1+m.f,bx=m.a*x2+m.c*y2+m.e,by=m.b*x2+m.d*y2+m.f,dx=bx-ax,dy=by-ay,l=dx*dx+dy*dy;
-          const t=l?Math.max(0,Math.min(1,((x-ax)*dx+(y-ay)*dy)/l)):0;
-          return Math.hypot(x-ax-t*dx,y-ay-t*dy)<=7;
-        });
-        if(!nearSelected){event.preventDefault();clearFromWhitespace();return;}
+      // Any tap in the open wheel center dismisses the current isolation.
+      // Do not reinterpret it as an aspect hit, even when an invisible
+      // 28px stroke overlaps the tap coordinate.
+      if(lockedState&&event.target.closest?.('#skyFoundationWheelMount')){
+        const wheel=document.querySelector('#skyFoundationWheelMount .sky-foundation-wheel');
+        const rect=wheel?.getBoundingClientRect();
+        if(rect){
+          const cx=rect.left+rect.width/2,cy=rect.top+rect.height/2;
+          const radius=Math.min(rect.width,rect.height)*0.27;
+          if(Math.hypot(event.clientX-cx,event.clientY-cy)<radius){
+            event.preventDefault();clearFromWhitespace();return;
+          }
+        }
       }
       const node=interactive(event);if(node){event.preventDefault();rowLockedState=null;rowHoverState=null;const next=specFrom(node);if(same(lockedState,next)){lockedState=null;selectionOrigin=null}else{lockedState=next;selectionOrigin=originFromNode(node,next)}hoverState=null;applyState();return}if(clearableWhitespace(event))clearFromWhitespace()
     });
