@@ -150,12 +150,13 @@ const activateScope=async(mode)=>{
   const line=candidates.find(n=>getComputedStyle(n).display!=='none'&&!n.hidden);
   if(!line)return {error:'No eligible '+mode+' line',candidates:candidates.length};
   const id=(n)=>[n.dataset.leftSky,n.dataset.leftPlacement,n.dataset.aspect,n.dataset.rightSky,n.dataset.rightPlacement].join('|');
-  line.dispatchEvent(new MouseEvent('click',{bubbles:true,cancelable:true,view:window}));
+  const clicked=line.dispatchEvent(new MouseEvent('click',{bubbles:true,cancelable:true,view:window}));
+  window.__scopeTrace={clicked,attached:line.isConnected,rootContains:document.getElementById('skyFoundationRoot')?.contains(line),rootBound:document.getElementById('skyFoundationRoot')?.dataset.foundationInteractionsV2Bound,filter:window.__mobileTestLastFilter,trace:window.__focusTrace.slice(-8)};
   return {id:id(line),endpoints:[line.dataset.leftSky+':'+line.dataset.leftPlacement,line.dataset.rightSky+':'+line.dataset.rightPlacement]};
  },mode);
  assert.ok(!data.error,JSON.stringify(data));
  const selection=await focus();
- console.log('SCOPE ACTIVATION',mode,data,{active:selection.active,selected:selection.selected,kept:selection.keptAspects.length},await page.evaluate(()=>window.__mobileTestLastFilter));
+ console.log('SCOPE ACTIVATION',mode,data,{active:selection.active,selected:selection.selected,kept:selection.keptAspects.length},await page.evaluate(()=>({filter:window.__mobileTestLastFilter,scope:window.__scopeTrace})));
  assert.ok(selection.active,mode+' click must lock isolation');
  assert.ok(selection.keptAspects.some(n=>[n.leftSky,n.left,n.aspect,n.rightSky,n.right].join('|')===data.id),mode+' correct line must be kept');
  for(const endpoint of data.endpoints)assert.ok(selection.keptEndpoints.includes(endpoint),mode+' must keep endpoint '+endpoint);
