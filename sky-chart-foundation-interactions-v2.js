@@ -501,8 +501,12 @@
     if(!wheel)return;
     const original=gesture.target?.isConnected?gesture.target:null;
     const underFinger=document.elementFromPoint(event.clientX,event.clientY);
-    const target=original&&wheel.contains(original)?original:
-      underFinger&&wheel.contains(underFinger)?underFinger:null;
+    // Browser touch target can be stale after a wheel redraw, collision-order
+    // pass, or scroll layout update. Prefer the element physically under the
+    // released finger instead of dispatching to an old placement that moved
+    // over a house; fall back to the original only if hit testing cannot resolve.
+    const target=underFinger&&wheel.contains(underFinger)?underFinger:
+      original&&wheel.contains(original)?original:null;
     if(!target)return; // A removed wheel target must not become a blank-area clear.
     // Dispatch through the same click handler as mouse/keyboard, retaining
     // coordinates so nearby aspect-line hit testing uses the actual tap.
