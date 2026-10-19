@@ -544,6 +544,46 @@
     return Math.hypot(event.clientX-a.x-t*dx,event.clientY-a.y-t*dy) > 7;
   }
 
+  // Opt-in mobile diagnostic: add &aspectDebug=1 to the preview URL.
+  // It records the actual selection and visibility after each touch/click,
+  // including the next animation frame when visibility controllers settle.
+  function installAspectDiagnostics() {
+    if (!new URLSearchParams(location.search).has('aspectDebug')) return;
+    if (document.getElementById('skyAspectDebugPanel')) return;
+    const panel = document.createElement('div');
+    panel.id = 'skyAspectDebugPanel';
+    panel.style.cssText = 'position:fixed;z-index:2147483647;bottom:8px;left:8px;right:8px;max-height:32vh;overflow:auto;background:#10131df2;color:#fff;padding:10px;font:12px/1.45 monospace;border:1px solid #aaa;border-radius:8px;white-space:pre-wrap;pointer-events:auto';
+    const title = document.createElement('div');
+    title.textContent = 'Aspect diagnostic — tap line, then empty center';
+    const output = document.createElement('div');
+    const copy = document.createElement('button');
+    copy.textContent = 'Copy diagnostic';
+    copy.style.cssText = 'padding:5px;margin:5px 0;color:#000;background:#fff';
+    const log = [];
+    const snapshot = (phase, target) => {
+      const lines = Array.from(document.querySelectorAll('#skyFoundationWheelMount [data-layer="aspects"] > line:not(.sky-foundation-aspect-hit)'));
+      const visible = lines.filter(line => !line.hidden && getComputedStyle(line).display !== 'none');
+      const emphasized = visible.filter(line => line.classList.contains('is-kept'));
+      const rows = Array.from(document.querySelectorAll('.sky-foundation-relationship-row'));
+      const visibleRows = rows.filter(row => !row.hidden && getComputedStyle(row).display !== 'none');
+      const wheel = document.querySelector('#skyFoundationWheelMount .sky-foundation-wheel');
+      const data = {phase,target,locked:lockedState,hover:hoverState,isolation:wheel?.classList.contains('has-isolation'),lines:lines.length,visible:visible.length,emphasized:emphasized.length,rows:rows.length,visibleRows:visibleRows.length,hiddenClasses:lines.reduce((a,l)=>{if(l.classList.contains('sky-chart-relationship-filter-hidden'))a++;return a},0)};
+      log.push(JSON.stringify(data));
+      if (log.length > 12) log.shift();
+      output.textContent = log.join('\\n');
+    };
+    copy.addEventListener('click', () => { const text = log.join('\\n'); if(navigator.clipboard?.writeText) navigator.clipboard.writeText(text).catch(()=>{}); else { const t=document.createElement('textarea');t.value=text;panel.appendChild(t);t.select();document.execCommand('copy');t.remove();} });
+    panel.append(title,copy,output);
+    document.body.appendChild(panel);
+    const root = document.getElementById('skyFoundationRoot');
+    root?.addEventListener('click', event => {
+      const target = event.target?.tagName + '.' + (event.target?.getAttribute?.('class') || '').toString().slice(0,55);
+      snapshot('click',target);
+      requestAnimationFrame(()=>requestAnimationFrame(()=>snapshot('settled',target)));
+    },true);
+    snapshot('initial','none');
+  }
+
   function bindEvents() {
     const root = document.getElementById('skyFoundationRoot');
     if (!root || root.dataset.foundationInteractionsBound === 'true') return;
@@ -681,6 +721,7 @@
     await renderRelationshipRows(relations);
     bindEvents();
     applyState();
+    installAspectDiagnostics();
     window.dispatchEvent(new Event('relphi:sky-foundation-interactions-ready'));
   }
 
