@@ -492,7 +492,7 @@
       const touch=event.changedTouches?.[0];
       if(!touch)return;
       touchActivation=true;
-      touchStart={id:touch.identifier,x:touch.clientX,y:touch.clientY};
+      touchStart={id:touch.identifier,x:touch.clientX,y:touch.clientY,target:event.target};
       hoverState=null;rowHoverState=null;
     },{passive:true,capture:true});
     root.addEventListener('touchcancel',()=>{touchStart=null;},true);
@@ -512,7 +512,18 @@
       if(inCenter){
         if(lockedState)clearFromWhitespace();
       }else{
-        const hit=nearestAspect({clientX:touch.clientX,clientY:touch.clientY});
+        // iOS targets the 28px transparent SVG hit stroke, while
+        // nearestAspect() only accepts a 9px distance from the thin line.
+        // Preserve the hit-target's original line across touchend.
+        let hit=nearestAspect({clientX:touch.clientX,clientY:touch.clientY});
+        if(!hit){
+          const target=start.target?.closest?.('[data-layer="aspects"] > line');
+          if(target){
+            const candidate=target.classList.contains('sky-foundation-aspect-hit')
+              ?target.previousElementSibling:target;
+            if(candidate?.matches?.('line.sky-foundation-aspect:not(.sky-foundation-aspect-hit)')&&!candidate.hidden&&getComputedStyle(candidate).display!=='none')hit=candidate;
+          }
+        }
         if(!hit)return;
         const next=specFrom(hit);
         if(!next?.value)return;
