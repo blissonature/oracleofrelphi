@@ -484,47 +484,47 @@
     // Touch is a discrete tap, not hover. iOS can synthesize pointerover,
     // pointermove and focus before the click, making a temporary isolation
     // look selected and then toggle off on finger release.
-    let touchActivation=false, touchAspectActivated=false;
-    let lastTouchSelection=null;
-    // Capture the compatibility click before other wheel listeners can
-    // interpret it as a second activation after the pointerdown selection.
-    document.addEventListener('click',event=>{
-      const last=lastTouchSelection;
-      if(!last||performance.now()-last.time>900)return;
-      if(Math.hypot(event.clientX-last.x,event.clientY-last.y)>32)return;
-      lastTouchSelection=null;
-      touchAspectActivated=false;
-      event.preventDefault();
-      event.stopImmediatePropagation();
-    },true);
-    root.addEventListener('pointerdown',event=>{
-      touchActivation=event.pointerType==='touch'||event.pointerType==='pen';
-      touchAspectActivated=false;
-      if(!touchActivation)return;
-      lastTouchSelection=null;
+    // A finger gesture must be committed once, on touchend, not on
+    // pointerdown (which can be canceled by scrolling) or hover.
+    let touchActivation=false;
+    let touchStart=null;
+    root.addEventListener('touchstart',event=>{
+      const touch=event.changedTouches?.[0];
+      if(!touch)return;
+      touchActivation=true;
+      touchStart={id:touch.identifier,x:touch.clientX,y:touch.clientY};
       hoverState=null;rowHoverState=null;
-      // A center tap dismisses a locked selection on pointerdown, before
-      // SVG hit strokes or the synthesized click can reinterpret the tap.
-      if(lockedState&&event.target.closest?.('#skyFoundationWheelMount')){
-        const wheel=document.querySelector('#skyFoundationWheelMount .sky-foundation-wheel');
-        const rect=wheel?.getBoundingClientRect();
-        if(rect&&Math.hypot(event.clientX-(rect.left+rect.width/2),event.clientY-(rect.top+rect.height/2))<Math.min(rect.width,rect.height)*0.27){
-          touchAspectActivated=true;lastTouchSelection={time:performance.now(),x:event.clientX,y:event.clientY};clearFromWhitespace();return;
-        }
+    },{passive:true,capture:true});
+    root.addEventListener('touchcancel',()=>{touchStart=null;},true);
+    root.addEventListener('touchend',event=>{
+      if(!touchStart)return;
+      const touch=Array.from(event.changedTouches||[]).find(t=>t.identifier===touchStart.id);
+      if(!touch)return;
+      const start=touchStart;touchStart=null;
+      if(Math.hypot(touch.clientX-start.x,touch.clientY-start.y)>14)return;
+      const wheel=event.target.closest?.('#skyFoundationWheelMount');
+      if(!wheel)return;
+      const graphic=wheel.querySelector('.sky-foundation-wheel');
+      const rect=graphic?.getBoundingClientRect();
+      if(!rect)return;
+      const radius=Math.min(rect.width,rect.height)*0.27;
+      const inCenter=Math.hypot(touch.clientX-(rect.left+rect.width/2),touch.clientY-(rect.top+rect.height/2))<radius;
+      if(inCenter){
+        if(lockedState)clearFromWhitespace();
+      }else{
+        const hit=nearestAspect({clientX:touch.clientX,clientY:touch.clientY});
+        if(!hit)return;
+        const next=specFrom(hit);
+        if(!next?.value)return;
+        rowLockedState=null;rowHoverState=null;
+        if(same(lockedState,next)){lockedState=null;selectionOrigin=null}
+        else{lockedState=next;selectionOrigin=originFromNode(hit,next)}
+        hoverState=null;applyState();
       }
-      const hit=event.target.closest?.('#skyFoundationWheelMount [data-interactive="aspect"]');
-      if(!hit)return;
-      const next=specFrom(hit);
-      if(!next?.value)return;
-      // Commit touch selection on pointerdown. A synthesized click after
-      // pointerup must not toggle this same selection straight back off.
-      touchAspectActivated=true;
-      lastTouchSelection={time:performance.now(),x:event.clientX,y:event.clientY};
-      rowLockedState=null;rowHoverState=null;
-      if(same(lockedState,next)){lockedState=null;selectionOrigin=null}
-      else{lockedState=next;selectionOrigin=originFromNode(hit,next)}
-      applyState();
-    },true);
+      // Prevent iOS from delivering a second synthetic click that toggles
+      // or clears the selection after touchend.
+      event.preventDefault();
+    },{passive:false,capture:true});
     root.addEventListener('pointerover',event=>{
       if(touchActivation||event.pointerType==='touch'||event.pointerType==='pen')return;
       wheelOnlyExternal=false;
@@ -555,7 +555,6 @@
       if(lockedState)return;const node=interactive(event);if(!node||node.contains(event.relatedTarget))return;hoverState=null;applyState()
     });
     root.addEventListener('click',event=>{
-      if(touchAspectActivated){touchAspectActivated=false;event.preventDefault();return;}
       wheelOnlyExternal=false;
       const row=event.target.closest?.('.sky-foundation-relationship-row[data-relation-index]');
       if(row)return;
