@@ -473,9 +473,47 @@
     restoreFocus,
     getSelectionOrigin
   });
+  // One touch-to-click adapter owned by the foundation controller. Touch hover is
+  // never selection state; one completed tap produces exactly one click.
+  let touchGesture=null,ignoreNativeClickUntil=0,syntheticTouchClick=false;
+  function touchInWheel(event){return !!event.target.closest?.('#skyFoundationWheelMount .sky-foundation-wheel')}
+  function beginTouch(event){
+    if(!['touch','pen'].includes(event.pointerType)||!touchInWheel(event))return;
+    touchGesture={id:event.pointerId,x:event.clientX,y:event.clientY,target:event.target,moved:false};
+    hoverState=null;rowHoverState=null;
+  }
+  function moveTouch(event){
+    if(!touchGesture||touchGesture.id!==event.pointerId)return;
+    if(Math.hypot(event.clientX-touchGesture.x,event.clientY-touchGesture.y)>10)touchGesture.moved=true;
+  }
+  function finishTouch(event){
+    if(!touchGesture||touchGesture.id!==event.pointerId)return;
+    const gesture=touchGesture;touchGesture=null;
+    if(gesture.moved)return;
+    ignoreNativeClickUntil=performance.now()+750;
+    const target=gesture.target?.isConnected?gesture.target:event.target;
+    if(!target?.isConnected)return;
+    // Dispatch through the same click handler as mouse/keyboard, retaining
+    // coordinates so nearby aspect-line hit testing uses the actual tap.
+    syntheticTouchClick=true;
+    try{target.dispatchEvent(new MouseEvent('click',{bubbles:true,cancelable:true,clientX:event.clientX,clientY:event.clientY,view:window}));}
+    finally{syntheticTouchClick=false;}
+    event.preventDefault();
+  }
+  function cancelTouch(event){if(touchGesture?.id===event.pointerId)touchGesture=null}
   function bind(){
     const root=document.getElementById('skyFoundationRoot');if(!root||root.dataset.foundationInteractionsV2Bound==='true')return;root.dataset.foundationInteractionsV2Bound='true';
+    root.addEventListener('pointerdown',beginTouch,{passive:true});
+    root.addEventListener('pointermove',moveTouch,{passive:true});
+    root.addEventListener('pointerup',finishTouch,{passive:false});
+    root.addEventListener('pointercancel',cancelTouch);
+    root.addEventListener('click',event=>{
+      if(!syntheticTouchClick&&performance.now()<ignoreNativeClickUntil&&touchInWheel(event)){
+        event.preventDefault();event.stopImmediatePropagation();
+      }
+    },true);
     root.addEventListener('pointerover',event=>{
+      if(event.pointerType==='touch'||event.pointerType==='pen')return;
       wheelOnlyExternal=false;
       const row=event.target.closest?.('.sky-foundation-relationship-row[data-relation-index]');
       if(row)return;
@@ -483,8 +521,9 @@
       const node=interactive(event);if(!node||node.contains(event.relatedTarget))return;
       rowHoverState=null;hoverState=specFrom(node);applyState()
     });
-    root.addEventListener('pointermove',event=>{if(lockedState||!event.target.closest?.('#skyFoundationWheelMount'))return;const direct=event.target.closest?.('[data-interactive]:not([data-interactive="aspect"])');if(direct)return;rowHoverState=null;const next=specFrom(nearestAspect(event));if(same(hoverState,next)||(!hoverState&&!next))return;hoverState=next;applyState()});
+    root.addEventListener('pointermove',event=>{if(event.pointerType==='touch'||event.pointerType==='pen')return;if(lockedState||!event.target.closest?.('#skyFoundationWheelMount'))return;const direct=event.target.closest?.('[data-interactive]:not([data-interactive="aspect"])');if(direct)return;rowHoverState=null;const next=specFrom(nearestAspect(event));if(same(hoverState,next)||(!hoverState&&!next))return;hoverState=next;applyState()});
     root.addEventListener('pointerout',event=>{
+      if(event.pointerType==='touch'||event.pointerType==='pen')return;
       const row=event.target.closest?.('.sky-foundation-relationship-row[data-relation-index]');
       if(row)return;
       if(lockedState)return;
