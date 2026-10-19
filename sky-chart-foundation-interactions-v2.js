@@ -541,10 +541,12 @@
     document.addEventListener('pointercancel',cancelTouch,{capture:true});
     // Compatibility clicks may be retargeted to the wheel/root after a
     // redraw, not to the original SVG element. Suppress the trusted native
-    // follow-up anywhere in the document; our single synthetic click already
-    // performed the tap action. Do not intercept other scripted activations.
+    // follow-up and other legacy synthetic clicks targeting the wheel: a
+    // competing pointerup handler was observed dispatching an untrusted click
+    // after our touch handler already committed selection. Suppress both kinds
+    // of duplicate click, without blocking interactions outside the wheel.
     document.addEventListener('click',event=>{
-      if(event.isTrusted&&performance.now()<ignoreNativeClickUntil){
+      if(performance.now()<ignoreNativeClickUntil&&touchInWheel(event)){
         event.preventDefault();event.stopImmediatePropagation();
       }
     },true);
