@@ -20,7 +20,9 @@ assert.ok(await page.locator('#skyFoundationWheelMount [data-focus-piece="aspect
 await line.dispatchEvent('click');
 assert.equal(await page.locator('#skyFoundationWheelMount .sky-foundation-wheel.has-isolation').count(),0,'second click must clear');
 const house=page.locator('#skyFoundationWheelMount [data-interactive="house"]').first();
+console.log('HOUSE BEFORE',await house.evaluate(n=>({html:n.outerHTML.slice(0,500),interactive:n.dataset.interactive,focus:n.dataset.focusPiece})));
 await house.evaluate(node=>{node.dispatchEvent(new MouseEvent('click',{bubbles:true,cancelable:true,view:window}));});
+console.log('HOUSE AFTER',await page.evaluate(()=>({wheel:document.querySelector('#skyFoundationWheelMount .sky-foundation-wheel')?.className?.baseVal,selected:[...document.querySelectorAll('.is-selected')].map(n=>n.outerHTML.slice(0,120)),bound:document.querySelector('#skyFoundationRoot')?.dataset.foundationInteractionsV2Bound})));
 assert.equal(await page.locator('#skyFoundationWheelMount .sky-foundation-wheel.has-isolation').count(),1,'house must isolate');
 assert.ok(await page.locator('#skyFoundationWheelMount [data-focus-piece="house"].is-kept').count()>0,'house must stay lit');
 await page.locator('#skyFoundationWheelMount .sky-foundation-wheel').evaluate(node=>node.dispatchEvent(new MouseEvent('click',{bubbles:true,cancelable:true,view:window})));
