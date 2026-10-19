@@ -95,7 +95,7 @@ select,input[type=number]{width:100%;min-height:36px;border-radius:8px;border:1.
 .cw-help{color:var(--muted);font-size:11px;line-height:1.5;margin:12px 0 0}
 .cw-path{fill:none;stroke-linecap:round;stroke-linejoin:round}
 .cw-guide{stroke:#aaa096;stroke-width:1.7;opacity:.77}
-.cw-ink{stroke:#2347ca;stroke-width:3.4}
+.cw-ink{stroke:var(--cw-ink,#2347ca);stroke-width:3.4}
 .cw-accent{stroke:#dc1f18;stroke-width:3}
 .cw-gap{stroke:#dc1f18;stroke-width:3;stroke-dasharray:7 7}
 .cw-dot{fill:#dc1f18;stroke:#fff;stroke-width:1.5}
@@ -104,6 +104,7 @@ select,input[type=number]{width:100%;min-height:36px;border-radius:8px;border:1.
 @keyframes cw-stroke-reveal{to{stroke-dashoffset:0}}
 @media(prefers-reduced-motion:reduce){.cw-new{animation:none;stroke-dashoffset:0}}
 #circleWalkPanel[hidden],#circleWalkToolbar[hidden],#compassPanel[hidden],#compassGeometryPanel[hidden]{display:none!important}
+@media(max-width:780px){#circleWalkPanel{grid-column:1/-1}}
 @media(max-width:520px){
  .cw-mode-switch{width:100%}.cw-mode{flex:1}
  .cw-nav{grid-template-columns:1fr minmax(86px,1.1fr) 1fr}
