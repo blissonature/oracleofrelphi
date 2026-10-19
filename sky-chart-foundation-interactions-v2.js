@@ -518,13 +518,17 @@
     root.addEventListener('pointermove',moveTouch,{passive:true});
     root.addEventListener('pointerup',finishTouch,{passive:false});
     root.addEventListener('pointercancel',cancelTouch);
-    root.addEventListener('click',event=>{
-      if(!syntheticTouchClick&&performance.now()<ignoreNativeClickUntil&&touchInWheel(event)){
+    // Compatibility clicks may be retargeted to the wheel/root after a
+    // redraw, not to the original SVG element. Suppress the trusted native
+    // follow-up anywhere in the document; our single synthetic click already
+    // performed the tap action. Do not intercept other scripted activations.
+    document.addEventListener('click',event=>{
+      if(!syntheticTouchClick&&event.isTrusted&&performance.now()<ignoreNativeClickUntil){
         event.preventDefault();event.stopImmediatePropagation();
       }
     },true);
     root.addEventListener('pointerover',event=>{
-      if(event.pointerType==='touch'||event.pointerType==='pen')return;
+      if(event.pointerType==='touch'||event.pointerType==='pen'||(event.pointerType==='mouse'&&performance.now()<ignoreNativeClickUntil))return;
       wheelOnlyExternal=false;
       const row=event.target.closest?.('.sky-foundation-relationship-row[data-relation-index]');
       if(row)return;
