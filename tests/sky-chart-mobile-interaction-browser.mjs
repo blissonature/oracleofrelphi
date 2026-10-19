@@ -158,11 +158,11 @@ const activateScope=async(mode)=>{
   console.log(mode+' physical relationship selection verified');
   return {id:identity,hit};
 };
-const ab=await activateScope('A-B');
-const bb=await activateScope('B-B');
-assert.notEqual(ab.id,bb.id,'tapping a different relationship must replace the old one');
 const aa=await activateScope('A-A');
-assert.notEqual(aa.id,bb.id,'A-A must replace B-B without residual endpoints');
+const ab=await activateScope('A-B');
+assert.notEqual(aa.id,ab.id,'A-B touch must replace A-A without residual endpoints');
+const bb=await activateScope('B-B');
+assert.notEqual(ab.id,bb.id,'B-B touch must replace A-B without residual endpoints');
 console.log('Exact A-A, A-B and B-B replacement verified');
 
 // Keyboard interaction must use the same authoritative lock and toggle logic.
