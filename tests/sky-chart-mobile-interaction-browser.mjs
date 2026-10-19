@@ -77,6 +77,20 @@ const focus=()=>page.evaluate(()=>{
  eligibleHidden:[...wheel.querySelectorAll('[data-layer="aspects"] > line.sky-foundation-aspect:not(.is-kept):not(.sky-foundation-aspect-hit)')].filter(n=>!['sky-chart-orb-hidden','sky-orb-filter-hidden','sky-chart-filter-hidden','sky-chart-multiselect-hidden','sky-chart-aspect-multiselect-hidden','sky-chart-house-multiselect-hidden','sky-chart-sign-filter-hidden','sky-chart-semantic-hidden'].some(c=>n.classList.contains(c))&&getComputedStyle(n).display==='none').length};
 });
 await page.evaluate(()=>{window.__focusTrace=[];window.addEventListener('relphi:sky-foundation-filter-changed',e=>{window.__focusTrace.push({event:'filter',state:e.detail?.state});});for(const type of ['click','pointerdown','pointerup','pointercancel'])window.addEventListener(type,e=>window.__focusTrace.push({event:type,kind:e.target.closest?.('[data-interactive]')?.dataset.interactive,what:e.target.closest?.('[data-interactive]')?.getAttribute('aria-label'),trusted:e.isTrusted,pointer:e.pointerType}),true);});
+// Wheel exploration must not mutate the user's explicit House or Zodiac Signs
+// checkbox selections. These are filters, not alternate owners of tap state.
+await page.waitForSelector('#skyChartHousePopover [data-house-choice]',{timeout:10000});
+await page.waitForSelector('#skyChartZodiacFilterMenu .sky-chart-zodiac-filter-row input[type="checkbox"]',{timeout:10000});
+const filterSnapshot=()=>page.evaluate(()=>({
+  houses:[...document.querySelectorAll('#skyChartHousePopover [data-house-choice]')]
+    .map(input=>[input.dataset.houseChoice,input.dataset.houseScope,input.dataset.houseTarget,String(input.checked)].join(':')).sort(),
+  signs:[...document.querySelectorAll('#skyChartZodiacFilterMenu .sky-chart-zodiac-filter-row input[type="checkbox"]')]
+    .map(input=>input.value+':'+String(input.checked)).sort()
+}));
+const initialFilters=await filterSnapshot();
+assert.ok(initialFilters.houses.length>=24,'House filter checkboxes must be present before wheel taps');
+assert.equal(initialFilters.signs.length,12,'all Zodiac Signs filter checkboxes must be present');
+
 const touchAspect=await findTouchPoint('aspect');
 assert.ok(touchAspect,'a real aspect stroke must be hit-testable on mobile');
 await page.touchscreen.tap(touchAspect.x,touchAspect.y);
@@ -102,6 +116,7 @@ state=await focus();
 assert.ok(state.active,'touch house must persist after release');
 console.log('HOUSE COMPARE DEBUG',touchHouse,JSON.stringify({active:state.active,selected:state.selected,keptAspects:state.keptAspects.length}),await page.evaluate(({x,y})=>({last:window.__mobileTestLastFilter,hit:document.elementFromPoint(x,y)?.outerHTML.slice(0,220),trace:window.__touchTrace}),touchHouse));
 assert.ok(state.selected.some(n=>n.kind==='house'&&n.sky===touchHouse.sky&&n.house===touchHouse.house),'correct house must be selected');
+assert.deepEqual(await filterSnapshot(),initialFilters,'wheel House selection must not change explicit House or Zodiac Signs filters');
 assert.ok(state.keptAspects.some(n=>n.leftSky===touchHouse.sky&&n.leftHouse===touchHouse.house||n.rightSky===touchHouse.sky&&n.rightHouse===touchHouse.house),'house must keep matching lines');
 console.log('Touch house: matching lines including conjunctions verified');
 const touchSign=await findTouchPoint('sign');
@@ -111,6 +126,7 @@ await page.waitForTimeout(850);
 state=await focus();
 assert.ok(state.active,'touch sign must persist after release');
 assert.ok(state.selected.some(n=>n.kind==='sign'&&n.sign===touchSign.sign),'touch sign replaces house selection');
+assert.deepEqual(await filterSnapshot(),initialFilters,'wheel Sign selection must not change explicit House or Zodiac Signs filters');
 assert.ok(state.keptAspects.some(n=>n.leftSign===touchSign.sign||n.rightSign===touchSign.sign),'sign must keep its matching aspect lines');
 console.log('Touch sign: replacement and matching lines verified');
 const whitespace=await page.evaluate(()=>{
@@ -130,6 +146,7 @@ await page.waitForTimeout(250);
 state=await focus();
 assert.equal(state.active,false,'touching blank wheel space must clear isolation');
 assert.equal(state.keptAspects.length,0,'blank wheel clear removes kept marks');
+assert.deepEqual(await filterSnapshot(),initialFilters,'clearing wheel exploration must leave explicit filter selections unchanged');
 console.log('Touch whitespace: cleared without hiding wheel verified');
 
 
