@@ -420,6 +420,33 @@ function renderSelectedConfiguration(tile,pattern){
   if(visual)visual.innerHTML=miniConfigurationMarkup(pattern,{interactive:false});
   if(structure)structure.textContent=structureText(pattern);
   if(interpretation)interpretation.textContent=interpretationText(pattern);
+  // The expanded card is progressive: show the reading first, reveal its
+  // geometry on demand rather than repeating the same material immediately.
+  const structurePanel=detail.querySelector('.sky-configuration-result-structure');
+  if(structurePanel&&!structurePanel.dataset.revealBound){
+    structurePanel.dataset.revealBound='true';
+    const control=document.createElement('button');
+    control.type='button';
+    control.className='sky-configuration-structure-toggle';
+    control.textContent='Show structure';
+    control.setAttribute('aria-expanded','false');
+    control.addEventListener('click',event=>{
+      event.preventDefault();event.stopPropagation();
+      const visible=structurePanel.dataset.open!=='true';
+      structurePanel.dataset.open=String(visible);
+      control.setAttribute('aria-expanded',String(visible));
+      control.textContent=visible?'Hide structure':'Show structure';
+      const value=structurePanel.querySelector(':scope>span');
+      if(value)value.hidden=!visible;
+    });
+    structurePanel.insertBefore(control,structurePanel.firstChild);
+    const heading=structurePanel.querySelector(':scope>strong');
+    if(heading)heading.hidden=true;
+  }
+  if(structurePanel){
+    const value=structurePanel.querySelector(':scope>span');
+    if(value)value.hidden=structurePanel.dataset.open!=='true';
+  }
   const oldNested=explanation?.querySelector('.sky-configuration-nested');
   oldNested?.remove();
   if(explanation&&pattern.nested?.length){
