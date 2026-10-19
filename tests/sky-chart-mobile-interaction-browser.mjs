@@ -146,6 +146,7 @@ assert.ok(scopeCounts['B-B']>0,'B-B wheel geometry must exist with two skies');
 
 const activateScope=async(mode)=>{
   const hit=await findTouchPoint('aspect',mode);
+  if(!hit)console.log('SCOPE HIT DIAGNOSTIC',mode,await page.evaluate(mode=>{const nodes=[...document.querySelectorAll('#skyFoundationWheelMount [data-layer="aspects"] > line.sky-foundation-aspect:not(.sky-foundation-aspect-hit)')].filter(n=>n.dataset.relationshipMode===mode);return {count:nodes.length,visible:nodes.filter(n=>getComputedStyle(n).display!=='none').length,clickable:nodes.filter(n=>getComputedStyle(n).pointerEvents!=='none').length,examples:nodes.slice(0,5).map(n=>({style:n.getAttribute('style'),class:n.getAttribute('class'),hidden:n.hidden,rect:n.getBoundingClientRect().toJSON(),index:n.dataset.relationIndex}))}},mode));
   assert.ok(hit,'a physical '+mode+' aspect stroke must be hit-testable on mobile');
   await page.touchscreen.tap(hit.x,hit.y);
   await page.waitForTimeout(850);
