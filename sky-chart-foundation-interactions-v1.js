@@ -514,6 +514,23 @@
     return node && root?.contains(node) ? node : null;
   }
 
+  // Invisible aspect hit strokes overlap the apparently empty wheel center.
+  // Treat a tap outside the visible line's narrow vicinity as a blank tap,
+  // even when the browser reports the wide invisible hit target.
+  function missedAspectLine(node, event) {
+    if (!node.classList?.contains('sky-foundation-aspect-hit')) return false;
+    const matrix = node.getScreenCTM?.();
+    if (!matrix || !Number.isFinite(event.clientX) || !Number.isFinite(event.clientY)) return false;
+    const x1 = Number(node.getAttribute('x1')), y1 = Number(node.getAttribute('y1'));
+    const x2 = Number(node.getAttribute('x2')), y2 = Number(node.getAttribute('y2'));
+    if (![x1,y1,x2,y2].every(Number.isFinite)) return false;
+    const a = { x:matrix.a*x1+matrix.c*y1+matrix.e, y:matrix.b*x1+matrix.d*y1+matrix.f };
+    const b = { x:matrix.a*x2+matrix.c*y2+matrix.e, y:matrix.b*x2+matrix.d*y2+matrix.f };
+    const dx=b.x-a.x, dy=b.y-a.y, length2=dx*dx+dy*dy;
+    const t=length2 ? Math.max(0,Math.min(1,((event.clientX-a.x)*dx+(event.clientY-a.y)*dy)/length2)) : 0;
+    return Math.hypot(event.clientX-a.x-t*dx,event.clientY-a.y-t*dy) > 7;
+  }
+
   function bindEvents() {
     const root = document.getElementById('skyFoundationRoot');
     if (!root || root.dataset.foundationInteractionsBound === 'true') return;
@@ -553,6 +570,12 @@
 
     root.addEventListener('click', event => {
       const node = interactiveFromEvent(event);
+      if (node && missedAspectLine(node, event)) {
+        lockedState = null;
+        hoverState = null;
+        applyState();
+        return;
+      }
       if (node) {
         event.preventDefault();
         // A tap on a broad house/sign sector while an aspect is selected is
