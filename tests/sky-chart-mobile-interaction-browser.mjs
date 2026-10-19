@@ -108,7 +108,7 @@ assert.ok(state.selected.some(n=>n.kind==='sign'&&n.sign===touchSign.sign),'touc
 assert.ok(state.keptAspects.some(n=>n.leftSign===touchSign.sign||n.rightSign===touchSign.sign),'sign must keep its matching aspect lines');
 console.log('PHYSICAL SIGN',touchSign,state);
 const whitespace=await page.evaluate(()=>{
- const wheel=document.querySelector('#skyFoundationWheelMount .sky-foundation-wheel'),svg=wheel.querySelector('svg');
+ const wheel=document.querySelector('#skyFoundationWheelMount .sky-foundation-wheel'),svg=wheel.matches('svg')?wheel:wheel.querySelector('svg');
  const r=svg.getBoundingClientRect();
  for(let iy=2;iy<=18;iy++)for(let ix=2;ix<=18;ix++){
    const x=r.left+r.width*ix/20,y=r.top+r.height*iy/20;
