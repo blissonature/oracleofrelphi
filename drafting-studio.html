@@ -1,0 +1,407 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#fffaf4">
+<meta name="description" content="An interactive geometric drafting studio with a virtual compass, caliper and pencil.">
+<link rel="icon" href="favicon.ico">
+<title>Compass Drafting Studio · Oracle of Relphi</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#242222;--muted:#69635b;--red:#dc1f18;--paper:#fffaf4;--line:#d9d0c5;--warm:#f3ece2;--blue:#2347ca}
+*{box-sizing:border-box}
+body{margin:0;background:#eeeae4;color:var(--ink);font:500 14px/1.45 Montserrat,Arial,sans-serif}
+button,input,select{font:inherit}
+button{cursor:pointer}
+button:focus-visible,input:focus-visible,select:focus-visible,a:focus-visible{outline:3px solid #d23a34;outline-offset:3px}
+a{color:#ac211a}
+.shell{max-width:1560px;padding:18px 22px 28px;margin:auto}
+header{display:flex;justify-content:space-between;align-items:center;gap:18px;padding:0 2px 16px}
+.brand{display:flex;align-items:center;gap:11px;text-decoration:none;color:var(--ink)}
+.seal{display:grid;place-items:center;border:2px solid var(--red);border-radius:50%;width:44px;height:44px;color:var(--red);font:800 26px Georgia,serif;background:#fff}
+.wordmark{font-weight:800;letter-spacing:-.04em;font-size:19px;line-height:1.1}
+.wordmark span{color:var(--red)}
+.eyebrow{font-weight:800;font-size:10px;text-transform:uppercase;letter-spacing:.17em;color:#8d4237}
+.head-note{font-size:12px;color:var(--muted);text-align:right}
+h1{font-size:clamp(26px,3.3vw,43px);line-height:1.13;letter-spacing:-.05em;margin:0}
+.sub{margin:6px 0 17px;color:var(--muted);max-width:850px}
+.workspace{display:grid;grid-template-columns:minmax(0,1fr) 306px;gap:14px;align-items:start}
+.board{min-width:0;background:#fff;border:1px solid var(--line);border-radius:16px;overflow:hidden;box-shadow:0 10px 30px rgba(45,28,14,.055)}
+.boardbar{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:11px 14px;background:#faf6f0;border-bottom:1px solid var(--line)}
+.boardbar strong{font-size:13px}
+.legend{display:flex;flex-wrap:wrap;gap:12px;font-size:11px;color:var(--muted)}
+.legend b{display:inline-block;vertical-align:-2px;width:11px;height:11px;border-radius:50%;margin-right:3px}
+.legend .pin{background:var(--red)}.legend .rotate{background:#83766b}.legend .holder{background:#d8a14b}.legend .pen{background:var(--blue)}
+.stage{height:min(68vh,760px);min-height:470px;position:relative;background:#fffdfa;overflow:hidden}
+.stage svg{display:block;width:100%;height:100%;touch-action:none;user-select:none;-webkit-user-select:none}
+.stage [data-handle]{cursor:grab;touch-action:none}
+.stage [data-handle]:active{cursor:grabbing}
+.stage .hit{fill:transparent;stroke:transparent;stroke-width:25}
+.stage .handle{stroke:#fff;stroke-width:3.5;filter:drop-shadow(0 2px 3px rgba(0,0,0,.15))}
+.stage-note{position:absolute;left:14px;bottom:13px;background:rgba(255,253,249,.94);border:1px solid #e8dfd3;border-radius:8px;padding:7px 10px;font-size:11px;color:#70685f;pointer-events:none;max-width:calc(100% - 28px)}
+.stage-note strong{color:#3b3430}
+.boardfoot{display:flex;justify-content:space-between;gap:12px;align-items:center;padding:11px 14px;border-top:1px solid var(--line);font-size:12px;color:var(--muted);background:#faf6f0}
+.boardfoot strong{color:var(--ink)}
+.sidebar{display:grid;gap:10px}
+.panel{background:#fff;border:1px solid var(--line);border-radius:14px;padding:14px}
+.panel h2{font-size:12px;text-transform:uppercase;letter-spacing:.09em;margin:0 0 11px}
+.buttons{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
+.btn{display:inline-flex;align-items:center;justify-content:center;text-align:center;min-height:37px;background:#fff;border:1.5px solid #cfc5ba;border-radius:8px;color:var(--ink);font-weight:800;font-size:11px;padding:7px}
+.btn:hover{border-color:#b92c23;color:#a3221b}
+.btn.primary{background:var(--red);color:#fff;border-color:var(--red)}
+.btn.primary:hover{background:#a71710}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.field{display:grid;gap:5px;margin:12px 0 0;font-size:12px;font-weight:700}
+.field-head{display:flex;justify-content:space-between;align-items:baseline}
+.field-head output{font-variant-numeric:tabular-nums;color:var(--red);font-weight:800}
+input[type=range]{width:100%;accent-color:var(--red);height:23px}
+select,input[type=number]{width:100%;min-height:36px;border-radius:8px;border:1.5px solid #cfc5ba;background:#fff;padding:6px 9px;color:var(--ink)}
+.check{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:700;margin-top:10px}
+.check input{accent-color:var(--red);width:17px;height:17px}
+.double{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.swatches{display:flex;gap:7px;align-items:center;margin-top:10px}
+.swatch{width:30px;height:30px;border-radius:50%;border:3px solid #fff;box-shadow:0 0 0 1px #bbb;background:var(--c)}
+.swatch[aria-pressed=true]{box-shadow:0 0 0 2px var(--ink)}
+.help{padding:14px 16px;background:#f9f2e9;border:1px solid #d9cbbd;border-radius:13px;margin-top:14px}
+.help h2{margin:0 0 8px;font-size:14px}
+.help p{margin:6px 0;color:#5d554e;font-size:12px}
+.help strong{color:var(--ink)}
+.status{font-size:11px;color:var(--muted);padding:0 2px}
+.filebar{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.muted{color:var(--muted)}
+footer{font-size:11px;color:#797168;text-align:center;padding:21px}
+@media (max-width:1000px){.workspace{grid-template-columns:minmax(0,1fr) 265px}.shell{padding:13px}.panel{padding:11px}}
+@media (max-width:780px){.workspace{grid-template-columns:1fr}.sidebar{grid-template-columns:repeat(2,minmax(0,1fr))}.sidebar .panel:last-child{grid-column:1/-1}.stage{height:57svh;min-height:410px}.shell{padding:10px}.head-note{display:none}.legend{gap:7px;font-size:10px}}
+@media (max-width:500px){header{padding-bottom:12px}.brand{gap:8px}.seal{width:37px;height:37px;font-size:21px}.wordmark{font-size:16px}.shell{padding:9px}h1{font-size:27px}.sub{font-size:12px}.boardbar{padding:9px;display:block}.boardbar strong{display:block;margin-bottom:5px}.legend{font-size:10px}.stage{height:55svh;min-height:385px}.stage-note{font-size:10px}.boardfoot{font-size:10px}.sidebar{grid-template-columns:1fr 1fr;gap:8px}.sidebar .panel:first-child,.sidebar .panel:nth-child(2),.sidebar .panel:last-child{grid-column:1/-1}.panel{padding:12px}.btn{min-height:41px;font-size:12px}.double{grid-template-columns:repeat(2,1fr)}}
+@media (prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="shell">
+  <header>
+    <a class="brand" href="tools.html" aria-label="Oracle of Relphi tools">
+      <span class="seal" aria-hidden="true">R</span>
+      <span class="wordmark">Oracle of <span>Relphi</span><small class="eyebrow" style="display:block;margin-top:3px;letter-spacing:.11em">Instruments / Drafting</small></span>
+    </a>
+    <div class="head-note">A stand-alone geometric instrument<br><a href="tools.html">← All Relphi tools</a></div>
+  </header>
+  <main>
+    <h1>Compass <span style="color:var(--red)">Drafting Studio</span></h1>
+    <p class="sub">Place the point. Swing the compass. Extend the pencil. Draw circles, spirals, polygons and connected constructions directly on the sheet.</p>
+    <div class="workspace">
+      <section class="board" aria-label="Interactive drafting sheet">
+        <div class="boardbar">
+          <strong>Drafting sheet <span class="muted">· Vector workspace</span></strong>
+          <div class="legend" aria-label="Handle key">
+            <span><b class="pin"></b> Right point · move</span>
+            <span><b class="rotate"></b> Left point · rotate</span>
+            <span><b class="holder"></b> Holder · radius</span>
+            <span><b class="pen"></b> Pencil · draw</span>
+          </div>
+        </div>
+        <div class="stage" id="stage">
+          <svg id="sheet" viewBox="0 0 1100 740" role="img" aria-label="Drafting sheet. Drag the red point to move the compass, gray point to rotate without drawing, gold holder to change radius, and blue pencil to draw.">
+            <defs>
+              <pattern id="smallGrid" width="25" height="25" patternUnits="userSpaceOnUse"><path d="M 25 0 L 0 0 0 25" stroke="#e5dfd8" stroke-width=".8" fill="none"/></pattern>
+              <pattern id="largeGrid" width="125" height="125" patternUnits="userSpaceOnUse"><rect width="125" height="125" fill="url(#smallGrid)"/><path d="M 125 0 L 0 0 0 125" stroke="#d3cbc1" stroke-width="1" fill="none"/></pattern>
+            </defs>
+            <rect id="gridPlane" x="-4000" y="-4000" width="9000" height="9000" fill="url(#largeGrid)" opacity=".45" pointer-events="none"></rect>
+            <g id="art" fill="none" stroke-linecap="round" stroke-linejoin="round"></g>
+            <g id="guides" pointer-events="none"></g>
+            <g id="instrument"></g>
+          </svg>
+          <div class="stage-note" id="hint"><strong>Try it:</strong> Drag the blue pencil point around the red center to draw.</div>
+        </div>
+        <div class="boardfoot"><span id="measure">Diameter: 360 · Angle: −35°</span><strong id="counter">0 marks</strong></div>
+      </section>
+      <aside class="sidebar" aria-label="Drafting controls">
+        <section class="panel">
+          <h2>Make a mark</h2>
+          <div class="buttons">
+            <button class="btn primary" id="quarter" title="Draw a 90° arc">Trace 90°</button>
+            <button class="btn primary" id="revolution" title="Draw one full revolution">Trace 360°</button>
+            <button class="btn" id="circle">Perfect circle</button>
+            <button class="btn" id="star">Polygon / star</button>
+          </div>
+          <div class="double">
+            <label class="field">Vertices
+              <input type="number" id="sides" min="3" max="24" step="1" value="5" aria-label="Number of polygon vertices">
+            </label>
+            <label class="field">Step
+              <input type="number" id="step" min="1" max="11" step="1" value="2" aria-label="Connect every nth vertex">
+            </label>
+          </div>
+          <label class="check"><input type="checkbox" id="clockwise" checked> Draw clockwise</label>
+          <label class="check"><input type="checkbox" id="spiral"> Variable-radius spiral</label>
+          <label class="field" id="pitchField">Spiral growth per turn
+            <span class="field-head"><span class="muted">Negative values spiral inward</span><output id="pitchValue">42</output></span>
+            <input type="range" id="pitch" min="-100" max="100" step="1" value="42">
+          </label>
+        </section>
+        <section class="panel">
+          <h2>Compass</h2>
+          <label class="field" style="margin-top:0">
+            <span class="field-head">Pencil radius <output id="radiusValue">180</output></span>
+            <input type="range" id="radius" min="25" max="365" step="1" value="180">
+          </label>
+          <div class="buttons" style="margin-top:8px">
+            <button class="btn" id="leftTurn">↺ Rotate 15°</button>
+            <button class="btn" id="rightTurn">↻ Rotate 15°</button>
+          </div>
+          <label class="check"><input type="checkbox" id="snap"> Snap rotation to 15° (left point)</label>
+          <label class="check"><input type="checkbox" id="showGrid" checked> Graph paper</label>
+          <label class="check"><input type="checkbox" id="showGuides" checked> Compass guides</label>
+          <div class="swatches" aria-label="Pencil ink color">
+            <button class="swatch" style="--c:#2347ca" data-color="#2347ca" aria-pressed="true" aria-label="Blue ink"></button>
+            <button class="swatch" style="--c:#292a30" data-color="#292a30" aria-pressed="false" aria-label="Graphite ink"></button>
+            <button class="swatch" style="--c:#dc1f18" data-color="#dc1f18" aria-pressed="false" aria-label="Relphi red ink"></button>
+          </div>
+          <label class="field">
+            <span class="field-head">Line weight <output id="weightValue">3</output></span>
+            <input type="range" id="weight" min="1" max="8" step="1" value="3">
+          </label>
+        </section>
+        <section class="panel">
+          <h2>Sheet &amp; export</h2>
+          <div class="buttons">
+            <button class="btn" id="undo" disabled>Undo</button>
+            <button class="btn" id="redo" disabled>Redo</button>
+            <button class="btn" id="sample">Load example study</button>
+            <button class="btn" id="clear">New blank sheet</button>
+          </div>
+          <div class="filebar" style="margin-top:8px">
+            <button class="btn" id="saveSvg">Export SVG</button>
+            <button class="btn" id="savePng">Export PNG</button>
+          </div>
+          <p class="status" id="status" role="status" aria-live="polite">Your drawing is saved in this browser.</p>
+        </section>
+      </aside>
+    </div>
+    <section class="help" aria-label="How to operate the drafting compass">
+      <h2>Four handles. Four distinct actions.</h2>
+      <p><strong>Red · Right caliper point:</strong> move the whole instrument; no line is drawn. <strong>Gray · Left caliper point:</strong> change orientation without marking the paper.</p>
+      <p><strong>Gold · Pencil holder:</strong> slide outward or inward to increase or decrease the diameter (twice the radius from the right point). <strong>Blue · Pencil tip:</strong> rotate around the right point and draw. With spiral mode on, drag the tip inward or outward as you rotate; or use Trace 360° for an exact spiral with the specified growth.</p>
+      <p>Works with mouse, pen, or touch. Two fingers can operate the holder and pencil together. Circle and polygon buttons create mathematically exact vector constructions. SVG and PNG exports contain the marks, not the hardware or guides.</p>
+    </section>
+  </main>
+  <footer>Oracle of Relphi · <a href="https://oracleofrelphi.com">oracleofrelphi.com</a> · Drafting Studio</footer>
+</div>
+<script>
+(function(){
+"use strict";
+const NS="http://www.w3.org/2000/svg";
+const $=id=>document.getElementById(id);
+const svg=$("sheet"), art=$("art"), guides=$("guides"), instrument=$("instrument"), stage=$("stage");
+const KEY="relphi-compass-drafting-v1";
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const polar=(c,r,a)=>({x:c.x+r*Math.cos(a),y:c.y+r*Math.sin(a)});
+const round=n=>Math.round(n*100)/100;
+const fmt=n=>String(round(n));
+const pathOf=pts=>pts.map((p,i)=>(i?"L":"M")+fmt(p.x)+" "+fmt(p.y)).join(" ");
+const dist=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
+const shortest=(a,b)=>Math.atan2(Math.sin(b-a),Math.cos(b-a));
+const el=(name,attr)=>{const node=document.createElementNS(NS,name);Object.keys(attr||{}).forEach(k=>node.setAttribute(k,attr[k]));return node};
+let state={c:{x:550,y:390},a:-.61,r:180,color:"#2347ca",weight:3,spiral:false,pitch:42,cw:true,grid:true,guide:true,snap:false,strokes:[]};
+let undo=[],redo=[],active=new Map(),activeStroke=null,queued=false,storageEnabled=true;
+function snapshot(){return JSON.stringify(state.strokes)}
+function history(){undo.push(snapshot());if(undo.length>80)undo.shift();redo=[]}
+function note(s){$("status").textContent=s}
+function save(){if(!storageEnabled)return;try{localStorage.setItem(KEY,JSON.stringify(state))}catch(e){storageEnabled=false;note("Local save unavailable. Export SVG to keep your drawing.")}}
+function load(){try{const s=JSON.parse(localStorage.getItem(KEY)||"null");if(!s||!Array.isArray(s.strokes))return;
+ if(!s.c||!Number.isFinite(s.c.x)||!Number.isFinite(s.c.y))return;
+ state={...state,...s,c:{x:s.c.x,y:s.c.y},strokes:s.strokes.filter(v=>Array.isArray(v.points)&&v.points.length>0).slice(0,1000)};
+ state.r=clamp(Number(state.r)||180,25,365);state.a=Number(state.a)||0;
+}catch(e){note("Saved sheet could not be loaded.")}}
+function syncControls(){
+ $("radius").value=state.r;$("radiusValue").textContent=String(Math.round(state.r));
+ $("weight").value=state.weight;$("weightValue").textContent=state.weight;
+ $("spiral").checked=state.spiral;$("pitch").value=state.pitch;$("pitchValue").textContent=state.pitch;
+ $("clockwise").checked=state.cw;$("showGrid").checked=state.grid;$("showGuides").checked=state.guide;$("snap").checked=state.snap;
+ document.querySelectorAll(".swatch").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.color===state.color)));
+}
+function drawArt(){
+ const frag=document.createDocumentFragment();
+ state.strokes.forEach(s=>{if(!s.points||s.points.length<2)return;
+  frag.appendChild(el("path",{d:pathOf(s.points),stroke:s.color||"#2347ca","stroke-width":clamp(Number(s.weight)||3,1,20),fill:"none","stroke-linecap":"round","stroke-linejoin":"round"}));
+ });art.replaceChildren(frag);
+}
+function drawMachine(){
+ const c=state.c,a=state.a,r=state.r;
+ const pen=polar(c,r,a),holder=polar(c,r*.64,a),left=polar(c,126,a+2.48);
+ const cross=polar(c,r+24,a);
+ $("gridPlane").style.display=state.grid?"":"none";
+ guides.replaceChildren();
+ if(state.guide){
+  guides.appendChild(el("circle",{cx:fmt(c.x),cy:fmt(c.y),r:fmt(r),fill:"none",stroke:"#bea98e","stroke-dasharray":"5 9","stroke-width":"1.4",opacity:".8"}));
+  guides.appendChild(el("line",{x1:fmt(c.x-12),y1:fmt(c.y),x2:fmt(c.x+12),y2:fmt(c.y),stroke:"#9d8b7a","stroke-width":"1"}));
+  guides.appendChild(el("line",{x1:fmt(c.x),y1:fmt(c.y-12),x2:fmt(c.x),y2:fmt(c.y+12),stroke:"#9d8b7a","stroke-width":"1"}));
+ }
+ const frag=document.createDocumentFragment();
+ frag.appendChild(el("line",{x1:fmt(left.x),y1:fmt(left.y),x2:fmt(c.x),y2:fmt(c.y),stroke:"#9e958e","stroke-width":14,"stroke-linecap":"round"}));
+ frag.appendChild(el("line",{x1:fmt(left.x),y1:fmt(left.y),x2:fmt(c.x),y2:fmt(c.y),stroke:"#d8d4cf","stroke-width":9,"stroke-linecap":"round"}));
+ frag.appendChild(el("line",{x1:fmt(c.x),y1:fmt(c.y),x2:fmt(pen.x),y2:fmt(pen.y),stroke:"#a9a5a0","stroke-width":16,"stroke-linecap":"round"}));
+ frag.appendChild(el("line",{x1:fmt(c.x),y1:fmt(c.y),x2:fmt(pen.x),y2:fmt(pen.y),stroke:"#e5e1d9","stroke-width":11,"stroke-linecap":"round"}));
+ frag.appendChild(el("line",{x1:fmt(pen.x),y1:fmt(pen.y),x2:fmt(cross.x),y2:fmt(cross.y),stroke:state.color,"stroke-width":3.5}));
+ frag.appendChild(el("circle",{cx:fmt(c.x),cy:fmt(c.y),r:20,fill:"#f7f0e7",stroke:"#aa9e92","stroke-width":2}));
+ frag.appendChild(el("circle",{cx:fmt(c.x),cy:fmt(c.y),r:7,fill: "#dc1f18",stroke:"#fff","stroke-width":2}));
+ frag.appendChild(el("rect",{x:fmt(holder.x-16),y:fmt(holder.y-12),width:32,height:24,rx:5,fill:"#d6a257",stroke:"#8e642f","stroke-width":2,transform:"rotate("+fmt(a*180/Math.PI)+" "+fmt(holder.x)+" "+fmt(holder.y)+")"}));
+ // Give every handle a generous invisible hit target for touch, plus a persistent visible center.
+ [["pivot",c,"#dc1f18",11],["left",left,"#83766b",12],["holder",holder,"#d6a257",10],["pen",pen,state.color,13]].forEach(([name,p,color,size])=>{
+  const g=el("g",{"data-handle":name,role:"button","aria-label":{pivot:"Move right caliper point",left:"Rotate left caliper without drawing",holder:"Slide pencil holder to set radius",pen:"Rotate pencil tip to draw"}[name]});
+  g.appendChild(el("circle",{class:"hit",cx:fmt(p.x),cy:fmt(p.y),r:30}));
+  g.appendChild(el("circle",{class:"handle",cx:fmt(p.x),cy:fmt(p.y),r:size,fill:color}));
+  if(name==="pen")g.appendChild(el("circle",{cx:fmt(p.x),cy:fmt(p.y),r:4,fill:"#fff",stroke:"none","pointer-events":"none"}));
+  frag.appendChild(g);
+ });
+ instrument.replaceChildren(frag);
+ $("measure").textContent="Diameter: "+Math.round(r*2)+" · Angle: "+Math.round(a*180/Math.PI)+"°";
+ $("radiusValue").textContent=String(Math.round(r));
+ $("radius").value=Math.round(r);
+ $("counter").textContent=state.strokes.length+" mark"+(state.strokes.length===1?"":"s");
+ $("undo").disabled=undo.length===0;$("redo").disabled=redo.length===0;
+ $("hint").innerHTML=active.size?({"pivot":"Moving the whole compass — no mark","left":"Rotating the compass — no mark","holder":"Sliding the holder to change diameter","pen":"Pencil drawing on the sheet"}[Array.from(active.values())[0].type]||"Drafting"):"<strong>Try it:</strong> Drag a colored handle, or use the precision controls.";
+}
+function render(){if(queued)return;queued=true;requestAnimationFrame(()=>{queued=false;drawArt();drawMachine()})}
+function pointerPosition(e){const m=svg.getScreenCTM();if(!m)return null;const p=svg.createSVGPoint();p.x=e.clientX;p.y=e.clientY;return p.matrixTransform(m.inverse())}
+function addPoint(s,p){const last=s.points[s.points.length-1];if(!last||dist(p,last)>.65)s.points.push({x:round(p.x),y:round(p.y)})}
+function penMove(a,r){
+ const fromA=state.a,fromR=state.r,delta=shortest(fromA,a),steps=Math.max(1,Math.ceil(Math.max(Math.abs(delta)*Math.max(fromR,r),Math.abs(r-fromR))/4));
+ for(let i=1;i<=steps;i++){const t=i/steps,ang=fromA+delta*t,rad=fromR+(r-fromR)*t;if(activeStroke)addPoint(activeStroke,polar(state.c,rad,ang))}
+ state.a=fromA+delta;state.r=r;
+}
+function pointerDown(e){
+ const handle=e.target.closest("[data-handle]");if(!handle)return;
+ if(e.button!==undefined&&e.button!==0)return;
+ e.preventDefault();const p=pointerPosition(e);if(!p)return;const type=handle.dataset.handle;
+ if(type==="pen"&&activeStroke)return;
+ const item={type,start:p,center:{...state.c},angle:state.a,radius:state.r};
+ active.set(e.pointerId,item);svg.setPointerCapture(e.pointerId);
+ if(type==="pen"){history();activeStroke={points:[polar(state.c,state.r,state.a)],color:state.color,weight:state.weight};state.strokes.push(activeStroke)}
+ render();
+}
+function pointerMove(e){
+ const item=active.get(e.pointerId);if(!item)return;
+ e.preventDefault();const p=pointerPosition(e);if(!p)return;
+ if(item.type==="pivot"){state.c={x:item.center.x+p.x-item.start.x,y:item.center.y+p.y-item.start.y}}
+ else if(item.type==="left"){let a=Math.atan2(p.y-state.c.y,p.x-state.c.x)-2.48;if(state.snap)a=Math.round(a/(Math.PI/12))*(Math.PI/12);state.a=a}
+ else if(item.type==="holder"){
+  const along=(p.x-state.c.x)*Math.cos(state.a)+(p.y-state.c.y)*Math.sin(state.a);
+  const radius=clamp(along/.64,25,365);
+  if(activeStroke){const penIsHeld=Array.from(active.values()).some(v=>v.type==="pen");if(penIsHeld)penMove(state.a,radius);else state.r=radius}
+  else state.r=radius;
+ } else if(item.type==="pen"){
+  const a=Math.atan2(p.y-state.c.y,p.x-state.c.x);
+  const r=state.spiral?clamp(dist(p,state.c),25,365):state.r;
+  penMove(a,r);
+ }
+ render();
+}
+function pointerUp(e){
+ const item=active.get(e.pointerId);if(!item)return;
+ active.delete(e.pointerId);
+ if(item.type==="pen"){if(activeStroke&&activeStroke.points.length<2){state.strokes.pop();undo.pop()}activeStroke=null;save()}
+ else save();
+ try{if(svg.hasPointerCapture(e.pointerId))svg.releasePointerCapture(e.pointerId)}catch(err){}
+ render();
+}
+svg.addEventListener("pointerdown",pointerDown);
+svg.addEventListener("pointermove",pointerMove);
+svg.addEventListener("pointerup",pointerUp);
+svg.addEventListener("pointercancel",pointerUp);
+svg.addEventListener("lostpointercapture",pointerUp);
+function commitStrokes(strokes){history();state.strokes.push(...strokes);render();save()}
+function stroke(points,color=state.color,weight=state.weight){return {points:points.map(p=>({x:round(p.x),y:round(p.y)})),color,weight}}
+function sampleSweep(degrees){
+ const dir=state.cw?1:-1,turn=degrees*Math.PI/180*dir,n=Math.max(24,Math.round(Math.abs(degrees)*1.4));
+ const r0=state.r,r1=state.spiral?clamp(r0+state.pitch*degrees/360,25,365):r0;
+ const points=[];for(let i=0;i<=n;i++){const t=i/n;points.push(polar(state.c,r0+(r1-r0)*t,state.a+turn*t))}
+ commitStrokes([stroke(points)]);state.a+=turn;state.r=r1;render();save();
+}
+function perfectCircle(){const points=[];for(let i=0;i<=240;i++)points.push(polar(state.c,state.r,state.a+i*Math.PI*2/240));commitStrokes([stroke(points)])}
+function gcd(a,b){while(b){const t=a%b;a=b;b=t}return a}
+function starPolygon(){
+ const n=clamp(Math.round(Number($("sides").value)||5),3,24),k=clamp(Math.round(Number($("step").value)||2),1,Math.floor(n/2));
+ $("sides").value=n;$("step").value=k;
+ const shapes=[],cycles=gcd(n,k),count=n/cycles;
+ for(let root=0;root<cycles;root++){const points=[];for(let j=0;j<=count;j++){const index=(root+j*k)%n;points.push(polar(state.c,state.r,state.a+index*Math.PI*2/n))}shapes.push(stroke(points))}
+ commitStrokes(shapes);
+}
+function example(){
+ if(state.strokes.length&&!confirm("Replace this sheet with the example construction?"))return;
+ history();state.strokes=[];
+ const c1={x:355,y:285},c2={x:655,y:285},radius=150;
+ [c1,c2].forEach((c,index)=>{
+  let pts=[];for(let i=0;i<=240;i++)pts.push(polar(c,radius,-Math.PI/2+i*Math.PI*2/240));
+  state.strokes.push(stroke(pts,"#2347ca",3.5));
+  const center={x:c.x+(index?-10:-20),y:c.y+10},spiral=[];
+  for(let i=0;i<=450;i++){const t=i/450,r=4+138*t;spiral.push(polar(center,r,(index?-.2:.2)+Math.PI*4.1*t))}
+  state.strokes.push(stroke(spiral,"#2347ca",3.4));
+  const starPts=[];for(let j=0;j<=5;j++)starPts.push(polar(c,radius,(-Math.PI/2)+(j*2%5)*Math.PI*2/5));
+  state.strokes.push(stroke(starPts,"#a5a19d",1.7));
+ });
+ const low={x:505,y:545},web=[];
+ for(let j=0;j<=5;j++)web.push(polar(low,180,-Math.PI/2+(j*2%5)*Math.PI*2/5));
+ state.strokes.push(stroke(web,"#a5a19d",1.8));
+ state.c={x:535,y:600};state.r=145;state.a=-.8;
+ render();save();note("Example loaded. You can add marks, undo, or start a new sheet.");
+}
+function exportMarkup(){
+ const paths=state.strokes.filter(s=>s.points&&s.points.length>=2).map(s=>'<path d="'+pathOf(s.points)+'" stroke="'+(s.color||"#2347ca")+'" stroke-width="'+fmt(s.weight||3)+'" fill="none" stroke-linejoin="round" stroke-linecap="round"/>').join("");
+ return '<?xml version="1.0" encoding="UTF-8"?>\n'+
+ '<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="820" viewBox="0 0 1100 760" role="img" aria-label="Oracle of Relphi geometric drafting composition">'+
+ '<rect x="0" y="0" width="1100" height="760" fill="#fffdfa"/>'+
+ '<g>'+paths+'</g><path d="M38 718H1062" stroke="#ded6cd"/>'+
+ '<text x="40" y="745" fill="#242222" font-family="Montserrat,Arial,sans-serif" font-size="15" font-weight="700">Oracle of <tspan fill="#dc1f18">Relphi</tspan> · Drafting Studio</text>'+
+ '<text x="1060" y="745" text-anchor="end" fill="#6b645d" font-size="12" font-family="Montserrat,Arial,sans-serif">oracleofrelphi.com</text></svg>';
+}
+function download(blob,filename){
+ const u=URL.createObjectURL(blob),a=document.createElement("a");a.href=u;a.download=filename;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),1500);
+}
+$("saveSvg").addEventListener("click",()=>{download(new Blob([exportMarkup()],{type:"image/svg+xml;charset=utf-8"}),"relphi-drafting.svg");note("SVG exported.")});
+$("savePng").addEventListener("click",()=>{
+ const blob=new Blob([exportMarkup()],{type:"image/svg+xml;charset=utf-8"}),u=URL.createObjectURL(blob),img=new Image();
+ img.onload=()=>{const canvas=document.createElement("canvas");canvas.width=2400;canvas.height=1640;const ctx=canvas.getContext("2d");ctx.drawImage(img,0,0,2400,1640);
+  canvas.toBlob(out=>{if(out){download(out,"relphi-drafting.png");note("PNG exported.")}else note("PNG export unavailable. SVG export still works.")},"image/png");
+  URL.revokeObjectURL(u);
+ };
+ img.onerror=()=>{URL.revokeObjectURL(u);note("PNG export unavailable. Please use SVG.")};
+ img.src=u;
+});
+$("quarter").addEventListener("click",()=>sampleSweep(90));
+$("revolution").addEventListener("click",()=>sampleSweep(360));
+$("circle").addEventListener("click",perfectCircle);
+$("star").addEventListener("click",starPolygon);
+$("leftTurn").addEventListener("click",()=>{state.a-=Math.PI/12;render();save()});
+$("rightTurn").addEventListener("click",()=>{state.a+=Math.PI/12;render();save()});
+$("radius").addEventListener("input",e=>{state.r=Number(e.target.value);render();save()});
+$("weight").addEventListener("input",e=>{state.weight=Number(e.target.value);$("weightValue").textContent=state.weight;save()});
+$("spiral").addEventListener("change",e=>{state.spiral=e.target.checked;save()});
+$("pitch").addEventListener("input",e=>{state.pitch=Number(e.target.value);$("pitchValue").textContent=state.pitch;save()});
+$("clockwise").addEventListener("change",e=>{state.cw=e.target.checked;save()});
+$("showGrid").addEventListener("change",e=>{state.grid=e.target.checked;render();save()});
+$("showGuides").addEventListener("change",e=>{state.guide=e.target.checked;render();save()});
+$("snap").addEventListener("change",e=>{state.snap=e.target.checked;save()});
+document.querySelectorAll(".swatch").forEach(b=>b.addEventListener("click",()=>{state.color=b.dataset.color;syncControls();render();save()}));
+$("sample").addEventListener("click",example);
+$("clear").addEventListener("click",()=>{if(state.strokes.length&&!confirm("Start a new blank sheet?"))return;history();state.strokes=[];render();save();note("Blank sheet ready.")});
+$("undo").addEventListener("click",()=>{if(!undo.length)return;redo.push(snapshot());state.strokes=JSON.parse(undo.pop());render();save()});
+$("redo").addEventListener("click",()=>{if(!redo.length)return;undo.push(snapshot());state.strokes=JSON.parse(redo.pop());render();save()});
+document.addEventListener("keydown",e=>{
+ if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==="z"){e.preventDefault();(e.shiftKey?$("redo"):$("undo")).click()}
+});
+function fitView(){
+ const box=stage.getBoundingClientRect(),ratio=box.width/Math.max(1,box.height);
+ // On phones crop unused margins instead of shrinking every handle. Keep the center around the compass.
+ if(ratio<.78){const h=850,w=clamp(850*ratio,490,650);svg.setAttribute("viewBox",fmt(550-w/2)+" 10 "+fmt(w)+" "+fmt(h))}
+ else if(ratio<1.12){svg.setAttribute("viewBox","100 0 900 780")}
+ else svg.setAttribute("viewBox","0 0 1100 740");
+}
+window.addEventListener("resize",fitView);
+load();syncControls();fitView();render();
+})();
+</script>
+</body>
+</html>
