@@ -90,7 +90,7 @@ await page.touchscreen.tap(touchHouse.x,touchHouse.y);
 await page.waitForTimeout(850);
 state=await focus();
 assert.ok(state.active,'touch house must persist after release');
-console.log('HOUSE COMPARE DEBUG',touchHouse,JSON.stringify({active:state.active,selected:state.selected,keptAspects:state.keptAspects.length}),await page.evaluate(()=>({last:window.__mobileTestLastFilter,hit:(()=>{const e=document.elementFromPoint(touchHouse.x,touchHouse.y);return e?.outerHTML.slice(0,220)})()})));
+console.log('HOUSE COMPARE DEBUG',touchHouse,JSON.stringify({active:state.active,selected:state.selected,keptAspects:state.keptAspects.length}),await page.evaluate(({x,y})=>({last:window.__mobileTestLastFilter,hit:document.elementFromPoint(x,y)?.outerHTML.slice(0,220)}),touchHouse));
 assert.ok(state.selected.some(n=>n.kind==='house'&&n.sky===touchHouse.sky&&n.house===touchHouse.house),'correct house must be selected');
 assert.ok(state.keptAspects.some(n=>n.leftSky===touchHouse.sky&&n.leftHouse===touchHouse.house||n.rightSky===touchHouse.sky&&n.rightHouse===touchHouse.house),'house must keep matching lines');
 console.log('Touch house: matching lines including conjunctions verified');
