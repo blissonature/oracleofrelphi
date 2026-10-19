@@ -108,7 +108,7 @@ function skyIsPresent(slot){
     const collection=value[key];
     if(!collection||typeof collection!=='object')continue;
     if(Object.values(collection).some(item=>item&&typeof item==='object'&&
-      (Number.isFinite(Number(item.longitude))||String(item.sign||item.zodiac||'').trim())))return true;
+      ((item.longitude!=null&&item.longitude!==''&&Number.isFinite(Number(item.longitude)))||String(item.sign||item.zodiac||'').trim())))return true;
   }
   return false;
 }
