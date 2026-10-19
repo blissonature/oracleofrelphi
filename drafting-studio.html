@@ -517,6 +517,11 @@ function selectCustomColor(e){
  state.customColor=value.toLowerCase();state.color=state.customColor;state.inkSource="custom";
  syncControls();render();save();
 }
+$("customColor").addEventListener("click",()=>{
+ // Tapping the fourth swatch also reselects the last custom ink if the native picker is dismissed.
+ if(state.inkSource==="custom")return;
+ state.color=state.customColor;state.inkSource="custom";syncControls();render();save();
+});
 $("customColor").addEventListener("input",selectCustomColor);
 $("customColor").addEventListener("change",selectCustomColor);
 $("sample").addEventListener("click",example);
