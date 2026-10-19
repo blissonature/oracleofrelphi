@@ -549,8 +549,15 @@
     if (!root || root.dataset.foundationInteractionsBound === 'true') return;
     root.dataset.foundationInteractionsBound = 'true';
 
+    // Touch browsers synthesize pointerover/focus after a tap. Those transient
+    // states must never re-isolate the wheel immediately after dismissal.
+    let touchInteraction = false;
+    root.addEventListener('pointerdown', event => {
+      touchInteraction = event.pointerType === 'touch' || event.pointerType === 'pen';
+    }, true);
+
     root.addEventListener('pointerover', event => {
-      if (lockedState) return;
+      if (lockedState || touchInteraction || event.pointerType === 'touch' || event.pointerType === 'pen') return;
       const node = interactiveFromEvent(event);
       if (!node || node.contains(event.relatedTarget)) return;
       hoverState = specFrom(node);
@@ -558,7 +565,7 @@
     });
 
     root.addEventListener('pointerout', event => {
-      if (lockedState) return;
+      if (lockedState || touchInteraction) return;
       const node = interactiveFromEvent(event);
       if (!node || node.contains(event.relatedTarget)) return;
       hoverState = null;
@@ -566,7 +573,7 @@
     });
 
     root.addEventListener('focusin', event => {
-      if (lockedState) return;
+      if (lockedState || touchInteraction) return;
       const node = interactiveFromEvent(event);
       if (!node) return;
       hoverState = specFrom(node);
@@ -574,7 +581,7 @@
     });
 
     root.addEventListener('focusout', event => {
-      if (lockedState) return;
+      if (lockedState || touchInteraction) return;
       const node = interactiveFromEvent(event);
       if (!node || node.contains(event.relatedTarget)) return;
       hoverState = null;
