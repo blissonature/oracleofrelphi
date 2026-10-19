@@ -181,7 +181,11 @@
   function relationshipIdentity(node){
     if(!node)return'';
     const slots=relationshipSlots(node),left=String(node.dataset.leftPlacement||''),aspect=String(node.dataset.aspect||''),right=String(node.dataset.rightPlacement||'');
-    return left&&aspect&&right?`${slots.left}:${left}|${aspect}|${slots.right}:${right}`:''
+    if(!left||!aspect||!right)return'';
+    // Intrasky relationships are undirected: a row may enumerate the same two
+    // points in reverse order from its rendered aspect line.
+    if(slots.left===slots.right){const [first,second]=[left,right].sort();return `${slots.left}:${first}|${aspect}|${slots.right}:${second}`;}
+    return `${slots.left}:${left}|${aspect}|${slots.right}:${right}`
   }
   function specFrom(node){const kind=node?.dataset?.interactive;if(kind==='house')return{kind,sky:node.dataset.sky,value:Number(node.dataset.house)};if(kind==='sign')return{kind,sky:null,value:Number(node.dataset.sign)};if(kind==='placement')return{kind,sky:node.dataset.sky,value:node.dataset.placement};if(kind==='aspect')return{kind,sky:null,value:relationshipIdentity(node)};return null}
   function selectionLabel(spec){
