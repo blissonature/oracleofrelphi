@@ -493,8 +493,11 @@
     const gesture=touchGesture;touchGesture=null;
     if(gesture.moved)return;
     ignoreNativeClickUntil=performance.now()+750;
-    const target=gesture.target?.isConnected?gesture.target:event.target;
-    if(!target?.isConnected)return;
+    const wheel=document.querySelector('#skyFoundationWheelMount .sky-foundation-wheel');
+    if(!wheel)return;
+    const original=gesture.target?.isConnected?gesture.target:event.target;
+    const target=original?.isConnected&&wheel.contains(original)?original:wheel;
+    if(!target)return;
     // Dispatch through the same click handler as mouse/keyboard, retaining
     // coordinates so nearby aspect-line hit testing uses the actual tap.
     syntheticTouchClick=true;
