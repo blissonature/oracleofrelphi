@@ -518,10 +518,14 @@
   function cancelTouch(event){if(touchGesture?.id===event.pointerId)touchGesture=null}
   function bind(){
     const root=document.getElementById('skyFoundationRoot');if(!root||root.dataset.foundationInteractionsV2Bound==='true')return;root.dataset.foundationInteractionsV2Bound='true';
-    root.addEventListener('pointerdown',beginTouch,{passive:true});
-    root.addEventListener('pointermove',moveTouch,{passive:true});
-    root.addEventListener('pointerup',finishTouch,{passive:false});
-    root.addEventListener('pointercancel',cancelTouch);
+    // Capture wheel gestures at document level: foreground placements,
+    // progressive-disclosure handlers and tap hit overlays may stop bubbling
+    // before pointerup reaches the wheel root. The gesture begins only inside
+    // this wheel, so unrelated document touches remain completely untouched.
+    document.addEventListener('pointerdown',beginTouch,{capture:true,passive:true});
+    document.addEventListener('pointermove',moveTouch,{capture:true,passive:true});
+    document.addEventListener('pointerup',finishTouch,{capture:true,passive:false});
+    document.addEventListener('pointercancel',cancelTouch,{capture:true});
     // Compatibility clicks may be retargeted to the wheel/root after a
     // redraw, not to the original SVG element. Suppress the trusted native
     // follow-up anywhere in the document; our single synthetic click already
