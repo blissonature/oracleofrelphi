@@ -1,0 +1,31 @@
+name: Sky Chart contextual sky identity
+on:
+  pull_request:
+    paths:
+      - 'sky-chart.html'
+      - 'sky-chart-sky-card-title-integrity-v1.js'
+      - 'sky-chart-where-when-v3.js'
+      - 'sky-chart-relationship-scope-sections-v1.js'
+      - 'sky-chart-relationship-export-columns-v1.js'
+      - 'tests/sky-chart-contextual-titles-browser.mjs'
+      - '.github/workflows/sky-chart-contextual-titles.yml'
+  workflow_dispatch:
+jobs:
+  identity-browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: |
+          node --check sky-chart-sky-card-title-integrity-v1.js
+          node --check sky-chart-where-when-v3.js
+          node --check tests/sky-chart-contextual-titles-browser.mjs
+      - run: npm install --no-save playwright@1.52.0 luxon@3 suncalc@1.9.0
+      - run: npx playwright install --with-deps chromium
+      - name: Verify titles, copy, and PNG export
+        run: |
+          python3 -m http.server 4173 >/tmp/sky-title-http.log 2>&1 &
+          node tests/sky-chart-contextual-titles-browser.mjs
