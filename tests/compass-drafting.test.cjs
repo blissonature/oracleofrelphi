@@ -42,8 +42,8 @@ function mount(persisted) {
   const data=new Map(persisted ? [[STORAGE_KEY,persisted]] : []);
   const storage={getItem:k=>data.get(k)||null,setItem:(k,v)=>data.set(k,v)};
   const browser={innerWidth:1100,addEventListener(){}};
-  new Function('document','window','localStorage','requestAnimationFrame',script)(
-    doc,browser,storage,cb=>cb()
+  new Function('document','window','localStorage','requestAnimationFrame','confirm',script)(
+    doc,browser,storage,cb=>cb(),()=>true
   );
   const state=()=>JSON.parse(data.get(STORAGE_KEY)||'null');
   const event=(name,x,y,pointerId)=>({
