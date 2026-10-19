@@ -6,7 +6,7 @@
 
   const LIBRARY_KEY='relphiSkyLibraryV1';
   const SLOT_KEYS={A:'relphiSkyChartA',B:'relphiSkyChartB'};
-  const GENERIC_NAMES=new Set(['','current sky','sky a','sky b','standalone sky','comparison','unnamed sky','untitled sky','now']);
+  const GENERIC_NAMES=new Set(['','current sky','sky a','sky b','standalone sky','comparison','unnamed sky','untitled sky','now','where and when','unsaved sky']);
   const pending={A:null,B:null};
   let observer=null;
 
@@ -138,7 +138,7 @@
     const slot=event.key===SLOT_KEYS.A?'A':event.key===SLOT_KEYS.B?'B':null;if(!slot||!pending[slot])return;
     const request=pending[slot];pending[slot]=null;
     const value=payload(slot),source=String(value?.calcProfile?.source||'');
-    if(!['where-when-v1','where-when-v2'].includes(source))return;
+    if(!['where-when-v1','where-when-v2','where-when-v3'].includes(source))return;
     saveCalculatedSky(slot,request);
   });
 
