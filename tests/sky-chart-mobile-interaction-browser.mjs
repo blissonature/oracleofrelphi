@@ -70,11 +70,13 @@ const focus=()=>page.evaluate(()=>{
  dimmedVisible:[...wheel.querySelectorAll('[data-layer="aspects"] > line.sky-foundation-aspect:not(.is-kept):not(.sky-foundation-aspect-hit)')].filter(n=>getComputedStyle(n).display!=='none').length,
  eligibleHidden:[...wheel.querySelectorAll('[data-layer="aspects"] > line.sky-foundation-aspect:not(.is-kept):not(.sky-foundation-aspect-hit)')].filter(n=>!['sky-chart-orb-hidden','sky-orb-filter-hidden','sky-chart-filter-hidden','sky-chart-multiselect-hidden','sky-chart-aspect-multiselect-hidden','sky-chart-house-multiselect-hidden','sky-chart-sign-filter-hidden','sky-chart-semantic-hidden'].some(c=>n.classList.contains(c))&&getComputedStyle(n).display==='none').length};
 });
+await page.evaluate(()=>{window.__focusTrace=[];window.addEventListener('relphi:sky-foundation-filter-changed',e=>{window.__focusTrace.push({event:'filter',state:e.detail?.state});});for(const type of ['click','pointerdown','pointerup','pointercancel'])window.addEventListener(type,e=>window.__focusTrace.push({event:type,kind:e.target.closest?.('[data-interactive]')?.dataset.interactive,what:e.target.closest?.('[data-interactive]')?.getAttribute('aria-label'),trusted:e.isTrusted,pointer:e.pointerType}),true);});
 const touchAspect=await findTouchPoint('aspect');
 assert.ok(touchAspect,'a real aspect stroke must be hit-testable on mobile');
 await page.touchscreen.tap(touchAspect.x,touchAspect.y);
 await page.waitForTimeout(850);
 let state=await focus();
+console.log('FIRST ASPECT TOUCH TRANSITIONS',touchAspect,state.selected,await page.evaluate(()=>window.__focusTrace.slice(-15)));
 assert.ok(state.active,'touch aspect must persist after finger release and compatibility-click delay');
 assert.ok(state.keptAspects.length>0,'touch aspect must keep an aspect line');
 assert.ok(state.keptEndpoints.length>=2,'touch aspect must keep both endpoints');
