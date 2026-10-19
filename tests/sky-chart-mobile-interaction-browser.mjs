@@ -34,6 +34,7 @@ const findTouchPoint=async(kind)=>page.evaluate((kind)=>{
   const wheel=document.querySelector('#skyFoundationWheelMount .sky-foundation-wheel');
   const nodes=[...wheel.querySelectorAll('[data-interactive="'+kind+'"]')].filter(node=>node.getClientRects().length&&!node.classList.contains('sky-foundation-aspect-hit'));
   const width=window.innerWidth,height=window.innerHeight;
+  const markers=[...wheel.querySelectorAll('[data-layer="placements"] [data-interactive="placement"]')].map(n=>n.getBoundingClientRect()).filter(r=>r.width>0&&r.height>0);
   for(const node of nodes){
     const rect=node.getBoundingClientRect(),minX=Math.max(2,rect.left),maxX=Math.min(width-2,rect.right),minY=Math.max(2,rect.top),maxY=Math.min(height-2,rect.bottom);
     if(minX>=maxX||minY>=maxY)continue;
@@ -42,6 +43,10 @@ const findTouchPoint=async(kind)=>page.evaluate((kind)=>{
       const top=document.elementFromPoint(x,y)?.closest?.('[data-interactive]');
       if(top?.dataset.interactive!==kind)continue;
       if(kind==='house'){
+        // Chromium intentionally touch-adjusts a finger toward nearby glyphs.
+        // Do not call a glyph-targeting gesture a failed house-sector tap.
+        const nearGlyph=markers.some(r=>x>=r.left-25&&x<=r.right+25&&y>=r.top-25&&y<=r.bottom+25);
+        if(nearGlyph)continue;
         const slot=top.dataset.sky,h=top.dataset.house;
         const eligible=[...wheel.querySelectorAll('[data-layer="aspects"] > line.sky-foundation-aspect:not(.sky-foundation-aspect-hit)')]
           .some(line=>line.dataset.leftSky===slot&&line.dataset.leftHouse===h||line.dataset.rightSky===slot&&line.dataset.rightHouse===h);
