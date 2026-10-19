@@ -479,9 +479,21 @@
     restoreFocus,
     getSelectionOrigin
   });
+  // Every input method uses the same selection state transition. Touch invokes
+  // it directly rather than dispatching a second click through unrelated
+  // capture-phase listeners (which can retarget or consume that click).
+  function toggleInteractiveNode(node){
+    if(!node)return;
+    wheelOnlyExternal=false;
+    rowLockedState=null;rowHoverState=null;
+    const next=specFrom(node);
+    if(same(lockedState,next)){lockedState=null;selectionOrigin=null}
+    else{lockedState=next;selectionOrigin=originFromNode(node,next)}
+    hoverState=null;applyState();
+  }
   // One touch-to-click adapter owned by the foundation controller. Touch hover is
   // never selection state; one completed tap produces exactly one click.
-  let touchGesture=null,ignoreNativeClickUntil=0,syntheticTouchClick=false;
+  let touchGesture=null,ignoreNativeClickUntil=0;
   function touchInWheel(event){return !!event.target.closest?.('#skyFoundationWheelMount .sky-foundation-wheel')}
   function beginTouch(event){
     if(!['touch','pen'].includes(event.pointerType)||!touchInWheel(event))return;
@@ -508,11 +520,11 @@
     const target=underFinger&&wheel.contains(underFinger)?underFinger:
       original&&wheel.contains(original)?original:null;
     if(!target)return; // A removed wheel target must not become a blank-area clear.
-    // Dispatch through the same click handler as mouse/keyboard, retaining
-    // coordinates so nearby aspect-line hit testing uses the actual tap.
-    syntheticTouchClick=true;
-    try{target.dispatchEvent(new MouseEvent('click',{bubbles:true,cancelable:true,clientX:event.clientX,clientY:event.clientY,view:window}));}
-    finally{syntheticTouchClick=false;}
+    // Use the controller's one selection transition directly, not a fabricated
+    // DOM click subject to competing capture handlers or double activation.
+    const node=interactive({target,clientX:event.clientX,clientY:event.clientY});
+    if(node)toggleInteractiveNode(node);
+    else if(clearableWhitespace({target}))clearFromWhitespace();
     event.preventDefault();
   }
   function cancelTouch(event){if(touchGesture?.id===event.pointerId)touchGesture=null}
@@ -531,7 +543,7 @@
     // follow-up anywhere in the document; our single synthetic click already
     // performed the tap action. Do not intercept other scripted activations.
     document.addEventListener('click',event=>{
-      if(!syntheticTouchClick&&event.isTrusted&&performance.now()<ignoreNativeClickUntil){
+      if(event.isTrusted&&performance.now()<ignoreNativeClickUntil){
         event.preventDefault();event.stopImmediatePropagation();
       }
     },true);
@@ -566,9 +578,9 @@
       wheelOnlyExternal=false;
       const row=event.target.closest?.('.sky-foundation-relationship-row[data-relation-index]');
       if(row)return;
-      const node=interactive(event);if(node){event.preventDefault();rowLockedState=null;rowHoverState=null;const next=specFrom(node);if(same(lockedState,next)){lockedState=null;selectionOrigin=null}else{lockedState=next;selectionOrigin=originFromNode(node,next)}hoverState=null;applyState();return}if(clearableWhitespace(event))clearFromWhitespace()
+      const node=interactive(event);if(node){event.preventDefault();toggleInteractiveNode(node);return}if(clearableWhitespace(event))clearFromWhitespace()
     });
-    root.addEventListener('keydown',event=>{wheelOnlyExternal=false;if(event.key==='Escape'){clearFromWhitespace();return}if(event.target.closest('.sky-foundation-relationship-row'))return;if(!['Enter',' '].includes(event.key))return;const node=interactive(event);if(!node)return;event.preventDefault();rowLockedState=null;rowHoverState=null;const next=specFrom(node);if(same(lockedState,next)){lockedState=null;selectionOrigin=null}else{lockedState=next;selectionOrigin=originFromNode(node,next)}hoverState=null;applyState()});
+    root.addEventListener('keydown',event=>{wheelOnlyExternal=false;if(event.key==='Escape'){clearFromWhitespace();return}if(event.target.closest('.sky-foundation-relationship-row'))return;if(!['Enter',' '].includes(event.key))return;const node=interactive(event);if(!node)return;event.preventDefault();toggleInteractiveNode(node)});
   }
   function whereWhenEditing(){return document.documentElement.dataset.skyWhereWhenEditing==='true'}
   async function refresh(){
