@@ -20,9 +20,7 @@ assert.ok(await page.locator('#skyFoundationWheelMount [data-focus-piece="aspect
 await line.dispatchEvent('click');
 assert.equal(await page.locator('#skyFoundationWheelMount .sky-foundation-wheel.has-isolation').count(),0,'second click must clear');
 const house=page.locator('#skyFoundationWheelMount [data-interactive="house"]').first();
-console.log('HOUSE BEFORE',await house.evaluate(n=>({html:n.outerHTML.slice(0,500),interactive:n.dataset.interactive,focus:n.dataset.focusPiece})));
 await house.evaluate(node=>{node.dispatchEvent(new MouseEvent('click',{bubbles:true,cancelable:true,view:window}));});
-console.log('HOUSE AFTER',await page.evaluate(()=>({wheel:document.querySelector('#skyFoundationWheelMount .sky-foundation-wheel')?.className?.baseVal,selected:[...document.querySelectorAll('.is-selected')].map(n=>n.outerHTML.slice(0,120)),bound:document.querySelector('#skyFoundationRoot')?.dataset.foundationInteractionsV2Bound})));
 assert.equal(await page.locator('#skyFoundationWheelMount .sky-foundation-wheel.has-isolation').count(),1,'house must isolate');
 assert.ok(await page.locator('#skyFoundationWheelMount [data-focus-piece="house"].is-kept').count()>0,'house must stay lit');
 await page.locator('#skyFoundationWheelMount .sky-foundation-wheel').evaluate(node=>node.dispatchEvent(new MouseEvent('click',{bubbles:true,cancelable:true,view:window})));
@@ -77,12 +75,11 @@ assert.ok(touchAspect,'a real aspect stroke must be hit-testable on mobile');
 await page.touchscreen.tap(touchAspect.x,touchAspect.y);
 await page.waitForTimeout(850);
 let state=await focus();
-console.log('PHYSICAL ASPECT STATE',touchAspect,state);
 assert.ok(state.active,'touch aspect must persist after finger release and compatibility-click delay');
 assert.ok(state.keptAspects.length>0,'touch aspect must keep an aspect line');
 assert.ok(state.keptEndpoints.length>=2,'touch aspect must keep both endpoints');
 assert.equal(state.eligibleHidden,0,'unmatched eligible lines must remain visible but dimmed (orb-excluded lines may stay hidden)');
-console.log('PHYSICAL ASPECT',touchAspect,state);
+console.log('Touch aspect: persistent selection and endpoints verified');
 await page.touchscreen.tap(touchAspect.x,touchAspect.y);
 await page.waitForTimeout(250);
 state=await focus();
@@ -92,21 +89,19 @@ assert.ok(touchHouse,'a house sector with eligible aspects must be hit-testable 
 await page.touchscreen.tap(touchHouse.x,touchHouse.y);
 await page.waitForTimeout(850);
 state=await focus();
-console.log('PHYSICAL HOUSE STATE',touchHouse,state,await page.evaluate(()=>({last:window.__mobileTestLastFilter,houses:[...document.querySelectorAll('#skyFoundationWheelMount [data-interactive="house"]')].filter(n=>n.dataset.sky==='A'&&n.dataset.house==='1').map(n=>({class:n.getAttribute('class'),kept:n.classList.contains('is-kept'),selected:n.classList.contains('is-selected')})),mount:document.querySelector('#skyFoundationWheelMount .sky-foundation-wheel')?.getAttribute('class')})));
 assert.ok(state.active,'touch house must persist after release');
 assert.ok(state.selected.some(n=>n.kind==='house'&&n.sky===touchHouse.sky&&n.house===touchHouse.house),'correct house must be selected');
 assert.ok(state.keptAspects.some(n=>n.leftSky===touchHouse.sky&&n.leftHouse===touchHouse.house||n.rightSky===touchHouse.sky&&n.rightHouse===touchHouse.house),'house must keep matching lines');
-console.log('PHYSICAL HOUSE',touchHouse,state);
+console.log('Touch house: matching lines including conjunctions verified');
 const touchSign=await findTouchPoint('sign');
 assert.ok(touchSign,'a sign sector must be hit-testable on mobile');
 await page.touchscreen.tap(touchSign.x,touchSign.y);
 await page.waitForTimeout(850);
 state=await focus();
-console.log('PHYSICAL SIGN STATE',touchSign,state,await page.evaluate(()=>window.__mobileTestLastFilter));
 assert.ok(state.active,'touch sign must persist after release');
 assert.ok(state.selected.some(n=>n.kind==='sign'&&n.sign===touchSign.sign),'touch sign replaces house selection');
 assert.ok(state.keptAspects.some(n=>n.leftSign===touchSign.sign||n.rightSign===touchSign.sign),'sign must keep its matching aspect lines');
-console.log('PHYSICAL SIGN',touchSign,state);
+console.log('Touch sign: replacement and matching lines verified');
 const whitespace=await page.evaluate(()=>{
  const wheel=document.querySelector('#skyFoundationWheelMount .sky-foundation-wheel'),svg=wheel.matches('svg')?wheel:wheel.querySelector('svg');
  const r=svg.getBoundingClientRect();
@@ -124,7 +119,67 @@ await page.waitForTimeout(250);
 state=await focus();
 assert.equal(state.active,false,'touching blank wheel space must clear isolation');
 assert.equal(state.keptAspects.length,0,'blank wheel clear removes kept marks');
-console.log('PHYSICAL BLANK',whitespace,state);
+console.log('Touch whitespace: cleared without hiding wheel verified');
+
+
+/* Verify explicit replacements and toggle-off are exact, across all three
+   relationship scopes, not just the A-A stroke first hit by the finger. */
+const scopeCounts=await page.evaluate(()=>{
+ const wheel=document.querySelector('#skyFoundationWheelMount .sky-foundation-wheel');
+ return Object.fromEntries(['A-A','A-B','B-B'].map(mode=>[mode,[...wheel.querySelectorAll('[data-layer="aspects"] > line.sky-foundation-aspect:not(.sky-foundation-aspect-hit)')].filter(n=>n.dataset.relationshipMode===mode).length]));
+});
+console.log('Rendered relationship scopes',scopeCounts);
+assert.ok(scopeCounts['A-A']>0,'A-A wheel geometry must exist');
+assert.ok(scopeCounts['A-B']>0,'A-B wheel geometry must exist with two skies');
+assert.ok(scopeCounts['B-B']>0,'B-B wheel geometry must exist with two skies');
+
+const activateScope=async(mode)=>{
+ const data=await page.evaluate(mode=>{
+  const wheel=document.querySelector('#skyFoundationWheelMount .sky-foundation-wheel');
+  const candidates=[...wheel.querySelectorAll('[data-layer="aspects"] > line.sky-foundation-aspect:not(.sky-foundation-aspect-hit)')].filter(n=>n.dataset.relationshipMode===mode);
+  const line=candidates.find(n=>getComputedStyle(n).display!=='none'&&!n.hidden);
+  if(!line)return {error:'No eligible '+mode+' line',candidates:candidates.length};
+  const id=(n)=>[n.dataset.leftSky,n.dataset.leftPlacement,n.dataset.aspect,n.dataset.rightSky,n.dataset.rightPlacement].join('|');
+  line.dispatchEvent(new MouseEvent('click',{bubbles:true,cancelable:true,view:window}));
+  return {id:id(line),endpoints:[line.dataset.leftSky+':'+line.dataset.leftPlacement,line.dataset.rightSky+':'+line.dataset.rightPlacement]};
+ },mode);
+ assert.ok(!data.error,JSON.stringify(data));
+ const selection=await focus();
+ assert.ok(selection.active,mode+' click must lock isolation');
+ assert.ok(selection.keptAspects.some(n=>[n.leftSky,n.left,n.aspect,n.rightSky,n.right].join('|')===data.id),mode+' correct line must be kept');
+ for(const endpoint of data.endpoints)assert.ok(selection.keptEndpoints.includes(endpoint),mode+' must keep endpoint '+endpoint);
+ assert.ok(selection.keptAspects.every(n=>[n.leftSky,n.left,n.aspect,n.rightSky,n.right].join('|')===data.id),mode+' must isolate exact relationship, not a family of aspects');
+ return data;
+};
+const ab=await activateScope('A-B');
+const bb=await activateScope('B-B');
+assert.notEqual(ab.id,bb.id,'tapping a different relationship must replace the old one');
+const aa=await activateScope('A-A');
+assert.notEqual(aa.id,bb.id,'A-A must replace B-B without residual endpoints');
+console.log('Exact A-A, A-B and B-B replacement verified');
+
+// Keyboard interaction must use the same authoritative lock and toggle logic.
+const keyboardHouse=page.locator('#skyFoundationWheelMount [data-interactive="house"][data-sky="B"][data-house="2"]').first();
+await keyboardHouse.focus();
+await page.keyboard.press('Enter');
+state=await focus();
+assert.ok(state.active&&state.selected.some(n=>n.kind==='house'&&n.sky==='B'&&n.house==='2'),'Enter activates Sky B house');
+await page.keyboard.press('Enter');
+state=await focus();
+assert.equal(state.active,false,'second Enter clears the same Sky B house');
+console.log('Keyboard House activation and toggle-off verified');
+
+// A dragged finger must not trigger click selection on pointerup.
+const gesture=await findTouchPoint('house');
+assert.ok(gesture,'touch drag needs an available house sector');
+const session=await page.context().newCDPSession(page);
+await session.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x:gesture.x,y:gesture.y}]});
+await session.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[{x:gesture.x+30,y:gesture.y+34}]});
+await session.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});
+await page.waitForTimeout(850);
+state=await focus();
+assert.equal(state.active,false,'a finger drag must not turn into a persistent wheel selection');
+console.log('Touch pan threshold verified');
 
 assert.deepEqual(errors,[],'no browser errors');
 console.log('Sky Chart mobile interaction browser smoke test passed',identity);
