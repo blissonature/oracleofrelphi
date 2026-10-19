@@ -486,9 +486,10 @@
     const rows = Array.from(document.querySelectorAll('.sky-foundation-relationship-row'));
     rows.forEach(row => {
       const index = Number(row.dataset.relationIndex);
-      const visible = !state || keep.matched.has(index);
-      row.hidden = !visible;
-      row.setAttribute('aria-hidden', visible ? 'false' : 'true');
+      // Isolation is a visual emphasis, never a visibility filter. Mutating
+      // row.hidden here races two row-to-line visibility controllers and can
+      // permanently blank the SVG after a central tap clears the selection.
+      row.classList.toggle('is-kept', !!state && keep.matched.has(index));
       row.classList.toggle('is-selected', !!lockedState && lockedState.kind === 'aspect' && lockedState.value === index);
     });
 
