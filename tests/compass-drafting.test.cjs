@@ -138,3 +138,85 @@ test('sample construction and browser restoration preserve the drawing',()=>{
  second.get('undo').click();
  assert.equal(second.state().strokes.length,sample.strokes.length);
 });
+
+test('every snap is optional, independent, and off by default',()=>{
+ const t=mount();const keys=['snapGrid','snapGeometry','snap','snapRadius'];
+ for(const key of keys)assert.equal(Boolean(t.get(key).checked),false,key+' must start off');
+ t.get('snapGrid').checked=true;
+ t.get('snapGrid').emit('change',{target:t.get('snapGrid')});
+ assert.equal(t.state().snapGrid,true);
+ assert.equal(t.state().snapGeometry,false);
+ assert.equal(t.state().snapRadius,false);
+ const reopened=mount(t.data.get(STORAGE_KEY));
+ assert.equal(reopened.get('snapGrid').checked,true);
+ assert.equal(reopened.get('snap').checked,false);
+});
+test('grid snap moves right pivot to nearest 25-unit intersection but leaves old art unchanged',()=>{
+ const t=mount();
+ t.get('circle').click();
+ const ink=JSON.stringify(t.state().strokes);
+ t.drag('pivot',{x:550,y:390},{x:599,y:414});
+ near(t.state().c.x,599);near(t.state().c.y,414);
+ t.get('snapGrid').checked=true;
+ t.get('snapGrid').emit('change',{target:t.get('snapGrid')});
+ t.drag('pivot',{x:599,y:414},{x:599,y:414});
+ near(t.state().c.x,600);near(t.state().c.y,425);
+ assert.equal(JSON.stringify(t.state().strokes),ink);
+});
+test('snap to exact geometry crossings and construction centers',()=>{
+ const init={c:{x:550,y:390},a:0,r:180,strokes:[
+  {points:[{x:100,y:100},{x:700,y:700}],color:'#2347ca',weight:3},
+  {points:[{x:100,y:700},{x:700,y:100}],color:'#2347ca',weight:3}
+ ],snapGeometry:true};
+ const t=mount(JSON.stringify(init));
+ t.drag('pivot',{x:550,y:390},{x:407,y:404});
+ near(t.state().c.x,400);
+ near(t.state().c.y,400);
+ const withCenter={...init,c:{x:550,y:390},strokes:[{points:[{x:100,y:100},{x:160,y:100}],center:{x:500,y:500},color:'#2347ca',weight:3}]};
+ const c=mount(JSON.stringify(withCenter));
+ c.drag('pivot',{x:550,y:390},{x:506,y:504});
+ near(c.state().c.x,500);
+ near(c.state().c.y,500);
+});
+test('angle snap quantizes the left caliper and pencil, but not the free mode',()=>{
+ const t=mount();
+ const c={x:550,y:390},raw=Math.PI*33/180;
+ const leftAng=raw+2.48;
+ const target={x:c.x+126*Math.cos(leftAng),y:c.y+126*Math.sin(leftAng)};
+ t.drag('left',{x:550,y:390},target);
+ near(t.state().a,raw,.00001);
+ t.get('snap').checked=true;t.get('snap').emit('change',{target:t.get('snap')});
+ t.drag('left',{x:550,y:390},target);
+ near(t.state().a,Math.PI/6,.00001);
+ const penTarget={x:c.x+180*Math.cos(raw),y:c.y+180*Math.sin(raw)};
+ t.drag('pen',{x:0,y:0},penTarget);
+ near(t.state().a,Math.PI/6,.00001);
+ assert.equal(t.state().strokes.length,1);
+});
+test('radius snap quantizes holder movement and radius slider to 5 units',()=>{
+ const t=mount();
+ t.get('snapRadius').checked=true;t.get('snapRadius').emit('change',{target:t.get('snapRadius')});
+ const c=t.state().c,angle=t.state().a,raw=132.4;
+ const target={x:c.x+.64*raw*Math.cos(angle),y:c.y+.64*raw*Math.sin(angle)};
+ t.drag('holder',{x:0,y:0},target);
+ near(t.state().r,130);
+ t.get('radius').value='137';t.get('radius').emit('input',{target:t.get('radius')});
+ near(t.state().r,135);
+ t.get('snapRadius').checked=false;t.get('snapRadius').emit('change',{target:t.get('snapRadius')});
+ t.get('radius').value='137';t.get('radius').emit('input',{target:t.get('radius')});
+ near(t.state().r,137);
+});
+test('spiral pen snaps to grid points but a fixed-radius pen retains its circle',()=>{
+ const t=mount();
+ t.get('snapGrid').checked=true;t.get('snapGrid').emit('change',{target:t.get('snapGrid')});
+ const point={x:677,y:453};
+ t.drag('pen',{x:0,y:0},point);
+ near(t.state().r,180);
+ for(const r of radii(t.state().strokes[0].points,t.state().c))near(r,180);
+ t.get('spiral').checked=true;t.get('spiral').emit('change',{target:t.get('spiral')});
+ t.drag('pen',{x:0,y:0},point);
+ const spiral=t.state();
+ near(spiral.strokes.at(-1).points.at(-1).x,675);
+ near(spiral.strokes.at(-1).points.at(-1).y,450);
+ near(spiral.r,Math.hypot(125,60));
+});
