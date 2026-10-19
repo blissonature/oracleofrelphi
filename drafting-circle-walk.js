@@ -96,14 +96,23 @@ function build(n,center={x:550,y:390},radius=180,start=-Math.PI/2){
  return {n,c,r,exact,closureError,method:exact?"Exact construction":"Approximate · closure gap visible",
   steps,exportInk:[base,...outline],exportGuides:guides};
 }
-const api={build,polar,distance};
+function centeredViewportCircle(viewBox,requestedRadius){
+ const parts=typeof viewBox==="string"?viewBox.trim().split(/[\s,]+/).map(Number):
+  viewBox?[viewBox.x,viewBox.y,viewBox.width,viewBox.height].map(Number):[];
+ const [x,y,width,height]=parts;
+ if(parts.length!==4||![x,y,width,height].every(Number.isFinite)||width<=0||height<=0)throw new RangeError("Invalid visible SVG viewport");
+ const requested=Number(requestedRadius);
+ if(!Number.isFinite(requested)||requested<=0)throw new RangeError("Invalid requested circle radius");
+ return {c:pt(x+width/2,y+height/2),r:Math.min(requested,Math.min(width,height)*.35)};
+}
+const api={build,polar,distance,centeredViewportCircle};
 if(typeof module==="object"&&module.exports)module.exports=api;
 root.RelphiCircleWalkMath=api;
 if(typeof document==="undefined"||!root.RelphiDraftingBridge)return;
 const $=id=>document.getElementById(id),SVG="http://www.w3.org/2000/svg",bridge=root.RelphiDraftingBridge;
 const mode=$("walkMode"),manual=$("compassMode"),bar=$("circleWalkToolbar"),panel=$("circleWalkPanel"),overlay=$("circleWalkLayer");
 if(!mode||!manual||!bar||!panel||!overlay)return;
-const art=$("art"),hardware=$("instrument"),guides=$("guides"),hint=$("hint");
+const art=$("art"),hardware=$("instrument"),guides=$("guides"),hint=$("hint"),sheet=$("sheet");
 let enabled=false,division=6,position=0,result=null,origin=null;
 function elem(name,props={}){
  const e=document.createElementNS(SVG,name);
@@ -127,7 +136,11 @@ function shapeToSVG(shape,animated){
 }
 function refresh(){
  if(!enabled)return;
- origin=bridge.getGeometry();
+ const compass=bridge.getGeometry();
+ // The walkthrough is centered in the *visible SVG viewport*, never at
+ // the previous movable compass pivot. Fitting changes only the walkthrough.
+ const frame=centeredViewportCircle(sheet.getAttribute("viewBox"),compass.r);
+ origin={...compass,c:frame.c,r:frame.r};
  overlay.style.setProperty('--cw-ink',origin.color);
  result=build(division,origin.c,origin.r,origin.a);
  position=Math.max(0,Math.min(position,result.steps.length-1));
@@ -174,6 +187,9 @@ document.querySelectorAll("[data-circle-division]").forEach(b=>b.addEventListene
 $("cwPrev").addEventListener("click",()=>{if(position>0){position--;refresh();}});
 $("cwNext").addEventListener("click",()=>{if(result&&position<result.steps.length-1){position++;refresh();}});
 $("cwRestart").addEventListener("click",()=>{position=0;refresh();});
+ if(typeof root.addEventListener==="function"){
+  root.addEventListener("resize",()=>{if(enabled)refresh();});
+ }
 $("cwFinish").addEventListener("click",()=>{
  if(!enabled||!result||position!==result.steps.length-1)return;
  const source=$("cwIncludeGuides").checked?[...result.exportInk,...result.exportGuides]:result.exportInk;
