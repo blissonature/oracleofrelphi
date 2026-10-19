@@ -128,6 +128,7 @@ function shapeToSVG(shape,animated){
 function refresh(){
  if(!enabled)return;
  origin=bridge.getGeometry();
+ overlay.style.setProperty('--cw-ink',origin.color);
  result=build(division,origin.c,origin.r,origin.a);
  position=Math.max(0,Math.min(position,result.steps.length-1));
  const fragment=document.createDocumentFragment();
