@@ -103,6 +103,33 @@ await page.waitForFunction(()=>!!window.__renderedRelationships,{timeout:20000})
 const sheet=await page.evaluate(()=>window.__renderedRelationships);
 assert.ok(sheet.title.includes(wantedA)&&sheet.title.includes(wantedB),'PNG export title must use settings identities');
 assert.ok(sheet.context.includes(wantedA)&&sheet.context.includes(wantedB),'PNG export context must use settings identities');
+// Regression: only Sky A loaded. The copy must not invent a Sky B label.
+const single=await browser.newPage({viewport:{width:390,height:844},isMobile:true,hasTouch:true});
+const singleErrors=[];single.on('pageerror',e=>singleErrors.push(e.message));
+await single.addInitScript(a=>{
+  localStorage.setItem('relphiSkyChartA',JSON.stringify(a));
+  localStorage.removeItem('relphiSkyChartB');
+  localStorage.setItem('relphiSkyChartLastModeV1','single');
+},a);
+await single.goto('http://127.0.0.1:4173/sky-chart.html',{waitUntil:'domcontentloaded'});
+await single.waitForFunction(()=>document.getElementById('skyFoundationRoot')?.getAttribute('aria-busy')==='false',{timeout:30000});
+await single.waitForFunction(()=>document.querySelector('.sky-relationship-copy-button')?.dataset.scopeCopyOverride==='v8',{timeout:15000});
+await single.waitForFunction(()=>document.querySelectorAll('#skyFoundationRelationshipList .sky-foundation-relationship-row').length>0,{timeout:30000});
+await single.evaluate(()=>{
+  window.__copiedRelationships='';
+  document.execCommand=function(command){
+    if(command==='copy'){window.__copiedRelationships=document.activeElement?.value||'';return true}
+    return false;
+  };
+});
+await single.locator('.sky-relationship-copy-button').click();
+await single.waitForFunction(()=>String(window.__copiedRelationships||'').startsWith('Relationships'),{timeout:10000});
+const singleCopy=await single.evaluate(()=>window.__copiedRelationships);
+assert.ok(singleCopy.includes('Sky A: '+wantedA),'single-sky copy must identify the populated Sky A');
+assert.ok(!singleCopy.includes('Sky B:'),'single-sky copy must omit Sky B altogether');
+assert.ok(singleCopy.includes('A↔A'),'single-sky copy must retain Intrasky relationships');
+assert.deepEqual(singleErrors,[],'single-sky browser must have no errors');
+await single.close();
 assert.deepEqual(errors,[],'no browser errors');
 console.log('PASS descriptive Sky labels, unknown-time title, saved names, Relationships copy and PNG header');
 await browser.close();
