@@ -352,7 +352,25 @@
     if (kind === 'house') return { kind, sky:node.dataset.sky, value:Number(node.dataset.house) };
     if (kind === 'sign') return { kind, sky:null, value:Number(node.dataset.sign) };
     if (kind === 'placement') return { kind, sky:node.dataset.sky, value:node.dataset.placement };
-    if (kind === 'aspect') return { kind, sky:null, value:Number(node.dataset.relationIndex) };
+    if (kind === 'aspect') {
+      // The relationship list is the canonical render-address owner. A wheel line's
+      // index may be stale or belong to a different A-A/B-B enumeration.
+      const identity = candidate => {
+        const d = candidate.dataset;
+        const left = d.leftPlacement, right = d.rightPlacement, aspect = d.aspect;
+        if (!left || !right || !aspect) return '';
+        const mode = d.relationshipMode || (d.leftSky === d.rightSky ? d.leftSky + '-' + d.rightSky : 'A-B');
+        const endpoints = mode === 'A-A' || mode === 'B-B' ? [left,right].sort() : [left,right];
+        return mode + ':' + endpoints[0] + ':' + aspect + ':' + endpoints[1];
+      };
+      const key = identity(node);
+      const matched = key && Array.from(document.querySelectorAll('.sky-foundation-relationship-row[data-relation-index]'))
+        .find(row => identity(row) === key);
+      const address = matched?.dataset.relationIndex ?? node.dataset.relationIndex;
+      const index = Number(address);
+      if (!Number.isSafeInteger(index) || index < 0 || !current?.relations?.[index]) return null;
+      return { kind, sky:null, value:index };
+    }
     return null;
   }
 
