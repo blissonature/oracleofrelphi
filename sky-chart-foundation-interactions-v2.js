@@ -361,7 +361,13 @@
     }
     if(wheelOnlyExternal)return;
     ['A','B'].forEach(slot=>{const panel=document.getElementById(slot==='A'?'skyFoundationA':'skyFoundationB');if(!panel)return;panel.classList.toggle('has-ledger-isolation',!!filterState);panel.querySelectorAll('.sky-foundation-row[data-placement]').forEach(row=>{row.classList.toggle('is-kept',!!filterState&&filterKeep.placements.has(`${slot}:${row.dataset.placement}`));row.classList.toggle('is-selected',!!lockedState&&matchesNode(row,lockedState));row.classList.toggle('is-hovered',!!hoverState&&!lockedState&&matchesNode(row,hoverState))})});
-    document.querySelectorAll('.sky-foundation-relationship-row').forEach(row=>{const visible=!filterState||filterKeep.matched.has(String(row.dataset.relationIndex||''));row.hidden=!visible;row.setAttribute('aria-hidden',visible?'false':'true')});
+    // Isolation is emphasis, not filtering. The previous row.hidden write
+    // caused the relationship-state contract to hide all SVG aspect lines
+    // while the wheel could still retain highlighted houses and endpoints.
+    // Only actual filter controls may change relationship row visibility.
+    document.querySelectorAll('.sky-foundation-relationship-row').forEach(row=>{
+      row.classList.toggle('is-kept',!!filterState&&filterKeep.matched.has(String(row.dataset.relationIndex||'')));
+    });
     const allRows=[...document.querySelectorAll('#skyFoundationRelationshipList>.sky-foundation-relationship-row[data-relation-index]')],visibleCount=filterState?filterKeep.matched.size:allRows.filter(row=>rowEligibleForWheel(row)).length,totalCount=allRows.length,count=document.getElementById('skyFoundationRelationshipCount'),empty=document.getElementById('skyFoundationRelationshipEmpty'),clear=document.getElementById('skyFoundationClearIsolation');if(count)count.textContent=`${visibleCount}/${totalCount}`;if(empty)empty.hidden=visibleCount!==0;if(clear)clear.hidden=!(lockedState||rowLockedState);
     const relationshipIndexes=filterState?Array.from(filterKeep.matched):allRows.map(row=>String(row.dataset.relationIndex||'')).filter(Boolean);
     window.dispatchEvent(new CustomEvent('relphi:sky-foundation-filter-changed',{detail:{state:filterState?{...filterState,mode:lockedState?'selected':'hover'}:null,origin:lockedState&&selectionOrigin?{...selectionOrigin}:null,relationshipIndexes}}));
@@ -383,7 +389,7 @@
     const node=event.target.closest?.('[data-interactive]');
     if(node&&root.contains(node)){
       if(node.dataset.interactive!=='aspect')return node;
-      return nearestAspect(event)||node;
+      return nearestAspect(event); // Never fall back to an invisible hit stroke.
     }
     const wheel=event.target.closest?.('#skyFoundationWheelMount .sky-foundation-wheel');
     if(wheel&&root.contains(event.target))return nearestAspect(event);
@@ -475,7 +481,52 @@
   });
   function bind(){
     const root=document.getElementById('skyFoundationRoot');if(!root||root.dataset.foundationInteractionsV2Bound==='true')return;root.dataset.foundationInteractionsV2Bound='true';
+    // Touch is a discrete tap, not hover. iOS can synthesize pointerover,
+    // pointermove and focus before the click, making a temporary isolation
+    // look selected and then toggle off on finger release.
+    let touchActivation=false, touchAspectActivated=false;
+    let lastTouchSelection=null;
+    // Capture the compatibility click before other wheel listeners can
+    // interpret it as a second activation after the pointerdown selection.
+    document.addEventListener('click',event=>{
+      const last=lastTouchSelection;
+      if(!last||performance.now()-last.time>900)return;
+      if(Math.hypot(event.clientX-last.x,event.clientY-last.y)>32)return;
+      lastTouchSelection=null;
+      touchAspectActivated=false;
+      event.preventDefault();
+      event.stopImmediatePropagation();
+    },true);
+    root.addEventListener('pointerdown',event=>{
+      touchActivation=event.pointerType==='touch'||event.pointerType==='pen';
+      touchAspectActivated=false;
+      if(!touchActivation)return;
+      lastTouchSelection=null;
+      hoverState=null;rowHoverState=null;
+      // A center tap dismisses a locked selection on pointerdown, before
+      // SVG hit strokes or the synthesized click can reinterpret the tap.
+      if(lockedState&&event.target.closest?.('#skyFoundationWheelMount')){
+        const wheel=document.querySelector('#skyFoundationWheelMount .sky-foundation-wheel');
+        const rect=wheel?.getBoundingClientRect();
+        if(rect&&Math.hypot(event.clientX-(rect.left+rect.width/2),event.clientY-(rect.top+rect.height/2))<Math.min(rect.width,rect.height)*0.27){
+          touchAspectActivated=true;lastTouchSelection={time:performance.now(),x:event.clientX,y:event.clientY};clearFromWhitespace();return;
+        }
+      }
+      const hit=event.target.closest?.('#skyFoundationWheelMount [data-interactive="aspect"]');
+      if(!hit)return;
+      const next=specFrom(hit);
+      if(!next?.value)return;
+      // Commit touch selection on pointerdown. A synthesized click after
+      // pointerup must not toggle this same selection straight back off.
+      touchAspectActivated=true;
+      lastTouchSelection={time:performance.now(),x:event.clientX,y:event.clientY};
+      rowLockedState=null;rowHoverState=null;
+      if(same(lockedState,next)){lockedState=null;selectionOrigin=null}
+      else{lockedState=next;selectionOrigin=originFromNode(hit,next)}
+      applyState();
+    },true);
     root.addEventListener('pointerover',event=>{
+      if(touchActivation||event.pointerType==='touch'||event.pointerType==='pen')return;
       wheelOnlyExternal=false;
       const row=event.target.closest?.('.sky-foundation-relationship-row[data-relation-index]');
       if(row)return;
@@ -483,27 +534,45 @@
       const node=interactive(event);if(!node||node.contains(event.relatedTarget))return;
       rowHoverState=null;hoverState=specFrom(node);applyState()
     });
-    root.addEventListener('pointermove',event=>{if(lockedState||!event.target.closest?.('#skyFoundationWheelMount'))return;const direct=event.target.closest?.('[data-interactive]:not([data-interactive="aspect"])');if(direct)return;rowHoverState=null;const next=specFrom(nearestAspect(event));if(same(hoverState,next)||(!hoverState&&!next))return;hoverState=next;applyState()});
+    root.addEventListener('pointermove',event=>{if(touchActivation||event.pointerType==='touch'||event.pointerType==='pen')return;if(lockedState||!event.target.closest?.('#skyFoundationWheelMount'))return;const direct=event.target.closest?.('[data-interactive]:not([data-interactive="aspect"])');if(direct)return;rowHoverState=null;const next=specFrom(nearestAspect(event));if(same(hoverState,next)||(!hoverState&&!next))return;hoverState=next;applyState()});
     root.addEventListener('pointerout',event=>{
+      if(touchActivation||event.pointerType==='touch'||event.pointerType==='pen')return;
       const row=event.target.closest?.('.sky-foundation-relationship-row[data-relation-index]');
       if(row)return;
       if(lockedState)return;
       const node=interactive(event);if(!node||node.contains(event.relatedTarget))return;hoverState=null;applyState()
     });
     root.addEventListener('focusin',event=>{
+      if(touchActivation)return;
       const row=event.target.closest?.('.sky-foundation-relationship-row[data-relation-index]');
       if(row)return;
       if(lockedState)return;const node=interactive(event);if(!node)return;rowHoverState=null;hoverState=specFrom(node);applyState()
     });
     root.addEventListener('focusout',event=>{
+      if(touchActivation)return;
       const row=event.target.closest?.('.sky-foundation-relationship-row[data-relation-index]');
       if(row)return;
       if(lockedState)return;const node=interactive(event);if(!node||node.contains(event.relatedTarget))return;hoverState=null;applyState()
     });
     root.addEventListener('click',event=>{
+      if(touchAspectActivated){touchAspectActivated=false;event.preventDefault();return;}
       wheelOnlyExternal=false;
       const row=event.target.closest?.('.sky-foundation-relationship-row[data-relation-index]');
       if(row)return;
+      // Any tap in the open wheel center dismisses the current isolation.
+      // Do not reinterpret it as an aspect hit, even when an invisible
+      // 28px stroke overlaps the tap coordinate.
+      if(lockedState&&event.target.closest?.('#skyFoundationWheelMount')){
+        const wheel=document.querySelector('#skyFoundationWheelMount .sky-foundation-wheel');
+        const rect=wheel?.getBoundingClientRect();
+        if(rect){
+          const cx=rect.left+rect.width/2,cy=rect.top+rect.height/2;
+          const radius=Math.min(rect.width,rect.height)*0.27;
+          if(Math.hypot(event.clientX-cx,event.clientY-cy)<radius){
+            event.preventDefault();clearFromWhitespace();return;
+          }
+        }
+      }
       const node=interactive(event);if(node){event.preventDefault();rowLockedState=null;rowHoverState=null;const next=specFrom(node);if(same(lockedState,next)){lockedState=null;selectionOrigin=null}else{lockedState=next;selectionOrigin=originFromNode(node,next)}hoverState=null;applyState();return}if(clearableWhitespace(event))clearFromWhitespace()
     });
     root.addEventListener('keydown',event=>{wheelOnlyExternal=false;if(event.key==='Escape'){clearFromWhitespace();return}if(event.target.closest('.sky-foundation-relationship-row'))return;if(!['Enter',' '].includes(event.key))return;const node=interactive(event);if(!node)return;event.preventDefault();rowLockedState=null;rowHoverState=null;const next=specFrom(node);if(same(lockedState,next)){lockedState=null;selectionOrigin=null}else{lockedState=next;selectionOrigin=originFromNode(node,next)}hoverState=null;applyState()});

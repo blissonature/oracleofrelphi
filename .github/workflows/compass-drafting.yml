@@ -1,0 +1,27 @@
+name: Compass drafting checks
+on:
+  pull_request:
+    paths:
+      - drafting-studio.html
+      - tools.html
+      - tests/compass-drafting.test.cjs
+      - tests/drafting-circle-walk.test.cjs
+      - drafting-circle-walk.js
+      - .github/workflows/compass-drafting.yml
+  push:
+    branches: [main]
+    paths:
+      - drafting-studio.html
+      - tests/compass-drafting.test.cjs
+      - tests/drafting-circle-walk.test.cjs
+      - drafting-circle-walk.js
+jobs:
+  compass-drafting:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check geometry and pointer controls
+        run: node --test tests/compass-drafting.test.cjs tests/drafting-circle-walk.test.cjs

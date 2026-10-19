@@ -9,8 +9,6 @@
   let queued = false;
   let fitting = false;
   let placementSyncTimer = 0;
-  let relationshipVisibilityQueued = false;
-  let synchronizingRelationshipVisibility = false;
 
   const FILTER_HIDDEN_CLASSES = Object.freeze([
     'sky-foundation-single-sky-cross-hidden',
@@ -79,44 +77,11 @@
     placementSyncTimer = setTimeout(dispatchSettledPlacementState, 250);
   }
 
-  function relationshipRowVisible(row) {
-    if (!row || row.hidden) return false;
-    if (FILTER_HIDDEN_CLASSES.some(className => row.classList.contains(className))) return false;
-    return getComputedStyle(row).display !== 'none';
-  }
-
-  function synchronizeRelationshipVisibility() {
-    relationshipVisibilityQueued = false;
-    if (synchronizingRelationshipVisibility) return;
-    synchronizingRelationshipVisibility = true;
-
-    const rows = new Map(
-      Array.from(document.querySelectorAll('.sky-foundation-relationship-row[data-relation-index]'))
-        .map(row => [row.dataset.relationIndex, row])
-    );
-
-    let visibleLines = 0;
-    let totalLines = 0;
-    document.querySelectorAll('[data-layer="aspects"] > .sky-foundation-aspect[data-relation-index]').forEach(line => {
-      totalLines += 1;
-      const row = rows.get(line.dataset.relationIndex);
-      const visible = relationshipRowVisible(row);
-      const nextDisplay = visible ? '' : 'none';
-      if (line.hidden === visible) line.hidden = !visible;
-      if (line.style.display !== nextDisplay) line.style.display = nextDisplay;
-      line.classList.toggle('sky-chart-relationship-filter-hidden', !visible);
-      line.setAttribute('aria-hidden', visible ? 'false' : 'true');
-      if (visible) visibleLines += 1;
-    });
-
-    document.documentElement.dataset.skyVisibleRelationshipLines = `${visibleLines}/${totalLines}`;
-    synchronizingRelationshipVisibility = false;
-  }
-
+  // The relationship-state contract is the sole owner of SVG line visibility.
+  // Do not mirror row visibility here: the two controllers used to overwrite
+  // each other's inline display/hidden state during isolation dismissal.
   function scheduleRelationshipVisibility() {
-    if (relationshipVisibilityQueued) return;
-    relationshipVisibilityQueued = true;
-    requestAnimationFrame(synchronizeRelationshipVisibility);
+    // Visibility is synchronized by sky-chart-relationship-state-contract-v1.js.
   }
 
   function schedule() {
@@ -136,22 +101,6 @@
     document.addEventListener('change', event => {
       if (event.target.closest?.('[data-placement-choice]')) schedulePlacementStateSync();
       if (event.target.closest?.('.sky-chart-filter-bar')) scheduleRelationshipVisibility();
-    });
-
-    const observer = new MutationObserver(records => {
-      fitPlacementMenu();
-      if (synchronizingRelationshipVisibility) return;
-      const affectsRelationships = records.some(record => {
-        const target = record.target?.nodeType === 1 ? record.target : record.target?.parentElement;
-        return !!target?.closest?.('#skyFoundationRelationships,[data-layer="aspects"]');
-      });
-      if (affectsRelationships) scheduleRelationshipVisibility();
-    });
-    observer.observe(document.documentElement, {
-      childList: true,
-      subtree: true,
-      attributes: true,
-      attributeFilter: ['class', 'hidden', 'style']
     });
 
     window.addEventListener('resize', schedule);
