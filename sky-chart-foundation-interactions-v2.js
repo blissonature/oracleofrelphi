@@ -271,7 +271,7 @@
     // rows can be filtered, reordered or temporarily hidden independently of lines.
     // Build the visible endpoints from the actual line being displayed so an
     // isolated aspect never loses its two placements.
-    if(state&&(state.kind==='placement'||state.kind==='aspect')){
+    if(state&&(state.kind==='placement'||state.kind==='aspect'||state.kind==='house'||state.kind==='sign')){
       const lineVisible=line=>{
         if(line.hidden||line.style.display==='none')return false;
         const skip=['sky-chart-filter-hidden','sky-chart-orb-hidden','sky-orb-filter-hidden',
@@ -286,7 +286,9 @@
         const left=String(line.dataset.leftPlacement||''),right=String(line.dataset.rightPlacement||'');
         if(!left||!right||!identity)return;
         const matches=state.kind==='aspect'?identity===String(state.value):
-          (slots.left===state.sky&&left===state.value)||(slots.right===state.sky&&right===state.value);
+          state.kind==='placement'?(slots.left===state.sky&&left===state.value)||(slots.right===state.sky&&right===state.value):
+          state.kind==='house'?(slots.left===state.sky&&Number(line.dataset.leftHouse)===state.value)||(slots.right===state.sky&&Number(line.dataset.rightHouse)===state.value):
+          Number(line.dataset.leftSign)===state.value||Number(line.dataset.rightSign)===state.value;
         if(!matches)return;
         relationships.add(identity);
         for(const [slot,id,side] of [[slots.left,left,'left'],[slots.right,right,'right']]){
@@ -361,7 +363,13 @@
     }
     if(wheelOnlyExternal)return;
     ['A','B'].forEach(slot=>{const panel=document.getElementById(slot==='A'?'skyFoundationA':'skyFoundationB');if(!panel)return;panel.classList.toggle('has-ledger-isolation',!!filterState);panel.querySelectorAll('.sky-foundation-row[data-placement]').forEach(row=>{row.classList.toggle('is-kept',!!filterState&&filterKeep.placements.has(`${slot}:${row.dataset.placement}`));row.classList.toggle('is-selected',!!lockedState&&matchesNode(row,lockedState));row.classList.toggle('is-hovered',!!hoverState&&!lockedState&&matchesNode(row,hoverState))})});
-    document.querySelectorAll('.sky-foundation-relationship-row').forEach(row=>{const visible=!filterState||filterKeep.matched.has(String(row.dataset.relationIndex||''));row.hidden=!visible;row.setAttribute('aria-hidden',visible?'false':'true')});
+    // Isolation is emphasis, not filtering. The previous row.hidden write
+    // caused the relationship-state contract to hide all SVG aspect lines
+    // while the wheel could still retain highlighted houses and endpoints.
+    // Only actual filter controls may change relationship row visibility.
+    document.querySelectorAll('.sky-foundation-relationship-row').forEach(row=>{
+      row.classList.toggle('is-kept',!!filterState&&filterKeep.matched.has(String(row.dataset.relationIndex||'')));
+    });
     const allRows=[...document.querySelectorAll('#skyFoundationRelationshipList>.sky-foundation-relationship-row[data-relation-index]')],visibleCount=filterState?filterKeep.matched.size:allRows.filter(row=>rowEligibleForWheel(row)).length,totalCount=allRows.length,count=document.getElementById('skyFoundationRelationshipCount'),empty=document.getElementById('skyFoundationRelationshipEmpty'),clear=document.getElementById('skyFoundationClearIsolation');if(count)count.textContent=`${visibleCount}/${totalCount}`;if(empty)empty.hidden=visibleCount!==0;if(clear)clear.hidden=!(lockedState||rowLockedState);
     const relationshipIndexes=filterState?Array.from(filterKeep.matched):allRows.map(row=>String(row.dataset.relationIndex||'')).filter(Boolean);
     window.dispatchEvent(new CustomEvent('relphi:sky-foundation-filter-changed',{detail:{state:filterState?{...filterState,mode:lockedState?'selected':'hover'}:null,origin:lockedState&&selectionOrigin?{...selectionOrigin}:null,relationshipIndexes}}));
@@ -383,7 +391,7 @@
     const node=event.target.closest?.('[data-interactive]');
     if(node&&root.contains(node)){
       if(node.dataset.interactive!=='aspect')return node;
-      return nearestAspect(event)||node;
+      return nearestAspect(event); // Never fall back to an invisible hit stroke.
     }
     const wheel=event.target.closest?.('#skyFoundationWheelMount .sky-foundation-wheel');
     if(wheel&&root.contains(event.target))return nearestAspect(event);
@@ -475,7 +483,61 @@
   });
   function bind(){
     const root=document.getElementById('skyFoundationRoot');if(!root||root.dataset.foundationInteractionsV2Bound==='true')return;root.dataset.foundationInteractionsV2Bound='true';
+    // Touch is a discrete tap, not hover. iOS can synthesize pointerover,
+    // pointermove and focus before the click, making a temporary isolation
+    // look selected and then toggle off on finger release.
+    // A finger gesture must be committed once, on touchend, not on
+    // pointerdown (which can be canceled by scrolling) or hover.
+    let touchActivation=false;
+    let touchStart=null;
+    root.addEventListener('touchstart',event=>{
+      const touch=event.changedTouches?.[0];
+      if(!touch)return;
+      touchActivation=true;
+      touchStart={id:touch.identifier,x:touch.clientX,y:touch.clientY,target:event.target};
+      hoverState=null;rowHoverState=null;
+    },{passive:true,capture:true});
+    root.addEventListener('touchcancel',()=>{touchStart=null;},true);
+    root.addEventListener('touchend',event=>{
+      if(!touchStart)return;
+      const touch=Array.from(event.changedTouches||[]).find(t=>t.identifier===touchStart.id);
+      if(!touch)return;
+      const start=touchStart;touchStart=null;
+      if(Math.hypot(touch.clientX-start.x,touch.clientY-start.y)>14)return;
+      const wheel=event.target.closest?.('#skyFoundationWheelMount');
+      if(!wheel)return;
+      const graphic=wheel.querySelector('.sky-foundation-wheel');
+      const rect=graphic?.getBoundingClientRect();
+      if(!rect)return;
+      // The center-clear region geometrically overlaps aspect lines.
+      // Resolve an aspect hit BEFORE interpreting a tap as whitespace.
+      const target=start.target?.closest?.('[data-layer="aspects"] > line');
+      let hit=null;
+      if(target){
+        const candidate=target.classList.contains('sky-foundation-aspect-hit')
+          ?target.previousElementSibling:target;
+        if(candidate?.matches?.('line.sky-foundation-aspect:not(.sky-foundation-aspect-hit)')&&getComputedStyle(candidate).display!=='none')hit=candidate;
+      }
+      if(!hit)hit=nearestAspect({clientX:touch.clientX,clientY:touch.clientY});
+      if(hit){
+        const next=specFrom(hit);
+        if(!next?.value)return;
+        rowLockedState=null;rowHoverState=null;
+        if(same(lockedState,next)){lockedState=null;selectionOrigin=null}
+        else{lockedState=next;selectionOrigin=originFromNode(hit,next)}
+        hoverState=null;applyState();
+      }else{
+        const radius=Math.min(rect.width,rect.height)*0.27;
+        const inCenter=Math.hypot(touch.clientX-(rect.left+rect.width/2),touch.clientY-(rect.top+rect.height/2))<radius;
+        if(!inCenter)return;
+        if(lockedState)clearFromWhitespace();
+      }
+      // Prevent iOS from delivering a second synthetic click that toggles
+      // or clears the selection after touchend.
+      event.preventDefault();
+    },{passive:false,capture:true});
     root.addEventListener('pointerover',event=>{
+      if(touchActivation||event.pointerType==='touch'||event.pointerType==='pen')return;
       wheelOnlyExternal=false;
       const row=event.target.closest?.('.sky-foundation-relationship-row[data-relation-index]');
       if(row)return;
@@ -483,19 +545,22 @@
       const node=interactive(event);if(!node||node.contains(event.relatedTarget))return;
       rowHoverState=null;hoverState=specFrom(node);applyState()
     });
-    root.addEventListener('pointermove',event=>{if(lockedState||!event.target.closest?.('#skyFoundationWheelMount'))return;const direct=event.target.closest?.('[data-interactive]:not([data-interactive="aspect"])');if(direct)return;rowHoverState=null;const next=specFrom(nearestAspect(event));if(same(hoverState,next)||(!hoverState&&!next))return;hoverState=next;applyState()});
+    root.addEventListener('pointermove',event=>{if(touchActivation||event.pointerType==='touch'||event.pointerType==='pen')return;if(lockedState||!event.target.closest?.('#skyFoundationWheelMount'))return;const direct=event.target.closest?.('[data-interactive]:not([data-interactive="aspect"])');if(direct)return;rowHoverState=null;const next=specFrom(nearestAspect(event));if(same(hoverState,next)||(!hoverState&&!next))return;hoverState=next;applyState()});
     root.addEventListener('pointerout',event=>{
+      if(touchActivation||event.pointerType==='touch'||event.pointerType==='pen')return;
       const row=event.target.closest?.('.sky-foundation-relationship-row[data-relation-index]');
       if(row)return;
       if(lockedState)return;
       const node=interactive(event);if(!node||node.contains(event.relatedTarget))return;hoverState=null;applyState()
     });
     root.addEventListener('focusin',event=>{
+      if(touchActivation)return;
       const row=event.target.closest?.('.sky-foundation-relationship-row[data-relation-index]');
       if(row)return;
       if(lockedState)return;const node=interactive(event);if(!node)return;rowHoverState=null;hoverState=specFrom(node);applyState()
     });
     root.addEventListener('focusout',event=>{
+      if(touchActivation)return;
       const row=event.target.closest?.('.sky-foundation-relationship-row[data-relation-index]');
       if(row)return;
       if(lockedState)return;const node=interactive(event);if(!node||node.contains(event.relatedTarget))return;hoverState=null;applyState()
@@ -504,6 +569,20 @@
       wheelOnlyExternal=false;
       const row=event.target.closest?.('.sky-foundation-relationship-row[data-relation-index]');
       if(row)return;
+      // Any tap in the open wheel center dismisses the current isolation.
+      // Do not reinterpret it as an aspect hit, even when an invisible
+      // 28px stroke overlaps the tap coordinate.
+      if(lockedState&&event.target.closest?.('#skyFoundationWheelMount')){
+        const wheel=document.querySelector('#skyFoundationWheelMount .sky-foundation-wheel');
+        const rect=wheel?.getBoundingClientRect();
+        if(rect){
+          const cx=rect.left+rect.width/2,cy=rect.top+rect.height/2;
+          const radius=Math.min(rect.width,rect.height)*0.27;
+          if(Math.hypot(event.clientX-cx,event.clientY-cy)<radius){
+            event.preventDefault();clearFromWhitespace();return;
+          }
+        }
+      }
       const node=interactive(event);if(node){event.preventDefault();rowLockedState=null;rowHoverState=null;const next=specFrom(node);if(same(lockedState,next)){lockedState=null;selectionOrigin=null}else{lockedState=next;selectionOrigin=originFromNode(node,next)}hoverState=null;applyState();return}if(clearableWhitespace(event))clearFromWhitespace()
     });
     root.addEventListener('keydown',event=>{wheelOnlyExternal=false;if(event.key==='Escape'){clearFromWhitespace();return}if(event.target.closest('.sky-foundation-relationship-row'))return;if(!['Enter',' '].includes(event.key))return;const node=interactive(event);if(!node)return;event.preventDefault();rowLockedState=null;rowHoverState=null;const next=specFrom(node);if(same(lockedState,next)){lockedState=null;selectionOrigin=null}else{lockedState=next;selectionOrigin=originFromNode(node,next)}hoverState=null;applyState()});

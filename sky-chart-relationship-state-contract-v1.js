@@ -67,11 +67,23 @@
     if (applying) return;
     applying = true;
 
-    const rows = new Map(
-      Array.from(document.querySelectorAll(
-        '.sky-foundation-relationship-row[data-relation-index]'
-      )).map(row => [row.dataset.relationIndex, row])
-    );
+    // Indices are local to their A-B / A-A / B-B renderers and collide.
+    // Resolve each SVG line against its relationship's actual endpoints.
+    const identity = node => {
+      const d = node.dataset;
+      const mode = String(d.relationshipMode || 'A-B').toUpperCase();
+      const leftSky = d.leftSky || (mode === 'B-B' ? 'B' : 'A');
+      const rightSky = d.rightSky || (mode === 'A-A' ? 'A' : 'B');
+      const left = String(d.leftPlacement || ''), right = String(d.rightPlacement || '');
+      if (!left || !right || !d.aspect) return '';
+      const pair = leftSky === rightSky ? [left, right].sort() : [left, right];
+      return leftSky + ':' + pair[0] + '|' + d.aspect + '|' + rightSky + ':' + pair[1];
+    };
+    const rows = new Map();
+    document.querySelectorAll('.sky-foundation-relationship-row[data-relation-index]').forEach(row => {
+      const key = identity(row);
+      if (key) rows.set(key, row);
+    });
 
     let visibleRows = 0;
     let visibleLines = 0;
@@ -83,7 +95,7 @@
     document.querySelectorAll(
       '.sky-foundation-aspect[data-relation-index]'
     ).forEach(line => {
-      const visible = rowVisible(rows.get(line.dataset.relationIndex));
+      const visible = rowVisible(rows.get(identity(line)));
       if (line.hidden === visible) line.hidden = !visible;
       line.classList.toggle('sky-chart-relationship-filter-hidden', !visible);
       if (line.getAttribute('aria-hidden') !== (visible ? 'false' : 'true')) line.setAttribute('aria-hidden', visible ? 'false' : 'true');
