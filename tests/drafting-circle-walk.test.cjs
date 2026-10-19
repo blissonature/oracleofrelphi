@@ -84,3 +84,69 @@ test('reject impossible division counts or invalid radii rather than generating 
  assert.throws(()=>build(5,{x:0,y:0},0),RangeError);
  assert.throws(()=>build(6,{x:Infinity,y:0},150),RangeError);
 });
+
+test('walk mode changes steps without modifying old ink, and commits only on request',()=>{
+ class E {
+  constructor(){this.handlers={};this.children=[];this.attrs={};this.style={setProperty(k,v){this[k]=v}};this.dataset={};this.hidden=false;this.disabled=false;this.textContent='';}
+  setAttribute(k,v){this.attrs[k]=String(v);}
+  getAttribute(k){return this.attrs[k];}
+  addEventListener(k,fn){(this.handlers[k]??=[]).push(fn);}
+  click(){(this.handlers.click||[]).forEach(fn=>fn({target:this}));}
+  appendChild(child){this.children.push(child);}
+  replaceChildren(...children){this.children=children;}
+ }
+ const nodes=new Map(),get=id=>{if(!nodes.has(id))nodes.set(id,new E());return nodes.get(id)};
+ const divisions=Array.from({length:6},(_,i)=>{const el=new E();el.dataset.circleDivision=String(i+2);return el});
+ const documentMock={
+  getElementById:get,
+  querySelectorAll(q){return q==='[data-circle-division]'?divisions:[]},
+  createElementNS:()=>new E(),createDocumentFragment:()=>new E()
+ };
+ const initial={points:[{x:20,y:20},{x:30,y:30}],color:'#111',weight:1};
+ const ink=[initial],bridge={
+  getGeometry(){return {c:{x:550,y:390},r:180,a:-Math.PI/2,color:'#dc1f18',weight:2}},
+  addStrokes(strokes){ink.push(...strokes)}
+ };
+ const modulePath=require.resolve('../drafting-circle-walk.js');
+ const oldWindow=global.window,oldDocument=global.document;
+ try{
+  global.window={RelphiDraftingBridge:bridge};
+  global.document=documentMock;
+  delete require.cache[modulePath];
+  require(modulePath);
+  get('walkMode').click();
+  assert.equal(get('circleWalkToolbar').hidden,false);
+  assert.equal(get('circleWalkPanel').hidden,false);
+  assert.equal(get('compassPanel').hidden,true);
+  assert.equal(get('compassGeometryPanel').hidden,true);
+  assert.equal(get('cwFinish').disabled,true);
+  assert.equal(get('circleWalkLayer').style['--cw-ink'],'#dc1f18');
+  assert.equal(ink.length,1);
+  get('cwNext').click();
+  assert.match(get('cwPosition').textContent,/Step 2/);
+  get('cwPrev').click();
+  assert.match(get('cwPosition').textContent,/Step 1/);
+  // Switch to the deliberately approximate sevenfold journey.
+  divisions[5].click();
+  assert.match(get('cwMethod').textContent,/Approximate/);
+  assert.match(get('cwNote').textContent,/closure error/i);
+  for(let i=0;i<30&&!get('cwNext').disabled;i++)get('cwNext').click();
+  assert.equal(get('cwFinish').disabled,false);
+  assert.equal(ink.length,1);
+  get('cwFinish').click();
+  assert.equal(ink.length,3);
+  assert.equal(ink[0],initial);
+  assert.equal(ink[1].color,'#dc1f18');
+  assert.equal(ink[2].color,'#dc1f18');
+  assert.ok(distance(ink[2].points[0],ink[2].points.at(-1))>1,'heptagon must remain open');
+  get('compassMode').click();
+  assert.equal(get('circleWalkToolbar').hidden,true);
+  assert.equal(get('compassPanel').hidden,false);
+  assert.equal(get('instrument').style.display,'');
+  assert.equal(get('art').style.opacity,'');
+ }finally{
+  delete require.cache[modulePath];
+  if(oldWindow===undefined)delete global.window;else global.window=oldWindow;
+  if(oldDocument===undefined)delete global.document;else global.document=oldDocument;
+ }
+});
