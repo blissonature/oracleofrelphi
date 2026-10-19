@@ -494,7 +494,7 @@
   }
   // One touch-to-click adapter owned by the foundation controller. Touch hover is
   // never selection state; one completed tap produces exactly one click.
-  let touchGesture=null,ignoreNativeClickUntil=0;
+  let touchGesture=null,ignoreNativeClickUntil=0,lastTouchPoint=null;
   function touchInWheel(event){return !!event.target.closest?.('#skyFoundationWheelMount .sky-foundation-wheel')}
   function beginTouch(event){
     if(!['touch','pen'].includes(event.pointerType)||!touchInWheel(event))return;
@@ -509,6 +509,7 @@
     if(!touchGesture||touchGesture.id!==event.pointerId)return;
     const gesture=touchGesture;touchGesture=null;
     ignoreNativeClickUntil=performance.now()+750;
+    lastTouchPoint={x:event.clientX,y:event.clientY};
     if(gesture.moved)return;
     // A legacy handler can emit a click *inside the same pointerup dispatch*
     // before this listener executes. If it has already changed the foundation
