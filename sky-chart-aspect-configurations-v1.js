@@ -155,34 +155,44 @@ function configurationApex(pattern,aspects){
   const matches=[...counts].filter(([,count])=>count===2);
   return matches.length===1?matches[0][0]:null;
 }
+const CONFIG_SIGN_TONE=Object.freeze(['assertive and immediate','steady and embodied','curious and conversational','protective and attached','expressive and visible','discerning and practical','reciprocal and comparative','intense and investigative','exploratory and principled','disciplined and accountable','independent and collective','permeable and imaginative']);
+const CONFIG_HOUSE_FIELD=Object.freeze(['','identity and personal initiative','resources and self-worth','communication and immediate surroundings','home and private foundations','creative expression and pleasure','work, habits, and service','partnership and negotiation','shared resources and intimate commitments','learning and worldview','public role and responsibility','community, friendship, and belonging','solitude, retreat, and the unseen']);
+const CONFIG_SIGN_NAMES=Object.freeze(['Aries','Taurus','Gemini','Cancer','Leo','Virgo','Libra','Scorpio','Sagittarius','Capricorn','Aquarius','Pisces']);
+function configurationRecord(key){
+  const record=resultVertexRecord(key),item=vertexLabel(key);
+  if(!record)return{...item,meaning:CONFIG_PLACEMENT_MEANING[item.id]||'its role'};
+  const raw=resultSource(resultRead(record.sky)).find(([sourceKey,value])=>value&&typeof value==='object'&&resultCanonical(sourceKey,value)===record.id)?.[1];
+  const retrograde=raw?.retrograde===true||raw?.isRetrograde===true||String(raw?.motion||'').toLowerCase()==='retrograde';
+  return{...record,name:placementWord(record.id),meaning:CONFIG_PLACEMENT_MEANING[record.id]||'its role',retrograde};
+}
+function configurationPhrase(key,{detailed=false}={}){
+  const r=configurationRecord(key);
+  const where=r.house?CONFIG_HOUSE_FIELD[r.house]:'';
+  const sign=Number.isInteger(r.sign)?CONFIG_SIGN_NAMES[r.sign]:null;
+  const label='Sky '+r.sky+' '+r.name+(sign?' in '+sign:'')+(r.house?' (house '+r.house+')':'')+(r.retrograde?' retrograde':'');
+  if(!detailed)return label;
+  return label+' brings '+r.meaning+(where?' into '+where:'')+(Number.isInteger(r.sign)?', expressed in a '+CONFIG_SIGN_TONE[r.sign]+' manner':'')+'.';
+}
+function configurationMotionText(pattern){
+  const retro=pattern.vertices.map(configurationRecord).filter(p=>p.retrograde);
+  if(!retro.length)return'';
+  return ' Retrograde '+retro.map(p=>'Sky '+p.sky+' '+p.name).join(' and ')+' invites the pattern to be revisited and reworked before its next expression.';
+}
 function interpretationText(pattern){
-  const points=pattern.vertices.map(configurationRoleDescription).join('; ');
-  const opposition=configurationOppositionText(pattern);
+  const pairs=configurationEdgePairs(pattern,'opposition');
   const apexTypes={'t-square':['square'],yod:['quincunx'],'thors-hammer':['tri-octile'],'minor-grand-trine':['sextile']};
   const apex=configurationApex(pattern,apexTypes[pattern.type]||[]);
-  const apexText=apex?configurationRoleDescription(apex):'';
-  const base=apex?pattern.vertices.filter(key=>key!==apex).map(configurationRoleDescription).join(' and '):'';
-  const scope=patternScopeLabel(pattern);
-  const lead='In '+scope+', '+points+'. ';
-  switch(pattern.type){
-    case 'kite':{
-      const opposing=configurationEdgePairs(pattern,'opposition')[0];
-      const trines=configurationEdgePairs(pattern,'trine');
-      const grandTrineKeys=pattern.vertices.filter(key=>trines.filter(pair=>pair.includes(key)).length===2);
-      const outlet=opposing?.find(key=>!grandTrineKeys.includes(key));
-      return lead+'The grand-trine circuit links '+(grandTrineKeys.length===3?grandTrineKeys.map(configurationRoleDescription).join('; '):'the three trine-connected placements')+'. '+(opposition?'Its directional axis is '+opposition+'. ':'')+(outlet?'The opposing outlet, '+configurationRoleDescription(outlet)+', brings the flowing circuit into a focused encounter.':'The opposition directs the otherwise self-contained flow.');
-    }
-    case 'grand-trine':return lead+'These three functions reinforce one another through trines, creating an accessible circuit that can operate without much external pressure.';
-    case 'yod':return lead+'The sextile base of '+base+' requires two different adjustments toward '+apexText+', where their demands converge.';
-    case 't-square':return lead+(opposition?'The opposing axis is '+opposition+'. ':'')+'Both sides square '+apexText+', concentrating pressure and requiring a response through that function.';
-    case 'thors-hammer':return lead+'The square between '+base+' converges through two sesquiquadrates on '+apexText+', concentrating friction at that point.';
-    case 'minor-grand-trine':return lead+'The trine between '+base+' is made more usable through two sextiles to '+apexText+'.';
-    case 'mystic-rectangle':return lead+'The two polarities are '+opposition+'. Trines and sextiles connect the opposing axes, allowing tension and support to coexist.';
-    case 'grand-cross':return lead+'The opposing axes are '+opposition+'. Four squares distribute pressure across all four placements.';
-    case 'grand-sextile':return lead+'Its three opposing axes are '+opposition+'. The sextiles and trines provide multiple paths for cooperation among these specific functions.';
-    case 'cradle':return lead+'The central polarity is '+opposition+'. The remaining trines and sextiles provide routes to contain and redistribute its tension.';
-    default:return lead+(CONFIG_INTERPRETATION[pattern.type]||'The participating functions form a compound aspect pattern.');
+  const first=pairs[0];
+  let text='';
+  if(pattern.type==='t-square'&&first&&apex){
+    text=configurationPhrase(first[0],{detailed:true})+' '+configurationPhrase(first[1],{detailed:true})+' Their opposition sets these needs against one another; both press on '+configurationPhrase(apex)+', making '+(CONFIG_HOUSE_FIELD[configurationRecord(apex).house]||'that planetary function')+' the point where the tension seeks a response.';
+  }else if(pattern.type==='yod'&&apex){
+    const base=pattern.vertices.filter(k=>k!==apex);
+    text=base.map(k=>configurationPhrase(k,{detailed:true})).join(' ')+' Their differing adjustments converge on '+configurationPhrase(apex)+', concentrating development in '+(CONFIG_HOUSE_FIELD[configurationRecord(apex).house]||'its function')+'.';
+  }else{
+    text=pattern.vertices.map(k=>configurationPhrase(k,{detailed:true})).join(' ')+' '+(CONFIG_INTERPRETATION[pattern.type]||'These functions meet through a compound pattern.');
   }
+  return text+configurationMotionText(pattern);
 }
 function miniConfigurationMarkup(pattern,{compact=false,interactive=true}={}){
   const records=new Map(pattern.vertices.map(key=>[key,resultVertexRecord(key)]).filter(([,record])=>record));
@@ -410,6 +420,33 @@ function renderSelectedConfiguration(tile,pattern){
   if(visual)visual.innerHTML=miniConfigurationMarkup(pattern,{interactive:false});
   if(structure)structure.textContent=structureText(pattern);
   if(interpretation)interpretation.textContent=interpretationText(pattern);
+  // The expanded card is progressive: show the reading first, reveal its
+  // geometry on demand rather than repeating the same material immediately.
+  const structurePanel=detail.querySelector('.sky-configuration-result-structure');
+  if(structurePanel&&!structurePanel.dataset.revealBound){
+    structurePanel.dataset.revealBound='true';
+    const control=document.createElement('button');
+    control.type='button';
+    control.className='sky-configuration-structure-toggle';
+    control.textContent='Show structure';
+    control.setAttribute('aria-expanded','false');
+    control.addEventListener('click',event=>{
+      event.preventDefault();event.stopPropagation();
+      const visible=structurePanel.dataset.open!=='true';
+      structurePanel.dataset.open=String(visible);
+      control.setAttribute('aria-expanded',String(visible));
+      control.textContent=visible?'Hide structure':'Show structure';
+      const value=structurePanel.querySelector(':scope>span');
+      if(value)value.hidden=!visible;
+    });
+    structurePanel.insertBefore(control,structurePanel.firstChild);
+    const heading=structurePanel.querySelector(':scope>strong');
+    if(heading)heading.hidden=true;
+  }
+  if(structurePanel){
+    const value=structurePanel.querySelector(':scope>span');
+    if(value)value.hidden=structurePanel.dataset.open!=='true';
+  }
   const oldNested=explanation?.querySelector('.sky-configuration-nested');
   oldNested?.remove();
   if(explanation&&pattern.nested?.length){
