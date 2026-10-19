@@ -155,6 +155,7 @@ const activateScope=async(mode)=>{
  },mode);
  assert.ok(!data.error,JSON.stringify(data));
  const selection=await focus();
+ console.log('SCOPE ACTIVATION',mode,data,{active:selection.active,selected:selection.selected,kept:selection.keptAspects.length},await page.evaluate(()=>window.__mobileTestLastFilter));
  assert.ok(selection.active,mode+' click must lock isolation');
  assert.ok(selection.keptAspects.some(n=>[n.leftSky,n.left,n.aspect,n.rightSky,n.right].join('|')===data.id),mode+' correct line must be kept');
  for(const endpoint of data.endpoints)assert.ok(selection.keptEndpoints.includes(endpoint),mode+' must keep endpoint '+endpoint);
