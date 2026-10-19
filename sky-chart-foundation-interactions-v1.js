@@ -456,6 +456,18 @@
     // A wheel aspect may be owned by the intrasky relationship list rather than
     // foundation.current.relations. Never isolate to an empty keep-set: it dims
     // every glyph while the row/line visibility synchronizers hide every line.
+    // A numeric match is insufficient when the wheel and relationship list
+    // have different render-address owners. Do not dim the entire wheel unless
+    // the selected relationship has an actually rendered, visible aspect line.
+    if (state?.kind === 'aspect' && !Array.from(document.querySelectorAll('#skyFoundationWheelMount [data-layer="aspects"] > line.sky-foundation-aspect:not(.sky-foundation-aspect-hit)')).some(line =>
+      Number(line.dataset.relationIndex) === state.value &&
+      !line.hidden && !line.classList.contains('sky-chart-relationship-filter-hidden') &&
+      getComputedStyle(line).display !== 'none'
+    )) {
+      lockedState = null;
+      hoverState = null;
+      return applyState();
+    }
     if (state && keep.matched.size === 0) {
       lockedState = null;
       hoverState = null;
