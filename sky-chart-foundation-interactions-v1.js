@@ -456,7 +456,7 @@
     // A wheel aspect may be owned by the intrasky relationship list rather than
     // foundation.current.relations. Never isolate to an empty keep-set: it dims
     // every glyph while the row/line visibility synchronizers hide every line.
-    if (state?.kind === 'aspect' && keep.matched.size === 0) {
+    if (state && keep.matched.size === 0) {
       lockedState = null;
       hoverState = null;
       return applyState();
@@ -555,6 +555,14 @@
       const node = interactiveFromEvent(event);
       if (node) {
         event.preventDefault();
+        // A tap on a broad house/sign sector while an aspect is selected is
+        // usually a blank-wheel dismissal, not a request to hide all relations.
+        if (lockedState?.kind === 'aspect' && (node.dataset.interactive === 'house' || node.dataset.interactive === 'sign')) {
+          lockedState = null;
+          hoverState = null;
+          applyState();
+          return;
+        }
         const next = specFrom(node);
         lockedState = sameState(lockedState, next) ? null : next;
         hoverState = null;
