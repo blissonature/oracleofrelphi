@@ -361,7 +361,13 @@
     }
     if(wheelOnlyExternal)return;
     ['A','B'].forEach(slot=>{const panel=document.getElementById(slot==='A'?'skyFoundationA':'skyFoundationB');if(!panel)return;panel.classList.toggle('has-ledger-isolation',!!filterState);panel.querySelectorAll('.sky-foundation-row[data-placement]').forEach(row=>{row.classList.toggle('is-kept',!!filterState&&filterKeep.placements.has(`${slot}:${row.dataset.placement}`));row.classList.toggle('is-selected',!!lockedState&&matchesNode(row,lockedState));row.classList.toggle('is-hovered',!!hoverState&&!lockedState&&matchesNode(row,hoverState))})});
-    document.querySelectorAll('.sky-foundation-relationship-row').forEach(row=>{const visible=!filterState||filterKeep.matched.has(String(row.dataset.relationIndex||''));row.hidden=!visible;row.setAttribute('aria-hidden',visible?'false':'true')});
+    // Isolation is emphasis, not filtering. The previous row.hidden write
+    // caused the relationship-state contract to hide all SVG aspect lines
+    // while the wheel could still retain highlighted houses and endpoints.
+    // Only actual filter controls may change relationship row visibility.
+    document.querySelectorAll('.sky-foundation-relationship-row').forEach(row=>{
+      row.classList.toggle('is-kept',!!filterState&&filterKeep.matched.has(String(row.dataset.relationIndex||'')));
+    });
     const allRows=[...document.querySelectorAll('#skyFoundationRelationshipList>.sky-foundation-relationship-row[data-relation-index]')],visibleCount=filterState?filterKeep.matched.size:allRows.filter(row=>rowEligibleForWheel(row)).length,totalCount=allRows.length,count=document.getElementById('skyFoundationRelationshipCount'),empty=document.getElementById('skyFoundationRelationshipEmpty'),clear=document.getElementById('skyFoundationClearIsolation');if(count)count.textContent=`${visibleCount}/${totalCount}`;if(empty)empty.hidden=visibleCount!==0;if(clear)clear.hidden=!(lockedState||rowLockedState);
     const relationshipIndexes=filterState?Array.from(filterKeep.matched):allRows.map(row=>String(row.dataset.relationIndex||'')).filter(Boolean);
     window.dispatchEvent(new CustomEvent('relphi:sky-foundation-filter-changed',{detail:{state:filterState?{...filterState,mode:lockedState?'selected':'hover'}:null,origin:lockedState&&selectionOrigin?{...selectionOrigin}:null,relationshipIndexes}}));
@@ -383,7 +389,7 @@
     const node=event.target.closest?.('[data-interactive]');
     if(node&&root.contains(node)){
       if(node.dataset.interactive!=='aspect')return node;
-      return nearestAspect(event)||node;
+      return nearestAspect(event); // Never fall back to an invisible hit stroke.
     }
     const wheel=event.target.closest?.('#skyFoundationWheelMount .sky-foundation-wheel');
     if(wheel&&root.contains(event.target))return nearestAspect(event);
