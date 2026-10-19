@@ -83,6 +83,7 @@ console.log('Touch aspect: persistent selection and endpoints verified');
 await page.touchscreen.tap(touchAspect.x,touchAspect.y);
 await page.waitForTimeout(250);
 state=await focus();
+console.log('SECOND ASPECT TAP STATE',touchAspect,state.selected,state.keptAspects.slice(0,3));
 assert.equal(state.active,false,'touching the selected aspect a second time clears');
 await page.evaluate(()=>{window.__touchTrace=[];for(const type of ['pointerdown','pointerup','click'])document.addEventListener(type,e=>{if(e.clientX>240&&e.clientX<300&&e.clientY>380&&e.clientY<430)window.__touchTrace.push({type,phase:'capture',kind:e.target.closest?.('[data-interactive]')?.dataset.interactive,what:e.target.closest?.('[data-interactive]')?.getAttribute('aria-label'),trusted:e.isTrusted,pointer:e.pointerType,x:e.clientX,y:e.clientY})},true)});
 const touchHouse=await findTouchPoint('house');
