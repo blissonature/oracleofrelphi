@@ -1,0 +1,34 @@
+name: Four-world Recursive Reading
+on:
+  pull_request:
+    paths:
+      - 'drawing-board-workflow-v2.js'
+      - 'relphi-recursion-worlds-v1.css'
+      - 'navloader.js'
+      - 'tarot.html'
+      - 'tests/drawing-board-recursion.test.js'
+      - 'tests/drawing-board-recursion-mobile-focus.test.js'
+      - 'tests/drawing-board-recursion-four-worlds.test.mjs'
+      - '.github/workflows/drawing-board-four-world-recursion.yml'
+jobs:
+  recursion:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Static integrity
+        run: |
+          node --check drawing-board-workflow-v2.js
+          node tests/drawing-board-recursion-four-worlds.test.mjs
+      - name: Browser dependencies
+        run: |
+          npm install --no-save playwright@1.52.0
+          npx playwright install --with-deps chromium
+      - name: Desktop and mobile four-world reading flows
+        run: |
+          python3 -m http.server 8000 >/tmp/relphi-four-worlds.log 2>&1 &
+          node tests/drawing-board-recursion.test.js
+          node tests/drawing-board-recursion-mobile-focus.test.js

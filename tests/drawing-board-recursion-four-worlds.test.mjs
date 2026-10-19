@@ -1,0 +1,12 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+const js=fs.readFileSync('drawing-board-workflow-v2.js','utf8');
+const html=fs.readFileSync('tarot.html','utf8');
+const nav=fs.readFileSync('navloader.js','utf8');
+assert.match(js,/const RECURSION_ID = 'relphi-recursion-13'/);
+assert.match(js,/const RECURSION_LEVELS = 4/);
+assert.match(js,/cardCount:13,\s*virtualPositionCount:3/);
+assert.match(js,/recursion-4-earth/);
+assert.ok(html.includes('relphi-recursion-worlds-v1.css?v=1'));
+assert.ok(nav.includes('drawing-board-workflow-v2.js?v=137'));
+console.log('Four-world recursion structural acceptance passed.');

@@ -150,11 +150,11 @@ assert.deepEqual(Array.from(registry.shipped, item => item.id), [
   'saturn-square-9',
   'celtic-cross-10',
   'six-polarities-houses-12',
-  'relphi-recursion-22',
+  'relphi-recursion-13',
   'focus-1'
 ]);
-const recursion = registry.byId('relphi-recursion-22');
-assert.equal(recursion.cardCount, 22);
+const recursion = registry.byId('relphi-recursion-13');
+assert.equal(recursion.cardCount, 13);
 assert.equal(recursion.positionCount, 28);
 assert.equal(recursion.virtualPositionCount, 6);
 assert.equal(recursion.positions.length, 22);
