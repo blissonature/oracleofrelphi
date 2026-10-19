@@ -310,14 +310,15 @@ function geometrySnap(p,exclude){
  let best=null;
  const nearSegments=[];
  function offer(candidate,label){
-  const d=dist(p,candidate);
-  if(d<=SNAP_LIMIT&&(!best||d<best.distance-.05||(Math.abs(d-best.distance)<=.05&&label==="line crossing"))){
-   best={point:candidate,label,distance:d};
-  }
+  const d=dist(p,candidate),priority=label==="line crossing"?3:label==="construction center"?2:label==="existing vertex"?1:0;
+  // Favor meaningful construction landmarks within 10 units over a merely nearby line.
+  const score=d-(priority&&d<=10?16+priority:0);
+  if(d<=SNAP_LIMIT&&(!best||score<best.score)){best={point:candidate,label,distance:d,score}}
  }
  for(const shape of state.strokes){
   if(shape===exclude||!Array.isArray(shape.points))continue;
   const pts=shape.points;
+  if(shape.center&&Number.isFinite(shape.center.x)&&Number.isFinite(shape.center.y))offer(shape.center,"construction center");
   for(let j=1;j<pts.length;j++){
    const a=pts[j-1],b=pts[j];if(!a||!b||![a.x,a.y,b.x,b.y].every(Number.isFinite))continue;
    if(Math.min(a.x,b.x)>p.x+SNAP_LIMIT||Math.max(a.x,b.x)<p.x-SNAP_LIMIT||
@@ -357,7 +358,7 @@ function pointerDown(e){
  snapCue=null;
  const item={type,start:p,center:{...state.c},angle:state.a,radius:state.r};
  active.set(e.pointerId,item);svg.setPointerCapture(e.pointerId);
- if(type==="pen"){history();activeStroke={points:[polar(state.c,state.r,state.a)],color:state.color,weight:state.weight};state.strokes.push(activeStroke)}
+ if(type==="pen"){history();activeStroke={points:[polar(state.c,state.r,state.a)],color:state.color,weight:state.weight,center:{...state.c}};state.strokes.push(activeStroke)}
  render();
 }
 function pointerMove(e){
@@ -394,7 +395,7 @@ function pointerMove(e){
     if(state.spiral)r=clamp(dist(found.point,state.c),25,365);
    }
   }
-  if(match)applySnap(match);
+  if(match)applySnap(state.spiral?match:{...match,point:polar(state.c,r,a)});
   else if(state.snap&&Math.abs(shortest(rawAngle,a))>.001)applySnap({point:polar(state.c,r,a),label:"15° angle"});
   else if(state.spiral&&state.snapRadius&&Math.abs(r-dist(p,state.c))>.01)applySnap({point:polar(state.c,r,a),label:"5-unit radius"});
   else applySnap(null);
@@ -417,7 +418,7 @@ svg.addEventListener("pointerup",pointerUp);
 svg.addEventListener("pointercancel",pointerUp);
 svg.addEventListener("lostpointercapture",pointerUp);
 function commitStrokes(strokes){history();state.strokes.push(...strokes);render();save()}
-function stroke(points,color=state.color,weight=state.weight){return {points:points.map(p=>({x:round(p.x),y:round(p.y)})),color,weight}}
+function stroke(points,color=state.color,weight=state.weight,center=state.c){return {points:points.map(p=>({x:round(p.x),y:round(p.y)})),color,weight,center:{...center}}}
 function sampleSweep(degrees){
  const dir=state.cw?1:-1,turn=degrees*Math.PI/180*dir,n=Math.max(24,Math.round(Math.abs(degrees)*1.4));
  const r0=state.r,r1=state.spiral?clamp(r0+state.pitch*degrees/360,25,365):r0;
@@ -439,16 +440,16 @@ function example(){
  const c1={x:355,y:285},c2={x:655,y:285},radius=150;
  [c1,c2].forEach((c,index)=>{
   let pts=[];for(let i=0;i<=240;i++)pts.push(polar(c,radius,-Math.PI/2+i*Math.PI*2/240));
-  state.strokes.push(stroke(pts,"#2347ca",3.5));
+  state.strokes.push(stroke(pts,"#2347ca",3.5,c));
   const center={x:c.x+(index?-10:-20),y:c.y+10},spiral=[];
   for(let i=0;i<=450;i++){const t=i/450,r=4+138*t;spiral.push(polar(center,r,(index?-.2:.2)+Math.PI*4.1*t))}
-  state.strokes.push(stroke(spiral,"#2347ca",3.4));
+  state.strokes.push(stroke(spiral,"#2347ca",3.4,center));
   const starPts=[];for(let j=0;j<=5;j++)starPts.push(polar(c,radius,(-Math.PI/2)+(j*2%5)*Math.PI*2/5));
-  state.strokes.push(stroke(starPts,"#a5a19d",1.7));
+  state.strokes.push(stroke(starPts,"#a5a19d",1.7,c));
  });
  const low={x:505,y:545},web=[];
  for(let j=0;j<=5;j++)web.push(polar(low,180,-Math.PI/2+(j*2%5)*Math.PI*2/5));
- state.strokes.push(stroke(web,"#a5a19d",1.8));
+ state.strokes.push(stroke(web,"#a5a19d",1.8,low));
  state.c={x:535,y:600};state.r=145;state.a=-.8;
  render();save();note("Example loaded. You can add marks, undo, or start a new sheet.");
 }
