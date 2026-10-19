@@ -561,7 +561,10 @@
         applyState();
         return;
       }
-      if (lockedState && event.target.closest?.('#skyFoundationWheelMount,#skyFoundationRelationships')) {
+      // A blank tap anywhere within the Sky Chart clears explicit isolation.
+      // Restricting this to the wheel/list misses the SVG's surrounding space
+      // and leaves an isolated (or apparently empty) chart on mobile.
+      if (lockedState && !event.target.closest?.('button,input,select,textarea,a,[role="button"],summary')) {
         lockedState = null;
         hoverState = null;
         applyState();
