@@ -73,6 +73,43 @@ select,input[type=number]{width:100%;min-height:36px;border-radius:8px;border:1.
 .custom-dot{width:15px;height:15px;pointer-events:none;border:2px solid #fff;border-radius:50%;background:var(--custom-ink,#9061b5);box-shadow:0 0 0 1px rgba(0,0,0,.38)}
 .custom-picker input[type=color]{position:absolute;inset:0;width:100%;height:100%;padding:0;margin:0;opacity:0;cursor:pointer;border:0;touch-action:manipulation}
 .custom-picker:focus-within{outline:3px solid var(--red);outline-offset:3px}
+
+.boardbar{flex-wrap:wrap}
+.cw-mode-switch{display:flex;gap:3px;padding:3px;border-radius:10px;border:1px solid var(--line);background:#f4ebe0}
+.cw-mode{border:0;border-radius:7px;background:transparent;color:var(--muted);padding:7px 12px;font-size:11px;font-weight:800;min-height:34px}
+.cw-mode[aria-pressed=true]{background:var(--red);color:#fff}
+.cw-toolbar{padding:10px 12px 8px;background:#fbf5ed;border-bottom:1px solid var(--line);display:grid;gap:9px}
+.cw-divisions{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:5px}
+.cw-divisions button{min-height:35px;border:1px solid #d3c7b9;border-radius:7px;background:#fff;color:var(--ink);font-weight:800;font-size:13px}
+.cw-divisions button[aria-pressed=true]{background:var(--ink);color:#fff;border-color:var(--ink)}
+.cw-nav{display:grid;grid-template-columns:minmax(0,1fr) minmax(100px,1.1fr) minmax(0,1fr);gap:8px;align-items:center}
+.cw-nav .btn{min-height:35px}
+.cw-count{display:grid;gap:4px;text-align:center;color:var(--ink);font-size:11px}
+.cw-count progress{display:block;appearance:none;width:100%;height:5px;border:0;border-radius:8px;background:#ded3c8;overflow:hidden}
+.cw-count progress::-webkit-progress-bar{background:#ded3c8}
+.cw-count progress::-webkit-progress-value{background:var(--red)}
+.cw-count progress::-moz-progress-bar{background:var(--red)}
+.cw-method{font-size:11px;color:var(--red);font-weight:800;margin:0 0 12px}
+.cw-title{font-size:17px;letter-spacing:-.025em;margin:0 0 9px}
+.cw-explanation{min-height:72px;color:#514740;font-size:12px;line-height:1.6;margin:0 0 15px}
+.cw-help{color:var(--muted);font-size:11px;line-height:1.5;margin:12px 0 0}
+.cw-path{fill:none;stroke-linecap:round;stroke-linejoin:round}
+.cw-guide{stroke:#aaa096;stroke-width:1.7;opacity:.77}
+.cw-ink{stroke:#2347ca;stroke-width:3.4}
+.cw-accent{stroke:#dc1f18;stroke-width:3}
+.cw-gap{stroke:#dc1f18;stroke-width:3;stroke-dasharray:7 7}
+.cw-dot{fill:#dc1f18;stroke:#fff;stroke-width:1.5}
+.cw-label{font-size:16px;font-weight:800;font-family:Montserrat,Arial,sans-serif;fill:#a12a23;paint-order:stroke;stroke:#fffdfa;stroke-width:4px;stroke-linejoin:round}
+.cw-new{animation:cw-stroke-reveal .6s ease-in-out forwards}
+@keyframes cw-stroke-reveal{to{stroke-dashoffset:0}}
+@media(prefers-reduced-motion:reduce){.cw-new{animation:none;stroke-dashoffset:0}}
+#circleWalkPanel[hidden],#circleWalkToolbar[hidden],#compassPanel[hidden],#compassGeometryPanel[hidden]{display:none!important}
+@media(max-width:520px){
+ .cw-mode-switch{width:100%}.cw-mode{flex:1}
+ .cw-nav{grid-template-columns:1fr minmax(86px,1.1fr) 1fr}
+ .cw-nav .btn{font-size:11px;padding:5px}
+ .cw-explanation{min-height:0}
+}
 .help{padding:14px 16px;background:#f9f2e9;border:1px solid #d9cbbd;border-radius:13px;margin-top:14px}
 .help h2{margin:0 0 8px;font-size:14px}
 .help p{margin:6px 0;color:#5d554e;font-size:12px}
@@ -103,11 +140,30 @@ footer{font-size:11px;color:#797168;text-align:center;padding:21px}
       <section class="board" aria-label="Interactive drafting sheet">
         <div class="boardbar">
           <strong>Drafting sheet <span class="muted">· Vector workspace</span></strong>
-          <div class="legend" aria-label="Handle key">
+          <div class="legend" id="handleLegend" aria-label="Handle key">
             <span><b class="pin"></b> Right point · move</span>
             <span><b class="rotate"></b> Left point · rotate</span>
             <span><b class="holder"></b> Holder · radius</span>
             <span><b class="pen"></b> Pencil · draw</span>
+          </div>
+          <div class="cw-mode-switch" role="group" aria-label="Drafting instrument mode">
+            <button type="button" class="cw-mode" id="compassMode" aria-pressed="true">Compass</button>
+            <button type="button" class="cw-mode" id="walkMode" aria-pressed="false">Walk circle</button>
+          </div>
+        </div>
+        <div class="cw-toolbar" id="circleWalkToolbar" hidden aria-label="Circle division walkthrough controls">
+          <div class="cw-divisions" role="group" aria-label="Number of circle divisions">
+            <button type="button" data-circle-division="2" aria-pressed="false">2</button>
+            <button type="button" data-circle-division="3" aria-pressed="false">3</button>
+            <button type="button" data-circle-division="4" aria-pressed="false">4</button>
+            <button type="button" data-circle-division="5" aria-pressed="false">5</button>
+            <button type="button" data-circle-division="6" aria-pressed="true">6</button>
+            <button type="button" data-circle-division="7" aria-pressed="false">7</button>
+          </div>
+          <div class="cw-nav">
+            <button type="button" class="btn" id="cwPrev">← Previous</button>
+            <div class="cw-count"><strong id="cwPosition">Step 1</strong><progress id="cwProgress" max="1" value="1"></progress></div>
+            <button type="button" class="btn primary" id="cwNext">Next →</button>
           </div>
         </div>
         <div class="stage" id="stage">
@@ -120,13 +176,27 @@ footer{font-size:11px;color:#797168;text-align:center;padding:21px}
             <g id="art" fill="none" stroke-linecap="round" stroke-linejoin="round"></g>
             <g id="guides" pointer-events="none"></g>
             <g id="instrument"></g>
+            <g id="circleWalkLayer" pointer-events="none" style="display:none"></g>
           </svg>
           <div class="stage-note" id="hint"><strong>Try it:</strong> Drag the blue pencil point around the red center to draw.</div>
         </div>
         <div class="boardfoot"><span id="measure">Diameter: 360 · Angle: −35°</span><strong id="counter">0 marks</strong></div>
       </section>
       <aside class="sidebar" aria-label="Drafting controls">
-        <section class="panel">
+        <section class="panel" id="circleWalkPanel" hidden aria-label="Circle construction instructions">
+          <h2>Walk the divisions</h2>
+          <p class="cw-method" id="cwMethod">Exact construction</p>
+          <h3 class="cw-title" id="cwTitle">Establish the circle</h3>
+          <p class="cw-explanation" id="cwExplanation">Advance through the geometric construction.</p>
+          <div class="buttons">
+            <button class="btn" type="button" id="cwRestart">↺ Start over</button>
+            <button class="btn primary" type="button" id="cwFinish">Add to sheet</button>
+          </div>
+          <label class="check"><input type="checkbox" id="cwIncludeGuides"> Include construction lines when adding</label>
+          <p class="cw-help" id="cwNote">Walk through the construction before adding it to the sheet.</p>
+          <p class="cw-help">Seven is shown as an approximate compass walk, with the final closure gap visible and measured.</p>
+        </section>
+        <section class="panel" id="compassPanel">
           <h2>Make a mark</h2>
           <div class="buttons">
             <button class="btn primary" id="quarter" title="Draw a 90° arc">Trace 90°</button>
@@ -149,7 +219,7 @@ footer{font-size:11px;color:#797168;text-align:center;padding:21px}
             <input type="range" id="pitch" min="-100" max="100" step="1" value="42">
           </label>
         </section>
-        <section class="panel">
+        <section class="panel" id="compassGeometryPanel">
           <h2>Compass</h2>
           <label class="field" style="margin-top:0">
             <span class="field-head">Pencil radius <output id="radiusValue">180</output></span>
@@ -540,8 +610,15 @@ function fitView(){
  else svg.setAttribute("viewBox","0 0 1100 740");
 }
 window.addEventListener("resize",fitView);
+window.RelphiDraftingBridge={
+ getGeometry:()=>({c:{...state.c},r:state.r,a:state.a,color:state.color,weight:state.weight}),
+ addStrokes:items=>{if(!Array.isArray(items)||!items.length)return;
+  commitStrokes(items.map(v=>({points:v.points.map(p=>({x:round(p.x),y:round(p.y)})),color:v.color,weight:v.weight,center:v.center})));
+ }
+};
 load();syncControls();fitView();render();
 })();
 </script>
+<script src="drafting-circle-walk.js?v=1"></script>
 </body>
 </html>
