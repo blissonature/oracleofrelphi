@@ -587,7 +587,14 @@
       // central aspect field. Do not reinterpret that tap as another aspect:
       // the 28px overlapping hit strokes can otherwise select an unrelated
       // (and possibly hidden) relation instead of restoring the full wheel.
-      if (lockedState?.kind === 'aspect' && event.target.closest?.('[data-layer="aspects"]')) {
+      // The empty center is often the SVG root, not the aspects layer.
+      // Capture dismissal before other line/selection handlers can reinterpret
+      // the same tap and reinstate a stale selection.
+      const wheelSvg = event.target.closest?.('#skyFoundationWheelMount svg');
+      const centralBlank = wheelSvg && !event.target.closest?.('[data-layer="placements"],[data-layer="leaders"],[data-layer="a-houses"],[data-layer="b-houses"],[data-layer="signs"]');
+      if (lockedState?.kind === 'aspect' && centralBlank) {
+        event.preventDefault();
+        event.stopImmediatePropagation();
         lockedState = null;
         hoverState = null;
         applyState();
@@ -623,7 +630,7 @@
         hoverState = null;
         applyState();
       }
-    });
+    }, true);
 
     root.addEventListener('keydown', event => {
       if (event.key === 'Escape') {
