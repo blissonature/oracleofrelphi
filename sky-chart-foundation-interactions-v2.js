@@ -495,9 +495,11 @@
     ignoreNativeClickUntil=performance.now()+750;
     const wheel=document.querySelector('#skyFoundationWheelMount .sky-foundation-wheel');
     if(!wheel)return;
-    const original=gesture.target?.isConnected?gesture.target:event.target;
-    const target=original?.isConnected&&wheel.contains(original)?original:wheel;
-    if(!target)return;
+    const original=gesture.target?.isConnected?gesture.target:null;
+    const underFinger=document.elementFromPoint(event.clientX,event.clientY);
+    const target=original&&wheel.contains(original)?original:
+      underFinger&&wheel.contains(underFinger)?underFinger:null;
+    if(!target)return; // A removed wheel target must not become a blank-area clear.
     // Dispatch through the same click handler as mouse/keyboard, retaining
     // coordinates so nearby aspect-line hit testing uses the actual tap.
     syntheticTouchClick=true;
