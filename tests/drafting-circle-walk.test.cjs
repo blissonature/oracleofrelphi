@@ -2,7 +2,7 @@ const test=require('node:test');
 const assert=require('node:assert/strict');
 const fs=require('node:fs');
 const path=require('node:path');
-const {build,polar,distance}=require('../drafting-circle-walk.js');
+const {build,polar,distance,centeredViewportCircle}=require('../drafting-circle-walk.js');
 const html=fs.readFileSync(path.join(__dirname,'..','drafting-studio.html'),'utf8');
 const near=(a,b,t=1e-3)=>assert.ok(Math.abs(a-b)<t,String(a)+' ≠ '+String(b));
 const closePoint=(a,b,t=.05)=>near(distance(a,b),0,t);
@@ -85,6 +85,22 @@ test('reject impossible division counts or invalid radii rather than generating 
  assert.throws(()=>build(6,{x:Infinity,y:0},150),RangeError);
 });
 
+test('centered circle uses visible SVG viewBox center, not the compass pivot',()=>{
+ const desktop=centeredViewportCircle('0 0 1100 740',180);
+ assert.deepEqual(desktop.c,{x:550,y:370});
+ near(desktop.r,180);
+ const portrait=centeredViewportCircle('305 40 490 690',365);
+ assert.deepEqual(portrait.c,{x:550,y:385});
+ near(portrait.r,171.5);
+ const offset=centeredViewportCircle({x:100,y:24,width:900,height:780},180);
+ assert.deepEqual(offset.c,{x:550,y:414});
+ near(offset.r,180);
+ for(const b of [null,'0 0 100 0','100 50 0 200','one two three four']){
+  assert.throws(()=>centeredViewportCircle(b,180),RangeError);
+ }
+ assert.throws(()=>centeredViewportCircle('0 0 100 100',0),RangeError);
+});
+
 test('walk mode changes steps without modifying old ink, and commits only on request',()=>{
  class E {
   constructor(){this.handlers={};this.children=[];this.attrs={};this.style={setProperty(k,v){this[k]=v}};this.dataset={};this.hidden=false;this.disabled=false;this.textContent='';}
@@ -102,15 +118,17 @@ test('walk mode changes steps without modifying old ink, and commits only on req
   querySelectorAll(q){return q==='[data-circle-division]'?divisions:[]},
   createElementNS:()=>new E(),createDocumentFragment:()=>new E()
  };
+ get('sheet').setAttribute('viewBox','0 0 1100 740');
+ const listeners={};
  const initial={points:[{x:20,y:20},{x:30,y:30}],color:'#111',weight:1};
  const ink=[initial],bridge={
-  getGeometry(){return {c:{x:550,y:390},r:180,a:-Math.PI/2,color:'#dc1f18',weight:2}},
+  getGeometry(){return {c:{x:123,y:650},r:180,a:-Math.PI/2,color:'#dc1f18',weight:2}},
   addStrokes(strokes){ink.push(...strokes)}
  };
  const modulePath=require.resolve('../drafting-circle-walk.js');
  const oldWindow=global.window,oldDocument=global.document;
  try{
-  global.window={RelphiDraftingBridge:bridge};
+  global.window={RelphiDraftingBridge:bridge,addEventListener(name,fn){listeners[name]=fn}};
   global.document=documentMock;
   delete require.cache[modulePath];
   require(modulePath);
@@ -122,6 +140,11 @@ test('walk mode changes steps without modifying old ink, and commits only on req
   assert.equal(get('cwFinish').disabled,true);
   assert.equal(get('circleWalkLayer').style['--cw-ink'],'#dc1f18');
   assert.equal(ink.length,1);
+  assert.equal(typeof listeners.resize,'function');
+  // Resize to a distinctly offset, narrow viewBox. The active step remains selected.
+  get('sheet').setAttribute('viewBox','400 20 450 650');
+  listeners.resize();
+  assert.match(get('cwPosition').textContent,/Step 1/);
   get('cwNext').click();
   assert.match(get('cwPosition').textContent,/Step 2/);
   get('cwPrev').click();
@@ -138,6 +161,9 @@ test('walk mode changes steps without modifying old ink, and commits only on req
   assert.equal(ink[0],initial);
   assert.equal(ink[1].color,'#dc1f18');
   assert.equal(ink[2].color,'#dc1f18');
+  assert.deepEqual(ink[1].center,{x:625,y:345});
+  assert.deepEqual(ink[2].center,{x:625,y:345});
+  near(Math.max(...ink[1].points.map(p=>distance(p,ink[1].center))),157.5,.1);
   assert.ok(distance(ink[2].points[0],ink[2].points.at(-1))>1,'heptagon must remain open');
   get('compassMode').click();
   assert.equal(get('circleWalkToolbar').hidden,true);
