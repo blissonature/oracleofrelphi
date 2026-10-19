@@ -485,10 +485,23 @@
     // pointermove and focus before the click, making a temporary isolation
     // look selected and then toggle off on finger release.
     let touchActivation=false, touchAspectActivated=false;
+    let lastTouchSelection=null;
+    // Capture the compatibility click before other wheel listeners can
+    // interpret it as a second activation after the pointerdown selection.
+    document.addEventListener('click',event=>{
+      const last=lastTouchSelection;
+      if(!last||performance.now()-last.time>900)return;
+      if(Math.hypot(event.clientX-last.x,event.clientY-last.y)>32)return;
+      lastTouchSelection=null;
+      touchAspectActivated=false;
+      event.preventDefault();
+      event.stopImmediatePropagation();
+    },true);
     root.addEventListener('pointerdown',event=>{
       touchActivation=event.pointerType==='touch'||event.pointerType==='pen';
       touchAspectActivated=false;
       if(!touchActivation)return;
+      lastTouchSelection=null;
       hoverState=null;rowHoverState=null;
       // A center tap dismisses a locked selection on pointerdown, before
       // SVG hit strokes or the synthesized click can reinterpret the tap.
@@ -496,7 +509,7 @@
         const wheel=document.querySelector('#skyFoundationWheelMount .sky-foundation-wheel');
         const rect=wheel?.getBoundingClientRect();
         if(rect&&Math.hypot(event.clientX-(rect.left+rect.width/2),event.clientY-(rect.top+rect.height/2))<Math.min(rect.width,rect.height)*0.27){
-          touchAspectActivated=true;clearFromWhitespace();return;
+          touchAspectActivated=true;lastTouchSelection={time:performance.now(),x:event.clientX,y:event.clientY};clearFromWhitespace();return;
         }
       }
       const hit=event.target.closest?.('#skyFoundationWheelMount [data-interactive="aspect"]');
@@ -506,6 +519,7 @@
       // Commit touch selection on pointerdown. A synthesized click after
       // pointerup must not toggle this same selection straight back off.
       touchAspectActivated=true;
+      lastTouchSelection={time:performance.now(),x:event.clientX,y:event.clientY};
       rowLockedState=null;rowHoverState=null;
       if(same(lockedState,next)){lockedState=null;selectionOrigin=null}
       else{lockedState=next;selectionOrigin=originFromNode(hit,next)}
