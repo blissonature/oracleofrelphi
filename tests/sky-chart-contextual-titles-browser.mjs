@@ -128,6 +128,19 @@ const singleCopy=await single.evaluate(()=>window.__copiedRelationships);
 assert.ok(singleCopy.includes('Sky A: '+wantedA),'single-sky copy must identify the populated Sky A');
 assert.ok(!singleCopy.includes('Sky B:'),'single-sky copy must omit Sky B altogether');
 assert.ok(singleCopy.includes('A↔A'),'single-sky copy must retain Intrasky relationships');
+await single.evaluate(()=>{
+  window.__renderedSingle=null;
+  window.htmlToImage={toBlob:async sheet=>{
+    window.__renderedSingle={title:sheet.querySelector('.rex-title h1')?.textContent||'',context:sheet.querySelector('.rex-context')?.textContent||''};
+    return new Blob(['test image'],{type:'image/png'});
+  }};
+});
+await single.locator('#skyChartRelationshipsExport').click();
+await single.waitForFunction(()=>!!window.__renderedSingle,{timeout:20000});
+const singleSheet=await single.evaluate(()=>window.__renderedSingle);
+assert.ok(singleSheet.title.includes(wantedA)&&!singleSheet.title.includes('Where and When'));
+assert.ok(!singleSheet.title.includes('↔'),'single sky must not have a comparison marker in PNG heading');
+assert.ok(!singleSheet.context.includes('Where and When'),'single-sky PNG context must omit Sky B');
 assert.deepEqual(singleErrors,[],'single-sky browser must have no errors');
 await single.close();
 assert.deepEqual(errors,[],'no browser errors');
