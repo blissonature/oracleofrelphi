@@ -498,7 +498,7 @@
   function touchInWheel(event){return !!event.target.closest?.('#skyFoundationWheelMount .sky-foundation-wheel')}
   function beginTouch(event){
     if(!['touch','pen'].includes(event.pointerType)||!touchInWheel(event))return;
-    touchGesture={id:event.pointerId,x:event.clientX,y:event.clientY,target:event.target,moved:false};
+    touchGesture={id:event.pointerId,x:event.clientX,y:event.clientY,target:event.target,moved:false,priorLocked:cloneFocusValue(lockedState)};
     hoverState=null;rowHoverState=null;
   }
   function moveTouch(event){
@@ -510,6 +510,14 @@
     const gesture=touchGesture;touchGesture=null;
     ignoreNativeClickUntil=performance.now()+750;
     if(gesture.moved)return;
+    // A legacy handler can emit a click *inside the same pointerup dispatch*
+    // before this listener executes. If it has already changed the foundation
+    // lock, treat the gesture as handled. Toggling again would immediately undo
+    // a successful tap (or reselect an aspect the user just toggled off).
+    if(JSON.stringify(gesture.priorLocked)!==JSON.stringify(lockedState)){
+      event.preventDefault();
+      return;
+    }
     const wheel=document.querySelector('#skyFoundationWheelMount .sky-foundation-wheel');
     if(!wheel)return;
     const original=gesture.target?.isConnected?gesture.target:null;
