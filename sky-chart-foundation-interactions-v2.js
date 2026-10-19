@@ -491,8 +491,8 @@
   function finishTouch(event){
     if(!touchGesture||touchGesture.id!==event.pointerId)return;
     const gesture=touchGesture;touchGesture=null;
-    if(gesture.moved)return;
     ignoreNativeClickUntil=performance.now()+750;
+    if(gesture.moved)return;
     const wheel=document.querySelector('#skyFoundationWheelMount .sky-foundation-wheel');
     if(!wheel)return;
     const original=gesture.target?.isConnected?gesture.target:null;
