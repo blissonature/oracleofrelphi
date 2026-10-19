@@ -453,6 +453,14 @@
   function applyState() {
     const state = lockedState || hoverState;
     const keep = buildKeepSets(state);
+    // A wheel aspect may be owned by the intrasky relationship list rather than
+    // foundation.current.relations. Never isolate to an empty keep-set: it dims
+    // every glyph while the row/line visibility synchronizers hide every line.
+    if (state?.kind === 'aspect' && keep.matched.size === 0) {
+      lockedState = null;
+      hoverState = null;
+      return applyState();
+    }
     const wheel = document.querySelector('#skyFoundationWheelMount > .sky-foundation-wheel');
     if (wheel) {
       wheel.classList.toggle('has-isolation', !!state);
