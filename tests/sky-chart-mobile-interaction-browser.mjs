@@ -30,7 +30,7 @@ assert.equal(await page.locator('#skyFoundationWheelMount .sky-foundation-wheel.
    the rendered SVG, then use Chromium's touchscreen on those pixels. */
 await page.locator('#skyFoundationWheelMount .sky-foundation-wheel').scrollIntoViewIfNeeded();
 await page.evaluate(()=>window.addEventListener('relphi:sky-foundation-filter-changed',e=>{window.__mobileTestLastFilter=e.detail?.state}));
-const findTouchPoint=async(kind)=>page.evaluate((kind)=>{
+const findTouchPoint=async(kind,scope=null)=>page.evaluate(({kind,scope})=>{
   const wheel=document.querySelector('#skyFoundationWheelMount .sky-foundation-wheel');
   const nodes=[...wheel.querySelectorAll('[data-interactive="'+kind+'"]')].filter(node=>node.getClientRects().length&&!node.classList.contains('sky-foundation-aspect-hit'));
   const width=window.innerWidth,height=window.innerHeight;
@@ -42,6 +42,7 @@ const findTouchPoint=async(kind)=>page.evaluate((kind)=>{
       const x=minX+(maxX-minX)*ix/10,y=minY+(maxY-minY)*iy/10;
       const top=document.elementFromPoint(x,y)?.closest?.('[data-interactive]');
       if(top?.dataset.interactive!==kind)continue;
+      if(kind==='aspect'&&scope&&top.dataset.relationshipMode!==scope)continue;
       if(kind==='house'){
         // Chromium intentionally touch-adjusts a finger toward nearby glyphs.
         // Do not call a glyph-targeting gesture a failed house-sector tap.
@@ -65,7 +66,7 @@ const findTouchPoint=async(kind)=>page.evaluate((kind)=>{
     }
   }
   return null;
-},kind);
+},{kind,scope});
 const focus=()=>page.evaluate(()=>{
  const wheel=document.querySelector('#skyFoundationWheelMount .sky-foundation-wheel');
  return{active:wheel?.classList.contains('has-isolation'),
@@ -144,24 +145,18 @@ assert.ok(scopeCounts['A-B']>0,'A-B wheel geometry must exist with two skies');
 assert.ok(scopeCounts['B-B']>0,'B-B wheel geometry must exist with two skies');
 
 const activateScope=async(mode)=>{
- const data=await page.evaluate(mode=>{
-  const wheel=document.querySelector('#skyFoundationWheelMount .sky-foundation-wheel');
-  const candidates=[...wheel.querySelectorAll('[data-layer="aspects"] > line.sky-foundation-aspect:not(.sky-foundation-aspect-hit)')].filter(n=>n.dataset.relationshipMode===mode);
-  const line=candidates.find(n=>getComputedStyle(n).display!=='none'&&!n.hidden);
-  if(!line)return {error:'No eligible '+mode+' line',candidates:candidates.length};
-  const id=(n)=>[n.dataset.leftSky,n.dataset.leftPlacement,n.dataset.aspect,n.dataset.rightSky,n.dataset.rightPlacement].join('|');
-  const clicked=line.dispatchEvent(new MouseEvent('click',{bubbles:true,cancelable:true,view:window}));
-  window.__scopeTrace={clicked,attached:line.isConnected,rootContains:document.getElementById('skyFoundationRoot')?.contains(line),rootBound:document.getElementById('skyFoundationRoot')?.dataset.foundationInteractionsV2Bound,filter:window.__mobileTestLastFilter,trace:window.__focusTrace.slice(-8)};
-  return {id:id(line),endpoints:[line.dataset.leftSky+':'+line.dataset.leftPlacement,line.dataset.rightSky+':'+line.dataset.rightPlacement]};
- },mode);
- assert.ok(!data.error,JSON.stringify(data));
- const selection=await focus();
- console.log('SCOPE ACTIVATION',mode,data,{active:selection.active,selected:selection.selected,kept:selection.keptAspects.length},await page.evaluate(()=>({filter:window.__mobileTestLastFilter,scope:window.__scopeTrace&&{...window.__scopeTrace,trace:JSON.stringify(window.__scopeTrace.trace)}})));
- assert.ok(selection.active,mode+' click must lock isolation');
- assert.ok(selection.keptAspects.some(n=>[n.leftSky,n.left,n.aspect,n.rightSky,n.right].join('|')===data.id),mode+' correct line must be kept');
- for(const endpoint of data.endpoints)assert.ok(selection.keptEndpoints.includes(endpoint),mode+' must keep endpoint '+endpoint);
- assert.ok(selection.keptAspects.every(n=>[n.leftSky,n.left,n.aspect,n.rightSky,n.right].join('|')===data.id),mode+' must isolate exact relationship, not a family of aspects');
- return data;
+  const hit=await findTouchPoint('aspect',mode);
+  assert.ok(hit,'a physical '+mode+' aspect stroke must be hit-testable on mobile');
+  await page.touchscreen.tap(hit.x,hit.y);
+  await page.waitForTimeout(850);
+  const selection=await focus();
+  const identity=[hit.leftSky,hit.left,hit.aspect,hit.rightSky,hit.right].join('|');
+  assert.ok(selection.active,mode+' physical touch must lock isolation');
+  assert.ok(selection.keptAspects.some(n=>[n.leftSky,n.left,n.aspect,n.rightSky,n.right].join('|')===identity),mode+' correct line must be kept');
+  for(const endpoint of [hit.leftSky+':'+hit.left,hit.rightSky+':'+hit.right])assert.ok(selection.keptEndpoints.includes(endpoint),mode+' must keep '+endpoint);
+  assert.ok(selection.keptAspects.every(n=>[n.leftSky,n.left,n.aspect,n.rightSky,n.right].join('|')===identity),mode+' touch must isolate exact relationship');
+  console.log(mode+' physical relationship selection verified');
+  return {id:identity,hit};
 };
 const ab=await activateScope('A-B');
 const bb=await activateScope('B-B');
