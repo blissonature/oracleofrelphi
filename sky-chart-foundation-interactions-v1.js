@@ -583,6 +583,16 @@
 
     root.addEventListener('click', event => {
       const node = interactiveFromEvent(event);
+      // An already isolated aspect is dismissed by the next tap in the
+      // central aspect field. Do not reinterpret that tap as another aspect:
+      // the 28px overlapping hit strokes can otherwise select an unrelated
+      // (and possibly hidden) relation instead of restoring the full wheel.
+      if (lockedState?.kind === 'aspect' && event.target.closest?.('[data-layer="aspects"]')) {
+        lockedState = null;
+        hoverState = null;
+        applyState();
+        return;
+      }
       if (node && missedAspectLine(node, event)) {
         lockedState = null;
         hoverState = null;
