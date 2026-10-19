@@ -62,18 +62,19 @@ const focus=()=>page.evaluate(()=>{
  selected:[...wheel.querySelectorAll('[data-interactive].is-selected')].map(n=>({kind:n.dataset.interactive,sky:n.dataset.sky,house:n.dataset.house,sign:n.dataset.sign,aspect:n.dataset.aspect,left:n.dataset.leftPlacement,right:n.dataset.rightPlacement})),
  keptAspects:[...wheel.querySelectorAll('[data-layer="aspects"] > line.sky-foundation-aspect.is-kept:not(.sky-foundation-aspect-hit)')].map(n=>({aspect:n.dataset.aspect,left:n.dataset.leftPlacement,right:n.dataset.rightPlacement,leftSky:n.dataset.leftSky,rightSky:n.dataset.rightSky,leftHouse:n.dataset.leftHouse,rightHouse:n.dataset.rightHouse,leftSign:n.dataset.leftSign,rightSign:n.dataset.rightSign,hidden:getComputedStyle(n).display==='none'})),
  keptEndpoints:[...wheel.querySelectorAll('[data-layer="placements"] > g.is-kept')].map(n=>n.dataset.sky+':'+n.dataset.placement),
- dimmedVisible:[...wheel.querySelectorAll('[data-layer="aspects"] > line.sky-foundation-aspect:not(.is-kept):not(.sky-foundation-aspect-hit)')].filter(n=>getComputedStyle(n).display!=='none').length};
+ dimmedVisible:[...wheel.querySelectorAll('[data-layer="aspects"] > line.sky-foundation-aspect:not(.is-kept):not(.sky-foundation-aspect-hit)')].filter(n=>getComputedStyle(n).display!=='none').length,
+ eligibleHidden:[...wheel.querySelectorAll('[data-layer="aspects"] > line.sky-foundation-aspect:not(.is-kept):not(.sky-foundation-aspect-hit)')].filter(n=>!['sky-chart-orb-hidden','sky-orb-filter-hidden','sky-chart-filter-hidden','sky-chart-multiselect-hidden','sky-chart-aspect-multiselect-hidden','sky-chart-house-multiselect-hidden','sky-chart-sign-filter-hidden','sky-chart-semantic-hidden'].some(c=>n.classList.contains(c))&&getComputedStyle(n).display==='none').length};
 });
 const touchAspect=await findTouchPoint('aspect');
 assert.ok(touchAspect,'a real aspect stroke must be hit-testable on mobile');
 await page.touchscreen.tap(touchAspect.x,touchAspect.y);
 await page.waitForTimeout(850);
 let state=await focus();
-console.log('PHYSICAL ASPECT STATE',touchAspect,state,await page.evaluate(()=>[...document.querySelectorAll('#skyFoundationWheelMount [data-layer="aspects"] > line.sky-foundation-aspect:not(.sky-foundation-aspect-hit)')].slice(0,16).map(n=>({key:n.dataset.leftPlacement+'-'+n.dataset.aspect+'-'+n.dataset.rightPlacement,kept:n.classList.contains('is-kept'),hidden:n.hidden,style:n.getAttribute('style'),classes:n.getAttribute('class'),row:document.querySelector('.sky-foundation-relationship-row[data-relation-index="'+n.dataset.relationIndex+'"]')?.getAttribute('class')}))));
+console.log('PHYSICAL ASPECT STATE',touchAspect,state);
 assert.ok(state.active,'touch aspect must persist after finger release and compatibility-click delay');
 assert.ok(state.keptAspects.length>0,'touch aspect must keep an aspect line');
 assert.ok(state.keptEndpoints.length>=2,'touch aspect must keep both endpoints');
-assert.ok(state.dimmedVisible>0,'unmatched lines must remain visible but dimmed');
+assert.equal(state.eligibleHidden,0,'unmatched eligible lines must remain visible but dimmed (orb-excluded lines may stay hidden)');
 console.log('PHYSICAL ASPECT',touchAspect,state);
 await page.touchscreen.tap(touchAspect.x,touchAspect.y);
 await page.waitForTimeout(250);
