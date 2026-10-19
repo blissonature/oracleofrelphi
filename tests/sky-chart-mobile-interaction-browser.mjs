@@ -85,6 +85,7 @@ assert.ok(touchHouse,'a house sector with eligible aspects must be hit-testable 
 await page.touchscreen.tap(touchHouse.x,touchHouse.y);
 await page.waitForTimeout(850);
 state=await focus();
+console.log('PHYSICAL HOUSE STATE',touchHouse,state);
 assert.ok(state.active,'touch house must persist after release');
 assert.ok(state.selected.some(n=>n.kind==='house'&&n.sky===touchHouse.sky&&n.house===touchHouse.house),'correct house must be selected');
 assert.ok(state.keptAspects.some(n=>n.leftSky===touchHouse.sky&&n.leftHouse===touchHouse.house||n.rightSky===touchHouse.sky&&n.rightHouse===touchHouse.house),'house must keep matching lines');
