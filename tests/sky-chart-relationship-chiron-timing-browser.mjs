@@ -63,12 +63,12 @@ try{
       return node.dataset.relationshipMode==='B-B'&&node.dataset.aspect==='opposition'&&pair.has('venus')&&pair.has('chiron');
     });
     const meta=row?.querySelector('.inline-rel-transit-window');
-    return{kind:meta?.dataset.transitKind||'',text:meta?.textContent||'',chironReady:!!window.RelphiChironEphemeris?.isReady?.()};
+    return{kind:meta?.dataset.transitKind||'',text:meta?.textContent||'',chironReady:Number.isFinite(window.RelphiChironEphemeris?.longitudeAt?.(new Date('2026-09-10T18:00:00.000Z')))};
   });
   assert.equal(state.kind,'dynamic',`Venus–Chiron tile should show dynamic timing: ${JSON.stringify(state)}`);
   for(const label of ['Start','Exact','End','Duration','Passes'])assert.ok(state.text.includes(label),`timing tile should include ${label}: ${state.text}`);
   assert.ok(!state.text.includes('unavailable'),'timing tile should not say unavailable');
-  assert.ok(state.chironReady,'Swiss Chiron ephemeris should be ready');
+  assert.ok(state.chironReady,'Local Horizons Chiron ephemeris should supply a real longitude');
 
   // Expanding one row must not leak its timing/cards into Copy while Display is Glyphs.
   const glyphCopyState=await page.evaluate(()=>{
@@ -150,7 +150,8 @@ try{
           const leftHouse=Number(row.dataset.leftHouse),rightHouse=Number(row.dataset.rightHouse);
           const leftHouseToken=Number.isInteger(leftHouse)&&leftHouse>=1&&leftHouse<=12?` H${leftHouse}`:'';
           const rightHouseToken=Number.isInteger(rightHouse)&&rightHouse>=1&&rightHouse<=12?` H${rightHouse}`:'';
-          return `${placementSymbols[left]||left} in ${signSymbols[Number(row.dataset.leftSign)]||''} ${coordinate(row,'left')}${leftHouseToken} ${aspectSymbols[aspect]||aspect} ${placementSymbols[right]||right} in ${signSymbols[Number(row.dataset.rightSign)]||''} ${coordinate(row,'right')}${rightHouseToken}`.replace(/\s+/g,' ').trim();
+          const motion=(side,id)=>{const direct=String(row.dataset[side+'Sky']||'').toUpperCase(),scope=String(row.dataset.relationshipMode||'').toUpperCase(),sky=direct==='A'||direct==='B'?direct:scope==='A-A'?'A':scope==='B-B'?'B':side==='left'?'A':'B';return window.RelphiSkyRetrograde?.forPlacement?.(sky,id)?' Rx':''};
+          return `${placementSymbols[left]||left}${motion('left',left)} in ${signSymbols[Number(row.dataset.leftSign)]||''} ${coordinate(row,'left')}${leftHouseToken} ${aspectSymbols[aspect]||aspect} ${placementSymbols[right]||right}${motion('right',right)} in ${signSymbols[Number(row.dataset.rightSign)]||''} ${coordinate(row,'right')}${rightHouseToken}`.replace(/\s+/g,' ').trim();
         })
         .filter(Boolean);
     });
