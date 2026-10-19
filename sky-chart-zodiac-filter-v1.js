@@ -23,7 +23,7 @@ const SIGNS=[
 const COLORS=['#e53935','#f06b32','#f39a2e','#f5be3d','#f1dc43','#a9cf46','#43a85b','#2ca69b','#3285c7','#5961c8','#8c4fb4','#bd438e'];
 const ALL=SIGNS.map((_,index)=>String(index));
 const STORAGE_KEY='relphiSkyZodiacFilterV1';
-let selected=new Set(ALL),queued=false,wheelDriven=false,root=null,button=null,menu=null;
+let selected=new Set(ALL),queued=false,root=null,button=null,menu=null;
 try{const saved=JSON.parse(localStorage.getItem(STORAGE_KEY)||'null');if(Array.isArray(saved))selected=new Set(saved.map(String).filter(value=>ALL.includes(value)))}catch(_){}
 
 function canonicalGlyph(host,id,color){
@@ -48,27 +48,22 @@ function syncChecks(){
   if(button)button.textContent=summary();
 }
 
-function clearAppliedSignFilter(){
-  document.querySelectorAll('.sky-foundation-relationship-row[data-relation-index]').forEach(row=>row.classList.remove('sky-chart-sign-filter-hidden'));
-}
+
 function apply(){
   queued=false;
   const all=selected.size===12;
   document.querySelectorAll('.sky-foundation-relationship-row[data-relation-index]').forEach(row=>{
     const match=all||selected.has(String(row.dataset.leftSign))||selected.has(String(row.dataset.rightSign));
-    // A wheel sign already owns relationship isolation. The dropdown mirrors that state
-    // for visibility, but must not feed the same sign back as a second filtering layer.
-    row.classList.toggle('sky-chart-sign-filter-hidden',wheelDriven?false:!match);
+    row.classList.toggle('sky-chart-sign-filter-hidden',!match);
   });
   syncChecks();
-  document.documentElement.dataset.skyZodiacFilterSource=wheelDriven?'wheel':'manual';
-  if(!wheelDriven)try{localStorage.setItem(STORAGE_KEY,JSON.stringify(Array.from(selected)))}catch(_){}
-  window.dispatchEvent(new CustomEvent('relphi:sky-zodiac-filter-changed',{detail:{signs:Array.from(selected,Number),source:wheelDriven?'wheel':'manual'}}));
+  document.documentElement.dataset.skyZodiacFilterSource='manual';
+  try{localStorage.setItem(STORAGE_KEY,JSON.stringify(Array.from(selected)))}catch(_){}
+  window.dispatchEvent(new CustomEvent('relphi:sky-zodiac-filter-changed',{detail:{signs:Array.from(selected,Number),source:'manual'}}));
 }
 function schedule(){if(queued)return;queued=true;requestAnimationFrame(apply)}
 
 function releaseWheelIsolationForManualFilter(){
-  wheelDriven=false;
   const clear=document.getElementById('skyFoundationClearIsolation');
   if(clear&&!clear.hidden)clear.click();
 }
@@ -185,37 +180,8 @@ function install(){
   syncChecks();
 }
 
-// A wheel sign replaces the previous sign selection. Remove any sign-filter class
-// before the foundation click handler computes the new wheel relationship set, so
-// Scorpio → Libra → Scorpio cannot collapse into Scorpio ∩ Libra.
-document.addEventListener('pointerdown',event=>{
-  const sector=event.target.closest?.('#skyFoundationWheelMount [data-interactive="sign"]');
-  if(!sector)return;
-  clearAppliedSignFilter();
-},true);
-
-// A click on a wheel sign already locks the foundation isolation. Mirror that exact
-// selection into the Sign control after the interaction controller has updated the DOM.
-document.addEventListener('click',event=>{
-  const sector=event.target.closest?.('#skyFoundationWheelMount [data-interactive="sign"]');
-  if(!sector)return;
-  queueMicrotask(()=>{
-    const sign=String(sector.dataset.sign??'');
-    if(!ALL.includes(sign))return;
-    if(sector.classList.contains('is-selected')){
-      wheelDriven=true;selected=new Set([sign]);syncChecks();schedule();
-    }else if(wheelDriven){
-      wheelDriven=false;selected=new Set(ALL);syncChecks();schedule();
-    }
-  });
-});
-
-// Clearing a wheel-driven isolation should restore the dropdown to All. Manual Sign
-// filter edits set wheelDriven false before clearing, so they are not overwritten here.
-window.addEventListener('relphi:sky-foundation-filter-changed',event=>{
-  if(wheelDriven&&!event.detail?.state){wheelDriven=false;selected=new Set(ALL);syncChecks();schedule();}
-});
-
+// Wheel sign gestures belong to the foundation interaction controller.
+// This menu only owns explicitly changed Sign filter checkboxes.
 function start(){
   install();schedule();
   ['relphi:sky-foundation-interactions-ready','relphi:sky-foundation-ready','relphi:sky-placement-multiselect-changed','relphi:sky-aspect-multiselect-changed'].forEach(name=>window.addEventListener(name,()=>{install();schedule()}));
