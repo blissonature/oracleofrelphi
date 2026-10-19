@@ -41,8 +41,24 @@ async function runMobileTap(browserType,label){
     await page.waitForFunction(()=>document.documentElement.dataset.skyRelationshipSort==='ends-last',null,{timeout:45000});
     await page.waitForFunction(()=>document.querySelector('select[data-relationship-sort]')?.getAttribute('aria-busy')==='false',null,{timeout:45000});
 
-    const row=page.locator('#skyFoundationRelationshipList>.sky-foundation-relationship-row[data-relation-index]:visible').first();
-    await row.scrollIntoViewIfNeeded();
+    const first=page.locator('#skyFoundationRelationshipList>.sky-foundation-relationship-row[data-relation-index]:visible').first();
+    const rowIndex=await first.getAttribute('data-relation-index');
+    const row=page.locator('#skyFoundationRelationshipList>.sky-foundation-relationship-row[data-relation-index="'+rowIndex+'"]');
+    await page.evaluate(()=>document.querySelector('#skyFoundationRelationshipList>.sky-foundation-relationship-row[data-relation-index]:not([hidden])')?.scrollIntoView({block:'center'}));
+
+    // Playwright's synthesized PointerEvent is not equivalent to WebKit's native
+    // touchscreen dispatch. Exercise actual user taps on WebKit; Chromium below
+    // retains fine-grained down/move/up and compatibility-click assertions.
+    if(label==='WebKit'){
+      await row.tap();
+      await page.waitForFunction(()=>Boolean(document.querySelector('#skyFoundationRelationshipList>.sky-foundation-relationship-row.is-inline-expanded')),null,{timeout:5000});
+      assert.equal(await row.getAttribute('aria-expanded'),'true',label+': native first touch should expand');
+      await row.locator('.sky-foundation-relationship-placement--left').tap();
+      await page.waitForFunction(()=>!document.querySelector('#skyFoundationRelationshipList>.sky-foundation-relationship-row.is-inline-expanded'),null,{timeout:5000});
+      assert.equal(await row.getAttribute('aria-expanded'),'false',label+': native second touch should collapse');
+      console.log(label+': native touchscreen tap expands and collapses sorted relationship tiles');
+      return;
+    }
 
     // A vertical drag belongs to native scrolling and must not activate the row.
     const pan={pointerType:'touch',pointerId:41,isPrimary:true,clientX:120,clientY:300,buttons:1};
@@ -83,5 +99,5 @@ async function runMobileTap(browserType,label){
   }
 }
 
-await runMobileTap(chromium,'Chromium');
+if(!process.argv.includes('--webkit-only'))await runMobileTap(chromium,'Chromium');
 await runMobileTap(webkit,'WebKit');

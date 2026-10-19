@@ -1,0 +1,24 @@
+name: WebKit relationship tap
+on:
+  pull_request:
+    paths:
+      - 'sky-chart-inline-relationship-v5.js'
+      - 'tests/sky-chart-relationship-mobile-tap-browser.mjs'
+      - '.github/workflows/sky-chart-webkit-tap.yml'
+jobs:
+  webkit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 7
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Browser engine
+        run: |
+          npm install --no-save playwright@1.52.0
+          npx playwright install --with-deps webkit
+      - name: Native WebKit tap
+        run: |
+          python3 -m http.server 4173 >/tmp/sky-webkit.log 2>&1 &
+          node tests/sky-chart-relationship-mobile-tap-browser.mjs --webkit-only
