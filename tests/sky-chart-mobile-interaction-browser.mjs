@@ -31,6 +31,7 @@ assert.equal(await page.locator('#skyFoundationWheelMount .sky-foundation-wheel.
 /* Physical touch, not dispatchEvent: detect tappable pixels from hit testing on
    the rendered SVG, then use Chromium's touchscreen on those pixels. */
 await page.locator('#skyFoundationWheelMount .sky-foundation-wheel').scrollIntoViewIfNeeded();
+await page.evaluate(()=>window.addEventListener('relphi:sky-foundation-filter-changed',e=>{window.__mobileTestLastFilter=e.detail?.state}));
 const findTouchPoint=async(kind)=>page.evaluate((kind)=>{
   const wheel=document.querySelector('#skyFoundationWheelMount .sky-foundation-wheel');
   const nodes=[...wheel.querySelectorAll('[data-interactive="'+kind+'"]')].filter(node=>node.getClientRects().length&&!node.classList.contains('sky-foundation-aspect-hit'));
@@ -85,7 +86,7 @@ assert.ok(touchHouse,'a house sector with eligible aspects must be hit-testable 
 await page.touchscreen.tap(touchHouse.x,touchHouse.y);
 await page.waitForTimeout(850);
 state=await focus();
-console.log('PHYSICAL HOUSE STATE',touchHouse,state);
+console.log('PHYSICAL HOUSE STATE',touchHouse,state,await page.evaluate(()=>({last:window.__mobileTestLastFilter,houses:[...document.querySelectorAll('#skyFoundationWheelMount [data-interactive="house"]')].filter(n=>n.dataset.sky==='A'&&n.dataset.house==='1').map(n=>({class:n.getAttribute('class'),kept:n.classList.contains('is-kept'),selected:n.classList.contains('is-selected')})),mount:document.querySelector('#skyFoundationWheelMount .sky-foundation-wheel')?.getAttribute('class')})));
 assert.ok(state.active,'touch house must persist after release');
 assert.ok(state.selected.some(n=>n.kind==='house'&&n.sky===touchHouse.sky&&n.house===touchHouse.house),'correct house must be selected');
 assert.ok(state.keptAspects.some(n=>n.leftSky===touchHouse.sky&&n.leftHouse===touchHouse.house||n.rightSky===touchHouse.sky&&n.rightHouse===touchHouse.house),'house must keep matching lines');
