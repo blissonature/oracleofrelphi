@@ -484,10 +484,23 @@
     // Touch is a discrete tap, not hover. iOS can synthesize pointerover,
     // pointermove and focus before the click, making a temporary isolation
     // look selected and then toggle off on finger release.
-    let touchActivation=false;
+    let touchActivation=false, touchAspectActivated=false;
     root.addEventListener('pointerdown',event=>{
       touchActivation=event.pointerType==='touch'||event.pointerType==='pen';
-      if(touchActivation){hoverState=null;rowHoverState=null;}
+      touchAspectActivated=false;
+      if(!touchActivation)return;
+      hoverState=null;rowHoverState=null;
+      const hit=event.target.closest?.('#skyFoundationWheelMount [data-interactive="aspect"]');
+      if(!hit)return;
+      const next=specFrom(hit);
+      if(!next?.value)return;
+      // Commit touch selection on pointerdown. A synthesized click after
+      // pointerup must not toggle this same selection straight back off.
+      touchAspectActivated=true;
+      rowLockedState=null;rowHoverState=null;
+      if(same(lockedState,next)){lockedState=null;selectionOrigin=null}
+      else{lockedState=next;selectionOrigin=originFromNode(hit,next)}
+      applyState();
     },true);
     root.addEventListener('pointerover',event=>{
       if(touchActivation||event.pointerType==='touch'||event.pointerType==='pen')return;
@@ -519,6 +532,7 @@
       if(lockedState)return;const node=interactive(event);if(!node||node.contains(event.relatedTarget))return;hoverState=null;applyState()
     });
     root.addEventListener('click',event=>{
+      if(touchAspectActivated){touchAspectActivated=false;event.preventDefault();return;}
       wheelOnlyExternal=false;
       const row=event.target.closest?.('.sky-foundation-relationship-row[data-relation-index]');
       if(row)return;
