@@ -271,7 +271,7 @@
     // rows can be filtered, reordered or temporarily hidden independently of lines.
     // Build the visible endpoints from the actual line being displayed so an
     // isolated aspect never loses its two placements.
-    if(state&&(state.kind==='placement'||state.kind==='aspect')){
+    if(state&&(state.kind==='placement'||state.kind==='aspect'||state.kind==='house'||state.kind==='sign')){
       const lineVisible=line=>{
         if(line.hidden||line.style.display==='none')return false;
         const skip=['sky-chart-filter-hidden','sky-chart-orb-hidden','sky-orb-filter-hidden',
@@ -286,7 +286,9 @@
         const left=String(line.dataset.leftPlacement||''),right=String(line.dataset.rightPlacement||'');
         if(!left||!right||!identity)return;
         const matches=state.kind==='aspect'?identity===String(state.value):
-          (slots.left===state.sky&&left===state.value)||(slots.right===state.sky&&right===state.value);
+          state.kind==='placement'?(slots.left===state.sky&&left===state.value)||(slots.right===state.sky&&right===state.value):
+          state.kind==='house'?(slots.left===state.sky&&Number(line.dataset.leftHouse)===state.value)||(slots.right===state.sky&&Number(line.dataset.rightHouse)===state.value):
+          Number(line.dataset.leftSign)===state.value||Number(line.dataset.rightSign)===state.value;
         if(!matches)return;
         relationships.add(identity);
         for(const [slot,id,side] of [[slots.left,left,'left'],[slots.right,right,'right']]){
