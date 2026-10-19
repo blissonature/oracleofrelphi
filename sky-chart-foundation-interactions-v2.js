@@ -388,8 +388,9 @@
     const root=document.getElementById('skyFoundationRoot');if(!root)return null;
     const node=event.target.closest?.('[data-interactive]');
     if(node&&root.contains(node)){
-      if(node.dataset.interactive!=='aspect')return node;
-      return nearestAspect(event)||node;
+      // A struck SVG aspect already identifies its exact endpoints and
+      // harmonic. Do not replace it with a geometrically nearby crossing line.
+      return node;
     }
     const wheel=event.target.closest?.('#skyFoundationWheelMount .sky-foundation-wheel');
     if(wheel&&root.contains(event.target))return nearestAspect(event);
