@@ -220,3 +220,44 @@ test('spiral pen snaps to grid points but a fixed-radius pen retains its circle'
  near(spiral.strokes.at(-1).points.at(-1).y,450);
  near(spiral.r,Math.hypot(125,60));
 });
+
+test('fourth ink swatch opens a native picker and keeps quick presets independent',()=>{
+ const t=mount();
+ assert.match(html,/<input type="color" id="customColor"/);
+ assert.match(html,/data-color="#292a30"[\s\S]*?data-color="#dc1f18"[\s\S]*?data-color="#2347ca"[\s\S]*?id="customSwatch"/);
+ assert.equal(t.get('customSwatch').getAttribute('data-selected'),'false');
+ t.get('customColor').value='#12ab34';
+ t.get('customColor').emit('input',{target:t.get('customColor')});
+ assert.equal(t.state().color,'#12ab34');
+ assert.equal(t.state().customColor,'#12ab34');
+ assert.equal(t.state().inkSource,'custom');
+ assert.equal(t.get('customSwatch').getAttribute('data-selected'),'true');
+ assert.equal(t.get('customDot').style.backgroundColor,'#12ab34');
+ assert.ok(t.swatches.every(b=>b.getAttribute('aria-pressed')==='false'));
+ t.get('circle').click();
+ assert.equal(t.state().strokes[0].color,'#12ab34');
+ const black=t.swatches.find(b=>b.dataset.color==='#292a30');
+ black.click();
+ assert.equal(t.state().color,'#292a30');
+ assert.equal(t.get('customSwatch').getAttribute('data-selected'),'false');
+ assert.equal(t.get('customColor').value,'#12ab34');
+ assert.equal(black.getAttribute('aria-pressed'),'true');
+ t.get('circle').click();
+ assert.equal(t.state().strokes[0].color,'#12ab34');
+ assert.equal(t.state().strokes[1].color,'#292a30');
+});
+test('custom ink color is saved, restored, and can be selected again after a preset',()=>{
+ const t=mount();
+ t.get('customColor').value='#ef8143';
+ t.get('customColor').emit('change',{target:t.get('customColor')});
+ let reopened=mount(t.data.get(STORAGE_KEY));
+ assert.equal(reopened.state().color,'#ef8143');
+ assert.equal(reopened.get('customColor').value,'#ef8143');
+ assert.equal(reopened.get('customSwatch').getAttribute('data-selected'),'true');
+ reopened.swatches.find(b=>b.dataset.color==='#2347ca').click();
+ reopened=mount(reopened.data.get(STORAGE_KEY));
+ assert.equal(reopened.state().color,'#2347ca');
+ assert.equal(reopened.get('customColor').value,'#ef8143');
+ reopened.get('customColor').emit('input',{target:reopened.get('customColor')});
+ assert.equal(reopened.state().color,'#ef8143');
+});
