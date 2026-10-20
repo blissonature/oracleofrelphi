@@ -100,7 +100,7 @@ function writeJson(storage,key,value){try{storage.setItem(key,JSON.stringify(val
 function displayState(){
   const api=window.RelphiSkyVocab?.getDisplay?.();if(api)return api;
   const value=readJson(localStorage,DISPLAY_KEY,null);
-  return{glyphs:value?.glyphs!==false,names:value?.names!==false,referents:value?.referents!==false};
+  return{glyphs:value?value.glyphs!==false:false,names:value?value.names!==false:false,referents:value?value.referents!==false:true};
 }
 function capitalize(value){return String(value||'').replace(/[A-Za-z]/,letter=>letter.toUpperCase())}
 function registryEntry(id){const registry=window.RelphiGlyphRegistry;return registry?.get?.(id)||registry?.resolve?.(id)||null}
