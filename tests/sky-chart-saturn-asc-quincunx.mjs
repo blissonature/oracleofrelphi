@@ -139,4 +139,48 @@ try{
  assert.equal(await candidate.isVisible(),true,'Clicking Saturn after returning to standalone must not blank its quincunx');
  assert.ok(Number(await page.locator('html').getAttribute('data-sky-wheel-relationship-candidates'))>=1,'At least one candidate must survive selected Saturn');
  console.log('PASS: exact A↔A quincunx remains visible across sorting, wheel activation, and Sky B removal.');
+ const mobile=await browser.newContext({viewport:{width:390,height:850},hasTouch:true,isMobile:true});
+ try{
+  await mobile.addInitScript(fixture=>{
+   localStorage.setItem('relphiSkyChartA',JSON.stringify(fixture));
+   localStorage.removeItem('relphiSkyChartB');
+   localStorage.setItem('relphiSkyChartLastModeV1','standalone');
+   localStorage.setItem('relphiSkyHarmonicWindowV1','1');
+  },sky);
+  const screen=await mobile.newPage();
+  await screen.goto('http://127.0.0.1:4173/sky-chart.html',{waitUntil:'domcontentloaded',timeout:40000});
+  await screen.waitForSelector('#skyFoundationRoot[aria-busy="false"]',{timeout:30000});
+  await screen.waitForFunction(()=>
+   document.querySelector('#skyFoundationRelationshipList > .sky-foundation-relationship-row[data-aspect="quincunx"][data-relationship-mode="A-A"]'),null,{timeout:20000});
+  await screen.locator('#skyFoundationWheelMount').scrollIntoViewIfNeeded();
+  const point=await screen.evaluate(()=>{
+   const line=[...document.querySelectorAll('#skyFoundationWheelMount [data-layer="aspects"] > line.sky-foundation-aspect:not(.sky-foundation-aspect-hit)')]
+    .find(el=>el.dataset.aspect==='quincunx'&&[el.dataset.leftPlacement,el.dataset.rightPlacement].includes('saturn')&&[el.dataset.leftPlacement,el.dataset.rightPlacement].includes('asc'));
+   if(!line)throw new Error('Missing mobile aspect line');
+   const p=line.ownerSVGElement.createSVGPoint(),ctm=line.getScreenCTM();
+   p.x=(Number(line.getAttribute('x1'))+Number(line.getAttribute('x2')))/2;
+   p.y=(Number(line.getAttribute('y1'))+Number(line.getAttribute('y2')))/2;
+   const xy=p.matrixTransform(ctm);
+   return{x:xy.x,y:xy.y};
+  });
+  console.log('MOBILE TOUCH POSITION',JSON.stringify(point));
+  assert.ok(point.x>=0&&point.x<390&&point.y>=0&&point.y<850,'Mobile aspect midpoint must be in viewport');
+  await screen.touchscreen.tap(point.x,point.y);
+  await screen.waitForTimeout(450);
+  const afterTouch=await screen.evaluate(()=>({
+   selection:window.RelphiSkyFoundationInteractions?.captureFocus?.().lockedState,
+   row:[...document.querySelectorAll('.sky-foundation-relationship-row[data-aspect="quincunx"][data-relationship-mode="A-A"]')]
+    .find(row=>[row.dataset.leftPlacement,row.dataset.rightPlacement].includes('saturn')&&[row.dataset.leftPlacement,row.dataset.rightPlacement].includes('asc'))?.hidden,
+   line:[...document.querySelectorAll('#skyFoundationWheelMount [data-layer="aspects"] > line.sky-foundation-aspect:not(.sky-foundation-aspect-hit)')]
+    .filter(el=>el.dataset.aspect==='quincunx'&&[el.dataset.leftPlacement,el.dataset.rightPlacement].includes('saturn')&&[el.dataset.leftPlacement,el.dataset.rightPlacement].includes('asc'))
+    .map(el=>getComputedStyle(el).display),
+   candidates:document.documentElement.dataset.skyWheelRelationshipCandidates
+  }));
+  console.log('MOBILE TOUCH RESULT',JSON.stringify(afterTouch));
+  assert.equal(afterTouch.selection?.kind,'aspect','Mobile touch should select the line');
+  assert.equal(afterTouch.row,false,'Mobile touch must keep the matching relationship visible');
+  assert.ok(afterTouch.line.some(display=>display!=='none'),'Mobile touch must keep the aspect drawn');
+  assert.ok(Number(afterTouch.candidates)>=1,'Mobile touch must retain a candidate');
+  console.log('PASS: mobile touch preserves the same near-exact quincunx');
+ }finally{await mobile.close()}
 }finally{await browser.close()}
