@@ -261,9 +261,9 @@ function aspectInfo(aspect){return{id:aspect.id,glyphId:aspect.id,name:ASPECT_NA
 function displayState(){
   const value=readJson(localStorage,DISPLAY_KEY,null);
   return{
-    glyphs:value?.glyphs!==false,
-    names:value?.names!==false,
-    referents:value?.referents!==false
+    glyphs:value?value.glyphs!==false:false,
+    names:value?value.names!==false:false,
+    referents:value?value.referents!==false:true
   };
 }
 function saveDisplay(next){writeJson(localStorage,DISPLAY_KEY,next);document.documentElement.dataset.skyVocabGlyphs=next.glyphs?'true':'false';document.documentElement.dataset.skyVocabNames=next.names?'true':'false';document.documentElement.dataset.skyVocabReferents=next.referents?'true':'false'}
@@ -1314,7 +1314,7 @@ function renderParagraph(slot,panel){
   }
 }
 function htmlEscape(value){return String(value??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]))}
-function optionLabel(id){return id==='glyphs'?'Glyphs':id==='names'?'Names':'Referents'}
+function optionLabel(id){return id==='glyphs'?'Symbols':id==='names'?'Names':'Meanings'}
 function layerSummary(){
   const state=displayState(),ids=['glyphs','referents','names'],selected=ids.filter(id=>state[id]);
   if(selected.length===ids.length)return'All';
