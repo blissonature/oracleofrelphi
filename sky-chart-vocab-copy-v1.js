@@ -79,6 +79,21 @@ function serializePanel(panel){
       lines.push(value.toUpperCase(),'');
       return;
     }
+    // Vocab groups are <details> with a semantic title, decorative preview,
+    // and a body of independent sentences. Flattening the entire details
+    // element merges the preview glyphs and lines without any boundaries.
+    // Export its authored title and each sentence instead, even when closed.
+    if(node.matches('details.sky-vocab-group')){
+      const title=clean(node.querySelector(':scope > summary .sky-vocab-group-title')?.textContent);
+      const body=node.querySelector(':scope > .sky-vocab-group-body');
+      const sentences=[...body?.querySelectorAll(':scope > .sky-vocab-line')||[]]
+        .filter(line=>!line.hidden).map(serializeNode).filter(Boolean);
+      if(!sentences.length)return;
+      if(lines[lines.length-1]!=='')lines.push('');
+      if(title)lines.push(title,'');
+      lines.push(...sentences,'');
+      return;
+    }
     if(node.matches('.sky-vocab-structure-subheading')){
       if(lines[lines.length-1]!=='')lines.push('');
       lines.push(value,'');
