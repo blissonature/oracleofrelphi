@@ -86,7 +86,7 @@ try{
  assert.equal((await flash(main)).lines.length,0,'default wheel must have no flashlight strokes');
  const a=await locationFor(main,'A',11);
  console.log('A house target',JSON.stringify(a));
- assert.equal(a.target,'house','Real pointer must land in A house wedge');
+ assert.equal(a.house,'11','Real pointer must land in A house wedge');
  await main.mouse.move(a.x,a.y);
  await main.waitForTimeout(100);
  const hovered=await flash(main);
@@ -113,7 +113,7 @@ try{
 
  const b=await locationFor(main,'B',12);
  console.log('B house target',JSON.stringify(b));
- assert.equal(b.target,'house','Real pointer must land in B house wedge');
+ assert.equal(b.house,'12','Real pointer must land in B house wedge');
  await main.mouse.click(b.x,b.y);
  await main.mouse.move(15,15);
  await main.waitForTimeout(150);
