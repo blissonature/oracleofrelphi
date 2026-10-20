@@ -82,11 +82,11 @@ try{
 
   const relationshipCountStatus=await page.locator('#skyFoundationRelationshipCount').evaluate(node=>({
     matchCount:node.dataset.matchCount||'',
-    visibleNumber:getComputedStyle(node,'::before').content.replace(/["']/g,''),
+    visibleNumber:getComputedStyle(node,'::after').content.replace(/["']/g,''),
     suffix:getComputedStyle(node,'::after').content
   }));
   assert.match(relationshipCountStatus.matchCount,/^\d+$/,'Relationship header must retain a stable matching-count state.');
-  assert.equal(relationshipCountStatus.visibleNumber,relationshipCountStatus.matchCount,'Visible relationship count must render from stable match state.');
+  assert.equal(relationshipCountStatus.visibleNumber,relationshipCountStatus.matchCount+' matches','Visible relationship count must render N matches from stable match state.');
   assert.match(relationshipCountStatus.suffix,/matches/,'Relationship count must visibly identify the number as matches.');
 
   const showMore=page.locator('#skyFoundationRelationshipList [data-harmonic-show-more]');
