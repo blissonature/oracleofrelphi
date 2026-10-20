@@ -73,6 +73,17 @@ function serializePanel(panel){
   const slot=String(panel.dataset.skyVocabPanel||slotFor(panel)).toUpperCase(),lines=[`${skyName(slot)} — Vocab`,''];
   [...paragraph.children].forEach(node=>{
     if(node.hidden)return;
+    // A group contains a summary, decorative preview glyphs, and separate
+    // semantic lines. Never flatten the whole details element with textContent.
+    if(node.matches('.sky-vocab-group')){
+      const title=clean(node.querySelector(':scope > .sky-vocab-group-summary .sky-vocab-group-title')?.textContent);
+      const body=node.querySelector(':scope > .sky-vocab-group-body');
+      const entries=[...(body?.querySelectorAll(':scope > .sky-vocab-line')||[])].map(serializeNode).filter(Boolean);
+      if(!title||!entries.length)return;
+      if(lines[lines.length-1]!=='')lines.push('');
+      lines.push(title,...entries,'');
+      return;
+    }
     const value=serializeNode(node);if(!value)return;
     if(node.matches('.sky-vocab-structures-heading,.sky-vocab-placements-heading')){
       if(lines[lines.length-1]!=='')lines.push('');
