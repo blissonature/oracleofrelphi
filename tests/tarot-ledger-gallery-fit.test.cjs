@@ -7,9 +7,9 @@ const html=fs.readFileSync(path.join(__dirname,'../tarot.html'),'utf8');
 const css=fs.readFileSync(path.join(__dirname,'../tarot-ledger-gallery-fit.css'),'utf8');
 const app=fs.readFileSync(path.join(__dirname,'../tarot-app.js'),'utf8');
 test('new visitors can hide entry; gallery defaults to bounded fit and grid',()=>{
- assert.deepEqual(fit.load({getItem:()=>null}),{mode:'fit',min:112,max:320,entryVisible:true,view:'grid'});
+ assert.deepEqual(fit.load({getItem:()=>null}),{mode:'fit',min:112,max:320,entryVisible:true});
  const state=fit.normalize({mode:'manual',entryVisible:false,view:'book',min:82,max:192});
- assert.equal(state.view,'book');assert.equal(state.entryVisible,false);
+ assert.equal(state.entryVisible,false);
  assert.equal(state.min,82);assert.equal(state.max,192);
  const tooSmall=fit.normalize({min:-200,max:0});assert.ok(tooSmall.min>=64);
  const inverted=fit.normalize({min:250,max:120});
@@ -54,22 +54,26 @@ test('computed presentation applies only to Ledger result cards',()=>{
  fit.reset(grid);
  assert.equal(props['grid-template-columns'],undefined);
 });
-test('Ledger adds a reversible full-entry control and a page reader, without altering Drawing Board',()=>{
- for(const id of ['toggleLedgerEntry','ledgerGridView','ledgerBookView','tarotStorybook','cardDetail','cardList']){
+test('Ledger reuses its existing two-column layout with entry navigation',()=>{
+ for(const id of ['toggleLedgerEntry','cardDetail','cardList']){
   assert.ok(html.includes('id="'+id+'"'),id);
  }
+ assert.doesNotMatch(html,/ledgerBookView|ledgerGridView|tarotStorybook/);
+ assert.doesNotMatch(app,/renderBookPage\(|data-book-step|ledgerBookView/);
  assert.match(app,/function setLedgerEntryVisible\(/);
  assert.match(app,/data\.entryVisible|dataset\.entryVisible/);
- assert.match(app,/renderBookPage\(list/);
- assert.match(app,/data-book-step/);
- assert.match(app,/data-book-full-entry/);
- assert.match(app,/rwsImagePath\(card\)/);
+ assert.match(app,/function navigateLedgerEntry\(step\)/);
+ assert.match(app,/data-ledger-entry-step/);
+ assert.match(app,/data-ledger-entry-close/);
+ assert.match(app,/function reflectSelectedGalleryCard\(/);
+ assert.match(app,/list\.findIndex\(item => item\.card_id === state\.selected\?\.card_id\)/);
+ assert.match(app,/function renderDetail\(card\)/);
  assert.match(app,/data-gallery-min/);
  assert.match(app,/data-gallery-max/);
  assert.match(html,/tarot-ledger-gallery-fit\.js/);
  assert.match(html,/tarot-ledger-gallery-fit\.css/);
  assert.match(css,/html body\.tarot-ledger-page #browsePanel\[data-entry-visible="false"\]/);
- assert.match(css,/#browsePanel\[data-gallery-view="book"\]/);
- assert.ok(!css.includes('#shortListPanel'),'the style must not affect Drawing Board');
- assert.ok(!app.includes("const ledgerGalleryEngine = document.querySelector('#shortListPanel')"));
+ assert.match(css,/#cardDetail \.ledger-entry-nav/);
+ assert.doesNotMatch(css,/tarot-book|ledger-gallery-view-switch|tarotStorybook/);
+ assert.ok(!css.includes('#shortListPanel'),'Drawing Board must be untouched');
 });
