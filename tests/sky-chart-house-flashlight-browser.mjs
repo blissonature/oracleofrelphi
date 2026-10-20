@@ -1,0 +1,130 @@
+import {chromium} from 'playwright';
+import assert from 'node:assert/strict';
+const fixture=(offset=0)=>({
+ name:offset?'Comparison B':'Birth A',
+ houseSystem:'porphyry',
+ calcProfile:{instant:'2026-10-20T12:00:00.000Z',dateTime:'2026-10-20T06:00:00',timeZone:'America/Denver',latitude:40.76,longitude:-111.89,houseSystem:'porphyry'},
+ houseCusps:Array.from({length:12},(_,i)=>(168+offset+i*30)%360),
+ placements:{
+  Sun:{name:'Sun',longitude:170+offset},Moon:{name:'Moon',longitude:279+offset},
+  Mercury:{name:'Mercury',longitude:195+offset},Venus:{name:'Venus',longitude:215+offset},
+  Mars:{name:'Mars',longitude:118+offset},Jupiter:{name:'Jupiter',longitude:142+offset},
+  Saturn:{name:'Saturn',longitude:13+offset},Uranus:{name:'Uranus',longitude:65+offset},
+  Neptune:{name:'Neptune',longitude:3+offset},Pluto:{name:'Pluto',longitude:303+offset},
+  Ascendant:{name:'Ascendant',longitude:168+offset},Descendant:{name:'Descendant',longitude:348+offset},
+  'Medium Coeli':{name:'Medium Coeli',longitude:258+offset},'Imum Coeli':{name:'Imum Coeli',longitude:78+offset}
+ }
+});
+const browser=await chromium.launch({headless:true});
+const errors=[];
+const boot=async(page,compare)=>{
+ page.on('pageerror',e=>errors.push(e.message));
+ await page.addInitScript(({a,b,compare})=>{
+  localStorage.setItem('relphiSkyChartA',JSON.stringify(a));
+  if(compare)localStorage.setItem('relphiSkyChartB',JSON.stringify(b));
+  else localStorage.removeItem('relphiSkyChartB');
+  localStorage.setItem('relphiSkyChartLastModeV1',compare?'comparison':'standalone');
+  localStorage.setItem('relphiSkyHarmonicWindowV1','1');
+ },{a:fixture(),b:fixture(17),compare});
+ await page.goto('http://127.0.0.1:4173/sky-chart.html',{waitUntil:'domcontentloaded',timeout:40000});
+ await page.locator('#skyFoundationRoot[aria-busy="false"]').waitFor({timeout:25000});
+ await page.waitForFunction(compare?
+  ()=>!!document.querySelector('#skyFoundationWheelMount > svg[data-outer-sky="B"] [data-layer="b-houses"] path[data-house-cusp-start]'):
+  ()=>!!document.querySelector('#skyFoundationWheelMount > svg[data-single-sky="A"] [data-layer="a-houses"] path[data-house-cusp-start]'),null,{timeout:20000});
+};
+async function locationFor(page,slot,house){
+ return page.evaluate(({slot,house})=>{
+  const layer=slot==='A'?'a-houses':'b-houses';
+  const path=document.querySelector('#skyFoundationWheelMount [data-layer="'+layer+'"] > path[data-house="'+house+'"]');
+  if(!path)throw new Error('No sector '+slot+house);
+  const start=Number(path.dataset.houseCuspStart),end=Number(path.dataset.houseCuspEnd);
+  const angle=(start+((end-start+360)%360)/2-180)*Math.PI/180,r=slot==='A'?193:440;
+  const svg=path.ownerSVGElement,point=svg.createSVGPoint();
+  point.x=600+r*Math.cos(angle);point.y=600+r*Math.sin(angle);
+  const p=point.matrixTransform(svg.getScreenCTM());
+  const target=document.elementFromPoint(p.x,p.y);
+  return {x:p.x,y:p.y,start,end,target:target?.getAttribute('data-interactive'),tag:target?.tagName};
+ },{slot,house});
+}
+const flash=(page)=>page.evaluate(()=>{
+ const layer=document.querySelector('#skyFoundationWheelMount > svg > [data-house-flashlight]');
+ return {sky:layer?.dataset.sky,house:layer?.dataset.house,pinned:layer?.dataset.pinned,
+  lines:[...(layer?.querySelectorAll('line.sky-house-flashlight-edge')||[])].map(l=>({
+   kind:l.dataset.segment,edge:l.dataset.boundary,
+   x1:Number(l.getAttribute('x1')),y1:Number(l.getAttribute('y1')),
+   x2:Number(l.getAttribute('x2')),y2:Number(l.getAttribute('y2')),
+   events:getComputedStyle(l).pointerEvents
+  }))};
+});
+const main=await browser.newPage({viewport:{width:1390,height:1060}});
+try{
+ await boot(main,true);
+ assert.equal((await flash(main)).lines.length,0,'default wheel must have no flashlight strokes');
+ const a=await locationFor(main,'A',3);
+ console.log('A house target',JSON.stringify(a));
+ assert.equal(a.target,'house','Real pointer must land in A house wedge');
+ await main.mouse.move(a.x,a.y);
+ await main.waitForTimeout(100);
+ const hovered=await flash(main);
+ console.log('A hovered',JSON.stringify(hovered));
+ assert.equal(hovered.sky,'A');assert.equal(hovered.house,'3');
+ assert.equal(hovered.lines.length,6,'Two cusps, 3 continuous ring segments each');
+ assert.deepEqual(hovered.lines.filter(l=>l.edge==='0').map(l=>l.kind),['home','zodiac','other']);
+ assert.ok(hovered.lines.every(l=>l.events==='none'));
+ await main.mouse.move(15,15);
+ await main.waitForTimeout(100);
+ assert.equal((await flash(main)).lines.length,0,'Pointer exit must extinguish temporary light');
+
+ await main.mouse.click(a.x,a.y);
+ await main.mouse.move(15,15);
+ await main.waitForTimeout(150);
+ const pinned=await flash(main);
+ console.log('A tapped',JSON.stringify(pinned));
+ assert.equal(pinned.sky,'A');assert.equal(pinned.pinned,'true');
+ assert.equal(pinned.lines.length,6,'Tap should hold illumination after the pointer leaves');
+ await main.mouse.click(a.x,a.y);
+ await main.mouse.move(15,15);
+ await main.waitForTimeout(150);
+ assert.equal((await flash(main)).lines.length,0,'Tapping the same house again must clear it');
+
+ const b=await locationFor(main,'B',6);
+ console.log('B house target',JSON.stringify(b));
+ assert.equal(b.target,'house','Real pointer must land in B house wedge');
+ await main.mouse.click(b.x,b.y);
+ await main.mouse.move(15,15);
+ await main.waitForTimeout(150);
+ const bResult=await flash(main);
+ assert.equal(bResult.sky,'B');
+ assert.equal(bResult.pinned,'true');
+ assert.equal(bResult.lines.length,6);
+ assert.deepEqual(bResult.lines.filter(l=>l.edge==='0').map(l=>l.kind),['other','zodiac','home']);
+ console.log('B tapped',JSON.stringify(bResult));
+
+ const standalone=await browser.newPage({viewport:{width:1200,height:960}});
+ try{
+  await boot(standalone,false);
+  const onlyA=await locationFor(standalone,'A',2);
+  await standalone.mouse.move(onlyA.x,onlyA.y);
+  await standalone.waitForTimeout(100);
+  const only=await flash(standalone);
+  assert.equal(only.sky,'A');assert.equal(only.lines.length,4,'No invented comparison ring');
+  assert.deepEqual(only.lines.filter(l=>l.edge==='0').map(l=>l.kind),['home','zodiac']);
+ }finally{await standalone.close()}
+ const mobile=await browser.newContext({viewport:{width:390,height:850},isMobile:true,hasTouch:true});
+ try{
+  const screen=await mobile.newPage();
+  await boot(screen,true);
+  await screen.locator('#skyFoundationWheelMount').scrollIntoViewIfNeeded();
+  const target=await locationFor(screen,'A',3);
+  console.log('Mobile touch target',JSON.stringify(target));
+  assert.ok(target.x>=0&&target.x<=390&&target.y>=0&&target.y<=850,'Mobile tap coordinates must be visible');
+  await screen.touchscreen.tap(target.x,target.y);
+  await screen.waitForTimeout(180);
+  const result=await flash(screen);
+  console.log('Mobile tap result',JSON.stringify(result));
+  assert.equal(result.sky,'A');assert.equal(result.pinned,'true');
+  assert.equal(result.lines.length,6);
+ }finally{await mobile.close()}
+ assert.deepEqual(errors,[],'No browser uncaught exceptions: '+errors);
+ console.log('PASS: A/B hover, tap, un-tap, comparison and standalone geometry, mobile house flashlight');
+}finally{await browser.close()}
