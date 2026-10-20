@@ -172,7 +172,7 @@ const mobileRelationshipLayout=await page.locator('#skyFoundationRelationships>.
   const download=box(actions?.querySelector('#skyChartRelationshipsExport'));
   const headingBox=heading.getBoundingClientRect();
   return{
-    titleTop:title?.top??null,countTop:count?.top??null,copyTop:copy?.top??null,downloadTop:download?.top??null,
+    titleTop:title?(title.top+title.bottom)/2:null,countTop:count?(count.top+count.bottom)/2:null,copyTop:copy?(copy.top+copy.bottom)/2:null,downloadTop:download?(download.top+download.bottom)/2:null,
     sortTop:sort?.top??null,limitTop:limit?.top??null,
     sortWidth:sort?.width??0,limitWidth:limit?.width??0,
     row1Bottom:Math.max(title?.bottom||0,count?.bottom||0,copy?.bottom||0,download?.bottom||0),
