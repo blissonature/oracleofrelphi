@@ -56,6 +56,19 @@ try{
  assert.equal(await page.locator('#tarotStorybook').isHidden(),true);
  assert.equal(await page.locator('.tarot-result-grid').isVisible(),true);
 
+ // A plural rank search must find the four Page/Princess courts, not an empty result.
+ await page.locator('#oracleCommand').fill('pages');
+ await page.locator('#runCommand').click();
+ await page.waitForFunction(() => document.querySelectorAll('#browsePanel .tarot-result-grid .or-card').length === 4);
+ const pages=await page.evaluate(() => ({
+   ids:[...document.querySelectorAll('#browsePanel .tarot-result-grid .or-card')].map(card=>card.dataset.id),
+   count:document.getElementById('resultInlineCount')?.textContent
+ }));
+ assert.equal(pages.ids.length,4,JSON.stringify(pages));
+ assert.ok(pages.ids.every(id=>id.startsWith('princess_of_')),JSON.stringify(pages));
+ await page.locator('#ledgerBookView').click();
+ assert.match(await page.locator('#tarotStorybook .tarot-book-nav output').innerText(),/Page 1 of 4/);
+ await page.locator('#ledgerGridView').click();
  await page.setViewportSize({width:390,height:850});
  await page.locator('#toggleLedgerEntry').click();
  const mobile=await page.evaluate(()=>{
