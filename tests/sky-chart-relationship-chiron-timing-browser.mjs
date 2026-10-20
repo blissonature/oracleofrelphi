@@ -159,9 +159,12 @@ try{
     await page.locator('.sky-relationship-copy-button').click();
     await page.waitForFunction(()=>Boolean(window.__relphiCopiedText),null,{timeout:3000});
     const copied=await page.evaluate(()=>window.__relphiCopiedText);
+    // This checks order, not retrograde labeling (verified separately).
+    // Export intentionally includes "Rx" after a retrograde placement glyph.
+    const orderedText=copied.replace(/ Rx(?= in )/g,'');
     let cursor=-1;
     for(const signature of signatures){
-      const next=copied.indexOf(signature,cursor+1);
+      const next=orderedText.indexOf(signature,cursor+1);
       assert.ok(next>=0,`${spec.label} Copy omitted or reordered row after position ${cursor}: ${signature}\n${copied}`);
       cursor=next;
     }
