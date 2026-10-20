@@ -109,9 +109,11 @@ try{
   assert.ok(restoredMembers.includes('south-node'),`South Node must return when the shared Harmonic Window is restored: ${JSON.stringify(restoredMembers)}`);
   assert.ok(restoredMembers.includes('north-node'),`North Node must return when the shared Harmonic Window is restored: ${JSON.stringify(restoredMembers)}`);
 
-  // Dispatch from the structure row itself so the test exercises row context rather
-  // than accidentally landing on one of the many child tokens at the row's center.
-  await vertex.dispatchEvent('pointerover',{pointerType:'mouse'});
+  // Vocab groups default collapsed; pointer context is user-accessible only
+  // after opening the containing group. Hover the visible sentence, not a
+  // hidden child receiving a synthetic event.
+  await vertex.evaluate(line=>{const group=line.closest('details.sky-vocab-group');if(group)group.open=true});
+  await vertex.hover({position:{x:3,y:3}});
   await page.waitForFunction(()=>document.querySelector('#skyFoundationWheelMount>.sky-foundation-wheel')?.classList.contains('has-vocab-axis-context'));
   const states=await page.evaluate(()=>Object.fromEntries(['vertex','anti-vertex','north-node','south-node'].map(id=>{
     const node=document.querySelector(`#skyFoundationWheelMount [data-focus-piece="placement"][data-sky="A"][data-placement="${id}"]`);
