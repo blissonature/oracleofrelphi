@@ -140,13 +140,19 @@ function matrixFocus(){
   // ordinary matrix cells.
   const enabled=bySignCount?scopes:selected;
   const scopeNames=enabled.map(scope=>scope.label).join(' · ')||'None';
-  let aspects='None';
-  if(selected.length){
-    const counts=selected.map(scope=>values[scope.id]);
-    if(counts.every(n=>n===all))aspects='All';
-    else if(selected.length===1)aspects=counts[0]+' of '+all;
-    else aspects=selected.map(scope=>scope.label+': '+(values[scope.id]===all?'All':values[scope.id]+' of '+all)).join(' · ');
-  }
+  // No individual aspects selected means no aspect-type restriction: All.
+  // Otherwise report the actual selected names, never an unhelpful count.
+  const names=ids=>ids.map(id=>id.split('-').map(word=>word[0].toUpperCase()+word.slice(1)).join('-')).join(', ');
+  const label=scope=>{
+    const picks=MATRIX_ASPECTS.filter(id=>{
+      const cell=document.querySelector('[data-aspect-matrix-scope="'+scope.id+'"][data-aspect-matrix-aspect="'+id+'"]');
+      if(cell)return cell.checked;
+      return !!(stored&&Array.isArray(stored[scope.id])&&stored[scope.id].includes(id));
+    });
+    return picks.length===0||picks.length===all?'All':names(picks);
+  };
+  const aspects=selected.length===0?'All':selected.length===1?label(selected[0]):
+    selected.map(scope=>scope.label+': '+label(scope)).join(' · ');
   return{aspects,scopes:scopeNames,bySignCount};
 }
 function focusInformation(){
