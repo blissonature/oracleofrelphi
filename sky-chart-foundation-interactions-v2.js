@@ -529,6 +529,9 @@
   function schedule(){if(refreshQueued)return;refreshQueued=true;requestAnimationFrame(refresh)}
   function start(){
     window.addEventListener('relphi:sky-foundation-ready',schedule);
+    // The foundation may not emit a new ready event when Sky B is removed while
+    // the comparison is already rebuilding. Clean up intersky state immediately.
+    window.addEventListener('relphi:sky-b-removed',schedule);
     window.addEventListener('relphi:sky-orb-limit-changed',schedule);
     window.addEventListener('relphi:sky-by-sign-changed',schedule);
     [
