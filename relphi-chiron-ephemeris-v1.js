@@ -44,5 +44,5 @@ function calculate(date){
   return point;
 }
 async function completePayload(payload){const placements=source(payload);if(!placements||hasChiron(placements))return false;const instant=instantFor(payload);if(!instant)return false;try{placements.Chiron=calculate(instant)}catch(error){if(!/outside the local ephemeris range|ephemeris data are unavailable/.test(String(error?.message||'')))throw error;const profile=payload.calcProfile&&typeof payload.calcProfile==='object'?payload.calcProfile:{};profile.extraPoints={...(profile.extraPoints||{}),chiron:'unavailable',chironSource:'No local Chiron ephemeris for this date'};payload.calcProfile=profile;return false;}const profile=payload.calcProfile&&typeof payload.calcProfile==='object'?payload.calcProfile:{};profile.extraPoints={...(profile.extraPoints||{}),chiron:'calculated',chironSource:'NASA/JPL Horizons local ephemeris',...(profile.timeUnknown===true?{chironTiming:'approximate-local-noon'}:{})};payload.calcProfile=profile;return true;}
-window.RelphiChironEphemeris=Object.freeze({calculate,completePayload,hasChiron,longitudeAt,motionAt,instantFor});
+window.RelphiChironEphemeris=Object.freeze({calculate,completePayload,hasChiron,longitudeAt,motionAt,instantFor,isReady:()=>Boolean(window.RelphiChironEphemerisData)});
 })();
