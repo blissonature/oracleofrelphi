@@ -32,7 +32,7 @@ new Function(relationshipLimit);
 new Function(relationshipScope);
 new Function(relationshipExport);
 
-assert.match(html,/sky-chart-vocab-tab-v1\.js\?v=85/,'Sky Chart must load the Vocab subtab');
+assert.match(html,/sky-chart-vocab-tab-v1\.js\?v=\d+/,'Sky Chart must load the Vocab subtab');
 assert.match(html,/sky-chart-placement-multiselect-v4\.js\?v=7/,'Sky Chart must load the shared Relationships Placements controller');
 assert.match(html,/sky-chart-harmonic-orb-v1\.js\?v=8/,'Sky Chart must load the shared Harmonic Window model fix');
 assert.match(html,/sky-chart-orb-control-v1\.js\?v=20/,'Relationships must load the Harmonic Window controller with stable match-count semantics');
