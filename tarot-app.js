@@ -4110,7 +4110,7 @@
     };
     reflowLedgerGallery = applyResultZoom;
     applyResultZoom();
-    qsa('[data-gallery-mode]', panel).forEach(control => {
+    qsa('select[data-gallery-mode]', panel).forEach(control => {
       control.addEventListener('change', () => {
         ledgerGalleryPrefs.mode = control.value === 'manual' ? 'manual' : 'fit';
         const visual = panel.querySelector('.result-visual-tools');
