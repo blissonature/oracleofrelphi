@@ -7,13 +7,13 @@
 })(typeof window!=="undefined"?window:globalThis,function(){
   "use strict";
   const KEY="relphi-tarot-ledger-gallery-v1";
-  const DEFAULTS=Object.freeze({mode:"fit",min:112,max:320,entryVisible:true,view:"grid"});
+  const DEFAULTS=Object.freeze({mode:"fit",min:112,max:320,entryVisible:true});
   const clamp=(v,lo,hi)=>Math.max(lo,Math.min(hi,v));
   function normalize(raw){
     const cfg=raw&&typeof raw==="object"?raw:{};
     const min=clamp(Math.round(Number(cfg.min)||DEFAULTS.min),64,320);
     const max=clamp(Math.round(Number(cfg.max)||DEFAULTS.max),min,480);
-    return {mode:cfg.mode==="manual"?"manual":"fit",min,max,entryVisible:cfg.entryVisible!==false,view:cfg.view==="book"?"book":"grid"};
+    return {mode:cfg.mode==="manual"?"manual":"fit",min,max,entryVisible:cfg.entryVisible!==false};
   }
   function load(storage){
     try{
