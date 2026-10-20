@@ -89,6 +89,9 @@ jobs:
             let info=null,fp=null,fpError='';
             try{info=structure?.chartRulerInfo?.(JSON.parse(localStorage.getItem('relphiSkyChartA')||'null'))||null}catch(error){fpError+='info:'+error.message+';'}
             try{fp=structure?.fingerprint?.(JSON.parse(localStorage.getItem('relphiSkyChartA')||'null'))||null}catch(error){fpError+='fingerprint:'+error.message+';'}
+            // CSS metrics belong to the mounted Card Hits fingerprint, not the
+            // detached factory template (whose computed style and rects are empty).
+            fp=mount?.querySelector('.sky-card-ruler-fingerprint')||fp;
             return{
               hasShell:!!shell,
               hasButton:!!button,
