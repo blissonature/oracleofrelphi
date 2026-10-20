@@ -192,6 +192,10 @@ jobs:
           console.log('CARD_HITS_DRAWER '+JSON.stringify(drawer));
           assert.equal(drawer.open,true);
           assert.equal(drawer.structure,true);
+          // The earlier interaction deliberately switched to Houses. Restore
+          // Rulers before asserting the ruler-stage presentation.
+          await page.locator('#skyFoundationA [data-card-hits-view="rulers"]').click();
+          await page.waitForSelector('#skyFoundationA .sky-card-chart-ruler-stage',{state:'visible'});
 
           const chartRulerPresentation=await page.evaluate(()=>{
             const stage=document.querySelector('#skyFoundationA .sky-card-chart-ruler-stage');
