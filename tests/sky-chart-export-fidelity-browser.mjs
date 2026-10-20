@@ -113,8 +113,18 @@ const partial=await page.evaluate(()=>{
   return window.RelphiRelationshipExportFocus.matrix();
 });
 assert.equal(partial.aspects,'Conjunction, Square, Opposition');
+const conjunctionOnly=await page.evaluate(()=>{
+  document.querySelectorAll('[data-aspect-matrix-scope="A-B"][data-aspect-matrix-aspect]').forEach(input=>{
+    input.checked=input.dataset.aspectMatrixAspect==='conjunction';
+  });
+  localStorage.setItem('relphiSkyAspectMatrixV1',JSON.stringify({'A-A':[],'B-B':[],'A-B':['conjunction']}));
+  return window.RelphiRelationshipExportFocus.matrix();
+});
+assert.equal(conjunctionOnly.aspects,'Conjunction','one selected aspect must be named, not counted');
+assert.equal(conjunctionOnly.scopes,'A↔B');
 const empty=await page.evaluate(()=>{document.querySelectorAll('[data-aspect-matrix-scope="A-B"][data-aspect-matrix-aspect]').forEach(input=>{input.checked=false});localStorage.setItem('relphiSkyAspectMatrixV1',JSON.stringify({'A-A':[],'B-B':[],'A-B':[]}));return window.RelphiRelationshipExportFocus.matrix()});
-assert.equal(empty.aspects,'All','no selected aspect types must be reported as All');
+assert.equal(empty.aspects,'None','no checked aspect types must report None');
+assert.equal(empty.scopes,'None','a completely empty matrix must not claim a relationship scope');
 assert.equal(partial.scopes,'A↔B');
 assert.deepEqual(errors,[],'no browser errors');
 console.log('PASS A↔B-only matrix, Focus copy/PNG consistency, and separated Vocab groups');
