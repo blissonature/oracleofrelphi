@@ -1,0 +1,74 @@
+/* Tarot Ledger bounded auto-fit; does not affect the Drawing Board. */
+body.tarot-ledger-page #browsePanel .tarot-ledger-results-heading{
+  display:flex;align-items:center;justify-content:space-between;gap:.6rem;flex-wrap:wrap;
+  margin:0 0 .65rem;
+}
+body.tarot-ledger-page #browsePanel .tarot-ledger-results-heading h2{margin:0!important}
+body.tarot-ledger-page #toggleLedgerEntry{
+  appearance:none;min-height:38px;padding:.45rem .75rem;border:1.5px solid #c5b2a8;
+  border-radius:999px;background:#fff;color:#302622;cursor:pointer;
+  font:800 .78rem/1.25 Montserrat,Arial,sans-serif;
+}
+body.tarot-ledger-page #toggleLedgerEntry:hover,
+body.tarot-ledger-page #toggleLedgerEntry:focus-visible{border-color:#dc1f18;color:#a51712}
+body.tarot-ledger-page #toggleLedgerEntry:focus-visible{outline:3px solid rgba(220,31,24,.25);outline-offset:2px}
+
+/* Strongly scoped because legacy stylesheet contains multiple historical !important grids. */
+html body.tarot-ledger-page #browsePanel[data-entry-visible="false"]{
+  grid-template-columns:minmax(0,1fr)!important;gap:0!important;
+}
+html body.tarot-ledger-page #browsePanel[data-entry-visible="false"] #cardDetail,
+html body.tarot-ledger-page #browsePanel #cardDetail[hidden]{display:none!important}
+html body.tarot-ledger-page #browsePanel .tarot-list-panel{min-width:0!important;width:100%!important}
+html body.tarot-ledger-page #browsePanel .tarot-result-grid{
+  min-width:0!important;max-width:none!important;
+  margin-inline:auto!important;align-content:start!important;align-items:start!important;
+  gap:12px!important;
+}
+html body.tarot-ledger-page #browsePanel .tarot-result-grid>.or-card.tarot-card-surface{
+  min-width:0!important;box-sizing:border-box!important;
+  justify-self:stretch!important;aspect-ratio:500/864!important;
+  overflow:visible!important;
+}
+html body.tarot-ledger-page #browsePanel .tarot-result-grid>.or-card.tarot-card-surface .or-card-art{
+  max-width:100%!important;max-height:none!important;object-fit:contain!important;
+}
+/* All result-surface settings apply to Ledger; Drawing Board card surfaces are untouched. */
+body.tarot-ledger-page #browsePanel .result-visual-tools{
+  display:flex;align-items:center;flex-wrap:wrap;gap:.45rem .7rem;width:100%;
+}
+body.tarot-ledger-page #browsePanel .result-visual-tools .ledger-gallery-bound{
+  display:grid;grid-template-columns:auto minmax(76px,110px) auto;
+  column-gap:.35rem;align-items:center;min-width:0;
+  font:800 .76rem/1.35 Montserrat,Arial,sans-serif;
+}
+body.tarot-ledger-page #browsePanel .result-visual-tools .ledger-gallery-bound input{
+  width:100%;min-width:0;margin:0;accent-color:#dc1f18;
+}
+body.tarot-ledger-page #browsePanel .ledger-gallery-bound output{
+  width:3.1rem;text-align:right;font-variant-numeric:tabular-nums;
+  color:#9d211b;font-weight:800;
+}
+body.tarot-ledger-page #browsePanel .result-visual-tools [data-gallery-mode]{
+  min-height:34px;background:#fff;
+}
+body.tarot-ledger-page #browsePanel .result-visual-tools[data-gallery-mode="fit"] .ledger-gallery-manual-only,
+body.tarot-ledger-page #browsePanel .result-visual-tools[data-gallery-mode="manual"] .ledger-gallery-auto-only{
+  display:none!important;
+}
+@media(max-width:620px){
+  html body.tarot-ledger-page #browsePanel{min-width:0!important}
+  body.tarot-ledger-page #browsePanel .result-visual-tools{
+    display:grid;grid-template-columns:minmax(0,1fr);gap:.6rem;
+  }
+  body.tarot-ledger-page #browsePanel .result-visual-tools .ledger-gallery-bound{
+    grid-template-columns:4.4rem minmax(0,1fr) 3.1rem;
+  }
+  body.tarot-ledger-page #browsePanel .result-visual-tools .result-glyph-toggle{justify-self:start}
+  body.tarot-ledger-page #browsePanel .tarot-ledger-results-heading{gap:.4rem}
+  body.tarot-ledger-page #toggleLedgerEntry{font-size:.75rem}
+}
+@media(prefers-reduced-motion:reduce){
+ body.tarot-ledger-page #browsePanel .tarot-result-grid,
+ body.tarot-ledger-page #browsePanel .tarot-result-grid>.or-card{transition:none!important}
+}
