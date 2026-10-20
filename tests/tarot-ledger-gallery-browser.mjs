@@ -11,7 +11,7 @@ try{
  const initial=await page.evaluate(()=>{
   const cards=document.querySelectorAll('#browsePanel .tarot-result-grid .or-card');
   return {count:cards.length,entry:document.querySelector('#cardDetail')?.hidden,
-    galleryMode:document.querySelector('[data-gallery-mode]')?.value};
+    galleryMode:document.querySelector('select[data-gallery-mode]')?.value};
  });
  assert.ok(initial.count>=70,JSON.stringify(initial));
  assert.equal(initial.galleryMode,'fit');
