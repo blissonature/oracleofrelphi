@@ -3967,12 +3967,78 @@
   // A deep link asks to show a specific card entry, overriding a saved collapsed view.
   if (new URLSearchParams(location.search).has('card')) ledgerGalleryPrefs.entryVisible = true;
 
+  let bookIndex=0,bookQuerySignature='';
+  function renderBookPage(list=currentCards()){
+    const root=$('tarotStorybook'),browse=$('browsePanel');
+    if(!root||!browse)return;
+    const book=ledgerGalleryPrefs.view==='book';
+    browse.dataset.galleryView=book?'book':'grid';
+    root.hidden=!book;
+    $('ledgerGridView')?.setAttribute('aria-pressed',String(!book));
+    $('ledgerBookView')?.setAttribute('aria-pressed',String(book));
+    if(!book)return;
+    if(!list.length){root.innerHTML='<p class="empty-state">No cards match this search.</p>';return;}
+    bookIndex=Math.max(0,Math.min(bookIndex,list.length-1));
+    const card=list[bookIndex];
+    const name=title(card);
+    const description=layerInterpretation(card) || cardEssenceLabel(card) || displayMeaning(card) || '';
+    root.innerHTML=`<div class="tarot-book-nav">
+      <button type="button" data-book-step="-1" aria-label="Previous card" ${bookIndex===0?'disabled':''}>← Previous</button>
+      <output aria-live="polite">Page ${bookIndex+1} of ${list.length}</output>
+      <button type="button" data-book-step="1" aria-label="Next card" ${bookIndex===list.length-1?'disabled':''}>Next →</button>
+    </div>
+    <article class="tarot-book-page" tabindex="-1" aria-label="${escapeHtml(name)}">
+      <figure class="tarot-book-illustration"><img src="${escapeHtml(rwsImagePath(card))}" alt="${escapeHtml(rwsImageAlt(card))}" loading="eager"></figure>
+      <div class="tarot-book-text">
+        <p class="eyebrow">Tarot Ledger · Illustrated reading</p>
+        <h3>${escapeHtml(name)}</h3>
+        <p class="tarot-book-subtitle">${escapeHtml(subline(card))}</p>
+        <p class="tarot-book-story">${escapeHtml(description)}</p>
+        <button type="button" data-book-full-entry>Read full card entry</button>
+      </div>
+    </article>`;
+    root.querySelectorAll('[data-book-step]').forEach(button=>button.addEventListener('click',()=>{
+      const value=Number(button.dataset.bookStep)||0;
+      const next=Math.max(0,Math.min(list.length-1,bookIndex+value));
+      if(next===bookIndex)return;
+      bookIndex=next;
+      state.selected=list[bookIndex];
+      renderDetail(state.selected);
+      renderBookPage(list);
+    }));
+    root.querySelector('[data-book-full-entry]')?.addEventListener('click',()=>{
+      state.selected=card;renderDetail(card);setLedgerEntryVisible(true);
+      $('cardDetail')?.scrollIntoView({behavior:'smooth',block:'nearest'});
+    });
+  }
+  for(const [id,view] of [['ledgerGridView','grid'],['ledgerBookView','book']]){
+    $(id)?.addEventListener('click',()=>{
+      if(ledgerGalleryPrefs.view===view)return;
+      ledgerGalleryPrefs.view=view;
+      if(view==='book')setLedgerEntryVisible(false,false);
+      persistLedgerGallery();
+      const list=currentCards();
+      bookIndex=Math.max(0,list.findIndex(card=>card.card_id===state.selected?.card_id));
+      renderBookPage(list);
+      if(reflowLedgerGallery && view==='grid')requestAnimationFrame(reflowLedgerGallery);
+    });
+  }
+  $('tarotStorybook')?.addEventListener('keydown',event=>{
+    if(ledgerGalleryPrefs.view!=='book'||event.altKey||event.ctrlKey||event.metaKey||!['ArrowLeft','ArrowRight'].includes(event.key))return;
+    event.preventDefault();
+    $('tarotStorybook').querySelector('[data-book-step="'+(event.key==='ArrowLeft'?-1:1)+'"]')?.click();
+  });
   function renderBrowse() {
     setLedgerEntryVisible(ledgerGalleryPrefs.entryVisible, false);
     const list = currentCards();
     updateSummary(list);
     if (list.length && (!state.selected || !list.some(card => card.card_id === state.selected.card_id))) state.selected = list[0];
     const activeDetailId = state.selected && list.some(c => c.card_id === state.selected.card_id) ? state.selected.card_id : '';
+    const signature = state.mode+'|'+String(state.query||'')+'|'+list.map(c=>c.card_id).join(',');
+    if(signature!==bookQuerySignature){
+      bookQuerySignature=signature;
+      bookIndex=Math.max(0,list.findIndex(card=>card.card_id===state.selected?.card_id));
+    }
     const panel = $('cardList');
     const resultTools = list.length ? `<button type="button" data-add-results-to-row>Add shown to Drawing Board</button>` : '';
     const resultZoom = Math.max(0.35, Math.min(4.8, Number(state.resultZoom) || 1));
@@ -4121,6 +4187,7 @@
     }
     qsa('[data-drag-card]', panel).forEach(cardEl => cardEl.addEventListener('dragstart', event => { if (event.target.closest('.or-card-layer')) { event.preventDefault(); return; } setDragCardPayload(event, cardEl.dataset.dragCard || cardEl.dataset.id); }));
     renderDetail(state.selected && list.some(c => c.card_id === state.selected.card_id) ? state.selected : null);
+    renderBookPage(list);
     renderShortList();
   }
   function inspectBrowseResult(id) {
