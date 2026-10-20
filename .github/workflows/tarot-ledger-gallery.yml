@@ -1,0 +1,32 @@
+name: Tarot Ledger responsive gallery
+on:
+  push:
+    paths:
+      - 'tarot.html'
+      - 'tarot-app.js'
+      - 'tarot-ledger-gallery-fit.js'
+      - 'tarot-ledger-gallery-fit.css'
+      - 'tests/tarot-ledger-gallery-fit.test.cjs'
+      - '.github/workflows/tarot-ledger-gallery.yml'
+  pull_request:
+    paths:
+      - 'tarot.html'
+      - 'tarot-app.js'
+      - 'tarot-ledger-gallery-fit.js'
+      - 'tarot-ledger-gallery-fit.css'
+      - 'tests/tarot-ledger-gallery-fit.test.cjs'
+      - '.github/workflows/tarot-ledger-gallery.yml'
+jobs:
+  regression:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check JavaScript syntax
+        run: |
+          node --check tarot-app.js
+          node --check tarot-ledger-gallery-fit.js
+      - name: Check gallery, sizing and page-turning contracts
+        run: node --test tests/tarot-ledger-gallery-fit.test.cjs
