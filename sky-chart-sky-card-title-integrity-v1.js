@@ -103,7 +103,7 @@
     return[moment,place].filter(Boolean).join(' · ');
   }
   function nameFor(slot,value){
-    if(!hasPlacements(value))return'Where and When';
+    if(!hasPlacements(value))return settingsName(value)||'Where and When';
     const matched=resolvedSavedIdentity(slot);
     if(matched?.saved&&matched.name)return matched.name;
     const m=metadata(value),p=profile(value),savedName=String(m.savedSkyName||'').trim();
