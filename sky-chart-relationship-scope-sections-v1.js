@@ -125,8 +125,12 @@ function matrixFocus(){
     // The master checkbox shows the current scope state; the persisted value
     // covers both checked and partially checked matrices.
     const master=document.querySelector('[data-aspect-matrix-scope="'+scope.id+'"][data-aspect-matrix-aspect="all"]');
-    const picks=stored&&Array.isArray(stored[scope.id])?stored[scope.id].filter(id=>MATRIX_ASPECTS.includes(id)):[];
-    const count=master?.checked?all:picks.length;
+    const picks=stored&&Array.isArray(stored[scope.id])?stored[scope.id].filter(id=>MATRIX_ASPECTS.includes(id)):null;
+    // Read actual selected cells when the matrix is mounted, including partial
+    // selections. Fall back to persisted state, whose default is all aspects.
+    const rendered=MATRIX_ASPECTS.map(id=>document.querySelector('[data-aspect-matrix-scope="'+scope.id+'"][data-aspect-matrix-aspect="'+id+'"]'));
+    const count=rendered.every(Boolean)?rendered.filter(input=>input.checked).length:
+      master?.checked?all:picks?picks.length:all;
     return[scope.id,count];
   }));
   const selected=scopes.filter(scope=>values[scope.id]>0);
