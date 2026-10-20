@@ -107,7 +107,9 @@ try{
   assert.equal(mixed.moonSaturn,false,'At least one OR rule must match when OR rules exist.');
 
   const summary=(await page.locator('[data-placement-filter-summary]').textContent())?.trim()||'';
-  assert.match(summary,/logic rules$/);
+  assert.match(summary,/Mercury OR/);
+  assert.match(summary,/Venus OR/);
+  assert.match(summary,/Chart Angles NOT/);
   assert.deepEqual(errors,[]);
   console.log('Placement blank/OR/AND/NOT logic regression passed.');
 }finally{
