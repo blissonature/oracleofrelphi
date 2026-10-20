@@ -278,6 +278,7 @@ jobs:
               chartBeforeGrid:stage.compareDocumentPosition(grid)&Node.DOCUMENT_POSITION_FOLLOWING?true:false
             };
           });
+          console.log('RULER_LAYOUT_DEBUG '+JSON.stringify(rulerLayout));
           assert.deepEqual(rulerLayout.lowerRowCounts,[3,3],'The six ordinary rulers must remain two rows of three beneath the Chart Ruler.');
           assert.equal(rulerLayout.lowerCount,6);
           assert.equal(rulerLayout.lowerHasChart,false,'The chart ruler must remain isolated above the lower grid.');
