@@ -219,8 +219,8 @@ assert.match(vocab,/createVocabGroup\(container,slot,'structures-house-polaritie
 assert.match(vocab,/function createVocabGroup\(container,slot,key,label,renderBody\)/,'Vocab results must be organized into independently collapsible groups');
 assert.match(vocab,/details\.open=state\[slot\]\?\.\[key\]===true/,'Vocab groups must default closed unless the user opened that group previously');
 assert.match(vocab,/function populateVocabGroupPreview\(summary,body\)/,'Collapsed Vocab groups must expose a compact visual preview');
-assert.match(vocab,/body\.querySelectorAll\('\.sky-vocab-token\[data-vocab-kind="placement"\]'\)/,'Group previews must derive placement glyphs from the same rendered group members');
-assert.match(vocab,/groupPreviewGlyph\(tokenNode\)/,'Group previews must include canonical placement glyphs');
+assert.match(vocab,/body\.querySelectorAll\('\.sky-vocab-token\[data-vocab-kind="placement"\]\[data-vocab-longitude\]'\)/,'Group previews must derive spatial placement glyphs from the rendered group members');
+assert.match(vocab,/groupPreviewGlyph\(tokenNode,value,lane\)/,'Group previews must include canonical placement glyphs positioned by longitude and lane');
 assert.match(vocab,/--vocab-polarity-signs','--vocab-concentration-signs','--vocab-placement-signs'/,'Collapsed sign previews must reuse the exact sign rail data from expanded cards');
 assert.match(vocab,/--vocab-polarity-houses','--vocab-concentration-houses','--vocab-placement-houses'/,'Collapsed house previews must reuse the exact house rail data from expanded cards');
 assert.match(vocab,/horizontalPreviewGradient\(value\)/,'Collapsed rails may change orientation but must preserve the expanded rail color data');
@@ -264,8 +264,8 @@ assert.match(vocab,/vocabSentenceStart/,'Sentence-start tokens must preserve cap
 assert.match(vocab,/capitalizeStart/,'Referent-led Vocab lines must begin with a capital letter');
 assert.equal(/\.sky-foundation-relationship-row\s*\{/.test(vocab),false,'Vocab feature must not restyle Relationship rows');
 assert.equal(/#skyFoundationRelationships\s+[^'"]*\{/.test(vocab),false,'Vocab feature must not style the Relationships panel');
-assert.match(unified,/:is\(#skyFoundationRelationships,\.sky-vocab-panel\)/,'Unified relationship control styling must also target Vocab');
-assert.match(zodiacCss,/:is\(#skyFoundationRelationships,\.sky-vocab-panel\) \.sky-chart-zodiac-filter/,'Canonical Zodiac styling must also target Vocab');
+assert.match(unified,/:is\(#skyFoundationFocus,#skyFoundationRelationships,\.sky-vocab-panel\)/,'Unified controls must style Focus, Relationships and Vocab');
+assert.match(zodiacCss,/:is\(#skyFoundationFocus,#skyFoundationRelationships,\.sky-vocab-panel\) \.sky-chart-zodiac-filter/,'Canonical Zodiac controls must also style Vocab');
 
 console.log('Sky Chart Vocab tab contract passed.');
 
@@ -283,9 +283,9 @@ assert.match(vocab,/data-vocab-concentration-colors="true"/,'Concentration cards
 assert.match(vocab,/function applyPolarityRails\(line,signGradient,houseGradient,slot\)/,'Primary polarity cards must expose parallel sign and house rails');
 assert.match(vocab,/--vocab-polarity-signs/,'Outer polarity rail must encode sign context');
 assert.match(vocab,/--vocab-polarity-houses/,'Inner polarity rail must encode house context');
-assert.match(vocab,/data-vocab-polarity-colors="true"\]\::after\{left:4px;background:var\(--vocab-polarity-houses\);opacity:\.5\}/,'Polarity house stripe must use 50% opacity to match house-sector fill');
-assert.match(vocab,/data-vocab-concentration-colors="true"\]\::after\{left:4px;background:var\(--vocab-concentration-houses\);opacity:\.5\}/,'Concentration house stripe must use 50% opacity to match house-sector fill');
-assert.match(vocab,/data-vocab-placement-colors="true"\]\::after\{left:4px;background:var\(--vocab-placement-houses\);opacity:\.5\}/,'Placement house stripe must use 50% opacity to match house-sector fill');
+assert.match(vocab,/data-vocab-polarity-colors="true"\]\{[\s\S]*?background-image:var\(--vocab-polarity-signs\),var\(--vocab-polarity-houses\);[\s\S]*?background-position:0 0,4px 0/,'Polarity must preserve adjacent independently colored sign and house rails on the line surface');
+assert.match(vocab,/data-vocab-concentration-colors="true"\]\{[\s\S]*?background-image:var\(--vocab-concentration-signs\),var\(--vocab-concentration-houses\);[\s\S]*?background-position:0 0,4px 0/,'Concentration must preserve adjacent independent sign and house rails');
+assert.match(vocab,/data-vocab-placement-colors="true"\]\{[\s\S]*?background-image:var\(--vocab-placement-signs\),var\(--vocab-placement-houses\);[\s\S]*?background-position:0 0,4px 0/,'Placements must preserve adjacent independent sign and house rails');
 assert.match(vocab,/halfWeightedStructureGradient\(structure\.left,structure\.right,record=>record\.house\|\|null/,'Primary polarity house rail must use live member house assignments');
 assert.match(vocab,/signHouseTerritoryStops\(slot,list,pair\[side\],from,to\)/,'An empty sign-polarity pole must derive house rail colors from the sign territory rather than a neutral gray fallback.');
 assert.match(vocab,/leftCuspSign=houseCuspSign\(slot,list,pair\[0\]\)/,'House-polarity sign rail must derive from the active house-system cusps');
@@ -323,7 +323,7 @@ assert.doesNotMatch(vocab,/has-vocab-token-context|is-vocab-token-context/,'The 
 assert.match(vocab,/event\.pointerType!=='touch'&&event\.pointerType!=='pen'/,'Touch and pen taps must retain a Vocab wheel context instead of relying on hover');
 assert.match(vocab,/function clearVocabWheelContextFromBlank\(event\)/,'Retained Vocab wheel context must clear when another interaction takes over');
 assert.match(vocab,/document\.addEventListener\('pointerdown',clearVocabWheelContextFromBlank,true\)/,'Mouse, touch, and pen presses must share one clearing path');
-assert.match(drawersCss,/sky-where-fingerprint-heptagram\{[^}]*height:43px!important;[^}]*min-height:0!important;/,'The Sky Card microheptagram must explicitly defeat the full-size heptagram minimum height');
+assert.match(drawersCss,/sky-where-fingerprint-heptagram\{[^}]*height:52px!important;[^}]*min-height:0!important;/,'The 52px Sky Card microheptagram must defeat the large heptagram minimum height');
 assert.match(vocab,/vertex\|anti-vertex','anti-vertex\|vertex/,'Vertex and Anti-Vertex must be treated as an automatic polarity rather than a counted raw relationship');
 assert.doesNotMatch(vocab,/has-vocab-(?:token-)?context[^\n]*\[data-focus-piece="placement"\][^{]*\{[^}]*opacity:/,'Vocab context must not dim unrelated wheel placements');
 assert.doesNotMatch(vocab,/has-vocab-(?:token-)?context[^\n]*\[data-focus-piece="leader"\][^{]*\{[^}]*opacity:/,'Vocab context must preserve native placement-leader opacity');
