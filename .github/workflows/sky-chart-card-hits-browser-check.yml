@@ -318,10 +318,17 @@ jobs:
           assert.ok(Math.abs(rulerRails.sample.imgBottom-rulerRails.sample.houseTop)<=0.75,'Bottom house rail must sit flush against card art.');
 
           await page.locator('#skyFoundationA [data-card-hits-view="houses"]').click();
-          await page.waitForTimeout(80);
-          await page.waitForFunction(()=>{const img=document.querySelector('#skyFoundationA .sky-card-house-decan-art img');return !!img&&img.complete&&img.naturalWidth>0},{timeout:10000});
+          await page.waitForFunction(()=>{
+            const tab=document.querySelector('#skyFoundationA [data-card-hits-view="houses"]');
+            const houses=document.querySelector('#skyFoundationA .sky-card-houses');
+            return tab?.getAttribute('aria-selected')==='true'&&!!houses&&
+              [...houses.querySelectorAll('.sky-card-house-decan-art img')]
+                .some(img=>img.complete&&img.naturalWidth>0&&img.getBoundingClientRect().height>0);
+          },null,{timeout:10000});
           const houseArt=await page.evaluate(()=>{
-            const wrap=document.querySelector('#skyFoundationA .sky-card-house-decan-art'),img=wrap?.querySelector('img');
+            const wrap=[...document.querySelectorAll('#skyFoundationA .sky-card-houses .sky-card-house-decan-art')]
+              .find(node=>node.querySelector('img')?.getBoundingClientRect().height>0);
+            const img=wrap?.querySelector('img');
             const ws=wrap?getComputedStyle(wrap):null,is=img?getComputedStyle(img):null,u=img?new URL(img.src):null,rect=img?.getBoundingClientRect();
             return{wrapRadius:ws?.borderRadius,wrapBorder:ws?.borderWidth,wrapOutline:ws?.outlineWidth,wrapShadow:ws?.boxShadow,wrapClip:ws?.clipPath,wrapOverflow:ws?.overflow,imgRadius:is?.borderRadius,imgBorder:is?.borderWidth,imgOutline:is?.outlineWidth,imgShadow:is?.boxShadow,imgFit:is?.objectFit,imgClip:is?.clipPath,imgMask:is?.maskImage,imgWebkitMask:is?.webkitMaskImage,imgAspect:is?.aspectRatio,maxHeight:is?.maxHeight,sourceRatio:img?.naturalHeight?img.naturalWidth/img.naturalHeight:null,renderedRatio:rect?.height?rect.width/rect.height:null,rectHeight:rect?.height||0,rectWidth:rect?.width||0,imgDisplay:is?.display||'',wrapDisplay:ws?.display||'',ancestorDisplay:img?[...function*(node){for(let n=node.parentElement;n&&n.id!=='skyFoundationA';n=n.parentElement)yield[n.className||n.tagName,getComputedStyle(n).display]}(img)].slice(0,7):[],nativeClass:img?.classList.contains('sky-card-house-art-native')||false,src:u?.href||'',naturalWidth:img?.naturalWidth||0,media:img?.dataset?.cardMedia||'',countInside:!!wrap?.querySelector('.sky-card-house-decan-count')};
           });
