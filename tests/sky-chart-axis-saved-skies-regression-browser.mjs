@@ -133,7 +133,7 @@ try{
   assert.equal(loadedLegacyB.sourceReady,'true',`Loaded legacy Sky B must rebuild its source heptagram: ${JSON.stringify(loadedLegacyB)}`);
   assert.ok(loadedLegacyB.sourceWeek>=7,`Loaded legacy Sky B source must contain weekly heptagram geometry: ${JSON.stringify(loadedLegacyB)}`);
   assert.equal(loadedLegacyB.thumb,true,`Loaded legacy Sky B must display its microheptagram: ${JSON.stringify(loadedLegacyB)}`);
-  assert.ok(loadedLegacyB.glyphs>=1&&loadedLegacyB.glyphs<=2,'Loaded Sky B microheptagram must restore the active canonical ruler glyphs.');
+  assert.equal(loadedLegacyB.glyphs,7,'Loaded Sky B microheptagram must restore all seven canonical source glyphs.');
   assert.ok(loadedLegacyB.width>=51&&loadedLegacyB.height>=51,`Loaded legacy Sky B microheptagram must occupy the visible tab: ${JSON.stringify(loadedLegacyB)}`);
 
   await page.locator('[data-saved-sky-trigger="B"]').click();
