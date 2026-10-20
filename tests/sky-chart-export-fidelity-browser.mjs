@@ -106,10 +106,25 @@ assert.ok(!vocab.includes('bonds.Horizon'),'sentences cannot be joined without a
 const partial=await page.evaluate(()=>{
   const master=document.querySelector('[data-aspect-matrix-scope="A-B"][data-aspect-matrix-aspect="all"]');
   if(master)master.checked=false;
+  document.querySelectorAll('[data-aspect-matrix-scope="A-B"][data-aspect-matrix-aspect]').forEach(input=>{
+    if(input.dataset.aspectMatrixAspect!=='all')input.checked=['conjunction','square','opposition'].includes(input.dataset.aspectMatrixAspect);
+  });
   localStorage.setItem('relphiSkyAspectMatrixV1',JSON.stringify({'A-A':[],'B-B':[],'A-B':['conjunction','square','opposition']}));
   return window.RelphiRelationshipExportFocus.matrix();
 });
-assert.equal(partial.aspects,'3 of 11');
+assert.equal(partial.aspects,'Conjunction, Square, Opposition');
+const conjunctionOnly=await page.evaluate(()=>{
+  document.querySelectorAll('[data-aspect-matrix-scope="A-B"][data-aspect-matrix-aspect]').forEach(input=>{
+    input.checked=input.dataset.aspectMatrixAspect==='conjunction';
+  });
+  localStorage.setItem('relphiSkyAspectMatrixV1',JSON.stringify({'A-A':[],'B-B':[],'A-B':['conjunction']}));
+  return window.RelphiRelationshipExportFocus.matrix();
+});
+assert.equal(conjunctionOnly.aspects,'Conjunction','one selected aspect must be named, not counted');
+assert.equal(conjunctionOnly.scopes,'A↔B');
+const empty=await page.evaluate(()=>{document.querySelectorAll('[data-aspect-matrix-scope="A-B"][data-aspect-matrix-aspect]').forEach(input=>{input.checked=false});localStorage.setItem('relphiSkyAspectMatrixV1',JSON.stringify({'A-A':[],'B-B':[],'A-B':[]}));return window.RelphiRelationshipExportFocus.matrix()});
+assert.equal(empty.aspects,'None','no checked aspect types must report None');
+assert.equal(empty.scopes,'None','a completely empty matrix must not claim a relationship scope');
 assert.equal(partial.scopes,'A↔B');
 assert.deepEqual(errors,[],'no browser errors');
 console.log('PASS A↔B-only matrix, Focus copy/PNG consistency, and separated Vocab groups');

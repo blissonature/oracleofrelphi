@@ -45,7 +45,8 @@ const result=await page.evaluate(({a,b})=>{
   unknown.calcProfile.timeUnknown=true;
   const named=structuredClone(a);
   named.metadata.savedSkyName='My natal sky';
-  const empty={name:'Where and When',placements:{},calcProfile:a.calcProfile};
+  const empty={name:'Where and When',placements:{}};
+  const unrecognized={name:'Where and When',placements:{},calcProfile:a.calcProfile};
   const legacy=structuredClone(a);
   legacy.name='Unsaved sky';
   legacy.title='Unsaved sky';
@@ -57,13 +58,15 @@ const result=await page.evaluate(({a,b})=>{
     unknown:window.RelphiSkyCardTitle.nameFor('B',unknown),
     named:window.RelphiSkyCardTitle.nameFor('A',named),
     empty:window.RelphiSkyCardTitle.nameFor('A',empty),
+    unrecognized:window.RelphiSkyCardTitle.nameFor('A',unrecognized),
     legacy:window.RelphiSkyCardTitle.nameFor('A',legacy),
     fallback:window.RelphiSkyCardTitle.nameFor('A',withNoDate)
   };
 },{a,b});
 assert.equal(result.unknown,'Sep 2, 2026 (time unknown) · Boston, Massachusetts');
 assert.equal(result.named,'My natal sky','an explicitly named saved sky must keep its name');
-assert.equal(result.empty,'Where and When','empty slot remains an editor placeholder');
+assert.equal(result.empty,'Where and When','empty editor without settings stays a placeholder');
+assert.equal(result.unrecognized,wantedA,'calculated date and location survive unexpected placement encoding');
 assert.equal(result.legacy,wantedA,'generic unsaved name must not hide the settings');
 assert.equal(result.fallback,'Salt Lake City, Utah','location-only title should still be descriptive');
 

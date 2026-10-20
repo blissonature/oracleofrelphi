@@ -125,8 +125,12 @@ function matrixFocus(){
     // The master checkbox shows the current scope state; the persisted value
     // covers both checked and partially checked matrices.
     const master=document.querySelector('[data-aspect-matrix-scope="'+scope.id+'"][data-aspect-matrix-aspect="all"]');
-    const picks=stored&&Array.isArray(stored[scope.id])?stored[scope.id].filter(id=>MATRIX_ASPECTS.includes(id)):[];
-    const count=master?.checked?all:picks.length;
+    const picks=stored&&Array.isArray(stored[scope.id])?stored[scope.id].filter(id=>MATRIX_ASPECTS.includes(id)):null;
+    // Read actual selected cells when the matrix is mounted, including partial
+    // selections. Fall back to persisted state, whose default is all aspects.
+    const rendered=MATRIX_ASPECTS.map(id=>document.querySelector('[data-aspect-matrix-scope="'+scope.id+'"][data-aspect-matrix-aspect="'+id+'"]'));
+    const count=rendered.every(Boolean)?rendered.filter(input=>input.checked).length:
+      master?.checked?all:picks?picks.length:all;
     return[scope.id,count];
   }));
   const selected=scopes.filter(scope=>values[scope.id]>0);
@@ -136,13 +140,19 @@ function matrixFocus(){
   // ordinary matrix cells.
   const enabled=bySignCount?scopes:selected;
   const scopeNames=enabled.map(scope=>scope.label).join(' · ')||'None';
-  let aspects='None';
-  if(selected.length){
-    const counts=selected.map(scope=>values[scope.id]);
-    if(counts.every(n=>n===all))aspects='All';
-    else if(selected.length===1)aspects=counts[0]+' of '+all;
-    else aspects=selected.map(scope=>scope.label+': '+(values[scope.id]===all?'All':values[scope.id]+' of '+all)).join(' · ');
-  }
+  // An empty aspect matrix filters out all aspects. Only all eleven checked is All.
+  // Otherwise report the actual selected names, never an unhelpful count.
+  const names=ids=>ids.map(id=>id.split('-').map(word=>word[0].toUpperCase()+word.slice(1)).join('-')).join(', ');
+  const label=scope=>{
+    const picks=MATRIX_ASPECTS.filter(id=>{
+      const cell=document.querySelector('[data-aspect-matrix-scope="'+scope.id+'"][data-aspect-matrix-aspect="'+id+'"]');
+      if(cell)return cell.checked;
+      return !!(stored&&Array.isArray(stored[scope.id])&&stored[scope.id].includes(id));
+    });
+    return picks.length===0?'None':picks.length===all?'All':names(picks);
+  };
+  const aspects=selected.length===0?'None':selected.length===1?label(selected[0]):
+    selected.map(scope=>scope.label+': '+label(scope)).join(' · ');
   return{aspects,scopes:scopeNames,bySignCount};
 }
 function focusInformation(){

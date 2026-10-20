@@ -85,7 +85,7 @@ const matchCountPresentation=await page.locator('#skyFoundationRelationshipCount
   after:getComputedStyle(node,'::after').content,
   fontSize:getComputedStyle(node).fontSize
 }));
-assert.match(matchCountPresentation.raw,/^\\d+(?:\\/\\d+)?$/,'Underlying relationship count may still be written by legacy filters, but presentation owns the visible label.');
+assert.match(matchCountPresentation.raw,/^\d+(?:\/\d+)?$/,'Underlying relationship count may still be written by legacy filters, but presentation owns the visible label.');
 assert.equal(matchCountPresentation.after,'"' + matchCountPresentation.matchCount + ' matches"','Visible relationship count must be a single “N matches” phrase with one normal space and no slash total.');
 assert.equal(matchCountPresentation.fontSize,'0px','Legacy slash-total text must be visually suppressed.');
 

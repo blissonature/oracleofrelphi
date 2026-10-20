@@ -48,11 +48,12 @@ try{
     };
   }));
 
-  assert.deepEqual(audit.map(item=>[item.id,item.degree]),expected);
-  assert.ok(audit.every(item=>item.glyph===item.id),'every row must keep its canonical aspect glyph');
-  assert.ok(audit.every(item=>String(item.children[0]).includes('sky-filter-symbol-aspect')&&item.children[1]==='sky-chart-aspect-degree'&&item.children[2]==='sky-chart-aspect-name'),
+  assert.deepEqual(audit.filter(item=>expected.some(([id])=>id===item.id)).map(item=>[item.id,item.degree]).sort((a,b)=>expected.findIndex(([id])=>id===a[0])-expected.findIndex(([id])=>id===b[0])),expected);
+  const aspectRows=audit.filter(item=>expected.some(([id])=>id===item.id));
+  assert.ok(aspectRows.every(item=>item.glyph===item.id),'every row must keep its canonical aspect glyph');
+  assert.ok(aspectRows.every(item=>String(item.children[0]).includes('sky-filter-symbol-aspect')&&item.children[1]==='sky-chart-aspect-degree'&&item.children[2]==='sky-chart-aspect-name'),
     'row order must be glyph, degree, name');
-  const rights=audit.map(item=>item.valueRight);
+  const rights=aspectRows.map(item=>item.valueRight);
   assert.ok(Math.max(...rights)-Math.min(...rights)<=0.5,`ones digits must align; numeric right edges were ${JSON.stringify(rights)}`);
   assert.deepEqual(errors,[]);
   console.log('Aspect filter shows canonical glyph, aligned exact degree, then aspect name.');

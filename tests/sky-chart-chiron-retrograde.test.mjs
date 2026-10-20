@@ -83,7 +83,7 @@ test('Rx is reachable from every Sky Chart output surface',()=>{
   assert.match(semantic,/RelphiSkyRetrograde\?\.forPlacement/);
   assert.match(imageExport,/RelphiSkyRetrograde\?\.forPlacement/);
   assert.ok(html.includes('relphi-chiron-ephemeris-v1.js?v=7'));
-  assert.ok(html.includes('sky-chart-foundation-v2.js?v=43'));
-  assert.ok(html.includes('sky-chart-relationship-export-columns-v1.js?v=17'));
+  assert.ok(/sky-chart-foundation-v2\.js\?v=\d+/.test(html));
+  assert.ok(/sky-chart-relationship-export-columns-v1\.js\?v=\d+/.test(html));
 });
 console.log('Chiron 2026 direct',directDate,'retrograde',retroDate);

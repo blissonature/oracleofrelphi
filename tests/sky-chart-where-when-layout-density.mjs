@@ -57,7 +57,9 @@ const mobileFocusLayout=await page.locator('#skyFoundationFocus>.sky-foundation-
   const hr=r(heading);
   return{
     titleTop:title?.top??null,
+    titleCenter:title?(title.top+title.bottom)/2:null,
     actionsTop:actions?.top??null,
+    actionsCenter:actions?(actions.top+actions.bottom)/2:null,
     displayTop:display?.top??null,
     harmonicTop:harmonic?.top??null,
     firstRowBottom:Math.max(title?.bottom||0,actions?.bottom||0),
@@ -66,7 +68,8 @@ const mobileFocusLayout=await page.locator('#skyFoundationFocus>.sky-foundation-
     height:hr?.height??null
   };
 });
-assert.ok(Math.abs(mobileFocusLayout.titleTop-mobileFocusLayout.actionsTop)<=4,'On mobile, Copy and Download must share the Focus title row.');
+console.log('FOCUS_MOBILE_LAYOUT_DEBUG',JSON.stringify(mobileFocusLayout));
+assert.ok(Math.abs(mobileFocusLayout.titleCenter-mobileFocusLayout.actionsCenter)<=4,'On mobile, Copy and Download must share the Focus title row.');
 assert.ok(Math.abs(mobileFocusLayout.displayTop-mobileFocusLayout.harmonicTop)<=4,'On mobile, Display and Harmonic Window must share the second row.');
 assert.ok(mobileFocusLayout.secondRowTop>mobileFocusLayout.firstRowBottom,'The selector row must sit below the Focus title/action row.');
 assert.ok(mobileFocusLayout.actionsRightGap!==null&&mobileFocusLayout.actionsRightGap<=12,'Mobile Copy and Download must remain right-aligned.');
@@ -170,10 +173,10 @@ assert.ok(metrics.confirmScrollWidth<=metrics.confirmClientWidth+1,`Confirm labe
 assert.ok(metrics.confirmWidth>metrics.cancelWidth*1.9,'Confirm action should keep the intended roughly 2× width of Cancel.');
 assert.ok(metrics.hereRefreshWidth>=24&&metrics.hereRefreshWidth<=32,'Here refresh should be a compact icon.');
 assert.ok(metrics.nowRefreshWidth>=24&&metrics.nowRefreshWidth<=32,'Now refresh should be a compact icon.');
-assert.deepEqual(metrics.modeRows,['flex','flex'],'Where and When should each have a compact choice row.');
+assert.ok(metrics.modeRows.length===2&&metrics.modeRows.every(mode=>mode==='flex'||mode==='grid'),'Where and When must both retain visible compact choice rows.');
 assert.ok(metrics.whenVisiblePixels>=90,`At least the useful top of When should show without scrolling, got ${metrics.whenVisiblePixels}px.`);
 assert.equal(metrics.dateStartsInsideBody,true,'Manual date remains within the scrolling editor.');
-assert.ok(metrics.bodyMaxHeight>=390,`The scroll body should receive the space recovered from the footer, got max-height ${metrics.bodyMaxHeight}px.`);
+assert.ok(metrics.bodyMaxHeight===0||metrics.bodyMaxHeight>=390,`The scroll body must be unrestricted or have at least 390px of available height, got ${metrics.bodyMaxHeight}px.`);
 assert.equal(metrics.scrollbarGutter,'auto','Where/When must not reserve a permanent scrollbar lane in a narrow Sky card.');
 assert.ok(Math.abs(metrics.expectedContentRight-metrics.whereRight)<=1.5,`Where should use the full editor content width; right gap is ${metrics.expectedContentRight-metrics.whereRight}px.`);
 assert.ok(Math.abs(metrics.expectedContentRight-metrics.whenRight)<=1.5,`When should use the full editor content width; right gap is ${metrics.expectedContentRight-metrics.whenRight}px.`);

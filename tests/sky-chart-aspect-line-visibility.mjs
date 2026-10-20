@@ -72,8 +72,9 @@ const focusControlOrder=await page.evaluate(()=>{
   const harmonic=controls.querySelector(':scope>[data-orb-field="true"]');
   const actions=controls.querySelector(':scope>.sky-export-wheel-slot');
   const index=node=>children.indexOf(node);
-  return{display:index(display),harmonic:index(harmonic),actions:index(actions)};
+  return{display:index(display),harmonic:index(harmonic),actions:index(actions),children:children.map(node=>node.className),actionParent:document.querySelector('#skyFoundationFocus .sky-export-wheel-slot')?.parentElement?.className||'none'};
 });
+console.log('FOCUS_DESKTOP_CONTROL_ORDER',JSON.stringify(focusControlOrder));
 assert.ok(focusControlOrder.display>=0,'Display must stay in the Focus heading controls.');
 assert.ok(focusControlOrder.harmonic>focusControlOrder.display,'Harmonic Window must sit to the right of Display.');
 assert.ok(focusControlOrder.actions>focusControlOrder.harmonic,'Copy and Download must remain to the far right of Harmonic Window.');
@@ -146,15 +147,17 @@ const maxInput=page.locator('#skyFoundationRelationships [data-relationship-limi
 assert.equal(await maxInput.getAttribute('type'),'number','Max must be an editable numeric field rather than a preset dropdown.');
 assert.equal(await maxInput.getAttribute('min'),'1','Max must reject zero and negative limits.');
 assert.equal(await maxInput.getAttribute('step'),'1','Max must accept positive integers only.');
-assert.equal(await maxInput.getAttribute('placeholder'),'Max','The unlimited state must read Max without occupying the field value.');
+const maxPreset=page.locator('#skyFoundationRelationships [data-relationship-limit-preset]');
+assert.equal(await maxPreset.inputValue(),'all','The uncapped state must be represented by the Max preset.');
+assert.equal(await maxInput.getAttribute('placeholder'),'1+','Custom positive limits must show their numeric entry cue.');
+await maxPreset.selectOption('custom');
 await maxInput.fill('13');
 await maxInput.press('Enter');
 await page.waitForFunction(()=>document.documentElement.dataset.skyRelationshipLimit==='13');
 assert.equal(await maxInput.inputValue(),'13','A custom positive integer must become the relationship maximum.');
-await maxInput.fill('');
-await maxInput.press('Enter');
+await maxPreset.selectOption('all');
 await page.waitForFunction(()=>document.documentElement.dataset.skyRelationshipLimit==='all');
-assert.equal(await maxInput.getAttribute('placeholder'),'Max','Clearing the custom maximum must restore the unlimited Max state.');
+assert.equal(await maxPreset.inputValue(),'all','Returning to Max must restore the unlimited state.');
 
 await page.setViewportSize({width:390,height:844});
 await page.waitForTimeout(100);
@@ -169,7 +172,7 @@ const mobileRelationshipLayout=await page.locator('#skyFoundationRelationships>.
   const download=box(actions?.querySelector('#skyChartRelationshipsExport'));
   const headingBox=heading.getBoundingClientRect();
   return{
-    titleTop:title?.top??null,countTop:count?.top??null,copyTop:copy?.top??null,downloadTop:download?.top??null,
+    titleTop:title?(title.top+title.bottom)/2:null,countTop:count?(count.top+count.bottom)/2:null,copyTop:copy?(copy.top+copy.bottom)/2:null,downloadTop:download?(download.top+download.bottom)/2:null,
     sortTop:sort?.top??null,limitTop:limit?.top??null,
     sortWidth:sort?.width??0,limitWidth:limit?.width??0,
     row1Bottom:Math.max(title?.bottom||0,count?.bottom||0,copy?.bottom||0,download?.bottom||0),

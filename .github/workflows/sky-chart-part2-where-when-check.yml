@@ -1,50 +1,31 @@
-name: Sky Chart Part 2 Where and When check
-
+name: Sky Chart Where and When compatibility
 on:
-  push:
-    branches:
-      - main
   pull_request:
     paths:
-      - 'part2/sky-chart.html'
-      - 'sky-chart-where-when-v1.js'
-      - 'sky-chart-where-when-v1.css'
-      - 'sky-chart-foundation-v1.js'
-      - 'sky-chart-foundation-interactions-v1.js'
-      - 'tests/sky-chart-part2-where-when.mjs'
-      - 'tests/sky-chart-part2-confirmed-view.mjs'
+      - 'sky-chart.html'
+      - 'sky-chart-where-when-v3.js'
+      - 'sky-chart-where-when-modes-v1.css'
+      - 'tests/sky-chart-here-now-modes-browser.mjs'
+      - 'tests/sky-chart-contextual-titles-browser.mjs'
       - '.github/workflows/sky-chart-part2-where-when-check.yml'
-
+  workflow_dispatch:
 jobs:
-  browser-check:
+  current-sky-browser:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: JavaScript syntax
+      - run: |
+          node --check sky-chart-where-when-v3.js
+          node --check tests/sky-chart-here-now-modes-browser.mjs
+          node --check tests/sky-chart-contextual-titles-browser.mjs
+      - run: npm install --no-save playwright@1.52.0 luxon@3 suncalc@1.9.0
+      - run: npx playwright install --with-deps chromium
+      - name: Verify active Sky Chart Here/Now and sky identity
         run: |
-          node --check sky-chart-foundation-v1.js
-          node --check sky-chart-foundation-interactions-v1.js
-          node --check sky-chart-where-when-v1.js
-          node --check tests/sky-chart-part2-where-when.mjs
-          node --check tests/sky-chart-part2-confirmed-view.mjs
-      - name: Install browser dependencies
-        run: |
-          npm install --no-save playwright@1.52.0 luxon@3 suncalc@1.9.0
-          npx playwright install --with-deps chromium
-      - name: Run Where and When browser assertions
-        run: |
-          python3 -m http.server 4173 > /tmp/sky-chart-part2-server.log 2>&1 &
-          node tests/sky-chart-part2-where-when.mjs
-          node tests/sky-chart-part2-confirmed-view.mjs
-      - uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: sky-chart-part2-screenshots
-          path: |
-            sky-chart-part2-desktop.png
-            sky-chart-part2-mobile.png
-            sky-chart-part2-confirmed-desktop.png
-            sky-chart-part2-confirmed-mobile.png
+          python3 -m http.server 4173 > /tmp/sky-current-where-when-http.log 2>&1 &
+          node tests/sky-chart-here-now-modes-browser.mjs
+          node tests/sky-chart-contextual-titles-browser.mjs
