@@ -113,7 +113,7 @@ const partial=await page.evaluate(()=>{
   return window.RelphiRelationshipExportFocus.matrix();
 });
 assert.equal(partial.aspects,'Conjunction, Square, Opposition');
-const empty=await page.evaluate(()=>{localStorage.setItem('relphiSkyAspectMatrixV1',JSON.stringify({'A-A':[],'B-B':[],'A-B':[]}));return window.RelphiRelationshipExportFocus.matrix()});
+const empty=await page.evaluate(()=>{document.querySelectorAll('[data-aspect-matrix-scope="A-B"][data-aspect-matrix-aspect]').forEach(input=>{input.checked=false});localStorage.setItem('relphiSkyAspectMatrixV1',JSON.stringify({'A-A':[],'B-B':[],'A-B':[]}));return window.RelphiRelationshipExportFocus.matrix()});
 assert.equal(empty.aspects,'All','no selected aspect types must be reported as All');
 assert.equal(partial.scopes,'A↔B');
 assert.deepEqual(errors,[],'no browser errors');
