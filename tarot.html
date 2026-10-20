@@ -9,6 +9,7 @@
   <link href="style.css?v=368" rel="stylesheet"/>
   <link href="relphi-design-system.css?v=1" rel="stylesheet"/>
   <link href="drawing-board-workflow-v2.css?v=99" rel="stylesheet"/>
+  <link href="tarot-ledger-gallery-fit.css?v=1" rel="stylesheet"/>
 </head>
 <body class="tarot-ledger-page">
   <div id="nav-placeholder"></div>
@@ -344,7 +345,10 @@
 
     <section id="browsePanel" class="tarot-layout" hidden>
       <div class="tarot-list-panel">
-        <h2 class="cards-heading">Cards <span id="resultInlineCount" class="cards-heading-count">No cards shown</span></h2>
+        <div class="tarot-ledger-results-heading">
+          <h2 class="cards-heading">Cards <span id="resultInlineCount" class="cards-heading-count">No cards shown</span></h2>
+          <button type="button" id="toggleLedgerEntry" class="tarot-ledger-entry-toggle" aria-controls="cardDetail" aria-expanded="true">Hide full entry</button>
+        </div>
         <div id="cardList" class="tarot-card-list" role="list"></div>
       </div>
       <article id="cardDetail" class="tarot-detail" aria-live="polite"></article>
@@ -389,6 +393,7 @@ function copyQuestionCard(card) {
   <script src="relphi-rising-sign-house-offset-effects.js?v=219"></script>
   <script src="vendor/astronomy-engine/astronomy.browser.min.js"></script>
   <script src="relphi-house-systems.js?v=317"></script>
+  <script src="tarot-ledger-gallery-fit.js?v=1"></script>
   <script src="tarot-app.js?v=415"></script>
 </body>
 </html>
