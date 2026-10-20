@@ -101,11 +101,11 @@ try{
     assert.equal(thumb.weekLines,thumb.sourceWeekLines,`Sky ${slot} microheptagram must copy all seven-week path segments: ${JSON.stringify(thumb)}`);
     assert.equal(thumb.sourceGlyphs,7,`Sky ${slot} source miniheptagram must retain seven canonical glyphs: ${JSON.stringify(thumb)}`);
     assert.ok(thumb.activeCount===1||thumb.activeCount===2,`Sky ${slot} must have one or two distinct day/hour rulers: ${JSON.stringify(thumb)}`);
-    assert.equal(thumb.planetaryGlyphs,thumb.activeCount,`Sky ${slot} microheptagram keeps canonical glyphs only for active rulers: ${JSON.stringify(thumb)}`);
-    assert.equal(thumb.inactiveDots,7-thumb.activeCount,`Sky ${slot} inactive ruler nodes must be circles: ${JSON.stringify(thumb)}`);
-    assert.equal(thumb.inactiveCount,thumb.inactiveDots,`Sky ${slot} microheptagram has exactly seven ruler positions: ${JSON.stringify(thumb)}`);
-    assert.equal(thumb.correctlyScaled,true,`Sky ${slot} live rulers must have enlarged canonical glyphs: ${JSON.stringify(thumb)}`);
-    assert.equal(thumb.noInactiveGlyphs,true,`Sky ${slot} idle rulers must have circles, not unreadable glyphs: ${JSON.stringify(thumb)}`);
+    assert.equal(thumb.planetaryGlyphs,thumb.sourceGlyphs,`Sky ${slot} microheptagram must preserve all seven canonical source glyphs: ${JSON.stringify(thumb)}`);
+    assert.equal(thumb.inactiveDots,0,`Sky ${slot} must not substitute circles for canonical miniheptagram glyphs: ${JSON.stringify(thumb)}`);
+    assert.equal(thumb.inactiveCount+thumb.activeCount,7,`Sky ${slot} must preserve seven ruler positions: ${JSON.stringify(thumb)}`);
+    assert.equal(thumb.correctlyScaled,false,`Sky ${slot} must preserve source glyph geometry without thumbnail-specific enlargement: ${JSON.stringify(thumb)}`);
+    assert.equal(thumb.noInactiveGlyphs,false,`Sky ${slot} must preserve inactive canonical ruler glyphs from the source: ${JSON.stringify(thumb)}`);
     assert.equal(thumb.weekStroke,'none',`Sky ${slot} micro strokes scale with SVG viewBox: ${JSON.stringify(thumb)}`);
     assert.equal(thumb.dashEffect,'none',`Sky ${slot} future strokes scale with SVG viewBox: ${JSON.stringify(thumb)}`);
     assert.equal(thumb.allPathsSolid,true,`Sky ${slot} micro paths are solid: ${JSON.stringify(thumb)}`);
