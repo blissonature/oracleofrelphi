@@ -168,9 +168,9 @@ assert.match(vocab,/data-vocab-harmonic-window-input/,'Vocab must expose a contr
 assert.doesNotMatch(vocab,/canonicalHarmonicWindowInput/,'Neither visible controller may own a second or canonical Harmonic Window value');
 assert.match(harmonic,/relphi:sky-harmonic-window-model-changed/,'The shared model must publish live Harmonic Window changes');
 assert.match(orbControl,/const limit=Number\(model\(\)\?\.getWindow/,'Relationships filtering must read the shared model rather than reread its own control as state');
-assert.match(orbControl,/data\.harmonicShowMore='true'/,'Relationships must expose a Harmonic Window continuation item at the bottom of the list');
+assert.match(orbControl,/dataset\.harmonicShowMore='true'/,'Relationships must expose a Harmonic Window continuation item at the bottom of the list');
 assert.match(orbControl,/hiddenByHarmonicWindow\+=1/,'The continuation count must include only relationships excluded by Harmonic Window after other active filters');
-assert.match(orbControl,/m\?\.setWindow\?\.\(m\?\.maxWindow\?\?12\)/,'Clicking Show more must widen the shared Harmonic Window immediately');
+assert.match(orbControl,/nextRevealWindow\(rows,current,max\)[\s\S]*?m\?\.setWindow\?\.\(next\)/,'Clicking Show more must widen the shared Harmonic Window incrementally');
 assert.match(orbControl,/count\.dataset\.countLabel='matches'/,'Relationship status must identify the qualifying count as matches');
 assert.match(foundationCss,/#skyFoundationRelationshipCount\[data-count-label="matches"\]::before\s*\{[\s\S]*content:attr\(data-match-count\)/,'The visible relationship number must come from stable match state rather than mutable legacy text');
 assert.match(foundationCss,/#skyFoundationRelationshipCount\[data-count-label="matches"\]::after\s*\{[\s\S]*content:"matches"/,'The relationship count must visibly append matches');
