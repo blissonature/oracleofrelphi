@@ -72,8 +72,9 @@ const focusControlOrder=await page.evaluate(()=>{
   const harmonic=controls.querySelector(':scope>[data-orb-field="true"]');
   const actions=controls.querySelector(':scope>.sky-export-wheel-slot');
   const index=node=>children.indexOf(node);
-  return{display:index(display),harmonic:index(harmonic),actions:index(actions)};
+  return{display:index(display),harmonic:index(harmonic),actions:index(actions),children:children.map(node=>node.className),actionParent:document.querySelector('#skyFoundationFocus .sky-export-wheel-slot')?.parentElement?.className||'none'};
 });
+console.log('FOCUS_DESKTOP_CONTROL_ORDER',JSON.stringify(focusControlOrder));
 assert.ok(focusControlOrder.display>=0,'Display must stay in the Focus heading controls.');
 assert.ok(focusControlOrder.harmonic>focusControlOrder.display,'Harmonic Window must sit to the right of Display.');
 assert.ok(focusControlOrder.actions>focusControlOrder.harmonic,'Copy and Download must remain to the far right of Harmonic Window.');
