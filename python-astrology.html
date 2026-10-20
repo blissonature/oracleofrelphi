@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Python for Astrology · Oracle of Relphi</title>
+<link href="style.css?v=346" rel="stylesheet"/>
+<link href="favicon.ico" rel="icon" type="image/x-icon"/>
+<style>
+:root{--py-red:#dc1f18;--py-ink:#111;--py-paper:#fffdfb;--py-soft:#f6f2ef}
+body{background:var(--py-paper);color:var(--py-ink)}
+.py-shell{max-width:1180px;margin:2rem auto;padding:0 1rem 4rem}
+.py-hero{text-align:left;max-width:980px;margin:0 auto 1.2rem;padding:1rem 1.15rem;border-left:6px solid var(--py-red);background:#fff;border-radius:0 1.2rem 1.2rem 0}
+.py-hero .py-kicker{color:var(--py-red)}
+.py-hero .py-lede{max-width:760px;margin-bottom:.2rem}
+.py-hero h1{font-size:clamp(2.2rem,7vw,5rem);line-height:.94;margin:.15rem 0 .8rem}
+.py-hero .red{color:var(--py-red)}
+.py-kicker{font-weight:900;letter-spacing:.12em;text-transform:uppercase;font-size:.72rem}
+.py-lede{font-size:1.05rem;line-height:1.55}
+.py-start{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.8rem;margin:1rem 0 1.1rem}
+.py-start-card{border:1px solid rgba(17,17,17,.16);border-radius:1rem;background:#fff;padding:1rem;text-align:left;cursor:pointer;box-shadow:none}
+.py-start-card:first-child{border:2px solid var(--py-red)}
+.py-start-card:first-child::before{content:"BEST FIRST";display:inline-block;font-size:.64rem;font-weight:900;letter-spacing:.08em;color:#fff;background:var(--py-red);border-radius:999px;padding:.2rem .45rem;margin-bottom:.45rem}
+.py-start-card:hover,.py-start-card:focus{border-color:#dc1f18;outline:none}
+.py-start-card strong{display:block;font-size:1rem;margin-bottom:.25rem}
+.py-start-card span{display:block;color:#555;font-size:.84rem;line-height:1.35}
+.py-guide{border:0;border-radius:1.2rem;background:#f4f1ef;padding:1rem 1.1rem;margin:0 0 1.1rem}
+.py-guide>h2{font-size:1.45rem}
+.py-guide>p{max-width:760px}
+.py-guide h2{margin:.1rem 0 .4rem}
+.py-guide-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.65rem;margin-top:.7rem}
+.py-guide-item{background:#fff;border:1px solid rgba(17,17,17,.14);border-radius:.9rem;padding:.7rem}
+.py-guide-item b{display:block;margin-bottom:.2rem}
+.py-guide-item span{font-size:.82rem;color:#555;line-height:1.35}
+.py-grid{display:grid;grid-template-columns:minmax(0,1fr);gap:1rem;align-items:start}
+.py-map{order:2}
+.py-lab{order:1}
+.py-map,.py-lab{border:1.5px solid #111;border-radius:1.4rem;background:#fff;box-shadow:0 5px 18px rgba(0,0,0,.05)}
+.py-map{padding:.8rem;position:static;max-height:none;overflow:visible;border-color:rgba(17,17,17,.22)}
+.py-map-head h2{font-size:1.05rem;margin:.15rem 0}
+.py-map:not(.is-expanded) .py-course{display:none}
+.py-map:not(.is-expanded) #courseMap::before{content:"The full course map is tucked away until you want it.";display:block;color:#666;font-size:.84rem;padding:.35rem 0 .15rem}
+.py-map-head{display:flex;justify-content:space-between;align-items:center;gap:.5rem}
+.py-map-toggle{border:1px solid #111;border-radius:999px;background:#fff;padding:.35rem .6rem;font:inherit;font-weight:800;cursor:pointer}
+.py-map.is-collapsed .py-course{display:none}
+.py-progress{font-size:.76rem;color:#555;font-weight:800;margin:.3rem 0 .6rem}
+.py-course button[data-lesson]{padding:.34rem .2rem;border-radius:.55rem}
+.py-course button[data-lesson].is-recommended{background:#fff3ef}
+.py-course button[data-lesson].is-active{background:#111;color:#fff;padding-left:.5rem}
+.py-map h2,.py-lab h2{margin:.2rem 0 .7rem}
+.py-course{border-top:1px solid rgba(17,17,17,.12);padding:.55rem 0}
+.py-course:first-of-type{border-top:0}
+.py-course button{width:100%;text-align:left;border:0;background:transparent;padding:.3rem 0;cursor:pointer;font:inherit}
+.py-course-code{font-weight:900;color:var(--py-red);margin-right:.45rem}
+.py-course-theme{display:block;color:#555;font-size:.78rem;line-height:1.25;margin-top:.16rem}
+.py-lab{padding:1.2rem;border:2px solid #111;box-shadow:0 8px 24px rgba(0,0,0,.06)}
+.py-lab h2{font-size:clamp(1.7rem,4vw,2.55rem);line-height:1.05}
+.py-summary{font-size:1.05rem;max-width:760px}
+.py-concept{display:inline-block;background:#111;color:#fff;border-radius:999px;padding:.35rem .65rem;font-size:.8rem;margin:.4rem 0 .8rem}
+.py-controls{max-width:720px}
+.py-graphic{min-height:22rem;border:0;background:#f7f4f2}
+.py-codewrap{margin-top:1rem}
+.py-code{border:0}
+.py-output{border:2px solid #111;background:#fff}
+.py-result{color:#dc1f18}
+.py-section-label{font-size:.68rem;font-weight:900;letter-spacing:.1em;text-transform:uppercase;color:#777;margin:1rem 0 .35rem}
+.py-controls-wrap{border-top:1px solid rgba(17,17,17,.12);padding-top:.1rem}
+.py-status{display:inline-block;border:1px solid #111;border-radius:999px;padding:.25rem .55rem;font-size:.72rem;font-weight:900;text-transform:uppercase;letter-spacing:.06em}
+.py-lesson-head{display:flex;justify-content:space-between;gap:.75rem;align-items:flex-start}
+.py-lesson-head h2{margin:.35rem 0}
+.py-why{border-left:4px solid #dc1f18;padding:.7rem .8rem;background:#fff7f4;border-radius:.45rem;margin:.8rem 0 1rem;line-height:1.45;max-width:760px}
+.py-why strong{color:#dc1f18}
+.py-next{display:flex;justify-content:space-between;gap:.6rem;margin-top:1rem}
+.py-next button{border:1.5px solid #111;border-radius:999px;background:#111;color:#fff;padding:.55rem .85rem;font:inherit;font-weight:900;cursor:pointer}
+.py-next button:hover,.py-next button:focus{background:#dc1f18;border-color:#dc1f18;outline:none}
+.py-tip{font-size:.82rem;color:#555;line-height:1.35;margin:.5rem 0}
+.py-summary{font-size:1.02rem;line-height:1.5}
+.py-concept{font-weight:800;color:var(--py-red)}
+.py-controls{display:grid;gap:.7rem;margin:1rem 0}
+.py-control-card{border:1.5px solid #111;border-radius:1rem;padding:.65rem;background:#fff}
+.py-control-label{display:block;font-weight:900;font-size:.76rem;letter-spacing:.06em;text-transform:uppercase;margin-bottom:.35rem}
+.py-cycler{display:grid;grid-template-columns:2.5rem minmax(0,1fr) 2.5rem;gap:.45rem;align-items:center;border-radius:.9rem;outline:none}
+.py-cycler:focus-visible{box-shadow:0 0 0 3px rgba(220,31,24,.2)}
+.py-cycler-btn{border:1.5px solid #111;border-radius:999px;background:#111;color:#fff;height:2.5rem;font:900 1.25rem/1 system-ui,sans-serif;cursor:pointer}
+.py-cycler-btn:hover,.py-cycler-btn:focus{background:#dc1f18;border-color:#dc1f18;outline:none}
+.py-cycler-value{display:grid;place-items:center;min-height:2.5rem;padding:.35rem .6rem;border:1.5px solid #111;border-radius:.85rem;background:#faf8f7;font-weight:900;text-align:center}
+.py-codewrap{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(190px,.8fr);gap:.8rem}
+.py-code,.py-output{margin:0;border-radius:1rem;padding:1rem;min-height:9rem;box-sizing:border-box}
+.py-graphic{border:1.5px solid #111;border-radius:1rem;background:#fffdfb;padding:.8rem;margin:1rem 0;min-height:18rem;display:grid;place-items:center}
+.py-graphic svg{width:min(100%,34rem);height:auto;display:block}
+.py-graphic-note{margin:.65rem 0 0;color:#555;font-size:.84rem;line-height:1.4;text-align:center}
+.py-aspect-line{stroke:#dc1f18;stroke-width:4;stroke-linecap:round}
+.py-aspect-ray{stroke:#111;stroke-width:1.25;opacity:.45}
+.py-aspect-sector{fill:#fff;stroke:#111;stroke-width:1}
+.py-aspect-sector.is-source{fill:#dc1f18}
+.py-aspect-sector.is-target{fill:#111}
+.py-aspect-glyph{font:800 21px system-ui,sans-serif}
+.py-aspect-glyph.light{fill:#fff}
+.py-aspect-label{font:800 12px system-ui,sans-serif;fill:#111}
+.py-aspect-center-title{font:900 16px system-ui,sans-serif;fill:#111}
+.py-aspect-center-sub{font:700 11px system-ui,sans-serif;fill:#666}
+.py-code{white-space:pre-wrap;background:#111;color:#fff;overflow:auto;font:500 .9rem/1.5 ui-monospace,SFMono-Regular,Consolas,monospace}
+.py-output{background:var(--py-soft);border:1.5px solid #111}
+.py-output small{display:block;text-transform:uppercase;font-weight:900;letter-spacing:.08em;margin-bottom:.8rem}
+.py-result{font-size:clamp(1.45rem,5vw,2.7rem);font-weight:900;overflow-wrap:anywhere}
+.py-track-strip{display:flex;gap:.45rem;flex-wrap:wrap;justify-content:center;margin:1rem 0}
+.py-track-strip span{border:1px solid #111;border-radius:999px;padding:.35rem .6rem;font-size:.78rem;font-weight:800;background:#fff}
+.py-empty{padding:2rem;text-align:center;color:#555}
+@media(max-width:760px){.py-grid,.py-codewrap,.py-start,.py-guide-grid{grid-template-columns:1fr}.py-map{position:static;max-height:none}.py-shell{padding:0 .55rem 3rem}.py-lesson-head{display:block}}
+</style>
+</head>
+<body>
+<div id="nav-placeholder"></div>
+<main class="py-shell">
+<section class="py-hero">
+<p class="py-kicker">Relphi Learning Lab</p>
+<h1>Python for <span class="red">Astrology</span></h1>
+<p class="py-lede">Learn astrology by making its mechanisms executable. Start with tiny rules you can see immediately, then climb toward traditional techniques, celestial mechanics, and a transparent ephemeris.</p>
+<div class="py-track-strip"><span>Astrology 101–302</span><span>Traditional Astrology</span><span>Ephemeris Foundations</span><span>Build Your Own Ephemeris</span></div>
+</section>
+<section class="py-guide">
+<h2>Start here</h2>
+<p class="py-summary">Pick a question, not a course number. Each lesson lets you change one astrological rule and watch the code and geometry respond together.</p>
+<div class="py-guide-grid">
+  <div class="py-guide-item"><b>1 · Cycle</b><span>Use the ‹ › buttons or left/right arrow keys to change the current value.</span></div>
+  <div class="py-guide-item"><b>2 · Watch</b><span>The graphic redraws immediately so you can see what the rule actually does.</span></div>
+  <div class="py-guide-item"><b>3 · Read the code</b><span>The Python is the mechanism in miniature. You do not need prior coding experience.</span></div>
+</div>
+<div class="py-start">
+  <button class="py-start-card" data-start="major-aspects"><strong>See the zodiac move</strong><span>Cycle sextile, square, trine, and opposition from any sign.</span></button>
+  <button class="py-start-card" data-start="part-of-fortune"><strong>Make a traditional point</strong><span>See sect change the Part of Fortune formula.</span></button>
+  <button class="py-start-card" data-start="dodecatemoria"><strong>Find something surprising</strong><span>Watch one degree jump across the zodiac when multiplied by twelve.</span></button>
+</div>
+</section>
+<section class="py-grid">
+<aside class="py-map"><div class="py-map-head"><h2>Full curriculum</h2><button class="py-map-toggle" type="button" id="mapToggle">Show map</button></div><div class="py-progress" id="progressText"></div><div id="courseMap">Loading…</div></aside>
+<section class="py-lab" id="lessonLab" aria-live="polite"><div class="py-empty">Loading the first lesson…</div></section>
+</section>
+</main>
+<script>
+(async function(){
+const signs=["Aries","Taurus","Gemini","Cancer","Leo","Virgo","Libra","Scorpio","Sagittarius","Capricorn","Aquarius","Pisces"];
+const response=await fetch("python-astrology-curriculum.json",{cache:"no-store"});
+const data=await response.json();
+const map=document.getElementById("courseMap"),lab=document.getElementById("lessonLab");
+const labels=id=>data.lessons[id]?.title||id.split("-").map(s=>s[0].toUpperCase()+s.slice(1)).join(" ");
+const recommended=new Set(["major-aspects","day-ruler-deputies","zodiac-longitude","part-of-fortune","dodecatemoria","annual-profections","temporal-hours","nutation"]);
+map.innerHTML=data.courses.map(c=>'<div class="py-course"><button type="button" data-course="'+c.code+'"><span class="py-course-code">'+c.code+'</span>'+c.title+'<span class="py-course-theme">'+c.theme+'</span></button><div>'+c.lessons.map(id=>'<button type="button" data-lesson="'+id+'" class="'+(recommended.has(id)?"is-recommended":"")+'">↳ '+labels(id)+'</button>').join("")+'</div></div>').join("");
+const progress=document.getElementById("progressText");
+const interactiveCount=Object.values(data.lessons).filter(x=>x.status==="interactive").length;
+progress.textContent=interactiveCount+" interactive lessons live · more catalogued below";
+
+function control(name,spec){
+ const initial=Array.isArray(spec)?spec[0]:spec.value;
+ const kind=Array.isArray(spec)?"list":"number";
+ return '<div class="py-control-card"><span class="py-control-label">'+name+'</span><div class="py-cycler" tabindex="0" data-input="'+name+'" data-kind="'+kind+'"><button type="button" class="py-cycler-btn" data-step="-1" aria-label="Previous '+name+'">‹</button><div class="py-cycler-value" data-value>'+initial+'</div><button type="button" class="py-cycler-btn" data-step="1" aria-label="Next '+name+'">›</button></div></div>';
+}
+function values(){
+ const out={};
+ lab.querySelectorAll(".py-cycler").forEach(el=>{
+   const raw=el.querySelector("[data-value]").textContent;
+   out[el.dataset.input]=el.dataset.kind==="number"?Number(raw):raw;
+ });
+ return out;
+}
+function stepControl(id,cycler,step){
+ const lesson=data.lessons[id],name=cycler.dataset.input,spec=lesson.inputs[name],value=cycler.querySelector("[data-value]");
+ if(Array.isArray(spec)){
+   let i=spec.indexOf(value.textContent);if(i<0)i=0;
+   value.textContent=spec[(i+step+spec.length)%spec.length];
+ }else{
+   let n=Number(value.textContent)+step;
+   if(n>spec.max)n=spec.min;
+   if(n<spec.min)n=spec.max;
+   value.textContent=String(n);
+ }
+}
+function bindCyclers(id,update){
+ const all=[...lab.querySelectorAll(".py-cycler")];
+ all.forEach((cycler,index)=>{
+   cycler.addEventListener("click",e=>{
+     const btn=e.target.closest("[data-step]");if(!btn)return;
+     stepControl(id,cycler,Number(btn.dataset.step));cycler.focus();update();
+   });
+   cycler.addEventListener("keydown",e=>{
+     if(e.key==="ArrowLeft"||e.key==="ArrowRight"){
+       e.preventDefault();stepControl(id,cycler,e.key==="ArrowLeft"?-1:1);update();
+     }else if(e.key==="ArrowUp"||e.key==="ArrowDown"){
+       e.preventDefault();
+       const next=e.key==="ArrowUp"?(all[index-1]||all[all.length-1]):(all[index+1]||all[0]);
+       next.focus();
+     }
+   });
+ });
+}
+function evaluate(id,v){
+ if(id==="major-aspects"){
+   const offsets={Sextile:2,Square:3,Trine:4,Opposition:6};
+   const i=signs.indexOf(v.sign),step=offsets[v.aspect];
+   const forward=signs[(i+step)%12],backward=signs[(i-step+12)%12];
+   return v.aspect==="Opposition" ? forward : backward+" · "+forward;
+ }
+ if(id==="day-ruler-deputies"){const o=["Saturn","Jupiter","Mars","Sun","Venus","Mercury","Moon"],i=o.indexOf(v.ruler);return [v.ruler,o[(i+1)%7],o[(i+2)%7]].join(" → ")}
+ if(id==="zodiac-longitude")return (signs.indexOf(v.sign)*30+v.degree)+"°";
+ if(id==="part-of-fortune"){const n=v.sect==="day"?v.asc+v.moon-v.sun:v.asc+v.sun-v.moon;return ((n%360)+360)%360+"°"}
+ if(id==="annual-profections")return signs[(signs.indexOf(v.rising)+v.age)%12];
+ if(id==="dodecatemoria"){
+   const lon=(signs.indexOf(v.sign)*30+v.degree*12)%360;
+   return signs[Math.floor(lon/30)]+" "+(lon%30)+"° · "+lon+"°";
+ }
+ if(id==="monomoiria"){
+   const rulers=["Sun","Venus","Mercury","Moon","Saturn","Jupiter","Mars"];
+   return rulers[v.degree%7];
+ }
+ if(id==="decans-faces")return "Decan "+(Math.floor(v.degree/10)+1);
+ if(id==="whole-sign-house-distance"){
+   return ((signs.indexOf(v.target)-signs.indexOf(v.reference)+12)%12)+1;
+ }
+ if(id==="lot-houses"){
+   const a=Math.floor(v.lot_longitude/30),b=Math.floor(v.planet_longitude/30);
+   return "House "+(((b-a+12)%12)+1);
+ }
+ if(id==="monthly-profections"){
+   const annual=(signs.indexOf(v.rising)+v.age)%12;
+   return signs[(annual+v.month)%12];
+ }
+ if(id==="annual-time-lord"){
+   const rulers={Aries:"Mars",Taurus:"Venus",Gemini:"Mercury",Cancer:"Moon",Leo:"Sun",Virgo:"Mercury",Libra:"Venus",Scorpio:"Mars",Sagittarius:"Jupiter",Capricorn:"Saturn",Aquarius:"Saturn",Pisces:"Jupiter"};
+   const profected=signs[(signs.indexOf(v.rising)+v.age)%12];
+   return profected+" · "+rulers[profected];
+ }
+ if(id==="temporal-hours"){
+   const day=v.daylight_minutes/12,night=(1440-v.daylight_minutes)/12;
+   const fmt=n=>Math.floor(n)+"m "+Math.round((n-Math.floor(n))*60)+"s";
+   return "Day "+fmt(day)+" · Night "+fmt(night);
+ }
+ return "Concept lesson — interactive model coming next.";
+}
+function renderAspectGraphic(v){
+ const glyphs=["♈","♉","♊","♋","♌","♍","♎","♏","♐","♑","♒","♓"];
+ const offsets={Sextile:2,Square:3,Trine:4,Opposition:6};
+ const degrees={Sextile:60,Square:90,Trine:120,Opposition:180};
+ const source=signs.indexOf(v.sign),step=offsets[v.aspect];
+ const targets=v.aspect==="Opposition"?[(source+step)%12]:[(source-step+12)%12,(source+step)%12];
+ const c=180,r=145,inner=62;
+ const pt=(deg,rad)=>{const a=(deg-90)*Math.PI/180;return [c+rad*Math.cos(a),c+rad*Math.sin(a)]};
+ const wedge=(i)=>{
+   const a0=i*30,a1=(i+1)*30;
+   const [x0,y0]=pt(a0,r),[x1,y1]=pt(a1,r);
+   const cls=i===source?" is-source":targets.includes(i)?" is-target":"";
+   const [tx,ty]=pt(i*30+15,116);
+   const light=i===source||targets.includes(i)?" light":"";
+   return '<g><path class="py-aspect-sector'+cls+'" d="M '+c+' '+c+' L '+x0.toFixed(1)+' '+y0.toFixed(1)+' A '+r+' '+r+' 0 0 1 '+x1.toFixed(1)+' '+y1.toFixed(1)+' Z"></path><text class="py-aspect-glyph'+light+'" x="'+tx.toFixed(1)+'" y="'+ty.toFixed(1)+'" text-anchor="middle" dominant-baseline="middle">'+glyphs[i]+'</text></g>';
+ };
+ const rays=Array.from({length:12},(_,i)=>{const [x,y]=pt(i*30,r);return '<line class="py-aspect-ray" x1="'+c+'" y1="'+c+'" x2="'+x.toFixed(1)+'" y2="'+y.toFixed(1)+'"></line>'}).join("");
+ const [sx,sy]=pt(source*30+15,92);
+ const lines=targets.map(t=>{const [tx,ty]=pt(t*30+15,92);return '<line class="py-aspect-line" x1="'+sx.toFixed(1)+'" y1="'+sy.toFixed(1)+'" x2="'+tx.toFixed(1)+'" y2="'+ty.toFixed(1)+'"></line>'}).join("");
+ const targetNames=targets.map(i=>signs[i]).join(v.aspect==="Opposition"?"":" + ");
+ return '<svg viewBox="0 0 360 360" role="img" aria-label="'+v.aspect+' geometry from '+v.sign+'">'+Array.from({length:12},(_,i)=>wedge(i)).join("")+rays+lines+'<circle cx="180" cy="180" r="'+inner+'" fill="#fffdfb" stroke="#111" stroke-width="1.5"></circle><text class="py-aspect-center-title" x="180" y="175" text-anchor="middle">'+v.aspect+'</text><text class="py-aspect-center-sub" x="180" y="194" text-anchor="middle">'+degrees[v.aspect]+'° · '+targetNames+'</text></svg>';
+}
+
+function polarPoint(index,radius,offset=-90){
+ const a=(offset+index*360/12)*Math.PI/180;
+ return [180+radius*Math.cos(a),180+radius*Math.sin(a)];
+}
+function renderDeputyHeptagram(ruler){
+ const order=["Saturn","Jupiter","Mars","Sun","Venus","Mercury","Moon"];
+ const glyph={Saturn:"♄",Jupiter:"♃",Mars:"♂",Sun:"☉",Venus:"♀",Mercury:"☿",Moon:"☽"};
+ const i=order.indexOf(ruler),first=order[(i+1)%7],second=order[(i+2)%7];
+ const pts=order.map((p,j)=>{const a=(-90+j*360/7)*Math.PI/180;return [180+118*Math.cos(a),180+118*Math.sin(a)]});
+ const starOrder=[0,2,4,6,1,3,5,0];
+ const lines=starOrder.slice(0,-1).map((j,k)=>{
+   const a=pts[j],b=pts[starOrder[k+1]];
+   return '<line x1="'+a[0].toFixed(1)+'" y1="'+a[1].toFixed(1)+'" x2="'+b[0].toFixed(1)+'" y2="'+b[1].toFixed(1)+'" stroke="#111" stroke-width="1.4" opacity=".35"></line>';
+ }).join("");
+ const nodes=order.map((p,j)=>{
+   const [x,y]=pts[j];
+   const fill=p===ruler?"#dc1f18":p===first?"#111":p===second?"#777":"#fff";
+   const fg=(p===ruler||p===first||p===second)?"#fff":"#111";
+   return '<g><circle cx="'+x.toFixed(1)+'" cy="'+y.toFixed(1)+'" r="24" fill="'+fill+'" stroke="#111" stroke-width="1.5"></circle><text x="'+x.toFixed(1)+'" y="'+y.toFixed(1)+'" text-anchor="middle" dominant-baseline="middle" font-size="27" fill="'+fg+'">'+glyph[p]+'</text></g>';
+ }).join("");
+ return '<svg viewBox="0 0 360 360" role="img" aria-label="Day ruler deputies for '+ruler+'">'+lines+nodes+'<circle cx="180" cy="180" r="58" fill="#fffdfb" stroke="#111" stroke-width="1.5"></circle><text x="180" y="168" text-anchor="middle" class="py-aspect-center-title">'+ruler+'</text><text x="180" y="190" text-anchor="middle" class="py-aspect-center-sub">'+first+' → '+second+'</text></svg>';
+}
+function renderLongitudeWheel(sign,degree){
+ const glyphs=["♈","♉","♊","♋","♌","♍","♎","♏","♐","♑","♒","♓"];
+ const idx=signs.indexOf(sign),lon=idx*30+degree;
+ const c=180,r=145;
+ const pt=(deg,rad)=>{const a=(deg-90)*Math.PI/180;return [c+rad*Math.cos(a),c+rad*Math.sin(a)]};
+ const sectors=glyphs.map((g,i)=>{
+   const a0=i*30,a1=(i+1)*30,[x0,y0]=pt(a0,r),[x1,y1]=pt(a1,r),[tx,ty]=pt(i*30+15,116);
+   const active=i===idx;
+   return '<g><path d="M '+c+' '+c+' L '+x0.toFixed(1)+' '+y0.toFixed(1)+' A '+r+' '+r+' 0 0 1 '+x1.toFixed(1)+' '+y1.toFixed(1)+' Z" fill="'+(active?"#dc1f18":"#fff")+'" stroke="#111" stroke-width="1"></path><text x="'+tx.toFixed(1)+'" y="'+ty.toFixed(1)+'" text-anchor="middle" dominant-baseline="middle" font-size="21" fill="'+(active?"#fff":"#111")+'">'+g+'</text></g>';
+ }).join("");
+ const [px,py]=pt(lon,98);
+ return '<svg viewBox="0 0 360 360" role="img" aria-label="'+sign+' '+degree+' degrees equals '+lon+' degrees zodiac longitude">'+sectors+'<line x1="180" y1="180" x2="'+px.toFixed(1)+'" y2="'+py.toFixed(1)+'" stroke="#111" stroke-width="4" stroke-linecap="round"></line><circle cx="'+px.toFixed(1)+'" cy="'+py.toFixed(1)+'" r="6" fill="#dc1f18" stroke="#111" stroke-width="1.5"></circle><circle cx="180" cy="180" r="58" fill="#fffdfb" stroke="#111" stroke-width="1.5"></circle><text x="180" y="172" text-anchor="middle" class="py-aspect-center-title">'+sign+' '+degree+'°</text><text x="180" y="194" text-anchor="middle" class="py-aspect-center-sub">'+lon+'° zodiac longitude</text></svg>';
+}
+function renderProfectionWheel(rising,age){
+ const glyphs=["♈","♉","♊","♋","♌","♍","♎","♏","♐","♑","♒","♓"];
+ const start=signs.indexOf(rising),target=(start+age)%12;
+ const c=180,r=145;
+ const pt=(deg,rad)=>{const a=(deg-90)*Math.PI/180;return [c+rad*Math.cos(a),c+rad*Math.sin(a)]};
+ const sectors=glyphs.map((g,i)=>{
+   const a0=i*30,a1=(i+1)*30,[x0,y0]=pt(a0,r),[x1,y1]=pt(a1,r),[tx,ty]=pt(i*30+15,116);
+   const fill=i===start?"#111":i===target?"#dc1f18":"#fff";
+   const fg=(i===start||i===target)?"#fff":"#111";
+   return '<g><path d="M '+c+' '+c+' L '+x0.toFixed(1)+' '+y0.toFixed(1)+' A '+r+' '+r+' 0 0 1 '+x1.toFixed(1)+' '+y1.toFixed(1)+' Z" fill="'+fill+'" stroke="#111" stroke-width="1"></path><text x="'+tx.toFixed(1)+'" y="'+ty.toFixed(1)+'" text-anchor="middle" dominant-baseline="middle" font-size="21" fill="'+fg+'">'+g+'</text></g>';
+ }).join("");
+ return '<svg viewBox="0 0 360 360" role="img" aria-label="Annual profection from '+rising+' at age '+age+'">'+sectors+'<circle cx="180" cy="180" r="60" fill="#fffdfb" stroke="#111" stroke-width="1.5"></circle><text x="180" y="165" text-anchor="middle" class="py-aspect-center-title">Age '+age+'</text><text x="180" y="186" text-anchor="middle" class="py-aspect-center-sub">'+rising+' → '+signs[target]+'</text><text x="180" y="204" text-anchor="middle" class="py-aspect-center-sub">+'+(age%12)+' signs</text></svg>';
+}
+function renderFortuneWheel(v){
+ const c=180,r=128;
+ const pt=(deg,rad)=>{const a=(deg-90)*Math.PI/180;return [c+rad*Math.cos(a),c+rad*Math.sin(a)]};
+ const n=v.sect==="day"?v.asc+v.moon-v.sun:v.asc+v.sun-v.moon;
+ const fortune=((n%360)+360)%360;
+ const marks=[
+   ["ASC",v.asc,"#111"],
+   ["Sun",v.sun,"#d08a00"],
+   ["Moon",v.moon,"#777"],
+   ["Fortune",fortune,"#dc1f18"]
+ ];
+ const spokes=marks.map(([name,deg,color])=>{const [x,y]=pt(deg,100);return '<g><line x1="180" y1="180" x2="'+x.toFixed(1)+'" y2="'+y.toFixed(1)+'" stroke="'+color+'" stroke-width="'+(name==="Fortune"?4:2)+'"></line><circle cx="'+x.toFixed(1)+'" cy="'+y.toFixed(1)+'" r="'+(name==="Fortune"?7:5)+'" fill="'+color+'" stroke="#111" stroke-width="1"></circle><text x="'+x.toFixed(1)+'" y="'+(y-12).toFixed(1)+'" text-anchor="middle" font-size="11" font-weight="800">'+name+'</text></g>'}).join("");
+ return '<svg viewBox="0 0 360 360" role="img" aria-label="Part of Fortune calculation"><circle cx="180" cy="180" r="'+r+'" fill="#fff" stroke="#111" stroke-width="1.5"></circle>'+spokes+'<circle cx="180" cy="180" r="62" fill="#fffdfb" stroke="#111" stroke-width="1.5"></circle><text x="180" y="165" text-anchor="middle" class="py-aspect-center-title">Fortune '+fortune.toFixed(0)+'°</text><text x="180" y="187" text-anchor="middle" class="py-aspect-center-sub">'+(v.sect==="day"?"ASC + Moon − Sun":"ASC + Sun − Moon")+'</text><text x="180" y="205" text-anchor="middle" class="py-aspect-center-sub">'+v.sect+' formula</text></svg>';
+}
+
+function renderGraphic(id,v){
+ if(id==="major-aspects")return renderAspectGraphic(v);
+ if(id==="day-ruler-deputies")return renderDeputyHeptagram(v.ruler);
+ if(id==="zodiac-longitude")return renderLongitudeWheel(v.sign,v.degree);
+ if(id==="annual-profections")return renderProfectionWheel(v.rising,v.age);
+ if(id==="part-of-fortune")return renderFortuneWheel(v);
+ if(id==="dodecatemoria"){
+   const lon=(signs.indexOf(v.sign)*30+v.degree*12)%360;
+   return renderLongitudeWheel(signs[Math.floor(lon/30)],lon%30);
+ }
+ if(id==="whole-sign-house-distance"){
+   const start=signs.indexOf(v.reference),target=signs.indexOf(v.target);
+   const house=((target-start+12)%12)+1;
+   return renderProfectionWheel(v.reference,house-1);
+ }
+ if(id==="monthly-profections"){
+   const annual=(signs.indexOf(v.rising)+v.age)%12;
+   const annualSign=signs[annual];
+   return renderProfectionWheel(annualSign,v.month);
+ }
+ if(id==="annual-time-lord"){
+   return renderProfectionWheel(v.rising,v.age);
+ }
+ if(id==="monomoiria"){
+   const rulers=["Sun","Venus","Mercury","Moon","Saturn","Jupiter","Mars"];
+   const glyph={Sun:"☉",Venus:"♀",Mercury:"☿",Moon:"☽",Saturn:"♄",Jupiter:"♃",Mars:"♂"};
+   const ruler=rulers[v.degree%7];
+   return '<div style="text-align:center"><div style="font-size:5rem;line-height:1">'+glyph[ruler]+'</div><strong>'+ruler+'</strong><div class="py-graphic-note">Degree '+v.degree+' → '+ruler+'</div></div>';
+ }
+ if(id==="decans-faces"){
+   const d=Math.floor(v.degree/10);
+   return '<svg viewBox="0 0 360 150" role="img" aria-label="Three equal decans"><rect x="15" y="45" width="110" height="60" rx="12" fill="'+(d===0?"#dc1f18":"#fff")+'" stroke="#111" stroke-width="2"></rect><rect x="125" y="45" width="110" height="60" rx="12" fill="'+(d===1?"#dc1f18":"#fff")+'" stroke="#111" stroke-width="2"></rect><rect x="235" y="45" width="110" height="60" rx="12" fill="'+(d===2?"#dc1f18":"#fff")+'" stroke="#111" stroke-width="2"></rect><text x="70" y="80" text-anchor="middle" font-weight="900" fill="'+(d===0?"#fff":"#111")+'">0–10°</text><text x="180" y="80" text-anchor="middle" font-weight="900" fill="'+(d===1?"#fff":"#111")+'">10–20°</text><text x="290" y="80" text-anchor="middle" font-weight="900" fill="'+(d===2?"#fff":"#111")+'">20–30°</text></svg>';
+ }
+ if(id==="lot-houses"){
+   const lotSign=signs[Math.floor(v.lot_longitude/30)],planetSign=signs[Math.floor(v.planet_longitude/30)];
+   const h=((signs.indexOf(planetSign)-signs.indexOf(lotSign)+12)%12)+1;
+   return renderProfectionWheel(lotSign,h-1);
+ }
+ if(id==="temporal-hours"){
+   const day=v.daylight_minutes/12,night=(1440-v.daylight_minutes)/12;
+   const pct=v.daylight_minutes/1440*100;
+   return '<div style="width:100%;max-width:32rem"><div style="font-weight:900;margin-bottom:.5rem">24-hour day</div><div style="display:flex;height:4rem;border:1.5px solid #111;border-radius:1rem;overflow:hidden"><div style="width:'+pct+'%;background:#fff4bf;display:grid;place-items:center;font-weight:900">Day × 12</div><div style="width:'+(100-pct)+'%;background:#111;color:#fff;display:grid;place-items:center;font-weight:900">Night × 12</div></div><p class="py-graphic-note">Each daylight hour = '+day.toFixed(2)+' min · each night hour = '+night.toFixed(2)+' min</p></div>';
+ }
+ return '<div class="py-empty">Graphic model coming next.</div>';
+}
+
+const whyMap={
+ "major-aspects":"Great first lesson: it turns familiar aspect names into visible geometry and shows why each aspect is a fixed step around the zodiac.",
+ "day-ruler-deputies":"Good for seeing how one repeating planetary order can generate relationships without memorizing a table.",
+ "zodiac-longitude":"This is the bridge between sign-degree notation and the 0–360° math used throughout astrology software.",
+ "part-of-fortune":"A strong traditional example because sect changes the formula itself.",
+ "dodecatemoria":"One of the best 'aha' lessons: a tiny position inside one sign projects somewhere else on the zodiac.",
+ "annual-profections":"A clean example of modulo 12: one sign per year, then repeat.",
+ "temporal-hours":"Shows why a planetary hour is not simply sixty minutes.",
+ "nutation":"This is where the curriculum starts connecting astrology software to the moving astronomical reference frame."
+};
+function lessonOrder(){
+ return data.launchArc.filter(id=>data.lessons[id]);
+}
+function render(id){
+ const lesson=data.lessons[id];
+ if(!lesson){lab.innerHTML='<div class="py-empty"><strong>'+labels(id)+'</strong><br/>Catalogued for development.</div>';return}
+ const order=lessonOrder(),idx=order.indexOf(id),prev=idx>0?order[idx-1]:null,next=idx>=0&&idx<order.length-1?order[idx+1]:null;
+ lab.innerHTML='<div class="py-lesson-head"><div><span class="py-status">'+lesson.status+'</span><h2>'+lesson.title+'</h2></div><div class="py-tip">← → changes the focused value</div></div><p class="py-summary">'+lesson.summary+'</p>'+(whyMap[id]?'<div class="py-why"><strong>Why open this:</strong> '+whyMap[id]+'</div>':'')+'<p class="py-concept">Python idea · '+lesson.pythonConcept+'</p><div class="py-section-label">Change one thing</div><div class="py-controls-wrap"><div class="py-controls">'+Object.entries(lesson.inputs||{}).map(([n,s])=>control(n,s)).join("")+'</div></div><div class="py-section-label">Watch what changes</div><div class="py-graphic" id="graphic"></div>'+(lesson.note?'<p class="py-graphic-note">'+lesson.note+'</p>':'')+'<div class="py-section-label">What the rule returns</div><div class="py-output"><small>Output</small><div class="py-result" id="result"></div></div><div class="py-section-label">The same rule in Python</div><pre class="py-code"><code>'+lesson.code.replaceAll("&","&amp;").replaceAll("<","&lt;")+'</code></pre><div class="py-next">'+(prev?'<button type="button" data-jump="'+prev+'">← '+labels(prev)+'</button>':'<span></span>')+(next?'<button type="button" data-jump="'+next+'">'+labels(next)+' →</button>':'')+'</div>';
+ const update=()=>{const v=values();lab.querySelectorAll("[data-out]").forEach(o=>o.textContent=v[o.dataset.out]);document.getElementById("result").textContent=evaluate(id,v);document.getElementById("graphic").innerHTML=renderGraphic(id,v)};
+ bindCyclers(id,update);update();
+ map.querySelectorAll("[data-lesson]").forEach(b=>b.classList.toggle("is-active",b.dataset.lesson===id));
+ lab.querySelectorAll("[data-jump]").forEach(b=>b.addEventListener("click",()=>render(b.dataset.jump)));
+ history.replaceState(null,"","#"+id);
+}
+map.addEventListener("click",e=>{const b=e.target.closest("[data-lesson]");if(b)render(b.dataset.lesson)});
+document.querySelectorAll("[data-start]").forEach(b=>b.addEventListener("click",()=>render(b.dataset.start)));
+const mapBox=document.querySelector(".py-map"),mapToggle=document.getElementById("mapToggle");
+mapToggle.addEventListener("click",()=>{const expanded=mapBox.classList.toggle("is-expanded");mapToggle.textContent=expanded?"Hide map":"Show map";});
+const initial=location.hash.slice(1);render(data.lessons[initial]?initial:"major-aspects");
+})();
+</script>
+<script src="navloader.js"></script>
+</body>
+</html>
