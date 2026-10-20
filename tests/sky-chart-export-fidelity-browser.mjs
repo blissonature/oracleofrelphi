@@ -106,6 +106,9 @@ assert.ok(!vocab.includes('bonds.Horizon'),'sentences cannot be joined without a
 const partial=await page.evaluate(()=>{
   const master=document.querySelector('[data-aspect-matrix-scope="A-B"][data-aspect-matrix-aspect="all"]');
   if(master)master.checked=false;
+  document.querySelectorAll('[data-aspect-matrix-scope="A-B"][data-aspect-matrix-aspect]').forEach(input=>{
+    if(input.dataset.aspectMatrixAspect!=='all')input.checked=['conjunction','square','opposition'].includes(input.dataset.aspectMatrixAspect);
+  });
   localStorage.setItem('relphiSkyAspectMatrixV1',JSON.stringify({'A-A':[],'B-B':[],'A-B':['conjunction','square','opposition']}));
   return window.RelphiRelationshipExportFocus.matrix();
 });
