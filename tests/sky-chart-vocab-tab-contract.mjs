@@ -161,7 +161,7 @@ assert.match(vocab,/model\?\.setWindow\?\.\(value,input\)/,'Vocab must write dir
 
 const candidateReader=harmonic.slice(harmonic.indexOf('function windowFromControl()'),harmonic.indexOf('function metrics(',harmonic.indexOf('function windowFromControl()')));
 assert.doesNotMatch(candidateReader,/setWindow\(/,'Reading the maximum relationship-candidate ceiling must never overwrite the live Harmonic Window');
-assert.match(harmonicCeiling,/data\.filter='orb'/,'The hidden orb field must remain only the stable maximum candidate ceiling');
+assert.match(harmonicCeiling,/dataset\.filter='orb'/,'The hidden orb field must remain only the stable maximum candidate ceiling');
 assert.doesNotMatch(vocab,/defaultWindow\?\?0/,'An unset Harmonic Window must never fall through to zero');
 assert.match(vocab,/separation\(record\.value,anchor\.value\)<=windowValue/,'Axis polarity attachment eligibility must use the live Harmonic Window');
 assert.match(vocab,/data-vocab-harmonic-window-input/,'Vocab must expose a controller for the shared Harmonic Window');
