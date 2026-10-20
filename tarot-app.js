@@ -3934,7 +3934,41 @@
     if (text.startsWith('major:')) return `Major ${text.slice(6)}`;
     return text;
   }
+  const ledgerGalleryEngine = window.RelphiLedgerGalleryFit;
+  const ledgerGalleryPrefs = ledgerGalleryEngine.load();
+  // The result grid is recreated for each search; the view preferences are not.
+  let reflowLedgerGallery = null;
+  function persistLedgerGallery() { ledgerGalleryEngine.save(ledgerGalleryPrefs); }
+  function setLedgerEntryVisible(visible, persist = true) {
+    ledgerGalleryPrefs.entryVisible = !!visible;
+    const browse = $('browsePanel'), detail = $('cardDetail'), button = $('toggleLedgerEntry');
+    if (browse) browse.dataset.entryVisible = String(ledgerGalleryPrefs.entryVisible);
+    if (detail) detail.hidden = !ledgerGalleryPrefs.entryVisible;
+    if (button) {
+      button.textContent = ledgerGalleryPrefs.entryVisible ? 'Hide full entry' : 'Show full entry';
+      button.setAttribute('aria-expanded', String(ledgerGalleryPrefs.entryVisible));
+    }
+    if (persist) persistLedgerGallery();
+    // The list grows or shrinks with its neighboring entry. Refit after layout.
+    if (reflowLedgerGallery) requestAnimationFrame(reflowLedgerGallery);
+  }
+  $('toggleLedgerEntry')?.addEventListener('click', () =>
+    setLedgerEntryVisible(!ledgerGalleryPrefs.entryVisible));
+  window.addEventListener('resize', () => { if (reflowLedgerGallery) reflowLedgerGallery(); }, {passive:true});
+  if (typeof ResizeObserver === 'function') {
+    const observed = $('browsePanel')?.querySelector('.tarot-list-panel');
+    if (observed) {
+      const observer = new ResizeObserver(() => {
+        if (reflowLedgerGallery && !$('browsePanel').hidden) reflowLedgerGallery();
+      });
+      observer.observe(observed);
+    }
+  }
+  // A deep link asks to show a specific card entry, overriding a saved collapsed view.
+  if (new URLSearchParams(location.search).has('card')) ledgerGalleryPrefs.entryVisible = true;
+
   function renderBrowse() {
+    setLedgerEntryVisible(ledgerGalleryPrefs.entryVisible, false);
     const list = currentCards();
     updateSummary(list);
     if (list.length && (!state.selected || !list.some(card => card.card_id === state.selected.card_id))) state.selected = list[0];
@@ -3943,12 +3977,47 @@
     const resultTools = list.length ? `<button type="button" data-add-results-to-row>Add shown to Drawing Board</button>` : '';
     const resultZoom = Math.max(0.35, Math.min(4.8, Number(state.resultZoom) || 1));
     const resultCardWidth = Math.max(3.5, Math.min(48, 10 * resultZoom)).toFixed(2) + 'rem';
-    const visualTools = list.length ? `<div class="result-visual-tools" aria-label="Visual result controls"><div class="result-zoom-control" aria-label="Results zoom"><span>Zoom</span><button type="button" data-result-zoom-step="-0.1" aria-label="Zoom results out">−</button><input data-result-zoom type="range" min="0.35" max="4.8" step="0.01" value="${resultZoom}" aria-label="Results zoom"><button type="button" data-result-zoom-step="0.1" aria-label="Zoom results in">+</button><output>${Math.round(resultZoom * 100)}%</output></div><button type="button" class="result-glyph-toggle" data-result-glyph-toggle aria-pressed="${state.resultGlyphsVisible ? 'true' : 'false'}">${state.resultGlyphsVisible ? 'Hide glyphs' : 'Show glyphs'}</button><label>Arrange <select data-result-layout><option value="auto" ${state.resultLayout === 'auto' ? 'selected' : ''}>Auto flow</option><option value="2" ${state.resultLayout === '2' ? 'selected' : ''}>2 columns</option><option value="3" ${state.resultLayout === '3' ? 'selected' : ''}>3 columns</option><option value="4" ${state.resultLayout === '4' ? 'selected' : ''}>4 columns</option></select></label></div>` : '';
+    const visualTools = list.length ? `<div class="result-visual-tools" data-gallery-mode="${ledgerGalleryPrefs.mode}" aria-label="Visual result controls">
+      <label class="ledger-gallery-mode-label">Card sizing
+        <select data-gallery-mode aria-label="Card sizing mode">
+          <option value="fit" ${ledgerGalleryPrefs.mode === 'fit' ? 'selected' : ''}>Auto-fit</option>
+          <option value="manual" ${ledgerGalleryPrefs.mode === 'manual' ? 'selected' : ''}>Manual</option>
+        </select>
+      </label>
+      <label class="ledger-gallery-bound ledger-gallery-auto-only">Smallest
+        <input type="range" data-gallery-min min="64" max="320" step="4" value="${ledgerGalleryPrefs.min}" aria-label="Minimum result card width in pixels">
+        <output data-gallery-min-output>${ledgerGalleryPrefs.min}px</output>
+      </label>
+      <label class="ledger-gallery-bound ledger-gallery-auto-only">Largest
+        <input type="range" data-gallery-max min="96" max="480" step="4" value="${ledgerGalleryPrefs.max}" aria-label="Maximum result card width in pixels">
+        <output data-gallery-max-output>${ledgerGalleryPrefs.max}px</output>
+      </label>
+      <div class="result-zoom-control ledger-gallery-manual-only" aria-label="Results zoom">
+        <span>Zoom</span><button type="button" data-result-zoom-step="-0.1" aria-label="Zoom results out">−</button>
+        <input data-result-zoom type="range" min="0.35" max="4.8" step="0.01" value="${resultZoom}" aria-label="Results zoom">
+        <button type="button" data-result-zoom-step="0.1" aria-label="Zoom results in">+</button>
+        <output>${Math.round(resultZoom * 100)}%</output>
+      </div>
+      <label class="ledger-gallery-manual-only">Arrange
+        <select data-result-layout>
+          <option value="auto" ${state.resultLayout === 'auto' ? 'selected' : ''}>Auto flow</option>
+          <option value="2" ${state.resultLayout === '2' ? 'selected' : ''}>2 columns</option>
+          <option value="3" ${state.resultLayout === '3' ? 'selected' : ''}>3 columns</option>
+          <option value="4" ${state.resultLayout === '4' ? 'selected' : ''}>4 columns</option>
+        </select>
+      </label>
+      <button type="button" class="result-glyph-toggle" data-result-glyph-toggle aria-pressed="${state.resultGlyphsVisible ? 'true' : 'false'}">${state.resultGlyphsVisible ? 'Hide glyphs' : 'Show glyphs'}</button>
+      </div>` : '';
     const filterBar = (state.cardFilters.length || resultTools || visualTools) ? `<div class="active-filter-row active-filter-row--results">${state.cardFilters.length ? `<strong>Filters</strong>${state.cardFilters.map(f => `<button type="button" data-remove-filter="${escapeHtml(f)}">${escapeHtml(filterDisplayName(f))} ×</button>`).join('')}<button type="button" data-clear-filters>Clear filters</button>` : ''}${resultTools}${visualTools}</div>` : '';
     panel.innerHTML = `${filterBar}<div class="or-card-grid tarot-result-grid" style="--result-zoom:${resultZoom};--result-card-w:${resultCardWidth};" data-result-layout="${escapeHtml(state.resultLayout || 'auto')}" data-result-glyphs="${state.resultGlyphsVisible ? 'on' : 'off'}">${list.map(card => renderCardSurface(card,{context:'browse', detailSelected: card.card_id === activeDetailId})).join('') || '<p class="empty-state">No cards are showing.</p>'}</div>`;
     const applyResultZoom = () => {
       const grid = panel.querySelector('.tarot-result-grid');
       if (!grid) return;
+      if (ledgerGalleryPrefs.mode === 'fit') {
+        ledgerGalleryEngine.apply(grid, ledgerGalleryPrefs, list.length, window.innerHeight);
+        return;
+      }
+      ledgerGalleryEngine.reset(grid);
       const widthRem = Math.max(3.5, Math.min(48, 10 * (Number(state.resultZoom) || 1)));
       const width = widthRem.toFixed(2) + 'rem';
       const layoutCount = Number(state.resultLayout);
@@ -3973,7 +4042,42 @@
         cardEl.style.setProperty('flex-basis', width, 'important');
       });
     };
+    reflowLedgerGallery = applyResultZoom;
     applyResultZoom();
+    qsa('[data-gallery-mode]', panel).forEach(control => {
+      control.addEventListener('change', () => {
+        ledgerGalleryPrefs.mode = control.value === 'manual' ? 'manual' : 'fit';
+        const visual = panel.querySelector('.result-visual-tools');
+        if (visual) visual.dataset.galleryMode = ledgerGalleryPrefs.mode;
+        persistLedgerGallery();
+        applyResultZoom();
+      });
+    });
+    const bounds = {
+      min: panel.querySelector('[data-gallery-min]'),
+      max: panel.querySelector('[data-gallery-max]')
+    };
+    function changeBound(kind, raw) {
+      const numeric = Number(raw);
+      if (!Number.isFinite(numeric)) return;
+      if (kind === 'min') {
+        ledgerGalleryPrefs.min = Math.max(64, Math.min(320, Math.round(numeric)));
+        ledgerGalleryPrefs.max = Math.max(ledgerGalleryPrefs.max, ledgerGalleryPrefs.min);
+      } else {
+        ledgerGalleryPrefs.max = Math.max(96, Math.min(480, Math.round(numeric)));
+        ledgerGalleryPrefs.min = Math.min(ledgerGalleryPrefs.min, ledgerGalleryPrefs.max);
+      }
+      for (const key of ['min','max']) {
+        if (bounds[key]) bounds[key].value = String(ledgerGalleryPrefs[key]);
+        const output = panel.querySelector('[data-gallery-' + key + '-output]');
+        if (output) output.textContent = ledgerGalleryPrefs[key] + 'px';
+      }
+      persistLedgerGallery();
+      applyResultZoom();
+    }
+    for (const key of ['min','max']) {
+      if (bounds[key]) bounds[key].addEventListener('input', () => changeBound(key, bounds[key].value));
+    }
     qsa('[data-remove-filter]', panel).forEach(btn => btn.addEventListener('click', () => { state.cardFilters = state.cardFilters.filter(f => f !== btn.dataset.removeFilter); renderBrowse(); }));
     const clearFilters = panel.querySelector('[data-clear-filters]');
     if (clearFilters) clearFilters.addEventListener('click', () => { state.cardFilters = []; renderBrowse(); });
@@ -4023,6 +4127,7 @@
     const card = cardById(id);
     if (!card) return;
     state.selected = card;
+    setLedgerEntryVisible(true);
     renderDetail(card);
     const detail = $('cardDetail');
     if (detail) detail.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
