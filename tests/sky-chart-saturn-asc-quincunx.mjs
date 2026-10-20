@@ -1,4 +1,5 @@
 import {chromium} from 'playwright';
+import assert from 'node:assert/strict';
 const sky={
  name:'Saturn–Ascendant quincunx',
  houseSystem:'porphyry',
@@ -56,6 +57,11 @@ try{
   console.log('DIAGNOSTIC '+stage+' '+JSON.stringify(out));
  }
  await inspect('before');
+ const candidate=page.locator('#skyFoundationRelationshipList > .sky-foundation-relationship-row[data-relationship-mode="A-A"][data-aspect="quincunx"][data-left-placement="saturn"][data-right-placement="asc"]');
+ assert.equal(await candidate.count(),1,'Near-exact A↔A Saturn–Ascendant quincunx should be generated');
+ assert.equal(await candidate.isVisible(),true,'Quincunx must pass the 1° harmonic window');
+ assert.ok(Math.abs(Number(await candidate.getAttribute('data-source-orb'))-1/60)<.001);
+
  const saturn=page.locator('#skyFoundationA .sky-foundation-row[data-placement="saturn"]').first();
  console.log('SATURN LEDGER LOCATOR '+await saturn.count());
  if(await saturn.count()){await saturn.click();await page.waitForTimeout(700);await inspect('after Saturn selected');}
@@ -91,5 +97,13 @@ try{
  });
  await page.waitForTimeout(1200);
  await inspect('after removing Sky B');
+ const stale=page.locator('#skyFoundationRelationshipList > .sky-foundation-relationship-row[data-relationship-mode="A-B"]');
+ assert.equal(await stale.count(),0,'Removing Sky B must remove stale A↔B relationships');
+ assert.equal(await candidate.count(),1,'Removing Sky B must preserve generated A↔A aspects');
+ assert.equal(await candidate.isVisible(),true,'Nearly exact Saturn–Ascendant quincunx remains available');
+
  if(await saturn.count()){await saturn.click();await page.waitForTimeout(800);await inspect('after reselecting Saturn following sky removal')}
+ assert.equal(await candidate.isVisible(),true,'Clicking Saturn after returning to standalone must not blank its quincunx');
+ assert.ok(Number(await page.locator('html').getAttribute('data-sky-wheel-relationship-candidates'))>=1,'At least one candidate must survive selected Saturn');
+ console.log('PASS: exact A↔A quincunx remains visible across sorting, wheel activation, and Sky B removal.');
 }finally{await browser.close()}
