@@ -369,6 +369,12 @@
     }
     if(!slot.querySelector(`#${WHEEL_ID}`)){const b=button(WHEEL_ID,'Download wheel snapshot');b.addEventListener('click',()=>exportKind('wheel',b));slot.appendChild(b)}
     let state=controls.querySelector(`#${STATUS_ID}`);if(!state){state=document.createElement('span');state.id=STATUS_ID;state.setAttribute('role','status');state.setAttribute('aria-live','polite');controls.appendChild(state)}
+    // This controller can initialize before Display and Harmonic Window arrive.
+    // Restore semantic DOM order after later controllers mount, rather than
+    // depending on CSS order: Display → Harmonic Window → Copy/Download → Status.
+    const harmonic=controls.querySelector(':scope>[data-orb-field="true"]');
+    if(harmonic&&slot.previousElementSibling!==harmonic)harmonic.insertAdjacentElement('afterend',slot);
+    if(state&&state.previousElementSibling!==slot)slot.insertAdjacentElement('afterend',state);
   }
   function ensureRelationshipControl(){
     const heading=document.querySelector('#skyFoundationRelationships>.sky-foundation-relationships-heading');if(!heading)return;
