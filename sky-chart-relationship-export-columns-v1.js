@@ -102,6 +102,15 @@ function name(s){
   const m=v?.metadata||{};
   return m.savedSkyName||v?.name||v?.displayName||v?.skyName||v?.title||`Sky ${s}`;
 }
+function present(s){
+  const v=read(s);
+  if(!v||typeof v!=='object')return false;
+  return ['placements','positions','points','bodies'].some(k=>{
+    const set=v[k];
+    return set&&typeof set==='object'&&Object.values(set).some(p=>p&&typeof p==='object'&&
+      ((p.longitude!=null&&p.longitude!==''&&Number.isFinite(Number(p.longitude)))||String(p.sign||p.zodiac||'').trim()));
+  });
+}
 function context(s){
   const p=read(s)?.calcProfile||{};
   let d=String(p.dateTime||'');
@@ -112,7 +121,7 @@ function context(s){
   return[String(p.location||''),d].filter(Boolean).join(' · ');
 }
 const safe=v=>String(v).toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,48)||'sky';
-const fileName=()=>`${safe(name('A'))}-vs-${safe(name('B'))}-relationships-${new Date().toISOString().slice(0,16).replace(/[-:T]/g,'')}.png`;
+const fileName=()=>`${safe(name('A'))}${present('B')?'-vs-'+safe(name('B')):''}-relationships-${new Date().toISOString().slice(0,16).replace(/[-:T]/g,'')}.png`;
 
 function slot(row,side){
   const explicit=String(row.dataset[side+'Sky']||'').toUpperCase();
@@ -331,7 +340,7 @@ async function build(){
   document.body.appendChild(host);
   sheet.className='rex-sheet';
   sheet.style.width=width+'px';
-  sheet.innerHTML=`<div class="rex-title"><h1>${esc(name('A'))} ↔ ${esc(name('B'))} — Relationships</h1><p>Current relationship export · referents · timing · Tarot correspondences · isolated aspect geometry</p></div><div class="rex-context"><span><b>${esc(name('A'))}</b>${context('A')?' · '+esc(context('A')):''}</span><span><b>${esc(name('B'))}</b>${context('B')?' · '+esc(context('B')):''}</span></div><div class="rex-head"><strong>Relationships</strong><em>${esc(rows.length+' shown')}</em></div>`;
+  sheet.innerHTML=`<div class="rex-title"><h1>${esc(name('A'))}${present('B')?' ↔ '+esc(name('B')):''} — Relationships</h1><p>Current relationship export · referents · timing · Tarot correspondences · isolated aspect geometry</p></div><div class="rex-context"><span><b>${esc(name('A'))}</b>${context('A')?' · '+esc(context('A')):''}</span>${present('B')?`<span><b>${esc(name('B'))}</b>${context('B')?' · '+esc(context('B')):''}</span>`:''}</div><div class="rex-head"><strong>Relationships</strong><em>${esc(rows.length+' shown')}</em></div>`;
   const filter=summary();
   if(filter){
     const n=document.createElement('div');
