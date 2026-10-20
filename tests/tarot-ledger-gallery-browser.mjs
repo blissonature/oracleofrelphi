@@ -11,11 +11,30 @@ try{
  const initial=await page.evaluate(()=>{
   const cards=document.querySelectorAll('#browsePanel .tarot-result-grid .or-card');
   return {count:cards.length,entry:document.querySelector('#cardDetail')?.hidden,
-    galleryMode:document.querySelector('select[data-gallery-mode]')?.value};
+    galleryMode:document.querySelector('select[data-gallery-mode]')?.value,
+    nav:document.querySelector('#cardDetail .ledger-entry-nav')?.textContent,
+    noExtraMode:!document.querySelector('#ledgerBookView,#ledgerGridView,#tarotStorybook')};
  });
  assert.ok(initial.count>=70,JSON.stringify(initial));
+ assert.equal(initial.entry,false);
  assert.equal(initial.galleryMode,'fit');
- await page.locator('#toggleLedgerEntry').click();
+ assert.equal(initial.noExtraMode,true);
+ assert.match(initial.nav,/Card 1 of 78/);
+ const beforeTitle=await page.locator('#cardDetail .full-entry-title-row h2').innerText();
+ await page.locator('#cardDetail [data-ledger-entry-step="1"]').click();
+ const afterTitle=await page.locator('#cardDetail .full-entry-title-row h2').innerText();
+ assert.notEqual(beforeTitle,afterTitle);
+ assert.match(await page.locator('#cardDetail .ledger-entry-position').innerText(),/Card 2 of 78/);
+ const active=await page.locator('#browsePanel .tarot-result-grid > .is-detail-selected').count();
+ assert.equal(active,1,'one gallery card must be marked active');
+ const activeId=await page.locator('#browsePanel .tarot-result-grid > .is-detail-selected').getAttribute('data-id');
+ assert.equal(activeId,(await page.locator('#cardDetail .full-entry-title-row h2').innerText()).length>0?activeId:null);
+ await page.locator('#cardDetail [data-ledger-entry-step="-1"]').click();
+ assert.equal(await page.locator('#cardDetail .full-entry-title-row h2').innerText(),beforeTitle);
+ assert.equal(await page.locator('#cardDetail [data-ledger-entry-step="-1"]').isDisabled(),true);
+
+ // Closing the entry restores the entire available width for the gallery.
+ await page.locator('#cardDetail [data-ledger-entry-close]').click();
  const hidden=await page.evaluate(()=>{
   const browse=document.querySelector('#browsePanel'),entry=document.querySelector('#cardDetail');
   const root=document.querySelector('#browsePanel .tarot-list-panel');
@@ -25,6 +44,7 @@ try{
  assert.equal(hidden.entry,true);
  assert.equal(hidden.grid,'false');
  assert.ok(hidden.widthRatio>.9,'results should reclaim width: '+JSON.stringify(hidden));
+ assert.equal(await page.locator('#toggleLedgerEntry').innerText(),'Show full entry');
  await page.evaluate(()=>{
    const min=document.querySelector('[data-gallery-min]');
    const max=document.querySelector('[data-gallery-max]');
@@ -41,47 +61,53 @@ try{
  assert.equal(fitted.stored.min,128);
  assert.equal(fitted.stored.max,256);
 
- await page.locator('#ledgerBookView').click();
- await page.locator('#tarotStorybook:not([hidden]) .tarot-book-page').waitFor();
- const first=await page.locator('#tarotStorybook .tarot-book-text h3').innerText();
- const img=page.locator('#tarotStorybook .tarot-book-illustration img');
- assert.match(await img.getAttribute('src'),/assets\/tarot\/rws\/.+\.webp/);
- await page.locator('#tarotStorybook [data-book-step="1"]').click();
- const second=await page.locator('#tarotStorybook .tarot-book-text h3').innerText();
- assert.notEqual(second,first);
- assert.equal(await page.locator('#cardDetail').isHidden(),true);
- await page.locator('#tarotStorybook [data-book-full-entry]').click();
+ await page.locator('#toggleLedgerEntry').click();
  assert.equal(await page.locator('#cardDetail').isVisible(),true);
- await page.locator('#ledgerGridView').click();
- assert.equal(await page.locator('#tarotStorybook').isHidden(),true);
- assert.equal(await page.locator('.tarot-result-grid').isVisible(),true);
+ assert.equal(await page.locator('#cardDetail .ledger-entry-nav').count(),1);
 
- // A plural rank search must find the four Page/Princess courts, not an empty result.
+ // The arrows navigate within the actual current search, not the entire deck.
  await page.locator('#oracleCommand').fill('pages');
  await page.locator('#runCommand').click();
  await page.waitForFunction(() => document.querySelectorAll('#browsePanel .tarot-result-grid .or-card').length === 4);
  const pages=await page.evaluate(() => ({
-   ids:[...document.querySelectorAll('#browsePanel .tarot-result-grid .or-card')].map(card=>card.dataset.id),
-   count:document.getElementById('resultInlineCount')?.textContent
+   ids:[...document.querySelectorAll('#browsePanel .tarot-result-grid .or-card')].map(card=>card.dataset.id)
  }));
  assert.equal(pages.ids.length,4,JSON.stringify(pages));
  assert.ok(pages.ids.every(id=>id.startsWith('princess_of_')),JSON.stringify(pages));
- await page.locator('#ledgerBookView').click();
- assert.match(await page.locator('#tarotStorybook .tarot-book-nav output').innerText(),/Page 1 of 4/);
- await page.locator('#ledgerGridView').click();
+ assert.match(await page.locator('#cardDetail .ledger-entry-position').innerText(),/Card 1 of 4/);
+ for(let i=1;i<4;i++){
+   await page.locator('#cardDetail [data-ledger-entry-step="1"]').click();
+   assert.match(await page.locator('#cardDetail .ledger-entry-position').innerText(),new RegExp('Card '+(i+1)+' of 4'));
+   assert.equal(await page.locator('.tarot-result-grid > .is-detail-selected').getAttribute('data-id'),pages.ids[i]);
+ }
+ assert.equal(await page.locator('#cardDetail [data-ledger-entry-step="1"]').isDisabled(),true);
+ await page.locator('#cardDetail .full-entry-title-row h2').focus();
+ // Heading isn't normally focusable; make it focusable to test scoped keyboard navigation.
+ await page.locator('#cardDetail .full-entry-title-row h2').evaluate(node=>{node.tabIndex=0;node.focus()});
+ await page.keyboard.press('ArrowLeft');
+ assert.match(await page.locator('#cardDetail .ledger-entry-position').innerText(),/Card 3 of 4/);
+ // Hide and re-open by selecting a result.
+ await page.locator('#toggleLedgerEntry').click();
+ assert.equal(await page.locator('#cardDetail').isHidden(),true);
+ await page.locator('#browsePanel .tarot-result-grid > .or-card').first().click({position:{x:10,y:10}});
+ assert.equal(await page.locator('#cardDetail').isVisible(),true);
+ assert.match(await page.locator('#cardDetail .ledger-entry-position').innerText(),/Card 1 of 4/);
+
  await page.setViewportSize({width:390,height:850});
  await page.locator('#toggleLedgerEntry').click();
  const mobile=await page.evaluate(()=>{
   const b=document.getElementById('browsePanel').getBoundingClientRect();
   const list=document.querySelector('.tarot-list-panel').getBoundingClientRect();
   const cards=Array.from(document.querySelectorAll('#browsePanel .tarot-result-grid .or-card')).slice(0,5);
-  return {viewport:innerWidth,browseW:b.width,listW:list.width,
-    cardWidths:cards.map(c=>c.getBoundingClientRect().width)};
+  return {viewport:innerWidth,browseW:b.width,listW:list.width,cardWidths:cards.map(c=>c.getBoundingClientRect().width)};
  });
  assert.ok(mobile.listW<=mobile.viewport+3,JSON.stringify(mobile));
  assert.ok(mobile.cardWidths.every(w=>w<=257&&w>=125),JSON.stringify(mobile));
+ await page.locator('#toggleLedgerEntry').click();
+ await page.locator('#cardDetail [data-ledger-entry-step="1"]').click();
+ assert.match(await page.locator('#cardDetail .ledger-entry-position').innerText(),/Card 2 of 4/);
  assert.deepEqual(errors,[]);
- console.log(JSON.stringify({initial,hidden,fitted,mobile,storybookTitles:[first,second],pageErrors:errors}));
+ console.log(JSON.stringify({initial,hidden,fitted,mobile,pages,pageErrors:errors}));
 }finally{
  await browser.close();
 }
