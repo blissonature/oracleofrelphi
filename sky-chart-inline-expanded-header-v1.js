@@ -161,8 +161,8 @@ function installStyle(){
     .sky-foundation-relationship-glyph>.sky-rx-glyph-overlay{
       position:absolute;right:-3px;bottom:0px;width:20px;height:20px;
       display:block;pointer-events:none;background-color:currentColor;
-      -webkit-mask:url("assets/planet-glyphs/retrograde.svg") center/contain no-repeat;
-      mask:url("assets/planet-glyphs/retrograde.svg") center/contain no-repeat;
+      -webkit-mask:url("${window.RelphiGlyphRegistry?.get?.('retrograde')?.asset||'none'}") center/contain no-repeat;
+      mask:url("${window.RelphiGlyphRegistry?.get?.('retrograde')?.asset||'none'}") center/contain no-repeat;
     }
 
     @media(max-width:620px){
