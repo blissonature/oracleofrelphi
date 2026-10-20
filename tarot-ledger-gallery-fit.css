@@ -72,3 +72,68 @@ body.tarot-ledger-page #browsePanel .result-visual-tools[data-gallery-mode="manu
  body.tarot-ledger-page #browsePanel .tarot-result-grid,
  body.tarot-ledger-page #browsePanel .tarot-result-grid>.or-card{transition:none!important}
 }
+
+/* Optional illustrated book mode: one full card and a readable text page. */
+html body.tarot-ledger-page #browsePanel[data-gallery-view="book"] #cardList .tarot-result-grid{display:none!important}
+html body.tarot-ledger-page #browsePanel[data-gallery-view="book"] #tarotStorybook:not([hidden]){display:block!important}
+html body.tarot-ledger-page #browsePanel #tarotStorybook[hidden]{display:none!important}
+body.tarot-ledger-page #browsePanel .ledger-gallery-view-switch{
+  display:flex;gap:.4rem;align-items:center;flex-wrap:wrap;margin:.2rem 0 .65rem;
+}
+body.tarot-ledger-page #browsePanel .ledger-gallery-view-switch button,
+body.tarot-ledger-page #browsePanel .tarot-book-nav button,
+body.tarot-ledger-page #browsePanel .tarot-book-text button{
+  appearance:none;min-height:40px;padding:.55rem .9rem;border:1px solid #bcaaa0;border-radius:999px;
+  background:#fff;color:#261d1b;cursor:pointer;font:800 .82rem/1.25 Montserrat,Arial,sans-serif;
+}
+body.tarot-ledger-page #browsePanel .ledger-gallery-view-switch button[aria-pressed="true"]{
+  background:#24201e;color:#fff;border-color:#24201e;
+}
+body.tarot-ledger-page #browsePanel .tarot-book-nav button:disabled{opacity:.36;cursor:default}
+body.tarot-ledger-page #browsePanel .tarot-book-nav{
+  display:flex;align-items:center;justify-content:space-between;gap:.6rem;margin:0 0 1rem;
+}
+body.tarot-ledger-page #browsePanel .tarot-book-nav output{
+  flex:1;text-align:center;font:800 .9rem Montserrat,Arial,sans-serif;
+  color:#7e3933;font-variant-numeric:tabular-nums;
+}
+body.tarot-ledger-page #browsePanel .tarot-book-page{
+  display:grid;grid-template-columns:minmax(160px,min(42%,370px)) minmax(0,1fr);
+  gap:clamp(1rem,3vw,2.5rem);align-items:center;min-width:0;padding:clamp(.8rem,2vw,1.5rem);
+  border:1px solid #dfd1c5;border-radius:14px;
+  background:linear-gradient(110deg,#fffdf8 0%,#fff8ea 49%,#fffdf9 100%);
+  box-shadow:0 12px 28px rgba(60,32,16,.08);
+}
+body.tarot-ledger-page #browsePanel .tarot-book-illustration{
+  margin:0;display:block;width:100%;min-width:0;
+}
+body.tarot-ledger-page #browsePanel .tarot-book-illustration img{
+  display:block;width:100%;height:auto;max-height:none;object-fit:contain;
+}
+body.tarot-ledger-page #browsePanel .tarot-book-text{min-width:0;line-height:1.6}
+body.tarot-ledger-page #browsePanel .tarot-book-text .eyebrow{font-size:.7rem;letter-spacing:.1em}
+body.tarot-ledger-page #browsePanel .tarot-book-text h3{
+  margin:.15em 0 .25em;font:800 clamp(1.55rem,3vw,2.7rem)/1.13 Montserrat,Arial,sans-serif;
+  overflow-wrap:anywhere;
+}
+body.tarot-ledger-page #browsePanel .tarot-book-subtitle{
+  margin:0 0 1rem;color:#795e53;font-size:.82rem;font-weight:700;
+}
+body.tarot-ledger-page #browsePanel .tarot-book-story{
+  margin:0 0 1.25rem;color:#28221d;font-size:clamp(.95rem,1.45vw,1.13rem);
+  line-height:1.7;white-space:pre-line;overflow-wrap:break-word;
+}
+body.tarot-ledger-page #browsePanel .tarot-book-text button{
+  border-color:#dc1f18;color:#9b1d17;background:#fff9f8;
+}
+@media(max-width:720px){
+  body.tarot-ledger-page #browsePanel .tarot-book-page{
+    grid-template-columns:minmax(0,1fr);gap:1.2rem;text-align:left;
+  }
+  body.tarot-ledger-page #browsePanel .tarot-book-illustration{
+    width:min(100%,300px);margin:0 auto;
+  }
+  body.tarot-ledger-page #browsePanel .tarot-book-nav button{
+    min-width:0;padding:.55rem .65rem;font-size:.76rem;
+  }
+}
