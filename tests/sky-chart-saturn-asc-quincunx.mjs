@@ -62,4 +62,17 @@ try{
  const asc=page.locator('#skyFoundationA .sky-foundation-row[data-placement="asc"]').first();
  console.log('ASC LEDGER LOCATOR '+await asc.count());
  if(await asc.count()){await asc.click();await page.waitForTimeout(700);await inspect('after asc selected');}
+ const sort=page.locator('select[data-relationship-sort]');
+ if(await sort.count()){
+  await sort.selectOption('most-challenging');
+  await page.waitForTimeout(450);await inspect('after most challenging sort');
+ }
+ for(const selector of ['#skyFoundationWheelMount [data-interactive="placement"][data-sky="A"][data-placement="saturn"]','#skyFoundationWheelMount [data-interactive="placement"][data-sky="A"][data-placement="asc"]','#skyFoundationWheelMount [data-layer="aspects"] > line[data-aspect="quincunx"][data-left-placement="saturn"][data-right-placement="asc"]:not(.sky-foundation-aspect-hit)']){
+  const locator=page.locator(selector).first();
+  console.log('WHEEL TARGET',selector,await locator.count());
+  if(!await locator.count())continue;
+  await locator.dispatchEvent('click',{button:0,clientX:380,clientY:320});
+  await page.waitForTimeout(500);
+  await inspect('after wheel click '+selector);
+ }
 }finally{await browser.close()}
