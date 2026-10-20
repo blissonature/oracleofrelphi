@@ -61,7 +61,7 @@ function retrogradeAtInstant(record,payload){
   return ((after-before+540)%360)-180 < -1e-5;
 }
 function retrogradeMark(){
-  return '<img class="sky-rx-master" src="assets/planet-glyphs/retrograde.svg" alt="Retrograde" width="21" height="21" decoding="async">';
+  const asset=window.RelphiGlyphRegistry?.get?.('retrograde')?.asset;if(!asset)return 'Rx';return '<img class="sky-rx-master" src="'+asset+'" alt="Retrograde" width="21" height="21" decoding="async">';
 }
 window.RelphiSkyRetrogradeMark=retrogradeMark;
 function recordRetrograde(record,payload){
