@@ -1,0 +1,26 @@
+/* House flashlight. It never draws until a house is hovered or tapped. */
+#skyFoundationWheelMount .sky-house-flashlight{
+  pointer-events:none!important;
+  isolation:isolate;
+}
+#skyFoundationWheelMount .sky-house-flashlight line{
+  pointer-events:none!important;
+  fill:none;
+}
+#skyFoundationWheelMount .sky-house-flashlight-glow{
+  opacity:.13;
+  filter:drop-shadow(0 0 4px currentColor);
+}
+#skyFoundationWheelMount .sky-house-flashlight-edge{
+  opacity:.9;
+  paint-order:stroke;
+}
+#skyFoundationWheelMount .sky-house-flashlight-zodiac.sky-house-flashlight-glow{opacity:.11}
+#skyFoundationWheelMount .sky-house-flashlight-zodiac.sky-house-flashlight-edge{opacity:.78}
+#skyFoundationWheelMount .sky-house-flashlight-other.sky-house-flashlight-glow{opacity:.07}
+#skyFoundationWheelMount .sky-house-flashlight-other.sky-house-flashlight-edge{opacity:.40;stroke-dasharray:6 6}
+#skyFoundationWheelMount .sky-house-flashlight:not([data-pinned="true"]){opacity:.9}
+@media(prefers-reduced-motion:no-preference){
+ #skyFoundationWheelMount .sky-house-flashlight{animation:relphi-house-light-in 150ms ease-out}
+ @keyframes relphi-house-light-in{from{opacity:0}to{opacity:1}}
+}
