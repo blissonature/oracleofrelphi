@@ -253,6 +253,8 @@ function visibleRows(){
   });
 }
 function summary(){
+  const current=window.RelphiRelationshipExportFocus?.lines?.();
+  if(Array.isArray(current)&&current.length)return current.join(' · ');
   const b=(document.querySelector('#skyFoundationFocus .sky-chart-filter-bar')||document.querySelector('#skyFoundationRelationships .sky-chart-filter-bar'));
   if(!b)return'';
   const p=[],h=b.querySelector('[data-harmonic-window-input]'),limit=document.querySelector('#skyFoundationRelationships [data-relationship-limit]');
@@ -340,12 +342,12 @@ async function build(){
   document.body.appendChild(host);
   sheet.className='rex-sheet';
   sheet.style.width=width+'px';
-  sheet.innerHTML=`<div class="rex-title"><h1>${esc(name('A'))}${present('B')?' ↔ '+esc(name('B')):''} — Relationships</h1><p>Current relationship export · referents · timing · Tarot correspondences · isolated aspect geometry</p></div><div class="rex-context"><span><b>${esc(name('A'))}</b>${context('A')?' · '+esc(context('A')):''}</span>${present('B')?`<span><b>${esc(name('B'))}</b>${context('B')?' · '+esc(context('B')):''}</span>`:''}</div><div class="rex-head"><strong>Relationships</strong><em>${esc(rows.length+' shown')}</em></div>`;
+  sheet.innerHTML=`<div class="rex-title"><h1>${esc(name('A'))}${present('B')?' ↔ '+esc(name('B')):''} — Relationships</h1><p>Current relationship export · selected display · timing · Tarot correspondences · isolated aspect geometry</p></div><div class="rex-context"><span><b>${esc(name('A'))}</b>${context('A')?' · '+esc(context('A')):''}</span>${present('B')?`<span><b>${esc(name('B'))}</b>${context('B')?' · '+esc(context('B')):''}</span>`:''}</div><div class="rex-head"><strong>Relationships</strong><em>${esc(rows.length+' shown')}</em></div>`;
   const filter=summary();
   if(filter){
     const n=document.createElement('div');
     n.className='rex-summary';
-    n.textContent='Showing only: '+filter;
+    n.textContent='Focus · '+filter;
     sheet.appendChild(n);
   }
   const wrap=document.createElement('div');
