@@ -798,6 +798,11 @@
     const aliases = [normalizedTitle(card), rwsName, thothName, titleNoThe(rwsName), titleNoThe(thothName), card?.name, card?.systems?.thoth?.title, card?.systems?.golden_dawn_rws?.title];
     if (n != null) aliases.push(String(n), roman, roman?.toLowerCase());
     if (card?.rank) aliases.push(card.rank); const courtCode = courtRankCode(card); if (courtCode) aliases.push(courtCode, courtCode.toLowerCase());
+    // Common plural court-rank queries should find the four matching cards:
+    // Page (RWS) and Princess (Thoth) refer to the same court rank.
+    if (card?.card_type === 'Court' && courtCode === 'C1') {
+      aliases.push('page', 'pages', 'princess', 'princesses');
+    }
     const suitLetter = { Wands:'W', Cups:'C', Swords:'S', Pentacles:'P' }[card?.suit] || '';
     const suitAltLetter = card?.suit === 'Pentacles' ? 'D' : '';
     const rn = rankNumber(card);
