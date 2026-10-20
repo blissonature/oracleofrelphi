@@ -181,7 +181,14 @@
   function relationshipIdentity(node){
     if(!node)return'';
     const slots=relationshipSlots(node),left=String(node.dataset.leftPlacement||''),aspect=String(node.dataset.aspect||''),right=String(node.dataset.rightPlacement||'');
-    return left&&aspect&&right?`${slots.left}:${left}|${aspect}|${slots.right}:${right}`:''
+    if(!left||!aspect||!right)return'';
+    // Intrasky aspects are unordered pairs. The standalone wheel and its
+    // relationship list can emit their endpoints in opposite orders. Sorting
+    // their qualified endpoints gives the SAME identity for either direction,
+    // while an intersky A→B comparison keeps the sky-specific orientation.
+    const endpoints=[`${slots.left}:${left}`,`${slots.right}:${right}`];
+    if(slots.left===slots.right)endpoints.sort();
+    return `${endpoints[0]}|${aspect}|${endpoints[1]}`;
   }
   function specFrom(node){const kind=node?.dataset?.interactive;if(kind==='house')return{kind,sky:node.dataset.sky,value:Number(node.dataset.house)};if(kind==='sign')return{kind,sky:null,value:Number(node.dataset.sign)};if(kind==='placement')return{kind,sky:node.dataset.sky,value:node.dataset.placement};if(kind==='aspect')return{kind,sky:null,value:relationshipIdentity(node)};return null}
   function selectionLabel(spec){
@@ -513,12 +520,25 @@
     refreshQueued=false;if(whereWhenEditing())return;const root=document.getElementById('skyFoundationRoot'),wheel=document.querySelector('#skyFoundationWheelMount > .sky-foundation-wheel');if(!root||!wheel||root.getAttribute('aria-busy')!=='false'||!HARMONIC)return;ensurePanel();
     const preparedA=prepare(read(KEYS.A),'A'),preparedB=prepare(read(KEYS.B),'B'),relations=relationships(preparedA.list,preparedB.list),nextSignature=relationshipSignature(relations);current={listA:preparedA.list,listB:preparedB.list,relations,cuspsA:preparedA.houseCusps,cuspsB:preparedB.houseCusps};
     annotateHouseLayer('a-houses','A');annotateHouseLayer('b-houses','B');annotateSigns();annotatePlacements(current.listA,current.listB);annotateAspects(relations);annotateLedger('A',current.listA);annotateLedger('B',current.listB);
-    if(renderedRelationshipSignature!==nextSignature||!relationshipRowsIntact(relations)){await renderRows(relations);renderedRelationshipSignature=nextSignature}
+    if(!preparedB.list.length){
+      // Standalone A↔A rows have a separate owner. Removing Sky B must clear
+      // ONLY stale intersky rows without replacing the valid intrasky ledger.
+      // Otherwise old A↔B candidates linger behind the single-sky filters.
+      const list=document.getElementById('skyFoundationRelationshipList');
+      list?.querySelectorAll(':scope > .sky-foundation-relationship-row[data-relationship-mode="A-B"]')
+        .forEach(row=>row.remove());
+      renderedRelationshipSignature='';
+    }else if(renderedRelationshipSignature!==nextSignature||!relationshipRowsIntact(relations)){
+      await renderRows(relations);renderedRelationshipSignature=nextSignature;
+    }
     bind();applyState();window.dispatchEvent(new Event('relphi:sky-foundation-interactions-ready'));
   }
   function schedule(){if(refreshQueued)return;refreshQueued=true;requestAnimationFrame(refresh)}
   function start(){
     window.addEventListener('relphi:sky-foundation-ready',schedule);
+    // The foundation may not emit a new ready event when Sky B is removed while
+    // the comparison is already rebuilding. Clean up intersky state immediately.
+    window.addEventListener('relphi:sky-b-removed',schedule);
     window.addEventListener('relphi:sky-orb-limit-changed',schedule);
     window.addEventListener('relphi:sky-by-sign-changed',schedule);
     [
