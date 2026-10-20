@@ -10,7 +10,6 @@
     'sky-chart-filter-hidden',
     'sky-chart-multiselect-hidden',
     'sky-chart-house-multiselect-hidden',
-    'sky-chart-aspect-multiselect-hidden',
     'sky-chart-sign-filter-hidden'
   ]);
   const ORB_HIDDEN_CLASSES=new Set(['sky-chart-orb-hidden','sky-orb-filter-hidden']);
@@ -48,6 +47,9 @@
   function excludedByExplicitFilter(row){
     if(row.classList.contains('sky-foundation-single-sky-cross-hidden'))return true;
     for(const className of row.classList){
+      // Aspect-type checkboxes govern which strokes are drawn; they must not
+      // dim houses, signs or placements. Only other semantic filters focus.
+      if(className==='sky-chart-aspect-multiselect-hidden')continue;
       if(ORB_HIDDEN_CLASSES.has(className))continue;
       if(EXPLICIT_HIDDEN_CLASSES.has(className))return true;
       if(className.includes('multiselect-hidden'))return true;
