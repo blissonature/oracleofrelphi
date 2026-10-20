@@ -66,6 +66,7 @@ const mobileFocusLayout=await page.locator('#skyFoundationFocus>.sky-foundation-
     height:hr?.height??null
   };
 });
+console.log('FOCUS_MOBILE_LAYOUT_DEBUG',JSON.stringify(mobileFocusLayout));
 assert.ok(Math.abs(mobileFocusLayout.titleTop-mobileFocusLayout.actionsTop)<=4,'On mobile, Copy and Download must share the Focus title row.');
 assert.ok(Math.abs(mobileFocusLayout.displayTop-mobileFocusLayout.harmonicTop)<=4,'On mobile, Display and Harmonic Window must share the second row.');
 assert.ok(mobileFocusLayout.secondRowTop>mobileFocusLayout.firstRowBottom,'The selector row must sit below the Focus title/action row.');
