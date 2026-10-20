@@ -1,0 +1,32 @@
+name: Sky Chart export fidelity
+on:
+  pull_request:
+    paths:
+      - 'sky-chart-vocab-copy-v1.js'
+      - 'sky-chart-relationship-scope-sections-v1.js'
+      - 'sky-chart-relationship-export-columns-v1.js'
+      - 'sky-chart.html'
+      - 'tests/sky-chart-export-fidelity-browser.mjs'
+      - '.github/workflows/sky-chart-export-fidelity.yml'
+  workflow_dispatch:
+jobs:
+  copied-output:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate JavaScript syntax
+        run: |
+          node --check sky-chart-vocab-copy-v1.js
+          node --check sky-chart-relationship-scope-sections-v1.js
+          node --check sky-chart-relationship-export-columns-v1.js
+          node --check tests/sky-chart-export-fidelity-browser.mjs
+      - run: npm install --no-save playwright@1.52.0 luxon@3 suncalc@1.9.0
+      - run: npx playwright install --with-deps chromium
+      - name: Verify Focus and Vocab exports in mobile Chromium
+        run: |
+          python3 -m http.server 4173 >/tmp/sky-export-fidelity-http.log 2>&1 &
+          node tests/sky-chart-export-fidelity-browser.mjs

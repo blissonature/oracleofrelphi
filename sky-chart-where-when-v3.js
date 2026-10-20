@@ -274,7 +274,9 @@ function calculateUnknownTimeSky(slot,selected,date){
   const existing=payload(slot)||{},metadata=existing.metadata&&typeof existing.metadata==='object'?{...existing.metadata}:{},priorProfile=existing.calcProfile&&typeof existing.calcProfile==='object'?{...existing.calcProfile}:{};
   metadata.whereWhenSource=selected.source||'manual';metadata.liveNowDisabled=true;metadata.liveNowDisabledReason='time-unknown';
   delete metadata.capturedNowAt;delete metadata.liveContinuous;delete metadata.liveNowOrigin;delete metadata.liveNowAt;delete metadata.liveAgeAnchorAt;delete metadata.liveNowLatitude;delete metadata.liveNowLongitude;
-  return{...existing,name:existing.name||`Sky ${slot}`,saved:false,placements,houseCusps:[],metadata,calcProfile:{...priorProfile,dateTime:date,instant:'',timeUnknown:true,moonRange:{start:moonStart,end:moonEnd},latitude:String(selected.latitude),longitude:String(selected.longitude),location:selected.canonical,locationQuery:selected.query||selected.canonical,timeZone:selected.timezone,whereWhenSource:selected.source||'manual',houseSystem:'none',houseCusps:[],cusps:[],source:'where-when-v3'},savedAt:new Date().toISOString()};
+  delete metadata.savedSkyId;delete metadata.savedSkyName;delete metadata.savedSkyLoadedAt;delete metadata.name;delete metadata.title;
+  delete priorProfile.name;delete priorProfile.title;
+  return{...existing,name:`Sky ${slot}`,title:`Sky ${slot}`,displayName:`Sky ${slot}`,skyName:`Sky ${slot}`,saved:false,placements,houseCusps:[],metadata,calcProfile:{...priorProfile,dateTime:date,instant:'',timeUnknown:true,moonRange:{start:moonStart,end:moonEnd},latitude:String(selected.latitude),longitude:String(selected.longitude),location:selected.canonical,locationQuery:selected.query||selected.canonical,timeZone:selected.timezone,whereWhenSource:selected.source||'manual',houseSystem:'none',houseCusps:[],cusps:[],source:'where-when-v3'},savedAt:new Date().toISOString()};
 }
 function calculateSky(slot,selected,date,time,options={}){
   if(options.timeUnknown===true)return calculateUnknownTimeSky(slot,selected,date);
@@ -300,6 +302,9 @@ function calculateSky(slot,selected,date,time,options={}){
     if(chironKey&&source[chironKey]&&typeof source[chironKey]==='object')placements[chironKey]=JSON.parse(JSON.stringify(source[chironKey]));
   }
   delete metadata.savedSkyId;delete metadata.savedSkyName;delete metadata.savedSkyLoadedAt;
+  // A changed calculation starts a fresh working identity. The editor's
+  // explicit Sky name, if supplied, is reapplied by Saved Skies after commit.
+  delete metadata.name;delete metadata.title;delete priorProfile.name;delete priorProfile.title;
   metadata.whereWhenSource=selected.source||'manual';
   if(liveOrigin==='use-now'){
     delete metadata.liveNowDisabled;delete metadata.liveNowDisabledReason;delete metadata.liveNowMigrated;
@@ -316,7 +321,7 @@ function calculateSky(slot,selected,date,time,options={}){
   }else delete metadata.capturedNowAt;
   metadata.liveNowDisabled=true;metadata.liveNowDisabledReason=options.snapshotNow?'fixed-now-snapshot':'custom-where-when';
   delete priorProfile.liveNowOrigin;delete priorProfile.liveNowAt;
-  return{...existing,name:options.snapshotNow?'Now':existing.name||`Sky ${slot}`,title:options.snapshotNow?'Now':existing.title,displayName:options.snapshotNow?'Now':existing.displayName,skyName:options.snapshotNow?'Now':existing.skyName,saved:false,placements,houseCusps:houses.cusps,metadata,calcProfile:{...priorProfile,dateTime:options.snapshotNow?dt.toFormat("yyyy-MM-dd'T'HH:mm"):`${date}T${time}`,instant:dt.toUTC().toISO(),timeUnknown:false,latitude:String(selected.latitude),longitude:String(selected.longitude),location:selected.canonical,locationQuery:selected.query||selected.canonical,timeZone:selected.timezone,whereWhenSource:selected.source||'manual',houseSystem:houses.system||houseSystem,houseCusps:houses.cusps,cusps:houses.cusps,houseSystemNote:houses.note,source:'where-when-v3'},savedAt:new Date().toISOString()};
+  return{...existing,name:options.snapshotNow?'Now':`Sky ${slot}`,title:options.snapshotNow?'Now':`Sky ${slot}`,displayName:options.snapshotNow?'Now':`Sky ${slot}`,skyName:options.snapshotNow?'Now':`Sky ${slot}`,saved:false,placements,houseCusps:houses.cusps,metadata,calcProfile:{...priorProfile,dateTime:options.snapshotNow?dt.toFormat("yyyy-MM-dd'T'HH:mm"):`${date}T${time}`,instant:dt.toUTC().toISO(),timeUnknown:false,latitude:String(selected.latitude),longitude:String(selected.longitude),location:selected.canonical,locationQuery:selected.query||selected.canonical,timeZone:selected.timezone,whereWhenSource:selected.source||'manual',houseSystem:houses.system||houseSystem,houseCusps:houses.cusps,cusps:houses.cusps,houseSystemNote:houses.note,source:'where-when-v3'},savedAt:new Date().toISOString()};
 }
 function dispatchSlotChange(slot){try{window.dispatchEvent(new StorageEvent('storage',{key:SLOT_KEYS[slot],newValue:localStorage.getItem(SLOT_KEYS[slot]),storageArea:localStorage}))}catch(_){const event=new Event('storage');Object.defineProperty(event,'key',{value:SLOT_KEYS[slot]});window.dispatchEvent(event)}}
 function normalizePacket(packet){

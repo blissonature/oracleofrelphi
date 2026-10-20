@@ -89,13 +89,17 @@
     queued=false;
     const limit=Number(model()?.getWindow?.()??model()?.defaultWindow??7);
     if(!Number.isFinite(limit))return;
-    const visibleIndexes=new Set(),rows=[...document.querySelectorAll('.sky-foundation-relationship-row[data-relation-index]')],identity=relationshipKey,rowsByIndex=new Map(rows.map(row=>[identity(row),row]));
+    const visibleIndexes=new Set(),lineVisibleKeys=new Set(),rows=[...document.querySelectorAll('.sky-foundation-relationship-row[data-relation-index]')],identity=relationshipKey,rowsByIndex=new Map(rows.map(row=>[identity(row),row]));
     let hiddenByHarmonicWindow=0;
     rows.forEach(row=>{
       const phase=phaseFromRow(row),hiddenByOrb=row.dataset.bySignOnly!=='true'&&Number.isFinite(phase)&&phase>limit,hiddenByWheel=wheelIndexes&&!wheelIndexes.has(String(row.dataset.relationIndex));
       const hiddenByOther=row.classList.contains('sky-chart-filter-hidden')||row.classList.contains('sky-chart-multiselect-hidden')||row.classList.contains('sky-chart-house-multiselect-hidden')||row.classList.contains('sky-chart-aspect-multiselect-hidden')||row.classList.contains('sky-chart-sign-filter-hidden')||row.classList.contains('sky-foundation-single-sky-cross-hidden');
       if(hiddenByOrb&&!hiddenByWheel&&!hiddenByOther)hiddenByHarmonicWindow+=1;
-      const visible=!hiddenByOrb&&!hiddenByWheel&&!hiddenByOther;
+      // A wheel focus dims nonmatching aspect lines. It must never hide them:
+      // users need to be able to tap a different line to replace the focus.
+      const lineEligible=!hiddenByOrb&&!hiddenByOther;
+      if(lineEligible)lineVisibleKeys.add(identity(row));
+      const visible=lineEligible&&!hiddenByWheel;
       row.classList.toggle('sky-chart-orb-hidden',hiddenByOrb);row.hidden=!visible;row.setAttribute('aria-hidden',visible?'false':'true');
       if(Number.isFinite(phase)&&row.dataset.bySignOnly!=='true'){
         const dynamic=metricsFor(phase,limit);
@@ -108,7 +112,7 @@
 
     document.querySelectorAll('[data-layer="aspects"] .sky-foundation-aspect').forEach(line=>{
       const index=String(line.dataset.relationIndex||''),key=identity(line);
-      setSvgVisibility(line,index!==''&&visibleIndexes.has(key));
+      setSvgVisibility(line,index!==''&&lineVisibleKeys.has(key));
       const row=index?rowsByIndex.get(key):null;
       if(row){line.dataset.harmonicWindow=row.dataset.harmonicWindow||'';line.dataset.harmonicCoherence=row.dataset.harmonicCoherence||''}
     });

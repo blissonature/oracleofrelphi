@@ -181,7 +181,11 @@
   function relationshipIdentity(node){
     if(!node)return'';
     const slots=relationshipSlots(node),left=String(node.dataset.leftPlacement||''),aspect=String(node.dataset.aspect||''),right=String(node.dataset.rightPlacement||'');
-    return left&&aspect&&right?`${slots.left}:${left}|${aspect}|${slots.right}:${right}`:''
+    if(!left||!aspect||!right)return'';
+    // Intrasky relationships are undirected: a row may enumerate the same two
+    // points in reverse order from its rendered aspect line.
+    if(slots.left===slots.right){const [first,second]=[left,right].sort();return `${slots.left}:${first}|${aspect}|${slots.right}:${second}`;}
+    return `${slots.left}:${left}|${aspect}|${slots.right}:${right}`
   }
   function specFrom(node){const kind=node?.dataset?.interactive;if(kind==='house')return{kind,sky:node.dataset.sky,value:Number(node.dataset.house)};if(kind==='sign')return{kind,sky:null,value:Number(node.dataset.sign)};if(kind==='placement')return{kind,sky:node.dataset.sky,value:node.dataset.placement};if(kind==='aspect')return{kind,sky:null,value:relationshipIdentity(node)};return null}
   function selectionLabel(spec){
@@ -271,7 +275,7 @@
     // rows can be filtered, reordered or temporarily hidden independently of lines.
     // Build the visible endpoints from the actual line being displayed so an
     // isolated aspect never loses its two placements.
-    if(state&&(state.kind==='placement'||state.kind==='aspect')){
+    if(state&&(state.kind==='placement'||state.kind==='aspect'||state.kind==='house'||state.kind==='sign')){
       const lineVisible=line=>{
         if(line.hidden||line.style.display==='none')return false;
         const skip=['sky-chart-filter-hidden','sky-chart-orb-hidden','sky-orb-filter-hidden',
@@ -286,7 +290,9 @@
         const left=String(line.dataset.leftPlacement||''),right=String(line.dataset.rightPlacement||'');
         if(!left||!right||!identity)return;
         const matches=state.kind==='aspect'?identity===String(state.value):
-          (slots.left===state.sky&&left===state.value)||(slots.right===state.sky&&right===state.value);
+          state.kind==='house'?(slots.left===state.sky&&Number(line.dataset.leftHouse)===state.value)||(slots.right===state.sky&&Number(line.dataset.rightHouse)===state.value):
+          state.kind==='sign'?Number(line.dataset.leftSign)===state.value||Number(line.dataset.rightSign)===state.value:
+          ((slots.left===state.sky&&left===state.value)||(slots.right===state.sky&&right===state.value));
         if(!matches)return;
         relationships.add(identity);
         for(const [slot,id,side] of [[slots.left,left,'left'],[slots.right,right,'right']]){
@@ -348,7 +354,7 @@
   }
   function rowMarksNode(node,state){return node.dataset.focusPiece==='aspect'&&rowLineMatches(node,state)}
   function applyState(){
-    const filterState=lockedState||hoverState,filterKeep=keepSets(filterState),rowState=rowLockedState||rowHoverState,wheelState=filterState||rowState,wheel=document.querySelector('#skyFoundationWheelMount > .sky-foundation-wheel');
+    const filterState=lockedState||(!rowLockedState&&hoverState),filterKeep=keepSets(filterState),rowState=rowLockedState||rowHoverState,wheelState=filterState||rowState,wheel=document.querySelector('#skyFoundationWheelMount > .sky-foundation-wheel');
     if(wheel){
       wheel.classList.toggle('has-isolation',!!wheelState);
       wheel.querySelectorAll('[data-focus-piece]').forEach(node=>{
@@ -382,8 +388,9 @@
     const root=document.getElementById('skyFoundationRoot');if(!root)return null;
     const node=event.target.closest?.('[data-interactive]');
     if(node&&root.contains(node)){
-      if(node.dataset.interactive!=='aspect')return node;
-      return nearestAspect(event)||node;
+      // A struck SVG aspect already identifies its exact endpoints and
+      // harmonic. Do not replace it with a geometrically nearby crossing line.
+      return node;
     }
     const wheel=event.target.closest?.('#skyFoundationWheelMount .sky-foundation-wheel');
     if(wheel&&root.contains(event.target))return nearestAspect(event);
@@ -473,9 +480,87 @@
     restoreFocus,
     getSelectionOrigin
   });
+  // Every input method uses the same selection state transition. Touch invokes
+  // it directly rather than dispatching a second click through unrelated
+  // capture-phase listeners (which can retarget or consume that click).
+  function toggleInteractiveNode(node){
+    if(!node)return;
+    wheelOnlyExternal=false;
+    rowLockedState=null;rowHoverState=null;
+    const next=specFrom(node);
+    if(same(lockedState,next)){lockedState=null;selectionOrigin=null}
+    else{lockedState=next;selectionOrigin=originFromNode(node,next)}
+    hoverState=null;applyState();
+  }
+  // One touch-to-click adapter owned by the foundation controller. Touch hover is
+  // never selection state; one completed tap produces exactly one click.
+  let touchGesture=null,ignoreNativeClickUntil=0,lastTouchPoint=null;
+  function touchInWheel(event){return !!event.target.closest?.('#skyFoundationWheelMount .sky-foundation-wheel')}
+  function beginTouch(event){
+    if(!['touch','pen'].includes(event.pointerType)||!touchInWheel(event))return;
+    touchGesture={id:event.pointerId,x:event.clientX,y:event.clientY,target:event.target,moved:false,priorLocked:cloneFocusValue(lockedState)};
+    hoverState=null;rowHoverState=null;
+  }
+  function moveTouch(event){
+    if(!touchGesture||touchGesture.id!==event.pointerId)return;
+    if(Math.hypot(event.clientX-touchGesture.x,event.clientY-touchGesture.y)>10)touchGesture.moved=true;
+  }
+  function finishTouch(event){
+    if(!touchGesture||touchGesture.id!==event.pointerId)return;
+    const gesture=touchGesture;touchGesture=null;
+    ignoreNativeClickUntil=performance.now()+750;
+    lastTouchPoint={x:event.clientX,y:event.clientY};
+    if(gesture.moved)return;
+    // A legacy handler can emit a click *inside the same pointerup dispatch*
+    // before this listener executes. If it has already changed the foundation
+    // lock, treat the gesture as handled. Toggling again would immediately undo
+    // a successful tap (or reselect an aspect the user just toggled off).
+    if(JSON.stringify(gesture.priorLocked)!==JSON.stringify(lockedState)){
+      event.preventDefault();
+      return;
+    }
+    const wheel=document.querySelector('#skyFoundationWheelMount .sky-foundation-wheel');
+    if(!wheel)return;
+    const original=gesture.target?.isConnected?gesture.target:null;
+    const underFinger=document.elementFromPoint(event.clientX,event.clientY);
+    // Browser touch target can be stale after a wheel redraw, collision-order
+    // pass, or scroll layout update. Prefer the element physically under the
+    // released finger instead of dispatching to an old placement that moved
+    // over a house; fall back to the original only if hit testing cannot resolve.
+    const target=underFinger&&wheel.contains(underFinger)?underFinger:
+      original&&wheel.contains(original)?original:null;
+    if(!target)return; // A removed wheel target must not become a blank-area clear.
+    // Use the controller's one selection transition directly, not a fabricated
+    // DOM click subject to competing capture handlers or double activation.
+    const node=interactive({target,clientX:event.clientX,clientY:event.clientY});
+    if(node)toggleInteractiveNode(node);
+    else if(clearableWhitespace({target}))clearFromWhitespace();
+    event.preventDefault();
+  }
+  function cancelTouch(event){if(touchGesture?.id===event.pointerId)touchGesture=null}
   function bind(){
     const root=document.getElementById('skyFoundationRoot');if(!root||root.dataset.foundationInteractionsV2Bound==='true')return;root.dataset.foundationInteractionsV2Bound='true';
+    // Capture wheel gestures at document level: foreground placements,
+    // progressive-disclosure handlers and tap hit overlays may stop bubbling
+    // before pointerup reaches the wheel root. The gesture begins only inside
+    // this wheel, so unrelated document touches remain completely untouched.
+    document.addEventListener('pointerdown',beginTouch,{capture:true,passive:true});
+    document.addEventListener('pointermove',moveTouch,{capture:true,passive:true});
+    document.addEventListener('pointerup',finishTouch,{capture:true,passive:false});
+    document.addEventListener('pointercancel',cancelTouch,{capture:true});
+    // Compatibility clicks may be retargeted to the wheel/root after a
+    // redraw, not to the original SVG element. Suppress the trusted native
+    // follow-up and other legacy synthetic clicks targeting the wheel: a
+    // competing pointerup handler was observed dispatching an untrusted click
+    // after our touch handler already committed selection. Suppress both kinds
+    // of duplicate click, without blocking interactions outside the wheel.
+    document.addEventListener('click',event=>{
+      if(performance.now()<ignoreNativeClickUntil&&touchInWheel(event)){
+        event.preventDefault();event.stopImmediatePropagation();
+      }
+    },true);
     root.addEventListener('pointerover',event=>{
+      if(event.pointerType==='touch'||event.pointerType==='pen'||(event.pointerType==='mouse'&&performance.now()<ignoreNativeClickUntil))return;
       wheelOnlyExternal=false;
       const row=event.target.closest?.('.sky-foundation-relationship-row[data-relation-index]');
       if(row)return;
@@ -483,8 +568,9 @@
       const node=interactive(event);if(!node||node.contains(event.relatedTarget))return;
       rowHoverState=null;hoverState=specFrom(node);applyState()
     });
-    root.addEventListener('pointermove',event=>{if(lockedState||!event.target.closest?.('#skyFoundationWheelMount'))return;const direct=event.target.closest?.('[data-interactive]:not([data-interactive="aspect"])');if(direct)return;rowHoverState=null;const next=specFrom(nearestAspect(event));if(same(hoverState,next)||(!hoverState&&!next))return;hoverState=next;applyState()});
+    root.addEventListener('pointermove',event=>{if(event.pointerType==='touch'||event.pointerType==='pen')return;if(lockedState||!event.target.closest?.('#skyFoundationWheelMount'))return;const direct=event.target.closest?.('[data-interactive]:not([data-interactive="aspect"])');if(direct)return;rowHoverState=null;const next=specFrom(nearestAspect(event));if(same(hoverState,next)||(!hoverState&&!next))return;hoverState=next;applyState()});
     root.addEventListener('pointerout',event=>{
+      if(event.pointerType==='touch'||event.pointerType==='pen')return;
       const row=event.target.closest?.('.sky-foundation-relationship-row[data-relation-index]');
       if(row)return;
       if(lockedState)return;
@@ -504,21 +590,31 @@
       wheelOnlyExternal=false;
       const row=event.target.closest?.('.sky-foundation-relationship-row[data-relation-index]');
       if(row)return;
-      const node=interactive(event);if(node){event.preventDefault();rowLockedState=null;rowHoverState=null;const next=specFrom(node);if(same(lockedState,next)){lockedState=null;selectionOrigin=null}else{lockedState=next;selectionOrigin=originFromNode(node,next)}hoverState=null;applyState();return}if(clearableWhitespace(event))clearFromWhitespace()
+      const node=interactive(event);if(node){event.preventDefault();toggleInteractiveNode(node);return}if(clearableWhitespace(event))clearFromWhitespace()
     });
-    root.addEventListener('keydown',event=>{wheelOnlyExternal=false;if(event.key==='Escape'){clearFromWhitespace();return}if(event.target.closest('.sky-foundation-relationship-row'))return;if(!['Enter',' '].includes(event.key))return;const node=interactive(event);if(!node)return;event.preventDefault();rowLockedState=null;rowHoverState=null;const next=specFrom(node);if(same(lockedState,next)){lockedState=null;selectionOrigin=null}else{lockedState=next;selectionOrigin=originFromNode(node,next)}hoverState=null;applyState()});
+    root.addEventListener('keydown',event=>{wheelOnlyExternal=false;if(event.key==='Escape'){clearFromWhitespace();return}if(event.target.closest('.sky-foundation-relationship-row'))return;if(!['Enter',' '].includes(event.key))return;const node=interactive(event);if(!node)return;event.preventDefault();toggleInteractiveNode(node)});
   }
   function whereWhenEditing(){return document.documentElement.dataset.skyWhereWhenEditing==='true'}
   async function refresh(){
     refreshQueued=false;if(whereWhenEditing())return;const root=document.getElementById('skyFoundationRoot'),wheel=document.querySelector('#skyFoundationWheelMount > .sky-foundation-wheel');if(!root||!wheel||root.getAttribute('aria-busy')!=='false'||!HARMONIC)return;ensurePanel();
     const preparedA=prepare(read(KEYS.A),'A'),preparedB=prepare(read(KEYS.B),'B'),relations=relationships(preparedA.list,preparedB.list),nextSignature=relationshipSignature(relations);current={listA:preparedA.list,listB:preparedB.list,relations,cuspsA:preparedA.houseCusps,cuspsB:preparedB.houseCusps};
     annotateHouseLayer('a-houses','A');annotateHouseLayer('b-houses','B');annotateSigns();annotatePlacements(current.listA,current.listB);annotateAspects(relations);annotateLedger('A',current.listA);annotateLedger('B',current.listB);
-    if(renderedRelationshipSignature!==nextSignature||!relationshipRowsIntact(relations)){await renderRows(relations);renderedRelationshipSignature=nextSignature}
+    if(!preparedB.list.length){
+      // Return to single-sky: the intrasky renderer owns A↔A rows. Remove
+      // only orphaned intersky rows, not the currently valid intrasky results.
+      const list=document.getElementById('skyFoundationRelationshipList');
+      list?.querySelectorAll(':scope > .sky-foundation-relationship-row[data-relationship-mode="A-B"]')
+        .forEach(row=>row.remove());
+      renderedRelationshipSignature='';
+    }else if(renderedRelationshipSignature!==nextSignature||!relationshipRowsIntact(relations)){
+      await renderRows(relations);renderedRelationshipSignature=nextSignature;
+    }
     bind();applyState();window.dispatchEvent(new Event('relphi:sky-foundation-interactions-ready'));
   }
   function schedule(){if(refreshQueued)return;refreshQueued=true;requestAnimationFrame(refresh)}
   function start(){
     window.addEventListener('relphi:sky-foundation-ready',schedule);
+    window.addEventListener('relphi:sky-b-removed',schedule);
     window.addEventListener('relphi:sky-orb-limit-changed',schedule);
     window.addEventListener('relphi:sky-by-sign-changed',schedule);
     [

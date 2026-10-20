@@ -98,15 +98,68 @@ function skyIdentity(slot){
   const metadata=payload?.metadata||{};
   return title||String(metadata.savedSkyName||payload?.name||payload?.displayName||payload?.skyName||payload?.title||'').trim()||'Unnamed sky';
 }
+function skyIsPresent(slot){
+  let value=null;
+  try{value=JSON.parse(localStorage.getItem('relphiSkyChart'+slot)||'null')}catch(_){}
+  if(!value||typeof value!=='object')return false;
+  // A stored placeholder is not a loaded sky. Use actual placements rather
+  // than the existence of the slot key or its generic display name.
+  for(const key of ['placements','positions','points','bodies']){
+    const collection=value[key];
+    if(!collection||typeof collection!=='object')continue;
+    if(Object.values(collection).some(item=>item&&typeof item==='object'&&
+      ((item.longitude!=null&&item.longitude!==''&&Number.isFinite(Number(item.longitude)))||String(item.sign||item.zodiac||'').trim())))return true;
+  }
+  return false;
+}
+// The Aspects UI is a scope-by-aspect matrix. The old flat scope checkboxes
+// are not the active filter and must not be consulted by exports.
+const MATRIX_SCOPES=Object.freeze([{id:'A-A',label:'A↔A'},{id:'B-B',label:'B↔B'},{id:'A-B',label:'A↔B'}]);
+const MATRIX_ASPECTS=Object.freeze(['conjunction','semi-sextile','octile','sextile','quintile','square','trine','tri-octile','bi-quintile','quincunx','opposition']);
+function matrixFocus(){
+  const scopes=MATRIX_SCOPES.filter(scope=>scope.id==='A-A'||skyIsPresent('B'));
+  const all=MATRIX_ASPECTS.length;
+  let stored=null;
+  try{stored=JSON.parse(localStorage.getItem('relphiSkyAspectMatrixV1')||'null')}catch(_){}
+  const values=Object.fromEntries(scopes.map(scope=>{
+    // The master checkbox shows the current scope state; the persisted value
+    // covers both checked and partially checked matrices.
+    const master=document.querySelector('[data-aspect-matrix-scope="'+scope.id+'"][data-aspect-matrix-aspect="all"]');
+    const picks=stored&&Array.isArray(stored[scope.id])?stored[scope.id].filter(id=>MATRIX_ASPECTS.includes(id)):[];
+    const count=master?.checked?all:picks.length;
+    return[scope.id,count];
+  }));
+  const selected=scopes.filter(scope=>values[scope.id]>0);
+  const bySign=window.RelphiSkyBySign?.selected;
+  const bySignCount=bySign instanceof Set?bySign.size:0;
+  // By Sign can admit aspects in each active scope independently of the
+  // ordinary matrix cells.
+  const enabled=bySignCount?scopes:selected;
+  const scopeNames=enabled.map(scope=>scope.label).join(' · ')||'None';
+  let aspects='None';
+  if(selected.length){
+    const counts=selected.map(scope=>values[scope.id]);
+    if(counts.every(n=>n===all))aspects='All';
+    else if(selected.length===1)aspects=counts[0]+' of '+all;
+    else aspects=selected.map(scope=>scope.label+': '+(values[scope.id]===all?'All':values[scope.id]+' of '+all)).join(' · ');
+  }
+  return{aspects,scopes:scopeNames,bySignCount};
+}
 function focusInformation(){
   const value=selector=>String(document.querySelector(selector)?.textContent||'').trim().replace(/\s+/g,' ');
   const selected=selector=>{const element=document.querySelector(selector);return element?.selectedOptions?.[0]?.textContent?.trim()||element?.value||''};
   const windowValue=window.RelphiHarmonicOrb?.getWindow?.();
+  const matrix=matrixFocus();
+  const display=window.RelphiSkyRelationshipDisplay?.getState?.();
+  const enabled=display&&['glyphs','names','referents'].filter(id=>display[id]===true);
+  const names={glyphs:'Glyphs',names:'Names',referents:'Referents'};
+  const displayName=enabled?enabled.length===3?'All':enabled.length?enabled.map(id=>names[id]).join(' · '):'None':value('[data-relationship-display-value-text]');
   const controls=[
-    ['Display',value('[data-relationship-display-value-text]')],
+    ['Display',displayName],
     ['Harmonic Window',Number.isFinite(Number(windowValue))?String(windowValue)+'°':document.querySelector('[data-harmonic-window-input]')?.value||''],
-    ['Aspects',value('[data-aspect-filter-summary]')||'None selected'],
-    ['Relationship scopes',[...document.querySelectorAll('[data-aspect-scope-choice]:checked')].map(el=>el.getAttribute('aria-label')||el.closest('label')?.textContent?.trim()||el.value).filter(Boolean).join(' · ')||'None selected'],
+    ['Aspects',matrix.aspects],
+    ['Relationship scopes',matrix.scopes],
+    ...(matrix.bySignCount?[['By Sign',matrix.bySignCount+' selected']]:[]),
     ['Placements',value('[data-placement-filter-summary]')],
     ['Zodiac Signs',value('[data-zodiac-summary]')],
     ['Houses',value('[data-house-filter-summary]')],
@@ -115,8 +168,9 @@ function focusInformation(){
   ];
   return controls.filter(([,v])=>String(v).trim()).map(([k,v])=>k+': '+v);
 }
+window.RelphiRelationshipExportFocus=Object.freeze({lines:focusInformation,matrix:matrixFocus});
 function relationshipsCopyHeader(){
-  return ['Relationships','Sky A: '+skyIdentity('A'),'Sky B: '+skyIdentity('B'),'','Focus',...focusInformation()].join('\n');
+  return ['Relationships','Sky A: '+skyIdentity('A'),...(skyIsPresent('B')?['Sky B: '+skyIdentity('B')]:[]),'','Focus',...focusInformation()].join('\n');
 }
 function serializeDisplayOrder(rows){
   const blocks=[];let currentMode='',bucket=[];

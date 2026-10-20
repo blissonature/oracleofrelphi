@@ -36,9 +36,16 @@
   }
 
   function rowVisible(row) {
-    if (!row || row.hidden) return false;
+    if (!row) return false;
+    // The foundation controller hides unmatched relationship rows during wheel
+    // exploration. This is NOT a filter that should erase their aspect lines:
+    // nonmatching lines remain on the wheel, dimmed by .has-isolation.
+    const exploring = !!document.querySelector('#skyFoundationWheelMount > .sky-foundation-wheel.has-isolation');
+    if (row.hidden && !exploring) return false;
     if (HIDDEN_CLASSES.some(className => row.classList.contains(className))) return false;
-    return getComputedStyle(row).display !== 'none';
+    // The HTML [hidden] attribute sets computed display:none; during isolation
+    // that is only list presentation, never permission to hide wheel geometry.
+    return (exploring && row.hidden) || getComputedStyle(row).display !== 'none';
   }
 
   function clearAutomaticSelection() {

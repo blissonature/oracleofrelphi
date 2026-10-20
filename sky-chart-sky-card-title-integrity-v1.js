@@ -10,7 +10,7 @@
   window.__relphiSkyCardTitleIntegrityV6=true;
 
   const KEYS={A:'relphiSkyChartA',B:'relphiSkyChartB'};
-  const GENERIC=new Set(['','current sky','sky a','sky b','standalone sky','comparison','unnamed sky','untitled sky','new sky','where and when']);
+  const GENERIC=new Set(['','current sky','sky a','sky b','standalone sky','comparison','unnamed sky','untitled sky','new sky','where and when','unsaved sky']);
   const STYLE_ID='skyCardStableTitleV5';
   const STEP_MS=5*60*1000;
   let queued=false,timer=0;
@@ -79,21 +79,43 @@
   function resolvedSavedIdentity(slot){
     try{return window.RelphiSkySavedSkyIdentity?.identity?.(slot)||null}catch(_){return null}
   }
+
+  // Describe a calculated working sky by the coordinates the user committed,
+  // not by the label of the editor used to create it. Use its LOCAL date/time:
+  // parsing it as a UTC instant would shift the title into the wrong day/zone.
+  function settingsName(value){
+    const p=profile(value),raw=String(p.dateTime||value?.dateTime||'').trim();
+    const match=raw.match(/^(\d{4})-(\d{2})-(\d{2})(?:[T ](\d{2}):(\d{2}))?/);
+    let moment='';
+    if(match){
+      const year=Number(match[1]),month=Number(match[2]),day=Number(match[3]);
+      const date=new Date(Date.UTC(year,month-1,day,12));
+      if(date.getUTCFullYear()===year&&date.getUTCMonth()===month-1&&date.getUTCDate()===day){
+        moment=new Intl.DateTimeFormat('en-US',{month:'short',day:'numeric',year:'numeric',timeZone:'UTC'}).format(date);
+        if(p.timeUnknown===true)moment+=' (time unknown)';
+        else if(match[4]!=null){
+          const hour=Number(match[4]),minute=Number(match[5]);
+          if(hour<24&&minute<60)moment+=', '+String(hour%12||12)+':'+String(minute).padStart(2,'0')+' '+(hour>=12?'PM':'AM');
+        }
+      }
+    }
+    const place=String(p.location||value?.location||'').trim();
+    return[moment,place].filter(Boolean).join(' · ');
+  }
   function nameFor(slot,value){
-    if(editingWhereWhen(slot))return'Where and When';
     if(!hasPlacements(value))return'Where and When';
     const matched=resolvedSavedIdentity(slot);
     if(matched?.saved&&matched.name)return matched.name;
     const m=metadata(value),p=profile(value),savedName=String(m.savedSkyName||'').trim();
     if(savedName)return savedName;
-    if(manualWhereWhen(value))return'Where and When';
     if(liveOrigin(value))return liveAgeLabel(value);
-    if(nearNow(value))return'Now';
-    for(const candidate of [value?.name,value?.displayName,value?.skyName,value?.title,p.name,p.title,m.name,m.title]){
-      const name=String(candidate||'').trim(),norm=normalize(name);
-      if(name&&!GENERIC.has(norm))return name;
-    }
-    return'Where and When';
+    if(nearNow(value)&&!manualWhereWhen(value))return'Now';
+    const named=[value?.name,value?.displayName,value?.skyName,value?.title,p.name,p.title,m.name,m.title]
+      .map(item=>String(item||'').trim()).find(item=>item&&!GENERIC.has(normalize(item))&&normalize(item)!=='now');
+    // A working Where/When result may have a deliberately supplied name; keep
+    // that name, but never promote generic editor or empty-sky labels to identity.
+    if(named)return named;
+    return settingsName(value)||'Where and When';
   }
 
   function heading(slot){return document.querySelector(`#skyFoundation${slot}>.sky-foundation-heading`)}
