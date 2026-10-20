@@ -48,50 +48,37 @@ try{
   assert.ok(members.includes('south-node'),`South Node must attach to Vertex pole: ${JSON.stringify(members)}`);
   assert.ok(members.includes('north-node'),`North Node must attach to Anti-Vertex pole: ${JSON.stringify(members)}`);
 
-  const vocabWindow=page.locator('#skyFoundationA [data-vocab-harmonic-window-input="A"]');
-  const relationshipWindow=page.locator('#skyFoundationRelationships [data-harmonic-window-input]');
-  assert.equal(await vocabWindow.count(),1,'Vocab must expose one Harmonic Window controller for Sky A.');
-  assert.equal(await relationshipWindow.count(),1,'Relationships must retain one Harmonic Window controller.');
+  // The shared Focus header owns the single Harmonic Window control.
+  // Vocab responds to that model and does not duplicate the control.
+  const relationshipWindow=page.locator('#skyFoundationFocus [data-harmonic-window-input]');
+  assert.equal(await relationshipWindow.count(),1,'Focus must expose one shared Harmonic Window controller.');
+  assert.equal(await page.locator('#skyFoundationA [data-vocab-harmonic-window-input]').count(),0,'Vocab must not duplicate the shared Harmonic Window control.');
   const defaultWindow=await page.evaluate(()=>String(window.RelphiHarmonicOrb.defaultWindow));
   const initialWindows=await page.evaluate(()=>({
     live:String(window.RelphiHarmonicOrb.getWindow()),
     ceiling:String(document.querySelector('[data-orb-candidate-ceiling]')?.value||'')
   }));
-  assert.equal(initialWindows.ceiling,String(await page.evaluate(()=>window.RelphiHarmonicOrb.maxWindow)),'The hidden relationship candidate ceiling must remain at the model maximum.');
-  assert.equal(initialWindows.live,defaultWindow,'The hidden candidate ceiling must not overwrite the live Harmonic Window.');
-  assert.equal(await relationshipWindow.inputValue(),defaultWindow,'Relationships must initialize from the shared Harmonic Window default.');
-  assert.equal(await vocabWindow.inputValue(),defaultWindow,'Vocab must initialize from the same shared Harmonic Window default.');
+  assert.equal(initialWindows.ceiling,String(await page.evaluate(()=>window.RelphiHarmonicOrb.maxWindow)),'Candidate ceiling remains maximum.');
+  assert.equal(initialWindows.live,defaultWindow,'Candidate ceiling must not overwrite live window.');
+  assert.equal(await relationshipWindow.inputValue(),defaultWindow);
 
   await relationshipWindow.fill('4');
   await page.waitForFunction(()=>document.documentElement.dataset.skyHarmonicWindow==='4');
-  await page.waitForFunction(()=>document.querySelector('#skyFoundationA [data-vocab-harmonic-window-input="A"]')?.value==='4');
-  assert.equal(await vocabWindow.inputValue(),'4','Changing Relationships Harmonic Window must update Vocab.');
-
   await relationshipWindow.press('ArrowUp');
   await page.waitForFunction(()=>document.documentElement.dataset.skyHarmonicWindow==='4.05');
-  assert.equal(await relationshipWindow.inputValue(),'4.05','ArrowUp on Relationships must increase the Harmonic Window by 0.05°.');
-  assert.equal(await vocabWindow.inputValue(),'4.05','Relationships arrow stepping must mirror into Vocab.');
   await relationshipWindow.press('ArrowDown');
   await page.waitForFunction(()=>document.documentElement.dataset.skyHarmonicWindow==='4');
-  assert.equal(await vocabWindow.inputValue(),'4','ArrowDown must restore the shared Harmonic Window by 0.05°.');
 
-  await vocabWindow.press('ArrowDown');
-  await page.waitForFunction(()=>document.documentElement.dataset.skyHarmonicWindow==='3.95');
-  assert.equal(await relationshipWindow.inputValue(),'3.95','Vocab arrow stepping must mirror into Relationships.');
-  await vocabWindow.press('ArrowUp');
-  await page.waitForFunction(()=>document.documentElement.dataset.skyHarmonicWindow==='4');
-  assert.equal(await relationshipWindow.inputValue(),'4','ArrowUp in Vocab must restore the shared Harmonic Window by 0.05°.');
-
-  await vocabWindow.fill('0');
+  await relationshipWindow.fill('0');
   await page.waitForFunction(()=>document.documentElement.dataset.skyHarmonicWindow==='0');
   await page.waitForFunction(()=>{
     const row=document.querySelector('#skyFoundationA [data-vocab-structure="axis-polarity"][data-vocab-axis="vertex-anti-vertex"]');
     return row?.dataset.vocabHarmonicWindow==='0';
   });
   const narrowMembers=(await vertex.getAttribute('data-vocab-members')||'').split('|').filter(Boolean);
-  assert.equal(narrowMembers.includes('south-node'),false,`South Node must leave the Vertex pole when the shared Harmonic Window narrows to zero: ${JSON.stringify(narrowMembers)}`);
-  assert.equal(narrowMembers.includes('north-node'),false,`North Node must leave the Anti-Vertex pole when the shared Harmonic Window narrows to zero: ${JSON.stringify(narrowMembers)}`);
-  assert.equal(await relationshipWindow.inputValue(),'0','Changing Vocab Harmonic Window must update Relationships.');
+  assert.equal(narrowMembers.includes('south-node'),false,'Narrowing Focus must remove South Node from Vertex pole.');
+  assert.equal(narrowMembers.includes('north-node'),false,'Narrowing Focus must remove North Node from Anti-Vertex pole.');
+  assert.equal(await relationshipWindow.inputValue(),'0');
 
   const relationshipCountStatus=await page.locator('#skyFoundationRelationshipCount').evaluate(node=>({
     matchCount:node.dataset.matchCount||'',
