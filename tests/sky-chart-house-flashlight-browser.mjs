@@ -84,14 +84,14 @@ const main=await browser.newPage({viewport:{width:1390,height:1060}});
 try{
  await boot(main,true);
  assert.equal((await flash(main)).lines.length,0,'default wheel must have no flashlight strokes');
- const a=await locationFor(main,'A',3);
+ const a=await locationFor(main,'A',11);
  console.log('A house target',JSON.stringify(a));
  assert.equal(a.target,'house','Real pointer must land in A house wedge');
  await main.mouse.move(a.x,a.y);
  await main.waitForTimeout(100);
  const hovered=await flash(main);
  console.log('A hovered',JSON.stringify(hovered));
- assert.equal(hovered.sky,'A');assert.equal(hovered.house,'3');
+ assert.equal(hovered.sky,'A');assert.equal(hovered.house,'11');
  assert.equal(hovered.lines.length,6,'Two cusps, 3 continuous ring segments each');
  assert.deepEqual(hovered.lines.filter(l=>l.edge==='0').map(l=>l.kind),['home','zodiac','other']);
  assert.ok(hovered.lines.every(l=>l.events==='none'));
@@ -111,7 +111,7 @@ try{
  await main.waitForTimeout(150);
  assert.equal((await flash(main)).lines.length,0,'Tapping the same house again must clear it');
 
- const b=await locationFor(main,'B',6);
+ const b=await locationFor(main,'B',12);
  console.log('B house target',JSON.stringify(b));
  assert.equal(b.target,'house','Real pointer must land in B house wedge');
  await main.mouse.click(b.x,b.y);
@@ -127,7 +127,7 @@ try{
  const standalone=await browser.newPage({viewport:{width:1200,height:960}});
  try{
   await boot(standalone,false);
-  const onlyA=await locationFor(standalone,'A',2);
+  const onlyA=await locationFor(standalone,'A',10);
   await standalone.mouse.move(onlyA.x,onlyA.y);
   await standalone.waitForTimeout(100);
   const only=await flash(standalone);
@@ -139,7 +139,7 @@ try{
   const screen=await mobile.newPage();
   await boot(screen,true);
   await screen.locator('#skyFoundationWheelMount').scrollIntoViewIfNeeded();
-  const target=await locationFor(screen,'A',3);
+  const target=await locationFor(screen,'A',11);
   console.log('Mobile touch target',JSON.stringify(target));
   assert.ok(target.x>=0&&target.x<=390&&target.y>=0&&target.y<=850,'Mobile tap coordinates must be visible');
   await screen.touchscreen.tap(target.x,target.y);
