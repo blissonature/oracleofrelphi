@@ -140,7 +140,7 @@ function matrixFocus(){
   // ordinary matrix cells.
   const enabled=bySignCount?scopes:selected;
   const scopeNames=enabled.map(scope=>scope.label).join(' · ')||'None';
-  // No individual aspects selected means no aspect-type restriction: All.
+  // An empty aspect matrix filters out all aspects. Only all eleven checked is All.
   // Otherwise report the actual selected names, never an unhelpful count.
   const names=ids=>ids.map(id=>id.split('-').map(word=>word[0].toUpperCase()+word.slice(1)).join('-')).join(', ');
   const label=scope=>{
@@ -149,9 +149,9 @@ function matrixFocus(){
       if(cell)return cell.checked;
       return !!(stored&&Array.isArray(stored[scope.id])&&stored[scope.id].includes(id));
     });
-    return picks.length===0||picks.length===all?'All':names(picks);
+    return picks.length===0?'None':picks.length===all?'All':names(picks);
   };
-  const aspects=selected.length===0?'All':selected.length===1?label(selected[0]):
+  const aspects=selected.length===0?'None':selected.length===1?label(selected[0]):
     selected.map(scope=>scope.label+': '+label(scope)).join(' · ');
   return{aspects,scopes:scopeNames,bySignCount};
 }
