@@ -189,7 +189,7 @@ assert.match(relationshipLimit,/record\.target\?\.matches\?\.\('\.sky-foundation
 assert.doesNotMatch(relationshipLimit,/countObserver/,'Legacy count text rewrites must not drive match-count recalculation');
 assert.match(relationshipLimit,/CAP_CLASS='sky-chart-result-limit-hidden'/,'Result Limit must own a distinct non-destructive visibility class');
 assert.match(relationshipLimit,/eligible\.forEach\(\(row,index\)=>row\.classList\.toggle\(CAP_CLASS,index>=cap\)\)/,'Result Limit must cap the current sorted eligible DOM order');
-assert.match(relationshipLimit,/data\.resultLimitShowMore='true'/,'A capped list must expose an actionable continuation row');
+assert.match(relationshipLimit,/dataset\.resultLimitShowMore='true'/,'A capped list must expose an actionable continuation row');
 assert.match(relationshipLimit,/PRESETS\.find\(value=>value>current\)/,'Show more must advance through the common Max presets without requiring the dropdown');
 assert.match(relationshipScope,/sky-chart-result-limit-hidden/,'Relationships Copy must exclude rows hidden by the result cap');
 assert.match(relationshipScope,/Copied '\+visibleRows\(\)\.length/,'Copy feedback must confirm the number of capped visible relationships copied');
