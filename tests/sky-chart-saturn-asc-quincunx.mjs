@@ -75,4 +75,21 @@ try{
   await page.waitForTimeout(500);
   await inspect('after wheel click '+selector);
  }
+
+ console.log('TRANSITION comparison -> standalone');
+ await page.evaluate(fixture=>{
+  const b=JSON.parse(JSON.stringify(fixture));b.name='Sky B';for(const item of Object.values(b.placements))item.longitude=(Number(item.longitude)+1)%360;
+  localStorage.setItem('relphiSkyChartB',JSON.stringify(b));
+  window.dispatchEvent(new Event('storage'));
+ },sky);
+ await page.waitForTimeout(900);
+ await inspect('in comparison');
+ await page.evaluate(()=>{
+   localStorage.removeItem('relphiSkyChartB');
+   window.dispatchEvent(new Event('relphi:sky-b-removed'));
+   window.dispatchEvent(new Event('storage'));
+ });
+ await page.waitForTimeout(1200);
+ await inspect('after removing Sky B');
+ if(await saturn.count()){await saturn.click();await page.waitForTimeout(800);await inspect('after reselecting Saturn following sky removal')}
 }finally{await browser.close()}
