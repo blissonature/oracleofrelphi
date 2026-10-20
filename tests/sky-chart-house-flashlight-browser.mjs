@@ -53,7 +53,19 @@ async function locationFor(page,slot,house){
     }
    }
   }
-  throw new Error('No actual hit point for '+slot+' house '+house);
+  const sectors=[...svg.querySelectorAll('[data-layer="'+layer+'"] > path[data-house]')].map(el=>({house:el.dataset.house,start:el.dataset.houseCuspStart,end:el.dataset.houseCuspEnd,d:el.getAttribute('d')?.slice(0,95)}));
+  const hist={};for(const radius of (slot==='A'?[190,235,285,300]:[435,462,495,535,560])){
+   for(let deg=0;deg<360;deg+=15){
+    const p=svg.createSVGPoint(),rad=deg*Math.PI/180;p.x=600+radius*Math.cos(rad);p.y=600+radius*Math.sin(rad);
+    const at=p.matrixTransform(ctm);
+    if(at.x<0||at.y<0||at.x>=innerWidth||at.y>=innerHeight)continue;
+    const el=document.elementFromPoint(at.x,at.y);
+    const found=el?.closest?.('[data-interactive="house"][data-house][data-sky]');
+    const key=found?found.dataset.sky+found.dataset.house:(el?.tagName||'none');
+    hist[key]=(hist[key]||0)+1;
+   }
+  }
+  throw new Error('No actual hit point for '+slot+' house '+house+' '+JSON.stringify({sectors,hist}));
  },{slot,house});
 }
 const flash=(page)=>page.evaluate(()=>{
