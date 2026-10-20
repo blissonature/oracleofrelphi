@@ -37,13 +37,23 @@ async function locationFor(page,slot,house){
   const layer=slot==='A'?'a-houses':'b-houses';
   const path=document.querySelector('#skyFoundationWheelMount [data-layer="'+layer+'"] > path[data-house="'+house+'"]');
   if(!path)throw new Error('No sector '+slot+house);
-  const start=Number(path.dataset.houseCuspStart),end=Number(path.dataset.houseCuspEnd);
-  const angle=(start+((end-start+360)%360)/2-180)*Math.PI/180,r=slot==='A'?193:440;
-  const svg=path.ownerSVGElement,point=svg.createSVGPoint();
-  point.x=600+r*Math.cos(angle);point.y=600+r*Math.sin(angle);
-  const p=point.matrixTransform(svg.getScreenCTM());
-  const target=document.elementFromPoint(p.x,p.y);
-  return {x:p.x,y:p.y,start,end,target:target?.getAttribute('data-interactive'),tag:target?.tagName};
+  const svg=path.ownerSVGElement,ctm=svg.getScreenCTM();
+  // Test real hit targets, not bounding-box centers or assumed house cusp
+  // ordering, because overlapping paths can catch a visually wrong point.
+  for(const radius of (slot==='A'?[190,235,285,300]:[435,462,495,535,560])){
+   for(let deg=0;deg<360;deg+=3){
+    const p=svg.createSVGPoint(),rad=deg*Math.PI/180;
+    p.x=600+radius*Math.cos(rad);p.y=600+radius*Math.sin(rad);
+    const at=p.matrixTransform(ctm);
+    if(at.x<15||at.y<15||at.x>innerWidth-15||at.y>innerHeight-15)continue;
+    const element=document.elementFromPoint(at.x,at.y);
+    const found=element?.closest?.('[data-interactive="house"][data-house][data-sky]');
+    if(found?.dataset.house===String(house)&&found?.dataset.sky===slot){
+     return{x:at.x,y:at.y,angle:deg,radius,house:found.dataset.house,sky:found.dataset.sky};
+    }
+   }
+  }
+  throw new Error('No actual hit point for '+slot+' house '+house);
  },{slot,house});
 }
 const flash=(page)=>page.evaluate(()=>{
