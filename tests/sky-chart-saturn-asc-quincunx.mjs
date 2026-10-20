@@ -80,10 +80,20 @@ try{
    lines:[...document.querySelectorAll('[data-layer="aspects"] > line.sky-foundation-aspect:not(.sky-foundation-aspect-hit)')].filter(el=>el.dataset.aspect==='quincunx'&&[el.dataset.leftPlacement,el.dataset.rightPlacement].includes('saturn')&&[el.dataset.leftPlacement,el.dataset.rightPlacement].includes('asc')).map(el=>({cls:el.getAttribute('class'),display:getComputedStyle(el).display,opacity:getComputedStyle(el).opacity})),
  }));
  console.log('AFTER REAL CLICK STATE',JSON.stringify(clickedState));
+ assert.equal(clickedState.focus?.lockedState?.kind,'aspect','Real line click must lock an aspect, not a blank sector');
+ assert.equal(clickedState.focus?.lockedState?.value,'A:asc|quincunx|A:saturn','Intrasky endpoint order is canonical');
+ assert.ok(clickedState.lines.some(line=>line.display!=='none'&&!line.cls.includes('sky-chart-orb-hidden')),'Selected aspect line must stay visible at HW=1');
+ assert.ok(Number(clickedState.count.split('/')[0])>=1,'Selected aspect must retain a candidate');
  const candidate=page.locator('#skyFoundationRelationshipList > .sky-foundation-relationship-row[data-relationship-mode="A-A"][data-aspect="quincunx"][data-left-placement="saturn"][data-right-placement="asc"]');
  assert.equal(await candidate.count(),1,'Near-exact A↔A Saturn–Ascendant quincunx should be generated');
  assert.equal(await candidate.isVisible(),true,'Quincunx must pass the 1° harmonic window');
  assert.ok(Math.abs(Number(await candidate.getAttribute('data-source-orb'))-1/60)<.001);
+ // Clicking the very same line a second time must release isolation and keep it drawn.
+ await page.mouse.click(aspectCoordinates.x,aspectCoordinates.y);
+ await page.waitForTimeout(350);
+ assert.equal((await page.evaluate(()=>window.RelphiSkyFoundationInteractions?.captureFocus?.()))?.lockedState,null,
+   'Second click must clear the same aspect selection');
+ assert.equal(await candidate.isVisible(),true,'Clearing isolation must retain ordinary aspect display');
 
  const saturn=page.locator('#skyFoundationA .sky-foundation-row[data-placement="saturn"]').first();
  console.log('SATURN LEDGER LOCATOR '+await saturn.count());
