@@ -112,7 +112,9 @@ const partial=await page.evaluate(()=>{
   localStorage.setItem('relphiSkyAspectMatrixV1',JSON.stringify({'A-A':[],'B-B':[],'A-B':['conjunction','square','opposition']}));
   return window.RelphiRelationshipExportFocus.matrix();
 });
-assert.equal(partial.aspects,'3 of 11');
+assert.equal(partial.aspects,'Conjunction, Square, Opposition');
+const empty=await page.evaluate(()=>{localStorage.setItem('relphiSkyAspectMatrixV1',JSON.stringify({'A-A':[],'B-B':[],'A-B':[]}));return window.RelphiRelationshipExportFocus.matrix()});
+assert.equal(empty.aspects,'All','no selected aspect types must be reported as All');
 assert.equal(partial.scopes,'A↔B');
 assert.deepEqual(errors,[],'no browser errors');
 console.log('PASS A↔B-only matrix, Focus copy/PNG consistency, and separated Vocab groups');
