@@ -1,10 +1,12 @@
 import {chromium} from 'playwright';
 import assert from 'node:assert/strict';
-const fixture=(offset=0)=>({
+const fixture=(offset=0)=>{
+ const houseCusps=Array.from({length:12},(_,i)=>(168+offset+i*30)%360);
+ return {
  name:offset?'Comparison B':'Birth A',
  houseSystem:'porphyry',
- calcProfile:{instant:'2026-10-20T12:00:00.000Z',dateTime:'2026-10-20T06:00:00',timeZone:'America/Denver',latitude:40.76,longitude:-111.89,houseSystem:'porphyry'},
- houseCusps:Array.from({length:12},(_,i)=>(168+offset+i*30)%360),
+ calcProfile:{instant:'2026-10-20T12:00:00.000Z',dateTime:'2026-10-20T06:00:00',timeZone:'America/Denver',latitude:40.76,longitude:-111.89,houseSystem:'porphyry',houseCusps},
+ houseCusps,
  placements:{
   Sun:{name:'Sun',longitude:170+offset},Moon:{name:'Moon',longitude:279+offset},
   Mercury:{name:'Mercury',longitude:195+offset},Venus:{name:'Venus',longitude:215+offset},
@@ -14,7 +16,7 @@ const fixture=(offset=0)=>({
   Ascendant:{name:'Ascendant',longitude:168+offset},Descendant:{name:'Descendant',longitude:348+offset},
   'Medium Coeli':{name:'Medium Coeli',longitude:258+offset},'Imum Coeli':{name:'Imum Coeli',longitude:78+offset}
  }
-});
+}};
 const browser=await chromium.launch({headless:true});
 const errors=[];
 const boot=async(page,compare)=>{
