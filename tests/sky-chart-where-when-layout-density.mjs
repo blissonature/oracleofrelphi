@@ -57,7 +57,9 @@ const mobileFocusLayout=await page.locator('#skyFoundationFocus>.sky-foundation-
   const hr=r(heading);
   return{
     titleTop:title?.top??null,
+    titleCenter:title?(title.top+title.bottom)/2:null,
     actionsTop:actions?.top??null,
+    actionsCenter:actions?(actions.top+actions.bottom)/2:null,
     displayTop:display?.top??null,
     harmonicTop:harmonic?.top??null,
     firstRowBottom:Math.max(title?.bottom||0,actions?.bottom||0),
@@ -67,7 +69,7 @@ const mobileFocusLayout=await page.locator('#skyFoundationFocus>.sky-foundation-
   };
 });
 console.log('FOCUS_MOBILE_LAYOUT_DEBUG',JSON.stringify(mobileFocusLayout));
-assert.ok(Math.abs(mobileFocusLayout.titleTop-mobileFocusLayout.actionsTop)<=4,'On mobile, Copy and Download must share the Focus title row.');
+assert.ok(Math.abs(mobileFocusLayout.titleCenter-mobileFocusLayout.actionsCenter)<=4,'On mobile, Copy and Download must share the Focus title row.');
 assert.ok(Math.abs(mobileFocusLayout.displayTop-mobileFocusLayout.harmonicTop)<=4,'On mobile, Display and Harmonic Window must share the second row.');
 assert.ok(mobileFocusLayout.secondRowTop>mobileFocusLayout.firstRowBottom,'The selector row must sit below the Focus title/action row.');
 assert.ok(mobileFocusLayout.actionsRightGap!==null&&mobileFocusLayout.actionsRightGap<=12,'Mobile Copy and Download must remain right-aligned.');
