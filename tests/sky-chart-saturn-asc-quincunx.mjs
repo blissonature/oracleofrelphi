@@ -57,6 +57,29 @@ try{
   console.log('DIAGNOSTIC '+stage+' '+JSON.stringify(out));
  }
  await inspect('before');
+ // Reproduce the real gesture: pointer lands on the visible, near-exact
+ // Saturn/Ascendant aspect line. Dispatching a fake click without coordinates
+ // misses nearestAspect() and conceals touch/mouse hit-test regressions.
+ const aspectCoordinates=await page.evaluate(()=>{
+  const line=[...document.querySelectorAll('#skyFoundationWheelMount [data-layer="aspects"] > line.sky-foundation-aspect:not(.sky-foundation-aspect-hit)')]
+    .find(el=>el.dataset.aspect==='quincunx'&&[el.dataset.leftPlacement,el.dataset.rightPlacement].includes('saturn')&&[el.dataset.leftPlacement,el.dataset.rightPlacement].includes('asc'));
+  if(!line)throw new Error('missing Saturn / asc quincunx aspect line');
+  const point=line.ownerSVGElement.createSVGPoint(),ctm=line.getScreenCTM();
+  point.x=(Number(line.getAttribute('x1'))+Number(line.getAttribute('x2')))/2;
+  point.y=(Number(line.getAttribute('y1'))+Number(line.getAttribute('y2')))/2;
+  const client=point.matrixTransform(ctm);
+  return {x:client.x,y:client.y,identity:[line.dataset.leftSky,line.dataset.leftPlacement,line.dataset.aspect,line.dataset.rightSky,line.dataset.rightPlacement],index:line.dataset.relationIndex,cls:line.getAttribute('class')};
+ });
+ console.log('LINE CLICK POSITION',JSON.stringify(aspectCoordinates));
+ await page.mouse.click(aspectCoordinates.x,aspectCoordinates.y);
+ await page.waitForTimeout(650);
+ await inspect('after real mouse aspect-line click');
+ const clickedState=await page.evaluate(()=>({
+   focus:window.RelphiSkyFoundationInteractions?.captureFocus?.(),
+   count:document.querySelector('#skyFoundationRelationshipCount')?.textContent,
+   lines:[...document.querySelectorAll('[data-layer="aspects"] > line.sky-foundation-aspect:not(.sky-foundation-aspect-hit)')].filter(el=>el.dataset.aspect==='quincunx'&&[el.dataset.leftPlacement,el.dataset.rightPlacement].includes('saturn')&&[el.dataset.leftPlacement,el.dataset.rightPlacement].includes('asc')).map(el=>({cls:el.getAttribute('class'),display:getComputedStyle(el).display,opacity:getComputedStyle(el).opacity})),
+ }));
+ console.log('AFTER REAL CLICK STATE',JSON.stringify(clickedState));
  const candidate=page.locator('#skyFoundationRelationshipList > .sky-foundation-relationship-row[data-relationship-mode="A-A"][data-aspect="quincunx"][data-left-placement="saturn"][data-right-placement="asc"]');
  assert.equal(await candidate.count(),1,'Near-exact A↔A Saturn–Ascendant quincunx should be generated');
  assert.equal(await candidate.isVisible(),true,'Quincunx must pass the 1° harmonic window');
