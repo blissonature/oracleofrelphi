@@ -1113,7 +1113,14 @@ function vocabLineContext(line){
   });
   return{slot,placements,signs,houses};
 }
+function clearVocabTokenWheelMarkers(){
+  const wheel=document.querySelector('#skyFoundationWheelMount > .sky-foundation-wheel');
+  if(!wheel)return;
+  wheel.querySelectorAll('.is-vocab-token-context').forEach(node=>node.classList.remove('is-vocab-token-context'));
+  wheel.classList.remove('has-vocab-token-context');
+}
 function clearVocabWheelTokenContext(){
+  clearVocabTokenWheelMarkers();
   const api=window.RelphiSkyFoundationInteractions;
   api?.clearWheel?.();
   api?.clearWheelPreview?.();
@@ -1154,11 +1161,24 @@ function foundationSpec(context){
   if(context.kind==='house')return{kind:'house',sky:context.slot,value:context.house};
   return null;
 }
+function markVocabTokenWheel(context){
+  const wheel=document.querySelector('#skyFoundationWheelMount > .sky-foundation-wheel');
+  if(!wheel)return;
+  clearVocabTokenWheelMarkers();
+  const tokenSelector=context.kind==='placement'
+    ? '[data-focus-piece="placement"][data-sky="'+context.slot+'"][data-placement="'+CSS.escape(context.id)+'"]'
+    : context.kind==='sign'
+      ? '[data-focus-piece="sign"][data-sign="'+context.sign+'"]'
+      : '[data-focus-piece="house"][data-sky="'+context.slot+'"][data-house="'+context.house+'"]';
+  wheel.querySelectorAll(tokenSelector).forEach(node=>node.classList.add('is-vocab-token-context'));
+  wheel.classList.add('has-vocab-token-context');
+}
 function applyVocabTokenWheelContext(tokenNode){
   const context=vocabTokenWheelContext(tokenNode),api=window.RelphiSkyFoundationInteractions;
   if(!context||!api?.previewWheel)return;
   clearVocabLineIsolation();
   if(!api.previewWheel(foundationSpec(context)))return;
+  markVocabTokenWheel(context);
   vocabWheelContextToken?.classList.remove('is-wheel-token-active');
   tokenNode.classList.add('is-wheel-token-active');
   vocabWheelContextToken=tokenNode;
@@ -1180,7 +1200,8 @@ function togglePinnedVocabToken(tokenNode){
   vocabWheelContextToken?.classList.remove('is-wheel-token-active');
   vocabWheelContextToken=wasPinned?null:tokenNode;
   tokenNode.classList.toggle('is-wheel-token-active',!wasPinned);
-  api.toggleWheel(foundationSpec(context));
+  if(api.toggleWheel(foundationSpec(context)))markVocabTokenWheel(context);
+  else clearVocabTokenWheelMarkers();
 }
 function applyVocabWheelContext(line){
   if(line===vocabWheelContextLine)return;

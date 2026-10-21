@@ -21,3 +21,8 @@
 /* Structural Vocab context keeps native sector fills and adds a quiet glow, without dimming neighbors. */
 .sky-foundation-wheel.has-vocab-axis-context .sky-foundation-sign-sector.is-vocab-context,
 .sky-foundation-wheel.has-vocab-axis-context .sky-foundation-house-sector.is-vocab-context{filter:brightness(1.06) drop-shadow(0 0 3px rgba(255,255,255,.88)) drop-shadow(0 0 4px rgba(89,106,129,.42))!important}
+/* A single Vocab token is a visual pointer, not a filter. Keep all other
+   wheel geometry at its native illumination while the token glows. */
+.sky-foundation-wheel.has-vocab-token-context.has-isolation [data-focus-piece],
+.sky-foundation-wheel.has-vocab-token-context.has-isolation [data-layer="zodiac"] [data-focus-piece]:not(.is-kept){opacity:1!important;filter:none!important}
+.sky-foundation-wheel.has-vocab-token-context [data-focus-piece].is-vocab-token-context{opacity:1!important;filter:brightness(1.12) drop-shadow(0 0 3px rgba(255,255,255,.9)) drop-shadow(0 0 6px rgba(94,113,136,.65))!important}
