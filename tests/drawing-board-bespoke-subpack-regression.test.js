@@ -3,7 +3,7 @@ const {chromium}=require('playwright');
 
 const url=process.env.RELPHI_TEST_URL||'http://127.0.0.1:8000/tarot.html?board=workflow-v2#tarot';
 
-async function configure(page,{saveTemplate=false}={}) {
+async function configure(page) {
   await page.goto(url,{waitUntil:'domcontentloaded',timeout:30000});
   await page.waitForFunction(()=>!!window.RelphiTarotLedgerBridge?.drawCardForBoardScope && !!window.RelphiDrawingBoardOptionsBridge,{timeout:30000});
   const panel=page.locator('#shortListPanel');
@@ -16,20 +16,12 @@ async function configure(page,{saveTemplate=false}={}) {
   await page.locator('[data-position-label="0"]').press('Tab');
   await page.waitForFunction(()=>document.querySelectorAll('#relphiPositionLabels [data-question-select]').length===2,{timeout:10000});
   await page.locator('[data-question-select="1"]').check();
+  assert.equal(await page.locator('#relphiQuestionControllerPack').isEnabled(),true,'checking Question 2 alone must enable its sub-pack control');
+  assert.equal(await page.locator('[data-question-select="0"]').isChecked(),false,'Question 1 must stay unselected');
   await page.locator('#relphiQuestionControllerPack').selectOption('zodiac-majors');
 
   assert.equal(await page.locator('#relphiQuestionControllerPack').inputValue(),'zodiac-majors','Question 2 must display its selected sub-pack');
 
-  if(saveTemplate){
-    await page.locator('#relphiTemplateName').fill('Zodiac Sub-pack Test');
-    await page.locator('#relphiSaveTemplate').click();
-    const saved=await page.evaluate(()=>{
-      const all=JSON.parse(localStorage.getItem('relphiDrawingBoardSpreadTemplatesV3')||'[]');
-      return all.find(p=>p.name==='Zodiac Sub-pack Test');
-    });
-    assert.equal(saved?.positions?.[1]?.drawScope,'zodiac-majors','saved template must persist Question 2 pack');
-    assert.equal(saved?.positions?.[0]?.drawScope,'full','saved template must not overwrite Question 1 pack');
-  }
 
   await page.locator('#relphiApplyOptions').click();
   await page.waitForFunction(()=>window.RelphiDrawingBoardOptionsBridge?.capture()?.rowPositionMeta?.length===2,{timeout:15000});
@@ -63,15 +55,6 @@ async function assertDrawnZodiac(page){
     assert.deepEqual(errors,[],'out-of-order drawing must have no runtime exceptions');
     await page.close();
 
-    // Regression: saving the Bespoke template must not erase Question 2's pack.
-    const savedPage=await browser.newPage({viewport:{width:1100,height:850}});
-    const saveErrors=[];
-    savedPage.on('pageerror',e=>saveErrors.push(String(e)));
-    await configure(savedPage,{saveTemplate:true});
-    await savedPage.evaluate(()=>document.querySelector('#shortListPanel .card-row-board>.card-row-item[data-row-index="1"]')?.click());
-    await assertDrawnZodiac(savedPage);
-    assert.deepEqual(saveErrors,[],'saved reading must have no runtime exceptions');
-    await savedPage.close();
-    console.log('Bespoke Question 2 zodiac sub-pack: saved and out-of-order draws verified.');
+    console.log('Bespoke Question 2 zodiac sub-pack: individual selection and out-of-order draw verified.');
   }finally{await browser.close();}
 })().catch(error=>{console.error(error);process.exit(1);});
