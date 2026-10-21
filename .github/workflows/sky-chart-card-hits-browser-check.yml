@@ -318,6 +318,10 @@ jobs:
           assert.ok(Math.abs(rulerRails.sample.imgBottom-rulerRails.sample.houseTop)<=0.75,'Bottom house rail must sit flush against card art.');
 
           await page.locator('#skyFoundationA [data-card-hits-view="houses"]').click();
+          // House art is intentionally lazy-loaded. Move its first card into the
+          // visible drawer viewport before asserting decoded image geometry.
+          const firstHouseArt=page.locator('#skyFoundationA .sky-card-houses .sky-card-house-decan-art img').first();
+          await firstHouseArt.scrollIntoViewIfNeeded();
           await page.waitForFunction(()=>{
             const tab=document.querySelector('#skyFoundationA [data-card-hits-view="houses"]');
             const houses=document.querySelector('#skyFoundationA .sky-card-houses');

@@ -11,10 +11,12 @@ async function openBoard(page){
   const panel=page.locator('#shortListPanel');
   if(!(await panel.isVisible())) await page.click('#relphiOpenDrawingBoardCurrent');
   await panel.waitFor({state:'visible'});
+  await page.locator('#relphiBoardSettingsButton').click();
   await page.waitForSelector('#shortListPanel #drawingBoardOptionsButton',{state:'visible',timeout:10000});
 }
 async function applyCeltic(page){
   await page.click('#drawingBoardOptionsButton');
+  await page.locator('[data-referent-path="templates"]').click();
   await page.waitForSelector('.relphi-reading-options-drawer.is-reading-options-open #relphiSpreadTemplateSelect',{state:'visible'});
   await page.selectOption('#relphiSpreadTemplateSelect','celtic-cross-10');
   await page.click('#relphiApplyOptions');

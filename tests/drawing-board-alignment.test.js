@@ -16,6 +16,7 @@ fs.mkdirSync(out,{recursive:true});
     await page.waitForFunction(() => !!window.RelphiDrawingBoardSpreadPrefabs && !!window.RelphiDrawingBoardPrefabsBridge && !!window.RelphiDrawingBoardOptionsBridge,{timeout:20000});
     if (!(await page.locator('#shortListPanel').isVisible())) await page.click('#relphiOpenDrawingBoardCurrent');
     await page.waitForSelector('#shortListPanel .card-row-workspace-toolbar.relphi-board-controller',{state:'visible'});
+    await page.locator('#relphiBoardSettingsButton').click();
 
     // Magnet geometry is exercised in drawing-board-runtime.test.js on the actual
     // mobile toolbar. This test owns the visible description-layer title alignment.

@@ -382,7 +382,7 @@
       const start=svg.createSVGPoint(),end=svg.createSVGPoint();start.x=Number(line.getAttribute('x1'));start.y=Number(line.getAttribute('y1'));end.x=Number(line.getAttribute('x2'));end.y=Number(line.getAttribute('y2'));
       const distance=distanceToSegment(event.clientX,event.clientY,start.matrixTransform(matrix),end.matrixTransform(matrix));if(distance<best){best=distance;nearest=line}
     });
-    return best<=9?nearest:null;
+    return best<=14?nearest:null;
   }
   function interactive(event){
     const root=document.getElementById('skyFoundationRoot');if(!root)return null;

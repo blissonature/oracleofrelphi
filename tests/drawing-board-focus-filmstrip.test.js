@@ -11,6 +11,7 @@ async function openBoard(page){
   const panel=page.locator('#shortListPanel');
   if(!(await panel.isVisible())) await page.click('#relphiOpenDrawingBoardCurrent');
   await panel.waitFor({state:'visible'});
+  await page.locator('#relphiBoardSettingsButton').click();
 }
 async function resetAndApplyQuestions(page,labels){
   await page.click('#drawingBoardOptionsButton');
