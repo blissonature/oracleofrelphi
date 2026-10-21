@@ -31,7 +31,8 @@ async function applyQuestions(page,labels){
   const firstLabel=page.locator('#relphiPositionLabels [data-position-label="0"]').first();
   await firstLabel.waitFor({state:'visible'});
   await firstLabel.fill(labels.join(', '));
-  await firstLabel.dispatchEvent('change');
+  // Comma-list parsing is deliberately deferred until Question 1 loses focus.
+  await firstLabel.evaluate(input=>input.blur());
   await page.waitForFunction(count=>document.querySelectorAll('#relphiPositionLabels .relphi-label-row').length===count,labels.length);
   await page.click('#relphiApplyOptions');
   await page.waitForFunction(count=>{
