@@ -48,8 +48,18 @@ async function resetAndApplyQuestions(page,labels){
 
     const labels=Array.from({length:20},(_,i)=>`Question ${i+1}`);
     await resetAndApplyQuestions(page,labels);
+    // Seed a nine-card Focus fixture through the public ledger bridge. This
+    // test isolates Focus scrolling/scrubbing, not the Attune drawing ritual,
+    // which is exercised in the reading-text browser check.
+    const seeded=await page.evaluate(()=>{
+      const ledger=window.RelphiTarotLedgerBridge;
+      return window.RELPHI_TAROT_CARDS.slice(0,9).map(card=>ledger.addCardToBoard(card.card_id,'full'));
+    });
+    assert.equal(seeded.length,9);
+    assert.equal(seeded.every(Boolean),true,'Focus fixture must receive nine distinct cards');
+    await page.waitForFunction(()=>document.querySelectorAll('#shortListPanel .card-row-board [data-row-card]').length===9);
 
-    await page.locator('.card-row-item[data-row-index="0"] .card-row-drop-card').evaluate(node=>node.click());
+    await page.locator('.card-row-item[data-row-index="0"] [data-row-card]').evaluate(node=>node.click());
     await page.waitForSelector('.relphi-focus-reader',{state:'visible'});
     await page.waitForFunction(()=>Number(document.querySelector('.relphi-focus-reader')?.dataset.focusIndex)===0);
 
