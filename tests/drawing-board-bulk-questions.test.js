@@ -10,7 +10,7 @@ const prefabs = fs.readFileSync(path.join(root, 'drawing-board-spread-prefabs-v1
 
 assert.doesNotMatch(board, /relphiBulkQuestions/);
 assert.match(board, /function parseBulkQuestions\(value\)/);
-assert.match(board, /const MAX_POSITIONS = 50;/);
+assert.match(board, /const MAX_POSITIONS = 78;/, 'Position limit is the full 78-card deck');
 assert.doesNotMatch(board, /slice\(0,90\)|maxlength="90"/);
 assert.match(board, /slice\(0,MAX_POSITIONS\)/);
 assert.doesNotMatch(board, /MAX_QUESTION_LENGTH|maxlength="1000"|slice\(0,\s*1000\)/);

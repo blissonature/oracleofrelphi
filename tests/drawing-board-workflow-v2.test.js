@@ -62,7 +62,7 @@ assert.match(board, /if\(craftedReadingActive\|\|boardHasCraftedStructure\(root\
 assert.match(board, /if \(!zoomToolbarVisibleForState\(root\)\) return/);
 assert.match(board, /relphiCraftedPath/);
 assert.match(board, /craftedPath/);
-assert.match(board, /const path=activeCraftedPath\|\|'templates'/);
+assert.match(board, /const path=crowleyActive\?'templates':\(activeCraftedPath\|\|''\)/, 'Crowley template path is explicit; other Crafted paths preserve selection');
 assert.match(board, /visibleToolbarHeight/);
 assert.match(board, /function cancelBoardSettings/);
 assert.match(board, /boardSetupConfirmed=true/);
