@@ -38,9 +38,9 @@ async function applyCeltic(page){
     await openBoard(page);
     await applyCeltic(page);
 
-    // The horizontal crossing card intentionally overlays the center of the
-    // covering card. Click its exposed top corner, not the obstructed midpoint.
-    await page.locator('.card-row-item[data-row-index="0"] .card-row-drop-card').click({position:{x:8,y:8}});
+    // Draw through the visible action: Celtic crossing placeholders overlap
+    // by design and are not reliable click targets for drawing cards.
+    await page.click('#drawRandomRowCard');
     await page.waitForSelector('.card-row-item[data-row-index="0"] [data-row-card]',{state:'visible'});
     if(await page.locator('.relphi-focus-reader').count()) await page.click('.relphi-focus-close');
 
