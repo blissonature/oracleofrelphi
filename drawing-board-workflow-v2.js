@@ -5780,6 +5780,14 @@
     boardOpen=trigger.getAttribute('aria-expanded')==='true' && !root.hidden;
     if (!boardOpen) { root.hidden=true; trigger.textContent='Open Drawing Board'; trigger.setAttribute('aria-expanded','false'); }
     else enhance(root);
+    // Revision-specific preview links can open the Bespoke editor directly.
+    // Normal site navigation and restored reading sessions are unchanged.
+    if(new URLSearchParams(location.search).get('previewBespoke')==='1' && !window.__relphiBespokePreviewOpened){
+      window.__relphiBespokePreviewOpened=true;
+      setBoardOpen(true,{fit:false});
+      openOptions(root);
+      root.querySelector('[data-referent-path="bespoke"]')?.click();
+    }
     return true;
   }
   function bootUntilReady(attempt=0){
