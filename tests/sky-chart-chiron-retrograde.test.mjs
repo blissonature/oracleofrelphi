@@ -82,7 +82,7 @@ test('Rx is reachable from every Sky Chart output surface',()=>{
   assert.match(compact,/RelphiSkyRetrograde\?\.forPlacement/);
   assert.match(semantic,/RelphiSkyRetrograde\?\.forPlacement/);
   assert.match(imageExport,/RelphiSkyRetrograde\?\.forPlacement/);
-  assert.ok(html.includes('relphi-chiron-ephemeris-v1.js?v=7'));
+  assert.match(html,/relphi-chiron-ephemeris-v1\.js\?v=\d+/,'Chiron ephemeris must be loaded with a versioned resource URL');
   assert.ok(/sky-chart-foundation-v2\.js\?v=\d+/.test(html));
   assert.ok(/sky-chart-relationship-export-columns-v1\.js\?v=\d+/.test(html));
 });

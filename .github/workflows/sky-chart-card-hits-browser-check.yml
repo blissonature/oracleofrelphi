@@ -318,9 +318,12 @@ jobs:
           assert.ok(Math.abs(rulerRails.sample.imgBottom-rulerRails.sample.houseTop)<=0.75,'Bottom house rail must sit flush against card art.');
 
           await page.locator('#skyFoundationA [data-card-hits-view="houses"]').click();
-          // House art is intentionally lazy-loaded. Move its first card into the
-          // visible drawer viewport before asserting decoded image geometry.
-          const firstHouseArt=page.locator('#skyFoundationA .sky-card-houses .sky-card-house-decan-art img').first();
+          // The House display is progressive: collapsed rows intentionally hide
+          // their lazy artwork. Expand the first House as a user would, then
+          // test the visible image rather than attempting to scroll a hidden one.
+          await page.locator('#skyFoundationA [data-card-house-toggle]').first().click();
+          const firstHouseArt=page.locator('#skyFoundationA .sky-card-house-detail:not([hidden]) .sky-card-house-decan-art img').first();
+          await firstHouseArt.waitFor({state:'visible',timeout:10000});
           await firstHouseArt.scrollIntoViewIfNeeded();
           await page.waitForFunction(()=>{
             const tab=document.querySelector('#skyFoundationA [data-card-hits-view="houses"]');
@@ -362,7 +365,7 @@ jobs:
           assert.equal(houseArt.media,'local-house-art');
 
           await page.waitForSelector('#skyFoundationA [data-card-house-toggle]',{timeout:10000});
-          await page.locator('#skyFoundationA [data-card-house-toggle]').first().click();
+          // The first House remains expanded from the decan geometry assertion.
           await page.waitForFunction(()=>{
             const imgs=[...document.querySelectorAll('#skyFoundationA .sky-card-house-detail-row[data-card-house-detail-role="ruler"] .sky-card-house-span-major-art img,#skyFoundationA .sky-card-house-detail-row[data-card-house-detail-role="sign"] .sky-card-house-span-major-art img')];
             return imgs.length===2&&imgs.every(img=>img.complete&&img.naturalWidth>0);
