@@ -3677,3 +3677,12 @@ body:has(.relphi-attune-reader),body:has(.relphi-focus-reader){
     height:2.15rem!important;min-height:2.15rem!important;
   }
 }
+
+
+/* A closed details disclosure must override the absolute-positioned panel rule. */
+#shortListPanel .relphi-referent-panel .relphi-question-more:not([open])>.relphi-question-more-panel{
+  display:none!important;
+}
+#shortListPanel .relphi-referent-panel .relphi-question-more[open]>.relphi-question-more-panel{
+  display:grid!important;
+}
