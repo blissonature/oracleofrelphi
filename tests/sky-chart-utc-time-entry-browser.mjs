@@ -60,6 +60,18 @@ for(const spec of cases){
   assert.ok(preview.localLabel.includes(spec.zone)&&preview.localLabel.includes(spec.offset),spec.name+': visible equivalent with offset');
   assert.ok(preview.scrollWidth<=preview.width+5,spec.name+': editor must not overflow horizontally');
 
+  // Planetary Hours' draft link must use the UTC instant directly. In a
+  // repeated DST hour its local HH:mm cannot identify which occurrence.
+  await page.waitForFunction(()=>{
+    const link=document.querySelector('#skyFoundationA [data-draft-where-when-link="true"]');
+    return !!link&&new URLSearchParams(String(link.getAttribute('href')||'').split('#')[1]||'').has('dt');
+  },null,{timeout:15000});
+  const linkedInstant=await page.evaluate(()=>{
+    const link=document.querySelector('#skyFoundationA [data-draft-where-when-link="true"]');
+    return new URLSearchParams(String(link.getAttribute('href')||'').split('#')[1]||'').get('dt');
+  });
+  assert.equal(new Date(linkedInstant).toISOString(),spec.date+'T'+spec.time+':00.000Z',spec.name+': the draft heptagram must use the exact UTC instant');
+
   if(spec.name.includes('date boundary')){
     // Toggle back: the enhanced 12-hour picker must show the UTC-derived local time.
     await editor.locator('[data-ww-field="time-basis"][value="local"]').check();
