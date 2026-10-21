@@ -168,6 +168,10 @@ async function assertFreeformClearCardsLeavesZeroSlotBoard(page,expectedCards){
   try {
     const page=await browser.newPage({viewport:{width:390,height:844}});
     await openBoard(page);
+    // Page chrome and navigation may finish asynchronous layout after the board
+    // toolbar becomes visible. Measure only after the document layout settles.
+    await page.waitForLoadState('networkidle');
+    await page.waitForTimeout(500);
     const workspaceTopBeforeSettings=await page.locator('#shortListPanel .card-row-workspace').evaluate(el=>el.getBoundingClientRect().top+window.scrollY);
     await page.click('#relphiBoardSettingsButton');
     await page.waitForSelector('.relphi-board-settings-panel',{state:'visible'});
