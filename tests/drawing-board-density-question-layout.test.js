@@ -115,6 +115,8 @@ async function applyQuestions(page,labels){
     await page.click('#zoomCardRowExtents');
     await page.waitForTimeout(180);
 
+    if((await page.locator('#relphiBoardSettingsButton').getAttribute('aria-expanded'))!=='true')
+      await page.click('#relphiBoardSettingsButton');
     await page.click('#drawingBoardOptionsButton');
     await page.waitForSelector('.relphi-reading-options-drawer.is-reading-options-open',{state:'visible'});
     await page.click('[data-referent-path="bespoke"]');
