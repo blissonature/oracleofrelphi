@@ -7,6 +7,7 @@ on:
   pull_request:
     paths:
       - 'drawing-board-workflow-v2.js'
+      - 'drawing-board-bespoke-pack-bridge-v1.js'
       - 'drawing-board-workflow-v2.css'
       - 'drawing-board.html'
       - 'navloader.js'
@@ -39,6 +40,8 @@ jobs:
           node --check tests/drawing-board-runtime.test.js
           node --check tests/drawing-board-iphone-regressions.test.js
           node --check tests/drawing-board-bespoke-mobile-regression.test.js
+          node --check tests/drawing-board-bespoke-subpack-regression.test.js
+          node --check drawing-board-bespoke-pack-bridge-v1.js
           node --check tests/drawing-board-alignment.test.js
           node --check tests/drawing-board-bulk-questions.test.js
           node --check tests/drawing-board-clear-cards.test.js
@@ -70,6 +73,7 @@ jobs:
           SERVER_PID=$!
           trap 'kill $SERVER_PID || true' EXIT
           node tests/drawing-board-bespoke-mobile-regression.test.js
+          node tests/drawing-board-bespoke-subpack-regression.test.js
           node tests/drawing-board-recursion-mobile-focus.test.js
           node tests/drawing-board-referents.test.js || true
           node tests/drawing-board-recursion.test.js || true
