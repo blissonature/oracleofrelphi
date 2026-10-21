@@ -21,6 +21,11 @@ async function resetAndApplyQuestions(page,labels){
     const state=window.RelphiDrawingBoardPrefabsBridge?.getState?.();
     return state && !state.activeLayout && state.slotCount===0 && state.hasCards===false;
   });
+  // Reset returns to Free. Reopen Crafted/Bespoke before authoring positions.
+  if((await page.locator('#relphiBoardSettingsButton').getAttribute('aria-expanded'))!=='true')
+    await page.locator('#relphiBoardSettingsButton').click();
+  await page.locator('#drawingBoardOptionsButton').click();
+  await page.locator('[data-referent-path="bespoke"]').click();
   await page.waitForSelector('#relphiBulkReferents',{state:'visible'});
   await page.fill('#relphiBulkReferents',labels.join(', '));
   await page.click('#relphiParseReferents');
