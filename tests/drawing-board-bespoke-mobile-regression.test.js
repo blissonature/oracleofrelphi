@@ -80,6 +80,7 @@ const base=process.env.RELPHI_TEST_URL||'http://127.0.0.1:8000/tarot.html?board=
     });
     assert.deepEqual(undersizedMobileFields,[],'visible mobile Drawing Board form controls must not fall below 16px and trigger iOS focus zoom');
 
+    await page.locator('.relphi-question-more>summary').tap();
     await page.locator('#relphiPositionLabels [data-question-select="0"]').check();
     assert.equal(await page.locator('#relphiQuestionControllerPack').isEnabled(),true,'selected question must allow Sub-pack changes');
     assert.equal(await page.locator('#relphiQuestionControllerCards').isEnabled(),true,'selected question must allow card-count changes');
