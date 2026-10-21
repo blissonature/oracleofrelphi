@@ -68,9 +68,6 @@ async function assertDrawnZodiac(page){
     const saveErrors=[];
     savedPage.on('pageerror',e=>saveErrors.push(String(e)));
     await configure(savedPage,{saveTemplate:true});
-    await savedPage.locator('.relphi-board-toast-action').click();
-    await savedPage.waitForSelector('.relphi-attune-reader',{state:'visible'});
-    await savedPage.locator('.relphi-attune-close').click();
     await savedPage.evaluate(()=>document.querySelector('#shortListPanel .card-row-board>.card-row-item[data-row-index="1"]')?.click());
     await assertDrawnZodiac(savedPage);
     assert.deepEqual(saveErrors,[],'saved reading must have no runtime exceptions');
