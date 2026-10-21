@@ -39,7 +39,9 @@ const base=process.env.RELPHI_TEST_URL||'http://127.0.0.1:8000/tarot.html?board=
       const toolbar=document.querySelector('.relphi-question-toolbar-settings');
       const pack=document.querySelector('#relphiQuestionControllerPack');
       const cards=document.querySelector('#relphiQuestionControllerCards');
-      const link=document.querySelector('#relphiQuestionControllerLink');
+      const reversals=document.querySelector('#relphiQuestionControllerReversals');
+      const repeats=document.querySelector('#relphiQuestionControllerRepeats');
+      const more=document.querySelector('.relphi-question-more>summary');
       const visible=node=>{
         if(!node)return false;
         const r=node.getBoundingClientRect(),s=getComputedStyle(node);
@@ -50,14 +52,21 @@ const base=process.env.RELPHI_TEST_URL||'http://127.0.0.1:8000/tarot.html?board=
         toolbarWidth:toolbar?.getBoundingClientRect().width||0,
         pack:visible(pack),
         cards:visible(cards),
-        link:visible(link)
+        reversals:visible(reversals),
+        repeats:visible(repeats),
+        more:visible(more)
       };
     });
     assert.equal(geometry.toolbar,true,'Bespoke card settings toolbar must be visible on mobile');
     assert.ok(geometry.toolbarWidth>200,'Bespoke card settings toolbar must have usable mobile width');
-    assert.equal(geometry.pack,true,'Sub-pack must be visible on mobile');
-    assert.equal(geometry.cards,true,'Cards per question must be visible on mobile');
-    assert.equal(geometry.link,true,'Share card with must be visible on mobile');
+    assert.equal(geometry.pack,false,'Subpack must stay hidden until More Options opens');
+    assert.equal(geometry.cards,false,'Cards per Question must stay hidden until More Options opens');
+    assert.equal(geometry.reversals,true,'Reversals must remain visible');
+    assert.equal(geometry.repeats,true,'Repeats must remain visible');
+    assert.equal(geometry.more,true,'Ellipsis must be visible');
+    await page.locator('.relphi-question-more>summary').tap();
+    assert.equal(await page.locator('#relphiQuestionControllerPack').isVisible(),true);
+    assert.equal(await page.locator('#relphiQuestionControllerCards').isVisible(),true);
 
     const undersizedMobileFields=await page.evaluate(()=>{
       const controls=Array.from(document.querySelectorAll('#shortListPanel.relphi-settings-open .relphi-board-settings-panel input, #shortListPanel.relphi-settings-open .relphi-board-settings-panel textarea, #shortListPanel.relphi-settings-open .relphi-board-settings-panel select'));
@@ -74,7 +83,7 @@ const base=process.env.RELPHI_TEST_URL||'http://127.0.0.1:8000/tarot.html?board=
     await page.locator('#relphiPositionLabels [data-question-select="0"]').check();
     assert.equal(await page.locator('#relphiQuestionControllerPack').isEnabled(),true,'selected question must allow Sub-pack changes');
     assert.equal(await page.locator('#relphiQuestionControllerCards').isEnabled(),true,'selected question must allow card-count changes');
-    assert.equal(await page.locator('#relphiQuestionControllerLink').isEnabled(),true,'selected question must allow shared-card linking');
+    assert.equal(await page.locator('#relphiQuestionControllerLink').count(),0,'obsolete Share card with control must be absent');
 
     await page.locator('[data-referent-path="templates"]').tap();
     await page.waitForSelector('#relphiModifyTemplate',{state:'visible',timeout:10000});
