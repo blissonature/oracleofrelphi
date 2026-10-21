@@ -25,6 +25,14 @@ async function configure(page) {
   assert.equal(await page.locator('#relphiQuestionControllerPack').inputValue(),'zodiac-majors','Question 2 must display its selected sub-pack');
 
 
+  const toolbar=page.locator('.relphi-question-toolbar');
+  const info=await toolbar.evaluate(el=>({width:el.getBoundingClientRect().width,scrollWidth:el.scrollWidth,rows:[...el.children].map(n=>Math.round(n.getBoundingClientRect().top))}));
+  assert.ok(info.scrollWidth<=info.width+3,'mobile toolbar should not overflow horizontally: '+JSON.stringify(info));
+  assert.equal(info.rows[0],info.rows[1],'Select All and question actions should share row one');
+  assert.ok(info.rows[2]>info.rows[0],'drawing rules should occupy row two');
+  assert.equal(await page.locator('#relphiQuestionControllerReversals').isVisible(),true);
+  assert.equal(await page.locator('#relphiQuestionControllerRepeats').isVisible(),true);
+
   await page.locator('#relphiApplyOptions').click();
   await page.waitForFunction(()=>window.RelphiDrawingBoardOptionsBridge?.capture()?.rowPositionMeta?.length===2,{timeout:15000});
   const state=await page.evaluate(()=>window.RelphiDrawingBoardOptionsBridge.capture());
@@ -52,13 +60,6 @@ async function assertDrawnZodiac(page){
     const errors=[];
     page.on('pageerror',e=>errors.push(String(e)));
     await configure(page);
-    const toolbar=page.locator('.relphi-question-toolbar');
-    const info=await toolbar.evaluate(el=>({width:el.getBoundingClientRect().width,scrollWidth:el.scrollWidth,rows:[...el.children].map(n=>Math.round(n.getBoundingClientRect().top))}));
-    assert.ok(info.scrollWidth<=info.width+3,'mobile toolbar should not overflow horizontally: '+JSON.stringify(info));
-    assert.equal(info.rows[0],info.rows[1],'Select All and question actions should share row one');
-    assert.ok(info.rows[2]>info.rows[0],'drawing rules should occupy row two');
-    assert.equal(await page.locator('#relphiQuestionControllerReversals').isVisible(),true);
-    assert.equal(await page.locator('#relphiQuestionControllerRepeats').isVisible(),true);
     await page.evaluate(()=>document.querySelector('#shortListPanel .card-row-board>.card-row-item[data-row-index="1"]')?.click());
     await assertDrawnZodiac(page);
     assert.deepEqual(errors,[],'out-of-order drawing must have no runtime exceptions');
