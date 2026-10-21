@@ -38,8 +38,10 @@ async function openBoard(page){
 }
 
 async function applyTemplate(page,id){
-  await page.click('#relphiBoardSettingsButton');
+  if((await page.locator('#relphiBoardSettingsButton').getAttribute('aria-expanded'))!=='true')
+    await page.click('#relphiBoardSettingsButton');
   await page.click('#drawingBoardOptionsButton');
+  await page.click('[data-referent-path="templates"]');
   await page.waitForSelector('#relphiSpreadTemplateSelect',{state:'visible'});
   await page.selectOption('#relphiSpreadTemplateSelect',id);
   await page.click('#relphiApplyOptions');
@@ -47,7 +49,7 @@ async function applyTemplate(page,id){
 }
 
 async function fillCustomQuestions(page,questions){
-  const firstLabel='#relphiPositionLabels .relphi-label-row input';
+  const firstLabel='#relphiPositionLabels [data-position-label="0"]';
   if (!(await page.locator(firstLabel).first().isVisible().catch(()=>false))) {
     if (!(await page.locator('.relphi-reading-options-drawer.is-reading-options-open').count())) {
       if (!(await page.locator('#relphiBoardSettingsButton').getAttribute('aria-expanded')==='true')) await page.click('#relphiBoardSettingsButton');
@@ -59,7 +61,7 @@ async function fillCustomQuestions(page,questions){
   await page.waitForSelector(firstLabel,{state:'visible'});
   const input=page.locator(firstLabel).first();
   await input.fill(questions.join(', '));
-  await input.dispatchEvent('change');
+  await input.evaluate(node=>node.blur());
   await page.waitForFunction(count => document.querySelectorAll('#relphiPositionLabels .relphi-label-row').length===count,questions.length);
   await page.click('#relphiApplyOptions');
   await page.waitForFunction(count => {
@@ -71,6 +73,8 @@ async function fillCustomQuestions(page,questions){
 async function drawCards(page,count){
   for(let i=0;i<count;i+=1){
     await page.click('#drawRandomRowCard');
+    const attune=page.locator('.relphi-attune-reader [data-attune-random]');
+    if(await attune.isVisible().catch(()=>false))await attune.click();
     await page.waitForFunction(expected => document.querySelectorAll('#shortListPanel .card-row-board [data-row-card]').length===expected,i+1);
     const focus=page.locator('.relphi-focus-reader');
     try {
@@ -191,7 +195,7 @@ async function assertFreeformClearCardsLeavesZeroSlotBoard(page,expectedCards){
     assert.equal(await page.locator('#relphiResetBoard').isEnabled(),true,'Reset activates after a setup is confirmed');
     await page.click('#relphiResetBoard');
     assert.equal(await page.locator('#relphiFreePack').inputValue(),'full','Reset restores Full Pack');
-    assert.equal(await page.locator('#relphiFreeLabels').isChecked(),true,'Reset restores Labels');
+    assert.equal(await page.locator('#relphiFreeLabels').count(),0,'Free Mode has no position stickers');
     assert.equal(await page.locator('#relphiFreeReversals').isChecked(),true,'Reset restores Reversals');
     assert.equal(await page.locator('#relphiFreeRepeats').isChecked(),false,'Reset restores Repeats off');
     await page.click('#relphiCancelFreeSettings');
