@@ -52,8 +52,8 @@ const base=process.env.RELPHI_TEST_URL||'http://127.0.0.1:8000/tarot.html?board=
         toolbarWidth:toolbar?.getBoundingClientRect().width||0,
         pack:visible(pack),
         cards:visible(cards),
-        reversals:visible(reversals),
-        repeats:visible(repeats),
+        reversals:!!reversals && getComputedStyle(reversals).display!=='none' && reversals.getBoundingClientRect().width>0,
+        repeats:!!repeats && getComputedStyle(repeats).display!=='none' && repeats.getBoundingClientRect().width>0,
         more:visible(more)
       };
     });
