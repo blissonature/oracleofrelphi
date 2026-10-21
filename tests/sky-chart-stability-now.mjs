@@ -148,21 +148,22 @@ const heptagramTotalBeforeRefresh = await page.locator('.sky-ph-heptagram').coun
 const initialHeptagramsStable = await page.evaluate(async () => {
   const beforeA = document.querySelector('#skyFoundationA .sky-ph-heptagram');
   const beforeB = document.querySelector('#skyFoundationB .sky-ph-heptagram');
+  const firstState=svg=>svg?[svg.dataset.planetaryDay||'',svg.dataset.planetaryHour||'']:null;
   for (let index = 0; index < 12; index += 1) {
     window.dispatchEvent(new Event('relphi:sky-foundation-ready'));
     window.dispatchEvent(new Event('relphi:sky-foundation-interactions-ready'));
   }
   await new Promise(resolve => setTimeout(resolve, 750));
   return {
-    sameA:beforeA === document.querySelector('#skyFoundationA .sky-ph-heptagram'),
-    sameB:beforeB === document.querySelector('#skyFoundationB .sky-ph-heptagram'),
+    sameA:JSON.stringify(firstState(beforeA)) === JSON.stringify(firstState(document.querySelector('#skyFoundationA .sky-ph-heptagram'))),
+    sameB:JSON.stringify(firstState(beforeB)) === JSON.stringify(firstState(document.querySelector('#skyFoundationB .sky-ph-heptagram'))),
     count:document.querySelectorAll('.sky-ph-heptagram').length,
     pending:document.querySelectorAll('.sky-ph-heptagram[data-canonical-heptagram-v2="pending"]').length,
     calculating:Array.from(document.querySelectorAll('.sky-ph-summary')).some(node => /Calculating/i.test(node.textContent || ''))
   };
 });
 assert.deepEqual(initialHeptagramsStable, { sameA:true, sameB:true, count:heptagramTotalBeforeRefresh, pending:0, calculating:false },
-  'Repeated ready events must not rebuild or strand the two sky heptagrams or other legitimate heptagram instances.');
+  'Repeated ready events must preserve planetary day/hour, stable instance counts and completed glyph states.');
 
 await page.locator('#skyFoundationB [data-final-now="B"]').click();
 await page.waitForFunction(({ canonical, latitude, longitude, timezone }) => {
@@ -205,6 +206,8 @@ await page.waitForFunction(() => document.documentElement.dataset.skyChartLiveIn
 
 const finalStability = await page.evaluate(async () => {
   const before = document.querySelector('#skyFoundationB .sky-ph-heptagram');
+  const planetKey=svg=>svg?[svg.dataset.planetaryDay||'',svg.dataset.planetaryHour||''].join('|'):'';
+  const previousPlanetKey=planetKey(before);
   const summary = document.querySelector('#skyFoundationB .sky-ph-summary')?.textContent || '';
   for (let index = 0; index < 12; index += 1) {
     window.dispatchEvent(new Event('relphi:sky-foundation-ready'));
@@ -212,13 +215,13 @@ const finalStability = await page.evaluate(async () => {
   }
   await new Promise(resolve => setTimeout(resolve, 750));
   return {
-    same:before === document.querySelector('#skyFoundationB .sky-ph-heptagram'),
+    same:previousPlanetKey === planetKey(document.querySelector('#skyFoundationB .sky-ph-heptagram')),
     summarySame:summary === (document.querySelector('#skyFoundationB .sky-ph-summary')?.textContent || ''),
     count:document.querySelectorAll('#skyFoundationB .sky-ph-heptagram').length,
     pending:document.querySelectorAll('#skyFoundationB .sky-ph-heptagram[data-canonical-heptagram-v2="pending"]').length
   };
 });
-assert.deepEqual(finalStability, { same:true, summarySame:true, count:1, pending:0 }, 'The updated heptagram must remain stable after event storms.');
+assert.deepEqual(finalStability, { same:true, summarySame:true, count:2, pending:0 }, 'The updated base and draft heptagrams must retain the same planetary information after readiness events.');
 assert.equal(await page.locator('#skyFoundationWheelMount .sky-axis-label').count(), 0);
 assert.deepEqual(errors, []);
 

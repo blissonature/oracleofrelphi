@@ -44,6 +44,7 @@ try {
     const img=frame.querySelector('img'),fs=getComputedStyle(frame),is=getComputedStyle(img),fr=frame.getBoundingClientRect(),ir=img.getBoundingClientRect();
     const bl=parseFloat(fs.borderLeftWidth)||0,br=parseFloat(fs.borderRightWidth)||0,bt=parseFloat(fs.borderTopWidth)||0,bb=parseFloat(fs.borderBottomWidth)||0;
     return{
+      sky:frame.closest('.inline-rel-card')?.classList.contains('sky-b')?'B':'A',
       frameRadius:fs.borderRadius,
       framePadding:[fs.paddingTop,fs.paddingRight,fs.paddingBottom,fs.paddingLeft],
       frameBorder:[fs.borderTopWidth,fs.borderRightWidth,fs.borderBottomWidth,fs.borderLeftWidth],
@@ -78,8 +79,10 @@ try {
     assert.ok(Math.abs(item.renderedRatio-item.sourceRatio)<0.01,'dual-card art must preserve the source image aspect ratio');
     assert.ok(Object.values(item.flush).every(delta=>delta<=0.75),'dual-card art must touch the inside edge of its Sky stroke without a gap');
   });
-  assert.equal(inlineCardArt[0].frameColor,'rgb(201, 33, 30)','Sky A card stroke must stay red');
-  assert.equal(inlineCardArt[1].frameColor,'rgb(36, 98, 208)','Sky B card stroke must stay blue');
+  inlineCardArt.forEach(item=>{
+    const expected=item.sky==='B'?'rgb(36, 98, 208)':'rgb(201, 33, 30)';
+    assert.equal(item.frameColor,expected,'Relationship '+item.sky+' card stroke must match the source sky even for A↔A or B↔B');
+  });
 
   const blank=await page.evaluate(()=>{
     const row=document.querySelector('.sky-foundation-relationship-row.is-inline-expanded');
