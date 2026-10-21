@@ -12,8 +12,8 @@ async function configure(page,{saveTemplate=false}={}) {
   await page.locator('#relphiBoardSettingsButton').click();
   await page.locator('#drawingBoardOptionsButton').click();
   await page.locator('[data-referent-path="bespoke"]').click();
-  await page.locator('#relphiBulkReferents').fill('What is moving?, Which zodiac sign is relevant?');
-  await page.locator('#relphiParseReferents').click();
+  await page.locator('[data-position-label="0"]').fill('What is moving?, Which zodiac sign is relevant?');
+  await page.locator('[data-position-label="0"]').press('Tab');
   await page.waitForFunction(()=>document.querySelectorAll('#relphiPositionLabels [data-question-select]').length===2,{timeout:10000});
   await page.locator('[data-question-select="1"]').check();
   await page.locator('#relphiQuestionControllerPack').selectOption('zodiac-majors');
