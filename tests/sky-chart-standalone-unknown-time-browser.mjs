@@ -120,6 +120,52 @@ assert.ok(moonFocus.fragments.every(x=>x==='leader'),'Unknown-time Moon range bo
 assert.ok(Number(moonFocus.dimmed)<.2,'Unknown-time Moon must dim when unrelated Pluto is selected: '+JSON.stringify(moonFocus));
 assert.ok(moonFocus.fragmentOpacity.every(x=>Number(x)<.2),'Unknown-time Moon range lines must dim with its symbol.');
 assert.ok(Number(moonFocus.restored)>.9,'Unknown-time Moon must restore after clearing focus.');
+// Regression: Moon-range boundaries must retain their OWN sky and Moon identity
+// in the comparison wheel, even after the ordinary placement interaction pass.
+// Previously the interaction layer paired each marker with leaders[index],
+// stealing a Moon boundary for a later sky's Sun.
+const knownSky={
+  name:'Known-time comparison',
+  calcProfile:{timeUnknown:false,dateTime:'2026-10-21T16:00',houseSystem:'porphyry',
+    houseCusps:Array.from({length:12},(_,index)=>index*30)},
+  placements:{
+    Sun:placement('Sun',210),
+    Moon:placement('Moon',245),
+    Mercury:placement('Mercury',268),
+    Venus:placement('Venus',315),
+    Mars:placement('Mars',345)
+  }
+};
+for(const scenario of [
+  {title:'unknown A beside known B',A:unknownSky,B:knownSky,rangeSky:'A',otherSky:'B'},
+  {title:'known A beside unknown B',A:knownSky,B:unknownSky,rangeSky:'B',otherSky:'A'}
+]){
+  await page.evaluate(({A,B})=>{
+    localStorage.setItem('relphiSkyChartA',JSON.stringify(A));
+    localStorage.setItem('relphiSkyChartB',JSON.stringify(B));
+    localStorage.setItem('relphiSkyChartLastModeV1','comparison');
+  },scenario);
+  await page.reload({waitUntil:'networkidle'});
+  await page.waitForFunction(()=>document.querySelector('#skyFoundationWheelMount>svg[data-ring-order="A-inner-B-outer"]')?.dataset.finalGeometryReady==='true',{timeout:20000});
+  await page.waitForTimeout(450);
+  const identity=await page.evaluate(({rangeSky,otherSky})=>{
+    const wheel=document.querySelector('#skyFoundationWheelMount>svg[data-ring-order="A-inner-B-outer"]');
+    const boundaries=[...wheel.querySelectorAll('[data-layer="leaders"] > line.sky-foundation-moon-range-boundary')];
+    const allRange=[...wheel.querySelectorAll('[data-layer="leaders"] > .sky-foundation-moon-range, [data-layer="leaders"] > .sky-foundation-moon-range-boundary, [data-layer="leaders"] > .sky-foundation-moon-range-leader')];
+    const otherSun=[...wheel.querySelectorAll(`[data-layer="leaders"] > line.sky-foundation-leader[data-sky="${otherSky}"][data-placement="sun"]`)];
+    const misplaced=allRange.filter(node=>node.dataset.sky!==rangeSky||node.dataset.placement!=='moon-range');
+    const reassigned=allRange.filter(node=>node.dataset.sign!==undefined||node.dataset.house!==undefined);
+    return{boundaryCount:boundaries.length,rangeCount:allRange.length,misplaced:misplaced.map(node=>node.outerHTML.slice(0,300)),reassigned:reassigned.map(node=>node.outerHTML.slice(0,300)),otherSunCount:otherSun.length,
+      otherSunPlacements:otherSun.map(node=>({sky:node.dataset.sky,placement:node.dataset.placement,sign:node.dataset.sign}))};
+  },scenario);
+  assert.equal(identity.boundaryCount,2,scenario.title+': two Moon-range boundaries expected');
+  assert.equal(identity.rangeCount,4,scenario.title+': band + two ticks + dashed leader expected');
+  assert.deepEqual(identity.misplaced,[],scenario.title+': Moon range has been assigned to the wrong sky or luminary');
+  assert.deepEqual(identity.reassigned,[],scenario.title+': Moon range inherited an ordinary Sun/planet annotation');
+  assert.equal(identity.otherSunCount,1,scenario.title+': other sky Sun retains its own leader');
+  assert.equal(identity.otherSunPlacements[0].placement,'sun',scenario.title+': Sun leader identity is stable');
+}
+
 await page.screenshot({path:'sky-chart-standalone-unknown-time.png',fullPage:true});
 await browser.close();
 console.log('Standalone unknown-time composition passed.');
