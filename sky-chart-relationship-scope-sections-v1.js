@@ -118,42 +118,51 @@ const MATRIX_SCOPES=Object.freeze([{id:'A-A',label:'A↔A'},{id:'B-B',label:'B�
 const MATRIX_ASPECTS=Object.freeze(['conjunction','semi-sextile','octile','sextile','quintile','square','trine','tri-octile','bi-quintile','quincunx','opposition']);
 function matrixFocus(){
   const scopes=MATRIX_SCOPES.filter(scope=>scope.id==='A-A'||skyIsPresent('B'));
-  const all=MATRIX_ASPECTS.length;
   let stored=null;
   try{stored=JSON.parse(localStorage.getItem('relphiSkyAspectMatrixV1')||'null')}catch(_){}
-  const values=Object.fromEntries(scopes.map(scope=>{
-    // The master checkbox shows the current scope state; the persisted value
-    // covers both checked and partially checked matrices.
-    const master=document.querySelector('[data-aspect-matrix-scope="'+scope.id+'"][data-aspect-matrix-aspect="all"]');
-    const picks=stored&&Array.isArray(stored[scope.id])?stored[scope.id].filter(id=>MATRIX_ASPECTS.includes(id)):null;
-    // Read actual selected cells when the matrix is mounted, including partial
-    // selections. Fall back to persisted state, whose default is all aspects.
-    const rendered=MATRIX_ASPECTS.map(id=>document.querySelector('[data-aspect-matrix-scope="'+scope.id+'"][data-aspect-matrix-aspect="'+id+'"]'));
-    const count=rendered.every(Boolean)?rendered.filter(input=>input.checked).length:
-      master?.checked?all:picks?picks.length:all;
-    return[scope.id,count];
-  }));
-  const selected=scopes.filter(scope=>values[scope.id]>0);
+  // The matrix defaults to all eleven aspects. A closed or unmounted filter
+  // menu is not an empty selection: use persisted values or defaults.
+  const checked=scope=>MATRIX_ASPECTS.filter(id=>{
+    const cell=document.querySelector('[data-aspect-matrix-scope="'+scope.id+'"][data-aspect-matrix-aspect="'+id+'"]');
+    if(cell)return cell.checked===true;
+    const saved=stored&&Array.isArray(stored[scope.id])?stored[scope.id]:MATRIX_ASPECTS;
+    return saved.includes(id);
+  });
+  const selection=scopes.map(scope=>({scope,picks:checked(scope)}));
+  const enabled=selection.filter(item=>item.picks.length);
+  const titleCase=id=>id.split('-').map(word=>word[0].toUpperCase()+word.slice(1)).join('-');
+  const phrase=picks=>picks.length===0?'None':picks.length===MATRIX_ASPECTS.length?'All':picks.map(titleCase).join(', ');
+  const uniform=selection.length>0&&selection.every(item=>item.picks.join('|')===selection[0].picks.join('|'));
+  const aspects=uniform?phrase(selection[0].picks):
+    selection.map(item=>item.scope.label+': '+phrase(item.picks)).join(' · ');
+  let signIds=[];
   const bySign=window.RelphiSkyBySign?.selected;
-  const bySignCount=bySign instanceof Set?bySign.size:0;
-  // By Sign can admit aspects in each active scope independently of the
-  // ordinary matrix cells.
-  const enabled=bySignCount?scopes:selected;
-  const scopeNames=enabled.map(scope=>scope.label).join(' · ')||'None';
-  // An empty aspect matrix filters out all aspects. Only all eleven checked is All.
-  // Otherwise report the actual selected names, never an unhelpful count.
-  const names=ids=>ids.map(id=>id.split('-').map(word=>word[0].toUpperCase()+word.slice(1)).join('-')).join(', ');
-  const label=scope=>{
-    const picks=MATRIX_ASPECTS.filter(id=>{
-      const cell=document.querySelector('[data-aspect-matrix-scope="'+scope.id+'"][data-aspect-matrix-aspect="'+id+'"]');
-      if(cell)return cell.checked;
-      return !!(stored&&Array.isArray(stored[scope.id])&&stored[scope.id].includes(id));
-    });
-    return picks.length===0?'None':picks.length===all?'All':names(picks);
+  if(bySign instanceof Set)signIds=[...bySign].filter(id=>MATRIX_ASPECTS.includes(id));
+  else try{const saved=JSON.parse(localStorage.getItem('relphiSkyAspectBySignV2')||'[]');if(Array.isArray(saved))signIds=saved.filter(id=>MATRIX_ASPECTS.includes(id))}catch(_){}
+  const bySignNames=signIds.map(titleCase).join(', ');
+  const scopeNames=(signIds.length?scopes:enabled.map(item=>item.scope)).map(scope=>scope.label).join(' · ')||'None';
+  return{aspects,scopes:scopeNames,bySignNames};
+}
+function zodiacCopySummary(){
+  const names=['Aries','Taurus','Gemini','Cancer','Leo','Virgo','Libra','Scorpio','Sagittarius','Capricorn','Aquarius','Pisces'];
+  let saved=null;
+  try{saved=JSON.parse(localStorage.getItem('relphiSkyZodiacFilterV1')||'null')}catch(_){}
+  if(!Array.isArray(saved))return String(document.querySelector('[data-zodiac-summary]')?.textContent||'All').trim()||'All';
+  const selected=[...new Set(saved.map(Number).filter(index=>Number.isInteger(index)&&index>=0&&index<12))].sort((a,b)=>a-b);
+  return selected.length===12?'All':selected.length?selected.map(index=>names[index]).join(', '):'None';
+}
+function houseCopySummary(){
+  let saved=null;
+  try{saved=JSON.parse(localStorage.getItem('relphiSkyHouseFilterV1')||'null')}catch(_){}
+  if(!saved||typeof saved!=='object')return String(document.querySelector('[data-house-filter-summary]')?.textContent||'All').trim()||'All';
+  const slots=skyIsPresent('B')?['A','B']:['A'];
+  const describe=slot=>{
+    const picks=Array.isArray(saved[slot])?saved[slot].map(Number):Array.from({length:12},(_,i)=>i+1);
+    const numbers=[...new Set(picks.filter(n=>Number.isInteger(n)&&n>=1&&n<=12))].sort((a,b)=>a-b);
+    return numbers.length===12?'All':numbers.length===0?'None':(numbers.length===1?'House ':'Houses ')+numbers.join(', ');
   };
-  const aspects=selected.length===0?'None':selected.length===1?label(selected[0]):
-    selected.map(scope=>scope.label+': '+label(scope)).join(' · ');
-  return{aspects,scopes:scopeNames,bySignCount};
+  const summaries=slots.map(describe);
+  return summaries.every(summary=>summary===summaries[0])?summaries[0]:slots.map((slot,i)=>'Sky '+slot+': '+summaries[i]).join(' · ');
 }
 function focusInformation(){
   const value=selector=>String(document.querySelector(selector)?.textContent||'').trim().replace(/\s+/g,' ');
@@ -169,16 +178,16 @@ function focusInformation(){
     ['Harmonic Window',Number.isFinite(Number(windowValue))?String(windowValue)+'°':document.querySelector('[data-harmonic-window-input]')?.value||''],
     ['Aspects',matrix.aspects],
     ['Relationship scopes',matrix.scopes],
-    ...(matrix.bySignCount?[['By Sign',matrix.bySignCount+' selected']]:[]),
-    ['Placements',value('[data-placement-filter-summary]')],
-    ['Zodiac Signs',value('[data-zodiac-summary]')],
-    ['Houses',value('[data-house-filter-summary]')],
+    ...(matrix.bySignNames?[['By Sign',matrix.bySignNames]]:[]),
+    ['Placements',window.RelphiSkyPlacementLogic?.summary?.()||value('[data-placement-filter-summary]')||'All'],
+    ['Zodiac Signs',zodiacCopySummary()],
+    ['Houses',houseCopySummary()],
     ['Sort',selected('.sky-relationship-sort-select')],
     ['Max',(()=>{const applied=window.RelphiRelationshipLimit?.get?.();return applied==='all'?'Max':applied||selected('[data-relationship-limit-preset]')||document.querySelector('[data-relationship-limit]')?.value||''})()]
   ];
   return controls.filter(([,v])=>String(v).trim()).map(([k,v])=>k+': '+v);
 }
-window.RelphiRelationshipExportFocus=Object.freeze({lines:focusInformation,matrix:matrixFocus});
+window.RelphiRelationshipExportFocus=Object.freeze({lines:focusInformation,matrix:matrixFocus,selectedZodiac:zodiacCopySummary,selectedHouses:houseCopySummary});
 function relationshipsCopyHeader(){
   return ['Relationships','Sky A: '+skyIdentity('A'),...(skyIsPresent('B')?['Sky B: '+skyIdentity('B')]:[]),'','Focus',...focusInformation()].join('\n');
 }
@@ -192,10 +201,11 @@ function serializeDisplayOrder(rows){
   };
   for(const row of rows){const rowMode=mode(row);if(currentMode&&rowMode!==currentMode)flush();currentMode=rowMode;bucket.push(row)}
   flush();
-  return blocks.length?`${relationshipsCopyHeader()}\n\n${blocks.join('\n\n')}`:'';
+  return blocks.length?`${relationshipsCopyHeader()}\n\n${blocks.join('\n\n')}\n\nOracle of Relphi · oracleofrelphi.com`:relationshipsCopyHeader();
 }
 function serializeAll(){
   const rows=visibleRows(),sortMode=window.RelphiRelationshipSort?.mode?.();
+  if(!rows.length)return relationshipsCopyHeader()+'\n\nNo relationships match the current Focus.\n\nOracle of Relphi · oracleofrelphi.com';
   if(GLOBAL_SORTS.has(sortMode))return serializeDisplayOrder(rows);
   const families=[];
   for(const family of FAMILIES){
@@ -203,7 +213,7 @@ function serializeAll(){
     for(const group of GROUPS){if(group.family!==family.id)continue;const body=serializeSection(rows.filter(r=>mode(r)===group.mode));if(body)sections.push(`${group.title}\n${body}`)}
     if(sections.length)families.push(`${family.title}\n\n${sections.join('\n\n')}`);
   }
-  return families.length?`${relationshipsCopyHeader()}\n\n${families.join('\n\n')}`:'';
+  return families.length?`${relationshipsCopyHeader()}\n\n${families.join('\n\n')}\n\nOracle of Relphi · oracleofrelphi.com`:relationshipsCopyHeader();
 }
 function legacyCopy(text){const active=document.activeElement;let ta=null;try{ta=document.createElement('textarea');ta.value=text;ta.setAttribute('aria-hidden','true');Object.assign(ta.style,{position:'fixed',left:'0',top:'0',width:'1px',height:'1px',padding:'0',border:'0',opacity:'0',fontSize:'16px'});document.body.appendChild(ta);try{ta.focus({preventScroll:true})}catch(_){ta.focus()}ta.select();ta.setSelectionRange(0,ta.value.length);return document.execCommand('copy')===true}catch(_){return false}finally{ta?.remove();try{active?.focus?.({preventScroll:true})}catch(_){try{active?.focus?.()}catch(__){}}}}
 async function writeClipboard(text){if(legacyCopy(text))return true;if(!navigator.clipboard?.writeText)return false;let timer=0;try{const timeout=new Promise(resolve=>{timer=window.setTimeout(()=>resolve(false),900)});const copy=Promise.resolve(navigator.clipboard.writeText(text)).then(()=>true,()=>false);return await Promise.race([copy,timeout])}catch(_){return false}finally{clearTimeout(timer)}}
