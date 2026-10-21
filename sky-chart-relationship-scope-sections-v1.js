@@ -132,9 +132,11 @@ function matrixFocus(){
   const enabled=selection.filter(item=>item.picks.length);
   const titleCase=id=>id.split('-').map(word=>word[0].toUpperCase()+word.slice(1)).join('-');
   const phrase=picks=>picks.length===0?'None':picks.length===MATRIX_ASPECTS.length?'All':picks.map(titleCase).join(', ');
-  const uniform=selection.length>0&&selection.every(item=>item.picks.join('|')===selection[0].picks.join('|'));
-  const aspects=uniform?phrase(selection[0].picks):
-    selection.map(item=>item.scope.label+': '+phrase(item.picks)).join(' · ');
+  // Disabled scopes belong in the separate Relationship scopes field. They
+  // must not turn "all eleven A↔B aspects" into a misleading three-scope list.
+  const uniform=enabled.length>0&&enabled.every(item=>item.picks.join('|')===enabled[0].picks.join('|'));
+  const aspects=enabled.length===0?'None':uniform?phrase(enabled[0].picks):
+    enabled.map(item=>item.scope.label+': '+phrase(item.picks)).join(' · ');
   let signIds=[];
   const bySign=window.RelphiSkyBySign?.selected;
   if(bySign instanceof Set)signIds=[...bySign].filter(id=>MATRIX_ASPECTS.includes(id));

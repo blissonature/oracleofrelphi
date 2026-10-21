@@ -38,7 +38,7 @@ x=fixture({relphiSkyChartA:sky,relphiSkyChartB:sky,
   relphiSkyZodiacFilterV1:JSON.stringify([2,6]),
   relphiSkyHouseFilterV1:JSON.stringify({A:[1],B:[2,3]})});
 const lines=x.focus.lines().join('\n');
-assert.match(lines,/Aspects: A↔A: Conjunction · B↔B: Trine · A↔B: None/);
+assert.match(lines,/Aspects: A↔A: Conjunction · B↔B: Trine/);
 assert.match(lines,/By Sign: Square/);
 assert.match(lines,/Placements: Sun OR · B Moon NOT/);
 assert.match(lines,/Zodiac Signs: Gemini, Libra/);
