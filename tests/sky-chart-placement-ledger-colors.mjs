@@ -61,10 +61,8 @@ await page.waitForFunction(()=>{
   });
   throw new Error('Canonical ledger readiness failed: '+JSON.stringify(diagnostic)+'; '+error.message);
 });
-await page.waitForFunction(()=>typeof window.RelphiSkyColors?.scan==='function',null,{timeout:20000});
-const colorScan=await page.evaluate(()=>window.RelphiSkyColors.scan());
-assert.equal(colorScan.passed,true,`Placement color scan painted ${colorScan.painted}/${colorScan.expected} hosts.`);
-assert.equal(await page.getAttribute('html','data-sky-placement-colors'),'passed');
+// The retired RelphiSkyColors global is not part of the current color
+// contract. Validate actual computed SVG shape colors below instead.
 await page.waitForTimeout(100);
 
 const issues=await page.evaluate(({colors})=>{

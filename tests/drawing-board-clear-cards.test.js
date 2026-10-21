@@ -176,7 +176,8 @@ async function assertFreeformClearCardsLeavesZeroSlotBoard(page,expectedCards){
         position:getComputedStyle(document.querySelector('#shortListPanel .relphi-board-settings-panel')).position
       };
     });
-    assert.ok(Math.abs(overlayGeometry.workspaceTop-workspaceTopBeforeSettings)<1,'Opening Settings must not move the Drawing Board workspace');
+    assert.ok(Math.abs(overlayGeometry.workspaceTop-workspaceTopBeforeSettings)<1,
+      'Opening Settings must not move the Drawing Board workspace: '+JSON.stringify({before:workspaceTopBeforeSettings,after:overlayGeometry}));
     assert.equal(overlayGeometry.overlaps,true,'Settings must cover the Drawing Board workspace');
     assert.equal(overlayGeometry.position,'absolute','Settings must be an overlay rather than an in-flow panel');
     assert.equal(await page.locator('#relphiResetBoard').isDisabled(),true,'Reset Board starts disabled on an untouched board');
