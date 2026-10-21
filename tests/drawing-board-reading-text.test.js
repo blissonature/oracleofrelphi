@@ -76,8 +76,8 @@ async function applyCeltic(page){
     assert.match(serialized,/Relphi interpretation:/);
     assert.doesNotMatch(serialized,/Same card, same ingredients, inverted orientation/i);
 
-    await page.click('#drawing-board-reading-text .relphi-copy-reading');
-    await page.waitForFunction(()=>document.querySelector('#drawing-board-reading-text .relphi-copy-reading-status')?.textContent==='Copied.');
+    await page.click('#drawing-board-document-actions .relphi-copy-reading');
+    await page.waitForFunction(()=>document.querySelector('#drawing-board-document-actions .relphi-board-document-status')?.textContent==='Copied.');
     const copied=await page.evaluate(()=>window.__relphiCopiedReading);
     assert.equal(copied,serialized,'Copy must use the same reading serializer shown below the board');
 
