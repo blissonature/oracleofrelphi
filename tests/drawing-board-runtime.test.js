@@ -21,11 +21,16 @@ async function openBoard(page) {
   await page.waitForSelector('#shortListPanel #zoomCardRowExtents',{timeout:10000});
   await page.locator('#relphiBoardSettingsButton').click({force:true});
   await page.locator('#drawingBoardOptionsButton').click({force:true});
-  await page.locator('[data-relphi-options-path="templates"]').click({force:true});
+  await page.locator('[data-referent-path="templates"]').click();
   await page.waitForFunction(() => document.body.innerText.includes('Opening of the Key · First Operation'));
 }
 async function applyCeltic(page) {
-  await page.click('#drawingBoardOptionsButton');
+  if(!(await page.locator('.relphi-reading-options-drawer.is-reading-options-open').count())){
+    if((await page.locator('#relphiBoardSettingsButton').getAttribute('aria-expanded'))!=='true')
+      await page.locator('#relphiBoardSettingsButton').click();
+    await page.locator('#drawingBoardOptionsButton').click();
+  }
+  await page.locator('[data-referent-path="templates"]').click();
   await page.waitForSelector('.relphi-reading-options-drawer.is-reading-options-open #relphiSpreadTemplateSelect',{state:'visible'});
   await page.selectOption('#relphiSpreadTemplateSelect','celtic-cross-10');
   await page.click('#relphiApplyOptions');
