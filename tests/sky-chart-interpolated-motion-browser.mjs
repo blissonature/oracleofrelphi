@@ -36,6 +36,7 @@ try{
     const moon=document.querySelector('#skyFoundationWheelMount [data-layer="placements"] > g[data-sky="A"][data-placement="moon"]');
     return Boolean(moon&&document.querySelector('[data-motion-play]:not(:disabled)'));
   },null,{timeout:30000});
+  const beforePlayback=await page.evaluate(()=>localStorage.getItem('relphiSkyChartA'));
   const original=await page.locator('#skyFoundationWheelMount [data-layer="placements"] > g[data-sky="A"][data-placement="moon"]').getAttribute('transform');
   await page.locator('[data-motion-play]').click();
   await page.waitForFunction(()=>Number(document.querySelector('[data-motion-slider]').value)>0.4,null,{timeout:10000});
@@ -48,7 +49,7 @@ try{
   await page.locator('[data-motion-play]').click();
   assert.equal(await page.locator('[data-motion-play]').innerText(),'Play');
   const storedAfter=await page.evaluate(()=>localStorage.getItem('relphiSkyChartA'));
-  assert.equal(storedAfter,saved,'Playback must not rewrite Sky A.');
+  assert.equal(storedAfter,beforePlayback,'Playback must not rewrite Sky A.');
   await page.locator('[data-motion-reset]').click();
   assert.equal(await page.locator('[data-motion-slider]').inputValue(),'0');
   assert.equal(await page.locator('[data-layer="motion-preview"]').count(),0,'Reset removes ghost markers.');
