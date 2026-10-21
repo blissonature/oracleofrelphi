@@ -3058,7 +3058,16 @@
     draft.templateName=name;
     const based=templateById(draft.templateId || draft.basedOnTemplateId);
     const positions=(based?.positions?.length===draft.labels.length ? clone(based.positions) : genericPositions(draft.labels));
-    positions.forEach((item,index)=>{ item.label=draft.labels[index] || `Position ${index+1}`; item.drawOrder=index+1; });
+    positions.forEach((item,index)=>{
+      const settings=normalizedBespokeQuestionSettings(draft,index);
+      item.label=draft.labels[index] || `Position ${index+1}`;
+      item.drawOrder=index+1;
+      item.drawScope=settings.pack||'full';
+      item.allowReversals=settings.reversals!==false;
+      item.allowRepeats=!!settings.repeats;
+      item.cardCount=settings.cardCount;
+      item.linkTo=settings.linkTo;
+    });
     const id=`custom-${slug(name)}-${draft.labels.length}`;
     const custom={version:1,id,name,cardCount:draft.labels.length,source:'custom',editable:true,basedOn:based?.id||null,positions,rules:{allowReversals:draft.reversals,allowRepeats:draft.repeats,drawScope:(draft.pack==='question-by-question'?'full':draft.pack)},appearance:templateAppearanceFromSnapshot()};
     const items=existing.filter(item=>item.id!==id);
@@ -5191,7 +5200,12 @@
     // Focus belongs to the referent slot, not necessarily the append slot used
     // internally by the native draw.
     pendingFocusIndex=targetIndex;
-    draw.click();
+    // The selected referent owns the draw pool. The native append index may be
+    // different when the querent answers questions out of order.
+    const scope=String(meta.drawScope||snap?.rowDrawScope||'full');
+    const scopedDraw=ledgerBridge()?.drawCardForBoardScope;
+    const succeeded=typeof scopedDraw==='function' ? scopedDraw(scope) : (draw.click(),currentCardCount(root)>drawnIndex);
+    if(!succeeded){pendingFocusIndex=null;activeDraw=false;return;}
     if (targetIndex!==drawnIndex) prefabBridge()?.swapPositionSlots?.(drawnIndex,targetIndex);
     activeDraw=false;
     if(surfaceReadingSession){
