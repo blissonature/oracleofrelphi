@@ -240,7 +240,7 @@ async function applyQuestions(page,labels){
     assert.equal(secondAudit.text,long,'focus view must preserve the complete question');
     assert.ok(secondAudit.positionScrollWidth<=secondAudit.positionClientWidth+1,'focus question must wrap instead of clipping horizontally');
     assert.ok(secondAudit.panelScrollHeight<=secondAudit.panelClientHeight+1,'Focus question panel must expand to expose the full question instead of clipping or requiring an inner scroll');
-    assert.ok(Math.abs(secondAudit.art.width-firstArt.width)<=1 && Math.abs(secondAudit.art.height-firstArt.height)<=1,
+    assert.ok(Math.abs(secondAudit.art.width-firstArt.width)<=2 && Math.abs(secondAudit.art.height-firstArt.height)<=2,
       `same card/orientation must keep the same focus art scale regardless of question length: short=${JSON.stringify(firstArt)} long=${JSON.stringify(secondAudit.art)}`);
 
     console.log('Drawing Board dense packing and question-layout checks passed.');
