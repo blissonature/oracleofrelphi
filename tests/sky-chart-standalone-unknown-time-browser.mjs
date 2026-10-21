@@ -140,15 +140,18 @@ for(const scenario of [
   {title:'unknown A beside known B',A:unknownSky,B:knownSky,rangeSky:'A',otherSky:'B'},
   {title:'known A beside unknown B',A:knownSky,B:unknownSky,rangeSky:'B',otherSky:'A'}
 ]){
-  await page.evaluate(({A,B})=>{
+  // The standalone fixture uses addInitScript to clear Sky B on every reload.
+  // A fresh page with its own init script is required to test comparison mode.
+  const comparisonPage=await browser.newPage({viewport:{width:1440,height:1000}});
+  await comparisonPage.addInitScript(({A,B})=>{
     localStorage.setItem('relphiSkyChartA',JSON.stringify(A));
     localStorage.setItem('relphiSkyChartB',JSON.stringify(B));
     localStorage.setItem('relphiSkyChartLastModeV1','comparison');
   },scenario);
-  await page.reload({waitUntil:'networkidle'});
-  await page.waitForFunction(()=>document.querySelector('#skyFoundationWheelMount>svg[data-ring-order="A-inner-B-outer"]')?.dataset.finalGeometryReady==='true',{timeout:20000});
-  await page.waitForTimeout(450);
-  const identity=await page.evaluate(({rangeSky,otherSky})=>{
+  await comparisonPage.goto('http://127.0.0.1:4173/sky-chart.html',{waitUntil:'networkidle'});
+  await comparisonPage.waitForFunction(()=>document.querySelector('#skyFoundationWheelMount>svg[data-ring-order="A-inner-B-outer"]')?.dataset.finalGeometryReady==='true',null,{timeout:20000});
+  await comparisonPage.waitForTimeout(450);
+  const identity=await comparisonPage.evaluate(({rangeSky,otherSky})=>{
     const wheel=document.querySelector('#skyFoundationWheelMount>svg[data-ring-order="A-inner-B-outer"]');
     const boundaries=[...wheel.querySelectorAll('[data-layer="leaders"] > line.sky-foundation-moon-range-boundary')];
     const allRange=[...wheel.querySelectorAll('[data-layer="leaders"] > .sky-foundation-moon-range, [data-layer="leaders"] > .sky-foundation-moon-range-boundary, [data-layer="leaders"] > .sky-foundation-moon-range-leader')];
@@ -164,6 +167,7 @@ for(const scenario of [
   assert.deepEqual(identity.reassigned,[],scenario.title+': Moon range inherited an ordinary Sun/planet annotation');
   assert.equal(identity.otherSunCount,1,scenario.title+': other sky Sun retains its own leader');
   assert.equal(identity.otherSunPlacements[0].placement,'sun',scenario.title+': Sun leader identity is stable');
+  await comparisonPage.close();
 }
 
 await page.screenshot({path:'sky-chart-standalone-unknown-time.png',fullPage:true});
