@@ -91,8 +91,8 @@ assert.equal(initialAbstractGlyphGeometry.every(item=>!item.visible||item.ready)
 // Verify current presentation, wheel-preview interoperability and tab switching.
 assert.equal(await page.locator('#skyFoundationA [data-vocab-dropdown-toggle]').count(),0,
   'Vocab must not revive duplicate controls after adopting the shared Relationships filters');
-assert.ok(await page.locator('#skyFoundationRelationships [data-placement-filter-summary]').count()>0,
-  'Relationships must remain the shared owner of Placement filter controls');
+assert.equal(await page.locator('#skyFoundationRelationshipList').count(),1,
+  'Vocab must continue alongside the shared Relationships controls and ledger');
 
 await vocabGroups.evaluateAll(nodes=>nodes.forEach(node=>{node.open=true}));
 await page.waitForFunction(()=>[...document.querySelectorAll('#skyFoundationA details.sky-vocab-group')].every(node=>node.open));
