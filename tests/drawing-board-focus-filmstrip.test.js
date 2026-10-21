@@ -26,7 +26,7 @@ async function resetAndApplyQuestions(page,labels){
     await page.locator('#relphiBoardSettingsButton').click();
   await page.locator('#drawingBoardOptionsButton').click();
   await page.locator('[data-referent-path="bespoke"]').click();
-  const firstLabel=page.locator('#relphiPositionLabels .relphi-label-row input').first();
+  const firstLabel=page.locator('#relphiPositionLabels [data-position-label="0"]').first();
   await firstLabel.waitFor({state:'visible'});
   await firstLabel.fill(labels.join(', '));
   await firstLabel.dispatchEvent('change');

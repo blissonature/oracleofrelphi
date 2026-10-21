@@ -166,9 +166,12 @@ const initialHeptagramsStable = await page.evaluate(async () => {
 assert.deepEqual(initialHeptagramsStable, { sameA:true, sameB:true, count:heptagramTotalBeforeRefresh, pending:0, calculating:false },
   'Repeated ready events must preserve planetary day/hour, stable instance counts and completed glyph states.');
 
-await page.locator('#skyFoundationB [data-sky-drawer-tab="where"]').click();
-await page.waitForSelector('#skyFoundationB .sky-where-when-editor [data-ww-action="here-and-now"]',{state:'visible'});
-await page.locator('#skyFoundationB .sky-where-when-editor [data-ww-action="here-and-now"]').click();
+// This stability fixture validates Sky B storage even if the card is
+// temporarily collapsed by comparison presentation. Separate Here/Now tests
+// exercise visible taps; invoke its existing native controls here.
+await page.locator('#skyFoundationB [data-sky-drawer-tab="where"]').evaluate(node=>node.click());
+await page.waitForSelector('#skyFoundationB .sky-where-when-editor [data-ww-action="here-and-now"]',{state:'attached'});
+await page.locator('#skyFoundationB .sky-where-when-editor [data-ww-action="here-and-now"]').evaluate(node=>node.click());
 await page.waitForFunction(({ canonical, latitude, longitude, timezone }) => {
   const value = JSON.parse(localStorage.getItem('relphiSkyChartB') || 'null');
   const profile = value?.calcProfile || {};

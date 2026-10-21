@@ -28,7 +28,7 @@ async function applyQuestions(page,labels){
     await page.waitForSelector('.relphi-reading-options-drawer.is-reading-options-open',{state:'visible'});
   }
   await page.click('[data-referent-path="bespoke"]');
-  const firstLabel=page.locator('#relphiPositionLabels .relphi-label-row input').first();
+  const firstLabel=page.locator('#relphiPositionLabels [data-position-label="0"]').first();
   await firstLabel.waitFor({state:'visible'});
   await firstLabel.fill(labels.join(', '));
   await firstLabel.dispatchEvent('change');
