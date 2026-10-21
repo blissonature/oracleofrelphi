@@ -93,6 +93,7 @@ await page.addInitScript(({ a, b, fixed }) => {
   localStorage.setItem('relphiSkyChartA', JSON.stringify(a));
   localStorage.setItem('relphiSkyChartB', JSON.stringify(b));
   sessionStorage.removeItem('relphiSkyWhereWhenViewV1');
+  localStorage.setItem('relphiSkyChartLastModeV1','comparison');
   window.__skyBSnapshots = [];
   window.addEventListener('storage', event => {
     if (event.key !== 'relphiSkyChartB') return;
