@@ -165,7 +165,9 @@ const initialHeptagramsStable = await page.evaluate(async () => {
 assert.deepEqual(initialHeptagramsStable, { sameA:true, sameB:true, count:heptagramTotalBeforeRefresh, pending:0, calculating:false },
   'Repeated ready events must preserve planetary day/hour, stable instance counts and completed glyph states.');
 
-await page.locator('#skyFoundationB [data-final-now="B"]').click();
+await page.locator('#skyFoundationB [data-sky-drawer-tab="where"]').click();
+await page.waitForSelector('#skyFoundationB .sky-where-when-editor [data-ww-action="here-and-now"]',{state:'visible'});
+await page.locator('#skyFoundationB .sky-where-when-editor [data-ww-action="here-and-now"]').click();
 await page.waitForFunction(({ canonical, latitude, longitude, timezone }) => {
   const value = JSON.parse(localStorage.getItem('relphiSkyChartB') || 'null');
   const profile = value?.calcProfile || {};
