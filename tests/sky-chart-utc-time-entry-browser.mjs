@@ -62,10 +62,11 @@ for(const spec of cases){
 
   // Planetary Hours' draft link must use the UTC instant directly. In a
   // repeated DST hour its local HH:mm cannot identify which occurrence.
-  await page.waitForFunction(()=>{
+  await page.waitForFunction(expected=>{
     const link=document.querySelector('#skyFoundationA [data-draft-where-when-link="true"]');
-    return !!link&&new URLSearchParams(String(link.getAttribute('href')||'').split('#')[1]||'').has('dt');
-  },null,{timeout:15000});
+    const dt=new URLSearchParams(String(link?.getAttribute('href')||'').split('#')[1]||'').get('dt');
+    return !!dt&&Date.parse(dt)===Date.parse(expected);
+  },spec.date+'T'+spec.time+':00.000Z',{timeout:15000});
   const linkedInstant=await page.evaluate(()=>{
     const link=document.querySelector('#skyFoundationA [data-draft-where-when-link="true"]');
     return new URLSearchParams(String(link.getAttribute('href')||'').split('#')[1]||'').get('dt');
