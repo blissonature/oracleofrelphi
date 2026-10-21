@@ -164,14 +164,14 @@ async function assertFreeformClearCardsLeavesZeroSlotBoard(page,expectedCards){
   try {
     const page=await browser.newPage({viewport:{width:390,height:844}});
     await openBoard(page);
-    const workspaceTopBeforeSettings=await page.locator('#shortListPanel .card-row-workspace').evaluate(el=>el.getBoundingClientRect().top);
+    const workspaceTopBeforeSettings=await page.locator('#shortListPanel .card-row-workspace').evaluate(el=>el.getBoundingClientRect().top+window.scrollY);
     await page.click('#relphiBoardSettingsButton');
     await page.waitForSelector('.relphi-board-settings-panel',{state:'visible'});
     const overlayGeometry=await page.evaluate(()=>{
       const workspace=document.querySelector('#shortListPanel .card-row-workspace')?.getBoundingClientRect();
       const settings=document.querySelector('#shortListPanel .relphi-board-settings-panel')?.getBoundingClientRect();
       return {
-        workspaceTop:workspace?.top||0,
+        workspaceTop:workspace?workspace.top+window.scrollY:0,
         overlaps:!!workspace&&!!settings&&settings.bottom>workspace.top&&settings.top<workspace.bottom,
         position:getComputedStyle(document.querySelector('#shortListPanel .relphi-board-settings-panel')).position
       };
