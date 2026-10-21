@@ -56,6 +56,13 @@ async function assertDrawnZodiac(page){
   try{
     // Regression: answering Question 2 first must not borrow the full-pack pool
     // from the native append slot allocated to Question 1.
+    // The shared preview link must land inside Bespoke, not on the Tarot homepage.
+    const preview=await browser.newPage({viewport:{width:375,height:812},isMobile:true,hasTouch:true});
+    await preview.goto(url.replace('board=workflow-v2','board=workflow-v2&previewBespoke=1'),{waitUntil:'domcontentloaded'});
+    await preview.waitForSelector('#relphiPositionLabels [data-position-label="0"]',{state:'visible',timeout:30000});
+    assert.equal(await preview.locator('#shortListPanel').isVisible(),true,'preview must open Drawing Board');
+    assert.equal(await preview.locator('[data-referent-path="bespoke"]').getAttribute('aria-pressed'),'true','preview must select Bespoke');
+    await preview.close();
     const page=await browser.newPage({viewport:{width:375,height:812},isMobile:true,hasTouch:true});
     const errors=[];
     page.on('pageerror',e=>errors.push(String(e)));
