@@ -26,9 +26,10 @@ async function resetAndApplyQuestions(page,labels){
     await page.locator('#relphiBoardSettingsButton').click();
   await page.locator('#drawingBoardOptionsButton').click();
   await page.locator('[data-referent-path="bespoke"]').click();
-  await page.waitForSelector('#relphiBulkReferents',{state:'visible'});
-  await page.fill('#relphiBulkReferents',labels.join(', '));
-  await page.click('#relphiParseReferents');
+  const firstLabel=page.locator('#relphiPositionLabels .relphi-label-row input').first();
+  await firstLabel.waitFor({state:'visible'});
+  await firstLabel.fill(labels.join(', '));
+  await firstLabel.dispatchEvent('change');
   await page.waitForFunction(count=>document.querySelectorAll('#relphiPositionLabels .relphi-label-row').length===count,labels.length);
   await page.click('#relphiApplyOptions');
   await page.waitForFunction(count=>{
