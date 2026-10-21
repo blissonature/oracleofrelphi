@@ -2467,12 +2467,14 @@
   }
   function bespokeQuestionControllerMarkup(draft) {
     const defaults=bespokeDefaultQuestionSettings(draft);
-    return '<div class="relphi-question-toolbar-settings" aria-label="Card options for selected questions">'+
-      '<div class="relphi-question-toolbar-pack" title="Sub-pack"><select id="relphiQuestionControllerPack" class="relphi-select" aria-label="Sub-pack">'+packOptions(defaults.pack)+'</select><button type="button" class="relphi-subpack-create" data-create-subpack aria-label="Create a sub-pack"><span aria-hidden="true"></span></button></div>'+
-      '<label class="relphi-question-toolbar-cards" title="Cards per question"><input id="relphiQuestionControllerCards" class="relphi-input" type="number" inputmode="numeric" min="1" max="12" step="1" value="'+defaults.cardCount+'" aria-label="Cards per selected question"><span>× Cards</span></label>'+
-      '<label class="relphi-question-toolbar-link" title="Share card with"><select id="relphiQuestionControllerLink" class="relphi-select" aria-label="Share card with"><option value="">No link</option></select></label>'+
+    return '<div class="relphi-question-toolbar-settings" aria-label="Drawing rules">'+
       '<label class="relphi-question-toolbar-check"><input id="relphiQuestionControllerReversals" type="checkbox" '+(defaults.reversals?'checked':'')+'> <span>Reversals</span></label>'+
       '<label class="relphi-question-toolbar-check"><input id="relphiQuestionControllerRepeats" type="checkbox" '+(defaults.repeats?'checked':'')+'> <span>Repeats</span></label>'+
+      '<details class="relphi-question-more"><summary aria-label="More Options" title="More Options">···</summary>'+
+        '<div class="relphi-question-more-panel"><strong>More Options</strong>'+
+          '<label class="relphi-question-more-field"><span>Subpack</span><span class="relphi-question-toolbar-pack"><select id="relphiQuestionControllerPack" class="relphi-select" aria-label="Subpack for selected questions">'+packOptions(defaults.pack)+'</select><button type="button" class="relphi-subpack-create" data-create-subpack aria-label="Create a subpack"><span aria-hidden="true"></span></button></span></label>'+
+          '<label class="relphi-question-more-field"><span>Cards per Question</span><input id="relphiQuestionControllerCards" class="relphi-input" type="number" inputmode="numeric" min="1" max="12" step="1" value="'+defaults.cardCount+'" aria-label="Cards per selected question"></label>'+
+        '</div></details>'+
     '</div>';
   }
 
@@ -2480,7 +2482,7 @@
     const clonedFrom=!draft.templateId&&draft.basedOnTemplateId?templateById(draft.basedOnTemplateId):null;
     return '<section class="relphi-referent-panel">'+
       (clonedFrom?'<div class="relphi-template-clone-note"><strong>Editing a copy of '+escapeHtml(clonedFrom.name)+'</strong><span>The original template stays untouched. Name and save this Bespoke version if you want to keep it; you can also continue without saving.</span></div>':'')+
-      '<div class="relphi-question-toolbar"><label class="relphi-question-select-all"><input type="checkbox" id="relphiSelectAllQuestions" aria-label="Select all questions for editing"> <span>Select all</span></label>'+bespokeQuestionControllerMarkup(draft)+'<div class="relphi-question-toolbar-actions"><button type="button" id="relphiCopyBespokeQuestions" class="relphi-button relphi-question-copy" aria-label="Copy all Bespoke questions and advanced settings">Copy</button><button type="button" id="relphiMoveQuestionsUp" class="relphi-question-icon-button" aria-label="Move selected questions up"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 18V6M7 11l5-5 5 5"></path></svg></button><button type="button" id="relphiMoveQuestionsDown" class="relphi-question-icon-button" aria-label="Move selected questions down"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 6v12M7 13l5 5 5-5"></path></svg></button><button type="button" id="relphiDeleteQuestions" class="relphi-question-icon-button" aria-label="Delete selected questions"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M7 7l10 10M17 7L7 17"></path></svg></button><button type="button" id="relphiAddPosition" class="relphi-question-icon-button" aria-label="Add question" '+(hasCards||draft.labels.length>=MAX_POSITIONS?'disabled':'')+'><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 6v12M6 12h12"></path></svg></button></div></div>'+
+      '<div class="relphi-question-toolbar"><label class="relphi-question-select-all"><input type="checkbox" id="relphiSelectAllQuestions" aria-label="Select all questions for editing"> <span>Select all</span></label>'<div class="relphi-question-toolbar-actions"><button type="button" id="relphiCopyBespokeQuestions" class="relphi-button relphi-question-copy" aria-label="Copy all Bespoke questions and advanced settings">Copy</button><button type="button" id="relphiMoveQuestionsUp" class="relphi-question-icon-button" aria-label="Move selected questions up"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 18V6M7 11l5-5 5 5"></path></svg></button><button type="button" id="relphiMoveQuestionsDown" class="relphi-question-icon-button" aria-label="Move selected questions down"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 6v12M7 13l5 5 5-5"></path></svg></button><button type="button" id="relphiDeleteQuestions" class="relphi-question-icon-button" aria-label="Delete selected questions"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M7 7l10 10M17 7L7 17"></path></svg></button><button type="button" id="relphiAddPosition" class="relphi-question-icon-button" aria-label="Add question" '+(hasCards||draft.labels.length>=MAX_POSITIONS?'disabled':'')+'><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 6v12M6 12h12"></path></svg></button></div>'+bespokeQuestionControllerMarkup(draft)+'</div>'+
       '<div id="relphiPositionLabels">'+labelsMarkup(draft.labels,draft)+'</div>'+
       '<div class="relphi-bespoke-appearance-host"></div>'+
       '<div class="relphi-template-save"><input id="relphiTemplateName" class="'+((draft.templateName||'Unnamed Template')==='Unnamed Template'?'is-unnamed':'')+'" type="text" maxlength="60" aria-label="Template name" value="'+escapeHtml(draft.templateName||'Unnamed Template')+'" '+(hasCards?'disabled':'')+'><button type="button" id="relphiSaveTemplate" '+(hasCards?'disabled':'')+'>Save template</button></div>'+
@@ -2846,7 +2848,8 @@
       if(down)down.disabled=!any||allSelected||selected[selected.length-1]===draft.labels.length-1;
       if(del)del.disabled=!any;
       if(all){all.checked=allSelected;all.indeterminate=any&&!allSelected}
-      Object.values(controller).forEach(node=>{if(node&&'disabled' in node)node.disabled=!any});
+      [controller.pack,controller.cards,controller.createPack].forEach(node=>{if(node)node.disabled=!any});
+      [controller.reversals,controller.repeats].forEach(node=>{if(node)node.disabled=false});
       if(!any){
         const baseline=bespokeDefaultQuestionSettings(draft);
         if(controller.pack){controller.pack.innerHTML=packOptions(baseline.pack);controller.pack.value=baseline.pack}
@@ -2887,7 +2890,19 @@
       syncQuestionController();
       return true;
     };
-    const applyQuestionController=(patch)=>selectedQuestionIndexes().length?applyToSelected(patch):false;
+    const applyQuestionController=(patch)=>{
+      if(selectedQuestionIndexes().length)return applyToSelected(patch);
+      if(!('reversals' in patch)&&!('repeats' in patch))return false;
+      if('reversals' in patch)draft.reversals=patch.reversals;
+      if('repeats' in patch)draft.repeats=patch.repeats;
+      draft.labels.forEach((_,index)=>{
+        const prior=ensureQuestionSettings(index);
+        draft.positionSettings[index]={...prior,...patch};
+      });
+      markQuestionEditCustom(drawer,draft);
+      syncQuestionController();
+      return true;
+    };
     drawer.querySelector('#relphiSelectAllQuestions')?.addEventListener('change',event=>{drawer.querySelectorAll('[data-question-select]').forEach(box=>{box.checked=event.target.checked});syncQuestionController()});
     // Questions are re-created by comma parsing and row edits. Delegating to
     // the stable list keeps selection and per-question settings bound to new rows.
