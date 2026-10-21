@@ -1,5 +1,7 @@
 import {chromium} from 'playwright';
 import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import path from 'node:path';
 
 const ref=process.env.PREVIEW_REF;
 assert.match(ref||'',/^[0-9a-f]{40}$/,'A commit SHA is required');
@@ -22,6 +24,27 @@ try{
  for(const [kind,url] of urls){
   const ctx=await browser.newContext({viewport:{width:1200,height:820},serviceWorkers:'block'});
   const page=await ctx.newPage(),failures=[],errors=[];
+  // The production preview wrapper references immutable commit paths.
+  // Third-party raw.githack occasionally returns ORB-blocked resources on CI.
+  // Route only the exact checked-out SHA back to the runner's committed files.
+  // This still exercises the real hosted wrapper and its revision routing.
+  if(kind==='preview'){
+    await page.route(/https:\/\/(?:raw\.githack\.com|cdn\.jsdelivr\.net)\//, async route=>{
+      const url=new URL(route.request().url());
+      let rel='';
+      const rawPrefix='/blissonature/oracleofrelphi/'+ref+'/';
+      const cdnPrefix='/gh/blissonature/oracleofrelphi@'+ref+'/';
+      if(url.hostname==='raw.githack.com' && url.pathname.startsWith(rawPrefix)) rel=url.pathname.slice(rawPrefix.length);
+      if(url.hostname==='cdn.jsdelivr.net' && url.pathname.startsWith(cdnPrefix)) rel=url.pathname.slice(cdnPrefix.length);
+      if(!rel)return route.continue();
+      const base=process.cwd(),filename=path.resolve(base,decodeURIComponent(rel));
+      if(!filename.startsWith(base+path.sep)||!fs.existsSync(filename)||!fs.statSync(filename).isFile())
+        return route.abort('failed');
+      const ext=path.extname(filename).toLowerCase();
+      const type=({'.js':'application/javascript','.css':'text/css','.html':'text/html','.svg':'image/svg+xml','.webp':'image/webp','.png':'image/png','.json':'application/json'})[ext]||'application/octet-stream';
+      await route.fulfill({path:filename,contentType:type});
+    });
+  }
   page.on('pageerror',e=>errors.push(e.message));
   page.on('requestfailed',r=>failures.push({url:r.url(),error:r.failure()?.errorText}));
   page.on('response',response=>{if(response.status()>=400)failures.push({status:response.status(),url:response.url()})});
