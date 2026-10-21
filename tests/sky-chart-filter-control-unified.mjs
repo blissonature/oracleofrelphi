@@ -47,7 +47,7 @@ for(const [name,shape] of Object.entries(geometry)){
 await page.locator('[data-aspect-filter="combined"] [data-aspect-filter-toggle]').click();
 await page.waitForSelector('#skyChartAspectPopover:not([hidden]) [data-aspect-list="matrix"]');
 await page.waitForFunction(()=>document.querySelectorAll('#skyChartAspectPopover .sky-filter-symbol-aspect[data-glyph-color]').length===11);
-const glyphs=await page.locator('#skyChartAspectPopover .sky-chart-aspect-list-item[data-aspect-list-item]:not([data-aspect-list-item="all"])').evaluateAll(rows=>rows.map(row=>{
+const glyphs=await page.locator('#skyChartAspectPopover .sky-chart-aspect-list-item[data-aspect-list-item]:not([data-aspect-list-item="all"]):not([data-aspect-list-item^="group:"])').evaluateAll(rows=>rows.map(row=>{
   const host=row.querySelector('.sky-filter-symbol-aspect');
   return{aspect:row.dataset.aspectListItem,glyph:host?.dataset.canonicalGlyph||'',color:host?.dataset.glyphColor||''};
 }));

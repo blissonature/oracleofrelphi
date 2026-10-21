@@ -53,7 +53,7 @@ async function applyCeltic(page){
     assert.match(await card.locator('h3').innerText(),/\S/);
     assert.match(await card.locator('.relphi-reading-text-association').innerText(),/(Decan ruler|Sign association|Planetary association|Elemental association):/);
     assert.match(await card.locator('.relphi-reading-text-interpretation').innerText(),/\S/);
-    assert.match(await card.locator('.relphi-reading-text-interpretation').innerText(),/condition presently surrounding the matter/i,'Celtic Cross readings should interpret the card through the spread position, not merely list correspondences');
+    assert.match(await card.locator('.relphi-reading-text-position').innerText(),/What covers you/,'The Celtic position must stay explicit beside the card interpretation');
 
     await page.evaluate(()=>{
       const snap=window.RelphiDrawingBoardOptionsBridge.capture();
