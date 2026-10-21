@@ -164,7 +164,7 @@
       appendScript('tarot-card-selection-scroll-v1.js?v=2', function () {
         requestAnimationFrame(function () { window.RelphiTarotCardSelectionScroll?.scrollFromLocation(); });
       });
-      appendScript('drawing-board-workflow-v2.js?v=138', function () {
+      appendScript('drawing-board-workflow-v2.js?v=139', function () {
         appendScript('drawing-board-bespoke-pack-bridge-v1.js?v=1');
         appendScript('relphi-sky-connector-v1.js?v=2');
         appendScript('drawing-board-crowley-harmonic-v1.js?v=6', function () {
