@@ -18,6 +18,8 @@ async function configure(page) {
   await page.locator('[data-question-select="1"]').check();
   assert.equal(await page.locator('#relphiQuestionControllerPack').isEnabled(),true,'checking Question 2 alone must enable its sub-pack control');
   assert.equal(await page.locator('[data-question-select="0"]').isChecked(),false,'Question 1 must stay unselected');
+  await page.locator('.relphi-question-more > summary').click();
+  assert.equal(await page.locator('.relphi-question-more').evaluate(el=>el.open),true,'ellipses must open the More Options panel');
   await page.locator('#relphiQuestionControllerPack').selectOption('zodiac-majors');
 
   assert.equal(await page.locator('#relphiQuestionControllerPack').inputValue(),'zodiac-majors','Question 2 must display its selected sub-pack');
@@ -46,10 +48,17 @@ async function assertDrawnZodiac(page){
   try{
     // Regression: answering Question 2 first must not borrow the full-pack pool
     // from the native append slot allocated to Question 1.
-    const page=await browser.newPage({viewport:{width:1100,height:850}});
+    const page=await browser.newPage({viewport:{width:375,height:812},isMobile:true,hasTouch:true});
     const errors=[];
     page.on('pageerror',e=>errors.push(String(e)));
     await configure(page);
+    const toolbar=page.locator('.relphi-question-toolbar');
+    const info=await toolbar.evaluate(el=>({width:el.getBoundingClientRect().width,scrollWidth:el.scrollWidth,rows:[...el.children].map(n=>Math.round(n.getBoundingClientRect().top))}));
+    assert.ok(info.scrollWidth<=info.width+3,'mobile toolbar should not overflow horizontally: '+JSON.stringify(info));
+    assert.equal(info.rows[0],info.rows[1],'Select All and question actions should share row one');
+    assert.ok(info.rows[2]>info.rows[0],'drawing rules should occupy row two');
+    assert.equal(await page.locator('#relphiQuestionControllerReversals').isVisible(),true);
+    assert.equal(await page.locator('#relphiQuestionControllerRepeats').isVisible(),true);
     await page.evaluate(()=>document.querySelector('#shortListPanel .card-row-board>.card-row-item[data-row-index="1"]')?.click());
     await assertDrawnZodiac(page);
     assert.deepEqual(errors,[],'out-of-order drawing must have no runtime exceptions');
