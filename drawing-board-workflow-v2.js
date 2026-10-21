@@ -2889,7 +2889,11 @@
     };
     const applyQuestionController=(patch)=>selectedQuestionIndexes().length?applyToSelected(patch):false;
     drawer.querySelector('#relphiSelectAllQuestions')?.addEventListener('change',event=>{drawer.querySelectorAll('[data-question-select]').forEach(box=>{box.checked=event.target.checked});syncQuestionController()});
-    drawer.querySelectorAll('[data-question-select]').forEach(box=>box.addEventListener('change',syncQuestionController));
+    // Questions are re-created by comma parsing and row edits. Delegating to
+    // the stable list keeps selection and per-question settings bound to new rows.
+    labelsList?.addEventListener('change',event=>{
+      if(event.target.matches('[data-question-select]'))syncQuestionController();
+    });
     controller.pack?.addEventListener('change',()=>{if(controller.pack.value&&controller.pack.value!=='__mixed__')applyQuestionController({pack:controller.pack.value})});
     controller.cards?.addEventListener('change',()=>{
       const value=Math.max(1,Math.min(12,Math.trunc(Number(controller.cards.value)||1)));
