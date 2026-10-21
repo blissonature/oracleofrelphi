@@ -51,7 +51,16 @@ await page.waitForFunction(()=>{
       art?.dataset.relphiAtomicCommit==='true'&&
       !!art.getAttribute('transform');
   });
-},null,{timeout:20000});
+},null,{timeout:20000}).catch(async error=>{
+  const diagnostic=await page.evaluate(()=>{
+    const hosts=[...document.querySelectorAll('#skyFoundationA .sky-foundation-row > svg,#skyFoundationB .sky-foundation-row > svg')];
+    return {count:hosts.length,anomalies:hosts.map((host,i)=>{
+      const art=host.querySelector(':scope > .relphi-canonical-glyph');
+      return {index:i,id:host.dataset.canonicalGlyphId,view:host.getAttribute('viewBox'),fit:host.dataset.canonicalFit,commit:art?.dataset.relphiAtomicCommit,transform:art?.getAttribute('transform'),html:host.outerHTML.slice(0,130)};
+    }).filter(x=>x.view!=='-20 -20 40 40'||x.fit!=='registry-component'||!x.id||x.commit!=='true'||!x.transform).slice(0,10)};
+  });
+  throw new Error('Canonical ledger readiness failed: '+JSON.stringify(diagnostic)+'; '+error.message);
+});
 await page.waitForFunction(()=>typeof window.RelphiSkyColors?.scan==='function',null,{timeout:20000});
 const colorScan=await page.evaluate(()=>window.RelphiSkyColors.scan());
 assert.equal(colorScan.passed,true,`Placement color scan painted ${colorScan.painted}/${colorScan.expected} hosts.`);

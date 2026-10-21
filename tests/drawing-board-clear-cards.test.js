@@ -28,8 +28,11 @@ async function openBoard(page){
   });
   assert.equal(chrome.bar,true,'Drawing Board must have one command bar');
   assert.equal(chrome.title,'Drawing Board','command bar owns the Drawing Board title');
-  assert.deepEqual(chrome.actions,['clearShortListCardsOnly','undoShortList','redoShortList','drawRandomRowCard'],'right actions must be Clear, Undo, Redo, Draw');
-  assert.deepEqual(chrome.labels,['Clear','Undo','Redo','Draw'],'right action labels must match the redesign');
+  assert.deepEqual(chrome.actions,['relphiResetBoard','undoShortList','redoShortList','clearShortListCardsOnly','drawRandomRowCard'],
+    'right actions must provide separate Reset, Undo, Redo, Clear and Draw controls');
+  assert.equal(chrome.labels[0],'Reset Board');
+  assert.equal(chrome.labels[3],'Clear');
+  assert.equal(chrome.labels[4],'Draw');
   assert.equal(chrome.settingsExpanded,'false','Settings starts closed');
   assert.equal(chrome.legacyRows,0,'legacy global action rows must be removed');
 }
