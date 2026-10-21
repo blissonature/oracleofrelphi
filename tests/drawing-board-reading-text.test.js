@@ -41,6 +41,8 @@ async function applyCeltic(page){
     // Draw through the visible action: Celtic crossing placeholders overlap
     // by design and are not reliable click targets for drawing cards.
     await page.click('#drawRandomRowCard');
+    await page.waitForSelector('.relphi-attune-reader [data-attune-random]',{state:'visible'});
+    await page.locator('.relphi-attune-reader [data-attune-random]').click();
     await page.waitForSelector('.card-row-item[data-row-index="0"] [data-row-card]',{state:'visible'});
     if(await page.locator('.relphi-focus-reader').count()) await page.click('.relphi-focus-close');
 

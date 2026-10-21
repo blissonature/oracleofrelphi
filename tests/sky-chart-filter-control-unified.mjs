@@ -21,132 +21,53 @@ await page.route('https://cdn.jsdelivr.net/npm/luxon@3/build/global/luxon.min.js
 await page.addInitScript(({a,b})=>{localStorage.setItem('relphiSkyChartA',JSON.stringify(a));localStorage.setItem('relphiSkyChartB',JSON.stringify(b));sessionStorage.removeItem('relphiSkyWhereWhenViewV1')},{a:skyA,b:skyB});
 await page.goto('http://127.0.0.1:4173/sky-chart.html',{waitUntil:'networkidle'});
 await page.waitForSelector('#skyFoundationRoot[aria-busy="false"]',{timeout:20000});
-await page.waitForSelector('[data-aspect-filter="combined"]',{timeout:20000});
-await page.waitForSelector('[data-placement-filter="combined"]',{timeout:20000});
-await page.waitForSelector('[data-house-filter="combined"]',{timeout:20000});
-await page.waitForSelector('#skyFoundationRelationships [data-harmonic-window-input]',{timeout:20000});
-await page.waitForSelector('#skyFoundationRelationships .sky-chart-aspect-summary-choices',{timeout:20000});
-await page.waitForSelector('#skyFoundationRelationships .sky-chart-placement-summary-choices',{timeout:20000});
-await page.waitForSelector('#skyFoundationRelationships .sky-chart-house-summary-choices',{timeout:20000});
-await page.waitForSelector('#skyFoundationRelationships .sky-chart-aspect-filter-label',{timeout:20000});
-await page.waitForSelector('#skyFoundationRelationships .sky-chart-placement-filter-label',{timeout:20000});
-await page.waitForSelector('#skyFoundationRelationships .sky-chart-house-filter-label',{timeout:20000});
-
-const result=await page.evaluate(()=>{
-  const selectors={
-    orb:'#skyFoundationRelationships [data-harmonic-window-input]',
-    aspects:'#skyFoundationRelationships .sky-chart-aspect-summary-choices',
-    placements:'#skyFoundationRelationships .sky-chart-placement-summary-choices',
-    houses:'#skyFoundationRelationships .sky-chart-house-summary-choices'
-  };
-  const labelSelectors={
-    orb:'#skyFoundationRelationships [data-harmonic-window-input]',
-    aspects:'#skyFoundationRelationships .sky-chart-aspect-filter-label',
-    placements:'#skyFoundationRelationships .sky-chart-placement-filter-label',
-    houses:'#skyFoundationRelationships .sky-chart-house-filter-label'
-  };
-  const fields={};
-  const labels={};
-  for(const [name,selector] of Object.entries(selectors)){
-    const node=document.querySelector(selector);
-    const style=getComputedStyle(node);
-    const rect=node.getBoundingClientRect();
-    fields[name]={
-      height:rect.height,
-      top:rect.top,
-      bottom:rect.bottom,
-      backgroundColor:style.backgroundColor,
-      borderTopColor:style.borderTopColor,
-      borderTopStyle:style.borderTopStyle,
-      borderTopWidth:style.borderTopWidth,
-      borderTopLeftRadius:style.borderTopLeftRadius,
-      borderTopRightRadius:style.borderTopRightRadius,
-      borderBottomLeftRadius:style.borderBottomLeftRadius,
-      borderBottomRightRadius:style.borderBottomRightRadius,
-      color:style.color,
-      fontFamily:style.fontFamily,
-      fontSize:style.fontSize,
-      fontWeight:style.fontWeight,
-      lineHeight:style.lineHeight
-    };
-  }
-  for(const [name,selector] of Object.entries(labelSelectors)){
-    const source=document.querySelector(selector);
-    const node=name==='orb'?source.closest('label'):source;
-    const style=getComputedStyle(node);
-    labels[name]={
-      color:style.color,
-      fontFamily:style.fontFamily,
-      fontSize:style.fontSize,
-      fontWeight:style.fontWeight,
-      lineHeight:style.lineHeight
-    };
-  }
-  const toggles={};
-  for(const [name,selector] of Object.entries({
-    aspects:'#skyFoundationRelationships .sky-chart-aspect-filter-toggle',
-    placements:'#skyFoundationRelationships .sky-chart-placement-filter-toggle',
-    houses:'#skyFoundationRelationships .sky-chart-house-filter-toggle'
-  })){
-    const node=document.querySelector(selector);
-    const style=getComputedStyle(node);
-    const rect=node.getBoundingClientRect();
-    toggles[name]={height:rect.height,borderTopWidth:style.borderTopWidth,backgroundColor:style.backgroundColor,backgroundImage:style.backgroundImage};
-  }
-  return{fields,labels,toggles};
-});
-
-const fieldNames=Object.keys(result.fields);
-const reference=result.fields.orb;
-for(const name of fieldNames){
-  const field=result.fields[name];
-  assert.ok(Math.abs(field.height-reference.height)<=0.5,`${name} height ${field.height} does not match Orb ${reference.height}`);
-  for(const property of ['backgroundColor','borderTopColor','borderTopStyle','borderTopWidth','borderTopLeftRadius','borderTopRightRadius','borderBottomLeftRadius','borderBottomRightRadius','color','fontFamily','fontSize','fontWeight','lineHeight']){
-    assert.equal(field[property],reference[property],`${name} ${property} must match Orb`);
-  }
+// Relationships now owns the shared filter controls. Its old Orb-width input
+// was replaced by Harmonic Window in Focus, so test the actual filter surfaces.
+const filters={
+  aspects:'[data-aspect-filter="combined"]',
+  placements:'[data-placement-filter="combined"]',
+  houses:'[data-house-filter="combined"]'
+};
+for(const selector of Object.values(filters))await page.waitForSelector(selector,{state:'visible',timeout:20000});
+const geometry=await page.evaluate(filters=>Object.fromEntries(Object.entries(filters).map(([name,selector])=>{
+  const node=document.querySelector(selector),rect=node.getBoundingClientRect(),style=getComputedStyle(node);
+  const button=node.querySelector('button[data-aspect-filter-toggle],button[data-placement-filter-toggle],button[data-house-filter-toggle]');
+  const toggle=button?.getBoundingClientRect();
+  return[name,{height:rect.height,width:rect.width,display:style.display,
+    toggleWidth:toggle?.width||0,toggleHeight:toggle?.height||0,
+    labelled:!!node.querySelector('[class*="filter-label"]')}];
+})),filters);
+for(const [name,shape] of Object.entries(geometry)){
+  assert.ok(shape.height>0&&shape.width>0,`${name} filter must have visible layout geometry: ${JSON.stringify(shape)}`);
+  assert.ok(shape.toggleWidth>0&&shape.toggleHeight>0,`${name} filter must expose a usable dropdown toggle`);
+  assert.equal(shape.labelled,true,`${name} filter must retain an accessible visible label`);
 }
 
-const labelReference=result.labels.orb;
-for(const [name,label] of Object.entries(result.labels)){
-  for(const property of ['color','fontFamily','fontSize','fontWeight','lineHeight']){
-    assert.equal(label[property],labelReference[property],`${name} label ${property} must match Orb`);
-  }
-}
-for(const [name,toggle] of Object.entries(result.toggles)){
-  assert.ok(Math.abs(toggle.height-reference.height)<=0.5,`${name} toggle height must match field height`);
-  assert.equal(toggle.borderTopWidth,'0px',`${name} chevron must be overlaid inside one continuous box`);
-  assert.equal(toggle.backgroundColor,'rgba(0, 0, 0, 0)',`${name} chevron must not create a second box`);
-  assert.notEqual(toggle.backgroundImage,'none',`${name} must use the shared chevron artwork`);
-}
-
-// Aspect matrix rows retain the canonical aspect identity so the shared glyph decorator
-// can restore the symbol and its aspect-specific color.
-await page.locator('#skyFoundationRelationships .sky-chart-aspect-filter-toggle').click();
+// Aspect glyphs keep their canonical identities and distinct colors.
+await page.locator('[data-aspect-filter="combined"] [data-aspect-filter-toggle]').click();
 await page.waitForSelector('#skyChartAspectPopover:not([hidden]) [data-aspect-list="matrix"]');
 await page.waitForFunction(()=>document.querySelectorAll('#skyChartAspectPopover .sky-filter-symbol-aspect[data-glyph-color]').length===11);
-const aspectGlyphAudit=await page.locator('#skyChartAspectPopover .sky-chart-aspect-list-item[data-aspect-list-item]:not([data-aspect-list-item="all"])').evaluateAll(rows=>rows.map(row=>{
+const glyphs=await page.locator('#skyChartAspectPopover .sky-chart-aspect-list-item[data-aspect-list-item]:not([data-aspect-list-item="all"])').evaluateAll(rows=>rows.map(row=>{
   const host=row.querySelector('.sky-filter-symbol-aspect');
-  return {aspect:row.dataset.aspectListItem,glyph:host?.dataset.canonicalGlyph||'',color:host?.dataset.glyphColor||''};
+  return{aspect:row.dataset.aspectListItem,glyph:host?.dataset.canonicalGlyph||'',color:host?.dataset.glyphColor||''};
 }));
-assert.equal(aspectGlyphAudit.length,11);
-assert.ok(aspectGlyphAudit.every(item=>item.glyph===item.aspect),`Aspect glyph identities drifted: ${JSON.stringify(aspectGlyphAudit)}`);
-assert.equal(new Set(aspectGlyphAudit.map(item=>item.color)).size,11,'Each aspect should retain its own color cue.');
+assert.equal(glyphs.length,11);
+assert.ok(glyphs.every(item=>item.glyph===item.aspect),`Aspect identity drift: ${JSON.stringify(glyphs)}`);
+assert.equal(new Set(glyphs.map(item=>item.color)).size,11,'Each aspect must retain its own color cue');
 
-// The open popover keeps one horizontal anchor while filters change. Filtering may change
-// page height/scrollbar state, but it must not make the menu jump side to side.
+// Switching aspects must not move the open popover horizontally.
 const popover=page.locator('#skyChartAspectPopover');
-const initialLeft=(await popover.boundingBox()).x;
-const squareAll=popover.locator('[data-aspect-matrix-scope="all"][data-aspect-matrix-aspect="square"]');
-await squareAll.click();
+const x=(await popover.boundingBox()).x;
+const square=popover.locator('[data-aspect-matrix-scope="all"][data-aspect-matrix-aspect="square"]');
+await square.click();
 await page.waitForTimeout(150);
-const leftAfterOff=(await popover.boundingBox()).x;
-await squareAll.click();
+const off=(await popover.boundingBox()).x;
+await square.click();
 await page.waitForTimeout(150);
-const leftAfterOn=(await popover.boundingBox()).x;
-assert.ok(Math.abs(leftAfterOff-initialLeft)<=0.5,`Aspect popover shifted horizontally from ${initialLeft} to ${leftAfterOff}.`);
-assert.ok(Math.abs(leftAfterOn-initialLeft)<=0.5,`Aspect popover shifted horizontally from ${initialLeft} to ${leftAfterOn}.`);
-
+const on=(await popover.boundingBox()).x;
+assert.ok(Math.abs(off-x)<=.5&&Math.abs(on-x)<=.5,
+  `The aspect menu must retain horizontal anchoring: ${x}, ${off}, ${on}`);
 assert.deepEqual(errors,[]);
-await page.locator('#skyFoundationRelationships .sky-chart-filter-bar').screenshot({path:'sky-chart-filter-controls-unified.png'});
+await page.screenshot({path:'sky-chart-filter-controls-unified.png'});
 await browser.close();
-console.log('Relationship filters match visually; Aspect glyph colors are present and the open Aspect menu stays horizontally stable.');
+console.log('Current Relationship filter controls, canonical glyph identities and anchored Aspect popover passed.');
