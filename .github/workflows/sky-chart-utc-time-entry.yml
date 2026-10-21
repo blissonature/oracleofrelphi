@@ -1,0 +1,40 @@
+name: Sky Chart UTC entry browser checks
+
+on:
+  pull_request:
+    paths:
+      - 'sky-chart.html'
+      - 'sky-chart-where-when-v3.js'
+      - 'sky-chart-time-control-v1.js'
+      - 'tests/sky-chart-utc-time-entry-browser.mjs'
+      - '.github/workflows/sky-chart-utc-time-entry.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - 'sky-chart.html'
+      - 'sky-chart-where-when-v3.js'
+      - 'sky-chart-time-control-v1.js'
+      - 'tests/sky-chart-utc-time-entry-browser.mjs'
+
+jobs:
+  utc-browser:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: JavaScript syntax
+        run: |
+          node --check sky-chart-where-when-v3.js
+          node --check sky-chart-time-control-v1.js
+          node --check tests/sky-chart-utc-time-entry-browser.mjs
+      - name: Install browser dependencies
+        run: |
+          npm install --no-save playwright@1.52.0 luxon@3 suncalc@1.9.0
+          npx playwright install --with-deps chromium
+      - name: Run UTC / local browser acceptance
+        run: |
+          python3 -m http.server 4173 > /tmp/sky-chart-utc-server.log 2>&1 &
+          node tests/sky-chart-utc-time-entry-browser.mjs
