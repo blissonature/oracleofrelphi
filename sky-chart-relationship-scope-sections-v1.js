@@ -166,6 +166,23 @@ function houseCopySummary(){
   const summaries=slots.map(describe);
   return summaries.every(summary=>summary===summaries[0])?summaries[0]:slots.map((slot,i)=>'Sky '+slot+': '+summaries[i]).join(' · ');
 }
+function placementCopySummary(){
+  const choices=[...document.querySelectorAll('[data-placement-scope="placement"][data-placement-target][data-placement-choice]')];
+  const slots=skyIsPresent('B')?['A','B']:['A'];
+  if(!choices.length)return window.RelphiSkyPlacementLogic?.summary?.()||String(document.querySelector('[data-placement-filter-summary]')?.textContent||'All').trim()||'All';
+  const label=id=>id.split('-').map(w=>w.charAt(0).toUpperCase()+w.slice(1)).join(' ');
+  const data=slots.map(slot=>{
+    const inputs=choices.filter(input=>input.dataset.placementChoice===slot.toLowerCase()&&!input.disabled);
+    const selected=inputs.filter(input=>input.checked).map(input=>label(input.dataset.placementTarget));
+    return {slot,all:inputs.length&&selected.length===inputs.length,none:!selected.length,selected};
+  });
+  if(data.every(item=>item.all))return 'All';
+  if(data.every(item=>item.none))return 'None';
+  const summary=item=>item.all?'All':item.none?'None':item.selected.join(', ');
+  if(data.length===1)return summary(data[0]);
+  if(data.every(item=>summary(item)===summary(data[0])))return summary(data[0]);
+  return data.map(item=>'Sky '+item.slot+': '+summary(item)).join(' · ');
+}
 function focusInformation(){
   const value=selector=>String(document.querySelector(selector)?.textContent||'').trim().replace(/\s+/g,' ');
   const selected=selector=>{const element=document.querySelector(selector);return element?.selectedOptions?.[0]?.textContent?.trim()||element?.value||''};
@@ -181,7 +198,7 @@ function focusInformation(){
     ['Aspects',matrix.aspects],
     ['Relationship scopes',matrix.scopes],
     ...(matrix.bySignNames?[['By Sign',matrix.bySignNames]]:[]),
-    ['Placements',window.RelphiSkyPlacementLogic?.summary?.()||value('[data-placement-filter-summary]')||'All'],
+    ['Placements',placementCopySummary()],
     ['Zodiac Signs',zodiacCopySummary()],
     ['Houses',houseCopySummary()],
     ['Sort',selected('.sky-relationship-sort-select')],
@@ -217,6 +234,9 @@ function serializeAll(){
   }
   return families.length?`${relationshipsCopyHeader()}\n\n${families.join('\n\n')}\n\nOracle of Relphi · oracleofrelphi.com`:relationshipsCopyHeader();
 }
+// Public semantic source of truth: also used if the Copy button is recreated
+// before the scoped controller reattaches its enhanced event listener.
+window.RelphiRelationshipScopeCopySerializer=Object.freeze({serializeAll,focusInformation,relationshipsCopyHeader});
 function legacyCopy(text){const active=document.activeElement;let ta=null;try{ta=document.createElement('textarea');ta.value=text;ta.setAttribute('aria-hidden','true');Object.assign(ta.style,{position:'fixed',left:'0',top:'0',width:'1px',height:'1px',padding:'0',border:'0',opacity:'0',fontSize:'16px'});document.body.appendChild(ta);try{ta.focus({preventScroll:true})}catch(_){ta.focus()}ta.select();ta.setSelectionRange(0,ta.value.length);return document.execCommand('copy')===true}catch(_){return false}finally{ta?.remove();try{active?.focus?.({preventScroll:true})}catch(_){try{active?.focus?.()}catch(__){}}}}
 async function writeClipboard(text){if(legacyCopy(text))return true;if(!navigator.clipboard?.writeText)return false;let timer=0;try{const timeout=new Promise(resolve=>{timer=window.setTimeout(()=>resolve(false),900)});const copy=Promise.resolve(navigator.clipboard.writeText(text)).then(()=>true,()=>false);return await Promise.race([copy,timeout])}catch(_){return false}finally{clearTimeout(timer)}}
 function bindCopyButton(){const b=document.querySelector('.sky-relationship-copy-button');if(!b||b.dataset.scopeCopyOverride==='v8')return;b.dataset.scopeCopyOverride='v8';b.setAttribute('aria-label','Copy included relationships at the current reveal level');b.addEventListener('click',async e=>{e.preventDefault();e.stopImmediatePropagation();const text=serializeAll();if(!text)return;b.textContent='Copying…';let ok=false;try{ok=await writeClipboard(text)}catch(_){}if(!ok){b.textContent='Copy failed';clearTimeout(copyTimer);copyTimer=setTimeout(()=>{if(b.isConnected)b.textContent='Copy'},1400);return}b.textContent='Copied '+visibleRows().length;clearTimeout(copyTimer);copyTimer=setTimeout(()=>{if(b.isConnected)b.textContent='Copy'},1000)},true)}
