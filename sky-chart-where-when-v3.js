@@ -191,6 +191,7 @@ function syncUtcToLocal(form){
   }
   timeField(form,'date').value=local.toFormat('yyyy-MM-dd');
   timeField(form,'time').value=local.toFormat('HH:mm');
+  window.RelphiSkyTimeControl?.refresh?.(timeField(form,'time'));
   if(label){
     label.hidden=false;
     label.textContent='At '+zone+': '+local.toFormat('ccc, LLL d, yyyy · h:mm a')+' (UTC'+local.toFormat('ZZ')+').';
@@ -250,6 +251,7 @@ function updateNowFields(slot){
   const date=form.querySelector('[data-ww-field="date"]'),time=form.querySelector('[data-ww-field="time"]'),summary=form.querySelector('[data-ww-now-value]');
   if(date)date.value=local.toFormat('yyyy-MM-dd');
   if(time)time.value=local.toFormat('HH:mm');
+  if(time)window.RelphiSkyTimeControl?.refresh?.(time);
   if(summary)summary.textContent='Captured · '+local.toFormat('ccc, LLL d · h:mm:ss a')+' · '+timezone;
   const utc=instant.toUTC();timeField(form,'utc-date').value=utc.toFormat('yyyy-MM-dd');timeField(form,'utc-time').value=utc.toFormat('HH:mm');
 }
