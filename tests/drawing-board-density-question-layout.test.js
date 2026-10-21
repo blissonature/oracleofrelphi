@@ -14,6 +14,8 @@ async function openBoard(page){
   await page.locator('#relphiBoardSettingsButton').click();
 }
 async function resetBoard(page){
+  if((await page.locator('#relphiBoardSettingsButton').getAttribute('aria-expanded'))!=='true')
+    await page.click('#relphiBoardSettingsButton');
   await page.click('#drawingBoardOptionsButton');
   await page.waitForSelector('.relphi-reading-options-drawer.is-reading-options-open',{state:'visible'});
   await page.click('#relphiResetBoard');

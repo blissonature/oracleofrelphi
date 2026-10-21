@@ -23,7 +23,24 @@ await page.waitForSelector('#skyFoundationRoot[aria-busy="false"]',{timeout:2000
 
 await page.locator('#skyFoundationA [data-sky-drawer-tab="placements"]').evaluate(node=>node.click());
 await page.locator('#skyFoundationB [data-sky-drawer-tab="placements"]').evaluate(node=>node.click());
-await page.waitForFunction(()=>document.querySelectorAll('#skyFoundationA .sky-foundation-row').length>10&&document.querySelectorAll('#skyFoundationB .sky-foundation-row').length>10,null,{timeout:20000});
+await page.waitForFunction(()=>document.querySelectorAll('#skyFoundationA .sky-foundation-row').length>10&&document.querySelectorAll('#skyFoundationB .sky-foundation-row').length>10,null,{timeout:20000}).catch(async error=>{
+  const diagnostic=await page.evaluate(()=>{
+    const count=selector=>document.querySelectorAll(selector).length;
+    return {
+      a:count('#skyFoundationA .sky-foundation-row'),
+      b:count('#skyFoundationB .sky-foundation-row'),
+      aMount:document.querySelector('#skyFoundationA [data-sky-drawer-mount="placements"]')?.innerText?.slice(0,200),
+      bMount:document.querySelector('#skyFoundationB [data-sky-drawer-mount="placements"]')?.innerText?.slice(0,200),
+      aDrawers:count('#skyFoundationA .sky-card-drawer'),
+      bDrawers:count('#skyFoundationB .sky-card-drawer'),
+      wheel:count('#skyFoundationWheelMount .sky-foundation-wheel'),
+      present:document.documentElement.dataset.skyBPresent,
+      mode:document.documentElement.dataset.skyStartupMode,
+      last:localStorage.getItem('relphiSkyChartLastModeV1')
+    };
+  });
+  throw new Error('Ledger presence failed: '+JSON.stringify(diagnostic)+'; '+error.message);
+});
 await page.waitForFunction(()=>{
   const hosts=Array.from(document.querySelectorAll('#skyFoundationA .sky-foundation-row > svg,#skyFoundationB .sky-foundation-row > svg'));
   return hosts.length>20&&hosts.every(host=>{
