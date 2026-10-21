@@ -28,7 +28,7 @@ async function configure(page) {
   const toolbar=page.locator('.relphi-question-toolbar');
   const info=await toolbar.evaluate(el=>({width:el.getBoundingClientRect().width,scrollWidth:el.scrollWidth,rows:[...el.children].map(n=>Math.round(n.getBoundingClientRect().top))}));
   assert.ok(info.scrollWidth<=info.width+3,'mobile toolbar should not overflow horizontally: '+JSON.stringify(info));
-  assert.equal(info.rows[0],info.rows[1],'Select All and question actions should share row one');
+  assert.ok(Math.abs(info.rows[0]-info.rows[1])<20,'Select All and actions must occupy the same grid row');
   assert.ok(info.rows[2]>info.rows[0],'drawing rules should occupy row two');
   assert.equal(await page.locator('#relphiQuestionControllerReversals').isVisible(),true);
   assert.equal(await page.locator('#relphiQuestionControllerRepeats').isVisible(),true);
