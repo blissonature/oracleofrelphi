@@ -148,34 +148,53 @@ try{
     const token=vertex.locator(`.sky-vocab-token[data-vocab-kind="${kind}"]`).first();
     assert.equal(await token.count(),1,`Vertex polarity must expose a ${kind} token`);
     await token.hover();
-    await page.waitForFunction(()=>document.querySelector('#skyFoundationWheelMount>.sky-foundation-wheel')?.classList.contains('has-vocab-token-context'));
+    await page.waitForFunction(kind=>{
+      const wheel=document.querySelector('#skyFoundationWheelMount>.sky-foundation-wheel');
+      return wheel?.classList.contains('has-isolation')&&
+        !!wheel.querySelector(`[data-focus-piece="${kind}"].is-hovered`);
+    },kind,{timeout:10000});
     tokenKinds[kind]=await page.evaluate(()=>{
       const wheel=document.querySelector('#skyFoundationWheelMount>.sky-foundation-wheel');
-      const visiblePlacement=wheel?.querySelector('[data-focus-piece="placement"]:not(.is-vocab-token-context)');
+      const unrelated=wheel?.querySelector('[data-focus-piece="placement"]:not(.is-kept)');
+      const count=kind=>wheel?.querySelectorAll(`[data-focus-piece="${kind}"].is-hovered`).length||0;
       return{
         rowContext:wheel?.classList.contains('has-vocab-context')||false,
         axisMode:wheel?.classList.contains('has-vocab-axis-context')||false,
-        tokenPlacements:wheel?.querySelectorAll('[data-focus-piece="placement"].is-vocab-token-context').length||0,
-        tokenSigns:wheel?.querySelectorAll('.sky-foundation-sign-sector.is-vocab-token-context').length||0,
-        tokenHouses:wheel?.querySelectorAll('.sky-foundation-house-sector.is-vocab-token-context').length||0,
-        unrelatedPlacementOpacity:visiblePlacement?Number(getComputedStyle(visiblePlacement).opacity):null
+        nativeIsolation:wheel?.classList.contains('has-isolation')||false,
+        tokenPlacements:count('placement'),
+        tokenSigns:count('sign'),
+        tokenHouses:count('house'),
+        unrelatedPlacementOpacity:unrelated?Number(getComputedStyle(unrelated).opacity):null
       };
     });
   }
-  assert.deepEqual(tokenKinds.placement,{rowContext:false,axisMode:false,tokenPlacements:1,tokenSigns:0,tokenHouses:0,unrelatedPlacementOpacity:1},`Placement token hover must add only placement highlight with no dimming: ${JSON.stringify(tokenKinds)}`);
-  assert.deepEqual(tokenKinds.sign,{rowContext:false,axisMode:false,tokenPlacements:0,tokenSigns:1,tokenHouses:0,unrelatedPlacementOpacity:1},`Sign token hover must add only sign highlight with no dimming: ${JSON.stringify(tokenKinds)}`);
-  assert.deepEqual(tokenKinds.house,{rowContext:false,axisMode:false,tokenPlacements:0,tokenSigns:0,tokenHouses:1,unrelatedPlacementOpacity:1},`House token hover must add only house highlight with no dimming: ${JSON.stringify(tokenKinds)}`);
+  for(const kind of ['placement','sign','house']){
+    const state=tokenKinds[kind];
+    assert.equal(state.rowContext,false,`${kind} token preview must clear row context`);
+    assert.equal(state.axisMode,false,`${kind} token preview must clear axis context`);
+    assert.equal(state.nativeIsolation,true,`${kind} token must use native wheel isolation`);
+    assert.deepEqual([state.tokenPlacements,state.tokenSigns,state.tokenHouses],
+      ['placement','sign','house'].map(type=>type===kind?1:0),
+      `${kind} token must hover only the corresponding native wheel piece: ${JSON.stringify(state)}`);
+    assert.ok(state.unrelatedPlacementOpacity>0&&state.unrelatedPlacementOpacity<1,
+      `${kind} token must dim, not hide, other wheel placements: ${JSON.stringify(state)}`);
+  }
 
   const placementLevel=vertex.locator('.sky-vocab-token[data-vocab-kind="placement"]').first().locator('[data-vocab-level]').first();
   await placementLevel.click();
   await page.locator('#skyFoundationA .sky-vocab-structures-heading').hover();
-  const pinnedPlacement=await page.evaluate(()=>({
-    rowContext:document.querySelector('#skyFoundationWheelMount>.sky-foundation-wheel')?.classList.contains('has-vocab-context')||false,
-    token:document.querySelectorAll('#skyFoundationWheelMount [data-focus-piece].is-vocab-token-context').length,
-    unrelatedOpacity:Number(getComputedStyle(document.querySelector('#skyFoundationWheelMount [data-focus-piece="placement"]:not(.is-vocab-token-context)')).opacity)
-  }));
-  assert.equal(pinnedPlacement.rowContext,false,`Pinned token must not restore structure whiteout: ${JSON.stringify(pinnedPlacement)}`);
-  assert.ok(pinnedPlacement.token>=1&&pinnedPlacement.unrelatedOpacity===1,`Pinned token must highlight without dimming anything else: ${JSON.stringify(pinnedPlacement)}`);
+  const pinnedPlacement=await page.evaluate(()=>{
+    const wheel=document.querySelector('#skyFoundationWheelMount>.sky-foundation-wheel');
+    const unrelated=wheel?.querySelector('[data-focus-piece="placement"]:not(.is-kept)');
+    return{
+      rowContext:wheel?.classList.contains('has-vocab-context')||false,
+      selected:wheel?.querySelectorAll('[data-focus-piece="placement"].is-selected').length||0,
+      unrelatedOpacity:unrelated?Number(getComputedStyle(unrelated).opacity):null
+    };
+  });
+  assert.equal(pinnedPlacement.rowContext,false,`Pinned token must not restore row context: ${JSON.stringify(pinnedPlacement)}`);
+  assert.ok(pinnedPlacement.selected>=1&&pinnedPlacement.unrelatedOpacity>0&&pinnedPlacement.unrelatedOpacity<1,
+    `Pinned token must retain native wheel isolation without hiding placements: ${JSON.stringify(pinnedPlacement)}`);
 
   console.log('Structural polarity member regression passed:',JSON.stringify({states,tokenKinds,pinnedPlacement}));
 }finally{

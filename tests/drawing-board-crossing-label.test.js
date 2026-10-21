@@ -17,7 +17,9 @@ fs.mkdirSync(out,{recursive:true});
     assert.ok(frame,'standalone Drawing Board iframe must load');
     await frame.waitForFunction(()=>!!window.RelphiDrawingBoardOptionsBridge && !!document.querySelector('#drawingBoardOptionsButton') && !!document.querySelector('#relphiOpenDrawingBoardCurrent'),null,{timeout:20000});
     const panel=frame.locator('#shortListPanel');
-    if(!(await panel.isVisible())) await frame.click('#relphiOpenDrawingBoardCurrent');
+    // drawing-board.html auto-opens its iframe after all native handlers load.
+    // Clicking its opener early can race with that auto-open and close it again.
+    await frame.waitForFunction(()=>document.querySelector('#relphiOpenDrawingBoardCurrent')?.getAttribute('aria-expanded')==='true',null,{timeout:25000});
     await panel.waitFor({state:'visible',timeout:10000});
     await frame.locator('#relphiBoardSettingsButton').click();
     await frame.waitForSelector('#shortListPanel #drawingBoardOptionsButton',{state:'visible',timeout:10000});
