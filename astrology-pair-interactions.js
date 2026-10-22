@@ -99,7 +99,8 @@ function update(){
  const url=new URL(location.href);
  const query=new URLSearchParams();
  for(const field of [scope,aspect,sourceHouse,targetHouse,sourceSign,targetSign]){
-  if(field.value)query.set(field.name,field.value);
+  const isDefault=(field.name==='scope'&&field.value==='transit-to-natal')||(field.name==='aspect'&&field.value==='opposition');
+  if(field.value&&!isDefault)query.set(field.name,field.value);
  }
  if(sourceRx.checked)query.set('sourceRx','1');
  if(targetRx.checked)query.set('targetRx','1');
