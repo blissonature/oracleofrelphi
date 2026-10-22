@@ -92,6 +92,7 @@ for(const url of urls){
     document.querySelector('#copy-canon-fixture button').textContent='Copied';
   });
   await page.waitForFunction(()=>document.querySelector('#copy-canon-fixture button svg use')?.getAttribute('href')==='relphi-icons.svg#relphi-copy',null,{timeout:5000});
+  await page.waitForFunction(()=>document.querySelector('#copy-canon-fixture button')?.dataset.relphiCopyFeedback==='done',null,{timeout:4000});
   assert.equal(await page.locator('#copy-canon-fixture button').first().getAttribute('data-relphi-copy-feedback'),'done');
   assert.equal(await page.locator('#copy-canon-fixture button').first().getAttribute('aria-label'),'Copied');
   assert.equal(await page.locator('#copy-canon-fixture button').first().locator('svg use').getAttribute('href'),SOURCE);
