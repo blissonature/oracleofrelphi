@@ -129,6 +129,19 @@ for(const url of urls){
   if(url.startsWith('index.html')){
     await page.waitForFunction(()=>[...document.querySelectorAll('.question-card .copy-icon')].every(n=>n.querySelector('svg.relphi-copy-icon use')?.getAttribute('href')==='relphi-icons.svg#relphi-copy'),null,{timeout:6000});
     assert.equal(await page.locator('.question-card .copy-icon svg use').count(),4,'Every Invocation Card uses the same mark');
+    const cardAudit=await page.locator('.question-card').evaluateAll(cards=>cards.map(card=>({
+      hasParentIcon:card.classList.contains('relphi-copy-icon-button'),
+      count:card.querySelectorAll('svg').length,
+      nested:card.querySelector('.copy-icon svg use')?.getAttribute('href')
+    })));
+    for(const card of cardAudit){
+      assert.equal(card.hasParentIcon,false,'The parent Invocation Card must not receive a second Copy SVG');
+      assert.equal(card.count,1,'Every Invocation Card must contain exactly one SVG');
+      assert.equal(card.nested,SOURCE,'The card Copy SVG must reference the master path');
+    }
+    await page.waitForTimeout(280);
+    assert.equal(await page.locator('.question-card .copy-icon svg').count(),4,
+      'The icon decorator must not loop, remove or duplicate question-card icons');
   }
   if(url.startsWith('sky-chart')){
     // Verifies the icon is really painted, not just that the <use> exists.
