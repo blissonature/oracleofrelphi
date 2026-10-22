@@ -102,7 +102,7 @@ function makeOverlay(){
     state.markers.push({body,clone,trace,lane,exactRadius:Number.isFinite(exactRadius)?exactRadius:lane});
     dim(host,.19);dim(leader,.12);
   }
-  dim(wheel.querySelector('[data-layer="aspects"]'),.12);
+  // Keep reference-sky aspect lines visible. Unknown-time exploration draws its own evolving aspect layer.
   return state.markers.length>0;
 }
 function clock(ms){
