@@ -97,6 +97,9 @@
       if(hiddenByOrb&&!hiddenByWheel&&!hiddenByOther)hiddenByHarmonicWindow+=1;
       // A wheel focus dims nonmatching aspect lines. It must never hide them:
       // users need to be able to tap a different line to replace the focus.
+      // Selection/hover must not make the SVG layer disappear. A line's
+      // visibility is determined by filters and harmonic window alone, never
+      // by a selected relationship or whether its row is temporarily hidden.
       const lineEligible=!hiddenByOrb&&!hiddenByOther;
       if(lineEligible)lineVisibleKeys.add(identity(row));
       const visible=lineEligible&&!hiddenByWheel;
@@ -112,7 +115,17 @@
 
     document.querySelectorAll('[data-layer="aspects"] .sky-foundation-aspect').forEach(line=>{
       const index=String(line.dataset.relationIndex||''),key=identity(line);
-      setSvgVisibility(line,index!==''&&lineVisibleKeys.has(key));
+      // Some SVG relation indexes differ from the reordered list indexes.
+      // Use canonical endpoint identity as fallback. A focus click must not
+      // turn the entire aspect layer off merely because no row key matched.
+      const counterpart=rowsByIndex.get(key);
+      const eligible=counterpart?lineVisibleKeys.has(key):
+        !['sky-chart-filter-hidden','sky-chart-multiselect-hidden','sky-chart-house-multiselect-hidden',
+          'sky-chart-aspect-multiselect-hidden','sky-chart-sign-filter-hidden','sky-foundation-single-sky-cross-hidden']
+          .some(name=>line.classList.contains(name)) &&
+        (line.dataset.bySignOnly==='true'||!Number.isFinite(Number(line.dataset.phaseError))||
+          Number(line.dataset.phaseError)<=limit);
+      setSvgVisibility(line,eligible);
       const row=index?rowsByIndex.get(key):null;
       if(row){line.dataset.harmonicWindow=row.dataset.harmonicWindow||'';line.dataset.harmonicCoherence=row.dataset.harmonicCoherence||''}
     });
