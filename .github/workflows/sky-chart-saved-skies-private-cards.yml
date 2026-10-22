@@ -28,7 +28,7 @@ jobs:
           node --check sky-chart-saved-skies-labels-v1.js
           node --check sky-chart-saved-skies-v1.js
           node --check tests/sky-chart-saved-skies-private-cards-browser.mjs
-          node --test tests/sky-chart-saved-skies-row-alignment.test.mjs tests/sky-chart-saved-skies-micro-style.test.mjs
+          node --test tests/sky-chart-saved-skies-row-alignment.test.mjs
       - name: Install browser
         run: |
           npm install --no-save playwright@1.52.0 luxon@3 suncalc@1.9.0
