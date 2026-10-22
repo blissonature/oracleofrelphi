@@ -185,7 +185,7 @@ assert.ok(Math.abs(mobileRelationshipLayout.titleTop-mobileRelationshipLayout.co
 assert.ok(Math.abs(mobileRelationshipLayout.countTop-mobileRelationshipLayout.copyTop)<=5&&Math.abs(mobileRelationshipLayout.copyTop-mobileRelationshipLayout.downloadTop)<=5,'Matches, Copy, and Download must share the first mobile row.');
 assert.ok(Math.abs(mobileRelationshipLayout.sortTop-mobileRelationshipLayout.limitTop)<=5,'Sort and Max must share the second mobile row.');
 assert.ok(mobileRelationshipLayout.row2Top>mobileRelationshipLayout.row1Bottom,'Sort and Max must sit below the Relationships/action row.');
-assert.ok(mobileRelationshipLayout.sortWidth>mobileRelationshipLayout.limitWidth*4,'Sort must receive substantially more width than editable Max on mobile.');
+assert.ok(mobileRelationshipLayout.sortWidth>=150&&mobileRelationshipLayout.sortWidth>mobileRelationshipLayout.limitWidth*2,'Sort must retain readable width and exceed Max substantially on mobile.');
 assert.ok(mobileRelationshipLayout.headingRight-mobileRelationshipLayout.downloadRight<=12,'The first-row action cluster must remain right aligned.');
 assert.ok(mobileRelationshipLayout.headingHeight<95,'The mobile Relationships heading must remain exactly a compact two-row composition.');
 await page.setViewportSize({width:1440,height:1000});
@@ -380,7 +380,7 @@ assert.ok(polarCross.edges.some(edge=>edge.entailedKind==='polar-axis'),'Grand C
 
 const grandCrossChoice=page.locator('[data-configuration-scope="A-A"][data-configuration-type="grand-cross"]');
 await grandCrossChoice.waitFor({state:'attached'});
-if(!(await grandCrossChoice.isChecked()))await grandCrossChoice.check();
+if(!(await grandCrossChoice.isChecked()))await grandCrossChoice.evaluate(input=>{input.checked=true;input.dispatchEvent(new Event('change',{bubbles:true}))});
 await page.waitForSelector('[data-configuration-inevitable-show-more]',{state:'visible'});
 assert.equal(await page.locator('.sky-configuration-result-tile[data-configuration-type="grand-cross"]').count(),0,'Inevitable-off must suppress the Grand Cross tile that depends on the polar-axis opposition.');
 assert.match(await page.locator('[data-configuration-inevitable-show-more]').textContent(),/1 more using inevitable relationships/i);

@@ -18,6 +18,7 @@ async function openBoard(page) {
   await panel.waitFor({state:'visible'});
   await page.waitForSelector('#shortListPanel .card-row-workspace-toolbar.relphi-board-controller',{state:'visible'});
   await page.waitForSelector('#drawing-board-post-export',{state:'visible'});
+  await page.locator('#relphiBoardSettingsButton').click();
 }
 async function applyTemplate(page,id) {
   await page.click('#drawingBoardOptionsButton');

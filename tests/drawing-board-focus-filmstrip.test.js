@@ -11,6 +11,7 @@ async function openBoard(page){
   const panel=page.locator('#shortListPanel');
   if(!(await panel.isVisible())) await page.click('#relphiOpenDrawingBoardCurrent');
   await panel.waitFor({state:'visible'});
+  await page.locator('#relphiBoardSettingsButton').click();
 }
 async function resetAndApplyQuestions(page,labels){
   await page.click('#drawingBoardOptionsButton');
@@ -20,9 +21,16 @@ async function resetAndApplyQuestions(page,labels){
     const state=window.RelphiDrawingBoardPrefabsBridge?.getState?.();
     return state && !state.activeLayout && state.slotCount===0 && state.hasCards===false;
   });
-  await page.waitForSelector('#relphiBulkReferents',{state:'visible'});
-  await page.fill('#relphiBulkReferents',labels.join(', '));
-  await page.click('#relphiParseReferents');
+  // Reset returns to Free. Reopen Crafted/Bespoke before authoring positions.
+  if((await page.locator('#relphiBoardSettingsButton').getAttribute('aria-expanded'))!=='true')
+    await page.locator('#relphiBoardSettingsButton').click();
+  await page.locator('#drawingBoardOptionsButton').click();
+  await page.locator('[data-referent-path="bespoke"]').click();
+  const firstLabel=page.locator('#relphiPositionLabels [data-position-label="0"]').first();
+  await firstLabel.waitFor({state:'visible'});
+  await firstLabel.fill(labels.join(', '));
+  // Comma-list parsing is deliberately deferred until Question 1 loses focus.
+  await firstLabel.evaluate(input=>input.blur());
   await page.waitForFunction(count=>document.querySelectorAll('#relphiPositionLabels .relphi-label-row').length===count,labels.length);
   await page.click('#relphiApplyOptions');
   await page.waitForFunction(count=>{
@@ -41,8 +49,18 @@ async function resetAndApplyQuestions(page,labels){
 
     const labels=Array.from({length:20},(_,i)=>`Question ${i+1}`);
     await resetAndApplyQuestions(page,labels);
+    // Seed a nine-card Focus fixture through the public ledger bridge. This
+    // test isolates Focus scrolling/scrubbing, not the Attune drawing ritual,
+    // which is exercised in the reading-text browser check.
+    const seeded=await page.evaluate(()=>{
+      const ledger=window.RelphiTarotLedgerBridge;
+      return window.RELPHI_TAROT_CARDS.slice(0,9).map(card=>ledger.addCardToBoard(card.card_id,'full'));
+    });
+    assert.equal(seeded.length,9);
+    assert.equal(seeded.every(Boolean),true,'Focus fixture must receive nine distinct cards');
+    await page.waitForFunction(()=>document.querySelectorAll('#shortListPanel .card-row-board [data-row-card]').length===9);
 
-    await page.locator('.card-row-item[data-row-index="0"] .card-row-drop-card').evaluate(node=>node.click());
+    await page.locator('.card-row-item[data-row-index="0"] [data-row-card]').evaluate(node=>node.click());
     await page.waitForSelector('.relphi-focus-reader',{state:'visible'});
     await page.waitForFunction(()=>Number(document.querySelector('.relphi-focus-reader')?.dataset.focusIndex)===0);
 

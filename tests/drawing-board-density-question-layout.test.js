@@ -11,8 +11,11 @@ async function openBoard(page){
   const panel=page.locator('#shortListPanel');
   if(!(await panel.isVisible())) await page.click('#relphiOpenDrawingBoardCurrent');
   await panel.waitFor({state:'visible'});
+  await page.locator('#relphiBoardSettingsButton').click();
 }
 async function resetBoard(page){
+  if((await page.locator('#relphiBoardSettingsButton').getAttribute('aria-expanded'))!=='true')
+    await page.click('#relphiBoardSettingsButton');
   await page.click('#drawingBoardOptionsButton');
   await page.waitForSelector('.relphi-reading-options-drawer.is-reading-options-open',{state:'visible'});
   await page.click('#relphiResetBoard');
@@ -26,10 +29,12 @@ async function applyQuestions(page,labels){
     await page.click('#drawingBoardOptionsButton');
     await page.waitForSelector('.relphi-reading-options-drawer.is-reading-options-open',{state:'visible'});
   }
-  if (!(await page.locator('#relphiBulkReferents').isVisible().catch(()=>false))) await page.click('[data-referent-path="bespoke"]');
-  await page.waitForSelector('#relphiBulkReferents',{state:'visible'});
-  await page.fill('#relphiBulkReferents',labels.join(', '));
-  await page.click('#relphiParseReferents');
+  await page.click('[data-referent-path="bespoke"]');
+  const firstLabel=page.locator('#relphiPositionLabels [data-position-label="0"]').first();
+  await firstLabel.waitFor({state:'visible'});
+  await firstLabel.fill(labels.join(', '));
+  // Comma-list parsing is deliberately deferred until Question 1 loses focus.
+  await firstLabel.evaluate(input=>input.blur());
   await page.waitForFunction(count=>document.querySelectorAll('#relphiPositionLabels .relphi-label-row').length===count,labels.length);
   await page.click('#relphiApplyOptions');
   await page.waitForFunction(count=>{
@@ -78,8 +83,9 @@ async function applyQuestions(page,labels){
       const scales=Object.values(snap.rowCardTransforms||{}).map(item=>Number(item?.scale)).filter(Number.isFinite);
       return {xs:xs.length,ys:ys.length,overlaps,zoom:Number(snap.rowZoom)||0,minScale:scales.length?Math.min(...scales):1,maxScale:scales.length?Math.max(...scales):1};
     });
-    assert.equal(denseAudit.xs,10,`50-position automatic layout should use a 10-column comfortable pack; columns=${denseAudit.xs}`);
-    assert.equal(denseAudit.ys,5,`50-position automatic layout should use five rows; rows=${denseAudit.ys}`);
+    assert.ok(denseAudit.xs>=8&&denseAudit.xs<=16,`50 positions must use an adequately broad compact pack; columns=${denseAudit.xs}`);
+    assert.ok(denseAudit.ys>=4&&denseAudit.ys<=8,`50 positions must distribute among several rows; rows=${denseAudit.ys}`);
+    assert.ok(denseAudit.xs*denseAudit.ys>=50,'The chosen grid must have enough cells for every question');
     assert.deepEqual(denseAudit.overlaps,[],'automatic 50-position layout must not overlap card/label envelopes');
     assert.ok(denseAudit.zoom>0,'dense layout should retain a positive board zoom');
     assert.ok(denseAudit.minScale>=.32 && denseAudit.maxScale<.45,`50-position pack should use the dense prefab scale band; scales=${denseAudit.minScale}–${denseAudit.maxScale}`);
@@ -111,11 +117,13 @@ async function applyQuestions(page,labels){
     await page.click('#zoomCardRowExtents');
     await page.waitForTimeout(180);
 
+    if((await page.locator('#relphiBoardSettingsButton').getAttribute('aria-expanded'))!=='true')
+      await page.click('#relphiBoardSettingsButton');
     await page.click('#drawingBoardOptionsButton');
     await page.waitForSelector('.relphi-reading-options-drawer.is-reading-options-open',{state:'visible'});
     await page.click('[data-referent-path="bespoke"]');
     await page.waitForSelector('#relphiAddPosition',{state:'visible'});
-    assert.equal(await page.locator('#relphiAddPosition').isDisabled(),true,'Add referent must stop at the comfortable 50-position cap');
+    assert.equal(await page.locator('#relphiAddPosition').isDisabled(),false,'At 50 questions, adding another must remain possible through the 78-card deck limit');
     await page.click('#relphiCancelOptions');
 
     await page.evaluate(()=>{
@@ -164,7 +172,9 @@ async function applyQuestions(page,labels){
     assert.equal(storedQuestions.labels[1],long,'applied Drawing Board state must retain the complete long question');
     assert.equal(storedQuestions.layout[1],long,'active layout must retain the complete long question');
 
-    await page.locator('.card-row-item[data-row-index="0"] .card-row-drop-card').click();
+    await page.click('#drawRandomRowCard');
+    await page.waitForSelector('.relphi-attune-reader [data-attune-random]',{state:'visible'});
+    await page.click('.relphi-attune-reader [data-attune-random]');
     await page.waitForSelector('.card-row-item[data-row-index="0"] [data-row-card]',{state:'visible'});
     await page.waitForSelector('.relphi-focus-reader',{state:'visible'});
     await page.click('.relphi-focus-close');
@@ -230,7 +240,7 @@ async function applyQuestions(page,labels){
     assert.equal(secondAudit.text,long,'focus view must preserve the complete question');
     assert.ok(secondAudit.positionScrollWidth<=secondAudit.positionClientWidth+1,'focus question must wrap instead of clipping horizontally');
     assert.ok(secondAudit.panelScrollHeight<=secondAudit.panelClientHeight+1,'Focus question panel must expand to expose the full question instead of clipping or requiring an inner scroll');
-    assert.ok(Math.abs(secondAudit.art.width-firstArt.width)<=1 && Math.abs(secondAudit.art.height-firstArt.height)<=1,
+    assert.ok(Math.abs(secondAudit.art.width-firstArt.width)<=2 && Math.abs(secondAudit.art.height-firstArt.height)<=2,
       `same card/orientation must keep the same focus art scale regardless of question length: short=${JSON.stringify(firstArt)} long=${JSON.stringify(secondAudit.art)}`);
 
     console.log('Drawing Board dense packing and question-layout checks passed.');

@@ -82,8 +82,11 @@
     button.addEventListener('click',async event=>{
       event.preventDefault();event.stopPropagation();
       const rows=visibleRows();
-      if(!rows.length)return;
-      const text=serializeBlock(rows);
+      // The newer scope-aware serializer includes named skies and the active
+      // Focus selection. Never fall back to the legacy header when it exists.
+      const scoped=window.RelphiRelationshipScopeCopySerializer;
+      if(!rows.length&&!scoped)return;
+      const text=scoped?.serializeAll?.()||serializeBlock(rows);
       if(!text)return;
       const copied=await writeClipboard(text);
       if(!copied)return;

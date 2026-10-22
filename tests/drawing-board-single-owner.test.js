@@ -10,7 +10,7 @@ const board = read('drawing-board-workflow-v2.js');
 const css = read('drawing-board-workflow-v2.css');
 const app = read('tarot-app.js');
 
-assert.match(nav, /drawing-board-workflow-v2\.js\?v=113/);
+assert.match(nav, /drawing-board-workflow-v2\.js\?v=\d+/);
 [
   'drawing-board-interactions-v1.js',
   'drawing-board-template-lifecycle-v1.js',
@@ -46,7 +46,7 @@ assert.match(board, /renderedContentBounds/);
 assert.match(board, /workspace\.clientWidth/);
 assert.match(board, /workspace\.clientHeight/);
 assert.match(board, /relphi-workspace-tools/);
-assert.match(board, /data-tool="more"/);
+assert.doesNotMatch(board, /data-tool="more"/, 'Zoom toolbar must not revive the superseded More menu');
 assert.doesNotMatch(board, /data-tool="snaps"/);
 assert.doesNotMatch(board, /data-tool="background"/);
 assert.match(board, /Unlock rotation & scale/);

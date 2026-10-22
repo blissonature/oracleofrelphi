@@ -192,6 +192,10 @@ jobs:
           console.log('CARD_HITS_DRAWER '+JSON.stringify(drawer));
           assert.equal(drawer.open,true);
           assert.equal(drawer.structure,true);
+          // The earlier interaction deliberately switched to Houses. Restore
+          // Rulers before asserting the ruler-stage presentation.
+          await page.locator('#skyFoundationA [data-card-hits-view="rulers"]').click();
+          await page.waitForSelector('#skyFoundationA .sky-card-chart-ruler-stage',{state:'visible'});
 
           const chartRulerPresentation=await page.evaluate(()=>{
             const stage=document.querySelector('#skyFoundationA .sky-card-chart-ruler-stage');
@@ -314,13 +318,28 @@ jobs:
           assert.ok(Math.abs(rulerRails.sample.imgBottom-rulerRails.sample.houseTop)<=0.75,'Bottom house rail must sit flush against card art.');
 
           await page.locator('#skyFoundationA [data-card-hits-view="houses"]').click();
-          await page.waitForTimeout(80);
-          await page.waitForFunction(()=>{const img=document.querySelector('#skyFoundationA .sky-card-house-decan-art img');return !!img&&img.complete&&img.naturalWidth>0},{timeout:10000});
+          // The House display is progressive: collapsed rows intentionally hide
+          // their lazy artwork. Expand the first House as a user would, then
+          // test the visible image rather than attempting to scroll a hidden one.
+          await page.locator('#skyFoundationA [data-card-house-toggle]').first().click();
+          const firstHouseArt=page.locator('#skyFoundationA .sky-card-house-detail:not([hidden]) .sky-card-house-decan-art img').first();
+          await firstHouseArt.waitFor({state:'visible',timeout:10000});
+          await firstHouseArt.scrollIntoViewIfNeeded();
+          await page.waitForFunction(()=>{
+            const tab=document.querySelector('#skyFoundationA [data-card-hits-view="houses"]');
+            const houses=document.querySelector('#skyFoundationA .sky-card-houses');
+            return tab?.getAttribute('aria-selected')==='true'&&!!houses&&
+              [...houses.querySelectorAll('.sky-card-house-decan-art img')]
+                .some(img=>img.complete&&img.naturalWidth>0&&img.getBoundingClientRect().height>0);
+          },null,{timeout:10000});
           const houseArt=await page.evaluate(()=>{
-            const wrap=document.querySelector('#skyFoundationA .sky-card-house-decan-art'),img=wrap?.querySelector('img');
+            const wrap=[...document.querySelectorAll('#skyFoundationA .sky-card-houses .sky-card-house-decan-art')]
+              .find(node=>node.querySelector('img')?.getBoundingClientRect().height>0);
+            const img=wrap?.querySelector('img');
             const ws=wrap?getComputedStyle(wrap):null,is=img?getComputedStyle(img):null,u=img?new URL(img.src):null,rect=img?.getBoundingClientRect();
-            return{wrapRadius:ws?.borderRadius,wrapBorder:ws?.borderWidth,wrapOutline:ws?.outlineWidth,wrapShadow:ws?.boxShadow,wrapClip:ws?.clipPath,wrapOverflow:ws?.overflow,imgRadius:is?.borderRadius,imgBorder:is?.borderWidth,imgOutline:is?.outlineWidth,imgShadow:is?.boxShadow,imgFit:is?.objectFit,imgClip:is?.clipPath,imgMask:is?.maskImage,imgWebkitMask:is?.webkitMaskImage,imgAspect:is?.aspectRatio,maxHeight:is?.maxHeight,sourceRatio:img?.naturalHeight?img.naturalWidth/img.naturalHeight:null,renderedRatio:rect?.height?rect.width/rect.height:null,nativeClass:img?.classList.contains('sky-card-house-art-native')||false,src:u?.href||'',naturalWidth:img?.naturalWidth||0,media:img?.dataset?.cardMedia||'',countInside:!!wrap?.querySelector('.sky-card-house-decan-count')};
+            return{wrapRadius:ws?.borderRadius,wrapBorder:ws?.borderWidth,wrapOutline:ws?.outlineWidth,wrapShadow:ws?.boxShadow,wrapClip:ws?.clipPath,wrapOverflow:ws?.overflow,imgRadius:is?.borderRadius,imgBorder:is?.borderWidth,imgOutline:is?.outlineWidth,imgShadow:is?.boxShadow,imgFit:is?.objectFit,imgClip:is?.clipPath,imgMask:is?.maskImage,imgWebkitMask:is?.webkitMaskImage,imgAspect:is?.aspectRatio,maxHeight:is?.maxHeight,sourceRatio:img?.naturalHeight?img.naturalWidth/img.naturalHeight:null,renderedRatio:rect?.height?rect.width/rect.height:null,rectHeight:rect?.height||0,rectWidth:rect?.width||0,imgDisplay:is?.display||'',wrapDisplay:ws?.display||'',ancestorDisplay:img?[...function*(node){for(let n=node.parentElement;n&&n.id!=='skyFoundationA';n=n.parentElement)yield[n.className||n.tagName,getComputedStyle(n).display]}(img)].slice(0,7):[],nativeClass:img?.classList.contains('sky-card-house-art-native')||false,src:u?.href||'',naturalWidth:img?.naturalWidth||0,media:img?.dataset?.cardMedia||'',countInside:!!wrap?.querySelector('.sky-card-house-decan-count')};
           });
+          console.log('HOUSE_ART_DEBUG '+JSON.stringify(houseArt));
           assert.equal(houseArt.wrapRadius,'0px');
           assert.equal(houseArt.wrapBorder,'0px');
           assert.equal(houseArt.wrapOutline,'0px');
@@ -346,12 +365,12 @@ jobs:
           assert.equal(houseArt.media,'local-house-art');
 
           await page.waitForSelector('#skyFoundationA [data-card-house-toggle]',{timeout:10000});
-          await page.locator('#skyFoundationA [data-card-house-toggle]').first().click();
+          // The first House remains expanded from the decan geometry assertion.
           await page.waitForFunction(()=>{
-            const imgs=[...document.querySelectorAll('#skyFoundationA .sky-card-house-detail-row[data-card-house-detail-role="ruler"] .sky-card-house-span-major-art img,#skyFoundationA .sky-card-house-detail-row[data-card-house-detail-role="sign"] .sky-card-house-span-major-art img')];
+            const imgs=[...document.querySelectorAll('#skyFoundationA .sky-card-house-detail:not([hidden]) .sky-card-house-detail-row[data-card-house-detail-role="ruler"] .sky-card-house-span-major-art img,#skyFoundationA .sky-card-house-detail:not([hidden]) .sky-card-house-detail-row[data-card-house-detail-role="sign"] .sky-card-house-span-major-art img')];
             return imgs.length===2&&imgs.every(img=>img.complete&&img.naturalWidth>0);
           },{timeout:10000});
-          const expandedMajorArt=await page.evaluate(()=>[...document.querySelectorAll('#skyFoundationA .sky-card-house-detail-row[data-card-house-detail-role="ruler"] .sky-card-house-span-major-art img,#skyFoundationA .sky-card-house-detail-row[data-card-house-detail-role="sign"] .sky-card-house-span-major-art img')].map(img=>{const style=getComputedStyle(img),wrap=img.parentElement,wrapStyle=getComputedStyle(wrap),rect=img.getBoundingClientRect();return{src:img.src,naturalWidth:img.naturalWidth,media:img.dataset.cardMedia||'',nativeClass:img.classList.contains('sky-card-house-art-native'),fit:style.objectFit,clip:style.clipPath,mask:style.maskImage,webkitMask:style.webkitMaskImage,radius:style.borderRadius,border:style.borderWidth,outline:style.outlineWidth,shadow:style.boxShadow,aspect:style.aspectRatio,maxHeight:style.maxHeight,wrapRadius:wrapStyle.borderRadius,wrapBorder:wrapStyle.borderWidth,wrapOutline:wrapStyle.outlineWidth,wrapShadow:wrapStyle.boxShadow,wrapClip:wrapStyle.clipPath,wrapOverflow:wrapStyle.overflow,sourceRatio:img.naturalHeight?img.naturalWidth/img.naturalHeight:null,renderedRatio:rect.height?rect.width/rect.height:null}}));
+          const expandedMajorArt=await page.evaluate(()=>[...document.querySelectorAll('#skyFoundationA .sky-card-house-detail:not([hidden]) .sky-card-house-detail-row[data-card-house-detail-role="ruler"] .sky-card-house-span-major-art img,#skyFoundationA .sky-card-house-detail:not([hidden]) .sky-card-house-detail-row[data-card-house-detail-role="sign"] .sky-card-house-span-major-art img')].map(img=>{const style=getComputedStyle(img),wrap=img.parentElement,wrapStyle=getComputedStyle(wrap),rect=img.getBoundingClientRect();return{src:img.src,naturalWidth:img.naturalWidth,media:img.dataset.cardMedia||'',nativeClass:img.classList.contains('sky-card-house-art-native'),fit:style.objectFit,clip:style.clipPath,mask:style.maskImage,webkitMask:style.webkitMaskImage,radius:style.borderRadius,border:style.borderWidth,outline:style.outlineWidth,shadow:style.boxShadow,aspect:style.aspectRatio,maxHeight:style.maxHeight,wrapRadius:wrapStyle.borderRadius,wrapBorder:wrapStyle.borderWidth,wrapOutline:wrapStyle.outlineWidth,wrapShadow:wrapStyle.boxShadow,wrapClip:wrapStyle.clipPath,wrapOverflow:wrapStyle.overflow,sourceRatio:img.naturalHeight?img.naturalWidth/img.naturalHeight:null,renderedRatio:rect.height?rect.width/rect.height:null}}));
           assert.equal(expandedMajorArt.length,2);
           expandedMajorArt.forEach(item=>{
             assert.match(item.src,/\/assets\/tarot\/rws\/.+\.webp$/);

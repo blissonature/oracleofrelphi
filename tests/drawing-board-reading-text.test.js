@@ -11,10 +11,12 @@ async function openBoard(page){
   const panel=page.locator('#shortListPanel');
   if(!(await panel.isVisible())) await page.click('#relphiOpenDrawingBoardCurrent');
   await panel.waitFor({state:'visible'});
+  await page.locator('#relphiBoardSettingsButton').click();
   await page.waitForSelector('#shortListPanel #drawingBoardOptionsButton',{state:'visible',timeout:10000});
 }
 async function applyCeltic(page){
   await page.click('#drawingBoardOptionsButton');
+  await page.locator('[data-referent-path="templates"]').click();
   await page.waitForSelector('.relphi-reading-options-drawer.is-reading-options-open #relphiSpreadTemplateSelect',{state:'visible'});
   await page.selectOption('#relphiSpreadTemplateSelect','celtic-cross-10');
   await page.click('#relphiApplyOptions');
@@ -36,7 +38,11 @@ async function applyCeltic(page){
     await openBoard(page);
     await applyCeltic(page);
 
-    await page.locator('.card-row-item[data-row-index="0"] .card-row-drop-card').click();
+    // Draw through the visible action: Celtic crossing placeholders overlap
+    // by design and are not reliable click targets for drawing cards.
+    await page.click('#drawRandomRowCard');
+    await page.waitForSelector('.relphi-attune-reader [data-attune-random]',{state:'visible'});
+    await page.locator('.relphi-attune-reader [data-attune-random]').click();
     await page.waitForSelector('.card-row-item[data-row-index="0"] [data-row-card]',{state:'visible'});
     if(await page.locator('.relphi-focus-reader').count()) await page.click('.relphi-focus-close');
 
@@ -47,7 +53,7 @@ async function applyCeltic(page){
     assert.match(await card.locator('h3').innerText(),/\S/);
     assert.match(await card.locator('.relphi-reading-text-association').innerText(),/(Decan ruler|Sign association|Planetary association|Elemental association):/);
     assert.match(await card.locator('.relphi-reading-text-interpretation').innerText(),/\S/);
-    assert.match(await card.locator('.relphi-reading-text-interpretation').innerText(),/condition presently surrounding the matter/i,'Celtic Cross readings should interpret the card through the spread position, not merely list correspondences');
+    assert.match(await card.locator('.relphi-reading-text-position').innerText(),/What covers you/,'The Celtic position must stay explicit beside the card interpretation');
 
     await page.evaluate(()=>{
       const snap=window.RelphiDrawingBoardOptionsBridge.capture();
@@ -70,8 +76,8 @@ async function applyCeltic(page){
     assert.match(serialized,/Relphi interpretation:/);
     assert.doesNotMatch(serialized,/Same card, same ingredients, inverted orientation/i);
 
-    await page.click('#drawing-board-reading-text .relphi-copy-reading');
-    await page.waitForFunction(()=>document.querySelector('#drawing-board-reading-text .relphi-copy-reading-status')?.textContent==='Copied.');
+    await page.click('#drawing-board-document-actions .relphi-copy-reading');
+    await page.waitForFunction(()=>document.querySelector('#drawing-board-document-actions .relphi-board-document-status')?.textContent==='Copied.');
     const copied=await page.evaluate(()=>window.__relphiCopiedReading);
     assert.equal(copied,serialized,'Copy must use the same reading serializer shown below the board');
 

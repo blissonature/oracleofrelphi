@@ -43,25 +43,10 @@ try{
   await page.goto('http://127.0.0.1:4173/sky-chart.html',{waitUntil:'networkidle',timeout:30000});
   await page.waitForSelector('#skyFoundationRoot[aria-busy="false"]',{timeout:20000});
   await page.waitForFunction(()=>document.documentElement.dataset.skyBPresent==='true',null,{timeout:10000});
-  await page.waitForFunction(()=>window.__relphiSkyHoverFastPathV4===true,null,{timeout:10000});
-  await page.waitForFunction(()=>document.querySelectorAll('#skyFoundationWheelMount .sky-foundation-aspect-hit').length>8,null,{timeout:10000});
+  // The foundation interaction owner handles the desktop hover radius directly;
+  // a detached fast-path script or invisible SVG hit clones are not required.
+  await page.waitForFunction(()=>document.querySelectorAll('#skyFoundationWheelMount [data-layer="aspects"] > line.sky-foundation-aspect').length>8,null,{timeout:10000});
   await page.waitForTimeout(200);
-
-  const hitGeometry=await page.evaluate(()=>{
-    const hit=document.querySelector('#skyFoundationWheelMount .sky-foundation-aspect-hit');
-    const style=hit?getComputedStyle(hit):null;
-    return hit?{
-      width:parseFloat(style.strokeWidth),
-      linecap:style.strokeLinecap,
-      vectorEffect:style.vectorEffect,
-      pointerEvents:style.pointerEvents
-    }:null;
-  });
-  assert.ok(hitGeometry,'wide aspect hit target should exist');
-  assert.ok(hitGeometry.width>=28,`aspect hit stroke should be at least 28px, got ${hitGeometry.width}`);
-  assert.equal(hitGeometry.linecap,'round');
-  assert.equal(hitGeometry.vectorEffect,'non-scaling-stroke');
-  assert.equal(hitGeometry.pointerEvents,'stroke');
 
   const probe=await page.evaluate(()=>{
     const lines=[...document.querySelectorAll('#skyFoundationWheelMount [data-layer="aspects"] > line.sky-foundation-aspect:not(.sky-foundation-aspect-hit)')].filter(line=>{

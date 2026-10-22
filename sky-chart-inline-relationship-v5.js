@@ -110,7 +110,13 @@ function close(row){clearReveal(row);const detail=row?.querySelector(':scope>.in
 function open(row){if(row?.classList.contains('is-inline-expanded')){close(row);openRow=null;return}if(openRow&&openRow!==row)close(openRow);const rel=relation(row);if(!rel)return;openRow=row;row.classList.add('is-inline-expanded');row.setAttribute('aria-expanded','true');decorateTopReveal(row);const signature=`${rel.left.sky}:${rel.left.id}@${rel.left.value.toFixed(7)}|${rel.aspect}|${rel.right.sky}:${rel.right.id}@${rel.right.value.toFixed(7)}`;let detail=row.querySelector(':scope>.inline-rel-detail');if(detail&&detail.dataset.inlineRelationshipSignature===signature){detail.hidden=false;bindInlineTileCopy(row,detail,rel);document.getElementById('skySelectedRelationship')?.setAttribute('hidden','');return}detail?.remove();detail=document.createElement('div');detail.className='inline-rel-detail';detail.dataset.inlineRelationshipSignature=signature;const ca=card(rel.left),cb=card(rel.right);warmCardArt(ca.image);warmCardArt(cb.image);detail.innerHTML=`<div class="inline-rel-top-reveal" role="status" aria-live="polite" hidden></div><div class="inline-rel-visual">${cardMarkup(rel.left.sky,ca)}${wheelMarkup(rel)}${cardMarkup(rel.right.sky,cb)}</div>${contextMarkup(rel)}`;row.appendChild(detail);bindInlineTileCopy(row,detail,rel);document.getElementById('skySelectedRelationship')?.setAttribute('hidden','')}
 function rowFromTarget(target){return target?.closest?.('.sky-foundation-relationship-row[data-relation-index]')||null}
 function touchPointer(event){return event.pointerType==='touch'||event.pointerType==='pen'}
-function onPointerDown(event){if(!touchPointer(event)||event.target.closest?.('.inline-rel-tile-copy'))return;const row=rowFromTarget(event.target);if(!row)return;touchGesture={id:event.pointerId,row,x:event.clientX,y:event.clientY,moved:false}}
+function onPointerDown(event){
+  // A genuine mouse press starts a fresh click; a touch follow-up click does not.
+  if(event.pointerType==='mouse'){suppressClickRow=null;return}
+  if(!touchPointer(event)||event.target.closest?.('.inline-rel-tile-copy'))return;
+  const row=rowFromTarget(event.target);if(!row)return;
+  touchGesture={id:event.pointerId,row,x:event.clientX,y:event.clientY,moved:false}
+}
 function onPointerMove(event){if(!touchGesture||touchGesture.id!==event.pointerId)return;const dx=event.clientX-touchGesture.x,dy=event.clientY-touchGesture.y;if(Math.hypot(dx,dy)>10)touchGesture.moved=true}
 function onPointerCancel(event){if(touchGesture?.id===event.pointerId)touchGesture=null}
 function onPointerUp(event){
@@ -124,7 +130,13 @@ function onPointerUp(event){
 function onClick(event){
   if(event.target.closest?.('.inline-rel-tile-copy'))return;
   const row=rowFromTarget(event.target);
-  if(row&&row===suppressClickRow&&performance.now()-suppressClickAt<900){event.preventDefault();event.stopImmediatePropagation();suppressClickRow=null;return}
+  if(row&&suppressClickRow&&row.dataset.relationIndex===suppressClickRow.dataset.relationIndex&&
+     performance.now()-suppressClickAt<5000){
+    // WebKit can emit more than one compatibility click for a single touch.
+    // Keep the suppression window until it expires rather than consuming it
+    // with the first click and letting the next click reverse the selection.
+    event.preventDefault();event.stopImmediatePropagation();return
+  }
   suppressClickRow=null;
   const ledger=event.target.closest('[data-inline-ledger]');if(ledger){event.stopImmediatePropagation();return}
   const topGlyph=event.target.closest('[data-inline-top-reveal],.sky-foundation-relationship-glyph--left,.sky-foundation-relationship-glyph--aspect,.sky-foundation-relationship-glyph--right'),revealRow=topGlyph?.closest('.sky-foundation-relationship-row.is-inline-expanded');

@@ -14,7 +14,7 @@ sandbox.window.document=sandbox.document; sandbox.window.localStorage=sandbox.lo
 vm.createContext(sandbox); vm.runInContext(source,sandbox);
 const api=sandbox.window.RelphiDrawingBoardSpreadPrefabs;
 assert.ok(api);
-assert.equal(api.shipped.length,10);
+assert.equal(api.shipped.length,11,'All eleven shipped spreads must be present');
 assert.ok(api.shipped.every(item=>item.positions.length===item.cardCount));
 const recursion=api.byId('relphi-recursion-22');
 assert.ok(recursion);
