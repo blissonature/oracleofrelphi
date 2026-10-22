@@ -96,6 +96,32 @@ for(const url of urls){
   assert.equal(await page.locator('#copy-canon-fixture button').first().getAttribute('data-relphi-copy-feedback'),'done');
   assert.equal(await page.locator('#copy-canon-fixture button').first().getAttribute('aria-label'),'Copied');
   assert.equal(await page.locator('#copy-canon-fixture button').first().locator('svg use').getAttribute('href'),SOURCE);
+  // Site-wide invariant, across real and dynamically inserted clipboard actions:
+  // one SVG per control, no second icon drawn through a pseudo-element, and the
+  // painted master symbol centered in the control (including invisible Copy text).
+  await page.waitForTimeout(180);
+  const iconAudit=await page.evaluate(()=>{
+    return [...document.querySelectorAll('button.relphi-copy-icon-button')].map(button=>{
+      const icons=[...button.querySelectorAll('svg')],svg=icons[0],use=svg?.querySelector('use');
+      const br=button.getBoundingClientRect(),ir=svg?.getBoundingClientRect();
+      const before=getComputedStyle(button,'::before').content,after=getComputedStyle(button,'::after').content;
+      const isFormat=Boolean(button.dataset.relphiCopyFormat);
+      return{name:button.getAttribute('aria-label')||button.title||'',iconCount:icons.length,
+        href:use?.getAttribute('href')||'',before,after,isFormat,
+        deltaX:ir?(ir.left+ir.width/2)-(br.left+br.width/2):null,
+        deltaY:ir?(ir.top+ir.height/2)-(br.top+br.height/2):null};
+    });
+  });
+  for(const item of iconAudit){
+    assert.equal(item.iconCount,1,url+': duplicated SVG on '+item.name);
+    assert.equal(item.href,SOURCE,url+': noncanonical glyph on '+item.name);
+    assert.equal(item.before,'none',url+': competing pseudo-icon on '+item.name);
+    if(!item.isFormat){
+      assert.equal(item.after,'none',url+': competing trailing pseudo-icon on '+item.name);
+      assert.ok(Math.abs(item.deltaX)<=.65&&Math.abs(item.deltaY)<=.65,
+        url+': off-center canonical Copy SVG '+JSON.stringify(item));
+    }
+  }
   // Shared source must also appear on existing owner controls when they render.
   const existing=await page.locator('button.relphi-copy-icon-button:not(#copy-canon-fixture button)').count();
   if(url.startsWith('sky-chart'))assert.ok(existing>=1,url+': actual Sky Chart toolbar uses master glyph');
