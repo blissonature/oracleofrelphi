@@ -61,10 +61,10 @@
     if(!document.querySelector('link[href^="relphi-copy-icon-convention-v1.css"]')){
       const link=document.createElement('link');
       link.rel='stylesheet';
-      link.href='relphi-copy-icon-convention-v1.css?v=2';
+      link.href='relphi-copy-icon-convention-v1.css?v=3';
       document.head.appendChild(link);
     }
-    appendScript('relphi-copy-icon-convention-v1.js?v=2');
+    appendScript('relphi-copy-icon-convention-v1.js?v=3');
   }
 
   function initMenu() {
