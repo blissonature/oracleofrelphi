@@ -6,19 +6,8 @@ const DEFAULT_WINDOW=7;
 const MAX_WINDOW=12;
 const WINDOW_STEP=.05;
 const WINDOW_STORAGE_KEY='relphiSkyHarmonicWindowV1';
-const ASPECTS=Object.freeze([
-  Object.freeze({id:'conjunction',angle:0,numerator:0,harmonic:1,color:'#e53935'}),
-  Object.freeze({id:'semi-sextile',angle:30,numerator:1,harmonic:12,color:'#7c9b49'}),
-  Object.freeze({id:'octile',angle:45,numerator:1,harmonic:8,color:'#b86d43'}),
-  Object.freeze({id:'sextile',angle:60,numerator:1,harmonic:6,color:'#d3b727'}),
-  Object.freeze({id:'quintile',angle:72,numerator:1,harmonic:5,color:'#8b6cc2'}),
-  Object.freeze({id:'square',angle:90,numerator:1,harmonic:4,color:'#d6534d'}),
-  Object.freeze({id:'trine',angle:120,numerator:1,harmonic:3,color:'#4e9e69'}),
-  Object.freeze({id:'tri-octile',angle:135,numerator:3,harmonic:8,color:'#9f5944'}),
-  Object.freeze({id:'bi-quintile',angle:144,numerator:2,harmonic:5,color:'#7655aa'}),
-  Object.freeze({id:'quincunx',angle:150,numerator:5,harmonic:12,color:'#4b8e88'}),
-  Object.freeze({id:'opposition',angle:180,numerator:1,harmonic:2,color:'#5961c8'})
-]);
+const ASPECTS=window.RelphiHarmonicAspectCatalog?.aspects;
+if(!ASPECTS)throw new Error('Canonical harmonic aspect catalogue is unavailable.');
 const BY_ID=new Map(ASPECTS.map(aspect=>[aspect.id,aspect]));
 let activeWindow=DEFAULT_WINDOW;
 try{
