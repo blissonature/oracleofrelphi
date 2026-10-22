@@ -92,9 +92,9 @@ for(const url of urls){
     document.querySelector('#copy-canon-fixture button').textContent='Copied';
   });
   await page.waitForFunction(()=>document.querySelector('#copy-canon-fixture button svg use')?.getAttribute('href')==='relphi-icons.svg#relphi-copy',null,{timeout:5000});
-  assert.equal(await page.locator('#copy-canon-fixture button').getAttribute('data-relphi-copy-feedback'),'done');
-  assert.equal(await page.locator('#copy-canon-fixture button').getAttribute('aria-label'),'Copied');
-  assert.equal(await page.locator('#copy-canon-fixture button svg use').getAttribute('href'),SOURCE);
+  assert.equal(await page.locator('#copy-canon-fixture button').first().getAttribute('data-relphi-copy-feedback'),'done');
+  assert.equal(await page.locator('#copy-canon-fixture button').first().getAttribute('aria-label'),'Copied');
+  assert.equal(await page.locator('#copy-canon-fixture button').first().locator('svg use').getAttribute('href'),SOURCE);
   // Shared source must also appear on existing owner controls when they render.
   const existing=await page.locator('button.relphi-copy-icon-button:not(#copy-canon-fixture button)').count();
   if(url.startsWith('sky-chart'))assert.ok(existing>=1,url+': actual Sky Chart toolbar uses master glyph');
