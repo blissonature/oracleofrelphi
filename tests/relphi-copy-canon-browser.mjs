@@ -11,7 +11,13 @@ assert.equal((sprite.match(/<path\b/g)||[]).length,1,'Master sprite must contain
 assert.equal((sprite.match(/<symbol\b/g)||[]).length,1,'Copy glyph must have one symbol');
 assert.match(sprite,/id="relphi-copy"/);
 assert.match(sprite,/translate\(-\.28 \.23\)/,'Optical centering remains part of master SVG geometry');
-assert.match(sprite,/stroke-width="1\.9"/);
+assert.match(sprite,/stroke-width="1\.6"/);
+const downloadSource=readFileSync('sky-chart-export-v2.js','utf8');
+const copyStroke=Number(sprite.match(/stroke-width="([0-9.]+)"/)?.[1]);
+const downloadStroke=Number(downloadSource.match(/const ICON=.*?stroke-width="([0-9.]+)"/)?.[1]);
+assert.equal(downloadStroke,1.9,'Download remains the 1.9-unit reference at 17px');
+assert.ok(Math.abs(copyStroke*20/24-downloadStroke*17/24)<0.03,
+  'Copy at 20px must match the visible stroke weight of Download at 17px');
 assert.doesNotMatch(sprite,/<rect\b|<circle\b|<polygon\b|<polyline\b/i,'No second primitive in master icon');
 assert.doesNotMatch(css,/data:image\/svg|mask:url\(/i,'No duplicate CSS-drawn Copy icon');
 assert.doesNotMatch(js,/createElementNS\([^\n]*['"]path['"]/i,'Consumers must never author new Copy path geometry');
