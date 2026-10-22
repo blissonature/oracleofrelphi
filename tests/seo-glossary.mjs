@@ -13,7 +13,7 @@ for(const file of files){
  const html=readFileSync(resolve(root,file),'utf8');
  const canonical='https://oracleofrelphi.com/'+file;
  assert.match(html,/<html lang="en">/);
- assert.match(html,/<main class="reference-shell">/);
+ assert.match(html,/<main class="reference-shell(?: [^"]+)?">/);
  assert.match(html,/<h1\b[^>]*>[\s\S]*?<\/h1>/);
  assert.match(html,/<title>[^<]{20,}<\/title>/);
  assert.match(html,/<meta name="description" content=".{50,}">/);
