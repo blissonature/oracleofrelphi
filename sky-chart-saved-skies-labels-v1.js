@@ -261,7 +261,7 @@ function place(record){
   return Number.isFinite(lat)&&Number.isFinite(lon)?`${lat.toFixed(3)}°, ${lon.toFixed(3)}°`:'';
 }
 function copyFor(record){
-  const root=document.createElement('span');root.className='sky-saved-fingerprint-copy';root.dataset.savedFingerprintCopy='true';root.setAttribute('aria-hidden','true');
+  const root=document.createElement('span');root.className='sky-saved-fingerprint-copy';root.dataset.savedFingerprintCopy='true';
   const name=document.createElement('span');name.className='sky-saved-fingerprint-copy-name';name.textContent=String(record?.name||'Saved sky').trim()||'Saved sky';
   const when=document.createElement('span');when.className='sky-saved-fingerprint-copy-when';when.textContent=dateTime(record);
   const where=document.createElement('span');where.className='sky-saved-fingerprint-copy-where';where.textContent=place(record);
@@ -321,6 +321,19 @@ function reveal(item){
   row.classList.add('is-identity-revealed');
 }
 function listenPrivateReveal(){
+  // Keyboard and assistive-technology focus is an intentional reveal, equivalent
+  // to hovering. The accessible name stays generic until the user focuses a row.
+  document.addEventListener('focusin',event=>{
+    const item=event.target.closest?.('#skySavedSkiesPopover .sky-saved-list-item[data-private-sky-fingerprint="true"]');
+    if(!item)return;
+    const record=library().find(entry=>recordRef(entry)===item.dataset.savedSkyRef);
+    if(!record)return;
+    item.setAttribute('aria-label','Load '+[String(record.name||'Saved sky'),dateTime(record),place(record)].filter(Boolean).join('. '));
+  },true);
+  document.addEventListener('focusout',event=>{
+    const item=event.target.closest?.('#skySavedSkiesPopover .sky-saved-list-item[data-private-sky-fingerprint="true"]');
+    if(item)item.setAttribute('aria-label','Load saved sky identified by three fingerprints');
+  },true);
   document.addEventListener('pointerdown',event=>{
     const item=event.target.closest?.('#skySavedSkiesPopover .sky-saved-list-item[data-private-sky-fingerprint="true"]');
     if(!item){clearHold();return}
