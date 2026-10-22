@@ -174,3 +174,4 @@ button.relphi-copy-icon-button[data-relphi-copy-format]::after{
   -webkit-mask:none!important;mask:none!important;
 }
 .question-card .copy-icon[hidden]{display:none!important}
+.question-card.card-copied .copy-icon{color:#277046}
