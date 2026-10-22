@@ -3,7 +3,7 @@
 Every clipboard-copy action uses the **same one-path, optically centered, mirrored dual-rectangle SVG**. The foreground rectangle is **lower-left** and the background rectangle is **upper-right**. The source of truth is exactly one `<path>` in [`relphi-icons.svg`](./relphi-icons.svg), under the `#relphi-copy` symbol. **Do not redraw, mirror, substitute, rasterize, restroke, transform, or resize the icon in a consuming module.**
 
 ## Geometry contract
-- Master viewBox: `0 0 24 24`; original line weight `1.9` units; round joins and caps; paired corners radius `1.8`.
+- Master viewBox: `0 0 24 24`; line weight `1.6` units (at 20px, visually equivalent to Download's 1.9 units at 17px); round joins and caps; paired corners radius `1.8`.
 - Canonical optical correction: `translate(-.28 .23)` belongs **inside the master path**. It was measured from rendered stroke opacity, then centered to the 24-unit canvas. Never apply a separate consumer transform to the graphic.
 - A Copy button displays the master symbol at exactly **20 × 20 CSS pixels**, within a **34 × 32px** hit area (or the established 2.25rem Drawing Board icon-control box). Icon whitespace and drawing scale are always identical.
 - **Center the actual SVG frame at 50%/50% of its button with absolute positioning and translate(-50%, -50%).** Clipboard handlers preserve hidden text nodes (e.g. "Copy"); a flex `gap` mistakenly moved the SVG 3px right in an earlier revision. Never allow anonymous invisible text items or a baseline to alter the icon position. The master path already supplies the optical correction within that frame.
