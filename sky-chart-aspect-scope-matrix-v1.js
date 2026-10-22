@@ -20,7 +20,7 @@ const GROUPS=Object.freeze([
   {id:'major',label:'Major',aspects:['conjunction','opposition','trine','square','sextile']},
   {id:'minor',label:'Minor',aspects:['semi-sextile','octile','tri-octile','quincunx']},
   {id:'harmonic',label:'Fifth Harmonic',aspects:['quintile','bi-quintile']},
-  ...catalogue.orders.map(order=>({id:'order-'+order,label:order+'th Harmonic',aspects:catalogue.group(order).map(a=>a.id)}))
+  ...catalogue.orders.map(order=>({id:'order-'+order,label:order+(order%100>=11&&order%100<=13?'th':order%10===1?'st':order%10===2?'nd':order%10===3?'rd':'th')+' Harmonic',aspects:catalogue.group(order).map(a=>a.id)}))
 ]);
 const GROUP_MAP=new Map(GROUPS.map(group=>[group.id,group]));
 const SCOPES=Object.freeze([
