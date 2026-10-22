@@ -513,8 +513,10 @@
   function showSectorDescription(node,spec){
     const wheel=document.querySelector('#skyFoundationWheelMount > .sky-foundation-wheel');
     if(!wheel)return;
-    let label=wheel.querySelector(':scope > .sky-wheel-sector-description');
-    if(!label){label=document.createElement('div');label.className='sky-wheel-sector-description';label.setAttribute('role','status');label.setAttribute('aria-live','polite');wheel.appendChild(label)}
+    const mount=wheel.parentElement;
+    if(!mount)return;
+    let label=mount.querySelector(':scope > .sky-wheel-sector-description');
+    if(!label){label=document.createElement('div');label.className='sky-wheel-sector-description';label.setAttribute('role','status');label.setAttribute('aria-live','polite');mount.appendChild(label)}
     if(!spec||!['house','sign','placement'].includes(spec.kind)){label.hidden=true;return}
     const vocab=window.RelphiSkyVocab?.describeFocus?.(spec.kind,spec.value);
     if(!vocab?.description){label.hidden=true;return}
