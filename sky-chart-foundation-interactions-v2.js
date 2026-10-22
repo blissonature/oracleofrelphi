@@ -499,6 +499,9 @@
     // A focus state must not remove the very tile being navigated to.
     row.classList.add('is-wheel-target');
     row.setAttribute('aria-current','true');
+    // The tile itself owns Glyphs / Names / Referents progressive disclosure
+    // and its two Tarot endpoint cards. Never synthesize a parallel panel.
+    window.RelphiInlineRelationship?.expand?.(row);
     document.querySelectorAll('#skyFoundationRelationshipList > .sky-foundation-relationship-row').forEach(other=>{
       if(other!==row){other.classList.remove('is-wheel-target');other.removeAttribute('aria-current')}
     });
