@@ -3,6 +3,15 @@ on:
   pull_request:
     paths:
       - 'astrology-glossary.html'
+      - 'astrology-pairs.html'
+      - 'astrology-pairs.css'
+      - 'astrology-pair-interactions.js'
+      - 'astrology-pair-directory.js'
+      - 'tools/build-astrology-pairs.mjs'
+      - 'tools/materialize-astrology-pairs.mjs'
+      - 'tests/astrology-pair-pages.mjs'
+      - 'tests/astrology-pair-browser.mjs'
+      - 'astrology/pairs/**'
       - 'glossary-stubs.html'
       - 'glossary-stubs.css'
       - 'glossary-stub-catalog.js'
@@ -21,6 +30,15 @@ on:
   push:
     paths:
       - 'astrology-glossary.html'
+      - 'astrology-pairs.html'
+      - 'astrology-pairs.css'
+      - 'astrology-pair-interactions.js'
+      - 'astrology-pair-directory.js'
+      - 'tools/build-astrology-pairs.mjs'
+      - 'tools/materialize-astrology-pairs.mjs'
+      - 'tests/astrology-pair-pages.mjs'
+      - 'tests/astrology-pair-browser.mjs'
+      - 'astrology/pairs/**'
       - 'glossary-stubs.html'
       - 'glossary-stubs.css'
       - 'glossary-stub-catalog.js'
@@ -46,6 +64,8 @@ jobs:
       - run: node tests/seo-glossary.mjs
       - run: node tests/glossary-stub-catalog.mjs
       - run: node tools/glossary-stub-batch.mjs --count
+      - run: node tests/astrology-pair-pages.mjs
+      - run: node tools/materialize-astrology-pairs.mjs --check
 
   browser:
     needs: verify
@@ -61,9 +81,12 @@ jobs:
         run: |
           python3 -m http.server 4173 > /tmp/glossary-stub-server.log 2>&1 &
           node tests/glossary-stub-browser.mjs
+          node tests/astrology-pair-browser.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: glossary-stub-screenshots
-          path: glossary-stubs-*.png
+          path: |
+            glossary-stubs-*.png
+            astrology-pair-*.png
           if-no-files-found: ignore
