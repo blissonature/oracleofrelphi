@@ -1894,6 +1894,15 @@ document.addEventListener('keydown',event=>{if(event.key==='Escape')closeDropdow
 window.addEventListener('resize',scheduleDropdownPosition);
 window.addEventListener('scroll',scheduleDropdownPosition,true);
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)schedule()});
-window.RelphiSkyVocab=Object.freeze({render:schedule,activate,getDisplay:displayState,getFilters:filterState,getScopeFilters:scopeFilterState,getWheelFilters:()=>wheelFilterState,getWheelFilterSpec:()=>wheelFilterSpec});
+window.RelphiSkyVocab=Object.freeze({render:schedule,activate,getDisplay:displayState,getFilters:filterState,getScopeFilters:scopeFilterState,getWheelFilters:()=>wheelFilterState,getWheelFilterSpec:()=>wheelFilterSpec,
+  // Shared source of truth for wheel sector descriptions.
+  describeFocus(kind,value){
+    if(kind==='house'){const n=Number(value);return {name:HOUSE_NAMES[n]||'House '+n,description:HOUSE_MENU_DESCRIPTIONS[n]||''}}
+    if(kind==='sign'){const name=SIGNS[Number(value)];return {name,description:SIGN_REFERENTS[name]||''}}
+    if(kind==='placement'){
+      const id=slug(value);return {name:String(value||'Placement').replace(/-/g,' '),description:PLACEMENT_REFERENTS[ALIASES[id]||id]||''}
+    }
+    return null;
+  }});
 document.readyState==='loading'?document.addEventListener('DOMContentLoaded',schedule,{once:true}):schedule();
 })();
