@@ -101,6 +101,17 @@
     ['greek-omega','Omega',['omega','Ω','ω'],null,1,0,0,'Ω','greek-letter','600']
   ].map(([id,name,aliases,asset,scale,dx,dy,fallback,fitMode,fontWeight]) => ({ id,name,aliases,asset,scale,dx,dy,fallback,fitMode,fontWeight }));
 
+  // Every harmonic fraction is assigned a canonical registry identity. For
+  // uncommon aspects, use compact fraction lettering rather than inventing
+  // a historical glyph that was never standardized.
+  const catalogue=window.RelphiHarmonicAspectCatalog;
+  catalogue?.aspects.filter(aspect=>!aspect.legacy).forEach(aspect=>{
+    const superscript=String(aspect.numerator).replace(/[0-9]/g,d=>'⁰¹²³⁴⁵⁶⁷⁸⁹'[Number(d)]);
+    entries.push({id:aspect.id,name:aspect.label,aliases:aspect.aliases,asset:null,
+      scale:.82,dx:0,dy:0,fallback:String(aspect.harmonic)+superscript,
+      fitMode:'aspect-letter',fontWeight:'700'});
+  });
+
   const byId = new Map(entries.map(entry => [entry.id, entry]));
   const aliases = new Map();
   const normalize = value => String(value || '').replace(/[\uFE0E\uFE0F]/g, '').trim().toLowerCase();
