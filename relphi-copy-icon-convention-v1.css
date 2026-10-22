@@ -1,0 +1,133 @@
+/* Canonical Relphi clipboard action: overlapping rectangles, with visible check feedback.
+   Copy remains a real button; the source text stays in the DOM for existing copy handlers. */
+button.relphi-copy-icon-button{
+  appearance:none;
+  box-sizing:border-box!important;
+  display:inline-grid!important;
+  place-items:center!important;
+  flex:0 0 auto;
+  width:33px!important;
+  min-width:33px!important;
+  max-width:33px!important;
+  height:31px!important;
+  min-height:31px!important;
+  max-height:31px!important;
+  padding:0!important;
+  font-size:0!important;
+  line-height:0!important;
+  letter-spacing:0!important;
+  white-space:nowrap!important;
+  vertical-align:middle;
+  position:relative;
+  margin-left:0;
+}
+button.relphi-copy-icon-button::before{
+  content:"";
+  display:block;
+  width:18px;
+  height:18px;
+  flex:none;
+  background-color:currentColor;
+  -webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='8' y='8' width='13' height='13' rx='2'/%3E%3Cpath d='M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3'/%3E%3C/svg%3E") center/contain no-repeat;
+  mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='8' y='8' width='13' height='13' rx='2'/%3E%3Cpath d='M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3'/%3E%3C/svg%3E") center/contain no-repeat;
+}
+button.relphi-copy-icon-button[data-relphi-copy-feedback="done"]::before{
+  -webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 6 9 17l-5-5'/%3E%3C/svg%3E") center/contain no-repeat;
+  mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 6 9 17l-5-5'/%3E%3C/svg%3E") center/contain no-repeat;
+}
+button.relphi-copy-icon-button[data-relphi-copy-feedback="done"]{color:#277046}
+button.relphi-copy-icon-button[data-relphi-copy-feedback="failed"]{color:#a11c18}
+button.relphi-copy-icon-button[data-relphi-copy-feedback="copying"]{opacity:.68}
+button.relphi-copy-icon-button:focus-visible{outline:2px solid #ba3429!important;outline-offset:2px!important}
+button.relphi-copy-icon-button:disabled{opacity:.45;cursor:not-allowed}
+
+/* The Bespoke question command is a member of the same 2.25rem icon family. */
+#shortListPanel .relphi-question-toolbar #relphiCopyBespokeQuestions.relphi-copy-icon-button{
+  display:inline-grid!important;place-items:center!important;
+  width:2.25rem!important;min-width:2.25rem!important;max-width:2.25rem!important;
+  height:2.25rem!important;min-height:2.25rem!important;max-height:2.25rem!important;
+  margin:0!important;padding:0!important;font-size:0!important;
+  border-radius:7px!important;
+}
+#shortListPanel .drawing-board-top-actions.relphi-board-command-actions > button.relphi-copy-icon-button:not(.board-history-icon){
+  width:2.25rem!important;min-width:2.25rem!important;max-width:2.25rem!important;
+  padding:0!important;font-size:0!important;
+}
+
+/* Solve overflow at the Relationships *panel* width, not only viewport width.
+   Title and count keep their intended semantic positions; Copy/Export stay reachable. */
+#skyFoundationRelationships{container-type:inline-size}
+#skyFoundationRelationships .sky-foundation-relationships-heading{
+  column-gap:12px;
+}
+#skyFoundationRelationships .sky-foundation-relationships-heading>.sky-relationship-heading-actions{
+  grid-template-columns:minmax(155px,1fr) 76px minmax(82px,max-content) 33px 33px;
+  min-width:0;
+  max-width:100%;
+}
+#skyFoundationRelationships .sky-foundation-relationships-heading>.sky-relationship-heading-actions>.sky-relationship-sort-control{min-width:0}
+#skyFoundationRelationships .sky-foundation-relationships-heading>.sky-relationship-heading-actions>#skyFoundationRelationshipCount{min-width:0}
+@container (max-width:740px){
+  #skyFoundationRelationships .sky-foundation-relationships-heading{
+    grid-template-columns:minmax(0,1fr);
+    grid-template-rows:auto auto;
+    gap:7px;
+    padding:8px 10px;
+  }
+  #skyFoundationRelationships .sky-foundation-relationships-heading>h2,
+  #skyFoundationRelationships .sky-foundation-relationships-heading>.sky-relationship-vocab-tabs{
+    grid-column:1;grid-row:1;justify-self:start;align-self:center;
+  }
+  #skyFoundationRelationships .sky-foundation-relationships-heading>.sky-relationship-heading-actions{
+    grid-column:1;grid-row:2;
+    display:grid;
+    grid-template-columns:minmax(0,1fr) 76px minmax(72px,max-content) 33px 33px;
+    grid-template-rows:auto;
+    gap:5px;
+    width:100%;
+  }
+  #skyFoundationRelationships .sky-foundation-relationships-heading>.sky-relationship-heading-actions>.sky-relationship-sort-control{
+    grid-column:1;grid-row:1;width:100%;min-width:0
+  }
+  #skyFoundationRelationships .sky-foundation-relationships-heading>.sky-relationship-heading-actions>.sky-relationship-limit-control{
+    grid-column:2;grid-row:1;justify-self:end
+  }
+  #skyFoundationRelationships .sky-foundation-relationships-heading>.sky-relationship-heading-actions>#skyFoundationRelationshipCount{
+    grid-column:3;grid-row:1;justify-self:center
+  }
+  #skyFoundationRelationships .sky-foundation-relationships-heading>.sky-relationship-heading-actions>.sky-relationship-copy-button{
+    grid-column:4;grid-row:1;justify-self:end
+  }
+  #skyFoundationRelationships .sky-foundation-relationships-heading>.sky-relationship-heading-actions>#skyChartRelationshipsExport{
+    grid-column:5;grid-row:1;justify-self:end
+  }
+}
+@container (max-width:510px){
+  #skyFoundationRelationships .sky-foundation-relationships-heading{
+    grid-template-columns:minmax(0,1fr) auto auto auto;
+    grid-template-rows:auto auto;
+    gap:7px 5px;
+    padding:8px;
+  }
+  #skyFoundationRelationships .sky-foundation-relationships-heading>h2,
+  #skyFoundationRelationships .sky-foundation-relationships-heading>.sky-relationship-vocab-tabs{
+    grid-column:1;grid-row:1;align-self:center;justify-self:start;
+    min-width:0;max-width:100%;overflow:hidden;text-overflow:ellipsis;
+  }
+  #skyFoundationRelationships .sky-foundation-relationships-heading>.sky-relationship-heading-actions{display:contents}
+  #skyFoundationRelationships .sky-foundation-relationships-heading #skyFoundationRelationshipCount{
+    grid-column:2;grid-row:1;justify-self:end
+  }
+  #skyFoundationRelationships .sky-foundation-relationships-heading .sky-relationship-copy-button{
+    grid-column:3;grid-row:1;justify-self:end
+  }
+  #skyFoundationRelationships .sky-foundation-relationships-heading #skyChartRelationshipsExport{
+    grid-column:4;grid-row:1;justify-self:end
+  }
+  #skyFoundationRelationships .sky-foundation-relationships-heading .sky-relationship-sort-control{
+    grid-column:1/4;grid-row:2;min-width:0;width:100%
+  }
+  #skyFoundationRelationships .sky-foundation-relationships-heading .sky-relationship-limit-control{
+    grid-column:4;grid-row:2;justify-self:end
+  }
+}
