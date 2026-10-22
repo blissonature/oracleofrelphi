@@ -104,6 +104,10 @@ const ASPECT_REFERENTS={
   quincunx:'continuing adjustment',
   opposition:'polarity'
 };
+window.RelphiHarmonicAspectCatalog?.aspects.forEach(aspect=>{
+  if(!ASPECT_NAMES[aspect.id])ASPECT_NAMES[aspect.id]=aspect.label;
+  if(!ASPECT_REFERENTS[aspect.id])ASPECT_REFERENTS[aspect.id]=window.RelphiHarmonicAspectCatalog.referent(aspect);
+});
 const ALIASES={
   rising:'asc',ascendant:'asc',ac:'asc',
   descendant:'dsc',dc:'dsc',
