@@ -58,9 +58,20 @@ for(const width of [320,390,510,540,630,740,760,900,1200]){
     }));
     const svg=button?.querySelector('svg.relphi-copy-icon');
     const use=svg?.querySelector('use');
+    const br=button.getBoundingClientRect(),sr=svg?.getBoundingClientRect();
+    const bbox=use?.getBBox(),matrix=use?.getScreenCTM();
+    const mark=bbox&&matrix?new DOMPoint(bbox.x+bbox.width/2,bbox.y+bbox.height/2).matrixTransform(matrix):null;
+    const duplicateCount=button.querySelectorAll('svg').length;
+    const pseudoBefore=getComputedStyle(button,'::before');
+    const pseudoAfter=getComputedStyle(button,'::after');
     return{width:innerWidth,header:{left:hdr.left,right:hdr.right,scrollWidth:header.scrollWidth,clientWidth:header.clientWidth},container:{left:container.left,right:container.right},bounds,
       documentScroll:document.documentElement.scrollWidth,viewport:document.documentElement.clientWidth,
-      button:{class:button?.className,label:button?.getAttribute('aria-label'),title:button?.title,text:button?.textContent,iconHref:use?.getAttribute('href'),iconWidth:svg?getComputedStyle(svg).width:'',iconHeight:svg?getComputedStyle(svg).height:''}
+      button:{class:button?.className,label:button?.getAttribute('aria-label'),title:button?.title,text:button?.textContent,iconHref:use?.getAttribute('href'),iconWidth:svg?getComputedStyle(svg).width:'',iconHeight:svg?getComputedStyle(svg).height:'',
+        duplicates:duplicateCount, before:pseudoBefore.content,after:pseudoAfter.content,
+        offsetX:sr?(sr.left+sr.width/2)-(br.left+br.width/2):null,
+        offsetY:sr?(sr.top+sr.height/2)-(br.top+br.height/2):null,
+        glyphOffsetX:mark?mark.x-(br.left+br.width/2):null,
+        glyphOffsetY:mark?mark.y-(br.top+br.height/2):null}
     };
   });
   for(const [key,b] of Object.entries(result.bounds)){
@@ -73,6 +84,13 @@ for(const width of [320,390,510,540,630,740,760,900,1200]){
   assert.equal(result.button.iconHref,'relphi-icons.svg#relphi-copy',width+': all Copy buttons must reference the one canonical path');
   assert.equal(result.button.iconWidth,'20px',width+': canonical icon width is fixed');
   assert.equal(result.button.iconHeight,'20px',width+': canonical icon height is fixed');
+  assert.equal(result.button.duplicates,1,width+': exactly one SVG exists inside the Copy button');
+  assert.equal(result.button.before,'none',width+': no legacy pseudo-icon before the SVG');
+  assert.equal(result.button.after,'none',width+': no legacy pseudo-icon after the SVG');
+  assert.ok(Math.abs(result.button.offsetX)<=.65&&Math.abs(result.button.offsetY)<=.65,
+    width+': SVG frame must be precisely centered independently of hidden text: '+JSON.stringify(result.button));
+  assert.ok(Math.abs(result.button.glyphOffsetX)<=1.05&&Math.abs(result.button.glyphOffsetY)<=1.05,
+    width+': actual mark must be optically centered within the button: '+JSON.stringify(result.button));
   assert.match(result.button.label,/Copy included relationships/i,width+': copy retains its accessible action');
   if(width===630)await page.screenshot({path:'relationships-copy-toolbar-630px.png',fullPage:false});
 }
@@ -111,6 +129,23 @@ await page.waitForFunction(()=>document.querySelectorAll('#copy-convention-fixtu
 const consistent=await page.locator('#copy-convention-fixtures .relphi-copy-icon-button').evaluateAll(nodes=>nodes.every(node=>
   node.querySelector('svg.relphi-copy-icon use')?.getAttribute('href')==='relphi-icons.svg#relphi-copy'&&!!node.getAttribute('aria-label')));
 assert.equal(consistent,true,'All dynamically inserted Copy controls share the SVG icon and accessible name');
+const noDuplicates=await page.locator('#copy-convention-fixtures .relphi-copy-icon-button').evaluateAll(nodes=>nodes.every(node=>
+  node.querySelectorAll('svg').length===1&&
+  getComputedStyle(node,'::before').content==='none'&&
+  getComputedStyle(node,'::after').content==='none'));
+assert.equal(noDuplicates,true,'All clipboard buttons must have one SVG and zero competing pseudo-icons');
+// Simulate an old module appending a second icon *after* the shared controller mounted.
+await page.evaluate(()=>{
+  const button=document.querySelector('#copy-convention-fixtures .relphi-copy-icon-button');
+  const stray=document.createElementNS('http://www.w3.org/2000/svg','svg');
+  stray.setAttribute('data-old-copy-icon','true');
+  button.appendChild(stray);
+});
+await page.waitForFunction(()=>{
+  const button=document.querySelector('#copy-convention-fixtures .relphi-copy-icon-button');
+  return button?.querySelectorAll('svg').length===1&&
+    button.querySelector('svg use')?.getAttribute('href')==='relphi-icons.svg#relphi-copy';
+},null,{timeout:4000});
 assert.deepEqual(errors.filter(e=>/Uncaught|SyntaxError|ReferenceError/.test(e)),[],'No critical page errors');
 await context.close();
 await browser.close();
