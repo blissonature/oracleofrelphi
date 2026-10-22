@@ -228,6 +228,39 @@ assert.equal(audit.indexedLines,audit.totalLines,'Every rendered aspect line mus
 assert.equal(audit.visibleLines,audit.visibleRows,'Visible relationship rows and wheel aspect lines must stay in one-to-one visibility parity.');
 assert.ok(audit.missingVisibleRowLines.length===0,`Every visible relationship row needs a visible wheel line; missing ${audit.missingVisibleRowLines.join(', ')}`);
 
+// Clicking an SVG aspect must never remove the complete aspect layer.
+// Actual eligible lines may dim, but must remain rendered and selectable.
+const lineBefore=await page.evaluate(()=>[...document.querySelectorAll('#skyFoundationWheelMount [data-layer="aspects"] > line.sky-foundation-aspect:not(.sky-foundation-aspect-hit)')].filter(line=>getComputedStyle(line).display!=='none'&&!line.hidden).length);
+assert.ok(lineBefore>1,'Focus regression requires multiple available aspect lines');
+await page.locator('#skyFoundationWheelMount [data-layer="aspects"] > line.sky-foundation-aspect:not(.sky-foundation-aspect-hit):visible').first().dispatchEvent('click',{bubbles:true});
+await page.waitForTimeout(220);
+const lineAfter=await page.evaluate(()=>[...document.querySelectorAll('#skyFoundationWheelMount [data-layer="aspects"] > line.sky-foundation-aspect:not(.sky-foundation-aspect-hit)')].filter(line=>getComputedStyle(line).display!=='none'&&!line.hidden).length);
+assert.equal(lineAfter,lineBefore,'Selecting an aspect line must not hide the aspect layer');
+const selectedTile=await page.evaluate(()=>{
+ const line=document.querySelector('#skyFoundationWheelMount .sky-foundation-aspect.is-selected');
+ const rows=[...document.querySelectorAll('#skyFoundationRelationshipList > .sky-foundation-relationship-row')];
+ const selected=rows.filter(row=>row.classList.contains('is-wheel-target'));
+ const identity=node=>{
+   const mode=String(node?.dataset.relationshipMode||'A-B').toUpperCase(),
+     l=node?.dataset.leftSky||(mode==='B-B'?'B':'A'),
+     r=node?.dataset.rightSky||(mode==='A-A'?'A':'B'),
+     left=node?.dataset.leftPlacement,right=node?.dataset.rightPlacement,aspect=node?.dataset.aspect;
+   if(l===r){const parts=[left,right].sort();return l+':'+parts[0]+'|'+aspect+'|'+r+':'+parts[1]}
+   return l+':'+left+'|'+aspect+'|'+r+':'+right
+ };
+ const list=document.querySelector('#skyFoundationRelationshipList');
+ return {selectedCount:selected.length,matched:!!line&&selected.length===1&&identity(line)===identity(selected[0]),
+   visible:selected[0]&&!selected[0].hidden&&getComputedStyle(selected[0]).display!=='none',
+   scrollArea:list?.getBoundingClientRect().toJSON(),tile:selected[0]?.getBoundingClientRect().toJSON()};
+});
+assert.equal(selectedTile.selectedCount,1,'Exactly one Relationship tile must highlight after clicking its aspect line');
+assert.equal(selectedTile.matched,true,'Highlighted tile must correspond to the exact selected aspect endpoints');
+assert.equal(selectedTile.visible,true,'Selected Relationship tile must remain visible');
+assert.ok(selectedTile.tile.top<selectedTile.scrollArea.bottom&&selectedTile.tile.bottom>selectedTile.scrollArea.top,
+  'Selected tile must be scrolled into visible Relationships list viewport');
+
+await page.locator('#skyFoundationClearIsolation').click();
+
 // Relationship-list hover owns only the row/line highlight. It must never dim or isolate the wheel,
 // including A↔A and B↔B rows generated after the comparison relationships.
 const intraskyRow=page.locator('#skyFoundationRelationshipList>.sky-foundation-relationship-row[data-relationship-mode="B-B"]:visible, #skyFoundationRelationshipList>.sky-foundation-relationship-row[data-relationship-mode="A-A"]:visible').first();

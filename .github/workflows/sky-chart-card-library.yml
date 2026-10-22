@@ -1,0 +1,31 @@
+name: Sky Card library redesign browser
+on:
+  pull_request:
+    paths:
+      - 'sky-chart-card-library-v1.js'
+      - 'sky-chart-card-library-v1.css'
+      - 'sky-chart.html'
+      - 'tests/sky-chart-card-library-browser.mjs'
+      - '.github/workflows/sky-chart-card-library.yml'
+jobs:
+  acceptance:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: |
+          node --check sky-chart-card-library-v1.js
+          node --check tests/sky-chart-card-library-browser.mjs
+      - run: |
+          npm install --no-save playwright@1.52.0 luxon@3 suncalc@1.9.0
+          npx playwright install --with-deps chromium
+      - run: |
+          python3 -m http.server 4173 >/tmp/sky-library.log 2>&1 &
+          node tests/sky-chart-card-library-browser.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: sky-card-library-design
+          path: sky-card-library-modern-*.png

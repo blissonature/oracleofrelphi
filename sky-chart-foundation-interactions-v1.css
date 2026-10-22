@@ -599,3 +599,15 @@
     max-height:420px;
   }
 }
+
+/* Selecting an aspect navigates to its exact Relationships tile. Unselected
+   tiles remain available; focus is emphasis rather than disappearance. */
+#skyFoundationRelationshipList > .sky-foundation-relationship-row.is-wheel-target{
+  opacity:1!important;
+  background:#fff5e8!important;
+  border-color:var(--relationship-aspect-color)!important;
+  box-shadow:0 0 0 2px color-mix(in srgb,var(--relationship-aspect-color) 40%,transparent),0 2px 12px rgba(35,27,19,.10)!important;
+}
+#skyFoundationRelationshipList > .sky-foundation-relationship-row.is-wheel-dimmed:not(.is-wheel-target){
+  opacity:.52;
+}
