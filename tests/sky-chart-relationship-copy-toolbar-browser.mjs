@@ -56,10 +56,11 @@ for(const width of [320,390,510,540,630,740,760,900,1200]){
       const r=node.getBoundingClientRect(),style=getComputedStyle(node);
       return[key,{left:r.left,right:r.right,top:r.top,bottom:r.bottom,width:r.width,height:r.height,display:style.display,visibility:style.visibility}];
     }));
-    const pseudo=button?getComputedStyle(button,'::before'):null;
+    const svg=button?.querySelector('svg.relphi-copy-icon');
+    const use=svg?.querySelector('use');
     return{width:innerWidth,header:{left:hdr.left,right:hdr.right,scrollWidth:header.scrollWidth,clientWidth:header.clientWidth},container:{left:container.left,right:container.right},bounds,
       documentScroll:document.documentElement.scrollWidth,viewport:document.documentElement.clientWidth,
-      button:{class:button?.className,label:button?.getAttribute('aria-label'),title:button?.title,text:button?.textContent,iconContent:pseudo?.content,iconWidth:pseudo?.width,iconMask:pseudo?.maskImage,iconColor:pseudo?.backgroundColor}
+      button:{class:button?.className,label:button?.getAttribute('aria-label'),title:button?.title,text:button?.textContent,iconHref:use?.getAttribute('href'),iconWidth:svg?getComputedStyle(svg).width:'',iconHeight:svg?getComputedStyle(svg).height:''}
     };
   });
   for(const [key,b] of Object.entries(result.bounds)){
@@ -69,8 +70,9 @@ for(const width of [320,390,510,540,630,740,760,900,1200]){
     assert.equal(b.visibility,'visible',width+': '+key+' must be visible');
   }
   assert.ok(result.header.scrollWidth<=result.header.clientWidth+3,JSON.stringify({width,error:'header overflow',result}));
-  assert.ok(result.button.iconMask.includes('data:image/svg'),width+': icon must be a standard two-rectangle SVG');
-  assert.equal(result.button.iconWidth,'18px',width+': copy glyph should stay legible');
+  assert.equal(result.button.iconHref,'relphi-icons.svg#relphi-copy',width+': all Copy buttons must reference the one canonical path');
+  assert.equal(result.button.iconWidth,'20px',width+': canonical icon width is fixed');
+  assert.equal(result.button.iconHeight,'20px',width+': canonical icon height is fixed');
   assert.match(result.button.label,/Copy included relationships/i,width+': copy retains its accessible action');
   if(width===630)await page.screenshot({path:'relationships-copy-toolbar-630px.png',fullPage:false});
 }
@@ -90,6 +92,7 @@ await page.waitForFunction(()=>Boolean(window.__copiedRelationshipText),null,{ti
 assert.ok((await page.evaluate(()=>window.__copiedRelationshipText)).includes('Sky A:'),'Icon button must still invoke existing relationship serializer');
 await page.waitForFunction(()=>document.querySelector('.sky-relationship-copy-button')?.dataset.relphiCopyFeedback==='done',null,{timeout:3000});
 assert.match(await page.locator('.sky-relationship-copy-button').getAttribute('aria-label'),/^Copied/i,'Feedback is accessible');
+assert.equal(await page.locator('.sky-relationship-copy-button svg use').getAttribute('href'),'relphi-icons.svg#relphi-copy','Successful copy must NOT substitute a different glyph');
 await page.waitForFunction(()=>document.querySelector('.sky-relationship-copy-button')?.dataset.relphiCopyFeedback==='idle',null,{timeout:5000});
 
 // The same convention must attach to copy controls inserted asynchronously.
@@ -106,7 +109,7 @@ const dynamic=await page.evaluate(async()=>{
 });
 await page.waitForFunction(()=>document.querySelectorAll('#copy-convention-fixtures .relphi-copy-icon-button').length===6,null,{timeout:4000});
 const consistent=await page.locator('#copy-convention-fixtures .relphi-copy-icon-button').evaluateAll(nodes=>nodes.every(node=>
-  getComputedStyle(node,'::before').maskImage.includes('data:image/svg')&&!!node.getAttribute('aria-label')));
+  node.querySelector('svg.relphi-copy-icon use')?.getAttribute('href')==='relphi-icons.svg#relphi-copy'&&!!node.getAttribute('aria-label')));
 assert.equal(consistent,true,'All dynamically inserted Copy controls share the SVG icon and accessible name');
 assert.deepEqual(errors.filter(e=>/Uncaught|SyntaxError|ReferenceError/.test(e)),[],'No critical page errors');
 await context.close();
