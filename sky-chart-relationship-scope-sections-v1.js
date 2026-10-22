@@ -123,7 +123,8 @@ function matrixFocus(){
   const explorer=window.RelphiHarmonicExplorer;
   if(explorer?.enabled()){
     const order=explorer.getOrder();
-    const activeScopes=MATRIX_SCOPES.filter(scope=>(scope.id==='A-A'||skyIsPresent('B'))&&document.querySelector('[data-aspect-matrix-scope="'+scope.id+'"][data-aspect-matrix-aspect="all"]')?.checked!==false);
+    let stored=null;try{stored=JSON.parse(localStorage.getItem('relphiSkyAspectMatrixV1')||'null')}catch(_){}
+    const activeScopes=MATRIX_SCOPES.filter(scope=>(scope.id==='A-A'||skyIsPresent('B'))&&(!Array.isArray(stored?.[scope.id])||stored[scope.id].length>0));
     return{aspects:'Harmonic '+order,scopes:activeScopes.map(scope=>scope.label).join(' · ')||'None',bySignCount:0};
   }
   const scopes=MATRIX_SCOPES.filter(scope=>scope.id==='A-A'||skyIsPresent('B'));
