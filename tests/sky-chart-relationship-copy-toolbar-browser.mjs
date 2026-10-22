@@ -36,7 +36,7 @@ await page.waitForSelector('.sky-relationship-sort-select',{timeout:30000});
 await page.waitForSelector('.sky-relationship-limit-control',{timeout:30000});
 await page.waitForSelector('#skyChartRelationshipsExport',{timeout:30000});
 
-for(const width of [320,390,510,540,630,740,760,900,1200]){
+for(const width of [320,390,451,480,510,540,595,600,630,740,760,900,1200]){
   await page.setViewportSize({width,height:900});
   await page.waitForTimeout(170);
   const result=await page.evaluate(()=>{
@@ -59,12 +59,18 @@ for(const width of [320,390,510,540,630,740,760,900,1200]){
     const svg=button?.querySelector('svg.relphi-copy-icon');
     const use=svg?.querySelector('use');
     const br=button.getBoundingClientRect(),sr=svg?.getBoundingClientRect();
+    const title=header?.querySelector('h2,.sky-relationship-vocab-tabs');
+    const tr=title?.getBoundingClientRect();
+    const sortRect=nodes.sort?.getBoundingClientRect();
+    const titleAndSort={titleTop:tr?.top,titleBottom:tr?.bottom,titleCenter:tr?(tr.top+tr.bottom)/2:null,
+      sortTop:sortRect?.top,sortBottom:sortRect?.bottom,sortCenter:sortRect?(sortRect.top+sortRect.bottom)/2:null,
+      titleRight:tr?.right,sortLeft:sortRect?.left};
     const bbox=use?.getBBox(),matrix=use?.getScreenCTM();
     const mark=bbox&&matrix?new DOMPoint(bbox.x+bbox.width/2,bbox.y+bbox.height/2).matrixTransform(matrix):null;
     const duplicateCount=button.querySelectorAll('svg').length;
     const pseudoBefore=getComputedStyle(button,'::before');
     const pseudoAfter=getComputedStyle(button,'::after');
-    return{width:innerWidth,header:{left:hdr.left,right:hdr.right,scrollWidth:header.scrollWidth,clientWidth:header.clientWidth},container:{left:container.left,right:container.right},bounds,
+    return{width:innerWidth,header:{left:hdr.left,right:hdr.right,scrollWidth:header.scrollWidth,clientWidth:header.clientWidth},container:{left:container.left,right:container.right,width:container.width},titleAndSort,bounds,
       documentScroll:document.documentElement.scrollWidth,viewport:document.documentElement.clientWidth,
       button:{class:button?.className,label:button?.getAttribute('aria-label'),title:button?.title,text:button?.textContent,iconHref:use?.getAttribute('href'),iconWidth:svg?getComputedStyle(svg).width:'',iconHeight:svg?getComputedStyle(svg).height:'',
         duplicates:duplicateCount, before:pseudoBefore.content,after:pseudoAfter.content,
@@ -81,6 +87,19 @@ for(const width of [320,390,510,540,630,740,760,900,1200]){
     assert.equal(b.visibility,'visible',width+': '+key+' must be visible');
   }
   assert.ok(result.header.scrollWidth<=result.header.clientWidth+3,JSON.stringify({width,error:'header overflow',result}));
+  if(result.container.width>451){
+    const ts=result.titleAndSort;
+    assert.ok(Math.abs(ts.titleCenter-ts.sortCenter)<=6,
+      JSON.stringify({width,error:'Relationships heading and controls must remain in ONE ROW',result}));
+    assert.ok(ts.titleRight<=ts.sortLeft+1,
+      JSON.stringify({width,error:'sort dropdown may not overlap Relationships title',result}));
+    const baseline=result.bounds.sort.top;
+    for(const key of ['limit','count','copy','download']){
+      const b=result.bounds[key];
+      assert.ok(Math.abs((b.top+b.bottom)/2-(result.bounds.sort.top+result.bounds.sort.bottom)/2)<=6,
+        JSON.stringify({width,key,error:'all controls must be vertically aligned in the same row',result}));
+    }
+  }
   assert.equal(result.button.iconHref,'relphi-icons.svg#relphi-copy',width+': all Copy buttons must reference the one canonical path');
   assert.equal(result.button.iconWidth,'20px',width+': canonical icon width is fixed');
   assert.equal(result.button.iconHeight,'20px',width+': canonical icon height is fixed');
@@ -93,6 +112,7 @@ for(const width of [320,390,510,540,630,740,760,900,1200]){
     width+': actual mark must be optically centered within the button: '+JSON.stringify(result.button));
   assert.match(result.button.label,/Copy included relationships/i,width+': copy retains its accessible action');
   if(width===630)await page.screenshot({path:'relationships-copy-toolbar-630px.png',fullPage:false});
+  if(width===595)await page.screenshot({path:'relationships-copy-toolbar-595px.png',fullPage:false});
 }
 await page.setViewportSize({width:630,height:900});
 await page.evaluate(()=>{
