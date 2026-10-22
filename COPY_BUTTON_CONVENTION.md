@@ -1,14 +1,25 @@
-# Oracle of Relphi — Copy button convention
+# Oracle of Relphi — canonical Copy glyph (non-negotiable)
 
-Copying information to the **clipboard** uses the standard **two overlapping rectangles** icon. This is the default for Sky Chart, Drawing Board, Planetary Hours, and future Relphi tools.
+Every clipboard-copy action uses the **same one-path, optically centered, mirrored dual-rectangle SVG**. The foreground rectangle is **lower-left** and the background rectangle is **upper-right**. The source of truth is exactly one `<path>` in [`relphi-icons.svg`](./relphi-icons.svg), under the `#relphi-copy` symbol. **Do not redraw, mirror, substitute, rasterize, restroke, transform, or resize the icon in a consuming module.**
 
-- Use an icon-only button for a *single clipboard action* rather than the word “Copy.” The visible icon is the shared, canonical vector in `relphi-copy-icon-convention-v1.css` (18px artwork inside a roughly 33px control).
-- Every Copy icon button needs a descriptive `aria-label` and `title` such as **Copy visible relationships**, **Copy all questions**, or **Copy share link**, so users know *what* it copies. Keep keyboard access and visible focus.
-- After successful copying, show a checkmark briefly; on failure show an error state. Both states need a meaningful accessible label. Clipboard code remains with the owning tool. The icon decorator must **not** replace or trigger the underlying clipboard action.
-- Do not treat **Duplicate**, **Modify a copy**, **Create copy**, etc. as clipboard actions. Where multiple outputs are offered together (**Copy Text**, **Copy PNG**) and the format would be ambiguous, keep sufficient visible format names beside the shared Copy glyph.
-- For a new clipboard-only control, add `data-relphi-clipboard-action` to its existing `<button type="button">`, include `relphi-copy-icon-convention-v1.css` and `relphi-copy-icon-convention-v1.js` on the page, and provide an action-specific accessible name. The shared decorator also adapts older owner-specific Copy buttons; it does not remove their text nodes or interfere with clipboard handlers.
-- When the toolbar is crowded, reflow its controls into another row based on **available panel width**. Never silently clip Copy or Download outside its panel. The Relationships implementation uses a CSS size container and is regression-tested from narrow mobile through desktop widths.
+## Geometry contract
+- Master viewBox: `0 0 24 24`; original line weight `1.9` units; round joins and caps; paired corners radius `1.8`.
+- Canonical optical correction: `translate(-.28 .23)` belongs **inside the master path**. It was measured from rendered stroke opacity, then centered to the 24-unit canvas. Never apply a separate consumer transform to the graphic.
+- A Copy button displays the master symbol at exactly **20 × 20 CSS pixels**, within a **34 × 32px** hit area (or the established 2.25rem Drawing Board icon-control box). Icon whitespace and drawing scale are always identical.
+- All clipboard instances refer to `relphi-icons.svg#relphi-copy` through `<svg class="relphi-copy-icon" viewBox="0 0 24 24"><use href="relphi-icons.svg#relphi-copy"/></svg>`. No inline `<path>`, `<rect>`, CSS-mask SVG, encoded data URL, font glyph, or emoji is permitted as an alternate Copy mark.
 
-## Regression contract
+## Interaction contract
+- The visible button is icon-only when it is a single unambiguous clipboard action. Keep a real keyboard-accessible `<button>` with an action-specific `aria-label` and `title` (e.g., “Copy included relationships”).
+- Success and failure are reported accessibly via the existing button's label, tooltip, and control color. **Do not swap the Copy glyph for a checkmark** or any other glyph; its geometry never changes.
+- When separate actions for Copy Text vs Copy PNG coexist, retain the short format label **next to** the canonical icon. The icon itself is never modified.
+- “Duplicate”, “Modify a copy”, “Create a copy” and similar operations are not clipboard-copy actions.
+- The `relphi-copy-icon-convention-v1.js` decorator controls presentation only. Copy operations, serialization, and fallback clipboard handling remain with the owning tool; the decorator does not intercept clicks.
 
-`tests/sky-chart-relationship-copy-toolbar-browser.mjs` verifies the standard glyph, accessible label, success feedback, unchanged Relationships serializer, dynamic controls, and non-overflow at 320, 390, 510, 540, 630, 740, 760, 900 and 1200px.
+## Coverage and implementation
+- The shared `navloader.js` loads the global presentation controller on every Relphi page, with direct inclusion on Sky Chart, Tarot/Drawing Board, and Planetary Hours where needed.
+- Existing buttons are discovered by their Copy action, including dynamic buttons and `data-relphi-clipboard-action` opt-ins. Homepage Invocation Cards receive the **same** icon inside their clickable card without changing the whole-card copy behavior.
+- The Relationships heading reflows based on available **panel** width so Copy and Download remain visible. No toolbar may clip an icon outside its container.
+
+## Regression checks
+- `tests/sky-chart-relationship-copy-toolbar-browser.mjs` checks toolbar containment across nine widths, unchanged relationship clipboard behavior, and the canonical SVG source.
+- `tests/relphi-copy-canon-browser.mjs` checks only one path exists, no embedded duplicate drawing exists, every Copy button references the same sprite across pages and dynamic controls, and feedback cannot replace the glyph.
