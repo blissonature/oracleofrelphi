@@ -35,6 +35,11 @@
   }
   function isCopy(button){
     if(!(button instanceof HTMLButtonElement))return false;
+    // Invocation Cards are *containers* with their own one icon inside
+    // .copy-icon. Their "Copy this question" tooltip must NOT trigger a second
+    // copy SVG on the whole button. Decorating both caused a repeated cycle:
+    // parent pass removed child icon, child pass recreated it, ad infinitum.
+    if(button.matches('.question-card')&&button.querySelector('.copy-icon'))return false;
     if(button.matches(KNOWN))return true;
     const raw=String(button.textContent||'').trim();
     const a=String(button.getAttribute('aria-label')||'').trim();
