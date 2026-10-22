@@ -1,0 +1,33 @@
+name: Materialize astrology pair pages
+on:
+  push:
+    branches:
+      - feat/astrology-search-glossary-20261022
+    paths:
+      - 'tools/build-astrology-pairs.mjs'
+      - 'tools/materialize-astrology-pairs.mjs'
+      - '.github/workflows/materialize-astrology-pairs.yml'
+permissions:
+  contents: write
+jobs:
+  render:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Render 441 static pairing pages
+        run: node tools/materialize-astrology-pairs.mjs --write
+      - name: Commit generated HTML on the draft branch only
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add astrology/pairs astrology-pairs.html sitemap.xml
+          if ! git diff --cached --quiet; then
+            git commit -m "Generate 441 placement-pair HTML pages and sitemap [skip ci]"
+            git push origin HEAD:feat/astrology-search-glossary-20261022
+          fi
