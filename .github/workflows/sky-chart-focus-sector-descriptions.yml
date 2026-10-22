@@ -1,0 +1,23 @@
+name: Wheel Focus sector descriptions
+on:
+  pull_request:
+    paths:
+      - 'sky-chart-vocab-tab-v1.js'
+      - 'sky-chart-foundation-interactions-v2.js'
+      - 'sky-chart-foundation-interactions-v1.css'
+      - 'tests/sky-chart-focus-sector-descriptions-browser.mjs'
+      - '.github/workflows/sky-chart-focus-sector-descriptions.yml'
+jobs:
+  browser:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: |
+          npm install --no-save playwright@1.52.0
+          npx playwright install --with-deps chromium
+      - run: |
+          python3 -m http.server 4173 >/tmp/focus-sector-http.log 2>&1 &
+          node tests/sky-chart-focus-sector-descriptions-browser.mjs
