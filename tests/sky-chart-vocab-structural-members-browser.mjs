@@ -96,12 +96,13 @@ try{
   await showMore.click();
   await page.waitForFunction(()=>document.documentElement.dataset.skyHarmonicWindow==='1');
   assert.equal(await relationshipWindow.inputValue(),'1','Increase must increment the shared Harmonic Window by one degree.');
-  assert.equal(await vocabWindow.inputValue(),'1','Increase must mirror the widened Harmonic Window into Vocab.');
+  await page.waitForFunction(()=>document.querySelector('#skyFoundationA [data-vocab-structure="axis-polarity"][data-vocab-axis="vertex-anti-vertex"]')?.dataset.vocabHarmonicWindow==='1');
+  assert.equal(await page.locator('#skyFoundationA [data-vocab-harmonic-window-input]').count(),0,'Vocab reflects the shared window without duplicating its control.');
   if(await showMore.isVisible()){
     assert.match((await showMore.textContent()||'').trim(),/\d+ more beyond 1° · Increase to 2°/,'Continuation must advance incrementally, not jump to the maximum.');
   }
 
-  await vocabWindow.fill(defaultWindow);
+  await relationshipWindow.fill(defaultWindow);
   await page.waitForFunction(value=>document.documentElement.dataset.skyHarmonicWindow===value,defaultWindow);
   await page.waitForFunction(value=>{
     const row=document.querySelector('#skyFoundationA [data-vocab-structure="axis-polarity"][data-vocab-axis="vertex-anti-vertex"]');
