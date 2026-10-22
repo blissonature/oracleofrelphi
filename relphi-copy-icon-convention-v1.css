@@ -103,84 +103,137 @@ button.relphi-copy-icon-button[data-relphi-copy-format]::after{
   width:2.25rem!important;min-width:2.25rem!important;max-width:2.25rem!important;
   padding:0!important;font-size:0!important;
 }
-/* Solve overflow at the Relationships *panel* width, not only viewport width.
-   Title and count keep their intended semantic positions; Copy/Export stay reachable. */
+/* Relationships: use ONE compact row wherever the content can fit.
+   Flex the sort control, never relocate it to a second row at tablet widths.
+   A genuinely narrow (< 450px) panel can use the accessible two-row fallback. */
 #skyFoundationRelationships{container-type:inline-size}
 #skyFoundationRelationships .sky-foundation-relationships-heading{
-  column-gap:12px;
+  display:grid;
+  grid-template-columns:max-content minmax(0,1fr);
+  grid-template-rows:minmax(36px,auto);
+  align-items:center;
+  column-gap:8px;
+  row-gap:0;
+  min-height:44px;
+  padding:4px 9px;
+  box-sizing:border-box;
 }
-#skyFoundationRelationships .sky-foundation-relationships-heading>.sky-relationship-heading-actions{
-  grid-template-columns:minmax(155px,1fr) 76px minmax(82px,max-content) 33px 33px;
+#skyFoundationRelationships .sky-foundation-relationships-heading>h2,
+#skyFoundationRelationships .sky-foundation-relationships-heading>.sky-relationship-vocab-tabs{
+  grid-column:1;
+  grid-row:1;
   min-width:0;
   max-width:100%;
+  align-self:center;
+  justify-self:start;
+  white-space:nowrap;
 }
-#skyFoundationRelationships .sky-foundation-relationships-heading>.sky-relationship-heading-actions>.sky-relationship-sort-control{min-width:0}
-#skyFoundationRelationships .sky-foundation-relationships-heading>.sky-relationship-heading-actions>#skyFoundationRelationshipCount{min-width:0}
-@container (max-width:740px){
-  #skyFoundationRelationships .sky-foundation-relationships-heading{
-    grid-template-columns:minmax(0,1fr);
-    grid-template-rows:auto auto;
-    gap:7px;
-    padding:8px 10px;
-  }
-  #skyFoundationRelationships .sky-foundation-relationships-heading>h2,
-  #skyFoundationRelationships .sky-foundation-relationships-heading>.sky-relationship-vocab-tabs{
-    grid-column:1;grid-row:1;justify-self:start;align-self:center;
-  }
-  #skyFoundationRelationships .sky-foundation-relationships-heading>.sky-relationship-heading-actions{
-    grid-column:1;grid-row:2;
-    display:grid;
-    grid-template-columns:minmax(0,1fr) 76px minmax(72px,max-content) 33px 33px;
-    grid-template-rows:auto;
-    gap:5px;
-    width:100%;
-  }
-  #skyFoundationRelationships .sky-foundation-relationships-heading>.sky-relationship-heading-actions>.sky-relationship-sort-control{
-    grid-column:1;grid-row:1;width:100%;min-width:0
-  }
-  #skyFoundationRelationships .sky-foundation-relationships-heading>.sky-relationship-heading-actions>.sky-relationship-limit-control{
-    grid-column:2;grid-row:1;justify-self:end
-  }
-  #skyFoundationRelationships .sky-foundation-relationships-heading>.sky-relationship-heading-actions>#skyFoundationRelationshipCount{
-    grid-column:3;grid-row:1;justify-self:center
-  }
-  #skyFoundationRelationships .sky-foundation-relationships-heading>.sky-relationship-heading-actions>.sky-relationship-copy-button{
-    grid-column:4;grid-row:1;justify-self:end
-  }
-  #skyFoundationRelationships .sky-foundation-relationships-heading>.sky-relationship-heading-actions>#skyChartRelationshipsExport{
-    grid-column:5;grid-row:1;justify-self:end
-  }
+#skyFoundationRelationships .sky-foundation-relationships-heading>.sky-relationship-heading-actions{
+  grid-column:2;
+  grid-row:1;
+  display:grid;
+  grid-template-columns:minmax(0,1fr) 76px max-content 34px 30px;
+  grid-template-rows:1fr;
+  align-items:center;
+  column-gap:5px;
+  row-gap:0;
+  width:100%;
+  min-width:0;
+  max-width:100%;
+  margin:0;
 }
-@container (max-width:510px){
+#skyFoundationRelationships .sky-foundation-relationships-heading>.sky-relationship-heading-actions>.sky-relationship-sort-control{
+  grid-column:1;
+  grid-row:1;
+  min-width:0;
+  width:100%;
+  margin:0;
+}
+#skyFoundationRelationships .sky-foundation-relationships-heading>.sky-relationship-heading-actions .sky-relationship-sort-select{
+  display:block;
+  width:100%;
+  min-width:0;
+  max-width:100%;
+  text-overflow:ellipsis;
+}
+#skyFoundationRelationships .sky-foundation-relationships-heading>.sky-relationship-heading-actions>.sky-relationship-limit-control{
+  grid-column:2;
+  grid-row:1;
+  justify-self:end;
+  width:76px;
+  min-width:0;
+  margin:0;
+}
+#skyFoundationRelationships .sky-foundation-relationships-heading>.sky-relationship-heading-actions>#skyFoundationRelationshipCount{
+  grid-column:3;
+  grid-row:1;
+  justify-self:end;
+  min-width:0;
+  width:max-content;
+  margin:0;
+  white-space:nowrap;
+}
+#skyFoundationRelationships .sky-foundation-relationships-heading>.sky-relationship-heading-actions>.sky-relationship-copy-button{
+  grid-column:4;
+  grid-row:1;
+  justify-self:center;
+  margin:0!important;
+}
+#skyFoundationRelationships .sky-foundation-relationships-heading>.sky-relationship-heading-actions>#skyChartRelationshipsExport{
+  grid-column:5;
+  grid-row:1;
+  justify-self:center;
+  margin:0!important;
+}
+/* This fallback is for phones too narrow to carry every control. It must not
+   trigger at the ~600px panel shown in the report. */
+@container (max-width:450px){
   #skyFoundationRelationships .sky-foundation-relationships-heading{
     grid-template-columns:minmax(0,1fr) auto auto auto;
     grid-template-rows:auto auto;
-    gap:7px 5px;
-    padding:8px;
+    column-gap:5px;
+    row-gap:6px;
+    padding:7px 8px;
   }
   #skyFoundationRelationships .sky-foundation-relationships-heading>h2,
   #skyFoundationRelationships .sky-foundation-relationships-heading>.sky-relationship-vocab-tabs{
-    grid-column:1;grid-row:1;align-self:center;justify-self:start;
-    min-width:0;max-width:100%;overflow:hidden;text-overflow:ellipsis;
+    grid-column:1;
+    grid-row:1;
+    min-width:0;
+    overflow:hidden;
+    text-overflow:ellipsis;
   }
-  #skyFoundationRelationships .sky-foundation-relationships-heading>.sky-relationship-heading-actions{display:contents}
+  #skyFoundationRelationships .sky-foundation-relationships-heading>.sky-relationship-heading-actions{
+    display:contents;
+  }
   #skyFoundationRelationships .sky-foundation-relationships-heading #skyFoundationRelationshipCount{
-    grid-column:2;grid-row:1;justify-self:end
+    grid-column:2;
+    grid-row:1;
+    justify-self:end;
   }
   #skyFoundationRelationships .sky-foundation-relationships-heading .sky-relationship-copy-button{
-    grid-column:3;grid-row:1;justify-self:end
+    grid-column:3;
+    grid-row:1;
+    justify-self:end;
   }
   #skyFoundationRelationships .sky-foundation-relationships-heading #skyChartRelationshipsExport{
-    grid-column:4;grid-row:1;justify-self:end
+    grid-column:4;
+    grid-row:1;
+    justify-self:end;
   }
   #skyFoundationRelationships .sky-foundation-relationships-heading .sky-relationship-sort-control{
-    grid-column:1/4;grid-row:2;min-width:0;width:100%
+    grid-column:1 / 4;
+    grid-row:2;
+    width:100%;
+    min-width:0;
   }
   #skyFoundationRelationships .sky-foundation-relationships-heading .sky-relationship-limit-control{
-    grid-column:4;grid-row:2;justify-self:end
+    grid-column:4;
+    grid-row:2;
+    justify-self:end;
+    width:76px;
   }
 }
-
 
 /* A clickable Invocation Card is itself a clipboard action.
    Its local icon receives precisely the same external SVG reference. */
