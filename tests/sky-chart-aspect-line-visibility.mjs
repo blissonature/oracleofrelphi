@@ -256,6 +256,19 @@ const selectedTile=await page.evaluate(()=>{
 assert.equal(selectedTile.selectedCount,1,'Exactly one Relationship tile must highlight after clicking its aspect line');
 assert.equal(selectedTile.matched,true,'Highlighted tile must correspond to the exact selected aspect endpoints');
 assert.equal(selectedTile.visible,true,'Selected Relationship tile must remain visible');
+const expanded=await page.evaluate(()=>{
+ const row=document.querySelector('#skyFoundationRelationshipList > .sky-foundation-relationship-row.is-wheel-target');
+ const cards=row?.querySelectorAll(':scope > .inline-rel-detail .inline-rel-card');
+ return {expanded:row?.classList.contains('is-inline-expanded'),aria:row?.getAttribute('aria-expanded'),
+   detail:!!row?.querySelector(':scope > .inline-rel-detail:not([hidden])'),cards:cards?.length||0,
+   rowCount:document.querySelectorAll('#skyFoundationRelationshipList > .sky-foundation-relationship-row:not([hidden])').length};
+});
+assert.equal(expanded.expanded,true,'Selecting an aspect line expands its Relationship tile');
+assert.equal(expanded.aria,'true','Expanded tile exposes its state accessibly');
+assert.equal(expanded.detail,true,'The expanded tile contains visible progressive detail');
+assert.equal(expanded.cards,2,'Expanded tile reveals both endpoint tarot cards');
+assert.ok(expanded.rowCount>1,'Other matching Relationships tiles must remain in the list');
+
 assert.ok(selectedTile.tile.top<selectedTile.scrollArea.bottom&&selectedTile.tile.bottom>selectedTile.scrollArea.top,
   'Selected tile must be scrolled into visible Relationships list viewport');
 
