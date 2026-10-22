@@ -74,7 +74,15 @@
   }
 
   const ASPECT_COLORS = ASPECTS.reduce(function (result, aspect) {
-    result[aspect.key] = colorForDegrees(aspect.degrees);
+    // Restore Oracle of Relphi's established aspect colors. Harmonic additions
+    // must not silently switch the existing meanings to Music Theory hues.
+    const CANONICAL = {
+      conjunction:'#e53935',semisextile:'#7c9b49',semisquare:'#b86d43',
+      sextile:'#d3b727',quintile:'#8b6cc2',square:'#d6534d',
+      trine:'#4e9e69',sesquiquadrate:'#9f5944',biquintile:'#7655aa',
+      quincunx:'#4b8e88',opposition:'#5961c8'
+    };
+    result[aspect.key] = CANONICAL[aspect.key] || colorForDegrees(aspect.degrees);
     aspect.aliases.forEach(function (alias) { result[alias] = result[aspect.key]; });
     return result;
   }, {});
