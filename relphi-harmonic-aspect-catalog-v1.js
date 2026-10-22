@@ -1,11 +1,11 @@
 // A single, extensible harmonic-aspect catalogue for Sky Chart.
-// Integer orders 2–24, irreducible numerators only, with traditional names
+// Integer orders 2–40, irreducible numerators only, with traditional names
 // where reasonably established. Unnamed fractions retain explicit Hn m/n
 // labels; an order is not assigned a speculative astrological meaning.
 (function(){
 'use strict';
 if(window.RelphiHarmonicAspectCatalog)return;
-const MAX_ORDER=24;
+const MAX_ORDER=40;
 const LEGACY=[
  ['conjunction','Conjunction',0,0,1,'#e53935','major'],
  ['semi-sextile','Semi-Sextile',30,1,12,'#7c9b49','minor'],
@@ -29,7 +29,9 @@ const NAMED={
  16:{1:['semi-octile','Semioctile'],3:['tri-semi-octile','Sesquioctile'],5:['quin-semi-octile','Quinsemioctile'],7:['sep-semi-octile','Sepsemioctile']},
  18:{1:['semi-novile','Seminovile'],5:['quin-semi-novile','Quin-seminovile'],7:['sep-semi-novile','Sep-seminovile']},
  20:{1:['vigintile','Vigintile'],3:['tri-vigintile','Trivigintile'],7:['sep-vigintile','Sepvigintile'],9:['non-vigintile','Nonvigintile']},
- 24:{1:['semi-duodecile','Semiduodecile'],5:['quin-semi-duodecile','Quinsemiduodecile'],7:['sep-semi-duodecile','Sepsemiduodecile'],11:['undec-semi-duodecile','Undecsemiduodecile']}
+ 24:{1:['semi-duodecile','Semiduodecile'],5:['quin-semi-duodecile','Quinsemiduodecile'],7:['sep-semi-duodecile','Sepsemiduodecile'],11:['undec-semi-duodecile','Undecsemiduodecile']},
+ 36:{1:['trigintasextile','Trigintasextile']},
+ 40:{1:['quadragintile','Quadragintile']}
 };
 const BASE_IDS=new Set(LEGACY.map(a=>a[0]));
 const gcd=(a,b)=>b?gcd(b,a%b):a;
