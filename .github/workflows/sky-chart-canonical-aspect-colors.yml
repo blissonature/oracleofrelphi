@@ -1,0 +1,17 @@
+name: Canonical aspect colors
+on:
+  pull_request:
+    paths:
+      - sky-chart-relationship-color-hints.js
+      - navloader.js
+      - tests/sky-chart-canonical-aspect-colors.mjs
+      - .github/workflows/sky-chart-canonical-aspect-colors.yml
+jobs:
+  palette:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node tests/sky-chart-canonical-aspect-colors.mjs
