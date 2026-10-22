@@ -42,6 +42,9 @@ button.relphi-copy-icon-button{
   fill:none;
   stroke:currentColor;
 }
+/* Owner-module visibility always wins over the icon-only display rule. */
+button.relphi-copy-icon-button[hidden],
+button.relphi-copy-icon-button[aria-hidden="true"]{display:none!important}
 button.relphi-copy-icon-button::before{content:none!important;display:none!important}
 button.relphi-copy-icon-button[data-relphi-copy-feedback="done"]{
   color:#277046;
