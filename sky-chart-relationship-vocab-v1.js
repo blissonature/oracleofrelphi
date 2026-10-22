@@ -79,6 +79,10 @@ const ASPECT_REFERENTS={
   'tri-octile':'accumulated friction','bi-quintile':'refined creative pattern-making',
   quincunx:'continuing adjustment',opposition:'polarity'
 };
+window.RelphiHarmonicAspectCatalog?.aspects.forEach(aspect=>{
+  if(!ASPECT_NAMES[aspect.id])ASPECT_NAMES[aspect.id]=aspect.label;
+  if(!ASPECT_REFERENTS[aspect.id])ASPECT_REFERENTS[aspect.id]=window.RelphiHarmonicAspectCatalog.referent(aspect);
+});
 const CONFIGS={
   'grand-trine':{name:'Grand Trine',referent:'closed three-way low-resistance flow'},
   kite:{name:'Kite',referent:'low-resistance circuit given direction through an opposing axis'},
