@@ -1,0 +1,45 @@
+name: Private Saved Skies fingerprint cards
+
+on:
+  pull_request:
+    paths:
+      - 'sky-chart-saved-skies-labels-v1.js'
+      - 'sky-chart-saved-skies-v1.js'
+      - 'sky-chart.html'
+      - 'tests/sky-chart-saved-skies-private-cards-browser.mjs'
+      - 'tests/sky-chart-saved-skies-row-alignment.test.mjs'
+      - '.github/workflows/sky-chart-saved-skies-private-cards.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'sky-chart-saved-skies-labels-v1.js'
+      - 'sky-chart-saved-skies-v1.js'
+      - 'tests/sky-chart-saved-skies-private-cards-browser.mjs'
+jobs:
+  private-picker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: JavaScript checks
+        run: |
+          node --check sky-chart-saved-skies-labels-v1.js
+          node --check sky-chart-saved-skies-v1.js
+          node --check tests/sky-chart-saved-skies-private-cards-browser.mjs
+          node --test tests/sky-chart-saved-skies-row-alignment.test.mjs tests/sky-chart-saved-skies-micro-style.test.mjs
+      - name: Install browser
+        run: |
+          npm install --no-save playwright@1.52.0 luxon@3 suncalc@1.9.0
+          npx playwright install --with-deps chromium
+      - name: Browser privacy and interactions
+        run: |
+          python3 -m http.server 4173 >/tmp/saved-skies-private-http.log 2>&1 &
+          node tests/sky-chart-saved-skies-private-cards-browser.mjs
+      - name: Screenshots
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: private-saved-sky-cards
+          path: saved-skies-private-*.png
