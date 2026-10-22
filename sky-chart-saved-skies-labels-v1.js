@@ -358,7 +358,9 @@ function listenPrivateReveal(){
   document.addEventListener('pointercancel',clearHold,true);
   // Suppress only the synthetic click following the long press. A later normal
   // tap still loads the sky through the existing picker controller.
-  document.addEventListener('click',event=>{
+  // Capture at window, before the core picker controller's document capture
+  // listener. Otherwise a long press would still select the sky on release.
+  window.addEventListener('click',event=>{
     if(!skipNextClick)return;
     const item=event.target.closest?.('#skySavedSkiesPopover .sky-saved-list-item');
     if(item!==skipNextClick)return;
