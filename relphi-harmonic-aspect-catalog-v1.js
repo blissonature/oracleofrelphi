@@ -44,7 +44,7 @@ for(let n=2;n<=MAX_ORDER;n++){
   if(base.some(a=>a.harmonic===n&&a.numerator===m))continue;
   const label= NAMED[n]?.[m];
   const id=label?.[0]||'harmonic-'+n+'-'+m;
-  const name=label?.[1]||('H'+n+' · '+m+'/'+n);
+  const name=label?.[1]||('Harmonic '+n+' · '+m+'/'+n);
   const aliases=[];
   if(id==='tri-decile')aliases.push('tridecile','tredecile','sesquiquintile');
   if(id==='undecile')aliases.push('elftile');
