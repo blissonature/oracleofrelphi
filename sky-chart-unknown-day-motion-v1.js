@@ -12,7 +12,7 @@ const SIGNS=['Aries','Taurus','Gemini','Cancer','Leo','Virgo','Libra','Scorpio',
 const IDS={asc:'asc',ascendant:'asc',rising:'asc',dsc:'dsc',descendant:'dsc',mc:'mc',midheaven:'mc',mediumcoeli:'mc',ic:'ic',imumcoeli:'ic',vertex:'vertex',antivertex:'anti-vertex',avx:'anti-vertex',partoffortune:'part-of-fortune',fortune:'part-of-fortune',northnode:'north-node',southnode:'south-node',lilith:'lilith'};
 const NO_PAIRS=new Set(['asc|dsc','ic|mc','north-node|south-node','anti-vertex|vertex']);
 const NS='http://www.w3.org/2000/svg',MINUTE=60000,HOUR=3600000,EPHEMERIS_STEP=30*MINUTE;
-const state={selected:'',identity:'',date:null,minutes:0,exploring:false,playing:false,raf:0,lastFrame:0,wheel:null,markerLayer:null,lineLayer:null,markers:new Map(),lines:new Map(),hidden:[],cache:new Map(),ui:null,enabled:false,paintCount:0};
+const state={selected:'',identity:'',date:null,minutes:0,exploring:false,playing:false,raf:0,lastFrame:0,wheel:null,markerLayer:null,lineLayer:null,markers:new Map(),lines:new Map(),hidden:[],cache:new Map(),ui:null,enabled:false,paintCount:0,relations:[],wheelGeometry:null,formatter:null,formatterZone:''};
 const norm=x=>((Number(x)%360)+360)%360;
 const shortest=(a,b)=>((Number(b)-Number(a)+540)%360)-180;
 const rad=x=>x*Math.PI/180;
@@ -123,7 +123,7 @@ function restore(){
   state.hidden=[];
   state.markerLayer?.remove();state.lineLayer?.remove();
   state.markerLayer=null;state.lineLayer=null;state.wheel=null;
-  state.markers.clear();state.lines.clear();
+  state.markers.clear();state.lines.clear();state.relations=[];state.wheelGeometry=null;state.paintCount=0;
 }
 function geometry(site,current){
   const spec=window.RelphiSkyWheelSpec,role=spec?.role?.(site.slot)||{};
@@ -170,7 +170,7 @@ function prepare(site){
   const current=wheel();if(!current||!window.RelphiGlyphComponent||!window.RelphiGlyphRegistry)return false;
   if(state.wheel===current&&state.markerLayer?.isConnected&&state.selected===site.slot)return true;
   restore();state.wheel=current;
-  const g=geometry(site,current);
+  const g=geometry(site,current);state.wheelGeometry=g;
   const aspectLayer=el('g',{'data-layer':'motion-day-aspects','pointer-events':'none','aria-hidden':'true'});
   const markerLayer=el('g',{'data-layer':'motion-day-markers','pointer-events':'none','aria-hidden':'true'});
   const placements=current.querySelector('[data-layer="placements"]');
@@ -215,7 +215,7 @@ function aspects(site,positions){
   }
   return out.sort((a,b)=>a.metrics.phaseError-b.metrics.phaseError);
 }
-function drawAspects(site,relationships,g){
+function drawAspects(site,relationships,g,positions){
   const used=new Set();
   for(const relation of relationships){
     const key=[relation.scope,relation.left,relation.right,relation.aspect.id].join('|');
@@ -225,7 +225,8 @@ function drawAspects(site,relationships,g){
       line=el('line',{class:'sky-foundation-aspect sky-motion-day-aspect',stroke:relation.aspect.color,'stroke-width':'2','vector-effect':'non-scaling-stroke',opacity:'.68','data-aspect':relation.aspect.id,'data-relationship-mode':relation.scope,'data-left-placement':relation.left,'data-right-placement':relation.right,'data-left-sky':relation.leftSky,'data-right-sky':relation.rightSky});
       state.lineLayer.appendChild(line);state.lines.set(key,line);
     }
-    const a=polar(g.aspectRadius,relation.l),b=polar(g.aspectRadius,relation.r);
+    const left=relation.leftSky===site.slot?positions[relation.left]:relation.l,right=relation.rightSky===site.slot?positions[relation.right]:relation.r;
+    const a=polar(g.aspectRadius,left),b=polar(g.aspectRadius,right);
     for(const [name,value] of Object.entries({x1:a.x,y1:a.y,x2:b.x,y2:b.y}))attr(line,name,value);
     line.style.display='';
     line.style.opacity=String(.20+.76*(relation.metrics.coherence||0));
@@ -249,7 +250,10 @@ function drawMarkers(positions,g){
   }
 }
 function timeText(ms,zone){
-  try{return new Intl.DateTimeFormat(undefined,{timeZone:zone,month:'short',day:'numeric',hour:'numeric',minute:'2-digit',second:'2-digit',hour12:true,timeZoneName:'short'}).format(new Date(ms))}
+  try{
+    if(state.formatterZone!==zone||!state.formatter){state.formatter=new Intl.DateTimeFormat(undefined,{timeZone:zone,month:'short',day:'numeric',hour:'numeric',minute:'2-digit',second:'2-digit',hour12:true,timeZoneName:'short'});state.formatterZone=zone}
+    return state.formatter.format(new Date(ms))
+  }
   catch(_){return new Date(ms).toISOString()}
 }
 function pretty(id){return ({asc:'Asc',dsc:'Dsc',mc:'MC',ic:'IC',vertex:'Vertex','anti-vertex':'Anti-Vertex','part-of-fortune':'Fortune','north-node':'N. Node','south-node':'S. Node'})[id]||id.charAt(0).toUpperCase()+id.slice(1)}
@@ -259,8 +263,12 @@ function paint(){
   if(!state.exploring){ui.slider.value='0';ui.play.textContent='Play';ui.time.textContent='Select a time or press Play';ui.phase.textContent='';ui.exact.textContent='';ui.aspects.textContent='';ui.reset.disabled=true;restore();return}
   if(!prepare(site))return;
   const ms=Math.min(site.end-1000,site.start+state.minutes*MINUTE),positions=positionAt(ms,site);
-  const g=geometry(site,state.wheel),relationships=aspects(site,positions);
-  drawMarkers(positions,g);drawAspects(site,relationships,g);
+  const g=state.wheelGeometry||geometry(site,state.wheel);
+  // Ephemeris, angular coordinates and line endpoints animate each frame;
+  // discovering which harmonics are active is limited to ~20 fps during Play.
+  if(!state.playing||state.paintCount%3===0)state.relations=aspects(site,positions);
+  const relationships=state.relations;
+  drawMarkers(positions,g);drawAspects(site,relationships,g,positions);
   ui.slider.value=String(state.minutes);
   ui.play.textContent=state.playing?'Pause':'Play';
   ui.time.textContent=timeText(ms,site.zone);
