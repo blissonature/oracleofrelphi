@@ -140,6 +140,16 @@ function openLedger(cardId){
   location.assign(url.href);
 }
 
+// The wheel opens an existing tile through the same canonical expansion path.
+  // This is deliberately idempotent: selecting the same line again should not
+  // close its cards through an accidental second toggle.
+window.RelphiInlineRelationship=Object.freeze({
+  expand(row){
+    if(!row?.matches?.('.sky-foundation-relationship-row[data-relation-index]'))return false;
+    if(!row.classList.contains('is-inline-expanded'))void open(row);
+    return true;
+  }
+});
 document.addEventListener('click',e=>{
   const ledger=e.target.closest('[data-inline-ledger]');
   if(ledger){e.preventDefault();e.stopImmediatePropagation();openLedger(ledger.dataset.inlineLedger);return}
