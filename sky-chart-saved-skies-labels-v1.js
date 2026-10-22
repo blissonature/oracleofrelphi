@@ -115,6 +115,7 @@ function installStyle(){
     min-width:0!important;max-width:100%!important;overflow:hidden!important;
   }
 
+}
 /* Modern private Sky cards: the three data-derived fingerprints are the identity.
    The layout never starts with a person's name, birth details, or location. */
 #skySavedSkiesPopover .sky-saved-list{
@@ -229,7 +230,6 @@ function installStyle(){
   #skySavedSkiesPopover .sky-saved-fingerprint-copy{transition:none}
 }
 
-}
 `;
   document.head.appendChild(style);
 }
