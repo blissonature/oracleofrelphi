@@ -139,8 +139,32 @@
   function annotateHouseLayer(layerName,slot){const layer=document.querySelector(`[data-layer="${layerName}"]`);if(!layer)return;Array.from(layer.children).filter(node=>node.tagName?.toLowerCase()==='path').forEach((node,index)=>{node.classList.add('sky-foundation-interactive','sky-foundation-house-sector');Object.assign(node.dataset,{interactive:'house',focusPiece:'house',sky:slot,house:String(index+1)});node.setAttribute('tabindex','0');node.setAttribute('role','button');node.setAttribute('aria-label',`Sky ${slot} house ${index+1}`)})}
   function annotateSigns(){const layer=document.querySelector('[data-layer="zodiac"]');if(!layer)return;const paths=Array.from(layer.children).filter(node=>node.tagName?.toLowerCase()==='path'),glyphs=Array.from(layer.children).filter(node=>node.tagName?.toLowerCase()==='g');paths.forEach((node,index)=>{node.classList.add('sky-foundation-interactive','sky-foundation-sign-sector');Object.assign(node.dataset,{interactive:'sign',focusPiece:'sign',sign:String(index)});node.setAttribute('tabindex','0');node.setAttribute('role','button');node.setAttribute('aria-label',SIGN_NAMES[index])});glyphs.forEach((node,index)=>{node.classList.add('sky-foundation-sign-glyph');Object.assign(node.dataset,{focusPiece:'sign',sign:String(index)});node.style.pointerEvents='none'})}
   function annotatePlacements(listA,listB){
-    const maps={A:new Map(listA.map(record=>[record.id,record])),B:new Map(listB.map(record=>[record.id,record]))},nodes=Array.from(document.querySelectorAll('[data-layer="placements"] > g[data-sky][data-placement]')),leaders=Array.from(document.querySelectorAll('[data-layer="leaders"] > line'));
-    nodes.forEach((node,index)=>{const slot=node.dataset.sky,record=maps[slot]?.get(node.dataset.placement);if(!record)return;node.classList.add('sky-foundation-interactive','sky-foundation-placement');Object.assign(node.dataset,{interactive:'placement',focusPiece:'placement',sign:String(record.sign),house:String(record.house)});node.setAttribute('tabindex','0');node.setAttribute('role','button');node.setAttribute('aria-label',`Sky ${slot} ${record.entry.name}, house ${record.house}`);const leader=leaders[index];if(leader){leader.classList.add('sky-foundation-focus-piece');Object.assign(leader.dataset,{focusPiece:'leader',sky:slot,placement:record.id,sign:String(record.sign),house:String(record.house)})}});
+    const maps={A:new Map(listA.map(record=>[record.id,record])),B:new Map(listB.map(record=>[record.id,record]))};
+    const wheel=document.querySelector('#skyFoundationWheelMount > .sky-foundation-wheel');
+    if(!wheel)return;
+    const nodes=Array.from(wheel.querySelectorAll('[data-layer="placements"] > g[data-sky][data-placement]'));
+    // The renderer authors a sky and placement identity on each ordinary leader.
+    // Never pair markers and lines by array index: unknown-time Moon boundaries
+    // insert additional <line>s, and angles can have multiple segments.
+    const ordinaryLeaders=new Map();
+    wheel.querySelectorAll('[data-layer="leaders"] > line.sky-foundation-leader[data-sky][data-placement]').forEach(leader=>{
+      const key=leader.dataset.sky+':'+leader.dataset.placement;
+      if(!ordinaryLeaders.has(key))ordinaryLeaders.set(key,[]);
+      ordinaryLeaders.get(key).push(leader);
+    });
+    nodes.forEach(node=>{
+      const slot=node.dataset.sky,record=maps[slot]?.get(node.dataset.placement);
+      if(!record)return;
+      node.classList.add('sky-foundation-interactive','sky-foundation-placement');
+      Object.assign(node.dataset,{interactive:'placement',focusPiece:'placement',sign:String(record.sign),house:String(record.house)});
+      node.setAttribute('tabindex','0');
+      node.setAttribute('role','button');
+      node.setAttribute('aria-label',`Sky ${slot} ${record.entry.name}, house ${record.house}`);
+      (ordinaryLeaders.get(slot+':'+record.id)||[]).forEach(leader=>{
+        leader.classList.add('sky-foundation-focus-piece');
+        Object.assign(leader.dataset,{focusPiece:'leader',sign:String(record.sign),house:String(record.house)});
+      });
+    });
   }
   function relationKey(left,aspect,right,orb){return`${left}|${aspect}|${right}|${Number(orb).toFixed(6)}`}
   function annotateAspects(relations){
