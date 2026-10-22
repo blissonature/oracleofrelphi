@@ -23,7 +23,7 @@ function decorate(){
   const custom=[...new Set(Object.values(data).filter(v=>typeof v==='string'&&v&&!DEFAULTS.includes(v)))].sort((a,b)=>a.localeCompare(b));
   const folders=[...DEFAULTS,...custom];if(!folders.includes(filter))filter='All';
   const chips=toolbar.querySelector('.sky-library-folders');
-  const chipHtml=folders.map(folder=>'<button type="button" class="sky-library-folder'+(folder===filter?' is-selected':'')+'" data-sky-library-folder="'+esc(folder)+'" aria-pressed="'+(folder===filter)+'">'+esc(folder)+'</button>').join('');
+  const chipHtml=folders.map(folder=>'<button type="button" class="sky-library-folder'+(folder===filter?' is-selected':'')+'" data-sky-library-folder="'+esc(folder)+'" aria-pressed="'+(folder===filter)+'">'+esc(folder)+'</button>').join('')+'<button type="button" class="sky-library-folder sky-library-add-folder" data-sky-library-add-folder aria-label="Create a folder">+ Folder</button>';
   if(chips.dataset.list!==chipHtml){chips.innerHTML=chipHtml;chips.dataset.list=chipHtml}
   const input=toolbar.querySelector('[data-sky-library-search]');if(input!==document.activeElement&&input.value!==query)input.value=query;
   const normalized=query.trim().toLocaleLowerCase();
@@ -76,6 +76,12 @@ document.addEventListener('input',e=>{if(e.target.matches?.(POPOVER+' [data-sky-
 document.addEventListener('click',e=>{
  const p=e.target.closest?.(POPOVER);if(!p)return;
  const folder=e.target.closest('[data-sky-library-folder]');if(folder){e.preventDefault();e.stopImmediatePropagation();filter=folder.dataset.skyLibraryFolder;schedule();return}
+ if(e.target.closest('[data-sky-library-add-folder]')){
+   e.preventDefault();e.stopImmediatePropagation();
+   const value=window.prompt('New folder name (e.g., Research)', '');
+   const folder=String(value||'').trim().slice(0,44);
+   if(folder){const map=read();map['__folder__'+folder]=folder;write(map);filter=folder;schedule()}return;
+ }
  const organize=e.target.closest('[data-sky-folder-edit]');
  if(organize){e.preventDefault();e.stopImmediatePropagation();const select=organize.parentElement.querySelector('select');select.hidden=!select.hidden;if(!select.hidden)select.focus();return}
  const action=e.target.closest('[data-sky-card-swap],[data-sky-card-promote],[data-sky-card-unload]');
@@ -83,10 +89,10 @@ document.addEventListener('click',e=>{
    e.preventDefault();e.stopImmediatePropagation();
    const controls=window.RelphiSkySlotControls,slot=document.querySelector('[data-saved-sky-trigger][aria-expanded="true"]')?.dataset.savedSkyTrigger||'A';
    if(action.hasAttribute('data-sky-card-swap'))controls?.swapSkies?.();
-   if(action.hasAttribute('data-sky-card-promote'))controls?.promoteSkyB?.();
+   if(action.hasAttribute('data-sky-card-promote'))(function(){localStorage.removeItem('relphiSkyChartA');window.dispatchEvent(new StorageEvent('storage',{key:'relphiSkyChartA'}));controls?.promoteSkyBToA?.()})()
    if(action.hasAttribute('data-sky-card-unload')){
      if(slot==='B')controls?.removeSkyB?.();
-     else if(controls?.hasSkyB?.())controls?.promoteSkyB?.();
+     else if(controls?.hasSkyB?.()){localStorage.removeItem('relphiSkyChartA');window.dispatchEvent(new StorageEvent('storage',{key:'relphiSkyChartA'}));controls?.promoteSkyBToA?.();}
      else {localStorage.removeItem('relphiSkyChartA');window.dispatchEvent(new StorageEvent('storage',{key:'relphiSkyChartA'}));}
    }
    p.hidden=true;document.querySelectorAll('[data-saved-sky-trigger]').forEach(node=>node.setAttribute('aria-expanded','false'));
