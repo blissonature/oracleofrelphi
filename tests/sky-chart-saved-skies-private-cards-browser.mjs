@@ -45,7 +45,7 @@ try{
   for(const id of ['private-person-one','private-person-two']){
     const entry=row(desktop,id),button=entry.locator('[data-saved-sky-ref]');
     assert.equal(await button.locator('.sky-saved-fingerprint-piece').count(),3,'One fingerprint of each of the three types');
-    assert.equal(await button.locator('.sky-saved-list-name').innerText(),'','Sensitive name is not rendered initially');
+    assert.equal(await button.locator('.sky-saved-list-name,.sky-saved-list-meta').count(),0,'Sensitive text nodes are absent from the initial picker');
     const state=await button.evaluate(node=>{
       const details=node.querySelector('[data-saved-fingerprint-copy]');
       const style=getComputedStyle(details);
