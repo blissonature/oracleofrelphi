@@ -1,0 +1,33 @@
+/* Sky Card library redesign — privacy overlay occupies the fingerprints themselves. */
+#skySavedSkiesPopover.sky-library-redesigned{width:min(465px,calc(100vw - 22px))!important;border-radius:16px;box-shadow:0 20px 52px #30251d40;background:#fffdfa}
+#skySavedSkiesPopover .sky-saved-list{display:flex;flex-direction:column;gap:5px}
+#skySavedSkiesPopover .sky-library-controls{display:grid;gap:9px;position:sticky;top:0;z-index:4;padding:9px 7px;background:#fffdfa;border-bottom:1px solid #e8e1d8}
+#skySavedSkiesPopover .sky-library-heading{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+#skySavedSkiesPopover .sky-library-heading strong{font:800 .77rem/1.3 system-ui}
+#skySavedSkiesPopover .sky-library-heading span,#skySavedSkiesPopover .sky-library-utility{color:#766b60;font:600 .6rem/1.3 system-ui}
+#skySavedSkiesPopover .sky-library-search{display:flex;align-items:center;gap:7px;min-height:35px;padding:0 11px;border:1px solid #d6cbc0;border-radius:10px;background:#fff}
+#skySavedSkiesPopover .sky-library-search:focus-within{border-color:#677f9f;box-shadow:0 0 0 2px #d9e2ef}
+#skySavedSkiesPopover .sky-library-search svg{width:15px;height:15px;fill:none;stroke:#776b61;stroke-width:1.8}
+#skySavedSkiesPopover .sky-library-search input{border:0;outline:0;background:transparent;min-width:0;width:100%;font:650 .68rem system-ui}
+#skySavedSkiesPopover .sky-library-folders{display:flex;gap:5px;overflow-x:auto;padding:1px 0 4px;scrollbar-width:thin}
+#skySavedSkiesPopover .sky-library-folder{flex:0 0 auto;min-height:28px;padding:0 10px;border:1px solid #ddd3c9;border-radius:999px;background:#fff;color:#51483f;font:700 .6rem system-ui}
+#skySavedSkiesPopover .sky-library-folder.is-selected{background:#302922;color:#fff;border-color:#302922}
+#skySavedSkiesPopover .sky-library-utility{display:flex;justify-content:space-between;gap:6px}
+#skySavedSkiesPopover .sky-saved-list-row{grid-template-columns:minmax(0,1fr) 27px 27px!important;min-height:58px!important}
+#skySavedSkiesPopover .sky-saved-list-row[hidden]{display:none!important}
+#skySavedSkiesPopover .sky-saved-list-item[data-private-sky-fingerprint="true"]{grid-template-columns:1fr 17px!important;grid-template-areas:"fingerprint check"!important;min-height:58px!important;padding:6px 10px!important;justify-content:start}
+#skySavedSkiesPopover .sky-saved-fingerprint-triptych{grid-area:fingerprint!important}
+#skySavedSkiesPopover .sky-saved-fingerprint-copy{display:none!important}
+#skySavedSkiesPopover .sky-library-identity-overlay{position:absolute;inset:4px 26px 4px 5px;display:flex;align-items:center;justify-content:center;padding:5px 10px;background:rgba(255,252,246,.97);backdrop-filter:blur(4px);color:#27211b;border-radius:8px;font:800 .77rem/1.25 system-ui;text-align:center;overflow:hidden;opacity:0;visibility:hidden;pointer-events:none;transition:opacity .13s}
+@media(hover:hover) and (pointer:fine){#skySavedSkiesPopover .sky-saved-list-item:hover .sky-library-identity-overlay{opacity:1;visibility:visible}}
+#skySavedSkiesPopover .sky-saved-list-item:focus-visible .sky-library-identity-overlay,#skySavedSkiesPopover .sky-saved-list-row.is-identity-revealed .sky-library-identity-overlay{opacity:1;visibility:visible}
+#skySavedSkiesPopover .sky-library-row-actions{display:grid;place-items:center;align-self:center;position:relative}
+#skySavedSkiesPopover .sky-library-row-actions button{width:25px;height:28px;border:0;background:transparent;color:#827467;border-radius:6px;font:800 1rem system-ui}
+#skySavedSkiesPopover .sky-library-row-actions select:not([hidden]){position:absolute;right:0;top:100%;z-index:12;min-width:110px;padding:5px;background:#fffdfa;border:1px solid #d8ccbe;border-radius:8px;font:650 .65rem system-ui}
+#skySavedSkiesPopover .sky-library-slot-actions{display:flex;gap:5px;padding:8px;border-bottom:1px solid #e4dbd0;background:#fffdfa}
+#skySavedSkiesPopover .sky-library-slot-actions button{display:flex;align-items:center;justify-content:center;gap:5px;flex:1;min-height:30px;padding:3px 4px;border:1px solid #ddd3c9;border-radius:8px;background:#fff;color:#3f352d;font:750 .6rem system-ui}
+#skySavedSkiesPopover .sky-library-slot-actions button:disabled{opacity:.35}
+#skySavedSkiesPopover .sky-library-empty-results{margin:9px 0;padding:15px;text-align:center;color:#786f65;font:650 .65rem system-ui}
+#skySavedSkiesPopover .sky-library-empty-results[hidden]{display:none!important}
+@media(max-width:400px){#skySavedSkiesPopover .sky-library-slot-actions button{font-size:.54rem}#skySavedSkiesPopover .sky-library-utility span:last-child{display:none}}
+@media(prefers-reduced-motion:reduce){#skySavedSkiesPopover .sky-library-identity-overlay{transition:none}}
