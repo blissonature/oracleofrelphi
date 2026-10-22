@@ -6,6 +6,7 @@
 <link href="favicon.ico" rel="icon" type="image/x-icon"/>
 <title>Oracle of Relphi Anniversary Edition</title>
 <link href="style.css?v=346" rel="stylesheet"/>
+<link href="relphi-copy-icon-convention-v1.css?v=3" rel="stylesheet"/>
 </head>
 <body class="home-page anniversary-home architecture-home">
 <div id="nav-placeholder"></div>
@@ -118,22 +119,22 @@
       <p class="anniversary-question-note">Copy one into Relphi when you want reflection rather than calculation.</p>
     </div>
     <div class="suggested-questions anniversary-questions">
-      <button class="question-card" type="button" onclick="copyQuestionCard(this)">
+      <button class="question-card" type="button" onclick="copyQuestionCard(this)" title="Copy this question">
         <span class="question-text">How may I return to resonance?</span>
         <span aria-hidden="true" class="copy-icon">Copy</span>
         <span class="copied-text" hidden>Copied</span>
       </button>
-      <button class="question-card" type="button" onclick="copyQuestionCard(this)">
+      <button class="question-card" type="button" onclick="copyQuestionCard(this)" title="Copy this question">
         <span class="question-text">What blessing is hidden in this sorrow?</span>
         <span aria-hidden="true" class="copy-icon">Copy</span>
         <span class="copied-text" hidden>Copied</span>
       </button>
-      <button class="question-card" type="button" onclick="copyQuestionCard(this)">
+      <button class="question-card" type="button" onclick="copyQuestionCard(this)" title="Copy this question">
         <span class="question-text">What part of me is asking to be restored?</span>
         <span aria-hidden="true" class="copy-icon">Copy</span>
         <span class="copied-text" hidden>Copied</span>
       </button>
-      <button class="question-card" type="button" onclick="copyQuestionCard(this)">
+      <button class="question-card" type="button" onclick="copyQuestionCard(this)" title="Copy this question">
         <span class="question-text">Who am I beneath the many reflections?</span>
         <span aria-hidden="true" class="copy-icon">Copy</span>
         <span class="copied-text" hidden>Copied</span>
@@ -168,7 +169,8 @@ function copyQuestionCard(card) {
   card.classList.add('card-copied');
   const icon = card.querySelector('.copy-icon');
   const copied = card.querySelector('.copied-text');
-  if (icon) icon.hidden = true;
+  // Copy feedback never removes or substitutes the canonical clipboard mark.
+  if (icon) icon.hidden = false;
   if (copied) copied.hidden = false;
   setTimeout(function() {
     card.classList.remove('card-copied');
@@ -177,6 +179,6 @@ function copyQuestionCard(card) {
   }, 1300);
 }
 </script>
-<script src="navloader.js"></script>
+<script src="navloader.js?v=3"></script>
 </body>
 </html>

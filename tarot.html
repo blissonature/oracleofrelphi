@@ -9,6 +9,7 @@
   <link href="style.css?v=368" rel="stylesheet"/>
   <link href="relphi-design-system.css?v=1" rel="stylesheet"/>
   <link href="drawing-board-workflow-v2.css?v=99" rel="stylesheet"/>
+  <link rel="stylesheet" href="relphi-copy-icon-convention-v1.css?v=3">
 </head>
 <body class="tarot-ledger-page">
   <div id="nav-placeholder"></div>
@@ -371,7 +372,8 @@ function copyQuestionCard(card) {
   card.classList.add('card-copied');
   const icon = card.querySelector('.copy-icon');
   const copied = card.querySelector('.copied-text');
-  if (icon) icon.hidden = true;
+  // Copy feedback never removes or substitutes the canonical clipboard mark.
+  if (icon) icon.hidden = false;
   if (copied) copied.hidden = false;
   setTimeout(function() {
     card.classList.remove('card-copied');
@@ -381,7 +383,7 @@ function copyQuestionCard(card) {
 }
 
   </script>
-  <script src="navloader.js?v=135"></script>
+  <script src="navloader.js?v=137"></script>
   <script src="tarot-cards.js"></script>
   <script src="relphi-symbolic-reference.js?v=3"></script>
   <script src="relphi-locked-interpretations.js?v=207"></script>
@@ -390,5 +392,6 @@ function copyQuestionCard(card) {
   <script src="vendor/astronomy-engine/astronomy.browser.min.js"></script>
   <script src="relphi-house-systems.js?v=317"></script>
   <script src="tarot-app.js?v=415"></script>
+  <script src="relphi-copy-icon-convention-v1.js?v=3"></script>
 </body>
 </html>

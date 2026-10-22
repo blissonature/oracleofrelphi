@@ -1,0 +1,44 @@
+name: Canonical Copy SVG single-source audit
+
+on:
+  pull_request:
+    paths:
+      - 'relphi-icons.svg'
+      - 'relphi-copy-icon-convention-v1.css'
+      - 'relphi-copy-icon-convention-v1.js'
+      - 'navloader.js'
+      - 'index.html'
+      - 'sky-chart.html'
+      - 'tarot.html'
+      - 'planetaryhours.html'
+      - 'tests/relphi-copy-canon-browser.mjs'
+      - '.github/workflows/relphi-copy-canon.yml'
+  push:
+    branches:
+      - main
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Syntax checks
+        run: |
+          node --check relphi-copy-icon-convention-v1.js
+          node --check navloader.js
+          node --check tests/relphi-copy-canon-browser.mjs
+      - name: Install browser
+        run: |
+          npm install --no-save playwright@1.52.0 luxon@3 suncalc@1.9.0
+          npx playwright install --with-deps chromium
+      - name: Verify single-source icon and all page targets
+        run: |
+          python3 -m http.server 4173 >/tmp/copy-canon-server.log 2>&1 &
+          node tests/relphi-copy-canon-browser.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: canonical-copy-icon
+          path: canonical-copy-icon-relationships.png

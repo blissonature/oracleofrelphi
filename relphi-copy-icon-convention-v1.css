@@ -1,0 +1,250 @@
+/* Canonical Oracle of Relphi clipboard control.
+   ALL instances reference ONE SVG <symbol>/<path> in relphi-icons.svg.
+   Do not draw a copy icon in CSS, replace it with a checkmark, or scale it per page. */
+button.relphi-copy-icon-button{
+  appearance:none;
+  box-sizing:border-box!important;
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  /* The owner's hidden text is still an anonymous flex item: never allocate
+     a gap before the icon. The icon is centered independently below. */
+  gap:0!important;
+  flex:0 0 auto;
+  width:34px!important;
+  min-width:34px!important;
+  max-width:34px!important;
+  height:32px!important;
+  min-height:32px!important;
+  max-height:32px!important;
+  padding:0!important;
+  margin-left:0;
+  font-size:0!important;
+  line-height:0!important;
+  letter-spacing:0!important;
+  vertical-align:middle;
+  position:relative;
+  white-space:nowrap!important;
+  cursor:pointer;
+}
+.relphi-copy-icon{
+  display:block!important;
+  /* Absolutely center the SVG in the button. This is independent of invisible
+     text and any owner-module inline-flex/grid layout and baseline rules. */
+  position:absolute!important;
+  top:50%!important;
+  left:50%!important;
+  transform:translate(-50%,-50%)!important;
+  transform-origin:center center!important;
+  box-sizing:border-box!important;
+  width:20px!important;
+  min-width:20px!important;
+  max-width:20px!important;
+  height:20px!important;
+  min-height:20px!important;
+  max-height:20px!important;
+  flex:0 0 20px!important;
+  margin:0!important;
+  padding:0!important;
+  overflow:visible!important;
+  color:inherit;
+  fill:none;
+  stroke:currentColor;
+}
+/* Owner-module visibility always wins over the icon-only display rule. */
+button.relphi-copy-icon-button[hidden],
+button.relphi-copy-icon-button[aria-hidden="true"]{display:none!important}
+button.relphi-copy-icon-button::before,
+button.relphi-copy-icon-button::after{
+  content:none!important;
+  display:none!important;
+}
+button.relphi-copy-icon-button[data-relphi-copy-feedback="done"]{
+  color:#277046;
+  background:color-mix(in srgb,#277046 7%,#fff);
+  border-color:#5e8c70;
+}
+button.relphi-copy-icon-button[data-relphi-copy-feedback="failed"]{
+  color:#a11c18;
+  border-color:#a11c18;
+}
+button.relphi-copy-icon-button[data-relphi-copy-feedback="copying"]{opacity:.68}
+button.relphi-copy-icon-button:focus-visible{outline:2px solid #ba3429!important;outline-offset:2px!important}
+button.relphi-copy-icon-button:disabled{opacity:.45;cursor:not-allowed}
+/* When two *distinct* copy formats appear together, retain format words.
+   The actual icon remains the exact same canonical path. */
+button.relphi-copy-icon-button[data-relphi-copy-format]{
+  width:auto!important;
+  min-width:34px!important;
+  max-width:none!important;
+  padding:0 10px!important;
+  gap:0!important;
+}
+button.relphi-copy-icon-button[data-relphi-copy-format] .relphi-copy-icon{
+  position:static!important;
+  transform:none!important;
+  margin:0 6px 0 0!important;
+}
+button.relphi-copy-icon-button[data-relphi-copy-format]::after{
+  display:block!important;
+  content:attr(data-relphi-copy-format)!important;
+  font:750 11px/1 system-ui,sans-serif;
+  letter-spacing:0;
+}
+/* Bespoke controls share the Drawing Board icon-control geometry. */
+#shortListPanel .relphi-question-toolbar #relphiCopyBespokeQuestions.relphi-copy-icon-button{
+  display:inline-flex!important;align-items:center!important;justify-content:center!important;
+  width:2.25rem!important;min-width:2.25rem!important;max-width:2.25rem!important;
+  height:2.25rem!important;min-height:2.25rem!important;max-height:2.25rem!important;
+  margin:0!important;padding:0!important;font-size:0!important;
+  border-radius:7px!important;
+}
+#shortListPanel .drawing-board-top-actions.relphi-board-command-actions > button.relphi-copy-icon-button:not(.board-history-icon){
+  width:2.25rem!important;min-width:2.25rem!important;max-width:2.25rem!important;
+  padding:0!important;font-size:0!important;
+}
+/* Relationships: use ONE compact row wherever the content can fit.
+   Flex the sort control, never relocate it to a second row at tablet widths.
+   A genuinely narrow (< 450px) panel can use the accessible two-row fallback. */
+#skyFoundationRelationships{container-type:inline-size}
+#skyFoundationRelationships .sky-foundation-relationships-heading{
+  display:grid;
+  grid-template-columns:max-content minmax(0,1fr);
+  grid-template-rows:minmax(36px,auto);
+  align-items:center;
+  column-gap:8px;
+  row-gap:0;
+  min-height:44px;
+  padding:4px 9px;
+  box-sizing:border-box;
+}
+#skyFoundationRelationships .sky-foundation-relationships-heading>h2,
+#skyFoundationRelationships .sky-foundation-relationships-heading>.sky-relationship-vocab-tabs{
+  grid-column:1;
+  grid-row:1;
+  min-width:0;
+  max-width:100%;
+  align-self:center;
+  justify-self:start;
+  white-space:nowrap;
+}
+#skyFoundationRelationships .sky-foundation-relationships-heading>.sky-relationship-heading-actions{
+  grid-column:2;
+  grid-row:1;
+  display:grid;
+  grid-template-columns:minmax(0,1fr) 76px max-content 34px 30px;
+  grid-template-rows:1fr;
+  align-items:center;
+  column-gap:5px;
+  row-gap:0;
+  width:100%;
+  min-width:0;
+  max-width:100%;
+  margin:0;
+}
+#skyFoundationRelationships .sky-foundation-relationships-heading>.sky-relationship-heading-actions>.sky-relationship-sort-control{
+  grid-column:1;
+  grid-row:1;
+  min-width:0;
+  width:100%;
+  margin:0;
+}
+#skyFoundationRelationships .sky-foundation-relationships-heading>.sky-relationship-heading-actions .sky-relationship-sort-select{
+  display:block;
+  width:100%;
+  min-width:0;
+  max-width:100%;
+  text-overflow:ellipsis;
+}
+#skyFoundationRelationships .sky-foundation-relationships-heading>.sky-relationship-heading-actions>.sky-relationship-limit-control{
+  grid-column:2;
+  grid-row:1;
+  justify-self:end;
+  width:76px;
+  min-width:0;
+  margin:0;
+}
+#skyFoundationRelationships .sky-foundation-relationships-heading>.sky-relationship-heading-actions>#skyFoundationRelationshipCount{
+  grid-column:3;
+  grid-row:1;
+  justify-self:end;
+  min-width:0;
+  width:max-content;
+  margin:0;
+  white-space:nowrap;
+}
+#skyFoundationRelationships .sky-foundation-relationships-heading>.sky-relationship-heading-actions>.sky-relationship-copy-button{
+  grid-column:4;
+  grid-row:1;
+  justify-self:center;
+  margin:0!important;
+}
+#skyFoundationRelationships .sky-foundation-relationships-heading>.sky-relationship-heading-actions>#skyChartRelationshipsExport{
+  grid-column:5;
+  grid-row:1;
+  justify-self:center;
+  margin:0!important;
+}
+/* This fallback is for phones too narrow to carry every control. It must not
+   trigger at the ~600px panel shown in the report. */
+@container (max-width:450px){
+  #skyFoundationRelationships .sky-foundation-relationships-heading{
+    grid-template-columns:minmax(0,1fr) auto auto auto;
+    grid-template-rows:auto auto;
+    column-gap:5px;
+    row-gap:6px;
+    padding:7px 8px;
+  }
+  #skyFoundationRelationships .sky-foundation-relationships-heading>h2,
+  #skyFoundationRelationships .sky-foundation-relationships-heading>.sky-relationship-vocab-tabs{
+    grid-column:1;
+    grid-row:1;
+    min-width:0;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+  #skyFoundationRelationships .sky-foundation-relationships-heading>.sky-relationship-heading-actions{
+    display:contents;
+  }
+  #skyFoundationRelationships .sky-foundation-relationships-heading #skyFoundationRelationshipCount{
+    grid-column:2;
+    grid-row:1;
+    justify-self:end;
+  }
+  #skyFoundationRelationships .sky-foundation-relationships-heading .sky-relationship-copy-button{
+    grid-column:3;
+    grid-row:1;
+    justify-self:end;
+  }
+  #skyFoundationRelationships .sky-foundation-relationships-heading #skyChartRelationshipsExport{
+    grid-column:4;
+    grid-row:1;
+    justify-self:end;
+  }
+  #skyFoundationRelationships .sky-foundation-relationships-heading .sky-relationship-sort-control{
+    grid-column:1 / 4;
+    grid-row:2;
+    width:100%;
+    min-width:0;
+  }
+  #skyFoundationRelationships .sky-foundation-relationships-heading .sky-relationship-limit-control{
+    grid-column:4;
+    grid-row:2;
+    justify-self:end;
+    width:76px;
+  }
+}
+
+/* A clickable Invocation Card is itself a clipboard action.
+   Its local icon receives precisely the same external SVG reference. */
+.question-card .copy-icon:not([hidden]){
+  display:inline-flex!important;align-items:center;justify-content:center;
+  box-sizing:border-box;
+  width:20px!important;min-width:20px!important;height:20px!important;
+  flex:0 0 20px;white-space:nowrap;
+  font-size:0!important;line-height:0!important;
+  background:transparent!important;
+  -webkit-mask:none!important;mask:none!important;
+}
+.question-card .copy-icon[hidden]{display:none!important}
+.question-card.card-copied .copy-icon{color:#277046}

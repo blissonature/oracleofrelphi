@@ -1,0 +1,47 @@
+name: Sky Chart Copy toolbar and icon convention
+
+on:
+  pull_request:
+    paths:
+      - 'sky-chart.html'
+      - 'relphi-copy-icon-convention-v1.css'
+      - 'relphi-copy-icon-convention-v1.js'
+      - 'tarot.html'
+      - 'planetaryhours.html'
+      - 'tests/sky-chart-relationship-copy-toolbar-browser.mjs'
+      - '.github/workflows/sky-chart-copy-toolbar.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - 'sky-chart.html'
+      - 'relphi-copy-icon-convention-v1.css'
+      - 'relphi-copy-icon-convention-v1.js'
+      - 'tests/sky-chart-relationship-copy-toolbar-browser.mjs'
+jobs:
+  browser-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Syntax
+        run: |
+          node --check relphi-copy-icon-convention-v1.js
+          node --check tests/sky-chart-relationship-copy-toolbar-browser.mjs
+      - name: Install Chromium
+        run: |
+          npm install --no-save playwright@1.52.0 luxon@3 suncalc@1.9.0
+          npx playwright install --with-deps chromium
+      - name: Browser layout and clipboard acceptance
+        run: |
+          python3 -m http.server 4173 >/tmp/copy-toolbar-http.log 2>&1 &
+          node tests/sky-chart-relationship-copy-toolbar-browser.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: relationships-copy-toolbar
+          path: |
+            relationships-copy-toolbar-630px.png
+            relationships-copy-toolbar-595px.png
