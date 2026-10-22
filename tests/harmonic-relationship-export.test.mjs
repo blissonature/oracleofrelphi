@@ -32,7 +32,7 @@ test('export recognizes newly selected harmonics without reporting Aspects: None
  const matrix=empty();matrix['A-A']=['harmonic-19-5','septile'];
  const {window}=setup(matrix);
  const focus=window.RelphiRelationshipExportFocus.matrix();
- assert.match(focus.aspects,/H19 · 5\/19/);
+ assert.match(focus.aspects,/Harmonic 19 · 5\/19/);
  assert.match(focus.aspects,/Septile/);
  assert.equal(focus.scopes,'A↔A');
  assert.doesNotMatch(focus.aspects,/None/);
@@ -62,7 +62,7 @@ test('semantic serializer gives an unnamed aspect a readable fractional label an
    leftSign:'7',rightSign:'11',leftHouse:'3',rightHouse:'6',relationshipMode:'A-A'
  },querySelector(){return null},querySelectorAll(){return []},classList:{contains(){return false}}};
  const s=window.RelphiRelationshipCopySerializer.serialize(row,{level:2});
- assert.match(s,/H19 · 5\/19 · 0\.0035°/);
+ assert.match(s,/Harmonic 19 · 5\/19 · 0\.0035°/);
  assert.doesNotMatch(s,/harmonic-19-5|0\.00°/);
  assert.match(s,/19 division of the zodiacal circle/);
 });
