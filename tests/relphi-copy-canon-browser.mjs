@@ -25,6 +25,20 @@ for(const url of urls){
   page.on('pageerror',e=>errors.push(e.message));
   await page.route('https://unpkg.com/suncalc@1.9.0/suncalc.js',route=>route.fulfill({path:path.resolve('node_modules/suncalc/suncalc.js'),contentType:'application/javascript'}));
   await page.route('https://cdn.jsdelivr.net/npm/luxon@3/build/global/luxon.min.js',route=>route.fulfill({path:path.resolve('node_modules/luxon/build/global/luxon.min.js'),contentType:'application/javascript'}));
+  if(url.startsWith('sky-chart')){
+    const signs=['Aries','Taurus','Gemini','Cancer','Leo','Virgo','Libra','Scorpio','Sagittarius','Capricorn','Aquarius','Pisces'];
+    const placement=(name,n)=>{const v=((n%360)+360)%360;return{name,longitude:v,sign:signs[Math.floor(v/30)],degree:Math.floor(v%30),minute:Math.floor((v%1)*60)}};
+    const mkSky=(offset)=>({
+      name:'Test sky',houseCusps:Array.from({length:12},(_,i)=>(168.38+offset+i*30)%360),
+      calcProfile:{dateTime:'2026-10-21T12:00',instant:'2026-10-21T18:00:00.000Z',timeZone:'America/Denver',location:'Salt Lake City, Utah',latitude:40.7608,longitude:-111.891,houseSystem:'equal-house',houseCusps:Array.from({length:12},(_,i)=>(168.38+offset+i*30)%360)},
+      placements:Object.fromEntries(Object.entries({Sun:195,Moon:118.42,Mercury:206.17,Venus:169.88,Mars:167.87,Jupiter:307.15,Saturn:235.57,Uranus:254.85,Neptune:271.02,Pluto:213.88,Ascendant:168.38,Midheaven:76.28}).map(([n,v])=>[n,placement(n,v+offset)]))
+    });
+    await page.addInitScript(({a,b})=>{
+      localStorage.setItem('relphiSkyChartA',JSON.stringify(a));
+      localStorage.setItem('relphiSkyChartB',JSON.stringify(b));
+      localStorage.setItem('relphiSkyChartLastModeV1','comparison');
+    },{a:mkSky(0),b:mkSky(28)});
+  }
   await page.goto('http://127.0.0.1:4173/'+url,{waitUntil:'domcontentloaded'});
   await page.waitForFunction(()=>!!window.RelphiCopyIcon&&!!document.querySelector('link[href*="relphi-copy-icon-convention-v1.css"]'),null,{timeout:20000});
   // Detect every present Copy button, not just a hand-curated selector list.
