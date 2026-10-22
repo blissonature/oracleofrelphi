@@ -68,16 +68,20 @@
       status==='copying'?'Copying':button.dataset.relphiCopyIconAction;
     if(button.getAttribute('aria-label')!==label)button.setAttribute('aria-label',label);
     if(button.title!==label)button.title=label;
-    // Reinsert after owners change textContent for feedback; do not alter their
-    // copy handlers, textual state, or event propagation.
-    const standard=button.querySelector(':scope > svg.relphi-copy-icon > use');
-    if(!standard||standard.getAttribute('href')!==SOURCE){
-      // A second copy drawing is never allowed on one button.
-      button.querySelectorAll('svg').forEach(old=>old.remove());
-      button.appendChild(icon());
-    }else{
-      button.querySelectorAll(':scope > svg:not(.relphi-copy-icon),:scope > svg.relphi-copy-icon:not(:first-of-type)').forEach(old=>old.remove());
+    // The owner may append its own icon after our pass, or replace textContent
+    // during feedback. Keep exactly ONE SVG, always referencing the master glyph.
+    // Do not rely on :first-of-type: when the owner SVG comes first that selector
+    // would delete our canonical one, causing an icon replacement loop.
+    const valid=[...button.querySelectorAll('svg.relphi-copy-icon')].filter(node=>
+      node.parentElement===button&&
+      node.querySelectorAll('use').length===1&&
+      node.querySelector('use')?.getAttribute('href')===SOURCE
+    );
+    const keep=valid[0]||icon();
+    for(const node of [...button.querySelectorAll('svg')]){
+      if(node!==keep)node.remove();
     }
+    if(keep.parentElement!==button)button.appendChild(keep);
   }
   function enhanceQuestionCard(card){
     const mount=card.querySelector('.copy-icon');
