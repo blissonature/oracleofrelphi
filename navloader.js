@@ -56,6 +56,17 @@
     document.head.appendChild(style);
   }
 
+  function ensureCanonicalCopyIcon(){
+    // Site-wide clipboard action rendering. All pages share one SVG path.
+    if(!document.querySelector('link[href^="relphi-copy-icon-convention-v1.css"]')){
+      const link=document.createElement('link');
+      link.rel='stylesheet';
+      link.href='relphi-copy-icon-convention-v1.css?v=2';
+      document.head.appendChild(link);
+    }
+    appendScript('relphi-copy-icon-convention-v1.js?v=2');
+  }
+
   function initMenu() {
     if (window.RelphiInitMenu) return window.RelphiInitMenu();
     appendScript('menu.js?v=7');
@@ -205,6 +216,7 @@
     if (window.__relphiTarotPreviewPending && !window.__relphiTarotPreviewDocument) return;
     initAnalytics();
     ensureNavStyles();
+    ensureCanonicalCopyIcon();
     loadEnhancements();
     if (document.querySelector('.menu-container')) return initMenu();
     fetch('nav.html?v=14').then(function (response) { if (!response.ok) throw new Error('Could not load nav.html'); return response.text(); }).then(injectNav).catch(fallbackNav);
