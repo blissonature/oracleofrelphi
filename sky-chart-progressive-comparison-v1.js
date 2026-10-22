@@ -38,6 +38,9 @@
     quincunx:['Quincunx','a 150° relationship that requires continuing adjustment and translation'],
     opposition:['Opposition','a 180° polarity that creates awareness through contrast and exchange']
   };
+  window.RelphiHarmonicAspectCatalog?.aspects.forEach(aspect=>{
+    if(!ASPECTS[aspect.id])ASPECTS[aspect.id]=[aspect.label,window.RelphiHarmonicAspectCatalog.referent(aspect)];
+  });
   const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot',"'":'&#39;'}[char]));
   const norm=value=>((Number(value)%360)+360)%360;
   const signFor=record=>SIGNS[Math.floor(norm(record.value)/30)];

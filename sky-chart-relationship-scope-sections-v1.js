@@ -9,7 +9,8 @@ const FAMILIES=Object.freeze([{id:'intersky',title:'Intersky'},{id:'intrasky',ti
 const GLOBAL_SORTS=new Set(['exact','aspect','strongest','most-challenging','most-supportive','duration-longest','duration-shortest','began-most-recently','ends-soonest','ends-last','applying-first','separating-first','closing-first','opening-first','reference-resolution']);
 const PLACEMENT_SYMBOLS=Object.freeze({sun:'☉',moon:'☽',mercury:'☿',venus:'♀',mars:'♂',jupiter:'♃',saturn:'♄',uranus:'♅',neptune:'♆',pluto:'♇',chiron:'⚷','north-node':'☊','south-node':'☋',lilith:'⚸','part-of-fortune':'⊗',vertex:'Vx','anti-vertex':'AVx',asc:'Asc',dsc:'Dsc',mc:'MC',ic:'IC'});
 const SIGN_SYMBOLS=Object.freeze(['♈','♉','♊','♋','♌','♍','♎','♏','♐','♑','♒','♓']);
-const ASPECT_SYMBOLS=Object.freeze({conjunction:'☌',opposition:'☍',trine:'△',square:'□',sextile:'✶','semi-sextile':'⚺',quincunx:'⚻',octile:'∠','tri-octile':'⚼',quintile:'Q','bi-quintile':'BQ'});
+const ASPECT_SYMBOLS={conjunction:'☌',opposition:'☍',trine:'△',square:'□',sextile:'✶','semi-sextile':'⚺',quincunx:'⚻',octile:'∠','tri-octile':'⚼',quintile:'Q','bi-quintile':'BQ'};
+window.RelphiHarmonicAspectCatalog?.aspects.forEach(aspect=>{if(!ASPECT_SYMBOLS[aspect.id])ASPECT_SYMBOLS[aspect.id]=aspect.label});
 const HIDDEN_CLASSES=Object.freeze(['sky-foundation-single-sky-cross-hidden','sky-chart-filter-hidden','sky-chart-orb-hidden','sky-orb-filter-hidden','sky-chart-multiselect-hidden','sky-chart-house-multiselect-hidden','sky-chart-aspect-multiselect-hidden','sky-chart-zodiac-filter-hidden','sky-chart-result-limit-hidden']);
 const COLLAPSED_VISUAL_CLASS='sky-relationship-drawer-collapsed-visual';
 const collapsed=new Set();
@@ -115,44 +116,41 @@ function skyIsPresent(slot){
 // The Aspects UI is a scope-by-aspect matrix. The old flat scope checkboxes
 // are not the active filter and must not be consulted by exports.
 const MATRIX_SCOPES=Object.freeze([{id:'A-A',label:'A↔A'},{id:'B-B',label:'B↔B'},{id:'A-B',label:'A↔B'}]);
-const MATRIX_ASPECTS=Object.freeze(['conjunction','semi-sextile','octile','sextile','quintile','square','trine','tri-octile','bi-quintile','quincunx','opposition']);
+const harmonicCatalogue=window.RelphiHarmonicAspectCatalog;
+const MATRIX_ASPECTS=Object.freeze((harmonicCatalogue?.aspects||[]).map(aspect=>aspect.id));
+const DEFAULT_MATRIX_ASPECTS=Object.freeze(harmonicCatalogue?.legacyIds||MATRIX_ASPECTS);
 function matrixFocus(){
+  const explorer=window.RelphiHarmonicExplorer;
+  if(explorer?.enabled()){
+    const order=explorer.getOrder();
+    let stored=null;try{stored=JSON.parse(localStorage.getItem('relphiSkyAspectMatrixV1')||'null')}catch(_){}
+    const activeScopes=MATRIX_SCOPES.filter(scope=>(scope.id==='A-A'||skyIsPresent('B'))&&(!Array.isArray(stored?.[scope.id])||stored[scope.id].length>0));
+    return{aspects:'Harmonic '+order,scopes:activeScopes.map(scope=>scope.label).join(' · ')||'None',bySignCount:0};
+  }
   const scopes=MATRIX_SCOPES.filter(scope=>scope.id==='A-A'||skyIsPresent('B'));
   const all=MATRIX_ASPECTS.length;
   let stored=null;
   try{stored=JSON.parse(localStorage.getItem('relphiSkyAspectMatrixV1')||'null')}catch(_){}
-  const values=Object.fromEntries(scopes.map(scope=>{
-    // The master checkbox shows the current scope state; the persisted value
-    // covers both checked and partially checked matrices.
-    const master=document.querySelector('[data-aspect-matrix-scope="'+scope.id+'"][data-aspect-matrix-aspect="all"]');
-    const picks=stored&&Array.isArray(stored[scope.id])?stored[scope.id].filter(id=>MATRIX_ASPECTS.includes(id)):null;
-    // Read actual selected cells when the matrix is mounted, including partial
-    // selections. Fall back to persisted state, whose default is all aspects.
-    const rendered=MATRIX_ASPECTS.map(id=>document.querySelector('[data-aspect-matrix-scope="'+scope.id+'"][data-aspect-matrix-aspect="'+id+'"]'));
-    const count=rendered.every(Boolean)?rendered.filter(input=>input.checked).length:
-      master?.checked?all:picks?picks.length:all;
-    return[scope.id,count];
-  }));
-  const selected=scopes.filter(scope=>values[scope.id]>0);
+  const selectedFor=scope=>{
+    const saved=stored&&Array.isArray(stored[scope.id])?stored[scope.id]:DEFAULT_MATRIX_ASPECTS;
+    const persisted=new Set(saved.filter(id=>MATRIX_ASPECTS.includes(id)));
+    // Filter cells are the authoritative active selections once mounted. Unlike
+    // the legacy eleven-only export map, read all harmonic aspect cells.
+    return MATRIX_ASPECTS.filter(id=>{
+      const input=document.querySelector('[data-aspect-matrix-scope="'+scope.id+'"][data-aspect-matrix-aspect="'+id+'"]');
+      return input?input.checked:persisted.has(id);
+    });
+  };
+  const selections=Object.fromEntries(scopes.map(scope=>[scope.id,selectedFor(scope)]));
+  const active=scopes.filter(scope=>selections[scope.id].length>0);
   const bySign=window.RelphiSkyBySign?.selected;
   const bySignCount=bySign instanceof Set?bySign.size:0;
-  // By Sign can admit aspects in each active scope independently of the
-  // ordinary matrix cells.
-  const enabled=bySignCount?scopes:selected;
+  const enabled=bySignCount?scopes:active;
   const scopeNames=enabled.map(scope=>scope.label).join(' · ')||'None';
-  // An empty aspect matrix filters out all aspects. Only all eleven checked is All.
-  // Otherwise report the actual selected names, never an unhelpful count.
-  const names=ids=>ids.map(id=>id.split('-').map(word=>word[0].toUpperCase()+word.slice(1)).join('-')).join(', ');
-  const label=scope=>{
-    const picks=MATRIX_ASPECTS.filter(id=>{
-      const cell=document.querySelector('[data-aspect-matrix-scope="'+scope.id+'"][data-aspect-matrix-aspect="'+id+'"]');
-      if(cell)return cell.checked;
-      return !!(stored&&Array.isArray(stored[scope.id])&&stored[scope.id].includes(id));
-    });
-    return picks.length===0?'None':picks.length===all?'All':names(picks);
-  };
-  const aspects=selected.length===0?'None':selected.length===1?label(selected[0]):
-    selected.map(scope=>scope.label+': '+label(scope)).join(' · ');
+  const names=ids=>ids.map(id=>harmonicCatalogue?.byId(id)?.label||id).join(', ');
+  const summary=ids=>ids.length===0?'None':ids.length===all?'All':names(ids);
+  const aspects=active.length===0?'None':active.length===1?summary(selections[active[0].id]):
+    active.map(scope=>scope.label+': '+summary(selections[scope.id])).join(' · ');
   return{aspects,scopes:scopeNames,bySignCount};
 }
 function focusInformation(){

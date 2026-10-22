@@ -72,6 +72,13 @@ const HOUSE_MEAN=[
 const ASPECT_NAME={conjunction:'Conjunction','semi-sextile':'Semi-Sextile',octile:'Octile',sextile:'Sextile',quintile:'Quintile',square:'Square',trine:'Trine','tri-octile':'Tri-Octile','bi-quintile':'Bi-Quintile',quincunx:'Quincunx',opposition:'Opposition'};
 const ASPECT_MEAN={conjunction:'the two functions operate together','semi-sextile':'neighboring functions accommodate one another',octile:'focused friction and adjustment',sextile:'a cooperative opening activated through participation',quintile:'creative pattern-making and specialized skill',square:'activating pressure and development',trine:'low-resistance exchange','tri-octile':'accumulated friction and redirection','bi-quintile':'refined creative pattern-making',quincunx:'continuing adjustment and translation',opposition:'awareness through polarity, contrast, and exchange'};
 const ASPECT_COLOR={conjunction:'#e53935','semi-sextile':'#7c9b49',octile:'#b86d43',sextile:'#d3b727',quintile:'#8b6cc2',square:'#d6534d',trine:'#4e9e69','tri-octile':'#9f5944','bi-quintile':'#7655aa',quincunx:'#4b8e88',opposition:'#5961c8'};
+const CATALOGUE=window.RelphiHarmonicAspectCatalog;
+CATALOGUE?.aspects.forEach(aspect=>{
+  if(!ASPECT_NAME[aspect.id])ASPECT_NAME[aspect.id]=aspect.label;
+  if(!ASPECT_MEAN[aspect.id])ASPECT_MEAN[aspect.id]=CATALOGUE.referent(aspect);
+  if(!ASPECT_COLOR[aspect.id])ASPECT_COLOR[aspect.id]=aspect.color;
+});
+const formatOrb=orb=>Number.isFinite(orb)?(orb>0&&orb<.005?orb.toFixed(4):orb.toFixed(2))+'°':'';
 const DECANS=[
   [['two_of_wands','Two of Wands'],['three_of_wands','Three of Wands'],['four_of_wands','Four of Wands']],
   [['five_of_pentacles','Five of Pentacles'],['six_of_pentacles','Six of Pentacles'],['seven_of_pentacles','Seven of Pentacles']],
@@ -233,7 +240,7 @@ function concepts(row){
   const label=(side,id)=>pname(id)+(window.RelphiSkyRetrograde?.forPlacement?.(slot(row,side),id)?' Rx':'');
   const left=[chip(label('left',lp),coord(row,'left'),PLACEMENT_MEAN[lp]||'','a'),chip(SIGNS[li],'',SIGN_MEAN[li]||'','a')];
   if(includeHouse(slot(row,'left'))&&Number.isInteger(lh)&&lh>=1&&lh<=12)left.push(chip(HOUSE_NAMES[lh], '', HOUSE_MEAN[lh]||'','a'));
-  const aspectChip=chip(ASPECT_NAME[aspect]||aspect,Number.isFinite(orb)?orb.toFixed(2)+'°':'',ASPECT_MEAN[aspect]||'','asp');
+  const aspectChip=chip(ASPECT_NAME[aspect]||aspect,formatOrb(orb),ASPECT_MEAN[aspect]||'','asp');
   const right=[chip(label('right',rp),coord(row,'right'),PLACEMENT_MEAN[rp]||'','b'),chip(SIGNS[ri],'',SIGN_MEAN[ri]||'','b')];
   if(includeHouse(slot(row,'right'))&&Number.isInteger(rh)&&rh>=1&&rh<=12)right.push(chip(HOUSE_NAMES[rh], '', HOUSE_MEAN[rh]||'','b'));
   n.style.gridTemplateColumns=`repeat(${left.length},minmax(0,1fr)) minmax(92px,1.12fr) repeat(${right.length},minmax(0,1fr))`;

@@ -14,8 +14,12 @@
     chiron:'⚷','north-node':'☊','south-node':'☋',lilith:'⚸','part-of-fortune':'⊗',vertex:'Vx',asc:'Asc',dsc:'Dsc',mc:'MC',ic:'IC'
   });
   const SIGN_SYMBOLS=Object.freeze(['♈','♉','♊','♋','♌','♍','♎','♏','♐','♑','♒','♓']);
-  const ASPECT_SYMBOLS=Object.freeze({
+  const ASPECT_SYMBOLS={
     conjunction:'☌',opposition:'☍',trine:'△',square:'□',sextile:'✶','semi-sextile':'⚺',quincunx:'⚻',octile:'∠','tri-octile':'⚼',quintile:'Q','bi-quintile':'BQ'
+  };
+  // Named minor aspects copy as canonical readable names, not ad hoc Unicode.
+  window.RelphiHarmonicAspectCatalog?.aspects.forEach(aspect=>{
+    if(!ASPECT_SYMBOLS[aspect.id])ASPECT_SYMBOLS[aspect.id]=aspect.label;
   });
   const ALL_HOUSES=Object.freeze(Array.from({length:12},(_,index)=>String(index+1)));
   const GROUPS=Object.freeze([
