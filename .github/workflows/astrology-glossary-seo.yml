@@ -8,6 +8,7 @@ on:
       - 'glossary-stub-catalog.js'
       - 'glossary-stub-explorer.js'
       - 'tests/glossary-stub-catalog.mjs'
+      - 'tests/glossary-stub-browser.mjs'
       - 'tools/glossary-stub-batch.mjs'
       - 'astrology-glossary.css'
       - 'transiting-uranus-retrograde-opposite-part-of-fortune.html'
@@ -25,6 +26,7 @@ on:
       - 'glossary-stub-catalog.js'
       - 'glossary-stub-explorer.js'
       - 'tests/glossary-stub-catalog.mjs'
+      - 'tests/glossary-stub-browser.mjs'
       - 'tools/glossary-stub-batch.mjs'
       - 'astrology-glossary.css'
       - 'transiting-uranus-retrograde-opposite-part-of-fortune.html'
@@ -44,3 +46,24 @@ jobs:
       - run: node tests/seo-glossary.mjs
       - run: node tests/glossary-stub-catalog.mjs
       - run: node tools/glossary-stub-batch.mjs --count
+
+  browser:
+    needs: verify
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --no-save playwright@1.52.0
+      - run: npx playwright install --with-deps chromium
+      - name: Check desktop and mobile stub interactions
+        run: |
+          python3 -m http.server 4173 > /tmp/glossary-stub-server.log 2>&1 &
+          node tests/glossary-stub-browser.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: glossary-stub-screenshots
+          path: glossary-stubs-*.png
+          if-no-files-found: ignore
