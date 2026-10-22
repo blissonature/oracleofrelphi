@@ -12,7 +12,7 @@ const SIGNS=['Aries','Taurus','Gemini','Cancer','Leo','Virgo','Libra','Scorpio',
 const IDS={asc:'asc',ascendant:'asc',rising:'asc',dsc:'dsc',descendant:'dsc',mc:'mc',midheaven:'mc',mediumcoeli:'mc',ic:'ic',imumcoeli:'ic',vertex:'vertex',antivertex:'anti-vertex',avx:'anti-vertex',partoffortune:'part-of-fortune',fortune:'part-of-fortune',northnode:'north-node',southnode:'south-node',lilith:'lilith'};
 const NO_PAIRS=new Set(['asc|dsc','ic|mc','north-node|south-node','anti-vertex|vertex']);
 const NS='http://www.w3.org/2000/svg',MINUTE=60000,HOUR=3600000,EPHEMERIS_STEP=30*MINUTE;
-const state={selected:'',identity:'',date:null,minutes:0,playing:false,raf:0,lastFrame:0,wheel:null,markerLayer:null,lineLayer:null,markers:new Map(),lines:new Map(),hidden:[],cache:new Map(),ui:null,enabled:false,paintCount:0};
+const state={selected:'',identity:'',date:null,minutes:0,exploring:false,playing:false,raf:0,lastFrame:0,wheel:null,markerLayer:null,lineLayer:null,markers:new Map(),lines:new Map(),hidden:[],cache:new Map(),ui:null,enabled:false,paintCount:0};
 const norm=x=>((Number(x)%360)+360)%360;
 const shortest=(a,b)=>((Number(b)-Number(a)+540)%360)-180;
 const rad=x=>x*Math.PI/180;
@@ -241,9 +241,8 @@ function drawMarkers(positions,g){
     attr(marker.group,'transform','translate('+display.x+' '+display.y+')');
     marker.group.querySelector('.relphi-glyph-bubble')?.setAttribute('transform',marker.isAngle?'rotate('+norm(lon+270)+')':'');
     if(marker.isAngle){
-      const first=polar(Math.min(marker.tick,marker.lane),lon),last=polar(Math.max(marker.tick,marker.lane),lon);
-      const close=polar(marker.lane+(marker.tick>=marker.lane?13:-13),lon);
-      const end=polar(marker.lane+(marker.tick>=marker.lane?-13:13),lon);
+      const first=polar(Math.min(marker.tick,marker.lane-45),lon),last=polar(Math.max(marker.tick,marker.lane+45),lon);
+      const end=polar(marker.lane-13,lon),close=polar(marker.lane+13,lon);
       const segments=[[marker.guide,first,end],[marker.extra,close,last]];
       for(const [line,a,b] of segments){line.style.display='';for(const [name,value] of Object.entries({x1:a.x,y1:a.y,x2:b.x,y2:b.y}))attr(line,name,value)}
     }else for(const [name,value] of Object.entries({x1:display.x,y1:display.y,x2:exact.x,y2:exact.y}))attr(marker.guide,name,value);
@@ -257,6 +256,7 @@ function pretty(id){return ({asc:'Asc',dsc:'Dsc',mc:'MC',ic:'IC',vertex:'Vertex'
 function paint(){
   const site=unknown(state.selected),ui=state.ui;
   if(!ui||!site||!state.enabled)return;
+  if(!state.exploring){ui.slider.value='0';ui.play.textContent='Play';ui.time.textContent='Select a time or press Play';ui.phase.textContent='';ui.exact.textContent='';ui.aspects.textContent='';ui.reset.disabled=true;restore();return}
   if(!prepare(site))return;
   const ms=Math.min(site.end-1000,site.start+state.minutes*MINUTE),positions=positionAt(ms,site);
   const g=geometry(site,state.wheel),relationships=aspects(site,positions);
@@ -279,7 +279,7 @@ function stop(){
   if(state.ui)state.ui.play.textContent='Play';
 }
 function close(){
-  stop();state.enabled=false;state.minutes=0;restore();
+  stop();state.enabled=false;state.minutes=0;state.exploring=false;restore();
   if(state.ui)state.ui.bar.hidden=true;
   const older=document.querySelector('.sky-motion-toolbar:not(.sky-motion-day-toolbar)');
   if(older)older.style.display='';
@@ -296,9 +296,9 @@ function play(){
   if(state.playing){stop();paint();return}
   if(!state.enabled)return;
   if(state.minutes>=state.date.duration)state.minutes=0;
-  state.playing=true;state.lastFrame=0;paint();state.raf=requestAnimationFrame(tick);
+  state.playing=true;state.exploring=true;state.lastFrame=0;paint();state.raf=requestAnimationFrame(tick);
 }
-function reset(){stop();state.minutes=0;paint()}
+function reset(){stop();state.minutes=0;state.exploring=false;restore();paint()}
 function styles(){
   if(document.getElementById('skyUnknownDayStyles'))return;
   const s=document.createElement('style');s.id='skyUnknownDayStyles';
@@ -330,7 +330,7 @@ function build(){
   const get=x=>bar.querySelector('[data-day-'+x+']');
   state.ui={bar,slot:get('slot'),speed:get('speed'),play:get('play'),reset:get('reset'),slider:get('slider'),time:get('time'),phase:get('phase'),exact:get('exact'),aspects:get('aspects')};
   state.ui.slot.addEventListener('change',()=>{stop();restore();state.selected=state.ui.slot.value;state.identity='';sync()});
-  state.ui.slider.addEventListener('input',()=>{stop();state.minutes=Number(state.ui.slider.value)||0;paint()});
+  state.ui.slider.addEventListener('input',()=>{stop();state.minutes=Number(state.ui.slider.value)||0;state.exploring=true;paint()});
   state.ui.play.addEventListener('click',play);
   state.ui.reset.addEventListener('click',reset);
 }
@@ -345,7 +345,7 @@ function sync(){
   if(!found.some(c=>c.slot===state.selected))state.selected=found[0].slot;
   const site=found.find(c=>c.slot===state.selected);
   const next=site.slot+':'+site.day+':'+site.zone+':'+site.lat+':'+site.lon+':'+site.start+':'+site.end;
-  if(next!==state.identity){stop();restore();state.minutes=0;state.cache.clear();state.identity=next}
+  if(next!==state.identity){stop();restore();state.minutes=0;state.exploring=false;state.cache.clear();state.identity=next}
   if(state.wheel&&state.wheel!==wheel())restore();
   state.date=site;
   ui.slot.replaceChildren(...found.map(item=>{const option=document.createElement('option');option.value=item.slot;option.textContent='Sky '+item.slot;return option}));
