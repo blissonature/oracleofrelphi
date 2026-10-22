@@ -102,7 +102,8 @@
       // by a selected relationship or whether its row is temporarily hidden.
       const lineEligible=!hiddenByOrb&&!hiddenByOther;
       if(lineEligible)lineVisibleKeys.add(identity(row));
-      const visible=lineEligible&&!hiddenByWheel;
+      // Wheel focus must not hide relationship tiles; it only highlights one.
+      const visible=lineEligible;
       row.classList.toggle('sky-chart-orb-hidden',hiddenByOrb);row.hidden=!visible;row.setAttribute('aria-hidden',visible?'false':'true');
       if(Number.isFinite(phase)&&row.dataset.bySignOnly!=='true'){
         const dynamic=metricsFor(phase,limit);
