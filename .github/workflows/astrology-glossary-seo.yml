@@ -3,6 +3,12 @@ on:
   pull_request:
     paths:
       - 'astrology-glossary.html'
+      - 'glossary-stubs.html'
+      - 'glossary-stubs.css'
+      - 'glossary-stub-catalog.js'
+      - 'glossary-stub-explorer.js'
+      - 'tests/glossary-stub-catalog.mjs'
+      - 'tools/glossary-stub-batch.mjs'
       - 'astrology-glossary.css'
       - 'transiting-uranus-retrograde-opposite-part-of-fortune.html'
       - 'index.html'
@@ -14,6 +20,12 @@ on:
   push:
     paths:
       - 'astrology-glossary.html'
+      - 'glossary-stubs.html'
+      - 'glossary-stubs.css'
+      - 'glossary-stub-catalog.js'
+      - 'glossary-stub-explorer.js'
+      - 'tests/glossary-stub-catalog.mjs'
+      - 'tools/glossary-stub-batch.mjs'
       - 'astrology-glossary.css'
       - 'transiting-uranus-retrograde-opposite-part-of-fortune.html'
       - 'index.html'
@@ -30,3 +42,5 @@ jobs:
         with:
           node-version: '22'
       - run: node tests/seo-glossary.mjs
+      - run: node tests/glossary-stub-catalog.mjs
+      - run: node tools/glossary-stub-batch.mjs --count
