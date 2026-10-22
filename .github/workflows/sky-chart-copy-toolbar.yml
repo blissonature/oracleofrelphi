@@ -42,4 +42,6 @@ jobs:
         if: always()
         with:
           name: relationships-copy-toolbar
-          path: relationships-copy-toolbar-630px.png
+          path: |
+            relationships-copy-toolbar-630px.png
+            relationships-copy-toolbar-595px.png
