@@ -228,6 +228,16 @@ assert.equal(audit.indexedLines,audit.totalLines,'Every rendered aspect line mus
 assert.equal(audit.visibleLines,audit.visibleRows,'Visible relationship rows and wheel aspect lines must stay in one-to-one visibility parity.');
 assert.ok(audit.missingVisibleRowLines.length===0,`Every visible relationship row needs a visible wheel line; missing ${audit.missingVisibleRowLines.join(', ')}`);
 
+// Clicking an SVG aspect must never remove the complete aspect layer.
+// Actual eligible lines may dim, but must remain rendered and selectable.
+const lineBefore=await page.evaluate(()=>[...document.querySelectorAll('#skyFoundationWheelMount [data-layer="aspects"] > line.sky-foundation-aspect:not(.sky-foundation-aspect-hit)')].filter(line=>getComputedStyle(line).display!=='none'&&!line.hidden).length);
+assert.ok(lineBefore>1,'Focus regression requires multiple available aspect lines');
+await page.locator('#skyFoundationWheelMount [data-layer="aspects"] > line.sky-foundation-aspect:not(.sky-foundation-aspect-hit):visible').first().dispatchEvent('click',{bubbles:true});
+await page.waitForTimeout(220);
+const lineAfter=await page.evaluate(()=>[...document.querySelectorAll('#skyFoundationWheelMount [data-layer="aspects"] > line.sky-foundation-aspect:not(.sky-foundation-aspect-hit)')].filter(line=>getComputedStyle(line).display!=='none'&&!line.hidden).length);
+assert.equal(lineAfter,lineBefore,'Selecting an aspect line must not hide the aspect layer');
+await page.locator('#skyFoundationClearIsolation').click();
+
 // Relationship-list hover owns only the row/line highlight. It must never dim or isolate the wheel,
 // including A↔A and B↔B rows generated after the comparison relationships.
 const intraskyRow=page.locator('#skyFoundationRelationshipList>.sky-foundation-relationship-row[data-relationship-mode="B-B"]:visible, #skyFoundationRelationshipList>.sky-foundation-relationship-row[data-relationship-mode="A-A"]:visible').first();
