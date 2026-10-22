@@ -7,6 +7,7 @@ const fields=['scope','source','sourceSign','sourceHouse','aspect','target','tar
 const lists={scope:model.scopes,source:model.placements,sourceSign:model.signs,sourceHouse:model.houses,aspect:model.aspects,target:model.placements,targetSign:model.signs,targetHouse:model.houses};
 const names={scope:'Relationship scope',source:'First placement',sourceSign:'First sign',sourceHouse:'First house',
  aspect:'Aspect',target:'Second placement',targetSign:'Second sign',targetHouse:'Second house'};
+root.replaceChildren(); // Remove static JavaScript-disabled fallback once the workbench is interactive.
 const input=new URLSearchParams(location.search);
 let current={...model.defaults};
 for(const key of [...fields,'sourceRx','targetRx']){
