@@ -3,8 +3,11 @@ on:
   pull_request:
     paths:
       - 'sky-chart-interpolated-motion-v1.js'
+      - 'sky-chart-unknown-day-motion-v1.js'
       - 'sky-chart.html'
       - 'tests/sky-chart-interpolated-motion.test.mjs'
+      - 'tests/sky-chart-unknown-day-motion.test.mjs'
+      - 'tests/sky-chart-unknown-day-motion-browser.mjs'
       - 'tests/sky-chart-interpolated-motion-browser.mjs'
       - '.github/workflows/sky-chart-interpolated-motion.yml'
   workflow_dispatch:
@@ -19,8 +22,10 @@ jobs:
       - name: Syntax and unit checks
         run: |
           node --check sky-chart-interpolated-motion-v1.js
+          node --check sky-chart-unknown-day-motion-v1.js
+          node --check tests/sky-chart-unknown-day-motion-browser.mjs
           node --check tests/sky-chart-interpolated-motion-browser.mjs
-          node --test tests/sky-chart-interpolated-motion.test.mjs
+          node --test tests/sky-chart-interpolated-motion.test.mjs tests/sky-chart-unknown-day-motion.test.mjs
       - name: Install browser test tooling
         run: |
           npm install --no-save playwright@1.52.0 luxon@3 suncalc@1.9.0
@@ -29,3 +34,4 @@ jobs:
         run: |
           python3 -m http.server 4173 > /tmp/sky-chart-motion-http.log 2>&1 &
           node tests/sky-chart-interpolated-motion-browser.mjs
+          node tests/sky-chart-unknown-day-motion-browser.mjs
