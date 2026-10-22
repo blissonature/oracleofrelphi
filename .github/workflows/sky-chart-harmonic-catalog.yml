@@ -8,6 +8,10 @@ on:
       - 'sky-chart-aspect-scope-matrix-v1.js'
       - 'sky-chart-foundation-v2.js'
       - 'tests/harmonic-aspect-catalog.test.mjs'
+      - 'tests/harmonic-relationship-export.test.mjs'
+      - 'sky-chart-relationship-scope-sections-v1.js'
+      - 'sky-chart-inline-relationship-copy-v1.js'
+      - 'sky-chart-relationship-export-columns-v1.js'
       - '.github/workflows/sky-chart-harmonic-catalog.yml'
 jobs:
   harmonic-catalog:
@@ -28,4 +32,4 @@ jobs:
           node --check sky-chart-vocab-tab-v1.js
           node --check sky-chart-relationship-vocab-v1.js
       - name: Harmonic geometry and registry regression
-        run: node --test tests/harmonic-aspect-catalog.test.mjs
+        run: node --test tests/harmonic-aspect-catalog.test.mjs tests/harmonic-relationship-export.test.mjs
