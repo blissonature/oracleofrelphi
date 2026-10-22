@@ -169,7 +169,8 @@ function copyQuestionCard(card) {
   card.classList.add('card-copied');
   const icon = card.querySelector('.copy-icon');
   const copied = card.querySelector('.copied-text');
-  if (icon) icon.hidden = true;
+  // Copy feedback never removes or substitutes the canonical clipboard mark.
+  if (icon) icon.hidden = false;
   if (copied) copied.hidden = false;
   setTimeout(function() {
     card.classList.remove('card-copied');
