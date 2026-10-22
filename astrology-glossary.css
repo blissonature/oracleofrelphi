@@ -1,0 +1,43 @@
+/* Dedicated searchable reference pages; no changes to instrument controls. */
+body.astrology-reference-page{padding:0;background:#fff;color:#171717;text-align:left}
+.astrology-reference-page .menu-container{z-index:999}
+.astrology-reference-page .reference-shell{width:min(980px,calc(100% - 2.5rem));margin:0 auto;padding:6.4rem 0 4rem}
+.astrology-reference-page .reference-topline{display:flex;align-items:center;gap:.6rem;flex-wrap:wrap;font-size:.79rem;letter-spacing:.04em;font-weight:700;text-transform:uppercase;color:#585858}
+.astrology-reference-page .reference-topline a{color:#a61c18;text-decoration:underline;text-underline-offset:3px}
+.astrology-reference-page .reference-topline .divider{color:#aaa}
+.astrology-reference-page .reference-eyebrow{font-size:.82rem;color:#9f2019;text-transform:uppercase;letter-spacing:.16em;font-weight:700;margin:2rem 0 .55rem}
+.astrology-reference-page .reference-title{font-size:clamp(2rem,5.2vw,3.55rem);line-height:1.13;letter-spacing:-.045em;max-width:940px;text-align:left;margin:0 0 1.05rem}
+.astrology-reference-page .reference-subtitle{font-size:clamp(1rem,2.1vw,1.25rem);line-height:1.7;color:#424242;max-width:800px;margin:0 0 1.6rem}
+.astrology-reference-page .definition{background:#f9f7f5;border-left:4px solid #c3201b;border-radius:0 1.1rem 1.1rem 0;padding:1.35rem clamp(1.15rem,3vw,2rem);margin:1.8rem 0 2rem}
+.astrology-reference-page .definition h2{font-size:.84rem;text-transform:uppercase;letter-spacing:.13em;color:#a61c18;margin:0 0 .5rem}
+.astrology-reference-page .definition p{font-size:clamp(1.08rem,2.1vw,1.35rem);line-height:1.6;font-weight:600;margin:0}
+.astrology-reference-page .reference-two-col{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(225px,.7fr);gap:clamp(2rem,5vw,4.5rem);align-items:start}
+.astrology-reference-page .reference-prose{max-width:750px}
+.astrology-reference-page .reference-prose h2{font-size:clamp(1.32rem,2.5vw,1.65rem);line-height:1.35;text-align:left;margin:2.2rem 0 .75rem}
+.astrology-reference-page .reference-prose h3{font-size:1.05rem;margin:1.6rem 0 .45rem}
+.astrology-reference-page .reference-prose p,.astrology-reference-page .reference-prose li{line-height:1.85;font-size:1.025rem;color:#242424}
+.astrology-reference-page .reference-prose a,.astrology-reference-page .reference-aside a,.astrology-reference-page .reference-footer a{color:#9c221d;text-decoration:underline;text-underline-offset:3px}
+.astrology-reference-page .reference-prose ol{padding-left:1.35rem}
+.astrology-reference-page .reference-prose li{padding-left:.2rem;margin:.65rem 0}
+.astrology-reference-page .reference-aside{position:sticky;top:5rem;border:1px solid #e4dedb;border-radius:1.2rem;padding:1.2rem;background:#fff}
+.astrology-reference-page .reference-aside h2{font-size:.85rem;text-transform:uppercase;letter-spacing:.1em;margin:0 0 1rem}
+.astrology-reference-page .reference-aside a{display:block;padding:.48rem 0;line-height:1.5;font-size:.94rem}
+.astrology-reference-page .reference-aside p{font-size:.9rem;line-height:1.65;color:#555}
+.astrology-reference-page .reference-symbols{display:flex;align-items:center;gap:.7rem;margin:1rem 0 1.6rem}
+.astrology-reference-page .reference-symbol{display:flex;align-items:center;justify-content:center;width:3rem;height:3rem;border:1px solid #ded5d1;border-radius:50%;background:#fff}
+.astrology-reference-page .reference-symbol img{display:block;width:2.25rem;height:2.25rem;object-fit:contain}
+.astrology-reference-page .reference-symbols .reference-angle{color:#bc251f;font-size:1.55rem}
+.astrology-reference-page .reference-symbols .reference-label{font-size:.84rem;color:#6b6b6b}
+.astrology-reference-page .reference-links{display:flex;flex-wrap:wrap;gap:.8rem;margin:1.5rem 0 2rem}
+.astrology-reference-page .reference-links a{padding:.8rem 1.1rem;border:1.5px solid #151515;border-radius:999px;color:#151515;font-weight:700;text-decoration:none;font-size:.91rem}
+.astrology-reference-page .reference-links a.primary{background:#151515;color:#fff}
+.astrology-reference-page .reference-links a:hover,.astrology-reference-page .reference-links a:focus{background:#dc1f18;border-color:#dc1f18;color:white}
+.astrology-reference-page .reference-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1rem;margin-top:1.1rem}
+.astrology-reference-page .reference-entry{background:#fbfaf9;border:1px solid #e7dfdc;border-radius:1.1rem;padding:1.25rem}
+.astrology-reference-page .reference-entry h2{font-size:1.05rem;margin:0 0 .35rem;text-align:left}
+.astrology-reference-page .reference-entry p{font-size:.96rem;line-height:1.7;margin:.3rem 0;color:#373737}
+.astrology-reference-page .reference-feature{border-color:#cc342e;background:#fcf6f4;grid-column:1/-1}
+.astrology-reference-page .reference-entry a{color:#a51d18;text-underline-offset:3px}
+.astrology-reference-page .reference-footer{border-top:1px solid #eee;padding:2rem 1.25rem;margin:0 auto;max-width:980px;font-size:.84rem;line-height:1.7;color:#555;text-align:center}
+@media(max-width:720px){.astrology-reference-page .reference-shell{width:min(100% - 2rem,680px);padding-top:5.8rem}.astrology-reference-page .reference-two-col{display:block}.astrology-reference-page .reference-aside{position:static;margin:2rem 0}.astrology-reference-page .reference-list{grid-template-columns:1fr}}
+@media(prefers-reduced-motion:reduce){.astrology-reference-page *{scroll-behavior:auto!important}}

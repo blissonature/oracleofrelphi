@@ -1,0 +1,32 @@
+name: Astrology Glossary SEO
+on:
+  pull_request:
+    paths:
+      - 'astrology-glossary.html'
+      - 'astrology-glossary.css'
+      - 'transiting-uranus-retrograde-opposite-part-of-fortune.html'
+      - 'index.html'
+      - 'nav.html'
+      - 'sitemap.xml'
+      - 'robots.txt'
+      - 'tests/seo-glossary.mjs'
+      - '.github/workflows/astrology-glossary-seo.yml'
+  push:
+    paths:
+      - 'astrology-glossary.html'
+      - 'astrology-glossary.css'
+      - 'transiting-uranus-retrograde-opposite-part-of-fortune.html'
+      - 'index.html'
+      - 'nav.html'
+      - 'sitemap.xml'
+      - 'robots.txt'
+      - 'tests/seo-glossary.mjs'
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node tests/seo-glossary.mjs
