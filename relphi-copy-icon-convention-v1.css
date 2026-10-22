@@ -1,49 +1,76 @@
-/* Canonical Relphi clipboard action: overlapping rectangles, with visible check feedback.
-   Copy remains a real button; the source text stays in the DOM for existing copy handlers. */
+/* Canonical Oracle of Relphi clipboard control.
+   ALL instances reference ONE SVG <symbol>/<path> in relphi-icons.svg.
+   Do not draw a copy icon in CSS, replace it with a checkmark, or scale it per page. */
 button.relphi-copy-icon-button{
   appearance:none;
   box-sizing:border-box!important;
-  display:inline-grid!important;
-  place-items:center!important;
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  gap:6px!important;
   flex:0 0 auto;
-  width:33px!important;
-  min-width:33px!important;
-  max-width:33px!important;
-  height:31px!important;
-  min-height:31px!important;
-  max-height:31px!important;
+  width:34px!important;
+  min-width:34px!important;
+  max-width:34px!important;
+  height:32px!important;
+  min-height:32px!important;
+  max-height:32px!important;
   padding:0!important;
+  margin-left:0;
   font-size:0!important;
   line-height:0!important;
   letter-spacing:0!important;
-  white-space:nowrap!important;
   vertical-align:middle;
   position:relative;
-  margin-left:0;
+  white-space:nowrap!important;
+  cursor:pointer;
 }
-button.relphi-copy-icon-button::before{
-  content:"";
-  display:block;
-  width:18px;
-  height:18px;
-  flex:none;
-  background-color:currentColor;
-  -webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='8' y='8' width='13' height='13' rx='2'/%3E%3Cpath d='M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3'/%3E%3C/svg%3E") center/contain no-repeat;
-  mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='8' y='8' width='13' height='13' rx='2'/%3E%3Cpath d='M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3'/%3E%3C/svg%3E") center/contain no-repeat;
+.relphi-copy-icon{
+  display:block!important;
+  box-sizing:content-box!important;
+  width:20px!important;
+  min-width:20px!important;
+  max-width:20px!important;
+  height:20px!important;
+  min-height:20px!important;
+  max-height:20px!important;
+  flex:0 0 20px!important;
+  margin:0!important;
+  padding:0!important;
+  overflow:visible!important;
+  color:inherit;
+  fill:none;
+  stroke:currentColor;
 }
-button.relphi-copy-icon-button[data-relphi-copy-feedback="done"]::before{
-  -webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 6 9 17l-5-5'/%3E%3C/svg%3E") center/contain no-repeat;
-  mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 6 9 17l-5-5'/%3E%3C/svg%3E") center/contain no-repeat;
+button.relphi-copy-icon-button::before{content:none!important;display:none!important}
+button.relphi-copy-icon-button[data-relphi-copy-feedback="done"]{
+  color:#277046;
+  background:color-mix(in srgb,#277046 7%,#fff);
+  border-color:#5e8c70;
 }
-button.relphi-copy-icon-button[data-relphi-copy-feedback="done"]{color:#277046}
-button.relphi-copy-icon-button[data-relphi-copy-feedback="failed"]{color:#a11c18}
+button.relphi-copy-icon-button[data-relphi-copy-feedback="failed"]{
+  color:#a11c18;
+  border-color:#a11c18;
+}
 button.relphi-copy-icon-button[data-relphi-copy-feedback="copying"]{opacity:.68}
 button.relphi-copy-icon-button:focus-visible{outline:2px solid #ba3429!important;outline-offset:2px!important}
 button.relphi-copy-icon-button:disabled{opacity:.45;cursor:not-allowed}
-
-/* The Bespoke question command is a member of the same 2.25rem icon family. */
+/* When two *distinct* copy formats appear together, retain format words.
+   The actual icon remains the exact same canonical path. */
+button.relphi-copy-icon-button[data-relphi-copy-format]{
+  width:auto!important;
+  min-width:34px!important;
+  max-width:none!important;
+  padding:0 10px!important;
+}
+button.relphi-copy-icon-button[data-relphi-copy-format]::after{
+  content:attr(data-relphi-copy-format);
+  font:750 11px/1 system-ui,sans-serif;
+  letter-spacing:0;
+}
+/* Bespoke controls share the Drawing Board icon-control geometry. */
 #shortListPanel .relphi-question-toolbar #relphiCopyBespokeQuestions.relphi-copy-icon-button{
-  display:inline-grid!important;place-items:center!important;
+  display:inline-flex!important;align-items:center!important;justify-content:center!important;
   width:2.25rem!important;min-width:2.25rem!important;max-width:2.25rem!important;
   height:2.25rem!important;min-height:2.25rem!important;max-height:2.25rem!important;
   margin:0!important;padding:0!important;font-size:0!important;
@@ -53,7 +80,6 @@ button.relphi-copy-icon-button:disabled{opacity:.45;cursor:not-allowed}
   width:2.25rem!important;min-width:2.25rem!important;max-width:2.25rem!important;
   padding:0!important;font-size:0!important;
 }
-
 /* Solve overflow at the Relationships *panel* width, not only viewport width.
    Title and count keep their intended semantic positions; Copy/Export stay reachable. */
 #skyFoundationRelationships{container-type:inline-size}
@@ -132,17 +158,16 @@ button.relphi-copy-icon-button:disabled{opacity:.45;cursor:not-allowed}
   }
 }
 
-/* A whole Invocation Card is the copy button: iconify its Copy affordance,
-   but retain the question and existing Copied feedback. */
+
+/* A clickable Invocation Card is itself a clipboard action.
+   Its local icon receives precisely the same external SVG reference. */
 .question-card .copy-icon:not([hidden]){
-  display:inline-block!important;
+  display:inline-flex!important;align-items:center;justify-content:center;
   box-sizing:border-box;
-  width:18px;min-width:18px;height:18px;
-  flex:0 0 18px;
-  overflow:hidden;
+  width:20px!important;min-width:20px!important;height:20px!important;
+  flex:0 0 20px;white-space:nowrap;
   font-size:0!important;line-height:0!important;
-  background:currentColor!important;
-  -webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='8' y='8' width='13' height='13' rx='2'/%3E%3Cpath d='M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3'/%3E%3C/svg%3E") center/contain no-repeat;
-  mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='8' y='8' width='13' height='13' rx='2'/%3E%3Cpath d='M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3'/%3E%3C/svg%3E") center/contain no-repeat;
+  background:transparent!important;
+  -webkit-mask:none!important;mask:none!important;
 }
 .question-card .copy-icon[hidden]{display:none!important}
