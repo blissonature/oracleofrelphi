@@ -120,6 +120,12 @@ const harmonicCatalogue=window.RelphiHarmonicAspectCatalog;
 const MATRIX_ASPECTS=Object.freeze((harmonicCatalogue?.aspects||[]).map(aspect=>aspect.id));
 const DEFAULT_MATRIX_ASPECTS=Object.freeze(harmonicCatalogue?.legacyIds||MATRIX_ASPECTS);
 function matrixFocus(){
+  const explorer=window.RelphiHarmonicExplorer;
+  if(explorer?.enabled()){
+    const order=explorer.getOrder();
+    const activeScopes=MATRIX_SCOPES.filter(scope=>(scope.id==='A-A'||skyIsPresent('B'))&&document.querySelector('[data-aspect-matrix-scope="'+scope.id+'"][data-aspect-matrix-aspect="all"]')?.checked!==false);
+    return{aspects:'Harmonic '+order,scopes:activeScopes.map(scope=>scope.label).join(' · ')||'None',bySignCount:0};
+  }
   const scopes=MATRIX_SCOPES.filter(scope=>scope.id==='A-A'||skyIsPresent('B'));
   const all=MATRIX_ASPECTS.length;
   let stored=null;
