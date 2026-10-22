@@ -367,7 +367,15 @@
     }
     if(wheelOnlyExternal)return;
     ['A','B'].forEach(slot=>{const panel=document.getElementById(slot==='A'?'skyFoundationA':'skyFoundationB');if(!panel)return;panel.classList.toggle('has-ledger-isolation',!!filterState);panel.querySelectorAll('.sky-foundation-row[data-placement]').forEach(row=>{row.classList.toggle('is-kept',!!filterState&&filterKeep.placements.has(`${slot}:${row.dataset.placement}`));row.classList.toggle('is-selected',!!lockedState&&matchesNode(row,lockedState));row.classList.toggle('is-hovered',!!hoverState&&!lockedState&&matchesNode(row,hoverState))})});
-    document.querySelectorAll('.sky-foundation-relationship-row').forEach(row=>{const visible=!filterState||filterKeep.matched.has(String(row.dataset.relationIndex||''));row.hidden=!visible;row.setAttribute('aria-hidden',visible?'false':'true')});
+    // Wheel isolation affects emphasis, not filtering: keep every previously
+    // eligible tile in the DOM and visible so a selected line can navigate to it.
+    document.querySelectorAll('.sky-foundation-relationship-row').forEach(row=>{
+      const matches=!filterState||rowMatchesState(row,filterState);
+      row.classList.toggle('is-wheel-dimmed',!!filterState&&!matches);
+      if(rowEligibleForWheel(row)){
+        row.hidden=false;row.setAttribute('aria-hidden','false');
+      }
+    });
     const allRows=[...document.querySelectorAll('#skyFoundationRelationshipList>.sky-foundation-relationship-row[data-relation-index]')],visibleCount=filterState?filterKeep.matched.size:allRows.filter(row=>rowEligibleForWheel(row)).length,totalCount=allRows.length,count=document.getElementById('skyFoundationRelationshipCount'),empty=document.getElementById('skyFoundationRelationshipEmpty'),clear=document.getElementById('skyFoundationClearIsolation');if(count)count.textContent=`${visibleCount}/${totalCount}`;if(empty)empty.hidden=visibleCount!==0;if(clear)clear.hidden=!(lockedState||rowLockedState);
     const relationshipIndexes=filterState?Array.from(filterKeep.matched):allRows.map(row=>String(row.dataset.relationIndex||'')).filter(Boolean);
     window.dispatchEvent(new CustomEvent('relphi:sky-foundation-filter-changed',{detail:{state:filterState?{...filterState,mode:lockedState?'selected':'hover'}:null,origin:lockedState&&selectionOrigin?{...selectionOrigin}:null,relationshipIndexes}}));
@@ -480,6 +488,25 @@
     restoreFocus,
     getSelectionOrigin
   });
+  // Wheel-to-Relationships navigation uses endpoint identity rather than a
+  // transient list index, so A↔A, B↔B and A↔B survive sorting and filtering.
+  function revealSelectedRelationship(spec){
+    if(spec?.kind!=='aspect')return;
+    const target=String(spec.value||'');
+    const locate=()=>[...document.querySelectorAll('#skyFoundationRelationshipList > .sky-foundation-relationship-row')]
+      .find(row=>relationshipIdentity(row)===target);
+    const row=locate();if(!row)return;
+    // A focus state must not remove the very tile being navigated to.
+    row.classList.add('is-wheel-target');
+    row.setAttribute('aria-current','true');
+    document.querySelectorAll('#skyFoundationRelationshipList > .sky-foundation-relationship-row').forEach(other=>{
+      if(other!==row){other.classList.remove('is-wheel-target');other.removeAttribute('aria-current')}
+    });
+    row.scrollIntoView({behavior:window.matchMedia?.('(prefers-reduced-motion: reduce)').matches?'instant':'smooth',block:'center',inline:'nearest'});
+  }
+  function clearWheelTargets(){
+    document.querySelectorAll('#skyFoundationRelationshipList > .sky-foundation-relationship-row.is-wheel-target').forEach(row=>{row.classList.remove('is-wheel-target');row.removeAttribute('aria-current')});
+  }
   // Every input method uses the same selection state transition. Touch invokes
   // it directly rather than dispatching a second click through unrelated
   // capture-phase listeners (which can retarget or consume that click).
@@ -491,6 +518,8 @@
     if(same(lockedState,next)){lockedState=null;selectionOrigin=null}
     else{lockedState=next;selectionOrigin=originFromNode(node,next)}
     hoverState=null;applyState();
+    if(lockedState?.kind==='aspect')requestAnimationFrame(()=>revealSelectedRelationship(lockedState));
+    else clearWheelTargets();
   }
   // One touch-to-click adapter owned by the foundation controller. Touch hover is
   // never selection state; one completed tap produces exactly one click.
