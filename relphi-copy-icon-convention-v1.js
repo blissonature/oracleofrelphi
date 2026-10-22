@@ -4,6 +4,8 @@
   if(window.__relphiCopyIconConventionV1)return;
   window.__relphiCopyIconConventionV1=true;
   const SELECTORS=[
+    // New clipboard actions opt in with data-relphi-clipboard-action.
+    'button[data-relphi-clipboard-action]',
     '.sky-relationship-copy-button',
     '.sky-wheel-copy-button',
     '.sky-quick-copy-button',
