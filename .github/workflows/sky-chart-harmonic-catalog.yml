@@ -1,0 +1,31 @@
+name: Sky Chart harmonic catalogue
+on:
+  pull_request:
+    paths:
+      - 'relphi-harmonic-aspect-catalog-v1.js'
+      - 'relphi-glyph-registry-v1.js'
+      - 'sky-chart-harmonic-orb-v1.js'
+      - 'sky-chart-aspect-scope-matrix-v1.js'
+      - 'sky-chart-foundation-v2.js'
+      - 'tests/harmonic-aspect-catalog.test.mjs'
+      - '.github/workflows/sky-chart-harmonic-catalog.yml'
+jobs:
+  harmonic-catalog:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: JavaScript syntax
+        run: |
+          node --check relphi-harmonic-aspect-catalog-v1.js
+          node --check relphi-glyph-registry-v1.js
+          node --check sky-chart-harmonic-orb-v1.js
+          node --check sky-chart-aspect-scope-matrix-v1.js
+          node --check sky-chart-foundation-v2.js
+          node --check sky-chart-inline-relationship-v5.js
+          node --check sky-chart-vocab-tab-v1.js
+          node --check sky-chart-relationship-vocab-v1.js
+      - name: Harmonic geometry and registry regression
+        run: node --test tests/harmonic-aspect-catalog.test.mjs
