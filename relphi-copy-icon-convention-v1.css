@@ -7,7 +7,9 @@ button.relphi-copy-icon-button{
   display:inline-flex!important;
   align-items:center!important;
   justify-content:center!important;
-  gap:6px!important;
+  /* The owner's hidden text is still an anonymous flex item: never allocate
+     a gap before the icon. The icon is centered independently below. */
+  gap:0!important;
   flex:0 0 auto;
   width:34px!important;
   min-width:34px!important;
@@ -27,7 +29,14 @@ button.relphi-copy-icon-button{
 }
 .relphi-copy-icon{
   display:block!important;
-  box-sizing:content-box!important;
+  /* Absolutely center the SVG in the button. This is independent of invisible
+     text and any owner-module inline-flex/grid layout and baseline rules. */
+  position:absolute!important;
+  top:50%!important;
+  left:50%!important;
+  transform:translate(-50%,-50%)!important;
+  transform-origin:center center!important;
+  box-sizing:border-box!important;
   width:20px!important;
   min-width:20px!important;
   max-width:20px!important;
@@ -45,7 +54,11 @@ button.relphi-copy-icon-button{
 /* Owner-module visibility always wins over the icon-only display rule. */
 button.relphi-copy-icon-button[hidden],
 button.relphi-copy-icon-button[aria-hidden="true"]{display:none!important}
-button.relphi-copy-icon-button::before{content:none!important;display:none!important}
+button.relphi-copy-icon-button::before,
+button.relphi-copy-icon-button::after{
+  content:none!important;
+  display:none!important;
+}
 button.relphi-copy-icon-button[data-relphi-copy-feedback="done"]{
   color:#277046;
   background:color-mix(in srgb,#277046 7%,#fff);
@@ -65,9 +78,16 @@ button.relphi-copy-icon-button[data-relphi-copy-format]{
   min-width:34px!important;
   max-width:none!important;
   padding:0 10px!important;
+  gap:0!important;
+}
+button.relphi-copy-icon-button[data-relphi-copy-format] .relphi-copy-icon{
+  position:static!important;
+  transform:none!important;
+  margin:0 6px 0 0!important;
 }
 button.relphi-copy-icon-button[data-relphi-copy-format]::after{
-  content:attr(data-relphi-copy-format);
+  display:block!important;
+  content:attr(data-relphi-copy-format)!important;
   font:750 11px/1 system-ui,sans-serif;
   letter-spacing:0;
 }
