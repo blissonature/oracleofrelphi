@@ -377,8 +377,8 @@
       }
     });
     const allRows=[...document.querySelectorAll('#skyFoundationRelationshipList>.sky-foundation-relationship-row[data-relation-index]')],visibleCount=filterState?filterKeep.matched.size:allRows.filter(row=>rowEligibleForWheel(row)).length,totalCount=allRows.length,count=document.getElementById('skyFoundationRelationshipCount'),empty=document.getElementById('skyFoundationRelationshipEmpty'),clear=document.getElementById('skyFoundationClearIsolation');if(count)count.textContent=`${visibleCount}/${totalCount}`;if(empty)empty.hidden=visibleCount!==0;if(clear)clear.hidden=!(lockedState||rowLockedState);
-    const relationshipIndexes=filterState?Array.from(filterKeep.matched):allRows.map(row=>String(row.dataset.relationIndex||'')).filter(Boolean);
-    window.dispatchEvent(new CustomEvent('relphi:sky-foundation-filter-changed',{detail:{state:filterState?{...filterState,mode:lockedState?'selected':'hover'}:null,origin:lockedState&&selectionOrigin?{...selectionOrigin}:null,relationshipIndexes}}));
+    const relationshipIndexes=focusState?.kind==='aspect'?Array.from(filterKeep.matched):filterState?Array.from(filterKeep.matched):allRows.map(row=>String(row.dataset.relationIndex||'')).filter(Boolean);
+    window.dispatchEvent(new CustomEvent('relphi:sky-foundation-filter-changed',{detail:{state:focusState?{...focusState,mode:lockedState?'selected':'hover'}:null,origin:lockedState&&selectionOrigin?{...selectionOrigin}:null,relationshipIndexes}}));
   }
   function distanceToSegment(x,y,a,b){const dx=b.x-a.x,dy=b.y-a.y,length=dx*dx+dy*dy;if(!length)return Math.hypot(x-a.x,y-a.y);const t=Math.max(0,Math.min(1,((x-a.x)*dx+(y-a.y)*dy)/length)),px=a.x+t*dx,py=a.y+t*dy;return Math.hypot(x-px,y-py)}
   function nearestAspect(event){
@@ -496,13 +496,20 @@
     const target=String(spec.value||'');
     const locate=()=>[...document.querySelectorAll('#skyFoundationRelationshipList > .sky-foundation-relationship-row')]
       .find(row=>relationshipIdentity(row)===target);
-    const row=locate();if(!row)return;
+    const row=locate();
+    if(!row){
+      // Intrasky and intersky tiles can finish rendering after the wheel click.
+      // Retain the locked selection and resolve it on the next Relationships-ready event.
+      return;
+    }
     // A focus state must not remove the very tile being navigated to.
+    if(!rowEligibleForWheel(row))return;
+    window.RelphiInlineRelationship?.expand?.(row);
     row.classList.add('is-wheel-target');
     row.setAttribute('aria-current','true');
-    window.RelphiInlineRelationship?.expand?.(row);
+    row.classList.add('is-selected');
     document.querySelectorAll('#skyFoundationRelationshipList > .sky-foundation-relationship-row').forEach(other=>{
-      if(other!==row){other.classList.remove('is-wheel-target');other.removeAttribute('aria-current')}
+      if(other!==row){other.classList.remove('is-wheel-target','is-selected');other.removeAttribute('aria-current')}
     });
     // Scroll only the Relationships list; scrollIntoView would move the entire page and wheel.
     const list=document.getElementById('skyFoundationRelationshipList');
@@ -676,7 +683,9 @@
     }else if(renderedRelationshipSignature!==nextSignature||!relationshipRowsIntact(relations)){
       await renderRows(relations);renderedRelationshipSignature=nextSignature;
     }
-    bind();applyState();window.dispatchEvent(new Event('relphi:sky-foundation-interactions-ready'));
+    bind();applyState();
+    if(lockedState?.kind==='aspect')requestAnimationFrame(()=>revealSelectedRelationship(lockedState));
+    window.dispatchEvent(new Event('relphi:sky-foundation-interactions-ready'));
   }
   function schedule(){if(refreshQueued)return;refreshQueued=true;requestAnimationFrame(refresh)}
   function start(){
