@@ -646,18 +646,18 @@
       if(event.pointerType==='touch'||event.pointerType==='pen')return;
       const row=event.target.closest?.('.sky-foundation-relationship-row[data-relation-index]');
       if(row)return;
-      if(lockedState&&lockedState.kind!=='aspect')return;
+      if(lockedState)return;
       const node=interactive(event);if(!node||node.contains(event.relatedTarget))return;hoverState=null;applyState()
     });
     root.addEventListener('focusin',event=>{
       const row=event.target.closest?.('.sky-foundation-relationship-row[data-relation-index]');
       if(row)return;
-      if(lockedState&&lockedState.kind!=='aspect')return;const node=interactive(event);if(!node)return;rowHoverState=null;hoverState=specFrom(node);applyState()
+      if(lockedState)return;const node=interactive(event);if(!node)return;rowHoverState=null;hoverState=specFrom(node);applyState()
     });
     root.addEventListener('focusout',event=>{
       const row=event.target.closest?.('.sky-foundation-relationship-row[data-relation-index]');
       if(row)return;
-      if(lockedState&&lockedState.kind!=='aspect')return;const node=interactive(event);if(!node||node.contains(event.relatedTarget))return;hoverState=null;applyState()
+      if(lockedState)return;const node=interactive(event);if(!node||node.contains(event.relatedTarget))return;hoverState=null;applyState()
     });
     root.addEventListener('click',event=>{
       wheelOnlyExternal=false;
