@@ -72,5 +72,33 @@ try{
  await page.mouse.move(10,10);
  await page.waitForTimeout(150);
  assert.equal(await moon.evaluate(node=>node.classList.contains('is-selected')),true,'Moon B must lock after Harmonic Window increases from 2 to 3');
- console.log('PASS Moon B wheel and side-panel clicks persist, including after Harmonic Window 2→3 transition');
+ // Exercise the actual helper dialog: one Moon B relationship is just outside HR 2.
+ await page.evaluate(()=>window.RelphiHarmonicOrb.setWindow(2));
+ await page.waitForTimeout(650);
+ const setup=await page.evaluate(()=>{
+   const rows=[...document.querySelectorAll('.sky-foundation-relationship-row[data-relation-index]')];
+   const target=rows.find(row=>(row.dataset.leftSky==='B'&&row.dataset.leftPlacement==='moon')||
+     (row.dataset.rightSky==='B'&&row.dataset.rightPlacement==='moon')||
+     (row.dataset.relationshipMode==='B-B'&&(row.dataset.leftPlacement==='moon'||row.dataset.rightPlacement==='moon')));
+   if(!target)return {error:'No Moon B relationship row',count:rows.length};
+   for(const row of rows)row.classList.add('sky-chart-filter-hidden');
+   target.classList.remove('sky-chart-filter-hidden');
+   target.classList.add('sky-chart-orb-hidden');
+   target.dataset.phaseError='2.5';
+   document.getElementById('skyFoundationRoot').dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true}));
+   window.dispatchEvent(new Event('relphi:sky-placement-multiselect-changed'));
+   return {count:rows.length,target:target.dataset.relationIndex};
+ });
+ assert.ok(!setup.error,JSON.stringify(setup));
+ await page.waitForSelector('#skyFoundationWheelMount [data-sky="B"][data-placement="moon"].is-filter-intermediate',{timeout:10000});
+ await moon.click({force:true});
+ await page.waitForSelector('.sky-focus-hidden-aspect-popover',{timeout:5000});
+ await page.getByRole('button',{name:'Increase to 3°'}).click();
+ assert.equal(await page.evaluate(()=>window.RelphiHarmonicOrb.getWindow()),3);
+ await moon.click({force:true});
+ await page.mouse.move(10,10);
+ await page.waitForTimeout(150);
+ assert.equal(await moon.evaluate(node=>node.classList.contains('is-selected')),true,'Moon B persists after actual helper Increase to 3');
+ console.log('PASS helper popup -> Increase to HR 3 -> select Moon B -> leave remains selected');
+  console.log('PASS Moon B wheel and side-panel clicks persist, including after Harmonic Window 2→3 transition');
 }finally{await browser.close()}
