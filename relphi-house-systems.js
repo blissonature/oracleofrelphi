@@ -130,8 +130,8 @@
     c[0]=normDeg(asc); c[3]=normDeg(mc+180); c[6]=normDeg(asc+180); c[9]=normDeg(mc);
     c[10]=placidusCusp(lst, lat, eps, 30, 1/3, +1, ref[10]);
     c[11]=placidusCusp(lst, lat, eps, 60, 2/3, +1, ref[11]);
-    c[1]=placidusCusp(lst, lat, eps, 120, 2/3, -1, ref[1]);
-    c[2]=placidusCusp(lst, lat, eps, 150, 1/3, -1, ref[2]);
+    c[1]=placidusCusp(lst, lat, eps, 120, 2/3, +1, ref[1]);
+    c[2]=placidusCusp(lst, lat, eps, 150, 1/3, +1, ref[2]);
     if ([c[1],c[2],c[10],c[11]].some(x => x === null)) throw new Error('Placidus is undefined for this latitude/time.');
     c[4]=normDeg(c[10]+180); c[5]=normDeg(c[11]+180); c[7]=normDeg(c[1]+180); c[8]=normDeg(c[2]+180);
     return c.map(normDeg);
