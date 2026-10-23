@@ -1,0 +1,23 @@
+name: Load Sky names and multifield search
+on:
+  pull_request:
+    paths:
+      - 'sky-chart-card-library-v1.js'
+      - 'sky-chart-card-library-v1.css'
+      - 'sky-chart.html'
+      - 'tests/load-sky-multifield-search-browser.mjs'
+      - '.github/workflows/load-sky-multifield-search.yml'
+jobs:
+  acceptance:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: |
+          npm install --no-save playwright@1.52.0
+          npx playwright install --with-deps chromium
+      - run: |
+          python3 -m http.server 4173 >/tmp/load-sky-http.log 2>&1 &
+          node tests/load-sky-multifield-search-browser.mjs
