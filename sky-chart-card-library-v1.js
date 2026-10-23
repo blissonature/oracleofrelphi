@@ -7,8 +7,8 @@ let filter='All',query='',editingFolder='',queued=false;
 const read=()=>{try{return JSON.parse(localStorage.getItem(KEY)||'{}')||{}}catch(_){return {}}};
 const write=data=>{try{localStorage.setItem(KEY,JSON.stringify(data));return true}catch(_){return false}};
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','"':'&quot;',"'":'&#39;'}[c]));
-const library=()=>window.RelphiSkySavedSkyIdentity?.library?.()||[];
-const id=r=>String(r?.id||r?.savedSkyId||r?.metadata?.savedSkyId||'');
+const library=()=>{try{const records=JSON.parse(localStorage.getItem('relphiSkyLibraryV1')||'[]');return Array.isArray(records)?records:[]}catch(_){return []}};
+const id=r=>String(r?.id||r?.savedSkyId||r?.metadata?.savedSkyId||'legacy:'+String(r?.name||'').trim().toLowerCase().replace(/\\s+/g,' '));
 function decorate(){
   queued=false;const pop=document.querySelector(POPOVER);
   if(!pop||pop.hidden)return;const list=pop.querySelector('.sky-saved-list');if(!list)return;
@@ -122,7 +122,26 @@ document.addEventListener('change',e=>{
  if(!ref)return;const map=read();map[ref]=e.target.value;write(map);e.target.hidden=true;schedule();
 },true);
 ['relphi:saved-sky-library-changed','relphi:saved-sky-active-changed','relphi:sky-slots-swapped'].forEach(name=>window.addEventListener(name,schedule));
-document.addEventListener('click',e=>{if(e.target.closest?.('[data-saved-sky-trigger],'+POPOVER))schedule()},true);
-document.readyState==='loading'?document.addEventListener('DOMContentLoaded',schedule,{once:true}):schedule();
+document.addEventListener('click',e=>{
+  if(!e.target.closest?.('[data-saved-sky-trigger],'+POPOVER))return;
+  schedule();
+  // The core Sky menu owns this transition and replaces the entire subview
+  // on the same click. Rehydrate after its render, not only before it.
+  if(e.target.closest?.('[data-sky-command="load"],[data-sky-menu-back]'))requestAnimationFrame(decorate);
+},true);
+let observedPopover=null;
+function watchLoadSubview(){
+  const pop=document.querySelector(POPOVER);
+  if(!pop||pop===observedPopover)return;
+  observedPopover=pop;
+  new MutationObserver(changes=>{
+    // Only respond when core has inserted or replaced the saved-list subview;
+    // do not observe content changes inside our own search and card widgets.
+    if(changes.some(change=>[...change.addedNodes].some(node=>node.nodeType===1&&
+      (node.matches?.('.sky-saved-list')||node.querySelector?.('.sky-saved-list')))))schedule();
+  }).observe(pop,{childList:true,subtree:false});
+}
+document.addEventListener('click',()=>requestAnimationFrame(watchLoadSubview),true);
+document.readyState==='loading'?document.addEventListener('DOMContentLoaded',()=>{schedule();watchLoadSubview()},{once:true}): (schedule(),watchLoadSubview());
 window.RelphiSkyCardLibrary={refresh:schedule};
 })();
