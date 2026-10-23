@@ -663,7 +663,12 @@
     // bubbling handlers must not interpret this same click as a hover reset.
     root.addEventListener('click',event=>{
       if(event.defaultPrevented||performance.now()<ignoreNativeClickUntil)return;
-      if(!event.target.closest?.('#skyFoundationWheelMount .sky-foundation-wheel'))return;
+      // Both SVG placements and Sky A/B placement ledger rows are selection surfaces.
+      // Previously capture ownership covered only the SVG wheel; ledger clicks
+      // could be consumed by other handlers and leave a hover-only highlight.
+      const onWheel=!!event.target.closest?.('#skyFoundationWheelMount .sky-foundation-wheel');
+      const onLedger=!!event.target.closest?.('#skyFoundationA .sky-foundation-row[data-interactive="placement"],#skyFoundationB .sky-foundation-row[data-interactive="placement"]');
+      if(!onWheel&&!onLedger)return;
       const node=interactive(event);
       if(!node)return;
       event.preventDefault();
