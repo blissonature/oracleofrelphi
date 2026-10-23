@@ -178,7 +178,9 @@
       hiddenNearest.delete(key);
       return;
     }
-    event.preventDefault();event.stopPropagation();event.stopImmediatePropagation();
+    // The helper is advisory. Never consume the placement activation: the
+    // foundation controller must receive the same click and lock isolation.
+    // Opening a popup does not confer click ownership to the helper.
     openPopup(marker,key,required);
   }
 
@@ -283,8 +285,13 @@
   function start(){
     // Capture pointer activation before the foundation wheel's own click handler
     // can lock an orb or trigger a competing focus refresh.
-    document.addEventListener('pointerdown',onPlacementClick,true);
+    // Desktop: show the helper on click, without preventing wheel selection.
+    // Touch: the wheel selects during pointerup and suppresses the follow-up
+    // synthetic click, so use pointerup only for touch/pen helper disclosure.
     document.addEventListener('click',onPlacementClick,true);
+    document.addEventListener('pointerup',event=>{
+      if(event.pointerType==='touch'||event.pointerType==='pen')onPlacementClick(event);
+    },true);
     document.addEventListener('keydown',event=>{
       if(event.key!=='Enter'&&event.key!==' ')return;
       const marker=event.target.closest?.('#skyFoundationWheelMount [data-layer="placements"] [data-sky][data-placement].is-filter-intermediate');
