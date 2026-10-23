@@ -16,7 +16,7 @@ function decorate(){
   let toolbar=list.querySelector(':scope > .sky-library-controls');
   if(!toolbar){
     toolbar=document.createElement('div');toolbar.className='sky-library-controls';
-    toolbar.innerHTML='<div class="sky-library-heading"><strong>Saved skies</strong><span>Fingerprint library</span></div><label class="sky-library-search"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.4"/><path d="m15.5 15.5 4.5 4.5"/></svg><input type="search" data-sky-library-search placeholder="Find a saved sky…" autocomplete="off" aria-label="Search saved skies by name"></label><div class="sky-library-folders" aria-label="Saved sky folders"></div><div class="sky-library-utility"><span data-sky-library-count></span><span>Hover or hold a fingerprint to see its name</span></div>';
+    toolbar.innerHTML='<div class="sky-library-heading"><strong>Saved skies</strong><span>Fingerprint library</span></div><label class="sky-library-search"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.4"/><path d="m15.5 15.5 4.5 4.5"/></svg><input type="search" data-sky-library-search placeholder="Search name, date, time or location…" autocomplete="off" aria-label="Search saved skies by name, date, time or location"></label><div class="sky-library-folders" aria-label="Saved sky folders"></div><div class="sky-library-utility"><span data-sky-library-count></span><span>Select a sky to load it</span></div>';
     list.prepend(toolbar);
   }
   const records=library(),data=read();
@@ -27,19 +27,35 @@ function decorate(){
   if(chips.dataset.list!==chipHtml){chips.innerHTML=chipHtml;chips.dataset.list=chipHtml}
   const input=toolbar.querySelector('[data-sky-library-search]');if(input!==document.activeElement&&input.value!==query)input.value=query;
   const normalized=query.trim().toLocaleLowerCase();
+  const tokens=normalized.split(/\\s+/).filter(Boolean);
+  const searchable=record=>{
+    const p=record?.calcProfile||record?.profile||{};
+    const when=[p.dateTime,p.instant,record?.dateTime,record?.instant,p.timeZone,record?.timeZone].filter(Boolean).join(' ');
+    const where=[p.location,record?.location,p.city,p.region,p.country,p.address,
+      record?.city,record?.place,record?.where].filter(Boolean).map(value=>
+      typeof value==='object'?Object.values(value).join(' '):String(value)).join(' ');
+    const dates=when.match(/\\d{4}-\\d{2}-\\d{2}/g)||[];
+    const expanded=dates.map(iso=>{const [y,m,d]=iso.split('-');return [m+'/'+d+'/'+y,d+'/'+m+'/'+y,y,m,d].join(' ')}).join(' ');
+    return [record?.name,when,where,expanded].filter(Boolean).join(' ').toLocaleLowerCase();
+  };
   let visible=0;
   list.querySelectorAll('.sky-saved-list-row').forEach(row=>{
     const button=row.querySelector('[data-saved-sky-ref]');if(!button)return;
     const record=records.find(r=>id(r)===button.dataset.savedSkyRef);if(!record)return;
     const name=String(record.name||'Saved sky');
     const folder=data[id(record)]||'Unfiled';
-    const show=(!normalized||name.toLocaleLowerCase().includes(normalized))&&(filter==='All'||filter===folder);
+    const index=searchable(record);
+    const show=tokens.every(token=>index.includes(token))&&(filter==='All'||filter===folder);
     row.hidden=!show;if(show)visible++;
     // Overlay occupies the exact fingerprint footprint: there is no reserved
     // name/date/location column, even when privacy detail is revealed.
     let overlay=button.querySelector('.sky-library-identity-overlay');
     if(!overlay){overlay=document.createElement('span');overlay.className='sky-library-identity-overlay';overlay.setAttribute('aria-hidden','true');button.appendChild(overlay)}
     overlay.textContent=name;
+    let visibleName=button.querySelector('.sky-library-visible-name');
+    if(!visibleName){visibleName=document.createElement('span');visibleName.className='sky-library-visible-name';button.appendChild(visibleName)}
+    visibleName.textContent=name;
+    button.setAttribute('aria-label','Load '+name);
     button.dataset.skyLibraryFolder=folder;
     const detail=button.querySelector('[data-saved-fingerprint-copy]');
     if(detail)detail.hidden=true;
@@ -59,7 +75,7 @@ function decorate(){
   toolbar.querySelector('[data-sky-library-count]').textContent=visible+' of '+records.length+' skies';
   let empty=list.querySelector(':scope > .sky-library-empty-results');
   if(!empty){empty=document.createElement('p');empty.className='sky-library-empty-results';list.appendChild(empty)}
-  empty.textContent=normalized?'No skies match that name.':'No skies in this folder.';
+  empty.textContent=normalized?'No skies match your search.':'No skies in this folder.';
   empty.hidden=visible!==0;
   list.querySelector('.sky-saved-library-instruction')?.remove();
   const top=pop.querySelector('.sky-library-slot-actions');
