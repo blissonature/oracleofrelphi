@@ -38,7 +38,8 @@ try{
  const ledger=page.locator('#skyFoundationB .sky-foundation-row[data-interactive="placement"][data-placement="moon"]').first();
  await ledger.waitFor({timeout:15000});
  // Clear the existing wheel lock and select Moon B from the side panel.
- await page.evaluate(()=>document.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true})));
+ await page.evaluate(()=>document.getElementById('skyFoundationRoot').dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true})));
+ assert.equal(await ledger.evaluate(node=>node.classList.contains('is-selected')),false,'Escape clears prior selection');
  await ledger.click({force:true});
  await page.mouse.move(10,10);
  await page.waitForTimeout(150);
