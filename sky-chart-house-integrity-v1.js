@@ -194,7 +194,7 @@
   repairAll(false);
 
   window.addEventListener('storage',event=>{
-    if(running)return;
+    if(running||window.__relphiHouseSystemCommitDepth>0)return;
     if(!event.key||event.key===KEYS.A||event.key===KEYS.B)repairAll(true);
   });
 })();
