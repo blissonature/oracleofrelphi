@@ -620,6 +620,18 @@
     document.addEventListener('pointerdown',beginTouch,{capture:true,passive:true});
     document.addEventListener('pointermove',moveTouch,{capture:true,passive:true});
     document.addEventListener('pointerup',finishTouch,{capture:true,passive:false});
+    // Real browser traces show Moon B pointerdown/pointerup but NO subsequent
+    // click when a wheel update replaces the SVG target during the gesture.
+    // Commit mouse selection on pointerup, before that click can disappear.
+    document.addEventListener('pointerup',event=>{
+      if(event.pointerType!=='mouse'||event.button!==0)return;
+      const target=event.target;
+      const onWheel=target.closest?.('#skyFoundationWheelMount .sky-foundation-wheel');
+      const onLedger=target.closest?.('#skyFoundationA .sky-foundation-row[data-interactive="placement"],#skyFoundationB .sky-foundation-row[data-interactive="placement"]');
+      if(!onWheel&&!onLedger)return;
+      const node=interactive(event);
+      if(node)toggleInteractiveNode(node);
+    },{capture:true,passive:true});
     document.addEventListener('pointercancel',cancelTouch,{capture:true});
     // Compatibility clicks may be retargeted to the wheel/root after a
     // redraw, not to the original SVG element. Suppress the trusted native
