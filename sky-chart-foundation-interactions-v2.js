@@ -354,13 +354,13 @@
   }
   function rowMarksNode(node,state){return node.dataset.focusPiece==='aspect'&&rowLineMatches(node,state)}
   function applyState(){
-    const filterState=lockedState||(!rowLockedState&&hoverState),filterKeep=keepSets(filterState),rowState=rowLockedState||rowHoverState,wheelState=filterState||rowState,wheel=document.querySelector('#skyFoundationWheelMount > .sky-foundation-wheel');
+    const focusState=lockedState||(!rowLockedState&&hoverState),aspectFocus=focusState?.kind==='aspect',filterState=aspectFocus?null:focusState,filterKeep=keepSets(focusState),rowState=rowLockedState||rowHoverState,wheelState=focusState||rowState,wheel=document.querySelector('#skyFoundationWheelMount > .sky-foundation-wheel');
     if(wheel){
-      wheel.classList.toggle('has-isolation',!!wheelState);
+      wheel.classList.toggle('has-isolation',!!wheelState&&!aspectFocus);
       wheel.querySelectorAll('[data-focus-piece]').forEach(node=>{
-        const isRowDriven=!filterState&&!!rowState,isKept=!!wheelState&&(isRowDriven?rowKeeps(node,rowState):kept(node,filterKeep)),type=node.dataset.focusPiece;
+        const isRowDriven=!focusState&&!!rowState,isKept=!!wheelState&&(isRowDriven?rowKeeps(node,rowState):kept(node,filterKeep)),type=node.dataset.focusPiece;
         node.classList.toggle('is-kept',isKept);
-        node.classList.toggle('is-aspect-endpoint',(isRowDriven||filterState?.kind==='aspect')&&isKept&&(type==='placement'||type==='leader'));
+        node.classList.toggle('is-aspect-endpoint',(isRowDriven||aspectFocus)&&isKept&&(type==='placement'||type==='leader'));
         node.classList.toggle('is-selected',!!lockedState&&matchesNode(node,lockedState)||(!filterState&&!!rowLockedState&&rowMarksNode(node,rowLockedState)));
         node.classList.toggle('is-hovered',!!hoverState&&!lockedState&&matchesNode(node,hoverState)||(!filterState&&!rowLockedState&&!!rowHoverState&&rowMarksNode(node,rowHoverState)));
       });
