@@ -154,6 +154,23 @@
     if(!marker||!marker.classList.contains('is-filter-intermediate'))return;
     const key=`${marker.dataset.sky}:${marker.dataset.placement}`;
     if(helperAccepted.has(key))return;
+    // The reveal helper only owns a click when there are NO currently visible
+    // relationships for this placement. Once HR 3 reveals even one Moon B
+    // aspect, the wheel controller owns the click to lock isolation.
+    const visibleMatch=eligibleRows().some(row=>
+      endpoints(row).includes(key)&&
+      !excludedByExplicitFilter(row)&&
+      !row.hidden&&
+      !row.classList.contains('sky-chart-orb-hidden')&&
+      !row.classList.contains('sky-orb-filter-hidden')&&
+      Number.isFinite(phase(row))&&
+      phase(row)<=Number(window.RelphiHarmonicOrb?.getWindow?.()??7)+1e-8
+    );
+    if(visibleMatch){
+      marker.classList.remove('is-filter-intermediate');
+      hiddenNearest.delete(key);
+      return;
+    }
     const required=hiddenNearest.get(key),current=Number(window.RelphiHarmonicOrb?.getWindow?.()??7);
     if(!Number.isFinite(required)||required<=current+1e-8){
       // Never swallow a selection click using a stale helper marker.
