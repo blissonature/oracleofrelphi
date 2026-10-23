@@ -704,7 +704,7 @@ function activeMode(mode){return activeScopes().includes(mode)}
 function nodeKey(sky,placement){return`${String(sky||'').toUpperCase()}:${String(placement||'')}`}
 function edgeKey(a,b){return[a,b].sort().join('|')}
 function patternKey(type,vertices){return`${type}:${vertices.slice().sort().join('|')}`}
-function phaseError(row){const direct=Number(row.dataset.phaseError);if(Number.isFinite(direct))return direct;const orb=Number(row.dataset.sourceOrb??row.dataset.orb),harmonic=Number(row.dataset.harmonicOrder)||1;return Number.isFinite(orb)?Math.abs(orb)*harmonic:Number.POSITIVE_INFINITY}
+function phaseError(row){const rawPhase=row.dataset.phaseError;if(rawPhase!=null&&rawPhase!==''&&Number.isFinite(Number(rawPhase)))return Math.abs(Number(rawPhase));const rawOrb=row.dataset.sourceOrb??row.dataset.orb;const orb=rawOrb==null||rawOrb===''?NaN:Number(rawOrb),harmonic=Number(row.dataset.harmonicOrder)||1;return Number.isFinite(orb)?Math.abs(orb)*harmonic:Number.POSITIVE_INFINITY}
 function eligibleRow(row,windowValue){if(!activeMode(relationshipMode(row)))return false;if(row.classList.contains('sky-foundation-single-sky-cross-hidden'))return false;return phaseError(row)<=windowValue+1e-9}
 function endpoint(row,side){const prefix=side==='left'?'left':'right';return{key:nodeKey(row.dataset[`${prefix}Sky`],row.dataset[`${prefix}Placement`]),sky:String(row.dataset[`${prefix}Sky`]||'').toUpperCase(),placement:String(row.dataset[`${prefix}Placement`]||''),sign:Number(row.dataset[`${prefix}Sign`]),house:Number(row.dataset[`${prefix}House`])}}
 function collectGraph(){
@@ -747,7 +747,7 @@ function completeInevitableGraph(graph,includeInevitable=inevitableEnabled){
     for(const [aspect,spec] of Object.entries(INEVITABLE_ASPECTS)){
       if(byAspect.has(aspect))continue;
       const phase=Math.abs(separation-spec.angle)*spec.harmonic;
-      if(phase>INEVITABLE_MAX_PHASE+1e-9)continue;
+      if(phase>Math.min(INEVITABLE_MAX_PHASE,harmonicWindow())+1e-9)continue;
       if(!best||phase<best.phase)best={row:null,aspect,phase,left:a,right:b,entailed:true,origin:'entailed',entailedKind:'configuration-completion'};
     }
     if(best)byAspect.set(best.aspect,best);
