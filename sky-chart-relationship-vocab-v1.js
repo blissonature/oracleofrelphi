@@ -126,8 +126,8 @@ function glyphNode(token){
   if(unicode){holder.textContent=unicode;return holder}
   const entry=id&&registryEntry(id),component=window.RelphiGlyphComponent;
   if(entry&&component?.draw){
-    holder.classList.add('has-svg-glyph');const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');svg.setAttribute('viewBox','-18 -18 36 36');svg.setAttribute('aria-hidden','true');svg.style.visibility='hidden';holder.appendChild(svg);
-    Promise.resolve(component.draw(svg,entry.id,{radius:14.5,padding:.5,color:'currentColor'})).then(()=>{if(svg.isConnected)svg.style.visibility='visible'}).catch(()=>{if(holder.isConnected)holder.textContent=fallback});
+    holder.classList.add('has-svg-glyph');const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');svg.setAttribute('viewBox','-18 -18 36 36');svg.setAttribute('aria-hidden','true');holder.appendChild(svg);
+    Promise.resolve(component.draw(svg,entry.id,{radius:14.5,padding:.5,color:'currentColor'})).then(()=>{svg.style.visibility='visible'}).catch(()=>{if(holder.isConnected)holder.textContent=fallback});
   }else holder.textContent=fallback;
   return holder
 }
