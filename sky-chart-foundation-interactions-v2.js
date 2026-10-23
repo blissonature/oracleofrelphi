@@ -411,6 +411,7 @@
   }
   function clearSelectionMarks(){document.querySelectorAll('.sky-foundation-relationship-row[aria-current]').forEach(row=>row.removeAttribute('aria-current'));document.querySelectorAll('.sky-foundation-aspect[data-selected-relation]').forEach(line=>delete line.dataset.selectedRelation)}
   function clearFromWhitespace(){
+    document.querySelector('.sky-wheel-sector-description')?.setAttribute('hidden','');
     lockedState=null;hoverState=null;rowLockedState=null;rowHoverState=null;selectionOrigin=null;const root=document.getElementById('skyFoundationRoot');if(root)root.dataset.relationshipSelectionCleared='true';applyState();clearSelectionMarks();
     selectionClearObserver?.disconnect();selectionClearObserver=new MutationObserver(()=>{if(root?.dataset.relationshipSelectionCleared==='true')clearSelectionMarks();else{selectionClearObserver.disconnect();selectionClearObserver=null}});if(root)selectionClearObserver.observe(root,{subtree:true,childList:true,attributes:true,attributeFilter:['aria-current','data-selected-relation']});
     window.dispatchEvent(new CustomEvent('relphi:sky-foundation-clear-selection',{detail:{source:'white-space'}}));requestAnimationFrame(clearSelectionMarks)
@@ -499,6 +500,7 @@
     // A focus state must not remove the very tile being navigated to.
     row.classList.add('is-wheel-target');
     row.setAttribute('aria-current','true');
+    window.RelphiInlineRelationship?.expand?.(row);
     document.querySelectorAll('#skyFoundationRelationshipList > .sky-foundation-relationship-row').forEach(other=>{
       if(other!==row){other.classList.remove('is-wheel-target');other.removeAttribute('aria-current')}
     });
@@ -506,6 +508,31 @@
   }
   function clearWheelTargets(){
     document.querySelectorAll('#skyFoundationRelationshipList > .sky-foundation-relationship-row.is-wheel-target').forEach(row=>{row.classList.remove('is-wheel-target');row.removeAttribute('aria-current')});
+  }
+  // Place the selected label in the unused corner outside the circular wheel,
+  // not over the sign ring, house divisions, or existing glyphs.
+  function showSectorDescription(node,spec){
+    const wheel=document.querySelector('#skyFoundationWheelMount > .sky-foundation-wheel');
+    if(!wheel)return;
+    const mount=wheel.parentElement;
+    if(!mount)return;
+    let label=mount.querySelector(':scope > .sky-wheel-sector-description');
+    if(!label){label=document.createElement('div');label.className='sky-wheel-sector-description';label.setAttribute('role','status');label.setAttribute('aria-live','polite');mount.appendChild(label)}
+    if(!spec||!['house','sign','placement'].includes(spec.kind)){label.hidden=true;return}
+    const vocab=window.RelphiSkyVocab?.describeFocus?.(spec.kind,spec.value);
+    if(!vocab?.description){label.hidden=true;return}
+    const bbox=node?.getBoundingClientRect(),outer=wheel.getBoundingClientRect();
+    // Four corner spaces outside the circular perimeter, determined by the
+    // activated node position. Use the upper/lower and left/right half of wheel.
+    const x=bbox?(bbox.left+bbox.right)/2:outer.left+outer.width/2;
+    const y=bbox?(bbox.top+bbox.bottom)/2:outer.top+outer.height/2;
+    label.dataset.corner=(y<outer.top+outer.height/2?'top':'bottom')+'-'+(x<outer.left+outer.width/2?'left':'right');
+    label.replaceChildren();
+    const heading=document.createElement('strong'),description=document.createElement('span');
+    heading.textContent=vocab.name;
+    description.textContent=vocab.description;
+    label.append(heading,description);
+    label.hidden=false;
   }
   // Every input method uses the same selection state transition. Touch invokes
   // it directly rather than dispatching a second click through unrelated
@@ -518,6 +545,7 @@
     if(same(lockedState,next)){lockedState=null;selectionOrigin=null}
     else{lockedState=next;selectionOrigin=originFromNode(node,next)}
     hoverState=null;applyState();
+    showSectorDescription(node,lockedState);
     if(lockedState?.kind==='aspect')requestAnimationFrame(()=>revealSelectedRelationship(lockedState));
     else clearWheelTargets();
   }
