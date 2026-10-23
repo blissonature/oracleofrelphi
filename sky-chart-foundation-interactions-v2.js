@@ -547,7 +547,11 @@
     hoverState=null;applyState();
     showSectorDescription(node,lockedState);
     if(lockedState?.kind==='aspect')requestAnimationFrame(()=>revealSelectedRelationship(lockedState));
-    else clearWheelTargets();
+    else {
+      clearWheelTargets();
+      // Explicit selection changes close the previous tile; hover never does.
+      window.RelphiInlineRelationship?.collapse?.();
+    }
   }
   // One touch-to-click adapter owned by the foundation controller. Touch hover is
   // never selection state; one completed tap produces exactly one click.
