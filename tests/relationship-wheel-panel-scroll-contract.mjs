@@ -1,0 +1,10 @@
+import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+const source=readFileSync('sky-chart-foundation-interactions-v2.js','utf8');
+const navigation=source.slice(source.indexOf('function revealSelectedRelationship('),source.indexOf('function clearWheelTargets('));
+assert.ok(navigation.includes("document.getElementById('skyFoundationRelationshipList')"),'scroll target must be Relationships list');
+assert.ok(navigation.includes('list.scrollTo({top:list.scrollTop+delta'), 'scroll the panel, not page');
+assert.ok(!navigation.includes('scrollIntoView('),'page scrolling is forbidden');
+assert.ok(source.includes("wheel.classList.toggle('has-isolation',!!wheelState)"),'wheel keeps dim isolation');
+assert.ok(source.includes("focusState.kind==='aspect'&&matchesNode(node,focusState)"),'selected aspect remains illuminated');
+console.log('Panel scrolling and aspect isolation contract passed');
