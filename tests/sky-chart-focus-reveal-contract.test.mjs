@@ -24,10 +24,10 @@ test('reveal is explicit, whole-degree, and never exceeds model maximum',()=>{
  assert.doesNotMatch(harmonic,/setWindow\?\.\(m\?\.maxWindow\?\?12\)/);
 });
 test('preview loads updated implementations',()=>{
- for(const suffix of ['sky-chart-filter-wheel-focus-v1.js?v=16','sky-chart-filter-wheel-focus-v1.css?v=4','sky-chart-orb-control-v1.js?v=29'])assert.ok(html.includes(suffix));
+ for(const suffix of ['sky-chart-filter-wheel-focus-v1.js?v=24','sky-chart-filter-wheel-focus-v1.css?v=5','sky-chart-orb-control-v1.js?v=29'])assert.ok(html.includes(suffix));
 });
 
-test('intermediate placement popup survives wheel refresh and intercepts pointer input',()=>{
+test('intermediate placement popup survives wheel refresh without intercepting selection',()=>{
  const sync=focus.slice(focus.indexOf('function sync()'),focus.indexOf('function whereWhenEditing()'));
  assert.doesNotMatch(sync,/closePopup\(\)/);
  assert.match(focus,/addEventListener\('pointerdown',onPlacementClick,true\)/);
