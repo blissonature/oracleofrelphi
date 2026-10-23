@@ -26,8 +26,24 @@ try{
  await page.waitForSelector('#skyFoundationRoot[aria-busy="false"]',{timeout:30000});
  const moon=page.locator('#skyFoundationWheelMount [data-interactive="placement"][data-sky="B"][data-placement="moon"]').first();
  await moon.waitFor({timeout:15000});
+ await page.evaluate(()=>{
+   window.__moonTrace=[];
+   for(const name of ['pointerdown','pointerup','click','pointerout']){
+     document.addEventListener(name,e=>{
+       const m=e.target.closest?.('[data-sky="B"][data-placement="moon"]');
+       if(m)window.__moonTrace.push({name,phase:e.eventPhase,target:m.tagName,classes:m.getAttribute('class'),cancel:e.defaultPrevented});
+     },true);
+   }
+ });
  await moon.click({force:true});
  await page.waitForTimeout(100);
+ const trace=await page.evaluate(()=>({
+  events:window.__moonTrace,
+  moon:document.querySelector('#skyFoundationWheelMount [data-interactive="placement"][data-sky="B"][data-placement="moon"]')?.outerHTML.slice(0,700),
+  wheel:document.querySelector('#skyFoundationWheelMount .sky-foundation-wheel')?.getAttribute('class'),
+  root:document.getElementById('skyFoundationRoot')?.dataset
+ }));
+ console.log('MOON_CLICK_TRACE',JSON.stringify(trace));
  assert.equal(await moon.evaluate(node=>node.classList.contains('is-selected')),true,'Click locks Sky B Moon');
  await page.mouse.move(10,10);
  await page.waitForTimeout(100);
