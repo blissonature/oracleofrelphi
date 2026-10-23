@@ -1,0 +1,13 @@
+import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+const s=readFileSync('sky-chart-foundation-interactions-v2.js','utf8');
+const reveal=s.slice(s.indexOf('function revealSelectedRelationship('),s.indexOf('function clearWheelTargets('));
+assert.match(reveal,/RelphiInlineRelationship\?\.expand\?\.\(row\)/,'Expand target');
+assert.match(reveal,/row\.setAttribute\('aria-current','true'\)/,'Mark target');
+assert.match(reveal,/row\.classList\.add\('is-selected'\)/,'Highlight target');
+assert.match(reveal,/list\.scrollTo\(/,'Scroll Relationships panel');
+assert.doesNotMatch(reveal,/scrollIntoView/,'Never scroll the page');
+assert.match(s,/if\(lockedState\?\.kind==='aspect'\)requestAnimationFrame\(\(\)=>revealSelectedRelationship\(lockedState\)\)/,'Reconcile selection after tile render');
+assert.match(s,/state:focusState\?\{\.\.\.focusState/,'Transmit current selection to Configurations');
+assert.match(s,/focusState\?\.kind==='aspect'\?Array\.from\(filterKeep\.matched\)/,'Send matched aspect indexes to Configurations');
+console.log('Wheel and configuration selection plumbing contract passed');
