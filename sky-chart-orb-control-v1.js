@@ -82,7 +82,10 @@
         schedule();
       });
       list.appendChild(button);
-    }else if(button!==list.lastElementChild)list.appendChild(button);
+    }else if(button!==list.lastElementChild){
+      // Sorting owns DOM order. Do not compete with it on every orb refresh.
+      requestAnimationFrame(()=>{if(button.isConnected&&button.parentElement===list&&button!==list.lastElementChild)list.appendChild(button)});
+    }
     return button;
   }
   function apply(){
