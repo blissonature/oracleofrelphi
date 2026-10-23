@@ -82,10 +82,8 @@
         schedule();
       });
       list.appendChild(button);
-    }else if(button!==list.lastElementChild){
-      // Sorting owns DOM order. Do not compete with it on every orb refresh.
-      requestAnimationFrame(()=>{if(button.isConnected&&button.parentElement===list&&button!==list.lastElementChild)list.appendChild(button)});
     }
+    // Relationship scope/sort controller alone owns helper ordering.
     return button;
   }
   function apply(){
