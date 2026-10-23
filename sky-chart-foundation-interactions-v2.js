@@ -659,6 +659,17 @@
       if(row)return;
       if(lockedState)return;const node=interactive(event);if(!node||node.contains(event.relatedTarget))return;hoverState=null;applyState()
     });
+    // Own actual wheel click selection in capture phase. Other legacy
+    // bubbling handlers must not interpret this same click as a hover reset.
+    root.addEventListener('click',event=>{
+      if(event.defaultPrevented||performance.now()<ignoreNativeClickUntil)return;
+      if(!event.target.closest?.('#skyFoundationWheelMount .sky-foundation-wheel'))return;
+      const node=interactive(event);
+      if(!node)return;
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      toggleInteractiveNode(node);
+    },true);
     root.addEventListener('click',event=>{
       wheelOnlyExternal=false;
       const row=event.target.closest?.('.sky-foundation-relationship-row[data-relation-index]');
