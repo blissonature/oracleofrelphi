@@ -116,6 +116,17 @@
     increase.addEventListener('click',()=>{
       closePopup();
       window.RelphiHarmonicOrb?.setWindow?.(target);
+      // Immediately release placements now covered by the new window, before
+      // the next animation-frame focus refresh. They belong to wheel selection.
+      for(const [placement,threshold] of hiddenNearest){
+        if(threshold<=target+1e-8){
+          hiddenNearest.delete(placement);
+          const [slot,id]=placement.split(':');
+          document.querySelectorAll('#skyFoundationWheelMount [data-layer="placements"] [data-sky][data-placement]').forEach(node=>{
+            if(node.dataset.sky===slot&&node.dataset.placement===id)node.classList.remove('is-filter-intermediate');
+          });
+        }
+      }
       const input=document.querySelector('[data-harmonic-window-input]');
       if(input){input.value=String(target);input.setAttribute('aria-valuenow',String(target))}
       window.dispatchEvent(new CustomEvent('relphi:sky-harmonic-window-model-changed',{detail:{harmonicWindow:target}}));
@@ -138,8 +149,13 @@
     const marker=event.target.closest?.('#skyFoundationWheelMount [data-layer="placements"] [data-sky][data-placement]');
     if(!marker||!marker.classList.contains('is-filter-intermediate'))return;
     const key=`${marker.dataset.sky}:${marker.dataset.placement}`;
-    const required=hiddenNearest.get(key);
-    if(!Number.isFinite(required))return;
+    const required=hiddenNearest.get(key),current=Number(window.RelphiHarmonicOrb?.getWindow?.()??7);
+    if(!Number.isFinite(required)||required<=current+1e-8){
+      // Never swallow a selection click using a stale helper marker.
+      marker.classList.remove('is-filter-intermediate');
+      hiddenNearest.delete(key);
+      return;
+    }
     event.preventDefault();event.stopPropagation();event.stopImmediatePropagation();
     openPopup(marker,key,required);
   }
