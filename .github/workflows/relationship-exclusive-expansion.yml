@@ -1,0 +1,20 @@
+name: Exclusive Relationships tile selection
+on:
+  pull_request:
+    paths:
+      - 'sky-chart-inline-relationship-v5.js'
+      - 'sky-chart-foundation-interactions-v2.js'
+      - 'tests/relationship-exclusive-expansion.mjs'
+      - '.github/workflows/relationship-exclusive-expansion.yml'
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: |
+          node --check sky-chart-inline-relationship-v5.js
+          node --check sky-chart-foundation-interactions-v2.js
+          node tests/relationship-exclusive-expansion.mjs
