@@ -7,4 +7,6 @@ assert.match(s,/threshold<=target\+1e-8/,'increase immediately releases newly el
 assert.match(s,/helperAccepted\.add\(key\)/,'Accepting helper records permission to select placement');
 assert.match(s,/if\(helperAccepted\.has\(key\)\)return/,'Accepted Moon B cannot have its subsequent click swallowed');
 assert.match(s,/hiddenNearest\.has\(key\)&&!helperAccepted\.has\(key\)/,'Async sync must not rearm prompt on an accepted placement');
-console.log('PASS Harmonic Window helper cannot re-intercept Moon B after acceptance, including when other aspects remain outside window');
+assert.match(s,/const visibleMatch=eligibleRows\(\)\.some/,'Check actual visible relationships before intercepting Moon B');
+assert.match(s,/if\(visibleMatch\)\{/,'Visible relationship makes helper relinquish click');
+console.log('PASS helper cannot intercept Moon B once there is a visible relationship at current Harmonic Window');
