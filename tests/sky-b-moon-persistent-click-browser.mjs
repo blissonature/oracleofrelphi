@@ -60,5 +60,17 @@ try{
  await page.mouse.move(10,10);
  await page.waitForTimeout(150);
  assert.equal(await ledger.evaluate(node=>node.classList.contains('is-selected')),true,'Sky B ledger Moon click must persist after mouse leave');
- console.log('PASS Moon B wheel and side-panel click remain locked after mouse movement and scroll');
+ // Regression for Harmonic Window model transition (the source of the user's report).
+ await page.evaluate(()=>{
+   document.getElementById('skyFoundationRoot').dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true}));
+   window.RelphiHarmonicOrb.setWindow(2);
+ });
+ await page.waitForTimeout(300);
+ await page.evaluate(()=>window.RelphiHarmonicOrb.setWindow(3));
+ await page.waitForTimeout(800);
+ await moon.click({force:true});
+ await page.mouse.move(10,10);
+ await page.waitForTimeout(150);
+ assert.equal(await moon.evaluate(node=>node.classList.contains('is-selected')),true,'Moon B must lock after Harmonic Window increases from 2 to 3');
+ console.log('PASS Moon B wheel and side-panel clicks persist, including after Harmonic Window 2→3 transition');
 }finally{await browser.close()}
