@@ -196,7 +196,20 @@
     if (system === 'koch') return result(system, kochCusps(asc, mc, lst, lat, eps), 'Koch is a time-based quadrant method; it can be undefined near polar latitudes.');
     return result('whole-sign', Array.from({length:12}, (_,i)=>normDeg(Math.floor(asc/30)*30+i*30)), 'Fallback to Whole Sign.');
   }
-  function result(system, cusps, note){ return { system, label:label(system), cusps:cusps.map(normDeg), note }; }
+  function result(system, cusps, note){
+    const normalized=cusps.map(normDeg);
+    // Validate geometry BEFORE it is persisted: inverted or wraparound cusps
+    // otherwise draw giant overlapping wedges and tiny opposite slivers.
+    if(normalized.length!==12||normalized.some(value=>!Number.isFinite(value)))throw new Error(system+' returned invalid house cusps.');
+    if(system!=='whole-sign'&&system!=='equal-house'){
+      const spans=normalized.map((value,i)=>forwardArc(value,normalized[(i+1)%12]));
+      if(spans.some(span=>span<=0.00001||span>=180)||
+        Math.abs(spans.reduce((sum,span)=>sum+span,0)-360)>0.001){
+        throw new Error(label(system)+' returned out-of-order house cusps. Recalculate the chart before displaying its house divisions.');
+      }
+    }
+    return { system, label:label(system), cusps:normalized, note };
+  }
   function label(system){ return SYSTEMS[normalizeSystem(system)] || 'Whole Sign'; }
   function normalizeSystem(system){
     const s = String(system || 'whole-sign').trim().toLowerCase().replace(/\s+/g,'-');
