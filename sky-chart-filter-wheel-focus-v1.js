@@ -289,9 +289,9 @@
     // Touch: the wheel selects during pointerup and suppresses the follow-up
     // synthetic click, so use pointerup only for touch/pen helper disclosure.
     document.addEventListener('click',onPlacementClick,true);
-    document.addEventListener('pointerup',event=>{
-      if(event.pointerType==='touch'||event.pointerType==='pen')onPlacementClick(event);
-    },true);
+    // Some wheel redraws suppress the eventual mouse click. Show the advisory
+    // helper on the completed gesture for mouse, touch, and pen alike.
+    document.addEventListener('pointerup',onPlacementClick,true);
     document.addEventListener('keydown',event=>{
       if(event.key!=='Enter'&&event.key!==' ')return;
       const marker=event.target.closest?.('#skyFoundationWheelMount [data-layer="placements"] [data-sky][data-placement].is-filter-intermediate');
