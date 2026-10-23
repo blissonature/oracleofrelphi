@@ -35,5 +35,13 @@ try{
  await page.evaluate(()=>{const list=document.getElementById('skyFoundationRelationshipList');if(list)list.scrollTop=200});
  await page.waitForTimeout(100);
  assert.equal(await moon.evaluate(node=>node.classList.contains('is-selected')),true,'Relationship panel scroll must preserve Sky B Moon lock');
- console.log('PASS Sky B Moon click remains locked after leave and panel scroll');
+ const ledger=page.locator('#skyFoundationB .sky-foundation-row[data-interactive="placement"][data-placement="moon"]').first();
+ await ledger.waitFor({timeout:15000});
+ // Clear the existing wheel lock and select Moon B from the side panel.
+ await page.evaluate(()=>document.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true})));
+ await ledger.click({force:true});
+ await page.mouse.move(10,10);
+ await page.waitForTimeout(150);
+ assert.equal(await ledger.evaluate(node=>node.classList.contains('is-selected')),true,'Sky B ledger Moon click must persist after mouse leave');
+ console.log('PASS Moon B wheel and side-panel click remain locked after mouse movement and scroll');
 }finally{await browser.close()}
