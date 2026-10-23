@@ -10,3 +10,9 @@ assert.match(s,/hiddenNearest\.has\(key\)&&!helperAccepted\.has\(key\)/,'Async s
 assert.match(s,/const visibleMatch=eligibleRows\(\)\.some/,'Check actual visible relationships before intercepting Moon B');
 assert.match(s,/if\(visibleMatch\)\{/,'Visible relationship makes helper relinquish click');
 console.log('PASS helper cannot intercept Moon B once there is a visible relationship at current Harmonic Window');
+
+const ownership=s.slice(s.indexOf('function onPlacementClick('),s.indexOf('function clearMarks('));
+assert.doesNotMatch(ownership,/stopImmediatePropagation|stopPropagation|preventDefault/,'Harmonic helper must NEVER block a placement click');
+assert.doesNotMatch(s,/document\.addEventListener\('pointerdown',onPlacementClick/,'Harmonic helper must not intercept pointerdown');
+assert.match(s,/document\.addEventListener\('click',onPlacementClick,true\)/,'Mouse click may show advisory helper without consuming event');
+console.log('PASS helper cannot steal placement selection clicks');
