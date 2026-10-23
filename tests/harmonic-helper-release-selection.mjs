@@ -4,4 +4,7 @@ const s=readFileSync('sky-chart-filter-wheel-focus-v1.js','utf8');
 assert.match(s,/required<=current\+1e-8/,'stale harmonic prompt must not intercept eligible placement click');
 assert.match(s,/marker\.classList\.remove\('is-filter-intermediate'\)/,'stale marker removed before click proceeds');
 assert.match(s,/threshold<=target\+1e-8/,'increase immediately releases newly eligible placement');
-console.log('PASS Harmonic Window helper releases eligible Moon B selection');
+assert.match(s,/helperAccepted\.add\(key\)/,'Accepting helper records permission to select placement');
+assert.match(s,/if\(helperAccepted\.has\(key\)\)return/,'Accepted Moon B cannot have its subsequent click swallowed');
+assert.match(s,/hiddenNearest\.has\(key\)&&!helperAccepted\.has\(key\)/,'Async sync must not rearm prompt on an accepted placement');
+console.log('PASS Harmonic Window helper cannot re-intercept Moon B after acceptance, including when other aspects remain outside window');
