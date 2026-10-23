@@ -10,6 +10,7 @@ try{
  },[p('Birthday Sky','birth','1985-10-08T04:37','Malden, Massachusetts'),p('Client Review','client','2026-11-14T15:30','Salt Lake City, Utah'),p('Eclipse Event','event','2024-04-08T10:00','Austin, Texas')]);
  await page.goto('http://127.0.0.1:4173/sky-chart.html',{waitUntil:'domcontentloaded'});
  await page.locator('[data-saved-sky-trigger="A"]').click({timeout:20000});
+ await page.locator('[data-sky-command="load"]').click({timeout:10000});
  await page.waitForFunction(()=>document.querySelectorAll('#skySavedSkiesPopover .sky-library-visible-name').length===3,null,{timeout:16000});
  const names=await page.locator('#skySavedSkiesPopover .sky-library-visible-name').allTextContents();
  assert.deepEqual(names,['Birthday Sky','Client Review','Eclipse Event'],'All saved sky names visible by default');
