@@ -356,9 +356,9 @@
   function applyState(){
     const focusState=(lockedState?.kind==='aspect'&&hoverState)||lockedState||(!rowLockedState&&hoverState),aspectFocus=focusState?.kind==='aspect',filterState=aspectFocus?null:focusState,filterKeep=keepSets(focusState),rowState=rowLockedState||rowHoverState,wheelState=focusState||rowState,wheel=document.querySelector('#skyFoundationWheelMount > .sky-foundation-wheel');
     if(wheel){
-      wheel.classList.toggle('has-isolation',!!wheelState&&!aspectFocus);
+      wheel.classList.toggle('has-isolation',!!wheelState);
       wheel.querySelectorAll('[data-focus-piece]').forEach(node=>{
-        const isRowDriven=!focusState&&!!rowState,isKept=!!wheelState&&(isRowDriven?rowKeeps(node,rowState):kept(node,filterKeep)),type=node.dataset.focusPiece;
+        const isRowDriven=!focusState&&!!rowState,isKept=!!wheelState&&(isRowDriven?rowKeeps(node,rowState):kept(node,filterKeep)||!!focusState&&focusState.kind==='aspect'&&matchesNode(node,focusState)),type=node.dataset.focusPiece;
         node.classList.toggle('is-kept',isKept);
         node.classList.toggle('is-aspect-endpoint',(isRowDriven||aspectFocus)&&isKept&&(type==='placement'||type==='leader'));
         node.classList.toggle('is-selected',!!lockedState&&matchesNode(node,lockedState)||(!filterState&&!!rowLockedState&&rowMarksNode(node,rowLockedState)));
@@ -504,7 +504,13 @@
     document.querySelectorAll('#skyFoundationRelationshipList > .sky-foundation-relationship-row').forEach(other=>{
       if(other!==row){other.classList.remove('is-wheel-target');other.removeAttribute('aria-current')}
     });
-    row.scrollIntoView({behavior:window.matchMedia?.('(prefers-reduced-motion: reduce)').matches?'instant':'smooth',block:'center',inline:'nearest'});
+    // Scroll only the Relationships list; scrollIntoView would move the entire page and wheel.
+    const list=document.getElementById('skyFoundationRelationshipList');
+    if(list){
+      const itemRect=row.getBoundingClientRect(),panelRect=list.getBoundingClientRect();
+      const delta=(itemRect.top+itemRect.height/2)-(panelRect.top+panelRect.height/2);
+      list.scrollTo({top:list.scrollTop+delta,behavior:window.matchMedia?.('(prefers-reduced-motion: reduce)').matches?'instant':'smooth'});
+    }
   }
   function clearWheelTargets(){
     document.querySelectorAll('#skyFoundationRelationshipList > .sky-foundation-relationship-row.is-wheel-target').forEach(row=>{row.classList.remove('is-wheel-target');row.removeAttribute('aria-current')});
