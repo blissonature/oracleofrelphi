@@ -26,10 +26,10 @@ try{
  await page.waitForSelector('#skyFoundationRoot[aria-busy="false"]',{timeout:30000});
  const moon=page.locator('#skyFoundationWheelMount [data-interactive="placement"][data-sky="B"][data-placement="moon"]').first();
  await moon.waitFor({timeout:15000});
- await moon.evaluate(node=>node.dispatchEvent(new MouseEvent('click',{bubbles:true,cancelable:true})));
+ await moon.click({force:true});
  await page.waitForTimeout(100);
  assert.equal(await moon.evaluate(node=>node.classList.contains('is-selected')),true,'Click locks Sky B Moon');
- await moon.evaluate(node=>node.dispatchEvent(new PointerEvent('pointerout',{bubbles:true,pointerType:'mouse'})));
+ await page.mouse.move(10,10);
  await page.waitForTimeout(100);
  assert.equal(await moon.evaluate(node=>node.classList.contains('is-selected')),true,'Pointer leave must preserve Sky B Moon lock');
  await page.evaluate(()=>{const list=document.getElementById('skyFoundationRelationshipList');if(list)list.scrollTop=200});
