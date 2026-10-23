@@ -18,6 +18,9 @@
   let observer=null;
   let observedList=null;
   let hiddenNearest=new Map();
+  // A user who accepted the helper must be able to select that placement,
+  // even if further aspects remain beyond the newly chosen window.
+  const helperAccepted=new Set();
   let popup=null;
 
   function relationshipSlots(row){
@@ -114,6 +117,7 @@
     const increase=document.createElement('button');increase.type='button';increase.textContent=`Increase to ${target}°`;
     dismiss.addEventListener('click',closePopup);
     increase.addEventListener('click',()=>{
+      helperAccepted.add(key);
       closePopup();
       window.RelphiHarmonicOrb?.setWindow?.(target);
       // Immediately release placements now covered by the new window, before
@@ -149,6 +153,7 @@
     const marker=event.target.closest?.('#skyFoundationWheelMount [data-layer="placements"] [data-sky][data-placement]');
     if(!marker||!marker.classList.contains('is-filter-intermediate'))return;
     const key=`${marker.dataset.sky}:${marker.dataset.placement}`;
+    if(helperAccepted.has(key))return;
     const required=hiddenNearest.get(key),current=Number(window.RelphiHarmonicOrb?.getWindow?.()??7);
     if(!Number.isFinite(required)||required<=current+1e-8){
       // Never swallow a selection click using a stale helper marker.
@@ -232,7 +237,7 @@
     wheel.querySelectorAll('[data-layer="placements"] [data-sky][data-placement], [data-layer="leaders"] [data-sky][data-placement]').forEach(node=>{
       const key=`${node.dataset.sky}:${node.dataset.placement}`;
       node.classList.toggle('is-filter-kept',placements.has(key));
-      node.classList.toggle('is-filter-intermediate',hiddenNearest.has(key));
+      node.classList.toggle('is-filter-intermediate',hiddenNearest.has(key)&&!helperAccepted.has(key));
     });
 
     document.documentElement.dataset.skyFilterWheelFocus=`${matched.length}/${rows.length}`;
