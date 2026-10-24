@@ -65,6 +65,34 @@ try{
  assert.ok(result.slots.A.items>=14&&result.slots.B.items>=14,'Both crowded skies must render their ordinary placements');
  assert.equal(result.slots.A.collisions.length,0,'Sky A placement glyph orbs must not overlap');
  assert.equal(result.slots.B.collisions.length,0,'Sky B placement glyph orbs must not overlap');
+ // A house boundary can force an adjusted leader back onto its exact
+ // longitude. The resolver must *still* maintain bubble clearance afterward.
+ const stressed=await page.evaluate(()=>{
+   const source=document.querySelector('#skyFoundationWheelMount > svg.sky-foundation-wheel');
+   const wheel=source.cloneNode(true),ns='http://www.w3.org/2000/svg';
+   const layer=wheel.querySelector('[data-layer="a-houses"]');
+   const line=document.createElementNS(ns,'line'),angle=(171-180)*Math.PI/180;
+   const at=r=>({x:600+r*Math.cos(angle),y:600+r*Math.sin(angle)});
+   const a=at(170),b=at(323);
+   line.classList.add('sky-foundation-divider');
+   for(const [k,v] of Object.entries({x1:a.x,y1:a.y,x2:b.x,y2:b.y}))line.setAttribute(k,String(v));
+   layer.appendChild(line);
+   window.RelphiPlacementCollisionOrder.arrange(wheel);
+   const nodes=[...wheel.querySelectorAll('[data-layer="placements"] > g[data-sky="A"][data-placement]:not([data-angle-axis="true"]):not([data-placement="moon-range"])')];
+   const items=nodes.map(group=>{
+     const m=group.transform.baseVal.consolidate()?.matrix;
+     return {name:group.dataset.placement,x:m?.e,y:m?.f,fallback:group.dataset.placementOrderFallback};
+   });
+   const collisions=[];
+   for(let i=0;i<items.length;i++)for(let j=i+1;j<items.length;j++){
+     const a=items[i],b=items[j],distance=Math.hypot(a.x-b.x,a.y-b.y);
+     if(distance<41.4)collisions.push({a:a.name,b:b.name,distance:Number(distance.toFixed(2))});
+   }
+   return {collisions,fallBacks:items.filter(x=>x.fallback==='true').map(x=>x.name),
+     crossings:wheel.dataset.placementLeaderCrossings,leaderHits:wheel.dataset.placementLeaderGlyphHits};
+ });
+ console.log('GLYPH_CUSP_STRESS_TRACE',JSON.stringify(stressed));
+ assert.equal(stressed.collisions.length,0,'House-divider leader fallback must not reintroduce glyph-orb overlaps');
  assert.deepEqual(errors,[]);
  console.log('PASS crowded Oct 23 A/B placement glyph orbs do not overlap');
 }finally{await browser.close()}
