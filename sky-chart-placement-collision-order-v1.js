@@ -271,11 +271,43 @@ function slotGeometrySignature(wheel,slot){
     fixed.map(segment=>[segment.a.x,segment.a.y,segment.b.x,segment.b.y])
   ]);
 }
+// Before rearranging an already drawn chart, examine the geometry instead of
+// trusting only a stale signature. Other controllers may touch line metadata
+// without changing any visible orb. A valid layout must be preserved as-is.
+function slotLayoutStillValid(wheel,slot){
+  if(!String(wheel.dataset.placementCollisionOrder||'').startsWith('same-sign-fixed-circumference'))return false;
+  const items=ordinaryItems(wheel,slot),bubble=Number(spec()?.comparison?.placementBubbleRadius)||19.7;
+  const fixed=fixedSegments(wheel,slot),seen=[];
+  for(const item of items){
+    const matrix=item.group.transform?.baseVal?.consolidate()?.matrix;
+    if(!matrix||!Number.isFinite(matrix.e)||!Number.isFinite(matrix.f))return false;
+    const position={x:matrix.e,y:matrix.f},c=center();
+    if(!Number.isFinite(item.authoredLane)||Math.abs(Math.hypot(position.x-c.x,position.y-c.y)-item.authoredLane)>.1)return false;
+    const display=num(item.group.dataset.displayLongitude),expected=polar(item.authoredLane,display);
+    if(!Number.isFinite(display)||Math.hypot(position.x-expected.x,position.y-expected.y)>.2)return false;
+    if(Math.floor(norm(display)/30)!==item.sign)return false;
+    const leader=parseSegment(item.leader);
+    if(!leader||Math.hypot(leader.a.x-position.x,leader.a.y-position.y)>.25)return false;
+    if(Math.hypot(leader.b.x-exactPoint({item},slot).x,leader.b.y-exactPoint({item},slot).y)>.25)return false;
+    if(fixed.some(segment=>properIntersection(leader.a,leader.b,segment.a,segment.b)))return false;
+    seen.push({item,position,leader,display});
+  }
+  for(let i=0;i<seen.length;i++)for(let j=i+1;j<seen.length;j++){
+    const a=seen[i],b=seen[j];
+    if(Math.hypot(a.position.x-b.position.x,a.position.y-b.position.y)<2*bubble+2-EPS)return false;
+    if(a.item.sign===b.item.sign&&a.item.exact<b.item.exact&&a.display>=b.display-EPS)return false;
+    if(properIntersection(a.leader.a,a.leader.b,b.leader.a,b.leader.b))return false;
+    if(segmentDistance(a.position,b.leader.a,b.leader.b)<bubble+4-EPS)return false;
+    if(segmentDistance(b.position,a.leader.a,a.leader.b)<bubble+4-EPS)return false;
+  }
+  return true;
+}
 function solveOrReuse(wheel,slot){
   const key='placementCollisionSignature'+slot,
     crossingsKey='placementSlotLeaderCrossings'+slot,
     hitsKey='placementSlotLeaderHits'+slot;
-  if(wheel.dataset[key]===slotGeometrySignature(wheel,slot)){
+  if(wheel.dataset[key]===slotGeometrySignature(wheel,slot)||slotLayoutStillValid(wheel,slot)){
+    wheel.dataset[key]=slotGeometrySignature(wheel,slot);
     return{items:[],crossings:Number(wheel.dataset[crossingsKey]||0),
       hits:Number(wheel.dataset[hitsKey]||0),reused:true};
   }
