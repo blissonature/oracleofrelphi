@@ -45,8 +45,7 @@ try{
      lane:Number(group.dataset.placementLane),authoredLane:Number(group.dataset.placementAuthoredLane)};
   };
   const report={metadata:{order:wheel.dataset.placementCollisionOrder,crossings:wheel.dataset.placementLeaderCrossings,
-   leaderHits:wheel.dataset.placementLeaderGlyphHits,
-   ariesSearch:wheel.dataset.placementCrowdedTraceB0||''},radius:spec.placementBubbleRadius,slots:{}};
+   leaderHits:wheel.dataset.placementLeaderGlyphHits},radius:spec.placementBubbleRadius,slots:{}};
   for(const slot of ['A','B']){
    const raw=[...wheel.querySelectorAll('[data-layer="placements"] > g[data-sky="'+slot+'"][data-placement]:not([data-angle-axis="true"]):not([data-placement="moon-range"])')];
    const parsed=raw.map(parse);const items=parsed.filter(g=>Number.isFinite(g.x)&&Number.isFinite(g.y));
@@ -61,7 +60,13 @@ try{
    // trusting only the lane attribute written by the solver.
    const offRing=items.filter(item=>Math.abs(Math.hypot(item.x-600,item.y-600)-item.authoredLane)>0.01)
      .map(item=>({name:item.id,radius:Math.hypot(item.x-600,item.y-600),authored:item.authoredLane}));
-   report.slots[slot]={...report.slots[slot],items:items.length,offRing,fallBacks:items.filter(x=>x.fallback==='true').map(x=>x.id),
+   const aries=slot==='B'?items.filter(item=>['neptune','moon','saturn'].includes(item.id)):[];
+   const ariesPairs=[];
+   for(let i=0;i<aries.length;i++)for(let j=i+1;j<aries.length;j++){
+     const first=aries[i],second=aries[j],distance=Math.hypot(first.x-second.x,first.y-second.y);
+     ariesPairs.push({a:first.id,b:second.id,distance:+distance.toFixed(3)});
+   }
+   report.slots[slot]={...report.slots[slot],ariesPairs,items:items.length,offRing,fallBacks:items.filter(x=>x.fallback==='true').map(x=>x.id),
     collisions,collidingItems:items.filter(x=>collisions.some(c=>c.a===x.id||c.b===x.id))};
   }
   return report;
@@ -70,6 +75,9 @@ try{
  assert.ok(result.slots.A.items>=14&&result.slots.B.items>=14,'Both crowded skies must render their ordinary placements');
  assert.equal(result.slots.A.collisions.length,0,'Sky A placement glyph orbs must not overlap');
  assert.equal(result.slots.B.collisions.length,0,'Sky B placement glyph orbs must not overlap');
+ assert.equal(result.slots.B.ariesPairs.length,3,'The screenshot regression must include Moon, Neptune and Saturn');
+ for(const pair of result.slots.B.ariesPairs)assert.ok(pair.distance>=2*result.radius+2-.1,
+   'Moon/Neptune/Saturn must not overlap: '+JSON.stringify(pair));
  for(const slot of ['A','B'])assert.deepEqual(result.slots[slot].offRing,[],
    'A placement orb in Sky '+slot+' left its assigned circumference');
  // A house boundary can force an adjusted leader back onto its exact
@@ -139,7 +147,7 @@ try{
    const offRing=items.filter(item=>Math.abs(Math.hypot(item.x-600,item.y-600)-item.authoredLane)>0.01)
      .map(item=>({name:item.name,radius:Math.hypot(item.x-600,item.y-600),authored:item.authoredLane}));
    return {collisions,offRing,bOffRing,bCollisions,bMoved,bSignatureChanged,
-     reuseCheckB:wheel.dataset.placementReuseCheckB||'',fallBacks:items.filter(x=>x.fallback==='true').map(x=>x.name),
+     fallBacks:items.filter(x=>x.fallback==='true').map(x=>x.name),
      repairs:Number(wheel.dataset.placementTangentialClearanceRepairs||0),
      unresolved:Number(wheel.dataset.placementUnresolvedBubbleOverlaps||0),leaderHitPairs:leaderHits,
      repeatedMovement:Number(repeatedMovement.toFixed(4)),
