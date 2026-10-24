@@ -139,6 +139,7 @@ try{
  assert.deepEqual(stressed.offRing,[],'The cusp-stress repair must keep every orb on its original circumference');
  assert.deepEqual(stressed.leaderHitPairs,[],'No actual SVG leader may intersect an unrelated glyph bubble in the stress case');
  assert.deepEqual(stressed.bOffRing,[],'Sky B must remain on its exact circumference during Sky A house-divider stress');
+ assert.deepEqual(stressed.bCollisions,[],'Sky A house-divider changes must not reintroduce Sky B glyph overlap');
  // A synthetic house boundary does not necessarily require a second adjustment:
  // do not demand gratuitous movement merely to register a repair counter.
  assert.ok(stressed.repeatedMovement<0.25,'Repeated collision layout passes must not move glyphs again');
