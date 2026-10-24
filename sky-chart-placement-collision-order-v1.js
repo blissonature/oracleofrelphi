@@ -178,7 +178,12 @@ function redistributeCrowdedSign(solution,slot,wheel,sign){
         if(!allowHouseCrossing&&houseDividers.some(f=>properIntersection(line.a,line.b,f.a,f.b))){rejections.house++;return false}
       }
       for(let j=i+1;j<full.length;j++){
-        const b=full[j],otherLine=segmentFor(b,slot);
+        const b=full[j];
+        // The crowded-sign search cannot fix two placements in OTHER signs.
+        // Do not let those unrelated pending collisions veto this sign's
+        // collective solution; each crowded sign is repaired in its own pass.
+        if(!records.includes(a)&&!records.includes(b))continue;
+        const otherLine=segmentFor(b,slot);
         if(Math.hypot(a.point.x-b.point.x,a.point.y-b.point.y)<sepDistance-EPS){rejections.orbs++;return false}
         if(records.includes(a)||records.includes(b)){
           if(properIntersection(line.a,line.b,otherLine.a,otherLine.b)){rejections.leaders++;return false}
