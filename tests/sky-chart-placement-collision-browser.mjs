@@ -35,6 +35,12 @@ try{
  await page.goto('http://127.0.0.1:4173/sky-chart.html',{waitUntil:'domcontentloaded'});
  await page.waitForFunction(()=>document.querySelector('#skyFoundationWheelMount > svg.sky-foundation-wheel')?.dataset.placementCollisionOrder?.includes('same-sign'),{timeout:30000});
  await page.waitForTimeout(650);
+ // Do not capture the early sign-only solve: wait until the chart has its
+ // rendered HOUSE edges, then apply the placement resolver to those edges.
+ await page.waitForFunction(()=>document.querySelectorAll(
+   '#skyFoundationWheelMount > svg.sky-foundation-wheel [data-layer="b-houses"] line.sky-foundation-divider'
+ ).length>=10,{timeout:30000});
+ await page.evaluate(()=>window.RelphiPlacementCollisionOrder.arrangeCurrent());
  const result=await page.evaluate(()=>{
   const wheel=document.querySelector('#skyFoundationWheelMount > svg.sky-foundation-wheel'),spec=window.RelphiSkyWheelSpec.comparison;
   const parse=(group)=>{
