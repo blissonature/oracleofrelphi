@@ -168,14 +168,13 @@ function redistributeCrowdedSign(solution,slot,wheel,sign){
   const angleAxes=fixed.filter(segment=>!houseDividers.some(h=>
     Math.abs(h.a.x-segment.a.x)<EPS&&Math.abs(h.a.y-segment.a.y)<EPS&&
     Math.abs(h.b.x-segment.b.x)<EPS&&Math.abs(h.b.y-segment.b.y)<EPS));
-  const rejections={angle:0,house:0,orbs:0,leaders:0,leaderOrbs:0,valid:0};
   const safe=(records,allowHouseCrossing,allowLeaderBehindOrb)=>{
     const full=[...records,...other];
     for(let i=0;i<full.length;i++){
       const a=full[i],line=segmentFor(a,slot);
       if(records.includes(a)){
-        if(angleAxes.some(f=>properIntersection(line.a,line.b,f.a,f.b))){rejections.angle++;return false}
-        if(!allowHouseCrossing&&houseDividers.some(f=>properIntersection(line.a,line.b,f.a,f.b))){rejections.house++;return false}
+        if(angleAxes.some(f=>properIntersection(line.a,line.b,f.a,f.b)))return false
+        if(!allowHouseCrossing&&houseDividers.some(f=>properIntersection(line.a,line.b,f.a,f.b)))return false
       }
       for(let j=i+1;j<full.length;j++){
         const b=full[j];
@@ -184,18 +183,18 @@ function redistributeCrowdedSign(solution,slot,wheel,sign){
         // collective solution; each crowded sign is repaired in its own pass.
         if(!records.includes(a)&&!records.includes(b))continue;
         const otherLine=segmentFor(b,slot);
-        if(Math.hypot(a.point.x-b.point.x,a.point.y-b.point.y)<sepDistance-EPS){rejections.orbs++;return false}
+        if(Math.hypot(a.point.x-b.point.x,a.point.y-b.point.y)<sepDistance-EPS)return false
         if(records.includes(a)||records.includes(b)){
-          if(properIntersection(line.a,line.b,otherLine.a,otherLine.b)){rejections.leaders++;return false}
+          if(properIntersection(line.a,line.b,otherLine.a,otherLine.b))return false
           // As a final fallback the leader may pass BEHIND another opaque
           // glyph orb. The line still points to its exact zodiac longitude;
           // leader-to-leader crossings remain prohibited.
-          if(!allowLeaderBehindOrb&&segmentDistance(a.point,otherLine.a,otherLine.b)<leaderClearance-EPS){rejections.leaderOrbs++;return false}
-          if(!allowLeaderBehindOrb&&segmentDistance(b.point,line.a,line.b)<leaderClearance-EPS){rejections.leaderOrbs++;return false}
+          if(!allowLeaderBehindOrb&&segmentDistance(a.point,otherLine.a,otherLine.b)<leaderClearance-EPS)return false
+          if(!allowLeaderBehindOrb&&segmentDistance(b.point,line.a,line.b)<leaderClearance-EPS)return false
         }
       }
     }
-    rejections.valid++;return true;
+    return true;
   };
   let best=null;
   // Preserve house dividers whenever possible. In an impossibly crowded
@@ -229,7 +228,6 @@ function redistributeCrowdedSign(solution,slot,wheel,sign){
     }
     if(stageBest){best=stageBest;break}
   }
-  wheel.dataset['placementCrowdedTrace'+slot+sign]=JSON.stringify(rejections);
   if(!best)return false;
   best.records.forEach((candidate,index)=>{
     Object.assign(group[index],candidate,{tangentialRepair:true,
@@ -390,7 +388,6 @@ function solveOrReuse(wheel,slot){
     input=slotGeometrySignature(wheel,slot);
   const sameInput=wheel.dataset[key]===input;
   const validGeometry=slotOrbsStayOnRingAndClear(wheel,slot);
-  wheel.dataset['placementReuseCheck'+slot]=sameInput+':'+validGeometry;
   if(sameInput&&validGeometry){
     return{items:[],crossings:Number(wheel.dataset[crossingsKey]||0),
       hits:Number(wheel.dataset[hitsKey]||0),reused:true};
