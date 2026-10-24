@@ -410,7 +410,15 @@ try{
      const d=Math.hypot(all[i].x-all[j].x,all[i].y-all[j].y);
      if(d<2*radius+6-.1)collisions.push({a:all[i].id,b:all[j].id,d:+d.toFixed(2)});
    }
-   return {measured,threshold,collisions};
+   const saturnExact=polar(450,subjects.saturn);
+   const nearSaturn=all.filter(g=>g.id!=='saturn').map(g=>({
+     id:g.id,distance:+Math.hypot(g.x-saturnExact.x,g.y-saturnExact.y).toFixed(3)
+   })).sort((a,b)=>a.distance-b.distance).slice(0,5);
+   const blocked=wheel.dataset.placementRadialLeaderBlocked||'';
+   return {measured,threshold,collisions,nearSaturn,blocked,
+     radialLeadersRestored:wheel.dataset.placementRadialLeadersRestored,
+     houseRepair:wheel.dataset.placementHouseBubbleClearanceRepairs,
+     leaderCrossings:wheel.dataset.placementLeaderCrossings};
  });
  console.log('LIBRA_HOUSE_STRAIGHT_LEADERS_TRACE',JSON.stringify(houseBorder));
  assert.deepEqual(houseBorder.collisions,[],'The three Libra placements must not overlap other orbs');
