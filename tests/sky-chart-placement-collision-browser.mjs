@@ -465,5 +465,40 @@ try{
    assert.ok(item.leaderStartDistance<.15,id+' leader must begin at the glyph center');
  }
  assert.deepEqual(errors,[]);
+ // Direct regression for the reported Moon and Sun: even if a prior
+ // renderer has put their circles in the neighboring HOUSE, an arrange()
+ // pass must restore their true house with no radial movement.
+ const moonSun=await page.evaluate(()=>{
+   const wheel=document.querySelector('#skyFoundationWheelMount > svg.sky-foundation-wheel').cloneNode(true);
+   const c={x:600,y:600},polar=(r,d)=>{
+     const a=(d-180)*Math.PI/180;return{x:c.x+r*Math.cos(a),y:c.y+r*Math.sin(a)};
+   };
+   const forced={moon:12,sun:222},fixed=[];
+   for(const [id,display] of Object.entries(forced)){
+     const group=wheel.querySelector('[data-layer="placements"] > g[data-sky="B"][data-placement="'+id+'"]');
+     if(!group)throw new Error('Missing Sky B '+id);
+     const lane=Number(group.dataset.placementAuthoredLane),point=polar(lane,display);
+     group.dataset.displayLongitude=String(display);
+     group.setAttribute('transform','translate('+point.x+' '+point.y+')');
+   }
+   window.RelphiPlacementCollisionOrder.arrange(wheel);
+   const cusp=[...wheel.querySelectorAll('[data-layer="b-houses"] line.sky-foundation-divider')]
+     .map(line=>{
+       const x=Number(line.getAttribute('x2')),y=Number(line.getAttribute('y2'));
+       return ((Math.atan2(y-600,x-600)*180/Math.PI+540)%360);
+     }).sort((a,b)=>a-b);
+   const house=d=>{const i=cusp.findLastIndex(x=>x<=((d%360)+360)%360+1e-6);return i<0?cusp.length-1:i};
+   for(const id of Object.keys(forced)){
+     const group=wheel.querySelector('[data-layer="placements"] > g[data-sky="B"][data-placement="'+id+'"]');
+     const m=group.transform.baseVal.consolidate().matrix,exact=Number(group.dataset.exactLongitude),
+       display=Number(group.dataset.displayLongitude),lane=Number(group.dataset.placementAuthoredLane);
+     fixed.push({id,exact,display,sameHouse:house(exact)===house(display),
+       radiusError:Math.abs(Math.hypot(m.e-600,m.f-600)-lane)});
+   }
+   return fixed;
+ });
+ console.log('MOON_SUN_HOUSE_REPAIR_TRACE',JSON.stringify(moonSun));
+ assert.ok(moonSun.every(item=>item.sameHouse&&item.radiusError<.15),
+   'Moon and Sun must be returned to their true Sky B houses on the original circumference');
  console.log('PASS crowded Oct 23 A/B and five-body Sky B house-cusp cluster stay separated on fixed circles');
 }finally{await browser.close()}
