@@ -217,8 +217,10 @@ function repairBubbleClearance(solution,slot,wheel){
     if(!improved)break;
   }
   const unresolved=overlapPairs();
-  wheel.dataset.placementTangentialClearanceRepairs=String(repaired);
-  wheel.dataset.placementUnresolvedBubbleOverlaps=String(unresolved.length);
+  wheel.dataset.placementTangentialClearanceRepairs=String(
+    Number(wheel.dataset.placementTangentialClearanceRepairs||0)+repaired);
+  wheel.dataset.placementUnresolvedBubbleOverlaps=String(
+    Number(wheel.dataset.placementUnresolvedBubbleOverlaps||0)+unresolved.length);
   if(unresolved.length)console.warn('[Sky Chart placement layout] No valid same-circumference clearance',slot,unresolved.length);
   return solution;
 }
@@ -266,6 +268,8 @@ function arrange(wheel){
     // would be ineligible.
     if(wheel.dataset.singleSky&&wheel.dataset.wheelGeometry!=='comparison')return;arranging=true;
   try{
+    wheel.dataset.placementTangentialClearanceRepairs='0';
+    wheel.dataset.placementUnresolvedBubbleOverlaps='0';
     const a=solveSlot(wheel,'A'),b=solveSlot(wheel,'B');
     wheel.dataset.placementLeaderCrossings=String(a.crossings+b.crossings);
     wheel.dataset.placementLeaderGlyphHits=String(a.hits+b.hits);
