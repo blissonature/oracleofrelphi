@@ -28,6 +28,7 @@
   let selectedObserver = null;
   let observedSelected = null;
   let hoverFilterActive = false;
+  const whereWhenEditing = () => document.documentElement.dataset.skyWhereWhenEditing === 'true';
 
   function relationshipTarget(target) {
     return target?.closest?.(
@@ -58,9 +59,14 @@
 
     const panel = document.getElementById('skySelectedRelationship');
     if (panel) {
-      panel.hidden = true;
-      panel.removeAttribute('data-relation-index');
-      panel.dataset.selectionSource = 'awaiting-explicit-user-selection';
+      // Idempotence matters: the selected-panel MutationObserver listens to
+      // these attributes. Writing the same hidden value every animation frame
+      // previously scheduled an unbounded visibility reconciliation loop.
+      if (!panel.hidden) panel.hidden = true;
+      if (panel.hasAttribute('data-relation-index')) panel.removeAttribute('data-relation-index');
+      if (panel.dataset.selectionSource !== 'awaiting-explicit-user-selection') {
+        panel.dataset.selectionSource = 'awaiting-explicit-user-selection';
+      }
     }
 
     document.getElementById('skyFoundationRoot')?.setAttribute(
@@ -71,7 +77,7 @@
 
   function synchronize() {
     queued = false;
-    if (applying) return;
+    if (applying || whereWhenEditing()) return;
     applying = true;
 
     const rows = new Map(
@@ -113,7 +119,7 @@
   }
 
   function schedule() {
-    if (queued) return;
+    if (queued || whereWhenEditing()) return;
     queued = true;
     requestAnimationFrame(synchronize);
   }
@@ -207,6 +213,9 @@
       if (!isHoverFilterEvent(event)) scheduleStructural();
     });
 
+    window.addEventListener('relphi:sky-where-when-edit-state-changed', event => {
+      if (event.detail?.active === false) scheduleStructural();
+    });
     document.documentElement.dataset.skyRelationshipSelectionPolicy = 'awaiting-user';
     scheduleStructural();
   }
