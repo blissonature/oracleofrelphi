@@ -624,6 +624,16 @@ function solveSlot(wheel,slot){
   }
   wheel.dataset.placementHouseSectorFallbacks=String(houseFallbacks);
   solution=resolveImpossibleHouseCrowding(solution,slot,wheel);
+  const bubble=Number(spec()?.comparison?.placementBubbleRadius)||19.7,
+    gap=Math.max(6,Number(spec()?.comparison?.placementClearance)||6);
+  let finalOverlaps=0;
+  for(let i=0;i<solution.length;i++)for(let j=i+1;j<solution.length;j++){
+    const first=solution[i],second=solution[j],
+      centerGap=Math.hypot(first.point.x-second.point.x,first.point.y-second.point.y),
+      minimum=(first.bubbleScale||1)*bubble+(second.bubbleScale||1)*bubble+gap;
+    if(centerGap<minimum-.1)finalOverlaps++;
+  }
+  wheel.dataset['placementRemainingOverlaps'+slot]=String(finalOverlaps);
   solution.sort((a,b)=>a.item.exact-b.item.exact||a.item.index-b.item.index);
   solution.forEach((record,index)=>{
     const {item}=record,exact=record.exactPoint||exactPoint(record,slot);
@@ -726,6 +736,11 @@ function arrange(wheel){
     const a=solveOrReuse(wheel,'A'),b=solveOrReuse(wheel,'B');
     wheel.dataset.placementLeaderCrossings=String(a.crossings+b.crossings);
     wheel.dataset.placementLeaderGlyphHits=String(a.hits+b.hits);
+    // Diagnostics must describe the final rendered (possibly locally
+    // compacted) circles, not obsolete pre-repair collision candidates.
+    wheel.dataset.placementUnresolvedBubbleOverlaps=String(
+      Number(wheel.dataset.placementRemainingOverlapsA||0)+
+      Number(wheel.dataset.placementRemainingOverlapsB||0));
     wheel.dataset.placementCircularOrder='preserved';
     wheel.dataset.crossSignDisplacement='forbidden';
     wheel.dataset.placementCollisionOrder='same-sign-fixed-circumference-v16';
