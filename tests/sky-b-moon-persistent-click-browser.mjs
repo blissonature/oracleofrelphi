@@ -35,10 +35,13 @@ try{
      },true);
    }
  });
- // Moving over Moon B must remain preview-only: no Relationships rows disappear.
+ // Hovering is preview-only: neither the visible list nor its match count changes.
+ await page.waitForFunction(()=>document.querySelector('#skyFoundationRelationshipCount')?.dataset.countLabel==='matches');
+ const hoverCountBefore=await page.locator('#skyFoundationRelationshipCount').getAttribute('data-match-count');
  await moon.hover({force:true});
  await page.waitForTimeout(100);
  assert.equal(await page.evaluate(()=>document.querySelectorAll('#skyFoundationRelationshipList > .is-wheel-selection-excluded').length),0,'Hover alone must not hide Relationships rows');
+ assert.equal(await page.locator('#skyFoundationRelationshipCount').getAttribute('data-match-count'),hoverCountBefore,'Hover must not change the matching Relationships count');
  await moon.click({force:true});
  await page.waitForTimeout(100);
  const trace=await page.evaluate(()=>({
@@ -108,10 +111,14 @@ try{
    const geometry=()=>[...document.querySelectorAll('#skyFoundationWheelMount [data-layer="aspects"] > line.sky-foundation-aspect:not(.sky-foundation-aspect-hit)')]
       .map(line=>['data-left-sky','data-left-placement','data-aspect','data-right-sky','data-right-placement','x1','y1','x2','y2'].map(name=>line.getAttribute(name)).join('|')).sort();
    window.__unfilteredWheelGeometry=geometry();
-   return {rows:window.__unfilteredRelationshipNodes.length,aspectLines:window.__unfilteredWheelGeometry.length};
+   const count=document.getElementById('skyFoundationRelationshipCount');
+   return {rows:window.__unfilteredRelationshipNodes.length,aspectLines:window.__unfilteredWheelGeometry.length,
+     shown:window.__unfilteredRelationshipNodes.filter(row=>getComputedStyle(row).display!=='none').length,
+     count:Number(count?.dataset.matchCount)};
  });
  assert.ok(baseline.rows>1,'Fixture must contain multiple Relationships tiles');
  assert.ok(baseline.aspectLines>0,'Fixture must show aspect lines on the comparison wheel');
+ assert.equal(baseline.count,baseline.shown,'Unselected count must match the tiles actually displayed');
  await moon.click({force:true});
  await page.mouse.move(10,10);
  await page.waitForTimeout(150);
@@ -119,13 +126,29 @@ try{
  const focusRows=await page.evaluate(()=>{
    const rows=[...document.querySelectorAll('#skyFoundationRelationshipList > .sky-foundation-relationship-row[data-relation-index]')];
    const excluded=rows.filter(row=>row.classList.contains('is-wheel-selection-excluded'));
+   const count=document.getElementById('skyFoundationRelationshipCount');
    return {total:rows.length,excluded:excluded.length,
      incorrectlyVisible:excluded.filter(row=>getComputedStyle(row).display!=='none').length,
-     matches:rows.filter(row=>!row.classList.contains('is-wheel-selection-excluded')).length};
+     matches:rows.filter(row=>!row.classList.contains('is-wheel-selection-excluded')).length,
+     shown:rows.filter(row=>getComputedStyle(row).display!=='none').length,
+     count:Number(count.dataset.matchCount),countLabel:count.dataset.countLabel,
+     ariaLabel:count.getAttribute('aria-label')};
  });
  assert.ok(focusRows.excluded>0,'Locked Moon B selection must temporarily hide unrelated relationships');
  assert.ok(focusRows.matches>0,'Locked Moon B selection must keep matching relationships visible');
  assert.equal(focusRows.incorrectlyVisible,0,'Unrelated relationships must be display:none');
+ assert.ok(focusRows.shown>0,'At least one matching relationship must remain displayed');
+ assert.equal(focusRows.count,focusRows.shown,'Locked Moon B match count must reflect only displayed Relationships tiles');
+ assert.equal(focusRows.countLabel,'matches','The displayed number must retain the matches label');
+ assert.equal(focusRows.ariaLabel,focusRows.shown+' matching relationships','Accessible match count must update with the selection');
+ // Harmonic Window may re-apply after selection. It must not restore the unfiltered count.
+ await page.evaluate(()=>window.dispatchEvent(new Event('relphi:sky-harmonic-window-model-changed')));
+ await page.waitForTimeout(200);
+ const reappliedCount=await page.evaluate(()=>({
+   count:Number(document.getElementById('skyFoundationRelationshipCount').dataset.matchCount),
+   shown:[...document.querySelectorAll('#skyFoundationRelationshipList > .sky-foundation-relationship-row')].filter(row=>getComputedStyle(row).display!=='none').length
+ }));
+ assert.equal(reappliedCount.count,reappliedCount.shown,'Harmonic Window re-apply must respect the temporary selection count');
  const snapshot=await page.evaluate(()=>{
    const rows=[...document.querySelectorAll('#skyFoundationRelationshipList > .sky-foundation-relationship-row')];
    const lines=[...document.querySelectorAll('#skyFoundationWheelMount [data-layer="aspects"] > line.sky-foundation-aspect:not(.sky-foundation-aspect-hit)')]
@@ -143,13 +166,20 @@ try{
  await page.waitForTimeout(150);
  const restored=await page.evaluate(()=>{
    const rows=[...document.querySelectorAll('#skyFoundationRelationshipList > .sky-foundation-relationship-row')];
+   const count=document.getElementById('skyFoundationRelationshipCount');
    return {excluded:rows.filter(row=>row.classList.contains('is-wheel-selection-excluded')).length,
      sameRows:rows.length===window.__unfilteredRelationshipNodes.length&&rows.every((row,i)=>row===window.__unfilteredRelationshipNodes[i]),
-     moonLocked:!!document.querySelector('#skyFoundationWheelMount [data-interactive="placement"][data-sky="B"][data-placement="moon"].is-selected')};
+     moonLocked:!!document.querySelector('#skyFoundationWheelMount [data-interactive="placement"][data-sky="B"][data-placement="moon"].is-selected'),
+     shown:rows.filter(row=>getComputedStyle(row).display!=='none').length,
+     count:Number(count.dataset.matchCount),ariaLabel:count.getAttribute('aria-label')};
  });
  assert.equal(restored.excluded,0,'Real blank-area click restores temporarily hidden Relationships tiles');
  assert.equal(restored.sameRows,true,'Blank-area clear restores the full list in its original order without rebuilding');
  assert.equal(restored.moonLocked,false,'Blank-area clear also removes the Moon B wheel selection');
+ assert.equal(restored.count,restored.shown,'Clearing Moon B restores the normal displayed match count');
+ assert.equal(restored.count,baseline.count,'Clearing Moon B restores the original count');
+ assert.equal(restored.ariaLabel,restored.shown+' matching relationships','Accessible count must restore after clear');
+ console.log('PASS Moon B temporarily updates match count and restores it after real blank-area click');
  console.log('PASS locked Moon B shows matching Relationships only, clear restores all');
   console.log('PASS helper popup -> Increase to HR 3 -> select Moon B -> leave remains selected');
   console.log('PASS Moon B wheel and side-panel clicks persist, including after Harmonic Window 2→3 transition');
