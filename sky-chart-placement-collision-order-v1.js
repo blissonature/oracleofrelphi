@@ -81,7 +81,11 @@ function ordinaryItems(wheel,slot){
 function solveSignGroup(items,lane){
   if(!items.length)return[];
   const baseSep=minimumSeparation(lane),sign=items[0].sign,start=sign*30,end=start+30;
-  for(const multiplier of [1,1.05,1.1,1.16,1.23]){
+  // Prefer the widest same-circumference spacing the sign can contain.
+  // The previous ascending search always accepted multiplier 1 first,
+  // leaving clusters visually cramped even when spare arc was available.
+  // Densely populated signs gracefully fall back to smaller increments.
+  for(const multiplier of [1.4,1.35,1.3,1.25,1.2,1.15,1.1,1.05,1]){
     const sep=baseSep*multiplier,lower=start+sep/2+.02,upper=end-sep/2-.02-(items.length-1)*sep;
     if(lower>upper)continue;
     const targets=items.map((item,index)=>item.exact-index*sep),fit=isotonic(targets,items.map(weight));
