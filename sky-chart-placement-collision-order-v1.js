@@ -457,6 +457,7 @@ function preferRadialLeadersAndHouseClearance(solution,slot,wheel){
     }
     repaired++;
   }
+  wheel.dataset.placementRadialLeaderBlocked='';
   // A previous sign-wide solve may leave a planet unnecessarily bent even
   // after its neighbors have moved clear of it. Restore radial stalks LAST,
   // using the *final* complete layout, without disturbing any other glyph.
@@ -465,13 +466,23 @@ function preferRadialLeadersAndHouseClearance(solution,slot,wheel){
     Math.abs(a.offset)-Math.abs(b.offset))){
     if(Math.abs(record.offset)<=.06)continue;
     const lane=record.item.authoredLane,point=polar(lane,record.item.exact);
-    if(!boundaryClear(point))continue;
-    if(solution.some(r=>r!==record&&circularDistance(point,r.point)<diameter-.05))continue;
+    if(!boundaryClear(point)){
+      wheel.dataset.placementRadialLeaderBlocked+=record.item.id+':house;';
+      continue;
+    }
+    const blockers=solution.filter(r=>r!==record&&circularDistance(point,r.point)<diameter-.05);
+    if(blockers.length){
+      wheel.dataset.placementRadialLeaderBlocked+=record.item.id+':orb-'+blockers.map(r=>r.item.id).join(',')+';';
+      continue;
+    }
     const trial={...record,display:record.item.exact,point,lane,offset:0,
       exactPoint:exactPoint(record,slot)};
     const currentIndex=solution.indexOf(record);
     const proposal=[...solution];proposal[currentIndex]=trial;
-    if(leaderCrossings(proposal,slot)>0)continue;
+    if(leaderCrossings(proposal,slot)>0){
+      wheel.dataset.placementRadialLeaderBlocked+=record.item.id+':leaders;';
+      continue;
+    }
     Object.assign(record,trial,{radialLeaderRestored:true});
     straightened++;
   }
