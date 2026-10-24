@@ -208,7 +208,11 @@ try{
  // the user's Aries 7°04′ BEFORE running the collision solver. This ensures
  // the regression really contains five Aries placements on the house cusp.
  await boundaryPage.evaluate(()=>{
-   const wheel=document.querySelector('#skyFoundationWheelMount > svg.sky-foundation-wheel');
+   const source=document.querySelector('#skyFoundationWheelMount > svg.sky-foundation-wheel');
+   // Work on an independent copy: the site's live-sky observer can rebuild
+   // derived Fortune while this regression executes, hiding the real bug.
+   const wheel=source.cloneNode(true);
+   window.__skyBHouseCuspTestWheel=wheel;
    const group=wheel.querySelector('[data-layer="placements"] > g[data-sky="B"][data-placement="part-of-fortune"]');
    const leader=wheel.querySelector('[data-layer="leaders"] line[data-sky="B"][data-placement="part-of-fortune"]:not([data-angle])');
    if(!group||!leader)throw new Error('Missing Sky B Part of Fortune for screenshot regression');
@@ -226,7 +230,7 @@ try{
    window.RelphiPlacementCollisionOrder.arrange(wheel);
  });
  const boundary=await boundaryPage.evaluate(()=>{
-   const wheel=document.querySelector('#skyFoundationWheelMount > svg.sky-foundation-wheel');
+   const wheel=window.__skyBHouseCuspTestWheel;
    const bubble=Number(window.RelphiSkyWheelSpec.comparison.placementBubbleRadius),
      clearance=Math.max(6,Number(window.RelphiSkyWheelSpec.comparison.placementClearance)||6);
    const items=[...wheel.querySelectorAll('[data-layer="placements"] > g[data-sky="B"][data-placement]:not([data-angle-axis="true"]):not([data-placement="moon-range"])')]
