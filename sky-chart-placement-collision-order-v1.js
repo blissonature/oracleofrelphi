@@ -260,55 +260,36 @@ function solveSlot(wheel,slot){
 // Preserve a valid resolved ring until that sky's geometry actually changes.
 // Changing Sky A's house dividers must never re-sanitize Sky B and inadvertently
 // return its safely separated orbs to overlapping exact anchors.
+// Cache only immutable layout inputs, never the output SVG transforms. Other
+// controllers may restyle glyphs without changing the sky's placements or
+// house boundaries. Such changes must not trigger a destructive layout rerun.
 function slotGeometrySignature(wheel,slot){
-  const groups=[...wheel.querySelectorAll(`[data-layer="placements"] > g[data-sky="${slot}"][data-placement]:not([data-angle-axis="true"])`)];
-  const leaders=[...wheel.querySelectorAll(`[data-layer="leaders"] line[data-sky="${slot}"][data-placement]`)];
-  const fixed=fixedSegments(wheel,slot);
+  const items=ordinaryItems(wheel,slot),fixed=fixedSegments(wheel,slot);
   return JSON.stringify([
-    groups.map(g=>[g.dataset.placement,g.dataset.exactLongitude,g.dataset.placementAuthoredLane??g.dataset.placementLane,
-      g.getAttribute('transform')]),
-    leaders.map(l=>[l.dataset.placement,l.getAttribute('x1'),l.getAttribute('y1'),l.getAttribute('x2'),l.getAttribute('y2')]),
+    items.map(item=>[item.id,item.exact,item.authoredLane,item.authoredExactRadius]),
     fixed.map(segment=>[segment.a.x,segment.a.y,segment.b.x,segment.b.y])
   ]);
 }
-// Before rearranging an already drawn chart, examine the geometry instead of
-// trusting only a stale signature. Other controllers may touch line metadata
-// without changing any visible orb. A valid layout must be preserved as-is.
-function slotLayoutStillValid(wheel,slot){
-  const rejected=reason=>{wheel.dataset['placementReuseRejection'+slot]=reason;return false};
-  if(!String(wheel.dataset.placementCollisionOrder||'').startsWith('same-sign-fixed-circumference'))return rejected('1');
-  const items=ordinaryItems(wheel,slot),bubble=Number(spec()?.comparison?.placementBubbleRadius)||19.7;
-  const fixed=fixedSegments(wheel,slot),seen=[];
+function slotOrbsStayOnRingAndClear(wheel,slot){
+  const items=ordinaryItems(wheel,slot),bubble=Number(spec()?.comparison?.placementBubbleRadius)||19.7,
+    c=center(),points=[];
   for(const item of items){
     const matrix=item.group.transform?.baseVal?.consolidate()?.matrix;
-    if(!matrix||!Number.isFinite(matrix.e)||!Number.isFinite(matrix.f))return rejected('2');
-    const position={x:matrix.e,y:matrix.f},c=center();
-    if(!Number.isFinite(item.authoredLane)||Math.abs(Math.hypot(position.x-c.x,position.y-c.y)-item.authoredLane)>.1)return rejected('3');
-    const display=num(item.group.dataset.displayLongitude),expected=polar(item.authoredLane,display);
-    if(!Number.isFinite(display)||Math.hypot(position.x-expected.x,position.y-expected.y)>.2)return rejected('4');
-    if(Math.floor(norm(display)/30)!==item.sign)return rejected('5');
-    const leader=parseSegment(item.leader);
-    if(!leader||Math.hypot(leader.a.x-position.x,leader.a.y-position.y)>.25)return rejected('6');
-    if(Math.hypot(leader.b.x-exactPoint({item},slot).x,leader.b.y-exactPoint({item},slot).y)>.25)return rejected('7');
-    if(fixed.some(segment=>properIntersection(leader.a,leader.b,segment.a,segment.b)))return rejected('8');
-    seen.push({item,position,leader,display});
-  }
-  for(let i=0;i<seen.length;i++)for(let j=i+1;j<seen.length;j++){
-    const a=seen[i],b=seen[j];
-    if(Math.hypot(a.position.x-b.position.x,a.position.y-b.position.y)<2*bubble+2-EPS)return rejected('9');
-    if(a.item.sign===b.item.sign&&a.item.exact<b.item.exact&&a.display>=b.display-EPS)return rejected('10');
-    if(properIntersection(a.leader.a,a.leader.b,b.leader.a,b.leader.b))return rejected('11');
-    if(segmentDistance(a.position,b.leader.a,b.leader.b)<bubble+4-EPS)return rejected('12');
-    if(segmentDistance(b.position,a.leader.a,a.leader.b)<bubble+4-EPS)return rejected('13');
+    if(!matrix||!Number.isFinite(matrix.e)||!Number.isFinite(matrix.f))return false;
+    if(!Number.isFinite(item.authoredLane))return false;
+    const point={x:matrix.e,y:matrix.f};
+    if(Math.abs(Math.hypot(point.x-c.x,point.y-c.y)-item.authoredLane)>.1)return false;
+    if(points.some(other=>Math.hypot(point.x-other.x,point.y-other.y)<2*bubble+2-EPS))return false;
+    points.push(point);
   }
   return true;
 }
 function solveOrReuse(wheel,slot){
   const key='placementCollisionSignature'+slot,
     crossingsKey='placementSlotLeaderCrossings'+slot,
-    hitsKey='placementSlotLeaderHits'+slot;
-  if(wheel.dataset[key]===slotGeometrySignature(wheel,slot)||slotLayoutStillValid(wheel,slot)){
-    wheel.dataset[key]=slotGeometrySignature(wheel,slot);
+    hitsKey='placementSlotLeaderHits'+slot,
+    input=slotGeometrySignature(wheel,slot);
+  if(wheel.dataset[key]===input&&slotOrbsStayOnRingAndClear(wheel,slot)){
     return{items:[],crossings:Number(wheel.dataset[crossingsKey]||0),
       hits:Number(wheel.dataset[hitsKey]||0),reused:true};
   }
