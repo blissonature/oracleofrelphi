@@ -263,6 +263,18 @@
   opacity:.48!important;
   cursor:not-allowed!important;
 }
+/* Reading text clipboard action uses the canonical centered icon, never a word. */
+#shortListPanel .relphi-board-document-buttons > .relphi-copy-reading{
+  width:2.25rem!important;
+  min-width:2.25rem!important;
+  max-width:2.25rem!important;
+  height:2.25rem!important;
+  min-height:2.25rem!important;
+  max-height:2.25rem!important;
+  padding:0!important;
+  font-size:0!important;
+  line-height:0!important;
+}
 #shortListPanel .relphi-board-document-status{
   min-height:.85em!important;
   color:#655d56!important;
@@ -2464,21 +2476,22 @@ body.relphi-attune-open{overflow:hidden!important}
 /* Add uses exactly the same control box as the other Bespoke toolbar actions. */
 #shortListPanel .relphi-question-toolbar #relphiAddPosition{display:grid!important;place-items:center!important;width:2.25rem!important;min-width:2.25rem!important;max-width:2.25rem!important;height:2.25rem!important;min-height:2.25rem!important;max-height:2.25rem!important;margin:0!important;padding:0!important;border:1px solid #b9afa7!important;border-radius:7px!important;box-sizing:border-box!important}
 
-/* Copy is a text action; unlike the glyph controls it must not be forced into a square. */
+/* The Bespoke Copy action is now the same icon-only control as the reading Copy action. */
 #shortListPanel .relphi-question-toolbar #relphiCopyBespokeQuestions{
   display:inline-flex!important;
   align-items:center!important;
   justify-content:center!important;
-  width:auto!important;
-  min-width:3.6rem!important;
-  max-width:none!important;
+  width:2.25rem!important;
+  min-width:2.25rem!important;
+  max-width:2.25rem!important;
   height:2.25rem!important;
   min-height:2.25rem!important;
-  padding:0 .65rem!important;
+  max-height:2.25rem!important;
+  padding:0!important;
   color:#2f2925!important;
-  font-size:.68rem!important;
+  font-size:0!important;
   font-weight:850!important;
-  line-height:1!important;
+  line-height:0!important;
   white-space:nowrap!important;
 }
 #shortListPanel .relphi-bespoke-question-settings select[data-position-card-count]{

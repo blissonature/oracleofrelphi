@@ -1673,7 +1673,8 @@
     const copy=document.createElement('button');
     copy.type='button';
     copy.className='relphi-board-document-button relphi-copy-reading';
-    copy.textContent='Copy';
+    // Icon-only clipboard control; its action remains available through aria-label/title.
+    copy.textContent='';
     copy.disabled=!(ledgerBridge()?.serializeDrawingBoardReading?.()||'').trim();
     copy.title='Copy the reading text';
     copy.setAttribute('aria-label','Copy the reading text');
@@ -1683,7 +1684,7 @@
       if(status)status.textContent=ok?'Copied.':'Copy failed.';
       if(ok){
         copy.textContent='Copied';
-        window.setTimeout(()=>{if(copy.isConnected)copy.textContent='Copy';},1200);
+        window.setTimeout(()=>{if(copy.isConnected)copy.textContent='';},1200);
       }
     });
     actions.appendChild(copy);
@@ -2480,7 +2481,7 @@
     const clonedFrom=!draft.templateId&&draft.basedOnTemplateId?templateById(draft.basedOnTemplateId):null;
     return '<section class="relphi-referent-panel">'+
       (clonedFrom?'<div class="relphi-template-clone-note"><strong>Editing a copy of '+escapeHtml(clonedFrom.name)+'</strong><span>The original template stays untouched. Name and save this Bespoke version if you want to keep it; you can also continue without saving.</span></div>':'')+
-      '<div class="relphi-question-toolbar"><label class="relphi-question-select-all"><input type="checkbox" id="relphiSelectAllQuestions" aria-label="Select all questions for editing"> <span>Select all</span></label>'+bespokeQuestionControllerMarkup(draft)+'<div class="relphi-question-toolbar-actions"><button type="button" id="relphiCopyBespokeQuestions" class="relphi-button relphi-question-copy" aria-label="Copy all Bespoke questions and advanced settings">Copy</button><button type="button" id="relphiMoveQuestionsUp" class="relphi-question-icon-button" aria-label="Move selected questions up"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 18V6M7 11l5-5 5 5"></path></svg></button><button type="button" id="relphiMoveQuestionsDown" class="relphi-question-icon-button" aria-label="Move selected questions down"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 6v12M7 13l5 5 5-5"></path></svg></button><button type="button" id="relphiDeleteQuestions" class="relphi-question-icon-button" aria-label="Delete selected questions"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M7 7l10 10M17 7L7 17"></path></svg></button><button type="button" id="relphiAddPosition" class="relphi-question-icon-button" aria-label="Add question" '+(hasCards||draft.labels.length>=MAX_POSITIONS?'disabled':'')+'><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 6v12M6 12h12"></path></svg></button></div></div>'+
+      '<div class="relphi-question-toolbar"><label class="relphi-question-select-all"><input type="checkbox" id="relphiSelectAllQuestions" aria-label="Select all questions for editing"> <span>Select all</span></label>'+bespokeQuestionControllerMarkup(draft)+'<div class="relphi-question-toolbar-actions"><button type="button" id="relphiCopyBespokeQuestions" class="relphi-button relphi-question-copy" aria-label="Copy all Bespoke questions and advanced settings"></button><button type="button" id="relphiMoveQuestionsUp" class="relphi-question-icon-button" aria-label="Move selected questions up"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 18V6M7 11l5-5 5 5"></path></svg></button><button type="button" id="relphiMoveQuestionsDown" class="relphi-question-icon-button" aria-label="Move selected questions down"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 6v12M7 13l5 5 5-5"></path></svg></button><button type="button" id="relphiDeleteQuestions" class="relphi-question-icon-button" aria-label="Delete selected questions"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M7 7l10 10M17 7L7 17"></path></svg></button><button type="button" id="relphiAddPosition" class="relphi-question-icon-button" aria-label="Add question" '+(hasCards||draft.labels.length>=MAX_POSITIONS?'disabled':'')+'><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 6v12M6 12h12"></path></svg></button></div></div>'+
       '<div id="relphiPositionLabels">'+labelsMarkup(draft.labels,draft)+'</div>'+
       '<div class="relphi-bespoke-appearance-host"></div>'+
       '<div class="relphi-template-save"><input id="relphiTemplateName" class="'+((draft.templateName||'Unnamed Template')==='Unnamed Template'?'is-unnamed':'')+'" type="text" maxlength="60" aria-label="Template name" value="'+escapeHtml(draft.templateName||'Unnamed Template')+'" '+(hasCards?'disabled':'')+'><button type="button" id="relphiSaveTemplate" '+(hasCards?'disabled':'')+'>Save template</button></div>'+
@@ -2907,7 +2908,7 @@
       button.setAttribute('aria-label',ok?'Bespoke questions copied':'Copy Bespoke questions failed');
       window.setTimeout(()=>{
         if(!button.isConnected)return;
-        button.textContent='Copy';
+        button.textContent='';
         button.setAttribute('aria-label','Copy all Bespoke questions and advanced settings');
       },1200);
     });
