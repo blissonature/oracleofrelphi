@@ -152,6 +152,63 @@ function sanitize(solution,slot,wheel){
 // Every orb has a fixed authored circumference. When leader sanitization
 // returns placements to their exact longitude, solve any remaining collisions
 // tangentially on THAT SAME circumference. No radial candidates are legal.
+// A chain of closely spaced longitudes cannot always be repaired one orb at a
+// time: the first orb has nowhere to move until its neighbors move together.
+// Solve the entire crowded sign as a unit, always on its authored circumference.
+function redistributeCrowdedSign(solution,slot,wheel,sign){
+  const group=solution.filter(record=>record.item.sign===sign).sort((a,b)=>a.item.exact-b.item.exact||a.item.index-b.item.index);
+  if(group.length<2)return false;
+  const other=solution.filter(record=>record.item.sign!==sign);
+  const shared=spec()?.comparison||{},bubble=Number(shared.placementBubbleRadius)||19.7,
+    sepDistance=2*bubble+2,leaderClearance=bubble+4,fixed=fixedSegments(wheel,slot);
+  const lane=group[0].item.authoredLane,start=sign*30,end=start+30;
+  if(!Number.isFinite(lane)||group.some(record=>Math.abs(record.item.authoredLane-lane)>EPS))return false;
+  const safe=(records)=>{
+    const full=[...records,...other];
+    for(let i=0;i<full.length;i++){
+      const a=full[i],line=segmentFor(a,slot);
+      if(records.includes(a)&&fixed.some(f=>properIntersection(line.a,line.b,f.a,f.b)))return false;
+      for(let j=i+1;j<full.length;j++){
+        const b=full[j],otherLine=segmentFor(b,slot);
+        if(Math.hypot(a.point.x-b.point.x,a.point.y-b.point.y)<sepDistance-EPS)return false;
+        if(records.includes(a)||records.includes(b)){
+          if(properIntersection(line.a,line.b,otherLine.a,otherLine.b))return false;
+          if(segmentDistance(a.point,otherLine.a,otherLine.b)<leaderClearance-EPS)return false;
+          if(segmentDistance(b.point,line.a,line.b)<leaderClearance-EPS)return false;
+        }
+      }
+    }
+    return true;
+  };
+  let best=null;
+  // Leave room at each sign edge for the full glyph radius. Search broad,
+  // legible spacing first, but never allow the search to leave this 30° sign.
+  const sepBase=minimumSeparation(lane);
+  for(const multiplier of [1.4,1.3,1.2,1.1,1]){
+    const sep=sepBase*multiplier,low=start+sep/2+.02,
+      high=end-sep/2-.02-(group.length-1)*sep;
+    if(low>high+EPS)continue;
+    const intervals=Math.max(1,Math.ceil((high-low)/.2));
+    for(let step=0;step<=intervals;step++){
+      const first=low+(high-low)*step/intervals;
+      const records=group.map((record,i)=>{
+        const display=first+i*sep;
+        return {...record,display,lane,point:polar(lane,display),
+          exactPoint:record.exactPoint||exactPoint(record,slot),offset:display-record.item.exact};
+      });
+      if(records.some(rec=>Math.abs(rec.offset)>19))continue;
+      if(!safe(records))continue;
+      const penalty=records.reduce((n,r)=>n+Math.abs(r.offset)*weight(r.item),0);
+      const score=penalty+100*(1.4-multiplier);
+      if(!best||score<best.score)best={records,score};
+    }
+  }
+  if(!best)return false;
+  best.records.forEach((candidate,index)=>{
+    Object.assign(group[index],candidate,{tangentialRepair:true});
+  });
+  return true;
+}
 function repairBubbleClearance(solution,slot,wheel){
   if(solution.length<2)return solution;
   const shared=spec()?.comparison||{},bubble=Number(shared.placementBubbleRadius)||19.7,
@@ -189,6 +246,10 @@ function repairBubbleClearance(solution,slot,wheel){
     return true;
   };
   let repaired=0;
+  // Resolve connected overlap chains together before local single-orb search.
+  // This avoids returning Moon/Neptune/Saturn to mutually overlapping exacts.
+  const crowdedSigns=new Set(overlapPairs().flatMap(({i,j})=>[solution[i].item.sign,solution[j].item.sign]));
+  for(const sign of crowdedSigns)if(redistributeCrowdedSign(solution,slot,wheel,sign))repaired++;
   for(let pass=0;pass<solution.length*4;pass++){
     const overlaps=overlapPairs();
     if(!overlaps.length)break;
