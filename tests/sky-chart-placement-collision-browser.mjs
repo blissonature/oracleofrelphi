@@ -39,7 +39,7 @@ try{
   const wheel=document.querySelector('#skyFoundationWheelMount > svg.sky-foundation-wheel'),spec=window.RelphiSkyWheelSpec.comparison;
   const parse=(group)=>{
    const match=group.getAttribute('transform')?.match(/translate\(\s*(-?[0-9.eE+]+)[ ,]+(-?[0-9.eE+]+)/);
-   const x=Number(match?.[1]),y=Number(match?.[2]);
+   const x=match?Number(match[1]):NaN,y=match?Number(match[2]):NaN;
    return {id:group.dataset.placement,exact:Number(group.dataset.exactLongitude),display:Number(group.dataset.displayLongitude),
      x,y,fallback:group.dataset.placementOrderFallback,offset:Number(group.dataset.placementTangentialOffset),
      lane:Number(group.dataset.placementLane)};
@@ -47,14 +47,16 @@ try{
   const report={metadata:{order:wheel.dataset.placementCollisionOrder,crossings:wheel.dataset.placementLeaderCrossings,
    leaderHits:wheel.dataset.placementLeaderGlyphHits},radius:spec.placementBubbleRadius,slots:{}};
   for(const slot of ['A','B']){
-   const items=[...wheel.querySelectorAll('[data-layer="placements"] > g[data-sky="'+slot+'"][data-placement]:not([data-angle-axis="true"]):not([data-placement="moon-range"])')].map(parse).filter(g=>Number.isFinite(g.x)&&Number.isFinite(g.y));
+   const raw=[...wheel.querySelectorAll('[data-layer="placements"] > g[data-sky="'+slot+'"][data-placement]:not([data-angle-axis="true"]):not([data-placement="moon-range"])')];
+   const items=raw.map(parse).filter(g=>Number.isFinite(g.x)&&Number.isFinite(g.y));
+   report.slots[slot]={rawCount:raw.length,sample:raw.slice(0,5).map(g=>({name:g.dataset.placement,transform:g.getAttribute('transform')}))};
    const collisions=[];
    for(let i=0;i<items.length;i++)for(let j=i+1;j<items.length;j++){
     const a=items[i],b=items[j],distance=Math.hypot(a.x-b.x,a.y-b.y),
       needed=2*spec.placementBubbleRadius+2;
     if(distance<needed)collisions.push({a:a.id,b:b.id,distance:Number(distance.toFixed(2)),needed});
    }
-   report.slots[slot]={items:items.length,fallBacks:items.filter(x=>x.fallback==='true').map(x=>x.id),
+   report.slots[slot]={...report.slots[slot],items:items.length,fallBacks:items.filter(x=>x.fallback==='true').map(x=>x.id),
     collisions,items:items.filter(x=>collisions.some(c=>c.a===x.id||c.b===x.id))};
   }
   return report;
