@@ -575,13 +575,16 @@ function resolveImpossibleHouseCrowding(solution,slot,wheel){
       for(let i=0;i<28;i++){const mid=(lower+upper)/2;if(fit(mid).possible)lower=mid;else upper=mid;}
     }else lower=1;
     const scale=+Math.max(.45,lower-.002).toFixed(4),cfg=fit(scale);
-    const targets=group.map((g,i)=>g.item.exact-i*cfg.sep),
-      iso=isotonic(targets,group.map(g=>weight(g.item)));
-    // Nonuniform, least-displaced angular layout, bounded by the true house.
-    const d=iso.map((v,i)=>Math.max(cfg.low-i*cfg.sep,Math.min(cfg.high-i*cfg.sep,v)));
-    for(let i=1;i<d.length;i++)d[i]=Math.max(d[i],d[i-1]);
-    for(let i=d.length-2;i>=0;i--)d[i]=Math.min(d[i],d[i+1]);
-    const angles=d.map((v,i)=>v+i*cfg.sep);
+    // Once a HOUSE is too narrow at the authored glyph diameter, equally
+    // spaced local centers are the unique safe fallback. Minimize the sum
+    // of weighted squared offsets while respecting BOTH house boundaries.
+    const weighted=group.reduce((a,g,i)=>({
+      sum:a.sum+weight(g.item)*(g.item.exact-i*cfg.sep),
+      total:a.total+weight(g.item)
+    }),{sum:0,total:0});
+    const first=Math.max(cfg.low,Math.min(cfg.high-(group.length-1)*cfg.sep,
+      weighted.sum/weighted.total));
+    const angles=group.map((_,i)=>first+i*cfg.sep);
     if(angles.some((a,i)=>a<cfg.low-.01||a>cfg.high+.01||
       !staysInActualHouse(group[i].item,a,cusps)))continue;
     for(let i=0;i<group.length;i++){
