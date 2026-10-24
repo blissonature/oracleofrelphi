@@ -109,7 +109,9 @@ try{
    }
    report.slots[slot]={...report.slots[slot],ariesPairs,items:items.length,offRing,
      isolated:isolated.map(x=>x.id),displacedIsolated,displacedHouses,
-     houseCusps:cuspLongitudes,meanAbsOffset:+meanAbsOffset.toFixed(3),fallBacks:items.filter(x=>x.fallback==='true').map(x=>x.id),
+     houseCusps:cuspLongitudes,houseArcDebug:wheel.dataset['placementHouseArcDebug'+slot],
+     houseSectorFallbacks:wheel.dataset.placementHouseSectorFallbacks,
+     meanAbsOffset:+meanAbsOffset.toFixed(3),fallBacks:items.filter(x=>x.fallback==='true').map(x=>x.id),
     collisions,collidingItems:items.filter(x=>collisions.some(c=>c.a===x.id||c.b===x.id))};
   }
   return report;
