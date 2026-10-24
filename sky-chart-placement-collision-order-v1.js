@@ -163,11 +163,19 @@ function redistributeCrowdedSign(solution,slot,wheel,sign){
     sepDistance=2*bubble+2,leaderClearance=bubble+4,fixed=fixedSegments(wheel,slot);
   const lane=group[0].item.authoredLane,start=sign*30,end=start+30;
   if(!Number.isFinite(lane)||group.some(record=>Math.abs(record.item.authoredLane-lane)>EPS))return false;
-  const safe=(records)=>{
+  const houseDividers=[...wheel.querySelectorAll(`[data-layer="${slot==='A'?'a-houses':'b-houses'}"] line.sky-foundation-divider`)]
+    .map(parseSegment).filter(Boolean);
+  const angleAxes=fixed.filter(segment=>!houseDividers.some(h=>
+    Math.abs(h.a.x-segment.a.x)<EPS&&Math.abs(h.a.y-segment.a.y)<EPS&&
+    Math.abs(h.b.x-segment.b.x)<EPS&&Math.abs(h.b.y-segment.b.y)<EPS));
+  const safe=(records,allowHouseCrossing)=>{
     const full=[...records,...other];
     for(let i=0;i<full.length;i++){
       const a=full[i],line=segmentFor(a,slot);
-      if(records.includes(a)&&fixed.some(f=>properIntersection(line.a,line.b,f.a,f.b)))return false;
+      if(records.includes(a)){
+        if(angleAxes.some(f=>properIntersection(line.a,line.b,f.a,f.b)))return false;
+        if(!allowHouseCrossing&&houseDividers.some(f=>properIntersection(line.a,line.b,f.a,f.b)))return false;
+      }
       for(let j=i+1;j<full.length;j++){
         const b=full[j],otherLine=segmentFor(b,slot);
         if(Math.hypot(a.point.x-b.point.x,a.point.y-b.point.y)<sepDistance-EPS)return false;
@@ -181,32 +189,44 @@ function redistributeCrowdedSign(solution,slot,wheel,sign){
     return true;
   };
   let best=null;
-  // Leave room at each sign edge for the full glyph radius. Search broad,
-  // legible spacing first, but never allow the search to leave this 30° sign.
-  const sepBase=minimumSeparation(lane);
-  for(const multiplier of [1.4,1.3,1.2,1.1,1]){
-    const sep=sepBase*multiplier,low=start+sep/2+.02,
-      high=end-sep/2-.02-(group.length-1)*sep;
-    if(low>high+EPS)continue;
-    const intervals=Math.max(1,Math.ceil((high-low)/.2));
-    for(let step=0;step<=intervals;step++){
-      const first=low+(high-low)*step/intervals;
-      const records=group.map((record,i)=>{
-        const display=first+i*sep;
-        return {...record,display,lane,point:polar(lane,display),
-          exactPoint:record.exactPoint||exactPoint(record,slot),offset:display-record.item.exact};
-      });
-      if(records.some(rec=>Math.abs(rec.offset)>19))continue;
-      if(!safe(records))continue;
-      const penalty=records.reduce((n,r)=>n+Math.abs(r.offset)*weight(r.item),0);
-      const score=penalty+100*(1.4-multiplier);
-      if(!best||score<best.score)best={records,score};
+  // Preserve house dividers whenever possible. In an impossibly crowded
+  // house segment, an exact-longitude leader may cross a house cusp rather
+  // than allowing glyphs to overlap or leave their fixed circumference.
+  for(const allowHouseCrossing of [false,true]){
+    let stageBest=null;
+    const sepBase=minimumSeparation(lane);
+    for(const multiplier of [1.4,1.3,1.2,1.1,1]){
+      const sep=sepBase*multiplier,low=start+sep/2+.02,
+        high=end-sep/2-.02-(group.length-1)*sep;
+      if(low>high+EPS)continue;
+      const intervals=Math.max(1,Math.ceil((high-low)/.2));
+      for(let step=0;step<=intervals;step++){
+        const first=low+(high-low)*step/intervals;
+        const records=group.map((record,i)=>{
+          const display=first+i*sep;
+          return {...record,display,lane,point:polar(lane,display),
+            exactPoint:record.exactPoint||exactPoint(record,slot),offset:display-record.item.exact};
+        });
+        if(records.some(rec=>Math.abs(rec.offset)>19))continue;
+        if(!safe(records,allowHouseCrossing))continue;
+        const crossings=records.reduce((n,r)=>{
+          const line=segmentFor(r,slot);
+          return n+houseDividers.filter(h=>properIntersection(line.a,line.b,h.a,h.b)).length;
+        },0);
+        const score=records.reduce((n,r)=>n+Math.abs(r.offset)*weight(r.item),0)
+          +80*(1.4-multiplier)+150*crossings;
+        if(!stageBest||score<stageBest.score)stageBest={records,score,crossings};
+      }
     }
+    if(stageBest){best=stageBest;break}
   }
   if(!best)return false;
   best.records.forEach((candidate,index)=>{
-    Object.assign(group[index],candidate,{tangentialRepair:true});
+    Object.assign(group[index],candidate,{tangentialRepair:true,
+      houseCrossingFallback:best.crossings>0});
   });
+  if(best.crossings)wheel.dataset.placementHouseDividerLeaderCrossings=String(
+    Number(wheel.dataset.placementHouseDividerLeaderCrossings||0)+best.crossings);
   return true;
 }
 function repairBubbleClearance(solution,slot,wheel){
@@ -313,6 +333,8 @@ function solveSlot(wheel,slot){
     item.group.dataset.placementOrderCorrected=Math.abs(record.offset)>1e-6?'true':'false';
     item.group.dataset.placementOrderFallback=record.fallback?'true':'false';
     item.group.dataset.placementTangentialClearance=record.tangentialRepair?'true':'false';
+    item.group.dataset.placementHouseCrossingFallback=record.houseCrossingFallback?'true':'false';
+    item.leader.dataset.placementHouseCrossingFallback=record.houseCrossingFallback?'true':'false';
     if(Math.abs(record.lane-item.authoredLane)>EPS)throw new Error('Placement orb left its authored circumference: '+item.id);
     item.group.dataset.placementTangentialOffset=record.offset.toFixed(3);
     item.leader.setAttribute('x1',record.point.x.toFixed(2));item.leader.setAttribute('y1',record.point.y.toFixed(2));
@@ -382,6 +404,7 @@ function arrange(wheel){
   try{
     wheel.dataset.placementTangentialClearanceRepairs='0';
     wheel.dataset.placementUnresolvedBubbleOverlaps='0';
+    wheel.dataset.placementHouseDividerLeaderCrossings='0';
     const a=solveOrReuse(wheel,'A'),b=solveOrReuse(wheel,'B');
     wheel.dataset.placementLeaderCrossings=String(a.crossings+b.crossings);
     wheel.dataset.placementLeaderGlyphHits=String(a.hits+b.hits);
