@@ -175,6 +175,54 @@ try{
  // A synthetic house boundary does not necessarily require a second adjustment:
  // do not demand gratuitous movement merely to register a repair counter.
  assert.ok(stressed.repeatedMovement<0.25,'Repeated collision layout passes must not move glyphs again');
+ // Five objects nearly coincident ACROSS Pisces/Aries. Previous sign-by-sign
+ // layout handled each sign but left a vertical stack across their boundary.
+ // Use the real comparison SVG and check the entire Sky B circumference.
+ const boundaryPage=await browser.newPage({viewport:{width:1440,height:980}});
+ const cuspB=fixture('B');
+ for(const [name,longitude] of Object.entries({
+   Neptune:359.2,Chiron:359.72,Moon:0.3,Saturn:1.05,'Part of Fortune':1.65
+ }))cuspB.placements[name].longitude=longitude;
+ await boundaryPage.route('https://unpkg.com/suncalc@1.9.0/suncalc.js',route=>route.fulfill({path:path.resolve('node_modules/suncalc/suncalc.js'),contentType:'application/javascript'}));
+ await boundaryPage.route('https://cdn.jsdelivr.net/npm/luxon@3/build/global/luxon.min.js',route=>route.fulfill({path:path.resolve('node_modules/luxon/build/global/luxon.min.js'),contentType:'application/javascript'}));
+ await boundaryPage.addInitScript(({a,b})=>{
+   localStorage.setItem('relphiSkyChartA',JSON.stringify(a));
+   localStorage.setItem('relphiSkyChartB',JSON.stringify(b));
+   localStorage.setItem('relphiSkyChartLastModeV1','comparison');
+ },{a:fixture('A'),b:cuspB});
+ await boundaryPage.goto('http://127.0.0.1:4173/sky-chart.html',{waitUntil:'domcontentloaded'});
+ await boundaryPage.waitForFunction(()=>document.querySelector('#skyFoundationWheelMount > svg.sky-foundation-wheel')?.dataset.placementCollisionOrder?.includes('same-sign'),{timeout:30000});
+ await boundaryPage.waitForTimeout(450);
+ const boundary=await boundaryPage.evaluate(()=>{
+   const wheel=document.querySelector('#skyFoundationWheelMount > svg.sky-foundation-wheel');
+   const bubble=Number(window.RelphiSkyWheelSpec.comparison.placementBubbleRadius);
+   const items=[...wheel.querySelectorAll('[data-layer="placements"] > g[data-sky="B"][data-placement]:not([data-angle-axis="true"]):not([data-placement="moon-range"])')]
+     .map(g=>{const m=g.transform.baseVal.consolidate()?.matrix;
+       return {id:g.dataset.placement,exact:Number(g.dataset.exactLongitude),display:Number(g.dataset.displayLongitude),
+         x:m.e,y:m.f,lane:Number(g.dataset.placementAuthoredLane)}});
+   const collisions=[];
+   for(let i=0;i<items.length;i++)for(let j=i+1;j<items.length;j++){
+     const a=items[i],b=items[j],dist=Math.hypot(a.x-b.x,a.y-b.y);
+     if(dist<2*bubble+2-.1)collisions.push({a:a.id,b:b.id,distance:+dist.toFixed(3)});
+   }
+   const ringErrors=items.filter(a=>Math.abs(Math.hypot(a.x-600,a.y-600)-a.lane)>.1).map(a=>a.id);
+   const signErrors=items.filter(a=>Math.floor(((a.display%360)+360)%360/30)!==Math.floor(((a.exact%360)+360)%360/30))
+     .map(a=>a.id);
+   const cluster=items.filter(a=>['neptune','chiron','moon','saturn','part-of-fortune'].includes(a.id))
+     .map(a=>({id:a.id,exact:a.exact,display:a.display,offset:+((((a.display-a.exact+540)%360)-180).toFixed(3))}));
+   const isolated=items.filter(a=>['mercury','jupiter','uranus','pluto'].includes(a.id));
+   return {count:items.length,collisions,ringErrors,signErrors,cluster,
+     otherOffsets:isolated.map(a=>({id:a.id,offset:+((((a.display-a.exact+540)%360)-180).toFixed(3))})),
+     unresolved:wheel.dataset.placementUnresolvedBubbleOverlaps};
+ });
+ console.log('PISCES_ARIES_BOUNDARY_TRACE',JSON.stringify(boundary));
+ assert.equal(boundary.count,17,'The crowded cusp fixture must include all Sky B placements');
+ assert.deepEqual(boundary.collisions,[],'No blue orb may overlap across the Pisces-Aries sign boundary');
+ assert.deepEqual(boundary.ringErrors,[],'Even boundary-crowded orbs must remain on their original circle');
+ assert.deepEqual(boundary.signErrors,[],'Every blue orb must remain in its true zodiac sign');
+ assert.ok(boundary.otherOffsets.every(v=>Math.abs(v.offset)<.1),'Distant placements must stay on their exact notch');
+ assert.equal(Number(boundary.unresolved),0,'A feasible five-body cusp must have zero unresolved collisions');
+ await boundaryPage.close();
  assert.deepEqual(errors,[]);
- console.log('PASS crowded Oct 23 A/B orbs stay on exact same circumference with no overlaps');
+ console.log('PASS crowded Oct 23 A/B and five-body Pisces-Aries cusp remain separated on fixed circles');
 }finally{await browser.close()}
