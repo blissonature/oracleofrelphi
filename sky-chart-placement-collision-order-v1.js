@@ -53,6 +53,35 @@ function parseSegment(line){
   const a={x:num(line.getAttribute('x1')),y:num(line.getAttribute('y1'))},b={x:num(line.getAttribute('x2')),y:num(line.getAttribute('y2'))};
   return[a.x,a.y,b.x,b.y].every(Number.isFinite)?{a,b}:null;
 }
+// The zodiac sign and HOUSE are independent constraints. A bubble can move
+// tangentially around its assigned ring to clear a neighbor, but its center
+// must remain inside the house sector containing its actual exact longitude.
+function houseCuspAngles(wheel,slot){
+  const role=slot==='A'?'a-houses':'b-houses',c=center();
+  const angles=[...wheel.querySelectorAll(`[data-layer="${role}"] line.sky-foundation-divider`)]
+    .map(line=>{
+      const segment=parseSegment(line);if(!segment)return NaN;
+      const p=Math.hypot(segment.a.x-c.x,segment.a.y-c.y)>
+        Math.hypot(segment.b.x-c.x,segment.b.y-c.y)?segment.a:segment.b;
+      return norm(Math.atan2(p.y-c.y,p.x-c.x)*180/Math.PI+180);
+    }).filter(Number.isFinite).sort((a,b)=>a-b);
+  return angles.filter((value,i)=>!i||Math.abs(value-angles[i-1])>.02);
+}
+function houseArcFor(cusps,exact){
+  if(cusps.length<4)return null;
+  const e=norm(exact);
+  let index=cusps.findLastIndex(v=>v<=e+1e-6);
+  if(index<0)index=cusps.length-1;
+  const first=cusps[index],last=cusps[(index+1)%cusps.length];
+  const lower=first>e?first-360:first;
+  return{lower,upper:last<=lower?last+360:last};
+}
+function staysInActualHouse(item,display,cusps){
+  const arc=houseArcFor(cusps,item.exact);
+  if(!arc)return true;
+  const d=item.exact+(((display-item.exact+540)%360)-180);
+  return d>=arc.lower-.001&&d<=arc.upper+.001;
+}
 function minimumSeparation(lane){
   const shared=spec()?.comparison||{},radius=Number(shared.placementBubbleRadius)||17.2,
     clearance=Math.max(6,Number(shared.placementClearance)||6);
@@ -174,7 +203,8 @@ function redistributeCrowdedSign(solution,slot,wheel,sign){
   const shared=spec()?.comparison||{},bubble=Number(shared.placementBubbleRadius)||19.7,
     sepDistance=2*bubble+Math.max(6,Number(shared.placementClearance)||6),
     leaderClearance=bubble+4,fixed=fixedSegments(wheel,slot);
-  const lane=group[0].item.authoredLane,start=sign*30,end=start+30;
+  const lane=group[0].item.authoredLane,start=sign*30,end=start+30,
+    houseCusps=houseCuspAngles(wheel,slot);
   if(!Number.isFinite(lane)||group.some(record=>Math.abs(record.item.authoredLane-lane)>EPS))return false;
   const houseDividers=[...wheel.querySelectorAll(`[data-layer="${slot==='A'?'a-houses':'b-houses'}"] line.sky-foundation-divider`)]
     .map(parseSegment).filter(Boolean);
@@ -183,6 +213,7 @@ function redistributeCrowdedSign(solution,slot,wheel,sign){
     Math.abs(h.b.x-segment.b.x)<EPS&&Math.abs(h.b.y-segment.b.y)<EPS));
   const safe=(records,allowHouseCrossing,allowLeaderBehindOrb)=>{
     const full=[...records,...other];
+    if(records.some(r=>!staysInActualHouse(r.item,r.display,houseCusps)))return false;
     for(let i=0;i<full.length;i++){
       const a=full[i],line=segmentFor(a,slot);
       if(records.includes(a)){
@@ -284,7 +315,8 @@ function repairBubbleClearance(solution,slot,wheel){
   if(solution.length<2)return solution;
   const shared=spec()?.comparison||{},bubble=Number(shared.placementBubbleRadius)||19.7,
     separation=2*bubble+Math.max(6,Number(shared.placementClearance)||6),
-    leaderClearance=bubble+4,fixed=fixedSegments(wheel,slot);
+    leaderClearance=bubble+4,fixed=fixedSegments(wheel,slot),
+    houseCusps=houseCuspAngles(wheel,slot);
   const distance=(a,b)=>Math.hypot(a.point.x-b.point.x,a.point.y-b.point.y);
   const overlapPairs=()=>{
     const pairs=[];
@@ -298,6 +330,7 @@ function repairBubbleClearance(solution,slot,wheel){
     const item=solution[index].item,sign=item.sign,start=sign*30,end=start+30;
     // A fixed circumference is not a preference: it is the layout contract.
     if(Math.abs(candidate.lane-item.authoredLane)>EPS)return false;
+    if(!staysInActualHouse(item,candidate.display,houseCusps))return false;
     if(!(candidate.display>start+.05&&candidate.display<end-.05))return false;
     for(let i=0;i<solution.length;i++){
       if(i===index)continue;
@@ -375,7 +408,7 @@ function preferRadialLeadersAndHouseClearance(solution,slot,wheel){
     clearance=Math.max(6,Number(shared.placementClearance)||6),
     minimum=bubble+clearance,diameter=2*bubble+clearance;
   const dividers=[...wheel.querySelectorAll(`[data-layer="${slot==='A'?'a-houses':'b-houses'}"] line.sky-foundation-divider`)]
-    .map(parseSegment).filter(Boolean);
+    .map(parseSegment).filter(Boolean),houseCusps=houseCuspAngles(wheel,slot);
   if(!dividers.length)return solution;
   const boundaryClear=point=>dividers.every(line=>segmentDistance(point,line.a,line.b)>=minimum-.05);
   const grouped=new Map();
@@ -391,7 +424,8 @@ function preferRadialLeadersAndHouseClearance(solution,slot,wheel){
     const canStraighten=record=>{
       if(Math.abs(record.display-record.item.exact)<.05)return false;
       const exact=polar(lane,record.item.exact);
-      return boundaryClear(exact)&&solution.every(r=>r===record||circularDistance(exact,r.point)>=diameter-.05);
+      return staysInActualHouse(record.item,record.item.exact,houseCusps)&&
+        boundaryClear(exact)&&solution.every(r=>r===record||circularDistance(exact,r.point)>=diameter-.05);
     };
     if(!group.some(r=>!boundaryClear(r.point)||canStraighten(r)))continue;
     const allSame=group.map(r=>r.item.exact);
@@ -404,7 +438,8 @@ function preferRadialLeadersAndHouseClearance(solution,slot,wheel){
       const unique=[...new Set(values)].sort((a,b)=>a-b);
       return unique.flatMap(display=>{
         const point=polar(lane,display);
-        if(!boundaryClear(point)||other.some(r=>circularDistance(point,r.point)<diameter-.05))return[];
+        if(!staysInActualHouse(record.item,display,houseCusps)||!boundaryClear(point)||
+           other.some(r=>circularDistance(point,r.point)<diameter-.05))return[];
         const segment={a:point,b:exactPoint(record,slot)};
         // A new leader cannot intersect another sky placement's leader. An
         // accurate line crossing a HOUSE division is possible, but penalized.
@@ -466,7 +501,7 @@ function preferRadialLeadersAndHouseClearance(solution,slot,wheel){
     Math.abs(a.offset)-Math.abs(b.offset))){
     if(Math.abs(record.offset)<=.06)continue;
     const lane=record.item.authoredLane,point=polar(lane,record.item.exact);
-    if(!boundaryClear(point)){
+    if(!staysInActualHouse(record.item,record.item.exact,houseCusps)||!boundaryClear(point)){
       wheel.dataset.placementRadialLeaderBlocked+=record.item.id+':house;';
       continue;
     }
@@ -499,6 +534,15 @@ function solveSlot(wheel,slot){
   solution=sanitize(solution,slot,wheel);
   solution=repairBubbleClearance(solution,slot,wheel);
   solution=preferRadialLeadersAndHouseClearance(solution,slot,wheel);
+  const houseCusps=houseCuspAngles(wheel,slot);
+  // Absolute fail-safe: do not depict a body in the wrong house even when
+  // the available arc is too narrow to satisfy every preferred gap. The
+  // exact notch is truth; flag an unresolved layout instead of falsifying it.
+  let houseFallbacks=0;
+  for(const record of solution)if(!staysInActualHouse(record.item,record.display,houseCusps)){
+    forceExact(record,slot);houseFallbacks++;
+  }
+  wheel.dataset.placementHouseSectorFallbacks=String(houseFallbacks);
   solution.sort((a,b)=>a.item.exact-b.item.exact||a.item.index-b.item.index);
   solution.forEach((record,index)=>{
     const {item}=record,exact=record.exactPoint||exactPoint(record,slot);
@@ -544,7 +588,7 @@ function slotGeometrySignature(wheel,slot){
 }
 function slotOrbsStayOnRingAndClear(wheel,slot){
   const items=ordinaryItems(wheel,slot),bubble=Number(spec()?.comparison?.placementBubbleRadius)||19.7,
-    c=center(),points=[],houseLines=[...wheel.querySelectorAll(
+    c=center(),points=[],cusps=houseCuspAngles(wheel,slot),houseLines=[...wheel.querySelectorAll(
       `[data-layer="${slot==='A'?'a-houses':'b-houses'}"] line.sky-foundation-divider`)]
       .map(parseSegment).filter(Boolean);
   for(const item of items){
@@ -552,6 +596,7 @@ function slotOrbsStayOnRingAndClear(wheel,slot){
     if(!matrix||!Number.isFinite(matrix.e)||!Number.isFinite(matrix.f))return false;
     if(!Number.isFinite(item.authoredLane))return false;
     const point={x:matrix.e,y:matrix.f};
+    if(!staysInActualHouse(item,num(item.group.dataset.displayLongitude),cusps))return false;
     if(houseLines.some(line=>segmentDistance(point,line.a,line.b)<
       bubble+Math.max(6,Number(spec()?.comparison?.placementClearance)||6)-.05))return false;
     if(Math.abs(Math.hypot(point.x-c.x,point.y-c.y)-item.authoredLane)>.1)return false;
