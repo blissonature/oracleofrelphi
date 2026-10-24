@@ -737,8 +737,18 @@ function install(){
   const mount=document.getElementById('skyFoundationWheelMount');
   if(mount)new MutationObserver(records=>{
     if(arranging)return;
-    if(records.some(record=>record.type==='childList'&&Array.from(record.addedNodes||[]).some(node=>node.nodeType===1)))requestAnimationFrame(arrangeCurrent);
-  }).observe(mount,{subtree:true,childList:true});
+    const houseLayer=node=>node?.closest?.('[data-layer="a-houses"],[data-layer="b-houses"]');
+    const newElement=record=>record.type==='childList'&&Array.from(record.addedNodes||[]).some(node=>node.nodeType===1);
+    // Re-layout when house DIVIDER GEOMETRY updates, even when the drawing
+    // renderer reuses its SVG line elements and only changes coordinates.
+    // Watching placement or leader attributes here would feed our own
+    // transform writes back into another collision solve.
+    const needsLayout=records.some(record=>newElement(record)||
+      (record.type==='attributes'&&record.target.matches?.('line.sky-foundation-divider')&&
+       houseLayer(record.target)));
+    if(needsLayout)requestAnimationFrame(arrangeCurrent);
+  }).observe(mount,{subtree:true,childList:true,attributes:true,
+    attributeFilter:['x1','y1','x2','y2']});
   arrangeCurrent();
   window.addEventListener('relphi:sky-foundation-ready',()=>requestAnimationFrame(arrangeCurrent));
 }
