@@ -50,6 +50,16 @@ try{
    const raw=[...wheel.querySelectorAll('[data-layer="placements"] > g[data-sky="'+slot+'"][data-placement]:not([data-angle-axis="true"]):not([data-placement="moon-range"])')];
    const parsed=raw.map(parse);const items=parsed.filter(g=>Number.isFinite(g.x)&&Number.isFinite(g.y));
    report.slots[slot]={rawCount:raw.length,sample:raw.slice(0,5).map(g=>({name:g.dataset.placement,transform:g.getAttribute('transform')})),parsed:parsed.slice(0,5)};
+   // Isolated glyphs have no clearance reason to leave their exact notch.
+   const signOf=item=>Math.floor(((item.exact%360)+360)%360/30);
+   const exactDistance=(a,b)=>Math.hypot(
+     a.authoredLane*Math.cos((a.exact-180)*Math.PI/180)-b.authoredLane*Math.cos((b.exact-180)*Math.PI/180),
+     a.authoredLane*Math.sin((a.exact-180)*Math.PI/180)-b.authoredLane*Math.sin((b.exact-180)*Math.PI/180));
+   const isolated=items.filter(item=>items.every(other=>other===item||
+     (signOf(item)!==signOf(other)&&exactDistance(item,other)>2*spec.placementBubbleRadius+2+.2)));
+   const displacedIsolated=isolated.filter(item=>Math.abs(item.display-item.exact)>.06)
+     .map(item=>({id:item.id,exact:item.exact,display:item.display,offset:item.offset}));
+   const meanAbsOffset=items.reduce((sum,item)=>sum+Math.abs(item.display-item.exact),0)/items.length;
    const collisions=[];
    for(let i=0;i<items.length;i++)for(let j=i+1;j<items.length;j++){
     const a=items[i],b=items[j],distance=Math.hypot(a.x-b.x,a.y-b.y),
@@ -66,7 +76,8 @@ try{
      const first=aries[i],second=aries[j],distance=Math.hypot(first.x-second.x,first.y-second.y);
      ariesPairs.push({a:first.id,b:second.id,distance:+distance.toFixed(3)});
    }
-   report.slots[slot]={...report.slots[slot],ariesPairs,items:items.length,offRing,fallBacks:items.filter(x=>x.fallback==='true').map(x=>x.id),
+   report.slots[slot]={...report.slots[slot],ariesPairs,items:items.length,offRing,
+     isolated:isolated.map(x=>x.id),displacedIsolated,meanAbsOffset:+meanAbsOffset.toFixed(3),fallBacks:items.filter(x=>x.fallback==='true').map(x=>x.id),
     collisions,collidingItems:items.filter(x=>collisions.some(c=>c.a===x.id||c.b===x.id))};
   }
   return report;
@@ -74,6 +85,8 @@ try{
  console.log('GLYPH_COLLISION_TRACE',JSON.stringify(result));
  assert.ok(result.slots.A.items>=14&&result.slots.B.items>=14,'Both crowded skies must render their ordinary placements');
  assert.equal(result.slots.A.collisions.length,0,'Sky A placement glyph orbs must not overlap');
+ for(const slot of ['A','B'])assert.deepEqual(result.slots[slot].displacedIsolated,[],
+   'An isolated glyph must remain centered on its exact zodiac notch in Sky '+slot);
  assert.equal(result.slots.B.collisions.length,0,'Sky B placement glyph orbs must not overlap');
  assert.equal(result.slots.B.ariesPairs.length,3,'The screenshot regression must include Moon, Neptune and Saturn');
  for(const pair of result.slots.B.ariesPairs)assert.ok(pair.distance>=2*result.radius+2-.1,
