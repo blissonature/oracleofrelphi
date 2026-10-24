@@ -105,7 +105,10 @@
       if(lineEligible)lineVisibleKeys.add(identity(row));
       // Wheel focus must not hide relationship tiles; it only highlights one.
       const visible=lineEligible;
-      row.classList.toggle('sky-chart-orb-hidden',hiddenByOrb);row.hidden=!visible;row.setAttribute('aria-hidden',visible?'false':'true');
+      row.classList.toggle('sky-chart-orb-hidden',hiddenByOrb);row.hidden=!visible;
+      // Focused rows are CSS-hidden, too; do not expose them to screen readers.
+      const temporarilyExcluded=row.classList.contains('is-wheel-selection-excluded');
+      row.setAttribute('aria-hidden',visible&&!temporarilyExcluded?'false':'true');
       if(Number.isFinite(phase)&&row.dataset.bySignOnly!=='true'){
         const dynamic=metricsFor(phase,limit);
         row.dataset.harmonicWindow=limit.toFixed(6);
@@ -134,14 +137,19 @@
 
     // No placement or leader highlighting here: Harmonic Window owns only
     // relationship rows and aspect-line visibility.
+    // Keep the same temporarily focused count when Harmonic Window reruns.
+    // These CSS-excluded tiles are still in the DOM and must not be counted.
+    const displayedIndexes=new Set(rows.filter(row=>visibleIndexes.has(identity(row))&&
+      !row.classList.contains('is-wheel-selection-excluded')).map(identity));
+    const displayedCount=displayedIndexes.size;
     const count=document.getElementById('skyFoundationRelationshipCount'),empty=document.getElementById('skyFoundationRelationshipEmpty');
     if(count){
-      count.textContent=String(visibleIndexes.size);
-      count.dataset.matchCount=String(visibleIndexes.size);
+      count.textContent=String(displayedCount);
+      count.dataset.matchCount=String(displayedCount);
       count.dataset.countLabel='matches';
-      count.setAttribute('aria-label',visibleIndexes.size+' matching relationships');
+      count.setAttribute('aria-label',displayedCount+' matching relationships');
     }
-    if(empty)empty.hidden=visibleIndexes.size!==0||hiddenByHarmonicWindow>0;
+    if(empty)empty.hidden=displayedCount!==0||(wheelState?.mode!=='selected'&&hiddenByHarmonicWindow>0);
     const more=ensureShowMoreRow(),max=Number(model()?.maxWindow??12);
     if(more){
       const next=nextRevealWindow(rows,limit,max);
