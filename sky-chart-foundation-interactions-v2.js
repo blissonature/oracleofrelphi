@@ -380,7 +380,22 @@
         row.setAttribute('aria-hidden',temporarilyExcluded?'true':'false');
       }
     });
-    const allRows=[...document.querySelectorAll('#skyFoundationRelationshipList>.sky-foundation-relationship-row[data-relation-index]')],visibleCount=filterState?filterKeep.matched.size:allRows.filter(row=>rowEligibleForWheel(row)).length,totalCount=allRows.length,count=document.getElementById('skyFoundationRelationshipCount'),empty=document.getElementById('skyFoundationRelationshipEmpty'),clear=document.getElementById('skyFoundationClearIsolation');if(count)count.textContent=`${visibleCount}/${totalCount}`;if(empty)empty.hidden=visibleCount!==0;if(clear)clear.hidden=!(lockedState||rowLockedState);
+    const allRows=[...document.querySelectorAll('#skyFoundationRelationshipList>.sky-foundation-relationship-row[data-relation-index]')];
+    // This label represents the list the user can actually inspect, not the
+    // pre-selection total. Hover is preview-only and never changes the count.
+    const visibleCount=allRows.filter(row=>rowEligibleForWheel(row)&&!row.hidden&&
+      (!lockedState||!row.classList.contains('is-wheel-selection-excluded'))).length;
+    const count=document.getElementById('skyFoundationRelationshipCount'),
+      empty=document.getElementById('skyFoundationRelationshipEmpty'),
+      clear=document.getElementById('skyFoundationClearIsolation');
+    if(count){
+      count.textContent=String(visibleCount);
+      count.dataset.matchCount=String(visibleCount);
+      count.dataset.countLabel='matches';
+      count.setAttribute('aria-label',visibleCount+' matching relationships');
+    }
+    if(empty)empty.hidden=visibleCount!==0;
+    if(clear)clear.hidden=!(lockedState||rowLockedState);
     const relationshipIndexes=focusState?.kind==='aspect'?Array.from(filterKeep.matched):filterState?Array.from(filterKeep.matched):allRows.map(row=>String(row.dataset.relationIndex||'')).filter(Boolean);
     window.dispatchEvent(new CustomEvent('relphi:sky-foundation-filter-changed',{detail:{state:focusState?{...focusState,mode:lockedState?'selected':'hover'}:null,origin:lockedState&&selectionOrigin?{...selectionOrigin}:null,relationshipIndexes}}));
   }
