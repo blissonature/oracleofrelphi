@@ -4,7 +4,8 @@
 // leader is never accepted; exact-radial overlap is preferable to a false visual correspondence.
 (function(){
 'use strict';
-if(!/(^|\/)sky-chart\.html$/.test(location.pathname)||window.__relphiSkyPlacementCollisionOrderV15)return;
+if(!/(^|\/)sky-chart\.html$/.test(location.pathname)||window.__relphiSkyPlacementCollisionOrderV16)return;
+window.__relphiSkyPlacementCollisionOrderV16=true;
 window.__relphiSkyPlacementCollisionOrderV15=true;
 window.__relphiSkyPlacementCollisionOrderV14=true;
 window.__relphiSkyPlacementCollisionOrderV13=true;
@@ -727,7 +728,7 @@ function arrange(wheel){
     wheel.dataset.placementLeaderGlyphHits=String(a.hits+b.hits);
     wheel.dataset.placementCircularOrder='preserved';
     wheel.dataset.crossSignDisplacement='forbidden';
-    wheel.dataset.placementCollisionOrder='same-sign-fixed-circumference-v15';
+    wheel.dataset.placementCollisionOrder='same-sign-fixed-circumference-v16';
     if(a.crossings+b.crossings)console.error('[Sky Chart placement layout] Crossing contract failed.',{A:a.crossings,B:b.crossings});
   }finally{arranging=false}
 }
