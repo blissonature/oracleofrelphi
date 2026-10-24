@@ -100,6 +100,19 @@ try{
    window.RelphiPlacementCollisionOrder.arrange(wheel);
    const again=[...wheel.querySelectorAll('[data-layer="placements"] > g[data-sky="A"][data-placement]:not([data-angle-axis="true"]):not([data-placement="moon-range"])')]
      .map(g=>{const m=g.transform.baseVal.consolidate()?.matrix;return[g.dataset.placement,m.e,m.f]});
+   const leaderHits=[];
+   const lines=[...wheel.querySelectorAll('[data-layer="leaders"] line[data-sky="A"][data-placement]:not([data-angle])')];
+   for(const line of lines){
+     const xa=Number(line.getAttribute('x1')),ya=Number(line.getAttribute('y1'));
+     const xb=Number(line.getAttribute('x2')),yb=Number(line.getAttribute('y2'));
+     const dx=xb-xa,dy=yb-ya,l2=dx*dx+dy*dy;
+     for(const item of items){
+       if(item.name===line.dataset.placement)continue;
+       const t=l2>1e-9?Math.max(0,Math.min(1,((item.x-xa)*dx+(item.y-ya)*dy)/l2)):0;
+       const d=Math.hypot(item.x-(xa+t*dx),item.y-(ya+t*dy));
+       if(d<23.7)leaderHits.push({line:line.dataset.placement,orb:item.name,d:+d.toFixed(2)});
+     }
+   }
    const repeatedMovement=Math.max(0,...positions.map(([name,x,y])=>{
      const match=again.find(v=>v[0]===name);
      return match?Math.hypot(match[1]-x,match[2]-y):Infinity;
@@ -108,7 +121,7 @@ try{
      .map(item=>({name:item.name,radius:Math.hypot(item.x-600,item.y-600),authored:item.authoredLane}));
    const inward=items.filter(item=>item.lane<item.authoredLane-0.01).map(item=>({name:item.name,lane:item.lane,authored:item.authoredLane}));
    return {collisions,outward,inward,fallBacks:items.filter(x=>x.fallback==='true').map(x=>x.name),
-     repairs:Number(wheel.dataset.placementRadialClearanceRepairs||0),
+     repairs:Number(wheel.dataset.placementRadialClearanceRepairs||0),leaderHitPairs:leaderHits,
      repeatedMovement:Number(repeatedMovement.toFixed(4)),
      crossings:wheel.dataset.placementLeaderCrossings,leaderHits:wheel.dataset.placementLeaderGlyphHits};
  });
