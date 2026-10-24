@@ -234,8 +234,9 @@ try{
  await page.evaluate(()=>{
    const wheel=document.querySelector('#skyFoundationWheelMount > .sky-foundation-wheel');
    const lines=[...wheel.querySelectorAll('[data-layer="aspects"] > line.sky-foundation-aspect:not(.sky-foundation-aspect-hit)')];
-   const original=lines.map(line=>({display:getComputedStyle(line).display,opacity:getComputedStyle(line).opacity}));
-   const records=[],frames=[];let previous=original.map(x=>x.display);
+   const original=lines.map(line=>({display:getComputedStyle(line).display,opacity:getComputedStyle(line).opacity,
+     filter:getComputedStyle(line).filter}));
+   const records=[],frames=[];let previous=original.map(x=>({...x}));let priorIsolation=wheel.classList.contains('has-isolation');
    const observer=new MutationObserver(items=>{
      for(const r of items)records.push({type:r.attributeName,old:r.oldValue,
        now:r.target.getAttribute(r.attributeName),index:lines.indexOf(r.target)});
@@ -245,11 +246,17 @@ try{
    window.__wwDrawerTransition={wheel,lines,original,records,frames,observer,active:true};
    const sample=()=>{
      const session=window.__wwDrawerTransition;if(!session?.active)return;
-     let toggles=0;
-     lines.forEach((line,i)=>{const next=getComputedStyle(line).display;
-       if(next!==previous[i]){toggles++;previous[i]=next}});
-     if(toggles)frames.push({time:performance.now(),toggles,where:document.documentElement.dataset.skyWhereWhenEditing,
-       wheelIsolation:wheel.classList.contains('has-isolation')});
+     let toggles=0,opacityChanges=0,filterChanges=0;
+     lines.forEach((line,i)=>{const computed=getComputedStyle(line);
+       if(computed.display!==previous[i].display){toggles++;previous[i].display=computed.display}
+       if(computed.opacity!==previous[i].opacity){opacityChanges++;previous[i].opacity=computed.opacity}
+       if(computed.filter!==previous[i].filter){filterChanges++;previous[i].filter=computed.filter}
+     });
+     const currentIsolation=wheel.classList.contains('has-isolation'),isolationChanges=Number(currentIsolation!==priorIsolation);
+     priorIsolation=currentIsolation;
+     if(toggles||opacityChanges||filterChanges||isolationChanges)frames.push({
+       time:performance.now(),toggles,opacityChanges,filterChanges,isolationChanges,
+       where:document.documentElement.dataset.skyWhereWhenEditing,wheelIsolation:currentIsolation});
      requestAnimationFrame(sample);
    };
    requestAnimationFrame(sample);
@@ -274,13 +281,20 @@ try{
    return {count:lines.length,wheelPreserved:wheel===document.querySelector('#skyFoundationWheelMount>.sky-foundation-wheel'),
      sameLines:lines.every(x=>x.isConnected),changes:records.length,
      classChanges:classes.length,styleChanges:styles.length,visibilityChanges:visibility.length,
-     displayTransitions:frames.reduce((n,x)=>n+x.toggles,0),displayFrames:frames.slice(0,16),
+     displayTransitions:frames.reduce((n,x)=>n+x.toggles,0),
+     opacityTransitions:frames.reduce((n,x)=>n+x.opacityChanges,0),
+     filterTransitions:frames.reduce((n,x)=>n+x.filterChanges,0),
+     isolationTransitions:frames.reduce((n,x)=>n+x.isolationChanges,0),
+     displayFrames:frames.slice(0,16),
      finalDisplayDifference:changed.length,
      sampleChanges:records.slice(0,18)};
  });
  console.log('WHERE_WHEN_DRAWER_TRANSITION_TRACE',JSON.stringify(transition));
  assert.ok(transition.wheelPreserved&&transition.sameLines,'Drawer switching must keep the same comparison wheel and aspect lines');
  assert.equal(transition.displayTransitions,0,'Switching Where and When / Placements must never blank or reveal gray aspect lines');
+ assert.equal(transition.opacityTransitions,0,'Switching drawers must not change the opacity of gray aspect lines');
+ assert.equal(transition.filterTransitions,0,'Switching drawers must not recolor or relight gray aspect lines');
+ assert.equal(transition.isolationTransitions,0,'Switching drawers must preserve the persistent Moon B focus');
  assert.equal(transition.finalDisplayDifference,0,'Returning to Placements must preserve the exact initial line display');
  assert.equal(transition.visibilityChanges,0,'Unchanged drawer switches must not rewrite any SVG visibility attributes');
  assert.equal(transition.classChanges,0,'Unchanged drawer switches must not mutate aspect-line classes');
