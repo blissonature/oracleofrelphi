@@ -294,7 +294,10 @@ function solveOrReuse(wheel,slot){
     crossingsKey='placementSlotLeaderCrossings'+slot,
     hitsKey='placementSlotLeaderHits'+slot,
     input=slotGeometrySignature(wheel,slot);
-  if(wheel.dataset[key]===input&&slotOrbsStayOnRingAndClear(wheel,slot)){
+  const sameInput=wheel.dataset[key]===input;
+  const validGeometry=slotOrbsStayOnRingAndClear(wheel,slot);
+  wheel.dataset['placementReuseCheck'+slot]=sameInput+':'+validGeometry;
+  if(sameInput&&validGeometry){
     return{items:[],crossings:Number(wheel.dataset[crossingsKey]||0),
       hits:Number(wheel.dataset[hitsKey]||0),reused:true};
   }
