@@ -57,7 +57,7 @@ try{
     if(distance<needed)collisions.push({a:a.id,b:b.id,distance:Number(distance.toFixed(2)),needed});
    }
    report.slots[slot]={...report.slots[slot],items:items.length,fallBacks:items.filter(x=>x.fallback==='true').map(x=>x.id),
-    collisions,items:items.filter(x=>collisions.some(c=>c.a===x.id||c.b===x.id))};
+    collisions,collidingItems:items.filter(x=>collisions.some(c=>c.a===x.id||c.b===x.id))};
   }
   return report;
  });
