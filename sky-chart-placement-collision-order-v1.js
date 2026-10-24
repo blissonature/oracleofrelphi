@@ -209,10 +209,34 @@ function redistributeCrowdedSign(solution,slot,wheel,sign){
   // than allowing glyphs to overlap or leave their fixed circumference.
   for(const [allowHouseCrossing,allowLeaderBehindOrb] of [[false,false],[true,false],[true,true]]){
     let stageBest=null;
+    // Test the least-displaced, nonuniform isotonic solution before trying
+    // an equally spaced sign-wide layout. A free-standing planet must not
+    // shift merely because two OTHER planets in its sign are conjunct.
+    const optimal=solveSignGroup(group.map(record=>record.item),lane);
+    const minimal=optimal.map((record,index)=>({
+      ...group[index],display:record.display,lane,
+      point:polar(lane,record.display),offset:record.display-group[index].item.exact
+    }));
+    if(minimal.length===group.length&&!minimal.some(r=>r.fallback)){
+      const minDisplay=Math.min(...minimal.map(r=>r.display)),maxDisplay=Math.max(...minimal.map(r=>r.display));
+      for(let shift=-12;shift<=12.00001;shift+=.25){
+        if(minDisplay+shift<start+.005||maxDisplay+shift>end-.005)continue;
+        const records=minimal.map(record=>{
+          const display=record.display+shift;
+          return {...record,display,point:polar(lane,display),offset:display-record.item.exact};
+        });
+        if(records.some(r=>Math.abs(r.offset)>19)||!safe(records,allowHouseCrossing,allowLeaderBehindOrb))continue;
+        const crossings=records.reduce((n,r)=>{
+          const line=segmentFor(r,slot);
+          return n+houseDividers.filter(h=>properIntersection(line.a,line.b,h.a,h.b)).length;
+        },0);
+        const score=records.reduce((n,r)=>n+r.offset*r.offset*weight(r.item),0)+150*crossings;
+        if(!stageBest||score<stageBest.score)stageBest={records,score,crossings,allowLeaderBehindOrb};
+      }
+    }
     const sepBase=minimumSeparation(lane);
-    // Begin at the smallest collision-free spacing; never distribute orbs
-    // more widely for decoration. Additional separation is evaluated only
-    // when the tight optimal layout is disallowed by leader geometry.
+    // Only fall back to evenly spaced sign-wide search when minimal
+    // nonuniform positions cannot satisfy the leader-routing constraints.
     for(const multiplier of [1,1.025,1.05,1.1]){
       const sep=sepBase*multiplier,low=start+.005,
         high=end-.005-(group.length-1)*sep;
