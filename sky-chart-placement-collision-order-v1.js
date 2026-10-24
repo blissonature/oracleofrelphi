@@ -77,10 +77,16 @@ function houseArcFor(cusps,exact){
   return{lower,upper:last<=lower?last+360:last};
 }
 function staysInActualHouse(item,display,cusps){
-  const arc=houseArcFor(cusps,item.exact);
-  if(!arc)return true;
-  const d=item.exact+(((display-item.exact+540)%360)-180);
-  return d>=arc.lower-.001&&d<=arc.upper+.001;
+  if(cusps.length<4)return true;
+  // Compare the actual painted house sectors, NOT just the numerical
+  // interval. In particular, the sector ending at the first cusp wraps
+  // across 0° Aries and must not admit glyphs past that boundary.
+  const houseOf=longitude=>{
+    const value=norm(longitude);
+    const i=cusps.findLastIndex(degree=>degree<=value+1e-6);
+    return i<0?cusps.length-1:i;
+  };
+  return houseOf(item.exact)===houseOf(display);
 }
 function minimumSeparation(lane){
   const shared=spec()?.comparison||{},radius=Number(shared.placementBubbleRadius)||17.2,
