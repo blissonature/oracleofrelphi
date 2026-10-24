@@ -147,6 +147,8 @@ function repairBubbleClearance(solution,slot,wheel){
     separation=2*bubble+2,leaderClearance=bubble+4,g=geometry(slot),fixed=fixedSegments(wheel,slot);
   if(!g)return solution;
   const radialMin=Number(g.inner)+bubble+12,radialMax=Number(g.outer)-bubble-12;
+  // The authored placement lane is an absolute outward boundary. Collision
+  // avoidance may move tangentially or inward, never away from wheel center.
   const distance=(a,b)=>Math.hypot(a.point.x-b.point.x,a.point.y-b.point.y);
   const overlapPairs=()=>{const pairs=[];for(let i=0;i<solution.length;i++)for(let j=i+1;j<solution.length;j++){
     const d=distance(solution[i],solution[j]);if(d<separation-EPS)pairs.push({i,j,d});
@@ -154,7 +156,9 @@ function repairBubbleClearance(solution,slot,wheel){
   const allowed=(candidate,index)=>{
     const item=solution[index].item,sign=item.sign,start=sign*30,end=start+30;
     if(!(candidate.display>start+0.05&&candidate.display<end-0.05))return false;
-    if(!(candidate.lane>=radialMin&&candidate.lane<=radialMax))return false;
+    const authored=Number(item.authoredLane);
+    const outerLimit=Number.isFinite(authored)?Math.min(radialMax,authored):Math.min(radialMax,solution[index].lane);
+    if(!(candidate.lane>=radialMin&&candidate.lane<=outerLimit+EPS))return false;
     for(let i=0;i<solution.length;i++){
       if(i===index)continue;
       const other=solution[i];
@@ -192,12 +196,15 @@ function repairBubbleClearance(solution,slot,wheel){
         for(const step of [1,2,3,4,5,6,7,8,9,10,12,14]){
           angles.push(item.exact+step,item.exact-step,record.display+step,record.display-step);
         }
-        const lanes=[record.lane];
-        for(let step=4;step<=100;step+=4)lanes.push(base-step,base+step);
+        // Never try base+step or any lane beyond the original authored lane.
+        // Prefer the original lane; if that cannot clear the collision, search
+        // inward only (toward the wheel center).
+        const lanes=[base];
+        for(let step=2;step<=100;step+=2)lanes.push(base-step);
         for(const display of [...new Set(angles.map(a=>Number(a.toFixed(5))))]){
           if(Math.abs(display-item.exact)>17)continue;
           for(const lane of [...new Set(lanes)]){
-            if(lane<radialMin||lane>radialMax)continue;
+            if(lane<radialMin||lane>Math.min(radialMax,base)+EPS)continue;
             const candidate={...record,display,lane,point:polar(lane,display),
               exactPoint:record.exactPoint||exactPoint(record,slot),offset:display-item.exact};
             if(!allowed(candidate,index))continue;
@@ -242,6 +249,7 @@ function solveSlot(wheel,slot){
     item.group.dataset.placementOrderCorrected=Math.abs(record.offset)>1e-6?'true':'false';
     item.group.dataset.placementOrderFallback=record.fallback?'true':'false';
     item.group.dataset.placementRadialClearance=record.radialRepair?'true':'false';
+    if(record.lane>item.authoredLane+EPS)throw new Error('Placement orb moved farther from wheel center than authored lane: '+item.id);
     item.group.dataset.placementTangentialOffset=record.offset.toFixed(3);
     item.leader.setAttribute('x1',record.point.x.toFixed(2));item.leader.setAttribute('y1',record.point.y.toFixed(2));
     item.leader.setAttribute('x2',exact.x.toFixed(2));item.leader.setAttribute('y2',exact.y.toFixed(2));
@@ -268,7 +276,7 @@ function arrange(wheel){
     wheel.dataset.placementLeaderGlyphHits=String(a.hits+b.hits);
     wheel.dataset.placementCircularOrder='preserved';
     wheel.dataset.crossSignDisplacement='forbidden';
-    wheel.dataset.placementCollisionOrder='same-sign-current-ring-v7';
+    wheel.dataset.placementCollisionOrder='same-sign-inward-only-v8';
     if(a.crossings+b.crossings)console.error('[Sky Chart placement layout] Crossing contract failed.',{A:a.crossings,B:b.crossings});
   }finally{arranging=false}
 }
