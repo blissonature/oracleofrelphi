@@ -128,6 +128,7 @@ try{
  console.log('GLYPH_CUSP_STRESS_TRACE',JSON.stringify(stressed));
  assert.equal(stressed.collisions.length,0,'House-divider leader fallback must not reintroduce glyph-orb overlaps');
  assert.deepEqual(stressed.outward,[],'The cusp-stress repair must never send an orb farther from the center');
+ assert.deepEqual(stressed.leaderHitPairs,[],'No actual SVG leader may intersect an unrelated glyph bubble in the stress case');
  assert.ok(stressed.repairs>0,'House-divider stress case must exercise the new radial clearance repair');
  assert.ok(stressed.repeatedMovement<0.25,'Repeated collision layout passes must not move glyphs again');
  assert.deepEqual(errors,[]);
