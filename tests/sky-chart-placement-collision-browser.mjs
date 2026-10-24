@@ -377,6 +377,21 @@ try{
      line.setAttribute('x1',a.x);line.setAttribute('y1',a.y);
      line.setAttribute('x2',b.x);line.setAttribute('y2',b.y);
    }
+   // The original auto-calculated Vertex happens to land exactly at our
+   // synthetic Saturn notch. The screenshot's Saturn has no visible orb
+   // there, so make this a genuinely unobstructed straight-leader fixture.
+   const vx=wheel.querySelector('[data-layer="placements"] > g[data-sky="B"][data-placement="vertex"]'),
+     vxLeader=wheel.querySelector('[data-layer="leaders"] line[data-sky="B"][data-placement="vertex"]:not([data-angle])');
+   if(!vx||!vxLeader)throw new Error('Missing Sky B Vertex fixture');
+   const vxExact=105,vxLane=Number(vx.dataset.placementAuthoredLane||vx.dataset.placementLane),
+     vxRad=Math.hypot(Number(vxLeader.getAttribute('x2'))-600,Number(vxLeader.getAttribute('y2'))-600),
+     va=polar(vxLane,vxExact),vb=polar(vxRad,vxExact);
+   vx.dataset.exactLongitude=String(vxExact);
+   vx.dataset.displayLongitude=String(vxExact);
+   vx.setAttribute('transform','translate('+va.x+' '+va.y+')');
+   vxLeader.dataset.exactLongitude=String(vxExact);
+   vxLeader.setAttribute('x1',va.x);vxLeader.setAttribute('y1',va.y);
+   vxLeader.setAttribute('x2',vb.x);vxLeader.setAttribute('y2',vb.y);
    delete wheel.dataset.placementCollisionSignatureB;
    window.RelphiPlacementCollisionOrder.arrange(wheel);
    const radius=Number(window.RelphiSkyWheelSpec.comparison.placementBubbleRadius);
