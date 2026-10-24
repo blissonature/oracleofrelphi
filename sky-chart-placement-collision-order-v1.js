@@ -169,7 +169,7 @@ function redistributeCrowdedSign(solution,slot,wheel,sign){
     Math.abs(h.a.x-segment.a.x)<EPS&&Math.abs(h.a.y-segment.a.y)<EPS&&
     Math.abs(h.b.x-segment.b.x)<EPS&&Math.abs(h.b.y-segment.b.y)<EPS));
   const rejections={angle:0,house:0,orbs:0,leaders:0,leaderOrbs:0,valid:0};
-  const safe=(records,allowHouseCrossing)=>{
+  const safe=(records,allowHouseCrossing,allowLeaderBehindOrb)=>{
     const full=[...records,...other];
     for(let i=0;i<full.length;i++){
       const a=full[i],line=segmentFor(a,slot);
@@ -182,8 +182,11 @@ function redistributeCrowdedSign(solution,slot,wheel,sign){
         if(Math.hypot(a.point.x-b.point.x,a.point.y-b.point.y)<sepDistance-EPS){rejections.orbs++;return false}
         if(records.includes(a)||records.includes(b)){
           if(properIntersection(line.a,line.b,otherLine.a,otherLine.b)){rejections.leaders++;return false}
-          if(segmentDistance(a.point,otherLine.a,otherLine.b)<leaderClearance-EPS){rejections.leaderOrbs++;return false}
-          if(segmentDistance(b.point,line.a,line.b)<leaderClearance-EPS){rejections.leaderOrbs++;return false}
+          // As a final fallback the leader may pass BEHIND another opaque
+          // glyph orb. The line still points to its exact zodiac longitude;
+          // leader-to-leader crossings remain prohibited.
+          if(!allowLeaderBehindOrb&&segmentDistance(a.point,otherLine.a,otherLine.b)<leaderClearance-EPS){rejections.leaderOrbs++;return false}
+          if(!allowLeaderBehindOrb&&segmentDistance(b.point,line.a,line.b)<leaderClearance-EPS){rejections.leaderOrbs++;return false}
         }
       }
     }
@@ -193,7 +196,7 @@ function redistributeCrowdedSign(solution,slot,wheel,sign){
   // Preserve house dividers whenever possible. In an impossibly crowded
   // house segment, an exact-longitude leader may cross a house cusp rather
   // than allowing glyphs to overlap or leave their fixed circumference.
-  for(const allowHouseCrossing of [false,true]){
+  for(const [allowHouseCrossing,allowLeaderBehindOrb] of [[false,false],[true,false],[true,true]]){
     let stageBest=null;
     const sepBase=minimumSeparation(lane);
     for(const multiplier of [1.4,1.3,1.2,1.1,1]){
@@ -209,14 +212,14 @@ function redistributeCrowdedSign(solution,slot,wheel,sign){
             exactPoint:record.exactPoint||exactPoint(record,slot),offset:display-record.item.exact};
         });
         if(records.some(rec=>Math.abs(rec.offset)>19))continue;
-        if(!safe(records,allowHouseCrossing))continue;
+        if(!safe(records,allowHouseCrossing,allowLeaderBehindOrb))continue;
         const crossings=records.reduce((n,r)=>{
           const line=segmentFor(r,slot);
           return n+houseDividers.filter(h=>properIntersection(line.a,line.b,h.a,h.b)).length;
         },0);
         const score=records.reduce((n,r)=>n+Math.abs(r.offset)*weight(r.item),0)
           +80*(1.4-multiplier)+150*crossings;
-        if(!stageBest||score<stageBest.score)stageBest={records,score,crossings};
+        if(!stageBest||score<stageBest.score)stageBest={records,score,crossings,allowLeaderBehindOrb};
       }
     }
     if(stageBest){best=stageBest;break}
@@ -225,7 +228,7 @@ function redistributeCrowdedSign(solution,slot,wheel,sign){
   if(!best)return false;
   best.records.forEach((candidate,index)=>{
     Object.assign(group[index],candidate,{tangentialRepair:true,
-      houseCrossingFallback:best.crossings>0});
+      houseCrossingFallback:best.crossings>0,leaderBehindOrbFallback:best.allowLeaderBehindOrb});
   });
   if(best.crossings)wheel.dataset.placementHouseDividerLeaderCrossings=String(
     Number(wheel.dataset.placementHouseDividerLeaderCrossings||0)+best.crossings);
@@ -336,6 +339,7 @@ function solveSlot(wheel,slot){
     item.group.dataset.placementOrderFallback=record.fallback?'true':'false';
     item.group.dataset.placementTangentialClearance=record.tangentialRepair?'true':'false';
     item.group.dataset.placementHouseCrossingFallback=record.houseCrossingFallback?'true':'false';
+    item.group.dataset.placementLeaderBehindOrbFallback=record.leaderBehindOrbFallback?'true':'false';
     item.leader.dataset.placementHouseCrossingFallback=record.houseCrossingFallback?'true':'false';
     if(Math.abs(record.lane-item.authoredLane)>EPS)throw new Error('Placement orb left its authored circumference: '+item.id);
     item.group.dataset.placementTangentialOffset=record.offset.toFixed(3);
