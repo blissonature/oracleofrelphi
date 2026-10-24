@@ -137,12 +137,95 @@ function sanitize(solution,slot,wheel){
   return solution;
 }
 
+// A rejected leader can return a placement to its exact longitude after the
+// angular collision solve. Repair *remaining* bubble overlaps without reversing
+// circular order, changing zodiac signs, or crossing cusps / another leader.
+function repairBubbleClearance(solution,slot,wheel){
+  if(solution.length<2)return solution;
+  const shared=spec()?.comparison||{},bubble=Number(shared.placementBubbleRadius)||19.7,
+    separation=2*bubble+2,leaderClearance=bubble+4,g=geometry(slot),fixed=fixedSegments(wheel,slot);
+  if(!g)return solution;
+  const radialMin=Number(g.inner)+bubble+12,radialMax=Number(g.outer)-bubble-12;
+  const distance=(a,b)=>Math.hypot(a.point.x-b.point.x,a.point.y-b.point.y);
+  const overlapPairs=()=>{const pairs=[];for(let i=0;i<solution.length;i++)for(let j=i+1;j<solution.length;j++){
+    const d=distance(solution[i],solution[j]);if(d<separation-EPS)pairs.push({i,j,d});
+  }return pairs.sort((a,b)=>a.d-b.d)};
+  const allowed=(candidate,index)=>{
+    const item=solution[index].item,sign=item.sign,start=sign*30,end=start+30;
+    if(!(candidate.display>start+0.05&&candidate.display<end-0.05))return false;
+    if(!(candidate.lane>=radialMin&&candidate.lane<=radialMax))return false;
+    for(let i=0;i<solution.length;i++){
+      if(i===index)continue;
+      const other=solution[i];
+      if(other.item.sign===sign&&((other.item.exact<item.exact&&candidate.display<=other.display+0.02)||
+        (other.item.exact>item.exact&&candidate.display>=other.display-0.02)))return false;
+      if(distance(candidate,other)<separation-EPS)return false;
+    }
+    const line=segmentFor(candidate,slot);
+    if(fixed.some(other=>properIntersection(line.a,line.b,other.a,other.b)))return false;
+    for(let i=0;i<solution.length;i++){
+      if(i===index)continue;
+      const other=solution[i],route=segmentFor(other,slot);
+      if(properIntersection(line.a,line.b,route.a,route.b))return false;
+      if(segmentDistance(other.point,line.a,line.b)<leaderClearance-EPS)return false;
+      if(segmentDistance(candidate.point,route.a,route.b)<leaderClearance-EPS)return false;
+    }
+    return true;
+  };
+  let repaired=0;
+  // Deterministic local search: choose the least distortion necessary to clear
+  // each collision. Prefer changing lower-priority placements over luminaries.
+  for(let pass=0;pass<solution.length*3;pass++){
+    const overlaps=overlapPairs();if(!overlaps.length)break;
+    let improved=false;
+    for(const {i,j} of overlaps){
+      const order=[i,j].sort((a,b)=>solution[b].item.priority-solution[a].item.priority||
+        Math.abs(solution[a].offset)-Math.abs(solution[b].offset));
+      let best=null;
+      for(const index of order){
+        const record=solution[index],item=record.item,originalLane=Number(item.authoredLane),
+          base=Number.isFinite(originalLane)?originalLane:record.lane;
+        // Keep the previous display angle when possible. The exact radial
+        // direction and small same-sign offsets are safe fallback candidates.
+        const angles=[record.display,item.exact];
+        for(const step of [1,2,3,4,5,6,7,8,9,10,12,14]){
+          angles.push(item.exact+step,item.exact-step,record.display+step,record.display-step);
+        }
+        const lanes=[record.lane];
+        for(let step=4;step<=100;step+=4)lanes.push(base-step,base+step);
+        for(const display of [...new Set(angles.map(a=>Number(a.toFixed(5))))]){
+          if(Math.abs(display-item.exact)>17)continue;
+          for(const lane of [...new Set(lanes)]){
+            if(lane<radialMin||lane>radialMax)continue;
+            const candidate={...record,display,lane,point:polar(lane,display),
+              exactPoint:record.exactPoint||exactPoint(record,slot),offset:display-item.exact};
+            if(!allowed(candidate,index))continue;
+            const penalty=(Math.abs(lane-base)*.23+Math.abs(candidate.offset)*3.5)*
+              (1+Math.max(0,3-item.priority)*.45);
+            if(!best||penalty<best.penalty)best={index,candidate,penalty};
+          }
+        }
+      }
+      if(best){
+        Object.assign(solution[best.index],best.candidate,{radialRepair:true});
+        repaired++;improved=true;break;
+      }
+    }
+    if(!improved)break;
+  }
+  const unresolved=overlapPairs();
+  if(repaired)wheel.dataset.placementRadialClearanceRepairs=String(
+    Number(wheel.dataset.placementRadialClearanceRepairs||0)+repaired);
+  if(unresolved.length)console.warn('[Sky Chart placement layout] Unresolved bubble clearance',slot,unresolved.length);
+  return solution;
+}
 function solveSlot(wheel,slot){
   const g=geometry(slot),items=ordinaryItems(wheel,slot);if(!g||!items.length)return{items:[],crossings:0,hits:0};
   const authoredLane=items.find(item=>Number.isFinite(item.authoredLane))?.authoredLane,lane=Number.isFinite(authoredLane)?authoredLane:Number(g.placement?.[0]);if(!Number.isFinite(lane))return{items:[],crossings:0,hits:0};
   const bySign=new Map();items.forEach(item=>{if(!bySign.has(item.sign))bySign.set(item.sign,[]);bySign.get(item.sign).push(item)});
   let solution=[];for(let sign=0;sign<12;sign++)solution.push(...solveSignGroup(bySign.get(sign)||[],lane));
   solution=sanitize(solution,slot,wheel);
+  solution=repairBubbleClearance(solution,slot,wheel);
   solution.sort((a,b)=>a.item.exact-b.item.exact||a.item.index-b.item.index);
   solution.forEach((record,index)=>{
     const {item}=record,exact=record.exactPoint||exactPoint(record,slot);
@@ -153,6 +236,7 @@ function solveSlot(wheel,slot){
     item.group.dataset.placementCircularOrder=String(index);
     item.group.dataset.placementOrderCorrected=Math.abs(record.offset)>1e-6?'true':'false';
     item.group.dataset.placementOrderFallback=record.fallback?'true':'false';
+    item.group.dataset.placementRadialClearance=record.radialRepair?'true':'false';
     item.group.dataset.placementTangentialOffset=record.offset.toFixed(3);
     item.leader.setAttribute('x1',record.point.x.toFixed(2));item.leader.setAttribute('y1',record.point.y.toFixed(2));
     item.leader.setAttribute('x2',exact.x.toFixed(2));item.leader.setAttribute('y2',exact.y.toFixed(2));
@@ -179,7 +263,7 @@ function arrange(wheel){
     wheel.dataset.placementLeaderGlyphHits=String(a.hits+b.hits);
     wheel.dataset.placementCircularOrder='preserved';
     wheel.dataset.crossSignDisplacement='forbidden';
-    wheel.dataset.placementCollisionOrder='same-sign-current-ring-v6';
+    wheel.dataset.placementCollisionOrder='same-sign-current-ring-v7';
     if(a.crossings+b.crossings)console.error('[Sky Chart placement layout] Crossing contract failed.',{A:a.crossings,B:b.crossings});
   }finally{arranging=false}
 }
