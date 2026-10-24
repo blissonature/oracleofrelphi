@@ -58,9 +58,9 @@ try{
    }
    // Compare the actual SVG transform against the wheel center rather than
    // trusting only the lane attribute written by the solver.
-   const outward=items.filter(item=>Math.hypot(item.x-600,item.y-600)>item.authoredLane+0.01)
+   const offRing=items.filter(item=>Math.abs(Math.hypot(item.x-600,item.y-600)-item.authoredLane)>0.01)
      .map(item=>({name:item.id,radius:Math.hypot(item.x-600,item.y-600),authored:item.authoredLane}));
-   report.slots[slot]={...report.slots[slot],items:items.length,outward,fallBacks:items.filter(x=>x.fallback==='true').map(x=>x.id),
+   report.slots[slot]={...report.slots[slot],items:items.length,offRing,fallBacks:items.filter(x=>x.fallback==='true').map(x=>x.id),
     collisions,collidingItems:items.filter(x=>collisions.some(c=>c.a===x.id||c.b===x.id))};
   }
   return report;
@@ -69,8 +69,8 @@ try{
  assert.ok(result.slots.A.items>=14&&result.slots.B.items>=14,'Both crowded skies must render their ordinary placements');
  assert.equal(result.slots.A.collisions.length,0,'Sky A placement glyph orbs must not overlap');
  assert.equal(result.slots.B.collisions.length,0,'Sky B placement glyph orbs must not overlap');
- for(const slot of ['A','B'])assert.deepEqual(result.slots[slot].outward,[],
-   'A placement orb in Sky '+slot+' moved farther outward from its authored radius');
+ for(const slot of ['A','B'])assert.deepEqual(result.slots[slot].offRing,[],
+   'A placement orb in Sky '+slot+' left its assigned circumference');
  // A house boundary can force an adjusted leader back onto its exact
  // longitude. The resolver must *still* maintain bubble clearance afterward.
  const stressed=await page.evaluate(()=>{
@@ -83,7 +83,7 @@ try{
    line.classList.add('sky-foundation-divider');
    for(const [k,v] of Object.entries({x1:a.x,y1:a.y,x2:b.x,y2:b.y}))line.setAttribute(k,String(v));
    layer.appendChild(line);
-   delete wheel.dataset.placementRadialClearanceRepairs;
+   delete wheel.dataset.placementTangentialClearanceRepairs;
    window.RelphiPlacementCollisionOrder.arrange(wheel);
    const nodes=[...wheel.querySelectorAll('[data-layer="placements"] > g[data-sky="A"][data-placement]:not([data-angle-axis="true"]):not([data-placement="moon-range"])')];
    const items=nodes.map(group=>{
@@ -117,20 +117,20 @@ try{
      const match=again.find(v=>v[0]===name);
      return match?Math.hypot(match[1]-x,match[2]-y):Infinity;
    }));
-   const outward=items.filter(item=>Math.hypot(item.x-600,item.y-600)>item.authoredLane+0.01)
+   const offRing=items.filter(item=>Math.abs(Math.hypot(item.x-600,item.y-600)-item.authoredLane)>0.01)
      .map(item=>({name:item.name,radius:Math.hypot(item.x-600,item.y-600),authored:item.authoredLane}));
-   const inward=items.filter(item=>item.lane<item.authoredLane-0.01).map(item=>({name:item.name,lane:item.lane,authored:item.authoredLane}));
-   return {collisions,outward,inward,fallBacks:items.filter(x=>x.fallback==='true').map(x=>x.name),
-     repairs:Number(wheel.dataset.placementRadialClearanceRepairs||0),leaderHitPairs:leaderHits,
+   return {collisions,offRing,fallBacks:items.filter(x=>x.fallback==='true').map(x=>x.name),
+     repairs:Number(wheel.dataset.placementTangentialClearanceRepairs||0),
+     unresolved:Number(wheel.dataset.placementUnresolvedBubbleOverlaps||0),leaderHitPairs:leaderHits,
      repeatedMovement:Number(repeatedMovement.toFixed(4)),
      crossings:wheel.dataset.placementLeaderCrossings,leaderHits:wheel.dataset.placementLeaderGlyphHits};
  });
  console.log('GLYPH_CUSP_STRESS_TRACE',JSON.stringify(stressed));
  assert.equal(stressed.collisions.length,0,'House-divider leader fallback must not reintroduce glyph-orb overlaps');
- assert.deepEqual(stressed.outward,[],'The cusp-stress repair must never send an orb farther from the center');
+ assert.deepEqual(stressed.offRing,[],'The cusp-stress repair must keep every orb on its original circumference');
  assert.deepEqual(stressed.leaderHitPairs,[],'No actual SVG leader may intersect an unrelated glyph bubble in the stress case');
- assert.ok(stressed.repairs>0,'House-divider stress case must exercise the new radial clearance repair');
+ assert.ok(stressed.repairs>0,'House-divider stress case must exercise tangential-only clearance');
  assert.ok(stressed.repeatedMovement<0.25,'Repeated collision layout passes must not move glyphs again');
  assert.deepEqual(errors,[]);
- console.log('PASS crowded Oct 23 A/B placement glyph orbs do not overlap');
+ console.log('PASS crowded Oct 23 A/B orbs stay on exact same circumference with no overlaps');
 }finally{await browser.close()}
