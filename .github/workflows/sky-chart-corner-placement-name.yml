@@ -1,0 +1,32 @@
+name: Sky Chart corner placement name capitalization
+
+on:
+  pull_request:
+    paths:
+      - 'sky-chart-vocab-tab-v1.js'
+      - 'sky-chart.html'
+      - 'tests/sky-chart-corner-placement-name-browser.mjs'
+      - '.github/workflows/sky-chart-corner-placement-name.yml'
+  workflow_dispatch:
+
+jobs:
+  corner-names:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check JavaScript syntax
+        run: |
+          node --check sky-chart-vocab-tab-v1.js
+          node --check tests/sky-chart-corner-placement-name-browser.mjs
+      - name: Install Chromium
+        run: |
+          npm install --no-save playwright@1.52.0 luxon@3 suncalc@1.9.0
+          npx playwright install --with-deps chromium
+      - name: Verify wheel corner box names
+        run: |
+          python3 -m http.server 4173 >/tmp/sky-chart-corner-name-server.log 2>&1 &
+          node tests/sky-chart-corner-placement-name-browser.mjs
