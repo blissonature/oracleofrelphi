@@ -367,13 +367,17 @@
     }
     if(wheelOnlyExternal)return;
     ['A','B'].forEach(slot=>{const panel=document.getElementById(slot==='A'?'skyFoundationA':'skyFoundationB');if(!panel)return;panel.classList.toggle('has-ledger-isolation',!!filterState);panel.querySelectorAll('.sky-foundation-row[data-placement]').forEach(row=>{row.classList.toggle('is-kept',!!filterState&&filterKeep.placements.has(`${slot}:${row.dataset.placement}`));row.classList.toggle('is-selected',!!lockedState&&matchesNode(row,lockedState));row.classList.toggle('is-hovered',!!hoverState&&!lockedState&&matchesNode(row,hoverState))})});
-    // Wheel isolation affects emphasis, not filtering: keep every previously
-    // eligible tile in the DOM and visible so a selected line can navigate to it.
+    // A clicked/tapped wheel selection temporarily narrows the Relationships
+    // scroll window. Hover is preview-only; never hide tiles while hovering.
+    // Preserve source eligibility and DOM rows; clearing the lock restores them.
     document.querySelectorAll('.sky-foundation-relationship-row').forEach(row=>{
       const matches=!filterState||rowMatchesState(row,filterState);
+      const temporarilyExcluded=!!lockedState&&!rowMatchesState(row,lockedState);
       row.classList.toggle('is-wheel-dimmed',!!filterState&&!matches);
+      row.classList.toggle('is-wheel-selection-excluded',temporarilyExcluded);
       if(rowEligibleForWheel(row)){
-        row.hidden=false;row.setAttribute('aria-hidden','false');
+        row.hidden=false;
+        row.setAttribute('aria-hidden',temporarilyExcluded?'true':'false');
       }
     });
     const allRows=[...document.querySelectorAll('#skyFoundationRelationshipList>.sky-foundation-relationship-row[data-relation-index]')],visibleCount=filterState?filterKeep.matched.size:allRows.filter(row=>rowEligibleForWheel(row)).length,totalCount=allRows.length,count=document.getElementById('skyFoundationRelationshipCount'),empty=document.getElementById('skyFoundationRelationshipEmpty'),clear=document.getElementById('skyFoundationClearIsolation');if(count)count.textContent=`${visibleCount}/${totalCount}`;if(empty)empty.hidden=visibleCount!==0;if(clear)clear.hidden=!(lockedState||rowLockedState);
