@@ -51,9 +51,11 @@ function parseSegment(line){
   return[a.x,a.y,b.x,b.y].every(Number.isFinite)?{a,b}:null;
 }
 function minimumSeparation(lane){
-  const shared=spec()?.comparison||{},radius=Number(shared.placementBubbleRadius)||17.2,clearance=Number(shared.placementClearance)||6;
-  const chord=2*radius+clearance,ratio=Math.min(.999999,chord/(2*lane));
-  return 2*Math.asin(ratio)*180/Math.PI+.08;
+  const shared=spec()?.comparison||{},radius=Number(shared.placementBubbleRadius)||17.2;
+  // The smallest visually legible gap between two actual bubbles.
+  // Do not exaggerate the distance from exact notches just to fill a sign.
+  const chord=2*radius+2,ratio=Math.min(.999999,chord/(2*lane));
+  return 2*Math.asin(ratio)*180/Math.PI+.005;
 }
 function isotonic(values,weights){
   const blocks=[];
@@ -81,26 +83,30 @@ function ordinaryItems(wheel,slot){
 
 function solveSignGroup(items,lane){
   if(!items.length)return[];
-  const baseSep=minimumSeparation(lane),sign=items[0].sign,start=sign*30,end=start+30;
-  // Prefer the widest same-circumference spacing the sign can contain.
-  // The previous ascending search always accepted multiplier 1 first,
-  // leaving clusters visually cramped even when spare arc was available.
-  // Densely populated signs gracefully fall back to smaller increments.
-  for(const multiplier of [1.4,1.35,1.3,1.25,1.2,1.15,1.1,1.05,1]){
-    const sep=baseSep*multiplier,lower=start+sep/2+.02,upper=end-sep/2-.02-(items.length-1)*sep;
-    if(lower>upper)continue;
-    const targets=items.map((item,index)=>item.exact-index*sep),fit=isotonic(targets,items.map(weight));
-    const solution=items.map((item,index)=>{
-      const base=Math.max(lower,Math.min(upper,fit[index])),display=base+index*sep;
-      return{item,lane,display,point:polar(lane,display),exactPoint:null,offset:display-item.exact};
-    });
-    return solution;
+  const sorted=[...items].sort((a,b)=>a.exact-b.exact||a.priority-b.priority||a.index-b.index);
+  const sign=sorted[0].sign,start=sign*30,end=start+30;
+  const make=(item,display,fallback=false)=>({item,lane,display,
+    point:polar(lane,display),exactPoint:null,offset:display-item.exact,fallback});
+  // An isolated placement stays EXACTLY on its longitude notch.
+  if(sorted.length===1)return[make(sorted[0],sorted[0].exact)];
+  const sep=minimumSeparation(lane),lower=start+.005,
+    upper=end-.005-(sorted.length-1)*sep;
+  if(upper<lower-EPS){
+    // Impossible to put all bubbles into one sign without overlap.
+    return sorted.map(item=>make(item,item.exact,true));
   }
-  // Too many placements to fit honestly inside this sign on one safe lane.
-  // Keep them exact rather than reversing order or sending a leader across neighbors.
-  return items.map(item=>({item,lane,display:item.exact,point:polar(lane,item.exact),exactPoint:null,offset:0,fallback:true}));
+  // Weighted bounded isotonic regression minimizes the squared angular
+  // displacement subject to non-overlap and circular order. Critically,
+  // positions that already have enough clearance remain at EXACT longitude:
+  // there is NO arbitrary spacing multiplier and NO margin of half a bubble
+  // from the zodiac boundary.
+  const targets=sorted.map((item,index)=>item.exact-index*sep);
+  const fit=isotonic(targets,sorted.map(weight));
+  return sorted.map((item,index)=>{
+    const display=Math.max(lower,Math.min(upper,fit[index]))+index*sep;
+    return make(item,display);
+  });
 }
-
 function fixedSegments(wheel,slot){
   const houseLayer=slot==='A'?'a-houses':'b-houses';
   return [
@@ -204,9 +210,12 @@ function redistributeCrowdedSign(solution,slot,wheel,sign){
   for(const [allowHouseCrossing,allowLeaderBehindOrb] of [[false,false],[true,false],[true,true]]){
     let stageBest=null;
     const sepBase=minimumSeparation(lane);
-    for(const multiplier of [1.4,1.3,1.2,1.1,1]){
-      const sep=sepBase*multiplier,low=start+sep/2+.02,
-        high=end-sep/2-.02-(group.length-1)*sep;
+    // Begin at the smallest collision-free spacing; never distribute orbs
+    // more widely for decoration. Additional separation is evaluated only
+    // when the tight optimal layout is disallowed by leader geometry.
+    for(const multiplier of [1,1.025,1.05,1.1]){
+      const sep=sepBase*multiplier,low=start+.005,
+        high=end-.005-(group.length-1)*sep;
       if(low>high+EPS)continue;
       const intervals=Math.max(1,Math.ceil((high-low)/.2));
       for(let step=0;step<=intervals;step++){
@@ -222,8 +231,11 @@ function redistributeCrowdedSign(solution,slot,wheel,sign){
           const line=segmentFor(r,slot);
           return n+houseDividers.filter(h=>properIntersection(line.a,line.b,h.a,h.b)).length;
         },0);
-        const score=records.reduce((n,r)=>n+Math.abs(r.offset)*weight(r.item),0)
-          +80*(1.4-multiplier)+150*crossings;
+        // Prefer the smallest total squared deviation from actual notches.
+        // Leader-routing safety is handled by the staged search, not by
+        // moving free placements away from their original coordinates.
+        const score=records.reduce((n,r)=>n+r.offset*r.offset*weight(r.item),0)
+          +150*crossings;
         if(!stageBest||score<stageBest.score)stageBest={records,score,crossings,allowLeaderBehindOrb};
       }
     }
