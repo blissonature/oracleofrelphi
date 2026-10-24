@@ -84,6 +84,10 @@ try{
    for(const [k,v] of Object.entries({x1:a.x,y1:a.y,x2:b.x,y2:b.y}))line.setAttribute(k,String(v));
    layer.appendChild(line);
    delete wheel.dataset.placementTangentialClearanceRepairs;
+   // Capture the initial geometry; only Sky A's cusp was changed.
+   const originalB=[...wheel.querySelectorAll('[data-layer="placements"] > g[data-sky="B"][data-placement]:not([data-angle-axis="true"]):not([data-placement="moon-range"])')]
+     .map(g=>{const m=g.transform.baseVal.consolidate()?.matrix;return {name:g.dataset.placement,x:m?.e,y:m?.f}});
+   const savedB=wheel.dataset.placementCollisionSignatureB||'';
    window.RelphiPlacementCollisionOrder.arrange(wheel);
    const nodes=[...wheel.querySelectorAll('[data-layer="placements"] > g[data-sky="A"][data-placement]:not([data-angle-axis="true"]):not([data-placement="moon-range"])')];
    const items=nodes.map(group=>{
@@ -101,6 +105,11 @@ try{
      .map(g=>{const m=g.transform.baseVal.consolidate()?.matrix;return {name:g.dataset.placement,
        x:m.e,y:m.f,authored:Number(g.dataset.placementAuthoredLane)}});
    const bOffRing=skyBItems.filter(x=>Math.abs(Math.hypot(x.x-600,x.y-600)-x.authored)>0.01);
+   const bMoved=skyBItems.filter(item=>{
+     const prior=originalB.find(x=>x.name===item.name);
+     return !prior||Math.hypot(prior.x-item.x,prior.y-item.y)>.1;
+   }).map(item=>item.name);
+   const bSignatureChanged=wheel.dataset.placementCollisionSignatureB!==savedB;
    const bCollisions=[];
    for(let i=0;i<skyBItems.length;i++)for(let j=i+1;j<skyBItems.length;j++){
      const p=skyBItems[i],q=skyBItems[j],distance=Math.hypot(p.x-q.x,p.y-q.y);
@@ -128,7 +137,8 @@ try{
    }));
    const offRing=items.filter(item=>Math.abs(Math.hypot(item.x-600,item.y-600)-item.authoredLane)>0.01)
      .map(item=>({name:item.name,radius:Math.hypot(item.x-600,item.y-600),authored:item.authoredLane}));
-   return {collisions,offRing,bOffRing,bCollisions,fallBacks:items.filter(x=>x.fallback==='true').map(x=>x.name),
+   return {collisions,offRing,bOffRing,bCollisions,bMoved,bSignatureChanged,
+     reuseCheckB:wheel.dataset.placementReuseCheckB||'',fallBacks:items.filter(x=>x.fallback==='true').map(x=>x.name),
      repairs:Number(wheel.dataset.placementTangentialClearanceRepairs||0),
      unresolved:Number(wheel.dataset.placementUnresolvedBubbleOverlaps||0),leaderHitPairs:leaderHits,
      repeatedMovement:Number(repeatedMovement.toFixed(4)),
