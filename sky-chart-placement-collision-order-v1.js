@@ -275,8 +275,8 @@ function slotGeometrySignature(wheel,slot){
 // trusting only a stale signature. Other controllers may touch line metadata
 // without changing any visible orb. A valid layout must be preserved as-is.
 function slotLayoutStillValid(wheel,slot){
-  if(!String(wheel.dataset.placementCollisionOrder||'').startsWith('same-sign-fixed-circumference'))return rejected('1');
   const rejected=reason=>{wheel.dataset['placementReuseRejection'+slot]=reason;return false};
+  if(!String(wheel.dataset.placementCollisionOrder||'').startsWith('same-sign-fixed-circumference'))return rejected('1');
   const items=ordinaryItems(wheel,slot),bubble=Number(spec()?.comparison?.placementBubbleRadius)||19.7;
   const fixed=fixedSegments(wheel,slot),seen=[];
   for(const item of items){
