@@ -35,6 +35,10 @@ try{
      },true);
    }
  });
+ // Moving over Moon B must remain preview-only: no Relationships rows disappear.
+ await moon.hover({force:true});
+ await page.waitForTimeout(100);
+ assert.equal(await page.evaluate(()=>document.querySelectorAll('#skyFoundationRelationshipList > .is-wheel-selection-excluded').length),0,'Hover alone must not hide Relationships rows');
  await moon.click({force:true});
  await page.waitForTimeout(100);
  const trace=await page.evaluate(()=>({
@@ -95,6 +99,19 @@ try{
  await page.waitForSelector('.sky-focus-hidden-aspect-popover',{timeout:5000});
  await page.getByRole('button',{name:'Increase to 3°'}).click();
  assert.equal(await page.evaluate(()=>window.RelphiHarmonicOrb.getWindow()),3);
+ await page.waitForTimeout(300);
+ // Snapshot DOM identity, exact row order, and aspect geometry *before* selecting.
+ // Temporarily narrowing Relationships must not rebuild data or redraw the wheel.
+ const baseline=await page.evaluate(()=>{
+   const list=document.getElementById('skyFoundationRelationshipList');
+   window.__unfilteredRelationshipNodes=[...list.querySelectorAll(':scope > .sky-foundation-relationship-row')];
+   const geometry=()=>[...document.querySelectorAll('#skyFoundationWheelMount [data-layer="aspects"] > line.sky-foundation-aspect:not(.sky-foundation-aspect-hit)')]
+      .map(line=>['data-left-sky','data-left-placement','data-aspect','data-right-sky','data-right-placement','x1','y1','x2','y2'].map(name=>line.getAttribute(name)).join('|')).sort();
+   window.__unfilteredWheelGeometry=geometry();
+   return {rows:window.__unfilteredRelationshipNodes.length,aspectLines:window.__unfilteredWheelGeometry.length};
+ });
+ assert.ok(baseline.rows>1,'Fixture must contain multiple Relationships tiles');
+ assert.ok(baseline.aspectLines>0,'Fixture must show aspect lines on the comparison wheel');
  await moon.click({force:true});
  await page.mouse.move(10,10);
  await page.waitForTimeout(150);
@@ -109,11 +126,30 @@ try{
  assert.ok(focusRows.excluded>0,'Locked Moon B selection must temporarily hide unrelated relationships');
  assert.ok(focusRows.matches>0,'Locked Moon B selection must keep matching relationships visible');
  assert.equal(focusRows.incorrectlyVisible,0,'Unrelated relationships must be display:none');
- // Clicking the blank Relationships list surface clears the temporary view.
- await page.evaluate(()=>document.getElementById('skyFoundationRelationshipList').click());
- await page.waitForTimeout(100);
- const restored=await page.evaluate(()=>[...document.querySelectorAll('#skyFoundationRelationshipList > .sky-foundation-relationship-row[data-relation-index]')].filter(row=>row.classList.contains('is-wheel-selection-excluded')).length);
- assert.equal(restored,0,'Clear lock restores every previously hidden relationship');
+ const snapshot=await page.evaluate(()=>{
+   const rows=[...document.querySelectorAll('#skyFoundationRelationshipList > .sky-foundation-relationship-row')];
+   const lines=[...document.querySelectorAll('#skyFoundationWheelMount [data-layer="aspects"] > line.sky-foundation-aspect:not(.sky-foundation-aspect-hit)')]
+     .map(line=>['data-left-sky','data-left-placement','data-aspect','data-right-sky','data-right-placement','x1','y1','x2','y2'].map(name=>line.getAttribute(name)).join('|')).sort();
+   return {sameRows:rows.length===window.__unfilteredRelationshipNodes.length&&rows.every((row,i)=>row===window.__unfilteredRelationshipNodes[i]),
+     sameGeometry:JSON.stringify(lines)===JSON.stringify(window.__unfilteredWheelGeometry),
+     moonLocked:!!document.querySelector('#skyFoundationWheelMount [data-interactive="placement"][data-sky="B"][data-placement="moon"].is-selected')};
+ });
+ assert.equal(snapshot.sameRows,true,'Selection must not delete, rebuild, or reorder Relationships tiles');
+ assert.equal(snapshot.sameGeometry,true,'Filtering Relationships must leave comparison-wheel aspect geometry untouched');
+ assert.equal(snapshot.moonLocked,true,'Relationships filtering must preserve the Moon B wheel lock');
+ // Use a REAL Chromium pointer click in the empty 8px list padding, not an artificial DOM click.
+ // That blank surface is the promised way to clear the selection.
+ await page.locator('#skyFoundationRelationshipList').click({position:{x:3,y:3}});
+ await page.waitForTimeout(150);
+ const restored=await page.evaluate(()=>{
+   const rows=[...document.querySelectorAll('#skyFoundationRelationshipList > .sky-foundation-relationship-row')];
+   return {excluded:rows.filter(row=>row.classList.contains('is-wheel-selection-excluded')).length,
+     sameRows:rows.length===window.__unfilteredRelationshipNodes.length&&rows.every((row,i)=>row===window.__unfilteredRelationshipNodes[i]),
+     moonLocked:!!document.querySelector('#skyFoundationWheelMount [data-interactive="placement"][data-sky="B"][data-placement="moon"].is-selected')};
+ });
+ assert.equal(restored.excluded,0,'Real blank-area click restores temporarily hidden Relationships tiles');
+ assert.equal(restored.sameRows,true,'Blank-area clear restores the full list in its original order without rebuilding');
+ assert.equal(restored.moonLocked,false,'Blank-area clear also removes the Moon B wheel selection');
  console.log('PASS locked Moon B shows matching Relationships only, clear restores all');
   console.log('PASS helper popup -> Increase to HR 3 -> select Moon B -> leave remains selected');
   console.log('PASS Moon B wheel and side-panel clicks persist, including after Harmonic Window 2→3 transition');
