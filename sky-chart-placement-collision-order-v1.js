@@ -361,89 +361,6 @@ function repairBubbleClearance(solution,slot,wheel){
   if(unresolved.length)console.warn('[Sky Chart placement layout] No valid same-circumference clearance',slot,unresolved.length);
   return solution;
 }
-// Adjacent zodiac signs share one circumference. Solving each sign in
-// isolation cannot guarantee clearance across their shared boundary (including
-// Pisces → Aries). Project ALL placements on the circle simultaneously onto
-// the smallest angular displacements that satisfy pairwise bubble clearance,
-// true sign membership, and circular order. Never change the radial lane.
-function resolveWholeCircumference(solution,slot,wheel){
-  if(solution.length<2)return solution;
-  const comparison=spec()?.comparison||{},bubble=Number(comparison.placementBubbleRadius)||19.7,
-    clearance=2*bubble+Math.max(6,Number(comparison.placementClearance)||6);
-  const collisionPairs=records=>{
-    const hits=[];
-    for(let i=0;i<records.length;i++)for(let j=i+1;j<records.length;j++)
-      if(Math.hypot(records[i].point.x-records[j].point.x,
-                    records[i].point.y-records[j].point.y)<clearance-.1)
-        hits.push([i,j]);
-    return hits;
-  };
-  const before=collisionPairs(solution);
-  if(!before.length)return solution;
-  const sorted=[...solution].sort((a,b)=>a.item.exact-b.item.exact||a.item.index-b.item.index);
-  const n=sorted.length,authoredLane=sorted[0].item.authoredLane;
-  if(sorted.some(r=>Math.abs(r.item.authoredLane-authoredLane)>EPS))return solution;
-  const separation=minimumSeparation(authoredLane);
-  // Cut the circular ordering at its LARGEST empty exact-longitude gap. That
-  // makes the crowded Pisces/Aries transition an ordinary adjacent pair.
-  let startAt=0,largestGap=-1;
-  for(let i=0;i<n;i++){
-    const next=i===n-1?sorted[0].item.exact+360:sorted[i+1].item.exact;
-    const gap=next-sorted[i].item.exact;
-    if(gap>largestGap){largestGap=gap;startAt=(i+1)%n}
-  }
-  if(largestGap<separation-.1)return solution;
-  const ordered=Array.from({length:n},(_,i)=>{
-    const index=startAt+i,record=sorted[index%n],winding=index>=n?360:0,
-      exact=record.item.exact+winding,signStart=record.item.sign*30+winding;
-    return{record,exact,lower:signStart+.005,upper:signStart+30-.005};
-  });
-  // Bounded weighted isotonic regression. After subtracting index*separation,
-  // the circular-clearance constraints are monotonic constraints. This
-  // minimizes squared distances to notches, not decorative even spacing.
-  const blocks=[],clamp=(value,lower,upper)=>Math.max(lower,Math.min(upper,value));
-  for(let i=0;i<n;i++){
-    const item=ordered[i],w=weight(item.record.item),target=item.exact-i*separation;
-    let block={first:i,last:i,sum:w*target,w,
-      lower:item.lower-i*separation,upper:item.upper-i*separation};
-    block.value=clamp(block.sum/block.w,block.lower,block.upper);
-    blocks.push(block);
-    while(blocks.length>1&&blocks[blocks.length-2].value>blocks[blocks.length-1].value+EPS){
-      const right=blocks.pop(),left=blocks.pop();
-      block={first:left.first,last:right.last,sum:left.sum+right.sum,w:left.w+right.w,
-        lower:Math.max(left.lower,right.lower),upper:Math.min(left.upper,right.upper)};
-      if(block.lower>block.upper+EPS){
-        wheel.dataset.placementWholeCircleInfeasible='bounds';
-        return solution;
-      }
-      block.value=clamp(block.sum/block.w,block.lower,block.upper);
-      blocks.push(block);
-    }
-  }
-  const candidate=new Array(n);
-  for(const block of blocks)for(let i=block.first;i<=block.last;i++){
-    const entry=ordered[i],display=block.value+i*separation;
-    if(display<entry.lower-EPS||display>entry.upper+EPS){
-      wheel.dataset.placementWholeCircleInfeasible='sign';
-      return solution;
-    }
-    candidate[i]={...entry.record,display,lane:authoredLane,
-      point:polar(authoredLane,display),
-      exactPoint:entry.record.exactPoint||exactPoint(entry.record,slot),
-      offset:display-entry.exact,fallback:false,wholeCircleRepair:true};
-  }
-  if(collisionPairs(candidate).length||leaderCrossings(candidate,slot)>0){
-    wheel.dataset.placementWholeCircleInfeasible='geometry';
-    return solution;
-  }
-  // The real longitude at the far end of every leader is unchanged.
-  // A house-divider or opaque-bubble crossing may be visually tolerated as
-  // a last resort; collisions and misleading inter-leader crossings are not.
-  for(let i=0;i<n;i++)Object.assign(ordered[i].record,candidate[i]);
-  wheel.dataset.placementWholeCircleRepairs=String(before.length);
-  wheel.dataset.placementWholeCircleInfeasible='';
-  return solution;
-}
 function solveSlot(wheel,slot){
   const g=geometry(slot),items=ordinaryItems(wheel,slot);if(!g||!items.length)return{items:[],crossings:0,hits:0};
   const authoredLane=items.find(item=>Number.isFinite(item.authoredLane))?.authoredLane,lane=Number.isFinite(authoredLane)?authoredLane:Number(g.placement?.[0]);if(!Number.isFinite(lane))return{items:[],crossings:0,hits:0};
@@ -451,7 +368,6 @@ function solveSlot(wheel,slot){
   let solution=[];for(let sign=0;sign<12;sign++)solution.push(...solveSignGroup(bySign.get(sign)||[],lane));
   solution=sanitize(solution,slot,wheel);
   solution=repairBubbleClearance(solution,slot,wheel);
-  solution=resolveWholeCircumference(solution,slot,wheel);
   solution.sort((a,b)=>a.item.exact-b.item.exact||a.item.index-b.item.index);
   solution.forEach((record,index)=>{
     const {item}=record,exact=record.exactPoint||exactPoint(record,slot);
