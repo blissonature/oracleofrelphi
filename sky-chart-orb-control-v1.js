@@ -29,11 +29,19 @@
   }
 
   function setSvgVisibility(node,visible){
-    node.hidden=!visible;
+    // Resuming after a canceled Where and When draft must not repaint every
+    // gray line by rewriting unchanged SVG visibility attributes.
+    if(node.hidden===visible)node.hidden=!visible;
     node.classList.toggle('sky-chart-orb-hidden',!visible);
-    node.setAttribute('aria-hidden',visible?'false':'true');
-    if(visible){node.style.removeProperty('display');node.style.removeProperty('pointer-events')}
-    else{node.style.setProperty('display','none','important');node.style.setProperty('pointer-events','none','important')}
+    const accessible=visible?'false':'true';
+    if(node.getAttribute('aria-hidden')!==accessible)node.setAttribute('aria-hidden',accessible);
+    if(visible){
+      if(node.style.getPropertyValue('display'))node.style.removeProperty('display');
+      if(node.style.getPropertyValue('pointer-events'))node.style.removeProperty('pointer-events');
+    }else{
+      if(node.style.getPropertyValue('display')!=='none'||node.style.getPropertyPriority('display')!=='important')node.style.setProperty('display','none','important');
+      if(node.style.getPropertyValue('pointer-events')!=='none'||node.style.getPropertyPriority('pointer-events')!=='important')node.style.setProperty('pointer-events','none','important');
+    }
   }
 
   function relationshipSlots(row){
