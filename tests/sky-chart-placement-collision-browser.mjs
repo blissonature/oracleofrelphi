@@ -200,6 +200,28 @@ try{
  await boundaryPage.goto('http://127.0.0.1:4173/sky-chart.html',{waitUntil:'domcontentloaded'});
  await boundaryPage.waitForFunction(()=>document.querySelector('#skyFoundationWheelMount > svg.sky-foundation-wheel')?.dataset.placementCollisionOrder?.includes('same-sign'),{timeout:30000});
  await boundaryPage.waitForTimeout(450);
+ // Fortune is a derived point in the app, which can overwrite the test's
+ // imported longitude. Position its actual rendered SVG group and leader at
+ // the user's Aries 7°04′ BEFORE running the collision solver. This ensures
+ // the regression really contains five Aries placements on the house cusp.
+ await boundaryPage.evaluate(()=>{
+   const wheel=document.querySelector('#skyFoundationWheelMount > svg.sky-foundation-wheel');
+   const group=wheel.querySelector('[data-layer="placements"] > g[data-sky="B"][data-placement="part-of-fortune"]');
+   const leader=wheel.querySelector('[data-layer="leaders"] line[data-sky="B"][data-placement="part-of-fortune"]:not([data-angle])');
+   if(!group||!leader)throw new Error('Missing Sky B Part of Fortune for screenshot regression');
+   const degree=7.0667,rad=(degree-180)*Math.PI/180;
+   const lane=Number(group.dataset.placementAuthoredLane||group.dataset.placementLane);
+   const radius=Math.hypot(Number(leader.getAttribute('x2'))-600,Number(leader.getAttribute('y2'))-600);
+   const point=r=>({x:600+r*Math.cos(rad),y:600+r*Math.sin(rad)}),a=point(lane),b=point(radius);
+   group.dataset.exactLongitude=String(degree);
+   group.dataset.displayLongitude=String(degree);
+   group.setAttribute('transform','translate('+a.x+' '+a.y+')');
+   leader.dataset.exactLongitude=String(degree);
+   leader.setAttribute('x1',a.x);leader.setAttribute('y1',a.y);
+   leader.setAttribute('x2',b.x);leader.setAttribute('y2',b.y);
+   delete wheel.dataset.placementCollisionSignatureB;
+   window.RelphiPlacementCollisionOrder.arrange(wheel);
+ });
  const boundary=await boundaryPage.evaluate(()=>{
    const wheel=document.querySelector('#skyFoundationWheelMount > svg.sky-foundation-wheel');
    const bubble=Number(window.RelphiSkyWheelSpec.comparison.placementBubbleRadius);
@@ -223,6 +245,9 @@ try{
      unresolved:wheel.dataset.placementUnresolvedBubbleOverlaps};
  });
  console.log('SKY_B_HOUSE_BOUNDARY_TRACE',JSON.stringify(boundary));
+ assert.equal(boundary.cluster.length,5,'The screenshot fixture must contain all five Sky B glyphs');
+ assert.ok(boundary.cluster.every(p=>p.exact>=0&&p.exact<30),
+   'All five photographed Sky B glyphs must be Aries, split by houses rather than signs');
  assert.equal(boundary.count,17,'The crowded cusp fixture must include all Sky B placements');
  assert.deepEqual(boundary.collisions,[],'No blue orb may overlap around Sky B house 7/8 cusp');
  assert.deepEqual(boundary.ringErrors,[],'Even boundary-crowded orbs must remain on their original circle');
