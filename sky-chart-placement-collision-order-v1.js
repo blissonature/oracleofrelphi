@@ -4,7 +4,8 @@
 // leader is never accepted; exact-radial overlap is preferable to a false visual correspondence.
 (function(){
 'use strict';
-if(!/(^|\/)sky-chart\.html$/.test(location.pathname)||window.__relphiSkyPlacementCollisionOrderV6)return;
+if(!/(^|\/)sky-chart\.html$/.test(location.pathname)||window.__relphiSkyPlacementCollisionOrderV7)return;
+window.__relphiSkyPlacementCollisionOrderV7=true;
 window.__relphiSkyPlacementCollisionOrderV6=true;
 window.__relphiSkyPlacementCollisionOrderV5=true;
 window.__relphiSkyPlacementCollisionOrderV4=true;
