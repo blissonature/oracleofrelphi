@@ -328,6 +328,84 @@ try{
    assert.deepEqual(caseResult.overlaps,[],'Sky B house-cusp cluster '+caseResult.case+' must have no touching blue orbs');
    assert.deepEqual(caseResult.misplaced,[],'Sky B house-cusp cluster '+caseResult.case+' must preserve radius and true zodiac sign');
  }
+ // The user screenshot identifies the OUTER Sky B house dividers (not sign
+ // borders): Saturn should keep a straight radial stalk; Neptune and the
+ // South Node must clear the adjacent blue house edges with their full orbs.
+ const houseBorder=await page.evaluate(()=>{
+   const wheel=document.querySelector('#skyFoundationWheelMount > svg.sky-foundation-wheel').cloneNode(true);
+   const ns='http://www.w3.org/2000/svg',c={x:600,y:600},rad=d=>(d-180)*Math.PI/180;
+   const polar=(radius,degree)=>({x:c.x+radius*Math.cos(rad(degree)),y:c.y+radius*Math.sin(rad(degree))});
+   const layer=wheel.querySelector('[data-layer="b-houses"]');
+   // Isolate the two actual radial HOUSE edges at Libra 17.5° and 25°.
+   for(const line of [...layer.querySelectorAll('line.sky-foundation-divider')])line.remove();
+   const dividerAngles=[197.5,205];
+   for(const angle of dividerAngles){
+     const line=document.createElementNS(ns,'line');
+     const a=polar(414,angle),b=polar(574,angle);
+     line.classList.add('sky-foundation-divider');
+     for(const [k,v] of Object.entries({x1:a.x,y1:a.y,x2:b.x,y2:b.y}))line.setAttribute(k,String(v));
+     layer.appendChild(line);
+   }
+   const subjects={saturn:188,neptune:196,'south-node':202};
+   for(const [id,exact] of Object.entries(subjects)){
+     const group=wheel.querySelector('[data-layer="placements"] > g[data-sky="B"][data-placement="'+id+'"]'),
+       line=wheel.querySelector('[data-layer="leaders"] line[data-sky="B"][data-placement="'+id+'"]:not([data-angle])');
+     if(!group||!line)throw new Error('Missing Sky B '+id+' group or leader');
+     const authored=Number(group.dataset.placementAuthoredLane||group.dataset.placementLane);
+     const endRadius=Math.hypot(Number(line.getAttribute('x2'))-600,Number(line.getAttribute('y2'))-600);
+     const a=polar(authored,exact),b=polar(endRadius,exact);
+     group.dataset.exactLongitude=String(exact);group.dataset.displayLongitude=String(exact);
+     group.setAttribute('transform','translate('+a.x+' '+a.y+')');
+     line.dataset.exactLongitude=String(exact);
+     line.setAttribute('x1',a.x);line.setAttribute('y1',a.y);
+     line.setAttribute('x2',b.x);line.setAttribute('y2',b.y);
+   }
+   delete wheel.dataset.placementCollisionSignatureB;
+   window.RelphiPlacementCollisionOrder.arrange(wheel);
+   const radius=Number(window.RelphiSkyWheelSpec.comparison.placementBubbleRadius);
+   const threshold=radius+Math.max(6,Number(window.RelphiSkyWheelSpec.comparison.placementClearance)||6);
+   const lines=[...layer.querySelectorAll('line.sky-foundation-divider')].map(line=>({
+     a:{x:Number(line.getAttribute('x1')),y:Number(line.getAttribute('y1'))},
+     b:{x:Number(line.getAttribute('x2')),y:Number(line.getAttribute('y2'))}
+   }));
+   const distance=(p,a,b)=>{
+     const dx=b.x-a.x,dy=b.y-a.y,denom=dx*dx+dy*dy;
+     const t=denom?Math.max(0,Math.min(1,((p.x-a.x)*dx+(p.y-a.y)*dy)/denom)):0;
+     return Math.hypot(p.x-a.x-t*dx,p.y-a.y-t*dy);
+   };
+   const measured={};
+   for(const [id,exact] of Object.entries(subjects)){
+     const group=wheel.querySelector('[data-layer="placements"] > g[data-sky="B"][data-placement="'+id+'"]'),
+       leader=wheel.querySelector('[data-layer="leaders"] line[data-sky="B"][data-placement="'+id+'"]:not([data-angle])'),
+       m=group.transform.baseVal.consolidate()?.matrix;
+     const point={x:m.e,y:m.f},authored=Number(group.dataset.placementAuthoredLane),
+       display=Number(group.dataset.displayLongitude);
+     measured[id]={exact,display,offset:Math.abs(display-exact),
+       radius:Math.hypot(point.x-600,point.y-600),authored,
+       clearance:Math.min(...lines.map(l=>distance(point,l.a,l.b))),
+       leaderStartDistance:Math.hypot(Number(leader.getAttribute('x1'))-point.x,Number(leader.getAttribute('y1'))-point.y),
+       straight:Math.abs(display-exact)<.06};
+   }
+   const all=[...wheel.querySelectorAll('[data-layer="placements"] > g[data-sky="B"][data-placement]:not([data-angle-axis="true"]):not([data-placement="moon-range"])')]
+     .map(g=>{const m=g.transform.baseVal.consolidate()?.matrix;return{id:g.dataset.placement,x:m.e,y:m.f}});
+   const collisions=[];
+   for(let i=0;i<all.length;i++)for(let j=i+1;j<all.length;j++){
+     const d=Math.hypot(all[i].x-all[j].x,all[i].y-all[j].y);
+     if(d<2*radius+6-.1)collisions.push({a:all[i].id,b:all[j].id,d:+d.toFixed(2)});
+   }
+   return {measured,threshold,collisions};
+ });
+ console.log('LIBRA_HOUSE_STRAIGHT_LEADERS_TRACE',JSON.stringify(houseBorder));
+ assert.deepEqual(houseBorder.collisions,[],'The three Libra placements must not overlap other orbs');
+ assert.ok(houseBorder.measured.saturn.straight,'Saturn must keep its radial stalk when no collision needs a bend');
+ for(const id of ['neptune','south-node']){
+   assert.ok(houseBorder.measured[id].clearance>=houseBorder.threshold-.1,
+     id+' orb must clear the blue Sky B house divider');
+ }
+ for(const [id,item] of Object.entries(houseBorder.measured)){
+   assert.ok(Math.abs(item.radius-item.authored)<.12,id+' must stay on the assigned circumference');
+   assert.ok(item.leaderStartDistance<.15,id+' leader must begin at the glyph center');
+ }
  assert.deepEqual(errors,[]);
  console.log('PASS crowded Oct 23 A/B and five-body Sky B house-cusp cluster stay separated on fixed circles');
 }finally{await browser.close()}
