@@ -52,10 +52,12 @@ function parseSegment(line){
   return[a.x,a.y,b.x,b.y].every(Number.isFinite)?{a,b}:null;
 }
 function minimumSeparation(lane){
-  const shared=spec()?.comparison||{},radius=Number(shared.placementBubbleRadius)||17.2;
-  // The smallest visually legible gap between two actual bubbles.
-  // Do not exaggerate the distance from exact notches just to fill a sign.
-  const chord=2*radius+2,ratio=Math.min(.999999,chord/(2*lane));
+  const shared=spec()?.comparison||{},radius=Number(shared.placementBubbleRadius)||17.2,
+    clearance=Math.max(6,Number(shared.placementClearance)||6);
+  // Use the existing intended 6px-or-greater gap. A previous regression
+  // reduced this to 2px, so tightly packed orbs passed numerical checks
+  // while visually touching at normal chart scale.
+  const chord=2*radius+clearance,ratio=Math.min(.999999,chord/(2*lane));
   return 2*Math.asin(ratio)*180/Math.PI+.005;
 }
 function isotonic(values,weights){
@@ -168,7 +170,8 @@ function redistributeCrowdedSign(solution,slot,wheel,sign){
   if(group.length<2)return false;
   const other=solution.filter(record=>record.item.sign!==sign);
   const shared=spec()?.comparison||{},bubble=Number(shared.placementBubbleRadius)||19.7,
-    sepDistance=2*bubble+2,leaderClearance=bubble+4,fixed=fixedSegments(wheel,slot);
+    sepDistance=2*bubble+Math.max(6,Number(shared.placementClearance)||6),
+    leaderClearance=bubble+4,fixed=fixedSegments(wheel,slot);
   const lane=group[0].item.authoredLane,start=sign*30,end=start+30;
   if(!Number.isFinite(lane)||group.some(record=>Math.abs(record.item.authoredLane-lane)>EPS))return false;
   const houseDividers=[...wheel.querySelectorAll(`[data-layer="${slot==='A'?'a-houses':'b-houses'}"] line.sky-foundation-divider`)]
@@ -278,7 +281,8 @@ function redistributeCrowdedSign(solution,slot,wheel,sign){
 function repairBubbleClearance(solution,slot,wheel){
   if(solution.length<2)return solution;
   const shared=spec()?.comparison||{},bubble=Number(shared.placementBubbleRadius)||19.7,
-    separation=2*bubble+2,leaderClearance=bubble+4,fixed=fixedSegments(wheel,slot);
+    separation=2*bubble+Math.max(6,Number(shared.placementClearance)||6),
+    leaderClearance=bubble+4,fixed=fixedSegments(wheel,slot);
   const distance=(a,b)=>Math.hypot(a.point.x-b.point.x,a.point.y-b.point.y);
   const overlapPairs=()=>{
     const pairs=[];
@@ -364,8 +368,8 @@ function repairBubbleClearance(solution,slot,wheel){
 // true sign membership, and circular order. Never change the radial lane.
 function resolveWholeCircumference(solution,slot,wheel){
   if(solution.length<2)return solution;
-  const bubble=Number(spec()?.comparison?.placementBubbleRadius)||19.7,
-    clearance=2*bubble+2;
+  const comparison=spec()?.comparison||{},bubble=Number(comparison.placementBubbleRadius)||19.7,
+    clearance=2*bubble+Math.max(6,Number(comparison.placementClearance)||6);
   const collisionPairs=records=>{
     const hits=[];
     for(let i=0;i<records.length;i++)for(let j=i+1;j<records.length;j++)
@@ -498,7 +502,8 @@ function slotOrbsStayOnRingAndClear(wheel,slot){
     if(!Number.isFinite(item.authoredLane))return false;
     const point={x:matrix.e,y:matrix.f};
     if(Math.abs(Math.hypot(point.x-c.x,point.y-c.y)-item.authoredLane)>.1)return false;
-    if(points.some(other=>Math.hypot(point.x-other.x,point.y-other.y)<2*bubble+2-EPS))return false;
+    if(points.some(other=>Math.hypot(point.x-other.x,point.y-other.y)<
+      2*bubble+Math.max(6,Number(spec()?.comparison?.placementClearance)||6)-EPS))return false;
     points.push(point);
   }
   return true;
