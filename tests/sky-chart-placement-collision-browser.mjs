@@ -45,7 +45,8 @@ try{
      lane:Number(group.dataset.placementLane),authoredLane:Number(group.dataset.placementAuthoredLane)};
   };
   const report={metadata:{order:wheel.dataset.placementCollisionOrder,crossings:wheel.dataset.placementLeaderCrossings,
-   leaderHits:wheel.dataset.placementLeaderGlyphHits},radius:spec.placementBubbleRadius,slots:{}};
+   leaderHits:wheel.dataset.placementLeaderGlyphHits,
+   ariesSearch:wheel.dataset.placementCrowdedTraceB0||''},radius:spec.placementBubbleRadius,slots:{}};
   for(const slot of ['A','B']){
    const raw=[...wheel.querySelectorAll('[data-layer="placements"] > g[data-sky="'+slot+'"][data-placement]:not([data-angle-axis="true"]):not([data-placement="moon-range"])')];
    const parsed=raw.map(parse);const items=parsed.filter(g=>Number.isFinite(g.x)&&Number.isFinite(g.y));
