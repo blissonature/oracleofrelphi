@@ -456,6 +456,24 @@ function preferRadialLeadersAndHouseClearance(solution,slot,wheel){
     }
     repaired++;
   }
+  // A previous sign-wide solve may leave a planet unnecessarily bent even
+  // after its neighbors have moved clear of it. Restore radial stalks LAST,
+  // using the *final* complete layout, without disturbing any other glyph.
+  // This is an independent preference pass, not conditional on a nearby cusp.
+  for(const record of [...solution].sort((a,b)=>b.item.priority-a.item.priority||
+    Math.abs(a.offset)-Math.abs(b.offset))){
+    if(Math.abs(record.offset)<=.06)continue;
+    const lane=record.item.authoredLane,point=polar(lane,record.item.exact);
+    if(!boundaryClear(point))continue;
+    if(solution.some(r=>r!==record&&circularDistance(point,r.point)<diameter-.05))continue;
+    const trial={...record,display:record.item.exact,point,lane,offset:0,
+      exactPoint:exactPoint(record,slot)};
+    const currentIndex=solution.indexOf(record);
+    const proposal=[...solution];proposal[currentIndex]=trial;
+    if(leaderCrossings(proposal,slot)>0)continue;
+    Object.assign(record,trial,{radialLeaderRestored:true});
+    straightened++;
+  }
   wheel.dataset.placementHouseBubbleClearanceRepairs=String(repaired);
   wheel.dataset.placementHouseBubbleClearanceUnresolved=String(unresolved);
   wheel.dataset.placementRadialLeadersRestored=String(straightened);
@@ -485,6 +503,7 @@ function solveSlot(wheel,slot){
     item.group.dataset.placementOrderFallback=record.fallback?'true':'false';
     item.group.dataset.placementTangentialClearance=record.tangentialRepair?'true':'false';
     item.group.dataset.placementHouseBoundaryClearance=record.houseBoundaryRepair?'true':'false';
+    item.group.dataset.placementRadialLeaderRestored=record.radialLeaderRestored?'true':'false';
     item.group.dataset.placementHouseCrossingFallback=record.houseCrossingFallback?'true':'false';
     item.group.dataset.placementLeaderBehindOrbFallback=record.leaderBehindOrbFallback?'true':'false';
     item.leader.dataset.placementHouseCrossingFallback=record.houseCrossingFallback?'true':'false';
