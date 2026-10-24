@@ -5,6 +5,9 @@ on:
     paths:
       - 'drawing-board-preview/drawing-board.html'
       - 'drawing-board.html'
+      - 'drawing-board-workflow-v2.js'
+      - 'drawing-board-workflow-v2.css'
+      - 'tests/drawing-board-document-download-icon.test.js'
       - '.github/workflows/drawing-board-preview-smoke.yml'
 
 permissions:
@@ -30,3 +33,13 @@ jobs:
           grep -Fq 'id="drawingBoardFrame"' /tmp/drawing-board-preview.html
           grep -Fq 'standaloneDrawingBoard=1' /tmp/drawing-board-preview.html
           echo 'Direct revision preview returned Drawing Board HTML successfully.'
+      - name: Install browser runner
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Verify icon-only Download in Chromium
+        run: |
+          python3 -m http.server 8000 --bind 127.0.0.1 >/tmp/relphi-download-browser.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill $SERVER_PID || true' EXIT
+          node tests/drawing-board-document-download-icon.test.js
