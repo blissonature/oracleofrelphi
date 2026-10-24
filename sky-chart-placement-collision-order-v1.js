@@ -569,12 +569,12 @@ function resolveImpossibleHouseCrowding(solution,slot,wheel){
       const low=lo+(houseLower?edge:0),high=hi-(houseUpper?edge:0);
       return{possible:high-low>=(group.length-1)*sep-.001,low,high,sep};
     };
-    if(!fit(.45).possible){wheel.dataset.placementImpossibleHouseCrowding='true';continue;}
-    let lower=.45,upper=1;
+    if(!fit(.28).possible){wheel.dataset.placementImpossibleHouseCrowding='true';continue;}
+    let lower=.28,upper=1;
     if(!fit(1).possible){
       for(let i=0;i<28;i++){const mid=(lower+upper)/2;if(fit(mid).possible)lower=mid;else upper=mid;}
     }else lower=1;
-    const scale=+Math.max(.45,lower-.002).toFixed(4),cfg=fit(scale);
+    const scale=+Math.max(.28,lower-.002).toFixed(4),cfg=fit(scale);
     // Once a HOUSE is too narrow at the authored glyph diameter, equally
     // spaced local centers are the unique safe fallback. Minimize the sum
     // of weighted squared offsets while respecting BOTH house boundaries.
