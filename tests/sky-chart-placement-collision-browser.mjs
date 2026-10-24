@@ -78,6 +78,19 @@ try{
    const displacedIsolated=isolated.filter(item=>Math.abs(item.display-item.exact)>.06)
      .map(item=>({id:item.id,exact:item.exact,display:item.display,offset:item.offset}));
    const meanAbsOffset=items.reduce((sum,item)=>sum+Math.abs(item.display-item.exact),0)/items.length;
+   // Compare glyph display angle against the same drawn house sector as
+   // its TRUE longitude; a collision must never switch its house.
+   const cuspLongitudes=[...new Set([...wheel.querySelectorAll('[data-layer="'+(slot==='A'?'a-houses':'b-houses')+'"] line.sky-foundation-divider')].map(line=>{
+     const pts=['1','2'].map(n=>({x:Number(line.getAttribute('x'+n)),y:Number(line.getAttribute('y'+n))}));
+     const p=pts.sort((a,b)=>Math.hypot(b.x-600,b.y-600)-Math.hypot(a.x-600,a.y-600))[0];
+     return +((((Math.atan2(p.y-600,p.x-600)*180/Math.PI+180)%360)+360)%360).toFixed(4);
+   }))].sort((a,b)=>a-b);
+   const houseOf=degree=>{
+     const d=((degree%360)+360)%360,index=cuspLongitudes.findLastIndex(v=>v<=d+1e-5);
+     return index<0?cuspLongitudes.length-1:index;
+   };
+   const displacedHouses=items.filter(g=>cuspLongitudes.length>=10&&houseOf(g.exact)!==houseOf(g.display))
+     .map(g=>({id:g.id,exact:g.exact,display:g.display,originalSector:houseOf(g.exact),displaySector:houseOf(g.display)}));
    const collisions=[];
    for(let i=0;i<items.length;i++)for(let j=i+1;j<items.length;j++){
     const a=items[i],b=items[j],distance=Math.hypot(a.x-b.x,a.y-b.y),
@@ -95,7 +108,8 @@ try{
      ariesPairs.push({a:first.id,b:second.id,distance:+distance.toFixed(3)});
    }
    report.slots[slot]={...report.slots[slot],ariesPairs,items:items.length,offRing,
-     isolated:isolated.map(x=>x.id),displacedIsolated,meanAbsOffset:+meanAbsOffset.toFixed(3),fallBacks:items.filter(x=>x.fallback==='true').map(x=>x.id),
+     isolated:isolated.map(x=>x.id),displacedIsolated,displacedHouses,
+     houseCusps:cuspLongitudes,meanAbsOffset:+meanAbsOffset.toFixed(3),fallBacks:items.filter(x=>x.fallback==='true').map(x=>x.id),
     collisions,collidingItems:items.filter(x=>collisions.some(c=>c.a===x.id||c.b===x.id))};
   }
   return report;
@@ -106,6 +120,8 @@ try{
  for(const slot of ['A','B'])assert.deepEqual(result.slots[slot].displacedIsolated,[],
    'An isolated glyph must remain centered on its exact zodiac notch in Sky '+slot);
  assert.equal(result.slots.B.collisions.length,0,'Sky B placement glyph orbs must not overlap');
+ for(const slot of ['A','B'])assert.deepEqual(result.slots[slot].displacedHouses,[],
+   'Moon, Sun, and all ordinary glyphs must remain inside their true house sector in Sky '+slot);
  assert.equal(result.slots.B.ariesPairs.length,3,'The screenshot regression must include Moon, Neptune and Saturn');
  for(const pair of result.slots.B.ariesPairs)assert.ok(pair.distance>=2*result.radius+result.clearance-.1,
    'Moon/Neptune/Saturn must not overlap: '+JSON.stringify(pair));
