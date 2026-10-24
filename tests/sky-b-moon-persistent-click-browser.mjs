@@ -99,6 +99,22 @@ try{
  await page.mouse.move(10,10);
  await page.waitForTimeout(150);
  assert.equal(await moon.evaluate(node=>node.classList.contains('is-selected')),true,'Moon B persists after actual helper Increase to 3');
- console.log('PASS helper popup -> Increase to HR 3 -> select Moon B -> leave remains selected');
+ const focusRows=await page.evaluate(()=>{
+   const rows=[...document.querySelectorAll('#skyFoundationRelationshipList > .sky-foundation-relationship-row[data-relation-index]')];
+   const excluded=rows.filter(row=>row.classList.contains('is-wheel-selection-excluded'));
+   return {total:rows.length,excluded:excluded.length,
+     incorrectlyVisible:excluded.filter(row=>getComputedStyle(row).display!=='none').length,
+     matches:rows.filter(row=>!row.classList.contains('is-wheel-selection-excluded')).length};
+ });
+ assert.ok(focusRows.excluded>0,'Locked Moon B selection must temporarily hide unrelated relationships');
+ assert.ok(focusRows.matches>0,'Locked Moon B selection must keep matching relationships visible');
+ assert.equal(focusRows.incorrectlyVisible,0,'Unrelated relationships must be display:none');
+ // Clearing focus restores the original DOM rows without rebuilding or resorting.
+ await page.evaluate(()=>document.getElementById('skyFoundationRoot').dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true})));
+ await page.waitForTimeout(100);
+ const restored=await page.evaluate(()=>[...document.querySelectorAll('#skyFoundationRelationshipList > .sky-foundation-relationship-row[data-relation-index]')].filter(row=>row.classList.contains('is-wheel-selection-excluded')).length);
+ assert.equal(restored,0,'Clear lock restores every previously hidden relationship');
+ console.log('PASS locked Moon B shows matching Relationships only, clear restores all');
+  console.log('PASS helper popup -> Increase to HR 3 -> select Moon B -> leave remains selected');
   console.log('PASS Moon B wheel and side-panel clicks persist, including after Harmonic Window 2→3 transition');
 }finally{await browser.close()}
