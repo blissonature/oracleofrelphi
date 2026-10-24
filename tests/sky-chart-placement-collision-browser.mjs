@@ -45,7 +45,8 @@ try{
      lane:Number(group.dataset.placementLane),authoredLane:Number(group.dataset.placementAuthoredLane)};
   };
   const report={metadata:{order:wheel.dataset.placementCollisionOrder,crossings:wheel.dataset.placementLeaderCrossings,
-   leaderHits:wheel.dataset.placementLeaderGlyphHits},radius:spec.placementBubbleRadius,slots:{}};
+   leaderHits:wheel.dataset.placementLeaderGlyphHits},radius:spec.placementBubbleRadius,
+   clearance:Math.max(6,Number(spec.placementClearance)||6),slots:{}};
   for(const slot of ['A','B']){
    const raw=[...wheel.querySelectorAll('[data-layer="placements"] > g[data-sky="'+slot+'"][data-placement]:not([data-angle-axis="true"]):not([data-placement="moon-range"])')];
    const parsed=raw.map(parse);const items=parsed.filter(g=>Number.isFinite(g.x)&&Number.isFinite(g.y));
@@ -56,14 +57,14 @@ try{
      a.authoredLane*Math.cos((a.exact-180)*Math.PI/180)-b.authoredLane*Math.cos((b.exact-180)*Math.PI/180),
      a.authoredLane*Math.sin((a.exact-180)*Math.PI/180)-b.authoredLane*Math.sin((b.exact-180)*Math.PI/180));
    const isolated=items.filter(item=>items.every(other=>other===item||
-     (signOf(item)!==signOf(other)&&exactDistance(item,other)>2*spec.placementBubbleRadius+2+.2)));
+     (signOf(item)!==signOf(other)&&exactDistance(item,other)>2*spec.placementBubbleRadius+Math.max(6,Number(spec.placementClearance)||6)+.2)));
    const displacedIsolated=isolated.filter(item=>Math.abs(item.display-item.exact)>.06)
      .map(item=>({id:item.id,exact:item.exact,display:item.display,offset:item.offset}));
    const meanAbsOffset=items.reduce((sum,item)=>sum+Math.abs(item.display-item.exact),0)/items.length;
    const collisions=[];
    for(let i=0;i<items.length;i++)for(let j=i+1;j<items.length;j++){
     const a=items[i],b=items[j],distance=Math.hypot(a.x-b.x,a.y-b.y),
-      needed=2*spec.placementBubbleRadius+2;
+      needed=2*spec.placementBubbleRadius+Math.max(6,Number(spec.placementClearance)||6);
     if(distance<needed)collisions.push({a:a.id,b:b.id,distance:Number(distance.toFixed(2)),needed});
    }
    // Compare the actual SVG transform against the wheel center rather than
@@ -89,7 +90,7 @@ try{
    'An isolated glyph must remain centered on its exact zodiac notch in Sky '+slot);
  assert.equal(result.slots.B.collisions.length,0,'Sky B placement glyph orbs must not overlap');
  assert.equal(result.slots.B.ariesPairs.length,3,'The screenshot regression must include Moon, Neptune and Saturn');
- for(const pair of result.slots.B.ariesPairs)assert.ok(pair.distance>=2*result.radius+2-.1,
+ for(const pair of result.slots.B.ariesPairs)assert.ok(pair.distance>=2*result.radius+result.clearance-.1,
    'Moon/Neptune/Saturn must not overlap: '+JSON.stringify(pair));
  for(const slot of ['A','B'])assert.deepEqual(result.slots[slot].offRing,[],
    'A placement orb in Sky '+slot+' left its assigned circumference');
@@ -120,7 +121,8 @@ try{
    const collisions=[];
    for(let i=0;i<items.length;i++)for(let j=i+1;j<items.length;j++){
      const a=items[i],b=items[j],distance=Math.hypot(a.x-b.x,a.y-b.y);
-     if(distance<41.4)collisions.push({a:a.name,b:b.name,distance:Number(distance.toFixed(2))});
+     if(distance<2*window.RelphiSkyWheelSpec.comparison.placementBubbleRadius+
+       Math.max(6,Number(window.RelphiSkyWheelSpec.comparison.placementClearance)||6)-.1)collisions.push({a:a.name,b:b.name,distance:Number(distance.toFixed(2))});
    }
    const positions=items.map(x=>[x.name,x.x,x.y]);
    const skyBItems=[...wheel.querySelectorAll('[data-layer="placements"] > g[data-sky="B"][data-placement]:not([data-angle-axis="true"]):not([data-placement="moon-range"])')]
@@ -135,7 +137,8 @@ try{
    const bCollisions=[];
    for(let i=0;i<skyBItems.length;i++)for(let j=i+1;j<skyBItems.length;j++){
      const p=skyBItems[i],q=skyBItems[j],distance=Math.hypot(p.x-q.x,p.y-q.y);
-     if(distance<41.4)bCollisions.push({a:p.name,b:q.name,distance:+distance.toFixed(3)});
+     if(distance<2*window.RelphiSkyWheelSpec.comparison.placementBubbleRadius+
+       Math.max(6,Number(window.RelphiSkyWheelSpec.comparison.placementClearance)||6)-.1)bCollisions.push({a:p.name,b:q.name,distance:+distance.toFixed(3)});
    }
    window.RelphiPlacementCollisionOrder.arrange(wheel);
    const again=[...wheel.querySelectorAll('[data-layer="placements"] > g[data-sky="A"][data-placement]:not([data-angle-axis="true"]):not([data-placement="moon-range"])')]
@@ -224,7 +227,8 @@ try{
  });
  const boundary=await boundaryPage.evaluate(()=>{
    const wheel=document.querySelector('#skyFoundationWheelMount > svg.sky-foundation-wheel');
-   const bubble=Number(window.RelphiSkyWheelSpec.comparison.placementBubbleRadius);
+   const bubble=Number(window.RelphiSkyWheelSpec.comparison.placementBubbleRadius),
+     clearance=Math.max(6,Number(window.RelphiSkyWheelSpec.comparison.placementClearance)||6);
    const items=[...wheel.querySelectorAll('[data-layer="placements"] > g[data-sky="B"][data-placement]:not([data-angle-axis="true"]):not([data-placement="moon-range"])')]
      .map(g=>{const m=g.transform.baseVal.consolidate()?.matrix;
        return {id:g.dataset.placement,exact:Number(g.dataset.exactLongitude),display:Number(g.dataset.displayLongitude),
@@ -232,7 +236,7 @@ try{
    const collisions=[];
    for(let i=0;i<items.length;i++)for(let j=i+1;j<items.length;j++){
      const a=items[i],b=items[j],dist=Math.hypot(a.x-b.x,a.y-b.y);
-     if(dist<2*bubble+2-.1)collisions.push({a:a.id,b:b.id,distance:+dist.toFixed(3)});
+     if(dist<2*bubble+clearance-.1)collisions.push({a:a.id,b:b.id,distance:+dist.toFixed(3)});
    }
    const ringErrors=items.filter(a=>Math.abs(Math.hypot(a.x-600,a.y-600)-a.lane)>.1).map(a=>a.id);
    const signErrors=items.filter(a=>Math.floor(((a.display%360)+360)%360/30)!==Math.floor(((a.exact%360)+360)%360/30))
@@ -259,7 +263,7 @@ try{
  // longitude and house-division changes. Do NOT conflate houses with signs.
  const seamStress=await page.evaluate(()=>{
    const source=document.querySelector('#skyFoundationWheelMount > svg.sky-foundation-wheel');
-   const spec=window.RelphiSkyWheelSpec.comparison,at=(r,deg)=>{
+   const spec=window.RelphiSkyWheelSpec.comparison,clearance=Math.max(6,Number(spec.placementClearance)||6),at=(r,deg)=>{
      const a=(deg-180)*Math.PI/180;return{x:600+r*Math.cos(a),y:600+r*Math.sin(a)};
    };
    const cases=[
@@ -295,7 +299,7 @@ try{
      const overlaps=[];
      for(let a=0;a<items.length;a++)for(let b=a+1;b<items.length;b++){
        const left=items[a],right=items[b],d=Math.hypot(left.x-right.x,left.y-right.y);
-       if(d<2*spec.placementBubbleRadius+2-.1)overlaps.push({a:left.id,b:right.id,d:+d.toFixed(2)});
+       if(d<2*spec.placementBubbleRadius+clearance-.1)overlaps.push({a:left.id,b:right.id,d:+d.toFixed(2)});
      }
      const misplaced=items.filter(g=>Math.abs(Math.hypot(g.x-600,g.y-600)-g.lane)>.12||
        Math.floor(((g.display%360)+360)%360/30)!==Math.floor(((g.exact%360)+360)%360/30)).map(g=>g.id);
