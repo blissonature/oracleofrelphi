@@ -229,6 +229,57 @@ try{
  assert.equal(editingStability.stillEditing,true,'The Where and When transaction must remain active');
  assert.equal(editingStability.displayChanges,0,'No aspect line can flash between hidden and visible during editing');
  assert.equal(editingStability.mutations,0,'No aspect line visibility writer should mutate a frozen wheel during editing');
+
+ // Observe aspect-line visibility across real Sky B drawer switches.
+ await page.evaluate(()=>{
+   const wheel=document.querySelector('#skyFoundationWheelMount > .sky-foundation-wheel');
+   const lines=[...wheel.querySelectorAll('[data-layer="aspects"] > line.sky-foundation-aspect:not(.sky-foundation-aspect-hit)')];
+   const original=lines.map(line=>({display:getComputedStyle(line).display,opacity:getComputedStyle(line).opacity}));
+   const records=[],frames=[];let previous=original.map(x=>x.display);
+   const observer=new MutationObserver(items=>{
+     for(const r of items)records.push({type:r.attributeName,old:r.oldValue,
+       now:r.target.getAttribute(r.attributeName),index:lines.indexOf(r.target)});
+   });
+   lines.forEach(node=>observer.observe(node,{attributes:true,attributeOldValue:true,
+     attributeFilter:['class','style','hidden','aria-hidden']}));
+   window.__wwDrawerTransition={wheel,lines,original,records,frames,observer,active:true};
+   const sample=()=>{
+     const session=window.__wwDrawerTransition;if(!session?.active)return;
+     let toggles=0;
+     lines.forEach((line,i)=>{const next=getComputedStyle(line).display;
+       if(next!==previous[i]){toggles++;previous[i]=next}});
+     if(toggles)frames.push({time:performance.now(),toggles,where:document.documentElement.dataset.skyWhereWhenEditing,
+       wheelIsolation:wheel.classList.contains('has-isolation')});
+     requestAnimationFrame(sample);
+   };
+   requestAnimationFrame(sample);
+ });
+ const placementsB=page.locator('#skyFoundationB [data-sky-drawer-tab="placements"]');
+ await placementsB.click();
+ await page.waitForFunction(()=>document.documentElement.dataset.skyWhereWhenEditing==='false');
+ await page.waitForTimeout(700);
+ await whereB.click();
+ await page.waitForFunction(()=>document.documentElement.dataset.skyWhereWhenEditing==='true');
+ await page.waitForTimeout(700);
+ await placementsB.click();
+ await page.waitForFunction(()=>document.documentElement.dataset.skyWhereWhenEditing==='false');
+ await page.waitForTimeout(700);
+ const transition=await page.evaluate(()=>{
+   const {wheel,lines,original,records,frames,observer}=window.__wwDrawerTransition;
+   window.__wwDrawerTransition.active=false;observer.disconnect();
+   const changed=lines.filter((line,i)=>getComputedStyle(line).display!==original[i].display);
+   const classes=records.filter(x=>x.type==='class');
+   const styles=records.filter(x=>x.type==='style');
+   const visibility=records.filter(x=>x.type==='hidden'||x.type==='aria-hidden');
+   return {count:lines.length,wheelPreserved:wheel===document.querySelector('#skyFoundationWheelMount>.sky-foundation-wheel'),
+     sameLines:lines.every(x=>x.isConnected),changes:records.length,
+     classChanges:classes.length,styleChanges:styles.length,visibilityChanges:visibility.length,
+     displayTransitions:frames.reduce((n,x)=>n+x.toggles,0),displayFrames:frames.slice(0,16),
+     finalDisplayDifference:changed.length,
+     sampleChanges:records.slice(0,18)};
+ });
+ console.log('WHERE_WHEN_DRAWER_TRANSITION_TRACE',JSON.stringify(transition));
+ assert.ok(transition.wheelPreserved&&transition.sameLines,'Drawer switching must keep the same comparison wheel and aspect lines');
  console.log('PASS Sky B Where and When holds every existing gray aspect line steady');
  console.log('PASS locked Moon B shows matching Relationships only, clear restores all');
   console.log('PASS helper popup -> Increase to HR 3 -> select Moon B -> leave remains selected');
