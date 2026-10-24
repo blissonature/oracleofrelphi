@@ -42,7 +42,7 @@ try{
    const x=matrix?.e,y=matrix?.f;
    return {id:group.dataset.placement,exact:Number(group.dataset.exactLongitude),display:Number(group.dataset.displayLongitude),
      x,y,fallback:group.dataset.placementOrderFallback,offset:Number(group.dataset.placementTangentialOffset),
-     lane:Number(group.dataset.placementLane)};
+     lane:Number(group.dataset.placementLane),authoredLane:Number(group.dataset.placementAuthoredLane)};
   };
   const report={metadata:{order:wheel.dataset.placementCollisionOrder,crossings:wheel.dataset.placementLeaderCrossings,
    leaderHits:wheel.dataset.placementLeaderGlyphHits},radius:spec.placementBubbleRadius,slots:{}};
@@ -56,7 +56,8 @@ try{
       needed=2*spec.placementBubbleRadius+2;
     if(distance<needed)collisions.push({a:a.id,b:b.id,distance:Number(distance.toFixed(2)),needed});
    }
-   report.slots[slot]={...report.slots[slot],items:items.length,fallBacks:items.filter(x=>x.fallback==='true').map(x=>x.id),
+   const outward=items.filter(item=>item.lane>item.authoredLane+0.01).map(item=>({name:item.id,lane:item.lane,authored:item.authoredLane}));
+   report.slots[slot]={...report.slots[slot],items:items.length,outward,fallBacks:items.filter(x=>x.fallback==='true').map(x=>x.id),
     collisions,collidingItems:items.filter(x=>collisions.some(c=>c.a===x.id||c.b===x.id))};
   }
   return report;
@@ -65,6 +66,8 @@ try{
  assert.ok(result.slots.A.items>=14&&result.slots.B.items>=14,'Both crowded skies must render their ordinary placements');
  assert.equal(result.slots.A.collisions.length,0,'Sky A placement glyph orbs must not overlap');
  assert.equal(result.slots.B.collisions.length,0,'Sky B placement glyph orbs must not overlap');
+ for(const slot of ['A','B'])assert.deepEqual(result.slots[slot].outward,[],
+   'A placement orb in Sky '+slot+' moved farther outward from its authored radius');
  // A house boundary can force an adjusted leader back onto its exact
  // longitude. The resolver must *still* maintain bubble clearance afterward.
  const stressed=await page.evaluate(()=>{
@@ -82,7 +85,8 @@ try{
    const nodes=[...wheel.querySelectorAll('[data-layer="placements"] > g[data-sky="A"][data-placement]:not([data-angle-axis="true"]):not([data-placement="moon-range"])')];
    const items=nodes.map(group=>{
      const m=group.transform.baseVal.consolidate()?.matrix;
-     return {name:group.dataset.placement,x:m?.e,y:m?.f,fallback:group.dataset.placementOrderFallback};
+     return {name:group.dataset.placement,x:m?.e,y:m?.f,fallback:group.dataset.placementOrderFallback,
+       lane:Number(group.dataset.placementLane),authoredLane:Number(group.dataset.placementAuthoredLane)};
    });
    const collisions=[];
    for(let i=0;i<items.length;i++)for(let j=i+1;j<items.length;j++){
@@ -97,13 +101,16 @@ try{
      const match=again.find(v=>v[0]===name);
      return match?Math.hypot(match[1]-x,match[2]-y):Infinity;
    }));
-   return {collisions,fallBacks:items.filter(x=>x.fallback==='true').map(x=>x.name),
+   const outward=items.filter(item=>item.lane>item.authoredLane+0.01).map(item=>({name:item.name,lane:item.lane,authored:item.authoredLane}));
+   const inward=items.filter(item=>item.lane<item.authoredLane-0.01).map(item=>({name:item.name,lane:item.lane,authored:item.authoredLane}));
+   return {collisions,outward,inward,fallBacks:items.filter(x=>x.fallback==='true').map(x=>x.name),
      repairs:Number(wheel.dataset.placementRadialClearanceRepairs||0),
      repeatedMovement:Number(repeatedMovement.toFixed(4)),
      crossings:wheel.dataset.placementLeaderCrossings,leaderHits:wheel.dataset.placementLeaderGlyphHits};
  });
  console.log('GLYPH_CUSP_STRESS_TRACE',JSON.stringify(stressed));
  assert.equal(stressed.collisions.length,0,'House-divider leader fallback must not reintroduce glyph-orb overlaps');
+ assert.deepEqual(stressed.outward,[],'The cusp-stress repair must never send an orb farther from the center');
  assert.ok(stressed.repairs>0,'House-divider stress case must exercise the new radial clearance repair');
  assert.ok(stressed.repeatedMovement<0.25,'Repeated collision layout passes must not move glyphs again');
  assert.deepEqual(errors,[]);
