@@ -264,7 +264,8 @@
   cursor:not-allowed!important;
 }
 /* Reading text clipboard action uses the canonical centered icon, never a word. */
-#shortListPanel .relphi-board-document-buttons > .relphi-copy-reading{
+#shortListPanel .relphi-board-document-buttons > .relphi-copy-reading,
+#shortListPanel .relphi-board-document-buttons > .relphi-board-download-button{
   width:2.25rem!important;
   min-width:2.25rem!important;
   max-width:2.25rem!important;
@@ -274,6 +275,13 @@
   padding:0!important;
   font-size:0!important;
   line-height:0!important;
+}
+#shortListPanel .relphi-board-document-buttons > .relphi-board-download-button > svg{
+  display:block!important;
+  width:17px!important;
+  height:17px!important;
+  flex:0 0 17px!important;
+  pointer-events:none;
 }
 #shortListPanel .relphi-board-document-status{
   min-height:.85em!important;
