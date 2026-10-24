@@ -9,6 +9,7 @@
 
   let queued=false,wheelIndexes=null,wheelState=null,installQueued=false,filterObserver=null,lastApplied=null;
   const model=()=>window.RelphiHarmonicOrb;
+  const whereWhenEditing=()=>document.documentElement.dataset.skyWhereWhenEditing==='true';
 
   function initialWindow(){
     return model()?.getWindow?.()??model()?.defaultWindow??7;
@@ -28,11 +29,19 @@
   }
 
   function setSvgVisibility(node,visible){
-    node.hidden=!visible;
+    // Resuming after a canceled Where and When draft must not repaint every
+    // gray line by rewriting unchanged SVG visibility attributes.
+    if(node.hidden===visible)node.hidden=!visible;
     node.classList.toggle('sky-chart-orb-hidden',!visible);
-    node.setAttribute('aria-hidden',visible?'false':'true');
-    if(visible){node.style.removeProperty('display');node.style.removeProperty('pointer-events')}
-    else{node.style.setProperty('display','none','important');node.style.setProperty('pointer-events','none','important')}
+    const accessible=visible?'false':'true';
+    if(node.getAttribute('aria-hidden')!==accessible)node.setAttribute('aria-hidden',accessible);
+    if(visible){
+      if(node.style.getPropertyValue('display'))node.style.removeProperty('display');
+      if(node.style.getPropertyValue('pointer-events'))node.style.removeProperty('pointer-events');
+    }else{
+      if(node.style.getPropertyValue('display')!=='none'||node.style.getPropertyPriority('display')!=='important')node.style.setProperty('display','none','important');
+      if(node.style.getPropertyValue('pointer-events')!=='none'||node.style.getPropertyPriority('pointer-events')!=='important')node.style.setProperty('pointer-events','none','important');
+    }
   }
 
   function relationshipSlots(row){
@@ -88,6 +97,9 @@
   }
   function apply(){
     queued=false;
+    // Sky A/B edits are drafts. The committed comparison-wheel aspect lines
+    // must not be rewritten by Harmonic Window while Where and When is open.
+    if(whereWhenEditing())return;
     const limit=Number(model()?.getWindow?.()??model()?.defaultWindow??7);
     if(!Number.isFinite(limit))return;
     const visibleIndexes=new Set(),lineVisibleKeys=new Set(),rows=[...document.querySelectorAll('.sky-foundation-relationship-row[data-relation-index]')],identity=relationshipKey,rowsByIndex=new Map(rows.map(row=>[identity(row),row]));
@@ -166,7 +178,7 @@
     }
   }
 
-  function schedule(){if(queued)return;queued=true;requestAnimationFrame(apply)}
+  function schedule(){if(queued||whereWhenEditing())return;queued=true;requestAnimationFrame(apply)}
 
   function normalizeOnCommit(input){
     const max=model()?.maxWindow??12,raw=input.value.trim().replace(',','.'),value=Number(raw);
@@ -241,6 +253,9 @@
     ['relphi:sky-foundation-interactions-ready','relphi:sky-intrasky-relationships-ready','relphi:sky-intrasky-b-relationships-ready','relphi:sky-placement-multiselect-changed','relphi:sky-house-multiselect-changed','relphi:sky-aspect-multiselect-changed','relphi:sky-zodiac-filter-changed','relphi:selected-relationship-rendered','relphi:sky-foundation-ready'].forEach(name=>window.addEventListener(name,ensureInstalled));
     ['relphi:sky-configuration-selection-changed','relphi:sky-configurations-detected','relphi:sky-aspect-visibility-applied'].forEach(name=>window.addEventListener(name,()=>{ensureInstalled();schedule()}));
     window.addEventListener('relphi:sky-harmonic-window-model-changed',schedule);
+    window.addEventListener('relphi:sky-where-when-edit-state-changed',event=>{
+      if(event.detail?.active===false)schedule();
+    });
     document.getElementById('skyFoundationRelationships')?.addEventListener('change',schedule);
   }
 
