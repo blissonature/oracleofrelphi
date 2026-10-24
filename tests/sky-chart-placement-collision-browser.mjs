@@ -77,6 +77,7 @@ try{
    line.classList.add('sky-foundation-divider');
    for(const [k,v] of Object.entries({x1:a.x,y1:a.y,x2:b.x,y2:b.y}))line.setAttribute(k,String(v));
    layer.appendChild(line);
+   delete wheel.dataset.placementRadialClearanceRepairs;
    window.RelphiPlacementCollisionOrder.arrange(wheel);
    const nodes=[...wheel.querySelectorAll('[data-layer="placements"] > g[data-sky="A"][data-placement]:not([data-angle-axis="true"]):not([data-placement="moon-range"])')];
    const items=nodes.map(group=>{
@@ -88,11 +89,23 @@ try{
      const a=items[i],b=items[j],distance=Math.hypot(a.x-b.x,a.y-b.y);
      if(distance<41.4)collisions.push({a:a.name,b:b.name,distance:Number(distance.toFixed(2))});
    }
+   const positions=items.map(x=>[x.name,x.x,x.y]);
+   window.RelphiPlacementCollisionOrder.arrange(wheel);
+   const again=[...wheel.querySelectorAll('[data-layer="placements"] > g[data-sky="A"][data-placement]:not([data-angle-axis="true"]):not([data-placement="moon-range"])')]
+     .map(g=>{const m=g.transform.baseVal.consolidate()?.matrix;return[g.dataset.placement,m.e,m.f]});
+   const repeatedMovement=Math.max(0,...positions.map(([name,x,y])=>{
+     const match=again.find(v=>v[0]===name);
+     return match?Math.hypot(match[1]-x,match[2]-y):Infinity;
+   }));
    return {collisions,fallBacks:items.filter(x=>x.fallback==='true').map(x=>x.name),
+     repairs:Number(wheel.dataset.placementRadialClearanceRepairs||0),
+     repeatedMovement:Number(repeatedMovement.toFixed(4)),
      crossings:wheel.dataset.placementLeaderCrossings,leaderHits:wheel.dataset.placementLeaderGlyphHits};
  });
  console.log('GLYPH_CUSP_STRESS_TRACE',JSON.stringify(stressed));
  assert.equal(stressed.collisions.length,0,'House-divider leader fallback must not reintroduce glyph-orb overlaps');
+ assert.ok(stressed.repairs>0,'House-divider stress case must exercise the new radial clearance repair');
+ assert.ok(stressed.repeatedMovement<0.25,'Repeated collision layout passes must not move glyphs again');
  assert.deepEqual(errors,[]);
  console.log('PASS crowded Oct 23 A/B placement glyph orbs do not overlap');
 }finally{await browser.close()}
