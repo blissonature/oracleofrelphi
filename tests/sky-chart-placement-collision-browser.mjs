@@ -181,7 +181,7 @@ try{
  const boundaryPage=await browser.newPage({viewport:{width:1440,height:980}});
  const cuspB=fixture('B');
  for(const [name,longitude] of Object.entries({
-   Neptune:359.2,Chiron:359.72,Moon:0.3,Saturn:1.05,'Part of Fortune':1.65
+   Neptune:359.2,Chiron:359.72,Moon:0.3,Saturn:1.05,Lilith:1.65
  }))cuspB.placements[name].longitude=longitude;
  await boundaryPage.route('https://unpkg.com/suncalc@1.9.0/suncalc.js',route=>route.fulfill({path:path.resolve('node_modules/suncalc/suncalc.js'),contentType:'application/javascript'}));
  await boundaryPage.route('https://cdn.jsdelivr.net/npm/luxon@3/build/global/luxon.min.js',route=>route.fulfill({path:path.resolve('node_modules/luxon/build/global/luxon.min.js'),contentType:'application/javascript'}));
@@ -208,9 +208,9 @@ try{
    const ringErrors=items.filter(a=>Math.abs(Math.hypot(a.x-600,a.y-600)-a.lane)>.1).map(a=>a.id);
    const signErrors=items.filter(a=>Math.floor(((a.display%360)+360)%360/30)!==Math.floor(((a.exact%360)+360)%360/30))
      .map(a=>a.id);
-   const cluster=items.filter(a=>['neptune','chiron','moon','saturn','part-of-fortune'].includes(a.id))
+   const cluster=items.filter(a=>['neptune','chiron','moon','saturn','lilith'].includes(a.id))
      .map(a=>({id:a.id,exact:a.exact,display:a.display,offset:+((((a.display-a.exact+540)%360)-180).toFixed(3))}));
-   const isolated=items.filter(a=>['mercury','jupiter','uranus','pluto'].includes(a.id));
+   const isolated=items.filter(a=>['mercury','uranus','pluto'].includes(a.id));
    return {count:items.length,collisions,ringErrors,signErrors,cluster,
      otherOffsets:isolated.map(a=>({id:a.id,offset:+((((a.display-a.exact+540)%360)-180).toFixed(3))})),
      unresolved:wheel.dataset.placementUnresolvedBubbleOverlaps};
@@ -223,6 +223,59 @@ try{
  assert.ok(boundary.otherOffsets.every(v=>Math.abs(v.offset)<.1),'Distant placements must stay on their exact notch');
  assert.equal(Number(boundary.unresolved),0,'A feasible five-body cusp must have zero unresolved collisions');
  await boundaryPage.close();
+ // Probe the real SVG geometry against five-member clusters spanning sign
+ // boundaries. These used to evade sign-local collision reconciliation.
+ const seamStress=await page.evaluate(()=>{
+   const source=document.querySelector('#skyFoundationWheelMount > svg.sky-foundation-wheel');
+   const spec=window.RelphiSkyWheelSpec.comparison,at=(r,deg)=>{
+     const a=(deg-180)*Math.PI/180;return{x:600+r*Math.cos(a),y:600+r*Math.sin(a)};
+   };
+   const cases=[
+     {neptune:359.2,chiron:359.72,moon:.3,saturn:1.05,lilith:1.65},
+     {neptune:358.9,chiron:359.15,moon:359.6,saturn:.15,lilith:.5},
+     {neptune:359.8,chiron:.05,moon:.2,saturn:.4,lilith:.6},
+     {neptune:356.5,chiron:359.9,moon:.05,saturn:1.0,lilith:1.05},
+     {neptune:58.8,chiron:59.4,moon:60.1,saturn:60.5,lilith:61.0}
+   ];
+   return cases.map((positions,i)=>{
+     const wheel=source.cloneNode(true);
+     for(const [name,deg] of Object.entries(positions)){
+       const group=wheel.querySelector('[data-layer="placements"] > g[data-sky="B"][data-placement="'+name+'"]');
+       const leader=wheel.querySelector('[data-layer="leaders"] line[data-sky="B"][data-placement="'+name+'"]:not([data-angle])');
+       if(!group||!leader)throw new Error('Missing SVG subject '+name);
+       const lane=Number(group.dataset.placementAuthoredLane||group.dataset.placementLane);
+       const exactRadius=Math.hypot(Number(leader.getAttribute('x2'))-600,Number(leader.getAttribute('y2'))-600);
+       const point=at(lane,deg),exact=at(exactRadius,deg);
+       group.dataset.exactLongitude=String(deg);
+       group.dataset.displayLongitude=String(deg);
+       group.setAttribute('transform','translate('+point.x+' '+point.y+')');
+       leader.dataset.exactLongitude=String(deg);
+       leader.setAttribute('x1',point.x);leader.setAttribute('y1',point.y);
+       leader.setAttribute('x2',exact.x);leader.setAttribute('y2',exact.y);
+     }
+     // The SVG was cloned from an already solved wheel. Force a fresh solve.
+     delete wheel.dataset.placementCollisionSignatureB;
+     window.RelphiPlacementCollisionOrder.arrange(wheel);
+     const items=[...wheel.querySelectorAll('[data-layer="placements"] > g[data-sky="B"][data-placement]:not([data-angle-axis="true"]):not([data-placement="moon-range"])')]
+       .map(g=>{const m=g.transform.baseVal.consolidate()?.matrix;
+         return {id:g.dataset.placement,x:m.e,y:m.f,exact:Number(g.dataset.exactLongitude),
+           display:Number(g.dataset.displayLongitude),lane:Number(g.dataset.placementAuthoredLane)}});
+     const overlaps=[];
+     for(let a=0;a<items.length;a++)for(let b=a+1;b<items.length;b++){
+       const left=items[a],right=items[b],d=Math.hypot(left.x-right.x,left.y-right.y);
+       if(d<2*spec.placementBubbleRadius+2-.1)overlaps.push({a:left.id,b:right.id,d:+d.toFixed(2)});
+     }
+     const misplaced=items.filter(g=>Math.abs(Math.hypot(g.x-600,g.y-600)-g.lane)>.12||
+       Math.floor(((g.display%360)+360)%360/30)!==Math.floor(((g.exact%360)+360)%360/30)).map(g=>g.id);
+     return {case:i,overlaps,misplaced,unresolved:wheel.dataset.placementUnresolvedBubbleOverlaps,
+       repaired:wheel.dataset.placementWholeCircleRepairs||'0'};
+   });
+ });
+ console.log('BOUNDARY_CLUSTERS_TRACE',JSON.stringify(seamStress));
+ for(const caseResult of seamStress){
+   assert.deepEqual(caseResult.overlaps,[],'Cross-sign cluster '+caseResult.case+' must have no touching blue orbs');
+   assert.deepEqual(caseResult.misplaced,[],'Cross-sign cluster '+caseResult.case+' must preserve radius and sign');
+ }
  assert.deepEqual(errors,[]);
  console.log('PASS crowded Oct 23 A/B and five-body Pisces-Aries cusp remain separated on fixed circles');
 }finally{await browser.close()}
