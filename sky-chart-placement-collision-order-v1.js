@@ -362,6 +362,105 @@ function repairBubbleClearance(solution,slot,wheel){
   if(unresolved.length)console.warn('[Sky Chart placement layout] No valid same-circumference clearance',slot,unresolved.length);
   return solution;
 }
+// Final preference pass for ordinary placement bubbles on ONE authored ring:
+// 1. Keep a straight radial leader (display longitude === true notch) whenever
+//    no glyph collision or house divider forces a displacement.
+// 2. Give the entire glyph outline breathing room from each HOUSE divider,
+//    not merely the leader line. Never move the glyph inward or outward.
+// 3. Minimize necessary same-ring angular shifts without changing the notch.
+function preferRadialLeadersAndHouseClearance(solution,slot,wheel){
+  if(!solution.length)return solution;
+  const shared=spec()?.comparison||{},bubble=Number(shared.placementBubbleRadius)||19.7,
+    clearance=Math.max(6,Number(shared.placementClearance)||6),
+    minimum=bubble+clearance,diameter=2*bubble+clearance;
+  const dividers=[...wheel.querySelectorAll(`[data-layer="${slot==='A'?'a-houses':'b-houses'}"] line.sky-foundation-divider`)]
+    .map(parseSegment).filter(Boolean);
+  if(!dividers.length)return solution;
+  const boundaryClear=point=>dividers.every(line=>segmentDistance(point,line.a,line.b)>=minimum-.05);
+  const grouped=new Map();
+  for(const r of solution){if(!grouped.has(r.item.sign))grouped.set(r.item.sign,[]);grouped.get(r.item.sign).push(r);}
+  const circularDistance=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
+  let repaired=0,unresolved=0,straightened=0;
+  for(const [sign,records] of grouped){
+    const group=records.sort((a,b)=>a.item.exact-b.item.exact||a.item.index-b.item.index);
+    const other=solution.filter(r=>r.item.sign!==sign),lane=group[0].item.authoredLane;
+    if(!Number.isFinite(lane)||group.some(r=>Math.abs(r.item.authoredLane-lane)>EPS))continue;
+    // We do NOT spread a sign when all orb outlines clear the boundaries and
+    // every non-radial stalk is necessitated by an existing orb collision.
+    const canStraighten=record=>{
+      if(Math.abs(record.display-record.item.exact)<.05)return false;
+      const exact=polar(lane,record.item.exact);
+      return boundaryClear(exact)&&solution.every(r=>r===record||circularDistance(exact,r.point)>=diameter-.05);
+    };
+    if(!group.some(r=>!boundaryClear(r.point)||canStraighten(r)))continue;
+    const allSame=group.map(r=>r.item.exact);
+    const options=group.map((record)=>{
+      const start=sign*30+.005,end=start+30-.01,values=[];
+      const append=deg=>{if(deg>=start&&deg<=end&&Math.abs(deg-record.item.exact)<=19.0001)values.push(Number(deg.toFixed(5)));};
+      append(record.item.exact);
+      append(record.display);
+      for(let t=Math.ceil(start*4)/4;t<=end;t+=.25)append(t);
+      const unique=[...new Set(values)].sort((a,b)=>a-b);
+      return unique.flatMap(display=>{
+        const point=polar(lane,display);
+        if(!boundaryClear(point)||other.some(r=>circularDistance(point,r.point)<diameter-.05))return[];
+        const segment={a:point,b:exactPoint(record,slot)};
+        // A new leader cannot intersect another sky placement's leader. An
+        // accurate line crossing a HOUSE division is possible, but penalized.
+        if(other.some(r=>{const line=segmentFor(r,slot);return properIntersection(segment.a,segment.b,line.a,line.b)}))return[];
+        const bends=Math.abs(display-record.item.exact);
+        const houseCrossings=dividers.filter(l=>properIntersection(segment.a,segment.b,l.a,l.b)).length;
+        const cost=weight(record.item)*(bends*bends+8*bends)+
+          (bends>.06?36:0)+houseCrossings*35;
+        return[{display,point,segment,cost}];
+      });
+    });
+    if(options.some(list=>!list.length)){unresolved++;continue;}
+    const costs=options.map(opts=>opts.map(()=>Infinity));
+    const back=options.map(opts=>opts.map(()=>-1));
+    options[0].forEach((opt,j)=>costs[0][j]=opt.cost);
+    for(let i=1;i<options.length;i++){
+      for(let j=0;j<options[i].length;j++){
+        const cur=options[i][j];
+        for(let k=0;k<options[i-1].length;k++){
+          if(!Number.isFinite(costs[i-1][k]))continue;
+          const prev=options[i-1][k];
+          if(cur.display<=prev.display+.02||circularDistance(cur.point,prev.point)<diameter-.05)continue;
+          if(properIntersection(cur.segment.a,cur.segment.b,prev.segment.a,prev.segment.b))continue;
+          const score=costs[i-1][k]+cur.cost;
+          if(score<costs[i][j]){costs[i][j]=score;back[i][j]=k;}
+        }
+      }
+    }
+    let index=-1,best=Infinity;
+    const last=group.length-1;
+    costs[last].forEach((score,j)=>{if(score<best){best=score;index=j;}});
+    if(index<0||!Number.isFinite(best)){unresolved++;continue;}
+    const chosen=new Array(group.length);
+    for(let i=last;i>=0;i--){chosen[i]=options[i][index];index=back[i][index];}
+    // Verify ALL inter-group and nonadjacent leader relationships, then
+    // atomically accept the improvement; otherwise preserve the old layout.
+    const trial=solution.map(record=>{
+      const idx=group.indexOf(record);
+      return idx>=0?{...record,display:chosen[idx].display,point:chosen[idx].point,
+        lane,offset:chosen[idx].display-record.item.exact}:record;
+    });
+    const overlaps=trial.some((a,i)=>trial.some((b,j)=>j>i&&circularDistance(a.point,b.point)<diameter-.05));
+    if(overlaps||leaderCrossings(trial,slot)>0){unresolved++;continue;}
+    for(let i=0;i<group.length;i++){
+      const record=group[i],wasBent=Math.abs(record.offset)>.06,
+        display=chosen[i].display;
+      if(wasBent&&Math.abs(display-record.item.exact)<=.06)straightened++;
+      Object.assign(record,{display,point:chosen[i].point,lane,
+        offset:display-record.item.exact,houseBoundaryRepair:true});
+    }
+    repaired++;
+  }
+  wheel.dataset.placementHouseBubbleClearanceRepairs=String(repaired);
+  wheel.dataset.placementHouseBubbleClearanceUnresolved=String(unresolved);
+  wheel.dataset.placementRadialLeadersRestored=String(straightened);
+  return solution;
+}
 function solveSlot(wheel,slot){
   const g=geometry(slot),items=ordinaryItems(wheel,slot);if(!g||!items.length)return{items:[],crossings:0,hits:0};
   const authoredLane=items.find(item=>Number.isFinite(item.authoredLane))?.authoredLane,lane=Number.isFinite(authoredLane)?authoredLane:Number(g.placement?.[0]);if(!Number.isFinite(lane))return{items:[],crossings:0,hits:0};
@@ -369,6 +468,7 @@ function solveSlot(wheel,slot){
   let solution=[];for(let sign=0;sign<12;sign++)solution.push(...solveSignGroup(bySign.get(sign)||[],lane));
   solution=sanitize(solution,slot,wheel);
   solution=repairBubbleClearance(solution,slot,wheel);
+  solution=preferRadialLeadersAndHouseClearance(solution,slot,wheel);
   solution.sort((a,b)=>a.item.exact-b.item.exact||a.item.index-b.item.index);
   solution.forEach((record,index)=>{
     const {item}=record,exact=record.exactPoint||exactPoint(record,slot);
@@ -384,6 +484,7 @@ function solveSlot(wheel,slot){
     item.group.dataset.placementOrderCorrected=Math.abs(record.offset)>1e-6?'true':'false';
     item.group.dataset.placementOrderFallback=record.fallback?'true':'false';
     item.group.dataset.placementTangentialClearance=record.tangentialRepair?'true':'false';
+    item.group.dataset.placementHouseBoundaryClearance=record.houseBoundaryRepair?'true':'false';
     item.group.dataset.placementHouseCrossingFallback=record.houseCrossingFallback?'true':'false';
     item.group.dataset.placementLeaderBehindOrbFallback=record.leaderBehindOrbFallback?'true':'false';
     item.leader.dataset.placementHouseCrossingFallback=record.houseCrossingFallback?'true':'false';
@@ -412,12 +513,16 @@ function slotGeometrySignature(wheel,slot){
 }
 function slotOrbsStayOnRingAndClear(wheel,slot){
   const items=ordinaryItems(wheel,slot),bubble=Number(spec()?.comparison?.placementBubbleRadius)||19.7,
-    c=center(),points=[];
+    c=center(),points=[],houseLines=[...wheel.querySelectorAll(
+      `[data-layer="${slot==='A'?'a-houses':'b-houses'}"] line.sky-foundation-divider`)]
+      .map(parseSegment).filter(Boolean);
   for(const item of items){
     const matrix=item.group.transform?.baseVal?.consolidate()?.matrix;
     if(!matrix||!Number.isFinite(matrix.e)||!Number.isFinite(matrix.f))return false;
     if(!Number.isFinite(item.authoredLane))return false;
     const point={x:matrix.e,y:matrix.f};
+    if(houseLines.some(line=>segmentDistance(point,line.a,line.b)<
+      bubble+Math.max(6,Number(spec()?.comparison?.placementClearance)||6)-.05))return false;
     if(Math.abs(Math.hypot(point.x-c.x,point.y-c.y)-item.authoredLane)>.1)return false;
     if(points.some(other=>Math.hypot(point.x-other.x,point.y-other.y)<
       2*bubble+Math.max(6,Number(spec()?.comparison?.placementClearance)||6)-EPS))return false;
