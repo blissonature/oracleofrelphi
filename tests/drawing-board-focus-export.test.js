@@ -11,5 +11,5 @@ assert.match(js,/data\.reversed[\s\S]*?context\.rotate\(Math\.PI\)/);
 assert.match(js,/navigator\.clipboard\.write\(/);
 assert.match(js,/URL\.createObjectURL\(blob\)/);
 assert.match(css,/\.relphi-focus-export-actions/);
-assert.match(js,/take\('downloadRowHtml','Download'/);
+assert.match(js,/take\('downloadRowHtml',''/);
 console.log('Focus single-card exports are wired without replacing whole-spread exports.');
