@@ -39,7 +39,7 @@ try{
   await page.goto('http://127.0.0.1:4173/sky-chart.html',{waitUntil:'domcontentloaded'});
   await page.waitForSelector('#skyFoundationRoot[aria-busy="false"]',{timeout:30000});
   await page.waitForFunction(()=>window.RelphiSkyVocab?.describeFocus&&
-    document.querySelector('#skyFoundationWheelMount [data-interactive="placement"][data-sky="B"][data-placement="moon"]'));
+    document.querySelector('#skyFoundationWheelMount [data-interactive="placement"][data-sky="A"][data-placement="moon"]'));
 
   const expected={
     moon:'Moon',saturn:'Saturn',sun:'Sun','north-node':'North Node',
@@ -51,7 +51,7 @@ try{
 
   for(const [id,name] of [['moon','Moon'],['saturn','Saturn']]){
     await page.evaluate(id=>{
-      const node=document.querySelector('#skyFoundationWheelMount [data-interactive="placement"][data-sky="B"][data-placement="'+id+'"]');
+      const node=document.querySelector('#skyFoundationWheelMount [data-interactive="placement"][data-sky="A"][data-placement="'+id+'"]');
       if(!node)throw new Error('Missing placement glyph: '+id);
       const pointer={bubbles:true,cancelable:true,composed:true,pointerId:88,pointerType:'mouse',isPrimary:true,buttons:1};
       node.dispatchEvent(new PointerEvent('pointerdown',pointer));
