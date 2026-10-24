@@ -175,14 +175,21 @@ try{
  // A synthetic house boundary does not necessarily require a second adjustment:
  // do not demand gratuitous movement merely to register a repair counter.
  assert.ok(stressed.repeatedMovement<0.25,'Repeated collision layout passes must not move glyphs again');
- // Five objects nearly coincident ACROSS Pisces/Aries. Previous sign-by-sign
- // layout handled each sign but left a vertical stack across their boundary.
- // Use the real comparison SVG and check the entire Sky B circumference.
+ // Screenshot regression: five Sky B glyphs crowded around the seventh/eighth
+ // HOUSE cusp. These placements are Aries placements; the blue division is
+ // a house boundary, NOT the Pisces/Aries sign boundary. Keep the fixed ring.
  const boundaryPage=await browser.newPage({viewport:{width:1440,height:980}});
  const cuspB=fixture('B');
+ // Aries degrees from the user's Oct 22 Sky B placements. Moon and Fortune
+ // are within a degree, with Saturn and Neptune also close, while Chiron
+ // occupies late Aries. Set the 8th-house cusp to Aries 7° to exercise the
+ // house divider splitting these glyphs into adjacent houses.
  for(const [name,longitude] of Object.entries({
-   Neptune:359.2,Chiron:359.72,Moon:0.3,Saturn:1.05,Lilith:1.65
+   Neptune:2.25,Chiron:28.4167,Moon:7.9667,Saturn:9.7833,'Part of Fortune':7.0667
  }))cuspB.placements[name].longitude=longitude;
+ const cuspAsc=157;
+ cuspB.houseCusps=Array.from({length:12},(_,i)=>(cuspAsc+i*30)%360);
+ cuspB.calcProfile.houseCusps=[...cuspB.houseCusps];
  await boundaryPage.route('https://unpkg.com/suncalc@1.9.0/suncalc.js',route=>route.fulfill({path:path.resolve('node_modules/suncalc/suncalc.js'),contentType:'application/javascript'}));
  await boundaryPage.route('https://cdn.jsdelivr.net/npm/luxon@3/build/global/luxon.min.js',route=>route.fulfill({path:path.resolve('node_modules/luxon/build/global/luxon.min.js'),contentType:'application/javascript'}));
  await boundaryPage.addInitScript(({a,b})=>{
@@ -208,34 +215,34 @@ try{
    const ringErrors=items.filter(a=>Math.abs(Math.hypot(a.x-600,a.y-600)-a.lane)>.1).map(a=>a.id);
    const signErrors=items.filter(a=>Math.floor(((a.display%360)+360)%360/30)!==Math.floor(((a.exact%360)+360)%360/30))
      .map(a=>a.id);
-   const cluster=items.filter(a=>['neptune','chiron','moon','saturn','lilith'].includes(a.id))
+   const cluster=items.filter(a=>['neptune','chiron','moon','saturn','part-of-fortune'].includes(a.id))
      .map(a=>({id:a.id,exact:a.exact,display:a.display,offset:+((((a.display-a.exact+540)%360)-180).toFixed(3))}));
    const isolated=items.filter(a=>['mercury','uranus','pluto'].includes(a.id));
    return {count:items.length,collisions,ringErrors,signErrors,cluster,
      otherOffsets:isolated.map(a=>({id:a.id,offset:+((((a.display-a.exact+540)%360)-180).toFixed(3))})),
      unresolved:wheel.dataset.placementUnresolvedBubbleOverlaps};
  });
- console.log('PISCES_ARIES_BOUNDARY_TRACE',JSON.stringify(boundary));
+ console.log('SKY_B_HOUSE_BOUNDARY_TRACE',JSON.stringify(boundary));
  assert.equal(boundary.count,17,'The crowded cusp fixture must include all Sky B placements');
- assert.deepEqual(boundary.collisions,[],'No blue orb may overlap across the Pisces-Aries sign boundary');
+ assert.deepEqual(boundary.collisions,[],'No blue orb may overlap around Sky B house 7/8 cusp');
  assert.deepEqual(boundary.ringErrors,[],'Even boundary-crowded orbs must remain on their original circle');
  assert.deepEqual(boundary.signErrors,[],'Every blue orb must remain in its true zodiac sign');
  assert.ok(boundary.otherOffsets.every(v=>Math.abs(v.offset)<.1),'Distant placements must stay on their exact notch');
- assert.equal(Number(boundary.unresolved),0,'A feasible five-body cusp must have zero unresolved collisions');
+ assert.equal(Number(boundary.unresolved),0,'A feasible five-body Sky B house-cusp cluster must have no unresolved collisions');
  await boundaryPage.close();
- // Probe the real SVG geometry against five-member clusters spanning sign
- // boundaries. These used to evade sign-local collision reconciliation.
+ // Probe the genuine five-body Aries/house-cusp cluster under small
+ // longitude and house-division changes. Do NOT conflate houses with signs.
  const seamStress=await page.evaluate(()=>{
    const source=document.querySelector('#skyFoundationWheelMount > svg.sky-foundation-wheel');
    const spec=window.RelphiSkyWheelSpec.comparison,at=(r,deg)=>{
      const a=(deg-180)*Math.PI/180;return{x:600+r*Math.cos(a),y:600+r*Math.sin(a)};
    };
    const cases=[
-     {neptune:359.2,chiron:359.72,moon:.3,saturn:1.05,lilith:1.65},
-     {neptune:358.9,chiron:359.15,moon:359.6,saturn:.15,lilith:.5},
-     {neptune:359.8,chiron:.05,moon:.2,saturn:.4,lilith:.6},
-     {neptune:356.5,chiron:359.9,moon:.05,saturn:1.0,lilith:1.05},
-     {neptune:58.8,chiron:59.4,moon:60.1,saturn:60.5,lilith:61.0}
+     {neptune:2.25,moon:7.9667,'part-of-fortune':7.0667,saturn:9.7833,chiron:28.4167},
+     {neptune:1.9,moon:7.5,'part-of-fortune':7.45,saturn:10.1,chiron:28.2},
+     {neptune:2.5,moon:7.9,'part-of-fortune':8.0,saturn:8.9,chiron:28.4},
+     {neptune:1.8,moon:6.8,'part-of-fortune':6.85,saturn:9.3,chiron:27.9},
+     {neptune:3.2,moon:8.6,'part-of-fortune':8.5,saturn:10.0,chiron:28.8}
    ];
    return cases.map((positions,i)=>{
      const wheel=source.cloneNode(true);
@@ -271,11 +278,11 @@ try{
        repaired:wheel.dataset.placementWholeCircleRepairs||'0'};
    });
  });
- console.log('BOUNDARY_CLUSTERS_TRACE',JSON.stringify(seamStress));
+ console.log('SKY_B_HOUSE_CUSP_CLUSTER_TRACE',JSON.stringify(seamStress));
  for(const caseResult of seamStress){
-   assert.deepEqual(caseResult.overlaps,[],'Cross-sign cluster '+caseResult.case+' must have no touching blue orbs');
-   assert.deepEqual(caseResult.misplaced,[],'Cross-sign cluster '+caseResult.case+' must preserve radius and sign');
+   assert.deepEqual(caseResult.overlaps,[],'Sky B house-cusp cluster '+caseResult.case+' must have no touching blue orbs');
+   assert.deepEqual(caseResult.misplaced,[],'Sky B house-cusp cluster '+caseResult.case+' must preserve radius and true zodiac sign');
  }
  assert.deepEqual(errors,[]);
- console.log('PASS crowded Oct 23 A/B and five-body Pisces-Aries cusp remain separated on fixed circles');
+ console.log('PASS crowded Oct 23 A/B and five-body Sky B house-cusp cluster stay separated on fixed circles');
 }finally{await browser.close()}
