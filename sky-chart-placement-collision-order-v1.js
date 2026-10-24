@@ -599,6 +599,34 @@ function resolveImpossibleHouseCrowding(solution,slot,wheel){
   wheel.dataset.placementMinimumBubbleScale=minimumScale.toFixed(3);
   return solution;
 }
+// Two bubbles can occupy DIFFERENT houses yet still touch across their
+// shared cusp. After all same-house positions have been fixed, clear these
+// residual outline collisions by reducing the affected circles ONLY.
+// Their angular positions, true houses, and assigned circumferences stay fixed.
+function clearResidualHouseEdgeCollisions(solution,slot,wheel){
+  const shared=spec()?.comparison||{},bubble=Number(shared.placementBubbleRadius)||19.7,
+    gap=Math.max(6,Number(shared.placementClearance)||6),minScale=.26;
+  let repairs=0;
+  for(let pass=0;pass<solution.length*solution.length;pass++){
+    let changed=false;
+    for(let i=0;i<solution.length;i++)for(let j=i+1;j<solution.length;j++){
+      const a=solution[i],b=solution[j],dist=Math.hypot(a.point.x-b.point.x,a.point.y-b.point.y),
+        first=a.bubbleScale||1,second=b.bubbleScale||1,
+        needed=(first+second)*bubble+gap;
+      if(dist>=needed-.1)continue;
+      const permitted=(dist-gap-.25)/(2*bubble);
+      if(permitted<minScale)continue;
+      const next=Math.max(minScale,Math.min(first,second,permitted));
+      if(first-next<.0001&&second-next<.0001)continue;
+      a.bubbleScale=next;b.bubbleScale=next;
+      a.houseCompactRepair=true;b.houseCompactRepair=true;
+      repairs++;changed=true;
+    }
+    if(!changed)break;
+  }
+  wheel.dataset['placementCrossHouseSizeRepairs'+slot]=String(repairs);
+  return solution;
+}
 function solveSlot(wheel,slot){
   const g=geometry(slot),items=ordinaryItems(wheel,slot);if(!g||!items.length)return{items:[],crossings:0,hits:0};
   const authoredLane=items.find(item=>Number.isFinite(item.authoredLane))?.authoredLane,lane=Number.isFinite(authoredLane)?authoredLane:Number(g.placement?.[0]);if(!Number.isFinite(lane))return{items:[],crossings:0,hits:0};
@@ -624,6 +652,7 @@ function solveSlot(wheel,slot){
   }
   wheel.dataset.placementHouseSectorFallbacks=String(houseFallbacks);
   solution=resolveImpossibleHouseCrowding(solution,slot,wheel);
+  solution=clearResidualHouseEdgeCollisions(solution,slot,wheel);
   const bubble=Number(spec()?.comparison?.placementBubbleRadius)||19.7,
     gap=Math.max(6,Number(spec()?.comparison?.placementClearance)||6);
   let finalOverlaps=0;
