@@ -38,8 +38,8 @@ try{
  const result=await page.evaluate(()=>{
   const wheel=document.querySelector('#skyFoundationWheelMount > svg.sky-foundation-wheel'),spec=window.RelphiSkyWheelSpec.comparison;
   const parse=(group)=>{
-   const match=group.getAttribute('transform')?.match(/translate\(\s*(-?[0-9.eE+]+)[ ,]+(-?[0-9.eE+]+)/);
-   const x=match?Number(match[1]):NaN,y=match?Number(match[2]):NaN;
+   const matrix=group.transform.baseVal.consolidate()?.matrix;
+   const x=matrix?.e,y=matrix?.f;
    return {id:group.dataset.placement,exact:Number(group.dataset.exactLongitude),display:Number(group.dataset.displayLongitude),
      x,y,fallback:group.dataset.placementOrderFallback,offset:Number(group.dataset.placementTangentialOffset),
      lane:Number(group.dataset.placementLane)};
