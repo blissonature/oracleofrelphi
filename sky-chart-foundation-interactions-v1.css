@@ -638,3 +638,7 @@
 #skyFoundationWheelMount .sky-wheel-sector-description[data-corner="top-right"]{right:1%;top:1%}
 #skyFoundationWheelMount .sky-wheel-sector-description[data-corner="bottom-left"]{left:1%;bottom:1%}
 #skyFoundationWheelMount .sky-wheel-sector-description[data-corner="bottom-right"]{right:1%;bottom:1%}
+
+/* A locked Wheel selection narrows only the Relationships scroll list.
+   Keep rows in the DOM so blank-space clear restores their original order. */
+#skyFoundationRelationshipList > .sky-foundation-relationship-row.is-wheel-selection-excluded {display:none!important}
