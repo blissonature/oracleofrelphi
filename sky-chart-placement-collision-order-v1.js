@@ -69,7 +69,7 @@ function ordinaryItems(wheel,slot){
     const id=String(group.dataset.placement||'');
     const leader=leaders.find(line=>line.dataset.placement===id&&Math.abs(num(line.dataset.exactLongitude)-exact)<1e-5)||leaders.find(line=>line.dataset.placement===id);
     if(!leader)return null;
-    return{group,leader,id,index,priority:priority(id),exact:norm(exact),sign:Math.floor(norm(exact)/30),authoredLane:num(group.dataset.placementLane),authoredExactRadius:Math.hypot(num(leader.getAttribute('x2'))-center().x,num(leader.getAttribute('y2'))-center().y)};
+    return{group,leader,id,index,priority:priority(id),exact:norm(exact),sign:Math.floor(norm(exact)/30),authoredLane:num(group.dataset.placementAuthoredLane??group.dataset.placementLane),authoredExactRadius:Math.hypot(num(leader.getAttribute('x2'))-center().x,num(leader.getAttribute('y2'))-center().y)};
   }).filter(Boolean).sort((a,b)=>a.exact-b.exact||a.priority-b.priority||a.index-b.index);
 }
 
@@ -232,6 +232,10 @@ function solveSlot(wheel,slot){
     item.group.setAttribute('transform',`translate(${record.point.x} ${record.point.y})`);
     item.group.dataset.displayLongitude=norm(record.display).toFixed(8);
     item.group.dataset.exactLongitude=item.exact.toFixed(8);
+    // Keep the source lane stable across any subsequent arrange() pass.
+    // A radial clearance repair must not become the authored lane for the
+    // whole sign/sky when filters or wheel events re-run the resolver.
+    if(!Number.isFinite(num(item.group.dataset.placementAuthoredLane)))item.group.dataset.placementAuthoredLane=String(item.authoredLane);
     item.group.dataset.placementLane=String(record.lane);
     item.group.dataset.placementCircularOrder=String(index);
     item.group.dataset.placementOrderCorrected=Math.abs(record.offset)>1e-6?'true':'false';
