@@ -256,6 +256,34 @@ function solveSlot(wheel,slot){
   return{items:solution,crossings:leaderCrossings(solution,slot),hits:bubbleHits(solution,slot)};
 }
 
+// Preserve a valid resolved ring until that sky's geometry actually changes.
+// Changing Sky A's house dividers must never re-sanitize Sky B and inadvertently
+// return its safely separated orbs to overlapping exact anchors.
+function slotGeometrySignature(wheel,slot){
+  const groups=[...wheel.querySelectorAll(`[data-layer="placements"] > g[data-sky="${slot}"][data-placement]:not([data-angle-axis="true"])`)];
+  const leaders=[...wheel.querySelectorAll(`[data-layer="leaders"] line[data-sky="${slot}"][data-placement]`)];
+  const fixed=fixedSegments(wheel,slot);
+  return JSON.stringify([
+    groups.map(g=>[g.dataset.placement,g.dataset.exactLongitude,g.dataset.placementAuthoredLane??g.dataset.placementLane,
+      g.getAttribute('transform')]),
+    leaders.map(l=>[l.dataset.placement,l.getAttribute('x1'),l.getAttribute('y1'),l.getAttribute('x2'),l.getAttribute('y2')]),
+    fixed.map(segment=>[segment.a.x,segment.a.y,segment.b.x,segment.b.y])
+  ]);
+}
+function solveOrReuse(wheel,slot){
+  const key='placementCollisionSignature'+slot,
+    crossingsKey='placementSlotLeaderCrossings'+slot,
+    hitsKey='placementSlotLeaderHits'+slot;
+  if(wheel.dataset[key]===slotGeometrySignature(wheel,slot)){
+    return{items:[],crossings:Number(wheel.dataset[crossingsKey]||0),
+      hits:Number(wheel.dataset[hitsKey]||0),reused:true};
+  }
+  const result=solveSlot(wheel,slot);
+  wheel.dataset[key]=slotGeometrySignature(wheel,slot);
+  wheel.dataset[crossingsKey]=String(result.crossings);
+  wheel.dataset[hitsKey]=String(result.hits);
+  return result;
+}
 function arrange(wheel){
   // This resolver is authored for the 1200×1200 A/B comparison geometry.
   // Standalone wheels use their own 600×600 geometry and already resolve
@@ -270,7 +298,7 @@ function arrange(wheel){
   try{
     wheel.dataset.placementTangentialClearanceRepairs='0';
     wheel.dataset.placementUnresolvedBubbleOverlaps='0';
-    const a=solveSlot(wheel,'A'),b=solveSlot(wheel,'B');
+    const a=solveOrReuse(wheel,'A'),b=solveOrReuse(wheel,'B');
     wheel.dataset.placementLeaderCrossings=String(a.crossings+b.crossings);
     wheel.dataset.placementLeaderGlyphHits=String(a.hits+b.hits);
     wheel.dataset.placementCircularOrder='preserved';
