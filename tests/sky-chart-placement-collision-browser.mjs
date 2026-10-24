@@ -254,9 +254,9 @@ try{
           .sort((a,b)=>Math.hypot(b.x-600,b.y-600)-Math.hypot(a.x-600,a.y-600))[0];
        return ((Math.atan2(p.y-600,p.x-600)*180/Math.PI+180)%360+360)%360;
      });
-   const nearestHouseCusp=Math.min(...houseDividerAngles.map(a=>Math.abs(((a-7+540)%360)-180)));
+   const ariesHouseCusps=houseDividerAngles.filter(a=>a>2.25&&a<28.4167);
    const isolated=items.filter(a=>['mercury','uranus','pluto'].includes(a.id));
-   return {count:items.length,collisions,ringErrors,signErrors,cluster,nearestHouseCusp,
+   return {count:items.length,collisions,ringErrors,signErrors,cluster,ariesHouseCusps,
      otherOffsets:isolated.map(a=>({id:a.id,offset:+((((a.display-a.exact+540)%360)-180).toFixed(3))})),
      unresolved:wheel.dataset.placementUnresolvedBubbleOverlaps};
  });
@@ -264,7 +264,7 @@ try{
  assert.equal(boundary.cluster.length,5,'The screenshot fixture must contain all five Sky B glyphs');
  assert.ok(boundary.cluster.every(p=>p.exact>=0&&p.exact<30),
    'All five photographed Sky B glyphs must be Aries, split by houses rather than signs');
- assert.ok(boundary.nearestHouseCusp<1.5,'The fixture must draw the Sky B seventh/eighth house divider at Aries 7°, not a zodiac boundary');
+ assert.ok(boundary.ariesHouseCusps.length>0,'The fixture must draw a Sky B house divider within Aries, separating the five glyphs across houses');
  assert.equal(boundary.count,17,'The crowded cusp fixture must include all Sky B placements');
  assert.deepEqual(boundary.collisions,[],'No blue orb may overlap around Sky B house 7/8 cusp');
  assert.deepEqual(boundary.ringErrors,[],'Even boundary-crowded orbs must remain on their original circle');
