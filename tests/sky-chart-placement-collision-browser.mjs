@@ -131,8 +131,6 @@ try{
    return {collisions,offRing,bOffRing,bCollisions,fallBacks:items.filter(x=>x.fallback==='true').map(x=>x.name),
      repairs:Number(wheel.dataset.placementTangentialClearanceRepairs||0),
      unresolved:Number(wheel.dataset.placementUnresolvedBubbleOverlaps||0),leaderHitPairs:leaderHits,
-     reuseRejectionA:wheel.dataset.placementReuseRejectionA||'',
-     reuseRejectionB:wheel.dataset.placementReuseRejectionB||'',
      repeatedMovement:Number(repeatedMovement.toFixed(4)),
      crossings:wheel.dataset.placementLeaderCrossings,leaderHits:wheel.dataset.placementLeaderGlyphHits};
  });
