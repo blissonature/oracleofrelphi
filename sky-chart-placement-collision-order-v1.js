@@ -539,6 +539,13 @@ function solveSlot(wheel,slot){
   // the available arc is too narrow to satisfy every preferred gap. The
   // exact notch is truth; flag an unresolved layout instead of falsifying it.
   let houseFallbacks=0;
+  wheel.dataset['placementHouseArcDebug'+slot]=JSON.stringify({
+    cusps:houseCusps,
+    moon:solution.filter(r=>['sun','moon','saturn'].includes(r.item.id))
+      .map(r=>({id:r.item.id,exact:r.item.exact,display:r.display,
+        arc:houseArcFor(houseCusps,r.item.exact),
+        allowed:staysInActualHouse(r.item,r.display,houseCusps)}))
+  });
   for(const record of solution)if(!staysInActualHouse(record.item,record.display,houseCusps)){
     forceExact(record,slot);houseFallbacks++;
   }
