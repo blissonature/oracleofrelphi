@@ -677,14 +677,16 @@ function slotOrbsStayOnRingAndClear(wheel,slot){
     const matrix=item.group.transform?.baseVal?.consolidate()?.matrix;
     if(!matrix||!Number.isFinite(matrix.e)||!Number.isFinite(matrix.f))return false;
     if(!Number.isFinite(item.authoredLane))return false;
-    const point={x:matrix.e,y:matrix.f};
+    const point={x:matrix.e,y:matrix.f},
+      scale=Math.max(.1,Math.min(1,num(item.group.dataset.placementBubbleScale)||1)),
+      clearance=Math.max(6,Number(spec()?.comparison?.placementClearance)||6);
     if(!staysInActualHouse(item,num(item.group.dataset.displayLongitude),cusps))return false;
     if(houseLines.some(line=>segmentDistance(point,line.a,line.b)<
-      bubble+Math.max(6,Number(spec()?.comparison?.placementClearance)||6)-.05))return false;
+      bubble*scale+clearance-.05))return false;
     if(Math.abs(Math.hypot(point.x-c.x,point.y-c.y)-item.authoredLane)>.1)return false;
-    if(points.some(other=>Math.hypot(point.x-other.x,point.y-other.y)<
-      2*bubble+Math.max(6,Number(spec()?.comparison?.placementClearance)||6)-EPS))return false;
-    points.push(point);
+    if(points.some(other=>Math.hypot(point.x-other.point.x,point.y-other.point.y)<
+      (scale+other.scale)*bubble+clearance-EPS))return false;
+    points.push({point,scale});
   }
   return true;
 }
