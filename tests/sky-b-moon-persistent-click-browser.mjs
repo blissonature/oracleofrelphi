@@ -280,6 +280,12 @@ try{
  });
  console.log('WHERE_WHEN_DRAWER_TRANSITION_TRACE',JSON.stringify(transition));
  assert.ok(transition.wheelPreserved&&transition.sameLines,'Drawer switching must keep the same comparison wheel and aspect lines');
+ assert.equal(transition.displayTransitions,0,'Switching Where and When / Placements must never blank or reveal gray aspect lines');
+ assert.equal(transition.finalDisplayDifference,0,'Returning to Placements must preserve the exact initial line display');
+ assert.equal(transition.visibilityChanges,0,'Unchanged drawer switches must not rewrite any SVG visibility attributes');
+ assert.equal(transition.classChanges,0,'Unchanged drawer switches must not mutate aspect-line classes');
+ assert.equal(transition.styleChanges,0,'Unchanged drawer switches must not restyle aspect-line visibility');
+ console.log('PASS Sky B Where and When / Placements drawer switching preserves gray aspects without flashing');
  console.log('PASS Sky B Where and When holds every existing gray aspect line steady');
  console.log('PASS locked Moon B shows matching Relationships only, clear restores all');
   console.log('PASS helper popup -> Increase to HR 3 -> select Moon B -> leave remains selected');
