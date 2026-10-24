@@ -56,7 +56,10 @@ try{
       needed=2*spec.placementBubbleRadius+2;
     if(distance<needed)collisions.push({a:a.id,b:b.id,distance:Number(distance.toFixed(2)),needed});
    }
-   const outward=items.filter(item=>item.lane>item.authoredLane+0.01).map(item=>({name:item.id,lane:item.lane,authored:item.authoredLane}));
+   // Compare the actual SVG transform against the wheel center rather than
+   // trusting only the lane attribute written by the solver.
+   const outward=items.filter(item=>Math.hypot(item.x-600,item.y-600)>item.authoredLane+0.01)
+     .map(item=>({name:item.id,radius:Math.hypot(item.x-600,item.y-600),authored:item.authoredLane}));
    report.slots[slot]={...report.slots[slot],items:items.length,outward,fallBacks:items.filter(x=>x.fallback==='true').map(x=>x.id),
     collisions,collidingItems:items.filter(x=>collisions.some(c=>c.a===x.id||c.b===x.id))};
   }
@@ -101,7 +104,8 @@ try{
      const match=again.find(v=>v[0]===name);
      return match?Math.hypot(match[1]-x,match[2]-y):Infinity;
    }));
-   const outward=items.filter(item=>item.lane>item.authoredLane+0.01).map(item=>({name:item.name,lane:item.lane,authored:item.authoredLane}));
+   const outward=items.filter(item=>Math.hypot(item.x-600,item.y-600)>item.authoredLane+0.01)
+     .map(item=>({name:item.name,radius:Math.hypot(item.x-600,item.y-600),authored:item.authoredLane}));
    const inward=items.filter(item=>item.lane<item.authoredLane-0.01).map(item=>({name:item.name,lane:item.lane,authored:item.authoredLane}));
    return {collisions,outward,inward,fallBacks:items.filter(x=>x.fallback==='true').map(x=>x.name),
      repairs:Number(wheel.dataset.placementRadialClearanceRepairs||0),
