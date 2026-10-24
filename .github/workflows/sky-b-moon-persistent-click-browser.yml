@@ -1,0 +1,22 @@
+name: Sky B Moon persistent click browser
+on:
+  pull_request:
+    paths:
+      - sky-chart-foundation-interactions-v2.js
+      - sky-chart.html
+      - tests/sky-b-moon-persistent-click-browser.mjs
+      - .github/workflows/sky-b-moon-persistent-click-browser.yml
+jobs:
+  browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --no-save playwright@1.52.0 luxon@3 suncalc@1.9.0
+      - run: npx playwright install --with-deps chromium
+      - run: |
+          python3 -m http.server 4173 >/tmp/sky-click-http.log 2>&1 &
+          node tests/sky-b-moon-persistent-click-browser.mjs

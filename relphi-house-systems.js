@@ -130,8 +130,8 @@
     c[0]=normDeg(asc); c[3]=normDeg(mc+180); c[6]=normDeg(asc+180); c[9]=normDeg(mc);
     c[10]=placidusCusp(lst, lat, eps, 30, 1/3, +1, ref[10]);
     c[11]=placidusCusp(lst, lat, eps, 60, 2/3, +1, ref[11]);
-    c[1]=placidusCusp(lst, lat, eps, 120, 2/3, -1, ref[1]);
-    c[2]=placidusCusp(lst, lat, eps, 150, 1/3, -1, ref[2]);
+    c[1]=placidusCusp(lst, lat, eps, 120, 2/3, +1, ref[1]);
+    c[2]=placidusCusp(lst, lat, eps, 150, 1/3, +1, ref[2]);
     if ([c[1],c[2],c[10],c[11]].some(x => x === null)) throw new Error('Placidus is undefined for this latitude/time.');
     c[4]=normDeg(c[10]+180); c[5]=normDeg(c[11]+180); c[7]=normDeg(c[1]+180); c[8]=normDeg(c[2]+180);
     return c.map(normDeg);
@@ -196,7 +196,20 @@
     if (system === 'koch') return result(system, kochCusps(asc, mc, lst, lat, eps), 'Koch is a time-based quadrant method; it can be undefined near polar latitudes.');
     return result('whole-sign', Array.from({length:12}, (_,i)=>normDeg(Math.floor(asc/30)*30+i*30)), 'Fallback to Whole Sign.');
   }
-  function result(system, cusps, note){ return { system, label:label(system), cusps:cusps.map(normDeg), note }; }
+  function result(system, cusps, note){
+    const normalized=cusps.map(normDeg);
+    // Validate geometry BEFORE it is persisted: inverted or wraparound cusps
+    // otherwise draw giant overlapping wedges and tiny opposite slivers.
+    if(normalized.length!==12||normalized.some(value=>!Number.isFinite(value)))throw new Error(system+' returned invalid house cusps.');
+    if(system!=='whole-sign'&&system!=='equal-house'){
+      const spans=normalized.map((value,i)=>forwardArc(value,normalized[(i+1)%12]));
+      if(spans.some(span=>span<=0.00001||span>=180)||
+        Math.abs(spans.reduce((sum,span)=>sum+span,0)-360)>0.001){
+        throw new Error(label(system)+' returned out-of-order house cusps. Recalculate the chart before displaying its house divisions.');
+      }
+    }
+    return { system, label:label(system), cusps:normalized, note };
+  }
   function label(system){ return SYSTEMS[normalizeSystem(system)] || 'Whole Sign'; }
   function normalizeSystem(system){
     const s = String(system || 'whole-sign').trim().toLowerCase().replace(/\s+/g,'-');

@@ -354,31 +354,50 @@
   }
   function rowMarksNode(node,state){return node.dataset.focusPiece==='aspect'&&rowLineMatches(node,state)}
   function applyState(){
-    const filterState=lockedState||(!rowLockedState&&hoverState),filterKeep=keepSets(filterState),rowState=rowLockedState||rowHoverState,wheelState=filterState||rowState,wheel=document.querySelector('#skyFoundationWheelMount > .sky-foundation-wheel');
+    const focusState=lockedState||(!rowLockedState&&hoverState),aspectFocus=focusState?.kind==='aspect',filterState=aspectFocus?null:focusState,filterKeep=keepSets(focusState),rowState=rowLockedState||rowHoverState,wheelState=focusState||rowState,wheel=document.querySelector('#skyFoundationWheelMount > .sky-foundation-wheel');
     if(wheel){
       wheel.classList.toggle('has-isolation',!!wheelState);
       wheel.querySelectorAll('[data-focus-piece]').forEach(node=>{
-        const isRowDriven=!filterState&&!!rowState,isKept=!!wheelState&&(isRowDriven?rowKeeps(node,rowState):kept(node,filterKeep)),type=node.dataset.focusPiece;
+        const isRowDriven=!focusState&&!!rowState,isKept=!!wheelState&&(isRowDriven?rowKeeps(node,rowState):kept(node,filterKeep)||!!focusState&&focusState.kind==='aspect'&&matchesNode(node,focusState)),type=node.dataset.focusPiece;
         node.classList.toggle('is-kept',isKept);
-        node.classList.toggle('is-aspect-endpoint',(isRowDriven||filterState?.kind==='aspect')&&isKept&&(type==='placement'||type==='leader'));
+        node.classList.toggle('is-aspect-endpoint',(isRowDriven||aspectFocus)&&isKept&&(type==='placement'||type==='leader'));
         node.classList.toggle('is-selected',!!lockedState&&matchesNode(node,lockedState)||(!filterState&&!!rowLockedState&&rowMarksNode(node,rowLockedState)));
         node.classList.toggle('is-hovered',!!hoverState&&!lockedState&&matchesNode(node,hoverState)||(!filterState&&!rowLockedState&&!!rowHoverState&&rowMarksNode(node,rowHoverState)));
       });
     }
     if(wheelOnlyExternal)return;
     ['A','B'].forEach(slot=>{const panel=document.getElementById(slot==='A'?'skyFoundationA':'skyFoundationB');if(!panel)return;panel.classList.toggle('has-ledger-isolation',!!filterState);panel.querySelectorAll('.sky-foundation-row[data-placement]').forEach(row=>{row.classList.toggle('is-kept',!!filterState&&filterKeep.placements.has(`${slot}:${row.dataset.placement}`));row.classList.toggle('is-selected',!!lockedState&&matchesNode(row,lockedState));row.classList.toggle('is-hovered',!!hoverState&&!lockedState&&matchesNode(row,hoverState))})});
-    // Wheel isolation affects emphasis, not filtering: keep every previously
-    // eligible tile in the DOM and visible so a selected line can navigate to it.
+    // A clicked/tapped wheel selection temporarily narrows the Relationships
+    // scroll window. Hover is preview-only; never hide tiles while hovering.
+    // Preserve source eligibility and DOM rows; clearing the lock restores them.
     document.querySelectorAll('.sky-foundation-relationship-row').forEach(row=>{
       const matches=!filterState||rowMatchesState(row,filterState);
+      const temporarilyExcluded=!!lockedState&&!rowMatchesState(row,lockedState);
       row.classList.toggle('is-wheel-dimmed',!!filterState&&!matches);
+      row.classList.toggle('is-wheel-selection-excluded',temporarilyExcluded);
       if(rowEligibleForWheel(row)){
-        row.hidden=false;row.setAttribute('aria-hidden','false');
+        row.hidden=false;
+        row.setAttribute('aria-hidden',temporarilyExcluded?'true':'false');
       }
     });
-    const allRows=[...document.querySelectorAll('#skyFoundationRelationshipList>.sky-foundation-relationship-row[data-relation-index]')],visibleCount=filterState?filterKeep.matched.size:allRows.filter(row=>rowEligibleForWheel(row)).length,totalCount=allRows.length,count=document.getElementById('skyFoundationRelationshipCount'),empty=document.getElementById('skyFoundationRelationshipEmpty'),clear=document.getElementById('skyFoundationClearIsolation');if(count)count.textContent=`${visibleCount}/${totalCount}`;if(empty)empty.hidden=visibleCount!==0;if(clear)clear.hidden=!(lockedState||rowLockedState);
-    const relationshipIndexes=filterState?Array.from(filterKeep.matched):allRows.map(row=>String(row.dataset.relationIndex||'')).filter(Boolean);
-    window.dispatchEvent(new CustomEvent('relphi:sky-foundation-filter-changed',{detail:{state:filterState?{...filterState,mode:lockedState?'selected':'hover'}:null,origin:lockedState&&selectionOrigin?{...selectionOrigin}:null,relationshipIndexes}}));
+    const allRows=[...document.querySelectorAll('#skyFoundationRelationshipList>.sky-foundation-relationship-row[data-relation-index]')];
+    // This label represents the list the user can actually inspect, not the
+    // pre-selection total. Hover is preview-only and never changes the count.
+    const visibleCount=allRows.filter(row=>rowEligibleForWheel(row)&&!row.hidden&&
+      (!lockedState||!row.classList.contains('is-wheel-selection-excluded'))).length;
+    const count=document.getElementById('skyFoundationRelationshipCount'),
+      empty=document.getElementById('skyFoundationRelationshipEmpty'),
+      clear=document.getElementById('skyFoundationClearIsolation');
+    if(count){
+      count.textContent=String(visibleCount);
+      count.dataset.matchCount=String(visibleCount);
+      count.dataset.countLabel='matches';
+      count.setAttribute('aria-label',visibleCount+' matching relationships');
+    }
+    if(empty)empty.hidden=visibleCount!==0;
+    if(clear)clear.hidden=!(lockedState||rowLockedState);
+    const relationshipIndexes=focusState?.kind==='aspect'?Array.from(filterKeep.matched):filterState?Array.from(filterKeep.matched):allRows.map(row=>String(row.dataset.relationIndex||'')).filter(Boolean);
+    window.dispatchEvent(new CustomEvent('relphi:sky-foundation-filter-changed',{detail:{state:focusState?{...focusState,mode:lockedState?'selected':'hover'}:null,origin:lockedState&&selectionOrigin?{...selectionOrigin}:null,relationshipIndexes}}));
   }
   function distanceToSegment(x,y,a,b){const dx=b.x-a.x,dy=b.y-a.y,length=dx*dx+dy*dy;if(!length)return Math.hypot(x-a.x,y-a.y);const t=Math.max(0,Math.min(1,((x-a.x)*dx+(y-a.y)*dy)/length)),px=a.x+t*dx,py=a.y+t*dy;return Math.hypot(x-px,y-py)}
   function nearestAspect(event){
@@ -411,7 +430,8 @@
   }
   function clearSelectionMarks(){document.querySelectorAll('.sky-foundation-relationship-row[aria-current]').forEach(row=>row.removeAttribute('aria-current'));document.querySelectorAll('.sky-foundation-aspect[data-selected-relation]').forEach(line=>delete line.dataset.selectedRelation)}
   function clearFromWhitespace(){
-    lockedState=null;hoverState=null;rowLockedState=null;rowHoverState=null;selectionOrigin=null;const root=document.getElementById('skyFoundationRoot');if(root)root.dataset.relationshipSelectionCleared='true';applyState();clearSelectionMarks();
+    document.querySelector('.sky-wheel-sector-description')?.setAttribute('hidden','');
+    lockedState=null;hoverState=null;rowLockedState=null;rowHoverState=null;selectionOrigin=null;const root=document.getElementById('skyFoundationRoot');if(root)root.dataset.relationshipSelectionCleared='true';applyState();clearSelectionMarks();clearWheelTargets();window.RelphiInlineRelationship?.collapse?.();
     selectionClearObserver?.disconnect();selectionClearObserver=new MutationObserver(()=>{if(root?.dataset.relationshipSelectionCleared==='true')clearSelectionMarks();else{selectionClearObserver.disconnect();selectionClearObserver=null}});if(root)selectionClearObserver.observe(root,{subtree:true,childList:true,attributes:true,attributeFilter:['aria-current','data-selected-relation']});
     window.dispatchEvent(new CustomEvent('relphi:sky-foundation-clear-selection',{detail:{source:'white-space'}}));requestAnimationFrame(clearSelectionMarks)
   }
@@ -495,17 +515,56 @@
     const target=String(spec.value||'');
     const locate=()=>[...document.querySelectorAll('#skyFoundationRelationshipList > .sky-foundation-relationship-row')]
       .find(row=>relationshipIdentity(row)===target);
-    const row=locate();if(!row)return;
+    const row=locate();
+    if(!row){
+      // Intrasky and intersky tiles can finish rendering after the wheel click.
+      // Retain the locked selection and resolve it on the next Relationships-ready event.
+      return;
+    }
     // A focus state must not remove the very tile being navigated to.
+    if(!rowEligibleForWheel(row))return;
+    window.RelphiInlineRelationship?.expand?.(row);
     row.classList.add('is-wheel-target');
     row.setAttribute('aria-current','true');
+    row.classList.add('is-selected');
     document.querySelectorAll('#skyFoundationRelationshipList > .sky-foundation-relationship-row').forEach(other=>{
-      if(other!==row){other.classList.remove('is-wheel-target');other.removeAttribute('aria-current')}
+      if(other!==row){other.classList.remove('is-wheel-target','is-selected');other.removeAttribute('aria-current')}
     });
-    row.scrollIntoView({behavior:window.matchMedia?.('(prefers-reduced-motion: reduce)').matches?'instant':'smooth',block:'center',inline:'nearest'});
+    // Scroll only the Relationships list; scrollIntoView would move the entire page and wheel.
+    const list=document.getElementById('skyFoundationRelationshipList');
+    if(list){
+      const itemRect=row.getBoundingClientRect(),panelRect=list.getBoundingClientRect();
+      const delta=(itemRect.top+itemRect.height/2)-(panelRect.top+panelRect.height/2);
+      list.scrollTo({top:list.scrollTop+delta,behavior:window.matchMedia?.('(prefers-reduced-motion: reduce)').matches?'instant':'smooth'});
+    }
   }
   function clearWheelTargets(){
     document.querySelectorAll('#skyFoundationRelationshipList > .sky-foundation-relationship-row.is-wheel-target').forEach(row=>{row.classList.remove('is-wheel-target');row.removeAttribute('aria-current')});
+  }
+  // Place the selected label in the unused corner outside the circular wheel,
+  // not over the sign ring, house divisions, or existing glyphs.
+  function showSectorDescription(node,spec){
+    const wheel=document.querySelector('#skyFoundationWheelMount > .sky-foundation-wheel');
+    if(!wheel)return;
+    const mount=wheel.parentElement;
+    if(!mount)return;
+    let label=mount.querySelector(':scope > .sky-wheel-sector-description');
+    if(!label){label=document.createElement('div');label.className='sky-wheel-sector-description';label.setAttribute('role','status');label.setAttribute('aria-live','polite');mount.appendChild(label)}
+    if(!spec||!['house','sign','placement'].includes(spec.kind)){label.hidden=true;return}
+    const vocab=window.RelphiSkyVocab?.describeFocus?.(spec.kind,spec.value);
+    if(!vocab?.description){label.hidden=true;return}
+    const bbox=node?.getBoundingClientRect(),outer=wheel.getBoundingClientRect();
+    // Four corner spaces outside the circular perimeter, determined by the
+    // activated node position. Use the upper/lower and left/right half of wheel.
+    const x=bbox?(bbox.left+bbox.right)/2:outer.left+outer.width/2;
+    const y=bbox?(bbox.top+bbox.bottom)/2:outer.top+outer.height/2;
+    label.dataset.corner=(y<outer.top+outer.height/2?'top':'bottom')+'-'+(x<outer.left+outer.width/2?'left':'right');
+    label.replaceChildren();
+    const heading=document.createElement('strong'),description=document.createElement('span');
+    heading.textContent=vocab.name;
+    description.textContent=vocab.description;
+    label.append(heading,description);
+    label.hidden=false;
   }
   // Every input method uses the same selection state transition. Touch invokes
   // it directly rather than dispatching a second click through unrelated
@@ -515,11 +574,15 @@
     wheelOnlyExternal=false;
     rowLockedState=null;rowHoverState=null;
     const next=specFrom(node);
-    if(same(lockedState,next)){lockedState=null;selectionOrigin=null}
-    else{lockedState=next;selectionOrigin=originFromNode(node,next)}
+    if(!same(lockedState,next)){lockedState=next;selectionOrigin=originFromNode(node,next)}
     hoverState=null;applyState();
+    showSectorDescription(node,lockedState);
     if(lockedState?.kind==='aspect')requestAnimationFrame(()=>revealSelectedRelationship(lockedState));
-    else clearWheelTargets();
+    else {
+      clearWheelTargets();
+      // Explicit selection changes close the previous tile; hover never does.
+      window.RelphiInlineRelationship?.collapse?.();
+    }
   }
   // One touch-to-click adapter owned by the foundation controller. Touch hover is
   // never selection state; one completed tap produces exactly one click.
@@ -576,6 +639,18 @@
     document.addEventListener('pointerdown',beginTouch,{capture:true,passive:true});
     document.addEventListener('pointermove',moveTouch,{capture:true,passive:true});
     document.addEventListener('pointerup',finishTouch,{capture:true,passive:false});
+    // Real browser traces show Moon B pointerdown/pointerup but NO subsequent
+    // click when a wheel update replaces the SVG target during the gesture.
+    // Commit mouse selection on pointerup, before that click can disappear.
+    document.addEventListener('pointerup',event=>{
+      if(event.pointerType!=='mouse'||event.button!==0)return;
+      const target=event.target;
+      const onWheel=target.closest?.('#skyFoundationWheelMount .sky-foundation-wheel');
+      const onLedger=target.closest?.('#skyFoundationA .sky-foundation-row[data-interactive="placement"],#skyFoundationB .sky-foundation-row[data-interactive="placement"]');
+      if(!onWheel&&!onLedger)return;
+      const node=interactive(event);
+      if(node)toggleInteractiveNode(node);
+    },{capture:true,passive:true});
     document.addEventListener('pointercancel',cancelTouch,{capture:true});
     // Compatibility clicks may be retargeted to the wheel/root after a
     // redraw, not to the original SVG element. Suppress the trusted native
@@ -615,6 +690,22 @@
       if(row)return;
       if(lockedState)return;const node=interactive(event);if(!node||node.contains(event.relatedTarget))return;hoverState=null;applyState()
     });
+    // Own actual wheel click selection in capture phase. Other legacy
+    // bubbling handlers must not interpret this same click as a hover reset.
+    root.addEventListener('click',event=>{
+      if(event.defaultPrevented||performance.now()<ignoreNativeClickUntil)return;
+      // Both SVG placements and Sky A/B placement ledger rows are selection surfaces.
+      // Previously capture ownership covered only the SVG wheel; ledger clicks
+      // could be consumed by other handlers and leave a hover-only highlight.
+      const onWheel=!!event.target.closest?.('#skyFoundationWheelMount .sky-foundation-wheel');
+      const onLedger=!!event.target.closest?.('#skyFoundationA .sky-foundation-row[data-interactive="placement"],#skyFoundationB .sky-foundation-row[data-interactive="placement"]');
+      if(!onWheel&&!onLedger)return;
+      const node=interactive(event);
+      if(!node)return;
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      toggleInteractiveNode(node);
+    },true);
     root.addEventListener('click',event=>{
       wheelOnlyExternal=false;
       const row=event.target.closest?.('.sky-foundation-relationship-row[data-relation-index]');
@@ -638,7 +729,9 @@
     }else if(renderedRelationshipSignature!==nextSignature||!relationshipRowsIntact(relations)){
       await renderRows(relations);renderedRelationshipSignature=nextSignature;
     }
-    bind();applyState();window.dispatchEvent(new Event('relphi:sky-foundation-interactions-ready'));
+    bind();applyState();
+    if(lockedState?.kind==='aspect')requestAnimationFrame(()=>revealSelectedRelationship(lockedState));
+    window.dispatchEvent(new Event('relphi:sky-foundation-interactions-ready'));
   }
   function schedule(){if(refreshQueued)return;refreshQueued=true;requestAnimationFrame(refresh)}
   function start(){

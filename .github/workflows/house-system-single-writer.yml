@@ -1,0 +1,17 @@
+name: House System single-writer guard
+on:
+  pull_request:
+    paths:
+      - 'sky-chart-placement-house-system-v1.js'
+      - 'sky-chart-house-integrity-v1.js'
+      - 'tests/house-system-single-writer.mjs'
+      - '.github/workflows/house-system-single-writer.yml'
+jobs:
+  guard:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node tests/house-system-single-writer.mjs

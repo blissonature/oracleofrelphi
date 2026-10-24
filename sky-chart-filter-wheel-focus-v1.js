@@ -18,6 +18,9 @@
   let observer=null;
   let observedList=null;
   let hiddenNearest=new Map();
+  // A user who accepted the helper must be able to select that placement,
+  // even if further aspects remain beyond the newly chosen window.
+  const helperAccepted=new Set();
   let popup=null;
 
   function relationshipSlots(row){
@@ -114,8 +117,20 @@
     const increase=document.createElement('button');increase.type='button';increase.textContent=`Increase to ${target}°`;
     dismiss.addEventListener('click',closePopup);
     increase.addEventListener('click',()=>{
+      helperAccepted.add(key);
       closePopup();
       window.RelphiHarmonicOrb?.setWindow?.(target);
+      // Immediately release placements now covered by the new window, before
+      // the next animation-frame focus refresh. They belong to wheel selection.
+      for(const [placement,threshold] of hiddenNearest){
+        if(threshold<=target+1e-8){
+          hiddenNearest.delete(placement);
+          const [slot,id]=placement.split(':');
+          document.querySelectorAll('#skyFoundationWheelMount [data-layer="placements"] [data-sky][data-placement]').forEach(node=>{
+            if(node.dataset.sky===slot&&node.dataset.placement===id)node.classList.remove('is-filter-intermediate');
+          });
+        }
+      }
       const input=document.querySelector('[data-harmonic-window-input]');
       if(input){input.value=String(target);input.setAttribute('aria-valuenow',String(target))}
       window.dispatchEvent(new CustomEvent('relphi:sky-harmonic-window-model-changed',{detail:{harmonicWindow:target}}));
@@ -138,9 +153,34 @@
     const marker=event.target.closest?.('#skyFoundationWheelMount [data-layer="placements"] [data-sky][data-placement]');
     if(!marker||!marker.classList.contains('is-filter-intermediate'))return;
     const key=`${marker.dataset.sky}:${marker.dataset.placement}`;
-    const required=hiddenNearest.get(key);
-    if(!Number.isFinite(required))return;
-    event.preventDefault();event.stopPropagation();event.stopImmediatePropagation();
+    if(helperAccepted.has(key))return;
+    // The reveal helper only owns a click when there are NO currently visible
+    // relationships for this placement. Once HR 3 reveals even one Moon B
+    // aspect, the wheel controller owns the click to lock isolation.
+    const visibleMatch=eligibleRows().some(row=>
+      endpoints(row).includes(key)&&
+      !excludedByExplicitFilter(row)&&
+      !row.hidden&&
+      !row.classList.contains('sky-chart-orb-hidden')&&
+      !row.classList.contains('sky-orb-filter-hidden')&&
+      Number.isFinite(phase(row))&&
+      phase(row)<=Number(window.RelphiHarmonicOrb?.getWindow?.()??7)+1e-8
+    );
+    if(visibleMatch){
+      marker.classList.remove('is-filter-intermediate');
+      hiddenNearest.delete(key);
+      return;
+    }
+    const required=hiddenNearest.get(key),current=Number(window.RelphiHarmonicOrb?.getWindow?.()??7);
+    if(!Number.isFinite(required)||required<=current+1e-8){
+      // Never swallow a selection click using a stale helper marker.
+      marker.classList.remove('is-filter-intermediate');
+      hiddenNearest.delete(key);
+      return;
+    }
+    // The helper is advisory. Never consume the placement activation: the
+    // foundation controller must receive the same click and lock isolation.
+    // Opening a popup does not confer click ownership to the helper.
     openPopup(marker,key,required);
   }
 
@@ -216,7 +256,7 @@
     wheel.querySelectorAll('[data-layer="placements"] [data-sky][data-placement], [data-layer="leaders"] [data-sky][data-placement]').forEach(node=>{
       const key=`${node.dataset.sky}:${node.dataset.placement}`;
       node.classList.toggle('is-filter-kept',placements.has(key));
-      node.classList.toggle('is-filter-intermediate',hiddenNearest.has(key));
+      node.classList.toggle('is-filter-intermediate',hiddenNearest.has(key)&&!helperAccepted.has(key));
     });
 
     document.documentElement.dataset.skyFilterWheelFocus=`${matched.length}/${rows.length}`;
@@ -245,8 +285,13 @@
   function start(){
     // Capture pointer activation before the foundation wheel's own click handler
     // can lock an orb or trigger a competing focus refresh.
-    document.addEventListener('pointerdown',onPlacementClick,true);
+    // Desktop: show the helper on click, without preventing wheel selection.
+    // Touch: the wheel selects during pointerup and suppresses the follow-up
+    // synthetic click, so use pointerup only for touch/pen helper disclosure.
     document.addEventListener('click',onPlacementClick,true);
+    // Some wheel redraws suppress the eventual mouse click. Show the advisory
+    // helper on the completed gesture for mouse, touch, and pen alike.
+    document.addEventListener('pointerup',onPlacementClick,true);
     document.addEventListener('keydown',event=>{
       if(event.key!=='Enter'&&event.key!==' ')return;
       const marker=event.target.closest?.('#skyFoundationWheelMount [data-layer="placements"] [data-sky][data-placement].is-filter-intermediate');

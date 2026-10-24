@@ -1,0 +1,12 @@
+import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+const src=readFileSync('sky-chart-foundation-interactions-v2.js','utf8');
+const toggle=src.slice(src.indexOf('function toggleInteractiveNode('),src.indexOf('let touchGesture=',src.indexOf('function toggleInteractiveNode(')));
+const clear=src.slice(src.indexOf('function clearFromWhitespace('),src.indexOf('let interactionReapplyQueued',src.indexOf('function clearFromWhitespace(')));
+assert.ok(toggle.includes('if(!same(lockedState,next))'),'click changes selection only for a different target');
+assert.ok(!toggle.includes('lockedState=null'),'clicking selected target must not clear');
+assert.ok(src.includes('const focusState=lockedState||(!rowLockedState&&hoverState)'),'hover must not override lock');
+assert.ok(clear.includes('clearWheelTargets()'),'blank click clears row highlight');
+assert.ok(clear.includes('RelphiInlineRelationship?.collapse?.()'),'blank click closes expanded tile');
+assert.ok(src.includes('if(lockedState)return;const node=interactive(event)'),'locked selection ignores pointer hover');
+console.log('Persistent selection until explicit blank-area clear: passed');

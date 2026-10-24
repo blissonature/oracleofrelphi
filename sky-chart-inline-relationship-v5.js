@@ -131,6 +131,23 @@ function onClick(event){
   if(revealRow){const field=topGlyph.dataset.inlineTopReveal||fieldFromTopGlyph(topGlyph);if(field){event.preventDefault();event.stopImmediatePropagation();cycleReveal(revealRow,field);return}}
   if(row)open(row)
 }
+// Wheel selections use precisely the same tile expansion and Tarot card rendering
+// as clicking a Relationships row, but without toggling an already-open tile shut.
+window.RelphiInlineRelationship=Object.freeze({
+  expand(row){
+    if(!row?.matches?.('.sky-foundation-relationship-row[data-relation-index]'))return false;
+    // A single controller owns expansion even when selection originates on the wheel.
+    if(openRow&&openRow!==row)close(openRow);
+    if(!row.classList.contains('is-inline-expanded'))open(row);
+    else openRow=row;
+    return row.classList.contains('is-inline-expanded');
+  },
+  collapse(){
+    if(openRow)close(openRow);
+    openRow=null;
+  },
+  selected:()=>openRow
+});
 document.addEventListener('pointerdown',onPointerDown,{capture:true,passive:true});
 document.addEventListener('pointermove',onPointerMove,{capture:true,passive:true});
 document.addEventListener('pointerup',onPointerUp,true);

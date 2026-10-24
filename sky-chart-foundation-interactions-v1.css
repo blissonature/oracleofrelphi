@@ -611,3 +611,34 @@
 #skyFoundationRelationshipList > .sky-foundation-relationship-row.is-wheel-dimmed:not(.is-wheel-target){
   opacity:.52;
 }
+
+/* Canonical Focus description, placed in the otherwise empty square corners
+   outside the wheel's circular perimeter. The SVG remains fully interactive. */
+#skyFoundationWheelMount{position:relative}
+#skyFoundationWheelMount .sky-wheel-sector-description{
+  position:absolute;z-index:8;
+  width:clamp(80px,17%,172px);
+  max-width:22%;
+  padding:7px 8px;
+  box-sizing:border-box;
+  border:1px solid rgba(43,36,31,.14);
+  border-radius:9px;
+  background:rgba(255,253,249,.94);
+  color:#251f1a;
+  box-shadow:0 2px 9px rgba(35,29,23,.06);
+  pointer-events:none;
+  display:grid;
+  gap:3px;
+  text-align:center;
+  font:550 clamp(9px,1vw,12px)/1.26 system-ui,sans-serif;
+}
+#skyFoundationWheelMount .sky-wheel-sector-description strong{font-weight:800}
+#skyFoundationWheelMount .sky-wheel-sector-description[hidden]{display:none!important}
+#skyFoundationWheelMount .sky-wheel-sector-description[data-corner="top-left"]{left:1%;top:1%}
+#skyFoundationWheelMount .sky-wheel-sector-description[data-corner="top-right"]{right:1%;top:1%}
+#skyFoundationWheelMount .sky-wheel-sector-description[data-corner="bottom-left"]{left:1%;bottom:1%}
+#skyFoundationWheelMount .sky-wheel-sector-description[data-corner="bottom-right"]{right:1%;bottom:1%}
+
+/* A locked Wheel selection narrows only the Relationships scroll list.
+   Keep rows in the DOM so blank-space clear restores their original order. */
+#skyFoundationRelationshipList > .sky-foundation-relationship-row.is-wheel-selection-excluded {display:none!important}
