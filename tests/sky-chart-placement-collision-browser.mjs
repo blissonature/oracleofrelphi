@@ -56,7 +56,24 @@ try{
    const exactDistance=(a,b)=>Math.hypot(
      a.authoredLane*Math.cos((a.exact-180)*Math.PI/180)-b.authoredLane*Math.cos((b.exact-180)*Math.PI/180),
      a.authoredLane*Math.sin((a.exact-180)*Math.PI/180)-b.authoredLane*Math.sin((b.exact-180)*Math.PI/180));
-   const isolated=items.filter(item=>items.every(other=>other===item||
+   // An orb isolated from other glyphs can still sit on a HOUSE divider.
+   // Do not expect exact-notch alignment when that physical boundary requires
+   // a small tangential offset on the same circular lane.
+   const houses=[...wheel.querySelectorAll('[data-layer="'+(slot==='A'?'a-houses':'b-houses')+'"] line.sky-foundation-divider')]
+     .map(line=>({a:{x:Number(line.getAttribute('x1')),y:Number(line.getAttribute('y1'))},
+       b:{x:Number(line.getAttribute('x2')),y:Number(line.getAttribute('y2'))}}));
+   const houseDistance=(p,a,b)=>{
+     const dx=b.x-a.x,dy=b.y-a.y,len=dx*dx+dy*dy;
+     const t=len?Math.max(0,Math.min(1,((p.x-a.x)*dx+(p.y-a.y)*dy)/len)):0;
+     return Math.hypot(p.x-a.x-t*dx,p.y-a.y-t*dy);
+   };
+   const notchClearsHouse=item=>{
+     const radians=(item.exact-180)*Math.PI/180,
+       point={x:600+item.authoredLane*Math.cos(radians),y:600+item.authoredLane*Math.sin(radians)};
+     return houses.every(line=>houseDistance(point,line.a,line.b)>
+       spec.placementBubbleRadius+Math.max(6,Number(spec.placementClearance)||6)+.2);
+   };
+   const isolated=items.filter(item=>notchClearsHouse(item)&&items.every(other=>other===item||
      (signOf(item)!==signOf(other)&&exactDistance(item,other)>2*spec.placementBubbleRadius+Math.max(6,Number(spec.placementClearance)||6)+.2)));
    const displacedIsolated=isolated.filter(item=>Math.abs(item.display-item.exact)>.06)
      .map(item=>({id:item.id,exact:item.exact,display:item.display,offset:item.offset}));
