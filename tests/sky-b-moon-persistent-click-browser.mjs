@@ -109,8 +109,8 @@ try{
  assert.ok(focusRows.excluded>0,'Locked Moon B selection must temporarily hide unrelated relationships');
  assert.ok(focusRows.matches>0,'Locked Moon B selection must keep matching relationships visible');
  assert.equal(focusRows.incorrectlyVisible,0,'Unrelated relationships must be display:none');
- // Clearing focus restores the original DOM rows without rebuilding or resorting.
- await page.evaluate(()=>document.getElementById('skyFoundationRoot').dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true})));
+ // Clicking the blank Relationships list surface clears the temporary view.
+ await page.evaluate(()=>document.getElementById('skyFoundationRelationshipList').click());
  await page.waitForTimeout(100);
  const restored=await page.evaluate(()=>[...document.querySelectorAll('#skyFoundationRelationshipList > .sky-foundation-relationship-row[data-relation-index]')].filter(row=>row.classList.contains('is-wheel-selection-excluded')).length);
  assert.equal(restored,0,'Clear lock restores every previously hidden relationship');
