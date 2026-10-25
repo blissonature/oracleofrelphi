@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow,noarchive">
+<title>Explorer Compatibility Check · Oracle of Relphi</title>
+<base href="../../">
+<style>
+:root{color-scheme:light;font:15px/1.45 Montserrat,system-ui,sans-serif;color:#26211e;background:#f8f5ef}
+*{box-sizing:border-box}body{margin:0}.shell{max-width:1000px;margin:auto;padding:18px}
+h1{font-size:1.45rem;margin:0 0 5px}.muted{color:#625a54}.subtitle{margin:0 0 17px}
+.grid{display:grid;grid-template-columns:minmax(270px,1fr) minmax(270px,1fr);gap:12px}
+section{border:1px solid #d7cdc4;background:white;padding:15px;border-radius:13px;min-width:0}
+h2{font-size:1.03rem;margin:0 0 8px}.outcome{padding:6px 9px;margin:3px 0;border-left:4px solid #8b8278;background:#f5f3ef;font-size:.85rem}
+.outcome[data-kind=pass]{border-left-color:#268051}.outcome[data-kind=fail]{border-left-color:#c53428}.outcome[data-kind=skip]{border-left-color:#a47a31}
+#map{width:min(100%,220px);display:block;margin:8px auto;touch-action:none;cursor:grab}#map:focus-visible{outline:3px solid #8764a7}
+.info{font-size:.81rem;color:#514b47}button{border:1px solid #857a71;background:#fff;border-radius:7px;padding:7px 10px;cursor:pointer;margin-right:4px;margin-bottom:4px}button:focus-visible{outline:3px solid #bd8442}
+#gallery{display:grid;grid-template-columns:repeat(auto-fit,minmax(82px,1fr));gap:7px}
+.canon{display:grid;place-items:center;gap:4px;padding:5px;background:#faf6f0;border:1px solid #e3dad1;border-radius:8px;text-align:center}
+.canon svg{width:52px;height:52px;overflow:visible;display:block}.canon small{font-size:.66rem;overflow-wrap:anywhere}
+#gpuCanvas{display:block;width:180px;height:180px;margin:10px auto;border:1px solid #ddd}
+details{margin-top:12px}.footer{font-size:.81rem;color:#625a54}
+@media(max-width:700px){.grid{grid-template-columns:1fr}}
+</style>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js"}}</script>
+<script src="relphi-glyph-registry-v1.js"></script>
+<script src="relphi-glyph-component-v1.js"></script>
+<script src="relphi-glyph-source-integrity-v1.js"></script>
+</head>
+<body><main class="shell">
+<h1>Three.js Explorer · compatibility test</h1>
+<p class="subtitle muted">Isolated check of original Relphi glyphs, zodiac math, gestures, WebGL 2 and a working SVG fallback. This is NOT the Sky Chart prototype.</p>
+<div class="grid">
+<section><h2>Exact geometry & navigation</h2><div id="geometryResults"></div>
+<svg id="map" viewBox="0 0 150 150" role="slider" tabindex="0" aria-label="Current focal longitude" aria-valuemin="0" aria-valuemax="359" aria-valuenow="0">
+<circle cx="75" cy="75" r="64" fill="#f8f5ef" stroke="#89817a" stroke-width="1.7"/>
+<g id="ticks"></g><polyline id="hemisphere" fill="none" stroke="#dc5c37" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+<line id="aspect" stroke="#8a63ac" stroke-width="3"/>
+<circle id="pointA" r="5" fill="#c9211e"/><circle id="pointB" r="5" fill="#2462d0"/><circle id="focus" r="6" fill="#d39b19" stroke="#fff" stroke-width="2"/>
+</svg>
+<button id="left">◀ Rotate</button><button id="right">Rotate ▶</button><button id="reset">Reset</button>
+<p class="info">Focus <b id="focusText">0°</b>. Drag the map, click a longitude, or use arrows. The aspect remains at its true zodiac positions, even without Three.js.</p></section>
+<section><h2>Canonical glyph integrity</h2><div id="glyphResults"></div><div id="gallery"></div>
+<p class="info">These glyphs use the real <code>RelphiGlyphRegistry</code> and <code>RelphiGlyphComponent</code>. They are DOM SVGs, not replacement artwork, raster textures, or newly drawn Three.js meshes.</p></section>
+<section><h2>WebGL and Three.js</h2><div id="graphicsResults"></div><canvas id="gpuCanvas" width="180" height="180"></canvas>
+<p class="info">A successful graphics result requires the Three.js module to load, a WebGL 2 context, a real draw call, and pixels read from the resulting frame. The camera math is separately checked.</p></section>
+<section><h2>Page/layout resilience</h2><div id="layoutResults"></div><p class="info">The SVG map and canonical glyphs should still load when WebGL 2 is unavailable. Resize this page and try tab/keyboard operation. No existing Sky Chart controllers have been modified.</p></section>
+</div><p class="footer">The test runs in your browser. Results describe this device/browser, not all browsers.</p>
+</main>
+<script type="module">
+import {norm,signed,delta,miniPoint,miniLongitude,polar} from './experiments/threejs-wheel-smoke/geometry.mjs';
+const NS='http://www.w3.org/2000/svg',$=id=>document.getElementById(id),root=(id,label,kind)=>{const div=document.createElement('div');div.className='outcome';div.dataset.kind=kind;div.textContent=label;$(id).appendChild(div)};
+const check=(target,label,condition)=>root(target,(condition?'PASS · ':'FAIL · ')+label,condition?'pass':'fail');
+const close=(a,b,t=1e-7)=>Math.abs(a-b)<=t;
+const points=[{sky:'A',degree:40,id:'sun'},{sky:'B',degree:160,id:'jupiter'}];
+for(const f of [0,45,91.7,179,270,359.999]){
+ check('geometryResults','View 0°, ±90°, 180° at focus '+f.toFixed(1),close(delta(f,f),0)&&close(delta(f+90,f),90)&&close(delta(f-90,f),-90)&&close(Math.abs(delta(f+180,f)),180));
+}
+check('geometryResults','True 120° aspect is invariant', [0,40,90,181,359].every(f=>close(Math.abs(signed(delta(40,f)-delta(160,f))),120)));
+check('geometryResults','Relphi mini-wheel orientation (0°=left, 90°=top)',close(miniPoint(0,54).x,21)&&close(miniPoint(90,54).y,21));
+check('geometryResults','Mini-map longitude inverse',Array.from({length:360},(_,i)=>i).every(d=>close(signed(miniLongitude(...Object.values(miniPoint(d)))-d),0)));
+const houseA=[350,14,40,74,107,139,168,196,225,252,284,317];
+const houseB=[342,12,37,69,102,130,161,191,219,247,278,312];
+const widths=x=>x.map((v,i)=>norm(x[(i+1)%12]-v));
+const houseFor=(longitude,cusps)=>cusps.findIndex((start,i)=>norm(longitude-start)<norm(cusps[(i+1)%12]-start))+1;
+check('geometryResults','Unequal house widths; wraparound at 360°',widths(houseA).reduce((a,b)=>a+b,0)===360&&new Set(widths(houseA)).size>1&&houseFor(355,houseA)===1&&houseFor(10,houseA)===1);
+check('geometryResults','Sky A and B house cusps stay independent',houseFor(345,houseA)!==houseFor(345,houseB));
+let focus=0,gesture=null;const map=$('map');
+const setFocus=v=>{focus=norm(v);$('focusText').textContent=focus.toFixed(2)+'°';map.setAttribute('aria-valuenow',Math.round(focus));drawMap()};
+const pt=(degree,r=54)=>miniPoint(degree,r);
+function drawMap(){
+ const pts=[];for(let a=-90;a<=90;a+=2){const p=pt(focus+a,60);pts.push(p.x+','+p.y)}$('hemisphere').setAttribute('points',pts.join(' '));
+ const A=pt(40,51),B=pt(160,51),F=pt(focus,61);
+ for(const [name,v] of [['pointA',A],['pointB',B],['focus',F]]){ $(name).setAttribute('cx',v.x);$(name).setAttribute('cy',v.y)}
+ for(const [name,v] of [['x1',A.x],['y1',A.y],['x2',B.x],['y2',B.y]])$('aspect').setAttribute(name,v);
+}
+for(let i=0;i<12;i++){const a=pt(i*30,56),b=pt(i*30,64),line=document.createElementNS(NS,'line');for(const [k,v]of Object.entries({x1:a.x,x2:b.x,y1:a.y,y2:b.y,stroke:'#928982'}))line.setAttribute(k,v);$('ticks').append(line)}
+const fromPointer=e=>{const box=map.getBoundingClientRect();return miniLongitude((e.clientX-box.left)/box.width*150,(e.clientY-box.top)/box.height*150)};
+map.addEventListener('pointerdown',e=>{if(e.button!==0)return;gesture={id:e.pointerId,x:e.clientX,y:e.clientY,moved:false};map.setPointerCapture(e.pointerId)});
+map.addEventListener('pointermove',e=>{if(!gesture||e.pointerId!==gesture.id)return;gesture.moved ||= Math.hypot(e.clientX-gesture.x,e.clientY-gesture.y)>3;if(gesture.moved)setFocus(fromPointer(e))});
+map.addEventListener('pointerup',e=>{if(!gesture||e.pointerId!==gesture.id)return;setFocus(fromPointer(e));gesture=null;map.releasePointerCapture(e.pointerId)});
+map.addEventListener('pointercancel',()=>gesture=null);
+map.addEventListener('keydown',e=>{if(['ArrowLeft','ArrowRight'].includes(e.key)){e.preventDefault();setFocus(focus+(e.key==='ArrowRight'?10:-10))}});
+$('left').onclick=()=>setFocus(focus-10);$('right').onclick=()=>setFocus(focus+10);$('reset').onclick=()=>setFocus(0);setFocus(0);
+check('layoutResults','SVG map requires no WebGL',!!map.getAttribute('viewBox')&&$('hemisphere').getAttribute('points').length>10);
+const before=focus;setFocus(271.5);check('layoutResults','Focus rotation works without GPU',close(focus,271.5)&&close(Number(map.getAttribute('aria-valuenow')),272));setFocus(before);
+const glyphIds=['sun','moon','jupiter','pisces','square','vertex','retrograde','anti-vertex','part-of-fortune'];
+const registry=window.RelphiGlyphRegistry,component=window.RelphiGlyphComponent;
+check('glyphResults','Canonical registry/component are loaded',!!registry&&!!component?.createBubble);
+try{window.RelphiGlyphIntegrity?.assert?.();check('glyphResults','Approved glyph registry integrity guard',true)}catch(e){check('glyphResults','Approved glyph registry integrity guard',false)}
+for(const id of glyphIds){
+ const entry=registry?.get?.(id);const cell=document.createElement('div');cell.className='canon';
+ const svg=document.createElementNS(NS,'svg');svg.setAttribute('viewBox','-22 -22 44 44');svg.setAttribute('role','img');svg.setAttribute('aria-label',id);
+ cell.append(svg);const small=document.createElement('small');small.textContent=id;cell.append(small);$('gallery').append(cell);
+ if(!entry){root('glyphResults','FAIL · registry missing '+id,'fail');continue}
+ try{
+  const bubble=component.createBubble(svg,id,{radius:17,color:id==='jupiter'?'#2462d0':'#c9211e',fill:'#fffdfa',strokeWidth:2.0,padding:1});
+  await bubble.ready;
+  const art=bubble.root.querySelector('[data-canonical-glyph-id]');
+  const ok=!!art&&!!bubble.root.querySelector('.relphi-canonical-glyph')&&bubble.root.dataset.canonicalGlyphId===id&&!art.hasAttribute('hidden')&&art.style.visibility!=='hidden'&&svg.getBBox().width>0;
+  cell.dataset.passed=String(ok);small.textContent=id+(ok?' ✓':' ✕');
+  root('glyphResults',(ok?'PASS · ':'FAIL · ')+id+' (master '+(entry.asset||'letter')+')',ok?'pass':'fail');
+ }catch(e){cell.dataset.passed='false';root('glyphResults','FAIL · '+id+': '+e.message,'fail')}
+}
+try{window.RelphiGlyphIntegrity?.assert?.();check('glyphResults','Registry unchanged after creating glyphs',true)}catch(e){check('glyphResults','Registry unchanged after creating glyphs',false)}
+check('layoutResults','HUD remains ordinary HTML; glyphs remain SVG',$('gallery').querySelectorAll('svg').length===glyphIds.length);
+let gl;
+try{gl=$('gpuCanvas').getContext('webgl2',{preserveDrawingBuffer:true,antialias:false})}catch(e){}
+if(!gl){root('graphicsResults','SKIP · WebGL 2 unavailable: SVG fallback stays active','skip')}
+else {
+ root('graphicsResults','PASS · WebGL 2 context acquired ('+String(gl.getParameter(gl.VERSION))+')','pass');
+ try{
+  const THREE=await import('three');
+  const renderer=new THREE.WebGLRenderer({canvas:$('gpuCanvas'),context:gl,antialias:false,alpha:false,preserveDrawingBuffer:true});
+  renderer.setSize(180,180,false);renderer.setPixelRatio(1);
+  const scene=new THREE.Scene();scene.background=new THREE.Color(0x101725);
+  const material=new THREE.MeshBasicMaterial({color:0xea3232});
+  scene.add(new THREE.Mesh(new THREE.SphereGeometry(1,24,12),material));
+  for(const mode of ['flat','perspective']){
+    const camera=mode==='flat'?new THREE.OrthographicCamera(-2,2,2,-2,.1,100):new THREE.PerspectiveCamera(45,1,.1,100);
+    camera.position.set(0,0,5);camera.lookAt(0,0,0);
+    renderer.render(scene,camera);
+    const pixel=new Uint8Array(4);gl.readPixels(90,90,1,1,gl.RGBA,gl.UNSIGNED_BYTE,pixel);
+    const ok=pixel[0]>80&&pixel[0]>pixel[1]*1.5&&renderer.info.render.calls>0;
+    check('graphicsResults',mode+' camera actually draws red pixels; '+renderer.info.render.calls+' call(s)',ok);
+  }
+  const perspective=new THREE.PerspectiveCamera(45,1,.1,100);perspective.position.set(0,7,13);perspective.lookAt(0,0,0);perspective.updateMatrixWorld(true);
+  const front=new THREE.Vector3(0,0,3.5).project(perspective),far=new THREE.Vector3(0,0,-3.5).project(perspective);
+  check('graphicsResults','Foreground appears below far opposition in perspective',front.y<far.y);
+  check('graphicsResults','Projection preserves left/right square directions',new THREE.Vector3(-3.5,0,0).project(perspective).x<0&&new THREE.Vector3(3.5,0,0).project(perspective).x>0);
+  renderer.dispose();
+ }catch(e){root('graphicsResults','FAIL · Three.js draw could not finish: '+e.message,'fail')}
+}
+</script>
+</body></html>
