@@ -1,6 +1,7 @@
 <!doctype html>
 <html lang="en">
 <head>
+<base href="../../">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex,nofollow,noarchive">
@@ -16,6 +17,9 @@ h1{font-size:clamp(1.2rem,2vw,1.6rem);margin:0}.subtitle{font-size:.81rem;color:
 .stage{margin-top:14px;border:1px solid #3b4861;border-radius:14px;background:radial-gradient(circle at 50% 80%,#243853 0,#101725 68%);position:relative;overflow:hidden;height:min(70vh,580px);min-height:340px}
 #render{width:100%;height:100%;display:block}.labels{position:absolute;inset:0;pointer-events:none;overflow:hidden}.dot-label{position:absolute;font-size:12px;font-weight:750;padding:3px 6px;border-radius:6px;background:#101725bd;transform:translate(-50%,-115%);white-space:nowrap}
 .dot-label[data-sky=A]{border:1px solid #ef6f6f}.dot-label[data-sky=B]{border:1px solid #69a5ff}
+.dot-label[data-sky]{display:flex;align-items:center;gap:5px;background:#fffcf1;color:#26211c;font-weight:750;z-index:3}
+.dot-label .canonical-icon{width:31px;height:31px;overflow:visible;flex:none}
+#glyphStatus{font-size:.78rem;font-weight:700;color:#e6c988}
 .hud{position:absolute;left:14px;top:12px;background:#101725c9;border:1px solid #63738a;border-radius:9px;padding:9px 10px;font-size:.74rem;pointer-events:none;line-height:1.5}
 .bottom{display:flex;align-items:center;gap:18px;justify-content:space-between;flex-wrap:wrap;margin-top:14px}
 .map-wrap{display:flex;gap:12px;align-items:center}.map-hint{max-width:320px;font-size:.76rem;line-height:1.5;color:#c0ccdf}.mini{width:154px;height:154px;touch-action:none;cursor:grab;border-radius:50%;flex:none}.mini:active{cursor:grabbing}.arrow{display:grid;grid-template-columns:repeat(3,44px);gap:4px;justify-items:stretch}.arrow button{padding:9px 0}.arrow button[data-id=up]{grid-column:2}.arrow button[data-id=left]{grid-column:1}.arrow button[data-id=reset]{grid-column:2}.arrow button[data-id=right]{grid-column:3}.arrow button[data-id=down]{grid-column:2}
@@ -23,27 +27,52 @@ h1{font-size:clamp(1.2rem,2vw,1.6rem);margin:0}.subtitle{font-size:.81rem;color:
 @media(max-width:600px){.shell{padding:12px}.stage{height:55vh;min-height:335px}.hud{top:7px;left:7px;padding:5px 7px;font-size:.65rem}.bottom{gap:10px}.mini{width:128px;height:128px}.map-hint{max-width:170px;font-size:.7rem}}
 </style>
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js"}}</script>
+<script src="relphi-glyph-registry-v1.js"></script>
+<script src="relphi-glyph-component-v1.js"></script>
+<script src="relphi-glyph-source-integrity-v1.js"></script>
 </head>
 <body><main class="shell">
 <header class="heading"><div><div class="kicker">Oracle of Relphi · isolated experiment</div><h1>One wheel, two camera views</h1><p class="subtitle">Three.js smoke test · not the Sky Chart or full Explorer prototype</p></div><div class="controls"><button id="flat" aria-pressed="true">Flat</button><button id="perspective" aria-pressed="false">Perspective</button></div></header>
 <section class="stage" aria-label="Three.js test scene"><canvas id="render"></canvas><div id="labels" class="labels" aria-hidden="true"></div><div class="hud"><strong id="viewLabel">Flat</strong><div>Focus: <span id="focusLabel">0.0°</span></div><div>A / B: same geometric scene</div></div></section>
 <div class="bottom"><div class="map-wrap"><svg id="map" class="mini" viewBox="0 0 150 150" role="slider" tabindex="0" aria-label="Focal longitude" aria-valuemin="0" aria-valuemax="359" aria-valuenow="0"><circle cx="75" cy="75" r="64" fill="#152036" stroke="#788ba8" stroke-width="1.5"/><g id="mapTicks"></g><polyline id="visibleArc" fill="none" stroke="#e2b765" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/><line id="aspectMap" x1="0" y1="0" x2="0" y2="0" stroke="#cfb6ee" stroke-width="3"/><circle id="mapA" r="5" fill="#ee7575"/><circle id="mapB" r="5" fill="#6ca6ff"/><circle id="mapFocus" r="6" fill="#f9d27e" stroke="#101725" stroke-width="2"/></svg><p class="map-hint"><strong>Mini-map</strong><br>Drag to rotate continuously, click to refocus, or use the arrow buttons. A↔B aspect remains fixed in actual zodiac longitude.</p></div><div class="arrow" aria-label="Navigation controls"><button data-id="up" aria-label="Raise camera">↑</button><button data-id="left" aria-label="Rotate counterclockwise">←</button><button data-id="reset" aria-label="Reset focus">◎</button><button data-id="right" aria-label="Rotate clockwise">→</button><button data-id="down" aria-label="Lower camera">↓</button></div></div>
-<p id="status" class="status" role="status">Loading Three.js…</p><p class="fine">Four angular anchors: foreground 0°, square end caps ±90°, opposition 180°. Two colored sky placements form a 120° trine; both the scene and map use their exact longitudes. No Sky Chart code has been modified.</p>
+<p id="status" class="status" role="status">Loading Three.js…</p><p id="glyphStatus">Canonical Sky A/B glyphs: loading…</p><p class="fine"><a href="experiments/threejs-wheel-smoke/compatibility.html" style="color:#e3bbff">Open glyph, WebGL 2, mini-map, and fallback diagnostics</a></p><p class="fine">Four angular anchors: foreground 0°, square end caps ±90°, opposition 180°. Two colored sky placements form a 120° trine; both the scene and map use their exact longitudes. No Sky Chart code has been modified.</p>
 </main>
 <script type="module">
 import * as THREE from 'three';
-import {norm, signed, delta, polar, miniPoint, miniLongitude} from './geometry.mjs';
+import {norm, signed, delta, polar, miniPoint, miniLongitude} from './experiments/threejs-wheel-smoke/geometry.mjs';
 const status=document.getElementById('status'),stage=document.querySelector('.stage'),canvas=document.getElementById('render'),labelRoot=document.getElementById('labels');
 const scene=new THREE.Scene();scene.background=null;
 const renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:true,powerPreference:'low-power'});
 renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,2));
 const wheel=new THREE.Group();scene.add(wheel);
-const rings=[3.0,4.05],samples=[{name:'Sky A · Sun',sky:'A',degree:40,r:rings[0],color:0xee7575},{name:'Sky B · Jupiter',sky:'B',degree:160,r:rings[1],color:0x6ca6ff}];
+const rings=[3.0,4.05],samples=[{name:'Sky A · Sun',sky:'A',id:'sun',degree:40,r:rings[0],color:0xee7575},{name:'Sky B · Jupiter',sky:'B',id:'jupiter',degree:160,r:rings[1],color:0x6ca6ff}];
 const anchors=[{name:'Foreground',degree:0,r:3.55,color:0xffd47c},{name:'Square +90°',degree:90,r:3.55,color:0xedb85d},{name:'Opposition',degree:180,r:3.55,color:0xab8be7},{name:'Square −90°',degree:270,r:3.55,color:0xedb85d}];
 function loop(radius,color){const p=[];for(let i=0;i<360;i+=2){const pt=polar(i,radius);p.push(new THREE.Vector3(pt.x,0,pt.z))}const geo=new THREE.BufferGeometry().setFromPoints(p);wheel.add(new THREE.LineLoop(geo,new THREE.LineBasicMaterial({color,transparent:true,opacity:.7})));}
 for(const r of rings)loop(r,0x8fa9c8);
 for(let i=0;i<12;i++){const a=polar(i*30,rings[0]-.13),b=polar(i*30,rings[1]+.13),g=new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(a.x,0,a.z),new THREE.Vector3(b.x,0,b.z)]);wheel.add(new THREE.Line(g,new THREE.LineBasicMaterial({color:0x526078})));}
-function marker(point,size){const p=polar(point.degree,point.r);const mesh=new THREE.Mesh(new THREE.SphereGeometry(size,16,12),new THREE.MeshBasicMaterial({color:point.color,depthTest:false}));mesh.position.set(p.x,.11,p.z);wheel.add(mesh);const label=document.createElement('span');label.className='dot-label';label.textContent=point.name;if(point.sky)label.dataset.sky=point.sky;labelRoot.append(label);return {mesh,label};}
+const glyphJobs=[];
+function marker(point,size){const p=polar(point.degree,point.r);const mesh=new THREE.Mesh(new THREE.SphereGeometry(size,16,12),new THREE.MeshBasicMaterial({color:point.color,depthTest:false}));mesh.position.set(p.x,.11,p.z);wheel.add(mesh);const label=document.createElement('span');label.className='dot-label';label.textContent=point.name;
+ if(point.sky){
+  label.dataset.sky=point.sky;
+  const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
+  svg.setAttribute('viewBox','-20 -20 40 40');svg.classList.add('canonical-icon');
+  svg.setAttribute('role','img');svg.setAttribute('aria-label',point.name);
+  const caption=document.createElement('span');caption.textContent=point.name;
+  label.replaceChildren(svg,caption);
+  // The camera moves these DOM SVG glyphs; only the canonical component draws them.
+  // Never flatten to a canvas texture or redraw approved glyph geometry.
+  try{
+   const bubble=window.RelphiGlyphComponent.createBubble(svg,point.id,{
+    radius:16,padding:1,color:point.sky==='A'?'#c9211e':'#2462d0',fill:'#fffdfa',strokeWidth:2.1
+   });
+   glyphJobs.push(bubble.ready.then(art=>{
+    const ok=bubble.root.dataset.canonicalGlyphId===point.id&&!!art?.classList.contains('relphi-canonical-glyph');
+    if(!ok)throw Error('Canonical glyph identity failed: '+point.id);
+    return point.id;
+   }));
+  }catch(error){glyphJobs.push(Promise.reject(error))}
+ }
+ labelRoot.append(label);return {mesh,label};}
 const items=[...samples,...anchors].map(p=>({...p,...marker(p,p.sky?.16:.115)}));
 const a=polar(samples[0].degree,samples[0].r),b=polar(samples[1].degree,samples[1].r);wheel.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(a.x,.04,a.z),new THREE.Vector3(b.x,.04,b.z)]),new THREE.LineBasicMaterial({color:0xcab3fa,transparent:true,opacity:.85})));
 let focus=0,elevation=7,mode='flat';const flat=new THREE.OrthographicCamera(-6,6,6,-6,.1,100),perspective=new THREE.PerspectiveCamera(45,1,.1,100);
@@ -70,6 +99,7 @@ const mathOK=[0,90,180,270].every(d=>Math.abs(delta(d,0))=== (d===270?90:d))&&Ma
 resize();render();const gl=renderer.getContext();const glName=gl?.getParameter?.(gl.VERSION)||'WebGL context unavailable';status.textContent=`${mathOK?'PASS':'FAIL'} · Three.js r${THREE.REVISION} · ${glName} · ${renderer.info.render.calls} draw calls`;
 if(!mathOK)status.style.color='#f58c8c';
 new ResizeObserver(()=>{resize();render()}).observe(stage);
+Promise.allSettled(glyphJobs).then(results=>{const ok=results.filter(result=>result.status==='fulfilled').length;document.getElementById('glyphStatus').textContent='Canonical SVGs: '+ok+'/'+results.length+' rendered from the approved Relphi glyph component';try{window.RelphiGlyphIntegrity?.assert?.()}catch(error){document.getElementById('glyphStatus').textContent+=' · Integrity guard failed: '+error.message}});
 </script>
 <script>window.addEventListener('error',e=>{const status=document.getElementById('status');if(status&&status.textContent.includes('Loading'))status.textContent='Three.js test could not initialize: '+(e.message||'module failed to load')});setTimeout(()=>{const status=document.getElementById('status');if(status&&status.textContent.includes('Loading'))status.textContent='Three.js did not load. This test requires CDN access and WebGL support.'},9000)</script>
 </body></html>
