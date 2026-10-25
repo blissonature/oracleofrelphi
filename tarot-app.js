@@ -4031,6 +4031,7 @@
     document.body.classList.remove('full-card-reader-active');
     renderDetail(state.selected);
     if (fullCardReaderRestoreFocus?.isConnected) fullCardReaderRestoreFocus.focus({preventScroll:true});
+    else $('cardReaderExpand')?.focus({preventScroll:true});
   }
   function moveFullCardReader(direction) {
     const ids = fullCardReaderIds();
@@ -4777,9 +4778,12 @@
     const panel = $('cardDetail');
     if (!panel) return;
     const ids = fullCardReaderIds();
-    const readerControls = fullCardReaderOpen && card ? '<nav class="full-card-reader-nav" aria-label="Browse card entries"><button id="cardReaderPrev" type="button" aria-label="Previous card">←</button><span class="full-card-reader-position">' + (Math.max(0,ids.indexOf(card.card_id))+1) + ' / ' + ids.length + '</span><button id="cardReaderNext" type="button" aria-label="Next card">→</button><button id="cardReaderClose" type="button" aria-label="Close full card view and return to index">× <span>Close</span></button></nav>' : '';
+    const readerControls = !card ? '' : fullCardReaderOpen
+      ? '<nav class="full-card-reader-nav" aria-label="Browse card entries"><button id="cardReaderPrev" type="button" aria-label="Previous card">←</button><span class="full-card-reader-position">' + (Math.max(0,ids.indexOf(card.card_id))+1) + ' / ' + ids.length + '</span><button id="cardReaderNext" type="button" aria-label="Next card">→</button><button id="cardReaderClose" type="button" aria-label="Close full card view and return to index">× <span>Close</span></button></nav>'
+      : '<div class="full-card-reader-launch"><button id="cardReaderExpand" type="button" aria-label="Open full-screen card entry">⛶ Full card view</button></div>';
     panel.innerHTML = readerControls + cardDetailHtml(card);
     bindCardEntry(panel);
+    panel.querySelector('#cardReaderExpand')?.addEventListener('click', () => inspectBrowseResult(card.card_id));
     panel.querySelector('#cardReaderPrev')?.addEventListener('click', () => moveFullCardReader(-1));
     panel.querySelector('#cardReaderNext')?.addEventListener('click', () => moveFullCardReader(1));
     panel.querySelector('#cardReaderClose')?.addEventListener('click', closeFullCardReader);
