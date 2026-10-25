@@ -10,7 +10,7 @@ const download=sky.match(/const ICON='(<svg[^']+<\/svg>)';/)?.[1];
 assert.ok(copy&&snapshot&&download,'production SVG definitions must be available');
 assert.match(snapshot,/transform="translate\(0 -1\)"/,'optical adjustment belongs to shared master');
 assert.match(snapshot,/stroke-width="1.9"/,'camera line weight matches Download');
-assert.match(snapshot,/M9 6h6l1\.25 1\.75H18/,'camera is compact rather than oversized');
+assert.match(snapshot,/M9\.2 4\.1h5\.6l1\.8 2\.3H19\.9/,'camera master has the deliberately enlarged silhouette');
 
 (async()=>{
  const browser=await chromium.launch({headless:true});
@@ -53,13 +53,16 @@ assert.match(snapshot,/M9 6h6l1\.25 1\.75H18/,'camera is compact rather than ove
    const c=metrics.snapshot,d=metrics.download,k=metrics.copy;
    assert.ok(Math.abs(c.cx-18)<0.25&&Math.abs(c.cy-18)<0.25,
      'camera ink centroid must sit within 0.25px of the 36px button center: '+JSON.stringify(metrics));
-   assert.ok(c.width>d.width*1.05&&c.width<d.width*1.20,
-     'camera silhouette should be moderately wider than Download, not oversized');
-   assert.ok(c.width<k.width*.88,'camera must remain smaller than the 20px Copy mark');
-   assert.ok(c.height>d.height*.78&&c.height<d.height*.95,
-     'camera height must not crowd compact icon frame');
-   assert.ok(c.ink>d.ink&&c.ink<k.ink,
-     'camera apparent weight should be between Download and Copy');
+   assert.ok(c.width>=15.5&&c.width<=16.3,
+     'enlarged Snapshot must present a roughly 16px-wide visible silhouette');
+   assert.ok(c.width>=k.width*.98&&c.width<=k.width*1.07,
+     'Snapshot must match Copy in apparent width despite its 17px frame');
+   assert.ok(c.width>d.width*1.30,
+     'Snapshot must be substantially larger than the narrow Download mark');
+   assert.ok(c.height>=d.height*.97&&c.height<=d.height*1.09,
+     'camera visible height should match Download instead of being undersized');
+   assert.ok(c.ink>=k.ink*.93&&c.ink<=k.ink*1.09,
+     'camera total drawn ink should be comparable to Copy');
    console.log('Chromium raster optical alignment:',JSON.stringify(metrics));
   }finally{await page.close();}
  }finally{await browser.close();}
