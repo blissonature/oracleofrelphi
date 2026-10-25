@@ -319,7 +319,7 @@ jobs:
 
           assert.equal(await page.locator('#skyFoundationA .sky-card-houses').count(),1);
           await page.waitForSelector('#skyFoundationA [data-card-house-toggle]',{timeout:10000});
-          assert.match((await page.locator('#skyFoundationA [data-card-house-toggle]').first().innerText()),/Ruler:\\s*(Sun|Moon|Mercury|Venus|Mars|Jupiter|Saturn)/,'Enhanced house header must preserve the cusp ruler.');
+          assert.match((await page.locator('#skyFoundationA [data-card-house-toggle]').first().innerText()),/Ruler:\s*(Sun|Moon|Mercury|Venus|Mars|Jupiter|Saturn)/,'Enhanced house header must preserve the cusp ruler.');
           await page.locator('#skyFoundationA [data-card-house-toggle]').first().click();
           await page.waitForTimeout(80);
           await page.waitForFunction(()=>{const img=document.querySelector('#skyFoundationA .sky-card-house-decan-art img');return !!img&&img.complete&&img.naturalWidth>0},{timeout:10000});
