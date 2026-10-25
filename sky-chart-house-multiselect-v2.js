@@ -254,7 +254,9 @@
     menu.hidden = false;
     menu.classList.add('is-portaled');
     document.body.appendChild(menu);
-    owner.querySelector('[data-house-filter-toggle]')?.setAttribute('aria-expanded','true');
+    const trigger=owner.querySelector('[data-house-filter-toggle]');
+    trigger?.setAttribute('aria-expanded','true');
+    if(trigger)trigger.textContent='⌃';
     requestAnimationFrame(position);
   }
 
@@ -266,18 +268,42 @@
     menu.removeAttribute('style');
     owner.appendChild(menu);
     owner.classList.remove('is-open');
-    owner.querySelector('[data-house-filter-toggle]')?.setAttribute('aria-expanded','false');
+    const trigger=owner.querySelector('[data-house-filter-toggle]');
+    trigger?.setAttribute('aria-expanded','false');
+    if(trigger)trigger.textContent='⌄';
     portalOwner = null;
   }
 
+  function installCollapseStyle(){
+    if(document.getElementById('skyChartHouseCollapseStyle'))return;
+    const style=document.createElement('style');style.id='skyChartHouseCollapseStyle';
+    style.textContent=`
+      #skyChartHousePopover .sky-chart-house-popover-collapse{
+        position:sticky;top:0;z-index:5;display:flex;align-items:center;justify-content:space-between;
+        width:100%;min-height:48px;margin:0 0 5px;padding:10px 16px;
+        border:0;border-bottom:1px solid rgba(40,37,33,.18);border-radius:0;
+        background:#fffdf8;color:#25221f;font:inherit;font-weight:700;text-align:left;
+        cursor:pointer;touch-action:manipulation;
+      }
+      #skyChartHousePopover .sky-chart-house-popover-collapse:focus-visible{
+        outline:2px solid #2462d0;outline-offset:-3px;
+      }
+      #skyChartHousePopover .sky-chart-house-collapse-chevron{font-size:23px;line-height:1}
+    `;
+    document.head.appendChild(style);
+  }
   function createControl() {
+    installCollapseStyle();
     const root = document.createElement('div');
     root.className = 'sky-chart-house-filter sky-chart-house-filter-combined';
     root.dataset.houseFilter = 'combined';
-    root.innerHTML = '<div class="sky-chart-house-filter-head"><span class="sky-chart-house-filter-label">Houses</span><div class="sky-chart-house-summary-choices" role="group" aria-label="All houses"></div><button type="button" class="sky-chart-house-filter-toggle" data-house-filter-toggle aria-label="Open house filters" aria-haspopup="dialog" aria-expanded="false" aria-controls="skyChartHousePopover">⌄</button><span class="sky-chart-house-filter-status" data-house-filter-summary aria-live="polite">All</span></div><div id="skyChartHousePopover" class="sky-chart-house-filter-popover" role="dialog" aria-label="House filters" hidden><div class="sky-chart-house-filter-body"></div></div>';
+    root.innerHTML = '<div class="sky-chart-house-filter-head"><span class="sky-chart-house-filter-label">Houses</span><div class="sky-chart-house-summary-choices" role="group" aria-label="All houses"></div><button type="button" class="sky-chart-house-filter-toggle" data-house-filter-toggle aria-label="Open house filters" aria-haspopup="dialog" aria-expanded="false" aria-controls="skyChartHousePopover">⌄</button><span class="sky-chart-house-filter-status" data-house-filter-summary aria-live="polite">All</span></div><div id="skyChartHousePopover" class="sky-chart-house-filter-popover" role="dialog" aria-label="House filters" hidden><button type="button" class="sky-chart-house-popover-collapse" data-house-filter-collapse aria-label="Collapse Houses filter" title="Collapse Houses filter"><span>Houses</span><span class="sky-chart-house-collapse-chevron" aria-hidden="true">⌃</span></button><div class="sky-chart-house-filter-body"></div></div>';
     const choices = root.querySelector('.sky-chart-house-summary-choices');
     activeKinds().forEach(kind => choices.appendChild(choice('all','all',kind,'All houses')));
     root.querySelector('[data-house-filter-toggle]').addEventListener('click', () => isOpen(root) ? close(root) : open(root));
+    // Popovers move to document.body when opened. Bind the collapse control
+    // directly to the menu so it continues working after that move.
+    root.querySelector('[data-house-filter-collapse]').addEventListener('click',()=>close(root));
     return root;
   }
 
