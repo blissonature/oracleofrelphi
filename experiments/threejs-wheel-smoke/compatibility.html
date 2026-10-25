@@ -33,12 +33,13 @@ details{margin-top:12px}.footer{font-size:.81rem;color:#625a54}
 <section><h2>Exact geometry & navigation</h2><div id="geometryResults"></div>
 <svg id="map" viewBox="0 0 150 150" role="slider" tabindex="0" aria-label="Current focal longitude" aria-valuemin="0" aria-valuemax="359" aria-valuenow="0">
 <circle cx="75" cy="75" r="64" fill="#f8f5ef" stroke="#89817a" stroke-width="1.7"/>
-<g id="ticks"></g><polyline id="hemisphere" fill="none" stroke="#dc5c37" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
-<line id="aspect" stroke="#8a63ac" stroke-width="3"/>
-<circle id="pointA" r="5" fill="#c9211e"/><circle id="pointB" r="5" fill="#2462d0"/><circle id="focus" r="6" fill="#d39b19" stroke="#fff" stroke-width="2"/>
+<g id="mapWorld"><g id="ticks"></g><line id="aspect" stroke="#8a63ac" stroke-width="3"/>
+<circle id="pointA" r="5" fill="#c9211e"/><circle id="pointB" r="5" fill="#2462d0"/></g>
+<polyline id="hemisphere" fill="none" stroke="#dc5c37" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" pointer-events="none"/>
+<circle id="focus" r="6" fill="#d39b19" stroke="#fff" stroke-width="2" pointer-events="none"/>
 </svg>
 <button id="left">◀ Rotate</button><button id="right">Rotate ▶</button><button id="reset">Reset</button>
-<p class="info">Focus <b id="focusText">0°</b>. Drag the map, click a longitude, or use arrows. The aspect remains at its true zodiac positions, even without Three.js.</p></section>
+<p class="info">Focus <b id="focusText">0°</b>. Drag the map, click a longitude, or use arrows. The aspect line and zodiac rotate together under the fixed foreground marker, even without Three.js.</p></section>
 <section><h2>Canonical glyph integrity</h2><div id="glyphResults"></div><div id="gallery"></div>
 <p class="info">These glyphs use the real <code>RelphiGlyphRegistry</code> and <code>RelphiGlyphComponent</code>. They are DOM SVGs, not replacement artwork, raster textures, or newly drawn Three.js meshes.</p></section>
 <section><h2>WebGL and Three.js</h2><div id="graphicsResults"></div><canvas id="gpuCanvas" width="180" height="180"></canvas>
@@ -47,7 +48,7 @@ details{margin-top:12px}.footer{font-size:.81rem;color:#625a54}
 </div><p class="footer">The test runs in your browser. Results describe this device/browser, not all browsers.</p>
 </main>
 <script type="module">
-import {norm,signed,delta,miniPoint,miniLongitude,polar} from './experiments/threejs-wheel-smoke/geometry.mjs';
+import {norm,signed,delta,miniPoint,miniLongitude,polar,rotatedMiniPoint,mapLongitudeAt,draggedMapFocus} from './experiments/threejs-wheel-smoke/geometry.mjs';
 const NS='http://www.w3.org/2000/svg',$=id=>document.getElementById(id),root=(id,label,kind)=>{const div=document.createElement('div');div.className='outcome';div.dataset.kind=kind;div.textContent=label;$(id).appendChild(div)};
 const check=(target,label,condition)=>root(target,(condition?'PASS · ':'FAIL · ')+label,condition?'pass':'fail');
 const close=(a,b,t=1e-7)=>Math.abs(a-b)<=t;
@@ -65,24 +66,37 @@ const houseFor=(longitude,cusps)=>cusps.findIndex((start,i)=>norm(longitude-star
 check('geometryResults','Unequal house widths; wraparound at 360°',widths(houseA).reduce((a,b)=>a+b,0)===360&&new Set(widths(houseA)).size>1&&houseFor(355,houseA)===1&&houseFor(10,houseA)===1);
 check('geometryResults','Sky A and B house cusps stay independent',houseFor(345,houseA)!==houseFor(345,houseB));
 let focus=0,gesture=null;const map=$('map');
-const setFocus=v=>{focus=norm(v);$('focusText').textContent=focus.toFixed(2)+'°';map.setAttribute('aria-valuenow',Math.round(focus));drawMap()};
+const setFocus=v=>{focus=norm(v);$('focusText').textContent=focus.toFixed(2)+'°';map.setAttribute('aria-valuenow',Math.floor(focus));drawMap()};
 const pt=(degree,r=54)=>miniPoint(degree,r);
-function drawMap(){
- const pts=[];for(let a=-90;a<=90;a+=2){const p=pt(focus+a,60);pts.push(p.x+','+p.y)}$('hemisphere').setAttribute('points',pts.join(' '));
- const A=pt(40,51),B=pt(160,51),F=pt(focus,61);
- for(const [name,v] of [['pointA',A],['pointB',B],['focus',F]]){ $(name).setAttribute('cx',v.x);$(name).setAttribute('cy',v.y)}
- for(const [name,v] of [['x1',A.x],['y1',A.y],['x2',B.x],['y2',B.y]])$('aspect').setAttribute(name,v);
-}
+const hemisphere=[];for(let a=-90;a<=90;a+=2){const p=pt(a,60);hemisphere.push(p.x+','+p.y)}
+$('hemisphere').setAttribute('points',hemisphere.join(' '));
+const A=pt(40,51),B=pt(160,51),F=pt(0,61);
+for(const [name,v] of [['pointA',A],['pointB',B],['focus',F]]){$(name).setAttribute('cx',v.x);$(name).setAttribute('cy',v.y)}
+for(const [name,v] of [['x1',A.x],['y1',A.y],['x2',B.x],['y2',B.y]])$('aspect').setAttribute(name,v);
+function drawMap(){$('mapWorld').setAttribute('transform',`rotate(${-focus} 75 75)`)}
 for(let i=0;i<12;i++){const a=pt(i*30,56),b=pt(i*30,64),line=document.createElementNS(NS,'line');for(const [k,v]of Object.entries({x1:a.x,x2:b.x,y1:a.y,y2:b.y,stroke:'#928982'}))line.setAttribute(k,v);$('ticks').append(line)}
 const fromPointer=e=>{const box=map.getBoundingClientRect();return miniLongitude((e.clientX-box.left)/box.width*150,(e.clientY-box.top)/box.height*150)};
-map.addEventListener('pointerdown',e=>{if(e.button!==0)return;gesture={id:e.pointerId,x:e.clientX,y:e.clientY,moved:false};map.setPointerCapture(e.pointerId)});
-map.addEventListener('pointermove',e=>{if(!gesture||e.pointerId!==gesture.id)return;gesture.moved ||= Math.hypot(e.clientX-gesture.x,e.clientY-gesture.y)>3;if(gesture.moved)setFocus(fromPointer(e))});
-map.addEventListener('pointerup',e=>{if(!gesture||e.pointerId!==gesture.id)return;setFocus(fromPointer(e));gesture=null;map.releasePointerCapture(e.pointerId)});
+map.addEventListener('pointerdown',e=>{if(e.button!==0)return;gesture={id:e.pointerId,x:e.clientX,y:e.clientY,moved:false,startFocus:focus,startDisplay:fromPointer(e)};map.setPointerCapture(e.pointerId)});
+map.addEventListener('pointermove',e=>{if(!gesture||e.pointerId!==gesture.id)return;gesture.moved ||= Math.hypot(e.clientX-gesture.x,e.clientY-gesture.y)>3;if(gesture.moved)setFocus(draggedMapFocus(gesture.startFocus,gesture.startDisplay,fromPointer(e)))});
+map.addEventListener('pointerup',e=>{if(!gesture||e.pointerId!==gesture.id)return;if(!gesture.moved)setFocus(norm(fromPointer(e)+focus));gesture=null;map.releasePointerCapture(e.pointerId)});
 map.addEventListener('pointercancel',()=>gesture=null);
 map.addEventListener('keydown',e=>{if(['ArrowLeft','ArrowRight'].includes(e.key)){e.preventDefault();setFocus(focus+(e.key==='ArrowRight'?10:-10))}});
 $('left').onclick=()=>setFocus(focus-10);$('right').onclick=()=>setFocus(focus+10);$('reset').onclick=()=>setFocus(0);setFocus(0);
 check('layoutResults','SVG map requires no WebGL',!!map.getAttribute('viewBox')&&$('hemisphere').getAttribute('points').length>10);
-const before=focus;setFocus(271.5);check('layoutResults','Focus rotation works without GPU',close(focus,271.5)&&close(Number(map.getAttribute('aria-valuenow')),272));setFocus(before);
+const before=focus;setFocus(271.5);check('layoutResults','Focus rotation works without GPU',close(focus,271.5)&&close(Number(map.getAttribute('aria-valuenow')),271));
+check('layoutResults','Aspect, zodiac ticks, and endpoints share the same rotating map frame',
+  $('mapWorld').contains($('aspect'))&&$('mapWorld').contains($('ticks'))&&
+  $('mapWorld').contains($('pointA'))&&$('mapWorld').contains($('pointB'))&&
+  $('mapWorld').getAttribute('transform')==='rotate(-271.5 75 75)'&&
+  !$('mapWorld').contains($('focus'))&&!$('mapWorld').contains($('hemisphere')));
+check('layoutResults','Rotated endpoints agree with actual aspect longitudes',
+  close(rotatedMiniPoint(40,focus,51).x,miniPoint(40-focus,51).x)&&
+  close(rotatedMiniPoint(160,focus,51).y,miniPoint(160-focus,51).y));
+check('layoutResults','Click refocuses by un-rotating pointer longitude',
+  close(mapLongitudeAt(...Object.values(rotatedMiniPoint(40,focus,51)),focus),40));
+check('layoutResults','Drag keeps grabbed zodiac point under finger',
+  close(draggedMapFocus(271.5,50,68),253.5));
+setFocus(before);
 const glyphIds=['sun','moon','jupiter','pisces','square','vertex','retrograde','anti-vertex','part-of-fortune'];
 const registry=window.RelphiGlyphRegistry,component=window.RelphiGlyphComponent;
 check('glyphResults','Canonical registry/component are loaded',!!registry&&!!component?.createBubble);
