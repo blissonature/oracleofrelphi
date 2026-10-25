@@ -1,0 +1,32 @@
+name: Sky Chart wheel copy confirmation timeout
+
+on:
+  pull_request:
+    paths:
+      - 'sky-chart-export-v2.js'
+      - 'sky-chart.html'
+      - 'tests/sky-chart-wheel-copy-confirmation-browser.mjs'
+      - '.github/workflows/sky-chart-wheel-copy-confirmation.yml'
+  workflow_dispatch:
+
+jobs:
+  wheel-copy-status:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate source and browser test syntax
+        run: |
+          node --check sky-chart-export-v2.js
+          node --check tests/sky-chart-wheel-copy-confirmation-browser.mjs
+      - name: Install Chromium
+        run: |
+          npm install --no-save playwright@1.52.0 luxon@3 suncalc@1.9.0
+          npx playwright install --with-deps chromium
+      - name: Verify successful copy confirmation lifecycle
+        run: |
+          python3 -m http.server 4173 >/tmp/sky-chart-wheel-copy-server.log 2>&1 &
+          node tests/sky-chart-wheel-copy-confirmation-browser.mjs
