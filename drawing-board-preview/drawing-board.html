@@ -8,45 +8,28 @@
   <style>
     html,body{margin:0;min-height:100%;font:16px/1.45 system-ui,sans-serif;background:#fffdf8;color:#241f1b}
     #previewStatus{max-width:760px;margin:12vh auto;padding:1.25rem 1.5rem;border:1px solid rgba(31,27,24,.18);border-radius:16px;background:#fff}
-    #previewStatus[hidden]{display:none}
+    #previewStatus a{color:inherit;font-weight:700;text-underline-offset:.18em}
   </style>
 </head>
 <body>
-  <div id="previewStatus">Loading exact Drawing Board revision…</div>
+  <div id="previewStatus">Opening exact Drawing Board revision… <a id="directPreview" href="#">Open directly</a></div>
   <script>
-  (async function(){
+  (function(){
     'use strict';
     const status=document.getElementById('previewStatus');
+    const link=document.getElementById('directPreview');
     const ref=new URLSearchParams(location.search).get('ref')||'';
     if(!/^[0-9a-f]{40}$/i.test(ref)){
       status.textContent='This preview needs an exact forty-character commit SHA in ?ref=.';
       return;
     }
-    const staticPreview=`/drawing-board-preview/revisions/${ref}/index.html`;
-    try{
-      const local=await fetch(staticPreview,{method:'HEAD',cache:'no-store'});
-      if(local.ok){
-        location.replace(staticPreview);
-        return;
-      }
-    }catch(_){}
-    const rawBase=`https://raw.githubusercontent.com/blissonature/oracleofrelphi/${ref}/`;
-    const assetBase=`https://cdn.jsdelivr.net/gh/blissonature/oracleofrelphi@${ref}/`;
-    try{
-      const response=await fetch(rawBase+'drawing-board.html',{cache:'no-store'});
-      if(!response.ok)throw new Error(`GitHub returned ${response.status}`);
-      let html=await response.text();
-      const frameUrl=`/drawing-board-preview/tarot.html?ref=${encodeURIComponent(ref)}&board=workflow-v2&standaloneDrawingBoard=1#tarot`;
-      html=html.replace(/src=(['"])tarot\.html\?board=workflow-v2&amp;standaloneDrawingBoard=1#tarot\1/i,`src="${frameUrl}"`);
-      const base=`<base href="${assetBase}">`;
-      if(/<head[^>]*>/i.test(html))html=html.replace(/<head([^>]*)>/i,`<head$1>${base}`);
-      else html=base+html;
-      document.open();
-      document.write(html);
-      document.close();
-    }catch(error){
-      status.textContent=`Preview failed to load revision ${ref}: ${error.message}`;
-    }
+    // Open a single, pinned revision. No jsDelivr package/version lookups,
+    // dynamic asset-base rewriting, or cross-origin HTML fetches are needed.
+    // The iframe and its relative assets all resolve from the same revision.
+    const direct='https://raw.githack.com/blissonature/oracleofrelphi/'+ref+'/drawing-board.html';
+    link.href=direct;
+    link.rel='noopener';
+    requestAnimationFrame(function(){ location.replace(direct); });
   })();
   </script>
 </body>

@@ -1528,6 +1528,8 @@
     if (kind === 'magnet') return '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 5v8a6 6 0 0 0 12 0V5h-4v8a2 2 0 0 1-4 0V5z"></path><path d="M6 9h4M14 9h4"></path></svg>';
     if (kind === 'picture') return '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"></rect><circle cx="9" cy="9" r="2"></circle><path d="m4 17 5-5 4 4 2-2 5 5"></path></svg>';
     if (kind === 'fit') return '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3H3v5M16 3h5v5M8 21H3v-5M16 21h5v-5"></path><path d="m3 8 5-5M21 8l-5-5M3 16l5 5M21 16l-5 5"></path></svg>';
+    // Match the established Sky Chart download glyph (17px, 1.9-unit stroke).
+    if (kind === 'download') return '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 3v11m0 0-4-4m4 4 4-4M5 15v4h14v-4" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg>';
     return '';
   }
 
@@ -1673,7 +1675,8 @@
     const copy=document.createElement('button');
     copy.type='button';
     copy.className='relphi-board-document-button relphi-copy-reading';
-    copy.textContent='Copy';
+    // Icon-only clipboard control; its action remains available through aria-label/title.
+    copy.textContent='';
     copy.disabled=!(ledgerBridge()?.serializeDrawingBoardReading?.()||'').trim();
     copy.title='Copy the reading text';
     copy.setAttribute('aria-label','Copy the reading text');
@@ -1683,7 +1686,7 @@
       if(status)status.textContent=ok?'Copied.':'Copy failed.';
       if(ok){
         copy.textContent='Copied';
-        window.setTimeout(()=>{if(copy.isConnected)copy.textContent='Copy';},1200);
+        window.setTimeout(()=>{if(copy.isConnected)copy.textContent='';},1200);
       }
     });
     actions.appendChild(copy);
@@ -1701,7 +1704,11 @@
       actions.appendChild(node);
       return node;
     };
-    const snapshotButton=take('snapshotCardRowArrangement','Snapshot','Snapshot the current board arrangement at zoom extents');
+    const snapshotButton=take('snapshotCardRowArrangement','','Snapshot the current board arrangement at zoom extents');
+    if(snapshotButton){
+      snapshotButton.classList.add('relphi-board-snapshot-button');
+      snapshotButton.innerHTML='<svg class="relphi-snapshot-icon" viewBox="0 0 24 24" width="17" height="17" aria-hidden="true" focusable="false"><use href="relphi-icons.svg#relphi-snapshot"/></svg>';
+    }
     if(snapshotButton && snapshotButton.dataset.relphiSnapshotBridgeBound!=='true'){
       snapshotButton.dataset.relphiSnapshotBridgeBound='true';
       snapshotButton.addEventListener('click',async event=>{
@@ -1725,7 +1732,11 @@
         }
       },true);
     }
-    take('downloadRowHtml','Download','Download the reading as HTML with card art and text');
+    const downloadButton=take('downloadRowHtml','','Download the reading as HTML with card art and text');
+    if(downloadButton){
+      downloadButton.classList.add('relphi-board-download-button');
+      downloadButton.innerHTML=icon('download');
+    }
 
     const journal=document.createElement('button');
     journal.type='button';
@@ -2480,7 +2491,7 @@
     const clonedFrom=!draft.templateId&&draft.basedOnTemplateId?templateById(draft.basedOnTemplateId):null;
     return '<section class="relphi-referent-panel">'+
       (clonedFrom?'<div class="relphi-template-clone-note"><strong>Editing a copy of '+escapeHtml(clonedFrom.name)+'</strong><span>The original template stays untouched. Name and save this Bespoke version if you want to keep it; you can also continue without saving.</span></div>':'')+
-      '<div class="relphi-question-toolbar"><label class="relphi-question-select-all"><input type="checkbox" id="relphiSelectAllQuestions" aria-label="Select all questions for editing"> <span>Select all</span></label>'+bespokeQuestionControllerMarkup(draft)+'<div class="relphi-question-toolbar-actions"><button type="button" id="relphiCopyBespokeQuestions" class="relphi-button relphi-question-copy" aria-label="Copy all Bespoke questions and advanced settings">Copy</button><button type="button" id="relphiMoveQuestionsUp" class="relphi-question-icon-button" aria-label="Move selected questions up"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 18V6M7 11l5-5 5 5"></path></svg></button><button type="button" id="relphiMoveQuestionsDown" class="relphi-question-icon-button" aria-label="Move selected questions down"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 6v12M7 13l5 5 5-5"></path></svg></button><button type="button" id="relphiDeleteQuestions" class="relphi-question-icon-button" aria-label="Delete selected questions"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M7 7l10 10M17 7L7 17"></path></svg></button><button type="button" id="relphiAddPosition" class="relphi-question-icon-button" aria-label="Add question" '+(hasCards||draft.labels.length>=MAX_POSITIONS?'disabled':'')+'><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 6v12M6 12h12"></path></svg></button></div></div>'+
+      '<div class="relphi-question-toolbar"><label class="relphi-question-select-all"><input type="checkbox" id="relphiSelectAllQuestions" aria-label="Select all questions for editing"> <span>Select all</span></label>'+bespokeQuestionControllerMarkup(draft)+'<div class="relphi-question-toolbar-actions"><button type="button" id="relphiCopyBespokeQuestions" class="relphi-button relphi-question-copy" aria-label="Copy all Bespoke questions and advanced settings"></button><button type="button" id="relphiMoveQuestionsUp" class="relphi-question-icon-button" aria-label="Move selected questions up"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 18V6M7 11l5-5 5 5"></path></svg></button><button type="button" id="relphiMoveQuestionsDown" class="relphi-question-icon-button" aria-label="Move selected questions down"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 6v12M7 13l5 5 5-5"></path></svg></button><button type="button" id="relphiDeleteQuestions" class="relphi-question-icon-button" aria-label="Delete selected questions"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M7 7l10 10M17 7L7 17"></path></svg></button><button type="button" id="relphiAddPosition" class="relphi-question-icon-button" aria-label="Add question" '+(hasCards||draft.labels.length>=MAX_POSITIONS?'disabled':'')+'><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 6v12M6 12h12"></path></svg></button></div></div>'+
       '<div id="relphiPositionLabels">'+labelsMarkup(draft.labels,draft)+'</div>'+
       '<div class="relphi-bespoke-appearance-host"></div>'+
       '<div class="relphi-template-save"><input id="relphiTemplateName" class="'+((draft.templateName||'Unnamed Template')==='Unnamed Template'?'is-unnamed':'')+'" type="text" maxlength="60" aria-label="Template name" value="'+escapeHtml(draft.templateName||'Unnamed Template')+'" '+(hasCards?'disabled':'')+'><button type="button" id="relphiSaveTemplate" '+(hasCards?'disabled':'')+'>Save template</button></div>'+
@@ -2907,7 +2918,7 @@
       button.setAttribute('aria-label',ok?'Bespoke questions copied':'Copy Bespoke questions failed');
       window.setTimeout(()=>{
         if(!button.isConnected)return;
-        button.textContent='Copy';
+        button.textContent='';
         button.setAttribute('aria-label','Copy all Bespoke questions and advanced settings');
       },1200);
     });

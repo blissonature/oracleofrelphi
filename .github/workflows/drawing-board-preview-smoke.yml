@@ -1,0 +1,50 @@
+name: Drawing Board preview smoke
+
+on:
+  pull_request:
+    paths:
+      - 'drawing-board-preview/drawing-board.html'
+      - 'drawing-board.html'
+      - 'drawing-board-workflow-v2.js'
+      - 'drawing-board-workflow-v2.css'
+      - 'tests/drawing-board-document-download-icon.test.js'
+      - 'tests/drawing-board-snapshot-camera.test.js'
+      - 'tests/drawing-board-camera-optical-raster.test.js'
+      - 'relphi-icons.svg'
+      - '.github/workflows/drawing-board-preview-smoke.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  preview-smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate revision-specific preview route
+        run: |
+          set -euo pipefail
+          grep -Fq 'raw.githack.com/blissonature/oracleofrelphi/' drawing-board-preview/drawing-board.html
+          if grep -Eq 'cdn.jsdelivr.net|raw.githubusercontent.com|document.write|assetBase' drawing-board-preview/drawing-board.html; then
+            echo 'Preview loader must not fetch/cross-rewrite page HTML or resolve jsDelivr versions.'
+            exit 1
+          fi
+          REF="${{ github.event.pull_request.head.sha }}"
+          URL="https://raw.githack.com/blissonature/oracleofrelphi/${REF}/drawing-board.html"
+          echo "Checking pinned live Drawing Board: ${URL}"
+          curl --retry 4 --retry-delay 3 --retry-all-errors --connect-timeout 12 --max-time 55 -fsSL "${URL}" -o /tmp/drawing-board-preview.html
+          grep -Fq 'id="drawingBoardFrame"' /tmp/drawing-board-preview.html
+          grep -Fq 'standaloneDrawingBoard=1' /tmp/drawing-board-preview.html
+          echo 'Direct revision preview returned Drawing Board HTML successfully.'
+      - name: Install browser runner
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Verify icon-only Download in Chromium
+        run: |
+          python3 -m http.server 8000 --bind 127.0.0.1 >/tmp/relphi-download-browser.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill $SERVER_PID || true' EXIT
+          node tests/drawing-board-document-download-icon.test.js
+          node tests/drawing-board-snapshot-camera.test.js
+          node tests/drawing-board-camera-optical-raster.test.js
