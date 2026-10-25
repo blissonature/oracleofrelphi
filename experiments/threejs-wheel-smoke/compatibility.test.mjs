@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import {norm, signed, delta, polar, miniPoint, miniLongitude} from './geometry.mjs';
+import {norm, signed, delta, polar, miniPoint, miniLongitude, rotatedMiniPoint, mapLongitudeAt, draggedMapFocus} from './geometry.mjs';
 const near=(a,b,t=1e-8)=>assert.ok(Math.abs(a-b)<=t, `expected ${b}, received ${a}`);
 const positions=[0,10,30,40.137,90,120,180,270,300,359.999];
 test('mini map exactly matches established Relphi zodiac orientation',()=>{
@@ -38,4 +38,44 @@ test('perspective camera widens field on narrow displays',()=>{
   const fov=Math.max(45,2*Math.atan(Math.tan(desired)/aspect)*180/Math.PI);
   const horizontal=Math.atan(Math.tan(fov*Math.PI/360)*aspect);
   assert.ok(horizontal>=Math.min(desired,Math.atan(Math.tan(Math.PI/8)*aspect))-1e-10);}
+});
+
+test('aspect endpoints rotate with the mini-map, not independently of zodiac ticks',()=>{
+  const left=40, right=160, separation=Math.abs(signed(left-right));
+  for(const focus of positions){
+    const movedLeft=rotatedMiniPoint(left,focus,51);
+    const movedRight=rotatedMiniPoint(right,focus,51);
+    const movedAriesTick=rotatedMiniPoint(0,focus,56);
+    // All world geometry is acted upon by one and the same -focus transform.
+    for(const [actual,longitude,radius] of [[movedLeft,left,51],[movedRight,right,51],[movedAriesTick,0,56]]){
+      const expected=miniPoint(longitude-focus,radius);
+      near(actual.x,expected.x);near(actual.y,expected.y);
+    }
+    near(Math.abs(signed((miniLongitude(movedLeft.x,movedLeft.y)-
+      miniLongitude(movedRight.x,movedRight.y)))),separation);
+    // Foreground indicator stays at 0° in display space for every rotation.
+    near(miniPoint(0,60).x,15);
+    near(miniPoint(0,60).y,75);
+  }
+});
+test('clicking a coordinate refocuses to its actual longitude after map rotation',()=>{
+  for(const focus of positions)for(const longitude of positions){
+    const screen=rotatedMiniPoint(longitude,focus,51);
+    near(Math.abs(signed(mapLongitudeAt(screen.x,screen.y,focus)-longitude)),0);
+  }
+});
+test('dragging retains the grabbed zodiac bearing without an initial jump',()=>{
+  for(const original of positions)for(const start of positions){
+    near(draggedMapFocus(original,start,start),norm(original));
+    for(const angularTravel of [-179,-90,-1,1,70,179]){
+      const next=norm(start+angularTravel);
+      const updatedFocus=draggedMapFocus(original,start,next);
+      // The same underlying longitude remains directly under the moved finger.
+      const grabbedLongitude=norm(start+original);
+      near(Math.abs(signed(mapLongitudeAt(...Object.values(
+        rotatedMiniPoint(grabbedLongitude,updatedFocus)),updatedFocus)-grabbedLongitude)),0);
+      near(Math.abs(signed(miniLongitude(...Object.values(
+        rotatedMiniPoint(grabbedLongitude,updatedFocus)))-next)),0);
+    }
+  }
 });
