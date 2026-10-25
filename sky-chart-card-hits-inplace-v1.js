@@ -332,6 +332,8 @@ function groupHouseSpans(root){
     const displayLegs=total===0?legs:legs.filter(leg=>(occupiedBySign.get(leg.sign)||[]).length);
     const list=document.createElement('div');list.className='sky-card-house-detail sky-card-house-span-list';list.appendChild(makeHouseMeaning(house));displayLegs.forEach(leg=>list.appendChild(makeSpan(leg,occupiedBySign.get(leg.sign)||[])));
     const toggle=makeHouseToggle(house,cuspValues,total,fallbackSigns);
+    const cuspRuler=row.querySelector(':scope > .sky-card-house-label .sky-card-house-cusp-ruler');
+    if(cuspRuler){const label=document.createElement('span');label.className='sky-card-house-cusp-ruler';label.textContent='Ruler: '+cuspRuler.textContent.trim();toggle.querySelector('.sky-card-house-toggle-range')?.appendChild(label)}
     row.querySelector(':scope > .sky-card-house-label')?.remove();original.replaceWith(list);row.prepend(toggle);
     row.dataset.houseNumber=String(house);row.dataset.houseHitCount=String(total);row.dataset.rulerSpansEnhanced='true';
   });
