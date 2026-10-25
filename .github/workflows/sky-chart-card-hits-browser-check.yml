@@ -170,6 +170,10 @@ jobs:
           assert.equal(await page.locator('#skyFoundationA [data-card-hits-view]').count(),0,'No Rulers/Houses tabs.');
           assert.ok(await page.locator('#skyFoundationA [data-ruler-match="true"]').count()>0,'Selected ruler highlights matching houses.');
           assert.ok(await page.locator('#skyFoundationA .sky-card-house-match-chip').count()>0,'Matching houses explain their connections.');
+          assert.equal(await page.locator('#skyFoundationA [data-card-ruler]').count(),1,'Only the selected ruler remains in drill-down.');
+          assert.equal(await page.locator('#skyFoundationA [data-ruler-match="false"]').count(),0,'Unmatched house rows are removed from the DOM.');
+          assert.ok(await page.locator('#skyFoundationA .sky-card-house-row').count()<12,'Ruler selection is a filter, not dimming.');
+          assert.equal(await page.locator('#skyFoundationA .sky-card-hits-focus-caption [data-card-ruler-clear]').innerText(),'← Back','Drill-down has an explicit Back control.');
           const venusEdges=await page.evaluate(()=>{const p=JSON.parse(localStorage.getItem('relphiSkyChartA'));const edges=window.RelphiSkyCardHitsStructure.houseMatches(p,'Venus');return {house1:edges.get(1).map(x=>x.type),house2:edges.get(2).map(x=>x.type),house10:edges.get(10).map(x=>x.type)}});
           assert.ok(venusEdges.house1.includes('located'),'Venus location must connect its occupied house.');
           assert.ok(venusEdges.house2.includes('cusp')&&venusEdges.house2.includes('occupant'),'One house must preserve multiple matching paths.');
@@ -177,7 +181,9 @@ jobs:
           await page.locator('#skyFoundationA .sky-card-hits-group-heading').last().click();
           assert.equal(await page.evaluate(()=>document.documentElement.hasAttribute('data-sky-card-ruler-focus')),true,'House interactions must retain the ruler selection.');
           await page.locator('#skyFoundationA .sky-card-hits-focus-caption [data-card-ruler-clear]').click();
-          assert.equal(await page.evaluate(()=>document.documentElement.hasAttribute('data-sky-card-ruler-focus')),false,'Explicit clear returns to all houses.');
+          assert.equal(await page.evaluate(()=>document.documentElement.hasAttribute('data-sky-card-ruler-focus')),false,'Back clears ruler focus.');
+          assert.equal(await page.locator('#skyFoundationA [data-card-ruler]').count(),7,'Back restores all seven rulers.');
+          assert.equal(await page.locator('#skyFoundationA .sky-card-house-row').count(),12,'Back restores twelve ordered houses.');
           console.log('RULER_FOCUS_CLEAR_OK');
           await page.locator('#skyFoundationA [data-sky-drawer-tab="card-hits"]').click({force:true});
 
