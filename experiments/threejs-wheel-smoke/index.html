@@ -78,7 +78,18 @@ const a=polar(samples[0].degree,samples[0].r),b=polar(samples[1].degree,samples[
 let focus=0,elevation=7,mode='flat';const flat=new THREE.OrthographicCamera(-6,6,6,-6,.1,100),perspective=new THREE.PerspectiveCamera(45,1,.1,100);
 flat.position.set(0,17,0);flat.up.set(0,0,-1);flat.lookAt(0,0,0);
 function camera(){if(mode==='flat')return flat;perspective.position.set(0,elevation,13);perspective.up.set(0,1,0);perspective.lookAt(0,0,0);return perspective;}
-function resize(){const w=stage.clientWidth,h=stage.clientHeight;renderer.setSize(w,h,false);const aspect=w/h;flat.left=-5.25*aspect;flat.right=5.25*aspect;flat.top=5.25;flat.bottom=-5.25;flat.updateProjectionMatrix();perspective.aspect=aspect;perspective.updateProjectionMatrix();}
+function resize(){
+ const w=Math.max(1,stage.clientWidth),h=Math.max(1,stage.clientHeight),aspect=w/h;
+ renderer.setSize(w,h,false);
+ // Contain the entire ring on portrait screens: don't clip left/right sectors.
+ const half=5.1;
+ const horizontalHalf=half*Math.max(1,aspect),verticalHalf=half*Math.max(1,1/aspect);
+ flat.left=-horizontalHalf;flat.right=horizontalHalf;flat.top=verticalHalf;flat.bottom=-verticalHalf;flat.updateProjectionMatrix();
+ // Widen vertical FOV when a narrow phone would otherwise crop the ±90° end caps.
+ const desiredHalfHorizontal=24*Math.PI/180;
+ perspective.fov=Math.max(45,2*Math.atan(Math.tan(desiredHalfHorizontal)/aspect)*180/Math.PI);
+ perspective.aspect=aspect;perspective.updateProjectionMatrix();
+}
 const $=(id)=>document.getElementById(id),arc=$('visibleArc');
 const pt=(deg,r=60)=>miniPoint(deg,r,75,75);
 function drawMap(){const points=[];for(let a=-90;a<=90;a+=2){const p=pt(focus+a);points.push(`${p.x},${p.y}`)}arc.setAttribute('points',points.join(' '));const f=pt(focus,60),la=pt(samples[0].degree,51),lb=pt(samples[1].degree,51);for(const [id,p] of [['mapFocus',f],['mapA',la],['mapB',lb]]){$(id).setAttribute('cx',p.x);$(id).setAttribute('cy',p.y)}$('aspectMap').setAttribute('x1',la.x);$('aspectMap').setAttribute('y1',la.y);$('aspectMap').setAttribute('x2',lb.x);$('aspectMap').setAttribute('y2',lb.y);$('map').setAttribute('aria-valuenow',String(Math.round(focus)));$('focusLabel').textContent=`${focus.toFixed(1)}°`;}
