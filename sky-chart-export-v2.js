@@ -25,7 +25,8 @@
     'stroke','stroke-opacity','stroke-width','stroke-dasharray','stroke-dashoffset',
     'stroke-linecap','stroke-linejoin','paint-order'
   ]);
-  let libraryPromise=null,preparing=false,pendingIOS=null;
+  let libraryPromise=null,preparing=false,pendingIOS=null,statusClearTimer=null;
+  const COPY_CONFIRMATION_MS=3000;
 
   const isIOS=()=>/iPad|iPhone|iPod/i.test(String(navigator.userAgent||''))||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
   const esc=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot',"'":'&#39;'}[c]));
@@ -64,7 +65,10 @@
   }
   function prewarm(){const warm=()=>loadLibrary().catch(()=>{});if('requestIdleCallback'in window)requestIdleCallback(warm,{timeout:2500});else setTimeout(warm,800)}
 
-  function status(text,error=false,busy=false,factoid=''){
+  function status(text,error=false,busy=false,factoid='',dismissAfterMs=0){
+    // A newer status (including a fresh copy in progress) cancels the previous
+    // confirmation timer so it cannot erase an unrelated message.
+    if(statusClearTimer!==null){clearTimeout(statusClearTimer);statusClearTimer=null}
     const node=document.getElementById(STATUS_ID);if(!node)return;
     node.replaceChildren();
     node.dataset.error=error?'true':'false';node.dataset.busy=busy?'true':'false';
@@ -84,6 +88,12 @@
       copy.textContent=' '+factoid;
       fact.append(label,copy);
       node.appendChild(fact);
+    }
+    if(dismissAfterMs>0&&!error&&!busy){
+      statusClearTimer=window.setTimeout(()=>{
+        statusClearTimer=null;
+        if(node.isConnected)status('');
+      },dismissAfterMs);
     }
   }
   function wheelCopyFactoid(){
@@ -299,7 +309,7 @@
         button.textContent='Copied';
         window.setTimeout(()=>{if(button.isConnected)button.textContent=previous||'Copy'},1200);
       }
-      status('Wheel copied to clipboard.');
+      status('Wheel copied to clipboard.',false,false,'',COPY_CONFIRMATION_MS);
     }catch(error){
       console.error('Sky Chart wheel copy failed:',error);
       status(String(error?.message||'Unable to copy wheel.').replace(/\s+/g,' ').slice(0,140),true);
