@@ -4,7 +4,8 @@
 // leader is never accepted; exact-radial overlap is preferable to a false visual correspondence.
 (function(){
 'use strict';
-if(!/(^|\/)sky-chart\.html$/.test(location.pathname)||window.__relphiSkyPlacementCollisionOrderV16)return;
+if(!/(^|\/)sky-chart\.html$/.test(location.pathname)||window.__relphiSkyPlacementCollisionOrderV17)return;
+window.__relphiSkyPlacementCollisionOrderV17=true;
 window.__relphiSkyPlacementCollisionOrderV16=true;
 window.__relphiSkyPlacementCollisionOrderV15=true;
 window.__relphiSkyPlacementCollisionOrderV14=true;
@@ -533,100 +534,6 @@ function preferRadialLeadersAndHouseClearance(solution,slot,wheel){
   wheel.dataset.placementRadialLeadersRestored=String(straightened);
   return solution;
 }
-// Last-resort layout for a physically too-narrow sign/house arc: preserve
-// the true house, sign, and exact radial lane. Reduce only the crowded
-// glyphs' visual diameter as needed, rather than moving them into a false
-// house or putting several full-size bubbles on top of one another.
-function resolveImpossibleHouseCrowding(solution,slot,wheel){
-  const shared=spec()?.comparison||{},radius=Number(shared.placementBubbleRadius)||19.7,
-    gap=Math.max(6,Number(shared.placementClearance)||6),
-    cusps=houseCuspAngles(wheel,slot),groups=new Map();
-  if(cusps.length<4)return solution;
-  const keyOf=r=>r.item.sign+':'+cusps.findLastIndex(x=>x<=r.item.exact+1e-6);
-  for(const record of solution){
-    record.bubbleScale=1;
-    const key=keyOf(record);
-    if(!groups.has(key))groups.set(key,[]);
-    groups.get(key).push(record);
-  }
-  const chord=(r,a,b)=>2*r*Math.sin(Math.abs(a-b)*Math.PI/360);
-  let repairs=0,minimumScale=1;
-  for(const group of groups.values()){
-    if(group.length<2)continue;
-    group.sort((a,b)=>a.item.exact-b.item.exact||a.item.index-b.item.index);
-    const lane=group[0].item.authoredLane,arc=houseArcFor(cusps,group[0].item.exact),sign=group[0].item.sign;
-    if(!arc||!Number.isFinite(lane)||group.some(r=>Math.abs(r.item.authoredLane-lane)>EPS))continue;
-    const lo=Math.max(sign*30+.025,arc.lower+.025),hi=Math.min(sign*30+30-.025,arc.upper-.025);
-    if(lo>=hi)continue;
-    const colliding=group.some((a,i)=>group.some((b,j)=>j>i&&
-      chord(lane,a.display,b.display)<2*radius+gap-.05));
-    if(!colliding)continue;
-    // Only the actual HOUSE boundaries need the extra bubble-to-divider
-    // padding. The sign edge requires glyph centers to remain inside it.
-    const houseLower=arc.lower>=sign*30-.01,houseUpper=arc.upper<=sign*30+30+.01;
-    const fit=scale=>{
-      const r=radius*scale,sep=2*Math.asin(Math.min(.999999,(2*r+gap)/(2*lane)))*180/Math.PI+.005;
-      const edge=Math.asin(Math.min(.999999,(r+gap)/(lane)))*180/Math.PI;
-      const low=lo+(houseLower?edge:0),high=hi-(houseUpper?edge:0);
-      return{possible:high-low>=(group.length-1)*sep-.001,low,high,sep};
-    };
-    if(!fit(.28).possible){wheel.dataset.placementImpossibleHouseCrowding='true';continue;}
-    let lower=.28,upper=1;
-    if(!fit(1).possible){
-      for(let i=0;i<28;i++){const mid=(lower+upper)/2;if(fit(mid).possible)lower=mid;else upper=mid;}
-    }else lower=1;
-    const scale=+Math.max(.28,lower-.002).toFixed(4),cfg=fit(scale);
-    // Once a HOUSE is too narrow at the authored glyph diameter, equally
-    // spaced local centers are the unique safe fallback. Minimize the sum
-    // of weighted squared offsets while respecting BOTH house boundaries.
-    const weighted=group.reduce((a,g,i)=>({
-      sum:a.sum+weight(g.item)*(g.item.exact-i*cfg.sep),
-      total:a.total+weight(g.item)
-    }),{sum:0,total:0});
-    const first=Math.max(cfg.low,Math.min(cfg.high-(group.length-1)*cfg.sep,
-      weighted.sum/weighted.total));
-    const angles=group.map((_,i)=>first+i*cfg.sep);
-    if(angles.some((a,i)=>a<cfg.low-.01||a>cfg.high+.01||
-      !staysInActualHouse(group[i].item,a,cusps)))continue;
-    for(let i=0;i<group.length;i++){
-      const record=group[i],display=angles[i];
-      Object.assign(record,{display,point:polar(lane,display),lane,
-        offset:display-record.item.exact,bubbleScale:scale,houseCompactRepair:true});
-    }
-    minimumScale=Math.min(minimumScale,scale);repairs++;
-  }
-  wheel.dataset.placementCompactHouseRepairs=String(repairs);
-  wheel.dataset.placementMinimumBubbleScale=minimumScale.toFixed(3);
-  return solution;
-}
-// Two bubbles can occupy DIFFERENT houses yet still touch across their
-// shared cusp. After all same-house positions have been fixed, clear these
-// residual outline collisions by reducing the affected circles ONLY.
-// Their angular positions, true houses, and assigned circumferences stay fixed.
-function clearResidualHouseEdgeCollisions(solution,slot,wheel){
-  const shared=spec()?.comparison||{},bubble=Number(shared.placementBubbleRadius)||19.7,
-    gap=Math.max(6,Number(shared.placementClearance)||6),minScale=.26;
-  let repairs=0;
-  for(let pass=0;pass<solution.length*solution.length;pass++){
-    let changed=false;
-    for(let i=0;i<solution.length;i++)for(let j=i+1;j<solution.length;j++){
-      const a=solution[i],b=solution[j],dist=Math.hypot(a.point.x-b.point.x,a.point.y-b.point.y),
-        first=a.bubbleScale||1,second=b.bubbleScale||1,
-        needed=(first+second)*bubble+gap;
-      if(dist>=needed-.1)continue;
-      const permitted=(dist-gap-.25)/(2*bubble);
-      if(permitted<minScale)continue;
-      const next=Math.max(minScale,Math.min(first,second,permitted));
-      if(first-next<.0001&&second-next<.0001)continue;
-      a.bubbleScale=next;b.bubbleScale=next;
-      a.houseCompactRepair=true;b.houseCompactRepair=true;
-      repairs++;changed=true;
-    }
-    if(!changed)break;
-  }
-  wheel.dataset['placementCrossHouseSizeRepairs'+slot]=String(repairs);
-  return solution;
-}
 function solveSlot(wheel,slot){
   const g=geometry(slot),items=ordinaryItems(wheel,slot);if(!g||!items.length)return{items:[],crossings:0,hits:0};
   const authoredLane=items.find(item=>Number.isFinite(item.authoredLane))?.authoredLane,lane=Number.isFinite(authoredLane)?authoredLane:Number(g.placement?.[0]);if(!Number.isFinite(lane))return{items:[],crossings:0,hits:0};
@@ -651,24 +558,24 @@ function solveSlot(wheel,slot){
     forceExact(record,slot);houseFallbacks++;
   }
   wheel.dataset.placementHouseSectorFallbacks=String(houseFallbacks);
-  solution=resolveImpossibleHouseCrowding(solution,slot,wheel);
-  solution=clearResidualHouseEdgeCollisions(solution,slot,wheel);
+  // Never alter placement bubble size. When physical clearance is infeasible,
+  // retain true sign/house/radius and report the remaining overlap.
   const bubble=Number(spec()?.comparison?.placementBubbleRadius)||19.7,
     gap=Math.max(6,Number(spec()?.comparison?.placementClearance)||6);
   let finalOverlaps=0;
   for(let i=0;i<solution.length;i++)for(let j=i+1;j<solution.length;j++){
     const first=solution[i],second=solution[j],
       centerGap=Math.hypot(first.point.x-second.point.x,first.point.y-second.point.y),
-      minimum=(first.bubbleScale||1)*bubble+(second.bubbleScale||1)*bubble+gap;
+      minimum=2*bubble+gap;
     if(centerGap<minimum-.1)finalOverlaps++;
   }
   wheel.dataset['placementRemainingOverlaps'+slot]=String(finalOverlaps);
   solution.sort((a,b)=>a.item.exact-b.item.exact||a.item.index-b.item.index);
   solution.forEach((record,index)=>{
     const {item}=record,exact=record.exactPoint||exactPoint(record,slot);
-    item.group.setAttribute('transform',`translate(${record.point.x} ${record.point.y}) scale(${record.bubbleScale||1})`);
-    item.group.dataset.placementBubbleScale=String(record.bubbleScale||1);
-    item.group.dataset.placementHouseCompactRepair=record.houseCompactRepair?'true':'false';
+    item.group.setAttribute('transform',`translate(${record.point.x} ${record.point.y})`);
+    item.group.dataset.placementBubbleScale='1';
+    item.group.dataset.placementHouseCompactRepair='false';
     item.group.dataset.displayLongitude=norm(record.display).toFixed(8);
     item.group.dataset.exactLongitude=item.exact.toFixed(8);
     // Keep the source lane stable across any subsequent arrange() pass.
@@ -718,15 +625,14 @@ function slotOrbsStayOnRingAndClear(wheel,slot){
     if(!matrix||!Number.isFinite(matrix.e)||!Number.isFinite(matrix.f))return false;
     if(!Number.isFinite(item.authoredLane))return false;
     const point={x:matrix.e,y:matrix.f},
-      scale=Math.max(.1,Math.min(1,num(item.group.dataset.placementBubbleScale)||1)),
       clearance=Math.max(6,Number(spec()?.comparison?.placementClearance)||6);
     if(!staysInActualHouse(item,num(item.group.dataset.displayLongitude),cusps))return false;
     if(houseLines.some(line=>segmentDistance(point,line.a,line.b)<
-      bubble*scale+clearance-.05))return false;
+      bubble+clearance-.05))return false;
     if(Math.abs(Math.hypot(point.x-c.x,point.y-c.y)-item.authoredLane)>.1)return false;
     if(points.some(other=>Math.hypot(point.x-other.point.x,point.y-other.point.y)<
-      (scale+other.scale)*bubble+clearance-EPS))return false;
-    points.push({point,scale});
+      2*bubble+clearance-EPS))return false;
+    points.push({point});
   }
   return true;
 }
@@ -772,7 +678,7 @@ function arrange(wheel){
       Number(wheel.dataset.placementRemainingOverlapsB||0));
     wheel.dataset.placementCircularOrder='preserved';
     wheel.dataset.crossSignDisplacement='forbidden';
-    wheel.dataset.placementCollisionOrder='same-sign-fixed-circumference-v16';
+    wheel.dataset.placementCollisionOrder='same-sign-fixed-circumference-v17';
     if(a.crossings+b.crossings)console.error('[Sky Chart placement layout] Crossing contract failed.',{A:a.crossings,B:b.crossings});
   }finally{arranging=false}
 }
