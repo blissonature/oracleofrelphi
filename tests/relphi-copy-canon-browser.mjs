@@ -3,17 +3,20 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import path from 'node:path';
 
-// Design-system contract: one master path, no CSS SVG masks or app-local paths.
+// Design-system contract: Copy owns one master path inside its own symbol;
+// the shared sprite may also define other distinct actions (e.g. Snapshot).
 const sprite=readFileSync('relphi-icons.svg','utf8');
 const css=readFileSync('relphi-copy-icon-convention-v1.css','utf8');
 const js=readFileSync('relphi-copy-icon-convention-v1.js','utf8');
-assert.equal((sprite.match(/<path\b/g)||[]).length,1,'Master sprite must contain exactly ONE SVG path');
-assert.equal((sprite.match(/<symbol\b/g)||[]).length,1,'Copy glyph must have one symbol');
-assert.match(sprite,/id="relphi-copy"/);
+const copySymbols=[...sprite.matchAll(/<symbol\b[^>]*id="relphi-copy"[^>]*>[\s\S]*?<\/symbol>/g)];
+assert.equal(copySymbols.length,1,'Copy glyph must have exactly one canonical symbol');
+const copyMaster=copySymbols[0][0];
+assert.equal((copyMaster.match(/<path\b/g)||[]).length,1,'Copy master must contain exactly ONE SVG path');
+assert.match(copyMaster,/id="relphi-copy"/);
 assert.match(sprite,/translate\(-\.28 \.23\)/,'Optical centering remains part of master SVG geometry');
 assert.match(sprite,/stroke-width="1\.6"/);
 const downloadSource=readFileSync('sky-chart-export-v2.js','utf8');
-const copyStroke=Number(sprite.match(/stroke-width="([0-9.]+)"/)?.[1]);
+const copyStroke=Number(copyMaster.match(/stroke-width="([0-9.]+)"/)?.[1]);
 const downloadStroke=Number(downloadSource.match(/const ICON=.*?stroke-width="([0-9.]+)"/)?.[1]);
 assert.equal(downloadStroke,1.9,'Download remains the 1.9-unit reference at 17px');
 assert.ok(Math.abs(copyStroke*20/24-downloadStroke*17/24)<0.03,
