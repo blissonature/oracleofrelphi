@@ -1,0 +1,92 @@
+name: Astrology Glossary SEO
+on:
+  pull_request:
+    paths:
+      - 'astrology-glossary.html'
+      - 'astrology-pairs.html'
+      - 'astrology-pairs.css'
+      - 'astrology-pair-interactions.js'
+      - 'astrology-pair-directory.js'
+      - 'tools/build-astrology-pairs.mjs'
+      - 'tools/materialize-astrology-pairs.mjs'
+      - 'tests/astrology-pair-pages.mjs'
+      - 'tests/astrology-pair-browser.mjs'
+      - 'astrology/pairs/**'
+      - 'glossary-stubs.html'
+      - 'glossary-stubs.css'
+      - 'glossary-stub-catalog.js'
+      - 'glossary-stub-explorer.js'
+      - 'tests/glossary-stub-catalog.mjs'
+      - 'tests/glossary-stub-browser.mjs'
+      - 'tools/glossary-stub-batch.mjs'
+      - 'astrology-glossary.css'
+      - 'transiting-uranus-retrograde-opposite-part-of-fortune.html'
+      - 'index.html'
+      - 'nav.html'
+      - 'sitemap.xml'
+      - 'robots.txt'
+      - 'tests/seo-glossary.mjs'
+      - '.github/workflows/astrology-glossary-seo.yml'
+  push:
+    paths:
+      - 'astrology-glossary.html'
+      - 'astrology-pairs.html'
+      - 'astrology-pairs.css'
+      - 'astrology-pair-interactions.js'
+      - 'astrology-pair-directory.js'
+      - 'tools/build-astrology-pairs.mjs'
+      - 'tools/materialize-astrology-pairs.mjs'
+      - 'tests/astrology-pair-pages.mjs'
+      - 'tests/astrology-pair-browser.mjs'
+      - 'astrology/pairs/**'
+      - 'glossary-stubs.html'
+      - 'glossary-stubs.css'
+      - 'glossary-stub-catalog.js'
+      - 'glossary-stub-explorer.js'
+      - 'tests/glossary-stub-catalog.mjs'
+      - 'tests/glossary-stub-browser.mjs'
+      - 'tools/glossary-stub-batch.mjs'
+      - 'astrology-glossary.css'
+      - 'transiting-uranus-retrograde-opposite-part-of-fortune.html'
+      - 'index.html'
+      - 'nav.html'
+      - 'sitemap.xml'
+      - 'robots.txt'
+      - 'tests/seo-glossary.mjs'
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node tests/seo-glossary.mjs
+      - run: node tests/glossary-stub-catalog.mjs
+      - run: node tools/glossary-stub-batch.mjs --count
+      - run: node tests/astrology-pair-pages.mjs
+      - run: node tools/materialize-astrology-pairs.mjs --check
+
+  browser:
+    needs: verify
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --no-save playwright@1.52.0
+      - run: npx playwright install --with-deps chromium
+      - name: Check desktop and mobile stub interactions
+        run: |
+          python3 -m http.server 4173 > /tmp/glossary-stub-server.log 2>&1 &
+          node tests/glossary-stub-browser.mjs
+          node tests/astrology-pair-browser.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: glossary-stub-screenshots
+          path: |
+            glossary-stubs-*.png
+            astrology-pair-*.png
+          if-no-files-found: ignore
