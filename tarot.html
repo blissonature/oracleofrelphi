@@ -10,6 +10,39 @@
   <link href="relphi-design-system.css?v=1" rel="stylesheet"/>
   <link href="drawing-board-workflow-v2.css?v=99" rel="stylesheet"/>
   <link rel="stylesheet" href="relphi-copy-icon-convention-v1.css?v=3">
+<style id="tarot-full-card-reader-styles">
+/* Compact entry typography, both in the index and immersive reader. */
+#cardDetail .full-entry-title-row h2{font-size:clamp(1.35rem,2.1vw,2.05rem)!important;line-height:1.14!important;letter-spacing:-.025em}
+#cardDetail .locked-relphi-priority p,#cardDetail .interpretation-card--priority p{font-size:clamp(.98rem,1.15vw,1.13rem)!important;line-height:1.52!important}
+#cardDetail .full-entry-title-block{min-width:0}
+#cardDetail .full-entry-hero{gap:clamp(.8rem,1.6vw,1.5rem)}
+/* Full viewport uses the existing card entry and controls, not a duplicated rendering. */
+body.full-card-reader-active{overflow:hidden}
+#browsePanel.full-card-reader-open{display:block!important;position:fixed!important;inset:0!important;width:100vw!important;height:100dvh!important;max-width:none!important;margin:0!important;padding:0!important;z-index:20000!important;background:#faf8f7!important;overflow:hidden!important}
+#browsePanel.full-card-reader-open>.tarot-list-panel{display:none!important}
+#browsePanel.full-card-reader-open>#cardDetail{box-sizing:border-box!important;display:block!important;position:absolute!important;inset:0!important;width:100%!important;height:100%!important;max-height:none!important;max-width:none!important;overflow:auto!important;overscroll-behavior:contain!important;padding:0 clamp(1rem,4vw,4rem) 3rem!important;margin:0!important;border:0!important;border-radius:0!important;background:#faf8f7!important;scrollbar-gutter:stable}
+#browsePanel.full-card-reader-open #cardDetail>.tarot-detail-head{width:min(100%,1320px)!important;max-width:1320px!important;margin:0 auto!important}
+#browsePanel.full-card-reader-open #cardDetail>.eyebrow{width:min(100%,1320px);margin:1.1rem auto}
+#browsePanel.full-card-reader-open .full-entry-main{width:100%!important;max-width:none!important}
+#browsePanel.full-card-reader-open .full-entry-hero{display:grid!important;grid-template-columns:minmax(0,1fr) minmax(0,2fr)!important;align-items:start;gap:clamp(1rem,3vw,3rem)!important}
+#browsePanel.full-card-reader-open .full-entry-title-row h2{font-size:clamp(1.6rem,2.6vw,2.8rem)!important}
+#browsePanel.full-card-reader-open .tarot-card-art{width:100%!important;max-width:360px!important;margin:0 auto!important;float:none!important;grid-column:1;grid-row:1 / span 2}
+#browsePanel.full-card-reader-open .tarot-card-art img{width:100%;height:auto;max-height:66vh;object-fit:contain}
+#browsePanel.full-card-reader-open .full-entry-title-block{grid-column:2;min-width:0}
+#browsePanel.full-card-reader-open .locked-ingredients{grid-column:2}
+.full-card-reader-nav{position:sticky;top:0;z-index:5;display:flex;align-items:center;justify-content:center;gap:clamp(.45rem,1.5vw,1rem);padding:.7rem max(1rem,env(safe-area-inset-left));background:rgba(250,248,247,.97);border-bottom:1px solid #e6ded9;backdrop-filter:blur(12px)}
+.full-card-reader-nav button{border:1px solid #bcb3ae;background:#fff;color:#111;border-radius:12px;min-width:44px;min-height:44px;font:750 1.2rem system-ui;cursor:pointer}
+.full-card-reader-nav button:focus-visible{outline:3px solid #dc1f18;outline-offset:2px}
+.full-card-reader-nav #cardReaderClose{margin-left:auto;padding:0 .8rem}
+.full-card-reader-position{font:700 .9rem system-ui;font-variant-numeric:tabular-nums;white-space:nowrap}
+@media(max-width:720px){
+#browsePanel.full-card-reader-open #cardDetail{padding:0 1rem 3rem!important}
+#browsePanel.full-card-reader-open .full-entry-hero{display:flex!important;flex-direction:column!important}
+#browsePanel.full-card-reader-open .tarot-card-art{width:min(64vw,240px)!important;max-width:240px!important;align-self:center}
+#browsePanel.full-card-reader-open .full-entry-title-block{width:100%}
+#browsePanel.full-card-reader-open .full-entry-title-row h2{font-size:clamp(1.4rem,5vw,2rem)!important}
+}
+</style>
 </head>
 <body class="tarot-ledger-page">
   <div id="nav-placeholder"></div>
@@ -391,7 +424,7 @@ function copyQuestionCard(card) {
   <script src="relphi-rising-sign-house-offset-effects.js?v=219"></script>
   <script src="vendor/astronomy-engine/astronomy.browser.min.js"></script>
   <script src="relphi-house-systems.js?v=317"></script>
-  <script src="tarot-app.js?v=415"></script>
+  <script src="tarot-app.js?v=416"></script>
   <script src="relphi-copy-icon-convention-v1.js?v=3"></script>
 </body>
 </html>
