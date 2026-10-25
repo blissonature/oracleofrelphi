@@ -103,6 +103,8 @@ for(const id of glyphIds){
 }
 try{window.RelphiGlyphIntegrity?.assert?.();check('glyphResults','Registry unchanged after creating glyphs',true)}catch(e){check('glyphResults','Registry unchanged after creating glyphs',false)}
 check('layoutResults','HUD remains ordinary HTML; glyphs remain SVG',$('gallery').querySelectorAll('svg').length===glyphIds.length);
+const mapXML=new XMLSerializer().serializeToString(map);
+check('layoutResults','Map can be serialized as standalone SVG',mapXML.includes('<svg')&&mapXML.includes('polyline')&&mapXML.includes('pointA'));
 let gl;
 try{gl=$('gpuCanvas').getContext('webgl2',{preserveDrawingBuffer:true,antialias:false})}catch(e){}
 if(!gl){root('graphicsResults','SKIP · WebGL 2 unavailable: SVG fallback stays active','skip')}
@@ -127,6 +129,8 @@ else {
   const front=new THREE.Vector3(0,0,3.5).project(perspective),far=new THREE.Vector3(0,0,-3.5).project(perspective);
   check('graphicsResults','Foreground appears below far opposition in perspective',front.y<far.y);
   check('graphicsResults','Projection preserves left/right square directions',new THREE.Vector3(-3.5,0,0).project(perspective).x<0&&new THREE.Vector3(3.5,0,0).project(perspective).x>0);
+  const dataURL=$('gpuCanvas').toDataURL('image/png');
+  check('graphicsResults','WebGL rendered frame exports to PNG',dataURL.startsWith('data:image/png;base64,')&&dataURL.length>300);
   renderer.dispose();
  }catch(e){root('graphicsResults','FAIL · Three.js draw could not finish: '+e.message,'fail')}
 }
