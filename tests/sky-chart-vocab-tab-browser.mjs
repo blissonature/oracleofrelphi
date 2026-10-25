@@ -39,6 +39,17 @@ await page.goto('http://127.0.0.1:4173/sky-chart.html',{waitUntil:'domcontentloa
 await page.waitForSelector('#skyFoundationRoot[aria-busy="false"]',{timeout:20000});
 await page.waitForSelector('#skyFoundationA [data-sky-vocab-view-button="vocab"]');
 
+// The wheel's corner focus box must show canonical capitalized placement
+// names, not lowercase dataset IDs used internally by the filter controls.
+const cornerNames=await page.evaluate(()=>Object.fromEntries(
+  ['sun','moon','saturn','north-node','south-node','part-of-fortune','anti-vertex']
+    .map(id=>[id,window.RelphiSkyVocab.describeFocus('placement',id)?.name])
+));
+assert.deepEqual(cornerNames,{
+  sun:'Sun',moon:'Moon',saturn:'Saturn','north-node':'North Node',
+  'south-node':'South Node','part-of-fortune':'Part of Fortune','anti-vertex':'Anti-Vertex'
+},'Corner-box placement labels must use the canonical capitalized names.');
+
 const vocabButton=page.locator('#skyFoundationA [data-sky-vocab-view-button="vocab"]');
 await vocabButton.click();
 await page.waitForFunction(()=>{const panel=document.querySelector('#skyFoundationA [data-sky-vocab-panel="A"]');return panel&&!panel.hidden;});
@@ -710,6 +721,11 @@ const mercurySelectionState=await page.evaluate(()=>({
   wheelSelected:document.querySelector('#skyFoundationWheelMount [data-interactive="placement"][data-sky="A"][data-placement="mercury"]')?.classList.contains('is-selected')||false
 }));
 assert.match(mercurySelectionState.summary,/Mercury/i,`A Placement wheel click must drive the Placement filter: ${JSON.stringify(mercurySelectionState)}`);
+assert.equal(
+  await page.locator('#skyFoundationWheelMount .sky-wheel-sector-description strong').textContent(),
+  'Mercury',
+  'The visible corner box must show a capitalized placement name after a wheel click.'
+);
 assert.equal(await page.locator('#skyFoundationA [data-vocab-dropdown-summary="signs"]').textContent(),'All','A Placement wheel click must not rewrite the Sign filter.');
 assert.equal(await page.locator('#skyFoundationA [data-vocab-dropdown-summary="houses"]').textContent(),'All','A Placement wheel click must not rewrite the House filter.');
 await clickBlankComparison();

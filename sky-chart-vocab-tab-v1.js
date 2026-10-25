@@ -1900,7 +1900,12 @@ window.RelphiSkyVocab=Object.freeze({render:schedule,activate,getDisplay:display
     if(kind==='house'){const n=Number(value);return {name:HOUSE_NAMES[n]||'House '+n,description:HOUSE_MENU_DESCRIPTIONS[n]||''}}
     if(kind==='sign'){const name=SIGNS[Number(value)];return {name,description:SIGN_REFERENTS[name]||''}}
     if(kind==='placement'){
-      const id=slug(value);return {name:String(value||'Placement').replace(/-/g,' '),description:PLACEMENT_REFERENTS[ALIASES[id]||id]||''}
+      const id=slug(value),canonical=ALIASES[id]||id;
+      // The wheel's corner label should use the canonical display name,
+      // never the lowercase placement identifier used for filtering.
+      const entry=window.RelphiGlyphRegistry?.get?.(canonical)||window.RelphiGlyphRegistry?.resolve?.(canonical);
+      const fallback=String(value||'Placement').replace(/(^|[\s-])([a-z])/g,(_,separator,letter)=>separator+letter.toUpperCase());
+      return {name:entry?.name||fallback,description:PLACEMENT_REFERENTS[canonical]||''};
     }
     return null;
   }});
