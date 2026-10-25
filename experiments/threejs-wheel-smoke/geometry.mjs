@@ -15,3 +15,14 @@ export const miniPoint = (degree, radius = 54, cx = 75, cy = 75) => {
 export const miniLongitude = (x, y, cx = 75, cy = 75) => norm(
   Math.atan2(y - cy, x - cx) * 180 / Math.PI + 180
 );
+
+// Rotating-mini-map contract: the world turns while the foreground indicator
+// stays at the left edge (the exact Relphi 0° position).
+// All placement/aspect endpoints retain their unmodified source longitude.
+export const rotatedMiniPoint = (longitude, focus, radius = 54, cx = 75, cy = 75) =>
+  miniPoint(longitude - focus, radius, cx, cy);
+export const mapLongitudeAt = (x, y, focus, cx = 75, cy = 75) =>
+  norm(miniLongitude(x, y, cx, cy) + focus);
+// Preserve where the finger first grabbed the world: avoid a jump on drag start.
+export const draggedMapFocus = (startFocus, startDisplayLongitude, currentDisplayLongitude) =>
+  norm(startFocus - signed(currentDisplayLongitude - startDisplayLongitude));
