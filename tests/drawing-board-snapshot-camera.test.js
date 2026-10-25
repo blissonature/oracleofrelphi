@@ -10,7 +10,7 @@ assert.equal((master.match(/id="relphi-snapshot"/g)||[]).length,1,'Snapshot has 
 const symbol=master.match(/<symbol\b[^>]*id="relphi-snapshot"[^>]*>[\s\S]*?<\/symbol>/)?.[0];
 assert.ok(symbol,'Snapshot symbol exists');
 assert.equal((symbol.match(/<path\b/g)||[]).length,1,'Snapshot camera has one canonical geometry path');
-assert.ok(symbol.includes('M9 6h6l1.25 1.75H18')&&symbol.includes('M14.5 13a2.5 2.5 0 1 1-5 0'), 'Snapshot camera retains a compact body, raised top, and round lens');
+assert.ok(symbol.includes('M9.2 4.1h5.6l1.8 2.3H19.9')&&symbol.includes('M15.35 13a3.35 3.35 0 1 1-6.7 0'), 'Snapshot camera has a larger body and lens, without changing the canonical symbol reference');
 assert.match(symbol,/transform="translate\(0 -1\)"/,'optical centering stays in the shared symbol');
 assert.doesNotMatch(symbol,/M7 4H4v3|M8 3H3v5/, 'Snapshot may not use viewfinder or Zoom Extents corner marks');
 assert.match(board,/snapshotButton\.innerHTML='<svg class="relphi-snapshot-icon"[^']*<use href="relphi-icons\.svg#relphi-snapshot"\/>/);
