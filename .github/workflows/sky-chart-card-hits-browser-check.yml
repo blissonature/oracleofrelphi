@@ -175,7 +175,9 @@ jobs:
           assert.ok(venusEdges.house2.includes('cusp')&&venusEdges.house2.includes('occupant'),'One house must preserve multiple matching paths.');
           assert.ok(venusEdges.house10.includes('lord'),'Dispositor of a house lord must appear as an indirect connection.');
           await page.locator('#skyFoundationA .sky-card-hits-group-heading').last().click();
-          assert.equal(await page.evaluate(()=>document.documentElement.hasAttribute('data-sky-card-ruler-focus')),false,'Leaving ruler focus must preserve prior foundation focus.');
+          assert.equal(await page.evaluate(()=>document.documentElement.hasAttribute('data-sky-card-ruler-focus')),true,'House interactions must retain the ruler selection.');
+          await page.locator('#skyFoundationA .sky-card-hits-focus-caption [data-card-ruler-clear]').click();
+          assert.equal(await page.evaluate(()=>document.documentElement.hasAttribute('data-sky-card-ruler-focus')),false,'Explicit clear returns to all houses.');
           console.log('RULER_FOCUS_CLEAR_OK');
           await page.locator('#skyFoundationA [data-sky-drawer-tab="card-hits"]').click({force:true});
 
