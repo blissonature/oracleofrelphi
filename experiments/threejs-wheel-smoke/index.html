@@ -141,7 +141,7 @@ map.addEventListener('pointerup',e=>{
     focus));
   gesture=null;map.releasePointerCapture(e.pointerId);
 });
-map.addEventListener('pointercancel',()=>{gesture=null});map.addEventListener('keydown',e=>{if(e.key==='ArrowLeft'||e.key==='ArrowRight'){e.preventDefault();setFocus(focus+(e.key==='ArrowLeft'?-10:10))}});
+map.addEventListener('pointercancel',()=>{gesture=null});map.addEventListener('keydown',e=>{if(e.key==='ArrowLeft'||e.key==='ArrowRight'){e.preventDefault();e.stopPropagation();setFocus(focus+(e.key==='ArrowLeft'?-10:10))}});
 const mathOK=[0,90,180,270].every(d=>Math.abs(delta(d,0))=== (d===270?90:d))&&Math.abs(signed(delta(40,310)-delta(160,310)))===120;
 resize();render();const gl=renderer.getContext();const glName=gl?.getParameter?.(gl.VERSION)||'WebGL context unavailable';status.textContent=`${mathOK?'PASS':'FAIL'} · Three.js r${THREE.REVISION} · ${glName} · ${renderer.info.render.calls} draw calls`;
 if(!mathOK)status.style.color='#f58c8c';
