@@ -1704,7 +1704,11 @@
       actions.appendChild(node);
       return node;
     };
-    const snapshotButton=take('snapshotCardRowArrangement','Snapshot','Snapshot the current board arrangement at zoom extents');
+    const snapshotButton=take('snapshotCardRowArrangement','','Snapshot the current board arrangement at zoom extents');
+    if(snapshotButton){
+      snapshotButton.classList.add('relphi-board-snapshot-button');
+      snapshotButton.innerHTML='<svg class="relphi-snapshot-icon" viewBox="0 0 24 24" width="17" height="17" aria-hidden="true" focusable="false"><use href="relphi-icons.svg#relphi-snapshot"/></svg>';
+    }
     if(snapshotButton && snapshotButton.dataset.relphiSnapshotBridgeBound!=='true'){
       snapshotButton.dataset.relphiSnapshotBridgeBound='true';
       snapshotButton.addEventListener('click',async event=>{
