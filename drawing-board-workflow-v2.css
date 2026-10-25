@@ -263,8 +263,9 @@
   opacity:.48!important;
   cursor:not-allowed!important;
 }
-/* Reading text clipboard action uses the canonical centered icon, never a word. */
+/* Compact icon-only document actions: Copy, Snapshot, Download. */
 #shortListPanel .relphi-board-document-buttons > .relphi-copy-reading,
+#shortListPanel .relphi-board-document-buttons > .relphi-board-snapshot-button,
 #shortListPanel .relphi-board-document-buttons > .relphi-board-download-button{
   width:2.25rem!important;
   min-width:2.25rem!important;
@@ -276,6 +277,7 @@
   font-size:0!important;
   line-height:0!important;
 }
+#shortListPanel .relphi-board-document-buttons > .relphi-board-snapshot-button > svg,
 #shortListPanel .relphi-board-document-buttons > .relphi-board-download-button > svg{
   display:block!important;
   width:17px!important;
