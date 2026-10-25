@@ -52,7 +52,7 @@ try{
   await page.waitForSelector('#skyFoundationRoot[aria-busy="false"]',{timeout:30000});
   await page.waitForSelector('#skyChartWheelCopy',{timeout:30000});
   await page.waitForSelector('#skyFoundationWheelMount > svg.sky-foundation-wheel',{timeout:30000});
-  // Real time keeps Playwright's requestAnimationFrame polling active during clipboard rendering.
+  await page.clock.install();
   const status=page.locator('#skyChartExportStatus');
   const button=page.locator('#skyChartWheelCopy');
   const success='Wheel copied to clipboard.';
@@ -66,17 +66,17 @@ try{
 
   await copy();
   assert.equal(await page.evaluate(()=>window.__copySuccessCount),1,'Copy must succeed before a confirmation appears.');
-  await page.waitForTimeout(2900);
+  await page.clock.runFor(2900);
   assert.equal(await status.textContent(),success,'Confirmation should remain visible before three seconds.');
-  await page.waitForTimeout(150);
+  await page.clock.runFor(150);
   assert.equal(await status.textContent(),'','Success confirmation should disappear after three seconds.');
 
   await copy();
-  await page.waitForTimeout(1400);
+  await page.clock.runFor(1400);
   await copy();
-  await page.waitForTimeout(1700);
+  await page.clock.runFor(1700);
   assert.equal(await status.textContent(),success,'An old timer must not erase a new confirmation.');
-  await page.waitForTimeout(1400);
+  await page.clock.runFor(1400);
   assert.equal(await status.textContent(),'','Most recent confirmation must dismiss three seconds after its own copy.');
   assert.equal(await page.evaluate(()=>window.__copySuccessCount),3,'Three successful clipboard writes expected.');
   assert.deepEqual(errors,[],'Copy and dismissal must not create browser page errors.');
