@@ -163,8 +163,11 @@ jobs:
           assert.equal(await page.evaluate(()=>document.querySelector('.sky-foundation-wheel')?.classList.contains('has-isolation')),true,'Clearing Card Hits ruler focus must preserve the prior locked wheel focus.');
           assert.equal(await page.locator(`#skyFoundationWheelMount [data-layer="placements"] [data-sky="A"][data-placement="${priorPlacementId}"]`).evaluate(node=>node.classList.contains('is-selected')),true,'The exact pre-Card-Hits placement must remain selected after ruler dismissal.');
           await page.locator('#skyFoundationA [data-card-ruler]').first().click();
-          await page.locator('#skyFoundationA [data-card-hits-view="houses"]').click();
-          assert.equal(await page.evaluate(()=>document.documentElement.hasAttribute('data-sky-card-ruler-focus')),false,'Leaving Rulers for Houses must clear Card Hits ruler focus.');
+          assert.equal(await page.locator('#skyFoundationA .sky-card-hits-group-heading').count(),2,'Rulers and Houses must coexist in one panel.');
+          assert.equal(await page.locator('#skyFoundationA .sky-card-houses').count(),1,'Houses must remain visible without switching tabs.');
+          assert.equal(await page.locator('#skyFoundationA [data-card-hits-view]').count(),0,'Obsolete Rulers/Houses tabs must be removed.');
+          await page.locator('#skyFoundationA .sky-card-hits-group-heading').last().click();
+          assert.equal(await page.evaluate(()=>document.documentElement.hasAttribute('data-sky-card-ruler-focus')),false,'Clicking Houses heading must clear ruler focus.');
           console.log('RULER_FOCUS_CLEAR_OK');
           await page.locator('#skyFoundationA [data-sky-drawer-tab="card-hits"]').click({force:true});
 
@@ -313,7 +316,7 @@ jobs:
           assert.ok(Math.abs(rulerRails.sample.signBottom-rulerRails.sample.imgTop)<=0.75,'Top sign rail must sit flush against card art.');
           assert.ok(Math.abs(rulerRails.sample.imgBottom-rulerRails.sample.houseTop)<=0.75,'Bottom house rail must sit flush against card art.');
 
-          await page.locator('#skyFoundationA [data-card-hits-view="houses"]').click();
+          assert.equal(await page.locator('#skyFoundationA .sky-card-houses').count(),1);
           await page.waitForTimeout(80);
           await page.waitForFunction(()=>{const img=document.querySelector('#skyFoundationA .sky-card-house-decan-art img');return !!img&&img.complete&&img.naturalWidth>0},{timeout:10000});
           const houseArt=await page.evaluate(()=>{
