@@ -34,12 +34,12 @@ h1{font-size:clamp(1.2rem,2vw,1.6rem);margin:0}.subtitle{font-size:.81rem;color:
 <body><main class="shell">
 <header class="heading"><div><div class="kicker">Oracle of Relphi · isolated experiment</div><h1>One wheel, two camera views</h1><p class="subtitle">Three.js smoke test · not the Sky Chart or full Explorer prototype</p></div><div class="controls"><button id="flat" aria-pressed="true">Flat</button><button id="perspective" aria-pressed="false">Perspective</button></div></header>
 <section class="stage" aria-label="Three.js test scene"><canvas id="render"></canvas><div id="labels" class="labels" aria-hidden="true"></div><div class="hud"><strong id="viewLabel">Flat</strong><div>Focus: <span id="focusLabel">0.0°</span></div><div>A / B: same geometric scene</div></div></section>
-<div class="bottom"><div class="map-wrap"><svg id="map" class="mini" viewBox="0 0 150 150" role="slider" tabindex="0" aria-label="Focal longitude" aria-valuemin="0" aria-valuemax="359" aria-valuenow="0"><circle cx="75" cy="75" r="64" fill="#152036" stroke="#788ba8" stroke-width="1.5"/><g id="mapTicks"></g><polyline id="visibleArc" fill="none" stroke="#e2b765" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/><line id="aspectMap" x1="0" y1="0" x2="0" y2="0" stroke="#cfb6ee" stroke-width="3"/><circle id="mapA" r="5" fill="#ee7575"/><circle id="mapB" r="5" fill="#6ca6ff"/><circle id="mapFocus" r="6" fill="#f9d27e" stroke="#101725" stroke-width="2"/></svg><p class="map-hint"><strong>Mini-map</strong><br>Drag to rotate continuously, click to refocus, or use the arrow buttons. A↔B aspect remains fixed in actual zodiac longitude.</p></div><div class="arrow" aria-label="Navigation controls"><button data-id="up" aria-label="Raise camera">↑</button><button data-id="left" aria-label="Rotate counterclockwise">←</button><button data-id="reset" aria-label="Reset focus">◎</button><button data-id="right" aria-label="Rotate clockwise">→</button><button data-id="down" aria-label="Lower camera">↓</button></div></div>
+<div class="bottom"><div class="map-wrap"><svg id="map" class="mini" viewBox="0 0 150 150" role="slider" tabindex="0" aria-label="Focal longitude" aria-valuemin="0" aria-valuemax="359" aria-valuenow="0"><circle cx="75" cy="75" r="64" fill="#152036" stroke="#788ba8" stroke-width="1.5"/><g id="mapWorld"><g id="mapTicks"></g><line id="aspectMap" x1="0" y1="0" x2="0" y2="0" stroke="#cfb6ee" stroke-width="3"/><circle id="mapA" r="5" fill="#ee7575"/><circle id="mapB" r="5" fill="#6ca6ff"/></g><polyline id="visibleArc" fill="none" stroke="#e2b765" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" pointer-events="none"/><circle id="mapFocus" r="6" fill="#f9d27e" stroke="#101725" stroke-width="2" pointer-events="none"/></svg><p class="map-hint"><strong>Mini-map</strong><br>Drag to rotate continuously, click to refocus, or use the arrow buttons. The zodiac, placements, and aspect line rotate together. The foreground marker stays fixed.</p></div><div class="arrow" aria-label="Navigation controls"><button data-id="up" aria-label="Raise camera">↑</button><button data-id="left" aria-label="Rotate counterclockwise">←</button><button data-id="reset" aria-label="Reset focus">◎</button><button data-id="right" aria-label="Rotate clockwise">→</button><button data-id="down" aria-label="Lower camera">↓</button></div></div>
 <p id="status" class="status" role="status">Loading Three.js…</p><p id="glyphStatus">Canonical Sky A/B glyphs: loading…</p><p class="fine"><a href="experiments/threejs-wheel-smoke/compatibility.html" style="color:#e3bbff">Open glyph, WebGL 2, mini-map, and fallback diagnostics</a></p><p class="fine">Four angular anchors: foreground 0°, square end caps ±90°, opposition 180°. Two colored sky placements form a 120° trine; both the scene and map use their exact longitudes. No Sky Chart code has been modified.</p>
 </main>
 <script type="module">
 import * as THREE from 'three';
-import {norm, signed, delta, polar, miniPoint, miniLongitude} from './experiments/threejs-wheel-smoke/geometry.mjs';
+import {norm, signed, delta, polar, miniPoint, miniLongitude, rotatedMiniPoint, mapLongitudeAt, draggedMapFocus} from './experiments/threejs-wheel-smoke/geometry.mjs';
 const status=document.getElementById('status'),stage=document.querySelector('.stage'),canvas=document.getElementById('render'),labelRoot=document.getElementById('labels');
 const scene=new THREE.Scene();scene.background=null;
 const renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:true,powerPreference:'low-power'});
@@ -92,8 +92,21 @@ function resize(){
 }
 const $=(id)=>document.getElementById(id),arc=$('visibleArc');
 const pt=(deg,r=60)=>miniPoint(deg,r,75,75);
-function drawMap(){const points=[];for(let a=-90;a<=90;a+=2){const p=pt(focus+a);points.push(`${p.x},${p.y}`)}arc.setAttribute('points',points.join(' '));const f=pt(focus,60),la=pt(samples[0].degree,51),lb=pt(samples[1].degree,51);for(const [id,p] of [['mapFocus',f],['mapA',la],['mapB',lb]]){$(id).setAttribute('cx',p.x);$(id).setAttribute('cy',p.y)}$('aspectMap').setAttribute('x1',la.x);$('aspectMap').setAttribute('y1',la.y);$('aspectMap').setAttribute('x2',lb.x);$('aspectMap').setAttribute('y2',lb.y);$('map').setAttribute('aria-valuenow',String(Math.round(focus)));$('focusLabel').textContent=`${focus.toFixed(1)}°`;}
+function drawMap(){
+  // The existing A↔B aspect is stored at true longitudes. Move its entire
+  // reference frame with the zodiac; never keep its screen line fixed.
+  $('mapWorld').setAttribute('transform',`rotate(${-focus} 75 75)`);
+  $('map').setAttribute('aria-valuenow',String(Math.floor(focus)));
+  $('focusLabel').textContent=`${focus.toFixed(1)}°`;
+}
 const mapTicks=$('mapTicks');for(let i=0;i<12;i++){const p=pt(i*30,54),q=pt(i*30,64);const line=document.createElementNS('http://www.w3.org/2000/svg','line');for(const [k,v]of Object.entries({x1:p.x,y1:p.y,x2:q.x,y2:q.y,stroke:'#8799b1','stroke-width':1.5}))line.setAttribute(k,v);mapTicks.append(line)}
+// Fixed left-hand focal marker and highlighted viewing hemisphere. Only the
+// underlying mapWorld (zodiac, glyph endpoints, and aspect chord) rotates.
+const hemisphere=[];for(let a=-90;a<=90;a+=2){const p=pt(a);hemisphere.push(`${p.x},${p.y}`)}arc.setAttribute('points',hemisphere.join(' '));
+const mapAnchor=pt(0,60);$('mapFocus').setAttribute('cx',mapAnchor.x);$('mapFocus').setAttribute('cy',mapAnchor.y);
+const pA=pt(samples[0].degree,51),pB=pt(samples[1].degree,51);
+for(const [id,p] of [['mapA',pA],['mapB',pB]]){$(id).setAttribute('cx',p.x);$(id).setAttribute('cy',p.y)}
+for(const [attr,value] of Object.entries({x1:pA.x,y1:pA.y,x2:pB.x,y2:pB.y}))$('aspectMap').setAttribute(attr,value);
 function render(){wheel.rotation.y=-focus*Math.PI/180;const cam=camera();renderer.render(scene,cam);scene.updateMatrixWorld(true);cam.updateMatrixWorld(true);for(const item of items){const v=item.mesh.getWorldPosition(new THREE.Vector3()).project(cam);const inView=v.z>-1&&v.z<1&&Math.abs(v.x)<1.15&&Math.abs(v.y)<1.15;item.label.style.display=inView?'':'none';item.label.style.left=`${(v.x+1)*50}%`;item.label.style.top=`${(-v.y+1)*50}%`;}drawMap();}
 function setFocus(next){focus=norm(next);render()}
 function setMode(next){mode=next;for(const id of ['flat','perspective'])$(id).setAttribute('aria-pressed',String(id===mode));$('viewLabel').textContent=mode==='flat'?'Flat / orthographic':'Tilted / perspective';render()}
@@ -101,10 +114,33 @@ $('flat').addEventListener('click',()=>setMode('flat'));$('perspective').addEven
 function move(dir){if(dir==='left')setFocus(focus-10);if(dir==='right')setFocus(focus+10);if(dir==='up'||dir==='down'){elevation=Math.max(2.5,Math.min(14,elevation+(dir==='up'?1:-1)));setMode('perspective')}if(dir==='reset'){elevation=7;setFocus(0)}}
 document.querySelectorAll('.arrow button').forEach(b=>b.addEventListener('click',()=>move(b.dataset.id)));
 window.addEventListener('keydown',event=>{if(event.altKey||event.ctrlKey||event.metaKey||/^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement?.tagName||''))return;const dirs={ArrowLeft:'left',ArrowRight:'right',ArrowUp:'up',ArrowDown:'down'};if(dirs[event.key]){event.preventDefault();move(dirs[event.key])}});
-const map=$('map');let gesture=null;function eventLongitude(e){const box=map.getBoundingClientRect(),x=(e.clientX-box.left)/box.width*150,y=(e.clientY-box.top)/box.height*150;return miniLongitude(x,y,75,75)}
-map.addEventListener('pointerdown',e=>{if(e.button!==0)return;gesture={pointer:e.pointerId,x:e.clientX,y:e.clientY,moved:false};map.setPointerCapture(e.pointerId)});
-map.addEventListener('pointermove',e=>{if(!gesture||gesture.pointer!==e.pointerId)return;if(Math.hypot(e.clientX-gesture.x,e.clientY-gesture.y)>3)gesture.moved=true;if(gesture.moved)setFocus(eventLongitude(e))});
-map.addEventListener('pointerup',e=>{if(!gesture||gesture.pointer!==e.pointerId)return;if(!gesture.moved)setFocus(eventLongitude(e));gesture=null;map.releasePointerCapture(e.pointerId)});
+const map=$('map');let gesture=null;
+function eventDisplayLongitude(e){
+  const box=map.getBoundingClientRect();
+  const x=(e.clientX-box.left)/box.width*150,y=(e.clientY-box.top)/box.height*150;
+  return miniLongitude(x,y,75,75);
+}
+map.addEventListener('pointerdown',e=>{
+  if(e.button!==0)return;
+  gesture={pointer:e.pointerId,x:e.clientX,y:e.clientY,moved:false,
+    startFocus:focus,startDisplay:eventDisplayLongitude(e)};
+  map.setPointerCapture(e.pointerId);
+});
+map.addEventListener('pointermove',e=>{
+  if(!gesture||gesture.pointer!==e.pointerId)return;
+  if(Math.hypot(e.clientX-gesture.x,e.clientY-gesture.y)>3)gesture.moved=true;
+  if(gesture.moved)setFocus(draggedMapFocus(gesture.startFocus,gesture.startDisplay,eventDisplayLongitude(e)));
+});
+map.addEventListener('pointerup',e=>{
+  if(!gesture||gesture.pointer!==e.pointerId)return;
+  // Tapping uses the inverse of the currently rotated map; dragging keeps
+  // the grabbed point under the finger without snapping on pointerdown.
+  if(!gesture.moved)setFocus(mapLongitudeAt(
+    (e.clientX-map.getBoundingClientRect().left)/map.getBoundingClientRect().width*150,
+    (e.clientY-map.getBoundingClientRect().top)/map.getBoundingClientRect().height*150,
+    focus));
+  gesture=null;map.releasePointerCapture(e.pointerId);
+});
 map.addEventListener('pointercancel',()=>{gesture=null});map.addEventListener('keydown',e=>{if(e.key==='ArrowLeft'||e.key==='ArrowRight'){e.preventDefault();setFocus(focus+(e.key==='ArrowLeft'?-10:10))}});
 const mathOK=[0,90,180,270].every(d=>Math.abs(delta(d,0))=== (d===270?90:d))&&Math.abs(signed(delta(40,310)-delta(160,310)))===120;
 resize();render();const gl=renderer.getContext();const glName=gl?.getParameter?.(gl.VERSION)||'WebGL context unavailable';status.textContent=`${mathOK?'PASS':'FAIL'} · Three.js r${THREE.REVISION} · ${glName} · ${renderer.info.render.calls} draw calls`;
