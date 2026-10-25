@@ -2343,6 +2343,7 @@
         <p class="ph-calendar-date" id="calendarDayTitle">—</p>
         <p class="ph-tiny ph-calendar-frame-note" id="calendarFrameNote">The planetary day runs from local sunrise to the following sunrise.</p>
       </div>
+      <a href="record.html" style="display:inline-flex;align-items:center;justify-content:center;gap:.35rem;padding:.55rem .85rem;border-radius:.8rem;background:#dc1f18;color:white;text-decoration:none;font-weight:800;min-height:44px" aria-label="Quick record audio in Planetary Calendar">● Record</a>
       <div class="ph-calendar-nav" aria-label="Planetary calendar navigation">
         <div class="ph-calendar-view-toggle" role="group" aria-label="Calendar view">
           <button id="calendarMonthViewButton" type="button" aria-pressed="false">Month</button>
@@ -5344,10 +5345,17 @@
     el.hourMarks.innerHTML = zones + marks;
   }
 
+  function calendarAudioRecords() {
+    try {
+      const records = JSON.parse(localStorage.getItem('relphiPlanetaryCalendarRecordingsV1') || '[]');
+      return Array.isArray(records) ? records : [];
+    } catch (error) { return []; }
+  }
   function renderHoursCalendar(frame, rows, dayKey, idx) {
     if (!el.calendarTimeline) return;
     lastCalendarRender = {frame:frame, rows:rows, dayKey:dayKey, idx:idx};
     const store = loadCalendarNotes();
+    const audioRecords = calendarAudioRecords();
     el.calendarTimeline.innerHTML = rows.map(function (r, i) {
       const notes = calendarNotesForHour(frame, r, store);
       const hourKey = calendarHourKey(frame, r);
@@ -5359,6 +5367,14 @@
       const noteMarkup = notes.map(function (note) {
         const stamp = note.createdAt ? new Date(note.createdAt).toLocaleString(undefined,{timeZone:state.tz,month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}) : '';
         return '<article class="ph-calendar-note"><div><p>' + htmlText(note.text || '') + '</p><small>' + htmlText(stamp) + '</small></div><button class="ph-calendar-note-delete" type="button" data-calendar-note-delete="' + htmlText(note.id || '') + '" data-hour-key="' + htmlText(hourKey) + '" aria-label="Delete this note">×</button></article>';
+      }).join('');
+      const audioMarkup = audioRecords.filter(function (record) {
+        const time = new Date(record.createdAt).getTime();
+        return time >= r.start.getTime() && time < r.end.getTime();
+      }).map(function (record) {
+        const stamp = new Date(record.createdAt).toLocaleString(undefined,{timeZone:state.tz,hour:'numeric',minute:'2-digit'});
+        const label = record.note ? htmlText(record.note) : 'Audio recording';
+        return '<article class="ph-calendar-note"><div><p><a href="record.html?play=' + encodeURIComponent(record.id) + '">▶ ' + label + '</a></p><small>' + htmlText(stamp) + ' · ' + Math.round(Number(record.durationSeconds)||0) + ' sec · saved in this browser</small></div></article>';
       }).join('');
       const draft = state.calendarDrafts && state.calendarDrafts[hourKey] ? state.calendarDrafts[hourKey] : '';
       const hourEvents = (state.calendarEvents || []).filter(function (event) {
@@ -5378,7 +5394,7 @@
           (hourEventMarkup ? '<div class="ph-calendar-hour-events">' + hourEventMarkup + '</div>' : '') +
           '<div class="ph-calendar-hour-focus">' + htmlText(contextFocus(byKey[dayKey], r.ruler)) + '</div>' +
           '<details class="ph-calendar-hour-reading"><summary>Hour reading</summary><div>' + fullContextStatement(byKey[dayKey], r, rows) + '</div></details>' +
-          (noteMarkup ? '<div class="ph-calendar-notes">' + noteMarkup + '</div>' : '') +
+          ((noteMarkup || audioMarkup) ? '<div class="ph-calendar-notes">' + noteMarkup + audioMarkup + '</div>' : '') +
           '<div class="ph-calendar-hour-actions">' +
             '<button type="button" data-calendar-note-add="' + htmlText(hourKey) + '">' + (notes.length ? 'Add another note' : 'Add note') + '</button>' +
             '<a href="' + htmlText(calendarSkyHref(r)) + '">Sky at hour start</a>' +
