@@ -9,6 +9,7 @@ on:
       - 'drawing-board-workflow-v2.css'
       - 'tests/drawing-board-document-download-icon.test.js'
       - 'tests/drawing-board-snapshot-camera.test.js'
+      - 'tests/drawing-board-camera-optical-raster.test.js'
       - 'relphi-icons.svg'
       - '.github/workflows/drawing-board-preview-smoke.yml'
 
@@ -46,3 +47,4 @@ jobs:
           trap 'kill $SERVER_PID || true' EXIT
           node tests/drawing-board-document-download-icon.test.js
           node tests/drawing-board-snapshot-camera.test.js
+          node tests/drawing-board-camera-optical-raster.test.js
