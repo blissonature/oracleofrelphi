@@ -318,3 +318,26 @@ button.relphi-copy-icon-button[data-relphi-copy-format]::after{
     grid-column:4;grid-row:2;
   }
 }
+
+/* Keep the two mobile rows in normal flow, even when legacy styles position
+   the heading or apply a fixed height. */
+@container (max-width:600px){
+  #skyFoundationRelationships .sky-foundation-relationships-heading{
+    position:relative!important;
+    height:auto!important;
+    max-height:none!important;
+    overflow:visible!important;
+  }
+  #skyFoundationRelationships .sky-foundation-relationships-heading>.sky-relationship-heading-actions{
+    position:relative!important;
+    inset:auto!important;
+    transform:none!important;
+    height:auto!important;
+    max-height:none!important;
+  }
+  #skyFoundationRelationships .sky-foundation-relationships-heading>.sky-relationship-vocab-tabs{
+    position:relative!important;
+    inset:auto!important;
+    transform:none!important;
+  }
+}
