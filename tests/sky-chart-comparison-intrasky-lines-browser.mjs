@@ -29,7 +29,9 @@ try{
     await page.goto('http://127.0.0.1:4173/sky-chart.html',{waitUntil:'domcontentloaded'});
     await page.waitForSelector('#skyFoundationRoot[aria-busy="false"]',{timeout:30000});
     await page.waitForSelector('#skyFoundationRelationshipList>.sky-intrasky-b-generated',{timeout:30000});
-    await page.waitForFunction(()=>document.querySelectorAll('#skyFoundationWheelMount [data-layer="aspects"]>line.sky-comparison-intrasky-aspect[data-relationship-mode="B-B"]').length>0,{timeout:30000});
+    const debug=await page.evaluate(()=>({bPresent:document.documentElement.dataset.skyBPresent,svg:document.querySelector('#skyFoundationWheelMount>svg.sky-foundation-wheel')?.outerHTML.slice(0,420),scriptLoaded:!!window.__relphiComparisonIntraskyLinesV1,rows:[...document.querySelectorAll('#skyFoundationRelationshipList>.sky-intrasky-b-generated')].slice(0,2).map(x=>({index:x.dataset.relationIndex,left:x.dataset.leftLongitude,right:x.dataset.rightLongitude})),lines:document.querySelectorAll('#skyFoundationWheelMount [data-layer="aspects"]>line').length}));
+    console.log('B_B_DEBUG',width,JSON.stringify(debug));
+    await page.waitForFunction(()=>document.querySelectorAll('#skyFoundationWheelMount [data-layer="aspects"]>line.sky-comparison-intrasky-aspect[data-relationship-mode="B-B"]').length>0,null,{timeout:10000});
     const audit=await page.evaluate(()=>{
       const visible=n=>{const s=getComputedStyle(n);return !n.hidden&&s.display!=='none'&&s.visibility!=='hidden'&&Number(s.opacity)>0};
       const rows=[...document.querySelectorAll('#skyFoundationRelationshipList>.sky-intrasky-b-generated')].filter(visible);
