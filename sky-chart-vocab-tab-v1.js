@@ -27,7 +27,7 @@ const SIGN_REFERENTS={
   Cancer:'care, protection, memory, belonging, and attachment',
   Leo:'radiance, creativity, pride, loyalty, and recognition',
   Virgo:'discernment, service, refinement, repair, and usefulness',
-  Libra:'relationship, balance, fairness, dialogue, and mutual recognition',
+  Libra:'Counter — the other, comparison, fairness, dialogue, and mutual recognition',
   Scorpio:'intensity, secrecy, survival, bonding, and emotional truth',
   Sagittarius:'the search for meaning, greater aspirations, worldview, and the bigger picture',
   Capricorn:'structure, responsibility, endurance, mastery, and worldly form',
