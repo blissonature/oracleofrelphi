@@ -8,7 +8,7 @@ const configurations=readFileSync(new URL('../sky-chart-aspect-configurations-v1
 new Function(vocab);
 new Function(configurations);
 
-assert.match(html,/sky-chart-relationship-vocab-v1\.js\?v=3/,'Sky Chart must load Relationship Vocab.');
+assert.match(html,/sky-chart-relationship-vocab-v1\.js\?v=4/,'Sky Chart must load Relationship Vocab.');
 assert.match(vocab,/data-relationship-vocab-view="relationships"[^>]*>Relationships</,'Relationships must remain the first peer tab.');
 assert.match(vocab,/data-relationship-vocab-view="vocab"[^>]*>Vocab</,'Vocab must be a peer tab inside Relationships.');
 assert.match(vocab,/'grand-trine':\{name:'Grand Trine',referent:'closed three-way low-resistance flow'\}/,'Grand Trine must carry its own Vocab referent.');

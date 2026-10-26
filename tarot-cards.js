@@ -4535,7 +4535,7 @@ window.RELPHI_TAROT_CARDS = [
       "Venus",
       "Zodiac template",
       "You / Other",
-      "Scales",
+      "Counter",
       "Moznayim",
       "Yin arc (Libra through Pisces)",
       "House 7",
@@ -4618,7 +4618,7 @@ window.RELPHI_TAROT_CARDS = [
       "summary": "A second center is recognized across from the first; relation begins between two first persons.",
       "principles": [
         "You / Other",
-        "Scales",
+        "Counter",
         "Moznayim",
         "Yin arc (Libra through Pisces)",
         "Natural House 7"
