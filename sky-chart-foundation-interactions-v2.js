@@ -605,7 +605,8 @@
     wheelOnlyExternal=false;
     rowLockedState=null;rowHoverState=null;
     const next=specFrom(node);
-    if(!same(lockedState,next)){lockedState=next;selectionOrigin=originFromNode(node,next)}
+    if(same(lockedState,next)){lockedState=null;selectionOrigin=null}
+    else{lockedState=next;selectionOrigin=originFromNode(node,next)}
     hoverState=null;applyState();
     showSectorDescription(node,lockedState);
     if(lockedState?.kind==='aspect')requestAnimationFrame(()=>revealSelectedRelationship(lockedState));
@@ -617,7 +618,7 @@
   }
   // One touch-to-click adapter owned by the foundation controller. Touch hover is
   // never selection state; one completed tap produces exactly one click.
-  let touchGesture=null,ignoreNativeClickUntil=0,lastTouchPoint=null;
+  let touchGesture=null,ignoreNativeClickUntil=0,lastTouchPoint=null,lastMousePointerSelection=null;
   function touchInWheel(event){return !!event.target.closest?.('#skyFoundationWheelMount .sky-foundation-wheel')}
   function beginTouch(event){
     if(!['touch','pen'].includes(event.pointerType)||!touchInWheel(event))return;
@@ -680,7 +681,12 @@
       const onLedger=target.closest?.('#skyFoundationA .sky-foundation-row[data-interactive="placement"],#skyFoundationB .sky-foundation-row[data-interactive="placement"]');
       if(!onWheel&&!onLedger)return;
       const node=interactive(event);
-      if(node)toggleInteractiveNode(node);
+      if(node){
+        toggleInteractiveNode(node);
+        // A mouse pointerup can be followed by a native click. Do not toggle
+        // the same house/placement twice for one physical gesture.
+        lastMousePointerSelection={spec:specFrom(node),at:performance.now()};
+      }
     },{capture:true,passive:true});
     document.addEventListener('pointercancel',cancelTouch,{capture:true});
     // Compatibility clicks may be retargeted to the wheel/root after a
@@ -735,7 +741,11 @@
       if(!node)return;
       event.preventDefault();
       event.stopImmediatePropagation();
-      toggleInteractiveNode(node);
+      const duplicate=event.detail>0&&lastMousePointerSelection&&
+        performance.now()-lastMousePointerSelection.at<750&&
+        same(lastMousePointerSelection.spec,specFrom(node));
+      lastMousePointerSelection=null;
+      if(!duplicate)toggleInteractiveNode(node);
     },true);
     root.addEventListener('click',event=>{
       wheelOnlyExternal=false;
