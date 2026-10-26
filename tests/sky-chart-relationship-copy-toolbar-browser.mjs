@@ -87,7 +87,7 @@ for(const width of [320,390,451,480,510,540,595,600,630,740,760,900,1200]){
     assert.equal(b.visibility,'visible',width+': '+key+' must be visible');
   }
   assert.ok(result.header.scrollWidth<=result.header.clientWidth+3,JSON.stringify({width,error:'header overflow',result}));
-  if(width>650){
+  if(result.container.width>650){
     const ts=result.titleAndSort;
     assert.ok(Math.abs(ts.titleCenter-ts.sortCenter)<=6,
       JSON.stringify({width,error:'Relationships heading and controls must remain in ONE ROW',result}));
@@ -101,7 +101,7 @@ for(const width of [320,390,451,480,510,540,595,600,630,740,760,900,1200]){
     }
   }
   // Mobile header must never paint the title over the sort control.
-  if(width<=650){
+  if(result.container.width<=650){
     const ts=result.titleAndSort;
     assert.ok(ts.titleBottom+2<=ts.sortTop,
       JSON.stringify({width,error:'mobile Relationships heading overlaps sort selector',result}));
