@@ -249,10 +249,23 @@ button.relphi-copy-icon-button[data-relphi-copy-format]::after{
 .question-card .copy-icon[hidden]{display:none!important}
 .question-card.card-copied .copy-icon{color:#277046}
 
-/* Narrow screens: preserve the original toolbar; only remove the
-   heading from its collision path with the sort selector. */
-@container (max-width:600px){
-  #skyFoundationRelationships .sky-foundation-relationships-heading>h2{
-    display:none!important;
+/* On phones, keep the existing toolbar's own responsive layout unchanged.
+   Reserve a separate header track for the Relationships label. */
+@container (max-width:450px){
+  #skyFoundationRelationships .sky-foundation-relationships-heading{
+    grid-template-columns:minmax(0,1fr);
+    grid-template-rows:auto auto;
+    row-gap:6px;
+    height:auto;
+  }
+  #skyFoundationRelationships .sky-foundation-relationships-heading>h2,
+  #skyFoundationRelationships .sky-foundation-relationships-heading>.sky-relationship-vocab-tabs{
+    grid-column:1;
+    grid-row:1;
+    position:static;
+  }
+  #skyFoundationRelationships .sky-foundation-relationships-heading>.sky-relationship-heading-actions{
+    grid-column:1;
+    grid-row:2;
   }
 }
