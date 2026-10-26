@@ -25,11 +25,17 @@ try{
       localStorage.setItem('relphiSkyChartB',JSON.stringify(b));
       localStorage.setItem('relphiSkyChartLastModeV1','comparison');
       localStorage.setItem('relphiSkyHarmonicWindowV1','3');
-      localStorage.setItem('relphiSkyAspectMatrixV1',JSON.stringify({'A-A':[],'B-B':ids,'A-B':[]}));
+      localStorage.setItem('relphiSkyAspectMatrixV1',JSON.stringify({'A-A':ids,'B-B':ids,'A-B':ids}));
     },{a,b,ids});
     await page.goto('http://127.0.0.1:4173/sky-chart.html',{waitUntil:'domcontentloaded'});
     await page.waitForSelector('#skyFoundationRoot[aria-busy="false"]',{timeout:30000});
     await page.waitForSelector('#skyFoundationRelationshipList>.sky-intrasky-b-generated',{timeout:30000});
+    for(const scope of ['A-A','A-B']){
+      const input=page.locator('[data-aspect-matrix-scope="'+scope+'"][data-aspect-matrix-aspect="all"]').first();
+      await input.waitFor({state:'attached',timeout:10000});
+      await input.evaluate(el=>{el.checked=false;el.dispatchEvent(new Event('change',{bubbles:true}))});
+    }
+    await page.waitForTimeout(250);
     const debug=await page.evaluate(()=>({bPresent:document.documentElement.dataset.skyBPresent,svg:document.querySelector('#skyFoundationWheelMount>svg.sky-foundation-wheel')?.outerHTML.slice(0,420),scriptLoaded:!!window.__relphiComparisonIntraskyLinesV1,rows:[...document.querySelectorAll('#skyFoundationRelationshipList>.sky-intrasky-b-generated')].slice(0,2).map(x=>({index:x.dataset.relationIndex,left:x.dataset.leftLongitude,right:x.dataset.rightLongitude})),lines:document.querySelectorAll('#skyFoundationWheelMount [data-layer="aspects"]>line').length,ours:document.querySelectorAll('#skyFoundationWheelMount [data-layer="aspects"]>line.sky-comparison-intrasky-aspect').length,samples:[...document.querySelectorAll('#skyFoundationWheelMount [data-layer="aspects"]>line')].slice(-5).map(x=>({class:x.getAttribute('class'),mode:x.dataset.relationshipMode,index:x.dataset.relationIndex})),errors:[...document.querySelectorAll('#skyFoundationRelationshipList>.sky-intrasky-b-generated')].filter(x=>!x.dataset.leftLongitude||!x.dataset.rightLongitude).length}));
     console.log('B_B_DEBUG',width,JSON.stringify(debug));
     await page.waitForTimeout(450);
