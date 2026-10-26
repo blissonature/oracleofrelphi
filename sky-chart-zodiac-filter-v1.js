@@ -13,7 +13,7 @@ const SIGNS=[
   ['cancer','Cancer','Crab'],
   ['leo','Leo','Lion'],
   ['virgo','Virgo','Maiden'],
-  ['libra','Libra','Scales'],
+  ['libra','Libra','Counter'],
   ['scorpio','Scorpio','Scorpion'],
   ['sagittarius','Sagittarius','Bow'],
   ['capricorn','Capricorn','Kid'],
