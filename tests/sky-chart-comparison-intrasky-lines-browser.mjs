@@ -31,11 +31,11 @@ try{
     await page.waitForSelector('#skyFoundationRelationshipList>.sky-intrasky-b-generated',{timeout:30000});
     const debug=await page.evaluate(()=>({bPresent:document.documentElement.dataset.skyBPresent,svg:document.querySelector('#skyFoundationWheelMount>svg.sky-foundation-wheel')?.outerHTML.slice(0,420),scriptLoaded:!!window.__relphiComparisonIntraskyLinesV1,rows:[...document.querySelectorAll('#skyFoundationRelationshipList>.sky-intrasky-b-generated')].slice(0,2).map(x=>({index:x.dataset.relationIndex,left:x.dataset.leftLongitude,right:x.dataset.rightLongitude})),lines:document.querySelectorAll('#skyFoundationWheelMount [data-layer="aspects"]>line').length,ours:document.querySelectorAll('#skyFoundationWheelMount [data-layer="aspects"]>line.sky-comparison-intrasky-aspect').length,samples:[...document.querySelectorAll('#skyFoundationWheelMount [data-layer="aspects"]>line')].slice(-5).map(x=>({class:x.getAttribute('class'),mode:x.dataset.relationshipMode,index:x.dataset.relationIndex})),errors:[...document.querySelectorAll('#skyFoundationRelationshipList>.sky-intrasky-b-generated')].filter(x=>!x.dataset.leftLongitude||!x.dataset.rightLongitude).length}));
     console.log('B_B_DEBUG',width,JSON.stringify(debug));
-    await page.waitForFunction(()=>document.querySelectorAll('#skyFoundationWheelMount [data-layer="aspects"]>line.sky-comparison-intrasky-aspect[data-relationship-mode="B-B"]').length>0,null,{timeout:10000});
+    await page.waitForTimeout(450);
     const audit=await page.evaluate(()=>{
       const visible=n=>{const s=getComputedStyle(n);return !n.hidden&&s.display!=='none'&&s.visibility!=='hidden'&&Number(s.opacity)>0};
       const rows=[...document.querySelectorAll('#skyFoundationRelationshipList>.sky-intrasky-b-generated')].filter(visible);
-      const lines=[...document.querySelectorAll('#skyFoundationWheelMount [data-layer="aspects"]>line.sky-comparison-intrasky-aspect')].filter(visible);
+      const lines=[...document.querySelectorAll('#skyFoundationWheelMount [data-layer="aspects"]>line.sky-foundation-aspect:not(.sky-foundation-aspect-hit)')].filter(visible);
       const bLines=lines.filter(x=>x.dataset.relationshipMode==='B-B');
       const aLines=lines.filter(x=>x.dataset.relationshipMode==='A-A');
       const keys=arr=>new Set(arr.map(x=>x.dataset.relationIndex));
