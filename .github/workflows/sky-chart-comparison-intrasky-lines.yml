@@ -1,0 +1,30 @@
+name: Sky Chart comparison intrasky aspect lines
+on:
+  pull_request:
+    paths:
+      - 'sky-chart.html'
+      - 'sky-chart-comparison-intrasky-lines-v1.js'
+      - 'tests/sky-chart-comparison-intrasky-lines-browser.mjs'
+      - '.github/workflows/sky-chart-comparison-intrasky-lines.yml'
+  workflow_dispatch:
+jobs:
+  comparison-intrasky-lines:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: JavaScript syntax
+        run: |
+          node --check sky-chart-comparison-intrasky-lines-v1.js
+          node --check tests/sky-chart-comparison-intrasky-lines-browser.mjs
+      - name: Install Chromium
+        run: |
+          npm install --no-save playwright@1.52.0 luxon@3 suncalc@1.9.0
+          npx playwright install --with-deps chromium
+      - name: Verify visible Sky B intrasky lines at mobile and desktop widths
+        run: |
+          python3 -m http.server 4173 >/tmp/sky-b-lines-server.log 2>&1 &
+          node tests/sky-chart-comparison-intrasky-lines-browser.mjs
