@@ -3,6 +3,7 @@ on:
   push:
     paths:
       - 'sky-chart-foundation-v2.js'
+      - 'sky-chart-foundation-interactions-v2.js'
       - 'sky-chart-house-flashlight-v1.js'
       - 'sky-chart-house-flashlight-v1.css'
       - 'sky-chart.html'
@@ -12,6 +13,7 @@ on:
   pull_request:
     paths:
       - 'sky-chart-foundation-v2.js'
+      - 'sky-chart-foundation-interactions-v2.js'
       - 'sky-chart-house-flashlight-v1.js'
       - 'sky-chart-house-flashlight-v1.css'
       - 'sky-chart.html'
@@ -28,6 +30,7 @@ jobs:
           node-version: '22'
       - run: |
           node --check sky-chart-foundation-v2.js
+          node --check sky-chart-foundation-interactions-v2.js
           node --check sky-chart-house-flashlight-v1.js
           node --test tests/sky-chart-house-flashlight.test.cjs
   browser:
