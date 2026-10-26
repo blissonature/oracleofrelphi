@@ -27,8 +27,14 @@ jobs:
           for(const width of [390,1280]){
             const page=await browser.newPage({viewport:{width,height:900}});
             const errs=[];page.on('pageerror',e=>errs.push(e.message));
+            await page.addInitScript(()=>{
+              localStorage.setItem('relphiSkyChartA',JSON.stringify({name:'Counter label check',calcProfile:{houseSystem:'porphyry',dateTime:'2026-10-08T10:00:00',latitude:40.7608,longitude:-111.8910,houseCusps:Array.from({length:12},(_,i)=>(180+i*30)%360)},placements:{Sun:{longitude:195},Moon:{longitude:118.4},Ascendant:{longitude:180},Mercury:{longitude:206},Venus:{longitude:169},Mars:{longitude:167},Jupiter:{longitude:307},Saturn:{longitude:235}}}));
+            });
             await page.goto('http://127.0.0.1:4173/sky-chart.html',{waitUntil:'domcontentloaded'});
-            await page.waitForTimeout(1200);
+            await page.waitForSelector('[data-vocab-dropdown-toggle="signs"],.sky-chart-zodiac-filter-toggle',{timeout:20000});
+            const vocabToggle=page.locator('[data-vocab-dropdown-toggle="signs"]').first();
+            if(await vocabToggle.count())await vocabToggle.click();
+            else await page.locator('.sky-chart-zodiac-filter-toggle').first().click();
             const found=await page.evaluate(()=>{
               const vocab=[...document.querySelectorAll('[data-sign-list-item="libra"]')].map(n=>n.innerText);
               const text=[...document.querySelectorAll('body *')].filter(n=>n.children.length===0&&/Counter/.test(n.textContent||'')).map(n=>n.textContent.trim());
