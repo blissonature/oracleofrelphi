@@ -249,23 +249,58 @@ button.relphi-copy-icon-button[data-relphi-copy-format]::after{
 .question-card .copy-icon[hidden]{display:none!important}
 .question-card.card-copied .copy-icon{color:#277046}
 
-/* On phones, keep the existing toolbar's own responsive layout unchanged.
-   Reserve a separate header track for the Relationships label. */
-@container (max-width:450px){
+/* Keep the original compact mobile header arrangement at widths where
+   the desktop one-line heading would collide with the sort selector.
+   Row 1: title, count, copy, download. Row 2: sort, Max. */
+@container (max-width:600px){
   #skyFoundationRelationships .sky-foundation-relationships-heading{
-    grid-template-columns:minmax(0,1fr);
+    display:grid;
+    grid-template-columns:minmax(0,1fr) auto 34px 30px;
     grid-template-rows:auto auto;
+    column-gap:5px;
     row-gap:6px;
     height:auto;
+    min-height:0;
+    padding:7px 8px;
   }
   #skyFoundationRelationships .sky-foundation-relationships-heading>h2,
   #skyFoundationRelationships .sky-foundation-relationships-heading>.sky-relationship-vocab-tabs{
     grid-column:1;
     grid-row:1;
     position:static;
+    min-width:0;
+    max-width:100%;
+    overflow:hidden;
+    text-overflow:ellipsis;
   }
   #skyFoundationRelationships .sky-foundation-relationships-heading>.sky-relationship-heading-actions{
-    grid-column:1;
+    display:contents;
+  }
+  #skyFoundationRelationships .sky-foundation-relationships-heading #skyFoundationRelationshipCount{
+    grid-column:2;
+    grid-row:1;
+    justify-self:end;
+  }
+  #skyFoundationRelationships .sky-foundation-relationships-heading .sky-relationship-copy-button{
+    grid-column:3;
+    grid-row:1;
+    justify-self:end;
+  }
+  #skyFoundationRelationships .sky-foundation-relationships-heading #skyChartRelationshipsExport{
+    grid-column:4;
+    grid-row:1;
+    justify-self:end;
+  }
+  #skyFoundationRelationships .sky-foundation-relationships-heading .sky-relationship-sort-control{
+    grid-column:1 / 4;
     grid-row:2;
+    min-width:0;
+    width:100%;
+  }
+  #skyFoundationRelationships .sky-foundation-relationships-heading .sky-relationship-limit-control{
+    grid-column:4;
+    grid-row:2;
+    justify-self:end;
+    width:76px;
   }
 }
