@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import {chromium} from 'playwright';
 import path from 'node:path';
+import {PNG} from 'pngjs';
 
 const signs=['Aries','Taurus','Gemini','Cancer','Leo','Virgo','Libra','Scorpio','Sagittarius','Capricorn','Aquarius','Pisces'];
 const placement=(name,longitude)=>{const v=((longitude%360)+360)%360,i=Math.floor(v/30),within=v%30;return{name,longitude:v,sign:signs[i],degree:Math.floor(within),minute:Math.floor((within%1)*60)}};
@@ -55,7 +56,16 @@ try{
         bPresent:document.documentElement.dataset.skyBPresent,
         aspectClasses:bLines.slice(0,3).map(x=>x.getAttribute('class'))};
     });
-    console.log('B_B_COMPARISON_ASPECT_AUDIT',width,JSON.stringify(audit));
+    const image=PNG.sync.read(await page.locator('#skyFoundationWheelMount>svg.sky-foundation-wheel').screenshot());
+    const centerX=image.width/2,centerY=image.height/2,radius=image.width*120/1200;
+    let centerLinePixels=0;
+    for(let y=Math.floor(centerY-radius);y<=centerY+radius;y++)for(let x=Math.floor(centerX-radius);x<=centerX+radius;x++){
+      if(x<0||y<0||x>=image.width||y>=image.height||Math.hypot(x-centerX,y-centerY)>radius)continue;
+      const i=(y*image.width+x)*4,red=image.data[i],green=image.data[i+1],blue=image.data[i+2];
+      if(Math.max(red,green,blue)-Math.min(red,green,blue)>35&&Math.min(red,green,blue)<190)centerLinePixels++;
+    }
+    console.log('B_B_COMPARISON_ASPECT_AUDIT',width,JSON.stringify({...audit,centerLinePixels,imageWidth:image.width}));
+    assert.ok(centerLinePixels>20,'Actual wheel center must contain painted aspect lines, not just visible SVG DOM nodes. Found '+centerLinePixels);
     assert.ok(audit.rowCount>0,'Fixture must show B↔B relationship results.');
     assert.equal(audit.bLines,audit.rowCount,'Each visible B↔B relationship must have a visible wheel line.');
     assert.deepEqual(audit.missing,[],'All B↔B rows need counterpart lines.');
