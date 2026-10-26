@@ -291,7 +291,7 @@ button.relphi-copy-icon-button[data-relphi-copy-format]::after{
 
 /* Phone viewport override: force the header itself into exactly two tracks.
    The container-based fallback alone is not sufficient on mobile Safari. */
-@media screen and (max-width:650px){
+@container (max-width:650px){
   #skyFoundationRelationships .sky-foundation-relationships-heading{
     display:grid!important;
     grid-template-columns:minmax(0,1fr) auto 34px 30px!important;
