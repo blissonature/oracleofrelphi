@@ -24,6 +24,7 @@ try{
       localStorage.setItem('relphiSkyChartA',JSON.stringify(a));
       localStorage.setItem('relphiSkyChartB',JSON.stringify(b));
       localStorage.setItem('relphiSkyChartLastModeV1','comparison');
+      localStorage.setItem('relphiSkyHarmonicWindowV1','3');
       localStorage.setItem('relphiSkyAspectMatrixV1',JSON.stringify({'A-A':[],'B-B':ids,'A-B':[]}));
     },{a,b,ids});
     await page.goto('http://127.0.0.1:4173/sky-chart.html',{waitUntil:'domcontentloaded'});
