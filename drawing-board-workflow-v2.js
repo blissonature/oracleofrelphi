@@ -1416,7 +1416,7 @@
     const body=settingsPanel.querySelector('.relphi-board-settings-body');
     // Legacy tab switch is deliberately not a control. Every action now has a
     // direct place in the compact Drawing Board chrome.
-    modeSwitch?.remove();
+    if(body&&modeSwitch&&modeSwitch.parentElement!==body)body.insertBefore(modeSwitch,body.firstChild);
     // Settings is an overlay: anchor it immediately below the command bar
     // without allowing it to participate in the board's vertical layout.
     const commandBottom=Math.max(0,bar.offsetTop+bar.offsetHeight);
@@ -5824,7 +5824,7 @@
   function installTopActions(root) {
     ensureBoardChrome(root);
     root.querySelector('#relphiBoardSettingsButton')?.remove();
-    root.querySelector('.drawing-board-mode-switch')?.remove();
+    // Hidden legacy radio nodes remain mounted only for guided methods' internal rendering.
     const draw=root.querySelector('#drawRandomRowCard');
     if(draw && draw.dataset.relphiUnifiedDraw!=='true'){
       draw.dataset.relphiUnifiedDraw='true';
