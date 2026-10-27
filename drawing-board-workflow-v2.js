@@ -924,27 +924,28 @@
     ).join('');
     const advanced=!!(chosen?.recursion||chosen?.helper);
     const blocks=Object.entries(s.building).filter(([,value])=>String(value||'').trim());
-    return '<div class="relphi-main-input-paths" aria-label="Question sources">'+
+    return '<div class="relphi-main-input-paths" aria-label="Reading sources">'+
       '<details class="relphi-main-input-path relphi-main-template-disclosure" '+(s.openTemplates?'open':'')+'>'+
-        '<summary>Templates <small>'+escapeHtml(chosen?.name||'None selected')+'</small></summary>'+
-        '<div class="relphi-main-template-row"><select id="relphiMainTemplate" data-main-template aria-label="Choose a template" '+(editable?'':'disabled')+'>'+templates+'</select>'+
-          '<button type="button" data-main-action="template-add" '+(!editable||!chosen?'disabled':'')+'>'+(advanced?'Open method':'Add template questions')+'</button></div>'+
-        (chosen?'<small class="relphi-main-source-note">'+(advanced?'Guided method uses its own setup.':chosen.positions.length+' positions.')+'</small>':'')+
-        '<details class="relphi-main-save-template"><summary>Save these questions as a template</summary>'+
-          '<div class="relphi-main-save-row"><label>Template name <input id="relphiMainTemplateName" type="text" maxlength="60" placeholder="Unnamed Template" '+(!editable?'disabled':'')+'></label>'+
-          '<button type="button" data-main-action="save" '+(!editable||!s.questions.length?'disabled':'')+'>Save template</button></div></details>'+
+        '<summary>Template'+(chosen?' · '+escapeHtml(chosen.name):'')+'</summary>'+
+        '<div class="relphi-main-popover-body"><div class="relphi-main-template-row">'+
+          '<select id="relphiMainTemplate" data-main-template aria-label="Choose a template" '+(editable?'':'disabled')+'>'+templates+'</select>'+
+          '<button type="button" data-main-action="template-add" '+(!editable||!chosen?'disabled':'')+'>'+(advanced?'Open method':'Add positions')+'</button></div>'+
+          (chosen?'<small class="relphi-main-source-note">'+(advanced?'Guided method uses its own setup.':chosen.positions.length+' positions.')+'</small>':'')+
+          '<details class="relphi-main-save-template"><summary>Save questions as a template</summary>'+
+            '<div class="relphi-main-save-row"><label>Template name <input id="relphiMainTemplateName" type="text" maxlength="60" placeholder="Unnamed Template" '+(!editable?'disabled':'')+'></label>'+
+            '<button type="button" data-main-action="save" '+(!editable||!s.questions.length?'disabled':'')+'>Save template</button></div></details>'+
+        '</div>'+
       '</details>'+
       '<details class="relphi-main-input-path relphi-main-building-disclosure" '+(s.openBlocks?'open':'')+'>'+
-        '<summary>Building Blocks <small>'+(blocks.length?blocks.map(([k,v])=>escapeHtml(k+': '+v)).join(' · '):'None selected')+'</small></summary>'+
-        '<div class="relphi-main-building-grid">'+
+        '<summary>Blocks'+(blocks.length?' · '+blocks.length:'')+'</summary>'+
+        '<div class="relphi-main-popover-body"><div class="relphi-main-building-grid">'+
           choice('element','Element',Object.keys(REFERENT_ELEMENTS).map(v=>[v,v]))+
           choice('planet','Planet',Object.keys(REFERENT_PLANETS).map(v=>[v,v]))+
           choice('aspect','Aspect',Object.keys(REFERENT_ASPECTS).map(v=>[v,v]))+
           choice('sign','Sign',Object.keys(REFERENT_SIGNS).map(v=>[v,v]))+
           choice('house','House',HOUSE_ORDINALS.map((name,i)=>[String(i+1),name+' House']))+
           choice('need','Universal Human Need',REFERENT_UNIVERSAL_HUMAN_NEEDS.map(v=>[v,v]))+
-        '</div>'+
-        '<button type="button" data-main-action="blocks-add" '+(!editable||!blocks.length?'disabled':'')+'>Surface questions</button>'+
+        '</div><button type="button" data-main-action="blocks-add" '+(!editable||!blocks.length?'disabled':'')+'>Surface questions</button></div>'+
       '</details>'+
     '</div>';
   }
@@ -1044,7 +1045,7 @@
         host.querySelector('#relphiMainQuestion')?.focus();
       };
       host.addEventListener('keydown',event=>{
-        if(event.target.id==='relphiMainQuestion'&&event.key==='Enter'&&(event.ctrlKey||event.metaKey)){
+        if(event.target.id==='relphiMainQuestion'&&event.key==='Enter'){
           event.preventDefault();submitQuestion();
         }
       });
@@ -1131,6 +1132,7 @@
     const questions=locked?positionGroups:s.questions;
     const currentInput=String(host.querySelector('#relphiMainQuestion')?.value||mainComposerInputDraft||'');
     if(currentInput)mainComposerInputDraft=currentInput;
+    if(locked&&entries.length&&!s.openJournal){s.openJournal=true;saveMainComposer();}
     const fingerprint=JSON.stringify({locked,hasCards,questions,entries,defaults:s.defaults,selected:s.selected,
       openJournal:s.openJournal,
       selectedTemplate:s.selectedTemplate,building:s.building,
@@ -1169,25 +1171,36 @@
     const drawInfo=locked?questions.length+' question'+(questions.length===1?'':'s')+' on the board':
       hasCards?'Clear free cards to start a question reading':
       s.questions.length+' question'+(s.questions.length===1?'':'s')+' · '+total+' card'+(total===1?'':'s');
-    host.innerHTML='<div class="relphi-main-composer-heading"><strong>Questions & interpretations</strong><span>'+
-      (locked?'Reading in progress':hasCards?'Free cards on board':'Ready when you are')+'</span></div>'+
+    host.innerHTML='<div class="relphi-main-strip" role="group" aria-label="Drawing Board controls">'+
+      '<div data-main-question-form class="relphi-main-question-form">'+
+        '<input aria-label="Your question" id="relphiMainQuestion" type="text" placeholder="Ask a question…" autocomplete="off" '+(!editable&&!canClarify?'disabled':'')+' value="'+escapeHtml(mainComposerInputDraft)+'">'+
+        '<button type="button" data-main-action="append" '+(!editable&&!canClarify?'disabled':'')+'>'+(canClarify?'+ Clarifier':'+ Add')+'</button></div>'+
       mainComposerPreQuestionsMarkup(root,locked,hasCards)+
-      '<div data-main-question-form class="relphi-main-question-form"><textarea aria-label="Your question" id="relphiMainQuestion" rows="2" placeholder="Type your question…" '+(!editable&&!canClarify?'disabled':'')+'>'+escapeHtml(mainComposerInputDraft)+'</textarea><button type="button" data-main-action="append" '+(!editable&&!canClarify?'disabled':'')+'>'+(canClarify?'Add clarifier':'Add question')+'</button></div>'+
-      '<details class="relphi-main-draw-defaults" '+(s.openDefaults?'open':'')+'><summary>Draw defaults · '+escapeHtml(packLabel(s.defaults.pack))+' · '+s.defaults.cards+' card'+(s.defaults.cards===1?'':'s')+' · Repeats '+(s.defaults.repeats?'ON':'OFF')+'</summary>'+
-      '<div class="relphi-main-defaults" aria-label="Sticky draw settings">'+
-        '<label>Sub-pack <select data-main-default="pack" '+(!editable?'disabled':'')+'>'+packOptions(s.defaults.pack)+'</select></label><button type="button" data-main-action="create-pack" aria-label="Create sub-pack" title="Create sub-pack" '+(!editable?'disabled':'')+'>+</button>'+
-        '<label>Cards <input data-main-default="cards" type="number" min="1" max="12" value="'+s.defaults.cards+'" '+(!editable?'disabled':'')+'></label>'+
-        '<label><input data-main-default="reversals" type="checkbox" '+(s.defaults.reversals?'checked':'')+' '+(!editable?'disabled':'')+'> Reversals</label>'+
-        '<label><input data-main-default="repeats" type="checkbox" '+(s.defaults.repeats?'checked':'')+' '+(!editable?'disabled':'')+'> Repeats</label>'+
-      '</div></details>'+
-      (editable&&questions.length?'<div class="relphi-main-question-tools"><button type="button" data-main-action="select-all">Select all</button>'+
-        '<button type="button" data-main-action="copy" aria-label="Copy questions" title="Copy questions"></button>'+
-        '<button type="button" data-main-action="up" '+(!selected.size?'disabled':'')+' aria-label="Move selected questions up">↑</button>'+
-        '<button type="button" data-main-action="down" '+(!selected.size?'disabled':'')+' aria-label="Move selected questions down">↓</button>'+
-        '<button type="button" data-main-action="delete" '+(!selected.size?'disabled':'')+' aria-label="Delete selected questions">Delete</button></div>':'')+
-      '<ol class="relphi-main-question-list" aria-label="Reading question list">'+(rows||'<li class="relphi-main-empty">Your questions will appear here.</li>')+'</ol>'+
-      '<div class="relphi-main-launch"><span aria-live="polite">'+drawInfo+'</span>'+
-        (locked?'':'<button type="button" data-main-action="ready" class="primary" '+(!valid?'disabled':'')+'>Ready to draw</button>')+'</div>';
+      '<details class="relphi-main-draw-defaults" '+(s.openDefaults?'open':'')+'>'+
+        '<summary>Draw options</summary><div class="relphi-main-popover-body">'+
+          '<div class="relphi-main-defaults" aria-label="Sticky draw settings">'+
+            '<label>Sub-pack <select data-main-default="pack" '+(!editable?'disabled':'')+'>'+packOptions(s.defaults.pack)+'</select></label>'+
+            '<button type="button" data-main-action="create-pack" aria-label="Create sub-pack" title="Create sub-pack" '+(!editable?'disabled':'')+'>+</button>'+
+            '<label>Cards <input data-main-default="cards" type="number" min="1" max="12" value="'+s.defaults.cards+'" '+(!editable?'disabled':'')+'></label>'+
+            '<label><input data-main-default="reversals" type="checkbox" '+(s.defaults.reversals?'checked':'')+' '+(!editable?'disabled':'')+'> Reversals</label>'+
+            '<label><input data-main-default="repeats" type="checkbox" '+(s.defaults.repeats?'checked':'')+' '+(!editable?'disabled':'')+'> Repeats</label>'+
+          '</div></div></details>'+
+      '<button type="button" class="relphi-main-chrome-action" data-main-action="filters" aria-label="Sub-pack keyword filters">Filters</button>'+
+      '<button type="button" class="relphi-main-chrome-action" data-main-action="methods" aria-label="Special reading methods">Methods</button>'+
+      '<button type="button" class="relphi-main-chrome-action" data-main-action="appearance" aria-label="Board appearance and controls">Board</button>'+
+      '<details class="relphi-main-journal" '+(s.openJournal?'open':'')+'>'+
+        '<summary>Questions <span>'+questions.length+'</span>'+(entries.length?' · '+entries.length+' drawn':'')+'</summary>'+
+        '<div class="relphi-main-journal-body">'+
+          (editable&&questions.length?'<div class="relphi-main-question-tools"><button type="button" data-main-action="select-all">Select all</button>'+
+            '<button type="button" data-main-action="copy" aria-label="Copy questions" title="Copy questions"></button>'+
+            '<button type="button" data-main-action="up" '+(!selected.size?'disabled':'')+' aria-label="Move selected questions up">↑</button>'+
+            '<button type="button" data-main-action="down" '+(!selected.size?'disabled':'')+' aria-label="Move selected questions down">↓</button>'+
+            '<button type="button" data-main-action="delete" '+(!selected.size?'disabled':'')+' aria-label="Delete selected questions">Delete</button></div>':'')+
+          '<ol class="relphi-main-question-list" aria-label="Reading question list">'+(rows||'<li class="relphi-main-empty">No questions yet.</li>')+'</ol>'+
+          '<small class="relphi-main-count-status" aria-live="polite">'+drawInfo+'</small>'+
+        '</div></details>'+
+      (!locked?'<button type="button" data-main-action="ready" class="primary relphi-main-ready" '+(!valid?'disabled':'')+'>Ready to draw</button>':'')+
+    '</div>';
   }
 
 
