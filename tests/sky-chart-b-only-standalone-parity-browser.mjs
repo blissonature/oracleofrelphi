@@ -96,8 +96,12 @@ async function inspect(slot,known,width){
  assert.ok(data.allPlacements.every(s=>s===slot),'Never retain the cleared sky placements');
  assert.ok(data.aspectCount>0&&data.paintedLines>0,'Aspects must be drawn and painted');
  assert.ok(data.related.includes(slot+'-'+slot),'Other sky relationships must remain available');
- assert.equal(data.degree,data.expectedDegree);
- assert.equal(data.placementLane,data.expectedPlacement);
+ if(known){
+  assert.equal(data.degree,data.expectedDegree);
+  assert.equal(data.placementLane,data.expectedPlacement);
+ }else{
+  assert.ok(data.degree>data.expectedDegree&&data.placementLane>data.expectedPlacement,'Unknown-time zodiac expands into house territory');
+ }
  assert.ok(data.aspectRadii.every(r=>Math.abs(r-data.expectedAspectRadius)<.01),'Aspect endpoints must stay in the original center');
  assert.deepEqual(data.bLeaderColors,[...data.bLeaderColors].fill(slot==='B'?'#2462d0':'#c9211e'));
  assert.deepEqual(errors,[],'Page must not raise exceptions');
