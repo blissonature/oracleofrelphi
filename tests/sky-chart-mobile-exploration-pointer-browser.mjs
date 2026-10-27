@@ -83,7 +83,7 @@ const flash=(page)=>page.evaluate(()=>{
 
 async function tipPoint(page){
  return page.evaluate(()=>{
-  const cursor=document.getElementById('relphiMobileExplorationCursor'),host=document.getElementById('skyFoundationWheelMount'),tip=window.RelphiMobileExplorationPointer?.getTip?.();
+  const cursor=document.getElementById('relphiMobileExplorationCursor'),host=document.getElementById('skyFoundationComparison'),tip=window.RelphiMobileExplorationPointer?.getTip?.();
   const b=host?.getBoundingClientRect();
   if(!tip||!b||!cursor)throw new Error('Cursor tip unavailable');
   return{x:tip.x+b.left,y:tip.y+b.top,dragging:cursor.dataset.dragging};
