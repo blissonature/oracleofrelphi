@@ -124,9 +124,11 @@ try{
        const bAspects=[...chart?.querySelectorAll('[data-layer="aspects"] > line[data-relationship-mode="B-B"]')||[]];
        const shown=bAspects.filter(line=>line.getAttribute('stroke')!=='none'&&!line.hidden&&getComputedStyle(line).display!=='none');
        const bHouses=chart?.querySelectorAll('[data-layer="b-houses"] > path[data-house]').length||0;
+       const interactiveBHouses=chart?.querySelectorAll('[data-layer="b-houses"] > path[data-interactive="house"]').length||0;
        return{single:chart?.dataset.singleSky,inner:chart?.dataset.innerSky,
          bPlacements:bNodes.length,aPlacements:aNodes.length,bAspects:bAspects.length,
-         paintedBAspects:shown.length,bHouses,html:document.getElementById('skyFoundationWheelMount')?.textContent?.slice(0,150)};
+         paintedBAspects:shown.length,bHouses,interactiveBHouses,
+         viewBoxWidth:chart?.viewBox.baseVal.width,html:document.getElementById('skyFoundationWheelMount')?.textContent?.slice(0,150)};
      });
      assert.equal(wheel.single,'B','Empty Sky A must display standalone Sky B wheel: '+JSON.stringify(wheel));
      assert.equal(wheel.inner,'B','B identity must control standalone wheel');
@@ -134,6 +136,10 @@ try{
      assert.equal(wheel.aPlacements,0,'Blank A cannot contribute placements');
      assert.ok(wheel.bAspects>0&&wheel.paintedBAspects>0,'Retained B↔B relationships must draw aspects');
      assert.equal(wheel.bHouses,cfg.bKnownTime?12:0,'Use B house cusps only when B time is known');
+     if(cfg.bKnownTime){
+       assert.equal(wheel.interactiveBHouses,12,'B houses remain explorable while A editor is open');
+       assert.ok(wheel.viewBoxWidth>1180,'Standalone B wheel must include complete outer house ring');
+     }
      console.log('PASS_B_ONLY_WHEEL',width,cfg.name,JSON.stringify(wheel));
     }
     assert.deepEqual(errors.filter(e=>/TypeError|ReferenceError|SyntaxError/.test(e)),[],'No uncaught errors');
