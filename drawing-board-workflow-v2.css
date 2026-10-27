@@ -4045,3 +4045,48 @@ html body #shortListPanel .relphi-board-settings-panel[data-chrome-panel="method
     min-width:0!important;width:auto!important;
   }
 }
+
+
+/* One genuine compact command row: undo old four-line grid and sky grid-area. */
+html body #shortListPanel .relphi-board-commandbar{
+  display:flex!important;flex-direction:row!important;flex-wrap:wrap!important;
+  align-items:center!important;justify-content:space-between!important;
+  grid-template-columns:none!important;grid-template-areas:none!important;
+  padding:.35rem .55rem!important;gap:.3rem .6rem!important;
+}
+html body #shortListPanel .relphi-board-command-left{
+  display:flex!important;flex:0 0 auto!important;align-items:center!important;
+  width:auto!important;order:0!important;
+}
+html body #shortListPanel .drawing-board-top-actions.relphi-board-command-actions{
+  display:flex!important;flex:1 1 auto!important;width:auto!important;order:1!important;
+  align-items:center!important;flex-direction:row!important;justify-content:flex-end!important;
+  flex-wrap:wrap!important;gap:.22rem!important;
+}
+html body #shortListPanel .drawing-board-top-actions>.relphi-sky-connector{
+  display:flex!important;position:static!important;grid-area:auto!important;
+  flex:0 0 auto!important;order:-1!important;width:auto!important;max-width:12rem!important;
+  margin:0 auto 0 0!important;padding:0!important;
+  border:0!important;background:transparent!important;justify-self:auto!important;
+}
+html body #shortListPanel .drawing-board-top-actions>.relphi-sky-connector select{
+  width:auto!important;max-width:min(22vw,12rem)!important;min-height:1.95rem!important;
+  height:1.95rem!important;margin:0!important;padding:.25rem 1.5rem .25rem .55rem!important;
+}
+html body #shortListPanel .drawing-board-top-actions.relphi-board-command-actions>button{
+  grid-area:auto!important;order:0!important;
+}
+html body #shortListPanel .drawing-board-top-actions.relphi-board-command-actions>#drawRandomRowCard{order:10!important}
+html body #shortListPanel .drawing-board-top-actions.relphi-board-command-actions>#clearShortListCardsOnly{order:9!important}
+html body #shortListPanel .drawing-board-top-actions.relphi-board-command-actions>#relphiResetBoard{order:8!important}
+html body #shortListPanel .drawing-board-top-actions.relphi-board-command-actions>#undoShortList{order:6!important}
+html body #shortListPanel .drawing-board-top-actions.relphi-board-command-actions>#redoShortList{order:7!important}
+@media(max-width:760px){
+  html body #shortListPanel .relphi-board-commandbar{gap:.25rem!important}
+  html body #shortListPanel .drawing-board-top-actions.relphi-board-command-actions{
+    display:flex!important;flex:1 1 100%!important;width:100%!important;
+  }
+  html body #shortListPanel .drawing-board-top-actions>.relphi-sky-connector select{
+    max-width:min(44vw,10rem)!important;
+  }
+}
