@@ -1061,12 +1061,22 @@
         const t=event.target,s=getMainComposer();
         if(t.matches('[data-main-template]')){
           s.selectedTemplate=t.value||'';
-          saveMainComposer();renderMainComposer(root,true);
+          saveMainComposer();
+          const chosen=templateById(s.selectedTemplate);
+          const add=host.querySelector('[data-main-action="template-add"]');
+          if(add){add.disabled=!chosen;add.textContent=chosen?.recursion||chosen?.helper?'Open method':'Add positions';}
+          const caption=host.querySelector('.relphi-main-template-disclosure > summary');
+          if(caption)caption.textContent='Template'+(chosen?' · '+chosen.name:'');
           return;
         }
         if(t.matches('[data-main-building]')){
           s.building[t.dataset.mainBuilding]=t.value||'';
-          saveMainComposer();renderMainComposer(root,true);
+          saveMainComposer();
+          const chosen=Object.entries(s.building).filter(([,v])=>String(v||'').trim());
+          const add=host.querySelector('[data-main-action="blocks-add"]');
+          if(add)add.disabled=chosen.length===0;
+          const caption=host.querySelector('.relphi-main-building-disclosure > summary');
+          if(caption)caption.textContent='Blocks'+(chosen.length?' · '+chosen.length:'');
           return;
         }
         if(t.matches('[data-main-default]')){
