@@ -77,6 +77,7 @@ async function assertContained(page,label){
     if(await attune.waitFor({state:'visible',timeout:2500}).then(()=>true).catch(()=>false))await attune.click();
     await page.waitForFunction(()=>document.querySelectorAll('.relphi-main-question-reading').length>0,null,{timeout:15000});
     assert.equal(await page.locator('#drawing-board-reading-text').isHidden(),true,'No duplicate reading-text block');
+    assert.equal(await page.locator('.relphi-main-question-row.is-reading').first().locator('.relphi-main-question-reading[data-reading-slot="0"]').count(),1,'Interpretation is attached to the first question, not a bottom duplicate');
     await page.screenshot({path:path.join(out,'drawing-board-main-ready.png'),fullPage:true});
     assert.deepEqual(errors,[],'No browser exceptions on desktop');
 
