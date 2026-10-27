@@ -677,7 +677,7 @@
     return String(draft.pack||'full')===String(defaults.pack||'full') &&
       !(draft.keywordTags||[]).length &&
       draft.keywordMatchMode!=='all' &&
-      draft.stickers===false &&
+      // Free Draw has no position stickers; their stored visibility is irrelevant.
       (draft.reversals!==false)===defaults.reversals &&
       !!draft.repeats===defaults.repeats;
   }
@@ -774,7 +774,8 @@
       crafted,
       drawSettings:!freeSettingsAreDefault(),
       appearance:appearanceChanged,
-      geometry:geometryChanged
+      geometry:geometryChanged,
+      questionDraft:getMainComposer().questions.length>0
     };
   }
   function boardCanReset(root=panel()) {
