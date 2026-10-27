@@ -1084,7 +1084,9 @@
           const prop=t.dataset.mainSetting;
           q[prop]=prop==='repeats'||prop==='reversals'?t.checked:
             prop==='cards'?Math.max(1,Math.min(12,Math.trunc(Number(t.value)||1))):t.value;
-          saveMainComposer();renderMainComposer(root,true);
+          saveMainComposer();
+          // Replacing an actively edited input synchronously can race its blur handler.
+          requestAnimationFrame(()=>renderMainComposer(root,true));
           return;
         }
         if(t.matches('[data-main-select]')){
@@ -1094,6 +1096,11 @@
       });
       host.addEventListener('toggle',event=>{
         const t=event.target,s=getMainComposer();
+        if(t.open&&t.matches('.relphi-main-template-disclosure,.relphi-main-building-disclosure,.relphi-main-draw-defaults,.relphi-main-journal')){
+          host.querySelectorAll('.relphi-main-template-disclosure,.relphi-main-building-disclosure,.relphi-main-draw-defaults,.relphi-main-journal').forEach(other=>{
+            if(other!==t&&other.open)other.open=false;
+          });
+        }
         if(t.matches('.relphi-main-building-disclosure')){s.openBlocks=t.open;saveMainComposer();}
         if(t.matches('.relphi-main-template-disclosure')){s.openTemplates=t.open;saveMainComposer();}
         if(t.matches('.relphi-main-draw-defaults')){s.openDefaults=t.open;saveMainComposer();}
