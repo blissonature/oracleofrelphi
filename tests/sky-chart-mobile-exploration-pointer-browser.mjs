@@ -145,6 +145,19 @@ async function aspectPoint(page){
 }
 async function dragPointer(page,target,commit=true){
  const before=await tipPoint(page),handle=await gripPoint(page),session=await page.context().newCDPSession(page);
+ const pointerTrace=await page.evaluate(({x,y})=>{
+  const g=document.querySelector('#relphiMobileExplorationCursor .relphi-mobile-cursor-cross');
+  const find=n=>n?{tag:n.tagName,cls:n.getAttribute?.('class')||'',id:n.id||'',
+    role:n.getAttribute?.('role')||'',pointerEvents:getComputedStyle(n).pointerEvents,touchAction:getComputedStyle(n).touchAction}:null;
+  window.__pointerTouchTrace=[];
+  for(const name of ['pointerdown','pointermove','pointerup','pointercancel','gotpointercapture','lostpointercapture']){
+    g.addEventListener(name,event=>window.__pointerTouchTrace.push({name,id:event.pointerId,type:event.pointerType,x:event.clientX,y:event.clientY}),{capture:true});
+  }
+  return {target:find(document.elementFromPoint(x,y)),
+   stack:document.elementsFromPoint(x,y).slice(0,6).map(find),
+   grip:find(g),svg:find(g.ownerSVGElement),container:find(g.ownerSVGElement.parentElement)};
+ },handle);
+ console.log('TOUCH_GRIP_HIT_TEST',JSON.stringify(pointerTrace));
  const steps=12,deltaX=target.x-before.x,deltaY=target.y-before.y;
  await session.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x:handle.x,y:handle.y,id:1}]});
  for(let i=1;i<=steps;i++){
@@ -155,7 +168,8 @@ async function dragPointer(page,target,commit=true){
   focus:document.querySelector('#skyFoundationWheelMount svg')?.classList.contains('has-isolation'),
   dragging:document.getElementById('relphiMobileExplorationCursor')?.dataset.dragging,
   flashlight:document.querySelector('#skyFoundationWheelMount [data-house-flashlight]')?.dataset.pinned,
-  state:document.querySelector('#skyFoundationWheelMount [data-house-flashlight]')?.dataset.house
+  state:document.querySelector('#skyFoundationWheelMount [data-house-flashlight]')?.dataset.house,
+  trace:(window.__pointerTouchTrace||[]).slice(-35)
  }));
  if(commit)await session.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});
  else await session.send('Input.dispatchTouchEvent',{type:'touchCancel',touchPoints:[]});
