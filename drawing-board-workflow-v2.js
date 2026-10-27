@@ -672,12 +672,14 @@
   }
 
   function freeSettingsAreDefault(draft=freeSettingsDraftFromState()) {
-    return String(draft.pack||'full')==='full' &&
+    // Sticky user preferences, not the old shipped defaults, define an untouched board.
+    const defaults=getMainComposer().defaults;
+    return String(draft.pack||'full')===String(defaults.pack||'full') &&
       !(draft.keywordTags||[]).length &&
       draft.keywordMatchMode!=='all' &&
       draft.stickers===false &&
-      draft.reversals!==false &&
-      !draft.repeats;
+      (draft.reversals!==false)===defaults.reversals &&
+      !!draft.repeats===defaults.repeats;
   }
 
   function transformLocks() {
