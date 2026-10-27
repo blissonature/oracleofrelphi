@@ -4,6 +4,7 @@ on:
     paths:
       - 'sky-chart-saved-skies-v1.js'
       - 'sky-chart-foundation-v2.js'
+      - 'sky-chart-foundation-interactions-v2.js'
       - 'sky-chart-slot-card-controls-v1.js'
       - 'sky-chart-working-sky-relationship-clear-v1.js'
       - 'sky-chart.html'
@@ -13,6 +14,7 @@ on:
     paths:
       - 'sky-chart-saved-skies-v1.js'
       - 'sky-chart-foundation-v2.js'
+      - 'sky-chart-foundation-interactions-v2.js'
       - 'sky-chart-slot-card-controls-v1.js'
       - 'sky-chart-working-sky-relationship-clear-v1.js'
       - 'sky-chart.html'
