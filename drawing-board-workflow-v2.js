@@ -885,11 +885,11 @@
     const actualSky=window.RelphiSkyConnector?.context?.();
     const pieces=[
       '<span><strong>Path</strong> '+escapeHtml(path==='bespoke'?'Questions':path==='astro'?'Astrological Tarot':path==='blocks'?'Building Blocks':path==='templates'?'Template':path==='surface'?'See What Surfaces':'Free draw')+'</span>',
-      '<span><strong>Template</strong> '+escapeHtml(template&&path==='templates'?template:'None selected')+'</span>',
+      '<span><strong>Template</strong> '+escapeHtml(template||((locked&&saved.path===path)?saved.template:'')||'None selected')+'</span>',
       '<span><strong>Building Blocks</strong> '+escapeHtml(blocks.length?blocks.join(' · '):'None in this reading')+'</span>',
       '<span><strong>Sky connections</strong> '+escapeHtml(skies.length?skies.join(' · '):(connected?.name||actualSky?.savedSky?.name||'None in this reading'))+'</span>'
     ];
-    return '<details class="relphi-main-sources"><summary>Reading sources</summary><div>'+pieces.join('')+'</div><button type="button" data-main-action="sources">Choose a different source path</button></details>';
+    return '<details class="relphi-main-sources" open><summary>Reading sources</summary><div>'+pieces.join('')+'</div><button type="button" data-main-action="sources">Choose a different source path</button></details>';
   }
   function mainComposerDraft(){
     const state=getMainComposer();
@@ -1055,15 +1055,15 @@
     const total=s.questions.reduce((sum,q)=>sum+(q.linkTo===''?q.cards:1),0);
     const valid=editable&&s.questions.length>0&&s.questions.every(q=>q.text.trim())&&total<=MAX_POSITIONS;
     host.innerHTML='<div class="relphi-main-composer-heading"><strong>Questions</strong><span>'+(locked?'Reading in progress':hasCards?'Free cards on board':'Ready when you are')+'</span></div>'+
-      '<div data-main-question-form class="relphi-main-question-form"><label for="relphiMainQuestion" class="sr-only">Your question</label><textarea id="relphiMainQuestion" rows="2" placeholder="Type your question…" '+(!editable&&!canClarify?'disabled':'')+'>'+escapeHtml(mainComposerInputDraft)+'</textarea><button type="button" data-main-action="append" '+(!editable&&!canClarify?'disabled':'')+'>'+(canClarify?'Add clarifier':'Add question')+'</button></div>'+
+      '<div data-main-question-form class="relphi-main-question-form"><textarea aria-label="Your question" id="relphiMainQuestion" rows="2" placeholder="Type your question…" '+(!editable&&!canClarify?'disabled':'')+'>'+escapeHtml(mainComposerInputDraft)+'</textarea><button type="button" data-main-action="append" '+(!editable&&!canClarify?'disabled':'')+'>'+(canClarify?'Add clarifier':'Add question')+'</button></div>'+
       '<div class="relphi-main-defaults" aria-label="Sticky draw settings">'+
-        '<label>Sub-pack <select data-main-default="pack" '+(!editable?'disabled':'')+'>'+packOptions(s.defaults.pack)+'</select></label>'+
+        '<label>Sub-pack <select data-main-default="pack" '+(!editable?'disabled':'')+'>'+packOptions(s.defaults.pack)+'</select></label><button type="button" data-main-action="create-pack" aria-label="Create sub-pack" title="Create sub-pack" '+(!editable?'disabled':'')+'>+</button>'+
         '<label>Cards <input data-main-default="cards" type="number" min="1" max="12" value="'+s.defaults.cards+'" '+(!editable?'disabled':'')+'></label>'+
         '<label><input data-main-default="reversals" type="checkbox" '+(s.defaults.reversals?'checked':'')+' '+(!editable?'disabled':'')+'> Reversals</label>'+
         '<label><input data-main-default="repeats" type="checkbox" '+(s.defaults.repeats?'checked':'')+' '+(!editable?'disabled':'')+'> Repeats</label>'+
       '</div>'+
       '<div class="relphi-main-question-tools"><button type="button" data-main-action="select-all" '+(!editable||!questions.length?'disabled':'')+'>Select all</button>'+
-        '<button type="button" data-main-action="copy" '+(!questions.length?'disabled':'')+' aria-label="Copy questions">Copy</button>'+
+        '<button type="button" data-main-action="copy" '+(!questions.length?'disabled':'')+' aria-label="Copy questions" title="Copy questions"></button>'+
         '<button type="button" data-main-action="up" '+(!editable||!selected.size?'disabled':'')+' aria-label="Move selected questions up">↑</button>'+
         '<button type="button" data-main-action="down" '+(!editable||!selected.size?'disabled':'')+' aria-label="Move selected questions down">↓</button>'+
         '<button type="button" data-main-action="delete" '+(!editable||!selected.size?'disabled':'')+' aria-label="Delete selected questions">Delete</button>'+
@@ -1110,6 +1110,12 @@
         const action=button.dataset.mainAction,s=getMainComposer();
         if(action==='append'){mainAddQuestion(root);return;}
         if(action==='sources'){openOptions(root);return;}
+    if(action==='create-pack'){
+      window.RelphiCustomSubpacks?.open?.({onSave:pack=>{
+        s.defaults.pack='custom:'+pack.id;saveMainComposer();renderMainComposer(root,true);
+      }});
+      return;
+    }
         if(action==='select-all'){s.selected=s.questions.map((_,i)=>i);renderMainComposer(root,true);return;}
         if(action==='add'){host.querySelector('#relphiMainQuestion')?.focus();return;}
         if(action==='up'||action==='down'){moveMainQuestions(action==='up'?-1:1,host);renderMainComposer(root,true);return;}
