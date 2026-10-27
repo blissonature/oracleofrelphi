@@ -1146,7 +1146,7 @@
           (entry.association?'<p class="relphi-main-reading-association">'+escapeHtml(entry.association)+'</p>':'')+
           (entry.interpretation?'<p class="relphi-main-reading-interpretation">'+escapeHtml(entry.interpretation)+'</p>':'')+
           '</article>').join('');
-      return '<li class="relphi-main-question-row">'+
+      return '<li class="relphi-main-question-row'+(editable?'':' is-reading')+'">'+
         (editable?'<input type="checkbox" data-main-select="'+index+'" aria-label="Select question '+(index+1)+'" '+(selected.has(index)?'checked':'')+'>':'')+
         '<span class="relphi-main-question-number">'+(index+1)+'</span>'+
         '<div class="relphi-main-question-content">'+
