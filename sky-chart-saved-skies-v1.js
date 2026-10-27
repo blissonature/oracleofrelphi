@@ -174,21 +174,22 @@
     const value=payload(slot);window.RelphiSkyCardShell?.ensure?.(slot,value);window.RelphiSkyCardShell?.openDrawer?.(slot,'where');
     requestAnimationFrame(()=>requestAnimationFrame(()=>{if(document.querySelector(`#skyFoundation${slot} .sky-where-when-editor[data-slot="${slot}"]`))return;window.dispatchEvent(new CustomEvent('relphi:sky-drawer-opened',{detail:{slot,drawer:'where'}}))}));
   }
+  function reportCleared(slot,action){window.dispatchEvent(new CustomEvent('relphi:sky-working-slot-cleared',{detail:{slot,action}}))}
   function newSky(slot){
     if(!SLOT_KEYS[slot])return false;closeWhereWhenEditor(slot);
     if(slot==='B'){
       try{localStorage.removeItem(SLOT_KEYS.B)}catch(_){return false}
-      dispatchStorage('B');
+      reportCleared('B','new');dispatchStorage('B');
       window.RelphiSkySlotControls?.addSkyB?.();
       window.dispatchEvent(new CustomEvent('relphi:sky-name-updated',{detail:{slot:'B',name:'Where and When',source:'new-sky'}}));
       schedule();return true;
     }
-    if(!writeJson(SLOT_KEYS.A,blankPayload()))return false;dispatchStorage('A');window.dispatchEvent(new CustomEvent('relphi:sky-name-updated',{detail:{slot:'A',name:'Where and When',source:'new-sky'}}));openBlankWhereWhen('A');return true;
+    if(!writeJson(SLOT_KEYS.A,blankPayload()))return false;reportCleared('A','new');dispatchStorage('A');window.dispatchEvent(new CustomEvent('relphi:sky-name-updated',{detail:{slot:'A',name:'Where and When',source:'new-sky'}}));openBlankWhereWhen('A');return true;
   }
   function removeSky(slot){
     if(!SLOT_KEYS[slot])return false;closeWhereWhenEditor(slot);
     if(slot==='B'){window.RelphiSkySlotControls?.removeSkyB?.();return true}
-    try{localStorage.removeItem(SLOT_KEYS.A)}catch(_){return false}dispatchStorage('A');window.RelphiSkyCardShell?.sync?.('A',null);window.dispatchEvent(new CustomEvent('relphi:sky-name-updated',{detail:{slot:'A',name:'Where and When',source:'remove-sky'}}));return true;
+    try{localStorage.removeItem(SLOT_KEYS.A)}catch(_){return false}reportCleared('A','remove');dispatchStorage('A');window.RelphiSkyCardShell?.sync?.('A',null);window.dispatchEvent(new CustomEvent('relphi:sky-name-updated',{detail:{slot:'A',name:'Where and When',source:'remove-sky'}}));return true;
   }
   function addSkyB(){window.RelphiSkySlotControls?.addSkyB?.()}
   function shortMeta(record){const profile=record?.calcProfile&&typeof record.calcProfile==='object'?record.calcProfile:{},date=String(profile.dateTime||record?.dateTime||'').slice(0,10),location=String(profile.location||record?.location||'').trim();return[date,location].filter(Boolean).join(' · ')}
