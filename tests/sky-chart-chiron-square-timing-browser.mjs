@@ -58,17 +58,30 @@ try{
   await row.click({force:true});
   await row.locator('.inline-rel-detail').waitFor({state:'visible',timeout:10000});
   await row.locator('[data-inline-progressive-token="left-placement"]').waitFor({state:'attached'});
-  const timing=await page.waitForFunction(sel=>{
+  const checkTiming=page.waitForFunction(sel=>{
    const row=document.querySelector(sel),slot=row?.querySelector('.inline-rel-transit-window');
    return slot?.dataset.transitKind==='dynamic'&&slot.querySelectorAll('.inline-rel-transit-row').length>=4;
-  },selector,{timeout:30000}).then(()=>page.evaluate(sel=>{
+  },selector,{timeout:15000});
+  try{await checkTiming}catch(error){
+    const debug=await page.evaluate(sel=>{
+      const row=document.querySelector(sel);
+      const meta=row?.querySelector('.inline-rel-transit-window');
+      return{hasRow:!!row,rowOpen:row?.classList.contains('is-inline-expanded'),
+        metaKind:meta?.dataset.transitKind,metaText:meta?.textContent,
+        model:row?window.RelphiRelationshipTransitMeta?.exportTimingForRow?.(row):null,
+        motion:window.RelphiSkyRetrograde?.forPlacement?.('B','chiron'),
+        details:row?.querySelector('.inline-rel-detail')?.outerHTML.slice(0,600)};
+    },selector);
+    console.log('TIMING_FAILURE_DIAGNOSTIC',width,JSON.stringify({debug,errors}));throw error;
+  }
+  const timing=await page.evaluate(sel=>{
    const row=document.querySelector(sel),slot=row.querySelector('.inline-rel-transit-window');
    const fields=[...slot.querySelectorAll('.inline-rel-transit-row')].map(x=>({
      key:x.querySelector('b')?.textContent.trim(),value:x.querySelector('span')?.textContent.trim()
    }));
    const t=window.RelphiRelationshipTransitMeta.exportTimingForRow(row);
    return{kind:slot.dataset.transitKind,fields,model:t};
-  },selector));
+  },selector);
   assert.equal(timing.kind,'dynamic');
   assert.equal(timing.model.kind,'dynamic');
   assert.ok(Number.isFinite(timing.model.startMs)&&Number.isFinite(timing.model.endMs));
