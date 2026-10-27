@@ -674,7 +674,7 @@
   function freeSettingsAreDefault(draft=freeSettingsDraftFromState()) {
     // Sticky user preferences, not the old shipped defaults, define an untouched board.
     const defaults=getMainComposer().defaults;
-    return String(draft.pack||'full')===String(defaults.pack||'full') &&
+    return String(draft.pack||'full')==='full' &&
       !(draft.keywordTags||[]).length &&
       draft.keywordMatchMode!=='all' &&
       // Free Draw has no position stickers; their stored visibility is irrelevant.
