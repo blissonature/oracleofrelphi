@@ -895,6 +895,57 @@
     ];
     return '<details class="relphi-main-sources" open><summary>Reading sources</summary><div>'+pieces.join('')+'</div><button type="button" data-main-action="sources">Choose a different source path</button></details>';
   }
+
+  // First-class sources appear above the question workspace and stay in chrome.
+  function mainComposerPreQuestionsMarkup(root,locked,hasCards){
+    const s=getMainComposer(),editable=!locked&&!hasCards;
+    const selected=templateById(s.selectedTemplate);
+    const choice=(key,label,values)=>{
+      const current=String(s.building[key]||'');
+      const options='<option value="">Any '+escapeHtml(label.toLowerCase())+'</option>'+
+        values.map(([value,display])=>'<option value="'+escapeHtml(String(value))+'" '+(current===String(value)?'selected':'')+'>'+escapeHtml(String(display))+'</option>').join('');
+      return '<label>'+escapeHtml(label)+'<select data-main-building="'+key+'" aria-label="Building Block: '+escapeHtml(label)+'" '+(editable?'':'disabled')+'>'+options+'</select></label>';
+    };
+    const templateOptions='<option value="">No template</option>'+allTemplates().map(t=>
+      '<option value="'+escapeHtml(t.id)+'" '+(s.selectedTemplate===t.id?'selected':'')+'>'+escapeHtml(t.name)+'</option>'
+    ).join('');
+    const advanced=!!(selected?.recursion||selected?.helper);
+    const count=selected?.positions?.length||0;
+    const chosenBlocks=Object.entries(s.building).filter(([,v])=>String(v||'').trim());
+    const connected=astrologySharedConnectorSky();
+    const sky=window.RelphiSkyConnector?.context?.();
+    const savedSky=String(connected?.name||sky?.savedSky?.name||'');
+    const prior=s.sources?.skies||[];
+    const skyLabel=locked&&prior.length?prior.join(' · '):(savedSky||'No saved sky connected');
+    return '<div class="relphi-main-input-paths" aria-label="Reading sources before questions">'+
+      '<section class="relphi-main-input-path" aria-label="Templates">'+
+        '<div class="relphi-main-input-heading"><strong>Templates</strong><small>'+(selected?escapeHtml(selected.name):'Choose a spread or start without one')+'</small></div>'+
+        '<div class="relphi-main-template-row">'+
+          '<label class="sr-only" for="relphiMainTemplate">Choose a template</label>'+
+          '<select id="relphiMainTemplate" data-main-template aria-label="Choose a template" '+(editable?'':'disabled')+'>'+templateOptions+'</select>'+
+          '<button type="button" data-main-action="template-add" '+(!editable||!selected?'disabled':'')+'>'+(advanced?'Open method':'Add template questions')+'</button>'+
+        '</div>'+
+        (selected?'<small class="relphi-main-source-note">'+(advanced?'Guided method: open its original controls.':count+' position'+(count===1?'':'s')+'; adding preserves your existing questions.')+'</small>':'')+
+      '</section>'+
+      '<section class="relphi-main-input-path" aria-label="Building Blocks">'+
+        '<div class="relphi-main-input-heading"><strong>Building Blocks</strong><small>'+(chosenBlocks.length?chosenBlocks.map(([k,v])=>escapeHtml(k+': '+v)).join(' · '):'Compose questions using symbolic correspondences')+'</small></div>'+
+        '<div class="relphi-main-building-grid">'+
+          choice('element','Element',Object.keys(REFERENT_ELEMENTS).map(v=>[v,v]))+
+          choice('planet','Planet',Object.keys(REFERENT_PLANETS).map(v=>[v,v]))+
+          choice('aspect','Aspect',Object.keys(REFERENT_ASPECTS).map(v=>[v,v]))+
+          choice('sign','Sign',Object.keys(REFERENT_SIGNS).map(v=>[v,v]))+
+          choice('house','House',HOUSE_ORDINALS.map((name,i)=>[String(i+1),name+' House']))+
+          choice('need','Universal Human Need',REFERENT_UNIVERSAL_HUMAN_NEEDS.map(v=>[v,v]))+
+        '</div>'+
+        '<button type="button" data-main-action="blocks-add" '+(!editable||!chosenBlocks.length?'disabled':'')+'>Surface questions from Building Blocks</button>'+
+      '</section>'+
+      '<section class="relphi-main-input-path relphi-main-sky-source" aria-label="Sky Connections">'+
+        '<div class="relphi-main-input-heading"><strong>Sky Connections</strong><small>'+escapeHtml(skyLabel)+'</small></div>'+
+        '<button type="button" data-main-action="skies">Configure sky connections</button>'+
+      '</section>'+
+    '</div>';
+  }
+
   function mainComposerDraft(){
     const state=getMainComposer();
     const d=blankDraft();
