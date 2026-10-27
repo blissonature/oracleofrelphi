@@ -124,11 +124,18 @@ try{
        const aNodes=[...chart?.querySelectorAll('[data-layer="placements"] > g[data-sky="A"][data-placement]')||[]];
        const bAspects=[...chart?.querySelectorAll('[data-layer="aspects"] > line[data-relationship-mode="B-B"]')||[]];
        const shown=bAspects.filter(line=>line.getAttribute('stroke')!=='none'&&!line.hidden&&getComputedStyle(line).display!=='none');
+       const bLine=chart?.querySelector('[data-layer="aspects"] > line[data-relationship-mode="B-B"]');
+       const center=window.RelphiSkyWheelSpec?.comparison?.center;
+       const originalAspectRadius=window.RelphiSkyWheelSpec?.role('A')?.inner-1;
+       const endpointRadius=coord=>bLine&&center
+         ?Math.hypot(Number(bLine.getAttribute('x'+coord))-center.x,Number(bLine.getAttribute('y'+coord))-center.y)
+         :null;
+       const aspectStartRadius=endpointRadius(1),aspectEndRadius=endpointRadius(2);
        const bHouses=chart?.querySelectorAll('[data-layer="b-houses"] > path[data-house]').length||0;
        const interactiveBHouses=chart?.querySelectorAll('[data-layer="b-houses"] > path[data-interactive="house"]').length||0;
        return{single:chart?.dataset.singleSky,inner:chart?.dataset.innerSky,
          bPlacements:bNodes.length,aPlacements:aNodes.length,bAspects:bAspects.length,
-         paintedBAspects:shown.length,bHouses,interactiveBHouses,
+         paintedBAspects:shown.length,aspectStartRadius,aspectEndRadius,originalAspectRadius,bHouses,interactiveBHouses,
          viewBoxWidth:chart?.viewBox.baseVal.width,html:document.getElementById('skyFoundationWheelMount')?.textContent?.slice(0,150)};
      });
      assert.equal(wheel.single,'B','Empty Sky A must display standalone Sky B wheel: '+JSON.stringify(wheel));
@@ -136,6 +143,13 @@ try{
      assert.ok(wheel.bPlacements>8,'Retained B placements must be visible: '+JSON.stringify(wheel));
      assert.equal(wheel.aPlacements,0,'Blank A cannot contribute placements');
      assert.ok(wheel.bAspects>0&&wheel.paintedBAspects>0,'Retained B↔B relationships must draw aspects');
+     // In the original two-sky wheel every aspect begins and ends at the
+     // canonical inner-circle radius, regardless of which sky its planets occupy.
+     // The B-only path must not relocate endpoints onto B's outer house ring.
+     assert.ok(Math.abs(wheel.aspectStartRadius-wheel.originalAspectRadius)<.01,
+       'Aspect start must use the original inner circle: '+JSON.stringify(wheel));
+     assert.ok(Math.abs(wheel.aspectEndRadius-wheel.originalAspectRadius)<.01,
+       'Aspect end must use the original inner circle: '+JSON.stringify(wheel));
      assert.equal(wheel.bHouses,cfg.bKnownTime?12:0,'Use B house cusps only when B time is known');
      if(cfg.bKnownTime){
        assert.equal(wheel.interactiveBHouses,12,'B houses remain explorable while A editor is open');
