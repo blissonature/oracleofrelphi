@@ -71,7 +71,7 @@ async function drawCards(page,count){
   for(let i=0;i<count;i+=1){
     await page.click('#drawRandomRowCard');
     const attune=page.locator('.relphi-attune-reader [data-attune-random]');
-    if(await attune.isVisible().catch(()=>false))await attune.click();
+    if(await attune.waitFor({state:'visible',timeout:2500}).then(()=>true).catch(()=>false))await attune.click();
     await page.waitForFunction(expected => document.querySelectorAll('#shortListPanel .card-row-board [data-row-card]').length===expected,i+1);
     const focus=page.locator('.relphi-focus-reader');
     try {
