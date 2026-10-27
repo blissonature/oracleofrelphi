@@ -1,0 +1,38 @@
+name: Sky Chart cleared working-sky relationships
+on:
+  pull_request:
+    paths:
+      - 'sky-chart-saved-skies-v1.js'
+      - 'sky-chart-slot-card-controls-v1.js'
+      - 'sky-chart-working-sky-relationship-clear-v1.js'
+      - 'sky-chart.html'
+      - 'tests/sky-chart-working-sky-relationship-clear-browser.mjs'
+      - '.github/workflows/sky-chart-working-sky-relationship-clear.yml'
+  push:
+    paths:
+      - 'sky-chart-saved-skies-v1.js'
+      - 'sky-chart-slot-card-controls-v1.js'
+      - 'sky-chart-working-sky-relationship-clear-v1.js'
+      - 'sky-chart.html'
+      - 'tests/sky-chart-working-sky-relationship-clear-browser.mjs'
+      - '.github/workflows/sky-chart-working-sky-relationship-clear.yml'
+jobs:
+  browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: |
+          node --check sky-chart-saved-skies-v1.js
+          node --check sky-chart-slot-card-controls-v1.js
+          node --check sky-chart-working-sky-relationship-clear-v1.js
+          node --check tests/sky-chart-working-sky-relationship-clear-browser.mjs
+      - run: |
+          npm install --no-save playwright@1.52.0 luxon@3 suncalc@1.9.0
+          npx playwright install chromium
+      - run: |
+          python3 -m http.server 4173 >/tmp/working-sky-reset-server.log 2>&1 &
+          node tests/sky-chart-working-sky-relationship-clear-browser.mjs
