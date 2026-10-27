@@ -960,7 +960,14 @@
     d.reversals=state.defaults.reversals;
     d.repeats=state.defaults.repeats;
     d.stickers=true;
-    d.templateName='Unnamed Template';
+    const chosen=templateById(state.selectedTemplate);
+    if(chosen&&!chosen.recursion&&!chosen.helper){
+      // Copy authored geometry where the positions fit; otherwise retain the
+      // template as provenance while Bespoke grows a safe generic arrangement.
+      d.basedOnTemplateId=chosen.id;
+      if(chosen.positions.length===d.labels.length)d.templateName=chosen.name;
+    }
+    if(!d.templateName)d.templateName='Unnamed Template';
     return d;
   }
   function syncMainFreeRules(root=panel()){
