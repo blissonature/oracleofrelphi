@@ -137,7 +137,7 @@ try{
          bPlacements:bNodes.length,aPlacements:aNodes.length,bAspects:bAspects.length,
          paintedBAspects:shown.length,aspectStartRadius,aspectEndRadius,originalAspectRadius,bHouses,interactiveBHouses,
          viewBoxWidth:chart?.viewBox.baseVal.width,
-          expectedStandaloneWidth:2*(window.RelphiSkyWheelSpec.comparison.zodiac.outer+24),
+          expectedStandaloneWidth:2*(window.RelphiSkyWheelSpec.comparison.zodiac.outer+window.RelphiSkyWheelSpec.comparison.placementBubbleRadius+24),
           innerRadius:Number(chart?.dataset.singleSkyInnerRadius),
           expectedStandaloneInner:Number(window.RelphiSkyWheelSpec.role('A').inner),
           html:document.getElementById('skyFoundationWheelMount')?.textContent?.slice(0,150)};
