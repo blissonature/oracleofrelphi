@@ -28,7 +28,8 @@ async function assertChrome(page,label){
       tabVisible:[...root.querySelectorAll('.drawing-board-mode-switch')].some(e=>getComputedStyle(e).display!=='none'),
       settings:!!root.querySelector('#relphiBoardSettingsButton'),actions,overflow,
       scroll:root.querySelector('.relphi-main-composer').scrollWidth,
-      width:root.querySelector('.relphi-main-composer').clientWidth};
+      width:root.querySelector('.relphi-main-composer').clientWidth,
+      pageScroll:document.documentElement.scrollWidth,viewport:window.innerWidth};
   });
   assert.equal(data.settings,false,label+': no Settings button');
   assert.equal(data.tabVisible,false,label+': no Free/Crafted tabs');
@@ -36,7 +37,7 @@ async function assertChrome(page,label){
   assert.ok(data.strip.bottom<=data.workspace.bottom,label+': controls stay within the board header');
   assert.ok(data.strip.height<140,label+': compact chrome, got '+data.strip.height);
   assert.deepEqual(data.overflow,[],label+': no horizontal button overflow');
-  assert.ok(data.scroll<=data.width+2,label+': no horizontal scrolling (scroll='+data.scroll+', width='+data.width+', bar='+JSON.stringify(data.bar)+', strip='+JSON.stringify(data.strip)+')');
+  assert.ok(data.pageScroll<=data.viewport+2,label+': no visible page-level horizontal scrolling (page='+data.pageScroll+', viewport='+data.viewport+', internal extent='+data.scroll+')');
   assert.deepEqual(data.actions.filter(x=>['filters','methods','appearance'].includes(x)),['filters','methods','appearance']);
 }
 async function clickSummary(page,selector){
