@@ -957,9 +957,9 @@
       host.className='relphi-main-composer';
       host.setAttribute('aria-label','Questions and drawing readiness');
       bar.insertAdjacentElement('afterend',host);
-      host.addEventListener('submit',event=>{
-        if(!event.target.matches('[data-main-question-form]'))return;
-        event.preventDefault();
+      // Tarot Ledger owns a parent form. Use an explicit button action rather
+      // than a nested submit, which would submit the Ledger and erase the draft.
+      const submitQuestion=()=>{
         const field=host.querySelector('#relphiMainQuestion');
         const text=String(field?.value||'').trim();
         if(!text)return;
@@ -976,10 +976,10 @@
         if(field)field.value='';
         renderMainComposer(root,true);
         host.querySelector('#relphiMainQuestion')?.focus();
-      });
+      };
       host.addEventListener('keydown',event=>{
         if(event.target.id==='relphiMainQuestion'&&event.key==='Enter'&&(event.ctrlKey||event.metaKey)){
-          event.preventDefault();host.querySelector('[data-main-question-form]')?.requestSubmit();
+          event.preventDefault();submitQuestion();
         }
       });
       host.addEventListener('input',event=>{
@@ -1018,6 +1018,7 @@
         const button=event.target.closest('[data-main-action]');
         if(!button)return;
         const action=button.dataset.mainAction,s=getMainComposer();
+        if(action==='append'){submitQuestion();return;}
         if(action==='sources'){openOptions(root);return;}
         if(action==='select-all'){s.selected=s.questions.map((_,i)=>i);renderMainComposer(root,true);return;}
         if(action==='add'){host.querySelector('#relphiMainQuestion')?.focus();return;}
@@ -1099,7 +1100,7 @@
     const total=s.questions.reduce((sum,q)=>sum+(q.linkTo===''?q.cards:1),0);
     const valid=editable&&s.questions.length>0&&s.questions.every(q=>q.text.trim())&&total<=MAX_POSITIONS;
     host.innerHTML='<div class="relphi-main-composer-heading"><strong>Questions</strong><span>'+(locked?'Reading in progress':hasCards?'Free cards on board':'Ready when you are')+'</span></div>'+
-      '<form data-main-question-form class="relphi-main-question-form"><label for="relphiMainQuestion" class="sr-only">Your question</label><textarea id="relphiMainQuestion" rows="2" placeholder="Type your question…" '+(!editable&&!canClarify?'disabled':'')+'></textarea><button type="submit" '+(!editable&&!canClarify?'disabled':'')+'>'+(canClarify?'Add clarifier':'Add question')+'</button></form>'+
+      '<div data-main-question-form class="relphi-main-question-form"><label for="relphiMainQuestion" class="sr-only">Your question</label><textarea id="relphiMainQuestion" rows="2" placeholder="Type your question…" '+(!editable&&!canClarify?'disabled':'')+'></textarea><button type="submit" '+(!editable&&!canClarify?'disabled':'')+'>'+(canClarify?'Add clarifier':'Add question')+'</button></form>'+
       '<div class="relphi-main-defaults" aria-label="Sticky draw settings">'+
         '<label>Sub-pack <select data-main-default="pack" '+(!editable?'disabled':'')+'>'+packOptions(s.defaults.pack)+'</select></label>'+
         '<label>Cards <input data-main-default="cards" type="number" min="1" max="12" value="'+s.defaults.cards+'" '+(!editable?'disabled':'')+'></label>'+
