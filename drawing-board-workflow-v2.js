@@ -931,6 +931,7 @@
           '<select id="relphiMainTemplate" data-main-template aria-label="Choose a template" '+(editable?'':'disabled')+'>'+templates+'</select>'+
           '<button type="button" data-main-action="template-add" '+(!editable||!chosen?'disabled':'')+'>'+(advanced?'Open method':'Add positions')+'</button></div>'+
           (chosen?'<small class="relphi-main-source-note">'+(advanced?'Guided method uses its own setup.':chosen.positions.length+' positions.')+'</small>':'')+
+          '<button type="button" class="relphi-main-advanced-source" data-main-action="template-method">Advanced template options</button>'+ 
           '<details class="relphi-main-save-template"><summary>Save questions as a template</summary>'+
             '<div class="relphi-main-save-row"><label>Template name <input id="relphiMainTemplateName" type="text" maxlength="60" placeholder="Unnamed Template" '+(!editable?'disabled':'')+'></label>'+
             '<button type="button" data-main-action="save" '+(!editable||!s.questions.length?'disabled':'')+'>Save template</button></div></details>'+
@@ -945,7 +946,8 @@
           choice('sign','Sign',Object.keys(REFERENT_SIGNS).map(v=>[v,v]))+
           choice('house','House',HOUSE_ORDINALS.map((name,i)=>[String(i+1),name+' House']))+
           choice('need','Universal Human Need',REFERENT_UNIVERSAL_HUMAN_NEEDS.map(v=>[v,v]))+
-        '</div><button type="button" data-main-action="blocks-add" '+(!editable||!blocks.length?'disabled':'')+'>Surface questions</button></div>'+
+        '</div><div class="relphi-main-popup-actions"><button type="button" data-main-action="blocks-add" '+(!editable||!blocks.length?'disabled':'')+'>Surface questions</button>'+ 
+        '<button type="button" data-main-action="blocks-method">Advanced Building Blocks</button></div></div>'+
       '</details>'+
     '</div>';
   }
@@ -1271,6 +1273,16 @@
         }
         if(action==='close-panel'){cancelBoardSettings(root);return;}
 
+        if(action==='template-method'||action==='blocks-method'){
+          const next=action==='template-method'?'templates':'blocks';
+          if(settingsOpen)cancelBoardSettings(root);
+          openOptions(root);
+          if(!optionsSession)beginOptionsSession();
+          switchOptionsPath(optionsSession,next);
+          optionsSession.pathCollapsed=false;
+          renderBoardSettings(root);
+          return;
+        }
         if(action==='template-add'){
           const template=templateById(s.selectedTemplate);
           if(!template||boardHasCraftedStructure(root)||currentCardCount(root))return;
