@@ -68,6 +68,39 @@ async function assertContained(page,label){
     await page.screenshot({path:path.join(out,'drawing-board-main-ready.png'),fullPage:true});
     assert.deepEqual(errors,[],'No browser exceptions on desktop');
 
+
+    // Source controls must precede Questions and actually populate the same list.
+    const sourcesContext=await browser.newContext({viewport:{width:1024,height:840}});
+    const sources=await sourcesContext.newPage();
+    const sourceErrors=[];sources.on('pageerror',error=>sourceErrors.push(String(error)));
+    await openBoard(sources);
+    const order=await sources.locator('.relphi-main-input-heading strong,.relphi-main-composer-heading strong').allTextContents();
+    assert.deepEqual(order,['Templates','Building Blocks','Sky Connections','Questions'],
+      'All source controls must appear in the main chrome before Questions');
+    assert.equal(await sources.locator('#relphiMainTemplate').isVisible(),true,'Template selector directly visible');
+    assert.equal(await sources.locator('[data-main-building="planet"]').isVisible(),true,'Building Block selectors directly visible');
+    await sources.selectOption('#relphiMainTemplate','past-present-future-3');
+    await sources.locator('[data-main-action="template-add"]').click();
+    assert.deepEqual(await sources.locator('[data-main-text]').evaluateAll(nodes=>nodes.map(n=>n.value)),
+      ['Past','Present','Future'],'Template must feed the question list without a mode switch');
+    await sources.selectOption('[data-main-building="sign"]','Libra');
+    await sources.locator('[data-main-action="blocks-add"]').click();
+    assert.equal(await sources.locator('[data-main-text]').count(),6,'Building Block questions append to the same list');
+    assert.equal(await sources.locator('[data-main-default="repeats"]').isChecked(),true);
+    await sources.reload({waitUntil:'domcontentloaded'});
+    if(!(await sources.locator('#shortListPanel').isVisible()))await sources.locator('#relphiOpenDrawingBoardCurrent').click();
+    await sources.locator('#relphiMainTemplate').waitFor({state:'visible'});
+    assert.equal(await sources.locator('#relphiMainTemplate').inputValue(),'past-present-future-3');
+    assert.equal(await sources.locator('[data-main-building="sign"]').inputValue(),'Libra');
+    assert.equal(await sources.locator('[data-main-text]').count(),6,'Template and Building Blocks questions persist');
+    await sources.screenshot({path:path.join(out,'drawing-board-sources-first.png'),fullPage:true});
+    await assertContained(sources,'Sources desktop');
+    await sources.locator('[data-main-action="skies"]').click();
+    await sources.locator('[data-referent-path="astro"]').waitFor({state:'visible'});
+    assert.equal(await sources.locator('.relphi-reading-options-drawer').isVisible(),true,'Sky setup is reachable from main chrome');
+    assert.deepEqual(sourceErrors,[]);
+    await sourcesContext.close();
+
     const mobile=await browser.newContext({viewport:{width:390,height:844},hasTouch:true,isMobile:true});
     const phone=await mobile.newPage();const mobileErrors=[];
     phone.on('pageerror',e=>mobileErrors.push(String(e)));
@@ -76,7 +109,9 @@ async function assertContained(page,label){
     await phone.locator('#relphiMainQuestion').fill('What is unfolding?');
     await phone.locator('.relphi-main-question-form button').tap();
     assert.equal(await phone.locator('.relphi-main-question-row').count(),1);
-    await assertContained(phone,'Mobile');
+    const mobileOrder=await phone.locator('.relphi-main-input-heading strong,.relphi-main-composer-heading strong').allTextContents();
+    assert.deepEqual(mobileOrder,['Templates','Building Blocks','Sky Connections','Questions']);
+        await assertContained(phone,'Mobile');
     await phone.screenshot({path:path.join(out,'drawing-board-main-mobile.png'),fullPage:true});
     await phone.locator('[data-main-action="ready"]').tap();
     await phone.waitForFunction(()=>window.RelphiDrawingBoardOptionsBridge?.capture?.()?.shortListPositionLabels?.length===1,null,{timeout:20000});
