@@ -35,16 +35,12 @@ async function assertContained(page,label){
     const desktop=await browser.newContext({viewport:{width:1280,height:920}});
     const page=await desktop.newPage();
     const errors=[];page.on('pageerror',e=>errors.push(String(e)));
-    page.on('console',m=>{if(m.type()==='error')console.log('CONSOLE_ERROR',m.text())});
-    page.on('framenavigated',f=>console.log('NAVIGATED',f.url().slice(0,220)));
     await openBoard(page);
     assert.equal(await page.locator('.relphi-main-composer').isVisible(),true);
     assert.equal(await page.locator('[data-main-default="repeats"]').isChecked(),true,'Repeats must default ON');
     assert.equal(await page.locator('.relphi-main-question-form').isVisible(),true,'composer is always visible');
     await page.locator('#relphiMainQuestion').fill('What is asking for my attention?');
-    console.log('BEFORE_CLICK',JSON.stringify(await page.evaluate(()=>({value:document.querySelector('#relphiMainQuestion')?.value,active:document.activeElement?.outerHTML.slice(0,180),fingerprint:document.querySelector('.relphi-main-composer')?.dataset.mainFingerprint,html:document.querySelector('.relphi-main-composer')?.outerHTML.slice(0,300)}))));
     await page.locator('.relphi-main-question-form button').click();
-    console.log('AFTER_ADD',JSON.stringify(await page.evaluate(()=>({cards:document.querySelectorAll('[data-main-text]').length,questionList:document.querySelector('.relphi-main-question-list')?.innerHTML,questionInput:document.querySelector('#relphiMainQuestion')?.value,snapshot:{labels:window.RelphiDrawingBoardOptionsBridge?.capture?.()?.shortListPositionLabels,layout:window.RelphiDrawingBoardOptionsBridge?.capture?.()?.rowActiveLayout?.id},local:localStorage.getItem('relphiDrawingBoardMainComposerV1'),html:document.querySelector('.relphi-main-composer')?.outerHTML.slice(0,2100)}))));
     assert.equal(await page.locator('[data-main-text]').count(),1);
     await page.locator('#relphiMainQuestion').fill('What is my next step?');
     await page.locator('.relphi-main-question-form button').click();
