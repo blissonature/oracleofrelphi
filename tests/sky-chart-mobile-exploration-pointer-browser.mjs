@@ -144,7 +144,8 @@ async function aspectPoint(page){
  });
 }
 async function dragPointer(page,target,commit=true){
- const before=await tipPoint(page),handle=await gripPoint(page),session=await page.context().newCDPSession(page);
+ const before=await tipPoint(page),handle=await gripPoint(page);
+ const session=page.__relphiTouchSession||(page.__relphiTouchSession=await page.context().newCDPSession(page));
  const pointerTrace=await page.evaluate(({x,y})=>{
   const g=document.querySelector('#relphiMobileExplorationCursor .relphi-mobile-cursor-cross');
   const find=n=>n?{tag:n.tagName,cls:n.getAttribute?.('class')||'',id:n.id||'',
@@ -183,7 +184,7 @@ async function dragPointer(page,target,commit=true){
  }));
  if(commit)await session.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});
  else await session.send('Input.dispatchTouchEvent',{type:'touchCancel',touchPoints:[]});
- await session.detach();
+ // Keep one CDP touch session for all drags; detaching can disable touch emulation.
  await page.waitForTimeout(150);
  return live;
 }
@@ -224,6 +225,14 @@ try{
    lines:layer?.querySelectorAll('line.sky-house-flashlight-edge').length};
  });
  console.log('MOBILE_HOUSE_PIN',JSON.stringify(pinned));
+ const afterFirstTouch=await page.evaluate(()=>{
+  const p=document.querySelector('#relphiMobileExplorationCursor'),g=p?.querySelector('.relphi-mobile-cursor-cross');
+  return {coarse:matchMedia('(pointer:coarse)').matches,fine:matchMedia('(pointer:fine)').matches,
+   pointerHidden:p?.hidden,pointerDisplay:p&&getComputedStyle(p).display,
+   gripDisplay:g&&getComputedStyle(g).display,gripBox:g?.getBoundingClientRect().toJSON(),
+   pointerConnected:p?.isConnected,aria:document.querySelector('.relphi-mobile-pointer-toggle')?.getAttribute('aria-pressed')};
+ });
+ console.log('AFTER_FIRST_TOUCH',JSON.stringify(afterFirstTouch));
  assert.deepEqual([pinned.sky,pinned.house,pinned.pinned],['A','11','true']);
  assert.equal(pinned.lines,6);
  assert.equal(pinned.bMars,true,'Comparison-sky Mars inside A H11 rays must stay bright');
