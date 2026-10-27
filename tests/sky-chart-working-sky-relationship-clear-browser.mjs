@@ -117,6 +117,7 @@ try{
     // An empty A must leave B's visual wheel, with real B placements
     // and B↔B aspect strokes. Covers both known- and unknown-time B.
     if(cfg.slot==='A'&&cfg.withB){
+     await page.locator('#skyFoundationWheelMount > svg.sky-foundation-wheel[data-single-sky="B"]').waitFor({state:'visible',timeout:20000});
      const wheel=await page.evaluate(()=>{
        const chart=document.querySelector('#skyFoundationWheelMount > svg.sky-foundation-wheel');
        const bNodes=[...chart?.querySelectorAll('[data-layer="placements"] > g[data-sky="B"][data-placement]')||[]];
