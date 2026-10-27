@@ -1014,55 +1014,6 @@
           renderMainComposer(root,true);
         }
       });
-      host.addEventListener('click',async event=>{
-        const button=event.target.closest('[data-main-action]');
-        if(!button)return;
-        const action=button.dataset.mainAction,s=getMainComposer();
-        if(action==='append'){submitQuestion();return;}
-        if(action==='sources'){openOptions(root);return;}
-        if(action==='select-all'){s.selected=s.questions.map((_,i)=>i);renderMainComposer(root,true);return;}
-        if(action==='add'){host.querySelector('#relphiMainQuestion')?.focus();return;}
-        if(action==='up'||action==='down'){moveMainQuestions(action==='up'?-1:1,host);renderMainComposer(root,true);return;}
-        if(action==='delete'){deleteMainQuestions(host);renderMainComposer(root,true);return;}
-        if(action==='copy'){
-          const source=boardHasCraftedStructure(root)?draftFromState():mainComposerDraft();
-          const ok=await writeDrawingBoardClipboard(bespokeQuestionsClipboardText(source));
-          showBoardToast(ok?'Questions copied.':'Copy failed.',{title:'Drawing Board',duration:2000});
-          return;
-        }
-        if(action==='save'){
-          if(!s.questions.length||boardHasCraftedStructure(root))return;
-          const name=String(host.querySelector('#relphiMainTemplateName')?.value||'Unnamed Template').trim()||'Unnamed Template';
-          const draft=mainComposerDraft(),entries=readCustomTemplates();
-          const id='custom-'+slug(name)+'-'+s.questions.length;
-          const positions=genericPositions(draft.labels);
-          positions.forEach((p,i)=>{p.label=draft.labels[i];p.drawOrder=i+1;p.drawScope=draft.positionSettings[i].pack;p.allowRepeats=draft.positionSettings[i].repeats;p.allowReversals=draft.positionSettings[i].reversals;p.cardCount=draft.positionSettings[i].cardCount;});
-          entries.splice(0,entries.length,...entries.filter(x=>x.id!==id));
-          entries.push({version:1,id,name,cardCount:positions.length,source:'custom',editable:true,basedOn:null,positions,
-            rules:{allowReversals:draft.reversals,allowRepeats:draft.repeats,drawScope:'full'},
-            appearance:templateAppearanceFromSnapshot()});
-          writeCustomTemplates(entries);
-          showBoardToast('Saved template: '+name,{title:'Drawing Board',duration:2600});
-          return;
-        }
-        if(action==='ready'){
-          if(boardHasCraftedStructure(root)||currentCardCount(root))return;
-          if(!s.questions.length||s.questions.some(q=>!q.text.trim()))return;
-          const draft=mainComposerDraft(),expanded=expandBespokeDraftForLaunch(draft);
-          if(!expanded.draft){
-            showBoardToast('This reading requests '+expanded.total+' cards. Maximum '+MAX_POSITIONS+'.',{title:'Questions',duration:4500});return;
-          }
-          if(settingsOpen)cancelBoardSettings(root);
-          optionsSession=null;
-          beginOptionsSession();
-          optionsSession.path='bespoke';
-          optionsSession.pathCollapsed=false;
-          optionsSession.draft=draft;
-          mainReadSources(optionsSession);
-          applyOptions(root);
-          renderMainComposer(root,true);
-        }
-      });
     }
     const s=getMainComposer();
     const locked=boardHasCraftedStructure(root);
@@ -1119,6 +1070,84 @@
         '<span aria-live="polite">'+(locked?questions.length+' question positions on the board':hasCards?'Clear the free cards to begin a question reading':s.questions.length+' question'+(s.questions.length===1?'':'s')+' · '+total+' card'+(total===1?'':'s'))+'</span>'+
         '<button type="button" data-main-action="ready" class="primary" '+(!valid?'disabled':'')+'>'+(locked?'Reading ready':'Ready to draw')+'</button></div>'+
       mainComposerSourceMarkup(root,locked);
+  }
+
+
+  function mainAddQuestion(root=panel()){
+    const host=root?.querySelector('.relphi-main-composer');
+    const field=host?.querySelector('#relphiMainQuestion');
+    const text=String(field?.value||'').trim();
+    if(!text||!root)return;
+    if(boardHasCraftedStructure(root)){
+      if(persistedCraftedPath(root)==='bespoke'&&appendBespokeQuestion(text)){
+        field.value='';renderMainComposer(root,true);
+      }
+      return;
+    }
+    const state=getMainComposer();
+    if(currentCardCount(root)||state.questions.length>=MAX_POSITIONS)return;
+    state.questions.push({...mainQuestionDefaults(),text});
+    state.selected=[];
+    saveMainComposer();
+    field.value='';
+    renderMainComposer(root,true);
+    host.querySelector('#relphiMainQuestion')?.focus();
+  }
+  // Catch toolbar actions before Tarot Ledger's legacy click handlers rerender
+  // the board. The composer may be recreated, so listeners must be stable.
+  async function mainComposerGlobalClick(event){
+    const button=event.target.closest?.('#shortListPanel .relphi-main-composer [data-main-action]');
+    if(!button)return;
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    const host=button.closest('.relphi-main-composer');
+    const root=panel();
+    if(!root||!host)return;
+        const action=button.dataset.mainAction,s=getMainComposer();
+        if(action==='append'){mainAddQuestion(root);return;}
+        if(action==='sources'){openOptions(root);return;}
+        if(action==='select-all'){s.selected=s.questions.map((_,i)=>i);renderMainComposer(root,true);return;}
+        if(action==='add'){host.querySelector('#relphiMainQuestion')?.focus();return;}
+        if(action==='up'||action==='down'){moveMainQuestions(action==='up'?-1:1,host);renderMainComposer(root,true);return;}
+        if(action==='delete'){deleteMainQuestions(host);renderMainComposer(root,true);return;}
+        if(action==='copy'){
+          const source=boardHasCraftedStructure(root)?draftFromState():mainComposerDraft();
+          const ok=await writeDrawingBoardClipboard(bespokeQuestionsClipboardText(source));
+          showBoardToast(ok?'Questions copied.':'Copy failed.',{title:'Drawing Board',duration:2000});
+          return;
+        }
+        if(action==='save'){
+          if(!s.questions.length||boardHasCraftedStructure(root))return;
+          const name=String(host.querySelector('#relphiMainTemplateName')?.value||'Unnamed Template').trim()||'Unnamed Template';
+          const draft=mainComposerDraft(),entries=readCustomTemplates();
+          const id='custom-'+slug(name)+'-'+s.questions.length;
+          const positions=genericPositions(draft.labels);
+          positions.forEach((p,i)=>{p.label=draft.labels[i];p.drawOrder=i+1;p.drawScope=draft.positionSettings[i].pack;p.allowRepeats=draft.positionSettings[i].repeats;p.allowReversals=draft.positionSettings[i].reversals;p.cardCount=draft.positionSettings[i].cardCount;});
+          entries.splice(0,entries.length,...entries.filter(x=>x.id!==id));
+          entries.push({version:1,id,name,cardCount:positions.length,source:'custom',editable:true,basedOn:null,positions,
+            rules:{allowReversals:draft.reversals,allowRepeats:draft.repeats,drawScope:'full'},
+            appearance:templateAppearanceFromSnapshot()});
+          writeCustomTemplates(entries);
+          showBoardToast('Saved template: '+name,{title:'Drawing Board',duration:2600});
+          return;
+        }
+        if(action==='ready'){
+          if(boardHasCraftedStructure(root)||currentCardCount(root))return;
+          if(!s.questions.length||s.questions.some(q=>!q.text.trim()))return;
+          const draft=mainComposerDraft(),expanded=expandBespokeDraftForLaunch(draft);
+          if(!expanded.draft){
+            showBoardToast('This reading requests '+expanded.total+' cards. Maximum '+MAX_POSITIONS+'.',{title:'Questions',duration:4500});return;
+          }
+          if(settingsOpen)cancelBoardSettings(root);
+          optionsSession=null;
+          beginOptionsSession();
+          optionsSession.path='bespoke';
+          optionsSession.pathCollapsed=false;
+          optionsSession.draft=draft;
+          mainReadSources(optionsSession);
+          applyOptions(root);
+          renderMainComposer(root,true);
+        }
   }
 
   function ensureBoardChrome(root=panel()) {
@@ -6038,6 +6067,7 @@
   window.RelphiAppendBespokeQuestion = appendBespokeQuestion;
   window.RelphiDrawingBoardEnsureTopActions = ensureBoardChrome;
 
+  window.addEventListener('click',mainComposerGlobalClick,true);
   window.addEventListener('click',globalCapture,true);
   document.addEventListener('keydown',event=>{
     const reader=document.querySelector('.relphi-focus-reader');
