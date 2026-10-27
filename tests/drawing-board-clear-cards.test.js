@@ -21,15 +21,15 @@ async function openBoard(page){
       bar:!!bar,
       title:bar?.querySelector('.relphi-board-command-title strong')?.textContent?.trim(),
       actions:Array.from(actions?.querySelectorAll(':scope > button')||[]).map(node=>node.id),
-      labels:Array.from(actions?.querySelectorAll(':scope > button')||[]).map(node=>node.textContent.trim()),
+      labels:Array.from(actions?.querySelectorAll(':scope > button')||[]).map(node=>node.getAttribute('aria-label')||node.textContent.trim()),
       settingsExpanded:bar?.querySelector('#relphiBoardSettingsButton')?.getAttribute('aria-expanded'),
       legacyRows:document.querySelectorAll('#shortListPanel .relphi-global-board-actions').length
     };
   });
   assert.equal(chrome.bar,true,'Drawing Board must have one command bar');
   assert.equal(chrome.title,'Drawing Board','command bar owns the Drawing Board title');
-  assert.deepEqual(chrome.actions,['clearShortListCardsOnly','undoShortList','redoShortList','drawRandomRowCard'],'right actions must be Clear, Undo, Redo, Draw');
-  assert.deepEqual(chrome.labels,['Clear','Undo','Redo','Draw'],'right action labels must match the redesign');
+  assert.deepEqual(chrome.actions,['relphiResetBoard','undoShortList','redoShortList','clearShortListCardsOnly','drawRandomRowCard'],'right actions must be Reset, Undo, Redo, Clear, Draw');
+  assert.deepEqual(chrome.labels,['Restore default settings','Undo','Redo','Clear the cards without changing settings','Draw a card'],'right actions must provide clear accessible labels');
   assert.equal(chrome.settingsExpanded,'false','Settings starts closed');
   assert.equal(chrome.legacyRows,0,'legacy global action rows must be removed');
 }
@@ -37,6 +37,8 @@ async function openBoard(page){
 async function applyTemplate(page,id){
   await page.click('#relphiBoardSettingsButton');
   await page.click('#drawingBoardOptionsButton');
+  if(!(await page.locator('#relphiSpreadTemplateSelect').isVisible().catch(()=>false)))
+    await page.click('[data-referent-path="templates"]');
   await page.waitForSelector('#relphiSpreadTemplateSelect',{state:'visible'});
   await page.selectOption('#relphiSpreadTemplateSelect',id);
   await page.click('#relphiApplyOptions');
@@ -68,6 +70,8 @@ async function fillCustomQuestions(page,questions){
 async function drawCards(page,count){
   for(let i=0;i<count;i+=1){
     await page.click('#drawRandomRowCard');
+    const attune=page.locator('.relphi-attune-reader [data-attune-random]');
+    if(await attune.waitFor({state:'visible',timeout:2500}).then(()=>true).catch(()=>false))await attune.click();
     await page.waitForFunction(expected => document.querySelectorAll('#shortListPanel .card-row-board [data-row-card]').length===expected,i+1);
     const focus=page.locator('.relphi-focus-reader');
     try {
@@ -161,20 +165,21 @@ async function assertFreeformClearCardsLeavesZeroSlotBoard(page,expectedCards){
   try {
     const page=await browser.newPage({viewport:{width:390,height:844}});
     await openBoard(page);
-    const workspaceTopBeforeSettings=await page.locator('#shortListPanel .card-row-workspace').evaluate(el=>el.getBoundingClientRect().top);
+    const workspaceTopBeforeSettings=await page.locator('#shortListPanel .card-row-workspace').evaluate(el=>el.getBoundingClientRect().top+window.scrollY);
     await page.click('#relphiBoardSettingsButton');
     await page.waitForSelector('.relphi-board-settings-panel',{state:'visible'});
     const overlayGeometry=await page.evaluate(()=>{
       const workspace=document.querySelector('#shortListPanel .card-row-workspace')?.getBoundingClientRect();
       const settings=document.querySelector('#shortListPanel .relphi-board-settings-panel')?.getBoundingClientRect();
+        const questionChrome=document.querySelector('#shortListPanel .relphi-main-composer')?.getBoundingClientRect();
       return {
-        workspaceTop:workspace?.top||0,
-        overlaps:!!workspace&&!!settings&&settings.bottom>workspace.top&&settings.top<workspace.bottom,
+        workspaceTop:(workspace?.top||0)+window.scrollY,
+        overlaps:!!questionChrome&&!!settings&&settings.bottom>questionChrome.top&&settings.top<questionChrome.bottom,
         position:getComputedStyle(document.querySelector('#shortListPanel .relphi-board-settings-panel')).position
       };
     });
     assert.ok(Math.abs(overlayGeometry.workspaceTop-workspaceTopBeforeSettings)<1,'Opening Settings must not move the Drawing Board workspace');
-    assert.equal(overlayGeometry.overlaps,true,'Settings must cover the Drawing Board workspace');
+    assert.equal(overlayGeometry.overlaps,true,'Settings must overlay the Drawing Board question chrome');
     assert.equal(overlayGeometry.position,'absolute','Settings must be an overlay rather than an in-flow panel');
     assert.equal(await page.locator('#relphiResetBoard').isDisabled(),true,'Reset Board starts disabled on an untouched board');
     assert.equal(await page.locator('#drawingBoardBoardTab').getAttribute('aria-checked'),'true','Free is the default settings mode');
@@ -187,9 +192,8 @@ async function assertFreeformClearCardsLeavesZeroSlotBoard(page,expectedCards){
     assert.equal(await page.locator('#relphiResetBoard').isEnabled(),true,'Reset activates after a setup is confirmed');
     await page.click('#relphiResetBoard');
     assert.equal(await page.locator('#relphiFreePack').inputValue(),'full','Reset restores Full Pack');
-    assert.equal(await page.locator('#relphiFreeLabels').isChecked(),true,'Reset restores Labels');
     assert.equal(await page.locator('#relphiFreeReversals').isChecked(),true,'Reset restores Reversals');
-    assert.equal(await page.locator('#relphiFreeRepeats').isChecked(),false,'Reset restores Repeats off');
+    assert.equal(await page.locator('#relphiFreeRepeats').isChecked(),false,'New visitors reset to shipped Repeats OFF; individual saved preferences are separate');
     await page.click('#relphiCancelFreeSettings');
 
     await applyTemplate(page,'past-present-future-3');
