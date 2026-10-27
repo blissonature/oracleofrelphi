@@ -530,7 +530,65 @@
     return!!(lockedState||rowLockedState);
   }
   function getSelectionOrigin(){return selectionOrigin?{...selectionOrigin}:null}
+
+  // The mobile pointer uses the same hit-testing, selection and isolation owner
+  // as mouse and keyboard. Do not dispatch synthetic mouse/touch events:
+  // those would collide with the wheel's gesture adapters.
+  function virtualPointerTarget(clientX,clientY){
+    if(!Number.isFinite(clientX)||!Number.isFinite(clientY))return null;
+    const wheel=document.querySelector('#skyFoundationWheelMount > svg.sky-foundation-wheel');
+    if(!wheel)return null;
+    const target=document.elementsFromPoint(clientX,clientY).find(node=>wheel.contains(node));
+    return target?interactive({target,clientX,clientY}):null;
+  }
+  function beginVirtualPointer(){
+    wheelOnlyExternal=false;
+    if(lockedState||rowLockedState){
+      lockedState=null;rowLockedState=null;selectionOrigin=null;
+      clearWheelTargets();
+      window.RelphiInlineRelationship?.collapse?.();
+    }
+    rowHoverState=null;
+    hoverState=null;
+    applyState();
+    return true;
+  }
+  function previewVirtualPointer(clientX,clientY){
+    const node=virtualPointerTarget(clientX,clientY);
+    const next=specFrom(node);
+    if(lockedState)return null;
+    if(!same(hoverState,next)){
+      hoverState=next;
+      rowHoverState=null;
+      applyState();
+      showSectorDescription(node,next);
+    }
+    return next?{...next}:null;
+  }
+  function commitVirtualPointer(clientX,clientY){
+    const node=virtualPointerTarget(clientX,clientY);
+    if(node){
+      toggleInteractiveNode(node);
+      return specFrom(node);
+    }
+    hoverState=null;
+    applyState();
+    showSectorDescription(null,null);
+    return null;
+  }
+  function clearVirtualPointer(){
+    if(lockedState)return;
+    hoverState=null;
+    rowHoverState=null;
+    applyState();
+    showSectorDescription(null,null);
+  }
+
   window.RelphiSkyFoundationInteractions=Object.freeze({
+    beginVirtualPointer,
+    previewVirtualPointer,
+    commitVirtualPointer,
+    clearVirtualPointer,
     previewWheel:previewExternalWheel,
     clearWheelPreview:clearExternalWheelPreview,
     toggleWheel:toggleExternalWheel,
