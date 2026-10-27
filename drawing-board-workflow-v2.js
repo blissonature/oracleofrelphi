@@ -1204,7 +1204,7 @@
             '<label>Cards <input data-main-default="cards" type="number" min="1" max="12" value="'+s.defaults.cards+'" '+(!editable?'disabled':'')+'></label>'+
             '<label><input data-main-default="reversals" type="checkbox" '+(s.defaults.reversals?'checked':'')+' '+(!editable?'disabled':'')+'> Reversals</label>'+
             '<label><input data-main-default="repeats" type="checkbox" '+(s.defaults.repeats?'checked':'')+' '+(!editable?'disabled':'')+'> Repeats</label>'+
-          '</div></div></details>'+
+          '</div><button type="button" class="relphi-main-filters-in-options" data-main-action="filters">Keyword / sub-pack filters</button></div></details>'+
       '<button type="button" class="relphi-main-chrome-action" data-main-action="filters" aria-label="Sub-pack keyword filters">Filters</button>'+
       '<button type="button" class="relphi-main-chrome-action" data-main-action="methods" aria-label="Special reading methods">Methods</button>'+
       '<button type="button" class="relphi-main-chrome-action" data-main-action="appearance" aria-label="Board appearance and controls">Board</button>'+
@@ -1219,7 +1219,7 @@
           '<ol class="relphi-main-question-list" aria-label="Reading question list">'+(rows||'<li class="relphi-main-empty">No questions yet.</li>')+'</ol>'+
           '<small class="relphi-main-count-status" aria-live="polite">'+drawInfo+'</small>'+
         '</div></details>'+
-      (!locked?'<button type="button" data-main-action="ready" class="primary relphi-main-ready" '+(!valid?'disabled':'')+'>Ready to draw</button>':'')+
+      (!locked?'<button type="button" data-main-action="ready" class="primary relphi-main-ready" aria-label="Ready to draw" '+(!valid?'disabled':'')+'><span>Ready</span><span class="relphi-main-ready-tail"> to draw</span></button>':'')+
     '</div>';
   }
 
