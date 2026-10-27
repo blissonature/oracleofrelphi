@@ -9,7 +9,7 @@
  const media=matchMedia(query);
  const NS='http://www.w3.org/2000/svg';
  let mount=null,control=null,cursor=null,grip=null,drag=null,tip=null,visible=true,frame=0;
- const TIP_X=5,TIP_Y=6,GRIP_X=43,GRIP_Y=16;
+ const TIP_X=2.5,TIP_Y=3,GRIP_X=21.5,GRIP_Y=8;
  const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
  const controller=()=>window.RelphiSkyFoundationInteractions;
  const wheel=()=>document.querySelector('#skyFoundationWheelMount > svg.sky-foundation-wheel');
@@ -155,11 +155,11 @@
   cursor.setAttribute('aria-label','Draggable exploration cursor');
   // Vector artwork modeled on the user's outlined arrow + four-way move cross.
   // The complete drawing never intercepts a wheel tap; only the cross does.
-  cursor.innerHTML='<svg viewBox="0 0 84 88" width="84" height="88" aria-hidden="true" focusable="false">'
+  cursor.innerHTML='<svg viewBox="0 0 84 88" width="42" height="44" aria-hidden="true" focusable="false">'
     +'<path class="relphi-mobile-cursor-arrow" d="M5 6 L75 46 L50 57 L38 82 Z"/>'
     +'<g class="relphi-mobile-cursor-cross" transform="translate(43 16)">'
     +'<path d="M0 -12 V12 M-12 0 H12 M-5 -7 L0 -12 L5 -7 M-5 7 L0 12 L5 7 M-7 -5 L-12 0 L-7 5 M7 -5 L12 0 L7 5"/>'
-    +'<circle class="relphi-mobile-pointer-touch-area" r="24"/>'
+    +'<circle class="relphi-mobile-pointer-touch-area" r="40"/>'
     +'</g></svg>';
   grip=cursor.querySelector('.relphi-mobile-cursor-cross');
   grip.setAttribute('role','button');
