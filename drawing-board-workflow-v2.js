@@ -3652,7 +3652,7 @@
     return resetBoardGlobal(root);
   }
 
-  function resetBoardGlobal(root = panel(), {openSettings=true} = {}) {
+  function resetBoardGlobal(root = panel(), {openSettings=false} = {}) {
     if(!root)return false;
     openTool='';
     surfaceReadingSession=null;
