@@ -29,6 +29,9 @@ jobs:
           SERVER_PID=$!
           trap 'kill $SERVER_PID || true' EXIT
           node tests/drawing-board-main-composer.test.js
+          node tests/drawing-board-bespoke-mobile-regression.test.js
+          node tests/drawing-board-clear-cards.test.js
+          node tests/drawing-board-keyword-pack.test.js
       - name: Upload screenshots
         if: always()
         uses: actions/upload-artifact@v4
