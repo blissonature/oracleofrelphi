@@ -48,7 +48,7 @@ async function clickSummary(page,selector){
   try{
     const desktop=await browser.newContext({viewport:{width:1280,height:920}});
     const page=await desktop.newPage(),errors=[];
-    page.on('pageerror',e=>errors.push(String(e)));
+    page.on('pageerror',e=>errors.push(String(e.stack||e)));
     await openBoard(page);
     await assertChrome(page,'Desktop');
     assert.equal(await page.locator('[data-main-default="repeats"]').isChecked(),false,'New visitor shipped Repeats OFF');
