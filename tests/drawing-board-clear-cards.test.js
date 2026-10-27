@@ -37,6 +37,8 @@ async function openBoard(page){
 async function applyTemplate(page,id){
   await page.click('#relphiBoardSettingsButton');
   await page.click('#drawingBoardOptionsButton');
+  if(!(await page.locator('#relphiSpreadTemplateSelect').isVisible().catch(()=>false)))
+    await page.click('[data-referent-path="templates"]');
   await page.waitForSelector('#relphiSpreadTemplateSelect',{state:'visible'});
   await page.selectOption('#relphiSpreadTemplateSelect',id);
   await page.click('#relphiApplyOptions');
