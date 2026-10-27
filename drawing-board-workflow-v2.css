@@ -3621,7 +3621,7 @@ body:has(.relphi-attune-reader),body:has(.relphi-focus-reader){
 
 
 /* Permanent Drawing Board composer: Free + Bespoke on the surface, not a tab. */
-#shortListPanel .relphi-board-settings-body>.drawing-board-mode-switch{display:none!important}
+/* Existing advanced source paths remain accessible from Settings; Free is no longer gated behind them. */
 #shortListPanel .relphi-main-composer{
   display:grid!important;gap:.55rem!important;
   padding:.7rem .8rem .78rem!important;background:#fffdf9!important;
