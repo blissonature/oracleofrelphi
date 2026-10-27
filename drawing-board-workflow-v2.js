@@ -844,6 +844,8 @@
         repeats:defaults.repeats!==false
       },
       sources:stored.sources&&typeof stored.sources==='object'?stored.sources:{},
+      selectedTemplate:String(stored.selectedTemplate||''),
+      building:stored.building&&typeof stored.building==='object'?{...stored.building}:{element:'',planet:'',aspect:'',sign:'',house:'',need:''},
       selected:[]
     };
     return mainComposer;
@@ -851,7 +853,8 @@
   function saveMainComposer(){
     const s=getMainComposer();
     try{localStorage.setItem(MAIN_COMPOSER_KEY,JSON.stringify({
-      questions:s.questions,defaults:s.defaults,sources:s.sources
+      questions:s.questions,defaults:s.defaults,sources:s.sources,
+      selectedTemplate:s.selectedTemplate,building:s.building
     }));}catch(_){}
   }
   function mainQuestionDefaults(){
@@ -861,11 +864,12 @@
   function mainReadSources(session){
     if(!session)return;
     const d=session.draft||{};
-    const selected=templateById(d.templateId||d.basedOnTemplateId);
-    const building=session.building||{};
+    const composer=getMainComposer();
+    const selected=templateById(d.templateId||d.basedOnTemplateId||(session.path==='bespoke'?composer.selectedTemplate:''));
+    const building=session.path==='bespoke'?composer.building:(session.building||{});
     const skyA=String(session.astrologySkyASource||'');
     const skyB=Number(session.astrologySkyCount)>1?String(session.astrologySkyBSource||''):'';
-    getMainComposer().sources={
+    composer.sources={
       path:String(session.path||'bespoke'),
       template:selected?.name||'',
       blocks:Object.entries(building).filter(([,value])=>String(value||'').trim()).map(([key,value])=>key+': '+value),
@@ -993,6 +997,16 @@
       });
       host.addEventListener('change',event=>{
         const t=event.target,s=getMainComposer();
+        if(t.matches('[data-main-template]')){
+          s.selectedTemplate=t.value||'';
+          saveMainComposer();renderMainComposer(root,true);
+          return;
+        }
+        if(t.matches('[data-main-building]')){
+          s.building[t.dataset.mainBuilding]=t.value||'';
+          saveMainComposer();renderMainComposer(root,true);
+          return;
+        }
         if(t.matches('[data-main-default]')){
           const prop=t.dataset.mainDefault;
           if(prop==='repeats'||prop==='reversals')s.defaults[prop]=t.checked;
@@ -1030,6 +1044,7 @@
     const currentInput=String(host.querySelector('#relphiMainQuestion')?.value||mainComposerInputDraft||'');
     if(currentInput)mainComposerInputDraft=currentInput;
     const fingerprint=JSON.stringify({locked,hasCards,questions,defaults:s.defaults,selected:s.selected,
+      selectedTemplate:s.selectedTemplate,building:s.building,
       path:locked?persistedCraftedPath(root):'free',sources:s.sources});
     if(!force&&host.dataset.mainFingerprint===fingerprint)return;
     if(!force&&host.contains(document.activeElement)&&!locked)return;
@@ -1054,7 +1069,7 @@
     }).join('');
     const total=s.questions.reduce((sum,q)=>sum+(q.linkTo===''?q.cards:1),0);
     const valid=editable&&s.questions.length>0&&s.questions.every(q=>q.text.trim())&&total<=MAX_POSITIONS;
-    host.innerHTML='<div class="relphi-main-composer-heading"><strong>Questions</strong><span>'+(locked?'Reading in progress':hasCards?'Free cards on board':'Ready when you are')+'</span></div>'+
+    host.innerHTML=mainComposerPreQuestionsMarkup(root,locked,hasCards)+'<div class="relphi-main-composer-heading"><strong>Questions</strong><span>'+(locked?'Reading in progress':hasCards?'Free cards on board':'Ready when you are')+'</span></div>'+
       '<div data-main-question-form class="relphi-main-question-form"><textarea aria-label="Your question" id="relphiMainQuestion" rows="2" placeholder="Type your question…" '+(!editable&&!canClarify?'disabled':'')+'>'+escapeHtml(mainComposerInputDraft)+'</textarea><button type="button" data-main-action="append" '+(!editable&&!canClarify?'disabled':'')+'>'+(canClarify?'Add clarifier':'Add question')+'</button></div>'+
       '<div class="relphi-main-defaults" aria-label="Sticky draw settings">'+
         '<label>Sub-pack <select data-main-default="pack" '+(!editable?'disabled':'')+'>'+packOptions(s.defaults.pack)+'</select></label><button type="button" data-main-action="create-pack" aria-label="Create sub-pack" title="Create sub-pack" '+(!editable?'disabled':'')+'>+</button>'+
@@ -1073,7 +1088,7 @@
         '<button type="button" data-main-action="save" '+(!editable||!s.questions.length?'disabled':'')+'>Save template</button>'+
         '<span aria-live="polite">'+(locked?questions.length+' question positions on the board':hasCards?'Clear the free cards to begin a question reading':s.questions.length+' question'+(s.questions.length===1?'':'s')+' · '+total+' card'+(total===1?'':'s'))+'</span>'+
         '<button type="button" data-main-action="ready" class="primary" '+(!valid?'disabled':'')+'>'+(locked?'Reading ready':'Ready to draw')+'</button></div>'+
-      mainComposerSourceMarkup(root,locked);
+      '';
   }
 
 
