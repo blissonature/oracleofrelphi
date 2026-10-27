@@ -1175,6 +1175,53 @@
     if(!root||!host)return;
         const action=button.dataset.mainAction,s=getMainComposer();
         if(action==='append'){mainAddQuestion(root);return;}
+
+        if(action==='template-add'){
+          const template=templateById(s.selectedTemplate);
+          if(!template||boardHasCraftedStructure(root)||currentCardCount(root))return;
+          if(template.recursion||template.helper){
+            openOptions(root);
+            if(!optionsSession)beginOptionsSession();
+            switchOptionsPath(optionsSession,'templates');
+            hydrateTemplateDraft(optionsSession.draft,template);
+            optionsSession.pathCollapsed=false;
+            renderBoardSettings(root);
+            return;
+          }
+          const entries=template.positions.slice().sort((a,b)=>(Number(a.drawOrder)||0)-(Number(b.drawOrder)||0));
+          if(s.questions.length+entries.length>MAX_POSITIONS){
+            showBoardToast('The template would exceed '+MAX_POSITIONS+' question positions.',{title:'Drawing Board',duration:3500});return;
+          }
+          entries.forEach(item=>s.questions.push({
+            ...mainQuestionDefaults(),text:String(item.label||''),
+            pack:String(item.drawScope||template.rules?.drawScope||s.defaults.pack||'full'),
+            reversals:s.defaults.reversals,repeats:s.defaults.repeats
+          }));
+          saveMainComposer();renderMainComposer(root,true);return;
+        }
+        if(action==='blocks-add'){
+          if(boardHasCraftedStructure(root)||currentCardCount(root))return;
+          const b=s.building||{};
+          if(!Object.values(b).some(v=>String(v||'').trim()))return;
+          const suggestions=candidateQuestionsFromBlocks(b);
+          const needOnly=!!b.need&&!b.element&&!b.planet&&!b.aspect&&!b.sign&&!Number(b.house||0)&&!b.mode;
+          const packs=needOnly&&REFERENT_NEED_QUESTIONS[b.need]
+            ?REFERENT_NEED_QUESTIONS[b.need].map(item=>item.pack)
+            :suggestions.map(()=>b.need?'uhn':b.planet?'planetary-majors':b.sign?'zodiac-majors':s.defaults.pack);
+          if(s.questions.length+suggestions.length>MAX_POSITIONS){
+            showBoardToast('The generated questions would exceed '+MAX_POSITIONS+' positions.',{title:'Drawing Board',duration:3500});return;
+          }
+          suggestions.forEach((text,i)=>s.questions.push({...mainQuestionDefaults(),text,pack:packs[i]||s.defaults.pack}));
+          saveMainComposer();renderMainComposer(root,true);return;
+        }
+        if(action==='skies'){
+          openOptions(root);
+          if(!optionsSession)beginOptionsSession();
+          switchOptionsPath(optionsSession,'astro');
+          optionsSession.pathCollapsed=false;
+          renderBoardSettings(root);
+          return;
+        }
         if(action==='sources'){openOptions(root);return;}
     if(action==='create-pack'){
       window.RelphiCustomSubpacks?.open?.({onSave:pack=>{
