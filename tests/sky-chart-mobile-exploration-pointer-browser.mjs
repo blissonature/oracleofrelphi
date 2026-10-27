@@ -210,6 +210,22 @@ try{
  assert.equal(await page.locator('.relphi-mobile-pointer-toggle').getAttribute('aria-pressed'),'true');
  assert.equal(await page.evaluate(()=>window.RelphiMobileExplorationPointer?.isEnabled?.()),true);
  assert.equal(await page.locator('#relphiMobileExplorationCursor .relphi-mobile-cursor-arrow').count(),1);
+ const visual=await page.evaluate(()=>{
+   const cursor=document.getElementById('relphiMobileExplorationCursor'),
+     svg=cursor?.querySelector('svg'),grip=cursor?.querySelector('.relphi-mobile-pointer-touch-area'),
+     arrow=cursor?.querySelector('.relphi-mobile-cursor-arrow');
+   const bounds=cursor?.getBoundingClientRect(),tip=window.RelphiMobileExplorationPointer?.getTip?.();
+   return{width:bounds?.width,height:bounds?.height,svgWidth:svg?.getAttribute('width'),
+     hitDiameter:Number(grip?.getAttribute('r'))*2*(bounds?.width/84),
+     arrow:!!arrow,tip,visualLeft:parseFloat(cursor?.style.left),visualTop:parseFloat(cursor?.style.top)};
+ });
+ assert.equal(visual.width,42,'Pointer must render at compact width');
+ assert.equal(visual.height,44,'Pointer must render at compact height');
+ assert.equal(visual.svgWidth,'42');
+ assert.ok(visual.hitDiameter>=40,'Touch grip must keep a comfortable target');
+ assert.ok(Math.abs(visual.visualLeft+2.5-visual.tip.x)<.1&&Math.abs(visual.visualTop+3-visual.tip.y)<.1,'Arrow tip remains accurately registered');
+ console.log('PASS_COMPACT_POINTER',JSON.stringify(visual));
+
  const h=await locationFor(page,'A',11);
  console.log('MOBILE_HOUSE_TARGET',JSON.stringify(h));
  const hover=await dragPointer(page,h);
