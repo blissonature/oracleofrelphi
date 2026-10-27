@@ -41,6 +41,7 @@ async function assertContained(page,label){
     assert.equal(await page.locator('.relphi-main-question-form').isVisible(),true,'composer is always visible');
     await page.locator('#relphiMainQuestion').fill('What is asking for my attention?');
     await page.locator('.relphi-main-question-form button').click();
+    console.log('AFTER_ADD',JSON.stringify(await page.evaluate(()=>({cards:document.querySelectorAll('[data-main-text]').length,questionList:document.querySelector('.relphi-main-question-list')?.innerHTML,questionInput:document.querySelector('#relphiMainQuestion')?.value,snapshot:{labels:window.RelphiDrawingBoardOptionsBridge?.capture?.()?.shortListPositionLabels,layout:window.RelphiDrawingBoardOptionsBridge?.capture?.()?.rowActiveLayout?.id},local:localStorage.getItem('relphiDrawingBoardMainComposerV1'),html:document.querySelector('.relphi-main-composer')?.outerHTML.slice(0,2100)}))));
     assert.equal(await page.locator('[data-main-text]').count(),1);
     await page.locator('#relphiMainQuestion').fill('What is my next step?');
     await page.locator('.relphi-main-question-form button').click();
