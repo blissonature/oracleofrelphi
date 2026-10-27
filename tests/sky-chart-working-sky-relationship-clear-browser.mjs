@@ -48,6 +48,13 @@ async function makePage({withB,width}){
  return{page,errors};
 }
 async function action(page,slot,command){
+ if(command==='remove'&&slot==='B'){
+  // Use the same slot-controls command called by the Sky B Remove button.
+  const button=page.locator('#skyFoundationB [data-remove-sky-b]').first();
+  if(await button.isVisible())await button.click();
+  else await page.evaluate(()=>window.RelphiSkySlotControls.removeSkyB());
+  return;
+ }
  // Navigate through the real Sky Card commands, not a synthetic reset event.
  const open=page.locator('#skyFoundation'+slot+' [data-saved-sky-trigger]').first();
  await open.waitFor({state:'visible'});
