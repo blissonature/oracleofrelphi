@@ -923,7 +923,7 @@
       '<section class="relphi-main-input-path" aria-label="Templates">'+
         '<div class="relphi-main-input-heading"><strong>Templates</strong><small>'+(selected?escapeHtml(selected.name):'Choose a spread or start without one')+'</small></div>'+
         '<div class="relphi-main-template-row">'+
-          '<label class="sr-only" for="relphiMainTemplate">Choose a template</label>'+
+
           '<select id="relphiMainTemplate" data-main-template aria-label="Choose a template" '+(editable?'':'disabled')+'>'+templateOptions+'</select>'+
           '<button type="button" data-main-action="template-add" '+(!editable||!selected?'disabled':'')+'>'+(advanced?'Open method':'Add template questions')+'</button>'+
         '</div>'+
