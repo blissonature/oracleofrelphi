@@ -22,7 +22,7 @@ const b={
  houseCusps:[358,28,58,88,118,148,178,208,238,268,298,328],
  calcProfile:{instant:B_INSTANT,dateTime:'2026-10-27T04:05:00',timeZone:'America/Denver',latitude:40.7608,longitude:-111.8910,houseSystem:'porphyry'},
  placements:{
-  Chiron:placement('Chiron',28+15/60,{retrograde:true}),
+  Chiron:placement('Chiron',28+15/60), // Rx must be inferred from the dated Chiron ephemeris.
   Sun:placement('Sun',214),
   Mars:placement('Mars',136.3)
  }
