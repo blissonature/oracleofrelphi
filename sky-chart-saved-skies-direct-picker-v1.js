@@ -39,7 +39,7 @@ function normalizePicker(){
   const popover=document.getElementById('skySavedSkiesPopover');if(!popover||popover.hidden)return;
   const load=popover.querySelector('[data-sky-command="load"]');if(load)load.click();
   const list=popover.querySelector('.sky-saved-list');if(!list)return;
-  popover.querySelector('.sky-saved-subview-head')?.remove();
+  // Keep the Load Sky heading so Save Sky remains available beside it.
   ensureNewSky(list);
   ensureSaveSky(popover);
   // These run synchronously/microtask-only; neither owns a DOM observer.
