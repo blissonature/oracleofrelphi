@@ -112,7 +112,7 @@ async function clickSummary(page,selector){
     assert.equal(await options.locator('[data-card-controls-master]').isVisible(),true,'Card controls have a Board home');
     assert.equal(await options.locator('.relphi-board-background').isVisible(),true,'Background controls have a Board home');
     await options.locator('[data-main-action="appearance"]').click();
-    await options.locator('[data-main-action="filters"]').click();
+    await options.locator('.relphi-main-strip > [data-main-action="filters"]').click();
     await options.locator('#relphiFreePack').waitFor({state:'visible'});
     assert.equal(await options.locator('#relphiFreePack').isVisible(),true,'Free pack filters have a chrome home');
     await options.screenshot({path:path.join(out,'drawing-board-compact-filters.png'),fullPage:true});
