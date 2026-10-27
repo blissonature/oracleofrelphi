@@ -1432,7 +1432,8 @@
     if(body&&modeSwitch&&modeSwitch.parentElement!==body)body.insertBefore(modeSwitch,body.firstChild);
     // Settings is an overlay: anchor it immediately below the command bar
     // without allowing it to participate in the board's vertical layout.
-    const commandBottom=Math.max(0,bar.offsetTop+bar.offsetHeight);
+    const chrome=root.querySelector('.relphi-main-composer');
+    const commandBottom=Math.max(0,bar.offsetTop+bar.offsetHeight+(chrome?.offsetHeight||0));
     settingsPanel.style.setProperty('--relphi-settings-top',commandBottom+'px');
 
     reset.disabled=!boardCanReset(root);
