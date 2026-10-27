@@ -21,15 +21,15 @@ async function openBoard(page){
       bar:!!bar,
       title:bar?.querySelector('.relphi-board-command-title strong')?.textContent?.trim(),
       actions:Array.from(actions?.querySelectorAll(':scope > button')||[]).map(node=>node.id),
-      labels:Array.from(actions?.querySelectorAll(':scope > button')||[]).map(node=>node.textContent.trim()),
+      labels:Array.from(actions?.querySelectorAll(':scope > button')||[]).map(node=>node.getAttribute('aria-label')||node.textContent.trim()),
       settingsExpanded:bar?.querySelector('#relphiBoardSettingsButton')?.getAttribute('aria-expanded'),
       legacyRows:document.querySelectorAll('#shortListPanel .relphi-global-board-actions').length
     };
   });
   assert.equal(chrome.bar,true,'Drawing Board must have one command bar');
   assert.equal(chrome.title,'Drawing Board','command bar owns the Drawing Board title');
-  assert.deepEqual(chrome.actions,['clearShortListCardsOnly','undoShortList','redoShortList','drawRandomRowCard'],'right actions must be Clear, Undo, Redo, Draw');
-  assert.deepEqual(chrome.labels,['Clear','Undo','Redo','Draw'],'right action labels must match the redesign');
+  assert.deepEqual(chrome.actions,['relphiResetBoard','undoShortList','redoShortList','clearShortListCardsOnly','drawRandomRowCard'],'right actions must be Reset, Undo, Redo, Clear, Draw');
+  assert.deepEqual(chrome.labels,['Restore default settings','Undo','Redo','Clear the cards without changing settings','Draw a card'],'right actions must provide clear accessible labels');
   assert.equal(chrome.settingsExpanded,'false','Settings starts closed');
   assert.equal(chrome.legacyRows,0,'legacy global action rows must be removed');
 }
