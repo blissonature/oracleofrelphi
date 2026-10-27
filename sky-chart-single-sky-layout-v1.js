@@ -82,7 +82,7 @@ function relax(items,lane){
 function protectHouseNumbers(wheel){
   const c=center(),g=activeGeometry(wheel);if(!g)return;
   const radius=(Number(g.inner)+Number(g.outer))/2;
-  wheel.querySelectorAll('[data-layer="a-houses"] .sky-foundation-house-number,[data-layer="a-houses"] .sky-placement-mini-house-number').forEach(node=>{
+  wheel.querySelectorAll('[data-layer="a-houses"] .sky-foundation-house-number,[data-layer="a-houses"] .sky-placement-mini-house-number,[data-layer="b-houses"] .sky-foundation-house-number,[data-layer="b-houses"] .sky-placement-mini-house-number').forEach(node=>{
     const x=num(node.getAttribute('x')),y=num(node.getAttribute('y')),dx=x-c.x,dy=y-c.y,length=Math.hypot(dx,dy);if(!Number.isFinite(length)||length===0)return;
     node.setAttribute('x',(c.x+dx/length*radius).toFixed(3));node.setAttribute('y',(c.y+dy/length*radius).toFixed(3));node.dataset.houseNumberLane='protected';
   });
