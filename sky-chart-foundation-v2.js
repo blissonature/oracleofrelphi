@@ -191,7 +191,7 @@ function buildSingleWheel(listA,cuspsA,slot='A'){
     radialLine(layers.ticks,gStandalone.degree-length,gStandalone.degree,degree,{class:className});
   }
 
-  const aspectRadius=Math.max(1,gStandalone.inner-1);
+  const aspectRadius=Math.max(1,geometry('A').inner-1);
   intraskyRelationships(listA,slot).forEach((relation,index)=>{
     const from=polar(aspectRadius,relation.left.value),to=polar(aspectRadius,relation.right.value);
     const attrs={
