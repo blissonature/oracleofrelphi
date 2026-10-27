@@ -1100,15 +1100,29 @@
     const locked=boardHasCraftedStructure(root);
     const hasCards=currentCardCount(root)>0;
     const snap=currentSnapshot()||{};
-    const questions=locked?(snap.shortListPositionLabels||[]).map((text,index)=>({
-      text:String(text||('Question '+(index+1))),
-      pack:String(snap.rowPositionMeta?.[index]?.drawScope||'full'),
-      cards:1,reversals:snap.rowPositionMeta?.[index]?.allowReversals!==false,
-      repeats:!!snap.rowPositionMeta?.[index]?.allowRepeats,linkTo:''
-    })):s.questions;
+
+    const entries=ledgerBridge()?.drawingBoardReadingEntries?.()||[];
+    const readingByIndex=new Map(entries.map(entry=>[entry.index,entry]));
+    const positionGroups=[];
+    if(locked){
+      const grouped=new Map();
+      (snap.shortListPositionLabels||[]).forEach((text,index)=>{
+        const meta=snap.rowPositionMeta?.[index]||snap.rowActiveLayout?.positions?.[index]||{};
+        const key=Number.isInteger(meta.questionIndex)?'question:'+meta.questionIndex:'slot:'+index;
+        let group=grouped.get(key);
+        if(!group){
+          group={text:String(meta.questionText||text||'Question '+(index+1)),
+            pack:String(meta.drawScope||'full'),cards:0,slotIndices:[],reversals:meta.allowReversals!==false,
+            repeats:!!meta.allowRepeats,linkTo:''};
+          grouped.set(key,group);positionGroups.push(group);
+        }
+        group.slotIndices.push(index);group.cards++;
+      });
+    }
+    const questions=locked?positionGroups:s.questions;
     const currentInput=String(host.querySelector('#relphiMainQuestion')?.value||mainComposerInputDraft||'');
     if(currentInput)mainComposerInputDraft=currentInput;
-    const fingerprint=JSON.stringify({locked,hasCards,questions,defaults:s.defaults,selected:s.selected,
+    const fingerprint=JSON.stringify({locked,hasCards,questions,entries,defaults:s.defaults,selected:s.selected,
       selectedTemplate:s.selectedTemplate,building:s.building,
       path:locked?persistedCraftedPath(root):'free',sources:s.sources});
     if(!force&&host.dataset.mainFingerprint===fingerprint)return;
@@ -1123,37 +1137,47 @@
         '<label>Cards <input type="number" min="1" max="12" data-main-setting="cards" data-main-index="'+index+'" value="'+q.cards+'"></label>'+
         '<label>Linked to <select data-main-setting="linkTo" data-main-index="'+index+'"><option value="">None</option>'+questions.map((other,i)=>i===index?'':'<option value="'+i+'" '+(q.linkTo===String(i)?'selected':'')+'>Question '+(i+1)+'</option>').join('')+'</select></label>'+
         '<label><input type="checkbox" data-main-setting="reversals" data-main-index="'+index+'" '+(q.reversals?'checked':'')+'> Reversals</label>'+
-        '<label><input type="checkbox" data-main-setting="repeats" data-main-index="'+index+'" '+(q.repeats?'checked':'')+'> Repeats</label></div>':'<span class="relphi-main-question-readonly-meta">'+escapeHtml(q.pack)+'</span>';
+        '<label><input type="checkbox" data-main-setting="repeats" data-main-index="'+index+'" '+(q.repeats?'checked':'')+'> Repeats</label></div>':'';
+      const settings=editable?'<details class="relphi-main-question-options" data-main-question-options="'+index+'" '+(s.openQuestionOptions.includes(index)?'open':'')+'><summary>'+escapeHtml(packLabel(q.pack))+' · '+q.cards+' card'+(q.cards===1?'':'s')+' · Draw options</summary>'+controls+'</details>':
+        '<span class="relphi-main-question-readonly-meta">'+escapeHtml(packLabel(q.pack))+'</span>';
+      const readings=(locked?q.slotIndices:[]).map(slotIndex=>readingByIndex.get(slotIndex)).filter(Boolean)
+        .map(entry=>'<article class="relphi-main-question-reading" data-reading-slot="'+entry.index+'">'+
+          '<strong>'+escapeHtml(entry.title)+(entry.reversed?' · reversed':'')+'</strong>'+
+          (entry.association?'<p class="relphi-main-reading-association">'+escapeHtml(entry.association)+'</p>':'')+
+          (entry.interpretation?'<p class="relphi-main-reading-interpretation">'+escapeHtml(entry.interpretation)+'</p>':'')+
+          '</article>').join('');
       return '<li class="relphi-main-question-row">'+
         (editable?'<input type="checkbox" data-main-select="'+index+'" aria-label="Select question '+(index+1)+'" '+(selected.has(index)?'checked':'')+'>':'')+
         '<span class="relphi-main-question-number">'+(index+1)+'</span>'+
         '<div class="relphi-main-question-content">'+
         (editable?'<textarea rows="1" data-main-text="'+index+'" aria-label="Question '+(index+1)+'">'+escapeHtml(q.text)+'</textarea>':
           '<span class="relphi-main-question-text">'+escapeHtml(q.text)+'</span>')+
-        controls+'</div></li>';
+        settings+readings+'</div></li>';
     }).join('');
     const total=s.questions.reduce((sum,q)=>sum+(q.linkTo===''?q.cards:1),0);
     const valid=editable&&s.questions.length>0&&s.questions.every(q=>q.text.trim())&&total<=MAX_POSITIONS;
-    host.innerHTML=mainComposerPreQuestionsMarkup(root,locked,hasCards)+'<div class="relphi-main-composer-heading"><strong>Questions</strong><span>'+(locked?'Reading in progress':hasCards?'Free cards on board':'Ready when you are')+'</span></div>'+
+    const drawInfo=locked?questions.length+' question'+(questions.length===1?'':'s')+' on the board':
+      hasCards?'Clear free cards to start a question reading':
+      s.questions.length+' question'+(s.questions.length===1?'':'s')+' · '+total+' card'+(total===1?'':'s');
+    host.innerHTML='<div class="relphi-main-composer-heading"><strong>Questions & interpretations</strong><span>'+
+      (locked?'Reading in progress':hasCards?'Free cards on board':'Ready when you are')+'</span></div>'+
+      mainComposerPreQuestionsMarkup(root,locked,hasCards)+
       '<div data-main-question-form class="relphi-main-question-form"><textarea aria-label="Your question" id="relphiMainQuestion" rows="2" placeholder="Type your question…" '+(!editable&&!canClarify?'disabled':'')+'>'+escapeHtml(mainComposerInputDraft)+'</textarea><button type="button" data-main-action="append" '+(!editable&&!canClarify?'disabled':'')+'>'+(canClarify?'Add clarifier':'Add question')+'</button></div>'+
+      '<details class="relphi-main-draw-defaults" '+(s.openDefaults?'open':'')+'><summary>Draw defaults · '+escapeHtml(packLabel(s.defaults.pack))+' · '+s.defaults.cards+' card'+(s.defaults.cards===1?'':'s')+' · Repeats '+(s.defaults.repeats?'ON':'OFF')+'</summary>'+
       '<div class="relphi-main-defaults" aria-label="Sticky draw settings">'+
         '<label>Sub-pack <select data-main-default="pack" '+(!editable?'disabled':'')+'>'+packOptions(s.defaults.pack)+'</select></label><button type="button" data-main-action="create-pack" aria-label="Create sub-pack" title="Create sub-pack" '+(!editable?'disabled':'')+'>+</button>'+
         '<label>Cards <input data-main-default="cards" type="number" min="1" max="12" value="'+s.defaults.cards+'" '+(!editable?'disabled':'')+'></label>'+
         '<label><input data-main-default="reversals" type="checkbox" '+(s.defaults.reversals?'checked':'')+' '+(!editable?'disabled':'')+'> Reversals</label>'+
         '<label><input data-main-default="repeats" type="checkbox" '+(s.defaults.repeats?'checked':'')+' '+(!editable?'disabled':'')+'> Repeats</label>'+
-      '</div>'+
-      '<div class="relphi-main-question-tools"><button type="button" data-main-action="select-all" '+(!editable||!questions.length?'disabled':'')+'>Select all</button>'+
-        '<button type="button" data-main-action="copy" '+(!questions.length?'disabled':'')+' aria-label="Copy questions" title="Copy questions"></button>'+
-        '<button type="button" data-main-action="up" '+(!editable||!selected.size?'disabled':'')+' aria-label="Move selected questions up">↑</button>'+
-        '<button type="button" data-main-action="down" '+(!editable||!selected.size?'disabled':'')+' aria-label="Move selected questions down">↓</button>'+
-        '<button type="button" data-main-action="delete" '+(!editable||!selected.size?'disabled':'')+' aria-label="Delete selected questions">Delete</button>'+
-        '<button type="button" data-main-action="add" '+(!editable?'disabled':'')+'>+ Question</button></div>'+
+      '</div></details>'+
+      (editable&&questions.length?'<div class="relphi-main-question-tools"><button type="button" data-main-action="select-all">Select all</button>'+
+        '<button type="button" data-main-action="copy" aria-label="Copy questions" title="Copy questions"></button>'+
+        '<button type="button" data-main-action="up" '+(!selected.size?'disabled':'')+' aria-label="Move selected questions up">↑</button>'+
+        '<button type="button" data-main-action="down" '+(!selected.size?'disabled':'')+' aria-label="Move selected questions down">↓</button>'+
+        '<button type="button" data-main-action="delete" '+(!selected.size?'disabled':'')+' aria-label="Delete selected questions">Delete</button></div>':'')+
       '<ol class="relphi-main-question-list" aria-label="Reading question list">'+(rows||'<li class="relphi-main-empty">Your questions will appear here.</li>')+'</ol>'+
-      '<div class="relphi-main-launch"><label>Template name <input id="relphiMainTemplateName" type="text" maxlength="60" placeholder="Unnamed Template" '+(!editable?'disabled':'')+'></label>'+
-        '<button type="button" data-main-action="save" '+(!editable||!s.questions.length?'disabled':'')+'>Save template</button>'+
-        '<span aria-live="polite">'+(locked?questions.length+' question positions on the board':hasCards?'Clear the free cards to begin a question reading':s.questions.length+' question'+(s.questions.length===1?'':'s')+' · '+total+' card'+(total===1?'':'s'))+'</span>'+
-        '<button type="button" data-main-action="ready" class="primary" '+(!valid?'disabled':'')+'>'+(locked?'Reading ready':'Ready to draw')+'</button></div>'+
-      '';
+      '<div class="relphi-main-launch"><span aria-live="polite">'+drawInfo+'</span>'+
+        (locked?'':'<button type="button" data-main-action="ready" class="primary" '+(!valid?'disabled':'')+'>Ready to draw</button>')+'</div>';
   }
 
 
@@ -2110,7 +2134,8 @@
     } else if (section.previousElementSibling !== anchor) {
       anchor.insertAdjacentElement('afterend',section);
     }
-    section.hidden=!entries.length;
+    // Structured question readings now display each interpretation below its question.
+    section.hidden=!entries.length||boardHasCraftedStructure(root);
     section.innerHTML=`<header>
       <div><strong>Reading text</strong><span>Question, card, association, and Relphi interpretation.</span></div>
     </header>
@@ -5928,7 +5953,6 @@
     installRecursionBoard(root);
     ensureBoardChrome(root);
     installTopActions(root);
-    renderMainComposer(root);
     syncMainFreeRules(root);
     installPermanentControls(root);
     installBespokeContinuation(root);
@@ -5936,6 +5960,7 @@
     installPinchZoom(root);
     installReadingTextArea(root);
     installExportArea(root);
+    renderMainComposer(root);
     installLockedLayoutPointerGuards(root);
     installBoardCapture(root);
     if(settingsOpen)renderBoardSettings(root);
