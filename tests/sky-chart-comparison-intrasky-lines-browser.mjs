@@ -11,7 +11,10 @@ const makeSky=(name,raw,asc)=>({
   placements:Object.fromEntries(Object.entries(raw).map(([name,long])=>[name,placement(name,long)]))
 });
 const a=makeSky('Sky A',{Sun:195,Moon:118,Mercury:206,Venus:169,Mars:167,Jupiter:307,Saturn:235,Uranus:255,Neptune:271,Pluto:213,Ascendant:168,Midheaven:76},168);
-const b=makeSky('Sky B',{Sun:34.18,Moon:94.27,Mercury:43.62,Venus:8.4,Mars:357.55,Jupiter:64.32,Saturn:130.1,Uranus:220,Neptune:255.77,Pluto:192.22,Chiron:31.6,Ascendant:10,Midheaven:280},10);
+const b=makeSky('Sky B',{Sun:34.18,Moon:94.27,Mercury:43.62,Venus:8.4,Mars:357.55,Jupiter:64.32,Saturn:130.1,Uranus:220,Neptune:255.77,Pluto:192.22,Chiron:31.6},10);
+b.calcProfile.timeUnknown=true;
+delete b.houseCusps;delete b.calcProfile.houseCusps;
+b.calcProfile.dateTime='2026-10-25';delete b.calcProfile.instant;
 const ids=['conjunction','semi-sextile','octile','sextile','quintile','square','trine','tri-octile','bi-quintile','quincunx','opposition'];
 const browser=await chromium.launch({headless:true});
 try{
