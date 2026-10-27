@@ -136,7 +136,11 @@ try{
        return{single:chart?.dataset.singleSky,inner:chart?.dataset.innerSky,
          bPlacements:bNodes.length,aPlacements:aNodes.length,bAspects:bAspects.length,
          paintedBAspects:shown.length,aspectStartRadius,aspectEndRadius,originalAspectRadius,bHouses,interactiveBHouses,
-         viewBoxWidth:chart?.viewBox.baseVal.width,html:document.getElementById('skyFoundationWheelMount')?.textContent?.slice(0,150)};
+         viewBoxWidth:chart?.viewBox.baseVal.width,
+          expectedStandaloneWidth:2*(window.RelphiSkyWheelSpec.comparison.zodiac.outer+24),
+          innerRadius:Number(chart?.dataset.singleSkyInnerRadius),
+          expectedStandaloneInner:Number(window.RelphiSkyWheelSpec.role('A').inner),
+          html:document.getElementById('skyFoundationWheelMount')?.textContent?.slice(0,150)};
      });
      assert.equal(wheel.single,'B','Empty Sky A must display standalone Sky B wheel: '+JSON.stringify(wheel));
      assert.equal(wheel.inner,'B','B identity must control standalone wheel');
@@ -153,7 +157,10 @@ try{
      assert.equal(wheel.bHouses,cfg.bKnownTime?12:0,'Use B house cusps only when B time is known');
      if(cfg.bKnownTime){
        assert.equal(wheel.interactiveBHouses,12,'B houses remain explorable while A editor is open');
-       assert.ok(wheel.viewBoxWidth>1180,'Standalone B wheel must include complete outer house ring');
+       assert.ok(Math.abs(wheel.viewBoxWidth-wheel.expectedStandaloneWidth)<1,
+          'B-only should use the compact A standalone viewBox instead of the former B outer comparison ring');
+        assert.equal(wheel.innerRadius,wheel.expectedStandaloneInner,
+          'B-only houses must begin at the canonical A standalone inner radius');
      }
      console.log('PASS_B_ONLY_WHEEL',width,cfg.name,JSON.stringify(wheel));
     }
