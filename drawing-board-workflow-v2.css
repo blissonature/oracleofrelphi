@@ -3718,3 +3718,14 @@ body:has(.relphi-attune-reader),body:has(.relphi-focus-reader){
 #shortListPanel .relphi-main-question-form>button{grid-column:2!important;align-self:stretch!important}
 #shortListPanel .relphi-main-defaults>[data-main-action="create-pack"]{padding:.15rem .48rem!important;min-width:2rem!important;font-size:1.1rem!important}
 @media(max-width:760px){#shortListPanel .relphi-main-question-form>button{grid-column:1!important}}
+
+/* Keep every authored question within the felt chrome on narrow phones. */
+@media(max-width:760px){
+  #shortListPanel .relphi-main-question-list{width:100%!important;max-width:100%!important;min-width:0!important;box-sizing:border-box!important;overflow-x:hidden!important}
+  #shortListPanel .relphi-main-question-row{width:100%!important;max-width:100%!important;min-width:0!important;box-sizing:border-box!important;grid-template-columns:1rem 1rem minmax(0,1fr)!important;padding:.38rem!important;overflow:hidden!important}
+  #shortListPanel .relphi-main-question-content{width:100%!important;max-width:100%!important;min-width:0!important;box-sizing:border-box!important}
+  #shortListPanel .relphi-main-question-row textarea{width:100%!important;max-width:100%!important;min-width:0!important;box-sizing:border-box!important}
+  #shortListPanel .relphi-main-question-settings{width:100%!important;min-width:0!important;max-width:100%!important}
+  #shortListPanel .relphi-main-question-settings label:first-child{min-width:0!important;width:100%!important}
+  #shortListPanel .relphi-main-question-settings label:first-child select{flex:1 1 0%!important;min-width:0!important;max-width:100%!important;width:auto!important}
+}
