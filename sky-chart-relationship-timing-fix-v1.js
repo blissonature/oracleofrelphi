@@ -107,7 +107,7 @@ function ephemerisLongitude(id,date,slot){
   if(id==='mc')return midheavenLongitude(date,slot);
   if(id==='ic'){const value=midheavenLongitude(date,slot);return Number.isFinite(value)?norm(value+180):NaN}
   if(id==='chiron'){
-    try{return Number(window.RelphiChironEphemeris?.calculateSync?.(date)?.longitude)}catch(_){return NaN}
+    try{const value=window.RelphiChironEphemeris?.longitudeAt?.(date);return Number.isFinite(value)?norm(value):NaN}catch(_){return NaN}
   }
   const astronomy=window.Astronomy,bodyName=BODY[id],bodyValue=astronomy?.Body?.[bodyName]||bodyName;
   if(!bodyName||!astronomy?.GeoVector||!astronomy?.Ecliptic||!bodyValue)return NaN;
@@ -215,8 +215,9 @@ function patchExpanded(){
 function schedulePatch(delay=0){if(queued)return;queued=true;setTimeout(()=>requestAnimationFrame(patchExpanded),delay)}
 function invalidate(){cache.clear();installApi();schedulePatch(30)}
 function primeChiron(){
-  const service=window.RelphiChironEphemeris;if(!service?.ready)return;
-  service.ready().then(()=>{
+  // This project's local Horizons ephemeris is synchronous; no ready() method exists.
+  const service=window.RelphiChironEphemeris;if(!service?.longitudeAt)return;
+  Promise.resolve().then(()=>{
     invalidate();
     document.querySelectorAll('#skyFoundationRelationshipList .inline-rel-transit-window[data-transit-kind="unavailable"]').forEach(meta=>{meta.dataset.transitReady='false';delete meta.dataset.transitSignature});
     schedulePatch(0);
