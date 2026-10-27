@@ -145,7 +145,7 @@ function buildSingleWheel(listA,cuspsA,slot='A'){
     :gA;
 
   const placementOuter=Math.max(...(gStandalone.placement||[]).map(Number).filter(Number.isFinite),z.outer);
-  const outerRadius=Math.max(z.outer,placementOuter+(Number(cmp.placementBubbleRadius)||19.7));
+  const outerRadius=Math.max(z.outer,gStandalone.outer,placementOuter+(Number(cmp.placementBubbleRadius)||19.7));
   const pad=24,standaloneViewBox=[c.x-outerRadius-pad,c.y-outerRadius-pad,(outerRadius+pad)*2,(outerRadius+pad)*2];
   const chart=svg('svg',{
     viewBox:standaloneViewBox.join(' '),
