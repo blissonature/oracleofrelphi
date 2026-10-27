@@ -1,0 +1,38 @@
+name: Drawing Board main composer Chromium
+on:
+  pull_request:
+    paths:
+      - 'drawing-board-workflow-v2.js'
+      - 'drawing-board-workflow-v2.css'
+      - 'tests/drawing-board-main-composer.test.js'
+      - '.github/workflows/drawing-board-main-composer.yml'
+jobs:
+  browser:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Syntax check
+        run: |
+          node --check drawing-board-workflow-v2.js
+          node --check tests/drawing-board-main-composer.test.js
+      - name: Install Chromium
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Verify permanent workspace
+        run: |
+          mkdir -p test-results
+          python3 -m http.server 8000 --bind 127.0.0.1 >/tmp/relphi-http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill $SERVER_PID || true' EXIT
+          node tests/drawing-board-main-composer.test.js
+      - name: Upload screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: main-composer-chromium
+          path: test-results/
+          if-no-files-found: ignore
