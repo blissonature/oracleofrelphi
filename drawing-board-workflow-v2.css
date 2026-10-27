@@ -3702,11 +3702,19 @@ body:has(.relphi-attune-reader),body:has(.relphi-focus-reader){
   #shortListPanel .relphi-main-composer{padding:.65rem!important}
   #shortListPanel .relphi-main-question-form{grid-template-columns:minmax(0,1fr)!important}
   #shortListPanel .relphi-main-question-form button{width:100%!important}
-  #shortListPanel .relphi-main-question-settings{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:.38rem!important}
-  #shortListPanel .relphi-main-question-settings label{min-width:0!important}
-  #shortListPanel .relphi-main-question-settings select{max-width:100%!important}
+  #shortListPanel .relphi-main-question-settings{display:flex!important;flex-wrap:wrap!important;gap:.35rem .55rem!important;align-items:center!important}
+  #shortListPanel .relphi-main-question-settings label{display:inline-flex!important;flex:0 1 auto!important;min-width:0!important;white-space:nowrap!important;font-size:.7rem!important}
+  #shortListPanel .relphi-main-question-settings label:first-child{flex:1 1 100%!important}
+  #shortListPanel .relphi-main-question-settings label:nth-child(3){flex:1 1 100%!important}
+  #shortListPanel .relphi-main-question-settings select{max-width:min(100%,12rem)!important}
   #shortListPanel .relphi-main-launch{justify-content:stretch!important}
   #shortListPanel .relphi-main-launch>label{width:100%!important}
   #shortListPanel .relphi-main-launch>span{flex:1 1 auto!important}
   #shortListPanel .relphi-main-launch>button.primary{flex:1 0 auto!important}
 }
+
+/* The main question input is labeled accessibly without occupying an extra grid cell. */
+#shortListPanel .relphi-main-question-form>textarea{grid-column:1!important;min-width:0!important}
+#shortListPanel .relphi-main-question-form>button{grid-column:2!important;align-self:stretch!important}
+#shortListPanel .relphi-main-defaults>[data-main-action="create-pack"]{padding:.15rem .48rem!important;min-width:2rem!important;font-size:1.1rem!important}
+@media(max-width:760px){#shortListPanel .relphi-main-question-form>button{grid-column:1!important}}
