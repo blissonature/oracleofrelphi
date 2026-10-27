@@ -28,7 +28,7 @@ const getCounts=()=>({
  selectedVisible:!document.getElementById('skySelectedRelationship')?.hidden,
  clearedSlot:document.documentElement.dataset.skyRelationshipResetSlot
 });
-async function makePage({withB,width}){
+async function makePage({withB,width,bKnownTime=false}){
  const page=await browser.newPage({viewport:{width,height:940}});
  const errors=[];page.on('pageerror',error=>errors.push(String(error)));
  await page.route('https://unpkg.com/suncalc@1.9.0/suncalc.js',route=>route.fulfill({path:path.resolve('node_modules/suncalc/suncalc.js'),contentType:'application/javascript'}));
@@ -40,7 +40,15 @@ async function makePage({withB,width}){
   localStorage.setItem('relphiSkyChartLastModeV1',b?'comparison':'single');
   localStorage.setItem('relphiSkyHarmonicWindowV1','3');
   localStorage.setItem('relphiSkyAspectMatrixV1',JSON.stringify({'A-A':ids,'B-B':ids,'A-B':ids}));
- },{a,b:withB?b:null,ids});
+ },{a,b:withB?(bKnownTime?(()=>{
+   const known=structuredClone(b);
+   known.calcProfile.timeUnknown=false;
+   known.calcProfile.dateTime='2026-10-25T10:00';
+   known.calcProfile.instant='2026-10-25T16:00:00.000Z';
+   known.houseCusps=Array.from({length:12},(_,i)=>(10+i*30)%360);
+   known.calcProfile.houseCusps=[...known.houseCusps];
+   return known;
+  })():b):null,ids});
  await page.goto('http://127.0.0.1:4173/sky-chart.html',{waitUntil:'domcontentloaded'});
  await page.waitForSelector('#skyFoundationRoot[aria-busy="false"]',{timeout:30000});
  await page.waitForSelector('#skyFoundationRelationshipList > .sky-intrasky-generated',{timeout:30000});
@@ -84,10 +92,11 @@ try{
   for(const cfg of [
    {name:'A New Sky without B',withB:false,slot:'A',command:'new',remaining:null},
    {name:'A New Sky with B',withB:true,slot:'A',command:'new',remaining:'B-B'},
+   {name:'A New Sky with B known time',withB:true,bKnownTime:true,slot:'A',command:'new',remaining:'B-B'},
    {name:'B New Sky with A',withB:true,slot:'B',command:'new',remaining:'A-A'},
    {name:'B Remove Sky with A',withB:true,slot:'B',command:'remove',remaining:'A-A'}
   ]){
-   const{page,errors}=await makePage({withB:cfg.withB,width});
+   const{page,errors}=await makePage({withB:cfg.withB,width,bKnownTime:cfg.bKnownTime});
    try{
     const before=await page.evaluate(getCounts);
     assert.ok((before.rows['A-A']||0)>0,'Fixture needs A-A relationships');
@@ -105,6 +114,28 @@ try{
     }
     await page.waitForTimeout(450);
     const settled=await audit(page,cfg.slot,cfg.remaining);
+    // An empty A must leave B's visual wheel, with real B placements
+    // and B↔B aspect strokes. Covers both known- and unknown-time B.
+    if(cfg.slot==='A'&&cfg.withB){
+     const wheel=await page.evaluate(()=>{
+       const chart=document.querySelector('#skyFoundationWheelMount > svg.sky-foundation-wheel');
+       const bNodes=[...chart?.querySelectorAll('[data-layer="placements"] > g[data-sky="B"][data-placement]')||[]];
+       const aNodes=[...chart?.querySelectorAll('[data-layer="placements"] > g[data-sky="A"][data-placement]')||[]];
+       const bAspects=[...chart?.querySelectorAll('[data-layer="aspects"] > line[data-relationship-mode="B-B"]')||[]];
+       const shown=bAspects.filter(line=>line.getAttribute('stroke')!=='none'&&!line.hidden&&getComputedStyle(line).display!=='none');
+       const bHouses=chart?.querySelectorAll('[data-layer="b-houses"] > path[data-house]').length||0;
+       return{single:chart?.dataset.singleSky,inner:chart?.dataset.innerSky,
+         bPlacements:bNodes.length,aPlacements:aNodes.length,bAspects:bAspects.length,
+         paintedBAspects:shown.length,bHouses,html:document.getElementById('skyFoundationWheelMount')?.textContent?.slice(0,150)};
+     });
+     assert.equal(wheel.single,'B','Empty Sky A must display standalone Sky B wheel: '+JSON.stringify(wheel));
+     assert.equal(wheel.inner,'B','B identity must control standalone wheel');
+     assert.ok(wheel.bPlacements>8,'Retained B placements must be visible: '+JSON.stringify(wheel));
+     assert.equal(wheel.aPlacements,0,'Blank A cannot contribute placements');
+     assert.ok(wheel.bAspects>0&&wheel.paintedBAspects>0,'Retained B↔B relationships must draw aspects');
+     assert.equal(wheel.bHouses,cfg.bKnownTime?12:0,'Use B house cusps only when B time is known');
+     console.log('PASS_B_ONLY_WHEEL',width,cfg.name,JSON.stringify(wheel));
+    }
     assert.deepEqual(errors.filter(e=>/TypeError|ReferenceError|SyntaxError/.test(e)),[],'No uncaught errors');
     console.log('PASS_WORKING_SKY_CLEAR',width,cfg.name,JSON.stringify({before:before.rows,after:after.rows,settled:settled.rows,count:settled.count}));
    }finally{await page.close()}
