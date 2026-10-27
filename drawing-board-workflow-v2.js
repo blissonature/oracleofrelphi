@@ -831,6 +831,8 @@
     let stored={};
     try{stored=JSON.parse(localStorage.getItem(MAIN_COMPOSER_KEY)||'{}')||{};}catch(_){}
     const defaults=stored.defaults||{};
+    const localRules=freeSettingsDraftFromState();
+    const own=(name)=>Object.prototype.hasOwnProperty.call(defaults,name);
     mainComposer={
       questions:Array.isArray(stored.questions)?stored.questions.slice(0,MAX_POSITIONS).map(q=>({
         text:String(q?.text||'').slice(0,1200),
@@ -843,9 +845,13 @@
       defaults:{
         pack:String(defaults.pack||'full'),
         cards:Math.max(1,Math.min(12,Math.trunc(Number(defaults.cards)||1))),
-        reversals:defaults.reversals!==false,
-        repeats:defaults.repeats!==false
+        reversals:own('reversals')?defaults.reversals!==false:localRules.reversals!==false,
+        repeats:own('repeats')?!!defaults.repeats:!!localRules.repeats
       },
+      openBlocks:!!stored.openBlocks,
+      openTemplates:!!stored.openTemplates,
+      openDefaults:!!stored.openDefaults,
+      openQuestionOptions:[],
       sources:stored.sources&&typeof stored.sources==='object'?stored.sources:{},
       selectedTemplate:String(stored.selectedTemplate||''),
       building:stored.building&&typeof stored.building==='object'?{...stored.building}:{element:'',planet:'',aspect:'',sign:'',house:'',need:''},
@@ -857,7 +863,8 @@
     const s=getMainComposer();
     try{localStorage.setItem(MAIN_COMPOSER_KEY,JSON.stringify({
       questions:s.questions,defaults:s.defaults,sources:s.sources,
-      selectedTemplate:s.selectedTemplate,building:s.building
+      selectedTemplate:s.selectedTemplate,building:s.building,
+      openBlocks:s.openBlocks,openTemplates:s.openTemplates,openDefaults:s.openDefaults
     }));}catch(_){}
   }
   function mainQuestionDefaults(){
@@ -899,39 +906,34 @@
     return '<details class="relphi-main-sources" open><summary>Reading sources</summary><div>'+pieces.join('')+'</div><button type="button" data-main-action="sources">Choose a different source path</button></details>';
   }
 
-  // First-class sources appear above the question workspace and stay in chrome.
+  // The sole template and building-block selectors live in the editor below
+  // the felt. Advanced symbolic controls stay behind a disclosure.
   function mainComposerPreQuestionsMarkup(root,locked,hasCards){
     const s=getMainComposer(),editable=!locked&&!hasCards;
-    const selected=templateById(s.selectedTemplate);
+    const chosen=templateById(s.selectedTemplate);
     const choice=(key,label,values)=>{
       const current=String(s.building[key]||'');
       const options='<option value="">Any</option>'+
         values.map(([value,display])=>'<option value="'+escapeHtml(String(value))+'" '+(current===String(value)?'selected':'')+'>'+escapeHtml(String(display))+'</option>').join('');
       return '<label>'+escapeHtml(label)+'<select data-main-building="'+key+'" aria-label="Building Block: '+escapeHtml(label)+'" '+(editable?'':'disabled')+'>'+options+'</select></label>';
     };
-    const templateOptions='<option value="">No template</option>'+allTemplates().map(t=>
+    const templates='<option value="">No template</option>'+allTemplates().map(t=>
       '<option value="'+escapeHtml(t.id)+'" '+(s.selectedTemplate===t.id?'selected':'')+'>'+escapeHtml(t.name)+'</option>'
     ).join('');
-    const advanced=!!(selected?.recursion||selected?.helper);
-    const count=selected?.positions?.length||0;
-    const chosenBlocks=Object.entries(s.building).filter(([,v])=>String(v||'').trim());
-    const connected=astrologySharedConnectorSky();
-    const sky=window.RelphiSkyConnector?.context?.();
-    const savedSky=String(connected?.name||sky?.savedSky?.name||'');
-    const prior=s.sources?.skies||[];
-    const skyLabel=locked&&prior.length?prior.join(' · '):(savedSky||'No saved sky connected');
-    return '<div class="relphi-main-input-paths" aria-label="Reading sources before questions">'+
-      '<section class="relphi-main-input-path" aria-label="Templates">'+
-        '<div class="relphi-main-input-heading"><strong>Templates</strong><small>'+(selected?escapeHtml(selected.name):'Choose a spread or start without one')+'</small></div>'+
-        '<div class="relphi-main-template-row">'+
-
-          '<select id="relphiMainTemplate" data-main-template aria-label="Choose a template" '+(editable?'':'disabled')+'>'+templateOptions+'</select>'+
-          '<button type="button" data-main-action="template-add" '+(!editable||!selected?'disabled':'')+'>'+(advanced?'Open method':'Add template questions')+'</button>'+
-        '</div>'+
-        (selected?'<small class="relphi-main-source-note">'+(advanced?'Guided method: open its original controls.':count+' position'+(count===1?'':'s')+'; adding preserves your existing questions.')+'</small>':'')+
-      '</section>'+
-      '<section class="relphi-main-input-path" aria-label="Building Blocks">'+
-        '<div class="relphi-main-input-heading"><strong>Building Blocks</strong><small>'+(chosenBlocks.length?chosenBlocks.map(([k,v])=>escapeHtml(k+': '+v)).join(' · '):'Compose questions using symbolic correspondences')+'</small></div>'+
+    const advanced=!!(chosen?.recursion||chosen?.helper);
+    const blocks=Object.entries(s.building).filter(([,value])=>String(value||'').trim());
+    return '<div class="relphi-main-input-paths" aria-label="Question sources">'+
+      '<details class="relphi-main-input-path relphi-main-template-disclosure" '+(s.openTemplates?'open':'')+'>'+
+        '<summary>Templates <small>'+escapeHtml(chosen?.name||'None selected')+'</small></summary>'+
+        '<div class="relphi-main-template-row"><select id="relphiMainTemplate" data-main-template aria-label="Choose a template" '+(editable?'':'disabled')+'>'+templates+'</select>'+
+          '<button type="button" data-main-action="template-add" '+(!editable||!chosen?'disabled':'')+'>'+(advanced?'Open method':'Add template questions')+'</button></div>'+
+        (chosen?'<small class="relphi-main-source-note">'+(advanced?'Guided method uses its own setup.':chosen.positions.length+' positions.')+'</small>':'')+
+        '<details class="relphi-main-save-template"><summary>Save these questions as a template</summary>'+
+          '<div class="relphi-main-save-row"><label>Template name <input id="relphiMainTemplateName" type="text" maxlength="60" placeholder="Unnamed Template" '+(!editable?'disabled':'')+'></label>'+
+          '<button type="button" data-main-action="save" '+(!editable||!s.questions.length?'disabled':'')+'>Save template</button></div></details>'+
+      '</details>'+
+      '<details class="relphi-main-input-path relphi-main-building-disclosure" '+(s.openBlocks?'open':'')+'>'+
+        '<summary>Building Blocks <small>'+(blocks.length?blocks.map(([k,v])=>escapeHtml(k+': '+v)).join(' · '):'None selected')+'</small></summary>'+
         '<div class="relphi-main-building-grid">'+
           choice('element','Element',Object.keys(REFERENT_ELEMENTS).map(v=>[v,v]))+
           choice('planet','Planet',Object.keys(REFERENT_PLANETS).map(v=>[v,v]))+
@@ -940,12 +942,8 @@
           choice('house','House',HOUSE_ORDINALS.map((name,i)=>[String(i+1),name+' House']))+
           choice('need','Universal Human Need',REFERENT_UNIVERSAL_HUMAN_NEEDS.map(v=>[v,v]))+
         '</div>'+
-        '<button type="button" data-main-action="blocks-add" '+(!editable||!chosenBlocks.length?'disabled':'')+'>Surface questions from Building Blocks</button>'+
-      '</section>'+
-      '<section class="relphi-main-input-path relphi-main-sky-source" aria-label="Sky Connections">'+
-        '<div class="relphi-main-input-heading"><strong>Sky Connections</strong><small>'+escapeHtml(skyLabel)+'</small></div>'+
-        '<button type="button" data-main-action="skies">Configure sky connections</button>'+
-      '</section>'+
+        '<button type="button" data-main-action="blocks-add" '+(!editable||!blocks.length?'disabled':'')+'>Surface questions</button>'+
+      '</details>'+
     '</div>';
   }
 
@@ -1010,12 +1008,12 @@
     const drawer=root.querySelector('.card-row-drawing-board');
     const bar=drawer?.querySelector(':scope > .relphi-board-commandbar');
     if(!drawer||!bar)return;
-    let host=drawer.querySelector(':scope > .relphi-main-composer');
+    let host=root.querySelector('.relphi-main-composer');
     if(!host){
       host=document.createElement('section');
       host.className='relphi-main-composer';
       host.setAttribute('aria-label','Questions and drawing readiness');
-      bar.insertAdjacentElement('afterend',host);
+      root.querySelector('.drawing-board-board-mode')?.insertAdjacentElement('afterend',host);
       // Tarot Ledger owns a parent form. Use an explicit button action rather
       // than a nested submit, which would submit the Ledger and erase the draft.
       const submitQuestion=()=>{
@@ -1084,7 +1082,20 @@
           renderMainComposer(root,true);
         }
       });
+      host.addEventListener('toggle',event=>{
+        const t=event.target,s=getMainComposer();
+        if(t.matches('.relphi-main-building-disclosure')){s.openBlocks=t.open;saveMainComposer();}
+        if(t.matches('.relphi-main-template-disclosure')){s.openTemplates=t.open;saveMainComposer();}
+        if(t.matches('.relphi-main-draw-defaults')){s.openDefaults=t.open;saveMainComposer();}
+        if(t.matches('[data-main-question-options]')){
+          const index=Number(t.dataset.mainQuestionOptions);
+          s.openQuestionOptions=s.openQuestionOptions.filter(i=>i!==index);
+          if(t.open)s.openQuestionOptions.push(index);
+        }
+      },true);
     }
+    const boardMode=root.querySelector('.drawing-board-board-mode');
+    if(boardMode&&host.previousElementSibling!==boardMode)boardMode.insertAdjacentElement('afterend',host);
     const s=getMainComposer();
     const locked=boardHasCraftedStructure(root);
     const hasCards=currentCardCount(root)>0;
