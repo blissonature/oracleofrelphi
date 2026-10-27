@@ -158,7 +158,7 @@ try{
      if(cfg.bKnownTime){
        assert.equal(wheel.interactiveBHouses,12,'B houses remain explorable while A editor is open');
        assert.ok(Math.abs(wheel.viewBoxWidth-wheel.expectedStandaloneWidth)<1,
-          'B-only should use the compact A standalone viewBox instead of the former B outer comparison ring');
+          'B-only should use the compact A standalone viewBox instead of the former B outer comparison ring: '+JSON.stringify(wheel));
         assert.equal(wheel.innerRadius,wheel.expectedStandaloneInner,
           'B-only houses must begin at the canonical A standalone inner radius');
      }
