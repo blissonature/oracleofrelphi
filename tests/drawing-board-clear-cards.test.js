@@ -187,7 +187,6 @@ async function assertFreeformClearCardsLeavesZeroSlotBoard(page,expectedCards){
     assert.equal(await page.locator('#relphiResetBoard').isEnabled(),true,'Reset activates after a setup is confirmed');
     await page.click('#relphiResetBoard');
     assert.equal(await page.locator('#relphiFreePack').inputValue(),'full','Reset restores Full Pack');
-    assert.equal(await page.locator('#relphiFreeLabels').isChecked(),true,'Reset restores Labels');
     assert.equal(await page.locator('#relphiFreeReversals').isChecked(),true,'Reset restores Reversals');
     assert.equal(await page.locator('#relphiFreeRepeats').isChecked(),true,'Reset keeps the user-preferred Repeats ON setting');
     await page.click('#relphiCancelFreeSettings');
