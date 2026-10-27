@@ -17,10 +17,8 @@ const base=process.env.RELPHI_TEST_URL||'http://127.0.0.1:8000/tarot.html?board=
     const panel=page.locator('#shortListPanel');
     if(!(await panel.isVisible())) await page.locator('#relphiOpenDrawingBoardCurrent').tap();
     await panel.waitFor({state:'visible',timeout:10000});
-    await page.waitForSelector('#relphiBoardSettingsButton',{state:'visible',timeout:10000});
-    await page.locator('#relphiBoardSettingsButton').tap();
-    await page.waitForSelector('#drawingBoardOptionsButton',{state:'visible',timeout:10000});
-    await page.locator('#drawingBoardOptionsButton').tap();
+    await page.waitForSelector('[data-main-action="methods"]',{state:'visible',timeout:10000});
+    await page.locator('[data-main-action="methods"]').tap();
     await page.waitForSelector('.relphi-reading-options-drawer.is-reading-options-open',{state:'visible',timeout:10000});
 
     await page.locator('[data-referent-path="templates"]').tap();
