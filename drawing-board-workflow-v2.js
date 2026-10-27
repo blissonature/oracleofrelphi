@@ -852,6 +852,7 @@
       openTemplates:!!stored.openTemplates,
       openDefaults:!!stored.openDefaults,
       openQuestionOptions:[],
+      openJournal:!!stored.openJournal,
       sources:stored.sources&&typeof stored.sources==='object'?stored.sources:{},
       selectedTemplate:String(stored.selectedTemplate||''),
       building:stored.building&&typeof stored.building==='object'?{...stored.building}:{element:'',planet:'',aspect:'',sign:'',house:'',need:''},
@@ -864,7 +865,8 @@
     try{localStorage.setItem(MAIN_COMPOSER_KEY,JSON.stringify({
       questions:s.questions,defaults:s.defaults,sources:s.sources,
       selectedTemplate:s.selectedTemplate,building:s.building,
-      openBlocks:s.openBlocks,openTemplates:s.openTemplates,openDefaults:s.openDefaults
+      openBlocks:s.openBlocks,openTemplates:s.openTemplates,openDefaults:s.openDefaults,
+      openJournal:s.openJournal
     }));}catch(_){}
   }
   function mainQuestionDefaults(){
@@ -1020,7 +1022,7 @@
       host=document.createElement('section');
       host.className='relphi-main-composer';
       host.setAttribute('aria-label','Questions and drawing readiness');
-      root.querySelector('.drawing-board-board-mode')?.insertAdjacentElement('afterend',host);
+      bar.insertAdjacentElement('afterend',host);
       // Tarot Ledger owns a parent form. Use an explicit button action rather
       // than a nested submit, which would submit the Ledger and erase the draft.
       const submitQuestion=()=>{
@@ -1094,6 +1096,7 @@
         if(t.matches('.relphi-main-building-disclosure')){s.openBlocks=t.open;saveMainComposer();}
         if(t.matches('.relphi-main-template-disclosure')){s.openTemplates=t.open;saveMainComposer();}
         if(t.matches('.relphi-main-draw-defaults')){s.openDefaults=t.open;saveMainComposer();}
+        if(t.matches('.relphi-main-journal')){s.openJournal=t.open;saveMainComposer();}
         if(t.matches('[data-main-question-options]')){
           const index=Number(t.dataset.mainQuestionOptions);
           s.openQuestionOptions=s.openQuestionOptions.filter(i=>i!==index);
@@ -1101,8 +1104,7 @@
         }
       },true);
     }
-    const boardMode=root.querySelector('.drawing-board-board-mode');
-    if(boardMode&&host.previousElementSibling!==boardMode)boardMode.insertAdjacentElement('afterend',host);
+    if(host.previousElementSibling!==bar)bar.insertAdjacentElement('afterend',host);
     const s=getMainComposer();
     const locked=boardHasCraftedStructure(root);
     const hasCards=currentCardCount(root)>0;
@@ -1130,6 +1132,7 @@
     const currentInput=String(host.querySelector('#relphiMainQuestion')?.value||mainComposerInputDraft||'');
     if(currentInput)mainComposerInputDraft=currentInput;
     const fingerprint=JSON.stringify({locked,hasCards,questions,entries,defaults:s.defaults,selected:s.selected,
+      openJournal:s.openJournal,
       selectedTemplate:s.selectedTemplate,building:s.building,
       path:locked?persistedCraftedPath(root):'free',sources:s.sources});
     if(!force&&host.dataset.mainFingerprint===fingerprint)return;
@@ -1220,6 +1223,22 @@
     if(!root||!host)return;
         const action=button.dataset.mainAction,s=getMainComposer();
         if(action==='append'){mainAddQuestion(root);return;}
+        if(action==='methods'){
+          if(settingsOpen&&settingsMode==='crafted'){cancelBoardSettings(root);return;}
+          openOptions(root);
+          return;
+        }
+        if(action==='appearance'||action==='filters'){
+          const same=settingsOpen&&settingsMode==='free'&&root.dataset.relphiChromePanel===action;
+          if(same){cancelBoardSettings(root);return;}
+          if(settingsOpen)cancelBoardSettings(root);
+          root.dataset.relphiChromePanel=action;
+          settingsMode='free';
+          boardConfigurationOpen=action==='appearance';
+          openBoardSettings(root);
+          return;
+        }
+        if(action==='close-panel'){cancelBoardSettings(root);return;}
 
         if(action==='template-add'){
           const template=templateById(s.selectedTemplate);
@@ -1324,7 +1343,7 @@
     const boardMode=root?.querySelector('.drawing-board-board-mode');
     const modeSwitch=root?.querySelector('.drawing-board-mode-switch');
     const topActions=root?.querySelector('.drawing-board-top-actions');
-    if(!root||!boardDrawer||!summary||!boardMode||!modeSwitch||!topActions)return null;
+    if(!root||!boardDrawer||!summary||!boardMode||!topActions)return null;
 
     boardDrawer.open=true;
     summary.hidden=true;
@@ -1333,7 +1352,7 @@
     if(!bar){
       bar=document.createElement('div');
       bar.className='relphi-board-commandbar';
-      bar.innerHTML='<div class="relphi-board-command-left"><div class="relphi-board-command-title"><strong>Drawing Board</strong><span class="relphi-board-command-count">0</span></div><button type="button" id="relphiBoardSettingsButton" aria-expanded="false">Settings</button></div>';
+      bar.innerHTML='<div class="relphi-board-command-left"><div class="relphi-board-command-title"><strong>Drawing Board</strong><span class="relphi-board-command-count">0</span></div></div>';
       summary.insertAdjacentElement('afterend',bar);
     }
     const count=bar.querySelector('.relphi-board-command-count');
@@ -1395,7 +1414,9 @@
       bar.insertAdjacentElement('afterend',settingsPanel);
     }
     const body=settingsPanel.querySelector('.relphi-board-settings-body');
-    if(body && modeSwitch.parentElement!==body)body.appendChild(modeSwitch);
+    // Legacy tab switch is deliberately not a control. Every action now has a
+    // direct place in the compact Drawing Board chrome.
+    modeSwitch?.remove();
     // Settings is an overlay: anchor it immediately below the command bar
     // without allowing it to participate in the board's vertical layout.
     const commandBottom=Math.max(0,bar.offsetTop+bar.offsetHeight);
@@ -1405,18 +1426,14 @@
 
     [...root.querySelectorAll('.relphi-global-board-actions')].forEach(node=>node.remove());
     settingsPanel.hidden=!settingsOpen;
-    if(!settingsOpen){boardConfigurationOpen=false;boardBackgroundMode='';}
+    if(!settingsOpen){boardConfigurationOpen=false;boardBackgroundMode='';root.dataset.relphiChromePanel='';}
     root.classList.toggle('relphi-settings-open',settingsOpen);
     installSettingsViewportGuard(root);
     if(settingsOpen){
       syncSettingsViewportHeight(root);
       requestAnimationFrame(()=>syncSettingsViewportHeight(root));
     }
-    const settingsButton=bar.querySelector('#relphiBoardSettingsButton');
-    if(settingsButton){
-      settingsButton.setAttribute('aria-expanded',String(settingsOpen));
-      settingsButton.classList.toggle('is-active',settingsOpen);
-    }
+    bar.querySelector('#relphiBoardSettingsButton')?.remove();
     return settingsPanel;
   }
 
@@ -1637,8 +1654,7 @@
   function renderFreeSettings(root=panel()) {
     const settingsPanel=ensureBoardChrome(root);
     const body=settingsPanel?.querySelector('.relphi-board-settings-body');
-    const modeSwitch=body?.querySelector('.drawing-board-mode-switch');
-    if(!settingsPanel||!body||!modeSwitch)return;
+    if(!settingsPanel||!body)return;
     body.querySelector('.relphi-reading-options-drawer')?.remove();
     body.querySelector('.relphi-free-settings')?.remove();
     const draft=freeSettingsSession?.draft || (freeSettingsSession={draft:freeSettingsDraftFromState()}).draft;
@@ -1646,7 +1662,7 @@
     free.className='relphi-free-settings';
     draft.stickers=false;
     free.innerHTML='<div class="relphi-free-settings-fields"><label class="relphi-free-pack">Sub-pack<select id="relphiFreePack">'+packOptions(draft.pack||'full')+'</select></label>'+keywordDraftMarkup(draft)+'<div class="relphi-free-toggles"><label><input id="relphiFreeReversals" type="checkbox" '+(draft.reversals!==false?'checked':'')+'> Reversals</label><label><input id="relphiFreeRepeats" type="checkbox" '+(draft.repeats?'checked':'')+'> Repeats</label></div></div><div class="relphi-board-settings-footer"><button type="button" id="relphiCancelFreeSettings">Cancel</button><button type="button" id="relphiConfirmFreeSettings" class="primary">Confirm</button></div>';
-    modeSwitch.insertAdjacentElement('afterend',free);
+    body.appendChild(free);
     renderBoardConfiguration(root);
 
     free.querySelector('#relphiFreePack')?.addEventListener('change',event=>{
@@ -1675,6 +1691,7 @@
     if(!settingsPanel||!settingsOpen)return;
     setBoardMode(root,settingsMode==='crafted'?'referents':'board');
     if(settingsMode==='crafted'){
+      root.dataset.relphiChromePanel='methods';
       settingsPanel.querySelector('.relphi-free-settings')?.remove();
       if(!optionsSession)beginOptionsSession();
       renderOptions(root);
@@ -1682,6 +1699,7 @@
       optionsSession=null;
       renderFreeSettings(root);
     }
+    settingsPanel.dataset.chromePanel=root.dataset.relphiChromePanel||'filters';
     ensureBoardChrome(root);
     renderBoardConfiguration(root);
     syncZoomToolbarVisibility(root);
@@ -1723,6 +1741,7 @@
     boardConfigurationOpen=false;
     root.querySelector('.relphi-reading-options-drawer')?.remove();
     root.querySelector('.relphi-free-settings')?.remove();
+    root.dataset.relphiChromePanel='';
     setBoardMode(root,craftedReadingActive||boardHasCraftedStructure(root)?'crafted':'board');
     ensureBoardChrome(root);
     syncZoomToolbarVisibility(root);
@@ -3732,6 +3751,7 @@
       ensureSettingsTransaction(root);
     }
     settingsMode='crafted';
+    root.dataset.relphiChromePanel='methods';
     if(!optionsSession)beginOptionsSession();
     renderBoardSettings(root);
   }
@@ -5803,34 +5823,8 @@
 
   function installTopActions(root) {
     ensureBoardChrome(root);
-    const settings=root.querySelector('#relphiBoardSettingsButton');
-    if(settings && settings.dataset.relphiSettingsBound!=='true'){
-      settings.dataset.relphiSettingsBound='true';
-      settings.addEventListener('click',event=>{event.preventDefault();event.stopImmediatePropagation();openBoardSettings(root);},true);
-    }
-
-    const boardTab=root.querySelector('#drawingBoardBoardTab');
-    if(boardTab){
-      boardTab.textContent='Free';
-      boardTab.setAttribute('aria-label','Free settings');
-      if(boardTab.dataset.relphiUnifiedBoardTab!=='true'){
-        boardTab.dataset.relphiUnifiedBoardTab='true';
-        boardTab.addEventListener('click',event=>{event.preventDefault();event.stopImmediatePropagation();switchSettingsMode('free',root);},true);
-      }
-    }
-
-    const options=root.querySelector('#drawingBoardOptionsButton');
-    if(options){
-      options.textContent='Crafted';
-      options.setAttribute('aria-label','Crafted settings');
-      options.setAttribute('aria-expanded',String(settingsOpen&&settingsMode==='crafted'));
-      options.onclick=null;
-      if(options.dataset.relphiUnifiedOptions!=='true'){
-        options.dataset.relphiUnifiedOptions='true';
-        options.addEventListener('click',event=>{event.preventDefault();event.stopImmediatePropagation();switchSettingsMode('crafted',root);},true);
-      }
-    }
-
+    root.querySelector('#relphiBoardSettingsButton')?.remove();
+    root.querySelector('.drawing-board-mode-switch')?.remove();
     const draw=root.querySelector('#drawRandomRowCard');
     if(draw && draw.dataset.relphiUnifiedDraw!=='true'){
       draw.dataset.relphiUnifiedDraw='true';
