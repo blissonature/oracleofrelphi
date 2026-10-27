@@ -4090,3 +4090,34 @@ html body #shortListPanel .drawing-board-top-actions.relphi-board-command-action
     max-width:min(44vw,10rem)!important;
   }
 }
+
+
+/* Four compact control cells per row on phones; input gets its own short row. */
+@media(max-width:760px){
+  html body #shortListPanel .relphi-main-strip{
+    display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;
+    align-items:stretch!important;gap:.25rem!important;
+  }
+  html body #shortListPanel .relphi-main-strip>.relphi-main-question-form{
+    grid-column:1 / -1!important;display:flex!important;min-width:0!important;
+    width:100%!important;flex:auto!important;
+  }
+  html body #shortListPanel .relphi-main-input-paths{display:contents!important}
+  html body #shortListPanel .relphi-main-strip>details,
+  html body #shortListPanel .relphi-main-input-paths>details,
+  html body #shortListPanel .relphi-main-strip>.relphi-main-chrome-action,
+  html body #shortListPanel .relphi-main-strip>.relphi-main-ready{
+    min-width:0!important;width:100%!important;margin:0!important;align-self:stretch!important;
+    box-sizing:border-box!important;max-width:100%!important;
+  }
+  html body #shortListPanel .relphi-main-strip>details>summary,
+  html body #shortListPanel .relphi-main-input-paths>details>summary,
+  html body #shortListPanel .relphi-main-strip>.relphi-main-chrome-action,
+  html body #shortListPanel .relphi-main-strip>.relphi-main-ready{
+    width:100%!important;max-width:100%!important;height:1.9rem!important;min-height:1.9rem!important;
+    padding:.22rem .22rem!important;font-size:.62rem!important;line-height:1.15!important;
+    overflow:hidden!important;text-overflow:ellipsis!important;
+    box-sizing:border-box!important;justify-content:center!important;
+  }
+  html body #shortListPanel .relphi-main-journal{margin:0!important}
+}
