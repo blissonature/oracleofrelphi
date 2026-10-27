@@ -1,0 +1,40 @@
+name: Sky Chart mobile exploration pointer
+on:
+  push:
+    paths:
+      - 'sky-chart-mobile-exploration-pointer-v1.js'
+      - 'sky-chart-mobile-exploration-pointer-v1.css'
+      - 'sky-chart-foundation-interactions-v2.js'
+      - 'sky-chart.html'
+      - 'tests/sky-chart-mobile-exploration-pointer-browser.mjs'
+      - '.github/workflows/sky-chart-mobile-exploration-pointer.yml'
+  pull_request:
+    paths:
+      - 'sky-chart-mobile-exploration-pointer-v1.js'
+      - 'sky-chart-mobile-exploration-pointer-v1.css'
+      - 'sky-chart-foundation-interactions-v2.js'
+      - 'sky-chart.html'
+      - 'tests/sky-chart-mobile-exploration-pointer-browser.mjs'
+      - '.github/workflows/sky-chart-mobile-exploration-pointer.yml'
+jobs:
+  pointer-browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Syntax checks
+        run: |
+          node --check sky-chart-foundation-interactions-v2.js
+          node --check sky-chart-mobile-exploration-pointer-v1.js
+          node --check tests/sky-chart-mobile-exploration-pointer-browser.mjs
+      - name: Install browser
+        run: |
+          npm install --no-save playwright@1.52.0 luxon@3 suncalc@1.9.0
+          npx playwright install --with-deps chromium
+      - name: Verify mobile touch exploration and desktop isolation
+        run: |
+          python3 -m http.server 4173 >/tmp/mobile-pointer-server.log 2>&1 &
+          node tests/sky-chart-mobile-exploration-pointer-browser.mjs
