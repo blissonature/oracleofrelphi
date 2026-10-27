@@ -37,7 +37,13 @@ async function assertContained(page,label){
     const errors=[];page.on('pageerror',e=>errors.push(String(e)));
     await openBoard(page);
     assert.equal(await page.locator('.relphi-main-composer').isVisible(),true);
-    assert.equal(await page.locator('[data-main-default="repeats"]').isChecked(),true,'Repeats must default ON');
+    assert.equal(await page.locator('[data-main-default="repeats"]').isChecked(),false,'First-time Repeats is shipped OFF');
+    await page.locator('.relphi-main-draw-defaults > summary').click();
+    await page.locator('[data-main-default="repeats"]').check();
+    assert.equal(await page.locator('[data-main-default="repeats"]').isChecked(),true,'User can set Repeats ON locally');
+    assert.equal(await page.locator('.relphi-main-building-disclosure').getAttribute('open'),null,'Advanced blocks collapsed');
+    const firstOrder=await page.evaluate(()=>document.querySelector('.drawing-board-board-mode').compareDocumentPosition(document.querySelector('.relphi-main-composer'))&Node.DOCUMENT_POSITION_FOLLOWING);
+    assert.ok(firstOrder,'Editor must be below felt');
     assert.equal(await page.locator('.relphi-main-question-form').isVisible(),true,'composer is always visible');
     await page.locator('#relphiMainQuestion').fill('What is asking for my attention?');
     await page.locator('.relphi-main-question-form button').click();
@@ -45,6 +51,7 @@ async function assertContained(page,label){
     await page.locator('#relphiMainQuestion').fill('What is my next step?');
     await page.locator('.relphi-main-question-form button').click();
     assert.equal(await page.locator('[data-main-text]').count(),2);
+    await page.locator('[data-main-question-options="0"] > summary').click();
     await page.locator('[data-main-setting="cards"][data-main-index="0"]').fill('2');
     await page.locator('[data-main-setting="cards"][data-main-index="0"]').dispatchEvent('change');
     assert.equal(await page.locator('[data-main-setting="cards"][data-main-index="0"]').inputValue(),'2');
@@ -64,40 +71,44 @@ async function assertContained(page,label){
     const snapshot=await page.evaluate(()=>window.RelphiDrawingBoardOptionsBridge.capture());
     assert.equal(snapshot.shortListPositionLabels.length,3);
     assert.equal(snapshot.rowAllowRepeats,true,'reading maintains Repeats ON');
-    assert.equal(await page.locator('.relphi-main-question-text').count(),3,'question list remains in chrome after launch');
+    assert.equal(await page.locator('.relphi-main-question-text').count(),2,'Multiple cards remain under their original question');
+    await page.locator('#drawRandomRowCard').click();
+    const attune=page.locator('.relphi-attune-reader [data-attune-random]');
+    if(await attune.waitFor({state:'visible',timeout:2500}).then(()=>true).catch(()=>false))await attune.click();
+    await page.waitForFunction(()=>document.querySelectorAll('.relphi-main-question-reading').length>0,null,{timeout:15000});
+    assert.equal(await page.locator('#drawing-board-reading-text').isHidden(),true,'No duplicate reading-text block');
     await page.screenshot({path:path.join(out,'drawing-board-main-ready.png'),fullPage:true});
     assert.deepEqual(errors,[],'No browser exceptions on desktop');
 
 
-    // Source controls must precede Questions and actually populate the same list.
+    // The editor stays below the board with one source selector per function.
     const sourcesContext=await browser.newContext({viewport:{width:1024,height:840}});
     const sources=await sourcesContext.newPage();
     const sourceErrors=[];sources.on('pageerror',error=>sourceErrors.push(String(error)));
     await openBoard(sources);
-    const order=await sources.locator('.relphi-main-input-heading strong,.relphi-main-composer-heading strong').allTextContents();
-    assert.deepEqual(order,['Templates','Building Blocks','Sky Connections','Questions'],
-      'All source controls must appear in the main chrome before Questions');
-    assert.equal(await sources.locator('#relphiMainTemplate').isVisible(),true,'Template selector directly visible');
-    assert.equal(await sources.locator('[data-main-building="planet"]').isVisible(),true,'Building Block selectors directly visible');
+    assert.equal(await sources.locator('.relphi-main-sky-source').count(),0,'No duplicate Sky Connections panel');
+    assert.equal(await sources.locator('.relphi-main-question-tools').count(),0,'No duplicate empty-state actions');
+    assert.equal(await sources.locator('.relphi-main-template-disclosure > summary').isVisible(),true);
+    assert.equal(await sources.locator('.relphi-main-building-disclosure > summary').isVisible(),true);
+    assert.equal(await sources.locator('[data-sky-choice]').count(),1,'Sky Connector exists only in header');
+    await sources.locator('.relphi-main-template-disclosure > summary').click();
     await sources.selectOption('#relphiMainTemplate','past-present-future-3');
     await sources.locator('[data-main-action="template-add"]').click();
     assert.deepEqual(await sources.locator('[data-main-text]').evaluateAll(nodes=>nodes.map(n=>n.value)),
-      ['Past','Present','Future'],'Template must feed the question list without a mode switch');
+      ['Past','Present','Future'],'Template positions become questions in the same list');
+    await sources.locator('.relphi-main-building-disclosure > summary').click();
     await sources.selectOption('[data-main-building="sign"]','Libra');
     await sources.locator('[data-main-action="blocks-add"]').click();
-    assert.equal(await sources.locator('[data-main-text]').count(),6,'Building Block questions append to the same list');
-    assert.equal(await sources.locator('[data-main-default="repeats"]').isChecked(),true);
+    assert.equal(await sources.locator('[data-main-text]').count(),6,'Building Block questions join the same list');
+    assert.equal(await sources.locator('[data-main-default="repeats"]').isChecked(),false,'New browser keeps shipped OFF');
     await sources.reload({waitUntil:'domcontentloaded'});
     if(!(await sources.locator('#shortListPanel').isVisible()))await sources.locator('#relphiOpenDrawingBoardCurrent').click();
-    await sources.locator('#relphiMainTemplate').waitFor({state:'visible'});
+    await sources.locator('#relphiMainQuestion').waitFor({state:'visible'});
     assert.equal(await sources.locator('#relphiMainTemplate').inputValue(),'past-present-future-3');
     assert.equal(await sources.locator('[data-main-building="sign"]').inputValue(),'Libra');
-    assert.equal(await sources.locator('[data-main-text]').count(),6,'Template and Building Blocks questions persist');
+    assert.equal(await sources.locator('[data-main-text]').count(),6,'Questions and choices survive reload');
     await sources.screenshot({path:path.join(out,'drawing-board-sources-first.png'),fullPage:true});
     await assertContained(sources,'Sources desktop');
-    await sources.locator('[data-main-action="skies"]').click();
-    await sources.locator('[data-referent-path="astro"]').waitFor({state:'visible'});
-    assert.equal(await sources.locator('.relphi-reading-options-drawer').isVisible(),true,'Sky setup is reachable from main chrome');
     assert.deepEqual(sourceErrors,[]);
     await sourcesContext.close();
 
@@ -105,12 +116,12 @@ async function assertContained(page,label){
     const phone=await mobile.newPage();const mobileErrors=[];
     phone.on('pageerror',e=>mobileErrors.push(String(e)));
     await openBoard(phone);
-    assert.equal(await phone.locator('[data-main-default="repeats"]').isChecked(),true);
+    assert.equal(await phone.locator('[data-main-default="repeats"]').isChecked(),false);
     await phone.locator('#relphiMainQuestion').fill('What is unfolding?');
     await phone.locator('.relphi-main-question-form button').tap();
     assert.equal(await phone.locator('.relphi-main-question-row').count(),1);
-    const mobileOrder=await phone.locator('.relphi-main-input-heading strong,.relphi-main-composer-heading strong').allTextContents();
-    assert.deepEqual(mobileOrder,['Templates','Building Blocks','Sky Connections','Questions']);
+    assert.equal(await phone.locator('.relphi-main-sky-source').count(),0);
+    assert.equal(await phone.locator('.relphi-main-building-disclosure').getAttribute('open'),null);
         await assertContained(phone,'Mobile');
     await phone.screenshot({path:path.join(out,'drawing-board-main-mobile.png'),fullPage:true});
     await phone.locator('[data-main-action="ready"]').tap();
