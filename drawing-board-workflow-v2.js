@@ -1132,7 +1132,8 @@
     const questions=locked?positionGroups:s.questions;
     const currentInput=String(host.querySelector('#relphiMainQuestion')?.value||mainComposerInputDraft||'');
     if(currentInput)mainComposerInputDraft=currentInput;
-    if(locked&&entries.length&&!s.openJournal){s.openJournal=true;saveMainComposer();}
+    if(locked&&entries.length&&!s.openJournal&&root.dataset.relphiComposerHadReading!=='true'){s.openJournal=true;saveMainComposer();}
+    root.dataset.relphiComposerHadReading=entries.length?'true':'false';
     const fingerprint=JSON.stringify({locked,hasCards,questions,entries,defaults:s.defaults,selected:s.selected,
       openJournal:s.openJournal,
       selectedTemplate:s.selectedTemplate,building:s.building,
@@ -1422,7 +1423,7 @@
     if(!settingsPanel){
       settingsPanel=document.createElement('section');
       settingsPanel.className='relphi-board-settings-panel';
-      settingsPanel.setAttribute('aria-label','Drawing Board settings');
+      settingsPanel.setAttribute('aria-label','Drawing Board chrome controls');
       settingsPanel.innerHTML='<div class="relphi-board-settings-body"></div>';
       bar.insertAdjacentElement('afterend',settingsPanel);
     }
