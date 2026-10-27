@@ -19,6 +19,21 @@ function ensureNewSky(list){
   const label=document.createElement('span');label.className='sky-create-new-label';label.textContent='New Sky';
   button.append(plus,label);row.appendChild(button);list.prepend(row);return row;
 }
+function ensureSaveSky(popover){
+  const head=popover.querySelector('.sky-saved-subview-head');
+  if(!head)return;
+  const slot=document.querySelector('[data-saved-sky-trigger][aria-expanded="true"]')?.dataset.savedSkyTrigger;
+  const value=slot&&localStorage.getItem('relphiSkyChart'+slot);
+  let hasSky=false;
+  try{const sky=value&&JSON.parse(value),source=sky?.placements||sky?.positions||sky?.points||sky?.bodies;
+    hasSky=!!(source&&typeof source==='object'&&Object.keys(source).length)}catch(_){}
+  const active=slot&&window.RelphiSkySavedSkyIdentity?.identity?.(slot);
+  let button=head.querySelector('[data-sky-picker-save]');
+  if(!hasSky){button?.remove();return}
+  if(!button){button=document.createElement('button');button.type='button';button.className='sky-saved-picker-save';button.dataset.skyPickerSave='true';button.dataset.skyCommand='save';head.appendChild(button)}
+  button.textContent=active?.saved?'Save Changes':'Save Sky';
+  button.setAttribute('aria-label',button.textContent+' for Sky '+slot);
+}
 function normalizePicker(){
   queued=false;
   const popover=document.getElementById('skySavedSkiesPopover');if(!popover||popover.hidden)return;
@@ -26,6 +41,7 @@ function normalizePicker(){
   const list=popover.querySelector('.sky-saved-list');if(!list)return;
   popover.querySelector('.sky-saved-subview-head')?.remove();
   ensureNewSky(list);
+  ensureSaveSky(popover);
   // These run synchronously/microtask-only; neither owns a DOM observer.
   window.RelphiSkyPrivateLoad?.redactNow?.();
   window.RelphiSkySavedSkiesLabels?.decorateNow?.();
@@ -34,6 +50,7 @@ function schedule(){if(queued)return;queued=true;queueMicrotask(normalizePicker)
 function start(){
   document.addEventListener('click',event=>{
     if(event.target.closest?.('[data-saved-sky-trigger]')){normalizePicker();return}
+    if(event.target.closest?.('#skySavedSkiesPopover [data-sky-command="save"], #skySavedSkiesPopover [data-sky-command-save-form]'))return;
     if(event.target.closest?.('#skySavedSkiesPopover'))schedule();
   },true);
   ['relphi:saved-sky-library-changed','relphi:saved-sky-active-changed'].forEach(name=>window.addEventListener(name,schedule));
