@@ -168,7 +168,20 @@ try{
  const page=await mobile.newPage();
  await boot(page,true);
  await page.locator('#skyFoundationWheelMount').scrollIntoViewIfNeeded();
- await page.locator('#relphiMobileExplorationCursor .relphi-mobile-cursor-cross').waitFor();
+ const startup=await page.evaluate(()=>({
+   width:innerWidth,coarse:matchMedia('(max-width: 650px) and (pointer: coarse)').matches,
+   pointerFine:matchMedia('(pointer: fine)').matches,
+   mediaMax:matchMedia('(max-width:650px)').matches,
+   script:!!window.__relphiMobileExplorePointerV1,
+   api:!!window.RelphiMobileExplorationPointer,
+   root:!!document.getElementById('skyFoundationWheelMount'),
+   button:document.querySelector('.relphi-mobile-pointer-toggle')?.outerHTML.slice(0,350),
+   cursor:document.querySelector('#relphiMobileExplorationCursor')?.outerHTML.slice(0,350),
+   cursorDisplay:document.getElementById('relphiMobileExplorationCursor')&&getComputedStyle(document.getElementById('relphiMobileExplorationCursor')).display,
+   toggleDisplay:document.querySelector('.relphi-mobile-pointer-toggle')&&getComputedStyle(document.querySelector('.relphi-mobile-pointer-toggle')).display
+ }));
+ console.log('MOBILE_POINTER_STARTUP',JSON.stringify({startup,errors}));
+ await page.locator('#relphiMobileExplorationCursor .relphi-mobile-cursor-cross').waitFor({timeout:7000});
  assert.equal(await page.locator('.relphi-mobile-pointer-toggle').getAttribute('aria-pressed'),'true');
  assert.equal(await page.evaluate(()=>window.RelphiMobileExplorationPointer?.isEnabled?.()),true);
  assert.equal(await page.locator('#relphiMobileExplorationCursor .relphi-mobile-cursor-arrow').count(),1);
