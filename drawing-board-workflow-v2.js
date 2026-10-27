@@ -905,7 +905,7 @@
     const selected=templateById(s.selectedTemplate);
     const choice=(key,label,values)=>{
       const current=String(s.building[key]||'');
-      const options='<option value="">Any '+escapeHtml(label.toLowerCase())+'</option>'+
+      const options='<option value="">Any</option>'+
         values.map(([value,display])=>'<option value="'+escapeHtml(String(value))+'" '+(current===String(value)?'selected':'')+'>'+escapeHtml(String(display))+'</option>').join('');
       return '<label>'+escapeHtml(label)+'<select data-main-building="'+key+'" aria-label="Building Block: '+escapeHtml(label)+'" '+(editable?'':'disabled')+'>'+options+'</select></label>';
     };
