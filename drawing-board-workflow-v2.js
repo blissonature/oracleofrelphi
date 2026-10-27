@@ -843,7 +843,7 @@
         linkTo:String(q?.linkTo??'')
       })):[],
       defaults:{
-        pack:String(defaults.pack||'full'),
+        pack:String(defaults.pack||localRules.pack||'full'),
         cards:Math.max(1,Math.min(12,Math.trunc(Number(defaults.cards)||1))),
         reversals:own('reversals')?defaults.reversals!==false:localRules.reversals!==false,
         repeats:own('repeats')?!!defaults.repeats:!!localRules.repeats
