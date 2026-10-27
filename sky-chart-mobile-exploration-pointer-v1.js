@@ -167,14 +167,28 @@
   target.append(control,cursor);
   setVisible(true);resetPosition();updateMode();
  }
- let queued=false;
+ let queued=false,observedMount=null;
+ const watcher=new MutationObserver(()=>{if(!mount)schedule()});
  function schedule(){
   if(queued)return;
   queued=true;
-  requestAnimationFrame(()=>{queued=false;attach()});
+  requestAnimationFrame(()=>{
+   queued=false;
+   attach();
+   // On slower mobile initialization the wheel SVG may appear after
+   // DOMContentLoaded and after the first ready event. Attach when it arrives,
+   // rather than leaving the pointer permanently absent.
+   if(mount){watcher.disconnect();observedMount=null;return}
+   const host=document.getElementById('skyFoundationWheelMount');
+   if(host&&host!==observedMount){
+    watcher.disconnect();observedMount=host;
+    watcher.observe(host,{childList:true});
+   }
+  });
  }
  window.addEventListener('relphi:sky-foundation-ready',schedule);
  window.addEventListener('resize',schedule);
+ window.addEventListener('load',schedule);
  if(media.addEventListener)media.addEventListener('change',updateMode);
  document.readyState==='loading'?document.addEventListener('DOMContentLoaded',schedule,{once:true}):schedule();
  window.RelphiMobileExplorationPointer=Object.freeze({
