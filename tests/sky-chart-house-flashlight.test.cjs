@@ -7,6 +7,7 @@ const root=path.resolve(__dirname,'..');
 const html=fs.readFileSync(path.join(root,'sky-chart.html'),'utf8');
 const source=fs.readFileSync(path.join(root,'sky-chart-foundation-v2.js'),'utf8');
 const controller=fs.readFileSync(path.join(root,'sky-chart-house-flashlight-v1.js'),'utf8');
+const interactions=fs.readFileSync(path.join(root,'sky-chart-foundation-interactions-v2.js'),'utf8');
 test('cusp rays use same-degree geometry as canonical shared zodiac wheel',()=>{
  const p=polar({x:600,y:600},414,180);
  assert.ok(Math.abs(p.x-1014)<1e-6);
@@ -43,4 +44,10 @@ test('flashlight derives cusps from the rendered sectors and accepts house focus
  assert.match(controller,/pointer-events':'none'/);
  assert.match(html,/sky-chart-house-flashlight-v1\.js/);
  assert.match(html,/sky-chart-house-flashlight-v1\.css/);
+});
+
+test('comparison-sky house focus is geometric, not matched by house number',()=>{
+ assert.match(interactions,/function houseFocusPlacements\(state\)/);
+ assert.match(interactions,/norm\(record.value-start\)<span/);
+ assert.match(interactions,/rowMatchesState\(row,filterState,filterKeep\.houseKeys\)/);
 });

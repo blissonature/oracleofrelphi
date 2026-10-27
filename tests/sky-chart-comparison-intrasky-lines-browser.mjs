@@ -77,6 +77,46 @@ try{
     assert.equal(audit.badCoordinates,0,'Every endpoint must have valid SVG coordinates.');
     assert.equal(audit.invalidStroke,0,'B↔B lines must have a visible aspect stroke.');
     assert.deepEqual(errors.filter(e=>/TypeError|ReferenceError|SyntaxError/.test(e)),[],'No page errors.');
+
+    // Integration: A H8 runs from 18° to 48°. Unknown-time B Sun (34.18°),
+    // Chiron (31.6°) and Mercury (43.62°) occupy this angular wedge even
+    // though Sky B has no calculable houses. Their B↔B aspect lines must stay lit.
+    const house8=page.locator('#skyFoundationWheelMount [data-layer="a-houses"] > path[data-house="8"]');
+    await house8.focus();
+    await page.keyboard.press('Enter');
+    await page.waitForTimeout(200);
+    const houseAudit=await page.evaluate(()=>{
+      const wheel=document.querySelector('#skyFoundationWheelMount > svg');
+      const mark=id=>wheel.querySelector('[data-layer="placements"] > g[data-sky="B"][data-placement="'+id+'"]')?.classList.contains('is-kept');
+      const all=[...wheel.querySelectorAll('[data-layer="aspects"] > line.sky-foundation-aspect[data-relationship-mode="B-B"]')]
+        .filter(el=>!el.hidden&&el.style.display!=='none');
+      const sun=all.filter(el=>el.dataset.leftPlacement==='sun'||el.dataset.rightPlacement==='sun');
+      const listed=[...document.querySelectorAll('#skyFoundationRelationshipList > .sky-foundation-relationship-row[data-relationship-mode="B-B"]')]
+        .filter(el=>el.dataset.leftPlacement==='sun'||el.dataset.rightPlacement==='sun');
+      return {
+        isolated:wheel.classList.contains('has-isolation'),
+        hasUnknownBHouse:!!wheel.querySelector('[data-layer="b-houses"] > path[data-house]'),
+        sun:mark('sun'),chiron:mark('chiron'),mercury:mark('mercury'),
+        neptune:mark('neptune'),mars:mark('mars'),
+        sunLines:sun.length,sunLinesKept:sun.every(el=>el.classList.contains('is-kept')),
+        sunLinesNoHouse:sun.every(el=>!el.hasAttribute('data-left-house')&&!el.hasAttribute('data-right-house')),
+        sunRows:listed.length,sunRowsIncluded:listed.filter(el=>!el.classList.contains('is-wheel-selection-excluded')).length
+      };
+    });
+    console.log('PR347_PR348_COMBINED',width,JSON.stringify(houseAudit));
+    assert.equal(houseAudit.isolated,true,'A house focus must activate isolation');
+    assert.equal(houseAudit.hasUnknownBHouse,false,'Unknown-time B must not fabricate house boundaries');
+    for(const name of ['sun','chiron','mercury'])assert.equal(houseAudit[name],true,'B '+name+' inside A H8 must be highlighted');
+    for(const name of ['neptune','mars'])assert.equal(houseAudit[name],false,'B '+name+' outside A H8 must remain dim');
+    assert.ok(houseAudit.sunLines>0,'B Sun must have an intrasky aspect in the fixture');
+    assert.equal(houseAudit.sunLinesKept,true,'B↔B aspects incident to B Sun must be lit');
+    assert.equal(houseAudit.sunLinesNoHouse,true,'Unknown-time B lines must not get fictitious house attributes');
+    assert.ok(houseAudit.sunRowsIncluded>0,'B↔B relationships linked to the selected angular wedge must remain included');
+    await page.keyboard.press('Enter');
+    await page.waitForTimeout(150);
+    assert.equal(await page.evaluate(()=>document.querySelector('#skyFoundationWheelMount > svg').classList.contains('has-isolation')),false,
+      'Pressing Enter on the same house again must clear isolation');
+
     await page.close();
   }
 }finally{await browser.close()}
