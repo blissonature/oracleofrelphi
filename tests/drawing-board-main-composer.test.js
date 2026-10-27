@@ -36,7 +36,7 @@ async function assertChrome(page,label){
   assert.ok(data.strip.bottom<=data.workspace.bottom,label+': controls stay within the board header');
   assert.ok(data.strip.height<140,label+': compact chrome, got '+data.strip.height);
   assert.deepEqual(data.overflow,[],label+': no horizontal button overflow');
-  assert.ok(data.scroll<=data.width+2,label+': no horizontal scrolling');
+  assert.ok(data.scroll<=data.width+2,label+': no horizontal scrolling (scroll='+data.scroll+', width='+data.width+', bar='+JSON.stringify(data.bar)+', strip='+JSON.stringify(data.strip)+')');
   assert.deepEqual(data.actions.filter(x=>['filters','methods','appearance'].includes(x)),['filters','methods','appearance']);
 }
 async function clickSummary(page,selector){
