@@ -134,7 +134,13 @@
  function attach(){
   const target=document.getElementById('skyFoundationWheelMount');
   if(!target||!wheel())return;
-  if(target===mount){resetPosition();updateMode();return}
+  if(target===mount){
+   // The foundation replaces wheelMount children on a chart redraw.
+   // Reattach the existing controls without losing their state/handlers.
+   if(control&&!control.isConnected)target.appendChild(control);
+   if(cursor&&!cursor.isConnected)target.appendChild(cursor);
+   resetPosition();updateMode();return;
+  }
   mount=target;
   control=document.createElement('button');
   control.type='button';
@@ -168,7 +174,7 @@
   setVisible(true);resetPosition();updateMode();
  }
  let queued=false,observedMount=null;
- const watcher=new MutationObserver(()=>{if(!mount)schedule()});
+ const watcher=new MutationObserver(()=>{if(!cursor?.isConnected||!control?.isConnected)schedule()});
  function schedule(){
   if(queued)return;
   queued=true;
@@ -178,7 +184,6 @@
    // On slower mobile initialization the wheel SVG may appear after
    // DOMContentLoaded and after the first ready event. Attach when it arrives,
    // rather than leaving the pointer permanently absent.
-   if(mount){watcher.disconnect();observedMount=null;return}
    const host=document.getElementById('skyFoundationWheelMount');
    if(host&&host!==observedMount){
     watcher.disconnect();observedMount=host;
