@@ -822,6 +822,7 @@
   // question semantics are one interface. No separate mode selection is needed.
   const MAIN_COMPOSER_KEY='relphiDrawingBoardMainComposerV1';
   let mainComposer=null;
+  let mainComposerInputDraft='';
   function getMainComposer(){
     if(mainComposer)return mainComposer;
     let stored={};
@@ -983,6 +984,7 @@
         }
       });
       host.addEventListener('input',event=>{
+        if(event.target.id==='relphiMainQuestion')mainComposerInputDraft=event.target.value;
         const index=Number(event.target.dataset.mainText);
         if(Number.isInteger(index)&&event.target.matches('[data-main-text]')){
           const q=getMainComposer().questions[index];
@@ -1025,6 +1027,8 @@
       cards:1,reversals:snap.rowPositionMeta?.[index]?.allowReversals!==false,
       repeats:!!snap.rowPositionMeta?.[index]?.allowRepeats,linkTo:''
     })):s.questions;
+    const currentInput=String(host.querySelector('#relphiMainQuestion')?.value||mainComposerInputDraft||'');
+    if(currentInput)mainComposerInputDraft=currentInput;
     const fingerprint=JSON.stringify({locked,hasCards,questions,defaults:s.defaults,selected:s.selected,
       path:locked?persistedCraftedPath(root):'free',sources:s.sources});
     if(!force&&host.dataset.mainFingerprint===fingerprint)return;
@@ -1051,7 +1055,7 @@
     const total=s.questions.reduce((sum,q)=>sum+(q.linkTo===''?q.cards:1),0);
     const valid=editable&&s.questions.length>0&&s.questions.every(q=>q.text.trim())&&total<=MAX_POSITIONS;
     host.innerHTML='<div class="relphi-main-composer-heading"><strong>Questions</strong><span>'+(locked?'Reading in progress':hasCards?'Free cards on board':'Ready when you are')+'</span></div>'+
-      '<div data-main-question-form class="relphi-main-question-form"><label for="relphiMainQuestion" class="sr-only">Your question</label><textarea id="relphiMainQuestion" rows="2" placeholder="Type your question…" '+(!editable&&!canClarify?'disabled':'')+'></textarea><button type="button" data-main-action="append" '+(!editable&&!canClarify?'disabled':'')+'>'+(canClarify?'Add clarifier':'Add question')+'</button></div>'+
+      '<div data-main-question-form class="relphi-main-question-form"><label for="relphiMainQuestion" class="sr-only">Your question</label><textarea id="relphiMainQuestion" rows="2" placeholder="Type your question…" '+(!editable&&!canClarify?'disabled':'')+'>'+escapeHtml(mainComposerInputDraft)+'</textarea><button type="button" data-main-action="append" '+(!editable&&!canClarify?'disabled':'')+'>'+(canClarify?'Add clarifier':'Add question')+'</button></div>'+
       '<div class="relphi-main-defaults" aria-label="Sticky draw settings">'+
         '<label>Sub-pack <select data-main-default="pack" '+(!editable?'disabled':'')+'>'+packOptions(s.defaults.pack)+'</select></label>'+
         '<label>Cards <input data-main-default="cards" type="number" min="1" max="12" value="'+s.defaults.cards+'" '+(!editable?'disabled':'')+'></label>'+
@@ -1076,11 +1080,11 @@
   function mainAddQuestion(root=panel()){
     const host=root?.querySelector('.relphi-main-composer');
     const field=host?.querySelector('#relphiMainQuestion');
-    const text=String(field?.value||'').trim();
+    const text=String(field?.value||mainComposerInputDraft||'').trim();
     if(!text||!root)return;
     if(boardHasCraftedStructure(root)){
       if(persistedCraftedPath(root)==='bespoke'&&appendBespokeQuestion(text)){
-        field.value='';renderMainComposer(root,true);
+        mainComposerInputDraft='';field.value='';renderMainComposer(root,true);
       }
       return;
     }
@@ -1089,7 +1093,7 @@
     state.questions.push({...mainQuestionDefaults(),text});
     state.selected=[];
     saveMainComposer();
-    field.value='';
+    mainComposerInputDraft='';field.value='';
     renderMainComposer(root,true);
     host.querySelector('#relphiMainQuestion')?.focus();
   }
@@ -6067,6 +6071,13 @@
   window.RelphiAppendBespokeQuestion = appendBespokeQuestion;
   window.RelphiDrawingBoardEnsureTopActions = ensureBoardChrome;
 
+  window.addEventListener('pointerdown',event=>{
+    const action=event.target.closest?.('#shortListPanel .relphi-main-composer [data-main-action="append"]');
+    if(!action)return;
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    mainAddQuestion(panel());
+  },true);
   window.addEventListener('click',mainComposerGlobalClick,true);
   window.addEventListener('click',globalCapture,true);
   document.addEventListener('keydown',event=>{
