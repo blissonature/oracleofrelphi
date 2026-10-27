@@ -169,7 +169,17 @@ async function dragPointer(page,target,commit=true){
   dragging:document.getElementById('relphiMobileExplorationCursor')?.dataset.dragging,
   flashlight:document.querySelector('#skyFoundationWheelMount [data-house-flashlight]')?.dataset.pinned,
   state:document.querySelector('#skyFoundationWheelMount [data-house-flashlight]')?.dataset.house,
-  trace:(window.__pointerTouchTrace||[]).slice(-35)
+  trace:(window.__pointerTouchTrace||[]).slice(-35),
+  tip:(()=>{
+   const t=window.RelphiMobileExplorationPointer?.getTip?.(),b=document.getElementById('skyFoundationComparison')?.getBoundingClientRect();
+   if(!t||!b)return null;return{x:t.x+b.left,y:t.y+b.top}
+  })(),
+  hit:(()=>{
+   const t=window.RelphiMobileExplorationPointer?.getTip?.(),b=document.getElementById('skyFoundationComparison')?.getBoundingClientRect();
+   if(!t||!b)return null;
+   const x=t.x+b.left,y=t.y+b.top,svg=document.querySelector('#skyFoundationWheelMount > svg');
+   return{coords:{x,y},wheel:svg?.getBoundingClientRect().toJSON(),stack:document.elementsFromPoint(x,y).slice(0,7).map(n=>({tag:n.tagName,cls:n.getAttribute?.('class')||'',layer:n.getAttribute?.('data-layer')||'',interactive:n.getAttribute?.('data-interactive')||'',house:n.getAttribute?.('data-house')||''}))}
+  })()
  }));
  if(commit)await session.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});
  else await session.send('Input.dispatchTouchEvent',{type:'touchCancel',touchPoints:[]});
@@ -199,7 +209,8 @@ try{
  assert.equal(await page.locator('.relphi-mobile-pointer-toggle').getAttribute('aria-pressed'),'true');
  assert.equal(await page.evaluate(()=>window.RelphiMobileExplorationPointer?.isEnabled?.()),true);
  assert.equal(await page.locator('#relphiMobileExplorationCursor .relphi-mobile-cursor-arrow').count(),1);
- const h=await ringPoint(page,'A',11);
+ const h=await locationFor(page,'A',11);
+ console.log('MOBILE_HOUSE_TARGET',JSON.stringify(h));
  const hover=await dragPointer(page,h);
  console.log('MOBILE_HOUSE_HOVER',JSON.stringify(hover));
  assert.equal(hover.dragging,'true','A real touch drag must hold the cross');
