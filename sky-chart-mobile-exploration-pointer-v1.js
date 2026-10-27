@@ -126,13 +126,14 @@
   if(!mount||drag)return;
   const box=wheelBox(),host=mount.getBoundingClientRect();
   if(!box)return;
+  if(control)control.style.top=Math.max(0,box.bottom-host.top-43)+'px';
   if(!tip){
    tip={x:box.left-host.left+box.width*.65,y:box.top-host.top+box.height*.68};
   }
   moveTip(tip.x,tip.y);
  }
  function attach(){
-  const target=document.getElementById('skyFoundationWheelMount');
+  const target=document.getElementById('skyFoundationComparison');
   if(!target||!wheel())return;
   if(target===mount){
    // The foundation replaces wheelMount children on a chart redraw.
