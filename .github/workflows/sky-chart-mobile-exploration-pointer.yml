@@ -33,7 +33,7 @@ jobs:
       - name: Install browser
         run: |
           npm install --no-save playwright@1.52.0 luxon@3 suncalc@1.9.0
-          npx playwright install --with-deps chromium
+          npx playwright install chromium
       - name: Verify mobile touch exploration and desktop isolation
         run: |
           python3 -m http.server 4173 >/tmp/mobile-pointer-server.log 2>&1 &
