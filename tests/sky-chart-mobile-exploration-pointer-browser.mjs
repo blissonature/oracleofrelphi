@@ -239,6 +239,25 @@ try{
  assert.ok(visual.hitDiameter>=40,'Touch grip must keep a comfortable target');
  assert.ok(Math.abs(visual.visualLeft+2.5-visual.tip.x)<.1&&Math.abs(visual.visualTop+3-visual.tip.y)<.1,'Arrow tip remains accurately registered');
  console.log('PASS_COMPACT_POINTER',JSON.stringify(visual));
+ const initial=await page.evaluate(()=>{
+  const wheel=document.querySelector('#skyFoundationWheelMount > svg').getBoundingClientRect(),
+    mount=document.getElementById('skyFoundationComparison').getBoundingClientRect(),
+    tip=window.RelphiMobileExplorationPointer.getTip(),
+    description=document.createElement('div');
+  description.className='sky-wheel-sector-description';
+  const wheelHost=document.getElementById('skyFoundationWheelMount');
+  wheelHost.append(description);
+  const layer=getComputedStyle(description).zIndex;
+  description.remove();
+  return{tipX:tip.x,tipY:tip.y,expectedX:wheel.right-mount.left-56,
+    expectedY:wheel.top-mount.top+29,textZ:Number(layer),
+    cursorZ:Number(getComputedStyle(document.getElementById('relphiMobileExplorationCursor')).zIndex)};
+ });
+ assert.ok(Math.abs(initial.tipX-initial.expectedX)<1&&Math.abs(initial.tipY-initial.expectedY)<1,
+  'Pointer must begin at upper-right wheel corner');
+ assert.ok(initial.textZ>initial.cursorZ,'Text box must layer above cursor');
+ console.log('PASS_POINTER_UPPER_RIGHT_AND_TEXT_OVERLAY',JSON.stringify(initial));
+
 
  const h=await locationFor(page,'A',11);
  console.log('MOBILE_HOUSE_TARGET',JSON.stringify(h));
