@@ -2,16 +2,6 @@
 /* Mobile pointer: the four-direction cross is the only draggable hit surface.
    The rest is transparent to wheel taps, zoom and native house/placement gestures. */
 #skyFoundationComparison{position:relative}
-#skyFoundationComparison .relphi-mobile-pointer-toggle{
- position:absolute;right:9px;top:0;z-index:26;
- padding:8px 10px;min-height:36px;
- border:1px solid #8c8985;border-radius:999px;
- background:#fffdf9;color:#302e2c;box-shadow:0 2px 7px rgba(0,0,0,.13);
- font:700 11px/1.15 system-ui,sans-serif;cursor:pointer;
-}
-#skyFoundationComparison .relphi-mobile-pointer-toggle[aria-pressed="true"]{
- border-color:#355f91;color:#254f83;background:#f1f6fd;
-}
 #skyFoundationComparison .relphi-mobile-exploration-cursor{
  position:absolute;z-index:25;width:75px;height:73px;
  touch-action:none!important;
@@ -36,9 +26,6 @@
 #skyFoundationComparison .relphi-mobile-pointer-touch-area{
  fill:rgba(255,255,255,0.002);stroke:none;pointer-events:all!important;
 }
-#skyFoundationComparison .relphi-mobile-pointer-toggle[hidden],
 #skyFoundationComparison .relphi-mobile-exploration-cursor[hidden]{display:none!important}
-@media not all and (max-width:650px){#skyFoundationComparison .relphi-mobile-exploration-cursor,
-#skyFoundationComparison .relphi-mobile-pointer-toggle{display:none!important}}
-@media (pointer:fine){#skyFoundationComparison .relphi-mobile-exploration-cursor,
-#skyFoundationComparison .relphi-mobile-pointer-toggle{display:none!important}}
+@media not all and (max-width:650px){#skyFoundationComparison .relphi-mobile-exploration-cursor{display:none!important}}
+@media (pointer:fine){#skyFoundationComparison .relphi-mobile-exploration-cursor{display:none!important}}
