@@ -200,14 +200,14 @@ try{
    script:!!window.__relphiMobileExplorePointerV1,
    api:!!window.RelphiMobileExplorationPointer,
    root:!!document.getElementById('skyFoundationWheelMount'),
-   button:document.querySelector('.relphi-mobile-pointer-toggle')?.outerHTML.slice(0,350),
+   buttonCount:document.querySelectorAll('.relphi-mobile-pointer-toggle').length,
    cursor:document.querySelector('#relphiMobileExplorationCursor')?.outerHTML.slice(0,350),
    cursorDisplay:document.getElementById('relphiMobileExplorationCursor')&&getComputedStyle(document.getElementById('relphiMobileExplorationCursor')).display,
-   toggleDisplay:document.querySelector('.relphi-mobile-pointer-toggle')&&getComputedStyle(document.querySelector('.relphi-mobile-pointer-toggle')).display
+   toggleDisplay:'absent'
  }));
  console.log('MOBILE_POINTER_STARTUP',JSON.stringify({startup,errors}));
  await page.locator('#relphiMobileExplorationCursor .relphi-mobile-cursor-cross').waitFor({timeout:7000});
- assert.equal(await page.locator('.relphi-mobile-pointer-toggle').getAttribute('aria-pressed'),'true');
+ assert.equal(await page.locator('.relphi-mobile-pointer-toggle').count(),0,'No pointer hide/show button should exist');
  assert.equal(await page.evaluate(()=>window.RelphiMobileExplorationPointer?.isEnabled?.()),true);
  assert.equal(await page.locator('#relphiMobileExplorationCursor .relphi-mobile-cursor-arrow').count(),1);
  const visual=await page.evaluate(()=>{
@@ -216,12 +216,12 @@ try{
      arrow=cursor?.querySelector('.relphi-mobile-cursor-arrow');
    const bounds=cursor?.getBoundingClientRect(),tip=window.RelphiMobileExplorationPointer?.getTip?.();
    return{width:bounds?.width,height:bounds?.height,svgWidth:svg?.getAttribute('width'),
-     hitDiameter:Number(grip?.getAttribute('r'))*2*(bounds?.width/84),
+     hitDiameter:Number(grip?.getAttribute('r'))*2*(bounds?.width/150),
      arrow:!!arrow,tip,visualLeft:parseFloat(cursor?.style.left),visualTop:parseFloat(cursor?.style.top)};
  });
- assert.equal(visual.width,42,'Pointer must render at compact width');
- assert.equal(visual.height,44,'Pointer must render at compact height');
- assert.equal(visual.svgWidth,'42');
+ assert.equal(visual.width,75,'Pointer canvas must accommodate offset thumb grip');
+ assert.equal(visual.height,73,'Pointer canvas must accommodate offset thumb grip');
+ assert.equal(visual.svgWidth,'75');
  const detail=await page.evaluate(()=>{
   const grip=document.querySelector('#relphiMobileExplorationCursor .relphi-mobile-cursor-cross');
   const arrow=document.querySelector('#relphiMobileExplorationCursor .relphi-mobile-cursor-arrow');
@@ -230,15 +230,39 @@ try{
     arrowWeight:getComputedStyle(arrow).strokeWidth,crossWeight:getComputedStyle(grip).strokeWidth,
     draggable:grip.getAttribute('role')};
  });
- assert.equal(detail.center,'translate(42 3)','Cross must be separated above the long arrow diagonal');
+ assert.equal(detail.center,'translate(110 108)','Cross must be down and away from the arrow tip');
  assert.match(detail.crossPath,/M0 -15 V15 M-15 0 H15/,'Navigation cross arms stay clear and have short arrowhead caps');
  assert.equal(detail.arrowWeight,'2.5px','Arrow outline should be thinner');
  assert.equal(detail.crossWeight,'2.4px','Navigation cross should have finer strokes');
  assert.equal(detail.draggable,'button');
+ const separation=Math.hypot((110-5)*.5,(108-6)*.5);
+ assert.ok(separation>70,'Thumb grip center must be at least 70px away from the arrow tip');
+ console.log('PASS_THUMB_TIP_CLEARANCE',separation);
+
  console.log('PASS_POINTER_VISUAL_DETAIL',JSON.stringify(detail));
  assert.ok(visual.hitDiameter>=40,'Touch grip must keep a comfortable target');
  assert.ok(Math.abs(visual.visualLeft+2.5-visual.tip.x)<.1&&Math.abs(visual.visualTop+3-visual.tip.y)<.1,'Arrow tip remains accurately registered');
  console.log('PASS_COMPACT_POINTER',JSON.stringify(visual));
+ const initial=await page.evaluate(()=>{
+  const wheel=document.querySelector('#skyFoundationWheelMount > svg').getBoundingClientRect(),
+    mount=document.getElementById('skyFoundationComparison').getBoundingClientRect(),
+    tip=window.RelphiMobileExplorationPointer.getTip(),
+    description=document.createElement('div');
+  description.className='sky-wheel-sector-description';
+  const wheelHost=document.getElementById('skyFoundationWheelMount');
+  wheelHost.append(description);
+  const layer=getComputedStyle(description).zIndex;
+  description.remove();
+  return{tipX:tip.x,tipY:tip.y,expectedX:wheel.right-mount.left-80,
+    expectedY:wheel.top-mount.top+25,textZ:Number(layer),
+    cursorZ:Number(getComputedStyle(document.getElementById('relphiMobileExplorationCursor')).zIndex)};
+ });
+ console.log('UPPER_RIGHT_DIAGNOSTIC',JSON.stringify(initial));
+ assert.ok(Math.abs(initial.tipX-initial.expectedX)<1&&Math.abs(initial.tipY-initial.expectedY)<30,
+  'Pointer must begin at upper-right wheel corner');
+ assert.ok(initial.textZ>initial.cursorZ,'Text box must layer above cursor');
+ console.log('PASS_POINTER_UPPER_RIGHT_AND_TEXT_OVERLAY',JSON.stringify(initial));
+
 
  const h=await locationFor(page,'A',11);
  console.log('MOBILE_HOUSE_TARGET',JSON.stringify(h));
@@ -287,13 +311,10 @@ try{
  }));
  console.log('MOBILE_ASPECT',JSON.stringify(afterAspect));
  assert.ok(afterAspect.origin?.kind==='aspect'&&afterAspect.selectedLines>0,'Arrow tip must pin aspect lines');
- await page.locator('.relphi-mobile-pointer-toggle').click();
- assert.equal(await page.locator('.relphi-mobile-pointer-toggle').getAttribute('aria-pressed'),'false');
- assert.equal(await page.locator('#relphiMobileExplorationCursor').isVisible(),false,'Hide button must hide only the pointer');
- await page.locator('.relphi-mobile-pointer-toggle').click();
- assert.equal(await page.locator('#relphiMobileExplorationCursor').isVisible(),true);
+ assert.equal(await page.locator('.relphi-mobile-pointer-toggle').count(),0,'No hide/show button');
+ assert.equal(await page.locator('#relphiMobileExplorationCursor').isVisible(),true,'Pointer stays available');
  assert.deepEqual(errors,[],'No uncaught browser exceptions');
- console.log('PASS mobile real touch: house preview/pin + flashlight, cross-sky endpoints, placements, zodiac, aspects, pointer toggle');
+ console.log('PASS mobile real touch: house preview/pin + flashlight, cross-sky endpoints, placements, zodiac, aspects, always-on cursor');
 }finally{await mobile.close()}
 const desktop=await browser.newPage({viewport:{width:1280,height:900}});
 try{
