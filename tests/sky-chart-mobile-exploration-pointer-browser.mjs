@@ -222,6 +222,20 @@ try{
  assert.equal(visual.width,42,'Pointer must render at compact width');
  assert.equal(visual.height,44,'Pointer must render at compact height');
  assert.equal(visual.svgWidth,'42');
+ const detail=await page.evaluate(()=>{
+  const grip=document.querySelector('#relphiMobileExplorationCursor .relphi-mobile-cursor-cross');
+  const arrow=document.querySelector('#relphiMobileExplorationCursor .relphi-mobile-cursor-arrow');
+  const crossPath=grip.querySelector('path');
+  return{center:grip.getAttribute('transform'),crossPath:crossPath.getAttribute('d'),
+    arrowWeight:getComputedStyle(arrow).strokeWidth,crossWeight:getComputedStyle(grip).strokeWidth,
+    draggable:grip.getAttribute('role')};
+ });
+ assert.equal(detail.center,'translate(40 26)','Cross must sit at midpoint of long diagonal from (5,6) to (75,46)');
+ assert.match(detail.crossPath,/M0 -17 V17 M-17 0 H17/,'Navigation arrows must be enlarged');
+ assert.equal(detail.arrowWeight,'2.5px','Arrow outline should be thinner');
+ assert.equal(detail.crossWeight,'2.4px','Navigation cross should have finer strokes');
+ assert.equal(detail.draggable,'button');
+ console.log('PASS_POINTER_VISUAL_DETAIL',JSON.stringify(detail));
  assert.ok(visual.hitDiameter>=40,'Touch grip must keep a comfortable target');
  assert.ok(Math.abs(visual.visualLeft+2.5-visual.tip.x)<.1&&Math.abs(visual.visualTop+3-visual.tip.y)<.1,'Arrow tip remains accurately registered');
  console.log('PASS_COMPACT_POINTER',JSON.stringify(visual));
