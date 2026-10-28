@@ -128,7 +128,9 @@
   if(!box)return;
   if(control)control.style.top=Math.max(0,box.bottom-host.top-43)+'px';
   if(!tip){
-   tip={x:box.left-host.left+box.width*.65,y:box.top-host.top+box.height*.68};
+   // Park in the wheel's upper-right corner with enough room for the
+   // 42px artwork and the drag cross, rather than in the chart's center.
+   tip={x:box.right-host.left-56,y:box.top-host.top+29};
   }
   moveTip(tip.x,tip.y);
  }
