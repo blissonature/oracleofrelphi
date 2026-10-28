@@ -8,7 +8,7 @@
  const query='(max-width: 650px) and (pointer: coarse)';
  const media=matchMedia(query);
  const NS='http://www.w3.org/2000/svg';
- let mount=null,control=null,cursor=null,grip=null,drag=null,tip=null,visible=true,frame=0;
+ let mount=null,cursor=null,grip=null,drag=null,tip=null,frame=0;
  const TIP_X=2.5,TIP_Y=3,GRIP_X=20,GRIP_Y=13;
  const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
  const controller=()=>window.RelphiSkyFoundationInteractions;
@@ -58,7 +58,7 @@
   requestHover();
  }
  function pointerDown(event){
-  if(!visible||drag||!tip)return;
+  if(drag||!tip)return;
   if(event.pointerType==='mouse'&&event.button!==0)return;
   event.preventDefault();event.stopPropagation();
   drag={id:event.pointerId,clientX:event.clientX,clientY:event.clientY,startX:tip.x,startY:tip.y};
@@ -81,7 +81,7 @@
   event.preventDefault();event.stopPropagation();
  }
  function onKey(event){
-  if(!visible||!tip)return;
+  if(!tip)return;
   const delta=event.shiftKey?20:8;
   const offsets={ArrowLeft:[-delta,0],ArrowRight:[delta,0],ArrowUp:[0,-delta],ArrowDown:[0,delta]};
   if(offsets[event.key]){
@@ -99,25 +99,10 @@
    event.preventDefault();controller()?.clearVirtualPointer?.();
   }
  }
- function setVisible(next){
-  visible=!!next;
-  if(cursor)cursor.hidden=!visible;
-  if(control){
-   control.setAttribute('aria-pressed',String(visible));
-   control.setAttribute('aria-label',visible?'Hide exploration pointer':'Show exploration pointer');
-   control.textContent=visible?'Hide pointer':'Explore with pointer';
-  }
-  if(!visible&&drag){
-   if(frame){cancelAnimationFrame(frame);frame=0}
-   controller()?.clearVirtualPointer?.();
-   drag=null;
-  }
- }
  function updateMode(){
   if(!mount)return;
   const mobile=media.matches;
-  control.hidden=!mobile;
-  cursor.hidden=!mobile||!visible;
+  cursor.hidden=!mobile;
   if(!mobile&&drag){
    drag=null;controller()?.clearVirtualPointer?.();
   }
@@ -126,7 +111,6 @@
   if(!mount||drag)return;
   const box=wheelBox(),host=mount.getBoundingClientRect();
   if(!box)return;
-  if(control)control.style.top=Math.max(0,box.bottom-host.top-43)+'px';
   if(!tip){
    // Park in the wheel's upper-right corner with enough room for the
    // 42px artwork and the drag cross, rather than in the chart's center.
@@ -140,16 +124,10 @@
   if(target===mount){
    // The foundation replaces wheelMount children on a chart redraw.
    // Reattach the existing controls without losing their state/handlers.
-   if(control&&!control.isConnected)target.appendChild(control);
    if(cursor&&!cursor.isConnected)target.appendChild(cursor);
    resetPosition();updateMode();return;
   }
   mount=target;
-  control=document.createElement('button');
-  control.type='button';
-  control.className='relphi-mobile-pointer-toggle';
-  control.setAttribute('aria-controls','relphiMobileExplorationCursor');
-  control.addEventListener('click',()=>setVisible(!visible));
   cursor=document.createElement('div');
   cursor.className='relphi-mobile-exploration-cursor';
   cursor.id='relphiMobileExplorationCursor';
@@ -173,11 +151,11 @@
   grip.addEventListener('pointercancel',event=>endDrag(event,false));
   grip.addEventListener('keydown',onKey);
   grip.addEventListener('click',event=>{event.preventDefault();event.stopPropagation()});
-  target.append(control,cursor);
-  setVisible(true);resetPosition();updateMode();
+  target.appendChild(cursor);
+  resetPosition();updateMode();
  }
  let queued=false,observedMount=null;
- const watcher=new MutationObserver(()=>{if(!cursor?.isConnected||!control?.isConnected)schedule()});
+ const watcher=new MutationObserver(()=>{if(!cursor?.isConnected)schedule()});
  function schedule(){
   if(queued)return;
   queued=true;
@@ -200,7 +178,7 @@
  if(media.addEventListener)media.addEventListener('change',updateMode);
  document.readyState==='loading'?document.addEventListener('DOMContentLoaded',schedule,{once:true}):schedule();
  window.RelphiMobileExplorationPointer=Object.freeze({
-  isEnabled:()=>!!visible&&media.matches,
+  isEnabled:()=>media.matches,
   getTip:()=>tip?{...tip}:null
  });
 })();
