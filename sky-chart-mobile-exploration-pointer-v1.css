@@ -1,3 +1,4 @@
+#skyFoundationComparison #skyFoundationWheelMount .sky-wheel-sector-description{z-index:30}
 /* Mobile pointer: the four-direction cross is the only draggable hit surface.
    The rest is transparent to wheel taps, zoom and native house/placement gestures. */
 #skyFoundationComparison{position:relative}
