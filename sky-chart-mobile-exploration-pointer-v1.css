@@ -13,7 +13,7 @@
  border-color:#355f91;color:#254f83;background:#f1f6fd;
 }
 #skyFoundationComparison .relphi-mobile-exploration-cursor{
- position:absolute;z-index:25;width:42px;height:44px;
+ position:absolute;z-index:25;width:75px;height:73px;
  touch-action:none!important;
  pointer-events:none!important;user-select:none;-webkit-user-select:none;
  -webkit-touch-callout:none;
