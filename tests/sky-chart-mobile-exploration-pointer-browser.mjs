@@ -36,6 +36,9 @@ const boot=async(page,compare,harmonicWindow=1)=>{
 };
 async function locationFor(page,slot,house){
  return page.evaluate(({slot,house})=>{
+  // Find a house's native hit target without the resting drag grip covering it.
+  const cursor=document.getElementById('relphiMobileExplorationCursor'),wasHidden=cursor?.hidden;
+  if(cursor)cursor.hidden=true;
   const layer=slot==='A'?'a-houses':'b-houses';
   const path=document.querySelector('#skyFoundationWheelMount [data-layer="'+layer+'"] > path[data-house="'+house+'"]');
   if(!path)throw new Error('No sector '+slot+house);
@@ -51,6 +54,7 @@ async function locationFor(page,slot,house){
     const element=document.elementFromPoint(at.x,at.y);
     const found=element?.closest?.('[data-interactive="house"][data-house][data-sky]');
     if(found?.dataset.house===String(house)&&found?.dataset.sky===slot){
+     if(cursor)cursor.hidden=wasHidden;
      return{x:at.x,y:at.y,angle:deg,radius,house:found.dataset.house,sky:found.dataset.sky};
     }
    }
@@ -67,6 +71,7 @@ async function locationFor(page,slot,house){
     hist[key]=(hist[key]||0)+1;
    }
   }
+  if(cursor)cursor.hidden=wasHidden;
   throw new Error('No actual hit point for '+slot+' house '+house+' '+JSON.stringify({sectors,hist}));
  },{slot,house});
 }
