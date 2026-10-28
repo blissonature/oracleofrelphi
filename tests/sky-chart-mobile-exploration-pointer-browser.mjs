@@ -311,13 +311,10 @@ try{
  }));
  console.log('MOBILE_ASPECT',JSON.stringify(afterAspect));
  assert.ok(afterAspect.origin?.kind==='aspect'&&afterAspect.selectedLines>0,'Arrow tip must pin aspect lines');
- await page.locator('.relphi-mobile-pointer-toggle').click();
- assert.equal(await page.locator('.relphi-mobile-pointer-toggle').getAttribute('aria-pressed'),'false');
- assert.equal(await page.locator('#relphiMobileExplorationCursor').isVisible(),false,'Hide button must hide only the pointer');
- await page.locator('.relphi-mobile-pointer-toggle').click();
- assert.equal(await page.locator('#relphiMobileExplorationCursor').isVisible(),true);
+ assert.equal(await page.locator('.relphi-mobile-pointer-toggle').count(),0,'No hide/show button');
+ assert.equal(await page.locator('#relphiMobileExplorationCursor').isVisible(),true,'Pointer stays available');
  assert.deepEqual(errors,[],'No uncaught browser exceptions');
- console.log('PASS mobile real touch: house preview/pin + flashlight, cross-sky endpoints, placements, zodiac, aspects, pointer toggle');
+ console.log('PASS mobile real touch: house preview/pin + flashlight, cross-sky endpoints, placements, zodiac, aspects, always-on cursor');
 }finally{await mobile.close()}
 const desktop=await browser.newPage({viewport:{width:1280,height:900}});
 try{
