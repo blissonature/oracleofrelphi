@@ -200,14 +200,14 @@ try{
    script:!!window.__relphiMobileExplorePointerV1,
    api:!!window.RelphiMobileExplorationPointer,
    root:!!document.getElementById('skyFoundationWheelMount'),
-   button:document.querySelector('.relphi-mobile-pointer-toggle')?.outerHTML.slice(0,350),
+   buttonCount:document.querySelectorAll('.relphi-mobile-pointer-toggle').length,
    cursor:document.querySelector('#relphiMobileExplorationCursor')?.outerHTML.slice(0,350),
    cursorDisplay:document.getElementById('relphiMobileExplorationCursor')&&getComputedStyle(document.getElementById('relphiMobileExplorationCursor')).display,
-   toggleDisplay:document.querySelector('.relphi-mobile-pointer-toggle')&&getComputedStyle(document.querySelector('.relphi-mobile-pointer-toggle')).display
+   toggleDisplay:'absent'
  }));
  console.log('MOBILE_POINTER_STARTUP',JSON.stringify({startup,errors}));
  await page.locator('#relphiMobileExplorationCursor .relphi-mobile-cursor-cross').waitFor({timeout:7000});
- assert.equal(await page.locator('.relphi-mobile-pointer-toggle').getAttribute('aria-pressed'),'true');
+ assert.equal(await page.locator('.relphi-mobile-pointer-toggle').count(),0,'No pointer hide/show button should exist');
  assert.equal(await page.evaluate(()=>window.RelphiMobileExplorationPointer?.isEnabled?.()),true);
  assert.equal(await page.locator('#relphiMobileExplorationCursor .relphi-mobile-cursor-arrow').count(),1);
  const visual=await page.evaluate(()=>{
