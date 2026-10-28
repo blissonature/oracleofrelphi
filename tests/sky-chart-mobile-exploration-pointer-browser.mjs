@@ -216,12 +216,12 @@ try{
      arrow=cursor?.querySelector('.relphi-mobile-cursor-arrow');
    const bounds=cursor?.getBoundingClientRect(),tip=window.RelphiMobileExplorationPointer?.getTip?.();
    return{width:bounds?.width,height:bounds?.height,svgWidth:svg?.getAttribute('width'),
-     hitDiameter:Number(grip?.getAttribute('r'))*2*(bounds?.width/84),
+     hitDiameter:Number(grip?.getAttribute('r'))*2*(bounds?.width/150),
      arrow:!!arrow,tip,visualLeft:parseFloat(cursor?.style.left),visualTop:parseFloat(cursor?.style.top)};
  });
- assert.equal(visual.width,42,'Pointer must render at compact width');
- assert.equal(visual.height,44,'Pointer must render at compact height');
- assert.equal(visual.svgWidth,'42');
+ assert.equal(visual.width,75,'Pointer canvas must accommodate offset thumb grip');
+ assert.equal(visual.height,73,'Pointer canvas must accommodate offset thumb grip');
+ assert.equal(visual.svgWidth,'75');
  const detail=await page.evaluate(()=>{
   const grip=document.querySelector('#relphiMobileExplorationCursor .relphi-mobile-cursor-cross');
   const arrow=document.querySelector('#relphiMobileExplorationCursor .relphi-mobile-cursor-arrow');
@@ -230,11 +230,15 @@ try{
     arrowWeight:getComputedStyle(arrow).strokeWidth,crossWeight:getComputedStyle(grip).strokeWidth,
     draggable:grip.getAttribute('role')};
  });
- assert.equal(detail.center,'translate(42 3)','Cross must be separated above the long arrow diagonal');
+ assert.equal(detail.center,'translate(110 108)','Cross must be down and away from the arrow tip');
  assert.match(detail.crossPath,/M0 -15 V15 M-15 0 H15/,'Navigation cross arms stay clear and have short arrowhead caps');
  assert.equal(detail.arrowWeight,'2.5px','Arrow outline should be thinner');
  assert.equal(detail.crossWeight,'2.4px','Navigation cross should have finer strokes');
  assert.equal(detail.draggable,'button');
+ const separation=Math.hypot((110-5)*.5,(108-6)*.5);
+ assert.ok(separation>70,'Thumb grip center must be at least 70px away from the arrow tip');
+ console.log('PASS_THUMB_TIP_CLEARANCE',separation);
+
  console.log('PASS_POINTER_VISUAL_DETAIL',JSON.stringify(detail));
  assert.ok(visual.hitDiameter>=40,'Touch grip must keep a comfortable target');
  assert.ok(Math.abs(visual.visualLeft+2.5-visual.tip.x)<.1&&Math.abs(visual.visualTop+3-visual.tip.y)<.1,'Arrow tip remains accurately registered');
@@ -249,8 +253,8 @@ try{
   wheelHost.append(description);
   const layer=getComputedStyle(description).zIndex;
   description.remove();
-  return{tipX:tip.x,tipY:tip.y,expectedX:wheel.right-mount.left-56,
-    expectedY:wheel.top-mount.top+29,textZ:Number(layer),
+  return{tipX:tip.x,tipY:tip.y,expectedX:wheel.right-mount.left-80,
+    expectedY:wheel.top-mount.top+25,textZ:Number(layer),
     cursorZ:Number(getComputedStyle(document.getElementById('relphiMobileExplorationCursor')).zIndex)};
  });
  console.log('UPPER_RIGHT_DIAGNOSTIC',JSON.stringify(initial));
