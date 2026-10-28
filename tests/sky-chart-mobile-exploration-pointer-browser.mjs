@@ -230,13 +230,13 @@ try{
     arrowWeight:getComputedStyle(arrow).strokeWidth,crossWeight:getComputedStyle(grip).strokeWidth,
     draggable:grip.getAttribute('role')};
  });
- assert.equal(detail.center,'translate(110 108)','Cross must be down and away from the arrow tip');
+ assert.equal(detail.center,'translate(54 111)','Cross must align with the arrow tail at a short visible gap');
  assert.match(detail.crossPath,/M0 -15 V15 M-15 0 H15/,'Navigation cross arms stay clear and have short arrowhead caps');
  assert.equal(detail.arrowWeight,'2.5px','Arrow outline should be thinner');
  assert.equal(detail.crossWeight,'2.4px','Navigation cross should have finer strokes');
  assert.equal(detail.draggable,'button');
- const separation=Math.hypot((110-5)*.5,(108-6)*.5);
- assert.ok(separation>70,'Thumb grip center must be at least 70px away from the arrow tip');
+ const separation=Math.hypot((54-5)*.5,(111-6)*.5);
+ assert.ok(separation>56&&separation<65,'Thumb grip must follow the diagonal and stay close to the tail');
  console.log('PASS_THUMB_TIP_CLEARANCE',separation);
 
  console.log('PASS_POINTER_VISUAL_DETAIL',JSON.stringify(detail));
@@ -253,7 +253,7 @@ try{
   wheelHost.append(description);
   const layer=getComputedStyle(description).zIndex;
   description.remove();
-  return{tipX:tip.x,tipY:tip.y,expectedX:wheel.right-mount.left-80,
+  return{tipX:tip.x,tipY:tip.y,expectedX:wheel.right-mount.left-69,
     expectedY:wheel.top-mount.top+25,textZ:Number(layer),
     cursorZ:Number(getComputedStyle(document.getElementById('relphiMobileExplorationCursor')).zIndex)};
  });
@@ -262,6 +262,17 @@ try{
   'Pointer must begin at upper-right wheel corner');
  assert.ok(initial.textZ>initial.cursorZ,'Text box must layer above cursor');
  console.log('PASS_POINTER_UPPER_RIGHT_AND_TEXT_OVERLAY',JSON.stringify(initial));
+ // A stationary tap is instruction, not a selection; the hint dismisses on blank clicks.
+ const grip=await gripPoint(page);
+ const session=await page.context().newCDPSession(page);
+ await session.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x:grip.x,y:grip.y,id:7}]});
+ await session.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});
+ await page.waitForFunction(()=>!document.querySelector('.relphi-mobile-pointer-hint')?.hidden);
+ assert.equal(await page.locator('.relphi-mobile-pointer-hint').innerText(),'Drag the cursor to explore the wheel');
+ await page.locator('#skyFoundationComparison').click({position:{x:8,y:8},force:true});
+ assert.equal(await page.locator('.relphi-mobile-pointer-hint').isVisible(),false);
+ console.log('PASS_POINTER_TAP_HELPER');
+
 
 
  const h=await locationFor(page,'A',11);
