@@ -130,7 +130,7 @@
   if(!tip){
    // Park in the wheel's upper-right corner with enough room for the
    // 42px artwork and the drag cross, rather than in the chart's center.
-   tip={x:box.right-host.left-56,y:box.top-host.top+29};
+   tip={x:box.right-host.left-80,y:box.top-host.top+25};
   }
   moveTip(tip.x,tip.y);
  }
@@ -157,9 +157,9 @@
   cursor.setAttribute('aria-label','Draggable exploration cursor');
   // Vector artwork modeled on the user's outlined arrow + four-way move cross.
   // The complete drawing never intercepts a wheel tap; only the cross does.
-  cursor.innerHTML='<svg viewBox="0 0 84 88" width="42" height="44" aria-hidden="true" focusable="false">'
+  cursor.innerHTML='<svg viewBox="0 0 150 146" width="75" height="73" aria-hidden="true" focusable="false">'
     +'<path class="relphi-mobile-cursor-arrow" d="M5 6 L75 46 L50 57 L38 82 Z"/>'
-    +'<g class="relphi-mobile-cursor-cross" transform="translate(42 3)">'
+    +'<g class="relphi-mobile-cursor-cross" transform="translate(110 108)">'
     +'<path d="M0 -15 V15 M-15 0 H15 M-4 -11 L0 -15 L4 -11 M-4 11 L0 15 L4 11 M-11 -4 L-15 0 L-11 4 M11 -4 L15 0 L11 4"/>'
     +'<circle class="relphi-mobile-pointer-touch-area" r="40"/>'
     +'</g></svg>';
