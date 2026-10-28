@@ -1,0 +1,122 @@
+import assert from 'node:assert/strict';
+import {chromium} from 'playwright';
+import path from 'node:path';
+import {PNG} from 'pngjs';
+
+const signs=['Aries','Taurus','Gemini','Cancer','Leo','Virgo','Libra','Scorpio','Sagittarius','Capricorn','Aquarius','Pisces'];
+const placement=(name,longitude)=>{const v=((longitude%360)+360)%360,i=Math.floor(v/30),within=v%30;return{name,longitude:v,sign:signs[i],degree:Math.floor(within),minute:Math.floor((within%1)*60)}};
+const makeSky=(name,raw,asc)=>({
+  name,houseSystem:'equal-house',houseCusps:Array.from({length:12},(_,i)=>(asc+i*30)%360),
+  calcProfile:{houseCusps:Array.from({length:12},(_,i)=>(asc+i*30)%360),houseSystem:'equal-house',dateTime:'2026-10-25T10:00',instant:'2026-10-25T16:00:00.000Z',timeZone:'America/Denver',latitude:40.76,longitude:-111.89},
+  placements:Object.fromEntries(Object.entries(raw).map(([name,long])=>[name,placement(name,long)]))
+});
+const a=makeSky('Sky A',{Sun:195,Moon:118,Mercury:206,Venus:169,Mars:167,Jupiter:307,Saturn:235,Uranus:255,Neptune:271,Pluto:213,Ascendant:168,Midheaven:76},168);
+const b=makeSky('Sky B',{Sun:34.18,Moon:94.27,Mercury:43.62,Venus:8.4,Mars:357.55,Jupiter:64.32,Saturn:130.1,Uranus:220,Neptune:255.77,Pluto:192.22,Chiron:31.6},10);
+b.calcProfile.timeUnknown=true;
+delete b.houseCusps;delete b.calcProfile.houseCusps;
+b.calcProfile.dateTime='2026-10-25';delete b.calcProfile.instant;
+const ids=['conjunction','semi-sextile','octile','sextile','quintile','square','trine','tri-octile','bi-quintile','quincunx','opposition'];
+const browser=await chromium.launch({headless:true});
+try{
+  for(const width of [390,1280]){
+    const page=await browser.newPage({viewport:{width,height:950}});
+    const errors=[];page.on('pageerror',e=>errors.push(e.message));
+    await page.route('https://unpkg.com/suncalc@1.9.0/suncalc.js',route=>route.fulfill({path:path.resolve('node_modules/suncalc/suncalc.js'),contentType:'application/javascript'}));
+    await page.route('https://cdn.jsdelivr.net/npm/luxon@3/build/global/luxon.min.js',route=>route.fulfill({path:path.resolve('node_modules/luxon/build/global/luxon.min.js'),contentType:'application/javascript'}));
+    await page.route('https://nominatim.openstreetmap.org/**',route=>route.fulfill({status:200,contentType:'application/json',body:'[]'}));
+    await page.addInitScript(({a,b,ids})=>{
+      localStorage.setItem('relphiSkyChartA',JSON.stringify(a));
+      localStorage.setItem('relphiSkyChartB',JSON.stringify(b));
+      localStorage.setItem('relphiSkyChartLastModeV1','comparison');
+      localStorage.setItem('relphiSkyHarmonicWindowV1','3');
+      localStorage.setItem('relphiSkyAspectMatrixV1',JSON.stringify({'A-A':ids,'B-B':ids,'A-B':ids}));
+    },{a,b,ids});
+    await page.goto('http://127.0.0.1:4173/sky-chart.html',{waitUntil:'domcontentloaded'});
+    await page.waitForSelector('#skyFoundationRoot[aria-busy="false"]',{timeout:30000});
+    await page.waitForSelector('#skyFoundationRelationshipList>.sky-intrasky-b-generated',{timeout:30000});
+    for(const scope of ['A-A','A-B']){
+      const input=page.locator('[data-aspect-matrix-scope="'+scope+'"][data-aspect-matrix-aspect="all"]').first();
+      await input.waitFor({state:'attached',timeout:10000});
+      await input.evaluate(el=>{el.checked=false;el.dispatchEvent(new Event('change',{bubbles:true}))});
+    }
+    await page.waitForTimeout(250);
+    const debug=await page.evaluate(()=>({bPresent:document.documentElement.dataset.skyBPresent,svg:document.querySelector('#skyFoundationWheelMount>svg.sky-foundation-wheel')?.outerHTML.slice(0,420),scriptLoaded:!!window.__relphiComparisonIntraskyLinesV1,rows:[...document.querySelectorAll('#skyFoundationRelationshipList>.sky-intrasky-b-generated')].slice(0,2).map(x=>({index:x.dataset.relationIndex,left:x.dataset.leftLongitude,right:x.dataset.rightLongitude})),lines:document.querySelectorAll('#skyFoundationWheelMount [data-layer="aspects"]>line').length,allBB:[...document.querySelectorAll('#skyFoundationWheelMount [data-layer="aspects"]>line[data-relationship-mode="B-B"]')].slice(0,4).map(x=>({cls:x.getAttribute('class'),hidden:x.hidden,style:x.getAttribute('style'),parentOpacity:getComputedStyle(x.parentElement).opacity,stroke:getComputedStyle(x).stroke})),ours:document.querySelectorAll('#skyFoundationWheelMount [data-layer="aspects"]>line.sky-comparison-intrasky-aspect').length,samples:[...document.querySelectorAll('#skyFoundationWheelMount [data-layer="aspects"]>line')].slice(-5).map(x=>({class:x.getAttribute('class'),mode:x.dataset.relationshipMode,index:x.dataset.relationIndex})),errors:[...document.querySelectorAll('#skyFoundationRelationshipList>.sky-intrasky-b-generated')].filter(x=>!x.dataset.leftLongitude||!x.dataset.rightLongitude).length}));
+    console.log('B_B_DEBUG',width,JSON.stringify(debug));
+    await page.waitForTimeout(450);
+    const audit=await page.evaluate(()=>{
+      const visible=n=>{const s=getComputedStyle(n);return !n.hidden&&s.display!=='none'&&s.visibility!=='hidden'&&Number(s.opacity)>0};
+      const rows=[...document.querySelectorAll('#skyFoundationRelationshipList>.sky-intrasky-b-generated')].filter(visible);
+      const lines=[...document.querySelectorAll('#skyFoundationWheelMount [data-layer="aspects"]>line.sky-foundation-aspect:not(.sky-foundation-aspect-hit)')].filter(visible);
+      const bLines=lines.filter(x=>x.dataset.relationshipMode==='B-B');
+      const aLines=lines.filter(x=>x.dataset.relationshipMode==='A-A');
+      const keys=arr=>new Set(arr.map(x=>x.dataset.relationIndex));
+      const rowIds=keys(rows),lineIds=keys(bLines);
+      return {rowCount:rows.length,bLines:bLines.length,aLines:aLines.length,
+        missing:[...rowIds].filter(x=>!lineIds.has(x)),
+        extra:[...lineIds].filter(x=>!rowIds.has(x)),
+        badCoordinates:bLines.filter(x=>!['x1','y1','x2','y2'].every(k=>Number.isFinite(Number(x.getAttribute(k))))).length,
+        invalidStroke:bLines.filter(x=>getComputedStyle(x).stroke==='none'||getComputedStyle(x).stroke==='transparent').length,
+        bPresent:document.documentElement.dataset.skyBPresent,
+        aspectClasses:bLines.slice(0,3).map(x=>x.getAttribute('class'))};
+    });
+    const image=PNG.sync.read(await page.locator('#skyFoundationWheelMount>svg.sky-foundation-wheel').screenshot());
+    const centerX=image.width/2,centerY=image.height/2,radius=image.width*120/1200;
+    let centerLinePixels=0;
+    for(let y=Math.floor(centerY-radius);y<=centerY+radius;y++)for(let x=Math.floor(centerX-radius);x<=centerX+radius;x++){
+      if(x<0||y<0||x>=image.width||y>=image.height||Math.hypot(x-centerX,y-centerY)>radius)continue;
+      const i=(y*image.width+x)*4,red=image.data[i],green=image.data[i+1],blue=image.data[i+2];
+      if(Math.max(red,green,blue)-Math.min(red,green,blue)>35&&Math.min(red,green,blue)<190)centerLinePixels++;
+    }
+    console.log('B_B_COMPARISON_ASPECT_AUDIT',width,JSON.stringify({...audit,centerLinePixels,imageWidth:image.width}));
+    assert.ok(centerLinePixels>20,'Actual wheel center must contain painted aspect lines, not just visible SVG DOM nodes. Found '+centerLinePixels);
+    assert.ok(audit.rowCount>0,'Fixture must show B↔B relationship results.');
+    assert.equal(audit.bLines,audit.rowCount,'Each visible B↔B relationship must have a visible wheel line.');
+    assert.deepEqual(audit.missing,[],'All B↔B rows need counterpart lines.');
+    assert.deepEqual(audit.extra,[],'No orphan B↔B lines may appear.');
+    assert.equal(audit.aLines,0,'A↔A lines must follow the disabled A↔A scope.');
+    assert.equal(audit.badCoordinates,0,'Every endpoint must have valid SVG coordinates.');
+    assert.equal(audit.invalidStroke,0,'B↔B lines must have a visible aspect stroke.');
+    assert.deepEqual(errors.filter(e=>/TypeError|ReferenceError|SyntaxError/.test(e)),[],'No page errors.');
+
+    // Integration: A H8 runs from 18° to 48°. Unknown-time B Sun (34.18°),
+    // Chiron (31.6°) and Mercury (43.62°) occupy this angular wedge even
+    // though Sky B has no calculable houses. Their B↔B aspect lines must stay lit.
+    const house8=page.locator('#skyFoundationWheelMount [data-layer="a-houses"] > path[data-house="8"]');
+    await house8.focus();
+    await page.keyboard.press('Enter');
+    await page.waitForTimeout(200);
+    const houseAudit=await page.evaluate(()=>{
+      const wheel=document.querySelector('#skyFoundationWheelMount > svg');
+      const mark=id=>wheel.querySelector('[data-layer="placements"] > g[data-sky="B"][data-placement="'+id+'"]')?.classList.contains('is-kept');
+      const all=[...wheel.querySelectorAll('[data-layer="aspects"] > line.sky-foundation-aspect[data-relationship-mode="B-B"]')]
+        .filter(el=>!el.hidden&&el.style.display!=='none');
+      const sun=all.filter(el=>el.dataset.leftPlacement==='sun'||el.dataset.rightPlacement==='sun');
+      const listed=[...document.querySelectorAll('#skyFoundationRelationshipList > .sky-foundation-relationship-row[data-relationship-mode="B-B"]')]
+        .filter(el=>el.dataset.leftPlacement==='sun'||el.dataset.rightPlacement==='sun');
+      return {
+        isolated:wheel.classList.contains('has-isolation'),
+        hasUnknownBHouse:!!wheel.querySelector('[data-layer="b-houses"] > path[data-house]'),
+        sun:mark('sun'),chiron:mark('chiron'),mercury:mark('mercury'),
+        neptune:mark('neptune'),mars:mark('mars'),
+        sunLines:sun.length,sunLinesKept:sun.every(el=>el.classList.contains('is-kept')),
+        sunLinesNoHouse:sun.every(el=>!el.hasAttribute('data-left-house')&&!el.hasAttribute('data-right-house')),
+        sunRows:listed.length,sunRowsIncluded:listed.filter(el=>!el.classList.contains('is-wheel-selection-excluded')).length
+      };
+    });
+    console.log('PR347_PR348_COMBINED',width,JSON.stringify(houseAudit));
+    assert.equal(houseAudit.isolated,true,'A house focus must activate isolation');
+    assert.equal(houseAudit.hasUnknownBHouse,false,'Unknown-time B must not fabricate house boundaries');
+    for(const name of ['sun','chiron','mercury'])assert.equal(houseAudit[name],true,'B '+name+' inside A H8 must be highlighted');
+    for(const name of ['neptune','mars'])assert.equal(houseAudit[name],false,'B '+name+' outside A H8 must remain dim');
+    assert.ok(houseAudit.sunLines>0,'B Sun must have an intrasky aspect in the fixture');
+    assert.equal(houseAudit.sunLinesKept,true,'B↔B aspects incident to B Sun must be lit');
+    assert.equal(houseAudit.sunLinesNoHouse,true,'Unknown-time B lines must not get fictitious house attributes');
+    assert.ok(houseAudit.sunRowsIncluded>0,'B↔B relationships linked to the selected angular wedge must remain included');
+    await page.keyboard.press('Enter');
+    await page.waitForTimeout(150);
+    assert.equal(await page.evaluate(()=>document.querySelector('#skyFoundationWheelMount > svg').classList.contains('has-isolation')),false,
+      'Pressing Enter on the same house again must clear isolation');
+
+    await page.close();
+  }
+}finally{await browser.close()}

@@ -310,7 +310,7 @@
 
 .sky-saved-subview-head{
   display:grid;
-  grid-template-columns:28px minmax(0,1fr);
+  grid-template-columns:28px minmax(0,1fr) auto;
   align-items:center;
   gap:6px;
   min-height:38px;
@@ -319,6 +319,16 @@
   background:#f5f0e9;
 }
 .sky-saved-subview-head strong{font:900 .7rem/1.1 system-ui,sans-serif}
+.sky-saved-subview-head .sky-saved-picker-save{
+  appearance:none;justify-self:end;white-space:nowrap;min-height:30px;
+  padding:5px 10px;border:1px solid #c9211e;border-radius:999px;
+  background:#fffdf8;color:#a41c1a;cursor:pointer;
+  font:800 .62rem/1 system-ui,sans-serif;
+}
+.sky-saved-subview-head .sky-saved-picker-save:hover,
+.sky-saved-subview-head .sky-saved-picker-save:focus-visible{
+  background:#c9211e;color:#fff;outline-offset:2px
+}
 .sky-saved-subview-head .sky-saved-back{
   appearance:none;display:grid;place-items:center;width:27px;height:27px;padding:0;
   border:0;border-radius:999px;background:transparent;color:#675f58;cursor:pointer

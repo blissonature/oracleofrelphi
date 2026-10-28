@@ -174,21 +174,22 @@
     const value=payload(slot);window.RelphiSkyCardShell?.ensure?.(slot,value);window.RelphiSkyCardShell?.openDrawer?.(slot,'where');
     requestAnimationFrame(()=>requestAnimationFrame(()=>{if(document.querySelector(`#skyFoundation${slot} .sky-where-when-editor[data-slot="${slot}"]`))return;window.dispatchEvent(new CustomEvent('relphi:sky-drawer-opened',{detail:{slot,drawer:'where'}}))}));
   }
+  function reportCleared(slot,action){window.dispatchEvent(new CustomEvent('relphi:sky-working-slot-cleared',{detail:{slot,action}}))}
   function newSky(slot){
     if(!SLOT_KEYS[slot])return false;closeWhereWhenEditor(slot);
     if(slot==='B'){
       try{localStorage.removeItem(SLOT_KEYS.B)}catch(_){return false}
-      dispatchStorage('B');
+      reportCleared('B','new');dispatchStorage('B');
       window.RelphiSkySlotControls?.addSkyB?.();
       window.dispatchEvent(new CustomEvent('relphi:sky-name-updated',{detail:{slot:'B',name:'Where and When',source:'new-sky'}}));
       schedule();return true;
     }
-    if(!writeJson(SLOT_KEYS.A,blankPayload()))return false;dispatchStorage('A');window.dispatchEvent(new CustomEvent('relphi:sky-name-updated',{detail:{slot:'A',name:'Where and When',source:'new-sky'}}));openBlankWhereWhen('A');return true;
+    if(!writeJson(SLOT_KEYS.A,blankPayload()))return false;reportCleared('A','new');dispatchStorage('A');window.dispatchEvent(new CustomEvent('relphi:sky-name-updated',{detail:{slot:'A',name:'Where and When',source:'new-sky'}}));openBlankWhereWhen('A');return true;
   }
   function removeSky(slot){
     if(!SLOT_KEYS[slot])return false;closeWhereWhenEditor(slot);
     if(slot==='B'){window.RelphiSkySlotControls?.removeSkyB?.();return true}
-    try{localStorage.removeItem(SLOT_KEYS.A)}catch(_){return false}dispatchStorage('A');window.RelphiSkyCardShell?.sync?.('A',null);window.dispatchEvent(new CustomEvent('relphi:sky-name-updated',{detail:{slot:'A',name:'Where and When',source:'remove-sky'}}));return true;
+    try{localStorage.removeItem(SLOT_KEYS.A)}catch(_){return false}reportCleared('A','remove');dispatchStorage('A');window.RelphiSkyCardShell?.sync?.('A',null);window.dispatchEvent(new CustomEvent('relphi:sky-name-updated',{detail:{slot:'A',name:'Where and When',source:'remove-sky'}}));return true;
   }
   function addSkyB(){window.RelphiSkySlotControls?.addSkyB?.()}
   function shortMeta(record){const profile=record?.calcProfile&&typeof record.calcProfile==='object'?record.calcProfile:{},date=String(profile.dateTime||record?.dateTime||'').slice(0,10),location=String(profile.location||record?.location||'').trim();return[date,location].filter(Boolean).join(' · ')}
@@ -206,7 +207,7 @@
       menu.innerHTML=`<div class="sky-saved-subview-head"><button type="button" class="sky-saved-back" data-sky-menu-back aria-label="Back">‹</button><strong>Load Sky</strong></div><div class="sky-saved-list">${items}</div>`;positionPopover();return;
     }
     if(menuView==='save'){
-      const label=active.saved?'Save Changes':'Save Sky',name=active.saved?active.name:(active.name==='New Sky'||active.name==='Where and When'||active.name===`Sky ${openSlot}`||active.name==='Unsaved sky'?'':active.name);
+      const label=active.saved?'Save Changes':'Save Sky',name=active.saved?active.name:(window.RelphiSkySuggestedName?.preferred?.(value)||((active.name==='New Sky'||active.name==='Where and When'||active.name===`Sky ${openSlot}`||active.name==='Unsaved sky')?'':active.name));
       menu.innerHTML=`<div class="sky-saved-subview-head"><button type="button" class="sky-saved-back" data-sky-menu-back aria-label="Back">‹</button><strong>${label}</strong></div><form class="sky-saved-command-save" data-sky-command-save-form><label><span>Sky name</span><input type="text" maxlength="80" autocomplete="off" data-sky-command-save-name value="${escapeHtml(name)}" placeholder="Name this sky"></label><button type="submit">${label}</button><p data-sky-command-status aria-live="polite"></p></form>`;positionPopover();return;
     }
     const hasB=window.RelphiSkySlotControls?.hasStoredSkyB?.()===true,canAddB=openSlot==='A'&&!window.RelphiSkySlotControls?.hasSkyB?.(),newButton=hasSky?'<button type="button" class="sky-saved-command" data-sky-command="new"><span>New Sky</span></button>':'',saveButton=hasSky?`<button type="button" class="sky-saved-command" data-sky-command="save"><span>${active.saved?'Save Changes':'Save Sky'}</span></button>`:'',swapButton=hasB?'<button type="button" class="sky-saved-command" data-sky-command="swap"><span>Swap Sky A ↔ Sky B</span></button>':'',addB=canAddB?'<button type="button" class="sky-saved-command" data-sky-command="add-b"><span>Add Sky B</span></button>':'',removeButton=openSlot==='B'?'<button type="button" class="sky-saved-command is-danger" data-sky-command="remove"><span>Remove Sky</span></button>':'';

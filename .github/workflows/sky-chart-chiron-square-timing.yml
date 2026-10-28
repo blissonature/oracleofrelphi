@@ -1,0 +1,54 @@
+name: Sky Chart Chiron transit timing and sky-owner labels
+on:
+  push:
+    paths:
+      - 'sky-chart-relationship-transit-meta-v4.js'
+      - 'sky-chart-relationship-timing-fix-v1.js'
+      - 'sky-chart-inline-progressive-contract-v3.js'
+      - 'sky-chart-inline-relationship-v5.js'
+      - 'sky-chart-inline-relationship-copy-v1.js'
+      - 'sky-chart-relationship-export-columns-v1.js'
+      - 'sky-chart.html'
+      - 'tests/sky-chart-chiron-square-timing-browser.mjs'
+      - 'tests/sky-chart-relationship-timing-coverage.mjs'
+      - '.github/workflows/sky-chart-chiron-square-timing.yml'
+  pull_request:
+    paths:
+      - 'sky-chart-relationship-transit-meta-v4.js'
+      - 'sky-chart-relationship-timing-fix-v1.js'
+      - 'sky-chart-inline-progressive-contract-v3.js'
+      - 'sky-chart-inline-relationship-v5.js'
+      - 'sky-chart-inline-relationship-copy-v1.js'
+      - 'sky-chart-relationship-export-columns-v1.js'
+      - 'sky-chart.html'
+      - 'tests/sky-chart-chiron-square-timing-browser.mjs'
+      - 'tests/sky-chart-relationship-timing-coverage.mjs'
+      - '.github/workflows/sky-chart-chiron-square-timing.yml'
+jobs:
+  browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 14
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Syntax checks
+        run: |
+          node --check sky-chart-relationship-transit-meta-v4.js
+          node --check sky-chart-relationship-timing-fix-v1.js
+          node --check sky-chart-inline-progressive-contract-v3.js
+          node --check sky-chart-inline-relationship-v5.js
+          node --check sky-chart-inline-relationship-copy-v1.js
+          node --check sky-chart-relationship-export-columns-v1.js
+          node --check tests/sky-chart-chiron-square-timing-browser.mjs
+      - name: Install Chromium
+        run: |
+          npm install --no-save playwright@1.52.0 luxon@3 suncalc@1.9.0
+          npx playwright install chromium
+      - name: Chiron timing model tests
+        run: node tests/sky-chart-relationship-timing-coverage.mjs
+      - name: Verify Chiron square timeline, Rx and labels in mobile and desktop
+        run: |
+          python3 -m http.server 4173 >/tmp/chiron-relationship-timing.log 2>&1 &
+          node tests/sky-chart-chiron-square-timing-browser.mjs

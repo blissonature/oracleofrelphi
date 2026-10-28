@@ -29,7 +29,7 @@ function sideSky(row,side){const explicit=String(row.dataset[side==='left'?'left
 function infoFor(row,field){
   const side=field.startsWith('left-')?'left':field.startsWith('right-')?'right':'';
   const sky=side?sideSky(row,side):'',tone=sky?sky.toLowerCase():'aspect';
-  if(field==='left-placement'||field==='right-placement'){const id=String(row.dataset[side==='left'?'leftPlacement':'rightPlacement']||'');return{name:placementName(id),referent:PLACEMENT_REFERENTS[id]||`a calculated placement in Sky ${sky}`,tone}}
+  if(field==='left-placement'||field==='right-placement'){const id=String(row.dataset[side==='left'?'leftPlacement':'rightPlacement']||'');return{name:`Sky ${sky}'s ${placementName(id)}${window.RelphiSkyRetrograde?.forPlacement?.(sky,id)?' Rx':''}`,referent:PLACEMENT_REFERENTS[id]||`a calculated placement in Sky ${sky}`,tone}}
   if(field==='left-sign'||field==='right-sign'){const name=SIGN_NAMES[Number(row.dataset[side==='left'?'leftSign':'rightSign'])]||'Sign';return{name,referent:SIGN_REFERENTS[name]||`the zodiacal mode containing the Sky ${sky} placement`,tone}}
   if(field==='left-house'||field==='right-house'){const n=houseNumber(row,side);return{name:ordinalHouseName(n),referent:HOUSE_REFERENTS[n]||`the house occupied by the Sky ${sky} placement`,tone}}
   const id=String(row.dataset.aspect||'');return{name:ASPECT_NAMES[id]||id,referent:ASPECT_REFERENTS[id]||'a measured relationship between the two placements',tone:'aspect'};

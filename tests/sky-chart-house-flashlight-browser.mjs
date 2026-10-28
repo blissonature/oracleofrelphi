@@ -19,15 +19,15 @@ const fixture=(offset=0)=>{
 }};
 const browser=await chromium.launch({headless:true});
 const errors=[];
-const boot=async(page,compare)=>{
+const boot=async(page,compare,harmonicWindow=1)=>{
  page.on('pageerror',e=>errors.push(e.message));
- await page.addInitScript(({a,b,compare})=>{
+ await page.addInitScript(({a,b,compare,harmonicWindow})=>{
   localStorage.setItem('relphiSkyChartA',JSON.stringify(a));
   if(compare)localStorage.setItem('relphiSkyChartB',JSON.stringify(b));
   else localStorage.removeItem('relphiSkyChartB');
   localStorage.setItem('relphiSkyChartLastModeV1',compare?'comparison':'standalone');
-  localStorage.setItem('relphiSkyHarmonicWindowV1','1');
- },{a:fixture(),b:fixture(17),compare});
+  localStorage.setItem('relphiSkyHarmonicWindowV1',String(harmonicWindow));
+ },{a:fixture(),b:fixture(17),compare,harmonicWindow});
  await page.goto('http://127.0.0.1:4173/sky-chart.html',{waitUntil:'domcontentloaded',timeout:40000});
  await page.locator('#skyFoundationRoot[aria-busy="false"]').waitFor({timeout:25000});
  await page.waitForFunction(compare?
@@ -124,6 +124,48 @@ try{
  assert.deepEqual(bResult.lines.filter(l=>l.edge==='0').map(l=>l.kind),['other','zodiac','home']);
  console.log('B tapped',JSON.stringify(bResult));
 
+
+ // A house 10: 78–108°. B Uranus: 82° (B house 9, not B house 10).
+ const overlap=await browser.newPage({viewport:{width:1390,height:1060}});
+ try{
+  await boot(overlap,true,4);
+  const a10=await locationFor(overlap,'A',10);
+  await overlap.mouse.click(a10.x,a10.y);
+  await overlap.mouse.move(15,15);
+  await overlap.waitForTimeout(180);
+  const focus=await overlap.evaluate(()=>{
+   const wheel=document.querySelector('#skyFoundationWheelMount > svg');
+   const bU=wheel.querySelector('[data-layer="placements"] > g[data-sky="B"][data-placement="uranus"]');
+   const bJ=wheel.querySelector('[data-layer="placements"] > g[data-sky="B"][data-placement="jupiter"]');
+   const leader=wheel.querySelector('[data-layer="leaders"] > line[data-sky="B"][data-placement="uranus"]');
+   const linked=[...wheel.querySelectorAll('[data-layer="aspects"] > line.sky-foundation-aspect:not(.sky-foundation-aspect-hit)')]
+    .filter(line=>{
+      const mode=line.dataset.relationshipMode;
+      return ((line.dataset.leftSky==='B'||mode==='B-B')&&line.dataset.leftPlacement==='uranus')||
+             ((line.dataset.rightSky==='B'||mode==='B-B')&&line.dataset.rightPlacement==='uranus');
+    }).filter(line=>!line.hidden&&line.style.display!=='none');
+   const rows=[...document.querySelectorAll('#skyFoundationRelationshipList > .sky-foundation-relationship-row')]
+    .filter(row=>(row.dataset.leftSky==='B'&&row.dataset.leftPlacement==='uranus')||
+                 (row.dataset.rightSky==='B'&&row.dataset.rightPlacement==='uranus'));
+   return {house:bU?.dataset.house,uranusKept:bU?.classList.contains('is-kept'),
+    leaderKept:leader?.classList.contains('is-kept'),jupiterKept:bJ?.classList.contains('is-kept'),
+    linkedCount:linked.length,linkedKept:linked.every(line=>line.classList.contains('is-kept')),
+    matchingRows:rows.length,rowsUnexcluded:rows.filter(row=>!row.classList.contains('is-wheel-selection-excluded')).length};
+  });
+  console.log('Cross-sky house focus',JSON.stringify(focus));
+  assert.equal(focus.house,'9','B placement must retain its native house index');
+  assert.equal(focus.uranusKept,true,'B Uranus inside A house 10 rays must stay lit');
+  assert.equal(focus.leaderKept,true,'B Uranus leader must stay lit');
+  assert.equal(focus.jupiterKept,false,'unrelated B placement stays dim');
+  assert.ok(focus.linkedCount>0,'fixture requires a visible aspect involving B Uranus');
+  assert.equal(focus.linkedKept,true,'visible aspects incident to B Uranus stay lit');
+  assert.ok(focus.matchingRows>0&&focus.rowsUnexcluded>0,'linked comparison relationships stay included');
+  await overlap.mouse.click(a10.x,a10.y);
+  await overlap.mouse.move(15,15);
+  await overlap.waitForTimeout(150);
+  assert.equal(await overlap.evaluate(()=>document.querySelector('#skyFoundationWheelMount > svg').classList.contains('has-isolation')),false);
+ }finally{await overlap.close()}
+
  const standalone=await browser.newPage({viewport:{width:1200,height:960}});
  try{
   await boot(standalone,false);
@@ -148,6 +190,8 @@ try{
   console.log('Mobile tap result',JSON.stringify(result));
   assert.equal(result.sky,'A');assert.equal(result.pinned,'true');
   assert.equal(result.lines.length,6);
+  assert.equal(await screen.evaluate(()=>document.querySelector('[data-layer="placements"] > g[data-sky="B"][data-placement="mars"]')?.classList.contains('is-kept')),true,
+    'Mobile A house 11 must illuminate B Mars at 135° inside its 108°–138° sector');
  }finally{await mobile.close()}
  assert.deepEqual(errors,[],'No browser uncaught exceptions: '+errors);
  console.log('PASS: A/B hover, tap, un-tap, comparison and standalone geometry, mobile house flashlight');

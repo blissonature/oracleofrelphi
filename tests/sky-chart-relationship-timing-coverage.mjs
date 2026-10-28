@@ -60,8 +60,7 @@ context.window.SunCalc={getPosition(){return{altitude:1}}};
 context.window.RelphiGlyphRegistry=registry;
 context.window.RelphiHarmonicOrb={defaultWindow:6,byId:id=>id==='opposition'?{harmonic:2}:null};
 context.window.RelphiChironEphemeris={
-  calculateSync(date){return{longitude:30.3+.05*daysFromCenter(date)}},
-  ready:async()=>true
+  longitudeAt(date){return 30.3+.05*daysFromCenter(date)}
 };
 vm.createContext(context);
 vm.runInContext(fs.readFileSync('sky-chart-relationship-transit-meta-v4.js','utf8'),context,{filename:'sky-chart-relationship-transit-meta-v4.js'});

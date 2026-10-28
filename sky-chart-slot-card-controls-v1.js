@@ -80,6 +80,7 @@
   function removeSkyB(){
     releaseSkyBWhereWhen();
     try{localStorage.removeItem(SKY_B_KEY)}catch(_){return}
+    window.dispatchEvent(new CustomEvent('relphi:sky-working-slot-cleared',{detail:{slot:'B',action:'remove'}}));
     delete document.documentElement.dataset.skyBEditing;
     const startup=window.RelphiSkyStartupMode;
     startup?.writeMode?.('single');

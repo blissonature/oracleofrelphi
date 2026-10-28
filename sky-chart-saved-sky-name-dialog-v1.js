@@ -102,7 +102,7 @@
     overlay.addEventListener('pointerdown',event=>{if(event.target===overlay)event.preventDefault()});
   }
   function openDialog(slot){
-    ensureDialog();activeSlot=slot;status.textContent='';input.value=candidateName(payload(slot));overlay.hidden=false;document.documentElement.dataset.skySaveNameOpen='true';
+    ensureDialog();activeSlot=slot;status.textContent='';input.value=window.RelphiSkySuggestedName?.preferred?.(payload(slot))||candidateName(payload(slot));overlay.hidden=false;document.documentElement.dataset.skySaveNameOpen='true';
     if(!matchMedia('(pointer:coarse)').matches)requestAnimationFrame(()=>input.focus({preventScroll:true}));
   }
   function closeDialog(){
