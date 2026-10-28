@@ -267,19 +267,6 @@ try{
   'Pointer must begin at upper-right wheel corner');
  assert.ok(initial.textZ>initial.cursorZ,'Text box must layer above cursor');
  console.log('PASS_POINTER_UPPER_RIGHT_AND_TEXT_OVERLAY',JSON.stringify(initial));
- // A stationary tap is instruction, not a selection; the hint dismisses on blank clicks.
- const grip=await gripPoint(page);
- const session=await page.context().newCDPSession(page);
- await session.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x:grip.x,y:grip.y,id:7}]});
- await session.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});
- await page.waitForFunction(()=>!document.querySelector('.relphi-mobile-pointer-hint')?.hidden);
- assert.equal(await page.locator('.relphi-mobile-pointer-hint').innerText(),'Drag the cursor to explore the wheel');
- await page.locator('#skyFoundationComparison').click({position:{x:8,y:8},force:true});
- assert.equal(await page.locator('.relphi-mobile-pointer-hint').isVisible(),false);
- console.log('PASS_POINTER_TAP_HELPER');
-
-
-
  const h=await locationFor(page,'A',11);
  console.log('MOBILE_HOUSE_TARGET',JSON.stringify(h));
  const hover=await dragPointer(page,h);
@@ -327,6 +314,20 @@ try{
  }));
  console.log('MOBILE_ASPECT',JSON.stringify(afterAspect));
  assert.ok(afterAspect.origin?.kind==='aspect'&&afterAspect.selectedLines>0,'Arrow tip must pin aspect lines');
+ // A stationary tap is instruction, not a selection; the hint dismisses on blank clicks.
+ const grip=await gripPoint(page);
+ const session=await page.context().newCDPSession(page);
+ await session.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x:grip.x,y:grip.y,id:7}]});
+ await session.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});
+ await page.waitForFunction(()=>!document.querySelector('.relphi-mobile-pointer-hint')?.hidden);
+ assert.equal(await page.locator('.relphi-mobile-pointer-hint').innerText(),'Drag the cursor to explore the wheel');
+ await page.locator('#skyFoundationComparison').click({position:{x:8,y:8},force:true});
+ assert.equal(await page.locator('.relphi-mobile-pointer-hint').isVisible(),false);
+ console.log('PASS_POINTER_TAP_HELPER');
+
+
+
+
  assert.equal(await page.locator('.relphi-mobile-pointer-toggle').count(),0,'No hide/show button');
  assert.equal(await page.locator('#relphiMobileExplorationCursor').isVisible(),true,'Pointer stays available');
  assert.deepEqual(errors,[],'No uncaught browser exceptions');
