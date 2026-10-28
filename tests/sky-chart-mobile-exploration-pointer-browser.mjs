@@ -230,8 +230,8 @@ try{
     arrowWeight:getComputedStyle(arrow).strokeWidth,crossWeight:getComputedStyle(grip).strokeWidth,
     draggable:grip.getAttribute('role')};
  });
- assert.equal(detail.center,'translate(40 26)','Cross must sit at midpoint of long diagonal from (5,6) to (75,46)');
- assert.match(detail.crossPath,/M0 -17 V17 M-17 0 H17/,'Navigation arrows must be enlarged');
+ assert.equal(detail.center,'translate(42 3)','Cross must be separated above the long arrow diagonal');
+ assert.match(detail.crossPath,/M0 -15 V15 M-15 0 H15/,'Navigation cross arms stay clear and have short arrowhead caps');
  assert.equal(detail.arrowWeight,'2.5px','Arrow outline should be thinner');
  assert.equal(detail.crossWeight,'2.4px','Navigation cross should have finer strokes');
  assert.equal(detail.draggable,'button');
