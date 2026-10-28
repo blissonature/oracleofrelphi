@@ -253,6 +253,7 @@ try{
     expectedY:wheel.top-mount.top+29,textZ:Number(layer),
     cursorZ:Number(getComputedStyle(document.getElementById('relphiMobileExplorationCursor')).zIndex)};
  });
+ console.log('UPPER_RIGHT_DIAGNOSTIC',JSON.stringify(initial));
  assert.ok(Math.abs(initial.tipX-initial.expectedX)<1&&Math.abs(initial.tipY-initial.expectedY)<1,
   'Pointer must begin at upper-right wheel corner');
  assert.ok(initial.textZ>initial.cursorZ,'Text box must layer above cursor');
