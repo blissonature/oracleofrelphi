@@ -9,7 +9,7 @@
  const media=matchMedia(query);
  const NS='http://www.w3.org/2000/svg';
  let mount=null,control=null,cursor=null,grip=null,drag=null,tip=null,visible=true,frame=0;
- const TIP_X=2.5,TIP_Y=3,GRIP_X=21.5,GRIP_Y=8;
+ const TIP_X=2.5,TIP_Y=3,GRIP_X=20,GRIP_Y=13;
  const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
  const controller=()=>window.RelphiSkyFoundationInteractions;
  const wheel=()=>document.querySelector('#skyFoundationWheelMount > svg.sky-foundation-wheel');
@@ -157,8 +157,8 @@
   // The complete drawing never intercepts a wheel tap; only the cross does.
   cursor.innerHTML='<svg viewBox="0 0 84 88" width="42" height="44" aria-hidden="true" focusable="false">'
     +'<path class="relphi-mobile-cursor-arrow" d="M5 6 L75 46 L50 57 L38 82 Z"/>'
-    +'<g class="relphi-mobile-cursor-cross" transform="translate(43 16)">'
-    +'<path d="M0 -12 V12 M-12 0 H12 M-5 -7 L0 -12 L5 -7 M-5 7 L0 12 L5 7 M-7 -5 L-12 0 L-7 5 M7 -5 L12 0 L7 5"/>'
+    +'<g class="relphi-mobile-cursor-cross" transform="translate(40 26)">'
+    +'<path d="M0 -17 V17 M-17 0 H17 M-7 -10 L0 -17 L7 -10 M-7 10 L0 17 L7 10 M-10 -7 L-17 0 L-10 7 M10 -7 L17 0 L10 7"/>'
     +'<circle class="relphi-mobile-pointer-touch-area" r="40"/>'
     +'</g></svg>';
   grip=cursor.querySelector('.relphi-mobile-cursor-cross');
