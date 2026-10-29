@@ -20,18 +20,21 @@
   scrollRestore=()=>{html.style.overflow=previous[0];body.style.overflow=previous[1];html.style.overscrollBehavior=previous[2];body.style.overscrollBehavior=previous[3];scrollRestore=null};
  }
  function unlockScroll(){scrollRestore?.()}
- function blockTouchScroll(event){if(drag)event.preventDefault()}
+ function blockTouchScroll(event){if(drag&&event.cancelable)event.preventDefault()}
+ function blockGestureScroll(event){if(drag&&event.cancelable)event.preventDefault()}
  document.addEventListener('touchmove',blockTouchScroll,{passive:false,capture:true});
+ window.addEventListener('touchmove',blockTouchScroll,{passive:false,capture:true});
+ document.addEventListener('gesturestart',blockGestureScroll,{passive:false,capture:true});
+ document.addEventListener('gesturechange',blockGestureScroll,{passive:false,capture:true});
  const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
  const controller=()=>window.RelphiSkyFoundationInteractions;
  const wheel=()=>document.querySelector('#skyFoundationWheelMount > svg.sky-foundation-wheel');
  function clientTip(){
   if(!tip||!mount)return null;
   const b=mount.getBoundingClientRect();
-  // Sample the chart within its bounds, even if the visible drag cursor
-  // follows the thumb beyond the wheel edge.
-  const p=withinWheel(tip.x,tip.y)||tip;
-  return{x:b.left+p.x,y:b.top+p.y};
+  // Use the visible pointer tip, never a silently clamped substitute.
+  // Outside the wheel, hit testing naturally returns no chart target.
+  return{x:b.left+tip.x,y:b.top+tip.y};
  }
  function wheelBox(){
   const el=wheel();
@@ -55,7 +58,7 @@
  function moveTip(x,y){
   // During drag keep the physical handle-to-pointer offset constant.
   // Clamping the visible artwork lets the thumb overtake the pointer.
-  // Only the chart hit-test position is constrained (in clientTip).
+  // Off-wheel tips simply clear the preview rather than acting elsewhere.
   if(drag){tip={x,y};paint();return}
   const clipped=withinWheel(x,y);
   if(!clipped)return;
@@ -163,7 +166,7 @@
     +'<path class="relphi-mobile-cursor-arrow" d="M5 6 L75 46 L50 57 L38 82 Z"/>'
     +'<g class="relphi-mobile-cursor-cross" transform="translate(82 93)">'
     +'<path d="M0 -15 V15 M-15 0 H15 M-4 -11 L0 -15 L4 -11 M-4 11 L0 15 L4 11 M-11 -4 L-15 0 L-11 4 M11 -4 L15 0 L11 4"/>'
-    +'<circle class="relphi-mobile-pointer-touch-area" r="40"/>'
+    +'<circle class="relphi-mobile-pointer-touch-area" r="22"/>'
     +'</g></svg>';
   grip=cursor.querySelector('.relphi-mobile-cursor-cross');
   grip.setAttribute('role','button');
