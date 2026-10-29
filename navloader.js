@@ -64,7 +64,7 @@
       link.href='relphi-copy-icon-convention-v1.css?v=4';
       document.head.appendChild(link);
     }
-    appendScript('relphi-copy-icon-convention-v1.js?v=3');
+    appendScript('relphi-copy-icon-convention-v1.js?v=4');
   }
 
   function initMenu() {
