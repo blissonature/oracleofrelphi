@@ -10,22 +10,31 @@
  const NS='http://www.w3.org/2000/svg';
  let mount=null,cursor=null,grip=null,drag=null,tip=null,frame=0;
  const TIP_X=2.5,TIP_Y=3;
+ const HOME_INSET_X=120; // keep full grip on-screen at initial upper-right parking
  let scrollRestore=null;
  function lockScroll(){
   if(scrollRestore)return;
   const html=document.documentElement,body=document.body;
-  const previous=[html.style.overflow,body.style.overflow,html.style.overscrollBehavior,body.style.overscrollBehavior];
-  html.style.overflow='hidden';body.style.overflow='hidden';
-  html.style.overscrollBehavior='none';body.style.overscrollBehavior='none';
-  scrollRestore=()=>{html.style.overflow=previous[0];body.style.overflow=previous[1];html.style.overscrollBehavior=previous[2];body.style.overscrollBehavior=previous[3];scrollRestore=null};
+  const y=window.scrollY,x=window.scrollX;
+  const old={overflow:html.style.overflow,overscroll:html.style.overscrollBehavior,
+   position:body.style.position,top:body.style.top,left:body.style.left,
+   width:body.style.width,bodyOverscroll:body.style.overscrollBehavior};
+  html.style.overflow='hidden';html.style.overscrollBehavior='none';
+  body.style.position='fixed';body.style.top=(-y)+'px';body.style.left=(-x)+'px';
+  body.style.width='100%';body.style.overscrollBehavior='none';
+  scrollRestore=()=>{
+   html.style.overflow=old.overflow;html.style.overscrollBehavior=old.overscroll;
+   body.style.position=old.position;body.style.top=old.top;
+   body.style.left=old.left;body.style.width=old.width;
+   body.style.overscrollBehavior=old.bodyOverscroll;
+   scrollRestore=null;window.scrollTo(x,y);
+  };
  }
  function unlockScroll(){scrollRestore?.()}
  function blockTouchScroll(event){if(drag&&event.cancelable)event.preventDefault()}
- function blockGestureScroll(event){if(drag&&event.cancelable)event.preventDefault()}
  document.addEventListener('touchmove',blockTouchScroll,{passive:false,capture:true});
- window.addEventListener('touchmove',blockTouchScroll,{passive:false,capture:true});
- document.addEventListener('gesturestart',blockGestureScroll,{passive:false,capture:true});
- document.addEventListener('gesturechange',blockGestureScroll,{passive:false,capture:true});
+ document.addEventListener('gesturestart',blockTouchScroll,{passive:false,capture:true});
+ document.addEventListener('gesturechange',blockTouchScroll,{passive:false,capture:true});
  const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
  const controller=()=>window.RelphiSkyFoundationInteractions;
  const wheel=()=>document.querySelector('#skyFoundationWheelMount > svg.sky-foundation-wheel');
@@ -64,11 +73,14 @@
   if(!clipped)return;
   tip=clipped;paint();
  }
+ function broadcastHouse(focus){
+  window.dispatchEvent(new CustomEvent('relphi:sky-virtual-house-hover',{detail:focus?.kind==='house'?{sky:focus.sky,house:Number(focus.value)}:null}));
+ }
  function hover(){
   frame=0;
   if(!drag)return;
   const p=clientTip();
-  if(p)controller()?.previewVirtualPointer?.(p.x,p.y);
+  if(p){const focus=controller()?.previewVirtualPointer?.(p.x,p.y);broadcastHouse(focus)}
  }
  function requestHover(){
   if(!frame)frame=requestAnimationFrame(hover);
@@ -98,6 +110,7 @@
   const p=clientTip();
   const active=commit&&p?controller()?.commitVirtualPointer?.(p.x,p.y):null;
   if(!commit)controller()?.clearVirtualPointer?.();
+  broadcastHouse(null);
   drag=null;
   // Once the thumb lifts, park the cursor tip back inside the wheel.
   const parked=withinWheel(tip.x,tip.y);
@@ -123,7 +136,7 @@
    const p=clientTip();
    if(p)controller()?.commitVirtualPointer?.(p.x,p.y);
   }else if(event.key==='Escape'){
-   event.preventDefault();controller()?.clearVirtualPointer?.();
+   event.preventDefault();controller()?.clearVirtualPointer?.();broadcastHouse(null);
   }
  }
  function updateMode(){
@@ -131,7 +144,7 @@
   const mobile=media.matches;
   cursor.hidden=!mobile;
   if(!mobile&&drag){
-   drag=null;unlockScroll();controller()?.clearVirtualPointer?.();
+   drag=null;unlockScroll();controller()?.clearVirtualPointer?.();broadcastHouse(null);
   }
  }
  function resetPosition(){
@@ -141,7 +154,7 @@
   if(!tip){
    // Park in the wheel's upper-right corner with enough room for the
    // 42px artwork and the drag cross, rather than in the chart's center.
-   tip={x:box.right-host.left-80,y:box.top-host.top+25};
+   tip={x:box.right-host.left-HOME_INSET_X,y:box.top-host.top+25};
   }
   moveTip(tip.x,tip.y);
  }
@@ -162,9 +175,9 @@
   cursor.setAttribute('aria-label','Draggable exploration cursor');
   // Pointer tip (5,6) and midpoint of the other arrowhead tips\n  // (75,46) and (38,82) => (56.5,64) define the diagonal axis.\n  // The move cross center (82,93) extends that axis with a small visual gap.\n  // Vector artwork modeled on the user's outlined arrow + four-way move cross.
   // The complete drawing never intercepts a wheel tap; only the cross does.
-  cursor.innerHTML='<svg viewBox="0 0 150 146" width="75" height="73" aria-hidden="true" focusable="false">'
+  cursor.innerHTML='<svg viewBox="0 0 200 195" width="100" height="97.5" aria-hidden="true" focusable="false">'
     +'<path class="relphi-mobile-cursor-arrow" d="M5 6 L75 46 L50 57 L38 82 Z"/>'
-    +'<g class="relphi-mobile-cursor-cross" transform="translate(82 93)">'
+    +'<g class="relphi-mobile-cursor-cross" transform="translate(126.65 143)">'
     +'<path d="M0 -15 V15 M-15 0 H15 M-4 -11 L0 -15 L4 -11 M-4 11 L0 15 L4 11 M-11 -4 L-15 0 L-11 4 M11 -4 L15 0 L11 4"/>'
     +'<circle class="relphi-mobile-pointer-touch-area" r="32"/>'
     +'</g></svg>';
@@ -176,6 +189,7 @@
   grip.addEventListener('pointermove',pointerMove);
   grip.addEventListener('pointerup',event=>endDrag(event,true));
   grip.addEventListener('pointercancel',event=>endDrag(event,false));
+  grip.addEventListener('lostpointercapture',event=>endDrag(event,false));
   grip.addEventListener('keydown',onKey);
   grip.addEventListener('click',event=>{event.preventDefault();event.stopPropagation()});
   target.appendChild(cursor);
