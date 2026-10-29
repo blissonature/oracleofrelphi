@@ -10,6 +10,18 @@
  const NS='http://www.w3.org/2000/svg';
  let mount=null,cursor=null,grip=null,drag=null,tip=null,frame=0;
  const TIP_X=2.5,TIP_Y=3;
+ let scrollRestore=null;
+ function lockScroll(){
+  if(scrollRestore)return;
+  const html=document.documentElement,body=document.body;
+  const previous=[html.style.overflow,body.style.overflow,html.style.overscrollBehavior,body.style.overscrollBehavior];
+  html.style.overflow='hidden';body.style.overflow='hidden';
+  html.style.overscrollBehavior='none';body.style.overscrollBehavior='none';
+  scrollRestore=()=>{html.style.overflow=previous[0];body.style.overflow=previous[1];html.style.overscrollBehavior=previous[2];body.style.overscrollBehavior=previous[3];scrollRestore=null};
+ }
+ function unlockScroll(){scrollRestore?.()}
+ function blockTouchScroll(event){if(drag)event.preventDefault()}
+ document.addEventListener('touchmove',blockTouchScroll,{passive:false,capture:true});
  const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
  const controller=()=>window.RelphiSkyFoundationInteractions;
  const wheel=()=>document.querySelector('#skyFoundationWheelMount > svg.sky-foundation-wheel');
@@ -62,6 +74,7 @@
   if(event.pointerType==='mouse'&&event.button!==0)return;
   event.preventDefault();event.stopPropagation();
   drag={id:event.pointerId,clientX:event.clientX,clientY:event.clientY,startX:tip.x,startY:tip.y};
+  lockScroll();
   try{grip.setPointerCapture(event.pointerId)}catch(_){}
   controller()?.beginVirtualPointer?.();
   requestHover();
@@ -75,7 +88,7 @@
   const p=clientTip();
   const active=commit&&p?controller()?.commitVirtualPointer?.(p.x,p.y):null;
   if(!commit)controller()?.clearVirtualPointer?.();
-  drag=null;paint();
+  drag=null;unlockScroll();paint();
   try{if(grip.hasPointerCapture(event.pointerId))grip.releasePointerCapture(event.pointerId)}catch(_){}
   if(active)cursor.dataset.focus=active.kind;else delete cursor.dataset.focus;
   event.preventDefault();event.stopPropagation();
@@ -104,7 +117,7 @@
   const mobile=media.matches;
   cursor.hidden=!mobile;
   if(!mobile&&drag){
-   drag=null;controller()?.clearVirtualPointer?.();
+   drag=null;unlockScroll();controller()?.clearVirtualPointer?.();
   }
  }
  function resetPosition(){
