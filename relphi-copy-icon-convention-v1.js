@@ -9,7 +9,27 @@
   // Sky Chart previews have a cross-origin asset base, so use the same-origin
   // canonical sprite there; production continues to use the usual relative path.
   const IS_SKY_PREVIEW=/(^|\/)sky-chart-preview\/sky-chart\.html$/.test(location.pathname);
-  const SOURCE=IS_SKY_PREVIEW?'/relphi-icons.svg#relphi-copy':'relphi-icons.svg#relphi-copy';
+  // A <use> pointing outside the document is unreliable in exact-commit
+  // previews (the document and its revision-pinned assets have different origins).
+  // Import the SAME canonical symbol from the pinned sprite into this document.
+  const SOURCE=IS_SKY_PREVIEW?'#relphi-copy':'relphi-icons.svg#relphi-copy';
+  async function ensurePreviewSprite(){
+    if(!IS_SKY_PREVIEW)return;
+    if(document.getElementById('relphi-copy'))return;
+    const url=new URL('relphi-icons.svg',document.baseURI);
+    const response=await fetch(url.toString(),{mode:'cors'});
+    if(!response.ok)throw new Error('Canonical copy sprite unavailable: '+response.status);
+    const xml=new DOMParser().parseFromString(await response.text(),'image/svg+xml');
+    const master=xml.getElementById('relphi-copy');
+    if(!master||master.tagName.toLowerCase()!=='symbol')throw new Error('Canonical copy symbol missing');
+    const sprite=document.createElementNS(SVG_NS,'svg');
+    sprite.setAttribute('aria-hidden','true');
+    sprite.setAttribute('width','0');
+    sprite.setAttribute('height','0');
+    sprite.style.cssText='position:absolute;width:0;height:0;overflow:hidden;pointer-events:none';
+    sprite.appendChild(document.importNode(master,true));
+    document.body.prepend(sprite);
+  }
   const KNOWN=[
     '.sky-relationship-copy-button',
     '.sky-wheel-copy-button',
@@ -129,5 +149,10 @@
     ['relphi:sky-foundation-ready','relphi:sky-foundation-interactions-ready','relphi:drawing-board-rendered'].forEach(event=>window.addEventListener(event,schedule));
   }
   window.RelphiCopyIcon=Object.freeze({hydrate:schedule,source:SOURCE});
-  document.readyState==='loading'?document.addEventListener('DOMContentLoaded',start,{once:true}):start();
+  async function begin(){
+    try{await ensurePreviewSprite()}
+    catch(error){console.error('Copy icon sprite failed to load',error)}
+    start();
+  }
+  document.readyState==='loading'?document.addEventListener('DOMContentLoaded',begin,{once:true}):void begin();
 })();
