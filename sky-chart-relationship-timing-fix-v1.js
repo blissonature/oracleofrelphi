@@ -209,7 +209,7 @@ function patchExpanded(){
   if(!meta||meta.dataset.transitKind!=='unavailable')return;
   const timing=timingForRow(row);if(!timing)return;
   const exactText=timing.timeline.exacts.length?timing.timeline.exacts.map(dateLabel).join(' · '):'near pass',passText=timing.timeline.exacts.length===1?'1 exact pass':`${timing.timeline.exacts.length} exact passes`;
-  meta.replaceChildren(rowMarkup('Start',dateLabel(timing.timeline.startMs)),rowMarkup('Exact',exactText),rowMarkup('End',dateLabel(timing.timeline.endMs)),rowMarkup('Duration',durationLabel(timing.durationDays)),rowMarkup('Passes',passText));
+  meta.replaceChildren(rowMarkup('Start',dateLabel(timing.timeline.startMs)),rowMarkup('Exact',exactText),rowMarkup('End',dateLabel(timing.timeline.endMs)),rowMarkup('Duration',durationLabel(timing.durationDays)),rowMarkup('Passes',passText),...(window.RelphiTransitNearExact?.text?.(timing.model,timing.timeline)?[rowMarkup('Near-exact approaches',window.RelphiTransitNearExact.text(timing.model,timing.timeline))]:[]));
   meta.dataset.transitReady='true';meta.dataset.transitKind='dynamic';meta.title=`Active from ${dateLabel(timing.timeline.startMs)} to ${dateLabel(timing.timeline.endMs)}; ${durationLabel(timing.durationDays)} current activation window.`;meta.setAttribute('aria-label',meta.title);
 }
 function schedulePatch(delay=0){if(queued)return;queued=true;setTimeout(()=>requestAnimationFrame(patchExpanded),delay)}
