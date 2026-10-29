@@ -204,6 +204,38 @@ function collectTimeline(model){
   if((model.movingEndpoints?.length||0)>1)return collectLocalTimeline(model);
   const{step,horizon,gap}=searchSettings(model),samples=[];for(let day=-horizon;day<=horizon;day+=step){const ms=model.center+day*DAY,error=model.signedErrorAt(ms);if(Number.isFinite(error))samples.push({ms,error})}if(!samples.some(sample=>Math.abs(sample.ms-model.center)<1000))samples.push({ms:model.center,error:model.signedErrorAt(model.center)});samples.sort((a,b)=>a.ms-b.ms);const inside=ms=>model.errorAt(ms)<=model.limit+1e-8,windows=[];let start=-1;for(let i=0;i<=samples.length;i++){const active=i<samples.length&&Math.abs(samples[i].error)<=model.limit+1e-8;if(active&&start<0)start=i;if(!active&&start>=0){const end=i-1;let entry=samples[start].ms,exit=samples[end].ms;if(start>0)entry=refineBoundary(entry,samples[start-1].ms,inside);if(i<samples.length)exit=refineBoundary(exit,samples[i].ms,inside);windows.push({start,end,entry,exit});start=-1}}const currentIndex=windows.findIndex(window=>window.entry<=model.center&&window.exit>=model.center);if(currentIndex<0)return null;let first=currentIndex,last=currentIndex;if(gap>0){while(first>0&&(windows[first].entry-windows[first-1].exit)/DAY<=gap)first--;while(last<windows.length-1&&(windows[last+1].entry-windows[last].exit)/DAY<=gap)last++}const group=windows.slice(first,last+1),exacts=[];group.forEach(window=>{for(let i=Math.max(1,window.start);i<=window.end;i++){const a=samples[i-1],b=samples[i];if(a.ms<window.entry||b.ms>window.exit)continue;if(a.error===0||b.error===0||Math.sign(a.error)!==Math.sign(b.error)){const time=root(a.ms,b.ms,model.signedErrorAt);if(Number.isFinite(time)&&time>=window.entry&&time<=window.exit&&!exacts.some(value=>Math.abs(value-time)<.0005*DAY))exacts.push(time)}}});exacts.sort((a,b)=>a-b);const startMs=group[0].entry,endMs=group[group.length-1].exit;return{startMs,endMs,exacts,windows:group,durationDays:(endMs-startMs)/DAY}
 }
+// Find retrograde turnarounds that approach an aspect without crossing exactitude.
+// These are meaningful encounters, but never increment the exact-pass count.
+function nearExactApproaches(model,timeline){
+  const begin=timeline.startMs,end=timeline.endMs;
+  if(!(end>begin))return[];
+  const step=Math.max(.25,Math.min(1.5,(end-begin)/DAY/900))*DAY;
+  const points=[];
+  for(let ms=begin;ms<end;ms+=step)points.push({ms,orb:model.errorAt(ms)});
+  points.push({ms:end,orb:model.errorAt(end)});
+  const output=[];
+  for(let i=1;i<points.length-1;i++){
+    const prev=points[i-1],current=points[i],next=points[i+1];
+    if(!Number.isFinite(current.orb)||!(current.orb<prev.orb&&current.orb<next.orb))continue;
+    let lo=prev.ms,hi=next.ms;
+    // Golden-section minimization of the ordinary angular orb, in milliseconds.
+    for(let n=0;n<38;n++){
+      const a=hi-(hi-lo)*.61803398875,b=lo+(hi-lo)*.61803398875;
+      if(model.errorAt(a)<model.errorAt(b))hi=b;else lo=a;
+    }
+    const ms=(lo+hi)/2,orb=model.errorAt(ms);
+    if(!Number.isFinite(orb)||orb<.0001||orb>model.limit+1e-8)continue;
+    if(timeline.exacts.some(exact=>Math.abs(exact-ms)<2*DAY))continue;
+    if(output.some(previous=>Math.abs(previous.ms-ms)<2*DAY))continue;
+    output.push({ms,orb});
+  }
+  return output.sort((a,b)=>a.ms-b.ms);
+}
+function nearExactText(model,timeline){
+  const near=nearExactApproaches(model,timeline);
+  return near.map(point=>dateLabel(point.ms)+' · '+point.orb.toFixed(2)+'° from exact').join(' · ');
+}
+window.RelphiTransitNearExact=Object.freeze({approaches:nearExactApproaches,text:nearExactText});
 function dateLabel(ms){return new Intl.DateTimeFormat(undefined,{month:'short',day:'numeric',year:'numeric'}).format(new Date(ms))}
 function durationLabel(days){if(days<1){const minutes=days*24*60;if(minutes<90)return`${Math.max(1,Math.round(minutes))} min`;return`${Math.max(1,Math.round(days*24*10)/10)} hr`}if(days<14)return`${Math.round(days*10)/10} days`;if(days<75)return`${Math.round(days)} days`;if(days<730)return`${Math.round(days/30.4375*10)/10} months`;return`${Math.round(days/365.25*10)/10} years`}
 function timingSlot(row){return row.querySelector(':scope>[data-inline-relationship-timing]')||row.querySelector(':scope>.inline-rel-detail [data-inline-relationship-timing]')}
@@ -219,7 +251,7 @@ function motionRows(row){
   const distance=snapshot.distance==='closing'?'Closing':snapshot.distance==='opening'?'Opening':'Steady';
   return[rowMarkup('Motion',`${phase} · ${distance}`)];
 }
-function renderTimeline(row,model,timeline){const meta=metaNode(row);if(!meta)return;const exactText=timeline.exacts.length?timeline.exacts.map(dateLabel).join(' · '):'near pass';const motion=motionSummary(model,timeline),passText=timeline.exacts.length===1?'1 exact pass':`${timeline.exacts.length} exact passes`;meta.replaceChildren(...motionRows(row),rowMarkup('Start',dateLabel(timeline.startMs)),rowMarkup('Exact',exactText),rowMarkup('End',dateLabel(timeline.endMs)),rowMarkup('Duration',durationLabel(timeline.durationDays)),rowMarkup('Passes',motion?`${passText} · ${motion}`:passText));meta.dataset.transitReady='true';meta.dataset.transitKind='dynamic';meta.title=`Active from ${dateLabel(timeline.startMs)} to ${dateLabel(timeline.endMs)}; ${durationLabel(timeline.durationDays)} total activation span; ${passText}${motion?`; ${motion}`:''}.`;meta.setAttribute('aria-label',meta.title)}
+function renderTimeline(row,model,timeline){const meta=metaNode(row);if(!meta)return;const exactText=timeline.exacts.length?timeline.exacts.map(dateLabel).join(' · '):'near pass';const motion=motionSummary(model,timeline),passText=timeline.exacts.length===1?'1 exact pass':`${timeline.exacts.length} exact passes`;meta.replaceChildren(...motionRows(row),rowMarkup('Start',dateLabel(timeline.startMs)),rowMarkup('Exact',exactText),rowMarkup('End',dateLabel(timeline.endMs)),rowMarkup('Duration',durationLabel(timeline.durationDays)),rowMarkup('Passes',motion?`${passText} · ${motion}`:passText),...(nearExactText(model,timeline)?[rowMarkup('Near-exact approaches',nearExactText(model,timeline))]:[]));meta.dataset.transitReady='true';meta.dataset.transitKind='dynamic';meta.title=`Active from ${dateLabel(timeline.startMs)} to ${dateLabel(timeline.endMs)}; ${durationLabel(timeline.durationDays)} total activation span; ${passText}${motion?`; ${motion}`:''}.`;meta.setAttribute('aria-label',meta.title)}
 function renderUnavailable(row,reason){const meta=metaNode(row);if(!meta)return;meta.replaceChildren(rowMarkup('Timing',reason||'Unavailable'));meta.dataset.transitReady='true';meta.dataset.transitKind='unavailable';meta.title=reason||'Transit timing is unavailable.';meta.setAttribute('aria-label',meta.title)}
 function renderEstimatedTiming(row){
   const timing=estimatedTimingForSort(row),meta=metaNode(row);
