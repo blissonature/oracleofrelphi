@@ -48,14 +48,12 @@ function geometry(chart,slot){
 }
 function decorate(parent,angle,section,center,color,index){
  const a=pure.polar(center,section.from,angle),b=pure.polar(center,section.to,angle);
- const base={x1:a.x,y1:a.y,x2:b.x,y2:b.y,
-  'data-boundary':String(index),'data-segment':section.role,'vector-effect':'non-scaling-stroke',
-  stroke:color,'stroke-linecap':'round'};
- const glow=svg('line',{...base,'class':'sky-house-flashlight-glow sky-house-flashlight-'+section.role,
-   'stroke-width':section.role==='home'?10:section.role==='zodiac'?9:7});
- const core=svg('line',{...base,'class':'sky-house-flashlight-edge sky-house-flashlight-'+section.role,
-   'stroke-width':section.role==='home'?2.9:section.role==='zodiac'?2.5:2.0});
- parent.append(glow,core);
+ parent.appendChild(svg('line',{x1:a.x,y1:a.y,x2:b.x,y2:b.y,
+  'data-boundary':String(index),'data-segment':'other',
+  'vector-effect':'non-scaling-stroke',stroke:color,
+  'stroke-width':'2','stroke-dasharray':'6 6',
+  'pointer-events':'none',
+  'class':'sky-house-flashlight-edge sky-house-flashlight-other'}));
 }
 function render(){
  const chart=wheel(),layer=host();
@@ -73,7 +71,7 @@ function render(){
  const fragment=document.createDocumentFragment(),color=root.RelphiSkyWheelSpec?.SKY?.[focus.sky]||'#c9211e';
  starts.forEach((angle,index)=>{
   const group=svg('g',{'data-house-flashlight-boundary':index===0?'start':'end'});
-  segments.forEach(section=>decorate(group,angle,section,center,color,index));
+  segments.filter(section=>section.role==='other').forEach(section=>decorate(group,angle,section,center,color,index));
   fragment.appendChild(group);
  });
  layer.replaceChildren(fragment);
