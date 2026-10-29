@@ -25,6 +25,7 @@
 #skyFoundationComparison .relphi-mobile-exploration-cursor[data-dragging="true"] .relphi-mobile-cursor-cross{cursor:grabbing}
 #skyFoundationComparison .relphi-mobile-pointer-touch-area{
  fill:rgba(255,255,255,0.002);stroke:none;pointer-events:all!important;
+ touch-action:none!important;-webkit-user-select:none!important;
 }
 #skyFoundationComparison .relphi-mobile-exploration-cursor[hidden]{display:none!important}
 @media not all and (max-width:650px){#skyFoundationComparison .relphi-mobile-exploration-cursor{display:none!important}}
