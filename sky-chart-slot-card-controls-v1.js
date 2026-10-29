@@ -93,7 +93,9 @@
   function ensureRemoveControl(){
     const heading=document.querySelector('#skyFoundationB > .sky-foundation-heading');
     if(!heading)return;
-    const present=skyBPresent()&&hasStoredSkyB();
+    // Sky B's card can be open while its Where and When form is still empty.
+    // Presence, not a saved payload, determines whether the user can close the sidecar.
+    const present=skyBPresent()||document.documentElement.dataset.skyBEditing==='true';
     let remove=heading.querySelector('[data-remove-sky-b]');
     if(present&&!remove){
       remove=document.createElement('button');
