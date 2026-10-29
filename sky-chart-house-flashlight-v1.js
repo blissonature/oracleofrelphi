@@ -89,8 +89,9 @@ function setPinned(value){
 }
 document.addEventListener('pointerover',event=>{
  const node=houseNode(event.target);
- if(!node)return;
- setHover(position(node));
+ if(node){setHover(position(node));return}
+ // A hover preview must end when the pointer enters any non-house surface.
+ if(hovered&&!pinned)setHover(null);
 });
 document.addEventListener('pointerout',event=>{
  const node=houseNode(event.target);
@@ -105,17 +106,8 @@ root.addEventListener('relphi:sky-house-focus-bridge-changed',event=>{
   setPinned(null);
  }
 });
-root.addEventListener('relphi:sky-foundation-filter-changed',event=>{
- const state=event.detail?.state;
- // Hover/selected house focus may originate outside the house wedge itself
- // (e.g. a card). Don't overwrite explicit house taps while pinned.
- if(pinned)return;
- if(state?.kind==='house'&&(state.sky==='A'||state.sky==='B')){
-  setHover({sky:state.sky,house:Number(state.value)});
- }else if(state?.kind&&hovered&&!houseNode(document.querySelector(':hover [data-interactive="house"]'))){
-  setHover(null);
- }
-});
+// House hover is owned by pointer entry/exit only. Foundation filter events
+// can arrive after pointerout with stale hover state; never revive the beam.
 root.addEventListener('relphi:sky-foundation-clear-selection',()=>{setPinned(null);setHover(null)});
 root.addEventListener('relphi:sky-b-removed',()=>{
  if(pinned?.sky==='B')pinned=null;
