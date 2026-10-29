@@ -28,7 +28,10 @@
  function clientTip(){
   if(!tip||!mount)return null;
   const b=mount.getBoundingClientRect();
-  return{x:b.left+tip.x,y:b.top+tip.y};
+  // Sample the chart within its bounds, even if the visible drag cursor
+  // follows the thumb beyond the wheel edge.
+  const p=withinWheel(tip.x,tip.y)||tip;
+  return{x:b.left+p.x,y:b.top+p.y};
  }
  function wheelBox(){
   const el=wheel();
@@ -50,6 +53,10 @@
   cursor.dataset.dragging=drag?'true':'false';
  }
  function moveTip(x,y){
+  // During drag keep the physical handle-to-pointer offset constant.
+  // Clamping the visible artwork lets the thumb overtake the pointer.
+  // Only the chart hit-test position is constrained (in clientTip).
+  if(drag){tip={x,y};paint();return}
   const clipped=withinWheel(x,y);
   if(!clipped)return;
   tip=clipped;paint();
@@ -88,7 +95,11 @@
   const p=clientTip();
   const active=commit&&p?controller()?.commitVirtualPointer?.(p.x,p.y):null;
   if(!commit)controller()?.clearVirtualPointer?.();
-  drag=null;unlockScroll();paint();
+  drag=null;
+  // Once the thumb lifts, park the cursor tip back inside the wheel.
+  const parked=withinWheel(tip.x,tip.y);
+  if(parked)tip=parked;
+  unlockScroll();paint();
   try{if(grip.hasPointerCapture(event.pointerId))grip.releasePointerCapture(event.pointerId)}catch(_){}
   if(active)cursor.dataset.focus=active.kind;else delete cursor.dataset.focus;
   event.preventDefault();event.stopPropagation();
