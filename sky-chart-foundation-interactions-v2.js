@@ -446,8 +446,18 @@
     const root=document.getElementById('skyFoundationRoot');if(!root)return null;
     const node=event.target.closest?.('[data-interactive]');
     if(node&&root.contains(node)){
-      // A struck SVG aspect already identifies its exact endpoints and
-      // harmonic. Do not replace it with a geometrically nearby crossing line.
+      // Widened aspect hit targets are siblings of their visible lines. They
+      // must not remain selectable after the Harmonic Window hides a line.
+      if(node.classList.contains('sky-foundation-aspect-hit')){
+        const line=node.previousElementSibling;
+        if(!line?.classList.contains('sky-foundation-aspect')||
+          line.hidden||getComputedStyle(line).display==='none'||
+          getComputedStyle(line).pointerEvents==='none')return null;
+      }
+      if(node.dataset.interactive==='aspect'&&
+        (node.hidden||getComputedStyle(node).display==='none'||
+         getComputedStyle(node).pointerEvents==='none'))return null;
+      // A struck eligible SVG aspect identifies its exact endpoints.
       return node;
     }
     const wheel=event.target.closest?.('#skyFoundationWheelMount .sky-foundation-wheel');
