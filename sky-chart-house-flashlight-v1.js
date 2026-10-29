@@ -106,6 +106,12 @@ root.addEventListener('relphi:sky-house-focus-bridge-changed',event=>{
   setPinned(null);
  }
 });
+// The virtual pointer does not issue native pointerover on the chart.
+root.addEventListener('relphi:sky-virtual-house-hover',event=>{
+ const detail=event.detail;
+ if(detail&&(detail.sky==='A'||detail.sky==='B')&&Number.isInteger(detail.house)&&detail.house>=1&&detail.house<=12)setHover({sky:detail.sky,house:detail.house});
+ else setHover(null);
+});
 // House hover is owned by pointer entry/exit only. Foundation filter events
 // can arrive after pointerout with stale hover state; never revive the beam.
 root.addEventListener('relphi:sky-foundation-clear-selection',()=>{setPinned(null);setHover(null)});
