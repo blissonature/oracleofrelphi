@@ -5,7 +5,11 @@
   window.__relphiCopyIconConventionV2=true;
   window.__relphiCopyIconConventionV1=true;
   const SVG_NS='http://www.w3.org/2000/svg';
-  const SOURCE='relphi-icons.svg#relphi-copy';
+  // External SVG <use> cannot reliably render across origins. Exact-revision
+  // Sky Chart previews have a cross-origin asset base, so use the same-origin
+  // canonical sprite there; production continues to use the usual relative path.
+  const IS_SKY_PREVIEW=/(^|\/)sky-chart-preview\/sky-chart\.html$/.test(location.pathname);
+  const SOURCE=IS_SKY_PREVIEW?'/relphi-icons.svg#relphi-copy':'relphi-icons.svg#relphi-copy';
   const KNOWN=[
     '.sky-relationship-copy-button',
     '.sky-wheel-copy-button',
