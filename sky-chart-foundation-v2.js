@@ -50,9 +50,15 @@ function motionLongitude(id,date){
 function retrogradeAtInstant(record,payload){
   if(!MOTION_BODIES.has(record.id))return false;
   const instant=profile(payload).instant;
+  // Unknown-time skies use local noon for planetary placements. Use that
+  // same reference instant for motion; never present it as a known event time.
+  const unknownReference=profile(payload).timeUnknown===true
+    ? window.RelphiChironEphemeris?.instantFor?.(payload)?.getTime()
+    : NaN;
   const epoch=record.id==='chiron'
     ? window.RelphiChironEphemeris?.instantFor?.(payload)?.getTime()
-    : (typeof instant==='string'&&instant?Date.parse(instant):NaN);
+    : (Number.isFinite(unknownReference)?unknownReference:
+      (typeof instant==='string'&&instant?Date.parse(instant):NaN));
   if(!Number.isFinite(epoch))return false;
   // A one-day central difference gives a stable longitude trend even at 0/360.
   const before=motionLongitude(record.id,new Date(epoch-12*3600000));
