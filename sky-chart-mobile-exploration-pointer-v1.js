@@ -9,7 +9,7 @@
  const media=matchMedia(query);
  const NS='http://www.w3.org/2000/svg';
  let mount=null,cursor=null,grip=null,drag=null,tip=null,frame=0;
- const TIP_X=2.5,TIP_Y=3,GRIP_X=20,GRIP_Y=13;
+ const TIP_X=2.5,TIP_Y=3;
  const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
  const controller=()=>window.RelphiSkyFoundationInteractions;
  const wheel=()=>document.querySelector('#skyFoundationWheelMount > svg.sky-foundation-wheel');
@@ -133,11 +133,14 @@
   cursor.id='relphiMobileExplorationCursor';
   cursor.setAttribute('role','group');
   cursor.setAttribute('aria-label','Draggable exploration cursor');
+  // Center the four-way control on the diagonal continuing from the arrow tail
+  // (38,82) back through its tip (5,6): at y=108, x≈49.3. The 15-unit
+  // cross leaves a visible, compact gap without a sideways offset.
   // Vector artwork modeled on the user's outlined arrow + four-way move cross.
   // The complete drawing never intercepts a wheel tap; only the cross does.
   cursor.innerHTML='<svg viewBox="0 0 150 146" width="75" height="73" aria-hidden="true" focusable="false">'
     +'<path class="relphi-mobile-cursor-arrow" d="M5 6 L75 46 L50 57 L38 82 Z"/>'
-    +'<g class="relphi-mobile-cursor-cross" transform="translate(110 108)">'
+    +'<g class="relphi-mobile-cursor-cross" transform="translate(49 108)">'
     +'<path d="M0 -15 V15 M-15 0 H15 M-4 -11 L0 -15 L4 -11 M-4 11 L0 15 L4 11 M-11 -4 L-15 0 L-11 4 M11 -4 L15 0 L11 4"/>'
     +'<circle class="relphi-mobile-pointer-touch-area" r="40"/>'
     +'</g></svg>';
