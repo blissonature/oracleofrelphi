@@ -993,7 +993,10 @@ function renderStructures(container,list,permitted,slot){
     return Number(bStellium)-Number(aStellium)||b.length-a.length||a[0].value-b[0].value;
   });
   const visibleSignPairs=SIGN_POLARITIES.filter(pair=>signPairVisible(slot,pair,permitted,showAll));
-  const visibleHousePairs=HOUSE_POLARITIES.filter(pair=>housePairVisible(slot,pair,permitted,showAll));
+  // Unknown-time skies have no established house framework; do not describe
+  // their houses as empty or assign unknown rulers in the Vocab.
+  const visibleHousePairs=profile(payload(slot)).timeUnknown===true?[]:
+    HOUSE_POLARITIES.filter(pair=>housePairVisible(slot,pair,permitted,showAll));
   if(!visiblePolarities.length&&!visibleClusters.length&&!visibleSignPairs.length&&!visibleHousePairs.length)return;
 
   const heading=document.createElement('div');heading.className='sky-vocab-structures-heading';heading.textContent='Structures';container.appendChild(heading);
