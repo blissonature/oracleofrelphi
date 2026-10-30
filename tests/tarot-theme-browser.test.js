@@ -39,9 +39,9 @@ const base=process.env.RELPHI_TEST_URL || 'http://127.0.0.1:8075/tarot.html';
    for(const t of ['despair','suffering','oppression','development'])assert.ok(leak.catalog.some(label=>label.toLowerCase()===t),t);
    await page.locator('#oracleCommand').fill('divorce');
    await page.locator('#runCommand').click();
-   await page.waitForFunction(()=>document.getElementById('activeSummary')?.textContent.includes('Explore separately'),{timeout:10000});
-   assert.equal(await page.locator('#activeSummary .relphi-theme-suggestion').count()>0,true);
-   await page.locator('#activeSummary .relphi-theme-suggestion').first().click();
+   await page.locator('#relphiThemeNavigation:visible').waitFor({timeout:10000});
+   assert.equal(await page.locator('#relphiThemeNavigation .relphi-theme-suggestion').count()>0,true);
+   await page.locator('#relphiThemeNavigation .relphi-theme-suggestion').first().click();
    await page.waitForFunction(()=>window.RELPHI_THEME_SEARCH?.directCardIds(document.getElementById('oracleCommand').value).length>0,{timeout:10000});
    // Open the actual Drawing Board, verifying available vocabulary remains accessible.
    await page.locator('#relphiOpenDrawingBoardCurrent').click();
