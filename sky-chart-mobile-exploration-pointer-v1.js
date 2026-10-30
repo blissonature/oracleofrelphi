@@ -176,8 +176,8 @@
   // Pointer tip (5,6) and midpoint of the other arrowhead tips\n  // (75,46) and (38,82) => (56.5,64) define the diagonal axis.\n  // The move cross center (82,93) extends that axis with a small visual gap.\n  // Vector artwork modeled on the user's outlined arrow + four-way move cross.
   // The complete drawing never intercepts a wheel tap; only the cross does.
   cursor.innerHTML='<svg viewBox="0 0 200 195" width="100" height="97.5" aria-hidden="true" focusable="false">'
-    +'<path class="relphi-mobile-cursor-arrow" d="M5 6 L75 46 L50 57 L38 82 Z"/>'
-    +'<g class="relphi-mobile-cursor-cross" transform="translate(126.64655172413794 143)">'
+    +'<path class="relphi-mobile-cursor-arrow" d="M5 6 L75 46 L50 57 L38 82 Z" transform="rotate(-3.3971329193 5 6)"/>'
+    +'<g class="relphi-mobile-cursor-cross" transform="translate(127 128)">'
     +'<path d="M0 -15 V15 M-15 0 H15 M-4 -11 L0 -15 L4 -11 M-4 11 L0 15 L4 11 M-11 -4 L-15 0 L-11 4 M11 -4 L15 0 L11 4"/>'
     +'<circle class="relphi-mobile-pointer-touch-area" r="32"/>'
     +'</g></svg>';
