@@ -13,7 +13,7 @@ vm.runInNewContext(code,sandbox);
 const cards=sandbox.window.RELPHI_TAROT_CARDS;
 const engine=sandbox.window.RELPHI_THEME_SEARCH;
 const actual=(term)=>Array.from(engine.directCardIds(term)).sort();
-const direct=term=>cards.filter(card=>(card.direct_themes||[]).includes(term)).map(c=>c.card_id).sort();
+const direct=term=>Array.from(cards).filter(card=>(card.direct_themes||[]).includes(term)).map(c=>c.card_id).sort();
 const exactly=(term,ids)=>assert.deepEqual(actual(term),ids.slice().sort(),term);
 assert.equal(cards.length,78);
 assert.equal(audit.reviewed_cards,78);
