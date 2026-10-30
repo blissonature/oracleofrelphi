@@ -83,7 +83,52 @@
       "managing resources": "resource management",
       "household harmony": "domestic harmony",
       "material hardship": "financial hardship",
-      "heartbreaking": "heartbreak"
+      "heartbreaking": "heartbreak",
+      "agony": "anguish",
+      "agonizing": "anguish",
+      "agonising": "anguish",
+      "desperate": "desperation",
+      "feeling desperate": "desperation",
+      "heartache": "heartbreak",
+      "heartaches": "heartbreak",
+      "emotional pain": "pain",
+      "painful": "pain",
+      "deprivation": "privation",
+      "deprivations": "privation",
+      "destitution": "poverty",
+      "destitute": "poverty",
+      "impoverished": "poverty",
+      "tranquility": "peace",
+      "tranquillity": "peace",
+      "tranquil": "peace",
+      "serenity": "peace",
+      "serene": "peace",
+      "peacefulness": "peace",
+      "rebirth": "renewal",
+      "reborn": "renewal",
+      "remorseful": "regret",
+      "regretful": "regret",
+      "humiliated": "humiliation",
+      "feeling humiliated": "humiliation",
+      "ostracized": "exclusion",
+      "ostracised": "exclusion",
+      "ostracism": "exclusion",
+      "excluded": "exclusion",
+      "left out": "exclusion",
+      "outcast": "exclusion",
+      "overwhelmed": "overwhelm",
+      "lied": "lies",
+      "lying to me": "lies",
+      "someone lied": "lies",
+      "betray": "betrayal",
+      "betrayer": "betrayal",
+      "feeling betrayed": "betrayal",
+      "fearful": "fear",
+      "terrified": "fear",
+      "mournful": "mourning",
+      "grief-stricken": "grief",
+      "bereft": "grief",
+      "defeated": "defeat"
   };
   // Navigational alternatives only: related topics are NEVER implicit results.
   const RELATED_SUGGESTIONS = {
@@ -333,7 +378,9 @@
 };
   const UNQUALIFIED = ["abuse","acceptance","adolescence","adoption","adultery","affair","aging","bankruptcy","bereavement","boundaries violation","bullying","burnout recovery","career change","caregiving","cheating","childbirth","citizenship","coercion","community loss","compromise","consent","coparenting","creativity block","custodianship","custody","demotion","development","disability","disclosure","discrimination","divorce","divorce settlement","emotional labor","estrangement","euthanasia","eviction","fame","financial hardship","financial independence","firing","forgiveness","fostering","grace","harassment","healing relationship","homelessness","housing insecurity","identity crisis","immigration","infertility","infidelity","jealousy","layoff","litigation","loss of pet","loyalty","marginalization","menopause","migration","miscarriage","negotiation","parenthood","personal development","privacy","promotion","rebellion","reconciliation","relocation","reputation","resignation","restitution","retirement","safety","self-esteem","self-worth","social exclusion","spiritual crisis","stillbirth","trauma","trust","unemployment","vulnerability","widowhood"];
   const normalize = value => String(value || '').toLowerCase().normalize('NFKD')
-    .replace(/[\u0300-\u036f]/g, '').replace(/[’‘]/g, "'").replace(/\s+/g, ' ').trim();
+    .replace(/[\u0300-\u036f]/g, '').replace(/[’‘]/g, "'")
+    .replace(/^[\s"“”'.,!?;:()[\]{}]+|[\s"“”'.,!?;:()[\]{}]+$/g, '')
+    .replace(/\s+/g, ' ').trim();
   const themes = new Map();
   for (const card of (global.RELPHI_TAROT_CARDS || [])) {
     for (const name of (card.direct_themes || [])) {
