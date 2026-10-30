@@ -1456,8 +1456,7 @@ window.RELPHI_TAROT_CARDS = [
       "suffering",
       "rupture",
       "division",
-      "emotional suffering",
-      "bereavement"
+      "emotional suffering"
     ],
     "astrology": {
       "logic": "Golden Dawn decan attribution for numbered minor cards.",
@@ -5470,8 +5469,7 @@ window.RELPHI_TAROT_CARDS = [
       "ruin",
       "misery",
       "adversity",
-      "structural failure",
-      "oppression"
+      "structural failure"
     ],
     "astrology": {
       "logic": "Major arcana attribution.",
