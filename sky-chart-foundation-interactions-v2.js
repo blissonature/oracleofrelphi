@@ -435,12 +435,14 @@
     if(!Number.isFinite(event.clientX)||!Number.isFinite(event.clientY))return null;
     let nearest=null,best=Infinity;
     document.querySelectorAll('[data-layer="aspects"] > line.sky-foundation-aspect:not(.sky-foundation-aspect-hit)').forEach(line=>{
-      if(line.classList.contains('sky-chart-filter-hidden')||line.classList.contains('sky-chart-orb-hidden')||line.classList.contains('sky-orb-filter-hidden')||getComputedStyle(line).display==='none')return;
+      if(line.classList.contains('sky-chart-filter-hidden')||line.classList.contains('sky-chart-orb-hidden')||line.classList.contains('sky-orb-filter-hidden'))return;
+      const style=getComputedStyle(line);
+      if(line.hidden||style.display==='none'||style.visibility==='hidden'||Number(style.opacity)===0)return;
       const matrix=line.getScreenCTM(),svg=line.ownerSVGElement;if(!matrix||!svg?.createSVGPoint)return;
       const start=svg.createSVGPoint(),end=svg.createSVGPoint();start.x=Number(line.getAttribute('x1'));start.y=Number(line.getAttribute('y1'));end.x=Number(line.getAttribute('x2'));end.y=Number(line.getAttribute('y2'));
       const distance=distanceToSegment(event.clientX,event.clientY,start.matrixTransform(matrix),end.matrixTransform(matrix));if(distance<best){best=distance;nearest=line}
     });
-    return best<=9?nearest:null;
+    return best<=14?nearest:null;
   }
   function interactive(event){
     const root=document.getElementById('skyFoundationRoot');if(!root)return null;
@@ -548,7 +550,17 @@
     if(!Number.isFinite(clientX)||!Number.isFinite(clientY))return null;
     const wheel=document.querySelector('#skyFoundationWheelMount > svg.sky-foundation-wheel');
     if(!wheel)return null;
+    // Hit-test at the visible tip. A physical pointer can acquire aspect
+    // lines by proximity even when the topmost SVG target is the background,
+    // a noninteractive overlay, or a house/sign sector. Virtual touch must
+    // use that same nearest-line route, not only elementsFromPoint().
+    const bounds=wheel.getBoundingClientRect();
+    if(clientX<bounds.left||clientX>bounds.right||clientY<bounds.top||clientY>bounds.bottom)return null;
     const target=document.elementsFromPoint(clientX,clientY).find(node=>wheel.contains(node));
+    const direct=target?.closest?.('[data-interactive]');
+    if(direct?.dataset.interactive==='placement')return interactive({target,clientX,clientY});
+    const aspect=nearestAspect({clientX,clientY});
+    if(aspect)return aspect;
     return target?interactive({target,clientX,clientY}):null;
   }
   function beginVirtualPointer(){
