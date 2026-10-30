@@ -82,6 +82,12 @@ exactly('love',['ace_of_cups','two_of_cups','ten_of_cups','knight_of_cups','quee
 exactly('betrayal',['five_of_cups','three_of_swords','five_of_swords','seven_of_swords','ten_of_swords']);
 
 // Distinct human events never inherit adjacent cards through vague links.
+// Ordinary but not-directly-qualified subjects offer safe navigation instead of false card hits.
+for(const q of ["loneliness","lonely","shame","shamed","depression","depressed","abandonment","fraud","robbery","corruption","manipulation","injustice","unfairness","housing","injury"]){
+ exactly(q,[]);
+ assert.equal(engine.resolve(q).match,'unqualified',q);
+ assert.ok(engine.related(q).length>0,q+' has related, separately qualified topics');
+}
 for(const q of ['divorce','cheating','infidelity','reconciliation']){
  exactly(q,[]);
  assert.equal(engine.resolve(q).match,'unqualified',q);
