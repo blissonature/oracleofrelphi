@@ -374,9 +374,24 @@
     "care",
     "nurture",
     "responsibility"
-  ]
+  ],
+  "loneliness": ["isolation","exclusion","solitude"],
+  "lonely": ["isolation","exclusion","solitude"],
+  "shame": ["humiliation","guilt","regret"],
+  "shamed": ["humiliation","guilt","regret"],
+  "depression": ["despair","sadness","suffering"],
+  "depressed": ["despair","sadness","suffering"],
+  "abandonment": ["rejection","loss","isolation"],
+  "fraud": ["deception","lies","theft"],
+  "robbery": ["theft","loss","privation"],
+  "corruption": ["deception","dishonor","control"],
+  "manipulation": ["control","deception","strategy"],
+  "injustice": ["humiliation","dishonor","conflict"],
+  "unfairness": ["humiliation","dishonor","conflict"],
+  "housing": ["home","security","stability"],
+  "injury": ["pain","recovery","protection"]
 };
-  const UNQUALIFIED = ["abuse","acceptance","adolescence","adoption","adultery","affair","aging","bankruptcy","bereavement","boundaries violation","bullying","burnout recovery","career change","caregiving","cheating","childbirth","citizenship","coercion","community loss","compromise","consent","coparenting","creativity block","custodianship","custody","demotion","development","disability","disclosure","discrimination","divorce","divorce settlement","emotional labor","estrangement","euthanasia","eviction","fame","financial hardship","financial independence","firing","forgiveness","fostering","grace","harassment","healing relationship","homelessness","housing insecurity","identity crisis","immigration","infertility","infidelity","jealousy","layoff","litigation","loss of pet","loyalty","marginalization","menopause","migration","miscarriage","negotiation","parenthood","personal development","privacy","promotion","rebellion","reconciliation","relocation","reputation","resignation","restitution","retirement","safety","self-esteem","self-worth","social exclusion","spiritual crisis","stillbirth","trauma","trust","unemployment","vulnerability","widowhood"];
+  const UNQUALIFIED = ["abandonment","abuse","acceptance","adolescence","adoption","adultery","affair","aging","bankruptcy","bereavement","boundaries violation","bullying","burnout recovery","career change","caregiving","cheating","childbirth","citizenship","coercion","community loss","compromise","consent","coparenting","corruption","creativity block","custodianship","custody","demotion","depressed","depression","development","disability","disclosure","discrimination","divorce","divorce settlement","emotional labor","estrangement","euthanasia","eviction","fame","financial hardship","financial independence","firing","forgiveness","fostering","fraud","grace","harassment","healing relationship","homelessness","housing","housing insecurity","identity crisis","immigration","infertility","infidelity","injury","injustice","jealousy","layoff","litigation","loneliness","lonely","loss of pet","loyalty","manipulation","marginalization","menopause","migration","miscarriage","negotiation","parenthood","personal development","privacy","promotion","rebellion","reconciliation","relocation","reputation","resignation","restitution","retirement","robbery","safety","self-esteem","self-worth","shame","shamed","social exclusion","spiritual crisis","stillbirth","trauma","trust","unemployment","unfairness","vulnerability","widowhood"];
   const normalize = value => String(value || '').toLowerCase().normalize('NFKD')
     .replace(/[\u0300-\u036f]/g, '').replace(/[’‘]/g, "'")
     .replace(/^[\s"“”'.,!?;:()[\]{}]+|[\s"“”'.,!?;:()[\]{}]+$/g, '')
