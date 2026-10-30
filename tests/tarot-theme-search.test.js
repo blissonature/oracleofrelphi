@@ -20,7 +20,7 @@ assert.equal(audit.reviewed_cards,78);
 assert.equal(audit.records.length,78);
 assert.equal(new Set(audit.records.map(row=>row.card_id)).size,78);
 assert.equal(engine.themeCount,563);
-assert.equal(engine.aliasCount,639);
+assert.equal(engine.aliasCount,684);
 
 // Every canonical theme is strictly equal to the original card-by-card membership.
 // No card qualifies through shared planet, suit, a neighboring theme or a search substring.
@@ -38,6 +38,12 @@ for(const name of allThemes){
 
 // Positive search-language equivalents. Aliases inherit only their canonical membership.
 const aliasPairs={
+ 'agony':'anguish','desperate':'desperation','heartache':'heartbreak',
+ 'deprivation':'privation','destitution':'poverty','serenity':'peace',
+ 'tranquility':'peace','rebirth':'renewal','humiliated':'humiliation',
+ 'ostracism':'exclusion','left out':'exclusion','lied':'lies',
+ 'betray':'betrayal','fearful':'fear','grief-stricken':'grief',
+ 'defeated':'defeat','overwhelmed':'overwhelm',
  'secrets':'secrecy','heartbroken':'heartbreak','lost my job':'job loss',
  'feeling despair':'despair','hopelessness':'despair','suffered':'suffering',
  'anguished':'anguish','cruel':'cruelty','oppressed':'oppression',
@@ -79,6 +85,11 @@ assert.ok(!actual('secrets').includes('three_of_swords'));
 assert.ok(!actual('oppression').includes('the_tower'),'reversed-only reading excluded');
 assert.equal(engine.resolve('ideas').name,'ideas','canonical theme outranks alias');
 assert.equal(engine.resolve('messages').name,'messages','canonical theme outranks alias');
+// Punctuation and ordinary prose must normalize without creating related-card leakage.
+for(const [query,theme] of Object.entries({'despair?':'despair','“suffering!”':'suffering',"'heartache.'":'heartbreak','SECRETS.':'secrecy'})) exactly(query,direct(theme));
+assert.ok(!actual('heartache').includes('seven_of_swords'));
+assert.ok(!actual('serenity').includes('three_of_swords'));
+assert.ok(!actual('deprivation').includes('ten_of_cups'));
 assert.ok(engine.suggest('secrects').some(item=>item.name==='secrecy'));
 assert.ok(engine.suggest('despairr').some(item=>item.name==='despair'));
 assert.ok(engine.matchingTagNames('secrets',['secrecy','betrayal','Cups']).includes('secrecy'));
