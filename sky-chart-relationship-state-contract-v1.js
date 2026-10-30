@@ -28,6 +28,7 @@
   let selectedObserver = null;
   let observedSelected = null;
   let hoverFilterActive = false;
+  const whereWhenEditing = () => document.documentElement.dataset.skyWhereWhenEditing === 'true';
 
   function relationshipTarget(target) {
     return target?.closest?.(
@@ -41,11 +42,15 @@
     // exploration. This is NOT a filter that should erase their aspect lines:
     // nonmatching lines remain on the wheel, dimmed by .has-isolation.
     const exploring = !!document.querySelector('#skyFoundationWheelMount > .sky-foundation-wheel.has-isolation');
-    if (row.hidden && !exploring) return false;
     if (HIDDEN_CLASSES.some(className => row.classList.contains(className))) return false;
-    // The HTML [hidden] attribute sets computed display:none; during isolation
-    // that is only list presentation, never permission to hide wheel geometry.
-    return (exploring && row.hidden) || getComputedStyle(row).display !== 'none';
+    // Locked wheel selection deliberately CSS-hides unrelated Relationships
+    // tiles without removing their aspect lines. Unlike real source filters,
+    // is-wheel-selection-excluded is list presentation, not line eligibility.
+    // Checking computed display first would mistakenly hide the dimmed lines
+    // whenever this controller resumes after switching out of Where and When.
+    if (exploring && (row.hidden || row.classList.contains('is-wheel-selection-excluded'))) return true;
+    if (row.hidden) return false;
+    return getComputedStyle(row).display !== 'none';
   }
 
   function clearAutomaticSelection() {
@@ -58,9 +63,14 @@
 
     const panel = document.getElementById('skySelectedRelationship');
     if (panel) {
-      panel.hidden = true;
-      panel.removeAttribute('data-relation-index');
-      panel.dataset.selectionSource = 'awaiting-explicit-user-selection';
+      // Idempotence matters: the selected-panel MutationObserver listens to
+      // these attributes. Writing the same hidden value every animation frame
+      // previously scheduled an unbounded visibility reconciliation loop.
+      if (!panel.hidden) panel.hidden = true;
+      if (panel.hasAttribute('data-relation-index')) panel.removeAttribute('data-relation-index');
+      if (panel.dataset.selectionSource !== 'awaiting-explicit-user-selection') {
+        panel.dataset.selectionSource = 'awaiting-explicit-user-selection';
+      }
     }
 
     document.getElementById('skyFoundationRoot')?.setAttribute(
@@ -71,7 +81,7 @@
 
   function synchronize() {
     queued = false;
-    if (applying) return;
+    if (applying || whereWhenEditing()) return;
     applying = true;
 
     const rows = new Map(
@@ -113,7 +123,7 @@
   }
 
   function schedule() {
-    if (queued) return;
+    if (queued || whereWhenEditing()) return;
     queued = true;
     requestAnimationFrame(synchronize);
   }
@@ -207,6 +217,9 @@
       if (!isHoverFilterEvent(event)) scheduleStructural();
     });
 
+    window.addEventListener('relphi:sky-where-when-edit-state-changed', event => {
+      if (event.detail?.active === false) scheduleStructural();
+    });
     document.documentElement.dataset.skyRelationshipSelectionPolicy = 'awaiting-user';
     scheduleStructural();
   }

@@ -180,6 +180,127 @@ try{
  assert.equal(restored.count,baseline.count,'Clearing Moon B restores the original count');
  assert.equal(restored.ariaLabel,restored.shown+' matching relationships','Accessible count must restore after clear');
  console.log('PASS Moon B temporarily updates match count and restores it after real blank-area click');
+ // Regression: Sky B's Where and When drawer must not rewrite or flash
+ // the existing dimmed comparison-wheel aspect lines while editing.
+ await moon.click({force:true});
+ await page.waitForTimeout(300);
+ assert.equal(await moon.evaluate(node=>node.classList.contains('is-selected')),true,'Moon B should be locked for Where and When regression');
+ const whereB=page.locator('#skyFoundationB [data-sky-drawer-tab="where"]');
+ await whereB.waitFor({timeout:10000});
+ await whereB.click();
+ await page.locator('#skyFoundationB .sky-where-when-editor').waitFor();
+ await page.waitForFunction(()=>document.documentElement.dataset.skyWhereWhenEditing==='true');
+ await page.waitForTimeout(300); // allow opening transition and draft preview to settle
+ const editingStability=await page.evaluate(async()=>{
+   const wheel=document.querySelector('#skyFoundationWheelMount > .sky-foundation-wheel');
+   const lines=[...wheel.querySelectorAll('[data-layer="aspects"] > line.sky-foundation-aspect:not(.sky-foundation-aspect-hit)')];
+   const changes=[],before=lines.map(node=>({
+     node,cls:node.getAttribute('class'),style:node.getAttribute('style'),hidden:node.hidden,
+     display:getComputedStyle(node).display
+   }));
+   const observer=new MutationObserver(records=>records.forEach(r=>changes.push({
+     attr:r.attributeName,id:r.target.dataset.relationIndex,old:r.oldValue,
+     now:r.target.getAttribute(r.attributeName)
+   })));
+   for(const node of lines)observer.observe(node,{attributes:true,attributeFilter:['class','style','hidden','aria-hidden'],attributeOldValue:true});
+   let samples=0,displayChanges=0;
+   const prior=lines.map(line=>getComputedStyle(line).display);
+   const deadline=performance.now()+1500;
+   await new Promise(resolve=>{
+     function sample(){
+       samples++;
+       lines.forEach((line,i)=>{
+         const display=getComputedStyle(line).display;
+         if(display!==prior[i]){displayChanges++;prior[i]=display}
+       });
+       if(performance.now()<deadline)requestAnimationFrame(sample);else resolve();
+     }
+     requestAnimationFrame(sample);
+   });
+   observer.disconnect();
+   return {count:lines.length,mutations:changes.length,displayChanges,samples,
+     changes:changes.slice(0,12),sameWheel:wheel===document.querySelector('#skyFoundationWheelMount > .sky-foundation-wheel'),
+     sameLines:before.every(({node})=>node.isConnected),
+     stillEditing:document.documentElement.dataset.skyWhereWhenEditing==='true'};
+ });
+ console.log('WHERE_WHEN_ASPECT_VISIBILITY_TRACE',JSON.stringify(editingStability));
+ assert.ok(editingStability.count>0,'The fixture must have comparison-wheel aspects');
+ assert.equal(editingStability.sameWheel,true,'Opening Where and When must preserve the wheel');
+ assert.equal(editingStability.stillEditing,true,'The Where and When transaction must remain active');
+ assert.equal(editingStability.displayChanges,0,'No aspect line can flash between hidden and visible during editing');
+ assert.equal(editingStability.mutations,0,'No aspect line visibility writer should mutate a frozen wheel during editing');
+
+ // Observe aspect-line visibility across real Sky B drawer switches.
+ await page.evaluate(()=>{
+   const wheel=document.querySelector('#skyFoundationWheelMount > .sky-foundation-wheel');
+   const lines=[...wheel.querySelectorAll('[data-layer="aspects"] > line.sky-foundation-aspect:not(.sky-foundation-aspect-hit)')];
+   const original=lines.map(line=>({display:getComputedStyle(line).display,opacity:getComputedStyle(line).opacity,
+     filter:getComputedStyle(line).filter}));
+   const records=[],frames=[];let previous=original.map(x=>({...x}));let priorIsolation=wheel.classList.contains('has-isolation');
+   const observer=new MutationObserver(items=>{
+     for(const r of items)records.push({type:r.attributeName,old:r.oldValue,
+       now:r.target.getAttribute(r.attributeName),index:lines.indexOf(r.target)});
+   });
+   lines.forEach(node=>observer.observe(node,{attributes:true,attributeOldValue:true,
+     attributeFilter:['class','style','hidden','aria-hidden']}));
+   window.__wwDrawerTransition={wheel,lines,original,records,frames,observer,active:true};
+   const sample=()=>{
+     const session=window.__wwDrawerTransition;if(!session?.active)return;
+     let toggles=0,opacityChanges=0,filterChanges=0;
+     lines.forEach((line,i)=>{const computed=getComputedStyle(line);
+       if(computed.display!==previous[i].display){toggles++;previous[i].display=computed.display}
+       if(computed.opacity!==previous[i].opacity){opacityChanges++;previous[i].opacity=computed.opacity}
+       if(computed.filter!==previous[i].filter){filterChanges++;previous[i].filter=computed.filter}
+     });
+     const currentIsolation=wheel.classList.contains('has-isolation'),isolationChanges=Number(currentIsolation!==priorIsolation);
+     priorIsolation=currentIsolation;
+     if(toggles||opacityChanges||filterChanges||isolationChanges)frames.push({
+       time:performance.now(),toggles,opacityChanges,filterChanges,isolationChanges,
+       where:document.documentElement.dataset.skyWhereWhenEditing,wheelIsolation:currentIsolation});
+     requestAnimationFrame(sample);
+   };
+   requestAnimationFrame(sample);
+ });
+ const placementsB=page.locator('#skyFoundationB [data-sky-drawer-tab="placements"]');
+ await placementsB.click();
+ await page.waitForFunction(()=>document.documentElement.dataset.skyWhereWhenEditing==='false');
+ await page.waitForTimeout(700);
+ await whereB.click();
+ await page.waitForFunction(()=>document.documentElement.dataset.skyWhereWhenEditing==='true');
+ await page.waitForTimeout(700);
+ await placementsB.click();
+ await page.waitForFunction(()=>document.documentElement.dataset.skyWhereWhenEditing==='false');
+ await page.waitForTimeout(700);
+ const transition=await page.evaluate(()=>{
+   const {wheel,lines,original,records,frames,observer}=window.__wwDrawerTransition;
+   window.__wwDrawerTransition.active=false;observer.disconnect();
+   const changed=lines.filter((line,i)=>getComputedStyle(line).display!==original[i].display);
+   const classes=records.filter(x=>x.type==='class');
+   const styles=records.filter(x=>x.type==='style');
+   const visibility=records.filter(x=>x.type==='hidden'||x.type==='aria-hidden');
+   return {count:lines.length,wheelPreserved:wheel===document.querySelector('#skyFoundationWheelMount>.sky-foundation-wheel'),
+     sameLines:lines.every(x=>x.isConnected),changes:records.length,
+     classChanges:classes.length,styleChanges:styles.length,visibilityChanges:visibility.length,
+     displayTransitions:frames.reduce((n,x)=>n+x.toggles,0),
+     opacityTransitions:frames.reduce((n,x)=>n+x.opacityChanges,0),
+     filterTransitions:frames.reduce((n,x)=>n+x.filterChanges,0),
+     isolationTransitions:frames.reduce((n,x)=>n+x.isolationChanges,0),
+     displayFrames:frames.slice(0,16),
+     finalDisplayDifference:changed.length,
+     sampleChanges:records.slice(0,18)};
+ });
+ console.log('WHERE_WHEN_DRAWER_TRANSITION_TRACE',JSON.stringify(transition));
+ assert.ok(transition.wheelPreserved&&transition.sameLines,'Drawer switching must keep the same comparison wheel and aspect lines');
+ assert.equal(transition.displayTransitions,0,'Switching Where and When / Placements must never blank or reveal gray aspect lines');
+ assert.equal(transition.opacityTransitions,0,'Switching drawers must not change the opacity of gray aspect lines');
+ assert.equal(transition.filterTransitions,0,'Switching drawers must not recolor or relight gray aspect lines');
+ assert.equal(transition.isolationTransitions,0,'Switching drawers must preserve the persistent Moon B focus');
+ assert.equal(transition.finalDisplayDifference,0,'Returning to Placements must preserve the exact initial line display');
+ assert.equal(transition.visibilityChanges,0,'Unchanged drawer switches must not rewrite any SVG visibility attributes');
+ assert.equal(transition.classChanges,0,'Unchanged drawer switches must not mutate aspect-line classes');
+ assert.equal(transition.styleChanges,0,'Unchanged drawer switches must not restyle aspect-line visibility');
+ console.log('PASS Sky B Where and When / Placements drawer switching preserves gray aspects without flashing');
+ console.log('PASS Sky B Where and When holds every existing gray aspect line steady');
  console.log('PASS locked Moon B shows matching Relationships only, clear restores all');
   console.log('PASS helper popup -> Increase to HR 3 -> select Moon B -> leave remains selected');
   console.log('PASS Moon B wheel and side-panel clicks persist, including after Harmonic Window 2→3 transition');
