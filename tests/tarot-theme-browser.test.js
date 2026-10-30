@@ -36,7 +36,7 @@ const base=process.env.RELPHI_TEST_URL || 'http://127.0.0.1:8075/tarot.html';
    assert.ok(!leak.love.includes('seven_of_swords'));
    assert.ok(!leak.love.includes('nine_of_swords'));
    assert.equal(leak.selected,4);
-   for(const t of ['despair','suffering','oppression','development'])assert.ok(leak.catalog.includes(t),t);
+   for(const t of ['despair','suffering','oppression','development'])assert.ok(leak.catalog.some(label=>label.toLowerCase()===t),t);
    await page.locator('#oracleCommand').fill('divorce');
    await page.locator('#runCommand').click();
    await page.waitForFunction(()=>document.getElementById('activeSummary')?.textContent.includes('Explore separately'),{timeout:10000});
