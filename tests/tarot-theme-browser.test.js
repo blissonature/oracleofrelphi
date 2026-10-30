@@ -22,7 +22,7 @@ const base=process.env.RELPHI_TEST_URL || 'http://127.0.0.1:8075/tarot.html';
      await page.waitForFunction(expected => {
        const el=document.getElementById('resultInlineCount');
        return !!el && el.textContent.trim()===expected;
-     },`${count} ${count===1?'card':'cards'} shown`,{timeout:15000});
+     },count===0?'No cards shown':`${count} ${count===1?'card':'cards'} shown`,{timeout:15000});
      const direct=await page.evaluate(t=>window.RELPHI_THEME_SEARCH.directCardIds(t).length,term);
      assert.equal(direct,count,term+' semantic count');
    }
