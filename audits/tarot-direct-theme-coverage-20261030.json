@@ -1,7 +1,7 @@
 {
   "schema": "relphi.direct-theme-coverage.v1",
   "reviewed_cards": 78,
-  "added_assignments": 275,
+  "added_assignments": 293,
   "records": [
     {
       "card_id": "ace_of_wands",
@@ -114,7 +114,8 @@
         "harmony",
         "refuge",
         "domestic harmony",
-        "prosperity"
+        "prosperity",
+        "concord"
       ],
       "original_theme_count": 11,
       "source": "relphi-locked-interpretations.js / four_of_wands",
@@ -163,7 +164,8 @@
         "valor",
         "valour",
         "negotiation",
-        "standing ground"
+        "standing ground",
+        "competition"
       ],
       "original_theme_count": 6,
       "source": "relphi-locked-interpretations.js / seven_of_wands",
@@ -180,7 +182,8 @@
         "swiftness",
         "momentum",
         "haste",
-        "transmission"
+        "transmission",
+        "message"
       ],
       "original_theme_count": 7,
       "source": "relphi-locked-interpretations.js / eight_of_wands",
@@ -196,7 +199,8 @@
       "new_direct_themes": [
         "readiness",
         "vigilance",
-        "endurance"
+        "endurance",
+        "strength"
       ],
       "original_theme_count": 6,
       "source": "relphi-locked-interpretations.js / nine_of_wands",
@@ -232,7 +236,9 @@
         "affection",
         "mutual care",
         "sympathy",
-        "concord"
+        "concord",
+        "friendship",
+        "passion"
       ],
       "original_theme_count": 7,
       "source": "relphi-locked-interpretations.js / two_of_cups",
@@ -249,7 +255,9 @@
         "abundance",
         "merriment",
         "shared joy",
-        "solace"
+        "solace",
+        "belonging",
+        "healing"
       ],
       "original_theme_count": 7,
       "source": "relphi-locked-interpretations.js / three_of_cups",
@@ -282,7 +290,8 @@
       "new_direct_themes": [
         "rupture",
         "frustration",
-        "emotional loss"
+        "emotional loss",
+        "betrayal"
       ],
       "original_theme_count": 6,
       "source": "relphi-locked-interpretations.js / five_of_cups",
@@ -366,7 +375,11 @@
         "satiety",
         "domestic happiness",
         "emotional completion",
-        "communal life"
+        "communal life",
+        "harmony",
+        "friendship",
+        "home",
+        "contentment"
       ],
       "original_theme_count": 17,
       "source": "relphi-locked-interpretations.js / ten_of_cups",
@@ -383,7 +396,9 @@
         "peace",
         "equilibrium",
         "truce",
-        "suspended judgment"
+        "suspended judgment",
+        "affection",
+        "friendship"
       ],
       "original_theme_count": 6,
       "source": "relphi-locked-interpretations.js / two_of_swords",
@@ -433,7 +448,8 @@
         "humiliation",
         "dishonor",
         "degradation",
-        "destruction"
+        "destruction",
+        "loss"
       ],
       "original_theme_count": 6,
       "source": "relphi-locked-interpretations.js / five_of_swords",
@@ -520,7 +536,9 @@
         "desolation",
         "affliction",
         "mental suffering",
-        "utter defeat"
+        "utter defeat",
+        "defeat",
+        "sadness"
       ],
       "original_theme_count": 9,
       "source": "relphi-locked-interpretations.js / ten_of_swords",
