@@ -1189,7 +1189,8 @@ window.RELPHI_TAROT_CARDS = [
       "abandonment of pursuit",
       "emotional depletion",
       "disengagement",
-      "dissolution"
+      "dissolution",
+      "abandonment"
     ],
     "astrology": {
       "logic": "Golden Dawn decan attribution for numbered minor cards.",
@@ -1839,7 +1840,8 @@ window.RELPHI_TAROT_CARDS = [
       "mental anguish",
       "accusation",
       "desperation",
-      "anguish"
+      "anguish",
+      "miscarriage"
     ],
     "astrology": {
       "logic": "Golden Dawn decan attribution for numbered minor cards.",
@@ -2399,7 +2401,8 @@ window.RELPHI_TAROT_CARDS = [
       "material independence",
       "discernment",
       "cultivation",
-      "prudence"
+      "prudence",
+      "safety"
     ],
     "astrology": {
       "logic": "Golden Dawn decan attribution for numbered minor cards.",
@@ -5579,7 +5582,9 @@ window.RELPHI_TAROT_CARDS = [
       "guidance",
       "bright prospects",
       "future orientation",
-      "communal vision"
+      "communal vision",
+      "abandonment",
+      "being abandoned"
     ],
     "astrology": {
       "logic": "Major arcana attribution.",
