@@ -85,6 +85,252 @@
       "material hardship": "financial hardship",
       "heartbreaking": "heartbreak"
   };
+  // Navigational alternatives only: related topics are NEVER implicit results.
+  const RELATED_SUGGESTIONS = {
+  "divorce": [
+    "separation",
+    "breakup",
+    "law",
+    "marriage",
+    "legal matters"
+  ],
+  "cheating": [
+    "deception",
+    "betrayal",
+    "secrecy",
+    "lies"
+  ],
+  "infidelity": [
+    "betrayal",
+    "deception",
+    "secrecy",
+    "marriage"
+  ],
+  "adultery": [
+    "betrayal",
+    "secrecy",
+    "marriage"
+  ],
+  "affair": [
+    "secrecy",
+    "deception",
+    "desire"
+  ],
+  "reconciliation": [
+    "reunion",
+    "resolution",
+    "harmony",
+    "accommodation"
+  ],
+  "trust": [
+    "truth",
+    "security",
+    "agreement",
+    "partnership"
+  ],
+  "loyalty": [
+    "commitment",
+    "devotion",
+    "trust"
+  ],
+  "forgiveness": [
+    "compassion",
+    "recovery",
+    "resolution"
+  ],
+  "jealousy": [
+    "insecurity",
+    "attachment",
+    "rivalry"
+  ],
+  "privacy": [
+    "secrecy",
+    "silence",
+    "boundaries"
+  ],
+  "abuse": [
+    "cruelty",
+    "violence",
+    "control",
+    "hostility"
+  ],
+  "coercion": [
+    "control",
+    "captivity",
+    "restriction"
+  ],
+  "harassment": [
+    "hostility",
+    "cruelty",
+    "conflict"
+  ],
+  "unemployment": [
+    "job loss",
+    "work",
+    "employment"
+  ],
+  "retirement": [
+    "completion",
+    "work",
+    "leisure"
+  ],
+  "promotion": [
+    "recognition",
+    "achievement",
+    "work"
+  ],
+  "resignation": [
+    "leaving",
+    "departure",
+    "work"
+  ],
+  "layoff": [
+    "job loss",
+    "employment"
+  ],
+  "bankruptcy": [
+    "financial hardship",
+    "debt",
+    "loss"
+  ],
+  "eviction": [
+    "home",
+    "loss",
+    "financial hardship"
+  ],
+  "homelessness": [
+    "home",
+    "poverty",
+    "financial hardship"
+  ],
+  "housing insecurity": [
+    "home",
+    "precarity",
+    "security"
+  ],
+  "career change": [
+    "work",
+    "change",
+    "opportunity"
+  ],
+  "custody": [
+    "legal matters",
+    "child",
+    "family"
+  ],
+  "coparenting": [
+    "child",
+    "family",
+    "collaboration"
+  ],
+  "disability": [
+    "health",
+    "restriction",
+    "adaptation"
+  ],
+  "discrimination": [
+    "fairness",
+    "justice",
+    "rejection"
+  ],
+  "emotional labor": [
+    "work",
+    "care",
+    "burden"
+  ],
+  "self-worth": [
+    "values",
+    "identity",
+    "independence"
+  ],
+  "identity crisis": [
+    "identity",
+    "confusion",
+    "uncertainty"
+  ],
+  "social exclusion": [
+    "isolation",
+    "belonging",
+    "rejection"
+  ],
+  "financial independence": [
+    "independence",
+    "money",
+    "security"
+  ],
+  "financial hardship": [
+    "poverty",
+    "hardship",
+    "money"
+  ],
+  "fertility issues": [
+    "fertility",
+    "pregnancy",
+    "health"
+  ],
+  "infertility": [
+    "fertility",
+    "pregnancy",
+    "health"
+  ],
+  "bereavement": [
+    "mourning",
+    "grief",
+    "loss"
+  ],
+  "miscarriage": [
+    "loss",
+    "pregnancy",
+    "grief"
+  ],
+  "stillbirth": [
+    "loss",
+    "pregnancy",
+    "mourning"
+  ],
+  "childbirth": [
+    "birth",
+    "pregnancy",
+    "mother"
+  ],
+  "parenthood": [
+    "mother",
+    "father",
+    "child",
+    "family"
+  ],
+  "adoption": [
+    "family",
+    "child",
+    "care"
+  ],
+  "spiritual crisis": [
+    "faith",
+    "uncertainty",
+    "awakening"
+  ],
+  "trauma": [
+    "suffering",
+    "cruelty",
+    "fear",
+    "recovery"
+  ],
+  "bullying": [
+    "hostility",
+    "cruelty",
+    "humiliation"
+  ],
+  "loss of pet": [
+    "grief",
+    "loss",
+    "mourning"
+  ],
+  "caregiving": [
+    "care",
+    "nurture",
+    "responsibility"
+  ]
+};
   const UNQUALIFIED = ["abuse","acceptance","adolescence","adoption","adultery","affair","aging","bankruptcy","bereavement","boundaries violation","bullying","burnout recovery","career change","caregiving","cheating","childbirth","citizenship","coercion","community loss","compromise","consent","coparenting","creativity block","custodianship","custody","demotion","development","disability","disclosure","discrimination","divorce","divorce settlement","emotional labor","estrangement","euthanasia","eviction","fame","financial hardship","financial independence","firing","forgiveness","fostering","grace","harassment","healing relationship","homelessness","housing insecurity","identity crisis","immigration","infertility","infidelity","jealousy","layoff","litigation","loss of pet","loyalty","marginalization","menopause","migration","miscarriage","negotiation","parenthood","personal development","privacy","promotion","rebellion","reconciliation","relocation","reputation","resignation","restitution","retirement","safety","self-esteem","self-worth","social exclusion","spiritual crisis","stillbirth","trauma","trust","unemployment","vulnerability","widowhood"];
   const normalize = value => String(value || '').toLowerCase().normalize('NFKD')
     .replace(/[\u0300-\u036f]/g, '').replace(/[’‘]/g, "'").replace(/\s+/g, ' ').trim();
@@ -156,6 +402,17 @@
     return [...matches].sort((a,b)=>a[1]-b[1]||a[0].localeCompare(b[0])).slice(0,limit)
       .map(([name,distance])=>({name,distance}));
   }
+  function related(raw) {
+    const key=normalize(raw);
+    const options=RELATED_SUGGESTIONS[key] || [];
+    const seen=new Set();
+    return options.map(name=>resolve(name)).filter(hit=>{
+      if(!hit || hit.match==='unqualified' || hit.match==='combined')return false;
+      const k=normalize(hit.name);
+      if(seen.has(k) || k===key)return false;
+      seen.add(k);return true;
+    }).map(hit=>hit.name);
+  }
   function matchingTagNames(raw, catalog) {
     const needle=normalize(raw);
     if(!needle)return [];
@@ -169,7 +426,7 @@
     return found.slice(0,40);
   }
   global.RELPHI_THEME_SEARCH=Object.freeze({
-    resolve,directCardIds,suggest,matchingTagNames,
+    resolve,directCardIds,suggest,related,matchingTagNames,
     themeCount:themes.size,aliasCount:aliases.size,
     candidates:Object.freeze(UNQUALIFIED.slice())
   });
