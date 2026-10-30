@@ -18,6 +18,18 @@ const exactly=(term,ids)=>assert.deepEqual(actual(term),ids.slice().sort(),term)
 assert.equal(cards.length,78);
 assert.equal(audit.reviewed_cards,78);
 assert.equal(audit.records.length,78);
+assert.equal(audit.added_assignments,293);
+const directlySourced={"five_of_cups":["betrayal"],"two_of_cups":["friendship","passion"],"three_of_cups":["belonging","healing"],"nine_of_wands":["strength"],"ten_of_swords":["defeat","sadness"],"ten_of_cups":["harmony","friendship","home","contentment"],"seven_of_wands":["competition"],"four_of_wands":["concord"],"two_of_swords":["affection","friendship"],"five_of_swords":["loss"],"eight_of_wands":["message"]};
+for(const [id,terms] of Object.entries(directlySourced)){
+ const card=cards.find(c=>c.card_id===id);
+ const row=audit.records.find(r=>r.card_id===id);
+ for(const term of terms){
+  assert.ok(card.direct_themes.includes(term),id+' direct theme '+term);
+  assert.ok(row.new_direct_themes.includes(term),id+' audit trace '+term);
+  assert.match([row.relphi_interpretation,row.traditional_upright,row.traditional_title].join(' ').toLowerCase(),new RegExp('\\b'+term+'\\b'),id+' source evidence for '+term);
+ }
+}
+
 assert.equal(new Set(audit.records.map(row=>row.card_id)).size,78);
 assert.equal(engine.themeCount,563);
 assert.equal(engine.aliasCount,684);
@@ -67,7 +79,7 @@ exactly('peace',['four_of_wands','two_of_swords']);
 exactly('development',['the_empress']);
 exactly('secrecy',['seven_of_swords','the_high_priestess','the_moon']);
 exactly('love',['ace_of_cups','two_of_cups','ten_of_cups','knight_of_cups','queen_of_cups','princess_of_cups','the_lovers']);
-exactly('betrayal',['three_of_swords','five_of_swords','seven_of_swords','ten_of_swords']);
+exactly('betrayal',['five_of_cups','three_of_swords','five_of_swords','seven_of_swords','ten_of_swords']);
 
 // Distinct human events never inherit adjacent cards through vague links.
 for(const q of ['divorce','cheating','infidelity','reconciliation']){
