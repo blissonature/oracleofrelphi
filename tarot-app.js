@@ -3935,7 +3935,28 @@
       } else {
         const theme = window.RELPHI_THEME_SEARCH?.resolve(state.query);
         if (theme?.match === 'unqualified') {
-          $('activeSummary').textContent = `“${state.query}” has no curated direct card assignments yet; related cards were not inferred.`;
+          const summary=$('activeSummary');
+          summary.textContent = `“${state.query}” has no curated direct card assignments yet. Related topics are suggestions, not results.`;
+          const related=window.RELPHI_THEME_SEARCH?.related(state.query) || [];
+          if(related.length){
+            const lead=document.createElement('span');
+            lead.textContent=' Explore separately: ';
+            summary.appendChild(lead);
+            related.forEach((name,index)=>{
+              if(index)summary.appendChild(document.createTextNode(', '));
+              const button=document.createElement('button');
+              button.type='button';
+              button.className='relphi-theme-suggestion';
+              button.textContent=name;
+              button.setAttribute('aria-label','Search direct theme '+name);
+              button.addEventListener('click',()=>{
+                $('oracleCommand').value=name;
+                runSearch(name);
+              });
+              summary.appendChild(button);
+            });
+            summary.appendChild(document.createTextNode('.'));
+          }
         } else if (theme && !exactShorthandResults(state.query).length) {
           $('activeSummary').textContent = `Direct theme: ${theme.name}${theme.match === 'alias' ? ` (matched “${state.query}”)` : ''}.`;
         } else {
