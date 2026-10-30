@@ -19938,3 +19938,12 @@ html body :is(
 .tarot-ledger-page .relphi-ledger-tool-header .relphi-tool-brandline{
   margin:.1rem 0 .2rem;
 }
+
+
+/* Curated thematic search suggestions are navigational, never implicit card matches. */
+html body .relphi-theme-navigation[hidden]{display:none!important}
+html body .relphi-theme-navigation{padding:.7rem .8rem;margin:.5rem 0 1rem;border:1px solid #d8d0c8;border-radius:10px;background:#faf8f6}
+html body .relphi-theme-navigation-label{margin:0 0 .5rem;font-size:.84rem}
+html body .relphi-theme-navigation-actions{display:flex;flex-wrap:wrap;gap:.45rem}
+html body .relphi-theme-suggestion{border:1px solid #b8aaa4;border-radius:8px;background:#fff;color:#3d2827;padding:.35rem .65rem;font:inherit;font-size:.82rem;cursor:pointer}
+html body .relphi-theme-suggestion:hover,html body .relphi-theme-suggestion:focus-visible{border-color:#a61712;outline:2px solid #a61712;outline-offset:1px}
