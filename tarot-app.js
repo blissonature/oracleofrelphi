@@ -2268,7 +2268,11 @@
           const checked = selected.some(value => normalizeSearch(value) === normalizeSearch(tag));
           return `<label class="row-tag-match"><input type="checkbox" data-row-tag-choice value="${escapeHtml(tag)}" ${checked ? 'checked' : ''}> <span>${escapeHtml(tag)}</span></label>`;
         }).join('')
-      : (state.rowTagQuery ? '<p class="row-tag-empty">No matching tags yet. Try another word.</p>' : '<p class="row-tag-empty">Type a tag to build this sub-pack.</p>');
+      : (state.rowTagQuery
+        ? '<p class="row-tag-empty">No directly matching theme. Related suggestions are separate searches, not automatically qualified cards.</p>'
+          + (window.RELPHI_THEME_SEARCH?.related(state.rowTagQuery) || []).map(name=>
+            `<button type="button" class="relphi-theme-suggestion" data-row-theme-suggestion="${escapeHtml(name)}">${escapeHtml(name)}</button>`).join(' ')
+        : '<p class="row-tag-empty">Type a tag to build this sub-pack.</p>');
     const selectedHtml = selected.length ? `<div class="row-tag-selected" aria-label="Selected tags">${selected.map(tag => `<button type="button" data-row-tag-remove="${escapeHtml(tag)}" title="Remove ${escapeHtml(tag)}">${escapeHtml(tag)} ×</button>`).join('')}</div>` : '';
     const poolCount = selected.length ? rowDrawPool('tags', { ignoreUsed:true }).length : 0;
     return `<section class="row-tag-subpack" aria-label="Keyword and tag sub-pack"><label class="row-tag-search-label">Tags <input id="rowTagQuery" type="search" value="${escapeHtml(state.rowTagQuery || '')}" placeholder="Type a tag, e.g. prince" autocomplete="off"></label><div class="row-tag-match-mode" role="group" aria-label="How selected tags combine"><label><input type="radio" name="rowTagMatchMode" value="any" ${state.rowTagMatchMode !== 'all' ? 'checked' : ''}> Any</label><label><input type="radio" name="rowTagMatchMode" value="all" ${state.rowTagMatchMode === 'all' ? 'checked' : ''}> All</label></div><div class="row-tag-matches" aria-live="polite">${matchRows}</div>${selectedHtml}<p class="row-tag-pool-count">${selected.length ? `${poolCount} card${poolCount === 1 ? '' : 's'} in this sub-pack` : 'Choose one or more matching tags before drawing.'}</p></section>`;
@@ -3541,6 +3545,13 @@
         try { next.setSelectionRange(next.value.length, next.value.length); } catch (error) {}
       }
     });
+    qsa('[data-row-theme-suggestion]', wrap).forEach(button => button.addEventListener('click',event=>{
+      event.preventDefault();
+      state.rowTagQuery=button.dataset.rowThemeSuggestion || '';
+      renderShortList();
+      const field=$('rowTagQuery');
+      if(field)field.focus({preventScroll:true});
+    }));
     qsa('[data-row-tag-choice]', wrap).forEach(input => input.addEventListener('change', () => {
       const value = input.value;
       const current = Array.isArray(state.rowSelectedTags) ? state.rowSelectedTags.slice() : [];
