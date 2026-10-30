@@ -1361,7 +1361,8 @@ window.RELPHI_TAROT_CARDS = [
       "breakup",
       "loss",
       "conflict",
-      "disappointment"
+      "disappointment",
+      "suffering"
     ],
     "astrology": {
       "logic": "Golden Dawn decan attribution for numbered minor cards.",
@@ -1701,7 +1702,9 @@ window.RELPHI_TAROT_CARDS = [
       "guilt",
       "nightmare",
       "distress",
-      "regret"
+      "regret",
+      "despair",
+      "suffering"
     ],
     "astrology": {
       "logic": "Golden Dawn decan attribution for numbered minor cards.",
@@ -1758,7 +1761,9 @@ window.RELPHI_TAROT_CARDS = [
       "collapse",
       "pain",
       "failure",
-      "culmination"
+      "culmination",
+      "despair",
+      "suffering"
     ],
     "astrology": {
       "logic": "Golden Dawn decan attribution for numbered minor cards.",
@@ -1989,7 +1994,8 @@ window.RELPHI_TAROT_CARDS = [
       "isolation",
       "job loss",
       "insecurity",
-      "need"
+      "need",
+      "suffering"
     ],
     "astrology": {
       "logic": "Golden Dawn decan attribution for numbered minor cards.",
