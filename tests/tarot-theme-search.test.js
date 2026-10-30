@@ -120,4 +120,4 @@ assert.match(app,/RELPHI_THEME_SEARCH\?\.suggest/);
 assert.match(app,/RELPHI_THEME_SEARCH\?\.related/);
 assert.match(app,/data-row-theme-suggestion/);
 assert.match(html,/<script src="tarot-theme-search-v1\.js\?v=1"><\/script>[\s\S]*<script src="tarot-app\.js\?v=416"><\/script>/);
-console.log('PASS: 78 cards, 563 first-degree themes, 639 aliases, all 563 card sets, protected boundaries, fuzzy suggestions and integrated searches.');
+console.log('PASS: 78 cards, 563 first-degree themes, 684 aliases, all 563 card sets, protected boundaries, fuzzy suggestions and integrated searches.');
