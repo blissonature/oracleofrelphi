@@ -394,7 +394,8 @@ window.RELPHI_TAROT_CARDS = [
       "harmony",
       "refuge",
       "domestic harmony",
-      "prosperity"
+      "prosperity",
+      "concord"
     ],
     "astrology": {
       "logic": "Golden Dawn decan attribution for numbered minor cards.",
@@ -572,7 +573,8 @@ window.RELPHI_TAROT_CARDS = [
       "valor",
       "valour",
       "negotiation",
-      "standing ground"
+      "standing ground",
+      "competition"
     ],
     "astrology": {
       "logic": "Golden Dawn decan attribution for numbered minor cards.",
@@ -633,7 +635,8 @@ window.RELPHI_TAROT_CARDS = [
       "swiftness",
       "momentum",
       "haste",
-      "transmission"
+      "transmission",
+      "message"
     ],
     "astrology": {
       "logic": "Golden Dawn decan attribution for numbered minor cards.",
@@ -692,7 +695,8 @@ window.RELPHI_TAROT_CARDS = [
       "recovery",
       "readiness",
       "vigilance",
-      "endurance"
+      "endurance",
+      "strength"
     ],
     "astrology": {
       "logic": "Golden Dawn decan attribution for numbered minor cards.",
@@ -819,7 +823,9 @@ window.RELPHI_TAROT_CARDS = [
       "affection",
       "mutual care",
       "sympathy",
-      "concord"
+      "concord",
+      "friendship",
+      "passion"
     ],
     "astrology": {
       "logic": "Golden Dawn decan attribution for numbered minor cards.",
@@ -880,7 +886,9 @@ window.RELPHI_TAROT_CARDS = [
       "abundance",
       "merriment",
       "shared joy",
-      "solace"
+      "solace",
+      "belonging",
+      "healing"
     ],
     "astrology": {
       "logic": "Golden Dawn decan attribution for numbered minor cards.",
@@ -999,7 +1007,8 @@ window.RELPHI_TAROT_CARDS = [
       "mourning",
       "rupture",
       "frustration",
-      "emotional loss"
+      "emotional loss",
+      "betrayal"
     ],
     "astrology": {
       "logic": "Golden Dawn decan attribution for numbered minor cards.",
@@ -1311,7 +1320,11 @@ window.RELPHI_TAROT_CARDS = [
       "satiety",
       "domestic happiness",
       "emotional completion",
-      "communal life"
+      "communal life",
+      "harmony",
+      "friendship",
+      "home",
+      "contentment"
     ],
     "astrology": {
       "logic": "Golden Dawn decan attribution for numbered minor cards.",
@@ -1377,7 +1390,9 @@ window.RELPHI_TAROT_CARDS = [
       "peace",
       "equilibrium",
       "truce",
-      "suspended judgment"
+      "suspended judgment",
+      "affection",
+      "friendship"
     ],
     "astrology": {
       "logic": "Golden Dawn decan attribution for numbered minor cards.",
@@ -1576,7 +1591,8 @@ window.RELPHI_TAROT_CARDS = [
       "humiliation",
       "dishonor",
       "degradation",
-      "destruction"
+      "destruction",
+      "loss"
     ],
     "astrology": {
       "logic": "Golden Dawn decan attribution for numbered minor cards.",
@@ -1887,7 +1903,9 @@ window.RELPHI_TAROT_CARDS = [
       "desolation",
       "affliction",
       "mental suffering",
-      "utter defeat"
+      "utter defeat",
+      "defeat",
+      "sadness"
     ],
     "astrology": {
       "logic": "Golden Dawn decan attribution for numbered minor cards.",
