@@ -1,7 +1,7 @@
 {
   "schema": "relphi.direct-theme-coverage.v1",
   "reviewed_cards": 78,
-  "added_assignments": 277,
+  "added_assignments": 275,
   "records": [
     {
       "card_id": "ace_of_wands",
@@ -399,8 +399,7 @@
       "new_direct_themes": [
         "rupture",
         "division",
-        "emotional suffering",
-        "bereavement"
+        "emotional suffering"
       ],
       "original_theme_count": 13,
       "source": "relphi-locked-interpretations.js / three_of_swords",
@@ -1189,8 +1188,7 @@
         "ruin",
         "misery",
         "adversity",
-        "structural failure",
-        "oppression"
+        "structural failure"
       ],
       "original_theme_count": 8,
       "source": "relphi-locked-interpretations.js / the_tower",
@@ -1292,5 +1290,9 @@
     "Independent life subjects are not connected by shared astrology",
     "Missing court interpretation records are not guessed"
   ],
-  "status": "source-backed editorial first pass; later refinement subject to review"
+  "status": "source-backed editorial first pass; later refinement subject to review",
+  "corrections": [
+    "The Tower: excluded oppression because source lists it as reversed-only",
+    "Three of Swords: excluded bereavement because sorrow/separation does not necessarily imply death"
+  ]
 }
