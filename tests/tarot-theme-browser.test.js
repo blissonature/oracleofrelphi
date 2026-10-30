@@ -63,7 +63,9 @@ const base=process.env.RELPHI_TEST_URL || 'http://127.0.0.1:8075/tarot.html';
    await page.locator('#relphiKeywordQuery').fill('despair');
    const despairChoice=page.locator('#relphiKeywordMatches [data-keyword-choice][value="despair"]');
    await despairChoice.waitFor({state:'visible',timeout:10000});
-   await despairChoice.check();
+   // The dialog re-renders immediately on selection, so click rather than Playwright.check()
+   // (which expects the original checkbox element to survive the click).
+   await despairChoice.click();
    await page.waitForFunction(()=>
      document.querySelector('#relphiKeywordCount')?.textContent.includes('2 cards in this sub-pack'),
      {timeout:10000});
