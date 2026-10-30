@@ -2058,6 +2058,7 @@
     if (!card) return [];
     const values = [
       ...(Array.isArray(card.tags) ? card.tags : []),
+      ...(Array.isArray(card.direct_themes) ? card.direct_themes : []),
       card.rank, card.rws_rank, card.card_type, card.arcana, card.suit, card.thoth_suit,
       card.element, card.rank_element, card.elemental_formula, card.polarity,
       ...splitCanonicalTagValue(card.astrology?.planet),
@@ -2089,7 +2090,7 @@
   function matchingCanonicalTags(query = state.rowTagQuery) {
     const needle = normalizeSearch(query);
     if (!needle) return [];
-    return canonicalTagCatalog().filter(tag => normalizeSearch(tag).includes(needle)).slice(0, 40);
+    return window.RELPHI_THEME_SEARCH?.matchingTagNames(query, canonicalTagCatalog()) || canonicalTagCatalog().filter(tag => normalizeSearch(tag).includes(needle)).slice(0, 40);
   }
 
   function cardMatchesSelectedTags(card, tags = state.rowSelectedTags, mode = state.rowTagMatchMode) {
@@ -2123,7 +2124,7 @@
     matches: query => {
       const needle = normalizeSearch(query);
       if (!needle) return [];
-      return canonicalTagCatalog().filter(tag => normalizeSearch(tag).includes(needle)).slice(0, 40);
+      return matchingCanonicalTags(query);
     },
     count: (tags, mode = 'any') => cards.filter(card => cardMatchesSelectedTags(card, tags, mode === 'all' ? 'all' : 'any')).length
   });
@@ -3854,6 +3855,14 @@
       return sortCardsForDisplay(cards.filter(card => rankNumber(card) === rank));
     }
     if (query.length === 1) return [];
+    // Explicit card identifiers outrank thematic queries.
+    if (!exact.length) {
+      const directTheme = window.RELPHI_THEME_SEARCH?.resolve(raw);
+      if (directTheme) {
+        const eligible = new Set(window.RELPHI_THEME_SEARCH.directCardIds(raw));
+        return sortCardsForDisplay(cards.filter(card => eligible.has(card.card_id)));
+      }
+    }
     const scored = cards.map(card => ({ card, score: resultScore(card, query, terms) })).filter(item => item.score >= 0);
     if (exact.length) {
       exact.forEach(card => { const found = scored.find(item => item.card.card_id === card.card_id); if (found) found.score += 12000; else scored.push({ card, score: 12000 }); });
@@ -3924,7 +3933,34 @@
         const date = new Date(state.lastDateField.date + 'T12:00:00');
         $('activeSummary').textContent = `Date lookup for ${date.toLocaleDateString(undefined, { weekday:'long', year:'numeric', month:'long', day:'numeric' })}.`;
       } else {
-        $('activeSummary').textContent = `Search results for “${state.query}”.`;
+        const theme = window.RELPHI_THEME_SEARCH?.resolve(state.query);
+        if (theme?.match === 'unqualified') {
+          $('activeSummary').textContent = `“${state.query}” has no curated direct card assignments yet; related cards were not inferred.`;
+        } else if (theme && !exactShorthandResults(state.query).length) {
+          $('activeSummary').textContent = `Direct theme: ${theme.name}${theme.match === 'alias' ? ` (matched “${state.query}”)` : ''}.`;
+        } else {
+          $('activeSummary').textContent = `Search results for “${state.query}”.`;
+          if (!count) {
+            const suggestions = window.RELPHI_THEME_SEARCH?.suggest(state.query,3) || [];
+            if (suggestions.length) {
+              const summary = $('activeSummary');
+              summary.appendChild(document.createTextNode(' Did you mean '));
+              suggestions.forEach((suggestion,index) => {
+                if (index) summary.appendChild(document.createTextNode(', '));
+                const button = document.createElement('button');
+                button.type = 'button';
+                button.className = 'relphi-theme-suggestion';
+                button.textContent = suggestion.name;
+                button.addEventListener('click', () => {
+                  $('oracleCommand').value = suggestion.name;
+                  runSearch(suggestion.name);
+                });
+                summary.appendChild(button);
+              });
+              summary.appendChild(document.createTextNode('?'));
+            }
+          }
+        }
       }
     }
   }
