@@ -8,6 +8,24 @@
   // Additional lexical forms; these do not add card qualification.
   // Search-language equivalents; these never create new card qualifications.
   const NEW_ALIASES = {
+      "abandon": "abandonment",
+      "abandoned": "abandonment",
+      "abandoning a concern": "abandonment of pursuit",
+      "abandoning a goal": "abandonment of pursuit",
+      "abandoning a pursuit": "abandonment of pursuit",
+      "abandoning a previous concern": "abandonment of pursuit",
+      "abandon a goal": "abandonment of pursuit",
+      "walking away from a goal": "abandonment of pursuit",
+      "feeling abandoned": "being abandoned",
+      "felt abandoned": "being abandoned",
+      "was abandoned": "being abandoned",
+      "forsaken": "being abandoned",
+      "deserted": "being abandoned",
+      "desertion": "being abandoned",
+      "left behind": "being abandoned",
+      "safe": "safety",
+      "feeling safe": "safety",
+      "being safe": "safety",
       "despairing": "despair",
       "in despair": "despair",
       "feeling despair": "despair",
@@ -389,9 +407,10 @@
   "injustice": ["humiliation","dishonor","conflict"],
   "unfairness": ["humiliation","dishonor","conflict"],
   "housing": ["home","security","stability"],
-  "injury": ["pain","recovery","protection"]
+  "injury": ["pain","recovery","protection"],
+  "compromise": ["negotiation", "agreement", "accommodation"]
 };
-  const UNQUALIFIED = ["abandonment","abuse","acceptance","adolescence","adoption","adultery","affair","aging","bankruptcy","bereavement","boundaries violation","bullying","burnout recovery","career change","caregiving","cheating","childbirth","citizenship","coercion","community loss","compromise","consent","coparenting","corruption","creativity block","custodianship","custody","demotion","depressed","depression","development","disability","disclosure","discrimination","divorce","divorce settlement","emotional labor","estrangement","euthanasia","eviction","fame","financial hardship","financial independence","firing","forgiveness","fostering","fraud","grace","harassment","healing relationship","homelessness","housing","housing insecurity","identity crisis","immigration","infertility","infidelity","injury","injustice","jealousy","layoff","litigation","loneliness","lonely","loss of pet","loyalty","manipulation","marginalization","menopause","migration","miscarriage","negotiation","parenthood","personal development","privacy","promotion","rebellion","reconciliation","relocation","reputation","resignation","restitution","retirement","robbery","safety","self-esteem","self-worth","shame","shamed","social exclusion","spiritual crisis","stillbirth","trauma","trust","unemployment","unfairness","vulnerability","widowhood"];
+  const UNQUALIFIED = ["abuse","acceptance","adolescence","adoption","adultery","affair","aging","bankruptcy","boundaries violation","bullying","burnout recovery","career change","cheating","childbirth","citizenship","coercion","community loss","compromise","consent","coparenting","corruption","creativity block","custodianship","custody","demotion","depressed","depression","disability","disclosure","discrimination","divorce","divorce settlement","emotional labor","estrangement","euthanasia","eviction","fame","financial independence","firing","forgiveness","fostering","fraud","grace","harassment","healing relationship","homelessness","housing","housing insecurity","identity crisis","immigration","infertility","infidelity","injury","injustice","jealousy","layoff","litigation","loneliness","lonely","loss of pet","loyalty","manipulation","marginalization","menopause","migration","parenthood","personal development","privacy","promotion","rebellion","reconciliation","relocation","reputation","resignation","restitution","retirement","robbery","self-esteem","self-worth","shame","shamed","social exclusion","spiritual crisis","stillbirth","trauma","trust","unemployment","unfairness","vulnerability"];
   const normalize = value => String(value || '').toLowerCase().normalize('NFKD')
     .replace(/[\u0300-\u036f]/g, '').replace(/[’‘]/g, "'")
     .replace(/^[\s"“”'.,!?;:()[\]{}]+|[\s"“”'.,!?;:()[\]{}]+$/g, '')
