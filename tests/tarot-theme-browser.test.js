@@ -10,15 +10,19 @@ const base=process.env.RELPHI_TEST_URL || 'http://127.0.0.1:8075/tarot.html';
    const errors=[];
    page.on('pageerror',err=>errors.push(String(err)));
    await page.goto(base,{waitUntil:'domcontentloaded'});
-   await page.waitForFunction(()=>window.RELPHI_THEME_SEARCH?.themeCount===563 && !!window.RELPHI_KEYWORD_SUBPACK_CONTEXT,{timeout:25000});
+   await page.waitForFunction(()=>window.RELPHI_THEME_SEARCH?.themeCount===567 && !!window.RELPHI_KEYWORD_SUBPACK_CONTEXT,{timeout:25000});
    const cases=[
      ['despair',2],['suffering',4],['despair and suffering',4],['secrets',3],
+     ['abandonment',2],['abandoned',2],['abandon a goal',1],
+     ['abandonment of pursuit',1],['being abandoned',1],['feeling abandoned',1],
+     ['safe',1],['safety',1],['miscarriage',1],
      ['despair?',2],['suffering!',4],['agony',1],['heartache',1],
      ['deprivation',2],['destitution',1],['serenity',2],
      ['desperate',1],['rebirth',3],['betray',5],
      ['love',7],['betrayal',5],['cruelty',1],['oppression',1],['ruin',2],
      ['development',1],['divorce',0],['cheating',0],['infidelity',0],
-     ['loneliness',0],['depression',0],['shame',0],['fraud',0]
+     ['loneliness',0],['depression',0],['shame',0],['fraud',0],
+     ['compromise',0],['corruption',0],['injury',0]
    ];
    for(const [term,count] of cases){
      await page.locator('#oracleCommand').fill(term);
@@ -40,8 +44,8 @@ const base=process.env.RELPHI_TEST_URL || 'http://127.0.0.1:8075/tarot.html';
    assert.ok(!leak.love.includes('seven_of_swords'));
    assert.ok(!leak.love.includes('nine_of_swords'));
    assert.equal(leak.selected,4);
-   for(const t of ['despair','suffering','oppression','development'])assert.ok(leak.catalog.some(label=>label.toLowerCase()===t),t);
-   for(const term of ['loneliness','depression','shame','fraud']){
+   for(const t of ['despair','suffering','oppression','development','abandonment','being abandoned','safety','miscarriage'])assert.ok(leak.catalog.some(label=>label.toLowerCase()===t),t);
+   for(const term of ['loneliness','depression','shame','fraud','compromise','corruption','injury']){
      await page.locator('#oracleCommand').fill(term);
      await page.locator('#runCommand').click();
      await page.waitForFunction(()=>document.getElementById('activeSummary')?.textContent.includes('Explore separately'),{timeout:10000});
@@ -71,6 +75,17 @@ const base=process.env.RELPHI_TEST_URL || 'http://127.0.0.1:8075/tarot.html';
      {timeout:10000});
    await page.locator('#relphiConfirmFreeSettings').click();
    assert.equal(await page.evaluate(()=>window.RELPHI_KEYWORD_SUBPACK_CONTEXT.count(['despair'])),2);
+   // Switch the real Drawing Board keyword pool to abandonment and verify
+   // direct membership without broad loss/rejection contamination.
+   await page.locator('#relphiBoardSettingsButton').click();
+   await page.locator('[data-keyword-remove="despair"]').click();
+   await page.locator('#relphiKeywordQuery').fill('abandonment');
+   const abandonChoice=page.locator('#relphiKeywordMatches [data-keyword-choice][value="abandonment"]');
+   await abandonChoice.waitFor({state:'visible',timeout:10000});
+   await abandonChoice.click(); // The selection re-renders the form.
+   await page.waitForFunction(()=>document.querySelector('#relphiKeywordCount')?.textContent.includes('2 cards in this sub-pack'),{timeout:10000});
+   await page.locator('#relphiConfirmFreeSettings').click();
+   assert.equal(await page.evaluate(()=>window.RELPHI_KEYWORD_SUBPACK_CONTEXT.count(['abandonment'])),2);
    assert.deepEqual(errors,[],`uncaught browser errors at ${viewport.width}px`);
    console.log('PASS browser width='+viewport.width+' queries='+cases.length+' Drawing Board + navigation');
    await page.close();
