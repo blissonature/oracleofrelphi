@@ -42,7 +42,7 @@
     // An explicit conjunction requests both independently qualified themes.
     // A single broad/related term never earns membership through the other.
     if (key.includes(' and ')) {
-      const parts=key.split(/\\s+and\\s+/).filter(Boolean);
+      const parts=key.split(/\s+and\s+/).filter(Boolean);
       if(parts.length>=2 && parts.length<=4) {
         const hits=parts.map(part=>resolve(part));
         if(hits.every(hit=>hit && hit.match!=='unqualified' && hit.match!=='combined'))
