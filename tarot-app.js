@@ -3928,10 +3928,47 @@
     if (id) setVisible(id, true);
     updateClearKeywordButtons();
   }
+  function renderThemeNavigation() {
+    const root=$('relphiThemeNavigation');
+    if(!root)return;
+    root.replaceChildren();
+    root.hidden=true;
+    if(state.mode!=='search')return;
+    const query=String(state.query||'').trim();
+    const engine=window.RELPHI_THEME_SEARCH;
+    const resolved=engine?.resolve(query);
+    const suggested=resolved?.match==='unqualified'
+      ? engine.related(query)
+      : (!resolved && !exactShorthandResults(query).length ? engine?.suggest(query,4).map(item=>item.name) : []);
+    if(!suggested?.length)return;
+    const intro=document.createElement('p');
+    intro.className='relphi-theme-navigation-label';
+    intro.textContent=resolved?.match==='unqualified'
+      ? 'No directly qualified cards for this subject yet. Explore these distinct themes:'
+      : 'No direct theme match. Did you mean:';
+    root.appendChild(intro);
+    const row=document.createElement('div');
+    row.className='relphi-theme-navigation-actions';
+    suggested.forEach(name=>{
+      const btn=document.createElement('button');
+      btn.type='button';
+      btn.className='relphi-theme-suggestion';
+      btn.textContent=name;
+      btn.setAttribute('aria-label','Search theme '+name);
+      btn.addEventListener('click',()=>{
+        $('oracleCommand').value=name;
+        runSearch(name);
+      });
+      row.appendChild(btn);
+    });
+    root.appendChild(row);
+    root.hidden=false;
+  }
   function updateSummary(list) {
     const count = list.length;
     const summaryModes = ['idle', 'all', 'search'];
     setSummaryVisible(summaryModes.includes(state.mode));
+    renderThemeNavigation();
     if (!summaryModes.includes(state.mode)) return;
     $('resultCount').textContent = count ? String(count) : 'No';
     $('resultNoun').textContent = count === 1 ? ' card shown' : ' cards shown';
