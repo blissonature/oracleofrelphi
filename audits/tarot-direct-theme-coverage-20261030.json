@@ -1,7 +1,7 @@
 {
   "schema": "relphi.direct-theme-coverage.v1",
   "reviewed_cards": 78,
-  "added_assignments": 293,
+  "added_assignments": 298,
   "records": [
     {
       "card_id": "ace_of_wands",
@@ -341,7 +341,8 @@
         "abandonment of pursuit",
         "emotional depletion",
         "disengagement",
-        "dissolution"
+        "dissolution",
+        "abandonment"
       ],
       "original_theme_count": 7,
       "source": "relphi-locked-interpretations.js / eight_of_cups",
@@ -518,7 +519,8 @@
         "mental anguish",
         "accusation",
         "desperation",
-        "anguish"
+        "anguish",
+        "miscarriage"
       ],
       "original_theme_count": 9,
       "source": "relphi-locked-interpretations.js / nine_of_swords",
@@ -675,7 +677,8 @@
         "material independence",
         "discernment",
         "cultivation",
-        "prudence"
+        "prudence",
+        "safety"
       ],
       "original_theme_count": 6,
       "source": "relphi-locked-interpretations.js / nine_of_pentacles",
@@ -1222,7 +1225,9 @@
       "new_direct_themes": [
         "bright prospects",
         "future orientation",
-        "communal vision"
+        "communal vision",
+        "abandonment",
+        "being abandoned"
       ],
       "original_theme_count": 7,
       "source": "relphi-locked-interpretations.js / the_star",
@@ -1312,5 +1317,60 @@
   "corrections": [
     "The Tower: excluded oppression because source lists it as reversed-only",
     "Three of Swords: excluded bereavement because sorrow/separation does not necessarily imply death"
-  ]
+  ],
+  "abandonment_review": {
+    "search": "abandonment",
+    "scope": "first_degree_only",
+    "direct": [
+      {
+        "card_id": "eight_of_cups",
+        "sense": "actively leaving or abandoning a previous concern",
+        "source": "traditional_upright"
+      },
+      {
+        "card_id": "the_star",
+        "sense": "experience of abandonment in the traditional reading",
+        "source": "traditional_upright"
+      }
+    ],
+    "excluded": [
+      {
+        "card_id": "three_of_swords",
+        "reason": "Direct separation or rejection does not automatically establish abandonment."
+      },
+      {
+        "card_id": "five_of_cups",
+        "reason": "Loss or disappointment does not automatically establish abandonment."
+      },
+      {
+        "card_id": "five_of_pentacles",
+        "reason": "Material exclusion or poverty does not automatically establish abandonment."
+      },
+      {
+        "card_id": "six_of_swords",
+        "reason": "Travel or transition does not by itself establish abandonment."
+      }
+    ],
+    "rule": "A shared emotional context never automatically confers direct thematic membership."
+  },
+  "unqualified_source_exceptions": {
+    "compromise": {
+      "card_ids": [
+        "seven_of_cups"
+      ],
+      "reason": "The interpretation uses compromise as 'undermine its own promise of pleasure', not mutual negotiated compromise; an undifferentiated query would conflate senses."
+    },
+    "corruption": {
+      "card_ids": [
+        "death"
+      ],
+      "reason": "The traditional meaning concerns decay/corruption of a form, not generic dishonesty or institutional corruption; distinct senses require explicit qualification."
+    },
+    "injury": {
+      "card_ids": [
+        "five_of_swords"
+      ],
+      "reason": "The Relphi text refers to a metaphorical social injury in a contest, not a literal bodily injury; a generic query would conflate senses."
+    }
+  }
 }
