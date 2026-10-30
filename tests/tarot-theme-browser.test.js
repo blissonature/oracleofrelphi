@@ -17,7 +17,8 @@ const base=process.env.RELPHI_TEST_URL || 'http://127.0.0.1:8075/tarot.html';
      ['deprivation',2],['destitution',1],['serenity',2],
      ['desperate',1],['rebirth',3],['betray',5],
      ['love',7],['betrayal',5],['cruelty',1],['oppression',1],['ruin',2],
-     ['development',1],['divorce',0],['cheating',0],['infidelity',0]
+     ['development',1],['divorce',0],['cheating',0],['infidelity',0],
+     ['loneliness',0],['depression',0],['shame',0],['fraud',0]
    ];
    for(const [term,count] of cases){
      await page.locator('#oracleCommand').fill(term);
@@ -40,6 +41,12 @@ const base=process.env.RELPHI_TEST_URL || 'http://127.0.0.1:8075/tarot.html';
    assert.ok(!leak.love.includes('nine_of_swords'));
    assert.equal(leak.selected,4);
    for(const t of ['despair','suffering','oppression','development'])assert.ok(leak.catalog.some(label=>label.toLowerCase()===t),t);
+   for(const term of ['loneliness','depression','shame','fraud']){
+     await page.locator('#oracleCommand').fill(term);
+     await page.locator('#runCommand').click();
+     await page.waitForFunction(()=>document.getElementById('activeSummary')?.textContent.includes('Explore separately'),{timeout:10000});
+     assert.ok(await page.locator('#activeSummary .relphi-theme-suggestion').count()>0,term+' directness guard');
+   }
    await page.locator('#oracleCommand').fill('divorce');
    await page.locator('#runCommand').click();
    await page.locator('#relphiThemeNavigation:visible').waitFor({timeout:10000});
