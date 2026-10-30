@@ -20,7 +20,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Run full 563-theme integrity suite
+      - name: Run complete direct-theme and lexical-coverage integrity suite
         run: node tests/tarot-theme-search.test.js
       - name: Install Playwright Chromium
         run: |
