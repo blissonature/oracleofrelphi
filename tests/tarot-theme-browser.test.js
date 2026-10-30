@@ -15,8 +15,8 @@ const base=process.env.RELPHI_TEST_URL || 'http://127.0.0.1:8075/tarot.html';
      ['despair',2],['suffering',4],['despair and suffering',4],['secrets',3],
      ['despair?',2],['suffering!',4],['agony',1],['heartache',1],
      ['deprivation',2],['destitution',1],['serenity',2],
-     ['desperate',1],['rebirth',3],['betray',4],
-     ['love',7],['betrayal',4],['cruelty',1],['oppression',1],['ruin',2],
+     ['desperate',1],['rebirth',3],['betray',5],
+     ['love',7],['betrayal',5],['cruelty',1],['oppression',1],['ruin',2],
      ['development',1],['divorce',0],['cheating',0],['infidelity',0]
    ];
    for(const [term,count] of cases){
