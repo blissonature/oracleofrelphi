@@ -1,0 +1,1296 @@
+{
+  "schema": "relphi.direct-theme-coverage.v1",
+  "reviewed_cards": 78,
+  "added_assignments": 277,
+  "records": [
+    {
+      "card_id": "ace_of_wands",
+      "card_name": "Ace of Wands",
+      "new_direct_themes": [
+        "invention",
+        "origin",
+        "birth",
+        "generative force",
+        "creative impulse"
+      ],
+      "original_theme_count": 8,
+      "source": "relphi-locked-interpretations.js / ace_of_wands",
+      "relphi_interpretation": "An impulse demands expression before a route has been chosen. The Ace of Wands is Fire at its source: courage, appetite, and creative force make beginning possible, but the eventual form remains unwritten.",
+      "traditional_title": "Root of the Powers of Fire.",
+      "traditional_upright": "creation, invention, enterprise, beginning, source, origin, birth, family, and generative force.",
+      "review_state": "reviewed_against_available_interpretations",
+      "constraints": "No thematic propagation from planets/suits, no reversed-only additions."
+    },
+    {
+      "card_id": "ace_of_cups",
+      "card_name": "Ace of Cups",
+      "new_direct_themes": [
+        "affection",
+        "receptivity",
+        "nourishment",
+        "emotional openness",
+        "feeling"
+      ],
+      "original_theme_count": 8,
+      "source": "relphi-locked-interpretations.js / ace_of_cups",
+      "relphi_interpretation": "Something is felt before it can be named or requested. The Ace of Cups opens the capacity to receive affection, grief, care, or need; what enters this vessel will shape what the feeling becomes.",
+      "traditional_title": "Root of the Powers of Water.",
+      "traditional_upright": "joy, contentment, nourishment, abundance, fertility, felicity, and the house of the true heart.",
+      "review_state": "reviewed_against_available_interpretations",
+      "constraints": "No thematic propagation from planets/suits, no reversed-only additions."
+    },
+    {
+      "card_id": "ace_of_swords",
+      "card_name": "Ace of Swords",
+      "new_direct_themes": [
+        "discernment",
+        "distinction",
+        "assertion",
+        "mental clarity"
+      ],
+      "original_theme_count": 9,
+      "source": "relphi-locked-interpretations.js / ace_of_swords",
+      "relphi_interpretation": "A distinction cuts through what had seemed undivided. The Ace of Swords gives a question its first clear edge, making a decision, truth, boundary, or argument possible before any verdict is reached.",
+      "traditional_title": "Root of the Powers of Air.",
+      "traditional_upright": "triumph, conquest, force, excess, and great power in both love and hatred.",
+      "review_state": "reviewed_against_available_interpretations",
+      "constraints": "No thematic propagation from planets/suits, no reversed-only additions."
+    },
+    {
+      "card_id": "ace_of_pentacles",
+      "card_name": "Ace of Pentacles",
+      "new_direct_themes": [
+        "prosperity",
+        "tangible opportunity",
+        "material foundation",
+        "embodiment"
+      ],
+      "original_theme_count": 10,
+      "source": "relphi-locked-interpretations.js / ace_of_pentacles",
+      "relphi_interpretation": "A possibility becomes something that can be held, used, or cultivated. The Ace of Disks offers the first tangible foothold: a resource, body, place, or commitment through which potential acquires substance.",
+      "traditional_title": "Root of the Powers of Earth.",
+      "traditional_upright": "material contentment, felicity, ecstasy, gold, prosperity, and favorable news.",
+      "review_state": "reviewed_against_available_interpretations",
+      "constraints": "No thematic propagation from planets/suits, no reversed-only additions."
+    },
+    {
+      "card_id": "two_of_wands",
+      "card_name": "Two of Wands",
+      "new_direct_themes": [
+        "dominion",
+        "self-command",
+        "self-direction"
+      ],
+      "original_theme_count": 7,
+      "source": "relphi-locked-interpretations.js / two_of_wands",
+      "relphi_interpretation": "Dominion begins when the will chooses a direction and claims room to act. Mars in Aries supplies initiative strong enough to govern a course, while exposing where self-command meets another will.",
+      "traditional_title": "Dominion",
+      "traditional_upright": "riches, fortune, magnificence, but also possible suffering, sadness, chagrin, or mortification.",
+      "review_state": "reviewed_against_available_interpretations",
+      "constraints": "No thematic propagation from planets/suits, no reversed-only additions."
+    },
+    {
+      "card_id": "three_of_wands",
+      "card_name": "Three of Wands",
+      "new_direct_themes": [
+        "commerce",
+        "conviction",
+        "outward expansion",
+        "venture"
+      ],
+      "original_theme_count": 6,
+      "source": "relphi-locked-interpretations.js / three_of_wands",
+      "relphi_interpretation": "An intention acquires an outward trajectory. The Sun in Aries gives the undertaking its own visible direction; conviction is tested not by how strongly it is declared but by what begins to take shape.",
+      "traditional_title": "Virtue",
+      "traditional_upright": "established strength, enterprise, effort, trade, commerce, discovery, and ships or ventures moving outward.",
+      "review_state": "reviewed_against_available_interpretations",
+      "constraints": "No thematic propagation from planets/suits, no reversed-only additions."
+    },
+    {
+      "card_id": "four_of_wands",
+      "card_name": "Four of Wands",
+      "new_direct_themes": [
+        "peace",
+        "harmony",
+        "refuge",
+        "domestic harmony",
+        "prosperity"
+      ],
+      "original_theme_count": 11,
+      "source": "relphi-locked-interpretations.js / four_of_wands",
+      "relphi_interpretation": "A beginning becomes a place where people can stand together. Venus in Aries brings independent action into an achieved arrangement; Completion is the moment effort becomes something inhabitable and worth celebrating.",
+      "traditional_title": "Completion",
+      "traditional_upright": "country life, haven of refuge, domestic harvest-home, repose, concord, harmony, prosperity, peace, and perfected work.",
+      "review_state": "reviewed_against_available_interpretations",
+      "constraints": "No thematic propagation from planets/suits, no reversed-only additions."
+    },
+    {
+      "card_id": "five_of_wands",
+      "card_name": "Five of Wands",
+      "new_direct_themes": [
+        "strife",
+        "contest",
+        "friction"
+      ],
+      "original_theme_count": 6,
+      "source": "relphi-locked-interpretations.js / five_of_wands",
+      "relphi_interpretation": "Several forces demand expression within a field too narrow to accommodate them easily. Saturn in Leo gives the contest resistance and stakes; Strife reveals which ambitions can coexist and which require different ground.",
+      "traditional_title": "Strife",
+      "traditional_upright": "imitation, struggle, strenuous competition, contest, pursuit of riches or fortune, and violent strife.",
+      "review_state": "reviewed_against_available_interpretations",
+      "constraints": "No thematic propagation from planets/suits, no reversed-only additions."
+    },
+    {
+      "card_id": "six_of_wands",
+      "card_name": "Six of Wands",
+      "new_direct_themes": [
+        "triumph",
+        "public recognition",
+        "accomplishment"
+      ],
+      "original_theme_count": 6,
+      "source": "relphi-locked-interpretations.js / six_of_wands",
+      "relphi_interpretation": "An effort becomes visible as an achievement others can recognize. Jupiter in Leo enlarges confidence into public standing; Victory joins accomplishment with the response of the wider field.",
+      "traditional_title": "Victory",
+      "traditional_upright": "triumph, victory, great news, expectation crowned by desire, and successful arrival.",
+      "review_state": "reviewed_against_available_interpretations",
+      "constraints": "No thematic propagation from planets/suits, no reversed-only additions."
+    },
+    {
+      "card_id": "seven_of_wands",
+      "card_name": "Seven of Wands",
+      "new_direct_themes": [
+        "valor",
+        "valour",
+        "negotiation",
+        "standing ground"
+      ],
+      "original_theme_count": 6,
+      "source": "relphi-locked-interpretations.js / seven_of_wands",
+      "relphi_interpretation": "A position has been taken and must now be defended in the open. Mars in Leo makes courage an active boundary: Valour is not the absence of opposition but the willingness to meet it without yielding ground.",
+      "traditional_title": "Valour",
+      "traditional_upright": "valor, discussion, wordy strife, negotiation, competition, barter, and a single position held against pressure.",
+      "review_state": "reviewed_against_available_interpretations",
+      "constraints": "No thematic propagation from planets/suits, no reversed-only additions."
+    },
+    {
+      "card_id": "eight_of_wands",
+      "card_name": "Eight of Wands",
+      "new_direct_themes": [
+        "swiftness",
+        "momentum",
+        "haste",
+        "transmission"
+      ],
+      "original_theme_count": 7,
+      "source": "relphi-locked-interpretations.js / eight_of_wands",
+      "relphi_interpretation": "Momentum becomes a message that travels farther than its origin. Mercury in Sagittarius unites speed with direction; events, words, and actions converge upon a distant aim before there is much time to reconsider.",
+      "traditional_title": "Swiftness",
+      "traditional_upright": "activity, swiftness, haste, movement toward an end, great hope, quick travel, and arrows of love.",
+      "review_state": "reviewed_against_available_interpretations",
+      "constraints": "No thematic propagation from planets/suits, no reversed-only additions."
+    },
+    {
+      "card_id": "nine_of_wands",
+      "card_name": "Nine of Wands",
+      "new_direct_themes": [
+        "readiness",
+        "vigilance",
+        "endurance"
+      ],
+      "original_theme_count": 6,
+      "source": "relphi-locked-interpretations.js / nine_of_wands",
+      "relphi_interpretation": "Strength is held in reserve after experience has taught what opposition costs. The Moon in Sagittarius preserves conviction through memory, vigilance, and a guarded supply of force ready for the next demand.",
+      "traditional_title": "Strength",
+      "traditional_upright": "strength in opposition, readiness to meet attack, defense, delay, suspension, or adjournment.",
+      "review_state": "reviewed_against_available_interpretations",
+      "constraints": "No thematic propagation from planets/suits, no reversed-only additions."
+    },
+    {
+      "card_id": "ten_of_wands",
+      "card_name": "Ten of Wands",
+      "new_direct_themes": [
+        "oppression",
+        "overburden",
+        "duty",
+        "strain",
+        "overwork"
+      ],
+      "original_theme_count": 10,
+      "source": "relphi-locked-interpretations.js / ten_of_wands",
+      "relphi_interpretation": "A chosen mission has accumulated more weight than one bearer can carry freely. Saturn in Sagittarius turns direction into duty; Oppression appears when sustaining the undertaking consumes the freedom that gave it purpose.",
+      "traditional_title": "Oppression",
+      "traditional_upright": "oppression, burden, weight, pressure, fortune or gain that becomes difficult to carry, and success experienced as strain.",
+      "review_state": "reviewed_against_available_interpretations",
+      "constraints": "No thematic propagation from planets/suits, no reversed-only additions."
+    },
+    {
+      "card_id": "two_of_cups",
+      "card_name": "Two of Cups",
+      "new_direct_themes": [
+        "reciprocity",
+        "affection",
+        "mutual care",
+        "sympathy",
+        "concord"
+      ],
+      "original_theme_count": 7,
+      "source": "relphi-locked-interpretations.js / two_of_cups",
+      "relphi_interpretation": "Two people or impulses meet in willing reciprocity. Venus in Cancer makes attraction an exchange of care; Love forms where each can approach, receive, and answer the other.",
+      "traditional_title": "Love",
+      "traditional_upright": "love, passion, friendship, affinity, union, concord, sympathy, and relation between two parties.",
+      "review_state": "reviewed_against_available_interpretations",
+      "constraints": "No thematic propagation from planets/suits, no reversed-only additions."
+    },
+    {
+      "card_id": "three_of_cups",
+      "card_name": "Three of Cups",
+      "new_direct_themes": [
+        "abundance",
+        "merriment",
+        "shared joy",
+        "solace"
+      ],
+      "original_theme_count": 7,
+      "source": "relphi-locked-interpretations.js / three_of_cups",
+      "relphi_interpretation": "Feeling grows richer by being shared. Mercury in Cancer turns private experience into conversation, celebration, and belonging; Abundance arises because different participants contribute to a common emotional life.",
+      "traditional_title": "Abundance",
+      "traditional_upright": "plenty, conclusion, merriment, happy issue, victory, fulfilment, solace, and healing.",
+      "review_state": "reviewed_against_available_interpretations",
+      "constraints": "No thematic propagation from planets/suits, no reversed-only additions."
+    },
+    {
+      "card_id": "four_of_cups",
+      "card_name": "Four of Cups",
+      "new_direct_themes": [
+        "satiety",
+        "aversion",
+        "refusal",
+        "emotional weariness"
+      ],
+      "original_theme_count": 6,
+      "source": "relphi-locked-interpretations.js / four_of_cups",
+      "relphi_interpretation": "Comfort gathers feeling inside a familiar, protective arrangement. The Moon in Cancer sustains emotional continuity through shelter, memory, and routine; Luxury is the pleasure of being sufficiently held.",
+      "traditional_title": "Luxury",
+      "traditional_upright": "weariness, disgust, aversion, satiety, imaginary vexation, or refusal of what is being offered.",
+      "review_state": "reviewed_against_available_interpretations",
+      "constraints": "No thematic propagation from planets/suits, no reversed-only additions."
+    },
+    {
+      "card_id": "five_of_cups",
+      "card_name": "Five of Cups",
+      "new_direct_themes": [
+        "rupture",
+        "frustration",
+        "emotional loss"
+      ],
+      "original_theme_count": 6,
+      "source": "relphi-locked-interpretations.js / five_of_cups",
+      "relphi_interpretation": "Something cherished meets a rupture that cannot be wished away. Mars in Scorpio presses feeling against loss, frustration, or betrayal; Disappointment reveals where attachment made the outcome matter deeply.",
+      "traditional_title": "Disappointment",
+      "traditional_upright": "loss, disappointment, partial loss, inheritance, transmission, patrimony, or something remaining after loss.",
+      "review_state": "reviewed_against_available_interpretations",
+      "constraints": "No thematic propagation from planets/suits, no reversed-only additions."
+    },
+    {
+      "card_id": "six_of_cups",
+      "card_name": "Six of Cups",
+      "new_direct_themes": [
+        "old affection",
+        "tenderness",
+        "remembering"
+      ],
+      "original_theme_count": 7,
+      "source": "relphi-locked-interpretations.js / six_of_cups",
+      "relphi_interpretation": "Something deeply felt becomes available as pleasure or tender recognition. The Sun in Scorpio illuminates memory and attachment without stripping away their depth; warmth reaches what had been held below the surface.",
+      "traditional_title": "Pleasure",
+      "traditional_upright": "the past, memories, childhood, old affections, looking backward, and things that have vanished.",
+      "review_state": "reviewed_against_available_interpretations",
+      "constraints": "No thematic propagation from planets/suits, no reversed-only additions."
+    },
+    {
+      "card_id": "seven_of_cups",
+      "card_name": "Seven of Cups",
+      "new_direct_themes": [
+        "debauch",
+        "intoxication",
+        "gratification",
+        "seduction by fantasy"
+      ],
+      "original_theme_count": 6,
+      "source": "relphi-locked-interpretations.js / seven_of_cups",
+      "relphi_interpretation": "Desire can become intoxicating enough to compromise its own promise of pleasure. Venus in Scorpio entwines attraction with hidden appetites and attachments; Debauch asks what is actually being valued when gratification takes command.",
+      "traditional_title": "Debauch",
+      "traditional_upright": "imagination, fantasy, reflection, sentiment, dream images, and things seen in contemplation but not made permanent.",
+      "review_state": "reviewed_against_available_interpretations",
+      "constraints": "No thematic propagation from planets/suits, no reversed-only additions."
+    },
+    {
+      "card_id": "eight_of_cups",
+      "card_name": "Eight of Cups",
+      "new_direct_themes": [
+        "abandonment of pursuit",
+        "emotional depletion",
+        "disengagement",
+        "dissolution"
+      ],
+      "original_theme_count": 7,
+      "source": "relphi-locked-interpretations.js / eight_of_cups",
+      "relphi_interpretation": "Feeling continues to flow where nourishment has grown thin. Saturn in Pisces weighs upon a dissolving emotional arrangement; Indolence is the costly persistence of a current that no longer carries life forward.",
+      "traditional_title": "Indolence",
+      "traditional_upright": "abandoning a previous concern, departure from former satisfaction, withdrawal, decline of a matter, or success deferred but not entirely abandoned.",
+      "review_state": "reviewed_against_available_interpretations",
+      "constraints": "No thematic propagation from planets/suits, no reversed-only additions."
+    },
+    {
+      "card_id": "nine_of_cups",
+      "card_name": "Nine of Cups",
+      "new_direct_themes": [
+        "gratitude",
+        "emotional satisfaction",
+        "well-being",
+        "enoughness"
+      ],
+      "original_theme_count": 6,
+      "source": "relphi-locked-interpretations.js / nine_of_cups",
+      "relphi_interpretation": "A deeply desired satisfaction can be received and enjoyed. Jupiter in Pisces expands emotional plenty into gratitude and generosity; Happiness is fullness experienced as enough, without demanding another proof.",
+      "traditional_title": "Happiness",
+      "traditional_upright": "concord, contentment, physical well-being, victory, success, advantage, and satisfaction.",
+      "review_state": "reviewed_against_available_interpretations",
+      "constraints": "No thematic propagation from planets/suits, no reversed-only additions."
+    },
+    {
+      "card_id": "ten_of_cups",
+      "card_name": "Ten of Cups",
+      "new_direct_themes": [
+        "satiety",
+        "domestic happiness",
+        "emotional completion",
+        "communal life"
+      ],
+      "original_theme_count": 17,
+      "source": "relphi-locked-interpretations.js / ten_of_cups",
+      "relphi_interpretation": "Feeling reaches the limit of its capacity for fulfillment. Mars in Pisces pushes emotional completion toward saturation, where harmony is fully inhabited but also requires release or renewal if it is to remain alive.",
+      "traditional_title": "Satiety",
+      "traditional_upright": "contentment, repose of the heart, perfection of human love and friendship, lasting happiness, home, town, or settled communal life.",
+      "review_state": "reviewed_against_available_interpretations",
+      "constraints": "No thematic propagation from planets/suits, no reversed-only additions."
+    },
+    {
+      "card_id": "two_of_swords",
+      "card_name": "Two of Swords",
+      "new_direct_themes": [
+        "peace",
+        "equilibrium",
+        "truce",
+        "suspended judgment"
+      ],
+      "original_theme_count": 6,
+      "source": "relphi-locked-interpretations.js / two_of_swords",
+      "relphi_interpretation": "Two claims are held in deliberate equilibrium. The Moon in Libra protects Peace by suspending judgment; neither side wins the field while the terms of relation remain balanced.",
+      "traditional_title": "Peace",
+      "traditional_upright": "conformity, equipoise, courage, friendship, concord under arms, tenderness, affection, or intimacy.",
+      "review_state": "reviewed_against_available_interpretations",
+      "constraints": "No thematic propagation from planets/suits, no reversed-only additions."
+    },
+    {
+      "card_id": "three_of_swords",
+      "card_name": "Three of Swords",
+      "new_direct_themes": [
+        "rupture",
+        "division",
+        "emotional suffering",
+        "bereavement"
+      ],
+      "original_theme_count": 13,
+      "source": "relphi-locked-interpretations.js / three_of_swords",
+      "relphi_interpretation": "A bond or understanding is divided by a consequence that cannot be ignored. Saturn in Libra gives Sorrow its sharp structure: separation must be recognized even when the relationship still matters.",
+      "traditional_title": "Sorrow",
+      "traditional_upright": "removal, absence, delay, division, rupture, dispersion, and separation.",
+      "review_state": "reviewed_against_available_interpretations",
+      "constraints": "No thematic propagation from planets/suits, no reversed-only additions."
+    },
+    {
+      "card_id": "four_of_swords",
+      "card_name": "Four of Swords",
+      "new_direct_themes": [
+        "truce",
+        "recuperation",
+        "respite",
+        "temporary peace"
+      ],
+      "original_theme_count": 6,
+      "source": "relphi-locked-interpretations.js / four_of_swords",
+      "relphi_interpretation": "Conflict is suspended under an agreement that makes thought possible again. Jupiter in Libra creates room for rest, proportion, and reconsideration; a Truce protects the interval without necessarily resolving the struggle.",
+      "traditional_title": "Truce",
+      "traditional_upright": "vigilance, retreat, solitude, exile, hermit’s repose, tomb, or rest from conflict.",
+      "review_state": "reviewed_against_available_interpretations",
+      "constraints": "No thematic propagation from planets/suits, no reversed-only additions."
+    },
+    {
+      "card_id": "five_of_swords",
+      "card_name": "Five of Swords",
+      "new_direct_themes": [
+        "humiliation",
+        "dishonor",
+        "degradation",
+        "destruction"
+      ],
+      "original_theme_count": 6,
+      "source": "relphi-locked-interpretations.js / five_of_swords",
+      "relphi_interpretation": "A contest leaves someone's position diminished even when its rules appear intelligible. Venus in Aquarius exposes the injury that can arise within impersonal judgments or group dynamics; Defeat has a social as well as a personal cost.",
+      "traditional_title": "Defeat",
+      "traditional_upright": "degradation, destruction, revocation, infamy, dishonor, or loss.",
+      "review_state": "reviewed_against_available_interpretations",
+      "constraints": "No thematic propagation from planets/suits, no reversed-only additions."
+    },
+    {
+      "card_id": "six_of_swords",
+      "card_name": "Six of Swords",
+      "new_direct_themes": [
+        "science",
+        "method",
+        "research",
+        "passage",
+        "coherent explanation"
+      ],
+      "original_theme_count": 8,
+      "source": "relphi-locked-interpretations.js / six_of_swords",
+      "relphi_interpretation": "A workable explanation emerges from scattered observations. Mercury in Aquarius organizes distinctions into a model that can be shared and tested; Science is thought gaining reach through coherent method.",
+      "traditional_title": "Science",
+      "traditional_upright": "journey by water, route, way, passage, envoy, commission, or an expedient means of travel or transition.",
+      "review_state": "reviewed_against_available_interpretations",
+      "constraints": "No thematic propagation from planets/suits, no reversed-only additions."
+    },
+    {
+      "card_id": "seven_of_swords",
+      "card_name": "Seven of Swords",
+      "new_direct_themes": [
+        "futility",
+        "failed strategy",
+        "ineffective planning"
+      ],
+      "original_theme_count": 7,
+      "source": "relphi-locked-interpretations.js / seven_of_swords",
+      "relphi_interpretation": "Effort is spent on a strategy unable to accomplish what it promises. The Moon in Aquarius feels the distance between private motives and the larger system; Futility exposes the limit of cleverness without a sound course.",
+      "traditional_title": "Futility",
+      "traditional_upright": "design, attempt, wish, hope, confidence, quarrelling, or a plan that may fail.",
+      "review_state": "reviewed_against_available_interpretations",
+      "constraints": "No thematic propagation from planets/suits, no reversed-only additions."
+    },
+    {
+      "card_id": "eight_of_swords",
+      "card_name": "Eight of Swords",
+      "new_direct_themes": [
+        "interference",
+        "restricted power",
+        "censure",
+        "confinement"
+      ],
+      "original_theme_count": 6,
+      "source": "relphi-locked-interpretations.js / eight_of_swords",
+      "relphi_interpretation": "Too many claims, signals, or obligations cross the same path. Jupiter in Gemini multiplies possibilities faster than they can be sorted; Interference describes lost freedom of action within a tangle of competing directions.",
+      "traditional_title": "Interference",
+      "traditional_upright": "bad news, violent chagrin, crisis, censure, restricted power, conflict, sickness, or calumny.",
+      "review_state": "reviewed_against_available_interpretations",
+      "constraints": "No thematic propagation from planets/suits, no reversed-only additions."
+    },
+    {
+      "card_id": "nine_of_swords",
+      "card_name": "Nine of Swords",
+      "new_direct_themes": [
+        "cruelty",
+        "mental anguish",
+        "accusation",
+        "desperation",
+        "anguish"
+      ],
+      "original_theme_count": 9,
+      "source": "relphi-locked-interpretations.js / nine_of_swords",
+      "relphi_interpretation": "Thought becomes an instrument that can wound. Mars in Gemini sharpens speech, accusation, or repeated judgment into mental force; Cruelty names the harm produced when the blade of distinction is used without mercy.",
+      "traditional_title": "Cruelty",
+      "traditional_upright": "death, failure, miscarriage, delay, deception, disappointment, or despair.",
+      "review_state": "reviewed_against_available_interpretations",
+      "constraints": "No thematic propagation from planets/suits, no reversed-only additions."
+    },
+    {
+      "card_id": "ten_of_swords",
+      "card_name": "Ten of Swords",
+      "new_direct_themes": [
+        "ruin",
+        "desolation",
+        "affliction",
+        "mental suffering",
+        "utter defeat"
+      ],
+      "original_theme_count": 9,
+      "source": "relphi-locked-interpretations.js / ten_of_swords",
+      "relphi_interpretation": "A line of reasoning reaches a conclusion that destroys the structure supporting it. The Sun in Gemini exposes the accumulated divisions; Ruin is the moment a once-commanding account can no longer sustain itself.",
+      "traditional_title": "Ruin",
+      "traditional_upright": "pain, affliction, tears, sadness, desolation, and utter mental or circumstantial defeat.",
+      "review_state": "reviewed_against_available_interpretations",
+      "constraints": "No thematic propagation from planets/suits, no reversed-only additions."
+    },
+    {
+      "card_id": "two_of_pentacles",
+      "card_name": "Two of Pentacles",
+      "new_direct_themes": [
+        "resource management",
+        "adjustment",
+        "recreation",
+        "material juggling"
+      ],
+      "original_theme_count": 7,
+      "source": "relphi-locked-interpretations.js / two_of_pentacles",
+      "relphi_interpretation": "Resources must move between competing needs instead of remaining fixed. Jupiter in Capricorn brings growth into contact with obligation; Change is the adjustment that keeps a material arrangement viable.",
+      "traditional_title": "Change",
+      "traditional_upright": "gaiety, recreation, news, written messages, agitation, obstacles, trouble, or embroilment.",
+      "review_state": "reviewed_against_available_interpretations",
+      "constraints": "No thematic propagation from planets/suits, no reversed-only additions."
+    },
+    {
+      "card_id": "three_of_pentacles",
+      "card_name": "Three of Pentacles",
+      "new_direct_themes": [
+        "craftsmanship",
+        "skilled labor",
+        "commerce",
+        "coordinated work"
+      ],
+      "original_theme_count": 9,
+      "source": "relphi-locked-interpretations.js / three_of_pentacles",
+      "relphi_interpretation": "A plan becomes real through coordinated labor. Mars in Capricorn directs effort into durable construction; Works reveals whether people, roles, tools, and standards can produce something together.",
+      "traditional_title": "Works",
+      "traditional_upright": "trade, skilled labor, métier, mastery of work, nobility, aristocracy, renown, or glory.",
+      "review_state": "reviewed_against_available_interpretations",
+      "constraints": "No thematic propagation from planets/suits, no reversed-only additions."
+    },
+    {
+      "card_id": "four_of_pentacles",
+      "card_name": "Four of Pentacles",
+      "new_direct_themes": [
+        "material security",
+        "holding on",
+        "inheritance",
+        "conservation"
+      ],
+      "original_theme_count": 7,
+      "source": "relphi-locked-interpretations.js / four_of_pentacles",
+      "relphi_interpretation": "Security is established by concentrating and controlling resources. The Sun in Capricorn gives possession a visible center; Power is the ability to preserve a structure and decide how its support is used.",
+      "traditional_title": "Power",
+      "traditional_upright": "surety of possessions, holding what one has, material security, gift, legacy, or inheritance.",
+      "review_state": "reviewed_against_available_interpretations",
+      "constraints": "No thematic propagation from planets/suits, no reversed-only additions."
+    },
+    {
+      "card_id": "five_of_pentacles",
+      "card_name": "Five of Pentacles",
+      "new_direct_themes": [
+        "privation",
+        "exclusion",
+        "material deprivation",
+        "financial hardship",
+        "precarity"
+      ],
+      "original_theme_count": 9,
+      "source": "relphi-locked-interpretations.js / five_of_pentacles",
+      "relphi_interpretation": "A material need becomes difficult to ignore. Mercury in Taurus subjects money, shelter, or security to continual calculation; Worry arises when the mind cannot yet establish that the necessary resources will hold.",
+      "traditional_title": "Worry",
+      "traditional_upright": "material trouble, poverty, hardship, exclusion, but also love, lovers, affinity, and human connection under difficulty.",
+      "review_state": "reviewed_against_available_interpretations",
+      "constraints": "No thematic propagation from planets/suits, no reversed-only additions."
+    },
+    {
+      "card_id": "six_of_pentacles",
+      "card_name": "Six of Pentacles",
+      "new_direct_themes": [
+        "material support",
+        "generosity",
+        "sustenance",
+        "prosperity"
+      ],
+      "original_theme_count": 8,
+      "source": "relphi-locked-interpretations.js / six_of_pentacles",
+      "relphi_interpretation": "Material support arrives in a proportion that can be sustained. The Moon in Taurus gives resources rhythm and reliability; Success means that what is received, retained, and exchanged actually supports life.",
+      "traditional_title": "Success",
+      "traditional_upright": "gifts, presents, gratification, attention, vigilance, accepted opportunity, and present prosperity.",
+      "review_state": "reviewed_against_available_interpretations",
+      "constraints": "No thematic propagation from planets/suits, no reversed-only additions."
+    },
+    {
+      "card_id": "seven_of_pentacles",
+      "card_name": "Seven of Pentacles",
+      "new_direct_themes": [
+        "insufficient return",
+        "investment failure",
+        "delayed reward"
+      ],
+      "original_theme_count": 7,
+      "source": "relphi-locked-interpretations.js / seven_of_pentacles",
+      "relphi_interpretation": "Investment meets a limit that effort cannot immediately overcome. Saturn in Taurus makes delay and insufficient yield visible; Failure is evidence that an established approach has not produced its intended material result.",
+      "traditional_title": "Failure",
+      "traditional_upright": "money, business, barter, material dealings, but also quarrels, innocence, ingenuity, or purgation depending on context.",
+      "review_state": "reviewed_against_available_interpretations",
+      "constraints": "No thematic propagation from planets/suits, no reversed-only additions."
+    },
+    {
+      "card_id": "eight_of_pentacles",
+      "card_name": "Eight of Pentacles",
+      "new_direct_themes": [
+        "craftsmanship",
+        "technique",
+        "diligence",
+        "skill development",
+        "professional development"
+      ],
+      "original_theme_count": 8,
+      "source": "relphi-locked-interpretations.js / eight_of_pentacles",
+      "relphi_interpretation": "Progress depends on attention to the small difference that matters. The Sun in Virgo illuminates technique, correction, and repetition; Prudence makes skill reliable through discriminating care.",
+      "traditional_title": "Prudence",
+      "traditional_upright": "work, employment, commission, craftsmanship, skill in craft or business, and preparatory labor.",
+      "review_state": "reviewed_against_available_interpretations",
+      "constraints": "No thematic propagation from planets/suits, no reversed-only additions."
+    },
+    {
+      "card_id": "nine_of_pentacles",
+      "card_name": "Nine of Pentacles",
+      "new_direct_themes": [
+        "material independence",
+        "discernment",
+        "cultivation",
+        "prudence"
+      ],
+      "original_theme_count": 6,
+      "source": "relphi-locked-interpretations.js / nine_of_pentacles",
+      "relphi_interpretation": "Effort matures into resources that can be enjoyed or held in reserve. Venus in Virgo finds pleasure in useful sufficiency; Gain is the independence produced when cultivation yields beyond immediate survival.",
+      "traditional_title": "Gain",
+      "traditional_upright": "prudence, safety, success, accomplishment, certainty, discernment, and secure material position.",
+      "review_state": "reviewed_against_available_interpretations",
+      "constraints": "No thematic propagation from planets/suits, no reversed-only additions."
+    },
+    {
+      "card_id": "ten_of_pentacles",
+      "card_name": "Ten of Pentacles",
+      "new_direct_themes": [
+        "ancestry",
+        "material continuity",
+        "established wealth",
+        "family legacy"
+      ],
+      "original_theme_count": 11,
+      "source": "relphi-locked-interpretations.js / ten_of_pentacles",
+      "relphi_interpretation": "Value becomes an enduring system of exchange, ownership, and inheritance. Mercury in Virgo links practical details into continuity; Wealth is abundance organized to outlast one transaction.",
+      "traditional_title": "Wealth",
+      "traditional_upright": "gain, riches, family matters, archives, ancestry, inheritance, house, dwelling, or established material continuity.",
+      "review_state": "reviewed_against_available_interpretations",
+      "constraints": "No thematic propagation from planets/suits, no reversed-only additions."
+    },
+    {
+      "card_id": "knight_of_wands",
+      "card_name": "Knight of Wands",
+      "new_direct_themes": [
+        "emigration",
+        "flight",
+        "change of residence",
+        "pursuit"
+      ],
+      "original_theme_count": 7,
+      "source": "relphi-locked-interpretations.js / knight_of_wands",
+      "relphi_interpretation": "An inspired aim becomes a pursuit. The Knight of Wands gives Fire direction and momentum; conviction travels through action, message, and risk, carrying others into the path of its heat.",
+      "traditional_title": null,
+      "traditional_upright": "departure, absence, flight, emigration, movement, or change of residence.",
+      "review_state": "reviewed_against_available_interpretations",
+      "constraints": "No thematic propagation from planets/suits, no reversed-only additions."
+    },
+    {
+      "card_id": "queen_of_wands",
+      "card_name": "Queen of Wands",
+      "new_direct_themes": [
+        "warmth",
+        "sincerity",
+        "creative authority",
+        "hospitality"
+      ],
+      "original_theme_count": 6,
+      "source": "relphi-locked-interpretations.js / queen_of_wands",
+      "relphi_interpretation": "Passion becomes a climate another person can enter. The Queen of Wands holds Fire without exhausting it, sustaining warmth, invitation, and creative authority through the way she receives and responds.",
+      "traditional_title": null,
+      "traditional_upright": "a friendly, honorable, loving, chaste, or serviceable woman; sincerity and warmth.",
+      "review_state": "reviewed_against_available_interpretations",
+      "constraints": "No thematic propagation from planets/suits, no reversed-only additions."
+    },
+    {
+      "card_id": "prince_of_wands",
+      "card_name": "Prince of Wands",
+      "new_direct_themes": [],
+      "original_theme_count": 6,
+      "source": "existing metadata only; no new assignments",
+      "relphi_interpretation": null,
+      "traditional_title": null,
+      "traditional_upright": null,
+      "review_state": "no_separate_card_interpretation_record",
+      "constraints": "No thematic propagation from planets/suits, no reversed-only additions."
+    },
+    {
+      "card_id": "princess_of_wands",
+      "card_name": "Princess of Wands",
+      "new_direct_themes": [],
+      "original_theme_count": 6,
+      "source": "existing metadata only; no new assignments",
+      "relphi_interpretation": null,
+      "traditional_title": null,
+      "traditional_upright": null,
+      "review_state": "no_separate_card_interpretation_record",
+      "constraints": "No thematic propagation from planets/suits, no reversed-only additions."
+    },
+    {
+      "card_id": "knight_of_cups",
+      "card_name": "Knight of Cups",
+      "new_direct_themes": [
+        "longing",
+        "romantic overture",
+        "offer",
+        "proposition"
+      ],
+      "original_theme_count": 7,
+      "source": "relphi-locked-interpretations.js / knight_of_cups",
+      "relphi_interpretation": "A feeling becomes a journey toward someone or something. The Knight of Cups gives longing a message and a destination; imagination translates private emotion into an offer that another may receive or decline.",
+      "traditional_title": null,
+      "traditional_upright": "arrival, approach, advancement, invitation, proposition, or incitement.",
+      "review_state": "reviewed_against_available_interpretations",
+      "constraints": "No thematic propagation from planets/suits, no reversed-only additions."
+    },
+    {
+      "card_id": "queen_of_cups",
+      "card_name": "Queen of Cups",
+      "new_direct_themes": [
+        "tenderness",
+        "empathy",
+        "devotion",
+        "emotional understanding"
+      ],
+      "original_theme_count": 6,
+      "source": "relphi-locked-interpretations.js / queen_of_cups",
+      "relphi_interpretation": "Feeling is received deeply enough to be understood on its own terms. The Queen of Cups holds memory, tenderness, and another person's emotional weather without immediately forcing either explanation or action.",
+      "traditional_title": null,
+      "traditional_upright": "a good, fair, honest, devoted person; loving intelligence, vision, happiness, pleasure, wisdom, and virtue.",
+      "review_state": "reviewed_against_available_interpretations",
+      "constraints": "No thematic propagation from planets/suits, no reversed-only additions."
+    },
+    {
+      "card_id": "prince_of_cups",
+      "card_name": "Prince of Cups",
+      "new_direct_themes": [],
+      "original_theme_count": 6,
+      "source": "existing metadata only; no new assignments",
+      "relphi_interpretation": null,
+      "traditional_title": null,
+      "traditional_upright": null,
+      "review_state": "no_separate_card_interpretation_record",
+      "constraints": "No thematic propagation from planets/suits, no reversed-only additions."
+    },
+    {
+      "card_id": "princess_of_cups",
+      "card_name": "Princess of Cups",
+      "new_direct_themes": [],
+      "original_theme_count": 6,
+      "source": "existing metadata only; no new assignments",
+      "relphi_interpretation": null,
+      "traditional_title": null,
+      "traditional_upright": null,
+      "review_state": "no_separate_card_interpretation_record",
+      "constraints": "No thematic propagation from planets/suits, no reversed-only additions."
+    },
+    {
+      "card_id": "knight_of_swords",
+      "card_name": "Knight of Swords",
+      "new_direct_themes": [
+        "bravery",
+        "wrath",
+        "confrontation",
+        "intervention"
+      ],
+      "original_theme_count": 6,
+      "source": "relphi-locked-interpretations.js / knight_of_swords",
+      "relphi_interpretation": "A line of reasoning acquires speed and a target. The Knight of Swords pursues a conclusion through questions, arguments, and rapid distinctions; thought becomes an intervention rather than private analysis.",
+      "traditional_title": null,
+      "traditional_upright": "skill, bravery, capacity, defense, wrath, war, opposition, resistance, or destructive force.",
+      "review_state": "reviewed_against_available_interpretations",
+      "constraints": "No thematic propagation from planets/suits, no reversed-only additions."
+    },
+    {
+      "card_id": "queen_of_swords",
+      "card_name": "Queen of Swords",
+      "new_direct_themes": [
+        "widowhood",
+        "bereavement",
+        "mourning",
+        "discernment",
+        "privation"
+      ],
+      "original_theme_count": 7,
+      "source": "relphi-locked-interpretations.js / queen_of_swords",
+      "relphi_interpretation": "Discernment makes room for feeling without surrendering clarity. The Queen of Swords listens to what experience has cost, then names the distinction that matters and holds a boundary others can understand.",
+      "traditional_title": null,
+      "traditional_upright": "widowhood, absence, sterility, mourning, privation, separation, or female sorrow.",
+      "review_state": "reviewed_against_available_interpretations",
+      "constraints": "No thematic propagation from planets/suits, no reversed-only additions."
+    },
+    {
+      "card_id": "prince_of_swords",
+      "card_name": "Prince of Swords",
+      "new_direct_themes": [],
+      "original_theme_count": 6,
+      "source": "existing metadata only; no new assignments",
+      "relphi_interpretation": null,
+      "traditional_title": null,
+      "traditional_upright": null,
+      "review_state": "no_separate_card_interpretation_record",
+      "constraints": "No thematic propagation from planets/suits, no reversed-only additions."
+    },
+    {
+      "card_id": "princess_of_swords",
+      "card_name": "Princess of Swords",
+      "new_direct_themes": [],
+      "original_theme_count": 6,
+      "source": "existing metadata only; no new assignments",
+      "relphi_interpretation": null,
+      "traditional_title": null,
+      "traditional_upright": null,
+      "review_state": "no_separate_card_interpretation_record",
+      "constraints": "No thematic propagation from planets/suits, no reversed-only additions."
+    },
+    {
+      "card_id": "knight_of_disks",
+      "card_name": "Knight of Disks",
+      "new_direct_themes": [],
+      "original_theme_count": 6,
+      "source": "existing metadata only; no new assignments",
+      "relphi_interpretation": null,
+      "traditional_title": null,
+      "traditional_upright": null,
+      "review_state": "no_separate_card_interpretation_record",
+      "constraints": "No thematic propagation from planets/suits, no reversed-only additions."
+    },
+    {
+      "card_id": "queen_of_disks",
+      "card_name": "Queen of Disks",
+      "new_direct_themes": [],
+      "original_theme_count": 7,
+      "source": "existing metadata only; no new assignments",
+      "relphi_interpretation": null,
+      "traditional_title": null,
+      "traditional_upright": null,
+      "review_state": "no_separate_card_interpretation_record",
+      "constraints": "No thematic propagation from planets/suits, no reversed-only additions."
+    },
+    {
+      "card_id": "prince_of_disks",
+      "card_name": "Prince of Disks",
+      "new_direct_themes": [],
+      "original_theme_count": 6,
+      "source": "existing metadata only; no new assignments",
+      "relphi_interpretation": null,
+      "traditional_title": null,
+      "traditional_upright": null,
+      "review_state": "no_separate_card_interpretation_record",
+      "constraints": "No thematic propagation from planets/suits, no reversed-only additions."
+    },
+    {
+      "card_id": "princess_of_disks",
+      "card_name": "Princess of Disks",
+      "new_direct_themes": [],
+      "original_theme_count": 7,
+      "source": "existing metadata only; no new assignments",
+      "relphi_interpretation": null,
+      "traditional_title": null,
+      "traditional_upright": null,
+      "review_state": "no_separate_card_interpretation_record",
+      "constraints": "No thematic propagation from planets/suits, no reversed-only additions."
+    },
+    {
+      "card_id": "the_fool",
+      "card_name": "The Fool",
+      "new_direct_themes": [
+        "openness",
+        "first step",
+        "new journey",
+        "uncertainty"
+      ],
+      "original_theme_count": 8,
+      "source": "relphi-locked-interpretations.js / the_fool",
+      "relphi_interpretation": "A beginning exists before it knows what it will become. The Fool steps beyond the known pattern with openness rather than proof; freedom appears as the capacity to move before identity, destination, or rules have been settled.",
+      "traditional_title": null,
+      "traditional_upright": "folly, mania, extravagance, intoxication, delirium, frenzy, and exposure.",
+      "review_state": "reviewed_against_available_interpretations",
+      "constraints": "No thematic propagation from planets/suits, no reversed-only additions."
+    },
+    {
+      "card_id": "the_magician",
+      "card_name": "The Magician / The Magus",
+      "new_direct_themes": [
+        "agency",
+        "diplomacy",
+        "translation",
+        "intelligibility"
+      ],
+      "original_theme_count": 7,
+      "source": "relphi-locked-interpretations.js / the_magician",
+      "relphi_interpretation": "An intention crosses from the inner world into exchange. The Magician makes a word, gesture, tool, or choice carry meaning into action; what is understood can now be communicated and made consequential.",
+      "traditional_title": null,
+      "traditional_upright": "skill, diplomacy, address, subtlety, will, self-confidence, and directed personal agency; also sickness, pain, loss, or disaster in some traditional readings.",
+      "review_state": "reviewed_against_available_interpretations",
+      "constraints": "No thematic propagation from planets/suits, no reversed-only additions."
+    },
+    {
+      "card_id": "the_high_priestess",
+      "card_name": "The High Priestess / The Priestess",
+      "new_direct_themes": [
+        "concealment",
+        "receptivity",
+        "unrevealed knowledge",
+        "secret keeping"
+      ],
+      "original_theme_count": 6,
+      "source": "relphi-locked-interpretations.js / the_high_priestess",
+      "relphi_interpretation": "Knowledge is carried through silence before it can be spoken. The High Priestess preserves a hidden continuity of memory, timing, and feeling; receptivity becomes a passage rather than an absence of action.",
+      "traditional_title": null,
+      "traditional_upright": "secrets, mystery, the future still unrevealed, silence, tenacity, wisdom, science, and hidden knowledge.",
+      "review_state": "reviewed_against_available_interpretations",
+      "constraints": "No thematic propagation from planets/suits, no reversed-only additions."
+    },
+    {
+      "card_id": "the_empress",
+      "card_name": "The Empress",
+      "new_direct_themes": [
+        "fruitfulness",
+        "nourishment",
+        "generativity",
+        "development"
+      ],
+      "original_theme_count": 9,
+      "source": "relphi-locked-interpretations.js / the_empress",
+      "relphi_interpretation": "Value opens a door through attraction rather than force. The Empress makes growth possible by welcoming relation, pleasure, and nourishment; what is invited can develop without first being conquered.",
+      "traditional_title": null,
+      "traditional_upright": "fruitfulness, action, initiative, length of days, the unknown, clandestine matters, difficulty, doubt, or ignorance.",
+      "review_state": "reviewed_against_available_interpretations",
+      "constraints": "No thematic propagation from planets/suits, no reversed-only additions."
+    },
+    {
+      "card_id": "the_emperor",
+      "card_name": "The Emperor",
+      "new_direct_themes": [
+        "protective authority",
+        "governance",
+        "realization",
+        "reason"
+      ],
+      "original_theme_count": 9,
+      "source": "relphi-locked-interpretations.js / the_emperor",
+      "relphi_interpretation": "A boundary makes first action legible. The Emperor gives initiative a visible threshold, where protective force can enter the world as structure and direction rather than remain an unformed demand.",
+      "traditional_title": null,
+      "traditional_upright": "stability, power, protection, realization, authority, reason, conviction, and aid from a great person.",
+      "review_state": "reviewed_against_available_interpretations",
+      "constraints": "No thematic propagation from planets/suits, no reversed-only additions."
+    },
+    {
+      "card_id": "the_hierophant",
+      "card_name": "The Hierophant",
+      "new_direct_themes": [
+        "transmission of knowledge",
+        "ceremony",
+        "alliance",
+        "shared values"
+      ],
+      "original_theme_count": 11,
+      "source": "relphi-locked-interpretations.js / the_hierophant",
+      "relphi_interpretation": "A living lesson gains continuity through embodiment and transmission. The Hierophant binds people to practices, promises, and values that can outlast the moment; tradition becomes meaningful when it can actually be carried.",
+      "traditional_title": null,
+      "traditional_upright": "marriage, alliance, captivity, servitude, mercy, goodness, inspiration, and recourse to a guiding figure.",
+      "review_state": "reviewed_against_available_interpretations",
+      "constraints": "No thematic propagation from planets/suits, no reversed-only additions."
+    },
+    {
+      "card_id": "the_lovers",
+      "card_name": "The Lovers",
+      "new_direct_themes": [
+        "mutual recognition",
+        "relational choice",
+        "dialogue",
+        "reciprocity"
+      ],
+      "original_theme_count": 13,
+      "source": "relphi-locked-interpretations.js / the_lovers",
+      "relphi_interpretation": "A relationship becomes possible through difference. The Lovers separates one voice or path from another so choice, conversation, and mutual recognition can exist without dissolving either participant.",
+      "traditional_title": null,
+      "traditional_upright": "attraction, love, beauty, and trials overcome.",
+      "review_state": "reviewed_against_available_interpretations",
+      "constraints": "No thematic propagation from planets/suits, no reversed-only additions."
+    },
+    {
+      "card_id": "the_chariot",
+      "card_name": "The Chariot",
+      "new_direct_themes": [
+        "protective movement",
+        "safe passage",
+        "transport",
+        "caregiving"
+      ],
+      "original_theme_count": 7,
+      "source": "relphi-locked-interpretations.js / the_chariot",
+      "relphi_interpretation": "Movement becomes possible because something vulnerable is carried safely. The Chariot gives feeling a protective vehicle: care, boundary, and direction work together so departure does not require abandoning belonging.",
+      "traditional_title": null,
+      "traditional_upright": "succor, providence, war, triumph, presumption, vengeance, and trouble overcome through force.",
+      "review_state": "reviewed_against_available_interpretations",
+      "constraints": "No thematic propagation from planets/suits, no reversed-only additions."
+    },
+    {
+      "card_id": "strength",
+      "card_name": "Strength / Lust",
+      "new_direct_themes": [
+        "magnanimity",
+        "vitality",
+        "mastery of instinct",
+        "creative force"
+      ],
+      "original_theme_count": 6,
+      "source": "relphi-locked-interpretations.js / strength",
+      "relphi_interpretation": "Instinct and conscious purpose draw upon the same living force. Strength sustains appetite, courage, and creative heat without extinguishing them; mastery comes through inhabiting vitality rather than opposing it.",
+      "traditional_title": null,
+      "traditional_upright": "power, energy, action, courage, magnanimity, complete success, and honours.",
+      "review_state": "reviewed_against_available_interpretations",
+      "constraints": "No thematic propagation from planets/suits, no reversed-only additions."
+    },
+    {
+      "card_id": "the_hermit",
+      "card_name": "The Hermit",
+      "new_direct_themes": [
+        "caution",
+        "prudence",
+        "examination",
+        "research",
+        "discernment"
+      ],
+      "original_theme_count": 8,
+      "source": "relphi-locked-interpretations.js / the_hermit",
+      "relphi_interpretation": "A small detail becomes the light by which the whole task can be understood. The Hermit withdraws attention from display toward examination, carrying useful knowledge through patience, skill, and precise discernment.",
+      "traditional_title": null,
+      "traditional_upright": "prudence, circumspection, caution, but also possible treason, concealment, or dissimulation.",
+      "review_state": "reviewed_against_available_interpretations",
+      "constraints": "No thematic propagation from planets/suits, no reversed-only additions."
+    },
+    {
+      "card_id": "wheel_of_fortune",
+      "card_name": "Wheel of Fortune / Fortune",
+      "new_direct_themes": [
+        "destiny",
+        "circumstantial change",
+        "reversal of fortune",
+        "changing fortunes"
+      ],
+      "original_theme_count": 6,
+      "source": "relphi-locked-interpretations.js / wheel_of_fortune",
+      "relphi_interpretation": "Circumstances turn, carrying resources and opportunities between hands. The Wheel of Fortune makes expansion inseparable from changing position; what rises or arrives participates in a larger cycle of exchange.",
+      "traditional_title": null,
+      "traditional_upright": "destiny, fortune, success, elevation, luck, and felicity.",
+      "review_state": "reviewed_against_available_interpretations",
+      "constraints": "No thematic propagation from planets/suits, no reversed-only additions."
+    },
+    {
+      "card_id": "justice",
+      "card_name": "Justice / Adjustment",
+      "new_direct_themes": [
+        "equity",
+        "rectification",
+        "legal judgment",
+        "reciprocity"
+      ],
+      "original_theme_count": 14,
+      "source": "relphi-locked-interpretations.js / justice",
+      "relphi_interpretation": "A relationship is brought under measure so its consequences can be faced. Justice / Adjustment weighs competing claims, corrects disproportion, and makes reciprocity a matter of actual conditions rather than appearances.",
+      "traditional_title": null,
+      "traditional_upright": "equity, rightness, probity, executive judgment, and triumph of the deserving side in law.",
+      "review_state": "reviewed_against_available_interpretations",
+      "constraints": "No thematic propagation from planets/suits, no reversed-only additions."
+    },
+    {
+      "card_id": "the_hanged_man",
+      "card_name": "The Hanged Man",
+      "new_direct_themes": [
+        "gestation",
+        "altered perspective",
+        "trials",
+        "inner development"
+      ],
+      "original_theme_count": 8,
+      "source": "relphi-locked-interpretations.js / the_hanged_man",
+      "relphi_interpretation": "Ordinary movement is suspended so a different process can develop. The Hanged Man yields control of the visible course, letting immersion, altered perspective, or gestation work beneath the demand for immediate action.",
+      "traditional_title": null,
+      "traditional_upright": "wisdom, circumspection, discernment, trials, sacrifice, intuition, divination, and prophecy.",
+      "review_state": "reviewed_against_available_interpretations",
+      "constraints": "No thematic propagation from planets/suits, no reversed-only additions."
+    },
+    {
+      "card_id": "death",
+      "card_name": "Death",
+      "new_direct_themes": [
+        "mortality",
+        "termination",
+        "dissolution",
+        "development through change"
+      ],
+      "original_theme_count": 8,
+      "source": "relphi-locked-interpretations.js / death",
+      "relphi_interpretation": "Life continues by changing the form through which it moves. Death presses what is hidden toward transformation; the ending of one arrangement becomes the passage through which another can emerge.",
+      "traditional_title": null,
+      "traditional_upright": "end, mortality, destruction, corruption, loss, failure, or the termination of a condition.",
+      "review_state": "reviewed_against_available_interpretations",
+      "constraints": "No thematic propagation from planets/suits, no reversed-only additions."
+    },
+    {
+      "card_id": "temperance",
+      "card_name": "Temperance / Art",
+      "new_direct_themes": [
+        "accommodation",
+        "adaptation",
+        "synthesis",
+        "proportion",
+        "reconciliation of differences"
+      ],
+      "original_theme_count": 7,
+      "source": "relphi-locked-interpretations.js / temperance",
+      "relphi_interpretation": "Unlike forces become capable of traveling together. Temperance / Art supports a direction through proportion and careful integration; meaning is reached not by erasing differences but by finding a viable relation among them.",
+      "traditional_title": null,
+      "traditional_upright": "economy, moderation, frugality, management, adaptation, and accommodation.",
+      "review_state": "reviewed_against_available_interpretations",
+      "constraints": "No thematic propagation from planets/suits, no reversed-only additions."
+    },
+    {
+      "card_id": "the_devil",
+      "card_name": "The Devil",
+      "new_direct_themes": [
+        "captivity",
+        "compulsion",
+        "attachment to form",
+        "violence"
+      ],
+      "original_theme_count": 8,
+      "source": "relphi-locked-interpretations.js / the_devil",
+      "relphi_interpretation": "Desire acquires the weight of a material bond. The Devil shows how attraction, survival, and visible form can hold attention in an established structure; what sustains a life may also define the terms of its captivity.",
+      "traditional_title": null,
+      "traditional_upright": "ravage, violence, vehemence, extraordinary effort, force, fatality, and what is predestined but not necessarily evil.",
+      "review_state": "reviewed_against_available_interpretations",
+      "constraints": "No thematic propagation from planets/suits, no reversed-only additions."
+    },
+    {
+      "card_id": "the_tower",
+      "card_name": "The Tower",
+      "new_direct_themes": [
+        "ruin",
+        "misery",
+        "adversity",
+        "structural failure",
+        "oppression"
+      ],
+      "original_theme_count": 8,
+      "source": "relphi-locked-interpretations.js / the_tower",
+      "relphi_interpretation": "Contained force breaks the structure that prevented its expression. The Tower makes the hidden pressure unmistakable; the event reveals what the old enclosure could no longer hold or truthfully represent.",
+      "traditional_title": null,
+      "traditional_upright": "misery, distress, indigence, adversity, calamity, disgrace, deception, and ruin.",
+      "review_state": "reviewed_against_available_interpretations",
+      "constraints": "No thematic propagation from planets/suits, no reversed-only additions."
+    },
+    {
+      "card_id": "the_star",
+      "card_name": "The Star",
+      "new_direct_themes": [
+        "bright prospects",
+        "future orientation",
+        "communal vision"
+      ],
+      "original_theme_count": 7,
+      "source": "relphi-locked-interpretations.js / the_star",
+      "relphi_interpretation": "A possibility is drawn out of the unseen and given a place in a wider pattern. The Star turns distance, hope, or communal vision into an orientation toward the future that others may also recognize.",
+      "traditional_title": null,
+      "traditional_upright": "loss, theft, privation, abandonment, but also hope and bright prospects in an alternate reading.",
+      "review_state": "reviewed_against_available_interpretations",
+      "constraints": "No thematic propagation from planets/suits, no reversed-only additions."
+    },
+    {
+      "card_id": "the_moon",
+      "card_name": "The Moon",
+      "new_direct_themes": [
+        "terror",
+        "perceptual uncertainty",
+        "dream imagery",
+        "darkness"
+      ],
+      "original_theme_count": 8,
+      "source": "relphi-locked-interpretations.js / the_moon",
+      "relphi_interpretation": "Perception moves through an uncertain boundary between image and experience. The Moon carries memory, fear, longing, and dream in a permeable field; the task is to follow what appears without confusing its shape with its source.",
+      "traditional_title": null,
+      "traditional_upright": "hidden enemies, danger, calumny, darkness, terror, deception, occult forces, and error.",
+      "review_state": "reviewed_against_available_interpretations",
+      "constraints": "No thematic propagation from planets/suits, no reversed-only additions."
+    },
+    {
+      "card_id": "the_sun",
+      "card_name": "The Sun",
+      "new_direct_themes": [
+        "visibility",
+        "open recognition",
+        "radiance",
+        "life affirmation"
+      ],
+      "original_theme_count": 10,
+      "source": "relphi-locked-interpretations.js / the_sun",
+      "relphi_interpretation": "Something becomes visible enough to be recognized openly. The Sun brings identity, vitality, and purpose into the light; presence itself establishes a center around which others can orient.",
+      "traditional_title": null,
+      "traditional_upright": "material happiness, fortunate marriage, contentment, and simple joy.",
+      "review_state": "reviewed_against_available_interpretations",
+      "constraints": "No thematic propagation from planets/suits, no reversed-only additions."
+    },
+    {
+      "card_id": "judgement",
+      "card_name": "Judgment / The Aeon",
+      "new_direct_themes": [
+        "renewal of purpose",
+        "change of position",
+        "decisive outcome"
+      ],
+      "original_theme_count": 8,
+      "source": "relphi-locked-interpretations.js / judgement",
+      "relphi_interpretation": "A dormant possibility answers a summons to become real. Judgment / Aeon brings latent force into a decisive new phase; awakening changes not only what is known but what can now be done.",
+      "traditional_title": null,
+      "traditional_upright": "change of position, renewal, result, outcome, awakening, and decisive judgment.",
+      "review_state": "reviewed_against_available_interpretations",
+      "constraints": "No thematic propagation from planets/suits, no reversed-only additions."
+    },
+    {
+      "card_id": "the_world",
+      "card_name": "The World / The Universe",
+      "new_direct_themes": [
+        "closure",
+        "recompense",
+        "complete passage",
+        "whole",
+        "finished form"
+      ],
+      "original_theme_count": 8,
+      "source": "relphi-locked-interpretations.js / the_world",
+      "relphi_interpretation": "A pattern reaches the boundary that makes it complete and recognizable. The World / Universe gives effort its finished form through time, consequence, and limit; closure allows the whole to be seen and the next cycle to begin.",
+      "traditional_title": null,
+      "traditional_upright": "assured success, recompense, voyage, route, emigration, flight, change of place, and completed passage.",
+      "review_state": "reviewed_against_available_interpretations",
+      "constraints": "No thematic propagation from planets/suits, no reversed-only additions."
+    }
+  ],
+  "source_interpretations_sha": "b69e1a166fec9363d87f69df746a56d63991a5a9",
+  "principles": [
+    "Only direct source interpretation qualifies a theme",
+    "Reversed meanings not automatically attached to an upright card",
+    "Independent life subjects are not connected by shared astrology",
+    "Missing court interpretation records are not guessed"
+  ],
+  "status": "source-backed editorial first pass; later refinement subject to review"
+}
