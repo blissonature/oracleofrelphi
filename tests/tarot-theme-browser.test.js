@@ -57,6 +57,18 @@ const base=process.env.RELPHI_TEST_URL || 'http://127.0.0.1:8075/tarot.html';
    await page.locator('#relphiOpenDrawingBoardCurrent').click();
    await page.waitForFunction(()=>!document.getElementById('shortListPanel').hidden,{timeout:15000});
    assert.equal(await page.locator('#shortListPanel').isVisible(),true);
+   // Exercise the actual Free Draw keyword picker, not merely its backing API.
+   await page.locator('#relphiBoardSettingsButton').click();
+   await page.locator('#relphiFreePack').selectOption('tags');
+   await page.locator('#relphiKeywordQuery').fill('despair');
+   const despairChoice=page.locator('#relphiKeywordMatches [data-keyword-choice][value="despair"]');
+   await despairChoice.waitFor({state:'visible',timeout:10000});
+   await despairChoice.check();
+   await page.waitForFunction(()=>
+     document.querySelector('#relphiKeywordCount')?.textContent.includes('2 cards in this sub-pack'),
+     {timeout:10000});
+   await page.locator('#relphiConfirmFreeSettings').click();
+   assert.equal(await page.evaluate(()=>window.RELPHI_KEYWORD_SUBPACK_CONTEXT.count(['despair'])),2);
    assert.deepEqual(errors,[],`uncaught browser errors at ${viewport.width}px`);
    console.log('PASS browser width='+viewport.width+' queries='+cases.length+' Drawing Board + navigation');
    await page.close();
