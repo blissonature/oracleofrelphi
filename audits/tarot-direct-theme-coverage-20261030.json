@@ -1,7 +1,7 @@
 {
   "schema": "relphi.direct-theme-coverage.v1",
   "reviewed_cards": 78,
-  "added_assignments": 340,
+  "added_assignments": 394,
   "records": [
     {
       "card_id": "ace_of_wands",
@@ -769,7 +769,14 @@
     {
       "card_id": "prince_of_wands",
       "card_name": "Prince of Wands",
-      "new_direct_themes": [],
+      "new_direct_themes": [
+        "swiftness",
+        "strength",
+        "courage",
+        "generosity",
+        "indecision",
+        "work"
+      ],
       "original_theme_count": 6,
       "source": "existing metadata only; no new assignments",
       "relphi_interpretation": null,
@@ -781,7 +788,14 @@
     {
       "card_id": "princess_of_wands",
       "card_name": "Princess of Wands",
-      "new_direct_themes": [],
+      "new_direct_themes": [
+        "courage",
+        "ambition",
+        "independence",
+        "anger",
+        "revenge",
+        "passion"
+      ],
       "original_theme_count": 6,
       "source": "existing metadata only; no new assignments",
       "relphi_interpretation": null,
@@ -831,7 +845,12 @@
     {
       "card_id": "prince_of_cups",
       "card_name": "Prince of Cups",
-      "new_direct_themes": [],
+      "new_direct_themes": [
+        "secrecy",
+        "passion",
+        "strategy",
+        "power"
+      ],
       "original_theme_count": 6,
       "source": "existing metadata only; no new assignments",
       "relphi_interpretation": null,
@@ -843,7 +862,13 @@
     {
       "card_id": "princess_of_cups",
       "card_name": "Princess of Cups",
-      "new_direct_themes": [],
+      "new_direct_themes": [
+        "kindness",
+        "tenderness",
+        "romance",
+        "dreams",
+        "nurture"
+      ],
       "original_theme_count": 6,
       "source": "existing metadata only; no new assignments",
       "relphi_interpretation": null,
@@ -892,7 +917,11 @@
     {
       "card_id": "prince_of_swords",
       "card_name": "Prince of Swords",
-      "new_direct_themes": [],
+      "new_direct_themes": [
+        "indecision",
+        "futility",
+        "reason"
+      ],
       "original_theme_count": 6,
       "source": "existing metadata only; no new assignments",
       "relphi_interpretation": null,
@@ -904,7 +933,14 @@
     {
       "card_id": "princess_of_swords",
       "card_name": "Princess of Swords",
-      "new_direct_themes": [],
+      "new_direct_themes": [
+        "anger",
+        "revenge",
+        "wisdom",
+        "dispute",
+        "resolution",
+        "practicality"
+      ],
       "original_theme_count": 6,
       "source": "existing metadata only; no new assignments",
       "relphi_interpretation": null,
@@ -916,7 +952,13 @@
     {
       "card_id": "knight_of_disks",
       "card_name": "Knight of Disks",
-      "new_direct_themes": [],
+      "new_direct_themes": [
+        "cultivation",
+        "growth",
+        "patience",
+        "endurance",
+        "practicality"
+      ],
       "original_theme_count": 6,
       "source": "existing metadata only; no new assignments",
       "relphi_interpretation": null,
@@ -928,7 +970,14 @@
     {
       "card_id": "queen_of_disks",
       "card_name": "Queen of Disks",
-      "new_direct_themes": [],
+      "new_direct_themes": [
+        "fertility",
+        "mother",
+        "kindness",
+        "affection",
+        "ambition",
+        "intuition"
+      ],
       "original_theme_count": 7,
       "source": "existing metadata only; no new assignments",
       "relphi_interpretation": null,
@@ -940,7 +989,15 @@
     {
       "card_id": "prince_of_disks",
       "card_name": "Prince of Disks",
-      "new_direct_themes": [],
+      "new_direct_themes": [
+        "prudence",
+        "resource management",
+        "caution",
+        "method",
+        "persistence",
+        "practicality",
+        "trust"
+      ],
       "original_theme_count": 6,
       "source": "existing metadata only; no new assignments",
       "relphi_interpretation": null,
@@ -952,7 +1009,14 @@
     {
       "card_id": "princess_of_disks",
       "card_name": "Princess of Disks",
-      "new_direct_themes": [],
+      "new_direct_themes": [
+        "fertility",
+        "creation",
+        "manifestation",
+        "embodiment",
+        "gestation",
+        "future"
+      ],
       "original_theme_count": 7,
       "source": "existing metadata only; no new assignments",
       "relphi_interpretation": null,
@@ -1414,5 +1478,6 @@
       ],
       "reason": "The Relphi text refers to a metaphorical social injury in a contest, not a literal bodily injury; a generic query would conflate senses."
     }
-  }
+  },
+  "court_source_supplement": "audits/tarot-court-first-degree-supplement-20261030.json"
 }
