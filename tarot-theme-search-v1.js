@@ -751,6 +751,156 @@
     "education",
     "completion",
     "achievement"
+  ],
+  "acceptance": [
+    "surrender",
+    "resolution",
+    "peace"
+  ],
+  "adolescence": [
+    "childhood",
+    "growth",
+    "learning"
+  ],
+  "aging": [
+    "mortality",
+    "change",
+    "wisdom"
+  ],
+  "boundaries violation": [
+    "boundaries",
+    "hostility",
+    "protection"
+  ],
+  "burnout recovery": [
+    "burnout",
+    "recovery",
+    "rest"
+  ],
+  "citizenship": [
+    "community",
+    "law",
+    "participation"
+  ],
+  "community loss": [
+    "community",
+    "loss",
+    "grief"
+  ],
+  "consent": [
+    "agreement",
+    "boundaries",
+    "choice"
+  ],
+  "creativity block": [
+    "creativity",
+    "stagnation",
+    "frustration"
+  ],
+  "custodianship": [
+    "caregiving",
+    "responsibility",
+    "protection"
+  ],
+  "demotion": [
+    "job loss",
+    "recognition",
+    "failure"
+  ],
+  "disclosure": [
+    "revelation",
+    "truth",
+    "secrecy"
+  ],
+  "divorce settlement": [
+    "legal matters",
+    "separation",
+    "resolution"
+  ],
+  "estrangement": [
+    "separation",
+    "exclusion",
+    "relationship"
+  ],
+  "euthanasia": [
+    "mortality",
+    "death",
+    "caregiving"
+  ],
+  "fame": [
+    "recognition",
+    "public recognition",
+    "visibility"
+  ],
+  "firing": [
+    "job loss",
+    "employment",
+    "loss"
+  ],
+  "fostering": [
+    "caregiving",
+    "child",
+    "nurture"
+  ],
+  "grace": [
+    "compassion",
+    "faith",
+    "care"
+  ],
+  "healing relationship": [
+    "recovery",
+    "relationship",
+    "care"
+  ],
+  "immigration": [
+    "emigration",
+    "moving",
+    "travel"
+  ],
+  "litigation": [
+    "law",
+    "legal matters",
+    "conflict"
+  ],
+  "marginalization": [
+    "exclusion",
+    "humiliation",
+    "fairness"
+  ],
+  "menopause": [
+    "change",
+    "health",
+    "transition"
+  ],
+  "migration": [
+    "emigration",
+    "moving",
+    "travel"
+  ],
+  "personal development": [
+    "development",
+    "growth",
+    "learning"
+  ],
+  "rebellion": [
+    "resistance",
+    "freedom",
+    "authority"
+  ],
+  "reputation": [
+    "recognition",
+    "praise",
+    "dishonor"
+  ],
+  "restitution": [
+    "recompense",
+    "justice",
+    "accountability"
+  ],
+  "vulnerability": [
+    "sensitivity",
+    "insecurity",
+    "openness"
   ]
 };
   const UNQUALIFIED = ["acceptance","accident","adolescence","adolescent","adoption","adultery","affair","aging","apology","bankruptcy","bias","bitterness","boundaries violation","burnout recovery","career change","childbirth","citizenship","community loss","compromise","consent","coparenting","corruption","creativity block","custodianship","custody","delusion","demotion","depressed","depression","disability","disclosure","discrimination","divorce","divorce settlement","domination","earning","emotional labor","end of life","envy","estrangement","euthanasia","eviction","exploitation","fame","firing","forgiveness","fostering","fraud","free will","grace","graduation","grandmother","grandparent","healing relationship","hospice","housing","identity crisis","immigration","infection","infertility","infidelity","initiation","injury","injustice","jealousy","landlord","litigation","loss of pet","magic","manipulation","marginalization","medicine","meditation","meeting","menopause","migration","neglect","numbness","parenthood","parenting","personal development","prayer","privacy","promotion","punishment","rebellion","rent","repair","reputation","resentment","resignation","restitution","retirement","robbery","self esteem","self worth","self-care","self-esteem","self-worth","shamed","sibling","social exclusion","spiritual crisis","spirituality","stillbirth","trauma","treatment","unfairness","violation","vulnerability"];
