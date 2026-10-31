@@ -1,7 +1,7 @@
 {
   "schema": "relphi.direct-theme-coverage.v1",
   "reviewed_cards": 78,
-  "added_assignments": 337,
+  "added_assignments": 340,
   "records": [
     {
       "card_id": "ace_of_wands",
@@ -222,7 +222,8 @@
         "duty",
         "strain",
         "overwork",
-        "stress"
+        "stress",
+        "purpose"
       ],
       "original_theme_count": 10,
       "source": "relphi-locked-interpretations.js / ten_of_wands",
@@ -1106,7 +1107,8 @@
         "magnanimity",
         "vitality",
         "mastery of instinct",
-        "creative force"
+        "creative force",
+        "purpose"
       ],
       "original_theme_count": 6,
       "source": "relphi-locked-interpretations.js / strength",
@@ -1300,7 +1302,8 @@
         "visibility",
         "open recognition",
         "radiance",
-        "life affirmation"
+        "life affirmation",
+        "purpose"
       ],
       "original_theme_count": 10,
       "source": "relphi-locked-interpretations.js / the_sun",
