@@ -18,7 +18,7 @@ const exactly=(term,ids)=>assert.deepEqual(actual(term),ids.slice().sort(),term)
 assert.equal(cards.length,78);
 assert.equal(audit.reviewed_cards,78);
 assert.equal(audit.records.length,78);
-assert.equal(audit.added_assignments,337);
+assert.equal(audit.added_assignments,340);
 const directlySourced={"five_of_cups":["betrayal"],"two_of_cups":["friendship","passion"],"three_of_cups":["belonging","healing"],"nine_of_wands":["strength"],"ten_of_swords":["defeat","sadness"],"ten_of_cups":["harmony","friendship","home","contentment"],"seven_of_wands":["competition"],"four_of_wands":["concord"],"two_of_swords":["affection","friendship"],"five_of_swords":["loss"],"eight_of_wands":["message"]};
 for(const [id,terms] of Object.entries(directlySourced)){
  const card=cards.find(c=>c.card_id===id);
@@ -31,14 +31,14 @@ for(const [id,terms] of Object.entries(directlySourced)){
 }
 
 assert.equal(new Set(audit.records.map(row=>row.card_id)).size,78);
-assert.equal(engine.themeCount,596);
+assert.equal(engine.themeCount,597);
 assert.equal(engine.aliasCount,787);
 
 // Every canonical theme is strictly equal to the original card-by-card membership.
 // No card qualifies through shared planet, suit, a neighboring theme or a search substring.
 const allThemes=[...new Set(cards.flatMap(c=>c.direct_themes||[]))];
 for(const theme of allThemes)exactly(theme,direct(theme));
-assert.equal(allThemes.length,596);
+assert.equal(allThemes.length,597);
 
 // No two card IDs in one theme; no unresolved card references.
 const ids=new Set(cards.map(card=>card.card_id));
@@ -164,4 +164,4 @@ assert.match(app,/RELPHI_THEME_SEARCH\?\.suggest/);
 assert.match(app,/RELPHI_THEME_SEARCH\?\.related/);
 assert.match(app,/data-row-theme-suggestion/);
 assert.match(html,/<script src="tarot-theme-search-v1\.js\?v=1"><\/script>[\s\S]*<script src="tarot-app\.js\?v=416"><\/script>/);
-console.log('PASS: 78 cards, 596 first-degree themes, 787 aliases, all 596 direct sets, source-gap guard, protected relevance and integrated searches.');
+console.log('PASS: 78 cards, 597 first-degree themes, 787 aliases, all 597 direct sets, source-gap guard, protected relevance and integrated searches.');
