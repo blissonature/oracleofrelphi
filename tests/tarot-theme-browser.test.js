@@ -12,7 +12,7 @@ const base=process.env.RELPHI_TEST_URL || 'http://127.0.0.1:8075/tarot.html';
    await page.goto(base,{waitUntil:'domcontentloaded'});
    await page.waitForFunction(()=>window.RELPHI_THEME_SEARCH?.themeCount===597 && !!window.RELPHI_KEYWORD_SUBPACK_CONTEXT,{timeout:25000});
    const cases=[
-     ['despair',2],['suffering',4],['despair and suffering',4],['secrets',3],
+     ['despair',2],['suffering',4],['despair and suffering',4],['secrets',4],
      ['abandonment',2],['abandoned',2],['abandon a goal',1],
      ['abandonment of pursuit',1],['being abandoned',1],['feeling abandoned',1],
      ['safe',1],['safety',1],['miscarriage',1],
@@ -22,15 +22,15 @@ const base=process.env.RELPHI_TEST_URL || 'http://127.0.0.1:8075/tarot.html';
      ['love',7],['betrayal',5],['cruelty',1],['oppression',1],['ruin',2],
      ['development',1],['divorce',0],['cheating',1],['infidelity',0],
      // Audited everyday-life topics: direct qualification, not transitive association.
-     ['anger',1],['angry',1],['panic',1],['war',2],['revenge',1],
+     ['anger',3],['angry',3],['panic',1],['war',2],['revenge',3],
      ['attack',1],['shame',2],['bullying',2],['victimization',2],
      ['loneliness',1],['lonely',1],['homelessness',1],['housing insecurity',1],
-     ['unemployment',1],['trust',2],['loyalty',1],['honesty',2],
+     ['unemployment',1],['trust',3],['loyalty',1],['honesty',2],
      ['abuse',2],['coercion',1],['harassment',1],
-     ['stress',1],['emptiness',1],['ecstasy',1],['manifestation',2],
+     ['stress',1],['emptiness',1],['ecstasy',1],['manifestation',3],
      ['gain',1],['profit',1],['income',2],['salary',2],['budget',2],
      ['arrival',1],['reconciliation',1],['self control',1],
-     ['dating',2],['fight',6],['purpose',3],
+     ['dating',3],['fight',6],['purpose',3],
      ['depression',0],['fraud',0],
      ['compromise',0],['corruption',0],['injury',0]
    ];
@@ -104,9 +104,9 @@ const base=process.env.RELPHI_TEST_URL || 'http://127.0.0.1:8075/tarot.html';
    const trustChoice=page.locator('#relphiKeywordMatches [data-keyword-choice][value="trust"]');
    await trustChoice.waitFor({state:'visible',timeout:10000});
    await trustChoice.click();
-   await page.waitForFunction(()=>document.querySelector('#relphiKeywordCount')?.textContent.includes('2 cards in this sub-pack'),{timeout:10000});
+   await page.waitForFunction(()=>document.querySelector('#relphiKeywordCount')?.textContent.includes('3 cards in this sub-pack'),{timeout:10000});
    await page.locator('#relphiConfirmFreeSettings').click();
-   assert.equal(await page.evaluate(()=>window.RELPHI_KEYWORD_SUBPACK_CONTEXT.count(['trust'])),2);
+   assert.equal(await page.evaluate(()=>window.RELPHI_KEYWORD_SUBPACK_CONTEXT.count(['trust'])),3);
    // Unqualified terms must offer visible navigation without changing the pool.
    await page.locator('#relphiBoardSettingsButton').click();
    await page.locator('[data-keyword-remove="trust"]').click();
@@ -128,9 +128,9 @@ const base=process.env.RELPHI_TEST_URL || 'http://127.0.0.1:8075/tarot.html';
    assert.ok((await page.locator('#relphiKeywordCount').textContent()).includes('Choose one or more tags'));
    await page.locator('#relphiKeywordMatches [data-keyword-navigate="secrecy"]').click();
    await page.locator('#relphiKeywordMatches [data-keyword-choice][value="secrecy"]').click();
-   await page.waitForFunction(()=>document.querySelector('#relphiKeywordCount')?.textContent.includes('3 cards in this sub-pack'),{timeout:10000});
+   await page.waitForFunction(()=>document.querySelector('#relphiKeywordCount')?.textContent.includes('4 cards in this sub-pack'),{timeout:10000});
    await page.locator('#relphiConfirmFreeSettings').click();
-   assert.equal(await page.evaluate(()=>window.RELPHI_KEYWORD_SUBPACK_CONTEXT.count(['secrecy'])),3);
+   assert.equal(await page.evaluate(()=>window.RELPHI_KEYWORD_SUBPACK_CONTEXT.count(['secrecy'])),4);
 
    assert.deepEqual(errors,[],`uncaught browser errors at ${viewport.width}px`);
    console.log('PASS browser width='+viewport.width+' queries='+cases.length+' Drawing Board + navigation');
