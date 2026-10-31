@@ -1155,6 +1155,7 @@
     });
     const query=free.querySelector('#relphiKeywordQuery');
     query?.addEventListener('input',event=>renderKeywordMatches(free,draft,event.target.value,()=>renderFreeSettings(root)));
+    if(draft.keywordQuery)renderKeywordMatches(free,draft,draft.keywordQuery,()=>renderFreeSettings(root));
     free.querySelectorAll('input[name="relphiKeywordMode"]').forEach(input=>input.addEventListener('change',()=>{
       draft.keywordMatchMode=input.value==='all'?'all':'any';
       renderFreeSettings(root);
@@ -1782,16 +1783,33 @@
     const tags=Array.isArray(draft.keywordTags)?draft.keywordTags:[];
     const selected=tags.length ? '<div class="relphi-keyword-selected">'+tags.map(tag=>'<button type="button" data-keyword-remove="'+escapeHtml(tag)+'">'+escapeHtml(tag)+' ×</button>').join('')+'</div>' : '';
     const count=window.RELPHI_KEYWORD_SUBPACK_CONTEXT?.count?.(tags,draft.keywordMatchMode)||0;
-    return '<div class="relphi-keyword-builder" aria-label="Keywords and Tags sub-pack"><label>Find tags<input id="relphiKeywordQuery" type="search" placeholder="Type a tag, e.g. prince" autocomplete="off"></label><div class="relphi-keyword-match-mode"><label><input type="radio" name="relphiKeywordMode" value="any" '+(draft.keywordMatchMode!=='all'?'checked':'')+'> Any</label><label><input type="radio" name="relphiKeywordMode" value="all" '+(draft.keywordMatchMode==='all'?'checked':'')+'> All</label></div><div id="relphiKeywordMatches" class="relphi-keyword-matches"><p>Type to find matching canonical tags.</p></div>'+selected+'<p id="relphiKeywordCount">'+(tags.length?count+' card'+(count===1?'':'s')+' in this sub-pack':'Choose one or more tags.')+'</p></div>';
+    return '<div class="relphi-keyword-builder" aria-label="Keywords and Tags sub-pack"><label>Find tags<input id="relphiKeywordQuery" type="search" value="'+escapeHtml(draft.keywordQuery||'')+'" placeholder="Type a theme or tag" autocomplete="off"></label><div class="relphi-keyword-match-mode"><label><input type="radio" name="relphiKeywordMode" value="any" '+(draft.keywordMatchMode!=='all'?'checked':'')+'> Any</label><label><input type="radio" name="relphiKeywordMode" value="all" '+(draft.keywordMatchMode==='all'?'checked':'')+'> All</label></div><div id="relphiKeywordMatches" class="relphi-keyword-matches"><p>Type to find matching canonical tags.</p></div>'+selected+'<p id="relphiKeywordCount">'+(tags.length?count+' card'+(count===1?'':'s')+' in this sub-pack':'Choose one or more tags.')+'</p></div>';
   }
   function renderKeywordMatches(drawer,draft,query,rerender=null) {
-    const host=drawer.querySelector('#relphiKeywordMatches'); if(!host) return;
-    const matches=window.RELPHI_KEYWORD_SUBPACK_CONTEXT?.matches?.(query)||[];
-    host.innerHTML=matches.length ? matches.map(tag=>'<label><input type="checkbox" data-keyword-choice value="'+escapeHtml(tag)+'" '+((draft.keywordTags||[]).includes(tag)?'checked':'')+'> '+escapeHtml(tag)+'</label>').join('') : '<p>'+(query?'No matching tags.':'Type to find matching canonical tags.')+'</p>';
+    const host=drawer.querySelector('#relphiKeywordMatches');if(!host)return;
+    const term=String(query||'').trim();
+    draft.keywordQuery=term;
+    const matches=window.RELPHI_KEYWORD_SUBPACK_CONTEXT?.matches?.(term)||[];
+    const search=window.RELPHI_THEME_SEARCH;
+    const related=term&&!matches.length?(search?.related?.(term)||[]):[];
+    const spelling=term&&!matches.length&&!related.length?(search?.suggest?.(term,5)||[]):[];
+    const choices=matches.map(tag=>'<label><input type="checkbox" data-keyword-choice value="'+escapeHtml(tag)+'" '+((draft.keywordTags||[]).includes(tag)?'checked':'')+'> '+escapeHtml(tag)+'</label>').join('');
+    const relatedChoices=related.length?'<p>Explore separately — related subjects are not automatic card matches:</p>'+related.map(tag=>'<button type="button" class="relphi-theme-suggestion" data-keyword-navigate="'+escapeHtml(tag)+'">'+escapeHtml(tag)+'</button>').join(' '):'';
+    const correctedChoices=spelling.length?'<p>Did you mean (select to search):</p>'+spelling.map(hit=>'<button type="button" class="relphi-theme-suggestion" data-keyword-navigate="'+escapeHtml(hit.name)+'">'+escapeHtml(hit.name)+'</button>').join(' '):'';
+    host.innerHTML=choices||relatedChoices||correctedChoices||'<p>'+(term?'No directly matching theme yet.':'Type a theme to build a direct-match sub-pack.')+'</p>';
     host.querySelectorAll('[data-keyword-choice]').forEach(input=>input.addEventListener('change',()=>{
-      const set=new Set(draft.keywordTags||[]); input.checked?set.add(input.value):set.delete(input.value); draft.keywordTags=[...set];
+      const set=new Set(draft.keywordTags||[]);
+      input.checked?set.add(input.value):set.delete(input.value);
+      draft.keywordTags=[...set];
       if(typeof rerender==='function')rerender();
       else renderOptions(drawer.closest('#shortListPanel')||panel());
+    }));
+    host.querySelectorAll('[data-keyword-navigate]').forEach(button=>button.addEventListener('click',()=>{
+      const next=button.dataset.keywordNavigate||'';
+      const field=drawer.querySelector('#relphiKeywordQuery');
+      if(field)field.value=next;
+      renderKeywordMatches(drawer,draft,next,rerender);
+      field?.focus({preventScroll:true});
     }));
   }
 
