@@ -5681,43 +5681,27 @@
     const snap=bridge.capture();if(!snap)return false;
     const labels=Array.isArray(snap.shortListPositionLabels)?snap.shortListPositionLabels.slice():[];
     if(labels.length>=MAX_POSITIONS)return false;
-    const index=labels.length;
-    const rules={
-      drawScope:String(snap.rowDrawScope||'full'),
-      allowReversals:snap.rowAllowReversals!==false,
-      allowRepeats:!!snap.rowAllowRepeats
-    };
     const originalMeta=Array.isArray(snap.rowPositionMeta)?snap.rowPositionMeta.map(item=>clone(item)||{}):[];
-    const previousPositions=Array.isArray(snap.rowActiveLayout?.positions)
-      ? snap.rowActiveLayout.positions.map(item=>clone(item)):[];
+    // Preserve the original, working add-position flow. The Clarifier uses the
+    // ACTIVE board rules, rather than overriding Repeats or choosing Full Pack.
+    const scope=String(snap.rowDrawScope||'full');
+    const reversals=snap.rowAllowReversals!==false;
+    const repeats=!!snap.rowAllowRepeats;
     labels.push(text);
-    const fresh=genericPositions(labels)[index];
-    // Preserve existing card positions, sizes, rotations and per-question rules.
-    // Only the new clarifier receives fresh geometry and current board defaults.
+    const positions=genericPositions(labels);
     snap.shortListPositionLabels=labels;
-    snap.shortListPositionCardIds=Array.from({length:labels.length},(_,i)=>String(snap.shortListPositionCardIds?.[i]||''));
-    snap.rowEnvelopeLayout={...(snap.rowEnvelopeLayout||{})};
-    snap.rowCardTransforms={...(snap.rowCardTransforms||{})};
-    snap.rowEnvelopeLayout[index]={x:fresh.transform.x*CANVAS_W,y:fresh.transform.y*CANVAS_H};
-    snap.rowCardTransforms[index]={scale:fresh.transform.scale,rotation:fresh.transform.rotation||0,zIndex:fresh.transform.zIndex||1};
-    const newMeta={id:fresh.id,drawScope:rules.drawScope,
-      allowReversals:rules.allowReversals,allowRepeats:rules.allowRepeats,
-      cardCount:1,craftedPath:'bespoke',questionText:text,openTransform:null,
-      cardSource:String(originalMeta[index-1]?.cardSource||'digital')};
-    snap.rowPositionMeta=[...originalMeta,newMeta];
-    const positions=previousPositions.length===index
-      ? [...previousPositions,{...fresh,drawOrder:index+1,drawScope:rules.drawScope,
-          allowReversals:rules.allowReversals,allowRepeats:rules.allowRepeats,
-          cardCount:1,questionText:text}]
-      : genericPositions(labels).map((item,i)=>({...item,
-          drawOrder:i+1,drawScope:snap.rowPositionMeta[i]?.drawScope||rules.drawScope,
-          allowReversals:snap.rowPositionMeta[i]?.allowReversals??rules.allowReversals,
-          allowRepeats:snap.rowPositionMeta[i]?.allowRepeats??rules.allowRepeats,cardCount:1}));
-    snap.rowActiveLayout={...(snap.rowActiveLayout||{}),version:1,id:'custom-active',
-      name:String(snap.rowActiveLayout?.name||'Bespoke'),cardCount:labels.length,
-      source:'custom',editable:true,basedOn:snap.rowActiveLayout?.basedOn||null,
-      relphiCraftedPath:'bespoke',positions,
-      rules:{allowReversals:rules.allowReversals,allowRepeats:rules.allowRepeats,drawScope:rules.drawScope}};
+    snap.shortListPositionCardIds=Array.from({length:labels.length},(_,index)=>String(snap.shortListPositionCardIds?.[index]||''));
+    snap.rowEnvelopeLayout={};snap.rowCardTransforms={};
+    snap.rowPositionMeta=positions.map((item,index)=>{
+      snap.rowEnvelopeLayout[index]={x:item.transform.x*CANVAS_W,y:item.transform.y*CANVAS_H};
+      snap.rowCardTransforms[index]={scale:item.transform.scale,rotation:item.transform.rotation||0,zIndex:item.transform.zIndex||1};
+      return {...(originalMeta[index]||{}),id:item.id,
+        drawScope:originalMeta[index]?.drawScope||scope,
+        allowReversals:originalMeta[index]?.allowReversals??reversals,
+        allowRepeats:originalMeta[index]?.allowRepeats??repeats,
+        cardCount:1,craftedPath:'bespoke',questionText:labels[index],openTransform:null};
+    });
+    snap.rowActiveLayout={version:1,id:'custom-active',name:String(snap.rowActiveLayout?.name||'Bespoke'),cardCount:labels.length,source:'custom',editable:true,basedOn:snap.rowActiveLayout?.basedOn||null,relphiCraftedPath:'bespoke',positions:positions.map((item,index)=>({...item,drawOrder:index+1,drawScope:snap.rowPositionMeta[index].drawScope,allowReversals:snap.rowPositionMeta[index].allowReversals,allowRepeats:snap.rowPositionMeta[index].allowRepeats,cardCount:1})),rules:{allowReversals:reversals,allowRepeats:repeats,drawScope:scope}};
     snap.rowLayoutLocked=false;
     bridge.restore(snap);
     craftedReadingActive=true;activeCraftedPath='bespoke';
