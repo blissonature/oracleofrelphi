@@ -136,4 +136,4 @@ assert.deepEqual(idsOf('SELF–CONTROL'),idsOf('self-control'));
 assert.ok(!idsOf('love').includes('seven_of_swords'));
 assert.ok(!idsOf('love').includes('nine_of_swords'));
 console.log('PASS broad domain audit: 373 queries, 332 unique, 8 domains, '+count.direct+
- ' direct, '+count.alias+' lexical, '+count.related+' separately navigable; 596 themes and 787 aliases.');
+ ' direct, '+count.alias+' lexical, '+count.related+' separately navigable; 597 themes and 787 aliases.');
