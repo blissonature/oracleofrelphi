@@ -1,7 +1,7 @@
 {
   "schema": "relphi.direct-theme-coverage.v1",
   "reviewed_cards": 78,
-  "added_assignments": 298,
+  "added_assignments": 337,
   "records": [
     {
       "card_id": "ace_of_wands",
@@ -63,7 +63,9 @@
         "prosperity",
         "tangible opportunity",
         "material foundation",
-        "embodiment"
+        "embodiment",
+        "ecstasy",
+        "manifestation"
       ],
       "original_theme_count": 10,
       "source": "relphi-locked-interpretations.js / ace_of_pentacles",
@@ -200,7 +202,8 @@
         "readiness",
         "vigilance",
         "endurance",
-        "strength"
+        "strength",
+        "attack"
       ],
       "original_theme_count": 6,
       "source": "relphi-locked-interpretations.js / nine_of_wands",
@@ -218,7 +221,8 @@
         "overburden",
         "duty",
         "strain",
-        "overwork"
+        "overwork",
+        "stress"
       ],
       "original_theme_count": 10,
       "source": "relphi-locked-interpretations.js / ten_of_wands",
@@ -238,7 +242,9 @@
         "sympathy",
         "concord",
         "friendship",
-        "passion"
+        "passion",
+        "trust",
+        "mutual respect"
       ],
       "original_theme_count": 7,
       "source": "relphi-locked-interpretations.js / two_of_cups",
@@ -342,7 +348,8 @@
         "emotional depletion",
         "disengagement",
         "dissolution",
-        "abandonment"
+        "abandonment",
+        "emptiness"
       ],
       "original_theme_count": 7,
       "source": "relphi-locked-interpretations.js / eight_of_cups",
@@ -450,7 +457,10 @@
         "dishonor",
         "degradation",
         "destruction",
-        "loss"
+        "loss",
+        "shame",
+        "bullying",
+        "victimization"
       ],
       "original_theme_count": 6,
       "source": "relphi-locked-interpretations.js / five_of_swords",
@@ -484,7 +494,8 @@
       "new_direct_themes": [
         "futility",
         "failed strategy",
-        "ineffective planning"
+        "ineffective planning",
+        "cheating"
       ],
       "original_theme_count": 7,
       "source": "relphi-locked-interpretations.js / seven_of_swords",
@@ -520,7 +531,11 @@
         "accusation",
         "desperation",
         "anguish",
-        "miscarriage"
+        "miscarriage",
+        "abuse",
+        "bullying",
+        "harassment",
+        "victimization"
       ],
       "original_theme_count": 9,
       "source": "relphi-locked-interpretations.js / nine_of_swords",
@@ -557,7 +572,8 @@
         "resource management",
         "adjustment",
         "recreation",
-        "material juggling"
+        "material juggling",
+        "budget"
       ],
       "original_theme_count": 7,
       "source": "relphi-locked-interpretations.js / two_of_pentacles",
@@ -591,7 +607,8 @@
         "material security",
         "holding on",
         "inheritance",
-        "conservation"
+        "conservation",
+        "budget"
       ],
       "original_theme_count": 7,
       "source": "relphi-locked-interpretations.js / four_of_pentacles",
@@ -609,7 +626,11 @@
         "exclusion",
         "material deprivation",
         "financial hardship",
-        "precarity"
+        "precarity",
+        "loneliness",
+        "homelessness",
+        "housing insecurity",
+        "unemployment"
       ],
       "original_theme_count": 9,
       "source": "relphi-locked-interpretations.js / five_of_pentacles",
@@ -626,7 +647,8 @@
         "material support",
         "generosity",
         "sustenance",
-        "prosperity"
+        "prosperity",
+        "income"
       ],
       "original_theme_count": 8,
       "source": "relphi-locked-interpretations.js / six_of_pentacles",
@@ -678,7 +700,10 @@
         "discernment",
         "cultivation",
         "prudence",
-        "safety"
+        "safety",
+        "gain",
+        "income",
+        "financial independence"
       ],
       "original_theme_count": 6,
       "source": "relphi-locked-interpretations.js / nine_of_pentacles",
@@ -729,7 +754,8 @@
         "warmth",
         "sincerity",
         "creative authority",
-        "hospitality"
+        "hospitality",
+        "honesty"
       ],
       "original_theme_count": 6,
       "source": "relphi-locked-interpretations.js / queen_of_wands",
@@ -770,7 +796,8 @@
         "longing",
         "romantic overture",
         "offer",
-        "proposition"
+        "proposition",
+        "arrival"
       ],
       "original_theme_count": 7,
       "source": "relphi-locked-interpretations.js / knight_of_cups",
@@ -787,7 +814,10 @@
         "tenderness",
         "empathy",
         "devotion",
-        "emotional understanding"
+        "emotional understanding",
+        "loyalty",
+        "trust",
+        "honesty"
       ],
       "original_theme_count": 6,
       "source": "relphi-locked-interpretations.js / queen_of_cups",
@@ -828,7 +858,9 @@
         "bravery",
         "wrath",
         "confrontation",
-        "intervention"
+        "intervention",
+        "war",
+        "anger"
       ],
       "original_theme_count": 6,
       "source": "relphi-locked-interpretations.js / knight_of_swords",
@@ -952,7 +984,8 @@
         "agency",
         "diplomacy",
         "translation",
-        "intelligibility"
+        "intelligibility",
+        "manifestation"
       ],
       "original_theme_count": 7,
       "source": "relphi-locked-interpretations.js / the_magician",
@@ -1054,7 +1087,9 @@
         "protective movement",
         "safe passage",
         "transport",
-        "caregiving"
+        "caregiving",
+        "war",
+        "revenge"
       ],
       "original_theme_count": 7,
       "source": "relphi-locked-interpretations.js / the_chariot",
@@ -1175,7 +1210,8 @@
         "adaptation",
         "synthesis",
         "proportion",
-        "reconciliation of differences"
+        "reconciliation of differences",
+        "reconciliation"
       ],
       "original_theme_count": 7,
       "source": "relphi-locked-interpretations.js / temperance",
@@ -1192,7 +1228,9 @@
         "captivity",
         "compulsion",
         "attachment to form",
-        "violence"
+        "violence",
+        "abuse",
+        "coercion"
       ],
       "original_theme_count": 8,
       "source": "relphi-locked-interpretations.js / the_devil",
@@ -1209,7 +1247,8 @@
         "ruin",
         "misery",
         "adversity",
-        "structural failure"
+        "structural failure",
+        "shame"
       ],
       "original_theme_count": 8,
       "source": "relphi-locked-interpretations.js / the_tower",
