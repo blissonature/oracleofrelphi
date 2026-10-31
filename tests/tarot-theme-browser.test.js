@@ -10,7 +10,7 @@ const base=process.env.RELPHI_TEST_URL || 'http://127.0.0.1:8075/tarot.html';
    const errors=[];
    page.on('pageerror',err=>errors.push(String(err)));
    await page.goto(base,{waitUntil:'domcontentloaded'});
-   await page.waitForFunction(()=>window.RELPHI_THEME_SEARCH?.themeCount===567 && !!window.RELPHI_KEYWORD_SUBPACK_CONTEXT,{timeout:25000});
+   await page.waitForFunction(()=>window.RELPHI_THEME_SEARCH?.themeCount===596 && !!window.RELPHI_KEYWORD_SUBPACK_CONTEXT,{timeout:25000});
    const cases=[
      ['despair',2],['suffering',4],['despair and suffering',4],['secrets',3],
      ['abandonment',2],['abandoned',2],['abandon a goal',1],
@@ -20,8 +20,18 @@ const base=process.env.RELPHI_TEST_URL || 'http://127.0.0.1:8075/tarot.html';
      ['deprivation',2],['destitution',1],['serenity',2],
      ['desperate',1],['rebirth',3],['betray',5],
      ['love',7],['betrayal',5],['cruelty',1],['oppression',1],['ruin',2],
-     ['development',1],['divorce',0],['cheating',0],['infidelity',0],
-     ['loneliness',0],['depression',0],['shame',0],['fraud',0],
+     ['development',1],['divorce',0],['cheating',1],['infidelity',0],
+     // Audited everyday-life topics: direct qualification, not transitive association.
+     ['anger',1],['angry',1],['panic',1],['war',2],['revenge',1],
+     ['attack',1],['shame',2],['bullying',2],['victimization',2],
+     ['loneliness',1],['lonely',1],['homelessness',1],['housing insecurity',1],
+     ['unemployment',1],['trust',2],['loyalty',1],['honesty',2],
+     ['abuse',2],['coercion',1],['harassment',1],
+     ['stress',1],['emptiness',1],['ecstasy',1],['manifestation',2],
+     ['gain',1],['profit',1],['income',2],['salary',2],['budget',2],
+     ['arrival',1],['reconciliation',1],['self control',1],
+     ['dating',2],['fight',16],
+     ['depression',0],['fraud',0],
      ['compromise',0],['corruption',0],['injury',0]
    ];
    for(const [term,count] of cases){
@@ -44,8 +54,8 @@ const base=process.env.RELPHI_TEST_URL || 'http://127.0.0.1:8075/tarot.html';
    assert.ok(!leak.love.includes('seven_of_swords'));
    assert.ok(!leak.love.includes('nine_of_swords'));
    assert.equal(leak.selected,4);
-   for(const t of ['despair','suffering','oppression','development','abandonment','being abandoned','safety','miscarriage'])assert.ok(leak.catalog.some(label=>label.toLowerCase()===t),t);
-   for(const term of ['loneliness','depression','shame','fraud','compromise','corruption','injury']){
+   for(const t of ['despair','suffering','oppression','development','abandonment','being abandoned','safety','miscarriage','cheating','loneliness','shame','trust','abuse','budget'])assert.ok(leak.catalog.some(label=>label.toLowerCase()===t),t);
+   for(const term of ['depression','fraud','compromise','corruption','injury','apology','parenting','purpose','meditation','eviction','graduation']){
      await page.locator('#oracleCommand').fill(term);
      await page.locator('#runCommand').click();
      await page.waitForFunction(()=>document.getElementById('activeSummary')?.textContent.includes('Explore separately'),{timeout:10000});
@@ -86,6 +96,17 @@ const base=process.env.RELPHI_TEST_URL || 'http://127.0.0.1:8075/tarot.html';
    await page.waitForFunction(()=>document.querySelector('#relphiKeywordCount')?.textContent.includes('2 cards in this sub-pack'),{timeout:10000});
    await page.locator('#relphiConfirmFreeSettings').click();
    assert.equal(await page.evaluate(()=>window.RELPHI_KEYWORD_SUBPACK_CONTEXT.count(['abandonment'])),2);
+   // The full domain review must also surface newly qualified everyday themes
+   // inside the actual Drawing Board picker.
+   await page.locator('#relphiBoardSettingsButton').click();
+   await page.locator('[data-keyword-remove="abandonment"]').click();
+   await page.locator('#relphiKeywordQuery').fill('trust');
+   const trustChoice=page.locator('#relphiKeywordMatches [data-keyword-choice][value="trust"]');
+   await trustChoice.waitFor({state:'visible',timeout:10000});
+   await trustChoice.click();
+   await page.waitForFunction(()=>document.querySelector('#relphiKeywordCount')?.textContent.includes('2 cards in this sub-pack'),{timeout:10000});
+   await page.locator('#relphiConfirmFreeSettings').click();
+   assert.equal(await page.evaluate(()=>window.RELPHI_KEYWORD_SUBPACK_CONTEXT.count(['trust'])),2);
    assert.deepEqual(errors,[],`uncaught browser errors at ${viewport.width}px`);
    console.log('PASS browser width='+viewport.width+' queries='+cases.length+' Drawing Board + navigation');
    await page.close();
