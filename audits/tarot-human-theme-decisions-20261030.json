@@ -219,6 +219,140 @@
       ],
       "interpretive_basis": "The Relphi interpretation directly names purpose: a mission under weight (Ten of Wands), conscious purpose integrated with instinct (Strength), or identity and purpose becoming visible (The Sun). This is not inferred merely from any action or success.",
       "source_type": "relphi_explicit"
+    },
+    {
+      "card_id": "prince_of_wands",
+      "topics": [
+        "swiftness",
+        "strength",
+        "courage",
+        "generosity",
+        "indecision",
+        "work"
+      ],
+      "interpretive_basis": "In the Crowley/Thoth description, rapid courageous action coexists with moments of indecision; the character is generous and perseveres at work. These are direct traits in that account.",
+      "source_type": "external_thoth_positive_upright",
+      "source_url": "https://www.crowleythoth.org/tarot/thoth/prince-of-wands/"
+    },
+    {
+      "card_id": "princess_of_wands",
+      "topics": [
+        "courage",
+        "ambition",
+        "independence",
+        "anger",
+        "revenge",
+        "passion"
+      ],
+      "interpretive_basis": "The earthy form of Fire is described as daring, ambitious, intensely passionate and independent, with anger and a pronounced impulse toward revenge.",
+      "source_type": "external_thoth_positive_upright",
+      "source_url": "https://crowley-thoth.com/symbolism/wands-11-princess/"
+    },
+    {
+      "card_id": "prince_of_cups",
+      "topics": [
+        "secrecy",
+        "passion",
+        "strategy",
+        "power"
+      ],
+      "interpretive_basis": "The Crowley/Thoth Prince of Cups presents a quiet exterior concealing strong passion and secret aims; a calculated, power-conscious emotional strategy is directly described.",
+      "source_type": "external_thoth_positive_upright",
+      "source_url": "https://www.crowleythoth.org/tarot/thoth/prince-of-cups/"
+    },
+    {
+      "card_id": "princess_of_cups",
+      "topics": [
+        "kindness",
+        "tenderness",
+        "romance",
+        "dreams",
+        "nurture"
+      ],
+      "interpretive_basis": "The earthy expression of Water gives form to feeling and supports life; gentleness, kindness, tenderness and romantic dreaming are direct character themes.",
+      "source_type": "external_thoth_positive_upright",
+      "source_url": "https://www.crowleythoth.org/tarot/thoth/princess-of-cups/"
+    },
+    {
+      "card_id": "prince_of_swords",
+      "topics": [
+        "indecision",
+        "futility",
+        "reason"
+      ],
+      "interpretive_basis": "The Crowley/Thoth Air-of-Air prince is intellectually agile but without durable direction; reasoning generates many ideas that fail to produce grounded action.",
+      "source_type": "external_thoth_positive_upright",
+      "source_url": "https://www.crowleythoth.org/tarot/thoth/prince-of-swords/"
+    },
+    {
+      "card_id": "princess_of_swords",
+      "topics": [
+        "anger",
+        "revenge",
+        "wisdom",
+        "dispute",
+        "resolution",
+        "practicality"
+      ],
+      "interpretive_basis": "The earthly expression of Air directly involves anger, avenging offense, practical judgment, controversy and skill in settling disputes.",
+      "source_type": "external_thoth_positive_upright",
+      "source_url": "https://crowley-thoth.com/symbolism/swords-11-princess/"
+    },
+    {
+      "card_id": "knight_of_disks",
+      "topics": [
+        "cultivation",
+        "growth",
+        "patience",
+        "endurance",
+        "practicality"
+      ],
+      "interpretive_basis": "The Crowley/Thoth Knight of Disks is materially productive and patient: tending cultivated fields through persistent practical labor and slow growth.",
+      "source_type": "external_thoth_positive_upright",
+      "source_url": "https://www.crowleythoth.org/tarot/thoth/knight-of-disks/"
+    },
+    {
+      "card_id": "queen_of_disks",
+      "topics": [
+        "fertility",
+        "mother",
+        "kindness",
+        "affection",
+        "ambition",
+        "intuition"
+      ],
+      "interpretive_basis": "The Crowley/Thoth Queen of Disks is the maternal and fertile expression of Earth; she is affectionate, kind, practically ambitious and reliant on instinct and intuition.",
+      "source_type": "external_thoth_positive_upright",
+      "source_url": "https://www.crowleythoth.org/tarot/thoth/queen-of-disks/"
+    },
+    {
+      "card_id": "prince_of_disks",
+      "topics": [
+        "prudence",
+        "resource management",
+        "caution",
+        "method",
+        "persistence",
+        "practicality",
+        "trust"
+      ],
+      "interpretive_basis": "The Crowley/Thoth Prince of Disks is explicitly methodical, cautious, practical, trustworthy and persistent, making plans to develop material resources.",
+      "source_type": "external_thoth_positive_upright",
+      "source_url": "https://www.crowleythoth.org/tarot/thoth/prince-of-disks/"
+    },
+    {
+      "card_id": "princess_of_disks",
+      "topics": [
+        "fertility",
+        "creation",
+        "manifestation",
+        "embodiment",
+        "gestation",
+        "future"
+      ],
+      "interpretive_basis": "The earthly form of Earth symbolizes fertile gestation, generative potential and a future becoming embodied; the description uses maternal and creative symbolism, not a literal pregnancy prediction.",
+      "source_type": "external_thoth_positive_upright",
+      "source_url": "https://www.crowleythoth.org/tarot/thoth/princess-of-disks/"
     }
   ],
   "protected_boundaries": [
