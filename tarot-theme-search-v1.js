@@ -8,6 +8,90 @@
   // Additional lexical forms; these do not add card qualification.
   // Search-language equivalents; these never create new card qualifications.
   const NEW_ALIASES = {
+      "panic": "terror",
+      "panicking": "terror",
+      "panicked": "terror",
+      "angry": "anger",
+      "rage": "anger",
+      "raging": "anger",
+      "furious": "anger",
+      "furiously angry": "anger",
+      "ashamed": "shame",
+      "feeling ashamed": "shame",
+      "lonely": "loneliness",
+      "feeling lonely": "loneliness",
+      "feeling alone": "loneliness",
+      "dating": "romance",
+      "going on dates": "romance",
+      "lovers": "love",
+      "caring for a parent": "caregiving",
+      "profit": "gain",
+      "profits": "gain",
+      "earning a profit": "gain",
+      "career": "work",
+      "my career": "work",
+      "career growth": "professional development",
+      "evolution": "development through change",
+      "evolving": "development through change",
+      "doubt": "uncertainty",
+      "doubting": "uncertainty",
+      "retaliation": "revenge",
+      "vengeance": "revenge",
+      "revengeful": "revenge",
+      "fight": "conflict",
+      "fights": "conflict",
+      "new chapter": "renewal",
+      "starting a new chapter": "renewal",
+      "test": "examination",
+      "taking a test": "examination",
+      "harassed": "harassment",
+      "being harassed": "harassment",
+      "bullied": "bullying",
+      "being bullied": "bullying",
+      "bully": "bullying",
+      "abused": "abuse",
+      "abusive": "abuse",
+      "coerced": "coercion",
+      "being coerced": "coercion",
+      "homeless": "homelessness",
+      "being homeless": "homelessness",
+      "unemployed": "unemployment",
+      "out of work": "unemployment",
+      "jobless": "unemployment",
+      "housing unstable": "housing insecurity",
+      "unstable housing": "housing insecurity",
+      "betraying trust": "betrayal",
+      "loyal": "loyalty",
+      "trusted": "trust",
+      "trusting someone": "trust",
+      "telling the truth": "honesty",
+      "honest": "honesty",
+      "income stream": "income",
+      "salary": "income",
+      "wages": "income",
+      "paycheck": "income",
+      "budgeting": "budget",
+      "budgets": "budget",
+      "ecstatic": "ecstasy",
+      "feeling ecstatic": "ecstasy",
+      "empty inside": "emptiness",
+      "feeling empty": "emptiness",
+      "stressed": "stress",
+      "under stress": "stress",
+      "stressful": "stress",
+      "manifesting": "manifestation",
+      "manifest": "manifestation",
+      "warfare": "war",
+      "at war": "war",
+      "attacked": "attack",
+      "under attack": "attack",
+      "make amends": "reconciliation",
+      "making peace": "reconciliation",
+      "cheated": "cheating",
+      "cheater": "cheating",
+      "cheating someone": "cheating",
+      "victim": "victimization",
+      "victimised": "victimization",
       "abandon": "abandonment",
       "abandoned": "abandonment",
       "abandoning a concern": "abandonment of pursuit",
@@ -393,26 +477,287 @@
     "nurture",
     "responsibility"
   ],
-  "loneliness": ["isolation","exclusion","solitude"],
-  "lonely": ["isolation","exclusion","solitude"],
-  "shame": ["humiliation","guilt","regret"],
-  "shamed": ["humiliation","guilt","regret"],
-  "depression": ["despair","sadness","suffering"],
-  "depressed": ["despair","sadness","suffering"],
-  "abandonment": ["rejection","loss","isolation"],
-  "fraud": ["deception","lies","theft"],
-  "robbery": ["theft","loss","privation"],
-  "corruption": ["deception","dishonor","control"],
-  "manipulation": ["control","deception","strategy"],
-  "injustice": ["humiliation","dishonor","conflict"],
-  "unfairness": ["humiliation","dishonor","conflict"],
-  "housing": ["home","security","stability"],
-  "injury": ["pain","recovery","protection"],
-  "compromise": ["negotiation", "agreement", "accommodation"]
+  "loneliness": [
+    "isolation",
+    "exclusion",
+    "solitude"
+  ],
+  "lonely": [
+    "isolation",
+    "exclusion",
+    "solitude"
+  ],
+  "shame": [
+    "humiliation",
+    "guilt",
+    "regret"
+  ],
+  "shamed": [
+    "humiliation",
+    "guilt",
+    "regret"
+  ],
+  "depression": [
+    "despair",
+    "sadness",
+    "suffering"
+  ],
+  "depressed": [
+    "despair",
+    "sadness",
+    "suffering"
+  ],
+  "abandonment": [
+    "rejection",
+    "loss",
+    "isolation"
+  ],
+  "fraud": [
+    "deception",
+    "lies",
+    "theft"
+  ],
+  "robbery": [
+    "theft",
+    "loss",
+    "privation"
+  ],
+  "corruption": [
+    "deception",
+    "dishonor",
+    "control"
+  ],
+  "manipulation": [
+    "control",
+    "deception",
+    "strategy"
+  ],
+  "injustice": [
+    "humiliation",
+    "dishonor",
+    "conflict"
+  ],
+  "unfairness": [
+    "humiliation",
+    "dishonor",
+    "conflict"
+  ],
+  "housing": [
+    "home",
+    "security",
+    "stability"
+  ],
+  "injury": [
+    "pain",
+    "recovery",
+    "protection"
+  ],
+  "compromise": [
+    "negotiation",
+    "agreement",
+    "accommodation"
+  ],
+  "resentment": [
+    "anger",
+    "hostility",
+    "regret"
+  ],
+  "bitterness": [
+    "anger",
+    "sorrow",
+    "regret"
+  ],
+  "envy": [
+    "rivalry",
+    "insecurity",
+    "desire"
+  ],
+  "numbness": [
+    "emotional depletion",
+    "disinterest",
+    "withdrawal"
+  ],
+  "repair": [
+    "recovery",
+    "resolution",
+    "renewal"
+  ],
+  "apology": [
+    "regret",
+    "accountability",
+    "communication"
+  ],
+  "neglect": [
+    "avoidance",
+    "withdrawal",
+    "care"
+  ],
+  "parenting": [
+    "caregiving",
+    "nurture",
+    "family"
+  ],
+  "grandparent": [
+    "family",
+    "ancestry",
+    "legacy"
+  ],
+  "sibling": [
+    "family",
+    "childhood",
+    "relationship"
+  ],
+  "grandmother": [
+    "family",
+    "ancestry",
+    "legacy"
+  ],
+  "adolescent": [
+    "childhood",
+    "growth",
+    "learning"
+  ],
+  "earning": [
+    "work",
+    "income",
+    "gain"
+  ],
+  "exploitation": [
+    "oppression",
+    "bondage",
+    "control"
+  ],
+  "rent": [
+    "money",
+    "home",
+    "debt"
+  ],
+  "landlord": [
+    "home",
+    "law",
+    "resources"
+  ],
+  "self-care": [
+    "care",
+    "nurture",
+    "rest"
+  ],
+  "hospice": [
+    "caregiving",
+    "mortality",
+    "compassion"
+  ],
+  "end of life": [
+    "mortality",
+    "death",
+    "caregiving"
+  ],
+  "infection": [
+    "illness",
+    "healing",
+    "health"
+  ],
+  "medicine": [
+    "healing",
+    "health",
+    "care"
+  ],
+  "treatment": [
+    "healing",
+    "recovery",
+    "care"
+  ],
+  "self worth": [
+    "values",
+    "identity",
+    "confidence"
+  ],
+  "self esteem": [
+    "confidence",
+    "identity",
+    "values"
+  ],
+  "initiation": [
+    "beginning",
+    "ceremony",
+    "awakening"
+  ],
+  "purpose": [
+    "calling",
+    "direction",
+    "will"
+  ],
+  "free will": [
+    "choice",
+    "agency",
+    "freedom"
+  ],
+  "delusion": [
+    "illusion",
+    "confusion",
+    "perceptual uncertainty"
+  ],
+  "spirituality": [
+    "faith",
+    "religion",
+    "intuition"
+  ],
+  "prayer": [
+    "faith",
+    "religion",
+    "hope"
+  ],
+  "magic": [
+    "manifestation",
+    "will",
+    "creation"
+  ],
+  "meditation": [
+    "reflection",
+    "solitude",
+    "rest"
+  ],
+  "domination": [
+    "dominion",
+    "control",
+    "oppression"
+  ],
+  "bias": [
+    "fairness",
+    "judgment",
+    "justice"
+  ],
+  "punishment": [
+    "consequences",
+    "reckoning",
+    "judgment"
+  ],
+  "violation": [
+    "boundaries",
+    "protection",
+    "hostility"
+  ],
+  "meeting": [
+    "connection",
+    "invitation",
+    "reunion"
+  ],
+  "accident": [
+    "surprise",
+    "shock",
+    "crisis"
+  ],
+  "graduation": [
+    "education",
+    "completion",
+    "achievement"
+  ]
 };
-  const UNQUALIFIED = ["abuse","acceptance","adolescence","adoption","adultery","affair","aging","bankruptcy","boundaries violation","bullying","burnout recovery","career change","cheating","childbirth","citizenship","coercion","community loss","compromise","consent","coparenting","corruption","creativity block","custodianship","custody","demotion","depressed","depression","disability","disclosure","discrimination","divorce","divorce settlement","emotional labor","estrangement","euthanasia","eviction","fame","financial independence","firing","forgiveness","fostering","fraud","grace","harassment","healing relationship","homelessness","housing","housing insecurity","identity crisis","immigration","infertility","infidelity","injury","injustice","jealousy","layoff","litigation","loneliness","lonely","loss of pet","loyalty","manipulation","marginalization","menopause","migration","parenthood","personal development","privacy","promotion","rebellion","reconciliation","relocation","reputation","resignation","restitution","retirement","robbery","self-esteem","self-worth","shame","shamed","social exclusion","spiritual crisis","stillbirth","trauma","trust","unemployment","unfairness","vulnerability"];
+  const UNQUALIFIED = ["acceptance","accident","adolescence","adolescent","adoption","adultery","affair","aging","apology","bankruptcy","bias","bitterness","boundaries violation","burnout recovery","career change","childbirth","citizenship","community loss","compromise","consent","coparenting","corruption","creativity block","custodianship","custody","delusion","demotion","depressed","depression","disability","disclosure","discrimination","divorce","divorce settlement","domination","earning","emotional labor","end of life","envy","estrangement","euthanasia","eviction","exploitation","fame","firing","forgiveness","fostering","fraud","free will","grace","graduation","grandmother","grandparent","healing relationship","hospice","housing","identity crisis","immigration","infection","infertility","infidelity","initiation","injury","injustice","jealousy","landlord","litigation","loss of pet","magic","manipulation","marginalization","medicine","meditation","meeting","menopause","migration","neglect","numbness","parenthood","parenting","personal development","prayer","privacy","promotion","punishment","purpose","rebellion","rent","repair","reputation","resentment","resignation","restitution","retirement","robbery","self esteem","self worth","self-care","self-esteem","self-worth","shamed","sibling","social exclusion","spiritual crisis","spirituality","stillbirth","trauma","treatment","unfairness","violation","vulnerability"];
   const normalize = value => String(value || '').toLowerCase().normalize('NFKD')
     .replace(/[\u0300-\u036f]/g, '').replace(/[’‘]/g, "'")
+    // Space and hyphen spellings are the same phrase, not different concepts.
+    .replace(/[\u2010-\u2015\u2212-]/g, ' ')
     .replace(/^[\s"“”'.,!?;:()[\]{}]+|[\s"“”'.,!?;:()[\]{}]+$/g, '')
     .replace(/\s+/g, ' ').trim();
   const themes = new Map();
@@ -429,6 +774,21 @@
     if (key && theme && !themes.has(key) && !aliases.has(key)) aliases.set(key, theme.name);
   }
   const candidates = new Set(UNQUALIFIED.map(normalize));
+  // Maintain conservative noun plural coverage for the entire curated vocabulary.
+  // Exact distinct canonicals (e.g. choice/choices) and ambiguity override heuristics.
+  const inflectionProposals = new Map();
+  for (const [key, theme] of themes) {
+    if (!/^[a-z]{4,}$/.test(key) || /s$/.test(key)) continue;
+    const plural = /[^aeiou]y$/.test(key) ? key.slice(0,-1)+'ies'
+      : /(ch|sh|x|z)$/.test(key) ? key+'es' : key+'s';
+    if (themes.has(plural) || aliases.has(plural) || candidates.has(plural)) continue;
+    if (!inflectionProposals.has(plural)) inflectionProposals.set(plural,new Set());
+    inflectionProposals.get(plural).add(theme.name);
+  }
+  const inflections = new Map();
+  for(const [word,names] of inflectionProposals)
+    if(names.size===1) inflections.set(word,[...names][0]);
+
   function resolve(raw) {
     const key = normalize(raw);
     if (!key) return null;
@@ -436,6 +796,7 @@
     const alias = aliases.get(key);
     if (alias) return {name:alias, match:'alias'};
     if (candidates.has(key)) return {name:key, match:'unqualified'};
+    if (inflections.has(key)) return {name:inflections.get(key), match:'inflection'};
     // An explicit conjunction requests both independently qualified themes.
     // A single broad/related term never earns membership through the other.
     if (key.includes(' and ')) {
@@ -508,7 +869,7 @@
   }
   global.RELPHI_THEME_SEARCH=Object.freeze({
     resolve,directCardIds,suggest,related,matchingTagNames,
-    themeCount:themes.size,aliasCount:aliases.size,
+    themeCount:themes.size,aliasCount:aliases.size,inflectionCount:inflections.size,
     candidates:Object.freeze(UNQUALIFIED.slice())
   });
 })(window);
