@@ -765,7 +765,8 @@ window.RELPHI_TAROT_CARDS = [
       "duty",
       "strain",
       "overwork",
-      "stress"
+      "stress",
+      "purpose"
     ],
     "astrology": {
       "logic": "Golden Dawn decan attribution for numbered minor cards.",
@@ -4476,7 +4477,8 @@ window.RELPHI_TAROT_CARDS = [
       "magnanimity",
       "vitality",
       "mastery of instinct",
-      "creative force"
+      "creative force",
+      "purpose"
     ],
     "astrology": {
       "logic": "Major arcana attribution.",
@@ -5901,7 +5903,8 @@ window.RELPHI_TAROT_CARDS = [
       "visibility",
       "open recognition",
       "radiance",
-      "life affirmation"
+      "life affirmation",
+      "purpose"
     ],
     "astrology": {
       "logic": "Major arcana attribution.",
