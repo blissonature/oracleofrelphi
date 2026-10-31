@@ -11,6 +11,7 @@ on:
       - 'tarot.html'
       - 'tests/tarot-theme-*'
       - 'audits/tarot-direct-theme-*'
+      - 'audits/tarot-human-*'
 jobs:
   verified-theme-search:
     runs-on: ubuntu-latest
@@ -21,7 +22,9 @@ jobs:
         with:
           node-version: '22'
       - name: Run complete direct-theme and lexical-coverage integrity suite
-        run: node tests/tarot-theme-search.test.js
+        run: |
+          node tests/tarot-theme-search.test.js
+          node tests/tarot-theme-domain-probes.test.js
       - name: Install Playwright Chromium
         run: |
           npm install --no-save playwright@1.56.1
