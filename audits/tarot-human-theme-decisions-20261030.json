@@ -195,6 +195,30 @@
       ],
       "interpretive_basis": "Deception, secrecy and lies with a concealed ineffective strategy are direct modes of cheating; this does not qualify it for love.",
       "source_type": "relphi_plus_traditional"
+    },
+    {
+      "card_id": "ten_of_wands",
+      "topics": [
+        "purpose"
+      ],
+      "interpretive_basis": "The Relphi interpretation directly names purpose: a mission under weight (Ten of Wands), conscious purpose integrated with instinct (Strength), or identity and purpose becoming visible (The Sun). This is not inferred merely from any action or success.",
+      "source_type": "relphi_explicit"
+    },
+    {
+      "card_id": "strength",
+      "topics": [
+        "purpose"
+      ],
+      "interpretive_basis": "The Relphi interpretation directly names purpose: a mission under weight (Ten of Wands), conscious purpose integrated with instinct (Strength), or identity and purpose becoming visible (The Sun). This is not inferred merely from any action or success.",
+      "source_type": "relphi_explicit"
+    },
+    {
+      "card_id": "the_sun",
+      "topics": [
+        "purpose"
+      ],
+      "interpretive_basis": "The Relphi interpretation directly names purpose: a mission under weight (Ten of Wands), conscious purpose integrated with instinct (Strength), or identity and purpose becoming visible (The Sun). This is not inferred merely from any action or success.",
+      "source_type": "relphi_explicit"
     }
   ],
   "protected_boundaries": [
