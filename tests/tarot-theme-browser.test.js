@@ -107,6 +107,31 @@ const base=process.env.RELPHI_TEST_URL || 'http://127.0.0.1:8075/tarot.html';
    await page.waitForFunction(()=>document.querySelector('#relphiKeywordCount')?.textContent.includes('2 cards in this sub-pack'),{timeout:10000});
    await page.locator('#relphiConfirmFreeSettings').click();
    assert.equal(await page.evaluate(()=>window.RELPHI_KEYWORD_SUBPACK_CONTEXT.count(['trust'])),2);
+   // Unqualified terms must offer visible navigation without changing the pool.
+   await page.locator('#relphiBoardSettingsButton').click();
+   await page.locator('[data-keyword-remove="trust"]').click();
+   await page.locator('#relphiKeywordQuery').fill('apology');
+   const related=page.locator('#relphiKeywordMatches [data-keyword-navigate="regret"]');
+   await related.waitFor({state:'visible',timeout:10000});
+   assert.ok((await page.locator('#relphiKeywordCount').textContent()).includes('Choose one or more tags'));
+   await related.click();
+   await page.locator('#relphiKeywordMatches [data-keyword-choice][value="regret"]').click();
+   await page.waitForFunction(()=>document.querySelector('#relphiKeywordCount')?.textContent.includes('2 cards in this sub-pack'),{timeout:10000});
+   assert.equal(await page.locator('#relphiKeywordQuery').inputValue(),'regret','Query survives selection re-render');
+   await page.locator('#relphiConfirmFreeSettings').click();
+   assert.equal(await page.evaluate(()=>window.RELPHI_KEYWORD_SUBPACK_CONTEXT.count(['regret'])),2);
+   // Typos offer corrections, never implicit card qualification.
+   await page.locator('#relphiBoardSettingsButton').click();
+   await page.locator('[data-keyword-remove="regret"]').click();
+   await page.locator('#relphiKeywordQuery').fill('secrects');
+   await page.locator('#relphiKeywordMatches [data-keyword-navigate="secrecy"]').waitFor({state:'visible',timeout:10000});
+   assert.ok((await page.locator('#relphiKeywordCount').textContent()).includes('Choose one or more tags'));
+   await page.locator('#relphiKeywordMatches [data-keyword-navigate="secrecy"]').click();
+   await page.locator('#relphiKeywordMatches [data-keyword-choice][value="secrecy"]').click();
+   await page.waitForFunction(()=>document.querySelector('#relphiKeywordCount')?.textContent.includes('3 cards in this sub-pack'),{timeout:10000});
+   await page.locator('#relphiConfirmFreeSettings').click();
+   assert.equal(await page.evaluate(()=>window.RELPHI_KEYWORD_SUBPACK_CONTEXT.count(['secrecy'])),3);
+
    assert.deepEqual(errors,[],`uncaught browser errors at ${viewport.width}px`);
    console.log('PASS browser width='+viewport.width+' queries='+cases.length+' Drawing Board + navigation');
    await page.close();
