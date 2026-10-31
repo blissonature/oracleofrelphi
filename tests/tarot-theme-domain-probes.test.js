@@ -49,6 +49,11 @@ for(const domain of bank.domains){
 assert.equal(seen.size,332);
 assert.deepEqual(count,{direct:257,alias:44,related:72},
  'Search coverage baseline must not regress by replacing direct hits with vague navigation.');
+// No recognized but unqualified subject may leave a user at a dead end.
+for(const candidate of engine.candidates) {
+ assert.deepEqual(idsOf(candidate),[],'Unqualified registry must never return cards: '+candidate);
+ assert.ok(engine.related(candidate).length>0,'No separate thematic navigation for '+candidate);
+}
 assert.equal(engine.themeCount,597);
 assert.equal(engine.aliasCount,787);
 assert.ok(engine.inflectionCount>120,'Inflections cover newly added themes without per-word patches');
