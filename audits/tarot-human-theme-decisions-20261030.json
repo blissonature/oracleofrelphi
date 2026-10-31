@@ -1,0 +1,420 @@
+{
+  "schema": "relphi_first_degree_human_themes_v1",
+  "date": "2026-10-30",
+  "scope": "Explicit editorial review of all newly assigned everyday-life themes: the core action, condition or symbol must be represented in that card, not merely a neighboring suit, planet, outcome, or reversal.",
+  "records": [
+    {
+      "card_id": "knight_of_swords",
+      "topics": [
+        "war",
+        "anger"
+      ],
+      "interpretive_basis": "Traditional Knight of Swords names war and wrath; active aggressive force is first-degree, not generic conflict.",
+      "source_type": "traditional_plus_relphi"
+    },
+    {
+      "card_id": "the_chariot",
+      "topics": [
+        "war",
+        "revenge"
+      ],
+      "interpretive_basis": "The Chariot's traditional reading explicitly names war and vengeance.",
+      "source_type": "traditional_plus_relphi"
+    },
+    {
+      "card_id": "nine_of_wands",
+      "topics": [
+        "attack"
+      ],
+      "interpretive_basis": "Traditional reading explicitly describes readiness to meet an attack; this is the defensive side of the event, not an actual assault assertion.",
+      "source_type": "traditional_plus_relphi"
+    },
+    {
+      "card_id": "five_of_swords",
+      "topics": [
+        "shame",
+        "bullying",
+        "victimization"
+      ],
+      "interpretive_basis": "The card directly depicts humiliation, dishonor, and group-inflicted social injury; the interpretation emphasizes the diminished position.",
+      "source_type": "relphi_plus_traditional"
+    },
+    {
+      "card_id": "the_tower",
+      "topics": [
+        "shame"
+      ],
+      "interpretive_basis": "The Tower traditionally names disgrace among direct meanings; not all sudden crises entail disgrace.",
+      "source_type": "traditional_plus_relphi"
+    },
+    {
+      "card_id": "five_of_pentacles",
+      "topics": [
+        "loneliness",
+        "homelessness",
+        "housing insecurity",
+        "unemployment"
+      ],
+      "interpretive_basis": "The directly described hardship concerns exclusion, shelter, resources and job loss; not every solitude or loss card qualifies.",
+      "source_type": "relphi_plus_traditional"
+    },
+    {
+      "card_id": "two_of_cups",
+      "topics": [
+        "trust",
+        "mutual respect"
+      ],
+      "interpretive_basis": "The direct card meaning is two willing participants exchanging care, each able to approach, receive and answer the other.",
+      "source_type": "relphi_plus_traditional"
+    },
+    {
+      "card_id": "queen_of_cups",
+      "topics": [
+        "loyalty",
+        "trust",
+        "honesty"
+      ],
+      "interpretive_basis": "The traditional Queen of Cups explicitly describes an honest and devoted person; trustworthy loyalty is a first-degree personal trait.",
+      "source_type": "traditional_plus_relphi"
+    },
+    {
+      "card_id": "queen_of_wands",
+      "topics": [
+        "honesty"
+      ],
+      "interpretive_basis": "The traditional Queen of Wands describes sincerity and honorable behavior, independently of romantic love.",
+      "source_type": "traditional_plus_relphi"
+    },
+    {
+      "card_id": "the_devil",
+      "topics": [
+        "abuse",
+        "coercion"
+      ],
+      "interpretive_basis": "Traditional violence, force and captivity describe abusive/coercive power, not merely desire or physical embodiment.",
+      "source_type": "relphi_plus_traditional"
+    },
+    {
+      "card_id": "nine_of_swords",
+      "topics": [
+        "abuse",
+        "bullying",
+        "harassment",
+        "victimization"
+      ],
+      "interpretive_basis": "Cruel repeated accusation or weaponized language directly inflicts psychological harm; do not imply mental illness in a querent.",
+      "source_type": "relphi_plus_traditional"
+    },
+    {
+      "card_id": "ten_of_wands",
+      "topics": [
+        "stress"
+      ],
+      "interpretive_basis": "The direct meaning is burden, overwork, oppressive demands and strain, rather than generic sadness.",
+      "source_type": "relphi_plus_traditional"
+    },
+    {
+      "card_id": "eight_of_cups",
+      "topics": [
+        "emptiness"
+      ],
+      "interpretive_basis": "The direct meaning of Indolence includes withdrawal from emotionally depleted arrangements that no longer nourish.",
+      "source_type": "relphi_plus_traditional"
+    },
+    {
+      "card_id": "ace_of_pentacles",
+      "topics": [
+        "ecstasy",
+        "manifestation"
+      ],
+      "interpretive_basis": "The traditional Ace explicitly names ecstasy; the Relphi reading describes possibility becoming tangible.",
+      "source_type": "relphi_plus_traditional"
+    },
+    {
+      "card_id": "the_magician",
+      "topics": [
+        "manifestation"
+      ],
+      "interpretive_basis": "Relphi interpretation has intention crossing into consequential words, tools and actions; not supernatural claims.",
+      "source_type": "relphi_plus_traditional"
+    },
+    {
+      "card_id": "nine_of_pentacles",
+      "topics": [
+        "gain",
+        "income",
+        "financial independence"
+      ],
+      "interpretive_basis": "The Gain card's interpretation explicitly describes cultivated material resources, independence, and sufficiency.",
+      "source_type": "relphi_plus_traditional"
+    },
+    {
+      "card_id": "six_of_pentacles",
+      "topics": [
+        "income"
+      ],
+      "interpretive_basis": "Success in the source is a material incoming, retained and distributed resource flow; direct income, not inferred inheritance.",
+      "source_type": "relphi_plus_traditional"
+    },
+    {
+      "card_id": "two_of_pentacles",
+      "topics": [
+        "budget"
+      ],
+      "interpretive_basis": "The material arrangement directly balances resources among competing needs.",
+      "source_type": "relphi_plus_traditional"
+    },
+    {
+      "card_id": "four_of_pentacles",
+      "topics": [
+        "budget"
+      ],
+      "interpretive_basis": "Power directly concerns controlling, allocating and retaining possessions/resources.",
+      "source_type": "relphi_plus_traditional"
+    },
+    {
+      "card_id": "knight_of_cups",
+      "topics": [
+        "arrival"
+      ],
+      "interpretive_basis": "Traditional Knight of Cups explicitly names arrival, approach and invitation.",
+      "source_type": "traditional_plus_relphi"
+    },
+    {
+      "card_id": "temperance",
+      "topics": [
+        "reconciliation"
+      ],
+      "interpretive_basis": "Temperance/Art directly integrates unlike forces into a viable relation; this does not automatically mean romantic forgiveness.",
+      "source_type": "relphi_plus_traditional"
+    },
+    {
+      "card_id": "seven_of_swords",
+      "topics": [
+        "cheating"
+      ],
+      "interpretive_basis": "Deception, secrecy and lies with a concealed ineffective strategy are direct modes of cheating; this does not qualify it for love.",
+      "source_type": "relphi_plus_traditional"
+    },
+    {
+      "card_id": "ten_of_wands",
+      "topics": [
+        "purpose"
+      ],
+      "interpretive_basis": "The Relphi interpretation directly names purpose: a mission under weight (Ten of Wands), conscious purpose integrated with instinct (Strength), or identity and purpose becoming visible (The Sun). This is not inferred merely from any action or success.",
+      "source_type": "relphi_explicit"
+    },
+    {
+      "card_id": "strength",
+      "topics": [
+        "purpose"
+      ],
+      "interpretive_basis": "The Relphi interpretation directly names purpose: a mission under weight (Ten of Wands), conscious purpose integrated with instinct (Strength), or identity and purpose becoming visible (The Sun). This is not inferred merely from any action or success.",
+      "source_type": "relphi_explicit"
+    },
+    {
+      "card_id": "the_sun",
+      "topics": [
+        "purpose"
+      ],
+      "interpretive_basis": "The Relphi interpretation directly names purpose: a mission under weight (Ten of Wands), conscious purpose integrated with instinct (Strength), or identity and purpose becoming visible (The Sun). This is not inferred merely from any action or success.",
+      "source_type": "relphi_explicit"
+    },
+    {
+      "card_id": "prince_of_wands",
+      "topics": [
+        "swiftness",
+        "strength",
+        "courage",
+        "generosity",
+        "indecision",
+        "work"
+      ],
+      "interpretive_basis": "In the Crowley/Thoth description, rapid courageous action coexists with moments of indecision; the character is generous and perseveres at work. These are direct traits in that account.",
+      "source_type": "external_thoth_positive_upright",
+      "source_url": "https://www.crowleythoth.org/tarot/thoth/prince-of-wands/"
+    },
+    {
+      "card_id": "princess_of_wands",
+      "topics": [
+        "courage",
+        "ambition",
+        "independence",
+        "anger",
+        "revenge",
+        "passion"
+      ],
+      "interpretive_basis": "The earthy form of Fire is described as daring, ambitious, intensely passionate and independent, with anger and a pronounced impulse toward revenge.",
+      "source_type": "external_thoth_positive_upright",
+      "source_url": "https://crowley-thoth.com/symbolism/wands-11-princess/"
+    },
+    {
+      "card_id": "prince_of_cups",
+      "topics": [
+        "secrecy",
+        "passion",
+        "strategy",
+        "power"
+      ],
+      "interpretive_basis": "The Crowley/Thoth Prince of Cups presents a quiet exterior concealing strong passion and secret aims; a calculated, power-conscious emotional strategy is directly described.",
+      "source_type": "external_thoth_positive_upright",
+      "source_url": "https://www.crowleythoth.org/tarot/thoth/prince-of-cups/"
+    },
+    {
+      "card_id": "princess_of_cups",
+      "topics": [
+        "kindness",
+        "tenderness",
+        "romance",
+        "dreams",
+        "nurture"
+      ],
+      "interpretive_basis": "The earthy expression of Water gives form to feeling and supports life; gentleness, kindness, tenderness and romantic dreaming are direct character themes.",
+      "source_type": "external_thoth_positive_upright",
+      "source_url": "https://www.crowleythoth.org/tarot/thoth/princess-of-cups/"
+    },
+    {
+      "card_id": "prince_of_swords",
+      "topics": [
+        "indecision",
+        "futility",
+        "reason"
+      ],
+      "interpretive_basis": "The Crowley/Thoth Air-of-Air prince is intellectually agile but without durable direction; reasoning generates many ideas that fail to produce grounded action.",
+      "source_type": "external_thoth_positive_upright",
+      "source_url": "https://www.crowleythoth.org/tarot/thoth/prince-of-swords/"
+    },
+    {
+      "card_id": "princess_of_swords",
+      "topics": [
+        "anger",
+        "revenge",
+        "wisdom",
+        "dispute",
+        "resolution",
+        "practicality"
+      ],
+      "interpretive_basis": "The earthly expression of Air directly involves anger, avenging offense, practical judgment, controversy and skill in settling disputes.",
+      "source_type": "external_thoth_positive_upright",
+      "source_url": "https://crowley-thoth.com/symbolism/swords-11-princess/"
+    },
+    {
+      "card_id": "knight_of_disks",
+      "topics": [
+        "cultivation",
+        "growth",
+        "patience",
+        "endurance",
+        "practicality"
+      ],
+      "interpretive_basis": "The Crowley/Thoth Knight of Disks is materially productive and patient: tending cultivated fields through persistent practical labor and slow growth.",
+      "source_type": "external_thoth_positive_upright",
+      "source_url": "https://www.crowleythoth.org/tarot/thoth/knight-of-disks/"
+    },
+    {
+      "card_id": "queen_of_disks",
+      "topics": [
+        "fertility",
+        "mother",
+        "kindness",
+        "affection",
+        "ambition",
+        "intuition"
+      ],
+      "interpretive_basis": "The Crowley/Thoth Queen of Disks is the maternal and fertile expression of Earth; she is affectionate, kind, practically ambitious and reliant on instinct and intuition.",
+      "source_type": "external_thoth_positive_upright",
+      "source_url": "https://www.crowleythoth.org/tarot/thoth/queen-of-disks/"
+    },
+    {
+      "card_id": "prince_of_disks",
+      "topics": [
+        "prudence",
+        "resource management",
+        "caution",
+        "method",
+        "persistence",
+        "practicality",
+        "trust"
+      ],
+      "interpretive_basis": "The Crowley/Thoth Prince of Disks is explicitly methodical, cautious, practical, trustworthy and persistent, making plans to develop material resources.",
+      "source_type": "external_thoth_positive_upright",
+      "source_url": "https://www.crowleythoth.org/tarot/thoth/prince-of-disks/"
+    },
+    {
+      "card_id": "princess_of_disks",
+      "topics": [
+        "fertility",
+        "creation",
+        "manifestation",
+        "embodiment",
+        "gestation",
+        "future"
+      ],
+      "interpretive_basis": "The earthly form of Earth symbolizes fertile gestation, generative potential and a future becoming embodied; the description uses maternal and creative symbolism, not a literal pregnancy prediction.",
+      "source_type": "external_thoth_positive_upright",
+      "source_url": "https://www.crowleythoth.org/tarot/thoth/princess-of-disks/"
+    }
+  ],
+  "protected_boundaries": [
+    {
+      "query": "love",
+      "must_exclude": [
+        "seven_of_swords",
+        "nine_of_swords",
+        "the_devil",
+        "five_of_swords"
+      ],
+      "why": "Life topics such as cheating, abuse, and bullying do not enter love merely through having relationship content."
+    },
+    {
+      "query": "loneliness",
+      "must_exclude": [
+        "the_hermit",
+        "eight_of_swords",
+        "three_of_swords"
+      ],
+      "why": "Chosen solitude, restriction and separation are not automatically felt loneliness."
+    },
+    {
+      "query": "shame",
+      "must_exclude": [
+        "nine_of_swords",
+        "the_fool"
+      ],
+      "why": "Guilt, fear and naivety do not automatically produce disgrace or shame."
+    },
+    {
+      "query": "trust",
+      "must_exclude": [
+        "seven_of_swords",
+        "the_moon"
+      ],
+      "why": "Secrecy or uncertainty is not first-degree interpersonal trust."
+    },
+    {
+      "query": "unemployment",
+      "must_exclude": [
+        "ace_of_pentacles",
+        "three_of_pentacles"
+      ],
+      "why": "Job opportunity and skilled employment do not themselves indicate being unemployed."
+    },
+    {
+      "query": "homelessness",
+      "must_exclude": [
+        "four_of_wands",
+        "ten_of_cups"
+      ],
+      "why": "Domestic happiness or shelter is not direct evidence of homelessness."
+    },
+    {
+      "query": "reconciliation",
+      "must_exclude": [
+        "three_of_swords",
+        "five_of_swords"
+      ],
+      "why": "Conflict, grief and defeat alone do not establish repaired relations."
+    }
+  ],
+  "material_health_note": "Medical or personal harms here are subject words in historical symbolism, never factual diagnoses or predictions."
+}

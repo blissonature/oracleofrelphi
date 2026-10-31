@@ -1,0 +1,142 @@
+{
+  "schema": "relphi_court_first_degree_source_supplement_v1",
+  "notes": "These 10 cards have no full locked Relphi/traditional upright narrative in the original audit. They are reviewed against explicitly separate Thoth positive/character descriptions, NOT manufactured as Relphi interpretations. Reversed/ill-dignified readings are not used to grant direct themes.",
+  "source_system": "Crowley Thoth court descriptions, archived by independent educational pages",
+  "reviewed_cards": 10,
+  "records": [
+    {
+      "card_id": "prince_of_wands",
+      "source_url": "https://www.crowleythoth.org/tarot/thoth/prince-of-wands/",
+      "source_scope": "upright positive character and direct symbolism",
+      "paraphrased_evidence": "In the Crowley/Thoth description, rapid courageous action coexists with moments of indecision; the character is generous and perseveres at work. These are direct traits in that account.",
+      "approved_direct_themes": [
+        "swiftness",
+        "strength",
+        "courage",
+        "generosity",
+        "indecision",
+        "work"
+      ]
+    },
+    {
+      "card_id": "princess_of_wands",
+      "source_url": "https://crowley-thoth.com/symbolism/wands-11-princess/",
+      "source_scope": "upright positive character and direct symbolism",
+      "paraphrased_evidence": "The earthy form of Fire is described as daring, ambitious, intensely passionate and independent, with anger and a pronounced impulse toward revenge.",
+      "approved_direct_themes": [
+        "courage",
+        "ambition",
+        "independence",
+        "anger",
+        "revenge",
+        "passion"
+      ]
+    },
+    {
+      "card_id": "prince_of_cups",
+      "source_url": "https://www.crowleythoth.org/tarot/thoth/prince-of-cups/",
+      "source_scope": "upright positive character and direct symbolism",
+      "paraphrased_evidence": "The Crowley/Thoth Prince of Cups presents a quiet exterior concealing strong passion and secret aims; a calculated, power-conscious emotional strategy is directly described.",
+      "approved_direct_themes": [
+        "secrecy",
+        "passion",
+        "strategy",
+        "power"
+      ]
+    },
+    {
+      "card_id": "princess_of_cups",
+      "source_url": "https://www.crowleythoth.org/tarot/thoth/princess-of-cups/",
+      "source_scope": "upright positive character and direct symbolism",
+      "paraphrased_evidence": "The earthy expression of Water gives form to feeling and supports life; gentleness, kindness, tenderness and romantic dreaming are direct character themes.",
+      "approved_direct_themes": [
+        "kindness",
+        "tenderness",
+        "romance",
+        "dreams",
+        "nurture"
+      ]
+    },
+    {
+      "card_id": "prince_of_swords",
+      "source_url": "https://www.crowleythoth.org/tarot/thoth/prince-of-swords/",
+      "source_scope": "upright positive character and direct symbolism",
+      "paraphrased_evidence": "The Crowley/Thoth Air-of-Air prince is intellectually agile but without durable direction; reasoning generates many ideas that fail to produce grounded action.",
+      "approved_direct_themes": [
+        "indecision",
+        "futility",
+        "reason"
+      ]
+    },
+    {
+      "card_id": "princess_of_swords",
+      "source_url": "https://crowley-thoth.com/symbolism/swords-11-princess/",
+      "source_scope": "upright positive character and direct symbolism",
+      "paraphrased_evidence": "The earthly expression of Air directly involves anger, avenging offense, practical judgment, controversy and skill in settling disputes.",
+      "approved_direct_themes": [
+        "anger",
+        "revenge",
+        "wisdom",
+        "dispute",
+        "resolution",
+        "practicality"
+      ]
+    },
+    {
+      "card_id": "knight_of_disks",
+      "source_url": "https://www.crowleythoth.org/tarot/thoth/knight-of-disks/",
+      "source_scope": "upright positive character and direct symbolism",
+      "paraphrased_evidence": "The Crowley/Thoth Knight of Disks is materially productive and patient: tending cultivated fields through persistent practical labor and slow growth.",
+      "approved_direct_themes": [
+        "cultivation",
+        "growth",
+        "patience",
+        "endurance",
+        "practicality"
+      ]
+    },
+    {
+      "card_id": "queen_of_disks",
+      "source_url": "https://www.crowleythoth.org/tarot/thoth/queen-of-disks/",
+      "source_scope": "upright positive character and direct symbolism",
+      "paraphrased_evidence": "The Crowley/Thoth Queen of Disks is the maternal and fertile expression of Earth; she is affectionate, kind, practically ambitious and reliant on instinct and intuition.",
+      "approved_direct_themes": [
+        "fertility",
+        "mother",
+        "kindness",
+        "affection",
+        "ambition",
+        "intuition"
+      ]
+    },
+    {
+      "card_id": "prince_of_disks",
+      "source_url": "https://www.crowleythoth.org/tarot/thoth/prince-of-disks/",
+      "source_scope": "upright positive character and direct symbolism",
+      "paraphrased_evidence": "The Crowley/Thoth Prince of Disks is explicitly methodical, cautious, practical, trustworthy and persistent, making plans to develop material resources.",
+      "approved_direct_themes": [
+        "prudence",
+        "resource management",
+        "caution",
+        "method",
+        "persistence",
+        "practicality",
+        "trust"
+      ]
+    },
+    {
+      "card_id": "princess_of_disks",
+      "source_url": "https://www.crowleythoth.org/tarot/thoth/princess-of-disks/",
+      "source_scope": "upright positive character and direct symbolism",
+      "paraphrased_evidence": "The earthly form of Earth symbolizes fertile gestation, generative potential and a future becoming embodied; the description uses maternal and creative symbolism, not a literal pregnancy prediction.",
+      "approved_direct_themes": [
+        "fertility",
+        "creation",
+        "manifestation",
+        "embodiment",
+        "gestation",
+        "future"
+      ]
+    }
+  ]
+}

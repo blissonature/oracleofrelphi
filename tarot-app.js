@@ -2058,6 +2058,7 @@
     if (!card) return [];
     const values = [
       ...(Array.isArray(card.tags) ? card.tags : []),
+      ...(Array.isArray(card.direct_themes) ? card.direct_themes : []),
       card.rank, card.rws_rank, card.card_type, card.arcana, card.suit, card.thoth_suit,
       card.element, card.rank_element, card.elemental_formula, card.polarity,
       ...splitCanonicalTagValue(card.astrology?.planet),
@@ -2089,7 +2090,7 @@
   function matchingCanonicalTags(query = state.rowTagQuery) {
     const needle = normalizeSearch(query);
     if (!needle) return [];
-    return canonicalTagCatalog().filter(tag => normalizeSearch(tag).includes(needle)).slice(0, 40);
+    return window.RELPHI_THEME_SEARCH?.matchingTagNames(query, canonicalTagCatalog()) || canonicalTagCatalog().filter(tag => normalizeSearch(tag).includes(needle)).slice(0, 40);
   }
 
   function cardMatchesSelectedTags(card, tags = state.rowSelectedTags, mode = state.rowTagMatchMode) {
@@ -2123,7 +2124,7 @@
     matches: query => {
       const needle = normalizeSearch(query);
       if (!needle) return [];
-      return canonicalTagCatalog().filter(tag => normalizeSearch(tag).includes(needle)).slice(0, 40);
+      return matchingCanonicalTags(query);
     },
     count: (tags, mode = 'any') => cards.filter(card => cardMatchesSelectedTags(card, tags, mode === 'all' ? 'all' : 'any')).length
   });
@@ -2267,7 +2268,11 @@
           const checked = selected.some(value => normalizeSearch(value) === normalizeSearch(tag));
           return `<label class="row-tag-match"><input type="checkbox" data-row-tag-choice value="${escapeHtml(tag)}" ${checked ? 'checked' : ''}> <span>${escapeHtml(tag)}</span></label>`;
         }).join('')
-      : (state.rowTagQuery ? '<p class="row-tag-empty">No matching tags yet. Try another word.</p>' : '<p class="row-tag-empty">Type a tag to build this sub-pack.</p>');
+      : (state.rowTagQuery
+        ? '<p class="row-tag-empty">No directly matching theme. Related suggestions are separate searches, not automatically qualified cards.</p>'
+          + (window.RELPHI_THEME_SEARCH?.related(state.rowTagQuery) || []).map(name=>
+            `<button type="button" class="relphi-theme-suggestion" data-row-theme-suggestion="${escapeHtml(name)}">${escapeHtml(name)}</button>`).join(' ')
+        : '<p class="row-tag-empty">Type a tag to build this sub-pack.</p>');
     const selectedHtml = selected.length ? `<div class="row-tag-selected" aria-label="Selected tags">${selected.map(tag => `<button type="button" data-row-tag-remove="${escapeHtml(tag)}" title="Remove ${escapeHtml(tag)}">${escapeHtml(tag)} ×</button>`).join('')}</div>` : '';
     const poolCount = selected.length ? rowDrawPool('tags', { ignoreUsed:true }).length : 0;
     return `<section class="row-tag-subpack" aria-label="Keyword and tag sub-pack"><label class="row-tag-search-label">Tags <input id="rowTagQuery" type="search" value="${escapeHtml(state.rowTagQuery || '')}" placeholder="Type a tag, e.g. prince" autocomplete="off"></label><div class="row-tag-match-mode" role="group" aria-label="How selected tags combine"><label><input type="radio" name="rowTagMatchMode" value="any" ${state.rowTagMatchMode !== 'all' ? 'checked' : ''}> Any</label><label><input type="radio" name="rowTagMatchMode" value="all" ${state.rowTagMatchMode === 'all' ? 'checked' : ''}> All</label></div><div class="row-tag-matches" aria-live="polite">${matchRows}</div>${selectedHtml}<p class="row-tag-pool-count">${selected.length ? `${poolCount} card${poolCount === 1 ? '' : 's'} in this sub-pack` : 'Choose one or more matching tags before drawing.'}</p></section>`;
@@ -3540,6 +3545,13 @@
         try { next.setSelectionRange(next.value.length, next.value.length); } catch (error) {}
       }
     });
+    qsa('[data-row-theme-suggestion]', wrap).forEach(button => button.addEventListener('click',event=>{
+      event.preventDefault();
+      state.rowTagQuery=button.dataset.rowThemeSuggestion || '';
+      renderShortList();
+      const field=$('rowTagQuery');
+      if(field)field.focus({preventScroll:true});
+    }));
     qsa('[data-row-tag-choice]', wrap).forEach(input => input.addEventListener('change', () => {
       const value = input.value;
       const current = Array.isArray(state.rowSelectedTags) ? state.rowSelectedTags.slice() : [];
@@ -3854,6 +3866,14 @@
       return sortCardsForDisplay(cards.filter(card => rankNumber(card) === rank));
     }
     if (query.length === 1) return [];
+    // Explicit card identifiers outrank thematic queries.
+    if (!exact.length) {
+      const directTheme = window.RELPHI_THEME_SEARCH?.resolve(raw);
+      if (directTheme) {
+        const eligible = new Set(window.RELPHI_THEME_SEARCH.directCardIds(raw));
+        return sortCardsForDisplay(cards.filter(card => eligible.has(card.card_id)));
+      }
+    }
     const scored = cards.map(card => ({ card, score: resultScore(card, query, terms) })).filter(item => item.score >= 0);
     if (exact.length) {
       exact.forEach(card => { const found = scored.find(item => item.card.card_id === card.card_id); if (found) found.score += 12000; else scored.push({ card, score: 12000 }); });
@@ -3908,10 +3928,47 @@
     if (id) setVisible(id, true);
     updateClearKeywordButtons();
   }
+  function renderThemeNavigation() {
+    const root=$('relphiThemeNavigation');
+    if(!root)return;
+    root.replaceChildren();
+    root.hidden=true;
+    if(state.mode!=='search')return;
+    const query=String(state.query||'').trim();
+    const engine=window.RELPHI_THEME_SEARCH;
+    const resolved=engine?.resolve(query);
+    const suggested=resolved?.match==='unqualified'
+      ? engine.related(query)
+      : (!resolved && !exactShorthandResults(query).length ? engine?.suggest(query,4).map(item=>item.name) : []);
+    if(!suggested?.length)return;
+    const intro=document.createElement('p');
+    intro.className='relphi-theme-navigation-label';
+    intro.textContent=resolved?.match==='unqualified'
+      ? 'No directly qualified cards for this subject yet. Explore these distinct themes:'
+      : 'No direct theme match. Did you mean:';
+    root.appendChild(intro);
+    const row=document.createElement('div');
+    row.className='relphi-theme-navigation-actions';
+    suggested.forEach(name=>{
+      const btn=document.createElement('button');
+      btn.type='button';
+      btn.className='relphi-theme-suggestion';
+      btn.textContent=name;
+      btn.setAttribute('aria-label','Search theme '+name);
+      btn.addEventListener('click',()=>{
+        $('oracleCommand').value=name;
+        runSearch(name);
+      });
+      row.appendChild(btn);
+    });
+    root.appendChild(row);
+    root.hidden=false;
+  }
   function updateSummary(list) {
     const count = list.length;
     const summaryModes = ['idle', 'all', 'search'];
     setSummaryVisible(summaryModes.includes(state.mode));
+    renderThemeNavigation();
     if (!summaryModes.includes(state.mode)) return;
     $('resultCount').textContent = count ? String(count) : 'No';
     $('resultNoun').textContent = count === 1 ? ' card shown' : ' cards shown';
@@ -3924,7 +3981,55 @@
         const date = new Date(state.lastDateField.date + 'T12:00:00');
         $('activeSummary').textContent = `Date lookup for ${date.toLocaleDateString(undefined, { weekday:'long', year:'numeric', month:'long', day:'numeric' })}.`;
       } else {
-        $('activeSummary').textContent = `Search results for “${state.query}”.`;
+        const theme = window.RELPHI_THEME_SEARCH?.resolve(state.query);
+        if (theme?.match === 'unqualified') {
+          const summary=$('activeSummary');
+          summary.textContent = `“${state.query}” has no curated direct card assignments yet. Related topics are suggestions, not results.`;
+          const related=window.RELPHI_THEME_SEARCH?.related(state.query) || [];
+          if(related.length){
+            const lead=document.createElement('span');
+            lead.textContent=' Explore separately: ';
+            summary.appendChild(lead);
+            related.forEach((name,index)=>{
+              if(index)summary.appendChild(document.createTextNode(', '));
+              const button=document.createElement('button');
+              button.type='button';
+              button.className='relphi-theme-suggestion';
+              button.textContent=name;
+              button.setAttribute('aria-label','Search direct theme '+name);
+              button.addEventListener('click',()=>{
+                $('oracleCommand').value=name;
+                runSearch(name);
+              });
+              summary.appendChild(button);
+            });
+            summary.appendChild(document.createTextNode('.'));
+          }
+        } else if (theme && !exactShorthandResults(state.query).length) {
+          $('activeSummary').textContent = `Direct theme: ${theme.name}${theme.match === 'alias' ? ` (matched “${state.query}”)` : ''}.`;
+        } else {
+          $('activeSummary').textContent = `Search results for “${state.query}”.`;
+          if (!count) {
+            const suggestions = window.RELPHI_THEME_SEARCH?.suggest(state.query,3) || [];
+            if (suggestions.length) {
+              const summary = $('activeSummary');
+              summary.appendChild(document.createTextNode(' Did you mean '));
+              suggestions.forEach((suggestion,index) => {
+                if (index) summary.appendChild(document.createTextNode(', '));
+                const button = document.createElement('button');
+                button.type = 'button';
+                button.className = 'relphi-theme-suggestion';
+                button.textContent = suggestion.name;
+                button.addEventListener('click', () => {
+                  $('oracleCommand').value = suggestion.name;
+                  runSearch(suggestion.name);
+                });
+                summary.appendChild(button);
+              });
+              summary.appendChild(document.createTextNode('?'));
+            }
+          }
+        }
       }
     }
   }
