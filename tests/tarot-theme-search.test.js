@@ -18,7 +18,7 @@ const exactly=(term,ids)=>assert.deepEqual(actual(term),ids.slice().sort(),term)
 assert.equal(cards.length,78);
 assert.equal(audit.reviewed_cards,78);
 assert.equal(audit.records.length,78);
-assert.equal(audit.added_assignments,298);
+assert.equal(audit.added_assignments,337);
 const directlySourced={"five_of_cups":["betrayal"],"two_of_cups":["friendship","passion"],"three_of_cups":["belonging","healing"],"nine_of_wands":["strength"],"ten_of_swords":["defeat","sadness"],"ten_of_cups":["harmony","friendship","home","contentment"],"seven_of_wands":["competition"],"four_of_wands":["concord"],"two_of_swords":["affection","friendship"],"five_of_swords":["loss"],"eight_of_wands":["message"]};
 for(const [id,terms] of Object.entries(directlySourced)){
  const card=cards.find(c=>c.card_id===id);
@@ -31,14 +31,14 @@ for(const [id,terms] of Object.entries(directlySourced)){
 }
 
 assert.equal(new Set(audit.records.map(row=>row.card_id)).size,78);
-assert.equal(engine.themeCount,567);
-assert.equal(engine.aliasCount,702);
+assert.equal(engine.themeCount,596);
+assert.equal(engine.aliasCount,787);
 
 // Every canonical theme is strictly equal to the original card-by-card membership.
 // No card qualifies through shared planet, suit, a neighboring theme or a search substring.
 const allThemes=[...new Set(cards.flatMap(c=>c.direct_themes||[]))];
 for(const theme of allThemes)exactly(theme,direct(theme));
-assert.equal(allThemes.length,567);
+assert.equal(allThemes.length,596);
 
 // No two card IDs in one theme; no unresolved card references.
 const ids=new Set(cards.map(card=>card.card_id));
@@ -120,18 +120,18 @@ exactly('betrayal',['five_of_cups','three_of_swords','five_of_swords','seven_of_
 
 // Distinct human events never inherit adjacent cards through vague links.
 // Ordinary but not-directly-qualified subjects offer safe navigation instead of false card hits.
-for(const q of ["loneliness","lonely","shame","shamed","depression","depressed","fraud","robbery","corruption","manipulation","injustice","unfairness","housing","injury"]){
+for(const q of ["depression","depressed","fraud","robbery","corruption","manipulation","injustice","unfairness","housing","injury"]){
  exactly(q,[]);
  assert.equal(engine.resolve(q).match,'unqualified',q);
  assert.ok(engine.related(q).length>0,q+' has related, separately qualified topics');
 }
-for(const q of ['divorce','cheating','infidelity','reconciliation']){
+for(const q of ['divorce','infidelity']){
  exactly(q,[]);
  assert.equal(engine.resolve(q).match,'unqualified',q);
  assert.ok(engine.related(q).length>0,q+' related topic navigation exists');
  for(const theme of engine.related(q))assert.ok(actual(theme).length>0,q+' -> '+theme);
 }
-for(const q of ['love','betrayal','secrecy','despair','suffering','abandonment','being abandoned','safety','miscarriage']){
+for(const q of ['love','betrayal','secrecy','despair','suffering','abandonment','being abandoned','safety','miscarriage','cheating','reconciliation','loneliness','shame','trust']){
  assert.equal(engine.resolve(q).match,'exact');
 }
 assert.ok(!actual('love').includes('seven_of_swords'));
@@ -145,6 +145,13 @@ for(const [query,theme] of Object.entries({'despair?':'despair','“suffering!�
 assert.ok(!actual('heartache').includes('seven_of_swords'));
 assert.ok(!actual('serenity').includes('three_of_swords'));
 assert.ok(!actual('deprivation').includes('ten_of_cups'));
+assert.equal(engine.resolve('self control').name,'self-control');
+assert.equal(engine.resolve('SELF–CONTROL').name,'self-control');
+assert.deepEqual(actual('self control'),actual('self-control'));
+assert.ok(engine.inflectionCount>120,'One-word inflections must be generated from the entire curated index');
+assert.ok(engine.related('self-worth').length>0,'Hyphenated terms resolve separate related navigation');
+assert.ok(!actual('love').includes('seven_of_swords'),'Cheating does not leak into love');
+assert.deepEqual(actual('cheating'),['seven_of_swords']);
 assert.ok(engine.suggest('secrects').some(item=>item.name==='secrecy'));
 assert.ok(engine.suggest('despairr').some(item=>item.name==='despair'));
 assert.ok(engine.matchingTagNames('secrets',['secrecy','betrayal','Cups']).includes('secrecy'));
@@ -157,4 +164,4 @@ assert.match(app,/RELPHI_THEME_SEARCH\?\.suggest/);
 assert.match(app,/RELPHI_THEME_SEARCH\?\.related/);
 assert.match(app,/data-row-theme-suggestion/);
 assert.match(html,/<script src="tarot-theme-search-v1\.js\?v=1"><\/script>[\s\S]*<script src="tarot-app\.js\?v=416"><\/script>/);
-console.log('PASS: 78 cards, 567 first-degree themes, 702 aliases, all 567 direct sets, source-gap guard, protected relevance and integrated searches.');
+console.log('PASS: 78 cards, 596 first-degree themes, 787 aliases, all 596 direct sets, source-gap guard, protected relevance and integrated searches.');
