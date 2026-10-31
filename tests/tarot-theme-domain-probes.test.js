@@ -47,9 +47,9 @@ for(const domain of bank.domains){
  }
 }
 assert.equal(seen.size,332);
-assert.deepEqual(count,{direct:256,alias:44,related:73},
+assert.deepEqual(count,{direct:257,alias:44,related:72},
  'Search coverage baseline must not regress by replacing direct hits with vague navigation.');
-assert.equal(engine.themeCount,596);
+assert.equal(engine.themeCount,597);
 assert.equal(engine.aliasCount,787);
 assert.ok(engine.inflectionCount>120,'Inflections cover newly added themes without per-word patches');
 
@@ -88,6 +88,7 @@ for(const [word,expected] of Object.entries({
  'abuse':['the_devil','nine_of_swords'],
  'homelessness':['five_of_pentacles'],
  'unemployment':['five_of_pentacles'],
+ 'purpose':['ten_of_wands','strength','the_sun'],
  'reconciliation':['temperance'],
  'budget':['two_of_pentacles','four_of_pentacles'],
  'war':['the_chariot','knight_of_swords'],
