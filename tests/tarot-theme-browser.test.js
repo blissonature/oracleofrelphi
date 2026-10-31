@@ -10,7 +10,7 @@ const base=process.env.RELPHI_TEST_URL || 'http://127.0.0.1:8075/tarot.html';
    const errors=[];
    page.on('pageerror',err=>errors.push(String(err)));
    await page.goto(base,{waitUntil:'domcontentloaded'});
-   await page.waitForFunction(()=>window.RELPHI_THEME_SEARCH?.themeCount===596 && !!window.RELPHI_KEYWORD_SUBPACK_CONTEXT,{timeout:25000});
+   await page.waitForFunction(()=>window.RELPHI_THEME_SEARCH?.themeCount===597 && !!window.RELPHI_KEYWORD_SUBPACK_CONTEXT,{timeout:25000});
    const cases=[
      ['despair',2],['suffering',4],['despair and suffering',4],['secrets',3],
      ['abandonment',2],['abandoned',2],['abandon a goal',1],
@@ -30,7 +30,7 @@ const base=process.env.RELPHI_TEST_URL || 'http://127.0.0.1:8075/tarot.html';
      ['stress',1],['emptiness',1],['ecstasy',1],['manifestation',2],
      ['gain',1],['profit',1],['income',2],['salary',2],['budget',2],
      ['arrival',1],['reconciliation',1],['self control',1],
-     ['dating',2],['fight',6],
+     ['dating',2],['fight',6],['purpose',3],
      ['depression',0],['fraud',0],
      ['compromise',0],['corruption',0],['injury',0]
    ];
@@ -55,7 +55,7 @@ const base=process.env.RELPHI_TEST_URL || 'http://127.0.0.1:8075/tarot.html';
    assert.ok(!leak.love.includes('nine_of_swords'));
    assert.equal(leak.selected,4);
    for(const t of ['despair','suffering','oppression','development','abandonment','being abandoned','safety','miscarriage','cheating','loneliness','shame','trust','abuse','budget'])assert.ok(leak.catalog.some(label=>label.toLowerCase()===t),t);
-   for(const term of ['depression','fraud','compromise','corruption','injury','apology','parenting','purpose','meditation','eviction','graduation']){
+   for(const term of ['depression','fraud','compromise','corruption','injury','apology','parenting','meditation','eviction','graduation']){
      await page.locator('#oracleCommand').fill(term);
      await page.locator('#runCommand').click();
      await page.waitForFunction(()=>document.getElementById('activeSummary')?.textContent.includes('Explore separately'),{timeout:10000});
