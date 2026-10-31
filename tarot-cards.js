@@ -209,7 +209,9 @@ window.RELPHI_TAROT_CARDS = [
       "prosperity",
       "tangible opportunity",
       "material foundation",
-      "embodiment"
+      "embodiment",
+      "ecstasy",
+      "manifestation"
     ],
     "astrology": {
       "logic": "Elemental root; not assigned to a decan.",
@@ -696,7 +698,8 @@ window.RELPHI_TAROT_CARDS = [
       "readiness",
       "vigilance",
       "endurance",
-      "strength"
+      "strength",
+      "attack"
     ],
     "astrology": {
       "logic": "Golden Dawn decan attribution for numbered minor cards.",
@@ -761,7 +764,8 @@ window.RELPHI_TAROT_CARDS = [
       "overburden",
       "duty",
       "strain",
-      "overwork"
+      "overwork",
+      "stress"
     ],
     "astrology": {
       "logic": "Golden Dawn decan attribution for numbered minor cards.",
@@ -825,7 +829,9 @@ window.RELPHI_TAROT_CARDS = [
       "sympathy",
       "concord",
       "friendship",
-      "passion"
+      "passion",
+      "trust",
+      "mutual respect"
     ],
     "astrology": {
       "logic": "Golden Dawn decan attribution for numbered minor cards.",
@@ -1190,7 +1196,8 @@ window.RELPHI_TAROT_CARDS = [
       "emotional depletion",
       "disengagement",
       "dissolution",
-      "abandonment"
+      "abandonment",
+      "emptiness"
     ],
     "astrology": {
       "logic": "Golden Dawn decan attribution for numbered minor cards.",
@@ -1593,7 +1600,10 @@ window.RELPHI_TAROT_CARDS = [
       "dishonor",
       "degradation",
       "destruction",
-      "loss"
+      "loss",
+      "shame",
+      "bullying",
+      "victimization"
     ],
     "astrology": {
       "logic": "Golden Dawn decan attribution for numbered minor cards.",
@@ -1716,7 +1726,8 @@ window.RELPHI_TAROT_CARDS = [
       "lies",
       "futility",
       "failed strategy",
-      "ineffective planning"
+      "ineffective planning",
+      "cheating"
     ],
     "astrology": {
       "logic": "Golden Dawn decan attribution for numbered minor cards.",
@@ -1841,7 +1852,11 @@ window.RELPHI_TAROT_CARDS = [
       "accusation",
       "desperation",
       "anguish",
-      "miscarriage"
+      "miscarriage",
+      "abuse",
+      "bullying",
+      "harassment",
+      "victimization"
     ],
     "astrology": {
       "logic": "Golden Dawn decan attribution for numbered minor cards.",
@@ -1968,7 +1983,8 @@ window.RELPHI_TAROT_CARDS = [
       "resource management",
       "adjustment",
       "recreation",
-      "material juggling"
+      "material juggling",
+      "budget"
     ],
     "astrology": {
       "logic": "Golden Dawn decan attribution for numbered minor cards.",
@@ -2092,7 +2108,8 @@ window.RELPHI_TAROT_CARDS = [
       "material security",
       "holding on",
       "inheritance",
-      "conservation"
+      "conservation",
+      "budget"
     ],
     "astrology": {
       "logic": "Golden Dawn decan attribution for numbered minor cards.",
@@ -2156,7 +2173,11 @@ window.RELPHI_TAROT_CARDS = [
       "exclusion",
       "material deprivation",
       "financial hardship",
-      "precarity"
+      "precarity",
+      "loneliness",
+      "homelessness",
+      "housing insecurity",
+      "unemployment"
     ],
     "astrology": {
       "logic": "Golden Dawn decan attribution for numbered minor cards.",
@@ -2218,7 +2239,8 @@ window.RELPHI_TAROT_CARDS = [
       "material support",
       "generosity",
       "sustenance",
-      "prosperity"
+      "prosperity",
+      "income"
     ],
     "astrology": {
       "logic": "Golden Dawn decan attribution for numbered minor cards.",
@@ -2402,7 +2424,10 @@ window.RELPHI_TAROT_CARDS = [
       "discernment",
       "cultivation",
       "prudence",
-      "safety"
+      "safety",
+      "gain",
+      "income",
+      "financial independence"
     ],
     "astrology": {
       "logic": "Golden Dawn decan attribution for numbered minor cards.",
@@ -2591,7 +2616,8 @@ window.RELPHI_TAROT_CARDS = [
       "warmth",
       "sincerity",
       "creative authority",
-      "hospitality"
+      "hospitality",
+      "honesty"
     ],
     "astrology": {
       "logic": "Court-card zodiac range crossing two signs.",
@@ -2769,7 +2795,8 @@ window.RELPHI_TAROT_CARDS = [
       "longing",
       "romantic overture",
       "offer",
-      "proposition"
+      "proposition",
+      "arrival"
     ],
     "astrology": {
       "logic": "Court-card zodiac range crossing two signs.",
@@ -2830,7 +2857,10 @@ window.RELPHI_TAROT_CARDS = [
       "tenderness",
       "empathy",
       "devotion",
-      "emotional understanding"
+      "emotional understanding",
+      "loyalty",
+      "trust",
+      "honesty"
     ],
     "astrology": {
       "logic": "Court-card zodiac range crossing two signs.",
@@ -3007,7 +3037,9 @@ window.RELPHI_TAROT_CARDS = [
       "bravery",
       "wrath",
       "confrontation",
-      "intervention"
+      "intervention",
+      "war",
+      "anger"
     ],
     "astrology": {
       "logic": "Court-card zodiac range crossing two signs.",
@@ -3571,7 +3603,8 @@ window.RELPHI_TAROT_CARDS = [
       "agency",
       "diplomacy",
       "translation",
-      "intelligibility"
+      "intelligibility",
+      "manifestation"
     ],
     "astrology": {
       "logic": "Major arcana attribution.",
@@ -4293,7 +4326,9 @@ window.RELPHI_TAROT_CARDS = [
       "protective movement",
       "safe passage",
       "transport",
-      "caregiving"
+      "caregiving",
+      "war",
+      "revenge"
     ],
     "astrology": {
       "logic": "Major arcana attribution.",
@@ -5211,7 +5246,8 @@ window.RELPHI_TAROT_CARDS = [
       "adaptation",
       "synthesis",
       "proportion",
-      "reconciliation of differences"
+      "reconciliation of differences",
+      "reconciliation"
     ],
     "astrology": {
       "logic": "Major arcana attribution.",
@@ -5353,7 +5389,9 @@ window.RELPHI_TAROT_CARDS = [
       "captivity",
       "compulsion",
       "attachment to form",
-      "violence"
+      "violence",
+      "abuse",
+      "coercion"
     ],
     "astrology": {
       "logic": "Major arcana attribution.",
@@ -5490,7 +5528,8 @@ window.RELPHI_TAROT_CARDS = [
       "ruin",
       "misery",
       "adversity",
-      "structural failure"
+      "structural failure",
+      "shame"
     ],
     "astrology": {
       "logic": "Major arcana attribution.",
