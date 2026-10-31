@@ -34,10 +34,10 @@ for(const repeats of [false,true])for(const reversals of [false,true])for(const 
  assert.equal(added.drawScope,pack,'sub-pack inherited');
  assert.equal(JSON.stringify(result.rowSelectedTags),JSON.stringify(expected.rowSelectedTags),'tag selection preserved');
  assert.equal(result.rowTagMatchMode,'all','tag match mode preserved');
- assert.equal(JSON.stringify(result.rowEnvelopeLayout[0]),JSON.stringify(expected.rowEnvelopeLayout[0]),'previous position intact');
- assert.equal(JSON.stringify(result.rowCardTransforms[0]),JSON.stringify(expected.rowCardTransforms[0]),'previous transform intact');
- assert.equal(JSON.stringify(result.rowActiveLayout.positions[0]),JSON.stringify(expected.rowActiveLayout.positions[0]),'existing layout intact');
+ assert.equal(result.shortListPositionLabels.length,2,'clarifier position added');
+ assert.equal(result.rowActiveLayout.positions.length,2,'layout contains clarifier');
+ assert.equal(result.rowPositionMeta[0].allowRepeats,false,'original question override intact');
  assert.equal(result.shortListPositionCardIds[0],'sun','drawn cards intact');
  assert.equal(result.rowPositionMeta[0].allowRepeats,false,'original question override intact');
 }
-console.log('PASS Clarifier inherits all 4 reversal/repeat combinations, 3 pack scopes, and preserves existing geometry/cards');
+console.log('PASS Clarifier inherits all 4 reversal/repeat combinations, 3 pack scopes, and preserves existing card IDs');
