@@ -2675,7 +2675,13 @@ window.RELPHI_TAROT_CARDS = [
       "leadership",
       "energy",
       "adventure",
-      "impulse"
+      "impulse",
+      "swiftness",
+      "strength",
+      "courage",
+      "generosity",
+      "indecision",
+      "work"
     ],
     "astrology": {
       "logic": "Court-card zodiac range crossing two signs.",
@@ -2733,7 +2739,13 @@ window.RELPHI_TAROT_CARDS = [
       "curiosity",
       "beginning",
       "enthusiasm",
-      "discovery"
+      "discovery",
+      "courage",
+      "ambition",
+      "independence",
+      "anger",
+      "revenge",
+      "passion"
     ],
     "astrology": {
       "logic": "Princess/Page quadrant logic; not an ordinary decan card.",
@@ -2918,7 +2930,11 @@ window.RELPHI_TAROT_CARDS = [
       "desire",
       "imagination",
       "relationship",
-      "attraction"
+      "attraction",
+      "secrecy",
+      "passion",
+      "strategy",
+      "power"
     ],
     "astrology": {
       "logic": "Court-card zodiac range crossing two signs.",
@@ -2976,7 +2992,12 @@ window.RELPHI_TAROT_CARDS = [
       "emotion",
       "surprise",
       "beginning",
-      "sensitivity"
+      "sensitivity",
+      "kindness",
+      "tenderness",
+      "romance",
+      "dreams",
+      "nurture"
     ],
     "astrology": {
       "logic": "Princess/Page quadrant logic; not an ordinary decan card.",
@@ -3160,7 +3181,10 @@ window.RELPHI_TAROT_CARDS = [
       "conflict",
       "intellect",
       "communication",
-      "restlessness"
+      "restlessness",
+      "indecision",
+      "futility",
+      "reason"
     ],
     "astrology": {
       "logic": "Court-card zodiac range crossing two signs.",
@@ -3218,7 +3242,13 @@ window.RELPHI_TAROT_CARDS = [
       "curiosity",
       "vigilance",
       "truth",
-      "communication"
+      "communication",
+      "anger",
+      "revenge",
+      "wisdom",
+      "dispute",
+      "resolution",
+      "practicality"
     ],
     "astrology": {
       "logic": "Princess/Page quadrant logic; not an ordinary decan card.",
@@ -3276,7 +3306,12 @@ window.RELPHI_TAROT_CARDS = [
       "responsibility",
       "routine",
       "persistence",
-      "stability"
+      "stability",
+      "cultivation",
+      "growth",
+      "patience",
+      "endurance",
+      "practicality"
     ],
     "astrology": {
       "logic": "Court-card zodiac range crossing two signs.",
@@ -3334,7 +3369,13 @@ window.RELPHI_TAROT_CARDS = [
       "work",
       "security",
       "nurture",
-      "practicality"
+      "practicality",
+      "fertility",
+      "mother",
+      "kindness",
+      "affection",
+      "ambition",
+      "intuition"
     ],
     "astrology": {
       "logic": "Court-card zodiac range crossing two signs.",
@@ -3391,7 +3432,14 @@ window.RELPHI_TAROT_CARDS = [
       "growth",
       "planning",
       "responsibility",
-      "ambition"
+      "ambition",
+      "prudence",
+      "resource management",
+      "caution",
+      "method",
+      "persistence",
+      "practicality",
+      "trust"
     ],
     "astrology": {
       "logic": "Court-card zodiac range crossing two signs.",
@@ -3450,7 +3498,13 @@ window.RELPHI_TAROT_CARDS = [
       "opportunity",
       "beginning",
       "learning",
-      "health"
+      "health",
+      "fertility",
+      "creation",
+      "manifestation",
+      "embodiment",
+      "gestation",
+      "future"
     ],
     "astrology": {
       "logic": "Princess/Page quadrant logic; not an ordinary decan card.",
