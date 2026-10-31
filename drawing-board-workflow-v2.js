@@ -5634,6 +5634,16 @@
     const root=panel();
     const text=String(question||'').trim();
     if(!root||!text||!optionsBridge()||!prefabBridge())return false;
+    // Capture the user's active draw rules before clearing an earlier
+    // structure. A fresh Bespoke question must not silently turn repeats off.
+    const inherited=optionsBridge().capture()||{};
+    const defaults={
+      pack:String(inherited.rowDrawScope||'full'),
+      reversals:inherited.rowAllowReversals!==false,
+      repeats:!!inherited.rowAllowRepeats,
+      keywordTags:Array.isArray(inherited.rowSelectedTags)?inherited.rowSelectedTags.slice():[],
+      keywordMatchMode:inherited.rowTagMatchMode==='all'?'all':'any'
+    };
     // Clear first: clearCraftedStructure restores a snapshot whose board-open
     // state may predate this launch. Open only after the reset so the launch
     // cannot be hidden again by that restore.
@@ -5649,11 +5659,13 @@
       basedOnTemplateId:'',
       templateName:'',
       labels:[text],
-      positionPacks:['full'],
-      positionSettings:[{pack:'full',reversals:true,repeats:false,cardCount:1,linkTo:''}],
-      pack:'full',
-      reversals:true,
-      repeats:false,
+      positionPacks:[defaults.pack],
+      positionSettings:[{pack:defaults.pack,reversals:defaults.reversals,repeats:defaults.repeats,cardCount:1,linkTo:''}],
+      pack:defaults.pack,
+      keywordTags:defaults.keywordTags,
+      keywordMatchMode:defaults.keywordMatchMode,
+      reversals:defaults.reversals,
+      repeats:defaults.repeats,
       stickers:true
     };
     if(!launchConfiguredReading(root,clone(optionsSession.draft)))return false;
@@ -5669,18 +5681,43 @@
     const snap=bridge.capture();if(!snap)return false;
     const labels=Array.isArray(snap.shortListPositionLabels)?snap.shortListPositionLabels.slice():[];
     if(labels.length>=MAX_POSITIONS)return false;
+    const index=labels.length;
+    const rules={
+      drawScope:String(snap.rowDrawScope||'full'),
+      allowReversals:snap.rowAllowReversals!==false,
+      allowRepeats:!!snap.rowAllowRepeats
+    };
     const originalMeta=Array.isArray(snap.rowPositionMeta)?snap.rowPositionMeta.map(item=>clone(item)||{}):[];
+    const previousPositions=Array.isArray(snap.rowActiveLayout?.positions)
+      ? snap.rowActiveLayout.positions.map(item=>clone(item)):[];
     labels.push(text);
-    const positions=genericPositions(labels);
+    const fresh=genericPositions(labels)[index];
+    // Preserve existing card positions, sizes, rotations and per-question rules.
+    // Only the new clarifier receives fresh geometry and current board defaults.
     snap.shortListPositionLabels=labels;
-    snap.shortListPositionCardIds=Array.from({length:labels.length},(_,index)=>String(snap.shortListPositionCardIds?.[index]||''));
-    snap.rowEnvelopeLayout={};snap.rowCardTransforms={};
-    snap.rowPositionMeta=positions.map((item,index)=>{
-      snap.rowEnvelopeLayout[index]={x:item.transform.x*CANVAS_W,y:item.transform.y*CANVAS_H};
-      snap.rowCardTransforms[index]={scale:item.transform.scale,rotation:item.transform.rotation||0,zIndex:item.transform.zIndex||1};
-      return {...(originalMeta[index]||{}),id:item.id,drawScope:originalMeta[index]?.drawScope||'full',allowReversals:originalMeta[index]?.allowReversals??true,allowRepeats:originalMeta[index]?.allowRepeats??false,cardCount:1,craftedPath:'bespoke',questionText:labels[index],openTransform:null};
-    });
-    snap.rowActiveLayout={version:1,id:'custom-active',name:String(snap.rowActiveLayout?.name||'Bespoke'),cardCount:labels.length,source:'custom',editable:true,basedOn:snap.rowActiveLayout?.basedOn||null,relphiCraftedPath:'bespoke',positions:positions.map((item,index)=>({...item,drawOrder:index+1,drawScope:snap.rowPositionMeta[index].drawScope,allowReversals:snap.rowPositionMeta[index].allowReversals,allowRepeats:snap.rowPositionMeta[index].allowRepeats,cardCount:1})),rules:{allowReversals:snap.rowAllowReversals!==false,allowRepeats:!!snap.rowAllowRepeats,drawScope:snap.rowDrawScope||'full'}};
+    snap.shortListPositionCardIds=Array.from({length:labels.length},(_,i)=>String(snap.shortListPositionCardIds?.[i]||''));
+    snap.rowEnvelopeLayout={...(snap.rowEnvelopeLayout||{})};
+    snap.rowCardTransforms={...(snap.rowCardTransforms||{})};
+    snap.rowEnvelopeLayout[index]={x:fresh.transform.x*CANVAS_W,y:fresh.transform.y*CANVAS_H};
+    snap.rowCardTransforms[index]={scale:fresh.transform.scale,rotation:fresh.transform.rotation||0,zIndex:fresh.transform.zIndex||1};
+    const newMeta={id:fresh.id,drawScope:rules.drawScope,
+      allowReversals:rules.allowReversals,allowRepeats:rules.allowRepeats,
+      cardCount:1,craftedPath:'bespoke',questionText:text,openTransform:null,
+      cardSource:String(originalMeta[index-1]?.cardSource||'digital')};
+    snap.rowPositionMeta=[...originalMeta,newMeta];
+    const positions=previousPositions.length===index
+      ? [...previousPositions,{...fresh,drawOrder:index+1,drawScope:rules.drawScope,
+          allowReversals:rules.allowReversals,allowRepeats:rules.allowRepeats,
+          cardCount:1,questionText:text}]
+      : genericPositions(labels).map((item,i)=>({...item,
+          drawOrder:i+1,drawScope:snap.rowPositionMeta[i]?.drawScope||rules.drawScope,
+          allowReversals:snap.rowPositionMeta[i]?.allowReversals??rules.allowReversals,
+          allowRepeats:snap.rowPositionMeta[i]?.allowRepeats??rules.allowRepeats,cardCount:1}));
+    snap.rowActiveLayout={...(snap.rowActiveLayout||{}),version:1,id:'custom-active',
+      name:String(snap.rowActiveLayout?.name||'Bespoke'),cardCount:labels.length,
+      source:'custom',editable:true,basedOn:snap.rowActiveLayout?.basedOn||null,
+      relphiCraftedPath:'bespoke',positions,
+      rules:{allowReversals:rules.allowReversals,allowRepeats:rules.allowRepeats,drawScope:rules.drawScope}};
     snap.rowLayoutLocked=false;
     bridge.restore(snap);
     craftedReadingActive=true;activeCraftedPath='bespoke';
