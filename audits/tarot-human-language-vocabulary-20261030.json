@@ -1,0 +1,292 @@
+{
+  "schema": "relphi_reviewed_human_search_language_v1",
+  "policy": {
+    "aliases": "Language equivalents only; inherit directly curated cards from one canonical term.",
+    "related": "Navigation only; never qualifies cards by association.",
+    "editorial": "Ambiguous terms remain unqualified and redirect to separately selectable qualified topics."
+  },
+  "aliases": {
+    "panic": "terror",
+    "panicking": "terror",
+    "panicked": "terror",
+    "angry": "anger",
+    "rage": "anger",
+    "raging": "anger",
+    "furious": "anger",
+    "furiously angry": "anger",
+    "ashamed": "shame",
+    "feeling ashamed": "shame",
+    "lonely": "loneliness",
+    "feeling lonely": "loneliness",
+    "feeling alone": "loneliness",
+    "dating": "romance",
+    "going on dates": "romance",
+    "lovers": "love",
+    "caring for a parent": "caregiving",
+    "profit": "gain",
+    "profits": "gain",
+    "earning a profit": "gain",
+    "career": "work",
+    "my career": "work",
+    "career growth": "professional development",
+    "evolution": "development through change",
+    "evolving": "development through change",
+    "doubt": "uncertainty",
+    "doubting": "uncertainty",
+    "retaliation": "revenge",
+    "vengeance": "revenge",
+    "revengeful": "revenge",
+    "fight": "conflict",
+    "fights": "conflict",
+    "new chapter": "renewal",
+    "starting a new chapter": "renewal",
+    "test": "examination",
+    "taking a test": "examination",
+    "harassed": "harassment",
+    "being harassed": "harassment",
+    "bullied": "bullying",
+    "being bullied": "bullying",
+    "bully": "bullying",
+    "abused": "abuse",
+    "abusive": "abuse",
+    "coerced": "coercion",
+    "being coerced": "coercion",
+    "homeless": "homelessness",
+    "being homeless": "homelessness",
+    "unemployed": "unemployment",
+    "out of work": "unemployment",
+    "jobless": "unemployment",
+    "housing unstable": "housing insecurity",
+    "unstable housing": "housing insecurity",
+    "betraying trust": "betrayal",
+    "loyal": "loyalty",
+    "trusted": "trust",
+    "trusting someone": "trust",
+    "telling the truth": "honesty",
+    "honest": "honesty",
+    "income stream": "income",
+    "salary": "income",
+    "wages": "income",
+    "paycheck": "income",
+    "budgeting": "budget",
+    "budgets": "budget",
+    "ecstatic": "ecstasy",
+    "feeling ecstatic": "ecstasy",
+    "empty inside": "emptiness",
+    "feeling empty": "emptiness",
+    "stressed": "stress",
+    "under stress": "stress",
+    "stressful": "stress",
+    "manifesting": "manifestation",
+    "manifest": "manifestation",
+    "warfare": "war",
+    "at war": "war",
+    "attacked": "attack",
+    "under attack": "attack",
+    "make amends": "reconciliation",
+    "making peace": "reconciliation",
+    "cheated": "cheating",
+    "cheater": "cheating",
+    "cheating someone": "cheating",
+    "victim": "victimization",
+    "victimized": "victimization",
+    "victimised": "victimization"
+  },
+  "related": {
+    "resentment": [
+      "anger",
+      "hostility",
+      "regret"
+    ],
+    "bitterness": [
+      "anger",
+      "sorrow",
+      "regret"
+    ],
+    "envy": [
+      "rivalry",
+      "insecurity",
+      "desire"
+    ],
+    "numbness": [
+      "emotional depletion",
+      "disinterest",
+      "withdrawal"
+    ],
+    "repair": [
+      "recovery",
+      "resolution",
+      "renewal"
+    ],
+    "apology": [
+      "regret",
+      "accountability",
+      "communication"
+    ],
+    "neglect": [
+      "avoidance",
+      "withdrawal",
+      "care"
+    ],
+    "parenting": [
+      "caregiving",
+      "nurture",
+      "family"
+    ],
+    "grandparent": [
+      "family",
+      "ancestry",
+      "legacy"
+    ],
+    "sibling": [
+      "family",
+      "childhood",
+      "relationship"
+    ],
+    "grandmother": [
+      "family",
+      "ancestry",
+      "legacy"
+    ],
+    "adolescent": [
+      "childhood",
+      "growth",
+      "learning"
+    ],
+    "earning": [
+      "work",
+      "income",
+      "gain"
+    ],
+    "exploitation": [
+      "oppression",
+      "bondage",
+      "control"
+    ],
+    "rent": [
+      "money",
+      "home",
+      "debt"
+    ],
+    "landlord": [
+      "home",
+      "law",
+      "resources"
+    ],
+    "self-care": [
+      "care",
+      "nurture",
+      "rest"
+    ],
+    "hospice": [
+      "caregiving",
+      "mortality",
+      "compassion"
+    ],
+    "end of life": [
+      "mortality",
+      "death",
+      "caregiving"
+    ],
+    "infection": [
+      "illness",
+      "healing",
+      "health"
+    ],
+    "medicine": [
+      "healing",
+      "health",
+      "care"
+    ],
+    "treatment": [
+      "healing",
+      "recovery",
+      "care"
+    ],
+    "self worth": [
+      "values",
+      "identity",
+      "confidence"
+    ],
+    "self esteem": [
+      "confidence",
+      "identity",
+      "values"
+    ],
+    "initiation": [
+      "beginning",
+      "ceremony",
+      "awakening"
+    ],
+    "purpose": [
+      "calling",
+      "direction",
+      "will"
+    ],
+    "free will": [
+      "choice",
+      "agency",
+      "freedom"
+    ],
+    "delusion": [
+      "illusion",
+      "confusion",
+      "perceptual uncertainty"
+    ],
+    "spirituality": [
+      "faith",
+      "religion",
+      "intuition"
+    ],
+    "prayer": [
+      "faith",
+      "religion",
+      "hope"
+    ],
+    "magic": [
+      "manifestation",
+      "will",
+      "creation"
+    ],
+    "meditation": [
+      "reflection",
+      "solitude",
+      "rest"
+    ],
+    "domination": [
+      "dominion",
+      "control",
+      "oppression"
+    ],
+    "bias": [
+      "fairness",
+      "judgment",
+      "justice"
+    ],
+    "punishment": [
+      "consequences",
+      "reckoning",
+      "judgment"
+    ],
+    "violation": [
+      "boundaries",
+      "protection",
+      "hostility"
+    ],
+    "meeting": [
+      "connection",
+      "invitation",
+      "reunion"
+    ],
+    "accident": [
+      "surprise",
+      "shock",
+      "crisis"
+    ],
+    "graduation": [
+      "education",
+      "completion",
+      "achievement"
+    ]
+  }
+}
