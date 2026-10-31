@@ -7,6 +7,7 @@ const vm = require('node:vm');
 const read=path=>fs.readFileSync(path,'utf8');
 const bank=JSON.parse(read('audits/tarot-human-topic-probes-20261030.json'));
 const decisions=JSON.parse(read('audits/tarot-human-theme-decisions-20261030.json'));
+const courts=JSON.parse(read('audits/tarot-court-first-degree-supplement-20261030.json'));
 const dictionary=JSON.parse(read('audits/tarot-human-language-vocabulary-20261030.json'));
 const sandbox={window:{}};
 vm.runInNewContext(read('tarot-cards.js'),sandbox);
@@ -68,6 +69,23 @@ for(const record of decisions.records){
   assert.ok(idsOf(term).includes(card.card_id),record.card_id+' not returned by '+term);
  }
 }
+// All 78 cards have a specified provenance; the ten missing locked upright
+// court descriptions are explicitly backed by Thoth upright source records,
+// not fictitiously labeled as Relphi text or reversal-derived membership.
+const original=JSON.parse(read('audits/tarot-direct-theme-coverage-20261030.json'));
+const missingLocked=original.records.filter(row=>!row.relphi_interpretation&&!row.traditional_upright);
+assert.equal(missingLocked.length,10);
+assert.equal(courts.reviewed_cards,10);
+assert.equal(courts.records.length,10);
+assert.deepEqual(missingLocked.map(row=>row.card_id).sort(),courts.records.map(row=>row.card_id).sort());
+for(const row of courts.records){
+ assert.ok(row.source_url.startsWith('https://'),'Public source provenance: '+row.card_id);
+ assert.ok(row.paraphrased_evidence.length>=90,'Source scope and support: '+row.card_id);
+ assert.equal(row.source_scope,'upright positive character and direct symbolism');
+ const card=cards.find(card=>card.card_id===row.card_id);
+ for(const name of row.approved_direct_themes)
+  assert.ok(card.direct_themes.includes(name),'Unsourced court theme '+row.card_id+':'+name);
+}
 for(const boundary of decisions.protected_boundaries)
  for(const id of boundary.must_exclude)
   assert.ok(!idsOf(boundary.query).includes(id),boundary.query+' incorrectly imported '+id);
@@ -84,9 +102,9 @@ for(const [query,topics] of Object.entries(dictionary.related)){
  assert.ok(topics.some(t=>actual.includes(t)),'At least one actual related suggestion: '+query);
 }
 for(const [word,expected] of Object.entries({
- 'anger':['knight_of_swords'],
+ 'anger':['knight_of_swords','princess_of_wands','princess_of_swords'],
  'shame':['five_of_swords','the_tower'],
- 'trust':['two_of_cups','queen_of_cups'],
+ 'trust':['two_of_cups','queen_of_cups','prince_of_disks'],
  'loyalty':['queen_of_cups'],
  'loneliness':['five_of_pentacles'],
  'cheating':['seven_of_swords'],
