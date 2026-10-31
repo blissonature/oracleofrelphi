@@ -760,6 +760,13 @@
     .replace(/[\u2010-\u2015\u2212-]/g, ' ')
     .replace(/^[\s"“”'.,!?;:()[\]{}]+|[\s"“”'.,!?;:()[\]{}]+$/g, '')
     .replace(/\s+/g, ' ').trim();
+  // Normalize related-topic keys too: "self-worth" and "self worth"
+  // must lead to the same explicitly separated navigation, never new direct cards.
+  const normalizedRelated = new Map();
+  for(const [raw,names] of Object.entries(RELATED_SUGGESTIONS)){
+    const key=normalize(raw);
+    normalizedRelated.set(key,[...new Set([...(normalizedRelated.get(key)||[]),...names])]);
+  }
   const themes = new Map();
   for (const card of (global.RELPHI_TAROT_CARDS || [])) {
     for (const name of (card.direct_themes || [])) {
@@ -846,7 +853,7 @@
   }
   function related(raw) {
     const key=normalize(raw);
-    const options=RELATED_SUGGESTIONS[key] || [];
+    const options=normalizedRelated.get(key) || [];
     const seen=new Set();
     return options.map(name=>resolve(name)).filter(hit=>{
       if(!hit || hit.match==='unqualified' || hit.match==='combined')return false;
