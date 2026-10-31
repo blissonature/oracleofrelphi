@@ -32,11 +32,11 @@ for(const repeats of [false,true])for(const reversals of [false,true])for(const 
  assert.equal(added.allowRepeats,repeats,'repeats inherited');
  assert.equal(added.allowReversals,reversals,'reversals inherited');
  assert.equal(added.drawScope,pack,'sub-pack inherited');
- assert.deepEqual(result.rowSelectedTags,expected.rowSelectedTags,'tag selection preserved');
+ assert.equal(JSON.stringify(result.rowSelectedTags),JSON.stringify(expected.rowSelectedTags),'tag selection preserved');
  assert.equal(result.rowTagMatchMode,'all','tag match mode preserved');
- assert.deepEqual(result.rowEnvelopeLayout[0],expected.rowEnvelopeLayout[0],'previous position intact');
- assert.deepEqual(result.rowCardTransforms[0],expected.rowCardTransforms[0],'previous transform intact');
- assert.deepEqual(result.rowActiveLayout.positions[0],expected.rowActiveLayout.positions[0],'existing layout intact');
+ assert.equal(JSON.stringify(result.rowEnvelopeLayout[0]),JSON.stringify(expected.rowEnvelopeLayout[0]),'previous position intact');
+ assert.equal(JSON.stringify(result.rowCardTransforms[0]),JSON.stringify(expected.rowCardTransforms[0]),'previous transform intact');
+ assert.equal(JSON.stringify(result.rowActiveLayout.positions[0]),JSON.stringify(expected.rowActiveLayout.positions[0]),'existing layout intact');
  assert.equal(result.shortListPositionCardIds[0],'sun','drawn cards intact');
  assert.equal(result.rowPositionMeta[0].allowRepeats,false,'original question override intact');
 }
