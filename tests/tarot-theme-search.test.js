@@ -18,7 +18,7 @@ const exactly=(term,ids)=>assert.deepEqual(actual(term),ids.slice().sort(),term)
 assert.equal(cards.length,78);
 assert.equal(audit.reviewed_cards,78);
 assert.equal(audit.records.length,78);
-assert.equal(audit.added_assignments,340);
+assert.equal(audit.added_assignments,394);
 const directlySourced={"five_of_cups":["betrayal"],"two_of_cups":["friendship","passion"],"three_of_cups":["belonging","healing"],"nine_of_wands":["strength"],"ten_of_swords":["defeat","sadness"],"ten_of_cups":["harmony","friendship","home","contentment"],"seven_of_wands":["competition"],"four_of_wands":["concord"],"two_of_swords":["affection","friendship"],"five_of_swords":["loss"],"eight_of_wands":["message"]};
 for(const [id,terms] of Object.entries(directlySourced)){
  const card=cards.find(c=>c.card_id===id);
@@ -114,7 +114,7 @@ exactly('oppression',['ten_of_wands']);
 exactly('ruin',['ten_of_swords','the_tower']);
 exactly('peace',['four_of_wands','two_of_swords']);
 exactly('development',['the_empress']);
-exactly('secrecy',['seven_of_swords','the_high_priestess','the_moon']);
+exactly('secrecy',['seven_of_swords','the_high_priestess','the_moon','prince_of_cups']);
 exactly('love',['ace_of_cups','two_of_cups','ten_of_cups','knight_of_cups','queen_of_cups','princess_of_cups','the_lovers']);
 exactly('betrayal',['five_of_cups','three_of_swords','five_of_swords','seven_of_swords','ten_of_swords']);
 
