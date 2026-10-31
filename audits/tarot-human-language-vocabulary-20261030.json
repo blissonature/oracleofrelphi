@@ -282,6 +282,156 @@
       "education",
       "completion",
       "achievement"
+    ],
+    "acceptance": [
+      "surrender",
+      "resolution",
+      "peace"
+    ],
+    "adolescence": [
+      "childhood",
+      "growth",
+      "learning"
+    ],
+    "aging": [
+      "mortality",
+      "change",
+      "wisdom"
+    ],
+    "boundaries violation": [
+      "boundaries",
+      "hostility",
+      "protection"
+    ],
+    "burnout recovery": [
+      "burnout",
+      "recovery",
+      "rest"
+    ],
+    "citizenship": [
+      "community",
+      "law",
+      "participation"
+    ],
+    "community loss": [
+      "community",
+      "loss",
+      "grief"
+    ],
+    "consent": [
+      "agreement",
+      "boundaries",
+      "choice"
+    ],
+    "creativity block": [
+      "creativity",
+      "stagnation",
+      "frustration"
+    ],
+    "custodianship": [
+      "caregiving",
+      "responsibility",
+      "protection"
+    ],
+    "demotion": [
+      "job loss",
+      "recognition",
+      "failure"
+    ],
+    "disclosure": [
+      "revelation",
+      "truth",
+      "secrecy"
+    ],
+    "divorce settlement": [
+      "legal matters",
+      "separation",
+      "resolution"
+    ],
+    "estrangement": [
+      "separation",
+      "exclusion",
+      "relationship"
+    ],
+    "euthanasia": [
+      "mortality",
+      "death",
+      "caregiving"
+    ],
+    "fame": [
+      "recognition",
+      "public recognition",
+      "visibility"
+    ],
+    "firing": [
+      "job loss",
+      "employment",
+      "loss"
+    ],
+    "fostering": [
+      "caregiving",
+      "child",
+      "nurture"
+    ],
+    "grace": [
+      "compassion",
+      "faith",
+      "care"
+    ],
+    "healing relationship": [
+      "recovery",
+      "relationship",
+      "care"
+    ],
+    "immigration": [
+      "emigration",
+      "moving",
+      "travel"
+    ],
+    "litigation": [
+      "law",
+      "legal matters",
+      "conflict"
+    ],
+    "marginalization": [
+      "exclusion",
+      "humiliation",
+      "fairness"
+    ],
+    "menopause": [
+      "change",
+      "health",
+      "transition"
+    ],
+    "migration": [
+      "emigration",
+      "moving",
+      "travel"
+    ],
+    "personal development": [
+      "development",
+      "growth",
+      "learning"
+    ],
+    "rebellion": [
+      "resistance",
+      "freedom",
+      "authority"
+    ],
+    "reputation": [
+      "recognition",
+      "praise",
+      "dishonor"
+    ],
+    "restitution": [
+      "recompense",
+      "justice",
+      "accountability"
+    ],
+    "vulnerability": [
+      "sensitivity",
+      "insecurity",
+      "openness"
     ]
   }
 }
