@@ -30,7 +30,7 @@ const base=process.env.RELPHI_TEST_URL || 'http://127.0.0.1:8075/tarot.html';
      ['stress',1],['emptiness',1],['ecstasy',1],['manifestation',2],
      ['gain',1],['profit',1],['income',2],['salary',2],['budget',2],
      ['arrival',1],['reconciliation',1],['self control',1],
-     ['dating',2],['fight',16],
+     ['dating',2],['fight',6],
      ['depression',0],['fraud',0],
      ['compromise',0],['corruption',0],['injury',0]
    ];
