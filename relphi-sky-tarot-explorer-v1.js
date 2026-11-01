@@ -146,7 +146,7 @@
   const sourceHelp=document.createElement('div');
   sourceHelp.id='skyConnectorSourceHelp';
   sourceHelp.hidden=true;
-  sourceHelp.innerHTML='<p>No skies saved in this preview. Skies on oracleofrelphi.com are not automatically shared with this preview.</p><a href="sky-chart.html">Open Sky Chart here to create or load a sky</a> <label>Import an existing sky JSON file <input type="file" id="skyConnectorImport" accept=".json,application/json"></label><span id="skyConnectorImportStatus" role="status"></span>';
+  sourceHelp.innerHTML='<p>This preview cannot read the skies saved on oracleofrelphi.com.</p><a href="sky-chart.html">Create a sky in this preview</a> <button type="button" id="skyConnectorTryExample">Try example: Mars 17°52′ Virgo</button><span id="skyConnectorExampleStatus" role="status"></span>';
   panel.appendChild(sourceHelp);
   listPanel.insertBefore(panel,listPanel.querySelector('.cards-heading'));
   // No replacement card grid, typography, palette, or page-wide hiding rules.
@@ -154,14 +154,13 @@
   const selector=panel.querySelector('#skyConnectorSky');
   const summary=panel.querySelector('#skyConnectorSummary');
   const sourceHelp=panel.querySelector('#skyConnectorSourceHelp');
-  const importStatus=panel.querySelector('#skyConnectorImportStatus');
-  const importFile=panel.querySelector('#skyConnectorImport');
-  function importSky(raw){
-    const payload=JSON.parse(raw);
-    const candidates=Array.isArray(payload)?payload:[payload?.sky,payload?.chart,payload?.skyA,payload?.data,payload].filter(Boolean);
-    const sky=candidates.find(candidate=>candidate&&typeof candidate==='object'&&placements(candidate).length>0);
-    if(!sky)throw new Error('That file does not contain recognizable sky placements.');
-    localStorage.setItem(KEYS.A,JSON.stringify(sky));
+  panel.querySelector('#skyConnectorTryExample')?.addEventListener('click',()=>{
+    // Clearly labeled example, not a substitute for the user's actual chart.
+    localStorage.setItem(KEYS.A,JSON.stringify({
+      name:'Example · Mars 17°52′ Virgo',
+      calcProfile:{timeUnknown:true},
+      placements:{Mars:{name:'Mars',sign:'Virgo',degree:17,minute:52}}
+    }));
     skyId='A';
     searchTerm='';
     const input=document.getElementById('oracleCommand');
@@ -169,12 +168,7 @@
     showNativeIndex();
     apply();
     updateUrl(true);
-  }
-  importFile?.addEventListener('change',async()=>{
-    const file=importFile.files?.[0];if(!file)return;
-    try{importSky(await file.text());importStatus.textContent='Sky loaded into this preview.';}
-    catch(error){importStatus.textContent=error?.message||'Unable to import sky.';}
-    finally{importFile.value='';}
+    panel.querySelector('#skyConnectorExampleStatus').textContent='Example sky loaded. Nine of Pentacles should match.';
   });
   function updateUrl(isOpen){
     const url=new URL(location.href);
