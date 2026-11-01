@@ -91,25 +91,15 @@
     pl.forEach(r=>{
       r.house = houseReady ? (r.house || houseAt(r.lon,cp)) : null;
       const sign=SIGNS[r.si],position=locationText(r),ruler=RULERS[r.si],face=FACES[r.si][r.decan];
-      add(index.planets.get(r.name),'direct','Direct planetary correspondence: '+position+'.',r);
-      add(index.signs.get(clean(sign)),'sign','Zodiac correspondence: '+position+' occupies '+sign+'.',r);
+      // Only position-specific Minor Arcana qualify. The planet occupying
+      // a decan is the trigger; the decan's traditional ruler need not be it.
       add(index.decans.get(clean(sign)+':'+r.decan),'decan','Exact decan: '+position+' falls in '+sign+' '+(r.decan*10)+'°–'+((r.decan+1)*10)+'°.',r);
       index.courts.forEach(c=>{if(contains(r.lon,c.start,c.end))add(c.card,'court','Court range: '+position+' falls within '+c.card.astrology.zodiac_range+'.',r)});
-      add(index.planets.get(ruler),'sign-ruler','Sign ruler: '+ruler+' governs '+sign+', occupied by '+r.name+'.',r);
-      add(index.planets.get(face),'decan-ruler','Decan ruler: '+face+' governs the '+['first','second','third'][r.decan]+' decan of '+sign+', occupied by '+r.name+'.',r);
     });
-    if(cp){cp.forEach((lon,i)=>{const sign=SIGNS[Math.floor(lon/30)],ruler=RULERS[Math.floor(lon/30)];
-      add(index.signs.get(clean(sign)),'house-sign','House '+(i+1)+' cusp is in '+sign+'.',null,i+1);
-      add(index.planets.get(ruler),'house-ruler','House '+(i+1)+' cusp in '+sign+' is ruled by '+ruler+'.',null,i+1);
-    })}
-    const asc=pl.find(r=>clean(r.name)==='ascendant');
-    if(asc && cp)add(index.planets.get(RULERS[asc.si]),'chart-ruler','Chart ruler: '+RULERS[asc.si]+' rules the Ascendant in '+SIGNS[asc.si]+'.',asc);
-    const profile=sky.calcProfile||{};
-    [['dayRuler','planetary day'],['hourRuler','planetary hour'],['planetaryDayRuler','planetary day'],['planetaryHourRuler','planetary hour']].forEach(([key,title])=>{const name=String(profile[key]||sky[key]||'');if(name)add(index.planets.get(name),'time-ruler',name+' rules the '+title+'.',null)});
     const entries=Array.from(ledger.values()).map(e=>({...e,hits:e.hits.sort((a,b)=>(a.house||99)-(b.house||99)||a.reason.localeCompare(b.reason)),hitCount:e.hits.length})).sort((a,b)=>b.hitCount-a.hitCount||a.card.name.localeCompare(b.card.name));
     return {entries,houseReady,placementCount:pl.length,hitCount:entries.reduce((n,e)=>n+e.hitCount,0)};
   }
-  const modeHits = (entry,mode) => mode==='rulers' ? entry.hits.filter(h=>['direct','sign-ruler','decan-ruler','house-ruler','chart-ruler','time-ruler'].includes(h.type)) : mode==='houses' ? entry.hits.filter(h=>h.house!=null) : entry.hits;
+  const modeHits = entry => entry.hits;
   const image = card => 'assets/tarot/rws/'+encodeURIComponent(card.card_id)+'.webp';
   function initSkyChart() {
     // Native links allow normal browser navigation, including open in new tab.
@@ -150,18 +140,15 @@
   panel.className='active-filter-row active-filter-row--results';
   panel.setAttribute('aria-label','Sky Connector filters');
   panel.hidden=true;
-  panel.innerHTML='<strong>Sky Connector</strong> <label>Sky <select id="skyConnectorSky" aria-label="Choose sky"></select></label> <span role="group" aria-label="Sky match views"><button type="button" data-sky-view="all">All matches</button><button type="button" data-sky-view="rulers">Rulers</button><button type="button" data-sky-view="houses">Houses</button></span> <label class="sky-house-filter" hidden>House <select id="skyConnectorHouse" aria-label="Filter by house"></select></label> <button type="button" data-sky-close>Show All Cards</button> <span id="skyConnectorSummary" role="status" aria-live="polite"></span>';
+  panel.innerHTML='<strong>Sky Connector</strong> <label>Sky <select id="skyConnectorSky" aria-label="Choose sky"></select></label> <button type="button" data-sky-close>Show All Cards</button> <span id="skyConnectorSummary" role="status" aria-live="polite"></span>';
   listPanel.insertBefore(panel,listPanel.querySelector('.cards-heading'));
   // No replacement card grid, typography, palette, or page-wide hiding rules.
-  let active=false,skyId='',view='all',houseFilter=0,openingIndex=false,queued=false;
+  let active=false,skyId='',searchTerm='',openingIndex=false,queued=false;
   const selector=panel.querySelector('#skyConnectorSky');
   const summary=panel.querySelector('#skyConnectorSummary');
-  const houseSelect=panel.querySelector('#skyConnectorHouse');
-  const houseLabel=panel.querySelector('.sky-house-filter');
-  houseSelect.innerHTML='<option value="0">All houses</option>'+Array.from({length:12},(_,i)=>'<option value="'+(i+1)+'">House '+(i+1)+'</option>').join('');
   function updateUrl(isOpen){
     const url=new URL(location.href);
-    if(isOpen){url.searchParams.set('skyConnector',skyId);url.searchParams.set('view',view);}
+    if(isOpen){url.searchParams.set('skyConnector',skyId);url.searchParams.delete('view');}
     else{url.searchParams.delete('skyConnector');url.searchParams.delete('view');}
     history.replaceState(history.state,'',url);
   }
@@ -170,13 +157,12 @@
     if(!skies.some(o=>o.id===skyId))skyId=skies[0]?.id||'';
     selector.innerHTML=skies.map(o=>'<option value="'+esc(o.id)+'">'+esc(o.name)+'</option>').join('')||'<option value="">No skies available</option>';
     selector.value=skyId;
-    houseLabel.hidden=view!=='houses';
-    houseSelect.value=String(houseFilter);
-    panel.querySelectorAll('[data-sky-view]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.skyView===view)));
   }
   function showNativeIndex(){
     openingIndex=true;
-    try{showAll.click();}finally{openingIndex=false;}
+    const input=document.getElementById('oracleCommand');
+    const value=input?.value||'';
+    try{showAll.click();}finally{openingIndex=false;if(input)input.value=value;}
   }
   function clearSkyState(){
     active=false;
@@ -199,12 +185,22 @@
     const sky=choose(skyId);
     const result=calculate(sky,window.RELPHI_TAROT_CARDS||[]);
     const matches=new Map();
-    if(sky && (view!=='houses'||result.houseReady)){
-      result.entries.forEach(entry=>{
-        const hits=modeHits(entry,view).filter(hit=>view!=='houses'||!houseFilter||hit.house===houseFilter);
-        if(hits.length)matches.set(entry.card.card_id,hits);
-      });
-    }
+    const term=clean(searchTerm);
+    const placed=placements(sky);
+    const matchingBodies=new Set(placed.filter(r=>!term ||
+      clean(r.name).includes(term) || clean(SIGNS[r.si]).includes(term)
+    ).map(r=>clean(r.name)));
+    const placementQuery=!!term && matchingBodies.size>0;
+    // A planet/sign query selects sky placements first, then their Minor
+    // Arcana correspondences. Other queries intersect card metadata.
+    result.entries.forEach(entry=>{
+      if(entry.card.arcana==='Major')return;
+      const hits=modeHits(entry).filter(hit=>!term || (placementQuery
+        ? matchingBodies.has(clean(hit.body))
+        : clean([entry.card.name,entry.card.card_id,entry.card.suit,
+                 entry.card.astrology?.planet,entry.card.astrology?.sign].join(' ')).includes(term)));
+      if(hits.length)matches.set(entry.card.card_id,hits);
+    });
     const grid=cardList.querySelector('.tarot-result-grid');
     if(grid){
       grid.querySelectorAll('.or-card[data-id]').forEach(card=>{
@@ -215,9 +211,16 @@
         card.querySelector('[data-sky-hit-badge]')?.remove();
         card.querySelector('[data-sky-hit-reasons]')?.remove();
         card.classList.remove('placement-layer-active');
-        const oldMark=card.querySelector('.relphi-connected-sky-mark');
-        if(oldMark)oldMark.hidden=!!hits;
+        card.querySelectorAll('.relphi-connected-sky-mark').forEach(mark=>mark.remove());
         if(!hits)return;
+        // Reuse the established twelve-color connected-sky marker verbatim.
+        const mark=document.createElement('span');
+        mark.className='relphi-connected-sky-mark';
+        mark.dataset.connectedSkyCard=card.dataset.id;
+        mark.title=hits.map(hit=>hit.reason).join(' · ');
+        mark.setAttribute('aria-label',hits.length+' connected sky activation'+(hits.length===1?'':'s'));
+        mark.innerHTML='<span aria-hidden="true"></span><b>×'+hits.length+'</b>';
+        card.appendChild(mark);
         // Reuse the Ledger's existing hit badge and placement overlay classes.
         // Its delegated data-placement-toggle interaction opens all reasons.
         const badge=document.createElement('button');
@@ -251,8 +254,7 @@
     const visible=grid?grid.querySelectorAll('.or-card[data-id]:not([hidden])').length:matches.size;
     const activations=Array.from(matches.values()).reduce((sum,hits)=>sum+hits.length,0);
     if(!sky)summary.textContent='Create or load a sky in Sky Chart to explore its tarot correspondences.';
-    else if(view==='houses'&&!result.houseReady)summary.textContent='Houses require a reliable time and house cusps. All matches and Rulers remain available.';
-    else summary.textContent=visible+' matching cards · '+activations+' correspondences'+(view==='houses'?' · '+(houseFilter?'House '+houseFilter:'All houses'):'')+'.';
+    else summary.textContent=visible+' matching Minor Arcana · '+activations+' placement correspondences'+(term?' · '+searchTerm:'')+'.';
     const inlineCount=document.getElementById('resultInlineCount');
     if(inlineCount)inlineCount.textContent=visible+(visible===1?' card':' cards')+' shown';
     const resultCount=document.getElementById('resultCount');
@@ -272,10 +274,9 @@
   new MutationObserver(mutations=>{
     if(mutations.some(m=>m.type==='childList'))schedule();
   }).observe(cardList,{childList:true});
-  function open(id,nextView){
+  function open(id){
     skyId=id||skyId;
-    view=['all','rulers','houses'].includes(nextView)?nextView:'all';
-    houseFilter=0;
+    searchTerm='';
     active=true;
     panel.hidden=false;
     button.setAttribute('aria-expanded','true');
@@ -284,26 +285,35 @@
     apply();
     updateUrl(true);
   }
-  button.addEventListener('click',()=>active?close():open(skyId,view));
+  button.addEventListener('click',()=>active?close():open(skyId));
   panel.querySelector('[data-sky-close]').addEventListener('click',close);
-  selector.addEventListener('change',()=>{skyId=selector.value;houseFilter=0;apply();updateUrl(true);});
-  houseSelect.addEventListener('change',()=>{houseFilter=Number(houseSelect.value)||0;apply();});
-  panel.querySelectorAll('[data-sky-view]').forEach(b=>b.addEventListener('click',()=>{view=b.dataset.skyView;houseFilter=0;apply();updateUrl(true);}));
+  selector.addEventListener('change',()=>{skyId=selector.value;apply();updateUrl(true);});
   showAll.addEventListener('click',()=>{if(active&&!openingIndex)clearSkyState();},true);
-  // Search, hiding the index, or opening the Drawing Board exits the filter,
-  // leaving the native handler responsible for its own next view.
-  ['runCommand','clearSearch','relphiOpenDrawingBoardCurrent','landingOpenBoard','landingDrawCard','landingShowLedger'].forEach(id=>{
+  // Sky Connector is a search mode, not an alternative renderer.
+  // Capture the normal Search action before the Ledger changes its dataset.
+  const searchInput=document.getElementById('oracleCommand');
+  function searchSky(event){
+    if(!active)return;
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    searchTerm=searchInput?.value.trim()||'';
+    showNativeIndex();
+    apply();
+  }
+  document.getElementById('runCommand')?.addEventListener('click',searchSky,true);
+  searchInput?.addEventListener('keydown',event=>{
+    if(active&&event.key==='Enter')searchSky(event);
+  },true);
+  ['clearSearch','relphiOpenDrawingBoardCurrent','landingOpenBoard','landingDrawCard','landingShowLedger'].forEach(id=>{
     document.getElementById(id)?.addEventListener('click',()=>{if(active)clearSkyState();},true);
   });
-  document.getElementById('oracleCommand')?.addEventListener('keydown',e=>{
-    if(active&&e.key==='Enter')clearSkyState();
-  },true);
   window.addEventListener('storage',e=>{
     if(active&&(!e.key||Object.values(KEYS).includes(e.key)||e.key==='relphiSkyLibraryV1'))schedule();
   });
   const params=new URLSearchParams(location.search);
-  if(params.has('skyConnector'))open(params.get('skyConnector'),params.get('view'));
+  if(params.has('skyConnector'))open(params.get('skyConnector'));
 }
   window.RelphiSkyTarotExplorerV1=Object.freeze({calculate,placements,cusps,modeHits,options});
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',SKY_PAGE?initSkyChart:initLedger,{once:true});else (SKY_PAGE?initSkyChart:initLedger)();
+  // Sky Chart owns its own rulers, houses and comparison-wheel interactions.
+  if(TAROT_PAGE){if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',initLedger,{once:true});else initLedger();}
 })();
