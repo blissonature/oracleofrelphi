@@ -65,7 +65,6 @@ storage.set('relphiSkyLibraryV1',JSON.stringify([{id:'fixture-sky',name:'Saved',
 check(api.options().some(s=>s.id==='A'),'Current Sky A is selectable');
 check(api.options().some(s=>s.id==='saved:fixture-sky'),'Saved skies are selectable');
 check(files.tarot.includes('relphi-sky-tarot-explorer-v1.js'),'Tarot Ledger loads explorer');
-check(files.sky.includes('relphi-sky-tarot-explorer-v1.js'),'Sky Chart loads explorer');
 check(!files.sky.includes('relphi-sky-tarot-explorer-v1.js'),'Sky Chart ruler/house wheel remains independent of Tarot Ledger');
 check(!files.drawer.includes('Rulers ↗')&&!files.drawer.includes('Houses ↗'),'Sky Chart Rulers and Houses remain native tabs');
 
@@ -78,7 +77,9 @@ check(files.explorer.includes("panel.querySelector('[data-sky-close]').addEventL
 check(files.explorer.includes("badge.className='or-hit-badge'"),'Sky hit reasons use canonical badge styling');
 check(files.explorer.includes("mark.className='relphi-connected-sky-mark'"),'Reuse the existing 12-color sky match marker');
 check(files.explorer.includes("searchTerm=searchInput?.value.trim()||''"),'A blank search selects all matching Minors');
-check(files.explorer.includes("searchTerm=''\n")||files.explorer.includes("searchTerm='';"),'Clearing a keyword restores all selected-sky matches');
+check(files.explorer.includes("searchTerm='';"),'Clearing a keyword restores all selected-sky matches');
+check(files.explorer.includes('function markOrdinaryResults()'),'Ordinary search visually marks sky matches without filtering');
+check(files.explorer.includes('else markOrdinaryResults();'),'Ordinary index begins in unfiltered marker mode');
 
 
 console.log('Sky Connector: Minor-only planetary degrees, decans, courts, Mars in Virgo, empty search, native marker and index PASS.');
