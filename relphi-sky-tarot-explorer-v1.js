@@ -141,11 +141,41 @@
   panel.setAttribute('aria-label','Sky Connector filters');
   panel.hidden=true;
   panel.innerHTML='<strong>Sky Connector</strong> <label>Sky <select id="skyConnectorSky" aria-label="Choose sky"></select></label> <button type="button" data-sky-close>Show All Cards</button> <span id="skyConnectorSummary" role="status" aria-live="polite"></span>';
+  // A GitHack preview has separate local storage from oracleofrelphi.com.
+  // Let the user populate this origin without inventing or copying their sky.
+  const sourceHelp=document.createElement('div');
+  sourceHelp.id='skyConnectorSourceHelp';
+  sourceHelp.hidden=true;
+  sourceHelp.innerHTML='<p>No skies saved in this preview. Skies on oracleofrelphi.com are not automatically shared with this preview.</p><a href="sky-chart.html">Open Sky Chart here to create or load a sky</a> <label>Import an existing sky JSON file <input type="file" id="skyConnectorImport" accept=".json,application/json"></label><span id="skyConnectorImportStatus" role="status"></span>';
+  panel.appendChild(sourceHelp);
   listPanel.insertBefore(panel,listPanel.querySelector('.cards-heading'));
   // No replacement card grid, typography, palette, or page-wide hiding rules.
   let active=false,skyId='',searchTerm='',openingIndex=false,queued=false;
   const selector=panel.querySelector('#skyConnectorSky');
   const summary=panel.querySelector('#skyConnectorSummary');
+  const sourceHelp=panel.querySelector('#skyConnectorSourceHelp');
+  const importStatus=panel.querySelector('#skyConnectorImportStatus');
+  const importFile=panel.querySelector('#skyConnectorImport');
+  function importSky(raw){
+    const payload=JSON.parse(raw);
+    const candidates=Array.isArray(payload)?payload:[payload?.sky,payload?.chart,payload?.skyA,payload?.data,payload].filter(Boolean);
+    const sky=candidates.find(candidate=>candidate&&typeof candidate==='object'&&placements(candidate).length>0);
+    if(!sky)throw new Error('That file does not contain recognizable sky placements.');
+    localStorage.setItem(KEYS.A,JSON.stringify(sky));
+    skyId='A';
+    searchTerm='';
+    const input=document.getElementById('oracleCommand');
+    if(input)input.value='';
+    showNativeIndex();
+    apply();
+    updateUrl(true);
+  }
+  importFile?.addEventListener('change',async()=>{
+    const file=importFile.files?.[0];if(!file)return;
+    try{importSky(await file.text());importStatus.textContent='Sky loaded into this preview.';}
+    catch(error){importStatus.textContent=error?.message||'Unable to import sky.';}
+    finally{importFile.value='';}
+  });
   function updateUrl(isOpen){
     const url=new URL(location.href);
     if(isOpen){url.searchParams.set('skyConnector',skyId);url.searchParams.delete('view');}
@@ -157,6 +187,8 @@
     if(!skies.some(o=>o.id===skyId))skyId=skies[0]?.id||'';
     selector.innerHTML=skies.map(o=>'<option value="'+esc(o.id)+'">'+esc(o.name)+'</option>').join('')||'<option value="">No skies available</option>';
     selector.value=skyId;
+    sourceHelp.hidden=skies.length>0;
+    selector.disabled=skies.length===0;
   }
   function showNativeIndex(){
     openingIndex=true;
@@ -254,7 +286,7 @@
     }
     const visible=grid?grid.querySelectorAll('.or-card[data-id]:not([hidden])').length:matches.size;
     const activations=Array.from(matches.values()).reduce((sum,hits)=>sum+hits.length,0);
-    if(!sky)summary.textContent='Create or load a sky in Sky Chart to explore its tarot correspondences.';
+    if(!sky)summary.textContent='Choose a sky in this preview to see its Minor Arcana matches.';
     else summary.textContent=visible+' matching Minor Arcana · '+activations+' placement correspondences'+(term?' · '+searchTerm:'')+'.';
     const inlineCount=document.getElementById('resultInlineCount');
     if(inlineCount)inlineCount.textContent=visible+(visible===1?' card':' cards')+' shown';
