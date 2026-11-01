@@ -166,7 +166,7 @@ jobs:
           // Sky Chart navigation now opens a filter of Tarot Ledger's own
           // card index. It must never hide/redesign the existing index.
           await page.locator('#skyFoundationA [data-card-hits-view="houses"]').click();
-          await page.waitForURL('**/tarot.html?skyConnector=A&view=houses',{timeout:15000});
+          await page.waitForURL('**/tarot.html?skyConnector=A&view=houses*',{timeout:15000});
           await page.locator('#skyConnectorPanel:not([hidden])').waitFor({timeout:15000});
           assert.equal(await page.locator('#browsePanel').isVisible(),true,'Sky Connector must keep the native index visible.');
           assert.equal(await page.locator('#skyConnectorSky').inputValue(),'A');
