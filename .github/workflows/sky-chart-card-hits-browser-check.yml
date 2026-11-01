@@ -163,27 +163,50 @@ jobs:
           assert.equal(await page.evaluate(()=>document.querySelector('.sky-foundation-wheel')?.classList.contains('has-isolation')),true,'Clearing Card Hits ruler focus must preserve the prior locked wheel focus.');
           assert.equal(await page.locator(`#skyFoundationWheelMount [data-layer="placements"] [data-sky="A"][data-placement="${priorPlacementId}"]`).evaluate(node=>node.classList.contains('is-selected')),true,'The exact pre-Card-Hits placement must remain selected after ruler dismissal.');
           await page.locator('#skyFoundationA [data-card-ruler]').first().click();
-          // Houses and Rulers are now links into Tarot Ledger's Sky Connector,
-          // rather than inline Sky Chart tabs. Verify real-page navigation.
+          // Sky Chart navigation now opens a filter of Tarot Ledger's own
+          // card index. It must never hide/redesign the existing index.
           await page.locator('#skyFoundationA [data-card-hits-view="houses"]').click();
           await page.waitForURL('**/tarot.html?skyConnector=A&view=houses',{timeout:15000});
           await page.locator('#skyConnectorPanel:not([hidden])').waitFor({timeout:15000});
-          assert.equal(await page.locator('[data-sky-view="houses"]').getAttribute('aria-pressed'),'true');
+          assert.equal(await page.locator('#browsePanel').isVisible(),true,'Sky Connector must keep the native index visible.');
           assert.equal(await page.locator('#skyConnectorSky').inputValue(),'A');
-          assert.ok(await page.locator('#skyConnectorCards .sky-connector-card').count()>0,'Houses must expose cards for house cusps and placements.');
-          assert.equal(await page.locator('.sky-house-filter').isVisible(),true);
+          assert.equal(await page.locator('[data-sky-view="houses"]').getAttribute('aria-pressed'),'true');
+          assert.equal(await page.locator('#skyConnectorHouse').isVisible(),true);
           await page.locator('#skyConnectorHouse').selectOption('2');
           assert.match(await page.locator('#skyConnectorSummary').innerText(),/House 2/);
+          assert.ok(await page.locator('#cardList .tarot-result-grid .or-card:visible').count()>0,'House view must show native card surfaces for matching houses.');
           await page.locator('[data-sky-view="all"]').click();
-          assert.equal(await page.locator('.sky-house-filter').isVisible(),false,'House filter only belongs to Houses mode.');
-          assert.ok(await page.locator('#skyConnectorCards .sky-connector-card').count()>12,'All matching cards must be visible, not only the old top 12.');
-          await page.locator('#skyConnectorCards .sky-connector-card summary').first().click();
-          assert.ok(await page.locator('#skyConnectorCards .sky-connector-card[open] .sky-connector-reasons li').count()>0,'Expanded cards explain every hit.');
+          assert.equal(await page.locator('#skyConnectorHouse').isVisible(),false,'House filter only belongs to Houses mode.');
+          const allVisible=await page.locator('#cardList .tarot-result-grid .or-card:visible').count();
+          assert.ok(allVisible>12,'All matching cards must be visible, without the former 12-card cutoff.');
+          assert.equal(await page.locator('#cardList .tarot-result-grid .or-card').count(),78,'Connector must use the existing complete 78-card grid.');
+          assert.equal(await page.locator('#skyConnectorCards').count(),0,'No independent replacement card grid is permitted.');
+          const badge=page.locator('#cardList .or-card:visible [data-sky-hit-badge]').first();
+          await badge.click();
+          assert.ok(await page.locator('#cardList .or-card.placement-layer-active [data-sky-hit-reasons] li').count()>0,'Original card hit layer must expose every correspondence.');
           await page.locator('[data-sky-view="rulers"]').click();
           assert.equal(await page.locator('[data-sky-view="rulers"]').getAttribute('aria-pressed'),'true');
-          assert.ok(await page.locator('#skyConnectorCards .sky-connector-card').count()>0);
-          await page.locator('[data-sky-close]').click();
-          assert.equal(await page.locator('#skyConnectorPanel').isVisible(),false,'Back to Ledger exits Sky Connector.');
+          assert.ok(await page.locator('#cardList .tarot-result-grid .or-card:visible').count()>0);
+          // The exact regression: native Show All Cards must exit Connector.
+          await page.locator('#showAllCards').click();
+          assert.equal(await page.locator('#skyConnectorPanel').isVisible(),false);
+          assert.equal(await page.locator('#browsePanel').isVisible(),true);
+          assert.equal(await page.locator('#cardList .tarot-result-grid .or-card:visible').count(),78,'Show All Cards must restore all 78 cards.');
+          assert.equal(await page.locator('#cardList [data-sky-hit-badge]').count(),0,'Exit must restore the original unmodified card surfaces.');
+          await page.locator('#openSkyConnector').click();
+          assert.equal(await page.locator('#skyConnectorPanel').isVisible(),true,'Connector must be re-enterable.');
+          await page.locator('#oracleCommand').fill('The Magician');
+          await page.locator('#runCommand').click();
+          assert.equal(await page.locator('#skyConnectorPanel').isVisible(),false,'Normal search must exit Connector.');
+          assert.equal(await page.locator('#browsePanel').isVisible(),true,'Normal search must retain native index layout.');
+          // Check the same controls at a phone viewport, without inventing an alternate card design.
+          await page.setViewportSize({width:390,height:844});
+          await page.locator('#openSkyConnector').click();
+          assert.equal(await page.locator('#skyConnectorPanel').isVisible(),true);
+          assert.ok(await page.locator('#cardList .tarot-result-grid .or-card:visible').count()>0);
+          await page.locator('#skyConnectorPanel [data-sky-close]').click();
+          assert.equal(await page.locator('#cardList .tarot-result-grid .or-card:visible').count(),78,'Phone-size return must restore full index.');
+
           console.log('SKY_CONNECTOR_NAVIGATION_OK');
           assert.deepEqual(errors,[]);
           await browser.close();
