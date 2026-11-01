@@ -143,11 +143,11 @@
   panel.innerHTML='<strong>Sky Connector</strong> <label>Sky <select id="skyConnectorSky" aria-label="Choose sky"></select></label> <button type="button" data-sky-close>Show All Cards</button> <span id="skyConnectorSummary" role="status" aria-live="polite"></span>';
   // A GitHack preview has separate local storage from oracleofrelphi.com.
   // Let the user populate this origin without inventing or copying their sky.
-  const sourceHelp=document.createElement('div');
-  sourceHelp.id='skyConnectorSourceHelp';
-  sourceHelp.hidden=true;
-  sourceHelp.innerHTML='<p>This preview cannot read the skies saved on oracleofrelphi.com.</p><a href="sky-chart.html">Create a sky in this preview</a> <button type="button" id="skyConnectorTryExample">Try example: Mars 17°52′ Virgo</button><span id="skyConnectorExampleStatus" role="status"></span>';
-  panel.appendChild(sourceHelp);
+  const sourceHelpNode=document.createElement('div');
+  sourceHelpNode.id='skyConnectorSourceHelp';
+  sourceHelpNode.hidden=true;
+  sourceHelpNode.innerHTML='<p>This preview cannot read the skies saved on oracleofrelphi.com.</p><a href="sky-chart.html">Create a sky in this preview</a> <button type="button" id="skyConnectorTryExample">Try example: Mars 17°52′ Virgo</button><span id="skyConnectorExampleStatus" role="status"></span>';
+  panel.appendChild(sourceHelpNode);
   listPanel.insertBefore(panel,listPanel.querySelector('.cards-heading'));
   // No replacement card grid, typography, palette, or page-wide hiding rules.
   let active=false,skyId='',searchTerm='',openingIndex=false,queued=false;
