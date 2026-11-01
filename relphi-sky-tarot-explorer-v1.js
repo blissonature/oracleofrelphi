@@ -125,50 +125,180 @@
     },true);
   }
   function initLedger() {
-    const main=document.querySelector('main.tarot-app-shell');if(!main)return;
-    const button=document.createElement('button');button.type='button';button.id='openSkyConnector';button.textContent='Sky Connector';
-    button.setAttribute('aria-controls','skyConnectorPanel');main.querySelector('.tarot-home-actions')?.appendChild(button);
-    const panel=document.createElement('section');panel.id='skyConnectorPanel';panel.className='sky-connector-mode';panel.hidden=true;panel.setAttribute('aria-label','Sky Connector');
-    panel.innerHTML='<div class="sky-connector-head"><div><p class="sky-connector-eyebrow">Tarot Ledger · Sky Connector</p><h2>Explore a sky through tarot</h2><p>Every card below has an explicit correspondence to the selected sky. Open a card to see every activation.</p></div><button type="button" data-sky-close>Back to Ledger</button></div><div class="sky-connector-controls"><label>Sky <select id="skyConnectorSky"></select></label><div role="group" aria-label="Sky match views"><button type="button" data-sky-view="all">All matches</button><button type="button" data-sky-view="rulers">Rulers</button><button type="button" data-sky-view="houses">Houses</button></div><label class="sky-house-filter" hidden>House <select id="skyConnectorHouse" aria-label="Filter by house"></select></label></div><p id="skyConnectorSummary" role="status" aria-live="polite"></p><div id="skyConnectorCards" class="sky-connector-cards"></div>';
-    main.insertBefore(panel,document.getElementById('browsePanel'));
-    const style=document.createElement('style');style.textContent=`
-    body.sky-connector-open main.tarot-app-shell > :not(.tarot-hero):not(.tarot-home-actions):not(#skyConnectorPanel){display:none!important}
-    body.sky-connector-open #skyConnectorPanel{display:block!important}
-    .relphi-sky-connector{display:none!important} /* Legacy Drawing Board selector moved to the Ledger */
-    .sky-connector-mode{margin:1rem auto 3rem;max-width:1260px;padding:clamp(12px,3vw,26px);border:1px solid #ddd3c8;border-radius:17px;background:#fffcf7;color:#241f1b}
-    .sky-connector-head{display:flex;justify-content:space-between;align-items:flex-start;gap:1rem}.sky-connector-head h2{margin:.15rem 0;font:700 clamp(1.35rem,3vw,2rem)/1.15 Georgia,serif}.sky-connector-head p{max-width:67ch;line-height:1.45}.sky-connector-eyebrow{margin:0;font-size:.75rem;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:#7a625a}
-    .sky-connector-controls{display:flex;flex-wrap:wrap;justify-content:space-between;gap:1rem;align-items:end;margin:1.25rem 0}.sky-connector-controls label[hidden]{display:none!important}.sky-connector-controls label{display:grid;gap:.3rem;flex:1 1 230px;font-weight:750;font-size:.8rem}.sky-connector-controls select{width:100%;min-height:42px;border:1px solid #aa9c8e;border-radius:7px;background:#fff;padding:.45rem;color:#241f1b}.sky-connector-controls [role=group]{display:flex;flex-wrap:wrap;gap:.4rem}.sky-house-filter{max-width:130px}
-    .sky-connector-mode button{cursor:pointer}.sky-connector-controls button,.sky-connector-head button{padding:.62rem .85rem;border:1px solid #9c8980;border-radius:8px;background:#fffdf9;color:#30251e;font-weight:750}.sky-connector-controls button[aria-pressed=true]{background:#493931;color:#fff}
-    #skyConnectorSummary{margin:.5rem 0 1rem;font-size:.9rem;font-weight:650}.sky-connector-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:1rem;align-items:start}.sky-connector-card{min-width:0;border:1px solid #d9d0c7;border-radius:10px;background:white;overflow:hidden}.sky-connector-card[open]{grid-column:span 2;border-color:#a38e7e;box-shadow:0 4px 24px #211b151c}.sky-connector-card summary{display:grid;justify-items:center;gap:.45rem;cursor:pointer;padding:.75rem;list-style:none}.sky-connector-card summary::-webkit-details-marker{display:none}.sky-connector-card summary:focus-visible,.sky-connector-mode button:focus-visible{outline:3px solid #8b5791;outline-offset:2px}.sky-connector-card img{width:100px;max-width:100%;aspect-ratio:2/3;object-fit:contain}.sky-connector-card strong{text-align:center;font-size:.85rem}.sky-connector-count{font-size:.74rem;color:#60483f;font-weight:750}.sky-connector-reasons{padding:.75rem;border-top:1px solid #e6ddd5}.sky-connector-reasons ol{margin:0 0 .8rem;padding-left:1.15rem;display:grid;gap:.55rem}.sky-connector-reasons li{font-size:.8rem;line-height:1.4;overflow-wrap:anywhere}.sky-connector-reasons button{padding:.5rem .65rem;border:1px solid #9d8177;border-radius:7px;background:#f9f3ed;color:#35271e;font-weight:700}
-    @media(max-width:600px){.sky-connector-head{flex-wrap:wrap}.sky-connector-controls [role=group]{width:100%}.sky-connector-controls [role=group] button{flex:1}.sky-connector-cards{grid-template-columns:repeat(2,minmax(0,1fr));gap:.55rem}.sky-connector-card[open]{grid-column:span 2}.sky-connector-card summary{padding:.5rem}.sky-connector-card img{width:86px}.sky-connector-reasons{padding:.6rem}}
-    `;document.head.appendChild(style);
-    let skyId='',view='all',houseFilter=0;
-    const selector=panel.querySelector('#skyConnectorSky'),cardsEl=panel.querySelector('#skyConnectorCards'),summary=panel.querySelector('#skyConnectorSummary'),houseSelect=panel.querySelector('#skyConnectorHouse'),houseLabel=panel.querySelector('.sky-house-filter');
-    houseSelect.innerHTML='<option value="0">All houses</option>'+Array.from({length:12},(_,i)=>'<option value="'+(i+1)+'">House '+(i+1)+'</option>').join('');
-    function updateUrl(open) { const url=new URL(location.href);if(open){url.searchParams.set('skyConnector',skyId);url.searchParams.set('view',view)}else{url.searchParams.delete('skyConnector');url.searchParams.delete('view')}history.replaceState(history.state,'',url); }
-    function render() {
-      const skies=options();selector.innerHTML=skies.map(o=>'<option value="'+esc(o.id)+'"'+(o.id===skyId?' selected':'')+'>'+esc(o.name)+'</option>').join('') || '<option value="">No available skies</option>';
-      if(!skies.some(x=>x.id===skyId))skyId=skies[0]?.id||'';
-      selector.value=skyId;
-      panel.querySelectorAll('[data-sky-view]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.skyView===view)));
-      houseLabel.hidden=view!=='houses';houseSelect.value=String(houseFilter);
-      const sky=choose(skyId),index=calculate(sky,window.RELPHI_TAROT_CARDS||[]);
-      if(!sky){summary.textContent='No sky available. Create or load a sky in Sky Chart, then return here.';cardsEl.replaceChildren();return}
-      if(view==='houses'&&!index.houseReady){summary.textContent='Houses require an exact birth time and calculated house cusps. Rulers and all matches remain available.';cardsEl.replaceChildren();return}
-      const matches=index.entries.map(entry=>({...entry,visibleHits:modeHits(entry,view).filter(h=>view!=='houses'||!houseFilter||h.house===houseFilter)})).filter(e=>e.visibleHits.length);
-      const total=matches.reduce((n,e)=>n+e.visibleHits.length,0);
-      summary.textContent=label(sky)+' · '+matches.length+' matching cards · '+total+' activations · '+index.placementCount+' placements'+(view==='houses'?' · '+(houseFilter?'House '+houseFilter:'all houses'):'')+'. No results are truncated.';
-      cardsEl.innerHTML=matches.map(e=>`<details class="sky-connector-card"><summary><img src="${esc(image(e.card))}" alt="" loading="lazy"><strong>${esc(e.card.name)}</strong><span class="sky-connector-count">${e.visibleHits.length} ${e.visibleHits.length===1?'match':'matches'}</span></summary><div class="sky-connector-reasons"><ol>${e.visibleHits.map(h=>`<li>${esc(h.reason)}</li>`).join('')}</ol><button type="button" data-sky-ledger-card="${esc(e.card.card_id)}" data-sky-ledger-name="${esc(e.card.name)}">Open full Ledger entry</button></div></details>`).join('');
-    }
-    function open(id,v) { if(id)skyId=id;view=['all','rulers','houses'].includes(v)?v:'all';panel.hidden=false;document.body.classList.add('sky-connector-open');button.setAttribute('aria-expanded','true');render();updateUrl(true); }
-    function close(){panel.hidden=true;document.body.classList.remove('sky-connector-open');button.setAttribute('aria-expanded','false');updateUrl(false)}
-    button.addEventListener('click',()=>open(skyId,view));panel.querySelector('[data-sky-close]').addEventListener('click',close);
-    selector.addEventListener('change',()=>{skyId=selector.value;houseFilter=0;render();updateUrl(true)});
-    houseSelect.addEventListener('change',()=>{houseFilter=Number(houseSelect.value)||0;render()});
-    panel.querySelectorAll('[data-sky-view]').forEach(b=>b.addEventListener('click',()=>{view=b.dataset.skyView;render();updateUrl(true)}));
-    panel.addEventListener('click',e=>{const hit=e.target.closest('[data-sky-ledger-card]');if(!hit)return;const name=hit.dataset.skyLedgerName;close();const input=document.getElementById('oracleCommand');if(input){input.value=name;input.dispatchEvent(new Event('input',{bubbles:true}));document.getElementById('runCommand')?.click();}});
-    const params=new URLSearchParams(location.search);if(params.has('skyConnector'))open(params.get('skyConnector'),params.get('view'));
+  const main=document.querySelector('main.tarot-app-shell');
+  const browse=document.getElementById('browsePanel');
+  const cardList=document.getElementById('cardList');
+  const listPanel=browse?.querySelector('.tarot-list-panel');
+  const homeActions=main?.querySelector('.tarot-home-actions');
+  const showAll=document.getElementById('showAllCards');
+  if(!main||!browse||!cardList||!listPanel||!homeActions||!showAll)return;
+  // Add only a native Ledger action and controls; its card grid, card artwork,
+  // reading/detail behavior, colors, typography and zoom all remain untouched.
+  const button=document.createElement('button');
+  button.type='button';
+  button.id='openSkyConnector';
+  button.textContent='Sky Connector';
+  button.setAttribute('aria-controls','skyConnectorPanel');
+  button.setAttribute('aria-expanded','false');
+  homeActions.appendChild(button);
+  const panel=document.createElement('section');
+  panel.id='skyConnectorPanel';
+  panel.className='active-filter-row active-filter-row--results';
+  panel.setAttribute('aria-label','Sky Connector filters');
+  panel.hidden=true;
+  panel.innerHTML='<strong>Sky Connector</strong> <label>Sky <select id="skyConnectorSky" aria-label="Choose sky"></select></label> <span role="group" aria-label="Sky match views"><button type="button" data-sky-view="all">All matches</button><button type="button" data-sky-view="rulers">Rulers</button><button type="button" data-sky-view="houses">Houses</button></span> <label class="sky-house-filter" hidden>House <select id="skyConnectorHouse" aria-label="Filter by house"></select></label> <button type="button" data-sky-close>Show All Cards</button> <span id="skyConnectorSummary" role="status" aria-live="polite"></span>';
+  listPanel.insertBefore(panel,listPanel.querySelector('.cards-heading'));
+  // No stylesheet rules, replacement card grids, or hidden Ledger sections.
+  let active=false,skyId='',view='all',houseFilter=0,openingIndex=false,queued=false;
+  const selector=panel.querySelector('#skyConnectorSky');
+  const summary=panel.querySelector('#skyConnectorSummary');
+  const houseSelect=panel.querySelector('#skyConnectorHouse');
+  const houseLabel=panel.querySelector('.sky-house-filter');
+  houseSelect.innerHTML='<option value="0">All houses</option>'+Array.from({length:12},(_,i)=>'<option value="'+(i+1)+'">House '+(i+1)+'</option>').join('');
+  function updateUrl(isOpen){
+    const url=new URL(location.href);
+    if(isOpen){url.searchParams.set('skyConnector',skyId);url.searchParams.set('view',view);}
+    else{url.searchParams.delete('skyConnector');url.searchParams.delete('view');}
+    history.replaceState(history.state,'',url);
   }
+  function refreshControls(){
+    const skies=options();
+    if(!skies.some(o=>o.id===skyId))skyId=skies[0]?.id||'';
+    selector.innerHTML=skies.map(o=>'<option value="'+esc(o.id)+'">'+esc(o.name)+'</option>').join('')||'<option value="">No skies available</option>';
+    selector.value=skyId;
+    houseLabel.hidden=view!=='houses';
+    houseSelect.value=String(houseFilter);
+    panel.querySelectorAll('[data-sky-view]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.skyView===view)));
+  }
+  function showNativeIndex(){
+    openingIndex=true;
+    try{showAll.click();}finally{openingIndex=false;}
+  }
+  function clearSkyState(){
+    active=false;
+    panel.hidden=true;
+    button.setAttribute('aria-expanded','false');
+    button.setAttribute('aria-pressed','false');
+    // Card list is re-rendered by native actions; do not mutate its original
+    // cards when exiting to search, a spread, or Drawing Board.
+    updateUrl(false);
+  }
+  function close(){
+    if(!active)return;
+    clearSkyState();
+    showNativeIndex();
+  }
+  function apply(){
+    queued=false;
+    if(!active)return;
+    refreshControls();
+    const sky=choose(skyId);
+    const result=calculate(sky,window.RELPHI_TAROT_CARDS||[]);
+    const matches=new Map();
+    if(sky && (view!=='houses'||result.houseReady)){
+      result.entries.forEach(entry=>{
+        const hits=modeHits(entry,view).filter(hit=>view!=='houses'||!houseFilter||hit.house===houseFilter);
+        if(hits.length)matches.set(entry.card.card_id,hits);
+      });
+    }
+    const grid=cardList.querySelector('.tarot-result-grid');
+    if(grid){
+      grid.querySelectorAll('.or-card[data-id]').forEach(card=>{
+        const hits=matches.get(card.dataset.id);
+        card.hidden=!hits;
+        if(hits)card.style.removeProperty('display');
+        else card.style.setProperty('display','none','important');
+        card.querySelector('[data-sky-hit-badge]')?.remove();
+        card.querySelector('[data-sky-hit-reasons]')?.remove();
+        const oldMark=card.querySelector('.relphi-connected-sky-mark');
+        if(oldMark)oldMark.hidden=!!hits;
+        if(!hits)return;
+        // Reuse the Ledger's existing hit badge and placement overlay classes.
+        // Its delegated data-placement-toggle interaction opens all reasons.
+        const badge=document.createElement('button');
+        badge.type='button';
+        badge.className='or-hit-badge';
+        badge.dataset.placementToggle='';
+        badge.dataset.skyHitBadge='true';
+        badge.textContent='×'+hits.length;
+        badge.setAttribute('aria-label','Show '+hits.length+' sky correspondences for '+(card.dataset.id||'card'));
+        badge.title=hits.map(h=>h.reason).join('\n');
+        const layer=document.createElement('div');
+        layer.className='or-card-layer or-card-layer--placement relphi-info-layer';
+        layer.dataset.placementLayer='';
+        layer.dataset.skyHitReasons='true';
+        layer.hidden=true;
+        const head=document.createElement('div');
+        head.className='or-layer-head relphi-info-static';
+        const title=document.createElement('strong');
+        title.textContent=hits.length+' sky '+(hits.length===1?'correspondence':'correspondences');
+        head.appendChild(title);
+        const scroll=document.createElement('div');
+        scroll.className='or-layer-scroll relphi-info-scroll';
+        const list=document.createElement('ol');
+        list.className='or-placement-list';
+        hits.forEach(hit=>{const item=document.createElement('li');item.textContent=hit.reason;list.appendChild(item);});
+        scroll.appendChild(list);
+        layer.append(head,scroll);
+        card.append(badge,layer);
+      });
+    }
+    const visible=grid?grid.querySelectorAll('.or-card[data-id]:not([hidden])').length:matches.size;
+    const activations=Array.from(matches.values()).reduce((sum,hits)=>sum+hits.length,0);
+    if(!sky)summary.textContent='Create or load a sky in Sky Chart to explore its tarot correspondences.';
+    else if(view==='houses'&&!result.houseReady)summary.textContent='Houses require a reliable time and house cusps. All matches and Rulers remain available.';
+    else summary.textContent=visible+' matching cards · '+activations+' correspondences'+(view==='houses'?' · '+(houseFilter?'House '+houseFilter:'All houses'):'')+'.';
+    const inlineCount=document.getElementById('resultInlineCount');
+    if(inlineCount)inlineCount.textContent=visible+(visible===1?' card':' cards')+' shown';
+    const resultCount=document.getElementById('resultCount');
+    if(resultCount)resultCount.textContent=visible?String(visible):'No';
+    const resultNoun=document.getElementById('resultNoun');
+    if(resultNoun)resultNoun.textContent=visible===1?' card shown':' cards shown';
+    const activeSummary=document.getElementById('activeSummary');
+    if(activeSummary)activeSummary.textContent='Sky Connector · '+(sky?label(sky):'Choose a sky');
+  }
+  function schedule(){
+    if(!active||queued)return;
+    queued=true;
+    queueMicrotask(apply);
+  }
+  // Native card interactions, zoom controls, and full-entry selection can
+  // re-render #cardList. Reapply the active sky filter without replacing them.
+  new MutationObserver(mutations=>{
+    if(mutations.some(m=>m.type==='childList'))schedule();
+  }).observe(cardList,{childList:true});
+  function open(id,nextView){
+    skyId=id||skyId;
+    view=['all','rulers','houses'].includes(nextView)?nextView:'all';
+    houseFilter=0;
+    active=true;
+    panel.hidden=false;
+    button.setAttribute('aria-expanded','true');
+    button.setAttribute('aria-pressed','true');
+    showNativeIndex();
+    apply();
+    updateUrl(true);
+  }
+  button.addEventListener('click',()=>active?close():open(skyId,view));
+  panel.querySelector('[data-sky-close]').addEventListener('click',close);
+  selector.addEventListener('change',()=>{skyId=selector.value;houseFilter=0;apply();updateUrl(true);});
+  houseSelect.addEventListener('change',()=>{houseFilter=Number(houseSelect.value)||0;apply();});
+  panel.querySelectorAll('[data-sky-view]').forEach(b=>b.addEventListener('click',()=>{view=b.dataset.skyView;houseFilter=0;apply();updateUrl(true);}));
+  showAll.addEventListener('click',()=>{if(active&&!openingIndex)clearSkyState();},true);
+  // Search, hiding the index, or opening the Drawing Board exits the filter,
+  // leaving the native handler responsible for its own next view.
+  ['runCommand','clearSearch','relphiOpenDrawingBoardCurrent','landingOpenBoard','landingDrawCard','landingShowLedger'].forEach(id=>{
+    document.getElementById(id)?.addEventListener('click',()=>{if(active)clearSkyState();},true);
+  });
+  document.getElementById('oracleCommand')?.addEventListener('keydown',e=>{
+    if(active&&e.key==='Enter')clearSkyState();
+  },true);
+  window.addEventListener('storage',e=>{
+    if(active&&(!e.key||Object.values(KEYS).includes(e.key)||e.key==='relphiSkyLibraryV1'))schedule();
+  });
+  const params=new URLSearchParams(location.search);
+  if(params.has('skyConnector'))open(params.get('skyConnector'),params.get('view'));
+}
   window.RelphiSkyTarotExplorerV1=Object.freeze({calculate,placements,cusps,modeHits,options});
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',SKY_PAGE?initSkyChart:initLedger,{once:true});else (SKY_PAGE?initSkyChart:initLedger)();
 })();
