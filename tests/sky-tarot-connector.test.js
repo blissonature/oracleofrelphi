@@ -67,5 +67,13 @@ check(files.sky.includes('relphi-sky-tarot-explorer-v1.js'),'Sky Chart loads exp
 check(files.explorer.includes("window.addEventListener('click',event=>"),'Sky Chart navigation precedes legacy document click handling');
 check(files.explorer.includes("location.assign('tarot.html?skyConnector='"),'Sky Chart routes into the Ledger, not Drawing Board');
 check(files.drawer.includes('Rulers ↗')&&files.drawer.includes('Houses ↗'),'Sky Chart tabs indicate navigation');
+check(!files.explorer.includes('body.sky-connector-open'),'No global visibility takeover of Tarot Ledger');
+check(!files.explorer.includes('.sky-connector-cards'),'No replacement visual card grid');
+check(files.explorer.includes("listPanel.insertBefore(panel,listPanel.querySelector('.cards-heading'))"),'Sky controls reuse the native index layout');
+check(files.explorer.includes("cardList.querySelector('.tarot-result-grid')"),'Sky results filter the native Ledger card grid');
+check(files.explorer.includes("showAll.addEventListener('click'"),'Native Show All Cards exits the sky filter');
+check(files.explorer.includes("panel.querySelector('[data-sky-close]').addEventListener('click',close)"),'Sky controls have an explicit native-index return');
+check(files.explorer.includes("badge.className='or-hit-badge'"),'Sky hit reasons use canonical badge styling');
+
 
 console.log('Sky Connector: 78-card deck, all 36 decans, 12 courts, exact boundaries, all hits, houses, unknown time, saved skies, navigation PASS.');
