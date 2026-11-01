@@ -301,6 +301,20 @@
     apply();
   }
   document.getElementById('runCommand')?.addEventListener('click',searchSky,true);
+  // Clearing the ordinary search text restores all selected-sky matches,
+  // without closing the connector or changing the native card index.
+  document.querySelectorAll('[data-clear-search-terms]').forEach(control=>{
+    control.addEventListener('click',event=>{
+      if(!active)return;
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      if(searchInput)searchInput.value='';
+      searchTerm='';
+      showNativeIndex();
+      apply();
+    },true);
+  });
+
   searchInput?.addEventListener('keydown',event=>{
     if(active&&event.key==='Enter')searchSky(event);
   },true);
