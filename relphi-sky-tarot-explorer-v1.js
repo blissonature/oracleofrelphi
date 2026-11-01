@@ -143,7 +143,7 @@
   homeActions.appendChild(button);
   // Keep the legacy Drawing Board context API, but not its obsolete selector.
   const legacyControlStyle=document.createElement('style');
-  legacyControlStyle.textContent='#shortListPanel .relphi-sky-connector{display:none!important}';
+  legacyControlStyle.textContent='#shortListPanel .relphi-sky-connector{display:none!important}#skyConnectorPanel{box-sizing:border-box;max-width:100%}#skyConnectorPanel label{min-width:0}#skyConnectorPanel select{max-width:100%;min-width:0}';
   document.head.appendChild(legacyControlStyle);
   const panel=document.createElement('section');
   panel.id='skyConnectorPanel';
