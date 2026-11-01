@@ -210,6 +210,7 @@
         else card.style.setProperty('display','none','important');
         card.querySelector('[data-sky-hit-badge]')?.remove();
         card.querySelector('[data-sky-hit-reasons]')?.remove();
+        card.classList.remove('placement-layer-active');
         const oldMark=card.querySelector('.relphi-connected-sky-mark');
         if(oldMark)oldMark.hidden=!!hits;
         if(!hits)return;
