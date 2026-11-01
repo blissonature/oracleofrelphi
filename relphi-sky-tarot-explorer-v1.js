@@ -172,6 +172,7 @@
     // Card list is re-rendered by native actions; do not mutate its original
     // cards when exiting to search, a spread, or Drawing Board.
     updateUrl(false);
+    queueMicrotask(markOrdinaryResults);
   }
   function close(){
     if(!active)return;
@@ -264,13 +265,33 @@
     const activeSummary=document.getElementById('activeSummary');
     if(activeSummary)activeSummary.textContent='Sky Connector · '+(sky?label(sky):'Choose a sky');
   }
-  function schedule(){
-    if(!active||queued)return;
-    queued=true;
-    queueMicrotask(apply);
+  // Ordinary Ledger searches retain their full results. Only visually mark
+  // the cards that are activated by the current selected sky.
+  function markOrdinaryResults(){
+    if(active)return;
+    const selected=choose(skyId || options()[0]?.id || '');
+    const ids=new Map(calculate(selected,window.RELPHI_TAROT_CARDS||[]).entries
+      .filter(e=>e.card.arcana!=='Major').map(e=>[e.card.card_id,e.hits]));
+    cardList.querySelectorAll('.or-card[data-id]').forEach(card=>{
+      const hits=ids.get(card.dataset.id);
+      const existing=card.querySelector('.relphi-connected-sky-mark');
+      if(!hits?.length){existing?.remove();return;}
+      if(existing)return;
+      const mark=document.createElement('span');
+      mark.className='relphi-connected-sky-mark';
+      mark.dataset.connectedSkyCard=card.dataset.id;
+      mark.title=hits.map(hit=>hit.reason).join(' · ');
+      mark.setAttribute('aria-label',hits.length+' connected sky activation'+(hits.length===1?'':'s'));
+      mark.innerHTML='<span aria-hidden="true"></span><b>×'+hits.length+'</b>';
+      card.appendChild(mark);
+    });
   }
-  // Native card interactions, zoom controls, and full-entry selection can
-  // re-render #cardList. Reapply the active sky filter without replacing them.
+  function schedule(){
+    if(queued)return;
+    queued=true;
+    queueMicrotask(()=>{queued=false;if(active)apply();else markOrdinaryResults();});
+  }
+  // Observe native index redraws in either mode; we never replace its cards.
   new MutationObserver(mutations=>{
     if(mutations.some(m=>m.type==='childList'))schedule();
   }).observe(cardList,{childList:true});
@@ -326,6 +347,7 @@
   });
   const params=new URLSearchParams(location.search);
   if(params.has('skyConnector'))open(params.get('skyConnector'));
+  else markOrdinaryResults();
 }
   window.RelphiSkyTarotExplorerV1=Object.freeze({calculate,placements,cusps,modeHits,options});
   // Sky Chart owns its own rulers, houses and comparison-wheel interactions.
