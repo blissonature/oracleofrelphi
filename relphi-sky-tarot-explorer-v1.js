@@ -113,14 +113,14 @@
   const image = card => 'assets/tarot/rws/'+encodeURIComponent(card.card_id)+'.webp';
   function initSkyChart() {
     // Native links allow normal browser navigation, including open in new tab.
-    document.addEventListener('click',event=>{
+    // Window capture precedes Sky Chart's legacy document-level tab renderer.
+    window.addEventListener('click',event=>{
       const tab=event.target.closest?.('[data-card-hits-view]');
-      const fingerprint=event.target.closest?.('[data-sky-drawer-tab="card-hits"]');
-      if(!tab&&!fingerprint)return;
-      const slot = tab?.closest('[data-card-hits-structure-slot]')?.dataset.cardHitsStructureSlot || fingerprint?.closest('[data-sky-card-drawers]')?.dataset.skyCardDrawers || fingerprint?.closest('#skyFoundationB')&&'B' || 'A';
+      if(!tab)return;
+      const slot=tab.closest('[data-card-hits-structure-slot]')?.dataset.cardHitsStructureSlot;
       if(!KEYS[slot]||!read(KEYS[slot]))return;
       event.preventDefault();event.stopImmediatePropagation();
-      const view=tab?.dataset.cardHitsView==='houses'?'houses':tab?'rulers':'all';
+      const view=tab.dataset.cardHitsView==='houses'?'houses':'rulers';
       location.assign('tarot.html?skyConnector='+encodeURIComponent(slot)+'&view='+view);
     },true);
   }
