@@ -375,6 +375,15 @@
     button.setAttribute('aria-expanded','true');
     button.setAttribute('aria-pressed','true');
     showNativeIndex();
+    // On a phone, default the native Ledger zoom to a two-across overview.
+    // Respect an existing custom zoom setting; the user can always change it.
+    if (window.matchMedia?.('(max-width: 700px)').matches) {
+      const zoom=cardList.querySelector('[data-result-zoom]');
+      if (zoom && Math.abs(Number(zoom.value)-1)<0.001) {
+        zoom.value='0.82';
+        zoom.dispatchEvent(new Event('input',{bubbles:true}));
+      }
+    }
     apply();
     updateUrl(true);
   }
