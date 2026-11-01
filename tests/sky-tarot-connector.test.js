@@ -38,21 +38,23 @@ check(full.entries.every(e=>e.hits.every(h=>h.house===null)),'Unknown-time entri
 const ariesTen=api.calculate({placements:{Mars:{longitude:10}}},cards);
 check(!!find(ariesTen,'three_of_wands'),'10° Aries matches Three of Wands');
 check(!find(ariesTen,'two_of_wands'),'10° Aries does not match Two of Wands');
-check(!!find(ariesTen,'the_emperor'),'Aries matches Emperor major');
-check(!!find(ariesTen,'the_tower'),'Mars matches Tower major');
+check(!find(ariesTen,'the_emperor'),'Major Arcana are not Sky Connector matches');
+check(!find(ariesTen,'the_tower'),'Planetary Majors are not Sky Connector matches');
 check(!!find(ariesTen,'queen_of_wands'),'10° Aries matches Queen of Wands range');
-
+const natalMars=api.calculate({placements:{Mars:{longitude:150+17+52/60}}},cards);
+check(!!find(natalMars,'nine_of_pentacles'),'Mars in Virgo second decan matches Venus in Virgo Nine of Pentacles');
+check(find(natalMars,'nine_of_pentacles').hits.some(h=>h.body==='Mars'),'The matching body is Mars rather than the decan ruler Venus');
+check(natalMars.entries.every(e=>e.card.arcana!=='Major'),'All matches are Minor Arcana');
 const known={
   name:'Known-time',
   calcProfile:{timeUnknown:false,houseCusps:Array.from({length:12},(_,i)=>i*30)},
   placements:{Ascendant:{longitude:5},Sun:{longitude:123},Venus:{longitude:190}}
 };
 const result=api.calculate(known,cards);
-assert.equal(result.houseReady,true,'Known house cusps enable House view');
-check(find(result,'strength').hits.some(h=>h.house===5),'The Leo Sun is in house 5');
-check(find(result,'the_tower').hits.some(h=>h.type==='chart-ruler'),'Mars is the chart ruler for Aries rising');
-check(result.entries.some(e=>api.modeHits(e,'houses').length>0),'House filter keeps house matches');
-check(result.entries.some(e=>api.modeHits(e,'rulers').length>0),'Rulers filter keeps ruler matches');
+assert.equal(result.houseReady,true,'Known house cusps enable house context');
+check(result.entries.every(e=>e.card.arcana!=='Major'),'Houses never create Major Arcana matches');
+check(result.entries.every(e=>e.hits.every(h=>h.type==='decan'||h.type==='court')),'Houses never generate a tarot match');
+check(result.entries.some(e=>e.hits.some(h=>h.house===5)),'Existing house position can annotate a Minor match');
 const partial={calcProfile:{houseCusps:[0,null,60,90,120,150,180,210,240,270,300,330]},placements:{Sun:{longitude:123}}};
 assert.equal(api.calculate(partial,cards).houseReady,false,'Incomplete cusp data is not a valid set of 12 houses');
 const unknown={...known,calcProfile:{...known.calcProfile,timeUnknown:true}};
@@ -64,9 +66,9 @@ check(api.options().some(s=>s.id==='A'),'Current Sky A is selectable');
 check(api.options().some(s=>s.id==='saved:fixture-sky'),'Saved skies are selectable');
 check(files.tarot.includes('relphi-sky-tarot-explorer-v1.js'),'Tarot Ledger loads explorer');
 check(files.sky.includes('relphi-sky-tarot-explorer-v1.js'),'Sky Chart loads explorer');
-check(files.explorer.includes("window.addEventListener('click',event=>"),'Sky Chart navigation precedes legacy document click handling');
-check(files.explorer.includes("location.assign('tarot.html?skyConnector='"),'Sky Chart routes into the Ledger, not Drawing Board');
-check(files.drawer.includes('Rulers ↗')&&files.drawer.includes('Houses ↗'),'Sky Chart tabs indicate navigation');
+check(!files.sky.includes('relphi-sky-tarot-explorer-v1.js'),'Sky Chart ruler/house wheel remains independent of Tarot Ledger');
+check(!files.drawer.includes('Rulers ↗')&&!files.drawer.includes('Houses ↗'),'Sky Chart Rulers and Houses remain native tabs');
+
 check(!files.explorer.includes('body.sky-connector-open'),'No global visibility takeover of Tarot Ledger');
 check(!files.explorer.includes('.sky-connector-cards'),'No replacement visual card grid');
 check(files.explorer.includes("listPanel.insertBefore(panel,listPanel.querySelector('.cards-heading'))"),'Sky controls reuse the native index layout');
@@ -74,6 +76,9 @@ check(files.explorer.includes("cardList.querySelector('.tarot-result-grid')"),'S
 check(files.explorer.includes("showAll.addEventListener('click'"),'Native Show All Cards exits the sky filter');
 check(files.explorer.includes("panel.querySelector('[data-sky-close]').addEventListener('click',close)"),'Sky controls have an explicit native-index return');
 check(files.explorer.includes("badge.className='or-hit-badge'"),'Sky hit reasons use canonical badge styling');
+check(files.explorer.includes("mark.className='relphi-connected-sky-mark'"),'Reuse the existing 12-color sky match marker');
+check(files.explorer.includes("searchTerm=searchInput?.value.trim()||''"),'A blank search selects all matching Minors');
+check(files.explorer.includes("searchTerm=''\n")||files.explorer.includes("searchTerm='';"),'Clearing a keyword restores all selected-sky matches');
 
 
-console.log('Sky Connector: 78-card deck, all 36 decans, 12 courts, exact boundaries, all hits, houses, unknown time, saved skies, navigation PASS.');
+console.log('Sky Connector: Minor-only planetary degrees, decans, courts, Mars in Virgo, empty search, native marker and index PASS.');
