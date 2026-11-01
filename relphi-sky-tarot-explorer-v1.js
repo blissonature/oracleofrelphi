@@ -141,6 +141,10 @@
   button.setAttribute('aria-controls','skyConnectorPanel');
   button.setAttribute('aria-expanded','false');
   homeActions.appendChild(button);
+  // Keep the legacy Drawing Board context API, but not its obsolete selector.
+  const legacyControlStyle=document.createElement('style');
+  legacyControlStyle.textContent='#shortListPanel .relphi-sky-connector{display:none!important}';
+  document.head.appendChild(legacyControlStyle);
   const panel=document.createElement('section');
   panel.id='skyConnectorPanel';
   panel.className='active-filter-row active-filter-row--results';
@@ -148,7 +152,7 @@
   panel.hidden=true;
   panel.innerHTML='<strong>Sky Connector</strong> <label>Sky <select id="skyConnectorSky" aria-label="Choose sky"></select></label> <span role="group" aria-label="Sky match views"><button type="button" data-sky-view="all">All matches</button><button type="button" data-sky-view="rulers">Rulers</button><button type="button" data-sky-view="houses">Houses</button></span> <label class="sky-house-filter" hidden>House <select id="skyConnectorHouse" aria-label="Filter by house"></select></label> <button type="button" data-sky-close>Show All Cards</button> <span id="skyConnectorSummary" role="status" aria-live="polite"></span>';
   listPanel.insertBefore(panel,listPanel.querySelector('.cards-heading'));
-  // No stylesheet rules, replacement card grids, or hidden Ledger sections.
+  // No replacement card grid, typography, palette, or page-wide hiding rules.
   let active=false,skyId='',view='all',houseFilter=0,openingIndex=false,queued=false;
   const selector=panel.querySelector('#skyConnectorSky');
   const summary=panel.querySelector('#skyConnectorSummary');
