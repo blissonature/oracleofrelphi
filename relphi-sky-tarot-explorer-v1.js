@@ -9,6 +9,7 @@
   const RULERS = ['Mars','Venus','Mercury','Moon','Sun','Mercury','Venus','Mars','Jupiter','Saturn','Saturn','Jupiter'];
   const FACES = [['Mars','Sun','Venus'],['Mercury','Moon','Saturn'],['Jupiter','Mars','Sun'],['Venus','Mercury','Moon'],['Saturn','Jupiter','Mars'],['Sun','Venus','Mercury'],['Moon','Saturn','Jupiter'],['Mars','Sun','Venus'],['Mercury','Moon','Saturn'],['Jupiter','Mars','Sun'],['Venus','Mercury','Moon'],['Saturn','Jupiter','Mars']];
   const KEYS = { A:'relphiSkyChartA', B:'relphiSkyChartB' };
+  let workingSky=null;
   const esc = x => String(x ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const read = k => { try { return JSON.parse(localStorage.getItem(k) || 'null'); } catch (_) { return null; } };
   const norm = n => ((n % 360) + 360) % 360;
@@ -17,8 +18,8 @@
   const label = p => String(p?.name || p?.metadata?.savedSkyName || p?.metadata?.name || p?.calcProfile?.name || p?.calcProfile?.location || p?.location || 'Untitled sky');
   function library() { const a = read('relphiSkyLibraryV1'); return Array.isArray(a) ? a : []; }
   function savedId(p) { return String(p?.id || p?.savedSkyId || p?.metadata?.savedSkyId || ''); }
-  function options() { return [...Object.keys(KEYS).filter(slot => !!read(KEYS[slot])).map(slot => ({id:slot,name:'Sky '+slot+' · '+label(read(KEYS[slot])),sky:read(KEYS[slot])})),...library().filter(p=>savedId(p)).map(p=>({id:'saved:'+savedId(p),name:'Saved · '+label(p),sky:p}))]; }
-  function choose(id) { if (KEYS[id]) return read(KEYS[id]); if (id.startsWith('saved:')) return library().find(p=>savedId(p)===id.slice(6)) || null; return null; }
+  function options() { return [...(workingSky?[{id:'working',name:label(workingSky),sky:workingSky}]:[]),...Object.keys(KEYS).filter(slot => !!read(KEYS[slot])).map(slot => ({id:slot,name:'Sky '+slot+' · '+label(read(KEYS[slot])),sky:read(KEYS[slot])})),...library().filter(p=>savedId(p)).map(p=>({id:'saved:'+savedId(p),name:'Saved · '+label(p),sky:p}))]; }
+  function choose(id) { if(id==='working')return workingSky;if (KEYS[id]) return read(KEYS[id]); if (id.startsWith('saved:')) return library().find(p=>savedId(p)===id.slice(6)) || null; return null; }
   function longitude(item) {
     if (!item || typeof item !== 'object') return NaN;
     if (item.longitude != null && item.longitude !== '' && Number.isFinite(Number(item.longitude))) return norm(Number(item.longitude));
@@ -140,13 +141,13 @@
   panel.className='active-filter-row active-filter-row--results';
   panel.setAttribute('aria-label','Sky Connector filters');
   panel.hidden=true;
-  panel.innerHTML='<strong>Sky Connector</strong> <label>Sky <select id="skyConnectorSky" aria-label="Choose sky"></select></label> <button type="button" data-sky-close>Show All Cards</button> <span id="skyConnectorSummary" role="status" aria-live="polite"></span>';
+  panel.innerHTML='<strong>Sky Connector</strong> <label>Sky <select id="skyConnectorSky" aria-label="Choose sky"></select></label> <button type="button" id="skyConnectorHereNow">Here &amp; Now</button> <button type="button" id="skyConnectorWhenToggle" aria-expanded="false">Where &amp; When</button> <button type="button" data-sky-close>Show All Cards</button> <span id="skyConnectorSummary" role="status" aria-live="polite"></span><div id="skyConnectorWhenPanel" hidden><label>Date and time (device local time) <input type="datetime-local" id="skyConnectorDateTime"></label> <label>Latitude <input id="skyConnectorLat" type="number" min="-90" max="90" step="any" placeholder="Optional"></label> <label>Longitude <input id="skyConnectorLon" type="number" min="-180" max="180" step="any" placeholder="Optional"></label> <button type="button" id="skyConnectorCalculate">Explore this sky</button><span id="skyConnectorCalcStatus" role="status"></span><p>Coordinates are optional for planetary matches; add both to calculate house context using the existing Ledger calculator.</p></div>';
   // A GitHack preview has separate local storage from oracleofrelphi.com.
   // Let the user populate this origin without inventing or copying their sky.
   const sourceHelpNode=document.createElement('div');
   sourceHelpNode.id='skyConnectorSourceHelp';
   sourceHelpNode.hidden=true;
-  sourceHelpNode.innerHTML='<p>This preview cannot read the skies saved on oracleofrelphi.com.</p><a href="sky-chart.html">Create a sky in this preview</a> <button type="button" id="skyConnectorTryExample">Try example: Mars 17°52′ Virgo</button><span id="skyConnectorExampleStatus" role="status"></span>';
+  sourceHelpNode.innerHTML='<p>This preview cannot read saved skies from oracleofrelphi.com. Use Here &amp; Now or Where &amp; When above to explore a real sky without files.</p><a href="sky-chart.html">Open Sky Chart in this preview</a>';
   panel.appendChild(sourceHelpNode);
   listPanel.insertBefore(panel,listPanel.querySelector('.cards-heading'));
   // No replacement card grid, typography, palette, or page-wide hiding rules.
@@ -154,21 +155,66 @@
   const selector=panel.querySelector('#skyConnectorSky');
   const summary=panel.querySelector('#skyConnectorSummary');
   const sourceHelp=panel.querySelector('#skyConnectorSourceHelp');
-  panel.querySelector('#skyConnectorTryExample')?.addEventListener('click',()=>{
-    // Clearly labeled example, not a substitute for the user's actual chart.
-    localStorage.setItem(KEYS.A,JSON.stringify({
-      name:'Example · Mars 17°52′ Virgo',
-      calcProfile:{timeUnknown:true},
-      placements:{Mars:{name:'Mars',sign:'Virgo',degree:17,minute:52}}
-    }));
-    skyId='A';
+  const whenPanel=panel.querySelector('#skyConnectorWhenPanel');
+  const whenToggle=panel.querySelector('#skyConnectorWhenToggle');
+  const whenInput=panel.querySelector('#skyConnectorDateTime');
+  const latInput=panel.querySelector('#skyConnectorLat');
+  const lonInput=panel.querySelector('#skyConnectorLon');
+  const calcStatus=panel.querySelector('#skyConnectorCalcStatus');
+  const localStamp=date=>{
+    const n=x=>String(x).padStart(2,'0');
+    return date.getFullYear()+'-'+n(date.getMonth()+1)+'-'+n(date.getDate())+'T'+n(date.getHours())+':'+n(date.getMinutes());
+  };
+  // The astronomy engine is loaded by the Ledger itself. Geocentric longitudes
+  // do not need a location; only the optional house calculation does.
+  function calculateMoment(date,latitude='',longitude=''){
+    if(!(date instanceof Date)||!Number.isFinite(date.getTime()))throw Error('Enter a valid date and time.');
+    const A=window.Astronomy;
+    if(!A)throw Error('Astronomy Engine is unavailable.');
+    const coordinatesProvided=latitude!==''||longitude!=='';
+    if(coordinatesProvided&&(latitude===''||longitude===''))throw Error('Provide both latitude and longitude.');
+    if(coordinatesProvided){
+      if(!Number.isFinite(Number(latitude))||Math.abs(Number(latitude))>90||!Number.isFinite(Number(longitude))||Math.abs(Number(longitude))>180)throw Error('Invalid coordinates.');
+      const bridge=window.RelphiTarotLedgerBridge?.calculateSkyForConnector;
+      if(typeof bridge!=='function')throw Error('House calculator is not ready.');
+      const result=bridge(date.toISOString(),latitude,longitude,'porphyry');
+      return {name:'Where & When · '+date.toLocaleString(),placements:result,calcProfile:{timeUnknown:false,houseSystem:'porphyry'}};
+    }
+    const placements={};
+    const bodies=['Sun','Moon','Mercury','Venus','Mars','Jupiter','Saturn','Uranus','Neptune','Pluto'];
+    bodies.forEach(body=>{
+      const lon=body==='Moon'&&typeof A.EclipticGeoMoon==='function'
+        ?A.EclipticGeoMoon(date).lon:A.Ecliptic(A.GeoVector(body,date,true)).elon;
+      if(!Number.isFinite(lon))throw Error('Cannot calculate '+body+'.');
+      placements[body]={longitude:norm(lon)};
+    });
+    return {name:'Here & Now · '+date.toLocaleString(),placements,calcProfile:{timeUnknown:true}};
+  }
+  function useMoment(date,lat='',lon=''){
+    workingSky=calculateMoment(date,lat,lon);
+    skyId='working';
     searchTerm='';
     const input=document.getElementById('oracleCommand');
     if(input)input.value='';
     showNativeIndex();
     apply();
     updateUrl(true);
-    panel.querySelector('#skyConnectorExampleStatus').textContent='Example sky loaded. Nine of Pentacles should match.';
+    calcStatus.textContent='Exploring '+label(workingSky)+'.';
+  }
+  panel.querySelector('#skyConnectorHereNow').addEventListener('click',()=>{
+    try{useMoment(new Date());}
+    catch(error){calcStatus.textContent=error.message;whenPanel.hidden=false;whenToggle.setAttribute('aria-expanded','true');}
+  });
+  whenToggle.addEventListener('click',()=>{
+    whenPanel.hidden=!whenPanel.hidden;
+    whenToggle.setAttribute('aria-expanded',String(!whenPanel.hidden));
+    if(!whenInput.value)whenInput.value=localStamp(new Date());
+  });
+  panel.querySelector('#skyConnectorCalculate').addEventListener('click',()=>{
+    try{
+      if(!whenInput.value)throw Error('Select a date and time.');
+      useMoment(new Date(whenInput.value),latInput.value,lonInput.value);
+    }catch(error){calcStatus.textContent=error.message;}
   });
   function updateUrl(isOpen){
     const url=new URL(location.href);
