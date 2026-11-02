@@ -3659,3 +3659,17 @@ body:has(.relphi-attune-reader),body:has(.relphi-focus-reader){
     right: 38px !important;
   }
 }
+
+/* A phone's touch target resolution preferred the card Add button over the
+   10px southeast scale knob. Give the knob a genuine independent hit area,
+   inset away from the Add button rather than stacking two actions together. */
+@media(max-width:760px) {
+  #shortListPanel.relphi-transform-editing-unlocked .short-list-row.card-row-board > .card-row-item .card-row-scale-handle--se {
+    right: 35px !important;
+    bottom: 0 !important;
+    width: 34px !important;
+    height: 34px !important;
+    z-index: 45 !important;
+    touch-action: none !important;
+  }
+}
