@@ -29,6 +29,7 @@
   let activeDraw = false;
   let openTool = '';
   let transformEditingUnlocked = false;
+  let suppressedCardFocusClick = null;
   let showPositionStickers = readStickerVisibility();
   let surfaceReadingSession = null;
   let recursionSession = null;
@@ -5343,7 +5344,9 @@
               const count=currentCardCount(live),scale=1;
               snap.rowEnvelopeLayout={...(snap.rowEnvelopeLayout||{})};
               snap.rowCardTransforms={...(snap.rowCardTransforms||{})};
-              for(let i=0;i<count;i++){
+              // Never reset transforms of cards already on the board when
+              // appending a new draw. Those transforms belong to the reader.
+              for(let i=before;i<count;i++){
                 snap.rowEnvelopeLayout[i]={x:i*CARD_W*scale,y:0};
                 snap.rowCardTransforms[i]={...(snap.rowCardTransforms[i]||{}),scale,rotation:0,zIndex:i+1};
               }
@@ -5396,7 +5399,12 @@
     const old=previousCount?genericPositions(Array.from({length:previousCount},(_,i)=>'Card '+(i+1))):[];
     const managed=root.dataset.relphiFreeGridManaged==='true';
     if(!managed && Object.keys(existing).length)return false;
-    if(managed && Object.entries(transforms).some(([key,v])=>Number(v.rotation||0)!==0))return false;
+    if(managed && Object.entries(transforms).some(([key,v])=>{
+      const expected=old[Number(key)]?.transform;
+      return Number(v.rotation||0)!==0 ||
+        (expected && Math.abs(Number(v.scale||1)-Number(expected.scale||1))>.001) ||
+        Number(v.zIndex||1)!==1;
+    }))return false;
     if(managed && Object.keys(existing).length && previousCount){
       // A reader's subsequent rearrangement takes ownership away from auto-fit.
       const oldSaved=root.dataset.relphiFreeGridCoordinates;
@@ -5547,6 +5555,23 @@
     else actions.insertBefore(button,actions.firstChild);
   }
 
+  // Transform target lives in tarot-app.js. Selection runs before both the
+  // legacy art-click handler and this workflow's Card Focus click capture.
+  function selectCardForTransformOnPointerDown(event) {
+    if (event.button !== 0) return;
+    const root=panel();
+    if (!root || !transformEditingAllowed(root)) return;
+    const item=event.target.closest?.('.card-row-board>.card-row-item[data-row-index]');
+    if (!item || !root.contains(item) || !item.querySelector('[data-row-card]')) return;
+    if (event.target.closest?.('button,a,input,textarea,select,label,[contenteditable="true"],[data-row-transform-handle],.or-card-title-banner')) return;
+    const index=Number(item.dataset.rowIndex);
+    if (!Number.isInteger(index)) return;
+    const bridge=prefabBridge();
+    if (!bridge?.selectTransformTarget || Number(bridge.getState?.()?.transformTarget)===index) return;
+    bridge.selectTransformTarget(index);
+    suppressedCardFocusClick={index,at:Date.now()};
+  }
+
   function globalCapture(event) {
     const root=panel();
     const openCloseTrigger=event.target.closest?.('#relphiOpenDrawingBoardCurrent');
@@ -5613,6 +5638,16 @@
       const index=Number(item.dataset.rowIndex);
       if (Number.isInteger(index)) {
         if (item.querySelector('[data-row-card]')) {
+          const selectedOnDown=suppressedCardFocusClick?.index===index &&
+            Date.now()-suppressedCardFocusClick.at<1800;
+          suppressedCardFocusClick=null;
+          const explicitTitle=!!event.target.closest?.('.or-card-title-banner');
+          if (!explicitTitle && transformEditingAllowed(root) &&
+              (selectedOnDown || Number(prefabBridge()?.getState?.()?.transformTarget)!==index)) {
+            prefabBridge()?.selectTransformTarget?.(index);
+            event.preventDefault(); event.stopImmediatePropagation();
+            return;
+          }
           event.preventDefault(); event.stopImmediatePropagation();
           openFocus(index);
           return;
@@ -5722,6 +5757,7 @@
   window.RelphiAppendBespokeQuestion = appendBespokeQuestion;
   window.RelphiDrawingBoardEnsureTopActions = ensureBoardChrome;
 
+  window.addEventListener('pointerdown',selectCardForTransformOnPointerDown,true);
   window.addEventListener('click',globalCapture,true);
   document.addEventListener('keydown',event=>{
     const reader=document.querySelector('.relphi-focus-reader');
