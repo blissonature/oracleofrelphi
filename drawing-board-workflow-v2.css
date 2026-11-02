@@ -3618,3 +3618,12 @@ body:has(.relphi-attune-reader),body:has(.relphi-focus-reader){
     background:#fffdf8!important;
   }
 }
+
+
+/* Transform gestures belong to each card, not to workspace touch scrolling.
+   The native renderer owns selection and updates the CSS transform variables. */
+#shortListPanel.relphi-transform-editing-unlocked .card-row-board [data-row-transform-handle] {
+  touch-action: none !important;
+  -webkit-user-select: none !important;
+  user-select: none !important;
+}
