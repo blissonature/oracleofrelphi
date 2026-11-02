@@ -2603,7 +2603,8 @@
     return Math.max(0, Math.min(max, raw));
   }
   function setRowCardTransform(index, updates = {}) {
-    if (state.rowLayoutLocked && !state.rowLayoutDesignMode) return;
+    // The layout lock preserves the predefined spread positions; it must not
+    // disable transforming cards that have already been drawn into those slots.
     const i = Math.max(0, Number(index) || 0);
     state.rowCardTransforms ||= {};
     const current = rowCardTransform(i);
@@ -2617,7 +2618,7 @@
     state.rowTransformTarget = i;
   }
   function resetRowCardTransform(index) {
-    if (state.rowLayoutLocked && !state.rowLayoutDesignMode) return;
+    // Resetting a drawn card is independent of the spread-position lock.
     state.rowCardTransforms ||= {};
     delete state.rowCardTransforms[Math.max(0, Number(index) || 0)];
   }
@@ -3067,6 +3068,10 @@
         event.stopPropagation();
         const index = Number(item.dataset.rowIndex) || 0;
         state.rowTransformTarget = index;
+        qsa('.card-row-item.is-transform-target', board).forEach(el => el.classList.remove('is-transform-target'));
+        item.classList.add('is-transform-target');
+        const targetInput = wrap.querySelector('#rowTransformTarget');
+        if (targetInput) targetInput.value = String(index);
         const start = rowEnvelopePosition(index);
         const startX = event.clientX;
         const startY = event.clientY;
@@ -3250,6 +3255,10 @@
         event.stopPropagation();
         const index = Number(item.dataset.rowIndex) || 0;
         state.rowTransformTarget = index;
+        qsa('.card-row-item.is-transform-target', board).forEach(el => el.classList.remove('is-transform-target'));
+        item.classList.add('is-transform-target');
+        const targetInput = wrap.querySelector('#rowTransformTarget');
+        if (targetInput) targetInput.value = String(index);
         const mode = handle.dataset.rowTransformHandle;
         const start = rowCardTransform(index);
         const rect = item.getBoundingClientRect();
