@@ -39,6 +39,9 @@ async function ready(page) {
   if ((await trigger.getAttribute('aria-expanded'))!=='true') await trigger.click();
   await page.locator('#shortListPanel .card-row-board>.card-row-item[data-row-index="1"] [data-row-card]').waitFor({state:'visible',timeout:20000});
   await page.waitForFunction(() => document.querySelector('#shortListPanel')?.classList.contains('relphi-board-ready'),null,{timeout:20000});
+  // Opening the board deliberately smooth-scrolls the page. Wait for that
+  // animation before measuring a 13px handle for pointer hit testing.
+  await page.waitForTimeout(1000);
   console.log('ready:',page.url(),await page.evaluate(() => ({count:document.querySelectorAll('#shortListPanel .card-row-item').length,controls:document.querySelector('#shortListPanel')?.className})));
 }
 
