@@ -9,6 +9,7 @@
   const RULERS = ['Mars','Venus','Mercury','Moon','Sun','Mercury','Venus','Mars','Jupiter','Saturn','Saturn','Jupiter'];
   const FACES = [['Mars','Sun','Venus'],['Mercury','Moon','Saturn'],['Jupiter','Mars','Sun'],['Venus','Mercury','Moon'],['Saturn','Jupiter','Mars'],['Sun','Venus','Mercury'],['Moon','Saturn','Jupiter'],['Mars','Sun','Venus'],['Mercury','Moon','Saturn'],['Jupiter','Mars','Sun'],['Venus','Mercury','Moon'],['Saturn','Jupiter','Mars']];
   const KEYS = { A:'relphiSkyChartA', B:'relphiSkyChartB' };
+  const LAST_SKY_KEY='relphiSkyConnectorLastWorkingV1';
   let workingSky=null;
   const esc = x => String(x ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const read = k => { try { return JSON.parse(localStorage.getItem(k) || 'null'); } catch (_) { return null; } };
@@ -17,6 +18,18 @@
   const contains = (lon, a, b) => norm(lon - a) < norm(b - a);
   const label = p => String(p?.name || p?.metadata?.savedSkyName || p?.metadata?.name || p?.calcProfile?.name || p?.calcProfile?.location || p?.location || 'Untitled sky');
   function library() { const a = read('relphiSkyLibraryV1'); return Array.isArray(a) ? a : []; }
+  // Keep the latest calculated sky across reloads without replacing any Sky Chart slot.
+  workingSky=read(LAST_SKY_KEY);
+  function saveSkyRecord(sky,name){
+    const records=library();
+    const cleanName=String(name||'').trim().slice(0,100);
+    if(!cleanName)throw Error('Give the sky a name before saving it.');
+    const existing=records.find(p=>p.kind==='chart'&&p.name===cleanName);
+    const id=existing?.id||'chart:sky-connector-'+Date.now();
+    const saved={...sky,id,kind:'chart',name:cleanName,notes:sky.notes||'',placements:sky.placements||{},calcProfile:sky.calcProfile||{},savedAt:new Date().toISOString(),savedAtLocal:new Date().toLocaleString()};
+    localStorage.setItem('relphiSkyLibraryV1',JSON.stringify([saved,...records.filter(p=>p.id!==id)].slice(0,80)));
+    return saved;
+  }
   function savedId(p) { return String(p?.id || p?.savedSkyId || p?.metadata?.savedSkyId || ''); }
   function options() { return [...(workingSky?[{id:'working',name:label(workingSky),sky:workingSky}]:[]),...Object.keys(KEYS).filter(slot => !!read(KEYS[slot])).map(slot => ({id:slot,name:'Sky '+slot+' · '+label(read(KEYS[slot])),sky:read(KEYS[slot])})),...library().filter(p=>savedId(p)).map(p=>({id:'saved:'+savedId(p),name:'Saved · '+label(p),sky:p}))]; }
   function choose(id) { if(id==='working')return workingSky;if (KEYS[id]) return read(KEYS[id]); if (id.startsWith('saved:')) return library().find(p=>savedId(p)===id.slice(6)) || null; return null; }
@@ -141,7 +154,7 @@
   panel.className='active-filter-row active-filter-row--results';
   panel.setAttribute('aria-label','Sky Connector filters');
   panel.hidden=true;
-  panel.innerHTML='<strong>Sky Connector</strong> <label>Sky <select id="skyConnectorSky" aria-label="Choose sky"></select></label> <button type="button" id="skyConnectorHereNow">Here &amp; Now</button> <button type="button" id="skyConnectorWhenToggle" aria-expanded="false">Where &amp; When</button> <button type="button" data-sky-close>Show All Cards</button> <span id="skyConnectorSummary" role="status" aria-live="polite"></span><div id="skyConnectorWhenPanel" hidden><label>Date and time (at selected location) <input type="datetime-local" id="skyConnectorDateTime"></label> <label>Location <input id="skyConnectorPlace" type="search" placeholder="City or place name" autocomplete="off"></label> <button type="button" id="skyConnectorFindPlace">Find location</button> <label id="skyConnectorPlaceChoiceLabel" hidden>Choose matching location <select id="skyConnectorPlaceChoice"></select></label> <span id="skyConnectorPlaceStatus" role="status" aria-live="polite"></span> <button type="button" id="skyConnectorCalculate">Explore this sky</button><span id="skyConnectorCalcStatus" role="status"></span><p>Location is optional for planetary matches. Search and choose a place for geographic sky calculations.</p></div>';
+  panel.innerHTML='<strong>Sky Connector</strong> <label>Saved skies <select id="skyConnectorSky" aria-label="Choose saved sky"></select></label> <button type="button" id="skyConnectorSaveSky">Save this sky</button> <button type="button" id="skyConnectorHereNow">Here &amp; Now</button> <button type="button" id="skyConnectorWhenToggle" aria-expanded="false">Where &amp; When</button> <button type="button" data-sky-close>Show All Cards</button> <span id="skyConnectorSummary" role="status" aria-live="polite"></span><div id="skyConnectorWhenPanel" hidden><label>Date and time (at selected location) <input type="datetime-local" id="skyConnectorDateTime"></label> <label>Location <input id="skyConnectorPlace" type="search" placeholder="City or place name" autocomplete="off"></label> <button type="button" id="skyConnectorFindPlace">Find location</button> <label id="skyConnectorPlaceChoiceLabel" hidden>Choose matching location <select id="skyConnectorPlaceChoice"></select></label> <span id="skyConnectorPlaceStatus" role="status" aria-live="polite"></span> <button type="button" id="skyConnectorCalculate">Explore this sky</button><span id="skyConnectorCalcStatus" role="status"></span><p>Location is optional for planetary matches. Search and choose a place for geographic sky calculations.</p></div>';
   // A GitHack preview has separate local storage from oracleofrelphi.com.
   // Let the user populate this origin without inventing or copying their sky.
   const sourceHelpNode=document.createElement('div');
@@ -153,6 +166,7 @@
   // No replacement card grid, typography, palette, or page-wide hiding rules.
   let active=false,skyId='',searchTerm='',openingIndex=false,queued=false;
   const selector=panel.querySelector('#skyConnectorSky');
+  const saveButton=panel.querySelector('#skyConnectorSaveSky');
   const summary=panel.querySelector('#skyConnectorSummary');
   const sourceHelp=panel.querySelector('#skyConnectorSourceHelp');
   const whenPanel=panel.querySelector('#skyConnectorWhenPanel');
@@ -229,6 +243,8 @@
   }
   function useMoment(date,lat='',lon=''){
     workingSky=calculateMoment(date,lat,lon);
+    try{localStorage.setItem(LAST_SKY_KEY,JSON.stringify(workingSky));}
+    catch(error){calcStatus.textContent='This browser cannot save skies locally.';}
     skyId='working';
     searchTerm='';
     const input=document.getElementById('oracleCommand');
@@ -249,7 +265,7 @@
   });
   function dateAtPlace(localValue, timeZone) {
     // Convert a wall-clock time in the selected city's timezone into a UTC Date.
-    const m=localValue.match(/^(\\d{4})-(\\d{2})-(\\d{2})T(\\d{2}):(\\d{2})$/);
+    const m=localValue.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})$/);
     if(!m)throw Error('Select a valid date and time.');
     const desired=Date.UTC(+m[1],+m[2]-1,+m[3],+m[4],+m[5]);
     const fmt=new Intl.DateTimeFormat('en-US',{timeZone,year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hourCycle:'h23'});
@@ -459,6 +475,20 @@
   button.addEventListener('click',()=>active?close():open(skyId));
   panel.querySelector('[data-sky-close]').addEventListener('click',close);
   selector.addEventListener('change',()=>{skyId=selector.value;apply();updateUrl(true);});
+  saveButton.addEventListener('click',()=>{
+    const sky=choose(skyId);
+    if(!sky){calcStatus.textContent='Calculate or select a sky before saving it.';return;}
+    if(skyId!=='working'&&skyId.startsWith('saved:')){calcStatus.textContent='This sky is already saved.';return;}
+    const name=window.prompt('Name this saved sky',label(sky));
+    if(name===null)return;
+    try{
+      const saved=saveSkyRecord(sky,name);
+      skyId='saved:'+saved.id;
+      apply();
+      updateUrl(true);
+      calcStatus.textContent='Saved '+saved.name+' to this browser’s sky library.';
+    }catch(error){calcStatus.textContent=error.message||'Could not save sky.';}
+  });
   showAll.addEventListener('click',()=>{if(active&&!openingIndex)clearSkyState();},true);
   // Sky Connector is a search mode, not an alternative renderer.
   // Capture the normal Search action before the Ledger changes its dataset.
