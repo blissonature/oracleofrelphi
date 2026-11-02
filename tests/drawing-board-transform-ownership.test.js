@@ -122,11 +122,22 @@ async function exercise(page,label) {
   const sx=handleBox.x+handleBox.width/2,sy=handleBox.y+handleBox.height/2;
   const angle=Math.PI/4,dx=sx-cx,dy=sy-cy;
   const rx=cx+dx*Math.cos(angle)-dy*Math.sin(angle),ry=cy+dx*Math.sin(angle)+dy*Math.cos(angle);
+  console.log(label+': rotate prehit:',await page.evaluate(([x,y])=>{
+    const el=document.elementFromPoint(x,y);
+    const h=document.querySelector('.card-row-item[data-row-index="1"] [data-row-transform-handle="rotate"]');
+    return {x,y,hit:el===h,actual:el?.className,handle:h?.getBoundingClientRect().toJSON(),scrollY:window.scrollY};
+  },[sx,sy]));
   await page.mouse.move(sx,sy);
+  console.log(label+': rotate hoverhit:',await page.evaluate(([x,y])=>{
+    const el=document.elementFromPoint(x,y);
+    const h=document.querySelector('.card-row-item[data-row-index="1"] [data-row-transform-handle="rotate"]');
+    return {x,y,hit:el===h,actual:el?.className,handle:h?.getBoundingClientRect().toJSON(),scrollY:window.scrollY};
+  },[sx,sy]));
   await page.mouse.down();
   await page.mouse.move(rx,ry,{steps:10});
   await page.mouse.up();
   const afterRotate=await snap(page);
+  console.log(label+': rotate result',JSON.stringify({before:transform(afterScale,1),after:transform(afterRotate,1),events:await page.evaluate(()=>window.__relphiTransformTrace?.slice(-18))}));
   assert.ok(Math.abs(transform(afterRotate,1).rotation-transform(afterScale,1).rotation)>5,
     label+': second card must rotate independently');
   assert.equal(transform(afterRotate,0).rotation||0,transform(afterScale,0).rotation||0,
