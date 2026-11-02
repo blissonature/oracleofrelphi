@@ -76,11 +76,18 @@ async function exercise(page,label) {
   const scaleBox=await scaleHandle.boundingBox();
   assert.ok(scaleBox,label+': scale handle has a visible hit area');
   const x=scaleBox.x+scaleBox.width/2, y=scaleBox.y+scaleBox.height/2;
+  console.log(label+': scale hit:',await page.evaluate(([x,y])=>{
+    const el=document.elementFromPoint(x,y);
+    const h=document.querySelector('.card-row-item[data-row-index="1"] [data-row-transform-handle="scale"][data-corner="se"]');
+    const item=h?.closest('.card-row-item');
+    return {x,y,tag:el?.tagName,classes:el?.getAttribute('class'),target:el?.getAttribute('data-row-transform-handle'),withinHandle:el===h||h?.contains(el),itemClass:item?.className,box:getComputedStyle(h).pointerEvents,rect:h?.getBoundingClientRect().toJSON()};
+  },[x,y]));
   await page.mouse.move(x,y);
   await page.mouse.down();
   await page.mouse.move(x+65,y+65,{steps:10});
   await page.mouse.up();
   const afterScale=await snap(page);
+  console.log(label+': after scale',JSON.stringify({before:transform(before,1),after:transform(afterScale,1)}));
   assert.ok(Math.abs(transform(afterScale,1).scale-transform(before,1).scale)>.02,
     label+': mouse drag should change second card scale');
   assert.ok(Math.abs(transform(afterScale,0).scale-transform(before,0).scale)<.001,
