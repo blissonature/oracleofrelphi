@@ -141,7 +141,7 @@
   panel.className='active-filter-row active-filter-row--results';
   panel.setAttribute('aria-label','Sky Connector filters');
   panel.hidden=true;
-  panel.innerHTML='<strong>Sky Connector</strong> <label>Sky <select id="skyConnectorSky" aria-label="Choose sky"></select></label> <button type="button" id="skyConnectorHereNow">Here &amp; Now</button> <button type="button" id="skyConnectorWhenToggle" aria-expanded="false">Where &amp; When</button> <button type="button" data-sky-close>Show All Cards</button> <span id="skyConnectorSummary" role="status" aria-live="polite"></span><div id="skyConnectorWhenPanel" hidden><label>Date and time (device local time) <input type="datetime-local" id="skyConnectorDateTime"></label> <label>Location <input id="skyConnectorPlace" type="search" placeholder="City or place name" autocomplete="off"></label> <button type="button" id="skyConnectorFindPlace">Find location</button> <label id="skyConnectorPlaceChoiceLabel" hidden>Choose matching location <select id="skyConnectorPlaceChoice"></select></label> <span id="skyConnectorPlaceStatus" role="status" aria-live="polite"></span> <button type="button" id="skyConnectorCalculate">Explore this sky</button><span id="skyConnectorCalcStatus" role="status"></span><p>Location is optional for planetary matches. Search and choose a place for geographic sky calculations.</p></div>';
+  panel.innerHTML='<strong>Sky Connector</strong> <label>Sky <select id="skyConnectorSky" aria-label="Choose sky"></select></label> <button type="button" id="skyConnectorHereNow">Here &amp; Now</button> <button type="button" id="skyConnectorWhenToggle" aria-expanded="false">Where &amp; When</button> <button type="button" data-sky-close>Show All Cards</button> <span id="skyConnectorSummary" role="status" aria-live="polite"></span><div id="skyConnectorWhenPanel" hidden><label>Date and time (at selected location) <input type="datetime-local" id="skyConnectorDateTime"></label> <label>Location <input id="skyConnectorPlace" type="search" placeholder="City or place name" autocomplete="off"></label> <button type="button" id="skyConnectorFindPlace">Find location</button> <label id="skyConnectorPlaceChoiceLabel" hidden>Choose matching location <select id="skyConnectorPlaceChoice"></select></label> <span id="skyConnectorPlaceStatus" role="status" aria-live="polite"></span> <button type="button" id="skyConnectorCalculate">Explore this sky</button><span id="skyConnectorCalcStatus" role="status"></span><p>Location is optional for planetary matches. Search and choose a place for geographic sky calculations.</p></div>';
   // A GitHack preview has separate local storage from oracleofrelphi.com.
   // Let the user populate this origin without inventing or copying their sky.
   const sourceHelpNode=document.createElement('div');
@@ -247,13 +247,43 @@
     whenToggle.setAttribute('aria-expanded',String(!whenPanel.hidden));
     if(!whenInput.value)whenInput.value=localStamp(new Date());
   });
-  panel.querySelector('#skyConnectorCalculate').addEventListener('click',()=>{
+  function dateAtPlace(localValue, timeZone) {
+    // Convert a wall-clock time in the selected city's timezone into a UTC Date.
+    const m=localValue.match(/^(\\d{4})-(\\d{2})-(\\d{2})T(\\d{2}):(\\d{2})$/);
+    if(!m)throw Error('Select a valid date and time.');
+    const desired=Date.UTC(+m[1],+m[2]-1,+m[3],+m[4],+m[5]);
+    const fmt=new Intl.DateTimeFormat('en-US',{timeZone,year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hourCycle:'h23'});
+    let utc=desired;
+    for(let attempt=0;attempt<4;attempt++){
+      const v=Object.fromEntries(fmt.formatToParts(new Date(utc)).filter(p=>p.type!=='literal').map(p=>[p.type,Number(p.value)]));
+      const displayed=Date.UTC(v.year,v.month-1,v.day,v.hour,v.minute);
+      const delta=desired-displayed;
+      if(!delta)break;
+      utc+=delta;
+    }
+    return new Date(utc);
+  }
+  panel.querySelector('#skyConnectorCalculate').addEventListener('click',async()=>{
+    const submit=panel.querySelector('#skyConnectorCalculate');
     try{
       if(!whenInput.value)throw Error('Select a date and time.');
       if(placeInput.value.trim() && !selectedPlace)throw Error('Find and select a location first.');
-      useMoment(new Date(whenInput.value),selectedPlace?.lat??'',selectedPlace?.lon??'');
-      if(selectedPlace)calcStatus.textContent='Exploring '+selectedPlace.display_name+' · '+new Date(whenInput.value).toLocaleString()+'.';
+      submit.disabled=true;
+      calcStatus.textContent='Calculating…';
+      let date;
+      if(selectedPlace){
+        const p=selectedPlace;
+        const u='https://api.open-meteo.com/v1/forecast?latitude='+encodeURIComponent(p.lat)+'&longitude='+encodeURIComponent(p.lon)+'&current=temperature_2m&timezone=auto';
+        const response=await fetch(u,{headers:{Accept:'application/json'}});
+        if(!response.ok)throw Error('Could not resolve this location’s time zone.');
+        const zone=(await response.json()).timezone;
+        if(!zone)throw Error('No time zone found for this location.');
+        date=dateAtPlace(whenInput.value,zone);
+      }else date=new Date(whenInput.value);
+      useMoment(date,selectedPlace?.lat??'',selectedPlace?.lon??'');
+      if(selectedPlace)calcStatus.textContent='Exploring '+selectedPlace.display_name+' · '+whenInput.value.replace('T',' ')+'.';
     }catch(error){calcStatus.textContent=error.message;}
+    finally{submit.disabled=false;}
   });
   function updateUrl(isOpen){
     const url=new URL(location.href);
