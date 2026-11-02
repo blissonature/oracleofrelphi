@@ -20036,3 +20036,33 @@ html body #browsePanel .board-result-unavailable {opacity: .7;}
   html body #browsePanel .board-result-cell {padding: .4rem .3rem;}
   html body #browsePanel .board-result-detail-row {font-size: .71rem;}
 }
+
+
+/* At phone widths keep every detail visible without sideways scrolling. */
+@media (max-width: 620px) {
+  html body #browsePanel .board-result-details-head {display: none;}
+  html body #browsePanel .board-result-detail-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+  }
+  html body #browsePanel .board-result-detail-row .board-result-cell {
+    border-left: 0;
+    padding: .5rem .6rem;
+  }
+  html body #browsePanel .board-result-detail-row .board-result-ingredients::before,
+  html body #browsePanel .board-result-detail-row .board-result-interpretation::before {
+    display: block;
+    font-size: .69rem;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    font-weight: 800;
+    margin-bottom: .24rem;
+    color: #786456;
+  }
+  html body #browsePanel .board-result-detail-row .board-result-ingredients::before {content: 'Ingredients';}
+  html body #browsePanel .board-result-detail-row .board-result-interpretation::before {content: 'Interpretation';}
+  html body #browsePanel .board-result-detail-row .board-result-cell + .board-result-cell {
+    border-top: 1px solid rgba(70,52,43,.12);
+  }
+  html body #browsePanel img.board-result-real-thumbnail[src] {width: 3.2rem !important;}
+}
