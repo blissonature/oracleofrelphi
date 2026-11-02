@@ -867,6 +867,24 @@
     if (value) value = sentenceCaseFragment(value);
     return value;
   }
+
+  // Windows-style Details rows, with every field visible and a single
+  // existing inspector on the right. One row per physical Drawing Board slot.
+  function boardResultDetailRow(card,index,activeId) {
+    const reversed=rowCardIsReversed(index);
+    const locked=lockedCardData(card);
+    const ingredients=(locked?.ingredient_refs||[]).map(ref=>LOCKED_INGREDIENTS[ref]).filter(Boolean);
+    const ingredientHtml=ingredients.length
+      ? ingredients.map(item=>'<div class="board-result-ingredient"><strong>'+escapeHtml(item.name||'')+'</strong>'+(item.contribution?'<span>'+escapeHtml(item.contribution)+'</span>':'')+'</div>').join('')
+      : '<span class="board-result-unavailable">No ingredient breakdown available.</span>';
+    const meaning=layerInterpretationForOrientation(card,reversed)||'No interpretation available.';
+    const name=title(card);
+    const position=String(state.shortListPositionLabels?.[index]||index+1);
+    return '<article class="board-result-detail-row'+(activeId===card.card_id?' is-selected':'')+'" data-board-detail-card="'+escapeHtml(card.card_id)+'" data-result-position="'+index+'" tabindex="0" role="button" aria-label="Inspect '+escapeHtml(name)+' at position '+escapeHtml(position)+'">'+
+      '<div class="board-result-cell board-result-identity"><img class="board-result-real-thumbnail" src="'+escapeHtml(rwsImagePath(card))+'" alt="'+escapeHtml(rwsImageAlt(card))+'" loading="lazy"><div><small>Position '+escapeHtml(position)+'</small><strong>'+escapeHtml(name)+'</strong>'+(reversed?'<em>Reversed</em>':'')+'</div></div>'+
+      '<div class="board-result-cell board-result-ingredients">'+ingredientHtml+'</div>'+
+      '<div class="board-result-cell board-result-interpretation"><p>'+escapeHtml(meaning)+'</p></div></article>';
+  }
   function renderCardSurface(card, options={}) {
     const context = options.context || 'browse';
     const glyphTags = context === 'short-list' ? '' : renderGlyphChips(card);
@@ -1151,7 +1169,7 @@
   }
   function refreshShortListViews() {
     renderShortList();
-    if (state.mode === 'all' || state.mode === 'search') renderBrowse();
+    if (state.mode === 'all' || state.mode === 'search' || state.mode === 'board-results') renderBrowse();
     if (state.selected) renderDetail(state.selected);
     if (state.activeCelticCard) renderSpread();
     queueDrawingBoardSave();
@@ -3878,6 +3896,9 @@
     });
   }
   function currentCards() {
+    // A live view of the cards on the Drawing Board, preserving position order,
+    // repeats, and the same Tarot Ledger card surfaces used by ordinary search.
+    if (state.mode === 'board-results') return state.shortList.map(id => cardById(id)).filter(Boolean);
     if (state.mode === 'all') return sortCardsForDisplay(cards.filter(includedByVisibility).filter(passesCardFilters));
     if (state.mode === 'search' && state.lastDateField?.query && state.query === state.lastDateField.query) {
       return state.lastDateField.cards.map(hit => cardById(hit.cardId)).filter(Boolean).filter(passesCardFilters);
@@ -3910,13 +3931,14 @@
   }
   function updateSummary(list) {
     const count = list.length;
-    const summaryModes = ['idle', 'all', 'search'];
+    const summaryModes = ['idle', 'all', 'search', 'board-results'];
     setSummaryVisible(summaryModes.includes(state.mode));
     if (!summaryModes.includes(state.mode)) return;
     $('resultCount').textContent = count ? String(count) : 'No';
     $('resultNoun').textContent = count === 1 ? ' card shown' : ' cards shown';
     const inlineCount = $('resultInlineCount');
     if (inlineCount) inlineCount.textContent = `${count ? String(count) : 'No'} ${count === 1 ? 'card' : 'cards'} shown`;
+    if (state.mode === 'board-results') $('activeSummary').textContent = count ? 'Drawing Board cards in position order. This list updates when the board changes.' : 'Drawing Board has no cards yet. Draw or add cards to see them here.';
     if (state.mode === 'idle') $('activeSummary').textContent = 'Begin with a search, a spread, a date, a chart placement, or show the full deck.';
     if (state.mode === 'all') $('activeSummary').textContent = state.cardFilters.length ? `Filters: ${state.cardFilters.join(', ')}.` : '';
     if (state.mode === 'search') {
@@ -3940,11 +3962,21 @@
     if (list.length && (!state.selected || !list.some(card => card.card_id === state.selected.card_id))) state.selected = list[0];
     const activeDetailId = state.selected && list.some(c => c.card_id === state.selected.card_id) ? state.selected.card_id : '';
     const panel = $('cardList');
-    const resultTools = list.length ? `<button type="button" data-add-results-to-row>Add shown to Drawing Board</button>` : '';
+    const resultTools = list.length && state.mode !== 'board-results' ? `<button type="button" data-add-results-to-row>Add shown to Drawing Board</button>` : '';
     const resultZoom = Math.max(0.35, Math.min(4.8, Number(state.resultZoom) || 1));
     const resultCardWidth = Math.max(3.5, Math.min(48, 10 * resultZoom)).toFixed(2) + 'rem';
-    const visualTools = list.length ? `<div class="result-visual-tools" aria-label="Visual result controls"><div class="result-zoom-control" aria-label="Results zoom"><span>Zoom</span><button type="button" data-result-zoom-step="-0.1" aria-label="Zoom results out">−</button><input data-result-zoom type="range" min="0.35" max="4.8" step="0.01" value="${resultZoom}" aria-label="Results zoom"><button type="button" data-result-zoom-step="0.1" aria-label="Zoom results in">+</button><output>${Math.round(resultZoom * 100)}%</output></div><button type="button" class="result-glyph-toggle" data-result-glyph-toggle aria-pressed="${state.resultGlyphsVisible ? 'true' : 'false'}">${state.resultGlyphsVisible ? 'Hide glyphs' : 'Show glyphs'}</button><label>Arrange <select data-result-layout><option value="auto" ${state.resultLayout === 'auto' ? 'selected' : ''}>Auto flow</option><option value="2" ${state.resultLayout === '2' ? 'selected' : ''}>2 columns</option><option value="3" ${state.resultLayout === '3' ? 'selected' : ''}>3 columns</option><option value="4" ${state.resultLayout === '4' ? 'selected' : ''}>4 columns</option></select></label></div>` : '';
+    const visualTools = list.length && state.mode !== 'board-results' ? `<div class="result-visual-tools" aria-label="Visual result controls"><div class="result-zoom-control" aria-label="Results zoom"><span>Zoom</span><button type="button" data-result-zoom-step="-0.1" aria-label="Zoom results out">−</button><input data-result-zoom type="range" min="0.35" max="4.8" step="0.01" value="${resultZoom}" aria-label="Results zoom"><button type="button" data-result-zoom-step="0.1" aria-label="Zoom results in">+</button><output>${Math.round(resultZoom * 100)}%</output></div><button type="button" class="result-glyph-toggle" data-result-glyph-toggle aria-pressed="${state.resultGlyphsVisible ? 'true' : 'false'}">${state.resultGlyphsVisible ? 'Hide glyphs' : 'Show glyphs'}</button><label>Arrange <select data-result-layout><option value="auto" ${state.resultLayout === 'auto' ? 'selected' : ''}>Auto flow</option><option value="2" ${state.resultLayout === '2' ? 'selected' : ''}>2 columns</option><option value="3" ${state.resultLayout === '3' ? 'selected' : ''}>3 columns</option><option value="4" ${state.resultLayout === '4' ? 'selected' : ''}>4 columns</option></select></label></div>` : '';
     const filterBar = (state.cardFilters.length || resultTools || visualTools) ? `<div class="active-filter-row active-filter-row--results">${state.cardFilters.length ? `<strong>Filters</strong>${state.cardFilters.map(f => `<button type="button" data-remove-filter="${escapeHtml(f)}">${escapeHtml(filterDisplayName(f))} ×</button>`).join('')}<button type="button" data-clear-filters>Clear filters</button>` : ''}${resultTools}${visualTools}</div>` : '';
+    if (state.mode === 'board-results') {
+      panel.innerHTML = '<div class="board-result-details" aria-label="Drawing Board card details"><div class="board-result-details-head"><span>Thumbnail</span><span>Ingredients</span><span>Interpretation</span></div>'+list.map((card,index)=>boardResultDetailRow(card,index,activeDetailId)).join('')+(list.length?'':'<p class="empty-state">No cards on the Drawing Board.</p>')+'</div>';
+      panel.querySelectorAll('[data-board-detail-card]').forEach(row=>{
+        const inspect=()=>{const card=cardById(row.dataset.boardDetailCard);if(!card)return;state.selected=card;panel.querySelectorAll('[data-board-detail-card]').forEach(el=>el.classList.toggle('is-selected',el===row));renderDetail(card);};
+        row.addEventListener('click',inspect);
+        row.addEventListener('keydown',event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();inspect();}});
+      });
+      renderDetail(state.selected && list.some(c=>c.card_id===state.selected.card_id)?state.selected:null);
+      return;
+    }
     panel.innerHTML = `${filterBar}<div class="or-card-grid tarot-result-grid" style="--result-zoom:${resultZoom};--result-card-w:${resultCardWidth};" data-result-layout="${escapeHtml(state.resultLayout || 'auto')}" data-result-glyphs="${state.resultGlyphsVisible ? 'on' : 'off'}">${list.map(card => renderCardSurface(card,{context:'browse', detailSelected: card.card_id === activeDetailId})).join('') || '<p class="empty-state">No cards are showing.</p>'}</div>`;
     const applyResultZoom = () => {
       const grid = panel.querySelector('.tarot-result-grid');
@@ -4004,6 +4036,7 @@
     panel.addEventListener('click', (event) => { if (userHasTextSelection()) return; const titleBtn = event.target.closest('[data-card-id]'); if (titleBtn && panel.contains(titleBtn)) { event.preventDefault(); event.stopPropagation(); inspectBrowseResult(titleBtn.dataset.cardId); return; } const cardEl = event.target.closest('.or-card[data-id]'); if (!cardEl || !panel.contains(cardEl) || event.target.closest('[data-shortlist]') || event.target.closest('[data-filter]') || event.target.closest('.or-card-layer')) return; const id = cardEl.dataset.id; event.preventDefault(); inspectBrowseResult(id); });
     qsa('[data-shortlist]', panel).forEach(btn => btn.addEventListener('click', (event) => { event.stopPropagation(); toggleShortList(btn.dataset.shortlist); }));
     qsa('[data-filter]', panel).forEach(chip => chip.addEventListener('click', (event) => { event.stopPropagation(); applyChipFilter(chip.dataset.filter); }));
+
     const resultGrid = panel.querySelector('.tarot-result-grid');
     if (resultGrid) {
       qsa('.or-chip.relphi-filter-chip', resultGrid).forEach(chip => {
@@ -4940,6 +4973,18 @@
   }
 
 
+  function showBoardCardResults() {
+    state.mode = 'board-results';
+    state.query = '';
+    state.cardFilters = [];
+    state.selected = null;
+    $('oracleCommand').value = '/board';
+    showPanel('browsePanel');
+    setVisible('visibilityPanel', false);
+    hideCommandMenu();
+    renderBrowse();
+    pushHistory();
+  }
   function showAll() {
     state.mode = 'all'; state.query = ''; state.cardFilters = []; $('oracleCommand').value = ''; showPanel('browsePanel'); setVisible('visibilityPanel', false); renderBrowse(); pushHistory();
   }
@@ -5066,6 +5111,7 @@
     const text = value.slice(1).trim();
     const lower = text.toLowerCase();
     if (!text || lower === 'show all' || lower === 'all') { showAll(); return; }
+    if (lower === 'board' || lower === 'board cards' || lower === 'drawing board' || lower === 'drawing board cards') { showBoardCardResults(); return; }
     if (lower.startsWith('draw')) { openSpread(); return; }
     if (lower.startsWith('spell')) { const spellText = text.replace(/^spell\s*/i, ''); if (spellText && openSpellSequence(spellText)) return; updateSummary([]); hideCommandMenu(); return; }
     if (lower.startsWith('date')) { const dateText = text.replace(/^date\s*/i, ''); if (dateText && openDateFromSearch(dateText)) return; openDate(); return; }
@@ -5093,7 +5139,7 @@
     if (!raw.startsWith('/')) return [];
     const term = raw.slice(1).trim().toLowerCase();
     const base = [
-      ['show all','Show All Cards'], ['draw','Draw Cards'], ['date ','Look Up a Date'], ['spell ','Spell Hebrew letters as cards'], ['chart','Chart Placement'], ['card ','Look Up a Card'], ['planet ','Filter by Planet'], ['sign ','Filter by Sign'], ['theme ','Search a Theme'], ['rising ','Add Rising Sign']
+      ['show all','Show All Cards'], ['board','Show Drawing Board Cards'], ['draw','Draw Cards'], ['date ','Look Up a Date'], ['spell ','Spell Hebrew letters as cards'], ['chart','Chart Placement'], ['card ','Look Up a Card'], ['planet ','Filter by Planet'], ['sign ','Filter by Sign'], ['theme ','Search a Theme'], ['rising ','Add Rising Sign']
     ];
     return base.filter(([cmd, label]) => !term || cmd.includes(term) || label.toLowerCase().includes(term)).slice(0, 8);
   }
@@ -10486,6 +10532,7 @@ ${notes || ''}`;
     const mode = snapshot?.mode || 'idle';
     if (mode === 'all') { state.mode = 'all'; state.query = ''; $('oracleCommand').value = ''; showPanel('browsePanel'); setVisible('visibilityPanel', false); renderBrowse(); }
     else if (mode === 'search') { state.mode = 'search'; state.query = snapshot.query || ''; $('oracleCommand').value = state.query; showPanel('browsePanel'); renderBrowse(); }
+    else if (mode === 'board-results') { state.mode = 'board-results'; state.query = ''; $('oracleCommand').value = '/board'; showPanel('browsePanel'); renderBrowse(); }
     else if (mode === 'spread') { state.mode = 'spread'; showPanel('spreadPanel'); updateSummary(state.currentSpread); renderSpread(); }
     else if (mode === 'date') { state.mode = 'date'; showPanel('datePanel'); updateSummary([]); }
     else if (mode === 'chart' || mode === 'currentSky') { state.mode = 'chart'; showPanel('chartPanel'); setVisible('currentSkyPanel', !isDedicatedSkyChartPage()); updateSummary([]); renderSkyCreator(); renderChartForm(); renderCurrentSkyForm(); renderChart(); renderCurrentSky(); }
