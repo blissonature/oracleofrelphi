@@ -103,7 +103,7 @@ async function exercise(page,label) {
     return {actual:el?.getAttribute('class'),expected:h?.getAttribute('class'),hit:el===h,handleRect:h?.getBoundingClientRect().toJSON(),itemRect:item?.getBoundingClientRect().toJSON(),scrollY:window.scrollY,docHeight:document.documentElement.scrollHeight};
   },[x,y]));
   await page.mouse.down();
-  await page.mouse.move(x+65,y+65,{steps:10});
+  await page.mouse.move(x+22,y+22,{steps:10});
   await page.mouse.up();
   const afterScale=await snap(page);
   console.log(label+': trace',JSON.stringify(await page.evaluate(()=>window.__relphiTransformTrace)));
