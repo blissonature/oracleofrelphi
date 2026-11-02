@@ -94,6 +94,11 @@ async function exercise(page,label) {
     window.addEventListener('pointerup',ev=>window.__relphiTransformTrace.push({kind:'up',pointerId:ev.pointerId}),true);
   });
   await page.mouse.move(x,y);
+  console.log(label+': hit after hover:',await page.evaluate(([x,y])=>{
+    const h=document.querySelector('.card-row-item[data-row-index="1"] [data-row-transform-handle="scale"][data-corner="se"]');
+    const item=h?.closest('.card-row-item'), el=document.elementFromPoint(x,y);
+    return {actual:el?.getAttribute('class'),expected:h?.getAttribute('class'),hit:el===h,handleRect:h?.getBoundingClientRect().toJSON(),itemRect:item?.getBoundingClientRect().toJSON(),scrollY:window.scrollY};
+  },[x,y]));
   await page.mouse.down();
   await page.mouse.move(x+65,y+65,{steps:10});
   await page.mouse.up();
