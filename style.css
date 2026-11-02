@@ -20053,3 +20053,22 @@ html body #browsePanel .tarot-result-grid .is-board-result-card .board-result-ca
   html body #browsePanel .tarot-result-grid .is-board-result-card .board-result-card-tabs {gap: .1rem; padding: .12rem;}
   html body #browsePanel .tarot-result-grid .is-board-result-card .board-result-card-tabs button {min-height: 30px;}
 }
+
+
+/* The Thumbnail tab is the miniature of the actual card, not a generic glyph. */
+html body #browsePanel .tarot-result-grid .is-board-result-card .board-result-card-tabs button .board-result-tab-thumbnail {
+  display: block;
+  height: 2.55rem;
+  max-width: 100%;
+  width: auto;
+  margin: 0 auto;
+  object-fit: contain;
+  border-radius: .12rem;
+}
+html body #browsePanel .tarot-result-grid .is-board-result-card .board-result-card-tabs button:has(.board-result-tab-thumbnail) {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.7rem;
+  padding: .1rem;
+}
