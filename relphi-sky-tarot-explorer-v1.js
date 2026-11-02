@@ -95,7 +95,7 @@
       // Only position-specific Minor Arcana qualify. The planet occupying
       // a decan is the trigger; the decan's traditional ruler need not be it.
       add(index.decans.get(clean(sign)+':'+r.decan),'decan','Exact decan: '+position+' falls in '+sign+' '+(r.decan*10)+'°–'+((r.decan+1)*10)+'°.',r);
-      index.courts.forEach(c=>{if(contains(r.lon,c.start,c.end))add(c.card,'court','Court range: '+position+' falls within '+c.card.astrology.zodiac_range+'.',r)});
+      // Court cards do not qualify as sky-specific Minor Arcana matches.
     });
     const entries=Array.from(ledger.values()).map(e=>({...e,hits:e.hits.sort((a,b)=>(a.house||99)-(b.house||99)||a.reason.localeCompare(b.reason)),hitCount:e.hits.length})).sort((a,b)=>b.hitCount-a.hitCount||a.card.name.localeCompare(b.card.name));
     return {entries,houseReady,placementCount:pl.length,hitCount:entries.reduce((n,e)=>n+e.hitCount,0)};
@@ -267,7 +267,7 @@
     // A planet/sign query selects sky placements first, then their Minor
     // Arcana correspondences. Other queries intersect card metadata.
     result.entries.forEach(entry=>{
-      if(entry.card.arcana==='Major')return;
+      if(entry.card.card_type!=='Pip')return;
       const hits=modeHits(entry).filter(hit=>!term || (placementQuery
         ? matchingBodies.has(clean(hit.body))
         : clean([entry.card.name,entry.card.card_id,entry.card.suit,
@@ -343,7 +343,7 @@
     if(active)return;
     const selected=choose(skyId || options()[0]?.id || '');
     const ids=new Map(calculate(selected,window.RELPHI_TAROT_CARDS||[]).entries
-      .filter(e=>e.card.arcana!=='Major').map(e=>[e.card.card_id,e.hits]));
+      .filter(e=>e.card.card_type==='Pip').map(e=>[e.card.card_id,e.hits]));
     cardList.querySelectorAll('.or-card[data-id]').forEach(card=>{
       const hits=ids.get(card.dataset.id);
       const existing=card.querySelector('.relphi-connected-sky-mark');
