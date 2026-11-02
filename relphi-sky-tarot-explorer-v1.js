@@ -141,7 +141,7 @@
   panel.className='active-filter-row active-filter-row--results';
   panel.setAttribute('aria-label','Sky Connector filters');
   panel.hidden=true;
-  panel.innerHTML='<strong>Sky Connector</strong> <label>Sky <select id="skyConnectorSky" aria-label="Choose sky"></select></label> <button type="button" id="skyConnectorHereNow">Here &amp; Now</button> <button type="button" id="skyConnectorWhenToggle" aria-expanded="false">Where &amp; When</button> <button type="button" data-sky-close>Show All Cards</button> <span id="skyConnectorSummary" role="status" aria-live="polite"></span><div id="skyConnectorWhenPanel" hidden><label>Date and time (device local time) <input type="datetime-local" id="skyConnectorDateTime"></label> <label>Latitude <input id="skyConnectorLat" type="number" min="-90" max="90" step="any" placeholder="Optional"></label> <label>Longitude <input id="skyConnectorLon" type="number" min="-180" max="180" step="any" placeholder="Optional"></label> <button type="button" id="skyConnectorCalculate">Explore this sky</button><span id="skyConnectorCalcStatus" role="status"></span><p>Coordinates are optional for planetary matches; add both to calculate house context using the existing Ledger calculator.</p></div>';
+  panel.innerHTML='<strong>Sky Connector</strong> <label>Sky <select id="skyConnectorSky" aria-label="Choose sky"></select></label> <button type="button" id="skyConnectorHereNow">Here &amp; Now</button> <button type="button" id="skyConnectorWhenToggle" aria-expanded="false">Where &amp; When</button> <button type="button" data-sky-close>Show All Cards</button> <span id="skyConnectorSummary" role="status" aria-live="polite"></span><div id="skyConnectorWhenPanel" hidden><label>Date and time (device local time) <input type="datetime-local" id="skyConnectorDateTime"></label> <label>Location <input id="skyConnectorPlace" type="search" placeholder="City or place name" autocomplete="off"></label> <button type="button" id="skyConnectorFindPlace">Find location</button> <label id="skyConnectorPlaceChoiceLabel" hidden>Choose matching location <select id="skyConnectorPlaceChoice"></select></label> <span id="skyConnectorPlaceStatus" role="status" aria-live="polite"></span> <button type="button" id="skyConnectorCalculate">Explore this sky</button><span id="skyConnectorCalcStatus" role="status"></span><p>Location is optional for planetary matches. Search and choose a place for geographic sky calculations.</p></div>';
   // A GitHack preview has separate local storage from oracleofrelphi.com.
   // Let the user populate this origin without inventing or copying their sky.
   const sourceHelpNode=document.createElement('div');
@@ -158,8 +158,45 @@
   const whenPanel=panel.querySelector('#skyConnectorWhenPanel');
   const whenToggle=panel.querySelector('#skyConnectorWhenToggle');
   const whenInput=panel.querySelector('#skyConnectorDateTime');
-  const latInput=panel.querySelector('#skyConnectorLat');
-  const lonInput=panel.querySelector('#skyConnectorLon');
+  const placeInput=panel.querySelector('#skyConnectorPlace');
+  const findPlace=panel.querySelector('#skyConnectorFindPlace');
+  const placeChoice=panel.querySelector('#skyConnectorPlaceChoice');
+  const placeChoiceLabel=panel.querySelector('#skyConnectorPlaceChoiceLabel');
+  const placeStatus=panel.querySelector('#skyConnectorPlaceStatus');
+  let selectedPlace=null,foundPlaces=[],placeRequest=0;
+  function invalidatePlace(){
+    selectedPlace=null;
+    foundPlaces=[];
+    placeChoice.replaceChildren();
+    placeChoiceLabel.hidden=true;
+    placeStatus.textContent='';
+    placeRequest++;
+  }
+  placeInput.addEventListener('input',invalidatePlace);
+  async function searchPlace(){
+    const query=placeInput.value.trim();
+    if(query.length<2){placeStatus.textContent='Enter at least two characters.';return;}
+    const seq=++placeRequest;
+    findPlace.disabled=true;
+    placeStatus.textContent='Searching locations…';
+    try{
+      const url='https://nominatim.openstreetmap.org/search?format=jsonv2&addressdetails=1&limit=6&q='+encodeURIComponent(query);
+      const response=await fetch(url,{headers:{'Accept':'application/json'}});
+      if(!response.ok)throw Error('Location search is temporarily unavailable.');
+      const data=await response.json();
+      if(seq!==placeRequest)return;
+      foundPlaces=Array.isArray(data)?data.filter(p=>Number.isFinite(Number(p.lat))&&Number.isFinite(Number(p.lon))):[];
+      placeChoice.replaceChildren();
+      foundPlaces.forEach((p,i)=>{const opt=document.createElement('option');opt.value=String(i);opt.textContent=p.display_name;placeChoice.appendChild(opt);});
+      placeChoiceLabel.hidden=foundPlaces.length===0;
+      selectedPlace=foundPlaces[0]||null;
+      placeStatus.textContent=selectedPlace?'Selected: '+selectedPlace.display_name:'No locations found. Try adding a country or state.';
+    }catch(error){if(seq===placeRequest){placeStatus.textContent=error.message||'Location search failed.';selectedPlace=null;placeChoiceLabel.hidden=true;}}
+    finally{if(seq===placeRequest)findPlace.disabled=false;}
+  }
+  findPlace.addEventListener('click',searchPlace);
+  placeInput.addEventListener('keydown',event=>{if(event.key==='Enter'){event.preventDefault();searchPlace();}});
+  placeChoice.addEventListener('change',()=>{selectedPlace=foundPlaces[Number(placeChoice.value)]||null;placeStatus.textContent=selectedPlace?'Selected: '+selectedPlace.display_name:'';});
   const calcStatus=panel.querySelector('#skyConnectorCalcStatus');
   const localStamp=date=>{
     const n=x=>String(x).padStart(2,'0');
@@ -213,7 +250,9 @@
   panel.querySelector('#skyConnectorCalculate').addEventListener('click',()=>{
     try{
       if(!whenInput.value)throw Error('Select a date and time.');
-      useMoment(new Date(whenInput.value),latInput.value,lonInput.value);
+      if(placeInput.value.trim() && !selectedPlace)throw Error('Find and select a location first.');
+      useMoment(new Date(whenInput.value),selectedPlace?.lat??'',selectedPlace?.lon??'');
+      if(selectedPlace)calcStatus.textContent='Exploring '+selectedPlace.display_name+' · '+new Date(whenInput.value).toLocaleString()+'.';
     }catch(error){calcStatus.textContent=error.message;}
   });
   function updateUrl(isOpen){
