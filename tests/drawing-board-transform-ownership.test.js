@@ -15,18 +15,31 @@ async function ready(page) {
   await page.goto(url,{waitUntil:'domcontentloaded'});
   await page.waitForFunction(() => window.RelphiDrawingBoardOptionsBridge?.capture &&
     window.RelphiDrawingBoardPrefabsBridge?.selectTransformTarget &&
-    !!document.querySelector('#showAllCards'),{timeout:30000});
-  await page.locator('#showAllCards').click();
-  for (let i=0; i<2; i++) {
-    const add=page.locator('[data-shortlist][aria-pressed="false"]').first();
-    await add.waitFor({state:'visible'});
-    await add.click();
-  }
-  await page.locator('#relphiOpenDrawingBoardCurrent').click();
-  await page.locator('#shortListPanel .card-row-board>.card-row-item[data-row-index="1"] [data-row-card]').waitFor({state:'visible'});
-  await page.waitForFunction(() => document.querySelector('#shortListPanel')?.classList.contains('relphi-board-ready'));
-  await page.waitForTimeout(200);
-  console.log('ready:',page.url(),await page.evaluate(() => ({hasPanel:!!document.querySelector('#shortListPanel'),body:document.body?.className, count:document.querySelectorAll('#shortListPanel .card-row-item').length})));
+    !!window.__relphiDrawingBoardUnifiedV3,null,{timeout:30000});
+  // Seed the two actual native cards through the documented board-state bridge.
+  // Do not open Browse / Show All Cards: its full Ledger rendering can dominate
+  // Chromium's main thread and obscure transform ownership regressions.
+  await page.evaluate(() => {
+    const bridge=window.RelphiDrawingBoardOptionsBridge;
+    const snapshot=bridge.capture();
+    snapshot.shortList=['ace_of_wands','ace_of_cups'];
+    snapshot.rowCardManual=[true,true];
+    snapshot.shortListSelection=[];
+    snapshot.rowActiveLayout=null;
+    snapshot.rowPositionMeta=[];
+    snapshot.rowEnvelopeLayout={0:{x:0,y:0},1:{x:195,y:0}};
+    snapshot.rowCardTransforms={0:{scale:1,rotation:0,zIndex:1},1:{scale:1,rotation:0,zIndex:2}};
+    snapshot.rowTransformTarget=0;
+    snapshot.rowLayoutLocked=true;
+    snapshot.rowLayoutDesignMode=false;
+    snapshot.cardRowBoardOpen=true;
+    bridge.restore(snapshot);
+  });
+  const trigger=page.locator('#relphiOpenDrawingBoardCurrent');
+  if ((await trigger.getAttribute('aria-expanded'))!=='true') await trigger.click();
+  await page.locator('#shortListPanel .card-row-board>.card-row-item[data-row-index="1"] [data-row-card]').waitFor({state:'visible',timeout:20000});
+  await page.waitForFunction(() => document.querySelector('#shortListPanel')?.classList.contains('relphi-board-ready'),null,{timeout:20000});
+  console.log('ready:',page.url(),await page.evaluate(() => ({count:document.querySelectorAll('#shortListPanel .card-row-item').length,controls:document.querySelector('#shortListPanel')?.className})));
 }
 
 async function exercise(page,label) {
