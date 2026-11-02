@@ -26,10 +26,12 @@ async function ready(page) {
   await page.locator('#shortListPanel .card-row-board>.card-row-item[data-row-index="1"] [data-row-card]').waitFor({state:'visible'});
   await page.waitForFunction(() => document.querySelector('#shortListPanel')?.classList.contains('relphi-board-ready'));
   await page.waitForTimeout(200);
+  console.log('ready:',page.url(),await page.evaluate(() => ({hasPanel:!!document.querySelector('#shortListPanel'),body:document.body?.className, count:document.querySelectorAll('#shortListPanel .card-row-item').length})));
 }
 
 async function exercise(page,label) {
   const panel=page.locator('#shortListPanel');
+  console.log('exercise:',label,page.url(),await panel.count());
   assert.equal(await panel.evaluate(el=>el.classList.contains('relphi-transform-editing-unlocked')),true,
     label+': Free-mode controls should be enabled');
   assert.equal(await target(page),0,label+': initial card should be selected');
@@ -84,7 +86,7 @@ async function exercise(page,label) {
   assert.equal(transform(afterRotate,0).rotation||0,transform(afterScale,0).rotation||0,
     label+': first card rotation must remain unchanged');
 
-  windowScreenshot=path.join(out,'drawing-board-transform-'+label+'.png');
+  const windowScreenshot=path.join(out,'drawing-board-transform-'+label+'.png');
   await page.screenshot({path:windowScreenshot,fullPage:true});
   await page.evaluate(() => window.RelphiDrawingBoardPrefabsBridge.refresh());
   const afterRerender=await snap(page);
@@ -114,6 +116,8 @@ async function exercise(page,label) {
         localStorage.setItem('relphiBoardTransformLocksV1',JSON.stringify({drag:true,rotation:true,scale:true}));
       });
       const page=await context.newPage();
+      page.on('framenavigated',frame=>{if(frame===page.mainFrame())console.log('navigation:',test.name,frame.url());});
+      page.on('pageerror',error=>console.log('pageerror:',test.name,String(error)));
       try{
         await ready(page);
         await exercise(page,test.name);
