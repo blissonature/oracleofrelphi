@@ -33,3 +33,22 @@ for (const reversals of [false, true]) for (const repeats of [false, true]) {
   assert.equal(restored.rowActiveLayout.positions[1].allowReversals,reversals);
 }
 console.log('Clarifier inherits all four board reversal/repeat combinations and pack; existing answers and overrides survive.');
+
+// A one-card pack isolates the reported failure: once used, it is exhausted
+// without repeats but must remain drawable when Clarifier inherits repeats on.
+const native = fs.readFileSync('tarot-app.js','utf8');
+const draw = native.match(/function drawRandomRowCard\(\) \{[\s\S]*?\n  \}/)[0];
+const random = native.match(/function randomRowDraw\(pool, allowReversals\) \{[\s\S]*?\n  \}/)[0];
+for (const reversals of [false,true]) for (const repeats of [false,true]) {
+  const state={shortList:['only-card'],rowAllowRepeats:repeats,rowAllowReversals:reversals};
+  let orientation, status={};
+  const ctx={state,positionDrawScope:()=> 'aces',rowDrawPool:()=>[{card_id:'only-card'}],
+    randomInt:n=>n-1,drawFromRowDeck:()=>null,$:()=>status,
+    commitShortList:cards=>{state.shortList=cards;},setRowCardReversed:(i,r)=>{orientation=r;},
+    refreshShortListViews:()=>{},expandCardRow:()=>{},scrollCardRowToEnd:()=>{}};
+  vm.createContext(ctx);vm.runInContext(random+'\n'+draw+'\ndrawRandomRowCard();',ctx);
+  assert.equal(state.shortList.length,repeats?2:1);
+  if(repeats)assert.equal(orientation,reversals);
+  else assert.match(status.textContent,/exhausted/);
+}
+console.log('An exhausted one-card pack draws a duplicate only with repeats on; reversals reach the native draw.');
