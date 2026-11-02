@@ -3637,3 +3637,15 @@ body:has(.relphi-attune-reader),body:has(.relphi-focus-reader){
 #shortListPanel.relphi-transform-editing-unlocked .short-list-row.card-row-board > .card-row-item.is-transform-target .card-row-transform-box {
   opacity: 1 !important;
 }
+
+/* A corner rotation knob becomes unreachable when a scaled card tucks under
+   the board commandbar (and overlaps the reverse-card control). Give rotate
+   its own stable lane on the upper-right edge, away from both owners. */
+#shortListPanel.relphi-transform-editing-unlocked .short-list-row.card-row-board > .card-row-item .card-row-rotate-handle--ne {
+  top: 22% !important;
+  right: 0 !important;
+  left: auto !important;
+  bottom: auto !important;
+  z-index: 30 !important;
+  touch-action: none !important;
+}
