@@ -60,6 +60,12 @@ async function exercise(page,label) {
 
   const first=page.locator('.card-row-item[data-row-index="0"] .card-row-transform-box');
   const second=page.locator('.card-row-item[data-row-index="1"] .card-row-transform-box');
+  // CSS intentionally fades the handles; inspect them after the transition.
+  await page.waitForFunction(() => {
+    const boxes=Array.from(document.querySelectorAll('#shortListPanel .card-row-item .card-row-transform-box'));
+    return boxes.length===2 && Number(getComputedStyle(boxes[0]).opacity)<.01 &&
+      Number(getComputedStyle(boxes[1]).opacity)>.99;
+  },null,{timeout:5000});
   assert.equal(await first.evaluate(el=>getComputedStyle(el).opacity),'0',label+': first handles hidden');
   assert.equal(await second.evaluate(el=>getComputedStyle(el).opacity),'1',label+': second handles shown');
 
