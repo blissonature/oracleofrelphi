@@ -2602,6 +2602,28 @@
     const raw = Number.isFinite(Number(state.rowTransformTarget)) ? Number(state.rowTransformTarget) : 0;
     return Math.max(0, Math.min(max, raw));
   }
+  // Native Drawing Board is the single owner of the active transform target.
+  // The workflow may request selection, but must not maintain a second selection state.
+  function selectRowTransformTarget(index, root = $('shortListPanel')) {
+    const target = Math.max(0, Math.min(Math.max(0, rowSlotCount() - 1), Math.trunc(Number(index) || 0)));
+    state.rowTransformTarget = target;
+    if (!root) return target;
+    root.querySelectorAll('.card-row-board .card-row-item[data-row-index]').forEach(item => {
+      item.classList.toggle('is-transform-target', Number(item.dataset.rowIndex) === target);
+    });
+    const targetSelect = root.querySelector('#rowTransformTarget');
+    if (targetSelect) targetSelect.value = String(target);
+    const transform = rowCardTransform(target);
+    const scale = root.querySelector('#rowTransformScale');
+    const rotation = root.querySelector('#rowTransformRotation');
+    const scaleValue = root.querySelector('#rowTransformScaleValue');
+    const rotationValue = root.querySelector('#rowTransformRotationValue');
+    if (scale) scale.value = String(transform.scale);
+    if (rotation) rotation.value = String(Math.round(transform.rotation));
+    if (scaleValue) scaleValue.textContent = Math.round(transform.scale * 100) + '%';
+    if (rotationValue) rotationValue.textContent = Math.round(transform.rotation) + '°';
+    return target;
+  }
   function setRowCardTransform(index, updates = {}) {
     // The layout lock preserves the predefined spread positions; it must not
     // disable transforming cards that have already been drawn into those slots.
@@ -2923,6 +2945,7 @@
     removePosition:removePrefabPosition,
     swapPositionSlots:swapDrawingBoardPositionSlots,
     getState:drawingBoardPrefabState,
+    selectTransformTarget:selectRowTransformTarget,
     setCenterOpen(value) {
       state.rowCenterOpen = !!value;
       document.dispatchEvent(new CustomEvent('relphi:drawing-board-center-view', { detail:{ open:state.rowCenterOpen } }));
@@ -3067,11 +3090,11 @@
         event.preventDefault();
         event.stopPropagation();
         const index = Number(item.dataset.rowIndex) || 0;
-        state.rowTransformTarget = index;
-        qsa('.card-row-item.is-transform-target', board).forEach(el => el.classList.remove('is-transform-target'));
-        item.classList.add('is-transform-target');
-        const targetInput = wrap.querySelector('#rowTransformTarget');
-        if (targetInput) targetInput.value = String(index);
+        selectRowTransformTarget(index, wrap);
+        // Selection must not start a drag when a prefab locks its slot coordinates.
+        if (state.rowLayoutLocked && !state.rowLayoutDesignMode) return;
+        if (wrap.classList.contains('relphi-transform-editing-unlocked') &&
+            !wrap.classList.contains('relphi-drag-unlocked')) return;
         const start = rowEnvelopePosition(index);
         const startX = event.clientX;
         const startY = event.clientY;
@@ -3254,11 +3277,7 @@
         event.preventDefault();
         event.stopPropagation();
         const index = Number(item.dataset.rowIndex) || 0;
-        state.rowTransformTarget = index;
-        qsa('.card-row-item.is-transform-target', board).forEach(el => el.classList.remove('is-transform-target'));
-        item.classList.add('is-transform-target');
-        const targetInput = wrap.querySelector('#rowTransformTarget');
-        if (targetInput) targetInput.value = String(index);
+        selectRowTransformTarget(index, wrap);
         const mode = handle.dataset.rowTransformHandle;
         const start = rowCardTransform(index);
         const rect = item.getBoundingClientRect();
@@ -3269,6 +3288,7 @@
         item.classList.add(mode === 'rotate' ? 'is-rotating' : 'is-scaling');
         handle.setPointerCapture?.(event.pointerId);
         const move = moveEvent => {
+          if (moveEvent.pointerId !== event.pointerId) return;
           if (mode === 'scale') {
             const distance = Math.max(8, Math.hypot(moveEvent.clientX - center.x, moveEvent.clientY - center.y));
             const nextScale = Math.max(.45, Math.min(2.5, start.scale * (distance / startDistance)));
@@ -3283,16 +3303,19 @@
           }
           item.style.cssText = cardRowItemStyle(index);
         };
-        const up = () => {
+        const up = finishEvent => {
+          if (finishEvent.pointerId !== event.pointerId) return;
           window.removeEventListener('pointermove', move);
           window.removeEventListener('pointerup', up);
+          window.removeEventListener('pointercancel', up);
           item.classList.remove('is-scaling', 'is-rotating');
           try { handle.releasePointerCapture?.(event.pointerId); } catch (error) {}
           document.body.style.cursor = '';
           renderShortList();
         };
         window.addEventListener('pointermove', move);
-        window.addEventListener('pointerup', up, { once: true });
+        window.addEventListener('pointerup', up);
+        window.addEventListener('pointercancel', up);
       });
     });
   }
@@ -3493,11 +3516,7 @@
       if (workspace) workspace.style.cssText = cardRowWorkspaceStyle(rowSlots);
     };
     if (transformTargetInput) transformTargetInput.addEventListener('change', () => {
-      state.rowTransformTarget = Number(transformTargetInput.value) || 0;
-      qsa('.card-row-item.is-transform-target', wrap).forEach(el => el.classList.remove('is-transform-target'));
-      const selectedItem = wrap.querySelector('.card-row-board .card-row-item[data-row-index="' + rowTransformTargetIndex(rowSlots) + '"]');
-      selectedItem?.classList.add('is-transform-target');
-      syncTransformControls();
+      selectRowTransformTarget(transformTargetInput.value, wrap);
     });
     if (transformScaleInput) transformScaleInput.addEventListener('input', () => {
       const index = rowTransformTargetIndex(rowSlots);
@@ -3585,7 +3604,7 @@
         if (rowItem && cardEl.closest('.card-row-board')) {
           event.preventDefault();
           event.stopPropagation();
-          state.rowTransformTarget = Number(rowItem.dataset.rowIndex) || 0;
+          selectRowTransformTarget(Number(rowItem.dataset.rowIndex) || 0, wrap);
           renderShortList();
           return;
         }
