@@ -82,11 +82,23 @@ async function exercise(page,label) {
     const item=h?.closest('.card-row-item');
     return {x,y,tag:el?.tagName,classes:el?.getAttribute('class'),target:el?.getAttribute('data-row-transform-handle'),withinHandle:el===h||h?.contains(el),itemClass:item?.className,box:getComputedStyle(h).pointerEvents,rect:h?.getBoundingClientRect().toJSON()};
   },[x,y]));
+  await page.evaluate(() => {
+    window.__relphiTransformTrace=[];
+    const h=document.querySelector('.card-row-item[data-row-index="1"] [data-row-transform-handle="scale"][data-corner="se"]');
+    h?.addEventListener('pointerdown',ev=>window.__relphiTransformTrace.push({kind:'handle-down',pointerId:ev.pointerId,target:ev.target.className,defaultPrevented:ev.defaultPrevented}),true);
+    window.addEventListener('pointerdown',ev=>window.__relphiTransformTrace.push({kind:'window-down',pointerId:ev.pointerId,target:ev.target.className}),true);
+    window.addEventListener('pointermove',ev=>{
+      const t=window.RelphiDrawingBoardOptionsBridge?.capture?.()?.rowCardTransforms?.[1];
+      window.__relphiTransformTrace.push({kind:'move',pointerId:ev.pointerId,scale:t?.scale,rotation:t?.rotation});
+    },true);
+    window.addEventListener('pointerup',ev=>window.__relphiTransformTrace.push({kind:'up',pointerId:ev.pointerId}),true);
+  });
   await page.mouse.move(x,y);
   await page.mouse.down();
   await page.mouse.move(x+65,y+65,{steps:10});
   await page.mouse.up();
   const afterScale=await snap(page);
+  console.log(label+': trace',JSON.stringify(await page.evaluate(()=>window.__relphiTransformTrace)));
   console.log(label+': after scale',JSON.stringify({before:transform(before,1),after:transform(afterScale,1)}));
   assert.ok(Math.abs(transform(afterScale,1).scale-transform(before,1).scale)>.02,
     label+': mouse drag should change second card scale');
