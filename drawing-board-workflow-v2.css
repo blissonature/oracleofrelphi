@@ -3627,3 +3627,13 @@ body:has(.relphi-attune-reader),body:has(.relphi-focus-reader){
   -webkit-user-select: none !important;
   user-select: none !important;
 }
+
+/* The native transform target is authoritative. Hover and legacy selection
+   must never leave a second card's handles visible or interactive. */
+#shortListPanel.relphi-transform-editing-unlocked .short-list-row.card-row-board > .card-row-item:not(.is-transform-target):not(.is-scaling):not(.is-rotating) .card-row-transform-box {
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+#shortListPanel.relphi-transform-editing-unlocked .short-list-row.card-row-board > .card-row-item.is-transform-target .card-row-transform-box {
+  opacity: 1 !important;
+}
