@@ -19940,135 +19940,99 @@ html body :is(
 }
 
 
-/* Drawing Board result views: same native card size and zoom in every mode. */
-html body #browsePanel .tarot-result-grid .is-board-result-card {
-  position: relative !important;
-  isolation: isolate;
-}
-html body #browsePanel .tarot-result-grid .is-board-result-card .board-result-card-tabs {
-  position: absolute;
-  left: .2rem;
-  right: .2rem;
-  bottom: .2rem;
-  z-index: 210;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: .22rem;
-  padding: .18rem;
-  border-radius: .6rem;
-  background: rgba(23, 22, 27, .88);
-  box-shadow: 0 1px 8px #0005;
-}
-html body #browsePanel .tarot-result-grid .is-board-result-card .board-result-card-tabs button {
-  flex: 1 1 0;
+
+/* /board: Windows-style Details list in the existing left result pane.
+   The full Tarot Ledger inspector remains the right column. */
+html body #browsePanel .board-result-details {
+  width: 100%;
   min-width: 0;
-  min-height: 32px;
-  border: 1px solid transparent;
-  border-radius: .4rem;
-  color: #fff;
-  background: transparent;
-  font-size: clamp(.85rem, 2vw, 1.2rem);
-  line-height: 1.1;
-  cursor: pointer;
-  touch-action: manipulation;
-}
-html body #browsePanel .tarot-result-grid .is-board-result-card .board-result-card-tabs button.is-active,
-html body #browsePanel .tarot-result-grid .is-board-result-card .board-result-card-tabs button[aria-pressed="true"] {
-  border-color: #e9d9bd;
-  background: #f3ede0;
-  color: #232025;
-}
-html body #browsePanel .tarot-result-grid .is-board-result-card .board-result-card-tabs button:focus-visible {
-  outline: 2px solid #fff;
-  outline-offset: 2px;
-}
-html body #browsePanel .tarot-result-grid .is-board-result-card .board-result-card-content {
-  display: none;
-  position: absolute;
-  z-index: 190;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: #f7f1e5;
-  color: #292329;
   box-sizing: border-box;
-  padding: .55rem .45rem 3.3rem;
-  overflow: hidden;
-  flex-direction: column;
-  font-size: clamp(.65rem, 1vw, .91rem);
+  border: 1px solid rgba(70, 52, 43, .19);
+  border-radius: .45rem;
+  background: #fffdf8;
+  overflow-wrap: anywhere;
 }
-html body #browsePanel .tarot-result-grid .is-board-result-card[data-board-view="ingredients"] .board-result-card-content,
-html body #browsePanel .tarot-result-grid .is-board-result-card[data-board-view="interpretation"] .board-result-card-content {
-  display: flex;
+html body #browsePanel .board-result-details-head,
+html body #browsePanel .board-result-detail-row {
+  display: grid;
+  grid-template-columns: minmax(7rem, .9fr) minmax(9rem, 1.15fr) minmax(12rem, 1.6fr);
+  align-items: start;
+  gap: 0;
+  min-width: 0;
 }
-html body #browsePanel .tarot-result-grid .is-board-result-card .board-result-card-title {
-  font-weight: 750;
-  font-size: 1.06em;
-  line-height: 1.2;
-  padding-bottom: .35rem;
-  border-bottom: 1px solid #b3a48a;
+html body #browsePanel .board-result-details-head {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  background: #eae1d3;
+  border-bottom: 1px solid #c9bcaa;
+  font-size: .73rem;
+  font-weight: 800;
+  letter-spacing: .02em;
 }
-html body #browsePanel .tarot-result-grid .is-board-result-card .board-result-card-body {
-  overflow-y: auto;
-  min-height: 0;
-  overscroll-behavior: contain;
-  margin-top: .35rem;
+html body #browsePanel .board-result-details-head > span {padding: .55rem .5rem;}
+html body #browsePanel .board-result-detail-row {
+  border-bottom: 1px solid #ded5c7;
+  color: #28232b;
+  cursor: pointer;
+  font-size: .78rem;
   line-height: 1.4;
 }
-html body #browsePanel .tarot-result-grid .is-board-result-card .board-result-card-body p {margin: 0 0 .45rem;}
-html body #browsePanel .tarot-result-grid .is-board-result-card .board-result-card-body .locked-ingredients {
-  display: block;
-  margin: 0;
-  padding: 0;
-  border: 0;
+html body #browsePanel .board-result-detail-row:last-child {border-bottom: 0;}
+html body #browsePanel .board-result-detail-row:nth-child(odd) {background: #f8f5ee;}
+html body #browsePanel .board-result-detail-row:hover {background: #eee7db;}
+html body #browsePanel .board-result-detail-row.is-selected {
+  background: #f3e9d9;
+  box-shadow: inset 3px 0 #b38d55;
 }
-html body #browsePanel .tarot-result-grid .is-board-result-card .board-result-card-body .locked-ingredients h3 {
-  display: none;
+html body #browsePanel .board-result-detail-row:focus-visible {
+  outline: 2px solid #8d6043;
+  outline-offset: -2px;
 }
-html body #browsePanel .tarot-result-grid .is-board-result-card .board-result-card-body .locked-ingredient-grid {
-  display: flex;
-  flex-direction: column;
-  gap: .4rem;
-  margin: 0;
-}
-html body #browsePanel .tarot-result-grid .is-board-result-card .board-result-card-body .locked-ingredient-card {
-  width: auto;
+html body #browsePanel .board-result-cell {
+  padding: .55rem .48rem;
   min-width: 0;
-  padding: .35rem;
 }
-html body #browsePanel .tarot-result-grid .is-board-result-card[data-board-view="ingredients"] > .or-card-layer,
-html body #browsePanel .tarot-result-grid .is-board-result-card[data-board-view="interpretation"] > .or-card-layer {
-  display: none !important;
+html body #browsePanel .board-result-cell + .board-result-cell {
+  border-left: 1px solid rgba(70, 52, 43, .1);
 }
-html body #browsePanel .tarot-result-grid .is-board-result-card > .or-card-layer {
-  z-index: 100 !important;
-}
-html body #browsePanel .tarot-result-grid .is-board-result-card .board-result-card-content,
-html body #browsePanel .tarot-result-grid .is-board-result-card .board-result-card-tabs {
-  pointer-events: auto;
-}
-@media (max-width: 700px) {
-  html body #browsePanel .tarot-result-grid .is-board-result-card .board-result-card-tabs {gap: .1rem; padding: .12rem;}
-  html body #browsePanel .tarot-result-grid .is-board-result-card .board-result-card-tabs button {min-height: 30px;}
-}
-
-
-/* The Thumbnail tab is the miniature of the actual card, not a generic glyph. */
-html body #browsePanel .tarot-result-grid .is-board-result-card .board-result-card-tabs button .board-result-tab-thumbnail {
-  display: block;
-  height: 2.55rem;
-  max-width: 100%;
-  width: auto;
-  margin: 0 auto;
-  object-fit: contain;
-  border-radius: .12rem;
-}
-html body #browsePanel .tarot-result-grid .is-board-result-card .board-result-card-tabs button:has(.board-result-tab-thumbnail) {
+html body #browsePanel .board-result-identity {
   display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 2.7rem;
-  padding: .1rem;
+  align-items: flex-start;
+  gap: .5rem;
+}
+html body #browsePanel .board-result-identity > div {
+  min-width: 0;
+  display: grid;
+  align-content: start;
+  gap: .1rem;
+}
+html body #browsePanel .board-result-identity small {opacity: .7; font-size: .75em;}
+html body #browsePanel .board-result-identity strong {font-size: .96em; line-height: 1.25;}
+html body #browsePanel .board-result-identity em {font-size: .82em; font-weight: 700;}
+html body #browsePanel img.board-result-real-thumbnail[src] {
+  display: block;
+  flex: 0 0 auto;
+  width: 3.2rem !important;
+  height: auto !important;
+  max-width: 36% !important;
+  object-fit: contain !important;
+}
+html body #browsePanel .board-result-ingredient {
+  display: block;
+  margin-bottom: .55rem;
+}
+html body #browsePanel .board-result-ingredient:last-child {margin-bottom: 0;}
+html body #browsePanel .board-result-ingredient strong {display: block; font-size: .98em;}
+html body #browsePanel .board-result-ingredient span {display: block; opacity: .87;}
+html body #browsePanel .board-result-interpretation p {margin: 0; white-space: normal;}
+html body #browsePanel .board-result-unavailable {opacity: .7;}
+@media (max-width: 850px) {
+  html body #browsePanel .board-result-details-head,
+  html body #browsePanel .board-result-detail-row {
+    grid-template-columns: minmax(5.2rem, .8fr) minmax(6rem, 1fr) minmax(7rem, 1.4fr);
+  }
+  html body #browsePanel img.board-result-real-thumbnail[src] {width: 2.2rem !important;}
+  html body #browsePanel .board-result-cell {padding: .4rem .3rem;}
+  html body #browsePanel .board-result-detail-row {font-size: .71rem;}
 }
