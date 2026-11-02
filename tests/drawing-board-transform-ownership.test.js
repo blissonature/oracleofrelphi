@@ -45,6 +45,52 @@ async function ready(page) {
   console.log('ready:',page.url(),await page.evaluate(() => ({count:document.querySelectorAll('#shortListPanel .card-row-item').length,controls:document.querySelector('#shortListPanel')?.className})));
 }
 
+async function touchDrag(page, from, to) {
+  const cdp=await page.context().newCDPSession(page);
+  const point=(x,y)=>({id:1,x,y,radiusX:6,radiusY:6,force:1});
+  try {
+    await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[point(from.x,from.y)]});
+    for(let i=1;i<=10;i++){
+      await cdp.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[point(from.x+(to.x-from.x)*i/10,from.y+(to.y-from.y)*i/10)]});
+      await page.waitForTimeout(18);
+    }
+    await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});
+  }finally {await cdp.detach();}
+}
+async function exerciseTouch(page) {
+  await page.evaluate(()=>{
+    const bridge=window.RelphiDrawingBoardOptionsBridge,snapshot=bridge.capture();
+    snapshot.rowCardTransforms[1]={scale:1,rotation:0,zIndex:2};
+    bridge.restore(snapshot);
+  });
+  await page.waitForTimeout(900);
+  const before=await snap(page), scale=page.locator('.card-row-item[data-row-index="1"] [data-row-transform-handle="scale"][data-corner="se"]');
+  const sb=await scale.boundingBox();
+  assert.ok(sb,'touch scale handle must be measurable');
+  const sx=sb.x+sb.width/2,sy=sb.y+sb.height/2;
+  assert.equal(await page.evaluate(([x,y])=>document.elementFromPoint(x,y)?.dataset.rowTransformHandle,[sx,sy]),'scale','touch scale handle must be hit-testable');
+  const scroll=await page.evaluate(()=>window.scrollY);
+  await touchDrag(page,{x:sx,y:sy},{x:sx+18,y:sy+18});
+  const afterScale=await snap(page);
+  assert.ok(Math.abs(transform(afterScale,1).scale-transform(before,1).scale)>.03,'touch should change selected card scale');
+  assert.equal(transform(afterScale,0).scale,transform(before,0).scale,'touch scale must not affect first card');
+  assert.ok(Math.abs((await page.evaluate(()=>window.scrollY))-scroll)<3,'touch scale must not scroll the page');
+
+  const rotate=page.locator('.card-row-item[data-row-index="1"] [data-row-transform-handle="rotate"]');
+  const item=page.locator('.card-row-item[data-row-index="1"]');
+  const rb=await rotate.boundingBox(),ib=await item.boundingBox();
+  assert.ok(rb&&ib,'touch rotate handle must be measurable');
+  const x=rb.x+rb.width/2,y=rb.y+rb.height/2;
+  assert.equal(await page.evaluate(([x,y])=>document.elementFromPoint(x,y)?.dataset.rowTransformHandle,[x,y]),'rotate','touch rotate handle must be hit-testable');
+  const cx=ib.x+ib.width/2,cy=ib.y+ib.height/2;
+  const angle=Math.PI/4,dx=x-cx,dy=y-cy;
+  await touchDrag(page,{x,y},{x:cx+dx*Math.cos(angle)-dy*Math.sin(angle),y:cy+dx*Math.sin(angle)+dy*Math.cos(angle)});
+  const afterRotate=await snap(page);
+  assert.ok(Math.abs(transform(afterRotate,1).rotation-transform(afterScale,1).rotation)>5,'touch rotation must change selected card');
+  assert.equal(transform(afterRotate,0).rotation,transform(afterScale,0).rotation,'touch rotation must not affect first card');
+  console.log('Touch scale and rotate gestures passed without page scrolling.');
+}
+
 async function exercise(page,label) {
   const panel=page.locator('#shortListPanel');
   console.log('exercise:',label,page.url(),await panel.count());
@@ -160,6 +206,7 @@ async function exercise(page,label) {
   assert.ok(Math.abs(transform(afterRerender,1).rotation-transform(afterRotate,1).rotation)<.001,
     label+': rotation must persist through a full rerender');
   assert.equal(await target(page),1,label+': rerender must preserve selected target');
+  if(label==='mobile') await exerciseTouch(page);
 
 
 }
