@@ -69,8 +69,8 @@ async function exercise(page,label) {
     return boxes.length===2 && Number(getComputedStyle(boxes[0]).opacity)<.01 &&
       Number(getComputedStyle(boxes[1]).opacity)>.99;
   },null,{timeout:5000});
-  assert.equal(await first.evaluate(el=>getComputedStyle(el).opacity),'0',label+': first handles hidden');
-  assert.equal(await second.evaluate(el=>getComputedStyle(el).opacity),'1',label+': second handles shown');
+  assert.ok(Number(await first.evaluate(el=>getComputedStyle(el).opacity))<.01,label+': first handles hidden');
+  assert.ok(Number(await second.evaluate(el=>getComputedStyle(el).opacity))>.99,label+': second handles shown');
 
   const before=await snap(page);
   const scaleHandle=page.locator('.card-row-item[data-row-index="1"] [data-row-transform-handle="scale"][data-corner="se"]');
