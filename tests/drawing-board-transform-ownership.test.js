@@ -80,7 +80,7 @@ async function exercise(page,label) {
     const el=document.elementFromPoint(x,y);
     const h=document.querySelector('.card-row-item[data-row-index="1"] [data-row-transform-handle="scale"][data-corner="se"]');
     const item=h?.closest('.card-row-item');
-    return {x,y,tag:el?.tagName,classes:el?.getAttribute('class'),target:el?.getAttribute('data-row-transform-handle'),withinHandle:el===h||h?.contains(el),itemClass:item?.className,box:getComputedStyle(h).pointerEvents,rect:h?.getBoundingClientRect().toJSON()};
+    return {x,y,tag:el?.tagName,classes:el?.getAttribute('class'),target:el?.getAttribute('data-row-transform-handle'),withinHandle:el===h||h?.contains(el),itemClass:item?.className,box:getComputedStyle(h).pointerEvents,rect:h?.getBoundingClientRect().toJSON(),itemRect:item?.getBoundingClientRect().toJSON(),scrollY:window.scrollY,docHeight:document.documentElement.scrollHeight};
   },[x,y]));
   await page.evaluate(() => {
     window.__relphiTransformTrace=[];
@@ -97,7 +97,7 @@ async function exercise(page,label) {
   console.log(label+': hit after hover:',await page.evaluate(([x,y])=>{
     const h=document.querySelector('.card-row-item[data-row-index="1"] [data-row-transform-handle="scale"][data-corner="se"]');
     const item=h?.closest('.card-row-item'), el=document.elementFromPoint(x,y);
-    return {actual:el?.getAttribute('class'),expected:h?.getAttribute('class'),hit:el===h,handleRect:h?.getBoundingClientRect().toJSON(),itemRect:item?.getBoundingClientRect().toJSON(),scrollY:window.scrollY};
+    return {actual:el?.getAttribute('class'),expected:h?.getAttribute('class'),hit:el===h,handleRect:h?.getBoundingClientRect().toJSON(),itemRect:item?.getBoundingClientRect().toJSON(),scrollY:window.scrollY,docHeight:document.documentElement.scrollHeight};
   },[x,y]));
   await page.mouse.down();
   await page.mouse.move(x+65,y+65,{steps:10});
