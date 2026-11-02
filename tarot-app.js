@@ -3494,6 +3494,9 @@
     };
     if (transformTargetInput) transformTargetInput.addEventListener('change', () => {
       state.rowTransformTarget = Number(transformTargetInput.value) || 0;
+      qsa('.card-row-item.is-transform-target', wrap).forEach(el => el.classList.remove('is-transform-target'));
+      const selectedItem = wrap.querySelector('.card-row-board .card-row-item[data-row-index="' + rowTransformTargetIndex(rowSlots) + '"]');
+      selectedItem?.classList.add('is-transform-target');
       syncTransformControls();
     });
     if (transformScaleInput) transformScaleInput.addEventListener('input', () => {
