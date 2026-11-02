@@ -70,8 +70,18 @@ async function exerciseTouch(page) {
   const sx=sb.x+sb.width/2,sy=sb.y+sb.height/2;
   assert.equal(await page.evaluate(([x,y])=>document.elementFromPoint(x,y)?.dataset.rowTransformHandle,[sx,sy]),'scale','touch scale handle must be hit-testable');
   const scroll=await page.evaluate(()=>window.scrollY);
+  await page.evaluate(()=>{
+    window.__relphiTouchTrace=[];
+    for(const type of ['pointerdown','pointermove','pointerup','pointercancel','touchstart','touchmove','touchend','touchcancel']){
+      window.addEventListener(type,e=>{
+        const snapshot=window.RelphiDrawingBoardOptionsBridge?.capture?.();
+        window.__relphiTouchTrace.push({type,target:e.target?.className,ptr:e.pointerId,ptrType:e.pointerType,button:e.button,scrollY:window.scrollY,scale:snapshot?.rowCardTransforms?.[1]?.scale});
+      },true);
+    }
+  });
   await touchDrag(page,{x:sx,y:sy},{x:sx+18,y:sy+18});
   const afterScale=await snap(page);
+  console.log('mobile: physical touchscreen event trace',JSON.stringify(await page.evaluate(()=>window.__relphiTouchTrace)));
   assert.ok(Math.abs(transform(afterScale,1).scale-transform(before,1).scale)>.03,'touch should change selected card scale');
   assert.equal(transform(afterScale,0).scale,transform(before,0).scale,'touch scale must not affect first card');
   assert.ok(Math.abs((await page.evaluate(()=>window.scrollY))-scroll)<3,'touch scale must not scroll the page');
