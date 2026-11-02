@@ -61,6 +61,14 @@ async function exercise(page,label) {
   assert.equal(await page.locator('.relphi-focus-reader').count(),0,
     label+': selecting another transform target must not force Card Focus');
 
+  // Clicking the already-active card should still open Focus; verify this
+  // before rotating the visual hit area out of its original rectangular footprint.
+  await page.locator('.card-row-item[data-row-index="1"] .card-row-card-wrap').click({position:{x:50,y:95},force:true});
+  await page.locator('.relphi-focus-reader').waitFor({state:'visible',timeout:12000});
+  await page.locator('.relphi-focus-close').click();
+  assert.equal(await target(page),1,label+': Card Focus must not take ownership of transforms');
+  await page.waitForTimeout(850);
+
   const first=page.locator('.card-row-item[data-row-index="0"] .card-row-transform-box');
   const second=page.locator('.card-row-item[data-row-index="1"] .card-row-transform-box');
   // CSS intentionally fades the handles; inspect them after the transition.
@@ -153,10 +161,7 @@ async function exercise(page,label) {
     label+': rotation must persist through a full rerender');
   assert.equal(await target(page),1,label+': rerender must preserve selected target');
 
-  await page.locator('.card-row-item[data-row-index="1"] .card-row-card-wrap').click({position:{x:50,y:95},force:true});
-  await page.locator('.relphi-focus-reader').waitFor({state:'visible'});
-  await page.locator('.relphi-focus-close').click();
-  assert.equal(await target(page),1,label+': Card Focus must not take ownership of transforms');
+
 }
 
 (async()=>{
