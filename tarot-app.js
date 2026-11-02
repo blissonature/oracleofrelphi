@@ -867,6 +867,17 @@
     if (value) value = sentenceCaseFragment(value);
     return value;
   }
+
+  function boardResultCardViews(card, index) {
+    const reversed=rowCardIsReversed(index);
+    const meaning=layerInterpretationForOrientation(card,reversed);
+    const ingredients=lockedIngredientsHtml(card) || '<p class="board-result-empty">No ingredient breakdown available.</p>';
+    const view=state.boardResultViews?.[index] || 'thumbnail';
+    const tabs=[['thumbnail','🖼','Thumbnail'],['ingredients','🧩','Ingredients'],['interpretation','📖','Interpretation']];
+    const controls='<div class="board-result-card-tabs" role="group" aria-label="'+escapeHtml(title(card))+' display">'+tabs.map(([key,icon,name])=>'<button type="button" data-card-view="'+key+'" data-result-position="'+index+'" aria-label="'+name+'" title="'+name+'" aria-pressed="'+(view===key)+'" class="'+(view===key?'is-active':'')+'"><span aria-hidden="true">'+icon+'</span></button>').join('')+'</div>';
+    const content='<div class="board-result-card-content" data-board-card-content><div class="board-result-card-title">'+escapeHtml(title(card))+(reversed?' · Reversed':'')+'</div><div class="board-result-card-body" data-board-card-body>'+(view==='ingredients'?ingredients:'<p>'+escapeHtml(meaning||'No interpretation available.')+'</p>')+'</div></div>';
+    return {view,controls,content};
+  }
   function renderCardSurface(card, options={}) {
     const context = options.context || 'browse';
     const glyphTags = context === 'short-list' ? '' : renderGlyphChips(card);
@@ -906,12 +917,14 @@
       : '';
     const placementLayer = placementBody ? `<div class="or-card-layer or-card-layer--placement relphi-info-layer" data-placement-layer hidden><div class="or-layer-head relphi-info-static"><strong>${escapeHtml(placementHeader)}</strong></div><div class="or-layer-scroll relphi-info-scroll">${placementBody}</div></div>` : '';
     const layerTitleHtml = escapeHtml(layerTitle).replace(/\//g, '/<wbr>');
+    const boardView=options.boardResultIndex == null ? null : boardResultCardViews(card,options.boardResultIndex);
     const resultTopCrop = 0;
     const resultCropStyle = resultTopCrop ? ` style="--rws-result-top-crop:${resultTopCrop.toFixed(2)}%;"` : '';
-    return `<article class="or-card tarot-card-surface relphi-surface relphi-surface--card ${context === 'short-list' ? 'short-list-card' : ''} ${selected ? 'is-row-selected' : ''} ${detailSelected ? 'is-detail-selected' : ''}" data-id="${escapeHtml(card.card_id)}" data-tags="${escapeHtml(publicTags(card).join('|'))}"${dragAttrs}${resultCropStyle} tabindex="0">
+    return `<article class="or-card tarot-card-surface relphi-surface relphi-surface--card ${boardView ? 'is-board-result-card' : ''} ${context === 'short-list' ? 'short-list-card' : ''} ${selected ? 'is-row-selected' : ''} ${detailSelected ? 'is-detail-selected' : ''}" data-id="${escapeHtml(card.card_id)}"${boardView ? ` data-board-view="${escapeHtml(boardView.view)}"` : ""} data-tags="${escapeHtml(publicTags(card).join('|'))}"${dragAttrs}${resultCropStyle} tabindex="0">
       <img class="or-card-art relphi-surface-face" src="${escapeHtml(rwsImagePath(card))}" alt="${escapeHtml(rwsImageAlt(card))}" loading="lazy"${context === 'short-list' ? ` data-relphi-adaptive-art="true" data-relphi-art-card="${escapeHtml(card.card_id)}" data-relphi-full-src="${escapeHtml(rwsImagePath(card))}" data-relphi-art-tier="full"` : ''}>
       ${inlinePositionSticker}${houseNumberSticker}
       ${glyphTags ? `<div class="or-card-badges relphi-sticker-row">${glyphTags}</div>` : ''}${badge}${connectedSkyMark}${placementBubble}
+      ${boardView ? boardView.content + boardView.controls : ""}
       <div class="or-card-layer relphi-info-layer" data-id="${escapeHtml(card.card_id)}"><div class="or-layer-head relphi-info-static"><span class="or-card-title-banner card-title-link" role="button" tabindex="0" data-card-id="${escapeHtml(card.card_id)}">${layerTitleHtml}</span>${add}</div><div class="or-card-essence${essenceClass}">${escapeHtml(essenceText)}</div><div class="or-layer-scroll relphi-info-scroll"><span>${escapeHtml(nbHyphens(layerText))}</span>${layerSources}</div></div>${placementLayer}
     </article>`;
   }
@@ -3949,7 +3962,7 @@
     const resultCardWidth = Math.max(3.5, Math.min(48, 10 * resultZoom)).toFixed(2) + 'rem';
     const visualTools = list.length ? `<div class="result-visual-tools" aria-label="Visual result controls"><div class="result-zoom-control" aria-label="Results zoom"><span>Zoom</span><button type="button" data-result-zoom-step="-0.1" aria-label="Zoom results out">−</button><input data-result-zoom type="range" min="0.35" max="4.8" step="0.01" value="${resultZoom}" aria-label="Results zoom"><button type="button" data-result-zoom-step="0.1" aria-label="Zoom results in">+</button><output>${Math.round(resultZoom * 100)}%</output></div><button type="button" class="result-glyph-toggle" data-result-glyph-toggle aria-pressed="${state.resultGlyphsVisible ? 'true' : 'false'}">${state.resultGlyphsVisible ? 'Hide glyphs' : 'Show glyphs'}</button><label>Arrange <select data-result-layout><option value="auto" ${state.resultLayout === 'auto' ? 'selected' : ''}>Auto flow</option><option value="2" ${state.resultLayout === '2' ? 'selected' : ''}>2 columns</option><option value="3" ${state.resultLayout === '3' ? 'selected' : ''}>3 columns</option><option value="4" ${state.resultLayout === '4' ? 'selected' : ''}>4 columns</option></select></label></div>` : '';
     const filterBar = (state.cardFilters.length || resultTools || visualTools) ? `<div class="active-filter-row active-filter-row--results">${state.cardFilters.length ? `<strong>Filters</strong>${state.cardFilters.map(f => `<button type="button" data-remove-filter="${escapeHtml(f)}">${escapeHtml(filterDisplayName(f))} ×</button>`).join('')}<button type="button" data-clear-filters>Clear filters</button>` : ''}${resultTools}${visualTools}</div>` : '';
-    panel.innerHTML = `${filterBar}<div class="or-card-grid tarot-result-grid" style="--result-zoom:${resultZoom};--result-card-w:${resultCardWidth};" data-result-layout="${escapeHtml(state.resultLayout || 'auto')}" data-result-glyphs="${state.resultGlyphsVisible ? 'on' : 'off'}">${list.map(card => renderCardSurface(card,{context:'browse', detailSelected: card.card_id === activeDetailId})).join('') || '<p class="empty-state">No cards are showing.</p>'}</div>`;
+    panel.innerHTML = `${filterBar}<div class="or-card-grid tarot-result-grid" style="--result-zoom:${resultZoom};--result-card-w:${resultCardWidth};" data-result-layout="${escapeHtml(state.resultLayout || 'auto')}" data-result-glyphs="${state.resultGlyphsVisible ? 'on' : 'off'}">${list.map((card,index) => renderCardSurface(card,{context:'browse', detailSelected: card.card_id === activeDetailId, boardResultIndex: state.mode === 'board-results' ? index : null})).join('') || '<p class="empty-state">No cards are showing.</p>'}</div>`;
     const applyResultZoom = () => {
       const grid = panel.querySelector('.tarot-result-grid');
       if (!grid) return;
@@ -4005,9 +4018,37 @@
     if (resultGlyphToggle) resultGlyphToggle.addEventListener('click', () => { state.resultGlyphsVisible = !state.resultGlyphsVisible; renderBrowse(); });
     const resultLayoutControl = panel.querySelector('[data-result-layout]');
     if (resultLayoutControl) resultLayoutControl.addEventListener('change', () => { state.resultLayout = resultLayoutControl.value || '3'; renderBrowse(); });
-    panel.addEventListener('click', (event) => { if (userHasTextSelection()) return; const titleBtn = event.target.closest('[data-card-id]'); if (titleBtn && panel.contains(titleBtn)) { event.preventDefault(); event.stopPropagation(); inspectBrowseResult(titleBtn.dataset.cardId); return; } const cardEl = event.target.closest('.or-card[data-id]'); if (!cardEl || !panel.contains(cardEl) || event.target.closest('[data-shortlist]') || event.target.closest('[data-filter]') || event.target.closest('.or-card-layer')) return; const id = cardEl.dataset.id; event.preventDefault(); inspectBrowseResult(id); });
+    panel.addEventListener('click', (event) => { if (userHasTextSelection()) return; const titleBtn = event.target.closest('[data-card-id]'); if (titleBtn && panel.contains(titleBtn)) { event.preventDefault(); event.stopPropagation(); inspectBrowseResult(titleBtn.dataset.cardId); return; } const cardEl = event.target.closest('.or-card[data-id]'); if (!cardEl || !panel.contains(cardEl) || event.target.closest('[data-shortlist]') || event.target.closest('[data-filter]') || event.target.closest('[data-card-view]') || event.target.closest('[data-board-card-content]') || event.target.closest('.or-card-layer')) return; const id = cardEl.dataset.id; event.preventDefault(); inspectBrowseResult(id); });
     qsa('[data-shortlist]', panel).forEach(btn => btn.addEventListener('click', (event) => { event.stopPropagation(); toggleShortList(btn.dataset.shortlist); }));
     qsa('[data-filter]', panel).forEach(chip => chip.addEventListener('click', (event) => { event.stopPropagation(); applyChipFilter(chip.dataset.filter); }));
+
+    qsa('[data-card-view]', panel).forEach(button=>button.addEventListener('click',event=>{
+      event.preventDefault();
+      event.stopPropagation();
+      const index=Number(button.dataset.resultPosition);
+      const view=button.dataset.cardView;
+      if(!Number.isInteger(index)||!['thumbnail','ingredients','interpretation'].includes(view))return;
+      const cardElement=button.closest('.is-board-result-card');
+      const card=list[index];
+      if(!cardElement||!card)return;
+      state.boardResultViews ||= {};
+      state.boardResultViews[index]=view;
+      cardElement.dataset.boardView=view;
+      cardElement.querySelectorAll('[data-card-view]').forEach(tab=>{
+        const chosen=tab.dataset.cardView===view;
+        tab.classList.toggle('is-active',chosen);
+        tab.setAttribute('aria-pressed',String(chosen));
+      });
+      const content=cardElement.querySelector('[data-board-card-body]');
+      if(content&&view!=='thumbnail'){
+        if(view==='ingredients')content.innerHTML=lockedIngredientsHtml(card)||'<p class="board-result-empty">No ingredient breakdown available.</p>';
+        else{
+          const p=document.createElement('p');
+          p.textContent=layerInterpretationForOrientation(card,rowCardIsReversed(index))||'No interpretation available.';
+          content.replaceChildren(p);
+        }
+      }
+    }));
     const resultGrid = panel.querySelector('.tarot-result-grid');
     if (resultGrid) {
       qsa('.or-chip.relphi-filter-chip', resultGrid).forEach(chip => {
