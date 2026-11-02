@@ -873,7 +873,7 @@
     const meaning=layerInterpretationForOrientation(card,reversed);
     const ingredients=lockedIngredientsHtml(card) || '<p class="board-result-empty">No ingredient breakdown available.</p>';
     const view=state.boardResultViews?.[index] || 'thumbnail';
-    const tabs=[['thumbnail','🖼','Thumbnail'],['ingredients','🧩','Ingredients'],['interpretation','📖','Interpretation']];
+    const tabs=[['thumbnail','<img class="board-result-tab-thumbnail" src="'+escapeHtml(rwsImagePath(card))+'" alt="" loading="lazy">','Thumbnail'],['ingredients','🧩','Ingredients'],['interpretation','📖','Interpretation']];
     const controls='<div class="board-result-card-tabs" role="group" aria-label="'+escapeHtml(title(card))+' display">'+tabs.map(([key,icon,name])=>'<button type="button" data-card-view="'+key+'" data-result-position="'+index+'" aria-label="'+name+'" title="'+name+'" aria-pressed="'+(view===key)+'" class="'+(view===key?'is-active':'')+'"><span aria-hidden="true">'+icon+'</span></button>').join('')+'</div>';
     const content='<div class="board-result-card-content" data-board-card-content><div class="board-result-card-title">'+escapeHtml(title(card))+(reversed?' · Reversed':'')+'</div><div class="board-result-card-body" data-board-card-body>'+(view==='ingredients'?ingredients:'<p>'+escapeHtml(meaning||'No interpretation available.')+'</p>')+'</div></div>';
     return {view,controls,content};
