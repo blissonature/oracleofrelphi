@@ -3832,8 +3832,8 @@
     return card.suit === suit || (suit === 'Pentacles' && card.thoth_suit === 'Disks');
   }
   function resolveCardToken(raw) {
-    const original = String(raw || '').trim();
-    const q = original.toUpperCase().replace(/\s+/g, '');
+    const original = String(raw || '').trim().replace(/\s+(?:rx|reversed)$/i, '');
+    const q = original.toUpperCase().replace(/\s+/g, '').replace(/^CI(?=[WCSDP]$)/, 'C1');
     if (!q) return null;
     const suitMap = { W:'Wands', C:'Cups', S:'Swords', D:'Pentacles', P:'Pentacles' };
     const rankMap = { A:'Ace', '2':'Two', '3':'Three', '4':'Four', '5':'Five', '6':'Six', '7':'Seven', '8':'Eight', '9':'Nine', '10':'Ten' };
@@ -3858,17 +3858,38 @@
     m = q.match(/^K([WCSDP])$/);
     if (m) return cards.find(card => card.card_type === 'Court' && courtRankCode(card) === 'C4' && cardMatchesSuit(card, suitMap[m[1]])) || null;
     const normalized = normalizeSearch(original);
-    return cards.find(card => normalizeSearch(title(card)) === normalized || normalizeSearch(card.name) === normalized || normalizeSearch(card.systems?.thoth?.display_name) === normalized || normalizeSearch(titleNoThe(card.systems?.golden_dawn_rws?.display_name || '')) === normalized || normalizeSearch(titleNoThe(card.systems?.thoth?.display_name || '')) === normalized) || null;
+    return cards.find(card => normalizeSearch(title(card)) === normalized || normalizeSearch(titleNoThe(title(card))) === normalized || normalizeSearch(card.name) === normalized || normalizeSearch(titleNoThe(card.name || '')) === normalized || normalizeSearch(card.systems?.thoth?.display_name) === normalized || normalizeSearch(titleNoThe(card.systems?.golden_dawn_rws?.display_name || '')) === normalized || normalizeSearch(titleNoThe(card.systems?.thoth?.display_name || '')) === normalized) || null;
+  }
+  // Card-reference parsing is owned by the native search implementation.
+  // Commas separate whole card names; spaces inside names are not delimiters.
+  // Preserve orientation for the separate optional Add to Drawing Board action.
+  function orderedCardTokenEntries(raw) {
+    const text = String(raw || '').trim();
+    if (!text) return [];
+    const delimited = /[,;]/.test(text);
+    const tokens = delimited
+      ? text.split(/[,;]/).map(x => x.trim())
+      : [text];
+    if (tokens.some(x => !x)) return [];
+    let resolved = tokens.map(token => ({
+      card: resolveCardToken(token),
+      reversed: /\\s+(?:rx|reversed)$/i.test(token)
+    }));
+    // Retain legacy whitespace-delimited shorthand lists, not arbitrary prose.
+    if (!delimited && !resolved[0].card && /\\s/.test(text)) {
+      const words = text.split(/\\s+/);
+      resolved = words.map(token => ({ card: resolveCardToken(token), reversed:false }));
+    }
+    if (resolved.some(entry => !entry.card)) return [];
+    const seen = new Set();
+    return resolved.filter(entry => {
+      if (seen.has(entry.card.card_id)) return false;
+      seen.add(entry.card.card_id);
+      return true;
+    });
   }
   function orderedCardTokenResults(raw) {
-    const text = String(raw || '').trim();
-    if (!/[\s,;]+/.test(text)) return [];
-    const tokens = text.split(/[\s,;]+/).map(x => x.trim()).filter(Boolean);
-    if (tokens.length < 2) return [];
-    const resolved = tokens.map(resolveCardToken);
-    if (resolved.some(card => !card)) return [];
-    const seen = new Set();
-    return resolved.filter(card => { if (seen.has(card.card_id)) return false; seen.add(card.card_id); return true; });
+    return orderedCardTokenEntries(raw).map(entry => entry.card);
   }
   function searchResults() {
     const raw = state.query.trim().replace(/^\//, '');
@@ -4010,9 +4031,20 @@
     if (clearFilters) clearFilters.addEventListener('click', () => { state.cardFilters = []; renderBrowse(); });
     const addShown = panel.querySelector('[data-add-results-to-row]');
     if (addShown) addShown.addEventListener('click', () => {
+      const entries = orderedCardTokenEntries(state.query);
+      const oriented = entries.length === list.length && entries.every((entry, index) => entry.card.card_id === list[index].card_id);
       const ids = list.map(card => card.card_id);
-      const next = state.rowAllowRepeats ? [...state.shortList, ...ids] : [...state.shortList, ...ids.filter(id => !state.shortList.includes(id))];
-      commitShortList(next);
+      const before = state.shortList.slice();
+      const additions = state.rowAllowRepeats ? ids : ids.filter(id => !before.includes(id));
+      if (!additions.length) return;
+      commitShortList([...before, ...additions]);
+      if (oriented) {
+        additions.forEach((id, offset) => {
+          const entry = entries.find(hit => hit.card.card_id === id);
+          setRowCardReversed(before.length + offset, !!entry?.reversed);
+        });
+        refreshShortListViews();
+      }
     });
     const resultZoomControl = panel.querySelector('[data-result-zoom]');
     const setResultZoom = value => {
@@ -4032,7 +4064,7 @@
     if (resultGlyphToggle) resultGlyphToggle.addEventListener('click', () => { state.resultGlyphsVisible = !state.resultGlyphsVisible; renderBrowse(); });
     const resultLayoutControl = panel.querySelector('[data-result-layout]');
     if (resultLayoutControl) resultLayoutControl.addEventListener('change', () => { state.resultLayout = resultLayoutControl.value || '3'; renderBrowse(); });
-    panel.addEventListener('click', (event) => { if (userHasTextSelection()) return; const titleBtn = event.target.closest('[data-card-id]'); if (titleBtn && panel.contains(titleBtn)) { event.preventDefault(); event.stopPropagation(); inspectBrowseResult(titleBtn.dataset.cardId); return; } const cardEl = event.target.closest('.or-card[data-id]'); if (!cardEl || !panel.contains(cardEl) || event.target.closest('[data-shortlist]') || event.target.closest('[data-filter]') || event.target.closest('.or-card-layer')) return; const id = cardEl.dataset.id; event.preventDefault(); inspectBrowseResult(id); });
+    panel.onclick = (event) => { if (userHasTextSelection()) return; const titleBtn = event.target.closest('[data-card-id]'); if (titleBtn && panel.contains(titleBtn)) { event.preventDefault(); event.stopPropagation(); inspectBrowseResult(titleBtn.dataset.cardId); return; } const cardEl = event.target.closest('.or-card[data-id]'); if (!cardEl || !panel.contains(cardEl) || event.target.closest('[data-shortlist]') || event.target.closest('[data-filter]') || event.target.closest('.or-card-layer')) return; const id = cardEl.dataset.id; event.preventDefault(); inspectBrowseResult(id); };
     qsa('[data-shortlist]', panel).forEach(btn => btn.addEventListener('click', (event) => { event.stopPropagation(); toggleShortList(btn.dataset.shortlist); }));
     qsa('[data-filter]', panel).forEach(chip => chip.addEventListener('click', (event) => { event.stopPropagation(); applyChipFilter(chip.dataset.filter); }));
     const resultGrid = panel.querySelector('.tarot-result-grid');
@@ -5140,6 +5172,7 @@
     const menu=$('commandMenu');
     const question=String(value||'').trim();
     if(!menu||!question||question.startsWith('/')||typeof window.RelphiLaunchBespokeQuestion!=='function')return;
+    if(orderedCardTokenEntries(question).length)return;
     menu.hidden=false;
     menu.innerHTML=`<button type="button" class="relphi-bespoke-choice"><span>Begin a Bespoke Crafted Reading</span><small>Use “${escapeHtml(question)}” as the first question</small></button>`;
     menu.querySelector('.relphi-bespoke-choice')?.addEventListener('click',()=>{
