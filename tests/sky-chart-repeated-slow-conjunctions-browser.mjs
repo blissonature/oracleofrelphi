@@ -8,7 +8,7 @@ const ids=['conjunction','semi-sextile','octile','sextile','quintile','square','
 const longitudes={Sun:221.05,Moon:142,Mercury:224,Venus:205,Mars:139,Jupiter:144.58,
  Saturn:9.1333,Uranus:64.5833,Neptune:2.0333,Pluto:303.1333,Chiron:27.9667,
  'North Node':325.95,'South Node':145.95,Lilith:275.5333,
- Descendant:5,Dsc:5,
+ Descendant:4.99999,Dsc:5,
  Ascendant:185,Midheaven:95};
 const make=(offset)=>({
  name:offset?'Nov 2, 2026, 10:10 PM':'Nov 3, 2026, 3:37 AM',houseSystem:'equal-house',
@@ -86,6 +86,17 @@ try{
   }));
   assert.deepEqual(selfAspects.rows,[],'an intrasky placement must not form any aspect with its own canonical identity');
   assert.deepEqual(selfAspects.lines,[],'self-aspects must not be rendered on the wheel');
+  // One source alias is just shy of the Seventh cusp; the surviving Descendant
+  // must still be H7 because it is the defining quadrant angle.
+  const descendantHouses=await page.evaluate(()=>[...document.querySelectorAll('#skyFoundationRelationshipList>.sky-foundation-relationship-row')].flatMap(row=>{
+    const scope=row.dataset.relationshipMode;
+    return ['left','right'].filter(side=>row.dataset[side+'Placement']==='dsc' &&
+      (scope==='A-A'||(scope==='A-B'&&side==='left'))).map(side=>Number(row.dataset[side+'House']));
+  }));
+  assert.ok(descendantHouses.length>0,'the fixture must contain Descendant relationships');
+  assert.ok(descendantHouses.every(house=>house===7),
+    'Sky A Descendant must retain house 7 at a rounded cusp boundary: '+descendantHouses.join(','));
+
   const before=await audit();
   assert.ok(before.rows.slow>=5,'fixture must generate repeated slow conjunctions');
   assert.equal(before.rows.slowVisible,before.rows.slow,'default includes repeated slow conjunctions');
