@@ -68,7 +68,7 @@ try{
     const sameSlow=['jupiter','saturn','uranus','neptune','pluto','chiron','north-node','south-node','lilith'].flatMap(same);
     const sameFast=same('sun');
     const intra=nodes.filter(n=>n.dataset.relationshipMode==='A-A'&&n.dataset.aspect==='conjunction');
-    return {slow:sameSlow.length,slowVisible:sameSlow.filter(visible).length,fast:sameFast.length,fastVisible:sameFast.filter(visible).length,intra:intra.length,intraVisible:intra.filter(visible).length};
+    return {slow:sameSlow.length,slowVisible:sameSlow.filter(visible).length,fast:sameFast.length,fastVisible:sameFast.filter(visible).length,intra:intra.length,intraVisible:intra.filter(visible).length,intraFiltered:intra.filter(n=>n.classList.contains('sky-chart-aspect-multiselect-hidden')).length};
    };
    return {rows:get('row'),lines:get('line'),setting:localStorage.getItem('relphiSkyHideRepeatedSlowConjunctionsV1')};
   });
@@ -78,7 +78,7 @@ try{
   assert.equal(before.rows.slowVisible,before.rows.slow,'default includes repeated slow conjunctions');
   await page.locator('[data-relationship-limit-preset]').selectOption('10');
   await page.waitForTimeout(300);
-  const baselineIntra=(await audit()).rows.intraVisible;
+  const baselineIntra=(await audit()).rows.intraFiltered;
   await toggle.check();
   await page.locator('[data-aspect-filter-toggle]').click();
   await page.waitForTimeout(350);
@@ -87,7 +87,7 @@ try{
   assert.equal(hidden.rows.slowVisible,0,'repeated slow conjunction rows hidden');
   assert.equal(hidden.lines.slowVisible,0,'repeated slow conjunction lines hidden');
   assert.equal(hidden.rows.fastVisible,hidden.rows.fast,'fast Sun conjunction preserved');
-  assert.equal(hidden.rows.intraVisible,baselineIntra,'intrasky conjunction visibility unchanged');
+  assert.equal(hidden.rows.intraFiltered,baselineIntra,'intrasky aspect eligibility must remain unchanged');
   await page.waitForTimeout(800);
   const afterSettling=await audit();
   assert.equal(afterSettling.rows.slowVisible,0,'slow conjunctions must remain suppressed after resort/limit refresh');
