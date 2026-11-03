@@ -53,7 +53,7 @@ function datedSky(slot){
   const profile=payload?.calcProfile;
   if(!profile||profile.timeUnknown===true)return null;
   const raw=profile.instant;
-  if(typeof raw!=='string'||!/(Z|[+-]\\d\\d:\\d\\d)$/.test(raw))return null;
+  if(typeof raw!=='string'||!/(Z|[+-]\d\d:\d\d)$/.test(raw))return null;
   const ms=Date.parse(raw);
   return Number.isFinite(ms)?ms:null;
 }
