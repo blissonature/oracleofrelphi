@@ -109,6 +109,13 @@ root.addEventListener('relphi:sky-house-focus-bridge-changed',event=>{
 });
 root.addEventListener('relphi:sky-foundation-filter-changed',event=>{
  const state=event.detail?.state;
+ // The foundation controller owns aspect selection, including SVG lines hit by
+ // geometric proximity and mobile pointerup (which may not dispatch a click).
+ // Clear both flashlight states on the committed selection transition.
+ if(state?.kind==='aspect'&&state.mode==='selected'){
+  if(pinned||hovered){pinned=null;hovered=null;render()}
+  return;
+ }
  // Hover/selected house focus may originate outside the house wedge itself
  // (e.g. a card). Don't overwrite explicit house taps while pinned.
  if(pinned)return;
