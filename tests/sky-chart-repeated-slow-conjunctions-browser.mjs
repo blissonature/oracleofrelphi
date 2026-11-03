@@ -68,7 +68,7 @@ try{
     const sameSlow=['jupiter','saturn','uranus','neptune','pluto','chiron','north-node','south-node','lilith'].flatMap(same);
     const sameFast=same('sun');
     const intra=nodes.filter(n=>n.dataset.relationshipMode==='A-A'&&n.dataset.aspect==='conjunction');
-    return {slow:sameSlow.length,slowVisible:sameSlow.filter(visible).length,fast:sameFast.length,fastVisible:sameFast.filter(visible).length,intra:intra.length,intraVisible:intra.filter(visible).length,intraFiltered:intra.filter(n=>n.classList.contains('sky-chart-aspect-multiselect-hidden')).length};
+    return {slow:sameSlow.length,slowVisible:sameSlow.filter(visible).length,slowFiltered:sameSlow.filter(n=>n.classList.contains('sky-chart-aspect-multiselect-hidden')).length,fast:sameFast.length,fastVisible:sameFast.filter(visible).length,intra:intra.length,intraVisible:intra.filter(visible).length,intraFiltered:intra.filter(n=>n.classList.contains('sky-chart-aspect-multiselect-hidden')).length};
    };
    return {rows:get('row'),lines:get('line'),setting:localStorage.getItem('relphiSkyHideRepeatedSlowConjunctionsV1')};
   });
@@ -141,7 +141,7 @@ try{
   await page.waitForTimeout(350);
   const restored=await audit();
   assert.equal(restored.setting,'false');
-  assert.equal(restored.rows.slowVisible,restored.rows.slow,'all original slow conjunction rows restored');
+  assert.equal(restored.rows.slowFiltered,0,'unchecking must restore eligibility to every slow conjunction regardless of Max 10');
   assert.deepEqual(errors.filter(e=>/TypeError|ReferenceError|SyntaxError/.test(e)),[]);
   console.log('slow-body conjunction filter verified',width,JSON.stringify({before,hidden,restored}));
   await page.close();
