@@ -15,7 +15,7 @@ const make=(offset)=>({
  dateTime:offset?'2026-11-02T22:10:00':'2026-11-03T03:37:00',
  timeZone:'America/Denver',houseSystem:'equal-house',latitude:40.76,longitude:-111.89,
  houseCusps:Array.from({length:12},(_,i)=>(185+i*30)%360)},
- placements:Object.fromEntries(Object.entries(longitudes).map(([name,lon])=>[name,{name,longitude:lon+(offset?.01:0)}]))
+ placements:Object.fromEntries(Object.entries(longitudes).map(([name,lon])=>[name,{name,longitude:name==='Midheaven'&&offset?9.0667:lon+(offset?.01:0)}]))
 });
 const browser=await chromium.launch({headless:true});
 try{
@@ -57,7 +57,7 @@ try{
   assert.equal(visibility.first,true,'the slow-conjunction choice must be first in the Aspect menu');
   assert.equal(visibility.within,true,'the choice must be inside the visible menu without scrolling');
   assert.equal(visibility.withinViewport,true,'the choice must be visible in the viewport');
-  assert.match(visibility.text,/Hide same-passage slow-body conjunctions/);
+  assert.match(visibility.text,/Hide repeated same-passage relationships/);
 
   const audit=()=>page.evaluate(()=>{
    const select=(kind)=>[...document.querySelectorAll(kind==='row'?'#skyFoundationRelationshipList>.sky-foundation-relationship-row':'#skyFoundationWheelMount [data-layer="aspects"] > line.sky-foundation-aspect:not(.sky-foundation-aspect-hit)')];
@@ -65,10 +65,12 @@ try{
    const get=kind=>{
     const nodes=select(kind);
     const same=(id)=>nodes.filter(n=>n.dataset.relationshipMode==='A-B'&&n.dataset.aspect==='conjunction'&&n.dataset.leftPlacement===id&&n.dataset.rightPlacement===id);
-    const sameSlow=['jupiter','saturn','uranus','neptune','pluto','chiron','north-node','south-node','lilith'].flatMap(same);
+    const sameSlow=['sun','moon','mercury','venus','mars','jupiter','saturn','uranus','neptune','pluto','chiron','north-node','south-node','lilith'].flatMap(same);
+    const nodeAxis=nodes.filter(n=>n.dataset.relationshipMode==='A-B'&&n.dataset.aspect==='opposition'&&((n.dataset.leftPlacement==='north-node'&&n.dataset.rightPlacement==='south-node')||(n.dataset.leftPlacement==='south-node'&&n.dataset.rightPlacement==='north-node')));
+    const saturnMC=nodes.filter(n=>n.dataset.relationshipMode==='A-B'&&n.dataset.aspect==='conjunction'&&n.dataset.leftPlacement==='saturn'&&n.dataset.rightPlacement==='mc');
     const sameFast=same('sun');
     const intra=nodes.filter(n=>n.dataset.relationshipMode==='A-A'&&n.dataset.aspect==='conjunction');
-    return {slow:sameSlow.length,slowVisible:sameSlow.filter(visible).length,slowFiltered:sameSlow.filter(n=>n.classList.contains('sky-chart-aspect-multiselect-hidden')).length,fast:sameFast.length,fastVisible:sameFast.filter(visible).length,intra:intra.length,intraVisible:intra.filter(visible).length,intraFiltered:intra.filter(n=>n.classList.contains('sky-chart-aspect-multiselect-hidden')).length};
+    return {slow:sameSlow.length,slowVisible:sameSlow.filter(visible).length,slowFiltered:sameSlow.filter(n=>n.classList.contains('sky-chart-aspect-multiselect-hidden')).length,fast:sameFast.length,fastVisible:sameFast.filter(visible).length,nodeAxis:nodeAxis.length,nodeAxisVisible:nodeAxis.filter(visible).length,nodeAxisFiltered:nodeAxis.filter(n=>n.classList.contains('sky-chart-aspect-multiselect-hidden')).length,saturnMC:saturnMC.length,saturnMCFiltered:saturnMC.filter(n=>n.classList.contains('sky-chart-aspect-multiselect-hidden')).length,intra:intra.length,intraVisible:intra.filter(visible).length,intraFiltered:intra.filter(n=>n.classList.contains('sky-chart-aspect-multiselect-hidden')).length};
    };
    return {rows:get('row'),lines:get('line'),setting:localStorage.getItem('relphiSkyHideRepeatedSlowConjunctionsV1')};
   });
@@ -76,7 +78,7 @@ try{
   const before=await audit();
   assert.ok(before.rows.slow>=5,'fixture must generate repeated slow conjunctions');
   assert.equal(before.rows.slowVisible,before.rows.slow,'default includes repeated slow conjunctions');
-  await page.locator('[data-relationship-limit-preset]').selectOption('10');
+  await page.locator('[data-relationship-limit-preset]').selectOption('5');
   await page.waitForTimeout(300);
   const baselineIntra=(await audit()).rows.intraFiltered;
   await toggle.check();
@@ -86,7 +88,13 @@ try{
   assert.equal(hidden.setting,'true');
   assert.equal(hidden.rows.slowVisible,0,'repeated slow conjunction rows hidden');
   assert.equal(hidden.lines.slowVisible,0,'repeated slow conjunction lines hidden');
-  assert.equal(hidden.rows.fastVisible,hidden.rows.fast,'fast Sun conjunction preserved');
+  assert.equal(hidden.rows.fastVisible,0,'same-pass Sun conjunction also suppressed');
+  assert.ok(hidden.rows.nodeAxis>=2,'fixture must contain both nodal-axis cross oppositions');
+  assert.equal(hidden.rows.nodeAxisFiltered,hidden.rows.nodeAxis,'both opposite node polarities suppressed');
+  assert.equal(hidden.lines.nodeAxisFiltered,hidden.lines.nodeAxis,'nodal-axis lines suppressed');
+  assert.ok(hidden.rows.saturnMC>0,'fixture must contain Saturn conjunct MC');
+  assert.equal(hidden.rows.saturnMCFiltered,0,'Saturn-MC stays eligible');
+  assert.equal(hidden.lines.saturnMCFiltered,0,'Saturn-MC wheel line stays eligible');
   assert.equal(hidden.rows.intraFiltered,baselineIntra,'intrasky aspect eligibility must remain unchanged');
   await page.waitForTimeout(800);
   const afterSettling=await audit();
@@ -101,12 +109,14 @@ try{
   await page.locator('.sky-relationship-copy-button').click();
   await page.waitForFunction(()=>!!window.__slowConjunctionCopied,null,{timeout:10000});
   const copied=await page.evaluate(()=>window.__slowConjunctionCopied);
-  assert.match(copied,/Repeated slow-body conjunctions: Hide same passage/,
+  assert.match(copied,/Repeated relationships: Hide same passage/,
     'copied Relationships focus must report the active filter');
-  for(const glyph of ['♇','♆','♅','⚷','♄','☊','☋','⚸'])
+  for(const glyph of ['♇','♆','♅','⚷','♄','♀','♂','☊','☋','⚸'])
     assert.ok(!copied.split('\\n').some(line=>line.includes(glyph)&&line.includes('☌')&&line.indexOf(glyph)!==line.lastIndexOf(glyph)),
       'Relationships Copy must exclude repeated '+glyph+' conjunctions');
 
+  assert.match(copied,/♄.*☌.*MC/,'Saturn conjunct MC must remain in copied results');
+  assert.ok(!copied.split('\n').some(line=>line.includes('☍')&&line.includes('☊')&&line.includes('☋')),'Node axis repetitions must be absent from Copy');
   // An explicit retrograde-state change makes the same-body conjunction
   // meaningful even across nearby skies.
   await page.evaluate(()=>{
@@ -118,7 +128,7 @@ try{
   });
   await page.waitForTimeout(500);
   const changedRx=await audit();
-  assert.ok(changedRx.rows.fastVisible>0);
+  assert.ok(changedRx.rows.fast>=1);
   const saturnVisible=await page.evaluate(()=>[...document.querySelectorAll('#skyFoundationRelationshipList>.sky-foundation-relationship-row')].some(n=>n.dataset.relationshipMode==='A-B'&&n.dataset.aspect==='conjunction'&&n.dataset.leftPlacement==='saturn'&&n.dataset.rightPlacement==='saturn'&&!n.hidden&&!n.classList.contains('sky-chart-aspect-multiselect-hidden')));
   assert.equal(saturnVisible,true,'retrograde-state change must preserve Saturn conjunction');
 
