@@ -44,6 +44,73 @@ const STORAGE_KEY='relphiSkyAspectMatrixV1';
 const REPEATED_SLOW_KEY='relphiSkyHideRepeatedSlowConjunctionsV1';
 const SLOW_IDENTITIES=new Set(['jupiter','saturn','uranus','neptune','pluto','chiron']);
 let hideRepeatedSlow=localStorage.getItem(REPEATED_SLOW_KEY)==='true';
+const SLOW_PASS_CACHE=new Map();
+const DAY_MS=86400000;
+const angularDelta=(a,b)=>((b-a+540)%360)-180;
+function datedSky(slot){
+  let payload;
+  try{payload=JSON.parse(localStorage.getItem(slot==='A'?'relphiSkyChartA':'relphiSkyChartB')||'null')}catch(_){return null}
+  const profile=payload?.calcProfile;
+  if(!profile||profile.timeUnknown===true)return null;
+  const raw=profile.instant;
+  if(typeof raw!=='string'||!/(Z|[+-]\\d\\d:\\d\\d)$/.test(raw))return null;
+  const ms=Date.parse(raw);
+  return Number.isFinite(ms)?ms:null;
+}
+function skyRetrograde(slot,id){
+  // The established placement motion owner respects explicit imported Rx state.
+  return window.RelphiSkyRetrograde?.forPlacement?.(slot,id);
+}
+function sampledLongitude(id,ms){
+  const date=new Date(ms);
+  if(id==='chiron'){
+    try{return window.RelphiChironEphemeris?.longitudeAt?.(date)??NaN}catch(_){return NaN}
+  }
+  const astronomy=window.Astronomy;
+  if(!astronomy?.GeoVector||!astronomy.Ecliptic)return NaN;
+  try{return astronomy.Ecliptic(astronomy.GeoVector(id[0].toUpperCase()+id.slice(1),date,true)).elon}
+  catch(_){return NaN}
+}
+function samePassAt(id,first,last){
+  const start=Math.min(first,last),end=Math.max(first,last),cacheKey=id+'|'+start+'|'+end;
+  if(SLOW_PASS_CACHE.has(cacheKey))return SLOW_PASS_CACHE.get(cacheKey);
+  // With matching motion, snapshots within one day cannot complete a distinct
+  // slow-body station passage; avoid unnecessary ephemeris sampling.
+  if(end-start<=DAY_MS){SLOW_PASS_CACHE.set(cacheKey,true);return true}
+  // Every slow body reverses direction when passing through a retrograde loop.
+  // Count changes of motion direction, not just final Rx flags: D -> Rx -> D
+  // revisits a degree with matching endpoint Rx but is a different passage.
+  // Distinct full revolutions necessarily include such reversals as well.
+  // Unknown/unsupported ephemeris is never grounds for suppressing a result.
+  let prior=sampledLongitude(id,start),direction=0,verdict=null;
+  if(!Number.isFinite(prior)){SLOW_PASS_CACHE.set(cacheKey,null);return null}
+  const steps=Math.ceil((end-start)/(5*DAY_MS));
+  // Beyond 20 years, matching degrees are not the same continuous passage
+  // for these bodies; don't perform thousands of unnecessary samples.
+  if(steps>1461){SLOW_PASS_CACHE.set(cacheKey,false);return false}
+  for(let i=1;i<=steps;i++){
+    const at=start+(end-start)*i/steps,next=sampledLongitude(id,at);
+    if(!Number.isFinite(next)){verdict=null;break}
+    const change=angularDelta(prior,next);
+    if(Math.abs(change)>0.0000001){
+      const nextDirection=Math.sign(change);
+      if(direction&&nextDirection!==direction){verdict=false;break}
+      direction=nextDirection;
+    }
+    prior=next;
+    if(i===steps)verdict=true;
+  }
+  SLOW_PASS_CACHE.set(cacheKey,verdict);
+  return verdict;
+}
+function samePassSlowConjunction(id){
+  const a=datedSky('A'),b=datedSky('B');
+  if(a===null||b===null)return false;
+  const aRx=skyRetrograde('A',id),bRx=skyRetrograde('B',id);
+  if(typeof aRx!=='boolean'||typeof bRx!=='boolean')return false;
+  if(aRx!==bRx)return false;
+  return samePassAt(id,a,b)===true;
+}
 const state=Object.fromEntries(SCOPES.map(scope=>[scope.id,new Set(IDS)]));
 (function loadPersistedState(){try{const saved=JSON.parse(localStorage.getItem(STORAGE_KEY)||'null');if(!saved||typeof saved!=='object')return;SCOPES.forEach(scope=>{if(Array.isArray(saved[scope.id]))state[scope.id]=new Set(saved[scope.id].filter(id=>IDS.includes(id)))})}catch(_){}})();
 let queued=false;
@@ -154,10 +221,10 @@ function renderPopover(){
   toggle.setAttribute('aria-label','Hide repeated slow-body conjunctions in A to B comparisons');
   toggle.checked=hideRepeatedSlow;
   const caption=document.createElement('span');
-  caption.textContent='Hide repeated slow-body conjunctions (A↔B)';
+  caption.textContent='Hide same-passage slow-body conjunctions (A↔B)';
   const explanation=document.createElement('small');
   explanation.style.cssText='display:block;font:400 11px/1.4 system-ui;opacity:.8;margin-top:3px';
-  explanation.textContent='Same-body Jupiter, Saturn, Uranus, Neptune, Pluto and Chiron conjunctions only. Different-body conjunctions and A↔A/B↔B remain visible.';
+  explanation.textContent='Keeps retrograde changes and returns on another passage, even at the same degree. Affects matching Jupiter, Saturn, Uranus, Neptune, Pluto or Chiron only.';
   caption.appendChild(explanation);preference.append(toggle,caption);
   body.replaceChildren(list,preference);
   window.dispatchEvent(new Event('relphi:sky-aspect-filter-rendered'));
@@ -200,7 +267,7 @@ function repeatedSlowConjunction(node,mode,aspect){
   if(!hideRepeatedSlow||mode!=='A-B'||aspect!=='conjunction')return false;
   const left=String(node?.dataset?.leftPlacement||'').trim().toLowerCase();
   const right=String(node?.dataset?.rightPlacement||'').trim().toLowerCase();
-  return left===right&&SLOW_IDENTITIES.has(left);
+  return left===right&&SLOW_IDENTITIES.has(left)&&samePassSlowConjunction(left);
 }
 function visible(node){const mode=relationshipMode(node);if(!activeScopes().includes(mode))return false;const aspect=normalize(node?.dataset?.aspect||'');if(repeatedSlowConjunction(node,mode,aspect))return false;if(node?.dataset?.bySignOnly==='true')return signSelected.has(aspect);if(!aspect)return true;const anySelected=activeScopes().some(scope=>state[scope]?.size>0);if(!anySelected)return false;if(window.RelphiAspectConfigurations?.participates?.(node))return true;return!!state[mode]?.has(aspect)}
 function applyMatrix({announce=true}={}){
@@ -275,7 +342,7 @@ function start(){
   schedule();document.addEventListener('change',handleChange);
   ['relphi:sky-foundation-ready','relphi:sky-foundation-interactions-ready','relphi:sky-intrasky-relationships-ready','relphi:sky-intrasky-b-relationships-ready','relphi:sky-single-sky-aspects-rendered','relphi:sky-placement-multiselect-changed','relphi:sky-house-multiselect-changed','relphi:sky-foundation-filter-changed','relphi:sky-b-removed','relphi:sky-b-restored','relphi:sky-configuration-selection-changed','relphi:sky-configurations-detected'].forEach(name=>window.addEventListener(name,schedule));
   window.addEventListener('relphi:sky-aspect-multiselect-changed',handleLegacyAspectPass);
-  window.addEventListener('storage',event=>{if(!event.key||event.key==='relphiSkyChartB')schedule()});
+  window.addEventListener('storage',event=>{if(!event.key||event.key==='relphiSkyChartA'||event.key==='relphiSkyChartB'){SLOW_PASS_CACHE.clear();schedule()}});
   new MutationObserver(schedule).observe(document.documentElement,{attributes:true,attributeFilter:['data-sky-b-present','data-sky-b-editing']});
   document.addEventListener('click',event=>{if(event.target.closest?.('[data-aspect-filter-toggle],[data-aspect-filter-value]'))requestAnimationFrame(()=>positionPopover({reset:true}))});
   window.addEventListener('resize',()=>positionPopover({reset:true}));window.addEventListener('scroll',positionPopover,true);window.visualViewport?.addEventListener('resize',()=>positionPopover({reset:true}));
