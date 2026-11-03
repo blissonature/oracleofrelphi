@@ -17,7 +17,7 @@ const make=(offset)=>({
  dateTime:offset?'2026-11-02T22:10:00':'2026-11-03T03:37:00',
  timeZone:'America/Denver',houseSystem:'equal-house',latitude:40.76,longitude:-111.89,
  houseCusps:Array.from({length:12},(_,i)=>((offset?117:185)+i*30)%360)},
- placements:Object.fromEntries(Object.entries(longitudes).map(([name,lon])=>[name,{name,longitude:name==='Midheaven'&&offset?9.0667:name==='Ascendant'&&offset?117:lon+(offset?.01:0)}]))
+ placements:Object.fromEntries(Object.entries(longitudes).filter(([name])=>!offset||(name!=='Descendant'&&name!=='Dsc')).map(([name,lon])=>[name,{name,longitude:name==='Midheaven'&&offset?9.0667:name==='Ascendant'&&offset?117:lon+(offset?.01:0)}]))
 });
 const browser=await chromium.launch({headless:true});
 try{
