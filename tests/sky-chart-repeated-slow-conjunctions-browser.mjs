@@ -32,6 +32,28 @@ try{
   await page.waitForSelector('#skyFoundationRoot[aria-busy="false"]',{timeout:35000});
   const toggle=page.locator('[data-hide-repeated-slow-conjunctions]');
   await toggle.waitFor({state:'attached',timeout:20000});
+  // Acceptance: opening the real Aspect menu must expose the option without
+  // scrolling, including on a narrow mobile viewport.
+  await page.locator('[data-aspect-filter-toggle]').click();
+  await page.waitForFunction(()=>{
+    const panel=document.getElementById('skyChartAspectPopover');
+    return panel&&!panel.hidden&&getComputedStyle(panel).display!=='none';
+  });
+  const option=page.locator('.sky-chart-slow-conjunction-option');
+  await option.waitFor({state:'visible'});
+  const visibility=await page.evaluate(()=>{
+    const menu=document.getElementById('skyChartAspectPopover');
+    const option=menu.querySelector('.sky-chart-slow-conjunction-option');
+    const first=menu.querySelector('.sky-chart-aspect-filter-body')?.firstElementChild;
+    const r=option.getBoundingClientRect(),p=menu.getBoundingClientRect();
+    return {first:first===option,within:r.top>=p.top&&r.bottom<=p.bottom,
+      withinViewport:r.top>=0&&r.bottom<=innerHeight,text:option.textContent.trim()};
+  });
+  assert.equal(visibility.first,true,'the slow-conjunction choice must be first in the Aspect menu');
+  assert.equal(visibility.within,true,'the choice must be inside the visible menu without scrolling');
+  assert.equal(visibility.withinViewport,true,'the choice must be visible in the viewport');
+  assert.match(visibility.text,/Hide same-passage slow-body conjunctions/);
+
   const audit=()=>page.evaluate(()=>{
    const select=(kind)=>[...document.querySelectorAll(kind==='row'?'#skyFoundationRelationshipList>.sky-foundation-relationship-row':'#skyFoundationWheelMount [data-layer="aspects"] > line.sky-foundation-aspect:not(.sky-foundation-aspect-hit)')];
    const visible=node=>!node.hidden&&!node.classList.contains('sky-chart-aspect-multiselect-hidden')&&getComputedStyle(node).display!=='none';
