@@ -49,6 +49,7 @@ try{
   const before=await audit();
   assert.ok(before.rows.slow>=5,'fixture must generate repeated slow conjunctions');
   assert.equal(before.rows.slowVisible,before.rows.slow,'default includes repeated slow conjunctions');
+  const baselineIntra=before.rows.intraVisible;
   await toggle.evaluate(el=>{el.checked=true;el.dispatchEvent(new Event('change',{bubbles:true}))});
   await page.waitForTimeout(350);
   const hidden=await audit();
@@ -56,7 +57,37 @@ try{
   assert.equal(hidden.rows.slowVisible,0,'repeated slow conjunction rows hidden');
   assert.equal(hidden.lines.slowVisible,0,'repeated slow conjunction lines hidden');
   assert.equal(hidden.rows.fastVisible,hidden.rows.fast,'fast Sun conjunction preserved');
-  assert.equal(hidden.rows.intraVisible,hidden.rows.intra,'intrasky conjunction preserved');
+  assert.equal(hidden.rows.intraVisible,baselineIntra,'intrasky conjunction visibility unchanged');
+  // An explicit retrograde-state change makes the same-body conjunction
+  // meaningful even across nearby skies.
+  await page.evaluate(()=>{
+   const key='relphiSkyChartB',b=JSON.parse(localStorage.getItem(key));
+   const a=window.RelphiSkyRetrograde.forPlacement('A','saturn');
+   b.placements.Saturn.retrograde=!a;
+   localStorage.setItem(key,JSON.stringify(b));
+   window.dispatchEvent(new StorageEvent('storage',{key,newValue:localStorage.getItem(key)}));
+  });
+  await page.waitForTimeout(500);
+  const changedRx=await audit();
+  assert.ok(changedRx.rows.fastVisible>0);
+  const saturnVisible=await page.evaluate(()=>[...document.querySelectorAll('#skyFoundationRelationshipList>.sky-foundation-relationship-row')].some(n=>n.dataset.relationshipMode==='A-B'&&n.dataset.aspect==='conjunction'&&n.dataset.leftPlacement==='saturn'&&n.dataset.rightPlacement==='saturn'&&!n.hidden&&!n.classList.contains('sky-chart-aspect-multiselect-hidden')));
+  assert.equal(saturnVisible,true,'retrograde-state change must preserve Saturn conjunction');
+
+  // A later pass must remain visible despite the same degree and the same
+  // retrograde flag: direct -> retrograde -> direct is a distinct passage.
+  await page.evaluate(()=>{
+   const ka='relphiSkyChartA',kb='relphiSkyChartB';
+   const a=JSON.parse(localStorage.getItem(ka)),b=JSON.parse(localStorage.getItem(kb));
+   const rx=window.RelphiSkyRetrograde.forPlacement('A','saturn');
+   a.placements.Saturn.retrograde=rx;b.placements.Saturn.retrograde=rx;
+   b.calcProfile.instant='2027-11-03T12:00:00Z';
+   localStorage.setItem(ka,JSON.stringify(a));localStorage.setItem(kb,JSON.stringify(b));
+   window.dispatchEvent(new StorageEvent('storage',{key:kb,newValue:localStorage.getItem(kb)}));
+  });
+  await page.waitForTimeout(600);
+  const afterReturn=await page.evaluate(()=>[...document.querySelectorAll('#skyFoundationRelationshipList>.sky-foundation-relationship-row')].some(n=>n.dataset.relationshipMode==='A-B'&&n.dataset.aspect==='conjunction'&&n.dataset.leftPlacement==='saturn'&&n.dataset.rightPlacement==='saturn'&&!n.hidden&&!n.classList.contains('sky-chart-aspect-multiselect-hidden')));
+  assert.equal(afterReturn,true,'same degree on different retrograde passage must remain visible');
+
   await toggle.evaluate(el=>{el.checked=false;el.dispatchEvent(new Event('change',{bubbles:true}))});
   await page.waitForTimeout(350);
   const restored=await audit();
