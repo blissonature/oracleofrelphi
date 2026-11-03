@@ -215,7 +215,7 @@ function renderPopover(){
   });
   const preference=document.createElement('label');
   preference.className='sky-chart-slow-conjunction-option';
-  preference.style.cssText='display:flex;align-items:flex-start;gap:9px;padding:12px 8px 7px;cursor:pointer;font:650 12px/1.4 system-ui';
+  preference.style.cssText='display:flex;align-items:flex-start;gap:9px;padding:10px 9px;margin-bottom:7px;border:1px solid rgba(31,27,24,.19);border-radius:9px;background:#f4efe8;color:#29231e;cursor:pointer;font:700 12px/1.4 system-ui';
   const toggle=document.createElement('input');toggle.type='checkbox';
   toggle.dataset.hideRepeatedSlowConjunctions='true';
   toggle.setAttribute('aria-label','Hide repeated slow-body conjunctions in A to B comparisons');
@@ -226,7 +226,8 @@ function renderPopover(){
   explanation.style.cssText='display:block;font:400 11px/1.4 system-ui;opacity:.8;margin-top:3px';
   explanation.textContent='Keeps retrograde changes and returns on another passage, even at the same degree. Affects matching Jupiter, Saturn, Uranus, Neptune, Pluto or Chiron only.';
   caption.appendChild(explanation);preference.append(toggle,caption);
-  body.replaceChildren(list,preference);
+  // Place this before the long scrollable matrix so it is visible immediately.
+  body.replaceChildren(preference,list);
   window.dispatchEvent(new Event('relphi:sky-aspect-filter-rendered'));
 }
 function renderClosedSummary(owner){
