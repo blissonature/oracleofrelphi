@@ -21,7 +21,7 @@ assert.match(board, /split\(','\)/);
 assert.match(board, /id="relphiPositionLabels"/);
 assert.match(board, /id="relphiAddPosition"/);
 assert.match(board, /const acceptCommaList=\(value\)=>/);
-assert.match(board, /labelsList\?\.addEventListener\('paste'/);
+assert.match(board, /function parseBulkQuestions\(value\)/);
 assert.match(board, /pasted\.includes\(','\)/);
 assert.match(board, /draft\.labels=labels/);
 assert.match(runtime, /comma-separated questions should create three individual label fields/);
