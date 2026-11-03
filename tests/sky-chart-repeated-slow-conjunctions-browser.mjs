@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import path from 'node:path';
 import {chromium} from 'playwright';
+import {PNG} from 'pngjs';
 
 const ids=['conjunction','semi-sextile','octile','sextile','quintile','square','trine','tri-octile','bi-quintile','quincunx','opposition'];
 // Reproduction: the user's two Salt Lake City skies are 5h27m apart.
@@ -82,8 +83,24 @@ try{
   await page.locator('[data-relationship-limit-preset]').selectOption('5');
   await page.waitForTimeout(300);
   const baselineIntra=(await audit()).rows.intraFiltered;
+  // Measure rendered wheel pixels, not only hidden DOM classes.
+  await page.locator('[data-aspect-filter-toggle]').click();
+  await page.waitForTimeout(300);
+  const wheel=page.locator('#skyFoundationWheelMount > svg.sky-foundation-wheel');
+  const renderedBefore=PNG.sync.read(await wheel.screenshot());
+  await page.locator('[data-aspect-filter-toggle]').click();
   await toggle.check();
   await page.locator('[data-aspect-filter-toggle]').click();
+  await page.waitForTimeout(350);
+  const renderedAfter=PNG.sync.read(await wheel.screenshot());
+  assert.equal(renderedBefore.width,renderedAfter.width);
+  assert.equal(renderedBefore.height,renderedAfter.height);
+  let changedPixels=0;
+  for(let i=0;i<renderedBefore.data.length;i+=4){
+    const delta=Math.abs(renderedBefore.data[i]-renderedAfter.data[i])+Math.abs(renderedBefore.data[i+1]-renderedAfter.data[i+1])+Math.abs(renderedBefore.data[i+2]-renderedAfter.data[i+2]);
+    if(delta>50)changedPixels++;
+  }
+  assert.ok(changedPixels>75,'Checking the filter must physically change the painted wheel, not only mark DOM lines hidden: '+changedPixels+' pixels');
   await page.waitForTimeout(350);
   const hidden=await audit();
   assert.equal(hidden.setting,'true');
@@ -154,7 +171,7 @@ try{
   assert.equal(restored.setting,'false');
   assert.equal(restored.rows.slowFiltered,0,'unchecking must restore eligibility to every slow conjunction regardless of Max 10');
   assert.deepEqual(errors.filter(e=>/TypeError|ReferenceError|SyntaxError/.test(e)),[]);
-  console.log('slow-body conjunction filter verified',width,JSON.stringify({before,hidden,restored}));
+  console.log('slow-body conjunction filter verified',width,JSON.stringify({changedPixels,before,hidden,restored}));
   await page.close();
  }
 }finally{await browser.close()}
