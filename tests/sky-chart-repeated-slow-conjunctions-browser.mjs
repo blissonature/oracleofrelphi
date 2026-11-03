@@ -3,14 +3,19 @@ import path from 'node:path';
 import {chromium} from 'playwright';
 
 const ids=['conjunction','semi-sextile','octile','sextile','quintile','square','trine','tri-octile','bi-quintile','quincunx','opposition'];
-const longitudes={Sun:195,Moon:118,Mercury:206,Venus:169,Mars:167,Jupiter:307,Saturn:235,Uranus:255,Neptune:271,Pluto:213,Chiron:74.5,Ascendant:168,Midheaven:76};
+// Reproduction: the user's two Salt Lake City skies are 5h27m apart.
+const longitudes={Sun:221.05,Moon:142,Mercury:224,Venus:205,Mars:139,Jupiter:144.58,
+ Saturn:9.1333,Uranus:64.5833,Neptune:2.0333,Pluto:303.1333,Chiron:27.9667,
+ 'North Node':325.95,'South Node':145.95,Lilith:275.5333,
+ Ascendant:185,Midheaven:95};
 const make=(offset)=>({
- name:'Close comparison',houseSystem:'equal-house',
- houseCusps:Array.from({length:12},(_,i)=>(168+i*30)%360),
- calcProfile:{instant:offset?'2026-11-04T12:00:00Z':'2026-11-03T12:00:00Z',
- dateTime:'2026-11-03T05:00:00',houseSystem:'equal-house',latitude:40.76,longitude:-111.89,
- houseCusps:Array.from({length:12},(_,i)=>(168+i*30)%360)},
- placements:Object.fromEntries(Object.entries(longitudes).map(([name,lon])=>[name,{name,longitude:lon+(offset?.25:0)}]))
+ name:offset?'Nov 2, 2026, 10:10 PM':'Nov 3, 2026, 3:37 AM',houseSystem:'equal-house',
+ houseCusps:Array.from({length:12},(_,i)=>(185+i*30)%360),
+ calcProfile:{instant:offset?'2026-11-03T05:10:00Z':'2026-11-03T10:37:00Z',
+ dateTime:offset?'2026-11-02T22:10:00':'2026-11-03T03:37:00',
+ timeZone:'America/Denver',houseSystem:'equal-house',latitude:40.76,longitude:-111.89,
+ houseCusps:Array.from({length:12},(_,i)=>(185+i*30)%360)},
+ placements:Object.fromEntries(Object.entries(longitudes).map(([name,lon])=>[name,{name,longitude:lon+(offset?.01:0)}]))
 });
 const browser=await chromium.launch({headless:true});
 try{
@@ -60,7 +65,7 @@ try{
    const get=kind=>{
     const nodes=select(kind);
     const same=(id)=>nodes.filter(n=>n.dataset.relationshipMode==='A-B'&&n.dataset.aspect==='conjunction'&&n.dataset.leftPlacement===id&&n.dataset.rightPlacement===id);
-    const sameSlow=['jupiter','saturn','uranus','neptune','pluto','chiron'].flatMap(same);
+    const sameSlow=['jupiter','saturn','uranus','neptune','pluto','chiron','north-node','south-node','lilith'].flatMap(same);
     const sameFast=same('sun');
     const intra=nodes.filter(n=>n.dataset.relationshipMode==='A-A'&&n.dataset.aspect==='conjunction');
     return {slow:sameSlow.length,slowVisible:sameSlow.filter(visible).length,fast:sameFast.length,fastVisible:sameFast.filter(visible).length,intra:intra.length,intraVisible:intra.filter(visible).length};
@@ -72,7 +77,9 @@ try{
   assert.ok(before.rows.slow>=5,'fixture must generate repeated slow conjunctions');
   assert.equal(before.rows.slowVisible,before.rows.slow,'default includes repeated slow conjunctions');
   const baselineIntra=before.rows.intraVisible;
-  await toggle.evaluate(el=>{el.checked=true;el.dispatchEvent(new Event('change',{bubbles:true}))});
+  await page.locator('[data-relationship-limit-preset]').selectOption('10');
+  await toggle.check();
+  await page.locator('[data-aspect-filter-toggle]').click();
   await page.waitForTimeout(350);
   const hidden=await audit();
   assert.equal(hidden.setting,'true');
@@ -80,6 +87,23 @@ try{
   assert.equal(hidden.lines.slowVisible,0,'repeated slow conjunction lines hidden');
   assert.equal(hidden.rows.fastVisible,hidden.rows.fast,'fast Sun conjunction preserved');
   assert.equal(hidden.rows.intraVisible,baselineIntra,'intrasky conjunction visibility unchanged');
+  await page.waitForTimeout(800);
+  const afterSettling=await audit();
+  assert.equal(afterSettling.rows.slowVisible,0,'slow conjunctions must remain suppressed after resort/limit refresh');
+  await page.evaluate(()=>{
+    window.__slowConjunctionCopied='';
+    document.execCommand=()=>false;
+    Object.defineProperty(navigator,'clipboard',{configurable:true,value:{
+      writeText:async text=>{window.__slowConjunctionCopied=String(text)}
+    }});
+  });
+  await page.locator('.sky-relationship-copy-button').click();
+  await page.waitForFunction(()=>!!window.__slowConjunctionCopied,null,{timeout:10000});
+  const copied=await page.evaluate(()=>window.__slowConjunctionCopied);
+  for(const glyph of ['♇','♆','♅','⚷','♄','☊','☋','⚸'])
+    assert.ok(!copied.split('\\n').some(line=>line.includes(glyph)&&line.includes('☌')&&line.indexOf(glyph)!==line.lastIndexOf(glyph)),
+      'Relationships Copy must exclude repeated '+glyph+' conjunctions');
+
   // An explicit retrograde-state change makes the same-body conjunction
   // meaningful even across nearby skies.
   await page.evaluate(()=>{
