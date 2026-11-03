@@ -42,7 +42,7 @@ const STORAGE_KEY='relphiSkyAspectMatrixV1';
 // Different slow bodies conjunct one another remain meaningful.
 // This is an explicit presentation preference, not an automatic date cutoff.
 const REPEATED_SLOW_KEY='relphiSkyHideRepeatedSlowConjunctionsV1';
-const SLOW_IDENTITIES=new Set(['jupiter','saturn','uranus','neptune','pluto','chiron']);
+const SLOW_IDENTITIES=new Set(['jupiter','saturn','uranus','neptune','pluto','chiron','north-node','south-node','lilith']);
 let hideRepeatedSlow=localStorage.getItem(REPEATED_SLOW_KEY)==='true';
 const SLOW_PASS_CACHE=new Map();
 const DAY_MS=86400000;
@@ -52,10 +52,21 @@ function datedSky(slot){
   try{payload=JSON.parse(localStorage.getItem(slot==='A'?'relphiSkyChartA':'relphiSkyChartB')||'null')}catch(_){return null}
   const profile=payload?.calcProfile;
   if(!profile||profile.timeUnknown===true)return null;
-  const raw=profile.instant;
-  if(typeof raw!=='string'||!/(Z|[+-]\d\d:\d\d)$/.test(raw))return null;
-  const ms=Date.parse(raw);
-  return Number.isFinite(ms)?ms:null;
+  const direct=[profile.instant,payload.instant,payload.metadata?.capturedNowAt,payload.metadata?.liveNowAt];
+  for(const raw of direct){
+    if(typeof raw!=='string'||!/(Z|[+-]\d\d:\d\d)$/i.test(raw))continue;
+    const ms=Date.parse(raw);
+    if(Number.isFinite(ms))return ms;
+  }
+  // Dated saved/imported skies can carry only local chart time + IANA zone.
+  // Resolve through the existing Luxon time-zone provider rather than UTC guessing.
+  const local=profile.dateTime||payload.dateTime;
+  const zone=profile.timeZone||profile.timezone||payload.timeZone;
+  if(typeof local==='string'&&typeof zone==='string'&&window.luxon?.DateTime){
+    const dt=window.luxon.DateTime.fromISO(local,{zone,setZone:true});
+    if(dt.isValid)return dt.toMillis();
+  }
+  return null;
 }
 function skyRetrograde(slot,id){
   // The established placement motion owner respects explicit imported Rx state.
@@ -77,6 +88,10 @@ function samePassAt(id,first,last){
   // With matching motion, snapshots within one day cannot complete a distinct
   // slow-body station passage; avoid unnecessary ephemeris sampling.
   if(end-start<=DAY_MS){SLOW_PASS_CACHE.set(cacheKey,true);return true}
+  // Nodes and lunar apogee are not interpolated by the planetary provider.
+  // For a longer interval, keep them visible unless separate passage history
+  // can be established; never infer it from orbital date distance alone.
+  if(id==='north-node'||id==='south-node'||id==='lilith')return null;
   // Every slow body reverses direction when passing through a retrograde loop.
   // Count changes of motion direction, not just final Rx flags: D -> Rx -> D
   // revisits a degree with matching endpoint Rx but is a different passage.
@@ -224,7 +239,7 @@ function renderPopover(){
   caption.textContent='Hide same-passage slow-body conjunctions (A↔B)';
   const explanation=document.createElement('small');
   explanation.style.cssText='display:block;font:400 11px/1.4 system-ui;opacity:.8;margin-top:3px';
-  explanation.textContent='Keeps retrograde changes and returns on another passage, even at the same degree. Affects matching Jupiter, Saturn, Uranus, Neptune, Pluto or Chiron only.';
+  explanation.textContent='Hides repeated slow positions from the same passage, including lunar nodes and Lilith. Keeps changes of retrograde direction and returns on another passage.';
   caption.appendChild(explanation);preference.append(toggle,caption);
   // Place this before the long scrollable matrix so it is visible immediately.
   body.replaceChildren(preference,list);
