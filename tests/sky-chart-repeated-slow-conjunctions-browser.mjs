@@ -30,7 +30,8 @@ try{
    localStorage.setItem('relphiSkyChartLastModeV1','comparison');
    localStorage.setItem('relphiSkySharedHouseSystemV1','equal-house');
    localStorage.setItem('relphiSkyHarmonicWindowV1','4');
-   localStorage.setItem('relphiSkyAspectMatrixV1',JSON.stringify({'A-A':ids,'B-B':ids,'A-B':ids}));
+   localStorage.setItem('relphiSkyVocabDisplayV1',JSON.stringify({glyphs:true,names:false,referents:false}));
+   localStorage.setItem('relphiSkyAspectMatrixV1',JSON.stringify({'A-A':[],'B-B':[],'A-B':ids}));
    localStorage.removeItem('relphiSkyHideRepeatedSlowConjunctionsV1');
   },{a:make(0),b:make(1),ids});
   await page.goto('http://127.0.0.1:4173/sky-chart.html',{waitUntil:'domcontentloaded',timeout:35000});
