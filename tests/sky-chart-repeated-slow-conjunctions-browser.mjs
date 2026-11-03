@@ -76,8 +76,9 @@ try{
   const before=await audit();
   assert.ok(before.rows.slow>=5,'fixture must generate repeated slow conjunctions');
   assert.equal(before.rows.slowVisible,before.rows.slow,'default includes repeated slow conjunctions');
-  const baselineIntra=before.rows.intraVisible;
   await page.locator('[data-relationship-limit-preset]').selectOption('10');
+  await page.waitForTimeout(300);
+  const baselineIntra=(await audit()).rows.intraVisible;
   await toggle.check();
   await page.locator('[data-aspect-filter-toggle]').click();
   await page.waitForTimeout(350);
