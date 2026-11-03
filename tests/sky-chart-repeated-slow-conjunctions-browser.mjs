@@ -8,6 +8,7 @@ const ids=['conjunction','semi-sextile','octile','sextile','quintile','square','
 const longitudes={Sun:221.05,Moon:142,Mercury:224,Venus:205,Mars:139,Jupiter:144.58,
  Saturn:9.1333,Uranus:64.5833,Neptune:2.0333,Pluto:303.1333,Chiron:27.9667,
  'North Node':325.95,'South Node':145.95,Lilith:275.5333,
+ Descendant:5,Dsc:5,
  Ascendant:185,Midheaven:95};
 const make=(offset)=>({
  name:offset?'Nov 2, 2026, 10:10 PM':'Nov 3, 2026, 3:37 AM',houseSystem:'equal-house',
@@ -77,6 +78,14 @@ try{
    return {rows:get('row'),lines:get('line'),setting:localStorage.getItem('relphiSkyHideRepeatedSlowConjunctionsV1')};
   });
   await page.waitForFunction(()=>[...document.querySelectorAll('#skyFoundationRelationshipList>.sky-foundation-relationship-row')].some(n=>n.dataset.relationshipMode==='A-B'&&n.dataset.aspect==='conjunction'&&n.dataset.leftPlacement==='saturn'&&n.dataset.rightPlacement==='saturn'),null,{timeout:25000});
+  // Reproduce saved Sky A's duplicate Descendant aliases. Both can land at
+  // Pisces 18°22′ but with H6/H7 metadata; their canonical ID is still dsc.
+  const selfAspects=await page.evaluate(()=>({
+    rows:[...document.querySelectorAll('#skyFoundationRelationshipList>.sky-foundation-relationship-row')].filter(n=>['A-A','B-B'].includes(n.dataset.relationshipMode)&&n.dataset.leftPlacement===n.dataset.rightPlacement).map(n=>({id:n.dataset.leftPlacement,aspect:n.dataset.aspect})),
+    lines:[...document.querySelectorAll('#skyFoundationWheelMount [data-layer="aspects"]>line.sky-foundation-aspect')].filter(n=>['A-A','B-B'].includes(n.dataset.relationshipMode)&&n.dataset.leftPlacement===n.dataset.rightPlacement).map(n=>({id:n.dataset.leftPlacement,aspect:n.dataset.aspect}))
+  }));
+  assert.deepEqual(selfAspects.rows,[],'an intrasky placement must not form any aspect with its own canonical identity');
+  assert.deepEqual(selfAspects.lines,[],'self-aspects must not be rendered on the wheel');
   const before=await audit();
   assert.ok(before.rows.slow>=5,'fixture must generate repeated slow conjunctions');
   assert.equal(before.rows.slowVisible,before.rows.slow,'default includes repeated slow conjunctions');
