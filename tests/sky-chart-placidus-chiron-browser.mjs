@@ -72,6 +72,20 @@ try{
   assert.equal(state.houses.mercury,'2');assert.equal(state.houses.jupiter,'5');
   assert.equal(state.houses.saturn,'3');assert.equal(state.houses.chiron,'9');
   assert.ok(Math.abs(state.cusps[1]-193.01)<0.2);
+  // Exercise the actual House System control rather than checking startup only.
+  const houseSelect=page.locator('[data-placement-house-system="A"]');
+  await houseSelect.selectOption('porphyry');
+  await page.waitForFunction(()=>JSON.parse(localStorage.getItem('relphiSkyChartA')).calcProfile.houseSystem==='porphyry');
+  await page.waitForFunction(()=>Math.abs(JSON.parse(localStorage.getItem('relphiSkyChartA')).calcProfile.houseCusps[1]-197.68)<.2);
+  assert.equal(await page.locator('[data-placement-house-system="B"]').inputValue(),'porphyry','both skies share the system');
+  await houseSelect.selectOption('placidus');
+  await page.waitForFunction(()=>{
+   const p=JSON.parse(localStorage.getItem('relphiSkyChartA'));
+   return p.calcProfile.houseSystem==='placidus'&&Math.abs(p.calcProfile.houseCusps[1]-193.01)<.2;
+  });
+  const preserved=await page.evaluate(()=>JSON.parse(localStorage.getItem('relphiSkyChartA')).placements.Chiron);
+  assert.equal(preserved.retrograde,true,'Chiron Rx survives switching House Systems');
+  assert.ok(Math.abs(preserved.longitude-74.49)<.03,'Chiron longitude survives switching House Systems');
   assert.equal(errors.length,0,'browser errors: '+errors.join('; '));
   results.push({viewport,house:state.houses,chironRx:state.chironRx});
   await page.close();
