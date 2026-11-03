@@ -38,11 +38,11 @@ const SCOPES=Object.freeze([
   {id:'A-B',label:'A↔B'}
 ]);
 const STORAGE_KEY='relphiSkyAspectMatrixV1';
-// Only repeated, same-identity A↔B conjunctions are optionally suppressed.
-// Different slow bodies conjunct one another remain meaningful.
-// This is an explicit presentation preference, not an automatic date cutoff.
+// Suppress only redundant A↔B relationships produced by the same orbital passage.
+// Cross-body contacts remain meaningful; node-axis polarity is one identity.
 const REPEATED_SLOW_KEY='relphiSkyHideRepeatedSlowConjunctionsV1';
-const SLOW_IDENTITIES=new Set(['jupiter','saturn','uranus','neptune','pluto','chiron','north-node','south-node','lilith']);
+const REPEAT_IDENTITIES=new Set(['sun','moon','mercury','venus','mars','jupiter','saturn','uranus','neptune','pluto','chiron','north-node','south-node','lilith']);
+const NODAL_IDS=new Set(['north-node','south-node']);
 let hideRepeatedSlow=localStorage.getItem(REPEATED_SLOW_KEY)==='true';
 const SLOW_PASS_CACHE=new Map();
 const DAY_MS=86400000;
@@ -118,7 +118,7 @@ function samePassAt(id,first,last){
   SLOW_PASS_CACHE.set(cacheKey,verdict);
   return verdict;
 }
-function samePassSlowConjunction(id){
+function samePassRepeatedPlacement(id){
   const a=datedSky('A'),b=datedSky('B');
   if(a===null||b===null)return false;
   const aRx=skyRetrograde('A',id),bRx=skyRetrograde('B',id);
@@ -233,13 +233,13 @@ function renderPopover(){
   preference.style.cssText='display:flex;align-items:flex-start;gap:9px;padding:10px 9px;margin-bottom:7px;border:1px solid rgba(31,27,24,.19);border-radius:9px;background:#f4efe8;color:#29231e;cursor:pointer;font:700 12px/1.4 system-ui';
   const toggle=document.createElement('input');toggle.type='checkbox';
   toggle.dataset.hideRepeatedSlowConjunctions='true';
-  toggle.setAttribute('aria-label','Hide repeated slow-body conjunctions in A to B comparisons');
+  toggle.setAttribute('aria-label','Hide repeated same-passage relationships in A to B comparisons');
   toggle.checked=hideRepeatedSlow;
   const caption=document.createElement('span');
-  caption.textContent='Hide same-passage slow-body conjunctions (A↔B)';
+  caption.textContent='Hide repeated same-passage relationships (A↔B)';
   const explanation=document.createElement('small');
   explanation.style.cssText='display:block;font:400 11px/1.4 system-ui;opacity:.8;margin-top:3px';
-  explanation.textContent='Hides repeated slow positions from the same passage, including lunar nodes and Lilith. Keeps changes of retrograde direction and returns on another passage.';
+  explanation.textContent='Omits a body conjunct itself and the duplicated North/South Node axis. Keeps different-body contacts, retrograde changes, and later returns.';
   caption.appendChild(explanation);preference.append(toggle,caption);
   // Place this before the long scrollable matrix so it is visible immediately.
   body.replaceChildren(preference,list);
@@ -279,13 +279,18 @@ function updateCount(){
     if(count)count.textContent=`${shown}/${rows.length}`;if(empty)empty.hidden=shown!==0;
   });
 }
-function repeatedSlowConjunction(node,mode,aspect){
-  if(!hideRepeatedSlow||mode!=='A-B'||aspect!=='conjunction')return false;
+function redundantSamePassRelationship(node,mode,aspect){
+  if(!hideRepeatedSlow||mode!=='A-B')return false;
   const left=String(node?.dataset?.leftPlacement||'').trim().toLowerCase();
   const right=String(node?.dataset?.rightPlacement||'').trim().toLowerCase();
-  return left===right&&SLOW_IDENTITIES.has(left)&&samePassSlowConjunction(left);
+  if(aspect==='conjunction'&&left===right&&REPEAT_IDENTITIES.has(left))return samePassRepeatedPlacement(left);
+  // The North/South Nodes form one axis: North A opposite South B (or
+  // conversely) merely repeats that axis when both skies belong to one pass.
+  if(aspect==='opposition'&&NODAL_IDS.has(left)&&NODAL_IDS.has(right)&&left!==right)
+    return samePassRepeatedPlacement('north-node');
+  return false;
 }
-function visible(node){const mode=relationshipMode(node);if(!activeScopes().includes(mode))return false;const aspect=normalize(node?.dataset?.aspect||'');if(repeatedSlowConjunction(node,mode,aspect))return false;if(node?.dataset?.bySignOnly==='true')return signSelected.has(aspect);if(!aspect)return true;const anySelected=activeScopes().some(scope=>state[scope]?.size>0);if(!anySelected)return false;if(window.RelphiAspectConfigurations?.participates?.(node))return true;return!!state[mode]?.has(aspect)}
+function visible(node){const mode=relationshipMode(node);if(!activeScopes().includes(mode))return false;const aspect=normalize(node?.dataset?.aspect||'');if(redundantSamePassRelationship(node,mode,aspect))return false;if(node?.dataset?.bySignOnly==='true')return signSelected.has(aspect);if(!aspect)return true;const anySelected=activeScopes().some(scope=>state[scope]?.size>0);if(!anySelected)return false;if(window.RelphiAspectConfigurations?.participates?.(node))return true;return!!state[mode]?.has(aspect)}
 function applyMatrix({announce=true}={}){
   applying=true;
   document.querySelectorAll('.sky-foundation-relationship-row,[data-layer="aspects"]>.sky-foundation-aspect').forEach(node=>node.classList.toggle('sky-chart-aspect-multiselect-hidden',!visible(node)));
