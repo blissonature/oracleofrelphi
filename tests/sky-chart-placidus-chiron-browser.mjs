@@ -72,6 +72,11 @@ try{
   assert.equal(state.houses.mercury,'2');assert.equal(state.houses.jupiter,'5');
   assert.equal(state.houses.saturn,'3');assert.equal(state.houses.chiron,'9');
   assert.ok(Math.abs(state.cusps[1]-193.01)<0.2);
+  // The visible wheel wedges must use the same cusp geometry as the ledger.
+  await page.waitForFunction(()=>{
+   const wedge=document.querySelector('#skyFoundationWheelMount [data-layer="a-houses"] > path[data-house="2"]');
+   return wedge&&Math.abs(Number(wedge.dataset.houseCuspStart)-193.01)<.2;
+  },null,{timeout:15000});
   // Exercise the actual House System control rather than checking startup only.
   const houseSelect=page.locator('[data-placement-house-system="A"]');
   await houseSelect.selectOption('porphyry');
