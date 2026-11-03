@@ -100,6 +100,8 @@ try{
   await page.locator('.sky-relationship-copy-button').click();
   await page.waitForFunction(()=>!!window.__slowConjunctionCopied,null,{timeout:10000});
   const copied=await page.evaluate(()=>window.__slowConjunctionCopied);
+  assert.match(copied,/Repeated slow-body conjunctions: Hide same passage/,
+    'copied Relationships focus must report the active filter');
   for(const glyph of ['♇','♆','♅','⚷','♄','☊','☋','⚸'])
     assert.ok(!copied.split('\\n').some(line=>line.includes(glyph)&&line.includes('☌')&&line.indexOf(glyph)!==line.lastIndexOf(glyph)),
       'Relationships Copy must exclude repeated '+glyph+' conjunctions');
