@@ -3090,6 +3090,11 @@
         event.preventDefault();
         event.stopPropagation();
         const index = Number(item.dataset.rowIndex) || 0;
+        // The native renderer alone owns selection. Expose whether this pointer
+        // chose a new target so the workflow can avoid opening Card Focus.
+        if (rowTransformTargetIndex() !== index && wrap.classList.contains('relphi-transform-editing-unlocked')) {
+          item.dataset.relphiSelectedOnPointerDown = String(Date.now());
+        }
         selectRowTransformTarget(index, wrap);
         // Selection must not start a drag when a prefab locks its slot coordinates.
         if (state.rowLayoutLocked && !state.rowLayoutDesignMode) return;
