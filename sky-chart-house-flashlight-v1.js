@@ -124,6 +124,17 @@ root.addEventListener('relphi:sky-b-removed',()=>{
  if(hovered?.sky==='B')hovered=null;
  root.requestAnimationFrame(render);
 });
+// Aspect selection supersedes house exploration, including when an aspect row
+// is a button (which the generic click-away handler intentionally exempts).
+// Capture pointerdown as well as click: mobile selection may consume the click.
+function clearForAspectSelection(event){
+ const target=event.target;
+ if(!target?.closest?.('.sky-foundation-relationship-row[data-relationship-selection], .sky-foundation-relationship-row[data-relation-index], #skyFoundationWheelMount [data-interactive="aspect"], #skyFoundationWheelMount [data-focus-piece="aspect"]'))return;
+ if(!pinned&&!hovered)return;
+ pinned=null;hovered=null;render();
+}
+document.addEventListener('pointerdown',clearForAspectSelection,true);
+document.addEventListener('click',clearForAspectSelection,true);
 // A normal click away from a house should not leave a pinned highlight.
 document.addEventListener('click',event=>{
  if(!pinned||houseNode(event.target))return;
