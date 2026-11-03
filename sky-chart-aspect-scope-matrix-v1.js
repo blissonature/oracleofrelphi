@@ -38,6 +38,12 @@ const SCOPES=Object.freeze([
   {id:'A-B',label:'A↔B'}
 ]);
 const STORAGE_KEY='relphiSkyAspectMatrixV1';
+// Only repeated, same-identity A↔B conjunctions are optionally suppressed.
+// Different slow bodies conjunct one another remain meaningful.
+// This is an explicit presentation preference, not an automatic date cutoff.
+const REPEATED_SLOW_KEY='relphiSkyHideRepeatedSlowConjunctionsV1';
+const SLOW_IDENTITIES=new Set(['jupiter','saturn','uranus','neptune','pluto','chiron']);
+let hideRepeatedSlow=localStorage.getItem(REPEATED_SLOW_KEY)==='true';
 const state=Object.fromEntries(SCOPES.map(scope=>[scope.id,new Set(IDS)]));
 (function loadPersistedState(){try{const saved=JSON.parse(localStorage.getItem(STORAGE_KEY)||'null');if(!saved||typeof saved!=='object')return;SCOPES.forEach(scope=>{if(Array.isArray(saved[scope.id]))state[scope.id]=new Set(saved[scope.id].filter(id=>IDS.includes(id)))})}catch(_){}})();
 let queued=false;
@@ -140,7 +146,20 @@ function renderPopover(){
       if(aspect){const row=matrixRow(aspect.id,aspect.label,false,aspect.angle);if(SIGN_ASPECTS.includes(aspect.id))row.insertBefore(signChoice(aspect.id),row.querySelector('.sky-chart-aspect-list-choices'));list.appendChild(row)}
     });
   });
-  body.replaceChildren(list);
+  const preference=document.createElement('label');
+  preference.className='sky-chart-slow-conjunction-option';
+  preference.style.cssText='display:flex;align-items:flex-start;gap:9px;padding:12px 8px 7px;cursor:pointer;font:650 12px/1.4 system-ui';
+  const toggle=document.createElement('input');toggle.type='checkbox';
+  toggle.dataset.hideRepeatedSlowConjunctions='true';
+  toggle.setAttribute('aria-label','Hide repeated slow-body conjunctions in A to B comparisons');
+  toggle.checked=hideRepeatedSlow;
+  const caption=document.createElement('span');
+  caption.textContent='Hide repeated slow-body conjunctions (A↔B)';
+  const explanation=document.createElement('small');
+  explanation.style.cssText='display:block;font:400 11px/1.4 system-ui;opacity:.8;margin-top:3px';
+  explanation.textContent='Same-body Jupiter, Saturn, Uranus, Neptune, Pluto and Chiron conjunctions only. Different-body conjunctions and A↔A/B↔B remain visible.';
+  caption.appendChild(explanation);preference.append(toggle,caption);
+  body.replaceChildren(list,preference);
   window.dispatchEvent(new Event('relphi:sky-aspect-filter-rendered'));
 }
 function renderClosedSummary(owner){
@@ -155,6 +174,7 @@ function renderClosedSummary(owner){
   summary.replaceChildren(choice('all','all','All aspects in all relationship scopes',true),...scopes.map(scope=>choice(scope.id,'all',`All aspects in ${scope.label}`,true)));
 }
 function updateInputs(){
+  document.querySelectorAll('[data-hide-repeated-slow-conjunctions]').forEach(input=>{input.checked=hideRepeatedSlow;input.disabled=!bActive()});
   document.querySelectorAll('[data-sky-by-sign]').forEach(input=>{
     const id=input.dataset.skyBySign;
     const ids=id==='all'?SIGN_ASPECTS:id.startsWith('group:')?(GROUP_MAP.get(id.slice(6))?.aspects||[]).filter(value=>SIGN_ASPECTS.includes(value)):[id];
@@ -176,7 +196,13 @@ function updateCount(){
     if(count)count.textContent=`${shown}/${rows.length}`;if(empty)empty.hidden=shown!==0;
   });
 }
-function visible(node){const mode=relationshipMode(node);if(!activeScopes().includes(mode))return false;const aspect=normalize(node?.dataset?.aspect||'');if(node?.dataset?.bySignOnly==='true')return signSelected.has(aspect);if(!aspect)return true;const anySelected=activeScopes().some(scope=>state[scope]?.size>0);if(!anySelected)return false;if(window.RelphiAspectConfigurations?.participates?.(node))return true;return!!state[mode]?.has(aspect)}
+function repeatedSlowConjunction(node,mode,aspect){
+  if(!hideRepeatedSlow||mode!=='A-B'||aspect!=='conjunction')return false;
+  const left=String(node?.dataset?.leftPlacement||'').trim().toLowerCase();
+  const right=String(node?.dataset?.rightPlacement||'').trim().toLowerCase();
+  return left===right&&SLOW_IDENTITIES.has(left);
+}
+function visible(node){const mode=relationshipMode(node);if(!activeScopes().includes(mode))return false;const aspect=normalize(node?.dataset?.aspect||'');if(repeatedSlowConjunction(node,mode,aspect))return false;if(node?.dataset?.bySignOnly==='true')return signSelected.has(aspect);if(!aspect)return true;const anySelected=activeScopes().some(scope=>state[scope]?.size>0);if(!anySelected)return false;if(window.RelphiAspectConfigurations?.participates?.(node))return true;return!!state[mode]?.has(aspect)}
 function applyMatrix({announce=true}={}){
   applying=true;
   document.querySelectorAll('.sky-foundation-relationship-row,[data-layer="aspects"]>.sky-foundation-aspect').forEach(node=>node.classList.toggle('sky-chart-aspect-multiselect-hidden',!visible(node)));
@@ -220,6 +246,13 @@ function ensureUI(){
   renderClosedSummary(owner);if(!popover()?.querySelector('[data-aspect-list="matrix"]'))renderPopover();ensureMenuObserver();updateInputs();return true;
 }
 function handleChange(event){
+  const slow=event.target.closest?.('[data-hide-repeated-slow-conjunctions]');
+  if(slow){
+    hideRepeatedSlow=!!slow.checked;
+    try{localStorage.setItem(REPEATED_SLOW_KEY,String(hideRepeatedSlow))}catch(_){}
+    applyMatrix();
+    return;
+  }
   const signInput=event.target.closest?.('[data-sky-by-sign]');
   if(signInput){
     const id=signInput.dataset.skyBySign;
