@@ -79,8 +79,8 @@ try{
   const labels=await page.evaluate(()=>window.__chironRxPngLabels);
   // Export concept chips identify sky ownership (e.g. "Sky A's Chiron Rx").
   // Verify the complete placement label, not a bare title that is not emitted.
-  assert.ok(labels.some(label=>/\\bChiron Rx$/.test(label)),'PNG concept chips must include retrograde Chiron: '+JSON.stringify(labels));
-  assert.ok(labels.some(label=>/\\bChiron$/.test(label)),'PNG concept chips must preserve direct Chiron: '+JSON.stringify(labels));
+  assert.ok(labels.some(label=>/\bChiron Rx$/.test(label)),'PNG concept chips must include retrograde Chiron: '+JSON.stringify(labels));
+  assert.ok(labels.some(label=>/\bChiron$/.test(label)),'PNG concept chips must preserve direct Chiron: '+JSON.stringify(labels));
   assert.deepEqual(errors.filter(x=>!/Unexpected identifier ['"]astronomy['"]/.test(x)),[]);
   console.log('Chiron retrograde visible and exported in both Sky Card, text, and PNG. '+retro+' / '+direct);
 }finally{await browser.close()}
