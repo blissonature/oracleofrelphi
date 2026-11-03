@@ -10,12 +10,12 @@ const longitudes={Sun:221.05,Moon:142,Mercury:224,Venus:205,Mars:139,Jupiter:144
  Ascendant:185,Midheaven:95};
 const make=(offset)=>({
  name:offset?'Nov 2, 2026, 10:10 PM':'Nov 3, 2026, 3:37 AM',houseSystem:'equal-house',
- houseCusps:Array.from({length:12},(_,i)=>(185+i*30)%360),
+ houseCusps:Array.from({length:12},(_,i)=>((offset?117:185)+i*30)%360),
  calcProfile:{instant:offset?'2026-11-03T05:10:00Z':'2026-11-03T10:37:00Z',
  dateTime:offset?'2026-11-02T22:10:00':'2026-11-03T03:37:00',
  timeZone:'America/Denver',houseSystem:'equal-house',latitude:40.76,longitude:-111.89,
- houseCusps:Array.from({length:12},(_,i)=>(185+i*30)%360)},
- placements:Object.fromEntries(Object.entries(longitudes).map(([name,lon])=>[name,{name,longitude:name==='Midheaven'&&offset?9.0667:lon+(offset?.01:0)}]))
+ houseCusps:Array.from({length:12},(_,i)=>((offset?117:185)+i*30)%360)},
+ placements:Object.fromEntries(Object.entries(longitudes).map(([name,lon])=>[name,{name,longitude:name==='Midheaven'&&offset?9.0667:name==='Ascendant'&&offset?117:lon+(offset?.01:0)}]))
 });
 const browser=await chromium.launch({headless:true});
 try{
