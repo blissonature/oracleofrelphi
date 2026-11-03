@@ -1,0 +1,49 @@
+name: Drawing Board transform ownership
+
+on:
+  pull_request:
+    paths:
+      - 'tarot-app.js'
+      - 'drawing-board-workflow-v2.js'
+      - 'drawing-board-workflow-v2.css'
+      - 'tests/drawing-board-transform-ownership.test.js'
+      - 'tests/tarot-card-list-search.test.js'
+      - '.github/workflows/drawing-board-transform-ownership.yml'
+  push:
+    branches:
+      - fix/drawing-board-card-transform-handles
+
+jobs:
+  multi-card-chromium:
+    name: Real card gestures / Chromium desktop and mobile
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Syntax check native and workflow owners
+        run: |
+          node --check tarot-app.js
+          node --check drawing-board-workflow-v2.js
+          node --check tests/drawing-board-transform-ownership.test.js
+          node --check tests/tarot-card-list-search.test.js
+      - name: Install Chromium
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Verify selecting and independently transforming two cards
+        run: |
+          mkdir -p test-results
+          python3 -m http.server 8000 --bind 127.0.0.1 >/tmp/relphi-http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill $SERVER_PID || true' EXIT
+          node tests/drawing-board-transform-ownership.test.js
+          node tests/tarot-card-list-search.test.js
+      - name: Upload desktop and mobile screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: drawing-board-transform-ownership
+          path: test-results/drawing-board-transform-*.png
+          if-no-files-found: ignore

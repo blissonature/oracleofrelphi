@@ -1322,14 +1322,7 @@
     removeSacredResumeGate(root);
     if(!resetBoardGlobal(root,{openSettings:false}))return false;
     sacredResumeGateHandled=true;
-    const reconcile=()=>{
-      const live=panel();
-      if(!live)return;
-      ensureBoardChrome(live);
-      const reset=live.querySelector('#relphiResetBoard');
-      if(reset)reset.disabled=!boardCanReset(live);
-    };
-    requestAnimationFrame(()=>requestAnimationFrame(reconcile));
+    // resetBoardGlobal synchronously refreshes board chrome and reset state.
     showBoardToast('The Sacred Reading has been concluded.',{title:'Reading concluded',duration:4200});
     return true;
   }
@@ -5343,7 +5336,9 @@
               const count=currentCardCount(live),scale=1;
               snap.rowEnvelopeLayout={...(snap.rowEnvelopeLayout||{})};
               snap.rowCardTransforms={...(snap.rowCardTransforms||{})};
-              for(let i=0;i<count;i++){
+              // Never reset transforms of cards already on the board when
+              // appending a new draw. Those transforms belong to the reader.
+              for(let i=before;i<count;i++){
                 snap.rowEnvelopeLayout[i]={x:i*CARD_W*scale,y:0};
                 snap.rowCardTransforms[i]={...(snap.rowCardTransforms[i]||{}),scale,rotation:0,zIndex:i+1};
               }
@@ -5396,7 +5391,12 @@
     const old=previousCount?genericPositions(Array.from({length:previousCount},(_,i)=>'Card '+(i+1))):[];
     const managed=root.dataset.relphiFreeGridManaged==='true';
     if(!managed && Object.keys(existing).length)return false;
-    if(managed && Object.entries(transforms).some(([key,v])=>Number(v.rotation||0)!==0))return false;
+    if(managed && Object.entries(transforms).some(([key,v])=>{
+      const expected=old[Number(key)]?.transform;
+      return Number(v.rotation||0)!==0 ||
+        (expected && Math.abs(Number(v.scale||1)-Number(expected.scale||1))>.001) ||
+        Number(v.zIndex||1)!==1;
+    }))return false;
     if(managed && Object.keys(existing).length && previousCount){
       // A reader's subsequent rearrangement takes ownership away from auto-fit.
       const oldSaved=root.dataset.relphiFreeGridCoordinates;
@@ -5613,6 +5613,16 @@
       const index=Number(item.dataset.rowIndex);
       if (Number.isInteger(index)) {
         if (item.querySelector('[data-row-card]')) {
+          const selectedOnDown=Number(item.dataset.relphiSelectedOnPointerDown||0)>0 &&
+            Date.now()-Number(item.dataset.relphiSelectedOnPointerDown)<1800;
+          delete item.dataset.relphiSelectedOnPointerDown;
+          const explicitTitle=!!event.target.closest?.('.or-card-title-banner');
+          if (!explicitTitle && transformEditingAllowed(root) &&
+              (selectedOnDown || Number(prefabBridge()?.getState?.()?.transformTarget)!==index)) {
+            prefabBridge()?.selectTransformTarget?.(index);
+            event.preventDefault(); event.stopImmediatePropagation();
+            return;
+          }
           event.preventDefault(); event.stopImmediatePropagation();
           openFocus(index);
           return;

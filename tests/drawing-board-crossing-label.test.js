@@ -19,9 +19,12 @@ fs.mkdirSync(out,{recursive:true});
     const panel=frame.locator('#shortListPanel');
     if(!(await panel.isVisible())) await frame.click('#relphiOpenDrawingBoardCurrent');
     await panel.waitFor({state:'visible',timeout:10000});
+    // The unified board intentionally keeps Crafted settings behind Settings.
+    await frame.locator('#relphiBoardSettingsButton').click();
     await frame.waitForSelector('#shortListPanel #drawingBoardOptionsButton',{state:'visible',timeout:10000});
-
     await frame.click('#drawingBoardOptionsButton');
+    await frame.waitForSelector('.relphi-reading-options-drawer.is-reading-options-open',{state:'visible',timeout:10000});
+    await frame.click('[data-referent-path="templates"]');
     await frame.waitForSelector('.relphi-reading-options-drawer.is-reading-options-open #relphiSpreadTemplateSelect',{state:'visible',timeout:10000});
     await frame.selectOption('#relphiSpreadTemplateSelect','celtic-cross-10');
     await frame.click('#relphiApplyOptions');
