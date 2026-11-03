@@ -29,7 +29,6 @@
   let activeDraw = false;
   let openTool = '';
   let transformEditingUnlocked = false;
-  let suppressedCardFocusClick = null;
   let showPositionStickers = readStickerVisibility();
   let surfaceReadingSession = null;
   let recursionSession = null;
@@ -5555,23 +5554,6 @@
     else actions.insertBefore(button,actions.firstChild);
   }
 
-  // Transform target lives in tarot-app.js. Selection runs before both the
-  // legacy art-click handler and this workflow's Card Focus click capture.
-  function selectCardForTransformOnPointerDown(event) {
-    if (event.button !== 0) return;
-    const root=panel();
-    if (!root || !transformEditingAllowed(root)) return;
-    const item=event.target.closest?.('.card-row-board>.card-row-item[data-row-index]');
-    if (!item || !root.contains(item) || !item.querySelector('[data-row-card]')) return;
-    if (event.target.closest?.('button,a,input,textarea,select,label,[contenteditable="true"],[data-row-transform-handle],.or-card-title-banner')) return;
-    const index=Number(item.dataset.rowIndex);
-    if (!Number.isInteger(index)) return;
-    const bridge=prefabBridge();
-    if (!bridge?.selectTransformTarget || Number(bridge.getState?.()?.transformTarget)===index) return;
-    bridge.selectTransformTarget(index);
-    suppressedCardFocusClick={index,at:Date.now()};
-  }
-
   function globalCapture(event) {
     const root=panel();
     const openCloseTrigger=event.target.closest?.('#relphiOpenDrawingBoardCurrent');
@@ -5638,9 +5620,9 @@
       const index=Number(item.dataset.rowIndex);
       if (Number.isInteger(index)) {
         if (item.querySelector('[data-row-card]')) {
-          const selectedOnDown=suppressedCardFocusClick?.index===index &&
-            Date.now()-suppressedCardFocusClick.at<1800;
-          suppressedCardFocusClick=null;
+          const selectedOnDown=Number(item.dataset.relphiSelectedOnPointerDown||0)>0 &&
+            Date.now()-Number(item.dataset.relphiSelectedOnPointerDown)<1800;
+          delete item.dataset.relphiSelectedOnPointerDown;
           const explicitTitle=!!event.target.closest?.('.or-card-title-banner');
           if (!explicitTitle && transformEditingAllowed(root) &&
               (selectedOnDown || Number(prefabBridge()?.getState?.()?.transformTarget)!==index)) {
@@ -5757,7 +5739,6 @@
   window.RelphiAppendBespokeQuestion = appendBespokeQuestion;
   window.RelphiDrawingBoardEnsureTopActions = ensureBoardChrome;
 
-  window.addEventListener('pointerdown',selectCardForTransformOnPointerDown,true);
   window.addEventListener('click',globalCapture,true);
   document.addEventListener('keydown',event=>{
     const reader=document.querySelector('.relphi-focus-reader');
