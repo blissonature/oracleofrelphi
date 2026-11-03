@@ -1322,14 +1322,7 @@
     removeSacredResumeGate(root);
     if(!resetBoardGlobal(root,{openSettings:false}))return false;
     sacredResumeGateHandled=true;
-    const reconcile=()=>{
-      const live=panel();
-      if(!live)return;
-      ensureBoardChrome(live);
-      const reset=live.querySelector('#relphiResetBoard');
-      if(reset)reset.disabled=!boardCanReset(live);
-    };
-    requestAnimationFrame(()=>requestAnimationFrame(reconcile));
+    // resetBoardGlobal synchronously refreshes board chrome and reset state.
     showBoardToast('The Sacred Reading has been concluded.',{title:'Reading concluded',duration:4200});
     return true;
   }
