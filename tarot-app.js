@@ -3873,11 +3873,11 @@
     if (tokens.some(x => !x)) return [];
     let resolved = tokens.map(token => ({
       card: resolveCardToken(token),
-      reversed: /\\s+(?:rx|reversed)$/i.test(token)
+      reversed: /\s+(?:rx|reversed)$/i.test(token)
     }));
     // Retain legacy whitespace-delimited shorthand lists, not arbitrary prose.
-    if (!delimited && !resolved[0].card && /\\s/.test(text)) {
-      const words = text.split(/\\s+/);
+    if (!delimited && !resolved[0].card && /\s/.test(text)) {
+      const words = text.split(/\s+/);
       resolved = words.map(token => ({ card: resolveCardToken(token), reversed:false }));
     }
     if (resolved.some(entry => !entry.card)) return [];
