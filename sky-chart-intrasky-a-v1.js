@@ -33,7 +33,17 @@ function profile(payload){return payload?.calcProfile&&typeof payload.calcProfil
 function ascendant(payload,list){const record=list.find(item=>item.id==='asc');if(record)return record.value;const value=Number(profile(payload).ascendant??payload?.ascendant??payload?.asc);return Number.isFinite(value)?norm(value):0}
 function cusps(payload,list){const p=profile(payload);if(p.timeUnknown===true)return[];for(const raw of[p.houseCusps,p.cusps,payload?.houseCusps,payload?.cusps,payload?.houses]){if(!raw)continue;const values=(Array.isArray(raw)?raw:Object.values(raw)).map(item=>typeof item==='object'?Number(item.longitude??item.value??item.cusp):Number(item)).slice(0,12);if(values.length===12&&values.every(Number.isFinite))return values.map(norm)}const asc=ascendant(payload,list),system=String(p.houseSystem||payload?.houseSystem||'whole-sign').toLowerCase(),start=system.includes('whole')?Math.floor(asc/30)*30:asc;return Array.from({length:12},(_,index)=>norm(start+index*30))}
 function houseFor(value,houseCusps){if(!Array.isArray(houseCusps)||houseCusps.length!==12)return null;for(let index=0;index<12;index+=1){const start=houseCusps[index],span=norm(houseCusps[(index+1)%12]-start)||30;if(norm(value-start)<span)return index+1}return 12}
-function prepare(slot='A'){const payload=read(slot),list=source(payload).map(([key,item])=>{const entry=canonical(key,item),value=longitude(item);return{key,item,entry,id:entry?.id||'',value,sky:slot}}).filter(record=>record.entry&&Number.isFinite(record.value)).filter((record,index,records)=>records.findIndex(other=>other.id===record.id)===index).sort((a,b)=>{const ai=ORDER.indexOf(a.id),bi=ORDER.indexOf(b.id);return(ai<0?999:ai)-(bi<0?999:bi)||a.value-b.value}),houseCusps=cusps(payload,list);list.forEach(record=>{record.sign=Math.floor(record.value/30);record.house=houseFor(record.value,houseCusps)});return list}
+function prepare(slot='A'){const payload=read(slot),list=source(payload).map(([key,item])=>{const entry=canonical(key,item),value=longitude(item);return{key,item,entry,id:entry?.id||'',value,sky:slot}}).filter(record=>record.entry&&Number.isFinite(record.value)).filter((record,index,records)=>records.findIndex(other=>other.id===record.id)===index).sort((a,b)=>{const ai=ORDER.indexOf(a.id),bi=ORDER.indexOf(b.id);return(ai<0?999:ai)-(bi<0?999:bi)||a.value-b.value}),houseCusps=cusps(payload,list);list.forEach(record=>{
+  record.sign=Math.floor(record.value/30);
+  record.house=houseFor(record.value,houseCusps);
+  // Angles define quadrant cusps. Saved aliases may differ by a floating-point
+  // fraction around the cusp; do not put the Descendant into H6 (or ASC in H12)
+  // because a nearly equal source longitude lies just below its own cusp.
+  const angleHouse={asc:1,ic:4,dsc:7,mc:10}[record.id];
+  const system=String(profile(payload).houseSystem||payload?.houseSystem||'').toLowerCase();
+  if(angleHouse&&!system.includes('whole')&&houseCusps.length===12&&
+      separation(record.value,houseCusps[angleHouse-1])<0.02)record.house=angleHouse;
+});return list}
 function redundantPair(left,right){return REDUNDANT.has([String(left||''),String(right||'')].sort().join('|'))}
 function relationships(list){const harmonic=window.RelphiHarmonicOrb,aspects=harmonic?.aspects||[],windowValue=Number(harmonic?.maxWindow)||12,result=[];for(let i=0;i<list.length;i+=1){for(let j=i+1;j<list.length;j+=1){const left=list[i],right=list[j];if(left.id===right.id||redundantPair(left.id,right.id))continue;const distance=separation(left.value,right.value);for(const aspect of aspects){const relation=harmonic?.relation?.(left,right,aspect,distance,windowValue);if(relation)result.push({...relation,scope:'intra-a'})}}}
  const bySign=window.RelphiSkyBySign;
