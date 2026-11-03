@@ -28,7 +28,7 @@ const url = process.env.RELPHI_TEST_URL || 'http://127.0.0.1:8000/tarot.html#tar
         assert.equal(!!snapshot.rowCardReversals?.[2],true,size.name+': court reversed');
         assert.equal(!!snapshot.rowCardReversals?.[3],false,size.name+': nine cups upright');
         assert.equal(!!snapshot.rowCardReversals?.[4],false,size.name+': death upright');
-        await page.locator('#oracleCommand').fill('secrecy');
+        await page.locator('#oracleCommand').fill('moon');
         await page.locator('#runCommand').click();
         assert.ok(await page.locator('#cardList .tarot-result-grid .or-card[data-id]').count()>0,size.name+': ordinary theme search remains functional');
         console.log(size.name+' card-list search, board handoff, and theme search passed');
