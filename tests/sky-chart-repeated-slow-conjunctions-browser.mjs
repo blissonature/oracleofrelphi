@@ -112,7 +112,7 @@ try{
   assert.match(copied,/Repeated relationships: Hide same passage/,
     'copied Relationships focus must report the active filter');
   for(const glyph of ['♇','♆','♅','⚷','♄','♀','♂','☊','☋','⚸'])
-    assert.ok(!copied.split('\\n').some(line=>line.includes(glyph)&&line.includes('☌')&&line.indexOf(glyph)!==line.lastIndexOf(glyph)),
+    assert.ok(!copied.split('\n').some(line=>line.includes(glyph)&&line.includes('☌')&&line.indexOf(glyph)!==line.lastIndexOf(glyph)),
       'Relationships Copy must exclude repeated '+glyph+' conjunctions');
 
   assert.match(copied,/♄.*☌.*MC/,'Saturn conjunct MC must remain in copied results');
