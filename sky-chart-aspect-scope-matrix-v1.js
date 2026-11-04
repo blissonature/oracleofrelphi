@@ -338,7 +338,7 @@ function visible(node,excluded){const mode=relationshipMode(node);if(!activeScop
 function applyMatrix({announce=true}={}){
   applying=true;
   const excluded=equivalenceExclusions();
-  document.querySelectorAll('.sky-foundation-relationship-row,[data-layer="aspects"]>.sky-foundation-aspect').forEach(node=>node.classList.toggle('sky-chart-aspect-multiselect-hidden',!visible(node,excluded)));
+  document.querySelectorAll('.sky-foundation-relationship-row,[data-layer="aspects"]>.sky-foundation-aspect,[data-layer="aspects"]>.sky-foundation-aspect-hit').forEach(node=>node.classList.toggle('sky-chart-aspect-multiselect-hidden',!visible(node,excluded)));
   updateInputs();
   const matrix=Object.fromEntries(SCOPES.map(scope=>[scope.id,IDS.filter(id=>state[scope.id].has(id))]));
   try{localStorage.setItem(STORAGE_KEY,JSON.stringify(matrix))}catch(_){}
