@@ -130,6 +130,31 @@ try{
   assert.ok(hidden.rows.nodeAxis>=2,'fixture must contain both nodal-axis cross oppositions');
   assert.equal(hidden.rows.nodeAxisFiltered,hidden.rows.nodeAxis,'both opposite node polarities suppressed');
   assert.equal(hidden.lines.nodeAxisFiltered,hidden.lines.nodeAxis,'nodal-axis lines suppressed');
+  // Reciprocal observations of one pair and aspect are one encounter.
+  // Same passage: A Venus sextile B Jupiter and A Jupiter sextile B Venus,
+  // Sun-Mercury conjunction, Jupiter-South Node conjunction.
+  const reciprocalAudit=await page.evaluate(()=>{
+    const source=selector=>[...document.querySelectorAll(selector)];
+    const groups=[
+      ['venus','jupiter','sextile'],
+      ['sun','mercury','conjunction'],
+      ['jupiter','south-node','conjunction']
+    ];
+    const inspect=selector=>groups.map(([a,b,aspect])=>{
+      const matches=source(selector).filter(n=>n.dataset.relationshipMode==='A-B'&&n.dataset.aspect===aspect&&
+        ((n.dataset.leftPlacement===a&&n.dataset.rightPlacement===b)||
+         (n.dataset.leftPlacement===b&&n.dataset.rightPlacement===a)));
+      const eligible=matches.filter(n=>!n.classList.contains('sky-chart-aspect-multiselect-hidden'));
+      return {group:a+'|'+b+'|'+aspect,total:matches.length,visible:eligible.length};
+    });
+    return {rows:inspect('#skyFoundationRelationshipList>.sky-foundation-relationship-row'),
+      lines:inspect('#skyFoundationWheelMount [data-layer="aspects"]>line.sky-foundation-aspect:not(.sky-foundation-aspect-hit)')};
+  });
+  for(const kind of ['rows','lines'])for(const group of reciprocalAudit[kind]){
+    assert.ok(group.total>=2,'reproduction must contain both directions for '+kind+' '+group.group);
+    assert.equal(group.visible,1,'only one same-passage reciprocal observation should remain for '+kind+' '+group.group);
+  }
+
   assert.ok(hidden.rows.saturnMC>0,'fixture must contain Saturn conjunct MC');
   assert.equal(hidden.rows.saturnMCFiltered,0,'Saturn-MC stays eligible');
   assert.equal(hidden.lines.saturnMCFiltered,0,'Saturn-MC wheel line stays eligible');
