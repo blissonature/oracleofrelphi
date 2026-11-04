@@ -265,5 +265,80 @@ try{
   assert.deepEqual(errors.filter(e=>/TypeError|ReferenceError|SyntaxError/.test(e)),[]);
   console.log('slow-body conjunction filter verified',width,JSON.stringify({changedPixels,before,hidden,restored}));
   await page.close();
+
+  // Separate user-reported comparison: Nov 3 1:55 PM vs 5:05 AM in SLC.
+  // Assert recurrence by canonical factor pairs, not by hardcoded degrees.
+  const sky=(slot)=>{
+    const earlier=slot==='B',asc=earlier?197.55:319.2833333333,mc=earlier?110.4833333333:246.9166666667;
+    const placements={
+      Sun:{longitude:earlier?221.0666667:221.45},
+      Mercury:{longitude:earlier?223.6:223.1333333,retrograde:true},
+      Venus:{longitude:earlier?205.0833333:204.9333333,retrograde:true},
+      Jupiter:{longitude:earlier?144.6166667:144.65},
+      'North Node':{longitude:earlier?325.9333333:325.9166667},
+      'South Node':{longitude:earlier?145.9333333:145.9166667},
+      Mars:{longitude:earlier?139.8666667:139.8},
+      Saturn:{longitude:9.12,retrograde:true},
+      Ascendant:{longitude:asc},Descendant:{longitude:(asc+180)%360},
+      Midheaven:{longitude:mc}
+    };
+    const cusps=Array.from({length:12},(_,i)=>(asc+i*30)%360);
+    return {name:earlier?'Nov 3, 2026, 5:05 AM':'Nov 3, 2026, 1:55 PM',
+      houseSystem:'equal-house',houseCusps:cusps,
+      calcProfile:{instant:earlier?'2026-11-03T12:05:00Z':'2026-11-03T20:55:00Z',
+        dateTime:earlier?'2026-11-03T05:05:00':'2026-11-03T13:55:00',
+        timeZone:'America/Denver',houseSystem:'equal-house',
+        latitude:40.76,longitude:-111.89,houseCusps:cusps},
+      placements:Object.fromEntries(Object.entries(placements).map(([name,value])=>[name,{name,...value}]))};
+  };
+  const exact=await browser.newPage({viewport:{width,height:920}});
+  exact.on('pageerror',e=>{throw e});
+  await exact.route('https://unpkg.com/suncalc@1.9.0/suncalc.js',route=>route.fulfill({path:path.resolve('node_modules/suncalc/suncalc.js'),contentType:'application/javascript'}));
+  await exact.route('https://cdn.jsdelivr.net/npm/luxon@3/build/global/luxon.min.js',route=>route.fulfill({path:path.resolve('node_modules/luxon/build/global/luxon.min.js'),contentType:'application/javascript'}));
+  await exact.addInitScript(({a,b,ids})=>{
+    localStorage.setItem('relphiSkyChartA',JSON.stringify(a));
+    localStorage.setItem('relphiSkyChartB',JSON.stringify(b));
+    localStorage.setItem('relphiSkyChartLastModeV1','comparison');
+    localStorage.setItem('relphiSkySharedHouseSystemV1','equal-house');
+    localStorage.setItem('relphiSkyHarmonicWindowV1','4');
+    localStorage.setItem('relphiSkyAspectMatrixV1',JSON.stringify({'A-A':[],'B-B':[],'A-B':ids}));
+    localStorage.removeItem('relphiSkyHideRepeatedSlowConjunctionsV1');
+  },{a:sky('A'),b:sky('B'),ids});
+  await exact.goto('http://127.0.0.1:4173/sky-chart.html',{waitUntil:'domcontentloaded',timeout:35000});
+  await exact.waitForSelector('#skyFoundationRoot[aria-busy="false"]',{timeout:35000});
+  const reciprocal=()=>exact.evaluate(()=>{
+    const pairs=[['venus','jupiter','sextile'],['sun','mercury','conjunction'],['jupiter','south-node','conjunction']];
+    const match=(n,a,b,aspect)=>n.dataset.relationshipMode==='A-B'&&n.dataset.aspect===aspect&&
+      ((n.dataset.leftPlacement===a&&n.dataset.rightPlacement===b)||(n.dataset.leftPlacement===b&&n.dataset.rightPlacement===a));
+    const scan=selector=>{
+      const nodes=[...document.querySelectorAll(selector)];
+      return pairs.map(([a,b,aspect])=>{
+        const all=nodes.filter(n=>match(n,a,b,aspect));
+        return {pair:a+' '+aspect+' '+b,total:all.length,eligible:all.filter(n=>!n.classList.contains('sky-chart-aspect-multiselect-hidden')).length};
+      });
+    };
+    const angles=[...document.querySelectorAll('#skyFoundationRelationshipList>.sky-foundation-relationship-row')].filter(n=>
+      n.dataset.relationshipMode==='A-B'&&n.dataset.aspect==='conjunction'&&
+      n.dataset.leftPlacement==='dsc'&&n.dataset.rightPlacement==='mars');
+    return {rows:scan('#skyFoundationRelationshipList>.sky-foundation-relationship-row'),
+      lines:scan('#skyFoundationWheelMount [data-layer="aspects"]>line.sky-foundation-aspect:not(.sky-foundation-aspect-hit)'),
+      angle:{total:angles.length,eligible:angles.filter(n=>!n.classList.contains('sky-chart-aspect-multiselect-hidden')).length}};
+  });
+  await exact.waitForFunction(()=>[...document.querySelectorAll('#skyFoundationRelationshipList>.sky-foundation-relationship-row')].some(n=>
+    n.dataset.leftPlacement==='jupiter'&&n.dataset.rightPlacement==='south-node'),null,{timeout:25000});
+  const initial=await reciprocal();
+  await exact.locator('[data-aspect-filter-toggle]').click();
+  await exact.locator('[data-hide-repeated-slow-conjunctions]').check();
+  await exact.locator('[data-aspect-filter-toggle]').click();
+  await exact.waitForTimeout(550);
+  const filtered=await reciprocal();
+  for(const mode of ['rows','lines'])for(let i=0;i<3;i++){
+    assert.ok(initial[mode][i].total>=2,'real 8h50m comparison must have reciprocal '+initial[mode][i].pair);
+    assert.equal(filtered[mode][i].eligible,1,'same-passage reciprocal appears once in '+mode+': '+filtered[mode][i].pair);
+  }
+  assert.ok(filtered.angle.total>0,'Sky A Descendant conjunct Sky B Mars is present');
+  assert.equal(filtered.angle.eligible,filtered.angle.total,'distinct angle contact preserved');
+  console.log('actual 8h50m reciprocal comparison verified',width,JSON.stringify(filtered));
+  await exact.close();
  }
 }finally{await browser.close()}
