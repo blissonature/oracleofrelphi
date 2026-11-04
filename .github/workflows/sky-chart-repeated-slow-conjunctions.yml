@@ -3,6 +3,7 @@ on:
   pull_request:
     paths:
       - 'sky-chart-aspect-scope-matrix-v1.js'
+      - 'sky-chart-selected-relationship-wheel-bridge-v1.js'
       - 'sky-chart-intrasky-a-v1.js'
       - 'sky-chart-intrasky-relationships-v1.js'
       - 'sky-chart-single-sky-aspects-v1.js'
@@ -21,6 +22,7 @@ jobs:
           node-version: '22'
       - run: |
           node --check sky-chart-aspect-scope-matrix-v1.js
+          node --check sky-chart-selected-relationship-wheel-bridge-v1.js
           node --check sky-chart-intrasky-a-v1.js
           node --check sky-chart-intrasky-relationships-v1.js
           node --check sky-chart-single-sky-aspects-v1.js
