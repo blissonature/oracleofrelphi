@@ -107,10 +107,10 @@ function samePassAt(id,first,last){
     if(!Number.isFinite(next)){verdict=null;break}
     const change=angularDelta(prior,next);
     travel+=change;
-    // The Sun and Moon never station geocentrically, yet revisit the same
-    // degree on a later revolution. A full 360° of unwrapped travel is a
-    // new go-around even with identical direct/retrograde endpoint states.
-    if(Math.abs(travel)>=359.99){verdict=false;break}
+    // Sun/Moon never station but revisit an aspect window on their next
+    // circuit. Crossing 330° of unwrapped motion is enough to establish a
+    // new orbital passage near the original longitude, before exact return.
+    if(Math.abs(travel)>=330){verdict=false;break}
     if(Math.abs(change)>0.0000001){
       const nextDirection=Math.sign(change);
       if(direction&&nextDirection!==direction){verdict=false;break}
