@@ -92,12 +92,11 @@ function samePassAt(id,first,last){
   // For a longer interval, keep them visible unless separate passage history
   // can be established; never infer it from orbital date distance alone.
   if(id==='north-node'||id==='south-node'||id==='lilith')return null;
-  // Every slow body reverses direction when passing through a retrograde loop.
-  // Count changes of motion direction, not just final Rx flags: D -> Rx -> D
-  // revisits a degree with matching endpoint Rx but is a different passage.
-  // Distinct full revolutions necessarily include such reversals as well.
+  // A new passage can follow a station OR a full revolution (Sun/Moon
+  // do not retrograde). Preserve encounters after either transition; never
+  // classify passage identity from the endpoint Rx flags alone.
   // Unknown/unsupported ephemeris is never grounds for suppressing a result.
-  let prior=sampledLongitude(id,start),direction=0,verdict=null;
+  let prior=sampledLongitude(id,start),direction=0,travel=0,verdict=null;
   if(!Number.isFinite(prior)){SLOW_PASS_CACHE.set(cacheKey,null);return null}
   const steps=Math.ceil((end-start)/(5*DAY_MS));
   // Beyond 20 years, matching degrees are not the same continuous passage
@@ -107,6 +106,11 @@ function samePassAt(id,first,last){
     const at=start+(end-start)*i/steps,next=sampledLongitude(id,at);
     if(!Number.isFinite(next)){verdict=null;break}
     const change=angularDelta(prior,next);
+    travel+=change;
+    // The Sun and Moon never station geocentrically, yet revisit the same
+    // degree on a later revolution. A full 360° of unwrapped travel is a
+    // new go-around even with identical direct/retrograde endpoint states.
+    if(Math.abs(travel)>=359.99){verdict=false;break}
     if(Math.abs(change)>0.0000001){
       const nextDirection=Math.sign(change);
       if(direction&&nextDirection!==direction){verdict=false;break}
