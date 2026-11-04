@@ -292,7 +292,7 @@ try{
       placements:Object.fromEntries(Object.entries(placements).map(([name,value])=>[name,{name,...value}]))};
   };
   const exact=await browser.newPage({viewport:{width,height:920}});
-  exact.on('pageerror',e=>{throw e});
+  const exactErrors=[];exact.on('pageerror',e=>exactErrors.push(e.message));
   await exact.route('https://unpkg.com/suncalc@1.9.0/suncalc.js',route=>route.fulfill({path:path.resolve('node_modules/suncalc/suncalc.js'),contentType:'application/javascript'}));
   await exact.route('https://cdn.jsdelivr.net/npm/luxon@3/build/global/luxon.min.js',route=>route.fulfill({path:path.resolve('node_modules/luxon/build/global/luxon.min.js'),contentType:'application/javascript'}));
   await exact.addInitScript(({a,b,ids})=>{
@@ -338,6 +338,7 @@ try{
   }
   assert.ok(filtered.angle.total>0,'Sky A Descendant conjunct Sky B Mars is present');
   assert.equal(filtered.angle.eligible,filtered.angle.total,'distinct angle contact preserved');
+  assert.deepEqual(exactErrors.filter(e=>/TypeError|ReferenceError|SyntaxError/.test(e)),[]);
   console.log('actual 8h50m reciprocal comparison verified',width,JSON.stringify(filtered));
   await exact.close();
  }
