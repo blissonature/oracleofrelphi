@@ -239,7 +239,7 @@ function renderPopover(){
   caption.textContent='Hide repeated same-passage relationships (A↔B)';
   const explanation=document.createElement('small');
   explanation.style.cssText='display:block;font:400 11px/1.4 system-ui;opacity:.8;margin-top:3px';
-  explanation.textContent='Omits a body conjunct itself and the duplicated North/South Node axis. Keeps different-body contacts, retrograde changes, and later returns.';
+  explanation.textContent='Removes same-passage self-repeats and reciprocal views of one relationship. Preserves distinct retrograde passes and contacts to different angles.';
   caption.appendChild(explanation);preference.append(toggle,caption);
   // Place this before the long scrollable matrix so it is visible immediately.
   body.replaceChildren(preference,list);
@@ -290,10 +290,51 @@ function redundantSamePassRelationship(node,mode,aspect){
     return samePassRepeatedPlacement('north-node');
   return false;
 }
-function visible(node){const mode=relationshipMode(node);if(!activeScopes().includes(mode))return false;const aspect=normalize(node?.dataset?.aspect||'');if(redundantSamePassRelationship(node,mode,aspect))return false;if(node?.dataset?.bySignOnly==='true')return signSelected.has(aspect);if(!aspect)return true;const anySelected=activeScopes().some(scope=>state[scope]?.size>0);if(!anySelected)return false;if(window.RelphiAspectConfigurations?.participates?.(node))return true;return!!state[mode]?.has(aspect)}
+// Relationship equivalence is calculated once from observations, then shared
+// by rows and wheel lines. The raw A↔B direction is an observation, not an
+// independent encounter when both actual bodies are in the same passage.
+const RECIPROCAL_FACTORS=new Set(['sun','moon','mercury','venus','mars','jupiter','saturn','uranus','neptune','pluto','chiron','north-node','south-node','lilith']);
+const observationKey=node=>{
+  const mode=relationshipMode(node),aspect=normalize(node?.dataset?.aspect||'');
+  const left=String(node?.dataset?.leftPlacement||'').toLowerCase();
+  const right=String(node?.dataset?.rightPlacement||'').toLowerCase();
+  return mode+'|'+left+'|'+aspect+'|'+right;
+};
+function equivalenceExclusions(){
+  const excluded=new Set();
+  if(!hideRepeatedSlow)return excluded;
+  const groups=new Map();
+  document.querySelectorAll('#skyFoundationRelationshipList>.sky-foundation-relationship-row').forEach(row=>{
+    if(relationshipMode(row)!=='A-B'||row.dataset.bySignOnly==='true')return;
+    const left=String(row.dataset.leftPlacement||'').toLowerCase(),right=String(row.dataset.rightPlacement||'').toLowerCase();
+    const aspect=normalize(row.dataset.aspect||'');
+    if(!aspect||left===right||!RECIPROCAL_FACTORS.has(left)||!RECIPROCAL_FACTORS.has(right))return;
+    const pair=[left,right].sort();
+    // Only collapse observations of the same two trajectories on unchanged
+    // passages. This preserves a return, a station, and mixed time frames.
+    if(!samePassRepeatedPlacement(pair[0])||!samePassRepeatedPlacement(pair[1]))return;
+    const key=pair.join('|')+'|'+aspect;
+    if(!groups.has(key))groups.set(key,new Map());
+    const observations=groups.get(key),id=observationKey(row);
+    const orb=Number(row.dataset.phaseError??row.dataset.orb);
+    const score=Number.isFinite(orb)?Math.abs(orb):Infinity;
+    const existing=observations.get(id);
+    if(!existing||score<existing.score)observations.set(id,{id,score});
+  });
+  groups.forEach(observations=>{
+    if(observations.size<2)return;
+    const choices=[...observations.values()].sort((a,b)=>a.score-b.score||a.id.localeCompare(b.id));
+    // Two directed observations remain available as original source records;
+    // only the noncanonical one loses display eligibility.
+    choices.slice(1).forEach(choice=>excluded.add(choice.id));
+  });
+  return excluded;
+}
+function visible(node,excluded){const mode=relationshipMode(node);if(!activeScopes().includes(mode))return false;const aspect=normalize(node?.dataset?.aspect||'');if(redundantSamePassRelationship(node,mode,aspect))return false;if(excluded?.has(observationKey(node)))return false;if(node?.dataset?.bySignOnly==='true')return signSelected.has(aspect);if(!aspect)return true;const anySelected=activeScopes().some(scope=>state[scope]?.size>0);if(!anySelected)return false;if(window.RelphiAspectConfigurations?.participates?.(node))return true;return!!state[mode]?.has(aspect)}
 function applyMatrix({announce=true}={}){
   applying=true;
-  document.querySelectorAll('.sky-foundation-relationship-row,[data-layer="aspects"]>.sky-foundation-aspect').forEach(node=>node.classList.toggle('sky-chart-aspect-multiselect-hidden',!visible(node)));
+  const excluded=equivalenceExclusions();
+  document.querySelectorAll('.sky-foundation-relationship-row,[data-layer="aspects"]>.sky-foundation-aspect').forEach(node=>node.classList.toggle('sky-chart-aspect-multiselect-hidden',!visible(node,excluded)));
   updateInputs();
   const matrix=Object.fromEntries(SCOPES.map(scope=>[scope.id,IDS.filter(id=>state[scope.id].has(id))]));
   try{localStorage.setItem(STORAGE_KEY,JSON.stringify(matrix))}catch(_){}
