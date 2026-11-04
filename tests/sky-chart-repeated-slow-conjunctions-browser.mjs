@@ -254,6 +254,14 @@ try{
   const restored=await audit();
   assert.equal(restored.setting,'false');
   assert.equal(restored.rows.slowFiltered,0,'unchecking must restore eligibility to every slow conjunction regardless of Max 10');
+  const restoredHitTargets=await page.evaluate(()=>{
+    const matches=[...document.querySelectorAll('#skyFoundationWheelMount [data-layer="aspects"]>.sky-foundation-aspect-hit')].filter(n=>
+      n.dataset.relationshipMode==='A-B'&&n.dataset.aspect==='conjunction'&&
+      n.dataset.leftPlacement==='saturn'&&n.dataset.rightPlacement==='saturn');
+    return {total:matches.length,shown:matches.filter(n=>getComputedStyle(n).display!=='none').length};
+  });
+  assert.ok(restoredHitTargets.total>0,'restored wheel requires a Saturn hit target');
+  assert.equal(restoredHitTargets.shown,restoredHitTargets.total,'unchecking restores the wheel interaction target');
   assert.deepEqual(errors.filter(e=>/TypeError|ReferenceError|SyntaxError/.test(e)),[]);
   console.log('slow-body conjunction filter verified',width,JSON.stringify({changedPixels,before,hidden,restored}));
   await page.close();
