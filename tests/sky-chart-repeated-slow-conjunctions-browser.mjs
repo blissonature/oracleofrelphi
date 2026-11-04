@@ -234,6 +234,12 @@ try{
   await page.waitForTimeout(600);
   const afterReturn=await page.evaluate(()=>[...document.querySelectorAll('#skyFoundationRelationshipList>.sky-foundation-relationship-row')].some(n=>n.dataset.relationshipMode==='A-B'&&n.dataset.aspect==='conjunction'&&n.dataset.leftPlacement==='saturn'&&n.dataset.rightPlacement==='saturn'&&!n.hidden&&!n.classList.contains('sky-chart-aspect-multiselect-hidden')));
   assert.equal(afterReturn,true,'same degree on different retrograde passage must remain visible');
+  const newSolarRevolution=await page.evaluate(()=>[...document.querySelectorAll('#skyFoundationRelationshipList>.sky-foundation-relationship-row')].some(n=>
+    n.dataset.relationshipMode==='A-B'&&n.dataset.aspect==='conjunction'&&
+    n.dataset.leftPlacement==='sun'&&n.dataset.rightPlacement==='sun'&&
+    !n.classList.contains('sky-chart-aspect-multiselect-hidden')));
+  assert.equal(newSolarRevolution,true,'same Sun degree after a whole year must count as a different go-around');
+
 
   await toggle.evaluate(el=>{el.checked=false;el.dispatchEvent(new Event('change',{bubbles:true}))});
   await page.waitForTimeout(350);
