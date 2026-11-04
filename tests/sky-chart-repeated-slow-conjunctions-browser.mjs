@@ -126,6 +126,14 @@ try{
   assert.equal(hidden.setting,'true');
   assert.equal(hidden.rows.slowVisible,0,'repeated slow conjunction rows hidden');
   assert.equal(hidden.lines.slowVisible,0,'repeated slow conjunction lines hidden');
+  const hiddenHitTargets=await page.evaluate(()=>{
+    const hits=[...document.querySelectorAll('#skyFoundationWheelMount [data-layer="aspects"]>.sky-foundation-aspect-hit')];
+    const matching=hits.filter(n=>n.dataset.relationshipMode==='A-B'&&n.dataset.aspect==='conjunction'&&
+      n.dataset.leftPlacement==='saturn'&&n.dataset.rightPlacement==='saturn');
+    return {total:matching.length,hidden:matching.filter(n=>getComputedStyle(n).display==='none').length};
+  });
+  assert.ok(hiddenHitTargets.total>0,'the wheel must contain a hit target for suppressed Saturn conjunction');
+  assert.equal(hiddenHitTargets.hidden,hiddenHitTargets.total,'excluded aspect must not retain clickable hit targets');
   assert.equal(hidden.rows.fastVisible,0,'same-pass Sun conjunction also suppressed');
   assert.ok(hidden.rows.nodeAxis>=2,'fixture must contain both nodal-axis cross oppositions');
   assert.equal(hidden.rows.nodeAxisFiltered,hidden.rows.nodeAxis,'both opposite node polarities suppressed');
