@@ -310,6 +310,13 @@ function equivalenceExclusions(){
   const groups=new Map();
   document.querySelectorAll('#skyFoundationRelationshipList>.sky-foundation-relationship-row').forEach(row=>{
     if(relationshipMode(row)!=='A-B'||row.dataset.bySignOnly==='true')return;
+    // If another filter allows only one of the two observations, retain that
+    // eligible observation. Never choose a representative hidden by an
+    // independent placement, house, sign, semantic, or harmonic restriction.
+    const independentlyExcluded=['sky-chart-filter-hidden','sky-chart-orb-hidden','sky-orb-filter-hidden',
+      'sky-chart-multiselect-hidden','sky-chart-house-multiselect-hidden','sky-chart-sign-filter-hidden',
+      'sky-chart-zodiac-filter-hidden','sky-chart-semantic-hidden','sky-foundation-single-sky-cross-hidden'];
+    if(independentlyExcluded.some(name=>row.classList.contains(name)))return;
     const left=String(row.dataset.leftPlacement||'').toLowerCase(),right=String(row.dataset.rightPlacement||'').toLowerCase();
     const aspect=normalize(row.dataset.aspect||'');
     if(!aspect||left===right||!RECIPROCAL_FACTORS.has(left)||!RECIPROCAL_FACTORS.has(right))return;
