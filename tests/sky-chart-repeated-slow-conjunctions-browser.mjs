@@ -180,6 +180,31 @@ try{
 
   assert.match(copied,/♄.*☌.*MC/,'Saturn conjunct MC must remain in copied results');
   assert.ok(!copied.split('\n').some(line=>line.includes('☍')&&line.includes('☊')&&line.includes('☋')),'Node axis repetitions must be absent from Copy');
+  // A reciprocal pair must NOT be collapsed when one body changes
+  // retrograde state between the two observations.
+  await page.evaluate(()=>{
+    const key='relphiSkyChartB',payload=JSON.parse(localStorage.getItem(key));
+    const initial=window.RelphiSkyRetrograde.forPlacement('A','jupiter');
+    payload.placements.Jupiter.retrograde=!initial;
+    localStorage.setItem(key,JSON.stringify(payload));
+    window.dispatchEvent(new StorageEvent('storage',{key,newValue:localStorage.getItem(key)}));
+  });
+  await page.waitForTimeout(600);
+  const changedJupiter=await page.evaluate(()=>{
+    const selectors=['#skyFoundationRelationshipList>.sky-foundation-relationship-row','#skyFoundationWheelMount [data-layer="aspects"]>line.sky-foundation-aspect:not(.sky-foundation-aspect-hit)'];
+    return selectors.map(selector=>[...document.querySelectorAll(selector)].filter(n=>n.dataset.relationshipMode==='A-B'&&n.dataset.aspect==='sextile'&&
+      ((n.dataset.leftPlacement==='venus'&&n.dataset.rightPlacement==='jupiter')||
+       (n.dataset.leftPlacement==='jupiter'&&n.dataset.rightPlacement==='venus'))&&
+       !n.classList.contains('sky-chart-aspect-multiselect-hidden')).length);
+  });
+  assert.deepEqual(changedJupiter,[2,2],'retrograde change preserves both directional observations for one pair');
+  await page.evaluate(()=>{
+    const key='relphiSkyChartB',payload=JSON.parse(localStorage.getItem(key));
+    payload.placements.Jupiter.retrograde=window.RelphiSkyRetrograde.forPlacement('A','jupiter');
+    localStorage.setItem(key,JSON.stringify(payload));
+    window.dispatchEvent(new StorageEvent('storage',{key,newValue:localStorage.getItem(key)}));
+  });
+  await page.waitForTimeout(450);
   // An explicit retrograde-state change makes the same-body conjunction
   // meaningful even across nearby skies.
   await page.evaluate(()=>{
