@@ -5389,6 +5389,16 @@
       return p&&card&&Math.abs(Number(p.x)-i*CARD_W)<1&&Math.abs(Number(p.y))<1
         &&Math.abs(Number(card.scale)-1)<.001&&Math.abs(Number(card.rotation||0))<.001;
     }).every(Boolean);
+    const legacyPacked= count>1 && (()=>{
+      const oldPositions=genericPositions(Array.from({length:count},(_,i)=>'Card '+(i+1)));
+      return oldPositions.every((item,i)=>{
+        const p=existing[i],card=transforms[i],t=item.transform;
+        return p&&card&&Math.abs(Number(p.x)-t.x*CANVAS_W)<1
+          &&Math.abs(Number(p.y)-t.y*CANVAS_H)<1
+          &&Math.abs(Number(card.scale)-t.scale)<.001
+          &&Math.abs(Number(card.rotation||0))<.001;
+      });
+    })();
     const previousGridVersion=String(root.dataset.relphiFreeGridSignature||'');
     // Re-layout an older auto-managed grid when upgrading to card-face packing.
     // Explicit reader edits must still be protected below.
@@ -5398,9 +5408,9 @@
     const previousCount=Number(root.dataset.relphiFreeGridCount)||0;
     const old=previousCount?genericPositions(Array.from({length:previousCount},(_,i)=>'Card '+(i+1)),{cardFacesOnly:true}):[];
     const managed=root.dataset.relphiFreeGridManaged==='true';
-    if(!managed && Object.keys(existing).length && !oldStrip)return false;
+    if(!managed && Object.keys(existing).length && !oldStrip && !legacyPacked)return false;
     if(managed && Object.entries(transforms).some(([key,v])=>Number(v.rotation||0)!==0))return false;
-    if(managed && Object.keys(existing).length && previousCount && !oldStrip){
+    if(managed && Object.keys(existing).length && previousCount && !oldStrip && !legacyPacked){
       // A reader's subsequent rearrangement takes ownership away from auto-fit.
       const oldSaved=root.dataset.relphiFreeGridCoordinates;
       if(oldSaved){
