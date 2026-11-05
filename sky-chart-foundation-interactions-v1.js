@@ -352,7 +352,25 @@
     if (kind === 'house') return { kind, sky:node.dataset.sky, value:Number(node.dataset.house) };
     if (kind === 'sign') return { kind, sky:null, value:Number(node.dataset.sign) };
     if (kind === 'placement') return { kind, sky:node.dataset.sky, value:node.dataset.placement };
-    if (kind === 'aspect') return { kind, sky:null, value:Number(node.dataset.relationIndex) };
+    if (kind === 'aspect') {
+      // The relationship list is the canonical render-address owner. A wheel line's
+      // index may be stale or belong to a different A-A/B-B enumeration.
+      const identity = candidate => {
+        const d = candidate.dataset;
+        const left = d.leftPlacement, right = d.rightPlacement, aspect = d.aspect;
+        if (!left || !right || !aspect) return '';
+        const mode = d.relationshipMode || (d.leftSky === d.rightSky ? d.leftSky + '-' + d.rightSky : 'A-B');
+        const endpoints = mode === 'A-A' || mode === 'B-B' ? [left,right].sort() : [left,right];
+        return mode + ':' + endpoints[0] + ':' + aspect + ':' + endpoints[1];
+      };
+      const key = identity(node);
+      const matched = key && Array.from(document.querySelectorAll('.sky-foundation-relationship-row[data-relation-index]'))
+        .find(row => identity(row) === key);
+      const address = matched?.dataset.relationIndex ?? node.dataset.relationIndex;
+      const index = Number(address);
+      if (!Number.isSafeInteger(index) || index < 0 || !current?.relations?.[index]) return null;
+      return { kind, sky:null, value:index };
+    }
     return null;
   }
 
@@ -435,6 +453,26 @@
   function applyState() {
     const state = lockedState || hoverState;
     const keep = buildKeepSets(state);
+    // A wheel aspect may be owned by the intrasky relationship list rather than
+    // foundation.current.relations. Never isolate to an empty keep-set: it dims
+    // every glyph while the row/line visibility synchronizers hide every line.
+    // A numeric match is insufficient when the wheel and relationship list
+    // have different render-address owners. Do not dim the entire wheel unless
+    // the selected relationship has an actually rendered, visible aspect line.
+    if (state?.kind === 'aspect' && !Array.from(document.querySelectorAll('#skyFoundationWheelMount [data-layer="aspects"] > line.sky-foundation-aspect:not(.sky-foundation-aspect-hit)')).some(line =>
+      Number(line.dataset.relationIndex) === state.value &&
+      !line.hidden && !line.classList.contains('sky-chart-relationship-filter-hidden') &&
+      getComputedStyle(line).display !== 'none'
+    )) {
+      lockedState = null;
+      hoverState = null;
+      return applyState();
+    }
+    if (state && keep.matched.size === 0) {
+      lockedState = null;
+      hoverState = null;
+      return applyState();
+    }
     const wheel = document.querySelector('#skyFoundationWheelMount > .sky-foundation-wheel');
     if (wheel) {
       wheel.classList.toggle('has-isolation', !!state);
@@ -460,9 +498,10 @@
     const rows = Array.from(document.querySelectorAll('.sky-foundation-relationship-row'));
     rows.forEach(row => {
       const index = Number(row.dataset.relationIndex);
-      const visible = !state || keep.matched.has(index);
-      row.hidden = !visible;
-      row.setAttribute('aria-hidden', visible ? 'false' : 'true');
+      // Isolation is a visual emphasis, never a visibility filter. Mutating
+      // row.hidden here races two row-to-line visibility controllers and can
+      // permanently blank the SVG after a central tap clears the selection.
+      row.classList.toggle('is-kept', !!state && keep.matched.has(index));
       row.classList.toggle('is-selected', !!lockedState && lockedState.kind === 'aspect' && lockedState.value === index);
     });
 
@@ -488,13 +527,37 @@
     return node && root?.contains(node) ? node : null;
   }
 
+  // Invisible aspect hit strokes overlap the apparently empty wheel center.
+  // Treat a tap outside the visible line's narrow vicinity as a blank tap,
+  // even when the browser reports the wide invisible hit target.
+  function missedAspectLine(node, event) {
+    if (!node.classList?.contains('sky-foundation-aspect-hit')) return false;
+    const matrix = node.getScreenCTM?.();
+    if (!matrix || !Number.isFinite(event.clientX) || !Number.isFinite(event.clientY)) return false;
+    const x1 = Number(node.getAttribute('x1')), y1 = Number(node.getAttribute('y1'));
+    const x2 = Number(node.getAttribute('x2')), y2 = Number(node.getAttribute('y2'));
+    if (![x1,y1,x2,y2].every(Number.isFinite)) return false;
+    const a = { x:matrix.a*x1+matrix.c*y1+matrix.e, y:matrix.b*x1+matrix.d*y1+matrix.f };
+    const b = { x:matrix.a*x2+matrix.c*y2+matrix.e, y:matrix.b*x2+matrix.d*y2+matrix.f };
+    const dx=b.x-a.x, dy=b.y-a.y, length2=dx*dx+dy*dy;
+    const t=length2 ? Math.max(0,Math.min(1,((event.clientX-a.x)*dx+(event.clientY-a.y)*dy)/length2)) : 0;
+    return Math.hypot(event.clientX-a.x-t*dx,event.clientY-a.y-t*dy) > 7;
+  }
+
   function bindEvents() {
     const root = document.getElementById('skyFoundationRoot');
     if (!root || root.dataset.foundationInteractionsBound === 'true') return;
     root.dataset.foundationInteractionsBound = 'true';
 
+    // Touch browsers synthesize pointerover/focus after a tap. Those transient
+    // states must never re-isolate the wheel immediately after dismissal.
+    let touchInteraction = false;
+    root.addEventListener('pointerdown', event => {
+      touchInteraction = event.pointerType === 'touch' || event.pointerType === 'pen';
+    }, true);
+
     root.addEventListener('pointerover', event => {
-      if (lockedState) return;
+      if (lockedState || touchInteraction || event.pointerType === 'touch' || event.pointerType === 'pen') return;
       const node = interactiveFromEvent(event);
       if (!node || node.contains(event.relatedTarget)) return;
       hoverState = specFrom(node);
@@ -502,7 +565,7 @@
     });
 
     root.addEventListener('pointerout', event => {
-      if (lockedState) return;
+      if (lockedState || touchInteraction) return;
       const node = interactiveFromEvent(event);
       if (!node || node.contains(event.relatedTarget)) return;
       hoverState = null;
@@ -510,7 +573,7 @@
     });
 
     root.addEventListener('focusin', event => {
-      if (lockedState) return;
+      if (lockedState || touchInteraction) return;
       const node = interactiveFromEvent(event);
       if (!node) return;
       hoverState = specFrom(node);
@@ -518,7 +581,7 @@
     });
 
     root.addEventListener('focusout', event => {
-      if (lockedState) return;
+      if (lockedState || touchInteraction) return;
       const node = interactiveFromEvent(event);
       if (!node || node.contains(event.relatedTarget)) return;
       hoverState = null;
@@ -527,20 +590,54 @@
 
     root.addEventListener('click', event => {
       const node = interactiveFromEvent(event);
+      // An already isolated aspect is dismissed by the next tap in the
+      // central aspect field. Do not reinterpret that tap as another aspect:
+      // the 28px overlapping hit strokes can otherwise select an unrelated
+      // (and possibly hidden) relation instead of restoring the full wheel.
+      // The empty center is often the SVG root, not the aspects layer.
+      // Capture dismissal before other line/selection handlers can reinterpret
+      // the same tap and reinstate a stale selection.
+      const wheelSvg = event.target.closest?.('#skyFoundationWheelMount svg');
+      const centralBlank = wheelSvg && !event.target.closest?.('[data-layer="placements"],[data-layer="leaders"],[data-layer="a-houses"],[data-layer="b-houses"],[data-layer="signs"]');
+      if (lockedState?.kind === 'aspect' && centralBlank) {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        lockedState = null;
+        hoverState = null;
+        applyState();
+        return;
+      }
+      if (node && missedAspectLine(node, event)) {
+        lockedState = null;
+        hoverState = null;
+        applyState();
+        return;
+      }
       if (node) {
         event.preventDefault();
+        // A tap on a broad house/sign sector while an aspect is selected is
+        // usually a blank-wheel dismissal, not a request to hide all relations.
+        if (lockedState?.kind === 'aspect' && (node.dataset.interactive === 'house' || node.dataset.interactive === 'sign')) {
+          lockedState = null;
+          hoverState = null;
+          applyState();
+          return;
+        }
         const next = specFrom(node);
         lockedState = sameState(lockedState, next) ? null : next;
         hoverState = null;
         applyState();
         return;
       }
-      if (lockedState && event.target.closest?.('#skyFoundationWheelMount,#skyFoundationRelationships')) {
+      // A blank tap anywhere within the Sky Chart clears explicit isolation.
+      // Restricting this to the wheel/list misses the SVG's surrounding space
+      // and leaves an isolated (or apparently empty) chart on mobile.
+      if (lockedState && !event.target.closest?.('button,input,select,textarea,a,[role="button"],summary')) {
         lockedState = null;
         hoverState = null;
         applyState();
       }
-    });
+    }, true);
 
     root.addEventListener('keydown', event => {
       if (event.key === 'Escape') {
