@@ -44,7 +44,16 @@
     return null;
   }
   function records(payload){
-    return source(payload).map(([key,item])=>{const entry=canonical(key,item),value=longitude(item);return{key,item,entry,id:entry?.id||'',value}}).filter(record=>record.entry&&Number.isFinite(record.value)).sort((a,b)=>{const ai=ORDER.indexOf(a.id),bi=ORDER.indexOf(b.id);return(ai<0?999:ai)-(bi<0?999:bi)||a.value-b.value});
+    // Canonical placement identity is unique within each sky. Source aliases
+    // (Descendant/Dsc, Midheaven/MC, etc.) must not produce new endpoints.
+    // Keep the same first-occurrence precedence as the foundation wheel.
+    const seen=new Set();
+    return source(payload).map(([key,item])=>{
+      const entry=canonical(key,item),value=longitude(item);
+      if(!entry||!Number.isFinite(value)||seen.has(entry.id))return null;
+      seen.add(entry.id);
+      return{key,item,entry,id:entry.id,value};
+    }).filter(Boolean).sort((a,b)=>{const ai=ORDER.indexOf(a.id),bi=ORDER.indexOf(b.id);return(ai<0?999:ai)-(bi<0?999:bi)||a.value-b.value});
   }
   function profile(payload){return payload?.calcProfile&&typeof payload.calcProfile==='object'?payload.calcProfile:{}}
   function ascendant(payload,list){const record=list.find(item=>item.id==='asc');if(record)return record.value;const value=Number(profile(payload).ascendant??payload?.ascendant??payload?.asc);return Number.isFinite(value)?norm(value):0}
@@ -53,7 +62,23 @@
     const asc=ascendant(payload,list),system=String(p.houseSystem||payload?.houseSystem||'whole-sign').toLowerCase(),start=system.includes('whole')?Math.floor(asc/30)*30:asc;return Array.from({length:12},(_,index)=>norm(start+index*30));
   }
   function houseFor(value,houseCusps){for(let index=0;index<12;index++){const start=houseCusps[index],span=norm(houseCusps[(index+1)%12]-start)||30;if(norm(value-start)<span)return index+1}return 12}
-  function prepare(payload,slot){const list=records(payload),timeUnknown=profile(payload).timeUnknown===true,houseCusps=timeUnknown?[]:cusps(payload,list);list.forEach(record=>{record.sky=slot;record.sign=Math.floor(record.value/30);record.house=timeUnknown?null:houseFor(record.value,houseCusps)});return{list,houseCusps,timeUnknown}}
+  function prepare(payload,slot){
+    const list=records(payload),timeUnknown=profile(payload).timeUnknown===true,
+      houseCusps=timeUnknown?[]:cusps(payload,list);
+    const houseSystem=String(profile(payload).houseSystem||payload?.houseSystem||'').toLowerCase();
+    list.forEach(record=>{
+      record.sky=slot;
+      record.sign=Math.floor(record.value/30);
+      record.house=timeUnknown?null:houseFor(record.value,houseCusps);
+      // A quadrant angle defines its own cusp. The source placement and
+      // saved cusp may differ by a few arcseconds, especially after rounding.
+      // Do not classify the Descendant as H6 on that numerical boundary.
+      const angleHouse={asc:1,ic:4,dsc:7,mc:10}[record.id];
+      if(angleHouse&&!houseSystem.includes('whole')&&houseCusps.length===12&&
+        separation(record.value,houseCusps[angleHouse-1])<0.02)record.house=angleHouse;
+    });
+    return{list,houseCusps,timeUnknown};
+  }
   function relationships(listA,listB){
     const result=[],windowValue=HARMONIC?.windowFromControl?.()??10;
     listA.forEach(left=>listB.forEach(right=>{
