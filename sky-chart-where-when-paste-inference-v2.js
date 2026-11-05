@@ -152,7 +152,7 @@ async function inferFromPaste(form){
     const estimate=await inferMoment(state.parsed);if(estimate.rms>1.25)throw new Error('These placements do not match one astronomical sky. For progressions or other derived charts, enter the Where and When manually.');
     const place=await reversePacket(estimate.latitude,estimate.longitude),local=window.luxon?.DateTime?.fromJSDate(estimate.date)?.setZone(place.timezone);if(!local?.isValid)throw new Error('The inferred instant could not be converted to the inferred time zone.');
     const packet={source:'placement-inference',query:'',canonical:place.canonical,latitude:estimate.latitude,longitude:estimate.longitude,timezone:place.timezone};choosePacket(form,packet);
-    const date=form.querySelector('[data-ww-field="date"]'),time=form.querySelector('[data-ww-field="time"]');if(date)date.value=local.toFormat('yyyy-MM-dd');if(time)time.value=local.toFormat('HH:mm');[date,time].forEach(node=>{fire(node,'input');fire(node,'change')});
+    const date=form.querySelector('[data-ww-field="date"]'),time=form.querySelector('[data-ww-field="time"]');if(date)date.value=local.toFormat('yyyy-MM-dd');if(time)time.value=local.toFormat('HH:mm');window.RelphiSkyUtcTimeEntry?.syncLocalToUtc?.(form);[date,time].forEach(node=>{fire(node,'input');fire(node,'change')});
     state.packet=packet;state.whereWhenSource='placement-inference';state.inferredFromPlacements=true;state.confidence=estimate.confidence;setPasteStatus(form,'');window.RelphiSkyWhereWhenDraftHeptagram?.render?.(form.dataset.slot,0);
   }catch(error){state.inferredFromPlacements=false;state.confidence=null;setPasteStatus(form,error.message||'Where and When could not be inferred from that paste.',true)}finally{if(button?.isConnected){button.disabled=false;button.textContent='Infer Where and When'}}
 }
@@ -165,7 +165,11 @@ function siderealDegrees(date,longitude){return norm(window.Astronomy.SiderealTi
 function buildPastedPayload(slot,form,state){
   const existing=read(slot)||{},date=form.querySelector('[data-ww-field="date"]')?.value||'',time=form.querySelector('[data-ww-field="time"]')?.value||'',timezone=form.querySelector('[data-ww-field="timezone"]')?.value||'',latitude=Number(form.querySelector('[data-ww-field="latitude"]')?.value),longitude=Number(form.querySelector('[data-ww-field="longitude"]')?.value);
   if(!date||!time||!timezone||!Number.isFinite(latitude)||!Number.isFinite(longitude))throw new Error('Where and When is incomplete.');
-  const dt=window.luxon?.DateTime?.fromISO(`${date}T${time}`,{zone:timezone,setZone:true});if(!dt?.isValid)throw new Error('The local time is not valid.');
+  const utcSelected=form.querySelector('[data-ww-field="time-basis"]:checked')?.value==='utc';
+  const explicitUtc=utcSelected?window.RelphiSkyUtcTimeEntry?.instantForForm?.(form):null;
+  if(utcSelected&&!explicitUtc)throw new Error('Enter a valid UTC date and time.');
+  const dt=utcSelected?explicitUtc.setZone(timezone):window.luxon?.DateTime?.fromISO(date+'T'+time,{zone:timezone,setZone:true});
+  if(!dt?.isValid)throw new Error('The entered date and time are not valid.');
   const packet=state.packet||packetFromForm(form);if(!packet?.canonical)throw new Error('Choose a locality or infer it from coordinates before confirming.');
   const placements=JSON.parse(JSON.stringify(state.parsed.placements));if(placements.Ascendant&&!placements.Descendant)placements.Descendant=placementObject('Descendant',placements.Ascendant.longitude+180);if(placements.Midheaven&&!placements.IC)placements.IC=placementObject('IC',placements.Midheaven.longitude+180);
   const system=localStorage.getItem(SHARED_HOUSE_KEY)||existing.calcProfile?.houseSystem||'whole-sign',asc=placements.Ascendant?.longitude,mc=placements.Midheaven?.longitude;let houses=null;
@@ -173,7 +177,7 @@ function buildPastedPayload(slot,form,state){
   const metadata=existing.metadata&&typeof existing.metadata==='object'?{...existing.metadata}:{};delete metadata.savedSkyId;delete metadata.savedSkyName;delete metadata.savedSkyLoadedAt;delete metadata.liveNowOrigin;delete metadata.liveNowAt;delete metadata.liveAgeAnchorAt;delete metadata.liveNowLatitude;delete metadata.liveNowLongitude;metadata.liveNowDisabled=true;metadata.liveNowDisabledReason='pasted-placements';metadata.placementSource='astroseek-paste';metadata.whereWhenSource=state.whereWhenSource||packet.source||'manual';
   const profile=existing.calcProfile&&typeof existing.calcProfile==='object'?{...existing.calcProfile}:{};delete profile.liveNowOrigin;delete profile.liveNowAt;
   const source=state.inferredFromPlacements?'astroseek-paste-inference':'astroseek-paste',whereWhenSource=state.whereWhenSource||packet.source||'manual';
-  const calcProfile={...profile,dateTime:`${date}T${time}`,instant:dt.toUTC().toISO(),latitude:String(latitude),longitude:String(longitude),location:packet.canonical,locationQuery:packet.source==='placement-inference'?'':(packet.query||packet.canonical),timeZone:timezone,whereWhenSource,houseSystem:houses?.system||system,houseCusps:houses?.cusps||profile.houseCusps||[],cusps:houses?.cusps||profile.cusps||[],houseSystemNote:houses?.note,source,inferredFromPlacements:!!state.inferredFromPlacements};
+  const calcProfile={...profile,dateTime:dt.toFormat("yyyy-MM-dd'T'HH:mm"),instant:dt.toUTC().toISO(),latitude:String(latitude),longitude:String(longitude),location:packet.canonical,locationQuery:packet.source==='placement-inference'?'':(packet.query||packet.canonical),timeZone:timezone,whereWhenSource,houseSystem:houses?.system||system,houseCusps:houses?.cusps||profile.houseCusps||[],cusps:houses?.cusps||profile.cusps||[],houseSystemNote:houses?.note,source,inferredFromPlacements:!!state.inferredFromPlacements};
   return{...existing,name:existing.name||`Sky ${slot}`,saved:false,placements,houseCusps:houses?.cusps||existing.houseCusps||[],metadata,calcProfile,savedAt:new Date().toISOString()};
 }
 function hasPaste(form){return!!form?.querySelector('[data-ww-paste-placements]')?.value.trim()}

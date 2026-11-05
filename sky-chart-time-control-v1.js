@@ -157,6 +157,10 @@
     syncDisabled(control);
   }
 
+  // External date/time converters may update the canonical HH:MM input while
+  // the visual 12-hour control is hidden. Keep both in sync on return to Local.
+  window.RelphiSkyTimeControl=Object.freeze({refresh:syncFromCanonical});
+
   function enhance(input){
     if(!(input instanceof HTMLInputElement)||input.dataset.skyTimeEnhanced==='true')return;
     input.dataset.skyTimeEnhanced='true';
