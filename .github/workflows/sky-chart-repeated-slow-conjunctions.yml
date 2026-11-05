@@ -8,6 +8,7 @@ on:
       - 'sky-chart-intrasky-relationships-v1.js'
       - 'sky-chart-single-sky-aspects-v1.js'
       - 'sky-chart-foundation-v2.js'
+      - 'sky-chart-foundation-interactions-v2.js'
       - 'sky-chart.html'
       - 'tests/sky-chart-repeated-slow-conjunctions-browser.mjs'
       - '.github/workflows/sky-chart-repeated-slow-conjunctions.yml'
@@ -27,6 +28,7 @@ jobs:
           node --check sky-chart-intrasky-relationships-v1.js
           node --check sky-chart-single-sky-aspects-v1.js
           node --check sky-chart-foundation-v2.js
+          node --check sky-chart-foundation-interactions-v2.js
           npm install --no-save playwright@1.52.0 luxon@3 suncalc@1.9.0 pngjs@7
           npx playwright install --with-deps chromium
       - run: |
