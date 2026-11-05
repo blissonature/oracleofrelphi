@@ -1,0 +1,67 @@
+import {chromium} from 'playwright';
+import assert from 'node:assert/strict';
+import path from 'node:path';
+
+const browser=await chromium.launch({headless:true});
+try{
+  const context=await browser.newContext({viewport:{width:390,height:844},timezoneId:'America/Denver'});
+  const page=await context.newPage(),errors=[];
+  page.on('pageerror',error=>errors.push(error.message));
+  await page.route('https://unpkg.com/suncalc@1.9.0/suncalc.js',route=>route.fulfill({path:path.resolve('node_modules/suncalc/suncalc.js'),contentType:'application/javascript'}));
+  await page.route('https://cdn.jsdelivr.net/npm/luxon@3/build/global/luxon.min.js',route=>route.fulfill({path:path.resolve('node_modules/luxon/build/global/luxon.min.js'),contentType:'application/javascript'}));
+  await page.addInitScript(()=>{
+    const date='2026-10-21';
+    const moonRange={start:{name:'Moon',longitude:279.10},end:{name:'Moon',longitude:292.62}};
+    const placements={Sun:{name:'Sun',longitude:208},Mercury:{name:'Mercury',longitude:220},Venus:{name:'Venus',longitude:190},Mars:{name:'Mars',longitude:117},Jupiter:{name:'Jupiter',longitude:145}};
+    localStorage.setItem('relphiSkyChartA',JSON.stringify({name:'Unknown-time study',placements,houseCusps:[],calcProfile:{dateTime:date,instant:'',timeUnknown:true,moonRange,latitude:'40.7608',longitude:'-111.891',location:'Salt Lake City, Utah',timeZone:'America/Denver',houseSystem:'none',houseCusps:[],source:'where-when-v3'}}));
+    localStorage.setItem('relphiSkyChartB',JSON.stringify({name:'Known reference',placements:{Moon:{name:'Moon',longitude:280},Sun:{name:'Sun',longitude:200}},houseCusps:[],calcProfile:{instant:'2026-10-21T12:00:00.000Z',dateTime:'2026-10-21T06:00',timeUnknown:false,timeZone:'America/Denver',source:'imported'}}));
+    localStorage.setItem('relphiSkyChartLastModeV1','comparison');
+  });
+  await page.goto('http://127.0.0.1:4173/sky-chart.html',{waitUntil:'domcontentloaded'});
+  await page.waitForFunction(()=>!!(window.RelphiSkyUnknownDayMotion&&document.querySelector('.sky-motion-day-toolbar:not([hidden])')&&document.querySelector('#skyFoundationWheelMount > svg.sky-foundation-wheel')),{timeout:30000});
+  await page.waitForFunction(()=>document.querySelector('#skyFoundationRoot')?.getAttribute('aria-busy')==='false',null,{timeout:30000});
+  const bar=page.locator('.sky-motion-day-toolbar'),slider=bar.locator('[data-day-slider]');
+  assert.equal(await bar.isVisible(),true);
+  assert.equal(await page.locator('[data-layer="motion-day-markers"]').count(),0,'An unknown-time sky must retain its range before exploration');
+  const original=await page.evaluate(()=>JSON.parse(localStorage.getItem('relphiSkyChartA')));
+  assert.equal(original.calcProfile.timeUnknown,true);
+  assert.equal(original.calcProfile.instant,'');
+  assert.ok(original.calcProfile.moonRange);
+  await slider.evaluate(node=>{node.value=String(Number(node.max)/2);node.dispatchEvent(new Event('input',{bubbles:true}))});
+  await page.waitForFunction(()=>!!document.querySelector('[data-layer="motion-day-markers"] [data-motion-body="vertex"]'),null,{timeout:8000});
+  const moving=await page.locator('[data-layer="motion-day-markers"] [data-motion-body]').evaluateAll(nodes=>nodes.map(node=>node.getAttribute('data-motion-body')));
+  for(const name of ['moon','asc','dsc','mc','ic','vertex','anti-vertex','part-of-fortune'])assert.ok(moving.includes(name),'Missing animated '+name);
+  const first=await page.locator('[data-layer="motion-day-markers"] [data-motion-body="moon"]').getAttribute('transform');
+  const ascFirst=await page.locator('[data-layer="motion-day-markers"] [data-motion-body="asc"]').getAttribute('transform');
+  const vertexFirst=await page.locator('[data-layer="motion-day-markers"] [data-motion-body="vertex"]').getAttribute('transform');
+  assert.ok(await page.locator('[data-layer="motion-day-aspects"] line').count()>0,'Should compute dynamic aspects');
+  const aspectStart=await page.locator('[data-layer="motion-day-aspects"] line:not([style*="display: none"])').count();
+  assert.ok(aspectStart>0,'Aspect lines must remain visible as the day is scrubbed');
+  await slider.evaluate(node=>{node.value=String(Number(node.max)*.75);node.dispatchEvent(new Event('input',{bubbles:true}))});
+  const second=await page.locator('[data-layer="motion-day-markers"] [data-motion-body="moon"]').getAttribute('transform');
+  const ascSecond=await page.locator('[data-layer="motion-day-markers"] [data-motion-body="asc"]').getAttribute('transform');
+  const vertexSecond=await page.locator('[data-layer="motion-day-markers"] [data-motion-body="vertex"]').getAttribute('transform');
+  assert.notEqual(first,second,'Moon must change position');
+  assert.notEqual(ascFirst,ascSecond,'Ascendant must rotate as time moves');
+  assert.notEqual(vertexFirst,vertexSecond,'Vertex must rotate as time moves');
+  const aspectEnd=await page.locator('[data-layer="motion-day-aspects"] line:not([style*="display: none"])').count();
+  assert.ok(aspectEnd>0,'Aspects must not disappear after scrubbing');
+  await bar.locator('[data-day-speed]').selectOption('180');
+  await bar.locator('[data-day-play]').click();
+  await page.waitForTimeout(350);
+  assert.equal(await bar.locator('[data-day-play]').innerText(),'Pause');
+  await bar.locator('[data-day-play]').click();
+  assert.equal(await bar.locator('[data-day-play]').innerText(),'Play');
+  assert.ok((await bar.locator('[data-day-aspects]').innerText()).length>10,'Show the evolving aspect list');
+  const after=await page.evaluate(()=>JSON.parse(localStorage.getItem('relphiSkyChartA')));
+  assert.equal(after.calcProfile.timeUnknown,true);
+  assert.equal(after.calcProfile.instant,'');
+  assert.deepEqual(after.calcProfile.moonRange,original.calcProfile.moonRange);
+  await bar.locator('[data-day-reset]').click();
+  assert.equal(await page.locator('[data-layer="motion-day-markers"]').count(),0,'Reset must restore unknown-time range, not a fabricated midnight chart');
+  assert.equal(await page.locator('.sky-foundation-moon-range').count()>0,true,'The original Moon uncertainty range must survive');
+  assert.deepEqual(errors.filter(error=>/sky-chart-unknown-day-motion|skyUnknownDay|unknown day motion/i.test(error)),[]);
+  console.log('Unknown-time civil-day scrub, moving Moon/angles/Vertex/Fortune, visible evolving aspects, play/pause, and reset: passed');
+}finally{
+  await browser.close();
+}
