@@ -65,6 +65,7 @@ async function run(browser,mode){
     await page.addInitScript(({a,b})=>{
       localStorage.setItem('relphiSkyChartA',JSON.stringify(a));
       localStorage.setItem('relphiSkyChartB',JSON.stringify(b));
+      localStorage.setItem('relphiSkyChartLastModeV1','comparison');
       window.__relphiSkyCardFocusTrace=[];
       window.addEventListener('relphi:sky-foundation-filter-changed',event=>{
         if(event.detail?.state?.mode==='selected'){
