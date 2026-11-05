@@ -208,7 +208,7 @@
       loadCanonicalGlyphRuntime();
       appendScript('sky-chart-builder-v4-unlock.js?v=1');
       loadSkyBuilder(0);
-      appendScript(preview === 'pr22' ? 'sky-chart-relationship-color-hints-pr22.js?v=1' : 'sky-chart-relationship-color-hints.js?v=3');
+      appendScript(preview === 'pr22' ? 'sky-chart-relationship-color-hints-pr22.js?v=1' : 'sky-chart-relationship-color-hints.js?v=4');
     }
   }
 
