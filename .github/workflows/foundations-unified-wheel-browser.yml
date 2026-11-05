@@ -1,0 +1,47 @@
+name: Foundations unified wheel Chromium
+on:
+  pull_request:
+    paths:
+      - 'astrology-foundations.html'
+      - 'astrology-foundations-unified-wheel-v1.js'
+      - '.github/workflows/foundations-unified-wheel-browser.yml'
+jobs:
+  foundations-wheel:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node --check astrology-foundations-unified-wheel-v1.js
+      - run: npm install --no-save playwright@1.52.0
+      - run: npx playwright install --with-deps chromium
+      - name: Interactive wheel and correspondence checks
+        run: |
+          python3 -m http.server 4173 >/tmp/foundations.log 2>&1 &
+          cat > foundations-wheel-test.mjs <<'EOF'
+          import {chromium} from 'playwright';
+          import assert from 'node:assert/strict';
+          const b=await chromium.launch({headless:true});
+          for(const width of [390,1280]){
+            const p=await b.newPage({viewport:{width,height:900}});
+            await p.goto('http://127.0.0.1:4173/astrology-foundations.html',{waitUntil:'domcontentloaded'});
+            await p.locator('[data-kind="wheel"]').click();
+            await p.locator('.uf-wheel').waitFor();
+            await p.locator('[data-uf-sign="6"]').click();
+            assert.match(await p.locator('.uf-corner').innerText(),/Libra.*Yang.*Venus/);
+            await p.locator('[data-uf-kind]').selectOption('Decans & Tarot');
+            assert.equal(await p.locator('[data-uf-row]').count(),36);
+            assert.match(await p.locator('[data-uf-row="11"]').last().innerText(),/Pisces.*Mars.*10 of Disks/);
+            await p.locator('[data-uf-kind]').selectOption('Aspects');
+            await p.locator('[data-uf-origin]').fill('30');
+            await p.locator('[data-uf-origin]').dispatchEvent('change');
+            assert.match(await p.locator('.uf-chart').innerText(),/Opposition.*180.*210/);
+            await p.locator('[data-uf-house="7"]').click();
+            assert.match(await p.locator('.uf-corner').innerText(),/House 7/);
+            console.log('FOUNDATIONS_WHEEL_OK',width);
+            await p.close();
+          }
+          await b.close();
+          EOF
+          node foundations-wheel-test.mjs
