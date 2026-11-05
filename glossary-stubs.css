@@ -1,0 +1,28 @@
+/* Draft glossary workbench — intentionally unindexed. */
+.astrology-reference-page .stub-workspace{max-width:1100px}
+.astrology-reference-page .stub-banner{padding:1rem 1.25rem;background:#fcf4ef;border:1px solid #e8d4ca;border-radius:1rem;line-height:1.7;margin:1.4rem 0 2rem;font-size:.93rem}
+.astrology-reference-page .stub-banner strong{color:#9d241e}
+.astrology-reference-page .stub-controls{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:1rem;align-items:end;margin:1.25rem 0 1.8rem}
+.astrology-reference-page .stub-field{display:flex;flex-direction:column;gap:.42rem;font-size:.8rem;font-weight:700;color:#434343}
+.astrology-reference-page .stub-field select{height:2.8rem;max-width:100%;width:100%;border:1.4px solid #d3c8c3;background:#fff;border-radius:.65rem;padding:.45rem .7rem;color:#111;font:600 .87rem/1.1 Montserrat,Arial,sans-serif;appearance:auto}
+.astrology-reference-page .stub-field select:focus-visible{outline:3px solid #dc1f18;outline-offset:2px}
+.astrology-reference-page .stub-checkbox{display:flex;gap:.55rem;align-items:center;font-size:.84rem;font-weight:700}
+.astrology-reference-page .stub-checkbox input{width:1rem;height:1rem;accent-color:#bd2420}
+.astrology-reference-page .stub-draft{background:#fff;border:1px solid #e6dcda;border-radius:1.3rem;padding:1.4rem clamp(1rem,3vw,2rem);box-shadow:0 8px 20px rgba(38,15,13,.04)}
+.astrology-reference-page .stub-statusline{display:flex;flex-wrap:wrap;align-items:center;gap:1rem;margin-bottom:1rem;font-size:.76rem}
+.astrology-reference-page .stub-pill{font-weight:800;letter-spacing:.06em;color:#555;border:1px solid #aaa;border-radius:999px;padding:.38rem .6rem}
+.astrology-reference-page .stub-feasible{color:#35683d;font-weight:700}
+.astrology-reference-page .stub-infeasible{color:#b1201b;font-weight:800}
+.astrology-reference-page .stub-draft h2{text-align:left;margin:.4rem 0 .6rem;font-size:clamp(1.4rem,3vw,2rem);line-height:1.35;overflow-wrap:anywhere}
+.astrology-reference-page .stub-draft h3{text-align:left;margin:1.65rem 0 .6rem;font-size:1rem}
+.astrology-reference-page .stub-draft p{font-size:.96rem;color:#555}
+.astrology-reference-page .stub-open-fields{display:grid;grid-template-columns:minmax(140px,1fr) minmax(0,2fr);gap:.45rem .8rem;font-size:.91rem;line-height:1.6}
+.astrology-reference-page .stub-open-fields dt{font-weight:700;color:#303030}
+.astrology-reference-page .stub-open-fields dd{color:#777;margin:0;font-style:italic}
+.astrology-reference-page #stubId{display:block;padding:.8rem;background:#f9f5f3;border-radius:.6rem;font-size:.83rem;overflow-wrap:anywhere;line-height:1.8}
+.astrology-reference-page #stubJson{background:#171717;color:#f9f9f9;border-radius:.85rem;overflow:auto;max-height:370px;padding:1.1rem;font-size:.76rem;line-height:1.6;text-align:left}
+.astrology-reference-page .stub-actions button{padding:.85rem 1.2rem;border:1px solid #111;border-radius:999px;background:#111;color:#fff;font:700 .9rem Montserrat,Arial,sans-serif;cursor:pointer}
+.astrology-reference-page .stub-actions button:hover{background:#c5201a;border-color:#c5201a}
+.astrology-reference-page .stub-action-feedback{font-size:.86rem;color:#555;align-self:center}
+@media(max-width:900px){.astrology-reference-page .stub-controls{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:520px){.astrology-reference-page .stub-controls{grid-template-columns:1fr}.astrology-reference-page .stub-open-fields{grid-template-columns:1fr}.astrology-reference-page .stub-open-fields dd{margin:0 0 .55rem}.astrology-reference-page #stubJson{font-size:.69rem}}
