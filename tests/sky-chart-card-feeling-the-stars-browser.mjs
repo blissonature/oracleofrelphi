@@ -45,7 +45,7 @@ async function focus(page,selector,label,kind,value,sky,method='click'){
   assert.equal(selected?.sky||null,sky||null,'The focus sky must match the target');
 }
 
-async function run(browser,mode){
+async function run(browser,mode,url='http://127.0.0.1:4173/sky-chart.html'){
   const mobile=mode==='mobile';
   const context=await browser.newContext({
     viewport:mobile?{width:390,height:844}:{width:1280,height:980},
@@ -73,7 +73,7 @@ async function run(browser,mode){
         }
       });
     },{a:makeSky('Marisa'),b:makeSky('Nov 4, 2026',29.27)});
-    await page.goto('http://127.0.0.1:4173/sky-chart.html',{waitUntil:'domcontentloaded'});
+    await page.goto(url,{waitUntil:'domcontentloaded',timeout:30000});
     await page.waitForSelector('#skyFoundationRoot[aria-busy="false"]',{timeout:30000});
     await page.waitForSelector('#skyFoundationA .sky-foundation-row[data-placement="jupiter"] .sky-foundation-coordinate-sign[data-interactive="sign"]',{timeout:30000});
     await page.waitForSelector('#skyFoundationA .sky-foundation-row[data-placement="jupiter"] .sky-foundation-house[data-interactive="house"]',{timeout:30000});
@@ -129,4 +129,9 @@ const browser=await chromium.launch({headless:true});
 try{
   await run(browser,'desktop');
   await run(browser,'mobile');
+  const ref=process.env.REMOTE_PREVIEW_REF||'';
+  if(ref){
+    assert.match(ref,/^[a-f0-9]{40}$/i,'Hosted preview requires an exact commit SHA');
+    await run(browser,'hosted-preview',`https://oracleofrelphi.com/sky-chart-preview/sky-chart.html?ref=${ref}`);
+  }
 } finally{await browser.close()}
