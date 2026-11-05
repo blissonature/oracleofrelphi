@@ -4019,14 +4019,46 @@
     renderDetail(state.selected && list.some(c => c.card_id === state.selected.card_id) ? state.selected : null);
     renderShortList();
   }
+  let fullCardReaderOpen = false;
+  let fullCardReaderRestoreFocus = null;
+  function fullCardReaderIds() {
+    const root = $('cardList');
+    return [...new Set(Array.from(root?.querySelectorAll('.or-card[data-id]') || []).map(el => el.dataset.id).filter(Boolean))];
+  }
+  function closeFullCardReader() {
+    fullCardReaderOpen = false;
+    $('browsePanel')?.classList.remove('full-card-reader-open');
+    document.body.classList.remove('full-card-reader-active');
+    renderDetail(state.selected);
+    if (fullCardReaderRestoreFocus?.isConnected) fullCardReaderRestoreFocus.focus({preventScroll:true});
+    else $('cardReaderExpand')?.focus({preventScroll:true});
+  }
+  function moveFullCardReader(direction) {
+    const ids = fullCardReaderIds();
+    if (!ids.length) return;
+    const at = ids.indexOf(state.selected?.card_id);
+    const next = ids[(Math.max(0,at) + direction + ids.length) % ids.length];
+    const card = cardById(next);
+    if (card) { state.selected = card; renderDetail(card); $('cardDetail')?.scrollTo(0,0); }
+  }
   function inspectBrowseResult(id) {
     const card = cardById(id);
     if (!card) return;
+    if (!fullCardReaderOpen) fullCardReaderRestoreFocus = document.activeElement;
+    fullCardReaderOpen = true;
     state.selected = card;
     renderDetail(card);
-    const detail = $('cardDetail');
-    if (detail) detail.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    $('browsePanel')?.classList.add('full-card-reader-open');
+    document.body.classList.add('full-card-reader-active');
+    $('cardReaderClose')?.focus({preventScroll:true});
   }
+  document.addEventListener('keydown', event => {
+    if (!fullCardReaderOpen || event.altKey || event.ctrlKey || event.metaKey) return;
+    if (event.key === 'Escape') { event.preventDefault(); closeFullCardReader(); }
+    if (['INPUT','TEXTAREA','SELECT'].includes(document.activeElement?.tagName)) return;
+    if (event.key === 'ArrowLeft') { event.preventDefault(); moveFullCardReader(-1); }
+    if (event.key === 'ArrowRight') { event.preventDefault(); moveFullCardReader(1); }
+  });
   function isPrincessCourt(card) {
     return card?.card_type === 'Court' && String(card.rank || '').toLowerCase() === 'princess';
   }
@@ -4744,9 +4776,17 @@
   }
   function renderDetail(card) {
     const panel = $('cardDetail');
-    panel.innerHTML = cardDetailHtml(card);
+    if (!panel) return;
+    const ids = fullCardReaderIds();
+    const readerControls = !card ? '' : fullCardReaderOpen
+      ? '<nav class="full-card-reader-nav" aria-label="Browse card entries"><button id="cardReaderPrev" type="button" aria-label="Previous card">←</button><span class="full-card-reader-position">' + (Math.max(0,ids.indexOf(card.card_id))+1) + ' / ' + ids.length + '</span><button id="cardReaderNext" type="button" aria-label="Next card">→</button><button id="cardReaderClose" type="button" aria-label="Close full card view and return to index">× <span>Close</span></button></nav>'
+      : '<div class="full-card-reader-launch"><button id="cardReaderExpand" type="button" aria-label="Open full-screen card entry">⛶ Full card view</button></div>';
+    panel.innerHTML = readerControls + cardDetailHtml(card);
     bindCardEntry(panel);
-
+    panel.querySelector('#cardReaderExpand')?.addEventListener('click', () => inspectBrowseResult(card.card_id));
+    panel.querySelector('#cardReaderPrev')?.addEventListener('click', () => moveFullCardReader(-1));
+    panel.querySelector('#cardReaderNext')?.addEventListener('click', () => moveFullCardReader(1));
+    panel.querySelector('#cardReaderClose')?.addEventListener('click', closeFullCardReader);
   }
   const bindRenderedCardEntry = bindCardEntry;
   window.RelphiTarotLedgerBridge = Object.freeze({
