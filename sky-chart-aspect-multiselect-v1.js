@@ -404,12 +404,32 @@
     if (!hover) schedule();
   }
 
+  // On touch screens, a swipe starting just outside a long checklist should not
+  // dismiss it. Reserve dismissal for an intentional tap, below a small movement
+  // threshold, while keeping the existing mouse and Escape behavior.
+  let outsideTouch = null;
   function closeOutside(event) {
     const owner = portalOwner;
     const menu = popover();
     if (!isOpen(owner)) return;
-    if (owner.contains(event.target) || menu?.contains(event.target)) return;
+    if (owner.contains(event.target) || menu?.contains(event.target)) {
+      outsideTouch = null;
+      return;
+    }
+    if (event.pointerType === 'touch' || event.pointerType === 'pen') {
+      outsideTouch = { id:event.pointerId, x:event.clientX, y:event.clientY, moved:false };
+      return;
+    }
     close(owner);
+  }
+  function finishOutsideTouch(event) {
+    const touch = outsideTouch;
+    if (!touch || touch.id !== event.pointerId) return;
+    outsideTouch = null;
+    if (event.type === 'pointercancel' || !isOpen(portalOwner)) return;
+    if (Math.hypot(event.clientX-touch.x,event.clientY-touch.y) > 12) return;
+    if (portalOwner.contains(event.target) || popover()?.contains(event.target)) return;
+    close(portalOwner);
   }
 
 
@@ -434,6 +454,8 @@
 
     document.addEventListener('change', handleChange);
     document.addEventListener('pointerdown', closeOutside, true);
+    document.addEventListener('pointerup', finishOutsideTouch, true);
+    document.addEventListener('pointercancel', finishOutsideTouch, true);
     document.addEventListener('keydown', event => {
       if (event.key !== 'Escape' || !isOpen(portalOwner)) return;
       const owner = portalOwner;
