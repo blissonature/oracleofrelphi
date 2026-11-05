@@ -341,5 +341,91 @@ try{
   assert.deepEqual(exactErrors.filter(e=>/TypeError|ReferenceError|SyntaxError/.test(e)),[]);
   console.log('actual 8h50m reciprocal comparison verified',width,JSON.stringify(filtered));
   await exact.close();
+
+  // Regression from the Nov 4 natal/event comparison. Two different source
+  // keys name the SAME natal Descendant on opposite sides of the H7 cusp.
+  // Both the list and wheel must show ONE canonical Dsc–Venus relationship.
+  const porphyryCusps=[
+    168.3666667,197.6666667,226.9666667,256.2666667,286.9666667,317.6666667,
+    348.3666667,17.6666667,46.9666667,76.2666667,106.9666667,137.6666667
+  ];
+  const natal={
+    name:'Marisa',houseSystem:'porphyry',houseCusps:porphyryCusps,
+    calcProfile:{houseSystem:'porphyry',houseCusps:porphyryCusps,
+      instant:'1985-10-08T11:37:00Z',dateTime:'1985-10-08T04:37:00',timeZone:'America/Denver',
+      latitude:40.76,longitude:-111.89},
+    placements:{
+      Descendant:{name:'Descendant',longitude:348.36666},
+      Dsc:{name:'Dsc',longitude:348.36667},
+      Ascendant:{name:'Ascendant',longitude:168.3666667},
+      Midheaven:{name:'Midheaven',longitude:76.2666667},
+      Mars:{name:'Mars',longitude:167.8666667},
+      Mercury:{name:'Mercury',longitude:206.1666667},
+      'Part of Fortune':{name:'Part of Fortune',longitude:244.95}
+    }
+  };
+  const eventAsc=17.55,eventCusps=Array.from({length:12},(_,i)=>(eventAsc+i*30)%360);
+  const eventSky={
+    name:'Nov 4, 2026, 5:44 PM',houseSystem:'equal-house',houseCusps:eventCusps,
+    calcProfile:{houseSystem:'equal-house',houseCusps:eventCusps,
+      instant:'2026-11-05T00:44:00Z',dateTime:'2026-11-04T17:44:00',
+      timeZone:'America/Denver',latitude:40.76,longitude:-111.89},
+    placements:{
+      Venus:{name:'Venus',longitude:204.5,retrograde:true},
+      Vertex:{name:'Vertex',longitude:204.1833333},
+      Sun:{name:'Sun',longitude:222.6},
+      Mercury:{name:'Mercury',longitude:221.6166667,retrograde:true},
+      Ascendant:{name:'Ascendant',longitude:eventAsc},
+      Midheaven:{name:'Midheaven',longitude:301.2333333}
+    }
+  };
+  const natalPage=await browser.newPage({viewport:{width,height:920}});
+  const natalErrors=[];natalPage.on('pageerror',e=>natalErrors.push(e.message));
+  await natalPage.route('https://unpkg.com/suncalc@1.9.0/suncalc.js',route=>route.fulfill({path:path.resolve('node_modules/suncalc/suncalc.js'),contentType:'application/javascript'}));
+  await natalPage.route('https://cdn.jsdelivr.net/npm/luxon@3/build/global/luxon.min.js',route=>route.fulfill({path:path.resolve('node_modules/luxon/build/global/luxon.min.js'),contentType:'application/javascript'}));
+  await natalPage.addInitScript(({a,b,ids})=>{
+    localStorage.setItem('relphiSkyChartA',JSON.stringify(a));
+    localStorage.setItem('relphiSkyChartB',JSON.stringify(b));
+    localStorage.setItem('relphiSkyChartLastModeV1','comparison');
+    localStorage.setItem('relphiSkyHarmonicWindowV1','1');
+    localStorage.setItem('relphiSkyAspectMatrixV1',JSON.stringify({
+      'A-A':['conjunction'],'B-B':['conjunction'],'A-B':ids
+    }));
+    localStorage.setItem('relphiSkyHideRepeatedSlowConjunctionsV1','true');
+  },{a:natal,b:eventSky,ids});
+  await natalPage.goto('http://127.0.0.1:4173/sky-chart.html',{waitUntil:'domcontentloaded',timeout:35000});
+  await natalPage.waitForSelector('#skyFoundationRoot[aria-busy="false"]',{timeout:35000});
+  await natalPage.waitForFunction(()=>[...document.querySelectorAll('#skyFoundationRelationshipList>.sky-foundation-relationship-row')].some(row=>
+    row.dataset.relationshipMode==='A-B'&&row.dataset.leftPlacement==='dsc'&&row.dataset.rightPlacement==='venus'&&row.dataset.aspect==='bi-quintile'
+  ),null,{timeout:25000});
+  const natalAudit=await natalPage.evaluate(()=>{
+    const all=selector=>[...document.querySelectorAll(selector)];
+    const rows=all('#skyFoundationRelationshipList>.sky-foundation-relationship-row');
+    const lines=all('#skyFoundationWheelMount [data-layer="aspects"]>line.sky-foundation-aspect:not(.sky-foundation-aspect-hit)');
+    const matches=n=>n.dataset.relationshipMode==='A-B'&&n.dataset.leftPlacement==='dsc'&&
+      n.dataset.rightPlacement==='venus'&&n.dataset.aspect==='bi-quintile';
+    const dscRows=rows.filter(matches),dscLines=lines.filter(matches);
+    const self=rows.filter(n=>['A-A','B-B'].includes(n.dataset.relationshipMode)&&n.dataset.leftPlacement===n.dataset.rightPlacement);
+    const venusVertex=rows.filter(n=>n.dataset.relationshipMode==='B-B'&&n.dataset.aspect==='conjunction'&&
+      new Set([n.dataset.leftPlacement,n.dataset.rightPlacement]).size===2&&
+      ['venus','vertex'].every(id=>[n.dataset.leftPlacement,n.dataset.rightPlacement].includes(id)));
+    const ledger=[...document.querySelectorAll('#skyFoundationA .sky-foundation-row')].filter(row=>
+      /^(Descendant|Dsc)$/i.test(row.querySelector('.sky-foundation-row-name')?.textContent.trim()||''));
+    return {
+      dscRows:dscRows.map(n=>({house:n.dataset.leftHouse,hidden:n.classList.contains('sky-chart-aspect-multiselect-hidden')})),
+      dscLines:dscLines.map(n=>({house:n.dataset.leftHouse,hidden:n.classList.contains('sky-chart-aspect-multiselect-hidden')})),
+      self:self.length,venusVertex:venusVertex.length,ledger:ledger.length
+    };
+  });
+  assert.deepEqual(natalAudit.dscRows,[{house:'7',hidden:false}],
+    'the natal Descendant must have ONE H7 biquintile to transiting Venus');
+  assert.deepEqual(natalAudit.dscLines,[{house:'7',hidden:false}],
+    'the wheel must use the same unique canonical Descendant relation');
+  assert.equal(natalAudit.self,0,'duplicate aliases must not create intrasky self-aspects');
+  assert.equal(natalAudit.ledger,1,'placement ledger must show the Descendant once');
+  assert.ok(natalAudit.venusVertex>0,'a distinct Venus–Vertex conjunction must remain eligible');
+  assert.deepEqual(natalErrors.filter(e=>/TypeError|ReferenceError|SyntaxError/.test(e)),[]);
+  console.log('natal-event duplicate Descendant resolved',width,JSON.stringify(natalAudit));
+  await natalPage.close();
  }
 }finally{await browser.close()}
