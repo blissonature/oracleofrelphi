@@ -1,0 +1,32 @@
+name: Sky Chart Houses mobile collapse
+
+on:
+  pull_request:
+    paths:
+      - 'sky-chart-house-multiselect-v2.js'
+      - 'sky-chart.html'
+      - 'tests/sky-chart-houses-mobile-collapse-browser.mjs'
+      - '.github/workflows/sky-chart-houses-mobile-collapse.yml'
+  workflow_dispatch:
+
+jobs:
+  iphone-collapse:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Syntax checks
+        run: |
+          node --check sky-chart-house-multiselect-v2.js
+          node --check tests/sky-chart-houses-mobile-collapse-browser.mjs
+      - name: Install Chromium
+        run: |
+          npm install --no-save playwright@1.52.0 luxon@3 suncalc@1.9.0
+          npx playwright install --with-deps chromium
+      - name: Verify Houses mobile collapse
+        run: |
+          python3 -m http.server 4173 >/tmp/sky-houses-collapse-server.log 2>&1 &
+          node tests/sky-chart-houses-mobile-collapse-browser.mjs
