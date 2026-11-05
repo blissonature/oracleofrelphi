@@ -1,0 +1,37 @@
+name: Sky Card Feeling the Stars interactions
+
+on:
+  pull_request:
+    paths:
+      - 'sky-chart-foundation-v2.js'
+      - 'sky-chart-foundation-interactions-v2.js'
+      - 'sky-chart-foundation-interactions-v1.css'
+      - 'sky-chart-vocab-tab-v1.js'
+      - 'tests/sky-chart-card-feeling-the-stars-browser.mjs'
+      - '.github/workflows/sky-chart-card-feeling-the-stars.yml'
+  workflow_dispatch:
+
+jobs:
+  sky-card-parts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check Sky Card JavaScript syntax
+        run: |
+          node --check sky-chart-foundation-v2.js
+          node --check sky-chart-foundation-interactions-v2.js
+          node --check tests/sky-chart-card-feeling-the-stars-browser.mjs
+      - name: Install Chromium for desktop and mobile regression
+        run: |
+          npm install --no-save playwright@1.52.0 luxon@3 suncalc@1.9.0
+          npx playwright install --with-deps chromium
+      - name: Verify independent planet, sign, and house focus, including exact-revision hosted preview
+        env:
+          REMOTE_PREVIEW_REF: ${{ github.event.pull_request.head.sha }}
+        run: |
+          python3 -m http.server 4173 >/tmp/sky-card-feeling-the-stars-server.log 2>&1 &
+          node tests/sky-chart-card-feeling-the-stars-browser.mjs

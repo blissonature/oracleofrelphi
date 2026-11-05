@@ -85,6 +85,24 @@
   outline:none;
 }
 
+/* Sky Card placement rows expose independently actionable sign and house parts.
+   Keep the focus treatment with the existing ledger interaction styles. */
+.sky-foundation-row .sky-foundation-coordinate-sign[role="button"],
+.sky-foundation-row .sky-foundation-house[role="button"] {
+  cursor:pointer;
+  border-radius:4px;
+  touch-action:manipulation;
+}
+.sky-foundation-row .sky-foundation-coordinate-sign[role="button"]:hover,
+.sky-foundation-row .sky-foundation-coordinate-sign[role="button"]:focus-visible,
+.sky-foundation-row .sky-foundation-coordinate-sign.is-selected,
+.sky-foundation-row .sky-foundation-house[role="button"]:hover,
+.sky-foundation-row .sky-foundation-house[role="button"]:focus-visible,
+.sky-foundation-row .sky-foundation-house.is-selected {
+  outline:2px solid rgba(31,27,24,.56);
+  outline-offset:2px;
+}
+
 .sky-foundation-panel.has-ledger-isolation .sky-foundation-row {
   opacity:.16;
 }
