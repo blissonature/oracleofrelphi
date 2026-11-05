@@ -352,8 +352,8 @@ try{
   const natal={
     name:'Marisa',houseSystem:'porphyry',houseCusps:porphyryCusps,
     calcProfile:{houseSystem:'porphyry',houseCusps:porphyryCusps,
-      instant:'1985-10-08T11:37:00Z',dateTime:'1985-10-08T04:37:00',timeZone:'America/Denver',
-      latitude:40.76,longitude:-111.89},
+      instant:'1985-10-08T08:37:00Z',dateTime:'1985-10-08T04:37:00',timeZone:'America/New_York',
+      latitude:42.426,longitude:-71.067},
     placements:{
       Descendant:{name:'Descendant',longitude:348.36666},
       Dsc:{name:'Dsc',longitude:348.36667},
