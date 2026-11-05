@@ -64,6 +64,15 @@ try{
     const visible=await page.locator('#skyFoundationWheelMount .sky-wheel-sector-description').isVisible();
     assert.equal(visible,true,'The corner text box for '+name+' must be visible.');
   }
-  assert.deepEqual(errors,[],'Capitalized corner labels must produce no page errors.');
+  const libraMeaning=await page.evaluate(()=>window.RelphiSkyVocab.describeFocus('sign',6));
+  assert.match(libraMeaning.description,/Counter/,'Libra corner description must carry Counter wording.');
+  const libraNode=page.locator('#skyFoundationWheelMount [data-interactive="sign"][data-sign="6"],#skyFoundationWheelMount [data-interactive="sign"][data-sign-index="6"]').first();
+  assert.ok(await libraNode.count()>0,'Libra sign on wheel must be interactive.');
+  await libraNode.dispatchEvent('pointerdown',{pointerId:89,pointerType:'mouse',isPrimary:true,buttons:1});
+  await libraNode.dispatchEvent('pointerup',{pointerId:89,pointerType:'mouse',isPrimary:true,buttons:0});
+  await libraNode.dispatchEvent('click');
+  await page.waitForFunction(()=>document.querySelector('#skyFoundationWheelMount .sky-wheel-sector-description')?.textContent?.includes('Counter'),{timeout:10000});
+  assert.equal(await page.locator('#skyFoundationWheelMount .sky-wheel-sector-description').isVisible(),true,'Visible corner text box must say Counter.');
+    assert.deepEqual(errors,[],'Capitalized corner labels must produce no page errors.');
   console.log('PASS: canonical placement names and visible Moon/Saturn corner boxes use title capitalization.');
 } finally { await browser.close(); }
