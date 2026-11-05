@@ -5381,7 +5381,7 @@
     const count=Array.isArray(snap.shortList)?snap.shortList.length:0;
     if(!count)return false;
     const positions=genericPositions(Array.from({length:count},(_,i)=>'Card '+(i+1)),{cardFacesOnly:true});
-    const signature='compact-faces-v1|'+count+'|'+Math.round(autoLayoutViewport().width)+'|'+Math.round(autoLayoutViewport().height);
+    const signature='compact-faces-v2|'+count+'|'+window.innerWidth+'|'+window.innerHeight;
     // Recover only the old programmatic one-row strip, never arbitrary reader layouts.
     const existing=snap.rowEnvelopeLayout||{},transforms=snap.rowCardTransforms||{};
     const oldStrip=count>1 && Array.from({length:count},(_,i)=>{
@@ -5417,6 +5417,23 @@
         let expected;try{expected=JSON.parse(oldSaved);}catch(_){expected={};}
         if(Object.entries(expected).some(([i,p])=>Math.abs(Number(existing[i]?.x)-p.x)>1||Math.abs(Number(existing[i]?.y)-p.y)>1))return false;
       }
+    }
+    // Snapshot restoration redraws the board and triggers enhance() again.
+    // If its current geometry already matches this fit, mark it current
+    // without restoring the snapshot or scheduling another render.
+    const alreadyFitted=positions.every((item,i)=>{
+      const current=existing[i],card=transforms[i],target=item.transform;
+      return current&&card&&Math.abs(Number(current.x)-target.x*CANVAS_W)<.5
+        &&Math.abs(Number(current.y)-target.y*CANVAS_H)<.5
+        &&Math.abs(Number(card.scale)-target.scale)<.001
+        && Math.abs(Number(card.rotation||0))<.001;
+    }) && Object.keys(existing).length===count;
+    if(alreadyFitted){
+      root.dataset.relphiFreeGridSignature=signature;
+      root.dataset.relphiFreeGridCount=String(count);
+      root.dataset.relphiFreeGridManaged='true';
+      root.dataset.relphiFreeGridCoordinates=JSON.stringify(existing);
+      return false;
     }
     freeAutoLayoutBusy=true;
     try{
@@ -5454,7 +5471,9 @@
     root.hidden=false;
     root.removeAttribute('hidden');
     if (migrateLegacyDenseAutoLayout(root)) { requestAnimationFrame(()=>enhance(root)); return; }
-    if (fitFreeReadingGrid(root)) { requestAnimationFrame(()=>enhance(root)); return; }
+    // restore() already triggers the canonical board render event; do not queue
+    // a second enhancement pass, which can create a draw/fit/redraw loop.
+    if (fitFreeReadingGrid(root)) return;
     root.classList.toggle('relphi-hide-position-stickers',!showPositionStickers);
     markSemanticPositions(root);
     updateLayoutClasses(root);
