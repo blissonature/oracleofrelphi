@@ -113,6 +113,8 @@ async function run(browser,mode){
       await focus(page,base,'Jupiter','placement','jupiter','A','Enter');
     }
     // Repeated activation must toggle the canonical lock off, not leave stale help.
+    // The mobile sequence ends on Sky B's house, so first select Jupiter on A.
+    if(mobile)await focus(page,base+' .sky-foundation-row-name','Jupiter','placement','jupiter','A',method);
     await page.locator(base+' .sky-foundation-row-name')[method]();
     await page.waitForFunction(()=>{
       const label=document.querySelector('#skyFoundationWheelMount .sky-wheel-sector-description');
