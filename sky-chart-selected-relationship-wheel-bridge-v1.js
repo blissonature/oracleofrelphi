@@ -13,6 +13,9 @@
       const hit = line.cloneNode(false);
       hit.removeAttribute('class');
       hit.classList.add('sky-foundation-aspect-hit');
+      // A newly cloned interaction target must inherit the source line's
+      // existing filter eligibility; subsequent changes use the aspect matrix.
+      if(line.classList.contains('sky-chart-aspect-multiselect-hidden'))hit.classList.add('sky-chart-aspect-multiselect-hidden');
       hit.setAttribute('stroke', 'transparent');
       hit.setAttribute('stroke-width', '28');
       hit.setAttribute('stroke-linecap', 'round');
