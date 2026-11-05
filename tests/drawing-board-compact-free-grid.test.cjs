@@ -9,7 +9,7 @@ const counts=[12,37,78];
 for(const count of counts){
  const snap={shortList:Array.from({length:count},(_,i)=>({id:i})),rowEnvelopeLayout:{},rowCardTransforms:{}};
  const root={dataset:{},querySelector:()=>null};let writes=0;
- const env={panel:()=>root,CANVAS_W:900,CANVAS_H:760,CARD_W:174,CARD_H:174*866/500,LABEL_H:68,START_EDGE_GUTTER:4,
+ const env={window:{innerWidth:1280,innerHeight:900},panel:()=>root,CANVAS_W:900,CANVAS_H:760,CARD_W:174,CARD_H:174*866/500,LABEL_H:68,START_EDGE_GUTTER:4,
   clamp:(v,a,b)=>Math.max(a,Math.min(b,v)),
   position:(id,label,drawOrder,point)=>({id,label,drawOrder,transform:point}),
   transform:(x,y,scale,rotation=0,zIndex=1)=>({x,y,scale,rotation,zIndex}),
