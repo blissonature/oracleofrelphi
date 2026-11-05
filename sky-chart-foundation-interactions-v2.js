@@ -195,7 +195,24 @@
       const record=ledgerRecord(row,list);
       if(!record){delete row.dataset.interactive;delete row.dataset.sky;delete row.dataset.placement;delete row.dataset.house;delete row.dataset.sign;row.removeAttribute('tabindex');row.removeAttribute('role');return}
       Object.assign(row.dataset,{interactive:'placement',sky:slot,placement:record.id,house:String(record.house),sign:String(record.sign)});
-      row.setAttribute('tabindex','0');row.setAttribute('role','button');row.setAttribute('aria-label',`Sky ${slot} ${record.entry.name}, house ${record.house}`)
+      row.setAttribute('tabindex','0');row.setAttribute('role','button');row.setAttribute('aria-label',`Sky ${slot} ${record.entry.name}, house ${record.house}`);
+      // The placement row still owns the planet selection, but its sign and
+      // house are separate, keyboard-accessible targets for this same controller.
+      // Do not attach child listeners or create another focus/description owner.
+      const signTarget=row.querySelector('.sky-foundation-coordinate-sign');
+      if(signTarget&&Number.isInteger(record.sign)&&record.sign>=0&&record.sign<12){
+        Object.assign(signTarget.dataset,{interactive:'sign',sign:String(record.sign)});
+        signTarget.setAttribute('tabindex','0');
+        signTarget.setAttribute('role','button');
+        signTarget.setAttribute('aria-label',`${SIGN_NAMES[record.sign]} zodiac sign`);
+      }
+      const houseTarget=row.querySelector('.sky-foundation-house');
+      if(houseTarget&&Number.isInteger(record.house)&&record.house>=1&&record.house<=12){
+        Object.assign(houseTarget.dataset,{interactive:'house',sky:slot,house:String(record.house)});
+        houseTarget.setAttribute('tabindex','0');
+        houseTarget.setAttribute('role','button');
+        houseTarget.setAttribute('aria-label',`Sky ${slot} house ${record.house}`);
+      }
     })
   }
 
@@ -422,7 +439,7 @@
       });
     }
     if(wheelOnlyExternal)return;
-    ['A','B'].forEach(slot=>{const panel=document.getElementById(slot==='A'?'skyFoundationA':'skyFoundationB');if(!panel)return;panel.classList.toggle('has-ledger-isolation',!!filterState);panel.querySelectorAll('.sky-foundation-row[data-placement]').forEach(row=>{row.classList.toggle('is-kept',!!filterState&&filterKeep.placements.has(`${slot}:${row.dataset.placement}`));row.classList.toggle('is-selected',!!lockedState&&matchesNode(row,lockedState));row.classList.toggle('is-hovered',!!hoverState&&!lockedState&&matchesNode(row,hoverState))})});
+    ['A','B'].forEach(slot=>{const panel=document.getElementById(slot==='A'?'skyFoundationA':'skyFoundationB');if(!panel)return;panel.classList.toggle('has-ledger-isolation',!!filterState);panel.querySelectorAll('.sky-foundation-row[data-placement]').forEach(row=>{row.classList.toggle('is-kept',!!filterState&&filterKeep.placements.has(`${slot}:${row.dataset.placement}`));row.classList.toggle('is-selected',!!lockedState&&matchesNode(row,lockedState));row.classList.toggle('is-hovered',!!hoverState&&!lockedState&&matchesNode(row,hoverState));row.querySelectorAll('[data-interactive="sign"],[data-interactive="house"]').forEach(target=>{const selected=!!lockedState&&matchesNode(target,lockedState);target.classList.toggle('is-selected',selected);target.classList.toggle('is-hovered',!!hoverState&&!lockedState&&matchesNode(target,hoverState));target.setAttribute('aria-pressed',String(selected))})})});
     // A clicked/tapped wheel selection temporarily narrows the Relationships
     // scroll window. Hover is preview-only; never hide tiles while hovering.
     // Preserve source eligibility and DOM rows; clearing the lock restores them.
