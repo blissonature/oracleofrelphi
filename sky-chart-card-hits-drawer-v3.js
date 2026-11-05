@@ -15,7 +15,7 @@ const RULER_SIGNS={Sun:['Leo'],Moon:['Cancer'],Mercury:['Gemini','Virgo'],Venus:
 const DECAN_CARDS=[['two_of_wands','three_of_wands','four_of_wands'],['five_of_pentacles','six_of_pentacles','seven_of_pentacles'],['eight_of_swords','nine_of_swords','ten_of_swords'],['two_of_cups','three_of_cups','four_of_cups'],['five_of_wands','six_of_wands','seven_of_wands'],['eight_of_pentacles','nine_of_pentacles','ten_of_pentacles'],['two_of_swords','three_of_swords','four_of_swords'],['five_of_cups','six_of_cups','seven_of_cups'],['eight_of_wands','nine_of_wands','ten_of_wands'],['two_of_pentacles','three_of_pentacles','four_of_pentacles'],['five_of_swords','six_of_swords','seven_of_swords'],['eight_of_cups','nine_of_cups','ten_of_cups']];
 const PLANET_FALLBACK={Sun:'the_sun',Moon:'the_high_priestess',Mercury:'the_magician',Venus:'the_empress',Mars:'the_tower',Jupiter:'wheel_of_fortune',Saturn:'the_world'};
 const ALIASES={sun:'Sun',moon:'Moon',mercury:'Mercury',venus:'Venus',mars:'Mars',jupiter:'Jupiter',saturn:'Saturn',uranus:'Uranus',neptune:'Neptune',pluto:'Pluto',asc:'Ascendant',rising:'Ascendant',ascendant:'Ascendant',dsc:'Descendant',descendant:'Descendant',mc:'Midheaven',midheaven:'Midheaven',ic:'Imum Coeli','north-node':'North Node','north node':'North Node',node:'North Node','south-node':'South Node','south node':'South Node',chiron:'Chiron',lilith:'Lilith',vertex:'Vertex','part-of-fortune':'Part of Fortune','part of fortune':'Part of Fortune',fortune:'Part of Fortune'};
-const state={A:{tab:'rulers',ruler:''},B:{tab:'rulers',ruler:''}};
+const state={A:{tab:'rulers',ruler:'',detail:null},B:{tab:'rulers',ruler:'',detail:null}};
 const FINGERPRINT_COLORS=['#e53935','#f06b32','#f39a2e','#f5be3d','#f1dc43','#a9cf46','#43a85b','#2ca69b','#3285c7','#5961c8','#8c4fb4','#bd438e'];
 let queued=false,savedObserver=null,priorFoundationFocus=null;
 const esc=v=>String(v==null?'':v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -94,33 +94,93 @@ html[data-sky-card-ruler-focus] #skyFoundationWheelMount [data-layer="placements
 `;document.head.appendChild(s)}
 function mount(slot){return window.RelphiSkyCardShell?.get?.(slot)?.cardHits||null}
 function open(slot){return!!window.RelphiSkyCardShell?.get?.(slot)?.root?.querySelector(':scope > .sky-card-drawer[data-sky-drawer="card-hits"][open]')}
+
+// A one-step rulership graph. Houses stay in zodiacal order; reasons are independent edges.
+const MODERN_ASSOC={Scorpio:'Pluto',Aquarius:'Uranus',Pisces:'Neptune'};
+function houseMatches(p,ruler){
+  const base=records(p),c=cusps(p,base);
+  if(!c||profile(p).timeUnknown===true)return new Map();
+  const positions=housed(base,c),located=planetRecord(positions,ruler),result=new Map();
+  for(let h=1;h<=12;h++){
+    const edges=[],cuspSign=Math.floor(norm(c[h-1])/30),lord=SIGN_RULERS[cuspSign],lordRecord=planetRecord(positions,lord);
+    if(lord===ruler)edges.push({type:'cusp',label:'Rules cusp',detail:SIGNS[cuspSign]+' cusp'});
+    if(located?.house===h)edges.push({type:'located',label:'Located here',detail:ruler+' occupies this house'});
+    for(const occupant of positions.filter(r=>r.house===h&&RULERS.includes(r.body))){
+      if(occupant.body!==ruler&&SIGN_RULERS[occupant.signIndex]===ruler)
+        edges.push({type:'occupant',label:'Rules occupant',detail:occupant.body+' in '+occupant.sign});
+    }
+    if(lord!==ruler&&lordRecord&&SIGN_RULERS[lordRecord.signIndex]===ruler)
+      edges.push({type:'lord',label:'Rules house lord',detail:lord+' in '+lordRecord.sign});
+    result.set(h,edges);
+  }
+  return result;
+}
+function houseMatchMarkup(edges){
+  if(!edges.length)return '';
+  return '<div class="sky-card-house-match-reasons" aria-label="Rulership connections">'+edges.map(x=>'<span class="sky-card-house-match-chip" title="'+esc(x.detail)+'"><strong>'+esc(x.label)+'</strong><small>'+esc(x.detail)+'</small></span>').join('')+'</div>';
+}
+function explorerStyles(){
+  if(document.getElementById('relphiCardHitsExplorerStyles'))return;
+  const st=document.createElement('style');st.id='relphiCardHitsExplorerStyles';
+  st.textContent=`
+.sky-card-hits-structure{gap:1.2rem}
+.sky-card-hits-structure>section{display:grid;gap:.65rem;min-width:0}
+.sky-card-hits-group-heading{margin:0;padding:0 0 .5rem;border-bottom:1px solid rgba(31,27,24,.14);font:850 .77rem/1.3 system-ui,sans-serif;color:#302923}
+.sky-card-hits-explorer-note{margin:0;color:#6a6058;font:650 .67rem/1.5 system-ui,sans-serif}
+.sky-card-hits-focus-caption{display:flex;align-items:center;justify-content:space-between;gap:.5rem;flex-wrap:wrap;font:750 .66rem/1.3 system-ui,sans-serif}
+.sky-card-hits-focus-caption button{border:1px solid #cfc5ba;border-radius:999px;padding:.35rem .7rem;background:white;cursor:pointer;font:800 .64rem system-ui,sans-serif}
+.sky-card-house-row[data-ruler-match="false"]{display:none!important}
+.sky-card-house-row[data-ruler-match="true"]{border-color:var(--accent,#666)}
+.sky-card-house-match-reasons{display:flex;flex-wrap:wrap;gap:.3rem;padding:.5rem .65rem;background:color-mix(in srgb,var(--accent,#666) 6%,white)}
+.sky-card-house-match-chip{display:inline-flex;flex-direction:column;gap:2px;border:1px solid rgba(39,31,24,.13);border-radius:8px;background:white;padding:5px 7px;font:700 .59rem/1.2 system-ui,sans-serif}
+.sky-card-house-match-chip small{font:600 .56rem/1.25 system-ui,sans-serif;color:#63584f}
+.sky-card-house-cusp-ruler{font-weight:850}
+.sky-card-ruler-detail-choice{appearance:none;display:flex;align-items:center;gap:5px;width:100%;border:0;background:transparent;color:inherit;text-align:left;cursor:pointer;padding:0;font:inherit}
+.sky-card-ruler-detail-choice:hover,.sky-card-ruler-detail-choice:focus-visible{outline:2px solid var(--accent,#777);outline-offset:3px;border-radius:4px}
+.sky-card-ruler-detail-choice[aria-pressed="true"]{font-weight:900;text-decoration:underline}
+`;
+  document.head.appendChild(st);
+}
 function rulerCard(p,list,chart){const card=planetCard(p),record=planetRecord(list,p),sign=record?.signIndex,house=Number(record?.house),hasSign=Number.isFinite(sign),hasHouse=Number.isInteger(house)&&house>=1&&house<=12,style=[hasSign?`--ruler-sign-color:${fingerprintColor(sign)}`:'',hasHouse?`--ruler-house-color:${fingerprintColor(house-1)}`:''].filter(Boolean).join(';');return`<button type="button" class="sky-card-ruler${p===chart?' is-chart-ruler':''}" data-card-ruler="${esc(p)}" aria-label="${esc(p)}${p===chart?', chart ruler':''}${hasSign?`, in ${esc(SIGNS[sign])}`:''}${hasHouse?`, house ${house}`:''}. Show what it rules."><span class="sky-card-ruler-art sky-card-ruler-rail-stack"${style?` style="${style}"`:''}>${hasSign?`<span class="sky-card-ruler-rail sky-card-ruler-rail-sign" data-ruler-card-sign-rail="${sign}" aria-hidden="true"></span>`:''}${card?`<img src="${esc(fingerprintCardSrc(card))}" alt="" loading="lazy" decoding="async" data-card-media="local-ruler-art">`:''}${hasHouse?`<span class="sky-card-ruler-rail sky-card-ruler-rail-house" data-ruler-card-house-rail="${house}" aria-hidden="true"></span>`:''}</span><span class="sky-card-ruler-name">${esc(p)}</span></button>`}
 function list(items,empty='None',className=''){return`<ul class="sky-card-ruler-list${className?' '+className:''}">${(items.length?items:[`<span class="sky-card-ruler-empty">${esc(empty)}</span>`]).map(x=>`<li>${x}</li>`).join('')}</ul>`}
 function placementCoord(r){return`${r.degree}°${String(r.minute).padStart(2,'0')}′ ${r.sign}`}
 function rulerDetail(slot,ruler,p,listRecords,c){
   const signs=RULER_SIGNS[ruler]||[],houses=ruledHouses(ruler,c),placements=ruledPlacements(ruler,listRecords),pr=planetRecord(listRecords,ruler),card=planetCard(ruler);
   const focusColor=pr?fingerprintColor(pr.signIndex):'#655d56';
-  const signItems=signs.map(s=>{const i=SIGNS.indexOf(s),color=fingerprintColor(i);return`<span class="sky-card-ruler-color-bar" style="--ruler-item-color:${color}" aria-hidden="true"></span>${glyphMarkup(i)}<strong>${esc(s)}</strong>`});
-  const houseItems=houses.map(x=>`<span class="sky-card-ruler-color-bar" style="--ruler-item-color:${fingerprintColor(x.house-1)}" aria-hidden="true"></span>${houseMedallionMarkup(x.house)}<span class="sky-card-ruler-house-sign">${glyphMarkup(x.signIndex)}<strong>${esc(x.sign)}</strong></span>`);
-  const placementItems=placements.map(r=>`<span class="sky-card-ruler-color-bar" style="--ruler-item-color:${fingerprintColor(r.signIndex)}" aria-hidden="true"></span><span class="sky-card-ruler-placement-main"><strong>${esc(r.body)}</strong><span>${glyphMarkup(r.signIndex)}${esc(placementCoord(r))}</span></span>${r.house?houseMedallionMarkup(r.house):''}`);
+  const signItems=signs.map(s=>{const i=SIGNS.indexOf(s),color=fingerprintColor(i);return`<button type="button" class="sky-card-ruler-detail-choice" data-ruler-detail-kind="sign" data-ruler-detail-value="${esc(s)}" aria-label="Explore ${esc(s)} rulership"><span class="sky-card-ruler-color-bar" style="--ruler-item-color:${color}" aria-hidden="true"></span>${glyphMarkup(i)}<strong>${esc(s)}</strong>${MODERN_ASSOC[s]?` <small>(modern: ${esc(MODERN_ASSOC[s])})</small>`:''}</button>`});
+  const houseItems=houses.map(x=>`<button type="button" class="sky-card-ruler-detail-choice" data-ruler-detail-kind="house" data-ruler-detail-value="${x.house}" aria-label="Explore house ${x.house}"><span class="sky-card-ruler-color-bar" style="--ruler-item-color:${fingerprintColor(x.house-1)}" aria-hidden="true"></span>${houseMedallionMarkup(x.house)}<span class="sky-card-ruler-house-sign">${glyphMarkup(x.signIndex)}<strong>${esc(x.sign)}</strong></span></button>`);
+  const placementItems=placements.map(r=>`<button type="button" class="sky-card-ruler-detail-choice" data-ruler-detail-kind="placement" data-ruler-detail-value="${esc(r.body)}" aria-label="Explore ${esc(r.body)} in house ${r.house||'unknown'}"><span class="sky-card-ruler-color-bar" style="--ruler-item-color:${fingerprintColor(r.signIndex)}" aria-hidden="true"></span><span class="sky-card-ruler-placement-main"><strong>${esc(r.body)}</strong><span>${glyphMarkup(r.signIndex)}${esc(placementCoord(r))}</span></span>${r.house?houseMedallionMarkup(r.house):''}</button>`);
   const placed=pr?`<span class="sky-card-ruler-head-placement">${glyphMarkup(pr.signIndex)}<span>${esc(placementCoord(pr))}</span>${pr.house?houseMedallionMarkup(pr.house):''}</span>`:'<span class="sky-card-ruler-head-placement">Not placed</span>';
   return`<section class="sky-card-ruler-detail" style="--ruler-focus-color:${focusColor}"><div class="sky-card-ruler-detail-head"><div class="sky-card-ruler-detail-title"><span class="sky-card-ruler-detail-kicker">Ruler focus</span><h4>${esc(cardName(card))} · ${esc(ruler)}</h4></div>${placed}</div><div class="sky-card-ruler-sections"><section class="sky-card-ruler-section"><h5>Signs</h5>${list(signItems,'None','sky-card-ruler-list-signs')}</section><section class="sky-card-ruler-section"><h5>Houses</h5>${list(houseItems,'None','sky-card-ruler-list-houses')}</section><section class="sky-card-ruler-section"><h5>Placements</h5>${list(placementItems,'None','sky-card-ruler-list-placements')}</section></div><button type="button" class="sky-card-ruler-clear" data-card-ruler-clear>Clear ruler focus</button></section>`}
-function rulersView(slot,p){const base=records(p),c=cusps(p,base),listRecords=housed(base,c),unknown=profile(p).timeUnknown===true,chart=unknown?'':chartRuler(listRecords),selected=unknown?'':state[slot].ruler,others=RULERS.filter(r=>r!==chart),stage=unknown?`<div class="sky-card-chart-ruler-stage sky-card-chart-ruler-unknown"><span class="sky-card-chart-ruler-role">Chart Ruler</span><span class="sky-card-chart-ruler-placeholder" role="img" aria-label="Chart Ruler unknown because time of day is unknown"><span class="sky-card-chart-ruler-question" aria-hidden="true">?</span></span><span class="sky-card-time-unknown-note">Requires an exact time.</span></div>`:chart?`<div class="sky-card-chart-ruler-stage"><span class="sky-card-chart-ruler-role">Chart Ruler</span>${rulerCard(chart,listRecords,chart)}</div>`:'';return`${stage}<div class="sky-card-rulers-grid">${others.map(r=>rulerCard(r,listRecords,chart)).join('')}</div>${selected?rulerDetail(slot,selected,p,listRecords,c):''}`}
-function housesView(p){if(profile(p).timeUnknown===true)return'<div class="sky-card-time-unknown-panel"><strong>Houses unavailable</strong><span>House cusps require an exact time of day.</span></div>';const houses=houseDecans(p);if(!houses.length)return'<p class="sky-card-hits-empty">House cusps are needed to map decan cards by house.</p>';return`<div class="sky-card-houses">${houses.map(h=>`<section class="sky-card-house-row" data-house-number="${h.house}"><div class="sky-card-house-label">${houseMedallionMarkup(h.house)}<span>${glyphMarkup(h.signIndex)}${esc(h.sign)} cusp</span></div><div class="sky-card-house-decans">${h.cards.map(x=>{const name=cardName(x.card);return`<div class="sky-card-house-decan" title="${esc(name)} · ${esc(SIGNS[x.signIndex])} ${x.decan*10}°–${x.decan*10+10}° · ${x.count} placement${x.count===1?'':'s'}"><span class="sky-card-house-decan-art">${x.card?`<img class="sky-card-house-art-native" src="${esc(fingerprintCardSrc(x.card))}" alt="" loading="lazy" decoding="async" data-card-media="local-house-art">`:''}</span><span class="sky-card-house-decan-label">${glyphMarkup(x.signIndex,'sky-card-inline-glyph')}<span>${x.decan*10}–${x.decan*10+10}°</span><span class="sky-card-house-decan-count${x.count===0?' is-zero':''}">${x.count}</span></span></div>`}).join('')}</div></section>`).join('')}</div>`}
-function render(slot){const target=mount(slot),p=read(slot);if(!target||!p)return;const tab=state[slot].tab,skySignature=JSON.stringify([p.instant||p.dateTime||'',profile(p).timeUnknown===true,source(p).length]);target.innerHTML=`<section class="sky-card-hits-structure" data-card-hits-structure-slot="${slot}" data-card-hits-sky-signature="${esc(skySignature)}" style="--slot-color:${slot==='A'?'#c9211e':'#2462d0'}"><div class="sky-card-hits-structure-tabs" role="tablist" aria-label="Card Hits views"><button type="button" class="sky-card-hits-structure-tab" data-card-hits-view="rulers" role="tab" aria-selected="${tab==='rulers'}">Rulers</button><button type="button" class="sky-card-hits-structure-tab" data-card-hits-view="houses" role="tab" aria-selected="${tab==='houses'}">Houses</button></div>${tab==='rulers'?rulersView(slot,p):housesView(p)}</section>`;target.querySelectorAll('[data-card-ruler]').forEach(b=>b.classList.toggle('is-active',b.dataset.cardRuler===state[slot].ruler));hydrateCanonicalGlyphs(target);hydrateHouseMedallions(target)}
+function rulersView(slot,p){const base=records(p),c=cusps(p,base),listRecords=housed(base,c),unknown=profile(p).timeUnknown===true,chart=unknown?'':chartRuler(listRecords),selected=unknown?'':state[slot].ruler,others=RULERS.filter(r=>r!==chart),stage=unknown?`<div class="sky-card-chart-ruler-stage sky-card-chart-ruler-unknown"><span class="sky-card-chart-ruler-role">Chart Ruler</span><span class="sky-card-chart-ruler-placeholder" role="img" aria-label="Chart Ruler unknown because time of day is unknown"><span class="sky-card-chart-ruler-question" aria-hidden="true">?</span></span><span class="sky-card-time-unknown-note">Requires an exact time.</span></div>`:chart?`<div class="sky-card-chart-ruler-stage"><span class="sky-card-chart-ruler-role">Chart Ruler</span>${rulerCard(chart,listRecords,chart)}</div>`:'';return selected?`<div class="sky-card-rulers-grid sky-card-rulers-grid-single">${rulerCard(selected,listRecords,chart)}</div>${rulerDetail(slot,selected,p,listRecords,c)}`:`${stage}<div class="sky-card-rulers-grid">${others.map(r=>rulerCard(r,listRecords,chart)).join('')}</div>`}
+function detailHouses(p,selected,detail){
+ const matches=houseMatches(p,selected);if(!detail)return matches;
+ const base=records(p),c=cusps(p,base),positions=housed(base,c),filter=new Map();
+ for(const [h,edges] of matches){
+  let related=false;
+  if(detail.kind==='house')related=h===Number(detail.value);
+  if(detail.kind==='placement')related=positions.some(x=>x.house===h&&x.body===detail.value);
+  if(detail.kind==='sign'){
+   const sign=detail.value,si=SIGNS.indexOf(sign);
+   related=(c&&Math.floor(norm(c[h-1])/30)===si)||positions.some(x=>x.house===h&&x.sign===sign);
+  }
+  filter.set(h,related?edges:[]);
+ }
+ return filter;
+}
+function housesView(p,selected='',detail=null){if(profile(p).timeUnknown===true)return'<div class="sky-card-time-unknown-panel"><strong>Houses unavailable</strong><span>House cusps require an exact time of day.</span></div>';const houses=houseDecans(p),matches=selected?detailHouses(p,selected,detail):null;if(!houses.length)return'<p class="sky-card-hits-empty">House cusps are needed to map decan cards by house.</p>';return`<div class="sky-card-houses">${houses.filter(h=>!matches||(matches.get(h.house)||[]).length>0).map(h=>`<section class="sky-card-house-row" data-house-number="${h.house}"${matches?` data-ruler-match="${(matches.get(h.house)||[]).length>0}"`:``}><div class="sky-card-house-label">${houseMedallionMarkup(h.house)}<span>${glyphMarkup(h.signIndex)}${esc(h.sign)} cusp · <strong class="sky-card-house-cusp-ruler">${esc(SIGN_RULERS[h.signIndex])}${MODERN_ASSOC[h.sign]?` <small>(modern: ${esc(MODERN_ASSOC[h.sign])})</small>`:""}</strong></span></div>${matches?houseMatchMarkup(matches.get(h.house)||[]):""}<div class="sky-card-house-decans">${h.cards.map(x=>{const name=cardName(x.card);return`<div class="sky-card-house-decan" title="${esc(name)} · ${esc(SIGNS[x.signIndex])} ${x.decan*10}°–${x.decan*10+10}° · ${x.count} placement${x.count===1?'':'s'}"><span class="sky-card-house-decan-art">${x.card?`<img class="sky-card-house-art-native" src="${esc(fingerprintCardSrc(x.card))}" alt="" loading="lazy" decoding="async" data-card-media="local-house-art">`:''}</span><span class="sky-card-house-decan-label">${glyphMarkup(x.signIndex,'sky-card-inline-glyph')}<span>${x.decan*10}–${x.decan*10+10}°</span><span class="sky-card-house-decan-count${x.count===0?' is-zero':''}">${x.count}</span></span></div>`}).join('')}</div></section>`).join('')}</div>`}
+function render(slot){explorerStyles();const target=mount(slot),p=read(slot);if(!target||!p)return;const selected=state[slot].ruler,detail=state[slot].detail,skySignature=JSON.stringify([p.instant||p.dateTime||'',profile(p).timeUnknown===true,source(p).length]);target.innerHTML=`<section class="sky-card-hits-structure" data-card-hits-structure-slot="${slot}" data-card-hits-sky-signature="${esc(skySignature)}" style="--slot-color:${slot==='A'?'#c9211e':'#2462d0'}"><section aria-label="Rulers"><h3 class="sky-card-hits-group-heading">Planetary rulers</h3>${rulersView(slot,p)}</section><section aria-label="Houses"><h3 class="sky-card-hits-group-heading">Houses · 1–12</h3>${selected?`<div class="sky-card-hits-focus-caption"><span>${esc(selected)} · Houses connected through rulership</span><button type="button" data-card-ruler-clear aria-label="Back to all rulers and houses">← Back</button></div>`:'<p class="sky-card-hits-explorer-note">Select a ruler to explore its connected houses.</p>'}${detail?`<div class="sky-card-hits-focus-caption"><span>Exploring ${esc(detail.kind)}: ${esc(detail.value)}</span><button type="button" data-card-detail-back>← Ruler</button></div>`:''}${housesView(p,selected,detail)}</section></section>`;target.querySelectorAll('[data-card-ruler]').forEach(b=>b.classList.toggle('is-active',b.dataset.cardRuler===selected));hydrateCanonicalGlyphs(target);hydrateHouseMedallions(target)}
 function refreshOpen(){['A','B'].forEach(slot=>{
   if(!open(slot))return;
   const target=mount(slot),p=read(slot);if(!target||!p)return;
   const structure=target.querySelector(':scope>.sky-card-hits-structure');
-  const renderedTab=structure?.querySelector('.sky-card-hits-structure-tab[aria-selected="true"]')?.dataset.cardHitsView||'';
-  const wantedTab=state[slot].tab;
   const renderedSky=structure?.dataset.cardHitsSkySignature||'';
   const wantedSky=JSON.stringify([p.instant||p.dateTime||'',profile(p).timeUnknown===true,source(p).length]);
-  if(!structure||renderedTab!==wantedTab||renderedSky!==wantedSky)render(slot);
+  if(!structure||!structure.querySelector('.sky-card-hits-group-heading')||renderedSky!==wantedSky)render(slot);
 })}
 function relationSlots(row){const mode=row.dataset.relationshipMode||document.documentElement.dataset.skyRelationshipMode||'A-B';if(mode==='A-A')return['A','A'];if(mode==='B-B')return['B','B'];return[row.dataset.leftSky||'A',row.dataset.rightSky||'B']}
 function clearFocusVisual(){document.documentElement.removeAttribute('data-sky-card-ruler-focus');document.documentElement.removeAttribute('data-sky-card-ruler-slot');document.querySelectorAll('.sky-card-ruler-dim,.sky-card-ruler-kept,.sky-card-ruler-sign,.sky-card-ruler-hidden').forEach(n=>n.classList.remove('sky-card-ruler-dim','sky-card-ruler-kept','sky-card-ruler-sign','sky-card-ruler-hidden'));window.dispatchEvent(new CustomEvent('relphi:sky-card-ruler-focus-changed',{detail:{active:false}}))}
-function clearFocus(){state.A.ruler='';state.B.ruler='';clearFocusVisual()}
+function clearFocus(){state.A.ruler='';state.B.ruler='';state.A.detail=null;state.B.detail=null;clearFocusVisual()}
 function countRelationships(){requestAnimationFrame(()=>{const rows=Array.from(document.querySelectorAll('.sky-foundation-relationship-row')).filter(r=>!r.classList.contains('sky-foundation-single-sky-cross-hidden')),shown=rows.filter(r=>!r.hidden&&!Array.from(r.classList).some(n=>/hidden$/.test(n))).length,count=document.getElementById('skyFoundationRelationshipCount');if(count)count.textContent=`${shown}/${rows.length}`})}
 function applyFocus(slot,ruler){clearFocusVisual();if(!ruler){countRelationships();return}const p=read(slot),base=records(p),c=cusps(p,base),listRecords=housed(base,c),ids=new Set(ruledPlacements(ruler,listRecords).map(r=>r.canonical)),signs=new Set((RULER_SIGNS[ruler]||[]).map(s=>String(SIGNS.indexOf(s)))),houses=new Set(ruledHouses(ruler,c).map(x=>String(x.house)));document.documentElement.dataset.skyCardRulerFocus=ruler;document.documentElement.dataset.skyCardRulerSlot=slot;document.querySelectorAll('#skyFoundationWheelMount [data-layer="placements"] [data-sky][data-placement],#skyFoundationWheelMount [data-layer="leaders"] [data-sky][data-placement]').forEach(n=>{if(n.dataset.sky!==slot)return;const keep=ids.has(canonical(n.dataset.placement));n.classList.toggle('sky-card-ruler-kept',keep);n.classList.toggle('sky-card-ruler-dim',!keep)});document.querySelectorAll('#skyFoundationWheelMount [data-interactive="sign"]').forEach(n=>n.classList.toggle('sky-card-ruler-sign',signs.has(String(n.dataset.sign??n.dataset.signIndex??''))));const kept=new Set();document.querySelectorAll('.sky-foundation-relationship-row').forEach(row=>{const [ls,rs]=relationSlots(row),keep=(ls===slot&&ids.has(canonical(row.dataset.leftPlacement)))||(rs===slot&&ids.has(canonical(row.dataset.rightPlacement)));row.classList.toggle('sky-card-ruler-hidden',!keep);if(keep&&row.dataset.relationIndex!=null)kept.add(String(row.dataset.relationIndex))});document.querySelectorAll('#skyFoundationWheelMount [data-layer="aspects"] [data-relation-index]').forEach(n=>n.classList.toggle('sky-card-ruler-hidden',!kept.has(String(n.dataset.relationIndex||''))));document.querySelectorAll('#skyFoundationWheelMount [data-focus-piece="house"],#skyFoundationWheelMount [data-interactive="house"]').forEach(n=>{if(n.dataset.sky&&n.dataset.sky!==slot)return;n.classList.toggle('sky-card-ruler-sign',houses.has(String(n.dataset.house??n.dataset.houseNumber??'')))});countRelationships();window.dispatchEvent(new CustomEvent('relphi:sky-card-ruler-focus-changed',{detail:{active:true,slot,ruler,placements:Array.from(ids),signs:Array.from(signs,Number),houses:Array.from(houses,Number)}}))}
 function fingerprint(p){
@@ -182,6 +242,16 @@ function dismissRulerFocus(slot,{restore=true}={}){
 }
 function schedule(){if(queued)return;queued=true;requestAnimationFrame(()=>{queued=false;refreshOpen();patchCurrent();patchSaved();const f=activeFocus();if(f)applyFocus(f.slot,f.ruler)})}
 function click(e){
+  const choice=e.target.closest?.('[data-ruler-detail-kind]');
+  if(choice){
+    const root=choice.closest('[data-card-hits-structure-slot]'),slot=root?.dataset.cardHitsStructureSlot;
+    if(!KEYS[slot]||!state[slot].ruler)return;
+    const kind=choice.dataset.rulerDetailKind,value=choice.dataset.rulerDetailValue,current=state[slot].detail;
+    state[slot].detail=current?.kind===kind&&current?.value===value?null:{kind,value};
+    render(slot);return;
+  }
+  const detailBack=e.target.closest?.('[data-card-detail-back]');
+  if(detailBack){const slot=detailBack.closest('[data-card-hits-structure-slot]')?.dataset.cardHitsStructureSlot;if(KEYS[slot]){state[slot].detail=null;render(slot)}return}
   const tab=e.target.closest?.('[data-card-hits-view]');
   if(tab){
     const root=tab.closest('[data-card-hits-structure-slot]'),slot=root?.dataset.cardHitsStructureSlot;
@@ -198,12 +268,9 @@ function click(e){
     const root=ruler.closest('[data-card-hits-structure-slot]'),slot=root?.dataset.cardHitsStructureSlot;
     if(!KEYS[slot])return;
     const planet=String(ruler.dataset.cardRuler||''),current=activeFocus(),same=current?.slot===slot&&current?.ruler===planet;
-    if(same){
-      dismissRulerFocus(slot,{restore:true});
-      return;
-    }
+    if(same)return;
     if(!current)capturePriorFoundationFocus();
-    state.A.ruler='';state.B.ruler='';state[slot].ruler=planet;
+    state.A.ruler='';state.B.ruler='';state.A.detail=null;state.B.detail=null;state[slot].ruler=planet;
     applyFocus(slot,planet);render(slot);
     return;
   }
@@ -217,7 +284,7 @@ function click(e){
 }
 function dismissRulerFocusOnPointerDown(e){
   const focus=activeFocus();if(!focus)return;
-  if(e.target.closest?.('[data-card-ruler],[data-card-ruler-detail]'))return;
+  if(e.target.closest?.('[data-card-ruler],[data-card-ruler-detail],.sky-card-hits-structure'))return;
 
   // A new wheel or relationship selection is intentional and should replace
   // the prior focus rather than restoring it after this pointer action.
@@ -226,6 +293,6 @@ function dismissRulerFocusOnPointerDown(e){
 }
 function start(){styles();window.RelphiGlyphIntegrity?.assert?.();window.addEventListener('pointerdown',dismissRulerFocusOnPointerDown,true);document.addEventListener('click',click,true);window.addEventListener('relphi:sky-drawer-opened',e=>{const{slot,drawer}=e.detail||{};if(drawer==='card-hits'&&KEYS[slot])requestAnimationFrame(()=>render(slot))});window.addEventListener('storage',e=>{if(!e.key||Object.values(KEYS).includes(e.key)||e.key===LIBRARY_KEY)schedule()});['relphi:sky-foundation-ready','relphi:sky-foundation-interactions-ready','relphi:saved-sky-library-changed','relphi:saved-sky-loaded','relphi:sky-b-restored','relphi:sky-session-recovered','relphi:sky-house-multiselect-changed'].forEach(n=>window.addEventListener(n,schedule));const watch=()=>{const pop=document.getElementById('skySavedSkiesPopover');if(!pop)return false;savedObserver=new MutationObserver(rs=>{if(rs.some(r=>r.addedNodes.length||r.removedNodes.length))requestAnimationFrame(patchSaved)});savedObserver.observe(pop,{childList:true,subtree:true});return true};if(!watch()){const finder=new MutationObserver(()=>{if(watch())finder.disconnect()});finder.observe(document.body,{childList:true,subtree:true})}schedule();setTimeout(schedule,0)}
 window.RelphiSkyCardHitsDrawer=Object.freeze({getHits:()=>[],thumbnailFor:thumb,displayName:cardName});
-window.RelphiSkyCardHitsStructure=Object.freeze({render:schedule,chartRulerInfo,fingerprint,houseDecans,clearRulerFocus:clearFocus});
+window.RelphiSkyCardHitsStructure=Object.freeze({render:schedule,chartRulerInfo,fingerprint,houseDecans,houseMatches,clearRulerFocus:clearFocus});
 document.readyState==='loading'?document.addEventListener('DOMContentLoaded',start,{once:true}):start();
 })();
