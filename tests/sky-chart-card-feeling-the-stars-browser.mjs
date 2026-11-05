@@ -39,10 +39,24 @@ async function focus(page,selector,label,kind,value,sky,method='click'){
     const el=document.querySelector('#skyFoundationWheelMount .sky-wheel-sector-description');
     return !!el&&!el.hidden&&el.querySelector('strong')?.textContent===expected;
   },label,{timeout:15000});
+  // Inspect the rendered canonical lock, including in hosted previews whose
+  // document.open() loader resets temporary test event instrumentation.
+  const active=await page.evaluate(({kind,value,sky})=>{
+    const wheel=document.querySelector('#skyFoundationWheelMount .sky-foundation-wheel');
+    if(!wheel?.classList.contains('has-isolation'))return false;
+    const panel=sky?document.getElementById('skyFoundation'+sky):null;
+    if(kind==='placement')return !!panel?.querySelector('.sky-foundation-row[data-placement="'+value+'"].is-selected');
+    if(kind==='house')return !!panel?.querySelector('.sky-foundation-house[data-house="'+value+'"].is-selected[aria-pressed="true"]');
+    if(kind==='sign')return !!document.querySelector('.sky-foundation-coordinate-sign[data-sign="'+value+'"].is-selected[aria-pressed="true"]');
+    return false;
+  },{kind,value,sky});
+  assert.equal(active,true,'The canonical '+kind+' target must be selected in the actual wheel/ledger UI');
   const selected=await page.evaluate(()=>window.__relphiSkyCardFocusTrace?.at(-1)?.state||null);
-  assert.equal(selected?.kind,kind,'The wheel must own a '+kind+' selection, not the row planet');
-  assert.equal(String(selected?.value),String(value),'Selected focus value should match the clicked part');
-  assert.equal(selected?.sky||null,sky||null,'The focus sky must match the target');
+  if(selected){
+    assert.equal(selected.kind,kind,'The wheel must own a '+kind+' selection, not the row planet');
+    assert.equal(String(selected.value),String(value),'Selected focus value should match the clicked part');
+    assert.equal(selected.sky||null,sky||null,'The focus sky must match the target');
+  }
 }
 
 async function run(browser,mode,url='http://127.0.0.1:4173/sky-chart.html'){
