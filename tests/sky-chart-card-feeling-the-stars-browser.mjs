@@ -110,7 +110,7 @@ async function run(browser,mode){
     if(!mobile){
       await focus(page,base+' .sky-foundation-coordinate-sign','Aquarius','sign',10,null,'Enter');
       await focus(page,base+' .sky-foundation-house','Fifth House','house',5,'A','Space');
-      await focus(page,base+' .sky-foundation-row-name','Jupiter','placement','jupiter','A','Enter');
+      await focus(page,base,'Jupiter','placement','jupiter','A','Enter');
     }
     // Repeated activation must toggle the canonical lock off, not leave stale help.
     await page.locator(base+' .sky-foundation-row-name')[method]();
