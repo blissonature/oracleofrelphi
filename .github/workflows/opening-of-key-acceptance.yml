@@ -1,0 +1,24 @@
+name: Opening of the Key acceptance
+on:
+  pull_request:
+    paths:
+      - 'drawing-board-crowley-harmonic-v1.js'
+      - 'tarot-app.js'
+      - 'tests/drawing-board-opening-key-*.test.js'
+      - '.github/workflows/opening-of-key-acceptance.yml'
+jobs:
+  opening-key:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify five-operation workflow contracts
+        run: |
+          node --check drawing-board-crowley-harmonic-v1.js
+          node tests/drawing-board-opening-key-domain-filter.test.js
+          node tests/drawing-board-opening-key-mobile-hierarchy.test.js
+          node tests/drawing-board-opening-key-rerender-state.test.js
+          node tests/drawing-board-opening-key-retry.test.js
+          node tests/drawing-board-opening-key-significator-persistence.test.js

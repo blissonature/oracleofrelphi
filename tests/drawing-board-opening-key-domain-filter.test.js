@@ -12,7 +12,7 @@ assert.match(js,/id="crowleyDomainSearch"/);
 assert.match(js,/function domainMatches\(query\)/);
 assert.match(js,/split\(\/\[,;\]\+\|\\s\+or\\s\+\//);
 assert.match(js,/data-crowley-domain/);
-assert.match(js,/Search in ordinary language/);
+assert.match(js,/Search by subject/);
 assert.doesNotMatch(js,/Expected domain<select/);
 
 console.log('Opening of the Key domain gate explains IHVH and filters ordinary-language concepts into the four domains.');
