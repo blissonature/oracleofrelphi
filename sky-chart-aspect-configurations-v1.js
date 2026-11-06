@@ -158,6 +158,7 @@ function configurationApex(pattern,aspects){
 const CONFIG_SIGN_TONE=Object.freeze(['assertive and immediate','steady and embodied','curious and conversational','protective and attached','expressive and visible','discerning and practical','reciprocal and comparative','intense and investigative','exploratory and principled','disciplined and accountable','independent and collective','permeable and imaginative']);
 const CONFIG_HOUSE_FIELD=Object.freeze(['','identity and personal initiative','resources and self-worth','communication and immediate surroundings','home and private foundations','creative expression and pleasure','work, habits, and service','partnership and negotiation','shared resources and intimate commitments','learning and worldview','public role and responsibility','community, friendship, and belonging','solitude, retreat, and the unseen']);
 const CONFIG_SIGN_NAMES=Object.freeze(['Aries','Taurus','Gemini','Cancer','Leo','Virgo','Libra','Scorpio','Sagittarius','Capricorn','Aquarius','Pisces']);
+const CONFIG_SIGN_GLYPHS=Object.freeze(['♈','♉','♊','♋','♌','♍','♎','♏','♐','♑','♒','♓']);
 function configurationRecord(key){
   const record=resultVertexRecord(key),item=vertexLabel(key);
   if(!record)return{...item,meaning:CONFIG_PLACEMENT_MEANING[item.id]||'its role'};
@@ -215,13 +216,23 @@ function miniConfigurationMarkup(pattern,{compact=false,interactive=true}={}){
     return'<div class="'+classes+'"'+attrs+'><svg viewBox="0 0 120 120" aria-hidden="true"><circle cx="60" cy="60" r="47" class="sky-configuration-mini-ring"/>'+radii+lines+points+'</svg></div>';
   }
 
-  // Expanded diagrams keep geometry in the 120×120 SVG, but canonical
-  // inscribed vertices live in screen space so wheel scaling cannot alter them.
+  // The expanded geometry itself owns three distinct semantic targets at
+  // each vertex. They feed the existing Foundation interaction controller:
+  // placement glyph, zodiac sign, and this sky's house. No second list/legend
+  // or duplicate explanatory card is rendered below the diagram.
   const vertices=[...records.values()].map(record=>{
     const p=resultPoint(record.value),left=(p.x/120*100).toFixed(4),top=(p.y/120*100).toFixed(4);
-    return'<span class="sky-configuration-vertex-host" data-canonical-placement="'+record.id+'" data-sky="'+record.sky+'" style="left:'+left+'%;top:'+top+'%"></span>';
+    const sign=record.sign,validSign=Number.isInteger(sign)&&sign>=0&&sign<12;
+    const house=Number.isInteger(record.house)&&record.house>=1&&record.house<=12&&window.RelphiRelationshipExportHouses?.include?.(record.sky)!==false?record.house:null;
+    const signName=validSign?CONFIG_SIGN_NAMES[sign]:'';
+    const houseInfo=house?window.RelphiSkyVocab?.describeFocus?.('house',house):null;
+    const signButton=validSign?'<button type="button" class="sky-configuration-vertex-sign" data-interactive="sign" data-sign="'+sign+'" aria-label="'+signName+' zodiac sign" title="'+signName+'" style="--vertex-sign-color:'+resultSignColor(sign)+'">'+CONFIG_SIGN_GLYPHS[sign]+'</button>':'';
+    const houseButton=house?'<button type="button" class="sky-configuration-vertex-house" data-interactive="house" data-sky="'+record.sky+'" data-house="'+house+'" aria-label="Sky '+record.sky+' House '+house+'" title="House '+house+(houseInfo?.description?' — '+houseInfo.description:'')+'" style="--vertex-house-color:'+resultHouseColor(house)+'">'+house+'</button>':'';
+    return'<span class="sky-configuration-vertex-host" data-canonical-placement="'+record.id+'" data-sky="'+record.sky+'" data-vertex-half="'+(p.y<60?'top':'bottom')+'" style="left:'+left+'%;top:'+top+'%">'+
+      '<button type="button" class="sky-configuration-vertex-placement" data-interactive="placement" data-sky="'+record.sky+'" data-placement="'+record.id+'" aria-label="Sky '+record.sky+' '+placementWord(record.id)+'" title="Sky '+record.sky+' '+placementWord(record.id)+'"></button>'+
+      '<span class="sky-configuration-vertex-attributes">'+signButton+houseButton+'</span></span>';
   }).join('');
-  return'<div class="'+classes+'"'+attrs+'><svg viewBox="0 0 120 120" aria-hidden="true"><circle cx="60" cy="60" r="47" class="sky-configuration-mini-ring"/>'+radii+lines+'</svg><span class="sky-configuration-vertex-layer" aria-hidden="true">'+vertices+'</span></div>';
+  return'<div class="'+classes+' is-expanded" role="group" aria-label="Configuration diagram: choose a placement, sign or house"><svg viewBox="0 0 120 120" aria-hidden="true"><circle cx="60" cy="60" r="47" class="sky-configuration-mini-ring"/>'+radii+lines+'</svg><span class="sky-configuration-vertex-layer">'+vertices+'</span></div>';
 }
 
 async function paintConfigurationMiniGlyphs(root){
@@ -244,7 +255,9 @@ async function paintConfigurationMiniGlyphs(root){
       circle.removeAttribute('aria-hidden');
     });
     glyph.dataset.configurationInscribedClone='true';
-    host.replaceChildren(glyph);
+    const target=host.querySelector(':scope>.sky-configuration-vertex-placement');
+    if(!target)continue;
+    target.replaceChildren(glyph);
     host.dataset.canonicalGlyphReady='true';
   }
 }
@@ -544,10 +557,7 @@ function openConfiguration(tile,group){
     const matches=document.createElement('div');matches.className='sky-configuration-match-stack';
     const heading=document.createElement('div');heading.className='sky-configuration-match-stack-heading';
     const count=document.createElement('span');count.textContent=group.matches.length+' match'+(group.matches.length===1?'':'es');
-    const railKey=document.createElement('span');
-    railKey.className='sky-configuration-match-rail-key';
-    railKey.textContent='Upper: sign · Lower: house';
-    heading.append(count,railKey);
+    heading.append(count);
     const list=document.createElement('div');list.className='sky-configuration-match-list';
     group.matches.forEach((match,index)=>list.appendChild(configurationMatchRow(match,index)));
     matches.append(heading,list);detail.appendChild(matches);
