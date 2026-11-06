@@ -177,7 +177,7 @@ async function run(mode,url='http://127.0.0.1:4173/sky-chart.html'){
   focus=await page.evaluate(skyInteractions);
   assert.equal(focus.lockedState.sky,'A');
   assert.equal(focus.lockedState.value,1);
-  assert.match(await page.locator('.sky-wheel-sector-description').textContent(),/House 1/i);
+  assert.match(await page.locator('.sky-wheel-sector-description').textContent(),/(First House|House 1)/i);
   const glyph=asc.locator('.sky-configuration-vertex-placement');
   if(mobile)await glyph.tap();else await glyph.click();
   await page.waitForFunction(()=>window.RelphiSkyFoundationInteractions?.captureFocus?.().lockedState?.kind==='placement');
