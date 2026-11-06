@@ -109,7 +109,8 @@ async function run(mode,url='http://127.0.0.1:4173/sky-chart.html'){
   const ownAxes=tile.locator('.sky-configuration-match-row[data-configuration-match*="A:asc"][data-configuration-match*="A:dsc"][data-configuration-match*="B:vertex"][data-configuration-match*="B:anti-vertex"]');
   assert.equal(await ownAxes.count(),1,"The Asc/Dsc ↔ Vx/AVx Grand Cross must remain a selectable exact match");
   if(mobile)await ownAxes.tap();else await ownAxes.click();
-  assert.match(await tile.locator('.sky-configuration-intrinsic-axes-note').textContent(),/2 oppositions are intrinsic polar axes/);
+  assert.equal(await tile.locator('.sky-configuration-participant-guide,.sky-configuration-intrinsic-axes-note').count(),0,
+    'Expanded Configuration must not repeat its interpretation in supplementary cards or panels');
   const detailCopy=tile.locator('.sky-configuration-tile-copy');
   if(mobile)await detailCopy.tap();else await detailCopy.click();
   await page.waitForFunction(()=>document.querySelector('.sky-configuration-result-tile.is-expanded .sky-configuration-tile-copy')?.dataset.relphiCopyFeedback==='done',
@@ -119,42 +120,47 @@ async function run(mode,url='http://127.0.0.1:4173/sky-chart.html'){
   assert.match(detailText,/Structure:/);
   assert.match(detailText,/Interpretation:/);
 
-  // Sign/house rails need explicit identity and a semantic explanation in the expanded tile.
+  // Explain the EXISTING rails, without duplicating the placement interpretation.
   const meaning=await tile.evaluate(node=>{
-    const legend=node.querySelector('.sky-configuration-rail-legend');
-    const entries=[...node.querySelectorAll('.sky-configuration-participant-meaning')];
-    return{legend:legend?.textContent?.trim(),participants:entries.map(e=>e.textContent.trim()),
-      rails:[...node.querySelectorAll('.sky-configuration-match-participant')].map(p=>({
-       sign:p.dataset.sign,house:p.dataset.house,
-       signColor:p.querySelector('.sky-configuration-match-rail-sign')?.style.background,
-       houseColor:p.querySelector('.sky-configuration-match-rail-house')?.style.background
-      }))};
+    const key=node.querySelector('.sky-configuration-match-rail-key');
+    const rows=[...node.querySelectorAll('.sky-configuration-match-row')];
+    const first=rows.find(r=>r.classList.contains('is-selected'));
+    const participants=[...first.querySelectorAll('.sky-configuration-match-participant')].map(p=>({
+      sign:p.dataset.sign,house:p.dataset.house,title:p.title,
+      signTitle:p.querySelector('.sky-configuration-match-rail-sign')?.title,
+      houseTitle:p.querySelector('.sky-configuration-match-rail-house')?.title,
+      signColor:p.querySelector('.sky-configuration-match-rail-sign')?.style.background,
+      houseColor:p.querySelector('.sky-configuration-match-rail-house')?.style.background
+    }));
+    return{key:key?.textContent?.trim(),participants,ariaLabel:first?.getAttribute('aria-label'),
+      noteCount:node.querySelectorAll('.sky-configuration-participant-guide,.sky-configuration-intrinsic-axes-note,.sky-configuration-aspect-legend').length,
+      matchCount:rows.length};
   });
-  console.log('MEANING '+mode+' '+JSON.stringify(meaning).slice(0,1800));
-  assert.match(meaning.legend||'',/sign/i);
-  assert.match(meaning.legend||'',/house/i);
-  assert.ok(meaning.participants.length>=3,'Expanded tile should explain each participant');
-  assert.ok(meaning.participants.every(s=>SIGNS.some(sign=>s.includes(sign))),'Every selected vertex must expose its actual zodiac sign');
-  assert.ok(meaning.participants.some(s=>/House \d|house \d/i.test(s)));
-  assert.ok(meaning.participants.some(s=>/Virgo/.test(s)),'The natal Ascendant must retain Virgo');
+  console.log('RAILS '+mode+' '+JSON.stringify(meaning).slice(0,1600));
+  assert.match(meaning.key||'',/Upper: sign · Lower: house/);
+  assert.equal(meaning.noteCount,0,'No duplicate legend/participant cards or separate intrinsic-axis panel');
+  assert.equal(meaning.participants.length,4,'Use the four actual Grand Cross glyph rails');
+  assert.ok(meaning.participants.every(p=>p.signColor&&p.houseColor&&p.signTitle&&p.houseTitle),
+    'Keep the sign and house colors while labeling the EXISTING rails');
+  assert.ok(meaning.ariaLabel?.includes('Ascendant in Virgo house 1'),'Accessible match label must identify the natal Ascendant');
   const liveVertex=await page.evaluate(()=>{
     const sky=JSON.parse(localStorage.getItem('relphiSkyChartB')||'{}');
     const entries=sky.placements||sky.positions||sky.points||{};
     const value=entries.Vertex||entries.vertex;
     return Number(value?.longitude);
   });
-  assert.ok(Number.isFinite(liveVertex),'The comparison sky should retain a calculable Vertex');
+  assert.ok(Number.isFinite(liveVertex),'Comparison sky should retain a calculable Vertex');
   const vertexSign=SIGNS[Math.floor((((liveVertex%360)+360)%360)/30)];
-  assert.ok(meaning.participants.some(s=>s.includes('Vertex'+vertexSign)),
-    'The event Vertex sign must agree with its current calculated longitude');
+  assert.ok(meaning.participants.some(p=>p.title.includes('Vertex · '+vertexSign)),
+    'Existing Vertex rail must identify the currently calculated zodiac sign');
   const box=await tile.evaluate(node=>{
     const tileRect=node.getBoundingClientRect();
-    const guideRect=node.querySelector('.sky-configuration-participant-guide')?.getBoundingClientRect();
-    return{tileLeft:tileRect.left,tileRight:tileRect.right,guideLeft:guideRect?.left,guideRight:guideRect?.right};
+    const keyRect=node.querySelector('.sky-configuration-match-rail-key')?.getBoundingClientRect();
+    return{tileLeft:tileRect.left,tileRight:tileRect.right,keyLeft:keyRect?.left,keyRight:keyRect?.right};
   });
-  assert.ok(box.guideLeft>=box.tileLeft-2&&box.guideRight<=box.tileRight+2,
-    mode+' expanded sign/house guide must fit its tile horizontally');
-  await tile.locator('.sky-configuration-participant-guide').scrollIntoViewIfNeeded();
+  assert.ok(box.keyLeft>=box.tileLeft-2&&box.keyRight<=box.tileRight+2,
+    mode+' unobtrusive key must fit inside the expanded tile');
+  await tile.locator('.sky-configuration-match-stack-heading').scrollIntoViewIfNeeded();
   await page.screenshot({path:'feeling-stars-config-'+mode+'.png',fullPage:false});
 
   // When copying is denied, the owner must report a failure instead of a silent no-op.
