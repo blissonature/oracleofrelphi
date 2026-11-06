@@ -339,7 +339,12 @@ function groupedPatternsForResults(){
   })).sort((a,b)=>a.representative.maxPhase-b.representative.maxPhase||a.representative.meanPhase-b.representative.meanPhase);
 }
 function configurationMatchLabel(pattern){
-  return pattern.vertices.map(key=>placementWord(vertexLabel(key).id)).join(' · ');
+  return pattern.vertices.map(key=>{
+    const record=configurationRecord(key);
+    const sign=Number.isInteger(record.sign)?' in '+CONFIG_SIGN_NAMES[record.sign]:'';
+    const house=record.house?' house '+record.house:'';
+    return 'Sky '+record.sky+' '+record.name+sign+house;
+  }).join(' · ');
 }
 function configurationHoverPointer(event){
   const type=String(event?.pointerType||'');
@@ -410,6 +415,76 @@ async function paintConfigurationMatchGlyphs(root){
     host.dataset.canonicalGlyphReady='true';
   }
 }
+function configurationParticipantGuide(pattern){
+  // Sign and house are different dimensions: the top rail describes a zodiacal
+  // manner of expression; the bottom rail locates its field of experience.
+  // This reuses the shared Vocab descriptions and existing wheel/medallion colors.
+  const guide=document.createElement('section');
+  guide.className='sky-configuration-participant-guide';
+  guide.setAttribute('aria-label','Configuration signs, houses, and color-rail meanings');
+  const lead=document.createElement('p');
+  lead.className='sky-configuration-rail-legend';
+  lead.textContent='Color rails: upper = zodiac sign (how it expresses); lower = house (where it acts).';
+  guide.appendChild(lead);
+  const entries=document.createElement('div');
+  entries.className='sky-configuration-participant-meanings';
+  for(const key of pattern.vertices){
+    const record=configurationRecord(key);
+    const sign=Number.isInteger(record.sign)?record.sign:null;
+    if(sign===null)continue;
+    const house=Number.isInteger(record.house)&&record.house>=1&&record.house<=12&&window.RelphiRelationshipExportHouses?.include?.(record.sky)!==false?record.house:null;
+    const item=document.createElement('div');
+    item.className='sky-configuration-participant-meaning';
+    item.dataset.sky=record.sky;
+    const head=document.createElement('strong');
+    head.textContent='Sky '+record.sky+' · '+record.name+(record.retrograde?' Rx':'');
+    const owner=resultRead(record.sky)?.name;
+    if(owner)head.title='Sky '+record.sky+': '+owner;
+    item.appendChild(head);
+    const line=(kind,name,description,color)=>{
+      const row=document.createElement('div');
+      row.className='sky-configuration-participant-attribute sky-configuration-participant-'+kind;
+      const swatch=document.createElement('i');
+      swatch.className='sky-configuration-participant-swatch';
+      swatch.style.background=color;
+      swatch.setAttribute('aria-hidden','true');
+      const value=document.createElement('span');
+      value.textContent=name+(description?' — '+description:'');
+      row.append(swatch,value);
+      return row;
+    };
+    const signInfo=window.RelphiSkyVocab?.describeFocus?.('sign',sign);
+    item.appendChild(line('sign',signInfo?.name||CONFIG_SIGN_NAMES[sign],signInfo?.description||CONFIG_SIGN_TONE[sign],resultSignColor(sign)));
+    if(house){
+      const houseInfo=window.RelphiSkyVocab?.describeFocus?.('house',house);
+      item.appendChild(line('house','House '+house,houseInfo?.description||CONFIG_HOUSE_FIELD[house],resultHouseColor(house)));
+    }else{
+      const missing=document.createElement('span');
+      missing.className='sky-configuration-house-unknown';
+      missing.textContent='House unavailable for this sky';
+      item.appendChild(missing);
+    }
+    entries.appendChild(item);
+  }
+  guide.appendChild(entries);
+  const aspects=document.createElement('div');
+  aspects.className='sky-configuration-aspect-legend';
+  const label=document.createElement('strong');label.textContent='Aspect line colors:';
+  aspects.appendChild(label);
+  const kinds=new Set(pattern.edges.map(edge=>edge.aspect));
+  for(const aspect of kinds){
+    const key=document.createElement('span');
+    const swatch=document.createElement('i');
+    swatch.style.background=RESULT_ASPECT_COLORS[aspect]||'#777';
+    swatch.setAttribute('aria-hidden','true');
+    const name=document.createElement('span');
+    name.textContent=aspect.replace(/-/g,' ').replace(/\b\w/g,char=>char.toUpperCase());
+    key.append(swatch,name);
+    aspects.appendChild(key);
+  }
+  guide.appendChild(aspects);
+  return guide;
+}
 function renderSelectedConfiguration(tile,pattern){
   const detail=tile?.querySelector(':scope>.sky-configuration-result-detail');
   if(!detail)return;
@@ -454,28 +529,61 @@ function renderSelectedConfiguration(tile,pattern){
     holder.innerHTML=nestedConfigurationMarkup(pattern);
     if(holder.firstElementChild)explanation.appendChild(holder.firstElementChild);
   }
+  detail.querySelector(':scope>.sky-configuration-participant-guide')?.remove();
+  detail.insertBefore(configurationParticipantGuide(pattern),detail.querySelector(':scope>.sky-configuration-match-stack'));
   tile.dataset.configurationResult=pattern.key;
   const exact=tile.querySelector(':scope>.sky-configuration-result-summary .sky-configuration-result-exactness');
   if(exact)exact.textContent=Number.isFinite(pattern.maxPhase)?pattern.maxPhase.toFixed(2)+'°':'';
   paintConfigurationMiniGlyphs(visual);
 }
-async function copySelectedConfiguration(tile,button){
-  const pattern=tile?.__configurationSelectedPattern;if(!pattern)return;
-  const text='Configurations\n\n'+serializeConfigurationPattern(pattern);
+async function writeConfigurationClipboard(text,button,doneLabel){
+  if(!text)return false;
+  if(button?.dataset.configurationCopyPending==='true')return false;
+  const originalLabel=button?.dataset.configurationCopyAction||button?.getAttribute('aria-label')||'Copy';
+  if(button){
+    button.dataset.configurationCopyAction=originalLabel;
+    button.dataset.configurationCopyPending='true';
+    button.disabled=true;
+    button.textContent='Copying';
+  }
   let ok=false;
-  try{if(navigator.clipboard?.writeText){await navigator.clipboard.writeText(text);ok=true}}catch(_){}
+  try{
+    if(navigator.clipboard?.writeText){await navigator.clipboard.writeText(text);ok=true}
+  }catch(error){
+    // A browser may deny the modern API in a preview without granting Clipboard access.
+    // Continue through the existing synchronous document-copy fallback.
+  }
   if(!ok){
-    const area=document.createElement('textarea');area.value=text;area.setAttribute('readonly','');
-    Object.assign(area.style,{position:'fixed',left:'-10000px',top:'0',opacity:'0'});
-    document.body.appendChild(area);area.select();
-    try{ok=document.execCommand('copy')}catch(_){}
+    const area=document.createElement('textarea');
+    area.value=text;
+    area.readOnly=true;
+    Object.assign(area.style,{position:'fixed',left:'0',top:'0',width:'1px',height:'1px',opacity:'0'});
+    document.body.appendChild(area);
+    area.focus({preventScroll:true});
+    area.select();
+    area.setSelectionRange(0,area.value.length);
+    try{ok=!!document.execCommand('copy')}catch(error){ok=false}
     area.remove();
   }
-  if(ok&&button){
-    const prior=button.textContent;button.textContent='Copied';
+  if(button?.isConnected){
+    delete button.dataset.configurationCopyPending;
+    button.disabled=false;
+    button.textContent=ok?doneLabel:'Copy failed';
+    button.setAttribute('aria-label',ok?doneLabel:'Copy failed — browser clipboard permission unavailable');
     clearTimeout(button.__copyTimer);
-    button.__copyTimer=setTimeout(()=>{if(button.isConnected)button.textContent=prior||'Copy'},1100);
+    button.__copyTimer=window.setTimeout(()=>{
+      if(!button.isConnected)return;
+      button.textContent='Copy';
+      button.setAttribute('aria-label',originalLabel);
+    },1600);
   }
+  if(!ok)console.warn('[Sky Chart] Configuration copy denied by Clipboard API and document copy fallback.');
+  return ok;
+}
+async function copySelectedConfiguration(tile,button){
+  const pattern=tile?.__configurationSelectedPattern;
+  if(!pattern)return false;
+  return writeConfigurationClipboard('Configurations\n\n'+serializeConfigurationPattern(pattern),button,'Copied');
 }
 function selectConfigurationMatch(tile,pattern,row){
   tile.querySelectorAll('.sky-configuration-match-row.is-selected').forEach(node=>node.classList.remove('is-selected'));
@@ -573,7 +681,7 @@ function hierarchicalPatterns(source){
 function rawPatternsForResults(){return selectedPatternsForVisibility()}
 function patternsForResults(){return hierarchicalPatterns(rawPatternsForResults())}
 
-let configurationCopyTimer=0,configurationExportBusy=false,configurationExportLibrary=null;
+let configurationExportBusy=false,configurationExportLibrary=null;
 function configurationVertexText(key){
   const record=resultVertexRecord(key),item=vertexLabel(key);
   if(!record)return 'Sky '+item.sky+' '+item.label;
@@ -598,15 +706,8 @@ function serializeVisibleConfigurations(){
   return 'Configurations\n\n'+current.map(serializeConfigurationPattern).join('\n\n');
 }
 async function copyVisibleConfigurations(button){
-  const text=serializeVisibleConfigurations();if(!text)return;
-  let ok=false;
-  try{if(navigator.clipboard?.writeText){await navigator.clipboard.writeText(text);ok=true}}catch(_){}
-  if(!ok){
-    const area=document.createElement('textarea');area.value=text;area.setAttribute('readonly','');Object.assign(area.style,{position:'fixed',left:'-10000px',top:'0',opacity:'0'});document.body.appendChild(area);area.select();try{ok=document.execCommand('copy')}catch(_){}area.remove();
-  }
-  if(ok&&button){
-    const count=patternsForResults().length;button.textContent='Copied '+count;clearTimeout(configurationCopyTimer);configurationCopyTimer=setTimeout(()=>{if(button.isConnected)button.textContent='Copy'},1200);
-  }
+  const text=serializeVisibleConfigurations();
+  return writeConfigurationClipboard(text,button,'Copied '+patternsForResults().length);
 }
 function loadConfigurationExporter(){
   if(window.htmlToImage?.toPng)return Promise.resolve(window.htmlToImage);
@@ -644,7 +745,7 @@ async function downloadVisibleConfigurations(button){
 }
 function bindConfigurationActions(panel){
   const copy=panel?.querySelector('.sky-configuration-copy-button'),download=panel?.querySelector('.sky-configuration-download-button');
-  if(copy&&!copy.dataset.bound){copy.dataset.bound='true';copy.addEventListener('click',event=>{event.preventDefault();event.stopPropagation();copyVisibleConfigurations(copy)})}
+  if(copy&&!copy.dataset.bound){copy.dataset.bound='true';copy.setAttribute('aria-label','Copy visible configurations');copy.addEventListener('click',event=>{event.preventDefault();event.stopPropagation();void copyVisibleConfigurations(copy)})}
   if(download&&!download.dataset.bound){download.dataset.bound='true';download.addEventListener('click',event=>{event.preventDefault();event.stopPropagation();downloadVisibleConfigurations(download)})}
 }
 function inevitableMoreButton(hiddenCount){
