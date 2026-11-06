@@ -65,6 +65,41 @@ async function run(mode,url='http://127.0.0.1:4173/sky-chart.html'){
   assert.match(copied,/(Grand Cross|Mystic Rectangle|T-Square)/);
   console.log('COPY LIST '+mode+' '+copied.slice(0,100).replaceAll('\n',' '));
 
+  // Recreate the specific two-sky axis cross in a minimal relationship graph.
+  // The default Focus filter omits these angle/point edges, so don't assume
+  // its initial list includes a user-selected Focus configuration.
+  await page.evaluate(()=>{
+    const list=document.getElementById('skyFoundationRelationshipList');
+    list.replaceChildren();
+    const square=(left,right,lHouse,rHouse,lSign,rSign)=>{
+      const row=document.createElement('div');
+      row.className='sky-foundation-relationship-row';
+      Object.assign(row.dataset,{
+        relationshipMode:'A-B',leftSky:'A',rightSky:'B',
+        leftPlacement:left,rightPlacement:right,aspect:'square',
+        phaseError:'0.33',sourceOrb:'0.0833',harmonicOrder:'4',
+        leftHouse:String(lHouse),rightHouse:String(rHouse),
+        leftSign:String(lSign),rightSign:String(rSign)
+      });
+      return row;
+    };
+    list.append(
+      square('asc','vertex',1,5,5,8),
+      square('asc','anti-vertex',1,11,5,2),
+      square('dsc','vertex',7,5,11,8),
+      square('dsc','anti-vertex',7,11,11,2)
+    );
+    window.RelphiAspectConfigurations?.refresh?.();
+  });
+  await page.waitForFunction(()=>window.RelphiAspectConfigurations?.patterns?.some(pattern=>
+    pattern.type==='grand-cross'&&['A:asc','A:dsc','B:vertex','B:anti-vertex']
+      .every(key=>pattern.vertices.includes(key))),null,{timeout:10000});
+  await page.locator('[data-configuration-inevitable]').evaluate(input=>{
+    input.checked=true;
+    input.dispatchEvent(new Event('change',{bubbles:true}));
+  });
+  await page.waitForSelector('.sky-configuration-result-tile[data-configuration-type="grand-cross"]',{state:'visible',timeout:10000});
+
   const tile=page.locator('.sky-configuration-result-tile[data-configuration-type="grand-cross"]').first();
   if(mobile)await tile.locator('.sky-configuration-result-summary').tap();
   else await tile.locator('.sky-configuration-result-summary').click();
