@@ -1040,3 +1040,111 @@ html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]) .sky-chart-con
   background:#f6f0e8;
   color:#29231e;
 }
+
+
+/* Feeling the Stars: explain existing sign/house and aspect rails in the
+   Configurations renderer's own expanded tile, not in an overlay or tooltip. */
+.sky-configuration-participant-guide{
+  grid-column:1/-1;
+  display:grid;
+  gap:10px;
+  min-width:0;
+  border-top:1px solid rgba(31,27,24,.1);
+  padding-top:10px;
+}
+.sky-configuration-rail-legend{
+  margin:0;
+  color:#554b43;
+  font:750 .67rem/1.4 system-ui,sans-serif;
+}
+.sky-configuration-participant-meanings{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(min(100%,226px),1fr));
+  gap:8px;
+  min-width:0;
+}
+.sky-configuration-participant-meaning{
+  display:grid;
+  align-content:start;
+  gap:7px;
+  min-width:0;
+  padding:9px 10px;
+  border:1px solid rgba(31,27,24,.12);
+  border-radius:9px;
+  background:#fff;
+}
+.sky-configuration-participant-meaning>strong{
+  font:850 .68rem/1.2 system-ui,sans-serif;
+  color:#332d28;
+}
+.sky-configuration-participant-meaning[data-sky="A"]{border-top:3px solid #c9211e}
+.sky-configuration-participant-meaning[data-sky="B"]{border-top:3px solid #2462d0}
+.sky-configuration-participant-attribute{
+  display:grid;
+  grid-template-columns:24px minmax(0,1fr);
+  align-items:start;
+  gap:8px;
+  color:#494139;
+  font:650 .64rem/1.4 system-ui,sans-serif;
+}
+.sky-configuration-participant-swatch{
+  display:block;
+  width:24px;
+  height:5px;
+  margin-top:.5em;
+  border-radius:999px;
+  border:1px solid rgba(31,27,24,.08);
+}
+.sky-configuration-house-unknown{
+  color:#6f655d;
+  font:650 .62rem/1.3 system-ui,sans-serif;
+}
+.sky-configuration-aspect-legend{
+  display:flex;
+  flex-wrap:wrap;
+  align-items:center;
+  gap:6px 11px;
+  padding:7px 0 0;
+  border-top:1px solid rgba(31,27,24,.08);
+  color:#5b5047;
+  font:700 .62rem/1.3 system-ui,sans-serif;
+}
+.sky-configuration-aspect-legend>strong{font-weight:850}
+.sky-configuration-aspect-legend>span{
+  display:inline-flex;
+  gap:5px;
+  align-items:center;
+}
+.sky-configuration-aspect-legend>span>i{
+  width:22px;
+  height:4px;
+  border-radius:999px;
+}
+.sky-configuration-structure-toggle{
+  appearance:none;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  width:100%;
+  min-height:31px;
+  border:1px solid rgba(31,27,24,.2);
+  border-radius:7px;
+  padding:6px 10px;
+  background:#fff;
+  color:#40382f;
+  font:800 .64rem/1.1 system-ui,sans-serif;
+  text-align:left;
+  cursor:pointer;
+}
+.sky-configuration-structure-toggle:hover,
+.sky-configuration-structure-toggle:focus-visible{
+  border-color:#685f56;
+  background:#fffdf8;
+  outline:2px solid rgba(31,27,24,.15);
+  outline-offset:2px;
+}
+.sky-configuration-structure-toggle[aria-expanded="true"]{background:#f4eee6}
+@media(max-width:620px){
+  .sky-configuration-participant-meanings{grid-template-columns:1fr}
+  .sky-configuration-participant-guide{gap:8px}
+}
