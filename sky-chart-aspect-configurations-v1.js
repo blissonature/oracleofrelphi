@@ -158,6 +158,7 @@ function configurationApex(pattern,aspects){
 const CONFIG_SIGN_TONE=Object.freeze(['assertive and immediate','steady and embodied','curious and conversational','protective and attached','expressive and visible','discerning and practical','reciprocal and comparative','intense and investigative','exploratory and principled','disciplined and accountable','independent and collective','permeable and imaginative']);
 const CONFIG_HOUSE_FIELD=Object.freeze(['','identity and personal initiative','resources and self-worth','communication and immediate surroundings','home and private foundations','creative expression and pleasure','work, habits, and service','partnership and negotiation','shared resources and intimate commitments','learning and worldview','public role and responsibility','community, friendship, and belonging','solitude, retreat, and the unseen']);
 const CONFIG_SIGN_NAMES=Object.freeze(['Aries','Taurus','Gemini','Cancer','Leo','Virgo','Libra','Scorpio','Sagittarius','Capricorn','Aquarius','Pisces']);
+const CONFIG_SIGN_GLYPHS=Object.freeze(['♈','♉','♊','♋','♌','♍','♎','♏','♐','♑','♒','♓']);
 function configurationRecord(key){
   const record=resultVertexRecord(key),item=vertexLabel(key);
   if(!record)return{...item,meaning:CONFIG_PLACEMENT_MEANING[item.id]||'its role'};
@@ -215,13 +216,23 @@ function miniConfigurationMarkup(pattern,{compact=false,interactive=true}={}){
     return'<div class="'+classes+'"'+attrs+'><svg viewBox="0 0 120 120" aria-hidden="true"><circle cx="60" cy="60" r="47" class="sky-configuration-mini-ring"/>'+radii+lines+points+'</svg></div>';
   }
 
-  // Expanded diagrams keep geometry in the 120×120 SVG, but canonical
-  // inscribed vertices live in screen space so wheel scaling cannot alter them.
+  // The expanded geometry itself owns three distinct semantic targets at
+  // each vertex. They feed the existing Foundation interaction controller:
+  // placement glyph, zodiac sign, and this sky's house. No second list/legend
+  // or duplicate explanatory card is rendered below the diagram.
   const vertices=[...records.values()].map(record=>{
     const p=resultPoint(record.value),left=(p.x/120*100).toFixed(4),top=(p.y/120*100).toFixed(4);
-    return'<span class="sky-configuration-vertex-host" data-canonical-placement="'+record.id+'" data-sky="'+record.sky+'" style="left:'+left+'%;top:'+top+'%"></span>';
+    const sign=record.sign,validSign=Number.isInteger(sign)&&sign>=0&&sign<12;
+    const house=Number.isInteger(record.house)&&record.house>=1&&record.house<=12&&window.RelphiRelationshipExportHouses?.include?.(record.sky)!==false?record.house:null;
+    const signName=validSign?CONFIG_SIGN_NAMES[sign]:'';
+    const houseInfo=house?window.RelphiSkyVocab?.describeFocus?.('house',house):null;
+    const signButton=validSign?'<button type="button" class="sky-configuration-vertex-sign" data-interactive="sign" data-sign="'+sign+'" aria-label="'+signName+' zodiac sign" title="'+signName+'" style="--vertex-sign-color:'+resultSignColor(sign)+'">'+CONFIG_SIGN_GLYPHS[sign]+'</button>':'';
+    const houseButton=house?'<button type="button" class="sky-configuration-vertex-house" data-interactive="house" data-sky="'+record.sky+'" data-house="'+house+'" aria-label="Sky '+record.sky+' House '+house+'" title="House '+house+(houseInfo?.description?' — '+houseInfo.description:'')+'" style="--vertex-house-color:'+resultHouseColor(house)+'">'+house+'</button>':'';
+    return'<span class="sky-configuration-vertex-host" data-canonical-placement="'+record.id+'" data-sky="'+record.sky+'" data-vertex-half="'+(p.y<60?'top':'bottom')+'" style="left:'+left+'%;top:'+top+'%">'+
+      '<button type="button" class="sky-configuration-vertex-placement" data-interactive="placement" data-sky="'+record.sky+'" data-placement="'+record.id+'" aria-label="Sky '+record.sky+' '+placementWord(record.id)+'" title="Sky '+record.sky+' '+placementWord(record.id)+'"></button>'+
+      '<span class="sky-configuration-vertex-attributes">'+signButton+houseButton+'</span></span>';
   }).join('');
-  return'<div class="'+classes+'"'+attrs+'><svg viewBox="0 0 120 120" aria-hidden="true"><circle cx="60" cy="60" r="47" class="sky-configuration-mini-ring"/>'+radii+lines+'</svg><span class="sky-configuration-vertex-layer" aria-hidden="true">'+vertices+'</span></div>';
+  return'<div class="'+classes+' is-expanded" role="group" aria-label="Configuration diagram: choose a placement, sign or house"><svg viewBox="0 0 120 120" aria-hidden="true"><circle cx="60" cy="60" r="47" class="sky-configuration-mini-ring"/>'+radii+lines+'</svg><span class="sky-configuration-vertex-layer">'+vertices+'</span></div>';
 }
 
 async function paintConfigurationMiniGlyphs(root){
@@ -244,14 +255,17 @@ async function paintConfigurationMiniGlyphs(root){
       circle.removeAttribute('aria-hidden');
     });
     glyph.dataset.configurationInscribedClone='true';
-    host.replaceChildren(glyph);
+    const target=host.querySelector(':scope>.sky-configuration-vertex-placement');
+    if(!target)continue;
+    target.replaceChildren(glyph);
     host.dataset.canonicalGlyphReady='true';
   }
 }
 function aspectColorRail(pattern){
   const seen=[];
   pattern.edges.forEach(edge=>{const color=RESULT_ASPECT_COLORS[edge.aspect]||'#777';if(!seen.some(item=>item.aspect===edge.aspect))seen.push({aspect:edge.aspect,color})});
-  return'<span class="sky-configuration-result-color-rail" aria-hidden="true">'+seen.map(item=>'<i data-aspect="'+item.aspect+'" style="background:'+item.color+'"></i>').join('')+'</span>';
+  const names=seen.map(item=>item.aspect.replace(/-/g,' ')).join(' and ');
+  return'<span class="sky-configuration-result-color-rail" title="Aspect colors: '+names+'" aria-hidden="true">'+seen.map(item=>'<i data-aspect="'+item.aspect+'" title="'+item.aspect.replace(/-/g,' ')+'" style="background:'+item.color+'"></i>').join('')+'</span>';
 }
 function ensureResultsPanel(){
   const relationships=document.getElementById('skyFoundationRelationships'),comparison=document.getElementById('skyFoundationComparison');if(!relationships||!comparison)return null;
@@ -339,7 +353,12 @@ function groupedPatternsForResults(){
   })).sort((a,b)=>a.representative.maxPhase-b.representative.maxPhase||a.representative.meanPhase-b.representative.meanPhase);
 }
 function configurationMatchLabel(pattern){
-  return pattern.vertices.map(key=>placementWord(vertexLabel(key).id)).join(' · ');
+  return pattern.vertices.map(key=>{
+    const record=configurationRecord(key);
+    const sign=Number.isInteger(record.sign)?' in '+CONFIG_SIGN_NAMES[record.sign]:'';
+    const house=record.house?' house '+record.house:'';
+    return 'Sky '+record.sky+' '+record.name+sign+house;
+  }).join(' · ');
 }
 function configurationHoverPointer(event){
   const type=String(event?.pointerType||'');
@@ -362,6 +381,8 @@ function configurationMatchRow(pattern,index){
     const signRail=document.createElement('span');
     signRail.className='sky-configuration-match-rail sky-configuration-match-rail-sign';
     signRail.style.background=resultSignColor(record?.sign);
+    const signInfo=Number.isInteger(record?.sign)?window.RelphiSkyVocab?.describeFocus?.('sign',record.sign):null;
+    signRail.title=signInfo?.name||CONFIG_SIGN_NAMES[record?.sign]||'Sign unavailable';
     const glyph=document.createElement('span');
     glyph.className='sky-configuration-match-glyph';
     glyph.dataset.canonicalPlacement=item.id;
@@ -370,6 +391,10 @@ function configurationMatchRow(pattern,index){
     const houseRail=document.createElement('span');
     houseRail.className='sky-configuration-match-rail sky-configuration-match-rail-house';
     houseRail.style.background=resultHouseColor(record?.house);
+    const house=Number.isInteger(record?.house)&&record.house>=1&&record.house<=12&&window.RelphiRelationshipExportHouses?.include?.(item.sky)!==false?record.house:null;
+    const houseInfo=house?window.RelphiSkyVocab?.describeFocus?.('house',house):null;
+    houseRail.title=house?'House '+house+(houseInfo?.description?' — '+houseInfo.description:''):'House unavailable';
+    participant.title='Sky '+item.sky+' '+placementWord(item.id)+' · '+signRail.title+' · '+houseRail.title;
     participant.append(signRail,glyph,houseRail);
     placements.appendChild(participant);
   });
@@ -459,23 +484,54 @@ function renderSelectedConfiguration(tile,pattern){
   if(exact)exact.textContent=Number.isFinite(pattern.maxPhase)?pattern.maxPhase.toFixed(2)+'°':'';
   paintConfigurationMiniGlyphs(visual);
 }
-async function copySelectedConfiguration(tile,button){
-  const pattern=tile?.__configurationSelectedPattern;if(!pattern)return;
-  const text='Configurations\n\n'+serializeConfigurationPattern(pattern);
+async function writeConfigurationClipboard(text,button,doneLabel){
+  if(!text)return false;
+  if(button?.dataset.configurationCopyPending==='true')return false;
+  const originalLabel=button?.dataset.configurationCopyAction||button?.getAttribute('aria-label')||'Copy';
+  if(button){
+    button.dataset.configurationCopyAction=originalLabel;
+    button.dataset.configurationCopyPending='true';
+    button.disabled=true;
+    button.textContent='Copying';
+  }
   let ok=false;
-  try{if(navigator.clipboard?.writeText){await navigator.clipboard.writeText(text);ok=true}}catch(_){}
+  try{
+    if(navigator.clipboard?.writeText){await navigator.clipboard.writeText(text);ok=true}
+  }catch(error){
+    // A browser may deny the modern API in a preview without granting Clipboard access.
+    // Continue through the existing synchronous document-copy fallback.
+  }
   if(!ok){
-    const area=document.createElement('textarea');area.value=text;area.setAttribute('readonly','');
-    Object.assign(area.style,{position:'fixed',left:'-10000px',top:'0',opacity:'0'});
-    document.body.appendChild(area);area.select();
-    try{ok=document.execCommand('copy')}catch(_){}
+    const area=document.createElement('textarea');
+    area.value=text;
+    area.readOnly=true;
+    Object.assign(area.style,{position:'fixed',left:'0',top:'0',width:'1px',height:'1px',opacity:'0'});
+    document.body.appendChild(area);
+    area.focus({preventScroll:true});
+    area.select();
+    area.setSelectionRange(0,area.value.length);
+    try{ok=!!document.execCommand('copy')}catch(error){ok=false}
     area.remove();
   }
-  if(ok&&button){
-    const prior=button.textContent;button.textContent='Copied';
+  if(button?.isConnected){
+    delete button.dataset.configurationCopyPending;
+    button.disabled=false;
+    button.textContent=ok?doneLabel:'Copy failed';
+    button.setAttribute('aria-label',ok?doneLabel:'Copy failed — browser clipboard permission unavailable');
     clearTimeout(button.__copyTimer);
-    button.__copyTimer=setTimeout(()=>{if(button.isConnected)button.textContent=prior||'Copy'},1100);
+    button.__copyTimer=window.setTimeout(()=>{
+      if(!button.isConnected)return;
+      button.textContent='Copy';
+      button.setAttribute('aria-label',originalLabel);
+    },1600);
   }
+  if(!ok)console.warn('[Sky Chart] Configuration copy denied by Clipboard API and document copy fallback.');
+  return ok;
+}
+async function copySelectedConfiguration(tile,button){
+  const pattern=tile?.__configurationSelectedPattern;
+  if(!pattern)return false;
+  return writeConfigurationClipboard('Configurations\n\n'+serializeConfigurationPattern(pattern),button,'Copied');
 }
 function selectConfigurationMatch(tile,pattern,row){
   tile.querySelectorAll('.sky-configuration-match-row.is-selected').forEach(node=>node.classList.remove('is-selected'));
@@ -499,7 +555,9 @@ function openConfiguration(tile,group){
       tileCopy.addEventListener('click',event=>{event.preventDefault();event.stopPropagation();copySelectedConfiguration(tile,tileCopy)});
     }
     const matches=document.createElement('div');matches.className='sky-configuration-match-stack';
-    const heading=document.createElement('div');heading.className='sky-configuration-match-stack-heading';heading.textContent=group.matches.length+' match'+(group.matches.length===1?'':'es');
+    const heading=document.createElement('div');heading.className='sky-configuration-match-stack-heading';
+    const count=document.createElement('span');count.textContent=group.matches.length+' match'+(group.matches.length===1?'':'es');
+    heading.append(count);
     const list=document.createElement('div');list.className='sky-configuration-match-list';
     group.matches.forEach((match,index)=>list.appendChild(configurationMatchRow(match,index)));
     matches.append(heading,list);detail.appendChild(matches);
@@ -573,7 +631,7 @@ function hierarchicalPatterns(source){
 function rawPatternsForResults(){return selectedPatternsForVisibility()}
 function patternsForResults(){return hierarchicalPatterns(rawPatternsForResults())}
 
-let configurationCopyTimer=0,configurationExportBusy=false,configurationExportLibrary=null;
+let configurationExportBusy=false,configurationExportLibrary=null;
 function configurationVertexText(key){
   const record=resultVertexRecord(key),item=vertexLabel(key);
   if(!record)return 'Sky '+item.sky+' '+item.label;
@@ -598,15 +656,8 @@ function serializeVisibleConfigurations(){
   return 'Configurations\n\n'+current.map(serializeConfigurationPattern).join('\n\n');
 }
 async function copyVisibleConfigurations(button){
-  const text=serializeVisibleConfigurations();if(!text)return;
-  let ok=false;
-  try{if(navigator.clipboard?.writeText){await navigator.clipboard.writeText(text);ok=true}}catch(_){}
-  if(!ok){
-    const area=document.createElement('textarea');area.value=text;area.setAttribute('readonly','');Object.assign(area.style,{position:'fixed',left:'-10000px',top:'0',opacity:'0'});document.body.appendChild(area);area.select();try{ok=document.execCommand('copy')}catch(_){}area.remove();
-  }
-  if(ok&&button){
-    const count=patternsForResults().length;button.textContent='Copied '+count;clearTimeout(configurationCopyTimer);configurationCopyTimer=setTimeout(()=>{if(button.isConnected)button.textContent='Copy'},1200);
-  }
+  const text=serializeVisibleConfigurations();
+  return writeConfigurationClipboard(text,button,'Copied '+patternsForResults().length);
 }
 function loadConfigurationExporter(){
   if(window.htmlToImage?.toPng)return Promise.resolve(window.htmlToImage);
@@ -644,7 +695,7 @@ async function downloadVisibleConfigurations(button){
 }
 function bindConfigurationActions(panel){
   const copy=panel?.querySelector('.sky-configuration-copy-button'),download=panel?.querySelector('.sky-configuration-download-button');
-  if(copy&&!copy.dataset.bound){copy.dataset.bound='true';copy.addEventListener('click',event=>{event.preventDefault();event.stopPropagation();copyVisibleConfigurations(copy)})}
+  if(copy&&!copy.dataset.bound){copy.dataset.bound='true';copy.setAttribute('aria-label','Copy visible configurations');copy.addEventListener('click',event=>{event.preventDefault();event.stopPropagation();void copyVisibleConfigurations(copy)})}
   if(download&&!download.dataset.bound){download.dataset.bound='true';download.addEventListener('click',event=>{event.preventDefault();event.stopPropagation();downloadVisibleConfigurations(download)})}
 }
 function inevitableMoreButton(hiddenCount){
