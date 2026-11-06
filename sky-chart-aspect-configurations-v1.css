@@ -1120,6 +1120,15 @@ html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]) .sky-chart-con
   height:4px;
   border-radius:999px;
 }
+.sky-configuration-intrinsic-axes-note{
+  margin:0;
+  padding:8px 10px;
+  border-radius:8px;
+  border:1px solid rgba(53,47,42,.12);
+  background:#f6f2eb;
+  color:#564c42;
+  font:650 .62rem/1.45 system-ui,sans-serif;
+}
 .sky-configuration-structure-toggle{
   appearance:none;
   display:flex;
