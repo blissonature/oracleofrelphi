@@ -69,6 +69,12 @@ async function run(mode,url='http://127.0.0.1:4173/sky-chart.html'){
   if(mobile)await tile.locator('.sky-configuration-result-summary').tap();
   else await tile.locator('.sky-configuration-result-summary').click();
   await page.waitForSelector('.sky-configuration-result-tile.is-expanded .sky-configuration-result-detail',{timeout:10000});
+  const matchKeys=await tile.locator('.sky-configuration-match-row').evaluateAll(rows=>rows.map(row=>row.dataset.configurationMatch));
+  console.log('GRAND CROSS MATCHES '+mode+' '+JSON.stringify(matchKeys.slice(0,12)));
+  const ownAxes=tile.locator('.sky-configuration-match-row[data-configuration-match*="A:asc"][data-configuration-match*="A:dsc"][data-configuration-match*="B:vertex"][data-configuration-match*="B:anti-vertex"]');
+  assert.equal(await ownAxes.count(),1,'The user's Asc/Dsc ↔ Vx/AVx configuration must remain a selectable exact match');
+  if(mobile)await ownAxes.tap();else await ownAxes.click();
+  assert.match(await tile.locator('.sky-configuration-intrinsic-axes-note').textContent(),/2 oppositions are intrinsic polar axes/);
   const detailCopy=tile.locator('.sky-configuration-tile-copy');
   if(mobile)await detailCopy.tap();else await detailCopy.click();
   await page.waitForFunction(()=>document.querySelector('.sky-configuration-result-tile.is-expanded .sky-configuration-tile-copy')?.dataset.relphiCopyFeedback==='done',
@@ -95,6 +101,17 @@ async function run(mode,url='http://127.0.0.1:4173/sky-chart.html'){
   assert.ok(meaning.participants.length>=3,'Expanded tile should explain each participant');
   assert.ok(meaning.participants.every(s=>SIGNS.some(sign=>s.includes(sign))),'Every selected vertex must expose its actual zodiac sign');
   assert.ok(meaning.participants.some(s=>/House \d|house \d/i.test(s)));
+  assert.ok(meaning.participants.some(s=>/Virgo/.test(s)),'The natal Ascendant must retain Virgo');
+  assert.ok(meaning.participants.some(s=>/Sagittarius/.test(s)),'The event Vertex must retain Sagittarius');
+  const box=await tile.evaluate(node=>{
+    const tileRect=node.getBoundingClientRect();
+    const guideRect=node.querySelector('.sky-configuration-participant-guide')?.getBoundingClientRect();
+    return{tileLeft:tileRect.left,tileRight:tileRect.right,guideLeft:guideRect?.left,guideRight:guideRect?.right};
+  });
+  assert.ok(box.guideLeft>=box.tileLeft-2&&box.guideRight<=box.tileRight+2,
+    mode+' expanded sign/house guide must fit its tile horizontally');
+  await tile.locator('.sky-configuration-participant-guide').scrollIntoViewIfNeeded();
+  await page.screenshot({path:'feeling-stars-config-'+mode+'.png',fullPage:false});
 
   // When copying is denied, the owner must report a failure instead of a silent no-op.
   await page.evaluate(()=>{
