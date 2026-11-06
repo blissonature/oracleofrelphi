@@ -93,7 +93,7 @@ async function run(mode){
   assert.match(meaning.legend||'',/sign/i);
   assert.match(meaning.legend||'',/house/i);
   assert.ok(meaning.participants.length>=3,'Expanded tile should explain each participant');
-  assert.ok(meaning.participants.some(s=>/Virgo|Sagittarius|Gemini|Aries|Libra/.test(s)));
+  assert.ok(meaning.participants.every(s=>SIGNS.some(sign=>s.includes(sign))),'Every selected vertex must expose its actual zodiac sign');
   assert.ok(meaning.participants.some(s=>/House \d|house \d/i.test(s)));
 
   // When copying is denied, the owner must report a failure instead of a silent no-op.
