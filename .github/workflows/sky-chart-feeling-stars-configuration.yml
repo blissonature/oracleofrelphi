@@ -26,7 +26,9 @@ jobs:
         run: |
           npm install --no-save playwright@1.52.0 luxon@3 suncalc@1.9.0
           npx playwright install --with-deps chromium
-      - name: Chromium desktop and touch verification
+      - name: Chromium desktop, touch and exact-commit hosted preview verification
+        env:
+          REMOTE_PREVIEW_REF: ${{ github.event.pull_request.head.sha }}
         run: |
           python3 -m http.server 4173 >/tmp/feeling-stars-config-http.log 2>&1 &
           node tests/sky-chart-feeling-stars-configuration-browser.mjs
