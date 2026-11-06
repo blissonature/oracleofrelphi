@@ -72,7 +72,7 @@ async function run(mode,url='http://127.0.0.1:4173/sky-chart.html'){
   const matchKeys=await tile.locator('.sky-configuration-match-row').evaluateAll(rows=>rows.map(row=>row.dataset.configurationMatch));
   console.log('GRAND CROSS MATCHES '+mode+' '+JSON.stringify(matchKeys.slice(0,12)));
   const ownAxes=tile.locator('.sky-configuration-match-row[data-configuration-match*="A:asc"][data-configuration-match*="A:dsc"][data-configuration-match*="B:vertex"][data-configuration-match*="B:anti-vertex"]');
-  assert.equal(await ownAxes.count(),1,'The user's Asc/Dsc ↔ Vx/AVx configuration must remain a selectable exact match');
+  assert.equal(await ownAxes.count(),1,"The Asc/Dsc ↔ Vx/AVx Grand Cross must remain a selectable exact match");
   if(mobile)await ownAxes.tap();else await ownAxes.click();
   assert.match(await tile.locator('.sky-configuration-intrinsic-axes-note').textContent(),/2 oppositions are intrinsic polar axes/);
   const detailCopy=tile.locator('.sky-configuration-tile-copy');
