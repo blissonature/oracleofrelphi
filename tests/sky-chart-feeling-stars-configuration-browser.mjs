@@ -29,7 +29,7 @@ const b=sky('Sensed Spiral, Bilateral Neural Activity in Arms and Jaw',{
 },-45.9,'2026-11-06T03:35:00Z');
 
 const browser=await chromium.launch({headless:true});
-async function run(mode){
+async function run(mode,url='http://127.0.0.1:4173/sky-chart.html'){
  const mobile=mode==='mobile';
  const context=await browser.newContext({viewport:mobile?{width:390,height:844}:{width:1280,height:960},
     hasTouch:mobile,isMobile:mobile,deviceScaleFactor:mobile?2:1,permissions:['clipboard-read','clipboard-write']});
@@ -49,7 +49,7 @@ async function run(mode){
    localStorage.setItem('relphiSkyConfigurationInevitableV1','false');
  },{a,b});
  try{
-  await page.goto('http://127.0.0.1:4173/sky-chart.html',{waitUntil:'domcontentloaded'});
+  await page.goto(url,{waitUntil:'domcontentloaded',timeout:35000});
   await page.waitForSelector('#skyFoundationRoot[aria-busy="false"]',{timeout:30000});
   await page.waitForSelector('#skyFoundationConfigurations:not([hidden]) .sky-configuration-result-tile',
      {timeout:30000});
@@ -111,4 +111,12 @@ async function run(mode){
   console.log('PASS '+mode+' list and tile clipboard; visible failure status; sign and house interpretation');
  }finally{await context.close()}
 }
-try{await run('desktop');await run('mobile')}finally{await browser.close()}
+try{
+ await run('desktop');
+ await run('mobile');
+ const ref=process.env.REMOTE_PREVIEW_REF||'';
+ if(ref){
+  assert.match(ref,/^[a-f0-9]{40}$/i,'The hosted preview must use the exact commit SHA');
+  await run('hosted-preview','https://oracleofrelphi.com/sky-chart-preview/sky-chart.html?ref='+ref);
+ }
+}finally{await browser.close()}
