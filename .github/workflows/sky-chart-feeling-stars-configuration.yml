@@ -1,0 +1,32 @@
+name: Feeling the Stars configurations clipboard and meaning
+
+on:
+  pull_request:
+    paths:
+      - 'sky-chart-aspect-configurations-v1.js'
+      - 'sky-chart-aspect-configurations-v1.css'
+      - 'tests/sky-chart-feeling-stars-configuration-browser.mjs'
+      - '.github/workflows/sky-chart-feeling-stars-configuration.yml'
+  workflow_dispatch:
+
+jobs:
+  configuration-meaning:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Syntax check
+        run: |
+          node --check sky-chart-aspect-configurations-v1.js
+          node --check tests/sky-chart-feeling-stars-configuration-browser.mjs
+      - name: Install browser dependencies
+        run: |
+          npm install --no-save playwright@1.52.0 luxon@3 suncalc@1.9.0
+          npx playwright install --with-deps chromium
+      - name: Chromium desktop and touch verification
+        run: |
+          python3 -m http.server 4173 >/tmp/feeling-stars-config-http.log 2>&1 &
+          node tests/sky-chart-feeling-stars-configuration-browser.mjs
