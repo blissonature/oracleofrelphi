@@ -251,7 +251,8 @@ async function paintConfigurationMiniGlyphs(root){
 function aspectColorRail(pattern){
   const seen=[];
   pattern.edges.forEach(edge=>{const color=RESULT_ASPECT_COLORS[edge.aspect]||'#777';if(!seen.some(item=>item.aspect===edge.aspect))seen.push({aspect:edge.aspect,color})});
-  return'<span class="sky-configuration-result-color-rail" aria-hidden="true">'+seen.map(item=>'<i data-aspect="'+item.aspect+'" style="background:'+item.color+'"></i>').join('')+'</span>';
+  const names=seen.map(item=>item.aspect.replace(/-/g,' ')).join(' and ');
+  return'<span class="sky-configuration-result-color-rail" title="Aspect colors: '+names+'" aria-hidden="true">'+seen.map(item=>'<i data-aspect="'+item.aspect+'" title="'+item.aspect.replace(/-/g,' ')+'" style="background:'+item.color+'"></i>').join('')+'</span>';
 }
 function ensureResultsPanel(){
   const relationships=document.getElementById('skyFoundationRelationships'),comparison=document.getElementById('skyFoundationComparison');if(!relationships||!comparison)return null;
@@ -367,6 +368,8 @@ function configurationMatchRow(pattern,index){
     const signRail=document.createElement('span');
     signRail.className='sky-configuration-match-rail sky-configuration-match-rail-sign';
     signRail.style.background=resultSignColor(record?.sign);
+    const signInfo=Number.isInteger(record?.sign)?window.RelphiSkyVocab?.describeFocus?.('sign',record.sign):null;
+    signRail.title=signInfo?.name||CONFIG_SIGN_NAMES[record?.sign]||'Sign unavailable';
     const glyph=document.createElement('span');
     glyph.className='sky-configuration-match-glyph';
     glyph.dataset.canonicalPlacement=item.id;
@@ -375,6 +378,10 @@ function configurationMatchRow(pattern,index){
     const houseRail=document.createElement('span');
     houseRail.className='sky-configuration-match-rail sky-configuration-match-rail-house';
     houseRail.style.background=resultHouseColor(record?.house);
+    const house=Number.isInteger(record?.house)&&record.house>=1&&record.house<=12&&window.RelphiRelationshipExportHouses?.include?.(item.sky)!==false?record.house:null;
+    const houseInfo=house?window.RelphiSkyVocab?.describeFocus?.('house',house):null;
+    houseRail.title=house?'House '+house+(houseInfo?.description?' — '+houseInfo.description:''):'House unavailable';
+    participant.title='Sky '+item.sky+' '+placementWord(item.id)+' · '+signRail.title+' · '+houseRail.title;
     participant.append(signRail,glyph,houseRail);
     placements.appendChild(participant);
   });
@@ -414,84 +421,6 @@ async function paintConfigurationMatchGlyphs(root){
     host.replaceChildren(glyph);
     host.dataset.canonicalGlyphReady='true';
   }
-}
-function configurationParticipantGuide(pattern){
-  // Sign and house are different dimensions: the top rail describes a zodiacal
-  // manner of expression; the bottom rail locates its field of experience.
-  // This reuses the shared Vocab descriptions and existing wheel/medallion colors.
-  const guide=document.createElement('section');
-  guide.className='sky-configuration-participant-guide';
-  guide.setAttribute('aria-label','Configuration signs, houses, and color-rail meanings');
-  const lead=document.createElement('p');
-  lead.className='sky-configuration-rail-legend';
-  lead.textContent='Color rails: upper = zodiac sign (how it expresses); lower = house (where it acts).';
-  guide.appendChild(lead);
-  const entries=document.createElement('div');
-  entries.className='sky-configuration-participant-meanings';
-  for(const key of pattern.vertices){
-    const record=configurationRecord(key);
-    const sign=Number.isInteger(record.sign)?record.sign:null;
-    if(sign===null)continue;
-    const house=Number.isInteger(record.house)&&record.house>=1&&record.house<=12&&window.RelphiRelationshipExportHouses?.include?.(record.sky)!==false?record.house:null;
-    const item=document.createElement('div');
-    item.className='sky-configuration-participant-meaning';
-    item.dataset.sky=record.sky;
-    const head=document.createElement('strong');
-    head.textContent='Sky '+record.sky+' · '+record.name+(record.retrograde?' Rx':'');
-    const owner=resultRead(record.sky)?.name;
-    if(owner)head.title='Sky '+record.sky+': '+owner;
-    item.appendChild(head);
-    const line=(kind,name,description,color)=>{
-      const row=document.createElement('div');
-      row.className='sky-configuration-participant-attribute sky-configuration-participant-'+kind;
-      const swatch=document.createElement('i');
-      swatch.className='sky-configuration-participant-swatch';
-      swatch.style.background=color;
-      swatch.setAttribute('aria-hidden','true');
-      const value=document.createElement('span');
-      value.textContent=name+(description?' — '+description:'');
-      row.append(swatch,value);
-      return row;
-    };
-    const signInfo=window.RelphiSkyVocab?.describeFocus?.('sign',sign);
-    item.appendChild(line('sign',signInfo?.name||CONFIG_SIGN_NAMES[sign],signInfo?.description||CONFIG_SIGN_TONE[sign],resultSignColor(sign)));
-    if(house){
-      const houseInfo=window.RelphiSkyVocab?.describeFocus?.('house',house);
-      item.appendChild(line('house','House '+house,houseInfo?.description||CONFIG_HOUSE_FIELD[house],resultHouseColor(house)));
-    }else{
-      const missing=document.createElement('span');
-      missing.className='sky-configuration-house-unknown';
-      missing.textContent='House unavailable for this sky';
-      item.appendChild(missing);
-    }
-    entries.appendChild(item);
-  }
-  guide.appendChild(entries);
-  const aspects=document.createElement('div');
-  aspects.className='sky-configuration-aspect-legend';
-  const label=document.createElement('strong');label.textContent='Aspect line colors:';
-  aspects.appendChild(label);
-  const kinds=new Set(pattern.edges.map(edge=>edge.aspect));
-  for(const aspect of kinds){
-    const key=document.createElement('span');
-    const swatch=document.createElement('i');
-    swatch.style.background=RESULT_ASPECT_COLORS[aspect]||'#777';
-    swatch.setAttribute('aria-hidden','true');
-    const name=document.createElement('span');
-    name.textContent=aspect.replace(/-/g,' ').replace(/\b\w/g,char=>char.toUpperCase());
-    key.append(swatch,name);
-    aspects.appendChild(key);
-  }
-  guide.appendChild(aspects);
-  const inherentAxes=pattern.edges.filter(edge=>edge.entailedKind==='polar-axis');
-  if(inherentAxes.length){
-    const note=document.createElement('p');
-    note.className='sky-configuration-intrinsic-axes-note';
-    note.textContent=inherentAxes.length+' opposition'+(inherentAxes.length===1?' is':'s are')+
-      ' intrinsic polar axes (such as Ascendant–Descendant or Vertex–Anti-Vertex), not separate observed alignments. The other connections describe how those axes fit together.';
-    guide.appendChild(note);
-  }
-  return guide;
 }
 function renderSelectedConfiguration(tile,pattern){
   const detail=tile?.querySelector(':scope>.sky-configuration-result-detail');
@@ -537,8 +466,6 @@ function renderSelectedConfiguration(tile,pattern){
     holder.innerHTML=nestedConfigurationMarkup(pattern);
     if(holder.firstElementChild)explanation.appendChild(holder.firstElementChild);
   }
-  detail.querySelector(':scope>.sky-configuration-participant-guide')?.remove();
-  detail.insertBefore(configurationParticipantGuide(pattern),detail.querySelector(':scope>.sky-configuration-match-stack'));
   tile.dataset.configurationResult=pattern.key;
   const exact=tile.querySelector(':scope>.sky-configuration-result-summary .sky-configuration-result-exactness');
   if(exact)exact.textContent=Number.isFinite(pattern.maxPhase)?pattern.maxPhase.toFixed(2)+'°':'';
@@ -615,7 +542,12 @@ function openConfiguration(tile,group){
       tileCopy.addEventListener('click',event=>{event.preventDefault();event.stopPropagation();copySelectedConfiguration(tile,tileCopy)});
     }
     const matches=document.createElement('div');matches.className='sky-configuration-match-stack';
-    const heading=document.createElement('div');heading.className='sky-configuration-match-stack-heading';heading.textContent=group.matches.length+' match'+(group.matches.length===1?'':'es');
+    const heading=document.createElement('div');heading.className='sky-configuration-match-stack-heading';
+    const count=document.createElement('span');count.textContent=group.matches.length+' match'+(group.matches.length===1?'':'es');
+    const railKey=document.createElement('span');
+    railKey.className='sky-configuration-match-rail-key';
+    railKey.textContent='Upper: sign · Lower: house';
+    heading.append(count,railKey);
     const list=document.createElement('div');list.className='sky-configuration-match-list';
     group.matches.forEach((match,index)=>list.appendChild(configurationMatchRow(match,index)));
     matches.append(heading,list);detail.appendChild(matches);
