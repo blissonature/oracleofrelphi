@@ -65,7 +65,7 @@ async function run(mode){
   assert.match(copied,/(Grand Cross|Mystic Rectangle|T-Square)/);
   console.log('COPY LIST '+mode+' '+copied.slice(0,100).replaceAll('\n',' '));
 
-  const tile=page.locator('.sky-configuration-result-tile').first();
+  const tile=page.locator('.sky-configuration-result-tile[data-configuration-type="grand-cross"]').first();
   if(mobile)await tile.locator('.sky-configuration-result-summary').tap();
   else await tile.locator('.sky-configuration-result-summary').click();
   await page.waitForSelector('.sky-configuration-result-tile.is-expanded .sky-configuration-result-detail',{timeout:10000});
