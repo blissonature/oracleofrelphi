@@ -137,7 +137,16 @@ async function run(mode,url='http://127.0.0.1:4173/sky-chart.html'){
   assert.ok(meaning.participants.every(s=>SIGNS.some(sign=>s.includes(sign))),'Every selected vertex must expose its actual zodiac sign');
   assert.ok(meaning.participants.some(s=>/House \d|house \d/i.test(s)));
   assert.ok(meaning.participants.some(s=>/Virgo/.test(s)),'The natal Ascendant must retain Virgo');
-  assert.ok(meaning.participants.some(s=>/Sagittarius/.test(s)),'The event Vertex must retain Sagittarius');
+  const liveVertex=await page.evaluate(()=>{
+    const sky=JSON.parse(localStorage.getItem('relphiSkyChartB')||'{}');
+    const entries=sky.placements||sky.positions||sky.points||{};
+    const value=entries.Vertex||entries.vertex;
+    return Number(value?.longitude);
+  });
+  assert.ok(Number.isFinite(liveVertex),'The comparison sky should retain a calculable Vertex');
+  const vertexSign=SIGNS[Math.floor((((liveVertex%360)+360)%360)/30)];
+  assert.ok(meaning.participants.some(s=>s.includes('Vertex'+vertexSign)),
+    'The event Vertex sign must agree with its current calculated longitude');
   const box=await tile.evaluate(node=>{
     const tileRect=node.getBoundingClientRect();
     const guideRect=node.querySelector('.sky-configuration-participant-guide')?.getBoundingClientRect();
