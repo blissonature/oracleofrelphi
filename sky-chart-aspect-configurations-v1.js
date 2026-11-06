@@ -483,6 +483,14 @@ function configurationParticipantGuide(pattern){
     aspects.appendChild(key);
   }
   guide.appendChild(aspects);
+  const inherentAxes=pattern.edges.filter(edge=>edge.entailedKind==='polar-axis');
+  if(inherentAxes.length){
+    const note=document.createElement('p');
+    note.className='sky-configuration-intrinsic-axes-note';
+    note.textContent=inherentAxes.length+' opposition'+(inherentAxes.length===1?' is':'s are')+
+      ' intrinsic polar axes (such as Ascendant–Descendant or Vertex–Anti-Vertex), not separate observed alignments. The other connections describe how those axes fit together.';
+    guide.appendChild(note);
+  }
   return guide;
 }
 function renderSelectedConfiguration(tile,pattern){
