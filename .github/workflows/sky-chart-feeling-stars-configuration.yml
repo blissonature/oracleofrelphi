@@ -32,3 +32,9 @@ jobs:
         run: |
           python3 -m http.server 4173 >/tmp/feeling-stars-config-http.log 2>&1 &
           node tests/sky-chart-feeling-stars-configuration-browser.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: feeling-stars-configuration-screenshots
+          path: feeling-stars-config-*.png
+          if-no-files-found: ignore
