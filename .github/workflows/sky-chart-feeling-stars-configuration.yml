@@ -12,6 +12,8 @@ on:
 jobs:
   configuration-meaning:
     runs-on: ubuntu-latest
+    container:
+      image: mcr.microsoft.com/playwright:v1.52.0-noble
     timeout-minutes: 12
     steps:
       - uses: actions/checkout@v4
@@ -22,10 +24,9 @@ jobs:
         run: |
           node --check sky-chart-aspect-configurations-v1.js
           node --check tests/sky-chart-feeling-stars-configuration-browser.mjs
-      - name: Install browser dependencies
+      - name: Install JavaScript dependencies (Chromium preinstalled in official image)
         run: |
-          npm install --no-save playwright@1.52.0 luxon@3 suncalc@1.9.0
-          npx playwright install --with-deps chromium
+          npm install --no-save --no-audit --no-fund playwright@1.52.0 luxon@3 suncalc@1.9.0
       - name: Chromium desktop, touch and exact-commit hosted preview verification
         env:
           REMOTE_PREVIEW_REF: ${{ github.event.pull_request.head.sha }}
