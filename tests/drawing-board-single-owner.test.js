@@ -151,6 +151,7 @@ assert.deepEqual(Array.from(registry.shipped, item => item.id), [
   'celtic-cross-10',
   'six-polarities-houses-12',
   'relphi-recursion-22',
+  'crowley-harmonic-divination-12',
   'focus-1'
 ]);
 const recursion = registry.byId('relphi-recursion-22');
