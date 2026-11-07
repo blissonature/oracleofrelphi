@@ -206,7 +206,14 @@
       const items=records.length?records.map(record=>{const ref=recordRef(record),meta=shortMeta(record),current=ref===activeRef,name=String(record.name||'Saved sky'),confirming=ref===deletePendingRef;const confirmation=confirming?`<div class="sky-saved-delete-confirmation" role="group" aria-label="Confirm deletion of this saved sky"><span>Delete this saved sky?</span><button type="button" data-saved-delete-cancel>Cancel</button><button type="button" class="is-danger" data-saved-delete-confirm="${escapeHtml(ref)}">Delete</button></div>`:'';return `<div class="sky-saved-list-row${current?' is-active':''}${confirming?' is-confirming-delete':''}"><button type="button" class="sky-saved-list-item" data-saved-sky-ref="${escapeHtml(ref)}" aria-label="Load ${escapeHtml(name)} into Sky ${openSlot}"><span class="sky-saved-list-name">${escapeHtml(name)}</span>${meta?`<span class="sky-saved-list-meta">${escapeHtml(meta)}</span>`:''}<span class="sky-saved-list-check" aria-hidden="true">${current?'✓':''}</span></button><button type="button" class="sky-saved-list-delete" data-saved-delete-ref="${escapeHtml(ref)}" aria-label="Delete ${escapeHtml(name)} from Saved skies" title="Delete from Saved skies">×</button>${confirmation}</div>`}).join(''):'<p class="sky-saved-empty">No saved skies yet.</p>';
       const newSky='<div class="sky-create-new-row" data-sky-create-new><button type="button" class="sky-create-new-button" data-sky-command="new" aria-label="Create a new blank sky"><span class="sky-create-new-plus" aria-hidden="true">+</span><span>New Sky</span></button></div>';
       const saveSky=hasSky?`<div class="sky-create-new-row" data-sky-save-row><button type="button" class="sky-create-new-button" data-sky-picker-save data-sky-command="save" aria-label="${active.saved?'Save Changes':'Save Sky'} for Sky ${openSlot}">${active.saved?'Save Changes':'Save Sky'}</button></div>`:'';
-      menu.innerHTML=`<div class="sky-saved-list">${newSky}${saveSky}${items}</div>`;positionPopover();return;
+      menu.innerHTML=`<div class="sky-saved-list">${newSky}${saveSky}${items}</div>`;
+      // Complete the existing privacy → label → overlay pipeline in its
+      // authoritative render task. Asynchronous click-listener order can
+      // otherwise leave names exposed beneath the fingerprint triptychs.
+      window.RelphiSkyPrivateLoad?.redactNow?.();
+      window.RelphiSkySavedSkiesLabels?.decorateNow?.();
+      window.RelphiSkyCardLibrary?.refresh?.();
+      positionPopover();return;
     }
     if(menuView==='save'){
       const label=active.saved?'Save Changes':'Save Sky',name=active.saved?active.name:(window.RelphiSkySuggestedName?.preferred?.(value)||((active.name==='New Sky'||active.name==='Where and When'||active.name===`Sky ${openSlot}`||active.name==='Unsaved sky')?'':active.name));

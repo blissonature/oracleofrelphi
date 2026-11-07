@@ -18,6 +18,9 @@ try {
   localStorage.setItem('relphiSkyChartB',JSON.stringify(beta));
   localStorage.setItem('relphiSkyLibraryV1',JSON.stringify([alpha,beta,study]));
   localStorage.setItem('relphiSkyChartLastModeV1','comparison');
+  // A historical assignment to an old built-in category is not proof that
+  // the user explicitly created a folder.
+  localStorage.setItem('relphiSkyCardFoldersV1',JSON.stringify({'family-1':'Family'}));
  },{alpha,beta,study});
  await page.goto('http://127.0.0.1:4173/sky-chart.html',{waitUntil:'domcontentloaded'});
  await page.locator('[data-saved-sky-trigger="A"]').click({timeout:20000});
@@ -25,6 +28,19 @@ try {
  await page.waitForSelector('#skySavedSkiesPopover.sky-library-redesigned .sky-library-controls',{timeout:10000});
  assert.equal(await page.locator('#skySavedSkiesPopover .sky-saved-list-row:not([hidden])').count(),3);
  assert.equal(await page.locator('#skySavedSkiesPopover .sky-library-identity-overlay').count(),3);
+ assert.equal(await page.locator('#skySavedSkiesPopover [data-sky-library-folder]').count(),0,
+   'No category chips before the user creates a folder');
+ assert.equal(await page.locator('#skySavedSkiesPopover .sky-library-folders').isHidden(),true,
+   'Folder filter strip is absent without user-created folders');
+ assert.equal(await page.locator('#skySavedSkiesPopover [data-sky-folder-edit]').count(),0,
+   'No meaningless per-sky folder controls before folders exist');
+ assert.equal(await page.locator('#skySavedSkiesPopover [data-sky-library-add-folder]').count(),1,
+   'The user can create a folder without suggested categories');
+ const escaped=await page.locator('#skySavedSkiesPopover [data-saved-sky-ref]').evaluateAll(buttons=>buttons.filter(button=>{
+   const copy=button.querySelector('[data-saved-fingerprint-copy]');
+   return !copy||!copy.closest('.sky-library-identity-overlay');
+ }).map(button=>button.dataset.savedSkyRef));
+ assert.deepEqual(escaped,[],'Identity is mounted only inside the concealed overlay');
  // The title chevron opens the saved-chart picker directly. Primary actions
  // precede filtering, and Sky slot management is a footer, not a competing header.
  assert.equal(await page.locator('#skySavedSkiesPopover .sky-saved-subview-head').count(),0);
@@ -64,6 +80,12 @@ try {
  assert.equal(await page.locator('#skySavedSkiesPopover .sky-saved-list-row:not([hidden])').count(),1,'Search by name filters private cards');
  assert.equal(await page.locator('#skySavedSkiesPopover .sky-saved-list-row:not([hidden]) [data-saved-sky-ref]').getAttribute('data-saved-sky-ref'),'client-1');
  await page.locator('[data-sky-library-search]').fill('');
+ page.once('dialog',dialog=>dialog.accept('Clients'));
+ await page.locator('#skySavedSkiesPopover [data-sky-library-add-folder]').click();
+ await page.waitForSelector('#skySavedSkiesPopover [data-sky-library-folder="Clients"]');
+ const folderLabels=await page.locator('#skySavedSkiesPopover [data-sky-library-folder]').allTextContents();
+ assert.deepEqual(folderLabels,['All','Clients','Unfiled'],
+   'Only explicitly created categories appear, plus navigation filters');
  const action=page.locator('[data-saved-sky-ref="client-1"]').locator('..').locator('[data-sky-folder-edit]');
  await action.click();
  await page.locator('[data-saved-sky-ref="client-1"]').locator('..').locator('[data-sky-folder-select]').selectOption('Clients');

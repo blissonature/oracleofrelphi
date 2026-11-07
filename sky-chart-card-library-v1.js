@@ -2,12 +2,19 @@
 (function(){
 'use strict';
 if(window.__relphiSkyCardLibraryV1)return;window.__relphiSkyCardLibraryV1=true;
-const KEY='relphiSkyCardFoldersV1',POPOVER='#skySavedSkiesPopover',DEFAULTS=['All','Family','Clients','Events','Study','Unfiled'];
+const KEY='relphiSkyCardFoldersV1',POPOVER='#skySavedSkiesPopover';
 let filter='All',query='',editingFolder='',queued=false,holdTimer=null,holdRef='',suppressClickRef='';
 const read=()=>{try{return JSON.parse(localStorage.getItem(KEY)||'{}')||{}}catch(_){return {}}};
 const write=data=>{try{localStorage.setItem(KEY,JSON.stringify(data));return true}catch(_){return false}};
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','"':'&quot;',"'":'&#39;'}[c]));
 const library=()=>window.RelphiSkySavedSkyIdentity?.library?.()||[];
+// A folder exists only after the user creates it. Record names, historical
+// assignments, and built-in example labels cannot manufacture categories.
+function userFolders(data){
+  return [...new Set(Object.entries(data).filter(([key,value])=>
+    key.startsWith('__folder__')&&typeof value==='string'&&value.trim()
+  ).map(([,name])=>name.trim()))].sort((a,b)=>a.localeCompare(b));
+}
 const id=r=>String(r?.id||r?.savedSkyId||r?.metadata?.savedSkyId||'');
 function setRevealed(row,active){
   const button=row?.querySelector?.('[data-saved-sky-ref]');if(!button)return;
@@ -25,16 +32,19 @@ function decorate(){
   let toolbar=list.querySelector(':scope > .sky-library-controls');
   if(!toolbar){
     toolbar=document.createElement('div');toolbar.className='sky-library-controls';
-    toolbar.innerHTML='<div class="sky-library-heading"><strong>Saved skies</strong><span>Fingerprint library</span></div><label class="sky-library-search"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.4"/><path d="m15.5 15.5 4.5 4.5"/></svg><input type="search" data-sky-library-search placeholder="Find a saved sky…" autocomplete="off" aria-label="Search saved skies by name"></label><div class="sky-library-folders" aria-label="Saved sky folders"></div><div class="sky-library-utility"><span data-sky-library-count></span><span>Hover or hold a fingerprint to see its name</span></div>';
+    toolbar.innerHTML='<div class="sky-library-heading"><strong>Saved skies</strong><button type="button" data-sky-library-add-folder aria-label="Create a folder">+ Folder</button></div><label class="sky-library-search"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.4"/><path d="m15.5 15.5 4.5 4.5"/></svg><input type="search" data-sky-library-search placeholder="Find a saved sky…" autocomplete="off" aria-label="Search saved skies by name"></label><div class="sky-library-folders" aria-label="Saved sky folders"></div><div class="sky-library-utility"><span data-sky-library-count></span><span>Hover or hold a fingerprint to see its name</span></div>';
     // Primary actions come from the Saved Skies controller, before library tools.
     const primary=list.querySelector(':scope > [data-sky-save-row]')||list.querySelector(':scope > [data-sky-add-b-row]')||list.querySelector(':scope > [data-sky-create-new]');
     if(primary)primary.insertAdjacentElement('afterend',toolbar);else list.prepend(toolbar);
   }
   const records=library(),data=read();
-  const custom=[...new Set(Object.values(data).filter(v=>typeof v==='string'&&v&&!DEFAULTS.includes(v)))].sort((a,b)=>a.localeCompare(b));
-  const folders=[...DEFAULTS,...custom];if(!folders.includes(filter))filter='All';
+  const custom=userFolders(data);
+  // All and Unfiled are filter utilities, visible only when actual folders exist.
+  const folders=custom.length?['All',...custom,'Unfiled']:[];
+  if(!folders.includes(filter))filter='All';
   const chips=toolbar.querySelector('.sky-library-folders');
-  const chipHtml=folders.map(folder=>'<button type="button" class="sky-library-folder'+(folder===filter?' is-selected':'')+'" data-sky-library-folder="'+esc(folder)+'" aria-pressed="'+(folder===filter)+'">'+esc(folder)+'</button>').join('')+'<button type="button" class="sky-library-folder sky-library-add-folder" data-sky-library-add-folder aria-label="Create a folder">+ Folder</button>';
+  chips.hidden=!custom.length;
+  const chipHtml=folders.map(folder=>'<button type="button" class="sky-library-folder'+(folder===filter?' is-selected':'')+'" data-sky-library-folder="'+esc(folder)+'" aria-pressed="'+(folder===filter)+'">'+esc(folder)+'</button>').join('');
   if(chips.dataset.list!==chipHtml){chips.innerHTML=chipHtml;chips.dataset.list=chipHtml}
   const input=toolbar.querySelector('[data-sky-library-search]');if(input!==document.activeElement&&input.value!==query)input.value=query;
   const normalized=query.trim().toLocaleLowerCase();
@@ -43,7 +53,7 @@ function decorate(){
     const button=row.querySelector('[data-saved-sky-ref]');if(!button)return;
     const record=records.find(r=>id(r)===button.dataset.savedSkyRef);if(!record)return;
     const name=String(record.name||'Saved sky');
-    const folder=data[id(record)]||'Unfiled';
+    const folder=custom.includes(data[id(record)])?data[id(record)]:'Unfiled';
     const show=(!normalized||name.toLocaleLowerCase().includes(normalized))&&(filter==='All'||filter===folder);
     row.hidden=!show;if(show)visible++;
     // Overlay occupies the exact fingerprint footprint: there is no reserved
@@ -57,7 +67,10 @@ function decorate(){
     if(detail){detail.hidden=false;if(detail.parentElement!==overlay)overlay.replaceChildren(detail)}
     else if(!overlay.firstElementChild)overlay.textContent=name;
     setRevealed(row,row.classList.contains('is-identity-revealed')||document.activeElement===button);
+    // An organization menu without any user-created folder is a dead control.
+    row.classList.toggle('has-user-folders',custom.length>0);
     let controls=row.querySelector('.sky-library-row-actions');
+    if(!custom.length){controls?.remove();return}
     if(!controls){
       controls=document.createElement('div');controls.className='sky-library-row-actions';
       controls.innerHTML='<button type="button" data-sky-folder-edit aria-label="Organize saved sky" title="Organize">⋯</button><select data-sky-folder-select aria-label="Move saved sky to folder" hidden></select>';
@@ -73,7 +86,7 @@ function decorate(){
   toolbar.querySelector('[data-sky-library-count]').textContent=visible+' of '+records.length+' skies';
   let empty=list.querySelector(':scope > .sky-library-empty-results');
   if(!empty){empty=document.createElement('p');empty.className='sky-library-empty-results';list.appendChild(empty)}
-  empty.textContent=normalized?'No skies match that name.':'No skies in this folder.';
+  empty.textContent=normalized?'No skies match that name.':records.length?'No skies in this folder.':'No saved skies yet.';
   empty.hidden=visible!==0;
   list.querySelector('.sky-saved-library-instruction')?.remove();
   const top=pop.querySelector('.sky-library-slot-actions');
@@ -99,9 +112,15 @@ function handlePickerClick(e){
  const folder=e.target.closest('[data-sky-library-folder]');if(folder){e.preventDefault();e.stopImmediatePropagation();filter=folder.dataset.skyLibraryFolder;schedule();return true}
  if(e.target.closest('[data-sky-library-add-folder]')){
    e.preventDefault();e.stopImmediatePropagation();
-   const value=window.prompt('New folder name (e.g., Research)', '');
+   const value=window.prompt('New folder name', '');
    const folder=String(value||'').trim().slice(0,44);
-   if(folder){const map=read();map['__folder__'+folder]=folder;write(map);filter=folder;schedule()}return true;
+   if(!folder)return true;
+   const map=read(),existing=userFolders(map).find(name=>name.toLocaleLowerCase()===folder.toLocaleLowerCase());
+   if(existing){filter=existing;schedule();return true}
+   if(['all','unfiled'].includes(folder.toLocaleLowerCase()))return true;
+   map['__folder__'+folder]=folder;
+   if(write(map)){filter=folder;schedule()}
+   return true;
  }
  const organize=e.target.closest('[data-sky-folder-edit]');
  if(organize){e.preventDefault();e.stopImmediatePropagation();const select=organize.parentElement.querySelector('select');select.hidden=!select.hidden;if(!select.hidden)select.focus();return true}
