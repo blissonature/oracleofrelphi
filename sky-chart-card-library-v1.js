@@ -131,7 +131,7 @@ document.addEventListener('focusin',e=>{
 });
 document.addEventListener('focusout',e=>{
  const row=e.target.closest?.('#skySavedSkiesPopover .sky-saved-list-row');
- if(row&&!row.contains(e.relatedTarget))setRevealed(row,false);
+ if(row&&e.target.closest?.('[data-saved-sky-ref]'))setRevealed(row,false);
 });
 document.addEventListener('pointerdown',e=>{
  if(e.pointerType!=='touch')return;
