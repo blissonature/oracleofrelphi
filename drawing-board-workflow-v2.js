@@ -4136,9 +4136,9 @@
     }
     if (workspace.dataset.relphiRecursionZoomFloorBound!=='true') {
       workspace.dataset.relphiRecursionZoomFloorBound='true';
-      let lastRecursionViewportWidth=Math.round(window.innerWidth||document.documentElement.clientWidth||0);
+      let lastRecursionViewportWidth=Math.round(window.innerWidth||document.documentElement?.clientWidth||0);
       window.addEventListener('resize',()=>{
-        const nextWidth=Math.round(window.innerWidth||document.documentElement.clientWidth||0);
+        const nextWidth=Math.round(window.innerWidth||document.documentElement?.clientWidth||0);
         const widthChanged=Math.abs(nextWidth-lastRecursionViewportWidth)>2;
         lastRecursionViewportWidth=nextWidth;
         if(widthChanged)requestAnimationFrame(()=>syncRecursionZoomFloor(panel()));
@@ -6361,9 +6361,9 @@
   });
   document.addEventListener('relphi:drawing-board-rendered',()=>enhance(panel()));
   window.addEventListener('relphi:tarot-enhancements-ready',()=>enhance(panel()));
-  let lastBoardViewportWidth=Math.round(window.innerWidth||document.documentElement.clientWidth||0);
+  let lastBoardViewportWidth=Math.round(window.innerWidth||document.documentElement?.clientWidth||0);
   window.addEventListener('resize',()=>{
-    const nextWidth=Math.round(window.innerWidth||document.documentElement.clientWidth||0);
+    const nextWidth=Math.round(window.innerWidth||document.documentElement?.clientWidth||0);
     const widthChanged=Math.abs(nextWidth-lastBoardViewportWidth)>2;
     lastBoardViewportWidth=nextWidth;
     // Mobile browser chrome changes the visual viewport height while scrolling.
