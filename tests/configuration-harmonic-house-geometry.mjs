@@ -27,3 +27,14 @@ for(let i=0;i<12;i++){
 }
 assert.ok(((placidus.cusps[1]-placidus.cusps[0]+360)%360)>15,'House 1 must not collapse to a spurious narrow sliver at this latitude');
 console.log('Configuration Harmonic Window and house geometry guards passed.');
+
+// Configuration diagrams may draw canonical art only. Neither emoji/Unicode
+// zodiac substitutions nor floating house/sign badge elements are allowed.
+assert.doesNotMatch(config,/CONFIG_SIGN_GLYPHS|sky-configuration-vertex-sign|sky-configuration-vertex-house|sky-configuration-vertex-attributes/,
+  'Configuration geometry cannot use counterfeit zodiac glyphs or floating house/sign badges');
+assert.match(config,/sky-configuration-match-context/,'Existing match rows expose sign/house names as ordinary text');
+assert.match(config,/paintConfigurationMiniGlyphs\(visual\)/,
+  'Diagram vertices still receive the established canonical placement glyphs');
+const configCss=readFileSync('sky-chart-aspect-configurations-v1.css','utf8');
+assert.doesNotMatch(configCss,/sky-configuration-vertex-sign|sky-configuration-vertex-house|sky-configuration-vertex-attributes/,
+  'Disapproved floating badge styles are removed at source');

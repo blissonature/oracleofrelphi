@@ -814,45 +814,6 @@ html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]) .sky-chart-con
   transform:none!important;
   pointer-events:none;
 }
-.sky-configuration-vertex-attributes{
-  position:absolute;
-  top:37px;
-  left:50%;
-  transform:translateX(-50%);
-  display:flex;
-  gap:3px;
-  width:max-content;
-  pointer-events:auto;
-}
-.sky-configuration-vertex-host[data-vertex-half="bottom"] .sky-configuration-vertex-attributes{
-  top:auto;
-  bottom:37px;
-}
-.sky-configuration-vertex-sign,
-.sky-configuration-vertex-house{
-  appearance:none;
-  display:grid;
-  place-items:center;
-  width:23px;
-  height:23px;
-  padding:0;
-  border:1px solid rgba(31,27,24,.17);
-  border-radius:7px;
-  background:#fff;
-  font:800 .82rem/1 system-ui,sans-serif;
-  cursor:pointer;
-  box-shadow:0 1px 3px rgba(31,27,24,.12);
-  -webkit-tap-highlight-color:transparent;
-}
-.sky-configuration-vertex-sign{
-  color:var(--vertex-sign-color);
-  border-top:3px solid var(--vertex-sign-color);
-}
-.sky-configuration-vertex-house{
-  color:var(--vertex-house-color);
-  border-bottom:3px solid var(--vertex-house-color);
-  font-size:.68rem;
-}
 .sky-configuration-mini-wheel.is-expanded button:focus-visible{
   outline:2px solid #29231e;
   outline-offset:2px;
@@ -974,19 +935,36 @@ html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]) .sky-chart-con
 /* Canonical glyphs in selectable Configuration match rows. */
 .sky-configuration-match-placements{
   display:flex;
-  align-items:center;
-  gap:5px;
+  align-items:flex-start;
+  flex-wrap:wrap;
+  gap:7px;
   min-width:0;
   overflow:visible;
 }
+@media(max-width:620px){
+  .sky-configuration-match-row{grid-template-columns:minmax(0,1fr)}
+  .sky-configuration-match-meta{justify-self:end}
+}
 .sky-configuration-match-participant{
   display:grid;
-  grid-template-rows:4px 38px 4px;
+  grid-template-rows:4px 38px 4px auto;
   place-items:center;
-  width:38px;
-  min-width:38px;
-  height:46px;
+  align-content:start;
+  width:100px;
+  min-width:82px;
+  max-width:100%;
+  height:auto;
   overflow:visible;
+}
+.sky-configuration-match-context{
+  display:block;
+  max-width:100%;
+  padding-top:5px;
+  color:#51473e;
+  font:650 .6rem/1.25 system-ui,sans-serif;
+  text-align:center;
+  white-space:normal;
+  overflow-wrap:break-word;
 }
 .sky-configuration-match-rail{
   display:block;

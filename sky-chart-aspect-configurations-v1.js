@@ -158,7 +158,6 @@ function configurationApex(pattern,aspects){
 const CONFIG_SIGN_TONE=Object.freeze(['assertive and immediate','steady and embodied','curious and conversational','protective and attached','expressive and visible','discerning and practical','reciprocal and comparative','intense and investigative','exploratory and principled','disciplined and accountable','independent and collective','permeable and imaginative']);
 const CONFIG_HOUSE_FIELD=Object.freeze(['','identity and personal initiative','resources and self-worth','communication and immediate surroundings','home and private foundations','creative expression and pleasure','work, habits, and service','partnership and negotiation','shared resources and intimate commitments','learning and worldview','public role and responsibility','community, friendship, and belonging','solitude, retreat, and the unseen']);
 const CONFIG_SIGN_NAMES=Object.freeze(['Aries','Taurus','Gemini','Cancer','Leo','Virgo','Libra','Scorpio','Sagittarius','Capricorn','Aquarius','Pisces']);
-const CONFIG_SIGN_GLYPHS=Object.freeze(['♈','♉','♊','♋','♌','♍','♎','♏','♐','♑','♒','♓']);
 function configurationRecord(key){
   const record=resultVertexRecord(key),item=vertexLabel(key);
   if(!record)return{...item,meaning:CONFIG_PLACEMENT_MEANING[item.id]||'its role'};
@@ -216,23 +215,19 @@ function miniConfigurationMarkup(pattern,{compact=false,interactive=true}={}){
     return'<div class="'+classes+'"'+attrs+'><svg viewBox="0 0 120 120" aria-hidden="true"><circle cx="60" cy="60" r="47" class="sky-configuration-mini-ring"/>'+radii+lines+points+'</svg></div>';
   }
 
-  // The expanded geometry itself owns three distinct semantic targets at
-  // each vertex. They feed the existing Foundation interaction controller:
-  // placement glyph, zodiac sign, and this sky's house. No second list/legend
-  // or duplicate explanatory card is rendered below the diagram.
+  // The user rejected overprinted sign/house tiles and substitute glyphs.
+  // Preserve the aspect geometry and its canonical placement-art owners:
+  // contextual sign and house names live in the already-existing match row.
   const vertices=[...records.values()].map(record=>{
     const p=resultPoint(record.value),left=(p.x/120*100).toFixed(4),top=(p.y/120*100).toFixed(4);
-    const sign=record.sign,validSign=Number.isInteger(sign)&&sign>=0&&sign<12;
-    const house=Number.isInteger(record.house)&&record.house>=1&&record.house<=12&&window.RelphiRelationshipExportHouses?.include?.(record.sky)!==false?record.house:null;
-    const signName=validSign?CONFIG_SIGN_NAMES[sign]:'';
-    const houseInfo=house?window.RelphiSkyVocab?.describeFocus?.('house',house):null;
-    const signButton=validSign?'<button type="button" class="sky-configuration-vertex-sign" data-interactive="sign" data-sign="'+sign+'" aria-label="'+signName+' zodiac sign" title="'+signName+'" style="--vertex-sign-color:'+resultSignColor(sign)+'">'+CONFIG_SIGN_GLYPHS[sign]+'</button>':'';
-    const houseButton=house?'<button type="button" class="sky-configuration-vertex-house" data-interactive="house" data-sky="'+record.sky+'" data-house="'+house+'" aria-label="Sky '+record.sky+' House '+house+'" title="House '+house+(houseInfo?.description?' — '+houseInfo.description:'')+'" style="--vertex-house-color:'+resultHouseColor(house)+'">'+house+'</button>':'';
-    return'<span class="sky-configuration-vertex-host" data-canonical-placement="'+record.id+'" data-sky="'+record.sky+'" data-vertex-half="'+(p.y<60?'top':'bottom')+'" style="left:'+left+'%;top:'+top+'%">'+
-      '<button type="button" class="sky-configuration-vertex-placement" data-interactive="placement" data-sky="'+record.sky+'" data-placement="'+record.id+'" aria-label="Sky '+record.sky+' '+placementWord(record.id)+'" title="Sky '+record.sky+' '+placementWord(record.id)+'"></button>'+
-      '<span class="sky-configuration-vertex-attributes">'+signButton+houseButton+'</span></span>';
+    const sign=Number.isInteger(record.sign)&&record.sign>=0&&record.sign<12?CONFIG_SIGN_NAMES[record.sign]:'';
+    const house=Number.isInteger(record.house)&&record.house>=1&&record.house<=12&&
+      window.RelphiRelationshipExportHouses?.include?.(record.sky)!==false?record.house:null;
+    const context='Sky '+record.sky+' '+placementWord(record.id)+(sign?', '+sign:'')+(house?', House '+house:'');
+    return'<span class="sky-configuration-vertex-host" data-canonical-placement="'+record.id+'" data-sky="'+record.sky+'" style="left:'+left+'%;top:'+top+'%">'+
+      '<button type="button" class="sky-configuration-vertex-placement" data-interactive="placement" data-sky="'+record.sky+'" data-placement="'+record.id+'" aria-label="'+context+'" title="'+context+'"></button></span>';
   }).join('');
-  return'<div class="'+classes+' is-expanded" role="group" aria-label="Configuration diagram: choose a placement, sign or house"><svg viewBox="0 0 120 120" aria-hidden="true"><circle cx="60" cy="60" r="47" class="sky-configuration-mini-ring"/>'+radii+lines+'</svg><span class="sky-configuration-vertex-layer">'+vertices+'</span></div>';
+  return'<div class="'+classes+' is-expanded" role="group" aria-label="Configuration diagram: canonical placements and aspect geometry"><svg viewBox="0 0 120 120" aria-hidden="true"><circle cx="60" cy="60" r="47" class="sky-configuration-mini-ring"/>'+radii+lines+'</svg><span class="sky-configuration-vertex-layer">'+vertices+'</span></div>';
 }
 
 async function paintConfigurationMiniGlyphs(root){
@@ -395,7 +390,13 @@ function configurationMatchRow(pattern,index){
     const houseInfo=house?window.RelphiSkyVocab?.describeFocus?.('house',house):null;
     houseRail.title=house?'House '+house+(houseInfo?.description?' — '+houseInfo.description:''):'House unavailable';
     participant.title='Sky '+item.sky+' '+placementWord(item.id)+' · '+signRail.title+' · '+houseRail.title;
-    participant.append(signRail,glyph,houseRail);
+    // Clear, readable locations belong to the existing match row, outside
+    // the protected geometry; ordinary text is not a replacement glyph.
+    const context=document.createElement('span');
+    context.className='sky-configuration-match-context';
+    const signName=Number.isInteger(record?.sign)?CONFIG_SIGN_NAMES[record.sign]:'Sign unavailable';
+    context.textContent=signName+(house?' · House '+house:'');
+    participant.append(signRail,glyph,houseRail,context);
     placements.appendChild(participant);
   });
 
