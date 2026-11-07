@@ -30,7 +30,7 @@ try {
     details:el.querySelector('[data-saved-fingerprint-copy]')?getComputedStyle(el.querySelector('[data-saved-fingerprint-copy]')).display:'none'};
  });
  assert.equal(defaultState.display,'hidden','Identity overlay is concealed by default');
- assert.equal(defaultState.details,'none','No empty sensitive detail column');
+ assert.equal(defaultState.details,'grid','Identity details live inside the concealed overlay, not a separate column');
  await page.screenshot({path:'sky-card-library-modern-default.png',fullPage:false});
  await page.locator('[data-saved-sky-ref="family-1"]').hover();
  await page.waitForFunction(()=>getComputedStyle(document.querySelector('[data-saved-sky-ref="family-1"] .sky-library-identity-overlay')).visibility==='visible',null,{timeout:3000});
