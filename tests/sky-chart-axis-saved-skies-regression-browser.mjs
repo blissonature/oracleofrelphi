@@ -99,7 +99,7 @@ try{
     assert.ok(thumb.weekLines>=7,`Sky ${slot} microheptagram should retain the weekly star geometry: ${JSON.stringify(thumb)}`);
     assert.equal(thumb.visibleWeekLines,thumb.weekLines,`Sky ${slot} microheptagram lines should be visibly painted: ${JSON.stringify(thumb)}`);
     assert.equal(thumb.weekLines,thumb.sourceWeekLines,`Sky ${slot} microheptagram must copy all seven-week path segments: ${JSON.stringify(thumb)}`);
-    assert.equal(thumb.sourceGlyphs,7,`Sky ${slot} source miniheptagram must retain seven canonical glyphs: ${JSON.stringify(thumb)}`);
+    assert.equal(thumb.sourceGlyphs,thumb.activeCount,`Sky ${slot} source miniheptagram displays only its active canonical ruler glyphs: ${JSON.stringify(thumb)}`);
     assert.ok(thumb.activeCount===1||thumb.activeCount===2,`Sky ${slot} must have one or two distinct day/hour rulers: ${JSON.stringify(thumb)}`);
     assert.equal(thumb.planetaryGlyphs,thumb.activeCount,`Sky ${slot} microheptagram keeps canonical glyphs only for active rulers: ${JSON.stringify(thumb)}`);
     assert.equal(thumb.inactiveDots,7-thumb.activeCount,`Sky ${slot} inactive ruler nodes must be circles: ${JSON.stringify(thumb)}`);
