@@ -1,0 +1,29 @@
+name: Tarot Ledger Sky Connector
+on:
+  pull_request:
+    paths:
+      - 'relphi-sky-tarot-explorer-v1.js'
+      - 'tarot-cards.js'
+      - 'tarot.html'
+      - 'sky-chart.html'
+      - 'sky-chart-card-hits-drawer-v3.js'
+      - 'tests/sky-tarot-connector.test.js'
+      - '.github/workflows/sky-tarot-connector.yml'
+  push:
+    paths:
+      - 'relphi-sky-tarot-explorer-v1.js'
+      - 'tarot-cards.js'
+      - 'tarot.html'
+      - 'sky-chart.html'
+      - 'sky-chart-card-hits-drawer-v3.js'
+      - 'tests/sky-tarot-connector.test.js'
+      - '.github/workflows/sky-tarot-connector.yml'
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: JavaScript syntax
+        run: node --check relphi-sky-tarot-explorer-v1.js
+      - name: Complete sky-to-tarot correspondence tests
+        run: node tests/sky-tarot-connector.test.js
