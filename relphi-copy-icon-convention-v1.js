@@ -5,9 +5,15 @@
   window.__relphiCopyIconConventionV2=true;
   window.__relphiCopyIconConventionV1=true;
   const SVG_NS='http://www.w3.org/2000/svg';
-  // Preview pages load pinned CSS/JS via an external <base>, but Chromium
-  // cannot paint cross-origin SVG <use> references. Always use the page origin.
-  const SOURCE=location.origin+'/relphi-icons.svg#relphi-copy';
+  // SVG <use> must stay on the page's origin (Chromium blocks cross-origin
+  // symbols). Same-origin scripts resolve beside themselves, including when
+  // the whole page is served from a commit-pinned GitHack repo directory.
+  // Hosted previews instead load pinned JS across origins using <base>;
+  // there the deployed same-origin site sprite is authoritative.
+  const scriptURL=document.currentScript?.src||'';
+  const SOURCE=scriptURL&&new URL(scriptURL).origin===location.origin
+    ?new URL('relphi-icons.svg#relphi-copy',scriptURL).href
+    :location.origin+'/relphi-icons.svg#relphi-copy';
   const KNOWN=[
     '.sky-relationship-copy-button',
     '.sky-wheel-copy-button',
