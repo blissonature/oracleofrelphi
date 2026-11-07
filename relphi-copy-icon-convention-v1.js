@@ -5,7 +5,9 @@
   window.__relphiCopyIconConventionV2=true;
   window.__relphiCopyIconConventionV1=true;
   const SVG_NS='http://www.w3.org/2000/svg';
-  const SOURCE='relphi-icons.svg#relphi-copy';
+  // Preview pages load pinned CSS/JS via an external <base>, but Chromium
+  // cannot paint cross-origin SVG <use> references. Always use the page origin.
+  const SOURCE=location.origin+'/relphi-icons.svg#relphi-copy';
   const KNOWN=[
     '.sky-relationship-copy-button',
     '.sky-wheel-copy-button',
