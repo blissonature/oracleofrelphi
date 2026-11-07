@@ -31,7 +31,7 @@ async function load(page){
   await page.goto('http://127.0.0.1:4173/sky-chart.html',{waitUntil:'domcontentloaded'});
   await page.locator('[data-saved-sky-trigger="A"]').click({timeout:20000});
   await page.waitForSelector('#skySavedSkiesPopover .sky-saved-list-row [data-private-sky-fingerprint="true"]',{timeout:20000});
-  await page.waitForFunction(()=>!!document.querySelector('#skySavedSkiesPopover .sky-saved-library-instruction'),null,{timeout:10000});
+  await page.waitForFunction(()=>!!document.querySelector('#skySavedSkiesPopover.sky-library-redesigned .sky-library-controls'),null,{timeout:10000});
 }
 function row(page,id){return page.locator('#skySavedSkiesPopover .sky-saved-list-row').filter({has:page.locator('[data-saved-sky-ref="'+id+'"]')})}
 
@@ -47,8 +47,8 @@ try{
     assert.equal(await button.locator('.sky-saved-fingerprint-piece').count(),3,'One fingerprint of each of the three types');
     assert.equal(await button.locator('.sky-saved-list-name,.sky-saved-list-meta').count(),0,'Sensitive text nodes are absent from the initial picker');
     const state=await button.evaluate(node=>{
-      const details=node.querySelector('[data-saved-fingerprint-copy]');
-      const style=getComputedStyle(details);
+      const overlay=node.querySelector('.sky-library-identity-overlay');
+      const style=getComputedStyle(overlay);
       const label=node.getAttribute('aria-label');
       const name=node.closest('.sky-saved-list-row')?.querySelector('[data-saved-delete-ref]')?.getAttribute('aria-label');
       return{visibility:style.visibility,opacity:style.opacity,label,deleteLabel:name};
