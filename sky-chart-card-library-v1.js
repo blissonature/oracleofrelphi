@@ -85,24 +85,24 @@ function decorate(){
 }
 function schedule(){if(queued)return;queued=true;queueMicrotask(decorate)}
 document.addEventListener('input',e=>{if(e.target.matches?.(POPOVER+' [data-sky-library-search]')){query=e.target.value;schedule()}},true);
-window.addEventListener('click',e=>{
+function handlePickerClick(e){
  const p=e.target.closest?.(POPOVER);
- if(e.target.closest?.('[data-saved-sky-trigger]')){schedule();return}
- if(!p)return;
+ if(e.target.closest?.('[data-saved-sky-trigger]')){schedule();return false}
+ if(!p)return false;
  const clickedRef=e.target.closest?.('[data-saved-sky-ref]')?.dataset.savedSkyRef||'';
  if(clickedRef&&clickedRef===suppressClickRef){
-   suppressClickRef='';e.preventDefault();e.stopImmediatePropagation();return;
+   suppressClickRef='';e.preventDefault();e.stopImmediatePropagation();return true;
  }
  schedule();
- const folder=e.target.closest('[data-sky-library-folder]');if(folder){e.preventDefault();e.stopImmediatePropagation();filter=folder.dataset.skyLibraryFolder;schedule();return}
+ const folder=e.target.closest('[data-sky-library-folder]');if(folder){e.preventDefault();e.stopImmediatePropagation();filter=folder.dataset.skyLibraryFolder;schedule();return true}
  if(e.target.closest('[data-sky-library-add-folder]')){
    e.preventDefault();e.stopImmediatePropagation();
    const value=window.prompt('New folder name (e.g., Research)', '');
    const folder=String(value||'').trim().slice(0,44);
-   if(folder){const map=read();map['__folder__'+folder]=folder;write(map);filter=folder;schedule()}return;
+   if(folder){const map=read();map['__folder__'+folder]=folder;write(map);filter=folder;schedule()}return true;
  }
  const organize=e.target.closest('[data-sky-folder-edit]');
- if(organize){e.preventDefault();e.stopImmediatePropagation();const select=organize.parentElement.querySelector('select');select.hidden=!select.hidden;if(!select.hidden)select.focus();return}
+ if(organize){e.preventDefault();e.stopImmediatePropagation();const select=organize.parentElement.querySelector('select');select.hidden=!select.hidden;if(!select.hidden)select.focus();return true}
  const action=e.target.closest('[data-sky-card-swap],[data-sky-card-promote],[data-sky-card-unload]');
  if(action){
    e.preventDefault();e.stopImmediatePropagation();
@@ -115,9 +115,10 @@ window.addEventListener('click',e=>{
      else {localStorage.removeItem('relphiSkyChartA');window.dispatchEvent(new StorageEvent('storage',{key:'relphiSkyChartA'}));}
    }
    p.hidden=true;document.querySelectorAll('[data-saved-sky-trigger]').forEach(node=>node.setAttribute('aria-expanded','false'));
-   return;
+   return true;
  }
-},true);
+ return false;
+}
 document.addEventListener('change',e=>{
  if(!e.target.matches?.(POPOVER+' [data-sky-folder-select]'))return;
  e.stopImmediatePropagation();
@@ -153,5 +154,5 @@ for(const name of ['pointerup','pointercancel']){
  },{capture:true,passive:true});
 }
 document.readyState==='loading'?document.addEventListener('DOMContentLoaded',schedule,{once:true}):schedule();
-window.RelphiSkyCardLibrary={refresh:schedule};
+window.RelphiSkyCardLibrary={refresh:schedule,handlePickerClick};
 })();
