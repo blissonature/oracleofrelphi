@@ -14,7 +14,7 @@
   const SLOT_KEYS={A:'relphiSkyChartA',B:'relphiSkyChartB'};
   const GENERIC_NAMES=new Set(['','current sky','sky a','sky b','standalone sky','comparison','unnamed sky','untitled sky','new sky','where and when']);
   let openSlot=null,queued=false,popover=null;
-  let deletePendingRef='',menuView='commands';
+  let deletePendingRef='',menuView='load';
 
   const normalize=value=>String(value||'').trim().toLowerCase().replace(/\s+/g,' ');
   const clone=value=>JSON.parse(JSON.stringify(value));
@@ -196,7 +196,7 @@
   function escapeHtml(value){return String(value??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]))}
 
   function ensurePopover(){
-    if(popover?.isConnected)return popover;popover=document.createElement('div');popover.id='skySavedSkiesPopover';popover.className='sky-saved-skies-popover';popover.hidden=true;popover.setAttribute('role','dialog');popover.setAttribute('aria-label','Sky menu');document.body.appendChild(popover);return popover;
+    if(popover?.isConnected)return popover;popover=document.createElement('div');popover.id='skySavedSkiesPopover';popover.className='sky-saved-skies-popover';popover.hidden=true;popover.setAttribute('role','dialog');popover.setAttribute('aria-label','Saved Skies');document.body.appendChild(popover);return popover;
   }
   function renderPopover(){
     const menu=ensurePopover();if(!openSlot)return;
@@ -204,14 +204,15 @@
     if(menuView==='load'){
       const activeRef=active.record?recordRef(active.record):'';
       const items=records.length?records.map(record=>{const ref=recordRef(record),meta=shortMeta(record),current=ref===activeRef,name=String(record.name||'Saved sky'),confirming=ref===deletePendingRef;const confirmation=confirming?`<div class="sky-saved-delete-confirmation" role="group" aria-label="Confirm deletion of this saved sky"><span>Delete this saved sky?</span><button type="button" data-saved-delete-cancel>Cancel</button><button type="button" class="is-danger" data-saved-delete-confirm="${escapeHtml(ref)}">Delete</button></div>`:'';return `<div class="sky-saved-list-row${current?' is-active':''}${confirming?' is-confirming-delete':''}"><button type="button" class="sky-saved-list-item" data-saved-sky-ref="${escapeHtml(ref)}" aria-label="Load ${escapeHtml(name)} into Sky ${openSlot}"><span class="sky-saved-list-name">${escapeHtml(name)}</span>${meta?`<span class="sky-saved-list-meta">${escapeHtml(meta)}</span>`:''}<span class="sky-saved-list-check" aria-hidden="true">${current?'✓':''}</span></button><button type="button" class="sky-saved-list-delete" data-saved-delete-ref="${escapeHtml(ref)}" aria-label="Delete ${escapeHtml(name)} from Saved skies" title="Delete from Saved skies">×</button>${confirmation}</div>`}).join(''):'<p class="sky-saved-empty">No saved skies yet.</p>';
-      menu.innerHTML=`<div class="sky-saved-subview-head"><button type="button" class="sky-saved-back" data-sky-menu-back aria-label="Back">‹</button><strong>Load Sky</strong></div><div class="sky-saved-list">${items}</div>`;positionPopover();return;
+      const newSky='<div class="sky-create-new-row" data-sky-create-new><button type="button" class="sky-create-new-button" data-sky-command="new" aria-label="Create a new blank sky"><span class="sky-create-new-plus" aria-hidden="true">+</span><span>New Sky</span></button></div>';
+      const saveSky=hasSky?`<div class="sky-create-new-row" data-sky-save-row><button type="button" class="sky-create-new-button" data-sky-picker-save data-sky-command="save" aria-label="${active.saved?'Save Changes':'Save Sky'} for Sky ${openSlot}">${active.saved?'Save Changes':'Save Sky'}</button></div>`:'';
+      menu.innerHTML=`<div class="sky-saved-list">${newSky}${saveSky}${items}</div>`;positionPopover();return;
     }
     if(menuView==='save'){
       const label=active.saved?'Save Changes':'Save Sky',name=active.saved?active.name:(window.RelphiSkySuggestedName?.preferred?.(value)||((active.name==='New Sky'||active.name==='Where and When'||active.name===`Sky ${openSlot}`||active.name==='Unsaved sky')?'':active.name));
       menu.innerHTML=`<div class="sky-saved-subview-head"><button type="button" class="sky-saved-back" data-sky-menu-back aria-label="Back">‹</button><strong>${label}</strong></div><form class="sky-saved-command-save" data-sky-command-save-form><label><span>Sky name</span><input type="text" maxlength="80" autocomplete="off" data-sky-command-save-name value="${escapeHtml(name)}" placeholder="Name this sky"></label><button type="submit">${label}</button><p data-sky-command-status aria-live="polite"></p></form>`;positionPopover();return;
     }
-    const hasB=window.RelphiSkySlotControls?.hasStoredSkyB?.()===true,canAddB=openSlot==='A'&&!window.RelphiSkySlotControls?.hasSkyB?.(),newButton=hasSky?'<button type="button" class="sky-saved-command" data-sky-command="new"><span>New Sky</span></button>':'',saveButton=hasSky?`<button type="button" class="sky-saved-command" data-sky-command="save"><span>${active.saved?'Save Changes':'Save Sky'}</span></button>`:'',swapButton=hasB?'<button type="button" class="sky-saved-command" data-sky-command="swap"><span>Swap Sky A ↔ Sky B</span></button>':'',addB=canAddB?'<button type="button" class="sky-saved-command" data-sky-command="add-b"><span>Add Sky B</span></button>':'',removeButton=openSlot==='B'?'<button type="button" class="sky-saved-command is-danger" data-sky-command="remove"><span>Remove Sky</span></button>':'';
-    menu.innerHTML=`<div class="sky-saved-command-list">${newButton}<button type="button" class="sky-saved-command" data-sky-command="load"><span>Load Sky</span></button>${saveButton}${swapButton}${addB}${removeButton}</div>`;positionPopover();
+
   }
   function triggerFor(slot){return document.querySelector(`#skyFoundation${slot}>.sky-foundation-heading>.sky-card-title-stable [data-saved-sky-trigger]`)||document.querySelector(`#skyFoundation${slot}>.sky-foundation-heading [data-saved-sky-trigger]`)}
   function positionPopover(){
@@ -219,8 +220,8 @@
     const rect=trigger.getBoundingClientRect(),margin=12,gap=6,width=Math.min(440,window.innerWidth-margin*2),left=Math.max(margin,Math.min(rect.left,window.innerWidth-width-margin)),below=window.innerHeight-rect.bottom-margin-gap,above=rect.top-margin-gap,openAbove=below<280&&above>below,maxHeight=Math.min(520,Math.max(230,openAbove?above:below));
     Object.assign(popover.style,{width:`${width}px`,maxHeight:`${maxHeight}px`,left:`${left}px`,top:openAbove?'auto':`${rect.bottom+gap}px`,bottom:openAbove?`${window.innerHeight-rect.top+gap}px`:'auto'});
   }
-  function open(slot){openSlot=slot;deletePendingRef='';menuView='commands';const menu=ensurePopover();menu.hidden=false;renderPopover();triggerFor(slot)?.setAttribute('aria-expanded','true')}
-  function close(){if(!popover)return;triggerFor(openSlot)?.setAttribute('aria-expanded','false');popover.hidden=true;popover.removeAttribute('style');openSlot=null;deletePendingRef='';menuView='commands'}
+  function open(slot){openSlot=slot;deletePendingRef='';menuView='load';const menu=ensurePopover();menu.hidden=false;renderPopover();triggerFor(slot)?.setAttribute('aria-expanded','true')}
+  function close(){if(!popover)return;triggerFor(openSlot)?.setAttribute('aria-expanded','false');popover.hidden=true;popover.removeAttribute('style');openSlot=null;deletePendingRef='';menuView='load'}
 
   // Title/menu trigger rendering has one owner: sky-chart-sky-card-title-integrity.
   // Saved Skies only consumes that trigger and never manufactures competing card chrome.
@@ -236,11 +237,10 @@
     const trigger=event.target.closest?.('[data-saved-sky-trigger]');
     if(trigger){event.preventDefault();event.stopPropagation();const slot=trigger.dataset.savedSkyTrigger;if(openSlot===slot&&!popover?.hidden)close();else open(slot);return}
     if(event.target.closest?.('[data-saved-close]')){close();return}
-    if(event.target.closest?.('[data-sky-menu-back]')&&openSlot){menuView='commands';deletePendingRef='';renderPopover();return}
+    if(event.target.closest?.('[data-sky-menu-back]')&&openSlot){menuView='load';deletePendingRef='';renderPopover();return}
     const command=event.target.closest?.('[data-sky-command]');
     if(command&&openSlot){
       event.preventDefault();event.stopPropagation();const action=command.dataset.skyCommand,slot=openSlot;
-      if(action==='load'){menuView='load';renderPopover();return}
       if(action==='save'){menuView='save';renderPopover();requestAnimationFrame(()=>popover?.querySelector('[data-sky-command-save-name]')?.focus({preventScroll:true}));return}
       if(action==='new'){close();newSky(slot);schedule();return}
       if(action==='remove'){close();removeSky(slot);schedule();return}
@@ -258,7 +258,7 @@
   document.addEventListener('submit',event=>{
     const form=event.target.closest?.('[data-sky-command-save-form]');if(!form||!openSlot)return;
     event.preventDefault();event.stopPropagation();const input=form.querySelector('[data-sky-command-save-name]'),status=form.querySelector('[data-sky-command-status]'),active=identity(openSlot),result=saveActive(openSlot,input?.value||'',active.record||null);
-    if(status)status.textContent=result.message;if(result.ok){menuView='commands';renderPopover();schedule()}else input?.focus({preventScroll:true});
+    if(status)status.textContent=result.message;if(result.ok){menuView='load';renderPopover();schedule()}else input?.focus({preventScroll:true});
   });
 
   document.addEventListener('pointerdown',event=>{if(!openSlot||popover?.hidden)return;if(popover.contains(event.target)||triggerFor(openSlot)?.contains(event.target))return;close()},true);

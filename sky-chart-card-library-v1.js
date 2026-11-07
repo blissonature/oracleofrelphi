@@ -26,7 +26,9 @@ function decorate(){
   if(!toolbar){
     toolbar=document.createElement('div');toolbar.className='sky-library-controls';
     toolbar.innerHTML='<div class="sky-library-heading"><strong>Saved skies</strong><span>Fingerprint library</span></div><label class="sky-library-search"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.4"/><path d="m15.5 15.5 4.5 4.5"/></svg><input type="search" data-sky-library-search placeholder="Find a saved sky…" autocomplete="off" aria-label="Search saved skies by name"></label><div class="sky-library-folders" aria-label="Saved sky folders"></div><div class="sky-library-utility"><span data-sky-library-count></span><span>Hover or hold a fingerprint to see its name</span></div>';
-    list.prepend(toolbar);
+    // Primary actions come from the Saved Skies controller, before library tools.
+    const primary=list.querySelector(':scope > [data-sky-save-row]')||list.querySelector(':scope > [data-sky-add-b-row]')||list.querySelector(':scope > [data-sky-create-new]');
+    if(primary)primary.insertAdjacentElement('afterend',toolbar);else list.prepend(toolbar);
   }
   const records=library(),data=read();
   const custom=[...new Set(Object.values(data).filter(v=>typeof v==='string'&&v&&!DEFAULTS.includes(v)))].sort((a,b)=>a.localeCompare(b));
@@ -75,7 +77,7 @@ function decorate(){
   empty.hidden=visible!==0;
   list.querySelector('.sky-saved-library-instruction')?.remove();
   const top=pop.querySelector('.sky-library-slot-actions');
-  if(!top){const actions=document.createElement('div');actions.className='sky-library-slot-actions';actions.innerHTML='<button type="button" data-sky-card-swap>⇄ <span>Swap A / B</span></button><button type="button" data-sky-card-promote>← <span>Move B to A</span></button><button type="button" data-sky-card-unload>× <span>Unload</span></button>';pop.prepend(actions)}
+  if(!top){const actions=document.createElement('div');actions.className='sky-library-slot-actions';actions.innerHTML='<button type="button" data-sky-card-swap>⇄ <span>Swap A / B</span></button><button type="button" data-sky-card-promote>← <span>Move B to A</span></button><button type="button" data-sky-card-unload>× <span>Unload</span></button>';pop.append(actions)}
   const controlsTop=pop.querySelector('.sky-library-slot-actions');
   const slot=document.querySelector('[data-saved-sky-trigger][aria-expanded="true"]')?.dataset.savedSkyTrigger||'A';
   const hasB=window.RelphiSkySlotControls?.hasSkyB?.()===true;
