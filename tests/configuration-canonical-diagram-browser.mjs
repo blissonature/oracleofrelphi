@@ -129,7 +129,10 @@ try{
         sticky:styled.position,overflowPanel:getComputedStyle(panel).overflowY,
         overflowTile:getComputedStyle(root).overflowY,
         glyphs:visual.querySelectorAll('.sky-configuration-vertex-placement svg[data-relationship-canonical-host]').length,
-        visibleReading:paragraphs.some(p=>{const r=p.getBoundingClientRect();return r.bottom>rect.bottom+2&&r.top<innerHeight-2}),
+        visibleReading:paragraphs.some(p=>{const r=p.getBoundingClientRect();
+          return r.bottom>Math.max(0,rect.top)+2&&r.top<innerHeight-2&&
+            (r.left>=rect.right-1||r.bottom>rect.bottom+2);
+        }),
         pageScroll:scrollY};
     });
     assert.equal(whileReading.sticky,'sticky',label+' canonical drawing uses the existing sticky visual');
@@ -138,7 +141,8 @@ try{
     assert.ok(whileReading.y>=-1&&whileReading.y<=17,
       label+' canonical diagram remains in the viewport while interpretation scrolls: '+JSON.stringify(whileReading));
     assert.equal(whileReading.glyphs,before.count,label+' no duplicate or lost canonical placement glyphs');
-    assert.equal(whileReading.visibleReading,true,label+' interpretation remains readable below pinned diagram');
+    console.log('STICKY_READING '+label+' '+JSON.stringify(whileReading));
+    assert.equal(whileReading.visibleReading,true,label+' interpretation remains readable beside or below pinned diagram');
     await page.screenshot({path:'sky-configuration-reading-'+label+'.png'});
     // Returning to the top must restore the original in-flow position.
     await page.evaluate(y=>window.scrollTo(0,y),Math.max(0,before.documentY-30));
