@@ -28,7 +28,7 @@ const allDecans = {name:'All decans',calcProfile:{timeUnknown:true},placements:{
 for(let i=0;i<36;i++) allDecans.placements['P'+i]={longitude:i*10+0.001};
 const full=api.calculate(allDecans,cards);
 assert.equal(full.entries.filter(e=>e.card.card_type==='Pip').length,36,'Must find all 36 unique decan pips');
-assert.equal(full.entries.filter(e=>e.card.card_type==='Court').length,12,'Must find all 12 range-attributed courts');
+assert.equal(full.entries.filter(e=>e.card.card_type==='Court').length,0,'Court cards are not sky-specific matches');
 check(!full.entries.some(e=>e.card.card_id.startsWith('princess_')),'Princess quadrants are not ordinary court zodiac ranges');
 check(full.entries.length>12,'No arbitrary 12-card truncation');
 check(full.hitCount>full.entries.length,'Preserve all reasons when the same card matches several placements');
@@ -40,7 +40,7 @@ check(!!find(ariesTen,'three_of_wands'),'10° Aries matches Three of Wands');
 check(!find(ariesTen,'two_of_wands'),'10° Aries does not match Two of Wands');
 check(!find(ariesTen,'the_emperor'),'Major Arcana are not Sky Connector matches');
 check(!find(ariesTen,'the_tower'),'Planetary Majors are not Sky Connector matches');
-check(!!find(ariesTen,'queen_of_wands'),'10° Aries matches Queen of Wands range');
+check(!find(ariesTen,'queen_of_wands'),'10° Aries does not pull in Court cards');
 const natalMars=api.calculate({placements:{Mars:{longitude:150+17+52/60}}},cards);
 check(!!find(natalMars,'nine_of_pentacles'),'Mars in Virgo second decan matches Venus in Virgo Nine of Pentacles');
 check(find(natalMars,'nine_of_pentacles').hits.some(h=>h.body==='Mars'),'The matching body is Mars rather than the decan ruler Venus');
