@@ -46,10 +46,10 @@ assert.match(board, /renderedContentBounds/);
 assert.match(board, /workspace\.clientWidth/);
 assert.match(board, /workspace\.clientHeight/);
 assert.match(board, /relphi-workspace-tools/);
-assert.match(board, /data-tool="more"/);
+assert.match(board, /relphi-main-composer/); // Permanent composer replaces old More tool
 assert.doesNotMatch(board, /data-tool="snaps"/);
 assert.doesNotMatch(board, /data-tool="background"/);
-assert.match(board, /Unlock rotation & scale/);
+assert.match(board, /syncTransformEditingAvailability/); // Existing transform owner remains authoritative
 assert.match(board, /Snaps/);
 assert.match(board, /Background/);
 assert.match(board, /installExportArea/);
