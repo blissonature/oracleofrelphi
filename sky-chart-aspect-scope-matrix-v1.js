@@ -122,13 +122,17 @@ function samePassAt(id,first,last){
   SLOW_PASS_CACHE.set(cacheKey,verdict);
   return verdict;
 }
-function samePassRepeatedPlacement(id){
+function samePassRepeatedPlacement(id,memo){
+  if(memo?.has(id))return memo.get(id);
   const a=datedSky('A'),b=datedSky('B');
-  if(a===null||b===null)return false;
-  const aRx=skyRetrograde('A',id),bRx=skyRetrograde('B',id);
-  if(typeof aRx!=='boolean'||typeof bRx!=='boolean')return false;
-  if(aRx!==bRx)return false;
-  return samePassAt(id,a,b)===true;
+  let repeated=false;
+  if(a!==null&&b!==null){
+    const aRx=skyRetrograde('A',id),bRx=skyRetrograde('B',id);
+    if(typeof aRx==='boolean'&&typeof bRx==='boolean'&&aRx===bRx)
+      repeated=samePassAt(id,a,b)===true;
+  }
+  memo?.set(id,repeated);
+  return repeated;
 }
 const state=Object.fromEntries(SCOPES.map(scope=>[scope.id,new Set(IDS)]));
 (function loadPersistedState(){try{const saved=JSON.parse(localStorage.getItem(STORAGE_KEY)||'null');if(!saved||typeof saved!=='object')return;SCOPES.forEach(scope=>{if(Array.isArray(saved[scope.id]))state[scope.id]=new Set(saved[scope.id].filter(id=>IDS.includes(id)))})}catch(_){}})();
@@ -143,7 +147,7 @@ function normalize(value){
   return({semisextile:'semi-sextile','semi-sextile':'semi-sextile',semisquare:'octile','semi-square':'octile',sesquisquare:'tri-octile','sesqui-square':'tri-octile',sesquiquadrate:'tri-octile',biquintile:'bi-quintile',inconjunct:'quincunx'})[key]||key;
 }
 function bActive(){
-  try{window.RelphiSkyStartupMode?.syncRoot?.()}catch(_){}
+  // Pure read: refresh syncs startup mode once, not for every chart line.
   const html=document.documentElement;
   return html.dataset.skyBEditing==='true'||html.dataset.skyBPresent==='true';
 }
@@ -232,21 +236,34 @@ function renderPopover(){
       if(aspect){const row=matrixRow(aspect.id,aspect.label,false,aspect.angle);if(SIGN_ASPECTS.includes(aspect.id))row.insertBefore(signChoice(aspect.id),row.querySelector('.sky-chart-aspect-list-choices'));list.appendChild(row)}
     });
   });
-  const preference=document.createElement('label');
-  preference.className='sky-chart-slow-conjunction-option';
-  preference.style.cssText='display:flex;align-items:flex-start;gap:9px;padding:10px 9px;margin-bottom:7px;border:1px solid rgba(31,27,24,.19);border-radius:9px;background:#f4efe8;color:#29231e;cursor:pointer;font:700 12px/1.4 system-ui';
-  const toggle=document.createElement('input');toggle.type='checkbox';
-  toggle.dataset.hideRepeatedSlowConjunctions='true';
-  toggle.setAttribute('aria-label','Hide repeated same-passage relationships in A to B comparisons');
-  toggle.checked=hideRepeatedSlow;
-  const caption=document.createElement('span');
-  caption.textContent='Hide repeated same-passage relationships (A↔B)';
-  const explanation=document.createElement('small');
-  explanation.style.cssText='display:block;font:400 11px/1.4 system-ui;opacity:.8;margin-top:3px';
-  explanation.textContent='Removes same-passage self-repeats and reciprocal views of one relationship. Preserves distinct retrograde passes and contacts to different angles.';
-  caption.appendChild(explanation);preference.append(toggle,caption);
-  // Place this before the long scrollable matrix so it is visible immediately.
-  body.replaceChildren(preference,list);
+  if(!bActive()){
+    // No comparison, no A↔B setting.
+    body.replaceChildren(list);
+  }else{
+    const bar=document.createElement('div');bar.className='sky-chart-aspect-settings-bar';
+    const settings=document.createElement('details');settings.className='sky-chart-aspect-settings';
+    const summary=document.createElement('summary');summary.dataset.aspectSettingsToggle='true';
+    summary.title='Aspect settings';summary.setAttribute('aria-label','Aspect settings');
+    // A native interface cog, never a substitute celestial glyph.
+    const icon=document.createElementNS('http://www.w3.org/2000/svg','svg');
+    icon.setAttribute('viewBox','0 0 24 24');icon.setAttribute('width','18');icon.setAttribute('height','18');
+    icon.setAttribute('fill','none');icon.setAttribute('stroke','currentColor');icon.setAttribute('stroke-width','1.5');
+    icon.setAttribute('stroke-linejoin','round');icon.setAttribute('aria-hidden','true');
+    icon.innerHTML='<path d="M10 2.8h4l.6 2.4 1.8 1 2.3-1 2.8 2.8-1 2.3 1 1.8L24 12l-2.5.6-1 1.8 1 2.3-2.8 2.8-2.3-1-1.8 1L14 22h-4l-.6-2.5-1.8-1-2.3 1-2.8-2.8 1-2.3-1-1.8L0 12l2.5-.6 1-1.8-1-2.3 2.8-2.8 2.3 1 1.8-1z"/><circle cx="12" cy="12" r="3.1"/>';
+    summary.append(icon);
+    const panel=document.createElement('div');panel.className='sky-chart-aspect-settings-panel';
+    const preference=document.createElement('label');preference.className='sky-chart-slow-conjunction-option';
+    const toggle=document.createElement('input');toggle.type='checkbox';
+    toggle.dataset.hideRepeatedSlowConjunctions='true';
+    toggle.setAttribute('aria-label','Hide repeated same-passage relationships in A to B comparisons');
+    toggle.checked=hideRepeatedSlow;
+    const caption=document.createElement('span');caption.className='sky-chart-slow-conjunction-caption';
+    caption.textContent='Hide repeated same-passage relationships (A↔B)';
+    const explanation=document.createElement('small');
+    explanation.textContent='Removes same-passage repeats and reciprocal views of one relationship. Preserves distinct retrograde passes and contacts to different angles.';
+    caption.append(explanation);preference.append(toggle,caption);
+    panel.append(preference);settings.append(summary,panel);bar.append(settings);body.replaceChildren(bar,list);
+  }
   window.dispatchEvent(new Event('relphi:sky-aspect-filter-rendered'));
 }
 function renderClosedSummary(owner){
@@ -261,7 +278,7 @@ function renderClosedSummary(owner){
   summary.replaceChildren(choice('all','all','All aspects in all relationship scopes',true),...scopes.map(scope=>choice(scope.id,'all',`All aspects in ${scope.label}`,true)));
 }
 function updateInputs(){
-  document.querySelectorAll('[data-hide-repeated-slow-conjunctions]').forEach(input=>{input.checked=hideRepeatedSlow;input.disabled=!bActive()});
+  document.querySelectorAll('[data-hide-repeated-slow-conjunctions]').forEach(input=>{input.checked=hideRepeatedSlow});
   document.querySelectorAll('[data-sky-by-sign]').forEach(input=>{
     const id=input.dataset.skyBySign;
     const ids=id==='all'?SIGN_ASPECTS:id.startsWith('group:')?(GROUP_MAP.get(id.slice(6))?.aspects||[]).filter(value=>SIGN_ASPECTS.includes(value)):[id];
@@ -283,15 +300,15 @@ function updateCount(){
     if(count)count.textContent=`${shown}/${rows.length}`;if(empty)empty.hidden=shown!==0;
   });
 }
-function redundantSamePassRelationship(node,mode,aspect){
+function redundantSamePassRelationship(node,mode,aspect,repeated){
   if(!hideRepeatedSlow||mode!=='A-B')return false;
   const left=String(node?.dataset?.leftPlacement||'').trim().toLowerCase();
   const right=String(node?.dataset?.rightPlacement||'').trim().toLowerCase();
-  if(aspect==='conjunction'&&left===right&&REPEAT_IDENTITIES.has(left))return samePassRepeatedPlacement(left);
+  if(aspect==='conjunction'&&left===right&&REPEAT_IDENTITIES.has(left))return repeated(left);
   // The North/South Nodes form one axis: North A opposite South B (or
   // conversely) merely repeats that axis when both skies belong to one pass.
   if(aspect==='opposition'&&NODAL_IDS.has(left)&&NODAL_IDS.has(right)&&left!==right)
-    return samePassRepeatedPlacement('north-node');
+    return repeated('north-node');
   return false;
 }
 // Relationship equivalence is calculated once from observations, then shared
@@ -304,7 +321,7 @@ const observationKey=node=>{
   const right=String(node?.dataset?.rightPlacement||'').toLowerCase();
   return mode+'|'+left+'|'+aspect+'|'+right;
 };
-function equivalenceExclusions(){
+function equivalenceExclusions(repeated){
   const excluded=new Set();
   if(!hideRepeatedSlow)return excluded;
   const groups=new Map();
@@ -323,7 +340,7 @@ function equivalenceExclusions(){
     const pair=[left,right].sort();
     // Only collapse observations of the same two trajectories on unchanged
     // passages. This preserves a return, a station, and mixed time frames.
-    if(!samePassRepeatedPlacement(pair[0])||!samePassRepeatedPlacement(pair[1]))return;
+    if(!repeated(pair[0])||!repeated(pair[1]))return;
     const key=pair.join('|')+'|'+aspect;
     if(!groups.has(key))groups.set(key,new Map());
     const observations=groups.get(key),id=observationKey(row);
@@ -341,25 +358,43 @@ function equivalenceExclusions(){
   });
   return excluded;
 }
-function visible(node,excluded){const mode=relationshipMode(node);if(!activeScopes().includes(mode))return false;const aspect=normalize(node?.dataset?.aspect||'');if(redundantSamePassRelationship(node,mode,aspect))return false;if(excluded?.has(observationKey(node)))return false;if(node?.dataset?.bySignOnly==='true')return signSelected.has(aspect);if(!aspect)return true;const anySelected=activeScopes().some(scope=>state[scope]?.size>0);if(!anySelected)return false;if(window.RelphiAspectConfigurations?.participates?.(node))return true;return!!state[mode]?.has(aspect)}
+function visible(node,excluded,active,anySelected,repeated){
+  const mode=relationshipMode(node);
+  if(!active.has(mode))return false;
+  const aspect=normalize(node?.dataset?.aspect||'');
+  if(redundantSamePassRelationship(node,mode,aspect,repeated))return false;
+  if(excluded.has(observationKey(node)))return false;
+  if(node?.dataset?.bySignOnly==='true')return signSelected.has(aspect);
+  if(!aspect)return true;
+  if(!anySelected)return false;
+  if(window.RelphiAspectConfigurations?.participates?.(node))return true;
+  return!!state[mode]?.has(aspect);
+}
 function applyMatrix({announce=true}={}){
+  if(applying)return;
   applying=true;
-  const excluded=equivalenceExclusions();
-  document.querySelectorAll('.sky-foundation-relationship-row,[data-layer="aspects"]>.sky-foundation-aspect,[data-layer="aspects"]>.sky-foundation-aspect-hit').forEach(node=>node.classList.toggle('sky-chart-aspect-multiselect-hidden',!visible(node,excluded)));
-  updateInputs();
-  const matrix=Object.fromEntries(SCOPES.map(scope=>[scope.id,IDS.filter(id=>state[scope.id].has(id))]));
-  try{localStorage.setItem(STORAGE_KEY,JSON.stringify(matrix))}catch(_){}
-  const active=new Set(activeScopes());
-  const scopes=SCOPES.filter(scope=>active.has(scope.id)&&(state[scope.id].size>0||signSelected.size>0)).map(scope=>scope.id);
-  const selected=IDS.filter(id=>signSelected.has(id)||SCOPES.some(scope=>active.has(scope.id)&&state[scope.id].has(id)));
-  document.documentElement.dataset.skyAspectMatrix='ready';
-  document.documentElement.dataset.skyAspectMultiselect='ready';
-  document.documentElement.dataset.skyAspectSelection=`${selected.length}/${IDS.length}`;
-  document.documentElement.dataset.skyRelationshipScopeSelection=scopes.join(',');
-  updateCount();
-  if(announce)window.dispatchEvent(new CustomEvent('relphi:sky-aspect-multiselect-changed',{detail:{selected,scopes,matrix}}));
-  window.dispatchEvent(new CustomEvent('relphi:sky-aspect-visibility-applied',{detail:{selected,scopes,matrix}}));
-  applying=false;
+  try{
+    const active=new Set(activeScopes());
+    const anySelected=[...active].some(scope=>state[scope]?.size>0);
+    // One passage computation per planet, shared by list, lines and hit areas.
+    const memo=new Map(),repeated=id=>samePassRepeatedPlacement(id,memo);
+    const excluded=hideRepeatedSlow&&active.has('A-B')?equivalenceExclusions(repeated):new Set();
+    document.querySelectorAll('.sky-foundation-relationship-row,[data-layer="aspects"]>.sky-foundation-aspect,[data-layer="aspects"]>.sky-foundation-aspect-hit')
+      .forEach(node=>node.classList.toggle('sky-chart-aspect-multiselect-hidden',
+        !visible(node,excluded,active,anySelected,repeated)));
+    updateInputs();
+    const matrix=Object.fromEntries(SCOPES.map(scope=>[scope.id,IDS.filter(id=>state[scope.id].has(id))]));
+    try{localStorage.setItem(STORAGE_KEY,JSON.stringify(matrix))}catch(_){}
+    const scopes=SCOPES.filter(scope=>active.has(scope.id)&&(state[scope.id].size>0||signSelected.size>0)).map(scope=>scope.id);
+    const selected=IDS.filter(id=>signSelected.has(id)||SCOPES.some(scope=>active.has(scope.id)&&state[scope.id].has(id)));
+    document.documentElement.dataset.skyAspectMatrix='ready';
+    document.documentElement.dataset.skyAspectMultiselect='ready';
+    document.documentElement.dataset.skyAspectSelection=`${selected.length}/${IDS.length}`;
+    document.documentElement.dataset.skyRelationshipScopeSelection=scopes.join(',');
+    updateCount();
+    if(announce)window.dispatchEvent(new CustomEvent('relphi:sky-aspect-multiselect-changed',{detail:{selected,scopes,matrix}}));
+    window.dispatchEvent(new CustomEvent('relphi:sky-aspect-visibility-applied',{detail:{selected,scopes,matrix}}));
+  }finally{applying=false}
 }
 function positionPopover({reset=false}={}){
   const owner=control(),menu=popover(),head=owner?.querySelector('.sky-chart-aspect-filter-head');
@@ -388,6 +423,7 @@ function ensureUI(){
 function handleChange(event){
   const slow=event.target.closest?.('[data-hide-repeated-slow-conjunctions]');
   if(slow){
+    if(!bActive()||!slow.closest('.sky-chart-aspect-settings'))return;
     hideRepeatedSlow=!!slow.checked;
     try{localStorage.setItem(REPEATED_SLOW_KEY,String(hideRepeatedSlow))}catch(_){}
     applyMatrix();
@@ -405,7 +441,7 @@ function handleChange(event){
   setCells(input.dataset.aspectMatrixScope,input.dataset.aspectMatrixAspect,input.checked);applyMatrix();
 }
 function whereWhenEditing(){return document.documentElement.dataset.skyWhereWhenEditing==='true'}
-function refresh(){queued=false;if(whereWhenEditing())return;const scopeSignature=bActive()?'A+B':'A',scopeChanged=scopeSignature!==lastScopeSignature;lastScopeSignature=scopeSignature;if(!ensureUI())return;if(scopeChanged)renderPopover();renderClosedSummary(control());updateInputs();applyMatrix({announce:false});positionPopover()}
+function refresh(){queued=false;if(whereWhenEditing())return;try{window.RelphiSkyStartupMode?.syncRoot?.()}catch(_){}const scopeSignature=bActive()?'A+B':'A',scopeChanged=scopeSignature!==lastScopeSignature;lastScopeSignature=scopeSignature;if(!ensureUI())return;if(scopeChanged)renderPopover();renderClosedSummary(control());updateInputs();applyMatrix({announce:false});positionPopover()}
 function schedule(){if(queued||applying||whereWhenEditing())return;queued=true;requestAnimationFrame(refresh)}
 function handleLegacyAspectPass(event){
   if(event.detail?.matrix)return;
