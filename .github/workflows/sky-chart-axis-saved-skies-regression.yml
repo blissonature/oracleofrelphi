@@ -38,3 +38,10 @@ jobs:
         run: |
           python3 -m http.server 4173 > /tmp/sky-chart-axis-saved-server.log 2>&1 &
           node tests/sky-chart-axis-saved-skies-regression-browser.mjs
+      - name: Upload verified fingerprint screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sky-micro-main-parity
+          path: sky-micro-main-parity-*.png
+          if-no-files-found: ignore

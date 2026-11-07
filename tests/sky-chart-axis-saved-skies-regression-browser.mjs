@@ -127,6 +127,31 @@ try{
     assert.equal(thumb.duplicateIds,0,`Sky ${slot} microheptagram must not duplicate source IDs: ${JSON.stringify(thumb)}`);
   }
 
+  // The visual fingerprint must occupy its original 52px tab at both sizes
+  // without modifying the completed source's seven canonical glyph mounts.
+  for(const [width,height,label] of [[1280,1000,'desktop'],[390,844,'mobile']]){
+    await page.setViewportSize({width,height});
+    await page.waitForTimeout(180);
+    const visual=await page.evaluate(()=>{
+      return ['A','B'].map(slot=>{
+        const refs=window.RelphiSkyCardShell?.get?.(slot);
+        const source=refs?.heptagram,thumb=refs?.whereFingerprint?.querySelector('.sky-where-fingerprint-heptagram');
+        const rect=thumb?.getBoundingClientRect();
+        const normalize=svg=>[...svg.querySelectorAll('.sky-ph-planet')].map(g=>g.querySelector('.sky-ph-node-glyph')?.innerHTML||'');
+        return{slot,width:rect?.width,height:rect?.height,unmodified:JSON.stringify(normalize(source))===JSON.stringify(normalize(thumb)),
+          sourceCount:source?.querySelectorAll('.sky-ph-planet .relphi-canonical-glyph').length,
+          thumbCount:thumb?.querySelectorAll('.sky-ph-planet .relphi-canonical-glyph').length};
+      });
+    });
+    for(const item of visual){
+      assert.ok(item.width>=51&&item.height>=51,`Sky ${item.slot} ${label} microheptagram retains original footprint: ${JSON.stringify(item)}`);
+      assert.equal(item.unmodified,true,`Sky ${item.slot} ${label} miniature never changes canonical glyph art: ${JSON.stringify(item)}`);
+      assert.equal(item.thumbCount,item.sourceCount,`Sky ${item.slot} ${label} glyph count mirrors live source: ${JSON.stringify(item)}`);
+    }
+    await page.screenshot({path:`sky-micro-main-parity-${label}.png`});
+  }
+  await page.setViewportSize({width:1280,height:1000});
+
   // Loading an older Saved Sky into an already-mounted Sky B must rebuild both
   // the hidden source heptagram and the visible microheptagram fingerprint.
   await page.locator('[data-saved-sky-trigger="B"]').click();
