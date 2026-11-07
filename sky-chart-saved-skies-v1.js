@@ -229,6 +229,10 @@
   function schedule(){if(queued)return;queued=true;requestAnimationFrame(sync)}
 
   document.addEventListener('click',event=>{
+    // One click owner for core sky commands and the fingerprint library's
+    // delegated folder/privacy actions. The library does not install a
+    // competing capture listener or change the sky loading lifecycle.
+    if(window.RelphiSkyCardLibrary?.handlePickerClick?.(event))return;
     const trigger=event.target.closest?.('[data-saved-sky-trigger]');
     if(trigger){event.preventDefault();event.stopPropagation();const slot=trigger.dataset.savedSkyTrigger;if(openSlot===slot&&!popover?.hidden)close();else open(slot);return}
     if(event.target.closest?.('[data-saved-close]')){close();return}
