@@ -138,6 +138,7 @@ document.addEventListener('pointerdown',e=>{
  const item=e.target.closest?.('#skySavedSkiesPopover [data-saved-sky-ref]');
  if(!item)return;
  clearTimeout(holdTimer);
+ suppressClickRef=''; // A later tap must not inherit an earlier long-press cancellation.
  holdRef=item.dataset.savedSkyRef;
  holdTimer=setTimeout(()=>{
    if(holdRef!==item.dataset.savedSkyRef)return;
