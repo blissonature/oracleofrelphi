@@ -72,7 +72,7 @@ const base=process.env.RELPHI_TEST_URL || 'http://127.0.0.1:8075/tarot.html';
    await page.waitForFunction(()=>!document.getElementById('shortListPanel').hidden,{timeout:15000});
    assert.equal(await page.locator('#shortListPanel').isVisible(),true);
    // Exercise the actual Free Draw keyword picker, not merely its backing API.
-   await page.locator('#relphiBoardSettingsButton').click();
+   await page.locator('.relphi-main-strip > [data-main-action="filters"]').click();
    await page.locator('#relphiFreePack').selectOption('tags');
    await page.locator('#relphiKeywordQuery').fill('despair');
    const despairChoice=page.locator('#relphiKeywordMatches [data-keyword-choice][value="despair"]');
@@ -87,7 +87,7 @@ const base=process.env.RELPHI_TEST_URL || 'http://127.0.0.1:8075/tarot.html';
    assert.equal(await page.evaluate(()=>window.RELPHI_KEYWORD_SUBPACK_CONTEXT.count(['despair'])),2);
    // Switch the real Drawing Board keyword pool to abandonment and verify
    // direct membership without broad loss/rejection contamination.
-   await page.locator('#relphiBoardSettingsButton').click();
+   await page.locator('.relphi-main-strip > [data-main-action="filters"]').click();
    await page.locator('[data-keyword-remove="despair"]').click();
    await page.locator('#relphiKeywordQuery').fill('abandonment');
    const abandonChoice=page.locator('#relphiKeywordMatches [data-keyword-choice][value="abandonment"]');
@@ -98,7 +98,7 @@ const base=process.env.RELPHI_TEST_URL || 'http://127.0.0.1:8075/tarot.html';
    assert.equal(await page.evaluate(()=>window.RELPHI_KEYWORD_SUBPACK_CONTEXT.count(['abandonment'])),2);
    // The full domain review must also surface newly qualified everyday themes
    // inside the actual Drawing Board picker.
-   await page.locator('#relphiBoardSettingsButton').click();
+   await page.locator('.relphi-main-strip > [data-main-action="filters"]').click();
    await page.locator('[data-keyword-remove="abandonment"]').click();
    await page.locator('#relphiKeywordQuery').fill('trust');
    const trustChoice=page.locator('#relphiKeywordMatches [data-keyword-choice][value="trust"]');
@@ -108,7 +108,7 @@ const base=process.env.RELPHI_TEST_URL || 'http://127.0.0.1:8075/tarot.html';
    await page.locator('#relphiConfirmFreeSettings').click();
    assert.equal(await page.evaluate(()=>window.RELPHI_KEYWORD_SUBPACK_CONTEXT.count(['trust'])),3);
    // Unqualified terms must offer visible navigation without changing the pool.
-   await page.locator('#relphiBoardSettingsButton').click();
+   await page.locator('.relphi-main-strip > [data-main-action="filters"]').click();
    await page.locator('[data-keyword-remove="trust"]').click();
    await page.locator('#relphiKeywordQuery').fill('apology');
    const related=page.locator('#relphiKeywordMatches [data-keyword-navigate="regret"]');
@@ -121,7 +121,7 @@ const base=process.env.RELPHI_TEST_URL || 'http://127.0.0.1:8075/tarot.html';
    await page.locator('#relphiConfirmFreeSettings').click();
    assert.equal(await page.evaluate(()=>window.RELPHI_KEYWORD_SUBPACK_CONTEXT.count(['regret'])),2);
    // Typos offer corrections, never implicit card qualification.
-   await page.locator('#relphiBoardSettingsButton').click();
+   await page.locator('.relphi-main-strip > [data-main-action="filters"]').click();
    await page.locator('[data-keyword-remove="regret"]').click();
    await page.locator('#relphiKeywordQuery').fill('secrects');
    await page.locator('#relphiKeywordMatches [data-keyword-navigate="secrecy"]').waitFor({state:'visible',timeout:10000});
