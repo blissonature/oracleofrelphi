@@ -180,9 +180,13 @@ function decorate(){
     else if(copy.dataset.signature!==sig){copy.replaceWith(copyFor(record));copy=item.querySelector('[data-saved-fingerprint-copy]')}
     if(copy)copy.dataset.signature=sig;
     const name=String(record.name||'Saved sky').trim()||'Saved sky',when=dateTime(record),where=place(record),parts=[name,when,where].filter(Boolean);
-    item.setAttribute('aria-label',`Load ${parts.join('. ')}.`);
-    const del=row.querySelector('[data-saved-delete-ref]');if(del){del.setAttribute('aria-label',`Delete ${name} from Saved Skies`);del.title=`Delete ${name}`}
-    const confirmation=row.querySelector('.sky-saved-delete-confirmation');if(confirmation)confirmation.setAttribute('aria-label',`Delete ${name}?`);
+    // The fingerprint library owns privacy disclosure and accessible names.
+    // Retain legacy accessible labels only when that owner is not installed.
+    if(!window.RelphiSkyCardLibrary){
+      item.setAttribute('aria-label',`Load ${parts.join('. ')}.`);
+      const del=row.querySelector('[data-saved-delete-ref]');if(del){del.setAttribute('aria-label',`Delete ${name} from Saved Skies`);del.title=`Delete ${name}`}
+      const confirmation=row.querySelector('.sky-saved-delete-confirmation');if(confirmation)confirmation.setAttribute('aria-label',`Delete ${name}?`);
+    }
   });
 }
 function schedule(){if(queued)return;queued=true;queueMicrotask(decorate)}
