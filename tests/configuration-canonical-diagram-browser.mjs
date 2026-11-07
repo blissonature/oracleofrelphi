@@ -74,20 +74,32 @@ try{
       const vertices=[...visual.querySelectorAll('.sky-configuration-vertex-host')];
       const placements=vertices.map(host=>host.querySelector('.sky-configuration-vertex-placement'));
       const lines=visual.querySelectorAll('.sky-configuration-mini-aspect');
-      const context=[...root.querySelectorAll('.sky-configuration-match-context')].map(x=>x.textContent.trim());
+      const context=[...root.querySelectorAll('.sky-configuration-interpretation-actor')].map(x=>x.textContent.trim());
+      const entries=[...root.querySelectorAll('.sky-configuration-interpretation-line')];
+      const matchRows=[...root.querySelectorAll('.sky-configuration-match-participant')];
+      const structures=[...root.querySelectorAll('.sky-configuration-interpretation-synthesis')];
+      const first=matchRows[0]?.getBoundingClientRect();
       const rect=visual.getBoundingClientRect();
       return{width:rect.width,lines:lines.length,
         canonical:placements.map(x=>!!x?.querySelector('svg[data-relationship-canonical-host]')),
         illegal:visual.querySelectorAll('.sky-configuration-vertex-sign,.sky-configuration-vertex-house,.sky-configuration-vertex-attributes,[data-interactive="sign"],[data-interactive="house"]').length,
-        text:visual.innerText||'',context};
+        text:visual.innerText||'',context,
+        entries:entries.length,structure:structures.map(s=>s.textContent.trim()),
+        noAddedLabels:root.querySelectorAll('.sky-configuration-match-context').length===0,
+        sameRails:matchRows.every(row=>{const box=row.getBoundingClientRect();return Math.abs(box.width-38)<1&&Math.abs(box.height-46)<1&&row.querySelectorAll('.sky-configuration-match-rail').length===2}),
+        signTokens:root.querySelectorAll('.sky-configuration-interpretation-sign').length,
+        houseTokens:root.querySelectorAll('.sky-configuration-interpretation-house').length,
+        aspectTokens:root.querySelectorAll('.sky-configuration-interpretation-aspect').length};
     });
     assert.equal(audit.lines,3,label+' retains all three aspect edges');
     assert.equal(audit.canonical.length,3,label+' retains three vertices');
     assert.ok(audit.canonical.every(Boolean),label+' displays only canonical placement art');
     assert.equal(audit.illegal,0,label+' has no unauthorized sign/house glyph badges');
-    assert.ok(audit.context.some(t=>t.includes('Aquarius')&&t.includes('House 5')),label+' labels nodal sign/house outside diagram');
-    assert.ok(audit.context.some(t=>t.includes('Leo')&&t.includes('House 11')),label+' labels opposite node outside diagram');
-    assert.ok(audit.context.some(t=>t.includes('Scorpio')&&t.includes('House 3')),label+' labels Saturn outside diagram');
+    assert.equal(audit.noAddedLabels,true,label+' has no additional text beneath the canonical rails');
+    assert.equal(audit.sameRails,true,label+' restores the 38px canonical rail and glyph layout');
+    assert.ok(audit.entries>=2,label+' structures interpretation by placement');
+    assert.ok(audit.signTokens>=2&&audit.houseTokens>=2,label+' color-codes signs and houses in the prose');
+    assert.ok(audit.structure.length>0&&audit.aspectTokens>0,label+' separates and colors the synthesis');
     assert.deepEqual(errors,[],label+' has no uncaught browser errors');
     await tile.screenshot({path:'sky-configuration-canonical-'+label+'.png'});
   }

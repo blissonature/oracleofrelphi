@@ -177,21 +177,91 @@ function configurationMotionText(pattern){
   if(!retro.length)return'';
   return ' Retrograde '+retro.map(p=>'Sky '+p.sky+' '+p.name).join(' and ')+' invites the pattern to be revisited and reworked before its next expression.';
 }
-function interpretationText(pattern){
+function configurationInterpretationParts(pattern){
   const pairs=configurationEdgePairs(pattern,'opposition');
   const apexTypes={'t-square':['square'],yod:['quincunx'],'thors-hammer':['tri-octile'],'minor-grand-trine':['sextile']};
   const apex=configurationApex(pattern,apexTypes[pattern.type]||[]);
   const first=pairs[0];
-  let text='';
+  let keys=pattern.vertices.slice(),synthesis='';
   if(pattern.type==='t-square'&&first&&apex){
-    text=configurationPhrase(first[0],{detailed:true})+' '+configurationPhrase(first[1],{detailed:true})+' Their opposition sets these needs against one another; both press on '+configurationPhrase(apex)+', making '+(CONFIG_HOUSE_FIELD[configurationRecord(apex).house]||'that planetary function')+' the point where the tension seeks a response.';
+    keys=[first[0],first[1]];
+    synthesis='Their opposition sets these needs against one another; both press on '+configurationPhrase(apex)+', making '+(CONFIG_HOUSE_FIELD[configurationRecord(apex).house]||'that planetary function')+' the point where the tension seeks a response.';
   }else if(pattern.type==='yod'&&apex){
-    const base=pattern.vertices.filter(k=>k!==apex);
-    text=base.map(k=>configurationPhrase(k,{detailed:true})).join(' ')+' Their differing adjustments converge on '+configurationPhrase(apex)+', concentrating development in '+(CONFIG_HOUSE_FIELD[configurationRecord(apex).house]||'its function')+'.';
+    keys=pattern.vertices.filter(key=>key!==apex);
+    synthesis='Their differing adjustments converge on '+configurationPhrase(apex)+', concentrating development in '+(CONFIG_HOUSE_FIELD[configurationRecord(apex).house]||'its function')+'.';
   }else{
-    text=pattern.vertices.map(k=>configurationPhrase(k,{detailed:true})).join(' ')+' '+(CONFIG_INTERPRETATION[pattern.type]||'These functions meet through a compound pattern.');
+    synthesis=CONFIG_INTERPRETATION[pattern.type]||'These functions meet through a compound pattern.';
   }
-  return text+configurationMotionText(pattern);
+  return{keys,synthesis,motion:configurationMotionText(pattern).trim()};
+}
+function interpretationText(pattern){
+  const {keys,synthesis,motion}=configurationInterpretationParts(pattern);
+  return[...keys.map(key=>configurationPhrase(key,{detailed:true})),synthesis,motion].filter(Boolean).join(' ');
+}
+// Interpretation presentation uses Vocab's existing sign/house palette, never
+// Unicode zodiac substitutes or glyph overlays. The canonical match-row
+// rails, canonical drawings and geometry remain untouched.
+function interpretationActor(key){
+  const record=configurationRecord(key),node=document.createElement('span');
+  node.className='sky-configuration-interpretation-actor';
+  const sky=document.createElement('span');sky.className='sky-configuration-interpretation-sky';sky.dataset.sky=record.sky||'A';sky.textContent='Sky '+record.sky;
+  const name=document.createElement('strong');name.className='sky-configuration-interpretation-placement';name.textContent=record.name;
+  node.append(sky,document.createTextNode(' '),name);
+  if(Number.isInteger(record.sign)&&record.sign>=0&&record.sign<12){
+    const sign=document.createElement('span');sign.className='sky-configuration-interpretation-sign';
+    sign.style.color=resultSignColor(record.sign);sign.textContent=' in '+CONFIG_SIGN_NAMES[record.sign];node.append(sign);
+  }
+  if(Number.isInteger(record.house)&&record.house>=1&&record.house<=12){
+    const house=document.createElement('span');house.className='sky-configuration-interpretation-house';
+    house.style.color=resultHouseColor(record.house);house.textContent=' (house '+record.house+')';node.append(house);
+  }
+  if(record.retrograde)node.append(document.createTextNode(' retrograde'));
+  return node;
+}
+function renderInterpretationClause(host,text,pattern){
+  const values=pattern.vertices.map(key=>({type:'placement',value:configurationPhrase(key),key}))
+    .concat(Object.keys(RESULT_ASPECT_COLORS).map(aspect=>({type:'aspect',value:aspect.replace(/-/g,' '),aspect})))
+    .sort((a,b)=>b.value.length-a.value.length);
+  const source=String(text||'');let cursor=0;
+  while(cursor<source.length){
+    const match=values.find(token=>source.slice(cursor,cursor+token.value.length).toLowerCase()===token.value.toLowerCase());
+    if(match){
+      if(match.type==='placement')host.appendChild(interpretationActor(match.key));
+      else{
+        const token=document.createElement('span');token.className='sky-configuration-interpretation-aspect';
+        token.style.color=RESULT_ASPECT_COLORS[match.aspect];token.textContent=source.slice(cursor,cursor+match.value.length);
+        host.appendChild(token);
+      }
+      cursor+=match.value.length;
+    }else{
+      const start=cursor++;
+      while(cursor<source.length&&!values.some(token=>source.slice(cursor,cursor+token.value.length).toLowerCase()===token.value.toLowerCase()))cursor++;
+      host.appendChild(document.createTextNode(source.slice(start,cursor)));
+    }
+  }
+}
+function renderConfigurationInterpretation(host,pattern){
+  const {keys,synthesis,motion}=configurationInterpretationParts(pattern);
+  const list=document.createElement('div');list.className='sky-configuration-interpretation-lines';
+  keys.forEach(key=>{
+    const record=configurationRecord(key),line=document.createElement('p');
+    line.className='sky-configuration-interpretation-line';
+    if(Number.isInteger(record.sign))line.style.setProperty('--configuration-sign-color',resultSignColor(record.sign));
+    if(Number.isInteger(record.house))line.style.setProperty('--configuration-house-color',resultHouseColor(record.house));
+    const lead=configurationPhrase(key),whole=configurationPhrase(key,{detailed:true});
+    const identity=interpretationActor(key),reading=document.createElement('span');
+    reading.className='sky-configuration-interpretation-reading';reading.textContent=whole.slice(lead.length).trimStart();
+    line.append(identity,document.createTextNode(' '),reading);list.appendChild(line);
+  });
+  if(synthesis){
+    const summary=document.createElement('p');summary.className='sky-configuration-interpretation-synthesis';
+    renderInterpretationClause(summary,synthesis,pattern);list.appendChild(summary);
+  }
+  if(motion){
+    const movement=document.createElement('p');movement.className='sky-configuration-interpretation-motion';
+    renderInterpretationClause(movement,motion,pattern);list.appendChild(movement);
+  }
+  host.replaceChildren(list);
 }
 function miniConfigurationMarkup(pattern,{compact=false,interactive=true}={}){
   const records=new Map(pattern.vertices.map(key=>[key,resultVertexRecord(key)]).filter(([,record])=>record));
@@ -389,13 +459,7 @@ function configurationMatchRow(pattern,index){
     const houseInfo=house?window.RelphiSkyVocab?.describeFocus?.('house',house):null;
     houseRail.title=house?'House '+house+(houseInfo?.description?' — '+houseInfo.description:''):'House unavailable';
     participant.title='Sky '+item.sky+' '+placementWord(item.id)+' · '+signRail.title+' · '+houseRail.title;
-    // Clear, readable locations belong to the existing match row, outside
-    // the protected geometry; ordinary text is not a replacement glyph.
-    const context=document.createElement('span');
-    context.className='sky-configuration-match-context';
-    const signName=Number.isInteger(record?.sign)?CONFIG_SIGN_NAMES[record.sign]:'Sign unavailable';
-    context.textContent=signName+(house?' · House '+house:'');
-    participant.append(signRail,glyph,houseRail,context);
+    participant.append(signRail,glyph,houseRail);
     placements.appendChild(participant);
   });
 
@@ -444,7 +508,7 @@ function renderSelectedConfiguration(tile,pattern){
   const explanation=detail.querySelector('.sky-configuration-result-explanation');
   if(visual)visual.innerHTML=miniConfigurationMarkup(pattern,{interactive:false});
   if(structure)structure.textContent=structureText(pattern);
-  if(interpretation)interpretation.textContent=interpretationText(pattern);
+  if(interpretation)renderConfigurationInterpretation(interpretation,pattern);
   // The expanded card is progressive: show the reading first, reveal its
   // geometry on demand rather than repeating the same material immediately.
   const structurePanel=detail.querySelector('.sky-configuration-result-structure');
