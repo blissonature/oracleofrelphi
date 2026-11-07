@@ -214,6 +214,6 @@ try{
  const ref=process.env.REMOTE_PREVIEW_REF||'';
  if(ref){
   assert.match(ref,/^[a-f0-9]{40}$/i,'The hosted preview must use the exact commit SHA');
-  await run('hosted-preview','https://cdn.githubraw.com/blissonature/oracleofrelphi/'+ref);
+  await run('hosted-preview','https://cdn.githubraw.com/blissonature/oracleofrelphi/'+ref+'/sky-chart.html');
  }
 }finally{await browser.close()}
