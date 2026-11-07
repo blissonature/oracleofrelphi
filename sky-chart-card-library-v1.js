@@ -3,12 +3,21 @@
 'use strict';
 if(window.__relphiSkyCardLibraryV1)return;window.__relphiSkyCardLibraryV1=true;
 const KEY='relphiSkyCardFoldersV1',POPOVER='#skySavedSkiesPopover',DEFAULTS=['All','Family','Clients','Events','Study','Unfiled'];
-let filter='All',query='',editingFolder='',queued=false;
+let filter='All',query='',editingFolder='',queued=false,holdTimer=null,holdRef='',suppressClickRef='';
 const read=()=>{try{return JSON.parse(localStorage.getItem(KEY)||'{}')||{}}catch(_){return {}}};
 const write=data=>{try{localStorage.setItem(KEY,JSON.stringify(data));return true}catch(_){return false}};
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','"':'&quot;',"'":'&#39;'}[c]));
 const library=()=>window.RelphiSkySavedSkyIdentity?.library?.()||[];
 const id=r=>String(r?.id||r?.savedSkyId||r?.metadata?.savedSkyId||'');
+function setRevealed(row,active){
+  const button=row?.querySelector?.('[data-saved-sky-ref]');if(!button)return;
+  const record=library().find(r=>id(r)===button.dataset.savedSkyRef);
+  row.classList.toggle('is-identity-revealed',!!active);
+  const parts=record?[record.name,button.querySelector('.sky-saved-fingerprint-copy-when')?.textContent,button.querySelector('.sky-saved-fingerprint-copy-where')?.textContent].filter(Boolean):[];
+  button.setAttribute('aria-label',active&&parts.length?'Load '+parts.join('. ')+'.':'Load this concealed saved sky.');
+  const del=row.querySelector('[data-saved-delete-ref]');
+  if(del)del.setAttribute('aria-label',active&&record?'Delete '+record.name+' from Saved skies':'Delete this concealed saved sky from Saved skies');
+}
 function decorate(){
   queued=false;const pop=document.querySelector(POPOVER);
   if(!pop||pop.hidden)return;const list=pop.querySelector('.sky-saved-list');if(!list)return;
@@ -39,10 +48,13 @@ function decorate(){
     // name/date/location column, even when privacy detail is revealed.
     let overlay=button.querySelector('.sky-library-identity-overlay');
     if(!overlay){overlay=document.createElement('span');overlay.className='sky-library-identity-overlay';overlay.setAttribute('aria-hidden','true');button.appendChild(overlay)}
-    overlay.textContent=name;
     button.dataset.skyLibraryFolder=folder;
+    // Reuse the labels owner's identity nodes inside the privacy overlay,
+    // rather than maintaining a second identity renderer.
     const detail=button.querySelector('[data-saved-fingerprint-copy]');
-    if(detail)detail.hidden=true;
+    if(detail){detail.hidden=false;if(detail.parentElement!==overlay)overlay.replaceChildren(detail)}
+    else if(!overlay.firstElementChild)overlay.textContent=name;
+    setRevealed(row,row.classList.contains('is-identity-revealed')||document.activeElement===button);
     let controls=row.querySelector('.sky-library-row-actions');
     if(!controls){
       controls=document.createElement('div');controls.className='sky-library-row-actions';
@@ -74,7 +86,14 @@ function decorate(){
 function schedule(){if(queued)return;queued=true;queueMicrotask(decorate)}
 document.addEventListener('input',e=>{if(e.target.matches?.(POPOVER+' [data-sky-library-search]')){query=e.target.value;schedule()}},true);
 document.addEventListener('click',e=>{
- const p=e.target.closest?.(POPOVER);if(!p)return;
+ const p=e.target.closest?.(POPOVER);
+ if(e.target.closest?.('[data-saved-sky-trigger]')){schedule();return}
+ if(!p)return;
+ const clickedRef=e.target.closest?.('[data-saved-sky-ref]')?.dataset.savedSkyRef||'';
+ if(clickedRef&&clickedRef===suppressClickRef){
+   suppressClickRef='';e.preventDefault();e.stopImmediatePropagation();return;
+ }
+ schedule();
  const folder=e.target.closest('[data-sky-library-folder]');if(folder){e.preventDefault();e.stopImmediatePropagation();filter=folder.dataset.skyLibraryFolder;schedule();return}
  if(e.target.closest('[data-sky-library-add-folder]')){
    e.preventDefault();e.stopImmediatePropagation();
@@ -106,7 +125,32 @@ document.addEventListener('change',e=>{
  if(!ref)return;const map=read();map[ref]=e.target.value;write(map);e.target.hidden=true;schedule();
 },true);
 ['relphi:saved-sky-library-changed','relphi:saved-sky-active-changed','relphi:sky-slots-swapped'].forEach(name=>window.addEventListener(name,schedule));
-document.addEventListener('click',e=>{if(e.target.closest?.('[data-saved-sky-trigger],'+POPOVER))schedule()},true);
+document.addEventListener('focusin',e=>{
+ const row=e.target.closest?.('#skySavedSkiesPopover .sky-saved-list-row');
+ if(row)setRevealed(row,!!e.target.closest('[data-saved-sky-ref]'));
+});
+document.addEventListener('focusout',e=>{
+ const row=e.target.closest?.('#skySavedSkiesPopover .sky-saved-list-row');
+ if(row&&!row.contains(e.relatedTarget))setRevealed(row,false);
+});
+document.addEventListener('pointerdown',e=>{
+ if(e.pointerType!=='touch')return;
+ const item=e.target.closest?.('#skySavedSkiesPopover [data-saved-sky-ref]');
+ if(!item)return;
+ clearTimeout(holdTimer);
+ holdRef=item.dataset.savedSkyRef;
+ holdTimer=setTimeout(()=>{
+   if(holdRef!==item.dataset.savedSkyRef)return;
+   setRevealed(item.closest('.sky-saved-list-row'),true);
+   suppressClickRef=holdRef;
+ },550);
+},{capture:true,passive:true});
+for(const name of ['pointerup','pointercancel']){
+ document.addEventListener(name,e=>{
+   if(e.pointerType!=='touch')return;
+   clearTimeout(holdTimer);holdTimer=null;holdRef='';
+ },{capture:true,passive:true});
+}
 document.readyState==='loading'?document.addEventListener('DOMContentLoaded',schedule,{once:true}):schedule();
 window.RelphiSkyCardLibrary={refresh:schedule};
 })();
