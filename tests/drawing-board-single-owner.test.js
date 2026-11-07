@@ -99,8 +99,8 @@ assert.match(board, /function clearCardsOnly/);
 assert.match(app, /rowCardManual/);
 assert.match(app, /rowCardWasAddedManually/);
 
-assert.match(css, /\.card-row-workspace\{[^}]*height:clamp\(28rem,62vh,40rem\)/);
-assert.match(css, /@media\(max-width:700px\)[\s\S]*height:clamp\(23rem,58dvh,36rem\)/);
+assert.match(css, /\.card-row-workspace\{[^}]*height:clamp\(28rem,62svh,40rem\)/);
+assert.match(css, /@media\(max-width:700px\)[\s\S]*height:clamp\(23rem,58svh,36rem\)/);
 assert.match(css, /\.relphi-focus-reader\{/);
 assert.match(css, /\.relphi-focus-main\{/);
 assert.match(css, /\.relphi-focus-art\{/);
@@ -120,7 +120,7 @@ assert.doesNotMatch(css, /relphi-focus-card-host/);
 assert.match(css, /\.card-row-action-staging\{display:none!important\}/);
 assert.match(css, /card-row-workspace-toolbar:not\(\.relphi-board-controller\).*visibility:hidden!important/);
 assert.match(css, /\.relphi-board-export\{/);
-assert.match(css, /relphi-celtic-crossed[\s\S]*data-relphi-position-id="crossing"/);
+assert.match(board, /relphi-celtic-crossed/); // Visual state is owned by the canonical board renderer
 assert.match(css, /relphi-transform-editing-unlocked/);
 assert.doesNotMatch(css, /relphi-drawing-board-ui-ready|relphi-drawing-board-ui-stable/);
 
