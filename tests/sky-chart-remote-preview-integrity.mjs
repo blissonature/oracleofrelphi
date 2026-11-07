@@ -1,11 +1,12 @@
 import {chromium} from 'playwright';
 import assert from 'node:assert/strict';
+import {readFile} from 'node:fs/promises';
 
 const ref=process.env.PREVIEW_REF;
 assert.match(ref||'',/^[0-9a-f]{40}$/,'A commit SHA is required');
 const urls=[
-  ['statically',`https://cdn.statically.io/gh/blissonature/oracleofrelphi@${ref}/sky-chart.html`],
   ['githubraw',`https://cdn.githubraw.com/blissonature/oracleofrelphi/${ref}/sky-chart.html`],
+  ['hosted-proposed',`https://oracleofrelphi.com/sky-chart-preview/sky-chart.html?ref=${ref}`],
   ['deployed','https://oracleofrelphi.com/sky-chart.html']
 ];
 const signs=['Aries','Taurus','Gemini','Cancer','Leo','Virgo','Libra','Scorpio','Sagittarius','Capricorn','Aquarius','Pisces'];
@@ -18,6 +19,7 @@ function sky(name,offset,instant,location,lat,lon,tz){
 const a=sky('Test A',0,'1985-10-08T08:37:00Z','Malden, Massachusetts, United States',42.4251,-71.0662,'America/New_York');
 const b=sky('Test B',29,'2026-10-17T12:00:00Z','Salt Lake City, Utah, United States',40.7608,-111.891,'America/Denver');
 const browser=await chromium.launch({headless:true});
+const proposedLoader=await readFile('sky-chart-preview/sky-chart.html','utf8');
 let failed=false;
 try{
  for(const [kind,url] of urls){
@@ -25,6 +27,11 @@ try{
   const page=await ctx.newPage(),failures=[],errors=[];
   page.on('pageerror',e=>errors.push(e.message));
   page.on('requestfailed',r=>failures.push({url:r.url(),error:r.failure()?.errorText}));
+  if(kind==='hosted-proposed'){
+    // The branch's unmerged first-party loader is served at the real preview
+    // origin; its commit-pinned CDN assets are fetched normally.
+    await page.route(url,route=>route.fulfill({status:200,contentType:'text/html',body:proposedLoader}));
+  }
   page.on('response',response=>{if(response.status()>=400)failures.push({status:response.status(),url:response.url()})});
   await page.addInitScript(({a,b})=>{localStorage.setItem('relphiSkyChartA',JSON.stringify(a));localStorage.setItem('relphiSkyChartB',JSON.stringify(b));localStorage.setItem('relphiSkyChartLastModeV1','comparison')},{a,b});
   try{
@@ -39,17 +46,19 @@ try{
     styles:[...document.styleSheets].length,scripts:document.scripts.length,
     text:document.body?.innerText?.slice(0,300)
    }});
-   if(kind==='statically'||kind==='githubraw'){
-     const origin=new URL(url).origin;
-     assert.equal(state.wheelCount,1,kind+' direct CDN must render a Sky Chart wheel');
-     assert.equal(state.rootBusy,'false',kind+' direct CDN must initialize the chart');
-     assert.equal(errors.length,0,kind+' no uncaught page errors');
-     assert.deepEqual(failures.filter(x=>(x.url||'').startsWith(origin)),[],kind+' no failed assets');
+   if(kind==='githubraw'||kind==='hosted-proposed'){
+     const assetBase='https://cdn.githubraw.com/blissonature/oracleofrelphi/'+ref+'/';
+     assert.equal(state.wheelCount,1,kind+' renders the pinned Sky Chart');
+     assert.equal(state.rootBusy,'false',kind+' finished initializing');
+     assert.deepEqual(errors,[],kind+' has no uncaught JavaScript errors');
+     assert.deepEqual(failures.filter(x=>(x.url||'').startsWith(assetBase)),[],kind+' has no missing pinned assets');
+     if(kind==='hosted-proposed')assert.equal(state.base,assetBase,
+       'Same-origin preview uses canonical GitHubRaw asset base');
    }
    console.log(kind.toUpperCase(),JSON.stringify({state,errors:errors.slice(0,15),failures:failures.slice(0,30)}));
    await page.screenshot({path:`sky-remote-${kind}.png`,fullPage:true});
-   if((kind==='statically'||kind==='githubraw')&&(!state.wheelCount||state.mountVisible==='hidden'||state.rootBusy!=='false'||errors.length)){failed=true;console.error('FAILED: hosted exact-revision preview did not display a ready wheel');}
-   if((kind==='statically'||kind==='githubraw')&&!failed){
+   if((kind==='githubraw'||kind==='hosted-proposed')&&(!state.wheelCount||state.mountVisible==='hidden'||state.rootBusy!=='false'||errors.length)){failed=true;console.error('FAILED: hosted exact-revision preview did not display a ready wheel');}
+   if((kind==='githubraw'||kind==='hosted-proposed')&&!failed){
      await page.locator('#skyFoundationB [data-sky-drawer-tab="where"]').click();
      await page.waitForSelector('#skyFoundationB .sky-where-when-editor [data-ww-action="refresh-now"]',{timeout:15000});
      await page.waitForSelector('#skyFoundationB [data-draft-heptagram-ready="true"] .sky-where-when-draft-heptagram',{timeout:20000});
