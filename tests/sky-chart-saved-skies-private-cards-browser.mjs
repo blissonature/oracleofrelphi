@@ -184,6 +184,22 @@ try{
   assert.equal(await longPage.locator('[data-saved-delete-confirm]').getAttribute('data-saved-delete-confirm'),'bulk-27');
   const scrollAfter=await scroller.evaluate(el=>el.scrollTop);
   assert.ok(scrollAfter>0,'Opening delete must retain the middle-of-list scroll');
+  const rowGeometry=await scroller.evaluate(list=>{
+    const rows=[...list.querySelectorAll('.sky-saved-list-row:not([hidden])')];
+    const bounds=rows.map(row=>row.getBoundingClientRect());
+    const confirm=list.querySelector('.sky-saved-delete-confirmation');
+    const cancel=confirm?.querySelector('[data-saved-delete-cancel]');
+    const cancelBounds=cancel?.getBoundingClientRect(),confirmBounds=confirm?.getBoundingClientRect();
+    return{
+      overlaps:bounds.slice(1).map((r,i)=>({index:i,gap:r.top-bounds[i].bottom})).filter(x=>x.gap<-.5),
+      cancellingInsideTarget:!!(cancelBounds&&confirmBounds&&
+        cancelBounds.top>=confirmBounds.top&&cancelBounds.bottom<=confirmBounds.bottom),
+      shrink:getComputedStyle(rows[26]).flexShrink
+    };
+  });
+  assert.deepEqual(rowGeometry.overlaps,[],'Saved Sky rows never overlap under 36-record scroll pressure');
+  assert.equal(rowGeometry.shrink,'0','Saved Sky cards preserve natural height rather than flex-shrinking');
+  assert.equal(rowGeometry.cancellingInsideTarget,true,'Cancel remains geometrically inside the selected confirmation');
   await longPage.locator('[data-saved-sky-ref="bulk-28"]').hover();
   assert.equal(await longPage.locator('[data-saved-sky-ref="bulk-28"] .sky-library-identity-overlay')
     .evaluate(el=>getComputedStyle(el).visibility),'hidden',
