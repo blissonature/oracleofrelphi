@@ -226,8 +226,9 @@
       height:Math.max(1,height-START_EDGE_GUTTER*2)
     };
   }
-  function genericPositions(labels) {
+  function genericPositions(labels, {cardFacesOnly=false} = {}) {
     const count=Math.max(1,labels.length);
+    const rowUnit=CARD_H+(cardFacesOnly?0:LABEL_H);
     const viewport=autoLayoutViewport();
     // Portrait phone readings of three should occupy two columns. A single
     // three-card strip wastes the felt's height even when its mathematical
@@ -242,7 +243,7 @@
       const rows=Math.ceil(count/cols);
       const fit=Math.min(
         viewport.width/(CARD_W*cols),
-        viewport.height/((CARD_H+LABEL_H)*rows)
+        viewport.height/(rowUnit*rows)
       );
       const unused=cols*rows-count;
       // Near-equal scale is not a reason to abandon the board's vertical space:
@@ -260,16 +261,16 @@
     const scale=clamp(Math.min(
       .88,
       (CANVAS_W-START_EDGE_GUTTER*2)/(CARD_W*cols),
-      (CANVAS_H-START_EDGE_GUTTER*2)/((CARD_H+LABEL_H)*rows)
+      (CANVAS_H-START_EDGE_GUTTER*2)/(rowUnit*rows)
     ),.32,.88);
     const cardW=CARD_W*scale;
-    const rowH=(CARD_H+LABEL_H)*scale;
+    const rowH=rowUnit*scale;
     return labels.map((label,index)=>{
       const col=index%cols,row=Math.floor(index/cols);
       const rowCount=Math.min(cols,count-row*cols);
       const rowInset=(cols-rowCount)*cardW/2;
       const x=(START_EDGE_GUTTER+rowInset+col*cardW)/CANVAS_W;
-      const y=(START_EDGE_GUTTER+LABEL_H*scale+row*rowH)/CANVAS_H;
+      const y=(START_EDGE_GUTTER+(cardFacesOnly?0:LABEL_H*scale)+row*rowH)/CANVAS_H;
       return position(`position-${index+1}`,label,index+1,transform(x,y,scale));
     });
   }
@@ -5898,22 +5899,10 @@
         if(freeDraw){
           const before=currentCardCount(root);
           requestAnimationFrame(()=>requestAnimationFrame(()=>{
-            const live=panel();if(!live||currentCardCount(live)<=before)return;
-            const bridge=optionsBridge(),snap=bridge?.capture?.();
-            if(bridge&&snap){
-              const count=currentCardCount(live),scale=1;
-              snap.rowEnvelopeLayout={...(snap.rowEnvelopeLayout||{})};
-              snap.rowCardTransforms={...(snap.rowCardTransforms||{})};
-              // Never reset transforms of cards already on the board when
-              // appending a new draw. Those transforms belong to the reader.
-              for(let i=before;i<count;i++){
-                snap.rowEnvelopeLayout[i]={x:i*CARD_W*scale,y:0};
-                snap.rowCardTransforms[i]={...(snap.rowCardTransforms[i]||{}),scale,rotation:0,zIndex:i+1};
-              }
-              bridge.restore(snap);
-            }
-            requestAnimationFrame(()=>requestAnimationFrame(zoomExtents));
+            const live=panel();
+            if(live&&currentCardCount(live)>before)fitFreeReadingGrid(live);
           }));
+
         }
       },true);
     }
@@ -5949,29 +5938,60 @@
     if(!snap)return false;
     const count=Array.isArray(snap.shortList)?snap.shortList.length:0;
     if(!count)return false;
-    const positions=genericPositions(Array.from({length:count},(_,i)=>'Card '+(i+1)));
-    const signature=count+'|'+Math.round(autoLayoutViewport().width)+'|'+Math.round(autoLayoutViewport().height);
-    if(root.dataset.relphiFreeGridSignature===signature)return false;
+    const positions=genericPositions(Array.from({length:count},(_,i)=>'Card '+(i+1)),{cardFacesOnly:true});
+    const signature='compact-faces-v2|'+count+'|'+window.innerWidth+'|'+window.innerHeight;
+    // Recover only the old programmatic one-row strip, never arbitrary reader layouts.
+    const existing=snap.rowEnvelopeLayout||{},transforms=snap.rowCardTransforms||{};
+    const oldStrip=count>1 && Array.from({length:count},(_,i)=>{
+      const p=existing[i],card=transforms[i];
+      return p&&card&&Math.abs(Number(p.x)-i*CARD_W)<1&&Math.abs(Number(p.y))<1
+        &&Math.abs(Number(card.scale)-1)<.001&&Math.abs(Number(card.rotation||0))<.001;
+    }).every(Boolean);
+    const legacyPacked= count>1 && (()=>{
+      const oldPositions=genericPositions(Array.from({length:count},(_,i)=>'Card '+(i+1)));
+      return oldPositions.every((item,i)=>{
+        const p=existing[i],card=transforms[i],t=item.transform;
+        return p&&card&&Math.abs(Number(p.x)-t.x*CANVAS_W)<1
+          &&Math.abs(Number(p.y)-t.y*CANVAS_H)<1
+          &&Math.abs(Number(card.scale)-t.scale)<.001
+          &&Math.abs(Number(card.rotation||0))<.001;
+      });
+    })();
+    const previousGridVersion=String(root.dataset.relphiFreeGridSignature||'');
+    // Re-layout an older auto-managed grid when upgrading to card-face packing.
+    // Explicit reader edits must still be protected below.
+    if(previousGridVersion===signature&&!oldStrip)return false;
     // Free mode's untouched, automatically arranged cards may be reflowed.
     // Never replace a layout after the reader has manually moved or rotated it.
     const previousCount=Number(root.dataset.relphiFreeGridCount)||0;
-    const existing=snap.rowEnvelopeLayout||{},transforms=snap.rowCardTransforms||{};
-    const old=previousCount?genericPositions(Array.from({length:previousCount},(_,i)=>'Card '+(i+1))):[];
+    const old=previousCount?genericPositions(Array.from({length:previousCount},(_,i)=>'Card '+(i+1)),{cardFacesOnly:true}):[];
     const managed=root.dataset.relphiFreeGridManaged==='true';
-    if(!managed && Object.keys(existing).length)return false;
-    if(managed && Object.entries(transforms).some(([key,v])=>{
-      const expected=old[Number(key)]?.transform;
-      return Number(v.rotation||0)!==0 ||
-        (expected && Math.abs(Number(v.scale||1)-Number(expected.scale||1))>.001) ||
-        Number(v.zIndex||1)!==1;
-    }))return false;
-    if(managed && Object.keys(existing).length && previousCount){
+    if(!managed && Object.keys(existing).length && !oldStrip && !legacyPacked)return false;
+    if(managed && Object.entries(transforms).some(([key,v])=>Number(v.rotation||0)!==0))return false;
+    if(managed && Object.keys(existing).length && previousCount && !oldStrip && !legacyPacked){
       // A reader's subsequent rearrangement takes ownership away from auto-fit.
       const oldSaved=root.dataset.relphiFreeGridCoordinates;
       if(oldSaved){
         let expected;try{expected=JSON.parse(oldSaved);}catch(_){expected={};}
         if(Object.entries(expected).some(([i,p])=>Math.abs(Number(existing[i]?.x)-p.x)>1||Math.abs(Number(existing[i]?.y)-p.y)>1))return false;
       }
+    }
+    // Snapshot restoration redraws the board and triggers enhance() again.
+    // If its current geometry already matches this fit, mark it current
+    // without restoring the snapshot or scheduling another render.
+    const alreadyFitted=positions.every((item,i)=>{
+      const current=existing[i],card=transforms[i],target=item.transform;
+      return current&&card&&Math.abs(Number(current.x)-target.x*CANVAS_W)<.5
+        &&Math.abs(Number(current.y)-target.y*CANVAS_H)<.5
+        &&Math.abs(Number(card.scale)-target.scale)<.001
+        && Math.abs(Number(card.rotation||0))<.001;
+    }) && Object.keys(existing).length===count;
+    if(alreadyFitted){
+      root.dataset.relphiFreeGridSignature=signature;
+      root.dataset.relphiFreeGridCount=String(count);
+      root.dataset.relphiFreeGridManaged='true';
+      root.dataset.relphiFreeGridCoordinates=JSON.stringify(existing);
+      return false;
     }
     freeAutoLayoutBusy=true;
     try{
@@ -6009,7 +6029,7 @@
     root.hidden=false;
     root.removeAttribute('hidden');
     if (migrateLegacyDenseAutoLayout(root)) { requestAnimationFrame(()=>enhance(root)); return; }
-    if (fitFreeReadingGrid(root)) { requestAnimationFrame(()=>enhance(root)); return; }
+    if (fitFreeReadingGrid(root)) return;
     root.classList.toggle('relphi-hide-position-stickers',!showPositionStickers);
     markSemanticPositions(root);
     updateLayoutClasses(root);
