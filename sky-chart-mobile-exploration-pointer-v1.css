@@ -29,3 +29,6 @@
 #skyFoundationComparison .relphi-mobile-exploration-cursor[hidden]{display:none!important}
 @media not all and (max-width:650px){#skyFoundationComparison .relphi-mobile-exploration-cursor{display:none!important}}
 @media (pointer:fine){#skyFoundationComparison .relphi-mobile-exploration-cursor{display:none!important}}
+
+#skyFoundationComparison .relphi-mobile-pointer-hint{position:absolute;z-index:29;max-width:160px;padding:6px 9px;border-radius:7px;border:1px solid rgba(45,39,34,.2);background:#fffdfa;color:#332e2a;box-shadow:0 2px 7px rgba(0,0,0,.12);font:600 11px/1.35 system-ui,sans-serif;pointer-events:none}
+#skyFoundationComparison .relphi-mobile-pointer-hint[hidden]{display:none!important}
