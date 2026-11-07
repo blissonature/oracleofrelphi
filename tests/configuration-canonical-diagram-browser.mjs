@@ -89,7 +89,11 @@ try{
         sameRails:matchRows.every(row=>{const box=row.getBoundingClientRect();return Math.abs(box.width-38)<1&&Math.abs(box.height-46)<1&&row.querySelectorAll('.sky-configuration-match-rail').length===2}),
         signTokens:root.querySelectorAll('.sky-configuration-interpretation-sign').length,
         houseTokens:root.querySelectorAll('.sky-configuration-interpretation-house').length,
-        aspectTokens:root.querySelectorAll('.sky-configuration-interpretation-aspect').length};
+        aspectTokens:root.querySelectorAll('.sky-configuration-interpretation-aspect').length,
+        synthesizedWeight:getComputedStyle(structures[0]).fontWeight,
+        colored:[...root.querySelectorAll('.sky-configuration-interpretation-sign,.sky-configuration-interpretation-house,.sky-configuration-interpretation-aspect')].map(x=>({
+          css:getComputedStyle(x).color,raw:x.style.getPropertyValue('--configuration-token-color')
+        }))};
     });
     assert.equal(audit.lines,3,label+' retains all three aspect edges');
     assert.equal(audit.canonical.length,3,label+' retains three vertices');
@@ -100,6 +104,9 @@ try{
     assert.ok(audit.entries>=2,label+' structures interpretation by placement');
     assert.ok(audit.signTokens>=2&&audit.houseTokens>=2,label+' color-codes signs and houses in the prose');
     assert.ok(audit.structure.length>0&&audit.aspectTokens>0,label+' separates and colors the synthesis');
+    assert.equal(audit.synthesizedWeight,'400',label+' synthesis uses normal-weight prose');
+    assert.ok(audit.colored.length>=5&&audit.colored.every(x=>x.raw&&x.css.startsWith('color(srgb')||x.raw&&x.css.startsWith('rgb(')),
+      label+' sign, house, and aspect text uses legible palette-derived colors');
     assert.deepEqual(errors,[],label+' has no uncaught browser errors');
     await tile.screenshot({path:'sky-configuration-canonical-'+label+'.png'});
   }

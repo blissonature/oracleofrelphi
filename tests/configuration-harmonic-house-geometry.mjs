@@ -32,7 +32,12 @@ console.log('Configuration Harmonic Window and house geometry guards passed.');
 // zodiac substitutions nor floating house/sign badge elements are allowed.
 assert.doesNotMatch(config,/CONFIG_SIGN_GLYPHS|sky-configuration-vertex-sign|sky-configuration-vertex-house|sky-configuration-vertex-attributes/,
   'Configuration geometry cannot use counterfeit zodiac glyphs or floating house/sign badges');
-assert.match(config,/sky-configuration-match-context/,'Existing match rows expose sign/house names as ordinary text');
+assert.doesNotMatch(config,/className='sky-configuration-match-context'/,
+  'Canonical rails and glyphs have no additional text beneath them');
+assert.match(config,/function renderConfigurationInterpretation\(/,
+  'Prose is separated and color-coded by the one configuration interpretation renderer');
+assert.match(config,/function configurationInterpretationParts\(/,
+  'Visual prose and copy text derive from the same semantic parts');
 assert.match(config,/paintConfigurationMiniGlyphs\(visual\)/,
   'Diagram vertices still receive the established canonical placement glyphs');
 const configCss=readFileSync('sky-chart-aspect-configurations-v1.css','utf8');

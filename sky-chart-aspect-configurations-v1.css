@@ -761,14 +761,19 @@ html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]) .sky-chart-con
 .sky-configuration-interpretation-sky[data-sky="B"]{color:#2462d0}
 .sky-configuration-interpretation-placement{font-weight:750;color:#24201d}
 .sky-configuration-interpretation-sign,.sky-configuration-interpretation-house,
-.sky-configuration-interpretation-aspect{font-weight:800}
+.sky-configuration-interpretation-aspect{
+  font-weight:750;
+  /* Keep the established hue but darken pale signs such as Leo for readable
+     small text. The existing sign/house rails retain their exact colors. */
+  color:color-mix(in srgb,var(--configuration-token-color,#777) 40%,#29231e);
+}
 .sky-configuration-interpretation-reading{color:#3f3832;font-weight:500}
 .sky-configuration-interpretation-synthesis,
 .sky-configuration-interpretation-motion{
   margin:0;
   padding:2px 0;
   color:#332e2a;
-  font-weight:550;
+  font-weight:400;
 }
 .sky-configuration-interpretation-synthesis{padding-top:2px}
 .sky-configuration-interpretation-motion{border-top:1px solid rgba(31,27,24,.10);padding-top:10px}

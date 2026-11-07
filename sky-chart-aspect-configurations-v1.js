@@ -209,11 +209,11 @@ function interpretationActor(key){
   node.append(sky,document.createTextNode(' '),name);
   if(Number.isInteger(record.sign)&&record.sign>=0&&record.sign<12){
     const sign=document.createElement('span');sign.className='sky-configuration-interpretation-sign';
-    sign.style.color=resultSignColor(record.sign);sign.textContent=' in '+CONFIG_SIGN_NAMES[record.sign];node.append(sign);
+    sign.style.setProperty('--configuration-token-color',resultSignColor(record.sign));sign.textContent=' in '+CONFIG_SIGN_NAMES[record.sign];node.append(sign);
   }
   if(Number.isInteger(record.house)&&record.house>=1&&record.house<=12){
     const house=document.createElement('span');house.className='sky-configuration-interpretation-house';
-    house.style.color=resultHouseColor(record.house);house.textContent=' (house '+record.house+')';node.append(house);
+    house.style.setProperty('--configuration-token-color',resultHouseColor(record.house));house.textContent=' (house '+record.house+')';node.append(house);
   }
   if(record.retrograde)node.append(document.createTextNode(' retrograde'));
   return node;
@@ -229,7 +229,7 @@ function renderInterpretationClause(host,text,pattern){
       if(match.type==='placement')host.appendChild(interpretationActor(match.key));
       else{
         const token=document.createElement('span');token.className='sky-configuration-interpretation-aspect';
-        token.style.color=RESULT_ASPECT_COLORS[match.aspect];token.textContent=source.slice(cursor,cursor+match.value.length);
+        token.style.setProperty('--configuration-token-color',RESULT_ASPECT_COLORS[match.aspect]);token.textContent=source.slice(cursor,cursor+match.value.length);
         host.appendChild(token);
       }
       cursor+=match.value.length;
