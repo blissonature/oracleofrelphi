@@ -30,7 +30,6 @@ const SCOPES=Object.freeze([
   {id:'B-B',label:'B↔B'},
   {id:'A-B',label:'A↔B'}
 ]);
-const PLACEMENT_SYMBOLS=Object.freeze({sun:'☉',moon:'☽',mercury:'☿',venus:'♀',mars:'♂',jupiter:'♃',saturn:'♄',uranus:'♅',neptune:'♆',pluto:'♇',chiron:'⚷','north-node':'☊','south-node':'☋',lilith:'⚸','part-of-fortune':'⊗',vertex:'Vx','anti-vertex':'AVx',asc:'Asc',dsc:'Dsc',mc:'MC',ic:'IC'});
 const RESULT_PANEL_ID='skyFoundationConfigurations';
 const RESULT_KEYS={A:'relphiSkyChartA',B:'relphiSkyChartB'};
 const RESULT_COLORS={A:'#c9211e',B:'#2462d0'};
@@ -116,7 +115,7 @@ function resultHouseColor(house){
   const n=Math.trunc(Number(house));return n>=1&&n<=12&&Array.isArray(colors)&&colors.length>=12?colors[n-1]:'#777';
 }
 function resultPoint(value,radius=47){const angle=(resultNorm(value)-180)*Math.PI/180;return{x:60+radius*Math.cos(angle),y:60+radius*Math.sin(angle)}}
-function placementLabel(id){return PLACEMENT_SYMBOLS[id]||window.RelphiGlyphRegistry?.get?.(id)?.fallback||String(id||'').replace(/-/g,' ')}
+function placementLabel(id){return placementWord(id)}
 function placementWord(id){const entry=window.RelphiGlyphRegistry?.get?.(id)||window.RelphiGlyphRegistry?.resolve?.(id);return entry?.name||String(id||'').replace(/-/g,' ').replace(/\b\w/g,letter=>letter.toUpperCase())}
 function vertexLabel(key){const [sky,id]=String(key||'').split(':');return{sky,id,label:placementLabel(id)}}
 function patternScopeLabel(pattern){const scope=patternScope(pattern);return SCOPES.find(item=>item.id===scope)?.label||scope}
