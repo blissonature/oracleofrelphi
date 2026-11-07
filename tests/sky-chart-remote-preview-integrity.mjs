@@ -38,6 +38,12 @@ try{
     styles:[...document.styleSheets].length,scripts:document.scripts.length,
     text:document.body?.innerText?.slice(0,300)
    }});
+   if(kind==='preview'){
+     const assetBase='https://cdn.jsdelivr.net/gh/blissonature/oracleofrelphi@'+ref+'/';
+     assert.equal(state.base,assetBase,'Exact-revision preview resolves assets from pinned jsDelivr, not GitHack');
+     assert.equal(failures.filter(x=>/githack\.com/i.test(x.url||'')).length,0,'No GitHack requests in exact preview');
+     assert.deepEqual(failures.filter(x=>/cdn\.jsdelivr\.net|raw\.githubusercontent\.com/i.test(x.url||'')),[],'No failed commit-pinned scripts, styles, or source');
+   }
    console.log(kind.toUpperCase(),JSON.stringify({state,errors:errors.slice(0,15),failures:failures.slice(0,30)}));
    await page.screenshot({path:`sky-remote-${kind}.png`,fullPage:true});
    if(kind==='preview'&&(!state.wheelCount||state.mountVisible==='hidden'||state.rootBusy!=='false'||errors.length)){failed=true;console.error('FAILED: hosted exact-revision preview did not display a ready wheel');}
