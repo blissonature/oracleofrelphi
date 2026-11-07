@@ -849,7 +849,7 @@
       if(!node)return;
       event.preventDefault();
       event.stopImmediatePropagation();
-      const duplicate=event.detail>0&&lastMousePointerSelection&&
+      const duplicate=lastMousePointerSelection&&
         performance.now()-lastMousePointerSelection.at<750&&
         same(lastMousePointerSelection.spec,specFrom(node));
       lastMousePointerSelection=null;
