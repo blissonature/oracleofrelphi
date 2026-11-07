@@ -17,7 +17,7 @@
 #skySavedSkiesPopover .sky-saved-list-row[hidden]{display:none!important}
 #skySavedSkiesPopover .sky-saved-list-item[data-private-sky-fingerprint="true"]{grid-template-columns:1fr 17px!important;grid-template-areas:"fingerprint check"!important;min-height:58px!important;padding:6px 10px!important;justify-content:start}
 #skySavedSkiesPopover .sky-saved-fingerprint-triptych{grid-area:fingerprint!important}
-#skySavedSkiesPopover .sky-saved-fingerprint-copy{display:none!important}
+#skySavedSkiesPopover .sky-library-identity-overlay .sky-saved-fingerprint-copy{display:grid;gap:2px;max-width:100%;max-height:100%;overflow:hidden;align-content:center}
 #skySavedSkiesPopover .sky-library-identity-overlay{position:absolute;inset:4px 26px 4px 5px;display:flex;align-items:center;justify-content:center;padding:5px 10px;background:rgba(255,252,246,.97);backdrop-filter:blur(4px);color:#27211b;border-radius:8px;font:800 .77rem/1.25 system-ui;text-align:center;overflow:hidden;opacity:0;visibility:hidden;pointer-events:none;transition:opacity .13s}
 @media(hover:hover) and (pointer:fine){#skySavedSkiesPopover .sky-saved-list-item:hover .sky-library-identity-overlay{opacity:1;visibility:visible}}
 #skySavedSkiesPopover .sky-saved-list-item:focus-visible .sky-library-identity-overlay,#skySavedSkiesPopover .sky-saved-list-row.is-identity-revealed .sky-library-identity-overlay{opacity:1;visibility:visible}
