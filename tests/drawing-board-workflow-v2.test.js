@@ -51,7 +51,7 @@ assert.match(board, /Clear the cards without changing settings/);
 assert.match(board, /Restore default settings/);
 assert.match(board, /function renderFreeSettings/);
 assert.match(board, /id="relphiFreePack"/);
-assert.match(board, /> Labels<\/label>/);
+assert.doesNotMatch(board, /> Labels<\/label>/); // Free Draw has no position stickers
 assert.match(board, /> Reversals<\/label>/);
 assert.match(board, /> Repeats<\/label>/);
 assert.match(board, /function confirmFreeSettings/);
