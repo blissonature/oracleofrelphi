@@ -28,7 +28,7 @@ try {
  await page.waitForSelector('#skySavedSkiesPopover.sky-library-redesigned .sky-library-controls',{timeout:10000});
  assert.equal(await page.locator('#skySavedSkiesPopover .sky-saved-list-row:not([hidden])').count(),3);
  assert.equal(await page.locator('#skySavedSkiesPopover .sky-library-identity-overlay').count(),3);
- assert.equal(await page.locator('#skySavedSkiesPopover [data-sky-library-folder]').count(),0,
+ assert.equal(await page.locator('#skySavedSkiesPopover .sky-library-folders [data-sky-library-folder]').count(),0,
    'No category chips before the user creates a folder');
  assert.equal(await page.locator('#skySavedSkiesPopover .sky-library-folders').isHidden(),true,
    'Folder filter strip is absent without user-created folders');
@@ -82,17 +82,17 @@ try {
  await page.locator('[data-sky-library-search]').fill('');
  page.once('dialog',dialog=>dialog.accept('Clients'));
  await page.locator('#skySavedSkiesPopover [data-sky-library-add-folder]').click();
- await page.waitForSelector('#skySavedSkiesPopover [data-sky-library-folder="Clients"]');
- const folderLabels=await page.locator('#skySavedSkiesPopover [data-sky-library-folder]').allTextContents();
+ await page.waitForSelector('#skySavedSkiesPopover .sky-library-folders [data-sky-library-folder="Clients"]');
+ const folderLabels=await page.locator('#skySavedSkiesPopover .sky-library-folders [data-sky-library-folder]').allTextContents();
  assert.deepEqual(folderLabels,['All','Clients','Unfiled'],
    'Only explicitly created categories appear, plus navigation filters');
  const action=page.locator('[data-saved-sky-ref="client-1"]').locator('..').locator('[data-sky-folder-edit]');
  await action.click();
  await page.locator('[data-saved-sky-ref="client-1"]').locator('..').locator('[data-sky-folder-select]').selectOption('Clients');
- await page.locator('[data-sky-library-folder="Clients"]').click();
+ await page.locator('.sky-library-folders [data-sky-library-folder="Clients"]').click();
  assert.equal(await page.locator('#skySavedSkiesPopover .sky-saved-list-row:not([hidden])').count(),1,'Folder filters rows');
  assert.equal(await page.locator('#skySavedSkiesPopover .sky-saved-list-row:not([hidden]) [data-saved-sky-ref]').getAttribute('data-saved-sky-ref'),'client-1','Assigned folder persists');
- await page.locator('[data-sky-library-folder="All"]').click();
+ await page.locator('.sky-library-folders [data-sky-library-folder="All"]').click();
  assert.equal(await page.locator('[data-sky-card-swap]').isEnabled(),true);
  await page.locator('[data-sky-card-swap]').click();
  await page.waitForFunction(()=>JSON.parse(localStorage.getItem('relphiSkyChartA')).metadata?.savedSkyId==='client-1',null,{timeout:7000});
