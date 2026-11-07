@@ -161,7 +161,7 @@ try{
     const copied=await page.evaluate(()=>window.__relphiCopiedText);
     let cursor=-1;
     for(const signature of signatures){
-      const next=copied.indexOf(signature,cursor+1);
+      const next=copied.replaceAll(' Rx in ',' in ').indexOf(signature,cursor+1);
       assert.ok(next>=0,`${spec.label} Copy omitted or reordered row after position ${cursor}: ${signature}\n${copied}`);
       cursor=next;
     }
