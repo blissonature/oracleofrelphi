@@ -86,6 +86,8 @@ try {
  const folderLabels=await page.locator('#skySavedSkiesPopover .sky-library-folders [data-sky-library-folder]').allTextContents();
  assert.deepEqual(folderLabels,['All','Clients','Unfiled'],
    'Only explicitly created categories appear, plus navigation filters');
+ assert.equal(await page.locator('.sky-library-folders [data-sky-library-folder="All"]').getAttribute('aria-pressed'),'true',
+   'After creating a folder, keep All selected so records can be assigned');
  const action=page.locator('[data-saved-sky-ref="client-1"]').locator('..').locator('[data-sky-folder-edit]');
  await action.click();
  await page.locator('[data-saved-sky-ref="client-1"]').locator('..').locator('[data-sky-folder-select]').selectOption('Clients');

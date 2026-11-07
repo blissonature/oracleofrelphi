@@ -118,7 +118,8 @@ function handlePickerClick(e){
    if(existing){filter=existing;schedule();return true}
    if(['all','unfiled'].includes(folder.toLocaleLowerCase()))return true;
    map['__folder__'+folder]=folder;
-   if(write(map)){filter=folder;schedule()}
+   // A new empty folder must not hide every sky before it can be filed.
+   if(write(map)){filter='All';schedule()}
    return true;
  }
  const organize=e.target.closest('[data-sky-folder-edit]');
