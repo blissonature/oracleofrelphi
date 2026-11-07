@@ -33,8 +33,10 @@ async function run(mode,url='http://127.0.0.1:4173/sky-chart.html'){
  const mobile=mode==='mobile';
  const context=await browser.newContext({viewport:mobile?{width:390,height:844}:{width:1280,height:960},
     hasTouch:mobile,isMobile:mobile,deviceScaleFactor:mobile?2:1,permissions:['clipboard-read','clipboard-write']});
- const page=await context.newPage(),errors=[];
+ const page=await context.newPage(),errors=[],networkErrors=[];
  page.on('pageerror',e=>errors.push(e.message));
+ page.on('requestfailed',req=>networkErrors.push({url:req.url(),failure:req.failure()?.errorText}));
+ page.on('response',response=>{if(response.status()>=400)networkErrors.push({url:response.url(),status:response.status()})});
  await page.route('https://unpkg.com/suncalc@1.9.0/suncalc.js',
   route=>route.fulfill({path:path.resolve('node_modules/suncalc/suncalc.js'),contentType:'application/javascript'}));
  await page.route('https://cdn.jsdelivr.net/npm/luxon@3/build/global/luxon.min.js',
@@ -50,7 +52,20 @@ async function run(mode,url='http://127.0.0.1:4173/sky-chart.html'){
  },{a,b});
  try{
   await page.goto(url,{waitUntil:'domcontentloaded',timeout:35000});
-  await page.waitForSelector('#skyFoundationRoot[aria-busy="false"]',{timeout:30000});
+  try{
+    await page.waitForSelector('#skyFoundationRoot[aria-busy="false"]',{timeout:30000});
+  }catch(error){
+    const state=await page.evaluate(()=>({
+      title:document.title,
+      bodyText:document.body?.innerText?.slice(0,900)||'',
+      rootBusy:document.getElementById('skyFoundationRoot')?.getAttribute('aria-busy'),
+      scripts:[...document.scripts].filter(s=>s.src).slice(-16).map(s=>s.src),
+      base:document.querySelector('base')?.href||'',
+      ready:document.readyState
+    })).catch(e=>({inspectionError:String(e)}));
+    console.error('CONFIG_REMOTE_DIAGNOSTICS '+JSON.stringify({mode,url:page.url(),state,errors,networkErrors:networkErrors.slice(0,30)}));
+    throw error;
+  }
   await page.waitForSelector('#skyFoundationConfigurations:not([hidden]) .sky-configuration-result-tile',
      {timeout:30000});
   const found=await page.locator('.sky-configuration-result-tile').evaluateAll(rows=>rows.map(r=>r.dataset.configurationType));
