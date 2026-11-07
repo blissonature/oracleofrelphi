@@ -65,26 +65,10 @@ function unknownRulerPlaceholder(){
 
 function microHeptagram(sourceSvg){
   if(sourceSvg?.dataset?.canonicalSourceReady!=='true'||sourceSvg?.dataset?.canonicalHeptagramReady!=='true')return null;
-  // The main heptagram remains the source of planetary states and glyphs.
-  // The 52px fingerprint renders active rulers as larger canonical glyphs and
-  // inactive positions as quiet dots, without changing source geometry.
+  // Reuse the miniheptagram's finished geometry and active canonical ruler glyphs.
+  // Preserve the finished canonical SVG without thumbnail-specific changes.
+  // Only its containing element determines the displayed size.
   const root=sourceSvg.cloneNode(true);
-  root.querySelectorAll('.sky-ph-planet').forEach(group=>{
-    const active=group.classList.contains('is-day-ruler')||group.classList.contains('is-hour-ruler');
-    const mount=group.querySelector(':scope > .sky-ph-node-glyph');
-    if(!mount)return;
-    if(active){
-      mount.querySelectorAll('[data-master-glyph-unit]').forEach(node=>node.setAttribute('transform','scale(1.45)'));
-      return;
-    }
-    const dot=document.createElementNS('http://www.w3.org/2000/svg','circle');
-    dot.classList.add('sky-ph-micro-idle-node');
-    dot.setAttribute('cx','0');
-    dot.setAttribute('cy','0');
-    dot.setAttribute('r','5');
-    dot.setAttribute('fill','#77736e');
-    mount.replaceChildren(dot);
-  });
   root.classList.add('sky-where-fingerprint-heptagram');
   root.classList.remove('sky-where-when-draft-heptagram');
   root.removeAttribute('style');
