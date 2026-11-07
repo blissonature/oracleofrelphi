@@ -58,7 +58,8 @@ try{
    await prompt.locator('[data-sky-name-cancel]').click();
    assert.equal((await readStorage(page)).lib.length,0,'Cancel cannot save');
    const menu=await picker(page);
-   assert.equal(await menu.locator('.sky-saved-subview-head strong').innerText(),'Load Sky');
+   assert.equal(await menu.locator('.sky-saved-subview-head').count(),0,'Title chevron opens the picker directly, not a Load Sky screen');
+   assert.equal(await menu.locator('.sky-saved-list > :first-child [data-sky-command="new"]').count(),1,'New Sky is the first item');
    assert.equal(await menu.locator('[data-sky-picker-save]').innerText(),'Save Sky');
    await menu.locator('[data-sky-picker-save]').click();
    const dialog=page.locator('.sky-save-name-overlay');
@@ -76,7 +77,7 @@ try{
    const after=await picker(page);
    assert.equal(await after.locator('[data-sky-picker-save]').innerText(),'Save Changes');
    assert.deepEqual(errors,[],'No browser errors');
-   console.log('PASS_SKY_SAVE_DEFERRED',width,JSON.stringify({suggestion:auto,saved:saved.sky.name,actions:['Cancel','Load Sky','Save Sky','Save Changes']}));
+   console.log('PASS_SKY_SAVE_DEFERRED',width,JSON.stringify({suggestion:auto,saved:saved.sky.name,actions:['Cancel','Direct Saved Skies','New Sky','Save Sky','Save Changes']}));
   }finally{await page.close()}
   for(const [kind,expected]of [['unknown','Time unknown 10/27/2026 · South Jordan, Utah'],
                                 ['custom','Meditation with Mars'],

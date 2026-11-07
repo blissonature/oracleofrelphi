@@ -51,7 +51,7 @@ assert.match(board, /Clear the cards without changing settings/);
 assert.match(board, /Restore default settings/);
 assert.match(board, /function renderFreeSettings/);
 assert.match(board, /id="relphiFreePack"/);
-assert.match(board, /> Labels<\/label>/);
+assert.doesNotMatch(board, /> Labels<\/label>/); // Free Draw has no position stickers
 assert.match(board, /> Reversals<\/label>/);
 assert.match(board, /> Repeats<\/label>/);
 assert.match(board, /function confirmFreeSettings/);
@@ -61,7 +61,7 @@ assert.match(board, /if\(craftedReadingActive\|\|boardHasCraftedStructure\(root\
 assert.match(board, /if \(!zoomToolbarVisibleForState\(root\)\) return/);
 assert.match(board, /relphiCraftedPath/);
 assert.match(board, /craftedPath/);
-assert.match(board, /const path=activeCraftedPath\|\|'templates'/);
+assert.match(board, /const path=crowleyActive\?'templates':\(activeCraftedPath\|\|''\)/);
 assert.match(board, /visibleToolbarHeight/);
 assert.match(board, /function cancelBoardSettings/);
 assert.match(board, /boardSetupConfirmed=true/);
@@ -195,8 +195,8 @@ assert.doesNotMatch(board, /relphiBulkQuestions/);
 assert.match(board, /<option value="">Custom<\/option>/);
 assert.match(board, /const rows=labels\.length \? labels : \[''\]/);
 assert.match(board, /const acceptCommaList=\(value\)=>/);
-assert.match(board, /labelsList\?\.addEventListener\('paste'/);
-assert.match(board, /labelsList\?\.addEventListener\('change'/);
+assert.match(board, /labelsList\?\.addEventListener\('focusout'/); // Single commit path for typed or pasted questions
+assert.match(board, /labelsList\?\.addEventListener\('input'/);
 assert.match(board, /pasted\.includes\(','\)/);
 assert.match(board, /parseBulkQuestions\(pasted\)/);
 assert.match(board, /draft\.labels=labels/);

@@ -216,12 +216,12 @@ try{
      arrow=cursor?.querySelector('.relphi-mobile-cursor-arrow');
    const bounds=cursor?.getBoundingClientRect(),tip=window.RelphiMobileExplorationPointer?.getTip?.();
    return{width:bounds?.width,height:bounds?.height,svgWidth:svg?.getAttribute('width'),
-     hitDiameter:Number(grip?.getAttribute('r'))*2*(bounds?.width/150),
+     hitDiameter:Number(grip?.getAttribute('r'))*2*(bounds?.width/Number(svg?.viewBox?.baseVal?.width||200)),
      arrow:!!arrow,tip,visualLeft:parseFloat(cursor?.style.left),visualTop:parseFloat(cursor?.style.top)};
  });
- assert.equal(visual.width,75,'Pointer canvas must accommodate offset thumb grip');
- assert.equal(visual.height,73,'Pointer canvas must accommodate offset thumb grip');
- assert.equal(visual.svgWidth,'75');
+ assert.equal(visual.width,100,'Pointer canvas must accommodate offset thumb grip');
+ assert.equal(visual.height,97.5,'Pointer canvas must accommodate offset thumb grip');
+ assert.equal(visual.svgWidth,'100');
  const detail=await page.evaluate(()=>{
   const grip=document.querySelector('#relphiMobileExplorationCursor .relphi-mobile-cursor-cross');
   const arrow=document.querySelector('#relphiMobileExplorationCursor .relphi-mobile-cursor-arrow');
@@ -230,12 +230,12 @@ try{
     arrowWeight:getComputedStyle(arrow).strokeWidth,crossWeight:getComputedStyle(grip).strokeWidth,
     draggable:grip.getAttribute('role')};
  });
- assert.equal(detail.center,'translate(110 108)','Cross must be down and away from the arrow tip');
+ assert.equal(detail.center,'translate(127 128)','Cross must be down and away from the arrow tip');
  assert.match(detail.crossPath,/M0 -15 V15 M-15 0 H15/,'Navigation cross arms stay clear and have short arrowhead caps');
  assert.equal(detail.arrowWeight,'2.5px','Arrow outline should be thinner');
  assert.equal(detail.crossWeight,'2.4px','Navigation cross should have finer strokes');
  assert.equal(detail.draggable,'button');
- const separation=Math.hypot((110-5)*.5,(108-6)*.5);
+ const separation=Math.hypot((127-5)*.5,(128-6)*.5);
  assert.ok(separation>70,'Thumb grip center must be at least 70px away from the arrow tip');
  console.log('PASS_THUMB_TIP_CLEARANCE',separation);
 
@@ -253,7 +253,7 @@ try{
   wheelHost.append(description);
   const layer=getComputedStyle(description).zIndex;
   description.remove();
-  return{tipX:tip.x,tipY:tip.y,expectedX:wheel.right-mount.left-80,
+  return{tipX:tip.x,tipY:tip.y,expectedX:wheel.right-mount.left-120,
     expectedY:wheel.top-mount.top+25,textZ:Number(layer),
     cursorZ:Number(getComputedStyle(document.getElementById('relphiMobileExplorationCursor')).zIndex)};
  });

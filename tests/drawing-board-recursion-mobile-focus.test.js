@@ -18,10 +18,9 @@ const base='http://127.0.0.1:8000/tarot.html?board=workflow-v2#tarot';
     const panel=page.locator('#shortListPanel');
     if(!(await panel.isVisible())) await page.locator('#relphiOpenDrawingBoardCurrent').tap();
     await panel.waitFor({state:'visible'});
-    await page.locator('#relphiBoardSettingsButton').tap();
-    await page.waitForSelector('#drawingBoardOptionsButton',{state:'visible'});
-    await page.locator('#drawingBoardOptionsButton').tap();
-    await page.locator('[data-referent-path="templates"]').tap();
+    // The composer is the sole entrypoint to guided template setup.
+    await page.locator('.relphi-main-template-disclosure > summary').tap();
+    await page.locator('[data-main-action="template-method"]').tap();
     await page.waitForSelector('#relphiSpreadTemplateSelect',{state:'visible'});
     await page.selectOption('#relphiSpreadTemplateSelect','relphi-recursion-22');
     await page.locator('#relphiApplyOptions').tap();

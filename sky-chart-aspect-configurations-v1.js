@@ -30,7 +30,6 @@ const SCOPES=Object.freeze([
   {id:'B-B',label:'B↔B'},
   {id:'A-B',label:'A↔B'}
 ]);
-const PLACEMENT_SYMBOLS=Object.freeze({sun:'☉',moon:'☽',mercury:'☿',venus:'♀',mars:'♂',jupiter:'♃',saturn:'♄',uranus:'♅',neptune:'♆',pluto:'♇',chiron:'⚷','north-node':'☊','south-node':'☋',lilith:'⚸','part-of-fortune':'⊗',vertex:'Vx','anti-vertex':'AVx',asc:'Asc',dsc:'Dsc',mc:'MC',ic:'IC'});
 const RESULT_PANEL_ID='skyFoundationConfigurations';
 const RESULT_KEYS={A:'relphiSkyChartA',B:'relphiSkyChartB'};
 const RESULT_COLORS={A:'#c9211e',B:'#2462d0'};
@@ -116,7 +115,7 @@ function resultHouseColor(house){
   const n=Math.trunc(Number(house));return n>=1&&n<=12&&Array.isArray(colors)&&colors.length>=12?colors[n-1]:'#777';
 }
 function resultPoint(value,radius=47){const angle=(resultNorm(value)-180)*Math.PI/180;return{x:60+radius*Math.cos(angle),y:60+radius*Math.sin(angle)}}
-function placementLabel(id){return PLACEMENT_SYMBOLS[id]||window.RelphiGlyphRegistry?.get?.(id)?.fallback||String(id||'').replace(/-/g,' ')}
+function placementLabel(id){return placementWord(id)}
 function placementWord(id){const entry=window.RelphiGlyphRegistry?.get?.(id)||window.RelphiGlyphRegistry?.resolve?.(id);return entry?.name||String(id||'').replace(/-/g,' ').replace(/\b\w/g,letter=>letter.toUpperCase())}
 function vertexLabel(key){const [sky,id]=String(key||'').split(':');return{sky,id,label:placementLabel(id)}}
 function patternScopeLabel(pattern){const scope=patternScope(pattern);return SCOPES.find(item=>item.id===scope)?.label||scope}
@@ -178,21 +177,91 @@ function configurationMotionText(pattern){
   if(!retro.length)return'';
   return ' Retrograde '+retro.map(p=>'Sky '+p.sky+' '+p.name).join(' and ')+' invites the pattern to be revisited and reworked before its next expression.';
 }
-function interpretationText(pattern){
+function configurationInterpretationParts(pattern){
   const pairs=configurationEdgePairs(pattern,'opposition');
   const apexTypes={'t-square':['square'],yod:['quincunx'],'thors-hammer':['tri-octile'],'minor-grand-trine':['sextile']};
   const apex=configurationApex(pattern,apexTypes[pattern.type]||[]);
   const first=pairs[0];
-  let text='';
+  let keys=pattern.vertices.slice(),synthesis='';
   if(pattern.type==='t-square'&&first&&apex){
-    text=configurationPhrase(first[0],{detailed:true})+' '+configurationPhrase(first[1],{detailed:true})+' Their opposition sets these needs against one another; both press on '+configurationPhrase(apex)+', making '+(CONFIG_HOUSE_FIELD[configurationRecord(apex).house]||'that planetary function')+' the point where the tension seeks a response.';
+    keys=[first[0],first[1]];
+    synthesis='Their opposition sets these needs against one another; both press on '+configurationPhrase(apex)+', making '+(CONFIG_HOUSE_FIELD[configurationRecord(apex).house]||'that planetary function')+' the point where the tension seeks a response.';
   }else if(pattern.type==='yod'&&apex){
-    const base=pattern.vertices.filter(k=>k!==apex);
-    text=base.map(k=>configurationPhrase(k,{detailed:true})).join(' ')+' Their differing adjustments converge on '+configurationPhrase(apex)+', concentrating development in '+(CONFIG_HOUSE_FIELD[configurationRecord(apex).house]||'its function')+'.';
+    keys=pattern.vertices.filter(key=>key!==apex);
+    synthesis='Their differing adjustments converge on '+configurationPhrase(apex)+', concentrating development in '+(CONFIG_HOUSE_FIELD[configurationRecord(apex).house]||'its function')+'.';
   }else{
-    text=pattern.vertices.map(k=>configurationPhrase(k,{detailed:true})).join(' ')+' '+(CONFIG_INTERPRETATION[pattern.type]||'These functions meet through a compound pattern.');
+    synthesis=CONFIG_INTERPRETATION[pattern.type]||'These functions meet through a compound pattern.';
   }
-  return text+configurationMotionText(pattern);
+  return{keys,synthesis,motion:configurationMotionText(pattern).trim()};
+}
+function interpretationText(pattern){
+  const {keys,synthesis,motion}=configurationInterpretationParts(pattern);
+  return[...keys.map(key=>configurationPhrase(key,{detailed:true})),synthesis,motion].filter(Boolean).join(' ');
+}
+// Interpretation presentation uses Vocab's existing sign/house palette, never
+// Unicode zodiac substitutes or glyph overlays. The canonical match-row
+// rails, canonical drawings and geometry remain untouched.
+function interpretationActor(key){
+  const record=configurationRecord(key),node=document.createElement('span');
+  node.className='sky-configuration-interpretation-actor';
+  const sky=document.createElement('span');sky.className='sky-configuration-interpretation-sky';sky.dataset.sky=record.sky||'A';sky.textContent='Sky '+record.sky;
+  const name=document.createElement('strong');name.className='sky-configuration-interpretation-placement';name.textContent=record.name;
+  node.append(sky,document.createTextNode(' '),name);
+  if(Number.isInteger(record.sign)&&record.sign>=0&&record.sign<12){
+    const sign=document.createElement('span');sign.className='sky-configuration-interpretation-sign';
+    sign.style.setProperty('--configuration-token-color',resultSignColor(record.sign));sign.textContent=' in '+CONFIG_SIGN_NAMES[record.sign];node.append(sign);
+  }
+  if(Number.isInteger(record.house)&&record.house>=1&&record.house<=12){
+    const house=document.createElement('span');house.className='sky-configuration-interpretation-house';
+    house.style.setProperty('--configuration-token-color',resultHouseColor(record.house));house.textContent=' (house '+record.house+')';node.append(house);
+  }
+  if(record.retrograde)node.append(document.createTextNode(' retrograde'));
+  return node;
+}
+function renderInterpretationClause(host,text,pattern){
+  const values=pattern.vertices.map(key=>({type:'placement',value:configurationPhrase(key),key}))
+    .concat(Object.keys(RESULT_ASPECT_COLORS).map(aspect=>({type:'aspect',value:aspect.replace(/-/g,' '),aspect})))
+    .sort((a,b)=>b.value.length-a.value.length);
+  const source=String(text||'');let cursor=0;
+  while(cursor<source.length){
+    const match=values.find(token=>source.slice(cursor,cursor+token.value.length).toLowerCase()===token.value.toLowerCase());
+    if(match){
+      if(match.type==='placement')host.appendChild(interpretationActor(match.key));
+      else{
+        const token=document.createElement('span');token.className='sky-configuration-interpretation-aspect';
+        token.style.setProperty('--configuration-token-color',RESULT_ASPECT_COLORS[match.aspect]);token.textContent=source.slice(cursor,cursor+match.value.length);
+        host.appendChild(token);
+      }
+      cursor+=match.value.length;
+    }else{
+      const start=cursor++;
+      while(cursor<source.length&&!values.some(token=>source.slice(cursor,cursor+token.value.length).toLowerCase()===token.value.toLowerCase()))cursor++;
+      host.appendChild(document.createTextNode(source.slice(start,cursor)));
+    }
+  }
+}
+function renderConfigurationInterpretation(host,pattern){
+  const {keys,synthesis,motion}=configurationInterpretationParts(pattern);
+  const list=document.createElement('div');list.className='sky-configuration-interpretation-lines';
+  keys.forEach(key=>{
+    const record=configurationRecord(key),line=document.createElement('p');
+    line.className='sky-configuration-interpretation-line';
+    if(Number.isInteger(record.sign))line.style.setProperty('--configuration-sign-color',resultSignColor(record.sign));
+    if(Number.isInteger(record.house))line.style.setProperty('--configuration-house-color',resultHouseColor(record.house));
+    const lead=configurationPhrase(key),whole=configurationPhrase(key,{detailed:true});
+    const identity=interpretationActor(key),reading=document.createElement('span');
+    reading.className='sky-configuration-interpretation-reading';reading.textContent=whole.slice(lead.length).trimStart();
+    line.append(identity,document.createTextNode(' '),reading);list.appendChild(line);
+  });
+  if(synthesis){
+    const summary=document.createElement('p');summary.className='sky-configuration-interpretation-synthesis';
+    renderInterpretationClause(summary,synthesis,pattern);list.appendChild(summary);
+  }
+  if(motion){
+    const movement=document.createElement('p');movement.className='sky-configuration-interpretation-motion';
+    renderInterpretationClause(movement,motion,pattern);list.appendChild(movement);
+  }
+  host.replaceChildren(list);
 }
 function miniConfigurationMarkup(pattern,{compact=false,interactive=true}={}){
   const records=new Map(pattern.vertices.map(key=>[key,resultVertexRecord(key)]).filter(([,record])=>record));
@@ -215,13 +284,19 @@ function miniConfigurationMarkup(pattern,{compact=false,interactive=true}={}){
     return'<div class="'+classes+'"'+attrs+'><svg viewBox="0 0 120 120" aria-hidden="true"><circle cx="60" cy="60" r="47" class="sky-configuration-mini-ring"/>'+radii+lines+points+'</svg></div>';
   }
 
-  // Expanded diagrams keep geometry in the 120×120 SVG, but canonical
-  // inscribed vertices live in screen space so wheel scaling cannot alter them.
+  // The user rejected overprinted sign/house tiles and substitute glyphs.
+  // Preserve the aspect geometry and its canonical placement-art owners:
+  // contextual sign and house names live in the already-existing match row.
   const vertices=[...records.values()].map(record=>{
     const p=resultPoint(record.value),left=(p.x/120*100).toFixed(4),top=(p.y/120*100).toFixed(4);
-    return'<span class="sky-configuration-vertex-host" data-canonical-placement="'+record.id+'" data-sky="'+record.sky+'" style="left:'+left+'%;top:'+top+'%"></span>';
+    const sign=Number.isInteger(record.sign)&&record.sign>=0&&record.sign<12?CONFIG_SIGN_NAMES[record.sign]:'';
+    const house=Number.isInteger(record.house)&&record.house>=1&&record.house<=12&&
+      window.RelphiRelationshipExportHouses?.include?.(record.sky)!==false?record.house:null;
+    const context='Sky '+record.sky+' '+placementWord(record.id)+(sign?', '+sign:'')+(house?', House '+house:'');
+    return'<span class="sky-configuration-vertex-host" data-canonical-placement="'+record.id+'" data-sky="'+record.sky+'" style="left:'+left+'%;top:'+top+'%">'+
+      '<button type="button" class="sky-configuration-vertex-placement" data-interactive="placement" data-sky="'+record.sky+'" data-placement="'+record.id+'" aria-label="'+context+'" title="'+context+'"></button></span>';
   }).join('');
-  return'<div class="'+classes+'"'+attrs+'><svg viewBox="0 0 120 120" aria-hidden="true"><circle cx="60" cy="60" r="47" class="sky-configuration-mini-ring"/>'+radii+lines+'</svg><span class="sky-configuration-vertex-layer" aria-hidden="true">'+vertices+'</span></div>';
+  return'<div class="'+classes+' is-expanded" role="group" aria-label="Configuration diagram: canonical placements and aspect geometry"><svg viewBox="0 0 120 120" aria-hidden="true"><circle cx="60" cy="60" r="47" class="sky-configuration-mini-ring"/>'+radii+lines+'</svg><span class="sky-configuration-vertex-layer">'+vertices+'</span></div>';
 }
 
 async function paintConfigurationMiniGlyphs(root){
@@ -244,14 +319,17 @@ async function paintConfigurationMiniGlyphs(root){
       circle.removeAttribute('aria-hidden');
     });
     glyph.dataset.configurationInscribedClone='true';
-    host.replaceChildren(glyph);
+    const target=host.querySelector(':scope>.sky-configuration-vertex-placement');
+    if(!target)continue;
+    target.replaceChildren(glyph);
     host.dataset.canonicalGlyphReady='true';
   }
 }
 function aspectColorRail(pattern){
   const seen=[];
   pattern.edges.forEach(edge=>{const color=RESULT_ASPECT_COLORS[edge.aspect]||'#777';if(!seen.some(item=>item.aspect===edge.aspect))seen.push({aspect:edge.aspect,color})});
-  return'<span class="sky-configuration-result-color-rail" aria-hidden="true">'+seen.map(item=>'<i data-aspect="'+item.aspect+'" style="background:'+item.color+'"></i>').join('')+'</span>';
+  const names=seen.map(item=>item.aspect.replace(/-/g,' ')).join(' and ');
+  return'<span class="sky-configuration-result-color-rail" title="Aspect colors: '+names+'" aria-hidden="true">'+seen.map(item=>'<i data-aspect="'+item.aspect+'" title="'+item.aspect.replace(/-/g,' ')+'" style="background:'+item.color+'"></i>').join('')+'</span>';
 }
 function ensureResultsPanel(){
   const relationships=document.getElementById('skyFoundationRelationships'),comparison=document.getElementById('skyFoundationComparison');if(!relationships||!comparison)return null;
@@ -339,7 +417,12 @@ function groupedPatternsForResults(){
   })).sort((a,b)=>a.representative.maxPhase-b.representative.maxPhase||a.representative.meanPhase-b.representative.meanPhase);
 }
 function configurationMatchLabel(pattern){
-  return pattern.vertices.map(key=>placementWord(vertexLabel(key).id)).join(' · ');
+  return pattern.vertices.map(key=>{
+    const record=configurationRecord(key);
+    const sign=Number.isInteger(record.sign)?' in '+CONFIG_SIGN_NAMES[record.sign]:'';
+    const house=record.house?' house '+record.house:'';
+    return 'Sky '+record.sky+' '+record.name+sign+house;
+  }).join(' · ');
 }
 function configurationHoverPointer(event){
   const type=String(event?.pointerType||'');
@@ -362,6 +445,8 @@ function configurationMatchRow(pattern,index){
     const signRail=document.createElement('span');
     signRail.className='sky-configuration-match-rail sky-configuration-match-rail-sign';
     signRail.style.background=resultSignColor(record?.sign);
+    const signInfo=Number.isInteger(record?.sign)?window.RelphiSkyVocab?.describeFocus?.('sign',record.sign):null;
+    signRail.title=signInfo?.name||CONFIG_SIGN_NAMES[record?.sign]||'Sign unavailable';
     const glyph=document.createElement('span');
     glyph.className='sky-configuration-match-glyph';
     glyph.dataset.canonicalPlacement=item.id;
@@ -370,6 +455,10 @@ function configurationMatchRow(pattern,index){
     const houseRail=document.createElement('span');
     houseRail.className='sky-configuration-match-rail sky-configuration-match-rail-house';
     houseRail.style.background=resultHouseColor(record?.house);
+    const house=Number.isInteger(record?.house)&&record.house>=1&&record.house<=12&&window.RelphiRelationshipExportHouses?.include?.(item.sky)!==false?record.house:null;
+    const houseInfo=house?window.RelphiSkyVocab?.describeFocus?.('house',house):null;
+    houseRail.title=house?'House '+house+(houseInfo?.description?' — '+houseInfo.description:''):'House unavailable';
+    participant.title='Sky '+item.sky+' '+placementWord(item.id)+' · '+signRail.title+' · '+houseRail.title;
     participant.append(signRail,glyph,houseRail);
     placements.appendChild(participant);
   });
@@ -419,7 +508,7 @@ function renderSelectedConfiguration(tile,pattern){
   const explanation=detail.querySelector('.sky-configuration-result-explanation');
   if(visual)visual.innerHTML=miniConfigurationMarkup(pattern,{interactive:false});
   if(structure)structure.textContent=structureText(pattern);
-  if(interpretation)interpretation.textContent=interpretationText(pattern);
+  if(interpretation)renderConfigurationInterpretation(interpretation,pattern);
   // The expanded card is progressive: show the reading first, reveal its
   // geometry on demand rather than repeating the same material immediately.
   const structurePanel=detail.querySelector('.sky-configuration-result-structure');
@@ -459,23 +548,54 @@ function renderSelectedConfiguration(tile,pattern){
   if(exact)exact.textContent=Number.isFinite(pattern.maxPhase)?pattern.maxPhase.toFixed(2)+'°':'';
   paintConfigurationMiniGlyphs(visual);
 }
-async function copySelectedConfiguration(tile,button){
-  const pattern=tile?.__configurationSelectedPattern;if(!pattern)return;
-  const text='Configurations\n\n'+serializeConfigurationPattern(pattern);
+async function writeConfigurationClipboard(text,button,doneLabel){
+  if(!text)return false;
+  if(button?.dataset.configurationCopyPending==='true')return false;
+  const originalLabel=button?.dataset.configurationCopyAction||button?.getAttribute('aria-label')||'Copy';
+  if(button){
+    button.dataset.configurationCopyAction=originalLabel;
+    button.dataset.configurationCopyPending='true';
+    button.disabled=true;
+    button.textContent='Copying';
+  }
   let ok=false;
-  try{if(navigator.clipboard?.writeText){await navigator.clipboard.writeText(text);ok=true}}catch(_){}
+  try{
+    if(navigator.clipboard?.writeText){await navigator.clipboard.writeText(text);ok=true}
+  }catch(error){
+    // A browser may deny the modern API in a preview without granting Clipboard access.
+    // Continue through the existing synchronous document-copy fallback.
+  }
   if(!ok){
-    const area=document.createElement('textarea');area.value=text;area.setAttribute('readonly','');
-    Object.assign(area.style,{position:'fixed',left:'-10000px',top:'0',opacity:'0'});
-    document.body.appendChild(area);area.select();
-    try{ok=document.execCommand('copy')}catch(_){}
+    const area=document.createElement('textarea');
+    area.value=text;
+    area.readOnly=true;
+    Object.assign(area.style,{position:'fixed',left:'0',top:'0',width:'1px',height:'1px',opacity:'0'});
+    document.body.appendChild(area);
+    area.focus({preventScroll:true});
+    area.select();
+    area.setSelectionRange(0,area.value.length);
+    try{ok=!!document.execCommand('copy')}catch(error){ok=false}
     area.remove();
   }
-  if(ok&&button){
-    const prior=button.textContent;button.textContent='Copied';
+  if(button?.isConnected){
+    delete button.dataset.configurationCopyPending;
+    button.disabled=false;
+    button.textContent=ok?doneLabel:'Copy failed';
+    button.setAttribute('aria-label',ok?doneLabel:'Copy failed — browser clipboard permission unavailable');
     clearTimeout(button.__copyTimer);
-    button.__copyTimer=setTimeout(()=>{if(button.isConnected)button.textContent=prior||'Copy'},1100);
+    button.__copyTimer=window.setTimeout(()=>{
+      if(!button.isConnected)return;
+      button.textContent='Copy';
+      button.setAttribute('aria-label',originalLabel);
+    },1600);
   }
+  if(!ok)console.warn('[Sky Chart] Configuration copy denied by Clipboard API and document copy fallback.');
+  return ok;
+}
+async function copySelectedConfiguration(tile,button){
+  const pattern=tile?.__configurationSelectedPattern;
+  if(!pattern)return false;
+  return writeConfigurationClipboard('Configurations\n\n'+serializeConfigurationPattern(pattern),button,'Copied');
 }
 function selectConfigurationMatch(tile,pattern,row){
   tile.querySelectorAll('.sky-configuration-match-row.is-selected').forEach(node=>node.classList.remove('is-selected'));
@@ -499,7 +619,9 @@ function openConfiguration(tile,group){
       tileCopy.addEventListener('click',event=>{event.preventDefault();event.stopPropagation();copySelectedConfiguration(tile,tileCopy)});
     }
     const matches=document.createElement('div');matches.className='sky-configuration-match-stack';
-    const heading=document.createElement('div');heading.className='sky-configuration-match-stack-heading';heading.textContent=group.matches.length+' match'+(group.matches.length===1?'':'es');
+    const heading=document.createElement('div');heading.className='sky-configuration-match-stack-heading';
+    const count=document.createElement('span');count.textContent=group.matches.length+' match'+(group.matches.length===1?'':'es');
+    heading.append(count);
     const list=document.createElement('div');list.className='sky-configuration-match-list';
     group.matches.forEach((match,index)=>list.appendChild(configurationMatchRow(match,index)));
     matches.append(heading,list);detail.appendChild(matches);
@@ -573,7 +695,7 @@ function hierarchicalPatterns(source){
 function rawPatternsForResults(){return selectedPatternsForVisibility()}
 function patternsForResults(){return hierarchicalPatterns(rawPatternsForResults())}
 
-let configurationCopyTimer=0,configurationExportBusy=false,configurationExportLibrary=null;
+let configurationExportBusy=false,configurationExportLibrary=null;
 function configurationVertexText(key){
   const record=resultVertexRecord(key),item=vertexLabel(key);
   if(!record)return 'Sky '+item.sky+' '+item.label;
@@ -598,15 +720,8 @@ function serializeVisibleConfigurations(){
   return 'Configurations\n\n'+current.map(serializeConfigurationPattern).join('\n\n');
 }
 async function copyVisibleConfigurations(button){
-  const text=serializeVisibleConfigurations();if(!text)return;
-  let ok=false;
-  try{if(navigator.clipboard?.writeText){await navigator.clipboard.writeText(text);ok=true}}catch(_){}
-  if(!ok){
-    const area=document.createElement('textarea');area.value=text;area.setAttribute('readonly','');Object.assign(area.style,{position:'fixed',left:'-10000px',top:'0',opacity:'0'});document.body.appendChild(area);area.select();try{ok=document.execCommand('copy')}catch(_){}area.remove();
-  }
-  if(ok&&button){
-    const count=patternsForResults().length;button.textContent='Copied '+count;clearTimeout(configurationCopyTimer);configurationCopyTimer=setTimeout(()=>{if(button.isConnected)button.textContent='Copy'},1200);
-  }
+  const text=serializeVisibleConfigurations();
+  return writeConfigurationClipboard(text,button,'Copied '+patternsForResults().length);
 }
 function loadConfigurationExporter(){
   if(window.htmlToImage?.toPng)return Promise.resolve(window.htmlToImage);
@@ -644,7 +759,7 @@ async function downloadVisibleConfigurations(button){
 }
 function bindConfigurationActions(panel){
   const copy=panel?.querySelector('.sky-configuration-copy-button'),download=panel?.querySelector('.sky-configuration-download-button');
-  if(copy&&!copy.dataset.bound){copy.dataset.bound='true';copy.addEventListener('click',event=>{event.preventDefault();event.stopPropagation();copyVisibleConfigurations(copy)})}
+  if(copy&&!copy.dataset.bound){copy.dataset.bound='true';copy.setAttribute('aria-label','Copy visible configurations');copy.addEventListener('click',event=>{event.preventDefault();event.stopPropagation();void copyVisibleConfigurations(copy)})}
   if(download&&!download.dataset.bound){download.dataset.bound='true';download.addEventListener('click',event=>{event.preventDefault();event.stopPropagation();downloadVisibleConfigurations(download)})}
 }
 function inevitableMoreButton(hiddenCount){

@@ -27,7 +27,7 @@ assert.doesNotMatch(js,/createElementNS\([^\n]*['"]path['"]/i,'Consumers must ne
 
 const browser=await chromium.launch({headless:true});
 const urls=['sky-chart.html','tarot.html?board=workflow-v2#tarot','planetaryhours.html','index.html','tools.html'];
-const SOURCE='relphi-icons.svg#relphi-copy';
+const SOURCE='http://127.0.0.1:4173/relphi-icons.svg#relphi-copy';
 for(const url of urls){
   const page=await browser.newPage({viewport:{width:630,height:840}});
   const errors=[];
@@ -100,7 +100,7 @@ for(const url of urls){
   await page.evaluate(()=>{
     document.querySelector('#copy-canon-fixture button').textContent='Copied';
   });
-  await page.waitForFunction(()=>document.querySelector('#copy-canon-fixture button svg use')?.getAttribute('href')==='relphi-icons.svg#relphi-copy',null,{timeout:5000});
+  await page.waitForFunction(()=>document.querySelector('#copy-canon-fixture button svg use')?.getAttribute('href')==='http://127.0.0.1:4173/relphi-icons.svg#relphi-copy',null,{timeout:5000});
   await page.waitForFunction(()=>document.querySelector('#copy-canon-fixture button')?.dataset.relphiCopyFeedback==='done',null,{timeout:4000});
   assert.equal(await page.locator('#copy-canon-fixture button').first().getAttribute('data-relphi-copy-feedback'),'done');
   assert.equal(await page.locator('#copy-canon-fixture button').first().getAttribute('aria-label'),'Copied');
@@ -136,7 +136,7 @@ for(const url of urls){
   if(url.startsWith('sky-chart'))assert.ok(existing>=1,url+': actual Sky Chart toolbar uses master glyph');
   if(url.startsWith('planetaryhours'))assert.ok(existing>=1,url+': Copy link uses master glyph');
   if(url.startsWith('index.html')){
-    await page.waitForFunction(()=>[...document.querySelectorAll('.question-card .copy-icon')].every(n=>n.querySelector('svg.relphi-copy-icon use')?.getAttribute('href')==='relphi-icons.svg#relphi-copy'),null,{timeout:6000});
+    await page.waitForFunction(()=>[...document.querySelectorAll('.question-card .copy-icon')].every(n=>n.querySelector('svg.relphi-copy-icon use')?.getAttribute('href')==='http://127.0.0.1:4173/relphi-icons.svg#relphi-copy'),null,{timeout:6000});
     assert.equal(await page.locator('.question-card .copy-icon svg use').count(),4,'Every Invocation Card uses the same mark');
     const cardAudit=await page.locator('.question-card').evaluateAll(cards=>cards.map(card=>({
       hasParentIcon:card.classList.contains('relphi-copy-icon-button'),
@@ -160,6 +160,23 @@ for(const url of urls){
       try{return node.getBBox().width>10&&node.getBBox().height>10}catch(_){return false}
     },null,{timeout:12000});
     await page.locator('.sky-relationship-copy-button').screenshot({path:'canonical-copy-icon-relationships.png'});
+  }
+  // Hosted commit previews use an external base for pinned CSS/JS assets.
+  // The SVG must still resolve on the document origin and paint in Chromium.
+  if(url.startsWith('sky-chart')||url.startsWith('tarot')){
+    await page.evaluate(()=>{
+      const base=document.createElement('base');
+      base.href='https://raw.githack.com/blissonature/oracleofrelphi/88680b05305cbb5e45eb59f11b7c2ff2fbe74d2e/';
+      document.head.prepend(base);
+    });
+    await page.waitForFunction(()=>{
+      const use=document.querySelector('#copy-canon-fixture button svg.relphi-copy-icon use');
+      if(!use)return false;
+      try{
+        return use.getAttribute('href')===location.origin+'/relphi-icons.svg#relphi-copy' &&
+          use.getBBox().width>10 && use.getBBox().height>10;
+      }catch(_){return false}
+    },null,{timeout:5000});
   }
   assert.deepEqual(errors.filter(s=>/SyntaxError|ReferenceError/.test(s)),[],url+': no syntax or reference errors');
   await page.close();

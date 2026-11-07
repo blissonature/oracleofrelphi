@@ -103,6 +103,9 @@ try{
  await page.getByRole('button',{name:'Increase to 3°'}).click();
  assert.equal(await page.evaluate(()=>window.RelphiHarmonicOrb.getWindow()),3);
  await page.waitForTimeout(300);
+ // The helper was opened by selecting Moon B; increasing the window must
+ // retain that lock. Clicking the same Moon again would intentionally toggle it off.
+ assert.equal(await moon.evaluate(node=>node.classList.contains('is-selected')),true,'Increasing the harmonic window preserves Moon B focus');
  // Snapshot DOM identity, exact row order, and aspect geometry *before* selecting.
  // Temporarily narrowing Relationships must not rebuild data or redraw the wheel.
  const baseline=await page.evaluate(()=>{
@@ -118,8 +121,8 @@ try{
  });
  assert.ok(baseline.rows>1,'Fixture must contain multiple Relationships tiles');
  assert.ok(baseline.aspectLines>0,'Fixture must show aspect lines on the comparison wheel');
- assert.equal(baseline.count,baseline.shown,'Unselected count must match the tiles actually displayed');
- await moon.click({force:true});
+ assert.equal(baseline.count,baseline.shown,'Match count must reflect the tiles actually displayed');
+ // The helper preserved the Moon lock. A second click would intentionally deselect it.
  await page.mouse.move(10,10);
  await page.waitForTimeout(150);
  assert.equal(await moon.evaluate(node=>node.classList.contains('is-selected')),true,'Moon B persists after actual helper Increase to 3');

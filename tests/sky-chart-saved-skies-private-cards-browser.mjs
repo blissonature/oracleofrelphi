@@ -31,7 +31,7 @@ async function load(page){
   await page.goto('http://127.0.0.1:4173/sky-chart.html',{waitUntil:'domcontentloaded'});
   await page.locator('[data-saved-sky-trigger="A"]').click({timeout:20000});
   await page.waitForSelector('#skySavedSkiesPopover .sky-saved-list-row [data-private-sky-fingerprint="true"]',{timeout:20000});
-  await page.waitForFunction(()=>!!document.querySelector('#skySavedSkiesPopover .sky-saved-library-instruction'),null,{timeout:10000});
+  await page.waitForFunction(()=>!!document.querySelector('#skySavedSkiesPopover.sky-library-redesigned .sky-library-controls'),null,{timeout:10000});
 }
 function row(page,id){return page.locator('#skySavedSkiesPopover .sky-saved-list-row').filter({has:page.locator('[data-saved-sky-ref="'+id+'"]')})}
 
@@ -47,8 +47,8 @@ try{
     assert.equal(await button.locator('.sky-saved-fingerprint-piece').count(),3,'One fingerprint of each of the three types');
     assert.equal(await button.locator('.sky-saved-list-name,.sky-saved-list-meta').count(),0,'Sensitive text nodes are absent from the initial picker');
     const state=await button.evaluate(node=>{
-      const details=node.querySelector('[data-saved-fingerprint-copy]');
-      const style=getComputedStyle(details);
+      const overlay=node.querySelector('.sky-library-identity-overlay');
+      const style=getComputedStyle(overlay);
       const label=node.getAttribute('aria-label');
       const name=node.closest('.sky-saved-list-row')?.querySelector('[data-saved-delete-ref]')?.getAttribute('aria-label');
       return{visibility:style.visibility,opacity:style.opacity,label,deleteLabel:name};
@@ -74,12 +74,52 @@ try{
   await first.locator('[data-saved-delete-ref]').click();
   assert.equal(await first.locator('.sky-saved-delete-confirmation').count(),1,'Delete still requires confirmation');
   const confirm=first.locator('.sky-saved-delete-confirmation');
-  assert.ok(!(await confirm.getAttribute('aria-label')).includes('Sensitive'),'Confirmation label conceals identity');
+  assert.equal(await confirm.getAttribute('data-saved-delete-target'),'private-person-one',
+    'Confirmation target must equal the clicked record ID');
+  assert.equal(await confirm.locator('[data-saved-delete-target-name]').innerText(),'Sensitive Person One',
+    'The exact saved sky name must be visible before deletion');
+  assert.ok((await confirm.getAttribute('aria-label')).includes('Sensitive Person One'),
+    'The intentional deletion confirmation must name the selected record');
+  // The asynchronous privacy decorator must not overwrite an intentionally
+  // disclosed deletion target after the menu settles.
+  await desktop.waitForTimeout(150);
+  assert.ok((await confirm.getAttribute('aria-label')).includes('Sensitive Person One'),
+    'Privacy refresh cannot replace the ID-bound confirmation with generic text');
+  assert.equal(await desktop.locator('#skySavedSkiesPopover .is-confirming-delete').count(),1,
+    'There is only one active destructive target');
   await first.locator('[data-saved-delete-cancel]').click();
+  assert.equal(await first.locator('.sky-saved-delete-confirmation').count(),0,
+    'Cancel removes the exact row confirmation without rebuilding the list');
+  assert.equal((await desktop.evaluate(()=>JSON.parse(localStorage.getItem('relphiSkyLibraryV1')))).length,2,
+    'Cancel never changes the stored library');
+  // The second record must not inherit a pending target or display the first name.
+  const second=row(desktop,'private-person-two');
+  await second.locator('[data-saved-delete-ref]').click();
+  assert.equal(await second.locator('[data-saved-delete-target-name]').innerText(),'Sensitive Person Two');
+  assert.equal(await first.locator('.sky-saved-delete-confirmation').count(),0);
+  await first.locator('[data-saved-sky-ref]').hover();
+  assert.equal(await first.locator('.sky-library-identity-overlay').evaluate(el=>getComputedStyle(el).visibility),'hidden',
+    'Other sky identities remain concealed while a delete confirmation is active');
+  await desktop.keyboard.press('Escape');
+  assert.equal(await desktop.locator('.sky-saved-delete-confirmation').count(),0,
+    'Escape cancels deletion without closing the picker');
   await first.locator('[data-saved-sky-ref]').click();
   await desktop.waitForFunction(()=>document.querySelector('#skySavedSkiesPopover')?.hidden===true,{timeout:10000});
   const loaded=await desktop.evaluate(()=>JSON.parse(localStorage.getItem('relphiSkyChartA')));
   assert.equal(loaded.metadata.savedSkyId,'private-person-one','Normal tap/click loads the right saved sky');
+  // Delete the second (different) record after loading the first. The loaded
+  // chart stays present and the second record alone disappears.
+  await desktop.locator('[data-saved-sky-trigger="A"]').click();
+  await desktop.locator('#skySavedSkiesPopover .sky-saved-list-row [data-saved-sky-ref="private-person-two"]')
+    .locator('..').locator('[data-saved-delete-ref]').click();
+  assert.equal(await desktop.locator('[data-saved-delete-target-name]').innerText(),'Sensitive Person Two');
+  await desktop.locator('[data-saved-delete-confirm]').click();
+  await desktop.waitForFunction(()=>JSON.parse(localStorage.getItem('relphiSkyLibraryV1')||'[]').length===1,null,{timeout:7000});
+  const remaining=await desktop.evaluate(()=>JSON.parse(localStorage.getItem('relphiSkyLibraryV1')||'[]').map(x=>x.id));
+  assert.deepEqual(remaining,['private-person-one'],'Only the confirmed record was deleted');
+  assert.equal(await desktop.locator('#skySavedSkiesPopover [data-saved-delete-target-name]').count(),0,
+    'The completed confirmation is removed');
+  await desktop.locator('[data-saved-sky-trigger="A"]').click();
 
   const touchContext=await browser.newContext({viewport:{width:390,height:844},isMobile:true,hasTouch:true});
   const touch=await touchContext.newPage();
@@ -106,8 +146,77 @@ try{
   await touch.waitForFunction(()=>document.querySelector('#skySavedSkiesPopover')?.hidden===true,null,{timeout:10000});
   assert.equal(await touch.evaluate(()=>JSON.parse(localStorage.getItem('relphiSkyChartA')).metadata?.savedSkyId),'private-person-one','A later tap still loads the saved sky');
   assert.deepEqual(errors.filter(e=>/SyntaxError|TypeError|ReferenceError/.test(e)),[],'No critical runtime errors');
+  // Mobile delete must reveal the exact target, not a coincidental hover.
+  await touch.locator('[data-saved-sky-trigger="A"]').tap();
+  await row(touch,'private-person-two').locator('[data-saved-delete-ref]').tap();
+  assert.equal(await touch.locator('[data-saved-delete-target-name]').innerText(),'Sensitive Person Two',
+    'Mobile confirmation identifies the tapped saved sky');
+  assert.equal(await touch.locator('#skySavedSkiesPopover .is-confirming-delete').count(),1);
+  await touch.screenshot({path:'saved-skies-private-delete-touch.png'});
+  await touch.locator('[data-saved-delete-cancel]').tap();
+  assert.equal(await touch.locator('.sky-saved-delete-confirmation').count(),0);
   await touchContext.close();
   await desktop.close();
+  // Regression for real-sized libraries: the former full-menu redraw moved
+  // the scroll position and let a different hover name appear at confirmation.
+  const longPage=await browser.newPage({viewport:{width:630,height:720}});
+  longPage.on('pageerror',e=>errors.push(e.message));
+  await longPage.route('https://unpkg.com/suncalc@1.9.0/suncalc.js',r=>r.fulfill({path:path.resolve('node_modules/suncalc/suncalc.js'),contentType:'application/javascript'}));
+  await longPage.route('https://cdn.jsdelivr.net/npm/luxon@3/build/global/luxon.min.js',r=>r.fulfill({path:path.resolve('node_modules/luxon/build/global/luxon.min.js'),contentType:'application/javascript'}));
+  const many=Array.from({length:36},(_,i)=>fixture(i===12?'Tornado example':i===26?'Target event 27':`Saved sky ${i+1}`,`bulk-${i+1}`,i*0.8));
+  await longPage.addInitScript(({original,many})=>{
+    localStorage.setItem('relphiSkyChartA',JSON.stringify(original));
+    localStorage.removeItem('relphiSkyChartB');
+    localStorage.setItem('relphiSkyLibraryV1',JSON.stringify(many));
+    localStorage.setItem('relphiSkyChartLastModeV1','single');
+  },{original,many});
+  await longPage.goto('http://127.0.0.1:4173/sky-chart.html',{waitUntil:'domcontentloaded'});
+  await longPage.locator('[data-saved-sky-trigger="A"]').click({timeout:30000});
+  await longPage.locator('[data-saved-sky-ref="bulk-27"]').waitFor({timeout:20000});
+  await longPage.locator('[data-saved-sky-ref="bulk-27"]').scrollIntoViewIfNeeded();
+  const scroller=longPage.locator('#skySavedSkiesPopover .sky-saved-list');
+  const initialScroll=await scroller.evaluate(el=>el.scrollTop);
+  assert.ok(initialScroll>0,'The long list is genuinely scrolled before deletion');
+  await longPage.locator('[data-saved-sky-ref="bulk-27"]').locator('..').locator('[data-saved-delete-ref]').click();
+  const pending=longPage.locator('[data-saved-delete-target="bulk-27"]');
+  assert.equal(await pending.locator('[data-saved-delete-target-name]').innerText(),'Target event 27');
+  assert.equal(await longPage.locator('[data-saved-delete-target]').count(),1,'Exactly one pending deletion');
+  assert.equal(await longPage.locator('[data-saved-delete-confirm]').getAttribute('data-saved-delete-confirm'),'bulk-27');
+  const scrollAfter=await scroller.evaluate(el=>el.scrollTop);
+  assert.ok(scrollAfter>0,'Opening delete must retain the middle-of-list scroll');
+  const rowGeometry=await scroller.evaluate(list=>{
+    const rows=[...list.querySelectorAll('.sky-saved-list-row:not([hidden])')];
+    const bounds=rows.map(row=>row.getBoundingClientRect());
+    const confirm=list.querySelector('.sky-saved-delete-confirmation');
+    const cancel=confirm?.querySelector('[data-saved-delete-cancel]');
+    const cancelBounds=cancel?.getBoundingClientRect(),confirmBounds=confirm?.getBoundingClientRect();
+    return{
+      overlaps:bounds.slice(1).map((r,i)=>({index:i,gap:r.top-bounds[i].bottom})).filter(x=>x.gap<-.5),
+      cancellingInsideTarget:!!(cancelBounds&&confirmBounds&&
+        cancelBounds.top>=confirmBounds.top&&cancelBounds.bottom<=confirmBounds.bottom),
+      shrink:getComputedStyle(rows[26]).flexShrink
+    };
+  });
+  assert.deepEqual(rowGeometry.overlaps,[],'Saved Sky rows never overlap under 36-record scroll pressure');
+  assert.equal(rowGeometry.shrink,'0','Saved Sky cards preserve natural height rather than flex-shrinking');
+  assert.equal(rowGeometry.cancellingInsideTarget,true,'Cancel remains geometrically inside the selected confirmation');
+  await longPage.locator('[data-saved-sky-ref="bulk-28"]').hover();
+  assert.equal(await longPage.locator('[data-saved-sky-ref="bulk-28"] .sky-library-identity-overlay')
+    .evaluate(el=>getComputedStyle(el).visibility),'hidden',
+    'Another chart cannot show a misleading hover identity during deletion');
+  await longPage.screenshot({path:'saved-skies-private-delete-long-library.png'});
+  await pending.locator('[data-saved-delete-cancel]').click();
+  assert.equal((await longPage.evaluate(()=>JSON.parse(localStorage.getItem('relphiSkyLibraryV1')))).length,36,
+    'Cancel leaves every saved chart untouched');
+  assert.ok((await scroller.evaluate(el=>el.scrollTop))>0,'Cancel does not jump to the first saved chart');
+  await longPage.locator('[data-saved-sky-ref="bulk-27"]').locator('..').locator('[data-saved-delete-ref]').click();
+  await longPage.locator('[data-saved-delete-confirm="bulk-27"]').click();
+  await longPage.waitForFunction(()=>JSON.parse(localStorage.getItem('relphiSkyLibraryV1')||'[]').length===35,null,{timeout:7000});
+  const retained=await longPage.evaluate(()=>JSON.parse(localStorage.getItem('relphiSkyLibraryV1')).map(x=>x.id));
+  assert.equal(retained.includes('bulk-27'),false,'Only the explicitly confirmed ID is deleted');
+  assert.equal(retained.includes('bulk-13'),true,'The unrelated tornado record remains');
+  assert.equal(retained.includes('bulk-28'),true,'The neighboring saved record remains');
+  await longPage.close();
 }finally{
   await browser.close();
 }

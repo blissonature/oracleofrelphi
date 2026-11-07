@@ -44,7 +44,16 @@
     return null;
   }
   function records(payload){
-    return source(payload).map(([key,item])=>{const entry=canonical(key,item),value=longitude(item);return{key,item,entry,id:entry?.id||'',value}}).filter(record=>record.entry&&Number.isFinite(record.value)).sort((a,b)=>{const ai=ORDER.indexOf(a.id),bi=ORDER.indexOf(b.id);return(ai<0?999:ai)-(bi<0?999:bi)||a.value-b.value});
+    // Canonical placement identity is unique within each sky. Source aliases
+    // (Descendant/Dsc, Midheaven/MC, etc.) must not produce new endpoints.
+    // Keep the same first-occurrence precedence as the foundation wheel.
+    const seen=new Set();
+    return source(payload).map(([key,item])=>{
+      const entry=canonical(key,item),value=longitude(item);
+      if(!entry||!Number.isFinite(value)||seen.has(entry.id))return null;
+      seen.add(entry.id);
+      return{key,item,entry,id:entry.id,value};
+    }).filter(Boolean).sort((a,b)=>{const ai=ORDER.indexOf(a.id),bi=ORDER.indexOf(b.id);return(ai<0?999:ai)-(bi<0?999:bi)||a.value-b.value});
   }
   function profile(payload){return payload?.calcProfile&&typeof payload.calcProfile==='object'?payload.calcProfile:{}}
   function ascendant(payload,list){const record=list.find(item=>item.id==='asc');if(record)return record.value;const value=Number(profile(payload).ascendant??payload?.ascendant??payload?.asc);return Number.isFinite(value)?norm(value):0}
@@ -53,7 +62,23 @@
     const asc=ascendant(payload,list),system=String(p.houseSystem||payload?.houseSystem||'whole-sign').toLowerCase(),start=system.includes('whole')?Math.floor(asc/30)*30:asc;return Array.from({length:12},(_,index)=>norm(start+index*30));
   }
   function houseFor(value,houseCusps){for(let index=0;index<12;index++){const start=houseCusps[index],span=norm(houseCusps[(index+1)%12]-start)||30;if(norm(value-start)<span)return index+1}return 12}
-  function prepare(payload,slot){const list=records(payload),timeUnknown=profile(payload).timeUnknown===true,houseCusps=timeUnknown?[]:cusps(payload,list);list.forEach(record=>{record.sky=slot;record.sign=Math.floor(record.value/30);record.house=timeUnknown?null:houseFor(record.value,houseCusps)});return{list,houseCusps,timeUnknown}}
+  function prepare(payload,slot){
+    const list=records(payload),timeUnknown=profile(payload).timeUnknown===true,
+      houseCusps=timeUnknown?[]:cusps(payload,list);
+    const houseSystem=String(profile(payload).houseSystem||payload?.houseSystem||'').toLowerCase();
+    list.forEach(record=>{
+      record.sky=slot;
+      record.sign=Math.floor(record.value/30);
+      record.house=timeUnknown?null:houseFor(record.value,houseCusps);
+      // A quadrant angle defines its own cusp. The source placement and
+      // saved cusp may differ by a few arcseconds, especially after rounding.
+      // Do not classify the Descendant as H6 on that numerical boundary.
+      const angleHouse={asc:1,ic:4,dsc:7,mc:10}[record.id];
+      if(angleHouse&&!houseSystem.includes('whole')&&houseCusps.length===12&&
+        separation(record.value,houseCusps[angleHouse-1])<0.02)record.house=angleHouse;
+    });
+    return{list,houseCusps,timeUnknown};
+  }
   function relationships(listA,listB){
     const result=[],windowValue=HARMONIC?.windowFromControl?.()??10;
     listA.forEach(left=>listB.forEach(right=>{
@@ -170,7 +195,24 @@
       const record=ledgerRecord(row,list);
       if(!record){delete row.dataset.interactive;delete row.dataset.sky;delete row.dataset.placement;delete row.dataset.house;delete row.dataset.sign;row.removeAttribute('tabindex');row.removeAttribute('role');return}
       Object.assign(row.dataset,{interactive:'placement',sky:slot,placement:record.id,house:String(record.house),sign:String(record.sign)});
-      row.setAttribute('tabindex','0');row.setAttribute('role','button');row.setAttribute('aria-label',`Sky ${slot} ${record.entry.name}, house ${record.house}`)
+      row.setAttribute('tabindex','0');row.setAttribute('role','button');row.setAttribute('aria-label',`Sky ${slot} ${record.entry.name}, house ${record.house}`);
+      // The placement row still owns the planet selection, but its sign and
+      // house are separate, keyboard-accessible targets for this same controller.
+      // Do not attach child listeners or create another focus/description owner.
+      const signTarget=row.querySelector('.sky-foundation-coordinate-sign');
+      if(signTarget&&Number.isInteger(record.sign)&&record.sign>=0&&record.sign<12){
+        Object.assign(signTarget.dataset,{interactive:'sign',sign:String(record.sign)});
+        signTarget.setAttribute('tabindex','0');
+        signTarget.setAttribute('role','button');
+        signTarget.setAttribute('aria-label',`${SIGN_NAMES[record.sign]} zodiac sign`);
+      }
+      const houseTarget=row.querySelector('.sky-foundation-house');
+      if(houseTarget&&Number.isInteger(record.house)&&record.house>=1&&record.house<=12){
+        Object.assign(houseTarget.dataset,{interactive:'house',sky:slot,house:String(record.house)});
+        houseTarget.setAttribute('tabindex','0');
+        houseTarget.setAttribute('role','button');
+        houseTarget.setAttribute('aria-label',`Sky ${slot} house ${record.house}`);
+      }
     })
   }
 
@@ -397,7 +439,7 @@
       });
     }
     if(wheelOnlyExternal)return;
-    ['A','B'].forEach(slot=>{const panel=document.getElementById(slot==='A'?'skyFoundationA':'skyFoundationB');if(!panel)return;panel.classList.toggle('has-ledger-isolation',!!filterState);panel.querySelectorAll('.sky-foundation-row[data-placement]').forEach(row=>{row.classList.toggle('is-kept',!!filterState&&filterKeep.placements.has(`${slot}:${row.dataset.placement}`));row.classList.toggle('is-selected',!!lockedState&&matchesNode(row,lockedState));row.classList.toggle('is-hovered',!!hoverState&&!lockedState&&matchesNode(row,hoverState))})});
+    ['A','B'].forEach(slot=>{const panel=document.getElementById(slot==='A'?'skyFoundationA':'skyFoundationB');if(!panel)return;panel.classList.toggle('has-ledger-isolation',!!filterState);panel.querySelectorAll('.sky-foundation-row[data-placement]').forEach(row=>{row.classList.toggle('is-kept',!!filterState&&filterKeep.placements.has(`${slot}:${row.dataset.placement}`));row.classList.toggle('is-selected',!!lockedState&&matchesNode(row,lockedState));row.classList.toggle('is-hovered',!!hoverState&&!lockedState&&matchesNode(row,hoverState));row.querySelectorAll('[data-interactive="sign"],[data-interactive="house"]').forEach(target=>{const selected=!!lockedState&&matchesNode(target,lockedState);target.classList.toggle('is-selected',selected);target.classList.toggle('is-hovered',!!hoverState&&!lockedState&&matchesNode(target,hoverState));target.setAttribute('aria-pressed',String(selected))})})});
     // A clicked/tapped wheel selection temporarily narrows the Relationships
     // scroll window. Hover is preview-only; never hide tiles while hovering.
     // Preserve source eligibility and DOM rows; clearing the lock restores them.
@@ -435,12 +477,14 @@
     if(!Number.isFinite(event.clientX)||!Number.isFinite(event.clientY))return null;
     let nearest=null,best=Infinity;
     document.querySelectorAll('[data-layer="aspects"] > line.sky-foundation-aspect:not(.sky-foundation-aspect-hit)').forEach(line=>{
-      if(line.classList.contains('sky-chart-filter-hidden')||line.classList.contains('sky-chart-orb-hidden')||line.classList.contains('sky-orb-filter-hidden')||getComputedStyle(line).display==='none')return;
+      if(line.classList.contains('sky-chart-filter-hidden')||line.classList.contains('sky-chart-orb-hidden')||line.classList.contains('sky-orb-filter-hidden'))return;
+      const style=getComputedStyle(line);
+      if(line.hidden||style.display==='none'||style.visibility==='hidden'||Number(style.opacity)===0)return;
       const matrix=line.getScreenCTM(),svg=line.ownerSVGElement;if(!matrix||!svg?.createSVGPoint)return;
       const start=svg.createSVGPoint(),end=svg.createSVGPoint();start.x=Number(line.getAttribute('x1'));start.y=Number(line.getAttribute('y1'));end.x=Number(line.getAttribute('x2'));end.y=Number(line.getAttribute('y2'));
       const distance=distanceToSegment(event.clientX,event.clientY,start.matrixTransform(matrix),end.matrixTransform(matrix));if(distance<best){best=distance;nearest=line}
     });
-    return best<=9?nearest:null;
+    return best<=14?nearest:null;
   }
   function interactive(event){
     const root=document.getElementById('skyFoundationRoot');if(!root)return null;
@@ -538,7 +582,13 @@
     if(!Number.isFinite(clientX)||!Number.isFinite(clientY))return null;
     const wheel=document.querySelector('#skyFoundationWheelMount > svg.sky-foundation-wheel');
     if(!wheel)return null;
+    const bounds=wheel.getBoundingClientRect();
+    if(clientX<bounds.left||clientX>bounds.right||clientY<bounds.top||clientY>bounds.bottom)return null;
     const target=document.elementsFromPoint(clientX,clientY).find(node=>wheel.contains(node));
+    const direct=target?.closest?.('[data-interactive]');
+    if(direct?.dataset.interactive==='placement')return interactive({target,clientX,clientY});
+    const aspect=nearestAspect({clientX,clientY});
+    if(aspect)return aspect;
     return target?interactive({target,clientX,clientY}):null;
   }
   function beginVirtualPointer(){
@@ -799,7 +849,7 @@
       if(!node)return;
       event.preventDefault();
       event.stopImmediatePropagation();
-      const duplicate=event.detail>0&&lastMousePointerSelection&&
+      const duplicate=lastMousePointerSelection&&
         performance.now()-lastMousePointerSelection.at<750&&
         same(lastMousePointerSelection.spec,specFrom(node));
       lastMousePointerSelection=null;

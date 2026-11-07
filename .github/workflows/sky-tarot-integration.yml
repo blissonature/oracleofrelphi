@@ -1,0 +1,54 @@
+name: Sky Chart and Tarot Ledger reconciliation
+on:
+  pull_request:
+    paths:
+      - 'sky-chart*'
+      - 'tarot*'
+      - 'drawing-board*'
+      - 'relphi-sky-tarot*'
+      - 'relphi-house-systems.js'
+      - 'tests/**'
+      - '.github/workflows/sky-tarot-integration.yml'
+  workflow_dispatch:
+jobs:
+  integration:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Parse authoritative scripts
+        run: |
+          node --check drawing-board-workflow-v2.js
+          node --check tarot-app.js
+          node --check tarot-theme-search-v1.js
+          node --check relphi-sky-tarot-explorer-v1.js
+          node --check sky-chart-foundation-interactions-v2.js
+          node --check sky-chart-mobile-exploration-pointer-v1.js
+          node --check sky-chart-chiron-completeness-v1.js
+      - name: Run integration and geometry regression tests
+        run: |
+          node tests/drawing-board-compact-free-grid.test.cjs
+          node tests/drawing-board-free-grid-no-loop.test.cjs
+          node tests/drawing-board-clarifier-settings.test.js
+          node tests/drawing-board-single-owner.test.js
+          node tests/tarot-card-list-search.test.js
+          node tests/tarot-theme-search.test.js
+          node tests/sky-tarot-connector.test.js
+          node tests/sky-chart-house-flashlight.test.cjs
+          node tests/sky-chart-placidus-chiron-integrity.test.mjs
+      - name: Install Chromium
+        run: |
+          npm install --no-save playwright@1.52.0 luxon@3 suncalc@1.9.0
+          npx playwright install --with-deps chromium
+      - name: Verify mobile and desktop user workflows
+        env:
+          RELPHI_TEST_URL: http://127.0.0.1:4173/tarot.html?board=workflow-v2#tarot
+        run: |
+          python3 -m http.server 4173 >/tmp/oracle-integration-server.log 2>&1 &
+          node tests/drawing-board-main-composer.test.js
+          node tests/drawing-board-bespoke-mobile-regression.test.js
+          node tests/sky-chart-virtual-aspect-hover-browser.mjs
+          node tests/sky-chart-placidus-chiron-browser.mjs

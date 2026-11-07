@@ -168,6 +168,7 @@ function focusInformation(){
     ['Display',displayName],
     ['Harmonic Window',Number.isFinite(Number(windowValue))?String(windowValue)+'°':document.querySelector('[data-harmonic-window-input]')?.value||''],
     ['Aspects',matrix.aspects],
+    ...(skyIsPresent('B')?[['Repeated relationships',document.querySelector('[data-hide-repeated-slow-conjunctions]')?.checked?'Hide same passage':'Show all']]:[]),
     ['Relationship scopes',matrix.scopes],
     ...(matrix.bySignCount?[['By Sign',matrix.bySignCount+' selected']]:[]),
     ['Placements',value('[data-placement-filter-summary]')],

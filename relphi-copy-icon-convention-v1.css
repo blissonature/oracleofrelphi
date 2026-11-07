@@ -112,7 +112,8 @@ button.relphi-copy-icon-button[data-relphi-copy-format]::after{
   grid-template-columns:max-content minmax(0,1fr);
   grid-template-rows:minmax(36px,auto);
   align-items:center;
-  column-gap:8px;
+  /* Horizontal separation is owned by the foundation heading grid (100px).
+     This component owns only the compact Copy/Download cluster. */
   row-gap:0;
   min-height:44px;
   padding:4px 9px;
@@ -132,7 +133,7 @@ button.relphi-copy-icon-button[data-relphi-copy-format]::after{
   grid-column:2;
   grid-row:1;
   display:grid;
-  grid-template-columns:minmax(0,1fr) 76px max-content 34px 30px;
+  grid-template-columns:minmax(0,1fr) 76px 101px 34px 30px;
   grid-template-rows:1fr;
   align-items:center;
   column-gap:5px;

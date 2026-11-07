@@ -68,7 +68,7 @@ function houseFor(value,houseCusps){
 function prepare(slot){
   const payload=read(slot),list=source(payload).map(([key,item])=>{
     const entry=canonical(key,item),value=longitude(item);return{key,item,entry,id:entry?.id||'',value,sky:slot};
-  }).filter(record=>record.entry&&Number.isFinite(record.value)).sort((a,b)=>{
+  }).filter(record=>record.entry&&Number.isFinite(record.value)).filter((record,index,records)=>records.findIndex(other=>other.id===record.id)===index).sort((a,b)=>{
     const ai=ORDER.indexOf(a.id),bi=ORDER.indexOf(b.id);return(ai<0?999:ai)-(bi<0?999:bi)||a.value-b.value;
   }),houseCusps=cusps(payload,list);
   list.forEach(record=>{record.sign=Math.floor(record.value/30);record.house=houseFor(record.value,houseCusps)});
@@ -83,7 +83,7 @@ function relationships(list,scope){
   for(let leftIndex=0;leftIndex<list.length;leftIndex+=1){
     for(let rightIndex=leftIndex+1;rightIndex<list.length;rightIndex+=1){
       const left=list[leftIndex],right=list[rightIndex];
-      if(redundantPair(left.id,right.id))continue;
+      if(left.id===right.id||redundantPair(left.id,right.id))continue;
       const distance=separation(left.value,right.value);
       for(const aspect of aspects){
         const relation=harmonic?.relation?.(left,right,aspect,distance,windowValue);
@@ -95,7 +95,7 @@ function relationships(list,scope){
   if(bySign?.selected?.size){
     const existing=new Set(result.map(r=>`${r.left.id}|${r.aspect.id}|${r.right.id}`));
     for(let i=0;i<list.length;i++)for(let j=i+1;j<list.length;j++){
-      const left=list[i],right=list[j];if(redundantPair(left.id,right.id))continue;
+      const left=list[i],right=list[j];if(left.id===right.id||redundantPair(left.id,right.id))continue;
       const leftSign=Math.floor(norm(left.value)/30),rightSign=Math.floor(norm(right.value)/30);
       const steps=Math.min((leftSign-rightSign+12)%12,(rightSign-leftSign+12)%12),distance=separation(left.value,right.value);
       for(const aspect of aspects){

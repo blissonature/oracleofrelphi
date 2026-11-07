@@ -1,0 +1,1547 @@
+{
+  "schema": "relphi_human_topic_probe_bank_v1",
+  "policy": "Independent everyday-life search probes, not inferred card assignments. Direct matching is allowed only with explicit curated relevance. Every probe must resolve directly or provide separately labeled navigation, never silently import associated cards.",
+  "source": "Oracle of Relphi Tarot Ledger and Drawing Board",
+  "coverage_domains": 8,
+  "probe_entries": 373,
+  "baseline_counts": {
+    "alias": 27,
+    "direct": 222,
+    "related": 52,
+    "absent": 72
+  },
+  "domains": [
+    {
+      "name": "Emotions",
+      "queries": [
+        {
+          "query": "sad",
+          "baseline": "alias"
+        },
+        {
+          "query": "sorrow",
+          "baseline": "direct"
+        },
+        {
+          "query": "grief",
+          "baseline": "direct"
+        },
+        {
+          "query": "mourning",
+          "baseline": "direct"
+        },
+        {
+          "query": "bereavement",
+          "baseline": "direct"
+        },
+        {
+          "query": "depressed",
+          "baseline": "related"
+        },
+        {
+          "query": "depression",
+          "baseline": "related"
+        },
+        {
+          "query": "loneliness",
+          "baseline": "related"
+        },
+        {
+          "query": "lonely",
+          "baseline": "related"
+        },
+        {
+          "query": "isolation",
+          "baseline": "direct"
+        },
+        {
+          "query": "hopelessness",
+          "baseline": "alias"
+        },
+        {
+          "query": "despair",
+          "baseline": "direct"
+        },
+        {
+          "query": "anxiety",
+          "baseline": "direct"
+        },
+        {
+          "query": "anxious",
+          "baseline": "alias"
+        },
+        {
+          "query": "panic",
+          "baseline": "absent"
+        },
+        {
+          "query": "fear",
+          "baseline": "direct"
+        },
+        {
+          "query": "afraid",
+          "baseline": "alias"
+        },
+        {
+          "query": "terror",
+          "baseline": "direct"
+        },
+        {
+          "query": "anger",
+          "baseline": "absent"
+        },
+        {
+          "query": "angry",
+          "baseline": "absent"
+        },
+        {
+          "query": "rage",
+          "baseline": "absent"
+        },
+        {
+          "query": "resentment",
+          "baseline": "absent"
+        },
+        {
+          "query": "bitterness",
+          "baseline": "absent"
+        },
+        {
+          "query": "jealousy",
+          "baseline": "related"
+        },
+        {
+          "query": "envy",
+          "baseline": "absent"
+        },
+        {
+          "query": "guilt",
+          "baseline": "direct"
+        },
+        {
+          "query": "ashamed",
+          "baseline": "absent"
+        },
+        {
+          "query": "shame",
+          "baseline": "related"
+        },
+        {
+          "query": "regret",
+          "baseline": "direct"
+        },
+        {
+          "query": "remorse",
+          "baseline": "alias"
+        },
+        {
+          "query": "disappointment",
+          "baseline": "direct"
+        },
+        {
+          "query": "frustration",
+          "baseline": "direct"
+        },
+        {
+          "query": "stress",
+          "baseline": "absent"
+        },
+        {
+          "query": "worry",
+          "baseline": "direct"
+        },
+        {
+          "query": "boredom",
+          "baseline": "direct"
+        },
+        {
+          "query": "emptiness",
+          "baseline": "absent"
+        },
+        {
+          "query": "numbness",
+          "baseline": "absent"
+        },
+        {
+          "query": "trauma",
+          "baseline": "related"
+        },
+        {
+          "query": "hurt",
+          "baseline": "direct"
+        },
+        {
+          "query": "heartache",
+          "baseline": "alias"
+        },
+        {
+          "query": "heartbreak",
+          "baseline": "direct"
+        },
+        {
+          "query": "pain",
+          "baseline": "direct"
+        },
+        {
+          "query": "suffering",
+          "baseline": "direct"
+        },
+        {
+          "query": "humiliation",
+          "baseline": "direct"
+        },
+        {
+          "query": "happiness",
+          "baseline": "direct"
+        },
+        {
+          "query": "joy",
+          "baseline": "direct"
+        },
+        {
+          "query": "contentment",
+          "baseline": "direct"
+        },
+        {
+          "query": "ecstasy",
+          "baseline": "absent"
+        },
+        {
+          "query": "delight",
+          "baseline": "alias"
+        },
+        {
+          "query": "peace",
+          "baseline": "direct"
+        },
+        {
+          "query": "serenity",
+          "baseline": "alias"
+        }
+      ]
+    },
+    {
+      "name": "Relationships",
+      "queries": [
+        {
+          "query": "love",
+          "baseline": "direct"
+        },
+        {
+          "query": "lovers",
+          "baseline": "absent"
+        },
+        {
+          "query": "romance",
+          "baseline": "direct"
+        },
+        {
+          "query": "dating",
+          "baseline": "absent"
+        },
+        {
+          "query": "attraction",
+          "baseline": "direct"
+        },
+        {
+          "query": "infidelity",
+          "baseline": "related"
+        },
+        {
+          "query": "affair",
+          "baseline": "related"
+        },
+        {
+          "query": "cheating",
+          "baseline": "related"
+        },
+        {
+          "query": "betrayal",
+          "baseline": "direct"
+        },
+        {
+          "query": "trust",
+          "baseline": "related"
+        },
+        {
+          "query": "loyalty",
+          "baseline": "related"
+        },
+        {
+          "query": "devotion",
+          "baseline": "direct"
+        },
+        {
+          "query": "commitment",
+          "baseline": "direct"
+        },
+        {
+          "query": "friendship",
+          "baseline": "direct"
+        },
+        {
+          "query": "friends",
+          "baseline": "alias"
+        },
+        {
+          "query": "marriage",
+          "baseline": "direct"
+        },
+        {
+          "query": "husband",
+          "baseline": "direct"
+        },
+        {
+          "query": "wife",
+          "baseline": "direct"
+        },
+        {
+          "query": "spouse",
+          "baseline": "direct"
+        },
+        {
+          "query": "partner",
+          "baseline": "direct"
+        },
+        {
+          "query": "partnership",
+          "baseline": "direct"
+        },
+        {
+          "query": "breakup",
+          "baseline": "direct"
+        },
+        {
+          "query": "divorce",
+          "baseline": "related"
+        },
+        {
+          "query": "separation",
+          "baseline": "direct"
+        },
+        {
+          "query": "reconciliation",
+          "baseline": "related"
+        },
+        {
+          "query": "forgiveness",
+          "baseline": "related"
+        },
+        {
+          "query": "repair",
+          "baseline": "absent"
+        },
+        {
+          "query": "apology",
+          "baseline": "absent"
+        },
+        {
+          "query": "reunion",
+          "baseline": "direct"
+        },
+        {
+          "query": "boundaries",
+          "baseline": "direct"
+        },
+        {
+          "query": "consent",
+          "baseline": "related"
+        },
+        {
+          "query": "abuse",
+          "baseline": "related"
+        },
+        {
+          "query": "control",
+          "baseline": "direct"
+        },
+        {
+          "query": "manipulation",
+          "baseline": "related"
+        },
+        {
+          "query": "neglect",
+          "baseline": "absent"
+        },
+        {
+          "query": "abandonment",
+          "baseline": "direct"
+        },
+        {
+          "query": "left behind",
+          "baseline": "alias"
+        },
+        {
+          "query": "rejection",
+          "baseline": "direct"
+        },
+        {
+          "query": "estrangement",
+          "baseline": "related"
+        },
+        {
+          "query": "intimacy",
+          "baseline": "direct"
+        },
+        {
+          "query": "sex",
+          "baseline": "direct"
+        },
+        {
+          "query": "sexuality",
+          "baseline": "alias"
+        },
+        {
+          "query": "widowhood",
+          "baseline": "direct"
+        },
+        {
+          "query": "communication",
+          "baseline": "direct"
+        },
+        {
+          "query": "secrecy",
+          "baseline": "direct"
+        },
+        {
+          "query": "secrets",
+          "baseline": "alias"
+        },
+        {
+          "query": "lying",
+          "baseline": "alias"
+        },
+        {
+          "query": "lies",
+          "baseline": "direct"
+        },
+        {
+          "query": "deception",
+          "baseline": "direct"
+        },
+        {
+          "query": "dishonesty",
+          "baseline": "alias"
+        },
+        {
+          "query": "honesty",
+          "baseline": "absent"
+        },
+        {
+          "query": "conflict",
+          "baseline": "direct"
+        },
+        {
+          "query": "argument",
+          "baseline": "direct"
+        },
+        {
+          "query": "disagreement",
+          "baseline": "direct"
+        },
+        {
+          "query": "resolution",
+          "baseline": "direct"
+        },
+        {
+          "query": "mutual respect",
+          "baseline": "absent"
+        },
+        {
+          "query": "reciprocity",
+          "baseline": "direct"
+        }
+      ]
+    },
+    {
+      "name": "Family",
+      "queries": [
+        {
+          "query": "family",
+          "baseline": "direct"
+        },
+        {
+          "query": "mother",
+          "baseline": "direct"
+        },
+        {
+          "query": "father",
+          "baseline": "direct"
+        },
+        {
+          "query": "child",
+          "baseline": "direct"
+        },
+        {
+          "query": "children",
+          "baseline": "alias"
+        },
+        {
+          "query": "childhood",
+          "baseline": "direct"
+        },
+        {
+          "query": "parenting",
+          "baseline": "absent"
+        },
+        {
+          "query": "pregnancy",
+          "baseline": "direct"
+        },
+        {
+          "query": "fertility",
+          "baseline": "direct"
+        },
+        {
+          "query": "infertility",
+          "baseline": "related"
+        },
+        {
+          "query": "miscarriage",
+          "baseline": "direct"
+        },
+        {
+          "query": "stillbirth",
+          "baseline": "related"
+        },
+        {
+          "query": "childbirth",
+          "baseline": "related"
+        },
+        {
+          "query": "adoption",
+          "baseline": "related"
+        },
+        {
+          "query": "caregiving",
+          "baseline": "direct"
+        },
+        {
+          "query": "caring for a parent",
+          "baseline": "absent"
+        },
+        {
+          "query": "home",
+          "baseline": "direct"
+        },
+        {
+          "query": "inheritance",
+          "baseline": "direct"
+        },
+        {
+          "query": "legacy",
+          "baseline": "direct"
+        },
+        {
+          "query": "widowhood",
+          "baseline": "direct"
+        },
+        {
+          "query": "mourning",
+          "baseline": "direct"
+        },
+        {
+          "query": "household",
+          "baseline": "alias"
+        },
+        {
+          "query": "ancestry",
+          "baseline": "direct"
+        },
+        {
+          "query": "belonging",
+          "baseline": "direct"
+        },
+        {
+          "query": "estrangement",
+          "baseline": "related"
+        },
+        {
+          "query": "grandparent",
+          "baseline": "absent"
+        },
+        {
+          "query": "sibling",
+          "baseline": "absent"
+        },
+        {
+          "query": "grandmother",
+          "baseline": "absent"
+        },
+        {
+          "query": "adolescent",
+          "baseline": "absent"
+        },
+        {
+          "query": "nurture",
+          "baseline": "direct"
+        }
+      ]
+    },
+    {
+      "name": "Money and work",
+      "queries": [
+        {
+          "query": "money",
+          "baseline": "direct"
+        },
+        {
+          "query": "wealth",
+          "baseline": "direct"
+        },
+        {
+          "query": "poverty",
+          "baseline": "direct"
+        },
+        {
+          "query": "debt",
+          "baseline": "direct"
+        },
+        {
+          "query": "bankruptcy",
+          "baseline": "related"
+        },
+        {
+          "query": "budget",
+          "baseline": "absent"
+        },
+        {
+          "query": "saving",
+          "baseline": "direct"
+        },
+        {
+          "query": "investment",
+          "baseline": "direct"
+        },
+        {
+          "query": "profit",
+          "baseline": "absent"
+        },
+        {
+          "query": "loss",
+          "baseline": "direct"
+        },
+        {
+          "query": "earning",
+          "baseline": "absent"
+        },
+        {
+          "query": "income",
+          "baseline": "absent"
+        },
+        {
+          "query": "inheritance",
+          "baseline": "direct"
+        },
+        {
+          "query": "financial independence",
+          "baseline": "related"
+        },
+        {
+          "query": "financial hardship",
+          "baseline": "direct"
+        },
+        {
+          "query": "unemployment",
+          "baseline": "related"
+        },
+        {
+          "query": "job loss",
+          "baseline": "direct"
+        },
+        {
+          "query": "layoff",
+          "baseline": "alias"
+        },
+        {
+          "query": "promotion",
+          "baseline": "related"
+        },
+        {
+          "query": "career",
+          "baseline": "absent"
+        },
+        {
+          "query": "employment",
+          "baseline": "direct"
+        },
+        {
+          "query": "work",
+          "baseline": "direct"
+        },
+        {
+          "query": "job",
+          "baseline": "direct"
+        },
+        {
+          "query": "retirement",
+          "baseline": "related"
+        },
+        {
+          "query": "resignation",
+          "baseline": "related"
+        },
+        {
+          "query": "ambition",
+          "baseline": "direct"
+        },
+        {
+          "query": "achievement",
+          "baseline": "direct"
+        },
+        {
+          "query": "success",
+          "baseline": "direct"
+        },
+        {
+          "query": "failure",
+          "baseline": "direct"
+        },
+        {
+          "query": "struggle",
+          "baseline": "direct"
+        },
+        {
+          "query": "exploitation",
+          "baseline": "absent"
+        },
+        {
+          "query": "overwork",
+          "baseline": "direct"
+        },
+        {
+          "query": "burnout",
+          "baseline": "direct"
+        },
+        {
+          "query": "stagnation",
+          "baseline": "direct"
+        },
+        {
+          "query": "opportunity",
+          "baseline": "direct"
+        },
+        {
+          "query": "gain",
+          "baseline": "absent"
+        },
+        {
+          "query": "resource management",
+          "baseline": "direct"
+        },
+        {
+          "query": "housing insecurity",
+          "baseline": "related"
+        },
+        {
+          "query": "homelessness",
+          "baseline": "related"
+        },
+        {
+          "query": "eviction",
+          "baseline": "related"
+        },
+        {
+          "query": "rent",
+          "baseline": "absent"
+        },
+        {
+          "query": "landlord",
+          "baseline": "absent"
+        },
+        {
+          "query": "moving house",
+          "baseline": "alias"
+        },
+        {
+          "query": "independence",
+          "baseline": "direct"
+        },
+        {
+          "query": "security",
+          "baseline": "direct"
+        },
+        {
+          "query": "stability",
+          "baseline": "direct"
+        },
+        {
+          "query": "abundance",
+          "baseline": "direct"
+        }
+      ]
+    },
+    {
+      "name": "Health and safety",
+      "queries": [
+        {
+          "query": "health",
+          "baseline": "direct"
+        },
+        {
+          "query": "illness",
+          "baseline": "direct"
+        },
+        {
+          "query": "sickness",
+          "baseline": "alias"
+        },
+        {
+          "query": "disease",
+          "baseline": "alias"
+        },
+        {
+          "query": "recovery",
+          "baseline": "direct"
+        },
+        {
+          "query": "healing",
+          "baseline": "direct"
+        },
+        {
+          "query": "injury",
+          "baseline": "related"
+        },
+        {
+          "query": "pain",
+          "baseline": "direct"
+        },
+        {
+          "query": "suffering",
+          "baseline": "direct"
+        },
+        {
+          "query": "trauma",
+          "baseline": "related"
+        },
+        {
+          "query": "addiction",
+          "baseline": "direct"
+        },
+        {
+          "query": "dependency",
+          "baseline": "direct"
+        },
+        {
+          "query": "burnout",
+          "baseline": "direct"
+        },
+        {
+          "query": "exhaustion",
+          "baseline": "direct"
+        },
+        {
+          "query": "stress",
+          "baseline": "absent"
+        },
+        {
+          "query": "self-care",
+          "baseline": "absent"
+        },
+        {
+          "query": "caregiving",
+          "baseline": "direct"
+        },
+        {
+          "query": "disability",
+          "baseline": "related"
+        },
+        {
+          "query": "fertility",
+          "baseline": "direct"
+        },
+        {
+          "query": "pregnancy",
+          "baseline": "direct"
+        },
+        {
+          "query": "death",
+          "baseline": "direct"
+        },
+        {
+          "query": "mortality",
+          "baseline": "direct"
+        },
+        {
+          "query": "hospice",
+          "baseline": "absent"
+        },
+        {
+          "query": "grief",
+          "baseline": "direct"
+        },
+        {
+          "query": "end of life",
+          "baseline": "absent"
+        },
+        {
+          "query": "violence",
+          "baseline": "direct"
+        },
+        {
+          "query": "victimization",
+          "baseline": "absent"
+        },
+        {
+          "query": "safety",
+          "baseline": "direct"
+        },
+        {
+          "query": "risk",
+          "baseline": "direct"
+        },
+        {
+          "query": "protection",
+          "baseline": "direct"
+        },
+        {
+          "query": "strength",
+          "baseline": "direct"
+        },
+        {
+          "query": "resilience",
+          "baseline": "direct"
+        },
+        {
+          "query": "infection",
+          "baseline": "absent"
+        },
+        {
+          "query": "medicine",
+          "baseline": "absent"
+        },
+        {
+          "query": "treatment",
+          "baseline": "absent"
+        }
+      ]
+    },
+    {
+      "name": "Inner life",
+      "queries": [
+        {
+          "query": "identity",
+          "baseline": "direct"
+        },
+        {
+          "query": "self worth",
+          "baseline": "absent"
+        },
+        {
+          "query": "self esteem",
+          "baseline": "absent"
+        },
+        {
+          "query": "confidence",
+          "baseline": "direct"
+        },
+        {
+          "query": "insecurity",
+          "baseline": "direct"
+        },
+        {
+          "query": "powerlessness",
+          "baseline": "direct"
+        },
+        {
+          "query": "self control",
+          "baseline": "absent"
+        },
+        {
+          "query": "personal growth",
+          "baseline": "alias"
+        },
+        {
+          "query": "development",
+          "baseline": "direct"
+        },
+        {
+          "query": "evolution",
+          "baseline": "absent"
+        },
+        {
+          "query": "change",
+          "baseline": "direct"
+        },
+        {
+          "query": "renewal",
+          "baseline": "direct"
+        },
+        {
+          "query": "rebirth",
+          "baseline": "alias"
+        },
+        {
+          "query": "transformation",
+          "baseline": "direct"
+        },
+        {
+          "query": "initiation",
+          "baseline": "absent"
+        },
+        {
+          "query": "awakening",
+          "baseline": "direct"
+        },
+        {
+          "query": "learning",
+          "baseline": "direct"
+        },
+        {
+          "query": "study",
+          "baseline": "direct"
+        },
+        {
+          "query": "education",
+          "baseline": "direct"
+        },
+        {
+          "query": "creativity",
+          "baseline": "direct"
+        },
+        {
+          "query": "inspiration",
+          "baseline": "direct"
+        },
+        {
+          "query": "purpose",
+          "baseline": "absent"
+        },
+        {
+          "query": "direction",
+          "baseline": "direct"
+        },
+        {
+          "query": "destiny",
+          "baseline": "direct"
+        },
+        {
+          "query": "fate",
+          "baseline": "direct"
+        },
+        {
+          "query": "free will",
+          "baseline": "absent"
+        },
+        {
+          "query": "choice",
+          "baseline": "direct"
+        },
+        {
+          "query": "indecision",
+          "baseline": "direct"
+        },
+        {
+          "query": "doubt",
+          "baseline": "absent"
+        },
+        {
+          "query": "confusion",
+          "baseline": "direct"
+        },
+        {
+          "query": "uncertainty",
+          "baseline": "direct"
+        },
+        {
+          "query": "clarity",
+          "baseline": "direct"
+        },
+        {
+          "query": "insight",
+          "baseline": "alias"
+        },
+        {
+          "query": "intuition",
+          "baseline": "direct"
+        },
+        {
+          "query": "wisdom",
+          "baseline": "direct"
+        },
+        {
+          "query": "truth",
+          "baseline": "direct"
+        },
+        {
+          "query": "illusion",
+          "baseline": "direct"
+        },
+        {
+          "query": "delusion",
+          "baseline": "absent"
+        },
+        {
+          "query": "hope",
+          "baseline": "direct"
+        },
+        {
+          "query": "faith",
+          "baseline": "direct"
+        },
+        {
+          "query": "spirituality",
+          "baseline": "absent"
+        },
+        {
+          "query": "belief",
+          "baseline": "alias"
+        },
+        {
+          "query": "prayer",
+          "baseline": "absent"
+        },
+        {
+          "query": "religion",
+          "baseline": "direct"
+        },
+        {
+          "query": "magic",
+          "baseline": "absent"
+        },
+        {
+          "query": "manifestation",
+          "baseline": "absent"
+        },
+        {
+          "query": "dreams",
+          "baseline": "direct"
+        },
+        {
+          "query": "nightmare",
+          "baseline": "direct"
+        },
+        {
+          "query": "solitude",
+          "baseline": "direct"
+        },
+        {
+          "query": "meditation",
+          "baseline": "absent"
+        },
+        {
+          "query": "patience",
+          "baseline": "direct"
+        },
+        {
+          "query": "acceptance",
+          "baseline": "related"
+        },
+        {
+          "query": "surrender",
+          "baseline": "direct"
+        },
+        {
+          "query": "closure",
+          "baseline": "direct"
+        }
+      ]
+    },
+    {
+      "name": "Power and conflict",
+      "queries": [
+        {
+          "query": "oppression",
+          "baseline": "direct"
+        },
+        {
+          "query": "cruelty",
+          "baseline": "direct"
+        },
+        {
+          "query": "abuse",
+          "baseline": "related"
+        },
+        {
+          "query": "coercion",
+          "baseline": "related"
+        },
+        {
+          "query": "bullying",
+          "baseline": "related"
+        },
+        {
+          "query": "harassment",
+          "baseline": "related"
+        },
+        {
+          "query": "violence",
+          "baseline": "direct"
+        },
+        {
+          "query": "attack",
+          "baseline": "absent"
+        },
+        {
+          "query": "war",
+          "baseline": "absent"
+        },
+        {
+          "query": "domination",
+          "baseline": "absent"
+        },
+        {
+          "query": "power",
+          "baseline": "direct"
+        },
+        {
+          "query": "authority",
+          "baseline": "direct"
+        },
+        {
+          "query": "control",
+          "baseline": "direct"
+        },
+        {
+          "query": "justice",
+          "baseline": "direct"
+        },
+        {
+          "query": "injustice",
+          "baseline": "related"
+        },
+        {
+          "query": "fairness",
+          "baseline": "direct"
+        },
+        {
+          "query": "bias",
+          "baseline": "absent"
+        },
+        {
+          "query": "discrimination",
+          "baseline": "related"
+        },
+        {
+          "query": "victim",
+          "baseline": "absent"
+        },
+        {
+          "query": "defeat",
+          "baseline": "direct"
+        },
+        {
+          "query": "failure",
+          "baseline": "direct"
+        },
+        {
+          "query": "humiliation",
+          "baseline": "direct"
+        },
+        {
+          "query": "shame",
+          "baseline": "related"
+        },
+        {
+          "query": "revenge",
+          "baseline": "absent"
+        },
+        {
+          "query": "retaliation",
+          "baseline": "absent"
+        },
+        {
+          "query": "punishment",
+          "baseline": "absent"
+        },
+        {
+          "query": "consequences",
+          "baseline": "direct"
+        },
+        {
+          "query": "accountability",
+          "baseline": "direct"
+        },
+        {
+          "query": "truth",
+          "baseline": "direct"
+        },
+        {
+          "query": "lies",
+          "baseline": "direct"
+        },
+        {
+          "query": "secret",
+          "baseline": "alias"
+        },
+        {
+          "query": "privacy",
+          "baseline": "related"
+        },
+        {
+          "query": "violation",
+          "baseline": "absent"
+        },
+        {
+          "query": "theft",
+          "baseline": "direct"
+        },
+        {
+          "query": "fraud",
+          "baseline": "related"
+        },
+        {
+          "query": "robbery",
+          "baseline": "related"
+        },
+        {
+          "query": "dishonor",
+          "baseline": "direct"
+        },
+        {
+          "query": "corruption",
+          "baseline": "related"
+        },
+        {
+          "query": "deception",
+          "baseline": "direct"
+        },
+        {
+          "query": "dishonesty",
+          "baseline": "alias"
+        },
+        {
+          "query": "rivalry",
+          "baseline": "direct"
+        },
+        {
+          "query": "competition",
+          "baseline": "direct"
+        },
+        {
+          "query": "conflict",
+          "baseline": "direct"
+        },
+        {
+          "query": "argument",
+          "baseline": "direct"
+        },
+        {
+          "query": "fight",
+          "baseline": "absent"
+        },
+        {
+          "query": "reconciliation",
+          "baseline": "related"
+        },
+        {
+          "query": "negotiation",
+          "baseline": "direct"
+        },
+        {
+          "query": "compromise",
+          "baseline": "related"
+        },
+        {
+          "query": "resolution",
+          "baseline": "direct"
+        },
+        {
+          "query": "accommodation",
+          "baseline": "direct"
+        },
+        {
+          "query": "protection",
+          "baseline": "direct"
+        },
+        {
+          "query": "boundaries",
+          "baseline": "direct"
+        }
+      ]
+    },
+    {
+      "name": "Life events",
+      "queries": [
+        {
+          "query": "birth",
+          "baseline": "direct"
+        },
+        {
+          "query": "death",
+          "baseline": "direct"
+        },
+        {
+          "query": "ending",
+          "baseline": "direct"
+        },
+        {
+          "query": "beginning",
+          "baseline": "direct"
+        },
+        {
+          "query": "travel",
+          "baseline": "direct"
+        },
+        {
+          "query": "journey",
+          "baseline": "direct"
+        },
+        {
+          "query": "departure",
+          "baseline": "direct"
+        },
+        {
+          "query": "return",
+          "baseline": "direct"
+        },
+        {
+          "query": "moving",
+          "baseline": "direct"
+        },
+        {
+          "query": "change",
+          "baseline": "direct"
+        },
+        {
+          "query": "transition",
+          "baseline": "direct"
+        },
+        {
+          "query": "relocation",
+          "baseline": "alias"
+        },
+        {
+          "query": "home",
+          "baseline": "direct"
+        },
+        {
+          "query": "celebration",
+          "baseline": "direct"
+        },
+        {
+          "query": "wedding",
+          "baseline": "direct"
+        },
+        {
+          "query": "meeting",
+          "baseline": "absent"
+        },
+        {
+          "query": "invitation",
+          "baseline": "direct"
+        },
+        {
+          "query": "proposal",
+          "baseline": "direct"
+        },
+        {
+          "query": "opportunity",
+          "baseline": "direct"
+        },
+        {
+          "query": "arrival",
+          "baseline": "absent"
+        },
+        {
+          "query": "victory",
+          "baseline": "direct"
+        },
+        {
+          "query": "defeat",
+          "baseline": "direct"
+        },
+        {
+          "query": "loss",
+          "baseline": "direct"
+        },
+        {
+          "query": "accident",
+          "baseline": "absent"
+        },
+        {
+          "query": "disaster",
+          "baseline": "direct"
+        },
+        {
+          "query": "crisis",
+          "baseline": "direct"
+        },
+        {
+          "query": "shock",
+          "baseline": "direct"
+        },
+        {
+          "query": "betrayal",
+          "baseline": "direct"
+        },
+        {
+          "query": "reunion",
+          "baseline": "direct"
+        },
+        {
+          "query": "new chapter",
+          "baseline": "absent"
+        },
+        {
+          "query": "closure",
+          "baseline": "direct"
+        },
+        {
+          "query": "completion",
+          "baseline": "direct"
+        },
+        {
+          "query": "promotion",
+          "baseline": "related"
+        },
+        {
+          "query": "retirement",
+          "baseline": "related"
+        },
+        {
+          "query": "graduation",
+          "baseline": "absent"
+        },
+        {
+          "query": "examination",
+          "baseline": "direct"
+        },
+        {
+          "query": "test",
+          "baseline": "absent"
+        },
+        {
+          "query": "waiting",
+          "baseline": "direct"
+        },
+        {
+          "query": "delay",
+          "baseline": "direct"
+        },
+        {
+          "query": "news",
+          "baseline": "direct"
+        },
+        {
+          "query": "message",
+          "baseline": "direct"
+        },
+        {
+          "query": "communication",
+          "baseline": "direct"
+        },
+        {
+          "query": "surprise",
+          "baseline": "direct"
+        },
+        {
+          "query": "revelation",
+          "baseline": "direct"
+        },
+        {
+          "query": "discovery",
+          "baseline": "direct"
+        },
+        {
+          "query": "breakthrough",
+          "baseline": "direct"
+        },
+        {
+          "query": "turning point",
+          "baseline": "direct"
+        }
+      ]
+    }
+  ]
+}

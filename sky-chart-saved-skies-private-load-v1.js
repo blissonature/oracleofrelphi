@@ -132,7 +132,9 @@ function redactLoadList(){
       item.replaceChildren(triptych(record),check);item.dataset.privateSkyFingerprint='true';item.setAttribute('aria-label','Load this concealed saved sky.');item.removeAttribute('title');
     }
     const del=row.querySelector('[data-saved-delete-ref]');if(del){del.setAttribute('aria-label','Delete this concealed saved sky from Saved skies');del.title='Delete concealed saved sky'}
-    const confirmation=row.querySelector('.sky-saved-delete-confirmation');if(confirmation)confirmation.setAttribute('aria-label','Delete this concealed saved sky?');
+    // Explicit deletion is owned by the Saved Skies controller: its
+    // ID-bound confirmation deliberately identifies the chosen record.
+    // Privacy redaction applies to ordinary rows, never a deliberate delete.
   });
 }
 function schedule(){if(queued)return;queued=true;queueMicrotask(redactLoadList)}
