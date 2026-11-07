@@ -14,12 +14,12 @@ test('Relationships copy serializes Rx independently on each sky-owned endpoint'
    assert.match(js,/\?' Rx':''/);
  }
  assert.ok(/sky-chart-relationship-copy-v1\.js\?v=\d+/.test(html));
- assert.match(html,/sky-chart-relationship-scope-sections-v1\\.js\\?v=\\d+/);
+ assert.match(html,/sky-chart-relationship-scope-sections-v1\.js\?v=\d+/);
 });
 
 test('Expanded semantic relationship copy includes Rx on the appropriate planet name',()=>{
  const js=read('sky-chart-inline-relationship-copy-v1.js');
  assert.match(js,/const sky=rowSky\(row,side\),retrograde=sky&&id&&window.RelphiSkyRetrograde\?\.forPlacement\?\.\(sky,id\)/);
- assert.match(js,/placementName\\(id\\)\\}\\$\\{retrograde\\?' Rx':''\\}/);
+ assert.match(js,/placementName\(id\)\}\$\{retrograde\?' Rx':''\}/);
  assert.ok(/sky-chart-inline-relationship-copy-v1\.js\?v=\d+/.test(html));
 });
