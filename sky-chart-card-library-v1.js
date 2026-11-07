@@ -60,7 +60,6 @@ function decorate(){
     // name/date/location column, even when privacy detail is revealed.
     let overlay=button.querySelector('.sky-library-identity-overlay');
     if(!overlay){overlay=document.createElement('span');overlay.className='sky-library-identity-overlay';overlay.setAttribute('aria-hidden','true');button.appendChild(overlay)}
-    button.dataset.skyLibraryFolder=folder;
     // Reuse the labels owner's identity nodes inside the privacy overlay,
     // rather than maintaining a second identity renderer.
     const detail=button.querySelector('[data-saved-fingerprint-copy]');
@@ -109,7 +108,7 @@ function handlePickerClick(e){
    suppressClickRef='';e.preventDefault();e.stopImmediatePropagation();return true;
  }
  schedule();
- const folder=e.target.closest('[data-sky-library-folder]');if(folder){e.preventDefault();e.stopImmediatePropagation();filter=folder.dataset.skyLibraryFolder;schedule();return true}
+ const folder=e.target.closest('.sky-library-folders [data-sky-library-folder]');if(folder){e.preventDefault();e.stopImmediatePropagation();filter=folder.dataset.skyLibraryFolder;schedule();return true}
  if(e.target.closest('[data-sky-library-add-folder]')){
    e.preventDefault();e.stopImmediatePropagation();
    const value=window.prompt('New folder name', '');

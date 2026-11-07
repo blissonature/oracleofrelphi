@@ -102,5 +102,11 @@ try {
  await page.locator('[data-sky-card-unload]').click();
  await page.waitForFunction(()=>JSON.parse(localStorage.getItem('relphiSkyChartA'))?.metadata?.savedSkyId==='family-1',null,{timeout:8000});
  assert.equal(await page.evaluate(()=>localStorage.getItem('relphiSkyChartB')),null,'Unloading A promotes B and removes B');
+ // Loading a real row must NOT dispatch the folder-filter action, even after
+ // the user has created a folder and used its filter.
+ await page.locator('[data-saved-sky-trigger="A"]').click();
+ await page.locator('#skySavedSkiesPopover [data-saved-sky-ref="client-1"]').click();
+ await page.waitForFunction(()=>JSON.parse(localStorage.getItem('relphiSkyChartA')||'null')?.metadata?.savedSkyId==='client-1',null,{timeout:7000});
+ assert.equal(await page.locator('#skySavedSkiesPopover').isVisible(),false,'Selecting a sky closes the picker');
  console.log('Sky Card library acceptance passed: compact identity overlay, search, folders, swap, unload/promote.');
 } finally{await browser.close()}
