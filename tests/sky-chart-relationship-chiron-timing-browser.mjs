@@ -159,9 +159,10 @@ try{
     await page.locator('.sky-relationship-copy-button').click();
     await page.waitForFunction(()=>Boolean(window.__relphiCopiedText),null,{timeout:3000});
     const copied=await page.evaluate(()=>window.__relphiCopiedText);
+    const normalizedCopy=copied.replaceAll(' Rx in ',' in ');
     let cursor=-1;
     for(const signature of signatures){
-      const next=copied.replaceAll(' Rx in ',' in ').indexOf(signature,cursor+1);
+      const next=normalizedCopy.indexOf(signature,cursor+1);
       assert.ok(next>=0,`${spec.label} Copy omitted or reordered row after position ${cursor}: ${signature}\n${copied}`);
       cursor=next;
     }
