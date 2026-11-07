@@ -74,12 +74,47 @@ try{
   await first.locator('[data-saved-delete-ref]').click();
   assert.equal(await first.locator('.sky-saved-delete-confirmation').count(),1,'Delete still requires confirmation');
   const confirm=first.locator('.sky-saved-delete-confirmation');
-  assert.ok(!(await confirm.getAttribute('aria-label')).includes('Sensitive'),'Confirmation label conceals identity');
+  assert.equal(await confirm.getAttribute('data-saved-delete-target'),'private-person-one',
+    'Confirmation target must equal the clicked record ID');
+  assert.equal(await confirm.locator('[data-saved-delete-target-name]').innerText(),'Sensitive Person One',
+    'The exact saved sky name must be visible before deletion');
+  assert.ok((await confirm.getAttribute('aria-label')).includes('Sensitive Person One'),
+    'The intentional deletion confirmation must name the selected record');
+  assert.equal(await desktop.locator('#skySavedSkiesPopover .is-confirming-delete').count(),1,
+    'There is only one active destructive target');
   await first.locator('[data-saved-delete-cancel]').click();
+  assert.equal(await first.locator('.sky-saved-delete-confirmation').count(),0,
+    'Cancel removes the exact row confirmation without rebuilding the list');
+  assert.equal((await desktop.evaluate(()=>JSON.parse(localStorage.getItem('relphiSkyLibraryV1')))).length,2,
+    'Cancel never changes the stored library');
+  // The second record must not inherit a pending target or display the first name.
+  const second=row(desktop,'private-person-two');
+  await second.locator('[data-saved-delete-ref]').click();
+  assert.equal(await second.locator('[data-saved-delete-target-name]').innerText(),'Sensitive Person Two');
+  assert.equal(await first.locator('.sky-saved-delete-confirmation').count(),0);
+  await first.locator('[data-saved-sky-ref]').hover();
+  assert.equal(await first.locator('.sky-library-identity-overlay').evaluate(el=>getComputedStyle(el).visibility),'hidden',
+    'Other sky identities remain concealed while a delete confirmation is active');
+  await desktop.keyboard.press('Escape');
+  assert.equal(await desktop.locator('.sky-saved-delete-confirmation').count(),0,
+    'Escape cancels deletion without closing the picker');
   await first.locator('[data-saved-sky-ref]').click();
   await desktop.waitForFunction(()=>document.querySelector('#skySavedSkiesPopover')?.hidden===true,{timeout:10000});
   const loaded=await desktop.evaluate(()=>JSON.parse(localStorage.getItem('relphiSkyChartA')));
   assert.equal(loaded.metadata.savedSkyId,'private-person-one','Normal tap/click loads the right saved sky');
+  // Delete the second (different) record after loading the first. The loaded
+  // chart stays present and the second record alone disappears.
+  await desktop.locator('[data-saved-sky-trigger="A"]').click();
+  await desktop.locator('#skySavedSkiesPopover .sky-saved-list-row [data-saved-sky-ref="private-person-two"]')
+    .locator('..').locator('[data-saved-delete-ref]').click();
+  assert.equal(await desktop.locator('[data-saved-delete-target-name]').innerText(),'Sensitive Person Two');
+  await desktop.locator('[data-saved-delete-confirm]').click();
+  await desktop.waitForFunction(()=>JSON.parse(localStorage.getItem('relphiSkyLibraryV1')||'[]').length===1,null,{timeout:7000});
+  const remaining=await desktop.evaluate(()=>JSON.parse(localStorage.getItem('relphiSkyLibraryV1')||'[]').map(x=>x.id));
+  assert.deepEqual(remaining,['private-person-one'],'Only the confirmed record was deleted');
+  assert.equal(await desktop.locator('#skySavedSkiesPopover [data-saved-delete-target-name]').count(),0,
+    'The completed confirmation is removed');
+  await desktop.locator('[data-saved-sky-trigger="A"]').click();
 
   const touchContext=await browser.newContext({viewport:{width:390,height:844},isMobile:true,hasTouch:true});
   const touch=await touchContext.newPage();

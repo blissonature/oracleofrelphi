@@ -195,15 +195,44 @@
   function shortMeta(record){const profile=record?.calcProfile&&typeof record.calcProfile==='object'?record.calcProfile:{},date=String(profile.dateTime||record?.dateTime||'').slice(0,10),location=String(profile.location||record?.location||'').trim();return[date,location].filter(Boolean).join(' · ')}
   function escapeHtml(value){return String(value??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]))}
 
+  // The delete target is the record ID, never its list index or a hovered card.
+  // Keep the name visible in the explicit destructive confirmation so that
+  // users can verify *which* saved chart will be removed.
+  function deleteConfirmationMarkup(record){
+    const ref=recordRef(record),name=String(record?.name||'Saved sky').trim(),meta=shortMeta(record);
+    return `<div class="sky-saved-delete-confirmation" data-saved-delete-target="${escapeHtml(ref)}" role="group" aria-label="Confirm deletion of ${escapeHtml(name)}"><span class="sky-saved-delete-target">Delete this saved sky?<strong data-saved-delete-target-name>${escapeHtml(name)}</strong>${meta?`<small>${escapeHtml(meta)}</small>`:''}</span><button type="button" data-saved-delete-cancel>Cancel</button><button type="button" class="is-danger" data-saved-delete-confirm="${escapeHtml(ref)}">Delete</button></div>`;
+  }
+  function clearDeleteConfirmation(){
+    const list=popover?.querySelector('.sky-saved-list');
+    list?.querySelectorAll('.sky-saved-list-row.is-confirming-delete').forEach(row=>{
+      row.classList.remove('is-confirming-delete');
+      row.querySelector('.sky-saved-delete-confirmation')?.remove();
+    });
+    deletePendingRef='';
+    popover?.classList.remove('sky-saved-delete-pending');
+  }
+  function showDeleteConfirmation(row,record){
+    if(!row||!record)return;
+    clearDeleteConfirmation();
+    deletePendingRef=recordRef(record);
+    row.classList.add('is-confirming-delete');
+    row.insertAdjacentHTML('beforeend',deleteConfirmationMarkup(record));
+    popover?.classList.add('sky-saved-delete-pending');
+    const confirm=row.querySelector('.sky-saved-delete-confirmation');
+    confirm?.scrollIntoView({block:'nearest',inline:'nearest'});
+    confirm?.querySelector('[data-saved-delete-cancel]')?.focus({preventScroll:true});
+  }
+
   function ensurePopover(){
     if(popover?.isConnected)return popover;popover=document.createElement('div');popover.id='skySavedSkiesPopover';popover.className='sky-saved-skies-popover';popover.hidden=true;popover.setAttribute('role','dialog');popover.setAttribute('aria-label','Saved Skies');document.body.appendChild(popover);return popover;
   }
   function renderPopover(){
     const menu=ensurePopover();if(!openSlot)return;
     const active=identity(openSlot),value=payload(openSlot),hasSky=hasPlacements(value),records=library();
+    menu.classList.toggle('sky-saved-delete-pending',!!deletePendingRef&&menuView==='load');
     if(menuView==='load'){
       const activeRef=active.record?recordRef(active.record):'';
-      const items=records.length?records.map(record=>{const ref=recordRef(record),meta=shortMeta(record),current=ref===activeRef,name=String(record.name||'Saved sky'),confirming=ref===deletePendingRef;const confirmation=confirming?`<div class="sky-saved-delete-confirmation" role="group" aria-label="Confirm deletion of this saved sky"><span>Delete this saved sky?</span><button type="button" data-saved-delete-cancel>Cancel</button><button type="button" class="is-danger" data-saved-delete-confirm="${escapeHtml(ref)}">Delete</button></div>`:'';return `<div class="sky-saved-list-row${current?' is-active':''}${confirming?' is-confirming-delete':''}"><button type="button" class="sky-saved-list-item" data-saved-sky-ref="${escapeHtml(ref)}" aria-label="Load ${escapeHtml(name)} into Sky ${openSlot}"><span class="sky-saved-list-name">${escapeHtml(name)}</span>${meta?`<span class="sky-saved-list-meta">${escapeHtml(meta)}</span>`:''}<span class="sky-saved-list-check" aria-hidden="true">${current?'✓':''}</span></button><button type="button" class="sky-saved-list-delete" data-saved-delete-ref="${escapeHtml(ref)}" aria-label="Delete ${escapeHtml(name)} from Saved skies" title="Delete from Saved skies">×</button>${confirmation}</div>`}).join(''):'<p class="sky-saved-empty">No saved skies yet.</p>';
+      const items=records.length?records.map(record=>{const ref=recordRef(record),meta=shortMeta(record),current=ref===activeRef,name=String(record.name||'Saved sky'),confirming=ref===deletePendingRef;const confirmation=confirming?deleteConfirmationMarkup(record):'';return `<div class="sky-saved-list-row${current?' is-active':''}${confirming?' is-confirming-delete':''}"><button type="button" class="sky-saved-list-item" data-saved-sky-ref="${escapeHtml(ref)}" aria-label="Load ${escapeHtml(name)} into Sky ${openSlot}"><span class="sky-saved-list-name">${escapeHtml(name)}</span>${meta?`<span class="sky-saved-list-meta">${escapeHtml(meta)}</span>`:''}<span class="sky-saved-list-check" aria-hidden="true">${current?'✓':''}</span></button><button type="button" class="sky-saved-list-delete" data-saved-delete-ref="${escapeHtml(ref)}" aria-label="Delete ${escapeHtml(name)} from Saved skies" title="Delete from Saved skies">×</button>${confirmation}</div>`}).join(''):'<p class="sky-saved-empty">No saved skies yet.</p>';
       const newSky='<div class="sky-create-new-row" data-sky-create-new><button type="button" class="sky-create-new-button" data-sky-command="new" aria-label="Create a new blank sky"><span class="sky-create-new-plus" aria-hidden="true">+</span><span>New Sky</span></button></div>';
       const saveSky=hasSky?`<div class="sky-create-new-row" data-sky-save-row><button type="button" class="sky-create-new-button" data-sky-picker-save data-sky-command="save" aria-label="${active.saved?'Save Changes':'Save Sky'} for Sky ${openSlot}">${active.saved?'Save Changes':'Save Sky'}</button></div>`:'';
       menu.innerHTML=`<div class="sky-saved-list">${newSky}${saveSky}${items}</div>`;
@@ -228,12 +257,19 @@
     Object.assign(popover.style,{width:`${width}px`,maxHeight:`${maxHeight}px`,left:`${left}px`,top:openAbove?'auto':`${rect.bottom+gap}px`,bottom:openAbove?`${window.innerHeight-rect.top+gap}px`:'auto'});
   }
   function open(slot){openSlot=slot;deletePendingRef='';menuView='load';const menu=ensurePopover();menu.hidden=false;renderPopover();triggerFor(slot)?.setAttribute('aria-expanded','true')}
-  function close(){if(!popover)return;triggerFor(openSlot)?.setAttribute('aria-expanded','false');popover.hidden=true;popover.removeAttribute('style');openSlot=null;deletePendingRef='';menuView='load'}
+  function close(){if(!popover)return;triggerFor(openSlot)?.setAttribute('aria-expanded','false');clearDeleteConfirmation();popover.hidden=true;popover.removeAttribute('style');openSlot=null;menuView='load'}
 
   // Title/menu trigger rendering has one owner: sky-chart-sky-card-title-integrity.
   // Saved Skies only consumes that trigger and never manufactures competing card chrome.
   function sync(){queued=false;if(openSlot)positionPopover()}
-  function refreshOpenPopover(){if(openSlot&&!popover?.hidden)renderPopover();else if(openSlot)positionPopover()}
+  function refreshOpenPopover(){
+    if(!openSlot||popover?.hidden)return;
+    // Saving/deleting elsewhere can refresh the picker. Preserve the user's
+    // scroll anchor rather than returning them to the first sky.
+    const prior=popover.querySelector('.sky-saved-list')?.scrollTop||0;
+    renderPopover();
+    const list=popover.querySelector('.sky-saved-list');if(list)list.scrollTop=prior;
+  }
   function schedule(){if(queued)return;queued=true;requestAnimationFrame(sync)}
 
   document.addEventListener('click',event=>{
@@ -255,9 +291,35 @@
       if(action==='add-b'){close();addSkyB();schedule();return}
     }
     const deleteButton=event.target.closest?.('[data-saved-delete-ref]'),deleteConfirm=event.target.closest?.('[data-saved-delete-confirm]');
-    if(deleteConfirm&&openSlot){event.preventDefault();event.stopPropagation();const ref=deleteConfirm.dataset.savedDeleteConfirm;deletePendingRef='';if(deleteRecord(ref)){renderPopover();schedule()}return}
-    if(event.target.closest?.('[data-saved-delete-cancel]')&&openSlot){event.preventDefault();event.stopPropagation();deletePendingRef='';renderPopover();return}
-    if(deleteButton&&openSlot){event.preventDefault();event.stopPropagation();const ref=deleteButton.dataset.savedDeleteRef,record=library().find(entry=>recordRef(entry)===ref);if(!record)return;deletePendingRef=ref;renderPopover();return}
+    if(deleteConfirm&&openSlot){
+      event.preventDefault();event.stopPropagation();
+      const ref=deleteConfirm.dataset.savedDeleteConfirm;
+      const row=deleteConfirm.closest('.sky-saved-list-row');
+      // A stale confirm button or a confirmation from another row must never
+      // delete a record, even if the DOM changes while the picker is open.
+      if(!ref||ref!==deletePendingRef||
+         row?.querySelector('[data-saved-sky-ref]')?.dataset.savedSkyRef!==ref||
+         !library().some(record=>recordRef(record)===ref)){
+        clearDeleteConfirmation();return;
+      }
+      clearDeleteConfirmation();
+      if(deleteRecord(ref)){refreshOpenPopover();schedule()}
+      return;
+    }
+    if(event.target.closest?.('[data-saved-delete-cancel]')&&openSlot){
+      event.preventDefault();event.stopPropagation();
+      const row=event.target.closest('.sky-saved-list-row'),button=row?.querySelector('[data-saved-delete-ref]');
+      clearDeleteConfirmation();button?.focus({preventScroll:true});
+      return;
+    }
+    if(deleteButton&&openSlot){
+      event.preventDefault();event.stopPropagation();
+      const ref=deleteButton.dataset.savedDeleteRef,row=deleteButton.closest('.sky-saved-list-row');
+      if(!ref||row?.querySelector('[data-saved-sky-ref]')?.dataset.savedSkyRef!==ref)return;
+      const record=library().find(entry=>recordRef(entry)===ref);
+      if(record)showDeleteConfirmation(row,record);
+      return;
+    }
     const item=event.target.closest?.('[data-saved-sky-ref]');
     if(item&&openSlot){event.preventDefault();event.stopPropagation();deletePendingRef='';const record=library().find(entry=>recordRef(entry)===item.dataset.savedSkyRef);if(record&&loadRecord(openSlot,record)){close();schedule()}return}
   },true);
@@ -269,7 +331,16 @@
   });
 
   document.addEventListener('pointerdown',event=>{if(!openSlot||popover?.hidden)return;if(popover.contains(event.target)||triggerFor(openSlot)?.contains(event.target))return;close()},true);
-  document.addEventListener('keydown',event=>{if(event.key==='Escape'&&openSlot){const trigger=triggerFor(openSlot);close();trigger?.focus()}});
+  document.addEventListener('keydown',event=>{
+    if(event.key!=='Escape'||!openSlot)return;
+    if(deletePendingRef){
+      event.preventDefault();event.stopPropagation();
+      const row=popover?.querySelector('.sky-saved-list-row.is-confirming-delete');
+      const button=row?.querySelector('[data-saved-delete-ref]');
+      clearDeleteConfirmation();button?.focus({preventScroll:true});return;
+    }
+    const trigger=triggerFor(openSlot);close();trigger?.focus();
+  });
   window.addEventListener('resize',positionPopover,{passive:true});window.visualViewport?.addEventListener('resize',positionPopover,{passive:true});window.visualViewport?.addEventListener('scroll',positionPopover,{passive:true});window.addEventListener('scroll',positionPopover,{passive:true,capture:true});
   window.addEventListener('storage',event=>{if(!event.key||event.key===LIBRARY_KEY||Object.values(SLOT_KEYS).includes(event.key))schedule();if(event.key===LIBRARY_KEY)refreshOpenPopover()});
   ['relphi:sky-foundation-ready','relphi:sky-name-updated','relphi:sky-where-when-committed'].forEach(name=>window.addEventListener(name,schedule));

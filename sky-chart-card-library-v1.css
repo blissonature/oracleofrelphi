@@ -31,6 +31,32 @@
 #skySavedSkiesPopover .sky-library-slot-actions{display:flex;gap:5px;padding:8px;border-bottom:1px solid #e4dbd0;background:#fffdfa}
 #skySavedSkiesPopover .sky-library-slot-actions button{display:flex;align-items:center;justify-content:center;gap:5px;flex:1;min-height:30px;padding:3px 4px;border:1px solid #ddd3c9;border-radius:8px;background:#fff;color:#3f352d;font:750 .6rem system-ui}
 #skySavedSkiesPopover .sky-library-slot-actions button:disabled{opacity:.35}
+/* A destructive action freezes incidental hover labels. The explicitly named,
+   ID-bound confirmation is the only visible identity until cancel or delete. */
+#skySavedSkiesPopover.sky-saved-delete-pending .sky-saved-list-item .sky-library-identity-overlay{
+  visibility:hidden;opacity:0
+}
+#skySavedSkiesPopover .sky-saved-list-row.is-confirming-delete{
+  background:#fff5f2;box-shadow:inset 0 0 0 1px #d9aba3
+}
+#skySavedSkiesPopover .sky-saved-delete-confirmation{
+  min-width:0;grid-template-columns:minmax(0,1fr) auto auto;padding:9px
+}
+#skySavedSkiesPopover .sky-saved-delete-target{
+  display:flex;flex-direction:column;gap:4px;min-width:0;overflow-wrap:anywhere;
+  font:700 .65rem/1.3 system-ui,sans-serif
+}
+#skySavedSkiesPopover .sky-saved-delete-target strong{
+  display:block;color:#34221f;font:800 .72rem/1.3 system-ui,sans-serif
+}
+#skySavedSkiesPopover .sky-saved-delete-target small{
+  color:#725f5b;font:600 .58rem/1.3 system-ui,sans-serif;overflow-wrap:anywhere
+}
+@media(max-width:420px){
+  #skySavedSkiesPopover .sky-saved-delete-confirmation{grid-template-columns:1fr 1fr}
+  #skySavedSkiesPopover .sky-saved-delete-target{grid-column:1/-1}
+}
+
 #skySavedSkiesPopover .sky-library-empty-results{margin:9px 0;padding:15px;text-align:center;color:#786f65;font:650 .65rem system-ui}
 #skySavedSkiesPopover .sky-library-empty-results[hidden]{display:none!important}
 @media(max-width:400px){#skySavedSkiesPopover .sky-library-slot-actions button{font-size:.54rem}#skySavedSkiesPopover .sky-library-utility span:last-child{display:none}}
