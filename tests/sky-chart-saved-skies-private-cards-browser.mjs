@@ -80,6 +80,11 @@ try{
     'The exact saved sky name must be visible before deletion');
   assert.ok((await confirm.getAttribute('aria-label')).includes('Sensitive Person One'),
     'The intentional deletion confirmation must name the selected record');
+  // The asynchronous privacy decorator must not overwrite an intentionally
+  // disclosed deletion target after the menu settles.
+  await desktop.waitForTimeout(150);
+  assert.ok((await confirm.getAttribute('aria-label')).includes('Sensitive Person One'),
+    'Privacy refresh cannot replace the ID-bound confirmation with generic text');
   assert.equal(await desktop.locator('#skySavedSkiesPopover .is-confirming-delete').count(),1,
     'There is only one active destructive target');
   await first.locator('[data-saved-delete-cancel]').click();
