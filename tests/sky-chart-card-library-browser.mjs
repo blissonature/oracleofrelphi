@@ -21,6 +21,14 @@ try {
  },{alpha,beta,study});
  await page.goto('http://127.0.0.1:4173/sky-chart.html',{waitUntil:'domcontentloaded'});
  await page.locator('[data-saved-sky-trigger="A"]').click({timeout:20000});
+ await page.waitForTimeout(250);
+ console.log('LIBRARY_BOOT_STATE',JSON.stringify(await page.evaluate(()=>({
+  loaded:!!window.RelphiSkyCardLibrary,
+  trigger:document.querySelector('[data-saved-sky-trigger="A"]')?.getAttribute('aria-expanded'),
+  pop:document.querySelector('#skySavedSkiesPopover')?.outerHTML.slice(0,2200),
+  scripts:[...document.scripts].map(x=>x.src).filter(x=>x.includes('sky-chart-card-library')),
+  libraryCount:window.RelphiSkySavedSkyIdentity?.library?.()?.length
+ }))));
  await page.waitForSelector('#skySavedSkiesPopover.sky-library-redesigned .sky-library-controls',{timeout:10000});
  assert.equal(await page.locator('#skySavedSkiesPopover .sky-saved-list-row:not([hidden])').count(),3);
  assert.equal(await page.locator('#skySavedSkiesPopover .sky-library-identity-overlay').count(),3);
