@@ -22,7 +22,7 @@ function activePickerSlot(){return document.querySelector('[data-saved-sky-trigg
 function installStyle(){
   if(document.getElementById('skySavedSkiesLabelsV2Style'))return;
   const style=document.createElement('style');style.id='skySavedSkiesLabelsV2Style';style.textContent=`
-#skySavedSkiesPopover .sky-saved-list-item[data-private-sky-fingerprint="true"]{
+#skySavedSkiesPopover:not(.sky-library-redesigned) .sky-saved-list-item[data-private-sky-fingerprint="true"]{
   display:grid!important;
   grid-template-columns:max-content minmax(0,1fr) 20px!important;
   grid-template-areas:"fingerprint copy check"!important;
@@ -84,13 +84,13 @@ function installStyle(){
 }
 #skySavedSkiesPopover .sky-saved-fingerprint-triptych{grid-area:fingerprint}
 @media(max-width:420px){
-  #skySavedSkiesPopover .sky-saved-list-item[data-private-sky-fingerprint="true"]{column-gap:9px!important}
+  #skySavedSkiesPopover:not(.sky-library-redesigned) .sky-saved-list-item[data-private-sky-fingerprint="true"]{column-gap:9px!important}
   #skySavedSkiesPopover .sky-saved-fingerprint-copy-name{font-size:.65rem}
   #skySavedSkiesPopover .sky-saved-fingerprint-copy-when,
   #skySavedSkiesPopover .sky-saved-fingerprint-copy-where{font-size:.54rem}
   /* Match the actual artwork widths instead of squeezing a 128px triptych into 90px. */
-  #skySavedSkiesPopover .sky-saved-list-row{grid-template-columns:minmax(0,1fr) 25px!important}
-  #skySavedSkiesPopover .sky-saved-list-item[data-private-sky-fingerprint="true"]{
+  #skySavedSkiesPopover:not(.sky-library-redesigned) .sky-saved-list-row{grid-template-columns:minmax(0,1fr) 25px!important}
+  #skySavedSkiesPopover:not(.sky-library-redesigned) .sky-saved-list-item[data-private-sky-fingerprint="true"]{
     grid-template-columns:132px minmax(0,1fr) 14px!important;
     grid-template-areas:"fingerprint copy check"!important;
     column-gap:6px!important;min-width:0!important;width:100%!important;
