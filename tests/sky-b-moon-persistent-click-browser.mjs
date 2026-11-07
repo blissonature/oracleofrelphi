@@ -121,8 +121,8 @@ try{
  });
  assert.ok(baseline.rows>1,'Fixture must contain multiple Relationships tiles');
  assert.ok(baseline.aspectLines>0,'Fixture must show aspect lines on the comparison wheel');
- assert.equal(baseline.count,baseline.shown,'Unselected count must match the tiles actually displayed');
- await moon.click({force:true});
+ assert.equal(baseline.count,baseline.shown,'Match count must reflect the tiles actually displayed');
+ // The helper preserved the Moon lock. A second click would intentionally deselect it.
  await page.mouse.move(10,10);
  await page.waitForTimeout(150);
  assert.equal(await moon.evaluate(node=>node.classList.contains('is-selected')),true,'Moon B persists after actual helper Increase to 3');
