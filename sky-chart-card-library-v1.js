@@ -85,7 +85,7 @@ function decorate(){
 }
 function schedule(){if(queued)return;queued=true;queueMicrotask(decorate)}
 document.addEventListener('input',e=>{if(e.target.matches?.(POPOVER+' [data-sky-library-search]')){query=e.target.value;schedule()}},true);
-document.addEventListener('click',e=>{
+window.addEventListener('click',e=>{
  const p=e.target.closest?.(POPOVER);
  if(e.target.closest?.('[data-saved-sky-trigger]')){schedule();return}
  if(!p)return;
