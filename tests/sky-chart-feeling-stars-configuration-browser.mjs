@@ -120,68 +120,59 @@ async function run(mode,url='http://127.0.0.1:4173/sky-chart.html'){
   assert.match(detailText,/Structure:/);
   assert.match(detailText,/Interpretation:/);
 
-  // One interactive, annotated plotted vertex for each position in the
-  // ACTUAL diagram; no second interpretation, card stack, or appended legend.
+  // The diagram belongs to the canonical glyph owner, not the rejected
+  // floating sign/house badge renderer. Vocab colors belong in interpretation.
   const meaning=await tile.evaluate(node=>{
     const visual=node.querySelector('.sky-configuration-result-visual');
     const plotted=[...visual.querySelectorAll('.sky-configuration-vertex-host')].map(host=>{
       const placement=host.querySelector('.sky-configuration-vertex-placement');
-      const sign=host.querySelector('.sky-configuration-vertex-sign');
-      const house=host.querySelector('.sky-configuration-vertex-house');
       return{sky:host.dataset.sky,placement:host.dataset.canonicalPlacement,
         glyph:!!placement?.querySelector('svg[data-relationship-canonical-host]'),
-        sign:sign?.textContent,house:house?.textContent,
-        signTitle:sign?.title,houseTitle:house?.title,
-        signColor:sign?.style.getPropertyValue('--vertex-sign-color'),
-        houseColor:house?.style.getPropertyValue('--vertex-house-color'),
-        signInteractive:sign?.dataset.interactive,houseInteractive:house?.dataset.interactive};
+        label:placement?.getAttribute('aria-label')||''};
     });
     const rect=visual.querySelector('.sky-configuration-mini-wheel')?.getBoundingClientRect();
+    const rails=[...node.querySelectorAll('.sky-configuration-match-participant')].map(x=>{
+      const r=x.getBoundingClientRect();
+      return{width:r.width,height:r.height,colors:[...x.querySelectorAll('.sky-configuration-match-rail')].map(y=>getComputedStyle(y).backgroundColor)};
+    });
+    const reader=node.querySelector('.sky-configuration-result-interpretation');
     return{plotted,width:rect?.width,hidden:visual.querySelector('.sky-configuration-vertex-layer')?.getAttribute('aria-hidden'),
+      badges:visual.querySelectorAll('.sky-configuration-vertex-sign,.sky-configuration-vertex-house,[data-interactive="sign"],[data-interactive="house"]').length,
+      expandedLabels:node.querySelectorAll('.sky-configuration-match-context').length,
+      rails,reading:reader?.textContent||'',
+      signs:reader.querySelectorAll('.sky-configuration-interpretation-sign').length,
+      houses:reader.querySelectorAll('.sky-configuration-interpretation-house').length,
+      syntheses:reader.querySelectorAll('.sky-configuration-interpretation-synthesis').length,
       extra:node.querySelectorAll('.sky-configuration-participant-guide,.sky-configuration-intrinsic-axes-note,.sky-configuration-aspect-legend,.sky-configuration-match-rail-key').length};
   });
   console.log('DIAGRAM '+mode+' '+JSON.stringify(meaning));
-  assert.equal(meaning.extra,0,'No duplicated interpretation or keys outside the diagram');
-  assert.equal(meaning.hidden,null,'Plotted interactive vertices must not be aria-hidden');
-  assert.equal(meaning.plotted.length,4,'All four vertices must be represented in the configuration geometry');
-  assert.ok(meaning.width>=190,'The expanded diagram must be large enough for sign and house targets');
-  assert.ok(meaning.plotted.every(v=>v.glyph&&v.sign&&v.house&&v.signTitle&&v.houseTitle&&v.signColor&&v.houseColor),
-    'Each existing vertex must carry its actual glyph, sign and house with matching colors');
-  assert.ok(meaning.plotted.every(v=>v.signInteractive==='sign'&&v.houseInteractive==='house'));
+  assert.equal(meaning.extra,0,'No duplicated interpretation panels or keys');
+  assert.equal(meaning.hidden,null,'Canonical interactive placements are accessible');
+  assert.equal(meaning.plotted.length,4,'All four geometry positions remain');
+  assert.ok(meaning.width>=190,'Original expanded diagram remains legible');
+  assert.ok(meaning.plotted.every(x=>x.glyph&&x.label),'Each point retains its canonical glyph');
+  assert.equal(meaning.badges,0,'No rejected sign or house badges overlap the diagram');
+  assert.equal(meaning.expandedLabels,0,'No extra label text beneath canonical glyph rails');
+  assert.ok(meaning.rails.length>0&&meaning.rails.every(r=>Math.abs(r.width-38)<1&&Math.abs(r.height-46)<1&&r.colors.length===2),
+    'Match row rails and glyphs retain their compact 38×46 proportions');
+  assert.ok(meaning.signs>=2&&meaning.houses>=2,'Vocab-colored signs and houses appear in the interpretation');
+  assert.ok(meaning.syntheses>=1,'Interpretation separates synthesis from individual readings');
   const asc=tile.locator('.sky-configuration-vertex-host[data-sky="A"][data-canonical-placement="asc"]');
-  assert.equal(await asc.count(),1,'My natal Ascendant must be plotted once');
-  assert.equal(await asc.locator('.sky-configuration-vertex-sign').getAttribute('aria-label'),'Virgo zodiac sign');
-  assert.equal(await asc.locator('.sky-configuration-vertex-house').textContent(),'1');
+  assert.equal(await asc.count(),1,'Natal Ascendant plotted once');
+  assert.match(await asc.locator('.sky-configuration-vertex-placement').getAttribute('aria-label'),/Sky A Ascendant.*Virgo/i);
   const liveVertex=await page.evaluate(()=>{
     const sky=JSON.parse(localStorage.getItem('relphiSkyChartB')||'{}');
     const entries=sky.placements||sky.positions||sky.points||{};
     return Number((entries.Vertex||entries.vertex)?.longitude);
   });
-  assert.ok(Number.isFinite(liveVertex),'The comparison sky should retain a calculated Vertex');
+  assert.ok(Number.isFinite(liveVertex),'Comparison sky retains calculated Vertex');
   const vertexSign=SIGNS[Math.floor((((liveVertex%360)+360)%360)/30)];
   const eventVertex=tile.locator('.sky-configuration-vertex-host[data-sky="B"][data-canonical-placement="vertex"]');
-  assert.equal(await eventVertex.locator('.sky-configuration-vertex-sign').getAttribute('title'),vertexSign);
-
-  // Clicking the diagram goes through the existing Foundation wheel controller,
-  // not an additional popover or competing selection state.
-  const skyInteractions=()=>window.RelphiSkyFoundationInteractions?.captureFocus?.();
-  const sign=asc.locator('.sky-configuration-vertex-sign');
-  if(mobile)await sign.tap();else await sign.click();
-  await page.waitForFunction(()=>window.RelphiSkyFoundationInteractions?.captureFocus?.().lockedState?.kind==='sign');
-  let focus=await page.evaluate(skyInteractions);
-  assert.equal(focus.lockedState.value,5,'Virgo sign button must select Virgo in the existing controller');
-  assert.match(await page.locator('.sky-wheel-sector-description').textContent(),/Virgo/i);
-  const house=asc.locator('.sky-configuration-vertex-house');
-  if(mobile)await house.tap();else await house.click();
-  await page.waitForFunction(()=>window.RelphiSkyFoundationInteractions?.captureFocus?.().lockedState?.kind==='house');
-  focus=await page.evaluate(skyInteractions);
-  assert.equal(focus.lockedState.sky,'A');
-  assert.equal(focus.lockedState.value,1);
-  assert.match(await page.locator('.sky-wheel-sector-description').textContent(),/(First House|House 1)/i);
+  assert.match(await eventVertex.locator('.sky-configuration-vertex-placement').getAttribute('aria-label'),new RegExp(vertexSign,'i'));
   const glyph=asc.locator('.sky-configuration-vertex-placement');
   if(mobile)await glyph.tap();else await glyph.click();
   await page.waitForFunction(()=>window.RelphiSkyFoundationInteractions?.captureFocus?.().lockedState?.kind==='placement');
-  focus=await page.evaluate(skyInteractions);
+  const focus=await page.evaluate(()=>window.RelphiSkyFoundationInteractions?.captureFocus?.());
   assert.equal(focus.lockedState.sky,'A');
   assert.equal(focus.lockedState.value,'asc');
   await page.locator('.sky-configuration-result-visual').scrollIntoViewIfNeeded();
@@ -199,7 +190,7 @@ async function run(mode,url='http://127.0.0.1:4173/sky-chart.html'){
     return button?.dataset.relphiCopyFeedback==='failed' || /^Copy failed/i.test(button?.getAttribute('aria-label')||'');
   },null,{timeout:3000});
   assert.deepEqual(errors,[],mode+' runtime errors');
-  console.log('PASS '+mode+' diagram sign, house and placement focus; clipboard and denied-permission feedback');
+  console.log('PASS '+mode+' canonical glyph diagram, color-coded interpretation, placement focus and copy feedback');
  }finally{await context.close()}
 }
 try{
