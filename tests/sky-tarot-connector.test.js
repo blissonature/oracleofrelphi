@@ -31,7 +31,7 @@ assert.equal(full.entries.filter(e=>e.card.card_type==='Pip').length,36,'Must fi
 assert.equal(full.entries.filter(e=>e.card.card_type==='Court').length,0,'Court cards are not sky-specific matches');
 check(!full.entries.some(e=>e.card.card_id.startsWith('princess_')),'Princess quadrants are not ordinary court zodiac ranges');
 check(full.entries.length>12,'No arbitrary 12-card truncation');
-check(full.hitCount>full.entries.length,'Preserve all reasons when the same card matches several placements');
+assert.equal(full.hitCount,full.entries.reduce((sum,e)=>sum+e.hits.length,0),'Retain every distinct placement reason per matched card');
 assert.equal(full.houseReady,false,'Unknown-time chart has no invented houses');
 check(full.entries.every(e=>e.hits.every(h=>h.house===null)),'Unknown-time entries do not retain house numbers');
 
