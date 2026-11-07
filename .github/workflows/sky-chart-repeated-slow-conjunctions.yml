@@ -34,3 +34,10 @@ jobs:
       - run: |
           python3 -m http.server 4173 >/tmp/sky-slow-conjunctions.log 2>&1 &
           node tests/sky-chart-repeated-slow-conjunctions-browser.mjs
+      - name: Upload tested aspect settings menus
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: aspect-settings-menu-desktop-mobile
+          path: aspect-setting-*.png
+          if-no-files-found: ignore
