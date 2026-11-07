@@ -133,7 +133,7 @@ button.relphi-copy-icon-button[data-relphi-copy-format]::after{
   grid-column:2;
   grid-row:1;
   display:grid;
-  grid-template-columns:minmax(0,1fr) 76px max-content 34px 30px;
+  grid-template-columns:minmax(0,1fr) 76px 101px 34px 30px;
   grid-template-rows:1fr;
   align-items:center;
   column-gap:5px;
