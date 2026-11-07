@@ -22,6 +22,35 @@ const make=(offset)=>({
 const browser=await chromium.launch({headless:true});
 try{
  for(const width of [1280,390]){
+  // A saved Sky B without comparison mode must not expose a disabled A↔B option.
+  const single=await browser.newPage({viewport:{width,height:920}});
+  const singleErrors=[];single.on('pageerror',e=>singleErrors.push(e.message));
+  await single.route('https://unpkg.com/suncalc@1.9.0/suncalc.js',route=>route.fulfill({path:path.resolve('node_modules/suncalc/suncalc.js'),contentType:'application/javascript'}));
+  await single.route('https://cdn.jsdelivr.net/npm/luxon@3/build/global/luxon.min.js',route=>route.fulfill({path:path.resolve('node_modules/luxon/build/global/luxon.min.js'),contentType:'application/javascript'}));
+  await single.addInitScript(({a,b})=>{
+    localStorage.setItem('relphiSkyChartA',JSON.stringify(a));
+    localStorage.setItem('relphiSkyChartB',JSON.stringify(b));
+    localStorage.setItem('relphiSkyChartLastModeV1','single');
+    localStorage.setItem('relphiSkyHideRepeatedSlowConjunctionsV1','true');
+  },{a:make(0),b:make(1)});
+  await single.goto('http://127.0.0.1:4173/sky-chart.html',{waitUntil:'domcontentloaded',timeout:35000});
+  await single.waitForSelector('#skyFoundationRoot[aria-busy="false"]',{timeout:35000});
+  await single.locator('[data-aspect-filter-toggle]').click();
+  const alone=await single.evaluate(()=>({
+    present:document.documentElement.dataset.skyBPresent,
+    settings:document.querySelectorAll('[data-aspect-settings-toggle]').length,
+    repeat:document.querySelectorAll('[data-hide-repeated-slow-conjunctions]').length,
+    visible:document.querySelectorAll('#skyFoundationRelationshipList>.sky-foundation-relationship-row:not(.sky-chart-aspect-multiselect-hidden)').length,
+    stored:localStorage.getItem('relphiSkyHideRepeatedSlowConjunctionsV1')
+  }));
+  assert.equal(alone.present,'false','Stored Sky B does not activate comparison mode');
+  assert.equal(alone.settings,0,'No gear for A↔B repeat setting in a standalone sky');
+  assert.equal(alone.repeat,0,'No disabled, apparently frozen checkbox');
+  assert.ok(alone.visible>0,'Standalone aspect selection remains functional');
+  assert.equal(alone.stored,'true','Comparison setting is retained but not applied');
+  assert.deepEqual(singleErrors.filter(x=>/TypeError|ReferenceError|SyntaxError/.test(x)),[]);
+  await single.screenshot({path:'aspect-setting-single-'+width+'.png'});
+  await single.close();
   const page=await browser.newPage({viewport:{width,height:920}});
   const errors=[];page.on('pageerror',e=>errors.push(e.message));
   await page.route('https://unpkg.com/suncalc@1.9.0/suncalc.js',route=>route.fulfill({path:path.resolve('node_modules/suncalc/suncalc.js'),contentType:'application/javascript'}));
@@ -48,19 +77,25 @@ try{
     return panel&&!panel.hidden&&getComputedStyle(panel).display!=='none';
   });
   const option=page.locator('.sky-chart-slow-conjunction-option');
+  const settings=page.locator('[data-aspect-settings-toggle]');
+  await settings.waitFor({state:'visible'});
+  assert.equal(await option.isVisible(),false,'Comparison settings are collapsed by default');
+  await settings.click();
   await option.waitFor({state:'visible'});
   const visibility=await page.evaluate(()=>{
     const menu=document.getElementById('skyChartAspectPopover');
     const option=menu.querySelector('.sky-chart-slow-conjunction-option');
     const first=menu.querySelector('.sky-chart-aspect-filter-body')?.firstElementChild;
     const r=option.getBoundingClientRect(),p=menu.getBoundingClientRect();
-    return {first:first===option,within:r.top>=p.top&&r.bottom<=p.bottom,
+    return {first:first?.classList.contains('sky-chart-aspect-settings-bar')===true,open:menu.querySelector('.sky-chart-aspect-settings')?.open===true,within:r.top>=p.top&&r.bottom<=p.bottom,
       withinViewport:r.top>=0&&r.bottom<=innerHeight,text:option.textContent.trim()};
   });
-  assert.equal(visibility.first,true,'the slow-conjunction choice must be first in the Aspect menu');
+  assert.equal(visibility.first,true,'the compact settings disclosure precedes the matrix');
+  assert.equal(visibility.open,true,'the settings cog opens the native details control');
   assert.equal(visibility.within,true,'the choice must be inside the visible menu without scrolling');
   assert.equal(visibility.withinViewport,true,'the choice must be visible in the viewport');
   assert.match(visibility.text,/Hide repeated same-passage relationships/);
+  await page.screenshot({path:'aspect-setting-comparison-'+width+'.png'});
 
   const audit=()=>page.evaluate(()=>{
    const select=(kind)=>[...document.querySelectorAll(kind==='row'?'#skyFoundationRelationshipList>.sky-foundation-relationship-row':'#skyFoundationWheelMount [data-layer="aspects"] > line.sky-foundation-aspect:not(.sky-foundation-aspect-hit)')];
@@ -109,7 +144,10 @@ try{
   const wheel=page.locator('#skyFoundationWheelMount > svg.sky-foundation-wheel');
   const renderedBefore=PNG.sync.read(await wheel.screenshot());
   await page.locator('[data-aspect-filter-toggle]').click();
-  await toggle.check();
+  const clickStarted=Date.now();
+  await toggle.check({timeout:10000});
+  assert.ok(Date.now()-clickStarted<10000,'Repeat setting must respond without browser lockup');
+  assert.equal(await page.locator('.sky-chart-aspect-settings').getAttribute('open'),'','Filter change keeps settings open');
   await page.locator('[data-aspect-filter-toggle]').click();
   await page.waitForTimeout(350);
   const renderedAfter=PNG.sync.read(await wheel.screenshot());
@@ -328,7 +366,8 @@ try{
     n.dataset.leftPlacement==='jupiter'&&n.dataset.rightPlacement==='south-node'),null,{timeout:25000});
   const initial=await reciprocal();
   await exact.locator('[data-aspect-filter-toggle]').click();
-  await exact.locator('[data-hide-repeated-slow-conjunctions]').check();
+  await exact.locator('[data-aspect-settings-toggle]').click();
+  await exact.locator('[data-hide-repeated-slow-conjunctions]').check({timeout:10000});
   await exact.locator('[data-aspect-filter-toggle]').click();
   await exact.waitForTimeout(550);
   const filtered=await reciprocal();
