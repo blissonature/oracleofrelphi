@@ -108,6 +108,41 @@ try{
     assert.ok(audit.colored.length>=5&&audit.colored.every(x=>x.raw&&x.css.startsWith('color(srgb')||x.raw&&x.css.startsWith('rgb(')),
       label+' sign, house, and aspect text uses legible palette-derived colors');
     assert.deepEqual(errors,[],label+' has no uncaught browser errors');
+    // Scroll the real document while reading (no nested scroll pane, clone or
+    // synthetic position override). The same canonical SVG remains onscreen.
+    const before=await tile.evaluate(root=>{
+      const visual=root.querySelector('.sky-configuration-result-visual');
+      const rect=visual.getBoundingClientRect();
+      return{documentY:window.scrollY+rect.top,viewportY:rect.top,
+        count:visual.querySelectorAll('.sky-configuration-vertex-placement svg[data-relationship-canonical-host]').length};
+    });
+    await page.evaluate(y=>window.scrollTo(0,y),before.documentY+Math.min(240,height*.33));
+    await page.waitForTimeout(230);
+    const whileReading=await tile.evaluate(root=>{
+      const visual=root.querySelector('.sky-configuration-result-visual');
+      const rect=visual.getBoundingClientRect();
+      const text=root.querySelector('.sky-configuration-result-interpretation');
+      const paragraphs=[...text.querySelectorAll('.sky-configuration-interpretation-line,.sky-configuration-interpretation-synthesis')];
+      const panel=root.closest('#skyFoundationComparison');
+      const styled=getComputedStyle(visual);
+      return{y:rect.top,bottom:rect.bottom,viewportHeight:innerHeight,
+        sticky:styled.position,overflowPanel:getComputedStyle(panel).overflowY,
+        overflowTile:getComputedStyle(root).overflowY,
+        glyphs:visual.querySelectorAll('.sky-configuration-vertex-placement svg[data-relationship-canonical-host]').length,
+        visibleReading:paragraphs.some(p=>{const r=p.getBoundingClientRect();return r.bottom>rect.bottom+2&&r.top<innerHeight-2}),
+        pageScroll:scrollY};
+    });
+    assert.equal(whileReading.sticky,'sticky',label+' canonical drawing uses the existing sticky visual');
+    assert.equal(whileReading.overflowPanel,'clip',label+' Foundation comparison panel does not intercept page scroll');
+    assert.equal(whileReading.overflowTile,'clip',label+' expanded tile does not intercept page scroll');
+    assert.ok(whileReading.y>=-1&&whileReading.y<=17,
+      label+' canonical diagram remains in the viewport while interpretation scrolls: '+JSON.stringify(whileReading));
+    assert.equal(whileReading.glyphs,before.count,label+' no duplicate or lost canonical placement glyphs');
+    assert.equal(whileReading.visibleReading,true,label+' interpretation remains readable below pinned diagram');
+    await page.screenshot({path:'sky-configuration-reading-'+label+'.png'});
+    // Returning to the top must restore the original in-flow position.
+    await page.evaluate(y=>window.scrollTo(0,y),Math.max(0,before.documentY-30));
+    await page.waitForTimeout(150);
     await tile.screenshot({path:'sky-configuration-canonical-'+label+'.png'});
   }
   await page.close();

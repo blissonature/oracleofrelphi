@@ -334,7 +334,7 @@ html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]) .sky-chart-con
   display:block!important;
   min-width:0;
   padding:0!important;
-  overflow:hidden;
+  overflow:clip;
   border:1px solid rgba(31,27,24,.13)!important;
   border-radius:11px!important;
   background:#fff!important;
@@ -414,6 +414,14 @@ html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]) .sky-chart-con
   grid-area:visual;
   display:grid;
   place-items:center;
+  /* The diagram is one canonical drawing, not a duplicate floating widget.
+     Keep it in view while its adjacent/below interpretation scrolls. */
+  position:sticky;
+  top:10px;
+  z-index:2;
+  align-self:start;
+  background:#fffdf8;
+  border-radius:8px;
 }
 .sky-configuration-mini-wheel{
   width:min(150px,100%);

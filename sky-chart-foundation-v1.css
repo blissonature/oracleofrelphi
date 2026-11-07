@@ -27,7 +27,10 @@ body.sky-chart-page.sky-foundation-active #chartPanel > :not(#skyFoundationRoot)
 }
 
 #skyFoundationA { grid-area:a; border-top:4px solid var(--sky-a); }
-#skyFoundationComparison { grid-area:comparison; }
+/* Configuration geometry stays visible while its interpretation scrolls.
+   overflow:hidden would become a scroll container and defeat sticky children;
+   clip preserves the rounded panel edge without taking scroll ownership. */
+#skyFoundationComparison { grid-area:comparison; overflow:clip; }
 #skyFoundationB { grid-area:b; border-top:4px solid var(--sky-b); }
 
 .sky-foundation-heading {
