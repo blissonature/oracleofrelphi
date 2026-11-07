@@ -867,6 +867,24 @@
     if (value) value = sentenceCaseFragment(value);
     return value;
   }
+
+  // Windows-style Details rows, with every field visible and a single
+  // existing inspector on the right. One row per physical Drawing Board slot.
+  function boardResultDetailRow(card,index,activeId) {
+    const reversed=rowCardIsReversed(index);
+    const locked=lockedCardData(card);
+    const ingredients=(locked?.ingredient_refs||[]).map(ref=>LOCKED_INGREDIENTS[ref]).filter(Boolean);
+    const ingredientHtml=ingredients.length
+      ? ingredients.map(item=>'<div class="board-result-ingredient"><strong>'+escapeHtml(item.name||'')+'</strong>'+(item.contribution?'<span>'+escapeHtml(item.contribution)+'</span>':'')+'</div>').join('')
+      : '<span class="board-result-unavailable">No ingredient breakdown available.</span>';
+    const meaning=layerInterpretationForOrientation(card,reversed)||'No interpretation available.';
+    const name=title(card);
+    const position=String(state.shortListPositionLabels?.[index]||index+1);
+    return '<article class="board-result-detail-row'+(activeId===card.card_id?' is-selected':'')+'" data-board-detail-card="'+escapeHtml(card.card_id)+'" data-result-position="'+index+'" tabindex="0" role="button" aria-label="Inspect '+escapeHtml(name)+' at position '+escapeHtml(position)+'">'+
+      '<div class="board-result-cell board-result-identity"><img class="board-result-real-thumbnail" src="'+escapeHtml(rwsImagePath(card))+'" alt="'+escapeHtml(rwsImageAlt(card))+'" loading="lazy"><div><small>Position '+escapeHtml(position)+'</small><strong>'+escapeHtml(name)+'</strong>'+(reversed?'<em>Reversed</em>':'')+'</div></div>'+
+      '<div class="board-result-cell board-result-ingredients">'+ingredientHtml+'</div>'+
+      '<div class="board-result-cell board-result-interpretation"><p>'+escapeHtml(meaning)+'</p></div></article>';
+  }
   function renderCardSurface(card, options={}) {
     const context = options.context || 'browse';
     const glyphTags = context === 'short-list' ? '' : renderGlyphChips(card);
@@ -1151,7 +1169,7 @@
   }
   function refreshShortListViews() {
     renderShortList();
-    if (state.mode === 'all' || state.mode === 'search') renderBrowse();
+    if (state.mode === 'all' || state.mode === 'search' || state.mode === 'board-results') renderBrowse();
     if (state.selected) renderDetail(state.selected);
     if (state.activeCelticCard) renderSpread();
     queueDrawingBoardSave();
@@ -2058,6 +2076,7 @@
     if (!card) return [];
     const values = [
       ...(Array.isArray(card.tags) ? card.tags : []),
+      ...(Array.isArray(card.direct_themes) ? card.direct_themes : []),
       card.rank, card.rws_rank, card.card_type, card.arcana, card.suit, card.thoth_suit,
       card.element, card.rank_element, card.elemental_formula, card.polarity,
       ...splitCanonicalTagValue(card.astrology?.planet),
@@ -2089,7 +2108,7 @@
   function matchingCanonicalTags(query = state.rowTagQuery) {
     const needle = normalizeSearch(query);
     if (!needle) return [];
-    return canonicalTagCatalog().filter(tag => normalizeSearch(tag).includes(needle)).slice(0, 40);
+    return window.RELPHI_THEME_SEARCH?.matchingTagNames(query, canonicalTagCatalog()) || canonicalTagCatalog().filter(tag => normalizeSearch(tag).includes(needle)).slice(0, 40);
   }
 
   function cardMatchesSelectedTags(card, tags = state.rowSelectedTags, mode = state.rowTagMatchMode) {
@@ -2123,7 +2142,7 @@
     matches: query => {
       const needle = normalizeSearch(query);
       if (!needle) return [];
-      return canonicalTagCatalog().filter(tag => normalizeSearch(tag).includes(needle)).slice(0, 40);
+      return matchingCanonicalTags(query);
     },
     count: (tags, mode = 'any') => cards.filter(card => cardMatchesSelectedTags(card, tags, mode === 'all' ? 'all' : 'any')).length
   });
@@ -2267,7 +2286,11 @@
           const checked = selected.some(value => normalizeSearch(value) === normalizeSearch(tag));
           return `<label class="row-tag-match"><input type="checkbox" data-row-tag-choice value="${escapeHtml(tag)}" ${checked ? 'checked' : ''}> <span>${escapeHtml(tag)}</span></label>`;
         }).join('')
-      : (state.rowTagQuery ? '<p class="row-tag-empty">No matching tags yet. Try another word.</p>' : '<p class="row-tag-empty">Type a tag to build this sub-pack.</p>');
+      : (state.rowTagQuery
+        ? '<p class="row-tag-empty">No directly matching theme. Related suggestions are separate searches, not automatically qualified cards.</p>'
+          + (window.RELPHI_THEME_SEARCH?.related(state.rowTagQuery) || []).map(name=>
+            `<button type="button" class="relphi-theme-suggestion" data-row-theme-suggestion="${escapeHtml(name)}">${escapeHtml(name)}</button>`).join(' ')
+        : '<p class="row-tag-empty">Type a tag to build this sub-pack.</p>');
     const selectedHtml = selected.length ? `<div class="row-tag-selected" aria-label="Selected tags">${selected.map(tag => `<button type="button" data-row-tag-remove="${escapeHtml(tag)}" title="Remove ${escapeHtml(tag)}">${escapeHtml(tag)} ×</button>`).join('')}</div>` : '';
     const poolCount = selected.length ? rowDrawPool('tags', { ignoreUsed:true }).length : 0;
     return `<section class="row-tag-subpack" aria-label="Keyword and tag sub-pack"><label class="row-tag-search-label">Tags <input id="rowTagQuery" type="search" value="${escapeHtml(state.rowTagQuery || '')}" placeholder="Type a tag, e.g. prince" autocomplete="off"></label><div class="row-tag-match-mode" role="group" aria-label="How selected tags combine"><label><input type="radio" name="rowTagMatchMode" value="any" ${state.rowTagMatchMode !== 'all' ? 'checked' : ''}> Any</label><label><input type="radio" name="rowTagMatchMode" value="all" ${state.rowTagMatchMode === 'all' ? 'checked' : ''}> All</label></div><div class="row-tag-matches" aria-live="polite">${matchRows}</div>${selectedHtml}<p class="row-tag-pool-count">${selected.length ? `${poolCount} card${poolCount === 1 ? '' : 's'} in this sub-pack` : 'Choose one or more matching tags before drawing.'}</p></section>`;
@@ -2602,8 +2625,31 @@
     const raw = Number.isFinite(Number(state.rowTransformTarget)) ? Number(state.rowTransformTarget) : 0;
     return Math.max(0, Math.min(max, raw));
   }
+  // Native Drawing Board is the single owner of the active transform target.
+  // The workflow may request selection, but must not maintain a second selection state.
+  function selectRowTransformTarget(index, root = $('shortListPanel')) {
+    const target = Math.max(0, Math.min(Math.max(0, rowSlotCount() - 1), Math.trunc(Number(index) || 0)));
+    state.rowTransformTarget = target;
+    if (!root) return target;
+    root.querySelectorAll('.card-row-board .card-row-item[data-row-index]').forEach(item => {
+      item.classList.toggle('is-transform-target', Number(item.dataset.rowIndex) === target);
+    });
+    const targetSelect = root.querySelector('#rowTransformTarget');
+    if (targetSelect) targetSelect.value = String(target);
+    const transform = rowCardTransform(target);
+    const scale = root.querySelector('#rowTransformScale');
+    const rotation = root.querySelector('#rowTransformRotation');
+    const scaleValue = root.querySelector('#rowTransformScaleValue');
+    const rotationValue = root.querySelector('#rowTransformRotationValue');
+    if (scale) scale.value = String(transform.scale);
+    if (rotation) rotation.value = String(Math.round(transform.rotation));
+    if (scaleValue) scaleValue.textContent = Math.round(transform.scale * 100) + '%';
+    if (rotationValue) rotationValue.textContent = Math.round(transform.rotation) + '°';
+    return target;
+  }
   function setRowCardTransform(index, updates = {}) {
-    if (state.rowLayoutLocked && !state.rowLayoutDesignMode) return;
+    // The layout lock preserves the predefined spread positions; it must not
+    // disable transforming cards that have already been drawn into those slots.
     const i = Math.max(0, Number(index) || 0);
     state.rowCardTransforms ||= {};
     const current = rowCardTransform(i);
@@ -2617,7 +2663,7 @@
     state.rowTransformTarget = i;
   }
   function resetRowCardTransform(index) {
-    if (state.rowLayoutLocked && !state.rowLayoutDesignMode) return;
+    // Resetting a drawn card is independent of the spread-position lock.
     state.rowCardTransforms ||= {};
     delete state.rowCardTransforms[Math.max(0, Number(index) || 0)];
   }
@@ -2922,6 +2968,7 @@
     removePosition:removePrefabPosition,
     swapPositionSlots:swapDrawingBoardPositionSlots,
     getState:drawingBoardPrefabState,
+    selectTransformTarget:selectRowTransformTarget,
     setCenterOpen(value) {
       state.rowCenterOpen = !!value;
       document.dispatchEvent(new CustomEvent('relphi:drawing-board-center-view', { detail:{ open:state.rowCenterOpen } }));
@@ -3066,7 +3113,16 @@
         event.preventDefault();
         event.stopPropagation();
         const index = Number(item.dataset.rowIndex) || 0;
-        state.rowTransformTarget = index;
+        // The native renderer alone owns selection. Expose whether this pointer
+        // chose a new target so the workflow can avoid opening Card Focus.
+        if (rowTransformTargetIndex() !== index && wrap.classList.contains('relphi-transform-editing-unlocked')) {
+          item.dataset.relphiSelectedOnPointerDown = String(Date.now());
+        }
+        selectRowTransformTarget(index, wrap);
+        // Selection must not start a drag when a prefab locks its slot coordinates.
+        if (state.rowLayoutLocked && !state.rowLayoutDesignMode) return;
+        if (wrap.classList.contains('relphi-transform-editing-unlocked') &&
+            !wrap.classList.contains('relphi-drag-unlocked')) return;
         const start = rowEnvelopePosition(index);
         const startX = event.clientX;
         const startY = event.clientY;
@@ -3249,7 +3305,7 @@
         event.preventDefault();
         event.stopPropagation();
         const index = Number(item.dataset.rowIndex) || 0;
-        state.rowTransformTarget = index;
+        selectRowTransformTarget(index, wrap);
         const mode = handle.dataset.rowTransformHandle;
         const start = rowCardTransform(index);
         const rect = item.getBoundingClientRect();
@@ -3260,6 +3316,7 @@
         item.classList.add(mode === 'rotate' ? 'is-rotating' : 'is-scaling');
         handle.setPointerCapture?.(event.pointerId);
         const move = moveEvent => {
+          if (moveEvent.pointerId !== event.pointerId) return;
           if (mode === 'scale') {
             const distance = Math.max(8, Math.hypot(moveEvent.clientX - center.x, moveEvent.clientY - center.y));
             const nextScale = Math.max(.45, Math.min(2.5, start.scale * (distance / startDistance)));
@@ -3274,16 +3331,19 @@
           }
           item.style.cssText = cardRowItemStyle(index);
         };
-        const up = () => {
+        const up = finishEvent => {
+          if (finishEvent.pointerId !== event.pointerId) return;
           window.removeEventListener('pointermove', move);
           window.removeEventListener('pointerup', up);
+          window.removeEventListener('pointercancel', up);
           item.classList.remove('is-scaling', 'is-rotating');
           try { handle.releasePointerCapture?.(event.pointerId); } catch (error) {}
           document.body.style.cursor = '';
           renderShortList();
         };
         window.addEventListener('pointermove', move);
-        window.addEventListener('pointerup', up, { once: true });
+        window.addEventListener('pointerup', up);
+        window.addEventListener('pointercancel', up);
       });
     });
   }
@@ -3484,8 +3544,7 @@
       if (workspace) workspace.style.cssText = cardRowWorkspaceStyle(rowSlots);
     };
     if (transformTargetInput) transformTargetInput.addEventListener('change', () => {
-      state.rowTransformTarget = Number(transformTargetInput.value) || 0;
-      syncTransformControls();
+      selectRowTransformTarget(transformTargetInput.value, wrap);
     });
     if (transformScaleInput) transformScaleInput.addEventListener('input', () => {
       const index = rowTransformTargetIndex(rowSlots);
@@ -3540,6 +3599,13 @@
         try { next.setSelectionRange(next.value.length, next.value.length); } catch (error) {}
       }
     });
+    qsa('[data-row-theme-suggestion]', wrap).forEach(button => button.addEventListener('click',event=>{
+      event.preventDefault();
+      state.rowTagQuery=button.dataset.rowThemeSuggestion || '';
+      renderShortList();
+      const field=$('rowTagQuery');
+      if(field)field.focus({preventScroll:true});
+    }));
     qsa('[data-row-tag-choice]', wrap).forEach(input => input.addEventListener('change', () => {
       const value = input.value;
       const current = Array.isArray(state.rowSelectedTags) ? state.rowSelectedTags.slice() : [];
@@ -3573,7 +3639,7 @@
         if (rowItem && cardEl.closest('.card-row-board')) {
           event.preventDefault();
           event.stopPropagation();
-          state.rowTransformTarget = Number(rowItem.dataset.rowIndex) || 0;
+          selectRowTransformTarget(Number(rowItem.dataset.rowIndex) || 0, wrap);
           renderShortList();
           return;
         }
@@ -3801,8 +3867,8 @@
     return card.suit === suit || (suit === 'Pentacles' && card.thoth_suit === 'Disks');
   }
   function resolveCardToken(raw) {
-    const original = String(raw || '').trim();
-    const q = original.toUpperCase().replace(/\s+/g, '');
+    const original = String(raw || '').trim().replace(/\s+(?:rx|reversed)$/i, '');
+    const q = original.toUpperCase().replace(/\s+/g, '').replace(/^CI(?=[WCSDP]$)/, 'C1');
     if (!q) return null;
     const suitMap = { W:'Wands', C:'Cups', S:'Swords', D:'Pentacles', P:'Pentacles' };
     const rankMap = { A:'Ace', '2':'Two', '3':'Three', '4':'Four', '5':'Five', '6':'Six', '7':'Seven', '8':'Eight', '9':'Nine', '10':'Ten' };
@@ -3827,17 +3893,38 @@
     m = q.match(/^K([WCSDP])$/);
     if (m) return cards.find(card => card.card_type === 'Court' && courtRankCode(card) === 'C4' && cardMatchesSuit(card, suitMap[m[1]])) || null;
     const normalized = normalizeSearch(original);
-    return cards.find(card => normalizeSearch(title(card)) === normalized || normalizeSearch(card.name) === normalized || normalizeSearch(card.systems?.thoth?.display_name) === normalized || normalizeSearch(titleNoThe(card.systems?.golden_dawn_rws?.display_name || '')) === normalized || normalizeSearch(titleNoThe(card.systems?.thoth?.display_name || '')) === normalized) || null;
+    return cards.find(card => normalizeSearch(title(card)) === normalized || normalizeSearch(titleNoThe(title(card))) === normalized || normalizeSearch(card.name) === normalized || normalizeSearch(titleNoThe(card.name || '')) === normalized || normalizeSearch(card.systems?.thoth?.display_name) === normalized || normalizeSearch(titleNoThe(card.systems?.golden_dawn_rws?.display_name || '')) === normalized || normalizeSearch(titleNoThe(card.systems?.thoth?.display_name || '')) === normalized) || null;
+  }
+  // Card-reference parsing is owned by the native search implementation.
+  // Commas separate whole card names; spaces inside names are not delimiters.
+  // Preserve orientation for the separate optional Add to Drawing Board action.
+  function orderedCardTokenEntries(raw) {
+    const text = String(raw || '').trim();
+    if (!text) return [];
+    const delimited = /[,;]/.test(text);
+    const tokens = delimited
+      ? text.split(/[,;]/).map(x => x.trim())
+      : [text];
+    if (tokens.some(x => !x)) return [];
+    let resolved = tokens.map(token => ({
+      card: resolveCardToken(token),
+      reversed: /\s+(?:rx|reversed)$/i.test(token)
+    }));
+    // Retain legacy whitespace-delimited shorthand lists, not arbitrary prose.
+    if (!delimited && !resolved[0].card && /\s/.test(text)) {
+      const words = text.split(/\s+/);
+      resolved = words.map(token => ({ card: resolveCardToken(token), reversed:false }));
+    }
+    if (resolved.some(entry => !entry.card)) return [];
+    const seen = new Set();
+    return resolved.filter(entry => {
+      if (seen.has(entry.card.card_id)) return false;
+      seen.add(entry.card.card_id);
+      return true;
+    });
   }
   function orderedCardTokenResults(raw) {
-    const text = String(raw || '').trim();
-    if (!/[\s,;]+/.test(text)) return [];
-    const tokens = text.split(/[\s,;]+/).map(x => x.trim()).filter(Boolean);
-    if (tokens.length < 2) return [];
-    const resolved = tokens.map(resolveCardToken);
-    if (resolved.some(card => !card)) return [];
-    const seen = new Set();
-    return resolved.filter(card => { if (seen.has(card.card_id)) return false; seen.add(card.card_id); return true; });
+    return orderedCardTokenEntries(raw).map(entry => entry.card);
   }
   function searchResults() {
     const raw = state.query.trim().replace(/^\//, '');
@@ -3854,6 +3941,14 @@
       return sortCardsForDisplay(cards.filter(card => rankNumber(card) === rank));
     }
     if (query.length === 1) return [];
+    // Explicit card identifiers outrank thematic queries.
+    if (!exact.length) {
+      const directTheme = window.RELPHI_THEME_SEARCH?.resolve(raw);
+      if (directTheme) {
+        const eligible = new Set(window.RELPHI_THEME_SEARCH.directCardIds(raw));
+        return sortCardsForDisplay(cards.filter(card => eligible.has(card.card_id)));
+      }
+    }
     const scored = cards.map(card => ({ card, score: resultScore(card, query, terms) })).filter(item => item.score >= 0);
     if (exact.length) {
       exact.forEach(card => { const found = scored.find(item => item.card.card_id === card.card_id); if (found) found.score += 12000; else scored.push({ card, score: 12000 }); });
@@ -3878,6 +3973,9 @@
     });
   }
   function currentCards() {
+    // A live view of the cards on the Drawing Board, preserving position order,
+    // repeats, and the same Tarot Ledger card surfaces used by ordinary search.
+    if (state.mode === 'board-results') return state.shortList.map(id => cardById(id)).filter(Boolean);
     if (state.mode === 'all') return sortCardsForDisplay(cards.filter(includedByVisibility).filter(passesCardFilters));
     if (state.mode === 'search' && state.lastDateField?.query && state.query === state.lastDateField.query) {
       return state.lastDateField.cards.map(hit => cardById(hit.cardId)).filter(Boolean).filter(passesCardFilters);
@@ -3908,15 +4006,53 @@
     if (id) setVisible(id, true);
     updateClearKeywordButtons();
   }
+  function renderThemeNavigation() {
+    const root=$('relphiThemeNavigation');
+    if(!root)return;
+    root.replaceChildren();
+    root.hidden=true;
+    if(state.mode!=='search')return;
+    const query=String(state.query||'').trim();
+    const engine=window.RELPHI_THEME_SEARCH;
+    const resolved=engine?.resolve(query);
+    const suggested=resolved?.match==='unqualified'
+      ? engine.related(query)
+      : (!resolved && !exactShorthandResults(query).length ? engine?.suggest(query,4).map(item=>item.name) : []);
+    if(!suggested?.length)return;
+    const intro=document.createElement('p');
+    intro.className='relphi-theme-navigation-label';
+    intro.textContent=resolved?.match==='unqualified'
+      ? 'No directly qualified cards for this subject yet. Explore these distinct themes:'
+      : 'No direct theme match. Did you mean:';
+    root.appendChild(intro);
+    const row=document.createElement('div');
+    row.className='relphi-theme-navigation-actions';
+    suggested.forEach(name=>{
+      const btn=document.createElement('button');
+      btn.type='button';
+      btn.className='relphi-theme-suggestion';
+      btn.textContent=name;
+      btn.setAttribute('aria-label','Search theme '+name);
+      btn.addEventListener('click',()=>{
+        $('oracleCommand').value=name;
+        runSearch(name);
+      });
+      row.appendChild(btn);
+    });
+    root.appendChild(row);
+    root.hidden=false;
+  }
   function updateSummary(list) {
     const count = list.length;
-    const summaryModes = ['idle', 'all', 'search'];
+    const summaryModes = ['idle', 'all', 'search', 'board-results'];
     setSummaryVisible(summaryModes.includes(state.mode));
+    renderThemeNavigation();
     if (!summaryModes.includes(state.mode)) return;
     $('resultCount').textContent = count ? String(count) : 'No';
     $('resultNoun').textContent = count === 1 ? ' card shown' : ' cards shown';
     const inlineCount = $('resultInlineCount');
     if (inlineCount) inlineCount.textContent = `${count ? String(count) : 'No'} ${count === 1 ? 'card' : 'cards'} shown`;
+    if (state.mode === 'board-results') $('activeSummary').textContent = count ? 'Drawing Board cards in position order. This list updates when the board changes.' : 'Drawing Board has no cards yet. Draw or add cards to see them here.';
     if (state.mode === 'idle') $('activeSummary').textContent = 'Begin with a search, a spread, a date, a chart placement, or show the full deck.';
     if (state.mode === 'all') $('activeSummary').textContent = state.cardFilters.length ? `Filters: ${state.cardFilters.join(', ')}.` : '';
     if (state.mode === 'search') {
@@ -3924,7 +4060,55 @@
         const date = new Date(state.lastDateField.date + 'T12:00:00');
         $('activeSummary').textContent = `Date lookup for ${date.toLocaleDateString(undefined, { weekday:'long', year:'numeric', month:'long', day:'numeric' })}.`;
       } else {
-        $('activeSummary').textContent = `Search results for “${state.query}”.`;
+        const theme = window.RELPHI_THEME_SEARCH?.resolve(state.query);
+        if (theme?.match === 'unqualified') {
+          const summary=$('activeSummary');
+          summary.textContent = `“${state.query}” has no curated direct card assignments yet. Related topics are suggestions, not results.`;
+          const related=window.RELPHI_THEME_SEARCH?.related(state.query) || [];
+          if(related.length){
+            const lead=document.createElement('span');
+            lead.textContent=' Explore separately: ';
+            summary.appendChild(lead);
+            related.forEach((name,index)=>{
+              if(index)summary.appendChild(document.createTextNode(', '));
+              const button=document.createElement('button');
+              button.type='button';
+              button.className='relphi-theme-suggestion';
+              button.textContent=name;
+              button.setAttribute('aria-label','Search direct theme '+name);
+              button.addEventListener('click',()=>{
+                $('oracleCommand').value=name;
+                runSearch(name);
+              });
+              summary.appendChild(button);
+            });
+            summary.appendChild(document.createTextNode('.'));
+          }
+        } else if (theme && !exactShorthandResults(state.query).length) {
+          $('activeSummary').textContent = `Direct theme: ${theme.name}${theme.match === 'alias' ? ` (matched “${state.query}”)` : ''}.`;
+        } else {
+          $('activeSummary').textContent = `Search results for “${state.query}”.`;
+          if (!count) {
+            const suggestions = window.RELPHI_THEME_SEARCH?.suggest(state.query,3) || [];
+            if (suggestions.length) {
+              const summary = $('activeSummary');
+              summary.appendChild(document.createTextNode(' Did you mean '));
+              suggestions.forEach((suggestion,index) => {
+                if (index) summary.appendChild(document.createTextNode(', '));
+                const button = document.createElement('button');
+                button.type = 'button';
+                button.className = 'relphi-theme-suggestion';
+                button.textContent = suggestion.name;
+                button.addEventListener('click', () => {
+                  $('oracleCommand').value = suggestion.name;
+                  runSearch(suggestion.name);
+                });
+                summary.appendChild(button);
+              });
+              summary.appendChild(document.createTextNode('?'));
+            }
+          }
+        }
       }
     }
   }
@@ -3940,11 +4124,21 @@
     if (list.length && (!state.selected || !list.some(card => card.card_id === state.selected.card_id))) state.selected = list[0];
     const activeDetailId = state.selected && list.some(c => c.card_id === state.selected.card_id) ? state.selected.card_id : '';
     const panel = $('cardList');
-    const resultTools = list.length ? `<button type="button" data-add-results-to-row>Add shown to Drawing Board</button>` : '';
+    const resultTools = list.length && state.mode !== 'board-results' ? `<button type="button" data-add-results-to-row>Add shown to Drawing Board</button>` : '';
     const resultZoom = Math.max(0.35, Math.min(4.8, Number(state.resultZoom) || 1));
     const resultCardWidth = Math.max(3.5, Math.min(48, 10 * resultZoom)).toFixed(2) + 'rem';
-    const visualTools = list.length ? `<div class="result-visual-tools" aria-label="Visual result controls"><div class="result-zoom-control" aria-label="Results zoom"><span>Zoom</span><button type="button" data-result-zoom-step="-0.1" aria-label="Zoom results out">−</button><input data-result-zoom type="range" min="0.35" max="4.8" step="0.01" value="${resultZoom}" aria-label="Results zoom"><button type="button" data-result-zoom-step="0.1" aria-label="Zoom results in">+</button><output>${Math.round(resultZoom * 100)}%</output></div><button type="button" class="result-glyph-toggle" data-result-glyph-toggle aria-pressed="${state.resultGlyphsVisible ? 'true' : 'false'}">${state.resultGlyphsVisible ? 'Hide glyphs' : 'Show glyphs'}</button><label>Arrange <select data-result-layout><option value="auto" ${state.resultLayout === 'auto' ? 'selected' : ''}>Auto flow</option><option value="2" ${state.resultLayout === '2' ? 'selected' : ''}>2 columns</option><option value="3" ${state.resultLayout === '3' ? 'selected' : ''}>3 columns</option><option value="4" ${state.resultLayout === '4' ? 'selected' : ''}>4 columns</option></select></label></div>` : '';
+    const visualTools = list.length && state.mode !== 'board-results' ? `<div class="result-visual-tools" aria-label="Visual result controls"><div class="result-zoom-control" aria-label="Results zoom"><span>Zoom</span><button type="button" data-result-zoom-step="-0.1" aria-label="Zoom results out">−</button><input data-result-zoom type="range" min="0.35" max="4.8" step="0.01" value="${resultZoom}" aria-label="Results zoom"><button type="button" data-result-zoom-step="0.1" aria-label="Zoom results in">+</button><output>${Math.round(resultZoom * 100)}%</output></div><button type="button" class="result-glyph-toggle" data-result-glyph-toggle aria-pressed="${state.resultGlyphsVisible ? 'true' : 'false'}">${state.resultGlyphsVisible ? 'Hide glyphs' : 'Show glyphs'}</button><label>Arrange <select data-result-layout><option value="auto" ${state.resultLayout === 'auto' ? 'selected' : ''}>Auto flow</option><option value="2" ${state.resultLayout === '2' ? 'selected' : ''}>2 columns</option><option value="3" ${state.resultLayout === '3' ? 'selected' : ''}>3 columns</option><option value="4" ${state.resultLayout === '4' ? 'selected' : ''}>4 columns</option></select></label></div>` : '';
     const filterBar = (state.cardFilters.length || resultTools || visualTools) ? `<div class="active-filter-row active-filter-row--results">${state.cardFilters.length ? `<strong>Filters</strong>${state.cardFilters.map(f => `<button type="button" data-remove-filter="${escapeHtml(f)}">${escapeHtml(filterDisplayName(f))} ×</button>`).join('')}<button type="button" data-clear-filters>Clear filters</button>` : ''}${resultTools}${visualTools}</div>` : '';
+    if (state.mode === 'board-results') {
+      panel.innerHTML = '<div class="board-result-details" aria-label="Drawing Board card details"><div class="board-result-details-head"><span>Thumbnail</span><span>Ingredients</span><span>Interpretation</span></div>'+list.map((card,index)=>boardResultDetailRow(card,index,activeDetailId)).join('')+(list.length?'':'<p class="empty-state">No cards on the Drawing Board.</p>')+'</div>';
+      panel.querySelectorAll('[data-board-detail-card]').forEach(row=>{
+        const inspect=()=>{const card=cardById(row.dataset.boardDetailCard);if(!card)return;state.selected=card;panel.querySelectorAll('[data-board-detail-card]').forEach(el=>el.classList.toggle('is-selected',el===row));renderDetail(card);};
+        row.addEventListener('click',inspect);
+        row.addEventListener('keydown',event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();inspect();}});
+      });
+      renderDetail(state.selected && list.some(c=>c.card_id===state.selected.card_id)?state.selected:null);
+      return;
+    }
     panel.innerHTML = `${filterBar}<div class="or-card-grid tarot-result-grid" style="--result-zoom:${resultZoom};--result-card-w:${resultCardWidth};" data-result-layout="${escapeHtml(state.resultLayout || 'auto')}" data-result-glyphs="${state.resultGlyphsVisible ? 'on' : 'off'}">${list.map(card => renderCardSurface(card,{context:'browse', detailSelected: card.card_id === activeDetailId})).join('') || '<p class="empty-state">No cards are showing.</p>'}</div>`;
     const applyResultZoom = () => {
       const grid = panel.querySelector('.tarot-result-grid');
@@ -3979,9 +4173,20 @@
     if (clearFilters) clearFilters.addEventListener('click', () => { state.cardFilters = []; renderBrowse(); });
     const addShown = panel.querySelector('[data-add-results-to-row]');
     if (addShown) addShown.addEventListener('click', () => {
+      const entries = orderedCardTokenEntries(state.query);
+      const oriented = entries.length === list.length && entries.every((entry, index) => entry.card.card_id === list[index].card_id);
       const ids = list.map(card => card.card_id);
-      const next = state.rowAllowRepeats ? [...state.shortList, ...ids] : [...state.shortList, ...ids.filter(id => !state.shortList.includes(id))];
-      commitShortList(next);
+      const before = state.shortList.slice();
+      const additions = state.rowAllowRepeats ? ids : ids.filter(id => !before.includes(id));
+      if (!additions.length) return;
+      commitShortList([...before, ...additions]);
+      if (oriented) {
+        additions.forEach((id, offset) => {
+          const entry = entries.find(hit => hit.card.card_id === id);
+          setRowCardReversed(before.length + offset, !!entry?.reversed);
+        });
+        refreshShortListViews();
+      }
     });
     const resultZoomControl = panel.querySelector('[data-result-zoom]');
     const setResultZoom = value => {
@@ -4001,9 +4206,10 @@
     if (resultGlyphToggle) resultGlyphToggle.addEventListener('click', () => { state.resultGlyphsVisible = !state.resultGlyphsVisible; renderBrowse(); });
     const resultLayoutControl = panel.querySelector('[data-result-layout]');
     if (resultLayoutControl) resultLayoutControl.addEventListener('change', () => { state.resultLayout = resultLayoutControl.value || '3'; renderBrowse(); });
-    panel.addEventListener('click', (event) => { if (userHasTextSelection()) return; const titleBtn = event.target.closest('[data-card-id]'); if (titleBtn && panel.contains(titleBtn)) { event.preventDefault(); event.stopPropagation(); inspectBrowseResult(titleBtn.dataset.cardId); return; } const cardEl = event.target.closest('.or-card[data-id]'); if (!cardEl || !panel.contains(cardEl) || event.target.closest('[data-shortlist]') || event.target.closest('[data-filter]') || event.target.closest('.or-card-layer')) return; const id = cardEl.dataset.id; event.preventDefault(); inspectBrowseResult(id); });
+    panel.onclick = (event) => { if (userHasTextSelection()) return; const titleBtn = event.target.closest('[data-card-id]'); if (titleBtn && panel.contains(titleBtn)) { event.preventDefault(); event.stopPropagation(); inspectBrowseResult(titleBtn.dataset.cardId); return; } const cardEl = event.target.closest('.or-card[data-id]'); if (!cardEl || !panel.contains(cardEl) || event.target.closest('[data-shortlist]') || event.target.closest('[data-filter]') || event.target.closest('.or-card-layer')) return; const id = cardEl.dataset.id; event.preventDefault(); inspectBrowseResult(id); };
     qsa('[data-shortlist]', panel).forEach(btn => btn.addEventListener('click', (event) => { event.stopPropagation(); toggleShortList(btn.dataset.shortlist); }));
     qsa('[data-filter]', panel).forEach(chip => chip.addEventListener('click', (event) => { event.stopPropagation(); applyChipFilter(chip.dataset.filter); }));
+
     const resultGrid = panel.querySelector('.tarot-result-grid');
     if (resultGrid) {
       qsa('.or-chip.relphi-filter-chip', resultGrid).forEach(chip => {
@@ -4750,6 +4956,11 @@
   }
   const bindRenderedCardEntry = bindCardEntry;
   window.RelphiTarotLedgerBridge = Object.freeze({
+    calculateSkyForConnector(dateISO, latitude, longitude, houseSystem='porphyry') {
+      const date=new Date(dateISO);
+      return calculateSkyWithAstronomy(date,latitude,longitude,houseSystem);
+    },
+
     renderCardEntry(cardId, eyebrow = 'Tarot Ledger entry') {
       const card = cardById(String(cardId || ''));
       return card ? cardDetailHtml(card, eyebrow) : '';
@@ -4940,6 +5151,18 @@
   }
 
 
+  function showBoardCardResults() {
+    state.mode = 'board-results';
+    state.query = '';
+    state.cardFilters = [];
+    state.selected = null;
+    $('oracleCommand').value = '/board';
+    showPanel('browsePanel');
+    setVisible('visibilityPanel', false);
+    hideCommandMenu();
+    renderBrowse();
+    pushHistory();
+  }
   function showAll() {
     state.mode = 'all'; state.query = ''; state.cardFilters = []; $('oracleCommand').value = ''; showPanel('browsePanel'); setVisible('visibilityPanel', false); renderBrowse(); pushHistory();
   }
@@ -5066,6 +5289,7 @@
     const text = value.slice(1).trim();
     const lower = text.toLowerCase();
     if (!text || lower === 'show all' || lower === 'all') { showAll(); return; }
+    if (lower === 'board' || lower === 'board cards' || lower === 'drawing board' || lower === 'drawing board cards') { showBoardCardResults(); return; }
     if (lower.startsWith('draw')) { openSpread(); return; }
     if (lower.startsWith('spell')) { const spellText = text.replace(/^spell\s*/i, ''); if (spellText && openSpellSequence(spellText)) return; updateSummary([]); hideCommandMenu(); return; }
     if (lower.startsWith('date')) { const dateText = text.replace(/^date\s*/i, ''); if (dateText && openDateFromSearch(dateText)) return; openDate(); return; }
@@ -5093,7 +5317,7 @@
     if (!raw.startsWith('/')) return [];
     const term = raw.slice(1).trim().toLowerCase();
     const base = [
-      ['show all','Show All Cards'], ['draw','Draw Cards'], ['date ','Look Up a Date'], ['spell ','Spell Hebrew letters as cards'], ['chart','Chart Placement'], ['card ','Look Up a Card'], ['planet ','Filter by Planet'], ['sign ','Filter by Sign'], ['theme ','Search a Theme'], ['rising ','Add Rising Sign']
+      ['show all','Show All Cards'], ['board','Show Drawing Board Cards'], ['draw','Draw Cards'], ['date ','Look Up a Date'], ['spell ','Spell Hebrew letters as cards'], ['chart','Chart Placement'], ['card ','Look Up a Card'], ['planet ','Filter by Planet'], ['sign ','Filter by Sign'], ['theme ','Search a Theme'], ['rising ','Add Rising Sign']
     ];
     return base.filter(([cmd, label]) => !term || cmd.includes(term) || label.toLowerCase().includes(term)).slice(0, 8);
   }
@@ -5109,6 +5333,7 @@
     const menu=$('commandMenu');
     const question=String(value||'').trim();
     if(!menu||!question||question.startsWith('/')||typeof window.RelphiLaunchBespokeQuestion!=='function')return;
+    if(orderedCardTokenEntries(question).length)return;
     menu.hidden=false;
     menu.innerHTML=`<button type="button" class="relphi-bespoke-choice"><span>Begin a Bespoke Crafted Reading</span><small>Use “${escapeHtml(question)}” as the first question</small></button>`;
     menu.querySelector('.relphi-bespoke-choice')?.addEventListener('click',()=>{
@@ -10486,6 +10711,7 @@ ${notes || ''}`;
     const mode = snapshot?.mode || 'idle';
     if (mode === 'all') { state.mode = 'all'; state.query = ''; $('oracleCommand').value = ''; showPanel('browsePanel'); setVisible('visibilityPanel', false); renderBrowse(); }
     else if (mode === 'search') { state.mode = 'search'; state.query = snapshot.query || ''; $('oracleCommand').value = state.query; showPanel('browsePanel'); renderBrowse(); }
+    else if (mode === 'board-results') { state.mode = 'board-results'; state.query = ''; $('oracleCommand').value = '/board'; showPanel('browsePanel'); renderBrowse(); }
     else if (mode === 'spread') { state.mode = 'spread'; showPanel('spreadPanel'); updateSummary(state.currentSpread); renderSpread(); }
     else if (mode === 'date') { state.mode = 'date'; showPanel('datePanel'); updateSummary([]); }
     else if (mode === 'chart' || mode === 'currentSky') { state.mode = 'chart'; showPanel('chartPanel'); setVisible('currentSkyPanel', !isDedicatedSkyChartPage()); updateSummary([]); renderSkyCreator(); renderChartForm(); renderCurrentSkyForm(); renderChart(); renderCurrentSky(); }
