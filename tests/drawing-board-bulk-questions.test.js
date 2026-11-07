@@ -21,7 +21,7 @@ assert.match(board, /split\(','\)/);
 assert.match(board, /id="relphiPositionLabels"/);
 assert.match(board, /id="relphiAddPosition"/);
 assert.match(board, /const acceptCommaList=\(value\)=>/);
-assert.match(board, /labelsList\?\.addEventListener\('paste'/);
+assert.match(board, /labelsList\?\.addEventListener\('focusout'/); // Pasted values share the input commit path
 assert.match(board, /pasted\.includes\(','\)/);
 assert.match(board, /draft\.labels=labels/);
 assert.match(runtime, /comma-separated questions should create three individual label fields/);
