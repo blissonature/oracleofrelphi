@@ -52,7 +52,7 @@ await page.evaluate(()=>{
 await page.locator('.sky-relationship-copy-button').click();
 await page.waitForFunction(()=>window.__copy.startsWith('Relationships'),{timeout:10000});
 const copied=await page.evaluate(()=>window.__copy);
-assert.match(copied,/\nAspects: All\nRelationship scopes: A↔B\n/);
+assert.match(copied,/\nAspects: All\nRepeated relationships: Show all\nRelationship scopes: A↔B\n/);
 assert.ok(!copied.includes('Relationship scopes: None selected'));
 assert.ok(copied.includes('A↔B'),'comparison results must remain in copy');
 assert.ok(!copied.includes('\nA↔A\n'),'unselected A↔A must not be exported');
