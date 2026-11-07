@@ -8,7 +8,7 @@
  const query='(max-width: 650px) and (pointer: coarse)';
  const media=matchMedia(query);
  const NS='http://www.w3.org/2000/svg';
- let mount=null,cursor=null,grip=null,drag=null,tip=null,hint=null,frame=0;
+ let mount=null,cursor=null,grip=null,drag=null,tip=null,hint=null,frame=0,docked=true;
  const TIP_X=2.5,TIP_Y=3;
  const HOME_INSET_X=120; // keep full grip on-screen at initial upper-right parking
  let scrollRestore=null;
@@ -89,7 +89,7 @@
  function pointerMove(event){
   if(!drag||drag.id!==event.pointerId)return;
   event.preventDefault();
-  if(Math.hypot(event.clientX-drag.clientX,event.clientY-drag.clientY)>5){drag.moved=true;if(hint)hint.hidden=true;}
+  if(Math.hypot(event.clientX-drag.clientX,event.clientY-drag.clientY)>5){drag.moved=true;docked=false;if(hint)hint.hidden=true;}
   moveTip(drag.startX+event.clientX-drag.clientX,drag.startY+event.clientY-drag.clientY);
   requestHover();
  }
@@ -157,7 +157,8 @@
   if(!mount||drag)return;
   const box=wheelBox(),host=mount.getBoundingClientRect();
   if(!box)return;
-  if(!tip){
+  if(docked||!tip){
+   // Park/redock before the user has dragged, including after wheel redraw.
    // Park in the wheel's upper-right corner with enough room for the
    // 42px artwork and the drag cross, rather than in the chart's center.
    tip={x:box.right-host.left-HOME_INSET_X,y:box.top-host.top+25};
