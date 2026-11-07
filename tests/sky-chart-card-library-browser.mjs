@@ -22,16 +22,33 @@ try {
  await page.goto('http://127.0.0.1:4173/sky-chart.html',{waitUntil:'domcontentloaded'});
  await page.locator('[data-saved-sky-trigger="A"]').click({timeout:20000});
  await page.waitForTimeout(250);
- console.log('LIBRARY_BOOT_STATE',JSON.stringify(await page.evaluate(()=>({
-  loaded:!!window.RelphiSkyCardLibrary,
-  trigger:document.querySelector('[data-saved-sky-trigger="A"]')?.getAttribute('aria-expanded'),
-  pop:document.querySelector('#skySavedSkiesPopover')?.outerHTML.slice(0,2200),
-  scripts:[...document.scripts].map(x=>x.src).filter(x=>x.includes('sky-chart-card-library')),
-  libraryCount:window.RelphiSkySavedSkyIdentity?.library?.()?.length
- }))));
  await page.waitForSelector('#skySavedSkiesPopover.sky-library-redesigned .sky-library-controls',{timeout:10000});
  assert.equal(await page.locator('#skySavedSkiesPopover .sky-saved-list-row:not([hidden])').count(),3);
  assert.equal(await page.locator('#skySavedSkiesPopover .sky-library-identity-overlay').count(),3);
+ // The title chevron opens the saved-chart picker directly. Primary actions
+ // precede filtering, and Sky slot management is a footer, not a competing header.
+ assert.equal(await page.locator('#skySavedSkiesPopover .sky-saved-subview-head').count(),0);
+ assert.equal(await page.locator('#skySavedSkiesPopover .sky-saved-list > :first-child [data-sky-command="new"]').count(),1);
+ assert.equal(await page.locator('#skySavedSkiesPopover [data-sky-command="load"]').count(),0);
+ const order=await page.locator('#skySavedSkiesPopover').evaluate(menu=>({
+   list:[...menu.children].findIndex(x=>x.classList.contains('sky-saved-list')),
+   footer:[...menu.children].findIndex(x=>x.classList.contains('sky-library-slot-actions'))
+ }));
+ assert.ok(order.list>=0&&order.footer>order.list,'Slot management follows the library list');
+ await page.setViewportSize({width:390,height:780});
+ await page.waitForTimeout(160);
+ const mobile=await page.locator('#skySavedSkiesPopover').evaluate(menu=>{
+   const bounds=menu.getBoundingClientRect(),list=menu.querySelector('.sky-saved-list');
+   return{left:bounds.left,right:bounds.right,viewport:innerWidth,
+      listOverflow:list.scrollWidth-list.clientWidth,
+      first:list.firstElementChild?.querySelector('[data-sky-command]')?.dataset.skyCommand};
+ });
+ assert.ok(mobile.left>=0&&mobile.right<=mobile.viewport,
+   'Mobile picker stays within viewport: '+JSON.stringify(mobile));
+ assert.equal(mobile.first,'new','New Sky remains first on mobile');
+ assert.ok(mobile.listOverflow<=1,'Saved Skies content does not overflow horizontally on mobile');
+ await page.setViewportSize({width:620,height:900});
+ await page.waitForTimeout(100);
  const defaultState=await page.locator('#skySavedSkiesPopover [data-saved-sky-ref="family-1"]').evaluate(el=>{
   const overlay=el.querySelector('.sky-library-identity-overlay');
   return{opacity:getComputedStyle(overlay).opacity,display:getComputedStyle(overlay).visibility,
