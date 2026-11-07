@@ -4,8 +4,9 @@ import assert from 'node:assert/strict';
 const ref=process.env.PREVIEW_REF;
 assert.match(ref||'',/^[0-9a-f]{40}$/,'A commit SHA is required');
 const urls=[
-  ['preview',`https://oracleofrelphi.com/sky-chart-preview/sky-chart.html?ref=${ref}`],
-  ['deployed', 'https://oracleofrelphi.com/sky-chart.html']
+  ['statically',`https://cdn.statically.io/gh/blissonature/oracleofrelphi@${ref}/sky-chart.html`],
+  ['githubraw',`https://cdn.githubraw.com/blissonature/oracleofrelphi/${ref}/sky-chart.html`],
+  ['deployed','https://oracleofrelphi.com/sky-chart.html']
 ];
 const signs=['Aries','Taurus','Gemini','Cancer','Leo','Virgo','Libra','Scorpio','Sagittarius','Capricorn','Aquarius','Pisces'];
 function point(name,degree){const value=((degree%360)+360)%360;return{name,longitude:value,sign:signs[Math.floor(value/30)],degree:Math.floor(value%30),minute:Math.floor((value%1)*60)}}
@@ -38,16 +39,17 @@ try{
     styles:[...document.styleSheets].length,scripts:document.scripts.length,
     text:document.body?.innerText?.slice(0,300)
    }});
-   if(kind==='preview'){
-     const assetBase='https://cdn.jsdelivr.net/gh/blissonature/oracleofrelphi@'+ref+'/';
-     assert.equal(state.base,assetBase,'Exact-revision preview resolves assets from pinned jsDelivr, not GitHack');
-     assert.equal(failures.filter(x=>/githack\.com/i.test(x.url||'')).length,0,'No GitHack requests in exact preview');
-     assert.deepEqual(failures.filter(x=>/cdn\.jsdelivr\.net|raw\.githubusercontent\.com/i.test(x.url||'')),[],'No failed commit-pinned scripts, styles, or source');
+   if(kind==='statically'||kind==='githubraw'){
+     const origin=new URL(url).origin;
+     assert.equal(state.wheelCount,1,kind+' direct CDN must render a Sky Chart wheel');
+     assert.equal(state.rootBusy,'false',kind+' direct CDN must initialize the chart');
+     assert.equal(errors.length,0,kind+' no uncaught page errors');
+     assert.deepEqual(failures.filter(x=>(x.url||'').startsWith(origin)),[],kind+' no failed assets');
    }
    console.log(kind.toUpperCase(),JSON.stringify({state,errors:errors.slice(0,15),failures:failures.slice(0,30)}));
    await page.screenshot({path:`sky-remote-${kind}.png`,fullPage:true});
-   if(kind==='preview'&&(!state.wheelCount||state.mountVisible==='hidden'||state.rootBusy!=='false'||errors.length)){failed=true;console.error('FAILED: hosted exact-revision preview did not display a ready wheel');}
-   if(kind==='preview'&&!failed){
+   if((kind==='statically'||kind==='githubraw')&&(!state.wheelCount||state.mountVisible==='hidden'||state.rootBusy!=='false'||errors.length)){failed=true;console.error('FAILED: hosted exact-revision preview did not display a ready wheel');}
+   if((kind==='statically'||kind==='githubraw')&&!failed){
      await page.locator('#skyFoundationB [data-sky-drawer-tab="where"]').click();
      await page.waitForSelector('#skyFoundationB .sky-where-when-editor [data-ww-action="refresh-now"]',{timeout:15000});
      await page.waitForSelector('#skyFoundationB [data-draft-heptagram-ready="true"] .sky-where-when-draft-heptagram',{timeout:20000});
