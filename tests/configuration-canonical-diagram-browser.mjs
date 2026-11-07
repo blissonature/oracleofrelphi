@@ -35,7 +35,7 @@ try{
   },{a,b});
   await page.goto('http://127.0.0.1:4173/sky-chart.html',{waitUntil:'domcontentloaded'});
   await page.waitForSelector('#skyFoundationRoot[aria-busy="false"]',{timeout:30000});
-  await page.waitForSelector('#skyChartAspectPopover [data-configuration-row="t-square"]',{timeout:15000});
+  await page.waitForSelector('#skyChartAspectPopover [data-configuration-row="t-square"]',{state:'attached',timeout:15000});
   // Explicit data for the three aspects, fed through the genuine graph owner,
   // avoids relying on which optional Relationship categories are user-enabled.
   await page.evaluate(()=>{
