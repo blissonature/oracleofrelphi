@@ -612,7 +612,7 @@ function openConfiguration(tile,group){
   let detail=tile.querySelector(':scope>.sky-configuration-result-detail');
   if(!detail){
     detail=document.createElement('div');detail.className='sky-configuration-result-detail';
-    detail.innerHTML='<button type="button" class="sky-configuration-tile-copy" aria-label="Copy this expanded configuration">Copy</button><div class="sky-configuration-result-visual"></div><div class="sky-configuration-result-explanation"><div class="sky-configuration-result-structure"><strong>Structure</strong><span></span></div><div class="sky-configuration-result-interpretation"><strong>Interpretation</strong><span></span></div></div>';
+    detail.innerHTML='<button type="button" class="sky-configuration-tile-copy" aria-label="Copy this expanded configuration">Copy</button><div class="sky-configuration-result-reading"><div class="sky-configuration-result-visual"></div><div class="sky-configuration-result-explanation" role="region" aria-label="Configuration interpretation" tabindex="0"><div class="sky-configuration-result-structure"><strong>Structure</strong><span></span></div><div class="sky-configuration-result-interpretation"><strong>Interpretation</strong><span></span></div></div></div>';
     const tileCopy=detail.querySelector('.sky-configuration-tile-copy');
     if(tileCopy){
       tileCopy.dataset.bound='true';
