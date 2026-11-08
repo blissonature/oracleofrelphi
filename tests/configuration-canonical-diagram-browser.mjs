@@ -108,6 +108,32 @@ try{
     assert.ok(audit.colored.length>=5&&audit.colored.every(x=>x.raw&&x.css.startsWith('color(srgb')||x.raw&&x.css.startsWith('rgb(')),
       label+' sign, house, and aspect text uses legible palette-derived colors');
     assert.deepEqual(errors,[],label+' has no uncaught browser errors');
+    const copyPosition=await tile.evaluate(root=>{
+      const detail=root.querySelector('.sky-configuration-result-detail');
+      const button=detail?.querySelector('.sky-configuration-tile-copy');
+      const d=detail?.getBoundingClientRect(),b=button?.getBoundingClientRect();
+      const next=detail?.querySelector('.sky-configuration-result-reading')?.getBoundingClientRect();
+      const matches=detail?.querySelector('.sky-configuration-match-stack')?.getBoundingClientRect();
+      return{
+        position:button&&getComputedStyle(button).position,
+        parent:button?.parentElement===detail,
+        top:b?.top-d?.top,right:d?.right-b?.right,
+        inside:b?.left>=d?.left&&b?.right<=d?.right&&b?.top>=d?.top,
+        noReadingCover:b?.bottom<=next?.top+1,
+        noMatchCover:b?.bottom<=matches?.top,
+        icon:button?.querySelector('svg.relphi-copy-icon use')?.getAttribute('href')||'',
+        count:detail?.querySelectorAll('.sky-configuration-tile-copy').length
+      };
+    });
+    assert.equal(copyPosition.count,1,label+' has exactly one contextual copy button');
+    assert.equal(copyPosition.parent,true,label+' retains its authoritative expanded tile owner');
+    assert.equal(copyPosition.position,'absolute',label+' contextual button is positioned by its owner, not globally made a flow item');
+    assert.equal(copyPosition.inside,true,label+' copy button stays inside its expanded tile');
+    assert.ok(copyPosition.top>=5&&copyPosition.top<=18,label+' copy button is at the upper-right beside the diagram: '+JSON.stringify(copyPosition));
+    assert.ok(copyPosition.right>=5&&copyPosition.right<=18,label+' copy button is right aligned: '+JSON.stringify(copyPosition));
+    assert.equal(copyPosition.noReadingCover,true,label+' copy button does not overlap the reading');
+    assert.equal(copyPosition.noMatchCover,true,label+' copy button does not cover match rows');
+    await page.waitForFunction(()=>document.querySelector('.sky-configuration-tile-copy svg.relphi-copy-icon use')?.getAttribute('href')?.endsWith('#relphi-copy'),null,{timeout:4500});
     // Geometry and interpretation share a bounded reading owner; the match
     // list is a sibling, never a surface beneath a sticky diagram.
     const bounds=await tile.evaluate(root=>{

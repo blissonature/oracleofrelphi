@@ -23,9 +23,14 @@ button.relphi-copy-icon-button{
   line-height:0!important;
   letter-spacing:0!important;
   vertical-align:middle;
-  position:relative;
   white-space:nowrap!important;
   cursor:pointer;
+}
+/* The canonical icon is centered inside every in-flow copy control.
+   A contextually positioned copy button owns its position in its feature CSS:
+   the Configuration tile's top-right control is absolute, not a grid item. */
+button.relphi-copy-icon-button:not(.sky-configuration-tile-copy){
+  position:relative;
 }
 .relphi-copy-icon{
   display:block!important;

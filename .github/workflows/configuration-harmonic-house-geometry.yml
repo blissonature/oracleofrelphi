@@ -7,6 +7,7 @@ on:
       - 'tests/configuration-harmonic-house-geometry.mjs'
       - 'tests/configuration-canonical-diagram-browser.mjs'
       - 'sky-chart-aspect-configurations-v1.css'
+      - 'relphi-copy-icon-convention-v1.css'
       - 'sky-chart-foundation-v1.css'
       - 'sky-chart.html'
       - '.github/workflows/configuration-harmonic-house-geometry.yml'
