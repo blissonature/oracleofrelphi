@@ -157,7 +157,10 @@ try{
       assert.equal(bounds.overflow,'visible','desktop reading uses ordinary page scroll');
       const scrolled=await tile.evaluate(root=>{
         const visual=root.querySelector('.sky-configuration-result-visual');
-        const target=scrollY+visual.getBoundingClientRect().top+240;
+        const region=root.querySelector('.sky-configuration-result-reading').getBoundingClientRect();
+        const visualRect=visual.getBoundingClientRect();
+        const availablePinnedTravel=region.height-visualRect.height;
+        const target=scrollY+visualRect.top+Math.min(110,Math.max(10,availablePinnedTravel*.5));
         window.scrollTo(0,target);
         return target;
       });
