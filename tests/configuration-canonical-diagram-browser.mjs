@@ -108,45 +108,89 @@ try{
     assert.ok(audit.colored.length>=5&&audit.colored.every(x=>x.raw&&x.css.startsWith('color(srgb')||x.raw&&x.css.startsWith('rgb(')),
       label+' sign, house, and aspect text uses legible palette-derived colors');
     assert.deepEqual(errors,[],label+' has no uncaught browser errors');
-    // Scroll the real document while reading (no nested scroll pane, clone or
-    // synthetic position override). The same canonical SVG remains onscreen.
-    const before=await tile.evaluate(root=>{
-      const visual=root.querySelector('.sky-configuration-result-visual');
-      const rect=visual.getBoundingClientRect();
-      return{documentY:window.scrollY+rect.top,viewportY:rect.top,
-        count:visual.querySelectorAll('.sky-configuration-vertex-placement svg[data-relationship-canonical-host]').length};
+    // Geometry and interpretation share a bounded reading owner; the match
+    // list is a sibling, never a surface beneath a sticky diagram.
+    const bounds=await tile.evaluate(root=>{
+      const region=root.querySelector('.sky-configuration-result-reading');
+      const visual=region.querySelector('.sky-configuration-result-visual');
+      const explanation=region.querySelector('.sky-configuration-result-explanation');
+      const matches=root.querySelector('.sky-configuration-match-stack');
+      const v=visual.getBoundingClientRect(),e=explanation.getBoundingClientRect();
+      const r=region.getBoundingClientRect(),m=matches.getBoundingClientRect();
+      return{matchBelow:m.top>=r.bottom-1,visualInside:v.top>=r.top-1&&v.bottom<=r.bottom+1,
+        explanationInside:e.top>=r.top-1&&e.bottom<=r.bottom+1,
+        matchOwner:matches.parentElement===root,
+        readingOwner:visual.parentElement===region&&explanation.parentElement===region,
+        visualCount:root.querySelectorAll('.sky-configuration-result-visual').length,
+        pos:getComputedStyle(visual).position,
+        overflow:getComputedStyle(explanation).overflowY,
+        full:explanation.scrollHeight,available:explanation.clientHeight};
     });
-    await page.evaluate(y=>window.scrollTo(0,y),before.documentY+Math.min(240,height*.33));
-    await page.waitForTimeout(230);
-    const whileReading=await tile.evaluate(root=>{
-      const visual=root.querySelector('.sky-configuration-result-visual');
-      const rect=visual.getBoundingClientRect();
-      const text=root.querySelector('.sky-configuration-result-interpretation');
-      const paragraphs=[...text.querySelectorAll('.sky-configuration-interpretation-line,.sky-configuration-interpretation-synthesis')];
-      const panel=root.closest('#skyFoundationComparison');
-      const styled=getComputedStyle(visual);
-      return{y:rect.top,bottom:rect.bottom,viewportHeight:innerHeight,
-        sticky:styled.position,overflowPanel:getComputedStyle(panel).overflowY,
-        overflowTile:getComputedStyle(root).overflowY,
-        glyphs:visual.querySelectorAll('.sky-configuration-vertex-placement svg[data-relationship-canonical-host]').length,
-        visibleReading:paragraphs.some(p=>{const r=p.getBoundingClientRect();
-          return r.bottom>Math.max(0,rect.top)+2&&r.top<innerHeight-2&&
-            (r.left>=rect.right-1||r.bottom>rect.bottom+2);
-        }),
-        pageScroll:scrollY};
-    });
-    assert.equal(whileReading.sticky,'sticky',label+' canonical drawing uses the existing sticky visual');
-    assert.equal(whileReading.overflowPanel,'clip',label+' Foundation comparison panel does not intercept page scroll');
-    assert.equal(whileReading.overflowTile,'clip',label+' expanded tile does not intercept page scroll');
-    assert.ok(whileReading.y>=-1&&whileReading.y<=17,
-      label+' canonical diagram remains in the viewport while interpretation scrolls: '+JSON.stringify(whileReading));
-    assert.equal(whileReading.glyphs,before.count,label+' no duplicate or lost canonical placement glyphs');
-    console.log('STICKY_READING '+label+' '+JSON.stringify(whileReading));
-    assert.equal(whileReading.visibleReading,true,label+' interpretation remains readable beside or below pinned diagram');
+    assert.equal(bounds.matchOwner,true,label+' match rows stay outside the reading section');
+    assert.equal(bounds.readingOwner,true,label+' there is exactly one bounded diagram/reading owner');
+    assert.equal(bounds.visualCount,1,label+' never creates a second diagram');
+    assert.equal(bounds.matchBelow,true,label+' match list is below, not beneath, the drawing');
+    assert.equal(bounds.visualInside,true,label+' drawing stays inside its own reading boundary');
+    assert.equal(bounds.explanationInside,true,label+' prose stays inside its own reading boundary');
+    if(label==='mobile'){
+      assert.equal(bounds.pos,'static','mobile diagram is not a floating sticky overlay');
+      assert.equal(bounds.overflow,'auto','mobile interpretation has its own scroll region');
+      assert.ok(bounds.full>bounds.available+30,'mobile fixture includes genuinely scrollable prose');
+      const internal=await tile.evaluate(root=>{
+        const region=root.querySelector('.sky-configuration-result-reading');
+        const visual=region.querySelector('.sky-configuration-result-visual');
+        const explanation=region.querySelector('.sky-configuration-result-explanation');
+        const before=visual.getBoundingClientRect();
+        const beforePage=scrollY;
+        explanation.scrollTop=160;
+        const after=visual.getBoundingClientRect();
+        return{scrollTop:explanation.scrollTop,diagramY:after.top-before.top,
+          pageY:scrollY-beforePage,diagramBottom:after.bottom,proseTop:explanation.getBoundingClientRect().top};
+      });
+      assert.ok(internal.scrollTop>50,'mobile prose scrolls independently of the diagram');
+      assert.ok(Math.abs(internal.diagramY)<1,'scrolling the interpretation does not move the canonical diagram');
+      assert.equal(internal.pageY,0,'internal reading scroll does not move the page');
+      assert.ok(internal.proseTop>=internal.diagramBottom-1,'interpretation is beneath, not covered by, the diagram');
+    }else{
+      assert.equal(bounds.pos,'sticky','desktop diagram follows the prose only inside its own reading section');
+      assert.equal(bounds.overflow,'visible','desktop reading uses ordinary page scroll');
+      const scrolled=await tile.evaluate(root=>{
+        const visual=root.querySelector('.sky-configuration-result-visual');
+        const target=scrollY+visual.getBoundingClientRect().top+240;
+        window.scrollTo(0,target);
+        return target;
+      });
+      await page.waitForTimeout(200);
+      const desktop=await tile.evaluate(root=>{
+        const region=root.querySelector('.sky-configuration-result-reading').getBoundingClientRect();
+        const visual=root.querySelector('.sky-configuration-result-visual').getBoundingClientRect();
+        const matches=root.querySelector('.sky-configuration-match-stack').getBoundingClientRect();
+        return{y:visual.top,regionBottom:region.bottom,visualBottom:visual.bottom,
+          matchTop:matches.top};
+      });
+      assert.ok(desktop.y>=-1&&desktop.y<=17,'desktop diagram stays visible beside the prose');
+      assert.ok(desktop.visualBottom<=desktop.regionBottom+1,'desktop diagram cannot escape its reading region');
+      assert.ok(desktop.visualBottom<=desktop.matchTop+1,'desktop diagram cannot cover the match list');
+    }
     await page.screenshot({path:'sky-configuration-reading-'+label+'.png'});
-    // Returning to the top must restore the original in-flow position.
-    await page.evaluate(y=>window.scrollTo(0,y),Math.max(0,before.documentY-30));
-    await page.waitForTimeout(150);
+    const firstMatch=tile.locator('.sky-configuration-match-row').first();
+    await firstMatch.scrollIntoViewIfNeeded();
+    await page.waitForTimeout(220);
+    const matchClear=await firstMatch.evaluate(row=>{
+      const tile=row.closest('.sky-configuration-result-tile');
+      const visual=tile.querySelector('.sky-configuration-result-visual');
+      const r=row.getBoundingClientRect(),d=visual.getBoundingClientRect();
+      const cx=r.left+r.width*.5,cy=r.top+r.height*.5;
+      const target=document.elementFromPoint(cx,cy);
+      return{matchY:r.top,diagramY:d.top,diagramBottom:d.bottom,
+        overlapped:d.bottom>r.top&&d.top<r.bottom&&d.right>r.left&&d.left<r.right,
+        hitRow:target===row||row.contains(target)};
+    });
+    assert.equal(matchClear.overlapped,false,label+' no floating diagram overlaps the selected match row');
+    assert.equal(matchClear.hitRow,true,label+' match row is actually clickable, not covered by artwork');
+    await page.screenshot({path:'sky-configuration-match-clear-'+label+'.png'});
+    await page.evaluate(()=>window.scrollTo(0,0));
+    await page.waitForTimeout(140);
     await tile.screenshot({path:'sky-configuration-canonical-'+label+'.png'});
   }
   await page.close();

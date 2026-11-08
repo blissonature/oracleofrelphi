@@ -44,4 +44,5 @@ jobs:
           path: |
             sky-configuration-canonical-*.png
             sky-configuration-reading-*.png
+            sky-configuration-match-clear-*.png
           if-no-files-found: ignore
