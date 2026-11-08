@@ -119,7 +119,7 @@ try{
       const r=region.getBoundingClientRect(),m=matches.getBoundingClientRect();
       return{matchBelow:m.top>=r.bottom-1,readingRect:{top:r.top,bottom:r.bottom},matchRect:{top:m.top,bottom:m.bottom},grid:getComputedStyle(root.querySelector('.sky-configuration-result-detail')).gridTemplateAreas,childAreas:{reading:getComputedStyle(region).gridArea,match:getComputedStyle(matches).gridArea},visualInside:v.top>=r.top-1&&v.bottom<=r.bottom+1,
         explanationInside:e.top>=r.top-1&&e.bottom<=r.bottom+1,
-        matchOwner:matches.parentElement===root,
+        matchOwner:matches.parentElement===root.querySelector('.sky-configuration-result-detail'),
         readingOwner:visual.parentElement===region&&explanation.parentElement===region,
         visualCount:root.querySelectorAll('.sky-configuration-result-visual').length,
         pos:getComputedStyle(visual).position,
