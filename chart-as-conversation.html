@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Chart as Conversation · Oracle of Relphi</title>
+<link rel="icon" href="favicon.ico">
+<link rel="stylesheet" href="style.css?v=346">
+<style>
+  .voices-page{--ink:#1d1b1b;--accent:#c7201c;--muted:#5a5552;max-width:1080px;margin:4rem auto 2rem;padding:0 clamp(.9rem,3vw,2rem);text-align:left;color:var(--ink)}
+  .voices-page h1,.voices-page h2,.voices-page h3{text-align:left;line-height:1.15}
+  .voices-page h1{font-size:clamp(2.3rem,5vw,4rem);margin:.35rem 0 .8rem;letter-spacing:-.04em}
+  .voices-page h2{font-size:clamp(1.35rem,3vw,1.8rem);margin:0 0 .8rem}
+  .voices-page h3{font-size:1.04rem;margin:0 0 .35rem}
+  .voices-page p,.voices-page li{line-height:1.55}
+  .voices-page .eyebrow{color:var(--accent);font-size:.8rem;font-weight:800;letter-spacing:.15em;text-transform:uppercase}
+  .voices-page .lead{font-size:clamp(1.05rem,2vw,1.28rem);max-width:780px}
+  .voices-page .axioms{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.75rem;margin:1.8rem 0 2rem}
+  .voices-page .axioms>div,.voices-page .panel,.voices-page .voice-card,.voices-page .sign-card,.voices-page .house-card{border:1px solid #e4ded9;border-radius:16px;background:#fff;padding:1rem}
+  .voices-page .axioms>div{background:#f9f7f5}
+  .voices-page .axioms b{display:block;color:var(--accent);margin-bottom:.4rem}
+  .voices-page section{margin:2rem 0}
+  .voices-page .panel{background:#f9f7f5;padding:clamp(1rem,3vw,1.6rem)}
+  .voices-page .controls{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.8rem}
+  .voices-page label{display:block;font-size:.86rem;font-weight:800}
+  .voices-page select{display:block;width:100%;min-width:0;border:1.5px solid #635d58;border-radius:10px;background:#fff;padding:.65rem .55rem;margin-top:.35rem;font:inherit;color:var(--ink)}
+  .voices-page select:focus-visible,.voices-page a:focus-visible{outline:3px solid var(--accent);outline-offset:3px}
+  .voices-page .readout{background:#fff;border-left:4px solid var(--accent);padding:1rem 1.1rem;margin-top:1rem;border-radius:0 10px 10px 0}
+  .voices-page blockquote{font-family:Georgia,serif;font-size:clamp(1.4rem,3.2vw,2rem);margin:.6rem 0;font-weight:400;line-height:1.3}
+  .voices-page .caption{font-size:.87rem;color:var(--muted)}
+  .voices-page .voice-list,.voices-page .sign-list,.voices-page .house-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.75rem}
+  .voices-page .voice-card .glyph{font-size:1.5rem;margin-right:.25rem}
+  .voices-page .core{font-family:Georgia,serif;font-size:1.17rem;margin:.5rem 0}
+  .voices-page .dialects{margin:.45rem 0 0;padding:0;list-style:none;color:#3a3430}
+  .voices-page .dialects li{margin:.25rem 0;font-size:.92rem}
+  .voices-page .sign-card,.voices-page .house-card{padding:.8rem 1rem}
+  .voices-page .sign-card p,.voices-page .house-card p{margin:.2rem 0;font-size:.92rem}
+  .voices-page .sign-symbol{font-size:1.3rem;margin-right:.3rem}
+  .voices-page .case-study{border-left:4px solid var(--accent);padding:.3rem 1rem;margin:1rem 0}
+  .voices-page .rule{font-size:1.04rem;font-weight:700}
+  .voices-page .footnote{font-size:.86rem;color:var(--muted)}
+  .voices-page a{color:#ad1714}
+  @media(max-width:700px){.voices-page{margin:3.8rem auto 1rem}.voices-page .axioms,.voices-page .controls{grid-template-columns:1fr}.voices-page .voice-list,.voices-page .sign-list,.voices-page .house-list{grid-template-columns:1fr}}
+  @media(min-width:701px) and (max-width:830px){.voices-page .controls{grid-template-columns:repeat(2,minmax(0,1fr))}}
+</style>
+</head>
+<body>
+<div id="nav-placeholder"></div>
+<main class="voices-page">
+<p class="eyebrow">Astrology Foundations · A listening exercise</p>
+<h1>The Chart as <span style="color:#c7201c">Conversation</span></h1>
+<p class="lead">A planet has something it is known for saying. The zodiac sign gives it a dialect. The house places that voice in company. Put them together, and the chart begins to speak.</p>
+<div class="axioms" aria-label="Three parts of astrological speech">
+  <div><b>Planet · The speaker</b>What matters? What function is trying to act or speak?</div>
+  <div><b>Sign · The dialect</b>How does that function recognize and express its concern?</div>
+  <div><b>House · The company</b>With whom—or in whose sphere of life—does it unfold?</div>
+</div>
+<section class="panel" aria-labelledby="try-heading">
+<h2 id="try-heading">Hear a placement speak</h2>
+<p>Change any of the three parts. A planet does not cease to be itself when it changes signs; it takes up a new manner of speaking.</p>
+<div class="controls">
+<label for="planet">Planet <select id="planet"></select></label>
+<label for="sign">Sign <select id="sign"></select></label>
+<label for="house">House <select id="house"></select></label>
+</div>
+<div class="readout" aria-live="polite" aria-atomic="true">
+<strong id="placement-name"></strong>
+<blockquote id="planet-utterance"></blockquote>
+<p id="dialect-line"></p>
+<p id="company-line"></p>
+<p class="caption" id="domicile-note"></p>
+</div>
+</section>
+<section aria-labelledby="planet-heading"><h2 id="planet-heading">The speakers</h2>
+<p>The first line is the planetary concern. The lines beneath are its traditional home-sign expressions, or a clearly marked modern association. These are teaching metaphors, not literal speech or exhaustive meanings.</p>
+<div class="voice-list" id="voice-list"></div></section>
+<section aria-labelledby="sign-heading"><h2 id="sign-heading">The twelve dialects</h2>
+<p>The dialects belong to signs, not to planets. Any planet can speak in any of these ways—even when it is away from its own domicile.</p>
+<div class="sign-list" id="sign-list"></div></section>
+<section aria-labelledby="house-heading"><h2 id="house-heading">The twelve kinds of company</h2>
+<p>“Who you are with” is a human doorway into the houses, not a replacement for their circumstances and topics.</p>
+<div class="house-list" id="house-list"></div></section>
+<section class="panel" aria-labelledby="example-heading"><h2 id="example-heading">Venus and Virgo: one sentence, two functions</h2>
+<div class="case-study"><p class="core">“This is good.”</p><p><strong>Venus</strong> appreciates: “I like that.” <strong>Virgo</strong> discerns: “It is done thoughtfully and well.” Venus in Virgo can appreciate <em>through</em> discernment. The planet supplies the motivation; the sign supplies the manner of expression.</p></div>
+<div class="case-study"><h3>Jupiter, hospitality, and <em>The Odyssey</em></h3><p>Jupiter in Sagittarius goes out into the world; Jupiter in Pisces makes room for the world to come in. The host and traveler each participate in something larger. In Christopher Nolan’s 2026 film <em>The Odyssey</em>, “Zeus’s Law” dramatizes <em>xenia</em>, the reciprocal obligations of hospitality. The film’s phrase is a modern rendering, not a single codified ancient Greek law.</p><p class="footnote">Context: <a href="https://www.wcsufm.org/2026-07-16/how-christopher-nolan-filmed-his-adaptation-of-the-odyssey-without-compromise" target="_blank" rel="noopener noreferrer">Christopher Nolan discussing xenia in an NPR interview</a>.</p></div>
+<p class="rule">Planet = what matters. Sign = how it is expressed. House = where and with whom it becomes meaningful.</p></section>
+<p class="footnote">Traditional domicile rulerships are used for the seven classical planets. Modern associations are identified separately and do not replace traditional rulers. A planet may occupy any of the twelve signs; its domiciles are illustrative, not its entire vocabulary.</p>
+</main>
+<script>
+(function(){
+'use strict';
+const planets=[
+['Sun','☉','Identity','“This is who I am!”',[['Leo','“Let me show you who I am!”']]],
+['Moon','☽','Feedback','“This is how I feel.”',[['Cancer','“Let me tell you what this means to me.”']]],
+['Mercury','☿','Understanding','“I understand!”',[['Gemini','“Let’s talk about it!”'],['Virgo','“Let me get this right.”']]],
+['Venus','♀','Affection and valuation','“I like that!”',[['Taurus','“That feels good!”'],['Libra','“That’s lovely!”']]],
+['Mars','♂','Agency and protection','“I’m ready to act.”',[['Aries','“I’m going for it!”'],['Scorpio','“I’m not letting go!”']]],
+['Jupiter','♃','Participation and enlargement','“We are part of something larger.”',[['Sagittarius','“Let’s see how far we can go!”'],['Pisces','“There is room for you here.”']]],
+['Saturn','♄','Boundaries that preserve freedom','“What structure makes freedom possible?”',[['Capricorn','“Let’s build something that lasts.”'],['Aquarius','“The rules should serve everyone.”']]],
+['Uranus','♅','New form and invention','“It doesn’t have to be this way!”',[['Aquarius','“Let’s invent another way.”']],true],
+['Neptune','♆','Release and wholeness','“We can let go.”',[['Pisces','“Let’s simply be.”']],true],
+['Pluto','♇','Burial and retrieval','“What has been buried?”',[['Scorpio','“Let’s uncover what lies underneath.”']],true]
+];
+const signs=[
+['Aries','♈','directly, decisively, and with initiative'],['Taurus','♉','sensually, steadily, and with attention to value'],['Gemini','♊','curiously, verbally, and through comparison'],['Cancer','♋','protectively, personally, and through memory'],['Leo','♌','openly, warmly, and with self-expression'],['Virgo','♍','carefully, precisely, and through discernment'],['Libra','♎','relationally, gracefully, and through proportion'],['Scorpio','♏','intensely, privately, and with persistence'],['Sagittarius','♐','expansively, frankly, and toward possibility'],['Capricorn','♑','deliberately, practically, and with responsibility'],['Aquarius','♒','principally, independently, and toward the collective'],['Pisces','♓','receptively, imaginatively, and with compassion']
+];
+const houses=[
+['1st','yourself and those encountering you','identity and immediate presence'],['2nd','people involved with your resources and possessions','livelihood, ownership, and value'],['3rd','siblings, neighbors, and familiar people','daily communication and proximity'],['4th','family, household, and ancestors','roots, privacy, and belonging'],['5th','children, lovers, playmates, and admirers','creation, pleasure, and play'],['6th','coworkers and those you serve or rely upon','work, maintenance, and care'],['7th','partners, contractual counterparts, and open opponents','one-to-one engagement'],['8th','those sharing debts, obligations, inheritances, or losses','entanglement and shared vulnerability'],['9th','teachers, travelers, and guides','belief, learning, and distant horizons'],['10th','authorities, employers, and the public','vocation, standing, and responsibility'],['11th','friends, allies, and fellow members','fellowship and shared hopes'],['12th','those absent, hidden, or secluded','withdrawal, confinement, and what is out of sight']
+];
+const byId=id=>document.getElementById(id);
+const make=(tag,text,cls)=>{const el=document.createElement(tag);if(text!==undefined)el.textContent=text;if(cls)el.className=cls;return el;};
+const fillSelect=(id,arr,selected,print)=>{const box=byId(id);arr.forEach((item,i)=>{const option=make('option',print(item,i));option.value=String(i);box.append(option);});box.value=String(selected);};
+fillSelect('planet',planets,3,p=>p[1]+' '+p[0]);fillSelect('sign',signs,5,s=>s[1]+' '+s[0]);fillSelect('house',houses,0,h=>h[0]+' House');
+function update(){
+const p=planets[Number(byId('planet').value)],s=signs[Number(byId('sign').value)],h=houses[Number(byId('house').value)];
+byId('placement-name').textContent=p[1]+' '+p[0]+' in '+s[1]+' '+s[0]+' · '+h[0]+' House';
+byId('planet-utterance').textContent=p[3];
+byId('dialect-line').textContent=s[0]+' gives '+p[0]+' a manner of speaking '+s[2]+'.';
+byId('company-line').textContent='In the '+h[0].toLowerCase()+' house, this voice is heard with '+h[1]+', through '+h[2]+'.';
+const match=p[4].find(d=>d[0]===s[0]);
+byId('domicile-note').textContent=match?(p[5]?'Modern association':'Traditional domicile')+' · One possible expression: '+match[1]:'This sign is not one of '+p[0]+'’s listed '+(p[5]?'modern associations':'domiciles')+'; the planet still speaks through it.';
+}
+['planet','sign','house'].forEach(id=>byId(id).addEventListener('change',update));update();
+const voiceList=byId('voice-list');planets.forEach(p=>{const card=make('article',undefined,'voice-card');card.append(make('h3',p[1]+' '+p[0]+' · '+p[2]),make('p',p[3],'core'));const ul=make('ul',undefined,'dialects');p[4].forEach(d=>ul.append(make('li',d[0]+': '+d[1])));card.append(ul);if(p[5])card.append(make('p','Modern association; not a traditional domicile.','caption'));voiceList.append(card);});
+const signList=byId('sign-list');signs.forEach(s=>{const card=make('article',undefined,'sign-card');card.append(make('h3',s[1]+' '+s[0]),make('p','Speaks '+s[2]+'.'));signList.append(card);});
+const houseList=byId('house-list');houses.forEach(h=>{const card=make('article',undefined,'house-card');card.append(make('h3',h[0]+' House'),make('p','With '+h[1]+'.'),make('p','Sphere: '+h[2]+'.','caption'));houseList.append(card);});
+})();
+</script>
+<script src="navloader.js?v=346"></script>
+</body>
+</html>
