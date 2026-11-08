@@ -117,7 +117,7 @@ try{
       const matches=root.querySelector('.sky-configuration-match-stack');
       const v=visual.getBoundingClientRect(),e=explanation.getBoundingClientRect();
       const r=region.getBoundingClientRect(),m=matches.getBoundingClientRect();
-      return{matchBelow:m.top>=r.bottom-1,visualInside:v.top>=r.top-1&&v.bottom<=r.bottom+1,
+      return{matchBelow:m.top>=r.bottom-1,readingRect:{top:r.top,bottom:r.bottom},matchRect:{top:m.top,bottom:m.bottom},grid:getComputedStyle(root.querySelector('.sky-configuration-result-detail')).gridTemplateAreas,childAreas:{reading:getComputedStyle(region).gridArea,match:getComputedStyle(matches).gridArea},visualInside:v.top>=r.top-1&&v.bottom<=r.bottom+1,
         explanationInside:e.top>=r.top-1&&e.bottom<=r.bottom+1,
         matchOwner:matches.parentElement===root,
         readingOwner:visual.parentElement===region&&explanation.parentElement===region,
@@ -126,6 +126,7 @@ try{
         overflow:getComputedStyle(explanation).overflowY,
         full:explanation.scrollHeight,available:explanation.clientHeight};
     });
+    console.log('CONFIG_LAYOUT_BOUNDS '+label+' '+JSON.stringify(bounds));
     assert.equal(bounds.matchOwner,true,label+' match rows stay outside the reading section');
     assert.equal(bounds.readingOwner,true,label+' there is exactly one bounded diagram/reading owner');
     assert.equal(bounds.visualCount,1,label+' never creates a second diagram');
