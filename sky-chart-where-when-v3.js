@@ -44,7 +44,6 @@ function installStyles(){
     .sky-where-when-one-click svg{width:16px;height:16px;flex:none}
     .sky-where-when-main-actions{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:start;gap:.35rem}
     .sky-where-when-main-actions .sky-where-when-one-click{min-width:0}
-    .sky-where-when-main-actions .sky-where-when-copy{display:inline-flex;align-items:center;justify-content:center;gap:.24rem;min-height:34px;min-width:63px;box-sizing:border-box}
     .sky-ph-handoff-dialog{width:min(680px,calc(100vw - 2rem));max-width:680px;border:2px solid #dc1f18;border-radius:1.3rem;padding:0;background:#fffdf8;color:#1f1b18;box-shadow:0 24px 70px rgba(0,0,0,.28)}
     .sky-ph-handoff-dialog::backdrop{background:rgba(17,14,12,.48);backdrop-filter:blur(2px)}
     .sky-ph-handoff-inner{padding:1.2rem;display:grid;gap:1rem}
@@ -61,7 +60,7 @@ function installStyles(){
     .sky-ph-handoff-clear,.sky-ph-handoff-cancel{border-radius:999px;padding:.68rem 1rem;font:inherit;font-weight:750;cursor:pointer}
     .sky-ph-handoff-clear{background:#fff;color:#dc1f18;border:1px solid #dc1f18}
     .sky-ph-handoff-cancel{background:#fff;color:#333;border:1px solid rgba(31,27,24,.22)}
-    @media(max-width:620px){.sky-where-when-here-now-row{padding:.55rem .55rem .14rem}.sky-where-when-main-actions{gap:.25rem}.sky-where-when-main-actions .sky-where-when-copy{min-width:59px;padding:.36rem .4rem}.sky-where-when-footer{padding:.42rem .55rem .55rem!important}.sky-ph-handoff-slots{grid-template-columns:1fr}}
+    @media(max-width:620px){.sky-where-when-here-now-row{padding:.55rem .55rem .14rem}.sky-where-when-main-actions{gap:.25rem}.sky-where-when-footer{padding:.42rem .55rem .55rem!important}.sky-ph-handoff-slots{grid-template-columns:1fr}}
   `;
   document.head.appendChild(style);
 }

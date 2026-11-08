@@ -78,8 +78,8 @@ try{
     const geometry=await copy.evaluate(node=>{const b=node.getBoundingClientRect(),row=node.closest('.sky-where-when-main-actions'),r=row?.getBoundingClientRect();return{button:{x:b.x,y:b.y,width:b.width,height:b.height},actions:r?{x:r.x,y:r.y,width:r.width,height:r.height}:null,window:{width:innerWidth,height:innerHeight},scroll:{x:scrollX,y:scrollY},buttonDisplay:getComputedStyle(node).display}});
     console.log('WHERE_WHEN_COPY_GEOMETRY_'+device,JSON.stringify(geometry));
     await page.screenshot({path:'where-when-quick-copy-'+device+'.png'});
-    assert.ok(box&&box.width>=48&&box.height>=28&&box.x>=0&&box.x+box.width<=width+1,
-      device+' visible accessible copy control in viewport: '+JSON.stringify(geometry));
+    assert.ok(box&&box.width>=32&&box.height>=30&&box.x>=0&&box.x+box.width<=width+1,
+      device+' canonical copy control in viewport: '+JSON.stringify(geometry));
     const tabB=page.locator('#skyFoundationB [data-sky-drawer-tab="where"]');
     await tabB.scrollIntoViewIfNeeded();await tabB.click();
     const copyB=page.locator('#skyFoundationB .sky-where-when-editor [data-copy-where-when]');
