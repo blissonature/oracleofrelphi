@@ -73,10 +73,13 @@ try{
     await page.waitForFunction(()=>document.querySelector('#skyFoundationA [data-copy-where-when] svg.relphi-copy-icon'));
     assert.equal(await copy.locator('svg.relphi-copy-icon > use').count(),1,
       device+' Copy has exactly one canonical clipboard glyph');
+    await copy.scrollIntoViewIfNeeded();
     const box=await copy.boundingBox();
-    assert.ok(box&&box.width>=48&&box.height>=28&&box.x>=0&&box.x+box.width<=width+1,
-      device+' visible accessible copy control in viewport');
+    const geometry=await copy.evaluate(node=>{const b=node.getBoundingClientRect(),row=node.closest('.sky-where-when-main-actions'),r=row?.getBoundingClientRect();return{button:{x:b.x,y:b.y,width:b.width,height:b.height},actions:r?{x:r.x,y:r.y,width:r.width,height:r.height}:null,window:{width:innerWidth,height:innerHeight},scroll:{x:scrollX,y:scrollY},buttonDisplay:getComputedStyle(node).display}});
+    console.log('WHERE_WHEN_COPY_GEOMETRY_'+device,JSON.stringify(geometry));
     await page.screenshot({path:'where-when-quick-copy-'+device+'.png'});
+    assert.ok(box&&box.width>=48&&box.height>=28&&box.x>=0&&box.x+box.width<=width+1,
+      device+' visible accessible copy control in viewport: '+JSON.stringify(geometry));
     const tabB=page.locator('#skyFoundationB [data-sky-drawer-tab="where"]');
     await tabB.scrollIntoViewIfNeeded();await tabB.click();
     const copyB=page.locator('#skyFoundationB .sky-where-when-editor [data-copy-where-when]');
