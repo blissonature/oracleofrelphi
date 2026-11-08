@@ -49,7 +49,11 @@ try{
     ].join('\n'),device+' selected name, place, date, time and zone');
     const initialStorage=await page.evaluate(()=>localStorage.getItem('relphiSkyChartA'));
     await form.locator('[data-ww-field="date"]').fill('2027-03-22');
-    await form.locator('[data-ww-field="time"]').fill('18:42');
+    const timeEntry=form.locator('[data-sky-time-entry]');
+    await timeEntry.fill('6:42 PM');
+    await timeEntry.press('Enter');
+    assert.equal(await form.locator('[data-ww-field="time"]').inputValue(),'18:42',
+      device+' visible time editor commits to its canonical HH:MM source');
     await copy.click();
     const draft=await clipboardHas('Date: 2027-03-22');
     assert.match(draft,/Date: 2027-03-22\nTime: 18:42/);
