@@ -604,7 +604,7 @@ if(!filled)return`<button class="sky-ph-handoff-slot is-empty" type="button" dat
 const info=planetaryHoursSlotPreview(slot),meta=[info.dateTime,info.location].filter(Boolean).join(' · ')||'Existing sky';
 return`<button class="sky-ph-handoff-slot" type="button" data-ph-handoff-slot="${slot}"><span class="sky-ph-handoff-action">Replace Sky ${slot}</span><strong class="sky-ph-handoff-name">${escapeHtml(info.name)}</strong><span class="sky-ph-handoff-meta">${escapeHtml(meta)}</span></button>`;
 }
-function choosePlanetaryHoursTarget(){
+function choosePlanetaryHoursTarget(sourceName='Planetary Hours moment',allowClearBoth=true){
 const aFilled=slotHasPlacements('A'),bFilled=slotHasPlacements('B');
 if(!aFilled)return Promise.resolve({slot:'A',clearBoth:false});
 return new Promise(resolve=>{
@@ -612,7 +612,7 @@ document.querySelector('.sky-ph-handoff-dialog')?.remove();
 const dialog=document.createElement('dialog');
 dialog.className='sky-ph-handoff-dialog';
 dialog.setAttribute('aria-labelledby','skyPhHandoffTitle');
-dialog.innerHTML=`<div class="sky-ph-handoff-inner"><h2 id="skyPhHandoffTitle">${bFilled?'Sky Chart slots filled':'Sky Chart already has a sky'}</h2><p>Where should this Planetary Hours moment go?</p><div class="sky-ph-handoff-slots">${planetaryHoursSlotMarkup('A',true)}${planetaryHoursSlotMarkup('B',bFilled)}</div><div class="sky-ph-handoff-actions">${bFilled?'<button class="sky-ph-handoff-clear" type="button" data-ph-handoff-clear>Clear both and open this moment</button>':''}<button class="sky-ph-handoff-cancel" type="button" data-ph-handoff-cancel>Cancel</button></div></div>`;
+dialog.innerHTML=`<div class="sky-ph-handoff-inner"><h2 id="skyPhHandoffTitle">${bFilled?'Sky Chart slots filled':'Sky Chart already has a sky'}</h2><p>Where should this ${escapeHtml(sourceName)} go?</p><div class="sky-ph-handoff-slots">${planetaryHoursSlotMarkup('A',true)}${planetaryHoursSlotMarkup('B',bFilled)}</div><div class="sky-ph-handoff-actions">${bFilled&&allowClearBoth?'<button class="sky-ph-handoff-clear" type="button" data-ph-handoff-clear>Clear both and open this moment</button>':''}<button class="sky-ph-handoff-cancel" type="button" data-ph-handoff-cancel>Cancel</button></div></div>`;
 const finish=choice=>{try{dialog.close()}catch(_){}dialog.remove();resolve(choice)};
 dialog.addEventListener('click',event=>{
 const slotButton=event.target.closest?.('[data-ph-handoff-slot]');
@@ -678,12 +678,95 @@ function schedulePlanetaryHoursHandoff(){
   };
   run();
 }
+// Selected text from the Chrome extension is an untrusted candidate, NEVER a sky.
+// Only this owner can open/initialize the editor; canonical location selection and
+// calculations still run through the existing Where and When transaction.
+function readSelectionHandoff(){
+  if(!location.hash.startsWith('#relphiSkyIntake='))return null;
+  const raw=new URLSearchParams(location.hash.slice(1)).get('relphiSkyIntake');
+  if(!raw||raw.length>1600)return null;
+  try{
+    const p=JSON.parse(raw);
+    if(p?.v!==1)return null;
+    const date=String(p.date||''),time=String(p.time||''),locationName=String(p.location||'').replace(/[\u0000-\u001f\u007f]/g,' ').trim().slice(0,180),unknown=p.timeUnknown===true;
+    if(date&&!/^\d{4}-\d{2}-\d{2}$/.test(date))return null;
+    if(date){
+      const dateCheck=new Date(date+'T00:00:00Z');
+      if(!Number.isFinite(dateCheck.getTime())||dateCheck.toISOString().slice(0,10)!==date)return null;
+    }
+    if(time&&!/^(?:[01]\d|2[0-3]):[0-5]\d$/.test(time))return null;
+    if(unknown&&time)return null;
+    if(!date&&!time&&!unknown&&!locationName)return null;
+    return{date,time,location:locationName,timeUnknown:unknown};
+  }catch(error){console.warn('[Sky Chart] Invalid selected Where and When',error);return null}
+}
+function cleanSelectionHandoffURL(){
+  if(!location.hash.startsWith('#relphiSkyIntake='))return;
+  const clean=new URL(location.href);clean.hash='';
+  history.replaceState(history.state,'',clean.pathname+clean.search);
+}
+let selectionHandoffConsumed=false;
+async function applySelectionHandoff(){
+  const packet=readSelectionHandoff();
+  if(!packet||selectionHandoffConsumed)return;
+  selectionHandoffConsumed=true;
+  const choice=await choosePlanetaryHoursTarget('selected Where and When',false);
+  if(!choice){cleanSelectionHandoffURL();return}
+  const slot=choice.slot;
+  // Revealing B is a navigational transition, not permission to alter a saved sky.
+  if(slot==='B'&&window.RelphiSkyStartupMode){
+    window.RelphiSkyStartupMode.writeMode('comparison');
+    window.RelphiSkyStartupMode.syncRoot();
+  }
+  window.RelphiSkyCardShell.openDrawer(slot,'where');
+  if(!formFor(slot))openEditor(slot,false);
+  const form=formFor(slot);
+  if(!form){selectionHandoffConsumed=false;return}
+  // Discard inherited values from an existing working sky BEFORE importing any field.
+  cardState[slot].selected=null;
+  const field=name=>form.querySelector('[data-ww-field="'+name+'"]');
+  for(const name of ['here','now']){const input=field(name);if(input)input.checked=false}
+  delete form.dataset.nowInstant;
+  for(const name of ['location-query','timezone','latitude','longitude','date','time']){
+    const input=field(name);if(input)input.value='';
+  }
+  const confirmation=form.querySelector('.sky-location-confirmation');
+  if(confirmation){confirmation.hidden=true;confirmation.replaceChildren()}
+  const results=form.querySelector('.sky-location-results');results?.replaceChildren();
+  if(field('date'))field('date').value=packet.date;
+  if(field('location-query'))field('location-query').value=packet.location;
+  if(field('time'))window.RelphiSkyTimeControl?.set?.(form,packet.time)|| (field('time').value=packet.time);
+  const unknown=field('time-unknown');
+  if(unknown){unknown.checked=packet.timeUnknown;unknown.dispatchEvent(new Event('change',{bubbles:true}))}
+  syncModes(slot);
+  status(slot,packet.location
+    ?'Recognized location loaded. Choose the matching search result, then supply any missing date/time.'
+    :'Recognized date/time loaded. Choose a location and supply any missing information.');
+  if(packet.location){
+    // The location search controller handles geocoding, timezone and choice.
+    form.querySelector('[data-ww-action="search-location"]')?.click();
+  }else{
+    requestAnimationFrame(()=>field('location-query')?.focus());
+  }
+  cleanSelectionHandoffURL();
+}
+function scheduleSelectionHandoff(){
+  if(!location.hash.startsWith('#relphiSkyIntake='))return;
+  let attempts=0;
+  const check=()=>{
+    attempts++;
+    const ready=window.RelphiSkyCardShell&&window.RelphiSkyWhereWhen&&document.querySelector('#skyFoundationRoot[aria-busy="false"]');
+    if(ready){void applySelectionHandoff();return}
+    if(attempts<160)setTimeout(check,50);
+  };
+  check();
+}
 window.addEventListener('storage',event=>{if(!event.key||Object.values(SLOT_KEYS).includes(event.key)){['A','B'].forEach(slot=>{window.RelphiSkyCardShell?.sync?.(slot,payload(slot));scheduleSummary(slot)})}});
 window.addEventListener('relphi:sky-foundation-ready',()=>{scheduleSummary('A');scheduleSummary('B')});
 window.addEventListener('relphi:sky-name-updated',event=>{const slot=event.detail?.slot;if(SLOT_KEYS[slot]){window.RelphiSkyCardShell?.sync?.(slot,payload(slot));scheduleSummary(slot,true)}});
 window.addEventListener('resize',()=>{['A','B'].forEach(slot=>{const svg=shell(slot)?.heptagram;if(svg&&svg.dataset.canonicalSourceReady==='true')svg.setAttribute('viewBox',window.matchMedia?.('(max-width:620px)')?.matches?'0 -8 360 368':'0 0 360 360')})},{passive:true});
 function recoverWhereWhen(){reconcileWhereWhenTransaction();['A','B'].forEach(slot=>{window.RelphiSkyCardShell?.ensure?.(slot,payload(slot));scheduleSummary(slot,true)})}
-function start(){installStyles();['A','B'].forEach(slot=>{freezeLegacyLiveSky(slot);shell(slot);scheduleSummary(slot)});schedulePlanetaryHoursHandoff()}
+function start(){installStyles();['A','B'].forEach(slot=>{freezeLegacyLiveSky(slot);shell(slot);scheduleSummary(slot)});schedulePlanetaryHoursHandoff();scheduleSelectionHandoff()}
 window.addEventListener('relphi:sky-session-recovered',recoverWhereWhen);
 document.readyState==='loading'?document.addEventListener('DOMContentLoaded',start,{once:true}):start();
 })();

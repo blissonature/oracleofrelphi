@@ -270,6 +270,13 @@
     }
   },true);
 
+  window.RelphiSkyTimeControl=Object.freeze({set:(form,value)=>{
+    const field=form?.querySelector(TIME_SELECTOR);
+    if(!field)return false;
+    field.value=String(value||'');
+    syncFromCanonical(field);
+    return true;
+  }});
   function start(){
     enhanceAll();
     const root=document.getElementById('skyFoundationRoot')||document.body;
