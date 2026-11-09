@@ -14,3 +14,6 @@ Download and unzip the extension folder (or the CI artifact). In Chrome, visit c
 
 ## Safety
 Recognition happens locally. Activating an item navigates to Oracle of Relphi, where the existing geocoder verifies places and the Where and When owner calculates a chart. Existing links, buttons, code, and editable content are not changed. Unusual or international addresses may require manual selection and confirmation. Existing sky data is not replaced without explicit user action.
+
+## Review-build destination
+This feature is in draft PR #375; the deployed live site does not yet contain the receiving code. The extension therefore defaults to the verified commit-pinned Sky Chart review build. In Options, switch to Live website after the Sky Chart changes are deployed. No PR has been merged automatically.

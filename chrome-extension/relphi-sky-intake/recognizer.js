@@ -96,12 +96,17 @@ function links(input,prefs={}){
   if(prefs.linkAddresses)found.push(...addresses(text));
   return found.sort((a,b)=>a.start-b.start||b.end-a.end).filter((x,i,all)=>!all.slice(0,i).some(y=>x.start<y.end));
 }
-function skyURL(data,base='https://oracleofrelphi.com/sky-chart.html'){
+// Review builds target the immutable, browser-verified Sky Chart receiver until merged.
+function destination(choice='preview'){
+  return choice==='live'?'https://oracleofrelphi.com/sky-chart.html':
+    'https://oracleofrelphi.com/sky-chart-preview/sky-chart.html?ref=a2cd9105d2ace34f3a12264203c41fb503eb7d7a';
+}
+function skyURL(data,base=destination()){
   if(!data?.hasAny||data.errors?.length)throw new Error('A recognizable, unambiguous date or address is required.');
   const url=new URL(base);if(!['http:','https:'].includes(url.protocol))throw new Error('Invalid Sky Chart URL.');
   const packet={v:1,date:data.date||'',time:data.time||'',timeUnknown:!!data.timeUnknown,location:data.location||''};
   url.hash='relphiSkyIntake='+encodeURIComponent(JSON.stringify(packet));
   return url.toString();
 }
-root.RelphiSkyRecognizer=Object.freeze({recognize,candidate,links,skyURL,dates,addresses,calendar});
+root.RelphiSkyRecognizer=Object.freeze({recognize,candidate,links,skyURL,destination,dates,addresses,calendar});
 })(globalThis);

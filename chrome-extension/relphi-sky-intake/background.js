@@ -1,14 +1,14 @@
 // Chrome MV3 launch owner. Calculation stays with Sky Chart's Where and When owner.
 importScripts('recognizer.js');
 const recognizer=globalThis.RelphiSkyRecognizer;
-const defaults={linkDates:false,linkAddresses:false,dateOrder:'unambiguous'};
+const defaults={linkDates:false,linkAddresses:false,dateOrder:'unambiguous',target:'preview'};
 function reviewURL(text,reason=''){
   return chrome.runtime.getURL('review.html')+'#'+new URLSearchParams({text:String(text||'').slice(0,5000),reason}).toString();
 }
 async function launch(input,kind='selection'){
   const text=String(input||'').slice(0,5000),settings=await chrome.storage.local.get(defaults);
   const data=recognizer.candidate(kind,text,settings);
-  await chrome.tabs.create({url:data.hasAny&&!data.errors.length?recognizer.skyURL(data):reviewURL(text,data.errors.join('; '))});
+  await chrome.tabs.create({url:data.hasAny&&!data.errors.length?recognizer.skyURL(data,recognizer.destination(settings.target)):reviewURL(text,data.errors.join('; '))});
   return data;
 }
 async function selection(tabId){

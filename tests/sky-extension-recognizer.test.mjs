@@ -39,3 +39,6 @@ assert.equal(packet.date,'2026-11-09');
 assert.equal(packet.location,'Salt Lake City, Utah');
 assert.equal(packet.time,'03:15');
 console.log('Recognizer accepted full/partial dates, local times, unknown time, independent links, and rejected ambiguous/invalid dates.');
+
+assert.match(R.destination('preview'),/sky-chart-preview\/sky-chart\.html\?ref=/);
+assert.equal(R.destination('live'),'https://oracleofrelphi.com/sky-chart.html');
