@@ -748,8 +748,19 @@ async function applySelectionHandoff(){
     ?'Recognized location loaded. Choose the matching search result, then supply any missing date/time.'
     :'Recognized date/time loaded. Choose a location and supply any missing information.');
   if(packet.location){
-    // The location search controller handles geocoding, timezone and choice.
-    form.querySelector('[data-ww-action="search-location"]')?.click();
+    // The location search owner does all geocoding and timezone resolution.
+    const candidates=await window.RelphiSkyLocationSearch?.search?.(slot);
+    const complete=Boolean(packet.date&&(packet.time||packet.timeUnknown));
+    if(complete&&Array.isArray(candidates)&&candidates.length===1){
+      // Auto-create only for a single place whose comma-delimited geographic
+      // components each actually match an identified canonical component.
+      const components=value=>String(value||'').split(',').map(v=>v.toLowerCase().replace(/[^a-z0-9 ]/g,'').replace(/\s+/g,' ').trim()).filter(Boolean);
+      const requested=components(packet.location),resolved=components(candidates[0].canonical);
+      const exact=requested.length>=2&&requested.every(part=>resolved.includes(part));
+      if(exact&&selectLocation(slot,{...candidates[0],source:'search'})){
+        await submitForm(slot,form);
+      }
+    }
   }else{
     requestAnimationFrame(()=>field('location-query')?.focus());
   }

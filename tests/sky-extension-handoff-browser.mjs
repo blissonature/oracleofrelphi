@@ -102,14 +102,9 @@ try{
   await full.page.goto(handoff({date:'2026-11-09',time:'15:15',timeUnknown:false,location:'Salt Lake City, Utah'}),{waitUntil:'domcontentloaded'});
   await full.page.waitForSelector('.sky-ph-handoff-dialog[open]',{timeout:25000});
   await full.page.locator('.sky-ph-handoff-dialog [data-ph-handoff-slot="B"]').click();
-  const completeForm=full.page.locator('#skyFoundationB .sky-where-when-editor');
-  await completeForm.waitFor({state:'visible',timeout:15000});
-  assert.equal(await completeForm.locator('[data-ww-field="date"]').inputValue(),'2026-11-09');
-  assert.equal(await completeForm.locator('[data-ww-field="time"]').inputValue(),'15:15');
-  await completeForm.locator('.sky-location-result').first().waitFor({state:'visible',timeout:15000});
-  await completeForm.locator('.sky-location-result').first().click();
-  assert.equal(await completeForm.locator('[data-ww-field="timezone"]').inputValue(),'America/Denver');
-  await completeForm.locator('button[type="submit"]').click();
+  // Exactly one canonical location matches BOTH the city and region.
+  // A complete candidate therefore creates the sky without extra actions.
+
   await full.page.waitForFunction(()=>{
     const raw=localStorage.getItem('relphiSkyChartB');if(!raw)return false;
     const value=JSON.parse(raw);
@@ -126,5 +121,23 @@ try{
   assert.deepEqual(full.errors.filter(x=>/TypeError|ReferenceError|SyntaxError/.test(x)),[]);
   await full.context.close();
   console.log('SKY_EXTENSION_FULL_CREATE PASS');
+
+  // With two geocoding candidates, the user must choose: do not guess and
+  // do not write any chart before the user confirms the place.
+  const ambiguous=await setup(1100,900,false,false);
+  await ambiguous.page.route('https://nominatim.openstreetmap.org/search**',route=>route.fulfill({contentType:'application/json',
+    body:JSON.stringify([
+      {lat:'40.7608',lon:'-111.891',display_name:'Salt Lake City, Utah, United States'},
+      {lat:'40.7000',lon:'-111.900',display_name:'Salt Lake City, Alternative, Utah, United States'}
+    ])}));
+  await ambiguous.page.goto(handoff({date:'2026-11-09',time:'15:15',timeUnknown:false,location:'Salt Lake City, Utah'}),{waitUntil:'domcontentloaded'});
+  const ambiguousForm=ambiguous.page.locator('#skyFoundationA .sky-where-when-editor');
+  await ambiguousForm.waitFor({state:'visible',timeout:30000});
+  await ambiguousForm.locator('.sky-location-result').first().waitFor({state:'visible',timeout:15000});
+  assert.equal(await ambiguousForm.locator('.sky-location-result').count(),2,'Both locations offered for review');
+  assert.equal(await ambiguous.page.evaluate(()=>localStorage.getItem('relphiSkyChartA')),null,'Multiple places never auto-create a sky');
+  await ambiguous.page.screenshot({path:'sky-extension-ambiguous-desktop.png'});
+  await ambiguous.context.close();
+  console.log('SKY_EXTENSION_AMBIGUOUS_PLACE PASS');
 }finally{await browser.close()}
 console.log('Site received partial and complete candidates safely and created a real sky through the existing calculation owner.');
