@@ -95,5 +95,36 @@ try{
   const after=await page.evaluate(()=>[localStorage.getItem('relphiSkyChartA'),localStorage.getItem('relphiSkyChartB')]);
   assert.deepEqual(before,after,'Cancel must not replace either occupied sky');
   await context.close();
+
+  // A complete selection can actually calculate a new working sky, without
+  // modifying the existing Sky A or copying stale data from the old Sky B.
+  const full=await setup(1100,900,true,true);
+  await full.page.goto(handoff({date:'2026-11-09',time:'15:15',timeUnknown:false,location:'Salt Lake City, Utah'}),{waitUntil:'domcontentloaded'});
+  await full.page.waitForSelector('.sky-ph-handoff-dialog[open]',{timeout:25000});
+  await full.page.locator('.sky-ph-handoff-dialog [data-ph-handoff-slot="B"]').click();
+  const completeForm=full.page.locator('#skyFoundationB .sky-where-when-editor');
+  await completeForm.waitFor({state:'visible',timeout:15000});
+  assert.equal(await completeForm.locator('[data-ww-field="date"]').inputValue(),'2026-11-09');
+  assert.equal(await completeForm.locator('[data-ww-field="time"]').inputValue(),'15:15');
+  await completeForm.locator('.sky-location-result').first().waitFor({state:'visible',timeout:15000});
+  await completeForm.locator('.sky-location-result').first().click();
+  assert.equal(await completeForm.locator('[data-ww-field="timezone"]').inputValue(),'America/Denver');
+  await completeForm.locator('button[type="submit"]').click();
+  await full.page.waitForFunction(()=>{
+    const raw=localStorage.getItem('relphiSkyChartB');if(!raw)return false;
+    const value=JSON.parse(raw);
+    return value?.calcProfile?.dateTime==='2026-11-09T15:15'&&Object.keys(value.placements||{}).length>=10;
+  },null,{timeout:25000});
+  const saved=await full.page.evaluate(()=>({
+    a:JSON.parse(localStorage.getItem('relphiSkyChartA')).name,
+    b:JSON.parse(localStorage.getItem('relphiSkyChartB')).calcProfile
+  }));
+  assert.equal(saved.a,'Saved Sky A','Completing a new sky must preserve the other working sky');
+  assert.ok(saved.b.location.includes('Salt Lake City'),'The geocoded location was used');
+  assert.equal(saved.b.timeZone,'America/Denver','Geocoded timezone is authoritative');
+  await full.page.screenshot({path:'sky-extension-complete-desktop.png'});
+  assert.deepEqual(full.errors.filter(x=>/TypeError|ReferenceError|SyntaxError/.test(x)),[]);
+  await full.context.close();
+  console.log('SKY_EXTENSION_FULL_CREATE PASS');
 }finally{await browser.close()}
-console.log('Site received date-only, address-only and complete candidate in the existing Sky Card flow, desktop/mobile, safely.');
+console.log('Site received partial and complete candidates safely and created a real sky through the existing calculation owner.');
