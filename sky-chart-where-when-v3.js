@@ -376,7 +376,7 @@ function selectLocation(slot,source){
   const confirmation=card?.querySelector('.sky-location-confirmation');
   if(confirmation){confirmation.hidden=false;confirmation.dataset.locationSource=packet.source||'search';confirmation.innerHTML=packet.source==='placement-inference'?`<p><strong>Location inferred from pasted placements</strong></p><p class="sky-inferred-location-value">${escapeHtml(packet.canonical)}</p>`:`<p><strong>You searched:</strong> ${escapeHtml(packet.query||packet.canonical)}</p><p><strong>Location found:</strong> ${escapeHtml(packet.canonical)}</p>`}
   card.querySelector('[data-ww-field="timezone"]').value=packet.timezone;card.querySelector('[data-ww-field="latitude"]').value=displayCoordinate(packet.latitude);card.querySelector('[data-ww-field="longitude"]').value=displayCoordinate(packet.longitude);
-  const when=card.querySelector('[data-ww-when]');when.disabled=false;when.querySelectorAll('input').forEach(node=>{node.disabled=false});card.querySelector('button[type="submit"]').disabled=false;
+  const when=card.querySelector('[data-ww-when]');when.disabled=false;when.querySelectorAll('input').forEach(node=>{node.disabled=node.matches('[data-ww-field="time"]')&&card.querySelector('[data-ww-field="time-unknown"]')?.checked===true});card.querySelector('button[type="submit"]').disabled=false;
   const hereToggle=card.querySelector('[data-ww-field="here"]');if(hereToggle)hereToggle.checked=packet.source==='current-location';
   syncModes(slot);
   status(slot,packet.source==='placement-inference'?'Inferred location ready. Review the date and time, then confirm.':'Location confirmed. Review the time and preview, then confirm.');
@@ -713,10 +713,15 @@ async function applySelectionHandoff(){
   const choice=await choosePlanetaryHoursTarget('selected Where and When',false);
   if(!choice){cleanSelectionHandoffURL();return}
   const slot=choice.slot;
-  // Revealing B is a navigational transition, not permission to alter a saved sky.
-  if(slot==='B'&&window.RelphiSkyStartupMode){
-    window.RelphiSkyStartupMode.writeMode('comparison');
-    window.RelphiSkyStartupMode.syncRoot();
+  // The Sky B slot controller owns the editing/visibility transition. Merely
+  // switching into comparison mode is insufficient while Sky B is still empty.
+  if(slot==='B'&&!slotHasPlacements('B')){
+    if(typeof window.RelphiSkySlotControls?.addSkyB!=='function'){
+      selectionHandoffConsumed=false;
+      status('A','Sky B could not be opened in this session.',true);
+      return;
+    }
+    window.RelphiSkySlotControls.addSkyB();
   }
   window.RelphiSkyCardShell.openDrawer(slot,'where');
   if(!formFor(slot))openEditor(slot,false);

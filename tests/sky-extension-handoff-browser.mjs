@@ -69,6 +69,22 @@ try{
     assert.deepEqual(b.errors.filter(x=>/TypeError|ReferenceError|SyntaxError/.test(x)),[],device+' no address intake errors');
     await b.context.close();
     console.log('SKY_EXTENSION_ADDRESS_'+device,'PASS');
+
+    // A selected date with explicitly unknown birth time must stay unknown
+    // through location search AND canonical location selection.
+    const unknownSky=await setup(width,height,false,false);
+    await unknownSky.page.goto(handoff({date:'2026-11-09',time:'',timeUnknown:true,location:'Salt Lake City, Utah'}),{waitUntil:'domcontentloaded'});
+    const unknownForm=unknownSky.page.locator('#skyFoundationA .sky-where-when-editor');
+    await unknownForm.waitFor({state:'visible',timeout:30000});
+    assert.equal(await unknownForm.locator('[data-ww-field="time-unknown"]').isChecked(),true);
+    assert.equal(await unknownForm.locator('[data-ww-field="time"]').isDisabled(),true);
+    await unknownForm.locator('.sky-location-result').first().waitFor({state:'visible',timeout:15000});
+    assert.equal(await unknownForm.locator('[data-ww-field="time"]').isDisabled(),true,'Search must preserve unknown-time disabling');
+    await unknownForm.locator('.sky-location-result').first().click();
+    assert.equal(await unknownForm.locator('[data-ww-field="time"]').isDisabled(),true,'Selecting canonical location must preserve unknown-time disabling');
+    assert.equal(await unknownForm.locator('[data-ww-field="date"]').inputValue(),'2026-11-09');
+    await unknownSky.context.close();
+    console.log('SKY_EXTENSION_UNKNOWN_TIME_'+device,'PASS');
   }
   // With both skies filled, clicking Cancel leaves BOTH untouched.
   const{context,page}=await setup(1100,900,true,true);
