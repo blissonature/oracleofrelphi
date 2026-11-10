@@ -355,6 +355,7 @@ jobs:
           assert.equal(houseArt.media,'local-house-art');
 
           await page.waitForSelector('#skyFoundationA [data-card-house-toggle]',{timeout:10000});
+          console.log('HOUSE_DETAIL_DIAG',JSON.stringify(await page.evaluate(()=>({count:document.querySelectorAll('#skyFoundationA .sky-card-house-span-major-art img').length,open:[...document.querySelectorAll('#skyFoundationA [data-card-house-toggle]')].filter(x=>x.getAttribute('aria-expanded')==='true').map(x=>x.dataset.cardHouseToggle),images:[...document.querySelectorAll('#skyFoundationA .sky-card-house-span-major-art img')].slice(0,8).map(x=>({src:x.src,complete:x.complete,natural:x.naturalWidth,visible:x.getBoundingClientRect().height>0})),details:document.querySelectorAll('#skyFoundationA .sky-card-house-detail').length}))));
           await page.waitForFunction(()=>{
             const imgs=[...document.querySelectorAll('#skyFoundationA .sky-card-house-detail-row[data-card-house-detail-role="ruler"] .sky-card-house-span-major-art img,#skyFoundationA .sky-card-house-detail-row[data-card-house-detail-role="sign"] .sky-card-house-span-major-art img')];
             return imgs.length===2&&imgs.every(img=>img.complete&&img.naturalWidth>0);
