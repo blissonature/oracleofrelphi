@@ -74,15 +74,20 @@ try{
     // through location search AND canonical location selection.
     const unknownSky=await setup(width,height,false,false);
     await unknownSky.page.goto(handoff({date:'2026-11-09',time:'',timeUnknown:true,location:'Salt Lake City, Utah'}),{waitUntil:'domcontentloaded'});
-    const unknownForm=unknownSky.page.locator('#skyFoundationA .sky-where-when-editor');
-    await unknownForm.waitFor({state:'visible',timeout:30000});
-    assert.equal(await unknownForm.locator('[data-ww-field="time-unknown"]').isChecked(),true);
-    assert.equal(await unknownForm.locator('[data-ww-field="time"]').isDisabled(),true);
-    await unknownForm.locator('.sky-location-result').first().waitFor({state:'visible',timeout:15000});
-    assert.equal(await unknownForm.locator('[data-ww-field="time"]').isDisabled(),true,'Search must preserve unknown-time disabling');
-    await unknownForm.locator('.sky-location-result').first().click();
-    assert.equal(await unknownForm.locator('[data-ww-field="time"]').isDisabled(),true,'Selecting canonical location must preserve unknown-time disabling');
-    assert.equal(await unknownForm.locator('[data-ww-field="date"]').inputValue(),'2026-11-09');
+    // A fully specified place + date + explicit unknown time is complete,
+    // so a uniquely resolved location should automatically create the correct
+    // daywide chart instead of leaving the editor open.
+    await unknownSky.page.waitForFunction(()=>{
+      const raw=localStorage.getItem('relphiSkyChartA');
+      if(!raw)return false;
+      const profile=JSON.parse(raw)?.calcProfile;
+      return profile?.dateTime==='2026-11-09'&&profile.timeUnknown===true&&
+        Number.isFinite(profile.moonRange?.start)&&Number.isFinite(profile.moonRange?.end);
+    },null,{timeout:30000});
+    const unknownValue=await unknownSky.page.evaluate(()=>JSON.parse(localStorage.getItem('relphiSkyChartA')));
+    assert.deepEqual(unknownValue.houseCusps,[],'Unknown-time sky has no fictitious houses');
+    assert.equal(unknownValue.calcProfile.timeZone,'America/Denver');
+    assert.ok(!unknownValue.placements.Moon,'Unknown-time Moon is a range, not a fake point');
     await unknownSky.context.close();
     console.log('SKY_EXTENSION_UNKNOWN_TIME_'+device,'PASS');
   }
