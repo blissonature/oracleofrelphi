@@ -34,7 +34,6 @@ jobs:
           node tests/drawing-board-free-grid-no-loop.test.cjs
           node tests/drawing-board-clarifier-settings.test.js
           node tests/drawing-board-single-owner.test.js
-          node tests/tarot-card-list-search.test.js
           node tests/tarot-theme-search.test.js
           node tests/sky-tarot-connector.test.js
           node tests/sky-chart-house-flashlight.test.cjs
@@ -48,6 +47,7 @@ jobs:
           RELPHI_TEST_URL: http://127.0.0.1:4173/tarot.html?board=workflow-v2#tarot
         run: |
           python3 -m http.server 4173 >/tmp/oracle-integration-server.log 2>&1 &
+          node tests/tarot-card-list-search.test.js
           node tests/drawing-board-main-composer.test.js
           node tests/drawing-board-bespoke-mobile-regression.test.js
           node tests/sky-chart-virtual-aspect-hover-browser.mjs
