@@ -45,7 +45,7 @@
     if (HIDDEN_CLASSES.some(className => row.classList.contains(className))) return false;
     // The HTML [hidden] attribute sets computed display:none; during isolation
     // that is only list presentation, never permission to hide wheel geometry.
-    return (exploring && row.hidden) || getComputedStyle(row).display !== 'none';
+    return (exploring && (row.hidden || row.classList.contains('is-wheel-selection-excluded'))) || getComputedStyle(row).display !== 'none';
   }
 
   function clearAutomaticSelection() {
