@@ -212,28 +212,28 @@ button.relphi-copy-icon-button[data-relphi-copy-format]::after{
   #skyFoundationRelationships .sky-foundation-relationships-heading>.sky-relationship-heading-actions{
     display:contents;
   }
-  #skyFoundationRelationships .sky-foundation-relationships-heading #skyFoundationRelationshipCount{
+  #skyFoundationRelationships .sky-foundation-relationships-heading>.sky-relationship-heading-actions>#skyFoundationRelationshipCount{
     grid-column:2;
     grid-row:1;
     justify-self:end;
   }
-  #skyFoundationRelationships .sky-foundation-relationships-heading .sky-relationship-copy-button{
+  #skyFoundationRelationships .sky-foundation-relationships-heading>.sky-relationship-heading-actions>.sky-relationship-copy-button{
     grid-column:3;
     grid-row:1;
     justify-self:end;
   }
-  #skyFoundationRelationships .sky-foundation-relationships-heading #skyChartRelationshipsExport{
+  #skyFoundationRelationships .sky-foundation-relationships-heading>.sky-relationship-heading-actions>#skyChartRelationshipsExport{
     grid-column:4;
     grid-row:1;
     justify-self:end;
   }
-  #skyFoundationRelationships .sky-foundation-relationships-heading .sky-relationship-sort-control{
+  #skyFoundationRelationships .sky-foundation-relationships-heading>.sky-relationship-heading-actions>.sky-relationship-sort-control{
     grid-column:1 / 4;
     grid-row:2;
     width:100%;
     min-width:0;
   }
-  #skyFoundationRelationships .sky-foundation-relationships-heading .sky-relationship-limit-control{
+  #skyFoundationRelationships .sky-foundation-relationships-heading>.sky-relationship-heading-actions>.sky-relationship-limit-control{
     grid-column:4;
     grid-row:2;
     justify-self:end;
