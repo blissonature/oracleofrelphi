@@ -137,8 +137,8 @@ try{
   assert.ok(sectorStyle.sign&&sectorStyle.house,`Active polarity must expose sign and house sectors: ${JSON.stringify(sectorStyle)}`);
   assert.equal(sectorStyle.sign.fillOpacity,.82,`Structure highlight must retain native zodiac fill opacity: ${JSON.stringify(sectorStyle)}`);
   assert.equal(sectorStyle.house.fillOpacity,.5,`Structure highlight must retain native house fill opacity: ${JSON.stringify(sectorStyle)}`);
-  assert.notEqual(sectorStyle.sign.filter,'none',`Structure sign must receive a subtle glow: ${JSON.stringify(sectorStyle)}`);
-  assert.notEqual(sectorStyle.house.filter,'none',`Structure house must receive a subtle glow: ${JSON.stringify(sectorStyle)}`);
+  assert.equal(sectorStyle.sign.filter,'none',`Structure sign must preserve the canonical sector treatment without a duplicate glow: ${JSON.stringify(sectorStyle)}`);
+  assert.equal(sectorStyle.house.filter,'none',`Structure house must preserve the canonical sector treatment without a duplicate glow: ${JSON.stringify(sectorStyle)}`);
   const untouched=await page.evaluate(()=>({
     placement:Number(getComputedStyle(document.querySelector('#skyFoundationWheelMount [data-focus-piece="placement"][data-sky="A"][data-placement="moon"]:not(.is-vocab-context)')).opacity),
     sign:Number(getComputedStyle(document.querySelector('#skyFoundationWheelMount .sky-foundation-sign-sector:not(.is-vocab-context)')).opacity)
