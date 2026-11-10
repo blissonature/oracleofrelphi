@@ -54,8 +54,8 @@ function installStyles(){
     .sky-card-house-detail-stack{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:.52rem!important;min-width:0!important;align-items:start!important}
     .sky-card-house-detail-row:not(.sky-card-house-detail-row-decan){display:grid!important;grid-template-columns:minmax(0,1fr)!important;align-content:start!important;justify-items:center!important;gap:.32rem!important;min-width:0!important;padding:.5rem .42rem .56rem!important;border:1px solid rgba(31,27,24,.09)!important;border-top:3px solid var(--sky-house-unit-color,#777)!important;border-left:1px solid rgba(31,27,24,.09)!important;border-radius:.72rem!important;background:#fffdfa!important;box-shadow:0 1px 3px rgba(31,27,24,.035)!important;text-align:center!important}
     .sky-card-house-detail-row:not(.sky-card-house-detail-row-decan) .sky-card-house-detail-role{justify-self:start!important;width:100%!important;padding:0!important;color:#665d55!important;font:950 .5rem/1 system-ui,sans-serif!important;letter-spacing:.07em!important;text-align:left!important;text-transform:uppercase!important;white-space:nowrap!important}
-    .sky-card-house-span-major-art{display:block!important;width:52px!important;height:90px!important;max-width:52px!important;aspect-ratio:500/866!important;margin:.02rem auto 0!important;border:1px solid rgba(31,27,24,.2)!important;border-radius:5px!important;background:#eee!important;box-shadow:0 2px 6px rgba(31,27,24,.12)!important;overflow:hidden!important}
-    .sky-card-house-span-major-art>img{display:block!important;width:100%!important;height:100%!important;object-fit:cover!important;border-radius:4px!important}
+    .sky-card-house-span-major-art{display:block!important;width:52px!important;height:auto!important;max-width:52px!important;aspect-ratio:auto!important;margin:.02rem auto 0!important;border:1px solid rgba(31,27,24,.2)!important;border-radius:5px!important;background:#eee!important;box-shadow:0 2px 6px rgba(31,27,24,.12)!important;overflow:hidden!important}
+    .sky-card-house-span-major-art>img{display:block!important;width:100%!important;height:auto!important;object-fit:contain!important;border-radius:0!important}
     .sky-card-house-detail-row:not(.sky-card-house-detail-row-decan) .sky-card-house-detail-copy{display:grid!important;align-content:start!important;justify-items:center!important;gap:.25rem!important;width:100%!important;min-width:0!important;text-align:center!important}
     .sky-card-house-detail-row:not(.sky-card-house-detail-row-decan) .sky-card-house-detail-card-name{display:block!important;max-width:100%!important;color:#655d56!important;font:760 .61rem/1.22 system-ui,sans-serif!important;white-space:normal!important;overflow-wrap:anywhere!important}
     .sky-card-house-detail-row:not(.sky-card-house-detail-row-decan) .sky-card-house-detail-name-line{display:flex!important;align-items:center!important;justify-content:center!important;flex-wrap:wrap!important;gap:.3rem!important;min-width:0!important;width:100%!important}
@@ -64,7 +64,7 @@ function installStyles(){
     .sky-card-house-detail-stack:has(> .sky-card-house-detail-row:not(.sky-card-house-detail-row-decan) .sky-card-house-progressive-name[aria-expanded="true"]){grid-template-columns:minmax(0,1fr)!important}
     .sky-card-house-detail-stack:has(> .sky-card-house-detail-row:not(.sky-card-house-detail-row-decan) .sky-card-house-progressive-name[aria-expanded="true"]) > .sky-card-house-detail-row:not(.sky-card-house-detail-row-decan){grid-template-columns:64px minmax(0,1fr)!important;grid-template-areas:"role role" "art copy"!important;align-items:center!important;justify-items:start!important;text-align:left!important}
     .sky-card-house-detail-stack:has(> .sky-card-house-detail-row:not(.sky-card-house-detail-row-decan) .sky-card-house-progressive-name[aria-expanded="true"]) > .sky-card-house-detail-row:not(.sky-card-house-detail-row-decan) .sky-card-house-detail-role{grid-area:role!important}
-    .sky-card-house-detail-stack:has(> .sky-card-house-detail-row:not(.sky-card-house-detail-row-decan) .sky-card-house-progressive-name[aria-expanded="true"]) > .sky-card-house-detail-row:not(.sky-card-house-detail-row-decan) .sky-card-house-span-major-art{grid-area:art!important;margin:0!important;width:58px!important;height:100px!important;max-width:58px!important}
+    .sky-card-house-detail-stack:has(> .sky-card-house-detail-row:not(.sky-card-house-detail-row-decan) .sky-card-house-progressive-name[aria-expanded="true"]) > .sky-card-house-detail-row:not(.sky-card-house-detail-row-decan) .sky-card-house-span-major-art{grid-area:art!important;margin:0!important;width:58px!important;height:auto!important;max-width:58px!important}
     .sky-card-house-detail-stack:has(> .sky-card-house-detail-row:not(.sky-card-house-detail-row-decan) .sky-card-house-progressive-name[aria-expanded="true"]) > .sky-card-house-detail-row:not(.sky-card-house-detail-row-decan) .sky-card-house-detail-copy{grid-area:copy!important;justify-items:start!important;text-align:left!important}
     .sky-card-house-detail-stack:has(> .sky-card-house-detail-row:not(.sky-card-house-detail-row-decan) .sky-card-house-progressive-name[aria-expanded="true"]) > .sky-card-house-detail-row:not(.sky-card-house-detail-row-decan) .sky-card-house-detail-name-line{justify-content:flex-start!important}
 
@@ -85,8 +85,8 @@ function installStyles(){
     .sky-card-house-decans-list{display:grid!important;gap:.48rem!important;min-width:0!important}
     .sky-card-house-detail-row-decan{display:grid!important;grid-template-columns:58px minmax(0,1fr)!important;align-items:start!important;gap:.58rem!important;min-width:0!important;padding:.56rem!important;border:1px solid rgba(31,27,24,.09)!important;border-left:3px solid var(--sky-house-unit-color,#777)!important;border-radius:.72rem!important;background:color-mix(in srgb,var(--sky-house-unit-color,#777) 3%,#fffdfa)!important;box-shadow:0 1px 3px rgba(31,27,24,.035)!important}
     .sky-card-house-detail-row-decan > .sky-card-house-detail-role{display:none!important}
-    .sky-card-house-decan-art{display:block!important;width:58px!important;height:100px!important;max-width:58px!important;aspect-ratio:500/866!important;margin:0!important;border:1px solid rgba(31,27,24,.2)!important;border-radius:5px!important;background:#eee!important;box-shadow:0 2px 6px rgba(31,27,24,.12)!important;overflow:hidden!important}
-    .sky-card-house-decan-art>img{display:block!important;width:100%!important;height:100%!important;object-fit:cover!important;border-radius:4px!important}
+    .sky-card-house-decan-art{display:block!important;width:58px!important;height:auto!important;max-width:58px!important;aspect-ratio:auto!important;margin:0!important;border:1px solid rgba(31,27,24,.2)!important;border-radius:5px!important;background:#eee!important;box-shadow:0 2px 6px rgba(31,27,24,.12)!important;overflow:hidden!important}
+    .sky-card-house-decan-art>img{display:block!important;width:100%!important;height:auto!important;object-fit:contain!important;border-radius:0!important}
     .sky-card-house-decan-meta{display:block!important;color:#403a35!important;font:850 .68rem/1.26 system-ui,sans-serif!important;white-space:normal!important}
     .sky-card-house-face{display:grid!important;gap:.22rem!important;min-width:0!important;margin-top:.12rem!important}
     .sky-card-house-face-line{display:flex!important;align-items:center!important;flex-wrap:wrap!important;gap:.34rem!important;min-width:0!important}
@@ -103,13 +103,13 @@ function installStyles(){
       .sky-card-house-toggle-glyph{flex-basis:29px!important;width:29px!important;height:29px!important}
       .sky-card-house-detail-stack{gap:.46rem!important}
       .sky-card-house-detail-row:not(.sky-card-house-detail-row-decan){padding:.46rem .36rem .52rem!important}
-      .sky-card-house-span-major-art{width:50px!important;height:87px!important;max-width:50px!important}
+      .sky-card-house-span-major-art{width:50px!important;height:auto!important;max-width:50px!important}
       .sky-card-house-detail-glyph{flex-basis:31px!important;width:31px!important;height:31px!important}
       .sky-card-house-progressive-name{font-size:.7rem!important}
       .sky-card-house-detail-card-name{font-size:.62rem!important}
       .sky-card-house-progressive-referent{font-size:.62rem!important;line-height:1.42!important}
       .sky-card-house-detail-row-decan{grid-template-columns:56px minmax(0,1fr)!important;gap:.52rem!important;padding:.52rem!important}
-      .sky-card-house-decan-art{width:56px!important;height:97px!important;max-width:56px!important}
+      .sky-card-house-decan-art{width:56px!important;height:auto!important;max-width:56px!important}
       .sky-card-house-decan-meta{font-size:.66rem!important}
       .sky-card-house-first-tip{align-items:flex-start}
     }
