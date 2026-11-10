@@ -104,6 +104,9 @@ await page.addInitScript(({ a, b, fixed }) => {
 await page.goto('http://127.0.0.1:4173/sky-chart.html', { waitUntil:'domcontentloaded', timeout:15000 });
 await page.waitForSelector('#skyFoundationRoot[aria-busy="false"]', { timeout:20000 });
 await page.waitForFunction(() => document.documentElement.dataset.skyFinalPass === 'v2');
+// Each Sky Card mounts its heptagram when the actual Where and When drawer opens.
+await page.locator('#skyFoundationA [data-sky-drawer-tab="where"]').click();
+await page.locator('#skyFoundationB [data-sky-drawer-tab="where"]').click();
 await page.waitForFunction(() => document.querySelectorAll('.sky-ph-heptagram').length === 2);
 await page.waitForFunction(() => Array.from(document.querySelectorAll('.sky-ph-summary')).every(node => !/Calculating/i.test(node.textContent || '')));
 

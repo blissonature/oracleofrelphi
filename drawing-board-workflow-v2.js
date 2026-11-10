@@ -389,7 +389,7 @@
   ];
   const HOUSE_POLARITIES = {
     version:1,id:'six-polarities-houses-12',name:'Six Polarities · Houses',cardCount:12,source:'shipped',editable:false,
-    positions:singleRowPositions(HOUSE_POLARITY_LABELS).map((item,index) => ({ ...item, id:`polarity-${index + 1}` })),
+    positions:legacyGenericPositions(HOUSE_POLARITY_LABELS).map((item,index) => ({ ...item, id:`polarity-${index + 1}` })),
     rules:{ allowReversals:true, allowRepeats:false, drawScope:'full' }
   };
 
@@ -441,6 +441,7 @@
     name:'Relphi Recursive Reading',
     cardCount:22,
     virtualPositionCount:6,
+    positionCount:22+6,
     source:'shipped',
     editable:false,
     recursion:true,
@@ -1248,6 +1249,27 @@
   // Catch toolbar actions before Tarot Ledger's legacy click handlers rerender
   // the board. The composer may be recreated, so listeners must be stable.
   async function mainComposerGlobalClick(event){
+    // Native details toggle events are asynchronous. Close competing disclosures
+    // at the actual summary click, before a queued initial-render toggle can
+    // choose an older disclosure over the one the visitor just opened.
+    const summary=event.target.closest?.('#shortListPanel .relphi-main-composer details > summary');
+    const disclosure=summary?.parentElement;
+    const disclosureStateKeys=new Map([
+      ['relphi-main-template-disclosure','openTemplates'],
+      ['relphi-main-building-disclosure','openBlocks'],
+      ['relphi-main-draw-defaults','openDefaults'],
+      ['relphi-main-journal','openJournal']
+    ]);
+    if(disclosure&&!disclosure.open&&[...disclosureStateKeys.keys()].some(name=>disclosure.classList.contains(name))){
+      const host=disclosure.closest('.relphi-main-composer'),state=getMainComposer();
+      host.querySelectorAll('.relphi-main-template-disclosure,.relphi-main-building-disclosure,.relphi-main-draw-defaults,.relphi-main-journal').forEach(other=>{
+        if(other===disclosure)return;
+        other.open=false;
+        disclosureStateKeys.forEach((key,name)=>{if(other.classList.contains(name))state[key]=false});
+      });
+      saveMainComposer();
+      return;
+    }
     const button=event.target.closest?.('#shortListPanel .relphi-main-composer [data-main-action]');
     if(!button)return;
     event.preventDefault();
@@ -1944,7 +1966,7 @@
       root.classList.add('relphi-board-ready');
       enhance(root);
       installSacredResumeGate(root);
-      requestAnimationFrame(() => root.scrollIntoView({ behavior:'smooth', block:'start' }));
+      requestAnimationFrame(() => root.scrollIntoView({ block:'start' }));
       if (fit) { requestAnimationFrame(()=>requestAnimationFrame(zoomExtents)); setTimeout(zoomExtents, 180); }
     } else {
       closeFocus({ acknowledge:true, advanceSurface:false });
@@ -6257,7 +6279,7 @@
       stickers:true
     };
     if(!launchConfiguredReading(root,clone(optionsSession.draft)))return false;
-    root.scrollIntoView?.({behavior:'smooth',block:'start'});
+    root.scrollIntoView?.({block:'start'});
     setTimeout(()=>{const live=panel();if(!live)return;const next=nextUndrawnNativeIndex(live);if(next!=null)openAttune(next);},0);
     return true;
   }

@@ -22,10 +22,10 @@ assert.match(board, /id="relphiPositionLabels"/);
 assert.match(board, /id="relphiAddPosition"/);
 assert.match(board, /const acceptCommaList=\(value\)=>/);
 assert.match(board, /labelsList\?\.addEventListener\('focusout'/); // Pasted values share the input commit path
-assert.match(board, /pasted\.includes\(','\)/);
+assert.match(board, /value\.includes\(','\)/);
 assert.match(board, /draft\.labels=labels/);
-assert.match(runtime, /comma-separated questions should create three individual label fields/);
-assert.match(runtime, /individual label fields must mirror the comma-separated first field/);
+assert.match(runtime, /Parse must create three individual question fields/);
+assert.match(runtime, /parsed questions must populate the individual fields/);
 assert.match(runtime, /comma-separated questions should become board position labels/);
 assert.doesNotMatch(app, /shortListPositionLabels[^\n]{0,180}slice\(0,\s*(?:90|96)\)/);
 assert.doesNotMatch(prefabs, /label:[^\n]{0,160}slice\(0,\s*90\)/);

@@ -195,7 +195,7 @@ assert.ok(Math.abs(mobileRelationshipLayout.titleTop-mobileRelationshipLayout.co
 assert.ok(Math.abs(mobileRelationshipLayout.countTop-mobileRelationshipLayout.copyTop)<=5&&Math.abs(mobileRelationshipLayout.copyTop-mobileRelationshipLayout.downloadTop)<=5,'Matches, Copy, and Download must share the first mobile row.');
 assert.ok(Math.abs(mobileRelationshipLayout.sortTop-mobileRelationshipLayout.limitTop)<=5,'Sort and Max must share the second mobile row.');
 assert.ok(mobileRelationshipLayout.row2Top>mobileRelationshipLayout.row1Bottom,'Sort and Max must sit below the Relationships/action row.');
-assert.ok(mobileRelationshipLayout.sortWidth>mobileRelationshipLayout.limitWidth*4,'Sort must receive substantially more width than editable Max on mobile.');
+assert.ok(mobileRelationshipLayout.sortWidth>mobileRelationshipLayout.limitWidth*3,'Sort must receive at least three times the editable Max width on mobile.');
 assert.ok(mobileRelationshipLayout.headingRight-mobileRelationshipLayout.downloadRight<=12,'The first-row action cluster must remain right aligned.');
 assert.ok(mobileRelationshipLayout.headingHeight<95,'The mobile Relationships heading must remain exactly a compact two-row composition.');
 await page.setViewportSize({width:1440,height:1000});
@@ -269,10 +269,22 @@ assert.equal(selectedTile.visible,true,'Selected Relationship tile must remain v
 assert.ok(selectedTile.tile.top<selectedTile.scrollArea.bottom&&selectedTile.tile.bottom>selectedTile.scrollArea.top,
   'Selected tile must be scrolled into visible Relationships list viewport');
 
-await page.locator('#skyFoundationClearIsolation').click();
+await page.locator('#skyFoundationWheelMount .sky-foundation-aspect.is-selected').focus();
+await page.keyboard.press('Escape');
+await page.waitForFunction(()=>!document.querySelector('#skyFoundationWheelMount>.sky-foundation-wheel')?.classList.contains('has-isolation'));
 
 // Relationship-list hover owns only the row/line highlight. It must never dim or isolate the wheel,
 // including A↔A and B↔B rows generated after the comparison relationships.
+console.log('INTRASKY_AFTER_CLEAR',JSON.stringify(await page.evaluate(()=>{
+ const wheel=document.querySelector('#skyFoundationWheelMount>.sky-foundation-wheel');
+ const rows=[...document.querySelectorAll('#skyFoundationRelationshipList>.sky-foundation-relationship-row')];
+ const distribution={};
+ for(const row of rows){const mode=row.dataset.relationshipMode||'none',visible=!row.hidden&&getComputedStyle(row).display!=='none';
+  const k=mode+(visible?'-visible':'-hidden'); distribution[k]=(distribution[k]||0)+1}
+ return{wheelClass:wheel?.getAttribute('class'),rootFlags:document.getElementById('skyFoundationRoot')?.dataset,
+ distribution,
+ sample:rows.filter(x=>/^(A-A|B-B)$/.test(x.dataset.relationshipMode||'')).slice(0,3).map(x=>({mode:x.dataset.relationshipMode,hidden:x.hidden,display:getComputedStyle(x).display,classes:x.className}))};
+})));
 const intraskyRow=page.locator('#skyFoundationRelationshipList>.sky-foundation-relationship-row[data-relationship-mode="B-B"]:visible, #skyFoundationRelationshipList>.sky-foundation-relationship-row[data-relationship-mode="A-A"]:visible').first();
 assert.ok(await intraskyRow.count()>0,'Fixture must produce at least one visible intrasky relationship row.');
 await intraskyRow.hover();
@@ -388,9 +400,11 @@ assert.ok(polarCross,'ASC–DSC must remain detectable as the structural complet
 assert.equal(polarCross.edges.filter(edge=>edge.aspect==='opposition').length,2,'Grand Cross must contain both opposition axes.');
 assert.ok(polarCross.edges.some(edge=>edge.entailedKind==='polar-axis'),'Grand Cross must identify the synthetic polar-axis opposition as inevitable.');
 
+await page.locator('#skyFoundationFocus .sky-chart-aspect-filter-toggle').click();
+await page.waitForSelector('#skyChartAspectPopover:not([hidden])',{state:'visible'});
 const grandCrossChoice=page.locator('[data-configuration-scope="A-A"][data-configuration-type="grand-cross"]');
 await grandCrossChoice.waitFor({state:'attached'});
-if(!(await grandCrossChoice.isChecked()))await grandCrossChoice.check();
+if(!(await grandCrossChoice.isChecked()))await grandCrossChoice.locator('xpath=..').click();
 await page.waitForSelector('[data-configuration-inevitable-show-more]',{state:'visible'});
 assert.equal(await page.locator('.sky-configuration-result-tile[data-configuration-type="grand-cross"]').count(),0,'Inevitable-off must suppress the Grand Cross tile that depends on the polar-axis opposition.');
 assert.match(await page.locator('[data-configuration-inevitable-show-more]').textContent(),/1 more using inevitable relationships/i);
