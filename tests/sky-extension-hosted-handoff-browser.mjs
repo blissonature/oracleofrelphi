@@ -10,7 +10,10 @@ try {
   // including its document.write loader and pinned relative script assets.
   for(const [width,height,device] of [[1365,920,'desktop'],[390,844,'mobile']]){
     const context=await browser.newContext({viewport:{width,height},serviceWorkers:'block'});
-    const page=await context.newPage(),failures=[];
+    const page=await context.newPage(),failures=[],failedRequests=[],badResponses=[];
+    page.on('requestfailed',request=>failedRequests.push({url:request.url(),failure:request.failure()}));
+    page.on('response',response=>{if(!response.ok())badResponses.push({url:response.url(),status:response.status()})});
+    page.on('console',message=>{if(message.type()==='error')failures.push('Console: '+message.text())});
     page.on('pageerror',e=>failures.push(String(e.message)));
     await page.route('https://nominatim.openstreetmap.org/search**',route=>
       route.fulfill({status:200,contentType:'application/json',body:JSON.stringify([{
@@ -29,7 +32,23 @@ try {
       const sky=JSON.parse(raw);
       return sky?.calcProfile?.dateTime==='2026-11-09T15:15'&&sky?.calcProfile?.timeZone==='America/Denver'&&
         Object.keys(sky.placements||{}).length>=10;
-    },null,{timeout:65000});
+    },null,{timeout:26000}).catch(async error=>{
+      const diag=await page.evaluate(()=>({
+        href:location.href,readyState:document.readyState,title:document.title,
+        previewStatus:document.getElementById('previewStatus')?.textContent||'',
+        bodyText:document.body?.innerText?.slice(0,900)||'',
+        base:document.querySelector('base')?.href||'',
+        scripts:document.scripts.length,root:document.getElementById('skyFoundationRoot')?.outerHTML?.slice(0,250)||'',
+        controllers:{where:!!window.RelphiSkyWhereWhen,geocoder:!!window.RelphiSkyLocationSearch},
+        editorCount:document.querySelectorAll('.sky-where-when-editor').length,
+        dialog:document.querySelector('.sky-ph-handoff-dialog')?.innerText||'',
+        status:document.querySelector('#skyFoundationA .sky-where-when-status')?.textContent||'',
+        storedA:localStorage.getItem('relphiSkyChartA')?.slice(0,1000)||''
+      }));
+      console.error('HOSTED_SELECTION_DIAGNOSTIC_'+device,JSON.stringify({diag,failedRequests,badResponses,errors:failures}));
+      await page.screenshot({path:'sky-extension-hosted-diagnostic-'+device+'.png',fullPage:false}).catch(()=>{});
+      throw error;
+    });
     const done=await page.evaluate(()=>{
       const payload=JSON.parse(localStorage.getItem('relphiSkyChartA'));
       return{url:location.href,skyName:payload.name,dateTime:payload.calcProfile.dateTime,
