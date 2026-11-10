@@ -109,8 +109,10 @@ try{
   assert.ok(restoredMembers.includes('south-node'),`South Node must return when the shared Harmonic Window is restored: ${JSON.stringify(restoredMembers)}`);
   assert.ok(restoredMembers.includes('north-node'),`North Node must return when the shared Harmonic Window is restored: ${JSON.stringify(restoredMembers)}`);
 
-  // Dispatch from the structure row itself so the test exercises row context rather
-  // than accidentally landing on one of the many child tokens at the row's center.
+  // Move the real pointer away from the previous filter/result target first.
+  // Only then exercise the actual structure row, without aiming at its child tokens.
+  await page.mouse.move(2,2);
+  await page.waitForFunction(()=>!document.querySelector('#skyFoundationWheelMount>.sky-foundation-wheel')?.classList.contains('has-isolation'));
   await vertex.dispatchEvent('pointerover',{pointerType:'mouse'});
   console.log('VOCAB_WHEEL_CONTEXT_DIAGNOSTIC',JSON.stringify(await page.evaluate(()=>({wheel:document.querySelector('#skyFoundationWheelMount>.sky-foundation-wheel')?.className?.baseVal,clickedNode:document.querySelector('#skyFoundationA [data-vocab-axis="vertex-anti-vertex"]')?.className,context:document.querySelector('#skyFoundationWheelMount>.sky-foundation-wheel')?.dataset.vocabIsolation,focus:window.RelphiSkyFoundationInteractions?.captureFocus?.()}))));
   await page.waitForFunction(()=>document.querySelector('#skyFoundationWheelMount>.sky-foundation-wheel')?.classList.contains('has-vocab-axis-context'));
