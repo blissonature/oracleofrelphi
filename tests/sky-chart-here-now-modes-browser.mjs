@@ -39,15 +39,16 @@ try{
  assert.equal(footerInitially.columns,2,'The footer must contain only the original Cancel and Use buttons.');
  const topOrder=await form.evaluate(node=>{
    const body=node.querySelector('.sky-where-when-scroll-body');
-   const relevant=[...body.children].filter(el=>el.matches('.sky-where-when-one-click,[data-ww-where],[data-ww-when],[data-ww-heptagram-slot]'));
+   const relevant=[...body.children].filter(el=>el.matches('.sky-where-when-main-actions,[data-ww-where],[data-ww-when],[data-ww-heptagram-slot]'));
    const button=body.querySelector('.sky-where-when-one-click');
-   return{order:relevant.map(el=>el.dataset.wwAction==='here-and-now'?'here-and-now':el.hasAttribute('data-ww-where')?'where':el.hasAttribute('data-ww-when')?'when':'heptagram'),
+   return{order:relevant.map(el=>el.classList.contains('sky-where-when-main-actions')?'main-actions':el.hasAttribute('data-ww-where')?'where':el.hasAttribute('data-ww-when')?'when':'heptagram'),
      buttonCount:node.querySelectorAll('[data-ww-action="here-and-now"]').length,
-     buttonIcon:!!button?.querySelector('svg'),
+     buttonIcon:!!button?.querySelector('svg'),copyCount:node.querySelectorAll('.sky-where-when-main-actions [data-copy-where-when]').length,
      buttonVisible:button?.getBoundingClientRect().height>0};
  });
  assert.equal(topOrder.buttonCount,1,'One-click Here and Now must exist exactly once.');
- assert.deepEqual(topOrder.order,['here-and-now','where','when','heptagram']);
+ assert.deepEqual(topOrder.order,['main-actions','where','when','heptagram']);
+ assert.equal(topOrder.copyCount,1,'Where and When Copy stays beside the single Here and Now action.');
  assert.equal(topOrder.buttonIcon,true,'The single button must contain its refresh icon.');
  assert.equal(topOrder.buttonVisible,true,'The top action must be visible.');
 
