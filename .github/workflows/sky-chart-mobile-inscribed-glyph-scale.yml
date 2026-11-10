@@ -1,0 +1,30 @@
+name: Sky Chart mobile inscribed canonical glyph scale
+on:
+  pull_request:
+    paths:
+      - sky-chart-foundation-v2.js
+      - tests/sky-chart-mobile-inscribed-glyph-scale-browser.mjs
+      - .github/workflows/sky-chart-mobile-inscribed-glyph-scale.yml
+  workflow_dispatch:
+jobs:
+  glyph-scale-browser:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --no-save playwright@1.55.0 suncalc@1.9.0 luxon@3
+      - run: npx playwright install --with-deps chromium
+      - name: Chromium desktop/mobile comparison, standalone, and tap
+        run: |
+          python3 -m http.server 4173 --bind 127.0.0.1 >/tmp/sky-glyph-server.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill $SERVER_PID || true' EXIT
+          node tests/sky-chart-mobile-inscribed-glyph-scale-browser.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: mobile-inscribed-glyph-scale-evidence
+          path: sky-inscribed-glyph-*.png
+          if-no-files-found: ignore
