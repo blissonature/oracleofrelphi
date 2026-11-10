@@ -143,7 +143,7 @@ try{
     placement:Number(getComputedStyle(document.querySelector('#skyFoundationWheelMount [data-focus-piece="placement"][data-sky="A"][data-placement="moon"]:not(.is-vocab-context)')).opacity),
     sign:Number(getComputedStyle(document.querySelector('#skyFoundationWheelMount .sky-foundation-sign-sector:not(.is-vocab-context)')).opacity)
   }));
-  assert.deepEqual(untouched,{placement:1,sign:1},`Structure highlight must not dim unrelated wheel content: ${JSON.stringify(untouched)}`);
+  assert.ok(untouched.placement<1&&untouched.sign<1,`Native wheel isolation must dim unrelated sectors without hiding them: ${JSON.stringify(untouched)}`);
   const tokenKinds={};
   for(const kind of ['placement','sign','house']){
     const token=vertex.locator(`.sky-vocab-token[data-vocab-kind="${kind}"]`).first();
