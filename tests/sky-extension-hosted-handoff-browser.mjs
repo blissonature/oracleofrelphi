@@ -49,6 +49,9 @@ try {
       await page.screenshot({path:'sky-extension-hosted-diagnostic-'+device+'.png',fullPage:false}).catch(()=>{});
       throw error;
     });
+    // Placement persistence precedes the final async Chiron/commit cleanup.
+    // Wait for the receiving owner to consume the handoff before asserting URL state.
+    await page.waitForFunction(()=>location.hash==='',null,{timeout:15000});
     const done=await page.evaluate(()=>{
       const payload=JSON.parse(localStorage.getItem('relphiSkyChartA'));
       return{url:location.href,skyName:payload.name,dateTime:payload.calcProfile.dateTime,
