@@ -109,6 +109,10 @@ try{
   assert.ok(restoredMembers.includes('south-node'),`South Node must return when the shared Harmonic Window is restored: ${JSON.stringify(restoredMembers)}`);
   assert.ok(restoredMembers.includes('north-node'),`North Node must return when the shared Harmonic Window is restored: ${JSON.stringify(restoredMembers)}`);
 
+  const structureGroup=vertex.locator('xpath=ancestor::details[contains(@class,"sky-vocab-group")]').first();
+  if(await structureGroup.count()&&await structureGroup.getAttribute('open')===null){
+    await structureGroup.locator(':scope > summary').click();
+  }
   // Move the real pointer away from the previous filter/result target first.
   // Only then exercise the actual structure row, without aiming at its child tokens.
   await page.mouse.move(2,2);
@@ -144,40 +148,42 @@ try{
     sign:Number(getComputedStyle(document.querySelector('#skyFoundationWheelMount .sky-foundation-sign-sector:not(.is-vocab-context)')).opacity)
   }));
   assert.ok(untouched.placement<1&&untouched.sign<1,`Native wheel isolation must dim unrelated sectors without hiding them: ${JSON.stringify(untouched)}`);
+  // The Vocab tokens now delegate to the canonical foundation focus owner.
+  // There must be no second Vocab-only highlight/brightness or selection state.
   const tokenKinds={};
   for(const kind of ['placement','sign','house']){
-    const token=vertex.locator(`.sky-vocab-token[data-vocab-kind="${kind}"]`).first();
-    assert.equal(await token.count(),1,`Vertex polarity must expose a ${kind} token`);
+    const token=vertex.locator('.sky-vocab-token[data-vocab-kind="'+kind+'"]').first();
+    assert.equal(await token.count(),1,'Vertex polarity must expose a '+kind+' token');
     await token.hover();
-    await page.waitForFunction(()=>document.querySelector('#skyFoundationWheelMount>.sky-foundation-wheel')?.classList.contains('has-vocab-token-context'));
-    tokenKinds[kind]=await page.evaluate(()=>{
+    await page.waitForFunction(()=>document.querySelector('#skyFoundationWheelMount>.sky-foundation-wheel')?.classList.contains('has-isolation'));
+    tokenKinds[kind]=await page.evaluate(kind=>{
       const wheel=document.querySelector('#skyFoundationWheelMount>.sky-foundation-wheel');
-      const visiblePlacement=wheel?.querySelector('[data-focus-piece="placement"]:not(.is-vocab-token-context)');
-      return{
-        rowContext:wheel?.classList.contains('has-vocab-context')||false,
-        axisMode:wheel?.classList.contains('has-vocab-axis-context')||false,
-        tokenPlacements:wheel?.querySelectorAll('[data-focus-piece="placement"].is-vocab-token-context').length||0,
-        tokenSigns:wheel?.querySelectorAll('.sky-foundation-sign-sector.is-vocab-token-context').length||0,
-        tokenHouses:wheel?.querySelectorAll('.sky-foundation-house-sector.is-vocab-token-context').length||0,
-        unrelatedPlacementOpacity:visiblePlacement?Number(getComputedStyle(visiblePlacement).opacity):null
-      };
-    });
+      const token=document.querySelector('#skyFoundationA [data-vocab-axis="vertex-anti-vertex"] .sky-vocab-token.is-wheel-token-active[data-vocab-kind="'+kind+'"]');
+      const focused=wheel?.querySelectorAll('[data-focus-piece="'+kind+'"].is-kept').length||0;
+      const dim=wheel?.querySelector('[data-focus-piece="placement"]:not(.is-kept)');
+      return{isolated:wheel?.classList.contains('has-isolation')||false,
+        active:!!token,focused,
+        noParallelAxis:!wheel?.classList.contains('has-vocab-axis-context'),
+        otherOpacity:dim?Number(getComputedStyle(dim).opacity):null};
+    },kind);
+    assert.equal(tokenKinds[kind].active,true,'The '+kind+' token is the active external focus target.');
+    assert.equal(tokenKinds[kind].isolated,true,'The '+kind+' token shares foundation wheel isolation.');
+    assert.ok(tokenKinds[kind].focused>=1,'The '+kind+' target is retained on the wheel.');
+    assert.equal(tokenKinds[kind].noParallelAxis,true,'Token focus must not leave the old line focus active.');
+    assert.ok(tokenKinds[kind].otherOpacity<1,'Unrelated placements dim using canonical focus.');
   }
-  assert.deepEqual(tokenKinds.placement,{rowContext:false,axisMode:false,tokenPlacements:1,tokenSigns:0,tokenHouses:0,unrelatedPlacementOpacity:1},`Placement token hover must add only placement highlight with no dimming: ${JSON.stringify(tokenKinds)}`);
-  assert.deepEqual(tokenKinds.sign,{rowContext:false,axisMode:false,tokenPlacements:0,tokenSigns:1,tokenHouses:0,unrelatedPlacementOpacity:1},`Sign token hover must add only sign highlight with no dimming: ${JSON.stringify(tokenKinds)}`);
-  assert.deepEqual(tokenKinds.house,{rowContext:false,axisMode:false,tokenPlacements:0,tokenSigns:0,tokenHouses:1,unrelatedPlacementOpacity:1},`House token hover must add only house highlight with no dimming: ${JSON.stringify(tokenKinds)}`);
 
   const placementLevel=vertex.locator('.sky-vocab-token[data-vocab-kind="placement"]').first().locator('[data-vocab-level]').first();
   await placementLevel.click();
   await page.locator('#skyFoundationA .sky-vocab-structures-heading').hover();
   const pinnedPlacement=await page.evaluate(()=>({
-    rowContext:document.querySelector('#skyFoundationWheelMount>.sky-foundation-wheel')?.classList.contains('has-vocab-context')||false,
-    token:document.querySelectorAll('#skyFoundationWheelMount [data-focus-piece].is-vocab-token-context').length,
-    unrelatedOpacity:Number(getComputedStyle(document.querySelector('#skyFoundationWheelMount [data-focus-piece="placement"]:not(.is-vocab-token-context)')).opacity)
+    focus:window.RelphiSkyFoundationInteractions?.captureFocus?.(),
+    wheelIsolated:document.querySelector('#skyFoundationWheelMount>.sky-foundation-wheel')?.classList.contains('has-isolation')||false,
+    selected:document.querySelectorAll('#skyFoundationWheelMount [data-focus-piece="placement"].is-selected').length
   }));
-  assert.equal(pinnedPlacement.rowContext,false,`Pinned token must not restore structure whiteout: ${JSON.stringify(pinnedPlacement)}`);
-  assert.ok(pinnedPlacement.token>=1&&pinnedPlacement.unrelatedOpacity===1,`Pinned token must highlight without dimming anything else: ${JSON.stringify(pinnedPlacement)}`);
-
+  assert.equal(pinnedPlacement.focus?.lockedState?.kind,'placement','Pinned placement must use the canonical focus state.');
+  assert.equal(pinnedPlacement.wheelIsolated,true,'Pinned placement remains visibly isolated.');
+  assert.ok(pinnedPlacement.selected>=1,'Pinned placement must stay selected when pointer leaves Vocab.');
   console.log('Structural polarity member regression passed:',JSON.stringify({states,tokenKinds,pinnedPlacement}));
 }finally{
   await browser.close();
