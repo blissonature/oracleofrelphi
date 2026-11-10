@@ -389,7 +389,7 @@
   ];
   const HOUSE_POLARITIES = {
     version:1,id:'six-polarities-houses-12',name:'Six Polarities · Houses',cardCount:12,source:'shipped',editable:false,
-    positions:singleRowPositions(HOUSE_POLARITY_LABELS).map((item,index) => ({ ...item, id:`polarity-${index + 1}` })),
+    positions:legacyGenericPositions(HOUSE_POLARITY_LABELS).map((item,index) => ({ ...item, id:`polarity-${index + 1}` })),
     rules:{ allowReversals:true, allowRepeats:false, drawScope:'full' }
   };
 
