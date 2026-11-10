@@ -1,0 +1,52 @@
+name: Sky from Selection extension browser tests
+on:
+  pull_request:
+    paths:
+      - 'chrome-extension/relphi-sky-intake/**'
+      - 'sky-chart-where-when-v3.js'
+      - 'sky-chart-time-control-v1.js'
+      - 'sky-chart.html'
+      - 'tests/sky-extension-*.mjs'
+      - 'tests/fixtures/sky-extension-sample.html'
+      - '.github/workflows/sky-extension-browser.yml'
+jobs:
+  browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install Chromium
+        run: |
+          npm install --no-save playwright@1.52.0 luxon@3 suncalc@1.9.0
+          npx playwright install --with-deps chromium
+      - name: Static contract and parser tests
+        run: |
+          node --check sky-chart-where-when-v3.js
+          node --check sky-chart-time-control-v1.js
+          node --check chrome-extension/relphi-sky-intake/recognizer.js
+          node --check chrome-extension/relphi-sky-intake/content.js
+          node --check chrome-extension/relphi-sky-intake/background.js
+          node tests/sky-extension-recognizer.test.mjs
+      - name: Chromium extension and website tests
+        run: |
+          python3 -m http.server 4173 >/tmp/sky-extension-http.log 2>&1 &
+          node tests/sky-extension-browser.mjs
+          node tests/sky-extension-handoff-browser.mjs
+          node tests/sky-extension-hosted-handoff-browser.mjs
+      - name: Package unpacked extension for installation
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: oracle-of-relphi-sky-chrome-extension
+          path: chrome-extension/relphi-sky-intake/
+          if-no-files-found: error
+      - name: Upload Chromium screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sky-extension-browser-evidence
+          path: sky-extension-*.png
+          if-no-files-found: ignore
