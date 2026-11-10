@@ -96,10 +96,10 @@ try{
   await showMore.click();
   await page.waitForFunction(()=>document.documentElement.dataset.skyHarmonicWindow==='1');
   assert.equal(await relationshipWindow.inputValue(),'1','The continuation widens the shared Harmonic Window one degree.');
-  assert.equal(await vocabWindow.inputValue(),'1','The continuation mirrors the new Harmonic Window into Vocab.');
+  assert.equal(await page.locator('#skyFoundationA [data-vocab-harmonic-window-input]').count(),0,'Vocab must continue using the shared Focus Harmonic Window.');
   await page.waitForFunction(()=>{const node=document.querySelector('#skyFoundationRelationshipList [data-harmonic-show-more]');return !node||node.hidden||node.textContent.includes('more beyond 1°')});
 
-  await vocabWindow.fill(defaultWindow);
+  await relationshipWindow.fill(defaultWindow);
   await page.waitForFunction(value=>document.documentElement.dataset.skyHarmonicWindow===value,defaultWindow);
   await page.waitForFunction(value=>{
     const row=document.querySelector('#skyFoundationA [data-vocab-structure="axis-polarity"][data-vocab-axis="vertex-anti-vertex"]');
