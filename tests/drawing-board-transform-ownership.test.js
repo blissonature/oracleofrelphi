@@ -68,6 +68,7 @@ async function exerciseTouch(page) {
   const sb=await scale.boundingBox();
   assert.ok(sb,'touch scale handle must be measurable');
   const sx=sb.x+sb.width/2,sy=sb.y+sb.height/2;
+  console.log('TOUCH_HANDLE_DIAG',JSON.stringify(await page.evaluate(([x,y])=>({x,y,scrollY:window.scrollY,viewport:{width:innerWidth,height:innerHeight},at:document.elementFromPoint(x,y)?.outerHTML.slice(0,250),stack:document.elementsFromPoint(x,y).slice(0,5).map(n=>({name:n.nodeName,class:n.getAttribute('class'),handle:n.dataset.rowTransformHandle})),handle:document.querySelector('.card-row-item[data-row-index="1"] [data-row-transform-handle="scale"][data-corner="se"]')?.getBoundingClientRect().toJSON()}),[sx,sy])));
   assert.equal(await page.evaluate(([x,y])=>document.elementFromPoint(x,y)?.dataset.rowTransformHandle,[sx,sy]),'scale','touch scale handle must be hit-testable');
   const scroll=await page.evaluate(()=>window.scrollY);
   await page.evaluate(()=>{
