@@ -628,7 +628,7 @@ if(typeof dialog.showModal==='function')dialog.showModal();else dialog.setAttrib
 function cleanPlanetaryHoursHandoffUrl(){
 const clean=new URL(location.href);
 ['preview','source','datetime','date','lat','lon','tz','loc','name','calc'].forEach(key=>clean.searchParams.delete(key));
-history.replaceState(history.state,'',clean.pathname+clean.search+clean.hash);
+history.replaceState(history.state,'',clean.href);
 }
 let planetaryHoursHandoffConsumed=false;
 async function applyPlanetaryHoursHandoff(){
@@ -703,7 +703,7 @@ function readSelectionHandoff(){
 function cleanSelectionHandoffURL(){
   if(!location.hash.startsWith('#relphiSkyIntake='))return;
   const clean=new URL(location.href);clean.hash='';
-  history.replaceState(history.state,'',clean.pathname+clean.search);
+  history.replaceState(history.state,'',clean.href);
 }
 let selectionHandoffConsumed=false;
 async function applySelectionHandoff(){
