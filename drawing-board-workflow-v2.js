@@ -6258,7 +6258,7 @@
       stickers:true
     };
     if(!launchConfiguredReading(root,clone(optionsSession.draft)))return false;
-    root.scrollIntoView?.({behavior:'smooth',block:'start'});
+    root.scrollIntoView?.({block:'start'});
     setTimeout(()=>{const live=panel();if(!live)return;const next=nextUndrawnNativeIndex(live);if(next!=null)openAttune(next);},0);
     return true;
   }
