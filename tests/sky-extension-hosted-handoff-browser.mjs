@@ -51,7 +51,22 @@ try {
     });
     // Placement persistence precedes the final async Chiron/commit cleanup.
     // Wait for the receiving owner to consume the handoff before asserting URL state.
-    await page.waitForFunction(()=>location.hash==='',null,{timeout:15000});
+    await page.waitForFunction(()=>location.hash==='',null,{timeout:6500}).catch(async error=>{
+      const diag=await page.evaluate(()=>({
+        href:location.href,readyState:document.readyState,title:document.title,
+        rootBusy:document.getElementById('skyFoundationRoot')?.getAttribute('aria-busy'),
+        editorPresent:!!document.querySelector('#skyFoundationA .sky-where-when-editor'),
+        editorHidden:document.querySelector('#skyFoundationA [data-ww-editor-mount]')?.hidden,
+        whereStatus:document.querySelector('#skyFoundationA .sky-where-when-status')?.textContent,
+        whereOwner:!!window.RelphiSkyWhereWhen,
+        hasA:!!localStorage.getItem('relphiSkyChartA'),
+        whereEditing:document.documentElement.dataset.skyWhereWhenEditing,
+        locationState:document.querySelector('#skyFoundationA .sky-location-confirmation')?.textContent?.slice(0,400)
+      }));
+      console.error('HOSTED_POST_COMMIT_DIAG_'+device,JSON.stringify({diag,errors:failures,failedRequests,badResponses}));
+      await page.screenshot({path:'sky-extension-hosted-post-commit-'+device+'.png'}).catch(()=>{});
+      throw error;
+    });
     const done=await page.evaluate(()=>{
       const payload=JSON.parse(localStorage.getItem('relphiSkyChartA'));
       return{url:location.href,skyName:payload.name,dateTime:payload.calcProfile.dateTime,
