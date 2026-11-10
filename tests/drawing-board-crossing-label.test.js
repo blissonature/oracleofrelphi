@@ -19,9 +19,11 @@ fs.mkdirSync(out,{recursive:true});
     const panel=frame.locator('#shortListPanel');
     if(!(await panel.isVisible())) await frame.click('#relphiOpenDrawingBoardCurrent');
     await panel.waitFor({state:'visible',timeout:10000});
-    await frame.waitForSelector('#shortListPanel #drawingBoardOptionsButton',{state:'visible',timeout:10000});
+    await frame.waitForSelector('#shortListPanel #relphiMainQuestion',{state:'visible',timeout:10000});
 
-    await frame.click('#drawingBoardOptionsButton');
+    // Crafted methods now open from the permanent Drawing Board commandbar;
+    // the old Free/Crafted mode tab is intentionally hidden.
+    await frame.locator('#shortListPanel [data-main-action="methods"]').click();
     await frame.waitForSelector('.relphi-reading-options-drawer.is-reading-options-open #relphiSpreadTemplateSelect',{state:'visible',timeout:10000});
     await frame.selectOption('#relphiSpreadTemplateSelect','celtic-cross-10');
     await frame.click('#relphiApplyOptions');
