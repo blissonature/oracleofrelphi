@@ -167,9 +167,10 @@ assert.equal(registry.byId('celtic-cross-11'), null);
 const celtic = registry.byId('celtic-cross-10');
 assert.equal(celtic.cardCount, 10);
 assert.deepEqual(Array.from(celtic.positions, item => item.label), [
-  '1 · What covers you','2 · What crosses you','3 · What crowns you','4 · What is beneath you','5 · What is behind you',
-  '6 · What is before you','7 · Yourself','8 · Your house','9 · Your hopes or fears','10 · What will come'
+  'What covers you','What crosses you','What crowns you','What is beneath you','What is behind you',
+  'What is before you','Yourself','Your house','Your hopes or fears','What will come'
 ]);
+assert.deepEqual(Array.from(celtic.positions, item => item.drawOrder),Array.from({length:10},(_,i)=>i+1),'Position order is represented separately from unnumbered semantic labels.');
 const cross = celtic.positions[1];
 assert.deepEqual(JSON.parse(JSON.stringify(cross.canonicalTransform)), {x:.20,y:.34,scale:.48,rotation:90,zIndex:30});
 assert.deepEqual(JSON.parse(JSON.stringify(cross.crossedTransform)), {x:.20,y:.34,scale:.48,rotation:90,zIndex:30});
