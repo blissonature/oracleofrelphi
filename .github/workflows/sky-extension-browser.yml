@@ -35,6 +35,7 @@ jobs:
           python3 -m http.server 4173 >/tmp/sky-extension-http.log 2>&1 &
           node tests/sky-extension-browser.mjs
           node tests/sky-extension-handoff-browser.mjs
+          node tests/sky-extension-hosted-handoff-browser.mjs
       - name: Package unpacked extension for installation
         if: always()
         uses: actions/upload-artifact@v4
