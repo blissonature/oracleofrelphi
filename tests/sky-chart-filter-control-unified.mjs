@@ -122,7 +122,7 @@ for(const [name,toggle] of Object.entries(result.toggles)){
 await page.locator('#skyFoundationFocus .sky-chart-aspect-filter-toggle').click();
 await page.waitForSelector('#skyChartAspectPopover:not([hidden]) [data-aspect-list="matrix"]');
 await page.waitForFunction(()=>document.querySelectorAll('#skyChartAspectPopover .sky-filter-symbol-aspect[data-glyph-color]').length===11);
-const aspectGlyphAudit=await page.locator('#skyChartAspectPopover .sky-chart-aspect-list-item[data-aspect-list-item]:not([data-aspect-list-item="all"])').evaluateAll(rows=>rows.map(row=>{
+const aspectGlyphAudit=await page.locator('#skyChartAspectPopover .sky-chart-aspect-list-item[data-aspect-list-item]:has(.sky-filter-symbol-aspect[data-glyph-color])').evaluateAll(rows=>rows.map(row=>{
   const host=row.querySelector('.sky-filter-symbol-aspect');
   return {aspect:row.dataset.aspectListItem,glyph:host?.dataset.canonicalGlyph||'',color:host?.dataset.glyphColor||''};
 }));
