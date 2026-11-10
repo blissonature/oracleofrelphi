@@ -400,6 +400,8 @@ assert.ok(polarCross,'ASC–DSC must remain detectable as the structural complet
 assert.equal(polarCross.edges.filter(edge=>edge.aspect==='opposition').length,2,'Grand Cross must contain both opposition axes.');
 assert.ok(polarCross.edges.some(edge=>edge.entailedKind==='polar-axis'),'Grand Cross must identify the synthetic polar-axis opposition as inevitable.');
 
+await page.locator('#skyFoundationFocus .sky-chart-aspect-filter-toggle').click();
+await page.waitForSelector('#skyChartAspectPopover:not([hidden])',{state:'visible'});
 const grandCrossChoice=page.locator('[data-configuration-scope="A-A"][data-configuration-type="grand-cross"]');
 await grandCrossChoice.waitFor({state:'attached'});
 if(!(await grandCrossChoice.isChecked()))await grandCrossChoice.check();
