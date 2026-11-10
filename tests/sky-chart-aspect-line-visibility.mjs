@@ -269,8 +269,9 @@ assert.equal(selectedTile.visible,true,'Selected Relationship tile must remain v
 assert.ok(selectedTile.tile.top<selectedTile.scrollArea.bottom&&selectedTile.tile.bottom>selectedTile.scrollArea.top,
   'Selected tile must be scrolled into visible Relationships list viewport');
 
+await page.locator('#skyFoundationWheelMount .sky-foundation-aspect.is-selected').focus();
 await page.keyboard.press('Escape');
-await page.waitForTimeout(50);
+await page.waitForFunction(()=>!document.querySelector('#skyFoundationWheelMount>.sky-foundation-wheel')?.classList.contains('has-isolation'));
 
 // Relationship-list hover owns only the row/line highlight. It must never dim or isolate the wheel,
 // including A↔A and B↔B rows generated after the comparison relationships.
