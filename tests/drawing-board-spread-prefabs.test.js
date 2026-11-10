@@ -35,7 +35,7 @@ assert.equal(c.positions[0].transform.y,.34);
 assert.equal(c.positions[1].canonicalTransform.x,.20);
 assert.equal(c.positions[1].canonicalTransform.y,.34);
 assert.equal(c.positions[4].transform.x,.015);
-assert.equal(c.positions[5].transform.x,.49);
+assert.equal(c.positions[5].transform.x,.385);
 assert.ok(c.positions.slice(6).every(p=>p.transform.x===.70));
 assert.ok(c.positions.slice(6).every(p=>p.transform.scale===.44));
 assert.deepEqual(Array.from(c.positions.slice(6),p=>p.transform.y),[.69,.46,.23,.00]);
