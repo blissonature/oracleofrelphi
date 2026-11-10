@@ -441,6 +441,7 @@
     name:'Relphi Recursive Reading',
     cardCount:22,
     virtualPositionCount:6,
+    positionCount:22+6,
     source:'shipped',
     editable:false,
     recursion:true,
