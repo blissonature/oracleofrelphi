@@ -274,6 +274,16 @@ await page.waitForTimeout(50);
 
 // Relationship-list hover owns only the row/line highlight. It must never dim or isolate the wheel,
 // including A↔A and B↔B rows generated after the comparison relationships.
+console.log('INTRASKY_AFTER_CLEAR',JSON.stringify(await page.evaluate(()=>{
+ const wheel=document.querySelector('#skyFoundationWheelMount>.sky-foundation-wheel');
+ const rows=[...document.querySelectorAll('#skyFoundationRelationshipList>.sky-foundation-relationship-row')];
+ const distribution={};
+ for(const row of rows){const mode=row.dataset.relationshipMode||'none',visible=!row.hidden&&getComputedStyle(row).display!=='none';
+  const k=mode+(visible?'-visible':'-hidden'); distribution[k]=(distribution[k]||0)+1}
+ return{wheelClass:wheel?.getAttribute('class'),rootFlags:document.getElementById('skyFoundationRoot')?.dataset,
+ distribution,
+ sample:rows.filter(x=>/^(A-A|B-B)$/.test(x.dataset.relationshipMode||'')).slice(0,3).map(x=>({mode:x.dataset.relationshipMode,hidden:x.hidden,display:getComputedStyle(x).display,classes:x.className}))};
+})));
 const intraskyRow=page.locator('#skyFoundationRelationshipList>.sky-foundation-relationship-row[data-relationship-mode="B-B"]:visible, #skyFoundationRelationshipList>.sky-foundation-relationship-row[data-relationship-mode="A-A"]:visible').first();
 assert.ok(await intraskyRow.count()>0,'Fixture must produce at least one visible intrasky relationship row.');
 await intraskyRow.hover();
