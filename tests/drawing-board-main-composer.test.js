@@ -99,6 +99,12 @@ async function clickSummary(page,selector){
     await options.locator('[data-main-action="template-add"]').click();
     assert.deepEqual(await options.locator('[data-main-text]').evaluateAll(nodes=>nodes.map(n=>n.value)),['Past','Present','Future']);
     await clickSummary(options,'.relphi-main-building-disclosure');
+    await options.waitForTimeout(120);
+    console.log('BUILDING_DISCLOSURE_OPEN',JSON.stringify(await options.evaluate(()=>{
+      const host=document.querySelector('.relphi-main-composer'),template=host?.querySelector('.relphi-main-template-disclosure'),blocks=host?.querySelector('.relphi-main-building-disclosure');
+      const field=blocks?.querySelector('[data-main-building="sign"]');
+      return {templateOpen:template?.open,blocksOpen:blocks?.open,fieldVisible:!!field&&getComputedStyle(field).display!=='none'&&field.getBoundingClientRect().height>0,sign:field?.value};
+    })));
     await options.selectOption('[data-main-building="sign"]','Libra');
     console.log('BLOCKS_DETAILS_STATE',JSON.stringify(await options.evaluate(()=>({open:document.querySelector('.relphi-main-building-disclosure')?.open,buttonHidden:!!document.querySelector('.relphi-main-building-disclosure [data-main-action="blocks-add"]')?.closest('details:not([open])'),buttonDisabled:document.querySelector('[data-main-action="blocks-add"]')?.disabled,state:window.RelphiDrawingBoardMainComposer?.capture?.()}))));
     await options.locator('[data-main-action="blocks-add"]').click();
