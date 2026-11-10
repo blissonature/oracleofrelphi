@@ -82,7 +82,7 @@ try{
       if(!raw)return false;
       const profile=JSON.parse(raw)?.calcProfile;
       return profile?.dateTime==='2026-11-09'&&profile.timeUnknown===true&&
-        Number.isFinite(profile.moonRange?.start)&&Number.isFinite(profile.moonRange?.end);
+        Number.isFinite(profile.moonRange?.start?.longitude)&&Number.isFinite(profile.moonRange?.end?.longitude);
     },null,{timeout:30000});
     const unknownValue=await unknownSky.page.evaluate(()=>JSON.parse(localStorage.getItem('relphiSkyChartA')));
     assert.deepEqual(unknownValue.houseCusps,[],'Unknown-time sky has no fictitious houses');
