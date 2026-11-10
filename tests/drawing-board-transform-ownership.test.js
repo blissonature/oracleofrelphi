@@ -65,6 +65,10 @@ async function exerciseTouch(page) {
   });
   await page.waitForTimeout(900);
   const before=await snap(page), scale=page.locator('.card-row-item[data-row-index="1"] [data-row-transform-handle="scale"][data-corner="se"]');
+  // Raw CDP touch events cannot scroll an offscreen handle into view for us.
+  // Measure after the same scroll-into-view prerequisite a real user performs.
+  await scale.scrollIntoViewIfNeeded();
+  await page.waitForTimeout(80);
   const sb=await scale.boundingBox();
   assert.ok(sb,'touch scale handle must be measurable');
   const sx=sb.x+sb.width/2,sy=sb.y+sb.height/2;
