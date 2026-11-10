@@ -40,7 +40,7 @@ try{
   const packet=JSON.parse(new URLSearchParams(new URL(newPage.url()).hash.slice(1)).get('relphiSkyIntake'));
   assert.equal(packet.date,'2026-11-09');
   assert.equal(new URL(newPage.url()).pathname,'/sky-chart-preview/sky-chart.html','Draft extension must launch the working preview receiver');
-  assert.equal(new URL(newPage.url()).searchParams.get('ref'),'a2cd9105d2ace34f3a12264203c41fb503eb7d7a');
+  assert.equal(new URL(newPage.url()).searchParams.get('ref'),'9922d7198e4f1886500d0acda828db2fd045f797');
   assert.equal(packet.location,'','A date link cannot steal an existing location');
   assert.equal(packet.time,'','A date link cannot invent a birth time');
   await newPage.close();
