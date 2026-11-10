@@ -404,7 +404,7 @@ await page.locator('#skyFoundationFocus .sky-chart-aspect-filter-toggle').click(
 await page.waitForSelector('#skyChartAspectPopover:not([hidden])',{state:'visible'});
 const grandCrossChoice=page.locator('[data-configuration-scope="A-A"][data-configuration-type="grand-cross"]');
 await grandCrossChoice.waitFor({state:'attached'});
-if(!(await grandCrossChoice.isChecked()))await grandCrossChoice.check();
+if(!(await grandCrossChoice.isChecked()))await grandCrossChoice.locator('xpath=..').click();
 await page.waitForSelector('[data-configuration-inevitable-show-more]',{state:'visible'});
 assert.equal(await page.locator('.sky-configuration-result-tile[data-configuration-type="grand-cross"]').count(),0,'Inevitable-off must suppress the Grand Cross tile that depends on the polar-axis opposition.');
 assert.match(await page.locator('[data-configuration-inevitable-show-more]').textContent(),/1 more using inevitable relationships/i);
