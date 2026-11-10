@@ -182,7 +182,7 @@ assert.equal(new Set(polarities.positions.map(item => item.transform.x)).size, 4
 assert.equal(new Set(polarities.positions.map(item => item.transform.y)).size, 3);
 const saturn = registry.byId('saturn-square-9');
 assert.deepEqual(Array.from(saturn.positions, item => [item.transform.x,item.transform.y,item.transform.scale]), [
-  [.04,.04,.58],[.36,.04,.58],[.68,.04,.58],[.04,.37,.58],[.36,.37,.58],[.68,.37,.58],[.04,.70,.58],[.36,.70,.58],[.68,.70,.58]
+  [.245,.025,.74],[.405,.025,.74],[.565,.025,.74],[.245,.405,.74],[.405,.405,.74],[.565,.405,.74],[.245,.785,.74],[.405,.785,.74],[.565,.785,.74]
 ]);
 
 console.log('Drawing Board single-owner checks passed.');
