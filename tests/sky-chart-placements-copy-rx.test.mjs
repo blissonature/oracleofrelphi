@@ -9,5 +9,5 @@ test('Placements Copy includes Rx only for rows displaying the canonical retrogr
  assert.match(js,/nameNode\?\.querySelector\('\.sky-placement-rx'\)\?' Rx':''/);
  assert.match(js,/const nameNode=row.querySelector\('\.sky-foundation-row-name'\)/);
  assert.match(js,/\[coordinate,house\]\.filter\(Boolean\)\.join\(' · '\)/);
- assert.ok(html.includes('sky-chart-quick-copy-v2.js?v=2'));
+ assert.match(html, /src="sky-chart-quick-copy-v2\.js\?v=\d+"/);
 });
