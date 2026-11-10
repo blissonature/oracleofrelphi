@@ -1249,6 +1249,27 @@
   // Catch toolbar actions before Tarot Ledger's legacy click handlers rerender
   // the board. The composer may be recreated, so listeners must be stable.
   async function mainComposerGlobalClick(event){
+    // Native details toggle events are asynchronous. Close competing disclosures
+    // at the actual summary click, before a queued initial-render toggle can
+    // choose an older disclosure over the one the visitor just opened.
+    const summary=event.target.closest?.('#shortListPanel .relphi-main-composer details > summary');
+    const disclosure=summary?.parentElement;
+    const disclosureStateKeys=new Map([
+      ['relphi-main-template-disclosure','openTemplates'],
+      ['relphi-main-building-disclosure','openBlocks'],
+      ['relphi-main-draw-defaults','openDefaults'],
+      ['relphi-main-journal','openJournal']
+    ]);
+    if(disclosure&&!disclosure.open&&[...disclosureStateKeys.keys()].some(name=>disclosure.classList.contains(name))){
+      const host=disclosure.closest('.relphi-main-composer'),state=getMainComposer();
+      host.querySelectorAll('.relphi-main-template-disclosure,.relphi-main-building-disclosure,.relphi-main-draw-defaults,.relphi-main-journal').forEach(other=>{
+        if(other===disclosure)return;
+        other.open=false;
+        disclosureStateKeys.forEach((key,name)=>{if(other.classList.contains(name))state[key]=false});
+      });
+      saveMainComposer();
+      return;
+    }
     const button=event.target.closest?.('#shortListPanel .relphi-main-composer [data-main-action]');
     if(!button)return;
     event.preventDefault();
