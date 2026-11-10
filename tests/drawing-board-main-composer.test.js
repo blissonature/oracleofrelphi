@@ -100,6 +100,7 @@ async function clickSummary(page,selector){
     assert.deepEqual(await options.locator('[data-main-text]').evaluateAll(nodes=>nodes.map(n=>n.value)),['Past','Present','Future']);
     await clickSummary(options,'.relphi-main-building-disclosure');
     await options.selectOption('[data-main-building="sign"]','Libra');
+    console.log('BLOCKS_DETAILS_STATE',JSON.stringify(await options.evaluate(()=>({open:document.querySelector('.relphi-main-building-disclosure')?.open,buttonHidden:!!document.querySelector('.relphi-main-building-disclosure [data-main-action="blocks-add"]')?.closest('details:not([open])'),buttonDisabled:document.querySelector('[data-main-action="blocks-add"]')?.disabled,state:window.RelphiDrawingBoardMainComposer?.capture?.()}))));
     await options.locator('[data-main-action="blocks-add"]').click();
     assert.equal(await options.locator('[data-main-text]').count(),6);
     await options.screenshot({path:path.join(out,'drawing-board-compact-sources.png'),fullPage:true});
