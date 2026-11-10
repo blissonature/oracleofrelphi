@@ -112,6 +112,7 @@ try{
   // Dispatch from the structure row itself so the test exercises row context rather
   // than accidentally landing on one of the many child tokens at the row's center.
   await vertex.dispatchEvent('pointerover',{pointerType:'mouse'});
+  console.log('VOCAB_WHEEL_CONTEXT_DIAGNOSTIC',JSON.stringify(await page.evaluate(()=>({wheel:document.querySelector('#skyFoundationWheelMount>.sky-foundation-wheel')?.className?.baseVal,clickedNode:document.querySelector('#skyFoundationA [data-vocab-axis="vertex-anti-vertex"]')?.className,context:document.querySelector('#skyFoundationWheelMount>.sky-foundation-wheel')?.dataset.vocabIsolation,focus:window.RelphiSkyFoundationInteractions?.captureFocus?.()}))));
   await page.waitForFunction(()=>document.querySelector('#skyFoundationWheelMount>.sky-foundation-wheel')?.classList.contains('has-vocab-axis-context'));
   const states=await page.evaluate(()=>Object.fromEntries(['vertex','anti-vertex','north-node','south-node'].map(id=>{
     const node=document.querySelector(`#skyFoundationWheelMount [data-focus-piece="placement"][data-sky="A"][data-placement="${id}"]`);
