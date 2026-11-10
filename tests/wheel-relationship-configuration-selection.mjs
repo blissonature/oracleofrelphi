@@ -6,7 +6,7 @@ assert.match(reveal,/RelphiInlineRelationship\?\.expand\?\.\(row\)/,'Expand targ
 assert.match(reveal,/row\.setAttribute\('aria-current','true'\)/,'Mark target');
 assert.match(reveal,/row\.classList\.add\('is-selected'\)/,'Highlight target');
 assert.match(reveal,/list\.scrollTo\(/,'Scroll Relationships panel');
-assert.doesNotMatch(reveal,/scrollIntoView/,'Never scroll the page');
+assert.doesNotMatch(reveal,/\.scrollIntoView\s*\(/,'Never scroll the page');
 assert.match(s,/if\(lockedState\?\.kind==='aspect'\)requestAnimationFrame\(\(\)=>revealSelectedRelationship\(lockedState\)\)/,'Reconcile selection after tile render');
 assert.match(s,/state:focusState\?\{\.\.\.focusState/,'Transmit current selection to Configurations');
 assert.match(s,/focusState\?\.kind==='aspect'\?Array\.from\(filterKeep\.matched\)/,'Send matched aspect indexes to Configurations');

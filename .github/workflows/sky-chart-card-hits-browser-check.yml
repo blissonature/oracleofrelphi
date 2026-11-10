@@ -193,6 +193,11 @@ jobs:
           assert.equal(drawer.open,true);
           assert.equal(drawer.structure,true);
 
+          // Tab state is persistent; Houses remained selected after the prior check.
+          const rulerTab=page.locator('#skyFoundationA [data-card-hits-view="rulers"]');
+          if(!(await rulerTab.isVisible())) await page.locator('#skyFoundationA [data-sky-drawer-tab="card-hits"]').click({force:true});
+          await rulerTab.click();
+
           const chartRulerPresentation=await page.evaluate(()=>{
             const stage=document.querySelector('#skyFoundationA .sky-card-chart-ruler-stage');
             const chart=stage?.querySelector('.sky-card-ruler.is-chart-ruler');

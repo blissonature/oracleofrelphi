@@ -13985,6 +13985,13 @@ label {
   padding: .22rem .45rem;
   white-space: nowrap;
 }
+/* Canonical Drawing Board transform-control rules. The native renderer alone
+   assigns is-transform-target; the workflow only toggles editing availability. */
+#shortListPanel.relphi-transform-editing-unlocked .card-row-board [data-row-transform-handle] {
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
 .short-list-row.card-row-board .card-row-transform-box { opacity: 0 !important; pointer-events: none !important; }
 .short-list-row.card-row-board .card-row-item.is-transform-target .card-row-transform-box,
 .short-list-row.card-row-board .card-row-item.is-scaling .card-row-transform-box,
@@ -13992,9 +13999,29 @@ label {
 .short-list-row.card-row-board .card-row-item:not(.is-transform-target):not(.is-scaling):not(.is-rotating) .card-row-scale-handle,
 .short-list-row.card-row-board .card-row-item:not(.is-transform-target):not(.is-scaling):not(.is-rotating) .card-row-rotate-handle { pointer-events: none !important; }
 .card-row-rotate-handle--nw { left: -10px !important; top: -10px !important; }
-.card-row-rotate-handle--ne { right: -10px !important; top: -10px !important; }
 .card-row-rotate-handle--sw { left: -10px !important; bottom: -10px !important; }
 .card-row-rotate-handle--se { right: -10px !important; bottom: -10px !important; }
+/* Reserve a stable rotation lane without overlaying the reverse-card button. */
+#shortListPanel.relphi-transform-editing-unlocked .card-row-board .card-row-rotate-handle--ne {
+  top: 22% !important;
+  right: 0 !important;
+  left: auto !important;
+  bottom: auto !important;
+  z-index: 30 !important;
+}
+@media (max-width: 760px) {
+  #shortListPanel.relphi-transform-editing-unlocked .card-row-board .card-row-rotate-handle--ne {
+    top: 55% !important;
+    right: 38px !important;
+  }
+  #shortListPanel.relphi-transform-editing-unlocked .card-row-board .card-row-scale-handle--se {
+    right: 35px !important;
+    bottom: 0 !important;
+    width: 34px !important;
+    height: 34px !important;
+    z-index: 45 !important;
+  }
+}
 .or-card.tarot-card-surface.relphi-surface--card .or-card-add,
 .or-card .or-card-add,
 #browsePanel .or-card-add,
@@ -19938,3 +19965,211 @@ html body :is(
 .tarot-ledger-page .relphi-ledger-tool-header .relphi-tool-brandline{
   margin:.1rem 0 .2rem;
 }
+
+
+
+/* /board: Windows-style Details list in the existing left result pane.
+   The full Tarot Ledger inspector remains the right column. */
+html body #browsePanel .board-result-details {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  border: 1px solid rgba(70, 52, 43, .19);
+  border-radius: .45rem;
+  background: #fffdf8;
+  overflow-wrap: anywhere;
+}
+html body #browsePanel .board-result-details-head,
+html body #browsePanel .board-result-detail-row {
+  display: grid;
+  grid-template-columns: minmax(7rem, .9fr) minmax(9rem, 1.15fr) minmax(12rem, 1.6fr);
+  align-items: start;
+  gap: 0;
+  min-width: 0;
+}
+html body #browsePanel .board-result-details-head {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  background: #eae1d3;
+  border-bottom: 1px solid #c9bcaa;
+  font-size: .73rem;
+  font-weight: 800;
+  letter-spacing: .02em;
+}
+html body #browsePanel .board-result-details-head > span {padding: .55rem .5rem;}
+html body #browsePanel .board-result-detail-row {
+  border-bottom: 1px solid #ded5c7;
+  color: #28232b;
+  cursor: pointer;
+  font-size: .78rem;
+  line-height: 1.4;
+}
+html body #browsePanel .board-result-detail-row:last-child {border-bottom: 0;}
+html body #browsePanel .board-result-detail-row:nth-child(odd) {background: #f8f5ee;}
+html body #browsePanel .board-result-detail-row:hover {background: #eee7db;}
+html body #browsePanel .board-result-detail-row.is-selected {
+  background: #f3e9d9;
+  box-shadow: inset 3px 0 #b38d55;
+}
+html body #browsePanel .board-result-detail-row:focus-visible {
+  outline: 2px solid #8d6043;
+  outline-offset: -2px;
+}
+html body #browsePanel .board-result-cell {
+  padding: .55rem .48rem;
+  min-width: 0;
+}
+html body #browsePanel .board-result-cell + .board-result-cell {
+  border-left: 1px solid rgba(70, 52, 43, .1);
+}
+html body #browsePanel .board-result-identity {
+  display: flex;
+  align-items: flex-start;
+  gap: .5rem;
+}
+html body #browsePanel .board-result-identity > div {
+  min-width: 0;
+  display: grid;
+  align-content: start;
+  gap: .1rem;
+}
+html body #browsePanel .board-result-identity small {opacity: .7; font-size: .75em;}
+html body #browsePanel .board-result-identity strong {font-size: .96em; line-height: 1.25;}
+html body #browsePanel .board-result-identity em {font-size: .82em; font-weight: 700;}
+html body #browsePanel img.board-result-real-thumbnail[src] {
+  display: block;
+  flex: 0 0 auto;
+  width: 3.2rem !important;
+  height: auto !important;
+  max-width: 36% !important;
+  object-fit: contain !important;
+}
+html body #browsePanel .board-result-ingredient {
+  display: block;
+  margin-bottom: .55rem;
+}
+html body #browsePanel .board-result-ingredient:last-child {margin-bottom: 0;}
+html body #browsePanel .board-result-ingredient strong {display: block; font-size: .98em;}
+html body #browsePanel .board-result-ingredient span {display: block; opacity: .87;}
+html body #browsePanel .board-result-interpretation p {margin: 0; white-space: normal;}
+html body #browsePanel .board-result-unavailable {opacity: .7;}
+@media (max-width: 850px) {
+  html body #browsePanel .board-result-details-head,
+  html body #browsePanel .board-result-detail-row {
+    grid-template-columns: minmax(5.2rem, .8fr) minmax(6rem, 1fr) minmax(7rem, 1.4fr);
+  }
+  html body #browsePanel img.board-result-real-thumbnail[src] {width: 2.2rem !important;}
+  html body #browsePanel .board-result-cell {padding: .4rem .3rem;}
+  html body #browsePanel .board-result-detail-row {font-size: .71rem;}
+}
+
+
+/* At phone widths keep every detail visible without sideways scrolling. */
+@media (max-width: 620px) {
+  html body #browsePanel .board-result-details-head {display: none;}
+  html body #browsePanel .board-result-detail-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+  }
+  html body #browsePanel .board-result-detail-row .board-result-cell {
+    border-left: 0;
+    padding: .5rem .6rem;
+  }
+  html body #browsePanel .board-result-detail-row .board-result-ingredients::before,
+  html body #browsePanel .board-result-detail-row .board-result-interpretation::before {
+    display: block;
+    font-size: .69rem;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    font-weight: 800;
+    margin-bottom: .24rem;
+    color: #786456;
+  }
+  html body #browsePanel .board-result-detail-row .board-result-ingredients::before {content: 'Ingredients';}
+  html body #browsePanel .board-result-detail-row .board-result-interpretation::before {content: 'Interpretation';}
+  html body #browsePanel .board-result-detail-row .board-result-cell + .board-result-cell {
+    border-top: 1px solid rgba(70,52,43,.12);
+  }
+  html body #browsePanel img.board-result-real-thumbnail[src] {width: 3.2rem !important;}
+}
+
+
+/* Tarot Ledger mobile results: retain native zoom and arrangement controls.
+   Keep the index full width instead of reserving a second desktop detail column. */
+@media (max-width: 700px) {
+  html body #browsePanel:not([hidden]) {
+    display: block !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+  }
+  html body #browsePanel .tarot-list-panel,
+  html body #browsePanel .tarot-card-list,
+  html body #browsePanel .tarot-result-grid {
+    box-sizing: border-box !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+  }
+  html body #browsePanel #cardDetail:empty {display: none !important;}
+  html body #browsePanel .active-filter-row--results {
+    position: static !important;
+    inset: auto !important;
+    transform: none !important;
+    box-sizing: border-box !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    margin: .35rem 0 .55rem !important;
+    overflow: visible !important;
+    height: auto !important;
+  }
+  html body #browsePanel .result-visual-tools {
+    display: flex !important;
+    width: 100% !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    flex-wrap: wrap !important;
+    gap: .4rem .55rem !important;
+  }
+  html body #browsePanel .result-zoom-control {
+    display: flex !important;
+    flex: 1 1 100% !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    gap: .45rem !important;
+  }
+  html body #browsePanel .result-zoom-control input {
+    flex: 1 1 auto !important;
+    min-width: 3rem !important;
+    width: auto !important;
+    max-width: none !important;
+  }
+  html body #browsePanel .result-zoom-control output {min-width: 2.8rem !important;}
+  html body #browsePanel .or-card-grid.tarot-result-grid {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    justify-content: flex-start !important;
+    align-content: flex-start !important;
+    gap: .3rem !important;
+    overflow: visible !important;
+    margin: 0 !important;
+  }
+  html body #browsePanel .or-card-grid.tarot-result-grid .or-card[hidden] {
+    display: none !important;
+  }
+  html body #browsePanel .or-card-grid.tarot-result-grid[data-result-layout="auto"] {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+}
+
+
+/* Curated thematic search suggestions are navigational, never implicit card matches. */
+html body .relphi-theme-navigation[hidden]{display:none!important}
+html body .relphi-theme-navigation{padding:.7rem .8rem;margin:.5rem 0 1rem;border:1px solid #d8d0c8;border-radius:10px;background:#faf8f6}
+html body .relphi-theme-navigation-label{margin:0 0 .5rem;font-size:.84rem}
+html body .relphi-theme-navigation-actions{display:flex;flex-wrap:wrap;gap:.45rem}
+html body .relphi-theme-suggestion{border:1px solid #b8aaa4;border-radius:8px;background:#fff;color:#3d2827;padding:.35rem .65rem;font:inherit;font-size:.82rem;cursor:pointer}
+html body .relphi-theme-suggestion:hover,html body .relphi-theme-suggestion:focus-visible{border-color:#a61712;outline:2px solid #a61712;outline-offset:1px}

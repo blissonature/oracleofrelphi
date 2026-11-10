@@ -106,7 +106,7 @@ for(const width of [320,390,451,480,510,540,595,600,630,740,760,900,1200]){
     assert.ok(ts.titleBottom+2<=ts.sortTop,
       JSON.stringify({width,error:'mobile Relationships heading overlaps sort selector',result}));
   }
-  assert.equal(result.button.iconHref,'relphi-icons.svg#relphi-copy',width+': all Copy buttons must reference the one canonical path');
+  assert.equal(result.button.iconHref,'http://127.0.0.1:4173/relphi-icons.svg#relphi-copy',width+': all Copy buttons must reference the one canonical path');
   assert.equal(result.button.iconWidth,'20px',width+': canonical icon width is fixed');
   assert.equal(result.button.iconHeight,'20px',width+': canonical icon height is fixed');
   assert.equal(result.button.duplicates,1,width+': exactly one SVG exists inside the Copy button');
@@ -136,7 +136,7 @@ await page.waitForFunction(()=>Boolean(window.__copiedRelationshipText),null,{ti
 assert.ok((await page.evaluate(()=>window.__copiedRelationshipText)).includes('Sky A:'),'Icon button must still invoke existing relationship serializer');
 await page.waitForFunction(()=>document.querySelector('.sky-relationship-copy-button')?.dataset.relphiCopyFeedback==='done',null,{timeout:3000});
 assert.match(await page.locator('.sky-relationship-copy-button').getAttribute('aria-label'),/^Copied/i,'Feedback is accessible');
-assert.equal(await page.locator('.sky-relationship-copy-button svg use').getAttribute('href'),'relphi-icons.svg#relphi-copy','Successful copy must NOT substitute a different glyph');
+assert.equal(await page.locator('.sky-relationship-copy-button svg use').getAttribute('href'),'http://127.0.0.1:4173/relphi-icons.svg#relphi-copy','Successful copy must NOT substitute a different glyph');
 await page.waitForFunction(()=>document.querySelector('.sky-relationship-copy-button')?.dataset.relphiCopyFeedback==='idle',null,{timeout:5000});
 
 // The same convention must attach to copy controls inserted asynchronously.
@@ -153,7 +153,7 @@ const dynamic=await page.evaluate(async()=>{
 });
 await page.waitForFunction(()=>document.querySelectorAll('#copy-convention-fixtures .relphi-copy-icon-button').length===6,null,{timeout:4000});
 const consistent=await page.locator('#copy-convention-fixtures .relphi-copy-icon-button').evaluateAll(nodes=>nodes.every(node=>
-  node.querySelector('svg.relphi-copy-icon use')?.getAttribute('href')==='relphi-icons.svg#relphi-copy'&&!!node.getAttribute('aria-label')));
+  node.querySelector('svg.relphi-copy-icon use')?.getAttribute('href')==='http://127.0.0.1:4173/relphi-icons.svg#relphi-copy'&&!!node.getAttribute('aria-label')));
 assert.equal(consistent,true,'All dynamically inserted Copy controls share the SVG icon and accessible name');
 const noDuplicates=await page.locator('#copy-convention-fixtures .relphi-copy-icon-button').evaluateAll(nodes=>nodes.every(node=>
   node.querySelectorAll('svg').length===1&&
@@ -170,7 +170,7 @@ await page.evaluate(()=>{
 await page.waitForFunction(()=>{
   const button=document.querySelector('#copy-convention-fixtures .relphi-copy-icon-button');
   return button?.querySelectorAll('svg').length===1&&
-    button.querySelector('svg use')?.getAttribute('href')==='relphi-icons.svg#relphi-copy';
+    button.querySelector('svg use')?.getAttribute('href')==='http://127.0.0.1:4173/relphi-icons.svg#relphi-copy';
 },null,{timeout:4000});
 assert.deepEqual(errors.filter(e=>/Uncaught|SyntaxError|ReferenceError/.test(e)),[],'No critical page errors');
 await context.close();

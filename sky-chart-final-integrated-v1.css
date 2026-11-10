@@ -40,6 +40,28 @@
 /* Aspect hit geometry stays easy to tap without drawing a box. */
 .sky-foundation-aspect-hit{fill:none!important;stroke:transparent!important;stroke-width:28px!important;stroke-linecap:round!important;vector-effect:non-scaling-stroke!important;outline:none!important;box-shadow:none!important;pointer-events:stroke!important}
 .sky-foundation-aspect-hit:focus,.sky-foundation-aspect-hit:focus-visible{outline:none!important;box-shadow:none!important}
+/* Hit targets are immediate siblings of their canonical SVG aspect lines.
+   Filters own the line's eligibility. A hidden source must never leave a
+   transparent 28px target intercepting hover/click over a visible aspect.
+   CSS sibling eligibility follows all filter owners without new listeners,
+   cloned state, or competing pointer controllers. */
+#skyFoundationWheelMount [data-layer="aspects"] >
+  line.sky-foundation-aspect:is(
+    [hidden],
+    .sky-foundation-single-sky-cross-hidden,
+    .sky-chart-filter-hidden,
+    .sky-chart-orb-hidden,
+    .sky-orb-filter-hidden,
+    .sky-chart-multiselect-hidden,
+    .sky-chart-house-multiselect-hidden,
+    .sky-chart-aspect-multiselect-hidden,
+    .sky-chart-sign-filter-hidden,
+    .sky-chart-zodiac-filter-hidden,
+    .sky-chart-semantic-hidden
+  ) + line.sky-foundation-aspect-hit{
+  display:none;
+}
+
 
 /* Keep selected readings stable while the user explores the retained list. */
 .sky-foundation-relationship-row[aria-current="true"]{position:relative;z-index:1}

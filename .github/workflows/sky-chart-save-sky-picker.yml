@@ -6,7 +6,6 @@ on:
       - 'sky-chart-sky-identity-affordance-v1.js'
       - 'sky-chart-saved-sky-name-dialog-v1.js'
       - 'sky-chart-saved-skies-v1.js'
-      - 'sky-chart-saved-skies-direct-picker-v1.js'
       - 'sky-chart-saved-skies-v1.css'
       - 'sky-chart.html'
       - 'tests/sky-chart-save-sky-picker-browser.mjs'
@@ -17,7 +16,6 @@ on:
       - 'sky-chart-sky-identity-affordance-v1.js'
       - 'sky-chart-saved-sky-name-dialog-v1.js'
       - 'sky-chart-saved-skies-v1.js'
-      - 'sky-chart-saved-skies-direct-picker-v1.js'
       - 'sky-chart-saved-skies-v1.css'
       - 'sky-chart.html'
       - 'tests/sky-chart-save-sky-picker-browser.mjs'
@@ -37,7 +35,6 @@ jobs:
           node --check sky-chart-sky-identity-affordance-v1.js
           node --check sky-chart-saved-sky-name-dialog-v1.js
           node --check sky-chart-saved-skies-v1.js
-          node --check sky-chart-saved-skies-direct-picker-v1.js
           node --check tests/sky-chart-save-sky-picker-browser.mjs
       - name: Install Chromium
         run: |

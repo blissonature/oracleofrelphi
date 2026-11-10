@@ -5,6 +5,11 @@ on:
       - 'sky-chart-aspect-configurations-v1.js'
       - 'relphi-house-systems.js'
       - 'tests/configuration-harmonic-house-geometry.mjs'
+      - 'tests/configuration-canonical-diagram-browser.mjs'
+      - 'sky-chart-aspect-configurations-v1.css'
+      - 'relphi-copy-icon-convention-v1.css'
+      - 'sky-chart-foundation-v1.css'
+      - 'sky-chart.html'
       - '.github/workflows/configuration-harmonic-house-geometry.yml'
 jobs:
   test:
@@ -15,3 +20,30 @@ jobs:
         with:
           node-version: '22'
       - run: node tests/configuration-harmonic-house-geometry.mjs
+
+  canonical-diagram-browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install Chromium
+        run: |
+          npm install --no-save playwright@1.52.0 luxon@3 suncalc@1.9.0
+          npx playwright install --with-deps chromium
+      - name: Verify configurations geometry on desktop and mobile
+        run: |
+          python3 -m http.server 4173 >/tmp/relphi-config-http.log 2>&1 &
+          node tests/configuration-canonical-diagram-browser.mjs
+      - name: Upload canonical diagram screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: canonical-configuration-diagram
+          path: |
+            sky-configuration-canonical-*.png
+            sky-configuration-reading-*.png
+            sky-configuration-match-clear-*.png
+          if-no-files-found: ignore

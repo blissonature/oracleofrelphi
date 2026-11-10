@@ -131,3 +131,30 @@ html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]) .sky-chart-asp
   text-transform:lowercase;
   pointer-events:none;
 }
+
+/* Aspect matrix owns a small, accessible native settings disclosure. */
+.sky-chart-aspect-settings-bar{display:flex;justify-content:flex-end;margin:1px 1px 5px}
+.sky-chart-aspect-settings{width:100%;min-width:0}
+.sky-chart-aspect-settings>summary{
+  display:flex;align-items:center;justify-content:center;box-sizing:border-box;
+  width:31px;height:29px;margin-left:auto;border:1px solid rgba(31,27,24,.19);
+  border-radius:7px;color:#514941;background:#fff;cursor:pointer;list-style:none
+}
+.sky-chart-aspect-settings>summary::-webkit-details-marker{display:none}
+.sky-chart-aspect-settings>summary svg{display:block;width:18px;height:18px}
+.sky-chart-aspect-settings>summary:hover,
+.sky-chart-aspect-settings>summary:focus-visible,
+.sky-chart-aspect-settings[open]>summary{background:#f4efe8;border-color:#766a60}
+.sky-chart-aspect-settings>summary:focus-visible{outline:2px solid #574b40;outline-offset:2px}
+.sky-chart-aspect-settings-panel{
+  margin-top:6px;padding:10px;border:1px solid rgba(31,27,24,.17);
+  border-radius:9px;background:#f7f3ed
+}
+.sky-chart-slow-conjunction-option{
+  display:flex;align-items:flex-start;gap:9px;min-width:0;
+  color:#29231e;cursor:pointer;font:700 .69rem/1.4 system-ui,sans-serif
+}
+.sky-chart-slow-conjunction-caption{min-width:0;flex:1}
+.sky-chart-slow-conjunction-caption small{
+  display:block;margin-top:4px;color:#6a6058;font:400 .63rem/1.42 system-ui,sans-serif
+}

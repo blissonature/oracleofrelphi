@@ -22,7 +22,7 @@ function activePickerSlot(){return document.querySelector('[data-saved-sky-trigg
 function installStyle(){
   if(document.getElementById('skySavedSkiesLabelsV2Style'))return;
   const style=document.createElement('style');style.id='skySavedSkiesLabelsV2Style';style.textContent=`
-#skySavedSkiesPopover .sky-saved-list-item[data-private-sky-fingerprint="true"]{
+#skySavedSkiesPopover:not(.sky-library-redesigned) .sky-saved-list-item[data-private-sky-fingerprint="true"]{
   display:grid!important;
   grid-template-columns:max-content minmax(0,1fr) 20px!important;
   grid-template-areas:"fingerprint copy check"!important;
@@ -84,13 +84,13 @@ function installStyle(){
 }
 #skySavedSkiesPopover .sky-saved-fingerprint-triptych{grid-area:fingerprint}
 @media(max-width:420px){
-  #skySavedSkiesPopover .sky-saved-list-item[data-private-sky-fingerprint="true"]{column-gap:9px!important}
+  #skySavedSkiesPopover:not(.sky-library-redesigned) .sky-saved-list-item[data-private-sky-fingerprint="true"]{column-gap:9px!important}
   #skySavedSkiesPopover .sky-saved-fingerprint-copy-name{font-size:.65rem}
   #skySavedSkiesPopover .sky-saved-fingerprint-copy-when,
   #skySavedSkiesPopover .sky-saved-fingerprint-copy-where{font-size:.54rem}
   /* Match the actual artwork widths instead of squeezing a 128px triptych into 90px. */
-  #skySavedSkiesPopover .sky-saved-list-row{grid-template-columns:minmax(0,1fr) 25px!important}
-  #skySavedSkiesPopover .sky-saved-list-item[data-private-sky-fingerprint="true"]{
+  #skySavedSkiesPopover:not(.sky-library-redesigned) .sky-saved-list-row{grid-template-columns:minmax(0,1fr) 25px!important}
+  #skySavedSkiesPopover:not(.sky-library-redesigned) .sky-saved-list-item[data-private-sky-fingerprint="true"]{
     grid-template-columns:132px minmax(0,1fr) 14px!important;
     grid-template-areas:"fingerprint copy check"!important;
     column-gap:6px!important;min-width:0!important;width:100%!important;
@@ -180,9 +180,13 @@ function decorate(){
     else if(copy.dataset.signature!==sig){copy.replaceWith(copyFor(record));copy=item.querySelector('[data-saved-fingerprint-copy]')}
     if(copy)copy.dataset.signature=sig;
     const name=String(record.name||'Saved sky').trim()||'Saved sky',when=dateTime(record),where=place(record),parts=[name,when,where].filter(Boolean);
-    item.setAttribute('aria-label',`Load ${parts.join('. ')}.`);
-    const del=row.querySelector('[data-saved-delete-ref]');if(del){del.setAttribute('aria-label',`Delete ${name} from Saved Skies`);del.title=`Delete ${name}`}
-    const confirmation=row.querySelector('.sky-saved-delete-confirmation');if(confirmation)confirmation.setAttribute('aria-label',`Delete ${name}?`);
+    // The fingerprint library owns privacy disclosure and accessible names.
+    // Retain legacy accessible labels only when that owner is not installed.
+    if(!window.RelphiSkyCardLibrary){
+      item.setAttribute('aria-label',`Load ${parts.join('. ')}.`);
+      const del=row.querySelector('[data-saved-delete-ref]');if(del){del.setAttribute('aria-label',`Delete ${name} from Saved Skies`);del.title=`Delete ${name}`}
+      const confirmation=row.querySelector('.sky-saved-delete-confirmation');if(confirmation)confirmation.setAttribute('aria-label',`Delete ${name}?`);
+    }
   });
 }
 function schedule(){if(queued)return;queued=true;queueMicrotask(decorate)}

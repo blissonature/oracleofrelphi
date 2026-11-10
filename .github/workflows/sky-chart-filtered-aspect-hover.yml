@@ -1,0 +1,36 @@
+name: Sky Chart filtered-aspect hover regression
+on:
+  pull_request:
+    paths:
+      - 'sky-chart-final-integrated-v1.css'
+      - 'sky-chart-selected-relationship-wheel-bridge-v1.js'
+      - 'sky-chart-foundation-interactions-v2.js'
+      - 'sky-chart-orb-control-v1.js'
+      - 'sky-chart-aspect-scope-matrix-v1.js'
+      - 'tests/sky-chart-filtered-aspect-hover-browser.mjs'
+      - '.github/workflows/sky-chart-filtered-aspect-hover.yml'
+jobs:
+  browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Chromium and JavaScript syntax
+        run: |
+          node --check tests/sky-chart-filtered-aspect-hover-browser.mjs
+          npm install --no-save playwright@1.52.0 luxon@3 suncalc@1.9.0
+          npx playwright install --with-deps chromium
+      - name: Real filtered aspect hover and dim/isolate on desktop and mobile
+        run: |
+          python3 -m http.server 4173 >/tmp/filtered-aspect-http.log 2>&1 &
+          node tests/sky-chart-filtered-aspect-hover-browser.mjs
+      - name: Save regression screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: filtered-aspect-hover-desktop-mobile
+          path: aspect-hover-filtered-*.png
+          if-no-files-found: ignore

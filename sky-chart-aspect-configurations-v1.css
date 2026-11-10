@@ -334,7 +334,7 @@ html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]) .sky-chart-con
   display:block!important;
   min-width:0;
   padding:0!important;
-  overflow:hidden;
+  overflow:clip;
   border:1px solid rgba(31,27,24,.13)!important;
   border-radius:11px!important;
   background:#fff!important;
@@ -400,11 +400,10 @@ html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]) .sky-chart-con
 }
 .sky-configuration-result-detail{
   display:grid;
-  grid-template-columns:minmax(128px,164px) minmax(0,1fr);
-  grid-template-areas:"visual reveal" "visual instance";
-  column-gap:14px;
+  grid-template-columns:minmax(0,1fr);
+  grid-template-areas:"reading" "instance";
   row-gap:10px;
-  align-items:center;
+  align-items:start;
   padding:11px 12px 13px;
   border-top:1px solid rgba(31,27,24,.1);
   background:#fffdf8;
@@ -414,6 +413,12 @@ html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]) .sky-chart-con
   grid-area:visual;
   display:grid;
   place-items:center;
+  /* Sticky is confined to the reading section, never the match list. */
+  position:sticky;
+  top:10px;
+  align-self:start;
+  background:#fffdf8;
+  border-radius:8px;
 }
 .sky-configuration-mini-wheel{
   width:min(150px,100%);
@@ -483,18 +488,10 @@ html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]) .sky-chart-con
 @media(max-width:620px){
   .sky-configuration-results-grid{grid-template-columns:1fr!important}
   .sky-configuration-result-tile.is-expanded{grid-column:auto}
-  .sky-configuration-result-detail{
-    grid-template-columns:118px minmax(0,1fr);
-    column-gap:10px;
-    padding:10px;
-  }
+  .sky-configuration-result-detail{padding:10px;}
   .sky-configuration-result-summary{min-height:46px;padding:8px 9px}
 }
 @media(max-width:420px){
-  .sky-configuration-result-detail{
-    grid-template-columns:1fr;
-    grid-template-areas:"visual" "reveal" "instance";
-  }
   .sky-configuration-mini-wheel{width:136px}
   .sky-configuration-result-reveal{text-align:left}
 }
@@ -696,10 +693,17 @@ html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]) .sky-chart-con
 
 
 /* Configuration hierarchy + first-open explanation. */
-.sky-configuration-result-detail{
-  grid-template-columns:minmax(128px,164px) minmax(0,1fr)!important;
-  grid-template-areas:"visual explanation" "instance instance"!important;
-  align-items:start!important;
+.sky-configuration-result-reading{
+  grid-area:reading;
+  display:grid;
+  grid-template-columns:minmax(220px,260px) minmax(0,1fr);
+  grid-template-areas:"visual explanation";
+  column-gap:14px;
+  align-items:start;
+  min-width:0;
+}
+.sky-configuration-result-reading .sky-configuration-result-visual{
+  min-width:0;
 }
 .sky-configuration-result-explanation{
   grid-area:explanation;
@@ -725,12 +729,61 @@ html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]) .sky-chart-con
   text-transform:uppercase;
   color:#6f655d;
 }
-.sky-configuration-result-structure>span,
-.sky-configuration-result-interpretation>span{
+.sky-configuration-result-structure>span{
   font:750 .68rem/1.4 system-ui,sans-serif;
 }
 .sky-configuration-result-interpretation{
-  background:#f3f6f0;
+  background:#fffdfa;
+  border:1px solid rgba(31,27,24,.11);
+  padding:11px 12px;
+}
+.sky-configuration-result-interpretation>span{
+  display:block;
+  font:500 .74rem/1.5 system-ui,sans-serif;
+}
+.sky-configuration-interpretation-lines{display:grid;gap:11px;min-width:0}
+.sky-configuration-interpretation-line{
+  display:block;
+  position:relative;
+  margin:0;
+  padding:2px 0 10px 13px;
+  border-bottom:1px solid rgba(31,27,24,.09);
+}
+.sky-configuration-interpretation-line::before,
+.sky-configuration-interpretation-line::after{
+  content:"";
+  position:absolute;
+  top:2px;
+  bottom:10px;
+  width:3px;
+  border-radius:2px;
+}
+.sky-configuration-interpretation-line::before{left:0;background:var(--configuration-sign-color,#777)}
+.sky-configuration-interpretation-line::after{left:5px;background:var(--configuration-house-color,#777)}
+.sky-configuration-interpretation-actor{font-weight:700}
+.sky-configuration-interpretation-sky[data-sky="A"]{color:#c9211e}
+.sky-configuration-interpretation-sky[data-sky="B"]{color:#2462d0}
+.sky-configuration-interpretation-placement{font-weight:750;color:#24201d}
+.sky-configuration-interpretation-sign,.sky-configuration-interpretation-house,
+.sky-configuration-interpretation-aspect{
+  font-weight:750;
+  /* Keep the established hue but darken pale signs such as Leo for readable
+     small text. The existing sign/house rails retain their exact colors. */
+  color:color-mix(in srgb,var(--configuration-token-color,#777) 40%,#29231e);
+}
+.sky-configuration-interpretation-reading{color:#3f3832;font-weight:500}
+.sky-configuration-interpretation-synthesis,
+.sky-configuration-interpretation-motion{
+  margin:0;
+  padding:2px 0;
+  color:#332e2a;
+  font-weight:400;
+}
+.sky-configuration-interpretation-synthesis{padding-top:2px}
+.sky-configuration-interpretation-motion{border-top:1px solid rgba(31,27,24,.10);padding-top:10px}
+@media(max-width:620px){
+  .sky-configuration-result-interpretation{padding:10px}
+  .sky-configuration-result-interpretation>span{font-size:.73rem;line-height:1.52}
 }
 .sky-configuration-nested{
   background:#f4f1f8;
@@ -760,30 +813,67 @@ html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]) .sky-chart-con
 .sky-configuration-result-instance{
   grid-area:instance!important;
 }
-@media(max-width:420px){
-  .sky-configuration-result-detail{
-    grid-template-columns:1fr!important;
-    grid-template-areas:"visual" "explanation" "instance"!important;
+@media(max-width:760px){
+  .sky-configuration-result-reading{
+    grid-template-columns:minmax(0,1fr);
+    grid-template-areas:"visual" "explanation";
+    row-gap:12px;
+  }
+  .sky-configuration-result-reading .sky-configuration-result-visual{
+    position:static;
+  }
+  /* The reading itself scrolls while the canonical diagram stays in its
+     ordinary place above it. Match rows are outside this scroll region. */
+  .sky-configuration-result-reading .sky-configuration-result-explanation{
+    max-height:min(44dvh,380px);
+    overflow-y:auto;
+    overscroll-behavior:contain;
+    scrollbar-gutter:stable;
+    padding-right:4px;
+    touch-action:pan-y;
+  }
+  .sky-configuration-result-reading .sky-configuration-result-explanation:focus-visible{
+    outline:2px solid #655184;
+    outline-offset:3px;
   }
 }
 
 
 
 
-/* Configuration diagrams: preserve the compact thumbnail; expanded vertices reuse Relationships canonical masters exactly. */
+/* Configurations are a playable geometric map, not a second placement list.
+   The canonical glyph, sign and house at each vertex share one Foundation owner. */
 .sky-configuration-mini-wheel{position:relative}
-.sky-configuration-mini-wheel>svg{position:relative;z-index:1}
+.sky-configuration-mini-wheel.is-expanded{
+  width:min(238px,100%);
+  cursor:default;
+  overflow:visible;
+}
+.sky-configuration-mini-wheel>svg{position:relative;z-index:1;pointer-events:none}
 .sky-configuration-vertex-layer{position:absolute;inset:0;z-index:2;pointer-events:none}
 .sky-configuration-vertex-host{
   position:absolute;
   width:38px;
   height:38px;
   transform:translate(-50%,-50%);
+  overflow:visible;
+  pointer-events:none;
+}
+.sky-configuration-vertex-placement{
+  position:relative;
   display:grid;
   place-items:center;
-  overflow:visible;
+  width:38px;
+  height:38px;
+  padding:0;
+  border:0;
+  border-radius:50%;
+  background:transparent;
+  cursor:pointer;
+  pointer-events:auto;
+  -webkit-tap-highlight-color:transparent;
 }
-.sky-configuration-vertex-host>svg[data-relationship-canonical-host]{
+.sky-configuration-vertex-placement>svg[data-relationship-canonical-host]{
   display:block;
   width:38px!important;
   height:38px!important;
@@ -793,6 +883,15 @@ html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]) .sky-chart-con
   max-height:38px;
   overflow:visible;
   transform:none!important;
+  pointer-events:none;
+}
+.sky-configuration-mini-wheel.is-expanded button:focus-visible{
+  outline:2px solid #29231e;
+  outline-offset:2px;
+}
+.sky-configuration-mini-wheel.is-expanded button:hover{
+  background:#f7eee4;
+  box-shadow:0 0 0 2px rgba(31,27,24,.14);
 }
 .sky-configuration-mini-wheel.is-compact .sky-configuration-mini-point{display:block}
 .sky-configuration-mini-wheel.is-compact .sky-configuration-mini-point circle{stroke-width:1}
@@ -847,7 +946,7 @@ html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]) .sky-chart-con
   box-shadow:inset 0 1px 0 rgba(255,255,255,.72);
 }
 .sky-configuration-match-stack{
-  grid-column:1/-1;
+  grid-area:instance;
   display:grid;
   gap:6px;
   margin-top:2px;
@@ -908,7 +1007,7 @@ html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]) .sky-chart-con
 .sky-configuration-match-placements{
   display:flex;
   align-items:center;
-  gap:5px;
+  gap:7px;
   min-width:0;
   overflow:visible;
 }
@@ -1040,3 +1139,29 @@ html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]) .sky-chart-con
   background:#f6f0e8;
   color:#29231e;
 }
+
+
+.sky-configuration-structure-toggle{
+  appearance:none;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  width:100%;
+  min-height:31px;
+  border:1px solid rgba(31,27,24,.2);
+  border-radius:7px;
+  padding:6px 10px;
+  background:#fff;
+  color:#40382f;
+  font:800 .64rem/1.1 system-ui,sans-serif;
+  text-align:left;
+  cursor:pointer;
+}
+.sky-configuration-structure-toggle:hover,
+.sky-configuration-structure-toggle:focus-visible{
+  border-color:#685f56;
+  background:#fffdf8;
+  outline:2px solid rgba(31,27,24,.15);
+  outline-offset:2px;
+}
+.sky-configuration-structure-toggle[aria-expanded="true"]{background:#f4eee6}

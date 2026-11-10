@@ -115,6 +115,16 @@ const relationshipHeaderGap=await page.evaluate(()=>{
   const first=heading?.querySelector('.sky-relationship-heading-actions>[data-relationship-sort],.sky-relationship-heading-actions>.sky-relationship-sort-control')?.getBoundingClientRect();
   return title&&first?first.left-title.right:null;
 });
+console.log('RELATIONSHIPS_DESKTOP_GAP',JSON.stringify(await page.evaluate(()=>{
+ const heading=document.querySelector('#skyFoundationRelationships>.sky-foundation-relationships-heading');
+ const title=heading?.querySelector('[data-relationship-vocab-tabs],h2:not([hidden])');
+ const actions=heading?.querySelector('.sky-relationship-heading-actions');
+ const sort=actions?.querySelector('[data-relationship-sort],.sky-relationship-sort-control');
+ const rect=node=>{const r=node?.getBoundingClientRect();return r?{left:r.left,right:r.right,width:r.width}:null};
+ return{heading:rect(heading),title:rect(title),actions:rect(actions),sort:rect(sort),
+  headerCss:heading?{display:getComputedStyle(heading).display,columns:getComputedStyle(heading).gridTemplateColumns,gap:getComputedStyle(heading).columnGap}:null,
+  actionsCss:actions?{columns:getComputedStyle(actions).gridTemplateColumns,overflow:getComputedStyle(actions).overflow}:null};
+}))); 
 assert.ok(relationshipHeaderGap!==null&&relationshipHeaderGap>=98,'Relationships needs a 100px visual break between its header and first control.');
 assert.equal(relationshipHeaderOrder.countParent,true,'Match count must live on the Relationships action line, not between the header and controls.');
 assert.ok(relationshipHeaderOrder.sort>=0&&relationshipHeaderOrder.limit>relationshipHeaderOrder.sort,'Sort must precede Max.');
