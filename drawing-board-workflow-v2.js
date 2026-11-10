@@ -1945,7 +1945,7 @@
       root.classList.add('relphi-board-ready');
       enhance(root);
       installSacredResumeGate(root);
-      requestAnimationFrame(() => root.scrollIntoView({ behavior:'smooth', block:'start' }));
+      requestAnimationFrame(() => root.scrollIntoView({ block:'start' }));
       if (fit) { requestAnimationFrame(()=>requestAnimationFrame(zoomExtents)); setTimeout(zoomExtents, 180); }
     } else {
       closeFocus({ acknowledge:true, advanceSurface:false });
