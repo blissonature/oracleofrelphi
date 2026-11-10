@@ -76,7 +76,7 @@ assert.match(board, /data-astrology-house-system/);
 assert.match(board, /session\.astrologyAdvanced=true/);
 assert.doesNotMatch(board, /Assigned sub-pack/);
 assert.doesNotMatch(board, /Suggested sub-pack/);
-assert.match(board, /<small>'\+escapeHtml\(packLabel\(q\.pack\)\)\+'<\/small>/);
+assert.match(board, /<span class="relphi-main-question-readonly-meta">'\+escapeHtml\(packLabel\(q\.pack\)\)\+'<\/span>/);
 assert.match(board, /Accepting a generated question also accepts its assigned sub-pack/);
 assert.match(board, /data-astrology-own-pack/);
 assert.match(board, /Choose sub-pack…/);
