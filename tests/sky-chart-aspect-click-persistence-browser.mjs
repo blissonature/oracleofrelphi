@@ -59,19 +59,33 @@ try{
     async function pointerLocation(exclude='',preferredMode=config.prefer){
       return page.evaluate(({exclude,prefer})=>{
         const key=node=>{const d=node.dataset,mode=String(d.relationshipMode||'A-B').toUpperCase(),a=d.leftSky||(mode==='B-B'?'B':'A'),b=d.rightSky||(mode==='A-A'?'A':'B'),left=d.leftPlacement,right=d.rightPlacement;if(a===b){const [x,y]=[left,right].sort();return a+':'+x+'|'+d.aspect+'|'+b+':'+y}return a+':'+left+'|'+d.aspect+'|'+b+':'+right};
-        const lines=[...document.querySelectorAll('#skyFoundationWheelMount [data-layer="aspects"] > line.sky-foundation-aspect:not(.sky-foundation-aspect-hit)')]
+        const candidates=[...document.querySelectorAll('#skyFoundationWheelMount [data-layer="aspects"] > line.sky-foundation-aspect:not(.sky-foundation-aspect-hit)')]
           .filter(n=>!n.hidden&&getComputedStyle(n).display!=='none');
-        lines.sort((a,b)=>Number(b.dataset.relationshipMode===prefer)-Number(a.dataset.relationshipMode===prefer));
-        for(const line of lines){
-          const m=line.getScreenCTM();if(!m)continue;
-          const x1=Number(line.getAttribute('x1')),y1=Number(line.getAttribute('y1')),x2=Number(line.getAttribute('x2')),y2=Number(line.getAttribute('y2'));
-          for(const t of [.25,.35,.45,.55,.65,.75]){
-            const p=new DOMPoint(x1+(x2-x1)*t,y1+(y2-y1)*t).matrixTransform(m);
+        const segments=candidates.map(line=>{
+          const m=line.getScreenCTM();if(!m)return null;
+          const start=new DOMPoint(Number(line.getAttribute('x1')),Number(line.getAttribute('y1'))).matrixTransform(m);
+          const end=new DOMPoint(Number(line.getAttribute('x2')),Number(line.getAttribute('y2'))).matrixTransform(m);
+          return{line,start,end,id:key(line)};
+        }).filter(Boolean);
+        const distance=(p,s)=>{
+          const dx=s.end.x-s.start.x,dy=s.end.y-s.start.y,length=dx*dx+dy*dy;
+          const t=length?Math.max(0,Math.min(1,((p.x-s.start.x)*dx+(p.y-s.start.y)*dy)/length)):0;
+          return Math.hypot(p.x-(s.start.x+t*dx),p.y-(s.start.y+t*dy));
+        };
+        for(const segment of segments.filter(s=>s.line.dataset.relationshipMode===prefer&&s.id!==exclude)){
+          for(const t of [.2,.3,.4,.5,.6,.7,.8]){
+            const p={x:segment.start.x+(segment.end.x-segment.start.x)*t,y:segment.start.y+(segment.end.y-segment.start.y)*t};
             if(p.x<2||p.y<2||p.x>innerWidth-2||p.y>innerHeight-2)continue;
             const top=document.elementFromPoint(p.x,p.y)?.closest?.('[data-interactive="aspect"]');
-            if(!top||top.dataset.relationshipMode!==prefer||!top.dataset.leftPlacement||!top.dataset.rightPlacement||getComputedStyle(top).pointerEvents==='none')continue;
-            const id=key(top);
-            if(id&&id!==exclude)return{x:p.x,y:p.y,id,mode:top.dataset.relationshipMode||'A-B'};
+            if(!top||!top.dataset.leftPlacement||!top.dataset.rightPlacement||getComputedStyle(top).pointerEvents==='none')continue;
+            // A direct drawn-line hit must already identify the requested line.
+            // Transparent hit clones may overlap; the interaction owner must
+            // instead resolve the nearest visible stroke at these coordinates.
+            if(!top.classList.contains('sky-foundation-aspect-hit')&&key(top)!==segment.id)continue;
+            let nearest=null,best=Infinity;
+            for(const candidate of segments){const d=distance(p,candidate);if(d<best){nearest=candidate;best=d}}
+            if(nearest?.id!==segment.id||best>1)continue;
+            return{x:p.x,y:p.y,id:segment.id,mode:segment.line.dataset.relationshipMode,topMode:top.dataset.relationshipMode};
           }
         }
         return null;
