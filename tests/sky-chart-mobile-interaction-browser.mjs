@@ -55,7 +55,7 @@ const findTouchPoint=async(kind,scope=null)=>page.evaluate(({kind,scope})=>{
     };
     for(const segment of strokes){
       if(scope&&segment.node.dataset.relationshipMode!==scope)continue;
-      for(const t of [.2,.3,.4,.5,.6,.7,.8]){
+      for(const t of [.07,.1,.15,.2,.25,.3,.35,.4,.45,.5,.55,.6,.65,.7,.75,.8,.85,.9,.93]){
         const x=segment.start.x+(segment.end.x-segment.start.x)*t,y=segment.start.y+(segment.end.y-segment.start.y)*t;
         if(x<=2||y<=2||x>=width-2||y>=height-2)continue;
         const top=document.elementFromPoint(x,y)?.closest?.('[data-interactive]');
@@ -71,7 +71,7 @@ const findTouchPoint=async(kind,scope=null)=>page.evaluate(({kind,scope})=>{
         }
         // Avoid crossing points and nearly coincident chords; touching one
         // of these is physically ambiguous even though both are valid lines.
-        if(closest!==segment||best>1||runnerUp-best<3)continue;
+        if(closest!==segment||best>1||runnerUp-best<0.25)continue;
         const d=segment.node.dataset;
         return{x,y,leftSky:d.leftSky,left:d.leftPlacement,aspect:d.aspect,rightSky:d.rightSky,right:d.rightPlacement};
       }
