@@ -102,12 +102,13 @@ try{
     assert.ok(afterSecond.kept.includes(second.id),config.name+' must keep the second chord, not the first');
     assert.equal(afterSecond.unselectable,0,config.name+' must not disable further clicks');
 
-    const clear=page.locator('#skyFoundationClearIsolation');
-    await clear.click();
-    await page.waitForTimeout(220);
+    // The Relationships-header Clear button is intentionally not displayed in
+    // every layout. The established wheel interaction clears by tapping the
+    // already-selected aspect again, using the same physical input path.
+    await activate(second);
     const afterClear=await snapshot();
-    assert.equal(afterClear.active,false,config.name+' Clear must remove isolation');
-    assert.equal(afterClear.visible,initial.visible,config.name+' Clear must restore all aspect strokes');
+    assert.equal(afterClear.active,false,config.name+' selecting the same line again must clear isolation');
+    assert.equal(afterClear.visible,initial.visible,config.name+' clearing must restore all aspect strokes');
     assert.deepEqual(errors.filter(Boolean),[],config.name+' should not generate page errors');
     console.log('PASS '+config.name+': '+initial.visible+' aspect lines retained; '+first.mode+' -> '+second.mode+' switched; clear restored');
     await page.close();
