@@ -624,7 +624,7 @@
     document.querySelectorAll('#skyFoundationRelationshipList > .sky-foundation-relationship-row').forEach(other=>{
       if(other!==row){other.classList.remove('is-wheel-target','is-selected');other.removeAttribute('aria-current')}
     });
-    // Scroll only the Relationships list; scrollIntoView would move the entire page and wheel.
+    // Keep navigation scrolling inside the Relationships list, never the page or wheel.
     const list=document.getElementById('skyFoundationRelationshipList');
     if(list){
       const itemRect=row.getBoundingClientRect(),panelRect=list.getBoundingClientRect();
