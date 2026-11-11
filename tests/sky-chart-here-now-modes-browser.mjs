@@ -39,17 +39,23 @@ try{
  assert.equal(footerInitially.columns,2,'The footer must contain only the original Cancel and Use buttons.');
  const topOrder=await form.evaluate(node=>{
    const body=node.querySelector('.sky-where-when-scroll-body');
-   const relevant=[...body.children].filter(el=>el.matches('.sky-where-when-one-click,[data-ww-where],[data-ww-when],[data-ww-heptagram-slot]'));
+   const relevant=[...body.children].filter(el=>el.matches('.sky-where-when-main-actions,.sky-where-when-one-click,[data-ww-where],[data-ww-when],[data-ww-heptagram-slot]'));
    const button=body.querySelector('.sky-where-when-one-click');
-   return{order:relevant.map(el=>el.dataset.wwAction==='here-and-now'?'here-and-now':el.hasAttribute('data-ww-where')?'where':el.hasAttribute('data-ww-when')?'when':'heptagram'),
+   const actions=button?.closest('.sky-where-when-main-actions');
+   const copy=actions?.querySelector('[data-copy-where-when]');
+   return{order:relevant.map(el=>(el.matches('.sky-where-when-main-actions,.sky-where-when-one-click'))?'here-and-now':el.hasAttribute('data-ww-where')?'where':el.hasAttribute('data-ww-when')?'when':'heptagram'),
      buttonCount:node.querySelectorAll('[data-ww-action="here-and-now"]').length,
      buttonIcon:!!button?.querySelector('svg'),
-     buttonVisible:button?.getBoundingClientRect().height>0};
+     buttonVisible:button?.getBoundingClientRect().height>0,
+     copyCount:actions?.querySelectorAll('[data-copy-where-when]').length||0,
+     copyVisible:!!copy&&copy.getBoundingClientRect().height>0};
  });
  assert.equal(topOrder.buttonCount,1,'One-click Here and Now must exist exactly once.');
  assert.deepEqual(topOrder.order,['here-and-now','where','when','heptagram']);
  assert.equal(topOrder.buttonIcon,true,'The single button must contain its refresh icon.');
  assert.equal(topOrder.buttonVisible,true,'The top action must be visible.');
+ assert.equal(topOrder.copyCount,1,'Where and When must retain one Copy button beside Here and Now.');
+ assert.equal(topOrder.copyVisible,true,'Where and When Copy must be visible on mobile.');
 
  assert.equal(await here.isChecked(),false);assert.equal(await now.isChecked(),false);
  assert.equal(await form.locator('[data-ww-field="live"]').count(),0,'Live toggle must be absent.');
