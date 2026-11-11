@@ -102,6 +102,7 @@ try{
     assert.ok(first,config.name+' must physically hit a '+config.prefer+' comparison-wheel aspect');
     await activate(first);
     const afterFirst=await snapshot();
+    console.log('FIRST_HIT_DIAGNOSTIC',config.name,JSON.stringify({first,afterFirst,initialVisible:initial.visible}));
     assert.equal(afterFirst.active,true,config.name+' must lock wheel isolation on click/tap');
     assert.equal(afterFirst.visible,initial.visible,config.name+' must not erase unrelated aspect lines after first selection');
     assert.ok(afterFirst.kept.includes(first.id),config.name+' must keep selected chord visible');
