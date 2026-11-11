@@ -201,6 +201,7 @@ const activateScope=async(mode)=>{
   await page.waitForTimeout(850);
   const selection=await focus();
   const identity=[hit.leftSky,hit.left,hit.aspect,hit.rightSky,hit.right].join('|');
+  console.log('SCOPE_DRAWN_STROKE_DIAGNOSTIC',mode,JSON.stringify({hit,selected:selection.selected,kept:selection.keptAspects.slice(0,5),trace:await page.evaluate(()=>window.__focusTrace.slice(-16))}));
   assert.ok(selection.active,mode+' physical touch must lock isolation');
   assert.ok(selection.keptAspects.some(n=>[n.leftSky,n.left,n.aspect,n.rightSky,n.right].join('|')===identity),mode+' correct line must be kept');
   for(const endpoint of [hit.leftSky+':'+hit.left,hit.rightSky+':'+hit.right])assert.ok(selection.keptEndpoints.includes(endpoint),mode+' must keep '+endpoint);
