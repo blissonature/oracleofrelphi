@@ -96,6 +96,22 @@ try{
       else await page.mouse.click(point.x,point.y);
       await page.waitForTimeout(300);
     }
+    await page.evaluate(()=>{
+      window.__aspectGestureTrace=[];
+      for(const kind of ['pointerdown','pointerup','click']){
+        document.addEventListener(kind,event=>{
+          if(!event.target.closest?.('#skyFoundationWheelMount'))return;
+          const hit=event.target.closest?.('[data-interactive]');
+          window.__aspectGestureTrace.push({kind,pointer:event.pointerType,detail:event.detail,
+            x:event.clientX,y:event.clientY,hit:hit?.dataset.interactive,
+            mode:hit?.dataset.relationshipMode,aspect:hit?.dataset.aspect});
+        },true);
+      }
+      window.addEventListener('relphi:sky-foundation-filter-changed',event=>{
+        const state=event.detail?.state;
+        if(state?.mode==='selected'||!state)window.__aspectGestureTrace.push({kind:'focus',state});
+      });
+    });
     const initial=await snapshot();
     assert.ok(initial.visible>4,config.name+' fixture requires multiple visible aspect chords');
     const first=await pointerLocation();
@@ -112,6 +128,7 @@ try{
     assert.ok(second,config.name+' must physically switch from '+config.prefer+' to '+config.next+' without clearing focus');
     await activate(second);
     const afterSecond=await snapshot();
+    console.log('SECOND_HIT_DIAGNOSTIC',config.name,JSON.stringify({second,afterSecond,trace:await page.evaluate(()=>window.__aspectGestureTrace.slice(-24))}));
     assert.equal(afterSecond.active,true,config.name+' must allow direct switching between aspect lines');
     assert.equal(afterSecond.visible,initial.visible,config.name+' must keep the original visible aspect count after switching');
     assert.ok(afterSecond.kept.includes(second.id),config.name+' must keep the second chord, not the first');
