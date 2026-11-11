@@ -759,7 +759,11 @@
     // after our touch handler already committed selection. Suppress both kinds
     // of duplicate click, without blocking interactions outside the wheel.
     document.addEventListener('click',event=>{
-      if(performance.now()<ignoreNativeClickUntil&&touchInWheel(event)){
+      // An older pointerup handler can emit a synthetic click before our
+      // finishTouch callback arms the post-gesture click guard. The physical
+      // touch gesture already owns selection, so consume that click in the
+      // existing capture handler while the gesture is still in progress.
+      if((touchGesture||performance.now()<ignoreNativeClickUntil)&&touchInWheel(event)){
         event.preventDefault();event.stopImmediatePropagation();
       }
     },true);
