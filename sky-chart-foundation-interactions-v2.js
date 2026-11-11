@@ -748,7 +748,7 @@
         toggleInteractiveNode(node);
         // A mouse pointerup can be followed by a native click. Do not toggle
         // the same house/placement twice for one physical gesture.
-        lastMousePointerSelection={spec:specFrom(node),at:performance.now()};
+        lastMousePointerSelection={spec:specFrom(node),at:performance.now(),x:event.clientX,y:event.clientY};
       }
     },{capture:true,passive:true});
     document.addEventListener('pointercancel',cancelTouch,{capture:true});
@@ -804,9 +804,14 @@
       if(!node)return;
       event.preventDefault();
       event.stopImmediatePropagation();
+      // A physical gesture produces pointerup followed by a native click.
+      // Dense transparent aspect-hit overlays may retarget the latter to
+      // another chord after pointerup changes focus. Gesture coordinates,
+      // not a second hit test, determine whether this click is a duplicate.
       const duplicate=event.detail>0&&lastMousePointerSelection&&
         performance.now()-lastMousePointerSelection.at<750&&
-        same(lastMousePointerSelection.spec,specFrom(node));
+        Math.hypot(event.clientX-lastMousePointerSelection.x,
+          event.clientY-lastMousePointerSelection.y)<=12;
       lastMousePointerSelection=null;
       if(!duplicate)toggleInteractiveNode(node);
     },true);
