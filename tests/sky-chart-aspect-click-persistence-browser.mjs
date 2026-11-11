@@ -17,8 +17,8 @@ function sky(name,offset,instant){
 const fixture={a:sky('Comparison A',0,'1985-10-08T04:37:00.000Z'),b:sky('Comparison B',29.27,'2026-09-09T21:00:00.000Z')};
 const browser=await chromium.launch({headless:true});
 try{
-  for(const config of [{name:'desktop',width:1440,height:1000,hasTouch:false,prefer:'A-B'},
-                       {name:'mobile',width:390,height:844,hasTouch:true,prefer:'B-B'}]){
+  for(const config of [{name:'desktop',width:1440,height:1000,hasTouch:false,prefer:'A-B',next:'B-B'},
+                       {name:'mobile',width:390,height:844,hasTouch:true,prefer:'B-B',next:'A-B'}]){
     const page=await browser.newPage({viewport:{width:config.width,height:config.height},hasTouch:config.hasTouch,isMobile:config.hasTouch});
     const errors=[];page.on('pageerror',error=>errors.push(error.message));
     await page.route('https://unpkg.com/suncalc@1.9.0/suncalc.js',route=>route.fulfill({path:path.resolve('node_modules/suncalc/suncalc.js'),contentType:'application/javascript'}));
@@ -56,7 +56,7 @@ try{
     }
     // Locate the actual topmost aspect hit target at a visible stroke segment.
     // This is a physical-pointer test, not dispatchEvent('click') on an SVG node.
-    async function pointerLocation(exclude=''){
+    async function pointerLocation(exclude='',preferredMode=config.prefer){
       return page.evaluate(({exclude,prefer})=>{
         const key=node=>{const d=node.dataset,mode=String(d.relationshipMode||'A-B').toUpperCase(),a=d.leftSky||(mode==='B-B'?'B':'A'),b=d.rightSky||(mode==='A-A'?'A':'B'),left=d.leftPlacement,right=d.rightPlacement;if(a===b){const [x,y]=[left,right].sort();return a+':'+x+'|'+d.aspect+'|'+b+':'+y}return a+':'+left+'|'+d.aspect+'|'+b+':'+right};
         const lines=[...document.querySelectorAll('#skyFoundationWheelMount [data-layer="aspects"] > line.sky-foundation-aspect:not(.sky-foundation-aspect-hit)')]
@@ -69,13 +69,13 @@ try{
             const p=new DOMPoint(x1+(x2-x1)*t,y1+(y2-y1)*t).matrixTransform(m);
             if(p.x<2||p.y<2||p.x>innerWidth-2||p.y>innerHeight-2)continue;
             const top=document.elementFromPoint(p.x,p.y)?.closest?.('[data-interactive="aspect"]');
-            if(!top||!top.dataset.leftPlacement||!top.dataset.rightPlacement||getComputedStyle(top).pointerEvents==='none')continue;
+            if(!top||top.dataset.relationshipMode!==prefer||!top.dataset.leftPlacement||!top.dataset.rightPlacement||getComputedStyle(top).pointerEvents==='none')continue;
             const id=key(top);
             if(id&&id!==exclude)return{x:p.x,y:p.y,id,mode:top.dataset.relationshipMode||'A-B'};
           }
         }
         return null;
-      },{exclude,prefer:config.prefer});
+      },{exclude,prefer:preferredMode});
     }
     async function activate(point){
       if(config.hasTouch)await page.touchscreen.tap(point.x,point.y);
@@ -85,7 +85,7 @@ try{
     const initial=await snapshot();
     assert.ok(initial.visible>4,config.name+' fixture requires multiple visible aspect chords');
     const first=await pointerLocation();
-    assert.ok(first,config.name+' must hit a real aspect target on the wheel');
+    assert.ok(first,config.name+' must physically hit a '+config.prefer+' comparison-wheel aspect');
     await activate(first);
     const afterFirst=await snapshot();
     assert.equal(afterFirst.active,true,config.name+' must lock wheel isolation on click/tap');
@@ -93,8 +93,8 @@ try{
     assert.ok(afterFirst.kept.includes(first.id),config.name+' must keep selected chord visible');
     assert.equal(afterFirst.unselectable,0,config.name+' other visible chords must remain clickable');
 
-    const second=await pointerLocation(first.id);
-    assert.ok(second,config.name+' must offer a second physical aspect target without clearing focus');
+    const second=await pointerLocation(first.id,config.next);
+    assert.ok(second,config.name+' must physically switch from '+config.prefer+' to '+config.next+' without clearing focus');
     await activate(second);
     const afterSecond=await snapshot();
     assert.equal(afterSecond.active,true,config.name+' must allow direct switching between aspect lines');
