@@ -76,6 +76,27 @@ function microHeptagram(sourceSvg){
   root.setAttribute('aria-hidden','true');
   root.setAttribute('focusable','false');
   root.querySelectorAll('[id]').forEach(node=>node.removeAttribute('id'));
+  // The full heptagram owns geometry and canonical glyph creation. The
+  // fingerprint owns only the thumbnail presentation: live rulers are enlarged
+  // and idle ruler glyphs become quiet dots at the same planetary positions.
+  root.querySelectorAll('.sky-ph-planet').forEach(group=>{
+    const active=group.classList.contains('is-day-ruler')||group.classList.contains('is-hour-ruler');
+    const mount=group.querySelector(':scope > .sky-ph-node-glyph');
+    if(!mount)return;
+    if(active){
+      const unit=mount.querySelector('[data-master-glyph-unit]');
+      if(unit)unit.setAttribute('transform','scale(1.45)');
+    }else{
+      mount.replaceChildren();
+      const dot=document.createElementNS('http://www.w3.org/2000/svg','circle');
+      dot.setAttribute('cx','0');
+      dot.setAttribute('cy','0');
+      dot.setAttribute('r','9');
+      dot.setAttribute('fill','#77736e');
+      dot.classList.add('sky-ph-micro-idle-node');
+      mount.appendChild(dot);
+    }
+  });
   return root;
 }
 window.RelphiSkyMicroHeptagram = microHeptagram;
