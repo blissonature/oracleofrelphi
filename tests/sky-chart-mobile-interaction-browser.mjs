@@ -39,7 +39,9 @@ const findTouchPoint=async(kind,scope=null)=>page.evaluate(({kind,scope})=>{
     // The wide transparent clones can overlap a different visible aspect.
     // Test the drawn stroke nearest to the physical finger, which is what
     // the canonical wheel interaction controller now selects.
-    const strokes=nodes.filter(node=>node.localName==='line'&&!node.hidden&&getComputedStyle(node).display!=='none')
+    const strokes=[...wheel.querySelectorAll('[data-layer="aspects"] > line.sky-foundation-aspect:not(.sky-foundation-aspect-hit)')]
+      .filter(node=>!node.hidden&&getComputedStyle(node).display!=='none'&&
+        !['sky-chart-filter-hidden','sky-chart-orb-hidden','sky-orb-filter-hidden'].some(cls=>node.classList.contains(cls)))
       .map(node=>{
         const matrix=node.getScreenCTM();if(!matrix)return null;
         const start=new DOMPoint(Number(node.getAttribute('x1')),Number(node.getAttribute('y1'))).matrixTransform(matrix);
@@ -61,9 +63,15 @@ const findTouchPoint=async(kind,scope=null)=>page.evaluate(({kind,scope})=>{
         // A physical click on a *different* drawn stroke is authoritative;
         // only wide transparent hit clones use nearest-stroke resolution.
         if(!top.classList.contains('sky-foundation-aspect-hit')&&top!==segment.node)continue;
-        let closest=null,best=Infinity;
-        for(const stroke of strokes){const d=distance({x,y},stroke);if(d<best){best=d;closest=stroke}}
-        if(closest!==segment||best>1)continue;
+        let closest=null,best=Infinity,runnerUp=Infinity;
+        for(const stroke of strokes){
+          const d=distance({x,y},stroke);
+          if(d<best){runnerUp=best;best=d;closest=stroke}
+          else if(d<runnerUp)runnerUp=d;
+        }
+        // Avoid crossing points and nearly coincident chords; touching one
+        // of these is physically ambiguous even though both are valid lines.
+        if(closest!==segment||best>1||runnerUp-best<3)continue;
         const d=segment.node.dataset;
         return{x,y,leftSky:d.leftSky,left:d.leftPlacement,aspect:d.aspect,rightSky:d.rightSky,right:d.rightPlacement};
       }
