@@ -58,6 +58,9 @@ const findTouchPoint=async(kind,scope=null)=>page.evaluate(({kind,scope})=>{
         if(x<=2||y<=2||x>=width-2||y>=height-2)continue;
         const top=document.elementFromPoint(x,y)?.closest?.('[data-interactive]');
         if(top?.dataset.interactive!=='aspect')continue;
+        // A physical click on a *different* drawn stroke is authoritative;
+        // only wide transparent hit clones use nearest-stroke resolution.
+        if(!top.classList.contains('sky-foundation-aspect-hit')&&top!==segment.node)continue;
         let closest=null,best=Infinity;
         for(const stroke of strokes){const d=distance({x,y},stroke);if(d<best){best=d;closest=stroke}}
         if(closest!==segment||best>1)continue;
