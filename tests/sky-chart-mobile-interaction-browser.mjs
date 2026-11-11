@@ -35,6 +35,38 @@ const findTouchPoint=async(kind,scope=null)=>page.evaluate(({kind,scope})=>{
   const nodes=[...wheel.querySelectorAll('[data-interactive="'+kind+'"]')].filter(node=>node.getClientRects().length&&!node.classList.contains('sky-foundation-aspect-hit'));
   const width=window.innerWidth,height=window.innerHeight;
   const markers=[...wheel.querySelectorAll('[data-layer="placements"] [data-interactive="placement"]')].map(n=>n.getBoundingClientRect()).filter(r=>r.width>0&&r.height>0);
+  if(kind==='aspect'){
+    // The wide transparent clones can overlap a different visible aspect.
+    // Test the drawn stroke nearest to the physical finger, which is what
+    // the canonical wheel interaction controller now selects.
+    const strokes=nodes.filter(node=>node.localName==='line'&&!node.hidden&&getComputedStyle(node).display!=='none')
+      .map(node=>{
+        const matrix=node.getScreenCTM();if(!matrix)return null;
+        const start=new DOMPoint(Number(node.getAttribute('x1')),Number(node.getAttribute('y1'))).matrixTransform(matrix);
+        const end=new DOMPoint(Number(node.getAttribute('x2')),Number(node.getAttribute('y2'))).matrixTransform(matrix);
+        return{node,start,end};
+      }).filter(Boolean);
+    const distance=(point,segment)=>{
+      const dx=segment.end.x-segment.start.x,dy=segment.end.y-segment.start.y,len=dx*dx+dy*dy;
+      const t=len?Math.max(0,Math.min(1,((point.x-segment.start.x)*dx+(point.y-segment.start.y)*dy)/len)):0;
+      return Math.hypot(point.x-segment.start.x-t*dx,point.y-segment.start.y-t*dy);
+    };
+    for(const segment of strokes){
+      if(scope&&segment.node.dataset.relationshipMode!==scope)continue;
+      for(const t of [.2,.3,.4,.5,.6,.7,.8]){
+        const x=segment.start.x+(segment.end.x-segment.start.x)*t,y=segment.start.y+(segment.end.y-segment.start.y)*t;
+        if(x<=2||y<=2||x>=width-2||y>=height-2)continue;
+        const top=document.elementFromPoint(x,y)?.closest?.('[data-interactive]');
+        if(top?.dataset.interactive!=='aspect')continue;
+        let closest=null,best=Infinity;
+        for(const stroke of strokes){const d=distance({x,y},stroke);if(d<best){best=d;closest=stroke}}
+        if(closest!==segment||best>1)continue;
+        const d=segment.node.dataset;
+        return{x,y,leftSky:d.leftSky,left:d.leftPlacement,aspect:d.aspect,rightSky:d.rightSky,right:d.rightPlacement};
+      }
+    }
+    return null;
+  }
   for(const node of nodes){
     const rect=node.getBoundingClientRect(),minX=Math.max(2,rect.left),maxX=Math.min(width-2,rect.right),minY=Math.max(2,rect.top),maxY=Math.min(height-2,rect.bottom);
     if(minX>=maxX||minY>=maxY)continue;
