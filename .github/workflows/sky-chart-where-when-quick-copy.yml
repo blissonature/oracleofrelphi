@@ -9,7 +9,7 @@ on:
       - '.github/workflows/sky-chart-where-when-quick-copy.yml'
 jobs:
   browser:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 12
     steps:
       - uses: actions/checkout@v4
