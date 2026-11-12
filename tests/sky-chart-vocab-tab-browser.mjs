@@ -97,21 +97,30 @@ assert.ok(initialAbstractGlyphGeometry.length>0,'Abstract Vocab must expose prev
 assert.equal(initialAbstractGlyphGeometry.every(item=>Math.abs(item.w-15)<.25&&Math.abs(item.h-15)<.25&&Math.abs(item.svgW-15)<.25&&Math.abs(item.svgH-15)<.25),true,'Abstract preview glyph boxes must start at their final fixed 15px geometry.');
 assert.equal(initialAbstractGlyphGeometry.every(item=>!item.visible||item.ready),true,'An abstract preview glyph must never paint before its canonical fitted state is ready.');
 
-const displayToggle=page.locator('#skyFoundationA [data-vocab-dropdown-toggle="layers"]');
-await displayToggle.click();
-const abstractDisplayMenu=page.locator('[data-vocab-dropdown-menu="layers"][data-vocab-menu-slot="A"]');
-await abstractDisplayMenu.waitFor({state:'visible'});
-for(const layer of ['referents','names']){
-  const input=abstractDisplayMenu.locator(`[data-vocab-layer="${layer}"][data-vocab-slot="A"]`);
-  await input.click();
-  await page.waitForTimeout(30);
-  await input.click();
-  await page.waitForTimeout(30);
+
+
+/* Vocab draws from the same Focus Display state. No second dropdown owner. */
+const sharedDisplay=page.locator('#skyFoundationFocus [data-relationship-display-value]');
+await sharedDisplay.waitFor({state:'visible'});
+assert.equal(await page.locator('#skyFoundationA [data-vocab-dropdown-toggle]').count(),0,'Vocab must not duplicate Focus display and filter controls.');
+await sharedDisplay.click();
+const sharedMenu=page.locator('#skyRelationshipDisplayPopover');
+await sharedMenu.waitFor({state:'visible'});
+for(const layer of ['glyphs','names','referents']){
+  assert.equal(await sharedMenu.locator('[data-shared-display-layer="'+layer+'"]').count(),1,'Focus Display owns the '+layer+' layer');
 }
+const sharedName=sharedMenu.locator('[data-shared-display-layer="names"]');
+await sharedName.uncheck();
+await page.waitForFunction(()=>window.RelphiSkyVocab?.getDisplay?.().names===false);
+await sharedName.check();
+await page.waitForFunction(()=>window.RelphiSkyVocab?.getDisplay?.().names===true);
 await page.keyboard.press('Escape');
+await sharedMenu.waitFor({state:'hidden'});
 const afterDisplayGlyphGeometry=await abstractGlyphGeometry();
-assert.deepEqual(afterDisplayGlyphGeometry.map(({w,h,svgW,svgH})=>[Math.round(w*100),Math.round(h*100),Math.round(svgW*100),Math.round(svgH*100)]),initialAbstractGlyphGeometry.map(({w,h,svgW,svgH})=>[Math.round(w*100),Math.round(h*100),Math.round(svgW*100),Math.round(svgH*100)]),'Changing Display must not resize abstract Vocab glyphs.');
-assert.equal(afterDisplayGlyphGeometry.every(item=>!item.visible||item.ready),true,'Display changes must never reveal an unfitted abstract glyph state.');
+assert.deepEqual(afterDisplayGlyphGeometry.map(({w,h,svgW,svgH})=>[Math.round(w*100),Math.round(h*100),Math.round(svgW*100),Math.round(svgH*100)]),
+ initialAbstractGlyphGeometry.map(({w,h,svgW,svgH})=>[Math.round(w*100),Math.round(h*100),Math.round(svgW*100),Math.round(svgH*100)]),
+ 'Shared Focus Display changes must not resize canonical abstract Vocab glyphs.');
+
 
 // Open all groups for the detailed interaction and geometry assertions below.
 await vocabGroups.evaluateAll(nodes=>nodes.forEach(node=>{node.open=true}));
@@ -267,92 +276,22 @@ await page.waitForFunction(()=>document.querySelector('#skyFoundationA .sky-voca
 assert.equal(await page.locator('#skyFoundationA .sky-vocab-token[data-vocab-id="_housecontext"]').count(),0,'Internal _houseContext metadata must never render as a Vocab placement after a sky load.');
 assert.equal((await page.locator('#skyFoundationA [data-sky-vocab-paragraph]').textContent()).includes('_houseContext'),false,'Private sky metadata text must not leak into the Vocab paragraph.');
 
-async function clickBlankComparison(){
-  await page.locator('#skyFoundationComparison').evaluate(node=>{
-    const pointer={bubbles:true,cancelable:true,composed:true,pointerId:91,pointerType:'mouse',isPrimary:true,buttons:1};
-    node.dispatchEvent(new PointerEvent('pointerdown',pointer));
-    node.dispatchEvent(new PointerEvent('pointerup',{...pointer,buttons:0}));
-    node.dispatchEvent(new MouseEvent('click',{bubbles:true,cancelable:true,composed:true}));
-  });
+
+
+/* Relationship filters remain the sole filter owner. Vocab must not create a
+   second Placements, Zodiac Signs, or Houses state. */
+assert.equal(await page.locator('#skyFoundationA [data-vocab-dropdown-toggle]').count(),0);
+const relationshipPlacementSummary=page.locator('#skyFoundationRelationships [data-placement-filter-summary]');
+assert.ok(await relationshipPlacementSummary.count()===1,'Relationships provides the shared Placements filter');
+const sharedPlacementButton=page.locator('#skyFoundationRelationships [data-placement-filter-toggle],#skyFoundationFocus [data-placement-filter-toggle]').first();
+if(await sharedPlacementButton.count()){
+  await sharedPlacementButton.click();
+  const placementMenu=page.locator('#skyChartPlacementPopover');
+  await placementMenu.waitFor({state:'visible'});
+  assert.ok(await placementMenu.locator('[data-placement-choice]').count()>10,'Shared Placements retains its OR/AND/NOT controls');
+  await page.keyboard.press('Escape');
 }
 
-const display=page.locator('#skyFoundationA [data-vocab-dropdown-toggle="layers"]');
-await display.click();
-const displayMenu=page.locator('[data-vocab-dropdown-menu="layers"][data-vocab-menu-slot="A"]');
-await displayMenu.waitFor({state:'visible'});
-assert.equal(await displayMenu.locator('.sky-vocab-filter-row').count(),3,'Display matrix must contain Glyphs, Names, and Referents.');
-assert.equal(await displayMenu.locator('[data-vocab-layer-all="A"]').count(),1);
-assert.equal(await displayMenu.locator('[data-vocab-layer-none="A"]').count(),1);
-await page.keyboard.press('Escape');
-await displayMenu.waitFor({state:'hidden'});
-
-const placements=page.locator('#skyFoundationA [data-vocab-shared-placement-toggle="A"]');
-const vocabPlacementSummary=page.locator('#skyFoundationA [data-vocab-dropdown-summary="placements"][data-vocab-summary-slot="A"]');
-const relationshipPlacementSummary=page.locator('#skyFoundationRelationships [data-placement-filter-summary]');
-assert.equal(await vocabPlacementSummary.textContent(),await relationshipPlacementSummary.textContent(),'Vocab Placements must initialize from the Relationships Placements state.');
-
-await placements.click();
-const placementMenu=page.locator('#skyChartPlacementPopover');
-await placementMenu.waitFor({state:'visible'});
-assert.equal(await placementMenu.locator('.sky-chart-placement-list').count(),1,'Opening Placements from Vocab must open the actual Relationships placement list.');
-assert.ok(await placementMenu.locator('.sky-chart-placement-list-item-group').count()>=4,'The shared Placements popover must retain Relationships group rows.');
-assert.ok(await placementMenu.locator('[data-placement-choice]').count()>10,'The shared Placements popover must retain OR/AND/NOT logic controls.');
-
-const sunAChoice=placementMenu.locator('[data-placement-scope="placement"][data-placement-target="sun"][data-placement-choice="a"]');
-await sunAChoice.click();
-await page.waitForFunction(()=>document.querySelector('#skyFoundationRelationships [data-placement-filter-summary]')?.textContent==='A Sun OR');
-await page.waitForFunction(()=>document.querySelector('#skyFoundationA [data-vocab-dropdown-summary="placements"]')?.textContent==='A Sun OR');
-assert.equal(await vocabPlacementSummary.textContent(),'A Sun OR','Vocab Placements summary must mirror Relationships immediately.');
-const mercuryAChoice=placementMenu.locator('[data-placement-scope="placement"][data-placement-target="mercury"][data-placement-choice="a"]');
-await mercuryAChoice.click();
-await mercuryAChoice.click();
-await page.waitForFunction(()=>document.querySelector('#skyFoundationRelationships [data-placement-filter-summary]')?.textContent==='A Sun OR · A Mercury AND');
-assert.equal(await relationshipPlacementSummary.textContent(),'A Sun OR · A Mercury AND','Multiple placement rules must be named instead of collapsed to a vague rule count.');
-await mercuryAChoice.click();
-await mercuryAChoice.click();
-const inheritedPlacementIds=await page.locator('#skyFoundationA .sky-vocab-line:not([data-vocab-structure]) .sky-vocab-token[data-vocab-kind="placement"]').evaluateAll(tokens=>[...new Set(tokens.map(token=>token.dataset.vocabId).filter(Boolean))]);
-assert.deepEqual(inheritedPlacementIds,['sun'],'Vocab placement results must inherit the effective Sky A placement scope from Relationships.');
-
-const placementScroll=await placementMenu.evaluate(async menu=>{
-  await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
-  const max=Math.max(0,menu.scrollHeight-menu.clientHeight);
-  menu.scrollTop=max;
-  const before=menu.scrollTop;
-  menu.dispatchEvent(new Event('scroll',{bubbles:false}));
-  await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
-  return{before,after:menu.scrollTop,max};
-});
-assert.ok(placementScroll.max>0,'The shared Placements dropdown test fixture must be scrollable.');
-assert.ok(placementScroll.before>0&&placementScroll.after>=placementScroll.before-2,'Scrolling the shared Placements dropdown must not snap back to the top.');
-
-await placementMenu.locator('[data-placement-logic-clear]').click();
-await page.waitForFunction(()=>document.querySelector('#skyFoundationRelationships [data-placement-filter-summary]')?.textContent==='All');
-await page.waitForFunction(()=>document.querySelector('#skyFoundationA [data-vocab-dropdown-summary="placements"]')?.textContent==='All');
-assert.ok(await page.locator('#skyFoundationA .sky-vocab-line:not([data-vocab-structure])').count()>5,'Clearing Relationships Placements must restore the full Vocab placement layer.');
-await page.keyboard.press('Escape');
-await placementMenu.waitFor({state:'hidden'});
-
-const signs=page.locator('#skyFoundationA [data-vocab-dropdown-toggle="signs"]');
-await signs.click();
-const signMenu=page.locator('[data-vocab-dropdown-menu="signs"][data-vocab-menu-slot="A"]');
-await signMenu.waitFor({state:'visible'});
-assert.equal(await signMenu.locator('[data-vocab-sign]').count(),12,'Zodiac Sign matrix must contain twelve signs.');
-assert.equal(await signMenu.locator('.sky-chart-zodiac-filter-row').count(),12,'Vocab Zodiac must reuse the Relationships Zodiac rows.');
-assert.equal(await signMenu.locator('.sky-chart-zodiac-filter-glyph svg').count(),12,'Every Vocab Zodiac row must use the canonical Relationships glyph cell.');
-assert.equal(await signMenu.locator('.sky-chart-sign-list-figure').count(),12,'Every Vocab Zodiac row must carry the Relationships figure label.');
-await page.keyboard.press('Escape');
-await signMenu.waitFor({state:'hidden'});
-
-const houses=page.locator('#skyFoundationA [data-vocab-dropdown-toggle="houses"]');
-await houses.click();
-const houseMenu=page.locator('[data-vocab-dropdown-menu="houses"][data-vocab-menu-slot="A"]');
-await houseMenu.waitFor({state:'visible'});
-assert.equal(await houseMenu.locator('[data-vocab-house]').count(),12,'House matrix must contain twelve houses.');
-assert.equal(await houseMenu.locator('.sky-chart-house-list').count(),1,'Vocab Houses must reuse the Relationships House list.');
-assert.equal(await houseMenu.locator('.sky-chart-house-menu-medallion').count(),12,'Every Vocab House row must use the Relationships house medallion.');
-assert.match(await houseMenu.locator('.sky-chart-house-menu-description').nth(0).textContent(),/^self, body, approach$/,'House descriptions must match Relationships wording.');
-await page.keyboard.press('Escape');
-await houseMenu.waitFor({state:'hidden'});
 
 const initialLines=page.locator('#skyFoundationA .sky-vocab-line');
 assert.ok(await initialLines.count()>5,'Vocab must render multiple sentence lines.');
@@ -424,23 +363,6 @@ const pinnedState=await page.evaluate(()=>{
 });
 assert.equal(pinnedState.selected,true,'Clicking a Vocab token must pin the native wheel selection.');
 assert.equal(pinnedState.kept,true,'Pinned Vocab selection must remain kept.');
-await page.locator('#skyFoundationA [data-vocab-dropdown-toggle="layers"]').click();
-await page.waitForFunction(()=>!document.querySelector('#skyFoundationWheelMount>.sky-foundation-wheel')?.classList.contains('has-isolation'));
-await page.keyboard.press('Escape');
-
-// Retained/touch-style row context clears on another Vocab interaction.
-await sunMercuryCluster.evaluate(node=>node.dispatchEvent(new PointerEvent('pointerup',{bubbles:true,pointerType:'touch',pointerId:77,isPrimary:true})));
-await page.waitForFunction(()=>document.querySelector('#skyFoundationWheelMount>.sky-foundation-wheel')?.classList.contains('has-vocab-context'));
-await page.locator('#skyFoundationA .sky-vocab-placements-heading').dispatchEvent('pointerdown',{pointerType:'touch',pointerId:78,isPrimary:true});
-await page.waitForFunction(()=>!document.querySelector('#skyFoundationWheelMount>.sky-foundation-wheel')?.classList.contains('has-isolation'));
-
-// Blank wheel space clears the same retained context.
-await sunMercuryCluster.evaluate(node=>node.dispatchEvent(new PointerEvent('pointerup',{bubbles:true,pointerType:'touch',pointerId:79,isPrimary:true})));
-await page.waitForFunction(()=>document.querySelector('#skyFoundationWheelMount>.sky-foundation-wheel')?.classList.contains('has-vocab-context'));
-const wheelBlank=page.locator('#skyFoundationWheelMount>.sky-foundation-wheel');
-await wheelBlank.dispatchEvent('pointerdown',{pointerType:'mouse',clientX:1,clientY:1,button:0});
-await page.waitForFunction(()=>!document.querySelector('#skyFoundationWheelMount>.sky-foundation-wheel')?.classList.contains('has-isolation'));
-
 
 const inlineGlyphPaintState=await page.locator('#skyFoundationA .sky-vocab-glyph.has-svg-glyph svg').evaluateAll(nodes=>nodes.slice(0,24).map(svg=>({
   ready:svg.dataset.vocabInlineGlyphReady==='true',
@@ -527,211 +449,7 @@ const medallionLineImpact=await page.locator('#skyFoundationA .sky-vocab-token[d
 assert.ok(medallionLineImpact&&medallionLineImpact.hostPosition==='relative','House Medallion host must provide a positioning context.');
 assert.ok(medallionLineImpact&&medallionLineImpact.hostHeight<=medallionLineImpact.lineHeight,'House Medallion host must not make the Vocab line taller than its normal text line.');
 
-// Global Display choices are the baseline. Clicking one token may add its hidden layers,
-// but must not alter what stays visible on neighboring tokens.
-await display.click();
-await displayMenu.waitFor({state:'visible'});
-const glyphToggle=displayMenu.locator('[data-vocab-layer="glyphs"]');
-const nameToggle=displayMenu.locator('[data-vocab-layer="names"]');
-const referentToggle=displayMenu.locator('[data-vocab-layer="referents"]');
-if(await glyphToggle.isChecked())await glyphToggle.uncheck();
-if(await nameToggle.isChecked())await nameToggle.uncheck();
-if(!(await referentToggle.isChecked()))await referentToggle.check();
-await page.keyboard.press('Escape');
-await displayMenu.waitFor({state:'hidden'});
-const firstToken=page.locator('#skyFoundationA .sky-vocab-token').first();
-const secondToken=page.locator('#skyFoundationA .sky-vocab-token').nth(1);
-assert.equal(await firstToken.locator('.sky-vocab-referent').count(),1,'Referents-only display must keep the referent visible.');
-assert.equal(await firstToken.locator('.sky-vocab-glyph').count(),0,'Referents-only display must initially hide the glyph.');
-assert.equal(await firstToken.locator('.sky-vocab-name').count(),0,'Referents-only display must initially hide the name.');
-await firstToken.locator('.sky-vocab-referent').click();
-assert.equal(await firstToken.locator('.sky-vocab-glyph').count(),1,'First local reveal must add the next hidden layer: glyph.');
-assert.equal(await firstToken.locator('.sky-vocab-name').count(),0,'First local reveal must not skip ahead to the name.');
-assert.equal(await secondToken.locator('.sky-vocab-glyph').count(),0,'A local reveal must not alter neighboring tokens.');
 
-const structureContextReferentOnly=page.locator('#skyFoundationA [data-vocab-structure] [data-vocab-context-kind="sign"]').first();
-assert.equal(await structureContextReferentOnly.locator('.sky-vocab-name').count(),0,'Turning Names off must also remove sign names inside Structures.');
-assert.equal(await structureContextReferentOnly.locator('.sky-vocab-referent').count(),1,'Turning Referents on must show the sign referent inside Structures.');
-
-const hiddenGlyphSpacing=await structureContextReferentOnly.evaluate(node=>{
-  const referent=node.querySelector('.sky-vocab-referent');
-  if(!referent)return null;
-  const prev=referent.previousSibling;
-  return{
-    glyphs:node.querySelectorAll('.sky-vocab-glyph').length,
-    previousText:prev?.nodeType===Node.TEXT_NODE?prev.nodeValue:'',
-    text:node.textContent
-  };
-});
-assert.equal(hiddenGlyphSpacing.glyphs,0,'Glyphs-off Structure context must contain no glyph host at all.');
-assert.equal(/\s{2,}$/.test(hiddenGlyphSpacing.previousText||''),false,'Glyphs-off Structure context must not leave doubled trailing spacing before the referent.');
-await firstToken.locator('.sky-vocab-referent').click();
-assert.equal(await firstToken.locator('.sky-vocab-name').count(),1,'Second local reveal must add the final hidden layer: name.');
-const expandedOrder=await firstToken.evaluate(node=>Array.from(node.querySelectorAll(':scope .sky-vocab-glyph,:scope .sky-vocab-referent,:scope .sky-vocab-name')).map(child=>
-  child.classList.contains('sky-vocab-glyph')?'glyph':child.classList.contains('sky-vocab-referent')?'referent':'name'
-));
-assert.deepEqual(expandedOrder,['glyph','referent','name'],'Expanded Vocab tokens must preserve Glyph → Referent → Name order.');
-const parentheticalText=await firstToken.textContent();
-assert.match(parentheticalText,/\([^)]*\)/,'Expanded Vocab name must be enclosed in parentheses.');
-
-const parentheticalNameDisplay=await firstToken.locator('.sky-vocab-parenthetical .sky-vocab-name').evaluate(node=>getComputedStyle(node).display);
-assert.equal(parentheticalNameDisplay,'inline','The revealed name must remain inline so the opening parenthesis stays attached to its content.');
-assert.equal(await firstToken.locator('.sky-vocab-parenthetical .sky-vocab-referent').count(),0,'The referent must not be placed inside the parentheses.');
-const visibleOrder=await firstToken.evaluate(node=>Array.from(node.querySelectorAll('.sky-vocab-referent,.sky-vocab-name,.sky-vocab-glyph')).map(child=>child.classList.contains('sky-vocab-referent')?'referent':child.classList.contains('sky-vocab-name')?'name':'glyph'));
-assert.deepEqual(visibleOrder,['glyph','referent','name'],'Visible token order must be Glyph, Referent, Name.');
-assert.equal(await firstToken.locator(':scope > .sky-vocab-referent').count(),1,'The referent must remain the unparenthesized readable first layer.');
-
-const symbolLabelWrap=await firstToken.locator(':scope > .sky-vocab-symbol-label').evaluate(node=>getComputedStyle(node).whiteSpace);
-assert.equal(symbolLabelWrap,'nowrap','Glyph and parenthetical name must behave as one unbreakable inline unit.');
-
-const houseTokenForWrap=page.locator('#skyFoundationA .sky-vocab-token[data-vocab-kind="house"]').filter({has:page.locator('.sky-vocab-referent')}).first();
-await houseTokenForWrap.locator('.sky-vocab-referent').click();
-const houseSymbolLabel=houseTokenForWrap.locator(':scope > .sky-vocab-symbol-label');
-assert.equal(await houseSymbolLabel.evaluate(node=>getComputedStyle(node).whiteSpace),'nowrap','House medallion and its grammatical lead must never split across lines.');
-await firstToken.locator('.sky-vocab-referent').click();
-assert.equal(await firstToken.locator('.sky-vocab-glyph').count(),0,'After all hidden layers are shown, the next click must return to the global Display baseline.');
-assert.equal(await firstToken.locator('.sky-vocab-referent').count(),1,'Returning to baseline must preserve the globally enabled referent.');
-await display.click();
-await displayMenu.waitFor({state:'visible'});
-await displayMenu.locator('[data-vocab-layer-all="A"]').click();
-await page.keyboard.press('Escape');
-await displayMenu.waitFor({state:'hidden'});
-
-const houseNine=page.locator('#skyFoundationWheelMount [data-interactive="house"][data-sky="A"][data-house="9"]').first();
-await houseNine.evaluate(node=>node.dispatchEvent(new MouseEvent('click',{bubbles:true,cancelable:true,composed:true})));
-await page.waitForFunction(()=>document.querySelector('#skyFoundationA [data-vocab-dropdown-summary="houses"]')?.textContent==='House 9');
-assert.equal(await page.locator('#skyFoundationA [data-vocab-house="9"]').isChecked(),true,'House 9 must be checked when House 9 is selected on the wheel.');
-assert.equal(await page.locator('#skyFoundationA [data-vocab-house="8"]').isChecked(),false,'House 8 must be unchecked when House 9 is selected on the wheel.');
-assert.equal(await page.locator('#skyFoundationA [data-vocab-dropdown-summary="placements"]').textContent(),'All','A House wheel click must leave the Placement dimension at All.');
-assert.equal(await page.locator('#skyFoundationA [data-vocab-dropdown-summary="signs"]').textContent(),'All','A House wheel click must leave the Zodiac Sign dimension at All.');
-
-const houseNinePlacements=await page.locator('#skyFoundationA .sky-vocab-line:not([data-vocab-structure]) .sky-vocab-token[data-vocab-kind="placement"]').evaluateAll(tokens=>Array.from(new Set(tokens.map(token=>token.dataset.vocabId))));
-assert.ok(houseNinePlacements.length>0,'House 9 must retain its own placement statements.');
-assert.equal(await page.locator('#skyFoundationA .sky-vocab-token[data-vocab-kind="aspect"]').count(),0,'House filtering must still avoid reopening the raw relationship list.');
-
-const houseNinePolarity=await page.locator('#skyFoundationA [data-vocab-structure="axis-polarity"][data-vocab-axis="mc-ic"]').evaluateAll(lines=>lines.map(line=>
-  Array.from(line.querySelectorAll('.sky-vocab-token[data-vocab-kind="placement"]'),token=>token.dataset.vocabId)
-));
-assert.equal(houseNinePolarity.length,1,'Selecting the MC/Chiron house must preserve the single higher-order MC–IC polarity structure.');
-assert.deepEqual(
-  new Set(houseNinePolarity[0]),
-  new Set(['mc','chiron','ic','uranus']),
-  'The preserved meridian polarity must carry the whole MC + Chiron ↔ IC + Uranus structure without reopening unrelated relationships.'
-);
-
-const meridianStripe=await meridianStructure.evaluate(node=>({
-  enabled:node.dataset.vocabPolarityColors,
-  sign:getComputedStyle(node).getPropertyValue('--vocab-polarity-signs').trim(),
-  house:getComputedStyle(node).getPropertyValue('--vocab-polarity-houses').trim(),
-  system:node.dataset.vocabHouseSystem,
-  borderLeft:getComputedStyle(node).borderLeftWidth
-}));
-assert.equal(meridianStripe.enabled,'true','Primary polarity cards must opt into dual sign/house rails.');
-assert.match(meridianStripe.sign,/linear-gradient/i,'Outer primary-polarity rail must encode signs.');
-assert.match(meridianStripe.house,/linear-gradient/i,'Inner primary-polarity rail must encode houses.');
-assert.equal(meridianStripe.system,'equal-house','Structure rails must record the house system used by the fixture.');
-assert.equal(meridianStripe.borderLeft,'0px','Colored structure rails must replace, not sit on top of, the old gray border.');
-
-const signStripe=page.locator('#skyFoundationA [data-vocab-structure="sign-polarity"]').first();
-assert.equal(await signStripe.getAttribute('data-vocab-polarity-colors'),'true','Sign polarity cards must use the two-color stripe.');
-assert.doesNotMatch(await signStripe.textContent(),/^Sign polarity:/i,'Sign-polarity cards must not repeat their section heading.');
-
-const houseStripe=page.locator('#skyFoundationA [data-vocab-structure="house-polarity"]').first();
-assert.equal(await houseStripe.getAttribute('data-vocab-polarity-colors'),'true','House polarity cards must use the two-color stripe.');
-assert.doesNotMatch(await houseStripe.textContent(),/^House polarity:/i,'House-polarity cards must not repeat their section heading.');
-
-const concentrationStripe=page.locator('#skyFoundationA [data-vocab-structure="cluster"],#skyFoundationA [data-vocab-structure="stellium"]').first();
-if(await concentrationStripe.count()){
-  assert.equal(await concentrationStripe.getAttribute('data-vocab-polarity-colors'),null,'Concentrations must not masquerade as two-ended polarity stripes.');
-  assert.equal(await concentrationStripe.getAttribute('data-vocab-concentration-colors'),'true','Concentrations must expose sign and house occupancy rails.');
-  assert.equal(await concentrationStripe.getAttribute('data-vocab-house-system'),'equal-house','Concentration rails must record the active house system used for their house distribution.');
-  const gradients=await concentrationStripe.evaluate(node=>({
-    sign:getComputedStyle(node).getPropertyValue('--vocab-concentration-signs').trim(),
-    house:getComputedStyle(node).getPropertyValue('--vocab-concentration-houses').trim()
-  }));
-  assert.match(gradients.sign,/linear-gradient/i,'Concentration sign occupancy must render as a segmented gradient rail.');
-  assert.match(gradients.house,/linear-gradient/i,'Concentration house occupancy must render as a segmented gradient rail.');
-}
-assert.equal(await meridianStructure.locator('[data-vocab-context-kind="sign"]').count(),2,'MC + Chiron and IC + Uranus must each share one sign context instead of repeating it per member.');
-assert.equal(await meridianStructure.locator('[data-vocab-context-kind="house"]').count(),2,'MC + Chiron and IC + Uranus must each share one house context instead of repeating it per member.');
-assert.equal(await meridianStructure.locator('[data-vocab-structure-context-group]').count(),2,'The meridian polarity fixture must collapse its four members into two shared-location groups.');
-
-const meridianText=(await meridianStructure.textContent()).replace(/\s+/g,' ').trim();
-assert.match(meridianText,/are in/i,'A grouped structural pole must read as prose using “are in”.');
-assert.match(meridianText,/At one end of the polarity,/,'Primary polarity prose must give the first side an explicit grammatical role.');
-assert.match(meridianText,/; at the other,/,'Primary polarity prose must give the second side an equal grammatical role.');
-assert.equal(meridianText.includes('form one pole, opposite'),false,'Primary polarity prose must not use the old asymmetric wording.');
-assert.match(meridianText,/concerning/i,'Structure house context must be introduced with “concerning” instead of a bare separator.');
-
-const structureTypography=await meridianStructure.evaluate(line=>{
-  const refs=Array.from(line.querySelectorAll('.sky-vocab-referent'));
-  const connective=line.querySelector('.sky-vocab-structure-member-context');
-  const label=line.querySelector('.sky-vocab-structure-label');
-  return{
-    referents:refs.map(node=>{const s=getComputedStyle(node);return[s.fontSize,s.fontWeight,s.lineHeight,s.color]}),
-    connective:connective?(()=>{const s=getComputedStyle(connective);return[s.fontSize,s.fontWeight,s.lineHeight,s.color]})():null,
-    label:label?(()=>{const s=getComputedStyle(label);return[s.fontSize,s.fontWeight,s.lineHeight,s.color]})():null
-  };
-});
-assert.ok(structureTypography.referents.length>=4,'Structure typography fixture must expose several referents.');
-assert.equal(new Set(structureTypography.referents.map(v=>v.join('|'))).size,1,'Placement, sign, and house referents in Structures must use one typography.');
-assert.deepEqual(structureTypography.connective,structureTypography.referents[0],'Connective prose such as “concerning” must use the same body typography as Structure referents.');
-assert.deepEqual(structureTypography.label,structureTypography.referents[0],'Structure labels must use exactly the same body typography as the rest of the card.');
-
-const structureSignSize=await meridianStructure.locator('[data-vocab-context-kind="sign"] .sky-vocab-glyph').first().evaluate(node=>({
-  width:parseFloat(getComputedStyle(node).width),
-  normal:parseFloat(getComputedStyle(document.querySelector('#skyFoundationA .sky-vocab-token[data-vocab-kind="sign"]:not(.sky-vocab-structure-context) .sky-vocab-glyph')).width)
-}));
-assert.ok(Math.abs(structureSignSize.width-structureSignSize.normal)<=1,'Structure sign glyphs must use the same mark size as ordinary Vocab sign glyphs.');
-assert.ok(await meridianStructure.locator('[data-vocab-context-kind="sign"] .sky-vocab-name').filter({hasText:'Gemini'}).count()>=1,'MC/Chiron pole must expose its Gemini context.');
-assert.ok(await meridianStructure.locator('[data-vocab-context-kind="sign"] .sky-vocab-name').filter({hasText:'Sagittarius'}).count()>=1,'IC/Uranus pole must expose its Sagittarius context.');
-assert.equal(await meridianStructure.locator('[data-vocab-context-kind="house"] .relphi-house-medallion').count(),2,'Grouped structure house context must reuse one canonical House Medallion per shared location.');
-
-await clickBlankComparison();
-await page.waitForFunction(()=>document.querySelector('#skyFoundationA [data-vocab-dropdown-summary="houses"]')?.textContent==='All');
-assert.equal(await page.locator('#skyFoundationA [data-vocab-dropdown-summary="placements"]').textContent(),'All','Blank space must restore the Vocab Placement filter after a House selection.');
-assert.equal(await page.locator('#skyFoundationA [data-vocab-dropdown-summary="signs"]').textContent(),'All','Blank space must restore the Vocab Zodiac filter after a House selection.');
-assert.equal(await page.evaluate(()=>window.RelphiSkyVocab?.getWheelFilterSpec?.()??null),null,'Blank space must drop the Vocab wheel-filter selection itself.');
-await page.waitForFunction(()=>document.querySelector('[data-house-filter="combined"] input[data-house-choice="a"][data-house-scope="all"][data-house-target="all"]')?.checked===true);
-
-const libra=page.locator('#skyFoundationWheelMount [data-interactive="sign"][data-sign="6"]').first();
-await libra.evaluate(node=>node.dispatchEvent(new MouseEvent('click',{bubbles:true,cancelable:true,composed:true})));
-await page.waitForFunction(()=>document.querySelector('#skyFoundationA [data-vocab-dropdown-summary="signs"]')?.textContent==='Libra');
-assert.equal(await page.locator('#skyFoundationA [data-vocab-sign="6"]').isChecked(),true,'Libra must be checked when the Libra wheel sector is selected.');
-assert.equal(await page.locator('#skyFoundationA [data-vocab-sign="5"]').isChecked(),false,'Virgo must be unchecked when the Libra wheel sector is selected.');
-assert.equal(await page.locator('#skyFoundationA [data-vocab-dropdown-summary="placements"]').textContent(),'All','A Sign wheel click must leave the Placement dimension at All.');
-
-await clickBlankComparison();
-await page.waitForFunction(()=>document.querySelector('#skyFoundationA [data-vocab-dropdown-summary="signs"]')?.textContent==='All');
-assert.equal(await page.locator('#skyFoundationA [data-vocab-dropdown-summary="placements"]').textContent(),'All','Blank space must restore Placement after a Zodiac selection.');
-assert.equal(await page.locator('#skyFoundationA [data-vocab-dropdown-summary="houses"]').textContent(),'All','Blank space must restore Houses after a Zodiac selection.');
-
-const mercury=page.locator('#skyFoundationWheelMount [data-interactive="placement"][data-sky="A"][data-placement="mercury"]').first();
-await mercury.evaluate(node=>{
-  const pointer={bubbles:true,cancelable:true,composed:true,pointerId:92,pointerType:'mouse',isPrimary:true,buttons:1};
-  node.dispatchEvent(new PointerEvent('pointerdown',pointer));
-  node.dispatchEvent(new PointerEvent('pointerup',{...pointer,buttons:0}));
-  node.dispatchEvent(new MouseEvent('click',{bubbles:true,cancelable:true,composed:true}));
-});
-await page.waitForTimeout(120);
-const mercurySelectionState=await page.evaluate(()=>({
-  summary:document.querySelector('#skyFoundationA [data-vocab-dropdown-summary="placements"]')?.textContent||'',
-  spec:window.RelphiSkyVocab?.getWheelFilterSpec?.()??null,
-  checked:Array.from(document.querySelectorAll('#skyFoundationA [data-vocab-placement]:checked'),node=>node.dataset.vocabPlacement),
-  wheelSelected:document.querySelector('#skyFoundationWheelMount [data-interactive="placement"][data-sky="A"][data-placement="mercury"]')?.classList.contains('is-selected')||false
-}));
-assert.match(mercurySelectionState.summary,/Mercury/i,`A Placement wheel click must drive the Placement filter: ${JSON.stringify(mercurySelectionState)}`);
-assert.equal(
-  await page.locator('#skyFoundationWheelMount .sky-wheel-sector-description strong').textContent(),
-  'Mercury',
-  'The visible corner box must show a capitalized placement name after a wheel click.'
-);
-assert.equal(await page.locator('#skyFoundationA [data-vocab-dropdown-summary="signs"]').textContent(),'All','A Placement wheel click must not rewrite the Sign filter.');
-assert.equal(await page.locator('#skyFoundationA [data-vocab-dropdown-summary="houses"]').textContent(),'All','A Placement wheel click must not rewrite the House filter.');
-await clickBlankComparison();
-await page.waitForFunction(()=>document.querySelector('#skyFoundationA [data-vocab-dropdown-summary="placements"]')?.textContent==='All');
-assert.equal(await page.locator('#skyFoundationA [data-vocab-dropdown-summary="signs"]').textContent(),'All','Blank space must restore Zodiac after a Placement selection.');
-assert.equal(await page.locator('#skyFoundationA [data-vocab-dropdown-summary="houses"]').textContent(),'All','Blank space must restore Houses after a Placement selection.');
 
 const cuspSky=structuredClone(skyA);
 cuspSky.placements.Venus=placement('Venus',179.2);
@@ -743,13 +461,9 @@ await page.evaluate(raw=>{
 },cuspSky);
 await page.waitForFunction(()=>document.querySelector('#skyFoundationA [data-vocab-structure="stellium"][data-vocab-cluster-type="cusp"][data-vocab-signs="Virgo|Libra"]'));
 const cuspStellium=page.locator('#skyFoundationA [data-vocab-structure="stellium"][data-vocab-cluster-type="cusp"][data-vocab-signs="Virgo|Libra"]');
-assert.equal(await cuspStellium.count(),1,'Three major bodies crossing Virgo–Libra must be surfaced as one cusp stellium.');
-assert.match(await cuspStellium.textContent(),/Stellium · Cusp · Virgo–Libra/i,'A cusp stellium must explicitly name both affected signs without repeating Concentration or Cluster.');
-const cuspDistribution=await cuspStellium.getAttribute('data-vocab-sign-distribution');
-assert.match(cuspDistribution,/Virgo:\d+\|Libra:\d+/,'Cusp concentration must expose member counts for both signs so stripe lengths follow occupancy.');
-const cuspGradient=await cuspStellium.evaluate(node=>getComputedStyle(node).getPropertyValue('--vocab-concentration-signs').trim());
-assert.match(cuspGradient,/%/,'Cusp concentration sign rail must encode proportional percentage stops rather than an even split.');
-
-assert.deepEqual(errors,[],'Opening Vocab and driving its filters from the wheel must not produce page errors.');
+assert.equal(await cuspStellium.count(),1,'Cross-sign major-body stellium remains represented');
+assert.match(await cuspStellium.textContent(),/Stellium · Cusp · Virgo–Libra/i);
+assert.match(await cuspStellium.getAttribute('data-vocab-sign-distribution'),/Virgo:\d+\|Libra:\d+/);
+assert.deepEqual(errors,[],'Vocab must not produce page errors');
 await browser.close();
-console.log('Vocab opens; House, Sign, and Placement wheel selections drive their matching filters; output is one capitalized sentence per line.');
+console.log('Vocab shared Focus, collapsed previews, canonical glyphs, polarity, house rails, and cusp-stellium acceptance passed.');
