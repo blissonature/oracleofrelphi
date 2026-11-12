@@ -183,7 +183,10 @@ jobs:
           assert.equal(state.mountHidden,false);
           assert.ok(state.mountChildCount>0);
           await page.locator('#skyFoundationA [data-sky-drawer-tab="card-hits"]').click({force:true});
-          await page.waitForTimeout(300);
+          // The previous interaction explicitly switched to Houses. Re-enter
+          // Rulers before checking the chart-ruler stage and tarot art.
+          await page.locator('#skyFoundationA [data-card-hits-view="rulers"]').click();
+          await page.waitForSelector('#skyFoundationA .sky-card-chart-ruler-stage',{state:'visible'});
           const drawer=await page.evaluate(()=>({
             open:document.querySelector('#skyFoundationA [data-sky-drawer="card-hits"]')?.open||false,
             structure:!!document.querySelector('#skyFoundationA .sky-card-hits-structure'),
