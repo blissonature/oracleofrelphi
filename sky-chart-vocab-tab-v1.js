@@ -1504,6 +1504,10 @@ function refreshGroupPreviews(root=document){
   });
 }
 function refreshDisplayLayers(){
+  // Display updates replace glyph/token content. Release its old Vocab-hover
+  // preview before replacement can discard the pointerout event.
+  vocabWheelTouchLine=null;
+  clearVocabWheelContext();
   syncControlState();
   document.querySelectorAll('[data-sky-vocab-panel]').forEach(panel=>{
     rerenderTokens(panel);
