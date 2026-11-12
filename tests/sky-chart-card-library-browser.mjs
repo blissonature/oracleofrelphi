@@ -39,6 +39,10 @@ try {
  assert.equal(await page.locator('#skySavedSkiesPopover .sky-saved-list-row:not([hidden])').count(),1,'Search by name filters private cards');
  assert.equal(await page.locator('#skySavedSkiesPopover .sky-saved-list-row:not([hidden]) [data-saved-sky-ref]').getAttribute('data-saved-sky-ref'),'client-1');
  await page.locator('[data-sky-library-search]').fill('');
+ // Folders are user-created; never invent default categories.
+ await page.evaluate(()=>{window.prompt=()=> 'Clients'});
+ await page.locator('[data-sky-library-add-folder]').click();
+ await page.waitForSelector('[data-sky-library-folder="Clients"]');
  const action=page.locator('[data-saved-sky-ref="client-1"]').locator('..').locator('[data-sky-folder-edit]');
  await action.click();
  await page.locator('[data-saved-sky-ref="client-1"]').locator('..').locator('[data-sky-folder-select]').selectOption('Clients');
