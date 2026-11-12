@@ -337,7 +337,9 @@ assert.match(app, /ctx\.fillText\('oracleofrelphi\.com'/);
 assert.doesNotMatch(app, /Drawing Board · oracleofrelphi\.com/);
 assert.doesNotMatch(app, /class="brand-tool">Drawing Board<\/div>/);
 assert.doesNotMatch(app, /Drawing Board · an Oracle of Relphi tool · oracleofrelphi\.com/);
-assert.equal((app.match(/drawRelphiExportBrand\(ctx,canvas,brandFooterH,brandLogoImage\)/g) || []).length,2,'both Drawing Board image exports must draw the real Oracle of Relphi logo footer');
+assert.equal((app.match(/drawRelphiExportBrand\(ctx,canvas,brandFooterH,brandLogoImage\)/g) || []).length,1,'Board-grid image export must use its real logo footer');
+assert.match(board, /context\.drawImage\(logo,pad,pad,72,72\)/,'Focused card image export must draw the decoded real Relphi logo');
+assert.match(board, /context\.fillText\('oracleofrelphi\.com'/,'Focused card image export must include its branded web footer');
 for (const [name,source] of [['Tarot Ledger',tarotPage],['Sky Chart',skyPage],['Planetary Hours',hoursPage]]) {
   assert.match(source, /<p class="relphi-tool-brandline">an Oracle of Relphi tool<\/p>/, name + ' must identify itself as an Oracle of Relphi tool');
 }
