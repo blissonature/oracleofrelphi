@@ -317,8 +317,8 @@ jobs:
           assert.ok(Math.abs(rulerRails.sample.imgBottom-rulerRails.sample.houseTop)<=0.75,'Bottom house rail must sit flush against card art.');
 
           await page.locator('#skyFoundationA [data-card-hits-view="houses"]').click();
-          await page.waitForTimeout(80);
-          await page.waitForFunction(()=>{const img=document.querySelector('#skyFoundationA .sky-card-house-decan-art img');return !!img&&img.complete&&img.naturalWidth>0},{timeout:10000});
+          await page.locator('#skyFoundationA .sky-card-house-decan-art img').first().scrollIntoViewIfNeeded();
+          await page.waitForFunction(()=>{const img=document.querySelector('#skyFoundationA .sky-card-house-decan-art img');return !!img&&img.complete&&img.naturalWidth>0},null,{timeout:10000});
           const houseArt=await page.evaluate(()=>{
             const wrap=document.querySelector('#skyFoundationA .sky-card-house-decan-art'),img=wrap?.querySelector('img');
             const ws=wrap?getComputedStyle(wrap):null,is=img?getComputedStyle(img):null,u=img?new URL(img.src):null,rect=img?.getBoundingClientRect();
