@@ -76,6 +76,8 @@ try{
       return stroke&&stroke!=='none'&&stroke!=='transparent'&&style.visibility!=='hidden'&&style.display!=='none'&&Number(style.opacity||1)>0;
     });
     const source=window.RelphiSkyCardShell?.get?.(slot)?.heptagram;
+    assert.ok(source?.closest('[data-sky-where-summary]'),'Sky Card shell must resolve the full Where and When heptagram, not its compact fingerprint');
+    assert.equal(heptagram?.hasAttribute('data-sky-heptagram'),false,'Thumbnail must not carry the full source locator');
     const sourceGlyphs=source?.querySelectorAll('.sky-ph-planet .relphi-canonical-glyph').length||0;
     const active=Array.from(heptagram?.querySelectorAll('.sky-ph-planet.is-day-ruler,.sky-ph-planet.is-hour-ruler')||[]);
     const inactive=Array.from(heptagram?.querySelectorAll('.sky-ph-planet:not(.is-day-ruler):not(.is-hour-ruler)')||[]);

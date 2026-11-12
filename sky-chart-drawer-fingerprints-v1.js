@@ -69,6 +69,12 @@ function microHeptagram(sourceSvg){
   // Preserve the finished canonical SVG without thumbnail-specific changes.
   // Only its containing element determines the displayed size.
   const root=sourceSvg.cloneNode(true);
+  // A thumbnail is a presentation clone, never another sky's source.
+  root.removeAttribute('data-sky-heptagram');
+  root.removeAttribute('data-canonical-source-ready');
+  root.removeAttribute('data-canonical-heptagram-ready');
+  root.removeAttribute('data-canonical-heptagram-consumer');
+  root.removeAttribute('data-canonical-heptagram-busy');
   root.classList.add('sky-where-fingerprint-heptagram');
   root.classList.remove('sky-where-when-draft-heptagram');
   root.removeAttribute('style');
