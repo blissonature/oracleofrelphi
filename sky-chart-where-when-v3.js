@@ -646,6 +646,115 @@ const refs=shell(slot);
 if(refs)status(slot,error.message||'The Planetary Hours sky could not be built.',true);
 }
 }
+
+/* Selection comparison handoff: the existing Where/When calculator owns both sky records. */
+function readSelectionComparison(){
+  const raw=new URLSearchParams(location.search).get('relphiCompare');
+  if(!raw)return null;
+  if(raw.length>6000)throw new Error('The selected comparison is too large.');
+  const packet=JSON.parse(raw);
+  if(packet?.version!==1||!Array.isArray(packet.events)||packet.events.length!==2)throw new Error('Expected exactly two selected events.');
+  const datePattern=/^\d{4}-\d{2}-\d{2}$/;
+  const timePattern=/^(?:[01]\d|2[0-3]):[0-5]\d$/;
+  return packet.events.map((event,index)=>{
+    const date=String(event?.date||''),time=event?.time==null?null:String(event.time);
+    const locationName=String(event?.location||'').trim();
+    const label=String(event?.label||'').trim().slice(0,32);
+    if(!datePattern.test(date)||Number.isNaN(Date.parse(date+'T00:00:00Z'))||(time!==null&&!timePattern.test(time))||!locationName||locationName.length>200)
+      throw new Error('Event '+(index+1)+' needs a valid date, location and optional time.');
+    return{date,time,location:locationName,label};
+  });
+}
+function selectionComparisonNotice(message){
+  let note=document.getElementById('relphiSelectionComparisonNotice');
+  if(!note){
+    note=document.createElement('div');
+    note.id='relphiSelectionComparisonNotice';note.setAttribute('role','alert');
+    note.style.cssText='position:fixed;z-index:2147483646;left:1rem;right:1rem;top:1rem;max-width:44rem;margin:auto;padding:1rem 1.3rem;border:2px solid #bc2019;border-radius:12px;background:#fffdf8;color:#251b18;box-shadow:0 8px 36px #0003;font:600 15px/1.45 system-ui';
+    document.body.appendChild(note);
+  }
+  note.textContent=message;
+}
+async function resolveSelectionLocation(locationName){
+  // Open-Meteo searches locality names, not entire postal addresses.
+  const parts=locationName.split(',').map(part=>part.trim()).filter(Boolean);
+  const query=parts[0];
+  if(!query||query.length<2)throw new Error('Invalid location: '+locationName);
+  const url=new URL('https://geocoding-api.open-meteo.com/v1/search');
+  url.searchParams.set('name',query);url.searchParams.set('count','100');url.searchParams.set('language','en');url.searchParams.set('format','json');
+  const response=await fetch(url.toString(),{headers:{Accept:'application/json'}});
+  if(!response.ok)throw new Error('Location lookup returned '+response.status+' for '+locationName);
+  const data=await response.json(),results=Array.isArray(data.results)?data.results:[];
+  const normalize=value=>String(value||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]/g,'');
+  const wanted=parts.slice(1).map(normalize);
+  const scored=results.map(place=>{
+    const fields=[place.admin1,place.admin2,place.admin3,place.country,place.country_code,place.admin1_code,place.admin2_code].map(normalize);
+    const score=wanted.reduce((total,word)=>total+(fields.includes(word)?10:0),0);
+    return{place,score};
+  }).sort((a,b)=>b.score-a.score);
+  if(!scored.length||(wanted.length&&scored[0].score<wanted.length*10))
+    throw new Error('Could not confidently match location: '+locationName+'. Check the selected place.');
+  const place=scored[0].place;
+  if(!Number.isFinite(Number(place.latitude))||!Number.isFinite(Number(place.longitude))||!place.timezone)
+    throw new Error('Location has no coordinates or time zone: '+locationName);
+  return{source:'selection-compare',query:locationName,canonical:[place.name,place.admin1,place.country].filter(Boolean).join(', '),latitude:Number(place.latitude),longitude:Number(place.longitude),timezone:String(place.timezone)};
+}
+let selectionComparisonConsumed=false;
+async function applySelectionComparison(){
+  if(selectionComparisonConsumed)return;
+  let events;
+  try{events=readSelectionComparison()}catch(error){selectionComparisonNotice(error.message||'Invalid selection.');return}
+  if(!events)return;
+  selectionComparisonConsumed=true;
+  selectionComparisonNotice('Resolving both selected locations…');
+  try{
+    const locations=await Promise.all(events.map(event=>resolveSelectionLocation(event.location)));
+    selectionComparisonNotice('Calculating Sky A and Sky B…');
+    const records=[];
+    for(let i=0;i<2;i++){
+      const slot=i?'B':'A',event=events[i],selected=locations[i];
+      const record=calculateSky(slot,selected,event.date,event.time||'',{replaceExisting:true,timeUnknown:event.time===null});
+      const name=[event.label?event.label.charAt(0).toUpperCase()+event.label.slice(1):'Event '+(i+1),event.date].join(' · ');
+      record.name=name;record.title=name;record.displayName=name;record.skyName=name;
+      record.metadata={...record.metadata,selectionEventLabel:event.label,selectionLocation:event.location};
+      if(window.RelphiChironEphemeris)await window.RelphiChironEphemeris.completePayload(record);
+      records.push(record);
+    }
+    // Commit both together; an incomplete geocode or calculation must not destroy either existing sky.
+    writeJson(SLOT_KEYS.A,records[0]);writeJson(SLOT_KEYS.B,records[1]);
+    window.RelphiSkyStartupMode?.writeMode?.('comparison');
+    window.RelphiSkyStartupMode?.syncRoot?.();
+    ['A','B'].forEach((slot,index)=>{
+      dispatchSlotChange(slot);
+      window.RelphiSkyCardShell?.sync?.(slot,records[index]);
+      window.dispatchEvent(new CustomEvent('relphi:sky-working-copy-updated',{detail:{slot,source:'selection-compare',dateTime:events[index].date+(events[index].time?'T'+events[index].time:''),location:locations[index].canonical}}));
+      window.dispatchEvent(new CustomEvent('relphi:sky-name-updated',{detail:{slot,name:records[index].name,source:'selection-compare'}}));
+      scheduleSummary(slot,true);
+    });
+    document.getElementById('relphiSelectionComparisonNotice')?.remove();
+    const next=new URL(location.href);next.searchParams.delete('relphiCompare');
+    history.replaceState(history.state,'',next.pathname+next.search+next.hash);
+    document.querySelector('[data-sky-chart-mode="compare"]')?.click();
+    requestAnimationFrame(()=>window.RelphiSkyCardShell?.openDrawer?.('A','placements'));
+  }catch(error){
+    selectionComparisonConsumed=false;
+    selectionComparisonNotice('Comparison import failed: '+(error.message||String(error)));
+    console.error('[Oracle of Relphi] Selection comparison import:',error);
+  }
+}
+function scheduleSelectionComparison(){
+  if(!new URLSearchParams(location.search).has('relphiCompare'))return;
+  let attempts=0;
+  const run=()=>{
+    attempts++;
+    const ready=!!(window.Astronomy&&window.luxon?.DateTime&&window.RelphiHouseSystems?.calculateCusps&&window.RelphiSkyCardShell);
+    if(ready){void applySelectionComparison();return}
+    if(attempts<120)setTimeout(run,50);
+    else selectionComparisonNotice('Sky Chart calculation dependencies did not load.');
+  };
+  run();
+}
+
 function schedulePlanetaryHoursHandoff(){
   if(!readPlanetaryHoursHandoff())return;
   let attempts=0;
@@ -662,7 +771,7 @@ window.addEventListener('relphi:sky-foundation-ready',()=>{scheduleSummary('A');
 window.addEventListener('relphi:sky-name-updated',event=>{const slot=event.detail?.slot;if(SLOT_KEYS[slot]){window.RelphiSkyCardShell?.sync?.(slot,payload(slot));scheduleSummary(slot,true)}});
 window.addEventListener('resize',()=>{['A','B'].forEach(slot=>{const svg=shell(slot)?.heptagram;if(svg&&svg.dataset.canonicalSourceReady==='true')svg.setAttribute('viewBox',window.matchMedia?.('(max-width:620px)')?.matches?'0 -8 360 368':'0 0 360 360')})},{passive:true});
 function recoverWhereWhen(){reconcileWhereWhenTransaction();['A','B'].forEach(slot=>{window.RelphiSkyCardShell?.ensure?.(slot,payload(slot));scheduleSummary(slot,true)})}
-function start(){installStyles();['A','B'].forEach(slot=>{freezeLegacyLiveSky(slot);shell(slot);scheduleSummary(slot)});schedulePlanetaryHoursHandoff()}
+function start(){installStyles();['A','B'].forEach(slot=>{freezeLegacyLiveSky(slot);shell(slot);scheduleSummary(slot)});schedulePlanetaryHoursHandoff();scheduleSelectionComparison()}
 window.addEventListener('relphi:sky-session-recovered',recoverWhereWhen);
 document.readyState==='loading'?document.addEventListener('DOMContentLoaded',start,{once:true}):start();
 })();
