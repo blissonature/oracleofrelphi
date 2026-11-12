@@ -686,7 +686,8 @@ async function resolveSelectionLocation(locationName){
   if(!response.ok)throw new Error('Location lookup returned '+response.status+' for '+locationName);
   const data=await response.json(),results=Array.isArray(data.results)?data.results:[];
   const normalize=value=>String(value||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]/g,'');
-  const wanted=parts.slice(1).map(normalize);
+  const usStates={AL:'Alabama',AK:'Alaska',AZ:'Arizona',AR:'Arkansas',CA:'California',CO:'Colorado',CT:'Connecticut',DE:'Delaware',FL:'Florida',GA:'Georgia',HI:'Hawaii',ID:'Idaho',IL:'Illinois',IN:'Indiana',IA:'Iowa',KS:'Kansas',KY:'Kentucky',LA:'Louisiana',ME:'Maine',MD:'Maryland',MA:'Massachusetts',MI:'Michigan',MN:'Minnesota',MS:'Mississippi',MO:'Missouri',MT:'Montana',NE:'Nebraska',NV:'Nevada',NH:'New Hampshire',NJ:'New Jersey',NM:'New Mexico',NY:'New York',NC:'North Carolina',ND:'North Dakota',OH:'Ohio',OK:'Oklahoma',OR:'Oregon',PA:'Pennsylvania',RI:'Rhode Island',SC:'South Carolina',SD:'South Dakota',TN:'Tennessee',TX:'Texas',UT:'Utah',VT:'Vermont',VA:'Virginia',WA:'Washington',WV:'West Virginia',WI:'Wisconsin',WY:'Wyoming',DC:'District of Columbia'};
+  const wanted=parts.slice(1).map(part=>normalize(usStates[part.toUpperCase()]||part));
   const scored=results.map(place=>{
     const fields=[place.admin1,place.admin2,place.admin3,place.country,place.country_code,place.admin1_code,place.admin2_code].map(normalize);
     const score=wanted.reduce((total,word)=>total+(fields.includes(word)?10:0),0);
