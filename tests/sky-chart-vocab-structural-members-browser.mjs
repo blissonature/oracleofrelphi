@@ -149,6 +149,14 @@ try{
     sign:Number(getComputedStyle(document.querySelector('#skyFoundationWheelMount .sky-foundation-sign-sector:not(.is-vocab-context)')).opacity)
   }));
   assert.ok(untouched.placement>0&&untouched.placement<1&&untouched.sign>0&&untouched.sign<1,`Native Vocab structure isolation must dim unrelated placements and signs: ${JSON.stringify(untouched)}`);
+  const postWindowPanel=await page.evaluate(()=>{
+    const panel=document.querySelector('#skyFoundationA [data-sky-vocab-panel="A"]');
+    const line=panel?.querySelector('[data-vocab-structure="axis-polarity"][data-vocab-axis="vertex-anti-vertex"]');
+    const chain=[];for(let node=line;node&&chain.length<10;node=node.parentElement){const s=getComputedStyle(node);chain.push({tag:node.tagName,className:String(node.className),hidden:node.hidden,display:s.display,visibility:s.visibility,rects:node.getClientRects().length})}
+    return {panelHidden:panel?.hidden,activeView:document.querySelector('#skyFoundationA [data-sky-vocab-tabs] .is-active')?.dataset.skyVocabViewButton,chain};
+  });
+  console.log('VOCAB_POST_WINDOW_VISIBILITY',JSON.stringify(postWindowPanel));
+  assert.equal(postWindowPanel.panelHidden,false,'Vocab panel must remain open after modifying Harmonic Window: '+JSON.stringify(postWindowPanel));
   const tokenKinds={};
   for(const kind of ['placement','sign','house']){
     const token=vertex.locator(`.sky-vocab-token[data-vocab-kind="${kind}"]`).first();
