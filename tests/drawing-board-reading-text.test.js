@@ -40,6 +40,9 @@ async function applyCeltic(page){
     // Celtic Cross position 2 deliberately crosses the center of position 1.
     // Click an exposed corner of position 1 rather than the occluded center.
     await page.locator('.card-row-item[data-row-index="0"] .card-row-drop-card').click({position:{x:8,y:8}});
+    // Digital draws now require an explicit Attune confirmation.
+    await page.waitForSelector('.relphi-attune-reader',{state:'visible'});
+    await page.locator('.relphi-attune-reader [data-attune-random]').click();
     await page.waitForSelector('.card-row-item[data-row-index="0"] [data-row-card]',{state:'visible'});
     if(await page.locator('.relphi-focus-reader').count()) await page.click('.relphi-focus-close');
 
