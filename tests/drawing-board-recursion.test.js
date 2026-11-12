@@ -12,13 +12,13 @@ const base='http://127.0.0.1:8000/tarot.html';
     page.on('pageerror',error=>errors.push(error?.stack||String(error)));
 
     await page.goto(base,{waitUntil:'domcontentloaded',timeout:30000});
-    await page.waitForFunction(()=>!!window.RelphiDrawingBoardOptionsBridge && !!document.querySelector('#drawingBoardOptionsButton'),null,{timeout:20000});
+    await page.waitForFunction(()=>!!window.RelphiDrawingBoardOptionsBridge && !!document.querySelector('#shortListPanel [data-main-action="methods"]'),null,{timeout:20000});
 
     const panel=page.locator('#shortListPanel');
     if(!(await panel.isVisible())) await page.click('#relphiOpenDrawingBoardCurrent');
     await panel.waitFor({state:'visible'});
-    await page.click('#drawingBoardOptionsButton');
-    await page.waitForSelector('.relphi-referents-drawer',{state:'visible'});
+    await page.locator('#shortListPanel [data-main-action="methods"]').click();
+    await page.waitForSelector('.relphi-reading-options-drawer.is-reading-options-open',{state:'visible'});
 
     await page.click('[data-referent-path="templates"]');
     await page.selectOption('#relphiSpreadTemplateSelect','relphi-recursion-22');
@@ -32,7 +32,7 @@ const base='http://127.0.0.1:8000/tarot.html';
     assert.ok(templateCopy.includes('Level 7'));
 
     await page.click('#relphiApplyOptions');
-    await page.waitForSelector('.relphi-referents-drawer',{state:'detached'});
+    await page.waitForSelector('.relphi-reading-options-drawer.is-reading-options-open',{state:'hidden'});
     await page.waitForSelector('.relphi-board-toast',{state:'visible'});
 
     const readingToast=await page.locator('.relphi-board-toast').innerText();

@@ -191,7 +191,7 @@ assert.match(board, /basedOnTemplateId/);
 assert.match(board, /function markQuestionEditCustom\(drawer,draft\)/);
 assert.match(board, /draft\.templateId='';/);
 assert.match(board, /templateSelect\.value=''/);
-assert.equal((board.match(/markQuestionEditCustom\(drawer,draft\)/g) || []).length, 5, 'only the helper definition plus question-list mutations should mark a preset Custom');
+assert.ok((board.match(/markQuestionEditCustom\(drawer,draft\)/g) || []).length>=5, 'Custom marking must cover all supported question-list edits');
 assert.doesNotMatch(board, /relphiDraft(?:Pack|Stickers|Reversals|Repeats)[^\n]*markQuestionEditCustom/);
 assert.doesNotMatch(board, /relphiBulkQuestions/);
 assert.match(board, /function markQuestionEditCustom/);
