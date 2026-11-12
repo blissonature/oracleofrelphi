@@ -98,7 +98,7 @@ try{
   await showMore.click();
   await page.waitForFunction(value=>document.documentElement.dataset.skyHarmonicWindow===value,nextWindow);
   assert.equal(await relationshipWindow.inputValue(),nextWindow,'Show more must advance to the next reveal threshold.');
-  assert.equal(await vocabWindow.inputValue(),nextWindow,'Show more must mirror the revealed threshold into Vocab.');
+  await page.waitForFunction(value=>document.querySelector('#skyFoundationA [data-vocab-structure="axis-polarity"][data-vocab-axis="vertex-anti-vertex"]')?.dataset.vocabHarmonicWindow===value,nextWindow);
   const maxWindow=Number(await page.evaluate(()=>window.RelphiHarmonicOrb.maxWindow));
   for(let step=0;step<=Math.ceil(maxWindow)+1&&await showMore.isVisible();step++){
     const before=Number(await relationshipWindow.inputValue());
@@ -107,7 +107,7 @@ try{
   }
   await showMore.waitFor({state:'hidden'});
 
-  await vocabWindow.fill(defaultWindow);
+  await relationshipWindow.fill(defaultWindow);
   await page.waitForFunction(value=>document.documentElement.dataset.skyHarmonicWindow===value,defaultWindow);
   await page.waitForFunction(value=>{
     const row=document.querySelector('#skyFoundationA [data-vocab-structure="axis-polarity"][data-vocab-axis="vertex-anti-vertex"]');

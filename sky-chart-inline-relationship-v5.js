@@ -124,7 +124,7 @@ function onPointerUp(event){
 function onClick(event){
   if(event.target.closest?.('.inline-rel-tile-copy'))return;
   const row=rowFromTarget(event.target);
-  if(row&&row===suppressClickRow&&performance.now()-suppressClickAt<900){event.preventDefault();event.stopImmediatePropagation();suppressClickRow=null;return}
+  if(row&&row===suppressClickRow&&performance.now()-suppressClickAt<900){event.preventDefault();event.stopImmediatePropagation();return}
   suppressClickRow=null;
   const ledger=event.target.closest('[data-inline-ledger]');if(ledger){event.stopImmediatePropagation();return}
   const topGlyph=event.target.closest('[data-inline-top-reveal],.sky-foundation-relationship-glyph--left,.sky-foundation-relationship-glyph--aspect,.sky-foundation-relationship-glyph--right'),revealRow=topGlyph?.closest('.sky-foundation-relationship-row.is-inline-expanded');

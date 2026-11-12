@@ -142,26 +142,31 @@
     // The source is ready only when every required canonical planetary glyph exists.
     // A previous pass could complete with missing registry entries and freeze
     // a partial graphic as "ready", which thumbnails then inherited.
-    if (svg.dataset.canonicalHeptagramReady === 'true' &&
-        planets.every(group=>group.querySelector('.relphi-canonical-glyph'))) return true;
+    const complete = groups => groups.length === 7 &&
+      groups.every(group=>svg.contains(group) && !!group.querySelector('.relphi-canonical-glyph'));
+    if (svg.dataset.canonicalHeptagramReady === 'true' && complete(planets)) return true;
     delete svg.dataset.canonicalHeptagramReady;
-    if (pending.has(svg)) return pending.get(svg);
+    // Source owner may replace all seven groups while another pass is awaiting
+    // glyph assets. Serialize passes and always re-check the CURRENT generation.
+    const running = pending.get(svg);
+    if (running) {
+      await running;
+      if (pending.get(svg) === running) pending.delete(svg);
+      return correct(svg);
+    }
 
     const job = (async () => {
       svg.dataset.canonicalHeptagramBusy = 'true';
       clearHeptagramWords(svg);
       const results = await Promise.all(planets.map(placePlanet));
+      const live = Array.from(svg.querySelectorAll('.sky-ph-planet'));
+      const sameGeneration = live.length === planets.length &&
+        live.every((group,index)=>group === planets[index]);
       clearHeptagramWords(svg);
-      if (!results.every(Boolean)) {
+      if (!sameGeneration || !results.every(Boolean) || !complete(live)) {
         delete svg.dataset.canonicalHeptagramBusy;
-        const attempt=Number(svg.dataset.canonicalHeptagramRetryCount||0);
-        if (attempt<24 && svg.isConnected) {
-          svg.dataset.canonicalHeptagramRetryCount=String(attempt+1);
-          setTimeout(()=>{ if(svg.isConnected)void correct(svg); },120);
-        }
         return false;
       }
-      delete svg.dataset.canonicalHeptagramRetryCount;
       svg.dataset.canonicalHeptagramConsumer = 'true';
       svg.dataset.glyphPresentation = 'circled';
       svg.dataset.rulerStates = 'hour-white-day-double-ring';
@@ -173,7 +178,7 @@
 
     pending.set(svg, job);
     try { return await job; }
-    finally { pending.delete(svg); }
+    finally { if (pending.get(svg) === job) pending.delete(svg); }
   }
 
   async function scan() {

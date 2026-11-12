@@ -8,7 +8,7 @@ const sandbox = {
   location:{pathname:'/tarot.html'},
   localStorage:{getItem:key=>storage.get(key)??null,setItem:(key,value)=>storage.set(key,String(value))},
   document:{readyState:'loading',addEventListener(){},getElementById(){return null;},body:{classList:{add(){},remove(){}}},querySelector(){return null;}},
-  window:{addEventListener(){}}, Event, CustomEvent:class{}, setTimeout(){return 1;}, clearTimeout(){}, console
+  window:{addEventListener(){},innerWidth:900}, Event, CustomEvent:class{}, setTimeout(){return 1;}, clearTimeout(){}, console
 };
 sandbox.window.document=sandbox.document; sandbox.window.localStorage=sandbox.localStorage;
 vm.createContext(sandbox); vm.runInContext(source,sandbox);

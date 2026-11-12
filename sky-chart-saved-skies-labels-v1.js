@@ -179,10 +179,9 @@ function decorate(){
     if(!copy){copy=copyFor(record);const check=item.querySelector('.sky-saved-list-check');if(check)item.insertBefore(copy,check);else item.appendChild(copy)}
     else if(copy.dataset.signature!==sig){copy.replaceWith(copyFor(record));copy=item.querySelector('[data-saved-fingerprint-copy]')}
     if(copy)copy.dataset.signature=sig;
-    const name=String(record.name||'Saved sky').trim()||'Saved sky',when=dateTime(record),where=place(record),parts=[name,when,where].filter(Boolean);
-    item.setAttribute('aria-label',`Load ${parts.join('. ')}.`);
-    const del=row.querySelector('[data-saved-delete-ref]');if(del){del.setAttribute('aria-label',`Delete ${name} from Saved Skies`);del.title=`Delete ${name}`}
-    const confirmation=row.querySelector('.sky-saved-delete-confirmation');if(confirmation)confirmation.setAttribute('aria-label',`Delete ${name}?`);
+    // This label builder owns visible fingerprint text only.
+    // Concealed/revealed accessible labels belong to the privacy and card-library
+    // controllers, and explicit deletion confirmation belongs to Saved Skies.
   });
 }
 function schedule(){if(queued)return;queued=true;queueMicrotask(decorate)}
