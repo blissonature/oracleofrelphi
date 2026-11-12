@@ -27,10 +27,10 @@ try {
  const defaultState=await page.locator('#skySavedSkiesPopover [data-saved-sky-ref="family-1"]').evaluate(el=>{
   const overlay=el.querySelector('.sky-library-identity-overlay');
   return{opacity:getComputedStyle(overlay).opacity,display:getComputedStyle(overlay).visibility,
-    details:el.querySelector('[data-saved-fingerprint-copy]')?getComputedStyle(el.querySelector('[data-saved-fingerprint-copy]')).display:'none'};
+    detailInOverlay:!!overlay&&!!el.querySelector('[data-saved-fingerprint-copy]')&&overlay.contains(el.querySelector('[data-saved-fingerprint-copy]'))};
  });
  assert.equal(defaultState.display,'hidden','Identity overlay is concealed by default');
- assert.equal(defaultState.details,'none','No empty sensitive detail column');
+ assert.equal(defaultState.detailInOverlay,true,'Identity details must be nested within the concealed overlay, not placed in a separate column');
  await page.screenshot({path:'sky-card-library-modern-default.png',fullPage:false});
  await page.locator('[data-saved-sky-ref="family-1"]').hover();
  await page.waitForFunction(()=>getComputedStyle(document.querySelector('[data-saved-sky-ref="family-1"] .sky-library-identity-overlay')).visibility==='visible',null,{timeout:3000});
