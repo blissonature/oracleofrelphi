@@ -126,6 +126,10 @@ assert.deepEqual(afterDisplayGlyphGeometry.map(({w,h,svgW,svgH})=>[Math.round(w*
 await vocabGroups.evaluateAll(nodes=>nodes.forEach(node=>{node.open=true}));
 await page.waitForFunction(()=>[...document.querySelectorAll('#skyFoundationA details.sky-vocab-group')].every(node=>node.open));
 
+// Rendered polarity lines are inside native collapsed details. Open those
+// disclosures via their actual summary before testing hover and token actions.
+await vocabGroups.evaluateAll(nodes=>nodes.forEach(node=>{node.open=true}));
+await page.waitForFunction(()=>[...document.querySelectorAll('#skyFoundationA details.sky-vocab-group')].every(node=>node.open));
 const vocabParagraph=page.locator('#skyFoundationA [data-sky-vocab-paragraph]');
 assert.equal(await vocabParagraph.locator(':scope > :first-child').evaluate(node=>node.classList.contains('sky-vocab-structures-heading')),true,'Structures must be the first reading layer before Placements.');
 const placementRows=vocabParagraph.locator('.sky-vocab-line[data-vocab-placement-colors="true"]');
