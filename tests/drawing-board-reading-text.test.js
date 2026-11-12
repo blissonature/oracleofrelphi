@@ -15,6 +15,7 @@ async function openBoard(page){
 }
 async function applyCeltic(page){
   await page.locator('#shortListPanel .relphi-main-composer [data-main-action="methods"]').click();
+  await page.locator('[data-referent-path="templates"]').click();
   await page.waitForSelector('.relphi-reading-options-drawer.is-reading-options-open #relphiSpreadTemplateSelect',{state:'visible'});
   await page.selectOption('#relphiSpreadTemplateSelect','celtic-cross-10');
   await page.click('#relphiApplyOptions');
