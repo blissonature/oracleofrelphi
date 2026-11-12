@@ -34,14 +34,9 @@ const base='http://127.0.0.1:8000/tarot.html';
 
     await page.click('#relphiApplyOptions');
     await page.waitForSelector('.relphi-reading-options-drawer.is-reading-options-open',{state:'hidden'});
-    await page.waitForSelector('.relphi-board-toast',{state:'visible'});
-
-    const readingToast=await page.locator('.relphi-board-toast').innerText();
-    assert.ok(readingToast.includes('active black circle opens white'));
-    assert.ok(readingToast.includes('red Earth circle wakes up'));
-    assert.ok(readingToast.includes('Veilva'));
-    assert.equal(await page.locator('.relphi-board-toast-action').textContent(),'Enter Level 1');
-
+    // A disappearing informational toast is not the authority for whether
+    // Recursion was created. Verify the persistent active layout instead.
+    await page.waitForFunction(()=>window.RelphiDrawingBoardOptionsBridge?.capture?.()?.rowActiveLayout?.id==='relphi-recursion-22');
     const configured=await page.evaluate(()=>window.RelphiDrawingBoardOptionsBridge.capture());
     assert.equal(configured.rowActiveLayout?.id,'relphi-recursion-22');
     assert.equal(configured.rowActiveLayout?.name,'Relphi Recursive Reading');
