@@ -77,8 +77,8 @@ try{
   await page.locator('#skyChartRelationshipsExport').click();
   await page.waitForFunction(()=>Array.isArray(window.__chironRxPngLabels),null,{timeout:12000});
   const labels=await page.evaluate(()=>window.__chironRxPngLabels);
-  assert.ok(labels.includes('Chiron Rx'),'PNG concept chips must include retrograde Chiron');
-  assert.ok(labels.includes('Chiron'),'PNG concept chips must preserve direct Chiron');
+  assert.ok(labels.some(label=>/^Sky [AB]'s Chiron Rx$/.test(label)),'PNG concept chips must include sky-owned retrograde Chiron');
+  assert.ok(labels.some(label=>/^Sky [AB]'s Chiron$/.test(label)),'PNG concept chips must preserve sky-owned direct Chiron');
   assert.deepEqual(errors.filter(x=>!/Unexpected identifier ['"]astronomy['"]/.test(x)),[]);
   console.log('Chiron retrograde visible and exported in both Sky Card, text, and PNG. '+retro+' / '+direct);
 }finally{await browser.close()}
