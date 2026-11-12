@@ -1618,10 +1618,6 @@ function installStyles(){
     .sky-placement-vocab-tab{appearance:none;min-width:0;min-height:30px;margin:0;padding:.34rem .58rem;border:0;border-radius:999px;background:transparent;color:#5d554e;font:850 .68rem/1 system-ui,sans-serif;cursor:pointer}
     .sky-placement-vocab-tab:hover,.sky-placement-vocab-tab:focus-visible{background:#f8f3ed;outline:none}
     .sky-placement-vocab-tab.is-active{background:#fff;color:#211d19;box-shadow:0 1px 3px rgba(31,27,24,.12)}
-    /* Vocab axis context only: keep native sector opacity while giving
-       selected zodiac/house sectors a soft temporary edge of recognition. */
-    #skyFoundationWheelMount .sky-foundation-wheel.has-vocab-axis-context .sky-foundation-sign-sector.is-vocab-context{filter:drop-shadow(0 0 3px rgba(50,42,36,.38))}
-    #skyFoundationWheelMount .sky-foundation-wheel.has-vocab-axis-context .sky-foundation-house-sector.is-vocab-context{filter:drop-shadow(0 0 3px rgba(50,42,36,.26))}
     .sky-vocab-panel{display:grid;gap:.72rem;padding:.52rem .7rem .82rem;min-width:0}
     .sky-vocab-panel[hidden]{display:none!important}
     .sky-vocab-harmonic-row{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;align-items:end}

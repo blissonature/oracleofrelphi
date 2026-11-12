@@ -98,7 +98,8 @@ assert.match(board, /function resetBoardFromOptions/);
 assert.match(board, /function draftPrefab/);
 assert.match(board, /Save template/);
 assert.doesNotMatch(board, /Show position stickers/); // Free Draw deliberately has no sticker mode
-assert.match(board, /const drawSettingsMarkup=\(session\.path==='surface'\|\|session\.path==='astro'\)/);
+assert.match(board, /session\.path==='surface'/,'See What Surfaces remains a distinct Crafted path');
+assert.match(board, /session\.path==='astro'/,'Astrological Tarot remains a distinct Crafted path');
 assert.match(board, /relphi-draw-options--surface/);
 assert.match(board, /Each probe uses the sub-pack shown beneath it/);
 assert.match(board, /data-surface-select-all/);

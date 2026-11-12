@@ -142,8 +142,8 @@ try{
   assert.ok(sectorStyle.sign&&sectorStyle.house,`Active polarity must expose sign and house sectors: ${JSON.stringify(sectorStyle)}`);
   assert.equal(sectorStyle.sign.fillOpacity,.82,`Structure highlight must retain native zodiac fill opacity: ${JSON.stringify(sectorStyle)}`);
   assert.equal(sectorStyle.house.fillOpacity,.5,`Structure highlight must retain native house fill opacity: ${JSON.stringify(sectorStyle)}`);
-  assert.notEqual(sectorStyle.sign.filter,'none',`Structure sign must receive a subtle glow: ${JSON.stringify(sectorStyle)}`);
-  assert.notEqual(sectorStyle.house.filter,'none',`Structure house must receive a subtle glow: ${JSON.stringify(sectorStyle)}`);
+  assert.equal(sectorStyle.sign.filter,'none','Native zodiac sector emphasis must not gain a separate Vocab glow');
+  assert.equal(sectorStyle.house.filter,'none','Native house sector emphasis must not gain a separate Vocab glow');
   const untouched=await page.evaluate(()=>({
     placement:Number(getComputedStyle(document.querySelector('#skyFoundationWheelMount [data-focus-piece="placement"][data-sky="A"][data-placement="moon"]:not(.is-vocab-context)')).opacity),
     sign:Number(getComputedStyle(document.querySelector('#skyFoundationWheelMount .sky-foundation-sign-sector:not(.is-vocab-context)')).opacity)
@@ -154,35 +154,27 @@ try{
     const token=vertex.locator(`.sky-vocab-token[data-vocab-kind="${kind}"]`).first();
     assert.equal(await token.count(),1,`Vertex polarity must expose a ${kind} token`);
     await token.hover();
-    await page.waitForFunction(()=>document.querySelector('#skyFoundationWheelMount>.sky-foundation-wheel')?.classList.contains('has-vocab-token-context'));
+    await page.waitForFunction(()=>document.querySelector('#skyFoundationWheelMount>.sky-foundation-wheel')?.classList.contains('has-isolation'));
     tokenKinds[kind]=await page.evaluate(()=>{
       const wheel=document.querySelector('#skyFoundationWheelMount>.sky-foundation-wheel');
-      const visiblePlacement=wheel?.querySelector('[data-focus-piece="placement"]:not(.is-vocab-token-context)');
-      return{
-        rowContext:wheel?.classList.contains('has-vocab-context')||false,
-        axisMode:wheel?.classList.contains('has-vocab-axis-context')||false,
-        tokenPlacements:wheel?.querySelectorAll('[data-focus-piece="placement"].is-vocab-token-context').length||0,
-        tokenSigns:wheel?.querySelectorAll('.sky-foundation-sign-sector.is-vocab-token-context').length||0,
-        tokenHouses:wheel?.querySelectorAll('.sky-foundation-house-sector.is-vocab-token-context').length||0,
-        unrelatedPlacementOpacity:visiblePlacement?Number(getComputedStyle(visiblePlacement).opacity):null
-      };
+      return{nativeIsolation:!!wheel?.classList.contains('has-isolation'),
+        customTokenState:!!wheel?.classList.contains('has-vocab-token-context'),
+        keptPlacement:wheel?.querySelectorAll('[data-focus-piece="placement"].is-kept').length||0,
+        keptSign:wheel?.querySelectorAll('.sky-foundation-sign-sector.is-kept').length||0,
+        keptHouse:wheel?.querySelectorAll('.sky-foundation-house-sector.is-kept').length||0};
     });
+    assert.equal(tokenKinds[kind].nativeIsolation,true,`Native wheel isolation must activate for ${kind} token`);
+    assert.equal(tokenKinds[kind].customTokenState,false,'Retired custom Vocab token state must stay absent');
+    assert.ok((kind==='placement'?tokenKinds[kind].keptPlacement:kind==='sign'?tokenKinds[kind].keptSign:tokenKinds[kind].keptHouse)>=1,
+      `Native wheel must keep the selected ${kind}: ${JSON.stringify(tokenKinds[kind])}`);
   }
-  assert.deepEqual(tokenKinds.placement,{rowContext:false,axisMode:false,tokenPlacements:1,tokenSigns:0,tokenHouses:0,unrelatedPlacementOpacity:1},`Placement token hover must add only placement highlight with no dimming: ${JSON.stringify(tokenKinds)}`);
-  assert.deepEqual(tokenKinds.sign,{rowContext:false,axisMode:false,tokenPlacements:0,tokenSigns:1,tokenHouses:0,unrelatedPlacementOpacity:1},`Sign token hover must add only sign highlight with no dimming: ${JSON.stringify(tokenKinds)}`);
-  assert.deepEqual(tokenKinds.house,{rowContext:false,axisMode:false,tokenPlacements:0,tokenSigns:0,tokenHouses:1,unrelatedPlacementOpacity:1},`House token hover must add only house highlight with no dimming: ${JSON.stringify(tokenKinds)}`);
-
   const placementLevel=vertex.locator('.sky-vocab-token[data-vocab-kind="placement"]').first().locator('[data-vocab-level]').first();
   await placementLevel.click();
+  const pinnedPlacement=await page.evaluate(()=>window.RelphiSkyFoundationInteractions.captureFocus());
+  assert.equal(pinnedPlacement?.lockedState?.kind,'placement','Clicking Vocab placement token must pin native wheel selection');
   await page.locator('#skyFoundationA .sky-vocab-structures-heading').hover();
-  const pinnedPlacement=await page.evaluate(()=>({
-    rowContext:document.querySelector('#skyFoundationWheelMount>.sky-foundation-wheel')?.classList.contains('has-vocab-context')||false,
-    token:document.querySelectorAll('#skyFoundationWheelMount [data-focus-piece].is-vocab-token-context').length,
-    unrelatedOpacity:Number(getComputedStyle(document.querySelector('#skyFoundationWheelMount [data-focus-piece="placement"]:not(.is-vocab-token-context)')).opacity)
-  }));
-  assert.equal(pinnedPlacement.rowContext,false,`Pinned token must not restore structure whiteout: ${JSON.stringify(pinnedPlacement)}`);
-  assert.ok(pinnedPlacement.token>=1&&pinnedPlacement.unrelatedOpacity===1,`Pinned token must highlight without dimming anything else: ${JSON.stringify(pinnedPlacement)}`);
-
+  assert.equal(await page.evaluate(()=>window.RelphiSkyFoundationInteractions.captureFocus()?.lockedState?.kind),'placement',
+    'Pointer leaving a Vocab token must not unpin its native wheel selection');
   console.log('Structural polarity member regression passed:',JSON.stringify({states,tokenKinds,pinnedPlacement}));
 }finally{
   await browser.close();
