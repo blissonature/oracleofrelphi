@@ -154,6 +154,13 @@ assert.match(ascDscRail,/linear-gradient/i,'A paired placement sentence must spl
 
 const primaryAxes=await vocabParagraph.locator('[data-vocab-structure="axis-polarity"]').evaluateAll(lines=>lines.map(line=>line.dataset.vocabAxis));
 assert.deepEqual(primaryAxes.slice(0,4),['vertex-anti-vertex','asc-dsc','mc-ic','north-node-south-node'],'Primary structures must lead with Vertex/Anti-Vertex, chart angles, then nodes.');
+// Hover previews intentionally defer to an existing locked focus. This test
+// starts from the neutral wheel state before exercising preview-only behavior.
+await page.evaluate(()=>window.RelphiSkyFoundationInteractions?.clearWheel?.());
+console.log('VOCAB_AXIS_BASELINE',JSON.stringify(await page.evaluate(()=>({
+  wheel:document.querySelector('#skyFoundationWheelMount>.sky-foundation-wheel')?.getAttribute('class'),
+  focus:window.RelphiSkyFoundationInteractions?.captureFocus?.()
+}))));
 for(const axis of primaryAxes.slice(0,4)){
   const row=page.locator(`#skyFoundationA [data-vocab-structure="axis-polarity"][data-vocab-axis="${axis}"]`);
   // Use the genuine Chromium pointer route, outside token hotspots, so the
