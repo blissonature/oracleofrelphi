@@ -156,7 +156,9 @@ const primaryAxes=await vocabParagraph.locator('[data-vocab-structure="axis-pola
 assert.deepEqual(primaryAxes.slice(0,4),['vertex-anti-vertex','asc-dsc','mc-ic','north-node-south-node'],'Primary structures must lead with Vertex/Anti-Vertex, chart angles, then nodes.');
 for(const axis of primaryAxes.slice(0,4)){
   const row=page.locator(`#skyFoundationA [data-vocab-structure="axis-polarity"][data-vocab-axis="${axis}"]`);
-  await row.dispatchEvent('pointerover',{pointerType:'mouse'});
+  // Use the genuine Chromium pointer route, outside token hotspots, so the
+  // line rather than a child token owns the structural-context preview.
+  await row.hover({position:{x:5,y:5}});
   await page.waitForFunction(()=>document.querySelector('#skyFoundationWheelMount>.sky-foundation-wheel')?.classList.contains('has-vocab-axis-context'));
   const memberIds=await row.locator('.sky-vocab-token[data-vocab-kind="placement"]').evaluateAll(nodes=>[...new Set(nodes.map(node=>node.dataset.vocabId).filter(Boolean))]);
   const memberStates=await page.evaluate(ids=>ids.map(id=>{
