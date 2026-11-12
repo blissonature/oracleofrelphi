@@ -52,7 +52,7 @@ async function applyCeltic(page){
     assert.equal(await page.locator('#drawing-board-reading-text').isVisible(),false,'Crafted readings must not duplicate the question-level reading text');
     let card=page.locator('#shortListPanel .relphi-main-question-reading[data-reading-slot="0"]');
     assert.equal(await card.count(),1,'reading text should render one entry for the drawn card');
-    assert.match(await card.locator('xpath=ancestor::li[1] .relphi-main-question-text').innerText(),/What covers you/);
+    assert.match(await card.locator('xpath=ancestor::li[1]').locator('.relphi-main-question-text').innerText(),/What covers you/);
     assert.match(await card.locator('strong').innerText(),/\S/);
     assert.match(await card.locator('.relphi-main-reading-association').innerText(),/(Decan ruler|Sign association|Planetary association|Elemental association):/);
     assert.match(await card.locator('.relphi-main-reading-interpretation').innerText(),/\S/);
