@@ -382,6 +382,8 @@ assert.ok(polarCross.edges.some(edge=>edge.entailedKind==='polar-axis'),'Grand C
 
 const grandCrossChoice=page.locator('[data-configuration-scope="A-A"][data-configuration-type="grand-cross"]');
 await grandCrossChoice.waitFor({state:'attached'});
+await page.locator('[data-aspect-filter="combined"]').click();
+await grandCrossChoice.waitFor({state:'visible'});
 if(!(await grandCrossChoice.isChecked()))await grandCrossChoice.check();
 await page.waitForSelector('[data-configuration-inevitable-show-more]',{state:'visible'});
 assert.equal(await page.locator('.sky-configuration-result-tile[data-configuration-type="grand-cross"]').count(),0,'Inevitable-off must suppress the Grand Cross tile that depends on the polar-axis opposition.');

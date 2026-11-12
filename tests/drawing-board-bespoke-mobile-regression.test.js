@@ -17,6 +17,16 @@ const base=process.env.RELPHI_TEST_URL||'http://127.0.0.1:8000/tarot.html?board=
     const panel=page.locator('#shortListPanel');
     if(!(await panel.isVisible())) await page.locator('#relphiOpenDrawingBoardCurrent').tap();
     await panel.waitFor({state:'visible',timeout:10000});
+    console.log('BOARD_MOBILE_BOOT_DIAG '+JSON.stringify(await page.evaluate(()=>{
+      const root=document.querySelector('#shortListPanel');
+      const drawer=root?.querySelector('.card-row-drawing-board');
+      const selectors=['.card-row-drawing-board','.card-row-drawing-board>summary','.drawing-board-board-mode','.drawing-board-mode-switch','.drawing-board-top-actions','#relphiBoardSettingsButton','.relphi-board-commandbar'];
+      return{panelVisible:!!root?.getClientRects().length,panelHidden:root?.hidden,drawerOpen:drawer?.open,
+        elements:Object.fromEntries(selectors.map(s=>[s,{exists:!!root?.querySelector(s),visible:!!root?.querySelector(s)?.getClientRects().length}])),
+        bridge:!!window.RelphiDrawingBoardOptionsBridge,navLoaded:!!window.__relphiDrawingBoardUnifiedV3,
+        scripts:[...document.scripts].map(s=>s.src).filter(s=>s.includes('drawing-board'))};
+    })));
+    console.log('BOARD_MOBILE_PAGE_ERRORS',JSON.stringify(errors));
     await page.waitForSelector('#relphiBoardSettingsButton',{state:'visible',timeout:10000});
     await page.locator('#relphiBoardSettingsButton').tap();
     await page.waitForSelector('#drawingBoardOptionsButton',{state:'visible',timeout:10000});

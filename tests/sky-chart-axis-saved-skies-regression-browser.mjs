@@ -22,6 +22,19 @@ try{
   await page.route('https://unpkg.com/suncalc@1.9.0/suncalc.js',route=>route.fulfill({path:path.resolve('node_modules/suncalc/suncalc.js'),contentType:'application/javascript'}));
   await page.route('https://cdn.jsdelivr.net/npm/luxon@3/build/global/luxon.min.js',route=>route.fulfill({path:path.resolve('node_modules/luxon/build/global/luxon.min.js'),contentType:'application/javascript'}));
   await page.addInitScript(({a,b,library})=>{
+    window.__heptagramCanonEvents=[];
+    window.addEventListener('relphi:sky-heptagram-canonical-ready',event=>{
+      const svg=event.detail?.svg;if(!svg)return;
+      const slot=svg.getAttribute('data-sky-heptagram')||'unknown';
+      const size=()=>svg.querySelectorAll('.sky-ph-planet .relphi-canonical-glyph').length;
+      window.__heptagramCanonEvents.push({slot,phase:'ready',glyphs:size()});
+      const observer=new MutationObserver(records=>{
+        const removed=records.reduce((count,record)=>count+
+          [...record.removedNodes].filter(n=>n.nodeType===1&&(n.matches?.('.relphi-canonical-glyph')||n.querySelector?.('.relphi-canonical-glyph'))).length,0);
+        if(removed)window.__heptagramCanonEvents.push({slot,phase:'removed',removed,glyphs:size(),mounts:[...svg.querySelectorAll('.sky-ph-planet')].map(g=>g.querySelectorAll('.relphi-canonical-glyph').length)});
+      });
+      observer.observe(svg,{subtree:true,childList:true});
+    });
     localStorage.setItem('relphiSkyChartA',JSON.stringify(a));
     localStorage.setItem('relphiSkyChartB',JSON.stringify(b));
     localStorage.setItem('relphiSkyLibraryV1',JSON.stringify(library));
@@ -95,6 +108,7 @@ try{
     return[slot,{sourceReady:svg?.dataset?.canonicalSourceReady,canonReady:svg?.dataset?.canonicalHeptagramReady,canonBusy:svg?.dataset?.canonicalHeptagramBusy,planets:[...svg?.querySelectorAll('.sky-ph-planet')||[]].map(node=>({classes:node.getAttribute('class'),glyphs:node.querySelectorAll('.relphi-canonical-glyph').length,unavailable:node.querySelector('.sky-ph-node-glyph')?.dataset.glyphUnavailable||''}))}];
   })));
   console.log('HEPTAGRAM_SOURCE_DIAG '+JSON.stringify(sourceDiagnostics));
+  console.log('HEPTAGRAM_CANON_LIFECYCLE '+JSON.stringify(await page.evaluate(()=>window.__heptagramCanonEvents)));
   for(const slot of ['A','B']){
     const thumb=drawerHeptagrams[slot];
     assert.equal(thumb.exists,true,`Sky ${slot} Where/When thumbprint mount should exist: ${JSON.stringify(thumb)}`);
