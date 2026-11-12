@@ -157,6 +157,12 @@ try{
   });
   console.log('VOCAB_POST_WINDOW_VISIBILITY',JSON.stringify(postWindowPanel));
   assert.equal(postWindowPanel.panelHidden,false,'Vocab panel must remain open after modifying Harmonic Window: '+JSON.stringify(postWindowPanel));
+  // Polarity groups are collapsible. After re-render the Vocab tab remains
+  // selected, but this particular <details> group may be closed. Open it
+  // through its visible summary before testing actual pointer interactions.
+  const polarityGroup=vertex.locator('xpath=ancestor::details[1]');
+  if(!(await polarityGroup.evaluate(node=>node.open)))await polarityGroup.locator(':scope > summary').click();
+  await vertex.waitFor({state:'visible'});
   const tokenKinds={};
   for(const kind of ['placement','sign','house']){
     const token=vertex.locator(`.sky-vocab-token[data-vocab-kind="${kind}"]`).first();
