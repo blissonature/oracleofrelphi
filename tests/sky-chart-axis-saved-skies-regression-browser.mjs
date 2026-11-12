@@ -76,8 +76,8 @@ try{
       return stroke&&stroke!=='none'&&stroke!=='transparent'&&style.visibility!=='hidden'&&style.display!=='none'&&Number(style.opacity||1)>0;
     });
     const source=window.RelphiSkyCardShell?.get?.(slot)?.heptagram;
-    assert.ok(source?.closest('[data-sky-where-summary]'),'Sky Card shell must resolve the full Where and When heptagram, not its compact fingerprint');
-    assert.equal(heptagram?.hasAttribute('data-sky-heptagram'),false,'Thumbnail must not carry the full source locator');
+    const sourceIsFull=!!source?.closest('[data-sky-where-summary]');
+    const thumbNotSource=!heptagram?.hasAttribute('data-sky-heptagram');
     const sourceGlyphs=source?.querySelectorAll('.sky-ph-planet .relphi-canonical-glyph').length||0;
     const active=Array.from(heptagram?.querySelectorAll('.sky-ph-planet.is-day-ruler,.sky-ph-planet.is-hour-ruler')||[]);
     const inactive=Array.from(heptagram?.querySelectorAll('.sky-ph-planet:not(.is-day-ruler):not(.is-hour-ruler)')||[]);
@@ -103,7 +103,7 @@ try{
     const redCorrect=redLines.every(line=>line.color==='rgb(201, 33, 30)');
     const hourLines=heptagram?.querySelectorAll('.sky-ph-hour-segment').length||0;
     const sourceHourLines=source?.querySelectorAll('.sky-ph-hour-segment').length||0;
-    return[slot,{exists:!!mount,hidden:mount?.hidden,heptagram:!!heptagram,width:rect?.width||0,height:rect?.height||0,weekLines:weekLines.length,visibleWeekLines:visibleWeekLines.length,sourceWeekLines:source?.querySelectorAll('.sky-ph-week-segment').length||0,planetaryGlyphs,sourceGlyphs,activeCount:active.length,inactiveCount:inactive.length,inactiveDots,correctlyScaled,noInactiveGlyphs,weekStroke,dashEffect,allPathsSolid,oneWidth,grayCorrect,redCorrect,hourLines,sourceHourLines,duplicateIds:heptagram?.querySelectorAll('[id]').length||0}];
+    return[slot,{sourceIsFull,thumbNotSource,exists:!!mount,hidden:mount?.hidden,heptagram:!!heptagram,width:rect?.width||0,height:rect?.height||0,weekLines:weekLines.length,visibleWeekLines:visibleWeekLines.length,sourceWeekLines:source?.querySelectorAll('.sky-ph-week-segment').length||0,planetaryGlyphs,sourceGlyphs,activeCount:active.length,inactiveCount:inactive.length,inactiveDots,correctlyScaled,noInactiveGlyphs,weekStroke,dashEffect,allPathsSolid,oneWidth,grayCorrect,redCorrect,hourLines,sourceHourLines,duplicateIds:heptagram?.querySelectorAll('[id]').length||0}];
   })));
   const sourceDiagnostics=await page.evaluate(()=>Object.fromEntries(['A','B'].map(slot=>{
     const svg=window.RelphiSkyCardShell?.get?.(slot)?.heptagram;
@@ -113,6 +113,8 @@ try{
   console.log('HEPTAGRAM_CANON_LIFECYCLE '+JSON.stringify(await page.evaluate(()=>window.__heptagramCanonEvents)));
   for(const slot of ['A','B']){
     const thumb=drawerHeptagrams[slot];
+    assert.equal(thumb.sourceIsFull,true,'Card shell must resolve the full Where and When SVG');
+    assert.equal(thumb.thumbNotSource,true,'Thumbnail cannot masquerade as the full heptagram source');
     assert.equal(thumb.exists,true,`Sky ${slot} Where/When thumbprint mount should exist: ${JSON.stringify(thumb)}`);
     assert.equal(thumb.hidden,false,`Sky ${slot} Where/When thumbprint should not be hidden: ${JSON.stringify(thumb)}`);
     assert.equal(thumb.heptagram,true,`Sky ${slot} microheptagram should exist: ${JSON.stringify(thumb)}`);
