@@ -160,6 +160,9 @@ assert.deepEqual(primaryAxes.slice(0,4),['vertex-anti-vertex','asc-dsc','mc-ic',
 // token, activating preview isolation even though no selection is locked.
 // Move the actual mouse out before establishing the neutral hover baseline.
 await page.mouse.move(1,1);
+// A retained Vocab context is intentionally cleared by a blank-space click;
+// moving the cursor alone must not discard touch/keyboard retention.
+await page.locator('#skyFoundationA .sky-vocab-structures-heading').click({position:{x:5,y:5}});
 await page.waitForFunction(()=>!document.querySelector('#skyFoundationWheelMount>.sky-foundation-wheel')?.classList.contains('has-isolation'),null,{timeout:10000});
 await page.evaluate(()=>window.RelphiSkyFoundationInteractions?.clearWheel?.());
 console.log('VOCAB_AXIS_BASELINE',JSON.stringify(await page.evaluate(()=>({
