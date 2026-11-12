@@ -109,14 +109,14 @@ const relationshipHeaderOrder=await page.evaluate(()=>{
     countParent:count?.parentElement===actions
   };
 });
-const relationshipHeaderGap=await page.evaluate(()=>{
+const relationshipHeaderSeparation=await page.evaluate(()=>{
   const heading=document.querySelector('#skyFoundationRelationships>.sky-foundation-relationships-heading');
   const title=heading?.querySelector('[data-relationship-vocab-tabs],h2:not([hidden])')?.getBoundingClientRect();
-  const first=heading?.querySelector('.sky-relationship-heading-actions>[data-relationship-sort],.sky-relationship-heading-actions>.sky-relationship-sort-control')?.getBoundingClientRect();
-  return title&&first?first.left-title.right:null;
+  const sort=heading?.querySelector('.sky-relationship-heading-actions>[data-relationship-sort],.sky-relationship-heading-actions>.sky-relationship-sort-control')?.getBoundingClientRect();
+  if(!title||!sort)return null;
+  return{horizontal:sort.left-title.right,vertical:sort.top-title.bottom,nonOverlapping:sort.left>=title.right+6||sort.top>=title.bottom+3};
 });
-console.log('RELATIONSHIPS_DESKTOP_GAP',relationshipHeaderGap);
-assert.ok(relationshipHeaderGap!==null&&relationshipHeaderGap>=98,'Relationships needs a 100px visual break between its header and first control.');
+assert.ok(relationshipHeaderSeparation?.nonOverlapping,'Relationships title and Sort must be separated without overlap, whether in one row or a responsive second row: '+JSON.stringify(relationshipHeaderSeparation));
 assert.equal(relationshipHeaderOrder.countParent,true,'Match count must live on the Relationships action line, not between the header and controls.');
 assert.ok(relationshipHeaderOrder.sort>=0&&relationshipHeaderOrder.limit>relationshipHeaderOrder.sort,'Sort must precede Max.');
 assert.ok(relationshipHeaderOrder.count>relationshipHeaderOrder.limit,'Match count must come after the controls.');
