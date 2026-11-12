@@ -98,7 +98,10 @@ function microHeptagram(sourceSvg){
       dot.setAttribute('cx','0');
       dot.setAttribute('cy','0');
       dot.setAttribute('r','9');
-      dot.setAttribute('fill','#77736e');
+      // Every source planet carries its authoritative ruler color on the group.
+      // currentColor keeps the smaller dot faithful to that same planet after
+      // the canonical glyph is reduced to a thumbnail, including rerenders.
+      dot.setAttribute('fill','currentColor');
       dot.classList.add('sky-ph-micro-idle-node');
       mount.appendChild(dot);
     }
