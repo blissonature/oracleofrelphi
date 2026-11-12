@@ -17,8 +17,9 @@ fs.mkdirSync(out,{recursive:true});
     assert.ok(frame,'standalone Drawing Board iframe must load');
     await frame.waitForFunction(()=>!!window.RelphiDrawingBoardOptionsBridge && !!document.querySelector('#drawingBoardOptionsButton') && !!document.querySelector('#relphiOpenDrawingBoardCurrent'),null,{timeout:20000});
     const panel=frame.locator('#shortListPanel');
-    if(!(await panel.isVisible())) await frame.click('#relphiOpenDrawingBoardCurrent');
-    await panel.waitFor({state:'visible',timeout:10000});
+    // drawing-board.html already auto-opens this iframe after initialization.
+    // A competing test click can toggle the just-opened board closed.
+    await panel.waitFor({state:'visible',timeout:20000});
     await frame.waitForSelector('#shortListPanel #relphiMainQuestion',{state:'visible',timeout:10000});
 
     // Crafted methods now open from the permanent Drawing Board commandbar;
