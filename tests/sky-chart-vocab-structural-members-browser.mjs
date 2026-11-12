@@ -92,12 +92,19 @@ try{
   const showMore=page.locator('#skyFoundationRelationshipList [data-harmonic-show-more]');
   await showMore.waitFor({state:'visible'});
   const showMoreText=(await showMore.textContent()||'').trim();
-  assert.match(showMoreText,/\d+ more beyond 0° Harmonic Window · Show more/,'Narrow Harmonic Window must end with an actionable continuation item.');
+  const nextMatch=showMoreText.match(/\d+ more beyond 0° · Increase to (\d+(?:\.\d+)?)°/);
+  assert.ok(nextMatch,'Narrow Harmonic Window must show the next actionable phase threshold: '+showMoreText);
+  const nextWindow=nextMatch[1];
   await showMore.click();
-  const maxWindow=await page.evaluate(()=>String(window.RelphiHarmonicOrb.maxWindow));
-  await page.waitForFunction(value=>document.documentElement.dataset.skyHarmonicWindow===value,maxWindow);
-  assert.equal(await relationshipWindow.inputValue(),maxWindow,'Show more must widen the shared Harmonic Window immediately.');
-  assert.equal(await vocabWindow.inputValue(),maxWindow,'Show more must mirror the widened Harmonic Window into Vocab.');
+  await page.waitForFunction(value=>document.documentElement.dataset.skyHarmonicWindow===value,nextWindow);
+  assert.equal(await relationshipWindow.inputValue(),nextWindow,'Show more must advance to the next reveal threshold.');
+  assert.equal(await vocabWindow.inputValue(),nextWindow,'Show more must mirror the revealed threshold into Vocab.');
+  const maxWindow=Number(await page.evaluate(()=>window.RelphiHarmonicOrb.maxWindow));
+  for(let step=0;step<=Math.ceil(maxWindow)+1&&await showMore.isVisible();step++){
+    const before=Number(await relationshipWindow.inputValue());
+    await showMore.click();
+    await page.waitForFunction(previous=>Number(document.documentElement.dataset.skyHarmonicWindow)>previous,before);
+  }
   await showMore.waitFor({state:'hidden'});
 
   await vocabWindow.fill(defaultWindow);
