@@ -115,6 +115,7 @@ const relationshipHeaderGap=await page.evaluate(()=>{
   const first=heading?.querySelector('.sky-relationship-heading-actions>[data-relationship-sort],.sky-relationship-heading-actions>.sky-relationship-sort-control')?.getBoundingClientRect();
   return title&&first?first.left-title.right:null;
 });
+console.log('RELATIONSHIPS_DESKTOP_GAP',relationshipHeaderGap);
 assert.ok(relationshipHeaderGap!==null&&relationshipHeaderGap>=98,'Relationships needs a 100px visual break between its header and first control.');
 assert.equal(relationshipHeaderOrder.countParent,true,'Match count must live on the Relationships action line, not between the header and controls.');
 assert.ok(relationshipHeaderOrder.sort>=0&&relationshipHeaderOrder.limit>relationshipHeaderOrder.sort,'Sort must precede Max.');
