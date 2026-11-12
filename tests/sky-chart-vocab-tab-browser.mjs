@@ -156,6 +156,11 @@ const primaryAxes=await vocabParagraph.locator('[data-vocab-structure="axis-pola
 assert.deepEqual(primaryAxes.slice(0,4),['vertex-anti-vertex','asc-dsc','mc-ic','north-node-south-node'],'Primary structures must lead with Vertex/Anti-Vertex, chart angles, then nodes.');
 // Hover previews intentionally defer to an existing locked focus. This test
 // starts from the neutral wheel state before exercising preview-only behavior.
+// A prior keyboard/display interaction can leave the pointer over a Vocab
+// token, activating preview isolation even though no selection is locked.
+// Move the actual mouse out before establishing the neutral hover baseline.
+await page.mouse.move(1,1);
+await page.waitForFunction(()=>!document.querySelector('#skyFoundationWheelMount>.sky-foundation-wheel')?.classList.contains('has-isolation'),null,{timeout:10000});
 await page.evaluate(()=>window.RelphiSkyFoundationInteractions?.clearWheel?.());
 console.log('VOCAB_AXIS_BASELINE',JSON.stringify(await page.evaluate(()=>({
   wheel:document.querySelector('#skyFoundationWheelMount>.sky-foundation-wheel')?.getAttribute('class'),
