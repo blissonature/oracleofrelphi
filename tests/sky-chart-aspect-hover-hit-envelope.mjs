@@ -43,7 +43,7 @@ try{
   await page.goto('http://127.0.0.1:4173/sky-chart.html',{waitUntil:'networkidle',timeout:30000});
   await page.waitForSelector('#skyFoundationRoot[aria-busy="false"]',{timeout:20000});
   await page.waitForFunction(()=>document.documentElement.dataset.skyBPresent==='true',null,{timeout:10000});
-  await page.waitForFunction(()=>window.__relphiSkyHoverFastPathV4===true,null,{timeout:10000});
+  await page.waitForFunction(()=>!!window.RelphiSkyFoundationInteractions?.captureFocus,null,{timeout:10000});
   await page.waitForFunction(()=>document.querySelectorAll('#skyFoundationWheelMount .sky-foundation-aspect-hit').length>8,null,{timeout:10000});
   await page.waitForTimeout(200);
 

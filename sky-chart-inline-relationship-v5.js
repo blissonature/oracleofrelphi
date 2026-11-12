@@ -125,7 +125,8 @@ function onClick(event){
   if(event.target.closest?.('.inline-rel-tile-copy'))return;
   const row=rowFromTarget(event.target);
   if(row&&row===suppressClickRow&&performance.now()-suppressClickAt<900){event.preventDefault();event.stopImmediatePropagation();return}
-  suppressClickRow=null;
+  // An unrelated click must not disarm the touch row's compatibility-click guard.
+  // WebKit can emit multiple post-touch click events; preserve the guard until its expiry.
   const ledger=event.target.closest('[data-inline-ledger]');if(ledger){event.stopImmediatePropagation();return}
   const topGlyph=event.target.closest('[data-inline-top-reveal],.sky-foundation-relationship-glyph--left,.sky-foundation-relationship-glyph--aspect,.sky-foundation-relationship-glyph--right'),revealRow=topGlyph?.closest('.sky-foundation-relationship-row.is-inline-expanded');
   if(revealRow){const field=topGlyph.dataset.inlineTopReveal||fieldFromTopGlyph(topGlyph);if(field){event.preventDefault();event.stopImmediatePropagation();cycleReveal(revealRow,field);return}}

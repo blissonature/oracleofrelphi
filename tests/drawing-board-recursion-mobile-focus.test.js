@@ -18,9 +18,11 @@ const base='http://127.0.0.1:8000/tarot.html?board=workflow-v2#tarot';
     const panel=page.locator('#shortListPanel');
     if(!(await panel.isVisible())) await page.locator('#relphiOpenDrawingBoardCurrent').tap();
     await panel.waitFor({state:'visible'});
-    await page.locator('#relphiBoardSettingsButton').tap();
-    await page.waitForSelector('#drawingBoardOptionsButton',{state:'visible'});
-    await page.locator('#drawingBoardOptionsButton').tap();
+    // The composer owns the current Methods action; legacy settings radios are retired.
+    const methods=page.locator('#shortListPanel .relphi-main-composer [data-main-action="methods"]');
+    await methods.waitFor({state:'visible'});
+    await methods.tap();
+    await page.waitForSelector('.relphi-reading-options-drawer.is-reading-options-open',{state:'visible'});
     await page.locator('[data-referent-path="templates"]').tap();
     await page.waitForSelector('#relphiSpreadTemplateSelect',{state:'visible'});
     await page.selectOption('#relphiSpreadTemplateSelect','relphi-recursion-22');
