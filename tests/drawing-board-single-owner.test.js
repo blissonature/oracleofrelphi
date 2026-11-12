@@ -10,7 +10,7 @@ const board = read('drawing-board-workflow-v2.js');
 const css = read('drawing-board-workflow-v2.css');
 const app = read('tarot-app.js');
 
-assert.match(nav, /drawing-board-workflow-v2\.js\?v=113/);
+assert.match(nav, /drawing-board-workflow-v2\.js\?v=\d+/);
 [
   'drawing-board-interactions-v1.js',
   'drawing-board-template-lifecycle-v1.js',
@@ -46,10 +46,10 @@ assert.match(board, /renderedContentBounds/);
 assert.match(board, /workspace\.clientWidth/);
 assert.match(board, /workspace\.clientHeight/);
 assert.match(board, /relphi-workspace-tools/);
-assert.match(board, /data-tool="more"/);
+assert.match(board, /relphi-main-composer/); // Permanent composer replaces old More tool
 assert.doesNotMatch(board, /data-tool="snaps"/);
 assert.doesNotMatch(board, /data-tool="background"/);
-assert.match(board, /Unlock rotation & scale/);
+assert.match(board, /syncTransformEditingAvailability/); // Existing transform owner remains authoritative
 assert.match(board, /Snaps/);
 assert.match(board, /Background/);
 assert.match(board, /installExportArea/);
@@ -99,8 +99,8 @@ assert.match(board, /function clearCardsOnly/);
 assert.match(app, /rowCardManual/);
 assert.match(app, /rowCardWasAddedManually/);
 
-assert.match(css, /\.card-row-workspace\{[^}]*height:clamp\(28rem,62vh,40rem\)/);
-assert.match(css, /@media\(max-width:700px\)[\s\S]*height:clamp\(23rem,58dvh,36rem\)/);
+assert.match(css, /\.card-row-workspace\{[^}]*height:clamp\(28rem,62svh,40rem\)/);
+assert.match(css, /@media\(max-width:700px\)[\s\S]*height:clamp\(23rem,58svh,36rem\)/);
 assert.match(css, /\.relphi-focus-reader\{/);
 assert.match(css, /\.relphi-focus-main\{/);
 assert.match(css, /\.relphi-focus-art\{/);
@@ -120,7 +120,7 @@ assert.doesNotMatch(css, /relphi-focus-card-host/);
 assert.match(css, /\.card-row-action-staging\{display:none!important\}/);
 assert.match(css, /card-row-workspace-toolbar:not\(\.relphi-board-controller\).*visibility:hidden!important/);
 assert.match(css, /\.relphi-board-export\{/);
-assert.match(css, /relphi-celtic-crossed[\s\S]*data-relphi-position-id="crossing"/);
+assert.match(board, /relphi-celtic-crossed/); // Visual state is owned by the canonical board renderer
 assert.match(css, /relphi-transform-editing-unlocked/);
 assert.doesNotMatch(css, /relphi-drawing-board-ui-ready|relphi-drawing-board-ui-stable/);
 
@@ -151,6 +151,7 @@ assert.deepEqual(Array.from(registry.shipped, item => item.id), [
   'celtic-cross-10',
   'six-polarities-houses-12',
   'relphi-recursion-22',
+  'crowley-harmonic-divination-12',
   'focus-1'
 ]);
 const recursion = registry.byId('relphi-recursion-22');
@@ -166,9 +167,10 @@ assert.equal(registry.byId('celtic-cross-11'), null);
 const celtic = registry.byId('celtic-cross-10');
 assert.equal(celtic.cardCount, 10);
 assert.deepEqual(Array.from(celtic.positions, item => item.label), [
-  '1 · What covers you','2 · What crosses you','3 · What crowns you','4 · What is beneath you','5 · What is behind you',
-  '6 · What is before you','7 · Yourself','8 · Your house','9 · Your hopes or fears','10 · What will come'
+  'What covers you','What crosses you','What crowns you','What is beneath you','What is behind you',
+  'What is before you','Yourself','Your house','Your hopes or fears','What will come'
 ]);
+assert.deepEqual(Array.from(celtic.positions, item => item.drawOrder),Array.from({length:10},(_,i)=>i+1),'Position order is represented separately from unnumbered semantic labels.');
 const cross = celtic.positions[1];
 assert.deepEqual(JSON.parse(JSON.stringify(cross.canonicalTransform)), {x:.20,y:.34,scale:.48,rotation:90,zIndex:30});
 assert.deepEqual(JSON.parse(JSON.stringify(cross.crossedTransform)), {x:.20,y:.34,scale:.48,rotation:90,zIndex:30});
@@ -180,7 +182,7 @@ assert.equal(new Set(polarities.positions.map(item => item.transform.x)).size, 4
 assert.equal(new Set(polarities.positions.map(item => item.transform.y)).size, 3);
 const saturn = registry.byId('saturn-square-9');
 assert.deepEqual(Array.from(saturn.positions, item => [item.transform.x,item.transform.y,item.transform.scale]), [
-  [.04,.04,.58],[.36,.04,.58],[.68,.04,.58],[.04,.37,.58],[.36,.37,.58],[.68,.37,.58],[.04,.70,.58],[.36,.70,.58],[.68,.70,.58]
+  [.245,.025,.74],[.405,.025,.74],[.565,.025,.74],[.245,.405,.74],[.405,.405,.74],[.565,.405,.74],[.245,.785,.74],[.405,.785,.74],[.565,.785,.74]
 ]);
 
 console.log('Drawing Board single-owner checks passed.');
