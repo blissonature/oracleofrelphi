@@ -382,7 +382,7 @@ assert.ok(polarCross.edges.some(edge=>edge.entailedKind==='polar-axis'),'Grand C
 
 const grandCrossChoice=page.locator('[data-configuration-scope="A-A"][data-configuration-type="grand-cross"]');
 await grandCrossChoice.waitFor({state:'attached'});
-await page.locator('[data-aspect-filter="combined"]').click();
+await page.locator('[data-aspect-filter="combined"] [data-aspect-filter-toggle]').click();
 await grandCrossChoice.waitFor({state:'visible'});
 if(!(await grandCrossChoice.isChecked()))await grandCrossChoice.check();
 await page.waitForSelector('[data-configuration-inevitable-show-more]',{state:'visible'});

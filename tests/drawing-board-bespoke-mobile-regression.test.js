@@ -27,10 +27,11 @@ const base=process.env.RELPHI_TEST_URL||'http://127.0.0.1:8000/tarot.html?board=
         scripts:[...document.scripts].map(s=>s.src).filter(s=>s.includes('drawing-board'))};
     })));
     console.log('BOARD_MOBILE_PAGE_ERRORS',JSON.stringify(errors));
-    await page.waitForSelector('#relphiBoardSettingsButton',{state:'visible',timeout:10000});
-    await page.locator('#relphiBoardSettingsButton').tap();
-    await page.waitForSelector('#drawingBoardOptionsButton',{state:'visible',timeout:10000});
-    await page.locator('#drawingBoardOptionsButton').tap();
+    // The current Drawing Board owns a permanent Methods action in its composer.
+    // Legacy hidden radio tabs and #relphiBoardSettingsButton are not user controls.
+    const methods=page.locator('#shortListPanel .relphi-main-composer [data-main-action="methods"]');
+    await methods.waitFor({state:'visible',timeout:10000});
+    await methods.tap();
     await page.waitForSelector('.relphi-reading-options-drawer.is-reading-options-open',{state:'visible',timeout:10000});
 
     await page.locator('[data-referent-path="templates"]').tap();

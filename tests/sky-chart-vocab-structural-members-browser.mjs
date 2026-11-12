@@ -153,6 +153,8 @@ try{
   for(const kind of ['placement','sign','house']){
     const token=vertex.locator(`.sky-vocab-token[data-vocab-kind="${kind}"]`).first();
     assert.equal(await token.count(),1,`Vertex polarity must expose a ${kind} token`);
+    await vertex.hover();
+    await token.waitFor({state:'visible'});
     await token.hover();
     await page.waitForFunction(()=>document.querySelector('#skyFoundationWheelMount>.sky-foundation-wheel')?.classList.contains('has-isolation'));
     tokenKinds[kind]=await page.evaluate(()=>{
