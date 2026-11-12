@@ -76,7 +76,7 @@ try{
   await first.locator('[data-saved-delete-ref]').click();
   assert.equal(await first.locator('.sky-saved-delete-confirmation').count(),1,'Delete still requires confirmation');
   const confirm=first.locator('.sky-saved-delete-confirmation');
-  assert.ok(!(await confirm.getAttribute('aria-label')).includes('Sensitive'),'Confirmation label conceals identity');
+  assert.ok((await confirm.getAttribute('aria-label')).includes('Sensitive Person One'),'Explicit delete confirmation must identify the selected saved sky before irreversible deletion');
   await first.locator('[data-saved-delete-cancel]').click();
   await first.locator('[data-saved-sky-ref]').click();
   await desktop.waitForFunction(()=>document.querySelector('#skySavedSkiesPopover')?.hidden===true,{timeout:10000});

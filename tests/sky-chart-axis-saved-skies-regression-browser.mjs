@@ -90,6 +90,11 @@ try{
     const sourceHourLines=source?.querySelectorAll('.sky-ph-hour-segment').length||0;
     return[slot,{exists:!!mount,hidden:mount?.hidden,heptagram:!!heptagram,width:rect?.width||0,height:rect?.height||0,weekLines:weekLines.length,visibleWeekLines:visibleWeekLines.length,sourceWeekLines:source?.querySelectorAll('.sky-ph-week-segment').length||0,planetaryGlyphs,sourceGlyphs,activeCount:active.length,inactiveCount:inactive.length,inactiveDots,correctlyScaled,noInactiveGlyphs,weekStroke,dashEffect,allPathsSolid,oneWidth,grayCorrect,redCorrect,hourLines,sourceHourLines,duplicateIds:heptagram?.querySelectorAll('[id]').length||0}];
   })));
+  const sourceDiagnostics=await page.evaluate(()=>Object.fromEntries(['A','B'].map(slot=>{
+    const svg=window.RelphiSkyCardShell?.get?.(slot)?.heptagram;
+    return[slot,{sourceReady:svg?.dataset?.canonicalSourceReady,canonReady:svg?.dataset?.canonicalHeptagramReady,canonBusy:svg?.dataset?.canonicalHeptagramBusy,planets:[...svg?.querySelectorAll('.sky-ph-planet')||[]].map(node=>({classes:node.getAttribute('class'),glyphs:node.querySelectorAll('.relphi-canonical-glyph').length,unavailable:node.querySelector('.sky-ph-node-glyph')?.dataset.glyphUnavailable||''}))}];
+  })));
+  console.log('HEPTAGRAM_SOURCE_DIAG '+JSON.stringify(sourceDiagnostics));
   for(const slot of ['A','B']){
     const thumb=drawerHeptagrams[slot];
     assert.equal(thumb.exists,true,`Sky ${slot} Where/When thumbprint mount should exist: ${JSON.stringify(thumb)}`);

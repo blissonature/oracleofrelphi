@@ -352,6 +352,10 @@ jobs:
           assert.ok(houseArt.naturalWidth>0);
           assert.equal(houseArt.media,'local-house-art');
 
+          const majorImages=page.locator('#skyFoundationA .sky-card-house-detail-row[data-card-house-detail-role="ruler"] .sky-card-house-span-major-art img,#skyFoundationA .sky-card-house-detail-row[data-card-house-detail-role="sign"] .sky-card-house-span-major-art img');
+          await majorImages.first().scrollIntoViewIfNeeded();
+          await majorImages.nth(1).scrollIntoViewIfNeeded();
+          console.log('HOUSE_MAJOR_IMG_DIAG '+JSON.stringify(await majorImages.evaluateAll(nodes=>nodes.map(img=>({src:img.getAttribute('src'),complete:img.complete,naturalWidth:img.naturalWidth,visible:!!img.getClientRects().length})))));
           await page.waitForFunction(()=>{
             const imgs=[...document.querySelectorAll('#skyFoundationA .sky-card-house-detail-row[data-card-house-detail-role="ruler"] .sky-card-house-span-major-art img,#skyFoundationA .sky-card-house-detail-row[data-card-house-detail-role="sign"] .sky-card-house-span-major-art img')];
             return imgs.length===2&&imgs.every(img=>img.complete&&img.naturalWidth>0);

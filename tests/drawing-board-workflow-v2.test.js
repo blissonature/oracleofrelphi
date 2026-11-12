@@ -97,7 +97,7 @@ assert.doesNotMatch(board, /requestAnimationFrame\(\(\)=>requestAnimationFrame\(
 assert.match(board, /function resetBoardFromOptions/);
 assert.match(board, /function draftPrefab/);
 assert.match(board, /Save template/);
-assert.match(board, /Show position stickers/);
+assert.doesNotMatch(board, /Show position stickers/); // Free Draw deliberately has no sticker mode
 assert.match(board, /const drawSettingsMarkup=\(session\.path==='surface'\|\|session\.path==='astro'\)/);
 assert.match(board, /relphi-draw-options--surface/);
 assert.match(board, /Each probe uses the sub-pack shown beneath it/);
