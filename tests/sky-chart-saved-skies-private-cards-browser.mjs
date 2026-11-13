@@ -42,6 +42,7 @@ try{
     const page=await context.newPage(),errors=[];
     page.on('pageerror',error=>errors.push(error.message));
     await load(page);
+    await page.waitForSelector('#skySavedSkiesPopover [data-saved-sky-ref="private-person-one"] .sky-library-identity-overlay',{timeout:12000});
     const rows=page.locator('#skySavedSkiesPopover .sky-saved-list-row');
     assert.equal(await rows.count(),2,'Canonical Saved Skies picker must show both fixture skies');
     for(const id of ['private-person-one','private-person-two']){
