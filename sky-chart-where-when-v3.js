@@ -367,11 +367,17 @@ function selectLocation(slot,source){
 async function reversePacket(latitude,longitude){
   const reverseUrl=new URL('https://api.bigdatacloud.net/data/reverse-geocode-client');reverseUrl.searchParams.set('latitude',String(latitude));reverseUrl.searchParams.set('longitude',String(longitude));reverseUrl.searchParams.set('localityLanguage','en');
   const zoneUrl=new URL('https://api.open-meteo.com/v1/forecast');zoneUrl.searchParams.set('latitude',String(latitude));zoneUrl.searchParams.set('longitude',String(longitude));zoneUrl.searchParams.set('timezone','auto');zoneUrl.searchParams.set('forecast_days','1');
+  // Time-zone resolution is required for the instant; reverse-geocoded display names are not.
+  // Do not fail a valid browser coordinate because an optional address provider is unavailable.
   const signal=AbortSignal.timeout(10000);
-  const[reverseResponse,zoneResponse]=await Promise.all([fetch(reverseUrl.toString(),{headers:{Accept:'application/json'},signal}),fetch(zoneUrl.toString(),{headers:{Accept:'application/json'},signal})]);
-  if(!reverseResponse.ok||!zoneResponse.ok)throw new Error('Current coordinates could not be resolved.');
-  const reverse=await reverseResponse.json(),zone=await zoneResponse.json(),canonical=[reverse.locality||reverse.city,reverse.principalSubdivision,reverse.countryName].map(v=>String(v||'').trim()).filter((v,i,list)=>v&&list.indexOf(v)===i).join(', ');
-  return{canonical,timezone:String(zone.timezone||'UTC')};
+  const[reverseResult,zoneResult]=await Promise.allSettled([
+    fetch(reverseUrl.toString(),{headers:{Accept:'application/json'},signal}).then(response=>{if(!response.ok)throw new Error('Place-name lookup failed.');return response.json()}),
+    fetch(zoneUrl.toString(),{headers:{Accept:'application/json'},signal}).then(response=>{if(!response.ok)throw new Error('Time-zone lookup failed.');return response.json()})
+  ]);
+  if(zoneResult.status!=='fulfilled'||!zoneResult.value?.timezone)throw new Error('The current location time zone could not be resolved.');
+  const reverse=reverseResult.status==='fulfilled'?reverseResult.value:{};
+  const canonical=[reverse.locality||reverse.city,reverse.principalSubdivision,reverse.countryName].map(v=>String(v||'').trim()).filter((v,i,list)=>v&&list.indexOf(v)===i).join(', ')||`${displayCoordinate(latitude)}, ${displayCoordinate(longitude)}`;
+  return{canonical,timezone:String(zoneResult.value.timezone)};
 }
 function currentPosition(){return new Promise((resolve,reject)=>{if(!navigator.geolocation)return reject(new Error('Current location is unavailable in this browser.'));navigator.geolocation.getCurrentPosition(resolve,reject,{enableHighAccuracy:false,timeout:12000,maximumAge:0})})}
 async function currentLocationPacket(){
