@@ -97,7 +97,8 @@ function microHeptagram(sourceSvg){
       const dot=document.createElementNS('http://www.w3.org/2000/svg','circle');
       dot.setAttribute('cx','0');
       dot.setAttribute('cy','0');
-      dot.setAttribute('r','9');
+      // Larger idle ruler markers remain centered on the canonical planetary nodes.
+      dot.setAttribute('r','15');
       // Every source planet carries its authoritative ruler color on the group.
       // currentColor keeps the smaller dot faithful to that same planet after
       // the canonical glyph is reduced to a thumbnail, including rerenders.
