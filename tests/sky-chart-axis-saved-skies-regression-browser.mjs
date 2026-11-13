@@ -24,13 +24,14 @@ async function assertRulerDotColors(page,selector,label,minCharts=1){
     inactive:[...svg.querySelectorAll('.sky-ph-planet:not(.is-day-ruler):not(.is-hour-ruler)')].map(group=>{
       const id=[...group.classList].find(name=>/^sky-ph-(saturn|jupiter|mars|sun|venus|mercury|moon)$/.test(name))?.slice(7)||'';
       const dot=group.querySelector('.sky-ph-micro-idle-node');
-      return{id,fill:dot?getComputedStyle(dot).fill:null,sourceColor:getComputedStyle(group).color};
+      return{id,fill:dot?getComputedStyle(dot).fill:null,radius:dot?Number(dot.getAttribute('r')):null,sourceColor:getComputedStyle(group).color};
     })
   })));
   assert.ok(charts.length>=minCharts,`${label}: expected at least ${minCharts} rendered microheptagrams, found ${charts.length}`);
   for(const [index,chart] of charts.entries()){
     assert.ok(chart.inactive.length>=5,`${label} chart ${index}: five or six idle ruler dots expected`);
     for(const dot of chart.inactive){
+      assert.equal(dot.radius,15,`${label} chart ${index}: ruler dot radius must remain readable at thumbnail scale`);
       assert.equal(dot.fill,RULER_COLORS[dot.id],`${label} chart ${index}: ${dot.id} must retain its distinct planetary color`);
       assert.equal(dot.fill,dot.sourceColor,`${label} chart ${index}: ${dot.id} must inherit the canonical source group's color`);
     }
