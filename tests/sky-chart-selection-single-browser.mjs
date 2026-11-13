@@ -12,7 +12,15 @@ try{
     const errors=[];page.on('pageerror',e=>errors.push(e.message));
     await page.route('https://unpkg.com/suncalc@1.9.0/suncalc.js',r=>r.fulfill({path:path.resolve('node_modules/suncalc/suncalc.js'),contentType:'application/javascript'}));
     await page.route('https://cdn.jsdelivr.net/npm/luxon@3/build/global/luxon.min.js',r=>r.fulfill({path:path.resolve('node_modules/luxon/build/global/luxon.min.js'),contentType:'application/javascript'}));
-    await page.route('https://geocoding-api.open-meteo.com/v1/search**',r=>r.fulfill({status:200,contentType:'application/json',body:JSON.stringify({results:[{name:'Rochester',admin1:'New York',country:'United States',country_code:'US',latitude:43.1566,longitude:-77.6088,timezone:'America/New_York'}]})}));
+    const lookups=[];
+    await page.route('https://geocoding-api.open-meteo.com/v1/search**',r=>{
+      lookups.push(new URL(r.request().url()).searchParams.get('name'));
+      return r.fulfill({status:200,contentType:'application/json',body:JSON.stringify({results:[
+        {name:'Rochester',admin1:'New York',country:'United States',country_code:'US',latitude:43.1566,longitude:-77.6088,timezone:'America/New_York',population:209000},
+        {name:'Rochester',admin1:'Minnesota',admin2:'Olmsted',country:'United States',country_code:'US',latitude:44.0121,longitude:-92.4802,timezone:'America/Chicago',population:121000},
+        {name:'Rochester Hills',admin1:'Minnesota',country:'United States',country_code:'US',latitude:40.0,longitude:-90.0,timezone:'America/Chicago'}
+      ]})});
+    });
     for(const time of ['11:00',null]){
       const event={date:'1971-10-29',time,location:'Rochester, New York',label:'born'};
       const packet=encodeURIComponent(JSON.stringify({version:1,event}));
@@ -35,6 +43,27 @@ try{
       }
       console.log('PASS single selected event '+(time?'known':'unknown')+' '+viewport.width);
     }
+    // Person-name annotations must not be included in the city geocoding query.
+    // The administrative state is still mandatory, even when a higher-population
+    // identically named city in another state is returned first.
+    const annotated={date:'1971-10-29',time:'11:00',location:'Rochester (Winona), Minnesota',label:'born'};
+    const beforeLookups=lookups.length;
+    await page.goto('http://127.0.0.1:4173/sky-chart.html?relphiSingle='+encodeURIComponent(JSON.stringify({version:1,event:annotated})),{waitUntil:'domcontentloaded'});
+    await page.waitForFunction(()=>{
+      try{return JSON.parse(localStorage.getItem('relphiSkyChartA'))?.calcProfile?.location?.includes('Minnesota')}catch{return false}
+    },null,{timeout:45000});
+    const annotatedState=await page.evaluate(()=>({
+      a:JSON.parse(localStorage.getItem('relphiSkyChartA')),
+      b:JSON.parse(localStorage.getItem('relphiSkyChartB')),
+      url:location.href
+    }));
+    assert.deepEqual(lookups.slice(beforeLookups),['Rochester'],'Biographical parenthetical must not contaminate geocoder query');
+    assert.match(annotatedState.a.calcProfile.location,/Rochester, Minnesota/);
+    assert.equal(annotatedState.a.calcProfile.timeZone,'America/Chicago');
+    assert.equal(annotatedState.a.metadata.selectionLocation,'Rochester (Winona), Minnesota');
+    assert.deepEqual(annotatedState.b,seedB,'Annotated city import must preserve Sky B');
+    assert.ok(!annotatedState.url.includes('relphiSingle'));
+    console.log('PASS parenthetical person-name city disambiguation '+viewport.width);
     const draft=encodeURIComponent(JSON.stringify({version:1,kind:'date',value:'1971-10-29'}));
     await page.goto('http://127.0.0.1:4173/sky-chart.html?relphiDraft='+draft,{waitUntil:'domcontentloaded'});
     await page.waitForFunction(()=>document.querySelector('#skyFoundationA .sky-where-when-editor [data-ww-field="date"]')?.value==='1971-10-29',null,{timeout:15000}).catch(async error=>{
