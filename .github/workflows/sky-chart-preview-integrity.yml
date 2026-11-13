@@ -6,6 +6,7 @@ on:
       - 'sky-chart.html'
       - 'sky-chart-heptagram-geometry-v1.css'
       - 'tests/sky-chart-remote-preview-integrity.mjs'
+      - 'tests/sky-chart-preview-cdn-probe.mjs'
       - '.github/workflows/sky-chart-preview-integrity.yml'
 jobs:
   preview-browser:
@@ -22,7 +23,9 @@ jobs:
       - name: Check served preview and deployed page
         env:
           PREVIEW_REF: ${{ github.event.pull_request.head.sha }}
-        run: node tests/sky-chart-remote-preview-integrity.mjs
+        run: |
+          node tests/sky-chart-preview-cdn-probe.mjs
+          node tests/sky-chart-remote-preview-integrity.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
