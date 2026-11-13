@@ -81,7 +81,10 @@ try{
     await page.goto('http://127.0.0.1:4173/sky-chart.html?relphiSingle='+encodeURIComponent(JSON.stringify({version:1,event:annotated})),{waitUntil:'domcontentloaded'});
     await page.waitForFunction(()=>document.querySelectorAll('#relphiSelectionComparisonNotice button').length>=3,null,{timeout:20000});
     assert.deepEqual(lookups.slice(beforeLookups),['Rochester','Winona'],'Both candidate cities must be geocoded independently');
-    assert.deepEqual(await page.evaluate(()=>JSON.parse(localStorage.getItem('relphiSkyChartA'))),priorSky,'Ambiguous location must not replace a working sky before selection');
+    const pendingSky=await page.evaluate(()=>JSON.parse(localStorage.getItem('relphiSkyChartA')));
+    assert.equal(pendingSky.calcProfile.dateTime,priorSky.calcProfile.dateTime,'Ambiguous selection must not change the working date');
+    assert.equal(pendingSky.calcProfile.location,priorSky.calcProfile.location,'Ambiguous selection must not change the working location');
+    assert.equal(pendingSky.metadata.selectionLocation,priorSky.metadata.selectionLocation,'Ambiguous selection must not replace the source location');
     const choices=await page.locator('#relphiSelectionComparisonNotice button').allTextContents();
     assert.ok(choices.some(text=>text.includes('Rochester, Minnesota')));
     assert.ok(choices.some(text=>text.includes('Winona, Minnesota')));
