@@ -3,18 +3,6 @@
 <head>
   <meta charset="utf-8">
 
-  <script>
-  // The already deployed exact-revision preview injects a jsDelivr base.
-  // Use a content-type-correct independent CDN for preview assets only.
-  // The production Sky Chart retains its existing same-origin assets.
-  (function(){
-    if(!location.pathname.endsWith('/sky-chart-preview/sky-chart.html'))return;
-    const ref=new URLSearchParams(location.search).get('ref')||'';
-    if(!/^[a-f0-9]{40}$/i.test(ref))return;
-    const base=document.querySelector('head > base[href*="cdn.jsdelivr.net/gh/blissonature/oracleofrelphi@"]');
-    if(base)base.href='https://cdn.statically.io/gh/blissonature/oracleofrelphi@'+ref+'/';
-  })();
-  </script>
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Sky Chart · Oracle of Relphi</title>
   <meta name="robots" content="noindex,nofollow,noarchive">
