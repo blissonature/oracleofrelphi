@@ -374,17 +374,25 @@ async function reversePacket(latitude,longitude){
     fetch(reverseUrl.toString(),{headers:{Accept:'application/json'},signal}).then(response=>{if(!response.ok)throw new Error('Place-name lookup failed.');return response.json()}),
     fetch(zoneUrl.toString(),{headers:{Accept:'application/json'},signal}).then(response=>{if(!response.ok)throw new Error('Time-zone lookup failed.');return response.json()})
   ]);
-  if(zoneResult.status!=='fulfilled'||!zoneResult.value?.timezone)throw new Error('The current location time zone could not be resolved.');
+  // A browser's IANA time zone is a useful local fallback when the remote
+  // coordinate-to-zone provider is unavailable. It is not proof of the
+  // geographical zone, so preserve its provenance for review.
+  const remoteZone=zoneResult.status==='fulfilled'?String(zoneResult.value?.timezone||'').trim():'';
+  const deviceZone=String(Intl.DateTimeFormat().resolvedOptions().timeZone||'').trim();
+  const validZone=value=>!!value&&window.luxon?.IANAZone?.isValidZone?.(value)===true;
+  const timezone=validZone(remoteZone)?remoteZone:validZone(deviceZone)?deviceZone:'';
+  if(!timezone)throw new Error('The current location time zone could not be resolved. Check the browser time-zone setting or choose a location manually.');
+  const timeZoneSource=timezone===remoteZone?'coordinate-service':'browser-fallback';
   const reverse=reverseResult.status==='fulfilled'?reverseResult.value:{};
   const canonical=[reverse.locality||reverse.city,reverse.principalSubdivision,reverse.countryName].map(v=>String(v||'').trim()).filter((v,i,list)=>v&&list.indexOf(v)===i).join(', ')||`${displayCoordinate(latitude)}, ${displayCoordinate(longitude)}`;
-  return{canonical,timezone:String(zoneResult.value.timezone)};
+  return{canonical,timezone,timeZoneSource};
 }
 function currentPosition(){return new Promise((resolve,reject)=>{if(!navigator.geolocation)return reject(new Error('Current location is unavailable in this browser.'));navigator.geolocation.getCurrentPosition(resolve,reject,{enableHighAccuracy:false,timeout:12000,maximumAge:0})})}
 async function currentLocationPacket(){
   const shared=window.RelphiSkyLocationSearch?.currentLocationPacket;
   if(typeof shared==='function'){const packet=await shared();return{...packet,source:'current-location'}}
   const position=await currentPosition(),latitude=Number(position.coords.latitude),longitude=Number(position.coords.longitude),resolved=await reversePacket(latitude,longitude);
-  return{source:'current-location',query:'My current location',canonical:resolved.canonical||`${displayCoordinate(latitude)}, ${displayCoordinate(longitude)}`,latitude,longitude,timezone:resolved.timezone||'UTC'};
+  return{source:'current-location',query:'My current location',canonical:resolved.canonical||`${displayCoordinate(latitude)}, ${displayCoordinate(longitude)}`,latitude,longitude,timezone:resolved.timezone,timeZoneSource:resolved.timeZoneSource};
 }
 function finishCommitted(slot,detail={}){
   clearEditor(slot);
@@ -404,6 +412,7 @@ async function submitCalculated(slot,form,options={}){
     const isNow=modeValue(form,'now');
     const effectiveOptions=isNow?{...options,timeUnknown:false,liveOrigin:'',instant:form.dataset.nowInstant,snapshotNow:true}:{...options,timeUnknown};
     const nextPayload=calculateSky(slot,selected,date,time,effectiveOptions);
+    if(selected.timeZoneSource)nextPayload.calcProfile.timeZoneSource=selected.timeZoneSource;
     // Chiron is optional when the local ephemeris cannot cover this date.
     status(slot,'Calculating Chiron…');
     if(window.RelphiChironEphemeris)await window.RelphiChironEphemeris.completePayload(nextPayload);
