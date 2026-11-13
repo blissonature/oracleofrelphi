@@ -22,7 +22,7 @@ jobs:
           npx playwright install --with-deps chromium
       - name: Check served preview and deployed page
         env:
-          PREVIEW_REF: 2a8b6b55f442993e75fe6df8f3950378612979c9
+          PREVIEW_REF: c8af32edee05b6a7e9f8c5b441a17bbf4096d5d5
         run: |
           node tests/sky-chart-remote-preview-integrity.mjs
       - uses: actions/upload-artifact@v4
