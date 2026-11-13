@@ -59,7 +59,7 @@ try{
     for(const abbreviation of [null,'PST']){
       const streetEvent={date:'2001-12-12',time:'17:30',location:streetAddress,label:'event',timeZoneAbbreviation:abbreviation};
       await page.goto('http://127.0.0.1:4173/sky-chart.html?relphiSingle='+encodeURIComponent(JSON.stringify({version:1,event:streetEvent})),{waitUntil:'domcontentloaded'});
-      await page.waitForFunction(()=>JSON.parse(localStorage.getItem('relphiSkyChartA')||'null')?.calcProfile?.dateTime==='2001-12-12T17:30',null,{timeout:20000});
+      await page.waitForFunction(expected=>{const sky=JSON.parse(localStorage.getItem('relphiSkyChartA')||'null');return !new URLSearchParams(location.search).has('relphiSingle')&&sky?.calcProfile?.dateTime==='2001-12-12T17:30'&&sky?.metadata?.selectionTimeZoneAbbreviation===expected},abbreviation,{timeout:20000});
       const streetSky=await page.evaluate(()=>JSON.parse(localStorage.getItem('relphiSkyChartA')));
       assert.match(streetSky.calcProfile.location,/9600 Wilshire Boulevard/);
       assert.equal(Number(streetSky.calcProfile.latitude),34.066916);
