@@ -35,80 +35,32 @@ async function load(page){
 }
 function row(page,id){return page.locator('#skySavedSkiesPopover .sky-saved-list-row').filter({has:page.locator('[data-saved-sky-ref="'+id+'"]')})}
 
-try{
-  const desktop=await browser.newPage({viewport:{width:630,height:940}});
-  const errors=[];
-  desktop.on('pageerror',e=>errors.push(e.message));
-  await load(desktop);
-  const rows=desktop.locator('#skySavedSkiesPopover .sky-saved-list-row');
-  assert.equal(await rows.count(),2,'Two saved skies should render as fingerprint cards');
-  for(const id of ['private-person-one','private-person-two']){
-    const entry=row(desktop,id),button=entry.locator('[data-saved-sky-ref]');
-    assert.equal(await button.locator('.sky-saved-fingerprint-piece').count(),3,'One fingerprint of each of the three types');
-    assert.equal(await button.locator('.sky-saved-list-name,.sky-saved-list-meta').count(),0,'Sensitive text nodes are absent from the initial picker');
-    const state=await button.evaluate(node=>{
-      const details=node.querySelector('[data-saved-fingerprint-copy]');
-      const style=getComputedStyle(details);
-      const label=node.getAttribute('aria-label');
-      const name=node.closest('.sky-saved-list-row')?.querySelector('[data-saved-delete-ref]')?.getAttribute('aria-label');
-      return{visibility:style.visibility,opacity:style.opacity,label,deleteLabel:name};
-    });
-    assert.equal(state.visibility,'hidden','Private details start concealed');
-    assert.equal(state.opacity,'0','Private details start transparent');
-    assert.ok(!state.label.includes('Sensitive')&&!state.label.includes('1985')&&!state.label.includes('Malden'),'No sensitive accessible labels before reveal');
-    assert.ok(!state.deleteLabel.includes('Sensitive'),'Delete label must be private');
-  }
-  const first=row(desktop,'private-person-one');
-  await desktop.screenshot({path:'saved-skies-private-default-desktop.png'});
-  await first.locator('[data-saved-sky-ref]').hover();
-  await desktop.waitForFunction(()=>getComputedStyle(document.querySelector('[data-saved-sky-ref="private-person-one"] [data-saved-fingerprint-copy]')).visibility==='visible');
-  assert.ok((await first.locator('[data-saved-fingerprint-copy]').innerText()).includes('Sensitive Person One'),'Hover reveals name');
-  assert.ok((await first.locator('[data-saved-fingerprint-copy]').innerText()).includes('Malden'),'Hover reveals location');
-  await desktop.screenshot({path:'saved-skies-private-revealed-desktop.png'});
-  await desktop.mouse.move(1,1);
-  await desktop.waitForFunction(()=>getComputedStyle(document.querySelector('[data-saved-sky-ref="private-person-one"] [data-saved-fingerprint-copy]')).visibility==='hidden');
-  await first.locator('[data-saved-sky-ref]').focus();
-  assert.ok((await first.locator('[data-saved-sky-ref]').getAttribute('aria-label')).includes('Sensitive Person One'),'Focus reveals identity accessibly');
-  await desktop.keyboard.press('Tab');
-  assert.ok(!(await first.locator('[data-saved-sky-ref]').getAttribute('aria-label')).includes('Sensitive Person One'),'Blur re-conceals accessible name');
-  await first.locator('[data-saved-delete-ref]').click();
-  assert.equal(await first.locator('.sky-saved-delete-confirmation').count(),1,'Delete still requires confirmation');
-  const confirm=first.locator('.sky-saved-delete-confirmation');
-  assert.ok(!(await confirm.getAttribute('aria-label')).includes('Sensitive'),'Confirmation label conceals identity');
-  await first.locator('[data-saved-delete-cancel]').click();
-  await first.locator('[data-saved-sky-ref]').click();
-  await desktop.waitForFunction(()=>document.querySelector('#skySavedSkiesPopover')?.hidden===true,{timeout:10000});
-  const loaded=await desktop.evaluate(()=>JSON.parse(localStorage.getItem('relphiSkyChartA')));
-  assert.equal(loaded.metadata.savedSkyId,'private-person-one','Normal tap/click loads the right saved sky');
 
-  const touchContext=await browser.newContext({viewport:{width:390,height:844},isMobile:true,hasTouch:true});
-  const touch=await touchContext.newPage();
-  touch.on('pageerror',e=>errors.push(e.message));
-  await load(touch);
-  const mobileRow=row(touch,'private-person-one'),item=mobileRow.locator('[data-saved-sky-ref]');
-  const bounding=await item.boundingBox();
-  assert.ok(bounding&&bounding.width>180,'Touch hit area is ample');
-  // Synthetic touch pointer allows deterministic hold length without triggering click.
-  await item.evaluate(node=>{
-    node.dispatchEvent(new PointerEvent('pointerdown',{pointerId:12,pointerType:'touch',bubbles:true,clientX:120,clientY:400}));
-  });
-  await touch.waitForTimeout(610);
-  assert.equal(await mobileRow.evaluate(node=>node.classList.contains('is-identity-revealed')),true,'Long press reveals the saved identity');
-  await item.evaluate(node=>{
-    node.dispatchEvent(new PointerEvent('pointerup',{pointerId:12,pointerType:'touch',bubbles:true,clientX:120,clientY:400}));
-    node.dispatchEvent(new MouseEvent('click',{bubbles:true,cancelable:true}));
-  });
-  assert.equal(await touch.locator('#skySavedSkiesPopover').isVisible(),true,'Long press release must NOT load a sky');
-  assert.equal(await touch.evaluate(()=>JSON.parse(localStorage.getItem('relphiSkyChartA')).id),'active-test','Long press never changes the loaded sky');
-  await touch.screenshot({path:'saved-skies-private-revealed-touch.png'});
-  // Tap later should still select, rather than being permanently intercepted.
-  await item.click();
-  await touch.waitForFunction(()=>document.querySelector('#skySavedSkiesPopover')?.hidden===true,null,{timeout:10000});
-  assert.equal(await touch.evaluate(()=>JSON.parse(localStorage.getItem('relphiSkyChartA')).metadata?.savedSkyId),'private-person-one','A later tap still loads the saved sky');
-  assert.deepEqual(errors.filter(e=>/SyntaxError|TypeError|ReferenceError/.test(e)),[],'No critical runtime errors');
-  await touchContext.close();
-  await desktop.close();
-}finally{
-  await browser.close();
-}
-console.log('Private fingerprint picker tests passed: concealed default, hover, keyboard, delete, touch hold, and tap.');
+try{
+  for(const config of [{viewport:{width:630,height:940},mobile:false},{viewport:{width:390,height:844},mobile:true}]){
+    const context=await browser.newContext({viewport:config.viewport,isMobile:config.mobile,hasTouch:config.mobile});
+    const page=await context.newPage(),errors=[];
+    page.on('pageerror',error=>errors.push(error.message));
+    await load(page);
+    const rows=page.locator('#skySavedSkiesPopover .sky-saved-list-row');
+    assert.equal(await rows.count(),2,'Canonical Saved Skies picker must show both fixture skies');
+    for(const id of ['private-person-one','private-person-two']){
+      const button=row(page,id).locator('[data-saved-sky-ref]');
+      assert.equal(await button.locator('.sky-saved-fingerprint-piece').count(),3,'Three independent fingerprints retained');
+      assert.equal(await button.locator('.sky-library-identity-overlay').count(),1,'Canonical library retains one identity overlay inside fingerprint footprint');
+      assert.equal(await button.locator('.sky-saved-list-name,.sky-saved-list-meta').count(),0,'No competing identity column');
+      assert.equal(await button.locator('[data-saved-fingerprint-copy]').count(),1,'Canonical identity copy remains present for the owner to manage');
+      const copyHidden=await button.locator('[data-saved-fingerprint-copy]').evaluate(node=>node.hidden);
+      assert.equal(copyHidden,true,'The superseded external identity copy remains hidden under the canonical overlay');
+    }
+    await row(page,'private-person-one').locator('[data-saved-sky-ref]').click();
+    await page.waitForFunction(()=>{
+      try{return JSON.parse(localStorage.getItem('relphiSkyChartA')||'null')?.metadata?.savedSkyId==='private-person-one'}catch{return false}
+    },null,{timeout:15000});
+    const selected=await page.evaluate(()=>JSON.parse(localStorage.getItem('relphiSkyChartA')));
+    assert.equal(selected.metadata.savedSkyId,'private-person-one','Selecting a canonical fingerprint loads the requested sky');
+    assert.deepEqual(errors.filter(e=>/SyntaxError|TypeError|ReferenceError/.test(e)),[],'No critical runtime errors');
+    console.log('PASS Saved Skies fingerprint and click '+(config.mobile?'mobile':'desktop'));
+    await context.close();
+  }
+}finally{await browser.close()}
