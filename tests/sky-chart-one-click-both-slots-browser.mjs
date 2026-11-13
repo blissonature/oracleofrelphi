@@ -28,6 +28,8 @@ try{
     await page.goto('http://127.0.0.1:4173/sky-chart.html',{waitUntil:'domcontentloaded'});
     await page.waitForSelector('#skyFoundationRoot[aria-busy="false"]',{timeout:30000});
     for(const slot of ['A','B']){
+      const namePrompt=page.locator('#skyWhereWhenNamePrompt:not([hidden])');
+      if(await namePrompt.count())await namePrompt.locator('[data-sky-name-cancel]').click();
       await page.locator('#skyFoundation'+slot+' [data-sky-drawer-tab="where"]').click();
       const form=page.locator('#skyFoundation'+slot+' .sky-where-when-editor');
       await form.waitFor();
