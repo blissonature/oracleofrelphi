@@ -790,8 +790,11 @@ function applySelectionDraft(){
       const input=form.querySelector('[data-ww-field="date"]');
       if(input)input.value=value;
       const unknown=form.querySelector('[data-ww-field="time-unknown"]');
-      if(unknown){unknown.checked=true;form.querySelector('[data-ww-field="time"]').disabled=true}
+      if(unknown)unknown.checked=true;
       syncModes('A');
+      // Use the existing unknown-time change owner to update the time control
+      // and draft visual state, rather than competing with it.
+      unknown?.dispatchEvent(new Event('change',{bubbles:true}));
       status('A','Selected date inserted. Choose a location and confirm; the time remains unknown.');
     }else{
       const here=form.querySelector('[data-ww-field="here"]');
