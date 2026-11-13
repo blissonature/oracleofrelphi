@@ -42,8 +42,16 @@ try{
       console.error('SINGLE_DRAFT_DIAGNOSTIC',JSON.stringify(diagnostic));
       throw error;
     });
-    assert.equal(await page.locator('#skyFoundationA [data-ww-field="time-unknown"]').isChecked(),true);
-    assert.equal(await page.locator('#skyFoundationA [data-ww-field="time"]').isDisabled(),true);
+    await page.waitForTimeout(250);
+    const draftState=await page.evaluate(()=>({
+      unknown:document.querySelector('#skyFoundationA [data-ww-field="time-unknown"]')?.checked,
+      disabled:document.querySelector('#skyFoundationA [data-ww-field="time"]')?.disabled,
+      date:document.querySelector('#skyFoundationA [data-ww-field="date"]')?.value,
+      notice:document.querySelector('#relphiSelectionComparisonNotice')?.textContent
+    }));
+    console.log('DRAFT_STATE',JSON.stringify(draftState));
+    assert.equal(draftState.unknown,true);
+    assert.equal(draftState.disabled,true);
     const preserved=await page.evaluate(()=>JSON.parse(localStorage.getItem('relphiSkyChartB')));
     assert.deepEqual(preserved,seedB);
     console.log('PASS date-only draft '+viewport.width);
