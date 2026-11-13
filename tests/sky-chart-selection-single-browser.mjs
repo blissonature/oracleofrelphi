@@ -45,7 +45,7 @@ try{
     await page.waitForTimeout(250);
     const draftState=await page.evaluate(()=>({
       unknown:document.querySelector('#skyFoundationA [data-ww-field="time-unknown"]')?.checked,
-      disabled:document.querySelector('#skyFoundationA [data-ww-field="time"]')?.disabled,
+      disabled:document.querySelector('#skyFoundationA .sky-time-entry')?.disabled,
       date:document.querySelector('#skyFoundationA [data-ww-field="date"]')?.value,
       notice:document.querySelector('#relphiSelectionComparisonNotice')?.textContent
     }));
