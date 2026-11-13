@@ -669,14 +669,18 @@ if(refs)status(slot,error.message||'The Planetary Hours sky could not be built.'
 
 /* Selection comparison handoff: the existing Where/When calculator owns both sky records. */
 function readSelectionComparison(){
-  const raw=new URLSearchParams(location.search).get('relphiCompare');
+  const params=new URLSearchParams(location.search);
+  const single=params.has('relphiSingle');
+  const raw=params.get(single?'relphiSingle':'relphiCompare');
   if(!raw)return null;
-  if(raw.length>6000)throw new Error('The selected comparison is too large.');
+  if(raw.length>6000)throw new Error('The selected event is too large.');
   const packet=JSON.parse(raw);
-  if(packet?.version!==1||!Array.isArray(packet.events)||packet.events.length!==2)throw new Error('Expected exactly two selected events.');
+  const events=single?[packet?.event]:packet?.events;
+  const count=single?1:2;
+  if(packet?.version!==1||!Array.isArray(events)||events.length!==count)throw new Error('Expected '+count+' selected event'+(count===1?'':'s')+'.');
   const datePattern=/^\d{4}-\d{2}-\d{2}$/;
   const timePattern=/^(?:[01]\d|2[0-3]):[0-5]\d$/;
-  return packet.events.map((event,index)=>{
+  return events.map((event,index)=>{
     const date=String(event?.date||''),time=event?.time==null?null:String(event.time);
     const locationName=String(event?.location||'').trim();
     const label=String(event?.label||'').trim().slice(0,32);
@@ -727,12 +731,12 @@ async function applySelectionComparison(){
   try{events=readSelectionComparison()}catch(error){selectionComparisonNotice(error.message||'Invalid selection.');return}
   if(!events)return;
   selectionComparisonConsumed=true;
-  selectionComparisonNotice('Resolving both selected locations…');
+  selectionComparisonNotice(events.length===1?'Resolving the selected location…':'Resolving both selected locations…');
   try{
     const locations=await Promise.all(events.map(event=>resolveSelectionLocation(event.location)));
-    selectionComparisonNotice('Calculating Sky A and Sky B…');
+    selectionComparisonNotice(events.length===1?'Calculating Sky A…':'Calculating Sky A and Sky B…');
     const records=[];
-    for(let i=0;i<2;i++){
+    for(let i=0;i<events.length;i++){
       const slot=i?'B':'A',event=events[i],selected=locations[i];
       const record=calculateSky(slot,selected,event.date,event.time||'',{replaceExisting:true,timeUnknown:event.time===null});
       const name=[event.label?event.label.charAt(0).toUpperCase()+event.label.slice(1):'Event '+(i+1),event.date].join(' · ');
@@ -741,11 +745,13 @@ async function applySelectionComparison(){
       if(window.RelphiChironEphemeris)await window.RelphiChironEphemeris.completePayload(record);
       records.push(record);
     }
-    // Commit both together; an incomplete geocode or calculation must not destroy either existing sky.
-    writeJson(SLOT_KEYS.A,records[0]);writeJson(SLOT_KEYS.B,records[1]);
-    window.RelphiSkyStartupMode?.writeMode?.('comparison');
+    // All validation/geocoding/calculation completes before any working sky changes.
+    writeJson(SLOT_KEYS.A,records[0]);
+    if(records.length===2)writeJson(SLOT_KEYS.B,records[1]);
+    window.RelphiSkyStartupMode?.writeMode?.(records.length===2?'comparison':'single');
     window.RelphiSkyStartupMode?.syncRoot?.();
-    ['A','B'].forEach((slot,index)=>{
+    records.forEach((record,index)=>{
+      const slot=index?'B':'A';
       dispatchSlotChange(slot);
       window.RelphiSkyCardShell?.sync?.(slot,records[index]);
       window.dispatchEvent(new CustomEvent('relphi:sky-working-copy-updated',{detail:{slot,source:'selection-compare',dateTime:events[index].date+(events[index].time?'T'+events[index].time:''),location:locations[index].canonical}}));
@@ -753,9 +759,9 @@ async function applySelectionComparison(){
       scheduleSummary(slot,true);
     });
     document.getElementById('relphiSelectionComparisonNotice')?.remove();
-    const next=new URL(location.href);next.searchParams.delete('relphiCompare');
+    const next=new URL(location.href);next.searchParams.delete('relphiCompare');next.searchParams.delete('relphiSingle');
     history.replaceState(history.state,'',next.pathname+next.search+next.hash);
-    document.querySelector('[data-sky-chart-mode="compare"]')?.click();
+    document.querySelector(records.length===2?'[data-sky-chart-mode="compare"]':'[data-sky-chart-mode="single"]')?.click();
     requestAnimationFrame(()=>window.RelphiSkyCardShell?.openDrawer?.('A','placements'));
   }catch(error){
     selectionComparisonConsumed=false;
@@ -764,7 +770,7 @@ async function applySelectionComparison(){
   }
 }
 function scheduleSelectionComparison(){
-  if(!new URLSearchParams(location.search).has('relphiCompare'))return;
+  if(!/relphiCompare|relphiSingle/.test(location.search))return;
   let attempts=0;
   const run=()=>{
     attempts++;
