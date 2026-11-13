@@ -75,7 +75,7 @@ function escapeHtml(value){return String(value==null?'':value).replace(/[&<>"']/
 function norm(value){return((Number(value)%360)+360)%360}
 function displayCoordinate(value){return Number.isFinite(Number(value))?Number(value).toFixed(5):''}
 function status(slot,message,error=false){const node=panel(slot)?.querySelector('.sky-where-when-status');if(!node)return;node.textContent=message||'';node.classList.toggle('is-error',!!error)}
-function setBusy(slot,busy){cardState[slot].busy=!!busy;const editor=formFor(slot);if(!editor)return;editor.querySelectorAll('button,input,select,textarea').forEach(node=>{if(node.classList.contains('sky-where-when-cancel'))return;node.disabled=!!busy});if(!busy)syncModes(slot)}
+function setBusy(slot,busy){cardState[slot].busy=!!busy;const editor=formFor(slot);if(!editor)return;editor.querySelectorAll('button,input,select,textarea').forEach(node=>{if(node.classList.contains('sky-where-when-cancel'))return;node.disabled=!!busy})}
 
 function publishTransactionState(){
   const slots=[...transactionState.editing].sort();
@@ -159,9 +159,6 @@ function syncModes(slot){
   if(hereValue){hereValue.hidden=!here;hereValue.textContent=here?cardState[slot].selected?.canonical||'Finding your location…':''}
   if(nowValue)nowValue.hidden=!now;
   if(now)updateNowFields(slot);
-  // The unknown-time checkbox is the authoritative owner of local-time input state.
-  const time=form.querySelector('[data-ww-field="time"]');
-  if(time)time.disabled=modeValue(form,'time-unknown');
   window.RelphiSkyWhereWhenDraftHeptagram?.render?.(slot,0);
 }
 function updateNowFields(slot){
