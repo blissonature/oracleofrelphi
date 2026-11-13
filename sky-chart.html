@@ -8,7 +8,7 @@
   // Use a content-type-correct independent CDN for preview assets only.
   // The production Sky Chart retains its existing same-origin assets.
   (function(){
-    if(!/(^|\\/)sky-chart-preview\\/sky-chart\\.html$/.test(location.pathname))return;
+    if(!location.pathname.endsWith('/sky-chart-preview/sky-chart.html'))return;
     const ref=new URLSearchParams(location.search).get('ref')||'';
     if(!/^[a-f0-9]{40}$/i.test(ref))return;
     const base=document.querySelector('head > base[href*="cdn.jsdelivr.net/gh/blissonature/oracleofrelphi@"]');
