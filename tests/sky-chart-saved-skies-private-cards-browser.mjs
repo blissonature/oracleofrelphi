@@ -31,7 +31,7 @@ async function load(page){
   await page.goto('http://127.0.0.1:4173/sky-chart.html',{waitUntil:'domcontentloaded'});
   await page.locator('[data-saved-sky-trigger="A"]').click({timeout:20000});
   await page.waitForSelector('#skySavedSkiesPopover .sky-saved-list-row [data-private-sky-fingerprint="true"]',{timeout:20000});
-  await page.waitForFunction(()=>!!document.querySelector('#skySavedSkiesPopover .sky-saved-library-instruction'),null,{timeout:10000});
+  assert.equal(await page.locator('#skySavedSkiesPopover .sky-saved-list-row').count(),2,'Both saved fingerprints are visible in the canonical picker');
 }
 function row(page,id){return page.locator('#skySavedSkiesPopover .sky-saved-list-row').filter({has:page.locator('[data-saved-sky-ref="'+id+'"]')})}
 
