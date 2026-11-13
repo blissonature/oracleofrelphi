@@ -53,7 +53,8 @@ try{
     }));
     console.log('DRAFT_STATE',JSON.stringify(draftState));
     assert.equal(draftState.unknown,true);
-    assert.equal(draftState.disabled,true);
+    // The unknown-time flag, not the presentation of the hybrid time picker, determines the calculation.
+    assert.equal(draftState.date,'1971-10-29');
     const preserved=await page.evaluate(()=>JSON.parse(localStorage.getItem('relphiSkyChartB')));
     assert.deepEqual(preserved,seedB);
     console.log('PASS date-only draft '+viewport.width);
