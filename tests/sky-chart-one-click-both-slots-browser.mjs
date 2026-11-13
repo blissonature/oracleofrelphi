@@ -44,11 +44,14 @@ try{
       // The reported live failure: coordinate time-zone provider does not resolve.
       // Both slots and both viewports must still calculate with an explicitly marked browser fallback.
       await page.route(zoneUrl,failZone);
+      const startedAt=Date.now();
       await action.click();
       await page.waitForFunction(slot=>{
         const sky=JSON.parse(localStorage.getItem('relphiSkyChart'+slot)||'null');
         return sky?.metadata?.capturedNowAt&&sky?.calcProfile?.timeZone==='America/Denver'&&sky?.metadata?.whereWhenSource==='current-location';
       },slot,{timeout:30000});
+      const elapsed=Date.now()-startedAt;
+      if(viewport.width===1280&&slot==='A')assert.ok(elapsed<7000,'Optional stalled reverse-geocode must not cause the old 10-second wait: '+elapsed+'ms');
       if(viewport.width===1280&&slot==='A')await page.unroute(reverseUrl,stallReverse);
       const actual=await page.evaluate(slot=>JSON.parse(localStorage.getItem('relphiSkyChart'+slot)),slot);
       assert.equal(actual.calcProfile.timeZoneSource,'browser-fallback','Browser timezone fallback must be recorded');
