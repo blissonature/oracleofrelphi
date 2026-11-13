@@ -30,7 +30,7 @@ test('both harmonic passages appear in existing locked Relphi-derived interpreta
 
 test('the full entry remains single-owner and does not add a second Relphi interpretation',()=>{
   const app=readFileSync('tarot-app.js','utf8');
-  const detail=app.slice(app.indexOf('function cardDetailHtml(card)'),app.indexOf('function bindDetailCustomArt'));
+  const detail=app.slice(app.indexOf('function cardDetailHtml('),app.indexOf('function bindDetailCustomArt'));
   assert.match(detail,/lockedRelphiInterpretation\(card\)/);
   assert.doesNotMatch(app,/rel\.harmonic_union_reflection|rel\.toroidal_visual_observation/);
   for(const card of [record('the_lovers'),record('temperance')]){
