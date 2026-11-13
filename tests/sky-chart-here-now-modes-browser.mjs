@@ -39,9 +39,9 @@ try{
  assert.equal(footerInitially.columns,2,'The footer must contain only the original Cancel and Use buttons.');
  const topOrder=await form.evaluate(node=>{
    const body=node.querySelector('.sky-where-when-scroll-body');
-   const relevant=[...body.children].filter(el=>el.matches('.sky-where-when-one-click,[data-ww-where],[data-ww-when],[data-ww-heptagram-slot]'));
+   const relevant=[...body.children].filter(el=>el.matches('.sky-where-when-one-click,.sky-where-when-main-actions,[data-ww-where],[data-ww-when],[data-ww-heptagram-slot]'));
    const button=body.querySelector('.sky-where-when-one-click');
-   return{order:relevant.map(el=>el.dataset.wwAction==='here-and-now'?'here-and-now':el.hasAttribute('data-ww-where')?'where':el.hasAttribute('data-ww-when')?'when':'heptagram'),
+   return{order:relevant.map(el=>(el.dataset.wwAction==='here-and-now'||el.matches('.sky-where-when-main-actions'))?'here-and-now':el.hasAttribute('data-ww-where')?'where':el.hasAttribute('data-ww-when')?'when':'heptagram'),
      buttonCount:node.querySelectorAll('[data-ww-action="here-and-now"]').length,
      buttonIcon:!!button?.querySelector('svg'),
      buttonVisible:button?.getBoundingClientRect().height>0};
