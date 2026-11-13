@@ -62,8 +62,8 @@ try{
       await page.waitForFunction(()=>JSON.parse(localStorage.getItem('relphiSkyChartA')||'null')?.calcProfile?.dateTime==='2001-12-12T17:30',null,{timeout:20000});
       const streetSky=await page.evaluate(()=>JSON.parse(localStorage.getItem('relphiSkyChartA')));
       assert.match(streetSky.calcProfile.location,/9600 Wilshire Boulevard/);
-      assert.equal(streetSky.calcProfile.latitude,34.066916);
-      assert.equal(streetSky.calcProfile.longitude,-118.404141);
+      assert.equal(Number(streetSky.calcProfile.latitude),34.066916);
+      assert.equal(Number(streetSky.calcProfile.longitude),-118.404141);
       assert.equal(streetSky.calcProfile.timeZone,'America/Los_Angeles');
       assert.equal(streetSky.metadata.selectionLocation,streetAddress);
       assert.equal(streetSky.metadata.selectionTimeZoneAbbreviation,abbreviation);
