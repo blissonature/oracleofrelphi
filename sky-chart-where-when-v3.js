@@ -330,23 +330,88 @@ function normalizePacket(packet){
   if(inferred){next.source='placement-inference';next.query=''}else if(!next.source)next.source='search';
   return next;
 }
+// The Where and When editor is the sole owner of its location search.
+async function locationSearchJson(url){
+  const response=await fetch(url.toString(),{headers:{Accept:'application/json'},signal:AbortSignal.timeout(8000)});
+  if(!response.ok)throw new Error('Location provider returned '+response.status);
+  return response.json();
+}
+function locationResultPacket(query,place){
+  const latitude=Number(place.latitude),longitude=Number(place.longitude),timezone=String(place.timezone||'');
+  if(!Number.isFinite(latitude)||!Number.isFinite(longitude)||!timezone)return null;
+  return{source:'search',query,canonical:[place.name,place.admin1,place.country].map(v=>String(v||'').trim()).filter(Boolean).join(', '),latitude,longitude,timezone};
+}
+async function cityLocationSearch(query){
+  const parts=query.split(',').map(v=>v.trim()).filter(Boolean);
+  const url=new URL('https://geocoding-api.open-meteo.com/v1/search');
+  url.searchParams.set('name',parts[0]||query);
+  url.searchParams.set('count','50');
+  url.searchParams.set('language','en');
+  url.searchParams.set('format','json');
+  const data=await locationSearchJson(url),results=Array.isArray(data.results)?data.results:[];
+  const key=value=>String(value||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]/g,'');
+  const usStates={AL:'Alabama',AK:'Alaska',AZ:'Arizona',AR:'Arkansas',CA:'California',CO:'Colorado',CT:'Connecticut',DE:'Delaware',FL:'Florida',GA:'Georgia',HI:'Hawaii',ID:'Idaho',IL:'Illinois',IN:'Indiana',IA:'Iowa',KS:'Kansas',KY:'Kentucky',LA:'Louisiana',ME:'Maine',MD:'Maryland',MA:'Massachusetts',MI:'Michigan',MN:'Minnesota',MS:'Mississippi',MO:'Missouri',MT:'Montana',NE:'Nebraska',NV:'Nevada',NH:'New Hampshire',NJ:'New Jersey',NM:'New Mexico',NY:'New York',NC:'North Carolina',ND:'North Dakota',OH:'Ohio',OK:'Oklahoma',OR:'Oregon',PA:'Pennsylvania',RI:'Rhode Island',SC:'South Carolina',SD:'South Dakota',TN:'Tennessee',TX:'Texas',UT:'Utah',VT:'Vermont',VA:'Virginia',WA:'Washington',WV:'West Virginia',WI:'Wisconsin',WY:'Wyoming',DC:'District of Columbia'};
+  const qualifiers=parts.slice(1).map(part=>key(usStates[part.toUpperCase()]||part));
+  const matches=results.filter(place=>qualifiers.every(q=>[place.admin1,place.admin2,place.admin3,place.country,place.country_code,place.admin1_code].some(v=>key(v)===q)));
+  return matches.map(place=>locationResultPacket(query,place)).filter(Boolean).slice(0,7);
+}
+async function preciseLocationSearch(query){
+  const url=new URL('https://nominatim.openstreetmap.org/search');
+  url.searchParams.set('q',query);
+  url.searchParams.set('format','jsonv2');
+  url.searchParams.set('addressdetails','1');
+  url.searchParams.set('limit','7');
+  url.searchParams.set('accept-language','en');
+  const raw=await locationSearchJson(url),results=Array.isArray(raw)?raw:[];
+  // Precise locations need a geographical time zone; return only verified packets.
+  const packets=[];
+  for(const result of results.slice(0,7)){
+    const latitude=Number(result.lat),longitude=Number(result.lon);
+    if(!Number.isFinite(latitude)||!Number.isFinite(longitude))continue;
+    try{
+      const zoneUrl=new URL('https://api.open-meteo.com/v1/forecast');
+      zoneUrl.searchParams.set('latitude',String(latitude));
+      zoneUrl.searchParams.set('longitude',String(longitude));
+      zoneUrl.searchParams.set('timezone','auto');
+      zoneUrl.searchParams.set('forecast_days','1');
+      const zone=await locationSearchJson(zoneUrl);
+      if(!zone?.timezone)continue;
+      packets.push({source:'search',query,canonical:String(result.display_name||result.name||query),latitude,longitude,timezone:String(zone.timezone)});
+    }catch(_){continue}
+  }
+  return packets;
+}
 async function searchLocation(slot){
   const card=panel(slot),input=card?.querySelector('[data-ww-field="location-query"]'),resultsNode=card?.querySelector('.sky-location-results'),query=input?.value.trim()||'';
   if(!query){status(slot,'Type a location first.',true);input?.focus();return}
-  status(slot,`Searching for ${query}…`);resultsNode?.replaceChildren();
-  try{
-    const url=new URL('https://geocoding-api.open-meteo.com/v1/search');url.searchParams.set('name',query);url.searchParams.set('count','7');url.searchParams.set('language','en');url.searchParams.set('format','json');
-    const response=await fetch(url.toString(),{headers:{Accept:'application/json'}});if(!response.ok)throw new Error(`Location search returned ${response.status}.`);
-    const data=await response.json(),results=Array.isArray(data.results)?data.results:[];if(!results.length)throw new Error('No matching location was found. Try a city plus state, region, or country.');
-    const fragment=document.createDocumentFragment();
-    results.forEach((result,index)=>{
-      const canonical=[result.name,result.admin1,result.country].map(v=>String(v||'').trim()).filter((v,i,list)=>v&&list.indexOf(v)===i).join(','+' '),button=document.createElement('button');
-      button.type='button';button.className='sky-location-result';button.dataset.wwAction='select-location';button.dataset.locationIndex=String(index);button.innerHTML=`<strong>${escapeHtml(canonical)}</strong><span>${displayCoordinate(result.latitude)}, ${displayCoordinate(result.longitude)} · ${escapeHtml(result.timezone||'Time zone unavailable')}</span>`;
-      button.__locationPacket={source:'search',query,canonical,latitude:Number(result.latitude),longitude:Number(result.longitude),timezone:String(result.timezone||'')};fragment.appendChild(button);
-    });
-    resultsNode.appendChild(fragment);status(slot,'Choose the canonical location that matches what you meant.');
-  }catch(error){status(slot,error.message||'Location search failed.',true)}
+  status(slot,'Searching for '+query+'…');
+  resultsNode?.replaceChildren();
+  const addressLike=/\d|(?:\bst(?:reet)?\b|\bave(?:nue)?\b|\brd\b|\broad\b|\bbuilding\b)/i.test(query);
+  const providers=addressLike?[preciseLocationSearch,cityLocationSearch]:[cityLocationSearch,preciseLocationSearch];
+  const errors=[];let results=[];
+  for(const provider of providers){
+    try{results=await provider(query);if(results.length)break}
+    catch(error){errors.push(error)}
+  }
+  if(!formFor(slot)?.isConnected||input?.value.trim()!==query)return;
+  if(!results.length){
+    const failed=errors.length===providers.length;
+    status(slot,failed?'Location services could not be reached. Check your connection and try again, or enter a different location.':'No matching location was found. Try the city and state, or a more specific address.',true);
+    return;
+  }
+  const fragment=document.createDocumentFragment();
+  results.forEach((packet,index)=>{
+    const button=document.createElement('button');
+    button.type='button';button.className='sky-location-result';
+    button.dataset.wwAction='select-location';button.dataset.locationIndex=String(index);
+    button.innerHTML='<strong>'+escapeHtml(packet.canonical)+'</strong><span>'+displayCoordinate(packet.latitude)+', '+displayCoordinate(packet.longitude)+' · '+escapeHtml(packet.timezone)+'</span>';
+    button.__locationPacket=packet;
+    fragment.appendChild(button);
+  });
+  resultsNode?.appendChild(fragment);
+  status(slot,'Choose the location that matches what you meant.');
 }
+
 function selectLocation(slot,source){
   const packet=normalizePacket(source?.__locationPacket||source);
   if(!packet||!Number.isFinite(Number(packet.latitude))||!Number.isFinite(Number(packet.longitude))||!packet.timezone){status(slot,'That result did not include a complete coordinate and time-zone packet.',true);return false}
@@ -367,17 +432,36 @@ function selectLocation(slot,source){
 async function reversePacket(latitude,longitude){
   const reverseUrl=new URL('https://api.bigdatacloud.net/data/reverse-geocode-client');reverseUrl.searchParams.set('latitude',String(latitude));reverseUrl.searchParams.set('longitude',String(longitude));reverseUrl.searchParams.set('localityLanguage','en');
   const zoneUrl=new URL('https://api.open-meteo.com/v1/forecast');zoneUrl.searchParams.set('latitude',String(latitude));zoneUrl.searchParams.set('longitude',String(longitude));zoneUrl.searchParams.set('timezone','auto');zoneUrl.searchParams.set('forecast_days','1');
-  const[reverseResponse,zoneResponse]=await Promise.all([fetch(reverseUrl.toString(),{headers:{Accept:'application/json'}}),fetch(zoneUrl.toString(),{headers:{Accept:'application/json'}})]);
-  if(!reverseResponse.ok||!zoneResponse.ok)throw new Error('Current coordinates could not be resolved.');
-  const reverse=await reverseResponse.json(),zone=await zoneResponse.json(),canonical=[reverse.locality||reverse.city,reverse.principalSubdivision,reverse.countryName].map(v=>String(v||'').trim()).filter((v,i,list)=>v&&list.indexOf(v)===i).join(', ');
-  return{canonical,timezone:String(zone.timezone||'UTC')};
+  // Time-zone resolution is required for the instant; reverse-geocoded display names are not.
+  // Do not fail a valid browser coordinate because an optional address provider is unavailable.
+  // The place name is optional. Do not let its slow network path hold up a valid
+  // position and time zone for the full required time-zone service deadline.
+  // Keep requests owned here rather than adding a second event handler or renderer.
+  const reverseSignal=AbortSignal.timeout(1000);
+  const zoneSignal=AbortSignal.timeout(10000);
+  const[reverseResult,zoneResult]=await Promise.allSettled([
+    fetch(reverseUrl.toString(),{headers:{Accept:'application/json'},signal:reverseSignal}).then(response=>{if(!response.ok)throw new Error('Place-name lookup failed.');return response.json()}),
+    fetch(zoneUrl.toString(),{headers:{Accept:'application/json'},signal:zoneSignal}).then(response=>{if(!response.ok)throw new Error('Time-zone lookup failed.');return response.json()})
+  ]);
+  // A browser's IANA time zone is a useful local fallback when the remote
+  // coordinate-to-zone provider is unavailable. It is not proof of the
+  // geographical zone, so preserve its provenance for review.
+  const remoteZone=zoneResult.status==='fulfilled'?String(zoneResult.value?.timezone||'').trim():'';
+  const deviceZone=String(Intl.DateTimeFormat().resolvedOptions().timeZone||'').trim();
+  const validZone=value=>!!value&&window.luxon?.IANAZone?.isValidZone?.(value)===true;
+  const timezone=validZone(remoteZone)?remoteZone:validZone(deviceZone)?deviceZone:'';
+  if(!timezone)throw new Error('The current location time zone could not be resolved. Check the browser time-zone setting or choose a location manually.');
+  const timeZoneSource=timezone===remoteZone?'coordinate-service':'browser-fallback';
+  const reverse=reverseResult.status==='fulfilled'?reverseResult.value:{};
+  const canonical=[reverse.locality||reverse.city,reverse.principalSubdivision,reverse.countryName].map(v=>String(v||'').trim()).filter((v,i,list)=>v&&list.indexOf(v)===i).join(', ')||`${displayCoordinate(latitude)}, ${displayCoordinate(longitude)}`;
+  return{canonical,timezone,timeZoneSource};
 }
 function currentPosition(){return new Promise((resolve,reject)=>{if(!navigator.geolocation)return reject(new Error('Current location is unavailable in this browser.'));navigator.geolocation.getCurrentPosition(resolve,reject,{enableHighAccuracy:false,timeout:12000,maximumAge:0})})}
 async function currentLocationPacket(){
   const shared=window.RelphiSkyLocationSearch?.currentLocationPacket;
   if(typeof shared==='function'){const packet=await shared();return{...packet,source:'current-location'}}
   const position=await currentPosition(),latitude=Number(position.coords.latitude),longitude=Number(position.coords.longitude),resolved=await reversePacket(latitude,longitude);
-  return{source:'current-location',query:'My current location',canonical:resolved.canonical||`${displayCoordinate(latitude)}, ${displayCoordinate(longitude)}`,latitude,longitude,timezone:resolved.timezone||'UTC'};
+  return{source:'current-location',query:'My current location',canonical:resolved.canonical||`${displayCoordinate(latitude)}, ${displayCoordinate(longitude)}`,latitude,longitude,timezone:resolved.timezone,timeZoneSource:resolved.timeZoneSource};
 }
 function finishCommitted(slot,detail={}){
   clearEditor(slot);
@@ -397,6 +481,7 @@ async function submitCalculated(slot,form,options={}){
     const isNow=modeValue(form,'now');
     const effectiveOptions=isNow?{...options,timeUnknown:false,liveOrigin:'',instant:form.dataset.nowInstant,snapshotNow:true}:{...options,timeUnknown};
     const nextPayload=calculateSky(slot,selected,date,time,effectiveOptions);
+    if(selected.timeZoneSource)nextPayload.calcProfile.timeZoneSource=selected.timeZoneSource;
     // Chiron is optional when the local ephemeris cannot cover this date.
     status(slot,'Calculating Chiron…');
     if(window.RelphiChironEphemeris)await window.RelphiChironEphemeris.completePayload(nextPayload);
@@ -471,7 +556,7 @@ async function hereAndNow(slot){
     syncModes(slot);
     setBusy(slot,false);
     await submitForm(slot,form,{snapshotNow:true,instant:form.dataset.nowInstant});
-  }catch(error){setBusy(slot,false);status(slot,error?.code===1?'Location permission was denied.':error?.message||'Here and Now could not be resolved.',true)}
+  }catch(error){setBusy(slot,false);status(slot,error?.code===1?'Location permission was denied.':(error?.name==='TimeoutError'||error?.name==='AbortError'?'Location lookup timed out. Try again or select a location manually.':error?.message)||'Here and Now could not be resolved.',true)}
 }
 
 function weekdayRuler(instant,timeZone){return WEEKDAY_RULERS[window.luxon.DateTime.fromJSDate(instant).setZone(timeZone).weekday]||'sun'}
@@ -646,6 +731,259 @@ const refs=shell(slot);
 if(refs)status(slot,error.message||'The Planetary Hours sky could not be built.',true);
 }
 }
+
+/* Selection comparison handoff: the existing Where/When calculator owns both sky records. */
+function readSelectionComparison(){
+  const params=new URLSearchParams(location.search);
+  const single=params.has('relphiSingle');
+  const raw=params.get(single?'relphiSingle':'relphiCompare');
+  if(!raw)return null;
+  if(raw.length>6000)throw new Error('The selected event is too large.');
+  const packet=JSON.parse(raw);
+  const events=single?[packet?.event]:packet?.events;
+  const count=single?1:2;
+  if(packet?.version!==1||!Array.isArray(events)||events.length!==count)throw new Error('Expected '+count+' selected event'+(count===1?'':'s')+'.');
+  const datePattern=/^\d{4}-\d{2}-\d{2}$/;
+  const timePattern=/^(?:[01]\d|2[0-3]):[0-5]\d$/;
+  return events.map((event,index)=>{
+    const date=String(event?.date||''),time=event?.time==null?null:String(event.time);
+    const locationName=String(event?.location||'').trim();
+    const timeZoneAbbreviation=String(event?.timeZoneAbbreviation||'').trim().toUpperCase();
+    if(timeZoneAbbreviation&&!/^(?:PST|PDT|MST|MDT|CST|CDT|EST|EDT|AKST|AKDT|HST|UTC|GMT)$/.test(timeZoneAbbreviation))throw new Error('Unsupported time-zone abbreviation: '+timeZoneAbbreviation);
+    const label=String(event?.label||'').trim().slice(0,32);
+    if(!datePattern.test(date)||Number.isNaN(Date.parse(date+'T00:00:00Z'))||(time!==null&&!timePattern.test(time))||!locationName||locationName.length>200)
+      throw new Error('Event '+(index+1)+' needs a valid date, location and optional time.');
+    return{date,time,location:locationName,label,timeZoneAbbreviation};
+  });
+}
+function selectionComparisonNotice(message){
+  let note=document.getElementById('relphiSelectionComparisonNotice');
+  if(!note){
+    note=document.createElement('div');
+    note.id='relphiSelectionComparisonNotice';note.setAttribute('role','alert');
+    note.style.cssText='position:fixed;z-index:2147483646;left:1rem;right:1rem;top:1rem;max-width:44rem;margin:auto;padding:1rem 1.3rem;border:2px solid #bc2019;border-radius:12px;background:#fffdf8;color:#251b18;box-shadow:0 8px 36px #0003;font:600 15px/1.45 system-ui';
+    document.body.appendChild(note);
+  }
+  note.textContent=message;
+}
+function chooseSelectionCity(original,candidates){
+  return new Promise((resolve,reject)=>{
+    const note=document.getElementById('relphiSelectionComparisonNotice');
+    if(!note)return reject(new Error('Location chooser is not available.'));
+    note.replaceChildren();
+    const heading=document.createElement('p');
+    heading.textContent='Which location does “'+original+'” refer to?';
+    note.appendChild(heading);
+    const choices=document.createElement('div');
+    choices.style.cssText='display:flex;gap:.6rem;flex-wrap:wrap;margin:.7rem 0';
+    for(const choice of candidates){
+      const button=document.createElement('button');
+      button.type='button';
+      button.textContent=choice.canonical;
+      button.style.cssText='padding:.6rem .9rem;border:1px solid #a72a22;border-radius:.6rem;background:white;color:#26201b;cursor:pointer;font:inherit';
+      button.addEventListener('click',()=>resolve(choice),{once:true});
+      choices.appendChild(button);
+    }
+    const cancel=document.createElement('button');
+    cancel.type='button';
+    cancel.textContent='Cancel import';
+    cancel.style.cssText='padding:.6rem .9rem;border:1px solid #777;border-radius:.6rem;background:white;color:#26201b;cursor:pointer;font:inherit';
+    cancel.addEventListener('click',()=>reject(new Error('Location choice canceled; neither sky was changed.')),{once:true});
+    choices.appendChild(cancel);
+    note.appendChild(choices);
+  });
+}
+async function resolveSelectionStreetAddress(locationName){
+  const normalized=locationName.replace(/\bU\.?\s*S\.?\s*A\.?(?=\s|,|$)/gi,'United States').replace(/\bU\.?\s*S\.?(?=\s|,|$)/gi,'United States');
+  const first=normalized.split(',')[0].trim();
+  const number=first.match(/^(\d+[A-Za-z]?)\s+/)?.[1];
+  const street=first.replace(/^\d+[A-Za-z]?\s+/,'').trim();
+  if(!number||!street)throw new Error('Street number and street name are needed: '+locationName);
+  const norm=value=>String(value||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\bboulevard\b/g,'blvd').replace(/\bavenue\b/g,'ave').replace(/\bstreet\b/g,'st').replace(/\bdrive\b/g,'dr').replace(/[^a-z0-9]/g,'');
+  const parts=normalized.split(',').map(v=>v.trim());
+  const city=parts[1]||'';
+  const statePart=parts[2]||'';
+  const state=statePart.replace(/\s+\d{5}(?:-\d{4})?$/,'').trim();
+  const postal=normalized.match(/\b\d{5}(?:-\d{4})?\b/)?.[0]||'';
+  const url=new URL('https://nominatim.openstreetmap.org/search');
+  url.searchParams.set('q',normalized);
+  url.searchParams.set('format','jsonv2');
+  url.searchParams.set('addressdetails','1');
+  url.searchParams.set('limit','10');
+  url.searchParams.set('accept-language','en');
+  let raw;
+  try{
+    const response=await fetch(url.toString(),{headers:{Accept:'application/json'},signal:AbortSignal.timeout(10000)});
+    if(!response.ok)throw new Error('HTTP '+response.status);
+    raw=await response.json();
+  }catch(error){throw new Error('Street-address service could not be reached. Try again from the Where and When editor.')}
+  const matches=(Array.isArray(raw)?raw:[]).filter(result=>{
+    const address=result.address||{};
+    const name=String(result.display_name||result.name||'');
+    const actualNumber=String(address.house_number||'');
+    const actualRoad=String(address.road||address.pedestrian||address.street||'');
+    const matchedNumber=norm(actualNumber)===norm(number)||new RegExp('(?:^|\\D)'+number+'(?:\\D|$)').test(name);
+    const matchedStreet=norm(actualRoad)===norm(street)||norm(name).includes(norm(street));
+    const matchedCity=!city||[address.city,address.town,address.village,address.municipality,name].some(v=>norm(v).includes(norm(city)));
+    const matchedState=!state||[address.state,name].some(v=>norm(v).includes(norm(state)));
+    const matchedPostal=!postal||!address.postcode||String(address.postcode).startsWith(postal.slice(0,5));
+    return matchedNumber&&matchedStreet&&matchedCity&&matchedState&&matchedPostal&&Number.isFinite(Number(result.lat))&&Number.isFinite(Number(result.lon));
+  });
+  if(!matches.length)throw new Error('Street address could not be verified: '+locationName+'. Search for the address in Where and When and choose a verified result.');
+  const place=matches[0],latitude=Number(place.lat),longitude=Number(place.lon);
+  const zoneUrl=new URL('https://api.open-meteo.com/v1/forecast');
+  zoneUrl.searchParams.set('latitude',String(latitude));zoneUrl.searchParams.set('longitude',String(longitude));
+  zoneUrl.searchParams.set('timezone','auto');zoneUrl.searchParams.set('forecast_days','1');
+  let timezone='';
+  try{
+    const response=await fetch(zoneUrl.toString(),{headers:{Accept:'application/json'},signal:AbortSignal.timeout(10000)});
+    if(response.ok)timezone=String((await response.json()).timezone||'');
+  }catch(_){}
+  if(!timezone||window.luxon?.IANAZone?.isValidZone?.(timezone)!==true)throw new Error('Street address was located, but its geographic time zone could not be confirmed. Try again in Where and When.');
+  return{source:'selection-compare',query:locationName,canonical:locationName,latitude,longitude,timezone};
+}
+async function resolveSelectionLocation(locationName){
+  if(/^\s*\d+[A-Za-z]?\s+\S/.test(locationName))return resolveSelectionStreetAddress(locationName);
+  const parts=locationName.split(',').map(part=>part.trim()).filter(Boolean);
+  const first=String(parts[0]||'');
+  const annotation=first.match(/^(.+?)\s*\(([^()]*)\)\s*$/);
+  const cityNames=annotation?[annotation[1].trim(),annotation[2].trim()]:[first];
+  if(!cityNames[0]||cityNames[0].length<2)throw new Error('Invalid location: '+locationName);
+  const normalize=value=>String(value||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]/g,'');
+  const usStates={AL:'Alabama',AK:'Alaska',AZ:'Arizona',AR:'Arkansas',CA:'California',CO:'Colorado',CT:'Connecticut',DE:'Delaware',FL:'Florida',GA:'Georgia',HI:'Hawaii',ID:'Idaho',IL:'Illinois',IN:'Indiana',IA:'Iowa',KS:'Kansas',KY:'Kentucky',LA:'Louisiana',ME:'Maine',MD:'Maryland',MA:'Massachusetts',MI:'Michigan',MN:'Minnesota',MS:'Mississippi',MO:'Missouri',MT:'Montana',NE:'Nebraska',NV:'Nevada',NH:'New Hampshire',NJ:'New Jersey',NM:'New Mexico',NY:'New York',NC:'North Carolina',ND:'North Dakota',OH:'Ohio',OK:'Oklahoma',OR:'Oregon',PA:'Pennsylvania',RI:'Rhode Island',SC:'South Carolina',SD:'South Dakota',TN:'Tennessee',TX:'Texas',UT:'Utah',VT:'Vermont',VA:'Virginia',WA:'Washington',WV:'West Virginia',WI:'Wisconsin',WY:'Wyoming',DC:'District of Columbia'};
+  const wanted=parts.slice(1).map(part=>normalize(usStates[part.toUpperCase()]||part));
+  const cities=[...new Set(cityNames.map(name=>name.trim()).filter(name=>name.length>=2))];
+  const candidates=[];
+  for(const city of cities){
+    const url=new URL('https://geocoding-api.open-meteo.com/v1/search');
+    url.searchParams.set('name',city);
+    url.searchParams.set('count','100');
+    url.searchParams.set('language','en');
+    url.searchParams.set('format','json');
+    const response=await fetch(url.toString(),{headers:{Accept:'application/json'},signal:AbortSignal.timeout(10000)});
+    if(!response.ok)throw new Error('Location lookup returned '+response.status+' for '+city);
+    const data=await response.json(),results=Array.isArray(data.results)?data.results:[];
+    const matches=results.filter(place=>{
+      const fields=[place.admin1,place.admin2,place.admin3,place.admin4,place.country,place.country_code,place.admin1_code,place.admin2_code].map(normalize);
+      return normalize(place.name)===normalize(city)&&wanted.every(word=>fields.includes(word))&&Number.isFinite(Number(place.latitude))&&Number.isFinite(Number(place.longitude))&&!!place.timezone;
+    }).sort((a,b)=>Number(b.population||0)-Number(a.population||0));
+    if(matches.length){
+      const place=matches[0];
+      candidates.push({source:'selection-compare',query:locationName,canonical:[place.name,place.admin1,place.country].filter(Boolean).join(', '),latitude:Number(place.latitude),longitude:Number(place.longitude),timezone:String(place.timezone)});
+    }
+  }
+  if(!candidates.length)throw new Error('Could not confidently match location: '+locationName+'. Check the selected place.');
+  // Parentheses may be a geographic alternative, a person, or an unrelated annotation.
+  // Never drop a resolvable second city or silently choose one over the other.
+  const unique=candidates.filter((item,index)=>candidates.findIndex(other=>other.latitude===item.latitude&&other.longitude===item.longitude)===index);
+  if(unique.length>1)return chooseSelectionCity(locationName,unique);
+  return unique[0];
+}
+let selectionComparisonConsumed=false;
+async function applySelectionComparison(){
+  if(selectionComparisonConsumed)return;
+  let events;
+  try{events=readSelectionComparison()}catch(error){selectionComparisonNotice(error.message||'Invalid selection.');return}
+  if(!events)return;
+  selectionComparisonConsumed=true;
+  selectionComparisonNotice(events.length===1?'Resolving the selected location…':'Resolving both selected locations…');
+  try{
+    const locations=[];
+    for(const event of events)locations.push(await resolveSelectionLocation(event.location));
+    selectionComparisonNotice(events.length===1?'Calculating Sky A…':'Calculating Sky A and Sky B…');
+    const records=[];
+    for(let i=0;i<events.length;i++){
+      const slot=i?'B':'A',event=events[i],selected=locations[i];
+      if(event.timeZoneAbbreviation&&event.time){
+        const offsetMinutes={PST:-480,PDT:-420,MST:-420,MDT:-360,CST:-360,CDT:-300,EST:-300,EDT:-240,AKST:-540,AKDT:-480,HST:-600,UTC:0,GMT:0}[event.timeZoneAbbreviation];
+        const local=window.luxon?.DateTime?.fromISO(event.date+'T'+event.time,{zone:selected.timezone});
+        if(!local?.isValid||local.offset!==offsetMinutes)throw new Error('The selected '+event.timeZoneAbbreviation+' does not agree with '+selected.timezone+' at the selected date and time.');
+      }
+      const record=calculateSky(slot,selected,event.date,event.time||'',{replaceExisting:true,timeUnknown:event.time===null});
+      const name=[event.label?event.label.charAt(0).toUpperCase()+event.label.slice(1):'Event '+(i+1),event.date].join(' · ');
+      record.name=name;record.title=name;record.displayName=name;record.skyName=name;
+      record.metadata={...record.metadata,selectionEventLabel:event.label,selectionLocation:event.location,selectionTimeZoneAbbreviation:event.timeZoneAbbreviation||null};
+      if(window.RelphiChironEphemeris)await window.RelphiChironEphemeris.completePayload(record);
+      records.push(record);
+    }
+    // All validation/geocoding/calculation completes before any working sky changes.
+    writeJson(SLOT_KEYS.A,records[0]);
+    if(records.length===2)writeJson(SLOT_KEYS.B,records[1]);
+    window.RelphiSkyStartupMode?.writeMode?.(records.length===2?'comparison':'single');
+    window.RelphiSkyStartupMode?.syncRoot?.();
+    records.forEach((record,index)=>{
+      const slot=index?'B':'A';
+      dispatchSlotChange(slot);
+      window.RelphiSkyCardShell?.sync?.(slot,records[index]);
+      window.dispatchEvent(new CustomEvent('relphi:sky-working-copy-updated',{detail:{slot,source:'selection-compare',dateTime:events[index].date+(events[index].time?'T'+events[index].time:''),location:locations[index].canonical}}));
+      window.dispatchEvent(new CustomEvent('relphi:sky-name-updated',{detail:{slot,name:records[index].name,source:'selection-compare'}}));
+      scheduleSummary(slot,true);
+    });
+    document.getElementById('relphiSelectionComparisonNotice')?.remove();
+    const next=new URL(location.href);next.searchParams.delete('relphiCompare');next.searchParams.delete('relphiSingle');
+    history.replaceState(history.state,'',next.pathname+next.search+next.hash);
+    document.querySelector(records.length===2?'[data-sky-chart-mode="compare"]':'[data-sky-chart-mode="single"]')?.click();
+    requestAnimationFrame(()=>window.RelphiSkyCardShell?.openDrawer?.('A','placements'));
+  }catch(error){
+    selectionComparisonConsumed=false;
+    selectionComparisonNotice('Comparison import failed: '+(error.message||String(error)));
+    console.error('[Oracle of Relphi] Selection comparison import:',error);
+  }
+}
+/* A date-only or location-only selection opens an editable draft; never fabricate the missing half. */
+function applySelectionDraft(){
+  const params=new URLSearchParams(location.search);
+  const raw=params.get('relphiDraft');
+  if(!raw)return;
+  try{
+    if(raw.length>6000)throw new Error('Selection is too long.');
+    const draft=JSON.parse(raw);
+    if(draft?.version!==1||!['date','location'].includes(draft.kind))throw new Error('Invalid selected Where and When field.');
+    const value=String(draft.value||'').trim();
+    if(!value||value.length>250)throw new Error('Empty or oversized selected field.');
+    if(draft.kind==='date'&&!/^\d{4}-\d{2}-\d{2}$/.test(value))throw new Error('Selected date must be in ISO format.');
+    openEditor('A',false);
+    const form=formFor('A');
+    if(!form)throw new Error('Sky A editor did not open.');
+    if(draft.kind==='date'){
+      const now=form.querySelector('[data-ww-field="now"]');
+      if(now)now.checked=false;
+      const input=form.querySelector('[data-ww-field="date"]');
+      if(input)input.value=value;
+      const unknown=form.querySelector('[data-ww-field="time-unknown"]');
+      if(unknown)unknown.checked=true;
+      syncModes('A');
+      // Use the existing unknown-time change owner to update the time control
+      // and draft visual state, rather than competing with it.
+      unknown?.dispatchEvent(new Event('change',{bubbles:true}));
+      status('A','Selected date inserted. Choose a location and confirm; the time remains unknown.');
+    }else{
+      const here=form.querySelector('[data-ww-field="here"]');
+      if(here)here.checked=false;
+      const input=form.querySelector('[data-ww-field="location-query"]');
+      if(input)input.value=value;
+      syncModes('A');
+      status('A','Selected location inserted. Search and confirm the correct place.');
+    }
+    const next=new URL(location.href);next.searchParams.delete('relphiDraft');
+    history.replaceState(history.state,'',next.pathname+next.search+next.hash);
+    requestAnimationFrame(()=>form.querySelector(draft.kind==='date'?'[data-ww-field="date"]':'[data-ww-field="location-query"]')?.focus());
+  }catch(error){selectionComparisonNotice('Selection draft failed: '+(error.message||String(error)))}
+}
+
+function scheduleSelectionComparison(){
+  if(!/relphiCompare|relphiSingle|relphiDraft/.test(location.search))return;
+  let attempts=0;
+  const run=()=>{
+    attempts++;
+    const ready=!!(window.Astronomy&&window.luxon?.DateTime&&window.RelphiHouseSystems?.calculateCusps&&window.RelphiSkyCardShell);
+    if(ready){if(new URLSearchParams(location.search).has('relphiDraft'))applySelectionDraft();else void applySelectionComparison();return}
+    if(attempts<120)setTimeout(run,50);
+    else selectionComparisonNotice('Sky Chart calculation dependencies did not load.');
+  };
+  run();
+}
+
 function schedulePlanetaryHoursHandoff(){
   if(!readPlanetaryHoursHandoff())return;
   let attempts=0;
@@ -662,7 +1000,7 @@ window.addEventListener('relphi:sky-foundation-ready',()=>{scheduleSummary('A');
 window.addEventListener('relphi:sky-name-updated',event=>{const slot=event.detail?.slot;if(SLOT_KEYS[slot]){window.RelphiSkyCardShell?.sync?.(slot,payload(slot));scheduleSummary(slot,true)}});
 window.addEventListener('resize',()=>{['A','B'].forEach(slot=>{const svg=shell(slot)?.heptagram;if(svg&&svg.dataset.canonicalSourceReady==='true')svg.setAttribute('viewBox',window.matchMedia?.('(max-width:620px)')?.matches?'0 -8 360 368':'0 0 360 360')})},{passive:true});
 function recoverWhereWhen(){reconcileWhereWhenTransaction();['A','B'].forEach(slot=>{window.RelphiSkyCardShell?.ensure?.(slot,payload(slot));scheduleSummary(slot,true)})}
-function start(){installStyles();['A','B'].forEach(slot=>{freezeLegacyLiveSky(slot);shell(slot);scheduleSummary(slot)});schedulePlanetaryHoursHandoff()}
+function start(){installStyles();['A','B'].forEach(slot=>{freezeLegacyLiveSky(slot);shell(slot);scheduleSummary(slot)});schedulePlanetaryHoursHandoff();scheduleSelectionComparison()}
 window.addEventListener('relphi:sky-session-recovered',recoverWhereWhen);
 document.readyState==='loading'?document.addEventListener('DOMContentLoaded',start,{once:true}):start();
 })();

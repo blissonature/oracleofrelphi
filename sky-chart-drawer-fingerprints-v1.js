@@ -69,6 +69,12 @@ function microHeptagram(sourceSvg){
   // Preserve the finished canonical SVG without thumbnail-specific changes.
   // Only its containing element determines the displayed size.
   const root=sourceSvg.cloneNode(true);
+  // A thumbnail is a presentation clone, never another sky's source.
+  root.removeAttribute('data-sky-heptagram');
+  root.removeAttribute('data-canonical-source-ready');
+  root.removeAttribute('data-canonical-heptagram-ready');
+  root.removeAttribute('data-canonical-heptagram-consumer');
+  root.removeAttribute('data-canonical-heptagram-busy');
   root.classList.add('sky-where-fingerprint-heptagram');
   root.classList.remove('sky-where-when-draft-heptagram');
   root.removeAttribute('style');
@@ -76,6 +82,31 @@ function microHeptagram(sourceSvg){
   root.setAttribute('aria-hidden','true');
   root.setAttribute('focusable','false');
   root.querySelectorAll('[id]').forEach(node=>node.removeAttribute('id'));
+  // The full heptagram owns geometry and canonical glyph creation. The
+  // fingerprint owns only the thumbnail presentation: live rulers are enlarged
+  // and idle ruler glyphs become quiet dots at the same planetary positions.
+  root.querySelectorAll('.sky-ph-planet').forEach(group=>{
+    const active=group.classList.contains('is-day-ruler')||group.classList.contains('is-hour-ruler');
+    const mount=group.querySelector(':scope > .sky-ph-node-glyph');
+    if(!mount)return;
+    if(active){
+      const unit=mount.querySelector('[data-master-glyph-unit]');
+      if(unit)unit.setAttribute('transform','scale(1.45)');
+    }else{
+      mount.replaceChildren();
+      const dot=document.createElementNS('http://www.w3.org/2000/svg','circle');
+      dot.setAttribute('cx','0');
+      dot.setAttribute('cy','0');
+      // Larger idle ruler markers remain centered on the canonical planetary nodes.
+      dot.setAttribute('r','15');
+      // Every source planet carries its authoritative ruler color on the group.
+      // currentColor keeps the smaller dot faithful to that same planet after
+      // the canonical glyph is reduced to a thumbnail, including rerenders.
+      dot.setAttribute('fill','currentColor');
+      dot.classList.add('sky-ph-micro-idle-node');
+      mount.appendChild(dot);
+    }
+  });
   return root;
 }
 window.RelphiSkyMicroHeptagram = microHeptagram;

@@ -25,6 +25,9 @@ on:
       - 'sky-chart-sky-identity-affordance-v1.js'
       - 'sky-chart-saved-sky-name-dialog-v1.js'
       - 'sky-chart-saved-skies-v1.js'
+      - 'tests/sky-chart-selection-comparison-browser.mjs'
+      - 'tests/sky-chart-selection-single-browser.mjs'
+      - 'tests/sky-chart-location-search-recovery-browser.mjs'
       - 'tests/sky-chart-where-when-transaction-stability.mjs'
       - 'tests/sky-chart-where-when-layout-density.mjs'
       - 'tests/sky-chart-architecture-contract.mjs'
@@ -52,7 +55,7 @@ on:
 
 jobs:
   browser-check:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -79,6 +82,9 @@ jobs:
           node --check sky-chart-sky-identity-affordance-v1.js
           node --check sky-chart-saved-sky-name-dialog-v1.js
           node --check sky-chart-saved-skies-v1.js
+          node --check tests/sky-chart-selection-comparison-browser.mjs
+          node --check tests/sky-chart-selection-single-browser.mjs
+          node --check tests/sky-chart-location-search-recovery-browser.mjs
           node --check tests/sky-chart-where-when-transaction-stability.mjs
           node --check tests/sky-chart-where-when-layout-density.mjs
           node tests/sky-chart-architecture-contract.mjs
@@ -91,6 +97,9 @@ jobs:
       - name: Run transaction and layout assertions
         run: |
           python3 -m http.server 4173 > /tmp/sky-chart-transaction-server.log 2>&1 &
+          node tests/sky-chart-selection-comparison-browser.mjs
+          node tests/sky-chart-selection-single-browser.mjs
+          node tests/sky-chart-location-search-recovery-browser.mjs
           node tests/sky-chart-where-when-transaction-stability.mjs
           node tests/sky-chart-challenging-wheel-click-stability.mjs
           node tests/sky-chart-where-when-layout-density.mjs

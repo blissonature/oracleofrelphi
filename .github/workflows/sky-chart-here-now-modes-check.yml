@@ -4,6 +4,7 @@ on:
     paths:
       - 'sky-chart.html'
       - 'sky-chart-where-when-v3.js'
+      - 'tests/sky-chart-one-click-both-slots-browser.mjs'
       - 'sky-chart-where-when-modes-v1.css'
       - 'sky-chart-where-when-draft-heptagram-v4.js'
       - 'sky-chart-heptagram-geometry-v1.css'
@@ -14,7 +15,7 @@ on:
       - '.github/workflows/sky-chart-here-now-modes-check.yml'
 jobs:
   here-now-browser:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -23,6 +24,7 @@ jobs:
       - name: JavaScript syntax checks
         run: |
           node --check sky-chart-where-when-v3.js
+          node --check tests/sky-chart-one-click-both-slots-browser.mjs
           node --check sky-chart-where-when-draft-heptagram-v4.js
           node --check sky-chart-staleness-v1.js
           node --check tests/sky-chart-here-now-modes-browser.mjs
@@ -36,6 +38,7 @@ jobs:
         run: |
           python3 -m http.server 4173 > /tmp/sky-chart-modes-server.log 2>&1 &
           node tests/sky-chart-here-now-modes-browser.mjs
+          node tests/sky-chart-one-click-both-slots-browser.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
