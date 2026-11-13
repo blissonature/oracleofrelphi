@@ -37,7 +37,11 @@ try{
     }
     const draft=encodeURIComponent(JSON.stringify({version:1,kind:'date',value:'1971-10-29'}));
     await page.goto('http://127.0.0.1:4173/sky-chart.html?relphiDraft='+draft,{waitUntil:'domcontentloaded'});
-    await page.waitForFunction(()=>document.querySelector('#skyFoundationA .sky-where-when-editor [data-ww-field="date"]')?.value==='1971-10-29',null,{timeout:15000});
+    await page.waitForFunction(()=>document.querySelector('#skyFoundationA .sky-where-when-editor [data-ww-field="date"]')?.value==='1971-10-29',null,{timeout:15000}).catch(async error=>{
+      const diagnostic=await page.evaluate(()=>({url:location.href,note:document.querySelector('#relphiSelectionComparisonNotice')?.textContent,editor:document.querySelector('#skyFoundationA .sky-where-when-editor')?.outerHTML?.slice(0,1300),aDate:document.querySelector('#skyFoundationA [data-ww-field="date"]')?.value,forms:document.querySelectorAll('.sky-where-when-editor').length}));
+      console.error('SINGLE_DRAFT_DIAGNOSTIC',JSON.stringify(diagnostic));
+      throw error;
+    });
     assert.equal(await page.locator('#skyFoundationA [data-ww-field="time-unknown"]').isChecked(),true);
     assert.equal(await page.locator('#skyFoundationA [data-ww-field="time"]').isDisabled(),true);
     const preserved=await page.evaluate(()=>JSON.parse(localStorage.getItem('relphiSkyChartB')));
