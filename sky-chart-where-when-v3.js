@@ -369,10 +369,14 @@ async function reversePacket(latitude,longitude){
   const zoneUrl=new URL('https://api.open-meteo.com/v1/forecast');zoneUrl.searchParams.set('latitude',String(latitude));zoneUrl.searchParams.set('longitude',String(longitude));zoneUrl.searchParams.set('timezone','auto');zoneUrl.searchParams.set('forecast_days','1');
   // Time-zone resolution is required for the instant; reverse-geocoded display names are not.
   // Do not fail a valid browser coordinate because an optional address provider is unavailable.
-  const signal=AbortSignal.timeout(10000);
+  // The place name is optional. Do not let its slow network path hold up a valid
+  // position and time zone for the full required time-zone service deadline.
+  // Keep requests owned here rather than adding a second event handler or renderer.
+  const reverseSignal=AbortSignal.timeout(1000);
+  const zoneSignal=AbortSignal.timeout(10000);
   const[reverseResult,zoneResult]=await Promise.allSettled([
-    fetch(reverseUrl.toString(),{headers:{Accept:'application/json'},signal}).then(response=>{if(!response.ok)throw new Error('Place-name lookup failed.');return response.json()}),
-    fetch(zoneUrl.toString(),{headers:{Accept:'application/json'},signal}).then(response=>{if(!response.ok)throw new Error('Time-zone lookup failed.');return response.json()})
+    fetch(reverseUrl.toString(),{headers:{Accept:'application/json'},signal:reverseSignal}).then(response=>{if(!response.ok)throw new Error('Place-name lookup failed.');return response.json()}),
+    fetch(zoneUrl.toString(),{headers:{Accept:'application/json'},signal:zoneSignal}).then(response=>{if(!response.ok)throw new Error('Time-zone lookup failed.');return response.json()})
   ]);
   // A browser's IANA time zone is a useful local fallback when the remote
   // coordinate-to-zone provider is unavailable. It is not proof of the
