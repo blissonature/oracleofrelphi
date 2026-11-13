@@ -699,38 +699,68 @@ function selectionComparisonNotice(message){
   }
   note.textContent=message;
 }
+function chooseSelectionCity(original,candidates){
+  return new Promise((resolve,reject)=>{
+    const note=document.getElementById('relphiSelectionComparisonNotice');
+    if(!note)return reject(new Error('Location chooser is not available.'));
+    note.replaceChildren();
+    const heading=document.createElement('p');
+    heading.textContent='Which location does “'+original+'” refer to?';
+    note.appendChild(heading);
+    const choices=document.createElement('div');
+    choices.style.cssText='display:flex;gap:.6rem;flex-wrap:wrap;margin:.7rem 0';
+    for(const choice of candidates){
+      const button=document.createElement('button');
+      button.type='button';
+      button.textContent=choice.canonical;
+      button.style.cssText='padding:.6rem .9rem;border:1px solid #a72a22;border-radius:.6rem;background:white;color:#26201b;cursor:pointer;font:inherit';
+      button.addEventListener('click',()=>resolve(choice),{once:true});
+      choices.appendChild(button);
+    }
+    const cancel=document.createElement('button');
+    cancel.type='button';
+    cancel.textContent='Cancel import';
+    cancel.style.cssText='padding:.6rem .9rem;border:1px solid #777;border-radius:.6rem;background:white;color:#26201b;cursor:pointer;font:inherit';
+    cancel.addEventListener('click',()=>reject(new Error('Location choice canceled; neither sky was changed.')),{once:true});
+    choices.appendChild(cancel);
+    note.appendChild(choices);
+  });
+}
 async function resolveSelectionLocation(locationName){
-  // Open-Meteo searches locality names, not entire postal addresses.
   const parts=locationName.split(',').map(part=>part.trim()).filter(Boolean);
-  // Parentheses on biographical pages frequently identify the subject
-  // (e.g. "Rochester (Winona), Minnesota"), not a geographical district.
-  // Keep the original text in selectionLocation, but geocode the city itself.
-  const query=String(parts[0]||'').replace(/\s*\([^()]*\)\s*$/,'').trim();
-  if(!query||query.length<2)throw new Error('Invalid location: '+locationName);
-  const url=new URL('https://geocoding-api.open-meteo.com/v1/search');
-  url.searchParams.set('name',query);url.searchParams.set('count','100');url.searchParams.set('language','en');url.searchParams.set('format','json');
-  const response=await fetch(url.toString(),{headers:{Accept:'application/json'}});
-  if(!response.ok)throw new Error('Location lookup returned '+response.status+' for '+locationName);
-  const data=await response.json(),results=Array.isArray(data.results)?data.results:[];
+  const first=String(parts[0]||'');
+  const annotation=first.match(/^(.+?)\s*\(([^()]*)\)\s*$/);
+  const cityNames=annotation?[annotation[1].trim(),annotation[2].trim()]:[first];
+  if(!cityNames[0]||cityNames[0].length<2)throw new Error('Invalid location: '+locationName);
   const normalize=value=>String(value||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]/g,'');
   const usStates={AL:'Alabama',AK:'Alaska',AZ:'Arizona',AR:'Arkansas',CA:'California',CO:'Colorado',CT:'Connecticut',DE:'Delaware',FL:'Florida',GA:'Georgia',HI:'Hawaii',ID:'Idaho',IL:'Illinois',IN:'Indiana',IA:'Iowa',KS:'Kansas',KY:'Kentucky',LA:'Louisiana',ME:'Maine',MD:'Maryland',MA:'Massachusetts',MI:'Michigan',MN:'Minnesota',MS:'Mississippi',MO:'Missouri',MT:'Montana',NE:'Nebraska',NV:'Nevada',NH:'New Hampshire',NJ:'New Jersey',NM:'New Mexico',NY:'New York',NC:'North Carolina',ND:'North Dakota',OH:'Ohio',OK:'Oklahoma',OR:'Oregon',PA:'Pennsylvania',RI:'Rhode Island',SC:'South Carolina',SD:'South Dakota',TN:'Tennessee',TX:'Texas',UT:'Utah',VT:'Vermont',VA:'Virginia',WA:'Washington',WV:'West Virginia',WI:'Wisconsin',WY:'Wyoming',DC:'District of Columbia'};
   const wanted=parts.slice(1).map(part=>normalize(usStates[part.toUpperCase()]||part));
-  const cityKey=normalize(query);
-  const scored=results.map(place=>{
-    const fields=[place.admin1,place.admin2,place.admin3,place.admin4,place.country,place.country_code,place.admin1_code,place.admin2_code].map(normalize);
-    // Require an exact city and every supplied geographic qualifier.
-    // A partial/prefix city match must never quietly become another town.
-    const cityMatches=normalize(place.name)===cityKey;
-    const regionMatches=wanted.every(word=>fields.includes(word));
-    return{place,match:cityMatches&&regionMatches};
-  }).filter(result=>result.match)
-    .sort((a,b)=>Number(b.place.population||0)-Number(a.place.population||0));
-  if(!scored.length)
-    throw new Error('Could not confidently match location: '+locationName+'. Check the selected place.');
-  const place=scored[0].place;
-  if(!Number.isFinite(Number(place.latitude))||!Number.isFinite(Number(place.longitude))||!place.timezone)
-    throw new Error('Location has no coordinates or time zone: '+locationName);
-  return{source:'selection-compare',query:locationName,canonical:[place.name,place.admin1,place.country].filter(Boolean).join(', '),latitude:Number(place.latitude),longitude:Number(place.longitude),timezone:String(place.timezone)};
+  const cities=[...new Set(cityNames.map(name=>name.trim()).filter(name=>name.length>=2))];
+  const candidates=[];
+  for(const city of cities){
+    const url=new URL('https://geocoding-api.open-meteo.com/v1/search');
+    url.searchParams.set('name',city);
+    url.searchParams.set('count','100');
+    url.searchParams.set('language','en');
+    url.searchParams.set('format','json');
+    const response=await fetch(url.toString(),{headers:{Accept:'application/json'},signal:AbortSignal.timeout(10000)});
+    if(!response.ok)throw new Error('Location lookup returned '+response.status+' for '+city);
+    const data=await response.json(),results=Array.isArray(data.results)?data.results:[];
+    const matches=results.filter(place=>{
+      const fields=[place.admin1,place.admin2,place.admin3,place.admin4,place.country,place.country_code,place.admin1_code,place.admin2_code].map(normalize);
+      return normalize(place.name)===normalize(city)&&wanted.every(word=>fields.includes(word))&&Number.isFinite(Number(place.latitude))&&Number.isFinite(Number(place.longitude))&&!!place.timezone;
+    }).sort((a,b)=>Number(b.population||0)-Number(a.population||0));
+    if(matches.length){
+      const place=matches[0];
+      candidates.push({source:'selection-compare',query:locationName,canonical:[place.name,place.admin1,place.country].filter(Boolean).join(', '),latitude:Number(place.latitude),longitude:Number(place.longitude),timezone:String(place.timezone)});
+    }
+  }
+  if(!candidates.length)throw new Error('Could not confidently match location: '+locationName+'. Check the selected place.');
+  // Parentheses may be a geographic alternative, a person, or an unrelated annotation.
+  // Never drop a resolvable second city or silently choose one over the other.
+  const unique=candidates.filter((item,index)=>candidates.findIndex(other=>other.latitude===item.latitude&&other.longitude===item.longitude)===index);
+  if(unique.length>1)return chooseSelectionCity(locationName,unique);
+  return unique[0];
 }
 let selectionComparisonConsumed=false;
 async function applySelectionComparison(){
@@ -741,7 +771,8 @@ async function applySelectionComparison(){
   selectionComparisonConsumed=true;
   selectionComparisonNotice(events.length===1?'Resolving the selected location…':'Resolving both selected locations…');
   try{
-    const locations=await Promise.all(events.map(event=>resolveSelectionLocation(event.location)));
+    const locations=[];
+    for(const event of events)locations.push(await resolveSelectionLocation(event.location));
     selectionComparisonNotice(events.length===1?'Calculating Sky A…':'Calculating Sky A and Sky B…');
     const records=[];
     for(let i=0;i<events.length;i++){
