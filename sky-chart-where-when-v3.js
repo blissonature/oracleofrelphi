@@ -42,6 +42,8 @@ function installStyles(){
     .sky-where-when-footer-actions .sky-where-when-button{width:100%;min-width:0;margin:0}
     .sky-where-when-one-click{display:flex;align-items:center;justify-content:center;gap:.4rem;min-height:34px;width:100%;margin:0 0 4px;font-size:.72rem;font-weight:700}
     .sky-where-when-one-click svg{width:16px;height:16px;flex:none}
+    .sky-where-when-main-actions{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:start;gap:.35rem}
+    .sky-where-when-main-actions .sky-where-when-one-click{min-width:0}
     .sky-ph-handoff-dialog{width:min(680px,calc(100vw - 2rem));max-width:680px;border:2px solid #dc1f18;border-radius:1.3rem;padding:0;background:#fffdf8;color:#1f1b18;box-shadow:0 24px 70px rgba(0,0,0,.28)}
     .sky-ph-handoff-dialog::backdrop{background:rgba(17,14,12,.48);backdrop-filter:blur(2px)}
     .sky-ph-handoff-inner{padding:1.2rem;display:grid;gap:1rem}
@@ -58,7 +60,7 @@ function installStyles(){
     .sky-ph-handoff-clear,.sky-ph-handoff-cancel{border-radius:999px;padding:.68rem 1rem;font:inherit;font-weight:750;cursor:pointer}
     .sky-ph-handoff-clear{background:#fff;color:#dc1f18;border:1px solid #dc1f18}
     .sky-ph-handoff-cancel{background:#fff;color:#333;border:1px solid rgba(31,27,24,.22)}
-    @media(max-width:620px){.sky-where-when-here-now-row{padding:.55rem .55rem .14rem}.sky-where-when-footer{padding:.42rem .55rem .55rem!important}.sky-ph-handoff-slots{grid-template-columns:1fr}}
+    @media(max-width:620px){.sky-where-when-here-now-row{padding:.55rem .55rem .14rem}.sky-where-when-main-actions{gap:.25rem}.sky-where-when-footer{padding:.42rem .55rem .55rem!important}.sky-ph-handoff-slots{grid-template-columns:1fr}}
   `;
   document.head.appendChild(style);
 }
@@ -128,7 +130,7 @@ function editorMarkup(slot,p){
   const nowMoment=Number.isFinite(Date.parse(moment))?moment:'';
   return `<form class="sky-where-when-editor" data-slot="${slot}" data-now-instant="${escapeHtml(nowMoment)}">
     <div class="sky-where-when-scroll-body">
-      <button class="sky-where-when-button secondary sky-where-when-one-click" type="button" data-ww-action="here-and-now"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6v5h-5M4 18v-5h5M18 10A7 7 0 0 0 6 7L4 9M6 14a7 7 0 0 0 12 3l2-2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span>1-Click Here and Now</span></button>
+      <div class="sky-where-when-main-actions"><button class="sky-where-when-button secondary sky-where-when-one-click" type="button" data-ww-action="here-and-now"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6v5h-5M4 18v-5h5M18 10A7 7 0 0 0 6 7L4 9M6 14a7 7 0 0 0 12 3l2-2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span>1-Click Here and Now</span></button><button class="sky-quick-copy-button sky-where-when-copy" type="button" data-copy-where-when aria-label="Copy Where and When for Sky ${slot}" title="Copy Where and When">Copy</button></div>
       <fieldset class="sky-where-when-section sky-where-when-mode" data-ww-where><legend>Where</legend>
         <div class="sky-ww-mode-row"><span class="sky-ww-mode-primary"><label class="sky-ww-choice"><input data-ww-field="here" type="checkbox"${here?' checked':''}><span>Here</span></label><button class="sky-ww-refresh" type="button" data-ww-action="refresh-here" aria-label="Refresh current location" title="Refresh current location"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6v5h-5M4 18v-5h5M18 10A7 7 0 0 0 6 7L4 9M6 14a7 7 0 0 0 12 3l2-2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button></span></div>
         <p class="sky-ww-mode-value" data-ww-here-value${here?'':' hidden'}>${escapeHtml(here?selected.canonical:'')}</p>
@@ -147,6 +149,24 @@ function editorMarkup(slot,p){
   </form>`;
 }
 
+// Copy what this open editor currently shows, including unsaved date/time edits.
+// Only a confirmed search result or selected Here location counts as "Where".
+function shareText(slot){
+  if(!SLOT_KEYS[slot])return'';
+  const form=formFor(slot);if(!form)return'';
+  const chart=payload(slot)||{},selected=cardState[slot].selected;
+  const name=String(panel(slot)?.querySelector('.sky-foundation-name')?.textContent||chart.name||chart.title||`Sky ${slot}`).trim()||`Sky ${slot}`;
+  const date=String(form.querySelector('[data-ww-field="date"]')?.value||'').trim();
+  const time=String(form.querySelector('[data-ww-field="time"]')?.value||'').trim();
+  const zone=String(selected?.timezone||form.querySelector('[data-ww-field="timezone"]')?.value||'').trim();
+  const unknown=modeValue(form,'time-unknown'),now=modeValue(form,'now');
+  const displayTime=unknown?'Unknown':time?(now?`${time} (captured Now)`:time):'Not set';
+  return [`${name} — Where and When`,
+    `Where: ${String(selected?.canonical||'').trim()||'Not selected'}`,
+    `Date: ${date||'Not set'}`,
+    `Time: ${displayTime}`,
+    `Time zone: ${zone||'Not set'}`].join('\n');
+}
 function modeValue(form,name){return form?.querySelector('[data-ww-field="'+name+'"]')?.checked===true}
 function captureMoment(form){if(form)form.dataset.nowInstant=new Date().toISOString()}
 function syncModes(slot){
@@ -549,7 +569,8 @@ window.RelphiSkyWhereWhen=Object.freeze({
   finishExternalCommit:(slot,detail)=>finishCommitted(slot,detail),
   status,
   setBusy,
-  profile:profileFor
+  profile:profileFor,
+  shareText
 });
 
 document.addEventListener('click',event=>{
