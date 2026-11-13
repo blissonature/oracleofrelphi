@@ -208,6 +208,15 @@ try{
  await page.locator('#skyFoundationB [data-sky-drawer-tab="where"]').click();
  const oneClick=page.locator('#skyFoundationB .sky-where-when-editor');
  await oneClick.waitFor();
+ // A stalled reverse-geocode service must not strand the editor in its busy state.
+ const stalledReverse=()=>new Promise(()=>{});
+ const reverseUrl='https://api.bigdatacloud.net/data/reverse-geocode-client**';
+ await page.route(reverseUrl,stalledReverse);
+ await oneClick.locator('[data-ww-action="here-and-now"]').click();
+ await page.waitForFunction(()=>document.querySelector('#skyFoundationB .sky-where-when-status')?.textContent?.includes('timed out'),null,{timeout:15000});
+ assert.equal(await oneClick.locator('[data-ww-action="here-and-now"]').isEnabled(),true,'One-click must recover after a stalled location service.');
+ assert.equal(await oneClick.locator('[data-ww-field="date"]').isEnabled(),true,'Manual When controls must recover after timeout.');
+ await page.unroute(reverseUrl,stalledReverse);
  const instantBeforeClick=Date.now();
  assert.equal(await oneClick.locator('[data-ww-action="here-and-now"]').count(),1);
  assert.deepEqual(await oneClick.locator('.sky-where-when-footer-actions button').allTextContents(),['Cancel','Use This Where and When']);
