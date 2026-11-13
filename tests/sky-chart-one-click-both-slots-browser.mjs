@@ -39,6 +39,11 @@ try{
       const stallReverse=()=>new Promise(()=>{});
       // Simulate an unavailable optional address service while the time-zone service succeeds.
       if(viewport.width===1280&&slot==='A')await page.route(reverseUrl,stallReverse);
+      const zoneUrl='https://api.open-meteo.com/v1/forecast**';
+      const failZone=route=>route.fulfill({status:503,contentType:'application/json',body:JSON.stringify({error:true,reason:'Service unavailable'})});
+      // The reported live failure: coordinate time-zone provider does not resolve.
+      // Both slots and both viewports must still calculate with an explicitly marked browser fallback.
+      await page.route(zoneUrl,failZone);
       await action.click();
       await page.waitForFunction(slot=>{
         const sky=JSON.parse(localStorage.getItem('relphiSkyChart'+slot)||'null');
@@ -46,6 +51,7 @@ try{
       },slot,{timeout:30000});
       if(viewport.width===1280&&slot==='A')await page.unroute(reverseUrl,stallReverse);
       const actual=await page.evaluate(slot=>JSON.parse(localStorage.getItem('relphiSkyChart'+slot)),slot);
+      assert.equal(actual.calcProfile.timeZoneSource,'browser-fallback','Browser timezone fallback must be recorded');
       assert.ok(actual.placements.Ascendant&&actual.placements.Midheaven,slot+' must calculate known-time angles');
       assert.ok(Date.now()-Date.parse(actual.calcProfile.instant)<120000,slot+' must capture present instant');
       console.log('PASS Here and Now '+slot+' '+viewport.width);
