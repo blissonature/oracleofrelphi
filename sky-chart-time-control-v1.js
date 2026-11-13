@@ -141,7 +141,9 @@
   }
   function syncDisabled(control){
     const input=control?.__canonicalInput;if(!input)return;
-    const disabled=input.disabled===true;
+    // The visible hybrid control must respect the authoritative unknown-time
+    // checkbox even when its hidden canonical field is temporarily re-enabled.
+    const disabled=input.disabled===true || input.closest('.sky-where-when-editor')?.querySelector('[data-ww-field="time-unknown"]')?.checked===true;
     control.classList.toggle('is-disabled',disabled);
     control.setAttribute('aria-disabled',disabled?'true':'false');
     const entry=control.querySelector('[data-sky-time-entry]'),toggle=control.querySelector('[data-sky-time-toggle]');
@@ -238,6 +240,12 @@
     }
     document.querySelectorAll('.sky-time-control.is-open').forEach(control=>{if(!control.contains(event.target))close(control)});
     if(event.target.closest?.('[data-ww-action="apply-inference"]'))requestAnimationFrame(()=>document.querySelectorAll(TIME_SELECTOR).forEach(syncFromCanonical));
+  },true);
+
+  document.addEventListener('change',event=>{
+    if(!event.target.matches?.('.sky-where-when-editor [data-ww-field="time-unknown"]'))return;
+    const input=event.target.closest('.sky-where-when-editor')?.querySelector('[data-ww-field="time"]');
+    if(input?.__skyTimeControl)syncDisabled(input.__skyTimeControl);
   },true);
 
   document.addEventListener('input',event=>{
