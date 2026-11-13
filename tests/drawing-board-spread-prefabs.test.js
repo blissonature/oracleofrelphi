@@ -8,13 +8,13 @@ const sandbox = {
   location:{pathname:'/tarot.html'},
   localStorage:{getItem:key=>storage.get(key)??null,setItem:(key,value)=>storage.set(key,String(value))},
   document:{readyState:'loading',addEventListener(){},getElementById(){return null;},body:{classList:{add(){},remove(){}}},querySelector(){return null;}},
-  window:{addEventListener(){}}, Event, CustomEvent:class{}, setTimeout(){return 1;}, clearTimeout(){}, console
+  window:{addEventListener(){},innerWidth:900}, Event, CustomEvent:class{}, setTimeout(){return 1;}, clearTimeout(){}, console
 };
 sandbox.window.document=sandbox.document; sandbox.window.localStorage=sandbox.localStorage;
 vm.createContext(sandbox); vm.runInContext(source,sandbox);
 const api=sandbox.window.RelphiDrawingBoardSpreadPrefabs;
 assert.ok(api);
-assert.equal(api.shipped.length,10);
+assert.equal(api.shipped.length,11); // Includes Crowley Harmonic Divination
 assert.ok(api.shipped.every(item=>item.positions.length===item.cardCount));
 const recursion=api.byId('relphi-recursion-22');
 assert.ok(recursion);
@@ -35,7 +35,7 @@ assert.equal(c.positions[0].transform.y,.34);
 assert.equal(c.positions[1].canonicalTransform.x,.20);
 assert.equal(c.positions[1].canonicalTransform.y,.34);
 assert.equal(c.positions[4].transform.x,.015);
-assert.equal(c.positions[5].transform.x,.49);
+assert.equal(c.positions[5].transform.x,.385);
 assert.ok(c.positions.slice(6).every(p=>p.transform.x===.70));
 assert.ok(c.positions.slice(6).every(p=>p.transform.scale===.44));
 assert.deepEqual(Array.from(c.positions.slice(6),p=>p.transform.y),[.69,.46,.23,.00]);

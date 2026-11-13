@@ -48,6 +48,7 @@ try {
       framePadding:[fs.paddingTop,fs.paddingRight,fs.paddingBottom,fs.paddingLeft],
       frameBorder:[fs.borderTopWidth,fs.borderRightWidth,fs.borderBottomWidth,fs.borderLeftWidth],
       frameColor:fs.borderTopColor,
+      sky:frame.closest('.inline-rel-card')?.classList.contains('sky-b')?'B':'A',
       frameOverflow:fs.overflow,
       imgRadius:is.borderRadius,
       imgBorder:is.borderWidth,
@@ -78,8 +79,9 @@ try {
     assert.ok(Math.abs(item.renderedRatio-item.sourceRatio)<0.01,'dual-card art must preserve the source image aspect ratio');
     assert.ok(Object.values(item.flush).every(delta=>delta<=0.75),'dual-card art must touch the inside edge of its Sky stroke without a gap');
   });
-  assert.equal(inlineCardArt[0].frameColor,'rgb(201, 33, 30)','Sky A card stroke must stay red');
-  assert.equal(inlineCardArt[1].frameColor,'rgb(36, 98, 208)','Sky B card stroke must stay blue');
+  const rowOwners=await row.evaluate(node=>[node.dataset.leftSky,node.dataset.rightSky]);
+  assert.deepEqual(inlineCardArt.map(art=>art.sky),rowOwners,'Each relationship card must belong to its own sky.');
+  inlineCardArt.forEach(art=>assert.equal(art.frameColor,art.sky==='A'?'rgb(201, 33, 30)':'rgb(36, 98, 208)',`Sky ${art.sky} card stroke must preserve its assigned color`));
 
   const blank=await page.evaluate(()=>{
     const row=document.querySelector('.sky-foundation-relationship-row.is-inline-expanded');

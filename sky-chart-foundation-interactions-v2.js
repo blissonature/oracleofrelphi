@@ -431,7 +431,7 @@
     window.dispatchEvent(new CustomEvent('relphi:sky-foundation-filter-changed',{detail:{state:focusState?{...focusState,mode:lockedState?'selected':'hover'}:null,origin:lockedState&&selectionOrigin?{...selectionOrigin}:null,relationshipIndexes}}));
   }
   function distanceToSegment(x,y,a,b){const dx=b.x-a.x,dy=b.y-a.y,length=dx*dx+dy*dy;if(!length)return Math.hypot(x-a.x,y-a.y);const t=Math.max(0,Math.min(1,((x-a.x)*dx+(y-a.y)*dy)/length)),px=a.x+t*dx,py=a.y+t*dy;return Math.hypot(x-px,y-py)}
-  function nearestAspect(event){
+  function nearestAspect(event,maxDistance=9){
     if(!Number.isFinite(event.clientX)||!Number.isFinite(event.clientY))return null;
     let nearest=null,best=Infinity;
     document.querySelectorAll('[data-layer="aspects"] > line.sky-foundation-aspect:not(.sky-foundation-aspect-hit)').forEach(line=>{
@@ -440,14 +440,19 @@
       const start=svg.createSVGPoint(),end=svg.createSVGPoint();start.x=Number(line.getAttribute('x1'));start.y=Number(line.getAttribute('y1'));end.x=Number(line.getAttribute('x2'));end.y=Number(line.getAttribute('y2'));
       const distance=distanceToSegment(event.clientX,event.clientY,start.matrixTransform(matrix),end.matrixTransform(matrix));if(distance<best){best=distance;nearest=line}
     });
-    return best<=9?nearest:null;
+    return best<=maxDistance?nearest:null;
   }
   function interactive(event){
     const root=document.getElementById('skyFoundationRoot');if(!root)return null;
     const node=event.target.closest?.('[data-interactive]');
     if(node&&root.contains(node)){
-      // A struck SVG aspect already identifies its exact endpoints and
-      // harmonic. Do not replace it with a geometrically nearby crossing line.
+      // The 28px transparent aspect-hit clones are oversized pickup areas, not
+      // the aspect that was visually struck. In a dense comparison wheel a
+      // later clone can cover an earlier A↔B stroke (A↔A/B↔B are appended
+      // later). Resolve its click to the closest *visible drawn* chord through
+      // the canonical hit tester, rather than trusting the overlay's stale
+      // frontmost identity. Direct hits on drawn strokes keep their identity.
+      if(node.classList.contains('sky-foundation-aspect-hit'))return nearestAspect(event,14);
       return node;
     }
     const wheel=event.target.closest?.('#skyFoundationWheelMount .sky-foundation-wheel');
@@ -619,7 +624,7 @@
     document.querySelectorAll('#skyFoundationRelationshipList > .sky-foundation-relationship-row').forEach(other=>{
       if(other!==row){other.classList.remove('is-wheel-target','is-selected');other.removeAttribute('aria-current')}
     });
-    // Scroll only the Relationships list; scrollIntoView would move the entire page and wheel.
+    // Keep navigation scrolling inside the Relationships list, never the page or wheel.
     const list=document.getElementById('skyFoundationRelationshipList');
     if(list){
       const itemRect=row.getBoundingClientRect(),panelRect=list.getBoundingClientRect();
@@ -743,7 +748,7 @@
         toggleInteractiveNode(node);
         // A mouse pointerup can be followed by a native click. Do not toggle
         // the same house/placement twice for one physical gesture.
-        lastMousePointerSelection={spec:specFrom(node),at:performance.now()};
+        lastMousePointerSelection={spec:specFrom(node),at:performance.now(),x:event.clientX,y:event.clientY};
       }
     },{capture:true,passive:true});
     document.addEventListener('pointercancel',cancelTouch,{capture:true});
@@ -754,7 +759,11 @@
     // after our touch handler already committed selection. Suppress both kinds
     // of duplicate click, without blocking interactions outside the wheel.
     document.addEventListener('click',event=>{
-      if(performance.now()<ignoreNativeClickUntil&&touchInWheel(event)){
+      // An older pointerup handler can emit a synthetic click before our
+      // finishTouch callback arms the post-gesture click guard. The physical
+      // touch gesture already owns selection, so consume that click in the
+      // existing capture handler while the gesture is still in progress.
+      if((touchGesture||performance.now()<ignoreNativeClickUntil)&&touchInWheel(event)){
         event.preventDefault();event.stopImmediatePropagation();
       }
     },true);
@@ -767,7 +776,7 @@
       const node=interactive(event);if(!node||node.contains(event.relatedTarget))return;
       rowHoverState=null;hoverState=specFrom(node);applyState()
     });
-    root.addEventListener('pointermove',event=>{if(event.pointerType==='touch'||event.pointerType==='pen')return;if(lockedState||!event.target.closest?.('#skyFoundationWheelMount'))return;const direct=event.target.closest?.('[data-interactive]:not([data-interactive="aspect"])');if(direct)return;rowHoverState=null;const next=specFrom(nearestAspect(event));if(same(hoverState,next)||(!hoverState&&!next))return;hoverState=next;applyState()});
+    root.addEventListener('pointermove',event=>{if(event.pointerType==='touch'||event.pointerType==='pen')return;if(lockedState||!event.target.closest?.('#skyFoundationWheelMount'))return;const direct=event.target.closest?.('[data-interactive]:not([data-interactive="aspect"])');if(direct)return;rowHoverState=null;const next=specFrom(nearestAspect(event,hoverState?.kind==='aspect'?18:14));if(same(hoverState,next)||(!hoverState&&!next))return;hoverState=next;applyState()});
     root.addEventListener('pointerout',event=>{
       if(event.pointerType==='touch'||event.pointerType==='pen')return;
       const row=event.target.closest?.('.sky-foundation-relationship-row[data-relation-index]');
@@ -799,9 +808,14 @@
       if(!node)return;
       event.preventDefault();
       event.stopImmediatePropagation();
+      // A physical gesture produces pointerup followed by a native click.
+      // Dense transparent aspect-hit overlays may retarget the latter to
+      // another chord after pointerup changes focus. Gesture coordinates,
+      // not a second hit test, determine whether this click is a duplicate.
       const duplicate=event.detail>0&&lastMousePointerSelection&&
         performance.now()-lastMousePointerSelection.at<750&&
-        same(lastMousePointerSelection.spec,specFrom(node));
+        Math.hypot(event.clientX-lastMousePointerSelection.x,
+          event.clientY-lastMousePointerSelection.y)<=12;
       lastMousePointerSelection=null;
       if(!duplicate)toggleInteractiveNode(node);
     },true);

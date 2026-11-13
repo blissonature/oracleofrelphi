@@ -39,17 +39,23 @@ try{
  assert.equal(footerInitially.columns,2,'The footer must contain only the original Cancel and Use buttons.');
  const topOrder=await form.evaluate(node=>{
    const body=node.querySelector('.sky-where-when-scroll-body');
-   const relevant=[...body.children].filter(el=>el.matches('.sky-where-when-one-click,[data-ww-where],[data-ww-when],[data-ww-heptagram-slot]'));
+   const relevant=[...body.children].filter(el=>el.matches('.sky-where-when-main-actions,.sky-where-when-one-click,[data-ww-where],[data-ww-when],[data-ww-heptagram-slot]'));
    const button=body.querySelector('.sky-where-when-one-click');
-   return{order:relevant.map(el=>el.dataset.wwAction==='here-and-now'?'here-and-now':el.hasAttribute('data-ww-where')?'where':el.hasAttribute('data-ww-when')?'when':'heptagram'),
+   const actions=button?.closest('.sky-where-when-main-actions');
+   const copy=actions?.querySelector('[data-copy-where-when]');
+   return{order:relevant.map(el=>(el.matches('.sky-where-when-main-actions,.sky-where-when-one-click'))?'here-and-now':el.hasAttribute('data-ww-where')?'where':el.hasAttribute('data-ww-when')?'when':'heptagram'),
      buttonCount:node.querySelectorAll('[data-ww-action="here-and-now"]').length,
      buttonIcon:!!button?.querySelector('svg'),
-     buttonVisible:button?.getBoundingClientRect().height>0};
+     buttonVisible:button?.getBoundingClientRect().height>0,
+     copyCount:actions?.querySelectorAll('[data-copy-where-when]').length||0,
+     copyVisible:!!copy&&copy.getBoundingClientRect().height>0};
  });
  assert.equal(topOrder.buttonCount,1,'One-click Here and Now must exist exactly once.');
  assert.deepEqual(topOrder.order,['here-and-now','where','when','heptagram']);
  assert.equal(topOrder.buttonIcon,true,'The single button must contain its refresh icon.');
  assert.equal(topOrder.buttonVisible,true,'The top action must be visible.');
+ assert.equal(topOrder.copyCount,1,'Where and When must retain one Copy button beside Here and Now.');
+ assert.equal(topOrder.copyVisible,true,'Where and When Copy must be visible on mobile.');
 
  assert.equal(await here.isChecked(),false);assert.equal(await now.isChecked(),false);
  assert.equal(await form.locator('[data-ww-field="live"]').count(),0,'Live toggle must be absent.');
@@ -202,6 +208,15 @@ try{
  await page.locator('#skyFoundationB [data-sky-drawer-tab="where"]').click();
  const oneClick=page.locator('#skyFoundationB .sky-where-when-editor');
  await oneClick.waitFor();
+ // A stalled reverse-geocode service must not strand the editor in its busy state.
+ const stalledReverse=()=>new Promise(()=>{});
+ const reverseUrl='https://api.bigdatacloud.net/data/reverse-geocode-client**';
+ await page.route(reverseUrl,stalledReverse);
+ await oneClick.locator('[data-ww-action="here-and-now"]').click();
+ await page.waitForFunction(()=>document.querySelector('#skyFoundationB .sky-where-when-status')?.textContent?.includes('timed out'),null,{timeout:15000});
+ assert.equal(await oneClick.locator('[data-ww-action="here-and-now"]').isEnabled(),true,'One-click must recover after a stalled location service.');
+ assert.equal(await oneClick.locator('[data-ww-field="date"]').isEnabled(),true,'Manual When controls must recover after timeout.');
+ await page.unroute(reverseUrl,stalledReverse);
  const instantBeforeClick=Date.now();
  assert.equal(await oneClick.locator('[data-ww-action="here-and-now"]').count(),1);
  assert.deepEqual(await oneClick.locator('.sky-where-when-footer-actions button').allTextContents(),['Cancel','Use This Where and When']);

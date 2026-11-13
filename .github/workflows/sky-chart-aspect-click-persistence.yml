@@ -1,0 +1,33 @@
+name: Comparison wheel aspect click persistence
+
+on:
+  pull_request:
+    paths:
+      - 'sky-chart-relationship-state-contract-v1.js'
+      - 'sky-chart-foundation-interactions-v2.js'
+      - 'sky-chart-orb-control-v1.js'
+      - 'sky-chart.html'
+      - 'tests/sky-chart-aspect-click-persistence-browser.mjs'
+      - '.github/workflows/sky-chart-aspect-click-persistence.yml'
+
+jobs:
+  chromium:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Syntax check
+        run: |
+          node --check sky-chart-relationship-state-contract-v1.js
+          node --check tests/sky-chart-aspect-click-persistence-browser.mjs
+      - name: Install Chromium and page dependencies
+        run: |
+          npm install --no-save playwright@1.52.0 luxon@3 suncalc@1.9.0
+          npx playwright install --with-deps chromium
+      - name: Browser interaction (real desktop mouse and mobile touch)
+        run: |
+          python3 -m http.server 4173 > /tmp/relphi-aspect-persistence-server.log 2>&1 &
+          node tests/sky-chart-aspect-click-persistence-browser.mjs

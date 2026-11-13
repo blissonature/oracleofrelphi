@@ -14,6 +14,33 @@ const skyB=sample('Beta sky',29.27,{dateTime:'2026-09-10T21:00',instant:'2026-09
 const saved={...structuredClone(skyA),id:'saved-alpha',name:'Saved Alpha',metadata:{savedSkyId:'saved-alpha',savedSkyName:'Saved Alpha'}};
 const legacySaved={...structuredClone(skyA),id:'legacy-sage',name:'Legacy Sage Event',calcProfile:{},instant:'2021-05-22T16:15:00.000Z',notes:'Motion state sampled around 2021-05-22T16:15:00.000Z. Location: Malden, Massachusetts, United States. Time zone: America/New_York. latitude 42.4251 and longitude -71.0662',metadata:{savedSkyId:'legacy-sage',savedSkyName:'Legacy Sage Event'}};
 
+
+const RULER_COLORS=Object.freeze({
+  saturn:'rgb(140, 122, 66)',jupiter:'rgb(65, 117, 47)',mars:'rgb(201, 33, 30)',
+  sun:'rgb(208, 138, 0)',venus:'rgb(178, 59, 121)',mercury:'rgb(39, 115, 144)',moon:'rgb(88, 98, 138)'
+});
+async function assertRulerDotColors(page,selector,label,minCharts=1){
+  const charts=await page.locator(selector).evaluateAll(svgs=>svgs.map(svg=>({
+    inactive:[...svg.querySelectorAll('.sky-ph-planet:not(.is-day-ruler):not(.is-hour-ruler)')].map(group=>{
+      const id=[...group.classList].find(name=>/^sky-ph-(saturn|jupiter|mars|sun|venus|mercury|moon)$/.test(name))?.slice(7)||'';
+      const dot=group.querySelector('.sky-ph-micro-idle-node');
+      return{id,fill:dot?getComputedStyle(dot).fill:null,radius:dot?Number(dot.getAttribute('r')):null,sourceColor:getComputedStyle(group).color};
+    })
+  })));
+  assert.ok(charts.length>=minCharts,`${label}: expected at least ${minCharts} rendered microheptagrams, found ${charts.length}`);
+  for(const [index,chart] of charts.entries()){
+    assert.ok(chart.inactive.length>=5,`${label} chart ${index}: five or six idle ruler dots expected`);
+    for(const dot of chart.inactive){
+      assert.equal(dot.radius,15,`${label} chart ${index}: ruler dot radius must remain readable at thumbnail scale`);
+      assert.equal(dot.fill,RULER_COLORS[dot.id],`${label} chart ${index}: ${dot.id} must retain its distinct planetary color`);
+      assert.equal(dot.fill,dot.sourceColor,`${label} chart ${index}: ${dot.id} must inherit the canonical source group's color`);
+    }
+    assert.equal(new Set(chart.inactive.map(dot=>dot.fill)).size,chart.inactive.length,
+      `${label} chart ${index}: idle ruler dots must not collapse to a common gray`);
+  }
+  return charts;
+}
+
 const browser=await chromium.launch({headless:true});
 try{
   const page=await browser.newPage({viewport:{width:1280,height:1000}});
@@ -22,6 +49,19 @@ try{
   await page.route('https://unpkg.com/suncalc@1.9.0/suncalc.js',route=>route.fulfill({path:path.resolve('node_modules/suncalc/suncalc.js'),contentType:'application/javascript'}));
   await page.route('https://cdn.jsdelivr.net/npm/luxon@3/build/global/luxon.min.js',route=>route.fulfill({path:path.resolve('node_modules/luxon/build/global/luxon.min.js'),contentType:'application/javascript'}));
   await page.addInitScript(({a,b,library})=>{
+    window.__heptagramCanonEvents=[];
+    window.addEventListener('relphi:sky-heptagram-canonical-ready',event=>{
+      const svg=event.detail?.svg;if(!svg)return;
+      const slot=svg.getAttribute('data-sky-heptagram')||'unknown';
+      const size=()=>svg.querySelectorAll('.sky-ph-planet .relphi-canonical-glyph').length;
+      window.__heptagramCanonEvents.push({slot,phase:'ready',glyphs:size()});
+      const observer=new MutationObserver(records=>{
+        const removed=records.reduce((count,record)=>count+
+          [...record.removedNodes].filter(n=>n.nodeType===1&&(n.matches?.('.relphi-canonical-glyph')||n.querySelector?.('.relphi-canonical-glyph'))).length,0);
+        if(removed)window.__heptagramCanonEvents.push({slot,phase:'removed',removed,glyphs:size(),mounts:[...svg.querySelectorAll('.sky-ph-planet')].map(g=>g.querySelectorAll('.relphi-canonical-glyph').length)});
+      });
+      observer.observe(svg,{subtree:true,childList:true});
+    });
     localStorage.setItem('relphiSkyChartA',JSON.stringify(a));
     localStorage.setItem('relphiSkyChartB',JSON.stringify(b));
     localStorage.setItem('relphiSkyLibraryV1',JSON.stringify(library));
@@ -53,6 +93,10 @@ try{
     const mount=window.RelphiSkyCardShell?.get?.(slot)?.whereFingerprint;
     return !!mount&&!mount.hidden&&!!mount.querySelector('.sky-where-fingerprint-heptagram');
   }),null,{timeout:5000});
+  await assertRulerDotColors(page,'.sky-card-fingerprint-tab .sky-where-fingerprint-heptagram','desktop Sky A/B',2);
+  await page.evaluate(()=>{window.RelphiSkyDrawerFingerprints?.render?.();window.RelphiSkyDrawerFingerprints?.render?.()});
+  await page.waitForTimeout(120);
+  await assertRulerDotColors(page,'.sky-card-fingerprint-tab .sky-where-fingerprint-heptagram','desktop after repeated refresh',2);
   const drawerHeptagrams=await page.evaluate(()=>Object.fromEntries(['A','B'].map(slot=>{
     const mount=window.RelphiSkyCardShell?.get?.(slot)?.whereFingerprint;
     const heptagram=mount?.querySelector('.sky-where-fingerprint-heptagram');
@@ -63,6 +107,8 @@ try{
       return stroke&&stroke!=='none'&&stroke!=='transparent'&&style.visibility!=='hidden'&&style.display!=='none'&&Number(style.opacity||1)>0;
     });
     const source=window.RelphiSkyCardShell?.get?.(slot)?.heptagram;
+    const sourceIsFull=!!source?.closest('[data-sky-where-summary]');
+    const thumbNotSource=!heptagram?.hasAttribute('data-sky-heptagram');
     const sourceGlyphs=source?.querySelectorAll('.sky-ph-planet .relphi-canonical-glyph').length||0;
     const active=Array.from(heptagram?.querySelectorAll('.sky-ph-planet.is-day-ruler,.sky-ph-planet.is-hour-ruler')||[]);
     const inactive=Array.from(heptagram?.querySelectorAll('.sky-ph-planet:not(.is-day-ruler):not(.is-hour-ruler)')||[]);
@@ -88,10 +134,18 @@ try{
     const redCorrect=redLines.every(line=>line.color==='rgb(201, 33, 30)');
     const hourLines=heptagram?.querySelectorAll('.sky-ph-hour-segment').length||0;
     const sourceHourLines=source?.querySelectorAll('.sky-ph-hour-segment').length||0;
-    return[slot,{exists:!!mount,hidden:mount?.hidden,heptagram:!!heptagram,width:rect?.width||0,height:rect?.height||0,weekLines:weekLines.length,visibleWeekLines:visibleWeekLines.length,sourceWeekLines:source?.querySelectorAll('.sky-ph-week-segment').length||0,planetaryGlyphs,sourceGlyphs,activeCount:active.length,inactiveCount:inactive.length,inactiveDots,correctlyScaled,noInactiveGlyphs,weekStroke,dashEffect,allPathsSolid,oneWidth,grayCorrect,redCorrect,hourLines,sourceHourLines,duplicateIds:heptagram?.querySelectorAll('[id]').length||0}];
+    return[slot,{sourceIsFull,thumbNotSource,exists:!!mount,hidden:mount?.hidden,heptagram:!!heptagram,width:rect?.width||0,height:rect?.height||0,weekLines:weekLines.length,visibleWeekLines:visibleWeekLines.length,sourceWeekLines:source?.querySelectorAll('.sky-ph-week-segment').length||0,planetaryGlyphs,sourceGlyphs,activeCount:active.length,inactiveCount:inactive.length,inactiveDots,correctlyScaled,noInactiveGlyphs,weekStroke,dashEffect,allPathsSolid,oneWidth,grayCorrect,redCorrect,hourLines,sourceHourLines,duplicateIds:heptagram?.querySelectorAll('[id]').length||0}];
   })));
+  const sourceDiagnostics=await page.evaluate(()=>Object.fromEntries(['A','B'].map(slot=>{
+    const svg=window.RelphiSkyCardShell?.get?.(slot)?.heptagram;
+    return[slot,{sourceReady:svg?.dataset?.canonicalSourceReady,canonReady:svg?.dataset?.canonicalHeptagramReady,canonBusy:svg?.dataset?.canonicalHeptagramBusy,planets:[...svg?.querySelectorAll('.sky-ph-planet')||[]].map(node=>({classes:node.getAttribute('class'),glyphs:node.querySelectorAll('.relphi-canonical-glyph').length,unavailable:node.querySelector('.sky-ph-node-glyph')?.dataset.glyphUnavailable||''}))}];
+  })));
+  console.log('HEPTAGRAM_SOURCE_DIAG '+JSON.stringify(sourceDiagnostics));
+  console.log('HEPTAGRAM_CANON_LIFECYCLE '+JSON.stringify(await page.evaluate(()=>window.__heptagramCanonEvents)));
   for(const slot of ['A','B']){
     const thumb=drawerHeptagrams[slot];
+    assert.equal(thumb.sourceIsFull,true,'Card shell must resolve the full Where and When SVG');
+    assert.equal(thumb.thumbNotSource,true,'Thumbnail cannot masquerade as the full heptagram source');
     assert.equal(thumb.exists,true,`Sky ${slot} Where/When thumbprint mount should exist: ${JSON.stringify(thumb)}`);
     assert.equal(thumb.hidden,false,`Sky ${slot} Where/When thumbprint should not be hidden: ${JSON.stringify(thumb)}`);
     assert.equal(thumb.heptagram,true,`Sky ${slot} microheptagram should exist: ${JSON.stringify(thumb)}`);
@@ -148,6 +202,8 @@ try{
   assert.equal(picker.heading,false,`direct Saved Skies picker must not keep a hidden heading sentinel: ${JSON.stringify(picker)}`);
   assert.equal(picker.fingerprint,true,`saved sky fingerprint should render: ${JSON.stringify(picker)}`);
   assert.equal(picker.heptagram,true,`saved sky temporal heptagram should render: ${JSON.stringify(picker)}`);
+  await page.waitForFunction(()=>[...document.querySelectorAll('#skySavedSkiesPopover .sky-saved-microheptagram')].length>0,null,{timeout:15000});
+  await assertRulerDotColors(page,'#skySavedSkiesPopover .sky-saved-microheptagram','Saved Skies picker');
   assert.equal(picker.newSky,true,`New Sky should be available in Sky B: ${JSON.stringify(picker)}`);
 
   await page.locator('#skySavedSkiesPopover [data-sky-command="new"]').click();
@@ -171,6 +227,29 @@ try{
   assert.equal(afterNew.storedB,null,`uncommitted New Sky B should not masquerade as a stored completed sky: ${JSON.stringify(afterNew)}`);
 
   assert.deepEqual(errors,[],`browser errors: ${errors.join(' | ')}`);
+
+  const mobile=await browser.newPage({viewport:{width:390,height:844},isMobile:true,hasTouch:true});
+  const mobileErrors=[];
+  mobile.on('pageerror',error=>mobileErrors.push(error.message));
+  await mobile.route('https://unpkg.com/suncalc@1.9.0/suncalc.js',route=>route.fulfill({path:path.resolve('node_modules/suncalc/suncalc.js'),contentType:'application/javascript'}));
+  await mobile.route('https://cdn.jsdelivr.net/npm/luxon@3/build/global/luxon.min.js',route=>route.fulfill({path:path.resolve('node_modules/luxon/build/global/luxon.min.js'),contentType:'application/javascript'}));
+  await mobile.addInitScript(({a,b})=>{
+    localStorage.setItem('relphiSkyChartA',JSON.stringify(a));
+    localStorage.setItem('relphiSkyChartB',JSON.stringify(b));
+    localStorage.setItem('relphiSkyChartLastModeV1','comparison');
+  },{a:skyA,b:skyB});
+  await mobile.goto('http://127.0.0.1:4173/sky-chart.html',{waitUntil:'domcontentloaded',timeout:30000});
+  await mobile.waitForSelector('#skyFoundationRoot[aria-busy="false"]',{timeout:20000});
+  await mobile.waitForFunction(()=>['A','B'].every(slot=>{
+    const mount=window.RelphiSkyCardShell?.get?.(slot)?.whereFingerprint;
+    return !!mount&&!mount.hidden&&!!mount.querySelector('.sky-where-fingerprint-heptagram .sky-ph-micro-idle-node');
+  }),null,{timeout:20000});
+  await assertRulerDotColors(mobile,'.sky-card-fingerprint-tab .sky-where-fingerprint-heptagram','mobile Sky A/B',2);
+  await mobile.evaluate(()=>window.RelphiSkyDrawerFingerprints?.render?.());
+  await mobile.waitForTimeout(120);
+  await assertRulerDotColors(mobile,'.sky-card-fingerprint-tab .sky-where-fingerprint-heptagram','mobile after refresh',2);
+  assert.deepEqual(mobileErrors,[],'mobile heptagram colors must not generate page errors');
+  await mobile.close();
   console.log('axis label/notch pairing, visibly painted A/B microheptagrams, Saved Skies fingerprints, and in-place Sky B New Sky passed');
 }finally{
   await browser.close();

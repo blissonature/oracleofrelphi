@@ -23,7 +23,7 @@ const DECANS=[[['two_of_wands','Two of Wands'],['three_of_wands','Three of Wands
 const ALIAS={rising:'asc',ascendant:'asc',ac:'asc',descendant:'dsc',dc:'dsc',midheaven:'mc','imum coeli':'ic',imumcoeli:'ic',vx:'vertex','anti vertex':'anti-vertex','anti-vertex':'anti-vertex',antivertex:'anti-vertex',avx:'anti-vertex','north node':'north-node',node:'north-node','true node':'north-node','south node':'south-node',fortune:'part-of-fortune','part of fortune':'part-of-fortune',pof:'part-of-fortune'};
 let openRow=null;
 let touchGesture=null;
-let suppressClickRow=null;
+let suppressClickRow=null,suppressClickKey='';
 let suppressClickAt=0;
 const cardArtWarmups=new Map();
 
@@ -119,13 +119,14 @@ function onPointerUp(event){
   if(gesture.moved||event.target.closest?.('[data-inline-ledger]'))return;
   if(event.target.closest?.('.inline-rel-tile-copy'))return;
   const row=rowFromTarget(event.target);if(!row||row!==gesture.row)return;
-  open(row);suppressClickRow=row;suppressClickAt=performance.now();
+  open(row);suppressClickRow=row;suppressClickKey=String(row.dataset.relationIndex||'');suppressClickAt=performance.now();
 }
 function onClick(event){
   if(event.target.closest?.('.inline-rel-tile-copy'))return;
   const row=rowFromTarget(event.target);
-  if(row&&row===suppressClickRow&&performance.now()-suppressClickAt<900){event.preventDefault();event.stopImmediatePropagation();suppressClickRow=null;return}
-  suppressClickRow=null;
+  if(row&&performance.now()-suppressClickAt<900&&(row===suppressClickRow||(suppressClickKey&&String(row.dataset.relationIndex||'')===suppressClickKey))){event.preventDefault();event.stopImmediatePropagation();return}
+  // An unrelated click must not disarm the touch row's compatibility-click guard.
+  // WebKit can emit multiple post-touch click events; preserve the guard until its expiry.
   const ledger=event.target.closest('[data-inline-ledger]');if(ledger){event.stopImmediatePropagation();return}
   const topGlyph=event.target.closest('[data-inline-top-reveal],.sky-foundation-relationship-glyph--left,.sky-foundation-relationship-glyph--aspect,.sky-foundation-relationship-glyph--right'),revealRow=topGlyph?.closest('.sky-foundation-relationship-row.is-inline-expanded');
   if(revealRow){const field=topGlyph.dataset.inlineTopReveal||fieldFromTopGlyph(topGlyph);if(field){event.preventDefault();event.stopImmediatePropagation();cycleReveal(revealRow,field);return}}

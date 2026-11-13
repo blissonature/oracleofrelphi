@@ -22,7 +22,7 @@ on:
 
 jobs:
   card-hits-browser-check:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -183,7 +183,10 @@ jobs:
           assert.equal(state.mountHidden,false);
           assert.ok(state.mountChildCount>0);
           await page.locator('#skyFoundationA [data-sky-drawer-tab="card-hits"]').click({force:true});
-          await page.waitForTimeout(300);
+          // The previous interaction explicitly switched to Houses. Re-enter
+          // Rulers before checking the chart-ruler stage and tarot art.
+          await page.locator('#skyFoundationA [data-card-hits-view="rulers"]').click();
+          await page.waitForSelector('#skyFoundationA .sky-card-chart-ruler-stage',{state:'visible'});
           const drawer=await page.evaluate(()=>({
             open:document.querySelector('#skyFoundationA [data-sky-drawer="card-hits"]')?.open||false,
             structure:!!document.querySelector('#skyFoundationA .sky-card-hits-structure'),
@@ -314,8 +317,12 @@ jobs:
           assert.ok(Math.abs(rulerRails.sample.imgBottom-rulerRails.sample.houseTop)<=0.75,'Bottom house rail must sit flush against card art.');
 
           await page.locator('#skyFoundationA [data-card-hits-view="houses"]').click();
-          await page.waitForTimeout(80);
-          await page.waitForFunction(()=>{const img=document.querySelector('#skyFoundationA .sky-card-house-decan-art img');return !!img&&img.complete&&img.naturalWidth>0},{timeout:10000});
+          await page.waitForSelector('#skyFoundationA [data-card-house-toggle]',{state:'visible'});
+          // Decan art lives inside disclosed House details, not collapsed rows.
+          await page.locator('#skyFoundationA [data-card-house-toggle]').first().click();
+          await page.waitForSelector('#skyFoundationA .sky-card-house-detail:not([hidden]) .sky-card-house-decan-art img',{state:'attached'});
+          await page.locator('#skyFoundationA .sky-card-house-detail:not([hidden]) .sky-card-house-decan-art img').first().scrollIntoViewIfNeeded();
+          await page.waitForFunction(()=>{const img=document.querySelector('#skyFoundationA .sky-card-house-decan-art img');return !!img&&img.complete&&img.naturalWidth>0},null,{timeout:10000});
           const houseArt=await page.evaluate(()=>{
             const wrap=document.querySelector('#skyFoundationA .sky-card-house-decan-art'),img=wrap?.querySelector('img');
             const ws=wrap?getComputedStyle(wrap):null,is=img?getComputedStyle(img):null,u=img?new URL(img.src):null,rect=img?.getBoundingClientRect();
@@ -345,13 +352,15 @@ jobs:
           assert.ok(houseArt.naturalWidth>0);
           assert.equal(houseArt.media,'local-house-art');
 
-          await page.waitForSelector('#skyFoundationA [data-card-house-toggle]',{timeout:10000});
-          await page.locator('#skyFoundationA [data-card-house-toggle]').first().click();
+          const majorImages=page.locator('#skyFoundationA .sky-card-house-detail:not([hidden]) .sky-card-house-detail-row[data-card-house-detail-role="ruler"] .sky-card-house-span-major-art img,#skyFoundationA .sky-card-house-detail:not([hidden]) .sky-card-house-detail-row[data-card-house-detail-role="sign"] .sky-card-house-span-major-art img');
+          await majorImages.first().scrollIntoViewIfNeeded();
+          await majorImages.nth(1).scrollIntoViewIfNeeded();
+          console.log('HOUSE_MAJOR_IMG_DIAG '+JSON.stringify(await majorImages.evaluateAll(nodes=>nodes.map(img=>({src:img.getAttribute('src'),complete:img.complete,naturalWidth:img.naturalWidth,visible:!!img.getClientRects().length})))));
           await page.waitForFunction(()=>{
-            const imgs=[...document.querySelectorAll('#skyFoundationA .sky-card-house-detail-row[data-card-house-detail-role="ruler"] .sky-card-house-span-major-art img,#skyFoundationA .sky-card-house-detail-row[data-card-house-detail-role="sign"] .sky-card-house-span-major-art img')];
+            const imgs=[...document.querySelectorAll('#skyFoundationA .sky-card-house-detail:not([hidden]) .sky-card-house-detail-row[data-card-house-detail-role="ruler"] .sky-card-house-span-major-art img,#skyFoundationA .sky-card-house-detail:not([hidden]) .sky-card-house-detail-row[data-card-house-detail-role="sign"] .sky-card-house-span-major-art img')];
             return imgs.length===2&&imgs.every(img=>img.complete&&img.naturalWidth>0);
           },{timeout:10000});
-          const expandedMajorArt=await page.evaluate(()=>[...document.querySelectorAll('#skyFoundationA .sky-card-house-detail-row[data-card-house-detail-role="ruler"] .sky-card-house-span-major-art img,#skyFoundationA .sky-card-house-detail-row[data-card-house-detail-role="sign"] .sky-card-house-span-major-art img')].map(img=>{const style=getComputedStyle(img),wrap=img.parentElement,wrapStyle=getComputedStyle(wrap),rect=img.getBoundingClientRect();return{src:img.src,naturalWidth:img.naturalWidth,media:img.dataset.cardMedia||'',nativeClass:img.classList.contains('sky-card-house-art-native'),fit:style.objectFit,clip:style.clipPath,mask:style.maskImage,webkitMask:style.webkitMaskImage,radius:style.borderRadius,border:style.borderWidth,outline:style.outlineWidth,shadow:style.boxShadow,aspect:style.aspectRatio,maxHeight:style.maxHeight,wrapRadius:wrapStyle.borderRadius,wrapBorder:wrapStyle.borderWidth,wrapOutline:wrapStyle.outlineWidth,wrapShadow:wrapStyle.boxShadow,wrapClip:wrapStyle.clipPath,wrapOverflow:wrapStyle.overflow,sourceRatio:img.naturalHeight?img.naturalWidth/img.naturalHeight:null,renderedRatio:rect.height?rect.width/rect.height:null}}));
+          const expandedMajorArt=await page.evaluate(()=>[...document.querySelectorAll('#skyFoundationA .sky-card-house-detail:not([hidden]) .sky-card-house-detail-row[data-card-house-detail-role="ruler"] .sky-card-house-span-major-art img,#skyFoundationA .sky-card-house-detail:not([hidden]) .sky-card-house-detail-row[data-card-house-detail-role="sign"] .sky-card-house-span-major-art img')].map(img=>{const style=getComputedStyle(img),wrap=img.parentElement,wrapStyle=getComputedStyle(wrap),rect=img.getBoundingClientRect();return{src:img.src,naturalWidth:img.naturalWidth,media:img.dataset.cardMedia||'',nativeClass:img.classList.contains('sky-card-house-art-native'),fit:style.objectFit,clip:style.clipPath,mask:style.maskImage,webkitMask:style.webkitMaskImage,radius:style.borderRadius,border:style.borderWidth,outline:style.outlineWidth,shadow:style.boxShadow,aspect:style.aspectRatio,maxHeight:style.maxHeight,wrapRadius:wrapStyle.borderRadius,wrapBorder:wrapStyle.borderWidth,wrapOutline:wrapStyle.outlineWidth,wrapShadow:wrapStyle.boxShadow,wrapClip:wrapStyle.clipPath,wrapOverflow:wrapStyle.overflow,sourceRatio:img.naturalHeight?img.naturalWidth/img.naturalHeight:null,renderedRatio:rect.height?rect.width/rect.height:null}}));
           assert.equal(expandedMajorArt.length,2);
           expandedMajorArt.forEach(item=>{
             assert.match(item.src,/\/assets\/tarot\/rws\/.+\.webp$/);

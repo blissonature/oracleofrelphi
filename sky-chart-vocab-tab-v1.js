@@ -1212,6 +1212,13 @@ function applyVocabWheelContext(line){
 function bindVocabWheelContext(panel){
   if(panel.dataset.vocabWheelContextBound==='true')return;
   panel.dataset.vocabWheelContextBound='true';
+  // Native details hide their descendant rows without removing them from DOM.
+  // A collapsing disclosure cannot leave its former hover preview isolated.
+  panel.addEventListener('toggle',event=>{
+    const group=event.target;
+    if(group?.matches?.('details.sky-vocab-group')&&!group.open&&
+       vocabWheelContextLine&&group.contains(vocabWheelContextLine))clearVocabWheelContext();
+  },true);
   const interactiveToken=target=>target.closest?.('.sky-vocab-token[data-vocab-kind="placement"],.sky-vocab-token[data-vocab-kind="sign"],.sky-vocab-token[data-vocab-kind="house"]');
   panel.addEventListener('pointerover',event=>{
     if(event.pointerType==='touch')return;
@@ -1504,6 +1511,10 @@ function refreshGroupPreviews(root=document){
   });
 }
 function refreshDisplayLayers(){
+  // Display updates replace glyph/token content. Release its old Vocab-hover
+  // preview before replacement can discard the pointerout event.
+  vocabWheelTouchLine=null;
+  clearVocabWheelContext();
   syncControlState();
   document.querySelectorAll('[data-sky-vocab-panel]').forEach(panel=>{
     rerenderTokens(panel);
@@ -1747,7 +1758,7 @@ function installStyles(){
   `;document.head.appendChild(style);
 }
 function render(){
-  queued=false;if(vocabWheelContextLine&&!vocabWheelContextLine.isConnected){vocabWheelTouchLine=null;clearVocabWheelContext()}installStyles();saveDisplay(displayState());['A','B'].forEach(ensureSlot);syncControlState();
+  queued=false;if(vocabWheelContextLine&&(!vocabWheelContextLine.isConnected||vocabWheelContextLine.getClientRects().length===0)){vocabWheelTouchLine=null;clearVocabWheelContext()}installStyles();saveDisplay(displayState());['A','B'].forEach(ensureSlot);syncControlState();
 }
 function schedule(){if(queued)return;queued=true;requestAnimationFrame(render)}
 function relationshipRowSlots(row){

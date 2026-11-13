@@ -119,7 +119,9 @@ try{
  assert.ok(baseline.rows>1,'Fixture must contain multiple Relationships tiles');
  assert.ok(baseline.aspectLines>0,'Fixture must show aspect lines on the comparison wheel');
  assert.equal(baseline.count,baseline.shown,'Unselected count must match the tiles actually displayed');
- await moon.click({force:true});
+ // The first click both selects Moon B and opens an advisory helper.
+ // Increasing the Harmonic Window must preserve that selection; a second
+ // click at this point would correctly toggle it off.
  await page.mouse.move(10,10);
  await page.waitForTimeout(150);
  assert.equal(await moon.evaluate(node=>node.classList.contains('is-selected')),true,'Moon B persists after actual helper Increase to 3');

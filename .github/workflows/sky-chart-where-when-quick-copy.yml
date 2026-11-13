@@ -1,0 +1,36 @@
+name: Sky Chart Where and When copy browser
+on:
+  pull_request:
+    paths:
+      - 'sky-chart-where-when-v3.js'
+      - 'sky-chart-quick-copy-v2.js'
+      - 'sky-chart.html'
+      - 'tests/sky-chart-where-when-quick-copy-browser.mjs'
+      - '.github/workflows/sky-chart-where-when-quick-copy.yml'
+jobs:
+  browser:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Chromium and JavaScript syntax
+        run: |
+          node --check sky-chart-where-when-v3.js
+          node --check sky-chart-quick-copy-v2.js
+          node --check tests/sky-chart-where-when-quick-copy-browser.mjs
+          npm install --no-save playwright@1.52.0 luxon@3 suncalc@1.9.0
+          npx playwright install --with-deps chromium
+      - name: Test actual clipboard on desktop and mobile
+        run: |
+          python3 -m http.server 4173 >/tmp/where-when-copy-http.log 2>&1 &
+          node tests/sky-chart-where-when-quick-copy-browser.mjs
+      - name: Save browser screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: where-when-copy-desktop-mobile
+          path: where-when-quick-copy-*.png
+          if-no-files-found: ignore

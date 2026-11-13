@@ -31,7 +31,7 @@ async function load(page){
   await page.goto('http://127.0.0.1:4173/sky-chart.html',{waitUntil:'domcontentloaded'});
   await page.locator('[data-saved-sky-trigger="A"]').click({timeout:20000});
   await page.waitForSelector('#skySavedSkiesPopover .sky-saved-list-row [data-private-sky-fingerprint="true"]',{timeout:20000});
-  await page.waitForFunction(()=>!!document.querySelector('#skySavedSkiesPopover .sky-saved-library-instruction'),null,{timeout:10000});
+  await page.waitForSelector('#skySavedSkiesPopover .sky-library-controls',{timeout:10000});
 }
 function row(page,id){return page.locator('#skySavedSkiesPopover .sky-saved-list-row').filter({has:page.locator('[data-saved-sky-ref="'+id+'"]')})}
 
@@ -51,10 +51,12 @@ try{
       const style=getComputedStyle(details);
       const label=node.getAttribute('aria-label');
       const name=node.closest('.sky-saved-list-row')?.querySelector('[data-saved-delete-ref]')?.getAttribute('aria-label');
-      return{visibility:style.visibility,opacity:style.opacity,label,deleteLabel:name};
+      const overlay=node.querySelector('.sky-library-identity-overlay');
+      return{visibility:style.visibility,contained:!!overlay&&overlay.contains(details),overlayVisibility:overlay?getComputedStyle(overlay).visibility:'missing',label,deleteLabel:name};
     });
     assert.equal(state.visibility,'hidden','Private details start concealed');
-    assert.equal(state.opacity,'0','Private details start transparent');
+    assert.equal(state.contained,true,'Private details must live inside the concealed identity overlay');
+    assert.equal(state.overlayVisibility,'hidden','The entire identity overlay must start visually concealed');
     assert.ok(!state.label.includes('Sensitive')&&!state.label.includes('1985')&&!state.label.includes('Malden'),'No sensitive accessible labels before reveal');
     assert.ok(!state.deleteLabel.includes('Sensitive'),'Delete label must be private');
   }
@@ -74,7 +76,7 @@ try{
   await first.locator('[data-saved-delete-ref]').click();
   assert.equal(await first.locator('.sky-saved-delete-confirmation').count(),1,'Delete still requires confirmation');
   const confirm=first.locator('.sky-saved-delete-confirmation');
-  assert.ok(!(await confirm.getAttribute('aria-label')).includes('Sensitive'),'Confirmation label conceals identity');
+  assert.ok((await confirm.getAttribute('aria-label')).includes('Sensitive Person One'),'Explicit delete confirmation must identify the selected saved sky before irreversible deletion');
   await first.locator('[data-saved-delete-cancel]').click();
   await first.locator('[data-saved-sky-ref]').click();
   await desktop.waitForFunction(()=>document.querySelector('#skySavedSkiesPopover')?.hidden===true,{timeout:10000});

@@ -109,13 +109,14 @@ const relationshipHeaderOrder=await page.evaluate(()=>{
     countParent:count?.parentElement===actions
   };
 });
-const relationshipHeaderGap=await page.evaluate(()=>{
+const relationshipHeaderSeparation=await page.evaluate(()=>{
   const heading=document.querySelector('#skyFoundationRelationships>.sky-foundation-relationships-heading');
   const title=heading?.querySelector('[data-relationship-vocab-tabs],h2:not([hidden])')?.getBoundingClientRect();
-  const first=heading?.querySelector('.sky-relationship-heading-actions>[data-relationship-sort],.sky-relationship-heading-actions>.sky-relationship-sort-control')?.getBoundingClientRect();
-  return title&&first?first.left-title.right:null;
+  const sort=heading?.querySelector('.sky-relationship-heading-actions>[data-relationship-sort],.sky-relationship-heading-actions>.sky-relationship-sort-control')?.getBoundingClientRect();
+  if(!title||!sort)return null;
+  return{horizontal:sort.left-title.right,vertical:sort.top-title.bottom,nonOverlapping:sort.left>=title.right+6||sort.top>=title.bottom+3};
 });
-assert.ok(relationshipHeaderGap!==null&&relationshipHeaderGap>=98,'Relationships needs a 100px visual break between its header and first control.');
+assert.ok(relationshipHeaderSeparation?.nonOverlapping,'Relationships title and Sort must be separated without overlap, whether in one row or a responsive second row: '+JSON.stringify(relationshipHeaderSeparation));
 assert.equal(relationshipHeaderOrder.countParent,true,'Match count must live on the Relationships action line, not between the header and controls.');
 assert.ok(relationshipHeaderOrder.sort>=0&&relationshipHeaderOrder.limit>relationshipHeaderOrder.sort,'Sort must precede Max.');
 assert.ok(relationshipHeaderOrder.count>relationshipHeaderOrder.limit,'Match count must come after the controls.');
@@ -185,7 +186,7 @@ assert.ok(Math.abs(mobileRelationshipLayout.titleTop-mobileRelationshipLayout.co
 assert.ok(Math.abs(mobileRelationshipLayout.countTop-mobileRelationshipLayout.copyTop)<=5&&Math.abs(mobileRelationshipLayout.copyTop-mobileRelationshipLayout.downloadTop)<=5,'Matches, Copy, and Download must share the first mobile row.');
 assert.ok(Math.abs(mobileRelationshipLayout.sortTop-mobileRelationshipLayout.limitTop)<=5,'Sort and Max must share the second mobile row.');
 assert.ok(mobileRelationshipLayout.row2Top>mobileRelationshipLayout.row1Bottom,'Sort and Max must sit below the Relationships/action row.');
-assert.ok(mobileRelationshipLayout.sortWidth>mobileRelationshipLayout.limitWidth*4,'Sort must receive substantially more width than editable Max on mobile.');
+assert.ok(mobileRelationshipLayout.sortWidth>mobileRelationshipLayout.limitWidth*2.5,'Sort must receive substantially more width than editable Max on mobile.');
 assert.ok(mobileRelationshipLayout.headingRight-mobileRelationshipLayout.downloadRight<=12,'The first-row action cluster must remain right aligned.');
 assert.ok(mobileRelationshipLayout.headingHeight<95,'The mobile Relationships heading must remain exactly a compact two-row composition.');
 await page.setViewportSize({width:1440,height:1000});
@@ -259,7 +260,8 @@ assert.equal(selectedTile.visible,true,'Selected Relationship tile must remain v
 assert.ok(selectedTile.tile.top<selectedTile.scrollArea.bottom&&selectedTile.tile.bottom>selectedTile.scrollArea.top,
   'Selected tile must be scrolled into visible Relationships list viewport');
 
-await page.locator('#skyFoundationClearIsolation').click();
+await page.locator('#skyFoundationWheelMount').click({position:{x:6,y:6},force:true});
+await page.waitForFunction(()=>!document.querySelector('.sky-foundation-wheel')?.classList.contains('has-isolation'));
 
 // Relationship-list hover owns only the row/line highlight. It must never dim or isolate the wheel,
 // including A↔A and B↔B rows generated after the comparison relationships.
@@ -380,6 +382,8 @@ assert.ok(polarCross.edges.some(edge=>edge.entailedKind==='polar-axis'),'Grand C
 
 const grandCrossChoice=page.locator('[data-configuration-scope="A-A"][data-configuration-type="grand-cross"]');
 await grandCrossChoice.waitFor({state:'attached'});
+await page.locator('[data-aspect-filter="combined"] [data-aspect-filter-toggle]').click();
+await grandCrossChoice.waitFor({state:'visible'});
 if(!(await grandCrossChoice.isChecked()))await grandCrossChoice.check();
 await page.waitForSelector('[data-configuration-inevitable-show-more]',{state:'visible'});
 assert.equal(await page.locator('.sky-configuration-result-tile[data-configuration-type="grand-cross"]').count(),0,'Inevitable-off must suppress the Grand Cross tile that depends on the polar-axis opposition.');

@@ -83,7 +83,9 @@ function refs(slot){
     placementFingerprint:root.querySelector('[data-sky-drawer-fingerprint="placements"]'),
     cardHitsFingerprint:root.querySelector('[data-sky-drawer-fingerprint="card-hits"]'),
     summary:root.querySelector('[data-sky-where-summary]'),
-    heptagram:root.querySelector('[data-sky-heptagram]'),
+    // The authoritative full-size source lives only inside Where and When.
+    // A thumbnail is also an SVG and must never shadow this reference.
+    heptagram:root.querySelector(':scope > [data-sky-drawer="where"] [data-sky-where-summary] > .sky-ph-jump > [data-sky-heptagram]'),
     editor:root.querySelector('[data-ww-editor-mount]')
   };
 }

@@ -50,14 +50,9 @@ try{
   assert.deepEqual(actual,expected,'Corner description names must be canonical and capitalized.');
 
   for(const [id,name] of [['moon','Moon'],['saturn','Saturn']]){
-    await page.evaluate(id=>{
-      const node=document.querySelector('#skyFoundationWheelMount [data-interactive="placement"][data-sky="A"][data-placement="'+id+'"]');
-      if(!node)throw new Error('Missing placement glyph: '+id);
-      const pointer={bubbles:true,cancelable:true,composed:true,pointerId:88,pointerType:'mouse',isPrimary:true,buttons:1};
-      node.dispatchEvent(new PointerEvent('pointerdown',pointer));
-      node.dispatchEvent(new PointerEvent('pointerup',{...pointer,buttons:0}));
-      node.dispatchEvent(new MouseEvent('click',{bubbles:true,cancelable:true,composed:true}));
-    },id);
+    // Exercise one real Chromium mouse gesture: synthetic pointerup + click
+    // previously triggered the obsolete double-selection test path.
+    await page.locator('#skyFoundationWheelMount [data-interactive="placement"][data-sky="A"][data-placement="'+id+'"]').click({timeout:10000});
     await page.waitForFunction(expected=>
       document.querySelector('#skyFoundationWheelMount .sky-wheel-sector-description strong')?.textContent===expected,
       name,{timeout:10000});

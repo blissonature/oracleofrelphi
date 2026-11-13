@@ -35,6 +35,49 @@ const findTouchPoint=async(kind,scope=null)=>page.evaluate(({kind,scope})=>{
   const nodes=[...wheel.querySelectorAll('[data-interactive="'+kind+'"]')].filter(node=>node.getClientRects().length&&!node.classList.contains('sky-foundation-aspect-hit'));
   const width=window.innerWidth,height=window.innerHeight;
   const markers=[...wheel.querySelectorAll('[data-layer="placements"] [data-interactive="placement"]')].map(n=>n.getBoundingClientRect()).filter(r=>r.width>0&&r.height>0);
+  if(kind==='aspect'){
+    // The wide transparent clones can overlap a different visible aspect.
+    // Test the drawn stroke nearest to the physical finger, which is what
+    // the canonical wheel interaction controller now selects.
+    const strokes=[...wheel.querySelectorAll('[data-layer="aspects"] > line.sky-foundation-aspect:not(.sky-foundation-aspect-hit)')]
+      .filter(node=>!node.hidden&&getComputedStyle(node).display!=='none'&&
+        !['sky-chart-filter-hidden','sky-chart-orb-hidden','sky-orb-filter-hidden'].some(cls=>node.classList.contains(cls)))
+      .map(node=>{
+        const matrix=node.getScreenCTM();if(!matrix)return null;
+        const start=new DOMPoint(Number(node.getAttribute('x1')),Number(node.getAttribute('y1'))).matrixTransform(matrix);
+        const end=new DOMPoint(Number(node.getAttribute('x2')),Number(node.getAttribute('y2'))).matrixTransform(matrix);
+        return{node,start,end};
+      }).filter(Boolean);
+    const distance=(point,segment)=>{
+      const dx=segment.end.x-segment.start.x,dy=segment.end.y-segment.start.y,len=dx*dx+dy*dy;
+      const t=len?Math.max(0,Math.min(1,((point.x-segment.start.x)*dx+(point.y-segment.start.y)*dy)/len)):0;
+      return Math.hypot(point.x-segment.start.x-t*dx,point.y-segment.start.y-t*dy);
+    };
+    for(const segment of strokes){
+      if(scope&&segment.node.dataset.relationshipMode!==scope)continue;
+      for(const t of [.07,.1,.15,.2,.25,.3,.35,.4,.45,.5,.55,.6,.65,.7,.75,.8,.85,.9,.93]){
+        const x=segment.start.x+(segment.end.x-segment.start.x)*t,y=segment.start.y+(segment.end.y-segment.start.y)*t;
+        if(x<=2||y<=2||x>=width-2||y>=height-2)continue;
+        const top=document.elementFromPoint(x,y)?.closest?.('[data-interactive]');
+        if(top?.dataset.interactive!=='aspect')continue;
+        // A physical click on a *different* drawn stroke is authoritative;
+        // only wide transparent hit clones use nearest-stroke resolution.
+        if(!top.classList.contains('sky-foundation-aspect-hit')&&top!==segment.node)continue;
+        let closest=null,best=Infinity,runnerUp=Infinity;
+        for(const stroke of strokes){
+          const d=distance({x,y},stroke);
+          if(d<best){runnerUp=best;best=d;closest=stroke}
+          else if(d<runnerUp)runnerUp=d;
+        }
+        // Avoid crossing points and nearly coincident chords; touching one
+        // of these is physically ambiguous even though both are valid lines.
+        if(closest!==segment||best>1||runnerUp-best<0.25)continue;
+        const d=segment.node.dataset;
+        return{x,y,leftSky:d.leftSky,left:d.leftPlacement,aspect:d.aspect,rightSky:d.rightSky,right:d.rightPlacement};
+      }
+    }
+    return null;
+  }
   for(const node of nodes){
     const rect=node.getBoundingClientRect(),minX=Math.max(2,rect.left),maxX=Math.min(width-2,rect.right),minY=Math.max(2,rect.top),maxY=Math.min(height-2,rect.bottom);
     if(minX>=maxX||minY>=maxY)continue;
@@ -169,6 +212,7 @@ const activateScope=async(mode)=>{
   await page.waitForTimeout(850);
   const selection=await focus();
   const identity=[hit.leftSky,hit.left,hit.aspect,hit.rightSky,hit.right].join('|');
+  console.log('SCOPE_DRAWN_STROKE_DIAGNOSTIC',mode,JSON.stringify({hit,selected:selection.selected,kept:selection.keptAspects.slice(0,5),trace:await page.evaluate(()=>window.__focusTrace.slice(-16))}));
   assert.ok(selection.active,mode+' physical touch must lock isolation');
   assert.ok(selection.keptAspects.some(n=>[n.leftSky,n.left,n.aspect,n.rightSky,n.right].join('|')===identity),mode+' correct line must be kept');
   for(const endpoint of [hit.leftSky+':'+hit.left,hit.rightSky+':'+hit.right])assert.ok(selection.keptEndpoints.includes(endpoint),mode+' must keep '+endpoint);

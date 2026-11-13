@@ -58,7 +58,7 @@ try{
    await prompt.locator('[data-sky-name-cancel]').click();
    assert.equal((await readStorage(page)).lib.length,0,'Cancel cannot save');
    const menu=await picker(page);
-   assert.equal(await menu.locator('.sky-saved-subview-head strong').innerText(),'Load Sky');
+   assert.equal(await menu.locator('.sky-library-heading strong').innerText(),'Saved skies');
    assert.equal(await menu.locator('[data-sky-picker-save]').innerText(),'Save Sky');
    await menu.locator('[data-sky-picker-save]').click();
    const dialog=page.locator('.sky-save-name-overlay');

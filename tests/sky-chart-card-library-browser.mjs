@@ -27,10 +27,10 @@ try {
  const defaultState=await page.locator('#skySavedSkiesPopover [data-saved-sky-ref="family-1"]').evaluate(el=>{
   const overlay=el.querySelector('.sky-library-identity-overlay');
   return{opacity:getComputedStyle(overlay).opacity,display:getComputedStyle(overlay).visibility,
-    details:el.querySelector('[data-saved-fingerprint-copy]')?getComputedStyle(el.querySelector('[data-saved-fingerprint-copy]')).display:'none'};
+    detailInOverlay:!!overlay&&!!el.querySelector('[data-saved-fingerprint-copy]')&&overlay.contains(el.querySelector('[data-saved-fingerprint-copy]'))};
  });
  assert.equal(defaultState.display,'hidden','Identity overlay is concealed by default');
- assert.equal(defaultState.details,'none','No empty sensitive detail column');
+ assert.equal(defaultState.detailInOverlay,true,'Identity details must be nested within the concealed overlay, not placed in a separate column');
  await page.screenshot({path:'sky-card-library-modern-default.png',fullPage:false});
  await page.locator('[data-saved-sky-ref="family-1"]').hover();
  await page.waitForFunction(()=>getComputedStyle(document.querySelector('[data-saved-sky-ref="family-1"] .sky-library-identity-overlay')).visibility==='visible',null,{timeout:3000});
@@ -39,6 +39,10 @@ try {
  assert.equal(await page.locator('#skySavedSkiesPopover .sky-saved-list-row:not([hidden])').count(),1,'Search by name filters private cards');
  assert.equal(await page.locator('#skySavedSkiesPopover .sky-saved-list-row:not([hidden]) [data-saved-sky-ref]').getAttribute('data-saved-sky-ref'),'client-1');
  await page.locator('[data-sky-library-search]').fill('');
+ // Folders are user-created; never invent default categories.
+ await page.evaluate(()=>{window.prompt=()=> 'Clients'});
+ await page.locator('[data-sky-library-add-folder]').click();
+ await page.waitForSelector('[data-sky-library-folder="Clients"]');
  const action=page.locator('[data-saved-sky-ref="client-1"]').locator('..').locator('[data-sky-folder-edit]');
  await action.click();
  await page.locator('[data-saved-sky-ref="client-1"]').locator('..').locator('[data-sky-folder-select]').selectOption('Clients');

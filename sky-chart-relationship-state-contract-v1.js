@@ -41,11 +41,13 @@
     // exploration. This is NOT a filter that should erase their aspect lines:
     // nonmatching lines remain on the wheel, dimmed by .has-isolation.
     const exploring = !!document.querySelector('#skyFoundationWheelMount > .sky-foundation-wheel.has-isolation');
-    if (row.hidden && !exploring) return false;
-    if (HIDDEN_CLASSES.some(className => row.classList.contains(className))) return false;
-    // The HTML [hidden] attribute sets computed display:none; during isolation
-    // that is only list presentation, never permission to hide wheel geometry.
-    return (exploring && row.hidden) || getComputedStyle(row).display !== 'none';
+    // Eligibility for a wheel chord is determined by enduring aspect, house,
+    // sign, scope and harmonic filters, not by the Relationships list's
+    // temporary presentation during a wheel selection.
+    if (VISIBILITY_CLASSES.some(className => row.classList.contains(className))) return false;
+    if (exploring) return true;
+    // Outside wheel focus the ordinary list visibility still applies.
+    return !row.hidden && getComputedStyle(row).display !== 'none';
   }
 
   function clearAutomaticSelection() {

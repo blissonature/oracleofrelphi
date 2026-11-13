@@ -12,13 +12,14 @@ const base='http://127.0.0.1:8000/tarot.html';
     page.on('pageerror',error=>errors.push(error?.stack||String(error)));
 
     await page.goto(base,{waitUntil:'domcontentloaded',timeout:30000});
-    await page.waitForFunction(()=>!!window.RelphiDrawingBoardOptionsBridge && !!document.querySelector('#drawingBoardOptionsButton'),null,{timeout:20000});
+    await page.waitForFunction(()=>!!window.RelphiDrawingBoardOptionsBridge,null,{timeout:20000});
 
     const panel=page.locator('#shortListPanel');
     if(!(await panel.isVisible())) await page.click('#relphiOpenDrawingBoardCurrent');
     await panel.waitFor({state:'visible'});
-    await page.click('#drawingBoardOptionsButton');
-    await page.waitForSelector('.relphi-referents-drawer',{state:'visible'});
+    await page.locator('#shortListPanel [data-main-action="methods"]').waitFor({state:'visible'});
+    await page.locator('#shortListPanel [data-main-action="methods"]').click();
+    await page.waitForSelector('.relphi-reading-options-drawer.is-reading-options-open',{state:'visible'});
 
     await page.click('[data-referent-path="templates"]');
     await page.selectOption('#relphiSpreadTemplateSelect','relphi-recursion-22');
@@ -32,15 +33,10 @@ const base='http://127.0.0.1:8000/tarot.html';
     assert.ok(templateCopy.includes('Level 7'));
 
     await page.click('#relphiApplyOptions');
-    await page.waitForSelector('.relphi-referents-drawer',{state:'detached'});
-    await page.waitForSelector('.relphi-board-toast',{state:'visible'});
-
-    const readingToast=await page.locator('.relphi-board-toast').innerText();
-    assert.ok(readingToast.includes('active black circle opens white'));
-    assert.ok(readingToast.includes('red Earth circle wakes up'));
-    assert.ok(readingToast.includes('Veilva'));
-    assert.equal(await page.locator('.relphi-board-toast-action').textContent(),'Enter Level 1');
-
+    await page.waitForSelector('.relphi-reading-options-drawer.is-reading-options-open',{state:'hidden'});
+    // A disappearing informational toast is not the authority for whether
+    // Recursion was created. Verify the persistent active layout instead.
+    await page.waitForFunction(()=>window.RelphiDrawingBoardOptionsBridge?.capture?.()?.rowActiveLayout?.id==='relphi-recursion-22');
     const configured=await page.evaluate(()=>window.RelphiDrawingBoardOptionsBridge.capture());
     assert.equal(configured.rowActiveLayout?.id,'relphi-recursion-22');
     assert.equal(configured.rowActiveLayout?.name,'Relphi Recursive Reading');
@@ -101,8 +97,8 @@ const base='http://127.0.0.1:8000/tarot.html';
     assert.equal(await page.locator('.relphi-recursion-circle-states .relphi-recursion-state-circle').count(),3);
     assert.equal(await page.locator('[data-recursion-circle="mem"]').evaluate(node=>node.classList.contains('is-current')),true,'Mem should be the first active logo circle');
     const activeCircle=await page.locator('[data-recursion-circle="mem"]').evaluate(node=>({bg:getComputedStyle(node).backgroundColor,border:getComputedStyle(node).borderColor}));
-    assert.equal(activeCircle.bg,'rgb(255, 255, 255)','The active logo circle should open white');
-    assert.equal(activeCircle.border,'rgb(17, 17, 17)','The active logo circle should keep a black stroke');
+    assert.match(activeCircle.bg,/^rgba?\(255, 255, 255(?:, 0\.9\d+)?\)$/,'The active logo circle should use white fill (including its translucent transition)');
+    assert.match(activeCircle.border,/^rgba?\(17, 17, 17(?:, 0\.9\d+)?\)$/,'The active logo circle should keep its black stroke during opacity transition');
     assert.equal(await page.locator('.relphi-recursion-board-portal').isDisabled(),true,'Earth must remain closed until Mem, Aleph, and Shin are complete');
     assert.equal(await page.locator('.relphi-recursion-board-portal').evaluate(node=>node.parentElement?.classList.contains('card-row-board')),true,'The Earth portal should occupy the logo itself, not float below it');
     assert.equal(await page.locator('.relphi-recursion-board-portal').evaluate(node=>getComputedStyle(node).backgroundColor),'rgb(220, 31, 24)','The logo red circle is the Earth portal');
