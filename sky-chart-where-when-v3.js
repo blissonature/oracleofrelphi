@@ -780,7 +780,7 @@ function applySelectionDraft(){
     if(draft?.version!==1||!['date','location'].includes(draft.kind))throw new Error('Invalid selected Where and When field.');
     const value=String(draft.value||'').trim();
     if(!value||value.length>250)throw new Error('Empty or oversized selected field.');
-    if(draft.kind==='date'&&!/^\\d{4}-\\d{2}-\\d{2}$/.test(value))throw new Error('Selected date must be in ISO format.');
+    if(draft.kind==='date'&&!/^\d{4}-\d{2}-\d{2}$/.test(value))throw new Error('Selected date must be in ISO format.');
     openEditor('A',false);
     const form=formFor('A');
     if(!form)throw new Error('Sky A editor did not open.');
