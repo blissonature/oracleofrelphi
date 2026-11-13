@@ -330,23 +330,88 @@ function normalizePacket(packet){
   if(inferred){next.source='placement-inference';next.query=''}else if(!next.source)next.source='search';
   return next;
 }
+// The Where and When editor is the sole owner of its location search.
+async function locationSearchJson(url){
+  const response=await fetch(url.toString(),{headers:{Accept:'application/json'},signal:AbortSignal.timeout(8000)});
+  if(!response.ok)throw new Error('Location provider returned '+response.status);
+  return response.json();
+}
+function locationResultPacket(query,place){
+  const latitude=Number(place.latitude),longitude=Number(place.longitude),timezone=String(place.timezone||'');
+  if(!Number.isFinite(latitude)||!Number.isFinite(longitude)||!timezone)return null;
+  return{source:'search',query,canonical:[place.name,place.admin1,place.country].map(v=>String(v||'').trim()).filter(Boolean).join(', '),latitude,longitude,timezone};
+}
+async function cityLocationSearch(query){
+  const parts=query.split(',').map(v=>v.trim()).filter(Boolean);
+  const url=new URL('https://geocoding-api.open-meteo.com/v1/search');
+  url.searchParams.set('name',parts[0]||query);
+  url.searchParams.set('count','50');
+  url.searchParams.set('language','en');
+  url.searchParams.set('format','json');
+  const data=await locationSearchJson(url),results=Array.isArray(data.results)?data.results:[];
+  const key=value=>String(value||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]/g,'');
+  const usStates={AL:'Alabama',AK:'Alaska',AZ:'Arizona',AR:'Arkansas',CA:'California',CO:'Colorado',CT:'Connecticut',DE:'Delaware',FL:'Florida',GA:'Georgia',HI:'Hawaii',ID:'Idaho',IL:'Illinois',IN:'Indiana',IA:'Iowa',KS:'Kansas',KY:'Kentucky',LA:'Louisiana',ME:'Maine',MD:'Maryland',MA:'Massachusetts',MI:'Michigan',MN:'Minnesota',MS:'Mississippi',MO:'Missouri',MT:'Montana',NE:'Nebraska',NV:'Nevada',NH:'New Hampshire',NJ:'New Jersey',NM:'New Mexico',NY:'New York',NC:'North Carolina',ND:'North Dakota',OH:'Ohio',OK:'Oklahoma',OR:'Oregon',PA:'Pennsylvania',RI:'Rhode Island',SC:'South Carolina',SD:'South Dakota',TN:'Tennessee',TX:'Texas',UT:'Utah',VT:'Vermont',VA:'Virginia',WA:'Washington',WV:'West Virginia',WI:'Wisconsin',WY:'Wyoming',DC:'District of Columbia'};
+  const qualifiers=parts.slice(1).map(part=>key(usStates[part.toUpperCase()]||part));
+  const matches=results.filter(place=>qualifiers.every(q=>[place.admin1,place.admin2,place.admin3,place.country,place.country_code,place.admin1_code].some(v=>key(v)===q)));
+  return matches.map(place=>locationResultPacket(query,place)).filter(Boolean).slice(0,7);
+}
+async function preciseLocationSearch(query){
+  const url=new URL('https://nominatim.openstreetmap.org/search');
+  url.searchParams.set('q',query);
+  url.searchParams.set('format','jsonv2');
+  url.searchParams.set('addressdetails','1');
+  url.searchParams.set('limit','7');
+  url.searchParams.set('accept-language','en');
+  const raw=await locationSearchJson(url),results=Array.isArray(raw)?raw:[];
+  // Precise locations need a geographical time zone; return only verified packets.
+  const packets=[];
+  for(const result of results.slice(0,7)){
+    const latitude=Number(result.lat),longitude=Number(result.lon);
+    if(!Number.isFinite(latitude)||!Number.isFinite(longitude))continue;
+    try{
+      const zoneUrl=new URL('https://api.open-meteo.com/v1/forecast');
+      zoneUrl.searchParams.set('latitude',String(latitude));
+      zoneUrl.searchParams.set('longitude',String(longitude));
+      zoneUrl.searchParams.set('timezone','auto');
+      zoneUrl.searchParams.set('forecast_days','1');
+      const zone=await locationSearchJson(zoneUrl);
+      if(!zone?.timezone)continue;
+      packets.push({source:'search',query,canonical:String(result.display_name||result.name||query),latitude,longitude,timezone:String(zone.timezone)});
+    }catch(_){continue}
+  }
+  return packets;
+}
 async function searchLocation(slot){
   const card=panel(slot),input=card?.querySelector('[data-ww-field="location-query"]'),resultsNode=card?.querySelector('.sky-location-results'),query=input?.value.trim()||'';
   if(!query){status(slot,'Type a location first.',true);input?.focus();return}
-  status(slot,`Searching for ${query}…`);resultsNode?.replaceChildren();
-  try{
-    const url=new URL('https://geocoding-api.open-meteo.com/v1/search');url.searchParams.set('name',query);url.searchParams.set('count','7');url.searchParams.set('language','en');url.searchParams.set('format','json');
-    const response=await fetch(url.toString(),{headers:{Accept:'application/json'}});if(!response.ok)throw new Error(`Location search returned ${response.status}.`);
-    const data=await response.json(),results=Array.isArray(data.results)?data.results:[];if(!results.length)throw new Error('No matching location was found. Try a city plus state, region, or country.');
-    const fragment=document.createDocumentFragment();
-    results.forEach((result,index)=>{
-      const canonical=[result.name,result.admin1,result.country].map(v=>String(v||'').trim()).filter((v,i,list)=>v&&list.indexOf(v)===i).join(','+' '),button=document.createElement('button');
-      button.type='button';button.className='sky-location-result';button.dataset.wwAction='select-location';button.dataset.locationIndex=String(index);button.innerHTML=`<strong>${escapeHtml(canonical)}</strong><span>${displayCoordinate(result.latitude)}, ${displayCoordinate(result.longitude)} · ${escapeHtml(result.timezone||'Time zone unavailable')}</span>`;
-      button.__locationPacket={source:'search',query,canonical,latitude:Number(result.latitude),longitude:Number(result.longitude),timezone:String(result.timezone||'')};fragment.appendChild(button);
-    });
-    resultsNode.appendChild(fragment);status(slot,'Choose the canonical location that matches what you meant.');
-  }catch(error){status(slot,error.message||'Location search failed.',true)}
+  status(slot,'Searching for '+query+'…');
+  resultsNode?.replaceChildren();
+  const addressLike=/\d|(?:\bst(?:reet)?\b|\bave(?:nue)?\b|\brd\b|\broad\b|\bbuilding\b)/i.test(query);
+  const providers=addressLike?[preciseLocationSearch,cityLocationSearch]:[cityLocationSearch,preciseLocationSearch];
+  const errors=[];let results=[];
+  for(const provider of providers){
+    try{results=await provider(query);if(results.length)break}
+    catch(error){errors.push(error)}
+  }
+  if(!formFor(slot)?.isConnected||input?.value.trim()!==query)return;
+  if(!results.length){
+    const failed=errors.length===providers.length;
+    status(slot,failed?'Location services could not be reached. Check your connection and try again, or enter a different location.':'No matching location was found. Try the city and state, or a more specific address.',true);
+    return;
+  }
+  const fragment=document.createDocumentFragment();
+  results.forEach((packet,index)=>{
+    const button=document.createElement('button');
+    button.type='button';button.className='sky-location-result';
+    button.dataset.wwAction='select-location';button.dataset.locationIndex=String(index);
+    button.innerHTML='<strong>'+escapeHtml(packet.canonical)+'</strong><span>'+displayCoordinate(packet.latitude)+', '+displayCoordinate(packet.longitude)+' · '+escapeHtml(packet.timezone)+'</span>';
+    button.__locationPacket=packet;
+    fragment.appendChild(button);
+  });
+  resultsNode?.appendChild(fragment);
+  status(slot,'Choose the location that matches what you meant.');
 }
+
 function selectLocation(slot,source){
   const packet=normalizePacket(source?.__locationPacket||source);
   if(!packet||!Number.isFinite(Number(packet.latitude))||!Number.isFinite(Number(packet.longitude))||!packet.timezone){status(slot,'That result did not include a complete coordinate and time-zone packet.',true);return false}
