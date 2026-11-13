@@ -44,6 +44,9 @@ try{
       // The reported live failure: coordinate time-zone provider does not resolve.
       // Both slots and both viewports must still calculate with an explicitly marked browser fallback.
       await page.route(zoneUrl,failZone);
+      const stallZone=()=>new Promise(()=>{});
+      // Network lookup that never responds must not delay the chart.
+      if(viewport.width===390&&slot==='B')await page.route(zoneUrl,stallZone);
       const startedAt=Date.now();
       await action.click();
       await page.waitForFunction(slot=>{
@@ -51,13 +54,14 @@ try{
         return sky?.metadata?.capturedNowAt&&sky?.calcProfile?.timeZone==='America/Denver'&&sky?.metadata?.whereWhenSource==='current-location';
       },slot,{timeout:30000});
       const elapsed=Date.now()-startedAt;
-      if(viewport.width===1280&&slot==='A')assert.ok(elapsed<7000,'Optional stalled reverse-geocode must not cause the old 10-second wait: '+elapsed+'ms');
+      assert.ok(elapsed<4500,'Here and Now should calculate promptly despite broken geocoding: '+elapsed+'ms for '+slot+' '+viewport.width);
       if(viewport.width===1280&&slot==='A')await page.unroute(reverseUrl,stallReverse);
+      if(viewport.width===390&&slot==='B')await page.unroute(zoneUrl,stallZone);
       const actual=await page.evaluate(slot=>JSON.parse(localStorage.getItem('relphiSkyChart'+slot)),slot);
       assert.equal(actual.calcProfile.timeZoneSource,'browser-fallback','Browser timezone fallback must be recorded');
       assert.ok(actual.placements.Ascendant&&actual.placements.Midheaven,slot+' must calculate known-time angles');
       assert.ok(Date.now()-Date.parse(actual.calcProfile.instant)<120000,slot+' must capture present instant');
-      console.log('PASS Here and Now '+slot+' '+viewport.width);
+      console.log('PASS fast Here and Now '+slot+' '+viewport.width+' '+elapsed+'ms');
     }
     assert.ok(!errors.some(e=>/Uncaught|TypeError|ReferenceError/.test(e)),errors.join('\n'));
     await context.close();
