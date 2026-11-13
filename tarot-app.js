@@ -4545,8 +4545,6 @@
     const fields = [];
     if (rel.title) fields.push(field('Relphi title', rel.title));
     if (rel.summary) fields.push(field('Summary', rel.summary));
-    if (rel.harmonic_union_reflection) fields.push(field('Harmonic union · individuality preserved', rel.harmonic_union_reflection));
-    if (rel.toroidal_visual_observation) fields.push(field('Art background · visual hypothesis', rel.toroidal_visual_observation));
     const needs = rel.universal_human_needs;
     if (needs) {
       if (needs.role) fields.push(field('Role', needs.role));
