@@ -705,7 +705,7 @@ async function resolveSelectionLocation(locationName){
   // Parentheses on biographical pages frequently identify the subject
   // (e.g. "Rochester (Winona), Minnesota"), not a geographical district.
   // Keep the original text in selectionLocation, but geocode the city itself.
-  const query=String(parts[0]||'').replace(/\\s*\\([^()]*\\)\\s*$/,'').trim();
+  const query=String(parts[0]||'').replace(/\s*\([^()]*\)\s*$/,'').trim();
   if(!query||query.length<2)throw new Error('Invalid location: '+locationName);
   const url=new URL('https://geocoding-api.open-meteo.com/v1/search');
   url.searchParams.set('name',query);url.searchParams.set('count','100');url.searchParams.set('language','en');url.searchParams.set('format','json');
