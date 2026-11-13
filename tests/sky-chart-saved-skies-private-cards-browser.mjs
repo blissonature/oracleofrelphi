@@ -40,8 +40,9 @@ try{
   for(const config of [{viewport:{width:630,height:940},mobile:false},{viewport:{width:390,height:844},mobile:true}]){
     const context=await browser.newContext({viewport:config.viewport,isMobile:config.mobile,hasTouch:config.mobile});
     const page=await context.newPage(),errors=[];
-    page.on('pageerror',error=>errors.push(error.message));
+    page.on('pageerror',error=>{errors.push(error.message);console.error('Saved Skies pageerror',error.message)});
     await load(page);
+    console.log('Saved Skies owner state',JSON.stringify(await page.evaluate(()=>({loaded:!!window.RelphiSkyCardLibrary,identity:!!window.RelphiSkySavedSkyIdentity,records:window.RelphiSkySavedSkyIdentity?.library?.().length,rows:document.querySelectorAll('#skySavedSkiesPopover .sky-saved-list-row').length,overlay:document.querySelectorAll('#skySavedSkiesPopover .sky-library-identity-overlay').length}))));
     await page.waitForSelector('#skySavedSkiesPopover [data-saved-sky-ref="private-person-one"] .sky-library-identity-overlay',{state:'attached',timeout:12000});
     const rows=page.locator('#skySavedSkiesPopover .sky-saved-list-row');
     assert.equal(await rows.count(),2,'Canonical Saved Skies picker must show both fixture skies');
