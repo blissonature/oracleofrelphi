@@ -769,13 +769,51 @@ async function applySelectionComparison(){
     console.error('[Oracle of Relphi] Selection comparison import:',error);
   }
 }
+/* A date-only or location-only selection opens an editable draft; never fabricate the missing half. */
+function applySelectionDraft(){
+  const params=new URLSearchParams(location.search);
+  const raw=params.get('relphiDraft');
+  if(!raw)return;
+  try{
+    if(raw.length>6000)throw new Error('Selection is too long.');
+    const draft=JSON.parse(raw);
+    if(draft?.version!==1||!['date','location'].includes(draft.kind))throw new Error('Invalid selected Where and When field.');
+    const value=String(draft.value||'').trim();
+    if(!value||value.length>250)throw new Error('Empty or oversized selected field.');
+    if(draft.kind==='date'&&!/^\\d{4}-\\d{2}-\\d{2}$/.test(value))throw new Error('Selected date must be in ISO format.');
+    openEditor('A',false);
+    const form=formFor('A');
+    if(!form)throw new Error('Sky A editor did not open.');
+    if(draft.kind==='date'){
+      const now=form.querySelector('[data-ww-field="now"]');
+      if(now)now.checked=false;
+      const input=form.querySelector('[data-ww-field="date"]');
+      if(input)input.value=value;
+      const unknown=form.querySelector('[data-ww-field="time-unknown"]');
+      if(unknown){unknown.checked=true;form.querySelector('[data-ww-field="time"]').disabled=true}
+      syncModes('A');
+      status('A','Selected date inserted. Choose a location and confirm; the time remains unknown.');
+    }else{
+      const here=form.querySelector('[data-ww-field="here"]');
+      if(here)here.checked=false;
+      const input=form.querySelector('[data-ww-field="location-query"]');
+      if(input)input.value=value;
+      syncModes('A');
+      status('A','Selected location inserted. Search and confirm the correct place.');
+    }
+    const next=new URL(location.href);next.searchParams.delete('relphiDraft');
+    history.replaceState(history.state,'',next.pathname+next.search+next.hash);
+    requestAnimationFrame(()=>form.querySelector(draft.kind==='date'?'[data-ww-field="date"]':'[data-ww-field="location-query"]')?.focus());
+  }catch(error){selectionComparisonNotice('Selection draft failed: '+(error.message||String(error)))}
+}
+
 function scheduleSelectionComparison(){
-  if(!/relphiCompare|relphiSingle/.test(location.search))return;
+  if(!/relphiCompare|relphiSingle|relphiDraft/.test(location.search))return;
   let attempts=0;
   const run=()=>{
     attempts++;
     const ready=!!(window.Astronomy&&window.luxon?.DateTime&&window.RelphiHouseSystems?.calculateCusps&&window.RelphiSkyCardShell);
-    if(ready){void applySelectionComparison();return}
+    if(ready){if(new URLSearchParams(location.search).has('relphiDraft'))applySelectionDraft();else void applySelectionComparison();return}
     if(attempts<120)setTimeout(run,50);
     else selectionComparisonNotice('Sky Chart calculation dependencies did not load.');
   };
