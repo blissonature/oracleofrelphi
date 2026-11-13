@@ -16,7 +16,7 @@ test('Saved Skies overrides inherited 270px minimum SVG height',()=>{
   assert.match(block,/min-height:0!important/);
   assert.match(block,/max-height:44px!important/);
   assert.match(block,/transform:none!important/);
-  assert.match(html,/sky-chart-saved-skies-labels-v1\\.js\\?v=\\d+/,'Saved Skies must load the canonical versioned labels source');
+  assert.match(html,/sky-chart-saved-skies-labels-v1[.]js[?]v=[0-9]+/,'Saved Skies must load the canonical versioned labels source');
 });
 
 test('Saved Skies retains independent fingerprints per row',()=>{
