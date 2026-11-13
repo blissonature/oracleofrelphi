@@ -748,10 +748,12 @@ function readSelectionComparison(){
   return events.map((event,index)=>{
     const date=String(event?.date||''),time=event?.time==null?null:String(event.time);
     const locationName=String(event?.location||'').trim();
+    const timeZoneAbbreviation=String(event?.timeZoneAbbreviation||'').trim().toUpperCase();
+    if(timeZoneAbbreviation&&!/^(?:PST|PDT|MST|MDT|CST|CDT|EST|EDT|AKST|AKDT|HST|UTC|GMT)$/.test(timeZoneAbbreviation))throw new Error('Unsupported time-zone abbreviation: '+timeZoneAbbreviation);
     const label=String(event?.label||'').trim().slice(0,32);
     if(!datePattern.test(date)||Number.isNaN(Date.parse(date+'T00:00:00Z'))||(time!==null&&!timePattern.test(time))||!locationName||locationName.length>200)
       throw new Error('Event '+(index+1)+' needs a valid date, location and optional time.');
-    return{date,time,location:locationName,label};
+    return{date,time,location:locationName,label,timeZoneAbbreviation};
   });
 }
 function selectionComparisonNotice(message){
@@ -791,7 +793,57 @@ function chooseSelectionCity(original,candidates){
     note.appendChild(choices);
   });
 }
+async function resolveSelectionStreetAddress(locationName){
+  const normalized=locationName.replace(/\bU\.?\s*S\.?\s*A\.?(?=\s|,|$)/gi,'United States').replace(/\bU\.?\s*S\.?(?=\s|,|$)/gi,'United States');
+  const first=normalized.split(',')[0].trim();
+  const number=first.match(/^(\d+[A-Za-z]?)\s+/)?.[1];
+  const street=first.replace(/^\d+[A-Za-z]?\s+/,'').trim();
+  if(!number||!street)throw new Error('Street number and street name are needed: '+locationName);
+  const norm=value=>String(value||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\bboulevard\b/g,'blvd').replace(/\bavenue\b/g,'ave').replace(/\bstreet\b/g,'st').replace(/\bdrive\b/g,'dr').replace(/[^a-z0-9]/g,'');
+  const parts=normalized.split(',').map(v=>v.trim());
+  const city=parts[1]||'';
+  const statePart=parts[2]||'';
+  const state=statePart.replace(/\s+\d{5}(?:-\d{4})?$/,'').trim();
+  const postal=normalized.match(/\b\d{5}(?:-\d{4})?\b/)?.[0]||'';
+  const url=new URL('https://nominatim.openstreetmap.org/search');
+  url.searchParams.set('q',normalized);
+  url.searchParams.set('format','jsonv2');
+  url.searchParams.set('addressdetails','1');
+  url.searchParams.set('limit','10');
+  url.searchParams.set('accept-language','en');
+  let raw;
+  try{
+    const response=await fetch(url.toString(),{headers:{Accept:'application/json'},signal:AbortSignal.timeout(10000)});
+    if(!response.ok)throw new Error('HTTP '+response.status);
+    raw=await response.json();
+  }catch(error){throw new Error('Street-address service could not be reached. Try again from the Where and When editor.')}
+  const matches=(Array.isArray(raw)?raw:[]).filter(result=>{
+    const address=result.address||{};
+    const name=String(result.display_name||result.name||'');
+    const actualNumber=String(address.house_number||'');
+    const actualRoad=String(address.road||address.pedestrian||address.street||'');
+    const matchedNumber=norm(actualNumber)===norm(number)||new RegExp('(?:^|\\D)'+number+'(?:\\D|$)').test(name);
+    const matchedStreet=norm(actualRoad)===norm(street)||norm(name).includes(norm(street));
+    const matchedCity=!city||[address.city,address.town,address.village,address.municipality,name].some(v=>norm(v).includes(norm(city)));
+    const matchedState=!state||[address.state,name].some(v=>norm(v).includes(norm(state)));
+    const matchedPostal=!postal||!address.postcode||String(address.postcode).startsWith(postal.slice(0,5));
+    return matchedNumber&&matchedStreet&&matchedCity&&matchedState&&matchedPostal&&Number.isFinite(Number(result.lat))&&Number.isFinite(Number(result.lon));
+  });
+  if(!matches.length)throw new Error('Street address could not be verified: '+locationName+'. Search for the address in Where and When and choose a verified result.');
+  const place=matches[0],latitude=Number(place.lat),longitude=Number(place.lon);
+  const zoneUrl=new URL('https://api.open-meteo.com/v1/forecast');
+  zoneUrl.searchParams.set('latitude',String(latitude));zoneUrl.searchParams.set('longitude',String(longitude));
+  zoneUrl.searchParams.set('timezone','auto');zoneUrl.searchParams.set('forecast_days','1');
+  let timezone='';
+  try{
+    const response=await fetch(zoneUrl.toString(),{headers:{Accept:'application/json'},signal:AbortSignal.timeout(10000)});
+    if(response.ok)timezone=String((await response.json()).timezone||'');
+  }catch(_){}
+  if(!timezone||window.luxon?.IANAZone?.isValidZone?.(timezone)!==true)throw new Error('Street address was located, but its geographic time zone could not be confirmed. Try again in Where and When.');
+  return{source:'selection-compare',query:locationName,canonical:locationName,latitude,longitude,timezone};
+}
 async function resolveSelectionLocation(locationName){
+  if(/^\s*\d+[A-Za-z]?\s+\S/.test(locationName))return resolveSelectionStreetAddress(locationName);
   const parts=locationName.split(',').map(part=>part.trim()).filter(Boolean);
   const first=String(parts[0]||'');
   const annotation=first.match(/^(.+?)\s*\(([^()]*)\)\s*$/);
@@ -842,10 +894,15 @@ async function applySelectionComparison(){
     const records=[];
     for(let i=0;i<events.length;i++){
       const slot=i?'B':'A',event=events[i],selected=locations[i];
+      if(event.timeZoneAbbreviation&&event.time){
+        const offsetMinutes={PST:-480,PDT:-420,MST:-420,MDT:-360,CST:-360,CDT:-300,EST:-300,EDT:-240,AKST:-540,AKDT:-480,HST:-600,UTC:0,GMT:0}[event.timeZoneAbbreviation];
+        const local=window.luxon?.DateTime?.fromISO(event.date+'T'+event.time,{zone:selected.timezone});
+        if(!local?.isValid||local.offset!==offsetMinutes)throw new Error('The selected '+event.timeZoneAbbreviation+' does not agree with '+selected.timezone+' at the selected date and time.');
+      }
       const record=calculateSky(slot,selected,event.date,event.time||'',{replaceExisting:true,timeUnknown:event.time===null});
       const name=[event.label?event.label.charAt(0).toUpperCase()+event.label.slice(1):'Event '+(i+1),event.date].join(' · ');
       record.name=name;record.title=name;record.displayName=name;record.skyName=name;
-      record.metadata={...record.metadata,selectionEventLabel:event.label,selectionLocation:event.location};
+      record.metadata={...record.metadata,selectionEventLabel:event.label,selectionLocation:event.location,selectionTimeZoneAbbreviation:event.timeZoneAbbreviation||null};
       if(window.RelphiChironEphemeris)await window.RelphiChironEphemeris.completePayload(record);
       records.push(record);
     }
