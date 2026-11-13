@@ -3964,7 +3964,6 @@ window.RELPHI_TAROT_CARDS = [
     "stable_symbol_kind": "card",
     "relphi": {
       "title": "Zodiac foundation: Distinction",
-      "harmonic_union_reflection": "Self and other can cease to be opposites without ceasing to be themselves. Consider two musical notes. They can form a harmony that neither could produce alone. The harmony is something greater than either note, but it doesn't require either note to lose its pitch. This is different from blending them until neither is distinguishable.",
       "summary": "The embodied center divides experience into distinguishable terms and exchanges signals between them.",
       "principles": [
         "Distinction",
@@ -4997,8 +4996,6 @@ window.RELPHI_TAROT_CARDS = [
     "stable_symbol_kind": "card",
     "relphi": {
       "title": "Zodiac foundation: Orientation",
-      "harmonic_union_reflection": "Self and other can cease to be opposites without ceasing to be themselves. Consider two musical notes. They can form a harmony that neither could produce alone. The harmony is something greater than either note, but it doesn't require either note to lose its pitch. This is different from blending them until neither is distinguishable.",
-      "toroidal_visual_observation": "Visual hypothesis (Thoth Art): the fine, looping constructions in the background resemble projections of spiral tori, suggesting circulation and the meeting of distinct currents. This is a visual analogy, not a confirmed identification of the forms or Harris's intent.",
       "summary": "The relational field takes accumulated distinctions and bonds and orients them toward a horizon, worldview, journey, law, teaching, or meaning.",
       "principles": [
         "Orientation",
