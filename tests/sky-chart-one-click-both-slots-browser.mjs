@@ -35,11 +35,16 @@ try{
       await form.waitFor();
       const action=form.locator('[data-ww-action="here-and-now"]');
       assert.equal(await action.count(),1);
+      const reverseUrl='https://api.bigdatacloud.net/data/reverse-geocode-client**';
+      const stallReverse=()=>new Promise(()=>{});
+      // Simulate an unavailable optional address service while the time-zone service succeeds.
+      if(viewport.width===1280&&slot==='A')await page.route(reverseUrl,stallReverse);
       await action.click();
       await page.waitForFunction(slot=>{
         const sky=JSON.parse(localStorage.getItem('relphiSkyChart'+slot)||'null');
         return sky?.metadata?.capturedNowAt&&sky?.calcProfile?.timeZone==='America/Denver'&&sky?.metadata?.whereWhenSource==='current-location';
       },slot,{timeout:30000});
+      if(viewport.width===1280&&slot==='A')await page.unroute(reverseUrl,stallReverse);
       const actual=await page.evaluate(slot=>JSON.parse(localStorage.getItem('relphiSkyChart'+slot)),slot);
       assert.ok(actual.placements.Ascendant&&actual.placements.Midheaven,slot+' must calculate known-time angles');
       assert.ok(Date.now()-Date.parse(actual.calcProfile.instant)<120000,slot+' must capture present instant');
