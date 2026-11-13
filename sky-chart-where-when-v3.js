@@ -702,7 +702,10 @@ function selectionComparisonNotice(message){
 async function resolveSelectionLocation(locationName){
   // Open-Meteo searches locality names, not entire postal addresses.
   const parts=locationName.split(',').map(part=>part.trim()).filter(Boolean);
-  const query=parts[0];
+  // Parentheses on biographical pages frequently identify the subject
+  // (e.g. "Rochester (Winona), Minnesota"), not a geographical district.
+  // Keep the original text in selectionLocation, but geocode the city itself.
+  const query=String(parts[0]||'').replace(/\\s*\\([^()]*\\)\\s*$/,'').trim();
   if(!query||query.length<2)throw new Error('Invalid location: '+locationName);
   const url=new URL('https://geocoding-api.open-meteo.com/v1/search');
   url.searchParams.set('name',query);url.searchParams.set('count','100');url.searchParams.set('language','en');url.searchParams.set('format','json');
@@ -712,12 +715,17 @@ async function resolveSelectionLocation(locationName){
   const normalize=value=>String(value||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]/g,'');
   const usStates={AL:'Alabama',AK:'Alaska',AZ:'Arizona',AR:'Arkansas',CA:'California',CO:'Colorado',CT:'Connecticut',DE:'Delaware',FL:'Florida',GA:'Georgia',HI:'Hawaii',ID:'Idaho',IL:'Illinois',IN:'Indiana',IA:'Iowa',KS:'Kansas',KY:'Kentucky',LA:'Louisiana',ME:'Maine',MD:'Maryland',MA:'Massachusetts',MI:'Michigan',MN:'Minnesota',MS:'Mississippi',MO:'Missouri',MT:'Montana',NE:'Nebraska',NV:'Nevada',NH:'New Hampshire',NJ:'New Jersey',NM:'New Mexico',NY:'New York',NC:'North Carolina',ND:'North Dakota',OH:'Ohio',OK:'Oklahoma',OR:'Oregon',PA:'Pennsylvania',RI:'Rhode Island',SC:'South Carolina',SD:'South Dakota',TN:'Tennessee',TX:'Texas',UT:'Utah',VT:'Vermont',VA:'Virginia',WA:'Washington',WV:'West Virginia',WI:'Wisconsin',WY:'Wyoming',DC:'District of Columbia'};
   const wanted=parts.slice(1).map(part=>normalize(usStates[part.toUpperCase()]||part));
+  const cityKey=normalize(query);
   const scored=results.map(place=>{
-    const fields=[place.admin1,place.admin2,place.admin3,place.country,place.country_code,place.admin1_code,place.admin2_code].map(normalize);
-    const score=wanted.reduce((total,word)=>total+(fields.includes(word)?10:0),0);
-    return{place,score};
-  }).sort((a,b)=>b.score-a.score);
-  if(!scored.length||(wanted.length&&scored[0].score<wanted.length*10))
+    const fields=[place.admin1,place.admin2,place.admin3,place.admin4,place.country,place.country_code,place.admin1_code,place.admin2_code].map(normalize);
+    // Require an exact city and every supplied geographic qualifier.
+    // A partial/prefix city match must never quietly become another town.
+    const cityMatches=normalize(place.name)===cityKey;
+    const regionMatches=wanted.every(word=>fields.includes(word));
+    return{place,match:cityMatches&&regionMatches};
+  }).filter(result=>result.match)
+    .sort((a,b)=>Number(b.place.population||0)-Number(a.place.population||0));
+  if(!scored.length)
     throw new Error('Could not confidently match location: '+locationName+'. Check the selected place.');
   const place=scored[0].place;
   if(!Number.isFinite(Number(place.latitude))||!Number.isFinite(Number(place.longitude))||!place.timezone)
