@@ -34,7 +34,7 @@ assert.ok(cities.length===1&&cities[0].kind==='address','Address linking works i
 assert.equal(R.candidate('date','November 9, 2026').location,'','Date-only cannot borrow a location');
 assert.equal(R.candidate('address','Salt Lake City, Utah').date,'','Address-only cannot borrow a date');
 const url=R.skyURL(R.candidate('selection','Location: Salt Lake City, Utah\nDate: November 9, 2026\nTime: 3:15 AM'));
-const packet=JSON.parse(new URLSearchParams(new URL(url).hash.slice(1)).get('relphiSkyIntake'));
+const packet=JSON.parse(new URL(url).searchParams.get('relphiSingle')).event;
 assert.equal(packet.date,'2026-11-09');
 assert.equal(packet.location,'Salt Lake City, Utah');
 assert.equal(packet.time,'03:15');
@@ -59,7 +59,13 @@ assert.equal(partialBirth.errors.length,0,'Time-zone annotation is nonblocking f
 assert.equal(partialBirth.date,'1946-06-14');
 assert.equal(partialBirth.time,'10:54');
 const birthURL=R.skyURL(R.recognize(completeBirth));
-const birthPacket=JSON.parse(new URLSearchParams(new URL(birthURL).hash.slice(1)).get('relphiSkyIntake'));
+const birthPacket=JSON.parse(new URL(birthURL).searchParams.get('relphiSingle')).event;
 assert.deepEqual({date:birthPacket.date,time:birthPacket.time,location:birthPacket.location},
   {date:'1946-06-14',time:'10:54',location:'Jamaica, Queens, New York'});
-assert.match(R.destination('preview'),/6fdcb770d3b7008ecf0cb44f97f02a87494184a1/);
+assert.match(R.destination('preview'),/12c803672cb618a62b386b33610097939912f723/);
+assert.equal(birthPacket.timeZoneAbbreviation,'EDT');
+const draftPacket=JSON.parse(new URL(R.skyURL(partialBirth)).searchParams.get('relphiDraft'));
+assert.equal(draftPacket.kind,'fields');
+assert.equal(draftPacket.date,'1946-06-14');
+assert.equal(draftPacket.time,'10:54');
+assert.equal(draftPacket.location,'');
