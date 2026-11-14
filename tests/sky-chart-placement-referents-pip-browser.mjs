@@ -26,6 +26,7 @@ try{
       const detail=panel.locator('.sky-placement-expanded[data-placement-detail="saturn"]');
       assert.equal(await detail.count(),1,'Saturn detail is expanded '+slot);
       assert.ok(await detail.isVisible(),'Expanded referents must actually be visible');
+      if(slot==='A')await panel.screenshot({path:'sky-chart-placement-detail-'+width+'.png'});
       const referents=await detail.textContent();
       for(const part of ['Placement','Sign','Decan','House'])assert.ok(referents.includes(part),part+' referent absent');
       assert.ok(referents.includes('structure'),'Saturn referent absent');
@@ -46,6 +47,8 @@ try{
       const ids=await images.evaluateAll(nodes=>nodes.map(n=>n.getAttribute('src').split('/').at(-1)));
       assert.ok(new Set(ids).size<ids.length,'duplicate pip artwork must remain in source order');
       assert.equal(await panel.locator('.sky-placement-pip-gallery .sky-placement-pip[href*="tarot.html?card="]').count(),placementOrder.length);
+      await page.waitForFunction(slot=>Array.from(document.querySelectorAll('#skyFoundation'+slot+' .sky-placement-pip img')).every(img=>img.complete&&img.naturalWidth>0),slot,{timeout:15000});
+      if(slot==='A')await panel.screenshot({path:'sky-chart-placement-pip-'+width+'.png'});
       await panel.locator('[data-placement-view="list"]').click();
       await saturn.waitFor();
       assert.equal(await panel.locator('.sky-placement-pip-gallery').count(),0,'return to placement ledger');
