@@ -128,14 +128,6 @@ function placementArtwork(slot,p){
     return`<a class="sky-card-placement-art" data-card-placement="${esc(record.canonical)}" href="${esc(cards.href(card.id))}" aria-label="${esc(record.body)} · ${esc(card.title)} · View in Tarot Ledger"><img src="${esc(card.image)}" alt="${esc(card.title)}" loading="lazy" decoding="async"></a>`;
   }).join('')}</div>`;
 }
-function openArtwork(slot){
-  if(!KEYS[slot])return;
-  const focus=activeFocus();
-  if(focus)dismissRulerFocus(focus.slot,{restore:true});
-  state[slot].tab='art';
-  window.RelphiSkyCardShell?.openDrawer?.(slot,'card-hits');
-  render(slot);
-}
 function render(slot){const target=mount(slot),p=read(slot);if(!target||!p)return;const tab=state[slot].tab,skySignature=JSON.stringify([p.instant||p.dateTime||'',profile(p).timeUnknown===true,source(p).length]);target.innerHTML=`<section class="sky-card-hits-structure" data-card-hits-structure-slot="${slot}" data-card-hits-sky-signature="${esc(skySignature)}" style="--slot-color:${slot==='A'?'#c9211e':'#2462d0'}"><div class="sky-card-hits-structure-tabs" role="tablist" aria-label="Card Hits views"><button type="button" class="sky-card-hits-structure-tab" data-card-hits-view="rulers" role="tab" aria-selected="${tab==='rulers'}">Rulers</button><button type="button" class="sky-card-hits-structure-tab" data-card-hits-view="houses" role="tab" aria-selected="${tab==='houses'}">Houses</button><button type="button" class="sky-card-hits-structure-tab" data-card-hits-view="art" role="tab" aria-selected="${tab==='art'}">Artwork</button></div>${tab==='rulers'?rulersView(slot,p):tab==='houses'?housesView(p):placementArtwork(slot,p)}</section>`;target.querySelectorAll('[data-card-ruler]').forEach(b=>b.classList.toggle('is-active',b.dataset.cardRuler===state[slot].ruler));hydrateCanonicalGlyphs(target);hydrateHouseMedallions(target)}
 function refreshOpen(){['A','B'].forEach(slot=>{
   if(!open(slot))return;
@@ -255,6 +247,6 @@ function dismissRulerFocusOnPointerDown(e){
 }
 function start(){styles();window.RelphiGlyphIntegrity?.assert?.();window.addEventListener('pointerdown',dismissRulerFocusOnPointerDown,true);document.addEventListener('click',click,true);window.addEventListener('relphi:sky-drawer-opened',e=>{const{slot,drawer}=e.detail||{};if(drawer==='card-hits'&&KEYS[slot])requestAnimationFrame(()=>render(slot))});window.addEventListener('storage',e=>{if(!e.key||Object.values(KEYS).includes(e.key)||e.key===LIBRARY_KEY)schedule()});['relphi:sky-foundation-ready','relphi:sky-foundation-interactions-ready','relphi:saved-sky-library-changed','relphi:saved-sky-loaded','relphi:sky-b-restored','relphi:sky-session-recovered','relphi:sky-house-multiselect-changed'].forEach(n=>window.addEventListener(n,schedule));const watch=()=>{const pop=document.getElementById('skySavedSkiesPopover');if(!pop)return false;savedObserver=new MutationObserver(rs=>{if(rs.some(r=>r.addedNodes.length||r.removedNodes.length))requestAnimationFrame(patchSaved)});savedObserver.observe(pop,{childList:true,subtree:true});return true};if(!watch()){const finder=new MutationObserver(()=>{if(watch())finder.disconnect()});finder.observe(document.body,{childList:true,subtree:true})}schedule();setTimeout(schedule,0)}
 window.RelphiSkyCardHitsDrawer=Object.freeze({getHits:()=>[],thumbnailFor:thumb,displayName:cardName});
-window.RelphiSkyCardHitsStructure=Object.freeze({render:schedule,chartRulerInfo,fingerprint,houseDecans,clearRulerFocus:clearFocus,openArtwork});
+window.RelphiSkyCardHitsStructure=Object.freeze({render:schedule,chartRulerInfo,fingerprint,houseDecans,clearRulerFocus:clearFocus});
 document.readyState==='loading'?document.addEventListener('DOMContentLoaded',start,{once:true}):start();
 })();
