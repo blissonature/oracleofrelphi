@@ -864,6 +864,51 @@ async function resolveSelectionStreetAddress(locationName){
   if(!timezone||window.luxon?.IANAZone?.isValidZone?.(timezone)!==true)throw new Error('Street address was located, but its geographic time zone could not be confirmed. Try again in Where and When.');
   return{source:'selection-compare',query:locationName,canonical:locationName,latitude,longitude,timezone};
 }
+// Resolve a named neighborhood by its actual geographic hierarchy.
+// Open-Meteo's city index may omit borough neighborhoods such as Jamaica, Queens.
+async function resolveSelectionNeighborhood(locationName){
+  const parts=locationName.split(',').map(x=>x.trim()).filter(Boolean);
+  if(parts.length<3)return null;
+  const normal=value=>String(value||'').toLowerCase().normalize('NFD')
+    .replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]/g,'');
+  const url=new URL('https://nominatim.openstreetmap.org/search');
+  url.searchParams.set('q',locationName+', United States');
+  url.searchParams.set('format','jsonv2');
+  url.searchParams.set('addressdetails','1');
+  url.searchParams.set('limit','10');
+  url.searchParams.set('accept-language','en');
+  const response=await fetch(url.toString(),{headers:{Accept:'application/json'},signal:AbortSignal.timeout(10000)});
+  if(!response.ok)throw new Error('Neighborhood lookup returned '+response.status);
+  const results=await response.json();
+  const matching=(Array.isArray(results)?results:[]).filter(result=>{
+    const a=result.address||{};
+    const primary=[result.name,a.suburb,a.neighbourhood,a.quarter,a.city_district,a.hamlet,a.town].map(normal);
+    const administrative=[result.display_name,a.borough,a.city_district,a.county,a.state,a.region,a.city].map(normal);
+    return primary.some(v=>v===normal(parts[0]))&&parts.slice(1).every(wanted=>
+      administrative.some(v=>v===normal(wanted)||v.includes(normal(wanted))))&&
+      Number.isFinite(Number(result.lat))&&Number.isFinite(Number(result.lon));
+  });
+  if(!matching.length)return null;
+  const found=[];
+  for(const result of matching){
+    const latitude=Number(result.lat),longitude=Number(result.lon);
+    const zoneUrl=new URL('https://api.open-meteo.com/v1/forecast');
+    zoneUrl.searchParams.set('latitude',String(latitude));
+    zoneUrl.searchParams.set('longitude',String(longitude));
+    zoneUrl.searchParams.set('timezone','auto');
+    zoneUrl.searchParams.set('forecast_days','1');
+    const zoneResponse=await fetch(zoneUrl.toString(),{headers:{Accept:'application/json'},signal:AbortSignal.timeout(10000)});
+    if(!zoneResponse.ok)continue;
+    const timezone=String((await zoneResponse.json()).timezone||'');
+    if(!window.luxon?.IANAZone?.isValidZone?.(timezone))continue;
+    found.push({source:'selection-compare',query:locationName,canonical:locationName+', United States',
+      latitude,longitude,timezone});
+  }
+  const unique=found.filter((item,index)=>found.findIndex(other=>
+    other.latitude===item.latitude&&other.longitude===item.longitude)===index);
+  if(unique.length>1)return chooseSelectionCity(locationName,unique);
+  return unique[0]||null;
+}
 async function resolveSelectionLocation(locationName){
   if(/^\s*\d+[A-Za-z]?\s+\S/.test(locationName))return resolveSelectionStreetAddress(locationName);
   const parts=locationName.split(',').map(part=>part.trim()).filter(Boolean);
@@ -894,7 +939,11 @@ async function resolveSelectionLocation(locationName){
       candidates.push({source:'selection-compare',query:locationName,canonical:[place.name,place.admin1,place.country].filter(Boolean).join(', '),latitude:Number(place.latitude),longitude:Number(place.longitude),timezone:String(place.timezone)});
     }
   }
-  if(!candidates.length)throw new Error('Could not confidently match location: '+locationName+'. Check the selected place.');
+  if(!candidates.length){
+    const neighborhood=await resolveSelectionNeighborhood(locationName);
+    if(neighborhood)return neighborhood;
+    throw new Error('Could not confidently match location: '+locationName+'. Check the selected place.');
+  }
   // Parentheses may be a geographic alternative, a person, or an unrelated annotation.
   // Never drop a resolvable second city or silently choose one over the other.
   const unique=candidates.filter((item,index)=>candidates.findIndex(other=>other.latitude===item.latitude&&other.longitude===item.longitude)===index);
