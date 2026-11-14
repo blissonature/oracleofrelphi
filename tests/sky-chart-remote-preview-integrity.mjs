@@ -20,11 +20,13 @@ const browser=await chromium.launch({headless:true});
 let failed=false;
 try{
  for(const [kind,url] of urls){
-  const ctx=await browser.newContext({viewport:{width:1200,height:820},serviceWorkers:'block'});
+  const ctx=await browser.newContext({viewport:{width:1200,height:820},serviceWorkers:'block',permissions:['geolocation'],geolocation:{latitude:40.7608,longitude:-111.891},timezoneId:'America/Denver'});
   const page=await ctx.newPage(),failures=[],errors=[];
   page.on('pageerror',e=>errors.push(e.message));
   page.on('requestfailed',r=>failures.push({url:r.url(),error:r.failure()?.errorText}));
   page.on('response',response=>{if(response.status()>=400)failures.push({status:response.status(),url:response.url()})});
+  await page.route('https://api.bigdatacloud.net/data/reverse-geocode-client**',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({locality:'Salt Lake City',principalSubdivision:'Utah',countryName:'United States'})}));
+  await page.route('https://api.open-meteo.com/v1/forecast**',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({timezone:'America/Denver'})}));
   await page.addInitScript(({a,b})=>{localStorage.setItem('relphiSkyChartA',JSON.stringify(a));localStorage.setItem('relphiSkyChartB',JSON.stringify(b));localStorage.setItem('relphiSkyChartLastModeV1','comparison')},{a,b});
   try{
    await page.goto(url,{waitUntil:'domcontentloaded',timeout:25000});
@@ -64,6 +66,15 @@ try{
      assert.equal(parseFloat(detail.future?.width),5);
      assert.equal(parseFloat(detail.current?.width),5);
      await page.screenshot({path:'sky-remote-preview-open.png',fullPage:true});
+     // The exact hosted commit must also complete the user's actual Here and Now action.
+     await page.locator('#skyFoundationB .sky-where-when-editor [data-ww-action="here-and-now"]').click();
+     await page.waitForFunction(()=>{
+       const sky=JSON.parse(localStorage.getItem('relphiSkyChartB')||'null');
+       return sky?.metadata?.capturedNowAt&&sky?.calcProfile?.timeZone==='America/Denver'&&
+         sky?.metadata?.whereWhenSource==='current-location';
+     },null,{timeout:20000});
+     console.log('PASS hosted commit-specific Here and Now');
+
    }
   }catch(e){failed=true;console.error(kind+' FAILED '+e.message);await page.screenshot({path:`sky-remote-${kind}.png`,fullPage:true}).catch(()=>{})}
   await ctx.close();
