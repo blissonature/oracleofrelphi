@@ -978,6 +978,9 @@ async function applySelectionComparison(){
       records.push(record);
     }
     // All validation/geocoding/calculation completes before any working sky changes.
+    // The existing shared house-system owner must adopt Porphyry before its
+    // storage listener reconciles newly imported working skies.
+    window.RelphiSkyPlacementHouseSystem?.adoptImportedSystem?.('porphyry');
     writeJson(SLOT_KEYS.A,records[0]);
     if(records.length===2)writeJson(SLOT_KEYS.B,records[1]);
     window.RelphiSkyStartupMode?.writeMode?.(records.length===2?'comparison':'single');
