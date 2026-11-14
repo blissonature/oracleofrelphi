@@ -81,6 +81,34 @@ try{
   assert.equal(previewPacket.location,'Salt Lake City, Utah');
   await preview.screenshot({path:'sky-extension-preview-desktop.png'});
   await preview.close();
+  // Exercise the real MV3 message handler with the reported full selected block.
+  const birth=[
+    '**Birth Data**',
+    '- **Date of Birth:** June 14, 1946',
+    '- **Time of Birth:** 10:54 AM EDT',
+    '- **Location:** Jamaica, Queens, New York'
+  ].join('\n');
+  const openBirth=browser.waitForEvent('page');
+  const sent=await options.evaluate(text=>new Promise(resolve=>
+    chrome.runtime.sendMessage({action:'openCandidate',kind:'selection',text},resolve)),birth);
+  assert.equal(sent.ok,true);
+  const birthPage=await openBirth;
+  await birthPage.waitForLoadState('domcontentloaded');
+  const complete=JSON.parse(new URL(birthPage.url()).searchParams.get('relphiSingle')).event;
+  assert.deepEqual({date:complete.date,time:complete.time,location:complete.location,zone:complete.timeZoneAbbreviation},
+    {date:'1946-06-14',time:'10:54',location:'Jamaica, Queens, New York',zone:'EDT'});
+  await birthPage.close();
+  const openPartial=browser.waitForEvent('page');
+  const partialSent=await options.evaluate(text=>new Promise(resolve=>
+    chrome.runtime.sendMessage({action:'openCandidate',kind:'selection',text},resolve)),
+    '**Date of Birth:** June 14, 1946\n**Time of Birth:** 10:54 AM EDT');
+  assert.equal(partialSent.ok,true);
+  const partialPage=await openPartial;
+  await partialPage.waitForLoadState('domcontentloaded');
+  const draft=JSON.parse(new URL(partialPage.url()).searchParams.get('relphiDraft'));
+  assert.deepEqual({kind:draft.kind,date:draft.date,time:draft.time,location:draft.location},
+    {kind:'fields',date:'1946-06-14',time:'10:54',location:''});
+  await partialPage.close();
   await options.close();
   console.log('Extension Options UI and interactive preview passed in Chromium; independent links preserve existing controls and launch partial data.');
 }finally{await browser.close()}
