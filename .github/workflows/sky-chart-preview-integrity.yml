@@ -6,10 +6,11 @@ on:
       - 'sky-chart.html'
       - 'sky-chart-heptagram-geometry-v1.css'
       - 'tests/sky-chart-remote-preview-integrity.mjs'
+      - 'tests/sky-chart-preview-cdn-probe.mjs'
       - '.github/workflows/sky-chart-preview-integrity.yml'
 jobs:
   preview-browser:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -21,8 +22,9 @@ jobs:
           npx playwright install --with-deps chromium
       - name: Check served preview and deployed page
         env:
-          PREVIEW_REF: ${{ github.event.pull_request.head.sha }}
-        run: node tests/sky-chart-remote-preview-integrity.mjs
+          PREVIEW_REF: d279687a004745d82a67ff34144c94a2e7463e52
+        run: |
+          node tests/sky-chart-remote-preview-integrity.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
