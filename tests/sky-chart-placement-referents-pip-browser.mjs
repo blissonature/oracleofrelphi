@@ -71,13 +71,14 @@ try{
       assert.equal(await detail.count(),0,'keyboard activation collapses detail');
       assert.equal(await panel.locator('[data-placement-view]').count(),0,'No redundant Placements/Pip art tab row');
       const topTabs=panel.locator('[data-sky-vocab-tabs] [data-sky-vocab-view-button]');
-      await page.waitForFunction(slot=>document.querySelectorAll('#skyFoundation'+slot+' [data-sky-vocab-tabs] [data-sky-vocab-view-button]').length===3,slot);
-      assert.deepEqual(await topTabs.allTextContents(),['Placements','Tarot','Vocab']);
+      await page.waitForFunction(slot=>document.querySelectorAll('#skyFoundation'+slot+' [data-sky-vocab-tabs] [data-sky-vocab-view-button]').length===2,slot);
+      assert.deepEqual(await topTabs.allTextContents(),['Placements','Vocab'],'Original Placements/Vocab navigation remains intact');
       const placementOrder=await panel.locator('.sky-foundation-ledger .sky-foundation-row[data-placement]').evaluateAll(rows=>rows.map(row=>row.dataset.placement));
-      await topTabs.filter({hasText:'Tarot'}).click();
+      await panel.locator('[data-sky-drawer-tab="card-hits"]').click();
+      await panel.locator('[data-card-hits-view="art"]').click();
       await page.waitForFunction(slot=>document.querySelector('#skyFoundation'+slot+' .sky-card-hits-structure [data-card-hits-view="art"][aria-selected="true"]')!==null,slot);
       const gallery=panel.locator('.sky-card-placement-art-grid');
-      assert.ok(await gallery.isVisible(),'Tarot opens artwork inside Card Hits');
+      assert.ok(await gallery.isVisible(),'Card Hits Artwork shows ordered card art');
       const cards=gallery.locator('.sky-card-placement-art');
       const images=cards.locator('img');
       assert.equal(await panel.locator('.sky-placement-pip-gallery').count(),0,'Gallery no longer belongs to Placements');
@@ -93,6 +94,10 @@ try{
       await panel.locator('[data-sky-drawer-tab="placements"]').click();
       await saturn.waitFor();
       assert.equal(await panel.locator('.sky-foundation-ledger .sky-foundation-row').count(),placementOrder.length,'Placements restores ledger');
+      await topTabs.filter({hasText:'Vocab'}).click();
+      assert.ok(await panel.locator('.sky-vocab-panel').isVisible(),'Vocab still functions after visiting Card Hits');
+      await topTabs.filter({hasText:'Placements'}).click();
+      assert.ok(await saturn.isVisible(),'Placements still functions after Vocab');
       console.log('PASS placement detail and duplicate pip art',slot,width);
     }
     assert.deepEqual(errors,[],'browser page errors: '+errors.join('; '));
