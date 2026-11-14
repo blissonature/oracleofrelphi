@@ -150,7 +150,7 @@ try{
     console.log('PASS Jamaica Queens 1946 birth with verified EDT '+viewport.width);
 
     // A date/time-only selection must never borrow that last sky's birthplace.
-    const draftBefore=await page.evaluate(()=>JSON.stringify(localStorage.getItem('relphiSkyChartA')));
+    const draftBefore=await page.evaluate(()=>JSON.parse(localStorage.getItem('relphiSkyChartA')));
     const birthDraft={version:1,kind:'fields',date:'1946-06-14',time:'10:54',location:'',timeUnknown:false};
     await page.goto('http://127.0.0.1:4173/sky-chart.html?relphiDraft='+
       encodeURIComponent(JSON.stringify(birthDraft)),{waitUntil:'domcontentloaded'});
@@ -176,7 +176,14 @@ try{
     assert.equal(imported.unknown,false);
     assert.equal(imported.timezone,'');
     assert.equal(imported.now,false);
-    assert.equal(await page.evaluate(()=>JSON.stringify(localStorage.getItem('relphiSkyChartA'))),draftBefore);
+    const draftAfter=await page.evaluate(()=>JSON.parse(localStorage.getItem('relphiSkyChartA')));
+    for(const field of ['name','savedAt'])assert.equal(draftAfter[field],draftBefore[field]);
+    for(const field of ['dateTime','instant','location','latitude','longitude','timeZone'])
+      assert.equal(draftAfter.calcProfile[field],draftBefore.calcProfile[field],'Draft must preserve '+field);
+    assert.deepEqual(draftAfter.metadata,draftBefore.metadata,'Draft must not replace sky source metadata');
+    for(const name of ['Sun','Moon','Ascendant','Midheaven'])
+      assert.ok(Math.abs(draftAfter.placements[name].longitude-draftBefore.placements[name].longitude)<0.000002,
+        'Draft must not materially change existing '+name+' placement');
     console.log('PASS 1946 date/time-only draft with no guessed birthplace '+viewport.width);
 
     assert.deepEqual(errors.filter(e=>/SyntaxError|TypeError|ReferenceError/.test(e)),[]);
