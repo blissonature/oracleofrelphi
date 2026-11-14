@@ -116,7 +116,7 @@ function placementDetail(record,house){
   return `<section class="sky-placement-expanded" data-placement-detail="${esc(record.id)}" aria-label="${esc(record.entry.name)} referents"><div class="sky-placement-referents">${sections.map(([label,name,meaning])=>`<div class="sky-placement-referent"><small>${esc(label)}</small><strong>${esc(name)}</strong><span>${esc(meaning)}</span></div>`).join('')}</div>${card?`<a class="sky-placement-card-link" href="${esc(placementCardLink(card))}" aria-label="Open full ${esc(card.title)} Tarot Ledger entry"><img src="${esc(card.image)}" alt="${esc(card.title)}" loading="lazy"><span>${esc(card.title)} · Open full card</span></a>`:''}</section>`;
 }
 function renderPlacementCards(list){
-  return `<div class="sky-placement-pip-gallery" aria-label="Pip card art in placement order">${list.map(record=>{const card=placementCard(record);if(!card)return'';return`<a href="${esc(placementCardLink(card))}" class="sky-placement-pip" aria-label="${esc(record.entry.name)} · ${esc(card.title)} · Open full card"><img src="${esc(card.image)}" alt="${esc(card.title)}" loading="lazy" decoding="async"></a>`}).join('')}</div>`;
+  return `<div class="sky-placement-pip-gallery" aria-label="Pip card art in placement order">${list.map(record=>{const card=placementCard(record);if(!card)return'';return`<a href="${esc(placementCardLink(card))}" class="sky-placement-pip" data-placement-id="${esc(record.id)}" aria-label="${esc(record.entry.name)} · ${esc(card.title)} · Open full card"><img src="${esc(card.image)}" alt="${esc(card.title)}" loading="lazy" decoding="async"></a>`}).join('')}</div>`;
 }
 function placementViewControls(slot){
   const mode=placementPresentation[slot].mode;
