@@ -21,6 +21,7 @@ try{
       const panel=page.locator('#skyFoundation'+slot);
       const saturn=panel.locator('.sky-foundation-ledger .sky-foundation-row[data-placement="saturn"]');
       await saturn.waitFor();
+      await page.waitForFunction(slot=>document.querySelector('#skyFoundation'+slot+' .sky-foundation-row[data-placement="saturn"]')?.dataset.interactive==='placement',slot,{timeout:15000});
       await saturn.click();
       let detail=panel.locator('.sky-placement-expanded[data-placement-detail="saturn"]');
       assert.equal(await detail.count(),1,'Saturn detail is expanded '+slot);
