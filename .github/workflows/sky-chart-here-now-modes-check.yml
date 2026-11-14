@@ -56,4 +56,8 @@ jobs:
           path: |
             sky-chart-here-now-manual-mobile.png
             sky-chart-here-now-refreshed-mobile.png
+            sky-chart-placement-detail-1280.png
+            sky-chart-placement-detail-390.png
+            sky-chart-placement-pip-1280.png
+            sky-chart-placement-pip-390.png
           if-no-files-found: ignore
