@@ -760,6 +760,7 @@
       }
     },true);
     root.addEventListener('pointerover',event=>{
+      if(event.target.closest?.('.sky-foundation-row[data-interactive="placement"]'))return;
       if(event.pointerType==='touch'||event.pointerType==='pen'||(event.pointerType==='mouse'&&performance.now()<ignoreNativeClickUntil))return;
       wheelOnlyExternal=false;
       const row=event.target.closest?.('.sky-foundation-relationship-row[data-relation-index]');
@@ -770,6 +771,7 @@
     });
     root.addEventListener('pointermove',event=>{if(event.pointerType==='touch'||event.pointerType==='pen')return;if(lockedState||!event.target.closest?.('#skyFoundationWheelMount'))return;const direct=event.target.closest?.('[data-interactive]:not([data-interactive="aspect"])');if(direct)return;rowHoverState=null;const next=specFrom(nearestAspect(event));if(same(hoverState,next)||(!hoverState&&!next))return;hoverState=next;applyState()});
     root.addEventListener('pointerout',event=>{
+      if(event.target.closest?.('.sky-foundation-row[data-interactive="placement"]'))return;
       if(event.pointerType==='touch'||event.pointerType==='pen')return;
       const row=event.target.closest?.('.sky-foundation-relationship-row[data-relation-index]');
       if(row)return;
@@ -777,11 +779,13 @@
       const node=interactive(event);if(!node||node.contains(event.relatedTarget))return;hoverState=null;applyState()
     });
     root.addEventListener('focusin',event=>{
+      if(event.target.closest?.('.sky-foundation-row[data-interactive="placement"]'))return;
       const row=event.target.closest?.('.sky-foundation-relationship-row[data-relation-index]');
       if(row)return;
       if(lockedState)return;const node=interactive(event);if(!node)return;rowHoverState=null;hoverState=specFrom(node);applyState()
     });
     root.addEventListener('focusout',event=>{
+      if(event.target.closest?.('.sky-foundation-row[data-interactive="placement"]'))return;
       const row=event.target.closest?.('.sky-foundation-relationship-row[data-relation-index]');
       if(row)return;
       if(lockedState)return;const node=interactive(event);if(!node||node.contains(event.relatedTarget))return;hoverState=null;applyState()
@@ -797,6 +801,8 @@
       const onLedger=!!event.target.closest?.('#skyFoundationA .sky-foundation-row[data-interactive="placement"],#skyFoundationB .sky-foundation-row[data-interactive="placement"]');
       if(onLedger){
         event.preventDefault();event.stopImmediatePropagation();
+        lockedState=null;hoverState=null;rowLockedState=null;rowHoverState=null;selectionOrigin=null;
+        applyState();clearWheelTargets();
         window.RelphiSkyPlacementView?.activate?.(onLedger.dataset.sky,onLedger.dataset.placement);
         return;
       }
