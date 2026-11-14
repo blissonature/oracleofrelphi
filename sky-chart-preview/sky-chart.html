@@ -32,11 +32,11 @@
       // cannot be assumed to be available as individual CDN assets. The preview
       // loader owns dependency delivery: embed the commit's exact CSS before
       // starting the application's scripts, keeping author cascade order.
-      const styleLinks=[...html.matchAll(/<link\\b[^>]*rel=["']stylesheet["'][^>]*>/gi)];
+      const styleLinks=[...html.matchAll(/<link\b[^>]*rel=["']stylesheet["'][^>]*>/gi)];
       const replacements=new Map();
       const getCss=async(match)=>{
-        const tag=match[0],path=tag.match(/\\bhref=["']([^"']+)["']/i)?.[1];
-        if(!path||/^(?:https?:|data:|\\/\\/)/i.test(path))return;
+        const tag=match[0],path=tag.match(/\bhref=["']([^"']+)["']/i)?.[1];
+        if(!path||/^(?:https?:|data:|\/\/)/i.test(path))return;
         const target=new URL(path,rawBase);
         const fetchCss=async()=>{
           const signal=AbortSignal.timeout(15000);
@@ -48,7 +48,7 @@
         try{css=await fetchCss()}
         catch(firstError){try{css=await fetchCss()}catch{throw firstError}}
         // Escaping closes neither this style element nor the document parser.
-        css=css.replace(/<\\/style/gi,'<\\\\/style');
+        css=css.replace(/<\/style/gi,'<\\/style');
         replacements.set(tag,'<style data-preview-css="'+path.replace(/"/g,'&quot;')+'">'+css+'</style>');
       };
       // Bound the fetch fanout to avoid exhausting mobile CDN/network sockets.
