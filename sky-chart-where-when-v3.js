@@ -288,7 +288,7 @@ function calculateSky(slot,selected,date,time,options={}){
   const asc=ascendantLongitude(instant,selected.latitude,selected.longitude),mc=midheavenLongitude(instant,selected.longitude);
   placements.Ascendant=placementObject('Ascendant',asc);placements.Midheaven=placementObject('Midheaven',mc);
   const storedHouseSystem=String(profileFor(slot).houseSystem||'').trim();
-  const houseSystem=localStorage.getItem(SHARED_HOUSE_KEY)||(storedHouseSystem&&storedHouseSystem!=='none'?storedHouseSystem:'whole-sign');
+  const houseSystem=options.houseSystem||localStorage.getItem(SHARED_HOUSE_KEY)||(storedHouseSystem&&storedHouseSystem!=='none'?storedHouseSystem:'whole-sign');
   const houses=window.RelphiHouseSystems.calculateCusps({system:houseSystem,ascendant:asc,midheaven:mc,siderealDegrees:siderealDegrees(instant,selected.longitude),obliquityDegrees:obliquity(instant),latitude:selected.latitude});
   const existing=options.replaceExisting?{}:(payload(slot)||{}),metadata=existing.metadata&&typeof existing.metadata==='object'?{...existing.metadata}:{},priorProfile=existing.calcProfile&&typeof existing.calcProfile==='object'?{...existing.calcProfile}:{},liveOrigin=String(options.liveOrigin||'');
   // A known-time calculation must not inherit unknown-time state from the prior working copy.
@@ -714,7 +714,7 @@ if(typeof dialog.showModal==='function')dialog.showModal();else dialog.setAttrib
 function cleanPlanetaryHoursHandoffUrl(){
 const clean=new URL(location.href);
 ['preview','source','datetime','date','lat','lon','tz','loc','name','calc'].forEach(key=>clean.searchParams.delete(key));
-history.replaceState(history.state,'',clean.pathname+clean.search+clean.hash);
+history.replaceState(history.state,'',clean.href);
 }
 let planetaryHoursHandoffConsumed=false;
 async function applyPlanetaryHoursHandoff(){
@@ -864,6 +864,51 @@ async function resolveSelectionStreetAddress(locationName){
   if(!timezone||window.luxon?.IANAZone?.isValidZone?.(timezone)!==true)throw new Error('Street address was located, but its geographic time zone could not be confirmed. Try again in Where and When.');
   return{source:'selection-compare',query:locationName,canonical:locationName,latitude,longitude,timezone};
 }
+// Resolve a named neighborhood by its actual geographic hierarchy.
+// Open-Meteo's city index may omit borough neighborhoods such as Jamaica, Queens.
+async function resolveSelectionNeighborhood(locationName){
+  const parts=locationName.split(',').map(x=>x.trim()).filter(Boolean);
+  if(parts.length<3)return null;
+  const normal=value=>String(value||'').toLowerCase().normalize('NFD')
+    .replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]/g,'');
+  const url=new URL('https://nominatim.openstreetmap.org/search');
+  url.searchParams.set('q',locationName+', United States');
+  url.searchParams.set('format','jsonv2');
+  url.searchParams.set('addressdetails','1');
+  url.searchParams.set('limit','10');
+  url.searchParams.set('accept-language','en');
+  const response=await fetch(url.toString(),{headers:{Accept:'application/json'},signal:AbortSignal.timeout(10000)});
+  if(!response.ok)throw new Error('Neighborhood lookup returned '+response.status);
+  const results=await response.json();
+  const matching=(Array.isArray(results)?results:[]).filter(result=>{
+    const a=result.address||{};
+    const primary=[result.name,a.suburb,a.neighbourhood,a.quarter,a.city_district,a.hamlet,a.town].map(normal);
+    const administrative=[result.display_name,a.borough,a.city_district,a.county,a.state,a.region,a.city].map(normal);
+    return primary.some(v=>v===normal(parts[0]))&&parts.slice(1).every(wanted=>
+      administrative.some(v=>v===normal(wanted)||v.includes(normal(wanted))))&&
+      Number.isFinite(Number(result.lat))&&Number.isFinite(Number(result.lon));
+  });
+  if(!matching.length)return null;
+  const found=[];
+  for(const result of matching){
+    const latitude=Number(result.lat),longitude=Number(result.lon);
+    const zoneUrl=new URL('https://api.open-meteo.com/v1/forecast');
+    zoneUrl.searchParams.set('latitude',String(latitude));
+    zoneUrl.searchParams.set('longitude',String(longitude));
+    zoneUrl.searchParams.set('timezone','auto');
+    zoneUrl.searchParams.set('forecast_days','1');
+    const zoneResponse=await fetch(zoneUrl.toString(),{headers:{Accept:'application/json'},signal:AbortSignal.timeout(10000)});
+    if(!zoneResponse.ok)continue;
+    const timezone=String((await zoneResponse.json()).timezone||'');
+    if(!window.luxon?.IANAZone?.isValidZone?.(timezone))continue;
+    found.push({source:'selection-compare',query:locationName,canonical:locationName+', United States',
+      latitude,longitude,timezone});
+  }
+  const unique=found.filter((item,index)=>found.findIndex(other=>
+    other.latitude===item.latitude&&other.longitude===item.longitude)===index);
+  if(unique.length>1)return chooseSelectionCity(locationName,unique);
+  return unique[0]||null;
+}
 async function resolveSelectionLocation(locationName){
   if(/^\s*\d+[A-Za-z]?\s+\S/.test(locationName))return resolveSelectionStreetAddress(locationName);
   const parts=locationName.split(',').map(part=>part.trim()).filter(Boolean);
@@ -894,7 +939,11 @@ async function resolveSelectionLocation(locationName){
       candidates.push({source:'selection-compare',query:locationName,canonical:[place.name,place.admin1,place.country].filter(Boolean).join(', '),latitude:Number(place.latitude),longitude:Number(place.longitude),timezone:String(place.timezone)});
     }
   }
-  if(!candidates.length)throw new Error('Could not confidently match location: '+locationName+'. Check the selected place.');
+  if(!candidates.length){
+    const neighborhood=await resolveSelectionNeighborhood(locationName);
+    if(neighborhood)return neighborhood;
+    throw new Error('Could not confidently match location: '+locationName+'. Check the selected place.');
+  }
   // Parentheses may be a geographic alternative, a person, or an unrelated annotation.
   // Never drop a resolvable second city or silently choose one over the other.
   const unique=candidates.filter((item,index)=>candidates.findIndex(other=>other.latitude===item.latitude&&other.longitude===item.longitude)===index);
@@ -921,7 +970,7 @@ async function applySelectionComparison(){
         const local=window.luxon?.DateTime?.fromISO(event.date+'T'+event.time,{zone:selected.timezone});
         if(!local?.isValid||local.offset!==offsetMinutes)throw new Error('The selected '+event.timeZoneAbbreviation+' does not agree with '+selected.timezone+' at the selected date and time.');
       }
-      const record=calculateSky(slot,selected,event.date,event.time||'',{replaceExisting:true,timeUnknown:event.time===null});
+      const record=calculateSky(slot,selected,event.date,event.time||'',{replaceExisting:true,timeUnknown:event.time===null,houseSystem:'porphyry'});
       const name=[event.label?event.label.charAt(0).toUpperCase()+event.label.slice(1):'Event '+(i+1),event.date].join(' · ');
       record.name=name;record.title=name;record.displayName=name;record.skyName=name;
       record.metadata={...record.metadata,selectionEventLabel:event.label,selectionLocation:event.location,selectionTimeZoneAbbreviation:event.timeZoneAbbreviation||null};
@@ -929,6 +978,9 @@ async function applySelectionComparison(){
       records.push(record);
     }
     // All validation/geocoding/calculation completes before any working sky changes.
+    // The existing shared house-system owner must adopt Porphyry before its
+    // storage listener reconciles newly imported working skies.
+    window.RelphiSkyPlacementHouseSystem?.adoptImportedSystem?.('porphyry');
     writeJson(SLOT_KEYS.A,records[0]);
     if(records.length===2)writeJson(SLOT_KEYS.B,records[1]);
     window.RelphiSkyStartupMode?.writeMode?.(records.length===2?'comparison':'single');
@@ -943,7 +995,7 @@ async function applySelectionComparison(){
     });
     document.getElementById('relphiSelectionComparisonNotice')?.remove();
     const next=new URL(location.href);next.searchParams.delete('relphiCompare');next.searchParams.delete('relphiSingle');
-    history.replaceState(history.state,'',next.pathname+next.search+next.hash);
+    history.replaceState(history.state,'',next.href);
     document.querySelector(records.length===2?'[data-sky-chart-mode="compare"]':'[data-sky-chart-mode="single"]')?.click();
     requestAnimationFrame(()=>window.RelphiSkyCardShell?.openDrawer?.('A','placements'));
   }catch(error){
@@ -960,36 +1012,48 @@ function applySelectionDraft(){
   try{
     if(raw.length>6000)throw new Error('Selection is too long.');
     const draft=JSON.parse(raw);
-    if(draft?.version!==1||!['date','location'].includes(draft.kind))throw new Error('Invalid selected Where and When field.');
+    if(draft?.version!==1||!['date','location','fields'].includes(draft.kind))
+      throw new Error('Invalid selected Where and When field.');
     const value=String(draft.value||'').trim();
-    if(!value||value.length>250)throw new Error('Empty or oversized selected field.');
-    if(draft.kind==='date'&&!/^\d{4}-\d{2}-\d{2}$/.test(value))throw new Error('Selected date must be in ISO format.');
+    const selectedDate=draft.kind==='fields'?String(draft.date||'').trim():draft.kind==='date'?value:'';
+    const selectedTime=draft.kind==='fields'?String(draft.time||'').trim():'';
+    const selectedPlace=draft.kind==='fields'?String(draft.location||'').trim():draft.kind==='location'?value:'';
+    const unknown=draft.kind==='date'||(draft.kind==='fields'&&draft.timeUnknown===true);
+    if(!selectedDate&&!selectedTime&&!selectedPlace)throw new Error('Empty selected Where and When fields.');
+    if([selectedDate,selectedTime,selectedPlace].some(x=>x.length>250))throw new Error('Oversized selected field.');
+    if(selectedDate&&!/^\d{4}-\d{2}-\d{2}$/.test(selectedDate))throw new Error('Selected date must be in ISO format.');
+    if(selectedTime&&!/^(?:[01]\d|2[0-3]):[0-5]\d$/.test(selectedTime))throw new Error('Invalid selected local time.');
+    if(unknown&&selectedTime)throw new Error('Known and unknown time cannot both be selected.');
     openEditor('A',false);
     const form=formFor('A');
     if(!form)throw new Error('Sky A editor did not open.');
-    if(draft.kind==='date'){
-      const now=form.querySelector('[data-ww-field="now"]');
-      if(now)now.checked=false;
-      const input=form.querySelector('[data-ww-field="date"]');
-      if(input)input.value=value;
-      const unknown=form.querySelector('[data-ww-field="time-unknown"]');
-      if(unknown)unknown.checked=true;
-      syncModes('A');
-      // Use the existing unknown-time change owner to update the time control
-      // and draft visual state, rather than competing with it.
-      unknown?.dispatchEvent(new Event('change',{bubbles:true}));
-      status('A','Selected date inserted. Choose a location and confirm; the time remains unknown.');
-    }else{
-      const here=form.querySelector('[data-ww-field="here"]');
-      if(here)here.checked=false;
-      const input=form.querySelector('[data-ww-field="location-query"]');
-      if(input)input.value=value;
-      syncModes('A');
-      status('A','Selected location inserted. Search and confirm the correct place.');
+    // Imported fields are manual, not Now/Here. Never borrow live coordinates,
+    // a time, or a location from an unrelated existing sky.
+    const here=form.querySelector('[data-ww-field="here"]'),now=form.querySelector('[data-ww-field="now"]');
+    if(here)here.checked=false;
+    if(now)now.checked=false;
+    cardState.A.selected=null;
+    for(const [field,input] of [['date',selectedDate],['time',selectedTime],['location-query',selectedPlace]]){
+      const node=form.querySelector('[data-ww-field="'+field+'"]');
+      if(node)node.value=input;
     }
+    for(const field of ['latitude','longitude','timezone']){
+      const node=form.querySelector('[data-ww-field="'+field+'"]');
+      if(node)node.value='';
+    }
+    const unknownControl=form.querySelector('[data-ww-field="time-unknown"]');
+    if(unknownControl)unknownControl.checked=unknown;
+    syncModes('A');
+    unknownControl?.dispatchEvent(new Event('change',{bubbles:true}));
+    if(selectedPlace){
+      const query=form.querySelector('[data-ww-field="location-query"]');
+      query?.dispatchEvent(new Event('input',{bubbles:true}));
+    }
+    status('A',selectedPlace?'Selected fields inserted. Confirm the place before calculating.':'Selected date/time inserted. Choose the birthplace to calculate; nothing was assumed.');
     const next=new URL(location.href);next.searchParams.delete('relphiDraft');
-    history.replaceState(history.state,'',next.pathname+next.search+next.hash);
-    requestAnimationFrame(()=>form.querySelector(draft.kind==='date'?'[data-ww-field="date"]':'[data-ww-field="location-query"]')?.focus());
+    history.replaceState(history.state,'',next.href);
+    const focus=selectedPlace?'location-query':selectedDate?'date':'time';
+    requestAnimationFrame(()=>form.querySelector('[data-ww-field="'+focus+'"]')?.focus());
   }catch(error){selectionComparisonNotice('Selection draft failed: '+(error.message||String(error)))}
 }
 
