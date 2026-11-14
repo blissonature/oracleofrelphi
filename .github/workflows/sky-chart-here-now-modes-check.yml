@@ -46,9 +46,9 @@ jobs:
       - name: Verify Where Here and When Now interactions
         run: |
           python3 -m http.server 4173 > /tmp/sky-chart-modes-server.log 2>&1 &
+          node tests/sky-chart-placement-referents-pip-browser.mjs
           node tests/sky-chart-here-now-modes-browser.mjs
           node tests/sky-chart-one-click-both-slots-browser.mjs
-          node tests/sky-chart-placement-referents-pip-browser.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
