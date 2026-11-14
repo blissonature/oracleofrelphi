@@ -36,6 +36,16 @@ try{
       assert.equal(layout.tiles,4,'Show planet, sign, decan, and house referents');
       assert.ok(layout.background!=='rgb(255, 255, 255)','Expanded card must use shared parchment styling');
       assert.equal(layout.cardInSharedStyle,true,'Tarot art must reuse the Relationships card primitive');
+      const rails=await detail.evaluate(node=>{
+        const colors=window.RelphiRelationshipVocab.railColors(7,Number(node.querySelector('[data-referent-kind="house"] strong')?.textContent.match(/\\d+/)?.[0]||0));
+        return{sign:node.style.getPropertyValue('--placement-sign-rail').trim(),house:node.style.getPropertyValue('--placement-house-rail').trim(),
+          expectedSign:colors.sign,expectedHouse:colors.house,background:getComputedStyle(node).backgroundImage,
+          dividers:[...node.querySelectorAll('.sky-placement-referent')].map(item=>getComputedStyle(item).borderTopWidth)};
+      });
+      assert.equal(rails.sign,rails.expectedSign,'Sign rail uses canonical Scorpio color');
+      assert.equal(rails.house,rails.expectedHouse,'House rail uses canonical numbered-house color');
+      assert.ok(rails.background.includes('gradient'),'Sign and house rails appear as two gradient tracks');
+      assert.ok(rails.dividers.every(width=>width==='0px'),'No arbitrarily colored referent borders');
       assert.ok(layout.cardHeight>=100,'Tarot art must be large and vertically presented');
       if(slot==='A')await panel.screenshot({path:'sky-chart-placement-detail-'+width+'.png'});
       const referents=await detail.textContent();
