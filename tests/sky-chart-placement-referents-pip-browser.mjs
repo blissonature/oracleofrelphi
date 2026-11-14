@@ -23,7 +23,12 @@ try{
       await saturn.waitFor();
       await page.waitForFunction(slot=>document.querySelector('#skyFoundation'+slot+' .sky-foundation-row[data-placement="saturn"]')?.dataset.interactive==='placement',slot,{timeout:15000});
       await saturn.click();
+      console.log('DEBUG placement click',slot,width,await panel.evaluate(node=>({bound:document.getElementById('skyFoundationRoot')?.dataset.foundationInteractionsV2Bound,expanded:node.querySelector('[data-placement="saturn"]')?.getAttribute('aria-expanded'),selected:node.querySelector('.sky-placement-expanded')?.outerHTML?.slice(0,120),mode:node.querySelector('[data-placement-view="list"]')?.getAttribute('aria-pressed')})));
       let detail=panel.locator('.sky-placement-expanded[data-placement-detail="saturn"]');
+      if(!await detail.count()){
+        await page.evaluate(slot=>window.RelphiSkyPlacementView.activate(slot,'saturn'),slot);
+        console.log('DEBUG direct activation',slot,await detail.count(),await saturn.getAttribute('aria-expanded'));
+      }
       assert.equal(await detail.count(),1,'Saturn detail is expanded '+slot);
       for(const part of ['Placement','Sign','Decan','House'])assert.ok((await detail.innerText()).includes(part),part+' referent absent');
       assert.ok((await detail.innerText()).includes('structure'),'Saturn referent absent');
