@@ -1,9 +1,9 @@
 import assert from 'node:assert/strict';
 import {chromium} from 'playwright';
 
-const receiver='6fdcb770d3b7008ecf0cb44f97f02a87494184a1';
+const receiver='afa1a01b812d44cf25e4f2e2ffaca2eadf1c1879';
 const base='https://oracleofrelphi.com/sky-chart-preview/sky-chart.html?ref='+receiver;
-const packet=p=>'#relphiSkyIntake='+encodeURIComponent(JSON.stringify({v:1,...p}));
+const packet=p=>{const url=new URL(base);url.searchParams.set('relphiSingle',JSON.stringify({version:1,event:p}));return url.toString()};
 const browser=await chromium.launch({headless:true});
 try {
   // This explicitly tests the remote preview actually opened by the extension,
@@ -15,6 +15,11 @@ try {
     page.on('response',response=>{if(!response.ok())badResponses.push({url:response.url(),status:response.status()})});
     page.on('console',message=>{if(message.type()==='error')failures.push('Console: '+message.text())});
     page.on('pageerror',e=>failures.push(String(e.message)));
+    await page.route('https://geocoding-api.open-meteo.com/v1/search**',route=>
+      route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({results:[{
+        name:'Salt Lake City',admin1:'Utah',country:'United States',country_code:'US',
+        latitude:40.7608,longitude:-111.891,timezone:'America/Denver'
+      }]})}));
     await page.route('https://nominatim.openstreetmap.org/search**',route=>
       route.fulfill({status:200,contentType:'application/json',body:JSON.stringify([{
         lat:'40.7608',lon:'-111.891',display_name:'Salt Lake City, Utah, United States',
@@ -22,7 +27,7 @@ try {
       }])}));
     await page.route('https://api.open-meteo.com/v1/forecast**',route=>
       route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({timezone:'America/Denver'})}));
-    await page.goto(base+packet({date:'2026-11-09',time:'15:15',timeUnknown:false,location:'Salt Lake City, Utah'}),{
+    await page.goto(packet({date:'2026-11-09',time:'15:15',location:'Salt Lake City, Utah',label:'born'}),{
       waitUntil:'domcontentloaded',timeout:60000
     });
     await page.waitForFunction(()=>{
@@ -51,7 +56,7 @@ try {
     });
     // Placement persistence precedes the final async Chiron/commit cleanup.
     // Wait for the receiving owner to consume the handoff before asserting URL state.
-    await page.waitForFunction(()=>location.hash==='',null,{timeout:6500}).catch(async error=>{
+    await page.waitForFunction(()=>!new URLSearchParams(location.search).has('relphiSingle'),null,{timeout:6500}).catch(async error=>{
       const diag=await page.evaluate(()=>({
         href:location.href,readyState:document.readyState,title:document.title,
         rootBusy:document.getElementById('skyFoundationRoot')?.getAttribute('aria-busy'),
@@ -78,11 +83,26 @@ try {
     assert.ok(done.location.includes('Salt Lake City'));
     assert.equal(done.timeZone,'America/Denver');
     assert.equal(new URL(done.url).searchParams.get('ref'),receiver,'Exactly pinned receiver');
-    assert.equal(new URL(done.url).hash,'','Successful intake is consumed');
+    assert.equal(new URL(done.url).searchParams.has('relphiSingle'),false,'Successful intake is consumed');
     assert.equal(done.editorOpen,false,'Complete selection calculates rather than leaving editor open');
     assert.deepEqual(failures.filter(x=>/TypeError|ReferenceError|SyntaxError/.test(x)),[],
       'No critical remote preview runtime errors');
     await page.screenshot({path:'sky-extension-hosted-'+device+'.png'});
+    const draftUrl=new URL(base);
+    draftUrl.searchParams.set('relphiDraft',JSON.stringify({
+      version:1,kind:'fields',date:'1946-06-14',time:'10:54',location:'',timeUnknown:false
+    }));
+    await page.goto(draftUrl.toString(),{waitUntil:'domcontentloaded'});
+    await page.waitForFunction(()=>{
+      const form=document.querySelector('#skyFoundationA .sky-where-when-editor');
+      return form?.querySelector('[data-ww-field="date"]')?.value==='1946-06-14'&&
+        form?.querySelector('[data-ww-field="time"]')?.value==='10:54'&&
+        form?.querySelector('[data-ww-field="location-query"]')?.value==='';
+    },null,{timeout:15000});
+    assert.equal(await page.evaluate(()=>JSON.parse(localStorage.getItem('relphiSkyChartA')).calcProfile.dateTime),
+      '2026-11-09T15:15','Partial selection never alters the saved chart');
+    await page.screenshot({path:'sky-extension-hosted-draft-'+device+'.png'});
+    console.log('HOSTED_SKY_EXTENSION_DRAFT_'+device,'PASS');
     console.log('HOSTED_SKY_EXTENSION_'+device,JSON.stringify(done));
     await context.close();
   }
