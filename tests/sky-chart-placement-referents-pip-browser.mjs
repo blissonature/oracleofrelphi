@@ -28,11 +28,18 @@ try{
       assert.ok(await detail.isVisible(),'Expanded referents must actually be visible');
       const layout=await detail.evaluate(node=>{
         const frame=getComputedStyle(node),tiles=node.querySelector('.sky-placement-referents'),grid=getComputedStyle(tiles),card=node.querySelector('.sky-placement-card-link'),img=card?.querySelector('img');
-        return{background:frame.backgroundColor,border:frame.borderLeftWidth,columns:grid.gridTemplateColumns.split(' ').filter(Boolean).length,
-          tiles:tiles.children.length,cardWidth:img?.getBoundingClientRect().width||0,
-          cardHeight:img?.getBoundingClientRect().height||0,cardInSharedStyle:card?.classList.contains('inline-rel-card')};
+        const artRect=card.getBoundingClientRect(),textRect=tiles.getBoundingClientRect(),imgRect=img.getBoundingClientRect(),frameRect=node.getBoundingClientRect();
+        return{background:frame.backgroundColor,border:frame.borderLeftWidth,columns:frame.gridTemplateColumns.split(' ').filter(Boolean).length,
+          textColumns:grid.gridTemplateColumns.split(' ').filter(Boolean).length,
+          tiles:tiles.children.length,cardWidth:imgRect.width,cardHeight:imgRect.height,
+          artLeft:artRect.left,artRight:artRect.right,textLeft:textRect.left,textRight:textRect.right,frameRight:frameRect.right,
+          visibleCardText:card.innerText.trim(),cardInSharedStyle:card?.classList.contains('inline-rel-card')};
       });
-      assert.equal(layout.columns,2,'Placement referents should be a two-column Relationships-style composition');
+      assert.equal(layout.columns,2,'Pip art and referents form two adjacent columns');
+      assert.equal(layout.textColumns,1,'Referent text flows vertically in the right column');
+      assert.ok(layout.artRight<layout.textLeft,'Pip art is positioned left of the referents');
+      assert.ok(layout.textRight<=layout.frameRight+1,'Referent text fits inside the tile');
+      assert.equal(layout.visibleCardText,'','The artwork link has no extraneous visible labels');
       assert.equal(layout.tiles,4,'Show planet, sign, decan, and house referents');
       assert.ok(layout.background!=='rgb(255, 255, 255)','Expanded card must use shared parchment styling');
       assert.equal(layout.cardInSharedStyle,true,'Tarot art must reuse the Relationships card primitive');
@@ -49,7 +56,7 @@ try{
       assert.equal(rails.house,rails.expectedHouse,'House rail uses canonical numbered-house color');
       assert.ok(rails.background.includes('gradient'),'Sign and house rails appear as two gradient tracks');
       assert.ok(rails.dividers.every(width=>width==='0px'),'No arbitrarily colored referent borders');
-      assert.ok(layout.cardHeight>=100,'Tarot art must be large and vertically presented');
+      assert.ok(layout.cardWidth>=95&&layout.cardHeight>=125,'Pip artwork uses the available left column at full natural proportions');
       if(slot==='A')await panel.screenshot({path:'sky-chart-placement-detail-'+width+'.png'});
       const referents=await detail.textContent();
       for(const part of ['Placement','Sign','Decan','House'])assert.ok(referents.includes(part),part+' referent absent');
@@ -57,6 +64,7 @@ try{
       assert.ok(referents.includes('Scorpio')||slot==='B','Saturn sign absent');
       const link=detail.locator('a.sky-placement-card-link');
       assert.match(await link.getAttribute('href'),/tarot\.html\?card=/);
+      assert.match(await link.getAttribute('aria-label'),/Tarot Ledger/);
       assert.equal(await saturn.getAttribute('aria-expanded'),'true');
       assert.equal(await saturn.evaluate(n=>n.classList.contains('is-selected')),false,'placement click must not use old highlight');
       await saturn.press('Enter');
