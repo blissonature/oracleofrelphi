@@ -472,7 +472,8 @@ async function submitCalculated(slot,form,options={}){
 }
 async function submitForm(slot,form,options={}){
   const pasted=window.RelphiSkyWhereWhenPasteInference;
-  if(pasted?.hasPaste?.(form)){
+  // Explicit Now actions supersede an unrelated paste or extension draft.
+  if(!options.snapshotNow&&pasted?.hasPaste?.(form)){
     const handled=await pasted.commit(form,{requestedLiveOrigin:options.liveOrigin||''});
     if(handled)return;
   }
