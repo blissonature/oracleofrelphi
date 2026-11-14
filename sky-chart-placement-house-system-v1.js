@@ -83,7 +83,14 @@ function installStyles(){
 document.addEventListener('change',event=>{const select=event.target.closest('[data-placement-house-system]');if(select)changeHouseSystem(select.value,select)});
 ['relphi:sky-foundation-ready','relphi:sky-foundation-interactions-ready','relphi:sky-house-multiselect-changed','relphi:sky-chart-angles-ready'].forEach(name=>window.addEventListener(name,schedule));
 window.addEventListener('storage',event=>{if(Object.values(KEYS).includes(event.key)){if(!syncing)syncSharedSystem();schedule()}});
-window.RelphiSkyPlacementHouseSystem=Object.freeze({mount:decorate,sync:syncControls});
+// Commit a completed imported sky's requested comparison-wide house system
+// through the existing single house-system owner before the working-sky write.
+function adoptImportedSystem(system){
+  if(!SYSTEMS[system])throw new Error('Unsupported imported house system: '+system);
+  localStorage.setItem(SHARED_KEY,system);
+  syncControls(system);
+}
+window.RelphiSkyPlacementHouseSystem=Object.freeze({mount:decorate,sync:syncControls,adoptImportedSystem});
 function start(){installStyles();syncSharedSystem();schedule()}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
 })();
