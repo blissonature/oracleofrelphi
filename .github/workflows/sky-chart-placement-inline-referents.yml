@@ -1,0 +1,35 @@
+name: Sky Chart inline referents Chromium acceptance
+on:
+  pull_request:
+    paths:
+      - 'sky-chart-vocab-tab-v1.js'
+      - 'tests/sky-chart-placement-inline-referents-browser.mjs'
+      - '.github/workflows/sky-chart-placement-inline-referents.yml'
+  workflow_dispatch:
+jobs:
+  chromium:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Syntax checks
+        run: |
+          node --check sky-chart-vocab-tab-v1.js
+          node --check tests/sky-chart-placement-inline-referents-browser.mjs
+      - name: Install browser dependencies
+        run: |
+          npm install --no-save playwright@1.52.0 luxon@3 suncalc@1.9.0
+          npx playwright install --with-deps chromium
+      - name: Verify inline referents and original Vocab in Chromium
+        run: |
+          python3 -m http.server 4173 >/tmp/relphi-inline-referents.log 2>&1 &
+          node tests/sky-chart-placement-inline-referents-browser.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: sky-chart-inline-referents-screenshots
+          path: sky-placement-referents-*.png
+          if-no-files-found: ignore
