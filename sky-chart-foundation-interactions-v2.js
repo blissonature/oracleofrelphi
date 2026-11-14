@@ -677,6 +677,12 @@
   // One touch-to-click adapter owned by the foundation controller. Touch hover is
   // never selection state; one completed tap produces exactly one click.
   let touchGesture=null,ignoreNativeClickUntil=0,lastTouchPoint=null,lastMousePointerSelection=null;
+  let ledgerGesture=null,lastLedgerPointer=null;
+  function openLedgerPlacement(row){
+    lockedState=null;hoverState=null;rowLockedState=null;rowHoverState=null;selectionOrigin=null;
+    applyState();clearWheelTargets();
+    window.RelphiSkyPlacementView?.activate?.(row.dataset.sky,row.dataset.placement);
+  }
   function touchInWheel(event){return !!event.target.closest?.('#skyFoundationWheelMount .sky-foundation-wheel')}
   function beginTouch(event){
     if(!['touch','pen'].includes(event.pointerType)||!touchInWheel(event))return;
@@ -726,6 +732,22 @@
     // progressive-disclosure handlers and tap hit overlays may stop bubbling
     // before pointerup reaches the wheel root. The gesture begins only inside
     // this wheel, so unrelated document touches remain completely untouched.
+    document.addEventListener('pointerdown',event=>{
+      const row=event.target.closest?.('#skyFoundationA .sky-foundation-row[data-placement],#skyFoundationB .sky-foundation-row[data-placement]');
+      ledgerGesture=row?{pointerId:event.pointerId,x:event.clientX,y:event.clientY,row}:null;
+    },{capture:true,passive:true});
+    document.addEventListener('pointerup',event=>{
+      const gesture=ledgerGesture;
+      if(!gesture||gesture.pointerId!==event.pointerId)return;
+      ledgerGesture=null;
+      if(Math.hypot(event.clientX-gesture.x,event.clientY-gesture.y)>10)return;
+      const row=event.target.closest?.('.sky-foundation-row[data-placement]');
+      if(!row||row!==gesture.row||!row.isConnected)return;
+      openLedgerPlacement(row);
+      lastLedgerPointer={at:performance.now(),sky:row.dataset.sky,id:row.dataset.placement};
+      if(event.pointerType!=='mouse'&&event.cancelable)event.preventDefault();
+    },{capture:true,passive:false});
+    document.addEventListener('pointercancel',event=>{if(ledgerGesture?.pointerId===event.pointerId)ledgerGesture=null},true);
     document.addEventListener('pointerdown',beginTouch,{capture:true,passive:true});
     document.addEventListener('pointermove',moveTouch,{capture:true,passive:true});
     document.addEventListener('pointerup',finishTouch,{capture:true,passive:false});
@@ -737,7 +759,8 @@
       const target=event.target;
       const onWheel=target.closest?.('#skyFoundationWheelMount .sky-foundation-wheel');
       const onLedger=target.closest?.('#skyFoundationA .sky-foundation-row[data-interactive="placement"],#skyFoundationB .sky-foundation-row[data-interactive="placement"]');
-      if(!onWheel&&!onLedger)return;
+      if(onLedger)return; // Placements own their expanded referent view, not wheel isolation.
+      if(!onWheel)return;
       const node=interactive(event);
       if(node){
         toggleInteractiveNode(node);
@@ -759,6 +782,7 @@
       }
     },true);
     root.addEventListener('pointerover',event=>{
+      if(event.target.closest?.('.sky-foundation-row[data-interactive="placement"]'))return;
       if(event.pointerType==='touch'||event.pointerType==='pen'||(event.pointerType==='mouse'&&performance.now()<ignoreNativeClickUntil))return;
       wheelOnlyExternal=false;
       const row=event.target.closest?.('.sky-foundation-relationship-row[data-relation-index]');
@@ -769,6 +793,7 @@
     });
     root.addEventListener('pointermove',event=>{if(event.pointerType==='touch'||event.pointerType==='pen')return;if(lockedState||!event.target.closest?.('#skyFoundationWheelMount'))return;const direct=event.target.closest?.('[data-interactive]:not([data-interactive="aspect"])');if(direct)return;rowHoverState=null;const next=specFrom(nearestAspect(event));if(same(hoverState,next)||(!hoverState&&!next))return;hoverState=next;applyState()});
     root.addEventListener('pointerout',event=>{
+      if(event.target.closest?.('.sky-foundation-row[data-interactive="placement"]'))return;
       if(event.pointerType==='touch'||event.pointerType==='pen')return;
       const row=event.target.closest?.('.sky-foundation-relationship-row[data-relation-index]');
       if(row)return;
@@ -776,11 +801,13 @@
       const node=interactive(event);if(!node||node.contains(event.relatedTarget))return;hoverState=null;applyState()
     });
     root.addEventListener('focusin',event=>{
+      if(event.target.closest?.('.sky-foundation-row[data-interactive="placement"]'))return;
       const row=event.target.closest?.('.sky-foundation-relationship-row[data-relation-index]');
       if(row)return;
       if(lockedState)return;const node=interactive(event);if(!node)return;rowHoverState=null;hoverState=specFrom(node);applyState()
     });
     root.addEventListener('focusout',event=>{
+      if(event.target.closest?.('.sky-foundation-row[data-interactive="placement"]'))return;
       const row=event.target.closest?.('.sky-foundation-relationship-row[data-relation-index]');
       if(row)return;
       if(lockedState)return;const node=interactive(event);if(!node||node.contains(event.relatedTarget))return;hoverState=null;applyState()
@@ -793,8 +820,15 @@
       // Previously capture ownership covered only the SVG wheel; ledger clicks
       // could be consumed by other handlers and leave a hover-only highlight.
       const onWheel=!!event.target.closest?.('#skyFoundationWheelMount .sky-foundation-wheel');
-      const onLedger=!!event.target.closest?.('#skyFoundationA .sky-foundation-row[data-interactive="placement"],#skyFoundationB .sky-foundation-row[data-interactive="placement"]');
-      if(!onWheel&&!onLedger)return;
+      const onLedger=event.target.closest?.('#skyFoundationA .sky-foundation-row[data-interactive="placement"],#skyFoundationB .sky-foundation-row[data-interactive="placement"]')||null;
+      if(onLedger){
+        event.preventDefault();event.stopImmediatePropagation();
+        const prior=lastLedgerPointer;
+        if(prior&&performance.now()-prior.at<750&&prior.sky===onLedger.dataset.sky&&prior.id===onLedger.dataset.placement){lastLedgerPointer=null;return}
+        openLedgerPlacement(onLedger);
+        return;
+      }
+      if(!onWheel)return;
       const node=interactive(event);
       if(!node)return;
       event.preventDefault();
@@ -811,7 +845,7 @@
       if(row)return;
       const node=interactive(event);if(node){event.preventDefault();toggleInteractiveNode(node);return}if(clearableWhitespace(event))clearFromWhitespace()
     });
-    root.addEventListener('keydown',event=>{wheelOnlyExternal=false;if(event.key==='Escape'){clearFromWhitespace();return}if(event.target.closest('.sky-foundation-relationship-row'))return;if(!['Enter',' '].includes(event.key))return;const node=interactive(event);if(!node)return;event.preventDefault();toggleInteractiveNode(node)});
+    root.addEventListener('keydown',event=>{wheelOnlyExternal=false;if(event.key==='Escape'){clearFromWhitespace();return}if(event.target.closest('.sky-foundation-relationship-row'))return;if(!['Enter',' '].includes(event.key))return;const ledgerRow=event.target.closest?.('.sky-foundation-row[data-interactive="placement"]');if(ledgerRow){event.preventDefault();openLedgerPlacement(ledgerRow);return}const node=interactive(event);if(!node)return;event.preventDefault();toggleInteractiveNode(node)});
   }
   function whereWhenEditing(){return document.documentElement.dataset.skyWhereWhenEditing==='true'}
   async function refresh(){
