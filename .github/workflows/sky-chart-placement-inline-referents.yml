@@ -4,6 +4,7 @@ on:
     paths:
       - 'sky-chart-vocab-tab-v1.js'
       - 'tests/sky-chart-placement-inline-referents-browser.mjs'
+      - 'tests/sky-chart-exact-preview-browser.mjs'
       - '.github/workflows/sky-chart-placement-inline-referents.yml'
   workflow_dispatch:
 jobs:
@@ -33,3 +34,8 @@ jobs:
           name: sky-chart-inline-referents-screenshots
           path: sky-placement-referents-*.png
           if-no-files-found: ignore
+      - name: Verify the exact-commit preview in Chromium
+        if: always()
+        env:
+          RELPHI_PREVIEW_REF: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: node tests/sky-chart-exact-preview-browser.mjs
