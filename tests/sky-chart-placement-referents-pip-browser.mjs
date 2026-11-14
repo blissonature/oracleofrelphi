@@ -45,7 +45,7 @@ try{
           expectedSign:colors.sign,expectedHouse:colors.house,background:getComputedStyle(node).backgroundImage,
           dividers:[...node.querySelectorAll('.sky-placement-referent')].map(item=>getComputedStyle(item).borderTopWidth)};
       });
-      assert.equal(rails.sign,rails.expectedSign,'Sign rail uses the displayed sign's canonical color');
+      assert.equal(rails.sign,rails.expectedSign,'Sign rail follows the selected zodiac sign');
       assert.equal(rails.house,rails.expectedHouse,'House rail uses canonical numbered-house color');
       assert.ok(rails.background.includes('gradient'),'Sign and house rails appear as two gradient tracks');
       assert.ok(rails.dividers.every(width=>width==='0px'),'No arbitrarily colored referent borders');
