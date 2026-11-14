@@ -960,36 +960,48 @@ function applySelectionDraft(){
   try{
     if(raw.length>6000)throw new Error('Selection is too long.');
     const draft=JSON.parse(raw);
-    if(draft?.version!==1||!['date','location'].includes(draft.kind))throw new Error('Invalid selected Where and When field.');
+    if(draft?.version!==1||!['date','location','fields'].includes(draft.kind))
+      throw new Error('Invalid selected Where and When field.');
     const value=String(draft.value||'').trim();
-    if(!value||value.length>250)throw new Error('Empty or oversized selected field.');
-    if(draft.kind==='date'&&!/^\d{4}-\d{2}-\d{2}$/.test(value))throw new Error('Selected date must be in ISO format.');
+    const selectedDate=draft.kind==='fields'?String(draft.date||'').trim():draft.kind==='date'?value:'';
+    const selectedTime=draft.kind==='fields'?String(draft.time||'').trim():'';
+    const selectedPlace=draft.kind==='fields'?String(draft.location||'').trim():draft.kind==='location'?value:'';
+    const unknown=draft.kind==='date'||(draft.kind==='fields'&&draft.timeUnknown===true);
+    if(!selectedDate&&!selectedTime&&!selectedPlace)throw new Error('Empty selected Where and When fields.');
+    if([selectedDate,selectedTime,selectedPlace].some(x=>x.length>250))throw new Error('Oversized selected field.');
+    if(selectedDate&&!/^\d{4}-\d{2}-\d{2}$/.test(selectedDate))throw new Error('Selected date must be in ISO format.');
+    if(selectedTime&&!/^(?:[01]\d|2[0-3]):[0-5]\d$/.test(selectedTime))throw new Error('Invalid selected local time.');
+    if(unknown&&selectedTime)throw new Error('Known and unknown time cannot both be selected.');
     openEditor('A',false);
     const form=formFor('A');
     if(!form)throw new Error('Sky A editor did not open.');
-    if(draft.kind==='date'){
-      const now=form.querySelector('[data-ww-field="now"]');
-      if(now)now.checked=false;
-      const input=form.querySelector('[data-ww-field="date"]');
-      if(input)input.value=value;
-      const unknown=form.querySelector('[data-ww-field="time-unknown"]');
-      if(unknown)unknown.checked=true;
-      syncModes('A');
-      // Use the existing unknown-time change owner to update the time control
-      // and draft visual state, rather than competing with it.
-      unknown?.dispatchEvent(new Event('change',{bubbles:true}));
-      status('A','Selected date inserted. Choose a location and confirm; the time remains unknown.');
-    }else{
-      const here=form.querySelector('[data-ww-field="here"]');
-      if(here)here.checked=false;
-      const input=form.querySelector('[data-ww-field="location-query"]');
-      if(input)input.value=value;
-      syncModes('A');
-      status('A','Selected location inserted. Search and confirm the correct place.');
+    // Imported fields are manual, not Now/Here. Never borrow live coordinates,
+    // a time, or a location from an unrelated existing sky.
+    const here=form.querySelector('[data-ww-field="here"]'),now=form.querySelector('[data-ww-field="now"]');
+    if(here)here.checked=false;
+    if(now)now.checked=false;
+    cardState.A.selected=null;
+    for(const [field,input] of [['date',selectedDate],['time',selectedTime],['location-query',selectedPlace]]){
+      const node=form.querySelector('[data-ww-field="'+field+'"]');
+      if(node)node.value=input;
     }
+    for(const field of ['latitude','longitude','timezone']){
+      const node=form.querySelector('[data-ww-field="'+field+'"]');
+      if(node)node.value='';
+    }
+    const unknownControl=form.querySelector('[data-ww-field="time-unknown"]');
+    if(unknownControl)unknownControl.checked=unknown;
+    syncModes('A');
+    unknownControl?.dispatchEvent(new Event('change',{bubbles:true}));
+    if(selectedPlace){
+      const query=form.querySelector('[data-ww-field="location-query"]');
+      query?.dispatchEvent(new Event('input',{bubbles:true}));
+    }
+    status('A',selectedPlace?'Selected fields inserted. Confirm the place before calculating.':'Selected date/time inserted. Choose the birthplace to calculate; nothing was assumed.');
     const next=new URL(location.href);next.searchParams.delete('relphiDraft');
     history.replaceState(history.state,'',next.pathname+next.search+next.hash);
-    requestAnimationFrame(()=>form.querySelector(draft.kind==='date'?'[data-ww-field="date"]':'[data-ww-field="location-query"]')?.focus());
+    const focus=selectedPlace?'location-query':selectedDate?'date':'time';
+    requestAnimationFrame(()=>form.querySelector('[data-ww-field="'+focus+'"]')?.focus());
   }catch(error){selectionComparisonNotice('Selection draft failed: '+(error.message||String(error)))}
 }
 
