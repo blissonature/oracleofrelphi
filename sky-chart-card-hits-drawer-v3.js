@@ -117,7 +117,7 @@ function housesView(p){if(profile(p).timeUnknown===true)return'<div class="sky-c
 function placementArtwork(slot,p){
   const base=records(p),byId=new Map(base.map(r=>[r.canonical,r]));
   const displayed=Array.from(window.RelphiSkyCardShell?.get?.(slot)?.placements?.querySelectorAll('.sky-foundation-ledger .sky-foundation-row[data-placement]')||[])
-    .map(row=>canonical(row.dataset.placement));
+    .map(row=>{const id=row.dataset.placement,entry=window.RelphiGlyphRegistry?.resolve?.(id)||window.RelphiGlyphRegistry?.get?.(id);return canonical(entry?.name||id)});
   const ordered=[],used=new Set();
   for(const id of displayed){const rec=byId.get(id);if(rec&&!used.has(rec.id)){ordered.push(rec);used.add(rec.id)}}
   for(const rec of base){if(!used.has(rec.id)){ordered.push(rec);used.add(rec.id)}}
