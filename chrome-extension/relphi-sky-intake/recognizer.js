@@ -69,10 +69,10 @@ function place(text){
 function recognize(input,prefs={}){
   // Formatting in a selected Markdown block is not birth data.
   const text=String(input||'').slice(0,5000)
-    .replace(/<\\/?(?:strong|b|em|i|p|li|h[1-6])(?:\\s[^>]*)?>/gi,' ')
-    .replace(/\\*\\*/g,'')
+    .replace(/<\/?(?:strong|b|em|i|p|li|h[1-6])(?:\s[^>]*)?>/gi,' ')
+    .replace(/\*\*/g,'')
     .replace(/__/g,'')
-    .replace(/^[\\t ]*[-*•][\\t ]+(?=\\S)/gm,''),errors=[];
+    .replace(/^[\t ]*[-*•][\t ]+(?=\S)/gm,''),errors=[];
   const d=dates(text,prefs),good=unique(d.filter(x=>x.date).map(x=>x.date)),invalid=d.filter(x=>!x.date);
   if(invalid.some(x=>x.ambiguous))errors.push('Ambiguous numeric date: spell out the month or set date order in preferences.');
   else if(invalid.length)errors.push('Invalid calendar date.');
@@ -84,7 +84,7 @@ function recognize(input,prefs={}){
   if(unknown&&valid.length)errors.push('Conflicting known and unknown times.');
   // Historical time zone is resolved by Sky Chart from the selected place.
   // Do not treat an EDT/EST annotation as an invalid birth time.
- const location=place(text),date=good.length===1?good[0]:'',time=valid.length===1?valid[0]:'';
+  const location=place(text),date=good.length===1?good[0]:'',time=valid.length===1?valid[0]:'';
   return{date,time,timeUnknown:unknown,location,errors:unique(errors),
     hasAny:!!(date||time||unknown||location),
     complete:!!(date&&(time||unknown)&&location&&!errors.length)};
