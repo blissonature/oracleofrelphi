@@ -4,12 +4,19 @@ import path from 'node:path';
 
 // Regression for browsers that never invoke either native geolocation callback.
 // A native timeout option is insufficient when the API itself hangs.
+function seedSky(name,shift){
+  const longitudes={Sun:195,Moon:118.42,Mercury:206.17,Venus:169.88,Mars:167.87,Jupiter:307.15,Saturn:235.57,Uranus:254.85,Neptune:271.02,Pluto:213.88,Ascendant:168.38,Midheaven:76.28};
+  return{name,calcProfile:{dateTime:'2026-11-01T12:00',instant:'2026-11-01T18:00:00.000Z',location:'Salt Lake City, Utah, United States',latitude:40.7608,longitude:-111.891,timeZone:'America/Denver',houseSystem:'porphyry',houseCusps:Array.from({length:12},(_,i)=>(168.38+shift+i*30)%360)},placements:Object.fromEntries(Object.entries(longitudes).map(([k,v])=>[k,{name:k,longitude:(v+shift)%360}]))};
+}
 const browser=await chromium.launch({headless:true});
 try{
  for(const viewport of [{width:1280,height:900},{width:390,height:844}]){
   const context=await browser.newContext({viewport,permissions:['geolocation'],geolocation:{latitude:40.7608,longitude:-111.891},timezoneId:'America/Denver'});
   const page=await context.newPage(),errors=[];page.on('pageerror',err=>errors.push(err.message));
-  await page.addInitScript(()=>{
+  await page.addInitScript(({a,b})=>{
+    localStorage.setItem('relphiSkyChartA',JSON.stringify(a));
+    localStorage.setItem('relphiSkyChartB',JSON.stringify(b));
+    localStorage.setItem('relphiSkyChartLastModeV1','comparison');
     window.__testGeolocationMode='stalled';
     Object.defineProperty(navigator,'geolocation',{configurable:true,value:{
       getCurrentPosition(success,error,options){
@@ -19,7 +26,7 @@ try{
         success({coords:{latitude:40.7608,longitude:-111.891,accuracy:40},timestamp:Date.now()});
       }
     }});
-  });
+  },{a:seedSky('Seed A',0),b:seedSky('Seed B',9)});
   await page.route('https://unpkg.com/suncalc@1.9.0/suncalc.js',route=>route.fulfill({path:path.resolve('node_modules/suncalc/suncalc.js'),contentType:'application/javascript'}));
   await page.route('https://cdn.jsdelivr.net/npm/luxon@3/build/global/luxon.min.js',route=>route.fulfill({path:path.resolve('node_modules/luxon/build/global/luxon.min.js'),contentType:'application/javascript'}));
   await page.route('https://api.bigdatacloud.net/data/reverse-geocode-client**',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({locality:'Salt Lake City',principalSubdivision:'Utah',countryName:'United States'})}));
