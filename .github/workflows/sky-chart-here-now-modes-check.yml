@@ -12,6 +12,7 @@ on:
       - 'sky-chart-staleness-v1.js'
       - 'tests/sky-chart-here-now-modes-browser.mjs'
       - 'tests/sky-chart-one-click-both-slots-browser.mjs'
+      - 'tests/sky-chart-here-now-native-geolocation-timeout-browser.mjs'
       - '.github/workflows/sky-chart-here-now-modes-check.yml'
 jobs:
   here-now-browser:
@@ -28,6 +29,7 @@ jobs:
           node --check sky-chart-staleness-v1.js
           node --check tests/sky-chart-here-now-modes-browser.mjs
           node --check tests/sky-chart-one-click-both-slots-browser.mjs
+          node --check tests/sky-chart-here-now-native-geolocation-timeout-browser.mjs
           node tests/sky-chart-architecture-contract.mjs
           node --test tests/sky-chart-heptagram-uniform-strokes.test.mjs
       - name: Install browser dependencies
@@ -39,6 +41,7 @@ jobs:
           python3 -m http.server 4173 > /tmp/sky-chart-modes-server.log 2>&1 &
           node tests/sky-chart-here-now-modes-browser.mjs
           node tests/sky-chart-one-click-both-slots-browser.mjs
+          node tests/sky-chart-here-now-native-geolocation-timeout-browser.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
