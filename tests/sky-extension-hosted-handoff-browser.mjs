@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import {chromium} from 'playwright';
 
-const receiver='afa1a01b812d44cf25e4f2e2ffaca2eadf1c1879';
+const receiver='acdb31d9dfca16a388e196d278c8e0af8cc889b8';
 const base='https://oracleofrelphi.com/sky-chart-preview/sky-chart.html?ref='+receiver;
 const packet=p=>{const url=new URL(base);url.searchParams.set('relphiSingle',JSON.stringify({version:1,event:p}));return url.toString()};
 const browser=await chromium.launch({headless:true});
