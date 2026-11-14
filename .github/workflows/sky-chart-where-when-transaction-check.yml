@@ -37,6 +37,7 @@ on:
   push:
     branches:
       - main
+      - feature/selection-two-sky-compare-20261112
     paths:
       - 'sky-chart.html'
       - 'sky-chart-card-shell-v2.js'
