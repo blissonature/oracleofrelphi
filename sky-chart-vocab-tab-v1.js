@@ -1858,7 +1858,7 @@ function wheelNodeFromEvent(event){
 function vocabClearableBlank(target){
   const root=document.getElementById('skyFoundationRoot');
   if(!root?.contains(target))return false;
-  if(target.closest?.('[data-interactive],button,input,select,textarea,a,label,summary,details,.sky-foundation-relationship-row,#skySelectedRelationship,.sky-chart-filter-bar,.sky-card-hits-structure,.sky-foundation-relationships-heading'))return false;
+  if(target.closest?.('[data-interactive],button,input,select,textarea,a,label,summary,details,.sky-foundation-relationship-row,#skySelectedRelationship,.sky-chart-filter-bar,.sky-card-hits-structure,.sky-foundation-relationships-heading,.sky-placement-referents'))return false;
   return !!target.closest?.('#skyFoundationWheelMount,#skyFoundationA,#skyFoundationB,#skyFoundationComparison');
 }
 function mirrorDirectWheelClick(event){
