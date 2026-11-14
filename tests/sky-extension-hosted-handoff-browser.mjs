@@ -15,18 +15,27 @@ try {
     page.on('response',response=>{if(!response.ok())badResponses.push({url:response.url(),status:response.status()})});
     page.on('console',message=>{if(message.type()==='error')failures.push('Console: '+message.text())});
     page.on('pageerror',e=>failures.push(String(e.message)));
-    await page.route('https://geocoding-api.open-meteo.com/v1/search**',route=>
-      route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({results:[{
+    await page.route('https://geocoding-api.open-meteo.com/v1/search**',route=>{
+      const name=new URL(route.request().url()).searchParams.get('name');
+      return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({results:name==='Jamaica'?[]:[{
         name:'Salt Lake City',admin1:'Utah',country:'United States',country_code:'US',
         latitude:40.7608,longitude:-111.891,timezone:'America/Denver'
-      }]})}));
-    await page.route('https://nominatim.openstreetmap.org/search**',route=>
-      route.fulfill({status:200,contentType:'application/json',body:JSON.stringify([{
+      }]})});
+    });
+    await page.route('https://nominatim.openstreetmap.org/search**',route=>{
+      const isJamaica=new URL(route.request().url()).searchParams.get('q')?.includes('Jamaica');
+      return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify(isJamaica?[{
+        lat:'40.7000',lon:'-73.8000',name:'Jamaica',display_name:'Jamaica, Queens, New York, United States',
+        address:{suburb:'Jamaica',borough:'Queens',county:'Queens County',state:'New York',country:'United States'}
+      }]:[{
         lat:'40.7608',lon:'-111.891',display_name:'Salt Lake City, Utah, United States',
         address:{city:'Salt Lake City',state:'Utah',country:'United States'}
-      }])}));
-    await page.route('https://api.open-meteo.com/v1/forecast**',route=>
-      route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({timezone:'America/Denver'})}));
+      }])});
+    });
+    await page.route('https://api.open-meteo.com/v1/forecast**',route=>{
+      const lat=Number(new URL(route.request().url()).searchParams.get('latitude'));
+      return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({timezone:Math.abs(lat-40.7)<0.0001?'America/New_York':'America/Denver'})});
+    });
     await page.goto(packet({date:'2026-11-09',time:'15:15',location:'Salt Lake City, Utah',label:'born'}),{
       waitUntil:'domcontentloaded',timeout:60000
     });
@@ -103,6 +112,27 @@ try {
       '2026-11-09T15:15','Partial selection never alters the saved chart');
     await page.screenshot({path:'sky-extension-hosted-draft-'+device+'.png'});
     console.log('HOSTED_SKY_EXTENSION_DRAFT_'+device,'PASS');
+    // The reported 1946 birth-selection flow reaches the same hosted receiver.
+    const historical={label:'born',date:'1946-06-14',time:'10:54',
+      location:'Jamaica, Queens, New York',timeZoneAbbreviation:'EDT'};
+    await page.goto(packet(historical),{waitUntil:'domcontentloaded'});
+    await page.waitForFunction(()=>{
+      const sky=JSON.parse(localStorage.getItem('relphiSkyChartA')||'null');
+      return sky?.calcProfile?.dateTime==='1946-06-14T10:54'&&
+        sky?.calcProfile?.timeZone==='America/New_York'&&
+        sky?.metadata?.selectionLocation==='Jamaica, Queens, New York'&&
+        !new URLSearchParams(location.search).has('relphiSingle');
+    },null,{timeout:30000});
+    const historicalResult=await page.evaluate(()=>{
+      const sky=JSON.parse(localStorage.getItem('relphiSkyChartA'));
+      return{dateTime:sky.calcProfile.dateTime,instant:sky.calcProfile.instant,
+        location:sky.calcProfile.location,timezone:sky.calcProfile.timeZone,
+        wheel:!!document.querySelector('#skyFoundationWheelMount svg')};
+    });
+    assert.equal(historicalResult.instant,'1946-06-14T14:54:00.000Z');
+    assert.equal(historicalResult.wheel,true,'Hosted preview shows historical sky graphics');
+    await page.screenshot({path:'sky-extension-hosted-jamaica-'+device+'.png'});
+    console.log('HOSTED_SKY_EXTENSION_JAMAICA_'+device,'PASS',JSON.stringify(historicalResult));
     console.log('HOSTED_SKY_EXTENSION_'+device,JSON.stringify(done));
     await context.close();
   }
