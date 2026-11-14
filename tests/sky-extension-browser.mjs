@@ -41,7 +41,7 @@ try{
   assert.equal(packet.date,'2026-11-09');
   assert.equal(packet.kind,'fields');
   assert.equal(new URL(newPage.url()).pathname,'/sky-chart-preview/sky-chart.html','Draft extension must launch the working preview receiver');
-  assert.equal(new URL(newPage.url()).searchParams.get('ref'),'acdb31d9dfca16a388e196d278c8e0af8cc889b8');
+  assert.equal(new URL(newPage.url()).searchParams.get('ref'),'05d22ff4b6607f1cc8a50e4881b6ce7f1eba8acb');
   assert.equal(packet.location,'','A date link cannot steal an existing location');
   assert.equal(packet.time,'','A date link cannot invent a birth time');
   await newPage.close();
