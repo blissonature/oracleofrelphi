@@ -37,12 +37,15 @@ try{
       assert.ok(layout.background!=='rgb(255, 255, 255)','Expanded card must use shared parchment styling');
       assert.equal(layout.cardInSharedStyle,true,'Tarot art must reuse the Relationships card primitive');
       const rails=await detail.evaluate(node=>{
-        const colors=window.RelphiRelationshipVocab.railColors(7,Number(node.querySelector('[data-referent-kind="house"] strong')?.textContent.replace('House ','')||0));
+        const signs=['Aries','Taurus','Gemini','Cancer','Leo','Virgo','Libra','Scorpio','Sagittarius','Capricorn','Aquarius','Pisces'];
+        const signIndex=signs.indexOf(node.querySelector('[data-referent-kind="sign"] strong')?.textContent.trim());
+        const houseNumber=Number(node.querySelector('[data-referent-kind="house"] strong')?.textContent.replace('House ','')||0);
+        const colors=window.RelphiRelationshipVocab.railColors(signIndex,houseNumber);
         return{sign:node.style.getPropertyValue('--placement-sign-rail').trim(),house:node.style.getPropertyValue('--placement-house-rail').trim(),
           expectedSign:colors.sign,expectedHouse:colors.house,background:getComputedStyle(node).backgroundImage,
           dividers:[...node.querySelectorAll('.sky-placement-referent')].map(item=>getComputedStyle(item).borderTopWidth)};
       });
-      assert.equal(rails.sign,rails.expectedSign,'Sign rail uses canonical Scorpio color');
+      assert.equal(rails.sign,rails.expectedSign,'Sign rail uses the displayed sign's canonical color');
       assert.equal(rails.house,rails.expectedHouse,'House rail uses canonical numbered-house color');
       assert.ok(rails.background.includes('gradient'),'Sign and house rails appear as two gradient tracks');
       assert.ok(rails.dividers.every(width=>width==='0px'),'No arbitrarily colored referent borders');
