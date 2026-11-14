@@ -33,6 +33,14 @@ try{
       await page.locator('#skyFoundation'+slot+' [data-sky-drawer-tab="where"]').click();
       const form=page.locator('#skyFoundation'+slot+' .sky-where-when-editor');
       await form.waitFor();
+      if(slot==='A'){
+        const pendingImport=form.locator('[data-ww-paste-placements]');
+        await pendingImport.waitFor({state:'attached'});
+        await pendingImport.evaluate(node=>{
+          node.value='Pending selection import: not a current sky';
+          node.dispatchEvent(new Event('input',{bubbles:true}));
+        });
+      }
       const action=form.locator('[data-ww-action="here-and-now"]');
       assert.equal(await action.count(),1);
       const reverseUrl='https://api.bigdatacloud.net/data/reverse-geocode-client**';
