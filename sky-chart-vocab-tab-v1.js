@@ -1313,6 +1313,60 @@ function renderParagraph(slot,panel){
     container.textContent='No placements match the current Focus.';
   }
 }
+// A selected placement can reveal its own referents in the Placements ledger.
+// Read the existing interaction selection and the canonical Vocab records;
+// the full Vocab view remains independent and unchanged.
+function syncPlacementReferents(){
+  ['A','B'].forEach(slot=>{
+    const mount=window.RelphiSkyCardShell?.get?.(slot)?.placements;
+    if(!mount)return;
+    const existing=mount.querySelector('[data-sky-placement-referents]');
+    const id=wheelFilterSpec?.kind==='placement'&&wheelFilterSpec.sky===slot?String(wheelFilterSpec.value||''):'';
+    const row=id?Array.from(mount.querySelectorAll('.sky-foundation-row[data-placement]')).find(node=>node.dataset.placement===id):null;
+    const record=id?records(slot).find(item=>item.id===id):null;
+    if(!row||!record){existing?.remove();return}
+
+    const placement=placementInfo(record),sign=signInfo(record.sign),house=record.house?houseInfo(record.house):null;
+    const items=[
+      {name:placement.name,referent:placement.referent},
+      {name:sign.name,referent:sign.referent},
+      ...(house?[{name:house.name,referent:HOUSE_REFERENTS[record.house]||house.referent}]:[])
+    ];
+    const signature=JSON.stringify([id,record.value,record.house,items]);
+    let tile=existing;
+    if(!tile){
+      tile=document.createElement('section');
+      tile.className='sky-placement-referents';
+      tile.dataset.skyPlacementReferents=slot;
+      tile.setAttribute('role','region');
+      tile.setAttribute('aria-label','Sky '+slot+' selected placement referents');
+    }
+    if(tile.dataset.referentsSignature!==signature){
+      tile.dataset.referentsSignature=signature;
+      const heading=document.createElement('div');
+      heading.className='sky-placement-referents-heading';
+      const title=document.createElement('strong');
+      title.textContent=placement.name+' in '+sign.name+(house?' · '+house.name:'');
+      const label=document.createElement('span');
+      label.textContent='Referents';
+      heading.append(title,label);
+      tile.replaceChildren(heading);
+      items.forEach(item=>{
+        const line=document.createElement('div');
+        line.className='sky-placement-referents-item';
+        const term=document.createElement('strong');
+        term.className='sky-placement-referents-term';
+        term.textContent=item.name;
+        const definition=document.createElement('span');
+        definition.className='sky-placement-referents-definition';
+        definition.textContent=item.referent;
+        line.append(term,definition);
+        tile.appendChild(line);
+      });
+    }
+    if(tile.previousElementSibling!==row)row.insertAdjacentElement('afterend',tile);
+  });
+}
 function htmlEscape(value){return String(value??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]))}
 function optionLabel(id){return id==='glyphs'?'Glyphs':id==='names'?'Names':'Referents'}
 function layerSummary(){
@@ -1510,7 +1564,7 @@ function refreshDisplayLayers(){
     refreshGroupPreviews(panel);
   });
 }
-function rerenderPanels(){vocabWheelTouchLine=null;clearVocabWheelContext();syncControlState();document.querySelectorAll('[data-sky-vocab-panel]').forEach(panel=>renderParagraph(panel.dataset.skyVocabPanel,panel))}
+function rerenderPanels(){vocabWheelTouchLine=null;clearVocabWheelContext();syncControlState();document.querySelectorAll('[data-sky-vocab-panel]').forEach(panel=>renderParagraph(panel.dataset.skyVocabPanel,panel));syncPlacementReferents()}
 function releaseWheelIsolationForManualFilter(){
   if(!wheelFilterState)return;
   wheelFilterState=null;wheelFilterSpec=null;
@@ -1613,6 +1667,14 @@ function ensureSlot(slot){
 function installStyles(){
   if(document.getElementById('skyVocabTabV1Styles'))return;
   const style=document.createElement('style');style.id='skyVocabTabV1Styles';style.textContent=`
+    .sky-placement-referents{display:grid;gap:.45rem;min-width:0;box-sizing:border-box;margin:.28rem .65rem .55rem;padding:.68rem .76rem;border:1px solid rgba(31,27,24,.14);border-left:4px solid var(--slot-color,#5d554e);border-radius:11px;background:#fffaf2;box-shadow:0 2px 8px rgba(31,27,24,.07)}
+    .sky-placement-referents-heading{display:flex;align-items:baseline;justify-content:space-between;gap:.6rem;padding-bottom:.3rem;border-bottom:1px solid rgba(31,27,24,.1)}
+    .sky-placement-referents-heading strong{min-width:0;color:#241f1b;font:850 .78rem/1.3 system-ui,sans-serif}
+    .sky-placement-referents-heading span{flex:none;color:#6a625b;font:750 .63rem/1.2 system-ui,sans-serif}
+    .sky-placement-referents-item{display:grid;grid-template-columns:minmax(86px,28%) minmax(0,1fr);gap:.65rem;align-items:start}
+    .sky-placement-referents-term{color:#332b25;font:800 .69rem/1.4 system-ui,sans-serif}
+    .sky-placement-referents-definition{min-width:0;color:#514841;font:600 .72rem/1.45 system-ui,sans-serif;overflow-wrap:break-word}
+    @media(max-width:620px){.sky-placement-referents{margin:.22rem .5rem .45rem;padding:.62rem .63rem}.sky-placement-referents-item{grid-template-columns:minmax(78px,32%) minmax(0,1fr);gap:.45rem}}
     .sky-placement-vocab-tabs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));align-items:center;gap:4px;flex:1 1 auto;width:min(190px,100%);min-width:0;padding:3px;border:1px solid rgba(31,27,24,.12);border-radius:999px;background:#f5f0e9}
     .sky-vocab-copy{margin-left:auto}
     .sky-placement-vocab-tab{appearance:none;min-width:0;min-height:30px;margin:0;padding:.34rem .58rem;border:0;border-radius:999px;background:transparent;color:#5d554e;font:850 .68rem/1 system-ui,sans-serif;cursor:pointer}
@@ -1747,7 +1809,7 @@ function installStyles(){
   `;document.head.appendChild(style);
 }
 function render(){
-  queued=false;if(vocabWheelContextLine&&!vocabWheelContextLine.isConnected){vocabWheelTouchLine=null;clearVocabWheelContext()}installStyles();saveDisplay(displayState());['A','B'].forEach(ensureSlot);syncControlState();
+  queued=false;if(vocabWheelContextLine&&!vocabWheelContextLine.isConnected){vocabWheelTouchLine=null;clearVocabWheelContext()}installStyles();saveDisplay(displayState());['A','B'].forEach(ensureSlot);syncControlState();syncPlacementReferents();
 }
 function schedule(){if(queued)return;queued=true;requestAnimationFrame(render)}
 function relationshipRowSlots(row){
