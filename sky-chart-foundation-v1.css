@@ -199,24 +199,22 @@ body.sky-chart-page.sky-foundation-active #chartPanel > :not(#skyFoundationRoot)
 .sky-placement-view-controls{display:grid;grid-template-columns:1fr 1fr;gap:3px;padding:4px;margin:8px 10px 2px;border-radius:999px;background:#f3eee7;border:1px solid rgba(31,27,24,.12)}
 .sky-placement-view-controls button{border:0;border-radius:999px;background:transparent;color:#615850;min-height:30px;cursor:pointer;font:800 .68rem/1.2 system-ui,sans-serif}
 .sky-placement-view-controls button[aria-pressed="true"]{background:white;color:#251e19;box-shadow:0 1px 4px rgba(31,27,24,.13)}
-/* Relationships' expanded tile grammar: soft parchment, grouped referents,
-   one full-size tarot image, and an accent keyed to the selected placement. */
-.sky-placement-expanded{grid-column:1/-1;display:grid;justify-items:stretch;gap:10px;min-width:0;margin:0 5px 9px;padding:10px 9px 12px;border:2px solid #342b24;border-left:5px solid var(--placement-accent,#b64b36);border-radius:9px;background:#fff0d8;box-shadow:0 2px 5px rgba(42,32,24,.1)}
+/* Use the same two informational rails as Relationships Vocab:
+   first rail = zodiac sign, second rail = numbered house.
+   All other edges remain neutral; decans do not select rail colors. */
+.sky-placement-expanded{grid-column:1/-1;display:grid;justify-items:stretch;gap:10px;min-width:0;margin:0 5px 9px;padding:10px 9px 12px 17px;border:2px solid #342b24;border-radius:9px;background-color:#fff0d8;background-image:linear-gradient(to bottom,var(--placement-sign-rail,#d8cfc3) 0 100%),linear-gradient(to bottom,var(--placement-house-rail,#d8cfc3) 0 100%);background-size:3px 100%,3px 100%;background-position:5px 0,10px 0;background-repeat:no-repeat;box-shadow:0 2px 5px rgba(42,32,24,.1)}
 .sky-placement-referents{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px;align-items:stretch}
-.sky-placement-referent{display:flex;flex-direction:column;align-items:center;justify-content:flex-start;min-width:0;gap:5px;padding:7px 5px 8px;border:0;border-top:3px solid var(--placement-accent,#b64b36);border-radius:8px;background:rgba(255,255,255,.42);text-align:center}
-.sky-placement-referent[data-referent-kind="sign"]{border-top-color:#3b75bd}
-.sky-placement-referent[data-referent-kind="decan"]{border-top-color:#d09b36}
-.sky-placement-referent[data-referent-kind="house"]{border-top-color:#5f9a7a}
+.sky-placement-referent{display:flex;flex-direction:column;align-items:center;justify-content:flex-start;min-width:0;gap:5px;padding:7px 5px 8px;border:0;border-radius:8px;background:rgba(255,255,255,.42);text-align:center}
 .sky-placement-referent small{color:#65564b;text-transform:uppercase;letter-spacing:.02em;font:850 .57rem/1.1 system-ui,sans-serif}
 .sky-placement-referent strong{max-width:100%;overflow-wrap:anywhere;color:#27201c;font:850 .65rem/1.2 system-ui,sans-serif}
 .sky-placement-referent span{max-width:100%;overflow-wrap:anywhere;color:#554940;font:600 .59rem/1.35 system-ui,sans-serif}
 .sky-placement-card-link.inline-rel-card{display:grid;grid-template-columns:1fr;justify-items:center;align-items:center;gap:3px;min-width:0;max-width:100%;margin:0 auto;padding:2px 4px 0;border:0;border-radius:0;background:transparent;color:#302721;text-decoration:none}
-.sky-placement-card-link.inline-rel-card small{color:var(--placement-accent,#b64b36);font:850 .56rem/1.1 system-ui,sans-serif;text-transform:uppercase}
-.sky-placement-card-link.inline-rel-card .inline-rel-card-art{display:block;width:auto;max-width:none;margin:2px auto 0;padding:0;border:2px solid var(--placement-accent,#b64b36);border-radius:0;background:transparent;line-height:0}
+.sky-placement-card-link.inline-rel-card small{color:#554940;font:850 .56rem/1.1 system-ui,sans-serif;text-transform:uppercase}
+.sky-placement-card-link.inline-rel-card .inline-rel-card-art{display:block;width:auto;max-width:none;margin:2px auto 0;padding:0;border:2px solid #53483f;border-radius:0;background:transparent;line-height:0}
 .sky-placement-card-link.inline-rel-card img{display:block;width:auto;max-width:100%;height:112px;aspect-ratio:auto;object-fit:contain;margin:0;padding:0;border:0;outline:0;border-radius:0;box-shadow:none}
 .sky-placement-card-link.inline-rel-card b{max-width:100%;color:#27201c;font:800 .66rem/1.2 system-ui,sans-serif;text-align:center}
 .sky-placement-card-action{font:700 .57rem/1.2 system-ui,sans-serif;color:#65584b;text-decoration:underline;text-underline-offset:2px}
-.sky-placement-card-link:focus-visible{outline:2px solid var(--placement-accent,#b64b36);outline-offset:3px}
+.sky-placement-card-link:focus-visible{outline:2px solid #53483f;outline-offset:3px}
 .sky-placement-pip-gallery{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;padding:10px 8px 16px}
 .sky-placement-pip{display:block;min-width:0;border-radius:5px;overflow:hidden;outline-offset:2px}
 .sky-placement-pip img{display:block;width:100%;height:auto;aspect-ratio:2/3;object-fit:contain}
