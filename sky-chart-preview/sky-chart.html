@@ -23,7 +23,7 @@
       return;
     }
     const rawBase=`https://raw.githubusercontent.com/blissonature/oracleofrelphi/${ref}/`;
-    const assetBase=`https://cdn.statically.io/gh/blissonature/oracleofrelphi@${ref}/`;
+    const assetBase=`https://cdn.jsdelivr.net/gh/blissonature/oracleofrelphi@${ref}/`;
     try{
       const response=await fetch(rawBase+'sky-chart.html',{cache:'no-store'});
       if(!response.ok)throw new Error(`GitHub returned ${response.status}`);
