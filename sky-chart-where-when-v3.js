@@ -407,7 +407,28 @@ async function reversePacket(latitude,longitude){
 }
 // Let the browser reuse a location fix up to five minutes old. Obtaining a
 // new device location is slower than the ephemeris calculation on many phones.
-function currentPosition(){return new Promise((resolve,reject)=>{if(!navigator.geolocation)return reject(new Error('Current location is unavailable in this browser.'));navigator.geolocation.getCurrentPosition(resolve,reject,{enableHighAccuracy:false,timeout:6000,maximumAge:300000})})}
+function currentPosition(){
+  return new Promise((resolve,reject)=>{
+    if(!navigator.geolocation){reject(new Error('Current location is unavailable in this browser.'));return}
+    // A browser's geolocation timeout need not advance while a permission prompt
+    // is pending. Ensure Here and Now always completes or reports a failure.
+    let settled=false;
+    const finish=(callback,value)=>{
+      if(settled)return;
+      settled=true;
+      clearTimeout(deadline);
+      callback(value);
+    };
+    const deadline=setTimeout(()=>finish(reject,new Error('Your browser did not provide a location. Check location permission and try again.')),8000);
+    try{
+      navigator.geolocation.getCurrentPosition(
+        position=>finish(resolve,position),
+        error=>finish(reject,error),
+        {enableHighAccuracy:false,timeout:6000,maximumAge:300000}
+      );
+    }catch(error){finish(reject,error)}
+  });
+}
 async function currentLocationPacket(){
   const shared=window.RelphiSkyLocationSearch?.currentLocationPacket;
   if(typeof shared==='function'){const packet=await shared();return{...packet,source:'current-location'}}
