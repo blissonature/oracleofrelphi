@@ -262,8 +262,10 @@ function openEditor(slot,focus=false){
   keepCommittedHeptagramInSummary(slot);
   window.RelphiSkyCardShell.setEditorExpanded(slot,true);
   syncModes(slot);
-  // A persisted 'Here' tag is not a fresh geolocation result for this editing session.
-  if(formFor(slot)?.querySelector('[data-ww-field="here"]')?.checked)void checkHere(slot);
+  // Opening an existing working sky is a read-only action. A saved Here
+  // selection already carries its coordinates and time zone; do not start an
+  // unsolicited geolocation request. Refresh Here and 1-Click Here and Now
+  // explicitly request a new position through currentLocationPacket().
   window.dispatchEvent(new CustomEvent('relphi:sky-where-when-editor-ready',{detail:{slot,form:formFor(slot)}}));
   if(focus)requestAnimationFrame(()=>formFor(slot)?.querySelector('[data-ww-field="location-query"]')?.focus());
 }
