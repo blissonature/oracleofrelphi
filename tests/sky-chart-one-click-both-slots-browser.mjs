@@ -82,11 +82,13 @@ try{
     },null,{timeout:12000});
     assert.equal(await retry.isDisabled(),false,'A stalled geolocation request must release the action');
     await page.evaluate(()=>delete navigator.geolocation.getCurrentPosition);
+    const capturedBefore=await page.evaluate(()=>JSON.parse(localStorage.getItem('relphiSkyChartA')||'null')?.metadata?.capturedNowAt||'');
     await retry.click();
-    await page.waitForFunction(()=>{
+    await page.waitForFunction(previous=>{
       const sky=JSON.parse(localStorage.getItem('relphiSkyChartA')||'null');
-      return sky?.metadata?.capturedNowAt&&Date.now()-Date.parse(sky.calcProfile.instant)<120000;
-    },null,{timeout:30000});
+      return sky?.metadata?.capturedNowAt&&sky.metadata.capturedNowAt!==previous&&
+        Date.now()-Date.parse(sky.calcProfile.instant)<120000;
+    },capturedBefore,{timeout:30000});
     console.log('PASS stalled permission deadline and retry '+viewport.width);
     assert.ok(!errors.some(e=>/Uncaught|TypeError|ReferenceError/.test(e)),errors.join('\n'));
     await context.close();
