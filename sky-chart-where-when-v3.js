@@ -992,7 +992,7 @@ async function applySelectionComparison(){
     });
     document.getElementById('relphiSelectionComparisonNotice')?.remove();
     const next=new URL(location.href);next.searchParams.delete('relphiCompare');next.searchParams.delete('relphiSingle');
-    history.replaceState(history.state,'',next.pathname+next.search+next.hash);
+    history.replaceState(history.state,'',next.href);
     document.querySelector(records.length===2?'[data-sky-chart-mode="compare"]':'[data-sky-chart-mode="single"]')?.click();
     requestAnimationFrame(()=>window.RelphiSkyCardShell?.openDrawer?.('A','placements'));
   }catch(error){
@@ -1048,7 +1048,7 @@ function applySelectionDraft(){
     }
     status('A',selectedPlace?'Selected fields inserted. Confirm the place before calculating.':'Selected date/time inserted. Choose the birthplace to calculate; nothing was assumed.');
     const next=new URL(location.href);next.searchParams.delete('relphiDraft');
-    history.replaceState(history.state,'',next.pathname+next.search+next.hash);
+    history.replaceState(history.state,'',next.href);
     const focus=selectedPlace?'location-query':selectedDate?'date':'time';
     requestAnimationFrame(()=>form.querySelector('[data-ww-field="'+focus+'"]')?.focus());
   }catch(error){selectionComparisonNotice('Selection draft failed: '+(error.message||String(error)))}
