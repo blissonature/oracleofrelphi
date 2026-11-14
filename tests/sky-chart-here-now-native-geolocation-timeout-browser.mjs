@@ -6,7 +6,7 @@ import path from 'node:path';
 // A native timeout option is insufficient when the API itself hangs.
 function seedSky(name,shift){
   const longitudes={Sun:195,Moon:118.42,Mercury:206.17,Venus:169.88,Mars:167.87,Jupiter:307.15,Saturn:235.57,Uranus:254.85,Neptune:271.02,Pluto:213.88,Ascendant:168.38,Midheaven:76.28};
-  return{name,calcProfile:{dateTime:'2026-11-01T12:00',instant:'2026-11-01T18:00:00.000Z',location:'Salt Lake City, Utah, United States',latitude:40.7608,longitude:-111.891,timeZone:'America/Denver',houseSystem:'porphyry',houseCusps:Array.from({length:12},(_,i)=>(168.38+shift+i*30)%360)},placements:Object.fromEntries(Object.entries(longitudes).map(([k,v])=>[k,{name:k,longitude:(v+shift)%360}]))};
+  return{name,metadata:{whereWhenSource:'current-location'},calcProfile:{dateTime:'2026-11-01T12:00',instant:'2026-11-01T18:00:00.000Z',location:'Salt Lake City, Utah, United States',latitude:40.7608,longitude:-111.891,timeZone:'America/Denver',houseSystem:'porphyry',houseCusps:Array.from({length:12},(_,i)=>(168.38+shift+i*30)%360)},placements:Object.fromEntries(Object.entries(longitudes).map(([k,v])=>[k,{name:k,longitude:(v+shift)%360}]))};
 }
 const browser=await chromium.launch({headless:true});
 try{
@@ -38,7 +38,7 @@ try{
     const form=page.locator('#skyFoundation'+slot+' .sky-where-when-editor');
     await form.waitFor({state:'visible'});
     const callsOnOpen=await page.evaluate(()=>window.__testGeoCalls||0);
-    assert.equal(callsOnOpen,slot==='A'?0:1,'Opening Where and When must not request the device location');
+    assert.equal(callsOnOpen,slot==='A'?0:2,'Opening an existing Here sky must not request device location');
     const oneClick=form.locator('[data-ww-action="here-and-now"]');
     await oneClick.click();
     await page.waitForFunction(slot=>{
@@ -52,7 +52,7 @@ try{
     assert.equal(await oneClick.isEnabled(),true,'Here and Now must recover from missing native callback');
     assert.equal(await form.locator('[data-ww-action="search-location"]').isEnabled(),true,'Editor usable after timeout');
     assert.equal(await form.locator('[data-copy-where-when]').count(),1,'Copy button must remain present');
-    assert.equal(await page.evaluate(()=>window.__testGeoCalls),slot==='A'?1:2,'One native location request per explicit Here and Now click; opening an editor must not call geolocation');
+    assert.equal(await page.evaluate(()=>window.__testGeoCalls),slot==='A'?1:3,'One native location request per explicit Here and Now click; the previous retry adds one call, opening the editor adds none');
     // Retry is a fresh user gesture, not an automatic background loop.
     await page.evaluate(()=>window.__testGeolocationMode='working');
     const elapsedStart=Date.now();
