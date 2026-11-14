@@ -62,9 +62,15 @@ for(const engine of [chromium,webkit]){
     await page.waitForFunction(slot=>JSON.parse(localStorage.getItem('relphiSkyChart'+slot)||'null')?.metadata?.capturedNowAt,slot,{timeout:15000});
     assert.equal(await page.evaluate(()=>window.__geoCalls),slot==='A'?2:4);
     console.log('PASS saved Here location, denied and successful retry on '+engine.name()+' '+slot);
-    if(slot==='A')await page.evaluate(()=>{
-      window.__geoMode='denied';window.RelphiSkyStartupMode.writeMode('comparison');window.RelphiSkyStartupMode.syncRoot();
-    });
+    if(slot==='A'){
+      // The name prompt is unrelated to geolocation; dismiss it as a user
+      // would before testing the next sky's Where and When controls.
+      const namePrompt=page.locator('#skyWhereWhenNamePrompt:not([hidden])');
+      if(await namePrompt.count())await namePrompt.locator('[data-sky-name-cancel]').click();
+      await page.evaluate(()=>{
+        window.__geoMode='denied';window.RelphiSkyStartupMode.writeMode('comparison');window.RelphiSkyStartupMode.syncRoot();
+      });
+    }
   }
   assert.deepEqual(errors.filter(msg=>/ReferenceError|TypeError|SyntaxError/.test(msg)),[]);
   await context.close();
