@@ -820,7 +820,7 @@
       // Previously capture ownership covered only the SVG wheel; ledger clicks
       // could be consumed by other handlers and leave a hover-only highlight.
       const onWheel=!!event.target.closest?.('#skyFoundationWheelMount .sky-foundation-wheel');
-      const onLedger=!!event.target.closest?.('#skyFoundationA .sky-foundation-row[data-interactive="placement"],#skyFoundationB .sky-foundation-row[data-interactive="placement"]');
+      const onLedger=event.target.closest?.('#skyFoundationA .sky-foundation-row[data-interactive="placement"],#skyFoundationB .sky-foundation-row[data-interactive="placement"]')||null;
       if(onLedger){
         event.preventDefault();event.stopImmediatePropagation();
         const prior=lastLedgerPointer;
