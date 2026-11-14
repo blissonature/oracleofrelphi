@@ -64,6 +64,30 @@ try{
      assert.equal(parseFloat(detail.future?.width),5);
      assert.equal(parseFloat(detail.current?.width),5);
      await page.screenshot({path:'sky-remote-preview-open.png',fullPage:true});
+     // Exercise the *hosted* preview with a browser that never invokes its
+     // geolocation callbacks. A screenshot of the editor alone misses this hang.
+     await page.evaluate(()=>{
+       window.__previewGeoMode='stalled';
+       Object.defineProperty(navigator,'geolocation',{configurable:true,value:{
+         getCurrentPosition(ok,fail){
+           if(window.__previewGeoMode==='working')ok({coords:{latitude:40.7608,longitude:-111.891,accuracy:35},timestamp:Date.now()});
+         }
+       }});
+     });
+     const form=page.locator('#skyFoundationB .sky-where-when-editor');
+     const action=form.locator('[data-ww-action="here-and-now"]');
+     await action.click();
+     await page.waitForFunction(()=>{
+       const form=document.querySelector('#skyFoundationB .sky-where-when-editor');
+       return form?.querySelector('.sky-where-when-status')?.textContent?.includes('Current location took too long')&&
+         form?.querySelector('[data-ww-action="here-and-now"]')?.disabled===false;
+     },null,{timeout:10500});
+     assert.equal(await form.locator('[data-copy-where-when]').count(),1,'Copy must remain visible after failed geolocation');
+     await page.evaluate(()=>window.__previewGeoMode='working');
+     await action.click();
+     await page.waitForFunction(()=>!!JSON.parse(localStorage.getItem('relphiSkyChartB')||'null')?.metadata?.capturedNowAt,null,{timeout:12000});
+     console.log('PASS hosted preview native-geolocation no-callback recovery and successful retry');
+
    }
   }catch(e){failed=true;console.error(kind+' FAILED '+e.message);await page.screenshot({path:`sky-remote-${kind}.png`,fullPage:true}).catch(()=>{})}
   await ctx.close();
