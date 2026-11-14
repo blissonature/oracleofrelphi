@@ -456,7 +456,28 @@ async function reversePacket(latitude,longitude){
   const canonical=[reverse.locality||reverse.city,reverse.principalSubdivision,reverse.countryName].map(v=>String(v||'').trim()).filter((v,i,list)=>v&&list.indexOf(v)===i).join(', ')||`${displayCoordinate(latitude)}, ${displayCoordinate(longitude)}`;
   return{canonical,timezone,timeZoneSource};
 }
-function currentPosition(){return new Promise((resolve,reject)=>{if(!navigator.geolocation)return reject(new Error('Current location is unavailable in this browser.'));navigator.geolocation.getCurrentPosition(resolve,reject,{enableHighAccuracy:false,timeout:12000,maximumAge:0})})}
+function currentPosition(){
+  return new Promise((resolve,reject)=>{
+    if(!navigator.geolocation){reject(new Error('Current location is unavailable in this browser.'));return}
+    // A geolocation prompt can remain pending without invoking the browser timeout.
+    // Keep the active Where and When transaction bounded and retryable.
+    let settled=false;
+    const finish=(callback,value)=>{
+      if(settled)return;
+      settled=true;
+      clearTimeout(deadline);
+      callback(value);
+    };
+    const deadline=setTimeout(()=>finish(reject,new Error('Your browser did not provide a location. Check location permission and try again.')),8000);
+    try{
+      navigator.geolocation.getCurrentPosition(
+        position=>finish(resolve,position),
+        error=>finish(reject,error),
+        {enableHighAccuracy:false,timeout:6000,maximumAge:300000}
+      );
+    }catch(error){finish(reject,error)}
+  });
+}
 async function currentLocationPacket(){
   const shared=window.RelphiSkyLocationSearch?.currentLocationPacket;
   if(typeof shared==='function'){const packet=await shared();return{...packet,source:'current-location'}}
