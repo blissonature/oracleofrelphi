@@ -26,6 +26,17 @@ try{
       const detail=panel.locator('.sky-placement-expanded[data-placement-detail="saturn"]');
       assert.equal(await detail.count(),1,'Saturn detail is expanded '+slot);
       assert.ok(await detail.isVisible(),'Expanded referents must actually be visible');
+      const layout=await detail.evaluate(node=>{
+        const frame=getComputedStyle(node),tiles=node.querySelector('.sky-placement-referents'),grid=getComputedStyle(tiles),card=node.querySelector('.sky-placement-card-link'),img=card?.querySelector('img');
+        return{background:frame.backgroundColor,border:frame.borderLeftWidth,columns:grid.gridTemplateColumns.split(' ').filter(Boolean).length,
+          tiles:tiles.children.length,cardWidth:img?.getBoundingClientRect().width||0,
+          cardHeight:img?.getBoundingClientRect().height||0,cardInSharedStyle:card?.classList.contains('inline-rel-card')};
+      });
+      assert.equal(layout.columns,2,'Placement referents should be a two-column Relationships-style composition');
+      assert.equal(layout.tiles,4,'Show planet, sign, decan, and house referents');
+      assert.ok(layout.background!=='rgb(255, 255, 255)','Expanded card must use shared parchment styling');
+      assert.equal(layout.cardInSharedStyle,true,'Tarot art must reuse the Relationships card primitive');
+      assert.ok(layout.cardHeight>=100,'Tarot art must be large and vertically presented');
       if(slot==='A')await panel.screenshot({path:'sky-chart-placement-detail-'+width+'.png'});
       const referents=await detail.textContent();
       for(const part of ['Placement','Sign','Decan','House'])assert.ok(referents.includes(part),part+' referent absent');
