@@ -127,9 +127,12 @@ try {
       const sky=JSON.parse(localStorage.getItem('relphiSkyChartA'));
       return{dateTime:sky.calcProfile.dateTime,instant:sky.calcProfile.instant,
         location:sky.calcProfile.location,timezone:sky.calcProfile.timeZone,
+        houseSystem:sky.calcProfile.houseSystem,houseCusps:sky.houseCusps,
         wheel:!!document.querySelector('#skyFoundationWheelMount svg')};
     });
     assert.equal(historicalResult.instant,'1946-06-14T14:54:00.000Z');
+    assert.equal(historicalResult.houseSystem,'porphyry');
+    assert.equal(historicalResult.houseCusps.length,12);
     assert.equal(historicalResult.wheel,true,'Hosted preview shows historical sky graphics');
     await page.screenshot({path:'sky-extension-hosted-jamaica-'+device+'.png'});
     console.log('HOSTED_SKY_EXTENSION_JAMAICA_'+device,'PASS',JSON.stringify(historicalResult));
