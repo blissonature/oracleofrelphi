@@ -75,7 +75,10 @@ try{
       assert.deepEqual(await topTabs.allTextContents(),['Placements','Vocab'],'Original Placements/Vocab navigation remains intact');
       const placementOrder=await panel.locator('.sky-foundation-ledger .sky-foundation-row[data-placement]').evaluateAll(rows=>rows.map(row=>row.dataset.placement));
       await panel.locator('[data-sky-drawer-tab="card-hits"]').click();
-      await panel.locator('[data-card-hits-view="art"]').click();
+      const decansTab=panel.locator('[data-card-hits-view="art"]');
+      assert.equal(await decansTab.textContent(),'Decans','Only Artwork subtab renamed; Card Hits remains the drawer');
+      assert.equal(await panel.locator('[data-sky-drawer-tab="card-hits"]').getAttribute('aria-label'),'Card Hits');
+      await decansTab.click();
       await page.waitForFunction(slot=>document.querySelector('#skyFoundation'+slot+' .sky-card-hits-structure [data-card-hits-view="art"][aria-selected="true"]')!==null,slot);
       const gallery=panel.locator('.sky-card-placement-art-grid');
       assert.ok(await gallery.isVisible(),'Card Hits Artwork shows ordered card art');
