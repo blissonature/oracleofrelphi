@@ -737,7 +737,8 @@
       const target=event.target;
       const onWheel=target.closest?.('#skyFoundationWheelMount .sky-foundation-wheel');
       const onLedger=target.closest?.('#skyFoundationA .sky-foundation-row[data-interactive="placement"],#skyFoundationB .sky-foundation-row[data-interactive="placement"]');
-      if(!onWheel&&!onLedger)return;
+      if(onLedger)return; // Placements own their expanded referent view, not wheel isolation.
+      if(!onWheel)return;
       const node=interactive(event);
       if(node){
         toggleInteractiveNode(node);
@@ -794,7 +795,12 @@
       // could be consumed by other handlers and leave a hover-only highlight.
       const onWheel=!!event.target.closest?.('#skyFoundationWheelMount .sky-foundation-wheel');
       const onLedger=!!event.target.closest?.('#skyFoundationA .sky-foundation-row[data-interactive="placement"],#skyFoundationB .sky-foundation-row[data-interactive="placement"]');
-      if(!onWheel&&!onLedger)return;
+      if(onLedger){
+        event.preventDefault();event.stopImmediatePropagation();
+        window.RelphiSkyPlacementView?.activate?.(onLedger.dataset.sky,onLedger.dataset.placement);
+        return;
+      }
+      if(!onWheel)return;
       const node=interactive(event);
       if(!node)return;
       event.preventDefault();
@@ -811,7 +817,7 @@
       if(row)return;
       const node=interactive(event);if(node){event.preventDefault();toggleInteractiveNode(node);return}if(clearableWhitespace(event))clearFromWhitespace()
     });
-    root.addEventListener('keydown',event=>{wheelOnlyExternal=false;if(event.key==='Escape'){clearFromWhitespace();return}if(event.target.closest('.sky-foundation-relationship-row'))return;if(!['Enter',' '].includes(event.key))return;const node=interactive(event);if(!node)return;event.preventDefault();toggleInteractiveNode(node)});
+    root.addEventListener('keydown',event=>{wheelOnlyExternal=false;if(event.key==='Escape'){clearFromWhitespace();return}if(event.target.closest('.sky-foundation-relationship-row'))return;if(!['Enter',' '].includes(event.key))return;const ledgerRow=event.target.closest?.('.sky-foundation-row[data-interactive="placement"]');if(ledgerRow){event.preventDefault();window.RelphiSkyPlacementView?.activate?.(ledgerRow.dataset.sky,ledgerRow.dataset.placement);return}const node=interactive(event);if(!node)return;event.preventDefault();toggleInteractiveNode(node)});
   }
   function whereWhenEditing(){return document.documentElement.dataset.skyWhereWhenEditing==='true'}
   async function refresh(){
