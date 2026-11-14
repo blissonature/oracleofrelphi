@@ -195,10 +195,6 @@ body.sky-chart-page.sky-foundation-active #chartPanel > :not(#skyFoundationRoot)
 .sky-foundation-row-name .sky-placement-rx{display:inline-flex;width:1.8em;height:1.8em;margin-left:-.24em;vertical-align:-.59em;color:inherit;flex:none}.sky-foundation-row-name .sky-rx-master{display:block;width:100%;height:100%;overflow:visible;fill:currentColor;font-family:Montserrat,system-ui,sans-serif}
 
 
-/* Placement presentation is owned by the foundation ledger; no competing overlay. */
-.sky-placement-view-controls{display:grid;grid-template-columns:1fr 1fr;gap:3px;padding:4px;margin:8px 10px 2px;border-radius:999px;background:#f3eee7;border:1px solid rgba(31,27,24,.12)}
-.sky-placement-view-controls button{border:0;border-radius:999px;background:transparent;color:#615850;min-height:30px;cursor:pointer;font:800 .68rem/1.2 system-ui,sans-serif}
-.sky-placement-view-controls button[aria-pressed="true"]{background:white;color:#251e19;box-shadow:0 1px 4px rgba(31,27,24,.13)}
 /* Use the same two informational rails as Relationships Vocab:
    first rail = zodiac sign, second rail = numbered house.
    All other edges remain neutral; decans do not select rail colors. */
@@ -212,8 +208,3 @@ body.sky-chart-page.sky-foundation-active #chartPanel > :not(#skyFoundationRoot)
 .sky-placement-card-link.inline-rel-card .inline-rel-card-art{display:block;width:100%;max-width:100%;box-sizing:border-box;margin:0;padding:0;border:2px solid #53483f;border-radius:0;background:transparent;line-height:0}
 .sky-placement-card-link.inline-rel-card img{display:block;width:100%;max-width:100%;height:auto;max-height:none;aspect-ratio:auto;object-fit:contain;margin:0;padding:0;border:0;outline:0;border-radius:0;box-shadow:none}
 .sky-placement-card-link:focus-visible{outline:2px solid #53483f;outline-offset:3px}
-.sky-placement-pip-gallery{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;padding:10px 8px 16px}
-.sky-placement-pip{display:block;min-width:0;border-radius:5px;overflow:hidden;outline-offset:2px}
-.sky-placement-pip img{display:block;width:100%;height:auto;aspect-ratio:2/3;object-fit:contain}
-.sky-placement-pip:focus-visible{outline:2px solid #524c45}
-@media(max-width:390px){.sky-placement-pip-gallery{gap:4px;padding-inline:5px}}
