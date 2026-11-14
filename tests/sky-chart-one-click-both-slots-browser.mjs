@@ -65,6 +65,8 @@ try{
     }
     // Permission dialogs may leave native getCurrentPosition pending without invoking
     // either callback. Confirm the authoritative controller releases the busy UI.
+    const resumedNamePrompt=page.locator('#skyWhereWhenNamePrompt:not([hidden])');
+    if(await resumedNamePrompt.count())await resumedNamePrompt.locator('[data-sky-name-cancel]').click();
     await page.locator('#skyFoundationA [data-sky-drawer-tab="where"]').click();
     const retryForm=page.locator('#skyFoundationA .sky-where-when-editor');
     await retryForm.waitFor();
