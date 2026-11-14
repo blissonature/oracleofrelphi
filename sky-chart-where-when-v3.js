@@ -208,7 +208,7 @@ async function checkHere(slot){
   }catch(error){
     if(!form.isConnected)return;
     here.checked=false;syncModes(slot);
-    status(slot,error?.code===1?'Location permission was denied.':error?.message||'Current location could not be resolved.',true);
+    status(slot,error?.code===1?'Location permission was denied by your browser or device. Allow location access for this browser and site, then retry.':error?.code===2?'Your device could not determine a location. Check Location Services and try again.':error?.code===3?'The browser location request timed out. Check location access and retry.':error?.message||'Current location could not be resolved.',true);
   }
 }
 function updateMode(slot,kind,checked){
@@ -532,7 +532,7 @@ async function hereAndNow(slot){
     syncModes(slot);
     setBusy(slot,false);
     await submitForm(slot,form,{snapshotNow:true,instant:form.dataset.nowInstant});
-  }catch(error){setBusy(slot,false);status(slot,error?.code===1?'Location permission was denied.':error?.message||'Here and Now could not be resolved.',true)}
+  }catch(error){setBusy(slot,false);status(slot,error?.code===1?'Location permission was denied by your browser or device. Allow location access for this browser and site, then retry.':error?.code===2?'Your device could not determine a location. Check Location Services and try again.':error?.code===3?'The browser location request timed out. Check location access and retry.':error?.message||'Here and Now could not be resolved.',true)}
 }
 
 function weekdayRuler(instant,timeZone){return WEEKDAY_RULERS[window.luxon.DateTime.fromJSDate(instant).setZone(timeZone).weekday]||'sun'}
