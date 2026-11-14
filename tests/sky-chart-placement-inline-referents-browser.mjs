@@ -28,6 +28,7 @@ for(const mode of ['desktop','mobile']){
   await page.addInitScript(({a,b})=>{
     localStorage.setItem('relphiSkyChartA',JSON.stringify(a));
     localStorage.setItem('relphiSkyChartB',JSON.stringify(b));
+    localStorage.setItem('relphiSkyChartLastModeV1','comparison');
     sessionStorage.removeItem('relphiSkyVocabViewV1');
   },{a:A,b:B});
   const errors=[];
@@ -63,6 +64,8 @@ for(const mode of ['desktop','mobile']){
   assert.match(await tileB.textContent(),/partnership, contracts, one-to-one relationship/);
   assert.equal(await tileA.count(),0,mode+' must not show referents in another sky');
   assert.equal(await tileB.locator('.sky-placement-referents-item').count(),3);
+  await tileB.locator('.sky-placement-referents-definition').first().click();
+  assert.equal(await tileB.count(),1,'Interacting with referent text must not clear selection');
   const rowBNext=page.locator('#skyFoundationB .sky-foundation-row[data-placement="moon"]');
   assert.equal(await tileB.evaluate(el=>el.previousElementSibling?.dataset?.placement),'moon','tile must follow selected row');
 
