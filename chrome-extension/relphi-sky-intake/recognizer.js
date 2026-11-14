@@ -67,7 +67,12 @@ function place(text){
   return inPlace?trim(inPlace[1]).slice(0,180):'';
 }
 function recognize(input,prefs={}){
-  const text=String(input||'').slice(0,5000),errors=[];
+  // Formatting in a selected Markdown block is not birth data.
+  const text=String(input||'').slice(0,5000)
+    .replace(/<\/?(?:strong|b|em|i|p|li|h[1-6])(?:\s[^>]*)?>/gi,' ')
+    .replace(/\*\*/g,'')
+    .replace(/__/g,'')
+    .replace(/^[\t ]*[-*•][\t ]+(?=\S)/gm,''),errors=[];
   const d=dates(text,prefs),good=unique(d.filter(x=>x.date).map(x=>x.date)),invalid=d.filter(x=>!x.date);
   if(invalid.some(x=>x.ambiguous))errors.push('Ambiguous numeric date: spell out the month or set date order in preferences.');
   else if(invalid.length)errors.push('Invalid calendar date.');
@@ -77,10 +82,11 @@ function recognize(input,prefs={}){
   if(valid.length>1)errors.push('Multiple distinct clock times.');
   const unknown=/\b(?:time\s+(?:is\s+)?unknown|unknown\s+(?:birth\s+)?time|birth\s+time\s+unknown)\b/i.test(text);
   if(unknown&&valid.length)errors.push('Conflicting known and unknown times.');
-  if(/\b(?:PST|PDT|MST|MDT|CST|CDT|EST|EDT|BST|IST)\b/.test(text)&&valid.length)
-    errors.push('Time-zone abbreviation needs review; time must be local to the selected place.');
+  // Historical time zone is resolved by Sky Chart from the selected place.
+  // Do not treat an EDT/EST annotation as an invalid birth time.
   const location=place(text),date=good.length===1?good[0]:'',time=valid.length===1?valid[0]:'';
-  return{date,time,timeUnknown:unknown,location,errors:unique(errors),
+  const timeZoneAbbreviation=(text.match(/\b(?:PST|PDT|MST|MDT|CST|CDT|EST|EDT|AKST|AKDT|HST|UTC|GMT)\b/i)||[])[0]?.toUpperCase()||'';
+  return{date,time,timeUnknown:unknown,location,timeZoneAbbreviation,errors:unique(errors),
     hasAny:!!(date||time||unknown||location),
     complete:!!(date&&(time||unknown)&&location&&!errors.length)};
 }
@@ -99,13 +105,25 @@ function links(input,prefs={}){
 // Review builds target the immutable, browser-verified Sky Chart receiver until merged.
 function destination(choice='preview'){
   return choice==='live'?'https://oracleofrelphi.com/sky-chart.html':
-    'https://oracleofrelphi.com/sky-chart-preview/sky-chart.html?ref=647d58eec821fab85730ce77dbf73cc8ac1e469f';
+    'https://oracleofrelphi.com/sky-chart-preview/sky-chart.html?ref=05d22ff4b6607f1cc8a50e4881b6ce7f1eba8acb';
 }
 function skyURL(data,base=destination()){
-  if(!data?.hasAny||data.errors?.length)throw new Error('A recognizable, unambiguous date or address is required.');
-  const url=new URL(base);if(!['http:','https:'].includes(url.protocol))throw new Error('Invalid Sky Chart URL.');
-  const packet={v:1,date:data.date||'',time:data.time||'',timeUnknown:!!data.timeUnknown,location:data.location||''};
-  url.hash='relphiSkyIntake='+encodeURIComponent(JSON.stringify(packet));
+  if(!data?.hasAny||data.errors?.length)throw new Error('A recognizable, unambiguous date, time, or address is required.');
+  const url=new URL(base);
+  if(!['http:','https:'].includes(url.protocol))throw new Error('Invalid Sky Chart URL.');
+  // The current Sky Chart receiver owns both complete-event calculation and
+  // non-destructive partial editor drafts; legacy fragment packets are unsupported.
+  if(data.complete){
+    const event={label:'born',date:data.date,time:data.timeUnknown?null:data.time,
+      location:data.location};
+    if(data.timeZoneAbbreviation)event.timeZoneAbbreviation=data.timeZoneAbbreviation;
+    url.searchParams.set('relphiSingle',JSON.stringify({version:1,event}));
+  }else{
+    url.searchParams.set('relphiDraft',JSON.stringify({version:1,kind:'fields',
+      date:data.date||'',time:data.time||'',location:data.location||'',
+      timeUnknown:!!data.timeUnknown||!!(data.date&&!data.time&&!data.location)}));
+  }
+  url.hash='';
   return url.toString();
 }
 root.RelphiSkyRecognizer=Object.freeze({recognize,candidate,links,skyURL,destination,dates,addresses,calendar});

@@ -34,7 +34,7 @@ assert.ok(cities.length===1&&cities[0].kind==='address','Address linking works i
 assert.equal(R.candidate('date','November 9, 2026').location,'','Date-only cannot borrow a location');
 assert.equal(R.candidate('address','Salt Lake City, Utah').date,'','Address-only cannot borrow a date');
 const url=R.skyURL(R.candidate('selection','Location: Salt Lake City, Utah\nDate: November 9, 2026\nTime: 3:15 AM'));
-const packet=JSON.parse(new URLSearchParams(new URL(url).hash.slice(1)).get('relphiSkyIntake'));
+const packet=JSON.parse(new URL(url).searchParams.get('relphiSingle')).event;
 assert.equal(packet.date,'2026-11-09');
 assert.equal(packet.location,'Salt Lake City, Utah');
 assert.equal(packet.time,'03:15');
@@ -42,3 +42,30 @@ console.log('Recognizer accepted full/partial dates, local times, unknown time, 
 
 assert.match(R.destination('preview'),/sky-chart-preview\/sky-chart\.html\?ref=/);
 assert.equal(R.destination('live'),'https://oracleofrelphi.com/sky-chart.html');
+
+
+// User-reported text: formatting and heading must not interfere with birth data.
+const completeBirth=[
+  '**Birth Data**',
+  '- **Date of Birth:** June 14, 1946',
+  '- **Time of Birth:** 10:54 AM EDT',
+  '- **Location:** Jamaica, Queens, New York'
+].join('\n');
+test(completeBirth,{date:'1946-06-14',time:'10:54',location:'Jamaica, Queens, New York',complete:true,hasAny:true});
+test('**Date of Birth:** June 14, 1946\n**Time of Birth:** 10:54 AM EDT',
+  {date:'1946-06-14',time:'10:54',location:'',hasAny:true,complete:false});
+const partialBirth=R.recognize('June 14, 1946\n10:54 AM EDT');
+assert.equal(partialBirth.errors.length,0,'Time-zone annotation is nonblocking for date/time-only selection');
+assert.equal(partialBirth.date,'1946-06-14');
+assert.equal(partialBirth.time,'10:54');
+const birthURL=R.skyURL(R.recognize(completeBirth));
+const birthPacket=JSON.parse(new URL(birthURL).searchParams.get('relphiSingle')).event;
+assert.deepEqual({date:birthPacket.date,time:birthPacket.time,location:birthPacket.location},
+  {date:'1946-06-14',time:'10:54',location:'Jamaica, Queens, New York'});
+assert.match(R.destination('preview'),/05d22ff4b6607f1cc8a50e4881b6ce7f1eba8acb/);
+assert.equal(birthPacket.timeZoneAbbreviation,'EDT');
+const draftPacket=JSON.parse(new URL(R.skyURL(partialBirth)).searchParams.get('relphiDraft'));
+assert.equal(draftPacket.kind,'fields');
+assert.equal(draftPacket.date,'1946-06-14');
+assert.equal(draftPacket.time,'10:54');
+assert.equal(draftPacket.location,'');

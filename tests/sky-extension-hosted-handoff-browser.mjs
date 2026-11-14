@@ -1,9 +1,9 @@
 import assert from 'node:assert/strict';
 import {chromium} from 'playwright';
 
-const receiver='647d58eec821fab85730ce77dbf73cc8ac1e469f';
+const receiver='05d22ff4b6607f1cc8a50e4881b6ce7f1eba8acb';
 const base='https://oracleofrelphi.com/sky-chart-preview/sky-chart.html?ref='+receiver;
-const packet=p=>'#relphiSkyIntake='+encodeURIComponent(JSON.stringify({v:1,...p}));
+const packet=p=>{const url=new URL(base);url.searchParams.set('relphiSingle',JSON.stringify({version:1,event:p}));return url.toString()};
 const browser=await chromium.launch({headless:true});
 try {
   // This explicitly tests the remote preview actually opened by the extension,
@@ -15,14 +15,28 @@ try {
     page.on('response',response=>{if(!response.ok())badResponses.push({url:response.url(),status:response.status()})});
     page.on('console',message=>{if(message.type()==='error')failures.push('Console: '+message.text())});
     page.on('pageerror',e=>failures.push(String(e.message)));
-    await page.route('https://nominatim.openstreetmap.org/search**',route=>
-      route.fulfill({status:200,contentType:'application/json',body:JSON.stringify([{
+    await page.route('https://geocoding-api.open-meteo.com/v1/search**',route=>{
+      const name=new URL(route.request().url()).searchParams.get('name');
+      return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({results:name==='Jamaica'?[]:[{
+        name:'Salt Lake City',admin1:'Utah',country:'United States',country_code:'US',
+        latitude:40.7608,longitude:-111.891,timezone:'America/Denver'
+      }]})});
+    });
+    await page.route('https://nominatim.openstreetmap.org/search**',route=>{
+      const isJamaica=new URL(route.request().url()).searchParams.get('q')?.includes('Jamaica');
+      return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify(isJamaica?[{
+        lat:'40.7000',lon:'-73.8000',name:'Jamaica',display_name:'Jamaica, Queens, New York, United States',
+        address:{suburb:'Jamaica',borough:'Queens',county:'Queens County',state:'New York',country:'United States'}
+      }]:[{
         lat:'40.7608',lon:'-111.891',display_name:'Salt Lake City, Utah, United States',
         address:{city:'Salt Lake City',state:'Utah',country:'United States'}
-      }])}));
-    await page.route('https://api.open-meteo.com/v1/forecast**',route=>
-      route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({timezone:'America/Denver'})}));
-    await page.goto(base+packet({date:'2026-11-09',time:'15:15',timeUnknown:false,location:'Salt Lake City, Utah'}),{
+      }])});
+    });
+    await page.route('https://api.open-meteo.com/v1/forecast**',route=>{
+      const lat=Number(new URL(route.request().url()).searchParams.get('latitude'));
+      return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({timezone:Math.abs(lat-40.7)<0.0001?'America/New_York':'America/Denver'})});
+    });
+    await page.goto(packet({date:'2026-11-09',time:'15:15',location:'Salt Lake City, Utah',label:'born'}),{
       waitUntil:'domcontentloaded',timeout:60000
     });
     await page.waitForFunction(()=>{
@@ -51,7 +65,7 @@ try {
     });
     // Placement persistence precedes the final async Chiron/commit cleanup.
     // Wait for the receiving owner to consume the handoff before asserting URL state.
-    await page.waitForFunction(()=>location.hash==='',null,{timeout:6500}).catch(async error=>{
+    await page.waitForFunction(()=>!new URLSearchParams(location.search).has('relphiSingle'),null,{timeout:6500}).catch(async error=>{
       const diag=await page.evaluate(()=>({
         href:location.href,readyState:document.readyState,title:document.title,
         rootBusy:document.getElementById('skyFoundationRoot')?.getAttribute('aria-busy'),
@@ -78,11 +92,50 @@ try {
     assert.ok(done.location.includes('Salt Lake City'));
     assert.equal(done.timeZone,'America/Denver');
     assert.equal(new URL(done.url).searchParams.get('ref'),receiver,'Exactly pinned receiver');
-    assert.equal(new URL(done.url).hash,'','Successful intake is consumed');
+    assert.equal(new URL(done.url).searchParams.has('relphiSingle'),false,'Successful intake is consumed');
     assert.equal(done.editorOpen,false,'Complete selection calculates rather than leaving editor open');
     assert.deepEqual(failures.filter(x=>/TypeError|ReferenceError|SyntaxError/.test(x)),[],
       'No critical remote preview runtime errors');
     await page.screenshot({path:'sky-extension-hosted-'+device+'.png'});
+    const draftUrl=new URL(base);
+    draftUrl.searchParams.set('relphiDraft',JSON.stringify({
+      version:1,kind:'fields',date:'1946-06-14',time:'10:54',location:'',timeUnknown:false
+    }));
+    await page.goto(draftUrl.toString(),{waitUntil:'domcontentloaded'});
+    await page.waitForFunction(()=>{
+      const form=document.querySelector('#skyFoundationA .sky-where-when-editor');
+      return form?.querySelector('[data-ww-field="date"]')?.value==='1946-06-14'&&
+        form?.querySelector('[data-ww-field="time"]')?.value==='10:54'&&
+        form?.querySelector('[data-ww-field="location-query"]')?.value==='';
+    },null,{timeout:15000});
+    assert.equal(await page.evaluate(()=>JSON.parse(localStorage.getItem('relphiSkyChartA')).calcProfile.dateTime),
+      '2026-11-09T15:15','Partial selection never alters the saved chart');
+    await page.screenshot({path:'sky-extension-hosted-draft-'+device+'.png'});
+    console.log('HOSTED_SKY_EXTENSION_DRAFT_'+device,'PASS');
+    // The reported 1946 birth-selection flow reaches the same hosted receiver.
+    const historical={label:'born',date:'1946-06-14',time:'10:54',
+      location:'Jamaica, Queens, New York',timeZoneAbbreviation:'EDT'};
+    await page.goto(packet(historical),{waitUntil:'domcontentloaded'});
+    await page.waitForFunction(()=>{
+      const sky=JSON.parse(localStorage.getItem('relphiSkyChartA')||'null');
+      return sky?.calcProfile?.dateTime==='1946-06-14T10:54'&&
+        sky?.calcProfile?.timeZone==='America/New_York'&&
+        sky?.metadata?.selectionLocation==='Jamaica, Queens, New York'&&
+        !new URLSearchParams(location.search).has('relphiSingle');
+    },null,{timeout:30000});
+    const historicalResult=await page.evaluate(()=>{
+      const sky=JSON.parse(localStorage.getItem('relphiSkyChartA'));
+      return{dateTime:sky.calcProfile.dateTime,instant:sky.calcProfile.instant,
+        location:sky.calcProfile.location,timezone:sky.calcProfile.timeZone,
+        houseSystem:sky.calcProfile.houseSystem,houseCusps:sky.houseCusps,
+        wheel:!!document.querySelector('#skyFoundationWheelMount svg')};
+    });
+    assert.equal(historicalResult.instant,'1946-06-14T14:54:00.000Z');
+    assert.equal(historicalResult.houseSystem,'porphyry');
+    assert.equal(historicalResult.houseCusps.length,12);
+    assert.equal(historicalResult.wheel,true,'Hosted preview shows historical sky graphics');
+    await page.screenshot({path:'sky-extension-hosted-jamaica-'+device+'.png'});
+    console.log('HOSTED_SKY_EXTENSION_JAMAICA_'+device,'PASS',JSON.stringify(historicalResult));
     console.log('HOSTED_SKY_EXTENSION_'+device,JSON.stringify(done));
     await context.close();
   }

@@ -37,10 +37,11 @@ try{
   const opening=browser.waitForEvent('page');
   await page.locator('#date-text [data-relphi-sky-link="date"]').click();
   const newPage=await opening;await newPage.waitForLoadState('domcontentloaded');
-  const packet=JSON.parse(new URLSearchParams(new URL(newPage.url()).hash.slice(1)).get('relphiSkyIntake'));
+  const packet=JSON.parse(new URL(newPage.url()).searchParams.get('relphiDraft'));
   assert.equal(packet.date,'2026-11-09');
+  assert.equal(packet.kind,'fields');
   assert.equal(new URL(newPage.url()).pathname,'/sky-chart-preview/sky-chart.html','Draft extension must launch the working preview receiver');
-  assert.equal(new URL(newPage.url()).searchParams.get('ref'),'647d58eec821fab85730ce77dbf73cc8ac1e469f');
+  assert.equal(new URL(newPage.url()).searchParams.get('ref'),'05d22ff4b6607f1cc8a50e4881b6ce7f1eba8acb');
   assert.equal(packet.location,'','A date link cannot steal an existing location');
   assert.equal(packet.time,'','A date link cannot invent a birth time');
   await newPage.close();
@@ -50,7 +51,8 @@ try{
   const openingAddress=browser.waitForEvent('page');
   await page.keyboard.press('Enter');
   const addressPage=await openingAddress;await addressPage.waitForLoadState('domcontentloaded');
-  const value=JSON.parse(new URLSearchParams(new URL(addressPage.url()).hash.slice(1)).get('relphiSkyIntake'));
+  const value=JSON.parse(new URL(addressPage.url()).searchParams.get('relphiDraft'));
+  assert.equal(value.kind,'fields');
   assert.equal(value.location,'Salt Lake City, Utah');
   assert.equal(value.date,'');
   await addressPage.close();
@@ -74,11 +76,39 @@ try{
   assert.equal(await preview.locator('#open').isEnabled(),true,'Interactive parser preview recognizes complete Where and When');
   await preview.locator('#open').click();
   await preview.waitForURL(/sky-chart-preview\/sky-chart\.html\?ref=/,{timeout:15000});
-  const previewPacket=JSON.parse(new URLSearchParams(new URL(preview.url()).hash.slice(1)).get('relphiSkyIntake'));
+  const previewPacket=JSON.parse(new URL(preview.url()).searchParams.get('relphiSingle')).event;
   assert.equal(previewPacket.time,'03:15');
   assert.equal(previewPacket.location,'Salt Lake City, Utah');
   await preview.screenshot({path:'sky-extension-preview-desktop.png'});
   await preview.close();
+  // Exercise the real MV3 message handler with the reported full selected block.
+  const birth=[
+    '**Birth Data**',
+    '- **Date of Birth:** June 14, 1946',
+    '- **Time of Birth:** 10:54 AM EDT',
+    '- **Location:** Jamaica, Queens, New York'
+  ].join('\n');
+  const openBirth=browser.waitForEvent('page');
+  const sent=await options.evaluate(text=>new Promise(resolve=>
+    chrome.runtime.sendMessage({action:'openCandidate',kind:'selection',text},resolve)),birth);
+  assert.equal(sent.ok,true);
+  const birthPage=await openBirth;
+  await birthPage.waitForLoadState('domcontentloaded');
+  const complete=JSON.parse(new URL(birthPage.url()).searchParams.get('relphiSingle')).event;
+  assert.deepEqual({date:complete.date,time:complete.time,location:complete.location,zone:complete.timeZoneAbbreviation},
+    {date:'1946-06-14',time:'10:54',location:'Jamaica, Queens, New York',zone:'EDT'});
+  await birthPage.close();
+  const openPartial=browser.waitForEvent('page');
+  const partialSent=await options.evaluate(text=>new Promise(resolve=>
+    chrome.runtime.sendMessage({action:'openCandidate',kind:'selection',text},resolve)),
+    '**Date of Birth:** June 14, 1946\n**Time of Birth:** 10:54 AM EDT');
+  assert.equal(partialSent.ok,true);
+  const partialPage=await openPartial;
+  await partialPage.waitForLoadState('domcontentloaded');
+  const draft=JSON.parse(new URL(partialPage.url()).searchParams.get('relphiDraft'));
+  assert.deepEqual({kind:draft.kind,date:draft.date,time:draft.time,location:draft.location},
+    {kind:'fields',date:'1946-06-14',time:'10:54',location:''});
+  await partialPage.close();
   await options.close();
   console.log('Extension Options UI and interactive preview passed in Chromium; independent links preserve existing controls and launch partial data.');
 }finally{await browser.close()}
