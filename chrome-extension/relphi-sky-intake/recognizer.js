@@ -85,7 +85,8 @@ function recognize(input,prefs={}){
   // Historical time zone is resolved by Sky Chart from the selected place.
   // Do not treat an EDT/EST annotation as an invalid birth time.
   const location=place(text),date=good.length===1?good[0]:'',time=valid.length===1?valid[0]:'';
-  return{date,time,timeUnknown:unknown,location,errors:unique(errors),
+  const timeZoneAbbreviation=(text.match(/\b(?:PST|PDT|MST|MDT|CST|CDT|EST|EDT|AKST|AKDT|HST|UTC|GMT)\b/i)||[])[0]?.toUpperCase()||'';
+  return{date,time,timeUnknown:unknown,location,timeZoneAbbreviation,errors:unique(errors),
     hasAny:!!(date||time||unknown||location),
     complete:!!(date&&(time||unknown)&&location&&!errors.length)};
 }
@@ -104,13 +105,25 @@ function links(input,prefs={}){
 // Review builds target the immutable, browser-verified Sky Chart receiver until merged.
 function destination(choice='preview'){
   return choice==='live'?'https://oracleofrelphi.com/sky-chart.html':
-    'https://oracleofrelphi.com/sky-chart-preview/sky-chart.html?ref=6fdcb770d3b7008ecf0cb44f97f02a87494184a1';
+    'https://oracleofrelphi.com/sky-chart-preview/sky-chart.html?ref=12c803672cb618a62b386b33610097939912f723';
 }
 function skyURL(data,base=destination()){
-  if(!data?.hasAny||data.errors?.length)throw new Error('A recognizable, unambiguous date or address is required.');
-  const url=new URL(base);if(!['http:','https:'].includes(url.protocol))throw new Error('Invalid Sky Chart URL.');
-  const packet={v:1,date:data.date||'',time:data.time||'',timeUnknown:!!data.timeUnknown,location:data.location||''};
-  url.hash='relphiSkyIntake='+encodeURIComponent(JSON.stringify(packet));
+  if(!data?.hasAny||data.errors?.length)throw new Error('A recognizable, unambiguous date, time, or address is required.');
+  const url=new URL(base);
+  if(!['http:','https:'].includes(url.protocol))throw new Error('Invalid Sky Chart URL.');
+  // The current Sky Chart receiver owns both complete-event calculation and
+  // non-destructive partial editor drafts; legacy fragment packets are unsupported.
+  if(data.complete){
+    const event={label:'born',date:data.date,time:data.timeUnknown?null:data.time,
+      location:data.location};
+    if(data.timeZoneAbbreviation)event.timeZoneAbbreviation=data.timeZoneAbbreviation;
+    url.searchParams.set('relphiSingle',JSON.stringify({version:1,event}));
+  }else{
+    url.searchParams.set('relphiDraft',JSON.stringify({version:1,kind:'fields',
+      date:data.date||'',time:data.time||'',location:data.location||'',
+      timeUnknown:!!data.timeUnknown||!!(data.date&&!data.time&&!data.location)}));
+  }
+  url.hash='';
   return url.toString();
 }
 root.RelphiSkyRecognizer=Object.freeze({recognize,candidate,links,skyURL,destination,dates,addresses,calendar});
