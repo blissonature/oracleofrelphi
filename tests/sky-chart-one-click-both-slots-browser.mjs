@@ -63,6 +63,31 @@ try{
       assert.ok(Date.now()-Date.parse(actual.calcProfile.instant)<120000,slot+' must capture present instant');
       console.log('PASS fast Here and Now '+slot+' '+viewport.width+' '+elapsed+'ms');
     }
+    // Permission dialogs may leave native getCurrentPosition pending without invoking
+    // either callback. Confirm the authoritative controller releases the busy UI.
+    await page.locator('#skyFoundationA [data-sky-drawer-tab="where"]').click();
+    const retryForm=page.locator('#skyFoundationA .sky-where-when-editor');
+    await retryForm.waitFor();
+    await page.waitForTimeout(250);
+    await page.evaluate(()=>{
+      Object.defineProperty(navigator.geolocation,'getCurrentPosition',{
+        configurable:true,value:()=>{}
+      });
+    });
+    const retry=retryForm.locator('[data-ww-action="here-and-now"]');
+    await retry.click();
+    await page.waitForFunction(()=>{
+      const form=document.querySelector('#skyFoundationA .sky-where-when-editor');
+      return (form?.querySelector('.sky-where-when-status')?.textContent||'').includes('did not provide a location');
+    },null,{timeout:12000});
+    assert.equal(await retry.isDisabled(),false,'A stalled geolocation request must release the action');
+    await page.evaluate(()=>delete navigator.geolocation.getCurrentPosition);
+    await retry.click();
+    await page.waitForFunction(()=>{
+      const sky=JSON.parse(localStorage.getItem('relphiSkyChartA')||'null');
+      return sky?.metadata?.capturedNowAt&&Date.now()-Date.parse(sky.calcProfile.instant)<120000;
+    },null,{timeout:30000});
+    console.log('PASS stalled permission deadline and retry '+viewport.width);
     assert.ok(!errors.some(e=>/Uncaught|TypeError|ReferenceError/.test(e)),errors.join('\n'));
     await context.close();
   }
