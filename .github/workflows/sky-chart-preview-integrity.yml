@@ -4,6 +4,9 @@ on:
     paths:
       - 'sky-chart-preview/sky-chart.html'
       - 'sky-chart.html'
+      - 'sky-chart-where-when-v3.js'
+      - 'sky-chart-final-pass-v2.js'
+      - 'tests/sky-chart-one-click-both-slots-browser.mjs'
       - 'sky-chart-heptagram-geometry-v1.css'
       - 'tests/sky-chart-remote-preview-integrity.mjs'
       - 'tests/sky-chart-preview-cdn-probe.mjs'
@@ -22,7 +25,7 @@ jobs:
           npx playwright install --with-deps chromium
       - name: Check served preview and deployed page
         env:
-          PREVIEW_REF: d279687a004745d82a67ff34144c94a2e7463e52
+          PREVIEW_REF: ${{ github.event.pull_request.head.sha }}
         run: |
           node tests/sky-chart-remote-preview-integrity.mjs
       - uses: actions/upload-artifact@v4
