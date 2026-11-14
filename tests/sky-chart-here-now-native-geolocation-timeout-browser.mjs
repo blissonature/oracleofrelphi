@@ -51,7 +51,11 @@ try{
     await page.waitForFunction(slot=>JSON.parse(localStorage.getItem('relphiSkyChart'+slot)||'null')?.metadata?.capturedNowAt,slot,{timeout:12000});
     assert.ok(Date.now()-elapsedStart<4500,'Retry must be fast with responsive native geolocation');
     console.log('PASS stalled native geolocation recovery and retry '+slot+' '+viewport.width);
-    if(slot==='A')await page.evaluate(()=>window.__testGeolocationMode='stalled');
+    if(slot==='A')await page.evaluate(()=>{
+      window.__testGeolocationMode='stalled';
+      window.RelphiSkyStartupMode.writeMode('comparison');
+      window.RelphiSkyStartupMode.syncRoot();
+    });
   }
   assert.deepEqual(errors.filter(x=>/ReferenceError|TypeError|SyntaxError/.test(x)),[]);
   await context.close();
