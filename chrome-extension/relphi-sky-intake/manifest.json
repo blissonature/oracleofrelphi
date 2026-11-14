@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "Oracle of Relphi — Sky from Selection",
-  "version": "0.1.0",
-  "description": "Open highlighted dates, addresses or complete Where and When in Sky Chart.",
+  "version": "0.1.1",
+  "description": "Capture selected birth dates, local times and places, including formatted text, into Sky Chart.",
   "permissions": [
     "activeTab",
     "scripting",
