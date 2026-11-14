@@ -193,3 +193,23 @@ body.sky-chart-page.sky-foundation-active #chartPanel > :not(#skyFoundationRoot)
 
 /* Keep retrograde state attached to its placement name in the Sky Card ledger. */
 .sky-foundation-row-name .sky-placement-rx{display:inline-flex;width:1.8em;height:1.8em;margin-left:-.24em;vertical-align:-.59em;color:inherit;flex:none}.sky-foundation-row-name .sky-rx-master{display:block;width:100%;height:100%;overflow:visible;fill:currentColor;font-family:Montserrat,system-ui,sans-serif}
+
+
+/* Placement presentation is owned by the foundation ledger; no competing overlay. */
+.sky-placement-view-controls{display:grid;grid-template-columns:1fr 1fr;gap:3px;padding:4px;margin:8px 10px 2px;border-radius:999px;background:#f3eee7;border:1px solid rgba(31,27,24,.12)}
+.sky-placement-view-controls button{border:0;border-radius:999px;background:transparent;color:#615850;min-height:30px;cursor:pointer;font:800 .68rem/1.2 system-ui,sans-serif}
+.sky-placement-view-controls button[aria-pressed="true"]{background:white;color:#251e19;box-shadow:0 1px 4px rgba(31,27,24,.13)}
+.sky-placement-expanded{grid-column:1/-1;display:grid;gap:9px;padding:10px 9px 12px;background:#fffaf1;border-bottom:2px solid rgba(31,27,24,.14)}
+.sky-placement-referents{display:grid;gap:6px}
+.sky-placement-referent{display:grid;gap:3px;padding:8px 9px;border:1px solid rgba(31,27,24,.1);border-radius:9px;background:#fff}
+.sky-placement-referent small{color:#766b60;text-transform:uppercase;letter-spacing:.075em;font:800 .55rem/1 system-ui,sans-serif}
+.sky-placement-referent strong{color:#2b2520;font:850 .73rem/1.2 system-ui,sans-serif}
+.sky-placement-referent span{color:#51483e;font:550 .68rem/1.4 system-ui,sans-serif}
+.sky-placement-card-link{display:grid;grid-template-columns:48px minmax(0,1fr);align-items:center;gap:9px;color:#332b25;font:800 .7rem/1.2 system-ui,sans-serif;text-decoration:none;padding:5px;border:1px solid rgba(31,27,24,.15);border-radius:9px;background:white}
+.sky-placement-card-link img{display:block;width:48px;height:auto;aspect-ratio:2/3;object-fit:contain}
+.sky-placement-card-link:hover,.sky-placement-card-link:focus-visible{outline:2px solid #73675b;outline-offset:1px}
+.sky-placement-pip-gallery{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;padding:10px 8px 16px}
+.sky-placement-pip{display:block;min-width:0;border-radius:5px;overflow:hidden;outline-offset:2px}
+.sky-placement-pip img{display:block;width:100%;height:auto;aspect-ratio:2/3;object-fit:contain}
+.sky-placement-pip:focus-visible{outline:2px solid #524c45}
+@media(max-width:390px){.sky-placement-pip-gallery{gap:4px;padding-inline:5px}}
