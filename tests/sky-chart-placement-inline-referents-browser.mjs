@@ -34,7 +34,21 @@ for(const mode of ['desktop','mobile']){
   page.on('pageerror',error=>errors.push(error.message));
   await page.goto('http://127.0.0.1:4173/sky-chart.html',{waitUntil:'domcontentloaded'});
   await page.waitForSelector('#skyFoundationRoot[aria-busy="false"]',{timeout:30000});
-  await page.waitForFunction(()=>!!window.RelphiSkyVocab&&!!window.RelphiSkyFoundationInteractions&&!!document.querySelector('#skyFoundationB .sky-foundation-row[data-placement="moon"]'),null,{timeout:30000});
+  try{
+    await page.waitForFunction(()=>!!window.RelphiSkyVocab&&!!window.RelphiSkyFoundationInteractions&&!!document.querySelector('#skyFoundationB .sky-foundation-row[data-placement="moon"]'),null,{timeout:18000});
+  }catch(error){
+    console.log('Sky Chart selection readiness diagnostic',mode,JSON.stringify(await page.evaluate(()=>({
+      vocab:!!window.RelphiSkyVocab,interaction:!!window.RelphiSkyFoundationInteractions,
+      busy:document.querySelector('#skyFoundationRoot')?.getAttribute('aria-busy'),
+      skyA:!!document.querySelector('#skyFoundationA'),skyB:!!document.querySelector('#skyFoundationB'),
+      aRows:[...document.querySelectorAll('#skyFoundationA .sky-foundation-row')].slice(0,12).map(x=>({name:x.querySelector('.sky-foundation-row-name')?.textContent,id:x.dataset.placement})),
+      bRows:[...document.querySelectorAll('#skyFoundationB .sky-foundation-row')].slice(0,12).map(x=>({name:x.querySelector('.sky-foundation-row-name')?.textContent,id:x.dataset.placement})),
+      children:document.querySelector('#skyFoundationB .sky-foundation-body')?.childElementCount,
+      scripts:[...document.scripts].filter(x=>x.src.includes('vocab')||x.src.includes('interaction')).map(x=>x.src)
+    }))));
+    console.log('Browser page errors:',errors);
+    throw error;
+  }
   const tileB=page.locator('#skyFoundationB [data-sky-placement-referents="B"]');
   const tileA=page.locator('#skyFoundationA [data-sky-placement-referents="A"]');
   assert.equal(await tileB.count(),0,mode+' should not display referents before selection');
