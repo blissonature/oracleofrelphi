@@ -8,7 +8,7 @@ const browser=await chromium.launch({headless:true});
 try{
   for(const width of [1280,390]){
     const context=await browser.newContext({viewport:{width,height:850}}),page=await context.newPage(),errors=[];
-    page.on('pageerror',e=>errors.push(e.message));
+    page.on('pageerror',e=>errors.push(e.stack||e.message));
     await page.route('https://unpkg.com/suncalc@1.9.0/suncalc.js',r=>r.fulfill({path:path.resolve('node_modules/suncalc/suncalc.js'),contentType:'application/javascript'}));
     await page.route('https://cdn.jsdelivr.net/npm/luxon@3/build/global/luxon.min.js',r=>r.fulfill({path:path.resolve('node_modules/luxon/build/global/luxon.min.js'),contentType:'application/javascript'}));
     await page.addInitScript(({a,b})=>{localStorage.setItem('relphiSkyChartA',JSON.stringify(a));localStorage.setItem('relphiSkyChartB',JSON.stringify(b));localStorage.setItem('relphiSkyChartLastModeV1','comparison')},{a:sky('A',0),b:sky('B',7)});
