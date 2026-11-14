@@ -62,7 +62,7 @@ const birthURL=R.skyURL(R.recognize(completeBirth));
 const birthPacket=JSON.parse(new URL(birthURL).searchParams.get('relphiSingle')).event;
 assert.deepEqual({date:birthPacket.date,time:birthPacket.time,location:birthPacket.location},
   {date:'1946-06-14',time:'10:54',location:'Jamaica, Queens, New York'});
-assert.match(R.destination('preview'),/acdb31d9dfca16a388e196d278c8e0af8cc889b8/);
+assert.match(R.destination('preview'),/05d22ff4b6607f1cc8a50e4881b6ce7f1eba8acb/);
 assert.equal(birthPacket.timeZoneAbbreviation,'EDT');
 const draftPacket=JSON.parse(new URL(R.skyURL(partialBirth)).searchParams.get('relphiDraft'));
 assert.equal(draftPacket.kind,'fields');
