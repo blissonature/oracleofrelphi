@@ -143,6 +143,10 @@ try{
     },null,{timeout:30000});
     const jamaica=await page.evaluate(()=>JSON.parse(localStorage.getItem('relphiSkyChartA')));
     assert.equal(jamaica.calcProfile.timeZone,'America/New_York');
+    assert.equal(jamaica.calcProfile.houseSystem,'porphyry','Selected known-time sky uses Porphyry');
+    assert.equal(jamaica.houseCusps.length,12);
+    assert.ok(jamaica.houseCusps.some((cusp,i)=>Math.abs(((jamaica.houseCusps[(i+1)%12]-cusp+360)%360)-30)>0.05),
+      'Porphyry cusps must not be equal-sign placeholders');
     assert.equal(Number(jamaica.calcProfile.latitude),40.7);
     assert.equal(Number(jamaica.calcProfile.longitude),-73.8);
     assert.equal(jamaica.metadata.selectionTimeZoneAbbreviation,'EDT');
