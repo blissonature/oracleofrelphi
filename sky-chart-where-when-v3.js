@@ -288,7 +288,7 @@ function calculateSky(slot,selected,date,time,options={}){
   const asc=ascendantLongitude(instant,selected.latitude,selected.longitude),mc=midheavenLongitude(instant,selected.longitude);
   placements.Ascendant=placementObject('Ascendant',asc);placements.Midheaven=placementObject('Midheaven',mc);
   const storedHouseSystem=String(profileFor(slot).houseSystem||'').trim();
-  const houseSystem=localStorage.getItem(SHARED_HOUSE_KEY)||(storedHouseSystem&&storedHouseSystem!=='none'?storedHouseSystem:'whole-sign');
+  const houseSystem=options.houseSystem||localStorage.getItem(SHARED_HOUSE_KEY)||(storedHouseSystem&&storedHouseSystem!=='none'?storedHouseSystem:'whole-sign');
   const houses=window.RelphiHouseSystems.calculateCusps({system:houseSystem,ascendant:asc,midheaven:mc,siderealDegrees:siderealDegrees(instant,selected.longitude),obliquityDegrees:obliquity(instant),latitude:selected.latitude});
   const existing=options.replaceExisting?{}:(payload(slot)||{}),metadata=existing.metadata&&typeof existing.metadata==='object'?{...existing.metadata}:{},priorProfile=existing.calcProfile&&typeof existing.calcProfile==='object'?{...existing.calcProfile}:{},liveOrigin=String(options.liveOrigin||'');
   // A known-time calculation must not inherit unknown-time state from the prior working copy.
@@ -970,7 +970,7 @@ async function applySelectionComparison(){
         const local=window.luxon?.DateTime?.fromISO(event.date+'T'+event.time,{zone:selected.timezone});
         if(!local?.isValid||local.offset!==offsetMinutes)throw new Error('The selected '+event.timeZoneAbbreviation+' does not agree with '+selected.timezone+' at the selected date and time.');
       }
-      const record=calculateSky(slot,selected,event.date,event.time||'',{replaceExisting:true,timeUnknown:event.time===null});
+      const record=calculateSky(slot,selected,event.date,event.time||'',{replaceExisting:true,timeUnknown:event.time===null,houseSystem:'porphyry'});
       const name=[event.label?event.label.charAt(0).toUpperCase()+event.label.slice(1):'Event '+(i+1),event.date].join(' · ');
       record.name=name;record.title=name;record.displayName=name;record.skyName=name;
       record.metadata={...record.metadata,selectionEventLabel:event.label,selectionLocation:event.location,selectionTimeZoneAbbreviation:event.timeZoneAbbreviation||null};
