@@ -100,7 +100,61 @@ function glyphFailure(host,error){host.dataset.relphiGlyphError=error?.message||
 function placementHouseMarker(house){const marker=window.RelphiHouseMedallion?.create?.(house,'',false);if(!marker)throw new Error('House medallion source primitive is unavailable.');return marker}
 function moonRangeRecords(payload){const range=profile(payload).moonRange;if(profile(payload).timeUnknown!==true||!range?.start||!range?.end)return null;const start=longitude(range.start),end=longitude(range.end);return Number.isFinite(start)&&Number.isFinite(end)?{start,end}:null}
 function moonRangeText(payload){const range=moonRangeRecords(payload);if(!range)return'';const format=value=>{const p=coordinate({value});return{...p,label:`${p.text} ${SIGN_NAMES[p.sign]}`}},start=format(range.start),end=format(range.end);return start.sign===end.sign?`${start.text}–${end.text} ${SIGN_NAMES[start.sign]}`:`${start.label} – ${end.label}`}
-function renderCard(slot,payload,list,cusps){const panel=document.getElementById(`skyFoundation${slot}`);if(!panel)return[];panel.querySelector('.sky-foundation-name').textContent=payload?.name||`Sky ${slot}`;const refs=window.RelphiSkyCardShell?.ensure?.(slot,payload),mount=refs?.placements||panel.querySelector('.sky-foundation-body');mount.replaceChildren();const moonRange=moonRangeRecords(payload);if(!list.length&&!moonRange){mount.innerHTML='<p class="sky-foundation-empty">No approved canonical placements are available for this sky.</p>';return[]}const ledger=document.createElement('div');ledger.className='sky-foundation-ledger';mount.appendChild(ledger);const color=spec()?.SKY?.[slot]||'#333',jobs=[],hasHouses=profile(payload).timeUnknown!==true;list.forEach(record=>{const position=coordinate(record),house=hasHouses?houseFor(record.value,cusps):0,row=document.createElement('div');row.className='sky-foundation-row';row.innerHTML=`<svg viewBox="-20 -20 40 40" aria-label="${esc(record.entry.name)}"></svg><span class="sky-foundation-row-name">${esc(record.entry.name)}${recordRetrograde(record,payload)?`<span class="sky-placement-rx">${retrogradeMark()}</span>`:''}</span><span class="sky-foundation-coordinate">${position.text} ${SIGN_NAMES[position.sign]}</span>${hasHouses?`<span class="sky-foundation-house relphi-placement-house-medallion-host" data-house="${house}"></span>`:''}`;if(hasHouses)row.querySelector('.sky-foundation-house')?.appendChild(placementHouseMarker(house));ledger.appendChild(row);const host=row.querySelector('svg');jobs.push(drawCanonical(host,record.id,{radius:16,padding:1,color}).catch(error=>glyphFailure(host,error)))});if(moonRange){const entry=window.RelphiGlyphRegistry?.resolve?.('moon')||window.RelphiGlyphRegistry?.get?.('moon'),row=document.createElement('div');row.className='sky-foundation-row sky-foundation-row--range';row.dataset.placement='moon-range';row.innerHTML=`<svg viewBox="-20 -20 40 40" aria-label="Moon"></svg><span class="sky-foundation-row-name">Moon</span><span class="sky-foundation-coordinate">${esc(moonRangeText(payload))}</span>`;const mercuryRow=[...ledger.children].find(node=>String(node.querySelector?.('.sky-foundation-row-name')?.textContent||'').trim()==='Mercury');if(mercuryRow)ledger.insertBefore(row,mercuryRow);else ledger.appendChild(row);const host=row.querySelector('svg');if(entry?.id)jobs.push(drawCanonical(host,entry.id,{radius:16,padding:1,color}).catch(error=>glyphFailure(host,error)))}return jobs}
+// The foundation owns placement presentation; the interaction controller routes row activation here.
+const placementPresentation={A:{mode:'list',selected:''},B:{mode:'list',selected:''}};
+function placementCard(record){return window.RelphiSkyDecanCards?.fromLongitude?.(record.value)||null}
+function placementCardLink(card){return card?window.RelphiSkyDecanCards?.href?.(card.id)||'#':''}
+function placementReferent(kind,value){return window.RelphiSkyVocab?.describeFocus?.(kind,value)?.description||''}
+function placementDetail(record,house){
+  const pos=coordinate(record),sign=SIGN_NAMES[pos.sign],decan=Math.floor((norm(record.value)%30)/10)+1,card=placementCard(record);
+  const sections=[
+    ['Placement',record.entry.name,placementReferent('placement',record.id)],
+    ['Sign',sign,placementReferent('sign',pos.sign)],
+    ['Decan',`${decan===1?'First':decan===2?'Second':'Third'} decan · ${sign}`,`${(decan-1)*10}°–${decan*10}° of ${sign}`],
+    ...(house?[['House',`House ${house}`,placementReferent('house',house)]]:[])
+  ];
+  return `<section class="sky-placement-expanded" data-placement-detail="${esc(record.id)}" aria-label="${esc(record.entry.name)} referents"><div class="sky-placement-referents">${sections.map(([label,name,meaning])=>`<div class="sky-placement-referent"><small>${esc(label)}</small><strong>${esc(name)}</strong><span>${esc(meaning)}</span></div>`).join('')}</div>${card?`<a class="sky-placement-card-link" href="${esc(placementCardLink(card))}" aria-label="Open full ${esc(card.title)} Tarot Ledger entry"><img src="${esc(card.image)}" alt="${esc(card.title)}" loading="lazy"><span>${esc(card.title)} · Open full card</span></a>`:''}</section>`;
+}
+function renderPlacementCards(list){
+  return `<div class="sky-placement-pip-gallery" aria-label="Pip card art in placement order">${list.map(record=>{const card=placementCard(record);if(!card)return'';return`<a href="${esc(placementCardLink(card))}" class="sky-placement-pip" aria-label="${esc(record.entry.name)} · ${esc(card.title)} · Open full card"><img src="${esc(card.image)}" alt="${esc(card.title)}" loading="lazy" decoding="async"></a>`}).join('')}</div>`;
+}
+function placementViewControls(slot){
+  const mode=placementPresentation[slot].mode;
+  return `<div class="sky-placement-view-controls" role="group" aria-label="Sky ${slot} placement views"><button type="button" data-placement-view="list" data-placement-slot="${slot}" aria-pressed="${mode==='list'}">Placements</button><button type="button" data-placement-view="pip" data-placement-slot="${slot}" aria-pressed="${mode==='pip'}">Pip art</button></div>`;
+}
+function activatePlacement(slot,id){
+  if(!placementPresentation[slot])return;
+  const panel=document.getElementById(`skyFoundation${slot}`),ledger=panel?.querySelector('.sky-foundation-ledger'),row=Array.from(ledger?.querySelectorAll('.sky-foundation-row[data-placement]')||[]).find(n=>n.dataset.placement===id);
+  if(!row||placementPresentation[slot].mode!=='list')return;
+  ledger.querySelectorAll('.sky-placement-expanded').forEach(node=>node.remove());
+  ledger.querySelectorAll('.sky-foundation-row[aria-expanded]').forEach(node=>node.setAttribute('aria-expanded','false'));
+  const state=placementPresentation[slot],wasSelected=state.selected===id;
+  state.selected=wasSelected?'':id;
+  if(!wasSelected){
+    const payload=read(KEYS[slot]),record=records(payload).find(item=>item.id===id);
+    if(record){
+      const house=profile(payload).timeUnknown===true?0:houseFor(record.value,houseCusps(payload,records(payload)));
+      row.insertAdjacentHTML('afterend',placementDetail(record,house));
+      row.setAttribute('aria-expanded','true');
+    }
+  }
+}
+function changePlacementView(slot,mode){
+  if(!placementPresentation[slot]||!['list','pip'].includes(mode))return;
+  placementPresentation[slot].mode=mode;placementPresentation[slot].selected='';
+  const payload=read(KEYS[slot]);if(!payload)return;
+  const list=records(payload),panel=document.getElementById(`skyFoundation${slot}`),mount=window.RelphiSkyCardShell?.get?.(slot)?.placements||panel?.querySelector('.sky-foundation-body');
+  if(!mount)return;
+  // Render the existing foundation presentation, never a second ledger owner.
+  renderCard(slot,payload,list,houseCusps(payload,list));
+}
+window.RelphiSkyPlacementView=Object.freeze({activate:activatePlacement,change:changePlacementView});
+document.addEventListener('click',event=>{
+  const control=event.target.closest?.('[data-placement-view][data-placement-slot]');
+  if(!control)return;
+  event.preventDefault();changePlacementView(control.dataset.placementSlot,control.dataset.placementView);
+});
+function renderCard(slot,payload,list,cusps){const panel=document.getElementById(`skyFoundation${slot}`);if(!panel)return[];panel.querySelector('.sky-foundation-name').textContent=payload?.name||`Sky ${slot}`;const refs=window.RelphiSkyCardShell?.ensure?.(slot,payload),mount=refs?.placements||panel.querySelector('.sky-foundation-body');mount.replaceChildren();const moonRange=moonRangeRecords(payload);if(!list.length&&!moonRange){mount.innerHTML='<p class="sky-foundation-empty">No approved canonical placements are available for this sky.</p>';return[]}mount.insertAdjacentHTML('beforeend',placementViewControls(slot));if(placementPresentation[slot].mode==='pip'){mount.insertAdjacentHTML('beforeend',renderPlacementCards(list));return[]}const ledger=document.createElement('div');ledger.className='sky-foundation-ledger';mount.appendChild(ledger);const color=spec()?.SKY?.[slot]||'#333',jobs=[],hasHouses=profile(payload).timeUnknown!==true;list.forEach(record=>{const position=coordinate(record),house=hasHouses?houseFor(record.value,cusps):0,row=document.createElement('div');row.className='sky-foundation-row';row.innerHTML=`<svg viewBox="-20 -20 40 40" aria-label="${esc(record.entry.name)}"></svg><span class="sky-foundation-row-name">${esc(record.entry.name)}${recordRetrograde(record,payload)?`<span class="sky-placement-rx">${retrogradeMark()}</span>`:''}</span><span class="sky-foundation-coordinate">${position.text} ${SIGN_NAMES[position.sign]}</span>${hasHouses?`<span class="sky-foundation-house relphi-placement-house-medallion-host" data-house="${house}"></span>`:''}`;if(hasHouses)row.querySelector('.sky-foundation-house')?.appendChild(placementHouseMarker(house));ledger.appendChild(row);row.dataset.placement=record.id;row.setAttribute('aria-expanded','false');if(placementPresentation[slot].selected===record.id){row.setAttribute('aria-expanded','true');row.insertAdjacentHTML('afterend',placementDetail(record,house))}const host=row.querySelector('svg');jobs.push(drawCanonical(host,record.id,{radius:16,padding:1,color}).catch(error=>glyphFailure(host,error)))});if(moonRange){const entry=window.RelphiGlyphRegistry?.resolve?.('moon')||window.RelphiGlyphRegistry?.get?.('moon'),row=document.createElement('div');row.className='sky-foundation-row sky-foundation-row--range';row.dataset.placement='moon-range';row.innerHTML=`<svg viewBox="-20 -20 40 40" aria-label="Moon"></svg><span class="sky-foundation-row-name">Moon</span><span class="sky-foundation-coordinate">${esc(moonRangeText(payload))}</span>`;const mercuryRow=[...ledger.children].find(node=>String(node.querySelector?.('.sky-foundation-row-name')?.textContent||'').trim()==='Mercury');if(mercuryRow)ledger.insertBefore(row,mercuryRow);else ledger.appendChild(row);const host=row.querySelector('svg');if(entry?.id)jobs.push(drawCanonical(host,entry.id,{radius:16,padding:1,color}).catch(error=>glyphFailure(host,error)))}return jobs}
 function relationships(a,b){const result=[],limit=Math.min(180,requestedOrb()),same=a===b;a.forEach((left,i)=>b.forEach((right,j)=>{if(same&&j<=i)return;if(same&&redundantIntraskyPair(left.id,right.id))return;const distance=separation(left.value,right.value);ASPECTS.forEach(aspect=>{const orb=Math.abs(distance-aspect.angle);if(orb<=limit)result.push({left,right,aspect,orb})})}));return result.sort((x,y)=>x.orb-y.orb)}
 function redundantIntraskyPair(left,right){return REDUNDANT_INTRASKY_PAIRS.has([String(left||''),String(right||'')].sort().join('|'))}
 function intraskyRelationships(list,slot){const harmonic=window.RelphiHarmonicOrb,aspects=harmonic?.aspects||[],windowValue=Number(harmonic?.maxWindow)||12,result=[];for(let i=0;i<list.length;i+=1)for(let j=i+1;j<list.length;j+=1){const left=list[i],right=list[j];if(redundantIntraskyPair(left.id,right.id))continue;const distance=separation(left.value,right.value);aspects.forEach(aspect=>{const relation=harmonic?.relation?.(left,right,aspect,distance,windowValue);if(relation)result.push({...relation,scope:slot==='A'?'intra-a':'intra-b'})})}return result.sort((a,b)=>a.phaseError-b.phaseError||a.harmonicOrder-b.harmonicOrder||a.orb-b.orb)}
