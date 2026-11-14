@@ -23,6 +23,10 @@ jobs:
         run: |
           npm install --no-save playwright@1.52.0
           npx playwright install --with-deps chromium
+      - name: Probe commit-specific asset hosts
+        env:
+          PREVIEW_REF: ${{ github.event.pull_request.head.sha }}
+        run: node tests/sky-chart-preview-cdn-probe.mjs
       - name: Check served preview and deployed page
         env:
           PREVIEW_REF: ${{ github.event.pull_request.head.sha }}
