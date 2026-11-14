@@ -37,10 +37,11 @@ try{
   const opening=browser.waitForEvent('page');
   await page.locator('#date-text [data-relphi-sky-link="date"]').click();
   const newPage=await opening;await newPage.waitForLoadState('domcontentloaded');
-  const packet=JSON.parse(new URLSearchParams(new URL(newPage.url()).hash.slice(1)).get('relphiSkyIntake'));
+  const packet=JSON.parse(new URL(newPage.url()).searchParams.get('relphiDraft'));
   assert.equal(packet.date,'2026-11-09');
+  assert.equal(packet.kind,'fields');
   assert.equal(new URL(newPage.url()).pathname,'/sky-chart-preview/sky-chart.html','Draft extension must launch the working preview receiver');
-  assert.equal(new URL(newPage.url()).searchParams.get('ref'),'6fdcb770d3b7008ecf0cb44f97f02a87494184a1');
+  assert.equal(new URL(newPage.url()).searchParams.get('ref'),'12c803672cb618a62b386b33610097939912f723');
   assert.equal(packet.location,'','A date link cannot steal an existing location');
   assert.equal(packet.time,'','A date link cannot invent a birth time');
   await newPage.close();
@@ -50,7 +51,8 @@ try{
   const openingAddress=browser.waitForEvent('page');
   await page.keyboard.press('Enter');
   const addressPage=await openingAddress;await addressPage.waitForLoadState('domcontentloaded');
-  const value=JSON.parse(new URLSearchParams(new URL(addressPage.url()).hash.slice(1)).get('relphiSkyIntake'));
+  const value=JSON.parse(new URL(addressPage.url()).searchParams.get('relphiDraft'));
+  assert.equal(value.kind,'fields');
   assert.equal(value.location,'Salt Lake City, Utah');
   assert.equal(value.date,'');
   await addressPage.close();
@@ -74,7 +76,7 @@ try{
   assert.equal(await preview.locator('#open').isEnabled(),true,'Interactive parser preview recognizes complete Where and When');
   await preview.locator('#open').click();
   await preview.waitForURL(/sky-chart-preview\/sky-chart\.html\?ref=/,{timeout:15000});
-  const previewPacket=JSON.parse(new URLSearchParams(new URL(preview.url()).hash.slice(1)).get('relphiSkyIntake'));
+  const previewPacket=JSON.parse(new URL(preview.url()).searchParams.get('relphiSingle')).event;
   assert.equal(previewPacket.time,'03:15');
   assert.equal(previewPacket.location,'Salt Lake City, Utah');
   await preview.screenshot({path:'sky-extension-preview-desktop.png'});
