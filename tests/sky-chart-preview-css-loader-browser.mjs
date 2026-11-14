@@ -21,9 +21,14 @@ try{
     });
     // The stylesheet loader is under test. Avoid fetching unrelated CDN scripts
     // to keep the check deterministic and expose CSS delivery independently.
-    await page.route(/cdn\\.jsdelivr\\.net|unpkg\\.com/,route=>route.abort());
+    await page.route(/cdn\.jsdelivr\.net|unpkg\.com/,route=>route.abort());
     await page.goto('http://127.0.0.1:4173/sky-chart-preview/sky-chart.html?ref='+ref,{waitUntil:'domcontentloaded'});
-    await page.waitForFunction(()=>document.querySelectorAll('style[data-preview-css]').length>=30,{timeout:20000});
+    try{
+      await page.waitForFunction(()=>document.querySelectorAll('style[data-preview-css]').length>=30,null,{timeout:20000});
+    }catch(error){
+      const diagnostics=await page.evaluate(()=>({styles:document.querySelectorAll('style[data-preview-css]').length,status:document.getElementById('previewStatus')?.textContent,head:document.head.innerHTML.slice(0,400)}));
+      throw new Error('Preview CSS loader did not render: '+JSON.stringify(diagnostics),{cause:error});
+    }
     const data=await page.evaluate(()=>{
       const h1=document.querySelector('h1'),hero=document.querySelector('.tarot-hero');
       return{title:h1?.textContent,fonts:getComputedStyle(h1).fontFamily,
