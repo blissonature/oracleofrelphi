@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 const ref=process.env.PREVIEW_REF;
 assert.match(ref||'',/^[0-9a-f]{40}$/,'A commit SHA is required');
 const urls=[
-  ['preview',`https://oracleofrelphi.com/sky-chart-preview/sky-chart.html?ref=${ref}`],
+  ['preview',`https://cdn.statically.io/gh/blissonature/oracleofrelphi@${ref}/sky-chart.html`],
   ['deployed', 'https://oracleofrelphi.com/sky-chart.html']
 ];
 const signs=['Aries','Taurus','Gemini','Cancer','Leo','Virgo','Libra','Scorpio','Sagittarius','Capricorn','Aquarius','Pisces'];
