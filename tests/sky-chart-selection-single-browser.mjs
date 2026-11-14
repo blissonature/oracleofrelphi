@@ -120,6 +120,65 @@ try{
     const preserved=await page.evaluate(()=>JSON.parse(localStorage.getItem('relphiSkyChartB')));
     assert.deepEqual(preserved,seedB);
     console.log('PASS date-only draft '+viewport.width);
+    // Jamaica is a Queens neighborhood, not the country Jamaica.
+    await page.route('https://nominatim.openstreetmap.org/search**',route=>route.fulfill({
+      status:200,contentType:'application/json',body:JSON.stringify([{
+        name:'Jamaica',display_name:'Jamaica, Queens, New York, United States',
+        lat:'40.7000',lon:'-73.8000',address:{
+          suburb:'Jamaica',borough:'Queens',county:'Queens County',
+          state:'New York',country:'United States'
+        }
+      }])
+    }));
+    await page.route('https://api.open-meteo.com/v1/forecast**',route=>route.fulfill({
+      status:200,contentType:'application/json',body:JSON.stringify({timezone:'America/New_York'})
+    }));
+    const birth={label:'born',date:'1946-06-14',time:'10:54',location:'Jamaica, Queens, New York',timeZoneAbbreviation:'EDT'};
+    await page.goto('http://127.0.0.1:4173/sky-chart.html?relphiSingle='+
+      encodeURIComponent(JSON.stringify({version:1,event:birth})),{waitUntil:'domcontentloaded'});
+    await page.waitForFunction(()=>{
+      const a=JSON.parse(localStorage.getItem('relphiSkyChartA')||'null');
+      return a?.calcProfile?.dateTime==='1946-06-14T10:54'&&
+        a?.metadata?.selectionLocation==='Jamaica, Queens, New York';
+    },null,{timeout:30000});
+    const jamaica=await page.evaluate(()=>JSON.parse(localStorage.getItem('relphiSkyChartA')));
+    assert.equal(jamaica.calcProfile.timeZone,'America/New_York');
+    assert.equal(Number(jamaica.calcProfile.latitude),40.7);
+    assert.equal(Number(jamaica.calcProfile.longitude),-73.8);
+    assert.equal(jamaica.metadata.selectionTimeZoneAbbreviation,'EDT');
+    assert.deepEqual(await page.evaluate(()=>JSON.parse(localStorage.getItem('relphiSkyChartB'))),seedB);
+    console.log('PASS Jamaica Queens 1946 birth with verified EDT '+viewport.width);
+
+    // A date/time-only selection must never borrow that last sky's birthplace.
+    const draftBefore=await page.evaluate(()=>JSON.stringify(localStorage.getItem('relphiSkyChartA')));
+    const birthDraft={version:1,kind:'fields',date:'1946-06-14',time:'10:54',location:'',timeUnknown:false};
+    await page.goto('http://127.0.0.1:4173/sky-chart.html?relphiDraft='+
+      encodeURIComponent(JSON.stringify(birthDraft)),{waitUntil:'domcontentloaded'});
+    await page.waitForFunction(()=>{
+      const form=document.querySelector('#skyFoundationA .sky-where-when-editor');
+      return form?.querySelector('[data-ww-field="date"]')?.value==='1946-06-14'&&
+        form.querySelector('[data-ww-field="time"]')?.value==='10:54';
+    },null,{timeout:20000});
+    const imported=await page.evaluate(()=>{
+      const form=document.querySelector('#skyFoundationA .sky-where-when-editor');
+      return{
+        date:form?.querySelector('[data-ww-field="date"]')?.value,
+        time:form?.querySelector('[data-ww-field="time"]')?.value,
+        location:form?.querySelector('[data-ww-field="location-query"]')?.value,
+        unknown:form?.querySelector('[data-ww-field="time-unknown"]')?.checked,
+        timezone:form?.querySelector('[data-ww-field="timezone"]')?.value,
+        now:form?.querySelector('[data-ww-field="now"]')?.checked
+      };
+    });
+    assert.equal(imported.date,'1946-06-14');
+    assert.equal(imported.time,'10:54');
+    assert.equal(imported.location,'');
+    assert.equal(imported.unknown,false);
+    assert.equal(imported.timezone,'');
+    assert.equal(imported.now,false);
+    assert.equal(await page.evaluate(()=>JSON.stringify(localStorage.getItem('relphiSkyChartA'))),draftBefore);
+    console.log('PASS 1946 date/time-only draft with no guessed birthplace '+viewport.width);
+
     assert.deepEqual(errors.filter(e=>/SyntaxError|TypeError|ReferenceError/.test(e)),[]);
     await context.close();
   }
