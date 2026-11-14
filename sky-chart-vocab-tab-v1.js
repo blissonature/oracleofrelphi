@@ -1589,9 +1589,12 @@ function installSubtabs(slot,view){
   if(!tabs){
     const title=row.querySelector('.sky-placement-copy-title');if(title)title.hidden=true;
     tabs=document.createElement('div');tabs.className='sky-placement-vocab-tabs';tabs.dataset.skyVocabTabs=slot;tabs.setAttribute('role','tablist');tabs.setAttribute('aria-label','Placement views');
-    tabs.innerHTML='<button type="button" class="sky-placement-vocab-tab" data-sky-vocab-view-button="placements" role="tab">Placements</button><button type="button" class="sky-placement-vocab-tab" data-sky-vocab-view-button="vocab" role="tab">Vocab</button>';
+    tabs.innerHTML='<button type="button" class="sky-placement-vocab-tab" data-sky-vocab-view-button="placements" role="tab">Placements</button><button type="button" class="sky-placement-vocab-tab" data-sky-vocab-view-button="tarot" role="tab">Tarot</button><button type="button" class="sky-placement-vocab-tab" data-sky-vocab-view-button="vocab" role="tab">Vocab</button>';
     row.insertBefore(tabs,row.querySelector('[data-copy-placements]')||null);
-    tabs.addEventListener('click',event=>{const button=event.target.closest('[data-sky-vocab-view-button]');if(button)activate(slot,button.dataset.skyVocabViewButton)});
+    tabs.addEventListener('click',event=>{const button=event.target.closest('[data-sky-vocab-view-button]');if(!button)return;
+      if(button.dataset.skyVocabViewButton==='tarot'){window.RelphiSkyCardHitsStructure?.openArtwork?.(slot);return}
+      activate(slot,button.dataset.skyVocabViewButton);
+    });
   }
   if(!row.querySelector('[data-copy-vocab]')){
     const copy=document.createElement('button');copy.type='button';copy.className='sky-quick-copy-button sky-vocab-copy';copy.dataset.copyVocab=slot;copy.textContent='Copy';copy.hidden=true;copy.setAttribute('aria-label','Copy visible Vocab for Sky '+slot);row.appendChild(copy);
@@ -1613,7 +1616,7 @@ function ensureSlot(slot){
 function installStyles(){
   if(document.getElementById('skyVocabTabV1Styles'))return;
   const style=document.createElement('style');style.id='skyVocabTabV1Styles';style.textContent=`
-    .sky-placement-vocab-tabs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));align-items:center;gap:4px;flex:1 1 auto;width:min(190px,100%);min-width:0;padding:3px;border:1px solid rgba(31,27,24,.12);border-radius:999px;background:#f5f0e9}
+    .sky-placement-vocab-tabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));align-items:center;gap:4px;flex:1 1 auto;width:min(275px,100%);min-width:0;padding:3px;border:1px solid rgba(31,27,24,.12);border-radius:999px;background:#f5f0e9}
     .sky-vocab-copy{margin-left:auto}
     .sky-placement-vocab-tab{appearance:none;min-width:0;min-height:30px;margin:0;padding:.34rem .58rem;border:0;border-radius:999px;background:transparent;color:#5d554e;font:850 .68rem/1 system-ui,sans-serif;cursor:pointer}
     .sky-placement-vocab-tab:hover,.sky-placement-vocab-tab:focus-visible{background:#f8f3ed;outline:none}
@@ -1738,7 +1741,7 @@ function installStyles(){
     .sky-vocab-level.is-color-coded svg{color:var(--vocab-token-color)!important}
     .sky-vocab-empty{color:#766c64;font-style:italic}
     @media(max-width:620px){
-      .sky-placement-vocab-tabs{width:min(184px,100%)}
+      .sky-placement-vocab-tabs{width:min(275px,100%)}
       .sky-placement-vocab-tab{font-size:.67rem;padding:.34rem .48rem}
       .sky-vocab-panel{padding:.48rem .58rem .74rem}
       .sky-vocab-dropdown-row{grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
