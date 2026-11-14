@@ -105,7 +105,7 @@ function links(input,prefs={}){
 // Review builds target the immutable, browser-verified Sky Chart receiver until merged.
 function destination(choice='preview'){
   return choice==='live'?'https://oracleofrelphi.com/sky-chart.html':
-    'https://oracleofrelphi.com/sky-chart-preview/sky-chart.html?ref=12c803672cb618a62b386b33610097939912f723';
+    'https://oracleofrelphi.com/sky-chart-preview/sky-chart.html?ref=afa1a01b812d44cf25e4f2e2ffaca2eadf1c1879';
 }
 function skyURL(data,base=destination()){
   if(!data?.hasAny||data.errors?.length)throw new Error('A recognizable, unambiguous date, time, or address is required.');
