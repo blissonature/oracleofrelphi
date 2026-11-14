@@ -37,7 +37,7 @@ try{
       assert.ok(layout.background!=='rgb(255, 255, 255)','Expanded card must use shared parchment styling');
       assert.equal(layout.cardInSharedStyle,true,'Tarot art must reuse the Relationships card primitive');
       const rails=await detail.evaluate(node=>{
-        const colors=window.RelphiRelationshipVocab.railColors(7,Number(node.querySelector('[data-referent-kind="house"] strong')?.textContent.match(/\\d+/)?.[0]||0));
+        const colors=window.RelphiRelationshipVocab.railColors(7,Number(node.querySelector('[data-referent-kind="house"] strong')?.textContent.replace('House ','')||0));
         return{sign:node.style.getPropertyValue('--placement-sign-rail').trim(),house:node.style.getPropertyValue('--placement-house-rail').trim(),
           expectedSign:colors.sign,expectedHouse:colors.house,background:getComputedStyle(node).backgroundImage,
           dividers:[...node.querySelectorAll('.sky-placement-referent')].map(item=>getComputedStyle(item).borderTopWidth)};
