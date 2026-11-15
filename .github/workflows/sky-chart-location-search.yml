@@ -29,3 +29,4 @@ jobs:
         run: |
           python3 -m http.server 4173 >/tmp/sky-search-server.log 2>&1 &
           node tests/sky-chart-location-search-browser.mjs
+          node tests/sky-chart-location-search-live-probe.mjs
