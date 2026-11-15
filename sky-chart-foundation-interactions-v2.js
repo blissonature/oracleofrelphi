@@ -456,13 +456,13 @@
   }
   function clearableWhitespace(event){
     const root=document.getElementById('skyFoundationRoot'),target=event.target;if(!root?.contains(target))return false;
-    if(target.closest?.('button,input,select,textarea,a,label,summary,details,.sky-foundation-relationship-row,#skySelectedRelationship,.sky-chart-filter-bar,.sky-foundation-relationships-heading'))return false;
+    if(target.closest?.('button,input,select,textarea,a,label,summary,details,.sky-foundation-relationship-row,#skySelectedRelationship,.sky-chart-filter-bar,.sky-foundation-relationships-heading,.sky-placement-expanded,.sky-foundation-row[data-placement]'))return false;
     return !!target.closest?.('#skyFoundationWheelMount,#skyFoundationA,#skyFoundationB,#skyFoundationComparison');
   }
   function clearSelectionMarks(){document.querySelectorAll('.sky-foundation-relationship-row[aria-current]').forEach(row=>row.removeAttribute('aria-current'));document.querySelectorAll('.sky-foundation-aspect[data-selected-relation]').forEach(line=>delete line.dataset.selectedRelation)}
   function clearFromWhitespace(){
     document.querySelector('.sky-wheel-sector-description')?.setAttribute('hidden','');
-    lockedState=null;hoverState=null;rowLockedState=null;rowHoverState=null;selectionOrigin=null;const root=document.getElementById('skyFoundationRoot');if(root)root.dataset.relationshipSelectionCleared='true';applyState();clearSelectionMarks();clearWheelTargets();window.RelphiInlineRelationship?.collapse?.();
+    lockedState=null;hoverState=null;rowLockedState=null;rowHoverState=null;selectionOrigin=null;const root=document.getElementById('skyFoundationRoot');if(root)root.dataset.relationshipSelectionCleared='true';applyState();clearSelectionMarks();clearWheelTargets();window.RelphiInlineRelationship?.collapse?.();window.RelphiSkyPlacementView?.collapse?.();
     selectionClearObserver?.disconnect();selectionClearObserver=new MutationObserver(()=>{if(root?.dataset.relationshipSelectionCleared==='true')clearSelectionMarks();else{selectionClearObserver.disconnect();selectionClearObserver=null}});if(root)selectionClearObserver.observe(root,{subtree:true,childList:true,attributes:true,attributeFilter:['aria-current','data-selected-relation']});
     window.dispatchEvent(new CustomEvent('relphi:sky-foundation-clear-selection',{detail:{source:'white-space'}}));requestAnimationFrame(clearSelectionMarks)
   }
@@ -793,6 +793,17 @@
     });
     root.addEventListener('pointermove',event=>{if(event.pointerType==='touch'||event.pointerType==='pen')return;if(lockedState||!event.target.closest?.('#skyFoundationWheelMount'))return;const direct=event.target.closest?.('[data-interactive]:not([data-interactive="aspect"])');if(direct)return;rowHoverState=null;const next=specFrom(nearestAspect(event));if(same(hoverState,next)||(!hoverState&&!next))return;hoverState=next;applyState()});
     root.addEventListener('pointerout',event=>{
+      // Mouse house exploration ends at the sector boundary, even after a click.
+      // Only the foundation selection owner clears the lock; touch taps still pin.
+      const exitedHouse=event.pointerType==='mouse'
+        ?event.target.closest?.('#skyFoundationWheelMount [data-interactive="house"][data-sky][data-house]')
+        :null;
+      if(exitedHouse&&!exitedHouse.contains(event.relatedTarget)&&
+         lockedState?.kind==='house'&&lockedState.sky===exitedHouse.dataset.sky&&
+         Number(lockedState.value)===Number(exitedHouse.dataset.house)){
+        clearFromWhitespace();
+        return;
+      }
       if(event.target.closest?.('.sky-foundation-row[data-interactive="placement"]'))return;
       if(event.pointerType==='touch'||event.pointerType==='pen')return;
       const row=event.target.closest?.('.sky-foundation-relationship-row[data-relation-index]');

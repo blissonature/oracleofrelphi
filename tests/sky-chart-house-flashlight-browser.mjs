@@ -100,29 +100,29 @@ try{
  assert.equal((await flash(main)).lines.length,0,'Pointer exit must extinguish temporary light');
 
  await main.mouse.click(a.x,a.y);
+ const mouseSelected=await flash(main);
+ console.log('A clicked',JSON.stringify(mouseSelected));
+ assert.equal(mouseSelected.sky,'A');assert.equal(mouseSelected.pinned,'true');
+ assert.equal(mouseSelected.lines.length,6,'Mouse click can select while the cursor remains in the house');
  await main.mouse.move(15,15);
  await main.waitForTimeout(150);
- const pinned=await flash(main);
- console.log('A tapped',JSON.stringify(pinned));
- assert.equal(pinned.sky,'A');assert.equal(pinned.pinned,'true');
- assert.equal(pinned.lines.length,6,'Tap should hold illumination after the pointer leaves');
- await main.mouse.click(a.x,a.y);
- await main.mouse.move(15,15);
- await main.waitForTimeout(150);
- assert.equal((await flash(main)).lines.length,0,'Tapping the same house again must clear it');
+ assert.equal((await flash(main)).lines.length,0,'Mouse exit must extinguish even a clicked house');
+ assert.equal(await main.evaluate(()=>document.querySelector('#skyFoundationWheelMount > svg')?.classList.contains('has-isolation')),false,
+   'Mouse exit must release selected house isolation as well as the flashlight');
 
  const b=await locationFor(main,'B',12);
  console.log('B house target',JSON.stringify(b));
  assert.equal(b.house,'12','Real pointer must land in B house wedge');
  await main.mouse.click(b.x,b.y);
- await main.mouse.move(15,15);
- await main.waitForTimeout(150);
  const bResult=await flash(main);
  assert.equal(bResult.sky,'B');
  assert.equal(bResult.pinned,'true');
  assert.equal(bResult.lines.length,6);
  assert.deepEqual(bResult.lines.filter(l=>l.edge==='0').map(l=>l.kind),['other','zodiac','home']);
- console.log('B tapped',JSON.stringify(bResult));
+ await main.mouse.move(15,15);
+ await main.waitForTimeout(150);
+ assert.equal((await flash(main)).lines.length,0,'B house also ends when the mouse leaves');
+ console.log('B mouse exit cleared');
 
 
  // A house 10: 78–108°. B Uranus: 82° (B house 9, not B house 10).
@@ -131,7 +131,6 @@ try{
   await boot(overlap,true,4);
   const a10=await locationFor(overlap,'A',10);
   await overlap.mouse.click(a10.x,a10.y);
-  await overlap.mouse.move(15,15);
   await overlap.waitForTimeout(180);
   const focus=await overlap.evaluate(()=>{
    const wheel=document.querySelector('#skyFoundationWheelMount > svg');
@@ -160,10 +159,10 @@ try{
   assert.ok(focus.linkedCount>0,'fixture requires a visible aspect involving B Uranus');
   assert.equal(focus.linkedKept,true,'visible aspects incident to B Uranus stay lit');
   assert.ok(focus.matchingRows>0&&focus.rowsUnexcluded>0,'linked comparison relationships stay included');
-  await overlap.mouse.click(a10.x,a10.y);
   await overlap.mouse.move(15,15);
   await overlap.waitForTimeout(150);
   assert.equal(await overlap.evaluate(()=>document.querySelector('#skyFoundationWheelMount > svg').classList.contains('has-isolation')),false);
+  assert.equal((await flash(overlap)).lines.length,0,'Cross-sky house mode must end on mouse exit');
  }finally{await overlap.close()}
 
  const standalone=await browser.newPage({viewport:{width:1200,height:960}});
