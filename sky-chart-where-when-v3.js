@@ -268,7 +268,7 @@ function openEditor(slot,focus=false){
   if(focus)requestAnimationFrame(()=>formFor(slot)?.querySelector('[data-ww-field="location-query"]')?.focus());
 }
 function clearEditor(slot){const refs=shell(slot);if(!refs)return;restoreHeptagram(slot);window.RelphiSkyCardShell.setEditorExpanded(slot,false);refs.editor.replaceChildren();cardState[slot].busy=false}
-function closeEditor(slot){if(!transactionState.editing.has(slot))return;clearEditor(slot);finishWhereWhen(slot,false)}
+function closeEditor(slot){if(!transactionState.editing.has(slot))return;cancelLocationRequest(slot);clearEditor(slot);finishWhereWhen(slot,false)}
 
 function localDateTimeToInstant(date,time,timeZone){
   if(!window.luxon?.DateTime)throw new Error('Time-zone conversion is unavailable.');
@@ -350,22 +350,156 @@ function normalizePacket(packet){
   if(inferred){next.source='placement-inference';next.query=''}else if(!next.source)next.source='search';
   return next;
 }
-async function searchLocation(slot){
-  const card=panel(slot),input=card?.querySelector('[data-ww-field="location-query"]'),resultsNode=card?.querySelector('.sky-location-results'),query=input?.value.trim()||'';
-  if(!query){status(slot,'Type a location first.',true);input?.focus();return}
-  status(slot,`Searching for ${query}…`);resultsNode?.replaceChildren();
+// Search, candidate selection, and time-zone resolution have one owner.
+// Search returns candidates first; a time-zone request is needed only for the chosen address.
+const locationRequests={A:{version:0,controller:null},B:{version:0,controller:null}};
+function cancelLocationRequest(slot){
+  const state=locationRequests[slot];if(!state)return;
+  ++state.version;state.controller?.abort();state.controller=null;
+  const card=panel(slot);
+  card?.querySelector('.sky-location-results')?.removeAttribute('aria-busy');
+  const button=card?.querySelector('[data-ww-action="search-location"]');if(button)button.disabled=false;
+}
+function isCurrentLocationRequest(slot,version,form,query){
+  return locationRequests[slot]?.version===version&&form?.isConnected&&
+    formFor(slot)===form&&form.querySelector('[data-ww-field="location-query"]')?.value.trim()===query;
+}
+async function locationJson(url,signal,deadline=3000){
+  const controller=new AbortController();
+  const abort=()=>controller.abort();
+  if(signal?.aborted)abort();else signal?.addEventListener('abort',abort,{once:true});
+  let timer;
+  const timeout=new Promise((_,reject)=>{
+    timer=setTimeout(()=>{reject(new Error('Location service timed out.'));controller.abort()},deadline);
+  });
   try{
-    const url=new URL('https://geocoding-api.open-meteo.com/v1/search');url.searchParams.set('name',query);url.searchParams.set('count','7');url.searchParams.set('language','en');url.searchParams.set('format','json');
-    const response=await fetch(url.toString(),{headers:{Accept:'application/json'}});if(!response.ok)throw new Error(`Location search returned ${response.status}.`);
-    const data=await response.json(),results=Array.isArray(data.results)?data.results:[];if(!results.length)throw new Error('No matching location was found. Try a city plus state, region, or country.');
+    return await Promise.race([(async()=>{
+      const response=await fetch(url.toString(),{headers:{Accept:'application/json'},signal:controller.signal});
+      if(!response.ok)throw new Error('Location service returned '+response.status+'.');
+      return response.json();
+    })(),timeout]);
+  }finally{
+    clearTimeout(timer);
+    signal?.removeEventListener('abort',abort);
+  }
+}
+function photonCandidates(data,query){
+  const match=query.match(/^\s*(\d+[a-z]?)\s+(.+)/i);
+  const stem=match?.[2]?.split(/[,\s]+/).map(word=>word.toLowerCase())
+    .find(word=>word.length>3&&!/^(avenue|boulevard|street|drive|road|north|south|east|west)$/.test(word));
+  return (Array.isArray(data?.features)?data.features:[]).map(feature=>{
+    const p=feature.properties||{},coords=feature.geometry?.coordinates||[];
+    const longitude=Number(coords[0]),latitude=Number(coords[1]);
+    if(!Number.isFinite(latitude)||Math.abs(latitude)>90||!Number.isFinite(longitude)||Math.abs(longitude)>180)return null;
+    const street=[p.housenumber,p.street].filter(Boolean).join(' ').trim();
+    // A numbered address cannot silently resolve to an approximate street/city centroid.
+    if(match&&(String(p.housenumber||'').toLowerCase()!==match[1].toLowerCase()||
+      (stem&&!String(p.street||p.name||'').toLowerCase().includes(stem))))return null;
+    const name=String(p.name||'').trim(),part=name&&name.toLowerCase()!==String(p.street||'').toLowerCase()?name:'';
+    const places=[part,street,p.district,p.city||p.locality||p.county,p.state,p.country]
+      .map(item=>String(item||'').trim()).filter((item,i,arr)=>item&&arr.findIndex(v=>v.toLowerCase()===item.toLowerCase())===i);
+    return{source:'search',query,canonical:places.join(', '),latitude,longitude,timezone:'',provider:'photon'};
+  }).filter(packet=>packet?.canonical).slice(0,7);
+}
+function cityCandidates(data,query){
+  return(Array.isArray(data?.results)?data.results:[]).map(result=>{
+    const canonical=[result.name,result.admin1,result.country].map(v=>String(v||'').trim())
+      .filter((v,i,arr)=>v&&arr.indexOf(v)===i).join(', ');
+    return{source:'search',query,canonical,latitude:Number(result.latitude),
+      longitude:Number(result.longitude),timezone:String(result.timezone||''),provider:'open-meteo'};
+  }).filter(packet=>packet.canonical&&Number.isFinite(packet.latitude)&&Number.isFinite(packet.longitude)&&packet.timezone).slice(0,7);
+}
+async function searchLocation(slot){
+  const card=panel(slot),form=card?.querySelector('.sky-where-when-editor'),
+    input=form?.querySelector('[data-ww-field="location-query"]'),
+    resultsNode=form?.querySelector('.sky-location-results'),query=input?.value.trim()||'';
+  if(!query){status(slot,'Type a location first.',true);input?.focus();return}
+  cancelLocationRequest(slot);
+  const state=locationRequests[slot],version=state.version,controller=new AbortController();
+  state.controller=controller;
+  const searchButton=form?.querySelector('[data-ww-action="search-location"]');
+  if(searchButton)searchButton.disabled=true;
+  resultsNode?.replaceChildren();resultsNode?.setAttribute('aria-busy','true');
+  status(slot,'Searching for '+query+'…');
+  const numbered=/^\s*\d+[a-z]?\s+\S/i.test(query);
+  let packets=[],failed=false;
+  try{
+    const providers=numbered?['photon']:['open-meteo','photon'];
+    for(const provider of providers){
+      if(controller.signal.aborted)return;
+      try{
+        const url=provider==='photon'
+          ?new URL('https://photon.komoot.io/api/')
+          :new URL('https://geocoding-api.open-meteo.com/v1/search');
+        if(provider==='photon'){
+          url.searchParams.set('q',query);url.searchParams.set('limit','10');url.searchParams.set('lang','en');
+        }else{
+          url.searchParams.set('name',query);url.searchParams.set('count','7');
+          url.searchParams.set('language','en');url.searchParams.set('format','json');
+        }
+        const data=await locationJson(url,controller.signal,3000);
+        packets=provider==='photon'?photonCandidates(data,query):cityCandidates(data,query);
+        if(packets.length)break;
+      }catch(error){if(controller.signal.aborted)return;failed=true}
+    }
+    if(!isCurrentLocationRequest(slot,version,form,query))return;
+    if(!packets.length){
+      status(slot,failed
+        ?'Location search is unavailable or timed out. Try again, or add the city and state.'
+        :numbered?'No matching street number was found. Add the city and state and search again.'
+          :'No matching place was found. Try a more complete place name.',true);
+      return;
+    }
     const fragment=document.createDocumentFragment();
-    results.forEach((result,index)=>{
-      const canonical=[result.name,result.admin1,result.country].map(v=>String(v||'').trim()).filter((v,i,list)=>v&&list.indexOf(v)===i).join(','+' '),button=document.createElement('button');
-      button.type='button';button.className='sky-location-result';button.dataset.wwAction='select-location';button.dataset.locationIndex=String(index);button.innerHTML=`<strong>${escapeHtml(canonical)}</strong><span>${displayCoordinate(result.latitude)}, ${displayCoordinate(result.longitude)} · ${escapeHtml(result.timezone||'Time zone unavailable')}</span>`;
-      button.__locationPacket={source:'search',query,canonical,latitude:Number(result.latitude),longitude:Number(result.longitude),timezone:String(result.timezone||'')};fragment.appendChild(button);
+    packets.forEach((packet,index)=>{
+      const button=document.createElement('button');button.type='button';
+      button.className='sky-location-result';button.dataset.wwAction='select-location';
+      button.dataset.locationIndex=String(index);
+      button.innerHTML='<strong>'+escapeHtml(packet.canonical)+'</strong><span>'+
+        displayCoordinate(packet.latitude)+', '+displayCoordinate(packet.longitude)+
+        (packet.timezone?' · '+escapeHtml(packet.timezone):' · Select to confirm time zone')+'</span>';
+      button.__locationPacket=packet;fragment.appendChild(button);
     });
-    resultsNode.appendChild(fragment);status(slot,'Choose the canonical location that matches what you meant.');
-  }catch(error){status(slot,error.message||'Location search failed.',true)}
+    if(packets.some(packet=>packet.provider==='photon')){
+      const attribution=document.createElement('small');
+      attribution.textContent='Address data © OpenStreetMap contributors';
+      fragment.appendChild(attribution);
+    }
+    resultsNode?.appendChild(fragment);
+    status(slot,'Choose the matching location.');
+  }finally{
+    if(isCurrentLocationRequest(slot,version,form,query)){
+      resultsNode?.removeAttribute('aria-busy');
+      if(searchButton)searchButton.disabled=false;
+      if(state.controller===controller)state.controller=null;
+    }
+  }
+}
+async function selectSearchedLocation(slot,button){
+  const packet=button?.__locationPacket;
+  if(!packet)return;
+  if(packet.timezone){selectLocation(slot,button);return}
+  const form=button.closest('.sky-where-when-editor'),query=form?.querySelector('[data-ww-field="location-query"]')?.value.trim()||'';
+  const state=locationRequests[slot],version=state.version,controller=new AbortController();
+  state.controller?.abort();state.controller=controller;
+  button.disabled=true;status(slot,'Confirming the selected location’s time zone…');
+  try{
+    const url=new URL('https://api.open-meteo.com/v1/forecast');
+    url.searchParams.set('latitude',String(packet.latitude));
+    url.searchParams.set('longitude',String(packet.longitude));
+    url.searchParams.set('timezone','auto');url.searchParams.set('forecast_days','1');
+    const data=await locationJson(url,controller.signal,2500);
+    if(!isCurrentLocationRequest(slot,version,form,query))return;
+    const timezone=String(data?.timezone||'');
+    if(!timezone)throw new Error('No time zone was returned.');
+    selectLocation(slot,{...packet,timezone});
+  }catch(error){
+    if(isCurrentLocationRequest(slot,version,form,query))
+      status(slot,'Time zone could not be confirmed. Please retry the result.',true);
+  }finally{
+    if(state.controller===controller)state.controller=null;
+    if(button.isConnected)button.disabled=false;
+  }
 }
 function selectLocation(slot,source){
   const packet=normalizePacket(source?.__locationPacket||source);
@@ -597,7 +731,7 @@ window.RelphiSkyWhereWhen=Object.freeze({
 
 document.addEventListener('click',event=>{
   const actionNode=event.target.closest?.('[data-ww-action]');if(!actionNode)return;const slot=eventSlot(actionNode);if(!slot)return;const action=actionNode.dataset.wwAction;
-  if(action==='cancel')closeEditor(slot);else if(action==='search-location')void searchLocation(slot);else if(action==='select-location')selectLocation(slot,actionNode);else if(action==='refresh-here'){const toggle=formFor(slot)?.querySelector('[data-ww-field="here"]');if(toggle&&!toggle.checked){toggle.checked=true;syncModes(slot)}void checkHere(slot)}else if(action==='refresh-now')refreshNow(slot);else if(action==='use-here')void useHere(slot,actionNode);else if(action==='use-now')void currentLocalTime(slot);else if(action==='here-and-now')void hereAndNow(slot);
+  if(action==='cancel')closeEditor(slot);else if(action==='search-location')void searchLocation(slot);else if(action==='select-location')void selectSearchedLocation(slot,actionNode);else if(action==='refresh-here'){const toggle=formFor(slot)?.querySelector('[data-ww-field="here"]');if(toggle&&!toggle.checked){toggle.checked=true;syncModes(slot)}void checkHere(slot)}else if(action==='refresh-now')refreshNow(slot);else if(action==='use-here')void useHere(slot,actionNode);else if(action==='use-now')void currentLocalTime(slot);else if(action==='here-and-now')void hereAndNow(slot);
 });
 document.addEventListener('change',event=>{
   const modeToggle=event.target.closest?.('[data-ww-field="here"],[data-ww-field="now"]');
@@ -614,7 +748,7 @@ document.addEventListener('change',event=>{
   window.RelphiSkyWhereWhenDraftHeptagram?.render?.(slot,0);
 });
 document.addEventListener('submit',event=>{const form=event.target.closest?.('.sky-where-when-editor');if(!form)return;event.preventDefault();void submitForm(form.dataset.slot,form)});
-document.addEventListener('input',event=>{const input=event.target.closest?.('[data-ww-field="location-query"]');if(input)input.classList.remove('is-current-location')});
+document.addEventListener('input',event=>{const input=event.target.closest?.('[data-ww-field="location-query"]');if(!input)return;input.classList.remove('is-current-location');const slot=eventSlot(input);if(!slot)return;cancelLocationRequest(slot);input.closest('.sky-where-when-editor')?.querySelector('.sky-location-results')?.replaceChildren()});
 document.addEventListener('keydown',event=>{if(event.key!=='Enter')return;const input=event.target.closest?.('[data-ww-field="location-query"]');if(!input)return;event.preventDefault();const slot=eventSlot(input);if(slot)void searchLocation(slot)});
 window.addEventListener('relphi:sky-drawer-preparing',event=>{const{slot,drawer}=event.detail||{};if(drawer==='where'&&SLOT_KEYS[slot])openEditor(slot,false)});
 window.addEventListener('relphi:sky-drawer-opened',event=>{const{slot,drawer}=event.detail||{};if(drawer==='where'&&SLOT_KEYS[slot]&&!transactionState.editing.has(slot))openEditor(slot,false)});
