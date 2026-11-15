@@ -29,6 +29,9 @@ try{
       const diagnostics=await page.evaluate(()=>({styles:document.querySelectorAll('style[data-preview-css]').length,status:document.getElementById('previewStatus')?.textContent,head:document.head.innerHTML.slice(0,400)}));
       throw new Error('Preview CSS loader did not render: '+JSON.stringify(diagnostics),{cause:error});
     }
+    // The loader writes its head before the browser parses the body. Wait for the
+    // actual application markup, not merely the first thirty inline styles.
+    await page.waitForFunction(()=>!!document.querySelector('h1')&&!!document.querySelector('.tarot-hero'),null,{timeout:20000});
     const data=await page.evaluate(()=>{
       const h1=document.querySelector('h1'),hero=document.querySelector('.tarot-hero');
       return{title:h1?.textContent,fonts:getComputedStyle(h1).fontFamily,
