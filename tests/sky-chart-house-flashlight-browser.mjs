@@ -109,6 +109,13 @@ try{
  assert.equal((await flash(main)).lines.length,0,'Mouse exit must extinguish even a clicked house');
  assert.equal(await main.evaluate(()=>document.querySelector('#skyFoundationWheelMount > svg')?.classList.contains('has-isolation')),false,
    'Mouse exit must release selected house isolation as well as the flashlight');
+ const afterHouseExit=await main.evaluate(()=>{
+   const rows=[...document.querySelectorAll('#skyFoundationRelationshipList > .sky-foundation-relationship-row[data-relation-index]')];
+   const eligible=rows.filter(row=>!row.hidden&&row.getAttribute('aria-hidden')!=='true'&&getComputedStyle(row).display!=='none');
+   return{rows:rows.length,eligible:eligible.length,empty:document.querySelector('#skyFoundationRelationshipEmpty')?.hidden===false};
+ });
+ assert.ok(afterHouseExit.eligible>0,'Leaving an isolated house must restore matching Relationships results: '+JSON.stringify(afterHouseExit));
+ assert.equal(afterHouseExit.empty,false,'Relationships must not remain on no matches after house hover exits');
 
  const b=await locationFor(main,'B',12);
  console.log('B house target',JSON.stringify(b));

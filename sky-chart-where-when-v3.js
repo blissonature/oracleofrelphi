@@ -419,6 +419,7 @@ async function searchLocation(slot){
   state.controller=controller;
   const searchButton=form?.querySelector('[data-ww-action="search-location"]');
   if(searchButton)searchButton.disabled=true;
+  if(resultsNode)resultsNode.hidden=false;
   resultsNode?.replaceChildren();resultsNode?.setAttribute('aria-busy','true');
   status(slot,'Searching for '+query+'…');
   const numbered=/^\s*\d+[a-z]?\s+\S/i.test(query);
@@ -475,38 +476,30 @@ async function searchLocation(slot){
     }
   }
 }
-async function selectSearchedLocation(slot,button){
+function selectSearchedLocation(slot,button){
   const packet=button?.__locationPacket;
   if(!packet)return;
-  if(packet.timezone){selectLocation(slot,button);return}
-  const form=button.closest('.sky-where-when-editor'),query=form?.querySelector('[data-ww-field="location-query"]')?.value.trim()||'';
-  const state=locationRequests[slot],version=state.version,controller=new AbortController();
-  state.controller?.abort();state.controller=controller;
-  button.disabled=true;status(slot,'Confirming the selected location’s time zone…');
-  try{
-    const url=new URL('https://api.open-meteo.com/v1/forecast');
-    url.searchParams.set('latitude',String(packet.latitude));
-    url.searchParams.set('longitude',String(packet.longitude));
-    url.searchParams.set('timezone','auto');url.searchParams.set('forecast_days','1');
-    const data=await locationJson(url,controller.signal,2500);
-    if(!isCurrentLocationRequest(slot,version,form,query))return;
-    const timezone=String(data?.timezone||'');
-    if(!timezone)throw new Error('No time zone was returned.');
-    selectLocation(slot,{...packet,timezone});
-  }catch(error){
-    if(isCurrentLocationRequest(slot,version,form,query))
-      status(slot,'Time zone could not be confirmed. Please retry the result.',true);
-  }finally{
-    if(state.controller===controller)state.controller=null;
-    if(button.isConnected)button.disabled=false;
+  // Photon returns a precise address coordinate, not a time zone. Resolve its
+  // geographic IANA zone from local data rather than starting a second
+  // dependency on a weather API that may time out or reject the request.
+  let timezone=String(packet.timezone||'').trim();
+  if(!timezone){
+    try{timezone=String(window.RelphiTimeZoneLookup?.(packet.latitude,packet.longitude)||'').trim()}catch(_){}
   }
+  if(!timezone||window.luxon?.IANAZone?.isValidZone?.(timezone)!==true){
+    status(slot,'Time-zone data is unavailable. Reload Sky Chart and try again.',true);
+    return;
+  }
+  selectLocation(slot,{...packet,timezone});
 }
 function selectLocation(slot,source){
   const packet=normalizePacket(source?.__locationPacket||source);
   if(!packet||!Number.isFinite(Number(packet.latitude))||!Number.isFinite(Number(packet.longitude))||!packet.timezone){status(slot,'That result did not include a complete coordinate and time-zone packet.',true);return false}
+  cancelLocationRequest(slot);
   packet.latitude=Number(packet.latitude);packet.longitude=Number(packet.longitude);cardState[slot].selected=packet;
   const card=panel(slot),queryInput=card?.querySelector('[data-ww-field="location-query"]');if(queryInput){queryInput.value=packet.source==='current-location'?'':packet.query||'';queryInput.classList.toggle('is-current-location',packet.source==='current-location')}
-  card?.querySelector('.sky-location-results')?.replaceChildren();
+  const results=card?.querySelector('.sky-location-results');
+  if(results){results.replaceChildren();results.removeAttribute('aria-busy');results.hidden=true}
   const confirmation=card?.querySelector('.sky-location-confirmation');
   if(confirmation){confirmation.hidden=false;confirmation.dataset.locationSource=packet.source||'search';confirmation.innerHTML=packet.source==='placement-inference'?`<p><strong>Location inferred from pasted placements</strong></p><p class="sky-inferred-location-value">${escapeHtml(packet.canonical)}</p>`:`<p><strong>You searched:</strong> ${escapeHtml(packet.query||packet.canonical)}</p><p><strong>Location found:</strong> ${escapeHtml(packet.canonical)}</p>`}
   card.querySelector('[data-ww-field="timezone"]').value=packet.timezone;card.querySelector('[data-ww-field="latitude"]').value=displayCoordinate(packet.latitude);card.querySelector('[data-ww-field="longitude"]').value=displayCoordinate(packet.longitude);

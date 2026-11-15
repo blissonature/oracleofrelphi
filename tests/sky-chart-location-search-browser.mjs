@@ -46,7 +46,7 @@ try{
   });
   await page.route('https://api.open-meteo.com/v1/forecast**',route=>{
     zoneCalls++;
-    return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({timezone:'America/New_York'})});
+    return route.abort('failed');
   });
   await page.addInitScript(({a,b})=>{
     localStorage.setItem('relphiSkyChartA',JSON.stringify(a));
@@ -79,9 +79,15 @@ try{
     assert.equal(await editor.locator('.sky-location-results').getAttribute('aria-busy'),null);
     await results.first().click();
     await editor.locator('.sky-location-confirmation:not([hidden])').waitFor();
-    assert.equal(zoneCalls-priorZones,1,'Only selected address resolves its time zone');
+    assert.equal(zoneCalls-priorZones,0,'Selected address resolves its time zone without network requests');
+    assert.equal(await results.count(),0,'All other address results disappear on confirmation');
+    assert.equal(await editor.locator('.sky-location-results').isHidden(),true,'Search results container is hidden after selection');
+    assert.equal(await editor.locator('.sky-location-results').getAttribute('aria-busy'),null,'No spinner remains after selection');
     assert.match(await editor.locator('.sky-location-confirmation').textContent(),/1600 pennsylvania ave/);
     assert.equal(await editor.locator('[data-ww-field="timezone"]').inputValue(),'America/New_York');
+    assert.equal(await page.evaluate(()=>window.RelphiTimeZoneLookup?.(38.8976387,-77.0365525)),'America/New_York');
+    assert.equal(await page.evaluate(()=>window.RelphiTimeZoneLookup?.(33.4484,-112.074)),'America/Phoenix');
+    assert.equal(await editor.locator('.sky-location-confirmation').isVisible(),true,'Only the selected address remains confirmed');
     await input.fill('Malden');
     const priorCities=cityCalls,priorZoneCount=zoneCalls;
     await search.click();
@@ -90,6 +96,8 @@ try{
     assert.equal(cityCalls-priorCities,1,'City searches retain the original canonical provider');
     await results.first().click();
     assert.equal(zoneCalls-priorZoneCount,0,'Canonical city time zone is reused without another request');
+    assert.equal(await results.count(),0,'City selection also clears unrelated search results');
+    assert.equal(await editor.locator('.sky-location-results').isHidden(),true,'City result list remains hidden after selection');
     console.log('PASS exact address and city search',slot,width);
   }
   const a=page.locator('#skyFoundationA .sky-where-when-editor');

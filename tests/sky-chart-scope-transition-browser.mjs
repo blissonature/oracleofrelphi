@@ -81,6 +81,16 @@ try{
       else assert.equal(state.counts[scope],0,'Disabled '+scope+' cannot paint lines');
     }
     assert.deepEqual(state.disagree,[],'No geometry may contradict the scope matrix');
+    const relationshipAudit=await page.evaluate(()=>{
+      const rows=[...document.querySelectorAll('#skyFoundationRelationshipList > .sky-foundation-relationship-row[data-relation-index]')];
+      const visible=rows.filter(row=>!row.hidden&&row.getAttribute('aria-hidden')!=='true'&&getComputedStyle(row).display!=='none');
+      return{total:rows.length,shown:visible.length,matching:document.getElementById('skyFoundationRelationshipCount')?.textContent,
+        empty:document.getElementById('skyFoundationRelationshipEmpty')?.hidden===false};
+    });
+    const expectedAny=Object.values(desired).some(Boolean);
+    assert.equal(relationshipAudit.shown>0,expectedAny,
+      'Relationships must contain matches exactly when eligible scopes remain: '+JSON.stringify(relationshipAudit));
+    if(expectedAny)assert.equal(relationshipAudit.empty,false,'No-matches UI must not cover valid relationships');
     console.log('PASS scope transition',width,changed,enabled,JSON.stringify(state.counts));
   }
   const transitions=await page.evaluate(()=>{
