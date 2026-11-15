@@ -36,7 +36,7 @@ try{
   const prompt=page.locator('#skyWhereWhenNamePrompt:not([hidden])');
   if(await prompt.count())await prompt.locator('[data-sky-name-cancel]').click();
   const control=page.locator('#skyFoundationFocus [data-aspect-filter="combined"]');
-  const choice=scope=>control.locator('[data-aspect-matrix-scope="'+scope+'"][data-aspect-matrix-aspect="all"]');
+  const choice=scope=>control.locator('.sky-chart-aspect-summary-choices [data-aspect-matrix-scope="'+scope+'"][data-aspect-matrix-aspect="all"]');
   for(const scope of ['A-A','B-B','A-B'])assert.equal(await choice(scope).count(),1,'Scope control '+scope+' is present in Focus');
   const snapshot=()=>page.evaluate(()=>{
     const lines=[...document.querySelectorAll('#skyFoundationWheelMount [data-layer="aspects"] > .sky-foundation-aspect[data-relation-index]:not(.sky-foundation-aspect-hit)')];
