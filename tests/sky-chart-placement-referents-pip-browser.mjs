@@ -69,8 +69,8 @@ try{
       assert.equal(await saturn.evaluate(n=>n.classList.contains('is-selected')),false,'placement click must not use old highlight');
       await detail.locator('.sky-placement-referents').click({position:{x:12,y:12}});
       assert.equal(await detail.count(),1,'Click inside the expanded tile must leave it open');
-      await panel.locator('.sky-foundation-ledger').click({position:{x:2,y:2}});
-      assert.equal(await detail.count(),0,'Click on blank ledger space collapses detail');
+      await page.locator('#skyFoundationComparison .sky-foundation-heading').click({position:{x:12,y:12}});
+      assert.equal(await detail.count(),0,'Click on a noninteractive chart area collapses detail');
       assert.equal(await saturn.getAttribute('aria-expanded'),'false','Blank dismiss updates aria-expanded');
       await saturn.click();
       assert.equal(await detail.count(),1,'Dismissal resets selection state for reopening');
