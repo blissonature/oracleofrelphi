@@ -474,6 +474,10 @@
   function interactive(event){
     const root=document.getElementById('skyFoundationRoot');if(!root)return null;
     const node=event.target.closest?.('[data-interactive]');
+    // Keyboard focus supplies no screen coordinates; the focused painted SVG
+    // line is already the explicit selection (transparent clones are not tabbable).
+    if(!Number.isFinite(event.clientX)||!Number.isFinite(event.clientY))
+      return node&&root.contains(node)&&!node.classList.contains('sky-foundation-aspect-hit')?node:null;
     if(node&&root.contains(node)&&node.dataset.interactive==='placement')return node;
     const wheel=event.target.closest?.('#skyFoundationWheelMount .sky-foundation-wheel');
     if(wheel&&root.contains(event.target)){
