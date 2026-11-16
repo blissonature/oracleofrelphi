@@ -91,6 +91,21 @@ async function run(browser,{comparison,flashlight}){
   fnSelf.set(name,(fnSelf.get(name)||0)+1);
  }
  const rank=m=>[...m].sort((a,b)=>b[1]-a[1]).slice(0,15).map(([k,v])=>({owner:k,samples:v}));
+ const parents=new Map();
+ profile.nodes.forEach(node=>(node.children||[]).forEach(child=>parents.set(child,node.id)));
+ const criticalCallers=new Map();
+ for(const id of profile.samples||[]){
+  const self=nodes.get(id)?.callFrame;
+  if(self?.functionName!=='hasStoredSkyB'&&self?.functionName!=='patternScope'&&self?.functionName!=='resultHouseFor')continue;
+  let parent=parents.get(id),depth=0,ancestry=[];
+  while(parent&&depth<5){
+   const frame=nodes.get(parent)?.callFrame;
+   if(frame)ancestry.push((frame.url.split('/').pop()||'?')+'::'+frame.functionName);
+   parent=parents.get(parent);depth++;
+  }
+  const label=self.functionName+' ← '+ancestry.join(' ← ');
+  criticalCallers.set(label,(criticalCallers.get(label)||0)+1);
+ }
  const result={
   comparison,flashlight,readyMs,wallMs,moveCount:setup.moves.length*3,
   lines:setup.lines,hitClones:setup.hitClones,relationshipTiles:setup.relationshipTiles,
@@ -100,7 +115,7 @@ async function run(browser,{comparison,flashlight}){
   layoutSeconds:delta(before,after,'LayoutDuration'),
   recalcStyleSeconds:delta(before,after,'RecalcStyleDuration'),
   cpuSamples:profile.samples?.length||0,
-  topScripts:rank(owners),topFunctions:rank(fnSelf),
+  topScripts:rank(owners),topFunctions:rank(fnSelf),criticalCallers:rank(criticalCallers),
   errors
  };
  console.log('HOVER_PROFILE',JSON.stringify(result));
