@@ -117,6 +117,52 @@ try{
  assert.ok(afterHouseExit.eligible>0,'Leaving an isolated house must restore matching Relationships results: '+JSON.stringify(afterHouseExit));
  assert.equal(afterHouseExit.empty,false,'Relationships must not remain on no matches after house hover exits');
 
+ // Real user journey: leaving a highlighted house for the Placements list
+ // must transfer hover ownership immediately, without retaining the house
+ // flashlight, wheel lock, or stale ledger isolation.
+ const placementRows=main.locator('#skyFoundationA .sky-foundation-row[data-interactive="placement"][data-placement]');
+ assert.ok(await placementRows.count()>1,'The Sky A ledger needs multiple placement hover targets');
+ const firstPlacement=placementRows.first(),secondPlacement=placementRows.nth(1);
+ const transitionAudit=()=>main.evaluate(()=>{
+   const focus=window.RelphiSkyFoundationInteractions?.captureFocus?.();
+   const layer=document.querySelector('#skyFoundationWheelMount [data-house-flashlight]');
+   const rows=[...document.querySelectorAll('#skyFoundationA .sky-foundation-row[data-interactive="placement"][data-placement]')];
+   return{lock:focus?.lockedState||null,flashlight:layer?.querySelectorAll('line.sky-house-flashlight-edge').length||0,
+     hovered:rows.filter(row=>row.classList.contains('is-hovered')).map(row=>row.dataset.placement),
+     isolated:document.querySelector('#skyFoundationWheelMount>.sky-foundation-wheel')?.classList.contains('has-isolation')||false};
+ });
+ await main.mouse.move(a.x,a.y);
+ await main.waitForTimeout(90);
+ assert.equal((await flash(main)).house,'11','A house hover must illuminate before changing hover target');
+ await firstPlacement.hover();
+ await main.waitForTimeout(100);
+ const fromHover=await transitionAudit();
+ console.log('HOUSE_TO_PLACEMENTS_HOVER',JSON.stringify(fromHover));
+ assert.equal(fromHover.flashlight,0,'House flashlight must disappear when hovering a Placements row');
+ assert.equal(fromHover.lock,null,'No house selection lock may remain after entering Placements');
+ assert.ok(fromHover.hovered.includes(await firstPlacement.getAttribute('data-placement')),
+   'The Placements row must receive hover after exiting a house');
+ await secondPlacement.hover();
+ await main.waitForTimeout(75);
+ const secondAudit=await transitionAudit();
+ assert.ok(secondAudit.hovered.includes(await secondPlacement.getAttribute('data-placement')),
+   'Hovering a second Placements row must replace the first hover');
+ assert.ok(!secondAudit.hovered.includes(await firstPlacement.getAttribute('data-placement')),
+   'First Placements hover must not remain trapped');
+
+ await main.locator('#skyFoundationWheelMount').scrollIntoViewIfNeeded();
+ const selectedHouse=await locationFor(main,'A',11);
+ await main.mouse.click(selectedHouse.x,selectedHouse.y);
+ assert.equal((await flash(main)).pinned,'true','A house click establishes a selected house before the transition');
+ await firstPlacement.hover();
+ await main.waitForTimeout(100);
+ const fromSelection=await transitionAudit();
+ console.log('HOUSE_TO_PLACEMENTS_SELECTED',JSON.stringify(fromSelection));
+ assert.equal(fromSelection.flashlight,0,'Clicked mouse house must release when hovering Placements');
+ assert.equal(fromSelection.lock,null,'Clicked house lock must be released when entering Placements');
+ assert.ok(fromSelection.hovered.includes(await firstPlacement.getAttribute('data-placement')),
+   'Placements hover must be functional immediately after a mouse house selection');
+
  const b=await locationFor(main,'B',12);
  console.log('B house target',JSON.stringify(b));
  assert.equal(b.house,'12','Real pointer must land in B house wedge');
