@@ -6,6 +6,7 @@ on:
       - 'sky-chart-hover-fast-path-v2.js'
       - 'sky-chart-house-flashlight-v1.js'
       - 'sky-chart-slot-card-controls-v1.js'
+      - 'sky-chart-placement-collision-order-v1.js'
       - 'sky-chart.html'
       - 'sky-chart-foundation-v2.js'
       - 'tests/sky-chart-compare-hover-profile.mjs'
