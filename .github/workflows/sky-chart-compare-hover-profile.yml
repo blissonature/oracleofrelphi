@@ -1,0 +1,26 @@
+name: Sky Chart hover CPU profile - standalone vs comparison
+on:
+  pull_request:
+    paths:
+      - 'sky-chart-foundation-interactions-v2.js'
+      - 'sky-chart-hover-fast-path-v2.js'
+      - 'sky-chart-house-flashlight-v1.js'
+      - 'sky-chart-foundation-v2.js'
+      - 'tests/sky-chart-compare-hover-profile.mjs'
+      - '.github/workflows/sky-chart-compare-hover-profile.yml'
+jobs:
+  profile:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 13
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: |
+          npm install --no-save playwright@1.52.0 luxon@3 suncalc@1.9.0
+          npx playwright install --with-deps chromium
+      - run: |
+          node --check tests/sky-chart-compare-hover-profile.mjs
+          python3 -m http.server 4173 >/tmp/compare-hover-profile-http.log 2>&1 &
+          node tests/sky-chart-compare-hover-profile.mjs
