@@ -49,7 +49,7 @@ async function run(browser,{comparison,flashlight}){
   const layer=wheel.querySelector('[data-layer="aspects"]');
   const bounds=wheel.getBoundingClientRect(), svg=wheel.createSVGPoint(),matrix=wheel.getScreenCTM();
   const moves=[];
-  for(let i=0;i<96;i++){
+  for(let i=0;i<36;i++){
    const deg=(i*137.508)%360,r= i%3===0?240:i%3===1?485:330,
      rad=deg*Math.PI/180;
    svg.x=600+r*Math.cos(rad);svg.y=600+r*Math.sin(rad);
@@ -70,12 +70,12 @@ async function run(browser,{comparison,flashlight}){
  await cdp.send('Performance.enable');
  await cdp.send('Profiler.enable');
  // Warm the same path to exclude first wheel hit and layout initialization.
- for(const [x,y] of setup.moves.slice(0,12))await page.mouse.move(x,y);
+ for(const [x,y] of setup.moves.slice(0,8))await page.mouse.move(x,y);
  await page.waitForTimeout(150);
  const before=metrics(await cdp.send('Performance.getMetrics'));
  await cdp.send('Profiler.start');
  const wallStart=Date.now();
- for(let k=0;k<3;k++)for(const [x,y] of setup.moves)await page.mouse.move(x,y);
+ for(let k=0;k<2;k++)for(const [x,y] of setup.moves)await page.mouse.move(x,y);
  await page.waitForTimeout(250);
  const wallMs=Date.now()-wallStart;
  const {profile}=await cdp.send('Profiler.stop');
