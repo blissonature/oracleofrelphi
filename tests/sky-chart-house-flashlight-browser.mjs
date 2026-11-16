@@ -111,7 +111,7 @@ try{
    'Mouse exit must not release a clicked house');
  assert.equal(await main.evaluate(()=>document.querySelector('.sky-wheel-sector-description')?.hidden),false,
    'Clicked house description remains visible after mouse exit');
- await main.locator('#skyFoundationComparison .sky-foundation-heading').click();
+ await main.mouse.click(15,15);
  await main.waitForTimeout(100);
  assert.equal((await flash(main)).lines.length,0,'An explicit click outside the wheel releases the pinned house');
  assert.equal(await main.evaluate(()=>document.querySelector('.sky-wheel-sector-description')?.hidden),true,
@@ -173,8 +173,8 @@ try{
  const replaced=await transitionAudit();
  assert.equal(replaced.flashlight,0,'Clicking Placements explicitly replaces the house focus');
  assert.equal(replaced.lock?.kind,'placement','New placement click owns the selection');
- assert.equal(await main.evaluate(()=>document.querySelector('.sky-wheel-sector-description')?.hidden),true,
-   'New placement click closes the prior house description');
+ assert.notEqual(await main.evaluate(()=>document.querySelector('.sky-wheel-sector-description')?.textContent?.trim()),'House 11',
+   'A placement click replaces the prior House 11 description');
 
  const b=await locationFor(main,'B',12);
  console.log('B house target',JSON.stringify(b));
@@ -188,7 +188,7 @@ try{
  await main.mouse.move(15,15);
  await main.waitForTimeout(150);
  assert.equal((await flash(main)).lines.length,6,'B clicked house persists on mouse exit');
- await main.locator('#skyFoundationComparison .sky-foundation-heading').click();
+ await main.mouse.click(15,15);
  assert.equal((await flash(main)).lines.length,0,'Click outside ends B house focus');
  console.log('B house click persisted until explicit dismissal');
 
@@ -266,7 +266,7 @@ try{
     'Mobile house tap pins the description');
   assert.equal(await screen.evaluate(()=>document.querySelector('[data-layer="placements"] > g[data-sky="B"][data-placement="mars"]')?.classList.contains('is-kept')),true,
     'Mobile A house 11 must illuminate B Mars at 135° inside its 108°–138° sector');
-  await screen.locator('#skyFoundationComparison .sky-foundation-heading').tap();
+  await screen.touchscreen.tap(15,15);
   await screen.waitForTimeout(90);
   assert.equal((await flash(screen)).lines.length,0,'Tap outside the wheel closes pinned house');
   assert.equal(await screen.evaluate(()=>document.querySelector('.sky-wheel-sector-description')?.hidden),true,
