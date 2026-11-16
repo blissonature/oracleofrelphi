@@ -4,6 +4,7 @@ on:
     paths:
       - 'sky-chart-preview/sky-chart.html'
       - 'sky-chart.html'
+      - 'sky-chart-foundation-interactions-v2.js'
       - 'sky-chart-where-when-v3.js'
       - 'sky-chart-final-pass-v2.js'
       - 'tests/sky-chart-one-click-both-slots-browser.mjs'
