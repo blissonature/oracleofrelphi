@@ -13,13 +13,6 @@ const wrap=(v)=>((Number(v)%360)+360)%360;
 function houseNode(target){
  return target?.closest?.('#skyFoundationWheelMount [data-interactive="house"][data-sky][data-house]')||null;
 }
-function position(node){
- if(!node)return null;
- const sky=String(node.dataset.sky||'').toUpperCase();
- const house=Number(node.dataset.house);
- if(!['A','B'].includes(sky)||!Number.isInteger(house)||house<1||house>12)return null;
- return {sky,house};
-}
 function same(a,b){return!!a&&!!b&&a.sky===b.sky&&a.house===b.house}
 function wheel(){
  return document.querySelector('#skyFoundationWheelMount > svg.sky-foundation-wheel');
@@ -87,18 +80,11 @@ function setHover(value){
  hovered=value;render();
 }
 function setPinned(value){
- pinned=value;render();
+ pinned=value;
+ // Selected house state must not leave a stale mouse hover behind.
+ if(value)hovered=null;
+ render();
 }
-document.addEventListener('pointerover',event=>{
- const node=houseNode(event.target);
- if(!node)return;
- setHover(position(node));
-});
-document.addEventListener('pointerout',event=>{
- const node=houseNode(event.target);
- if(!node||node.contains(event.relatedTarget))return;
- if(same(hovered,position(node)))setHover(null);
-});
 root.addEventListener('relphi:sky-house-focus-bridge-changed',event=>{
  const detail=event.detail||{};
  if(detail.active===true&&(detail.slot==='A'||detail.slot==='B')&&Number.isInteger(Number(detail.house))){
@@ -109,12 +95,13 @@ root.addEventListener('relphi:sky-house-focus-bridge-changed',event=>{
 });
 root.addEventListener('relphi:sky-foundation-filter-changed',event=>{
  const state=event.detail?.state;
- // Hover/selected house focus may originate outside the house wedge itself
- // (e.g. a card). Don't overwrite explicit house taps while pinned.
- if(pinned)return;
- if(state?.kind==='house'&&(state.sky==='A'||state.sky==='B')){
+ // Only the foundation interaction controller owns house hover. Selected
+ // houses arrive through the focus bridge; mouse hover never has a parallel
+ // pointer state that can reappear after a selection is cleared.
+ if(state?.mode==='hover'&&state.kind==='house'&&
+    (state.sky==='A'||state.sky==='B')){
   setHover({sky:state.sky,house:Number(state.value)});
- }else if(state?.kind&&hovered&&!houseNode(document.querySelector(':hover [data-interactive="house"]'))){
+ }else{
   setHover(null);
  }
 });

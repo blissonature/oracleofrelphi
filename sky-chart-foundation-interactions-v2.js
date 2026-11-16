@@ -782,13 +782,26 @@
       }
     },true);
     root.addEventListener('pointerover',event=>{
-      if(event.target.closest?.('.sky-foundation-row[data-interactive="placement"]'))return;
       if(event.pointerType==='touch'||event.pointerType==='pen'||(event.pointerType==='mouse'&&performance.now()<ignoreNativeClickUntil))return;
       wheelOnlyExternal=false;
       const row=event.target.closest?.('.sky-foundation-relationship-row[data-relation-index]');
       if(row)return;
+      // A mouse house selection ends when exploration moves into the
+      // Placements ledger or another panel. The new target takes hover
+      // ownership in this same event; do not collapse its expanded tile.
+      if(event.pointerType==='mouse'&&lockedState?.kind==='house'&&
+         selectionOrigin?.source==='Zodiac Wheel'&&
+         !event.target.closest?.('#skyFoundationWheelMount')){
+        lockedState=null;
+        selectionOrigin=null;
+        showSectorDescription(null,null);
+      }
       if(lockedState)return;
-      const node=interactive(event);if(!node||node.contains(event.relatedTarget))return;
+      const node=interactive(event);
+      if(!node||node.contains(event.relatedTarget)){
+        if(!node&&hoverState){hoverState=null;rowHoverState=null;applyState()}
+        return;
+      }
       rowHoverState=null;hoverState=specFrom(node);applyState()
     });
     // A mouse-explored house must end when the pointer actually leaves its
@@ -841,7 +854,6 @@
         clearFromWhitespace();
         return;
       }
-      if(event.target.closest?.('.sky-foundation-row[data-interactive="placement"]'))return;
       if(event.pointerType==='touch'||event.pointerType==='pen')return;
       const row=event.target.closest?.('.sky-foundation-relationship-row[data-relation-index]');
       if(row)return;
@@ -849,13 +861,11 @@
       const node=interactive(event);if(!node||node.contains(event.relatedTarget))return;hoverState=null;applyState()
     });
     root.addEventListener('focusin',event=>{
-      if(event.target.closest?.('.sky-foundation-row[data-interactive="placement"]'))return;
       const row=event.target.closest?.('.sky-foundation-relationship-row[data-relation-index]');
       if(row)return;
       if(lockedState)return;const node=interactive(event);if(!node)return;rowHoverState=null;hoverState=specFrom(node);applyState()
     });
     root.addEventListener('focusout',event=>{
-      if(event.target.closest?.('.sky-foundation-row[data-interactive="placement"]'))return;
       const row=event.target.closest?.('.sky-foundation-relationship-row[data-relation-index]');
       if(row)return;
       if(lockedState)return;const node=interactive(event);if(!node||node.contains(event.relatedTarget))return;hoverState=null;applyState()
