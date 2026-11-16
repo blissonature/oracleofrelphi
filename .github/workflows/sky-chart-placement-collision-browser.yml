@@ -23,4 +23,19 @@ jobs:
       - run: |
           python3 -m http.server 4173 >/tmp/sky-collision-http.log 2>&1 &
           sleep 2
-          node tests/sky-chart-placement-collision-browser.mjs
+          cp sky-chart-placement-collision-order-v1.js /tmp/sky-collision-current.js
+          # Establish whether the existing collision fixture already fails on
+          # the known pre-optimization owner before attributing a regression.
+          git show f72caef8d8294a13c8bdb85e5fd605edd76ad21c:sky-chart-placement-collision-order-v1.js > sky-chart-placement-collision-order-v1.js
+          set +e
+          node tests/sky-chart-placement-collision-browser.mjs >/tmp/collision-baseline.log 2>&1
+          baseline=$?
+          cp /tmp/sky-collision-current.js sky-chart-placement-collision-order-v1.js
+          node tests/sky-chart-placement-collision-browser.mjs >/tmp/collision-current.log 2>&1
+          current=$?
+          set -e
+          echo "BASELINE_COLLISION_EXIT=${baseline}"
+          grep -E 'AssertionError|PASS|GLYPH_COLLISION_TRACE' /tmp/collision-baseline.log | cut -c 1-260 | tail -n 5 || true
+          echo "CURRENT_COLLISION_EXIT=${current}"
+          grep -E 'AssertionError|PASS|GLYPH_COLLISION_TRACE' /tmp/collision-current.log | cut -c 1-260 | tail -n 5 || true
+          test "${current}" -eq 0
