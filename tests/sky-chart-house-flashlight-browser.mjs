@@ -106,9 +106,16 @@ try{
  assert.equal(mouseSelected.lines.length,6,'Mouse click can select while the cursor remains in the house');
  await main.mouse.move(15,15);
  await main.waitForTimeout(150);
- assert.equal((await flash(main)).lines.length,0,'Mouse exit must extinguish even a clicked house');
- assert.equal(await main.evaluate(()=>document.querySelector('#skyFoundationWheelMount > svg')?.classList.contains('has-isolation')),false,
-   'Mouse exit must release selected house isolation as well as the flashlight');
+ assert.equal((await flash(main)).lines.length,6,'Clicked house stays pinned after mouse exit');
+ assert.equal(await main.evaluate(()=>document.querySelector('#skyFoundationWheelMount > svg')?.classList.contains('has-isolation')),true,
+   'Mouse exit must not release a clicked house');
+ assert.equal(await main.evaluate(()=>document.querySelector('.sky-wheel-sector-description')?.hidden),false,
+   'Clicked house description remains visible after mouse exit');
+ await main.locator('#skyFoundationComparison .sky-foundation-heading').click();
+ await main.waitForTimeout(100);
+ assert.equal((await flash(main)).lines.length,0,'An explicit click outside the wheel releases the pinned house');
+ assert.equal(await main.evaluate(()=>document.querySelector('.sky-wheel-sector-description')?.hidden),true,
+   'Dismissal also closes the description');
  const afterHouseExit=await main.evaluate(()=>{
    const rows=[...document.querySelectorAll('#skyFoundationRelationshipList > .sky-foundation-relationship-row[data-relation-index]')];
    const eligible=rows.filter(row=>!row.hidden&&row.getAttribute('aria-hidden')!=='true'&&getComputedStyle(row).display!=='none');
@@ -117,9 +124,8 @@ try{
  assert.ok(afterHouseExit.eligible>0,'Leaving an isolated house must restore matching Relationships results: '+JSON.stringify(afterHouseExit));
  assert.equal(afterHouseExit.empty,false,'Relationships must not remain on no matches after house hover exits');
 
- // Real user journey: leaving a highlighted house for the Placements list
- // must transfer hover ownership immediately, without retaining the house
- // flashlight, wheel lock, or stale ledger isolation.
+ // Hover-only house exploration relinquishes its focus to Placements, but
+ // explicitly clicked houses persist until the next click or Escape.
  const placementRows=main.locator('#skyFoundationA .sky-foundation-row[data-interactive="placement"][data-placement]');
  assert.ok(await placementRows.count()>1,'The Sky A ledger needs multiple placement hover targets');
  const firstPlacement=placementRows.first(),secondPlacement=placementRows.nth(1);
@@ -158,10 +164,17 @@ try{
  await main.waitForTimeout(100);
  const fromSelection=await transitionAudit();
  console.log('HOUSE_TO_PLACEMENTS_SELECTED',JSON.stringify(fromSelection));
- assert.equal(fromSelection.flashlight,0,'Clicked mouse house must release when hovering Placements');
- assert.equal(fromSelection.lock,null,'Clicked house lock must be released when entering Placements');
- assert.ok(fromSelection.hovered.includes(await firstPlacement.getAttribute('data-placement')),
-   'Placements hover must be functional immediately after a mouse house selection');
+ assert.equal(fromSelection.flashlight,6,'Clicked house remains pinned while hovering Placements');
+ assert.deepEqual(fromSelection.lock,{kind:'house',sky:'A',value:11},'Hover does not dismiss a clicked house');
+ assert.equal(await main.evaluate(()=>document.querySelector('.sky-wheel-sector-description')?.hidden),false,
+   'House description stays open over the Placements panel');
+ await firstPlacement.click();
+ await main.waitForTimeout(110);
+ const replaced=await transitionAudit();
+ assert.equal(replaced.flashlight,0,'Clicking Placements explicitly replaces the house focus');
+ assert.equal(replaced.lock?.kind,'placement','New placement click owns the selection');
+ assert.equal(await main.evaluate(()=>document.querySelector('.sky-wheel-sector-description')?.hidden),true,
+   'New placement click closes the prior house description');
 
  const b=await locationFor(main,'B',12);
  console.log('B house target',JSON.stringify(b));
@@ -174,8 +187,10 @@ try{
  assert.deepEqual(bResult.lines.filter(l=>l.edge==='0').map(l=>l.kind),['other','zodiac','home']);
  await main.mouse.move(15,15);
  await main.waitForTimeout(150);
- assert.equal((await flash(main)).lines.length,0,'B house also ends when the mouse leaves');
- console.log('B mouse exit cleared');
+ assert.equal((await flash(main)).lines.length,6,'B clicked house persists on mouse exit');
+ await main.locator('#skyFoundationComparison .sky-foundation-heading').click();
+ assert.equal((await flash(main)).lines.length,0,'Click outside ends B house focus');
+ console.log('B house click persisted until explicit dismissal');
 
 
  // A house 10: 78–108°. B Uranus: 82° (B house 9, not B house 10).
@@ -214,8 +229,13 @@ try{
   assert.ok(focus.matchingRows>0&&focus.rowsUnexcluded>0,'linked comparison relationships stay included');
   await overlap.mouse.move(15,15);
   await overlap.waitForTimeout(150);
+  assert.equal(await overlap.evaluate(()=>document.querySelector('#skyFoundationWheelMount > svg').classList.contains('has-isolation')),true,
+    'Cross-sky pinned house remains isolated on mouse exit');
+  assert.equal((await flash(overlap)).lines.length,6,'Cross-sky house remains pinned on mouse exit');
+  await overlap.keyboard.press('Escape');
+  await overlap.waitForTimeout(70);
   assert.equal(await overlap.evaluate(()=>document.querySelector('#skyFoundationWheelMount > svg').classList.contains('has-isolation')),false);
-  assert.equal((await flash(overlap)).lines.length,0,'Cross-sky house mode must end on mouse exit');
+  assert.equal((await flash(overlap)).lines.length,0,'Escape explicitly releases cross-sky house focus');
  }finally{await overlap.close()}
 
  const standalone=await browser.newPage({viewport:{width:1200,height:960}});
@@ -242,9 +262,16 @@ try{
   console.log('Mobile tap result',JSON.stringify(result));
   assert.equal(result.sky,'A');assert.equal(result.pinned,'true');
   assert.equal(result.lines.length,6);
+  assert.equal(await screen.evaluate(()=>document.querySelector('.sky-wheel-sector-description')?.hidden),false,
+    'Mobile house tap pins the description');
   assert.equal(await screen.evaluate(()=>document.querySelector('[data-layer="placements"] > g[data-sky="B"][data-placement="mars"]')?.classList.contains('is-kept')),true,
     'Mobile A house 11 must illuminate B Mars at 135° inside its 108°–138° sector');
+  await screen.locator('#skyFoundationComparison .sky-foundation-heading').tap();
+  await screen.waitForTimeout(90);
+  assert.equal((await flash(screen)).lines.length,0,'Tap outside the wheel closes pinned house');
+  assert.equal(await screen.evaluate(()=>document.querySelector('.sky-wheel-sector-description')?.hidden),true,
+    'Mobile outside tap closes description');
  }finally{await mobile.close()}
  assert.deepEqual(errors,[],'No browser uncaught exceptions: '+errors);
- console.log('PASS: A/B hover, tap, un-tap, comparison and standalone geometry, mobile house flashlight');
+ console.log('PASS: hover-only release, pinned A/B house description, outside click, Escape, placement replacement, mobile dismissal, comparison and standalone geometry');
 }finally{await browser.close()}
