@@ -40,10 +40,10 @@ test('flashlight derives cusps from the rendered sectors and accepts house focus
  assert.match(controller,/relphi:sky-house-focus-bridge-changed/);
  assert.match(controller,/relphi:sky-foundation-ready/);
  assert.match(controller,/relphi:sky-foundation-filter-changed/);
- assert.match(controller,/state\\?\\.mode==='hover'/);
- assert.doesNotMatch(controller,/document\\.addEventListener\\('pointerover'/,
+ assert.match(controller,/state\?\.mode==='hover'/);
+ assert.doesNotMatch(controller,/document\.addEventListener\('pointerover'/,
    'Flashlight must not register a competing native mouse-hover owner');
- assert.doesNotMatch(controller,/document\\.addEventListener\\('pointerout'/,
+ assert.doesNotMatch(controller,/document\.addEventListener\('pointerout'/,
    'Flashlight must clear from foundation state rather than a second pointerout handler');
  assert.match(controller,/pointer-events':'none'/);
  assert.match(html,/sky-chart-house-flashlight-v1\.js/);
