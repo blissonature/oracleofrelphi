@@ -679,9 +679,14 @@
   let touchGesture=null,ignoreNativeClickUntil=0,lastTouchPoint=null,lastMousePointerSelection=null;
   let ledgerGesture=null,lastLedgerPointer=null;
   function openLedgerPlacement(row){
-    lockedState=null;hoverState=null;rowLockedState=null;rowHoverState=null;selectionOrigin=null;
-    applyState();clearWheelTargets();
-    window.RelphiSkyPlacementView?.activate?.(row.dataset.sky,row.dataset.placement);
+    // Placements clicks and wheel glyph clicks share the foundation's single
+    // selection transition. Expanding the referent tile is independent of,
+    // rather than a replacement for, illuminating the selected body's
+    // eligible intrasky and intersky relationships on the wheel.
+    if(!row?.isConnected||row.dataset.interactive!=='placement')return;
+    const selected=specFrom(row);
+    toggleInteractiveNode(row);
+    window.RelphiSkyPlacementView?.activate?.(selected.sky,selected.value);
   }
   function touchInWheel(event){return !!event.target.closest?.('#skyFoundationWheelMount .sky-foundation-wheel')}
   function beginTouch(event){
@@ -759,7 +764,7 @@
       const target=event.target;
       const onWheel=target.closest?.('#skyFoundationWheelMount .sky-foundation-wheel');
       const onLedger=target.closest?.('#skyFoundationA .sky-foundation-row[data-interactive="placement"],#skyFoundationB .sky-foundation-row[data-interactive="placement"]');
-      if(onLedger)return; // Placements own their expanded referent view, not wheel isolation.
+      if(onLedger)return; // The ledger's own pointerup selects both its tile and wheel focus.
       if(!onWheel)return;
       const node=interactive(event);
       if(node){

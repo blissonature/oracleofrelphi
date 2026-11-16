@@ -16,6 +16,9 @@ const APPROVED_COMPONENT_MASTERS=new Set(['chiron','north-node','south-node','pa
 const ALIASES={rising:'asc',ascendant:'asc',asc:'asc',ac:'asc',descendant:'dsc',dsc:'dsc',dc:'dsc',midheaven:'mc',mc:'mc','imum coeli':'ic',imumcoeli:'ic',ic:'ic',vertex:'vertex',vx:'vertex','anti vertex':'anti-vertex','anti-vertex':'anti-vertex',antivertex:'anti-vertex',avx:'anti-vertex','north node':'north-node',node:'north-node','true node':'north-node','south node':'south-node',fortune:'part-of-fortune','part of fortune':'part-of-fortune',pof:'part-of-fortune'};
 const ASPECTS=[{id:'conjunction',angle:0,color:'#e53935'},{id:'semi-sextile',angle:30,color:'#7c9b49'},{id:'octile',angle:45,color:'#b86d43'},{id:'sextile',angle:60,color:'#d3b727'},{id:'quintile',angle:72,color:'#8b6cc2'},{id:'square',angle:90,color:'#d6534d'},{id:'trine',angle:120,color:'#4e9e69'},{id:'tri-octile',angle:135,color:'#9f5944'},{id:'bi-quintile',angle:144,color:'#7655aa'},{id:'quincunx',angle:150,color:'#4b8e88'},{id:'opposition',angle:180,color:'#5961c8'}];
 const SIGN_NAMES=['Aries','Taurus','Gemini','Cancer','Leo','Virgo','Libra','Scorpio','Sagittarius','Capricorn','Aquarius','Pisces'];
+// Chaldean planetary order begins with Mars at Aries 0° and advances once
+// per 10° decan. This matches the existing Card Hits/Decans ruler mapping.
+const DECAN_CHALDEAN=['Mars','Sun','Venus','Mercury','Moon','Saturn','Jupiter'];
 let lastSignature='',rendering=false,rerender=false,renderingSignature='';
 
 const norm=value=>((Number(value)%360)+360)%360;
@@ -107,10 +110,11 @@ function placementCardLink(card){return card?window.RelphiSkyDecanCards?.href?.(
 function placementReferent(kind,value){return window.RelphiSkyVocab?.describeFocus?.(kind,value)?.description||''}
 function placementDetail(record,house){
   const pos=coordinate(record),sign=SIGN_NAMES[pos.sign],decan=Math.floor((norm(record.value)%30)/10)+1,card=placementCard(record);
+  const decanRuler=DECAN_CHALDEAN[Math.floor(norm(record.value)/10)%DECAN_CHALDEAN.length];
   const sections=[
     ['Placement',record.entry.name,placementReferent('placement',record.id)],
     ['Sign',sign,placementReferent('sign',pos.sign)],
-    ['Decan',`${decan===1?'First':decan===2?'Second':'Third'} decan · ${sign}`,`${(decan-1)*10}°–${decan*10}° of ${sign}`],
+    ['Decan',`${decan===1?'First':decan===2?'Second':'Third'} decan · ${sign}`,`${(decan-1)*10}°–${decan*10}° of ${sign} · Ruler: ${decanRuler}`],
     ...(house?[['House',`House ${house}`,placementReferent('house',house)]]:[])
   ];
   const rail=window.RelphiRelationshipVocab?.railColors?.(pos.sign,house)||{};
