@@ -1,0 +1,16 @@
+{
+  "manifest_version": 3,
+  "name": "Oracle of Relphi \u2014 Sky from Selection",
+  "version": "1.1.9",
+  "description": "Parse selected date and place into Sky A, compare two dated places, or prefill a single date/location without guessing missing data.",
+  "permissions": [
+    "contextMenus",
+    "tabs"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_title": "Oracle of Relphi \u2014 Sky from Selection"
+  }
+}
