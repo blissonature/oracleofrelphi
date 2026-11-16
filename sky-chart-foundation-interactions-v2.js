@@ -397,7 +397,19 @@
       });
     }
     if(wheelOnlyExternal)return;
-    ['A','B'].forEach(slot=>{const panel=document.getElementById(slot==='A'?'skyFoundationA':'skyFoundationB');if(!panel)return;panel.classList.toggle('has-ledger-isolation',!!filterState);panel.querySelectorAll('.sky-foundation-row[data-placement]').forEach(row=>{row.classList.toggle('is-kept',!!filterState&&filterKeep.placements.has(`${slot}:${row.dataset.placement}`));row.classList.toggle('is-selected',!!lockedState&&matchesNode(row,lockedState));row.classList.toggle('is-hovered',!!hoverState&&!lockedState&&matchesNode(row,hoverState))})});
+    const aspectLocked=lockedState?.kind==='aspect';
+    ['A','B'].forEach(slot=>{
+      const panel=document.getElementById(slot==='A'?'skyFoundationA':'skyFoundationB');
+      if(!panel)return;
+      panel.classList.toggle('has-ledger-isolation',!!filterState||aspectLocked);
+      panel.querySelectorAll('.sky-foundation-row[data-placement]').forEach(row=>{
+        const endpoint=aspectLocked&&filterKeep.placements.has(`${slot}:${row.dataset.placement}`);
+        row.classList.toggle('is-kept',!!filterState&&filterKeep.placements.has(`${slot}:${row.dataset.placement}`)||endpoint);
+        row.classList.toggle('is-aspect-endpoint',endpoint);
+        row.classList.toggle('is-selected',!!lockedState&&matchesNode(row,lockedState)||endpoint);
+        row.classList.toggle('is-hovered',!!hoverState&&!lockedState&&matchesNode(row,hoverState));
+      });
+    });
     // A clicked/tapped wheel selection temporarily narrows the Relationships
     // scroll window. Hover is preview-only; never hide tiles while hovering.
     // Preserve source eligibility and DOM rows; clearing the lock restores them.
@@ -431,28 +443,47 @@
     window.dispatchEvent(new CustomEvent('relphi:sky-foundation-filter-changed',{detail:{state:focusState?{...focusState,mode:lockedState?'selected':'hover'}:null,origin:lockedState&&selectionOrigin?{...selectionOrigin}:null,relationshipIndexes}}));
   }
   function distanceToSegment(x,y,a,b){const dx=b.x-a.x,dy=b.y-a.y,length=dx*dx+dy*dy;if(!length)return Math.hypot(x-a.x,y-a.y);const t=Math.max(0,Math.min(1,((x-a.x)*dx+(y-a.y)*dy)/length)),px=a.x+t*dx,py=a.y+t*dy;return Math.hypot(x-px,y-py)}
-  function nearestAspect(event){
+  // Transparent 28px hit envelopes can overlap or survive longer than their
+  // filtered source lines. Resolve every aspect pointer to the actual painted
+  // line, prioritizing the visibly highlighted geometry over faded neighbors.
+  // The faint lines remain selectable where no highlighted line is underfoot.
+  function nearestAspect(event,radius=14){
     if(!Number.isFinite(event.clientX)||!Number.isFinite(event.clientY))return null;
-    let nearest=null,best=Infinity;
-    document.querySelectorAll('[data-layer="aspects"] > line.sky-foundation-aspect:not(.sky-foundation-aspect-hit)').forEach(line=>{
-      if(line.classList.contains('sky-chart-filter-hidden')||line.classList.contains('sky-chart-orb-hidden')||line.classList.contains('sky-orb-filter-hidden')||getComputedStyle(line).display==='none')return;
-      const matrix=line.getScreenCTM(),svg=line.ownerSVGElement;if(!matrix||!svg?.createSVGPoint)return;
-      const start=svg.createSVGPoint(),end=svg.createSVGPoint();start.x=Number(line.getAttribute('x1'));start.y=Number(line.getAttribute('y1'));end.x=Number(line.getAttribute('x2'));end.y=Number(line.getAttribute('y2'));
-      const distance=distanceToSegment(event.clientX,event.clientY,start.matrixTransform(matrix),end.matrixTransform(matrix));if(distance<best){best=distance;nearest=line}
+    let nearest=null,best=Infinity,bestTier=-1;
+    const wheel=document.querySelector('#skyFoundationWheelMount > .sky-foundation-wheel');
+    wheel?.querySelectorAll('[data-layer="aspects"] > line.sky-foundation-aspect:not(.sky-foundation-aspect-hit)').forEach(line=>{
+      if(!line.isConnected||line.hidden||line.getAttribute('aria-hidden')==='true'||
+        PERSISTENT_HIDDEN_CLASSES.some(name=>line.classList.contains(name)))return;
+      const style=getComputedStyle(line);
+      if(style.display==='none'||style.visibility==='hidden'||Number(style.opacity)<=0)return;
+      const matrix=line.getScreenCTM(),svg=line.ownerSVGElement;
+      if(!matrix||!svg?.createSVGPoint)return;
+      const start=svg.createSVGPoint(),end=svg.createSVGPoint();
+      start.x=Number(line.getAttribute('x1'));start.y=Number(line.getAttribute('y1'));
+      end.x=Number(line.getAttribute('x2'));end.y=Number(line.getAttribute('y2'));
+      const distance=distanceToSegment(event.clientX,event.clientY,start.matrixTransform(matrix),end.matrixTransform(matrix));
+      if(distance>radius)return;
+      const tier=wheel.classList.contains('has-isolation')&&line.classList.contains('is-kept')?2:
+        Number(style.opacity)>.15?1:0;
+      if(tier>bestTier||(tier===bestTier&&distance<best)){
+        bestTier=tier;best=distance;nearest=line;
+      }
     });
-    return best<=9?nearest:null;
+    return nearest;
   }
   function interactive(event){
     const root=document.getElementById('skyFoundationRoot');if(!root)return null;
     const node=event.target.closest?.('[data-interactive]');
-    if(node&&root.contains(node)){
-      // A struck SVG aspect already identifies its exact endpoints and
-      // harmonic. Do not replace it with a geometrically nearby crossing line.
-      return node;
-    }
+    if(node&&root.contains(node)&&node.dataset.interactive==='placement')return node;
     const wheel=event.target.closest?.('#skyFoundationWheelMount .sky-foundation-wheel');
-    if(wheel&&root.contains(event.target))return nearestAspect(event);
-    return null;
+    if(wheel&&root.contains(event.target)){
+      // The nearest eligible visible stroke wins over an unrelated transparent
+      // SVG hit clone, including when the clone is above the source in DOM order.
+      const aspect=nearestAspect(event,14);
+      if(aspect)return aspect;
+      if(node?.dataset.interactive==='aspect')return null;
+    }
+    return node&&root.contains(node)?node:null;
   }
   function clearableWhitespace(event){
     const root=document.getElementById('skyFoundationRoot'),target=event.target;if(!root?.contains(target))return false;
@@ -662,15 +693,23 @@
     if(!node)return;
     wheelOnlyExternal=false;
     rowLockedState=null;rowHoverState=null;
-    const next=specFrom(node);
+    const next=specFrom(node),previousAspect=lockedState?.kind==='aspect';
     if(same(lockedState,next)){lockedState=null;selectionOrigin=null}
     else{lockedState=next;selectionOrigin=originFromNode(node,next)}
     hoverState=null;applyState();
     showSectorDescription(node,lockedState);
-    if(lockedState?.kind==='aspect')requestAnimationFrame(()=>revealSelectedRelationship(lockedState));
-    else {
+    if(lockedState?.kind==='aspect'){
+      const slots=relationshipSlots(node);
+      window.RelphiSkyPlacementView?.activateRelationship?.([
+        {sky:slots.left,id:node.dataset.leftPlacement},
+        {sky:slots.right,id:node.dataset.rightPlacement}
+      ]);
+      requestAnimationFrame(()=>revealSelectedRelationship(lockedState));
+    }else{
+      // A deselected/replaced relationship relinquishes its two expanded
+      // endpoint tiles; the ordinary placement click owner can then open one.
+      if(previousAspect)window.RelphiSkyPlacementView?.collapse?.();
       clearWheelTargets();
-      // Explicit selection changes close the previous tile; hover never does.
       window.RelphiInlineRelationship?.collapse?.();
     }
   }
