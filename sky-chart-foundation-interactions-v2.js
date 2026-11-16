@@ -781,6 +781,13 @@
     // before pointerup reaches the wheel root. The gesture begins only inside
     // this wheel, so unrelated document touches remain completely untouched.
     document.addEventListener('pointerdown',event=>{
+      // A house click is a persistent selection, not mouse hover. Only a new
+      // explicit action outside the wheel relinquishes its pinned description
+      // and flashlight; walking the pointer across panels does not.
+      if(event.isPrimary&&lockedState?.kind==='house'&&
+         !event.target.closest?.('#skyFoundationWheelMount .sky-foundation-wheel')){
+        clearFromWhitespace();
+      }
       const row=event.target.closest?.('#skyFoundationA .sky-foundation-row[data-placement],#skyFoundationB .sky-foundation-row[data-placement]');
       ledgerGesture=row?{pointerId:event.pointerId,x:event.clientX,y:event.clientY,row}:null;
     },{capture:true,passive:true});
@@ -825,6 +832,12 @@
     // after our touch handler already committed selection. Suppress both kinds
     // of duplicate click, without blocking interactions outside the wheel.
     document.addEventListener('click',event=>{
+      // Keyboard-activated controls outside the wheel must also close a
+      // pinned house. Pointer clicks already do so at pointerdown above.
+      if(event.detail===0&&lockedState?.kind==='house'&&
+         !event.target.closest?.('#skyFoundationWheelMount .sky-foundation-wheel')){
+        clearFromWhitespace();
+      }
       if(performance.now()<ignoreNativeClickUntil&&touchInWheel(event)){
         event.preventDefault();event.stopImmediatePropagation();
       }
@@ -834,16 +847,8 @@
       wheelOnlyExternal=false;
       const row=event.target.closest?.('.sky-foundation-relationship-row[data-relation-index]');
       if(row)return;
-      // A mouse house selection ends when exploration moves into the
-      // Placements ledger or another panel. The new target takes hover
-      // ownership in this same event; do not collapse its expanded tile.
-      if(event.pointerType==='mouse'&&lockedState?.kind==='house'&&
-         selectionOrigin?.source==='Zodiac Wheel'&&
-         !event.target.closest?.('#skyFoundationWheelMount')){
-        lockedState=null;
-        selectionOrigin=null;
-        showSectorDescription(null,null);
-      }
+      // Hover previews can move between panels. A clicked house remains
+      // selected until another explicit selection or dismissal.
       if(lockedState)return;
       const node=interactive(event);
       if(!node||node.contains(event.relatedTarget)){
@@ -852,30 +857,8 @@
       }
       rowHoverState=null;hoverState=specFrom(node);applyState()
     });
-    // A mouse-explored house must end when the pointer actually leaves its
-    // SVG wedge, even when another SVG child caught the pointer event or a
-    // wheel redraw detached the original house target.
-    function mouseInsideSelectedHouse(event){
-      const focus=lockedState;
-      if(focus?.kind!=='house')return null;
-      const layer=focus.sky==='A'?'a-houses':'b-houses';
-      const path=document.querySelector('#skyFoundationWheelMount [data-layer="'+layer+'"] > path[data-house="'+focus.value+'"]');
-      const ctm=path?.getScreenCTM?.(),svg=path?.ownerSVGElement;
-      if(!ctm||!svg?.createSVGPoint||typeof path.isPointInFill!=='function')return null;
-      try{
-        const point=svg.createSVGPoint();point.x=event.clientX;point.y=event.clientY;
-        return path.isPointInFill(point.matrixTransform(ctm.inverse()));
-      }catch(_){return null}
-    }
-    function releaseMouseHouse(event){
-      if(event.pointerType!=='mouse'||lockedState?.kind!=='house'||selectionOrigin?.source!=='Zodiac Wheel')return false;
-      if(mouseInsideSelectedHouse(event)!==false)return false;
-      clearFromWhitespace();
-      return true;
-    }
     root.addEventListener('pointermove',event=>{
       if(event.pointerType==='touch'||event.pointerType==='pen')return;
-      if(releaseMouseHouse(event))return;
       if(lockedState||!event.target.closest?.('#skyFoundationWheelMount'))return;
       const direct=event.target.closest?.('[data-interactive]:not([data-interactive="aspect"])');
       if(direct)return;
@@ -885,23 +868,7 @@
       hoverState=next;applyState();
     });
     root.addEventListener('pointerout',event=>{
-      // Mouse house exploration ends at the sector boundary, even after a click.
-      // Only the foundation selection owner clears the lock; touch taps still pin.
-      const departedWheel=event.pointerType==='mouse'&&event.target.closest?.('#skyFoundationWheelMount')&&
-        !event.relatedTarget?.closest?.('#skyFoundationWheelMount');
-      if(departedWheel&&lockedState?.kind==='house'&&selectionOrigin?.source==='Zodiac Wheel'){
-        clearFromWhitespace();return;
-      }
-      if(releaseMouseHouse(event))return;
-      const exitedHouse=event.pointerType==='mouse'
-        ?event.target.closest?.('#skyFoundationWheelMount [data-interactive="house"][data-sky][data-house]')
-        :null;
-      if(exitedHouse&&!exitedHouse.contains(event.relatedTarget)&&
-         lockedState?.kind==='house'&&lockedState.sky===exitedHouse.dataset.sky&&
-         Number(lockedState.value)===Number(exitedHouse.dataset.house)){
-        clearFromWhitespace();
-        return;
-      }
+      // A pinned house is not a hover: mouse exit never clears it.
       if(event.pointerType==='touch'||event.pointerType==='pen')return;
       const row=event.target.closest?.('.sky-foundation-relationship-row[data-relation-index]');
       if(row)return;
