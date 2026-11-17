@@ -2,6 +2,7 @@ name: Sky Chart placement click and decan ruler
 on:
   pull_request:
     paths:
+      - 'sky-chart-foundation-v1.css'
       - 'sky-chart-foundation-v2.js'
       - 'sky-chart-foundation-interactions-v2.js'
       - 'sky-chart.html'
