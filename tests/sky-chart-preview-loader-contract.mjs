@@ -29,7 +29,7 @@ const fakeFetch=async uri=>{
   if(!fs.existsSync(filename))return{ok:false,status:404,text:async()=>''};
   return{ok:true,status:200,text:async()=>fs.readFileSync(filename,'utf8')};
 };
-const context={document:doc,location:{search:'?ref='+commit},URLSearchParams,URL,AbortSignal,
+const context={document:doc,location:{search:'?ref='+commit},URLSearchParams,URL,Blob,AbortSignal,
   fetch:fakeFetch,console,Math,Promise,Array,Map,RegExp,Error,Date,String};
 await vm.runInNewContext(match[1],context,{timeout:2000});
 assert.equal(status.textContent,'','All local dependencies must be resolvable');
@@ -38,6 +38,8 @@ assert.equal(doc.closed,true,'Loader completes the replacement document');
 const html=doc.written||'';
 assert.equal([...html.matchAll(/<style data-preview-css=/g)].length,styles.length,'Every local stylesheet is embedded');
 assert.equal([...html.matchAll(/<script data-preview-js=/g)].length,scripts.length,'Every local script is embedded');
+assert.equal([...html.matchAll(/<script data-preview-js=[^>]+src="blob:/g)].length,scripts.length,
+  'Every local script is an ordered, MIME-correct Blob script, not inline HTML source');
 for(const item of scripts)assert.ok(html.includes('data-preview-js="'+item+'"'),'Missing source '+item);
 assert.ok(html.indexOf('data-preview-js="'+scripts[0]+'"')<html.indexOf('data-preview-js="'+scripts.at(-1)+'"'),
   'The first/last script execution order must match the application');
