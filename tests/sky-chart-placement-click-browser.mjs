@@ -54,6 +54,7 @@ try{
     const bubble=wheel?.querySelector('[data-layer="placements"] > g[data-sky="A"][data-placement="venus"] .relphi-glyph-bubble > circle');
     const ledger=document.querySelector('#skyFoundationA .sky-foundation-row[data-placement="venus"] > svg');
     return{client:mount?.clientWidth,scrollWidth:mount?.scrollWidth,wheelWidth:wheel?.getBoundingClientRect().width,
+      wheelLeft:wheel?.getBoundingClientRect().left,mountLeft:mount?.getBoundingClientRect().left,
       physicalBubbleWidth:bubble?.getBoundingClientRect().width,
       bubbleRadius:Number(bubble?.getAttribute('r')),ledgerWidth:ledger?.getBoundingClientRect().width};
   });
@@ -61,7 +62,8 @@ try{
   assert.equal(zoom.ledgerWidth,23,'Placement row glyph size is unchanged');
   if(mobile){
     assert.ok(zoom.wheelWidth>=719,'The single mobile wheel is magnified to at least 720px');
-    assert.ok(zoom.scrollWidth>zoom.client+100,'Mobile wheel scrolls without clipping its right side');
+    assert.ok(zoom.scrollWidth>=720,'Mobile wheel exposes its entire 720px visual width');
+    assert.ok(zoom.wheelLeft>=zoom.mountLeft,'Enlarged wheel must not be clipped off the left side');
     assert.ok(zoom.physicalBubbleWidth>=21,'Comparison placement bubble is legible at physical pixel size');
     const mount=page.locator('#skyFoundationWheelMount');
     await mount.evaluate(node=>{node.scrollLeft=(node.scrollWidth-node.clientWidth)/2});
