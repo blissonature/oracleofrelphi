@@ -181,18 +181,6 @@ body.sky-chart-page.sky-foundation-active #chartPanel > :not(#skyFoundationRoot)
     grid-template-areas:"a" "b" "comparison";
   }
   #skyFoundationWheelMount { min-height:300px; padding:4px; }
-  /* Mobile placement ledger: a readable, finger-friendly glyph without changing
-     the canonical vector, its 40-unit SVG viewBox, or the row's click owner. */
-  .sky-foundation-row {
-    grid-template-columns:36px minmax(0,1fr) auto auto;
-    column-gap:8px;
-    min-height:42px;
-    padding-block:5px;
-  }
-  .sky-foundation-row > svg {
-    width:33px;
-    height:33px;
-  }
   #skyFoundationWheelMount .sky-foundation-aspect {
     stroke-width:1.05;
     opacity:.52;
