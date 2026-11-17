@@ -29,8 +29,7 @@ const mini=Object.freeze({
   zodiac:Object.freeze({inner:83,outer:128.5,fillOpacity:.82,glyphRadius:14,strokeWidth:1.8}),
   standalone:standaloneInner,A:standaloneInner,B:standaloneInner,
   houseFillOpacity:.5,houseNumberFont:16,angleGap:12,angleRadius:14,angleStrokeWidth:1.8,
-  get placementRadius(){return mobilePlacements()?16:12},
-  get placementBubbleRadius(){return mobilePlacements()?17:13},placementStrokeWidth:1.8,
+  placementRadius:12,placementBubbleRadius:13,placementStrokeWidth:1.8,
   placementClearance:5,tangentialStep:.75,tangentialLimit:18
 });
 function role(slot){return slot==='A'?comparison.inner:comparison.outer}
