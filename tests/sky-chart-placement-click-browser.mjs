@@ -58,8 +58,8 @@ try{
       visualRadius:Number(bubble?.getAttribute('r')),contractRadius:spec.placementRadius,
       collisionRadius:spec.placementBubbleRadius};
   });
-  assert.equal(glyphDimensions.rowWidth,mobile?33:23,'Placement ledger glyph width follows mobile breakpoint');
-  assert.equal(glyphDimensions.rowHeight,mobile?33:23,'Placement ledger glyph height follows mobile breakpoint');
+  assert.equal(glyphDimensions.rowWidth,23,'Placement ledger glyph width remains unchanged');
+  assert.equal(glyphDimensions.rowHeight,23,'Placement ledger glyph height remains unchanged');
   assert.equal(glyphDimensions.visualRadius,mobile?24:18.5,'Placement wheel uses mobile glyph radius');
   assert.equal(glyphDimensions.contractRadius,glyphDimensions.visualRadius,'Renderer uses canonical spec');
   assert.equal(glyphDimensions.collisionRadius,mobile?25.5:19.7,'Collision solver sees larger bubble radius');
