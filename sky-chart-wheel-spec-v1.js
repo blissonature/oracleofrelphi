@@ -6,12 +6,17 @@ const COLORS=Object.freeze(['#e53935','#f06b32','#f39a2e','#f5be3d','#f1dc43','#
 const SKY=Object.freeze({A:'#c9211e',B:'#2462d0'});
 const SIGNS=Object.freeze(['aries','taurus','gemini','cancer','leo','virgo','libra','scorpio','sagittarius','capricorn','aquarius','pisces']);
 const ANGLES=Object.freeze(['asc','dsc','mc','ic']);
+// Use the same device-sensitive dimensions in the renderer AND collision solver.
+// Read at use time so rotating across the mobile breakpoint updates the contract.
+const mobilePlacements=()=>window.matchMedia?.('(max-width:620px)').matches===true;
 const comparison=Object.freeze({
   viewBox:Object.freeze([0,0,1200,1200]),center:Object.freeze({x:600,y:600}),
   inner:Object.freeze({inner:166,outer:323,degree:323,placement:Object.freeze([287,299,283]),angle:Object.freeze([202,220,238]),edge:166,side:'inner'}),
   zodiac:Object.freeze({inner:323,outer:414,fillOpacity:.82,glyphRadius:24,strokeWidth:2.7}),
   outer:Object.freeze({inner:414,outer:574,degree:414,placement:Object.freeze([450,440,460]),angle:Object.freeze([540,522,504]),edge:574,side:'outer'}),
-  houseFillOpacity:.5,houseNumberFont:22,angleGap:17,placementRadius:18.5,placementBubbleRadius:19.7,
+  houseFillOpacity:.5,houseNumberFont:22,angleGap:17,
+  get placementRadius(){return mobilePlacements()?24:18.5},
+  get placementBubbleRadius(){return mobilePlacements()?25.5:19.7},
   placementClearance:6,tangentialStep:.75,tangentialLimit:15
 });
 const standaloneInner=Object.freeze({
@@ -24,7 +29,8 @@ const mini=Object.freeze({
   zodiac:Object.freeze({inner:83,outer:128.5,fillOpacity:.82,glyphRadius:14,strokeWidth:1.8}),
   standalone:standaloneInner,A:standaloneInner,B:standaloneInner,
   houseFillOpacity:.5,houseNumberFont:16,angleGap:12,angleRadius:14,angleStrokeWidth:1.8,
-  placementRadius:12,placementBubbleRadius:13,placementStrokeWidth:1.8,
+  get placementRadius(){return mobilePlacements()?16:12},
+  get placementBubbleRadius(){return mobilePlacements()?17:13},placementStrokeWidth:1.8,
   placementClearance:5,tangentialStep:.75,tangentialLimit:18
 });
 function role(slot){return slot==='A'?comparison.inner:comparison.outer}
