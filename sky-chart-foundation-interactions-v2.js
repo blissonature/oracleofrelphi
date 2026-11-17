@@ -875,6 +875,14 @@
       const row=event.target.closest?.('.sky-foundation-relationship-row[data-relation-index]');
       if(row)return;
       if(lockedState)return;
+      // A chord can lose its hit target as the pointer leaves the SVG, so
+      // interactive(event) may be null on pointerout. Clear transient hover
+      // from the wheel boundary, not only from a surviving child target.
+      const wheel=event.target.closest?.('#skyFoundationWheelMount .sky-foundation-wheel');
+      if(wheel&&!wheel.contains(event.relatedTarget)){
+        if(hoverState||rowHoverState){hoverState=null;rowHoverState=null;applyState()}
+        return;
+      }
       const node=interactive(event);if(!node||node.contains(event.relatedTarget))return;hoverState=null;applyState()
     });
     root.addEventListener('focusin',event=>{
