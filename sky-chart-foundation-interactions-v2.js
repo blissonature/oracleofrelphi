@@ -811,6 +811,8 @@
     // Commit mouse selection on pointerup, before that click can disappear.
     document.addEventListener('pointerup',event=>{
       if(event.pointerType!=='mouse'||event.button!==0)return;
+      // A fresh mouse gesture supersedes any unconsumed native-click marker.
+      lastMousePointerSelection=null;
       const target=event.target;
       const onWheel=target.closest?.('#skyFoundationWheelMount .sky-foundation-wheel');
       const onLedger=target.closest?.('#skyFoundationA .sky-foundation-row[data-interactive="placement"],#skyFoundationB .sky-foundation-row[data-interactive="placement"]');
@@ -906,9 +908,12 @@
       if(!node)return;
       event.preventDefault();
       event.stopImmediatePropagation();
+      // Pointerup already committed the wheel gesture. After focus changes,
+      // the browser's native click can land on a DIFFERENT painted chord at
+      // the same pixel: suppress this duplicate event by gesture, not by
+      // identity of the newly hit line.
       const duplicate=event.detail>0&&lastMousePointerSelection&&
-        performance.now()-lastMousePointerSelection.at<750&&
-        same(lastMousePointerSelection.spec,specFrom(node));
+        performance.now()-lastMousePointerSelection.at<750;
       lastMousePointerSelection=null;
       if(!duplicate)toggleInteractiveNode(node);
     },true);
