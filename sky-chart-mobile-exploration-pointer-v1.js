@@ -22,8 +22,21 @@
   const el=wheel();
   return el?.getBoundingClientRect()||null;
  }
+ // Dock and constrain the grip to the portion of the SVG actually on screen.
+ // A scrollable or oversized wheel must never park the cursor offscreen.
+ function visibleWheelBox(){
+  const svgBox=wheelBox();
+  const hostBox=document.getElementById('skyFoundationWheelMount')?.getBoundingClientRect();
+  const panelBox=mount?.getBoundingClientRect();
+  if(!svgBox||!panelBox)return svgBox;
+  const left=Math.max(svgBox.left,hostBox?.left??svgBox.left,panelBox.left);
+  const right=Math.min(svgBox.right,hostBox?.right??svgBox.right,panelBox.right);
+  const top=Math.max(svgBox.top,hostBox?.top??svgBox.top,panelBox.top);
+  const bottom=Math.min(svgBox.bottom,hostBox?.bottom??svgBox.bottom,panelBox.bottom);
+  return right-left>10&&bottom-top>10?{left,right,top,bottom}:svgBox;
+ }
  function withinWheel(x,y){
-  const box=wheelBox(),host=mount?.getBoundingClientRect();
+  const box=visibleWheelBox(),host=mount?.getBoundingClientRect();
   if(!box||!host)return null;
   // Keep the arrow's tip inside the actual SVG, independent of phone zoom.
   return {
@@ -109,7 +122,7 @@
  }
  function resetPosition(){
   if(!mount||drag)return;
-  const box=wheelBox(),host=mount.getBoundingClientRect();
+  const box=visibleWheelBox(),host=mount.getBoundingClientRect();
   if(!box)return;
   if(!tip){
    // Park in the wheel's upper-right corner with enough room for the

@@ -811,6 +811,8 @@
     // Commit mouse selection on pointerup, before that click can disappear.
     document.addEventListener('pointerup',event=>{
       if(event.pointerType!=='mouse'||event.button!==0)return;
+      // A fresh mouse gesture supersedes any unconsumed native-click marker.
+      lastMousePointerSelection=null;
       const target=event.target;
       const onWheel=target.closest?.('#skyFoundationWheelMount .sky-foundation-wheel');
       const onLedger=target.closest?.('#skyFoundationA .sky-foundation-row[data-interactive="placement"],#skyFoundationB .sky-foundation-row[data-interactive="placement"]');
@@ -873,6 +875,14 @@
       const row=event.target.closest?.('.sky-foundation-relationship-row[data-relation-index]');
       if(row)return;
       if(lockedState)return;
+      // A chord can lose its hit target as the pointer leaves the SVG, so
+      // interactive(event) may be null on pointerout. Clear transient hover
+      // from the wheel boundary, not only from a surviving child target.
+      const wheel=event.target.closest?.('#skyFoundationWheelMount .sky-foundation-wheel');
+      if(wheel&&!wheel.contains(event.relatedTarget)){
+        if(hoverState||rowHoverState){hoverState=null;rowHoverState=null;applyState()}
+        return;
+      }
       const node=interactive(event);if(!node||node.contains(event.relatedTarget))return;hoverState=null;applyState()
     });
     root.addEventListener('focusin',event=>{
@@ -889,6 +899,13 @@
     // bubbling handlers must not interpret this same click as a hover reset.
     root.addEventListener('click',event=>{
       if(event.defaultPrevented||performance.now()<ignoreNativeClickUntil)return;
+      // Pointerup already committed this physical gesture. A subsequent native
+      // click may be retargeted to a different line, the mount, or the root
+      // after focus redraw; never interpret it as a second action.
+      const duplicate=event.detail>0&&lastMousePointerSelection&&
+        performance.now()-lastMousePointerSelection.at<750;
+      lastMousePointerSelection=null;
+      if(duplicate){event.preventDefault();event.stopImmediatePropagation();return}
       // Both SVG placements and Sky A/B placement ledger rows are selection surfaces.
       // Previously capture ownership covered only the SVG wheel; ledger clicks
       // could be consumed by other handlers and leave a hover-only highlight.
@@ -906,11 +923,7 @@
       if(!node)return;
       event.preventDefault();
       event.stopImmediatePropagation();
-      const duplicate=event.detail>0&&lastMousePointerSelection&&
-        performance.now()-lastMousePointerSelection.at<750&&
-        same(lastMousePointerSelection.spec,specFrom(node));
-      lastMousePointerSelection=null;
-      if(!duplicate)toggleInteractiveNode(node);
+      toggleInteractiveNode(node);
     },true);
     root.addEventListener('click',event=>{
       wheelOnlyExternal=false;

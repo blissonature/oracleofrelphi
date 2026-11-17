@@ -46,8 +46,8 @@ try{
       !!document.querySelector('#skyFoundationA .sky-foundation-row[data-interactive="placement"][data-placement="venus"]')&&
       !!document.querySelector('#skyFoundationB .sky-foundation-row[data-interactive="placement"][data-placement="venus"]');
   },null,{timeout:25000});
-  // On phones keep the canonical circle and collision geometry, but present
-  // the SAME wheel at a readable physical size inside a native scroll viewport.
+  // Mobile comparison enlarges only the canonical placement bubbles;
+  // the wheel itself retains the same fitted layout and aspect geometry.
   const zoom=await page.evaluate(()=>{
     const mount=document.getElementById('skyFoundationWheelMount');
     const wheel=mount?.querySelector(':scope > svg.sky-foundation-wheel');
@@ -58,21 +58,17 @@ try{
       physicalBubbleWidth:bubble?.getBoundingClientRect().width,
       bubbleRadius:Number(bubble?.getAttribute('r')),ledgerWidth:ledger?.getBoundingClientRect().width};
   });
-  assert.equal(zoom.bubbleRadius,18.5,'Canonical bubble radius is unchanged on both viewports');
+  assert.equal(zoom.bubbleRadius,mobile?27.75:18.5,'Canonical placement bubble radius follows comparison-only mobile scale');
   assert.equal(zoom.ledgerWidth,23,'Placement row glyph size is unchanged');
   if(mobile){
-    assert.ok(zoom.wheelWidth>=719,'The single mobile wheel is magnified to at least 720px');
-    assert.ok(zoom.scrollWidth>=720,'Mobile wheel exposes its entire 720px visual width');
-    assert.ok(zoom.wheelLeft>=zoom.mountLeft,'Enlarged wheel must not be clipped off the left side');
-    assert.ok(zoom.physicalBubbleWidth>=21,'Comparison placement bubble is legible at physical pixel size');
-    const mount=page.locator('#skyFoundationWheelMount');
-    await mount.evaluate(node=>{node.scrollLeft=(node.scrollWidth-node.clientWidth)/2});
-    const scrolled=await mount.evaluate(node=>node.scrollLeft);
-    assert.ok(scrolled>50,'Comparison wheel exposes its middle by native horizontal scroll');
+    assert.ok(zoom.wheelWidth<=zoom.client+2,'Mobile comparison wheel must fit without a 720px zoom');
+    assert.ok(zoom.scrollWidth<=zoom.client+2,'Mobile comparison wheel must not require horizontal scrolling');
+    assert.ok(zoom.wheelLeft>=zoom.mountLeft-2,'Fitted wheel must remain in its original mount');
+    assert.ok(zoom.physicalBubbleWidth>=14,'Enlarged placement bubbles must remain legible');
   }else{
     assert.ok(zoom.scrollWidth<=zoom.client+2,'Desktop wheel has no new horizontal overflow');
   }
-  console.log('PASS comparison wheel physical glyph size and scroll',width,JSON.stringify(zoom));
+  console.log('PASS fitted comparison wheel and placement bubble size',width,JSON.stringify(zoom));
   const wheelState=()=>page.evaluate(()=>{
     const wheel=document.querySelector('#skyFoundationWheelMount > .sky-foundation-wheel');
     const selection=window.RelphiSkyFoundationInteractions?.captureFocus?.().lockedState||null;

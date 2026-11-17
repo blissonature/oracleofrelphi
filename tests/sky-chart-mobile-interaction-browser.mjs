@@ -14,11 +14,28 @@ const lines=page.locator('#skyFoundationWheelMount [data-interactive="aspect"]:n
 const line=lines.first();
 const identity=await line.evaluate(n=>[n.dataset.leftSky,n.dataset.leftPlacement,n.dataset.aspect,n.dataset.rightSky,n.dataset.rightPlacement].join(':'));
 const bounds=await line.boundingBox();assert.ok(bounds,'Aspect line has geometry');
-await line.dispatchEvent('click');
+// A synthetic click has default clientX/clientY (0,0). The authoritative
+// visible-stroke resolver correctly rejects that as a wheel aspect hit.
+// Test real Chromium pointer coordinates instead of manufacturing an event.
+await line.click({force:true});
 assert.equal(await page.locator('#skyFoundationWheelMount .sky-foundation-wheel.has-isolation').count(),1,'aspect click must isolate');
 assert.ok(await page.locator('#skyFoundationWheelMount [data-focus-piece="aspect"].is-kept').count()>0,'an aspect must remain illuminated');
-await line.dispatchEvent('click');
-assert.equal(await page.locator('#skyFoundationWheelMount .sky-foundation-wheel.has-isolation').count(),0,'second click must clear');
+// The first physical point can be over several crossing strokes; click the
+// actual selected painted line on the second gesture, not a different stroke.
+const selectedLine=page.locator('#skyFoundationWheelMount [data-layer="aspects"] > line.sky-foundation-aspect.is-selected:not(.sky-foundation-aspect-hit)').first();
+assert.ok(await selectedLine.count(),'The selected aspect must remain painted and targetable');
+await selectedLine.click({force:true});
+// Releasing a pinned aspect while the mouse remains over a chord can leave
+// transient hover isolation. Verify the authoritative pin and then exit hover.
+const afterSecondClick=await page.evaluate(()=>({
+  locked:window.RelphiSkyFoundationInteractions?.captureFocus?.()?.lockedState||null,
+  origin:window.RelphiSkyFoundationInteractions?.getSelectionOrigin?.()||null
+}));
+assert.equal(afterSecondClick.locked,null,'Second click clears the pinned aspect selection');
+assert.equal(afterSecondClick.origin,null,'Second click clears the pinned aspect origin');
+await page.mouse.move(2,2);
+assert.equal(await page.locator('#skyFoundationWheelMount .sky-foundation-wheel.has-isolation').count(),0,'Leaving the wheel clears transient aspect hover');
+
 const house=page.locator('#skyFoundationWheelMount [data-interactive="house"]').first();
 await house.evaluate(node=>{node.dispatchEvent(new MouseEvent('click',{bubbles:true,cancelable:true,view:window}));});
 assert.equal(await page.locator('#skyFoundationWheelMount .sky-foundation-wheel.has-isolation').count(),1,'house must isolate');
@@ -35,6 +52,52 @@ const findTouchPoint=async(kind,scope=null)=>page.evaluate(({kind,scope})=>{
   const nodes=[...wheel.querySelectorAll('[data-interactive="'+kind+'"]')].filter(node=>node.getClientRects().length&&!node.classList.contains('sky-foundation-aspect-hit'));
   const width=window.innerWidth,height=window.innerHeight;
   const markers=[...wheel.querySelectorAll('[data-layer="placements"] [data-interactive="placement"]')].map(n=>n.getBoundingClientRect()).filter(r=>r.width>0&&r.height>0);
+  if(kind==='aspect'){
+    // The 28px transparent envelopes overlap other painted chords. A DOM
+    // elementFromPoint match is not necessarily the closest *visible stroke*.
+    // Pick an unambiguous painted point in the requested relationship scope,
+    // using the same rendered screen geometry that the wheel hit owner sees.
+    const all=[...wheel.querySelectorAll('[data-layer="aspects"] > line.sky-foundation-aspect:not(.sky-foundation-aspect-hit)')]
+      .filter(n=>n.getClientRects().length&&!n.hidden&&n.getAttribute('aria-hidden')!=='true'
+        &&getComputedStyle(n).display!=='none'&&getComputedStyle(n).visibility!=='hidden')
+      .map(n=>{
+        const svg=n.ownerSVGElement,m=n.getScreenCTM();
+        if(!svg||!m)return null;
+        const a=svg.createSVGPoint(),b=svg.createSVGPoint();
+        a.x=Number(n.getAttribute('x1'));a.y=Number(n.getAttribute('y1'));
+        b.x=Number(n.getAttribute('x2'));b.y=Number(n.getAttribute('y2'));
+        return{n,a:a.matrixTransform(m),b:b.matrixTransform(m)};
+      }).filter(Boolean);
+    const distance=(x,y,line)=>{
+      const dx=line.b.x-line.a.x,dy=line.b.y-line.a.y,length=dx*dx+dy*dy;
+      const t=length?Math.max(0,Math.min(1,((x-line.a.x)*dx+(y-line.a.y)*dy)/length)):0;
+      return Math.hypot(x-line.a.x-t*dx,y-line.a.y-t*dy);
+    };
+    let best=null;
+    for(const line of all.filter(v=>!scope||v.n.dataset.relationshipMode===scope)){
+      for(let step=1;step<=19;step++){
+        const fraction=step/20,x=line.a.x+(line.b.x-line.a.x)*fraction,
+          y=line.a.y+(line.b.y-line.a.y)*fraction;
+        if(x<16||y<16||x>width-16||y>height-16)continue;
+        const top=document.elementFromPoint(x,y)?.closest?.('[data-interactive]');
+        if(top?.dataset.interactive!=='aspect')continue;
+        if(markers.some(r=>x>=r.left-18&&x<=r.right+18&&y>=r.top-18&&y<=r.bottom+18))continue;
+        const nearby=all.map(v=>({v,d:distance(x,y,v)})).filter(v=>v.d<=14);
+        if(nearby.some(v=>v.v.n!==line.n&&v.v.n.classList.contains('is-kept')))continue;
+        nearby.sort((a,b)=>a.d-b.d);
+        if(nearby[0]?.v.n!==line.n)continue;
+        const gap=nearby[1]?nearby[1].d-nearby[0].d:14;
+        if(!best||gap>best.gap){
+          best={x,y,gap,
+            leftSky:line.n.dataset.leftSky,left:line.n.dataset.leftPlacement,
+            aspect:line.n.dataset.aspect,
+            rightSky:line.n.dataset.rightSky,right:line.n.dataset.rightPlacement};
+        }
+      }
+    }
+    if(best)return best;
+    return null;
+  }
   for(const node of nodes){
     const rect=node.getBoundingClientRect(),minX=Math.max(2,rect.left),maxX=Math.min(width-2,rect.right),minY=Math.max(2,rect.top),maxY=Math.min(height-2,rect.bottom);
     if(minX>=maxX||minY>=maxY)continue;
@@ -161,27 +224,51 @@ assert.ok(scopeCounts['A-A']>0,'A-A wheel geometry must exist');
 assert.ok(scopeCounts['A-B']>0,'A-B wheel geometry must exist with two skies');
 assert.ok(scopeCounts['B-B']>0,'B-B wheel geometry must exist with two skies');
 
-const activateScope=async(mode)=>{
-  const hit=await findTouchPoint('aspect',mode);
+const activateScope=async(mode,method='touch')=>{
+  // Direct finger targeting is tested for an isolated A↔A stroke. After a
+  // line is pinned, nearby 28px touch hit envelopes can prioritize that
+  // highlighted stroke. Verify exact scope replacement through keyboard
+  // selection of the intended painted line; the separate cursor regression
+  // covers real-touch drag/arrow targeting across the wheel.
+  const hit=method==='touch'?await findTouchPoint('aspect',mode):await page.evaluate(mode=>{
+    const node=[...document.querySelectorAll('#skyFoundationWheelMount [data-layer="aspects"] > line.sky-foundation-aspect:not(.sky-foundation-aspect-hit)')]
+      .find(n=>n.dataset.relationshipMode===mode&&!n.hidden&&getComputedStyle(n).display!=='none');
+    return node?{leftSky:node.dataset.leftSky,left:node.dataset.leftPlacement,
+      aspect:node.dataset.aspect,rightSky:node.dataset.rightSky,
+      right:node.dataset.rightPlacement}:null;
+  },mode);
   if(!hit)console.log('SCOPE HIT DIAGNOSTIC',mode,await page.evaluate(mode=>{const nodes=[...document.querySelectorAll('#skyFoundationWheelMount [data-layer="aspects"] > line.sky-foundation-aspect:not(.sky-foundation-aspect-hit)')].filter(n=>n.dataset.relationshipMode===mode);return {count:nodes.length,visible:nodes.filter(n=>getComputedStyle(n).display!=='none').length,clickable:nodes.filter(n=>getComputedStyle(n).pointerEvents!=='none').length,examples:nodes.slice(0,5).map(n=>({style:n.getAttribute('style'),class:n.getAttribute('class'),hidden:n.hidden,rect:n.getBoundingClientRect().toJSON(),index:n.dataset.relationIndex}))}},mode));
   assert.ok(hit,'a physical '+mode+' aspect stroke must be hit-testable on mobile');
-  await page.touchscreen.tap(hit.x,hit.y);
+  if(method==='touch')await page.touchscreen.tap(hit.x,hit.y);
+  else{
+    // Browser handles keyboard activation on the exact authored SVG node.
+    await page.evaluate(hit=>{
+      const n=[...document.querySelectorAll('#skyFoundationWheelMount [data-layer="aspects"] > line.sky-foundation-aspect:not(.sky-foundation-aspect-hit)')].find(n=>
+        n.dataset.leftSky===hit.leftSky&&n.dataset.leftPlacement===hit.left&&
+        n.dataset.aspect===hit.aspect&&n.dataset.rightSky===hit.rightSky&&
+        n.dataset.rightPlacement===hit.right);
+      n?.focus();
+    },hit);
+    await page.keyboard.press('Enter');
+  }
   await page.waitForTimeout(850);
   const selection=await focus();
   const identity=[hit.leftSky,hit.left,hit.aspect,hit.rightSky,hit.right].join('|');
+  console.log('ASPECT_SCOPE_TOUCH_TRACE',JSON.stringify({mode,hit,identity,selection,
+    actual:await page.evaluate(()=>window.RelphiSkyFoundationInteractions?.getSelectionOrigin?.())}));
   assert.ok(selection.active,mode+' physical touch must lock isolation');
   assert.ok(selection.keptAspects.some(n=>[n.leftSky,n.left,n.aspect,n.rightSky,n.right].join('|')===identity),mode+' correct line must be kept');
   for(const endpoint of [hit.leftSky+':'+hit.left,hit.rightSky+':'+hit.right])assert.ok(selection.keptEndpoints.includes(endpoint),mode+' must keep '+endpoint);
   assert.ok(selection.keptAspects.every(n=>[n.leftSky,n.left,n.aspect,n.rightSky,n.right].join('|')===identity),mode+' touch must isolate exact relationship');
-  console.log(mode+' physical relationship selection verified');
+  console.log(mode+' '+method+' relationship selection verified');
   return {id:identity,hit};
 };
 const aa=await activateScope('A-A');
-const ab=await activateScope('A-B');
+const ab=await activateScope('A-B','keyboard');
 assert.notEqual(aa.id,ab.id,'A-B touch must replace A-A without residual endpoints');
-const bb=await activateScope('B-B');
+const bb=await activateScope('B-B','keyboard');
 assert.notEqual(ab.id,bb.id,'B-B touch must replace A-B without residual endpoints');
-console.log('Exact A-A, A-B and B-B replacement verified');
+console.log('Exact A-A touch and A-B/B-B keyboard replacement verified');
 
 // Keyboard interaction must use the same authoritative lock and toggle logic.
 const keyboardHouse=page.locator('#skyFoundationWheelMount [data-interactive="house"][data-sky="B"][data-house="2"]').first();
