@@ -58,6 +58,33 @@
       });
       await Promise.all(workers);
       for(const link of styleLinks){const replacement=replacements.get(link[0]);if(replacement)html=html.replace(link[0],replacement)}
+      // The same loader owns local JavaScript delivery. A revision is not
+      // previewable if its 100+ script tags depend on jsDelivr's GitHub package
+      // limit or if some scripts silently receive a blocked response.
+      // Fetch exact commit sources from GitHub and execute in author order.
+      const scriptTags=[...html.matchAll(/<script\\b[^>]*\\bsrc=["']([^"']+)["'][^>]*><\\/script>/gi)];
+      const scripts=new Map();
+      let scriptCursor=0;
+      const scriptWorkers=Array.from({length:Math.min(8,scriptTags.length)},async()=>{
+        while(scriptCursor<scriptTags.length){
+          const match=scriptTags[scriptCursor++],tag=match[0],path=match[1];
+          if(/^(?:https?:|data:|\\/\\/)/i.test(path))continue;
+          const target=new URL(path,rawBase);
+          let source;
+          const load=async()=>{
+            const response=await fetch(target.href,{cache:'no-store',signal:AbortSignal.timeout(15000)});
+            if(!response.ok)throw new Error('JS '+path+' returned '+response.status);
+            return response.text();
+          };
+          try{source=await load()}
+          catch(firstError){try{source=await load()}catch{throw firstError}}
+          // Inline scripts retain their original ordered parser execution.
+          source=source.replace(/<\\/script/gi,'<\\\\/script');
+          scripts.set(tag,'<script data-preview-js="'+path.replace(/"/g,'&quot;')+'">'+source+'</script>');
+        }
+      });
+      await Promise.all(scriptWorkers);
+      for(const match of scriptTags){const replacement=scripts.get(match[0]);if(replacement)html=html.replace(match[0],replacement)}
       const base=`<base href="${assetBase}">`;
       if(/<head[^>]*>/i.test(html))html=html.replace(/<head([^>]*)>/i,`<head$1>${base}`);
       else html=base+html;
