@@ -61,18 +61,14 @@ try{
     assert.equal(editing.pattern,'[1-9][0-9]*');
     assert.equal(editing.placeholders,'','Editing field is visually blank');
     const during=await input.boundingBox();
-    console.log('LIMIT_FIELD_GEOMETRY',JSON.stringify({width,before,during,
-      control:await control.evaluate(node=>{
-        const r=node.getBoundingClientRect(),select=node.querySelector('select'),input=node.querySelector('input');
-        return{r:r.toJSON(),labelStyle:getComputedStyle(node).cssText,
-          selectStyle:{display:getComputedStyle(select).display,width:getComputedStyle(select).width},
-          inputStyle:{display:getComputedStyle(input).display,width:getComputedStyle(input).width},
-          parent:r.parentElement?.tagName};
-      })}));
-    assert.ok(Math.abs(before.x-during.x)<1&&Math.abs(before.y-during.y)<1&&
-      Math.abs(before.width-during.width)<1,
-      'Custom editing reuses the same physical field, not an adjacent input');
-
+    // Autofocus may scroll the page to bring the field into view.
+    // Compare both controls to their shared slot in the CURRENT viewport,
+    // rather than comparing old and new screen Y across page scroll.
+    const slot=await control.boundingBox();
+    assert.ok(Math.abs(before.width-during.width)<1
+      &&Math.abs(slot.x-during.x)<1&&Math.abs(slot.y-during.y)<1
+      &&Math.abs(slot.width-during.width)<1,
+      'Custom input occupies precisely the existing dropdown slot');
     await input.fill('-37');
     assert.equal(await input.inputValue(),'','A negative paste must be rejected, not converted to positive');
     await input.fill('4.5');
