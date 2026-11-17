@@ -61,6 +61,14 @@ try{
     assert.equal(editing.pattern,'[1-9][0-9]*');
     assert.equal(editing.placeholders,'','Editing field is visually blank');
     const during=await input.boundingBox();
+    console.log('LIMIT_FIELD_GEOMETRY',JSON.stringify({width,before,during,
+      control:await control.evaluate(node=>{
+        const r=node.getBoundingClientRect(),select=node.querySelector('select'),input=node.querySelector('input');
+        return{r:r.toJSON(),labelStyle:getComputedStyle(node).cssText,
+          selectStyle:{display:getComputedStyle(select).display,width:getComputedStyle(select).width},
+          inputStyle:{display:getComputedStyle(input).display,width:getComputedStyle(input).width},
+          parent:r.parentElement?.tagName};
+      })}));
     assert.ok(Math.abs(before.x-during.x)<1&&Math.abs(before.y-during.y)<1&&
       Math.abs(before.width-during.width)<1,
       'Custom editing reuses the same physical field, not an adjacent input');
