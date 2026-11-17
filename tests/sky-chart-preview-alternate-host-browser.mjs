@@ -4,7 +4,7 @@ const ref=process.env.PREVIEW_REF;
 assert.match(ref||'',/^[0-9a-f]{40}$/);
 const hosts=[
   ['githack',`https://raw.githack.com/blissonature/oracleofrelphi/${ref}/sky-chart-preview/sky-chart.html?ref=${ref}`],
-  ['statically',`https://cdn.statically.io/gh/blissonature/oracleofrelphi@${ref}/sky-chart.html`]
+  ['statically',`https://cdn.statically.io/gh/blissonature/oracleofrelphi@${ref}/sky-chart-preview/sky-chart.html?ref=${ref}`]
 ];
 const instant='1985-10-08T08:37:00Z';
 const positions={Sun:195,Moon:118.42,Mercury:206.17,Venus:169.8833,Mars:167.8667,Jupiter:307.15,Saturn:235.57,Uranus:254.85,Neptune:271.02,Pluto:213.88,Ascendant:168.38,Midheaven:76.28};
