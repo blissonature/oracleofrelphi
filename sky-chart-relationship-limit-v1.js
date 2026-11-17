@@ -139,22 +139,24 @@ function ensureControl(){
       if(select.value==='custom'){
         editingCustom=true;
         input.value='';
+        acceptedDraft='';
         syncControl();
         requestAnimationFrame(()=>{if(editingCustom&&input.isConnected)input.focus()});
         return;
       }
       setLimit(select.value);
     });
+    let acceptedDraft='';
     input.addEventListener('input',()=>{
-      // A text input with a numeric keyboard avoids accepting the "e", "-",
-      // and decimal characters allowed by native input[type=number].
-      const clean=input.value.replace(/[^0-9]/g,'').replace(/^0+/, '');
-      if(input.value!==clean){
-        const caret=input.selectionStart??input.value.length;
-        const cleanBefore=input.value.slice(0,caret).replace(/[^0-9]/g,'').replace(/^0+/,'');
-        input.value=clean;
-        input.setSelectionRange(cleanBefore.length,cleanBefore.length);
+      // Reject—not reinterpret—negative signs, decimals, exponent notation,
+      // zero, and unsafe integers. This also handles pastes and mobile input.
+      const raw=input.value;
+      if(raw===''||(/^[1-9][0-9]*$/.test(raw)&&Number.isSafeInteger(Number(raw)))){
+        acceptedDraft=raw;
+        return;
       }
+      input.value=acceptedDraft;
+      input.setSelectionRange(acceptedDraft.length,acceptedDraft.length);
     });
     input.addEventListener('blur',commit);
     input.addEventListener('keydown',event=>{
