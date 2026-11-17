@@ -891,6 +891,13 @@
     // bubbling handlers must not interpret this same click as a hover reset.
     root.addEventListener('click',event=>{
       if(event.defaultPrevented||performance.now()<ignoreNativeClickUntil)return;
+      // Pointerup already committed this physical gesture. A subsequent native
+      // click may be retargeted to a different line, the mount, or the root
+      // after focus redraw; never interpret it as a second action.
+      const duplicate=event.detail>0&&lastMousePointerSelection&&
+        performance.now()-lastMousePointerSelection.at<750;
+      lastMousePointerSelection=null;
+      if(duplicate){event.preventDefault();event.stopImmediatePropagation();return}
       // Both SVG placements and Sky A/B placement ledger rows are selection surfaces.
       // Previously capture ownership covered only the SVG wheel; ledger clicks
       // could be consumed by other handlers and leave a hover-only highlight.
@@ -908,14 +915,7 @@
       if(!node)return;
       event.preventDefault();
       event.stopImmediatePropagation();
-      // Pointerup already committed the wheel gesture. After focus changes,
-      // the browser's native click can land on a DIFFERENT painted chord at
-      // the same pixel: suppress this duplicate event by gesture, not by
-      // identity of the newly hit line.
-      const duplicate=event.detail>0&&lastMousePointerSelection&&
-        performance.now()-lastMousePointerSelection.at<750;
-      lastMousePointerSelection=null;
-      if(!duplicate)toggleInteractiveNode(node);
+      toggleInteractiveNode(node);
     },true);
     root.addEventListener('click',event=>{
       wheelOnlyExternal=false;
