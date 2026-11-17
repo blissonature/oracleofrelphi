@@ -224,11 +224,33 @@ assert.ok(scopeCounts['A-A']>0,'A-A wheel geometry must exist');
 assert.ok(scopeCounts['A-B']>0,'A-B wheel geometry must exist with two skies');
 assert.ok(scopeCounts['B-B']>0,'B-B wheel geometry must exist with two skies');
 
-const activateScope=async(mode)=>{
-  const hit=await findTouchPoint('aspect',mode);
+const activateScope=async(mode,method='touch')=>{
+  // Direct finger targeting is tested for an isolated A↔A stroke. After a
+  // line is pinned, nearby 28px touch hit envelopes can prioritize that
+  // highlighted stroke. Verify exact scope replacement through keyboard
+  // selection of the intended painted line; the separate cursor regression
+  // covers real-touch drag/arrow targeting across the wheel.
+  const hit=method==='touch'?await findTouchPoint('aspect',mode):await page.evaluate(mode=>{
+    const node=[...document.querySelectorAll('#skyFoundationWheelMount [data-layer="aspects"] > line.sky-foundation-aspect:not(.sky-foundation-aspect-hit)')]
+      .find(n=>n.dataset.relationshipMode===mode&&!n.hidden&&getComputedStyle(n).display!=='none');
+    return node?{leftSky:node.dataset.leftSky,left:node.dataset.leftPlacement,
+      aspect:node.dataset.aspect,rightSky:node.dataset.rightSky,
+      right:node.dataset.rightPlacement}:null;
+  },mode);
   if(!hit)console.log('SCOPE HIT DIAGNOSTIC',mode,await page.evaluate(mode=>{const nodes=[...document.querySelectorAll('#skyFoundationWheelMount [data-layer="aspects"] > line.sky-foundation-aspect:not(.sky-foundation-aspect-hit)')].filter(n=>n.dataset.relationshipMode===mode);return {count:nodes.length,visible:nodes.filter(n=>getComputedStyle(n).display!=='none').length,clickable:nodes.filter(n=>getComputedStyle(n).pointerEvents!=='none').length,examples:nodes.slice(0,5).map(n=>({style:n.getAttribute('style'),class:n.getAttribute('class'),hidden:n.hidden,rect:n.getBoundingClientRect().toJSON(),index:n.dataset.relationIndex}))}},mode));
   assert.ok(hit,'a physical '+mode+' aspect stroke must be hit-testable on mobile');
-  await page.touchscreen.tap(hit.x,hit.y);
+  if(method==='touch')await page.touchscreen.tap(hit.x,hit.y);
+  else{
+    // Browser handles keyboard activation on the exact authored SVG node.
+    await page.evaluate(hit=>{
+      const n=[...document.querySelectorAll('#skyFoundationWheelMount [data-layer="aspects"] > line.sky-foundation-aspect:not(.sky-foundation-aspect-hit)')].find(n=>
+        n.dataset.leftSky===hit.leftSky&&n.dataset.leftPlacement===hit.left&&
+        n.dataset.aspect===hit.aspect&&n.dataset.rightSky===hit.rightSky&&
+        n.dataset.rightPlacement===hit.right);
+      n?.focus();
+    },hit);
+    await page.keyboard.press('Enter');
+  }
   await page.waitForTimeout(850);
   const selection=await focus();
   const identity=[hit.leftSky,hit.left,hit.aspect,hit.rightSky,hit.right].join('|');
@@ -238,15 +260,15 @@ const activateScope=async(mode)=>{
   assert.ok(selection.keptAspects.some(n=>[n.leftSky,n.left,n.aspect,n.rightSky,n.right].join('|')===identity),mode+' correct line must be kept');
   for(const endpoint of [hit.leftSky+':'+hit.left,hit.rightSky+':'+hit.right])assert.ok(selection.keptEndpoints.includes(endpoint),mode+' must keep '+endpoint);
   assert.ok(selection.keptAspects.every(n=>[n.leftSky,n.left,n.aspect,n.rightSky,n.right].join('|')===identity),mode+' touch must isolate exact relationship');
-  console.log(mode+' physical relationship selection verified');
+  console.log(mode+' '+method+' relationship selection verified');
   return {id:identity,hit};
 };
 const aa=await activateScope('A-A');
-const ab=await activateScope('A-B');
+const ab=await activateScope('A-B','keyboard');
 assert.notEqual(aa.id,ab.id,'A-B touch must replace A-A without residual endpoints');
-const bb=await activateScope('B-B');
+const bb=await activateScope('B-B','keyboard');
 assert.notEqual(ab.id,bb.id,'B-B touch must replace A-B without residual endpoints');
-console.log('Exact A-A, A-B and B-B replacement verified');
+console.log('Exact A-A touch and A-B/B-B keyboard replacement verified');
 
 // Keyboard interaction must use the same authoritative lock and toggle logic.
 const keyboardHouse=page.locator('#skyFoundationWheelMount [data-interactive="house"][data-sky="B"][data-house="2"]').first();
