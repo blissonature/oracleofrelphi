@@ -3,6 +3,8 @@ on:
   pull_request:
     paths:
       - 'sky-chart-preview/sky-chart.html'
+      - 'tests/sky-chart-preview-loader-contract.mjs'
+      - 'sky-chart-foundation-v1.css'
       - 'sky-chart.html'
       - 'sky-chart-foundation-interactions-v2.js'
       - 'sky-chart-where-when-v3.js'
@@ -20,6 +22,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - name: Verify exact-revision preview loader dependency graph
+        run: node tests/sky-chart-preview-loader-contract.mjs
       - name: Install Playwright
         run: |
           npm install --no-save playwright@1.52.0
