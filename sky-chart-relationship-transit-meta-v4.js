@@ -149,9 +149,21 @@ function modelFor(row){
     const date=new Date(ep.date.getTime()+(ms-center)),value=ephemerisLongitude(ep.id,date,ep.sky);
     return Number.isFinite(value)?norm(ep.record.value+wrap(value-baseline)):NaN;
   };
+  // The relationship engine owns the aspect error at the chart moment. Its six-decimal
+  // phase is also what the Harmonic Window filter uses on rendered rows. Anchor the
+  // timing curve to that same center error while deriving movement from the ephemeris.
+  // Otherwise sub-arcsecond differences between row and saved placement precision can
+  // classify a visible boundary aspect as outside the window.
+  const centerError=signedAspectError(left.record.value,right.record.value,angle);
+  const listedPhaseRaw=String(row.dataset.phaseError??'').trim();
+  const listedPhase=listedPhaseRaw!==''?Number(listedPhaseRaw):NaN;
+  const harmonic=Number(row.dataset.harmonicOrder||window.RelphiHarmonicOrb?.byId?.(aspect)?.harmonic||1);
+  const listedError=Number.isFinite(listedPhase)&&Number.isFinite(harmonic)&&harmonic>0
+    ?Math.sign(centerError||1)*listedPhase/harmonic:centerError;
+  const centerCorrection=wrap(listedError-centerError);
   const signedErrorAt=ms=>{
     const a=valueAt(left,ms),b=valueAt(right,ms);
-    return Number.isFinite(a)&&Number.isFinite(b)?signedAspectError(a,b,angle):NaN;
+    return Number.isFinite(a)&&Number.isFinite(b)?wrap(signedAspectError(a,b,angle)+centerCorrection):NaN;
   };
   const errorAt=ms=>Math.abs(signedErrorAt(ms));
   return{kind:'dynamic',left,right,liveEndpoints:movingEndpoints,movingEndpoints,timingConvention,angle,limit,center,valueAt,signedErrorAt,errorAt,timedIntrasky};

@@ -36,6 +36,11 @@ try{
     mountVisible:mount?getComputedStyle(mount).visibility:null,
     wheelCount:mount?.querySelectorAll('.sky-foundation-wheel').length??0,
     wheelOuter:wheel?.outerHTML.slice(0,240)??null,
+    blobScriptCount:document.querySelectorAll('script[data-preview-js][src^="blob:"]').length,
+    placementCount:document.querySelectorAll('#skyFoundationA .sky-foundation-row[data-placement]').length,
+    relationshipCount:document.querySelectorAll('#skyFoundationRelationshipList .sky-foundation-relationship-row').length,
+    whereTab:!!document.querySelector('#skyFoundationB [data-sky-drawer-tab="where"]'),
+    foundationCount:document.querySelectorAll('#skyFoundationA,#skyFoundationB,#skyFoundationRelationships,#skyFoundationComparison').length,
     status:document.getElementById('previewStatus')?.textContent?.slice(0,250)??null,
     styles:[...document.styleSheets].length,scripts:document.scripts.length,
     text:document.body?.innerText?.slice(0,300)
@@ -44,6 +49,12 @@ try{
    await page.screenshot({path:`sky-remote-${kind}.png`,fullPage:true});
    if(kind==='preview'&&(!state.wheelCount||state.mountVisible==='hidden'||state.rootBusy!=='false'||errors.length)){failed=true;console.error('FAILED: hosted exact-revision preview did not display a ready wheel');}
    if(kind==='preview'&&!failed){
+     assert.ok(state.blobScriptCount>=100,'Hosted endpoint uses the corrected ordered Blob loader');
+     assert.equal(state.foundationCount,4,'All four foundation sections are mounted');
+     assert.ok(state.placementCount>=10,'Sky A placement rows are rendered');
+     assert.ok(state.relationshipCount>=1,'Relationships list is rendered');
+     assert.equal(state.whereTab,true,'Where and When editor is available');
+     console.log('PASS preview wheel, placements, relationships and Where and When');
      await page.locator('#skyFoundationB [data-sky-drawer-tab="where"]').click();
      await page.waitForSelector('#skyFoundationB .sky-where-when-editor [data-ww-action="refresh-now"]',{timeout:15000});
      await page.waitForSelector('#skyFoundationB [data-draft-heptagram-ready="true"] .sky-where-when-draft-heptagram',{timeout:20000});

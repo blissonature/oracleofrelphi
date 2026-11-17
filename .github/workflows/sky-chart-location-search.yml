@@ -1,0 +1,32 @@
+name: Sky Chart location search acceptance
+on:
+  pull_request:
+    paths:
+      - 'sky-chart-where-when-v3.js'
+      - 'sky-chart.html'
+      - 'sky-chart-location-search-v2.js'
+      - 'tests/sky-chart-location-search-browser.mjs'
+      - '.github/workflows/sky-chart-location-search.yml'
+jobs:
+  location-browser:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify syntax and unique source ownership
+        run: |
+          node --check sky-chart-where-when-v3.js
+          node --check tests/sky-chart-location-search-browser.mjs
+          if grep -q 'sky-chart-location-search-v2.js' sky-chart.html; then echo 'Duplicate search handler still installed'; exit 1; fi
+      - name: Install browser
+        run: |
+          npm install --no-save playwright@1.52.0 luxon@3 suncalc@1.9.0
+          npx playwright install --with-deps chromium
+      - name: Run desktop and mobile address-search acceptance
+        run: |
+          python3 -m http.server 4173 >/tmp/sky-search-server.log 2>&1 &
+          node tests/sky-chart-location-search-browser.mjs
+          node tests/sky-chart-location-search-live-probe.mjs

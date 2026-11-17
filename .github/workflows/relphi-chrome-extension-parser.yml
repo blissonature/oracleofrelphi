@@ -1,0 +1,28 @@
+name: Relphi Chrome extension parser
+
+on:
+  pull_request:
+    paths:
+      - 'chrome-extension/sky-from-selection/**'
+      - '.github/workflows/relphi-chrome-extension-parser.yml'
+  push:
+    paths:
+      - 'chrome-extension/sky-from-selection/**'
+      - '.github/workflows/relphi-chrome-extension-parser.yml'
+
+jobs:
+  parser-and-menu:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check extension scripts
+        run: |
+          node --check chrome-extension/sky-from-selection/parser.js
+          node --check chrome-extension/sky-from-selection/background.js
+      - name: Run parser and menu handoff tests
+        run: |
+          node chrome-extension/sky-from-selection/tests/parser.test.cjs
+          node chrome-extension/sky-from-selection/tests/background.test.cjs

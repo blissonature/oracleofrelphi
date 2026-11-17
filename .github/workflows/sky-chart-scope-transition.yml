@@ -1,0 +1,33 @@
+name: Sky Chart scope transition stability
+on:
+  pull_request:
+    paths:
+      - 'sky-chart-relationship-state-contract-v1.js'
+      - 'sky-chart-aspect-scope-matrix-v1.js'
+      - 'sky-chart-orb-control-v1.js'
+      - 'sky-chart.html'
+      - 'tests/sky-chart-scope-transition-browser.mjs'
+      - '.github/workflows/sky-chart-scope-transition.yml'
+jobs:
+  scope-browser:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify source and syntax
+        run: |
+          node --check sky-chart-relationship-state-contract-v1.js
+          node --check sky-chart-aspect-scope-matrix-v1.js
+          node --check sky-chart-orb-control-v1.js
+          node --check tests/sky-chart-scope-transition-browser.mjs
+      - name: Install Chromium
+        run: |
+          npm install --no-save playwright@1.52.0 luxon@3 suncalc@1.9.0
+          npx playwright install --with-deps chromium
+      - name: Repeated desktop/mobile intersky and intrasky transitions
+        run: |
+          python3 -m http.server 4173 >/tmp/sky-scope-http.log 2>&1 &
+          node tests/sky-chart-scope-transition-browser.mjs

@@ -1,0 +1,31 @@
+name: Sky Chart aspect line endpoint selection and hit precedence
+on:
+  pull_request:
+    paths:
+      - 'sky-chart-foundation-v2.js'
+      - 'sky-chart-foundation-interactions-v2.js'
+      - 'sky-chart.html'
+      - 'tests/sky-chart-aspect-endpoint-click-browser.mjs'
+      - '.github/workflows/sky-chart-aspect-endpoint-click.yml'
+jobs:
+  aspect-endpoint-browser:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 13
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check authoritative modules and test
+        run: |
+          node --check sky-chart-foundation-v2.js
+          node --check sky-chart-foundation-interactions-v2.js
+          node --check tests/sky-chart-aspect-endpoint-click-browser.mjs
+      - name: Install Chromium
+        run: |
+          npm install --no-save playwright@1.52.0 luxon@3 suncalc@1.9.0
+          npx playwright install --with-deps chromium
+      - name: Verify desktop/mobile overlapping hit targets and A-B/A-A referents
+        run: |
+          python3 -m http.server 4173 >/tmp/aspect-endpoint-http.log 2>&1 &
+          node tests/sky-chart-aspect-endpoint-click-browser.mjs

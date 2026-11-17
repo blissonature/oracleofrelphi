@@ -9,6 +9,7 @@ const payload={
   calcProfile:{instant:center.toISOString(),latitude:40.7608,longitude:-111.8910},
   placements:{
     Venus:{name:'Venus',glyphId:'venus',longitude:210.3},
+    Mars:{name:'Mars',glyphId:'mars',longitude:208.2968846},
     Chiron:{name:'Chiron',glyphId:'chiron',longitude:30.3},
     Sun:{name:'Sun',glyphId:'sun',longitude:170},
     Moon:{name:'Moon',glyphId:'moon',longitude:260},
@@ -19,13 +20,13 @@ const storage=new Map([
   ['relphiSkyChartA','null'],
   ['relphiSkyChartB',JSON.stringify(payload)]
 ]);
-const names={venus:'Venus',chiron:'Chiron',sun:'Sun',moon:'Moon','part-of-fortune':'Part of Fortune'};
+const names={venus:'Venus',mars:'Mars',chiron:'Chiron',sun:'Sun',moon:'Moon','part-of-fortune':'Part of Fortune'};
 const registry={
   resolve(id){const key=String(id||'').trim().toLowerCase();return key?{id:key,name:names[key]||key}:null},
   get(id){return this.resolve(id)}
 };
-const bodyBase={Sun:170,Venus:210.3};
-const bodySpeed={Sun:.9856,Venus:1.2};
+const bodyBase={Sun:170,Venus:210.3,Mars:208.2968846};
+const bodySpeed={Sun:.9856,Venus:1.2,Mars:.6};
 const Astronomy={
   Body:{Sun:'Sun',Moon:'Moon',Mercury:'Mercury',Venus:'Venus',Mars:'Mars',Jupiter:'Jupiter',Saturn:'Saturn',Uranus:'Uranus',Neptune:'Neptune',Pluto:'Pluto'},
   GeoVector(body,date){return{body,date:new Date(date)}},
@@ -37,7 +38,7 @@ const Astronomy={
 const documentStub={
   readyState:'loading',
   addEventListener(){},
-  querySelector(){return null},
+  querySelector(selector){return selector==='[data-harmonic-window-input]'&&context.testHarmonicWindow!=null?{value:String(context.testHarmonicWindow)}:null},
   querySelectorAll(){return[]},
   getElementById(){return null},
   createElement(){return{style:{},append(){},appendChild(){},setAttribute(){},replaceChildren(){}}},
@@ -89,4 +90,24 @@ const fortuneTiming=api.exportTimingForRow(row('part-of-fortune','sun'));
 assert.equal(fortuneTiming.kind,'dynamic',`Part of Fortune timing should be dynamic, got ${JSON.stringify(fortuneTiming)}`);
 assert.ok(Number.isFinite(fortuneTiming.startMs)&&Number.isFinite(fortuneTiming.endMs)&&fortuneTiming.endMs>fortuneTiming.startMs,'Part of Fortune should have a bounded activation window');
 
-console.log('relationship timing coverage passed for Chiron and Part of Fortune');
+// A six-decimal Harmonic Window must agree with the six-decimal phase used
+// by the relationship row. The underlying saved coordinates intentionally carry
+// another four ten-millionths of a degree beyond that rendered precision.
+context.testHarmonicWindow=2.003115;
+const boundaryRow=row('venus','mars');
+boundaryRow.dataset.aspect='conjunction';
+boundaryRow.dataset.harmonicOrder='1';
+boundaryRow.dataset.phaseError='2.003115';
+const boundaryTiming=api.exportTimingForRow(boundaryRow);
+assert.equal(boundaryTiming.kind,'dynamic',
+  'Boundary conjunction shown at 2.003115° must be timed within Harmonic Window 2.003115°');
+assert.ok(boundaryTiming.startMs<=center.getTime()&&boundaryTiming.endMs>=center.getTime(),
+  'The chart moment must fall inside the returned timing interval');
+context.testHarmonicWindow=2.003114;
+const excludedTiming=api.exportTimingForRow(boundaryRow);
+assert.equal(excludedTiming.kind,'unavailable',
+  'An actually smaller window must exclude the conjunction');
+assert.equal(excludedTiming.reason,'Outside the current Harmonic Window.',
+  'The outside-window message remains valid for genuine exclusions');
+
+console.log('relationship timing coverage passed for Chiron, Part of Fortune, and six-decimal conjunction boundaries');

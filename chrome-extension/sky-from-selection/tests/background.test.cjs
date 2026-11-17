@@ -1,0 +1,17 @@
+const assert=require('node:assert/strict');
+const vm=require('node:vm');
+const fs=require('node:fs');
+const path=require('node:path');
+const dir=path.resolve(__dirname,'..');
+const opened=[];let clickHandler;
+const chrome={contextMenus:{removeAll(callback){callback()},create(){} ,onClicked:{addListener(callback){clickHandler=callback}}},runtime:{onInstalled:{addListener(){}},onStartup:{addListener(){}},getURL:path=>'chrome-extension://test/'+path},tabs:{create({url}){opened.push(new URL(url))}},action:{onClicked:{addListener(){}}}};
+const context={chrome,URL,console,importScripts(filename){vm.runInContext(fs.readFileSync(path.join(dir,filename),'utf8'),context)}};
+vm.createContext(context);
+vm.runInContext(fs.readFileSync(path.join(dir,'background.js'),'utf8'),context);
+clickHandler({menuItemId:'relphi-open-selection',selectionText:'October 4, 1985, at approximately 8:34 p.m. E.D.T. in Massachusetts.'});
+assert.equal(opened.length,1);
+const event=JSON.parse(opened[0].searchParams.get('relphiSingle')).event;
+for(const [key,value] of Object.entries({date:'1985-10-04',time:'20:34',location:'Massachusetts',timeZoneAbbreviation:'EDT'}))assert.equal(event[key],value,key);
+assert.equal(opened[0].searchParams.has('relphiCompare'),false);
+assert.equal(opened[0].searchParams.has('relphiDraft'),false);
+console.log('PASS: selected text → context menu → Sky Chart URL handoff');

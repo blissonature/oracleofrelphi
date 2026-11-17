@@ -371,6 +371,14 @@ function start(){
   const observedList=document.getElementById('skyFoundationRelationshipList');if(observedList)new MutationObserver(records=>{if(activeMode==='vocab'&&records.some(record=>record.addedNodes?.length||record.removedNodes?.length))schedule()}).observe(observedList,{childList:true,subtree:false});
   schedule()
 }
-window.RelphiRelationshipVocab=Object.freeze({render:schedule,serialize:serializePanel,activate});
+// One canonical sign/house rail palette for Relationships and Placements.
+function railColors(signIndex,houseNumber){
+  const sign=Number(signIndex),house=Number(houseNumber);
+  return{
+    sign:Number.isInteger(sign)&&sign>=0&&sign<SIGN_COLORS.length?SIGN_COLORS[sign]:null,
+    house:Number.isInteger(house)&&house>=1&&house<=HOUSE_COLORS.length?HOUSE_COLORS[house-1]:null
+  };
+}
+window.RelphiRelationshipVocab=Object.freeze({render:schedule,serialize:serializePanel,activate,railColors});
 document.readyState==='loading'?document.addEventListener('DOMContentLoaded',start,{once:true}):start();
 })();

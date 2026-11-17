@@ -689,12 +689,25 @@ function install(){
   if(mount)new MutationObserver(records=>{
     if(arranging)return;
     const houseLayer=node=>node?.closest?.('[data-layer="a-houses"],[data-layer="b-houses"]');
-    const newElement=record=>record.type==='childList'&&Array.from(record.addedNodes||[]).some(node=>node.nodeType===1);
+    // Only placement, leader, house-division, or wheel-shell structure can
+    // affect glyph collisions. The previous any-new-SVG-element trigger also
+    // solved the entire comparison wheel whenever the independent flashlight
+    // redrew a few decorative rays, or a configuration/aspect layer changed.
+    const geometryLayers='[data-layer="placements"],[data-layer="leaders"],'+
+      '[data-layer="a-houses"],[data-layer="b-houses"]';
+    const newGeometry=record=>{
+      if(record.type!=='childList')return false;
+      const added=Array.from(record.addedNodes||[]).filter(node=>node.nodeType===1);
+      if(!added.length)return false;
+      if(record.target.closest?.(geometryLayers))return true;
+      return added.some(node=>node.matches?.('svg.sky-foundation-wheel,'+geometryLayers)||
+        node.querySelector?.(geometryLayers));
+    };
     // Re-layout when house DIVIDER GEOMETRY updates, even when the drawing
     // renderer reuses its SVG line elements and only changes coordinates.
     // Watching placement or leader attributes here would feed our own
     // transform writes back into another collision solve.
-    const needsLayout=records.some(record=>newElement(record)||
+    const needsLayout=records.some(record=>newGeometry(record)||
       (record.type==='attributes'&&record.target.matches?.('line.sky-foundation-divider')&&
        houseLayer(record.target)));
     if(needsLayout)requestAnimationFrame(arrangeCurrent);

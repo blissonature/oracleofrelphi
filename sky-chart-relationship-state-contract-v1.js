@@ -87,22 +87,15 @@
       if (rowVisible(row)) visibleRows += 1;
     });
 
+    // The Harmonic Window controller is the sole owner of rendered SVG line
+    // display/hidden/pointer state. The scope matrix supplies eligibility
+    // classes, and this contract observes the settled result for metadata and
+    // explicit-selection policy. Never reapply row-derived visibility here:
+    // repeated scope toggles otherwise race those controllers and flash lines.
     document.querySelectorAll(
-      '.sky-foundation-aspect[data-relation-index]'
+      '#skyFoundationWheelMount [data-layer="aspects"] > .sky-foundation-aspect[data-relation-index]:not(.sky-foundation-aspect-hit)'
     ).forEach(line => {
-      const visible = rowVisible(rows.get(line.dataset.relationIndex));
-      if (line.hidden === visible) line.hidden = !visible;
-      line.classList.toggle('sky-chart-relationship-filter-hidden', !visible);
-      if (line.getAttribute('aria-hidden') !== (visible ? 'false' : 'true')) line.setAttribute('aria-hidden', visible ? 'false' : 'true');
-      const display = visible ? '' : 'none';
-      const pointerEvents = visible ? '' : 'none';
-      if (line.style.getPropertyValue('display') !== display || line.style.getPropertyPriority('display') !== (visible ? '' : 'important')) {
-        line.style.setProperty('display', display, visible ? '' : 'important');
-      }
-      if (line.style.getPropertyValue('pointer-events') !== pointerEvents || line.style.getPropertyPriority('pointer-events') !== (visible ? '' : 'important')) {
-        line.style.setProperty('pointer-events', pointerEvents, visible ? '' : 'important');
-      }
-      if (visible) visibleLines += 1;
+      if (!line.hidden && getComputedStyle(line).display !== 'none') visibleLines += 1;
     });
 
     document.documentElement.dataset.skyVisibleRelationshipRows = String(visibleRows);

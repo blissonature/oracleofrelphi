@@ -63,7 +63,8 @@ try{
       return node.dataset.relationshipMode==='B-B'&&node.dataset.aspect==='opposition'&&pair.has('venus')&&pair.has('chiron');
     });
     const meta=row?.querySelector('.inline-rel-transit-window');
-    return{kind:meta?.dataset.transitKind||'',text:meta?.textContent||'',chironReady:!!window.RelphiChironEphemeris?.isReady?.()};
+    const chironLongitude=window.RelphiChironEphemeris?.longitudeAt?.(new Date('2026-09-10T18:00:00.000Z'));
+    return{kind:meta?.dataset.transitKind||'',text:meta?.textContent||'',chironReady:Number.isFinite(chironLongitude)};
   });
   assert.equal(state.kind,'dynamic',`Venus–Chiron tile should show dynamic timing: ${JSON.stringify(state)}`);
   for(const label of ['Start','Exact','End','Duration','Passes'])assert.ok(state.text.includes(label),`timing tile should include ${label}: ${state.text}`);
@@ -159,9 +160,12 @@ try{
     await page.locator('.sky-relationship-copy-button').click();
     await page.waitForFunction(()=>Boolean(window.__relphiCopiedText),null,{timeout:3000});
     const copied=await page.evaluate(()=>window.__relphiCopiedText);
+    // DOM signatures track placement/aspect order; the Copy serializer additionally
+    // annotates retrograde motion. Normalize only that annotation for the order check.
+    const copiedOrder=copied.replace(/ Rx in /g,' in ');
     let cursor=-1;
     for(const signature of signatures){
-      const next=copied.indexOf(signature,cursor+1);
+      const next=copiedOrder.indexOf(signature,cursor+1);
       assert.ok(next>=0,`${spec.label} Copy omitted or reordered row after position ${cursor}: ${signature}\n${copied}`);
       cursor=next;
     }

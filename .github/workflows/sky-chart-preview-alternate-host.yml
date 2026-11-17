@@ -1,0 +1,23 @@
+name: Sky Chart alternative commit preview
+on:
+  pull_request:
+    paths:
+      - 'sky-chart-foundation-v1.css'
+      - 'sky-chart.html'
+      - 'tests/sky-chart-preview-alternate-host-browser.mjs'
+      - '.github/workflows/sky-chart-preview-alternate-host.yml'
+jobs:
+  preview-browser:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --no-save playwright@1.52.0
+      - run: npx playwright install --with-deps chromium
+      - name: Check two alternate commit-specific preview hosts
+        env:
+          PREVIEW_REF: ${{ github.event.pull_request.head.sha }}
+        run: node tests/sky-chart-preview-alternate-host-browser.mjs

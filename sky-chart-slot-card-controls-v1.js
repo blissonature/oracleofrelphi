@@ -276,7 +276,22 @@
   function start(){
     sync();
     const root=document.getElementById('skyFoundationRoot')||document.body;
-    new MutationObserver(schedule).observe(root,{childList:true,subtree:true,attributes:true,attributeFilter:['hidden']});
+    // Slot controls are structural: changing a Relationships tile, aspect
+    // filter, or selected placement cannot create/remove a sky. Observing the
+    // entire wheel/list (including every row's hidden attribute) used to
+    // schedule full Sky B payload parsing and card-control synchronization
+    // after ordinary pointer interactions in comparison mode.
+    const slotShellSelector='#skyFoundationA,#skyFoundationB,#skyFoundationComparison';
+    const slotHeadingSelector='#skyFoundationA > .sky-foundation-heading,'+
+      '#skyFoundationB > .sky-foundation-heading,'+
+      '#skyFoundationComparison > .sky-foundation-heading';
+    new MutationObserver(records=>{
+      if(records.some(record=>{
+        const owner=record.target;
+        return owner===root||owner.matches?.(slotShellSelector)||
+          owner.matches?.(slotHeadingSelector);
+      }))schedule();
+    }).observe(root,{childList:true,subtree:true});
     new MutationObserver(schedule).observe(document.documentElement,{attributes:true,attributeFilter:['data-sky-b-present','data-sky-b-editing','data-sky-last-mode']});
     window.addEventListener('storage',handleStorage);
     window.addEventListener('relphi:sky-foundation-ready',schedule);
