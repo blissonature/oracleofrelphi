@@ -31,15 +31,27 @@ function syncControl(){
   const input=document.querySelector('[data-relationship-limit]');
   const select=document.querySelector('[data-relationship-limit-preset]');
   if(!input||!select)return;
-  // A list refresh must not cancel an in-progress Custom selection or typing.
-  const preset=editingCustom?'custom':limit==='all'?'all':PRESETS.includes(Number(limit))?limit:'custom';
-  const next=limit==='all'?'':limit;
-  if(!editingCustom&&input.value!==next)input.value=next;
+  // Preserve one visible field. A committed non-preset limit becomes its own
+  // selected option, leaving "Custom…" available to reopen blank editing.
+  let saved=select.querySelector('option[data-relationship-limit-saved]');
+  const customValue=limit!=='all'&&!PRESETS.includes(Number(limit));
+  if(customValue){
+    if(!saved){
+      saved=document.createElement('option');
+      saved.dataset.relationshipLimitSaved='true';
+      select.insertBefore(saved,select.querySelector('option[value="custom"]'));
+    }
+    saved.value=limit;
+    saved.textContent=limit;
+  }else saved?.remove();
+  const preset=editingCustom?'custom':limit;
   if(select.value!==preset)select.value=preset;
-  const custom=preset==='custom';
-  input.hidden=!custom;
-  input.disabled=!custom;
-  input.setAttribute('aria-hidden',custom?'false':'true');
+  select.hidden=editingCustom;
+  select.disabled=editingCustom;
+  select.setAttribute('aria-hidden',editingCustom?'true':'false');
+  input.hidden=!editingCustom;
+  input.disabled=!editingCustom;
+  input.setAttribute('aria-hidden',editingCustom?'false':'true');
 }
 function installStyles(){
   if(document.getElementById('skyRelationshipLimitV1Styles'))return;
@@ -47,7 +59,7 @@ function installStyles(){
   style.id='skyRelationshipLimitV1Styles';
   style.textContent=`
 .sky-chart-result-limit-hidden{display:none!important}
-#skyFoundationRelationships .sky-relationship-limit-control{display:inline-flex;align-items:center;gap:5px;min-width:0;white-space:nowrap}
+#skyFoundationRelationships .sky-relationship-limit-control{display:inline-flex;align-items:center;width:76px;min-width:76px;white-space:nowrap}
 #skyFoundationRelationships .sky-relationship-limit-control>select,
 #skyFoundationRelationships .sky-relationship-limit-control>input{
   height:29px;box-sizing:border-box;margin:0;border:1px solid rgba(31,27,24,.18);border-radius:9px;background:#fff;color:#332e2a;
@@ -55,11 +67,10 @@ function installStyles(){
 }
 #skyFoundationRelationships .sky-relationship-limit-control>select{width:76px;min-width:76px;padding:0 20px 0 8px;cursor:pointer}
 #skyFoundationRelationships .sky-relationship-limit-control>input{
-  appearance:textfield;-moz-appearance:textfield;width:64px;min-width:64px;padding:0 8px;text-align:center
+  appearance:none;width:76px;min-width:76px;padding:0 8px;text-align:center
 }
-#skyFoundationRelationships .sky-relationship-limit-control>input[hidden]{display:none!important}
-#skyFoundationRelationships .sky-relationship-limit-control>input::-webkit-outer-spin-button,
-#skyFoundationRelationships .sky-relationship-limit-control>input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+#skyFoundationRelationships .sky-relationship-limit-control>select[hidden],
+#skyFoundationRelationships .sky-relationship-limit-control>input[hidden]{display:none}
 #skyFoundationRelationships .sky-relationship-limit-control>select:hover,
 #skyFoundationRelationships .sky-relationship-limit-control>select:focus-visible,
 #skyFoundationRelationships .sky-relationship-limit-control>input:hover,
@@ -104,35 +115,50 @@ function ensureControl(){
       const option=document.createElement('option');option.value=value;option.textContent=text;select.appendChild(option);
     });
     const input=document.createElement('input');
-    input.type='number';
-    input.min='1';
-    input.step='1';
+    input.type='text';
     input.inputMode='numeric';
-    input.pattern='[0-9]*';
+    input.pattern='[1-9][0-9]*';
+    input.autocomplete='off';
+    input.maxLength=16;
     input.dataset.relationshipLimit='true';
     input.setAttribute('aria-label','Custom maximum shown relationships');
-    input.placeholder='1+';
-    input.value=limit==='all'?'':limit;
+    input.value='';
     const commit=()=>{
-      const raw=input.value.trim();
+      if(!editingCustom)return;
+      const raw=input.value;
       const number=Number(raw);
-      if(Number.isInteger(number)&&number>0){setLimit(String(number));return}
+      if(/^[1-9][0-9]*$/.test(raw)&&Number.isSafeInteger(number)){
+        setLimit(String(number));
+        return;
+      }
+      // Empty, zero, and out-of-range values do not replace the last limit.
       editingCustom=false;
       syncControl();
     };
     select.addEventListener('change',()=>{
       if(select.value==='custom'){
         editingCustom=true;
-        input.hidden=false;input.disabled=false;input.setAttribute('aria-hidden','false');
-        if(limit==='all'||PRESETS.includes(Number(limit)))input.value='';
-        select.value='custom';
-        requestAnimationFrame(()=>{input.hidden=false;input.disabled=false;input.setAttribute('aria-hidden','false');input.focus()});
+        input.value='';
+        acceptedDraft='';
+        syncControl();
+        requestAnimationFrame(()=>{if(editingCustom&&input.isConnected)input.focus()});
         return;
       }
       setLimit(select.value);
     });
-    input.addEventListener('change',commit);
-    input.addEventListener('blur',()=>{if(input.value.trim())commit()});
+    let acceptedDraft='';
+    input.addEventListener('input',()=>{
+      // Reject—not reinterpret—negative signs, decimals, exponent notation,
+      // zero, and unsafe integers. This also handles pastes and mobile input.
+      const raw=input.value;
+      if(raw===''||(/^[1-9][0-9]*$/.test(raw)&&Number.isSafeInteger(Number(raw)))){
+        acceptedDraft=raw;
+        return;
+      }
+      input.value=acceptedDraft;
+      input.setSelectionRange(acceptedDraft.length,acceptedDraft.length);
+    });
+    input.addEventListener('blur',commit);
     input.addEventListener('keydown',event=>{
       if(event.key==='Enter'){event.preventDefault();commit();input.blur()}
       if(event.key==='Escape'){event.preventDefault();editingCustom=false;syncControl();input.blur()}
