@@ -185,6 +185,7 @@ body.sky-chart-page.sky-foundation-active #chartPanel > :not(#skyFoundationRoot)
      native scrolling reveals its full extent on narrow screens. */
   #skyFoundationWheelMount {
     display:block;
+    place-items:normal;
     min-height:300px;
     padding:4px;
     overflow-x:auto;
