@@ -193,6 +193,20 @@ try{
  const page=await mobile.newPage();
  await boot(page,true);
  await page.locator('#skyFoundationWheelMount').scrollIntoViewIfNeeded();
+ const mobileWheel=await page.evaluate(()=>{
+   const host=document.getElementById('skyFoundationWheelMount'),
+     wheel=host.querySelector('svg.sky-foundation-wheel:not([data-single-sky])'),
+     circle=slot=>wheel.querySelector('[data-layer="placements"] > g[data-sky="'+slot+'"][data-placement="venus"] .relphi-glyph-bubble > circle'),
+     view=wheel.getBoundingClientRect(),mount=host.getBoundingClientRect(),
+     standard=Number(window.RelphiSkyWheelSpec.comparison.placementRadius);
+   return{width:view.width,hostWidth:mount.width,standard,
+     skyA:Number(circle('A')?.getAttribute('r')),skyB:Number(circle('B')?.getAttribute('r'))};
+ });
+ assert.ok(mobileWheel.width>150&&mobileWheel.width<=mobileWheel.hostWidth+2,
+   'Comparison wheel must remain fitted to mobile viewport, without a 720px minimum');
+ assert.equal(mobileWheel.skyA,mobileWheel.standard*1.5,'Sky A placement bubble must be enlarged');
+ assert.equal(mobileWheel.skyB,mobileWheel.standard*1.5,'Sky B placement bubble must be enlarged');
+ console.log('PASS_FITTED_WHEEL_AND_COMPARISON_BUBBLES',JSON.stringify(mobileWheel));
  const startup=await page.evaluate(()=>({
    width:innerWidth,coarse:matchMedia('(max-width: 650px) and (pointer: coarse)').matches,
    pointerFine:matchMedia('(pointer: fine)').matches,
@@ -262,6 +276,20 @@ try{
   'Pointer must begin at upper-right wheel corner');
  assert.ok(initial.textZ>initial.cursorZ,'Text box must layer above cursor');
  console.log('PASS_POINTER_UPPER_RIGHT_AND_TEXT_OVERLAY',JSON.stringify(initial));
+ const pointerVisibility=await page.evaluate(()=>{
+   const cursor=document.getElementById('relphiMobileExplorationCursor'),
+     grip=cursor.querySelector('.relphi-mobile-cursor-cross').getBoundingClientRect(),
+     panel=document.getElementById('skyFoundationComparison').getBoundingClientRect();
+   return{visible:getComputedStyle(cursor).display!=='none',
+     gripLeft:grip.left,gripRight:grip.right,gripTop:grip.top,gripBottom:grip.bottom,
+     panelLeft:panel.left,panelRight:panel.right,panelTop:panel.top,panelBottom:panel.bottom};
+ });
+ assert.ok(pointerVisibility.visible&&pointerVisibility.gripLeft>=pointerVisibility.panelLeft-2
+   &&pointerVisibility.gripRight<=pointerVisibility.panelRight+2
+   &&pointerVisibility.gripTop>=pointerVisibility.panelTop-2
+   &&pointerVisibility.gripBottom<=pointerVisibility.panelBottom+2,
+   'Mobile arrow cursor and thumb cross must both remain reachable within visible wheel panel');
+ console.log('PASS_CURSOR_REACHABLE',JSON.stringify(pointerVisibility));
 
 
  const h=await locationFor(page,'A',11);
@@ -315,10 +343,27 @@ try{
  assert.equal(await page.locator('#relphiMobileExplorationCursor').isVisible(),true,'Pointer stays available');
  assert.deepEqual(errors,[],'No uncaught browser exceptions');
  console.log('PASS mobile real touch: house preview/pin + flashlight, cross-sky endpoints, placements, zodiac, aspects, always-on cursor');
+ const alone=await mobile.newPage();
+ try{
+   await boot(alone,false);
+   const single=await alone.evaluate(()=>{
+     const svg=document.querySelector('#skyFoundationWheelMount > svg[data-single-sky="A"]');
+     const circle=svg.querySelector('[data-layer="placements"] > g[data-sky="A"][data-placement="venus"] .relphi-glyph-bubble > circle');
+     return{radius:Number(circle?.getAttribute('r')),standard:Number(window.RelphiSkyWheelSpec.comparison.placementRadius)};
+   });
+   assert.equal(single.radius,single.standard,'Standalone mobile placement bubbles must keep their original radius');
+   console.log('PASS_STANDALONE_UNCHANGED',JSON.stringify(single));
+ }finally{await alone.close()}
 }finally{await mobile.close()}
 const desktop=await browser.newPage({viewport:{width:1280,height:900}});
 try{
  await boot(desktop,true);
+ const desktopCircle=await desktop.evaluate(()=>{
+   const wheel=document.querySelector('#skyFoundationWheelMount > svg:not([data-single-sky])');
+   const circle=wheel.querySelector('[data-layer="placements"] > g[data-sky="A"][data-placement="venus"] .relphi-glyph-bubble > circle');
+   return{radius:Number(circle?.getAttribute('r')),standard:Number(window.RelphiSkyWheelSpec.comparison.placementRadius)};
+ });
+ assert.equal(desktopCircle.radius,desktopCircle.standard,'Desktop comparison bubble radius unchanged');
  assert.equal(await desktop.locator('.relphi-mobile-pointer-toggle').isVisible(),false);
  assert.equal(await desktop.locator('#relphiMobileExplorationCursor').isVisible(),false);
  console.log('PASS desktop: mobile cursor hidden, native wheel retained');
