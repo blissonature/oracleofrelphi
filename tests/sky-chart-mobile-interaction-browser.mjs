@@ -17,25 +17,6 @@ const bounds=await line.boundingBox();assert.ok(bounds,'Aspect line has geometry
 // A synthetic click has default clientX/clientY (0,0). The authoritative
 // visible-stroke resolver correctly rejects that as a wheel aspect hit.
 // Test real Chromium pointer coordinates instead of manufacturing an event.
-await page.evaluate(()=>{
-  window.__aspectGestureTrace=[];
-  const details=event=>{
-    const locked=window.RelphiSkyFoundationInteractions?.captureFocus?.()?.lockedState;
-    const node=event.target.closest?.('[data-interactive]');
-    return{type:event.type,at:performance.now().toFixed(2),
-      target:node?.dataset.interactive||event.target.tagName,
-      aspect:node?.dataset.aspect,
-      left:node?.dataset.leftPlacement,right:node?.dataset.rightPlacement,
-      x:event.clientX,y:event.clientY,
-      locked:locked?.kind+':'+locked?.value};
-  };
-  ['pointerdown','pointerup','click'].forEach(type=>document.addEventListener(type,event=>{
-    if(event.target.closest?.('#skyFoundationWheelMount'))window.__aspectGestureTrace.push(details(event));
-  },true));
-  window.addEventListener('relphi:sky-foundation-filter-changed',event=>{
-    window.__aspectGestureTrace.push({type:'focus',locked:event.detail?.state?.kind+':'+event.detail?.state?.value});
-  });
-});
 await line.click({force:true});
 assert.equal(await page.locator('#skyFoundationWheelMount .sky-foundation-wheel.has-isolation').count(),1,'aspect click must isolate');
 assert.ok(await page.locator('#skyFoundationWheelMount [data-focus-piece="aspect"].is-kept').count()>0,'an aspect must remain illuminated');
@@ -44,14 +25,17 @@ assert.ok(await page.locator('#skyFoundationWheelMount [data-focus-piece="aspect
 const selectedLine=page.locator('#skyFoundationWheelMount [data-layer="aspects"] > line.sky-foundation-aspect.is-selected:not(.sky-foundation-aspect-hit)').first();
 assert.ok(await selectedLine.count(),'The selected aspect must remain painted and targetable');
 await selectedLine.click({force:true});
-console.log('ASPECT_GESTURE_TRACE',JSON.stringify(await page.evaluate(()=>({
-  events:window.__aspectGestureTrace.slice(-45),
-  active:document.querySelector('#skyFoundationWheelMount .sky-foundation-wheel')?.classList.contains('has-isolation'),
-  selected:[...document.querySelectorAll('#skyFoundationWheelMount [data-layer="aspects"] > line.sky-foundation-aspect.is-selected:not(.sky-foundation-aspect-hit)')].map(n=>({left:n.dataset.leftPlacement,aspect:n.dataset.aspect,right:n.dataset.rightPlacement})).slice(0,6),
-  origin:window.RelphiSkyFoundationInteractions?.getSelectionOrigin?.(),
-  capture:window.RelphiSkyFoundationInteractions?.captureFocus?.()?.lockedState
-}))));
-assert.equal(await page.locator('#skyFoundationWheelMount .sky-foundation-wheel.has-isolation').count(),0,'second click on selected visible aspect must clear');
+// Releasing a pinned aspect while the mouse remains over a chord can leave
+// transient hover isolation. Verify the authoritative pin and then exit hover.
+const afterSecondClick=await page.evaluate(()=>({
+  locked:window.RelphiSkyFoundationInteractions?.captureFocus?.()?.lockedState||null,
+  origin:window.RelphiSkyFoundationInteractions?.getSelectionOrigin?.()||null
+}));
+assert.equal(afterSecondClick.locked,null,'Second click clears the pinned aspect selection');
+assert.equal(afterSecondClick.origin,null,'Second click clears the pinned aspect origin');
+await page.mouse.move(2,2);
+assert.equal(await page.locator('#skyFoundationWheelMount .sky-foundation-wheel.has-isolation').count(),0,'Leaving the wheel clears transient aspect hover');
+
 const house=page.locator('#skyFoundationWheelMount [data-interactive="house"]').first();
 await house.evaluate(node=>{node.dispatchEvent(new MouseEvent('click',{bubbles:true,cancelable:true,view:window}));});
 assert.equal(await page.locator('#skyFoundationWheelMount .sky-foundation-wheel.has-isolation').count(),1,'house must isolate');
