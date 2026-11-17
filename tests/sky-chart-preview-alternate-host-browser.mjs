@@ -40,7 +40,16 @@ try {
       assert.ok(state.width>=719,'Mobile wheel must be physically magnified');
       passed++;
     }catch(error){
-      console.log('PREVIEW_HOST_FAIL',name,url,String(error).slice(0,350),JSON.stringify(errors.slice(0,12)));
+      const details=await page.evaluate(()=>({
+        href:location.href,title:document.title,base:document.baseURI,
+        shell:document.getElementById('previewStatus')?.textContent?.slice(0,600),
+        busy:document.querySelector('#skyFoundationRoot')?.getAttribute('aria-busy'),
+        wheel:document.querySelectorAll('.sky-foundation-wheel').length,
+        scripts:document.scripts.length,css:document.styleSheets.length,
+        body:document.body?.innerText?.slice(0,450),
+        state:document.readyState
+      })).catch(e=>({evalError:String(e)}));
+      console.log('PREVIEW_HOST_FAIL',name,url,String(error).slice(0,350),JSON.stringify({details,errors:errors.slice(0,30)}));
     }finally{await ctx.close()}
   }
 }finally{await browser.close()}
