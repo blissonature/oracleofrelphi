@@ -62,13 +62,13 @@
       // previewable if its 100+ script tags depend on jsDelivr's GitHub package
       // limit or if some scripts silently receive a blocked response.
       // Fetch exact commit sources from GitHub and execute in author order.
-      const scriptTags=[...html.matchAll(/<script\\b[^>]*\\bsrc=["']([^"']+)["'][^>]*><\\/script>/gi)];
+      const scriptTags=[...html.matchAll(/<script\b[^>]*\bsrc=["']([^"']+)["'][^>]*><\/script>/gi)];
       const scripts=new Map();
       let scriptCursor=0;
       const scriptWorkers=Array.from({length:Math.min(8,scriptTags.length)},async()=>{
         while(scriptCursor<scriptTags.length){
           const match=scriptTags[scriptCursor++],tag=match[0],path=match[1];
-          if(/^(?:https?:|data:|\\/\\/)/i.test(path))continue;
+          if(/^(?:https?:|data:|\/\/)/i.test(path))continue;
           const target=new URL(path,rawBase);
           let source;
           const load=async()=>{
@@ -79,7 +79,7 @@
           try{source=await load()}
           catch(firstError){try{source=await load()}catch{throw firstError}}
           // Inline scripts retain their original ordered parser execution.
-          source=source.replace(/<\\/script/gi,'<\\\\/script');
+          source=source.replace(/<\/script/gi,'<\\/script');
           scripts.set(tag,'<script data-preview-js="'+path.replace(/"/g,'&quot;')+'">'+source+'</script>');
         }
       });
