@@ -52,6 +52,52 @@ const findTouchPoint=async(kind,scope=null)=>page.evaluate(({kind,scope})=>{
   const nodes=[...wheel.querySelectorAll('[data-interactive="'+kind+'"]')].filter(node=>node.getClientRects().length&&!node.classList.contains('sky-foundation-aspect-hit'));
   const width=window.innerWidth,height=window.innerHeight;
   const markers=[...wheel.querySelectorAll('[data-layer="placements"] [data-interactive="placement"]')].map(n=>n.getBoundingClientRect()).filter(r=>r.width>0&&r.height>0);
+  if(kind==='aspect'){
+    // The 28px transparent envelopes overlap other painted chords. A DOM
+    // elementFromPoint match is not necessarily the closest *visible stroke*.
+    // Pick an unambiguous painted point in the requested relationship scope,
+    // using the same rendered screen geometry that the wheel hit owner sees.
+    const all=[...wheel.querySelectorAll('[data-layer="aspects"] > line.sky-foundation-aspect:not(.sky-foundation-aspect-hit)')]
+      .filter(n=>n.getClientRects().length&&!n.hidden&&n.getAttribute('aria-hidden')!=='true'
+        &&getComputedStyle(n).display!=='none'&&getComputedStyle(n).visibility!=='hidden')
+      .map(n=>{
+        const svg=n.ownerSVGElement,m=n.getScreenCTM();
+        if(!svg||!m)return null;
+        const a=svg.createSVGPoint(),b=svg.createSVGPoint();
+        a.x=Number(n.getAttribute('x1'));a.y=Number(n.getAttribute('y1'));
+        b.x=Number(n.getAttribute('x2'));b.y=Number(n.getAttribute('y2'));
+        return{n,a:a.matrixTransform(m),b:b.matrixTransform(m)};
+      }).filter(Boolean);
+    const distance=(x,y,line)=>{
+      const dx=line.b.x-line.a.x,dy=line.b.y-line.a.y,length=dx*dx+dy*dy;
+      const t=length?Math.max(0,Math.min(1,((x-line.a.x)*dx+(y-line.a.y)*dy)/length)):0;
+      return Math.hypot(x-line.a.x-t*dx,y-line.a.y-t*dy);
+    };
+    let best=null;
+    for(const line of all.filter(v=>!scope||v.n.dataset.relationshipMode===scope)){
+      for(let step=1;step<=19;step++){
+        const fraction=step/20,x=line.a.x+(line.b.x-line.a.x)*fraction,
+          y=line.a.y+(line.b.y-line.a.y)*fraction;
+        if(x<16||y<16||x>width-16||y>height-16)continue;
+        const top=document.elementFromPoint(x,y)?.closest?.('[data-interactive]');
+        if(top?.dataset.interactive!=='aspect')continue;
+        if(markers.some(r=>x>=r.left-18&&x<=r.right+18&&y>=r.top-18&&y<=r.bottom+18))continue;
+        const nearby=all.map(v=>({v,d:distance(x,y,v)})).filter(v=>v.d<=14);
+        if(nearby.some(v=>v.v.n!==line.n&&v.v.n.classList.contains('is-kept')))continue;
+        nearby.sort((a,b)=>a.d-b.d);
+        if(nearby[0]?.v.n!==line.n)continue;
+        const gap=nearby[1]?nearby[1].d-nearby[0].d:14;
+        if(!best||gap>best.gap){
+          best={x,y,gap,
+            leftSky:line.n.dataset.leftSky,left:line.n.dataset.leftPlacement,
+            aspect:line.n.dataset.aspect,
+            rightSky:line.n.dataset.rightSky,right:line.n.dataset.rightPlacement};
+        }
+      }
+    }
+    if(best)return best;
+    return null;
+  }
   for(const node of nodes){
     const rect=node.getBoundingClientRect(),minX=Math.max(2,rect.left),maxX=Math.min(width-2,rect.right),minY=Math.max(2,rect.top),maxY=Math.min(height-2,rect.bottom);
     if(minX>=maxX||minY>=maxY)continue;
