@@ -46,6 +46,26 @@ try{
       !!document.querySelector('#skyFoundationA .sky-foundation-row[data-interactive="placement"][data-placement="venus"]')&&
       !!document.querySelector('#skyFoundationB .sky-foundation-row[data-interactive="placement"][data-placement="venus"]');
   },null,{timeout:25000});
+  // The wheel's rendered circles and its collision model must agree at each
+  // viewport; the ledger must remain readable without enlarging desktop UI.
+  const glyphDimensions=await page.evaluate(()=>{
+    const spec=window.RelphiSkyWheelSpec.comparison;
+    const row=document.querySelector('#skyFoundationA .sky-foundation-row[data-placement="venus"]');
+    const host=row?.querySelector(':scope > svg');
+    const wheel=document.querySelector('#skyFoundationWheelMount > .sky-foundation-wheel');
+    const bubble=wheel?.querySelector('[data-layer="placements"] > g[data-sky="A"][data-placement="venus"] .relphi-glyph-bubble > circle');
+    return{rowWidth:host?.getBoundingClientRect().width,rowHeight:host?.getBoundingClientRect().height,
+      visualRadius:Number(bubble?.getAttribute('r')),contractRadius:spec.placementRadius,
+      collisionRadius:spec.placementBubbleRadius};
+  });
+  assert.equal(glyphDimensions.rowWidth,mobile?33:23,'Placement ledger glyph width follows mobile breakpoint');
+  assert.equal(glyphDimensions.rowHeight,mobile?33:23,'Placement ledger glyph height follows mobile breakpoint');
+  assert.equal(glyphDimensions.visualRadius,mobile?24:18.5,'Placement wheel uses mobile glyph radius');
+  assert.equal(glyphDimensions.contractRadius,glyphDimensions.visualRadius,'Renderer uses canonical spec');
+  assert.equal(glyphDimensions.collisionRadius,mobile?25.5:19.7,'Collision solver sees larger bubble radius');
+  assert.ok(glyphDimensions.collisionRadius>glyphDimensions.visualRadius,'Collision frame encloses the rendered medallion');
+  console.log('PASS placement sizing',width,JSON.stringify(glyphDimensions));
+
   const wheelState=()=>page.evaluate(()=>{
     const wheel=document.querySelector('#skyFoundationWheelMount > .sky-foundation-wheel');
     const selection=window.RelphiSkyFoundationInteractions?.captureFocus?.().lockedState||null;
