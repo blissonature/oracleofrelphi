@@ -42,5 +42,5 @@ for(const item of scripts)assert.ok(html.includes('data-preview-js="'+item+'"'),
 assert.ok(html.indexOf('data-preview-js="'+scripts[0]+'"')<html.indexOf('data-preview-js="'+scripts.at(-1)+'"'),
   'The first/last script execution order must match the application');
 assert.ok(!html.includes('src="'+scripts[0]+'"'),'No original local script may remain CDN-dependent');
-assert.ok(html.includes('<base href="https://cdn.jsdelivr.net/gh/'),'Commit-specific base remains available for dynamic resources');
+assert.ok(html.includes('<base href="https://cdn.statically.io/gh/'),'Commit-specific base remains available for dynamic resources');
 console.log('PASS preview loader bundled',styles.length,'CSS files and',scripts.length,'ordered local scripts from exact commit');
