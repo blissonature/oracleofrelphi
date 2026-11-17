@@ -180,7 +180,24 @@ body.sky-chart-page.sky-foundation-active #chartPanel > :not(#skyFoundationRoot)
     grid-template-columns:1fr;
     grid-template-areas:"a" "b" "comparison";
   }
-  #skyFoundationWheelMount { min-height:300px; padding:4px; }
+  /* Preserve the authored wheel geometry: zoom the single rendered wheel
+     rather than growing glyph circles into neighboring placements. Horizontal
+     native scrolling reveals its full extent on narrow screens. */
+  #skyFoundationWheelMount {
+    display:block;
+    min-height:300px;
+    padding:4px;
+    overflow-x:auto;
+    overflow-y:hidden;
+    overscroll-behavior-x:contain;
+    -webkit-overflow-scrolling:touch;
+  }
+  #skyFoundationWheelMount > svg.sky-foundation-wheel {
+    width:max(100%,720px);
+    max-width:none;
+    max-height:none;
+    height:auto;
+  }
   #skyFoundationWheelMount .sky-foundation-aspect {
     stroke-width:1.05;
     opacity:.52;
