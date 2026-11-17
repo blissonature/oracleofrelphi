@@ -78,9 +78,12 @@
           };
           try{source=await load()}
           catch(firstError){try{source=await load()}catch{throw firstError}}
-          // Inline scripts retain their original ordered parser execution.
-          source=source.replace(/<\/script/gi,'<\\/script');
-          scripts.set(tag,'<script data-preview-js="'+path.replace(/"/g,'&quot;')+'">'+source+'<\/script>');
+          // Execute classic scripts in their original parser order, from local
+          // JavaScript Blobs. Do not inline source into HTML: some legitimate
+          // modules contain HTML strings and their script terminators would
+          // prematurely close the parser element, breaking the whole wheel.
+          const url=URL.createObjectURL(new Blob([source],{type:'text/javascript'}));
+          scripts.set(tag,'<script data-preview-js="'+path.replace(/"/g,'&quot;')+'" src="'+url+'"><\/script>');
         }
       });
       await Promise.all(scriptWorkers);
