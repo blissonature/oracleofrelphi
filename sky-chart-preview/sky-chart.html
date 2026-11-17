@@ -80,7 +80,7 @@
           catch(firstError){try{source=await load()}catch{throw firstError}}
           // Inline scripts retain their original ordered parser execution.
           source=source.replace(/<\/script/gi,'<\\/script');
-          scripts.set(tag,'<script data-preview-js="'+path.replace(/"/g,'&quot;')+'">'+source+'</script>');
+          scripts.set(tag,'<script data-preview-js="'+path.replace(/"/g,'&quot;')+'">'+source+'<\/script>');
         }
       });
       await Promise.all(scriptWorkers);
