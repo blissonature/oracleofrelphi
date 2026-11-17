@@ -20,8 +20,12 @@ const bounds=await line.boundingBox();assert.ok(bounds,'Aspect line has geometry
 await line.click({force:true});
 assert.equal(await page.locator('#skyFoundationWheelMount .sky-foundation-wheel.has-isolation').count(),1,'aspect click must isolate');
 assert.ok(await page.locator('#skyFoundationWheelMount [data-focus-piece="aspect"].is-kept').count()>0,'an aspect must remain illuminated');
-await line.click({force:true});
-assert.equal(await page.locator('#skyFoundationWheelMount .sky-foundation-wheel.has-isolation').count(),0,'second click must clear');
+// The first physical point can be over several crossing strokes; click the
+// actual selected painted line on the second gesture, not a different stroke.
+const selectedLine=page.locator('#skyFoundationWheelMount [data-layer="aspects"] > line.sky-foundation-aspect.is-selected:not(.sky-foundation-aspect-hit)').first();
+assert.ok(await selectedLine.count(),'The selected aspect must remain painted and targetable');
+await selectedLine.click({force:true});
+assert.equal(await page.locator('#skyFoundationWheelMount .sky-foundation-wheel.has-isolation').count(),0,'second click on selected visible aspect must clear');
 const house=page.locator('#skyFoundationWheelMount [data-interactive="house"]').first();
 await house.evaluate(node=>{node.dispatchEvent(new MouseEvent('click',{bubbles:true,cancelable:true,view:window}));});
 assert.equal(await page.locator('#skyFoundationWheelMount .sky-foundation-wheel.has-isolation').count(),1,'house must isolate');
