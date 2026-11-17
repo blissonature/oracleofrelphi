@@ -183,7 +183,7 @@ body.sky-chart-page.sky-foundation-active #chartPanel > :not(#skyFoundationRoot)
   /* Preserve the authored wheel geometry: zoom the single rendered wheel
      rather than growing glyph circles into neighboring placements. Horizontal
      native scrolling reveals its full extent on narrow screens. */
-  #skyFoundationWheelMount {
+  #skyFoundationWheelMount:has(> svg.sky-foundation-wheel:not([data-single-sky])) {
     display:block;
     place-items:normal;
     min-height:300px;
@@ -193,7 +193,7 @@ body.sky-chart-page.sky-foundation-active #chartPanel > :not(#skyFoundationRoot)
     overscroll-behavior-x:contain;
     -webkit-overflow-scrolling:touch;
   }
-  #skyFoundationWheelMount > svg.sky-foundation-wheel {
+  #skyFoundationWheelMount > svg.sky-foundation-wheel:not([data-single-sky]) {
     width:max(100%,720px);
     max-width:none;
     max-height:none;
