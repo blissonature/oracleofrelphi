@@ -23,8 +23,7 @@ function fixture(slot){
 }
 const browser=await chromium.launch({headless:true});
 try{
- const width=Number(process.env.RELPHI_TEST_VIEWPORT_WIDTH||1440);
- const page=await browser.newPage({viewport:{width,height:980},isMobile:width<=620,hasTouch:width<=620});
+ const page=await browser.newPage({viewport:{width:1440,height:980}});
  const errors=[];page.on('pageerror',e=>errors.push(e.message));
  await page.route('https://unpkg.com/suncalc@1.9.0/suncalc.js',route=>route.fulfill({path:path.resolve('node_modules/suncalc/suncalc.js'),contentType:'application/javascript'}));
  await page.route('https://cdn.jsdelivr.net/npm/luxon@3/build/global/luxon.min.js',route=>route.fulfill({path:path.resolve('node_modules/luxon/build/global/luxon.min.js'),contentType:'application/javascript'}));
@@ -507,5 +506,5 @@ try{
  console.log('MOON_SUN_HOUSE_REPAIR_TRACE',JSON.stringify(moonSun));
  assert.ok(moonSun.every(item=>item.sameHouse&&item.radiusError<.15),
    'Moon and Sun must be returned to their true Sky B houses on the original circumference');
- console.log('PASS crowded Oct 23 A/B and five-body Sky B house-cusp cluster stay separated on fixed circles',width);
+ console.log('PASS crowded Oct 23 A/B and five-body Sky B house-cusp cluster stay separated on fixed circles');
 }finally{await browser.close()}
