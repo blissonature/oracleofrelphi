@@ -180,25 +180,8 @@ body.sky-chart-page.sky-foundation-active #chartPanel > :not(#skyFoundationRoot)
     grid-template-columns:1fr;
     grid-template-areas:"a" "b" "comparison";
   }
-  /* Preserve the authored wheel geometry: zoom the single rendered wheel
-     rather than growing glyph circles into neighboring placements. Horizontal
-     native scrolling reveals its full extent on narrow screens. */
-  #skyFoundationWheelMount:has(> svg.sky-foundation-wheel:not([data-single-sky])) {
-    display:block;
-    place-items:normal;
-    min-height:300px;
-    padding:4px;
-    overflow-x:auto;
-    overflow-y:hidden;
-    overscroll-behavior-x:contain;
-    -webkit-overflow-scrolling:touch;
-  }
-  #skyFoundationWheelMount > svg.sky-foundation-wheel:not([data-single-sky]) {
-    width:max(100%,720px);
-    max-width:none;
-    max-height:none;
-    height:auto;
-  }
+  /* Keep the comparison and standalone wheels fitted to their existing mount.
+     Placement glyph size is owned by the canonical foundation renderer. */
   #skyFoundationWheelMount .sky-foundation-aspect {
     stroke-width:1.05;
     opacity:.52;
