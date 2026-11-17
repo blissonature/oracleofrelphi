@@ -14,10 +14,13 @@ const lines=page.locator('#skyFoundationWheelMount [data-interactive="aspect"]:n
 const line=lines.first();
 const identity=await line.evaluate(n=>[n.dataset.leftSky,n.dataset.leftPlacement,n.dataset.aspect,n.dataset.rightSky,n.dataset.rightPlacement].join(':'));
 const bounds=await line.boundingBox();assert.ok(bounds,'Aspect line has geometry');
-await line.dispatchEvent('click');
+// A synthetic click has default clientX/clientY (0,0). The authoritative
+// visible-stroke resolver correctly rejects that as a wheel aspect hit.
+// Test real Chromium pointer coordinates instead of manufacturing an event.
+await line.click({force:true});
 assert.equal(await page.locator('#skyFoundationWheelMount .sky-foundation-wheel.has-isolation').count(),1,'aspect click must isolate');
 assert.ok(await page.locator('#skyFoundationWheelMount [data-focus-piece="aspect"].is-kept').count()>0,'an aspect must remain illuminated');
-await line.dispatchEvent('click');
+await line.click({force:true});
 assert.equal(await page.locator('#skyFoundationWheelMount .sky-foundation-wheel.has-isolation').count(),0,'second click must clear');
 const house=page.locator('#skyFoundationWheelMount [data-interactive="house"]').first();
 await house.evaluate(node=>{node.dispatchEvent(new MouseEvent('click',{bubbles:true,cancelable:true,view:window}));});
