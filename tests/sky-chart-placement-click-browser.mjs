@@ -46,6 +46,31 @@ try{
       !!document.querySelector('#skyFoundationA .sky-foundation-row[data-interactive="placement"][data-placement="venus"]')&&
       !!document.querySelector('#skyFoundationB .sky-foundation-row[data-interactive="placement"][data-placement="venus"]');
   },null,{timeout:25000});
+  // On phones keep the canonical circle and collision geometry, but present
+  // the SAME wheel at a readable physical size inside a native scroll viewport.
+  const zoom=await page.evaluate(()=>{
+    const mount=document.getElementById('skyFoundationWheelMount');
+    const wheel=mount?.querySelector(':scope > svg.sky-foundation-wheel');
+    const bubble=wheel?.querySelector('[data-layer="placements"] > g[data-sky="A"][data-placement="venus"] .relphi-glyph-bubble > circle');
+    const ledger=document.querySelector('#skyFoundationA .sky-foundation-row[data-placement="venus"] > svg');
+    return{client:mount?.clientWidth,scrollWidth:mount?.scrollWidth,wheelWidth:wheel?.getBoundingClientRect().width,
+      physicalBubbleWidth:bubble?.getBoundingClientRect().width,
+      bubbleRadius:Number(bubble?.getAttribute('r')),ledgerWidth:ledger?.getBoundingClientRect().width};
+  });
+  assert.equal(zoom.bubbleRadius,18.5,'Canonical bubble radius is unchanged on both viewports');
+  assert.equal(zoom.ledgerWidth,23,'Placement row glyph size is unchanged');
+  if(mobile){
+    assert.ok(zoom.wheelWidth>=719,'The single mobile wheel is magnified to at least 720px');
+    assert.ok(zoom.scrollWidth>zoom.client+100,'Mobile wheel scrolls without clipping its right side');
+    assert.ok(zoom.physicalBubbleWidth>=21,'Comparison placement bubble is legible at physical pixel size');
+    const mount=page.locator('#skyFoundationWheelMount');
+    await mount.evaluate(node=>{node.scrollLeft=(node.scrollWidth-node.clientWidth)/2});
+    const scrolled=await mount.evaluate(node=>node.scrollLeft);
+    assert.ok(scrolled>50,'Comparison wheel exposes its middle by native horizontal scroll');
+  }else{
+    assert.ok(zoom.scrollWidth<=zoom.client+2,'Desktop wheel has no new horizontal overflow');
+  }
+  console.log('PASS comparison wheel physical glyph size and scroll',width,JSON.stringify(zoom));
   const wheelState=()=>page.evaluate(()=>{
     const wheel=document.querySelector('#skyFoundationWheelMount > .sky-foundation-wheel');
     const selection=window.RelphiSkyFoundationInteractions?.captureFocus?.().lockedState||null;
