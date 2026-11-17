@@ -3,11 +3,13 @@ on:
   push:
     paths:
       - 'sky-chart-placement-collision-order-v1.js'
+      - 'sky-chart-wheel-spec-v1.js'
       - 'tests/sky-chart-placement-collision-browser.mjs'
       - '.github/workflows/sky-chart-placement-collision-browser.yml'
   pull_request:
     paths:
       - 'sky-chart-placement-collision-order-v1.js'
+      - 'sky-chart-wheel-spec-v1.js'
       - 'tests/sky-chart-placement-collision-browser.mjs'
       - '.github/workflows/sky-chart-placement-collision-browser.yml'
 jobs:
@@ -24,3 +26,4 @@ jobs:
           python3 -m http.server 4173 >/tmp/sky-collision-http.log 2>&1 &
           sleep 2
           node tests/sky-chart-placement-collision-browser.mjs
+          RELPHI_TEST_VIEWPORT_WIDTH=390 node tests/sky-chart-placement-collision-browser.mjs
