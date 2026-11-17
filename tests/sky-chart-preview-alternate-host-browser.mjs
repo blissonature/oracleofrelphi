@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 const ref=process.env.PREVIEW_REF;
 assert.match(ref||'',/^[0-9a-f]{40}$/);
 const hosts=[
-  ['githack',`https://raw.githack.com/blissonature/oracleofrelphi/${ref}/sky-chart.html`],
+  ['githack',`https://raw.githack.com/blissonature/oracleofrelphi/${ref}/sky-chart-preview/sky-chart.html?ref=${ref}`],
   ['statically',`https://cdn.statically.io/gh/blissonature/oracleofrelphi@${ref}/sky-chart.html`]
 ];
 const instant='1985-10-08T08:37:00Z';
