@@ -69,9 +69,21 @@ console.log('DICTIONARY_PDF',JSON.stringify({pages:reference.pages,bytes:referen
 await page.locator('[data-relationship-limit-preset]').selectOption('5');
 await page.waitForFunction(()=>document.documentElement.dataset.skyRelationshipLimit==='5');
 await page.waitForFunction(()=>[...document.querySelectorAll('#skyFoundationRelationshipList>.sky-foundation-relationship-row')].filter(row=>{const s=getComputedStyle(row);return !row.hidden&&s.display!=='none'&&s.visibility!=='hidden'}).length===5);
-const relationshipsDownload=page.waitForEvent('download',{timeout:60000});
+const relationshipsDownload=page.waitForEvent('download',{timeout:45000});
 await page.locator('#skyChartRelationshipsPdf').click();
-const relationshipsFile=await relationshipsDownload;
+let relationshipsFile;
+try{relationshipsFile=await relationshipsDownload}
+catch(error){
+  const diagnostics=await page.evaluate(()=>({
+    status:document.getElementById('skyChartExportStatus')?.textContent||'',
+    stage:!!document.getElementById('relphiPdfStage'),
+    pages:document.querySelectorAll('#relphiPdfStage .rpdf-page').length,
+    images:[...document.querySelectorAll('#relphiPdfStage img')].map(i=>({src:i.getAttribute('src'),complete:i.complete,width:i.naturalWidth})).slice(0,12),
+    rows:document.querySelectorAll('#relphiPdfStage .rpdf-relationship').length
+  }));
+  console.error('RELATIONSHIPS_PDF_TIMEOUT',JSON.stringify({diagnostics,errors}));
+  throw error;
+}
 assert.match(relationshipsFile.suggestedFilename(),/relationships\.pdf$/);
 const relationships=await readPdf(relationshipsFile);
 assert.ok(relationships.pages>=2,'Five illustrated relationships should paginate');
