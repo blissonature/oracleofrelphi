@@ -55,11 +55,11 @@ function collect(rows){
     const left=endpoint(row,'left'),right=endpoint(row,'right');
     const aspectId=String(row.dataset.aspect||''),orb=Number(row.dataset.sourceOrb);
     for(const ep of [left,right]){
-      if(PLACEMENT_REFERENTS[ep.id])sets.placements.set(ep.id,{label:placementName(ep.id),text:PLACEMENT_REFERENTS[ep.id]});
-      if(SIGN_REFERENTS[ep.sign])sets.signs.set(ep.sign,{label:ep.sign,text:SIGN_REFERENTS[ep.sign]});
-      if(ep.house&&HOUSE_REFERENTS[ep.house])sets.houses.set(ep.house,{label:HOUSE_NAMES[ep.house],text:HOUSE_REFERENTS[ep.house]});
+      if(PLACEMENT_REFERENTS[ep.id])sets.placements.set(ep.id,{label:exportLabel(placementName(ep.id),EXPORT_GLYPHS[ep.id],PLACEMENT_REFERENTS[ep.id],layers),text:PLACEMENT_REFERENTS[ep.id]});
+      if(SIGN_REFERENTS[ep.sign])sets.signs.set(ep.sign,{label:exportLabel(ep.sign,EXPORT_SIGNS[SIGNS.indexOf(ep.sign)],SIGN_REFERENTS[ep.sign],layers),text:SIGN_REFERENTS[ep.sign]});
+      if(ep.house&&HOUSE_REFERENTS[ep.house])sets.houses.set(ep.house,{label:exportLabel(HOUSE_NAMES[ep.house],'H'+ep.house,HOUSE_REFERENTS[ep.house],layers),text:HOUSE_REFERENTS[ep.house]});
     }
-    if(ASPECT_REFERENTS[aspectId])sets.aspects.set(aspectId,{label:ASPECT_NAMES[aspectId],text:ASPECT_REFERENTS[aspectId]});
+    if(ASPECT_REFERENTS[aspectId])sets.aspects.set(aspectId,{label:exportLabel(ASPECT_NAMES[aspectId],EXPORT_ASPECTS[aspectId],ASPECT_REFERENTS[aspectId],layers),text:ASPECT_REFERENTS[aspectId]});
     const aspectLabel=exportLabel(ASPECT_NAMES[aspectId]||aspectId,EXPORT_ASPECTS[aspectId],ASPECT_REFERENTS[aspectId],layers);
     const middle=aspectLabel+(Number.isFinite(orb)?' · '+orb.toFixed(2)+'°':'');
     const lines=[exportEndpoint(left,layers),middle,exportEndpoint(right,layers)];
@@ -77,7 +77,7 @@ function dictionaryText(model){
     group.category[0].toUpperCase()+group.category.slice(1)+'\n'+
     group.entries.map(item=>item.label+' — '+item.text).join('\n')
   );
-  return 'Reference Dictionary\\n\\n'+groups.join('\n\n');
+  return 'Reference Dictionary\n\n'+groups.join('\n\n');
 }
 
 window.RelphiRelationshipCopySerializer=Object.freeze({serialize,levelForRow,modeLevel,collect,dictionaryText});
