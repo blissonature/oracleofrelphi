@@ -147,7 +147,7 @@ const diagnostics=await page.evaluate(()=>({
   relationshipExportV2:!!window.__relphiRelationshipExportColumnsV2,
   genericExportV5:!!window.__relphiSkyExportV5,
   visibleRows:[...document.querySelectorAll('#skyFoundationRelationshipList>.sky-foundation-relationship-row')].filter(r=>{const s=getComputedStyle(r);return !r.hidden&&s.display!=='none'&&s.visibility!=='hidden'}).length,
-  limit:document.querySelector('[data-relationship-limit]')?.value||'',
+  limit:String(window.RelphiRelationshipLimit?.get?.()||''),
   exportOptions:window.__relphiRelationshipExportOptions||null,
   pendingImages:[...document.querySelectorAll('.rex-sheet img')].filter(i=>!i.complete||!i.naturalWidth).map(i=>i.getAttribute('src')).slice(0,12),
   rexSheet:!!document.querySelector('.rex-sheet')
