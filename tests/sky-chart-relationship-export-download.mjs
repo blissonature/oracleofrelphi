@@ -74,12 +74,12 @@ assert.equal(await preset.inputValue(),'all','Max must be the default uncapped s
 assert.equal(await preset.locator('xpath=..').locator('.sky-relationship-limit-label').count(),0,'Max must not appear as a separate header label beside the selector.');
 await preset.selectOption('custom');
 await limit.waitFor({state:'visible'});
-assert.equal(await limit.getAttribute('type'),'number','Custom Max must use a cardinal-number field.');
-assert.equal(await limit.getAttribute('min'),'1','Custom Max must accept positive cardinal numbers.');
+assert.equal(await limit.getAttribute('type'),'text','Custom Max uses a text field to reject invalid cardinal input rather than coercing it.');
+assert.equal(await limit.getAttribute('inputmode'),'numeric','Custom Max must request the numeric mobile keyboard.');
 await limit.fill('7');
 await limit.press('Enter');
 await page.waitForFunction(()=>document.documentElement.dataset.skyRelationshipLimit==='7');
-assert.equal(await preset.inputValue(),'custom','A non-preset cardinal number must remain represented as Custom.');
+assert.equal(await preset.inputValue(),'7','A committed custom number must become the actual selected value in the shared field.');
 await page.locator('.sky-relationship-copy-button').click();
 assert.match(await page.evaluate(()=>window.__relationshipCopyText),/Max: 7(?:\n|$)/,'A custom limit must export its applied number, not the Custom menu label.');
 await preset.selectOption('all');
