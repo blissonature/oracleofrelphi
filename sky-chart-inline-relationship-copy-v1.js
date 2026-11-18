@@ -64,7 +64,7 @@ function collect(rows){
     const middle=aspectLabel+(Number.isFinite(orb)?' · '+orb.toFixed(2)+'°':'');
     const lines=[exportEndpoint(left,layers),middle,exportEndpoint(right,layers)];
     lines.push(...timingLines(row),...tarotLines(row));
-    return{row,scope:left.sky+'↔'+right.sky,text:lines.filter(Boolean).join('\\n'),left,right,aspectId,orb};
+    return{row,scope:left.sky+'↔'+right.sky,text:lines.filter(Boolean).join('\n'),left,right,aspectId,orb};
   });
   const dictionary=layers.referents?Object.entries(sets).map(([category,map])=>({
     category,entries:Array.from(map.values()).sort((a,b)=>a.label.localeCompare(b.label))
@@ -74,10 +74,10 @@ function collect(rows){
 function dictionaryText(model){
   if(!model?.dictionary?.length)return'';
   const groups=model.dictionary.map(group=>
-    group.category[0].toUpperCase()+group.category.slice(1)+'\\n'+
-    group.entries.map(item=>item.label+' — '+item.text).join('\\n')
+    group.category[0].toUpperCase()+group.category.slice(1)+'\n'+
+    group.entries.map(item=>item.label+' — '+item.text).join('\n')
   );
-  return 'Reference Dictionary\\n\\n'+groups.join('\\n\\n');
+  return 'Reference Dictionary\\n\\n'+groups.join('\n\n');
 }
 
 window.RelphiRelationshipCopySerializer=Object.freeze({serialize,levelForRow,modeLevel,collect,dictionaryText});
