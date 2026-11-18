@@ -50,13 +50,11 @@ try{
             const skyRight=right==='A'||right==='B'?right:mode==='A-A'?'A':'B';
             return sum+(skyLeft==='A'?row.querySelectorAll('.sky-foundation-relationship-placement--left .relphi-house-medallion').length:0)+(skyRight==='A'?row.querySelectorAll('.sky-foundation-relationship-placement--right .relphi-house-medallion').length:0);
           },0),
-          houseConcepts:[...node.querySelectorAll('.rex-chip strong')].map(n=>(n.textContent||'').trim()).filter(text=>/House$/.test(text)),
-          unknownHouseConcepts:[...node.querySelectorAll('.rex-row')].flatMap(row=>{
-            const mode=String(row.dataset.relationshipMode||'').toUpperCase(),left=String(row.dataset.leftSky||'').toUpperCase(),right=String(row.dataset.rightSky||'').toUpperCase();
-            const skyLeft=left==='A'||left==='B'?left:mode==='B-B'?'B':'A';
-            const skyRight=right==='A'||right==='B'?right:mode==='A-A'?'A':'B';
-            return [...(skyLeft==='A'?[...row.querySelectorAll('.rex-concepts .rex-chip.a strong')]:[]),...(skyRight==='A'?[...row.querySelectorAll('.rex-concepts .rex-chip.b strong')]:[])].map(n=>(n.textContent||'').trim()).filter(text=>/House$/.test(text));
-          }),
+          houseConcepts:[...node.querySelectorAll('.rex-dictionary-group p')]
+            .map(n=>(n.textContent||'').split(' — ')[0].trim()).filter(text=>/House$/.test(text)),
+          unknownHouseConcepts:[...node.querySelectorAll('.rex-row .rex-description')]
+            .flatMap(n=>(n.textContent||'').split('\n'))
+            .filter(line=>line.startsWith('Sky A:')&&/H7|Seventh House/.test(line)),
           rows:node.querySelectorAll('.rex-row').length
         };
         return new Blob(['png'],{type:'image/png'});
