@@ -88,5 +88,27 @@ function dictionaryText(model){
   return 'Reference Dictionary\n\n'+groups.join('\n\n');
 }
 
-window.RelphiRelationshipCopySerializer=Object.freeze({serialize,levelForRow,modeLevel,collect,dictionaryText});
+
+// Complete, chart-independent glossary. Uses the same authored definitions as
+// relationship Copy and PNG; nothing is derived from the currently loaded sky.
+function fullDictionary(){
+  const keyed=(ids,map,names)=>ids.filter(id=>map[id]).map(id=>({label:names?.[id]||placementName(id),text:map[id]}));
+  const planetIds=['sun','moon','mercury','venus','mars','jupiter','saturn','uranus','neptune','pluto'];
+  const angleIds=['asc','dsc','mc','ic'];
+  const otherIds=Object.keys(PLACEMENT_REFERENTS).filter(id=>!planetIds.includes(id)&&!angleIds.includes(id));
+  const angleNames={asc:'Ascendant',dsc:'Descendant',mc:'Midheaven (m.c.)',ic:'Imum Coeli (i.c.)'};
+  const rows=[
+    {category:'Planets, Angles, and Other Points',sections:[
+      {title:'Planets and Luminaries',entries:keyed(planetIds,PLACEMENT_REFERENTS)},
+      {title:'Angles',entries:keyed(angleIds,PLACEMENT_REFERENTS,angleNames)},
+      {title:'Other Points',entries:keyed(otherIds,PLACEMENT_REFERENTS)}
+    ]},
+    {category:'Signs',sections:[{title:'Zodiac Signs',entries:SIGNS.map(sign=>({label:sign,text:SIGN_REFERENTS[sign]}))}]},
+    {category:'Houses',sections:[{title:'The Twelve Houses',entries:HOUSE_NAMES.slice(1).map((label,i)=>({label,text:HOUSE_REFERENTS[i+1]}))}]},
+    {category:'Aspect Types',sections:[{title:'Aspects',entries:Object.keys(ASPECT_REFERENTS).map(id=>({label:ASPECT_NAMES[id]||id,text:ASPECT_REFERENTS[id]}))}]}
+  ];
+  return rows;
+}
+
+window.RelphiRelationshipCopySerializer=Object.freeze({serialize,levelForRow,modeLevel,collect,dictionaryText,fullDictionary});
 })();
