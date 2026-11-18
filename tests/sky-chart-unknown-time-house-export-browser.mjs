@@ -108,7 +108,7 @@ try{
   const png=await page.evaluate(()=>window.__relphiHouseExportSnapshot);
   assert.ok(png.rows>0,'PNG export must include a relationship.');
   assert.equal(png.unknownMedallions,0,'PNG clone must discard unknown-time house medallions but retain known-time ones.');
-  assert.ok(png.houseConcepts.includes('Fifth House'),'PNG must preserve known-time B house concepts.');
+  assert.ok(png.houseConcepts.some(label=>label.endsWith('Fifth House')),'PNG must preserve known-time B house concepts with the selected Glyphs/Names prefix.');
   assert.deepEqual(png.unknownHouseConcepts,[],'PNG must omit all house concepts attributed to unknown-time Sky A.');
   assert.equal(await row.locator('.sky-foundation-relationship-placement--left .relphi-house-medallion').count(),onScreenStale,'PNG must leave the live chart unchanged.');
   assert.deepEqual(errors.filter(x=>!/Unexpected identifier ['"]astronomy['"]/.test(x)),[]);
