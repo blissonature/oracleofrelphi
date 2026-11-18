@@ -51,7 +51,8 @@ function pageFor(host,owner,number){
   const p=document.createElement('section');p.className='rpdf-page';
   const title=document.createElement('div');title.className='rpdf-title';title.textContent='Relationships';
   const identities=document.createElement('div');identities.className='rpdf-identities';
-  identities.textContent='Sky A: '+owner.name('A')+(owner.present?.('B')?'  |  Sky B: '+owner.name('B'):'');
+  const identity=slot=>'Sky '+slot+': '+owner.name(slot)+(owner.context?.(slot)?' - '+owner.context(slot):'');
+  identities.textContent=identity('A')+(owner.present?.('B')?'  |  '+identity('B'):'');
   const focus=document.createElement('div');focus.className='rpdf-focus';
   focus.textContent=number===1?'Focus: '+owner.summary():'Oracle of Relphi  |  Relationships continued';
   const list=document.createElement('div');list.className='rpdf-list';
