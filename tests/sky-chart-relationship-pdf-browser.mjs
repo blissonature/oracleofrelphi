@@ -78,5 +78,26 @@ assert.ok(relationships.pages>=2,'Five illustrated relationships should paginate
 assert.ok(relationships.bytes>10000,'Illustrated PDF must not be empty');
 console.log('RELATIONSHIPS_PDF',JSON.stringify({pages:relationships.pages,bytes:relationships.bytes}));
 assert.deepEqual(errors,[],'PDF exports must not throw page errors');
+const mobile=await browser.newPage({viewport:{width:390,height:844},isMobile:true,hasTouch:true});
+await mobile.addInitScript(({a,b})=>{
+  localStorage.setItem('relphiSkyChartA',JSON.stringify(a));
+  localStorage.setItem('relphiSkyChartB',JSON.stringify(b));
+  localStorage.setItem('relphiSkyChartLastModeV1','comparison');
+},{a:sky('First Sky',0),b:sky('Second Sky',29.27)});
+await mobile.goto('http://127.0.0.1:4173/sky-chart.html',{waitUntil:'domcontentloaded',timeout:30000});
+await mobile.waitForSelector('#skyFoundationRoot[aria-busy="false"]',{timeout:30000});
+await mobile.waitForSelector('#skyChartRelationshipsPdf',{timeout:20000});
+const mobileLayout=await mobile.evaluate(()=>{
+  const bar=document.querySelector('#skyFoundationRelationships>.rpdf-toolbar');
+  const buttons=[...bar.querySelectorAll('button')].map(b=>({text:b.textContent,rect:b.getBoundingClientRect().toJSON()}));
+  return{width:window.innerWidth,toolbar:bar.getBoundingClientRect().toJSON(),buttons,
+    sorting:!!document.querySelector('#skyFoundationRelationships [data-relationship-sort]'),
+    max:!!document.querySelector('#skyFoundationRelationships [data-relationship-limit-preset]')};
+});
+assert.equal(mobileLayout.buttons.length,2,'Both PDF actions must be present on mobile.');
+assert.ok(mobileLayout.toolbar.left>=-1&&mobileLayout.toolbar.right<=mobileLayout.width+1,'PDF toolbar must fit the mobile viewport.');
+assert.ok(mobileLayout.buttons.every(b=>b.rect.left>=-1&&b.rect.right<=mobileLayout.width+1),'PDF actions must not overflow horizontally.');
+assert.ok(mobileLayout.sorting&&mobileLayout.max,'Original sorting and Max controls must remain in place.');
+await mobile.close();
 await browser.close();
 console.log('PDF browser download and four-category standalone dictionary checks passed.');
