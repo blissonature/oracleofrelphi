@@ -89,10 +89,10 @@ async function relationships(){
     for(let i=0;i<model.items.length;i++){
       const card=relationshipCard(model.items[i],i,owner);current.list.appendChild(card);
       // Measure the browser's actual card height before breaking pages.
-      if(current.list.getBoundingClientRect().bottom>1002&&current.list.children.length>1){
+      if(current.list.getBoundingClientRect().bottom-current.page.getBoundingClientRect().top>1002&&current.list.children.length>1){
         card.remove();current=pageFor(host,owner,pages.length+1);pages.push(current);current.list.appendChild(card);
       }
-      if(current.list.getBoundingClientRect().bottom>1002)throw Error('Relationship '+(i+1)+' exceeds one PDF page');
+      if(current.list.getBoundingClientRect().bottom-current.page.getBoundingClientRect().top>1002)throw Error('Relationship '+(i+1)+' exceeds one PDF page');
     }
     const pdf=new jsPDF({orientation:'portrait',unit:'pt',format:'letter',compress:true});
     for(let i=0;i<pages.length;i++){
