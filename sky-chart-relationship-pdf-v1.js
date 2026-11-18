@@ -38,7 +38,12 @@ function styles(){
     '#relphiPdfStage .rex-visual{padding:7px 14px 9px;grid-template-columns:110px minmax(132px,1fr) 110px;gap:14px}',
     '#relphiPdfStage .rex-card img{width:63px}',
     '#relphiPdfStage .rex-card b{max-width:105px;font-size:9px}',
-    '#relphiPdfStage .rex-wheel svg{width:106px;height:106px}'
+    '#relphiPdfStage .rex-wheel svg{width:106px;height:106px}',
+    '#skyFoundationRelationships>.rpdf-toolbar{display:flex;align-items:center;justify-content:flex-end;flex-wrap:wrap;gap:8px;padding:6px 12px 10px;border-bottom:1px solid rgba(31,27,24,.1)}',
+    '#skyFoundationRelationships>.rpdf-toolbar .rpdf-toolbar-label{color:#655d56;font:750 11px/1.3 system-ui,sans-serif;margin-right:auto}',
+    '#skyFoundationRelationships>.rpdf-toolbar button{font:750 11px/1.25 system-ui,sans-serif;padding:7px 10px;min-height:30px;border:1px solid #b5aba0;border-radius:7px;background:#fffdf8;color:#332d28;cursor:pointer}',
+    '#skyFoundationRelationships>.rpdf-toolbar button:hover,#skyFoundationRelationships>.rpdf-toolbar button:focus-visible{background:#f0ebe4;border-color:#70655b}',
+    '@media(max-width:620px){#skyFoundationRelationships>.rpdf-toolbar{justify-content:flex-start;gap:6px}#skyFoundationRelationships>.rpdf-toolbar .rpdf-toolbar-label{flex:0 0 100%}}'
   ].join('\n');
   document.head.appendChild(s);
 }
@@ -148,20 +153,26 @@ async function dictionary(){
   return{groups:groups.length,pages:total,entries:groups.flatMap(g=>g.sections.flatMap(s=>s.entries)).length};
 }
 function buttons(){
-  const old=document.getElementById('skyChartRelationshipsExport');
-  if(!old?.parentElement)return;
-  for(const entry of [
-    {id:'skyChartRelationshipsPdf',text:'Relationships PDF',title:'Download selected relationships as a paginated PDF'},
-    {id:'skyChartDictionaryPdf',text:'Dictionary PDF',title:'Download all reference definitions in a standalone PDF'}
-  ]){
-    let b=document.getElementById(entry.id);
-    if(b?.parentElement===old.parentElement)continue;
-    b?.remove();b=document.createElement('button');b.type='button';b.id=entry.id;
-    b.className='rpdf-download';b.textContent=entry.text;b.title=entry.title;
-    b.setAttribute('aria-label',entry.title);
-    b.style.cssText='font:700 11px/1.2 system-ui,sans-serif;padding:6px 8px;min-height:29px;border:1px solid #a99e93;border-radius:7px;color:#332d28;background:#fffdf8;cursor:pointer';
-    old.insertAdjacentElement('afterend',b);
+  const root=document.getElementById('skyFoundationRelationships');
+  const heading=root?.querySelector('.sky-foundation-relationships-heading');
+  if(!root||!heading)return;
+  let bar=root.querySelector(':scope>.rpdf-toolbar');
+  if(!bar){
+    bar=document.createElement('div');bar.className='rpdf-toolbar';
+    const label=document.createElement('span');label.textContent='PDF exports';label.className='rpdf-toolbar-label';
+    bar.appendChild(label);
   }
+  for(const entry of [
+    {id:'skyChartRelationshipsPdf',text:'Relationships PDF',title:'Download the currently selected relationships as a paginated PDF'},
+    {id:'skyChartDictionaryPdf',text:'Reference Dictionary PDF',title:'Download the complete chart-independent Reference Dictionary PDF'}
+  ]){
+    let button=bar.querySelector('#'+entry.id);
+    if(button)continue;
+    button=document.createElement('button');button.type='button';button.id=entry.id;
+    button.textContent=entry.text;button.title=entry.title;button.setAttribute('aria-label',entry.title);
+    bar.appendChild(button);
+  }
+  if(bar.previousElementSibling!==heading)heading.insertAdjacentElement('afterend',bar);
 }
 async function clicked(event){
   const b=event.target.closest?.('#skyChartRelationshipsPdf,#skyChartDictionaryPdf');
@@ -173,10 +184,10 @@ async function clicked(event){
 }
 function start(){
   buttons();
-  const heading=document.querySelector('#skyFoundationRelationships .sky-foundation-relationships-heading');
-  if(heading){
-    const observer=new MutationObserver(()=>{if(!document.getElementById('skyChartRelationshipsPdf')||!document.getElementById('skyChartDictionaryPdf'))buttons()});
-    observer.observe(heading,{childList:true,subtree:true});
+  const root=document.getElementById('skyFoundationRelationships');
+  if(root){
+    const observer=new MutationObserver(()=>{if(!root.querySelector(':scope>.rpdf-toolbar'))buttons()});
+    observer.observe(root,{childList:true});
   }
   window.addEventListener('relphi:sky-foundation-ready',buttons);
   document.addEventListener('click',clicked,true);
