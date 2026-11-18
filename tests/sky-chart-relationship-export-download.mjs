@@ -160,7 +160,7 @@ assert.equal(diagnostics.rexSheet,false,'Off-screen export sheet should be remov
 assert.equal(diagnostics.relationshipExportV4,true,'Compact Relationships exporter should own the download.');
 assert.equal(diagnostics.limit,'20','Export must run with the active 20-result cap.');
 assert.equal(diagnostics.visibleRows,20,'Export must include only the 20 currently shown relationships.');
-const expectedCols=Math.ceil(diagnostics.visibleRows/16);
+const expectedCols=Math.min(3,Math.max(1,Math.ceil(diagnostics.visibleRows/20)));
 const expectedWidth=24+expectedCols*500+Math.max(0,expectedCols-1)*8;
 const expectedRatio=diagnostics.visibleRows>24?1:1.1;
 assert.equal(diagnostics.exportOptions?.width,expectedWidth,'Relationship export should use the compact 500px column geometry.');
