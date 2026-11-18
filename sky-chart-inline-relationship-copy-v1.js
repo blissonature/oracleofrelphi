@@ -15,7 +15,7 @@ const ASPECT_REFERENTS={conjunction:'the two functions operate together','semi-s
 function rowSky(row,side){const x=String(row.dataset[side==='left'?'leftSky':'rightSky']||'').toUpperCase();if(x==='A'||x==='B')return x;const m=String(row.dataset.relationshipMode||'A-B').toUpperCase();if(m==='A-A')return'A';if(m==='B-B')return'B';return side==='left'?'A':'B'}
 function placementName(id){const e=window.RelphiGlyphRegistry?.get?.(id)||window.RelphiGlyphRegistry?.resolve?.(id);return String(e?.name||id||'').replace(/-/g,' ')}
 function coordinate(row,side){const small=row.querySelector(`.sky-foundation-relationship-placement--${side} .sky-foundation-relationship-copy small`);const stored=String(small?.dataset?.relationshipCoordinate||'').trim();return stored||String(small?.textContent||'').match(/\d{1,2}°\d{2}′/)?.[0]||''}
-function endpoint(row,side){const id=String(row.dataset[side==='left'?'leftPlacement':'rightPlacement']||''),si=Number(row.dataset[side==='left'?'leftSign':'rightSign']),h=Number(row.dataset[side==='left'?'leftHouse':'rightHouse']);const sky=rowSky(row,side),retrograde=sky&&id&&window.RelphiSkyRetrograde?.forPlacement?.(sky,id);return{sky,id,name:`Sky ${sky}'s ${placementName(id)}${retrograde?' Rx':''}`,sign:SIGNS[si]||'Sign',coordinate:coordinate(row,side),house:window.RelphiRelationshipExportHouses?.include?.(rowSky(row,side))===true&&Number.isFinite(h)&&h>=1&&h<=12?h:0}}
+function endpoint(row,side){const id=String(row.dataset[side==='left'?'leftPlacement':'rightPlacement']||''),si=Number(row.dataset[side==='left'?'leftSign':'rightSign']),h=Number(row.dataset[side==='left'?'leftHouse':'rightHouse']);const sky=rowSky(row,side),retrograde=sky&&id&&window.RelphiSkyRetrograde?.forPlacement?.(sky,id);return{sky,id,name:`Sky ${sky}'s ${placementName(id)}${retrograde?' Rx':''}`,retrograde:!!retrograde,sign:SIGNS[si]||'Sign',coordinate:coordinate(row,side),house:window.RelphiRelationshipExportHouses?.include?.(rowSky(row,side))===true&&Number.isFinite(h)&&h>=1&&h<=12?h:0}}
 function modeLevel(){let mode=String(document.documentElement.dataset.relationshipDisplay||'');if(!mode){try{mode=localStorage.getItem('relphiSkyRelationshipDisplayV1')||'glyphs'}catch(_){mode='glyphs'}}return mode==='referents'?2:mode==='names'?1:0}
 function levelForRow(row){const displayLevel=modeLevel();if(displayLevel===0)return 0;let level=displayLevel;if(!row?.classList?.contains('is-inline-expanded'))return level;for(const token of row.querySelectorAll('[data-inline-progressive-token]')){const n=Number(token.dataset.inlineProgressiveStage||0);if(Number.isFinite(n)&&n>level)level=n;if(level>=2)break}return Math.min(2,level)}
 function endpointBlock(ep,level){const first=`${ep.name} in ${ep.sign}${ep.coordinate?` ${ep.coordinate}`:''}${ep.house?` · ${HOUSE_NAMES[ep.house]}`:''}`;if(level<2)return first;const lines=[first];if(PLACEMENT_REFERENTS[ep.id])lines.push(PLACEMENT_REFERENTS[ep.id]);if(SIGN_REFERENTS[ep.sign])lines.push(`${ep.sign} — ${SIGN_REFERENTS[ep.sign]}`);if(ep.house)lines.push(`${HOUSE_NAMES[ep.house]} — ${HOUSE_REFERENTS[ep.house]}`);return lines.join('\n')}
@@ -25,7 +25,7 @@ function serialize(row,{level=levelForRow(row),includeScope=false}={}){level=Mat
 const layers=exportLayers();
 if(layers.referents&&!layers.glyphs&&!layers.names){
   const a=endpoint(row,'left'),b=endpoint(row,'right'),aspect=String(row.dataset.aspect||''),orb=Number(row.dataset.sourceOrb);
-  const ep=x=>['Sky '+x.sky+':',PLACEMENT_REFERENTS[x.id]||placementName(x.id),SIGN_REFERENTS[x.sign]||x.sign,x.coordinate,x.house?HOUSE_REFERENTS[x.house]:''].filter(Boolean).join(' · ');
+  const ep=x=>['Sky '+x.sky+':',PLACEMENT_REFERENTS[x.id]||placementName(x.id),x.retrograde?'retrograde':'',SIGN_REFERENTS[x.sign]||x.sign,x.coordinate,x.house?HOUSE_REFERENTS[x.house]:''].filter(Boolean).join(' · ');
   const middle=[ASPECT_REFERENTS[aspect]||aspect,Number.isFinite(orb)?orb.toFixed(2)+'°':'',...timingLines(row)].filter(Boolean).join(' · ');
   return[(includeScope?a.sky+'↔'+b.sky:''),ep(a),middle,ep(b),...tarotLines(row)].filter(Boolean).join('\n\n');
 }
@@ -51,7 +51,7 @@ function exportLabel(name,glyph,meaning,layers){
 }
 function exportEndpoint(ep,layers){
   const signIndex=SIGNS.indexOf(ep.sign);
-  const planet=exportLabel(placementName(ep.id),EXPORT_GLYPHS[ep.id],PLACEMENT_REFERENTS[ep.id],layers);
+  const planet=exportLabel(placementName(ep.id),EXPORT_GLYPHS[ep.id],PLACEMENT_REFERENTS[ep.id],layers)+(ep.retrograde?(layers.glyphs||layers.names?' Rx':' (retrograde)'):'');
   const sign=exportLabel(ep.sign,EXPORT_SIGNS[signIndex],SIGN_REFERENTS[ep.sign],layers);
   const house=ep.house?exportLabel(HOUSE_NAMES[ep.house],'H'+ep.house,HOUSE_REFERENTS[ep.house],layers):'';
   return ['Sky '+ep.sky+': '+planet,sign,ep.coordinate,house].filter(Boolean).join(' · ');
