@@ -5,8 +5,10 @@ on:
       - 'sky-chart.html'
       - 'sky-chart-relationship-pdf-v1.js'
       - 'sky-chart-inline-relationship-copy-v1.js'
+      - 'sky-chart-term-definitions-v1.js'
       - 'sky-chart-relationship-export-columns-v1.js'
       - 'tests/sky-chart-relationship-pdf-browser.mjs'
+      - 'tests/sky-chart-term-definitions-contract.mjs'
       - '.github/workflows/sky-chart-relationship-pdf.yml'
   workflow_dispatch:
 jobs:
@@ -20,6 +22,8 @@ jobs:
           node-version: '22'
       - name: Check source syntax
         run: |
+          node --check sky-chart-term-definitions-v1.js
+          node tests/sky-chart-term-definitions-contract.mjs
           node --check sky-chart-relationship-pdf-v1.js
           node --check sky-chart-inline-relationship-copy-v1.js
           node --check tests/sky-chart-relationship-pdf-browser.mjs
