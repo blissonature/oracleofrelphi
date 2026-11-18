@@ -51,7 +51,7 @@ function pageFor(host,owner,number){
   const p=document.createElement('section');p.className='rpdf-page';
   const title=document.createElement('div');title.className='rpdf-title';title.textContent='Relationships';
   const identities=document.createElement('div');identities.className='rpdf-identities';
-  identities.textContent='Sky A: '+owner.name('A')+'  |  Sky B: '+owner.name('B');
+  identities.textContent='Sky A: '+owner.name('A')+(owner.present?.('B')?'  |  Sky B: '+owner.name('B'):'');
   const focus=document.createElement('div');focus.className='rpdf-focus';
   focus.textContent=number===1?'Focus: '+owner.summary():'Oracle of Relphi  |  Relationships continued';
   const list=document.createElement('div');list.className='rpdf-list';
@@ -70,7 +70,7 @@ function relationshipCard(item,index,owner){
 }
 function fileName(kind){
   if(kind==='dictionary')return'oracle-of-relphi-reference-dictionary.pdf';
-  const owner=visual(),raw=(owner?.name?.('A')||'sky-chart')+'-'+(owner?.name?.('B')||'');
+  const owner=visual(),raw=(owner?.name?.('A')||'sky-chart')+(owner?.present?.('B')?'-'+owner.name('B'):'');
   const slug=raw.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,68);
   return(slug||'sky-chart')+'-relationships.pdf';
 }
