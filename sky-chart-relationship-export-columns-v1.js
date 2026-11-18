@@ -400,5 +400,13 @@ document.addEventListener('click',e=>{
   'relphi:relationship-limit-changed',
   'relphi:relationship-limit-applied'
 ].forEach(eventName=>window.addEventListener(eventName,()=>{pending=null}));
+// Read-only rendering helpers for paginated PDF, keeping Tarot and aspect geometry
+// in the existing Relationships export owner.
+window.RelphiRelationshipExportVisual=Object.freeze({
+  visibleRows,summary,name,context,
+  visual:row=>{install();return visual(row)},
+  ensureImages:load,
+  waitImgs
+});
 load().catch(()=>{});
 })();
