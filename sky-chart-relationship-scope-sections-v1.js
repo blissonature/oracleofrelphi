@@ -182,28 +182,27 @@ window.RelphiRelationshipExportFocus=Object.freeze({lines:focusInformation,matri
 function relationshipsCopyHeader(){
   return ['Relationships','Sky A: '+skyIdentity('A'),...(skyIsPresent('B')?['Sky B: '+skyIdentity('B')]:[]),'','Focus',...focusInformation()].join('\n');
 }
-function serializeDisplayOrder(rows){
-  const blocks=[];let currentMode='',bucket=[];
-  const flush=()=>{
-    if(!bucket.length)return;
-    const group=groupForMode(currentMode),family=familyForGroup(group),body=serializeSection(bucket);
-    if(body&&group&&family)blocks.push(`${family.title}\n\n${group.title}\n${body}`);
-    bucket=[];
-  };
-  for(const row of rows){const rowMode=mode(row);if(currentMode&&rowMode!==currentMode)flush();currentMode=rowMode;bucket.push(row)}
-  flush();
-  return blocks.length?`${relationshipsCopyHeader()}\n\n${blocks.join('\n\n')}`:'';
-}
 function serializeAll(){
-  const rows=visibleRows(),sortMode=window.RelphiRelationshipSort?.mode?.();
-  if(GLOBAL_SORTS.has(sortMode))return serializeDisplayOrder(rows);
-  const families=[];
-  for(const family of FAMILIES){
-    const sections=[];
-    for(const group of GROUPS){if(group.family!==family.id)continue;const body=serializeSection(rows.filter(r=>mode(r)===group.mode));if(body)sections.push(`${group.title}\n${body}`)}
-    if(sections.length)families.push(`${family.title}\n\n${sections.join('\n\n')}`);
+  const rows=visibleRows(),model=window.RelphiRelationshipCopySerializer?.collect?.(rows);
+  if(!model?.items?.length)return'';
+  const sortMode=window.RelphiRelationshipSort?.mode?.();
+  let body='';
+  if(GLOBAL_SORTS.has(sortMode)){
+    // Preserve the exact global ranking; annotate scopes per row rather than
+    // repeating intersky/intrasky headings on every scope transition.
+    body=model.items.map((item,index)=>(index+1)+'. '+item.scope+'\n'+item.text).join('\n\n');
+  }else{
+    const groups=[];
+    for(const family of FAMILIES){
+      for(const group of GROUPS.filter(candidate=>candidate.family===family.id)){
+        const items=model.items.filter(item=>mode(item.row)===group.mode);
+        if(items.length)groups.push(family.title+' · '+group.title+'\n'+items.map((item,index)=>(index+1)+'. '+item.text).join('\n\n'));
+      }
+    }
+    body=groups.join('\n\n');
   }
-  return families.length?`${relationshipsCopyHeader()}\n\n${families.join('\n\n')}`:'';
+  const dictionary=window.RelphiRelationshipCopySerializer?.dictionaryText?.(model)||'';
+  return relationshipsCopyHeader()+'\n\n'+body+(dictionary?'\n\n'+dictionary:'');
 }
 function legacyCopy(text){const active=document.activeElement;let ta=null;try{ta=document.createElement('textarea');ta.value=text;ta.setAttribute('aria-hidden','true');Object.assign(ta.style,{position:'fixed',left:'0',top:'0',width:'1px',height:'1px',padding:'0',border:'0',opacity:'0',fontSize:'16px'});document.body.appendChild(ta);try{ta.focus({preventScroll:true})}catch(_){ta.focus()}ta.select();ta.setSelectionRange(0,ta.value.length);return document.execCommand('copy')===true}catch(_){return false}finally{ta?.remove();try{active?.focus?.({preventScroll:true})}catch(_){try{active?.focus?.()}catch(__){}}}}
 async function writeClipboard(text){if(legacyCopy(text))return true;if(!navigator.clipboard?.writeText)return false;let timer=0;try{const timeout=new Promise(resolve=>{timer=window.setTimeout(()=>resolve(false),900)});const copy=Promise.resolve(navigator.clipboard.writeText(text)).then(()=>true,()=>false);return await Promise.race([copy,timeout])}catch(_){return false}finally{clearTimeout(timer)}}
