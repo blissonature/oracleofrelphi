@@ -273,11 +273,19 @@ function load(){
   return libPromise;
 }
 async function waitImgs(root){
-  await Promise.all([...root.querySelectorAll('img')].map(i=>
-    i.complete&&i.naturalWidth
-      ? i.decode?.().catch(()=>{})||Promise.resolve()
-      : new Promise(resolve=>{i.onload=i.onerror=resolve})
-  ));
+  await Promise.all([...root.querySelectorAll('img')].map(image=>{
+    // A failed image is also complete. Waiting for a second error event after
+    // completion deadlocks both PNG and PDF exports.
+    if(image.complete)return image.naturalWidth&&image.decode?image.decode().catch(()=>{}):Promise.resolve();
+    return new Promise(resolve=>{
+      let settled=false;
+      const finish=()=>{if(settled)return;settled=true;clearTimeout(timeout);image.removeEventListener('load',finish);image.removeEventListener('error',finish);resolve()};
+      const timeout=setTimeout(finish,10000);
+      image.addEventListener('load',finish);
+      image.addEventListener('error',finish);
+      if(image.complete)finish();
+    });
+  }));
 }
 async function build(){
   install();
