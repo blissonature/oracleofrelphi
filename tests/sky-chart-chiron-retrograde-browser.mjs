@@ -46,7 +46,7 @@ try{
     localStorage.setItem('relphiSkyRelationshipDisplayV1','glyphs');
     window.htmlToImage={
       toBlob:async node=>{
-        window.__chironRxPngLabels=[...node.querySelectorAll('.rex-concepts .rex-chip strong')].map(el=>(el.textContent||'').trim());
+        window.__chironRxPngLabels=[...node.querySelectorAll('.rex-concepts .rex-description')].map(el=>(el.textContent||'').trim());
         return new Blob(['png'],{type:'image/png'});
       },
       toPng:async()=> 'data:image/png;base64,cG5n'
@@ -72,13 +72,13 @@ try{
   await page.locator('.sky-relationship-copy-button').click();
   await page.waitForFunction(()=>Boolean(window.__relphiCopiedText),null,{timeout:5000});
   const clipboard=await page.evaluate(()=>window.__relphiCopiedText);
-  assert.match(clipboard,/⚷ Rx/,'Relationships Copy must include retrograde Chiron');
-  assert.match(clipboard,/⚷ in/,'Relationships Copy must also include direct Chiron');
+  assert.match(clipboard,/Sky [AB]: ⚷ Rx/,'Relationships Copy must include retrograde Chiron on its own sky endpoint');
+  assert.match(clipboard,/Sky [AB]: ⚷ ·/,'Relationships Copy must also include direct Chiron');
   await page.locator('#skyChartRelationshipsExport').click();
   await page.waitForFunction(()=>Array.isArray(window.__chironRxPngLabels),null,{timeout:12000});
   const labels=await page.evaluate(()=>window.__chironRxPngLabels);
-  assert.ok(labels.includes('Chiron Rx'),'PNG concept chips must include retrograde Chiron');
-  assert.ok(labels.includes('Chiron'),'PNG concept chips must preserve direct Chiron');
+  assert.ok(labels.some(line=>/Sky [AB]: ⚷ Rx/.test(line)),'PNG relationship summaries must include retrograde Chiron');
+  assert.ok(labels.some(line=>/Sky [AB]: ⚷ ·/.test(line)),'PNG relationship summaries must preserve direct Chiron');
   assert.deepEqual(errors.filter(x=>!/Unexpected identifier ['"]astronomy['"]/.test(x)),[]);
   console.log('Chiron retrograde visible and exported in both Sky Card, text, and PNG. '+retro+' / '+direct);
 }finally{await browser.close()}
