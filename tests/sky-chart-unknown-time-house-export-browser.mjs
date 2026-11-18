@@ -50,13 +50,11 @@ try{
             const skyRight=right==='A'||right==='B'?right:mode==='A-A'?'A':'B';
             return sum+(skyLeft==='A'?row.querySelectorAll('.sky-foundation-relationship-placement--left .relphi-house-medallion').length:0)+(skyRight==='A'?row.querySelectorAll('.sky-foundation-relationship-placement--right .relphi-house-medallion').length:0);
           },0),
-          houseConcepts:[...node.querySelectorAll('.rex-chip strong')].map(n=>(n.textContent||'').trim()).filter(text=>/House$/.test(text)),
-          unknownHouseConcepts:[...node.querySelectorAll('.rex-row')].flatMap(row=>{
-            const mode=String(row.dataset.relationshipMode||'').toUpperCase(),left=String(row.dataset.leftSky||'').toUpperCase(),right=String(row.dataset.rightSky||'').toUpperCase();
-            const skyLeft=left==='A'||left==='B'?left:mode==='B-B'?'B':'A';
-            const skyRight=right==='A'||right==='B'?right:mode==='A-A'?'A':'B';
-            return [...(skyLeft==='A'?[...row.querySelectorAll('.rex-concepts .rex-chip.a strong')]:[]),...(skyRight==='A'?[...row.querySelectorAll('.rex-concepts .rex-chip.b strong')]:[])].map(n=>(n.textContent||'').trim()).filter(text=>/House$/.test(text));
-          }),
+          houseConcepts:[...node.querySelectorAll('.rex-dictionary-group p')]
+            .map(n=>(n.textContent||'').split(' — ')[0].trim()).filter(text=>/House$/.test(text)),
+          unknownHouseConcepts:[...node.querySelectorAll('.rex-row .rex-description')]
+            .flatMap(n=>(n.textContent||'').split('\n'))
+            .filter(line=>line.startsWith('Sky A:')&&/H7|Seventh House/.test(line)),
           rows:node.querySelectorAll('.rex-row').length
         };
         return new Blob(['png'],{type:'image/png'});
@@ -110,7 +108,7 @@ try{
   const png=await page.evaluate(()=>window.__relphiHouseExportSnapshot);
   assert.ok(png.rows>0,'PNG export must include a relationship.');
   assert.equal(png.unknownMedallions,0,'PNG clone must discard unknown-time house medallions but retain known-time ones.');
-  assert.ok(png.houseConcepts.includes('Fifth House'),'PNG must preserve known-time B house concepts.');
+  assert.ok(png.houseConcepts.some(label=>label.endsWith('Fifth House')),'PNG must preserve known-time B house concepts with the selected Glyphs/Names prefix.');
   assert.deepEqual(png.unknownHouseConcepts,[],'PNG must omit all house concepts attributed to unknown-time Sky A.');
   assert.equal(await row.locator('.sky-foundation-relationship-placement--left .relphi-house-medallion').count(),onScreenStale,'PNG must leave the live chart unchanged.');
   assert.deepEqual(errors.filter(x=>!/Unexpected identifier ['"]astronomy['"]/.test(x)),[]);

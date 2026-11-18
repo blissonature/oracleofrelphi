@@ -1,0 +1,37 @@
+name: Sky Chart Relationships and Dictionary PDF
+on:
+  pull_request:
+    paths:
+      - 'sky-chart.html'
+      - 'sky-chart-relationship-pdf-v1.js'
+      - 'sky-chart-inline-relationship-copy-v1.js'
+      - 'sky-chart-term-definitions-v1.js'
+      - 'sky-chart-relationship-export-columns-v1.js'
+      - 'tests/sky-chart-relationship-pdf-browser.mjs'
+      - 'tests/sky-chart-term-definitions-contract.mjs'
+      - '.github/workflows/sky-chart-relationship-pdf.yml'
+  workflow_dispatch:
+jobs:
+  pdf-browser:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check source syntax
+        run: |
+          node --check sky-chart-term-definitions-v1.js
+          node tests/sky-chart-term-definitions-contract.mjs
+          node --check sky-chart-relationship-pdf-v1.js
+          node --check sky-chart-inline-relationship-copy-v1.js
+          node --check tests/sky-chart-relationship-pdf-browser.mjs
+      - name: Install browser and PDF validation dependencies
+        run: |
+          npm install --no-save playwright@1.52.0 luxon@3 suncalc@1.9.0 jspdf@2.5.2 html-to-image@1.11.11 pdfjs-dist@4.10.38
+          npx playwright install --with-deps chromium
+      - name: Download and parse both real PDFs in Chromium
+        run: |
+          python3 -m http.server 4173 >/tmp/relphi-pdf-http.log 2>&1 &
+          node tests/sky-chart-relationship-pdf-browser.mjs

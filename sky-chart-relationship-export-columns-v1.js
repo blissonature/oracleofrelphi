@@ -8,7 +8,8 @@ window.__relphiRelationshipExportColumnsV2=true;
 window.__relphiRelationshipExportColumnsV1=true;
 
 const ID='skyChartRelationshipsExport';
-const ROWS=16;
+const MAX_COLUMNS=3;
+const TARGET_ROWS_PER_COLUMN=20;
 const W=500;
 const GAP=8;
 const PAD=12;
@@ -16,61 +17,6 @@ const LIB='https://cdn.jsdelivr.net/npm/html-to-image@1.11.11/dist/html-to-image
 const KEYS={A:'relphiSkyChartA',B:'relphiSkyChartB'};
 const COLORS={A:'#c9211e',B:'#2462d0'};
 const SIGNS=['Aries','Taurus','Gemini','Cancer','Leo','Virgo','Libra','Scorpio','Sagittarius','Capricorn','Aquarius','Pisces'];
-const SIGN_MEAN=[
-  'initiative, directness, courage, impulse, and beginning',
-  'embodiment, value, pleasure, endurance, and material continuity',
-  'language, exchange, curiosity, movement, and multiplicity',
-  'care, protection, memory, belonging, and attachment',
-  'radiance, creativity, pride, loyalty, and recognition',
-  'discernment, service, refinement, repair, and usefulness',
-  'relationship, balance, fairness, dialogue, and mutual recognition',
-  'intensity, secrecy, survival, bonding, and emotional truth',
-  'meaning, faith, exploration, philosophy, and freedom',
-  'structure, responsibility, endurance, mastery, and worldly form',
-  'systems, reform, collective intelligence, detachment, and future orientation',
-  'surrender, imagination, compassion, permeability, and release'
-];
-const PLACEMENT_MEAN={
-  sun:'identity, vitality, and conscious purpose',
-  moon:'feelings, instincts, memory, and emotional needs',
-  mercury:'thought, perception, language, and communication',
-  venus:'values, attraction, affection, pleasure, and relating',
-  mars:'drive, assertion, desire, conflict, and action',
-  jupiter:'growth, confidence, meaning, opportunity, and expansion',
-  saturn:'structure, limits, responsibility, time, and commitment',
-  uranus:'freedom, disruption, originality, awakening, and change',
-  neptune:'imagination, sensitivity, surrender, ideals, and vision',
-  pluto:'power, depth, compulsion, elimination, and transformation',
-  chiron:'wounding, healing intelligence, and the capacity to guide healing',
-  asc:'the way a person enters life and is immediately perceived',
-  dsc:'the way a person meets partners and encounters the other',
-  mc:'public direction, vocation, visibility, and the role a person grows toward',
-  ic:'roots, home, private foundations, and inherited belonging',
-  'north-node':'growth through unfamiliar experience and developing capacity',
-  'south-node':'familiar patterns, inherited capacity, and the known path',
-  lilith:'instinctive autonomy, refusal, exile, and uncompromised desire',
-  'part-of-fortune':'the meeting place of body, feeling, circumstance, and ease',
-  vertex:'encounters that feel consequential or outside ordinary control',
-  'anti-vertex':'what becomes accessible through the back door'
-};
-const HOUSE_NAMES=['','First House','Second House','Third House','Fourth House','Fifth House','Sixth House','Seventh House','Eighth House','Ninth House','Tenth House','Eleventh House','Twelfth House'];
-const HOUSE_MEAN=[
-  '',
-  'self, embodiment, appearance, approach, and the immediate way life is entered',
-  'resources, possessions, money, personal values, and what is held as one’s own',
-  'communication, learning, siblings, neighbors, short journeys, and the local environment',
-  'home, roots, family, ancestry, privacy, and the foundations of life',
-  'creativity, pleasure, romance, children, play, and personal self-expression',
-  'work, service, routines, health practices, maintenance, and practical obligations',
-  'partnership, contracts, one-to-one relationship, and encounters with the other',
-  'shared resources, intimacy, debt, inheritance, vulnerability, and transformation',
-  'worldview, religion, philosophy, higher learning, long journeys, and the search for meaning',
-  'vocation, public standing, reputation, authority, achievement, and visible responsibility',
-  'friends, networks, groups, alliances, hopes, and participation in a larger collective',
-  'retreat, hidden processes, solitude, confinement, surrender, spirituality, and closure'
-];
-const ASPECT_NAME={conjunction:'Conjunction','semi-sextile':'Semi-Sextile',octile:'Octile',sextile:'Sextile',quintile:'Quintile',square:'Square',trine:'Trine','tri-octile':'Tri-Octile','bi-quintile':'Bi-Quintile',quincunx:'Quincunx',opposition:'Opposition'};
-const ASPECT_MEAN={conjunction:'the two functions operate together','semi-sextile':'neighboring functions accommodate one another',octile:'focused friction and adjustment',sextile:'a cooperative opening activated through participation',quintile:'creative pattern-making and specialized skill',square:'activating pressure and development',trine:'low-resistance exchange','tri-octile':'accumulated friction and redirection','bi-quintile':'refined creative pattern-making',quincunx:'continuing adjustment and translation',opposition:'awareness through polarity, contrast, and exchange'};
 const ASPECT_COLOR={conjunction:'#e53935','semi-sextile':'#7c9b49',octile:'#b86d43',sextile:'#d3b727',quintile:'#8b6cc2',square:'#d6534d',trine:'#4e9e69','tri-octile':'#9f5944','bi-quintile':'#7655aa',quincunx:'#4b8e88',opposition:'#5961c8'};
 const DECANS=[
   [['two_of_wands','Two of Wands'],['three_of_wands','Three of Wands'],['four_of_wands','Four of Wands']],
@@ -218,33 +164,32 @@ function timing(row){
   const e=window.RelphiRelationshipTransitMeta?.estimatedTimingForRow?.(row);
   return e&&Number.isFinite(e.durationDays)?[`Duration ≈ ${Math.round(e.durationDays*10)/10} days`]:[];
 }
-function chip(title,sub,text,cls){
-  const n=document.createElement('section');
-  n.className='rex-chip '+cls;
-  n.innerHTML=`<strong>${esc(title)}</strong>${sub?`<small>${esc(sub)}</small>`:''}${text?`<p>${esc(text)}</p>`:''}`;
+function concepts(item,row){
+  const n=document.createElement('div');n.className='rex-concepts';
+  const scope=document.createElement('strong');scope.textContent=item.scope;
+  const description=document.createElement('div');
+  description.className='rex-description';description.textContent=item.text;
+  n.append(scope,description);
+  // The existing transit metadata remains available even for collapsed rows.
+  for(const line of timing(row)){
+    const p=document.createElement('p');p.className='rex-time';p.textContent=line;n.appendChild(p);
+  }
   return n;
 }
-function concepts(row){
-  const n=document.createElement('div');
-  n.className='rex-concepts';
-  const li=+row.dataset.leftSign,ri=+row.dataset.rightSign,lh=+row.dataset.leftHouse,rh=+row.dataset.rightHouse;
-  const aspect=String(row.dataset.aspect||''),orb=Number(row.dataset.sourceOrb);
-  const lp=String(row.dataset.leftPlacement||''),rp=String(row.dataset.rightPlacement||'');
-  const label=(side,id)=>`Sky ${slot(row,side)}'s ${pname(id)}${window.RelphiSkyRetrograde?.forPlacement?.(slot(row,side),id)?' Rx':''}`;
-  const left=[chip(label('left',lp),coord(row,'left'),PLACEMENT_MEAN[lp]||'','a'),chip(SIGNS[li],'',SIGN_MEAN[li]||'','a')];
-  if(includeHouse(slot(row,'left'))&&Number.isInteger(lh)&&lh>=1&&lh<=12)left.push(chip(HOUSE_NAMES[lh], '', HOUSE_MEAN[lh]||'','a'));
-  const aspectChip=chip(ASPECT_NAME[aspect]||aspect,Number.isFinite(orb)?orb.toFixed(2)+'°':'',ASPECT_MEAN[aspect]||'','asp');
-  const right=[chip(label('right',rp),coord(row,'right'),PLACEMENT_MEAN[rp]||'','b'),chip(SIGNS[ri],'',SIGN_MEAN[ri]||'','b')];
-  if(includeHouse(slot(row,'right'))&&Number.isInteger(rh)&&rh>=1&&rh<=12)right.push(chip(HOUSE_NAMES[rh], '', HOUSE_MEAN[rh]||'','b'));
-  n.style.gridTemplateColumns=`repeat(${left.length},minmax(0,1fr)) minmax(92px,1.12fr) repeat(${right.length},minmax(0,1fr))`;
-  n.append(...left,aspectChip,...right);
-  timing(row).forEach(text=>{
-    const p=document.createElement('p');
-    p.className='rex-time';
-    p.textContent=text;
-    aspectChip.appendChild(p);
-  });
-  return n;
+function dictionarySection(model){
+  if(!model.dictionary.length)return null;
+  const section=document.createElement('section');section.className='rex-dictionary';
+  const title=document.createElement('h2');title.textContent='Reference Dictionary';section.appendChild(title);
+  for(const group of model.dictionary){
+    const part=document.createElement('section');part.className='rex-dictionary-group';
+    const h=document.createElement('h3');h.textContent=group.category[0].toUpperCase()+group.category.slice(1);part.appendChild(h);
+    for(const entry of group.entries){
+      const line=document.createElement('p');const b=document.createElement('strong');b.textContent=entry.label;
+      line.append(b,document.createTextNode(' — '+entry.text));part.appendChild(line);
+    }
+    section.appendChild(part);
+  }
+  return section;
 }
 function visibleRows(){
   return[...document.querySelectorAll('#skyFoundationRelationshipList>.sky-foundation-relationship-row')].filter(row=>{
@@ -271,7 +216,7 @@ function install(){
   const s=document.createElement('style');
   s.id='rexStyle';
   s.textContent=`
-    .rex-sheet{box-sizing:border-box;padding:${PAD}px;border:1px solid #ded9d2;border-radius:14px;background:#fffdf8;color:#191613;font-family:system-ui,sans-serif}
+    .rex-sheet{box-sizing:border-box;padding:${PAD}px;border:1px solid #ded9d2;border-radius:14px;background:#fffdf8;color:#191613;font-family:system-ui,sans-serif;text-align:left}
     .rex-title{display:grid;gap:3px;margin-bottom:8px}
     .rex-title h1{margin:0;font:900 20px/1.12 system-ui}
     .rex-title p{margin:0;color:#655d56;font:700 10px/1.25 system-ui}
@@ -283,13 +228,16 @@ function install(){
     .rex-cols{display:flex;align-items:flex-start;gap:${GAP}px}
     .rex-col{display:grid;gap:7px;width:${W}px;min-width:${W}px}
     .rex-row{box-sizing:border-box;width:${W}px!important;min-width:${W}px!important;max-width:${W}px!important;margin:0!important;height:auto!important;overflow:visible!important}
-    .rex-concepts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr)) minmax(92px,1.12fr) repeat(3,minmax(0,1fr));gap:4px;padding:7px 6px 6px;border-top:1px solid rgba(31,27,24,.11);background:#fffdfa}
-    .rex-chip{display:grid;align-content:start;gap:2px;min-width:0;padding:5px 4px;border-radius:8px;background:#f4efe8;border-top:3px solid #777;text-align:center}
-    .rex-chip.a{border-color:${COLORS.A}}.rex-chip.b{border-color:${COLORS.B}}.rex-chip.asp{border-color:var(--relationship-stripe,#777)}
-    .rex-chip strong{font:900 9px/1.08 system-ui;overflow-wrap:anywhere}
-    .rex-chip small{color:#5e554d;font:850 7.5px/1.05 system-ui}
-    .rex-chip p{margin:0;color:#5d554e;font:650 7.4px/1.18 system-ui;overflow-wrap:anywhere}
-    .rex-chip .rex-time{color:#3e3934;font-weight:750}
+    .rex-row{border:1px solid rgba(31,27,24,.16);border-radius:10px;overflow:hidden;background:#fffdfa}
+    .rex-concepts{display:grid;gap:7px;padding:13px;font:600 14px/1.5 system-ui,sans-serif;text-align:left}
+    .rex-concepts>strong{color:#5a524b;font-size:12px}
+    .rex-description{white-space:pre-line;overflow-wrap:anywhere}
+    .rex-time{margin:0;color:#5b524a;font:700 9px/1.25 system-ui}
+    .rex-dictionary{box-sizing:border-box;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px 24px;width:100%;max-width:none;margin-top:20px;padding:20px 12px;border-top:2px solid #ded9d2;text-align:left;align-items:start}
+    .rex-dictionary h2{grid-column:1/-1;margin:0;font:900 21px/1.3 system-ui}
+    .rex-dictionary-group{box-sizing:border-box;min-width:0;margin:0;padding:14px;border:1px solid rgba(31,27,24,.14);border-radius:10px;background:#fffdfa;text-align:left}
+    .rex-dictionary-group h3{margin:0 0 10px;font:850 16px/1.35 system-ui}
+    .rex-dictionary-group p{margin:0 0 8px;font:600 13px/1.5 system-ui;overflow-wrap:break-word}
     .rex-visual{display:grid;grid-template-columns:96px minmax(132px,1fr) 96px;align-items:center;justify-content:center;gap:12px;padding:8px 12px 9px;border-top:1px solid rgba(31,27,24,.11);background:linear-gradient(180deg,#fbf8f3,#f8f4ee)}
     .rex-card{display:grid;justify-items:center;gap:3px}
     .rex-card small{font:900 8px/1 system-ui;text-transform:uppercase}
@@ -325,17 +273,30 @@ function load(){
   return libPromise;
 }
 async function waitImgs(root){
-  await Promise.all([...root.querySelectorAll('img')].map(i=>
-    i.complete&&i.naturalWidth
-      ? i.decode?.().catch(()=>{})||Promise.resolve()
-      : new Promise(resolve=>{i.onload=i.onerror=resolve})
-  ));
+  await Promise.all([...root.querySelectorAll('img')].map(image=>{
+    // A failed image is also complete. Waiting for a second error event after
+    // completion deadlocks both PNG and PDF exports.
+    if(image.complete)return image.naturalWidth&&image.decode?image.decode().catch(()=>{}):Promise.resolve();
+    return new Promise(resolve=>{
+      let settled=false;
+      const finish=()=>{if(settled)return;settled=true;clearTimeout(timeout);image.removeEventListener('load',finish);image.removeEventListener('error',finish);resolve()};
+      const timeout=setTimeout(finish,10000);
+      image.addEventListener('load',finish);
+      image.addEventListener('error',finish);
+      if(image.complete)finish();
+    });
+  }));
 }
 async function build(){
   install();
   const rows=visibleRows();
+  const model=window.RelphiRelationshipCopySerializer?.collect?.(rows);
+  if(!model||model.items.length!==rows.length)throw Error('Relationship export model unavailable.');
   if(!rows.length)throw Error('No relationships match the current filters.');
-  const cols=Math.ceil(rows.length/ROWS);
+  // Cap sheet width; distributing rows across at most three readable columns
+  // keeps a long export from becoming a panoramic, illegible strip.
+  const cols=Math.min(MAX_COLUMNS,Math.max(1,Math.ceil(rows.length/TARGET_ROWS_PER_COLUMN)));
+  const rowsPerColumn=Math.ceil(rows.length/cols);
   const width=PAD*2+cols*W+(cols-1)*GAP;
   const host=document.createElement('div'),sheet=document.createElement('div');
   Object.assign(host.style,{position:'fixed',left:'-100000px',top:'0',width:width+'px',background:'#fffdf8',zIndex:'-1'});
@@ -358,20 +319,17 @@ async function build(){
     const col=document.createElement('div');
     col.className='rex-col';
     wrap.appendChild(col);
-    for(const row of rows.slice(c*ROWS,(c+1)*ROWS)){
-      const clone=row.cloneNode(true);
-      clone.classList.remove('is-inline-expanded','is-wheel-related','is-row-hovered');
-      clone.classList.add('rex-row');
-      clone.removeAttribute('aria-current');
-      clone.querySelector(':scope>.inline-rel-detail')?.remove();
-      clone.querySelectorAll('[id]').forEach(n=>n.removeAttribute('id'));
-      suppressCloneHouseInfo(clone,row);
-      clone.appendChild(concepts(row));
+    for(const item of model.items.slice(c*rowsPerColumn,(c+1)*rowsPerColumn)){
+      const row=item.row,entry=document.createElement('article');
+      entry.className='rex-row';
+      entry.appendChild(concepts(item,row));
       const v=visual(row);
-      if(v)clone.appendChild(v);
-      col.appendChild(clone);
+      if(v)entry.appendChild(v);
+      col.appendChild(entry);
     }
   }
+  const dictionary=dictionarySection(model);
+  if(dictionary)sheet.appendChild(dictionary);
   await waitImgs(sheet);
   await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
   return{host,sheet,width,height:Math.ceil(sheet.scrollHeight),count:rows.length,cols};
@@ -450,5 +408,13 @@ document.addEventListener('click',e=>{
   'relphi:relationship-limit-changed',
   'relphi:relationship-limit-applied'
 ].forEach(eventName=>window.addEventListener(eventName,()=>{pending=null}));
+// Read-only rendering helpers for paginated PDF, keeping Tarot and aspect geometry
+// in the existing Relationships export owner.
+window.RelphiRelationshipExportVisual=Object.freeze({
+  visibleRows,summary,name,context,present,
+  visual:row=>{install();return visual(row)},
+  ensureImages:load,
+  waitImgs
+});
 load().catch(()=>{});
 })();

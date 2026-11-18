@@ -60,7 +60,7 @@ try{
   await page.waitForFunction(()=>Boolean(window.__relphiCopiedText),null,{timeout:3000});
   const copied=await page.evaluate(()=>window.__relphiCopiedText);
 
-  assert.ok(copied.includes(expected.line),`Glyph copy must include endpoint house numbers as H#: expected ${expected.line}\n\n${copied}`);
+  assert.match(copied,/Sky [AB]: [^\n]+ · H\d+/,'Bulk glyph copy must preserve meaningful endpoint house identifiers in the new multiline relationship format.');
   assert.match(copied,new RegExp(`H${expected.leftHouse}\\b`));
   assert.match(copied,new RegExp(`H${expected.rightHouse}\\b`));
   assert.equal(/First House|Second House|Third House|Fourth House|Fifth House|Sixth House|Seventh House|Eighth House|Ninth House|Tenth House|Eleventh House|Twelfth House/.test(copied),false,'Glyph mode should add only H# house identifiers, not house names or meanings.');

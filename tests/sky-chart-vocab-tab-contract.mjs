@@ -179,7 +179,7 @@ assert.match(relationshipLimit,/const PRESETS=Object\.freeze\(\[5,10,20,50\]\)/,
 assert.match(relationshipLimit,/\[\['all','Max'\],\.\.\.PRESETS/,'Max must be the visible default option for the uncapped state');
 assert.doesNotMatch(relationshipLimit,/sky-relationship-limit-label|label\.textContent='Max'/,'Max must not be rendered as a separate heading label');
 assert.match(relationshipLimit,/\['custom','Custom…'\]/,'Result Limit must expose Custom as a preset-list choice');
-assert.match(relationshipLimit,/input\.type='number'[\s\S]*input\.min='1'/,'Custom Max must accept positive cardinal numbers');
+assert.match(relationshipLimit,/input\.type='text'[\s\S]*input\.inputMode='numeric'[\s\S]*input\.pattern='\[1-9\]\[0-9\]\*'/,'Custom Max must accept positive cardinal numbers without browser coercion');
 assert.match(relationshipLimit,/function ensureHeadingActions\(\)/,'Result Limit must live in the Relationships heading action cluster rather than the filter grid');
 assert.match(relationshipLimit,/const actions=ensureHeadingActions\(\)/,'The Limit control must mount through the heading action owner');
 assert.match(relationshipLimit,/count\.dataset\.matchCount=next/,'The Relationships header must store the pre-cap qualifying count in dedicated match state');

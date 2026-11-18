@@ -12,7 +12,7 @@ const VIEW_KEY='relphiSkyVocabViewV1';
 const FILTER_KEY='relphiSkyVocabFilterV1';
 const SCOPE_FILTER_KEY='relphiSkyVocabScopeFilterV1';
 const GROUP_OPEN_KEY='relphiSkyVocabGroupOpenV1';
-const SIGNS=['Aries','Taurus','Gemini','Cancer','Leo','Virgo','Libra','Scorpio','Sagittarius','Capricorn','Aquarius','Pisces'];
+const SIGNS=window.RelphiTermDefinitions.SIGNS;
 const SIGN_COLORS=['#e53935','#f06b32','#f39a2e','#f5be3d','#f1dc43','#a9cf46','#43a85b','#2ca69b','#3285c7','#5961c8','#8c4fb4','#bd438e'];
 const SIGN_RULERS=['Mars','Venus','Mercury','Moon','Sun','Mercury','Venus','Mars','Jupiter','Saturn','Saturn','Jupiter'];
 const SIGN_POLARITIES=[[0,6],[1,7],[2,8],[3,9],[4,10],[5,11]];
@@ -20,90 +20,12 @@ const HOUSE_POLARITIES=[[1,7],[2,8],[3,9],[4,10],[5,11],[6,12]];
 const SIGN_FIGURES=['Lamb','Bull','Twins','Crab','Lion','Maiden','Scales','Scorpion','Bow','Kid','Bucket','Fishes'];
 const HOUSE_COLORS=['#e53935','#f06b32','#f39a2e','#f5be3d','#f1dc43','#a9cf46','#43a85b','#2ca69b','#3285c7','#5961c8','#8c4fb4','#bd438e'];
 const HOUSE_MENU_DESCRIPTIONS=['','self, body, approach','money, possessions, worth','communication, siblings, local life','home, family, roots','pleasure, creativity, children','work, health, routine','partners, bonds, agreements','loss, death, other people’s resources','travel, belief, higher learning','career, reputation, public life','friends, groups, hopes','solitude, sorrow, hidden things'];
-const SIGN_REFERENTS={
-  Aries:'initiative, directness, courage, impulse, and beginning',
-  Taurus:'embodiment, value, pleasure, endurance, and material continuity',
-  Gemini:'writing, speech, learning, information exchange, and interpretation',
-  Cancer:'care, protection, memory, belonging, and attachment',
-  Leo:'radiance, creativity, pride, loyalty, and recognition',
-  Virgo:'discernment, service, refinement, repair, and usefulness',
-  Libra:'relationship, balance, fairness, dialogue, and mutual recognition',
-  Scorpio:'intensity, secrecy, survival, bonding, and emotional truth',
-  Sagittarius:'the search for meaning, greater aspirations, worldview, and the bigger picture',
-  Capricorn:'structure, responsibility, endurance, mastery, and worldly form',
-  Aquarius:'systems, reform, collective intelligence, detachment, and future orientation',
-  Pisces:'surrender, imagination, compassion, permeability, and release'
-};
-const HOUSE_NAMES=['','First House','Second House','Third House','Fourth House','Fifth House','Sixth House','Seventh House','Eighth House','Ninth House','Tenth House','Eleventh House','Twelfth House'];
-const HOUSE_REFERENTS=['',
-  'self, embodiment, appearance, approach, and the immediate way life is entered',
-  'resources, possessions, money, personal values, and what is held as one’s own',
-  'communication, learning, siblings, neighbors, short journeys, and the local environment',
-  'home, roots, family, ancestry, privacy, and the foundations of life',
-  'creativity, pleasure, romance, children, play, and personal self-expression',
-  'work, service, routines, health practices, maintenance, and practical obligations',
-  'partnership, contracts, one-to-one relationship, and encounters with the other',
-  'shared resources, intimacy, debt, inheritance, vulnerability, and transformation',
-  'worldview, religion, philosophy, higher learning, long journeys, and the search for meaning',
-  'vocation, public standing, reputation, authority, achievement, and visible responsibility',
-  'friends, networks, groups, alliances, hopes, and participation in a larger collective',
-  'retreat, hidden processes, solitude, confinement, surrender, spirituality, and closure'
-];
-const PLACEMENT_REFERENTS={
-  sun:'identity',
-  moon:'feelings and emotional needs',
-  mercury:'thought and communication',
-  venus:'values, affection, attraction, and relating',
-  mars:'drive, assertion, conflict, and action',
-  jupiter:'growth, meaning, opportunity, and expansion',
-  saturn:'structure, limits, responsibility, and time',
-  uranus:'disruption',
-  neptune:'imagination, ideals, permeability, and surrender',
-  pluto:'power, depth, elimination, and transformation',
-  chiron:'wound',
-  asc:'immediate presentation and the way life is entered',
-  dsc:'partnership and encounters with the other',
-  mc:'public visibility',
-  ic:'foundation for home and family',
-  'north-node':'growth through unfamiliar experience',
-  'south-node':'familiar and inherited patterns',
-  lilith:'instinctive autonomy and refusal',
-  'asteroid-lilith':'equality',
-  'part-of-fortune':'fortune and openings',
-  vertex:'consequential encounters',
-  'anti-vertex':'what becomes accessible through the back door',
-  child:'children',
-  hidalgo:'independence',
-  victoria:'victory',
-  daphne:'self-preservation through transformation',
-  vesta:'devotion'
-};
-const ASPECT_NAMES={
-  conjunction:'Conjunction',
-  'semi-sextile':'Semi-Sextile',
-  octile:'Octile',
-  sextile:'Sextile',
-  quintile:'Quintile',
-  square:'Square',
-  trine:'Trine',
-  'tri-octile':'Tri-Octile',
-  'bi-quintile':'Bi-Quintile',
-  quincunx:'Quincunx',
-  opposition:'Opposition'
-};
-const ASPECT_REFERENTS={
-  conjunction:'union',
-  'semi-sextile':'accommodation',
-  octile:'focused friction',
-  sextile:'cooperative opening',
-  quintile:'creative pattern-making',
-  square:'activating pressure',
-  trine:'low-resistance flow',
-  'tri-octile':'accumulated friction',
-  'bi-quintile':'refined creative pattern-making',
-  quincunx:'continuing adjustment',
-  opposition:'polarity'
-};
+const SIGN_REFERENTS=window.RelphiTermDefinitions.SIGN_REFERENTS;
+const HOUSE_NAMES=window.RelphiTermDefinitions.HOUSE_NAMES;
+const HOUSE_REFERENTS=window.RelphiTermDefinitions.HOUSE_REFERENTS;
+const PLACEMENT_REFERENTS=window.RelphiTermDefinitions.PLACEMENT_REFERENTS;
+const ASPECT_NAMES=window.RelphiTermDefinitions.ASPECT_NAMES;
+const ASPECT_REFERENTS=window.RelphiTermDefinitions.ASPECT_REFERENTS;
 const ALIASES={
   rising:'asc',ascendant:'asc',ac:'asc',
   descendant:'dsc',dc:'dsc',

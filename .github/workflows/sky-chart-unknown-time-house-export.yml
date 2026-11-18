@@ -11,7 +11,7 @@ on:
       - '.github/workflows/sky-chart-unknown-time-house-export.yml'
 jobs:
   browser-check:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 12
     steps:
       - uses: actions/checkout@v4

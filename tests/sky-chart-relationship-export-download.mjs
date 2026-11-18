@@ -74,12 +74,12 @@ assert.equal(await preset.inputValue(),'all','Max must be the default uncapped s
 assert.equal(await preset.locator('xpath=..').locator('.sky-relationship-limit-label').count(),0,'Max must not appear as a separate header label beside the selector.');
 await preset.selectOption('custom');
 await limit.waitFor({state:'visible'});
-assert.equal(await limit.getAttribute('type'),'number','Custom Max must use a cardinal-number field.');
-assert.equal(await limit.getAttribute('min'),'1','Custom Max must accept positive cardinal numbers.');
+assert.equal(await limit.getAttribute('type'),'text','Custom Max uses a text field to reject invalid cardinal input rather than coercing it.');
+assert.equal(await limit.getAttribute('inputmode'),'numeric','Custom Max must request the numeric mobile keyboard.');
 await limit.fill('7');
 await limit.press('Enter');
 await page.waitForFunction(()=>document.documentElement.dataset.skyRelationshipLimit==='7');
-assert.equal(await preset.inputValue(),'custom','A non-preset cardinal number must remain represented as Custom.');
+assert.equal(await preset.inputValue(),'7','A committed custom number must become the actual selected value in the shared field.');
 await page.locator('.sky-relationship-copy-button').click();
 assert.match(await page.evaluate(()=>window.__relationshipCopyText),/Max: 7(?:\n|$)/,'A custom limit must export its applied number, not the Custom menu label.');
 await preset.selectOption('all');
@@ -147,7 +147,7 @@ const diagnostics=await page.evaluate(()=>({
   relationshipExportV2:!!window.__relphiRelationshipExportColumnsV2,
   genericExportV5:!!window.__relphiSkyExportV5,
   visibleRows:[...document.querySelectorAll('#skyFoundationRelationshipList>.sky-foundation-relationship-row')].filter(r=>{const s=getComputedStyle(r);return !r.hidden&&s.display!=='none'&&s.visibility!=='hidden'}).length,
-  limit:document.querySelector('[data-relationship-limit]')?.value||'',
+  limit:String(window.RelphiRelationshipLimit?.get?.()||''),
   exportOptions:window.__relphiRelationshipExportOptions||null,
   pendingImages:[...document.querySelectorAll('.rex-sheet img')].filter(i=>!i.complete||!i.naturalWidth).map(i=>i.getAttribute('src')).slice(0,12),
   rexSheet:!!document.querySelector('.rex-sheet')
@@ -160,7 +160,7 @@ assert.equal(diagnostics.rexSheet,false,'Off-screen export sheet should be remov
 assert.equal(diagnostics.relationshipExportV4,true,'Compact Relationships exporter should own the download.');
 assert.equal(diagnostics.limit,'20','Export must run with the active 20-result cap.');
 assert.equal(diagnostics.visibleRows,20,'Export must include only the 20 currently shown relationships.');
-const expectedCols=Math.ceil(diagnostics.visibleRows/16);
+const expectedCols=Math.min(3,Math.max(1,Math.ceil(diagnostics.visibleRows/20)));
 const expectedWidth=24+expectedCols*500+Math.max(0,expectedCols-1)*8;
 const expectedRatio=diagnostics.visibleRows>24?1:1.1;
 assert.equal(diagnostics.exportOptions?.width,expectedWidth,'Relationship export should use the compact 500px column geometry.');

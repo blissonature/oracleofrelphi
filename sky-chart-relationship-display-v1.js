@@ -15,11 +15,10 @@ const STYLE_ID='skyRelationshipDisplayV2Styles';
 let queued=false,portalOwner=null,observer=null,observedRoot=null;
 
 function normalizeState(value){
-  return{
-    glyphs:value?.glyphs!==false,
-    names:value?.names!==false,
-    referents:value?.referents!==false
-  };
+  const state={glyphs:value?.glyphs!==false,names:value?.names!==false,referents:value?.referents!==false};
+  // At least one layer must remain readable; Referents-only is fully valid.
+  if(!state.glyphs&&!state.names&&!state.referents)state.referents=true;
+  return state;
 }
 function legacyState(){
   try{
@@ -152,7 +151,7 @@ function syncControl(state=readState()){
 function positionPortal(){const owner=portalOwner,menu=popover(),head=owner?.querySelector('.sky-relationship-display-head');if(!isOpen(owner)||!menu?.classList.contains('is-portaled')||!head)return;const rect=head.getBoundingClientRect(),margin=12,width=Math.min(280,Math.max(230,window.innerWidth-margin*2)),left=Math.min(window.innerWidth-width-margin,Math.max(margin,rect.left+rect.width/2-width/2)),menuHeight=Math.min(190,window.innerHeight-margin*2),roomBelow=window.innerHeight-rect.bottom-margin,above=roomBelow<menuHeight&&rect.top>roomBelow,top=above?Math.max(margin,rect.top-menuHeight-6):Math.min(window.innerHeight-menuHeight-margin,rect.bottom+6);Object.assign(menu.style,{width:`${width}px`,left:`${left}px`,top:`${Math.max(margin,top)}px`})}
 function open(owner=control()){const menu=owner?.querySelector('.sky-relationship-display-popover')||popover();if(!owner||!menu)return;portalOwner=owner;owner.classList.add('is-open');menu.hidden=false;menu.classList.add('is-portaled');document.body.appendChild(menu);owner.querySelector('[data-relationship-display-value]')?.setAttribute('aria-expanded','true');owner.querySelector('[data-relationship-display-toggle]')?.setAttribute('aria-expanded','true');requestAnimationFrame(()=>{positionPortal();menu.querySelector('[data-shared-display-layer]')?.focus({preventScroll:true})})}
 function close(owner=portalOwner||control(),{focus=false}={}){const menu=popover();if(!owner||!menu)return;menu.hidden=true;menu.classList.remove('is-portaled');menu.removeAttribute('style');owner.appendChild(menu);owner.classList.remove('is-open');owner.querySelector('[data-relationship-display-value]')?.setAttribute('aria-expanded','false');owner.querySelector('[data-relationship-display-toggle]')?.setAttribute('aria-expanded','false');portalOwner=null;if(focus)owner.querySelector('[data-relationship-display-value]')?.focus({preventScroll:true})}
-function chooseLayer(id,checked){const state=readState();state[id]=!!checked;setState(state);syncControl(state)}
+function chooseLayer(id,checked){const state=readState();state[id]=!!checked;setState(state)}
 function createControl(){
   const owner=document.createElement('div');owner.className='sky-relationship-display-control';owner.dataset.relationshipDisplayControl='true';
   const head=document.createElement('div');head.className='sky-relationship-display-head';
@@ -163,8 +162,7 @@ function createControl(){
   const menu=document.createElement('div');menu.id='skyRelationshipDisplayPopover';menu.className='sky-relationship-display-popover';menu.hidden=true;menu.setAttribute('role','dialog');menu.setAttribute('aria-label','Display layers');
   const actions=document.createElement('div');actions.className='sky-relationship-display-actions';
   const all=document.createElement('button');all.type='button';all.textContent='All';all.addEventListener('click',e=>{e.preventDefault();setState({glyphs:true,names:true,referents:true})});
-  const none=document.createElement('button');none.type='button';none.textContent='None';none.addEventListener('click',e=>{e.preventDefault();setState({glyphs:false,names:false,referents:false})});
-  actions.append(all,none);
+  actions.append(all);
   const list=document.createElement('div');list.className='sky-relationship-display-list';
   for(const item of DISPLAY_ITEMS){
     const option=document.createElement('label');option.className='sky-relationship-display-option';
