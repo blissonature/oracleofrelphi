@@ -60,7 +60,14 @@ assert.ok(!copied.includes('\nA↔A\n'),'unselected A↔A must not be exported')
 await page.evaluate(()=>{
   window.__png=null;
   window.htmlToImage={toBlob:async sheet=>{
-    window.__png={summary:sheet.querySelector('.rex-summary')?.textContent||'',title:sheet.querySelector('.rex-title h1')?.textContent||''};
+    window.__png={
+      summary:sheet.querySelector('.rex-summary')?.textContent||'',
+      title:sheet.querySelector('.rex-title h1')?.textContent||'',
+      rows:[...sheet.querySelectorAll('.rex-row .rex-description')].map(n=>n.textContent),
+      definitions:[...sheet.querySelectorAll('.rex-dictionary-group p')].map(n=>n.textContent),
+      dictionaryCount:sheet.querySelectorAll('.rex-dictionary').length,
+      conceptsPerRow:[...sheet.querySelectorAll('.rex-row')].map(n=>n.querySelectorAll('.rex-concepts').length)
+    };
     return new Blob(['image'],{type:'image/png'});
   }};
 });
@@ -70,6 +77,33 @@ const png=await page.evaluate(()=>window.__png);
 assert.ok(png.summary.includes('Aspects: All'),png.summary);
 assert.ok(png.summary.includes('Relationship scopes: A↔B'),png.summary);
 assert.ok(png.summary.includes('Display: Referents'),png.summary);
+assert.equal(png.dictionaryCount,1,'PNG must place one dictionary after the relationship list.');
+assert.ok(png.rows.length>0,'PNG must contain relationship summaries.');
+assert.ok(png.definitions.length>0,'PNG must include referenced definitions.');
+assert.equal(new Set(png.definitions).size,png.definitions.length,'PNG definitions must not repeat.');
+assert.ok(png.conceptsPerRow.every(n=>n===1),'PNG must not add duplicate referent chips per row.');
+assert.ok(png.rows[0].includes('Sky A:')||png.rows[0].includes('Sky B:'),'Referents-only PNG must remain independently readable.');
+assert.ok(!png.rows[0].includes("Sky A's Sun"),'Referents-only must not silently reintroduce placement names.');
+assert.ok(copied.includes('Reference Dictionary\n'),'Text export must use real newlines for its appendix.');
+assert.equal((copied.match(/Reference Dictionary/g)||[]).length,1,'Text must contain exactly one appendix.');
+assert.equal((copied.match(/systems, reform, collective intelligence, detachment, and future orientation/g)||[]).length<=1,true,'Referents must not be repeated inline in full exports.');
+
+// All eight selections except the all-hidden state remain valid. On attempted
+// all-hidden the authoritative owner restores Referents-only.
+await page.evaluate(()=>window.RelphiSkyRelationshipDisplay.setState({glyphs:false,names:false,referents:false}));
+const nonempty=await page.evaluate(()=>window.RelphiSkyRelationshipDisplay.getState());
+assert.deepEqual(nonempty,{glyphs:false,names:false,referents:true});
+assert.equal(await page.locator('#skyRelationshipDisplayPopover .sky-relationship-display-actions button').allTextContents().then(v=>v.includes('None')),false,'None action must not be offered.');
+await page.evaluate(()=>window.RelphiSkyRelationshipDisplay.setState({glyphs:true,names:true,referents:false}));
+await page.locator('.sky-relationship-copy-button').click();
+await page.waitForFunction(()=>window.__copy.includes('Display: Glyphs · Names'));
+const without=await page.evaluate(()=>window.__copy);
+assert.ok(!without.includes('Reference Dictionary'),'No dictionary when Referents are disabled.');
+await page.locator('#skyChartRelationshipsExport').click();
+await page.waitForFunction(()=>window.__png.dictionaryCount===0,{timeout:20000});
+const noReferentPng=await page.evaluate(()=>window.__png);
+assert.equal(noReferentPng.dictionaryCount,0,'PNG must omit the appendix with Referents disabled.');
+
 
 // Real serializer against the actual collapsed-group DOM contract. Decorative
 // summary previews must not enter the text, and every authored sentence gets a
