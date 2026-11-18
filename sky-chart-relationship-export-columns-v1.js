@@ -8,7 +8,8 @@ window.__relphiRelationshipExportColumnsV2=true;
 window.__relphiRelationshipExportColumnsV1=true;
 
 const ID='skyChartRelationshipsExport';
-const ROWS=16;
+const MAX_COLUMNS=3;
+const TARGET_ROWS_PER_COLUMN=20;
 const W=500;
 const GAP=8;
 const PAD=12;
@@ -215,7 +216,7 @@ function install(){
   const s=document.createElement('style');
   s.id='rexStyle';
   s.textContent=`
-    .rex-sheet{box-sizing:border-box;padding:${PAD}px;border:1px solid #ded9d2;border-radius:14px;background:#fffdf8;color:#191613;font-family:system-ui,sans-serif}
+    .rex-sheet{box-sizing:border-box;padding:${PAD}px;border:1px solid #ded9d2;border-radius:14px;background:#fffdf8;color:#191613;font-family:system-ui,sans-serif;text-align:left}
     .rex-title{display:grid;gap:3px;margin-bottom:8px}
     .rex-title h1{margin:0;font:900 20px/1.12 system-ui}
     .rex-title p{margin:0;color:#655d56;font:700 10px/1.25 system-ui}
@@ -228,15 +229,15 @@ function install(){
     .rex-col{display:grid;gap:7px;width:${W}px;min-width:${W}px}
     .rex-row{box-sizing:border-box;width:${W}px!important;min-width:${W}px!important;max-width:${W}px!important;margin:0!important;height:auto!important;overflow:visible!important}
     .rex-row{border:1px solid rgba(31,27,24,.16);border-radius:10px;overflow:hidden;background:#fffdfa}
-    .rex-concepts{display:grid;gap:5px;padding:10px;font:600 11px/1.4 system-ui,sans-serif}
-    .rex-concepts>strong{color:#5a524b;font-size:10px}
+    .rex-concepts{display:grid;gap:7px;padding:13px;font:600 14px/1.5 system-ui,sans-serif;text-align:left}
+    .rex-concepts>strong{color:#5a524b;font-size:12px}
     .rex-description{white-space:pre-line;overflow-wrap:anywhere}
     .rex-time{margin:0;color:#5b524a;font:700 9px/1.25 system-ui}
-    .rex-dictionary{margin-top:16px;padding:14px;border-top:2px solid #ded9d2}
-    .rex-dictionary h2{margin:0 0 10px;font:900 18px/1.3 system-ui}
-    .rex-dictionary-group{margin:0 0 10px}
-    .rex-dictionary-group h3{margin:0 0 4px;font:850 13px/1.3 system-ui}
-    .rex-dictionary-group p{margin:0 0 3px;font:600 11px/1.4 system-ui}
+    .rex-dictionary{box-sizing:border-box;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px 24px;width:100%;max-width:none;margin-top:20px;padding:20px 12px;border-top:2px solid #ded9d2;text-align:left;align-items:start}
+    .rex-dictionary h2{grid-column:1/-1;margin:0;font:900 21px/1.3 system-ui}
+    .rex-dictionary-group{box-sizing:border-box;min-width:0;margin:0;padding:14px;border:1px solid rgba(31,27,24,.14);border-radius:10px;background:#fffdfa;text-align:left}
+    .rex-dictionary-group h3{margin:0 0 10px;font:850 16px/1.35 system-ui}
+    .rex-dictionary-group p{margin:0 0 8px;font:600 13px/1.5 system-ui;overflow-wrap:break-word}
     .rex-visual{display:grid;grid-template-columns:96px minmax(132px,1fr) 96px;align-items:center;justify-content:center;gap:12px;padding:8px 12px 9px;border-top:1px solid rgba(31,27,24,.11);background:linear-gradient(180deg,#fbf8f3,#f8f4ee)}
     .rex-card{display:grid;justify-items:center;gap:3px}
     .rex-card small{font:900 8px/1 system-ui;text-transform:uppercase}
@@ -284,7 +285,10 @@ async function build(){
   const model=window.RelphiRelationshipCopySerializer?.collect?.(rows);
   if(!model||model.items.length!==rows.length)throw Error('Relationship export model unavailable.');
   if(!rows.length)throw Error('No relationships match the current filters.');
-  const cols=Math.ceil(rows.length/ROWS);
+  // Cap sheet width; distributing rows across at most three readable columns
+  // keeps a long export from becoming a panoramic, illegible strip.
+  const cols=Math.min(MAX_COLUMNS,Math.max(1,Math.ceil(rows.length/TARGET_ROWS_PER_COLUMN)));
+  const rowsPerColumn=Math.ceil(rows.length/cols);
   const width=PAD*2+cols*W+(cols-1)*GAP;
   const host=document.createElement('div'),sheet=document.createElement('div');
   Object.assign(host.style,{position:'fixed',left:'-100000px',top:'0',width:width+'px',background:'#fffdf8',zIndex:'-1'});
@@ -307,7 +311,7 @@ async function build(){
     const col=document.createElement('div');
     col.className='rex-col';
     wrap.appendChild(col);
-    for(const item of model.items.slice(c*ROWS,(c+1)*ROWS)){
+    for(const item of model.items.slice(c*rowsPerColumn,(c+1)*rowsPerColumn)){
       const row=item.row,entry=document.createElement('article');
       entry.className='rex-row';
       entry.appendChild(concepts(item,row));
