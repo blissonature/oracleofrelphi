@@ -7,7 +7,7 @@ const placement=(name,longitude)=>{const value=((longitude%360)+360)%360,sign=Ma
 function sky(name,offset){
   const asc=(168.38+offset)%360;
   const cusps=Array.from({length:12},(_,index)=>(asc+index*30)%360);
-  const raw={Sun:195,Moon:118.42,Mercury:206.17,Venus:169.88,Mars:167.87,Jupiter:307.15,Saturn:235.57,Uranus:254.85,Neptune:271.02,Pluto:213.88,Ascendant:168.38,Descendant:348.38,Midheaven:76.28,IC:256.28,Chiron:74.48,'North Node':40.3,'South Node':220.3,Lilith:44.23,'Part of Fortune':244.97,Vertex:330.33};
+  const raw={Sun:195,Moon:118.42,Mercury:206.17,Venus:169.88,Mars:167.87,Jupiter:307.15,Saturn:235.57,Uranus:254.85,Neptune:271.02,Pluto:213.88,Ascendant:168.38,Descendant:348.38,Midheaven:76.28,IC:256.28,Chiron:74.48,'North Node':40.3,'South Node':220.3,Lilith:44.23,'Part of Fortune':244.97,Vertex:330.33,'Anti-Vertex':150.33};
   return{name,houseSystem:'equal-house',houseCusps:cusps,calcProfile:{houseCusps:cusps,houseSystem:'equal-house'},placements:Object.fromEntries(Object.entries(raw).map(([key,value])=>[key,placement(key,value+offset)]))};
 }
 const browser=await chromium.launch({headless:true});
@@ -48,6 +48,26 @@ async function inspect(width,height,suffix){
       x1:Number(line.getAttribute('x1')),y1:Number(line.getAttribute('y1')),
       x2:Number(line.getAttribute('x2')),y2:Number(line.getAttribute('y2'))
     }));
+    // Each comparison wheel Vx/AVx bubble must be the exact approved Master
+    // Glyph List artwork, enlarged as a whole instead of only its circle.
+    const canonicalVertexSource=await fetch('assets/planet-glyphs/anti-vertex.svg?v=vertex-canon').then(r=>r.text());
+    const canonicalVertexPath=new DOMParser().parseFromString(canonicalVertexSource,'image/svg+xml').querySelector('path')?.getAttribute('d');
+    const vertexBubbles=['A','B'].flatMap(sky=>['vertex','anti-vertex'].map(id=>{
+      const host=document.querySelector(`#skyFoundationWheelMount>svg.sky-foundation-wheel [data-layer="placements"]>g[data-sky="${sky}"][data-placement="${id}"]`);
+      const bubble=host?.querySelector(':scope>.relphi-glyph-bubble');
+      const art=bubble?.querySelector('.relphi-canonical-glyph');
+      const scale=Number(bubble?.transform?.baseVal?.consolidate?.()?.matrix?.a);
+      const radius=Number(bubble?.querySelector(':scope>circle')?.getAttribute('r'));
+      const entry=window.RelphiGlyphRegistry?.get(id);
+      const expectedRenderedRadius=Number(window.RelphiSkyWheelSpec.comparison.placementRadius)*(window.matchMedia('(max-width:620px)').matches?1.5:1);
+      return{sky,id,registryId:entry?.id,asset:entry?.asset||null,fitMode:entry?.fitMode,
+        hostFound:!!host,masterId:bubble?.dataset.glyphId,artId:art?.dataset.canonicalGlyphId,
+        glyphCount:bubble?.querySelectorAll('.relphi-canonical-glyph')?.length||0,
+        letter:art?.querySelector('text')?.textContent||'',
+        path:art?.querySelector('path')?.getAttribute('d')||'',
+        radius,scale,expectedRenderedRadius,
+        canonicalFit:art?.dataset.relphiAtomicCommit};
+    }));
     const placementColors=Array.from(document.querySelectorAll('[data-layer="placements"] > [data-sky]')).map(host=>{
       const expected=host.dataset.sky==='A'?'rgb(201, 33, 30)':'rgb(36, 98, 208)';
       const art=host.querySelector('.relphi-canonical-glyph');
@@ -77,7 +97,7 @@ async function inspect(width,height,suffix){
       angleCount:document.querySelectorAll('[data-angle-axis="true"]').length,
       renderedSkyCount:new Set(Array.from(document.querySelectorAll('[data-layer="placements"] > [data-sky]')).map(host=>host.dataset.sky).filter(Boolean)).size,
       diagnostics:document.querySelectorAll('[data-angle-collision-error],[data-canonical-glyph-error]').length,
-      placementColors
+      placementColors,vertexBubbles,canonicalVertexPath
     };
   });
 
@@ -99,6 +119,24 @@ async function inspect(width,height,suffix){
   assert.ok(state.placementColors.length>0);
   assert.ok(state.placementColors.every(item=>item.painted>0));
   assert.deepEqual(state.placementColors.filter(item=>item.wrong),[]);
+  assert.equal(state.vertexBubbles.length,4,'Both Vx and AVx must be represented in each comparison sky');
+  for(const item of state.vertexBubbles){
+    assert.ok(item.hostFound,'Missing comparison-wheel '+item.sky+':'+item.id);
+    assert.equal(item.registryId,item.id);
+    assert.equal(item.masterId,item.id,'Bubble must come from canonical glyph registry');
+    assert.equal(item.artId,item.id,'Glyph inside bubble must come from canonical component');
+    assert.equal(item.glyphCount,1,'Do not layer duplicate glyph renderers');
+    assert.equal(item.canonicalFit,'true','Approved glyph must render successfully');
+    assert.equal(item.radius,19,'Start from the exact 19-unit Master Glyph List bubble');
+    assert.ok(Math.abs(item.radius*item.scale-item.expectedRenderedRadius)<0.01,'Scale the entire approved bubble to the intended comparison size');
+    if(item.id==='vertex'){
+      assert.equal(item.letter,'Vx','Preserve approved registry letter glyph for Vertex');
+      assert.equal(item.path,'','Vertex must not acquire unauthorized alternate SVG geometry');
+    }else{
+      assert.equal(item.letter,'','Anti-Vertex must use the approved SVG, not AVx fallback text');
+      assert.equal(item.path,state.canonicalVertexPath,'Anti-Vertex must use the unmodified canonical SVG path');
+    }
+  }
   assert.equal(state.diagnostics,0);
   assert.deepEqual(errors,[]);
   await page.screenshot({path:`sky-chart-single-canon-${suffix}.png`,fullPage:true,animations:'disabled'});
