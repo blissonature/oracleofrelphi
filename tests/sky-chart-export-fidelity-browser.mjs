@@ -66,7 +66,11 @@ await page.evaluate(()=>{
       rows:[...sheet.querySelectorAll('.rex-row .rex-description')].map(n=>n.textContent),
       definitions:[...sheet.querySelectorAll('.rex-dictionary-group p')].map(n=>n.textContent),
       dictionaryCount:sheet.querySelectorAll('.rex-dictionary').length,
-      conceptsPerRow:[...sheet.querySelectorAll('.rex-row')].map(n=>n.querySelectorAll('.rex-concepts').length)
+      conceptsPerRow:[...sheet.querySelectorAll('.rex-row')].map(n=>n.querySelectorAll('.rex-concepts').length),
+      width:sheet.getBoundingClientRect().width,
+      dictionaryWidth:sheet.querySelector('.rex-dictionary')?.getBoundingClientRect().width||0,
+      dictionaryColumns:sheet.querySelector('.rex-dictionary')?getComputedStyle(sheet.querySelector('.rex-dictionary')).gridTemplateColumns.split(' ').filter(Boolean).length:0,
+      rowTextSize:sheet.querySelector('.rex-concepts')?parseFloat(getComputedStyle(sheet.querySelector('.rex-concepts')).fontSize):0
     };
     return new Blob(['image'],{type:'image/png'});
   }};
@@ -78,6 +82,9 @@ assert.ok(png.summary.includes('Aspects: All'),png.summary);
 assert.ok(png.summary.includes('Relationship scopes: A↔B'),png.summary);
 assert.ok(png.summary.includes('Display: Referents'),png.summary);
 assert.equal(png.dictionaryCount,1,'PNG must place one dictionary after the relationship list.');
+assert.ok(png.dictionaryWidth>=png.width-30,'Dictionary must use the sheet width instead of shrinking into a narrow center column.');
+assert.equal(png.dictionaryColumns,2,'PNG reference dictionary must use two readable columns.');
+assert.ok(png.rowTextSize>=14,'PNG relationship text must remain at legible size.');
 assert.ok(png.rows.length>0,'PNG must contain relationship summaries.');
 assert.ok(png.definitions.length>0,'PNG must include referenced definitions.');
 assert.equal(new Set(png.definitions).size,png.definitions.length,'PNG definitions must not repeat.');
