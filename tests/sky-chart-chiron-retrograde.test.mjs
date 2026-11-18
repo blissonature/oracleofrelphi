@@ -81,8 +81,9 @@ test('Rx is reachable from every Sky Chart output surface',()=>{
   assert.match(expanded,/RelphiSkyRetrograde\?\.forPlacement/);
   assert.match(compact,/RelphiSkyRetrograde\?\.forPlacement/);
   assert.match(semantic,/RelphiSkyRetrograde\?\.forPlacement/);
-  assert.match(imageExport,/RelphiSkyRetrograde\?\.forPlacement/);
-  assert.ok(html.includes('relphi-chiron-ephemeris-v1.js?v=7'));
+  assert.match(imageExport,/RelphiRelationshipCopySerializer\?\.collect\?\.\(rows\)/,'The PNG must read the shared Rx-aware relationship export model');
+  assert.match(semantic,/ep\.retrograde/,'Shared relationship serialization must retain each endpoint’s Rx flag');
+  assert.ok(/relphi-chiron-ephemeris-v1\.js\?v=\d+/.test(html));
   assert.ok(/sky-chart-foundation-v2\.js\?v=\d+/.test(html));
   assert.ok(/sky-chart-relationship-export-columns-v1\.js\?v=\d+/.test(html));
 });
