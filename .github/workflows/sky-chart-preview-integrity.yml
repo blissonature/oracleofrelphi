@@ -7,6 +7,7 @@ on:
       - 'sky-chart-foundation-v1.css'
       - 'sky-chart.html'
       - 'sky-chart-inline-relationship-copy-v1.js'
+      - 'sky-chart-term-definitions-v1.js'
       - 'sky-chart-relationship-scope-sections-v1.js'
       - 'sky-chart-relationship-export-columns-v1.js'
       - 'sky-chart-relationship-display-v1.js'
