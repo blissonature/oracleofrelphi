@@ -403,7 +403,7 @@ document.addEventListener('click',e=>{
 // Read-only rendering helpers for paginated PDF, keeping Tarot and aspect geometry
 // in the existing Relationships export owner.
 window.RelphiRelationshipExportVisual=Object.freeze({
-  visibleRows,summary,name,context,
+  visibleRows,summary,name,context,present,
   visual:row=>{install();return visual(row)},
   ensureImages:load,
   waitImgs
