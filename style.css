@@ -14202,7 +14202,7 @@ html body .or-card-grid.tarot-result-grid .or-card-badges.relphi-sticker-row {
   max-width: 1.05rem !important;
   max-height: calc(100% - .55rem) !important;
   overflow: hidden !important;
-  z-index: 96 !important;
+  z-index: 5 !important;
 }
 html body .or-card-grid.tarot-result-grid .relphi-filter-chip {
   width: 1.05rem !important;
@@ -15089,7 +15089,9 @@ html body #browsePanel .or-card-grid.tarot-result-grid .or-card:focus-within .or
   opacity: 1 !important;
   transform: none !important;
   pointer-events: auto !important;
-  z-index: 120 !important;
+  /* The visible description still covers the card, but cannot occlude the
+     independently interactive glyph lane (85) during the hover transition. */
+  z-index: 70 !important;
 }
 html body #browsePanel .or-card-grid.tarot-result-grid .or-card-layer.relphi-info-layer .or-layer-head {
   margin: 0 !important;
