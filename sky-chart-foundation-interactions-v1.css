@@ -370,9 +370,7 @@
     row-gap:9px;
     min-height:0;
     padding:8px 10px;
-  }
-  .sky-foundation-relationships-heading>h2,
-  .sky-foundation-relationships-heading>.sky-relationship-vocab-tabs{
+  }.sky-foundation-relationships-heading>h2{
     grid-column:1;
     grid-row:1;
     align-self:center;
