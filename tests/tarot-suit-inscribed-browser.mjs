@@ -43,7 +43,7 @@ try{
 
   await page.goto(BASE+'tarot.html',{waitUntil:'domcontentloaded'});
   await page.locator('#showAllCards').click();
-  await page.waitForSelector('#cardList .or-chip--suit img.or-suit-inscribed-master',{timeout:25000});
+  await page.waitForSelector('#cardList .or-chip--suit img.or-suit-inscribed-master',{state:'attached',timeout:25000});
   const summary=await page.evaluate(()=>{
     const chips=[...document.querySelectorAll('#cardList .or-chip--suit')];
     const bySuit={};
