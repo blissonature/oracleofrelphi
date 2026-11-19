@@ -67,7 +67,16 @@ try{
   const wands=page.locator('#cardList .or-chip--suit[data-filter="Wands"]').first();
   await wands.scrollIntoViewIfNeeded();
   await wands.click({force:true});
-  await page.waitForSelector('#cardList [data-remove-filter="Wands"]',{timeout:12000});
+  const filterDiagnostic=await page.evaluate(()=>({
+    remove:[...document.querySelectorAll('#cardList [data-remove-filter]')].map(x=>({value:x.dataset.removeFilter,hidden:x.hidden,display:getComputedStyle(x).display})),
+    clear:[...document.querySelectorAll('#cardList [data-clear-filters]')].map(x=>({hidden:x.hidden,display:getComputedStyle(x).display})),
+    resultCount:document.querySelectorAll('#cardList .or-card').length,
+    browseHidden:document.getElementById('browsePanel')?.hidden,
+    summary:document.getElementById('resultInlineCount')?.textContent
+  }));
+  console.log('FILTER_DIAGNOSTIC',JSON.stringify(filterDiagnostic));
+  assert.ok(filterDiagnostic.remove.some(x=>x.value==='Wands'),
+    'Wands filter must be registered after clicking its real suit chip: '+JSON.stringify(filterDiagnostic));
   const visible=await page.locator('#cardList .or-card[data-id]').count();
   assert.ok(visible>0&&visible<summary.total,'Suit filter should narrow cards, not break interaction');
   await page.locator('#cardList [data-clear-filters]').click();
