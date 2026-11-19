@@ -23,6 +23,8 @@ try{
       allPresent:!!all,boardPresent:!!board,allVisible:all?getComputedStyle(all).display:null,
       appType:typeof app,cardLength:window.TAROT_CARDS?.length??window.tarotCards?.length??null,
       browseHidden:root?.hidden,boardHidden:document.querySelector('#shortListPanel')?.hidden,
+      boardLabel:board?.textContent.trim(),boardExpanded:board?.getAttribute('aria-expanded'),
+      boardDrawerOpen:!!document.querySelector('#shortListPanel details.card-row-drawing-board[open]'),
       scriptUrls:[...document.scripts].filter(s=>s.src).map(s=>s.src).slice(-22),
       previewMarker:window.__relphiTarotPreviewDocument,previewPending:window.__relphiTarotPreviewPending,
       bodySnippet:document.body?.innerText?.slice(0,180)};
@@ -44,6 +46,9 @@ try{
  }
  const end=await status();
 assert.equal(end.boardHidden,false,'Open Drawing Board must reveal its panel on '+width);
+ assert.match(end.boardLabel||'',/Close Drawing Board/,'Drawing Board button must switch to Close on '+width);
+ assert.equal(end.boardExpanded,'true','Drawing Board button must report expanded on '+width);
+ assert.equal(end.boardDrawerOpen,true,'Drawing Board content must actually open on '+width);
 assert.ok((await page.locator('#shortListPanel').count())===1,'Drawing Board must mount on '+width);
  assert.deepEqual(errors,[],'Hosted preview must initialize without page exceptions on '+width);
  console.log('PASS',width,'Show All Cards, Open Drawing Board, deck rendering, and history state');
