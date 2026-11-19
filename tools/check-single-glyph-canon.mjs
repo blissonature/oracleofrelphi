@@ -195,8 +195,9 @@ if (fs.existsSync(planetDir) && registry) {
 
 if (fs.existsSync(componentPath)) {
   const component = text(componentPath);
-  if (!component.includes("if (entry.fitMode === 'static-master') return true;")) fail('Static masters are no longer protected from runtime fitting.');
-  if (!component.includes("if (entry.fitMode === 'static-master') return commitCanonical(parent, staticMaster(")) fail('Static-master draw path is missing.');
+  if (!component.includes("const source=window.RelphiInscribedGlyphMastersV1?.[entry.id]")) fail('Shared glyph component is not using preserved inscribed SVG masters.');
+  if (!component.includes("const root=parent.ownerDocument.importNode(templateFor(entry),true)")) fail('Complete approved SVG artwork is not imported by the sole component.');
+  if (/createElementNS|getBBox|new DOMParser\(\).*circle|svg\(['"]circle|textGlyph\(|function fit\(/.test(component)) fail('Procedural glyph construction or runtime refitting returned.');
   if (component.includes("entry.id === 'lilith'")) fail('Lilith-specific component logic returned; Lilith must use the shared static-master path.');
   if (component.includes("entry.fitMode === 'lilith'")) fail('Lilith-specific fitting returned; Lilith must not have a bespoke fit mode.');
   if (component.includes("entry.id === 'part-of-fortune'")) fail('Part of Fortune-specific component logic returned; it must use the shared static-master path.');
@@ -214,7 +215,8 @@ if (fs.existsSync(navloaderPath)) {
   const nav = text(navloaderPath);
   for (const snippet of [
     "appendScript('relphi-glyph-registry-v1.js?v=30'",
-    "appendScript('relphi-glyph-component-v1.js?v=33'",
+    "appendScript('relphi-inscribed-glyph-masters-v1.js?v=1'",
+    "appendScript('relphi-glyph-component-v1.js?v=34'",
     "appendScript('relphi-glyph-source-integrity-v1.js?v=2'",
     "appendScript('relphi-inline-glyph-consumer-v1.js?v=3'",
     "appendScript('astrology-foundations-canonical-glyphs-v1.js?v=2'"
@@ -236,4 +238,4 @@ if (failures.length) {
 }
 
 console.log('Single glyph canon check passed.');
-console.log('One registry, one component, registry-only asset addressing, one relationship glyph painter, shared createBubble consumers, atomic relationship glyph ownership, shared static-master treatment, approved angle treatments, no unregistered planet SVGs, and no known competing production source paths.');
+console.log('One registry, one component, registry-only asset addressing, one relationship glyph painter, shared createBubble consumers, atomic relationship glyph ownership, approved complete static SVG treatment, approved angle treatments, no unregistered planet SVGs, and no known competing production source paths.');
