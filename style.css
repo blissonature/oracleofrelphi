@@ -3104,12 +3104,15 @@ body:has(.suggested-questions) main {
   border: 0;
   background: transparent;
   --relphi-filter-chip-shadow: none;
+  --relphi-filter-chip-border-width: 0px;
+  --relphi-suit-artboard-size: 2.11rem;
 }
+.or-card-grid.tarot-result-grid .or-chip--suit { --relphi-suit-artboard-size: 1.75rem; }
 .or-chip--suit > .or-suit-inscribed-master {
   display: block;
-  width: 2.11rem;
-  height: 2.11rem;
-  min-width: 2.11rem;
+  width: var(--relphi-suit-artboard-size);
+  height: var(--relphi-suit-artboard-size);
+  min-width: var(--relphi-suit-artboard-size);
   max-width: none;
   max-height: none;
   flex: 0 0 auto;
@@ -8680,8 +8683,8 @@ textarea::placeholder {
 [class*="glyph"] .or-chip {
   opacity: 1 !important;
 }
-.or-card-badges .or-chip,
-.relphi-sticker-row .or-chip,
+.or-card-badges .or-chip:not(.or-chip--suit),
+.relphi-sticker-row .or-chip:not(.or-chip--suit),
 .glyph-bubble,
 [class*="glyph-bubble"] {
   background-color: rgba(255,255,255,1) !important;
@@ -14207,13 +14210,13 @@ html body .or-card-grid.tarot-result-grid .relphi-filter-chip {
   height: 1.05rem !important;
   min-height: 1.05rem !important;
   padding: 0 !important;
-  border-width: 1px !important;
+  border-width: var(--relphi-filter-chip-border-width, 1px) !important;
   border-radius: 999px !important;
   font-size: .62rem !important;
   line-height: 1 !important;
   font-weight: 950 !important;
   letter-spacing: 0 !important;
-  box-shadow: 0 1px 4px rgba(0,0,0,.16) !important;
+  box-shadow: var(--relphi-filter-chip-shadow, 0 1px 4px rgba(0,0,0,.16)) !important;
 }
 html body .or-card-grid.tarot-result-grid .relphi-filter-chip.or-chip--uhn,
 html body .or-card-grid.tarot-result-grid .relphi-filter-chip[title*="Universal Human Needs"] {
