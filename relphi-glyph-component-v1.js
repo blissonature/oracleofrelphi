@@ -52,7 +52,7 @@
     return composed.ready;
   }
   function recolor(root,color){root.style.color=color;}
-  window.RelphiGlyphComponent=Object.freeze({
+  window.RelphiGlyphComponent = Object.freeze({
     draw,createBubble,recolor,
     canonicalBubbleRadius:MASTER_RADIUS,
     canonicalBubblePresentation:'uniform-master-scale',
