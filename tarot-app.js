@@ -3885,13 +3885,20 @@
     if (state.suppressHistory) return;
     const snapshot = historySnapshot();
     const hash = snapshot.mode === 'idle' ? 'tarot' : 'tarot-' + snapshot.mode + (snapshot.query ? '-' + slug(snapshot.query) : '');
-    if (isDedicatedSkyChartPage()) history.replaceState(snapshot, '', location.pathname + location.search + '#' + hash);
-    else history.pushState(snapshot, '', '#' + hash);
+    // The Tarot exact-preview loader uses an external asset base. Resolve
+    // navigation against the document URL, never against document.baseURI:
+    // History API entries must remain on the actual hosting origin.
+    const destination = new URL(location.href);
+    destination.hash = hash;
+    if (isDedicatedSkyChartPage()) history.replaceState(snapshot, '', destination.href);
+    else history.pushState(snapshot, '', destination.href);
   }
   function replaceHistory() {
     const snapshot = historySnapshot();
     const hash = snapshot.mode === 'idle' ? 'tarot' : `tarot-${snapshot.mode}`;
-    history.replaceState(snapshot, '', location.pathname + location.search + '#' + hash);
+    const destination = new URL(location.href);
+    destination.hash = hash;
+    history.replaceState(snapshot, '', destination.href);
   }
   function showPanel(id) {
     ['browsePanel','visibilityPanel','spreadPanel','datePanel','chartPanel','currentSkyPanel'].forEach(panel => setVisible(panel, false));
@@ -10489,7 +10496,9 @@ ${notes || ''}`;
     if (!isDedicatedSkyChartPage()) return false;
     applyHistory({ relphiTarot:true, mode:'chart', query:'' });
     const snapshot = historySnapshot();
-    history.replaceState(snapshot, '', location.pathname + location.search + '#tarot-chart');
+    const destination = new URL(location.href);
+    destination.hash = 'tarot-chart';
+    history.replaceState(snapshot, '', destination.href);
     return true;
   }
 
