@@ -38,6 +38,16 @@ await page.addInitScript(({a,b})=>{
 await page.goto('http://127.0.0.1:4173/sky-chart.html',{waitUntil:'domcontentloaded'});
 await page.waitForSelector('#skyFoundationRoot[aria-busy="false"]',{timeout:20000});
 await page.waitForSelector('#skyFoundationA [data-sky-vocab-view-button="vocab"]');
+const relationshipHeading=page.locator('#skyFoundationRelationships .sky-foundation-relationships-heading');
+await relationshipHeading.locator('h2').waitFor();
+assert.equal(await relationshipHeading.locator('h2').textContent(),'Relationships','Relationships must retain its original heading');
+assert.equal(await page.locator('[data-relationship-vocab-tabs],#skyRelationshipVocabPanel').count(),0,
+  'The unauthorized Relationship Vocab tab and panel must not exist');
+assert.equal(await page.locator('#skyFoundationRelationships .sky-relationship-sort-select').count(),1,
+  'Relationship sorting must remain available');
+assert.equal(await page.locator('#skyFoundationRelationships .sky-relationship-copy-button').count(),1,
+  'Relationship Copy must remain available');
+
 
 // The wheel's corner focus box must show canonical capitalized placement
 // names, not lowercase dataset IDs used internally by the filter controls.
@@ -750,6 +760,15 @@ assert.match(cuspDistribution,/Virgo:\d+\|Libra:\d+/,'Cusp concentration must ex
 const cuspGradient=await cuspStellium.evaluate(node=>getComputedStyle(node).getPropertyValue('--vocab-concentration-signs').trim());
 assert.match(cuspGradient,/%/,'Cusp concentration sign rail must encode proportional percentage stops rather than an even split.');
 
+
+await page.setViewportSize({width:390,height:844});
+await page.waitForTimeout(140);
+assert.equal(await page.locator('#skyFoundationRelationships .sky-foundation-relationships-heading>h2').isVisible(),true,
+  'Mobile Relationships title must remain visible without a Vocab peer tab');
+assert.equal(await page.locator('[data-relationship-vocab-tabs],#skyRelationshipVocabPanel').count(),0,
+  'Mobile must not restore the unauthorized Relationships Vocab');
+assert.equal(await page.locator('#skyFoundationA [data-sky-vocab-view-button="vocab"]').count(),1,
+  'Mobile must retain the authorized placement Vocab tab');
 assert.deepEqual(errors,[],'Opening Vocab and driving its filters from the wheel must not produce page errors.');
 await browser.close();
 console.log('Vocab opens; House, Sign, and Placement wheel selections drive their matching filters; output is one capitalized sentence per line.');
