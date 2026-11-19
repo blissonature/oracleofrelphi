@@ -111,8 +111,8 @@ try{
     {mode:'duration-shortest',field:'transitDurationDays',direction:1,label:'Shortest Duration'},
     {mode:'duration-longest',field:'transitDurationDays',direction:-1,label:'Longest Duration'},
     {mode:'began-most-recently',field:'transitStartedDaysAgo',direction:1,label:'Began Most Recently',scopeAware:true},
-    {mode:'ends-soonest',field:'transitEndsInDays',direction:1,label:'Ends Soonest'},
-    {mode:'ends-last',field:'transitEndsInDays',direction:-1,label:'Ends Last'}
+    {mode:'ends-soonest',field:'transitEndMs',direction:1,label:'Ends Soonest'},
+    {mode:'ends-last',field:'transitEndMs',direction:-1,label:'Ends Last'}
   ];
 
   for(const spec of timingSorts){
@@ -125,6 +125,25 @@ try{
       .map(row=>({id:row.dataset.relationIndex,value:Number(row.dataset[field]),scope:row.dataset.relationshipMode,left:row.dataset.leftPlacement,right:row.dataset.rightPlacement,aspect:row.dataset.aspect}))
       .filter(item=>Number.isFinite(item.value)),spec.field);
     assert.ok(values.length>1,`${spec.label} should time multiple visible rows: ${JSON.stringify(values)}`);
+    if(spec.mode==='ends-last'||spec.mode==='ends-soonest'){
+      // Compare the sort key with the actual multi-pass window shown in the detail tile,
+      // not with a tangent-speed estimate of the first departure.
+      const authoritative=await page.evaluate(()=>{
+        return [...document.querySelectorAll('#skyFoundationRelationshipList>.sky-foundation-relationship-row[data-relation-index]')]
+          .filter(row=>Number.isFinite(Number(row.dataset.transitEndMs)))
+          .slice(0,8)
+          .map(row=>{
+            const timeline=window.RelphiRelationshipTransitMeta?.exportTimingForRow?.(row);
+            return{row:row.dataset.relationIndex,stored:Number(row.dataset.transitEndMs),
+              exported:timeline?.kind==='dynamic'?Number(timeline.endMs):null};
+          });
+      });
+      assert.ok(authoritative.length>=2,'End-date sort should have multiple computed final dates');
+      for(const item of authoritative){
+        assert.ok(Number.isFinite(item.exported)&&Math.abs(item.stored-item.exported)<1000,
+          `Sort key must match displayed final End, not an approximate initial exit: ${JSON.stringify(item)}`);
+      }
+    }
     for(let i=1;i<values.length;i+=1){
       if(spec.scopeAware&&values[i-1].scope!==values[i].scope)continue;
       const previous=values[i-1].value,current=values[i].value;

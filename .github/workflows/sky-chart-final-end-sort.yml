@@ -1,0 +1,33 @@
+name: Sky Chart final End sorting (Chromium)
+on:
+  pull_request:
+    paths:
+      - sky-chart-relationship-sort-v1.js
+      - sky-chart-relationship-timing-fix-v1.js
+      - sky-chart.html
+      - tests/sky-chart-relationship-final-end-browser.mjs
+      - .github/workflows/sky-chart-final-end-sort.yml
+jobs:
+  final-end:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Syntax of sort owner and test
+        run: |
+          node --check sky-chart-relationship-sort-v1.js
+          node --check sky-chart-relationship-timing-fix-v1.js
+          node --check tests/sky-chart-relationship-final-end-browser.mjs
+      - run: npm install --no-save playwright@1.52.0
+      - run: npx playwright install --with-deps chromium
+      - name: Sort final End in desktop and mobile Chromium
+        run: node tests/sky-chart-relationship-final-end-browser.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: final-end-desktop-mobile
+          path: relationship-final-end-*.png
+          if-no-files-found: ignore

@@ -175,12 +175,37 @@ function scheduleSortRefresh(){
   requestAnimationFrame(()=>{sortQueued=false;applySort()});
 }
 function writeTiming(row,timing){
+  if(Number.isFinite(timing?.endMs))row.dataset.transitEndMs=String(timing.endMs);else delete row.dataset.transitEndMs;
   if(Number.isFinite(timing?.durationDays))row.dataset.transitDurationDays=String(timing.durationDays);else delete row.dataset.transitDurationDays;
   if(Number.isFinite(timing?.endsInDays))row.dataset.transitEndsInDays=String(timing.endsInDays);else delete row.dataset.transitEndsInDays;
   if(Number.isFinite(timing?.startedDaysAgo))row.dataset.transitStartedDaysAgo=String(timing.startedDaysAgo);else delete row.dataset.transitStartedDaysAgo;
   scheduleSortRefresh();
 }
-function estimatedTimingForRow(row){const timing=timingForRow(row);writeTiming(row,timing);return timing}
+function estimatedTimingForRow(row){
+  const sortMode=window.RelphiRelationshipSort?.mode?.();
+  let timing=null;
+  if(sortMode==='ends-last'||sortMode==='ends-soonest'){
+    // The end-date controls must use the final end of the same multi-pass
+    // timeline shown in expanded Relationships, not a local speed estimate.
+    const exported=baseApi?.exportTimingForRow?.(row);
+    if(exported?.kind==='dynamic'&&Number.isFinite(exported.endMs)){
+      const center=modelFor(row)?.center;
+      timing={
+        endMs:exported.endMs,
+        durationDays:exported.durationDays,
+        endsInDays:Number.isFinite(center)?(exported.endMs-center)/DAY:null,
+        startedDaysAgo:Number.isFinite(center)?(center-exported.startMs)/DAY:null
+      };
+    }else{
+      const fallback=timingForRow(row);
+      if(fallback)timing={...fallback,endMs:fallback.timeline.endMs};
+    }
+  }else{
+    timing=timingForRow(row);
+  }
+  writeTiming(row,timing);
+  return timing;
+}
 function exportTimingForRow(row){
   const original=baseApi?.exportTimingForRow?.(row);if(original?.kind==='dynamic')return original;
   const timing=timingForRow(row);if(!timing)return original||{kind:'unavailable',reason:'Timing unavailable.'};
@@ -188,7 +213,7 @@ function exportTimingForRow(row){
 }
 function clearDurationCache(){
   cache.clear();baseApi?.clearDurationCache?.();
-  document.querySelectorAll('#skyFoundationRelationshipList .sky-foundation-relationship-row').forEach(row=>{delete row.dataset.transitDurationDays;delete row.dataset.transitEndsInDays;delete row.dataset.transitStartedDaysAgo});
+  document.querySelectorAll('#skyFoundationRelationshipList .sky-foundation-relationship-row').forEach(row=>{delete row.dataset.transitDurationDays;delete row.dataset.transitEndsInDays;delete row.dataset.transitStartedDaysAgo;delete row.dataset.transitEndMs});
 }
 function installApi(){
   const current=window.RelphiRelationshipTransitMeta;if(current?.__timingFixV1)return;

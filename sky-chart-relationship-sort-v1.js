@@ -375,8 +375,9 @@ function compareRows(a,b){
   if(mode===MODES.longest)return compareTiming(a,b,'transitDurationDays',-1);
   if(mode===MODES.shortest)return compareTiming(a,b,'transitDurationDays',1);
   if(mode===MODES.beganMostRecently)return compareTiming(a,b,'transitStartedDaysAgo',1);
-  if(mode===MODES.endsSoonest)return compareTiming(a,b,'transitEndsInDays',1);
-  if(mode===MODES.endsLast)return compareTiming(a,b,'transitEndsInDays',-1);
+  // Compare absolute end instants, not estimates of days remaining from possibly different sky epochs.
+  if(mode===MODES.endsSoonest)return compareTiming(a,b,'transitEndMs',1);
+  if(mode===MODES.endsLast)return compareTiming(a,b,'transitEndMs',-1);
   return compareExact(a,b);
 }
 function currentMode(){return mode}
