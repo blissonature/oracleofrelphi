@@ -77,16 +77,16 @@ try{
   for(const file of htmlFiles){
     const location=join(root,file);
     const original=await readFile(location,'utf8');
-    const search=/<script src="relphi-glyph-component-v1\\.js\\?v=\\d+"><\\/script>/;
+    const search=/<script src="relphi-glyph-component-v1\.js\?v=\d+"><\/script>/;
     if(!search.test(original))throw Error('Expected canonical component script missing: '+file);
-    const replacement='<script src="relphi-inscribed-glyph-masters-v1.js?v=1"></script>\\n'+
+    const replacement='<script src="relphi-inscribed-glyph-masters-v1.js?v=1"></script>\n'+
       '<script src="relphi-glyph-component-v1.js?v=34"></script>';
     await writeFile(location,original.replace(search,replacement),'utf8');
   }
   const navPath=join(root,'navloader.js');
   const nav=await readFile(navPath,'utf8');
-  const oldNav="appendScript('relphi-glyph-component-v1.js?v=33', function () {\\n        appendScript('relphi-glyph-source-integrity-v1.js?v=2', onready);\\n      });";
-  const newNav="appendScript('relphi-inscribed-glyph-masters-v1.js?v=1', function () {\\n        appendScript('relphi-glyph-component-v1.js?v=34', function () {\\n          appendScript('relphi-glyph-source-integrity-v1.js?v=2', onready);\\n        });\\n      });";
+  const oldNav="appendScript('relphi-glyph-component-v1.js?v=33', function () {\n        appendScript('relphi-glyph-source-integrity-v1.js?v=2', onready);\n      });";
+  const newNav="appendScript('relphi-inscribed-glyph-masters-v1.js?v=1', function () {\n        appendScript('relphi-glyph-component-v1.js?v=34', function () {\n          appendScript('relphi-glyph-source-integrity-v1.js?v=2', onready);\n        });\n      });";
   if(!nav.includes(oldNav))throw Error('Canonical navloader owner changed; refusing automated replacement');
   await writeFile(navPath,nav.replace(oldNav,newNav),'utf8');
   // An exact browser-rendering comparison protects the approved optical reference.
