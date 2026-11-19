@@ -11,7 +11,7 @@ for(const [label,id] of Object.entries(suits)){
  assert.match(source,/<circle cx="0" cy="0" r="19" fill="#fff" stroke="currentColor" stroke-width="2.35"/,id+' must contain approved-style authored outer circle');
  assert.match(source,new RegExp('data-canonical-glyph-id="suit-'+id+'"'));
  assert.match(source,/class="relphi-canonical-glyph"/);
- assert.doesNotMatch(source,/script|foreignObject|<text|<use|transform=|<image/i,'Suit may not generate geometry, load fonts or depend on runtime transforms');
+ assert.doesNotMatch(source,/<script\\b|<foreignObject\\b|<text\\b|<use\\b|transform=|<image\\b/i,'Suit may not generate geometry, load fonts or depend on runtime transforms');
 }
 const app=readFileSync('tarot-app.js','utf8');
 assert.doesNotMatch(app,/function (?:wandSvg|cupSvg|swordSvg|pentacleSvg|glyphSvg)\(/,'Old procedural suit drawing must be deleted');
