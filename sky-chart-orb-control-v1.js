@@ -131,6 +131,13 @@
         (line.dataset.bySignOnly==='true'||!Number.isFinite(Number(line.dataset.phaseError))||
           Number(line.dataset.phaseError)<=limit);
       setSvgVisibility(line,eligible);
+      // A wide transparent hit envelope belongs to this same painted aspect.
+      // It is not a separately eligible relationship: when the Focus matrix or
+      // Harmonic Window excludes the source, its envelope must cease hit testing
+      // in the same visibility transaction, not remain an invisible obstruction.
+      const hit=line.nextElementSibling;
+      if(hit?.matches?.('line.sky-foundation-aspect-hit')&&hit.dataset.relationIndex===line.dataset.relationIndex)
+        setSvgVisibility(hit,eligible);
       const row=index?rowsByIndex.get(key):null;
       if(row){line.dataset.harmonicWindow=row.dataset.harmonicWindow||'';line.dataset.harmonicCoherence=row.dataset.harmonicCoherence||''}
     });
