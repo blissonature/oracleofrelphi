@@ -1,0 +1,40 @@
+name: Tarot suit inscribed master acceptance
+on:
+  pull_request:
+    paths:
+      - assets/inscribed-glyphs/suit-review-v1/**
+      - tarot-app.js
+      - tarot.html
+      - style.css
+      - tarot-suit-inscription-review.html
+      - tests/tarot-suit-inscribed-browser.mjs
+      - .github/workflows/tarot-suit-inscribed-acceptance.yml
+jobs:
+  chromium:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check application and test syntax
+        run: |
+          node --check tarot-app.js
+          node --check tests/tarot-suit-inscribed-browser.mjs
+      - name: Install browser harness
+        run: npm install --no-save playwright@1.52.0
+      - name: Confirm installed Chromium-based Chrome
+        run: google-chrome --version
+      - name: Verify suit artboards and actual Tarot filters, desktop and mobile
+        run: |
+          python3 -m http.server 4173 >/tmp/tarot-suit-acceptance.log 2>&1 &
+          node tests/tarot-suit-inscribed-browser.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: tarot-suit-inscribed-desktop-mobile
+          path: |
+            suit-artwork-review-*.png
+            suit-ledger-filter-*.png
+          if-no-files-found: ignore

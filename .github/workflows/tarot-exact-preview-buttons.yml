@@ -1,0 +1,30 @@
+name: Tarot exact preview buttons Chromium
+on:
+  pull_request:
+    paths:
+      - tests/tarot-exact-preview-buttons-browser.mjs
+      - .github/workflows/tarot-exact-preview-buttons.yml
+      - sky-chart-startup-mode-v1.js
+      - tarot.html
+      - tarot-app.js
+jobs:
+  browser:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --no-save playwright@1.52.0
+      - run: google-chrome --version
+      - name: Validate hosted Tarot exact preview buttons
+        env:
+          PREVIEW_REF: ${{ github.event.pull_request.head.sha }}
+        run: node tests/tarot-exact-preview-buttons-browser.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: tarot-hosted-preview-diagnostics
+          path: tarot-preview-diagnostic-*.png
+          if-no-files-found: ignore

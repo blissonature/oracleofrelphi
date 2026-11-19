@@ -696,29 +696,19 @@
     const rws = String(card.rws_rank || '').trim();
     return COURT_RANK_CODES[rws] || COURT_RANK_CODES[thoth] || '';
   }
-  function glyphSvg(label, inner, cls='') {
-    return `<svg class="glyph-svg ${escapeHtml(cls)}" viewBox="0 0 100 100" aria-label="${escapeHtml(label)}" role="img" focusable="false">${inner}</svg>`;
-  }
-  function pentacleSvg(label='Pentacle') {
-    return glyphSvg(label, '<circle cx="50" cy="50" r="42"/><path d="M50 8 L74 82 L12 36 L88 36 L26 82 Z"/>', 'pentacle-svg');
-  }
-  function wandSvg(label='Wands') {
-    return glyphSvg(label, '<path d="M50 12 L50 88"/><path d="M50 14 C39 24 37 36 48 45 C61 34 63 23 50 14 Z"/><path d="M50 50 C62 54 68 65 63 78 C51 73 46 63 50 50 Z"/>', 'wand-svg');
-  }
-  function cupSvg(label='Cups') {
-    return glyphSvg(label, '<path d="M26 22 H74 C72 49 62 61 50 61 C38 61 28 49 26 22 Z"/><path d="M50 61 V78"/><path d="M33 84 H67"/><path d="M28 28 C18 34 19 50 31 54"/><path d="M72 28 C82 34 81 50 69 54"/>', 'cup-svg');
-  }
-  function swordSvg(label='Swords') {
-    return glyphSvg(label, '<path d="M50 8 L58 60 L50 76 L42 60 Z"/><path d="M30 62 H70"/><path d="M50 62 V91"/><path d="M43 91 H57"/>', 'sword-svg');
-  }
+  // Single authoritative suit asset per glyph: complete SVG inscription, including
+  // its existing frame, whitespace and proportions. No per-card path or ring drawing.
+  const SUIT_INSCRIBED_ASSETS = Object.freeze({
+    Wands:'assets/inscribed-glyphs/suit-review-v1/wands.svg',
+    Cups:'assets/inscribed-glyphs/suit-review-v1/cups.svg',
+    Swords:'assets/inscribed-glyphs/suit-review-v1/swords.svg',
+    Pentacles:'assets/inscribed-glyphs/suit-review-v1/pentacles.svg'
+  });
   function suitDisplay(card) { return card?.suit === 'Pentacles' ? 'Pentacles/Disks' : (card?.suit || ''); }
   function suitGlyph(card) {
-    const suit = card?.suit || '';
-    if (suit === 'Wands') return wandSvg('Wands');
-    if (suit === 'Cups') return cupSvg('Cups');
-    if (suit === 'Swords') return swordSvg('Swords');
-    if (suit === 'Pentacles') return pentacleSvg('Pentacles/Disks');
-    return '';
+    const source=SUIT_INSCRIBED_ASSETS[card?.suit];
+    if(!source) return '';
+    return '<img class="or-suit-inscribed-master" src="'+source+'" alt="" aria-hidden="true" decoding="async" draggable="false">';
   }
   function cardGlyphItems(card) {
     const a = card?.astrology || {};
@@ -3895,13 +3885,20 @@
     if (state.suppressHistory) return;
     const snapshot = historySnapshot();
     const hash = snapshot.mode === 'idle' ? 'tarot' : 'tarot-' + snapshot.mode + (snapshot.query ? '-' + slug(snapshot.query) : '');
-    if (isDedicatedSkyChartPage()) history.replaceState(snapshot, '', location.pathname + location.search + '#' + hash);
-    else history.pushState(snapshot, '', '#' + hash);
+    // The Tarot exact-preview loader uses an external asset base. Resolve
+    // navigation against the document URL, never against document.baseURI:
+    // History API entries must remain on the actual hosting origin.
+    const destination = new URL(location.href);
+    destination.hash = hash;
+    if (isDedicatedSkyChartPage()) history.replaceState(snapshot, '', destination.href);
+    else history.pushState(snapshot, '', destination.href);
   }
   function replaceHistory() {
     const snapshot = historySnapshot();
     const hash = snapshot.mode === 'idle' ? 'tarot' : `tarot-${snapshot.mode}`;
-    history.replaceState(snapshot, '', location.pathname + location.search + '#' + hash);
+    const destination = new URL(location.href);
+    destination.hash = hash;
+    history.replaceState(snapshot, '', destination.href);
   }
   function showPanel(id) {
     ['browsePanel','visibilityPanel','spreadPanel','datePanel','chartPanel','currentSkyPanel'].forEach(panel => setVisible(panel, false));
@@ -10499,7 +10496,9 @@ ${notes || ''}`;
     if (!isDedicatedSkyChartPage()) return false;
     applyHistory({ relphiTarot:true, mode:'chart', query:'' });
     const snapshot = historySnapshot();
-    history.replaceState(snapshot, '', location.pathname + location.search + '#tarot-chart');
+    const destination = new URL(location.href);
+    destination.hash = 'tarot-chart';
+    history.replaceState(snapshot, '', destination.href);
     return true;
   }
 

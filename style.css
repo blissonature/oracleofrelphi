@@ -3098,6 +3098,27 @@ body:has(.suggested-questions) main {
   cursor: pointer;
   font-family: inherit;
 }
+/* Suit inscriptions contain the approved-style frame as part of the SVG.
+   The filter button is only the interactive host; it must not draw a second ring. */
+.or-chip.or-chip--suit {
+  border: 0;
+  background: transparent;
+  --relphi-filter-chip-shadow: none;
+  --relphi-filter-chip-border-width: 0px;
+}
+.or-chip--suit > .or-suit-inscribed-master {
+  display: block;
+  /* Complete 64-unit master scaled so its authored 38-unit ring matches the
+     existing interactive chip; no glyph bounds fitting or extra frame. */
+  width: 168.42105263%;
+  height: 168.42105263%;
+  min-width: 168.42105263%;
+  max-width: none;
+  max-height: none;
+  flex: 0 0 auto;
+  pointer-events: none;
+  user-select: none;
+}
 .or-chip:hover,
 .or-chip:focus-visible,
 .tag-row button:hover,
@@ -5208,7 +5229,7 @@ body:has(.suggested-questions) main {
   border-radius: 999px !important;
   font-size: .78rem !important;
   line-height: 1 !important;
-  box-shadow: 0 .18rem .5rem rgba(0,0,0,.13) !important;
+  box-shadow: var(--relphi-filter-chip-shadow, 0 .18rem .5rem rgba(0,0,0,.13)) !important;
 }
 .or-card.tarot-card-surface.relphi-surface--card .or-card-add {
   right: .45rem !important;
@@ -8662,8 +8683,8 @@ textarea::placeholder {
 [class*="glyph"] .or-chip {
   opacity: 1 !important;
 }
-.or-card-badges .or-chip,
-.relphi-sticker-row .or-chip,
+.or-card-badges .or-chip:not(.or-chip--suit),
+.relphi-sticker-row .or-chip:not(.or-chip--suit),
 .glyph-bubble,
 [class*="glyph-bubble"] {
   background-color: rgba(255,255,255,1) !important;
@@ -14189,13 +14210,13 @@ html body .or-card-grid.tarot-result-grid .relphi-filter-chip {
   height: 1.05rem !important;
   min-height: 1.05rem !important;
   padding: 0 !important;
-  border-width: 1px !important;
+  border-width: var(--relphi-filter-chip-border-width, 1px) !important;
   border-radius: 999px !important;
   font-size: .62rem !important;
   line-height: 1 !important;
   font-weight: 950 !important;
   letter-spacing: 0 !important;
-  box-shadow: 0 1px 4px rgba(0,0,0,.16) !important;
+  box-shadow: var(--relphi-filter-chip-shadow, 0 1px 4px rgba(0,0,0,.16)) !important;
 }
 html body .or-card-grid.tarot-result-grid .relphi-filter-chip.or-chip--uhn,
 html body .or-card-grid.tarot-result-grid .relphi-filter-chip[title*="Universal Human Needs"] {
@@ -14671,13 +14692,13 @@ html body .or-card-grid.tarot-result-grid .or-chip.relphi-filter-chip {
   min-height: .42rem !important;
   max-height: .42rem !important;
   padding: 0 !important;
-  border-width: 1px !important;
+  border-width: var(--relphi-filter-chip-border-width, 1px) !important;
   font-size: .23rem !important;
   line-height: 1 !important;
   opacity: .78 !important;
   transform: scale(.86) !important;
   transform-origin: center center !important;
-  box-shadow: 0 .04rem .10rem rgba(17,17,17,.12) !important;
+  box-shadow: var(--relphi-filter-chip-shadow, 0 .04rem .10rem rgba(17,17,17,.12)) !important;
 }
 html body .or-card-grid.tarot-result-grid .relphi-filter-chip.or-chip--hebrew,
 html body .or-card-grid.tarot-result-grid .or-chip.relphi-filter-chip.or-chip--hebrew {
@@ -15067,7 +15088,9 @@ html body #browsePanel .or-card-grid.tarot-result-grid .or-card:focus-within .or
   opacity: 1 !important;
   transform: none !important;
   pointer-events: auto !important;
-  z-index: 120 !important;
+  /* The visible description still covers the card, but cannot occlude the
+     independently interactive glyph lane (85) during the hover transition. */
+  z-index: 70 !important;
 }
 html body #browsePanel .or-card-grid.tarot-result-grid .or-card-layer.relphi-info-layer .or-layer-head {
   margin: 0 !important;

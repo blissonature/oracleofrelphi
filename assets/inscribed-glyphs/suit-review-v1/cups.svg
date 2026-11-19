@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-32 -32 64 64" role="img" aria-labelledby="title">
+  <title id="title">Cups — proposed canonical inscription</title>
+  <g class="relphi-glyph-bubble" data-glyph-id="suit-cups" data-canonical-glyph-id="suit-cups">
+    <circle cx="0" cy="0" r="19" fill="#fff" stroke="currentColor" stroke-width="2.35" aria-hidden="true"/>
+    <g class="relphi-canonical-glyph" data-canonical-glyph-id="suit-cups" fill="none" stroke="currentColor" stroke-width="2.52" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M -8.64 -10.08 H 8.64 C 7.92 -0.36 4.32 3.96 0 3.96 C -4.32 3.96 -7.92 -0.36 -8.64 -10.08 Z"/>
+    <path d="M 0 3.96 V 10.08"/>
+    <path d="M -6.12 12.24 H 6.12"/>
+    <path d="M -7.92 -7.92 C -11.52 -5.76 -11.16 0 -6.84 1.44"/>
+    <path d="M 7.92 -7.92 C 11.52 -5.76 11.16 0 6.84 1.44"/>
+    </g>
+  </g>
+</svg>
