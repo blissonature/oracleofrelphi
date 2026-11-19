@@ -3,7 +3,7 @@ on:
   pull_request:
     paths:
       - sky-chart-orb-control-v1.js
-      - sky-chart-relationship-vocab-v1.js
+      - sky-chart-vocab-tab-v1.js
       - tests/relationship-helper-glyph-stability.mjs
       - .github/workflows/relationship-helper-glyph-stability.yml
 jobs:
