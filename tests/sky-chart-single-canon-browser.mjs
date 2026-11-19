@@ -109,6 +109,7 @@ async function inspect(width,height,suffix){
       sourceStroke:sourcePath?.getAttribute('stroke')||'',
       sourceStrokeWidth:sourcePath?.getAttribute('stroke-width')||'',
       renderedFill:geminiPath?.getAttribute('fill')||'',
+      renderedComputedFill:geminiPath?getComputedStyle(geminiPath).fill:'',
       renderedStroke:geminiPath?.getAttribute('stroke')||'',
       angleLines,angleFrames,
       angleCount:document.querySelectorAll('[data-angle-axis="true"]').length,
@@ -127,7 +128,8 @@ async function inspect(width,height,suffix){
   assert.equal(state.sourceFill,'#111111');
   assert.equal(state.sourceStroke,'');
   assert.equal(state.sourceStrokeWidth,'');
-  assert.equal(state.renderedFill,'#171717');
+  assert.equal(state.renderedFill,'currentColor');
+  assert.equal(state.renderedComputedFill,'rgb(23, 23, 23)');
   assert.equal(state.renderedStroke,'');
   assert.ok(state.renderedSkyCount===1||state.renderedSkyCount===2);
   assert.equal(state.angleCount,state.renderedSkyCount*4);
