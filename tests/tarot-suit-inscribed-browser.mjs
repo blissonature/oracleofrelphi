@@ -66,7 +66,20 @@ try{
   if(await show.textContent()==='Show glyphs')await show.click();
   const wands=page.locator('#cardList .or-chip--suit[data-filter="Wands"]').first();
   await wands.scrollIntoViewIfNeeded();
+  const point=await wands.evaluate(chip=>{
+    const rect=chip.getBoundingClientRect(),x=rect.left+rect.width/2,y=rect.top+rect.height/2,hit=document.elementFromPoint(x,y);
+    window.__suitClickTrace=[];
+    document.addEventListener('click',event=>window.__suitClickTrace.push({
+      target:event.target?.tagName,cls:String(event.target?.className||'').slice(0,100),
+      filter:event.target?.closest?.('[data-filter]')?.dataset.filter||null
+    }),{capture:true,once:true});
+    return{x,y,chipRect:{width:rect.width,height:rect.height},actualHit:hit?.outerHTML.slice(0,220),
+      pointerEvents:getComputedStyle(chip).pointerEvents,opacity:getComputedStyle(chip).opacity,
+      glyphMode:document.querySelector('.tarot-result-grid')?.dataset.resultGlyphs};
+  });
+  console.log('SUIT_CLICK_POINT',JSON.stringify(point));
   await wands.click({force:true});
+  console.log('SUIT_CLICK_TRACE',JSON.stringify(await page.evaluate(()=>window.__suitClickTrace)));
   const filterDiagnostic=await page.evaluate(()=>({
     remove:[...document.querySelectorAll('#cardList [data-remove-filter]')].map(x=>({value:x.dataset.removeFilter,hidden:x.hidden,display:getComputedStyle(x).display})),
     clear:[...document.querySelectorAll('#cardList [data-clear-filters]')].map(x=>({hidden:x.hidden,display:getComputedStyle(x).display})),
