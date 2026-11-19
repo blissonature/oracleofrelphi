@@ -19,6 +19,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
+          ref: fix/canonical-angle-parity-20261118
           persist-credentials: true
       - uses: actions/setup-node@v4
         with:
