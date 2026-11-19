@@ -117,9 +117,7 @@ button.relphi-copy-icon-button[data-relphi-copy-format]::after{
   min-height:44px;
   padding:4px 9px;
   box-sizing:border-box;
-}
-#skyFoundationRelationships .sky-foundation-relationships-heading>h2,
-#skyFoundationRelationships .sky-foundation-relationships-heading>.sky-relationship-vocab-tabs{
+}#skyFoundationRelationships .sky-foundation-relationships-heading>h2{
   grid-column:1;
   grid-row:1;
   min-width:0;
@@ -194,9 +192,7 @@ button.relphi-copy-icon-button[data-relphi-copy-format]::after{
     column-gap:5px;
     row-gap:6px;
     padding:7px 8px;
-  }
-  #skyFoundationRelationships .sky-foundation-relationships-heading>h2,
-  #skyFoundationRelationships .sky-foundation-relationships-heading>.sky-relationship-vocab-tabs{
+  }#skyFoundationRelationships .sky-foundation-relationships-heading>h2{
     grid-column:1;
     grid-row:1;
     min-width:0;
@@ -261,9 +257,7 @@ button.relphi-copy-icon-button[data-relphi-copy-format]::after{
     height:auto;
     min-height:0;
     padding:7px 8px;
-  }
-  #skyFoundationRelationships .sky-foundation-relationships-heading>h2,
-  #skyFoundationRelationships .sky-foundation-relationships-heading>.sky-relationship-vocab-tabs{
+  }#skyFoundationRelationships .sky-foundation-relationships-heading>h2{
     grid-column:1;grid-row:1;
     position:static;
     min-width:0;max-width:100%;
@@ -304,9 +298,7 @@ button.relphi-copy-icon-button[data-relphi-copy-format]::after{
   }
   #skyFoundationRelationships .sky-foundation-relationships-heading>.sky-relationship-heading-actions{
     display:contents!important;
-  }
-  #skyFoundationRelationships .sky-foundation-relationships-heading>h2,
-  #skyFoundationRelationships .sky-foundation-relationships-heading>.sky-relationship-vocab-tabs{
+  }#skyFoundationRelationships .sky-foundation-relationships-heading>h2{
     grid-column:1!important;grid-row:1!important;
     position:static!important;inset:auto!important;
     min-width:0!important;
