@@ -65,7 +65,7 @@ async function inspect(width,height,suffix){
       return{sky,id,registryId:entry?.id,asset:entry?.asset||null,fitMode:entry?.fitMode,
         hostFound:!!host,masterId:bubble?.dataset.glyphId,artId:art?.dataset.canonicalGlyphId,
         glyphCount:bubble?.querySelectorAll('.relphi-canonical-glyph')?.length||0,
-        letter:art?.querySelector('text')?.textContent||'',
+        letter:art?.matches('text')?art.textContent:(art?.querySelector('text')?.textContent||''),
         path:art?.querySelector('path')?.getAttribute('d')||'',
         radius,scale,expectedRenderedRadius,
         canonicalFit:art?.dataset.relphiAtomicCommit};
