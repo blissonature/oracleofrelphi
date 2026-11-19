@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Tarot suit inscriptions · Oracle of Relphi review</title>
+<style>
+:root{font:16px/1.45 system-ui,sans-serif;color:#292520;background:#fffdf8}
+body{max-width:900px;margin:0 auto;padding:clamp(1rem,4vw,3rem)}
+h1{font-size:clamp(1.55rem,3vw,2.35rem);margin:.2rem 0}
+p{color:#655d54}
+.examples{display:grid;grid-template-columns:repeat(auto-fit,minmax(165px,1fr));gap:1rem;margin:2rem 0}
+.sample{border:1px solid #dbd0c3;border-radius:15px;background:white;padding:1.2rem;text-align:center}
+.sample>img{display:block;width:164px;height:164px;margin:auto}
+.sample h2{font-size:1.12rem;margin:.2rem 0}
+.sample p{font-size:.79rem;margin:.2rem 0 1rem}
+.filter{display:inline-flex;align-items:center;justify-content:center;width:1.28rem;height:1.28rem;padding:0;border:0;background:transparent;border-radius:50%;cursor:pointer}
+.filter>img{width:2.11rem;height:2.11rem;min-width:2.11rem;pointer-events:none}
+.filter:focus-visible{outline:2px solid #e13935;outline-offset:5px}
+.references{display:flex;flex-wrap:wrap;gap:1rem}
+.references figure{margin:0;text-align:center}
+.references img{display:block;width:86px;height:86px}
+.references figcaption{text-transform:capitalize;font-size:.76rem}
+#selection{font-weight:650;min-height:1.5em}
+</style></head><body>
+<main><p>Oracle of Relphi · Artwork review</p><h1>Four proposed suit inscriptions</h1>
+<p>These are candidates, not approved additions to the Master Glyph List. Each is a complete static SVG with the same frame, inscription ring, and outer whitespace model as the existing reference. The filter-size button uses that exact asset, without generating another circle.</p>
+<section class="examples" aria-label="Proposed Tarot suit glyphs">
+      <article class="sample"><img src="assets/inscribed-glyphs/suit-review-v1/wands.svg" alt="Wands inscribed master"><h2>Wands</h2><p>Proposed inscription · shared 64 × 64 authored frame</p><button type="button" class="filter" data-filter="Wands" aria-label="Filter by Wands"><img src="assets/inscribed-glyphs/suit-review-v1/wands.svg" alt=""></button></article>
+      <article class="sample"><img src="assets/inscribed-glyphs/suit-review-v1/cups.svg" alt="Cups inscribed master"><h2>Cups</h2><p>Proposed inscription · shared 64 × 64 authored frame</p><button type="button" class="filter" data-filter="Cups" aria-label="Filter by Cups"><img src="assets/inscribed-glyphs/suit-review-v1/cups.svg" alt=""></button></article>
+      <article class="sample"><img src="assets/inscribed-glyphs/suit-review-v1/swords.svg" alt="Swords inscribed master"><h2>Swords</h2><p>Proposed inscription · shared 64 × 64 authored frame</p><button type="button" class="filter" data-filter="Swords" aria-label="Filter by Swords"><img src="assets/inscribed-glyphs/suit-review-v1/swords.svg" alt=""></button></article>
+      <article class="sample"><img src="assets/inscribed-glyphs/suit-review-v1/pentacles.svg" alt="Pentacles / Disks inscribed master"><h2>Pentacles / Disks</h2><p>Proposed inscription · shared 64 × 64 authored frame</p><button type="button" class="filter" data-filter="Pentacles / Disks" aria-label="Filter by Pentacles / Disks"><img src="assets/inscribed-glyphs/suit-review-v1/pentacles.svg" alt=""></button></article>
+</section><p id="selection" aria-live="polite">Select a suit filter to inspect its interaction.</p>
+<h2>Master Glyph List comparison</h2><div class="references"><figure><img src="assets/inscribed-glyphs/v1/sun.svg" alt="sun canonical visual reference"><figcaption>sun</figcaption></figure>
+<figure><img src="assets/inscribed-glyphs/v1/uranus.svg" alt="uranus canonical visual reference"><figcaption>uranus</figcaption></figure>
+<figure><img src="assets/inscribed-glyphs/v1/pluto.svg" alt="pluto canonical visual reference"><figcaption>pluto</figcaption></figure>
+<figure><img src="assets/inscribed-glyphs/v1/scorpio.svg" alt="scorpio canonical visual reference"><figcaption>scorpio</figcaption></figure></div>
+</main>
+<script>document.querySelectorAll('[data-filter]').forEach(button=>button.addEventListener('click',()=>{document.querySelector('#selection').textContent='Selected filter: '+button.dataset.filter;document.querySelectorAll('[data-filter]').forEach(item=>item.setAttribute('aria-pressed',String(item===button)))}))</script>
+</body></html>
