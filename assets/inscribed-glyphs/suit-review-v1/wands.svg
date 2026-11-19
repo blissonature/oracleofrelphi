@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-32 -32 64 64" role="img" aria-labelledby="title">
+  <title id="title">Wands — proposed canonical inscription</title>
+  <g class="relphi-glyph-bubble" data-glyph-id="suit-wands" data-canonical-glyph-id="suit-wands">
+    <circle cx="0" cy="0" r="19" fill="#fff" stroke="currentColor" stroke-width="2.35" aria-hidden="true"/>
+    <g class="relphi-canonical-glyph" data-canonical-glyph-id="suit-wands" fill="none" stroke="currentColor" stroke-width="2.52" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M 0 -13.68 L 0 13.68"/>
+    <path d="M 0 -12.96 C -3.96 -9.36 -4.68 -5.04 -0.72 -1.8 C 3.96 -5.76 4.68 -9.72 0 -12.96 Z"/>
+    <path d="M 0 0 C 4.32 1.44 6.48 5.4 4.68 10.08 C 0.36 8.28 -1.44 4.68 0 0 Z"/>
+    </g>
+  </g>
+</svg>
