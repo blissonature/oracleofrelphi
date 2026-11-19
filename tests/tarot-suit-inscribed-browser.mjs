@@ -55,6 +55,9 @@ try{
       const style=getComputedStyle(chip);
       if(style.borderTopWidth!=='0px'||style.boxShadow!=='none')throw Error('Button creates unauthorized second ring or shadow: '+filter+' '+style.borderTopWidth+' '+style.boxShadow);
       if(chip.querySelector('svg'))throw Error('Procedural suit SVG still present');
+      const buttonRect=chip.getBoundingClientRect(),imageRect=img.getBoundingClientRect();
+      const ringDiameter=imageRect.width*(38/64);
+      if(Math.abs(ringDiameter-buttonRect.width)>1.0)throw Error('Authored ring does not fill the same filter chip frame: '+filter+' '+ringDiameter+' vs '+buttonRect.width);
       bySuit[filter]=(bySuit[filter]||0)+1;
     }
     return{bySuit,total:chips.length,heading:document.querySelector('#browsePanel h2')?.textContent};
@@ -79,7 +82,9 @@ try{
   });
   console.log('SUIT_CLICK_POINT',JSON.stringify(point));
   await wands.click({force:true});
-  console.log('SUIT_CLICK_TRACE',JSON.stringify(await page.evaluate(()=>window.__suitClickTrace)));
+  const hitTrace=await page.evaluate(()=>window.__suitClickTrace);
+  console.log('SUIT_CLICK_TRACE',JSON.stringify(hitTrace));
+  assert.equal(hitTrace[0]?.filter,'Wands','Physical mouse click must reach suit filter, not the card title layer');
   const filterDiagnostic=await page.evaluate(()=>({
     remove:[...document.querySelectorAll('#cardList [data-remove-filter]')].map(x=>({value:x.dataset.removeFilter,hidden:x.hidden,display:getComputedStyle(x).display})),
     clear:[...document.querySelectorAll('#cardList [data-clear-filters]')].map(x=>({hidden:x.hidden,display:getComputedStyle(x).display})),
