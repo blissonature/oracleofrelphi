@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-32 -32 64 64" role="img" aria-labelledby="title">
+  <title id="title">Swords — proposed canonical inscription</title>
+  <g class="relphi-glyph-bubble" data-glyph-id="suit-swords" data-canonical-glyph-id="suit-swords">
+    <circle cx="0" cy="0" r="19" fill="#fff" stroke="currentColor" stroke-width="2.35" aria-hidden="true"/>
+    <g class="relphi-canonical-glyph" data-canonical-glyph-id="suit-swords" fill="none" stroke="currentColor" stroke-width="2.52" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M 0 -15.12 L 2.88 3.6 L 0 9.36 L -2.88 3.6 Z"/>
+    <path d="M -7.2 4.32 H 7.2"/>
+    <path d="M 0 4.32 V 14.76"/>
+    <path d="M -2.52 14.76 H 2.52"/>
+    </g>
+  </g>
+</svg>
