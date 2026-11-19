@@ -321,18 +321,17 @@ test('Chart Angles are grouped visually without reordering ledger row identity',
   assert.doesNotMatch(angles, /ledger\.appendChild\(match\[1\]\)/);
 });
 
-test('dynamic SVG glyph fitting is identity-stable even inside hidden relationship rows', () => {
-  assert.match(component, /const fitMetrics = new Map\(\);/);
-  assert.match(component, /const cached = fitMetrics\.get\(entry\.id\);/);
-  assert.match(component, /const box = mountedBox\(node\) \|\| probeBox\(node\);/);
-  assert.match(component, /probe\.dataset\.relphiGlyphMeasureProbe = 'true';/);
-  assert.match(component, /fitMetrics\.set\(entry\.id, metrics\);/);
-  assert.match(component, /node\.dataset\.fitMetricsSource = 'identity-cache';/);
+test('static inscribed SVG preserves the complete canonical artboard without runtime fitting', () => {
+  assert.match(component, /RelphiInscribedGlyphMastersV1/);
+  assert.match(component, /importNode\(templateFor\(entry\),true\)/);
+  assert.match(component, /canonicalSource:'approved-inscribed-svg'/);
+  assert.doesNotMatch(component, /getBBox|fitMetrics|createElementNS|textGlyph\(/);
 });
 
 test('shared pages and Sky Chart use the same component version', () => {
-  assert.match(navloader, /appendScript\('relphi-glyph-component-v1\.js\?v=32'/);
-  assert.match(html, /relphi-glyph-component-v1\.js\?v=32/);
+  assert.match(navloader, /appendScript\('relphi-inscribed-glyph-masters-v1\.js\?v=1'/);
+  assert.match(navloader, /appendScript\('relphi-glyph-component-v1\.js\?v=34'/);
+  assert.match(html, /relphi-glyph-component-v1\.js\?v=34/);
 });
 
 test('Sky Chart cache keys point at the compact relationship, copy, coordinate, and thumbnail preview', () => {
