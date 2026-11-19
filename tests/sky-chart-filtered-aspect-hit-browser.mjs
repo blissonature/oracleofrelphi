@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {chromium} from 'playwright';
 
-const browser=await chromium.launch({headless:true});
+const browser=await chromium.launch({headless:true,channel:'chrome'});
 try{
   for(const viewport of [{width:1360,height:900},{width:390,height:844}]){
     const context=await browser.newContext({viewport,hasTouch:viewport.width<500});
