@@ -3098,6 +3098,24 @@ body:has(.suggested-questions) main {
   cursor: pointer;
   font-family: inherit;
 }
+/* Suit inscriptions contain the approved-style frame as part of the SVG.
+   The filter button is only the interactive host; it must not draw a second ring. */
+.or-chip.or-chip--suit {
+  border: 0;
+  background: transparent;
+  --relphi-filter-chip-shadow: none;
+}
+.or-chip--suit > .or-suit-inscribed-master {
+  display: block;
+  width: 2.11rem;
+  height: 2.11rem;
+  min-width: 2.11rem;
+  max-width: none;
+  max-height: none;
+  flex: 0 0 auto;
+  pointer-events: none;
+  user-select: none;
+}
 .or-chip:hover,
 .or-chip:focus-visible,
 .tag-row button:hover,
@@ -5208,7 +5226,7 @@ body:has(.suggested-questions) main {
   border-radius: 999px !important;
   font-size: .78rem !important;
   line-height: 1 !important;
-  box-shadow: 0 .18rem .5rem rgba(0,0,0,.13) !important;
+  box-shadow: var(--relphi-filter-chip-shadow, 0 .18rem .5rem rgba(0,0,0,.13)) !important;
 }
 .or-card.tarot-card-surface.relphi-surface--card .or-card-add {
   right: .45rem !important;
