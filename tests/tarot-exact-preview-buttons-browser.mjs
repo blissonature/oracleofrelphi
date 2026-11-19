@@ -13,7 +13,8 @@ try{
  page.on('requestfailed',r=>failures.push(r.url()+' '+r.failure()?.errorText));
  page.on('response',r=>{if(r.status()>=400)failures.push(r.status()+' '+r.url())});
  await page.goto(target,{waitUntil:'domcontentloaded',timeout:30000});
- await page.waitForTimeout(7000);
+ await page.waitForLoadState('load',{timeout:50000});
+ await page.waitForFunction(()=>document.readyState==='complete' && document.querySelector('#shortListPanel')?.childElementCount>0,{timeout:30000}).catch(()=>{});
  const status=()=>page.evaluate(()=>{
  const root=document.querySelector('#browsePanel'),app=window.RelphiTarotLedger;
  const all=document.querySelector('#showAllCards'),board=document.querySelector('#relphiOpenDrawingBoardCurrent');
@@ -27,18 +28,23 @@ try{
       bodySnippet:document.body?.innerText?.slice(0,180)};
  });
  console.log('BEFORE',width,JSON.stringify(await status()));
+ console.log('READINESS',width,JSON.stringify(await page.evaluate(()=>({ready:document.readyState,shortList:document.querySelector('#shortListPanel')?.childElementCount,cardList:document.querySelector('#cardList')?.childElementCount}))));
  for(const [name,selector] of [['show','#showAllCards'],['board','#relphiOpenDrawingBoardCurrent']]){
   if(await page.locator(selector).count()){
    await page.locator(selector).click({force:true,timeout:12000}).catch(e=>errors.push('click '+name+': '+e.message.slice(0,220)));
    await page.waitForTimeout(600);
    console.log('AFTER',width,name,JSON.stringify(await status()));
+   if(name==='show'){
+     const count=await page.locator('#cardList .or-card[data-id]').count();
+     const hidden=await page.locator('#browsePanel').evaluate(el=>el.hidden);
+     assert.equal(hidden,false,'Show All Cards must reveal Browse immediately on '+width+' (cards='+count+')');
+     assert.ok(count>20,'Show All Cards must populate deck on '+width);
+   }
   }
  }
  const end=await status();
- assert.equal(end.browseHidden,false,'Show All Cards must reveal Browse on '+width);
- assert.equal(end.boardHidden,false,'Open Drawing Board must reveal its panel on '+width);
- assert.ok((await page.locator('#cardList .or-card[data-id]').count())>20,'Show All Cards must render actual deck entries on '+width);
- assert.ok((await page.locator('#shortListPanel').count())===1,'Drawing Board must mount on '+width);
+assert.equal(end.boardHidden,false,'Open Drawing Board must reveal its panel on '+width);
+assert.ok((await page.locator('#shortListPanel').count())===1,'Drawing Board must mount on '+width);
  assert.deepEqual(errors,[],'Hosted preview must initialize without page exceptions on '+width);
  console.log('PASS',width,'Show All Cards, Open Drawing Board, deck rendering, and history state');
  console.log('ERRORS',width,JSON.stringify(errors.slice(0,28)));
