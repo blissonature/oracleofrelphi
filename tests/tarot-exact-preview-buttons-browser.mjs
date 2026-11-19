@@ -1,5 +1,7 @@
+import assert from 'node:assert/strict';
 import {chromium} from 'playwright';
-const sha=process.env.PREVIEW_REF||'a7ec1ad5329fa1bf3affd823a9040c471e1ef235';
+const sha=process.env.PREVIEW_REF;
+assert.match(sha||'',/^[0-9a-f]{40}$/,'Workflow must provide tested commit SHA');
 const target='https://oracleofrelphi.com/sky-chart-preview/sky-chart.html?ref='+sha+'&view=tarot';
 const browser=await chromium.launch({headless:true,channel:'chrome'});
 try{
@@ -11,7 +13,7 @@ try{
  page.on('requestfailed',r=>failures.push(r.url()+' '+r.failure()?.errorText));
  page.on('response',r=>{if(r.status()>=400)failures.push(r.status()+' '+r.url())});
  await page.goto(target,{waitUntil:'domcontentloaded',timeout:30000});
- await page.waitForTimeout(8000);
+ await page.waitForTimeout(7000);
  const status=()=>page.evaluate(()=>{
  const root=document.querySelector('#browsePanel'),app=window.RelphiTarotLedger;
  const all=document.querySelector('#showAllCards'),board=document.querySelector('#relphiOpenDrawingBoardCurrent');
@@ -32,6 +34,13 @@ try{
    console.log('AFTER',width,name,JSON.stringify(await status()));
   }
  }
+ const end=await status();
+ assert.equal(end.browseHidden,false,'Show All Cards must reveal Browse on '+width);
+ assert.equal(end.boardHidden,false,'Open Drawing Board must reveal its panel on '+width);
+ assert.ok((await page.locator('#cardList .or-card[data-id]').count())>20,'Show All Cards must render actual deck entries on '+width);
+ assert.ok((await page.locator('#shortListPanel').count())===1,'Drawing Board must mount on '+width);
+ assert.deepEqual(errors,[],'Hosted preview must initialize without page exceptions on '+width);
+ console.log('PASS',width,'Show All Cards, Open Drawing Board, deck rendering, and history state');
  console.log('ERRORS',width,JSON.stringify(errors.slice(0,28)));
  console.log('FAILURES',width,JSON.stringify(failures.slice(0,38)));
  console.log('LOGS',width,JSON.stringify(logs.slice(0,24)));
