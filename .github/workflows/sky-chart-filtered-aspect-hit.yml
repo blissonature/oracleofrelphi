@@ -22,7 +22,8 @@ jobs:
           node --check sky-chart-selected-relationship-wheel-bridge-v1.js
           node --check tests/sky-chart-filtered-aspect-hit-browser.mjs
       - run: npm install --no-save playwright@1.52.0
-      - run: npx playwright install --with-deps chromium
+      - name: Verify Chromium-based Chrome is installed
+        run: google-chrome --version
       - name: Chromium desktop mouse and mobile pointer regression
         run: |
           python3 -m http.server 4173 >/tmp/relphi-aspect-hit-server.log 2>&1 &
