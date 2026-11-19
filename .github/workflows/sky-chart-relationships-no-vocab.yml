@@ -1,0 +1,37 @@
+name: Relationships without unauthorized Vocab
+on:
+  pull_request:
+    paths:
+      - sky-chart.html
+      - relphi-copy-icon-convention-v1.css
+      - sky-chart-foundation-interactions-v1.css
+      - tests/sky-chart-relationship-vocab-contract.mjs
+      - tests/sky-chart-relationships-no-vocab-browser.mjs
+      - .github/workflows/sky-chart-relationships-no-vocab.yml
+jobs:
+  browser:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Source contract and syntax
+        run: |
+          node --check tests/sky-chart-relationships-no-vocab-browser.mjs
+          node tests/sky-chart-relationship-vocab-contract.mjs
+          node tests/relationship-helper-glyph-stability.mjs
+      - run: npm install --no-save playwright@1.52.0 luxon@3 suncalc@1.9.0
+      - name: Chromium-based browser
+        run: google-chrome --version
+      - name: Desktop and mobile Relationships acceptance
+        run: |
+          python3 -m http.server 4173 > /tmp/relationships-no-vocab.log 2>&1 &
+          node tests/sky-chart-relationships-no-vocab-browser.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: relationships-no-vocab-desktop-mobile
+          path: relationships-no-vocab-*.png
+          if-no-files-found: ignore
