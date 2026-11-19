@@ -18,6 +18,15 @@
       hit.setAttribute('stroke-linecap', 'round');
       hit.setAttribute('vector-effect', 'non-scaling-stroke');
       hit.setAttribute('pointer-events', 'stroke');
+      // Clone the source's current visibility. Later Focus/Harmonic Window
+      // changes are applied atomically by the existing visibility owner.
+      if(line.hidden||line.getAttribute('aria-hidden')==='true'||
+         getComputedStyle(line).display==='none'){
+        hit.hidden=true;
+        hit.setAttribute('aria-hidden','true');
+        hit.style.setProperty('display','none','important');
+        hit.style.setProperty('pointer-events','none','important');
+      }
       hit.setAttribute('tabindex', '-1');
       hit.setAttribute('aria-hidden', 'true');
       hit.dataset.interactive = 'aspect';
