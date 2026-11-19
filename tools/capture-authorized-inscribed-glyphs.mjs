@@ -59,10 +59,10 @@ try{
   for(const record of captured){
     if(!/^[a-z0-9-]+$/.test(record.id))throw Error('Unsafe glyph identity '+record.id);
     if(record.ringRadius!=='19')throw Error('Master circle unexpectedly differs for '+record.id);
-    const bytes=record.svg+'\n';
+    const bytes=record.svg.replaceAll('#111111','currentColor')+'\n';
     await writeFile(join(destination,record.id+'.svg'),bytes,'utf8');
     manifest.identities[record.id]={file:record.id+'.svg',sha256:createHash('sha256').update(bytes).digest('hex')};
-    dictionary[record.id]=record.svg;
+    dictionary[record.id]=record.svg.replaceAll('#111111','currentColor');
   }
   await writeFile(join(destination,'manifest.json'),JSON.stringify(manifest,null,2)+'\n','utf8');
   await writeFile(join(root,'relphi-inscribed-glyph-masters-v1.js'),
