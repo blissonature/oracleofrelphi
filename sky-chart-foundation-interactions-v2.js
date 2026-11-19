@@ -465,7 +465,12 @@
       if(distance>radius)return;
       const tier=wheel.classList.contains('has-isolation')&&line.classList.contains('is-kept')?2:
         Number(style.opacity)>.15?1:0;
-      if(tier>bestTier||(tier===bestTier&&distance<best)){
+      // Physical proximity to the painted stroke comes first. A previously
+      // hovered/is-kept aspect must not monopolize the wider 28px hit area and
+      // prevent a different stroke directly beneath the cursor from responding.
+      // On coincident painted strokes, prefer the visible emphasis, then the
+      // later (visually upper) SVG sibling.
+      if(distance<best-1e-6||(Math.abs(distance-best)<=1e-6&&tier>=bestTier)){
         bestTier=tier;best=distance;nearest=line;
       }
     });

@@ -1,0 +1,36 @@
+name: Comparison wheel filtered aspect hit testing
+on:
+  pull_request:
+    paths:
+      - sky-chart-orb-control-v1.js
+      - sky-chart-selected-relationship-wheel-bridge-v1.js
+      - sky-chart.html
+      - tests/sky-chart-filtered-aspect-hit-browser.mjs
+      - .github/workflows/sky-chart-filtered-aspect-hit.yml
+jobs:
+  chromium:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify source and test syntax
+        run: |
+          node --check sky-chart-orb-control-v1.js
+          node --check sky-chart-selected-relationship-wheel-bridge-v1.js
+          node --check tests/sky-chart-filtered-aspect-hit-browser.mjs
+      - run: npm install --no-save playwright@1.52.0
+      - name: Verify Chromium-based Chrome is installed
+        run: google-chrome --version
+      - name: Chromium desktop mouse and mobile pointer regression
+        run: |
+          python3 -m http.server 4173 >/tmp/relphi-aspect-hit-server.log 2>&1 &
+          node tests/sky-chart-filtered-aspect-hit-browser.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: filtered-aspect-hit-evidence
+          path: aspect-hit-filter-*.png
+          if-no-files-found: ignore
