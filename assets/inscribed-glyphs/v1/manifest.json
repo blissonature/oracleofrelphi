@@ -1,0 +1,388 @@
+{
+  "authority": "https://oracleofrelphi.com/glyphs-unified-preview.html",
+  "capture": "actual browser-rendered complete SVG; no geometric reconstruction",
+  "source": "glyphs-unified-preview.html + RelphiGlyphRegistry + RelphiGlyphComponent",
+  "count": 95,
+  "identities": {
+    "sun": {
+      "file": "sun.svg",
+      "sha256": "3030f24b7bde3a386688f15aacef38ac673988ba9337b16d48dd66a526d30627"
+    },
+    "moon": {
+      "file": "moon.svg",
+      "sha256": "b73e95d5c484b43819f8fc6a906e07fcbc69cd37fc2555dbed23c4be0270d14d"
+    },
+    "mercury": {
+      "file": "mercury.svg",
+      "sha256": "2b5b9185e6344e99f44f5f1e46acaf131b814c30f3b19bfdd9dd55dfea66439c"
+    },
+    "venus": {
+      "file": "venus.svg",
+      "sha256": "d871827e93a8da83daa5c93cfd9f675992af2e3e270a88bd646e3dcf72403c8a"
+    },
+    "mars": {
+      "file": "mars.svg",
+      "sha256": "689f31b01da3966e9fea998a7b2829b5fc3e80762ab0e3f116fffa48f572ac06"
+    },
+    "jupiter": {
+      "file": "jupiter.svg",
+      "sha256": "761346fc6db3b11dc6ce30a1665a2b9450d90f9b8c84dd0de53688c18cfc579f"
+    },
+    "saturn": {
+      "file": "saturn.svg",
+      "sha256": "5f1569193bf0e356a58f3a0d9a7dbbf4fcf902ede4bea7717a81d85f9a59879d"
+    },
+    "uranus": {
+      "file": "uranus.svg",
+      "sha256": "60c4a54075f78756033c65b238c5861507a195d5223660762476e8952e011ddc"
+    },
+    "neptune": {
+      "file": "neptune.svg",
+      "sha256": "ae7046cdd908ee393fad9f2bcd5a4a3d6a415de06c1817b8ff8a54ea05a39e83"
+    },
+    "pluto": {
+      "file": "pluto.svg",
+      "sha256": "4176dc0956a9f902f4458f68d9e91d624e028eaaba2b9c4138c11e8f1b6ec4a8"
+    },
+    "chiron": {
+      "file": "chiron.svg",
+      "sha256": "ea134375216f2898c5a6ad7d108db936a0333bbc845452a9e4601f05b8dbe2af"
+    },
+    "aries": {
+      "file": "aries.svg",
+      "sha256": "efc49a46ff04f453cc86ebb835ddb04723a11299ec8f918311c91c54f63a22ad"
+    },
+    "taurus": {
+      "file": "taurus.svg",
+      "sha256": "2d7c6c5a21993d62622e39c8b91fed7b06a60e1e99635225e0b183b72ee4f592"
+    },
+    "gemini": {
+      "file": "gemini.svg",
+      "sha256": "6e144d7bd2a4e7f8f91d40db24a96a5bb192f4504c6254464ea99631176f6aeb"
+    },
+    "cancer": {
+      "file": "cancer.svg",
+      "sha256": "8c74aaa7fdf71a0dc2e5e78c77410871d9e2073916ccd563cdaaec2b3c3ba621"
+    },
+    "leo": {
+      "file": "leo.svg",
+      "sha256": "490e0404813b4bb653bc815bbeccc159730b32e9caf0256b640878e8b622c651"
+    },
+    "virgo": {
+      "file": "virgo.svg",
+      "sha256": "e7117ebe111a73fa9519c09ec345dee75dac345de84f6de0c8134db5af0ea42b"
+    },
+    "libra": {
+      "file": "libra.svg",
+      "sha256": "d4e2f0a3b1114c0f2733f68279347af43f279162476910918a0bcef292f5f585"
+    },
+    "scorpio": {
+      "file": "scorpio.svg",
+      "sha256": "fc79240f076736cf0cb93c19b076aa70927381920360fac8155c7e65990fef33"
+    },
+    "sagittarius": {
+      "file": "sagittarius.svg",
+      "sha256": "5d4f3816ee221efcb6b5b34a6deb91f8c4b3dfb3a1f3ec0fb6ef834dfadb620e"
+    },
+    "capricorn": {
+      "file": "capricorn.svg",
+      "sha256": "5deb9334e156b8c9526629f60e855a05ae315b7c7e955eea6f8817a45124a393"
+    },
+    "aquarius": {
+      "file": "aquarius.svg",
+      "sha256": "c16afac8f679d127d48431fa22db7ae3b76f909851c6bdff5b89f7f526d9a24d"
+    },
+    "pisces": {
+      "file": "pisces.svg",
+      "sha256": "246304e44e20f4a0649637955603af6a12b9d65ea16ce1f60ea31a2759b4bd99"
+    },
+    "fire": {
+      "file": "fire.svg",
+      "sha256": "c636b5b1ebcf110c153116b176e1f04ce7ed6cd4b2f3ecf078ac028a88074939"
+    },
+    "water": {
+      "file": "water.svg",
+      "sha256": "b32c8dff7c4227128dabef411137f183fecdb0b25ce2ac6c0ce8eb9072a05d85"
+    },
+    "air": {
+      "file": "air.svg",
+      "sha256": "169bbfc7c17e52ff2df500cb40f21604e4437a9aebbe7424b50b1f52247a9f22"
+    },
+    "earth": {
+      "file": "earth.svg",
+      "sha256": "0eec88f55fc40d188251691836b258c1bbab589db8c2d4882a6c9ca05b66a135"
+    },
+    "conjunction": {
+      "file": "conjunction.svg",
+      "sha256": "d183d3b0f2c807ae32d4a7a95808f063d808eafb7115634f8694867744d0d79b"
+    },
+    "opposition": {
+      "file": "opposition.svg",
+      "sha256": "e2f6c0130f201b01b469e1afe3b46452fdcee74ff558704560344ab6bdfef2f2"
+    },
+    "trine": {
+      "file": "trine.svg",
+      "sha256": "c4925b39849e39cd4f8eb424137bbb542ec33dd36a74b0414b6d8b632a449e97"
+    },
+    "square": {
+      "file": "square.svg",
+      "sha256": "fce84917c4d910047f6162cf3adbffc1d55f3282dd2d524b1dc10032b5ecb9fc"
+    },
+    "sextile": {
+      "file": "sextile.svg",
+      "sha256": "8b0bef639931f46ae3885262c0342f76ea768b6ca1ee8f12037608d7b07ae789"
+    },
+    "semi-sextile": {
+      "file": "semi-sextile.svg",
+      "sha256": "adafd8024a855d4e265e333d2cc3d5980032dca1d8adeb91af4938fc0d5a484e"
+    },
+    "quincunx": {
+      "file": "quincunx.svg",
+      "sha256": "24876dfd8e4ffe555c95f5cb9295ca55e0bed17cf9ed88cda79556df1f8f4cdd"
+    },
+    "octile": {
+      "file": "octile.svg",
+      "sha256": "caabf5eaf203ed95c468ea8b0b8a92f7e914d16eaf9f3c2895e4155a65a79685"
+    },
+    "tri-octile": {
+      "file": "tri-octile.svg",
+      "sha256": "69bbbd98931662d2dd6adc8a039d18212e076d3535211ed38fe64d7f3617f50e"
+    },
+    "quintile": {
+      "file": "quintile.svg",
+      "sha256": "8ca5d9b226e2638dae5b0daa3b244dc3a81b09dd325d8aade67d016d734f887c"
+    },
+    "bi-quintile": {
+      "file": "bi-quintile.svg",
+      "sha256": "520af8c9384b0e392bab5b7fe5ece1a5028cf06f792cb9819d2e678591495723"
+    },
+    "north-node": {
+      "file": "north-node.svg",
+      "sha256": "791515f6918028701e3a980480eed2311b0850e850ebebc0f06ff78358640c2c"
+    },
+    "south-node": {
+      "file": "south-node.svg",
+      "sha256": "a8fd162a3fdb639547f7870ad9499335d2e5addada6675b4adeae6d68782c8ab"
+    },
+    "lilith": {
+      "file": "lilith.svg",
+      "sha256": "ce374923745a05f44b8cda9a6f586b43c59cd0100c2e129ca6bc851b740aa834"
+    },
+    "part-of-fortune": {
+      "file": "part-of-fortune.svg",
+      "sha256": "1cec43a6d3e1be66df1a2cfa847dcc80817f13b23aafa88f5a4061873b0031f7"
+    },
+    "retrograde": {
+      "file": "retrograde.svg",
+      "sha256": "cfe45fa367dc0637152ff9541fa71118263b5b2ca5250459ead297cef09d8375"
+    },
+    "vertex": {
+      "file": "vertex.svg",
+      "sha256": "da13e14647d07df49a607787becc09cd070509b2adeb756fb3f7e62d059c156f"
+    },
+    "anti-vertex": {
+      "file": "anti-vertex.svg",
+      "sha256": "8caa3f4c57ab41e5cb51b35d90b4be044d70e03e34da17f28f603192c4e6e8dc"
+    },
+    "asc": {
+      "file": "asc.svg",
+      "sha256": "2ce5a833eab12b43e4a3329facb756ee052e7c6dde0c1803128207d182b96096"
+    },
+    "dsc": {
+      "file": "dsc.svg",
+      "sha256": "ad79b9f0e1927b2ac660656482d458f390bf9f5a406b07ecfbc0c61fe01d7987"
+    },
+    "mc": {
+      "file": "mc.svg",
+      "sha256": "aa2a183bb98aebf32e5f04e95e43d832615515efea13f5727093bef860e476b1"
+    },
+    "ic": {
+      "file": "ic.svg",
+      "sha256": "499712ffb862169c7f559511ad1653e30f84c2b3568735390ee3a0f7ce4073f2"
+    },
+    "hebrew-aleph": {
+      "file": "hebrew-aleph.svg",
+      "sha256": "5d74c5399e739930899e6d12cff4e96b57e66a8f0aef4e37c3516f268a6f59bc"
+    },
+    "hebrew-beth": {
+      "file": "hebrew-beth.svg",
+      "sha256": "1ee726e8a58c3dbff5f008779205678042a1df57d2707c4d497b0e58af37b46d"
+    },
+    "hebrew-gimel": {
+      "file": "hebrew-gimel.svg",
+      "sha256": "9e653ed8a6c7199637d9ce0c53fc734f59b94eefe1beb2258bb72e71d8a617f9"
+    },
+    "hebrew-daleth": {
+      "file": "hebrew-daleth.svg",
+      "sha256": "9dd7155ba86a5dc94fadcadd9c50edeb6440ba262d5ce87a0795de7b92cc4c4e"
+    },
+    "hebrew-heh": {
+      "file": "hebrew-heh.svg",
+      "sha256": "e27a77fafa823c57f46eb4832b5d355475975efce4d95a174329ec46d2f08a39"
+    },
+    "hebrew-vav": {
+      "file": "hebrew-vav.svg",
+      "sha256": "4bc31eb21309efab0b153db077321acfe866dbf647366b18126ec228a56a2789"
+    },
+    "hebrew-zayin": {
+      "file": "hebrew-zayin.svg",
+      "sha256": "76c2c49b5dd5d541593258aec5970495cb680c10db4bc04c67fcaafe2050dfe1"
+    },
+    "hebrew-cheth": {
+      "file": "hebrew-cheth.svg",
+      "sha256": "427ce66c84493bd754dd1c665d5fe330e8497716108637c2e91a97a2b57ed7b9"
+    },
+    "hebrew-teth": {
+      "file": "hebrew-teth.svg",
+      "sha256": "2ebf09736e03b457491a6462cd31596a921c3eb0b7434cd3d4b11de7e4ed6a8f"
+    },
+    "hebrew-yod": {
+      "file": "hebrew-yod.svg",
+      "sha256": "c2e1064f28bce49a8a6880a90fbc065e6dba553b0d326b72c98fb7a0039905dc"
+    },
+    "hebrew-kaph": {
+      "file": "hebrew-kaph.svg",
+      "sha256": "f83b170be9d61a079a97981f2f19785d83ab36159f631c9e01d0e301f2b7f7a3"
+    },
+    "hebrew-lamed": {
+      "file": "hebrew-lamed.svg",
+      "sha256": "305b9581e607da7b45222558a0a60ed0335a9b11e6ec8c8c3c4d248563c71032"
+    },
+    "hebrew-mem": {
+      "file": "hebrew-mem.svg",
+      "sha256": "06724ad085843ab5fcfdec0f2eaefcc2c10356b411d02bd0be0db754f1440c8f"
+    },
+    "hebrew-nun": {
+      "file": "hebrew-nun.svg",
+      "sha256": "f1b5e56a4ced3e00db7859c79530829138ab770e130b18212457077226833229"
+    },
+    "hebrew-samekh": {
+      "file": "hebrew-samekh.svg",
+      "sha256": "2d424de93016ac572a09fb57fada0ca6fe5a3debdf1ee0f9eae9e4d26a34052f"
+    },
+    "hebrew-ayin": {
+      "file": "hebrew-ayin.svg",
+      "sha256": "9d34608b958fea2f3f915ebad886b417c162fc62bfaa698fc56575e22c6185ff"
+    },
+    "hebrew-peh": {
+      "file": "hebrew-peh.svg",
+      "sha256": "dea670802fdc17abe3b5d12d99c2832f8f7c1604dba84431ca3afd21b78d6e3f"
+    },
+    "hebrew-tzaddi": {
+      "file": "hebrew-tzaddi.svg",
+      "sha256": "5829dc59a2bfeb3b0f0c67478d6f5dc5e338f9aab36a8e639c48e28fcd632eda"
+    },
+    "hebrew-qoph": {
+      "file": "hebrew-qoph.svg",
+      "sha256": "db252b74f866103ac751e17f4b7fb68f72a45fd8f135ea09eff9b76e209ae8ef"
+    },
+    "hebrew-resh": {
+      "file": "hebrew-resh.svg",
+      "sha256": "c7e78fa7321b572b77eb6d023a35a91afb34fe4428cafb73bcaa8c86f485cfc3"
+    },
+    "hebrew-shin": {
+      "file": "hebrew-shin.svg",
+      "sha256": "ab42e4b1264d0328e0e4944698810cfca8ffcb26cfa3f0228b39272f1eb6b367"
+    },
+    "hebrew-tav": {
+      "file": "hebrew-tav.svg",
+      "sha256": "88a8920981496afd8230a4db02755f4539fc3305a3f17cae65df1b39fd5c65ad"
+    },
+    "greek-alpha": {
+      "file": "greek-alpha.svg",
+      "sha256": "50bb1e2af284572134123dde7ab2e39a11a870207360f926f9750955ec7a3338"
+    },
+    "greek-beta": {
+      "file": "greek-beta.svg",
+      "sha256": "f5d9739bb8ea96f1ed6ffbe8d0371d0906d1fc19ce8d1e92d13604d320c0ea97"
+    },
+    "greek-gamma": {
+      "file": "greek-gamma.svg",
+      "sha256": "364381e36ed4a7c3bce380df340a61933862c1cc2458c507f6230c94924dac0c"
+    },
+    "greek-delta": {
+      "file": "greek-delta.svg",
+      "sha256": "b1f48f924cef994ef48f2ef8f60f626941dd3f70441822013feef8acb1535a06"
+    },
+    "greek-epsilon": {
+      "file": "greek-epsilon.svg",
+      "sha256": "bec17dcb9f2d7a53828a5f3934a4bbb8c5872bc2004f30b6aa19e2bef767cdd3"
+    },
+    "greek-zeta": {
+      "file": "greek-zeta.svg",
+      "sha256": "bd66a8e26270099c2651eb8187948df83d125664735b7ab17e9b28ebe5f8d092"
+    },
+    "greek-eta": {
+      "file": "greek-eta.svg",
+      "sha256": "09e7728df3c5f39397590be4d8a3599450845dd406056b1f6e2b3a2c6d17bdb9"
+    },
+    "greek-theta": {
+      "file": "greek-theta.svg",
+      "sha256": "5a8683087b8680ea2621e825b91fe15dd3fa5917c37ba41dd222154002f83ceb"
+    },
+    "greek-iota": {
+      "file": "greek-iota.svg",
+      "sha256": "b14445543c99fce69517dbe19e80fd7b3f2e93ab17f70482d71387803778db6e"
+    },
+    "greek-kappa": {
+      "file": "greek-kappa.svg",
+      "sha256": "cfb704b2c00fb1a1faea69892868f6a1ac9fceb378e309ddf60cda4acb624159"
+    },
+    "greek-lambda": {
+      "file": "greek-lambda.svg",
+      "sha256": "2b4505fd19edcaad508e47011c91ef67bc62b17c68113c3175c4106383e7973f"
+    },
+    "greek-mu": {
+      "file": "greek-mu.svg",
+      "sha256": "41d26f2f9c6672cc8849ff8ced1017c2a63168e3ec5eba4f93c9f5f6a9ba6fec"
+    },
+    "greek-nu": {
+      "file": "greek-nu.svg",
+      "sha256": "69a053a20997ed08e7d8513edb02e3c48f9314e72aafe2774a7ee5b939a28a66"
+    },
+    "greek-xi": {
+      "file": "greek-xi.svg",
+      "sha256": "c6a53fc221341de28503dfc5609f7e836eaeffbeadc9a17c7efab81e60388986"
+    },
+    "greek-omicron": {
+      "file": "greek-omicron.svg",
+      "sha256": "a1804b8a907e33f9cc8e3c154ef5473424362016d2db8fb05a4f2eee74c8eec3"
+    },
+    "greek-pi": {
+      "file": "greek-pi.svg",
+      "sha256": "5721a05e44c3dee23cd06bae3f707f40eebebf8b8d8f4c062fe2c4bdc127801b"
+    },
+    "greek-rho": {
+      "file": "greek-rho.svg",
+      "sha256": "bfa5cec36600f93cd4faff4430598da5192128ae8a67469c1fe093fb3b6e7f06"
+    },
+    "greek-sigma": {
+      "file": "greek-sigma.svg",
+      "sha256": "bcb500a22816550be1264e8fa29b1cc52d6184c4e3d1aa8665e9077a1960f82f"
+    },
+    "greek-tau": {
+      "file": "greek-tau.svg",
+      "sha256": "e2b1f242b71d3e9d14ba7a0745dfeda22d9fafdccf17d07edcd98ce7b25cd084"
+    },
+    "greek-upsilon": {
+      "file": "greek-upsilon.svg",
+      "sha256": "3c92ff338fca312b0326f72c64ca4efac4d86ba0da7398199b19fbb37f7f293d"
+    },
+    "greek-phi": {
+      "file": "greek-phi.svg",
+      "sha256": "40c1f3bbec8dbdb525e8f8b4bb133ee4fb60f5df2e2206901034408633a3c92c"
+    },
+    "greek-chi": {
+      "file": "greek-chi.svg",
+      "sha256": "2fa71448ec90044d97682893d869d4e431ec3e3155891d44fdc9a79685f4da63"
+    },
+    "greek-psi": {
+      "file": "greek-psi.svg",
+      "sha256": "61301b920e6a542ef217a2f8bf6c9c3bf4b5b68af7a905acd288331757f38e33"
+    },
+    "greek-omega": {
+      "file": "greek-omega.svg",
+      "sha256": "b5be9a89aec1ccb766567eb82170f94964d681db6ddd5e00ae318ceaae4f7d7d"
+    }
+  }
+}

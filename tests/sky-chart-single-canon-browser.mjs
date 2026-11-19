@@ -65,11 +65,26 @@ async function inspect(width,height,suffix){
       return{sky,id,registryId:entry?.id,asset:entry?.asset||null,fitMode:entry?.fitMode,
         hostFound:!!host,masterId:bubble?.dataset.glyphId,artId:art?.dataset.canonicalGlyphId,
         glyphCount:bubble?.querySelectorAll('.relphi-canonical-glyph')?.length||0,
-        letter:art?.querySelector('text')?.textContent||'',
+        letter:art?.matches('text')?art.textContent:(art?.querySelector('text')?.textContent||''),
         path:art?.querySelector('path')?.getAttribute('d')||'',
         radius,scale,expectedRenderedRadius,
         canonicalFit:art?.dataset.relphiAtomicCommit};
     }));
+    const angleFrames=Array.from(document.querySelectorAll('[data-angle-axis="true"]')).map(host=>{
+      const root=host.querySelector(':scope>.relphi-glyph-bubble');
+      const rect=root?.querySelector(':scope>rect');
+      const circle=root?.querySelector(':scope>circle');
+      const matrix=root?.transform?.baseVal?.consolidate?.()?.matrix;
+      const scale=Number(host.dataset.angleFrameScale);
+      const sourceDiameter=Number(rect?.getAttribute('width'));
+      return{
+        id:host.dataset.placement,sky:host.dataset.sky,scale,sourceDiameter,
+        frameWidth:sourceDiameter*Math.hypot(Number(matrix?.a),Number(matrix?.b)),
+        letter:root?.querySelector('.relphi-canonical-glyph text')?.textContent||'',
+        circleHidden:circle?.style.opacity==='0',
+        hasRect:!!rect
+      };
+    });
     const placementColors=Array.from(document.querySelectorAll('[data-layer="placements"] > [data-sky]')).map(host=>{
       const expected=host.dataset.sky==='A'?'rgb(201, 33, 30)':'rgb(36, 98, 208)';
       const art=host.querySelector('.relphi-canonical-glyph');
@@ -94,8 +109,9 @@ async function inspect(width,height,suffix){
       sourceStroke:sourcePath?.getAttribute('stroke')||'',
       sourceStrokeWidth:sourcePath?.getAttribute('stroke-width')||'',
       renderedFill:geminiPath?.getAttribute('fill')||'',
+      renderedComputedFill:geminiPath?getComputedStyle(geminiPath).fill:'',
       renderedStroke:geminiPath?.getAttribute('stroke')||'',
-      angleLines,
+      angleLines,angleFrames,
       angleCount:document.querySelectorAll('[data-angle-axis="true"]').length,
       renderedSkyCount:new Set(Array.from(document.querySelectorAll('[data-layer="placements"] > [data-sky]')).map(host=>host.dataset.sky).filter(Boolean)).size,
       diagnostics:document.querySelectorAll('[data-angle-collision-error],[data-canonical-glyph-error]').length,
@@ -112,11 +128,18 @@ async function inspect(width,height,suffix){
   assert.equal(state.sourceFill,'#111111');
   assert.equal(state.sourceStroke,'');
   assert.equal(state.sourceStrokeWidth,'');
-  assert.equal(state.renderedFill,'#171717');
+  assert.equal(state.renderedFill,'currentColor');
+  assert.equal(state.renderedComputedFill,'rgb(23, 23, 23)');
   assert.equal(state.renderedStroke,'');
   assert.ok(state.renderedSkyCount===1||state.renderedSkyCount===2);
   assert.equal(state.angleCount,state.renderedSkyCount*4);
   assert.equal(state.angleLines.length,state.angleCount);
+  assert.equal(state.angleFrames.length,state.angleCount);
+  assert.ok(state.angleFrames.every(frame=>frame.hasRect&&frame.circleHidden),'Every chart angle uses its existing canonical lettering inside a rectangle, never a circle');
+  assert.ok(state.angleFrames.every(frame=>Math.abs(frame.sourceDiameter-38)<0.001),'Angle rectangles preserve the shared 19-unit master frame');
+  assert.ok(state.angleFrames.every(frame=>Math.abs(frame.frameWidth-2*Number(frame.scale)*19)<0.01),'Angle frame and canonical letter share one uniform transform');
+  assert.ok(state.angleFrames.every(frame=>Math.abs(frame.frameWidth-2*18.5*(suffix==='mobile'?1.5:1))<0.01),'Angles and placements must have the same presented diameter on desktop and mobile');
+
   assert.ok(state.angleLines.every(line=>Number.isFinite(line.expectedEdge)&&line.edge===line.expectedEdge));
   assert.ok(state.placementColors.length>0);
   assert.ok(state.placementColors.every(item=>item.painted>0));
