@@ -50,6 +50,7 @@ try{
     return results;
   });
   if(failures.length)throw Error('Master Glyph List page error: '+failures.join('; '));
+  const approvedRaster=await page.locator('#ugGrid').screenshot({animations:'disabled'});
   await mkdir(destination,{recursive:true});
   const manifest={authority:'https://oracleofrelphi.com/glyphs-unified-preview.html',
     capture:'actual browser-rendered complete SVG; no geometric reconstruction',
@@ -103,6 +104,8 @@ try{
   if(result.ids.join('|')!==captured.map(item=>item.id).join('|')||
      result.errors!==0||result.circles.some(count=>count!==1))
     throw Error('Static component failed its full 93-glyph browser acceptance');
+  const staticRaster=await page.locator('#ugGrid').screenshot({animations:'disabled'});
+  if(!approvedRaster.equals(staticRaster))throw Error('Static glyph rendering differs from the user-approved Master Glyph List');
   console.log('Captured '+captured.length+' complete, actual browser-rendered canonical inscribed SVGs.');
 }finally{
   await browser?.close();
