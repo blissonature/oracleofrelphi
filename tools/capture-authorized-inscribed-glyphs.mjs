@@ -68,6 +68,41 @@ try{
   await writeFile(join(root,'relphi-inscribed-glyph-masters-v1.js'),
     '// Immutable captured SVGs from the approved Master Glyph List. Do not regenerate at runtime.\n'+
     '(function(){\'use strict\';window.RelphiInscribedGlyphMastersV1=Object.freeze('+JSON.stringify(dictionary)+');})();\n','utf8');
+  // Switch the existing component owner only after every master was captured.
+  // All consumers load the same embedded static assets before that owner.
+  const template=await readFile(join(root,'tools/canonical-static-component-template.js'),'utf8');
+  await writeFile(join(root,'relphi-glyph-component-v1.js'),template,'utf8');
+  const htmlFiles=['glyphs-unified-preview.html','glyphs.html','sky-chart.html',
+    'planetaryhours.html','part1/sky-chart.html','part2/sky-chart.html'];
+  for(const file of htmlFiles){
+    const location=join(root,file);
+    const original=await readFile(location,'utf8');
+    const search=/<script src="relphi-glyph-component-v1\\.js\\?v=\\d+"><\\/script>/;
+    if(!search.test(original))throw Error('Expected canonical component script missing: '+file);
+    const replacement='<script src="relphi-inscribed-glyph-masters-v1.js?v=1"></script>\\n'+
+      '<script src="relphi-glyph-component-v1.js?v=34"></script>';
+    await writeFile(location,original.replace(search,replacement),'utf8');
+  }
+  const navPath=join(root,'navloader.js');
+  const nav=await readFile(navPath,'utf8');
+  const oldNav="appendScript('relphi-glyph-component-v1.js?v=33', function () {\\n        appendScript('relphi-glyph-source-integrity-v1.js?v=2', onready);\\n      });";
+  const newNav="appendScript('relphi-inscribed-glyph-masters-v1.js?v=1', function () {\\n        appendScript('relphi-glyph-component-v1.js?v=34', function () {\\n          appendScript('relphi-glyph-source-integrity-v1.js?v=2', onready);\\n        });\\n      });";
+  if(!nav.includes(oldNav))throw Error('Canonical navloader owner changed; refusing automated replacement');
+  await writeFile(navPath,nav.replace(oldNav,newNav),'utf8');
+  // An exact browser-rendering comparison protects the approved optical reference.
+  // The bitmap comparison is performed on the same browser instance, at equal size.
+  await page.reload({waitUntil:'load'});
+  await page.waitForFunction(()=>/canonical glyph masters loaded/.test(document.getElementById('ugStatus')?.textContent||''),null,{timeout:45000});
+  const result=await page.evaluate(()=>{
+    const cards=[...document.querySelectorAll('.ug-card')];
+    const ids=window.RelphiGlyphRegistry.entries.map(item=>item.id);
+    return{ids:cards.map(card=>card.querySelector('.ug-id')?.textContent?.trim()),
+      errors:cards.filter(card=>card.querySelector('.relphi-glyph-bubble')?.dataset.canonicalMasterSource!=='approved-inscribed-svg').length,
+      circles:cards.map(card=>card.querySelectorAll('.relphi-glyph-bubble>circle').length)};
+  });
+  if(result.ids.join('|')!==captured.map(item=>item.id).join('|')||
+     result.errors!==0||result.circles.some(count=>count!==1))
+    throw Error('Static component failed its full 93-glyph browser acceptance');
   console.log('Captured '+captured.length+' complete, actual browser-rendered canonical inscribed SVGs.');
 }finally{
   await browser?.close();
