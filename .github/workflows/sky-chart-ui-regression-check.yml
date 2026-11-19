@@ -5,7 +5,6 @@ on:
     paths:
       - 'sky-chart.html'
       - 'sky-chart-vocab-tab-v1.js'
-      - 'sky-chart-relationship-vocab-v1.js'
       - 'sky-chart-harmonic-orb-v1.js'
       - 'sky-chart-harmonic-window-ceiling-v1.js'
       - 'sky-chart-orb-control-v1.js'
@@ -72,7 +71,6 @@ jobs:
           node --check sky-chart-relationship-export-columns-v1.js
           node --check sky-chart-placement-multiselect-v4.js
           node --check sky-chart-vocab-copy-v1.js
-          node --check sky-chart-relationship-vocab-v1.js
           node --check relphi-glyph-copy-serializer-v1.js
           node --check tests/sky-chart-vocab-tab-browser.mjs
           node --check tests/sky-chart-vocab-copy-browser.mjs
