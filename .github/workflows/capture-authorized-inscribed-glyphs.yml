@@ -1,15 +1,6 @@
 name: Capture approved static inscribed glyph masters
 on:
-  pull_request:
-    paths:
-      - tools/capture-authorized-inscribed-glyphs.mjs
-      - .github/workflows/capture-authorized-inscribed-glyphs.yml
-  push:
-    branches:
-      - fix/canonical-angle-parity-20261118
-    paths:
-      - tools/capture-authorized-inscribed-glyphs.mjs
-      - .github/workflows/capture-authorized-inscribed-glyphs.yml
+  workflow_dispatch:
 permissions:
   contents: write
 jobs:
