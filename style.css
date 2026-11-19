@@ -14202,7 +14202,7 @@ html body .or-card-grid.tarot-result-grid .or-card-badges.relphi-sticker-row {
   max-width: 1.05rem !important;
   max-height: calc(100% - .55rem) !important;
   overflow: hidden !important;
-  z-index: 5 !important;
+  z-index: 96 !important;
 }
 html body .or-card-grid.tarot-result-grid .relphi-filter-chip {
   width: 1.05rem !important;
