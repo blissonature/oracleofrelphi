@@ -79,7 +79,7 @@ async function inspect(width,height,suffix){
       const sourceDiameter=Number(rect?.getAttribute('width'));
       return{
         id:host.dataset.placement,sky:host.dataset.sky,scale,sourceDiameter,
-        frameWidth:sourceDiameter*Number(matrix?.a),
+        frameWidth:sourceDiameter*Math.hypot(Number(matrix?.a),Number(matrix?.b)),
         letter:root?.querySelector('.relphi-canonical-glyph text')?.textContent||'',
         circleHidden:circle?.style.opacity==='0',
         hasRect:!!rect
