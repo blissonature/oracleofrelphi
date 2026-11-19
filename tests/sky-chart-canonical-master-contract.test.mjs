@@ -1,58 +1,63 @@
+import test from 'node:test';
 import assert from 'node:assert/strict';
-import fs from 'node:fs';
-import path from 'node:path';
-import { execFileSync } from 'node:child_process';
-import { fileURLToPath } from 'node:url';
+import { readFileSync } from 'node:fs';
+import { createHash } from 'node:crypto';
+import vm from 'node:vm';
 
-const here = path.dirname(fileURLToPath(import.meta.url));
-const root = path.resolve(here, '..');
-const read = file => fs.readFileSync(path.join(root, file), 'utf8');
-const APPROVED_PAGE = 'https://oracleofrelphi.com/glyphs-unified-preview.html';
+const read=path=>readFileSync(path,'utf8');
+const registrySource=read('relphi-glyph-registry-v1.js');
+const manifest=JSON.parse(read('assets/inscribed-glyphs/v1/manifest.json'));
+const component=read('relphi-glyph-component-v1.js');
+const foundation=read('sky-chart-foundation-v2.js');
+const bundleSource=read('relphi-inscribed-glyph-masters-v1.js');
+const registryContext={window:{}};
+vm.runInNewContext(registrySource,registryContext);
+const registry=registryContext.window.RelphiGlyphRegistry;
+const bundleContext={window:{}};
+vm.runInNewContext(bundleSource,bundleContext);
+const assets=bundleContext.window.RelphiInscribedGlyphMastersV1;
+const ids=registry.entries.map(x=>x.id);
 
-execFileSync(process.execPath, ['scripts/generate-glyph-canon-audit.mjs', 'glyph-canon-source-audit.json'], { cwd: root, stdio: 'inherit' });
-const audit = JSON.parse(read('glyph-canon-source-audit.json'));
-const manifest = JSON.parse(read('glyph-canon-approved-source-manifest.json'));
-const component = read('relphi-glyph-component-v1.js');
-const registry = read('relphi-glyph-registry-v1.js');
-const foundation = read('sky-chart-foundation-v1.js');
-const sky = read('sky-chart.html');
-const masterPage = read('glyphs-unified-preview.html');
-const gemini = read('assets/zodiac-glyphs/gemini.svg');
-
-assert.equal(audit.approvedSource.page, APPROVED_PAGE);
-assert.equal(manifest.authority.page, APPROVED_PAGE);
-assert.ok(audit.approvedRuntimeFiles.every(item => item.equal), 'Every canonical runtime file must match the pinned manifest.');
-assert.deepEqual(audit.competingSources, {
-  forbiddenFilesPresent: [],
-  angleAssetFiles: [],
-  definitionViolations: [],
-  mutationViolations: [],
-  geometryViolations: [],
-  staleReferences: [],
-  consumerReferenceViolations: []
+test('all canonical identities have one complete static inscribed SVG',()=>{
+  assert.deepEqual(Object.keys(manifest.identities).sort(),ids.slice().sort());
+  assert.deepEqual(Object.keys(assets).sort(),ids.slice().sort());
+  assert.equal(manifest.count,ids.length);
+  for(const entry of registry.entries){
+    const info=manifest.identities[entry.id];
+    const bytes=read('assets/inscribed-glyphs/v1/'+info.file);
+    assert.equal(createHash('sha256').update(bytes).digest('hex'),info.sha256,entry.id);
+    assert.equal(bytes.trim(),assets[entry.id],entry.id);
+    assert.match(bytes,/<svg [^>]*viewBox="-32 -32 64 64"/,entry.id);
+    assert.match(bytes,/<g class="relphi-glyph-bubble"[^>]*><circle cx="0" cy="0" r="19"/,entry.id);
+    assert.match(bytes,new RegExp('data-canonical-glyph-id="'+entry.id+'"'),entry.id);
+    assert.doesNotMatch(bytes,/<script|<foreignObject|<image/i,entry.id);
+  }
 });
 
-assert.match(sky, /relphi-glyph-component-v1\.js\?v=26/);
-assert.match(masterPage, /relphi-glyph-component-v1\.js\?v=26/);
-assert.match(component, /const CANONICAL_BUBBLE_RADIUS = 19/);
-assert.match(component, /const CANONICAL_BUBBLE_STROKE = 2\.35/);
-assert.match(component, /const requestedRadius = Number\(options\?\.radius \|\| CANONICAL_BUBBLE_RADIUS\)/);
-assert.match(component, /const scale = requestedRadius \/ CANONICAL_BUBBLE_RADIUS/);
-assert.match(component, /root\.setAttribute\('transform', `scale\(\$\{scale\}\)`\)/);
-assert.match(component, /circle\.setAttribute\('r', String\(CANONICAL_BUBBLE_RADIUS\)\)/);
-assert.match(component, /circle\.setAttribute\('stroke-width', String\(CANONICAL_BUBBLE_STROKE\)\)/);
-assert.match(component, /radius: CANONICAL_BUBBLE_RADIUS/);
-assert.match(component, /bubbleStrokeWidth: CANONICAL_BUBBLE_STROKE/);
-assert.match(component, /canonicalBubblePresentation = 'uniform-master-scale'/);
-assert.doesNotMatch(component, /circle\.setAttribute\('r', String\(requestedRadius\)\)/);
+test('shared component imports authored artboards and never constructs circles or refits artwork',()=>{
+  assert.match(component,/RelphiInscribedGlyphMastersV1/);
+  assert.match(component,/importNode\(templateFor\(entry\),true\)/);
+  assert.match(component,/scale\('\+\(radius\/MASTER_RADIUS\)\+'\)'/);
+  assert.doesNotMatch(component,/createElementNS|getBBox|function fit\(|textGlyph\(|createElement\(['"]circle/);
+  assert.match(component,/canonicalSource:'approved-inscribed-svg'/);
+});
 
-assert.match(foundation, /component\.createBubble\(parent, entry\.id, options\)/);
-assert.match(foundation, /bubble\.circle\.style\.opacity\s*=\s*['"]0['"]/);
-assert.doesNotMatch(foundation, /id === ['"]gemini['"]|gemini.*\?\s*\d+\s*:\s*\d+/i);
+test('angle letterforms and frames share the placement scale',()=>{
+  for(const [id,letter] of Object.entries({asc:'Asc',dsc:'Dsc',mc:'MC',ic:'IC'}))
+    assert.match(assets[id],new RegExp('>'+letter+'<\\/text>'),id);
+  assert.match(foundation,/frameScale=inscribedPlacementRadius\(isComparison\)\/frameRadius/);
+  assert.match(foundation,/scale\(\$\{frameScale\}\) rotate\(\$\{tangent\}\)/);
+  assert.match(foundation,/data-angle-frame-scale/);
+});
 
-assert.match(registry, /\['gemini','Gemini',[\s\S]*?'assets\/zodiac-glyphs\/gemini\.svg'/);
-assert.match(gemini, /viewBox="0 0 100 100"/);
-assert.match(gemini, /fill="#111111"/);
-assert.doesNotMatch(gemini, /stroke=|stroke-width=/);
-
-console.log('Circled glyphs are uniform scales of the exact canonical master; Gemini uses the single filled canonical asset.');
+test('every direct consumer loads the master bundle before the component',()=>{
+  for(const file of ['glyphs-unified-preview.html','glyphs.html','sky-chart.html',
+    'planetaryhours.html','part1/sky-chart.html','part2/sky-chart.html']){
+    const html=read(file),bundle=html.indexOf('relphi-inscribed-glyph-masters-v1.js'),
+      componentAt=html.indexOf('relphi-glyph-component-v1.js');
+    assert.ok(bundle>=0&&componentAt>bundle,file);
+  }
+  const nav=read('navloader.js');
+  assert.ok(nav.indexOf("appendScript('relphi-inscribed-glyph-masters-v1.js")<
+    nav.indexOf("appendScript('relphi-glyph-component-v1.js"));
+});
