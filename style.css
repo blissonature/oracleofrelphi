@@ -3105,15 +3105,14 @@ body:has(.suggested-questions) main {
   background: transparent;
   --relphi-filter-chip-shadow: none;
   --relphi-filter-chip-border-width: 0px;
-  --relphi-suit-artboard-size: var(--relphi-suit-asset-size, 2.11rem);
 }
-.or-card-grid.tarot-result-grid { --relphi-suit-asset-size: calc(.34rem * 64 / 38); }
-.or-card-grid.tarot-result-grid[data-result-density="compact"] { --relphi-suit-asset-size: calc(.22rem * 64 / 38); }
 .or-chip--suit > .or-suit-inscribed-master {
   display: block;
-  width: var(--relphi-suit-artboard-size);
-  height: var(--relphi-suit-artboard-size);
-  min-width: var(--relphi-suit-artboard-size);
+  /* Complete 64-unit master scaled so its authored 38-unit ring matches the
+     existing interactive chip; no glyph bounds fitting or extra frame. */
+  width: 168.42105263%;
+  height: 168.42105263%;
+  min-width: 168.42105263%;
   max-width: none;
   max-height: none;
   flex: 0 0 auto;
