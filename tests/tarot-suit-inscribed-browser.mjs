@@ -42,7 +42,7 @@ try{
   await page.screenshot({path:'suit-artwork-review-'+viewport.width+'.png',fullPage:true});
 
   await page.goto(BASE+'tarot.html',{waitUntil:'domcontentloaded'});
-  await page.locator('#landingShowLedger').click();
+  await page.locator('#showAllCards').click();
   await page.waitForSelector('#cardList .or-chip--suit img.or-suit-inscribed-master',{timeout:25000});
   const summary=await page.evaluate(()=>{
     const chips=[...document.querySelectorAll('#cardList .or-chip--suit')];
