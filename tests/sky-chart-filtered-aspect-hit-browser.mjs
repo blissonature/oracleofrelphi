@@ -9,6 +9,7 @@ try{
     const page=await context.newPage();
     const errors=[];
     page.on('pageerror',error=>errors.push(error.message));
+    await page.route('**/sky-chart.html',route=>route.fulfill({contentType:'text/html',body:'<!doctype html><html><head></head><body></body></html>'}));
     await page.goto('http://127.0.0.1:4173/sky-chart.html',{waitUntil:'domcontentloaded'});
     // Use a deterministic isolated fixture with the *actual* two production
     // owners. This proves SVG pointer routing, not only visibility attributes.
