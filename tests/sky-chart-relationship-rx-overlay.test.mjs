@@ -6,7 +6,7 @@ const html=fs.readFileSync('sky-chart.html','utf8');
 test('Relationship Retrograde consumes the one canonical glyph component with sky-owned color',()=>{
   assert.match(js,/sky-rx-owner="A"\]\{color:#c9211e\}/);
   assert.match(js,/sky-rx-owner="B"\]\{color:#2462d0\}/);
-  assert.match(js,/right:-6px;bottom:-4px;width:38px;height:38px/);
+  assert.match(js,/right:-12px;bottom:-9px;width:38px;height:38px/);
   assert.match(js,/component\.draw\(svg,'retrograde',\{radius:19,padding:1,color:'currentColor'\}\)/);
   assert.match(js,/mark\.appendChild\(svg\)/);
   assert.match(js,/glyph\.dataset\.skyRxOwner=sky/);
