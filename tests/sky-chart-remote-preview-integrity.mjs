@@ -43,35 +43,46 @@ try{
    if(kind==='preview'&&(!state.wheelCount||state.mountVisible==='hidden'||state.rootBusy!=='false'||errors.length)){failed=true;console.error('FAILED: hosted exact-revision preview did not display a ready wheel');}
    if(kind==='preview'&&!failed){
      // The commit-specific preview must resolve its updated glyph asset, not just display a wheel.
-     const retrograde=await page.evaluate(async()=>{
+     const marks=await page.evaluate(async()=>{
        const NS='http://www.w3.org/2000/svg';
-       const svg=document.createElementNS(NS,'svg');
-       svg.setAttribute('viewBox','-32 -32 64 64');
-       svg.style.cssText='position:fixed;right:12px;top:12px;width:64px;height:64px;z-index:99999';
-       document.body.appendChild(svg);
-       try{
-         const component=window.RelphiGlyphComponent;
-         if(!component)throw new Error('Canonical glyph component unavailable in exact preview');
-         const bubble=component.createBubble(svg,'retrograde',{radius:19,padding:1,color:'#111'});
-         await bubble.ready;
-         const art=svg.querySelector('.relphi-glyph-retrograde');
-         if(!art)throw new Error('Retrograde artwork failed to mount');
-         const box=art.getBoundingClientRect(),ring=bubble.circle.getBoundingClientRect();
-         const cx=ring.x+ring.width/2,cy=ring.y+ring.height/2;
-         return{
-           paths:art.querySelectorAll('path').length,
-           dx:box.x+box.width/2-cx,
-           dy:box.y+box.height/2-cy,
-           farthest:Math.max(...[[box.left,box.top],[box.left,box.bottom],[box.right,box.top],[box.right,box.bottom]].map(([x,y])=>Math.hypot(x-cx,y-cy))),
-           firstPath:art.querySelector('path')?.getAttribute('d')?.slice(0,20)||''
-         };
-       }finally{svg.remove()}
+       const component=window.RelphiGlyphComponent;
+       if(!component)throw new Error('Canonical glyph component unavailable in exact preview');
+       const results=[];
+       for(const id of ['retrograde','anti-vertex']){
+         const svg=document.createElementNS(NS,'svg');
+         svg.setAttribute('viewBox','-32 -32 64 64');
+         svg.style.cssText='position:fixed;right:12px;top:12px;width:64px;height:64px;z-index:99999';
+         document.body.appendChild(svg);
+         try{
+           const bubble=component.createBubble(svg,id,{radius:19,padding:1,color:'#111'});
+           await bubble.ready;
+           const art=svg.querySelector('.relphi-glyph-'+id);
+           if(!art)throw new Error(id+' artwork failed to mount');
+           const box=art.getBoundingClientRect(),ring=bubble.circle.getBoundingClientRect();
+           const cx=ring.x+ring.width/2,cy=ring.y+ring.height/2;
+           results.push({
+             id,
+             paths:art.querySelectorAll('path').length,
+             internalRings:art.querySelectorAll('circle').length,
+             dx:box.x+box.width/2-cx,
+             dy:box.y+box.height/2-cy,
+             farthest:Math.max(...[[box.left,box.top],[box.left,box.bottom],[box.right,box.top],[box.right,box.bottom]].map(([x,y])=>Math.hypot(x-cx,y-cy))),
+             firstPath:art.querySelector('path')?.getAttribute('d')?.slice(0,25)||''
+           });
+         }finally{svg.remove()}
+       }
+       return results;
      });
-     console.log('PREVIEW RETROGRADE MASTER',JSON.stringify(retrograde));
-     assert.equal(retrograde.paths,2);
-     assert.ok(retrograde.firstPath.startsWith('M46.666 33.1'),'Preview must load this commit’s Montserrat outline');
-     assert.ok(Math.abs(retrograde.dx)<1&&Math.abs(retrograde.dy)<1);
-     assert.ok(retrograde.farthest<16.825);
+     console.log('PREVIEW MONTSERRAT LETTER MASTERS',JSON.stringify(marks));
+     for(const [id,count,prefix] of [['retrograde',2,'M46.666 33.1'],['anti-vertex',3,'M27 57.623']]){
+       const mark=marks.find(g=>g.id===id);
+       assert.ok(mark,'Preview must load '+id+' from committed source');
+       assert.equal(mark.paths,count);
+       assert.equal(mark.internalRings,0);
+       assert.ok(mark.firstPath.startsWith(prefix),'Preview must load committed Montserrat '+id+' outline');
+       assert.ok(Math.abs(mark.dx)<1&&Math.abs(mark.dy)<1,id+' must be centered');
+       assert.ok(mark.farthest<16.825,id+' must fit entirely within its own ring');
+     }
      await page.locator('#skyFoundationB [data-sky-drawer-tab="where"]').click();
      await page.waitForSelector('#skyFoundationB .sky-where-when-editor [data-ww-action="refresh-now"]',{timeout:15000});
      await page.waitForSelector('#skyFoundationB [data-draft-heptagram-ready="true"] .sky-where-when-draft-heptagram',{timeout:20000});
