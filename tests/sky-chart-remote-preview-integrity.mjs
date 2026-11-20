@@ -108,6 +108,7 @@ try{
        glyphCanvas.font=plutoStyle.font;
        const plutoMetrics=glyphCanvas.measureText('P');
        const plutoBaseline=glyphRect.top+plutoMetrics.fontBoundingBoxAscent;
+       const baselineRowOffset=row.getBoundingClientRect().top-pluto.getBoundingClientRect().top;
        const pMatrix=p.getScreenCTM(), xMatrix=x.getScreenCTM();
        const pBaseline=pMatrix.b*Number(p.getAttribute('x'))+pMatrix.d*Number(p.getAttribute('y'))+pMatrix.f;
        const xBaseline=xMatrix.b*Number(x.getAttribute('x'))+xMatrix.d*Number(x.getAttribute('y'))+xMatrix.f;
@@ -123,7 +124,8 @@ try{
          rawImage:!!mark.querySelector('img'),plutoFont:plutoStyle.fontFamily,
          plutoWeight:plutoStyle.fontWeight,plutoSize:parseFloat(plutoStyle.fontSize),
          pFont:pStyle.fontFamily,pWeight:pStyle.fontWeight,pSize:effectiveSize,
-         baselineOffset:pBaseline-plutoBaseline,plutoBaseline,pBaseline,xBaseline,
+         baselineOffset:pBaseline-(plutoBaseline+baselineRowOffset),plutoBaseline,pBaseline,xBaseline,
+         subscriptDrop:xBaseline-pBaseline,
          plutoRangeHeight:glyphRect.height,fontMetricHeight:plutoMetrics.fontBoundingBoxAscent+plutoMetrics.fontBoundingBoxDescent,
          pLetter:p.textContent,xLetter:x.textContent,xFontWeight:getComputedStyle(x).fontWeight};
      });
@@ -131,6 +133,9 @@ try{
      assert.equal(placementMark.pFont,placementMark.plutoFont,'P and Pluto must use identical font families');
      assert.equal(placementMark.pWeight,placementMark.plutoWeight,'P and Pluto must use identical bold weight');
      assert.ok(Math.abs(placementMark.pSize-placementMark.plutoSize)<.35,'Retrograde P must match Pluto 11.84px font size');
+     assert.ok(Math.abs(placementMark.baselineOffset)<.35,'Retrograde P foot must align with Pluto P foot at the same row baseline');
+     assert.ok(placementMark.subscriptDrop>=1.5&&placementMark.subscriptDrop<=3.5,'The x baseline must drop below the capital P');
+     assert.equal(placementMark.xFontWeight,'900','The smaller x must have a visually bold stroke weight');
      assert.equal(placementMark.source,'retrograde');
      assert.equal(placementMark.rawImage,false,'Placements must not bypass component via image');
      const saturnIdentity=await page.evaluate(()=>{
