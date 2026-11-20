@@ -139,10 +139,10 @@ try{
      await placementsCopy.click();
      await page.waitForFunction(()=>!!window.__retrogradeCopied,null,{timeout:6000});
      const copiedPlacements=await page.evaluate(()=>window.__retrogradeCopied);
-     assert.match(copiedPlacements,/\\*\\*Saturn Rx\\*\\*/,'Placements Copy must contain Saturn Rx once');
+     assert.match(copiedPlacements,/\*\*Saturn Rx\*\*/,'Placements Copy must contain Saturn Rx once');
      assert.doesNotMatch(copiedPlacements,/SaturnPx|Saturn P x/,'Canonical SVG text must not pollute copy');
      console.log('PREVIEW PLACEMENTS COPY',JSON.stringify({saturnIdentity,
-       saturnLine:copiedPlacements.split('\\n').find(line=>line.includes('Saturn'))}));
+       saturnLine:copiedPlacements.split('\n').find(line=>line.includes('Saturn'))}));
 
      const relationshipsRx=await page.evaluate(()=>[...document.querySelectorAll('#skyFoundationRelationshipList .sky-rx-glyph-overlay')].map(node=>({
        art:!!node.querySelector('.relphi-glyph-retrograde'),
