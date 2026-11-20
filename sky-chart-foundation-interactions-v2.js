@@ -24,7 +24,7 @@
   const norm=value=>((Number(value)%360)+360)%360;
   const separation=(a,b)=>Math.abs(((a-b+180)%360+360)%360-180);
   const esc=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot',"'":'&#39;'}[c]));
-  function read(key){try{return JSON.parse(localStorage.getItem(key)||'null')}catch(_){return null}}
+  function read(key){try{return JSON.parse(window.RelphiSkyWorkingSlotStore.getItem(key)||'null')}catch(_){return null}}
   function source(payload){
     if(!payload||typeof payload!=='object')return[];
     const known=[payload.placements,payload.positions,payload.points,payload.bodies].find(value=>value&&typeof value==='object'),value=known||payload;
