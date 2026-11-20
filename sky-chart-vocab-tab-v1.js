@@ -1735,7 +1735,7 @@ function installStyles(){
     .sky-vocab-token{--vocab-mark-size:1.68em}
     .sky-vocab-symbol-label{display:inline;white-space:nowrap}
     .sky-vocab-rx{position:relative;display:inline-block;width:.9em;height:1em;margin-left:.08em;vertical-align:-.12em;color:inherit}
-    .sky-vocab-rx>svg{position:absolute;left:50%;top:50%;display:block;width:2.2em;height:2.2em;overflow:visible;transform:translate(-50%,-50%)}
+    .sky-vocab-rx>svg{position:absolute;left:50%;top:50%;display:block;width:2.7em;height:2.7em;overflow:visible;transform:translate(-50%,-50%)}
     .sky-vocab-parenthetical{display:inline;white-space:nowrap;vertical-align:baseline;color:#6a6058}
     .sky-vocab-parenthetical .sky-vocab-name,.sky-vocab-parenthetical .sky-vocab-referent{display:inline;vertical-align:baseline;color:inherit}
     .sky-vocab-glyph{position:relative;display:inline-block;width:var(--vocab-mark-size);min-width:var(--vocab-mark-size);height:1em;min-height:1em;margin:0;vertical-align:baseline;overflow:visible;font-weight:800;line-height:1}
