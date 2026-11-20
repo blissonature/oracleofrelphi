@@ -109,7 +109,8 @@ try{
   const timingSorts=[
     {mode:'duration-shortest',field:'transitDurationDays',direction:1,label:'Shortest Duration'},
     {mode:'duration-longest',field:'transitDurationDays',direction:-1,label:'Longest Duration'},
-    {mode:'began-most-recently',field:'transitStartedDaysAgo',direction:1,label:'Began Most Recently',scopeAware:true},
+    {mode:'began-most-recently',field:'transitStartedDaysAgo',direction:1,label:'Began Most Recently'},
+    {mode:'began-longest-ago',field:'transitStartedDaysAgo',direction:-1,label:'Began Longest Ago'},
     {mode:'ends-soonest',field:'transitEndsInDays',direction:1,label:'Ends Soonest'},
     {mode:'ends-last',field:'transitEndsInDays',direction:-1,label:'Ends Last'}
   ];
@@ -168,7 +169,7 @@ try{
   }
 
   assert.deepEqual(pageErrors,[],`browser errors: ${pageErrors.join(' | ')}`);
-  console.log('browser Chiron timing, glyph-only copy, all five timing sorts, and timing-sort Copy order passed');
+  console.log('browser Chiron timing, glyph-only copy, all six timing sorts, and timing-sort Copy order passed');
 }finally{
   await browser.close();
 }
