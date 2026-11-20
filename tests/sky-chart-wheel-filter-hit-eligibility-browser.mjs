@@ -79,6 +79,39 @@ try{
       colored:document.querySelectorAll('#skyFoundationWheelMount .is-kept').length
     }));
     assert.ok(markedBefore.selected>0,'A deliberate placement selection is retained');
+    // Exercise the real pointer hit path, not only synthetic DOM dispatch.
+    // Find a segment of an excluded A↔B line that is within the viewport but
+    // is not covered by another currently eligible aspect hit envelope.
+    const excludedPoint=await page.evaluate(()=>{
+      const lines=[...document.querySelectorAll('#skyFoundationWheelMount [data-layer="aspects"] > line.sky-chart-aspect-multiselect-hidden:not(.sky-foundation-aspect-hit)')];
+      for(const line of lines){
+        const m=line.getScreenCTM();if(!m)continue;
+        const x1=+line.getAttribute('x1'),y1=+line.getAttribute('y1');
+        const x2=+line.getAttribute('x2'),y2=+line.getAttribute('y2');
+        for(const t of [.25,.4,.5,.6,.75]){
+          const p=line.ownerSVGElement.createSVGPoint();
+          p.x=x1+(x2-x1)*t;p.y=y1+(y2-y1)*t;
+          const q=p.matrixTransform(m);
+          if(q.x<8||q.y<8||q.x>innerWidth-8||q.y>innerHeight-8)continue;
+          const top=document.elementFromPoint(q.x,q.y);
+          if(!top?.closest?.('#skyFoundationWheelMount'))continue;
+          if(top.closest?.('.sky-foundation-aspect-hit,[data-interactive="placement"],[data-interactive="aspect"]'))continue;
+          return{x:q.x,y:q.y};
+        }
+      }
+      return null;
+    });
+    if(excludedPoint){
+      await page.mouse.click(excludedPoint.x,excludedPoint.y);
+      const physical=await page.evaluate(()=>({
+        locked:document.querySelector('#skyFoundationWheelMount .sky-foundation-wheel')?.classList.contains('has-isolation'),
+        kept:document.querySelectorAll('#skyFoundationWheelMount .is-kept').length,
+        selected:document.querySelectorAll('#skyFoundationWheelMount [data-layer="placements"] > g.is-selected').length
+      }));
+      console.log(label+' excluded physical pointer click',JSON.stringify({point:excludedPoint,physical}));
+      assert.ok(physical.locked&&physical.kept>0&&physical.selected>0,
+        label+': click on filtered-out aspect coordinates must not clear placement focus');
+    }else console.log(label+' no unoccluded excluded stroke sample in viewport; DOM and CSS suppression assertions still enforced');
     const blockedLine=page.locator('#skyFoundationWheelMount [data-layer="aspects"] > line.sky-chart-aspect-multiselect-hidden:not(.sky-foundation-aspect-hit)').first();
     await blockedLine.dispatchEvent('click',{button:0});
     const after=await page.evaluate(()=>({
