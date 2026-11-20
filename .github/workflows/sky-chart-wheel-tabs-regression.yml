@@ -1,0 +1,49 @@
+name: Sky Chart wheel filter and independent tabs
+
+on:
+  pull_request:
+    paths:
+      - 'sky-chart-*.js'
+      - 'sky-chart.html'
+      - 'sky-chart-final-integrated-v1.css'
+      - 'tests/sky-chart-wheel-filter-hit-eligibility-browser.mjs'
+      - 'tests/sky-chart-independent-tab-workspaces-browser.mjs'
+      - '.github/workflows/sky-chart-wheel-tabs-regression.yml'
+  workflow_dispatch:
+
+jobs:
+  filtered-wheel-and-tabs:
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Syntax and invariant owners
+        run: |
+          node --check sky-chart-working-slot-store-v1.js
+          node --check sky-chart-startup-mode-v1.js
+          node --check sky-chart-angle-placements-v1.js
+          node --check sky-chart-final-pass-v2.js
+          node --check sky-chart-foundation-interactions-v2.js
+          node --check sky-chart-selected-relationship-wheel-bridge-v1.js
+          node --check tests/sky-chart-wheel-filter-hit-eligibility-browser.mjs
+          node --check tests/sky-chart-independent-tab-workspaces-browser.mjs
+      - name: Chromium and local astronomy dependencies
+        run: |
+          npm install --no-save playwright@1.61.0 luxon@3 suncalc@1.9.0
+          npx playwright install --with-deps chromium
+      - name: Actual wheel and independent tab user workflows
+        run: |
+          python3 -m http.server 4173 >/tmp/sky-wheel-tabs.log 2>&1 &
+          node tests/sky-chart-wheel-filter-hit-eligibility-browser.mjs
+          node tests/sky-chart-independent-tab-workspaces-browser.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: wheel-filter-and-tab-workspaces-chromium
+          path: |
+            wheel-filter-and-focus-*.png
+            two-independent-sky-tabs-*.png
+          if-no-files-found: ignore
