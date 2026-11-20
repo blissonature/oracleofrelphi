@@ -178,7 +178,7 @@
 
   // Enrich each working sky at the existing storage owner, not by intercepting
   // the browser's global Storage.prototype (which also affects other tabs).
-  window.RelphiSkyWorkingSlotStore.setSlotEnricher(enrichPayload);
+  window.RelphiSkyWorkingSlotStore.addSlotEnricher(enrichPayload);
 
   function dispatch(slot) {
     try {
