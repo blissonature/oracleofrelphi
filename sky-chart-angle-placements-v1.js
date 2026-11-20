@@ -21,7 +21,8 @@
     { id:'mc', key:'Medium Coeli', label:'Medium Coeli', registry:'mc', aliases:['mc','midheaven','medium coeli'] },
     { id:'ic', key:'Imum Coeli', label:'Imum Coeli', registry:'ic', aliases:['ic','imum coeli','imumcoeli'] }
   ]);
-  const originalSetItem = Storage.prototype.setItem;
+  const working=window.RelphiSkyWorkingSlotStore;
+  if(!working)throw new Error('Working Sky Chart storage must load before placement normalization.');
   let decorating = false;
   let decorateQueued = false;
 
@@ -154,19 +155,15 @@
     catch (_) { return raw; }
   }
 
-  Storage.prototype.setItem = function (key, value) {
-    if (this === localStorage && KEYS.has(String(key))) {
-      return originalSetItem.call(this, key, normalizeStored(String(value)));
-    }
-    return originalSetItem.call(this, key, value);
-  };
+  // Register the existing angle normalizer with the working-slot owner.
+  working.addSlotEnricher(normalizePayload);
 
   function normalizeExistingStorage() {
     KEYS.forEach(key => {
       const raw = window.RelphiSkyWorkingSlotStore.getItem(key);
       if (!raw) return;
       const normalized = normalizeStored(raw);
-      if (normalized !== raw) originalSetItem.call(localStorage, key, normalized);
+      if (normalized !== raw) working.setItem(key, normalized);
     });
   }
 
