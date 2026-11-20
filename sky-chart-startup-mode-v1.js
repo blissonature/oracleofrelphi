@@ -104,20 +104,20 @@ window.__relphiSkyStartupModeV1=true;
 const MODE_KEY='relphiSkyChartLastModeV1';
 const SKY_B_KEY='relphiSkyChartB';
 const html=document.documentElement;
-const nativeGetItem=Storage.prototype.getItem;
-const nativeSetItem=Storage.prototype.setItem;
+const working=window.RelphiSkyWorkingSlotStore;
+if(!working)throw new Error('The working Sky Chart slot store must load before startup mode.');
 const BASE_SKY_NAMES=new Set(['sun','moon','mercury','venus','mars','jupiter','saturn','uranus','neptune','pluto','asc','ascendant','rising','ac','mc','midheaven','mediumcoeli']);
 const baseSkyName=value=>String(value||'').trim().toLowerCase().replace(/[^a-z0-9]/g,'');
 
 function rawGet(key){
-  try{return nativeGetItem.call(localStorage,key)}catch(_){return null}
+  try{return working.getItem(key)}catch(_){return null}
 }
 function readMode(){
   return rawGet(MODE_KEY)==='comparison'?'comparison':'single';
 }
 function writeMode(mode){
   const next=mode==='comparison'?'comparison':'single';
-  try{if(rawGet(MODE_KEY)!==next)nativeSetItem.call(localStorage,MODE_KEY,next)}catch(_){}
+  try{if(rawGet(MODE_KEY)!==next)working.setItem(MODE_KEY,next)}catch(_){}
   if(html.dataset.skyLastMode!==next)html.dataset.skyLastMode=next;
   return next;
 }
@@ -252,7 +252,10 @@ document.addEventListener('click',event=>{
 },true);
 
 window.addEventListener('storage',event=>{
-  if(event.storageArea&&event.storageArea!==localStorage)return;
+  if(event.storageArea&&event.storageArea!==sessionStorage&&event.storageArea!==localStorage)return;
+  // Old tabs may still write legacy global keys. Those events must never
+  // replace the current tab's draft/comparison selection.
+  if(event.storageArea===localStorage&&(event.key===SKY_B_KEY||event.key===MODE_KEY))return;
   if(event.key===SKY_B_KEY&&!hasStoredSkyB())writeMode('single');
   if(event.key===SKY_B_KEY||event.key===MODE_KEY)syncRoot();
 });
