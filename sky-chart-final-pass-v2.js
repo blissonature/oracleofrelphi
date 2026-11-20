@@ -183,7 +183,7 @@
   function dispatch(slot) {
     try {
       window.dispatchEvent(new StorageEvent('storage', {
-        key:KEYS[slot], newValue:window.RelphiSkyWorkingSlotStore.getItem(KEYS[slot]), storageArea:localStorage
+        key:KEYS[slot], newValue:window.RelphiSkyWorkingSlotStore.getItem(KEYS[slot]), storageArea:sessionStorage
       }));
     } catch (_) {
       const event = new Event('storage');
