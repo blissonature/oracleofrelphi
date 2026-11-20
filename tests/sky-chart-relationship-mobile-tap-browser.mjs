@@ -37,9 +37,11 @@ async function runMobileTap(browserType,label){
     await page.waitForFunction(()=>document.documentElement.dataset.skyBPresent==='true',null,{timeout:10000});
 
     const sort=page.locator('select[data-relationship-sort]');
-    await sort.selectOption('ends-last');
-    await page.waitForFunction(()=>document.documentElement.dataset.skyRelationshipSort==='ends-last',null,{timeout:45000});
+    await sort.selectOption('began-longest-ago');
+    await page.waitForFunction(()=>document.documentElement.dataset.skyRelationshipSort==='began-longest-ago',null,{timeout:45000});
     await page.waitForFunction(()=>document.querySelector('select[data-relationship-sort]')?.getAttribute('aria-busy')==='false',null,{timeout:45000});
+    assert.equal(await sort.locator('option:checked').textContent(),'Began Longest Ago');
+    if(label==='Chromium')await page.screenshot({path:'relationships-began-longest-ago-mobile.png'});
 
     const row=page.locator('#skyFoundationRelationshipList>.sky-foundation-relationship-row[data-relation-index]:visible').first();
     await row.scrollIntoViewIfNeeded();
