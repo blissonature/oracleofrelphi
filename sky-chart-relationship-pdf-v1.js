@@ -213,12 +213,17 @@ async function clicked(event){
 function start(){
   styles();
   buttons();
-  const root=document.getElementById('skyFoundationRelationships');
-  if(root){
-    const observer=new MutationObserver(()=>{if(!root.querySelector('.sky-relationship-heading-actions>.rpdf-control'))buttons()});
-    observer.observe(root,{childList:true,subtree:true});
-  }
+  // The chart builds its heading asynchronously. Observe its existing parent
+  // until the original heading-actions owner has mounted, then disconnect.
+  // No duplicate export controls and no ongoing mutation work.
+  const mount=document.getElementById('skyFoundationComparison')||document.body;
+  const observer=new MutationObserver(()=>{
+    buttons();
+    if(document.getElementById('skyChartPdfMenu'))observer.disconnect();
+  });
+  if(!document.getElementById('skyChartPdfMenu'))observer.observe(mount,{childList:true,subtree:true});
   window.addEventListener('relphi:sky-foundation-ready',buttons);
+  window.addEventListener('relphi:sky-foundation-interactions-ready',buttons);
   document.addEventListener('click',clicked,true);
   document.addEventListener('keydown',event=>{if(event.key==='Escape')closeMenu()});
 }
