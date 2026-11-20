@@ -109,7 +109,11 @@ try{
         kept:document.querySelectorAll('#skyFoundationWheelMount .is-kept').length,
         selected:document.querySelectorAll('#skyFoundationWheelMount [data-layer="placements"] > g.is-selected').length
       }));
-      console.log(label+' excluded physical pointer click',JSON.stringify({point:excludedPoint,physical}));
+      const excludedHover=await page.evaluate(()=>[...document.querySelectorAll(
+        '#skyFoundationWheelMount [data-layer="aspects"] > line.sky-chart-aspect-multiselect-hidden:not(.sky-foundation-aspect-hit)')]
+        .filter(l=>l.classList.contains('is-hovered')||l.classList.contains('is-selected')).length);
+      console.log(label+' excluded physical pointer click',JSON.stringify({point:excludedPoint,physical,excludedHover}));
+      assert.equal(excludedHover,0,label+': excluded lines must not respond to pointer hover or click');
       assert.ok(physical.locked&&physical.kept>0&&physical.selected>0,
         label+': click on filtered-out aspect coordinates must not clear placement focus');
     }else console.log(label+' no unoccluded excluded stroke sample in viewport; DOM and CSS suppression assertions still enforced');
