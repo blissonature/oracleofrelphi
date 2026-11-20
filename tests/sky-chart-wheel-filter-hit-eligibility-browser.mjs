@@ -37,7 +37,14 @@ try{
       return{total:lines.length,eligible:eligible.length};
     });
     assert.ok(before.eligible>3,label+': some relationship-backed wheel lines must start interactive');
-    const button=page.locator('#skyFoundationRelationships .sky-chart-aspect-filter-toggle');
+    console.log(label+' filter UI diagnostics',JSON.stringify(await page.evaluate(()=>({
+      hasPanel:!!document.getElementById('skyFoundationRelationships'),
+      filters:document.querySelectorAll('.sky-chart-aspect-filter-toggle').length,
+      siblings:document.querySelectorAll('[data-aspect-filter="combined"]').length,
+      scripts:!!window.RelphiSkyAspectScopeMatrix,
+      visibleRows:document.querySelectorAll('#skyFoundationRelationshipList > .sky-foundation-relationship-row:not([hidden])').length
+    }))),JSON.stringify(errors));
+    const button=page.locator('.sky-chart-aspect-filter-toggle').first();
     await button.click();
     const check=page.locator('#skyChartAspectPopover [data-aspect-matrix-scope="A-B"][data-aspect-matrix-aspect="all"]');
     await check.waitFor({state:'visible',timeout:12000});
