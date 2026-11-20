@@ -66,14 +66,16 @@ try {
         await page.mouse.move(0,0);
       }
       await page.screenshot({path:'relationship-highlight-unselected-'+label+'.png'});
-      if(mobile)await first.tap();else await first.click();
+      // Target blank header chrome, not expandable glyph or detail controls.
+      if(mobile)await first.tap({position:{x:8,y:8}});else await first.click({position:{x:8,y:8}});
       await page.waitForFunction(()=>!!document.querySelector('#skyFoundationRelationshipList > .sky-foundation-relationship-row.is-inline-expanded'),null,{timeout:10000});
       const expanded=await selection(page);
       assert.equal(expanded.expanded.length,1,label+': deliberate activation expands exactly one tile');
       if(!mobile){
         assert.equal(expanded.current.length,1,'Desktop explicit selection still highlights the expanded row');
       }
-      if(mobile)await first.tap();else await first.click();
+      // Target blank header chrome, not expandable glyph or detail controls.
+      if(mobile)await first.tap({position:{x:8,y:8}});else await first.click({position:{x:8,y:8}});
       await page.waitForFunction(()=>!document.querySelector('#skyFoundationRelationshipList > .sky-foundation-relationship-row.is-inline-expanded'),null,{timeout:10000});
       await page.waitForTimeout(180);
       const closed=await selection(page);
