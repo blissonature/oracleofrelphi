@@ -10,7 +10,7 @@
   ]);
   const SKY_KEYS=new Set(['relphiSkyChartA','relphiSkyChartB']);
   const MIGRATED='relphiSkyTabWorkingSlotsMigratedV1';
-  let enrich=null;
+  const enrichers=[];
 
   // Adopt pre-existing working charts once, without deleting the legacy data.
   // Never replay another tab's changes over this tab's unsaved working slots.
@@ -30,11 +30,14 @@
   function setItem(key,value){
     key=String(key);value=String(value);
     if(!KEYS.has(key)){localStorage.setItem(key,value);return}
-    if(enrich&&SKY_KEYS.has(key)){
+    if(enrichers.length&&SKY_KEYS.has(key)){
       try{
-        const next=JSON.parse(value);
+        let next=JSON.parse(value);
         const prior=JSON.parse(sessionStorage.getItem(key)||'null');
-        value=JSON.stringify(enrich(next,prior));
+        // The later final-pass completion runs before the earlier angle
+        // normalization, preserving the established source execution order.
+        for(let i=enrichers.length-1;i>=0;i--)next=enrichers[i](next,prior);
+        value=JSON.stringify(next);
       }catch(_){/* Keep the source's original value if it is not a sky JSON packet. */}
     }
     sessionStorage.setItem(key,value);
@@ -43,11 +46,11 @@
     key=String(key);
     (KEYS.has(key)?sessionStorage:localStorage).removeItem(key);
   }
-  function setSlotEnricher(callback){
+  function addSlotEnricher(callback){
     if(typeof callback!=='function')throw new TypeError('A working-sky enrichment function is required.');
-    enrich=callback;
+    enrichers.push(callback);
   }
   window.RelphiSkyWorkingSlotStore=Object.freeze({
-    getItem,setItem,removeItem,setSlotEnricher,isTabScoped:key=>KEYS.has(String(key))
+    getItem,setItem,removeItem,addSlotEnricher,isTabScoped:key=>KEYS.has(String(key))
   });
 })();
