@@ -19,8 +19,8 @@
   const normalize=value=>String(value||'').trim().toLowerCase().replace(/\s+/g,' ');
   const clone=value=>JSON.parse(JSON.stringify(value));
 
-  function readJson(key,fallback){try{const raw=localStorage.getItem(key);return raw?JSON.parse(raw):fallback}catch(_){return fallback}}
-  function writeJson(key,value){try{localStorage.setItem(key,JSON.stringify(value));return true}catch(_){return false}}
+  function readJson(key,fallback){try{const raw=window.RelphiSkyWorkingSlotStore.getItem(key);return raw?JSON.parse(raw):fallback}catch(_){return fallback}}
+  function writeJson(key,value){try{window.RelphiSkyWorkingSlotStore.setItem(key,JSON.stringify(value));return true}catch(_){return false}}
   function payload(slot){return readJson(SLOT_KEYS[slot],null)}
   function placementSource(value){
     if(!value||typeof value!=='object')return{};
@@ -119,7 +119,7 @@
 
   function dispatchStorage(slot){
     const key=SLOT_KEYS[slot];
-    try{window.dispatchEvent(new StorageEvent('storage',{key,newValue:localStorage.getItem(key),storageArea:localStorage}))}
+    try{window.dispatchEvent(new StorageEvent('storage',{key,newValue:window.RelphiSkyWorkingSlotStore.getItem(key),storageArea:localStorage}))}
     catch(_){const event=new Event('storage');Object.defineProperty(event,'key',{value:key});window.dispatchEvent(event)}
     window.dispatchEvent(new CustomEvent('relphi:saved-sky-active-changed',{detail:{slot}}));
   }
@@ -159,7 +159,7 @@
   function loadRecord(slot,record){
     closeWhereWhenEditors();const id=recordRef(record),active=applyNamedIdentity(record,String(record.name||'Saved sky').trim(),id);delete active.savedAt;delete active.updatedAt;
     if(!writeJson(SLOT_KEYS[slot],active))return false;
-    if(slot==='B'){try{localStorage.setItem('relphiSkyChartLastModeV1','comparison')}catch(_){}document.documentElement.dataset.skyLastMode='comparison'}
+    if(slot==='B'){try{window.RelphiSkyWorkingSlotStore.setItem('relphiSkyChartLastModeV1','comparison')}catch(_){}document.documentElement.dataset.skyLastMode='comparison'}
     dispatchStorage(slot);window.dispatchEvent(new CustomEvent('relphi:saved-sky-loaded',{detail:{slot,id,name:String(record.name||'Saved sky').trim()}}));return true;
   }
   function deleteRecord(ref){
@@ -178,7 +178,7 @@
   function newSky(slot){
     if(!SLOT_KEYS[slot])return false;closeWhereWhenEditor(slot);
     if(slot==='B'){
-      try{localStorage.removeItem(SLOT_KEYS.B)}catch(_){return false}
+      try{window.RelphiSkyWorkingSlotStore.removeItem(SLOT_KEYS.B)}catch(_){return false}
       reportCleared('B','new');dispatchStorage('B');
       window.RelphiSkySlotControls?.addSkyB?.();
       window.dispatchEvent(new CustomEvent('relphi:sky-name-updated',{detail:{slot:'B',name:'Where and When',source:'new-sky'}}));
@@ -189,7 +189,7 @@
   function removeSky(slot){
     if(!SLOT_KEYS[slot])return false;closeWhereWhenEditor(slot);
     if(slot==='B'){window.RelphiSkySlotControls?.removeSkyB?.();return true}
-    try{localStorage.removeItem(SLOT_KEYS.A)}catch(_){return false}reportCleared('A','remove');dispatchStorage('A');window.RelphiSkyCardShell?.sync?.('A',null);window.dispatchEvent(new CustomEvent('relphi:sky-name-updated',{detail:{slot:'A',name:'Where and When',source:'remove-sky'}}));return true;
+    try{window.RelphiSkyWorkingSlotStore.removeItem(SLOT_KEYS.A)}catch(_){return false}reportCleared('A','remove');dispatchStorage('A');window.RelphiSkyCardShell?.sync?.('A',null);window.dispatchEvent(new CustomEvent('relphi:sky-name-updated',{detail:{slot:'A',name:'Where and When',source:'remove-sky'}}));return true;
   }
   function addSkyB(){window.RelphiSkySlotControls?.addSkyB?.()}
   function shortMeta(record){const profile=record?.calcProfile&&typeof record.calcProfile==='object'?record.calcProfile:{},date=String(profile.dateTime||record?.dateTime||'').slice(0,10),location=String(profile.location||record?.location||'').trim();return[date,location].filter(Boolean).join(' · ')}
