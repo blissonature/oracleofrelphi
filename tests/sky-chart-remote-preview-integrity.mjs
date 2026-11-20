@@ -12,7 +12,7 @@ function point(name,degree){const value=((degree%360)+360)%360;return{name,longi
 function sky(name,offset,instant,location,lat,lon,tz){
  const asc=168.38+offset,cusps=Array.from({length:12},(_,i)=>(asc+i*30)%360);
  const points={Sun:195,Moon:118.42,Mercury:206.17,Venus:169.88,Mars:167.87,Jupiter:307.15,Saturn:235.57,Uranus:254.85,Neptune:271.02,Pluto:213.88,Ascendant:asc,Midheaven:76.28};
- return {name,houseSystem:'equal-house',houseCusps:cusps,calcProfile:{dateTime:instant.slice(0,16),instant,location,locationQuery:location,timeZone:tz,latitude:lat,longitude:lon,houseCusps:cusps,houseSystem:'equal-house'},placements:Object.fromEntries(Object.entries(points).map(([k,v])=>[k,point(k,v+offset)]))};
+ return {name,houseSystem:'equal-house',houseCusps:cusps,calcProfile:{dateTime:instant.slice(0,16),instant,location,locationQuery:location,timeZone:tz,latitude:lat,longitude:lon,houseCusps:cusps,houseSystem:'equal-house'},placements:Object.fromEntries(Object.entries(points).map(([k,v])=>[k,{...point(k,v+offset),retrograde:k==='Saturn'&&offset===0}]))};
 }
 const a=sky('Test A',0,'1985-10-08T08:37:00Z','Malden, Massachusetts, United States',42.4251,-71.0662,'America/New_York');
 const b=sky('Test B',29,'2026-10-17T12:00:00Z','Salt Lake City, Utah, United States',40.7608,-111.891,'America/Denver');
@@ -83,6 +83,43 @@ try{
        assert.ok(Math.abs(mark.dx)<1&&Math.abs(mark.dy)<1,id+' must be centered');
        assert.ok(mark.farthest<16.825,id+' must fit entirely within its own ring');
      }
+     await page.waitForFunction(()=>{
+       const saturn=[...document.querySelectorAll('#skyFoundationA .sky-foundation-row')].find(row=>row.querySelector('.sky-foundation-row-name')?.textContent?.startsWith('Saturn'));
+       return saturn?.querySelector('.sky-placement-rx .relphi-glyph-retrograde path');
+     },null,{timeout:20000});
+     const placementMark=await page.evaluate(()=>{
+       const row=[...document.querySelectorAll('#skyFoundationA .sky-foundation-row')].find(row=>row.querySelector('.sky-foundation-row-name')?.textContent?.startsWith('Saturn'));
+       const art=row.querySelector('.sky-placement-rx .relphi-glyph-retrograde');
+       const mark=row.querySelector('.sky-placement-rx');
+       return {height:art.getBoundingClientRect().height,source:art.dataset.canonicalGlyphId,rawImage:!!mark.querySelector('img')};
+     });
+     assert.ok(placementMark.height>=8,'Placements Retrograde must read at text-sized dimensions');
+     assert.equal(placementMark.source,'retrograde');
+     assert.equal(placementMark.rawImage,false,'Placements must not bypass component via image');
+     const relationshipsRx=await page.evaluate(()=>[...document.querySelectorAll('#skyFoundationRelationshipList .sky-rx-glyph-overlay')].map(node=>({
+       art:!!node.querySelector('.relphi-glyph-retrograde'),
+       path:node.querySelector('.relphi-glyph-retrograde path')?.getAttribute('d')?.slice(0,12),
+       mask:getComputedStyle(node).maskImage
+     })));
+     console.log('PREVIEW PLACEMENTS AND RELATIONSHIPS RETROGRADE',JSON.stringify({placementMark,relationshipsRx}));
+     assert.ok(relationshipsRx.length>0,'Retrograde Saturn relationship must have motion indicator');
+     assert.ok(relationshipsRx.every(r=>r.art&&r.path?.startsWith('M46.666')),'Relationships must render registry-owned SVG');
+     assert.ok(relationshipsRx.every(r=>r.mask==='none'),'Relationships must not use raw asset CSS masks');
+
+     await page.locator('#skyFoundationA [data-sky-vocab-view-button="vocab"]').click();
+     await page.waitForFunction(()=>!!document.querySelector('#skyFoundationA .sky-vocab-token[data-vocab-id="saturn"][data-vocab-retrograde="true"] .sky-vocab-rx .relphi-glyph-retrograde path'),null,{timeout:20000});
+     const vocab=await page.evaluate(()=>{
+       const node=document.querySelector('#skyFoundationA .sky-vocab-token[data-vocab-id="saturn"][data-vocab-retrograde="true"]');
+       const mark=node?.querySelector('.sky-vocab-rx');
+       const text=node?window.RelphiVocabCopySerializer?.serializeToken?.(node):null;
+       return {visible:!!mark,source:mark?.querySelector('.relphi-glyph-retrograde')?.dataset.canonicalGlyphId,text};
+     });
+     console.log('PREVIEW VOCAB RETROGRADE',JSON.stringify(vocab));
+     assert.equal(vocab.visible,true);
+     assert.equal(vocab.source,'retrograde');
+     assert.match(vocab.text||'',/ Rx/);
+     await page.locator('#skyFoundationA [data-sky-vocab-view-button="placements"]').click();
+
      await page.locator('#skyFoundationB [data-sky-drawer-tab="where"]').click();
      await page.waitForSelector('#skyFoundationB .sky-where-when-editor [data-ww-action="refresh-now"]',{timeout:15000});
      await page.waitForSelector('#skyFoundationB [data-draft-heptagram-ready="true"] .sky-where-when-draft-heptagram',{timeout:20000});
@@ -109,5 +146,46 @@ try{
   }catch(e){failed=true;console.error(kind+' FAILED '+e.message);await page.screenshot({path:`sky-remote-${kind}.png`,fullPage:true}).catch(()=>{})}
   await ctx.close();
  }
+  // Render the original canonical Master Glyph List page at this exact commit.
+  // The existing self-hosted loader supplies the page and its registry/asset
+  // dependencies; no second master list or artwork source is introduced.
+  const gallery=await browser.newPage({viewport:{width:1100,height:900}});
+  try{
+    await gallery.goto(`https://oracleofrelphi.com/sky-chart-preview/sky-chart.html?ref=${ref}&page=glyphs-unified-preview.html`,{waitUntil:'domcontentloaded',timeout:30000});
+    await gallery.waitForFunction(()=>{
+      const card=id=>[...document.querySelectorAll('#ugGrid .ug-card')].find(node=>node.querySelector('.ug-id')?.textContent===id);
+      return !!card('retrograde')?.querySelector('.relphi-glyph-retrograde path')
+        && !!card('anti-vertex')?.querySelector('.relphi-glyph-anti-vertex path');
+    },null,{timeout:45000});
+    const galleryState=await gallery.evaluate(()=>{
+      const card=id=>[...document.querySelectorAll('#ugGrid .ug-card')].find(node=>node.querySelector('.ug-id')?.textContent===id);
+      return {
+        title:document.title,
+        status:document.getElementById('ugStatus')?.textContent||'',
+        masters:window.RelphiGlyphRegistry?.entries?.length||0,
+        marks:['retrograde','anti-vertex'].map(id=>{
+          const node=card(id),art=node?.querySelector('.relphi-glyph-'+id);
+          return {id,paths:art?.querySelectorAll('path').length,firstPath:art?.querySelector('path')?.getAttribute('d')?.slice(0,14),
+            source:art?.dataset.canonicalGlyphId,ring:node?.querySelector('.relphi-glyph-bubble>circle')?.style.opacity};
+        })
+      };
+    });
+    console.log('COMMIT MASTER GLYPH LIST',JSON.stringify(galleryState));
+    assert.match(galleryState.title,/Master Glyph List/);
+    assert.ok(galleryState.masters>80,'Original canonical master list must load');
+    for(const [id,paths,prefix] of [['retrograde',2,'M46.666'],['anti-vertex',3,'M27 57.623']]){
+      const mark=galleryState.marks.find(m=>m.id===id);
+      assert.equal(mark?.source,id);
+      assert.equal(mark?.paths,paths);
+      assert.ok(mark?.firstPath.startsWith(prefix),'Exact committed master geometry: '+id);
+      assert.equal(mark?.ring,'1');
+    }
+    await gallery.locator('[data-circle="false"]').click();
+    await gallery.waitForFunction(()=>[...document.querySelectorAll('#ugGrid .ug-card .relphi-glyph-bubble>circle')].every(c=>c.style.opacity==='0'),null,{timeout:30000});
+    await gallery.locator('[data-circle="true"]').click();
+    await gallery.waitForFunction(()=>[...document.querySelectorAll('#ugGrid .ug-card .relphi-glyph-bubble>circle')].every(c=>c.style.opacity==='1'),null,{timeout:30000});
+    await gallery.screenshot({path:'sky-remote-master-glyphs.png',fullPage:true});
+  }catch(error){failed=true;console.error('EXACT MASTER GLYPH LIST FAILED '+error.message)}
+  finally{await gallery.close()}
 }finally{await browser.close()}
 if(failed)process.exitCode=1;
