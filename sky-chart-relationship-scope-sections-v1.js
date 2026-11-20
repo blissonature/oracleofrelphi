@@ -6,7 +6,7 @@ window.__relphiRelationshipScopeSectionsV1=true;window.__relphiRelationshipScope
 
 const GROUPS=Object.freeze([{mode:'A-B',title:'A↔B',family:'intersky'},{mode:'A-A',title:'A↔A',family:'intrasky'},{mode:'B-B',title:'B↔B',family:'intrasky'}]);
 const FAMILIES=Object.freeze([{id:'intersky',title:'Intersky'},{id:'intrasky',title:'Intrasky'}]);
-const GLOBAL_SORTS=new Set(['exact','aspect','strongest','most-challenging','most-supportive','duration-longest','duration-shortest','began-most-recently','ends-soonest','ends-last','applying-first','separating-first','closing-first','opening-first','reference-resolution']);
+const GLOBAL_SORTS=new Set(['exact','aspect','strongest','most-challenging','most-supportive','duration-longest','duration-shortest','began-most-recently','began-longest-ago','ends-soonest','ends-last','applying-first','separating-first','closing-first','opening-first','reference-resolution']);
 const PLACEMENT_SYMBOLS=Object.freeze({sun:'☉',moon:'☽',mercury:'☿',venus:'♀',mars:'♂',jupiter:'♃',saturn:'♄',uranus:'♅',neptune:'♆',pluto:'♇',chiron:'⚷','north-node':'☊','south-node':'☋',lilith:'⚸','part-of-fortune':'⊗',vertex:'Vx','anti-vertex':'AVx',asc:'Asc',dsc:'Dsc',mc:'MC',ic:'IC'});
 const SIGN_SYMBOLS=Object.freeze(['♈','♉','♊','♋','♌','♍','♎','♏','♐','♑','♒','♓']);
 const ASPECT_SYMBOLS=Object.freeze({conjunction:'☌',opposition:'☍',trine:'△',square:'□',sextile:'✶','semi-sextile':'⚺',quincunx:'⚻',octile:'∠','tri-octile':'⚼',quintile:'Q','bi-quintile':'BQ'});

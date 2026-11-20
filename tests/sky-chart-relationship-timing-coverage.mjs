@@ -66,6 +66,23 @@ vm.createContext(context);
 vm.runInContext(fs.readFileSync('sky-chart-relationship-transit-meta-v4.js','utf8'),context,{filename:'sky-chart-relationship-transit-meta-v4.js'});
 const api=context.window.RelphiRelationshipTransitMeta;
 assert.ok(api?.exportTimingForRow,'timing API should install');
+assert.equal(typeof api.formatDurationSpan,'function','The canonical timing owner exports one compact calendar formatter');
+const space='\u202f',minute=60000;
+const start=Date.parse('2025-01-15T09:00:00Z');
+const nineMonths=Date.parse('2025-10-15T09:00:00Z');
+const end=nineMonths+17*DAY+12*60*minute+30*minute;
+assert.equal(api.formatDurationSpan(start,end),['9mo','2w','3d','12h','30m'].join(space),
+  'Duration uses anchored calendar months and exact whole-unit remainders');
+assert.equal(api.formatDurationSpan(Date.parse('2025-01-31T10:00:00Z'),Date.parse('2025-02-28T10:00:00Z')),'1mo',
+  'Month-end dates use the actual calendar rather than a fixed day count');
+assert.equal(api.formatDurationSpan(Date.parse('2024-02-29T10:00:00Z'),Date.parse('2025-02-28T10:00:00Z')),'1y',
+  'Leap-day anniversaries use a valid year boundary');
+assert.equal(api.formatDurationSpan(0,60000),'1m');
+assert.equal(api.formatDurationSpan(0,0),'0m');
+assert.equal(api.formatDurationSpan(0,1000),'<1m');
+const midpoint=nineMonths;
+assert.equal(api.formatDurationSpan(midpoint,end),['2w','3d','12h','30m'].join(space),
+  'Time left must be computed from the chart moment to end, not from wall-clock now');
 
 function row(left,right){return{
   isConnected:true,

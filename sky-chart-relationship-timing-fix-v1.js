@@ -18,7 +18,7 @@ const MIN_STEP={asc:.0007,dsc:.0007,mc:.0007,ic:.0007,vertex:.0007,'part-of-fort
 const MAX_STEP={asc:.01,dsc:.01,mc:.01,ic:.01,vertex:.01,'part-of-fortune':.01,moon:.2,mercury:.5,venus:.7,mars:1,sun:1,jupiter:4,saturn:7,uranus:10,neptune:12,pluto:14,chiron:4,'north-node':5,'south-node':5,lilith:5};
 const MIN_HORIZON={asc:2,dsc:2,mc:2,ic:2,vertex:2,'part-of-fortune':2,moon:45,mercury:400,venus:700,mars:1200,sun:800,jupiter:3000,saturn:4500,uranus:6000,neptune:7000,pluto:8000,chiron:3000,'north-node':4000,'south-node':4000,lilith:2500};
 const MAX_HORIZON=12000;
-const TIMING_MODES=new Set(['duration-longest','duration-shortest','began-most-recently','ends-soonest','ends-last']);
+const TIMING_MODES=new Set(['duration-longest','duration-shortest','began-most-recently','began-longest-ago','ends-soonest','ends-last']);
 const cache=new Map();
 const readCache={A:{raw:null,value:null},B:{raw:null,value:null}};
 const recordCache=new WeakMap(),profileDateCache=new WeakMap(),liveOriginCache=new WeakMap();
@@ -199,7 +199,7 @@ function applySort(){
   const list=document.getElementById('skyFoundationRelationshipList'),compare=window.RelphiRelationshipSort?.compareRows;if(!list||typeof compare!=='function')return;
   const rows=[...list.querySelectorAll(':scope>.sky-foundation-relationship-row')];rows.sort((a,b)=>compare(a,b));rows.forEach(row=>list.appendChild(row));
 }
-function durationLabel(days){if(days<1){const minutes=days*24*60;if(minutes<90)return`${Math.max(1,Math.round(minutes))} min`;return`${Math.max(1,Math.round(days*24*10)/10)} hr`}if(days<14)return`${Math.round(days*10)/10} days`;if(days<75)return`${Math.round(days)} days`;if(days<730)return`${Math.round(days/30.4375*10)/10} months`;return`${Math.round(days/365.25*10)/10} years`}
+function formatDurationSpan(startMs,endMs){return baseApi?.formatDurationSpan?.(startMs,endMs)||'Timing unavailable'}
 function dateLabel(ms){return new Intl.DateTimeFormat(undefined,{month:'short',day:'numeric',year:'numeric'}).format(new Date(ms))}
 function rowMarkup(label,value){const line=document.createElement('span');line.className='inline-rel-transit-row';const key=document.createElement('b');key.textContent=label;const text=document.createElement('span');text.textContent=value;line.append(key,text);return line}
 function patchExpanded(){
@@ -209,8 +209,10 @@ function patchExpanded(){
   if(!meta||meta.dataset.transitKind!=='unavailable')return;
   const timing=timingForRow(row);if(!timing)return;
   const exactText=timing.timeline.exacts.length?timing.timeline.exacts.map(dateLabel).join(' · '):'near pass',passText=timing.timeline.exacts.length===1?'1 exact pass':`${timing.timeline.exacts.length} exact passes`;
-  meta.replaceChildren(rowMarkup('Start',dateLabel(timing.timeline.startMs)),rowMarkup('Exact',exactText),rowMarkup('End',dateLabel(timing.timeline.endMs)),rowMarkup('Duration',durationLabel(timing.durationDays)),rowMarkup('Passes',passText));
-  meta.dataset.transitReady='true';meta.dataset.transitKind='dynamic';meta.title=`Active from ${dateLabel(timing.timeline.startMs)} to ${dateLabel(timing.timeline.endMs)}; ${durationLabel(timing.durationDays)} current activation window.`;meta.setAttribute('aria-label',meta.title);
+  const duration=formatDurationSpan(timing.timeline.startMs,timing.timeline.endMs);
+  const remaining=formatDurationSpan(timing.model.center,timing.timeline.endMs);
+  meta.replaceChildren(rowMarkup('Start',dateLabel(timing.timeline.startMs)),rowMarkup('Exact',exactText),rowMarkup('End',dateLabel(timing.timeline.endMs)),rowMarkup('Duration',`${duration} (${remaining} left)`),rowMarkup('Passes',passText));
+  meta.dataset.transitReady='true';meta.dataset.transitKind='dynamic';meta.title=`Active from ${dateLabel(timing.timeline.startMs)} to ${dateLabel(timing.timeline.endMs)}; ${duration} current activation window; ${remaining} left at chart moment.`;meta.setAttribute('aria-label',meta.title);
 }
 function schedulePatch(delay=0){if(queued)return;queued=true;setTimeout(()=>requestAnimationFrame(patchExpanded),delay)}
 function invalidate(){cache.clear();installApi();schedulePatch(30)}

@@ -205,7 +205,38 @@ function collectTimeline(model){
   const{step,horizon,gap}=searchSettings(model),samples=[];for(let day=-horizon;day<=horizon;day+=step){const ms=model.center+day*DAY,error=model.signedErrorAt(ms);if(Number.isFinite(error))samples.push({ms,error})}if(!samples.some(sample=>Math.abs(sample.ms-model.center)<1000))samples.push({ms:model.center,error:model.signedErrorAt(model.center)});samples.sort((a,b)=>a.ms-b.ms);const inside=ms=>model.errorAt(ms)<=model.limit+1e-8,windows=[];let start=-1;for(let i=0;i<=samples.length;i++){const active=i<samples.length&&Math.abs(samples[i].error)<=model.limit+1e-8;if(active&&start<0)start=i;if(!active&&start>=0){const end=i-1;let entry=samples[start].ms,exit=samples[end].ms;if(start>0)entry=refineBoundary(entry,samples[start-1].ms,inside);if(i<samples.length)exit=refineBoundary(exit,samples[i].ms,inside);windows.push({start,end,entry,exit});start=-1}}const currentIndex=windows.findIndex(window=>window.entry<=model.center&&window.exit>=model.center);if(currentIndex<0)return null;let first=currentIndex,last=currentIndex;if(gap>0){while(first>0&&(windows[first].entry-windows[first-1].exit)/DAY<=gap)first--;while(last<windows.length-1&&(windows[last+1].entry-windows[last].exit)/DAY<=gap)last++}const group=windows.slice(first,last+1),exacts=[];group.forEach(window=>{for(let i=Math.max(1,window.start);i<=window.end;i++){const a=samples[i-1],b=samples[i];if(a.ms<window.entry||b.ms>window.exit)continue;if(a.error===0||b.error===0||Math.sign(a.error)!==Math.sign(b.error)){const time=root(a.ms,b.ms,model.signedErrorAt);if(Number.isFinite(time)&&time>=window.entry&&time<=window.exit&&!exacts.some(value=>Math.abs(value-time)<.0005*DAY))exacts.push(time)}}});exacts.sort((a,b)=>a-b);const startMs=group[0].entry,endMs=group[group.length-1].exit;return{startMs,endMs,exacts,windows:group,durationDays:(endMs-startMs)/DAY}
 }
 function dateLabel(ms){return new Intl.DateTimeFormat(undefined,{month:'short',day:'numeric',year:'numeric'}).format(new Date(ms))}
-function durationLabel(days){if(days<1){const minutes=days*24*60;if(minutes<90)return`${Math.max(1,Math.round(minutes))} min`;return`${Math.max(1,Math.round(days*24*10)/10)} hr`}if(days<14)return`${Math.round(days*10)/10} days`;if(days<75)return`${Math.round(days)} days`;if(days<730)return`${Math.round(days/30.4375*10)/10} months`;return`${Math.round(days/365.25*10)/10} years`}
+// Calendar years/months use the interval's actual beginning, not fixed 30-day months.
+// All smaller units are whole numbers. Narrow no-break spaces keep the timing tile compact.
+function addCalendarMonths(ms,count){
+  const date=new Date(ms),monthIndex=date.getUTCMonth()+count;
+  const year=date.getUTCFullYear()+Math.floor(monthIndex/12);
+  const month=((monthIndex%12)+12)%12;
+  const lastDay=new Date(Date.UTC(year,month+1,0)).getUTCDate();
+  const next=new Date(ms);
+  next.setUTCDate(1);
+  next.setUTCFullYear(year,month,Math.min(date.getUTCDate(),lastDay));
+  return next.getTime();
+}
+function formatDurationSpan(startMs,endMs){
+  if(!Number.isFinite(startMs)||!Number.isFinite(endMs))return'';
+  const elapsedMs=Math.max(0,endMs-startMs);
+  if(elapsedMs>0&&elapsedMs<30000)return'<1m';
+  const end=startMs+Math.round(elapsedMs/60000)*60000;
+  if(end<=startMs)return'0m';
+  const start=new Date(startMs),last=new Date(end);
+  let years=Math.max(0,last.getUTCFullYear()-start.getUTCFullYear());
+  while(years&&addCalendarMonths(startMs,years*12)>end)years--;
+  while(addCalendarMonths(startMs,(years+1)*12)<=end)years++;
+  let totalMonths=years*12,months=0;
+  while(months<11&&addCalendarMonths(startMs,totalMonths+1)<=end){totalMonths++;months++}
+  let minutes=Math.max(0,Math.round((end-addCalendarMonths(startMs,totalMonths))/60000));
+  const weeks=Math.floor(minutes/10080);minutes-=weeks*10080;
+  const days=Math.floor(minutes/1440);minutes-=days*1440;
+  const hours=Math.floor(minutes/60);minutes-=hours*60;
+  const parts=[[years,'y'],[months,'mo'],[weeks,'w'],[days,'d'],[hours,'h'],[minutes,'m']]
+    .filter(([amount])=>amount>0).map(([amount,unit])=>amount+unit);
+  return parts.join('\u202f')||'0m';
+}
 function timingSlot(row){return row.querySelector(':scope>[data-inline-relationship-timing]')||row.querySelector(':scope>.inline-rel-detail [data-inline-relationship-timing]')}
 function metaNode(row){const slot=timingSlot(row);if(!slot)return null;let meta=slot.querySelector(':scope>.inline-rel-transit-window');if(!meta){meta=document.createElement('small');meta.className='inline-rel-transit-window';meta.setAttribute('role','status');meta.setAttribute('aria-live','polite');slot.appendChild(meta)}return meta}
 function removeMeta(row){timingSlot(row)?.querySelector(':scope>.inline-rel-transit-window')?.remove()}
@@ -219,14 +250,19 @@ function motionRows(row){
   const distance=snapshot.distance==='closing'?'Closing':snapshot.distance==='opening'?'Opening':'Steady';
   return[rowMarkup('Motion',`${phase} · ${distance}`)];
 }
-function renderTimeline(row,model,timeline){const meta=metaNode(row);if(!meta)return;const exactText=timeline.exacts.length?timeline.exacts.map(dateLabel).join(' · '):'near pass';const motion=motionSummary(model,timeline),passText=timeline.exacts.length===1?'1 exact pass':`${timeline.exacts.length} exact passes`;meta.replaceChildren(...motionRows(row),rowMarkup('Start',dateLabel(timeline.startMs)),rowMarkup('Exact',exactText),rowMarkup('End',dateLabel(timeline.endMs)),rowMarkup('Duration',durationLabel(timeline.durationDays)),rowMarkup('Passes',motion?`${passText} · ${motion}`:passText));meta.dataset.transitReady='true';meta.dataset.transitKind='dynamic';meta.title=`Active from ${dateLabel(timeline.startMs)} to ${dateLabel(timeline.endMs)}; ${durationLabel(timeline.durationDays)} total activation span; ${passText}${motion?`; ${motion}`:''}.`;meta.setAttribute('aria-label',meta.title)}
+function renderTimeline(row,model,timeline){const meta=metaNode(row);if(!meta)return;const exactText=timeline.exacts.length?timeline.exacts.map(dateLabel).join(' · '):'near pass';const motion=motionSummary(model,timeline),passText=timeline.exacts.length===1?'1 exact pass':`${timeline.exacts.length} exact passes`;const duration=formatDurationSpan(timeline.startMs,timeline.endMs),remaining=formatDurationSpan(model.center,timeline.endMs);meta.replaceChildren(...motionRows(row),rowMarkup('Start',dateLabel(timeline.startMs)),rowMarkup('Exact',exactText),rowMarkup('End',dateLabel(timeline.endMs)),rowMarkup('Duration',`${duration} (${remaining} left)`),rowMarkup('Passes',motion?`${passText} · ${motion}`:passText));meta.dataset.transitReady='true';meta.dataset.transitKind='dynamic';meta.title=`Active from ${dateLabel(timeline.startMs)} to ${dateLabel(timeline.endMs)}; ${duration} total activation span; ${remaining} left at chart moment; ${passText}${motion?`; ${motion}`:''}.`;meta.setAttribute('aria-label',meta.title)}
 function renderUnavailable(row,reason){const meta=metaNode(row);if(!meta)return;meta.replaceChildren(rowMarkup('Timing',reason||'Unavailable'));meta.dataset.transitReady='true';meta.dataset.transitKind='unavailable';meta.title=reason||'Transit timing is unavailable.';meta.setAttribute('aria-label',meta.title)}
 function renderEstimatedTiming(row){
   const timing=estimatedTimingForSort(row),meta=metaNode(row);
   if(!meta)return;
   if(!timing||!Number.isFinite(timing.durationDays)){renderUnavailable(row,'Timing estimate unavailable');return}
-  const lines=[rowMarkup('Duration',`≈ ${durationLabel(timing.durationDays)}`)];
-  if(Number.isFinite(timing.endsInDays))lines.push(rowMarkup('Ends',`≈ ${durationLabel(timing.endsInDays)} after chart moment`));
+  const model=modelFor(row),center=model.center;
+  const knownStart=Number.isFinite(timing.startedDaysAgo),knownEnd=Number.isFinite(timing.endsInDays);
+  const duration=knownStart&&knownEnd
+    ?formatDurationSpan(center-timing.startedDaysAgo*DAY,center+timing.endsInDays*DAY)
+    :formatDurationSpan(center,center+timing.durationDays*DAY);
+  const remaining=knownEnd?formatDurationSpan(center,center+timing.endsInDays*DAY):'';
+  const lines=[rowMarkup('Duration',`≈ ${duration}${remaining?` (≈ ${remaining} left)`:''}`)];
   meta.replaceChildren(...lines);
   meta.dataset.transitReady='true';
   meta.dataset.transitKind='estimated';
@@ -371,6 +407,7 @@ function exportTimingForRow(row){
   };
 }
 window.RelphiRelationshipTransitMeta=Object.freeze({
+  formatDurationSpan,
   estimatedTimingForRow:estimatedTimingForSort,
   motionSnapshotForRow,
   exportTimingForRow,

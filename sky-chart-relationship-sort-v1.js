@@ -13,6 +13,7 @@ const MODES=Object.freeze({
   longest:'duration-longest',
   shortest:'duration-shortest',
   beganMostRecently:'began-most-recently',
+  beganLongestAgo:'began-longest-ago',
   endsSoonest:'ends-soonest',
   endsLast:'ends-last',
   applying:'applying-first',
@@ -375,6 +376,7 @@ function compareRows(a,b){
   if(mode===MODES.longest)return compareTiming(a,b,'transitDurationDays',-1);
   if(mode===MODES.shortest)return compareTiming(a,b,'transitDurationDays',1);
   if(mode===MODES.beganMostRecently)return compareTiming(a,b,'transitStartedDaysAgo',1);
+  if(mode===MODES.beganLongestAgo)return compareTiming(a,b,'transitStartedDaysAgo',-1);
   if(mode===MODES.endsSoonest)return compareTiming(a,b,'transitEndsInDays',1);
   if(mode===MODES.endsLast)return compareTiming(a,b,'transitEndsInDays',-1);
   return compareExact(a,b);
@@ -435,6 +437,7 @@ function ensureControl(){
       [MODES.longest,'Longest Duration'],
       [MODES.shortest,'Shortest Duration'],
       [MODES.beganMostRecently,'Began Most Recently'],
+      [MODES.beganLongestAgo,'Began Longest Ago'],
       [MODES.endsSoonest,'Ends Soonest'],
       [MODES.endsLast,'Ends Last'],
       [MODES.applying,'Applying First'],
@@ -499,7 +502,7 @@ function setMode(next){
   calculationGeneration+=1;
   busy=false;
   ensureControl();
-  if([MODES.longest,MODES.shortest,MODES.beganMostRecently,MODES.endsSoonest,MODES.endsLast,MODES.applying,MODES.separating,MODES.closing,MODES.opening].includes(mode)){
+  if([MODES.longest,MODES.shortest,MODES.beganMostRecently,MODES.beganLongestAgo,MODES.endsSoonest,MODES.endsLast,MODES.applying,MODES.separating,MODES.closing,MODES.opening].includes(mode)){
     scheduleTransitSort(0);
     return;
   }
@@ -509,7 +512,7 @@ function refreshForRows(){
   invalidateScores();
   if(whereWhenEditing())return;
   ensureControl();
-  if([MODES.longest,MODES.shortest,MODES.beganMostRecently,MODES.endsSoonest,MODES.endsLast,MODES.applying,MODES.separating,MODES.closing,MODES.opening].includes(mode)){
+  if([MODES.longest,MODES.shortest,MODES.beganMostRecently,MODES.beganLongestAgo,MODES.endsSoonest,MODES.endsLast,MODES.applying,MODES.separating,MODES.closing,MODES.opening].includes(mode)){
     scheduleTransitSort(110);
     return;
   }
@@ -521,7 +524,7 @@ function invalidateTransit(){
   if(whereWhenEditing()){busy=false;return;}
   busy=false;
   window.RelphiRelationshipTransitMeta?.clearDurationCache?.();
-  if([MODES.longest,MODES.shortest,MODES.beganMostRecently,MODES.endsSoonest,MODES.endsLast,MODES.applying,MODES.separating,MODES.closing,MODES.opening].includes(mode))scheduleTransitSort(110);
+  if([MODES.longest,MODES.shortest,MODES.beganMostRecently,MODES.beganLongestAgo,MODES.endsSoonest,MODES.endsLast,MODES.applying,MODES.separating,MODES.closing,MODES.opening].includes(mode))scheduleTransitSort(110);
 }
 window.RelphiRelationshipSort=Object.freeze({
   axisFamilyKey,
