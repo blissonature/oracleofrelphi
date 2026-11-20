@@ -118,7 +118,7 @@
   }
   function dispatchStorage(key,raw){
     try{
-      window.dispatchEvent(new StorageEvent('storage',{key,newValue:raw,storageArea:localStorage}));
+      window.dispatchEvent(new StorageEvent('storage',{key,newValue:raw,storageArea:sessionStorage}));
       return;
     }catch(_){}
     const event=new Event('storage');
