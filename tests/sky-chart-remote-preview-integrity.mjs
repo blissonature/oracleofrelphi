@@ -80,7 +80,8 @@ try{
      const retro=marks.find(g=>g.id==='retrograde'),anti=marks.find(g=>g.id==='anti-vertex');
      assert.equal(retro?.paths,0,'Retrograde uses live system-ui P+x, not Montserrat outlines');
      assert.deepEqual(retro.text.map(t=>t.value),['P','x']);
-     assert.ok(retro.text.every(t=>t.family.includes('system-ui')&&t.weight==='700'));
+     assert.ok(retro.text.every(t=>t.family.includes('system-ui')),'Both letters use Pluto system-ui family');
+     assert.deepEqual(retro.text.map(t=>t.weight),['700','900'],'P matches Pluto; smaller x is optically bold');
      assert.equal(retro.internalRings,0);
      assert.equal(anti?.paths,3);
      assert.ok(anti.firstPath.startsWith('M27 57.623'));
