@@ -477,12 +477,20 @@
 .sky-foundation-relationship-row[data-aspect="quincunx"] { --relationship-aspect-color:#4b8e88; }
 .sky-foundation-relationship-row[data-aspect="opposition"] { --relationship-aspect-color:#5961c8; }
 
-.sky-foundation-relationship-row:hover,
 .sky-foundation-relationship-row:focus-visible,
 .sky-foundation-relationship-row.is-selected {
   border-color:rgba(31,27,24,.4);
   background:#f6f0e8;
   outline:none;
+}
+/* Touch browsers can retain :hover after a tap. Only a true hover pointer
+   should apply the pointer-preview styling; tap selection has its own state. */
+@media (hover:hover) and (pointer:fine) {
+  .sky-foundation-relationship-row:hover {
+    border-color:rgba(31,27,24,.4);
+    background:#f6f0e8;
+    outline:none;
+  }
 }
 
 .sky-foundation-relationship-row[hidden] {
