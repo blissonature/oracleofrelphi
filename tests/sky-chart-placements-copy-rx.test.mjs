@@ -10,5 +10,5 @@ test('Placements Copy includes Rx only for rows displaying the canonical retrogr
  assert.match(js,/const nameNode=row.querySelector\('\.sky-foundation-row-name'\)/);
  assert.match(js,/nameNode\?\.firstChild\?\.textContent/,'Copy must read the existing name text node instead of SVG P+x letters');
  assert.match(js,/\[coordinate,house\]\.filter\(Boolean\)\.join\(' · '\)/);
- assert.ok(html.includes('sky-chart-quick-copy-v2.js?v=4'));
+ assert.ok(html.includes('sky-chart-quick-copy-v2.js?v=5'));
 });
