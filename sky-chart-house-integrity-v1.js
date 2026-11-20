@@ -170,7 +170,7 @@
 
     if(emit){
       try{
-        window.dispatchEvent(new StorageEvent('storage',{key:KEYS[slot],newValue:window.RelphiSkyWorkingSlotStore.getItem(KEYS[slot]),storageArea:localStorage}));
+        window.dispatchEvent(new StorageEvent('storage',{key:KEYS[slot],newValue:window.RelphiSkyWorkingSlotStore.getItem(KEYS[slot]),storageArea:sessionStorage}));
       }catch(_){
         const event=new Event('storage');
         Object.defineProperty(event,'key',{value:KEYS[slot]});
