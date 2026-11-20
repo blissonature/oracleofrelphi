@@ -94,7 +94,7 @@ try{
     assert.ok(retro.textStyle.every(x=>x.family.includes('system-ui')),
       'The P and x must share the system font used for Pluto');
     assert.deepEqual(retro.textStyle.map(x=>x.weight),['700','700'],
-      'The P matches Pluto Bold, while the smaller subscript x uses optical bold weight');
+      'The P and x have the same font weight, as requested');
     assert.ok(circled.letters['anti-vertex'].firstPath.startsWith('M27 57.623'));
 
     const assets=await page.evaluate(async ids=>Object.fromEntries(await Promise.all(ids.map(async id=>{
