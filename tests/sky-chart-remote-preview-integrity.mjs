@@ -65,7 +65,7 @@ try{
            results.push({
              id,
              paths:art.querySelectorAll('path').length,
-             text:[...art.querySelectorAll('text')].map(t=>({value:t.textContent,family:getComputedStyle(t).fontFamily,weight:getComputedStyle(t).fontWeight})),
+             text:[...art.querySelectorAll('text')].map(t=>({value:t.textContent,family:getComputedStyle(t).fontFamily,weight:getComputedStyle(t).fontWeight,x:Number(t.getAttribute('x')),y:Number(t.getAttribute('y'))})),
              internalRings:art.querySelectorAll('circle').length,
              dx:box.x+box.width/2-cx,
              dy:box.y+box.height/2-cy,
@@ -82,6 +82,7 @@ try{
      assert.deepEqual(retro.text.map(t=>t.value),['P','x']);
      assert.ok(retro.text.every(t=>t.family.includes('system-ui')),'Both letters use Pluto system-ui family');
      assert.deepEqual(retro.text.map(t=>t.weight),['700','700'],'P and x must share the same bold weight');
+     assert.deepEqual(retro.text.map(t=>[t.x,t.y]),[[32,62],[43,69]],'The x must join the P bowl as the diagonal R leg, not remain spaced Px');
      assert.equal(retro.internalRings,0);
      assert.equal(anti?.paths,3);
      assert.ok(anti.firstPath.startsWith('M27 57.623'));
