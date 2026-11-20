@@ -30,6 +30,13 @@
 <script>
 (function(){
   'use strict';
+  // Commit-specific previews remain this same canonical Master Glyph List,
+  // supplied by the one self-hosted preview loader. Never clone its assets here.
+  const ref=new URLSearchParams(location.search).get('ref')||'';
+  if(/^[0-9a-f]{40}$/i.test(ref)&&/(^|\\/)glyphs-unified-preview\\.html$/.test(location.pathname)){
+    location.replace('sky-chart-preview/sky-chart.html?ref='+ref+'&page=glyphs-unified-preview.html');
+    return;
+  }
   const grid=document.getElementById('ugGrid');
   const status=document.getElementById('ugStatus');
   const color='#111111';
