@@ -256,9 +256,13 @@ function renderEstimatedTiming(row){
   const timing=estimatedTimingForSort(row),meta=metaNode(row);
   if(!meta)return;
   if(!timing||!Number.isFinite(timing.durationDays)){renderUnavailable(row,'Timing estimate unavailable');return}
-  const duration=formatDurationSpan(timing.model.center-timing.startedDaysAgo*DAY,timing.model.center+timing.endsInDays*DAY);
-  const remaining=formatDurationSpan(timing.model.center,timing.model.center+timing.endsInDays*DAY);
-  const lines=[rowMarkup('Duration',`≈ ${duration} (≈ ${remaining} left)`)];
+  const model=modelFor(row),center=model.center;
+  const knownStart=Number.isFinite(timing.startedDaysAgo),knownEnd=Number.isFinite(timing.endsInDays);
+  const duration=knownStart&&knownEnd
+    ?formatDurationSpan(center-timing.startedDaysAgo*DAY,center+timing.endsInDays*DAY)
+    :formatDurationSpan(center,center+timing.durationDays*DAY);
+  const remaining=knownEnd?formatDurationSpan(center,center+timing.endsInDays*DAY):'';
+  const lines=[rowMarkup('Duration',`≈ ${duration}${remaining?` (≈ ${remaining} left)`:''}`)];
   meta.replaceChildren(...lines);
   meta.dataset.transitReady='true';
   meta.dataset.transitKind='estimated';
