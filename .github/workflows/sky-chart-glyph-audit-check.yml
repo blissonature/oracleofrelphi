@@ -23,6 +23,8 @@ on:
       - 'tools/check-sky-chart-glyph-readiness.mjs'
       - 'tests/sky-chart-single-canon-browser.mjs'
       - 'tests/retrograde-master-browser.mjs'
+      - 'tests/sky-chart-relationship-rx-overlay.test.mjs'
+      - 'tests/sky-chart-placements-rx.test.mjs'
       - '.github/workflows/sky-chart-glyph-audit-check.yml'
   pull_request:
     paths:
@@ -73,6 +75,7 @@ jobs:
           node tools/check-single-glyph-canon.mjs
           node tools/check-planet-glyph-hashes.mjs
           node tools/check-sky-chart-glyph-readiness.mjs
+          node --test tests/sky-chart-placements-rx.test.mjs tests/sky-chart-relationship-rx-overlay.test.mjs
 
       - name: Install Chromium
         run: |
