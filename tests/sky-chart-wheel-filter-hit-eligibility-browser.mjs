@@ -16,7 +16,7 @@ function sky(name,offset){
 const browser=await chromium.launch({headless:true});
 try{
   for(const [label,width,height] of [['desktop',1280,900],['mobile',390,844]]){
-    const context=await browser.newContext({viewport:{width,height}});
+    const context=await browser.newContext({viewport:{width,height},isMobile:label==='mobile',hasTouch:label==='mobile',deviceScaleFactor:1});
     const page=await context.newPage(),errors=[];
     page.on('pageerror',err=>errors.push(err.message));
     await page.route('https://unpkg.com/suncalc@1.9.0/suncalc.js',route=>route.fulfill({path:path.resolve('node_modules/suncalc/suncalc.js'),contentType:'application/javascript'}));
@@ -102,7 +102,8 @@ try{
       return null;
     });
     if(excludedPoint){
-      await page.mouse.click(excludedPoint.x,excludedPoint.y);
+      if(label==='mobile')await page.touchscreen.tap(excludedPoint.x,excludedPoint.y);
+      else await page.mouse.click(excludedPoint.x,excludedPoint.y);
       const physical=await page.evaluate(()=>({
         locked:document.querySelector('#skyFoundationWheelMount .sky-foundation-wheel')?.classList.contains('has-isolation'),
         kept:document.querySelectorAll('#skyFoundationWheelMount .is-kept').length,
