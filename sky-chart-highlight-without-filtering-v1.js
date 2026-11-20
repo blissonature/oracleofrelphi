@@ -88,7 +88,7 @@
       line.dataset.interactive = 'aspect';
       line.dataset.focusPiece = 'aspect';
       line.classList.add('sky-foundation-interactive', 'sky-foundation-aspect');
-      line.style.pointerEvents = 'stroke';
+      line.style.pointerEvents = window.RelphiSkyFoundationInteractions?.aspectLineEligible?.(line)?'stroke':'none';
       addMappedLine(nextByIdentity, identity, line);
       addMappedLine(nextByIndex, index, line);
     });
