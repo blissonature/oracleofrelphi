@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
 
-const files=['sky-chart-vocab-tab-v1.js','sky-chart-relationship-vocab-v1.js','sky-chart-inline-relationship-copy-v1.js'];
+const files=['sky-chart-vocab-tab-v1.js','sky-chart-inline-relationship-copy-v1.js'];
 const html=fs.readFileSync('sky-chart.html','utf8');
 const defs=fs.readFileSync('sky-chart-term-definitions-v1.js','utf8');
 const sandbox={window:null,location:{pathname:'/sky-chart.html'}};
@@ -24,8 +24,8 @@ for(const file of files){
  assert.doesNotMatch(content,/const (?:SIGN_REFERENTS|HOUSE_REFERENTS|PLACEMENT_REFERENTS|ASPECT_REFERENTS|ASPECT_NAMES|HOUSE_NAMES|SIGNS)=\s*[\[{]/,'Consumers must not independently author the same dictionaries: '+file);
  assert.match(content,/RelphiTermDefinitions\./,'Consumer must use the shared owner: '+file);
 }
-assert.match(fs.readFileSync(files[1],'utf8'),/const CONFIGS=window\.RelphiTermDefinitions\.CONFIGS;/);
-assert.doesNotMatch(fs.readFileSync(files[1],'utf8'),/const CONFIGS=\{/,'Configurations must also have one owner');
+assert.ok(vocabulary.CONFIGS,'Configurations remain in the single definitions owner');
+assert.doesNotMatch(html,/sky-chart-relationship-vocab-v1\.js/,'Removed unauthorized Relationship Vocab must not be loaded');
 const first=html.indexOf('sky-chart-term-definitions-v1.js');
 assert.ok(first>0);
 for(const file of files)assert.ok(first<html.indexOf(file),'Definitions must load before '+file);
