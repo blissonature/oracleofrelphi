@@ -18,7 +18,7 @@ const MIN_STEP={asc:.0007,dsc:.0007,mc:.0007,ic:.0007,vertex:.0007,'part-of-fort
 const MAX_STEP={asc:.01,dsc:.01,mc:.01,ic:.01,vertex:.01,'part-of-fortune':.01,moon:.2,mercury:.5,venus:.7,mars:1,sun:1,jupiter:4,saturn:7,uranus:10,neptune:12,pluto:14,chiron:4,'north-node':5,'south-node':5,lilith:5};
 const MIN_HORIZON={asc:2,dsc:2,mc:2,ic:2,vertex:2,'part-of-fortune':2,moon:45,mercury:400,venus:700,mars:1200,sun:800,jupiter:3000,saturn:4500,uranus:6000,neptune:7000,pluto:8000,chiron:3000,'north-node':4000,'south-node':4000,lilith:2500};
 const MAX_HORIZON=12000;
-const TIMING_MODES=new Set(['duration-longest','duration-shortest','began-most-recently','ends-soonest','ends-last']);
+const TIMING_MODES=new Set(['duration-longest','duration-shortest','began-most-recently','began-longest-ago','ends-soonest','ends-last']);
 const cache=new Map();
 const readCache={A:{raw:null,value:null},B:{raw:null,value:null}};
 const recordCache=new WeakMap(),profileDateCache=new WeakMap(),liveOriginCache=new WeakMap();
