@@ -76,7 +76,7 @@ jobs:
 
       - name: Install Chromium
         run: |
-          npm install --no-save playwright@1.52.0 luxon@3 suncalc@1.9.0
+          npm install --no-save playwright@1.61.0 luxon@3 suncalc@1.9.0
           npx playwright install --with-deps chromium
 
       - name: Render and inspect Sky Chart consumer
