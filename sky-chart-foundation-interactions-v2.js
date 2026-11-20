@@ -461,9 +461,25 @@
     if(wheel&&root.contains(event.target))return nearestAspect(event);
     return null;
   }
+  function overExcludedAspectStroke(event){
+    if(!Number.isFinite(event.clientX)||!Number.isFinite(event.clientY))return false;
+    // The inactive SVG line may be visually dimmed or filtered, and its hit
+    // envelope is disabled. A click on its physical stroke must remain inert,
+    // not fall through as a whitespace click that clears a selected placement.
+    return [...document.querySelectorAll('#skyFoundationWheelMount [data-layer="aspects"] > line.sky-foundation-aspect:not(.sky-foundation-aspect-hit)')].some(line=>{
+      if(aspectLineEligible(line))return false;
+      const matrix=line.getScreenCTM(),svg=line.ownerSVGElement;
+      if(!matrix||!svg?.createSVGPoint)return false;
+      const p=svg.createSVGPoint(),q=svg.createSVGPoint();
+      p.x=Number(line.getAttribute('x1'));p.y=Number(line.getAttribute('y1'));
+      q.x=Number(line.getAttribute('x2'));q.y=Number(line.getAttribute('y2'));
+      return distanceToSegment(event.clientX,event.clientY,p.matrixTransform(matrix),q.matrixTransform(matrix))<=9;
+    });
+  }
   function clearableWhitespace(event){
     const root=document.getElementById('skyFoundationRoot'),target=event.target;if(!root?.contains(target))return false;
     if(target.closest?.('[data-interactive="aspect"],.sky-foundation-aspect-hit'))return false;
+    if(target.closest?.('#skyFoundationWheelMount')&&overExcludedAspectStroke(event))return false;
     if(target.closest?.('button,input,select,textarea,a,label,summary,details,.sky-foundation-relationship-row,#skySelectedRelationship,.sky-chart-filter-bar,.sky-foundation-relationships-heading'))return false;
     return !!target.closest?.('#skyFoundationWheelMount,#skyFoundationA,#skyFoundationB,#skyFoundationComparison');
   }
