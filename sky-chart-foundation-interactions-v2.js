@@ -160,7 +160,7 @@
     })
   }
   function ledgerRecord(row,list){
-    const label=String(row.dataset.placementLabel||row.querySelector('.sky-foundation-row-name')?.textContent||'').trim();if(!label)return null;
+    const label=String(row.querySelector('.sky-foundation-row-name')?.firstChild?.textContent||'').trim();if(!label)return null;
     const entry=canonical(label,{name:label});if(!entry?.id)return null;
     return list.find(record=>record.id===entry.id)||null;
   }
