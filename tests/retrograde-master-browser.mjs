@@ -39,6 +39,25 @@ async function inspect(page){
       return {left:Math.min(...xs),right:Math.max(...xs),top:Math.min(...ys),
         bottom:Math.max(...ys),fontFamily:cs.fontFamily,fontWeight:cs.fontWeight};
     }
+    function sharedDiagonalInk(texts){
+      if(texts.length!==2)return null;
+      const [p,x]=texts,scale=8;
+      function raster(text,offsetX=0){
+        const canvas=document.createElement('canvas');canvas.width=800;canvas.height=800;
+        const ctx=canvas.getContext('2d');ctx.scale(scale,scale);
+        ctx.font=getComputedStyle(text).font;
+        ctx.fillText(text.textContent,Number(text.getAttribute('x'))+offsetX,Number(text.getAttribute('y')));
+        return ctx.getImageData(0,0,canvas.width,canvas.height).data;
+      }
+      const pInk=raster(p),xInk=raster(x),separatedInk=raster(x,3);
+      let joined=0,separated=0;
+      for(let pixel=3;pixel<pInk.length;pixel+=4){
+        if(pInk[pixel]<=64)continue;
+        if(xInk[pixel]>64)joined++;
+        if(separatedInk[pixel]>64)separated++;
+      }
+      return {joinedArea:joined/(scale*scale),separatedArea:separated/(scale*scale)};
+    }
     const letters=Object.fromEntries(ids.map(id=>{
       const card=get(id),svg=card.querySelector('svg');
       const ring=card.querySelector('.relphi-glyph-bubble > circle');
@@ -52,6 +71,8 @@ async function inspect(page){
         viewBox:svg.getAttribute('viewBox'),
         paths:art.querySelectorAll('path').length,
         text:texts.map(t=>t.textContent),
+        textPositions:texts.map(t=>[Number(t.getAttribute('x')),Number(t.getAttribute('y'))]),
+        sharedDiagonalInk:sharedDiagonalInk(texts),
         textStyle:ink.filter(r=>r.fontFamily).map(r=>({family:r.fontFamily,weight:r.fontWeight})),
         firstPath:art.querySelector('path')?.getAttribute('d')?.slice(0,25)||'',
         embeddedCircle:art.querySelectorAll('circle').length,
@@ -95,6 +116,12 @@ try{
       'The P and x must share the system font used for Pluto');
     assert.deepEqual(retro.textStyle.map(x=>x.weight),['700','700'],
       'The P and x have the same font weight, as requested');
+    assert.deepEqual(retro.textPositions,[[32,62],[43,69]],
+      'The x must start within the P lower bowl, with its diagonal becoming the missing R leg');
+    assert.ok(retro.sharedDiagonalInk.joinedArea>1.1,
+      'The diagonal of the x must physically overlap the P lower bowl');
+    assert.ok(retro.sharedDiagonalInk.joinedArea>retro.sharedDiagonalInk.separatedArea*1.9,
+      'The master must be joined—not the original spaced Px treatment');
     assert.ok(circled.letters['anti-vertex'].firstPath.startsWith('M27 57.623'));
 
     const assets=await page.evaluate(async ids=>Object.fromEntries(await Promise.all(ids.map(async id=>{
