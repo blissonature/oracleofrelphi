@@ -57,16 +57,21 @@ try{
     return row?.classList.contains('is-inline-expanded')&&meta?.dataset.transitKind==='dynamic';
   },null,{timeout:45000});
 
-  const state=await page.evaluate(()=>{
+  const state=await page.evaluate(chartMoment=>{
     const row=[...document.querySelectorAll('#skyFoundationRelationshipList .sky-foundation-relationship-row')].find(node=>{
       const pair=new Set([node.dataset.leftPlacement,node.dataset.rightPlacement]);
       return node.dataset.relationshipMode==='B-B'&&node.dataset.aspect==='opposition'&&pair.has('venus')&&pair.has('chiron');
     });
     const meta=row?.querySelector('.inline-rel-transit-window');
-    return{kind:meta?.dataset.transitKind||'',text:meta?.textContent||'',chironReady:!!window.RelphiChironEphemeris?.isReady?.()};
-  });
+    const timeline=window.RelphiRelationshipTransitMeta?.exportTimingForRow?.(row);
+    const durationRow=[...meta?.querySelectorAll('.inline-rel-transit-row')||[]].find(line=>line.querySelector('b')?.textContent==='Duration');
+    const expectedLeft=timeline?.kind==='dynamic'?window.RelphiRelationshipTransitMeta?.formatDurationSpan?.(chartMoment,timeline.endMs):'';
+    return{kind:meta?.dataset.transitKind||'',text:meta?.textContent||'',chironReady:!!window.RelphiChironEphemeris?.isReady?.(),durationText:durationRow?.textContent||'',expectedLeft};
+  },Date.parse(instant));
   assert.equal(state.kind,'dynamic',`Venus–Chiron tile should show dynamic timing: ${JSON.stringify(state)}`);
   for(const label of ['Start','Exact','End','Duration','Passes'])assert.ok(state.text.includes(label),`timing tile should include ${label}: ${state.text}`);
+  assert.ok(state.expectedLeft,'The timeline must expose an end relative to the chart moment');
+  assert.ok(state.durationText.includes(`(${state.expectedLeft} left)`),`Duration must show chart-relative whole-unit time left: ${JSON.stringify(state)}`);
   assert.ok(!state.text.includes('unavailable'),'timing tile should not say unavailable');
   assert.ok(state.chironReady,'Swiss Chiron ephemeris should be ready');
 
@@ -125,6 +130,7 @@ try{
       .map(row=>({id:row.dataset.relationIndex,value:Number(row.dataset[field]),scope:row.dataset.relationshipMode,left:row.dataset.leftPlacement,right:row.dataset.rightPlacement,aspect:row.dataset.aspect}))
       .filter(item=>Number.isFinite(item.value)),spec.field);
     assert.ok(values.length>1,`${spec.label} should time multiple visible rows: ${JSON.stringify(values)}`);
+    if(spec.mode==='began-longest-ago')await page.screenshot({path:'relationships-began-longest-ago-desktop.png'});
     for(let i=1;i<values.length;i+=1){
       if(spec.scopeAware&&values[i-1].scope!==values[i].scope)continue;
       const previous=values[i-1].value,current=values[i].value;
