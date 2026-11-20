@@ -51,7 +51,7 @@ try{
     }
     const raw=await page.evaluate(async ids=>Object.fromEntries(await Promise.all(ids.map(async id=>{
       const response=await fetch('assets/planet-glyphs/'+id+'.svg');
-      assertResponse(response,id);
+      if(!response.ok)throw new Error('Missing original canonical asset '+id);
       const svg=new DOMParser().parseFromString(await response.text(),'image/svg+xml').documentElement;
       return[id,{viewBox:svg.getAttribute('viewBox'),paths:svg.querySelectorAll('path').length,
         texts:svg.querySelectorAll('text').length,circles:svg.querySelectorAll('circle').length}];
@@ -69,4 +69,3 @@ try{
     await page.close();
   }
 }finally{await browser.close()}
-function assertResponse(response,id){if(!response.ok)throw new Error('Missing original canonical asset '+id)}
