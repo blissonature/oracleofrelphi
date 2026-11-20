@@ -20,8 +20,6 @@
     'bi-quintile':'Bi-Quintile', quincunx:'Quincunx', opposition:'Opposition'
   };
   const filters = { aspect:'all', placement:'all', houseA:'all', houseB:'all' };
-  const baseSetItem = Storage.prototype.setItem;
-  let enriching = false;
   let queued = false;
   let mutationTimer = 0;
 
@@ -45,7 +43,7 @@
   }
 
   function read(slot) {
-    try { return JSON.parse(localStorage.getItem(KEYS[slot]) || 'null'); }
+    try { return JSON.parse(window.RelphiSkyWorkingSlotStore.getItem(KEYS[slot]) || 'null'); }
     catch (_) { return null; }
   }
 
@@ -178,26 +176,14 @@
     return value;
   }
 
-  Storage.prototype.setItem = function (key, raw) {
-    if (!enriching && this === localStorage && Object.values(KEYS).includes(String(key))) {
-      try {
-        const next = JSON.parse(String(raw));
-        const previous = JSON.parse(localStorage.getItem(String(key)) || 'null');
-        enriching = true;
-        return baseSetItem.call(this, key, JSON.stringify(enrichPayload(next, previous)));
-      } catch (_) {
-        // Fall through to the existing storage pipeline for non-JSON values.
-      } finally {
-        enriching = false;
-      }
-    }
-    return baseSetItem.call(this, key, raw);
-  };
+  // Enrich each working sky at the existing storage owner, not by intercepting
+  // the browser's global Storage.prototype (which also affects other tabs).
+  window.RelphiSkyWorkingSlotStore.setSlotEnricher(enrichPayload);
 
   function dispatch(slot) {
     try {
       window.dispatchEvent(new StorageEvent('storage', {
-        key:KEYS[slot], newValue:localStorage.getItem(KEYS[slot]), storageArea:localStorage
+        key:KEYS[slot], newValue:window.RelphiSkyWorkingSlotStore.getItem(KEYS[slot]), storageArea:localStorage
       }));
     } catch (_) {
       const event = new Event('storage');
@@ -212,7 +198,7 @@
     const before = JSON.stringify(current);
     const after = JSON.stringify(enrichPayload(current, current));
     if (before === after) return false;
-    localStorage.setItem(KEYS[slot], after);
+    window.RelphiSkyWorkingSlotStore.setItem(KEYS[slot], after);
     if (emit) dispatch(slot);
     return true;
   }
@@ -392,7 +378,7 @@
     Object.values(source).forEach(item => {
       if (Number.isFinite(Number(item?.longitude))) item.house = houseFor(Number(item.longitude), result.cusps);
     });
-    localStorage.setItem(KEYS[slot], JSON.stringify(value));
+    window.RelphiSkyWorkingSlotStore.setItem(KEYS[slot], JSON.stringify(value));
     dispatch(slot);
   }
 
