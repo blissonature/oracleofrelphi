@@ -247,8 +247,12 @@
     // initial rendering is settling or a list is being reordered.
     const index=String(line.dataset.relationIndex||'');
     const row=index?document.querySelector('#skyFoundationRelationshipList > .sky-foundation-relationship-row[data-relation-index="'+CSS.escape(index)+'"]'):null;
+    // Isolation temporarily collapses nonmatching Relationships tiles. That is
+    // presentation, not a user filter; another still-eligible aspect must be
+    // clickable to replace the selected placement bubble.
+    const exploring=!!document.querySelector('#skyFoundationWheelMount > .sky-foundation-wheel.has-isolation');
     const eligible=row=>!!row&&relationshipIdentity(row)===identity&&
-      rowEligibleForWheel(row)&&!row.hidden&&getComputedStyle(row).display!=='none';
+      rowEligibleForWheel(row)&&(exploring||(!row.hidden&&getComputedStyle(row).display!=='none'));
     if(row&&relationshipIdentity(row)===identity)return eligible(row);
     return [...document.querySelectorAll('#skyFoundationRelationshipList > .sky-foundation-relationship-row[data-relation-index]')]
       .some(eligible);
