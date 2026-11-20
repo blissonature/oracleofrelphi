@@ -27,18 +27,26 @@ function styles(){
   const s=document.createElement('style');s.id='relphiPdfStyle';
   s.textContent=[
     '#relphiPdfStage{position:fixed;left:-100000px;top:0;width:816px;z-index:-1;color:#29231e;font-family:Arial,system-ui,sans-serif;text-align:left}',
-    '#relphiPdfStage .rpdf-page{box-sizing:border-box;width:816px;height:1056px;background:#fffdf8;padding:42px 48px 54px;overflow:hidden}',
-    '#relphiPdfStage .rpdf-title{font-size:23px;font-weight:800;line-height:1.2;margin:0 0 6px}',
-    '#relphiPdfStage .rpdf-identities{font-size:11px;line-height:1.45;color:#544b44;margin:0 0 6px}',
-    '#relphiPdfStage .rpdf-focus{font-size:10px;line-height:1.35;color:#675e56;margin:0 0 14px}',
-    '#relphiPdfStage .rpdf-list{display:grid;gap:12px}',
-    '#relphiPdfStage .rpdf-relationship{box-sizing:border-box;width:100%;border:1px solid #d8d1c8;border-radius:9px;background:#fff;overflow:hidden;break-inside:avoid}',
-    '#relphiPdfStage .rpdf-number{background:#f2ede6;border-bottom:1px solid #e3ddd4;padding:7px 12px;font-size:12px;font-weight:800}',
-    '#relphiPdfStage .rpdf-prose{padding:10px 13px;white-space:pre-line;font-size:13px;line-height:1.47;overflow-wrap:anywhere}',
-    '#relphiPdfStage .rex-visual{padding:7px 14px 9px;grid-template-columns:110px minmax(132px,1fr) 110px;gap:14px}',
-    '#relphiPdfStage .rex-card img{width:63px}',
+    '#relphiPdfStage .rpdf-page{box-sizing:border-box;width:816px;height:1056px;background:#fffdf8;padding:40px 48px 54px;overflow:hidden}',
+    '#relphiPdfStage .rpdf-masthead{display:flex;justify-content:space-between;align-items:center;gap:14px;margin-bottom:16px;padding-bottom:12px;border-bottom:2px solid #ddd4c8}',
+    '#relphiPdfStage .rpdf-brand{font:900 13px/1 system-ui,sans-serif;letter-spacing:.03em;color:#2a2420}',
+    '#relphiPdfStage .rpdf-brand-rule{height:4px;width:80px;margin-top:7px;background:linear-gradient(90deg,#c9211e 0 48%,#fffdf8 48% 52%,#2462d0 52%)}',
+    '#relphiPdfStage .rpdf-page-meta{font:800 10px/1.3 system-ui,sans-serif;color:#766b60;text-align:right}',
+    '#relphiPdfStage .rpdf-title{font:900 27px/1.15 system-ui,sans-serif;color:#241e1a;letter-spacing:-.025em;margin:0 0 10px}',
+    '#relphiPdfStage .rpdf-identities{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:0 0 9px}',
+    '#relphiPdfStage .rpdf-identity{padding:9px 11px;border:1px solid #e3dcd3;border-left:4px solid var(--sky-color);border-radius:8px;background:#f7f1e9;color:#453d37;font:650 11px/1.4 system-ui,sans-serif;overflow-wrap:anywhere}',
+    '#relphiPdfStage .rpdf-identity b{display:block;margin-bottom:3px;color:var(--sky-color);font:900 10px/1.2 system-ui,sans-serif;letter-spacing:.04em;text-transform:uppercase}',
+    '#relphiPdfStage .rpdf-focus{font:700 10px/1.45 system-ui,sans-serif;color:#675e56;margin:0 0 15px;padding:8px 11px;border-radius:8px;background:#f4efe8}',
+    '#relphiPdfStage .rpdf-list{display:grid;gap:10px}',
+    '#relphiPdfStage .rpdf-relationship{box-sizing:border-box;width:100%;border:1px solid #d8d1c8;border-left:5px solid var(--aspect-color,#8b837b);border-radius:10px;background:#fffdfa;overflow:hidden;break-inside:avoid}',
+    '#relphiPdfStage .rpdf-number{display:flex;align-items:center;gap:10px;background:#f6efe6;border-bottom:1px solid #e3ddd4;padding:8px 12px;font:850 11px/1.25 system-ui,sans-serif;color:#38302b}',
+    '#relphiPdfStage .rpdf-index{display:grid;place-items:center;min-width:22px;height:22px;border:1px solid #d9cfc2;border-radius:50%;background:#fffdf8;font:900 10px/1 system-ui,sans-serif}',
+    '#relphiPdfStage .rpdf-aspect-name{margin-left:auto;color:var(--aspect-color,#685e55);font:850 10px/1 system-ui,sans-serif;text-transform:capitalize}',
+    '#relphiPdfStage .rpdf-prose{padding:10px 14px 12px;white-space:pre-line;color:#372f29;font:600 11px/1.46 system-ui,sans-serif;overflow-wrap:anywhere}',
+    '#relphiPdfStage .rex-visual{padding:12px 16px;grid-template-columns:110px 155px 110px;gap:25px;justify-content:center;border-top:0;border-bottom:1px solid #e5dbce;background:#f9f4eb}',
+    '#relphiPdfStage .rex-card img{width:57px}',
     '#relphiPdfStage .rex-card b{max-width:105px;font-size:9px}',
-    '#relphiPdfStage .rex-wheel svg{width:106px;height:106px}',
+    '#relphiPdfStage .rex-wheel svg{width:105px;height:105px}',
     '#skyFoundationRelationships .rpdf-control{position:relative;display:grid;place-items:center;min-width:30px;align-self:center;justify-self:center;z-index:6}',
     '#skyFoundationRelationships .rpdf-trigger{appearance:none;display:grid;place-items:center;box-sizing:border-box;width:30px;height:30px;min-width:30px;min-height:30px;padding:0;border:1px solid rgba(31,27,24,.2);border-radius:999px;background:#fffdf8;color:#332e2a;font:900 9px/1 system-ui,sans-serif;letter-spacing:-.03em;cursor:pointer}',
     '#skyFoundationRelationships .rpdf-trigger:hover,#skyFoundationRelationships .rpdf-trigger:focus-visible{outline:none;border-color:#2462d0;box-shadow:0 0 0 2px rgba(36,98,208,.12)}',
@@ -54,24 +62,41 @@ function styles(){
 }
 function pageFor(host,owner,number){
   const p=document.createElement('section');p.className='rpdf-page';
+  const masthead=document.createElement('header');masthead.className='rpdf-masthead';
+  const brand=document.createElement('div');brand.className='rpdf-brand';brand.textContent='Oracle of Relphi';
+  const brandRule=document.createElement('div');brandRule.className='rpdf-brand-rule';brand.appendChild(brandRule);
+  const pageMeta=document.createElement('span');pageMeta.className='rpdf-page-meta';pageMeta.textContent='SKY CHART  /  '+String(number).padStart(2,'0');
+  masthead.append(brand,pageMeta);
   const title=document.createElement('div');title.className='rpdf-title';title.textContent='Relationships';
   const identities=document.createElement('div');identities.className='rpdf-identities';
-  const identity=slot=>'Sky '+slot+': '+owner.name(slot)+(owner.context?.(slot)?' - '+owner.context(slot):'');
-  identities.textContent=identity('A')+(owner.present?.('B')?'  |  '+identity('B'):'');
+  for(const slot of owner.present?.('B')?['A','B']:['A']){
+    const item=document.createElement('div');item.className='rpdf-identity';
+    item.style.setProperty('--sky-color',slot==='A'?'#c9211e':'#2462d0');
+    const label=document.createElement('b');label.textContent='Sky '+slot+' · '+owner.name(slot);
+    item.append(label,document.createTextNode(owner.context?.(slot)||'Saved sky'));
+    identities.appendChild(item);
+  }
   const focus=document.createElement('div');focus.className='rpdf-focus';
-  focus.textContent=number===1?'Focus: '+owner.summary():'Oracle of Relphi  |  Relationships continued';
+  focus.textContent=number===1?'Focus · '+owner.summary():'Relationships · continued';
   const list=document.createElement('div');list.className='rpdf-list';
-  p.append(title,identities,focus,list);host.appendChild(p);
+  p.append(masthead,title,identities,focus,list);host.appendChild(p);
   return{page:p,list};
 }
 function relationshipCard(item,index,owner){
   const card=document.createElement('article');card.className='rpdf-relationship';
+  const aspect=String(item.row?.dataset?.aspect||'').replaceAll('-',' ');
+  card.style.setProperty('--aspect-color',getComputedStyle(item.row).getPropertyValue('--relationship-stripe').trim()||
+    getComputedStyle(item.row).getPropertyValue('--aspect-color').trim()||'#8b837b');
   const number=document.createElement('div');number.className='rpdf-number';
-  number.textContent=(index+1)+'. '+item.scope;
+  const indexPill=document.createElement('span');indexPill.className='rpdf-index';indexPill.textContent=String(index+1);
+  const label=document.createElement('strong');label.textContent=item.scope;
+  const aspectName=document.createElement('span');aspectName.className='rpdf-aspect-name';aspectName.textContent=aspect;
+  number.append(indexPill,label,aspectName);
   const text=document.createElement('div');text.className='rpdf-prose';text.textContent=item.text;
-  card.append(number,text);
+  card.appendChild(number);
   const picture=owner.visual(item.row);
   if(picture)card.appendChild(picture);
+  card.appendChild(text);
   return card;
 }
 function fileName(kind){
