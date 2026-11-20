@@ -69,7 +69,7 @@ try{
      });
      console.log('PREVIEW RETROGRADE MASTER',JSON.stringify(retrograde));
      assert.equal(retrograde.paths,2);
-     assert.match(retrograde.firstPath,/^M46\\.666 33\\.1/);
+     assert.ok(retrograde.firstPath.startsWith('M46.666 33.1'),'Preview must load this commit’s Montserrat outline');
      assert.ok(Math.abs(retrograde.dx)<1&&Math.abs(retrograde.dy)<1);
      assert.ok(retrograde.farthest<16.825);
      await page.locator('#skyFoundationB [data-sky-drawer-tab="where"]').click();
