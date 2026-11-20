@@ -65,6 +65,7 @@ try{
         row:!!document.querySelector('#skyFoundationRelationshipList > .sky-foundation-relationship-row[data-relation-index="'+l.dataset.relationIndex+'"]')
       })),enabled:enabled.length};
     });
+    console.log(label+' filtered line diagnostics',JSON.stringify({blocked:filtered.blocked.slice(0,12),enabled:filtered.enabled}));
     assert.ok(filtered.blocked.length>0,label+': A↔B filter must exclude actual aspect strokes');
     assert.ok(filtered.blocked.every(x=>!x.eligible&&x.hitPointer==='none'),label+': excluded strokes cannot retain invisible click targets');
     assert.ok(filtered.enabled>0,label+': A↔A remains actionable');
