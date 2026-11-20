@@ -162,7 +162,7 @@ if (fs.existsSync(registryPath)) {
     ["['dsc','Descendant',['dsc','descendant','dc'],null,1,0,0,'Dsc','letter','700']", 'Descendant'],
     ["['mc','Midheaven',['mc','midheaven'],null,1,0,0,'MC','letter','700']", 'Midheaven'],
     ["['ic','Imum Coeli',['ic','imum coeli','imumcoeli'],null,1,0,0,'IC','letter','700']", 'Imum Coeli'],
-    ["['anti-vertex','Anti-Vertex',['anti-vertex','anti vertex','antivertex','avx'],'assets/planet-glyphs/anti-vertex.svg',1,0,0,'AVx','letter','700']", 'Anti-Vertex']
+    ["['anti-vertex','Anti-Vertex',['anti-vertex','anti vertex','antivertex','avx'],'assets/planet-glyphs/anti-vertex.svg',1,0,0,'AVx','static-master','700']", 'Anti-Vertex']
   ];
   for (const [snippet, label] of angleRules) {
     if (!registry.includes(snippet)) fail(`${label} no longer uses the approved Master Glyph List text treatment.`);
