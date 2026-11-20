@@ -68,7 +68,13 @@ try{
   assert.deepEqual((await state(first)).names,initial.names,'Swapping in the second tab must not change the first wheel');
 
   // The named library remains browser-wide, not silently made per-tab.
-  await second.evaluate(()=>window.RelphiSkyWorkingSlotStore.setItem('relphiSkyLibraryV1','[{"name":"Shared Reference","placements":{"Sun":{"longitude":15}}}]'));
+  const storedSecond=await second.evaluate(()=>{
+    const payload=[{id:'saved-test-reference',name:'Shared Reference',placements:{Sun:{name:'Sun',longitude:15}}}];
+    window.RelphiSkyWorkingSlotStore.setItem('relphiSkyLibraryV1',JSON.stringify(payload));
+    return {shared:localStorage.getItem('relphiSkyLibraryV1'),tab:sessionStorage.getItem('relphiSkyLibraryV1')};
+  });
+  await first.waitForTimeout(500);
+  console.log('SHARED LIBRARY DIAGNOSTIC',JSON.stringify({storedSecond,first:await state(first),second:await state(second)}));
   assert.match((await state(first)).library||'',/Shared Reference/);
 
   await Promise.all(pages.map(async p=>{await p.reload({waitUntil:'domcontentloaded'});await ready(p)}));
