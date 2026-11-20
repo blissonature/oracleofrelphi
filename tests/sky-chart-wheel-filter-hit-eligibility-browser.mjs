@@ -128,12 +128,12 @@ try{
       label+': clicking an excluded aspect must not erase a selected placement or grey the wheel');
     const validIndex=await page.evaluate(()=>{
       const lines=[...document.querySelectorAll('#skyFoundationWheelMount [data-layer="aspects"] > line.sky-foundation-aspect:not(.sky-foundation-aspect-hit)')];
-      return lines.findIndex(l=>window.RelphiSkyFoundationInteractions.aspectLineEligible(l));
+      return lines.findIndex(l=>window.RelphiSkyFoundationInteractions.aspectLineEligible(l)&&l.dataset.leftPlacement!=='jupiter'&&l.dataset.rightPlacement!=='jupiter');
     });
-    assert.ok(validIndex>=0,label+': there must still be an eligible aspect line');
+    assert.ok(validIndex>=0,label+': an aspect unrelated to the selected Jupiter must remain eligible under the user filters');
     const chosen=page.locator('#skyFoundationWheelMount [data-layer="aspects"] > line.sky-foundation-aspect:not(.sky-foundation-aspect-hit)').nth(validIndex);
     const chosenBefore=await chosen.evaluate(l=>({id:l.dataset.relationIndex,scope:l.dataset.relationshipMode,aspect:l.dataset.aspect,eligible:window.RelphiSkyFoundationInteractions.aspectLineEligible(l),pointer:getComputedStyle(l).pointerEvents}));
-    assert.ok(chosenBefore.eligible,label+': selected line must pass all filters');
+    assert.ok(chosenBefore.eligible,label+': unrelated aspect must pass all user filters even during placement isolation');
     // Explicit selection is owned by the canonical state contract's
     // pointerdown followed by the wheel controller's click.
     await chosen.dispatchEvent('pointerdown',{pointerType:'mouse',button:0});
