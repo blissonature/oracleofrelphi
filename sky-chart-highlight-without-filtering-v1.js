@@ -165,6 +165,12 @@
   }
 
   function reconcileFrozenRowHover(event) {
+    // Touch and pen taps are activations, not hover previews. Release any
+    // preexisting pointer hover instead of freezing it beneath a tapped tile.
+    if (event.pointerType === 'touch' || event.pointerType === 'pen') {
+      if (hoveredRow) clearRowHover();
+      return;
+    }
     if (!rowHoverFrozen) return;
     rowHoverFrozen = false;
     const row = event.target?.closest?.('.sky-foundation-relationship-row') || null;
@@ -213,6 +219,7 @@
     });
 
     root.addEventListener('pointerover', event => {
+      if (event.pointerType === 'touch' || event.pointerType === 'pen') return;
       const row = event.target.closest('.sky-foundation-relationship-row');
       if (!row || row.contains(event.relatedTarget)) return;
       rowHoverFrozen = false;
@@ -223,6 +230,7 @@
     root.addEventListener('pointerdown', reconcileFrozenRowHover, true);
 
     root.addEventListener('pointerout', event => {
+      if (event.pointerType === 'touch' || event.pointerType === 'pen') return;
       const row = event.target.closest('.sky-foundation-relationship-row');
       if (!row || row.contains(event.relatedTarget)) return;
       if (freezeRowHoverOnExternalExit(event, row)) return;
@@ -231,7 +239,8 @@
 
     root.addEventListener('focusin', event => {
       const row = event.target.closest('.sky-foundation-relationship-row');
-      if (row) setRowHover(row);
+      // Pointer focus must not manufacture a lasting hover; keyboard focus may.
+      if (row?.matches(':focus-visible')) setRowHover(row);
     });
 
     root.addEventListener('focusout', event => {
