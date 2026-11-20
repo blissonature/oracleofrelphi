@@ -23,8 +23,8 @@ test('Both Sky Card Placements lists render Retrograde through the shared glyph 
   assert.match(js,/renderCard\('B'/);
 });
 test('Placements reserve a readable annotation space rather than scaling the glyph master',()=>{
-  assert.match(css,/\.sky-foundation-row-name \.sky-placement-rx\{[^}]*width:1\.25em;height:1em/);
-  assert.match(css,/\.sky-foundation-row-name \.sky-placement-rx>svg\{[^}]*width:3\.75em;height:3\.75em/);
+  assert.match(css,/\.sky-foundation-row-name \.sky-placement-rx\{[^}]*width:\.9em;height:1em/);
+  assert.match(css,/\.sky-foundation-row-name \.sky-placement-rx>svg\{[^}]*width:2\.4em;height:2\.4em/);
   assert.doesNotMatch(css,/\.sky-rx-master/);
   assert.match(html,/sky-chart-foundation-v1\.css\?v=\d+/);
 });
