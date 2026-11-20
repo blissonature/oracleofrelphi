@@ -119,7 +119,7 @@
 
   function dispatchStorage(slot){
     const key=SLOT_KEYS[slot];
-    try{window.dispatchEvent(new StorageEvent('storage',{key,newValue:window.RelphiSkyWorkingSlotStore.getItem(key),storageArea:localStorage}))}
+    try{window.dispatchEvent(new StorageEvent('storage',{key,newValue:window.RelphiSkyWorkingSlotStore.getItem(key),storageArea:sessionStorage}))}
     catch(_){const event=new Event('storage');Object.defineProperty(event,'key',{value:key});window.dispatchEvent(event)}
     window.dispatchEvent(new CustomEvent('relphi:saved-sky-active-changed',{detail:{slot}}));
   }
