@@ -33,8 +33,8 @@
     });
   }
 
-  function read(key){try{return JSON.parse(localStorage.getItem(key)||'null')}catch(_){return null}}
-  function write(key,value){localStorage.setItem(key,JSON.stringify(value))}
+  function read(key){try{return JSON.parse(window.RelphiSkyWorkingSlotStore.getItem(key)||'null')}catch(_){return null}}
+  function write(key,value){window.RelphiSkyWorkingSlotStore.setItem(key,JSON.stringify(value))}
   function placement(name,longitude,source){
     const value=norm(longitude),signIndex=Math.floor(value/30),within=value-signIndex*30,degree=Math.floor(within),minutes=(within-degree)*60,minute=Math.floor(minutes),second=Math.round((minutes-minute)*60);
     return{name,longitude:value,sign:SIGNS[signIndex],degree,minute,second,source};
