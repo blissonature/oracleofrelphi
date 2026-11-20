@@ -34,11 +34,13 @@ jobs:
         run: |
           npm install --no-save playwright@1.61.0 luxon@3 suncalc@1.9.0
           npx playwright install --with-deps chromium
-      - name: Actual wheel and independent tab user workflows
-        run: |
-          python3 -m http.server 4173 >/tmp/sky-wheel-tabs.log 2>&1 &
-          node tests/sky-chart-wheel-filter-hit-eligibility-browser.mjs
-          node tests/sky-chart-independent-tab-workspaces-browser.mjs
+      - name: Local Sky Chart server
+        run: python3 -m http.server 4173 >/tmp/sky-wheel-tabs.log 2>&1 &
+      - name: Wheel filtering and selection in desktop and mobile Chromium
+        run: node tests/sky-chart-wheel-filter-hit-eligibility-browser.mjs
+      - name: Two independent working tabs, swap and refresh
+        if: always()
+        run: node tests/sky-chart-independent-tab-workspaces-browser.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
