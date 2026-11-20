@@ -171,7 +171,10 @@
       if (hoveredRow) clearRowHover();
       return;
     }
-    if (!rowHoverFrozen) return;
+    // A pointerout can be missed during DOM redraw or a quick transition.
+    // The authoritative hover identity must follow every actual pointer move,
+    // not just a previously frozen state.
+    if (!rowHoverFrozen && !hoveredRow) return;
     rowHoverFrozen = false;
     const row = event.target?.closest?.('.sky-foundation-relationship-row') || null;
     if (row) setRowHover(row);
