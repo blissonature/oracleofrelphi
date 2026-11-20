@@ -30,7 +30,7 @@
 
   const isIOS=()=>/iPad|iPhone|iPod/i.test(String(navigator.userAgent||''))||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
   const esc=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot',"'":'&#39;'}[c]));
-  function read(slot){try{return JSON.parse(localStorage.getItem(slot==='A'?'relphiSkyChartA':'relphiSkyChartB')||'null')}catch(_){return null}}
+  function read(slot){try{return JSON.parse(window.RelphiSkyWorkingSlotStore.getItem(slot==='A'?'relphiSkyChartA':'relphiSkyChartB')||'null')}catch(_){return null}}
   function safeName(value,fallback){return String(value||fallback).trim().toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'').slice(0,48)||fallback}
   function rawSkyName(slot){const value=read(slot)||{},m=value.metadata&&typeof value.metadata==='object'?value.metadata:{};return m.savedSkyName||value.name||value.displayName||value.skyName||value.title||`Sky ${slot}`}
   function resolvedSkyName(slot){
