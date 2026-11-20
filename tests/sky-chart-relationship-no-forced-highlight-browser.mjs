@@ -86,6 +86,11 @@ try {
         outline:getComputedStyle(row).outline,shadow:getComputedStyle(row).boxShadow
       }));
       console.log(label+' post-collapse visual state',JSON.stringify(surface));
+      if(mobile){
+        assert.ok(!surface.classes.includes('is-row-hovered'),'Touch must not create a persistent hover class');
+        assert.equal(surface.shadow,'none','Closing by touch must release the dark inset hover outline');
+        assert.equal(surface.background,'rgb(255, 253, 250)','Touch must restore the unhighlighted tile background');
+      }
       assert.deepEqual(closed.current,[],label+': collapsed relationship must not remain selected');
       assert.deepEqual(closed.wheelTargets,[],label+': collapse must not force a wheel highlight');
       assert.deepEqual(closed.selected,[],label+': collapse must not force is-selected');
