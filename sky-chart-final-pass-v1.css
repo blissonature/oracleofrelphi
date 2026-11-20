@@ -9,7 +9,7 @@
 .sky-foundation-wheel [data-interactive="aspect"]:focus,
 .sky-foundation-wheel [data-interactive="aspect"]:focus-visible { outline:none !important; box-shadow:none !important; }
 .sky-foundation-aspect-hit,
-.sky-foundation-wheel rect.sky-foundation-aspect-hit { fill:transparent !important; stroke:transparent !important; pointer-events:stroke !important; }
+.sky-foundation-wheel rect.sky-foundation-aspect-hit { fill:transparent !important; stroke:transparent !important; pointer-events:stroke; }
 
 /* Zodiac glyph presentation is owned by sky-chart-foundation-v1.css. This pass
    preserves interaction-state opacity only; it must not add glyph strokes or glow. */
