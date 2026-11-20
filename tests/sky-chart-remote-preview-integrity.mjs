@@ -153,18 +153,21 @@ try{
   // resolving the original canonical page and its assets directly from the SHA.
   // This does not install a second glyph source or claim the live host was updated.
   const loader=await readFile(new URL('../sky-chart-preview/sky-chart.html',import.meta.url),'utf8');
+  const masterPage=await readFile(new URL('../glyphs-unified-preview.html',import.meta.url),'utf8');
   const server=createServer((request,response)=>{
-    if(new URL(request.url,'http://localhost').pathname!=='/sky-chart-preview/sky-chart.html'){
-      response.writeHead(404).end('Not Found');return;
-    }
+    const pathname=new URL(request.url,'http://localhost').pathname;
+    const body=pathname==='/sky-chart-preview/sky-chart.html'?loader:
+      pathname==='/glyphs-unified-preview.html'?masterPage:null;
+    if(body===null){response.writeHead(404).end('Not Found');return}
     response.writeHead(200,{'content-type':'text/html; charset=utf-8','cache-control':'no-store'});
-    response.end(loader);
+    response.end(body);
   });
   await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
   const gallery=await browser.newPage({viewport:{width:1100,height:900}});
   try{
-    const url=`http://127.0.0.1:${server.address().port}/sky-chart-preview/sky-chart.html?ref=${ref}&page=glyphs-unified-preview.html`;
+    const url=`http://127.0.0.1:${server.address().port}/glyphs-unified-preview.html?ref=${ref}`;
     await gallery.goto(url,{waitUntil:'domcontentloaded',timeout:30000});
+    await gallery.waitForURL(/sky-chart-preview\\/sky-chart\\.html\\?ref=.*page=glyphs-unified-preview\\.html/,{timeout:30000});
     await gallery.waitForFunction(()=>{
       const card=id=>[...document.querySelectorAll('#ugGrid .ug-card')].find(node=>node.querySelector('.ug-id')?.textContent===id);
       return !!card('retrograde')?.querySelector('.relphi-glyph-retrograde path')
