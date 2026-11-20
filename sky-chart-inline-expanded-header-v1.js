@@ -159,11 +159,10 @@ function installStyle(){
     .sky-foundation-relationship-glyph[data-sky-rx-owner="A"]{color:#c9211e}
     .sky-foundation-relationship-glyph[data-sky-rx-owner="B"]{color:#2462d0}
     .sky-foundation-relationship-glyph>.sky-rx-glyph-overlay{
-      position:absolute;right:-3px;bottom:0px;width:20px;height:20px;
-      display:block;pointer-events:none;background-color:currentColor;
-      -webkit-mask:url("${window.RelphiGlyphRegistry?.get?.('retrograde')?.asset||'none'}") center/contain no-repeat;
-      mask:url("${window.RelphiGlyphRegistry?.get?.('retrograde')?.asset||'none'}") center/contain no-repeat;
+      position:absolute;right:-6px;bottom:-4px;width:38px;height:38px;
+      display:block;pointer-events:none;color:inherit;
     }
+    .sky-rx-glyph-overlay>svg{display:block;width:100%;height:100%;overflow:visible}
 
     @media(max-width:620px){
       #skyFoundationRelationshipList:has(> .sky-foundation-relationship-row.is-inline-expanded){
@@ -217,7 +216,15 @@ function markRetrograde(row){
         const mark=document.createElement('span');mark.className='sky-rx-glyph-overlay';
         mark.setAttribute('role','img');
         mark.setAttribute('aria-label','Retrograde');
+        const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
+        svg.setAttribute('viewBox','-32 -32 64 64');
+        svg.setAttribute('aria-hidden','true');
+        mark.appendChild(svg);
         glyph.appendChild(mark);
+        const component=window.RelphiGlyphComponent;
+        if(component?.draw)Promise.resolve(component.draw(svg,'retrograde',{radius:19,padding:1,color:'currentColor'}))
+          .catch(error=>{mark.dataset.canonicalGlyphError=error.message;console.error(error)});
+        else mark.dataset.canonicalGlyphError='canonical-component-unavailable';
       }
     }else{delete glyph.dataset.skyRx;delete glyph.dataset.skyRxOwner;overlay?.remove()}
   }
