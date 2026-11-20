@@ -129,6 +129,9 @@ try{
     const chosen=page.locator('#skyFoundationWheelMount [data-layer="aspects"] > line.sky-foundation-aspect:not(.sky-foundation-aspect-hit)').nth(validIndex);
     const chosenBefore=await chosen.evaluate(l=>({id:l.dataset.relationIndex,scope:l.dataset.relationshipMode,aspect:l.dataset.aspect,eligible:window.RelphiSkyFoundationInteractions.aspectLineEligible(l),pointer:getComputedStyle(l).pointerEvents}));
     assert.ok(chosenBefore.eligible,label+': selected line must pass all filters');
+    // Explicit selection is owned by the canonical state contract's
+    // pointerdown followed by the wheel controller's click.
+    await chosen.dispatchEvent('pointerdown',{pointerType:'mouse',button:0});
     await chosen.dispatchEvent('click',{button:0});
     console.log(label+' valid wheel line',JSON.stringify(chosenBefore));
     await page.waitForTimeout(500);
