@@ -81,7 +81,7 @@ try{
      assert.equal(retro?.paths,0,'Retrograde uses live system-ui P+x, not Montserrat outlines');
      assert.deepEqual(retro.text.map(t=>t.value),['P','x']);
      assert.ok(retro.text.every(t=>t.family.includes('system-ui')),'Both letters use Pluto system-ui family');
-     assert.deepEqual(retro.text.map(t=>t.weight),['700','900'],'P matches Pluto; smaller x is optically bold');
+     assert.deepEqual(retro.text.map(t=>t.weight),['700','700'],'P and x must share the same bold weight');
      assert.equal(retro.internalRings,0);
      assert.equal(anti?.paths,3);
      assert.ok(anti.firstPath.startsWith('M27 57.623'));
