@@ -163,7 +163,7 @@
 
   function normalizeExistingStorage() {
     KEYS.forEach(key => {
-      const raw = localStorage.getItem(key);
+      const raw = window.RelphiSkyWorkingSlotStore.getItem(key);
       if (!raw) return;
       const normalized = normalizeStored(raw);
       if (normalized !== raw) originalSetItem.call(localStorage, key, normalized);
