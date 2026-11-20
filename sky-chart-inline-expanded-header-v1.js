@@ -159,7 +159,7 @@ function installStyle(){
     .sky-foundation-relationship-glyph[data-sky-rx-owner="A"]{color:#c9211e}
     .sky-foundation-relationship-glyph[data-sky-rx-owner="B"]{color:#2462d0}
     .sky-foundation-relationship-glyph>.sky-rx-glyph-overlay{
-      position:absolute;right:-6px;bottom:-4px;width:38px;height:38px;
+      position:absolute;right:-12px;bottom:-9px;width:38px;height:38px;
       display:block;pointer-events:none;color:inherit;
     }
     .sky-rx-glyph-overlay>svg{display:block;width:100%;height:100%;overflow:visible}
