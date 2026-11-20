@@ -61,7 +61,7 @@
     if(!writeJson(LIBRARY_KEY,records))return{ok:false,message:'Saved skies could not be written.'};
     const active=applyNamedIdentity(value,clean,id);
     if(!writeJson(SLOT_KEYS[slot],active))return{ok:false,message:'The sky was saved, but the active card could not be renamed.'};
-    try{window.dispatchEvent(new StorageEvent('storage',{key:SLOT_KEYS[slot],newValue:window.RelphiSkyWorkingSlotStore.getItem(SLOT_KEYS[slot]),storageArea:localStorage}))}catch(_){}
+    try{window.dispatchEvent(new StorageEvent('storage',{key:SLOT_KEYS[slot],newValue:window.RelphiSkyWorkingSlotStore.getItem(SLOT_KEYS[slot]),storageArea:sessionStorage}))}catch(_){}
     window.dispatchEvent(new CustomEvent('relphi:saved-sky-library-changed',{detail:{name:clean,id,action:'create'}}));
     announceName(slot,clean,id);
     return{ok:true,message:'Sky saved.'};
