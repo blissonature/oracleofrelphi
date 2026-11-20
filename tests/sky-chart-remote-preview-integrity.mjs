@@ -129,6 +129,7 @@ try{
        mark.closest('details.sky-vocab-group')?.setAttribute('open','');
        return mark.querySelector('.relphi-glyph-retrograde').getBoundingClientRect().height;
      });
+     console.log('PREVIEW VOCAB RETROGRADE HEIGHT',vocabSize);
      assert.ok(vocabSize>=8&&vocabSize<=11,'Vocab Retrograde must stay proportional to the surrounding text');
      await page.screenshot({path:'sky-remote-preview-vocab.png',fullPage:true});
      await page.locator('#skyFoundationA [data-sky-vocab-view-button="placements"]').click();
