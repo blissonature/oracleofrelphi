@@ -17,6 +17,7 @@ function sky(name,offset){
 }
 async function readPdf(download){
   const bytes=await fs.readFile(await download.path());
+  await fs.writeFile(path.resolve('verified-'+download.suggestedFilename()),bytes);
   assert.equal(bytes.subarray(0,5).toString(),'%PDF-','Download must be a real PDF document');
   const task=getDocument({data:new Uint8Array(bytes),useSystemFonts:true,disableFontFace:true});
   const document=await task.promise;
@@ -28,7 +29,7 @@ async function readPdf(download){
   await document.destroy();
   return{pages:text.length,text:text.join('\n'),bytes:bytes.length};
 }
-const browser=await chromium.launch({headless:true});
+const browser=await chromium.launch({headless:true,channel:'chrome'});
 const page=await browser.newPage({viewport:{width:1440,height:1000},acceptDownloads:true});
 const errors=[];
 page.on('pageerror',error=>errors.push(error.message));
