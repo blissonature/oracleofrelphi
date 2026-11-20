@@ -95,18 +95,22 @@ try{
        const mark=row.querySelector('.sky-placement-rx');
        return {height:art.getBoundingClientRect().height,source:art.dataset.canonicalGlyphId,rawImage:!!mark.querySelector('img')};
      });
-     assert.ok(placementMark.height>=8,'Placements Retrograde must read at text-sized dimensions');
+     assert.ok(placementMark.height>=8&&placementMark.height<=11,'Placements Retrograde must match compact reference size beside placement text');
      assert.equal(placementMark.source,'retrograde');
      assert.equal(placementMark.rawImage,false,'Placements must not bypass component via image');
      const relationshipsRx=await page.evaluate(()=>[...document.querySelectorAll('#skyFoundationRelationshipList .sky-rx-glyph-overlay')].map(node=>({
        art:!!node.querySelector('.relphi-glyph-retrograde'),
        path:node.querySelector('.relphi-glyph-retrograde path')?.getAttribute('d')?.slice(0,12),
-       mask:getComputedStyle(node).maskImage
+       mask:getComputedStyle(node).maskImage,
+        height:node.querySelector('.relphi-glyph-retrograde')?.getBoundingClientRect().height||0
      })));
      console.log('PREVIEW PLACEMENTS AND RELATIONSHIPS RETROGRADE',JSON.stringify({placementMark,relationshipsRx}));
      assert.ok(relationshipsRx.length>0,'Retrograde Saturn relationship must have motion indicator');
      assert.ok(relationshipsRx.every(r=>r.art&&r.path?.startsWith('M46.666')),'Relationships must render registry-owned SVG');
      assert.ok(relationshipsRx.every(r=>r.mask==='none'),'Relationships must not use raw asset CSS masks');
+      const relationshipSizes=relationshipsRx.map(r=>r.height).filter(h=>h>0);
+      assert.ok(relationshipSizes.length>0,'Relationships must display a visible motion marker');
+      assert.ok(relationshipSizes.every(h=>h>=7&&h<=10),'Relationships Retrograde must stay compact beside planet glyphs');
 
      await page.locator('#skyFoundationA [data-sky-vocab-view-button="vocab"]').click();
      await page.waitForFunction(()=>!!document.querySelector('#skyFoundationA .sky-vocab-token[data-vocab-id="saturn"][data-vocab-retrograde="true"] .sky-vocab-rx .relphi-glyph-retrograde path'),null,{timeout:20000});
@@ -125,7 +129,7 @@ try{
        mark.closest('details.sky-vocab-group')?.setAttribute('open','');
        return mark.querySelector('.relphi-glyph-retrograde').getBoundingClientRect().height;
      });
-     assert.ok(vocabSize>=8,'Vocab Retrograde must be readable within the surrounding text');
+     assert.ok(vocabSize>=8&&vocabSize<=11,'Vocab Retrograde must stay proportional to the surrounding text');
      await page.screenshot({path:'sky-remote-preview-vocab.png',fullPage:true});
      await page.locator('#skyFoundationA [data-sky-vocab-view-button="placements"]').click();
 
@@ -138,7 +142,7 @@ try{
          relationshipMarks:document.querySelectorAll('#skyFoundationRelationshipList .sky-rx-glyph-overlay .relphi-glyph-retrograde path').length};
      });
      console.log('PREVIEW MOBILE RETROGRADE',JSON.stringify(mobileRx));
-     assert.ok(mobileRx.placementsHeight>=8,'Mobile Placements must retain readable Retrograde');
+     assert.ok(mobileRx.placementsHeight>=8&&mobileRx.placementsHeight<=11,'Mobile Placements must retain compact Retrograde');
      assert.ok(mobileRx.relationshipMarks>0,'Mobile Relationships must retain canonical Retrograde');
      await page.screenshot({path:'sky-remote-preview-mobile.png',fullPage:true});
      await page.setViewportSize({width:1200,height:820});
