@@ -88,8 +88,18 @@ try{
     }));
     assert.ok(after.active&&after.selected>=markedBefore.selected&&after.colored>0,
       label+': clicking an excluded aspect must not erase a selected placement or grey the wheel');
-    const valid=page.locator('#skyFoundationWheelMount [data-layer="aspects"] > line.sky-foundation-aspect:not(.sky-foundation-aspect-hit):not(.sky-chart-aspect-multiselect-hidden)').first();
-    await valid.dispatchEvent('click',{button:0});
+    const valid=page.locator('#skyFoundationWheelMount [data-layer="aspects"] > line.sky-foundation-aspect:not(.sky-foundation-aspect-hit)')
+      .filter({visible:true});
+    const validIndex=await page.evaluate(()=>{
+      const lines=[...document.querySelectorAll('#skyFoundationWheelMount [data-layer="aspects"] > line.sky-foundation-aspect:not(.sky-foundation-aspect-hit)')];
+      return lines.findIndex(l=>window.RelphiSkyFoundationInteractions.aspectLineEligible(l));
+    });
+    assert.ok(validIndex>=0,label+': there must still be an eligible aspect line');
+    const chosen=page.locator('#skyFoundationWheelMount [data-layer="aspects"] > line.sky-foundation-aspect:not(.sky-foundation-aspect-hit)').nth(validIndex);
+    const chosenBefore=await chosen.evaluate(l=>({id:l.dataset.relationIndex,scope:l.dataset.relationshipMode,aspect:l.dataset.aspect,eligible:window.RelphiSkyFoundationInteractions.aspectLineEligible(l),pointer:getComputedStyle(l).pointerEvents}));
+    assert.ok(chosenBefore.eligible,label+': selected line must pass all filters');
+    await chosen.dispatchEvent('click',{button:0});
+    console.log(label+' valid wheel line',JSON.stringify(chosenBefore));
     await page.waitForTimeout(180);
     const state=await page.evaluate(()=>({
       enabled:[...document.querySelectorAll('#skyFoundationWheelMount .sky-foundation-aspect.is-selected')].length,
