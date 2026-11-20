@@ -73,7 +73,7 @@ function pageFor(host,owner,number){
     const item=document.createElement('div');item.className='rpdf-identity';
     item.style.setProperty('--sky-color',slot==='A'?'#c9211e':'#2462d0');
     const label=document.createElement('b');label.textContent='Sky '+slot+' · '+owner.name(slot);
-    item.append(label,document.createTextNode(owner.context?.(slot)||'Saved sky'));
+    item.append(label,document.createTextNode(owner.context?.(slot)||''));
     identities.appendChild(item);
   }
   const focus=document.createElement('div');focus.className='rpdf-focus';
@@ -144,33 +144,59 @@ async function dictionary(){
   const jsPDF=await pdfLibrary(),groups=copy().fullDictionary();
   const pdf=new jsPDF({orientation:'portrait',unit:'pt',format:'letter',compress:true});
   let page=0,y=0;
+  const palette=[
+    {ink:[184,55,43],soft:[249,238,232]},
+    {ink:[46,103,178],soft:[237,244,252]},
+    {ink:[117,81,146],soft:[245,238,248]},
+    {ink:[61,130,111],soft:[237,247,242]}
+  ];
   function newPage(){
     if(page)pdf.addPage('letter','portrait');page++;
-    pdf.setTextColor(40,35,30);pdf.setFont('helvetica','bold');pdf.setFontSize(21);
-    pdf.text('Oracle of Relphi',48,56);
-    pdf.setFont('helvetica','normal');pdf.setFontSize(11);pdf.setTextColor(95,86,76);
-    pdf.text('Reference Dictionary',48,77);
-    pdf.setDrawColor(207,199,188);pdf.line(48,89,564,89);
-    y=116;
+    pdf.setFillColor(255,253,248);pdf.rect(0,0,612,792,'F');
+    pdf.setTextColor(38,32,28);pdf.setFont('helvetica','bold');pdf.setFontSize(14);
+    pdf.text('Oracle of Relphi',48,52);
+    pdf.setFillColor(201,33,30);pdf.rect(48,62,51,3,'F');
+    pdf.setFillColor(36,98,208);pdf.rect(103,62,51,3,'F');
+    pdf.setFont('helvetica','normal');pdf.setFontSize(10);pdf.setTextColor(99,90,81);
+    pdf.text('REFERENCE DICTIONARY',564,53,{align:'right'});
+    pdf.setDrawColor(226,218,207);pdf.setLineWidth(.7);pdf.line(48,77,564,77);
+    y=105;
   }
-  function ensure(h){if(y+h>735)newPage()}
+  function ensure(h){if(y+h>722)newPage()}
+  function heading(text,pal){
+    const lines=pdf.splitTextToSize(readable(text),492);
+    const h=Math.max(48,24*lines.length+22);ensure(h);
+    pdf.setFillColor(...pal.soft);pdf.roundedRect(48,y-9,516,h-6,8,8,'F');
+    pdf.setFillColor(...pal.ink);pdf.roundedRect(48,y-9,5,h-6,2,2,'F');
+    pdf.setTextColor(42,34,29);pdf.setFont('helvetica','bold');pdf.setFontSize(17);
+    pdf.text(lines,65,y+15);
+    y+=h;
+  }
   newPage();
   for(let g=0;g<groups.length;g++){
-    const group=groups[g];
+    const group=groups[g],pal=palette[g%palette.length];
     if(g>0)newPage();
-    pdf.setTextColor(30,28,26);pdf.setFont('helvetica','bold');pdf.setFontSize(17);
-    const heading=pdf.splitTextToSize(readable(group.category),515);
-    pdf.text(heading,48,y);y+=22*heading.length+8;
+    heading(group.category,pal);
     for(const section of group.sections){
-      ensure(44);pdf.setFont('helvetica','bold');pdf.setFontSize(12);pdf.setTextColor(96,76,59);
-      pdf.text(readable(section.title),48,y);y+=20;
+      ensure(58);
+      pdf.setFillColor(...pal.ink);pdf.roundedRect(52,y-2,5,14,2,2,'F');
+      pdf.setTextColor(53,45,39);pdf.setFont('helvetica','bold');pdf.setFontSize(12);
+      pdf.text(readable(section.title),66,y+10);y+=29;
       for(const entry of section.entries){
-        pdf.setFont('helvetica','normal');pdf.setFontSize(11);
-        const lines=pdf.splitTextToSize(readable(entry.label)+'  -  '+readable(entry.text),506);
-        ensure(lines.length*15+8);
-        pdf.setTextColor(39,35,30);pdf.text(lines,54,y);y+=lines.length*15+8;
+        const label=readable(entry.label),body=readable(entry.text);
+        pdf.setFont('helvetica','normal');pdf.setFontSize(10.5);
+        const labelWidth=Math.min(165,Math.max(110,pdf.getTextWidth(label)+12));
+        const description=pdf.splitTextToSize(body,492-labelWidth-10);
+        const h=Math.max(30,15*description.length+12);ensure(h+3);
+        pdf.setFillColor(249,246,240);pdf.roundedRect(52,y,508,h,5,5,'F');
+        pdf.setTextColor(...pal.ink);pdf.setFont('helvetica','bold');pdf.setFontSize(10.5);
+        const labelLines=pdf.splitTextToSize(label,labelWidth-8);
+        pdf.text(labelLines,64,y+13);
+        pdf.setFont('helvetica','normal');pdf.setTextColor(51,45,40);
+        pdf.text(description,64+labelWidth,y+13);
+        y+=h+4;
       }
-      y+=9;
+      y+=12;
     }
   }
   const total=pdf.internal.getNumberOfPages();
