@@ -79,6 +79,13 @@ try {
       await page.waitForFunction(()=>!document.querySelector('#skyFoundationRelationshipList > .sky-foundation-relationship-row.is-inline-expanded'),null,{timeout:10000});
       await page.waitForTimeout(180);
       const closed=await selection(page);
+      const surface=await first.evaluate(row=>({
+        hover:row.matches(':hover'),focus:row.matches(':focus'),focusVisible:row.matches(':focus-visible'),
+        classes:[...row.classList],current:row.getAttribute('aria-current'),
+        background:getComputedStyle(row).backgroundColor,border:getComputedStyle(row).borderTop,
+        outline:getComputedStyle(row).outline,shadow:getComputedStyle(row).boxShadow
+      }));
+      console.log(label+' post-collapse visual state',JSON.stringify(surface));
       assert.deepEqual(closed.current,[],label+': collapsed relationship must not remain selected');
       assert.deepEqual(closed.wheelTargets,[],label+': collapse must not force a wheel highlight');
       assert.deepEqual(closed.selected,[],label+': collapse must not force is-selected');
