@@ -224,7 +224,7 @@ function records(slot){
   const first=source(value).map(([key,item])=>{
     const v=longitude(item);if(!Number.isFinite(v))return null;
     const name=rawName(key,item),ident=identity(key,item,name),explicitHouse=Number(item?.house??item?.houseNumber??item?.house_number);
-    return{key,item,value:v,name:ident.name,id:ident.id,glyphId:ident.glyphId,sign:Math.floor(v/30),explicitHouse:Number.isFinite(explicitHouse)&&explicitHouse>=1&&explicitHouse<=12?Math.trunc(explicitHouse):0,house:0};
+    return{key,item,value:v,name:ident.name,id:ident.id,glyphId:ident.glyphId,retrograde:window.RelphiSkyRetrograde?.forPlacement?.(slot,ident.id)===true,sign:Math.floor(v/30),explicitHouse:Number.isFinite(explicitHouse)&&explicitHouse>=1&&explicitHouse<=12?Math.trunc(explicitHouse):0,house:0};
   }).filter(Boolean);
   const houseCusps=cusps(value,first);
   first.forEach(record=>{record.house=houseCusps.length?houseFor(record.value,houseCusps):record.explicitHouse});
@@ -255,7 +255,7 @@ function relations(list){
 function placementReferent(record){return PLACEMENT_REFERENTS[record.id]||String(record.name||'placement').toLowerCase()}
 function signInfo(index){const name=SIGNS[index]||'Sign';return{id:slug(name),glyphId:slug(name),name,referent:SIGN_REFERENTS[name]||'zodiacal setting',color:SIGN_COLORS[index]||''}}
 function houseInfo(number){return{id:'house-'+number,glyphId:null,name:HOUSE_NAMES[number]||'House',referent:HOUSE_MENU_DESCRIPTIONS[number]||'life area',fallbackGlyph:String(number||''),color:HOUSE_COLORS[number-1]||''}}
-function placementInfo(record){return{id:record.id,glyphId:record.glyphId,name:record.name,referent:placementReferent(record),fallbackGlyph:record.fallbackGlyph||record.name,color:'',value:record.value}}
+function placementInfo(record){return{id:record.id,glyphId:record.glyphId,name:record.name,referent:placementReferent(record),fallbackGlyph:record.fallbackGlyph||record.name,color:'',value:record.value,retrograde:record.retrograde===true}}
 function aspectInfo(aspect){return{id:aspect.id,glyphId:aspect.id,name:ASPECT_NAMES[aspect.id]||aspect.id,referent:ASPECT_REFERENTS[aspect.id]||'relationship',fallbackGlyph:ASPECT_NAMES[aspect.id]||aspect.id,color:String(aspect?.color||'')}}
 
 function displayState(){
@@ -356,6 +356,7 @@ function token(info,kind='term',sentenceStart=false,lead=''){
   node.dataset.vocabFallbackGlyph=String(info.fallbackGlyph||info.name||'');
   node.dataset.vocabColor=String(info.color||'');
   if(Number.isFinite(Number(info.value)))node.dataset.vocabLongitude=String(norm(info.value));
+  if(kind==='placement'&&info.retrograde===true)node.dataset.vocabRetrograde='true';
   node.dataset.vocabLead=String(lead||'');
   if(info.color)node.style.setProperty('--vocab-token-color',String(info.color));
   node.dataset.vocabLocalStage='0';
@@ -465,6 +466,16 @@ function renderToken(node){
     const head=document.createElement('span');head.className='sky-vocab-symbol-label';
     if(lead)head.appendChild(document.createTextNode(lead));
     head.appendChild(g);
+    if(node.dataset.vocabRetrograde==='true'){
+      const mark=document.createElement('span');mark.className='sky-vocab-rx';
+      mark.setAttribute('role','img');mark.setAttribute('aria-label','Retrograde');
+      const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
+      svg.setAttribute('viewBox','-32 -32 64 64');
+      svg.setAttribute('aria-hidden','true');
+      mark.appendChild(svg);
+      head.appendChild(mark);
+      renderInlineGlyph(svg,'retrograde','Rx');
+    }
     node.appendChild(head);
   }else if(lead&&(r||n)){
     node.appendChild(document.createTextNode(lead));
@@ -1723,6 +1734,8 @@ function installStyles(){
     .sky-vocab-level:hover,.sky-vocab-level:focus-visible{background:rgba(45,39,34,.07);outline:none}
     .sky-vocab-token{--vocab-mark-size:1.68em}
     .sky-vocab-symbol-label{display:inline;white-space:nowrap}
+    .sky-vocab-rx{position:relative;display:inline-block;width:1.15em;height:1em;margin-left:.08em;vertical-align:-.12em;color:inherit}
+    .sky-vocab-rx>svg{position:absolute;left:50%;top:50%;display:block;width:3.6em;height:3.6em;overflow:visible;transform:translate(-50%,-50%)}
     .sky-vocab-parenthetical{display:inline;white-space:nowrap;vertical-align:baseline;color:#6a6058}
     .sky-vocab-parenthetical .sky-vocab-name,.sky-vocab-parenthetical .sky-vocab-referent{display:inline;vertical-align:baseline;color:inherit}
     .sky-vocab-glyph{position:relative;display:inline-block;width:var(--vocab-mark-size);min-width:var(--vocab-mark-size);height:1em;min-height:1em;margin:0;vertical-align:baseline;overflow:visible;font-weight:800;line-height:1}
