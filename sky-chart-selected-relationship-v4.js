@@ -48,6 +48,14 @@ function miniWheelMarkup(r){
 }
 function cardMarkup(slot,c){return`<article class="understanding-card sky-${slot.toLowerCase()}" data-selected-card="${slot}" data-card-title="${esc(c.title)}" data-card-decan="${c.decan}"><span class="correspondence-label">Sky ${slot}</span><figure class="correspondence-card-art"><img src="${esc(c.image)}" alt="${esc(c.title)}"></figure><button class="ledger-entry" data-ledger-card="${esc(c.id)}">Tarot Ledger</button></article>`}
 function mark(i){document.querySelectorAll('.sky-foundation-relationship-row[data-relation-index]').forEach(x=>x.setAttribute('aria-current',Number(x.dataset.relationIndex)===i?'true':'false'))}
+function clearSelection(){
+  // The inline relationship controller owns which row is expanded. Closing its
+  // last row must not leave the legacy selected panel's aria-current highlight.
+  selectedIndex=null;++token;
+  const panel=ensure();if(panel){panel.hidden=true;delete panel.dataset.relationIndex}
+  document.querySelectorAll('.sky-foundation-relationship-row[aria-current]:not(.is-wheel-target)')
+    .forEach(row=>row.removeAttribute('aria-current'));
+}
 async function render(i,source){
   const r=relation(i),panel=ensure();if(!r||!panel)return;
   const t=++token;selectedIndex=i;mark(i);panel.hidden=false;panel.dataset.relationIndex=i;
@@ -62,8 +70,25 @@ async function render(i,source){
   if(t!==token)return;
   window.dispatchEvent(new CustomEvent('relphi:selected-relationship-rendered',{detail:{index:i,relation:r,source,version:'understanding-v6-persistent-art'}}));
 }
-document.addEventListener('click',e=>{const panel=e.target.closest('#skySelectedRelationship');const ledger=e.target.closest('[data-ledger-card]');if(panel&&ledger){window.dispatchEvent(new CustomEvent('relphi:open-ledger-card',{detail:{cardId:ledger.dataset.ledgerCard,source:'selected-relationship'}}));return}const row=e.target.closest('.sky-foundation-relationship-row[data-relation-index]');if(row)queueMicrotask(()=>render(Number(row.dataset.relationIndex),'relationship-list'))});
-window.addEventListener('relphi:sky-foundation-clear-selection',()=>{selectedIndex=null;if(ensure())mount.hidden=true});
-function ready(force=false){const panel=ensure();if(!panel)return;if(selectedIndex!=null&&rowFor(selectedIndex)){if(force)render(selectedIndex,'foundation-rerender');return}const first=[...document.querySelectorAll('.sky-foundation-relationship-row[data-relation-index]')].find(x=>!x.hidden);if(first)render(Number(first.dataset.relationIndex),'initial-relationship')}
+document.addEventListener('click',e=>{const panel=e.target.closest('#skySelectedRelationship');const ledger=e.target.closest('[data-ledger-card]');if(panel&&ledger){window.dispatchEvent(new CustomEvent('relphi:open-ledger-card',{detail:{cardId:ledger.dataset.ledgerCard,source:'selected-relationship'}}));return}const row=e.target.closest('.sky-foundation-relationship-row[data-relation-index]');if(row)queueMicrotask(()=>{
+  // The existing inline controller already handled this click in capture phase.
+  // Render only while the clicked tile remains open. A second click closes it
+  // and releases the highlight instead of silently reselecting the same tile.
+  const inline=window.RelphiInlineRelationship;
+  if(inline?.selected&&inline.selected()!==row){clearSelection();return}
+  void render(Number(row.dataset.relationIndex),'relationship-list');
+})});
+window.addEventListener('relphi:sky-foundation-clear-selection',clearSelection);
+function ready(force=false){
+  const panel=ensure();if(!panel)return;
+  if(selectedIndex!=null&&rowFor(selectedIndex)){
+    if(force)void render(selectedIndex,'foundation-rerender');
+    return;
+  }
+  // No relationship is selected on page load or list refresh. The first tile
+  // must not be auto-marked while the user explores hover previews.
+  if(selectedIndex!=null)clearSelection();
+  else panel.hidden=true;
+}
 window.addEventListener('relphi:sky-foundation-ready',()=>ready(true));if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>requestAnimationFrame(()=>ready(false)),{once:true});else requestAnimationFrame(()=>ready(false));
 })();
