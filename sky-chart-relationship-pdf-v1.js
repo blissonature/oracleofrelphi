@@ -39,11 +39,16 @@ function styles(){
     '#relphiPdfStage .rex-card img{width:63px}',
     '#relphiPdfStage .rex-card b{max-width:105px;font-size:9px}',
     '#relphiPdfStage .rex-wheel svg{width:106px;height:106px}',
-    '#skyFoundationRelationships>.rpdf-toolbar{display:flex;align-items:center;justify-content:flex-end;flex-wrap:wrap;gap:8px;padding:6px 12px 10px;border-bottom:1px solid rgba(31,27,24,.1)}',
-    '#skyFoundationRelationships>.rpdf-toolbar .rpdf-toolbar-label{color:#655d56;font:750 11px/1.3 system-ui,sans-serif;margin-right:auto}',
-    '#skyFoundationRelationships>.rpdf-toolbar button{font:750 11px/1.25 system-ui,sans-serif;padding:7px 10px;min-height:30px;border:1px solid #b5aba0;border-radius:7px;background:#fffdf8;color:#332d28;cursor:pointer}',
-    '#skyFoundationRelationships>.rpdf-toolbar button:hover,#skyFoundationRelationships>.rpdf-toolbar button:focus-visible{background:#f0ebe4;border-color:#70655b}',
-    '@media(max-width:620px){#skyFoundationRelationships>.rpdf-toolbar{justify-content:flex-start;gap:6px}#skyFoundationRelationships>.rpdf-toolbar .rpdf-toolbar-label{flex:0 0 100%}}'
+    '#skyFoundationRelationships .rpdf-control{position:relative;display:grid;place-items:center;min-width:30px;align-self:center;justify-self:center;z-index:6}',
+    '#skyFoundationRelationships .rpdf-trigger{appearance:none;display:grid;place-items:center;box-sizing:border-box;width:30px;height:30px;min-width:30px;min-height:30px;padding:0;border:1px solid rgba(31,27,24,.2);border-radius:999px;background:#fffdf8;color:#332e2a;font:900 9px/1 system-ui,sans-serif;letter-spacing:-.03em;cursor:pointer}',
+    '#skyFoundationRelationships .rpdf-trigger:hover,#skyFoundationRelationships .rpdf-trigger:focus-visible{outline:none;border-color:#2462d0;box-shadow:0 0 0 2px rgba(36,98,208,.12)}',
+    '#skyFoundationRelationships .rpdf-trigger[aria-expanded="true"]{border-color:#2462d0;color:#2462d0}',
+    '#skyFoundationRelationships .rpdf-menu{position:absolute;z-index:20;top:calc(100% + 6px);right:0;display:grid;gap:3px;box-sizing:border-box;min-width:225px;max-width:min(300px,calc(100vw - 22px));padding:6px;border:1px solid rgba(31,27,24,.16);border-radius:11px;background:#fffdf8;box-shadow:0 7px 22px rgba(31,27,24,.14)}',
+    '#skyFoundationRelationships .rpdf-menu[hidden]{display:none}',
+    '#skyFoundationRelationships .rpdf-menu button{display:block;width:100%;min-height:36px;margin:0;padding:8px 11px;border:0;border-radius:7px;background:transparent;color:#332e2a;text-align:left;font:750 11px/1.25 system-ui,sans-serif;cursor:pointer}',
+    '#skyFoundationRelationships .rpdf-menu button:hover,#skyFoundationRelationships .rpdf-menu button:focus-visible{outline:none;background:#f0ebe4}',
+    '#skyFoundationRelationships .rpdf-menu button:disabled{opacity:.6;cursor:wait}',
+    '@media(max-width:620px){#skyFoundationRelationships .rpdf-menu{right:0}}'
   ].join('\n');
   document.head.appendChild(s);
 }
@@ -154,44 +159,68 @@ async function dictionary(){
   return{groups:groups.length,pages:total,entries:groups.flatMap(g=>g.sections.flatMap(s=>s.entries)).length};
 }
 function buttons(){
-  const root=document.getElementById('skyFoundationRelationships');
-  const heading=root?.querySelector('.sky-foundation-relationships-heading');
-  if(!root||!heading)return;
-  let bar=root.querySelector(':scope>.rpdf-toolbar');
-  if(!bar){
-    bar=document.createElement('div');bar.className='rpdf-toolbar';
-    const label=document.createElement('span');label.textContent='PDF exports';label.className='rpdf-toolbar-label';
-    bar.appendChild(label);
-  }
+  const heading=document.querySelector('#skyFoundationRelationships .sky-foundation-relationships-heading');
+  const actions=heading?.querySelector('.sky-relationship-heading-actions');
+  if(!actions)return;
+  let control=actions.querySelector(':scope>.rpdf-control');
+  if(control)return;
+  control=document.createElement('div');control.className='rpdf-control';
+  const trigger=document.createElement('button');
+  trigger.type='button';trigger.className='rpdf-trigger';trigger.id='skyChartPdfMenu';
+  trigger.textContent='PDF';trigger.setAttribute('aria-label','PDF download options');
+  trigger.setAttribute('aria-haspopup','true');trigger.setAttribute('aria-expanded','false');
+  const menu=document.createElement('div');menu.className='rpdf-menu';menu.id='skyChartPdfOptions';menu.hidden=true;
   for(const entry of [
     {id:'skyChartRelationshipsPdf',text:'Relationships PDF',title:'Download the currently selected relationships as a paginated PDF'},
-    {id:'skyChartDictionaryPdf',text:'Reference Dictionary PDF',title:'Download the complete chart-independent Reference Dictionary PDF'}
+    {id:'skyChartDictionaryPdf',text:'Reference Dictionary PDF',title:'Download the complete chart-independent Reference Dictionary'}
   ]){
-    let button=bar.querySelector('#'+entry.id);
-    if(button)continue;
-    button=document.createElement('button');button.type='button';button.id=entry.id;
+    const button=document.createElement('button');button.type='button';button.id=entry.id;
     button.textContent=entry.text;button.title=entry.title;button.setAttribute('aria-label',entry.title);
-    bar.appendChild(button);
+    menu.appendChild(button);
   }
-  if(bar.previousElementSibling!==heading)heading.insertAdjacentElement('afterend',bar);
+  trigger.setAttribute('aria-controls',menu.id);
+  control.append(trigger,menu);
+  actions.appendChild(control);
 }
+function closeMenu(){
+  const trigger=document.getElementById('skyChartPdfMenu');
+  const menu=document.getElementById('skyChartPdfOptions');
+  if(menu)menu.hidden=true;
+  trigger?.setAttribute('aria-expanded','false');
+}
+
 async function clicked(event){
+  const trigger=event.target.closest?.('#skyChartPdfMenu');
+  if(trigger){
+    event.preventDefault();
+    const menu=document.getElementById('skyChartPdfOptions');
+    if(!menu)return;
+    menu.hidden=!menu.hidden;
+    trigger.setAttribute('aria-expanded',menu.hidden?'false':'true');
+    return;
+  }
   const b=event.target.closest?.('#skyChartRelationshipsPdf,#skyChartDictionaryPdf');
-  if(!b||busy)return;
-  event.preventDefault();busy=true;b.disabled=true;status('Preparing PDF...');
+  if(!b){if(!event.target.closest?.('.rpdf-control'))closeMenu();return}
+  event.preventDefault();
+  closeMenu();
+  if(busy)return;
+  busy=true;b.disabled=true;status('Preparing PDF...');
   try{if(b.id==='skyChartDictionaryPdf')await dictionary();else await relationships()}
   catch(e){console.error(e);status('PDF export failed: '+(e?.message||e))}
   finally{busy=false;b.disabled=false}
 }
+
 function start(){
+  styles();
   buttons();
   const root=document.getElementById('skyFoundationRelationships');
   if(root){
-    const observer=new MutationObserver(()=>{if(!root.querySelector(':scope>.rpdf-toolbar'))buttons()});
-    observer.observe(root,{childList:true});
+    const observer=new MutationObserver(()=>{if(!root.querySelector('.sky-relationship-heading-actions>.rpdf-control'))buttons()});
+    observer.observe(root,{childList:true,subtree:true});
   }
   window.addEventListener('relphi:sky-foundation-ready',buttons);
   document.addEventListener('click',clicked,true);
+  document.addEventListener('keydown',event=>{if(event.key==='Escape')closeMenu()});
 }
 document.readyState==='loading'?document.addEventListener('DOMContentLoaded',start,{once:true}):start();
 window.RelphiRelationshipsPdf=Object.freeze({relationships,dictionary});
