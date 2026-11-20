@@ -120,6 +120,30 @@ try{
      assert.ok(Math.abs(placementMark.pSize-placementMark.plutoSize)<.35,'Retrograde P must match Pluto 11.84px font size');
      assert.equal(placementMark.source,'retrograde');
      assert.equal(placementMark.rawImage,false,'Placements must not bypass component via image');
+     const saturnIdentity=await page.evaluate(()=>{
+       const row=[...document.querySelectorAll('#skyFoundationA .sky-foundation-row')]
+         .find(node=>node.dataset.placementLabel==='Saturn');
+       return {label:row?.dataset.placementLabel,id:row?.dataset.placement,interactive:row?.dataset.interactive};
+     });
+     assert.equal(saturnIdentity.label,'Saturn','SVG text must not become the semantic placement name');
+     assert.equal(saturnIdentity.id,'saturn','Retrograde must not break placement selection identity');
+     assert.equal(saturnIdentity.interactive,'placement','Retrograde must preserve placement interactions');
+     await page.evaluate(()=>{
+       window.__retrogradeCopied='';
+       Object.defineProperty(navigator,'clipboard',{configurable:true,value:{
+         writeText:async value=>{window.__retrogradeCopied=String(value)}
+       }});
+     });
+     const placementsCopy=page.locator('#skyFoundationA [data-copy-placements]').first();
+     assert.equal(await placementsCopy.count(),1,'Use the actual Sky A Placements Copy control');
+     await placementsCopy.click();
+     await page.waitForFunction(()=>!!window.__retrogradeCopied,null,{timeout:6000});
+     const copiedPlacements=await page.evaluate(()=>window.__retrogradeCopied);
+     assert.match(copiedPlacements,/\\*\\*Saturn Rx\\*\\*/,'Placements Copy must contain Saturn Rx once');
+     assert.doesNotMatch(copiedPlacements,/SaturnPx|Saturn P x/,'Canonical SVG text must not pollute copy');
+     console.log('PREVIEW PLACEMENTS COPY',JSON.stringify({saturnIdentity,
+       saturnLine:copiedPlacements.split('\\n').find(line=>line.includes('Saturn'))}));
+
      const relationshipsRx=await page.evaluate(()=>[...document.querySelectorAll('#skyFoundationRelationshipList .sky-rx-glyph-overlay')].map(node=>({
        art:!!node.querySelector('.relphi-glyph-retrograde'),
        path:node.querySelector('.relphi-glyph-retrograde text')?.textContent,
