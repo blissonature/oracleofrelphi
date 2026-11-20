@@ -167,7 +167,7 @@ try{
   try{
     const url=`http://127.0.0.1:${server.address().port}/glyphs-unified-preview.html?ref=${ref}`;
     await gallery.goto(url,{waitUntil:'domcontentloaded',timeout:30000});
-    await gallery.waitForURL(/sky-chart-preview\\/sky-chart\\.html\\?ref=.*page=glyphs-unified-preview\\.html/,{timeout:30000});
+    await gallery.waitForURL(url=>url.pathname==='/sky-chart-preview/sky-chart.html'&&url.searchParams.get('page')==='glyphs-unified-preview.html',{timeout:30000});
     await gallery.waitForFunction(()=>{
       const card=id=>[...document.querySelectorAll('#ugGrid .ug-card')].find(node=>node.querySelector('.ug-id')?.textContent===id);
       return !!card('retrograde')?.querySelector('.relphi-glyph-retrograde path')
