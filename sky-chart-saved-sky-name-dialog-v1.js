@@ -15,8 +15,8 @@
 
   const normalize=value=>String(value||'').trim().toLowerCase().replace(/\s+/g,' ');
   const clone=value=>JSON.parse(JSON.stringify(value));
-  function readJson(key,fallback){try{const raw=localStorage.getItem(key);return raw?JSON.parse(raw):fallback}catch(_){return fallback}}
-  function writeJson(key,value){try{localStorage.setItem(key,JSON.stringify(value));return true}catch(_){return false}}
+  function readJson(key,fallback){try{const raw=window.RelphiSkyWorkingSlotStore.getItem(key);return raw?JSON.parse(raw):fallback}catch(_){return fallback}}
+  function writeJson(key,value){try{window.RelphiSkyWorkingSlotStore.setItem(key,JSON.stringify(value));return true}catch(_){return false}}
   function payload(slot){return readJson(SLOT_KEYS[slot],null)}
   function placementSource(value){
     if(!value||typeof value!=='object')return{};
@@ -61,7 +61,7 @@
     if(!writeJson(LIBRARY_KEY,records))return{ok:false,message:'Saved skies could not be written.'};
     const active=applyNamedIdentity(value,clean,id);
     if(!writeJson(SLOT_KEYS[slot],active))return{ok:false,message:'The sky was saved, but the active card could not be renamed.'};
-    try{window.dispatchEvent(new StorageEvent('storage',{key:SLOT_KEYS[slot],newValue:localStorage.getItem(SLOT_KEYS[slot]),storageArea:localStorage}))}catch(_){}
+    try{window.dispatchEvent(new StorageEvent('storage',{key:SLOT_KEYS[slot],newValue:window.RelphiSkyWorkingSlotStore.getItem(SLOT_KEYS[slot]),storageArea:localStorage}))}catch(_){}
     window.dispatchEvent(new CustomEvent('relphi:saved-sky-library-changed',{detail:{name:clean,id,action:'create'}}));
     announceName(slot,clean,id);
     return{ok:true,message:'Sky saved.'};
