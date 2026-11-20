@@ -122,10 +122,13 @@ try{
      assert.equal(placementMark.rawImage,false,'Placements must not bypass component via image');
      const saturnIdentity=await page.evaluate(()=>{
        const row=[...document.querySelectorAll('#skyFoundationA .sky-foundation-row')]
-         .find(node=>node.dataset.placementLabel==='Saturn');
-       return {label:row?.dataset.placementLabel,id:row?.dataset.placement,interactive:row?.dataset.interactive};
+         .find(node=>node.querySelector('.sky-foundation-row-name')?.firstChild?.textContent==='Saturn');
+       return {label:row?.querySelector('.sky-foundation-row-name')?.firstChild?.textContent,
+         duplicateLabel:row?.dataset.placementLabel,
+         id:row?.dataset.placement,interactive:row?.dataset.interactive};
      });
      assert.equal(saturnIdentity.label,'Saturn','SVG text must not become the semantic placement name');
+     assert.equal(saturnIdentity.duplicateLabel,undefined,'Name must have one DOM source, not parallel dataset state');
      assert.equal(saturnIdentity.id,'saturn','Retrograde must not break placement selection identity');
      assert.equal(saturnIdentity.interactive,'placement','Retrograde must preserve placement interactions');
      await page.evaluate(()=>{
