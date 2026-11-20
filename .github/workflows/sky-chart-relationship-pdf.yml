@@ -30,8 +30,14 @@ jobs:
       - name: Install browser and PDF validation dependencies
         run: |
           npm install --no-save playwright@1.52.0 luxon@3 suncalc@1.9.0 jspdf@2.5.2 html-to-image@1.11.11 pdfjs-dist@4.10.38
-          npx playwright install --with-deps chromium
+          google-chrome --version
       - name: Download and parse both real PDFs in Chromium
         run: |
           python3 -m http.server 4173 >/tmp/relphi-pdf-http.log 2>&1 &
           node tests/sky-chart-relationship-pdf-browser.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: verified-relphi-pdf-samples
+          path: verified-*.pdf
+          if-no-files-found: ignore

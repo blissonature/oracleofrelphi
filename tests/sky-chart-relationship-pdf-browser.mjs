@@ -17,6 +17,7 @@ function sky(name,offset){
 }
 async function readPdf(download){
   const bytes=await fs.readFile(await download.path());
+  await fs.writeFile(path.resolve('verified-'+download.suggestedFilename()),bytes);
   assert.equal(bytes.subarray(0,5).toString(),'%PDF-','Download must be a real PDF document');
   const task=getDocument({data:new Uint8Array(bytes),useSystemFonts:true,disableFontFace:true});
   const document=await task.promise;
@@ -28,7 +29,7 @@ async function readPdf(download){
   await document.destroy();
   return{pages:text.length,text:text.join('\n'),bytes:bytes.length};
 }
-const browser=await chromium.launch({headless:true});
+const browser=await chromium.launch({headless:true,channel:'chrome'});
 const page=await browser.newPage({viewport:{width:1440,height:1000},acceptDownloads:true});
 const errors=[];
 page.on('pageerror',error=>errors.push(error.message));
@@ -45,8 +46,14 @@ await page.addInitScript(({a,b})=>{
 await page.goto('http://127.0.0.1:4173/sky-chart.html',{waitUntil:'domcontentloaded',timeout:30000});
 await page.waitForSelector('#skyFoundationRoot[aria-busy="false"]',{timeout:30000});
 await page.waitForSelector('#skyFoundationRelationshipList .sky-foundation-relationship-row',{timeout:30000});
-await page.waitForSelector('#skyChartRelationshipsPdf',{timeout:20000});
-await page.waitForSelector('#skyChartDictionaryPdf',{timeout:20000});
+await page.waitForSelector('#skyChartPdfMenu',{timeout:20000});
+assert.equal(await page.locator('#skyFoundationRelationships>.rpdf-toolbar').count(),0,
+  'Clunky standalone PDF toolbar must be removed');
+assert.equal(await page.locator('.sky-relationship-heading-actions>.rpdf-control').count(),1,
+  'One compact PDF menu belongs in the existing Relationships heading');
+assert.equal(await page.locator('#skyChartPdfOptions').isHidden(),true);
+assert.equal(await page.locator('#skyChartPdfMenu').evaluate(b=>getComputedStyle(b).borderRadius),'999px',
+  'PDF button must use the same round treatment as established export controls');
 const dictionaryData=await page.evaluate(()=>window.RelphiRelationshipCopySerializer.fullDictionary());
 assert.deepEqual(dictionaryData.map(g=>g.category),['Planets, Angles, and Other Points','Signs','Houses','Aspect Types']);
 assert.equal(dictionaryData[1].sections[0].entries.length,12);
@@ -55,6 +62,7 @@ assert.ok(dictionaryData[0].sections[1].entries.some(x=>x.label.includes('m.c.')
 assert.ok(dictionaryData[3].sections[0].entries.some(x=>x.label==='Trine'));
 
 const dictionaryDownload=page.waitForEvent('download',{timeout:30000});
+await page.locator('#skyChartPdfMenu').click();
 await page.locator('#skyChartDictionaryPdf').click();
 const dictionaryFile=await dictionaryDownload;
 assert.equal(dictionaryFile.suggestedFilename(),'oracle-of-relphi-reference-dictionary.pdf');
@@ -70,6 +78,7 @@ await page.locator('[data-relationship-limit-preset]').selectOption('5');
 await page.waitForFunction(()=>document.documentElement.dataset.skyRelationshipLimit==='5');
 await page.waitForFunction(()=>[...document.querySelectorAll('#skyFoundationRelationshipList>.sky-foundation-relationship-row')].filter(row=>{const s=getComputedStyle(row);return !row.hidden&&s.display!=='none'&&s.visibility!=='hidden'}).length===5);
 const relationshipsDownload=page.waitForEvent('download',{timeout:45000});
+await page.locator('#skyChartPdfMenu').click();
 await page.locator('#skyChartRelationshipsPdf').click();
 let relationshipsFile;
 try{relationshipsFile=await relationshipsDownload}
@@ -98,18 +107,38 @@ await mobile.addInitScript(({a,b})=>{
 },{a:sky('First Sky',0),b:sky('Second Sky',29.27)});
 await mobile.goto('http://127.0.0.1:4173/sky-chart.html',{waitUntil:'domcontentloaded',timeout:30000});
 await mobile.waitForSelector('#skyFoundationRoot[aria-busy="false"]',{timeout:30000});
-await mobile.waitForSelector('#skyChartRelationshipsPdf',{timeout:20000});
+await mobile.waitForSelector('#skyChartPdfMenu',{timeout:20000});
 const mobileLayout=await mobile.evaluate(()=>{
-  const bar=document.querySelector('#skyFoundationRelationships>.rpdf-toolbar');
-  const buttons=[...bar.querySelectorAll('button')].map(b=>({text:b.textContent,rect:b.getBoundingClientRect().toJSON()}));
-  return{width:window.innerWidth,toolbar:bar.getBoundingClientRect().toJSON(),buttons,
-    sorting:!!document.querySelector('#skyFoundationRelationships [data-relationship-sort]'),
-    max:!!document.querySelector('#skyFoundationRelationships [data-relationship-limit-preset]')};
+  const root=document.querySelector('#skyFoundationRelationships');
+  const control=root.querySelector('.sky-relationship-heading-actions>.rpdf-control');
+  const last=root.querySelector('#skyFoundationRelationshipList>.sky-foundation-relationship-row:last-of-type');
+  const list=root.querySelector('#skyFoundationRelationshipList');
+  const menu=document.getElementById('skyChartPdfOptions');
+  const r=x=>x?.getBoundingClientRect().toJSON();
+  return{
+    width:window.innerWidth,
+    control:r(control),header:r(root.querySelector('.sky-foundation-relationships-heading')),
+    list:r(list),last:r(last),menuHidden:menu.hidden,
+    sorting:!!root.querySelector('[data-relationship-sort]'),
+    max:!!root.querySelector('[data-relationship-limit-preset]'),
+    copy:!!root.querySelector('.sky-relationship-copy-button'),
+    png:!!root.querySelector('#skyChartRelationshipsExport')
+  };
 });
-assert.equal(mobileLayout.buttons.length,2,'Both PDF actions must be present on mobile.');
-assert.ok(mobileLayout.toolbar.left>=-1&&mobileLayout.toolbar.right<=mobileLayout.width+1,'PDF toolbar must fit the mobile viewport.');
-assert.ok(mobileLayout.buttons.every(b=>b.rect.left>=-1&&b.rect.right<=mobileLayout.width+1),'PDF actions must not overflow horizontally.');
-assert.ok(mobileLayout.sorting&&mobileLayout.max,'Original sorting and Max controls must remain in place.');
+assert.ok(mobileLayout.control.left>=-1&&mobileLayout.control.right<=mobileLayout.width+1,
+  'PDF trigger must fit mobile without clipping');
+assert.ok(mobileLayout.control.bottom<=mobileLayout.header.bottom+2,
+  'PDF controls must be inside the established header, not over relationship tiles');
+assert.ok(mobileLayout.control.bottom<=mobileLayout.list.top+2,
+  'PDF controls cannot cover the first or last relationship match');
+assert.ok(mobileLayout.sorting&&mobileLayout.max&&mobileLayout.copy&&mobileLayout.png,
+  'Existing sorting, Max, Copy and PNG must remain intact');
+assert.equal(mobileLayout.menuHidden,true,'The PDF menu is closed until requested');
+await mobile.locator('#skyChartPdfMenu').click();
+assert.equal(await mobile.locator('#skyChartPdfOptions').isVisible(),true);
+assert.equal(await mobile.locator('#skyChartPdfOptions button').count(),2);
+await mobile.keyboard.press('Escape');
+assert.equal(await mobile.locator('#skyChartPdfOptions').isHidden(),true);
 await mobile.close();
 await browser.close();
 console.log('PDF browser download and four-category standalone dictionary checks passed.');
