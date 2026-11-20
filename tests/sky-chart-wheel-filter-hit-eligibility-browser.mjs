@@ -83,16 +83,36 @@ try{
     // Find a segment of an excluded A↔B line that is within the viewport but
     // is not covered by another currently eligible aspect hit envelope.
     const excludedPoint=await page.evaluate(()=>{
-      const lines=[...document.querySelectorAll('#skyFoundationWheelMount [data-layer="aspects"] > line.sky-chart-aspect-multiselect-hidden:not(.sky-foundation-aspect-hit)')];
+      const all=[...document.querySelectorAll('#skyFoundationWheelMount [data-layer="aspects"] > line.sky-foundation-aspect:not(.sky-foundation-aspect-hit)')];
+      const lines=all.filter(l=>l.classList.contains('sky-chart-aspect-multiselect-hidden'));
+      const xy=line=>{
+        const m=line.getScreenCTM(),svg=line.ownerSVGElement;
+        if(!m||!svg?.createSVGPoint)return null;
+        const p=svg.createSVGPoint(),q=svg.createSVGPoint();
+        p.x=+line.getAttribute('x1');p.y=+line.getAttribute('y1');
+        q.x=+line.getAttribute('x2');q.y=+line.getAttribute('y2');
+        return[p.matrixTransform(m),q.matrixTransform(m)];
+      };
+      const distance=(p,a,b)=>{
+        const dx=b.x-a.x,dy=b.y-a.y,l=dx*dx+dy*dy;
+        if(!l)return Math.hypot(p.x-a.x,p.y-a.y);
+        const t=Math.max(0,Math.min(1,((p.x-a.x)*dx+(p.y-a.y)*dy)/l));
+        return Math.hypot(p.x-a.x-t*dx,p.y-a.y-t*dy);
+      };
+      const validSegments=all.filter(l=>window.RelphiSkyFoundationInteractions.aspectLineEligible(l))
+        .map(xy).filter(Boolean);
       for(const line of lines){
         const m=line.getScreenCTM();if(!m)continue;
         const x1=+line.getAttribute('x1'),y1=+line.getAttribute('y1');
         const x2=+line.getAttribute('x2'),y2=+line.getAttribute('y2');
-        for(const t of [.25,.4,.5,.6,.75]){
+        for(const t of [.1,.2,.3,.4,.5,.6,.7,.8,.9]){
           const p=line.ownerSVGElement.createSVGPoint();
           p.x=x1+(x2-x1)*t;p.y=y1+(y2-y1)*t;
           const q=p.matrixTransform(m);
           if(q.x<8||q.y<8||q.x>innerWidth-8||q.y>innerHeight-8)continue;
+          // A visible eligible line takes precedence at a crossing. Only test
+          // locations belonging exclusively to excluded aspect geometry.
+          if(validSegments.some(([a,b])=>distance(q,a,b)<=12))continue;
           const top=document.elementFromPoint(q.x,q.y);
           if(!top?.closest?.('#skyFoundationWheelMount'))continue;
           if(top.closest?.('.sky-foundation-aspect-hit,[data-interactive="placement"],[data-interactive="aspect"]'))continue;
