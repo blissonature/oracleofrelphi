@@ -8,10 +8,12 @@ const timingSource=readFileSync('sky-chart-relationship-timing-fix-v1.js','utf8'
 const pageSource=readFileSync('sky-chart.html','utf8');
 
 // The registered comparator—not a parallel mock implementation—decides the order.
-const window={};
-const document={readyState:'loading',addEventListener(){},getElementById(){return null}};
+const window={dispatchEvent(){}};
+const document={readyState:'loading',addEventListener(){},getElementById(){return null},
+  createElement(){return{style:{}}},head:{appendChild(){}}};
 runInNewContext(sortSource,{window,document,location:{pathname:'/sky-chart.html'},
-  setTimeout(){return 1},clearTimeout(){},requestAnimationFrame(){},console});
+  setTimeout(){return 1},clearTimeout(){},requestAnimationFrame(){},
+  CustomEvent:class{constructor(type){this.type=type}},console});
 const api=window.RelphiRelationshipSort;
 assert.ok(api,'Existing Relationships sort owner must register');
 function row(age,scope,index){
