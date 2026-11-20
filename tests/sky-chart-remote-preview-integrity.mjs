@@ -42,6 +42,36 @@ try{
    await page.screenshot({path:`sky-remote-${kind}.png`,fullPage:true});
    if(kind==='preview'&&(!state.wheelCount||state.mountVisible==='hidden'||state.rootBusy!=='false'||errors.length)){failed=true;console.error('FAILED: hosted exact-revision preview did not display a ready wheel');}
    if(kind==='preview'&&!failed){
+     // The commit-specific preview must resolve its updated glyph asset, not just display a wheel.
+     const retrograde=await page.evaluate(async()=>{
+       const NS='http://www.w3.org/2000/svg';
+       const svg=document.createElementNS(NS,'svg');
+       svg.setAttribute('viewBox','-32 -32 64 64');
+       svg.style.cssText='position:fixed;right:12px;top:12px;width:64px;height:64px;z-index:99999';
+       document.body.appendChild(svg);
+       try{
+         const component=window.RelphiGlyphComponent;
+         if(!component)throw new Error('Canonical glyph component unavailable in exact preview');
+         const bubble=component.createBubble(svg,'retrograde',{radius:19,padding:1,color:'#111'});
+         await bubble.ready;
+         const art=svg.querySelector('.relphi-glyph-retrograde');
+         if(!art)throw new Error('Retrograde artwork failed to mount');
+         const box=art.getBoundingClientRect(),ring=bubble.circle.getBoundingClientRect();
+         const cx=ring.x+ring.width/2,cy=ring.y+ring.height/2;
+         return{
+           paths:art.querySelectorAll('path').length,
+           dx:box.x+box.width/2-cx,
+           dy:box.y+box.height/2-cy,
+           farthest:Math.max(...[[box.left,box.top],[box.left,box.bottom],[box.right,box.top],[box.right,box.bottom]].map(([x,y])=>Math.hypot(x-cx,y-cy))),
+           firstPath:art.querySelector('path')?.getAttribute('d')?.slice(0,20)||''
+         };
+       }finally{svg.remove()}
+     });
+     console.log('PREVIEW RETROGRADE MASTER',JSON.stringify(retrograde));
+     assert.equal(retrograde.paths,2);
+     assert.match(retrograde.firstPath,/^M46\\.666 33\\.1/);
+     assert.ok(Math.abs(retrograde.dx)<1&&Math.abs(retrograde.dy)<1);
+     assert.ok(retrograde.farthest<16.825);
      await page.locator('#skyFoundationB [data-sky-drawer-tab="where"]').click();
      await page.waitForSelector('#skyFoundationB .sky-where-when-editor [data-ww-action="refresh-now"]',{timeout:15000});
      await page.waitForSelector('#skyFoundationB [data-draft-heptagram-ready="true"] .sky-where-when-draft-heptagram',{timeout:20000});
