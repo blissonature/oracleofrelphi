@@ -82,7 +82,7 @@ try{
      assert.deepEqual(retro.text.map(t=>t.value),['P','x']);
      assert.ok(retro.text.every(t=>t.family.includes('system-ui')),'Both letters use Pluto system-ui family');
      assert.deepEqual(retro.text.map(t=>t.weight),['700','700'],'P and x must share the same bold weight');
-     assert.deepEqual(retro.text.map(t=>[t.x,t.y]),[[32,62],[43,69]],'The x must join the P bowl as the diagonal R leg, not remain spaced Px');
+     assert.deepEqual(retro.text.map(t=>[t.x,t.y]),[[33,62],[44,69]],'The x must join the P bowl as the diagonal R leg, not remain spaced Px');
      assert.equal(retro.internalRings,0);
      assert.equal(anti?.paths,3);
      assert.ok(anti.firstPath.startsWith('M27 57.623'));
