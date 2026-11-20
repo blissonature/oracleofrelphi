@@ -136,7 +136,7 @@ try{
      assert.ok(Math.abs(placementMark.pSize-placementMark.plutoSize)<.35,'Retrograde P must match Pluto 11.84px font size');
      assert.ok(Math.abs(placementMark.baselineOffset)<.35,'Retrograde P foot must align with Pluto P foot at the same row baseline');
      assert.ok(placementMark.subscriptDrop>=1.5&&placementMark.subscriptDrop<=3.5,'The x baseline must drop below the capital P');
-     assert.equal(placementMark.xFontWeight,'900','The smaller x must have a visually bold stroke weight');
+     assert.equal(placementMark.xFontWeight,'700','The x must match the P font weight');
      assert.equal(placementMark.source,'retrograde');
      assert.equal(placementMark.rawImage,false,'Placements must not bypass component via image');
      const saturnIdentity=await page.evaluate(()=>{
