@@ -161,7 +161,7 @@ const separation=(a,b)=>Math.abs(((a-b+180)%360+360)%360-180);
 const slug=value=>String(value||'').trim().toLowerCase().replace(/[._]/g,' ').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
 function readJson(storage,key,fallback){try{const raw=storage.getItem(key);return raw?JSON.parse(raw):fallback}catch(_){return fallback}}
 function writeJson(storage,key,value){try{storage.setItem(key,JSON.stringify(value))}catch(_){}}
-function payload(slot){return readJson(localStorage,KEYS[slot],null)}
+function payload(slot){return readJson(window.RelphiSkyWorkingSlotStore,KEYS[slot],null)}
 function profile(value){return value?.calcProfile&&typeof value.calcProfile==='object'?value.calcProfile:{}}
 function internalPlacementEntry(key,item){
   return[key,item?.id,item?.name,item?.label,item?.body,item?.planet,item?.point].some(value=>/^[_$]/.test(String(value||'').trim()));
