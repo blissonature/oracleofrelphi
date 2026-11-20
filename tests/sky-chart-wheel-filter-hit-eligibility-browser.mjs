@@ -131,12 +131,25 @@ try{
     assert.ok(chosenBefore.eligible,label+': selected line must pass all filters');
     await chosen.dispatchEvent('click',{button:0});
     console.log(label+' valid wheel line',JSON.stringify(chosenBefore));
-    await page.waitForTimeout(180);
-    const state=await page.evaluate(()=>({
-      enabled:[...document.querySelectorAll('#skyFoundationWheelMount .sky-foundation-aspect.is-selected')].length,
-      matched:[...document.querySelectorAll('#skyFoundationRelationshipList > .sky-foundation-relationship-row[aria-current="true"]')]
-        .filter(r=>!r.hidden&&!r.classList.contains('sky-chart-aspect-multiselect-hidden')).length
-    }));
+    await page.waitForTimeout(500);
+    const state=await page.evaluate(()=>{
+      const selected=[...document.querySelectorAll('#skyFoundationWheelMount .sky-foundation-aspect.is-selected')];
+      const rows=[...document.querySelectorAll('#skyFoundationRelationshipList > .sky-foundation-relationship-row')];
+      const marked=rows.filter(r=>r.getAttribute('aria-current')==='true');
+      return{
+        enabled:selected.length,
+        selectedLines:selected.slice(0,3).map(l=>({index:l.dataset.relationIndex,
+          left:l.dataset.leftPlacement,aspect:l.dataset.aspect,right:l.dataset.rightPlacement,
+          mode:l.dataset.relationshipMode})),
+        marked:marked.slice(0,3).map(r=>({index:r.dataset.relationIndex,hidden:r.hidden,
+          classes:[...r.classList],style:getComputedStyle(r).display})),
+        expanded:rows.filter(r=>r.classList.contains('is-inline-expanded')).map(r=>r.dataset.relationIndex),
+        matchingRow:rows.filter(r=>r.dataset.relationIndex===selected[0]?.dataset.relationIndex)
+          .map(r=>({index:r.dataset.relationIndex,hidden:r.hidden,classes:[...r.classList],style:getComputedStyle(r).display})),
+        matched:marked.filter(r=>!r.hidden&&!r.classList.contains('sky-chart-aspect-multiselect-hidden')).length
+      };
+    });
+    console.log(label+' selected aspect relationship resolution',JSON.stringify(state));
     assert.ok(state.enabled>0,label+': eligible aspect can still be selected');
     assert.ok(state.matched>0,label+': eligible aspect must resolve to its matching Relationships tile');
     await page.screenshot({path:'wheel-filter-and-focus-'+label+'.png',fullPage:true});
