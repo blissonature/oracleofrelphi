@@ -20,7 +20,7 @@
     return span;
   }
   function storedSkyBRaw(){
-    try{return localStorage.getItem(SKY_B_KEY)}catch(_){return null}
+    try{return window.RelphiSkyWorkingSlotStore.getItem(SKY_B_KEY)}catch(_){return null}
   }
   function hasStoredSkyB(){
     try{
@@ -39,7 +39,7 @@
     // A hidden/stale B payload must not suppress the user's Add Sky B control
     // or silently restore an old comparison. Add Sky B always starts a fresh B workflow.
     if(hasStoredSkyB()){
-      try{localStorage.removeItem(SKY_B_KEY)}catch(_){}
+      try{window.RelphiSkyWorkingSlotStore.removeItem(SKY_B_KEY)}catch(_){}
       dispatchSkyBStorage(null);
     }
     const internal=document.querySelector('#skyFoundationComparison [data-add-sky-b]');
@@ -51,7 +51,7 @@
     if(startup?.writeMode)startup.writeMode('comparison');
     else{
       root.dataset.skyLastMode='comparison';
-      try{localStorage.setItem('relphiSkyChartLastModeV1','comparison')}catch(_){}
+      try{window.RelphiSkyWorkingSlotStore.setItem('relphiSkyChartLastModeV1','comparison')}catch(_){}
     }
     startup?.syncRoot?.();
 
@@ -79,7 +79,7 @@
   }
   function removeSkyB(){
     releaseSkyBWhereWhen();
-    try{localStorage.removeItem(SKY_B_KEY)}catch(_){return}
+    try{window.RelphiSkyWorkingSlotStore.removeItem(SKY_B_KEY)}catch(_){return}
     window.dispatchEvent(new CustomEvent('relphi:sky-working-slot-cleared',{detail:{slot:'B',action:'remove'}}));
     delete document.documentElement.dataset.skyBEditing;
     const startup=window.RelphiSkyStartupMode;
@@ -130,13 +130,13 @@
   function dispatchSkyBStorage(raw){dispatchStorage(SKY_B_KEY,raw)}
   function restoreSkyB(raw){
     if(!raw)return;
-    try{localStorage.setItem(SKY_B_KEY,raw)}catch(_){return}
+    try{window.RelphiSkyWorkingSlotStore.setItem(SKY_B_KEY,raw)}catch(_){return}
     delete document.documentElement.dataset.skyBEditing;
     const startup=window.RelphiSkyStartupMode;
     if(startup?.writeMode)startup.writeMode('comparison');
     else{
       document.documentElement.dataset.skyLastMode='comparison';
-      try{localStorage.setItem('relphiSkyChartLastModeV1','comparison')}catch(_){}
+      try{window.RelphiSkyWorkingSlotStore.setItem('relphiSkyChartLastModeV1','comparison')}catch(_){}
     }
     startup?.syncRoot?.();
     document.documentElement.dataset.skyLastMode='comparison';
@@ -203,20 +203,20 @@
     if(promoting)return false;
     let rawB=null,activeA=null;
     try{
-      activeA=localStorage.getItem(SKY_A_KEY);
-      rawB=localStorage.getItem(SKY_B_KEY);
+      activeA=window.RelphiSkyWorkingSlotStore.getItem(SKY_A_KEY);
+      rawB=window.RelphiSkyWorkingSlotStore.getItem(SKY_B_KEY);
     }catch(_){return false}
     if(activeA||!rawB)return false;
 
     promoting=true;
     let promoted=null;
     try{
-      localStorage.setItem(SKY_A_KEY,rawB);
+      window.RelphiSkyWorkingSlotStore.setItem(SKY_A_KEY,rawB);
       try{promoted=JSON.parse(rawB)}catch(_){}
-      const ageB=localStorage.getItem(LIVE_AGE_KEYS.B);
-      if(ageB===null)localStorage.removeItem(LIVE_AGE_KEYS.A);
-      else localStorage.setItem(LIVE_AGE_KEYS.A,ageB);
-      localStorage.removeItem(LIVE_AGE_KEYS.B);
+      const ageB=window.RelphiSkyWorkingSlotStore.getItem(LIVE_AGE_KEYS.B);
+      if(ageB===null)window.RelphiSkyWorkingSlotStore.removeItem(LIVE_AGE_KEYS.A);
+      else window.RelphiSkyWorkingSlotStore.setItem(LIVE_AGE_KEYS.A,ageB);
+      window.RelphiSkyWorkingSlotStore.removeItem(LIVE_AGE_KEYS.B);
     }catch(_){promoting=false;return false}
 
     dispatchSkyAStorage(rawB);
@@ -239,12 +239,12 @@
   function swapSkies(){
     let rawA=null,rawB=null,ageA=null,ageB=null;
     try{
-      rawA=localStorage.getItem(SKY_A_KEY);rawB=localStorage.getItem(SKY_B_KEY);
-      ageA=localStorage.getItem(LIVE_AGE_KEYS.A);ageB=localStorage.getItem(LIVE_AGE_KEYS.B);
+      rawA=window.RelphiSkyWorkingSlotStore.getItem(SKY_A_KEY);rawB=window.RelphiSkyWorkingSlotStore.getItem(SKY_B_KEY);
+      ageA=window.RelphiSkyWorkingSlotStore.getItem(LIVE_AGE_KEYS.A);ageB=window.RelphiSkyWorkingSlotStore.getItem(LIVE_AGE_KEYS.B);
       if(!rawA||!rawB)return false;
-      localStorage.setItem(SKY_A_KEY,rawB);localStorage.setItem(SKY_B_KEY,rawA);
-      if(ageB===null)localStorage.removeItem(LIVE_AGE_KEYS.A);else localStorage.setItem(LIVE_AGE_KEYS.A,ageB);
-      if(ageA===null)localStorage.removeItem(LIVE_AGE_KEYS.B);else localStorage.setItem(LIVE_AGE_KEYS.B,ageA);
+      window.RelphiSkyWorkingSlotStore.setItem(SKY_A_KEY,rawB);window.RelphiSkyWorkingSlotStore.setItem(SKY_B_KEY,rawA);
+      if(ageB===null)window.RelphiSkyWorkingSlotStore.removeItem(LIVE_AGE_KEYS.A);else window.RelphiSkyWorkingSlotStore.setItem(LIVE_AGE_KEYS.A,ageB);
+      if(ageA===null)window.RelphiSkyWorkingSlotStore.removeItem(LIVE_AGE_KEYS.B);else window.RelphiSkyWorkingSlotStore.setItem(LIVE_AGE_KEYS.B,ageA);
     }catch(_){return false}
     dispatchSkyAStorage(rawB);dispatchSkyBStorage(rawA);
     let skyA=null,skyB=null;try{skyA=JSON.parse(rawB);skyB=JSON.parse(rawA)}catch(_){}
@@ -268,7 +268,7 @@
   function handleStorage(event){
     if(event?.key===SKY_A_KEY){
       let hasA=false;
-      try{hasA=!!localStorage.getItem(SKY_A_KEY)}catch(_){}
+      try{hasA=!!window.RelphiSkyWorkingSlotStore.getItem(SKY_A_KEY)}catch(_){}
       if(!hasA&&storedSkyBRaw())promoteSkyBToA();
     }
     schedule();
