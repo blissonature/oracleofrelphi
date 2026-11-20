@@ -233,6 +233,18 @@
   const PERSISTENT_HIDDEN_CLASSES=['sky-foundation-single-sky-cross-hidden','sky-chart-filter-hidden','sky-chart-orb-hidden','sky-orb-filter-hidden','sky-chart-multiselect-hidden','sky-chart-house-multiselect-hidden','sky-chart-aspect-multiselect-hidden','sky-chart-sign-filter-hidden','sky-chart-zodiac-filter-hidden','sky-chart-semantic-hidden'];
   function rowSlots(row){return relationshipSlots(row)}
   function rowEligibleForWheel(row){return!PERSISTENT_HIDDEN_CLASSES.some(name=>row.classList.contains(name))}
+  // The Relationships row is the authoritative eligibility of its wheel aspect.
+  // In particular, filtered/dimmed aspect strokes and their wide hit envelopes
+  // must never be selectable after the corresponding row is excluded.
+  function aspectLineEligible(node){
+    const line=node?.classList?.contains('sky-foundation-aspect-hit')?node.previousElementSibling:node;
+    if(!line?.isConnected||line.hidden||line.style.display==='none'||getComputedStyle(line).display==='none')return false;
+    if(PERSISTENT_HIDDEN_CLASSES.some(name=>line.classList.contains(name)))return false;
+    const identity=relationshipIdentity(line);
+    if(!identity)return false;
+    return [...document.querySelectorAll('#skyFoundationRelationshipList > .sky-foundation-relationship-row[data-relation-index]')]
+      .some(row=>relationshipIdentity(row)===identity&&rowEligibleForWheel(row)&&!row.hidden&&getComputedStyle(row).display!=='none');
+  }
   // Share house illumination through the comparison ring by zodiac longitude,
   // not by assuming that the two skies have the same house divisions.
   function houseFocusPlacements(state){
@@ -305,14 +317,7 @@
     // Build the visible endpoints from the actual line being displayed so an
     // isolated aspect never loses its two placements.
     if(state&&(state.kind==='placement'||state.kind==='aspect'||state.kind==='house'||state.kind==='sign')){
-      const lineVisible=line=>{
-        if(line.hidden||line.style.display==='none')return false;
-        const skip=['sky-chart-filter-hidden','sky-chart-orb-hidden','sky-orb-filter-hidden',
-          'sky-chart-multiselect-hidden','sky-chart-aspect-multiselect-hidden',
-          'sky-chart-house-multiselect-hidden','sky-chart-sign-filter-hidden',
-          'sky-chart-semantic-hidden'];
-        return !skip.some(name=>line.classList.contains(name));
-      };
+      const lineVisible=aspectLineEligible;
       document.querySelectorAll('#skyFoundationWheelMount [data-layer="aspects"] > line.sky-foundation-aspect:not(.sky-foundation-aspect-hit)').forEach(line=>{
         if(!lineVisible(line))return;
         const identity=relationshipIdentity(line),slots=relationshipSlots(line);
@@ -435,7 +440,7 @@
     if(!Number.isFinite(event.clientX)||!Number.isFinite(event.clientY))return null;
     let nearest=null,best=Infinity;
     document.querySelectorAll('[data-layer="aspects"] > line.sky-foundation-aspect:not(.sky-foundation-aspect-hit)').forEach(line=>{
-      if(line.classList.contains('sky-chart-filter-hidden')||line.classList.contains('sky-chart-orb-hidden')||line.classList.contains('sky-orb-filter-hidden')||getComputedStyle(line).display==='none')return;
+      if(!aspectLineEligible(line))return;
       const matrix=line.getScreenCTM(),svg=line.ownerSVGElement;if(!matrix||!svg?.createSVGPoint)return;
       const start=svg.createSVGPoint(),end=svg.createSVGPoint();start.x=Number(line.getAttribute('x1'));start.y=Number(line.getAttribute('y1'));end.x=Number(line.getAttribute('x2'));end.y=Number(line.getAttribute('y2'));
       const distance=distanceToSegment(event.clientX,event.clientY,start.matrixTransform(matrix),end.matrixTransform(matrix));if(distance<best){best=distance;nearest=line}
@@ -446,8 +451,10 @@
     const root=document.getElementById('skyFoundationRoot');if(!root)return null;
     const node=event.target.closest?.('[data-interactive]');
     if(node&&root.contains(node)){
-      // A struck SVG aspect already identifies its exact endpoints and
-      // harmonic. Do not replace it with a geometrically nearby crossing line.
+      // Do not let a filtered-out line or its transparent hit envelope become
+      // an interactive target. Ineligible strokes are not a click-through to
+      // a different crossing aspect either.
+      if(node.dataset.interactive==='aspect'&&!aspectLineEligible(node))return null;
       return node;
     }
     const wheel=event.target.closest?.('#skyFoundationWheelMount .sky-foundation-wheel');
@@ -456,6 +463,7 @@
   }
   function clearableWhitespace(event){
     const root=document.getElementById('skyFoundationRoot'),target=event.target;if(!root?.contains(target))return false;
+    if(target.closest?.('[data-interactive="aspect"],.sky-foundation-aspect-hit'))return false;
     if(target.closest?.('button,input,select,textarea,a,label,summary,details,.sky-foundation-relationship-row,#skySelectedRelationship,.sky-chart-filter-bar,.sky-foundation-relationships-heading'))return false;
     return !!target.closest?.('#skyFoundationWheelMount,#skyFoundationA,#skyFoundationB,#skyFoundationComparison');
   }
@@ -594,6 +602,7 @@
     toggleWheel:toggleExternalWheel,
     clearWheel:clearExternalWheel,
     captureFocus,
+    aspectLineEligible,
     restoreFocus,
     getSelectionOrigin
   });
@@ -659,7 +668,7 @@
   // it directly rather than dispatching a second click through unrelated
   // capture-phase listeners (which can retarget or consume that click).
   function toggleInteractiveNode(node){
-    if(!node)return;
+    if(!node||node.dataset.interactive==='aspect'&&!aspectLineEligible(node))return;
     wheelOnlyExternal=false;
     rowLockedState=null;rowHoverState=null;
     const next=specFrom(node);
