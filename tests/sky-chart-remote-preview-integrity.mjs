@@ -78,68 +78,39 @@ try{
      });
      console.log('PREVIEW MONTSERRAT LETTER MASTERS',JSON.stringify(marks));
      const retro=marks.find(g=>g.id==='retrograde'),anti=marks.find(g=>g.id==='anti-vertex');
-     assert.equal(retro?.paths,0,'Retrograde uses live system-ui P+x, not Montserrat outlines');
-     assert.deepEqual(retro.text.map(t=>t.value),['P','x']);
-     assert.ok(retro.text.every(t=>t.family.includes('system-ui')),'Both letters use Pluto system-ui family');
-     assert.deepEqual(retro.text.map(t=>t.weight),['700','700'],'P and x must share the same bold weight');
-     assert.deepEqual(retro.text.map(t=>[t.x,t.y]),[[33,62],[44,69]],'The x must join the P bowl as the diagonal R leg, not remain spaced Px');
+     assert.equal(retro?.paths,1,'Retrograde must retain its original outlined one-piece master');
+     assert.deepEqual(retro.text,[],'The master must not depend on text font rendering');
+     assert.ok(retro.firstPath.startsWith('m 50.066711'));
      assert.equal(retro.internalRings,0);
+     assert.ok(Math.abs(retro.dx)<1&&Math.abs(retro.dy)<1,'Centered in the existing circle');
+     assert.ok(retro.farthest<16.825,'Original artwork stays inside existing ring');
      assert.equal(anti?.paths,3);
      assert.ok(anti.firstPath.startsWith('M27 57.623'));
      assert.equal(anti.internalRings,0);
      assert.ok(Math.abs(anti.dx)<1&&Math.abs(anti.dy)<1);
      assert.ok(anti.farthest<16.825);
-     // SVG text logical bounding boxes include extra font ascent/descent.
-     // The canonical gallery audit checks the actual P and x ink against its ring.
      await page.waitForFunction(()=>{
-       const saturn=[...document.querySelectorAll('#skyFoundationA .sky-foundation-row')].find(row=>row.querySelector('.sky-foundation-row-name')?.textContent?.startsWith('Saturn'));
-       return saturn?.querySelector('.sky-placement-rx .relphi-glyph-retrograde text');
+       const row=[...document.querySelectorAll('#skyFoundationA .sky-foundation-row')]
+         .find(x=>x.querySelector('.sky-foundation-row-name')?.textContent?.startsWith('Saturn'));
+       return !!row?.querySelector('.sky-placement-rx .relphi-glyph-retrograde path');
      },null,{timeout:20000});
      const placementMark=await page.evaluate(()=>{
-       const row=[...document.querySelectorAll('#skyFoundationA .sky-foundation-row')].find(row=>row.querySelector('.sky-foundation-row-name')?.textContent?.startsWith('Saturn'));
+       const row=[...document.querySelectorAll('#skyFoundationA .sky-foundation-row')]
+         .find(x=>x.querySelector('.sky-foundation-row-name')?.textContent?.startsWith('Saturn'));
        const art=row.querySelector('.sky-placement-rx .relphi-glyph-retrograde');
-       const mark=row.querySelector('.sky-placement-rx');
-       const pluto=[...document.querySelectorAll('#skyFoundationA .sky-foundation-row')]
-         .find(item=>item.querySelector('.sky-foundation-row-name')?.textContent?.startsWith('Pluto'));
-       const plutoName=pluto.querySelector('.sky-foundation-row-name');
-       const plutoStyle=getComputedStyle(plutoName);
-       const p=art.querySelector('text'),pStyle=getComputedStyle(p);
-       const x=art.querySelectorAll('text')[1];
-       const range=document.createRange();range.setStart(plutoName.firstChild,0);range.setEnd(plutoName.firstChild,1);
-       const glyphRect=range.getBoundingClientRect(),glyphCanvas=document.createElement('canvas').getContext('2d');
-       glyphCanvas.font=plutoStyle.font;
-       const plutoMetrics=glyphCanvas.measureText('P');
-       const plutoBaseline=glyphRect.top+plutoMetrics.fontBoundingBoxAscent;
-       const baselineRowOffset=row.getBoundingClientRect().top-pluto.getBoundingClientRect().top;
-       const pMatrix=p.getScreenCTM(), xMatrix=x.getScreenCTM();
-       const pBaseline=pMatrix.b*Number(p.getAttribute('x'))+pMatrix.d*Number(p.getAttribute('y'))+pMatrix.f;
-       const xBaseline=xMatrix.b*Number(x.getAttribute('x'))+xMatrix.d*Number(x.getAttribute('y'))+xMatrix.f;
-       const effectiveSize=parseFloat(pStyle.fontSize)*Math.hypot(p.getScreenCTM().a,p.getScreenCTM().b);
-       const ctx=document.createElement('canvas').getContext('2d'),ys=[];
-       for(const t of art.querySelectorAll('text')){
-         const cs=getComputedStyle(t);ctx.font=cs.font;
-         const m=ctx.measureText(t.textContent),matrix=t.getScreenCTM(),x=+t.getAttribute('x'),y=+t.getAttribute('y');
-         for(const yy of [y-m.actualBoundingBoxAscent,y+m.actualBoundingBoxDescent])
-           ys.push(matrix.b*x+matrix.d*yy+matrix.f);
-       }
-       return {height:Math.max(...ys)-Math.min(...ys),source:art.dataset.canonicalGlyphId,
-         rawImage:!!mark.querySelector('img'),plutoFont:plutoStyle.fontFamily,
-         plutoWeight:plutoStyle.fontWeight,plutoSize:parseFloat(plutoStyle.fontSize),
-         pFont:pStyle.fontFamily,pWeight:pStyle.fontWeight,pSize:effectiveSize,
-         baselineOffset:pBaseline-(plutoBaseline+baselineRowOffset),plutoBaseline,pBaseline,xBaseline,
-         subscriptDrop:xBaseline-pBaseline,
-         plutoRangeHeight:glyphRect.height,fontMetricHeight:plutoMetrics.fontBoundingBoxAscent+plutoMetrics.fontBoundingBoxDescent,
-         pLetter:p.textContent,xLetter:x.textContent,xFontWeight:getComputedStyle(x).fontWeight};
+       return{
+         height:art.getBoundingClientRect().height,
+         source:art.dataset.canonicalGlyphId,
+         original:art.querySelector('path')?.getAttribute('d')?.slice(0,12),
+         textCount:art.querySelectorAll('text').length,
+         rawImage:!!row.querySelector('.sky-placement-rx img')
+       };
      });
-     assert.ok(placementMark.height>=9&&placementMark.height<=12,'Retrograde must stay compact with a true subscript');
-     assert.equal(placementMark.pFont,placementMark.plutoFont,'P and Pluto must use identical font families');
-     assert.equal(placementMark.pWeight,placementMark.plutoWeight,'P and Pluto must use identical bold weight');
-     assert.ok(Math.abs(placementMark.pSize-placementMark.plutoSize)<.35,'Retrograde P must match Pluto 11.84px font size');
-     assert.ok(Math.abs(placementMark.baselineOffset)<.35,'Retrograde P foot must align with Pluto P foot at the same row baseline');
-     assert.ok(placementMark.subscriptDrop>=1.5&&placementMark.subscriptDrop<=3.5,'The x baseline must drop below the capital P');
-     assert.equal(placementMark.xFontWeight,'700','The x must match the P font weight');
+     assert.ok(placementMark.height>=8&&placementMark.height<=16,'Original Retrograde must fit in name-row annotation');
+     assert.equal(placementMark.textCount,0);
+     assert.ok(placementMark.original.startsWith('m 50.066711'));
      assert.equal(placementMark.source,'retrograde');
-     assert.equal(placementMark.rawImage,false,'Placements must not bypass component via image');
+     assert.equal(placementMark.rawImage,false,'Placements must use shared canonical renderer');
      const saturnIdentity=await page.evaluate(()=>{
        const row=[...document.querySelectorAll('#skyFoundationA .sky-foundation-row')]
          .find(node=>node.querySelector('.sky-foundation-row-name')?.firstChild?.textContent==='Saturn');
@@ -147,7 +118,7 @@ try{
          duplicateLabel:row?.dataset.placementLabel,
          id:row?.dataset.placement,interactive:row?.dataset.interactive};
      });
-     assert.equal(saturnIdentity.label,'Saturn','SVG text must not become the semantic placement name');
+     assert.equal(saturnIdentity.label,'Saturn','The glyph artwork must not become semantic placement name');
      assert.equal(saturnIdentity.duplicateLabel,undefined,'Name must have one DOM source, not parallel dataset state');
      assert.equal(saturnIdentity.id,'saturn','Retrograde must not break placement selection identity');
      assert.equal(saturnIdentity.interactive,'placement','Retrograde must preserve placement interactions');
@@ -169,20 +140,20 @@ try{
 
      const relationshipsRx=await page.evaluate(()=>[...document.querySelectorAll('#skyFoundationRelationshipList .sky-rx-glyph-overlay')].map(node=>({
        art:!!node.querySelector('.relphi-glyph-retrograde'),
-       path:node.querySelector('.relphi-glyph-retrograde text')?.textContent,
+       path:node.querySelector('.relphi-glyph-retrograde path')?.getAttribute('d')?.slice(0,12),
        mask:getComputedStyle(node).maskImage,
         height:node.querySelector('.relphi-glyph-retrograde')?.getBoundingClientRect().height||0
      })));
      console.log('PREVIEW PLACEMENTS AND RELATIONSHIPS RETROGRADE',JSON.stringify({placementMark,relationshipsRx}));
      assert.ok(relationshipsRx.length>0,'Retrograde Saturn relationship must have motion indicator');
-     assert.ok(relationshipsRx.every(r=>r.art&&r.path==='P'),'Relationships must render registry-owned SVG');
+     assert.ok(relationshipsRx.every(r=>r.art&&r.path?.startsWith('m 50.066711')),'Relationships must render registry-owned SVG');
      assert.ok(relationshipsRx.every(r=>r.mask==='none'),'Relationships must not use raw asset CSS masks');
       const relationshipSizes=relationshipsRx.map(r=>r.height).filter(h=>h>0);
       assert.ok(relationshipSizes.length>0,'Relationships must display a visible motion marker');
       assert.ok(relationshipSizes.every(h=>h>=7&&h<=20),'Relationships Retrograde must stay compact beside planet glyphs');
 
      await page.locator('#skyFoundationA [data-sky-vocab-view-button="vocab"]').click();
-     await page.waitForFunction(()=>!!document.querySelector('#skyFoundationA .sky-vocab-token[data-vocab-id="saturn"][data-vocab-retrograde="true"] .sky-vocab-rx .relphi-glyph-retrograde text'),null,{timeout:20000});
+     await page.waitForFunction(()=>!!document.querySelector('#skyFoundationA .sky-vocab-token[data-vocab-id="saturn"][data-vocab-retrograde="true"] .sky-vocab-rx .relphi-glyph-retrograde path'),null,{timeout:20000});
      const vocab=await page.evaluate(()=>{
        const node=document.querySelector('#skyFoundationA .sky-vocab-token[data-vocab-id="saturn"][data-vocab-retrograde="true"]');
        const mark=node?.querySelector('.sky-vocab-rx');
@@ -209,7 +180,7 @@ try{
        const row=[...document.querySelectorAll('#skyFoundationA .sky-foundation-row')].find(node=>node.querySelector('.sky-foundation-row-name')?.textContent?.startsWith('Saturn'));
        const mark=row?.querySelector('.sky-placement-rx .relphi-glyph-retrograde');
        return {placementsHeight:mark?.getBoundingClientRect().height||0,
-         relationshipMarks:document.querySelectorAll('#skyFoundationRelationshipList .sky-rx-glyph-overlay .relphi-glyph-retrograde text').length};
+         relationshipMarks:document.querySelectorAll('#skyFoundationRelationshipList .sky-rx-glyph-overlay .relphi-glyph-retrograde path').length};
      });
      console.log('PREVIEW MOBILE RETROGRADE',JSON.stringify(mobileRx));
      assert.ok(mobileRx.placementsHeight>=8&&mobileRx.placementsHeight<=22,'Mobile Placements must retain compact Retrograde');
@@ -265,7 +236,7 @@ try{
     await gallery.waitForURL(url=>url.pathname==='/sky-chart-preview/sky-chart.html'&&url.searchParams.get('page')==='glyphs-unified-preview.html',{timeout:30000});
     await gallery.waitForFunction(()=>{
       const card=id=>[...document.querySelectorAll('#ugGrid .ug-card')].find(node=>node.querySelector('.ug-id')?.textContent===id);
-      return !!card('retrograde')?.querySelector('.relphi-glyph-retrograde text')
+      return !!card('retrograde')?.querySelector('.relphi-glyph-retrograde path')
         && !!card('anti-vertex')?.querySelector('.relphi-glyph-anti-vertex path');
     },null,{timeout:45000});
     const galleryState=await gallery.evaluate(()=>{
@@ -286,8 +257,9 @@ try{
     assert.ok(galleryState.masters>80,'Original canonical master list must load');
     const galleryRetro=galleryState.marks.find(g=>g.id==='retrograde');
      assert.equal(galleryRetro?.source,'retrograde');
-     assert.equal(galleryRetro.paths,0);
-     assert.deepEqual(galleryRetro.letters,['P','x']);
+     assert.equal(galleryRetro.paths,1);
+     assert.deepEqual(galleryRetro.letters,[]);
+      assert.ok(galleryRetro.firstPath.startsWith('m 50.066711'));
      assert.equal(galleryRetro.ring,'1');
      const galleryAnti=galleryState.marks.find(g=>g.id==='anti-vertex');
      assert.equal(galleryAnti?.source,'anti-vertex');
