@@ -103,7 +103,7 @@
     const panel = document.getElementById(slot === 'A' ? 'skyFoundationA' : 'skyFoundationB');
     if (!panel || !maps.byName.size) return;
     panel.querySelectorAll('.sky-foundation-row').forEach(row => {
-      const name = row.querySelector('.sky-foundation-row-name')?.textContent;
+      const name = row.dataset.placementLabel || row.querySelector('.sky-foundation-row-name')?.textContent;
       const coordinate = maps.byName.get(key(name));
       const target = row.querySelector('.sky-foundation-coordinate');
       if (coordinate && target && target.textContent !== coordinate.full) target.textContent = coordinate.full;
