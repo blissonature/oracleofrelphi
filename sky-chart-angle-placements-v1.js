@@ -196,7 +196,7 @@
           row.dataset.anglePlacement = angle.id;
           row.dataset.canonicalLedgerIdentity = angle.id;
           const name = row.querySelector('.sky-foundation-row-name');
-          if (name) name.textContent = angle.label;
+          if (name) { name.textContent = angle.label; row.dataset.placementLabel = angle.label; }
         });
 
         if (!found) {
