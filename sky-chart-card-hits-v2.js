@@ -102,7 +102,7 @@
   }
 
   function readPayload(slot) {
-    try { return JSON.parse(localStorage.getItem(KEYS[slot]) || 'null'); }
+    try { return JSON.parse(window.RelphiSkyWorkingSlotStore.getItem(KEYS[slot]) || 'null'); }
     catch (_) { return null; }
   }
 

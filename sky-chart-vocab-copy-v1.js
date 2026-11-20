@@ -6,7 +6,7 @@ window.__relphiSkyVocabCopyV1=true;
 
 function clean(value){return String(value||'').replace(/[\t\f\v ]+/g,' ').replace(/ *\n */g,'\n').trim()}
 function slotFor(node){return node?.closest('#skyFoundationA')?'A':node?.closest('#skyFoundationB')?'B':''}
-function readSky(slot){try{return JSON.parse(localStorage.getItem(slot==='A'?'relphiSkyChartA':'relphiSkyChartB')||'null')}catch(_){return null}}
+function readSky(slot){try{return JSON.parse(window.RelphiSkyWorkingSlotStore.getItem(slot==='A'?'relphiSkyChartA':'relphiSkyChartB')||'null')}catch(_){return null}}
 function skyName(slot){
   const value=readSky(slot);
   try{

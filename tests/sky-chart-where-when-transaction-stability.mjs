@@ -44,11 +44,11 @@ assert.equal(await firstEditorA.locator('[data-ww-action="refresh-now"]').count(
 assert.equal(await firstEditorA.locator('[data-ww-field="live"]').count(),0);
 assert.equal(await here.isChecked(),false,'Historical location starts in manual mode.');
 assert.equal(await now.isChecked(),false,'Historical time starts in manual mode.');
-const beforeUseHere=await firstEditorA.evaluate(form=>({date:form.querySelector('[data-ww-field="date"]')?.value||'',time:form.querySelector('[data-ww-field="time"]')?.value||'',stored:localStorage.getItem('relphiSkyChartA')}));
+const beforeUseHere=await firstEditorA.evaluate(form=>({date:form.querySelector('[data-ww-field="date"]')?.value||'',time:form.querySelector('[data-ww-field="time"]')?.value||'',stored:window.RelphiSkyWorkingSlotStore.getItem('relphiSkyChartA')}));
 await here.check();
 await page.waitForFunction(()=>document.querySelector('#skyFoundationA [data-ww-field="timezone"]')?.value==='America/Denver');
 await page.waitForFunction(()=>document.querySelector('#skyFoundationA [data-ww-here-value]')?.textContent?.includes('Salt Lake City'));
-const afterUseHere=await firstEditorA.evaluate(form=>({date:form.querySelector('[data-ww-field="date"]')?.value||'',time:form.querySelector('[data-ww-field="time"]')?.value||'',lat:Number(form.querySelector('[data-ww-field="latitude"]')?.value),lon:Number(form.querySelector('[data-ww-field="longitude"]')?.value),query:form.querySelector('[data-ww-field="location-query"]')?.value||'',stored:localStorage.getItem('relphiSkyChartA')}));
+const afterUseHere=await firstEditorA.evaluate(form=>({date:form.querySelector('[data-ww-field="date"]')?.value||'',time:form.querySelector('[data-ww-field="time"]')?.value||'',lat:Number(form.querySelector('[data-ww-field="latitude"]')?.value),lon:Number(form.querySelector('[data-ww-field="longitude"]')?.value),query:form.querySelector('[data-ww-field="location-query"]')?.value||'',stored:window.RelphiSkyWorkingSlotStore.getItem('relphiSkyChartA')}));
 assert.equal(afterUseHere.date,beforeUseHere.date,'Here must not change historical date.');
 assert.equal(afterUseHere.time,beforeUseHere.time,'Here must not change historical time.');
 assert.ok(Math.abs(afterUseHere.lat-40.7608)<1e-5&&Math.abs(afterUseHere.lon+111.891)<1e-5,'Here must apply browser coordinates.');
@@ -60,7 +60,7 @@ await now.check();
 await page.waitForFunction(()=>document.querySelector('#skyFoundationA [data-ww-now-value]')?.textContent?.includes('America/Denver'));
 assert.equal(await firstEditorA.locator('[data-ww-manual-when]').isHidden(),true,'Now hides manual date/time.');
 assert.equal(await firstEditorA.locator('[data-ww-manual-where]').isHidden(),true,'Now must not change Here.');
-assert.equal(await firstEditorA.evaluate(()=>localStorage.getItem('relphiSkyChartA')),beforeUseHere.stored,'Now must not commit until confirmation.');
+assert.equal(await firstEditorA.evaluate(()=>window.RelphiSkyWorkingSlotStore.getItem('relphiSkyChartA')),beforeUseHere.stored,'Now must not commit until confirmation.');
 await now.uncheck();
 assert.equal(await firstEditorA.locator('[data-ww-manual-when]').isVisible(),true,'Unchecking Now restores manual date/time.');
 await here.uncheck();
@@ -78,7 +78,7 @@ await page.waitForFunction(()=>document.documentElement.dataset.skyWhereWhenEdit
 const editorA=page.locator('#skyFoundationA .sky-where-when-editor'),editorB=page.locator('#skyFoundationB .sky-where-when-editor');await editorA.waitFor();await editorB.waitFor();
 const beforeSubmit=await relationshipState(),countsBefore=await page.evaluate(()=>({...window.__wwTransactionCounts}));
 await editorA.locator('[data-ww-field="date"]').fill('1990-04-15');await editorA.locator('[data-sky-time-entry]').fill('1:30 PM');await editorA.locator('[data-sky-time-entry]').press('Enter');await editorA.locator('button[type="submit"]').click();
-await page.waitForFunction(()=>JSON.parse(localStorage.getItem('relphiSkyChartA')).calcProfile.dateTime==='1990-04-15T13:30');
+await page.waitForFunction(()=>JSON.parse(window.RelphiSkyWorkingSlotStore.getItem('relphiSkyChartA')).calcProfile.dateTime==='1990-04-15T13:30');
 assert.equal(await page.locator('#skyFoundationA .sky-where-when-editor').count(),0);assert.equal(await page.locator('#skyFoundationB .sky-where-when-editor').count(),1);assert.equal(await page.locator('html').getAttribute('data-sky-where-when-editing'),'true');assert.equal(await page.locator('html').getAttribute('data-sky-where-when-editing-slots'),'B');
 await page.waitForTimeout(500);
 assert.equal(await page.locator('#skyWhereWhenNamePrompt:not([hidden])').count(),0,'Naming must not interrupt another open Where and When editor.');
@@ -103,8 +103,8 @@ const unknownToggle=unknownEditor.locator('[data-ww-field="time-unknown"]');
 if(!(await unknownToggle.isChecked()))await unknownToggle.check();
 await unknownEditor.locator('[data-ww-field="date"]').fill('1985-10-08');
 await unknownEditor.locator('button[type="submit"]').click();
-await page.waitForFunction(()=>JSON.parse(localStorage.getItem('relphiSkyChartA')).calcProfile.timeUnknown===true);
-let unknownStored=await page.evaluate(()=>JSON.parse(localStorage.getItem('relphiSkyChartA')));
+await page.waitForFunction(()=>JSON.parse(window.RelphiSkyWorkingSlotStore.getItem('relphiSkyChartA')).calcProfile.timeUnknown===true);
+let unknownStored=await page.evaluate(()=>JSON.parse(window.RelphiSkyWorkingSlotStore.getItem('relphiSkyChartA')));
 assert.equal(unknownStored.calcProfile.houseSystem,'none','Unknown-time commit should suppress houses.');
 assert.equal(unknownStored.houseCusps.length,0,'Unknown-time commit should clear house cusps.');
 assert.ok(unknownStored.calcProfile.moonRange,'Unknown-time commit should preserve the Moon range.');
@@ -112,7 +112,7 @@ assert.ok(unknownStored.calcProfile.moonRange,'Unknown-time commit should preser
 // Standalone unknown-time composition: zodiac expands into the unavailable house space
 // and the planetary placement lane moves outside the zodiac instead of leaving a ghost house ring.
 await page.evaluate(()=>{
-  localStorage.removeItem('relphiSkyChartB');
+  window.RelphiSkyWorkingSlotStore.removeItem('relphiSkyChartB');
   window.dispatchEvent(new CustomEvent('relphi:sky-b-removed'));
 });
 await page.waitForFunction(()=>document.querySelector('#skyFoundationWheelMount>svg[data-single-sky="A"]')?.dataset.wheelGeometry==='standalone-unknown-time');
@@ -158,8 +158,8 @@ assert.equal(await knownToggle.isChecked(),true,'Reopened unknown-time sky shoul
 await knownToggle.uncheck();
 await page.evaluate(()=>{const input=document.querySelector('#skyFoundationA [data-ww-field="time"]');input.value='04:37';input.dispatchEvent(new Event('input',{bubbles:true}));input.dispatchEvent(new Event('change',{bubbles:true}))});
 await knownEditor.locator('button[type="submit"]').click();
-await page.waitForFunction(()=>JSON.parse(localStorage.getItem('relphiSkyChartA')).calcProfile.timeUnknown===false);
-const knownStored=await page.evaluate(()=>JSON.parse(localStorage.getItem('relphiSkyChartA')));
+await page.waitForFunction(()=>JSON.parse(window.RelphiSkyWorkingSlotStore.getItem('relphiSkyChartA')).calcProfile.timeUnknown===false);
+const knownStored=await page.evaluate(()=>JSON.parse(window.RelphiSkyWorkingSlotStore.getItem('relphiSkyChartA')));
 assert.equal(knownStored.calcProfile.timeUnknown,false,'Known-time commit must explicitly clear the unknown-time flag.');
 assert.equal('moonRange' in knownStored.calcProfile,false,'Known-time commit must remove the unknown-time Moon range.');
 assert.notEqual(knownStored.calcProfile.houseSystem,'none','Known-time commit must restore a real house system.');
@@ -192,12 +192,12 @@ await nowEditor.locator('[data-ww-action="refresh-now"]').click();
 const refreshedInstant=await nowEditor.getAttribute('data-now-instant');
 assert.ok(Date.parse(refreshedInstant)>Date.parse(pickedInstant));
 await nowEditor.locator('button[type="submit"]').click();
-await page.waitForFunction(instant=>JSON.parse(localStorage.getItem('relphiSkyChartA'))?.metadata?.capturedNowAt===instant,refreshedInstant,{timeout:15000});
-const nowCommitted=await page.evaluate(()=>JSON.parse(localStorage.getItem('relphiSkyChartA')));
+await page.waitForFunction(instant=>JSON.parse(window.RelphiSkyWorkingSlotStore.getItem('relphiSkyChartA'))?.metadata?.capturedNowAt===instant,refreshedInstant,{timeout:15000});
+const nowCommitted=await page.evaluate(()=>JSON.parse(window.RelphiSkyWorkingSlotStore.getItem('relphiSkyChartA')));
 assert.equal(nowCommitted.calcProfile.timeZone,'America/New_York','Now retains an independent non-Here location.');
 assert.equal(nowCommitted.calcProfile.instant,refreshedInstant);
 assert.equal(nowCommitted.metadata.liveContinuous,undefined);
 assert.equal(nowCommitted.metadata.liveNowOrigin,undefined);
 await page.waitForTimeout(1200);
-assert.equal((await page.evaluate(()=>JSON.parse(localStorage.getItem('relphiSkyChartA')))).calcProfile.instant,refreshedInstant);
+assert.equal((await page.evaluate(()=>JSON.parse(window.RelphiSkyWorkingSlotStore.getItem('relphiSkyChartA')))).calcProfile.instant,refreshedInstant);
 assert.deepEqual(errors,[]);await browser.close();console.log('Where and When transaction stability passed.');

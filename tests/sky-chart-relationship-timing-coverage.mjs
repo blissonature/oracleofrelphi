@@ -58,6 +58,7 @@ context.window=context;
 context.window.Astronomy=Astronomy;
 context.window.SunCalc={getPosition(){return{altitude:1}}};
 context.window.RelphiGlyphRegistry=registry;
+context.window.RelphiSkyWorkingSlotStore={getItem:key=>storage.get(key)??null};
 context.window.RelphiHarmonicOrb={defaultWindow:6,byId:id=>id==='opposition'?{harmonic:2}:null};
 context.window.RelphiChironEphemeris={
   longitudeAt(date){return 30.3+.05*daysFromCenter(date)}

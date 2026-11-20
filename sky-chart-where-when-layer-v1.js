@@ -15,7 +15,7 @@ let observer=null;
 function panel(slot){return document.getElementById(`skyFoundation${slot}`)}
 function body(slot){return panel(slot)?.querySelector(':scope > .sky-foundation-body')||null}
 function slotFor(node){return node?.closest('#skyFoundationA')?'A':node?.closest('#skyFoundationB')?'B':''}
-function read(slot){try{return JSON.parse(localStorage.getItem(SLOT_KEYS[slot])||'null')}catch(_){return null}}
+function read(slot){try{return JSON.parse(window.RelphiSkyWorkingSlotStore.getItem(SLOT_KEYS[slot])||'null')}catch(_){return null}}
 function profile(slot){const value=read(slot);return value?.calcProfile&&typeof value.calcProfile==='object'?value.calcProfile:{}}
 function complete(slot){const p=profile(slot);return!!(p&&p.dateTime&&p.location&&p.timeZone&&Number.isFinite(Number(p.latitude))&&Number.isFinite(Number(p.longitude)))}
 function readView(){try{const value=JSON.parse(sessionStorage.getItem(VIEW_KEY)||'{}');return value&&typeof value==='object'?value:{}}catch(_){return{}}}

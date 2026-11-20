@@ -33,7 +33,7 @@ const recordCache=new WeakMap(),profileDateCache=new WeakMap(),liveOriginCache=n
 const norm=value=>((Number(value)%360)+360)%360;
 const wrap=value=>((Number(value)+540)%360)-180;
 function read(slot){
-  const raw=localStorage.getItem(KEYS[slot])||'null',cache=readCache[slot]||{raw:null,value:null};
+  const raw=window.RelphiSkyWorkingSlotStore.getItem(KEYS[slot])||'null',cache=readCache[slot]||{raw:null,value:null};
   if(cache.raw===raw)return cache.value;
   let value=null;try{value=JSON.parse(raw)}catch(_){}
   cache.raw=raw;cache.value=value;readCache[slot]=cache;return value;

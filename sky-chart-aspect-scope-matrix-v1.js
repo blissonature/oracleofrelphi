@@ -24,7 +24,7 @@ const SIGN_STEPS=Object.freeze({conjunction:0,'semi-sextile':1,sextile:2,square:
 // New By Sign preferences start disabled; preserve choices only after explicit selection in this version.
 const SIGN_STORAGE='relphiSkyAspectBySignV2';
 const signSelected=new Set();
-try{const saved=JSON.parse(localStorage.getItem(SIGN_STORAGE)||'[]');if(Array.isArray(saved))saved.filter(id=>SIGN_ASPECTS.includes(id)).forEach(id=>signSelected.add(id))}catch(_){}
+try{const saved=JSON.parse(window.RelphiSkyWorkingSlotStore.getItem(SIGN_STORAGE)||'[]');if(Array.isArray(saved))saved.filter(id=>SIGN_ASPECTS.includes(id)).forEach(id=>signSelected.add(id))}catch(_){}
 window.RelphiSkyBySign={selected:signSelected,steps:SIGN_STEPS,enabled:id=>signSelected.has(id)};
 const GROUPS=Object.freeze([
   {id:'major',label:'Major',aspects:['conjunction','opposition','trine','square','sextile']},
@@ -39,7 +39,7 @@ const SCOPES=Object.freeze([
 ]);
 const STORAGE_KEY='relphiSkyAspectMatrixV1';
 const state=Object.fromEntries(SCOPES.map(scope=>[scope.id,new Set(IDS)]));
-(function loadPersistedState(){try{const saved=JSON.parse(localStorage.getItem(STORAGE_KEY)||'null');if(!saved||typeof saved!=='object')return;SCOPES.forEach(scope=>{if(Array.isArray(saved[scope.id]))state[scope.id]=new Set(saved[scope.id].filter(id=>IDS.includes(id)))})}catch(_){}})();
+(function loadPersistedState(){try{const saved=JSON.parse(window.RelphiSkyWorkingSlotStore.getItem(STORAGE_KEY)||'null');if(!saved||typeof saved!=='object')return;SCOPES.forEach(scope=>{if(Array.isArray(saved[scope.id]))state[scope.id]=new Set(saved[scope.id].filter(id=>IDS.includes(id)))})}catch(_){}})();
 let queued=false;
 let applying=false;
 let menuObserver=null;
@@ -182,7 +182,7 @@ function applyMatrix({announce=true}={}){
   document.querySelectorAll('.sky-foundation-relationship-row,[data-layer="aspects"]>.sky-foundation-aspect').forEach(node=>node.classList.toggle('sky-chart-aspect-multiselect-hidden',!visible(node)));
   updateInputs();
   const matrix=Object.fromEntries(SCOPES.map(scope=>[scope.id,IDS.filter(id=>state[scope.id].has(id))]));
-  try{localStorage.setItem(STORAGE_KEY,JSON.stringify(matrix))}catch(_){}
+  try{window.RelphiSkyWorkingSlotStore.setItem(STORAGE_KEY,JSON.stringify(matrix))}catch(_){}
   const active=new Set(activeScopes());
   const scopes=SCOPES.filter(scope=>active.has(scope.id)&&(state[scope.id].size>0||signSelected.size>0)).map(scope=>scope.id);
   const selected=IDS.filter(id=>signSelected.has(id)||SCOPES.some(scope=>active.has(scope.id)&&state[scope.id].has(id)));
@@ -225,7 +225,7 @@ function handleChange(event){
     const id=signInput.dataset.skyBySign;
     const ids=id==='all'?SIGN_ASPECTS:id.startsWith('group:')?(GROUP_MAP.get(id.slice(6))?.aspects||[]).filter(value=>SIGN_ASPECTS.includes(value)):[id];
     ids.forEach(value=>signInput.checked?signSelected.add(value):signSelected.delete(value));
-    try{localStorage.setItem(SIGN_STORAGE,JSON.stringify([...signSelected]))}catch(_){}
+    try{window.RelphiSkyWorkingSlotStore.setItem(SIGN_STORAGE,JSON.stringify([...signSelected]))}catch(_){}
     applyMatrix();window.dispatchEvent(new CustomEvent('relphi:sky-by-sign-changed',{detail:{selected:[...signSelected]}}));return;
   }
   const input=event.target.closest?.('[data-aspect-matrix-scope][data-aspect-matrix-aspect]');if(!input)return;

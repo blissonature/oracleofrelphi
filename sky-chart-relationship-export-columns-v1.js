@@ -90,7 +90,7 @@ const DECANS=[
 let busy=false,pending=null,libPromise=null;
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot',"'":'&#39;'}[c]));
 const norm=v=>((Number(v)%360)+360)%360;
-const read=s=>{try{return JSON.parse(localStorage.getItem(KEYS[s])||'null')}catch(_){return null}};
+const read=s=>{try{return JSON.parse(window.RelphiSkyWorkingSlotStore.getItem(KEYS[s])||'null')}catch(_){return null}};
 const status=t=>{const n=document.getElementById('skyChartExportStatus');if(n)n.textContent=t||''};
 
 function name(s){

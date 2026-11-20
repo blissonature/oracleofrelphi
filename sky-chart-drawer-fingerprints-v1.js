@@ -16,7 +16,7 @@ let queued=false;
 const whereRetry={A:0,B:0};
 
 const norm=value=>((Number(value)%360)+360)%360;
-function read(slot){try{return JSON.parse(localStorage.getItem(KEYS[slot])||'null')}catch(_){return null}}
+function read(slot){try{return JSON.parse(window.RelphiSkyWorkingSlotStore.getItem(KEYS[slot])||'null')}catch(_){return null}}
 function source(payload){
   if(!payload||typeof payload!=='object')return[];
   const known=[payload.placements,payload.positions,payload.points,payload.bodies].find(value=>value&&typeof value==='object');
