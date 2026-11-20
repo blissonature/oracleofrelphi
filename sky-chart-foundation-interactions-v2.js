@@ -242,8 +242,16 @@
     if(PERSISTENT_HIDDEN_CLASSES.some(name=>line.classList.contains(name)))return false;
     const identity=relationshipIdentity(line);
     if(!identity)return false;
+    // The relationship renderer assigns a stable render address to each wheel
+    // line. Resolve that one row first; only fall back to identity search while
+    // initial rendering is settling or a list is being reordered.
+    const index=String(line.dataset.relationIndex||'');
+    const row=index?document.querySelector('#skyFoundationRelationshipList > .sky-foundation-relationship-row[data-relation-index="'+CSS.escape(index)+'"]'):null;
+    const eligible=row=>!!row&&relationshipIdentity(row)===identity&&
+      rowEligibleForWheel(row)&&!row.hidden&&getComputedStyle(row).display!=='none';
+    if(row&&relationshipIdentity(row)===identity)return eligible(row);
     return [...document.querySelectorAll('#skyFoundationRelationshipList > .sky-foundation-relationship-row[data-relation-index]')]
-      .some(row=>relationshipIdentity(row)===identity&&rowEligibleForWheel(row)&&!row.hidden&&getComputedStyle(row).display!=='none');
+      .some(eligible);
   }
   // Share house illumination through the comparison ring by zodiac longitude,
   // not by assuming that the two skies have the same house divisions.
@@ -467,13 +475,14 @@
     // envelope is disabled. A click on its physical stroke must remain inert,
     // not fall through as a whitespace click that clears a selected placement.
     return [...document.querySelectorAll('#skyFoundationWheelMount [data-layer="aspects"] > line.sky-foundation-aspect:not(.sky-foundation-aspect-hit)')].some(line=>{
-      if(aspectLineEligible(line))return false;
       const matrix=line.getScreenCTM(),svg=line.ownerSVGElement;
       if(!matrix||!svg?.createSVGPoint)return false;
       const p=svg.createSVGPoint(),q=svg.createSVGPoint();
       p.x=Number(line.getAttribute('x1'));p.y=Number(line.getAttribute('y1'));
       q.x=Number(line.getAttribute('x2'));q.y=Number(line.getAttribute('y2'));
-      return distanceToSegment(event.clientX,event.clientY,p.matrixTransform(matrix),q.matrixTransform(matrix))<=9;
+      // Do the cheap geometry check before the filter/relationship lookup.
+      if(distanceToSegment(event.clientX,event.clientY,p.matrixTransform(matrix),q.matrixTransform(matrix))>9)return false;
+      return !aspectLineEligible(line);
     });
   }
   function clearableWhitespace(event){
