@@ -14,7 +14,7 @@ const expected = Object.freeze({
   'assets/planet-glyphs/pluto.svg':'7b7729d393461767d65083c720fe9ca099048f50',
   'assets/planet-glyphs/lilith.svg':'242047703cd9e6d5fd37f7fac2191addefdbdea7',
   'assets/planet-glyphs/part-of-fortune.svg':'f02feda06f79c886695d51e7eb2dff748c6fa873',
-  'assets/planet-glyphs/retrograde.svg':'403841ceffeb14b8c9de4ed0dabf621c2cf18ce1',
+  'assets/planet-glyphs/retrograde.svg':'b54a6a8d1d2fc197f4b0b400634348eaeea461c1',
   'assets/planet-glyphs/anti-vertex.svg':'d9d94d684f7902a4eeaa504bf55fb726c0463077'
 });
 
