@@ -240,11 +240,8 @@
   }
 
   function lineEligible(line){
-    return!!line?.isConnected&&!line.hidden&&line.style.display!=='none'&&
-      !line.classList.contains('sky-chart-filter-hidden')&&
-      !line.classList.contains('sky-chart-orb-hidden')&&
-      !line.classList.contains('sky-orb-filter-hidden')&&
-      !line.classList.contains('sky-chart-aspect-multiselect-hidden');
+    // Same row-eligible rule as click/keyboard and the wide hit envelope.
+    return window.RelphiSkyFoundationInteractions?.aspectLineEligible?.(line)===true;
   }
   function relationEligible(relation){
     return!!cache?.focus?.aspect?.get(relation.identity)&&Array.from(cache.focus.aspect.get(relation.identity)).some(lineEligible);
