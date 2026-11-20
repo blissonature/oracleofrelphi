@@ -1,5 +1,7 @@
 import {chromium} from 'playwright';
 import assert from 'node:assert/strict';
+import {createServer} from 'node:http';
+import {readFile} from 'node:fs/promises';
 
 const ref=process.env.PREVIEW_REF;
 assert.match(ref||'',/^[0-9a-f]{40}$/,'A commit SHA is required');
@@ -146,12 +148,23 @@ try{
   }catch(e){failed=true;console.error(kind+' FAILED '+e.message);await page.screenshot({path:`sky-remote-${kind}.png`,fullPage:true}).catch(()=>{})}
   await ctx.close();
  }
-  // Render the original canonical Master Glyph List page at this exact commit.
-  // The existing self-hosted loader supplies the page and its registry/asset
-  // dependencies; no second master list or artwork source is introduced.
+  // The deployed host still runs the previous loader until approval and merge.
+  // Validate the modified self-hosted loader from this PR on a local HTTP server,
+  // resolving the original canonical page and its assets directly from the SHA.
+  // This does not install a second glyph source or claim the live host was updated.
+  const loader=await readFile(new URL('../sky-chart-preview/sky-chart.html',import.meta.url),'utf8');
+  const server=createServer((request,response)=>{
+    if(new URL(request.url,'http://localhost').pathname!=='/sky-chart-preview/sky-chart.html'){
+      response.writeHead(404).end('Not Found');return;
+    }
+    response.writeHead(200,{'content-type':'text/html; charset=utf-8','cache-control':'no-store'});
+    response.end(loader);
+  });
+  await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
   const gallery=await browser.newPage({viewport:{width:1100,height:900}});
   try{
-    await gallery.goto(`https://oracleofrelphi.com/sky-chart-preview/sky-chart.html?ref=${ref}&page=glyphs-unified-preview.html`,{waitUntil:'domcontentloaded',timeout:30000});
+    const url=`http://127.0.0.1:${server.address().port}/sky-chart-preview/sky-chart.html?ref=${ref}&page=glyphs-unified-preview.html`;
+    await gallery.goto(url,{waitUntil:'domcontentloaded',timeout:30000});
     await gallery.waitForFunction(()=>{
       const card=id=>[...document.querySelectorAll('#ugGrid .ug-card')].find(node=>node.querySelector('.ug-id')?.textContent===id);
       return !!card('retrograde')?.querySelector('.relphi-glyph-retrograde path')
@@ -185,7 +198,7 @@ try{
     await gallery.locator('[data-circle="true"]').click();
     await gallery.waitForFunction(()=>[...document.querySelectorAll('#ugGrid .ug-card .relphi-glyph-bubble>circle')].every(c=>c.style.opacity==='1'),null,{timeout:30000});
     await gallery.screenshot({path:'sky-remote-master-glyphs.png',fullPage:true});
-  }catch(error){failed=true;console.error('EXACT MASTER GLYPH LIST FAILED '+error.message)}
-  finally{await gallery.close()}
+  }catch(error){failed=true;console.error('PR MASTER GLYPH LIST PREVIEW FAILED '+error.message)}
+  finally{await gallery.close();await new Promise(resolve=>server.close(resolve))}
 }finally{await browser.close()}
 if(failed)process.exitCode=1;
