@@ -8,8 +8,8 @@ const KEYS={A:'relphiSkyChartA',B:'relphiSkyChartB'};
 const SLOT_BY_KEY=new Map(Object.entries(KEYS).map(([slot,key])=>[key,slot]));
 const LIVE_ORIGINS=new Set(['here-and-now','update-to-now','use-now']);
 
-function read(slot){try{return JSON.parse(localStorage.getItem(KEYS[slot])||'null')}catch(_){return null}}
-function write(slot,value){try{localStorage.setItem(KEYS[slot],JSON.stringify(value));return true}catch(_){return false}}
+function read(slot){try{return JSON.parse(window.RelphiSkyWorkingSlotStore.getItem(KEYS[slot])||'null')}catch(_){return null}}
+function write(slot,value){try{window.RelphiSkyWorkingSlotStore.setItem(KEYS[slot],JSON.stringify(value));return true}catch(_){return false}}
 function norm(value){return String(value||'').trim().toLowerCase().replace(/\s+/g,' ')}
 function profile(value){return value?.calcProfile&&typeof value.calcProfile==='object'?value.calcProfile:{}}
 
