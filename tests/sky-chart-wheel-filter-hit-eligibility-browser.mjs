@@ -88,8 +88,6 @@ try{
     }));
     assert.ok(after.active&&after.selected>=markedBefore.selected&&after.colored>0,
       label+': clicking an excluded aspect must not erase a selected placement or grey the wheel');
-    const valid=page.locator('#skyFoundationWheelMount [data-layer="aspects"] > line.sky-foundation-aspect:not(.sky-foundation-aspect-hit)')
-      .filter({visible:true});
     const validIndex=await page.evaluate(()=>{
       const lines=[...document.querySelectorAll('#skyFoundationWheelMount [data-layer="aspects"] > line.sky-foundation-aspect:not(.sky-foundation-aspect-hit)')];
       return lines.findIndex(l=>window.RelphiSkyFoundationInteractions.aspectLineEligible(l));
