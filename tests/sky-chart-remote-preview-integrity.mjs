@@ -99,8 +99,18 @@ try{
        const mark=row.querySelector('.sky-placement-rx');
        const pluto=[...document.querySelectorAll('#skyFoundationA .sky-foundation-row')]
          .find(item=>item.querySelector('.sky-foundation-row-name')?.textContent?.startsWith('Pluto'));
-       const plutoStyle=getComputedStyle(pluto.querySelector('.sky-foundation-row-name'));
+       const plutoName=pluto.querySelector('.sky-foundation-row-name');
+       const plutoStyle=getComputedStyle(plutoName);
        const p=art.querySelector('text'),pStyle=getComputedStyle(p);
+       const x=art.querySelectorAll('text')[1];
+       const range=document.createRange();range.setStart(plutoName.firstChild,0);range.setEnd(plutoName.firstChild,1);
+       const glyphRect=range.getBoundingClientRect(),glyphCanvas=document.createElement('canvas').getContext('2d');
+       glyphCanvas.font=plutoStyle.font;
+       const plutoMetrics=glyphCanvas.measureText('P');
+       const plutoBaseline=glyphRect.top+plutoMetrics.fontBoundingBoxAscent;
+       const pMatrix=p.getScreenCTM(), xMatrix=x.getScreenCTM();
+       const pBaseline=pMatrix.b*Number(p.getAttribute('x'))+pMatrix.d*Number(p.getAttribute('y'))+pMatrix.f;
+       const xBaseline=xMatrix.b*Number(x.getAttribute('x'))+xMatrix.d*Number(x.getAttribute('y'))+xMatrix.f;
        const effectiveSize=parseFloat(pStyle.fontSize)*Math.hypot(p.getScreenCTM().a,p.getScreenCTM().b);
        const ctx=document.createElement('canvas').getContext('2d'),ys=[];
        for(const t of art.querySelectorAll('text')){
@@ -112,7 +122,10 @@ try{
        return {height:Math.max(...ys)-Math.min(...ys),source:art.dataset.canonicalGlyphId,
          rawImage:!!mark.querySelector('img'),plutoFont:plutoStyle.fontFamily,
          plutoWeight:plutoStyle.fontWeight,plutoSize:parseFloat(plutoStyle.fontSize),
-         pFont:pStyle.fontFamily,pWeight:pStyle.fontWeight,pSize:effectiveSize};
+         pFont:pStyle.fontFamily,pWeight:pStyle.fontWeight,pSize:effectiveSize,
+         baselineOffset:pBaseline-plutoBaseline,plutoBaseline,pBaseline,xBaseline,
+         plutoRangeHeight:glyphRect.height,fontMetricHeight:plutoMetrics.fontBoundingBoxAscent+plutoMetrics.fontBoundingBoxDescent,
+         pLetter:p.textContent,xLetter:x.textContent,xFontWeight:getComputedStyle(x).fontWeight};
      });
      assert.ok(placementMark.height>=9&&placementMark.height<=12,'Retrograde must stay compact with a true subscript');
      assert.equal(placementMark.pFont,placementMark.plutoFont,'P and Pluto must use identical font families');
