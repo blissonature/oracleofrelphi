@@ -120,7 +120,28 @@ try{
      assert.equal(vocab.visible,true);
      assert.equal(vocab.source,'retrograde');
      assert.match(vocab.text||'',/ Rx/);
+     const vocabSize=await page.evaluate(()=>{
+       const mark=document.querySelector('#skyFoundationA .sky-vocab-token[data-vocab-id="saturn"][data-vocab-retrograde="true"] .sky-vocab-rx');
+       mark.closest('details.sky-vocab-group')?.setAttribute('open','');
+       return mark.querySelector('.relphi-glyph-retrograde').getBoundingClientRect().height;
+     });
+     assert.ok(vocabSize>=8,'Vocab Retrograde must be readable within the surrounding text');
+     await page.screenshot({path:'sky-remote-preview-vocab.png',fullPage:true});
      await page.locator('#skyFoundationA [data-sky-vocab-view-button="placements"]').click();
+
+     await page.setViewportSize({width:390,height:844});
+     await page.waitForTimeout(350);
+     const mobileRx=await page.evaluate(()=>{
+       const row=[...document.querySelectorAll('#skyFoundationA .sky-foundation-row')].find(node=>node.querySelector('.sky-foundation-row-name')?.textContent?.startsWith('Saturn'));
+       const mark=row?.querySelector('.sky-placement-rx .relphi-glyph-retrograde');
+       return {placementsHeight:mark?.getBoundingClientRect().height||0,
+         relationshipMarks:document.querySelectorAll('#skyFoundationRelationshipList .sky-rx-glyph-overlay .relphi-glyph-retrograde path').length};
+     });
+     console.log('PREVIEW MOBILE RETROGRADE',JSON.stringify(mobileRx));
+     assert.ok(mobileRx.placementsHeight>=8,'Mobile Placements must retain readable Retrograde');
+     assert.ok(mobileRx.relationshipMarks>0,'Mobile Relationships must retain canonical Retrograde');
+     await page.screenshot({path:'sky-remote-preview-mobile.png',fullPage:true});
+     await page.setViewportSize({width:1200,height:820});
 
      await page.locator('#skyFoundationB [data-sky-drawer-tab="where"]').click();
      await page.waitForSelector('#skyFoundationB .sky-where-when-editor [data-ww-action="refresh-now"]',{timeout:15000});
