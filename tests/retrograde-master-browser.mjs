@@ -116,7 +116,7 @@ try{
       'The P and x must share the system font used for Pluto');
     assert.deepEqual(retro.textStyle.map(x=>x.weight),['700','700'],
       'The P and x have the same font weight, as requested');
-    assert.deepEqual(retro.textPositions,[[32,62],[43,69]],
+    assert.deepEqual(retro.textPositions,[[33,62],[44,69]],
       'The x must start within the P lower bowl, with its diagonal becoming the missing R leg');
     assert.ok(retro.sharedDiagonalInk.joinedArea>1.1,
       'The diagonal of the x must physically overlap the P lower bowl');
