@@ -69,6 +69,44 @@ try{
     await page.locator('[data-circle="true"]').click();
     const restored=await inspect();
     assets.forEach(a=>assert.equal(restored[a.id].circleOpacity,'1'));
+
+    // The optional experiment must clone the actual Dsc / Vx letter primitive;
+    // no registry entry, second renderer or modified master is allowed.
+    await page.goto(origin+'/glyphs-unified-preview.html?mock=rx-typeface',{waitUntil:'domcontentloaded'});
+    await page.waitForFunction(()=>document.getElementById('ugTypefaceStudy')?.dataset.mockReady==='true',null,{timeout:30000});
+    const mock=await page.evaluate(()=>{
+      const root=document.getElementById('ugTypefaceStudy');
+      const svg=id=>root.querySelector('[data-typeface-source="'+id+'"] svg');
+      const text=id=>svg(id)?.querySelector('text');
+      const style=id=>{const n=text(id),cs=getComputedStyle(n);return{family:cs.fontFamily,size:cs.fontSize,weight:cs.fontWeight,spacing:cs.letterSpacing,text:n?.textContent}};
+      const cases=[...root.querySelectorAll('[data-typeface-inline]')].map(n=>{const cs=getComputedStyle(n);return{family:cs.fontFamily,size:cs.fontSize,weight:cs.fontWeight,spacing:cs.letterSpacing,text:n.textContent}});
+      const name=root.querySelector('.ug-typeface-placement span:first-child');
+      const mark=root.querySelector('.ug-typeface-placement [data-typeface-inline]');
+      return{visible:!root.hidden,vertex:style('vertex'),descendant:style('dsc'),candidate:style('mock'),cases,altPaths:svg('mock')?.querySelectorAll('path').length,
+        distance:mark.getBoundingClientRect().left-name.getBoundingClientRect().right};
+    });
+    assert.equal(mock.visible,true);
+    assert.equal(mock.vertex.text,'Vx');
+    assert.equal(mock.descendant.text,'Dsc');
+    assert.equal(mock.candidate.text,'Px');
+    assert.equal(mock.candidate.family,mock.vertex.family);
+    assert.equal(mock.candidate.size,mock.vertex.size);
+    assert.equal(mock.candidate.weight,mock.vertex.weight);
+    assert.equal(mock.candidate.spacing,mock.vertex.spacing);
+    assert.equal(mock.candidate.size,'16px');
+    assert.equal(mock.candidate.weight,'700');
+    assert.match(mock.candidate.family,/Montserrat/i);
+    assert.equal(mock.altPaths,0,'Symmetrical font x, not custom X strokes');
+    for(const item of mock.cases){
+      assert.equal(item.text,'Px');
+      assert.equal(item.family,mock.vertex.family);
+      assert.equal(item.size,mock.vertex.size);
+      assert.equal(item.weight,mock.vertex.weight);
+    }
+    assert.ok(mock.distance>=4,'Placement mock must separate the symbol from the planet name');
+    await page.screenshot({path:'retrograde-typeface-alternative-'+name+'.png',fullPage:true});
+    console.log('Retrograde exact Dsc/Vx letterform alternative PASS',name,JSON.stringify(mock));
+
     assert.deepEqual(errors,[],'Canonical gallery should raise no JavaScript exceptions');
     console.log('Original outlined Retrograde/Anti-Vertex canonical master PASS',name,JSON.stringify(circled));
     await page.close();
