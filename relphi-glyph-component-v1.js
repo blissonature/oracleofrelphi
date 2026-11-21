@@ -31,7 +31,7 @@
       String(entry.asset || '').startsWith('assets/aspect-glyphs/')
     ) return;
 
-    root.querySelectorAll('path,circle,ellipse,rect,polygon,polyline,line').forEach(node => {
+    root.querySelectorAll('path,circle,ellipse,rect,polygon,polyline,line,text').forEach(node => {
       const fill = node.getAttribute('fill');
       const stroke = node.getAttribute('stroke');
       const current = parseFloat(node.getAttribute('stroke-width')) || 0;
