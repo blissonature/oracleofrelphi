@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import {chromium} from 'playwright';
 
 const origin=process.env.GLYPH_TEST_ORIGIN||'http://127.0.0.1:4173';
-const assets=[{id:'retrograde',paths:1,first:'M50.066711'},{id:'anti-vertex',paths:3,first:'M27 57.623'}];
+const assets=[{id:'retrograde',paths:1,first:'M75.189'},{id:'anti-vertex',paths:3,first:'M27 57.623'}];
 const browser=await chromium.launch({headless:true});
 try{
   for(const [name,width,height] of [['desktop',1280,800],['mobile',390,844]]){
@@ -40,7 +40,7 @@ try{
       const d=circled[a.id];
       assert.equal(d.viewBox,'-32 -32 64 64');
       assert.equal(d.paths,a.paths);
-      assert.equal(d.liveText,0,'The original Retrograde master must not become two font-dependent characters');
+      assert.equal(d.liveText,a.id==='retrograde'?1:0,'Only Retrograde needs the planet-name P as a live font glyph');
       assert.equal(d.embeddedCircle,0,'The original SVG contains no circle');
       assert.ok(d.firstPath.startsWith(a.first),'The canonical glyph is the approved outline: '+a.id);
       assert.ok(Math.abs(d.centeredX)<1&&Math.abs(d.centeredY)<1,'Center on the original canonical ring: '+a.id);
@@ -56,7 +56,12 @@ try{
       return[id,{viewBox:svg.getAttribute('viewBox'),paths:svg.querySelectorAll('path').length,
         texts:svg.querySelectorAll('text').length,circles:svg.querySelectorAll('circle').length}];
     }))),assets.map(x=>x.id));
-    for(const asset of assets)assert.deepEqual(raw[asset.id],{viewBox:'0 0 100 100',paths:asset.paths,texts:0,circles:0});
+    for(const asset of assets)assert.deepEqual(raw[asset.id],{viewBox:'0 0 100 100',paths:asset.paths,texts:asset.id==='retrograde'?1:0,circles:0});
+    const font=await page.evaluate(()=>{const card=[...document.querySelectorAll('#ugGrid .ug-card')].find(node=>node.querySelector('.ug-id')?.textContent==='retrograde');const text=card.querySelector('.relphi-glyph-retrograde text');const css=getComputedStyle(text);return{letter:text.textContent,fontFamily:css.fontFamily,fontWeight:css.fontWeight,fill:css.fill};});
+    assert.equal(font.letter,'P','Use the exact letter P rendered by the planet-name typeface');
+    assert.match(font.fontFamily,/system-ui/i);
+    assert.equal(font.fontWeight,'700');
+    assert.equal(font.fill,'rgb(17, 17, 17)');
     await page.screenshot({path:'retrograde-master-'+name+'.png',fullPage:true});
     await page.locator('[data-circle="false"]').click();
     const off=await inspect();
