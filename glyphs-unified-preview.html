@@ -24,7 +24,7 @@
   .ug-typeface-case small{display:block;font:400 .67rem system-ui,sans-serif;color:#675e57;margin-bottom:.55rem}
   .ug-typeface-placement{display:flex;gap:5px;align-items:baseline;color:#c9211e;font:700 .74rem/1.2 system-ui,sans-serif}
   .ug-typeface-relationship{display:flex;gap:6px;align-items:center;color:#2462d0}
-  .ug-typeface-relationship .ug-typeface-planet{font:30px/1 Georgia,serif}
+  .ug-typeface-relationship .ug-typeface-planet{display:inline-flex;align-items:center;justify-content:center;width:48px;height:48px;flex:none}.ug-typeface-relationship .ug-typeface-planet svg{display:block;width:48px;height:48px}
   .ug-typeface-inline{display:inline-block;color:inherit;white-space:nowrap}
   @media(max-width:560px){.ug-typeface-samples{gap:.4rem}.ug-typeface-cell{min-height:98px;padding:4px}.ug-typeface-case{flex-basis:100%}}
 </style>
@@ -45,7 +45,7 @@
     </div>
     <div class="ug-typeface-cases">
       <div class="ug-typeface-case"><small>Placements: marker beside the planet name</small><div class="ug-typeface-placement"><span>Chiron</span><span class="ug-typeface-inline" data-typeface-inline>Px</span></div></div>
-      <div class="ug-typeface-case"><small>Relationships: marker beside a planetary glyph</small><div class="ug-typeface-relationship"><span class="ug-typeface-planet" aria-hidden="true">♄</span><span class="ug-typeface-inline" data-typeface-inline>Px</span></div></div>
+      <div class="ug-typeface-case"><small>Relationships: marker beside a planetary glyph</small><div class="ug-typeface-relationship"><span class="ug-typeface-planet" data-typeface-planet aria-hidden="true"></span><span class="ug-typeface-inline" data-typeface-inline>Px</span></div></div>
     </div>
   </section>
 
@@ -105,6 +105,11 @@
     prototype.textContent='Px';
     svg.appendChild(prototype);
     study.querySelector('[data-typeface-source="mock"]').replaceChildren(svg);
+    const sourceSaturn=card('saturn')?.querySelector('.ug-stage svg');
+    if(!sourceSaturn)throw new Error('Canonical Saturn glyph not available for Relationships mock');
+    const saturnCopy=sourceSaturn.cloneNode(true);
+    saturnCopy.querySelector('.relphi-glyph-bubble>circle')?.remove();
+    study.querySelector('[data-typeface-planet]').replaceChildren(saturnCopy);
     study.querySelectorAll('[data-typeface-inline]').forEach(node=>{
       node.style.fontFamily=originText.style.fontFamily;
       node.style.fontSize=originText.style.fontSize;
