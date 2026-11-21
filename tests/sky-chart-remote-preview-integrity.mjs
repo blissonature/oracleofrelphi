@@ -305,6 +305,34 @@ try{
     await gallery.locator('[data-circle="true"]').click();
     await gallery.waitForFunction(()=>[...document.querySelectorAll('#ugGrid .ug-card .relphi-glyph-bubble>circle')].every(c=>c.style.opacity==='1'),null,{timeout:30000});
     await gallery.screenshot({path:'sky-remote-master-glyphs.png',fullPage:true});
+
+    const typefaceURL='http://127.0.0.1:'+server.address().port+'/sky-chart-preview/sky-chart.html?ref='+ref+'&page=glyphs-unified-preview.html&mock=rx-typeface';
+    await gallery.goto(typefaceURL,{waitUntil:'domcontentloaded',timeout:30000});
+    await gallery.waitForFunction(()=>document.getElementById('ugTypefaceStudy')?.dataset.mockReady==='true',null,{timeout:45000});
+    for(const width of [1100,390]){
+      await gallery.setViewportSize({width,height:900});
+      const state=await gallery.evaluate(()=>{
+        const root=document.getElementById('ugTypefaceStudy');
+        const reference=root.querySelector('[data-typeface-source="vertex"] text');
+        const alternative=root.querySelector('[data-typeface-source="mock"] text');
+        const label=root.querySelector('.ug-typeface-placement span:first-child');
+        const mark=root.querySelector('.ug-typeface-placement [data-typeface-inline]');
+        const font=node=>{const style=getComputedStyle(node);return{family:style.fontFamily,size:style.fontSize,weight:style.fontWeight}};
+        return{ready:root.dataset.mockReady,reference:font(reference),alternative:font(alternative),text:alternative.textContent,
+          customPaths:root.querySelectorAll('[data-typeface-source="mock"] path').length,
+          canonicalSaturn:!!root.querySelector('[data-typeface-planet] .relphi-glyph-saturn'),
+          gap:mark.getBoundingClientRect().left-label.getBoundingClientRect().right};
+      });
+      console.log('HOSTED RETROGRADE TYPEFACE '+width,JSON.stringify(state));
+      assert.equal(state.ready,'true');
+      assert.equal(state.text,'Px');
+      assert.deepEqual(state.alternative,state.reference);
+      assert.equal(state.alternative.size,'16px');
+      assert.equal(state.customPaths,0);
+      assert.equal(state.canonicalSaturn,true);
+      assert.ok(state.gap>=4);
+      await gallery.screenshot({path:'sky-remote-retrograde-typeface-'+width+'.png',fullPage:true});
+    }
   }catch(error){failed=true;console.error('PR MASTER GLYPH LIST PREVIEW FAILED '+error.message)}
   finally{await gallery.close();await new Promise(resolve=>server.close(resolve))}
 }finally{await browser.close()}
