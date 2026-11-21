@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="robots" content="noindex,nofollow,noarchive">
-  <title>Sky Chart Preview · Oracle of Relphi</title>
+  <title>Commit Preview · Oracle of Relphi</title>
   <style>
     html,body{margin:0;min-height:100%;font:16px/1.45 system-ui,sans-serif;background:#fffdf8;color:#241f1b}
     #previewStatus{max-width:760px;margin:12vh auto;padding:1.25rem 1.5rem;border:1px solid rgba(31,27,24,.18);border-radius:16px;background:#fff}
@@ -12,12 +12,16 @@
   </style>
 </head>
 <body>
-  <div id="previewStatus">Loading exact Sky Chart revision…</div>
+  <div id="previewStatus">Loading exact Oracle of Relphi revision…</div>
   <script>
   (async function(){
     'use strict';
     const status=document.getElementById('previewStatus');
-    const ref=new URLSearchParams(location.search).get('ref')||'';
+    const params=new URLSearchParams(location.search);
+    const ref=params.get('ref')||'';
+    // Both supported views load their existing canonical page from the exact commit.
+    // There is no second glyph registry, component, or master gallery.
+    const page=params.get('page')==='glyphs-unified-preview.html'?'glyphs-unified-preview.html':'sky-chart.html';
     if(!/^[0-9a-f]{40}$/i.test(ref)){
       status.textContent='This preview needs an exact forty-character commit SHA in ?ref=.';
       return;
@@ -25,7 +29,7 @@
     const rawBase=`https://raw.githubusercontent.com/blissonature/oracleofrelphi/${ref}/`;
     const assetBase=`https://cdn.statically.io/gh/blissonature/oracleofrelphi@${ref}/`;
     try{
-      const response=await fetch(rawBase+'sky-chart.html',{cache:'no-store'});
+      const response=await fetch(rawBase+page,{cache:'no-store'});
       if(!response.ok)throw new Error(`GitHub returned ${response.status}`);
       let html=await response.text();
       // The repository is larger than the CDN's package threshold. Stylesheets

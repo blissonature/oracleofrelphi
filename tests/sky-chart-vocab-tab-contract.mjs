@@ -44,10 +44,14 @@ assert.match(html,/sky-chart-foundation-interactions-v2\.js\?v=\d+/,'Sky Chart m
 assert.match(html,/sky-chart-card-drawers-v1\.css\?v=\d+/,'Sky Chart must load the microheptagram sizing fix');
 assert.match(html,/sky-chart-filter-control-unified-v1\.css\?v=\d+/,'Sky Chart must load the shared Vocab/Relationships control styling');
 assert.match(html,/sky-chart-zodiac-filter-v1\.css\?v=\d+/,'Sky Chart must load the shared Vocab/Relationships zodiac styling');
-assert.match(registry,/\['anti-vertex','Anti-Vertex',\['anti-vertex','anti vertex','antivertex','avx'\],'assets\/planet-glyphs\/anti-vertex\.svg',1,0,0,'AVx','letter','700'\]/,'Anti-Vertex must use its canonical SVG with the same 16px bold letter treatment as chart angles');
+assert.match(registry,/\['anti-vertex','Anti-Vertex',\['anti-vertex','anti vertex','antivertex','avx'\],'assets\/planet-glyphs\/anti-vertex\.svg',1,0,0,'AVx','static-master','700'\]/,'Anti-Vertex must use its canonical outlined SVG static-master treatment');
 assert.doesNotMatch(antiVertexSvg,/<text\b|font-family|font-size|transform=/i,'Anti-Vertex canonical SVG must contain outlined geometry only, with no runtime font or transform dependency');
 assert.match(antiVertexSvg,/<path\b[^>]*fill="#111111"/,'Anti-Vertex canonical SVG must expose directly paintable path geometry');
 assert.match(vocab,/id:'anti-vertex',glyphId:'anti-vertex'/,'Derived Anti-Vertex must request the canonical registry identity instead of an AVx text fallback');
+assert.match(vocab,/window\.RelphiSkyRetrograde\?\.forPlacement\?\.\(slot,ident\.id\)===true/,'Vocab motion must reuse the shared Retrograde sky state');
+assert.match(vocab,/renderInlineGlyph\(svg,'retrograde','Rx'\)/,'Vocab Retrograde must reuse the one canonical glyph renderer');
+assert.match(vocab,/node\.dataset\.vocabRetrograde==='true'/,'Vocab must expose retrograde state on the placement token');
+assert.match(vocabCopy,/tokenNode\.dataset\.vocabRetrograde==='true'\?' Rx':''/,'Vocab Copy must include semantic retrograde state');
 assert.match(vocab,/Glyphs/);
 assert.match(vocab,/Names/);
 assert.match(vocab,/Referents/);

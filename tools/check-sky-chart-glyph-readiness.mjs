@@ -68,7 +68,7 @@ if (registry) {
     'north-node': ['☊','symbol','400'],
     'south-node': ['☋','symbol','400'],
     vertex: ['Vx','letter','700'],
-    'anti-vertex': ['AVx','letter','700'],
+    'anti-vertex': ['AVx','static-master','700'],
     asc: ['Asc','letter','700'],
     dsc: ['Dsc','letter','700'],
     mc: ['MC','letter','700'],
