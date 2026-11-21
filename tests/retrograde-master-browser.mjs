@@ -82,7 +82,7 @@ try{
       const cases=[...root.querySelectorAll('[data-typeface-inline]')].map(n=>{const cs=getComputedStyle(n);return{family:cs.fontFamily,size:cs.fontSize,weight:cs.fontWeight,spacing:cs.letterSpacing,text:n.textContent}});
       const name=root.querySelector('.ug-typeface-placement span:first-child');
       const mark=root.querySelector('.ug-typeface-placement [data-typeface-inline]');
-      return{visible:!root.hidden,vertex:style('vertex'),descendant:style('dsc'),candidate:style('mock'),cases,altPaths:svg('mock')?.querySelectorAll('path').length,
+      return{visible:!root.hidden,vertex:style('vertex'),descendant:style('dsc'),candidate:style('mock'),cases,altPaths:svg('mock')?.querySelectorAll('path').length,canonicalPlanet:!!root.querySelector('[data-typeface-planet] .relphi-glyph-saturn'),addedPlanetRing:!!root.querySelector('[data-typeface-planet] .relphi-glyph-bubble>circle'),
         distance:mark.getBoundingClientRect().left-name.getBoundingClientRect().right};
     });
     assert.equal(mock.visible,true);
@@ -97,6 +97,8 @@ try{
     assert.equal(mock.candidate.weight,'700');
     assert.match(mock.candidate.family,/Montserrat/i);
     assert.equal(mock.altPaths,0,'Symmetrical font x, not custom X strokes');
+    assert.equal(mock.canonicalPlanet,true,'Relationship mock must use the real Saturn master');
+    assert.equal(mock.addedPlanetRing,false,'No added circle in the relationship glyph');
     for(const item of mock.cases){
       assert.equal(item.text,'Px');
       assert.equal(item.family,mock.vertex.family);
