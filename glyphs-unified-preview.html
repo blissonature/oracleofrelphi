@@ -8,6 +8,25 @@
 <link rel="stylesheet" href="style.css?v=364">
 <style>
   :root{--preview-color:#111111}.ug-page{max-width:1080px;margin:3.5rem auto 2rem;padding:0 1rem}.ug-panel{background:#faf8f7;border:2px solid var(--preview-color);border-radius:1.25rem;padding:1rem}.ug-controls{display:flex;justify-content:center;gap:.55rem;flex-wrap:wrap;margin:.7rem 0 1rem}.ug-controls button{font:800 .9rem system-ui,sans-serif;border:2px solid #111;border-radius:999px;padding:.55rem .9rem;background:#fff;cursor:pointer}.ug-controls button[aria-pressed="true"]{background:#111;border-color:#111;color:#fff}.ug-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:.75rem}.ug-card{display:grid;justify-items:center;gap:.55rem;background:#fff;border:1px solid rgba(17,17,17,.14);border-radius:1rem;padding:.9rem}.ug-stage{width:64px;height:64px}.ug-stage svg{display:block;width:100%;height:100%;overflow:visible}.ug-name{font:850 .9rem/1.15 system-ui,sans-serif;text-align:center}.ug-id{font:650 .7rem/1.1 ui-monospace,monospace;color:#666}.ug-note{max-width:790px;margin:.4rem auto 1rem;line-height:1.45;color:#333}.ug-status{font:750 .8rem system-ui,sans-serif;margin:.7rem 0;color:#444}
+
+  /* Optional study, never a competing glyph master or rendering owner. */
+  .ug-typeface-study{margin:1.1rem 0 1.6rem;padding:1.2rem;border:1px solid rgba(31,27,24,.20);border-radius:16px;background:white}
+  .ug-typeface-study h2{font:800 1.1rem/1.25 Montserrat,Arial,Helvetica,sans-serif;margin:0 0 .4rem}
+  .ug-typeface-study p{font:400 .8rem/1.45 system-ui,sans-serif;color:#57504a;margin:.35rem 0 1rem}
+  .ug-typeface-samples{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.75rem}
+  .ug-typeface-cell{display:grid;justify-items:center;align-content:center;gap:.25rem;min-height:114px;border:1px solid rgba(17,17,17,.16);border-radius:12px;background:#fffdf8}
+  .ug-typeface-cell strong{font:700 .72rem system-ui,sans-serif}
+  .ug-typeface-cell small{font:400 .66rem system-ui,sans-serif;color:#675e57}
+  .ug-typeface-canvas{width:64px;height:64px;display:grid;place-items:center}
+  .ug-typeface-canvas svg{display:block;width:64px;height:64px}
+  .ug-typeface-cases{display:flex;flex-wrap:wrap;gap:.8rem;margin-top:1rem}
+  .ug-typeface-case{flex:1 1 200px;border:1px solid rgba(17,17,17,.15);border-radius:12px;padding:.8rem 1rem}
+  .ug-typeface-case small{display:block;font:400 .67rem system-ui,sans-serif;color:#675e57;margin-bottom:.55rem}
+  .ug-typeface-placement{display:flex;gap:5px;align-items:baseline;color:#c9211e;font:700 .74rem/1.2 system-ui,sans-serif}
+  .ug-typeface-relationship{display:flex;gap:6px;align-items:center;color:#2462d0}
+  .ug-typeface-relationship .ug-typeface-planet{font:30px/1 Georgia,serif}
+  .ug-typeface-inline{display:inline-block;color:inherit;white-space:nowrap}
+  @media(max-width:560px){.ug-typeface-samples{gap:.4rem}.ug-typeface-cell{min-height:98px;padding:4px}.ug-typeface-case{flex-basis:100%}}
 </style>
 </head>
 <body>
@@ -15,6 +34,21 @@
 <main class="ug-page">
   <h1>Master <span class="red">Glyph List</span></h1>
   <p class="ug-note">These are the canonical black glyph masters. Consuming tools may recolor the same geometry for any sky or interface. The uncircled view preserves the exact dimensions, fitting, centering, padding, scale, and margins of the circled masters; only the circle is hidden.</p>
+
+  <section class="ug-typeface-study" id="ugTypefaceStudy" aria-label="Retrograde font-only alternative" hidden>
+    <h2>Retrograde · one font-only alternative</h2>
+    <p>A proposed P and x, both drawn directly from the <strong>same 16 px Montserrat Bold</strong> typography as Dsc and Vx. The x is the font's existing x, with no individually drawn diagonals. This is a visual study, not the canonical Retrograde master.</p>
+    <div class="ug-typeface-samples">
+      <div class="ug-typeface-cell"><strong>Descendant</strong><div class="ug-typeface-canvas" data-typeface-source="dsc"></div><small>Dsc · reference</small></div>
+      <div class="ug-typeface-cell"><strong>Vertex</strong><div class="ug-typeface-canvas" data-typeface-source="vertex"></div><small>Vx · reference</small></div>
+      <div class="ug-typeface-cell"><strong>Retrograde</strong><div class="ug-typeface-canvas" data-typeface-source="mock"></div><small>Px · alternative</small></div>
+    </div>
+    <div class="ug-typeface-cases">
+      <div class="ug-typeface-case"><small>Placements: marker beside the planet name</small><div class="ug-typeface-placement"><span>Chiron</span><span class="ug-typeface-inline" data-typeface-inline>Px</span></div></div>
+      <div class="ug-typeface-case"><small>Relationships: marker beside a planetary glyph</small><div class="ug-typeface-relationship"><span class="ug-typeface-planet" aria-hidden="true">♄</span><span class="ug-typeface-inline" data-typeface-inline>Px</span></div></div>
+    </div>
+  </section>
+
   <section class="ug-panel" aria-label="Canonical master glyph list">
     <div class="ug-controls" role="group" aria-label="Circle presentation">
       <button type="button" data-circle="true" aria-pressed="true">With circles</button>
@@ -41,6 +75,46 @@
   const status=document.getElementById('ugStatus');
   const color='#111111';
   let showCircle=true;
+
+  const mockRequested=new URLSearchParams(location.search).get('mock')==='rx-typeface';
+  const study=document.getElementById('ugTypefaceStudy');
+  if(mockRequested)study.hidden=false;
+  function refreshTypefaceStudy(){
+    if(!mockRequested)return;
+    const card=id=>[...grid.querySelectorAll('.ug-card')].find(node=>node.querySelector('.ug-id')?.textContent===id);
+    const sourceVx=card('vertex')?.querySelector('.ug-stage svg');
+    const sourceDsc=card('dsc')?.querySelector('.ug-stage svg');
+    if(!sourceVx||!sourceDsc)return;
+    const originText=sourceVx.querySelector('text.relphi-glyph-vertex');
+    if(!originText)throw new Error('Canonical Vx lettering not ready');
+    for(const [id,source] of [['dsc',sourceDsc],['vertex',sourceVx]]){
+      const node=study.querySelector('[data-typeface-source="'+id+'"]');
+      const copy=source.cloneNode(true);
+      copy.querySelector('.relphi-glyph-bubble>circle')?.remove();
+      node.replaceChildren(copy);
+    }
+    const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
+    svg.setAttribute('viewBox','-32 -32 64 64');
+    svg.setAttribute('role','img');
+    svg.setAttribute('aria-label','Font-only Retrograde P x study');
+    // Clone the canonical Vx text primitive. Alter only the content in this
+    // temporary design study; do not register or replace any production glyph.
+    const prototype=originText.cloneNode(true);
+    prototype.removeAttribute('class');
+    prototype.removeAttribute('data-canonical-glyph-id');
+    prototype.textContent='Px';
+    svg.appendChild(prototype);
+    study.querySelector('[data-typeface-source="mock"]').replaceChildren(svg);
+    study.querySelectorAll('[data-typeface-inline]').forEach(node=>{
+      node.style.fontFamily=originText.style.fontFamily;
+      node.style.fontSize=originText.style.fontSize;
+      node.style.fontWeight=originText.style.fontWeight;
+      node.style.letterSpacing=originText.style.letterSpacing||'normal';
+      node.style.lineHeight='1';
+    });
+    study.dataset.mockReady='true';
+  }
+
   async function render(){
     grid.replaceChildren();
     const jobs=window.RelphiGlyphRegistry.entries.map(entry=>{
@@ -58,6 +132,7 @@
     const results=await Promise.allSettled(jobs);
     const failed=results.filter(result=>result.status==='rejected').length;
     status.textContent=failed?`${results.length-failed} masters loaded; ${failed} failed.`:`${results.length} canonical glyph masters loaded.`;
+    refreshTypefaceStudy();
   }
   document.querySelectorAll('[data-circle]').forEach(button=>button.addEventListener('click',()=>{
     showCircle=button.dataset.circle==='true';
