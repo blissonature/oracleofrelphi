@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import {chromium} from 'playwright';
 
 const origin=process.env.GLYPH_TEST_ORIGIN||'http://127.0.0.1:4173';
-const assets=[{id:'retrograde',paths:1,first:'m 50.066711'},{id:'anti-vertex',paths:3,first:'M27 57.623'}];
+const assets=[{id:'retrograde',paths:1,first:'M50.066711'},{id:'anti-vertex',paths:3,first:'M27 57.623'}];
 const browser=await chromium.launch({headless:true});
 try{
   for(const [name,width,height] of [['desktop',1280,800],['mobile',390,844]]){
