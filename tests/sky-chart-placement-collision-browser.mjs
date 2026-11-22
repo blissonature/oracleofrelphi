@@ -246,7 +246,12 @@ try{
  for(const [name,longitude] of Object.entries({
    Neptune:2.25,Chiron:28.4167,Moon:7.9667,Saturn:9.7833,'Part of Fortune':7.0667
  }))cuspB.placements[name].longitude=longitude;
- const cuspAsc=157;
+ // The five-body clearance acceptance must be physically feasible:
+ // four Aries bubbles share the sector before this divider. The previous
+ // synthetic 10° cusp offered under 10° for >17° of required centers.
+ // Move the SYNTHETIC house line to about 22° Aries, still separating
+ // Chiron (28° Aries) into the neighboring house.
+ const cuspAsc=169;
  cuspB.houseCusps=Array.from({length:12},(_,i)=>(cuspAsc+i*30)%360);
  cuspB.calcProfile.houseCusps=[...cuspB.houseCusps];
  await boundaryPage.route('https://unpkg.com/suncalc@1.9.0/suncalc.js',route=>route.fulfill({path:path.resolve('node_modules/suncalc/suncalc.js'),contentType:'application/javascript'}));
