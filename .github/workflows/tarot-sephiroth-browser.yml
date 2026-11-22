@@ -28,6 +28,9 @@ jobs:
       - name: Validate source and run full entries on desktop and mobile Chromium
         run: |
           node --check tarot-app.js
+          node --check sky-chart-startup-mode-v1.js
+          node --check navloader.js
+          node --check tarot-card-selection-scroll-v1.js
           node --check tests/tarot-sephiroth-browser.mjs
           python3 -m http.server 4173 --bind 127.0.0.1 >/tmp/tarot-sephiroth-browser.log 2>&1 &
           node tests/tarot-sephiroth-browser.mjs
