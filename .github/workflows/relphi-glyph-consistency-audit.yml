@@ -40,6 +40,8 @@ jobs:
             sleep 1
           done
           node tests/glyph-design-system-audit-browser.mjs
+          node --check tests/glyph-design-system-audit-report.mjs
+          node tests/glyph-design-system-audit-report.mjs
       - name: Verify Placements, wheel, and glyph consumers on both viewports
         run: |
           node --check tests/glyph-design-consumers-browser.mjs
