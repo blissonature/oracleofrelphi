@@ -26,6 +26,10 @@ fs.mkdirSync(out,{recursive:true});
       return !!board && !board.hidden && trigger?.getAttribute('aria-expanded')==='true';
     },null,{timeout:20000});
     await panel.waitFor({state:'visible',timeout:10000});
+    // The current Drawing Board workflow places Crafted options inside
+    // Board Settings; open that native control before selecting the template.
+    await frame.waitForSelector('#relphiBoardSettingsButton',{state:'visible',timeout:10000});
+    await frame.click('#relphiBoardSettingsButton');
     await frame.waitForSelector('#shortListPanel #drawingBoardOptionsButton',{state:'visible',timeout:10000});
 
     await frame.click('#drawingBoardOptionsButton');
