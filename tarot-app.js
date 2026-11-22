@@ -4787,6 +4787,13 @@
   }
   const bindRenderedCardEntry = bindCardEntry;
   window.RelphiTarotLedgerBridge = Object.freeze({
+    // Share the normal full-entry interaction with the existing exact-preview route.
+    openFullEntry(cardId) {
+      const id = String(cardId || '').trim();
+      if (!cardById(id)) return false;
+      openFullEntryById(id);
+      return true;
+    },
     renderCardEntry(cardId, eyebrow = 'Tarot Ledger entry') {
       const card = cardById(String(cardId || ''));
       return card ? cardDetailHtml(card, eyebrow) : '';
