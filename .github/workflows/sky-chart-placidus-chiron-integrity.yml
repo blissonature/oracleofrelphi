@@ -1,0 +1,46 @@
+name: Sky Chart Placidus and Chiron integrity
+on:
+  pull_request:
+    paths:
+      - 'relphi-house-systems.js'
+      - 'sky-chart-chiron-completeness-v1.js'
+      - 'sky-chart.html'
+      - 'tests/sky-chart-placidus-chiron-integrity.test.mjs'
+      - 'tests/sky-chart-placidus-chiron-browser.mjs'
+      - '.github/workflows/sky-chart-placidus-chiron-integrity.yml'
+  push:
+    paths:
+      - 'relphi-house-systems.js'
+      - 'sky-chart-chiron-completeness-v1.js'
+      - 'sky-chart.html'
+      - 'tests/sky-chart-placidus-chiron-integrity.test.mjs'
+      - 'tests/sky-chart-placidus-chiron-browser.mjs'
+      - '.github/workflows/sky-chart-placidus-chiron-integrity.yml'
+jobs:
+  unit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: |
+          node --check relphi-house-systems.js
+          node --check sky-chart-chiron-completeness-v1.js
+          node --test tests/sky-chart-placidus-chiron-integrity.test.mjs
+          node --test tests/sky-chart-chiron-retrograde.test.mjs
+  browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: |
+          npm install --no-save playwright@1.52.0 luxon@3 suncalc@1.9.0
+          npx playwright install --with-deps chromium
+      - run: |
+          python3 -m http.server 4173 >/tmp/sky-chart-placidus-chiron-http.log 2>&1 &
+          node tests/sky-chart-placidus-chiron-browser.mjs

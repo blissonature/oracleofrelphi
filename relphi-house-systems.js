@@ -178,8 +178,16 @@
     const system = normalizeSystem(options && options.system);
     const asc = normDeg(options && options.ascendant);
     const mc = normDeg(options && options.midheaven);
-    const lst = normDeg(options && options.siderealDegrees);
+    const suppliedLst = Number(options && options.siderealDegrees);
     const eps = Number(options && options.obliquityDegrees);
+    // A chart's MC fixes its local sidereal angle: RA(MC) = ARMC. Saved or
+    // imported skies can retain an older instant/longitude while retaining
+    // their correct angles. Mixing that stale sidereal angle with the current
+    // MC silently shifts Placidus intermediate cusps into the wrong signs.
+    // Use the MC as the single geometry authority for all quadrant systems.
+    const lst = Number.isFinite(eps)
+      ? normDeg(atan2Deg(sinDeg(mc) * cosDeg(eps), cosDeg(mc)))
+      : (Number.isFinite(suppliedLst) ? normDeg(suppliedLst) : NaN);
     const lat = Number(options && options.latitude);
     if (!Number.isFinite(asc) || !Number.isFinite(mc)) throw new Error('House calculation needs Ascendant and Midheaven.');
     if (system === 'whole-sign') {
