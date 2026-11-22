@@ -30,6 +30,17 @@ fs.mkdirSync(out,{recursive:true});
     // Board Settings; open that native control before selecting the template.
     await frame.waitForSelector('#relphiBoardSettingsButton',{state:'visible',timeout:10000});
     await frame.click('#relphiBoardSettingsButton');
+    console.log('CRAFTED_VIS_DIAG',JSON.stringify(await frame.evaluate(()=>{
+      const node=document.getElementById('drawingBoardOptionsButton');
+      const parents=[];
+      for(let p=node; p&&parents.length<8; p=p.parentElement){
+        const st=getComputedStyle(p),r=p.getBoundingClientRect();
+        parents.push({tag:p.tagName,id:p.id,classes:p.className,hidden:p.hidden,display:st.display,visibility:st.visibility,w:r.width,h:r.height});
+      }
+      const board=document.getElementById('shortListPanel');
+      const settings=document.getElementById('relphiBoardSettingsButton');
+      return{parents,boardClass:board?.className,boardHidden:board?.hidden,settingsExpanded:settings?.getAttribute('aria-expanded'),settingsVisible:!!settings&&getComputedStyle(settings).display!=='none'};
+    })));
     await frame.waitForSelector('#shortListPanel #drawingBoardOptionsButton',{state:'visible',timeout:10000});
 
     await frame.click('#drawingBoardOptionsButton');
