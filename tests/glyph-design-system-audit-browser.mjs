@@ -1,6 +1,8 @@
 import assert from 'node:assert/strict';
 import {mkdir,writeFile} from 'node:fs/promises';
 import {chromium} from 'playwright';
+import pngjs from 'pngjs';
+const {PNG}=pngjs;
 
 /**
  * Reproducible 95/95 rendered audit of the one canonical Master Glyph List.
@@ -12,7 +14,7 @@ const origin=process.env.GLYPH_AUDIT_ORIGIN||'http://127.0.0.1:4173';
 const dest='test-results/glyph-audit';
 await mkdir(dest,{recursive:true});
 const browser=await chromium.launch({headless:true,executablePath:process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE||undefined});
-const report={commit:process.env.GITHUB_SHA||null,origin,generatedAt:new Date().toISOString(),screens:{},issues:[],observations:[],method:'getBoundingClientRect captures layout bounds, not precise painted-ink extents; inspect saved screenshots before judging clipping'};
+const report={commit:process.env.GLYPH_AUDIT_REF||process.env.GITHUB_SHA||null,workflowCheckoutSha:process.env.GITHUB_SHA||null,origin,generatedAt:new Date().toISOString(),screens:{},issues:[],observations:[],method:'getBoundingClientRect captures layout bounds, not precise painted-ink extents; inspect saved screenshots before judging clipping'};
 const checkpoints=[['desktop',1280,900],['mobile',390,844]];
 try{
   for(const [screen,width,height] of checkpoints){
@@ -73,6 +75,27 @@ try{
     assert.ok(source.data.every(d=>d.viewBox==='-32 -32 64 64'),'Master gallery artboards must match');
     assert.ok(source.data.every(d=>d.outerCircleOpacity==='1'),'Every circle starts visible');
     assert.ok(source.data.every(d=>!d.clipped),'No glyph can be clipped by gallery artboard');
+
+    // This static master deliberately retains its original -32..32 source
+    // artboard for direct image consumers. The canonical component must use
+    // that source viewBox center rather than hardcode (50,50).
+    const rx=source.data.find(d=>d.id==='retrograde');
+    assert.ok(rx&&rx.mode==='static-master'&&rx.shapes===1&&rx.literalText===null,
+      'Retrograde retains the single original outlined shape');
+    assert.ok(Math.abs(rx.centerError.x)<1.2&&Math.abs(rx.centerError.y)<1.2,
+      'Retrograde artwork must be centered in the existing master bubble');
+    assert.ok(rx.farthest<18,'Retrograde artwork must stay within the existing ring');
+    const rxAsset=await page.evaluate(async()=>{
+      const response=await fetch('assets/planet-glyphs/retrograde.svg');
+      if(!response.ok)throw Error('Retrograde master unavailable');
+      const xml=new DOMParser().parseFromString(await response.text(),'image/svg+xml').documentElement;
+      return{viewBox:xml.getAttribute('viewBox'),paths:xml.querySelectorAll('path').length,
+        texts:xml.querySelectorAll('text').length,circles:xml.querySelectorAll('circle').length,
+        originalPath:xml.querySelector('path')?.getAttribute('d')?.startsWith('m 50.066711,43.626278')};
+    });
+    assert.deepEqual(rxAsset,{viewBox:'-32 -32 64 64',paths:1,texts:0,circles:0,originalPath:true},
+      'The original source image artboard and glyph geometry must remain unchanged');
+
     assert.deepEqual(errors,[],'No browser exceptions in master gallery');
     // Read Chromium's actual platform font, not merely the requested CSS stack.
     const session=await page.context().newCDPSession(page);
@@ -105,7 +128,30 @@ try{
       assert.ok(Math.abs(after[i].height-source.data[i].rect.height)<0.55,
         source.data[i].id+' circle toggle altered height');
     }
-    await page.screenshot({path:dest+'/95-glyphs-'+screen+'-uncircled.png',fullPage:true});
+    const uncircled=await page.screenshot({path:dest+'/95-glyphs-'+screen+'-uncircled.png',fullPage:true});
+    const bitmap=PNG.sync.read(uncircled);
+    const paintedInk=source.data.map(glyph=>{
+      // Only the glyph stage: omit name labels (beneath it) and card borders.
+      // Pixel inspection avoids mistaking invisible font ascent/descent for ink.
+      const cx=glyph.rect.x+glyph.rect.width/2-glyph.centerError.x;
+      const cy=glyph.rect.y+glyph.rect.height/2-glyph.centerError.y;
+      let pixels=0,farthest=0;
+      for(let y=Math.max(0,Math.round(cy)-42);y<Math.min(bitmap.height,Math.round(cy)+34);y++){
+        for(let x=Math.max(0,Math.round(cx)-44);x<Math.min(bitmap.width,Math.round(cx)+45);x++){
+          const i=(y*bitmap.width+x)*4;
+          if(Math.max(bitmap.data[i],bitmap.data[i+1],bitmap.data[i+2])>=95)continue;
+          pixels++;
+          farthest=Math.max(farthest,Math.hypot(x+0.5-cx,y+0.5-cy));
+        }
+      }
+      return{id:glyph.id,paintedPixels:pixels,inkRadius:Number(farthest.toFixed(3)),ringRadius:glyph.ringRadius};
+    });
+    assert.equal(paintedInk.length,95);
+    assert.ok(paintedInk.every(x=>x.paintedPixels>0),'Every canonical master must have visible painted pixels');
+    assert.ok(paintedInk.every(x=>x.inkRadius<=x.ringRadius+0.5),
+      'Painted glyph ink must remain inside the existing circle: '+JSON.stringify(paintedInk.filter(x=>x.inkRadius>x.ringRadius+0.5)));
+    report.screens[screen+'PaintedInk']=paintedInk;
+
     await page.locator('[data-circle="true"]').click();
     await page.waitForFunction(()=>[...document.querySelectorAll('#ugGrid .ug-card .relphi-glyph-bubble > circle')].length===95&&
       [...document.querySelectorAll('#ugGrid .ug-card .relphi-glyph-bubble > circle')].every(c=>c.style.opacity==='1')&&
@@ -124,6 +170,13 @@ try{
     }
     const latin=source.data.filter(x=>['asc','dsc','mc','ic','vertex'].includes(x.id));
     assert.equal(latin.length,5);
+
+    const symbols=source.data.filter(d=>d.mode==='symbol');
+    assert.equal(symbols.length,3,'Chiron and both lunar nodes use the canonical symbol treatment');
+    assert.ok(symbols.every(d=>d.font?.family.includes('Apple Symbols')&&
+      d.font?.family.includes('Noto Sans Symbols 2')),
+      'Symbol fonts must use valid family tokens, not silently inherit the body font');
+
     report.screens[screen]={width,height,status:source.status,glyphs:source.data,installedFontFaces:source.fonts,
       latin:latin.map(({id,font,platformFonts,platformFontsError})=>({id,font,platformFonts,platformFontsError})),
       issues,consoleErrors:errors,circleToggleValidated:95};
