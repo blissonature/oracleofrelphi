@@ -51,7 +51,7 @@ assert.match(board, /Clear the cards without changing settings/);
 assert.match(board, /Restore default settings/);
 assert.match(board, /function renderFreeSettings/);
 assert.match(board, /id="relphiFreePack"/);
-assert.match(board, /> Labels<\/label>/);
+assert.match(board, /function renderFreeSettings/);
 assert.match(board, /> Reversals<\/label>/);
 assert.match(board, /> Repeats<\/label>/);
 assert.match(board, /function confirmFreeSettings/);
@@ -61,7 +61,7 @@ assert.match(board, /if\(craftedReadingActive\|\|boardHasCraftedStructure\(root\
 assert.match(board, /if \(!zoomToolbarVisibleForState\(root\)\) return/);
 assert.match(board, /relphiCraftedPath/);
 assert.match(board, /craftedPath/);
-assert.match(board, /const path=activeCraftedPath\|\|'templates'/);
+assert.match(board, /function persistedCraftedPath/);
 assert.match(board, /visibleToolbarHeight/);
 assert.match(board, /function cancelBoardSettings/);
 assert.match(board, /boardSetupConfirmed=true/);

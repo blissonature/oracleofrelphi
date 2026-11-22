@@ -13985,6 +13985,13 @@ label {
   padding: .22rem .45rem;
   white-space: nowrap;
 }
+/* Canonical Drawing Board transform-control rules. The native renderer alone
+   assigns is-transform-target; the workflow only toggles editing availability. */
+#shortListPanel.relphi-transform-editing-unlocked .card-row-board [data-row-transform-handle] {
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
 .short-list-row.card-row-board .card-row-transform-box { opacity: 0 !important; pointer-events: none !important; }
 .short-list-row.card-row-board .card-row-item.is-transform-target .card-row-transform-box,
 .short-list-row.card-row-board .card-row-item.is-scaling .card-row-transform-box,
@@ -13992,9 +13999,29 @@ label {
 .short-list-row.card-row-board .card-row-item:not(.is-transform-target):not(.is-scaling):not(.is-rotating) .card-row-scale-handle,
 .short-list-row.card-row-board .card-row-item:not(.is-transform-target):not(.is-scaling):not(.is-rotating) .card-row-rotate-handle { pointer-events: none !important; }
 .card-row-rotate-handle--nw { left: -10px !important; top: -10px !important; }
-.card-row-rotate-handle--ne { right: -10px !important; top: -10px !important; }
 .card-row-rotate-handle--sw { left: -10px !important; bottom: -10px !important; }
 .card-row-rotate-handle--se { right: -10px !important; bottom: -10px !important; }
+/* Reserve a stable rotation lane without overlaying the reverse-card button. */
+#shortListPanel.relphi-transform-editing-unlocked .card-row-board .card-row-rotate-handle--ne {
+  top: 22% !important;
+  right: 0 !important;
+  left: auto !important;
+  bottom: auto !important;
+  z-index: 30 !important;
+}
+@media (max-width: 760px) {
+  #shortListPanel.relphi-transform-editing-unlocked .card-row-board .card-row-rotate-handle--ne {
+    top: 55% !important;
+    right: 38px !important;
+  }
+  #shortListPanel.relphi-transform-editing-unlocked .card-row-board .card-row-scale-handle--se {
+    right: 35px !important;
+    bottom: 0 !important;
+    width: 34px !important;
+    height: 34px !important;
+    z-index: 45 !important;
+  }
+}
 .or-card.tarot-card-surface.relphi-surface--card .or-card-add,
 .or-card .or-card-add,
 #browsePanel .or-card-add,

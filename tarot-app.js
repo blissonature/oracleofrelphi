@@ -2602,8 +2602,31 @@
     const raw = Number.isFinite(Number(state.rowTransformTarget)) ? Number(state.rowTransformTarget) : 0;
     return Math.max(0, Math.min(max, raw));
   }
+  // Native Drawing Board is the single owner of the active transform target.
+  // The workflow may request selection, but must not maintain a second selection state.
+  function selectRowTransformTarget(index, root = $('shortListPanel')) {
+    const target = Math.max(0, Math.min(Math.max(0, rowSlotCount() - 1), Math.trunc(Number(index) || 0)));
+    state.rowTransformTarget = target;
+    if (!root) return target;
+    root.querySelectorAll('.card-row-board .card-row-item[data-row-index]').forEach(item => {
+      item.classList.toggle('is-transform-target', Number(item.dataset.rowIndex) === target);
+    });
+    const targetSelect = root.querySelector('#rowTransformTarget');
+    if (targetSelect) targetSelect.value = String(target);
+    const transform = rowCardTransform(target);
+    const scale = root.querySelector('#rowTransformScale');
+    const rotation = root.querySelector('#rowTransformRotation');
+    const scaleValue = root.querySelector('#rowTransformScaleValue');
+    const rotationValue = root.querySelector('#rowTransformRotationValue');
+    if (scale) scale.value = String(transform.scale);
+    if (rotation) rotation.value = String(Math.round(transform.rotation));
+    if (scaleValue) scaleValue.textContent = Math.round(transform.scale * 100) + '%';
+    if (rotationValue) rotationValue.textContent = Math.round(transform.rotation) + '°';
+    return target;
+  }
   function setRowCardTransform(index, updates = {}) {
-    if (state.rowLayoutLocked && !state.rowLayoutDesignMode) return;
+    // The layout lock preserves the predefined spread positions; it must not
+    // disable transforming cards that have already been drawn into those slots.
     const i = Math.max(0, Number(index) || 0);
     state.rowCardTransforms ||= {};
     const current = rowCardTransform(i);
@@ -2617,7 +2640,7 @@
     state.rowTransformTarget = i;
   }
   function resetRowCardTransform(index) {
-    if (state.rowLayoutLocked && !state.rowLayoutDesignMode) return;
+    // Resetting a drawn card is independent of the spread-position lock.
     state.rowCardTransforms ||= {};
     delete state.rowCardTransforms[Math.max(0, Number(index) || 0)];
   }
@@ -2922,6 +2945,7 @@
     removePosition:removePrefabPosition,
     swapPositionSlots:swapDrawingBoardPositionSlots,
     getState:drawingBoardPrefabState,
+    selectTransformTarget:selectRowTransformTarget,
     setCenterOpen(value) {
       state.rowCenterOpen = !!value;
       document.dispatchEvent(new CustomEvent('relphi:drawing-board-center-view', { detail:{ open:state.rowCenterOpen } }));
@@ -3066,7 +3090,16 @@
         event.preventDefault();
         event.stopPropagation();
         const index = Number(item.dataset.rowIndex) || 0;
-        state.rowTransformTarget = index;
+        // The native renderer alone owns selection. Expose whether this pointer
+        // chose a new target so the workflow can avoid opening Card Focus.
+        if (rowTransformTargetIndex() !== index && wrap.classList.contains('relphi-transform-editing-unlocked')) {
+          item.dataset.relphiSelectedOnPointerDown = String(Date.now());
+        }
+        selectRowTransformTarget(index, wrap);
+        // Selection must not start a drag when a prefab locks its slot coordinates.
+        if (state.rowLayoutLocked && !state.rowLayoutDesignMode) return;
+        if (wrap.classList.contains('relphi-transform-editing-unlocked') &&
+            !wrap.classList.contains('relphi-drag-unlocked')) return;
         const start = rowEnvelopePosition(index);
         const startX = event.clientX;
         const startY = event.clientY;
@@ -3249,7 +3282,7 @@
         event.preventDefault();
         event.stopPropagation();
         const index = Number(item.dataset.rowIndex) || 0;
-        state.rowTransformTarget = index;
+        selectRowTransformTarget(index, wrap);
         const mode = handle.dataset.rowTransformHandle;
         const start = rowCardTransform(index);
         const rect = item.getBoundingClientRect();
@@ -3260,6 +3293,7 @@
         item.classList.add(mode === 'rotate' ? 'is-rotating' : 'is-scaling');
         handle.setPointerCapture?.(event.pointerId);
         const move = moveEvent => {
+          if (moveEvent.pointerId !== event.pointerId) return;
           if (mode === 'scale') {
             const distance = Math.max(8, Math.hypot(moveEvent.clientX - center.x, moveEvent.clientY - center.y));
             const nextScale = Math.max(.45, Math.min(2.5, start.scale * (distance / startDistance)));
@@ -3274,16 +3308,19 @@
           }
           item.style.cssText = cardRowItemStyle(index);
         };
-        const up = () => {
+        const up = finishEvent => {
+          if (finishEvent.pointerId !== event.pointerId) return;
           window.removeEventListener('pointermove', move);
           window.removeEventListener('pointerup', up);
+          window.removeEventListener('pointercancel', up);
           item.classList.remove('is-scaling', 'is-rotating');
           try { handle.releasePointerCapture?.(event.pointerId); } catch (error) {}
           document.body.style.cursor = '';
           renderShortList();
         };
         window.addEventListener('pointermove', move);
-        window.addEventListener('pointerup', up, { once: true });
+        window.addEventListener('pointerup', up);
+        window.addEventListener('pointercancel', up);
       });
     });
   }
@@ -3484,8 +3521,7 @@
       if (workspace) workspace.style.cssText = cardRowWorkspaceStyle(rowSlots);
     };
     if (transformTargetInput) transformTargetInput.addEventListener('change', () => {
-      state.rowTransformTarget = Number(transformTargetInput.value) || 0;
-      syncTransformControls();
+      selectRowTransformTarget(transformTargetInput.value, wrap);
     });
     if (transformScaleInput) transformScaleInput.addEventListener('input', () => {
       const index = rowTransformTargetIndex(rowSlots);
@@ -3573,7 +3609,7 @@
         if (rowItem && cardEl.closest('.card-row-board')) {
           event.preventDefault();
           event.stopPropagation();
-          state.rowTransformTarget = Number(rowItem.dataset.rowIndex) || 0;
+          selectRowTransformTarget(Number(rowItem.dataset.rowIndex) || 0, wrap);
           renderShortList();
           return;
         }
@@ -3801,8 +3837,8 @@
     return card.suit === suit || (suit === 'Pentacles' && card.thoth_suit === 'Disks');
   }
   function resolveCardToken(raw) {
-    const original = String(raw || '').trim();
-    const q = original.toUpperCase().replace(/\s+/g, '');
+    const original = String(raw || '').trim().replace(/\s+(?:rx|reversed)$/i, '');
+    const q = original.toUpperCase().replace(/\s+/g, '').replace(/^CI(?=[WCSDP]$)/, 'C1');
     if (!q) return null;
     const suitMap = { W:'Wands', C:'Cups', S:'Swords', D:'Pentacles', P:'Pentacles' };
     const rankMap = { A:'Ace', '2':'Two', '3':'Three', '4':'Four', '5':'Five', '6':'Six', '7':'Seven', '8':'Eight', '9':'Nine', '10':'Ten' };
@@ -3827,17 +3863,38 @@
     m = q.match(/^K([WCSDP])$/);
     if (m) return cards.find(card => card.card_type === 'Court' && courtRankCode(card) === 'C4' && cardMatchesSuit(card, suitMap[m[1]])) || null;
     const normalized = normalizeSearch(original);
-    return cards.find(card => normalizeSearch(title(card)) === normalized || normalizeSearch(card.name) === normalized || normalizeSearch(card.systems?.thoth?.display_name) === normalized || normalizeSearch(titleNoThe(card.systems?.golden_dawn_rws?.display_name || '')) === normalized || normalizeSearch(titleNoThe(card.systems?.thoth?.display_name || '')) === normalized) || null;
+    return cards.find(card => normalizeSearch(title(card)) === normalized || normalizeSearch(titleNoThe(title(card))) === normalized || normalizeSearch(card.name) === normalized || normalizeSearch(titleNoThe(card.name || '')) === normalized || normalizeSearch(card.systems?.thoth?.display_name) === normalized || normalizeSearch(titleNoThe(card.systems?.golden_dawn_rws?.display_name || '')) === normalized || normalizeSearch(titleNoThe(card.systems?.thoth?.display_name || '')) === normalized) || null;
+  }
+  // Card-reference parsing is owned by the native search implementation.
+  // Commas separate whole card names; spaces inside names are not delimiters.
+  // Preserve orientation for the separate optional Add to Drawing Board action.
+  function orderedCardTokenEntries(raw) {
+    const text = String(raw || '').trim();
+    if (!text) return [];
+    const delimited = /[,;]/.test(text);
+    const tokens = delimited
+      ? text.split(/[,;]/).map(x => x.trim())
+      : [text];
+    if (tokens.some(x => !x)) return [];
+    let resolved = tokens.map(token => ({
+      card: resolveCardToken(token),
+      reversed: /\s+(?:rx|reversed)$/i.test(token)
+    }));
+    // Retain legacy whitespace-delimited shorthand lists, not arbitrary prose.
+    if (!delimited && !resolved[0].card && /\s/.test(text)) {
+      const words = text.split(/\s+/);
+      resolved = words.map(token => ({ card: resolveCardToken(token), reversed:false }));
+    }
+    if (resolved.some(entry => !entry.card)) return [];
+    const seen = new Set();
+    return resolved.filter(entry => {
+      if (seen.has(entry.card.card_id)) return false;
+      seen.add(entry.card.card_id);
+      return true;
+    });
   }
   function orderedCardTokenResults(raw) {
-    const text = String(raw || '').trim();
-    if (!/[\s,;]+/.test(text)) return [];
-    const tokens = text.split(/[\s,;]+/).map(x => x.trim()).filter(Boolean);
-    if (tokens.length < 2) return [];
-    const resolved = tokens.map(resolveCardToken);
-    if (resolved.some(card => !card)) return [];
-    const seen = new Set();
-    return resolved.filter(card => { if (seen.has(card.card_id)) return false; seen.add(card.card_id); return true; });
+    return orderedCardTokenEntries(raw).map(entry => entry.card);
   }
   function searchResults() {
     const raw = state.query.trim().replace(/^\//, '');
@@ -3979,9 +4036,20 @@
     if (clearFilters) clearFilters.addEventListener('click', () => { state.cardFilters = []; renderBrowse(); });
     const addShown = panel.querySelector('[data-add-results-to-row]');
     if (addShown) addShown.addEventListener('click', () => {
+      const entries = orderedCardTokenEntries(state.query);
+      const oriented = entries.length === list.length && entries.every((entry, index) => entry.card.card_id === list[index].card_id);
       const ids = list.map(card => card.card_id);
-      const next = state.rowAllowRepeats ? [...state.shortList, ...ids] : [...state.shortList, ...ids.filter(id => !state.shortList.includes(id))];
-      commitShortList(next);
+      const before = state.shortList.slice();
+      const additions = state.rowAllowRepeats ? ids : ids.filter(id => !before.includes(id));
+      if (!additions.length) return;
+      commitShortList([...before, ...additions]);
+      if (oriented) {
+        additions.forEach((id, offset) => {
+          const entry = entries.find(hit => hit.card.card_id === id);
+          setRowCardReversed(before.length + offset, !!entry?.reversed);
+        });
+        refreshShortListViews();
+      }
     });
     const resultZoomControl = panel.querySelector('[data-result-zoom]');
     const setResultZoom = value => {
@@ -4001,7 +4069,7 @@
     if (resultGlyphToggle) resultGlyphToggle.addEventListener('click', () => { state.resultGlyphsVisible = !state.resultGlyphsVisible; renderBrowse(); });
     const resultLayoutControl = panel.querySelector('[data-result-layout]');
     if (resultLayoutControl) resultLayoutControl.addEventListener('change', () => { state.resultLayout = resultLayoutControl.value || '3'; renderBrowse(); });
-    panel.addEventListener('click', (event) => { if (userHasTextSelection()) return; const titleBtn = event.target.closest('[data-card-id]'); if (titleBtn && panel.contains(titleBtn)) { event.preventDefault(); event.stopPropagation(); inspectBrowseResult(titleBtn.dataset.cardId); return; } const cardEl = event.target.closest('.or-card[data-id]'); if (!cardEl || !panel.contains(cardEl) || event.target.closest('[data-shortlist]') || event.target.closest('[data-filter]') || event.target.closest('.or-card-layer')) return; const id = cardEl.dataset.id; event.preventDefault(); inspectBrowseResult(id); });
+    panel.onclick = (event) => { if (userHasTextSelection()) return; const titleBtn = event.target.closest('[data-card-id]'); if (titleBtn && panel.contains(titleBtn)) { event.preventDefault(); event.stopPropagation(); inspectBrowseResult(titleBtn.dataset.cardId); return; } const cardEl = event.target.closest('.or-card[data-id]'); if (!cardEl || !panel.contains(cardEl) || event.target.closest('[data-shortlist]') || event.target.closest('[data-filter]') || event.target.closest('.or-card-layer')) return; const id = cardEl.dataset.id; event.preventDefault(); inspectBrowseResult(id); };
     qsa('[data-shortlist]', panel).forEach(btn => btn.addEventListener('click', (event) => { event.stopPropagation(); toggleShortList(btn.dataset.shortlist); }));
     qsa('[data-filter]', panel).forEach(chip => chip.addEventListener('click', (event) => { event.stopPropagation(); applyChipFilter(chip.dataset.filter); }));
     const resultGrid = panel.querySelector('.tarot-result-grid');
@@ -5109,6 +5177,7 @@
     const menu=$('commandMenu');
     const question=String(value||'').trim();
     if(!menu||!question||question.startsWith('/')||typeof window.RelphiLaunchBespokeQuestion!=='function')return;
+    if(orderedCardTokenEntries(question).length)return;
     menu.hidden=false;
     menu.innerHTML=`<button type="button" class="relphi-bespoke-choice"><span>Begin a Bespoke Crafted Reading</span><small>Use “${escapeHtml(question)}” as the first question</small></button>`;
     menu.querySelector('.relphi-bespoke-choice')?.addEventListener('click',()=>{
