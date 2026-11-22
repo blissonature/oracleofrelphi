@@ -1,0 +1,49 @@
+name: Relphi 95-glyph consistency audit
+on:
+  push:
+    branches:
+      - docs/glyph-consistency-exception-review-20261121
+  pull_request:
+    paths:
+      - 'relphi-glyph-registry-v1.js'
+      - 'relphi-glyph-component-v1.js'
+      - 'glyphs-unified-preview.html'
+      - 'assets/planet-glyphs/**'
+      - 'assets/aspect-glyphs/**'
+      - 'assets/zodiac-glyphs/**'
+      - 'assets/element-glyphs/**'
+      - 'docs/design-system/glyph-rules-and-exception-ledger.md'
+      - 'tests/glyph-design-system-audit-browser.mjs'
+      - '.github/workflows/relphi-glyph-consistency-audit.yml'
+jobs:
+  full-gallery:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 16
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate audit test
+        run: node --check tests/glyph-design-system-audit-browser.mjs
+      - name: Install Chromium
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Audit all 95 canonical glyphs at desktop and mobile sizes
+        run: |
+          python3 -m http.server 4173 --bind 127.0.0.1 >/tmp/relphi-glyph-audit-http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID" || true' EXIT
+          for i in $(seq 1 20); do
+            curl -fsS http://127.0.0.1:4173/glyphs-unified-preview.html -o /dev/null && break
+            sleep 1
+          done
+          node tests/glyph-design-system-audit-browser.mjs
+      - name: Upload full rendered evidence (95×desktop + 95×mobile)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: relphi-95-glyph-design-audit
+          path: test-results/glyph-audit/
+          if-no-files-found: warn
