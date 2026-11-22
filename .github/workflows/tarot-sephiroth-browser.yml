@@ -1,0 +1,38 @@
+name: Tarot Tree of Life full entries
+
+on:
+  pull_request:
+    paths:
+      - 'tarot-app.js'
+      - 'tarot-cards.js'
+      - 'tarot.html'
+      - 'tests/tarot-sephiroth-browser.mjs'
+      - '.github/workflows/tarot-sephiroth-browser.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  browser:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install Playwright and Chromium
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Validate source and run full entries on desktop and mobile Chromium
+        run: |
+          node --check tarot-app.js
+          node --check tests/tarot-sephiroth-browser.mjs
+          python3 -m http.server 4173 --bind 127.0.0.1 >/tmp/tarot-sephiroth-browser.log 2>&1 &
+          node tests/tarot-sephiroth-browser.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: tarot-sephiroth-chromium-screenshots
+          path: tarot-sephiroth-*.png
+          if-no-files-found: ignore
