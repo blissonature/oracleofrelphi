@@ -93,6 +93,7 @@ try{
     await page.locator('[data-circle="false"]').click();
     await page.waitForFunction(()=>[...document.querySelectorAll('#ugGrid .ug-card')].length===95&&
       [...document.querySelectorAll('#ugGrid .ug-card .relphi-glyph-bubble > circle')].every(c=>c.style.opacity==='0')&&
+      document.querySelectorAll('#ugGrid .ug-card .relphi-canonical-glyph').length===95&&
       /95 canonical glyph masters loaded/.test(document.querySelector('#ugStatus')?.textContent||''));
     const after=await page.evaluate(()=>[...document.querySelectorAll('#ugGrid .ug-card')].map(card=>{
       const art=card.querySelector('.relphi-canonical-glyph'),box=art.getBoundingClientRect();
@@ -108,6 +109,7 @@ try{
     await page.locator('[data-circle="true"]').click();
     await page.waitForFunction(()=>[...document.querySelectorAll('#ugGrid .ug-card .relphi-glyph-bubble > circle')].length===95&&
       [...document.querySelectorAll('#ugGrid .ug-card .relphi-glyph-bubble > circle')].every(c=>c.style.opacity==='1')&&
+      document.querySelectorAll('#ugGrid .ug-card .relphi-canonical-glyph').length===95&&
       /95 canonical glyph masters loaded/.test(document.querySelector('#ugStatus')?.textContent||''));
     await page.screenshot({path:dest+'/95-glyphs-'+screen+'-circled.png',fullPage:true});
     // A numerical discrepancy isn't necessarily a defect; preserve evidence for review.
