@@ -210,7 +210,19 @@
     const art = svg('g');
     Array.from(source.children).forEach(child => art.appendChild(document.importNode(child, true)));
     const scale = 0.64 * Math.max(0.1, Number(radius) || 19) / 19;
-    art.setAttribute('transform', `matrix(${scale} 0 0 ${scale} ${-50 * scale} ${-50 * scale})`);
+    // A static master keeps its own source coordinate system. Most artboards
+    // use 0..100, but Retrograde's original direct-image master uses -32..32.
+    // The imported artwork must be centered on that source viewBox, not on an
+    // assumed (50,50); this preserves direct <img> consumers unchanged.
+    const sourceBox = String(source.getAttribute('viewBox') || '')
+      .trim().split(/[\\s,]+/).map(Number);
+    if (sourceBox.length !== 4 || !sourceBox.every(Number.isFinite) ||
+        sourceBox[2] <= 0 || sourceBox[3] <= 0) {
+      throw new Error('Invalid static master viewBox: ' + entry.id);
+    }
+    const cx = sourceBox[0] + sourceBox[2] / 2;
+    const cy = sourceBox[1] + sourceBox[3] / 2;
+    art.setAttribute('transform', `matrix(${scale} 0 0 ${scale} ${-cx * scale} ${-cy * scale})`);
     art.dataset.staticMaster = 'true';
     parent.appendChild(art);
     recolor(art, color);
