@@ -5678,7 +5678,7 @@
     snap.rowPositionMeta=positions.map((item,index)=>{
       snap.rowEnvelopeLayout[index]={x:item.transform.x*CANVAS_W,y:item.transform.y*CANVAS_H};
       snap.rowCardTransforms[index]={scale:item.transform.scale,rotation:item.transform.rotation||0,zIndex:item.transform.zIndex||1};
-      return {...(originalMeta[index]||{}),id:item.id,drawScope:originalMeta[index]?.drawScope||'full',allowReversals:originalMeta[index]?.allowReversals??true,allowRepeats:originalMeta[index]?.allowRepeats??false,cardCount:1,craftedPath:'bespoke',questionText:labels[index],openTransform:null};
+      return {...(originalMeta[index]||{}),id:item.id,drawScope:originalMeta[index]?.drawScope||snap.rowDrawScope||'full',allowReversals:originalMeta[index]?.allowReversals??(snap.rowAllowReversals!==false),allowRepeats:originalMeta[index]?.allowRepeats??!!snap.rowAllowRepeats,cardCount:1,craftedPath:'bespoke',questionText:labels[index],openTransform:null};
     });
     snap.rowActiveLayout={version:1,id:'custom-active',name:String(snap.rowActiveLayout?.name||'Bespoke'),cardCount:labels.length,source:'custom',editable:true,basedOn:snap.rowActiveLayout?.basedOn||null,relphiCraftedPath:'bespoke',positions:positions.map((item,index)=>({...item,drawOrder:index+1,drawScope:snap.rowPositionMeta[index].drawScope,allowReversals:snap.rowPositionMeta[index].allowReversals,allowRepeats:snap.rowPositionMeta[index].allowRepeats,cardCount:1})),rules:{allowReversals:snap.rowAllowReversals!==false,allowRepeats:!!snap.rowAllowRepeats,drawScope:snap.rowDrawScope||'full'}};
     snap.rowLayoutLocked=false;
@@ -5711,8 +5711,12 @@
     add?.addEventListener('click',()=>{
       const question=String(input?.value||'').trim();
       if(!question)return;
-      close();
-      appendBespokeQuestion(question);
+      if(appendBespokeQuestion(question)) close();
+      else {
+        let error=modal.querySelector('[role="alert"]');
+        if(!error){error=document.createElement('p');error.setAttribute('role','alert');add.parentElement.before(error);}
+        error.textContent='Could not add a clarifier. Check that this is a Bespoke reading with fewer than '+MAX_POSITIONS+' questions.';
+      }
     });
     document.body.appendChild(modal);
     requestAnimationFrame(()=>input?.focus());
