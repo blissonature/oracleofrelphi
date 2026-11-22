@@ -266,32 +266,48 @@ try{
  await boundaryPage.goto('http://127.0.0.1:4173/sky-chart.html',{waitUntil:'domcontentloaded'});
  await boundaryPage.waitForFunction(()=>document.querySelector('#skyFoundationWheelMount > svg.sky-foundation-wheel')?.dataset.placementCollisionOrder?.includes('same-sign'),{timeout:30000});
  await boundaryPage.waitForTimeout(450);
- // Fortune is a derived point in the app, which can overwrite the test's
- // imported longitude. Position its actual rendered SVG group and leader at
- // the user's Aries 7°04′ BEFORE running the collision solver. This ensures
- // the regression really contains five Aries placements on the house cusp.
- await boundaryPage.evaluate(()=>{
+ // Synthetic house-cusp acceptance is independent of ephemeris refreshes.
+ // Build one detached wheel from the intended 17-body fixture, then give it
+ // a physically feasible Aries cusp at 22°. Do not let the live chart rebuild
+ // Fortune, Anti-Vertex, house edges, or the model while this test is running.
+ await boundaryPage.evaluate(({positions,cusps})=>{
    const source=document.querySelector('#skyFoundationWheelMount > svg.sky-foundation-wheel');
-   // Work on an independent copy: the site's live-sky observer can rebuild
-   // derived Fortune while this regression executes, hiding the real bug.
-   const wheel=source.cloneNode(true);
+   const wheel=source.cloneNode(true),c={x:600,y:600},
+     rad=deg=>(deg-180)*Math.PI/180,
+     polar=(radius,degree)=>({x:c.x+radius*Math.cos(rad(degree)),y:c.y+radius*Math.sin(rad(degree))});
    window.__skyBHouseCuspTestWheel=wheel;
-   const group=wheel.querySelector('[data-layer="placements"] > g[data-sky="B"][data-placement="part-of-fortune"]');
-   const leader=wheel.querySelector('[data-layer="leaders"] line[data-sky="B"][data-placement="part-of-fortune"]:not([data-angle])');
-   if(!group||!leader)throw new Error('Missing Sky B Part of Fortune for screenshot regression');
-   const degree=7.0667,rad=(degree-180)*Math.PI/180;
-   const lane=Number(group.dataset.placementAuthoredLane||group.dataset.placementLane);
-   const radius=Math.hypot(Number(leader.getAttribute('x2'))-600,Number(leader.getAttribute('y2'))-600);
-   const point=r=>({x:600+r*Math.cos(rad),y:600+r*Math.sin(rad)}),a=point(lane),b=point(radius);
-   group.dataset.exactLongitude=String(degree);
-   group.dataset.displayLongitude=String(degree);
-   group.setAttribute('transform','translate('+a.x+' '+a.y+')');
-   leader.dataset.exactLongitude=String(degree);
-   leader.setAttribute('x1',a.x);leader.setAttribute('y1',a.y);
-   leader.setAttribute('x2',b.x);leader.setAttribute('y2',b.y);
+   const layer=wheel.querySelector('[data-layer="b-houses"]');
+   for(const line of [...layer.querySelectorAll('line.sky-foundation-divider')])line.remove();
+   const role=window.RelphiSkyWheelSpec.role('B');
+   for(const degree of cusps){
+     const line=document.createElementNS('http://www.w3.org/2000/svg','line'),
+       p=polar(role.inner,degree),q=polar(role.outer,degree);
+     line.setAttribute('class','sky-foundation-divider');
+     for(const [key,value] of Object.entries({x1:p.x,y1:p.y,x2:q.x,y2:q.y}))
+       line.setAttribute(key,String(value));
+     layer.appendChild(line);
+   }
+   for(const [name,item] of Object.entries(positions)){
+     const id=String(name).toLowerCase().replace(/\s+/g,'-');
+     const group=wheel.querySelector('[data-layer="placements"] > g[data-sky="B"][data-placement="'+id+'"]:not([data-angle-axis="true"])');
+     if(!group)continue;
+     const leader=wheel.querySelector('[data-layer="leaders"] line[data-sky="B"][data-placement="'+id+'"]:not([data-angle])');
+     if(!leader)throw new Error('Missing Sky B placement leader for '+id);
+     const degree=Number(item.longitude),
+       lane=Number(group.dataset.placementAuthoredLane||group.dataset.placementLane),
+       exactRadius=Math.hypot(Number(leader.getAttribute('x2'))-c.x,Number(leader.getAttribute('y2'))-c.y),
+       p=polar(lane,degree),q=polar(exactRadius,degree);
+     group.dataset.exactLongitude=String(degree);
+     group.dataset.displayLongitude=String(degree);
+     group.dataset.placementAuthoredLane=String(lane);
+     group.setAttribute('transform','translate('+p.x+' '+p.y+')');
+     leader.dataset.exactLongitude=String(degree);
+     for(const [key,value] of Object.entries({x1:p.x,y1:p.y,x2:q.x,y2:q.y}))
+       leader.setAttribute(key,String(value));
+   }
    delete wheel.dataset.placementCollisionSignatureB;
    window.RelphiPlacementCollisionOrder.arrange(wheel);
- });
+ },{positions:cuspB.placements,cusps:Array.from({length:12},(_,i)=>(22+i*30)%360)});
  const boundary=await boundaryPage.evaluate(()=>{
    const wheel=window.__skyBHouseCuspTestWheel;
    const bubble=Number(window.RelphiSkyWheelSpec.comparison.placementBubbleRadius),
@@ -341,7 +357,7 @@ try{
  // longitude changes. The original source page's 10° cusp cannot fit four
  // bubbles in 0–10° Aries; using it made this acceptance mathematically false.
  const seamStress=await boundaryPage.evaluate(()=>{
-   const source=document.querySelector('#skyFoundationWheelMount > svg.sky-foundation-wheel');
+   const source=window.__skyBHouseCuspTestWheel;
    const spec=window.RelphiSkyWheelSpec.comparison,clearance=Math.max(6,Number(spec.placementClearance)||6),at=(r,deg)=>{
      const a=(deg-180)*Math.PI/180;return{x:600+r*Math.cos(a),y:600+r*Math.sin(a)};
    };
