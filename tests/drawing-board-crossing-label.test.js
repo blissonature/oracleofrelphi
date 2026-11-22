@@ -16,8 +16,15 @@ fs.mkdirSync(out,{recursive:true});
     const frame=page.frames().find(candidate=>candidate!==page.mainFrame());
     assert.ok(frame,'standalone Drawing Board iframe must load');
     await frame.waitForFunction(()=>!!window.RelphiDrawingBoardOptionsBridge && !!document.querySelector('#drawingBoardOptionsButton') && !!document.querySelector('#relphiOpenDrawingBoardCurrent'),null,{timeout:20000});
+    // The standalone Drawing Board wrapper already opens its iframe's board.
+    // Wait for that owner instead of issuing a competing toggle click, which can
+    // close the board if the wrapper's initialization opens it concurrently.
     const panel=frame.locator('#shortListPanel');
-    if(!(await panel.isVisible())) await frame.click('#relphiOpenDrawingBoardCurrent');
+    await frame.waitForFunction(() => {
+      const trigger=document.getElementById('relphiOpenDrawingBoardCurrent');
+      const board=document.getElementById('shortListPanel');
+      return !!board && !board.hidden && trigger?.getAttribute('aria-expanded')==='true';
+    },null,{timeout:20000});
     await panel.waitFor({state:'visible',timeout:10000});
     await frame.waitForSelector('#shortListPanel #drawingBoardOptionsButton',{state:'visible',timeout:10000});
 
