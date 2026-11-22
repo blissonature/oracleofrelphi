@@ -43,6 +43,13 @@ jobs:
       - name: Verify Placements, wheel, and glyph consumers on both viewports
         run: |
           node --check tests/glyph-design-consumers-browser.mjs
+          python3 -m http.server 4173 --bind 127.0.0.1 >/tmp/relphi-glyph-consumers-http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID" || true' EXIT
+          for i in $(seq 1 20); do
+            curl -fsS http://127.0.0.1:4173/sky-chart.html -o /dev/null && break
+            sleep 1
+          done
           node tests/glyph-design-consumers-browser.mjs
       - name: Check hosted exact-commit gallery on desktop and mobile
         env:
