@@ -1,6 +1,8 @@
 import assert from 'node:assert/strict';
 import {mkdir,writeFile} from 'node:fs/promises';
 import {chromium} from 'playwright';
+import pngjs from 'pngjs';
+const {PNG}=pngjs;
 
 /**
  * Reproducible 95/95 rendered audit of the one canonical Master Glyph List.
@@ -126,7 +128,30 @@ try{
       assert.ok(Math.abs(after[i].height-source.data[i].rect.height)<0.55,
         source.data[i].id+' circle toggle altered height');
     }
-    await page.screenshot({path:dest+'/95-glyphs-'+screen+'-uncircled.png',fullPage:true});
+    const uncircled=await page.screenshot({path:dest+'/95-glyphs-'+screen+'-uncircled.png',fullPage:true});
+    const bitmap=PNG.sync.read(uncircled);
+    const paintedInk=source.data.map(glyph=>{
+      // Only the glyph stage: omit name labels (beneath it) and card borders.
+      // Pixel inspection avoids mistaking invisible font ascent/descent for ink.
+      const cx=glyph.rect.x+glyph.rect.width/2-glyph.centerError.x;
+      const cy=glyph.rect.y+glyph.rect.height/2-glyph.centerError.y;
+      let pixels=0,farthest=0;
+      for(let y=Math.max(0,Math.round(cy)-42);y<Math.min(bitmap.height,Math.round(cy)+34);y++){
+        for(let x=Math.max(0,Math.round(cx)-44);x<Math.min(bitmap.width,Math.round(cx)+45);x++){
+          const i=(y*bitmap.width+x)*4;
+          if(Math.max(bitmap.data[i],bitmap.data[i+1],bitmap.data[i+2])>=95)continue;
+          pixels++;
+          farthest=Math.max(farthest,Math.hypot(x+0.5-cx,y+0.5-cy));
+        }
+      }
+      return{id:glyph.id,paintedPixels:pixels,inkRadius:Number(farthest.toFixed(3)),ringRadius:glyph.ringRadius};
+    });
+    assert.equal(paintedInk.length,95);
+    assert.ok(paintedInk.every(x=>x.paintedPixels>0),'Every canonical master must have visible painted pixels');
+    assert.ok(paintedInk.every(x=>x.inkRadius<=x.ringRadius+0.5),
+      'Painted glyph ink must remain inside the existing circle: '+JSON.stringify(paintedInk.filter(x=>x.inkRadius>x.ringRadius+0.5)));
+    report.screens[screen+'PaintedInk']=paintedInk;
+
     await page.locator('[data-circle="true"]').click();
     await page.waitForFunction(()=>[...document.querySelectorAll('#ugGrid .ug-card .relphi-glyph-bubble > circle')].length===95&&
       [...document.querySelectorAll('#ugGrid .ug-card .relphi-glyph-bubble > circle')].every(c=>c.style.opacity==='1')&&
