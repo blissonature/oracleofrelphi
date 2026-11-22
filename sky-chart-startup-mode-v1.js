@@ -14,12 +14,47 @@ let tarotWarmStarted=false;
 function previewAssetBase(){
   return `https://cdn.jsdelivr.net/gh/blissonature/oracleofrelphi@${previewRef}/`;
 }
+// Tarot previews use the same immutable-source delivery policy as Sky Chart:
+// read each CSS/JS asset from the pinned GitHub commit, not from a CDN whose
+// package limits can intermittently return non-JavaScript response bodies.
+function previewRawBase(){
+  return `https://raw.githubusercontent.com/blissonature/oracleofrelphi/${previewRef}/`;
+}
+async function previewSourceText(path){
+  const url=new URL(path,previewRawBase());
+  const response=await fetch(url.href,{cache:'no-store',signal:AbortSignal.timeout(15000)});
+  if(!response.ok)throw new Error(`Exact Tarot asset ${path} returned ${response.status}`);
+  return response.text();
+}
 function loadExactTarotHtml(){
   if(tarotPreviewHtmlPromise)return tarotPreviewHtmlPromise;
-  tarotPreviewHtmlPromise=fetch(previewAssetBase()+'tarot.html',{cache:'force-cache'}).then(response=>{
-    if(!response.ok)throw new Error(`Exact Tarot Ledger revision returned ${response.status}.`);
-    return response.text();
-  });
+  tarotPreviewHtmlPromise=(async()=>{
+    let html=await previewSourceText('tarot.html');
+    const styles=[...html.matchAll(/<link\\b[^>]*rel=["']stylesheet["'][^>]*>/gi)];
+    const scripts=[...html.matchAll(/<script\\b[^>]*\\bsrc=["']([^"']+)["'][^>]*><\\/script>/gi)];
+    const updates=new Map();
+    let nextStyle=0,nextScript=0;
+    await Promise.all(Array.from({length:Math.min(6,styles.length)},async()=>{
+      while(nextStyle<styles.length){
+        const tag=styles[nextStyle++][0];
+        const path=tag.match(/\\bhref=["']([^"']+)["']/i)?.[1];
+        if(!path||/^(?:https?:|data:|\\/\\/)/i.test(path))continue;
+        const css=(await previewSourceText(path)).replace(/<\\/style/gi,'<\\\\/style');
+        updates.set(tag,`<style data-preview-css="${path.replace(/"/g,'&quot;')}">${css}</style>`);
+      }
+    }));
+    await Promise.all(Array.from({length:Math.min(8,scripts.length)},async()=>{
+      while(nextScript<scripts.length){
+        const [tag,path]=scripts[nextScript++];
+        if(/^(?:https?:|data:|\\/\\/)/i.test(path))continue;
+        const source=await previewSourceText(path);
+        const url=URL.createObjectURL(new Blob([source],{type:'text/javascript'}));
+        updates.set(tag,`<script data-preview-js="${path.replace(/"/g,'&quot;')}" src="${url}"><\\/script>`);
+      }
+    }));
+    for(const [original,replacement] of updates)html=html.replace(original,replacement);
+    return html;
+  })();
   return tarotPreviewHtmlPromise;
 }
 function warmExactTarotPreview(){
