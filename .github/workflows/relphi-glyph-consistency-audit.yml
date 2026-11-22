@@ -28,7 +28,7 @@ jobs:
         run: node --check tests/glyph-design-system-audit-browser.mjs
       - name: Install Chromium
         run: |
-          npm install --no-save playwright@1.55.0 pngjs@7.0.0
+          npm install --no-save playwright@1.55.0 pngjs@7.0.0 luxon@3 suncalc@1.9.0
           npx playwright install --with-deps chromium
       - name: Audit all 95 canonical glyphs at desktop and mobile sizes
         run: |
@@ -40,6 +40,10 @@ jobs:
             sleep 1
           done
           node tests/glyph-design-system-audit-browser.mjs
+      - name: Verify Placements, wheel, and glyph consumers on both viewports
+        run: |
+          node --check tests/glyph-design-consumers-browser.mjs
+          node tests/glyph-design-consumers-browser.mjs
       - name: Check hosted exact-commit gallery on desktop and mobile
         env:
           PREVIEW_REF: ${{ github.event.pull_request.head.sha || github.sha }}
