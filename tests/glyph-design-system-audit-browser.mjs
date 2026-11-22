@@ -170,6 +170,13 @@ try{
     }
     const latin=source.data.filter(x=>['asc','dsc','mc','ic','vertex'].includes(x.id));
     assert.equal(latin.length,5);
+
+    const symbols=source.data.filter(d=>d.mode==='symbol');
+    assert.equal(symbols.length,3,'Chiron and both lunar nodes use the canonical symbol treatment');
+    assert.ok(symbols.every(d=>d.font?.family.includes('Apple Symbols')&&
+      d.font?.family.includes('Noto Sans Symbols 2')),
+      'Symbol fonts must use valid family tokens, not silently inherit the body font');
+
     report.screens[screen]={width,height,status:source.status,glyphs:source.data,installedFontFaces:source.fonts,
       latin:latin.map(({id,font,platformFonts,platformFontsError})=>({id,font,platformFonts,platformFontsError})),
       issues,consoleErrors:errors,circleToggleValidated:95};
