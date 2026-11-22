@@ -4750,6 +4750,11 @@
   }
   const bindRenderedCardEntry = bindCardEntry;
   window.RelphiTarotLedgerBridge = Object.freeze({
+    calculateSkyForConnector(dateISO, latitude, longitude, houseSystem='porphyry') {
+      const date=new Date(dateISO);
+      return calculateSkyWithAstronomy(date,latitude,longitude,houseSystem);
+    },
+
     renderCardEntry(cardId, eyebrow = 'Tarot Ledger entry') {
       const card = cardById(String(cardId || ''));
       return card ? cardDetailHtml(card, eyebrow) : '';

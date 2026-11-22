@@ -19938,3 +19938,74 @@ html body :is(
 .tarot-ledger-page .relphi-ledger-tool-header .relphi-tool-brandline{
   margin:.1rem 0 .2rem;
 }
+
+
+/* Tarot Ledger mobile results: retain native zoom and arrangement controls.
+   Keep the index full width instead of reserving a second desktop detail column. */
+@media (max-width: 700px) {
+  html body #browsePanel:not([hidden]) {
+    display: block !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+  }
+  html body #browsePanel .tarot-list-panel,
+  html body #browsePanel .tarot-card-list,
+  html body #browsePanel .tarot-result-grid {
+    box-sizing: border-box !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+  }
+  html body #browsePanel #cardDetail:empty {display: none !important;}
+  html body #browsePanel .active-filter-row--results {
+    position: static !important;
+    inset: auto !important;
+    transform: none !important;
+    box-sizing: border-box !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    margin: .35rem 0 .55rem !important;
+    overflow: visible !important;
+    height: auto !important;
+  }
+  html body #browsePanel .result-visual-tools {
+    display: flex !important;
+    width: 100% !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    flex-wrap: wrap !important;
+    gap: .4rem .55rem !important;
+  }
+  html body #browsePanel .result-zoom-control {
+    display: flex !important;
+    flex: 1 1 100% !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    gap: .45rem !important;
+  }
+  html body #browsePanel .result-zoom-control input {
+    flex: 1 1 auto !important;
+    min-width: 3rem !important;
+    width: auto !important;
+    max-width: none !important;
+  }
+  html body #browsePanel .result-zoom-control output {min-width: 2.8rem !important;}
+  html body #browsePanel .or-card-grid.tarot-result-grid {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    justify-content: flex-start !important;
+    align-content: flex-start !important;
+    gap: .3rem !important;
+    overflow: visible !important;
+    margin: 0 !important;
+  }
+  html body #browsePanel .or-card-grid.tarot-result-grid .or-card[hidden] {
+    display: none !important;
+  }
+  html body #browsePanel .or-card-grid.tarot-result-grid[data-result-layout="auto"] {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+}
