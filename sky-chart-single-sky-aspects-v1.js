@@ -134,7 +134,8 @@
       const entry = canonical(key, item);
       const value = longitude(item);
       return { key, item, entry, id:entry?.id || '', value, sky:slot };
-    }).filter(record => record.entry && Number.isFinite(record.value));
+    }).filter(record => record.entry && Number.isFinite(record.value))
+      .filter((record,index,records)=>records.findIndex(other=>other.id===record.id)===index);
     const cusps = houseCusps(payload, list);
     list.forEach(record => {
       record.sign = Math.floor(record.value / 30);
@@ -153,6 +154,7 @@
       for (let rightIndex = leftIndex + 1; rightIndex < list.length; rightIndex += 1) {
         const left = list[leftIndex];
         const right = list[rightIndex];
+        if(left.id===right.id)continue;
         const distance = separation(left.value, right.value);
         ASPECTS.forEach(aspect => {
           const orb = Math.abs(distance - aspect.angle);
