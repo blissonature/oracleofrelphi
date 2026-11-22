@@ -31,6 +31,8 @@ jobs:
           npm install --no-save playwright@1.55.0 pngjs@7.0.0 luxon@3 suncalc@1.9.0
           npx playwright install --with-deps chromium
       - name: Audit all 95 canonical glyphs at desktop and mobile sizes
+        env:
+          GLYPH_AUDIT_REF: ${{ github.event.pull_request.head.sha || github.sha }}
         run: |
           python3 -m http.server 4173 --bind 127.0.0.1 >/tmp/relphi-glyph-audit-http.log 2>&1 &
           SERVER_PID=$!
