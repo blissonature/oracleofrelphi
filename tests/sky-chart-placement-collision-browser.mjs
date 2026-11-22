@@ -268,7 +268,8 @@ try{
  await boundaryPage.waitForTimeout(450);
  // Synthetic house-cusp acceptance is independent of ephemeris refreshes.
  // Build one detached wheel from the intended 17-body fixture, then give it
- // a physically feasible Aries cusp at 22°. Do not let the live chart rebuild
+ // a physically feasible Aries cusp at 22°, leaving all OTHER house edges
+ // unchanged. Do not let the live chart rebuild
  // Fortune, Anti-Vertex, house edges, or the model while this test is running.
  await boundaryPage.evaluate(({positions,cusps})=>{
    const source=document.querySelector('#skyFoundationWheelMount > svg.sky-foundation-wheel');
@@ -307,7 +308,7 @@ try{
    }
    delete wheel.dataset.placementCollisionSignatureB;
    window.RelphiPlacementCollisionOrder.arrange(wheel);
- },{positions:cuspB.placements,cusps:Array.from({length:12},(_,i)=>(22+i*30)%360)});
+ },{positions:cuspB.placements,cusps:[22,40,70,100,130,160,190,220,250,280,310,340]});
  const boundary=await boundaryPage.evaluate(()=>{
    const wheel=window.__skyBHouseCuspTestWheel;
    const bubble=Number(window.RelphiSkyWheelSpec.comparison.placementBubbleRadius),
