@@ -3891,17 +3891,24 @@
   function historySnapshot() {
     return { relphiTarot: true, mode:isDedicatedSkyChartPage() ? 'chart' : state.mode, query:state.query };
   }
+  // The History API must use the visible document's origin, not a <base>
+  // URL supplied for immutable preview assets on another host.
+  function historyUrl(hash) {
+    const url = new URL(location.href);
+    url.hash = hash;
+    return url.href;
+  }
   function pushHistory() {
     if (state.suppressHistory) return;
     const snapshot = historySnapshot();
     const hash = snapshot.mode === 'idle' ? 'tarot' : 'tarot-' + snapshot.mode + (snapshot.query ? '-' + slug(snapshot.query) : '');
-    if (isDedicatedSkyChartPage()) history.replaceState(snapshot, '', location.pathname + location.search + '#' + hash);
-    else history.pushState(snapshot, '', '#' + hash);
+    if (isDedicatedSkyChartPage()) history.replaceState(snapshot, '', historyUrl(hash));
+    else history.pushState(snapshot, '', historyUrl(hash));
   }
   function replaceHistory() {
     const snapshot = historySnapshot();
     const hash = snapshot.mode === 'idle' ? 'tarot' : `tarot-${snapshot.mode}`;
-    history.replaceState(snapshot, '', location.pathname + location.search + '#' + hash);
+    history.replaceState(snapshot, '', historyUrl(hash));
   }
   function showPanel(id) {
     ['browsePanel','visibilityPanel','spreadPanel','datePanel','chartPanel','currentSkyPanel'].forEach(panel => setVisible(panel, false));
@@ -10529,7 +10536,7 @@ ${notes || ''}`;
     if (!isDedicatedSkyChartPage()) return false;
     applyHistory({ relphiTarot:true, mode:'chart', query:'' });
     const snapshot = historySnapshot();
-    history.replaceState(snapshot, '', location.pathname + location.search + '#tarot-chart');
+    history.replaceState(snapshot, '', historyUrl('tarot-chart'));
     return true;
   }
 
