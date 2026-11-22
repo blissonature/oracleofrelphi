@@ -337,10 +337,10 @@ try{
  assert.deepEqual(boundary.signErrors,[],'Every blue orb must remain in its true zodiac sign');
  assert.ok(boundary.otherOffsets.every(v=>Math.abs(v.offset)<.1),'Distant placements must stay on their exact notch');
  assert.equal(Number(boundary.unresolved),0,'A feasible five-body Sky B house-cusp cluster must have no unresolved collisions');
- await boundaryPage.close();
- // Probe the genuine five-body Aries/house-cusp cluster under small
- // longitude and house-division changes. Do NOT conflate houses with signs.
- const seamStress=await page.evaluate(()=>{
+ // Probe the SAME feasible five-body Aries/house-cusp setup under small
+ // longitude changes. The original source page's 10° cusp cannot fit four
+ // bubbles in 0–10° Aries; using it made this acceptance mathematically false.
+ const seamStress=await boundaryPage.evaluate(()=>{
    const source=document.querySelector('#skyFoundationWheelMount > svg.sky-foundation-wheel');
    const spec=window.RelphiSkyWheelSpec.comparison,clearance=Math.max(6,Number(spec.placementClearance)||6),at=(r,deg)=>{
      const a=(deg-180)*Math.PI/180;return{x:600+r*Math.cos(a),y:600+r*Math.sin(a)};
@@ -391,6 +391,7 @@ try{
    assert.deepEqual(caseResult.overlaps,[],'Sky B house-cusp cluster '+caseResult.case+' must have no touching blue orbs');
    assert.deepEqual(caseResult.misplaced,[],'Sky B house-cusp cluster '+caseResult.case+' must preserve radius and true zodiac sign');
  }
+ await boundaryPage.close();
  // The user screenshot identifies the OUTER Sky B house dividers (not sign
  // borders): Saturn should keep a straight radial stalk; Neptune and the
  // South Node must clear the adjacent blue house edges with their full orbs.
