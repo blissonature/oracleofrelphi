@@ -12,8 +12,8 @@ try {
   page.on('requestfailed',r=>failed.push(r.url()+' :: '+r.failure()?.errorText));
   page.on('response',r=>{if(r.status()>=400)failed.push(r.status()+' :: '+r.url())});
   await page.goto(url,{waitUntil:'domcontentloaded',timeout:45000});
-  await page.locator('#cardDetail .tarot-traditional-sephirah').waitFor({state:'visible',timeout:60000}).catch(async error=>{
-    console.log('PREVIEW STATUS',JSON.stringify(await page.evaluate(()=>({title:document.title,href:location.href,status:document.querySelector('#previewStatus')?.textContent,body:document.body.innerText.slice(0,500),scripts:document.scripts.length,base:document.baseURI}))));
+  await page.locator('#cardDetail .tarot-traditional-sephirah').waitFor({state:'visible',timeout:18000}).catch(async error=>{
+    console.log('PREVIEW STATUS',JSON.stringify(await page.evaluate(()=>({title:document.title,href:location.href,status:document.querySelector('#previewStatus')?.textContent,body:document.body.innerText.slice(0,500),scripts:document.scripts.length,base:document.baseURI,cardCount:window.RELPHI_TAROT_CARDS?.length,bridge:!!window.RelphiTarotLedgerBridge,legacyLedger:!!window.RelphiTarotLedger,selection:!!window.RelphiTarotCardSelectionScroll,deepLink:!!window.__relphiTarotCardDeepLinkV10,previewDocument:window.__relphiTarotPreviewDocument,browseHidden:document.getElementById('browsePanel')?.hidden,scriptUrls:[...document.scripts].map(x=>x.src).filter(Boolean).slice(-20)}))));
     console.log('ERRORS',errors.slice(0,12),'NETWORK FAILURES',failed.slice(0,25));
     throw error;
   });
