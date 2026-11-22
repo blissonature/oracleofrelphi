@@ -76,7 +76,7 @@ lines.push('');
 lines.push('- [Desktop, with circles](95-glyphs-desktop-circled.png) and [without circles](95-glyphs-desktop-uncircled.png).');
 lines.push('- [Mobile, with circles](95-glyphs-mobile-circled.png) and [without circles](95-glyphs-mobile-uncircled.png).');
 lines.push('- [Complete raw JSON](95-glyph-rendering-audit.json) includes exact bounds, computed font stacks, Chromium platform-font IDs, and discrepancies.');
-lines.push('- The governing [exception ledger](https://github.com/blissonature/oracleofrelphi/blob/main/docs/design-system/glyph-rules-and-exception-ledger.md) records reasons/approval status rather than redefining the glyph renderer.');
+lines.push('- The governing [exception ledger](https://github.com/blissonature/oracleofrelphi/blob/docs/glyph-consistency-exception-review-20261121/docs/design-system/glyph-rules-and-exception-ledger.md) records reasons/approval status rather than redefining the glyph renderer.');
 lines.push('');
 lines.push('**Outstanding design decisions:** Select the Latin typeface; justify or remove Asc/Dsc tracking; decide how AVx should share typography; approve an actual Retrograde design; explicitly address the Tau alias conflict; check font availability on Windows/macOS/iOS/Android. None of these are decided merely because this audit passes.');
 await writeFile(out+'95-glyph-design-report.md',lines.join('\n')+'\n');
