@@ -3891,17 +3891,24 @@
   function historySnapshot() {
     return { relphiTarot: true, mode:isDedicatedSkyChartPage() ? 'chart' : state.mode, query:state.query };
   }
+  // The History API must use the visible document's origin, not a <base>
+  // URL supplied for immutable preview assets on another host.
+  function historyUrl(hash) {
+    const url = new URL(location.href);
+    url.hash = hash;
+    return url.href;
+  }
   function pushHistory() {
     if (state.suppressHistory) return;
     const snapshot = historySnapshot();
     const hash = snapshot.mode === 'idle' ? 'tarot' : 'tarot-' + snapshot.mode + (snapshot.query ? '-' + slug(snapshot.query) : '');
-    if (isDedicatedSkyChartPage()) history.replaceState(snapshot, '', location.pathname + location.search + '#' + hash);
-    else history.pushState(snapshot, '', '#' + hash);
+    if (isDedicatedSkyChartPage()) history.replaceState(snapshot, '', historyUrl(hash));
+    else history.pushState(snapshot, '', historyUrl(hash));
   }
   function replaceHistory() {
     const snapshot = historySnapshot();
     const hash = snapshot.mode === 'idle' ? 'tarot' : `tarot-${snapshot.mode}`;
-    history.replaceState(snapshot, '', location.pathname + location.search + '#' + hash);
+    history.replaceState(snapshot, '', historyUrl(hash));
   }
   function showPanel(id) {
     ['browsePanel','visibilityPanel','spreadPanel','datePanel','chartPanel','currentSkyPanel'].forEach(panel => setVisible(panel, false));
@@ -4538,6 +4545,35 @@
     }).slice(0, 8);
   }
 
+  // Book T / Thoth: each numbered minor rank maps to its own sephirah.
+  // Keep this rank-to-sphere correspondence separate from the card's decan ruler.
+  const TRADITIONAL_SEPHIROTH_BY_RANK = Object.freeze({
+    Ace:   { number:1,  name:'Kether',    quality:'Crown',         sphere:'Primum Mobile / First Motion' },
+    Two:   { number:2,  name:'Chokmah',   quality:'Wisdom',        sphere:'Zodiac / fixed stars' },
+    Three: { number:3,  name:'Binah',     quality:'Understanding', planet:'Saturn' },
+    Four:  { number:4,  name:'Chesed',    quality:'Mercy',         planet:'Jupiter' },
+    Five:  { number:5,  name:'Geburah',   quality:'Severity',      planet:'Mars' },
+    Six:   { number:6,  name:'Tiphareth', quality:'Beauty',        planet:'Sun' },
+    Seven: { number:7,  name:'Netzach',   quality:'Victory',       planet:'Venus' },
+    Eight: { number:8,  name:'Hod',       quality:'Splendour',     planet:'Mercury' },
+    Nine:  { number:9,  name:'Yesod',     quality:'Foundation',    planet:'Moon' },
+    Ten:   { number:10, name:'Malkuth',   quality:'Kingdom',       sphere:'Four elements / material realm' }
+  });
+
+  function traditionalSephirahHtml(card) {
+    if (card?.arcana !== 'Minor' || (card.card_type !== 'Ace' && card.card_type !== 'Pip')) return '';
+    const sephirah = TRADITIONAL_SEPHIROTH_BY_RANK[card.rank];
+    if (!sephirah) return '';
+    const fields = [
+      field('Sephirah', `${sephirah.number} · ${sephirah.name} (${sephirah.quality})`),
+      field(sephirah.planet ? 'Planetary sphere' : 'Associated sphere', sephirah.planet || sephirah.sphere)
+    ];
+    const distinction = card.card_type === 'Pip'
+      ? '<p class="generated-note">The rank’s Tree of Life correspondence is distinct from this card’s zodiacal decan ruler.</p>'
+      : '';
+    return `<section class="system-card tarot-traditional-sephirah" aria-label="Golden Dawn and Thoth Tree of Life correspondence"><h3>Golden Dawn / Thoth · Tree of Life</h3><dl>${fields.join('')}</dl>${distinction}</section>`;
+  }
+
   function relphiLayerHtml(card) {
     if (UHN_ORDER.has(card?.card_id)) return '';
     const rel = card?.relphi;
@@ -4708,6 +4744,7 @@
             ${lockedIngredientsHtml(card)}
           </section>
           ${lockedInterpretationComparisonHtml(card)}
+          ${traditionalSephirahHtml(card)}
           ${zodiacRangeGraphicHtml(card)}
           ${signList(card.astrology?.sign).length === 1 && SIGN_DATA[card.astrology?.sign] ? `<p class="generated-note">${escapeHtml(dignityLine(card.astrology.sign))}</p>` : ''}
           ${card.card_type === 'Pip' ? `<section class="ruler-interaction"><p class="eyebrow">Ruler interaction</p><p>${escapeHtml(decanRulerInteraction(card))}</p></section>` : ''}
@@ -4750,6 +4787,13 @@
   }
   const bindRenderedCardEntry = bindCardEntry;
   window.RelphiTarotLedgerBridge = Object.freeze({
+    // Share the normal full-entry interaction with the existing exact-preview route.
+    openFullEntry(cardId) {
+      const id = String(cardId || '').trim();
+      if (!cardById(id)) return false;
+      openFullEntryById(id);
+      return true;
+    },
     renderCardEntry(cardId, eyebrow = 'Tarot Ledger entry') {
       const card = cardById(String(cardId || ''));
       return card ? cardDetailHtml(card, eyebrow) : '';
@@ -10499,7 +10543,7 @@ ${notes || ''}`;
     if (!isDedicatedSkyChartPage()) return false;
     applyHistory({ relphiTarot:true, mode:'chart', query:'' });
     const snapshot = historySnapshot();
-    history.replaceState(snapshot, '', location.pathname + location.search + '#tarot-chart');
+    history.replaceState(snapshot, '', historyUrl('tarot-chart'));
     return true;
   }
 

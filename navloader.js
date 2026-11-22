@@ -2,19 +2,46 @@
 (function () {
   'use strict';
 
+  // Keep one dynamic-script owner and preserve insertion order in both normal
+  // pages and exact-commit Tarot previews. Preview scripts are fetched from the
+  // commit itself because jsDelivr intermittently blocks assets in this repo.
+  let exactPreviewScriptQueue=Promise.resolve();
   function appendScript(src, onload, onerror) {
-    const base = src.split('?')[0];
-    const existing = document.querySelector('script[src^="' + base + '"]');
-    if (existing) {
-      if (onload) setTimeout(onload, 0);
+    const base=src.split('?')[0];
+    const ref=new URLSearchParams(location.search).get('ref')||'';
+    const exactTarotPreview=isTarotPreviewDocument() && /^[0-9a-f]{40}$/i.test(ref);
+    const existing=exactTarotPreview
+      ? [...document.querySelectorAll('script[data-relphi-preview-src]')].find(node=>node.dataset.relphiPreviewSrc===base)
+      : document.querySelector('script[src^="' + base + '"]');
+    if(existing){
+      if(onload)setTimeout(onload,0);
       return existing;
     }
-    const script = document.createElement('script');
-    script.async = false;
-    script.src = src;
-    if (onload) script.addEventListener('load', onload, { once:true });
-    if (onerror) script.addEventListener('error', onerror, { once:true });
-    document.body.appendChild(script);
+    const script=document.createElement('script');
+    script.async=false;
+    if(onload)script.addEventListener('load',onload,{once:true});
+    if(onerror)script.addEventListener('error',onerror,{once:true});
+    if(!exactTarotPreview){
+      script.src=src;
+      document.body.appendChild(script);
+      return script;
+    }
+    script.dataset.relphiPreviewSrc=base;
+    exactPreviewScriptQueue=exactPreviewScriptQueue.then(async()=>{
+      const url=new URL(src,`https://raw.githubusercontent.com/blissonature/oracleofrelphi/${ref}/`);
+      const response=await fetch(url.href,{cache:'no-store',signal:AbortSignal.timeout(15000)});
+      if(!response.ok)throw new Error(`Tarot preview asset ${src} returned ${response.status}`);
+      const blob=URL.createObjectURL(new Blob([await response.text()],{type:'text/javascript'}));
+      await new Promise((resolve,reject)=>{
+        script.addEventListener('load',resolve,{once:true});
+        script.addEventListener('error',()=>reject(new Error(`Tarot preview script failed: ${src}`)),{once:true});
+        script.src=blob;
+        document.body.appendChild(script);
+      });
+    }).catch(error=>{
+      console.error('[Oracle of Relphi] Exact Tarot enhancement could not load:',src,error);
+      if(!script.isConnected&&onerror)onerror(error);
+    });
     return script;
   }
 

@@ -11,6 +11,8 @@ async function openBoard(page){
   const panel=page.locator('#shortListPanel');
   if(!(await panel.isVisible())) await page.click('#relphiOpenDrawingBoardCurrent');
   await panel.waitFor({state:'visible'});
+  if((await page.locator('#relphiBoardSettingsButton').getAttribute('aria-expanded'))!=='true') await page.click('#relphiBoardSettingsButton');
+  await page.waitForSelector('#drawingBoardOptionsButton',{state:'visible'});
 }
 async function resetAndApplyQuestions(page,labels){
   await page.click('#drawingBoardOptionsButton');
@@ -20,6 +22,7 @@ async function resetAndApplyQuestions(page,labels){
     const state=window.RelphiDrawingBoardPrefabsBridge?.getState?.();
     return state && !state.activeLayout && state.slotCount===0 && state.hasCards===false;
   });
+  if(!(await page.locator('#relphiBulkReferents').isVisible().catch(()=>false)))await page.click('[data-referent-path="bespoke"]');
   await page.waitForSelector('#relphiBulkReferents',{state:'visible'});
   await page.fill('#relphiBulkReferents',labels.join(', '));
   await page.click('#relphiParseReferents');

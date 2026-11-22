@@ -12,8 +12,12 @@ async function openBoard(page){
   if(!(await panel.isVisible())) await page.click('#relphiOpenDrawingBoardCurrent');
   await panel.waitFor({state:'visible'});
 }
+async function ensureSettings(page){
+  if((await page.locator('#relphiBoardSettingsButton').getAttribute('aria-expanded'))!=='true') await page.click('#relphiBoardSettingsButton');
+  await page.waitForSelector('#drawingBoardOptionsButton',{state:'visible'});
+}
 async function resetBoard(page){
-  await page.click('#drawingBoardOptionsButton');
+  await ensureSettings(page); await page.click('#drawingBoardOptionsButton');
   await page.waitForSelector('.relphi-reading-options-drawer.is-reading-options-open',{state:'visible'});
   await page.click('#relphiResetBoard');
   await page.waitForFunction(()=>{
@@ -23,7 +27,7 @@ async function resetBoard(page){
 }
 async function applyQuestions(page,labels){
   if(!(await page.locator('.relphi-reading-options-drawer.is-reading-options-open').count())) {
-    await page.click('#drawingBoardOptionsButton');
+    await ensureSettings(page); await page.click('#drawingBoardOptionsButton');
     await page.waitForSelector('.relphi-reading-options-drawer.is-reading-options-open',{state:'visible'});
   }
   if (!(await page.locator('#relphiBulkReferents').isVisible().catch(()=>false))) await page.click('[data-referent-path="bespoke"]');
@@ -111,7 +115,7 @@ async function applyQuestions(page,labels){
     await page.click('#zoomCardRowExtents');
     await page.waitForTimeout(180);
 
-    await page.click('#drawingBoardOptionsButton');
+    await ensureSettings(page); await page.click('#drawingBoardOptionsButton');
     await page.waitForSelector('.relphi-reading-options-drawer.is-reading-options-open',{state:'visible'});
     await page.click('[data-referent-path="bespoke"]');
     await page.waitForSelector('#relphiAddPosition',{state:'visible'});

@@ -18,9 +18,12 @@ async function openBoard(page) {
   await panel.waitFor({state:'visible'});
   await page.waitForSelector('#shortListPanel .card-row-workspace-toolbar.relphi-board-controller',{state:'visible'});
   await page.waitForSelector('#drawing-board-post-export',{state:'visible'});
+  if((await page.locator('#relphiBoardSettingsButton').getAttribute('aria-expanded'))!=='true') await page.click('#relphiBoardSettingsButton');
+  await page.waitForSelector('#drawingBoardOptionsButton',{state:'visible'});
 }
 async function applyTemplate(page,id) {
   await page.click('#drawingBoardOptionsButton');
+  await page.click('[data-referent-path="templates"]');
   await page.waitForSelector('.relphi-reading-options-drawer.is-reading-options-open #relphiSpreadTemplateSelect',{state:'visible'});
   await page.selectOption('#relphiSpreadTemplateSelect',id);
   await page.click('#relphiApplyOptions');

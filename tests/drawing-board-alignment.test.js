@@ -19,7 +19,9 @@ fs.mkdirSync(out,{recursive:true});
 
     // Magnet geometry is exercised in drawing-board-runtime.test.js on the actual
     // mobile toolbar. This test owns the visible description-layer title alignment.
+    if((await page.locator('#relphiBoardSettingsButton').getAttribute('aria-expanded'))!=='true') await page.click('#relphiBoardSettingsButton');
     await page.click('#drawingBoardOptionsButton');
+    await page.click('[data-referent-path="templates"]');
     await page.waitForSelector('#relphiSpreadTemplateSelect',{state:'visible'});
     await page.selectOption('#relphiSpreadTemplateSelect','focus-1');
     await page.click('#relphiApplyOptions');

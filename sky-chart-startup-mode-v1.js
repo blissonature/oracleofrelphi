@@ -14,12 +14,47 @@ let tarotWarmStarted=false;
 function previewAssetBase(){
   return `https://cdn.jsdelivr.net/gh/blissonature/oracleofrelphi@${previewRef}/`;
 }
+// Tarot previews use the same immutable-source delivery policy as Sky Chart:
+// read each CSS/JS asset from the pinned GitHub commit, not from a CDN whose
+// package limits can intermittently return non-JavaScript response bodies.
+function previewRawBase(){
+  return `https://raw.githubusercontent.com/blissonature/oracleofrelphi/${previewRef}/`;
+}
+async function previewSourceText(path){
+  const url=new URL(path,previewRawBase());
+  const response=await fetch(url.href,{cache:'no-store',signal:AbortSignal.timeout(15000)});
+  if(!response.ok)throw new Error(`Exact Tarot asset ${path} returned ${response.status}`);
+  return response.text();
+}
 function loadExactTarotHtml(){
   if(tarotPreviewHtmlPromise)return tarotPreviewHtmlPromise;
-  tarotPreviewHtmlPromise=fetch(previewAssetBase()+'tarot.html',{cache:'force-cache'}).then(response=>{
-    if(!response.ok)throw new Error(`Exact Tarot Ledger revision returned ${response.status}.`);
-    return response.text();
-  });
+  tarotPreviewHtmlPromise=(async()=>{
+    let html=await previewSourceText('tarot.html');
+    const styles=[...html.matchAll(/<link\b[^>]*rel=["']stylesheet["'][^>]*>/gi)];
+    const scripts=[...html.matchAll(/<script\b[^>]*\bsrc=["']([^"']+)["'][^>]*><\/script>/gi)];
+    const updates=new Map();
+    let nextStyle=0,nextScript=0;
+    await Promise.all(Array.from({length:Math.min(6,styles.length)},async()=>{
+      while(nextStyle<styles.length){
+        const tag=styles[nextStyle++][0];
+        const path=tag.match(/\bhref=["']([^"']+)["']/i)?.[1];
+        if(!path||/^(?:https?:|data:|\/\/)/i.test(path))continue;
+        const css=(await previewSourceText(path)).replace(/<\/style/gi,'<\\/style');
+        updates.set(tag,`<style data-preview-css="${path.replace(/"/g,'&quot;')}">${css}</style>`);
+      }
+    }));
+    await Promise.all(Array.from({length:Math.min(8,scripts.length)},async()=>{
+      while(nextScript<scripts.length){
+        const [tag,path]=scripts[nextScript++];
+        if(/^(?:https?:|data:|\/\/)/i.test(path))continue;
+        const source=await previewSourceText(path);
+        const url=URL.createObjectURL(new Blob([source],{type:'text/javascript'}));
+        updates.set(tag,`<script data-preview-js="${path.replace(/"/g,'&quot;')}" src="${url}"><\/script>`);
+      }
+    }));
+    for(const [original,replacement] of updates)html=html.replace(original,replacement);
+    return html;
+  })();
   return tarotPreviewHtmlPromise;
 }
 function warmExactTarotPreview(){
@@ -51,7 +86,7 @@ function requestedPreviewCardId(){
   return String(new URLSearchParams(location.search).get('card')||'').trim();
 }
 function previewCardBridgeScript(){
-  return '<script>(function(){\'use strict\';var cardId=String(window.__relphiTarotRequestedCard||new URLSearchParams(location.search).get(\'card\')||\'\').trim();function restoreScroll(){if(window.__relphiPreviewOriginalScrollIntoView){Element.prototype.scrollIntoView=window.__relphiPreviewOriginalScrollIntoView;delete window.__relphiPreviewOriginalScrollIntoView}}function esc(value){if(window.CSS&&CSS.escape)return CSS.escape(value);return String(value).replace(/["\\\\]/g,\'\\\\$&\')}function alignList(){if(!cardId)return;var browse=document.getElementById(\'browsePanel\'),list=document.getElementById(\'cardList\');if(!browse||!list)return;var target=list.querySelector(\'.or-card[data-id="\'+esc(cardId)+\'"]\')||list.querySelector(\'[data-card-id="\'+esc(cardId)+\'"]\');if(!target)return;var scroller=null;for(var node=target.parentElement;node&&browse.contains(node);node=node.parentElement){var style=getComputedStyle(node),overflow=style.overflowY;if((overflow===\'auto\'||overflow===\'scroll\')&&node.scrollHeight>node.clientHeight+1){scroller=node;break}if(node===browse)break}if(!scroller){var panel=browse.querySelector(\'.tarot-list-panel\');if(panel&&panel.scrollHeight>panel.clientHeight+1)scroller=panel}if(scroller){var nr=target.getBoundingClientRect(),sr=scroller.getBoundingClientRect(),top=scroller.scrollTop+(nr.top-sr.top)-(scroller.clientHeight-nr.height)/2;scroller.scrollTop=Math.max(0,Math.min(Math.max(0,scroller.scrollHeight-scroller.clientHeight),top))}}function finish(){try{if(!cardId)return;var detail=document.getElementById(\'cardDetail\'),browse=document.getElementById(\'browsePanel\'),ready=!!(browse&&!browse.hidden&&detail&&detail.textContent.trim());if(!ready&&window.RelphiTarotLedger&&window.RelphiTarotLedger.openFullEntry)window.RelphiTarotLedger.openFullEntry(cardId,\'ledger\');requestAnimationFrame(function(){requestAnimationFrame(function(){try{alignList();detail=document.getElementById(\'cardDetail\');if(detail&&detail.textContent.trim()){var top=Math.max(0,detail.getBoundingClientRect().top+window.scrollY-12);window.scrollTo({top:top,behavior:\'auto\'})}}finally{restoreScroll()}})})}catch(error){console.error(\'[Oracle of Relphi] Exact Tarot card handoff failed:\',error);restoreScroll()}}if(document.readyState===\'loading\')document.addEventListener(\'DOMContentLoaded\',finish,{once:true});else finish();setTimeout(restoreScroll,1500)})();<\/script>';
+  return '<script>(function(){\'use strict\';var cardId=String(window.__relphiTarotRequestedCard||new URLSearchParams(location.search).get(\'card\')||\'\').trim();function restoreScroll(){if(window.__relphiPreviewOriginalScrollIntoView){Element.prototype.scrollIntoView=window.__relphiPreviewOriginalScrollIntoView;delete window.__relphiPreviewOriginalScrollIntoView}}function esc(value){if(window.CSS&&CSS.escape)return CSS.escape(value);return String(value).replace(/["\\\\]/g,\'\\\\$&\')}function alignList(){if(!cardId)return;var browse=document.getElementById(\'browsePanel\'),list=document.getElementById(\'cardList\');if(!browse||!list)return;var target=list.querySelector(\'.or-card[data-id="\'+esc(cardId)+\'"]\')||list.querySelector(\'[data-card-id="\'+esc(cardId)+\'"]\');if(!target)return;var scroller=null;for(var node=target.parentElement;node&&browse.contains(node);node=node.parentElement){var style=getComputedStyle(node),overflow=style.overflowY;if((overflow===\'auto\'||overflow===\'scroll\')&&node.scrollHeight>node.clientHeight+1){scroller=node;break}if(node===browse)break}if(!scroller){var panel=browse.querySelector(\'.tarot-list-panel\');if(panel&&panel.scrollHeight>panel.clientHeight+1)scroller=panel}if(scroller){var nr=target.getBoundingClientRect(),sr=scroller.getBoundingClientRect(),top=scroller.scrollTop+(nr.top-sr.top)-(scroller.clientHeight-nr.height)/2;scroller.scrollTop=Math.max(0,Math.min(Math.max(0,scroller.scrollHeight-scroller.clientHeight),top))}}function finish(){try{if(!cardId)return;var detail=document.getElementById(\'cardDetail\'),browse=document.getElementById(\'browsePanel\'),ready=!!(browse&&!browse.hidden&&detail&&detail.textContent.trim());if(!ready&&window.RelphiTarotLedgerBridge&&window.RelphiTarotLedgerBridge.openFullEntry)window.RelphiTarotLedgerBridge.openFullEntry(cardId);requestAnimationFrame(function(){requestAnimationFrame(function(){try{alignList();detail=document.getElementById(\'cardDetail\');if(detail&&detail.textContent.trim()){var top=Math.max(0,detail.getBoundingClientRect().top+window.scrollY-12);window.scrollTo({top:top,behavior:\'auto\'})}}finally{restoreScroll()}})})}catch(error){console.error(\'[Oracle of Relphi] Exact Tarot card handoff failed:\',error);restoreScroll()}}if(document.readyState===\'loading\')document.addEventListener(\'DOMContentLoaded\',finish,{once:true});else finish();setTimeout(restoreScroll,1500)})();<\/script>';
 }
 function injectPreviewBase(html){
   const cardId=requestedPreviewCardId();

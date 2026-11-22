@@ -16,12 +16,37 @@ fs.mkdirSync(out,{recursive:true});
     const frame=page.frames().find(candidate=>candidate!==page.mainFrame());
     assert.ok(frame,'standalone Drawing Board iframe must load');
     await frame.waitForFunction(()=>!!window.RelphiDrawingBoardOptionsBridge && !!document.querySelector('#drawingBoardOptionsButton') && !!document.querySelector('#relphiOpenDrawingBoardCurrent'),null,{timeout:20000});
+    // The standalone Drawing Board wrapper already opens its iframe's board.
+    // Wait for that owner instead of issuing a competing toggle click, which can
+    // close the board if the wrapper's initialization opens it concurrently.
     const panel=frame.locator('#shortListPanel');
-    if(!(await panel.isVisible())) await frame.click('#relphiOpenDrawingBoardCurrent');
+    await frame.waitForFunction(() => {
+      const trigger=document.getElementById('relphiOpenDrawingBoardCurrent');
+      const board=document.getElementById('shortListPanel');
+      return !!board && !board.hidden && trigger?.getAttribute('aria-expanded')==='true';
+    },null,{timeout:20000});
     await panel.waitFor({state:'visible',timeout:10000});
+    // The current Drawing Board workflow places Crafted options inside
+    // Board Settings; open that native control before selecting the template.
+    await frame.waitForSelector('#relphiBoardSettingsButton',{state:'visible',timeout:10000});
+    await frame.click('#relphiBoardSettingsButton');
+    console.log('CRAFTED_VIS_DIAG',JSON.stringify(await frame.evaluate(()=>{
+      const node=document.getElementById('drawingBoardOptionsButton');
+      const parents=[];
+      for(let p=node; p&&parents.length<8; p=p.parentElement){
+        const st=getComputedStyle(p),r=p.getBoundingClientRect();
+        parents.push({tag:p.tagName,id:p.id,classes:p.className,hidden:p.hidden,display:st.display,visibility:st.visibility,w:r.width,h:r.height});
+      }
+      const board=document.getElementById('shortListPanel');
+      const settings=document.getElementById('relphiBoardSettingsButton');
+      return{parents,boardClass:board?.className,boardHidden:board?.hidden,settingsExpanded:settings?.getAttribute('aria-expanded'),settingsVisible:!!settings&&getComputedStyle(settings).display!=='none'};
+    })));
     await frame.waitForSelector('#shortListPanel #drawingBoardOptionsButton',{state:'visible',timeout:10000});
 
     await frame.click('#drawingBoardOptionsButton');
+    // Crafted settings opens on a chosen subview; the template picker lives in Templates.
+    await frame.waitForSelector('[data-referent-path="templates"]',{state:'visible',timeout:10000});
+    await frame.click('[data-referent-path="templates"]');
     await frame.waitForSelector('.relphi-reading-options-drawer.is-reading-options-open #relphiSpreadTemplateSelect',{state:'visible',timeout:10000});
     await frame.selectOption('#relphiSpreadTemplateSelect','celtic-cross-10');
     await frame.click('#relphiApplyOptions');

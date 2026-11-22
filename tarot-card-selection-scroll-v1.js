@@ -100,6 +100,9 @@
   }
 
   function ensureFullEntryDeepLink(){
+    // The self-hosted exact-preview bridge already calls the canonical full-entry
+    // navigation owner. Do not install a second competing deep-link driver.
+    if(window.__relphiTarotPreviewDocument===true)return;
     if(!requestedCardId()||window.__relphiTarotCardDeepLinkV10)return;
     if(document.querySelector('script[data-relphi-tarot-card-deep-link]'))return;
     const script=document.createElement('script');
