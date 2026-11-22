@@ -76,9 +76,9 @@ try{
     assert.ok(source.data.every(d=>d.outerCircleOpacity==='1'),'Every circle starts visible');
     assert.ok(source.data.every(d=>!d.clipped),'No glyph can be clipped by gallery artboard');
 
-    // The original Retrograde master used a -32,-32 viewBox and translated its
-    // artwork toward (0,0). The shared staticMaster owner expects 0..100 source
-    // geometry centered around (50,50). Keep the approved path unchanged.
+    // This static master deliberately retains its original -32..32 source
+    // artboard for direct image consumers. The canonical component must use
+    // that source viewBox center rather than hardcode (50,50).
     const rx=source.data.find(d=>d.id==='retrograde');
     assert.ok(rx&&rx.mode==='static-master'&&rx.shapes===1&&rx.literalText===null,
       'Retrograde retains the single original outlined shape');
@@ -93,8 +93,8 @@ try{
         texts:xml.querySelectorAll('text').length,circles:xml.querySelectorAll('circle').length,
         originalPath:xml.querySelector('path')?.getAttribute('d')?.startsWith('m 50.066711,43.626278')};
     });
-    assert.deepEqual(rxAsset,{viewBox:'0 0 100 100',paths:1,texts:0,circles:0,originalPath:true},
-      'Normalize only the coordinate system, preserving original glyph geometry');
+    assert.deepEqual(rxAsset,{viewBox:'-32 -32 64 64',paths:1,texts:0,circles:0,originalPath:true},
+      'The original source image artboard and glyph geometry must remain unchanged');
 
     assert.deepEqual(errors,[],'No browser exceptions in master gallery');
     // Read Chromium's actual platform font, not merely the requested CSS stack.
