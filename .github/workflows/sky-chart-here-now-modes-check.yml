@@ -12,6 +12,8 @@ on:
       - 'sky-chart-staleness-v1.js'
       - 'tests/sky-chart-here-now-modes-browser.mjs'
       - 'tests/sky-chart-one-click-both-slots-browser.mjs'
+      - 'tests/sky-chart-here-now-native-geolocation-timeout-browser.mjs'
+      - 'tests/sky-chart-here-now-webkit-permissions-browser.mjs'
       - '.github/workflows/sky-chart-here-now-modes-check.yml'
 jobs:
   here-now-browser:
@@ -28,17 +30,21 @@ jobs:
           node --check sky-chart-staleness-v1.js
           node --check tests/sky-chart-here-now-modes-browser.mjs
           node --check tests/sky-chart-one-click-both-slots-browser.mjs
+          node --check tests/sky-chart-here-now-native-geolocation-timeout-browser.mjs
+          node --check tests/sky-chart-here-now-webkit-permissions-browser.mjs
           node tests/sky-chart-architecture-contract.mjs
           node --test tests/sky-chart-heptagram-uniform-strokes.test.mjs
       - name: Install browser dependencies
         run: |
           npm install --no-save playwright@1.52.0 luxon@3 suncalc@1.9.0
-          npx playwright install --with-deps chromium
+          npx playwright install --with-deps chromium webkit
       - name: Verify Where Here and When Now interactions
         run: |
           python3 -m http.server 4173 > /tmp/sky-chart-modes-server.log 2>&1 &
           node tests/sky-chart-here-now-modes-browser.mjs
           node tests/sky-chart-one-click-both-slots-browser.mjs
+          node tests/sky-chart-here-now-native-geolocation-timeout-browser.mjs
+          node tests/sky-chart-here-now-webkit-permissions-browser.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:

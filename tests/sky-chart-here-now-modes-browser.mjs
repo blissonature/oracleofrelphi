@@ -232,7 +232,8 @@ try{
  await page.waitForTimeout(400);
  assert.equal(await page.locator('#skyFoundationB .sky-where-when-summary').isVisible(),false,'Unknown-time sky must not display a prior temporal heptagram.');
  await page.locator('#skyFoundationB [data-sky-drawer-tab="where"]').click();
- await page.waitForFunction(()=>document.querySelector('#skyFoundationB [data-ww-here-value]')?.textContent?.includes('Salt Lake City'),null,{timeout:20000});
+ // The editor displays the saved location on open; it must not automatically geolocate or replace it.
+  await page.waitForFunction(()=>document.querySelector('#skyFoundationB [data-ww-here-value]')?.textContent?.includes('Malden, Massachusetts'),null,{timeout:20000});
  assert.equal(await page.locator('#skyFoundationB [data-ww-field="here"]').isChecked(),true);
  assert.deepEqual(errors,[],'No uncaught page errors.');
  console.log('Fixed Now: refresh captures a new instant, never auto-commits or advances; no Live; legacy skies freeze.');
