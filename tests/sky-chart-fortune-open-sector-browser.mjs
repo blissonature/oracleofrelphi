@@ -66,6 +66,16 @@ try{
    const original=document.querySelector('#skyFoundationWheelMount > svg.sky-foundation-wheel');
    // A detached copy prevents live ephemeris/derived-Fortune updates from
    // rewriting the provided regression data during this independent solve.
+   const liveFortune=original.querySelector('[data-layer="placements"] > g[data-sky="B"][data-placement="part-of-fortune"]');
+   const liveState=liveFortune?{
+     exact:Number(liveFortune.dataset.exactLongitude),
+     display:Number(liveFortune.dataset.displayLongitude),
+     offset:((Number(liveFortune.dataset.displayLongitude)-Number(liveFortune.dataset.exactLongitude)+540)%360)-180,
+     authoredLane:liveFortune.dataset.placementAuthoredLane,
+     fallback:liveFortune.dataset.placementOrderFallback,
+     blocked:original.dataset.placementRadialLeaderBlocked,
+     remained:original.dataset.placementRemainingOverlapsB
+   }:null;
    const wheel=original.cloneNode(true);
    const center={x:600,y:600},rad=degree=>(degree-180)*Math.PI/180;
    const polar=(radius,degree)=>({x:center.x+radius*Math.cos(rad(degree)),
@@ -128,7 +138,7 @@ try{
    const offCircle=all.filter(x=>Math.abs(Math.hypot(x.x-600,x.y-600)-x.lane)>.1).map(x=>x.id);
    const diff=(a,b)=>Math.abs((((a-b+540)%360)-180));
    const nearestCusp=Math.min(...houseCusps.map(d=>diff(d,fortune.exact)));
-   return {fortune,relevant,items:all.length,collisions,wrongHouse,wrongSign,offCircle,
+   return {liveState,fortune,relevant,items:all.length,collisions,wrongHouse,wrongSign,offCircle,
      nearestCusp,remaining:wheel.dataset.placementRemainingOverlapsB,
      unresolved:wheel.dataset.placementUnresolvedBubbleOverlaps,
      blocked:wheel.dataset.placementRadialLeaderBlocked,
@@ -137,6 +147,9 @@ try{
   },{B,houseCusps:comparison.houseCusps});
   console.log('FORTUNE OPEN HOUSE SECTOR '+viewport.toUpperCase(),JSON.stringify(result));
   assert.ok(result.fortune,"Screenshot's Fortune must be present on the wheel");
+  assert.ok(result.liveState,'The real wheel must also render Part of Fortune');
+  assert.ok(Math.abs(result.liveState.exact-58.75)<.001,'The real wheel must carry the 28°45 Taurus longitude');
+  assert.ok(Math.abs(result.liveState.offset)<=3.5,'The real wheel may not exile Fortune while the exact sector remains usable');
   assert.ok(Math.abs(result.fortune.exact-58.75)<.001,'The exact screenshot longitude must be retained');
   assert.equal(result.items,17,'Entire outer wheel is present');
   assert.deepEqual(result.wrongHouse,[],'No placement enters another house');
