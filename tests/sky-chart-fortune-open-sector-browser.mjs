@@ -14,7 +14,11 @@ const B={
  Pluto:300+3+23/60, Chiron:27+10/60, Lilith:270+7+40/60,
  'Part of Fortune':30+28+45/60, Vertex:60+6+19/60,
  'Anti-Vertex':240+6+19/60, 'North Node':300+24+55/60,
- 'South Node':120+24+55/60
+ 'South Node':120+24+55/60,
+ // The screenshot also contains blue Dsc, Asc, MC and IC angle frames.
+ // Night Fortune = Asc + Sun - Moon = 58°45 Taurus.
+ Ascendant:209+34/60, Descendant:29+34/60,
+ Midheaven:124, 'Imum Coeli':304
 };
 const A={
  Sun:195,Moon:118.4167,Mercury:206.1667,Venus:169.8833,Mars:167.8667,
@@ -29,7 +33,7 @@ const norm=v=>(v%360+360)%360;
 const comparison={
  // The user's screenshot shows an outer-house division close to 1.5° Gemini,
  // with Moon and Fortune both inside house 7; Chiron at 27° Aries stays in house 6.
- asc:211,houseCusps:[211,242,272,302,332,359,29,61.5,93,122,152,182]
+ asc:209+34/60,houseCusps:[209+34/60,242,272,302,332,359,29+34/60,61.5,93,122,152,182]
 };
 function fixture(name,positions,cusps){
  return{name,houseSystem:'porphyry',houseCusps:cusps,
