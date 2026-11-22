@@ -1,0 +1,50 @@
+name: Sky Chart Fortune exact-longitude collision regression
+on:
+  push:
+    branches:
+      - fix/sky-b-fortune-open-house-sector-20261122
+  pull_request:
+    paths:
+      - sky-chart-placement-collision-order-v1.js
+      - sky-chart.html
+      - tests/sky-chart-fortune-open-sector-browser.mjs
+      - .github/workflows/sky-chart-fortune-open-sector.yml
+jobs:
+  fortune-collision:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 16
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify syntax
+        run: |
+          node --check tests/sky-chart-fortune-open-sector-browser.mjs
+          node --check sky-chart-placement-collision-order-v1.js
+      - name: Install Chromium
+        run: |
+          npm install --no-save playwright@1.55.0 luxon@3 suncalc@1.9.0
+          npx playwright install --with-deps chromium
+      - name: Reproduce screenshot and verify collision constraints
+        run: |
+          python3 -m http.server 4173 --bind 127.0.0.1 >/tmp/fortune-test-http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID" || true' EXIT
+          for i in $(seq 1 20); do
+            curl -fsS http://127.0.0.1:4173/sky-chart.html -o /dev/null && break
+            sleep 1
+          done
+          node tests/sky-chart-fortune-open-sector-browser.mjs
+      - name: Verify exact-commit self-hosted preview, desktop and mobile
+        env:
+          PREVIEW_REF: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          SKY_PREVIEW_URL="https://oracleofrelphi.com/sky-chart-preview/sky-chart.html?ref=$PREVIEW_REF" node tests/sky-chart-fortune-open-sector-browser.mjs
+      - name: Evidence
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: fortune-open-sector-evidence
+          path: test-results/fortune-collision/
+          if-no-files-found: ignore
