@@ -51,7 +51,7 @@ try{
           return{
             index:i+1,id:entry.id,name:entry.name,mode:entry.fitMode,asset:entry.asset,
             rawScale:entry.scale,dx:entry.dx,dy:entry.dy,
-            artTag:art.tagName.toLowerCase(),owner:art.dataset.canonicalGlyphId,hostOwner:host.dataset.canonicalGlyphId,
+            artTag:art.tagName.toLowerCase(),owner:art.dataset.canonicalGlyphId,hostOwner:bubble.dataset.canonicalGlyphId,
             fitted:art.dataset.relphiAtomicCommit,viewBox:host.getAttribute('viewBox'),
             outerCircleOpacity:ring.style.opacity,
             rect:{x:box.x,y:box.y,width:box.width,height:box.height},
