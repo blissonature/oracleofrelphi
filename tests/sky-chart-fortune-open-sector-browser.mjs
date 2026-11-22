@@ -62,6 +62,11 @@ try{
   },{a:fixture('Audit A',A,Array.from({length:12},(_,i)=>norm(168.3667+i*30))),
      b:fixture('Screenshot Sky B',B,comparison.houseCusps)});
   await page.goto(base,{waitUntil:'domcontentloaded',timeout:45000});
+  if(process.env.SKY_PREVIEW_URL){
+   const actualBase=await page.evaluate(()=>document.baseURI);
+   assert.ok(actualBase.includes(process.env.PREVIEW_REF),
+     'Self-hosted preview must use source files from the exact PR commit: '+actualBase);
+  }
   await page.waitForFunction(()=>document.querySelector('#skyFoundationWheelMount > svg.sky-foundation-wheel')?.dataset.placementCollisionOrder?.includes('same-sign')&&
    document.querySelectorAll('[data-layer="b-houses"] line.sky-foundation-divider').length>=10,
     null,{timeout:60000});
@@ -163,7 +168,7 @@ try{
   assert.ok(Math.abs(result.fortune.offset)<=3.5,
    'Part of Fortune must stay near 28°45 Taurus if its actual house sector has room');
   assert.deepEqual(errors,[],'No runtime errors');
-  await page.screenshot({path:'test-results/fortune-collision/'+viewport+'.png',fullPage:true});
+  await page.screenshot({path:'test-results/fortune-collision/'+(process.env.SKY_PREVIEW_URL?'hosted-':'local-')+viewport+'.png',fullPage:true});
   await page.close();
  }
 }finally{await browser.close()}
