@@ -10,11 +10,30 @@ const browser=await chromium.launch({headless:true});
 try{
  for(const [name,width,height] of [['desktop',1280,900],['mobile',390,844]]){
    const page=await browser.newPage({viewport:{width,height},serviceWorkers:'block'});
-   const errors=[];page.on('pageerror',error=>errors.push(error.message));
+   const errors=[],failures=[],consoleErrors=[];
+   page.on('pageerror',error=>errors.push(error.message));
+   page.on('console',msg=>{if(msg.type()==='error')consoleErrors.push(msg.text());});
+   page.on('requestfailed',req=>failures.push({url:req.url().slice(0,180),failure:req.failure()?.errorText}));
+   page.on('response',response=>{if(response.status()>=400)failures.push({url:response.url().slice(0,180),status:response.status()});});
    await page.goto(url,{waitUntil:'domcontentloaded',timeout:45000});
-   await page.waitForFunction(()=>window.RelphiGlyphRegistry?.entries?.length===95&&
-     document.querySelectorAll('#ugGrid .ug-card .relphi-canonical-glyph').length===95&&
-     /95 canonical glyph masters loaded/.test(document.querySelector('#ugStatus')?.textContent||''),null,{timeout:90000});
+   try{
+     await page.waitForFunction(()=>window.RelphiGlyphRegistry?.entries?.length===95&&
+       document.querySelectorAll('#ugGrid .ug-card .relphi-canonical-glyph').length===95&&
+       /95 canonical glyph masters loaded/.test(document.querySelector('#ugStatus')?.textContent||''),null,{timeout:45000});
+   }catch(error){
+     const state=await page.evaluate(()=>({
+       url:location.href,base:document.baseURI,title:document.title,readyState:document.readyState,
+       previewStatus:document.querySelector('#previewStatus')?.textContent?.slice(0,500),
+       galleryStatus:document.querySelector('#ugStatus')?.textContent?.slice(0,300),
+       registryCount:window.RelphiGlyphRegistry?.entries?.length,
+       cards:document.querySelectorAll('#ugGrid .ug-card').length,
+       arts:document.querySelectorAll('#ugGrid .ug-card .relphi-canonical-glyph').length,
+       bodyText:document.body?.innerText?.slice(0,550)
+     }));
+     await page.screenshot({path:'test-results/glyph-audit/hosted-'+name+'-failed.png',fullPage:true});
+     console.error('HOSTED PREVIEW DIAGNOSTICS',JSON.stringify({state,errors,consoleErrors:consoleErrors.slice(0,15),failures:failures.slice(0,30)}));
+     throw error;
+   }
    const state=await page.evaluate(()=>{
      const art=document.querySelector('.relphi-glyph-retrograde');
      const ring=art?.closest('.relphi-glyph-bubble')?.querySelector(':scope > circle');
