@@ -12,7 +12,7 @@ const origin=process.env.GLYPH_AUDIT_ORIGIN||'http://127.0.0.1:4173';
 const dest='test-results/glyph-audit';
 await mkdir(dest,{recursive:true});
 const browser=await chromium.launch({headless:true,executablePath:process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE||undefined});
-const report={commit:process.env.GITHUB_SHA||null,origin,generatedAt:new Date().toISOString(),screens:{},issues:[],observations:[]};
+const report={commit:process.env.GITHUB_SHA||null,origin,generatedAt:new Date().toISOString(),screens:{},issues:[],observations:[],method:'getBoundingClientRect captures layout bounds, not precise painted-ink extents; inspect saved screenshots before judging clipping'};
 const checkpoints=[['desktop',1280,900],['mobile',390,844]];
 try{
   for(const [screen,width,height] of checkpoints){
@@ -118,7 +118,8 @@ try{
       if(Math.abs(glyph.centerError.x)>2.5||Math.abs(glyph.centerError.y)>2.5)
         issues.push({id:glyph.id,kind:'visual-centering',error:glyph.centerError});
       if(glyph.farthest>glyph.ringRadius)
-        issues.push({id:glyph.id,kind:'outside-circle',farthest:glyph.farthest,ring:glyph.ringRadius});
+        // Browser element bounds include font ascent/descent. This is a review flag, not proof of ink overflow.
+        issues.push({id:glyph.id,kind:'layout-bbox-exceeds-ring-needs-ink-review',farthest:glyph.farthest,ring:glyph.ringRadius});
       if(glyph.platformFontsError)issues.push({id:glyph.id,kind:'unverified-platform-font',error:glyph.platformFontsError});
     }
     const latin=source.data.filter(x=>['asc','dsc','mc','ic','vertex'].includes(x.id));
