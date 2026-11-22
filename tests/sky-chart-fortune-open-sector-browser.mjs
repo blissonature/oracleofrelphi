@@ -168,6 +168,27 @@ try{
   assert.ok(Math.abs(result.fortune.offset)<=3.5,
    'Part of Fortune must stay near 28°45 Taurus if its actual house sector has room');
   assert.deepEqual(errors,[],'No runtime errors');
+  // The real wheel remains interactive after collision resolution. Hover,
+  // select, and deselect Part of Fortune without changing its geometry.
+  const bubble=page.locator('#skyFoundationWheelMount > svg.sky-foundation-wheel [data-layer="placements"] > g[data-sky="B"][data-placement="part-of-fortune"][data-interactive="placement"]');
+  await bubble.waitFor({state:'visible',timeout:15000});
+  const originalTransform=await bubble.getAttribute('transform');
+  await bubble.hover();
+  await page.waitForFunction(()=>document.querySelector(
+    '#skyFoundationWheelMount [data-layer="placements"] > g[data-sky="B"][data-placement="part-of-fortune"]'
+  )?.classList.contains('is-hovered'),null,{timeout:8000});
+  await bubble.click();
+  await page.waitForFunction(()=>document.querySelector(
+    '#skyFoundationWheelMount [data-layer="placements"] > g[data-sky="B"][data-placement="part-of-fortune"]'
+  )?.classList.contains('is-selected'),null,{timeout:8000});
+  assert.equal(await bubble.getAttribute('transform'),originalTransform,
+    'Selection must not move the Fortune bubble from its solved location');
+  await bubble.click();
+  await page.waitForFunction(()=>!document.querySelector(
+    '#skyFoundationWheelMount [data-layer="placements"] > g[data-sky="B"][data-placement="part-of-fortune"]'
+  )?.classList.contains('is-selected'),null,{timeout:8000});
+  assert.equal(await bubble.getAttribute('transform'),originalTransform,
+    'Deselecting must not trigger a spurious collision displacement');
   await page.screenshot({path:'test-results/fortune-collision/'+(process.env.SKY_PREVIEW_URL?'hosted-':'local-')+viewport+'.png',fullPage:true});
   await page.close();
  }
