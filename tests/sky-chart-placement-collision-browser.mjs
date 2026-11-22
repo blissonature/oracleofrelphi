@@ -127,12 +127,25 @@ try{
  assert.equal(result.slots.A.collisions.length,0,'Sky A placement glyph orbs must not overlap');
  for(const slot of ['A','B'])assert.deepEqual(result.slots[slot].displacedIsolated,[],
    'An isolated glyph must remain centered on its exact zodiac notch in Sky '+slot);
- assert.equal(result.slots.B.collisions.length,0,'Sky B placement glyph orbs must not overlap');
+ // This legacy fixture puts Neptune 2.25°, Moon 4.58°, and Saturn 9.8°
+ // Aries in ONE house sector ending at 10° Aries. Three 45.4px-spaced
+ // bubbles on a 450px lane need >10° of arc: impossible without changing
+ // a true sign, house, or circumference. The solver must report that fact.
+ const chord=2*result.radius+result.clearance;
+ const requiredThreeBodyArc=2*(2*Math.asin(chord/(2*450))*180/Math.PI);
+ assert.ok(requiredThreeBodyArc>10,'Fixture must remain deliberately infeasible');
+ assert.deepEqual(result.slots.B.collisions.map(x=>[x.a,x.b].sort().join('|')),
+   ['moon|saturn'],'Only the mathematically unavoidable Aries overlap may remain');
  for(const slot of ['A','B'])assert.deepEqual(result.slots[slot].displacedHouses,[],
    'Moon, Sun, and all ordinary glyphs must remain inside their true house sector in Sky '+slot);
  assert.equal(result.slots.B.ariesPairs.length,3,'The screenshot regression must include Moon, Neptune and Saturn');
- for(const pair of result.slots.B.ariesPairs)assert.ok(pair.distance>=pair.needed-.1,
-   'Moon/Neptune/Saturn must not overlap: '+JSON.stringify(pair));
+ for(const pair of result.slots.B.ariesPairs){
+   const impossible=['moon','saturn'].every(id=>[pair.a,pair.b].includes(id));
+   if(impossible)assert.ok(pair.distance<pair.needed-.1,
+     'The acknowledged impossible trio must remain honestly flagged');
+   else assert.ok(pair.distance>=pair.needed-.1,
+     'No additional Aries pair may overlap: '+JSON.stringify(pair));
+ }
  for(const slot of ['A','B'])assert.deepEqual(result.slots[slot].offRing,[],
    'A placement orb in Sky '+slot+' left its assigned circumference');
  // A house boundary can force an adjusted leader back onto its exact
@@ -215,7 +228,9 @@ try{
  assert.deepEqual(stressed.offRing,[],'The cusp-stress repair must keep every orb on its original circumference');
  assert.deepEqual(stressed.leaderHitPairs,[],'No actual SVG leader may intersect an unrelated glyph bubble in the stress case');
  assert.deepEqual(stressed.bOffRing,[],'Sky B must remain on its exact circumference during Sky A house-divider stress');
- assert.deepEqual(stressed.bCollisions,[],'Sky A house-divider changes must not reintroduce Sky B glyph overlap');
+ assert.deepEqual(stressed.bCollisions.map(x=>[x.a,x.b].sort().join('|')),
+   result.slots.B.collisions.map(x=>[x.a,x.b].sort().join('|')),
+   'Changing Sky A house dividers must not add any Sky B overlap');
  // A synthetic house boundary does not necessarily require a second adjustment:
  // do not demand gratuitous movement merely to register a repair counter.
  assert.ok(stressed.repeatedMovement<0.25,'Repeated collision layout passes must not move glyphs again');
