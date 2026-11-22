@@ -189,7 +189,7 @@
     } else if (greekLetter) {
       text.style.fontFamily = 'Noto Serif,Times New Roman,Georgia,serif';
     } else {
-      text.style.fontFamily = lettered ? 'Arial,Helvetica,sans-serif' : 'Apple Symbols,Segoe UI Symbol,Noto Sans Symbols 2,serif';
+      text.style.fontFamily = lettered ? 'Arial,Helvetica,sans-serif' : '"Apple Symbols","Segoe UI Symbol","Noto Sans Symbols 2",serif';
     }
     text.style.fontWeight = entry.fontWeight || (lettered ? '700' : '600');
     text.style.fontSize = hebrewLetter ? '31px' : greekLetter ? '30px' : aspectLetter ? '24px' : lettered ? '16px' : '34px';
