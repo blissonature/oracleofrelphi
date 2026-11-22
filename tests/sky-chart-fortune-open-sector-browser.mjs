@@ -27,9 +27,9 @@ const origin=process.env.GLYPH_AUDIT_ORIGIN||'http://127.0.0.1:4173';
 const base=process.env.SKY_PREVIEW_URL||origin+'/sky-chart.html';
 const norm=v=>(v%360+360)%360;
 const comparison={
- // The user's screenshot shows an outer-house division close to 2° Gemini,
- // with Moon on the previous side near 1° Taurus.
- asc:212,houseCusps:Array.from({length:12},(_,i)=>norm(212+i*30))
+ // The user's screenshot shows an outer-house division close to 1.5° Gemini,
+ // with Moon and Fortune both inside house 7; Chiron at 27° Aries stays in house 6.
+ asc:211,houseCusps:[211,242,272,302,332,359,29,61.5,93,122,152,182]
 };
 function fixture(name,positions,cusps){
  return{name,houseSystem:'porphyry',houseCusps:cusps,
