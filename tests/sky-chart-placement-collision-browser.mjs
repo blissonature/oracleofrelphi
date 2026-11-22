@@ -337,7 +337,9 @@ try{
    const ariesHouseCusps=houseDividerAngles.filter(a=>a>2.25&&a<28.4167);
    const splitAcrossHouses=ariesHouseCusps.some(cusp=>
      cluster.some(p=>p.exact<cusp)&&cluster.some(p=>p.exact>cusp));
-   const isolated=items.filter(a=>['mercury','uranus','pluto'].includes(a.id));
+   // Mercury (230.97°) and Vertex (231.02°) are effectively conjunct;
+   // Mercury is not a free-standing body in this fixture.
+   const isolated=items.filter(a=>['uranus','pluto'].includes(a.id));
    return {count:items.length,collisions,ringErrors,signErrors,cluster,ariesHouseCusps,splitAcrossHouses,
      otherOffsets:isolated.map(a=>({id:a.id,offset:+((((a.display-a.exact+540)%360)-180).toFixed(3))})),
      unresolved:wheel.dataset.placementUnresolvedBubbleOverlaps};
