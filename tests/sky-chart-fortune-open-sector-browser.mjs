@@ -136,7 +136,7 @@ try{
      leaderHits:wheel.dataset.placementLeaderGlyphHits};
   },{B,houseCusps:comparison.houseCusps});
   console.log('FORTUNE OPEN HOUSE SECTOR '+viewport.toUpperCase(),JSON.stringify(result));
-  assert.ok(result.fortune,'Screenshot's Fortune must be present on the wheel');
+  assert.ok(result.fortune,"Screenshot's Fortune must be present on the wheel");
   assert.ok(Math.abs(result.fortune.exact-58.75)<.001,'The exact screenshot longitude must be retained');
   assert.equal(result.items,17,'Entire outer wheel is present');
   assert.deepEqual(result.wrongHouse,[],'No placement enters another house');
