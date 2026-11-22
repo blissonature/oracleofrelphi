@@ -280,32 +280,50 @@ function redistributeCrowdedSign(solution,slot,wheel,sign){
       }
     }
     const sepBase=minimumSeparation(lane);
-    // Only fall back to evenly spaced sign-wide search when minimal
-    // nonuniform positions cannot satisfy the leader-routing constraints.
+    // The fallback must preserve unused angular space. Packing every body at
+    // the MINIMUM gap wrongly collapsed a Moon at 1° Taurus and Fortune at
+    // 28°45′ Taurus into early Taurus, even though each only needed a small
+    // independent movement away from the surrounding house cusps/orbs.
+    //
+    // Interpolate only the surplus distance between adjacent optimal slots,
+    // while retaining the shared minimum separation, circular order, and the
+    // existing house/leader safety gates. A ratio of 1 is the original open
+    // spacing; 0 is the old fully compressed fallback for genuinely dense arcs.
+    const targetGaps=optimal.slice(1).map((record,i)=>record.display-optimal[i].display);
+    const hasSlack=targetGaps.some(gap=>gap>sepBase+.2);
+    const slackRatios=hasSlack
+      ?[1,.98,.96,.94,.92,.90,.88,.86,.84,.80,.75,.70,.60,.50,.25,0]
+      :[1,0];
+    const tried=new Set();
     for(const multiplier of [1,1.025,1.05,1.1]){
-      const sep=sepBase*multiplier,low=start+.005,
-        high=end-.005-(group.length-1)*sep;
-      if(low>high+EPS)continue;
-      const intervals=Math.max(1,Math.ceil((high-low)/.2));
-      for(let step=0;step<=intervals;step++){
-        const first=low+(high-low)*step/intervals;
-        const records=group.map((record,i)=>{
-          const display=first+i*sep;
-          return {...record,display,lane,point:polar(lane,display),
-            exactPoint:record.exactPoint||exactPoint(record,slot),offset:display-record.item.exact};
-        });
-        if(records.some(rec=>Math.abs(rec.offset)>19))continue;
-        if(!safe(records,allowHouseCrossing,allowLeaderBehindOrb))continue;
-        const crossings=records.reduce((n,r)=>{
-          const line=segmentFor(r,slot);
-          return n+houseDividers.filter(h=>properIntersection(line.a,line.b,h.a,h.b)).length;
-        },0);
-        // Prefer the smallest total squared deviation from actual notches.
-        // Leader-routing safety is handled by the staged search, not by
-        // moving free placements away from their original coordinates.
-        const score=records.reduce((n,r)=>n+r.offset*r.offset*weight(r.item),0)
-          +150*crossings;
-        if(!stageBest||score<stageBest.score)stageBest={records,score,crossings,allowLeaderBehindOrb};
+      const minimum=sepBase*multiplier;
+      for(const ratio of slackRatios){
+        const gaps=targetGaps.map(gap=>minimum+Math.max(0,gap-minimum)*ratio);
+        const signature=gaps.map(g=>g.toFixed(5)).join(',');
+        if(tried.has(signature))continue;
+        tried.add(signature);
+        const offsets=[0];
+        gaps.forEach(gap=>offsets.push(offsets[offsets.length-1]+gap));
+        const low=start+.005,high=end-.005-offsets[offsets.length-1];
+        if(low>high+EPS)continue;
+        const intervals=Math.max(1,Math.ceil((high-low)/.2));
+        for(let step=0;step<=intervals;step++){
+          const first=low+(high-low)*step/intervals;
+          const records=group.map((record,i)=>{
+            const display=first+offsets[i];
+            return {...record,display,lane,point:polar(lane,display),
+              exactPoint:record.exactPoint||exactPoint(record,slot),offset:display-record.item.exact};
+          });
+          if(records.some(rec=>Math.abs(rec.offset)>19))continue;
+          if(!safe(records,allowHouseCrossing,allowLeaderBehindOrb))continue;
+          const crossings=records.reduce((n,r)=>{
+            const line=segmentFor(r,slot);
+            return n+houseDividers.filter(h=>properIntersection(line.a,line.b,h.a,h.b)).length;
+          },0);
+          const score=records.reduce((n,r)=>n+r.offset*r.offset*weight(r.item),0)
+            +150*crossings;
+          if(!stageBest||score<stageBest.score)stageBest={records,score,crossings,allowLeaderBehindOrb};
+        }
       }
     }
     if(stageBest){best=stageBest;break}
