@@ -28,7 +28,7 @@ jobs:
         run: node --check tests/glyph-design-system-audit-browser.mjs
       - name: Install Chromium
         run: |
-          npm install --no-save playwright@1.55.0
+          npm install --no-save playwright@1.55.0 pngjs@7.0.0
           npx playwright install --with-deps chromium
       - name: Audit all 95 canonical glyphs at desktop and mobile sizes
         run: |
