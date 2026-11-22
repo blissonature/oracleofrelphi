@@ -51,3 +51,10 @@ test('comparison-sky house focus is geometric, not matched by house number',()=>
  assert.match(interactions,/norm\(record.value-start\)<span/);
  assert.match(interactions,/rowMatchesState\(row,filterState,filterKeep\.houseKeys\)/);
 });
+
+test('committed wheel aspect selection clears pinned and hovered house flashlight',()=>{
+ assert.match(controller,/state\?\.kind==='aspect'&&state\.mode==='selected'/);
+ assert.match(controller,/if\(pinned\|\|hovered\)\{pinned=null;hovered=null;render\(\)\}/);
+ assert.match(interactions,/relphi:sky-foundation-filter-changed/);
+ assert.match(interactions,/if\(node\)toggleInteractiveNode\(node\)/);
+});
