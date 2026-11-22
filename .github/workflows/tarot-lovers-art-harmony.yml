@@ -1,0 +1,36 @@
+name: Tarot Lovers and Art harmony full-card acceptance
+on:
+  pull_request:
+    paths:
+      - 'tarot.html'
+      - 'tarot-cards.js'
+      - 'tarot-app.js'
+      - 'tarot-card-deep-link-v1.js'
+      - 'tests/tarot-lovers-art-harmony.test.mjs'
+      - 'tests/tarot-lovers-art-harmony-browser.mjs'
+      - '.github/workflows/tarot-lovers-art-harmony.yml'
+  workflow_dispatch:
+jobs:
+  browser-acceptance:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Syntax and data contracts
+        run: |
+          node --check tarot-app.js
+          node --check tarot-cards.js
+          node --check tarot-card-deep-link-v1.js
+          node --check tests/tarot-lovers-art-harmony-browser.mjs
+          node --test tests/tarot-lovers-art-harmony.test.mjs
+      - name: Install browser dependencies
+        run: |
+          npm install --no-save playwright@1.52.0
+          npx playwright install --with-deps chromium
+      - name: Verify full Tarot entries on desktop and mobile
+        run: |
+          python3 -m http.server 4173 >/tmp/tarot-lovers-art-http.log 2>&1 &
+          node tests/tarot-lovers-art-harmony-browser.mjs
