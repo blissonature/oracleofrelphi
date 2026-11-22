@@ -215,7 +215,7 @@
     // The imported artwork must be centered on that source viewBox, not on an
     // assumed (50,50); this preserves direct <img> consumers unchanged.
     const sourceBox = String(source.getAttribute('viewBox') || '')
-      .trim().split(/[\\s,]+/).map(Number);
+      .trim().split(/[\s,]+/).map(Number);
     if (sourceBox.length !== 4 || !sourceBox.every(Number.isFinite) ||
         sourceBox[2] <= 0 || sourceBox[3] <= 0) {
       throw new Error('Invalid static master viewBox: ' + entry.id);
