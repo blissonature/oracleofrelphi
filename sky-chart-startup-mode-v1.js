@@ -30,26 +30,26 @@ function loadExactTarotHtml(){
   if(tarotPreviewHtmlPromise)return tarotPreviewHtmlPromise;
   tarotPreviewHtmlPromise=(async()=>{
     let html=await previewSourceText('tarot.html');
-    const styles=[...html.matchAll(/<link\\b[^>]*rel=["']stylesheet["'][^>]*>/gi)];
-    const scripts=[...html.matchAll(/<script\\b[^>]*\\bsrc=["']([^"']+)["'][^>]*><\\/script>/gi)];
+    const styles=[...html.matchAll(/<link\b[^>]*rel=["']stylesheet["'][^>]*>/gi)];
+    const scripts=[...html.matchAll(/<script\b[^>]*\bsrc=["']([^"']+)["'][^>]*><\/script>/gi)];
     const updates=new Map();
     let nextStyle=0,nextScript=0;
     await Promise.all(Array.from({length:Math.min(6,styles.length)},async()=>{
       while(nextStyle<styles.length){
         const tag=styles[nextStyle++][0];
-        const path=tag.match(/\\bhref=["']([^"']+)["']/i)?.[1];
-        if(!path||/^(?:https?:|data:|\\/\\/)/i.test(path))continue;
-        const css=(await previewSourceText(path)).replace(/<\\/style/gi,'<\\\\/style');
+        const path=tag.match(/\bhref=["']([^"']+)["']/i)?.[1];
+        if(!path||/^(?:https?:|data:|\/\/)/i.test(path))continue;
+        const css=(await previewSourceText(path)).replace(/<\/style/gi,'<\\/style');
         updates.set(tag,`<style data-preview-css="${path.replace(/"/g,'&quot;')}">${css}</style>`);
       }
     }));
     await Promise.all(Array.from({length:Math.min(8,scripts.length)},async()=>{
       while(nextScript<scripts.length){
         const [tag,path]=scripts[nextScript++];
-        if(/^(?:https?:|data:|\\/\\/)/i.test(path))continue;
+        if(/^(?:https?:|data:|\/\/)/i.test(path))continue;
         const source=await previewSourceText(path);
         const url=URL.createObjectURL(new Blob([source],{type:'text/javascript'}));
-        updates.set(tag,`<script data-preview-js="${path.replace(/"/g,'&quot;')}" src="${url}"><\\/script>`);
+        updates.set(tag,`<script data-preview-js="${path.replace(/"/g,'&quot;')}" src="${url}"><\/script>`);
       }
     }));
     for(const [original,replacement] of updates)html=html.replace(original,replacement);
