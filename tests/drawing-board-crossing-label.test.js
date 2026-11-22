@@ -33,6 +33,9 @@ fs.mkdirSync(out,{recursive:true});
     await frame.waitForSelector('#shortListPanel #drawingBoardOptionsButton',{state:'visible',timeout:10000});
 
     await frame.click('#drawingBoardOptionsButton');
+    // Crafted settings opens on a chosen subview; the template picker lives in Templates.
+    await frame.waitForSelector('[data-referent-path="templates"]',{state:'visible',timeout:10000});
+    await frame.click('[data-referent-path="templates"]');
     await frame.waitForSelector('.relphi-reading-options-drawer.is-reading-options-open #relphiSpreadTemplateSelect',{state:'visible',timeout:10000});
     await frame.selectOption('#relphiSpreadTemplateSelect','celtic-cross-10');
     await frame.click('#relphiApplyOptions');
