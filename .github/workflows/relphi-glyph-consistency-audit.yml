@@ -40,6 +40,12 @@ jobs:
             sleep 1
           done
           node tests/glyph-design-system-audit-browser.mjs
+      - name: Check hosted exact-commit gallery on desktop and mobile
+        env:
+          PREVIEW_REF: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          node --check tests/glyph-design-hosted-preview-browser.mjs
+          node tests/glyph-design-hosted-preview-browser.mjs
       - name: Upload full rendered evidence (95×desktop + 95×mobile)
         if: always()
         uses: actions/upload-artifact@v4
