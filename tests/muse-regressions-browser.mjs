@@ -97,6 +97,33 @@ try {
         await page.screenshot({path:'test-results/muse-sky-import-'+width+'.png'});
       }finally{await context.close()}
     });
+    await check('Planetary Hours and Sky Chart hour-ruler parity '+width,async()=>{
+      const {page,context}=await newPage(width);
+      try{
+        await page.goto(base+'planetaryhours.html',{waitUntil:'domcontentloaded',timeout:30000});
+        await page.waitForFunction(()=>document.querySelector('#phCurrentWheelCard')?.getAttribute('href')?.includes('source=planetary-hours') && /hour/i.test(document.querySelector('#topHourRuler')?.textContent||''),{timeout:24000});
+        const snapshot=await page.evaluate(()=>({
+          href:document.querySelector('#phCurrentWheelCard')?.getAttribute('href'),
+          hour:document.querySelector('#topHourRuler')?.textContent?.trim()||'',
+          sunset:document.querySelector('#sunTimes')?.textContent?.trim()||'',
+          sunTile:document.querySelector('.ph-wanderer-card[data-sky-body="Sun"] .ph-wanderer-caption')?.textContent?.trim()||''
+        }));
+        const planetNames=/\b(Sun|Moon|Mercury|Venus|Mars|Jupiter|Saturn)\b/i;
+        const expected=(snapshot.hour.match(planetNames)||[])[1]?.toLowerCase();
+        assert.ok(expected,'Missing Planetary Hours ruler: '+JSON.stringify(snapshot));
+        const clockPattern=/(\d{1,2}):(\d{2})\s*(a\.?m\.?|p\.?m\.?)/i;
+        const calcSet=snapshot.sunset.match(/sunset at\s+(\d{1,2}:\d{2}\s*(?:a\.?m\.?|p\.?m\.?))/i)?.[1];
+        const tileSet=snapshot.sunTile.match(/Set\s+(\d{1,2}:\d{2}\s*(?:a\.?m\.?|p\.?m\.?))/i)?.[1];
+        const minutes=str=>{const x=str?.match(clockPattern);if(!x)return NaN;return (Number(x[1])%12)*60+Number(x[2])+(x[3].toLowerCase().startsWith('p')?720:0)};
+        assert.ok(Number.isFinite(minutes(calcSet))&&Number.isFinite(minutes(tileSet)),JSON.stringify(snapshot));
+        assert.ok(Math.abs(minutes(calcSet)-minutes(tileSet))<=20,'Sun tile Set and solar sunset mismatch: '+JSON.stringify(snapshot));
+        await page.goto(new URL(snapshot.href,base).href,{waitUntil:'domcontentloaded',timeout:40000});
+        await page.waitForFunction(()=>document.querySelector('.sky-ph-planet.is-hour-ruler'),{timeout:45000});
+        const actual=await page.locator('.sky-ph-planet.is-hour-ruler').first().getAttribute('class');
+        assert.match(actual,new RegExp('\\bsky-ph-'+expected+'\\b'),'Planetary hour mismatch: '+JSON.stringify({expected,actual,snapshot}));
+        await page.screenshot({path:'test-results/muse-planetary-sky-parity-'+width+'.png'});
+      }finally{await context.close()}
+    });
     await check('Tarot search add card and reload x4 '+width,async()=>{
       const {page,context}=await newPage(width);
       try{
