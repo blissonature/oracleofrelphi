@@ -13,8 +13,8 @@ const signs=['Aries','Taurus','Gemini','Cancer','Leo','Virgo','Libra','Scorpio',
 function point(name,degree){const value=((degree%360)+360)%360;return{name,longitude:value,sign:signs[Math.floor(value/30)],degree:Math.floor(value%30),minute:Math.floor((value%1)*60)}}
 function sky(name,offset,instant,location,lat,lon,tz){
  const asc=168.38+offset,cusps=Array.from({length:12},(_,i)=>(asc+i*30)%360);
- const points={Sun:195,Moon:118.42,Mercury:206.17,Venus:169.88,Mars:167.87,Jupiter:307.15,Saturn:235.57,Uranus:254.85,Neptune:271.02,Pluto:213.88,Ascendant:asc,Midheaven:76.28};
- return {name,houseSystem:'equal-house',houseCusps:cusps,calcProfile:{dateTime:instant.slice(0,16),instant,location,locationQuery:location,timeZone:tz,latitude:lat,longitude:lon,houseCusps:cusps,houseSystem:'equal-house'},placements:Object.fromEntries(Object.entries(points).map(([k,v])=>[k,{...point(k,v+offset),retrograde:k==='Saturn'&&offset===0}]))};
+ const points={Sun:195,Moon:118.42,Mercury:206.17,Venus:169.88,Mars:167.87,Jupiter:307.15,Saturn:235.57,Uranus:254.85,Neptune:271.02,Pluto:213.88,Chiron:74.48,Ascendant:asc,Midheaven:76.28};
+ return {name,houseSystem:'equal-house',houseCusps:cusps,calcProfile:{dateTime:instant.slice(0,16),instant,location,locationQuery:location,timeZone:tz,latitude:lat,longitude:lon,houseCusps:cusps,houseSystem:'equal-house'},placements:Object.fromEntries(Object.entries(points).map(([k,v])=>[k,{...point(k,v+offset),retrograde:(k==='Saturn'||k==='Chiron')&&offset===0}]))};
 }
 const a=sky('Test A',0,'1985-10-08T08:37:00Z','Malden, Massachusetts, United States',42.4251,-71.0662,'America/New_York');
 const b=sky('Test B',29,'2026-10-17T12:00:00Z','Salt Lake City, Utah, United States',40.7608,-111.891,'America/Denver');
@@ -145,6 +145,55 @@ try{
      assert.ok(Math.abs(letterMetrics.widthError)<0.75,'Retrograde P must match Pluto P at rendered name size');
      assert.ok(Math.abs(letterMetrics.baselineError)<0.65,'Retrograde P stem must end on the planet-name baseline');
      assert.ok(letterMetrics.gap>=3,'Retrograde must have visible separation from the planet name');
+     // The reported defect concerns Chiron specifically, not the x within Rx.
+     // Verify painted capital-P geometry against the *neighboring Chiron name*
+     // as well as the CSS text-baseline. SVG getBBox() measures glyph ink,
+     // whereas the old checks could pass even if the P's visible stem stopped
+     // too soon while the typographic baseline was numerically aligned.
+     const chironInk=await page.evaluate(()=>{
+       const row=[...document.querySelectorAll('#skyFoundationA .sky-foundation-row')]
+         .find(node=>node.querySelector('.sky-foundation-row-name')?.firstChild?.textContent==='Chiron');
+       const label=row?.querySelector('.sky-foundation-row-name');
+       const p=label?.querySelector('.sky-placement-rx .relphi-glyph-retrograde text');
+       if(!p)throw new Error('Chiron Rx must display a real canonical P');
+       const baselineProbe=document.createElement('span');
+       baselineProbe.style.cssText='display:inline-block;width:0;height:0;padding:0;margin:0;border:0;vertical-align:baseline';
+       label.insertBefore(baselineProbe,label.querySelector('.sky-placement-rx'));
+       const baseline=baselineProbe.getBoundingClientRect().top;
+       baselineProbe.remove();
+       const font=getComputedStyle(label),actual=getComputedStyle(p),
+         canvas=document.createElement('canvas'),context=canvas.getContext('2d');
+       context.font=font.fontWeight+' '+font.fontSize+' '+font.fontFamily;
+       const nameP=context.measureText('P');
+       const bbox=p.getBBox(),ctm=p.getScreenCTM();
+       const lowerLeft=ctm.b*bbox.x+ctm.d*(bbox.y+bbox.height)+ctm.f;
+       const marker=p.getBoundingClientRect(),labelBox=label.getBoundingClientRect();
+       return{
+         baseline,
+         pInkBottom:lowerLeft,
+         pInkGap:lowerLeft-baseline,
+         namePDescent:nameP.actualBoundingBoxDescent,
+         namePAscent:nameP.actualBoundingBoxAscent,
+         font:actual.fontFamily,nameFont:font.fontFamily,
+         weight:actual.fontWeight,nameWeight:font.fontWeight,
+         pWidth:p.getComputedTextLength()*Math.hypot(ctm.a,ctm.b),
+         namePWidth:nameP.width,
+         labelRight:(()=>{const range=document.createRange();range.selectNodeContents(label.firstChild);return range.getBoundingClientRect().right})(),
+         markerLeft:marker.left,
+         labelBoxHeight:labelBox.height,
+         glyphWidth:marker.width
+       };
+     });
+     console.log('CHIRON RX VISIBLE P STEM VS NAME BASELINE',JSON.stringify(chironInk));
+     assert.equal(chironInk.font,chironInk.nameFont,'Chiron P matches the actual name font');
+     assert.equal(chironInk.weight,chironInk.nameWeight,'Chiron P matches the actual name weight');
+     assert.ok(Math.abs(chironInk.pWidth-chironInk.namePWidth)<.75,'Chiron P has the same width as Pluto P');
+     assert.ok(Math.abs(chironInk.pInkGap-chironInk.namePDescent)<1.1,
+       'Painted P stem must reach Chiron baseline, not merely the declared SVG baseline');
+     assert.ok(chironInk.markerLeft-chironInk.labelRight>=3,
+       'Chiron name and retrograde letter must have comfortable separation');
+     await page.screenshot({path:'chiron-retrograde-visible-baseline.png',fullPage:true});
+
      const saturnIdentity=await page.evaluate(()=>{
        const row=[...document.querySelectorAll('#skyFoundationA .sky-foundation-row')]
          .find(node=>node.querySelector('.sky-foundation-row-name')?.firstChild?.textContent==='Saturn');
