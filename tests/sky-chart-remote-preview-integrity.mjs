@@ -14,7 +14,7 @@ function point(name,degree){const value=((degree%360)+360)%360;return{name,longi
 function sky(name,offset,instant,location,lat,lon,tz){
  const asc=168.38+offset,cusps=Array.from({length:12},(_,i)=>(asc+i*30)%360);
  const points={Sun:195,Moon:118.42,Mercury:206.17,Venus:169.88,Mars:167.87,Jupiter:307.15,Saturn:235.57,Uranus:254.85,Neptune:271.02,Pluto:213.88,Chiron:74.48,Ascendant:asc,Midheaven:76.28};
- return {name,houseSystem:'equal-house',houseCusps:cusps,calcProfile:{dateTime:instant.slice(0,16),instant,location,locationQuery:location,timeZone:tz,latitude:lat,longitude:lon,houseCusps:cusps,houseSystem:'equal-house'},placements:Object.fromEntries(Object.entries(points).map(([k,v])=>[k,{...point(k,v+offset),retrograde:(k==='Saturn'||k==='Chiron')&&offset===0}]))};
+ return {name,houseSystem:'equal-house',houseCusps:cusps,calcProfile:{dateTime:instant.slice(0,16),instant,location,locationQuery:location,timeZone:tz,latitude:lat,longitude:lon,houseCusps:cusps,houseSystem:'equal-house'},placements:Object.fromEntries(Object.entries(points).map(([k,v])=>[k,{...point(k,v+offset),retrograde:['Saturn','Uranus','Neptune','Chiron'].includes(k)&&offset===0}]))};
 }
 const a=sky('Test A',0,'1985-10-08T08:37:00Z','Malden, Massachusetts, United States',42.4251,-71.0662,'America/New_York');
 const b=sky('Test B',29,'2026-10-17T12:00:00Z','Salt Lake City, Utah, United States',40.7608,-111.891,'America/Denver');
@@ -31,11 +31,12 @@ async function verifyPaintedStemAgainstChiron(page,screen){
     const row=[...document.querySelectorAll('#skyFoundationA .sky-foundation-row')]
       .find(n=>n.querySelector('.sky-foundation-row-name')?.firstChild?.textContent==='Chiron');
     const label=row?.querySelector('.sky-foundation-row-name');
-    const path=label?.querySelector('.sky-placement-rx .relphi-glyph-retrograde path');
-    if(!path)throw new Error('Cannot inspect painted Chiron P stem');
+    const p=label?.querySelector('.sky-placement-rx .relphi-glyph-retrograde text');
+    if(!p)throw new Error('Cannot inspect painted Retrograde P stem');
     const range=document.createRange();range.selectNodeContents(label.firstChild);
     const name=range.getBoundingClientRect();
-    const stem=new DOMPoint(53.45,68).matrixTransform(path.getScreenCTM());
+    // The P remains an unmodified font letter; measure its natural left stroke.
+    const stem=new DOMPoint(50.15,66).matrixTransform(p.getScreenCTM());
     const xOffset=window.scrollX,yOffset=window.scrollY;
     const darkBottom=(from,to)=>{
       let lowest=-1,inkCount=0;
@@ -59,8 +60,8 @@ async function verifyPaintedStemAgainstChiron(page,screen){
   console.log('VISIBLE RASTER CHIRON VS P STEM',JSON.stringify(evidence));
   assert.ok(evidence.nameInk.count>0&&evidence.pStemInk.count>0,
     'Both Chiron n and Retrograde P stem must have measurable dark pixels');
-  assert.ok(evidence.difference>=0&&evidence.difference<=2,
-    'Actual painted P stem must end on Chiron lettering line, not above it');
+  assert.ok(Math.abs(evidence.difference)<=1,
+    'Natural P stem meets adjacent name baseline within one antialiased pixel');
 }
 
 const browser=await chromium.launch({headless:true});
@@ -143,7 +144,7 @@ try{
      assert.equal(retro.text[0].value,'P');
      assert.match(retro.text[0].family,/system-ui/i);
      assert.equal(retro.text[0].weight,'700');
-     assert.ok(retro.firstPath.startsWith('M60.1246'));
+     assert.ok(retro.firstPath.startsWith('M61.9513'));
      assert.equal(retro.internalRings,0);
      assert.ok(Math.abs(retro.dx)<1&&Math.abs(retro.dy)<1,'Centered in the existing circle');
      assert.ok(retro.farthest<16.825,'Original artwork stays inside existing ring');
@@ -171,7 +172,7 @@ try{
      });
      assert.ok(placementMark.height>=8&&placementMark.height<=16,'Original Retrograde must fit in name-row annotation');
      assert.equal(placementMark.textCount,1);
-     assert.ok(placementMark.original.startsWith('M60.1246'));
+     assert.ok(placementMark.original.startsWith('M61.9513'));
      assert.equal(placementMark.source,'retrograde');
      assert.equal(placementMark.rawImage,false,'Placements must use shared canonical renderer');
      // Match the live planet-name P exactly, including its baseline and its separation from the name.
@@ -205,6 +206,35 @@ try{
      assert.ok(Math.abs(letterMetrics.widthError)<0.25,'Retrograde P must match Pluto P at rendered name size');
      assert.ok(Math.abs(letterMetrics.baselineError)<0.65,'Retrograde P stem must end on the planet-name baseline');
      assert.ok(letterMetrics.gap>=3,'Retrograde must have visible separation from the planet name');
+     const universalBaselines=await page.evaluate(()=>{
+       const names=['Saturn','Uranus','Neptune','Chiron'];
+       return names.map(name=>{
+         const row=[...document.querySelectorAll('#skyFoundationA .sky-foundation-row')]
+           .find(r=>r.querySelector('.sky-foundation-row-name')?.firstChild?.textContent===name);
+         const label=row?.querySelector('.sky-foundation-row-name');
+         const svg=label?.querySelector('.sky-placement-rx svg');
+         const p=svg?.querySelector('.relphi-glyph-retrograde text');
+         const x=svg?.querySelector('.relphi-glyph-retrograde path');
+         if(!p||!x)throw Error('Missing retrograde on '+name);
+         const probe=document.createElement('span');
+         probe.style.cssText='display:inline-block;width:0;height:0;padding:0;margin:0;border:0;vertical-align:baseline';
+         label.insertBefore(probe,label.querySelector('.sky-placement-rx'));
+         const line=probe.getBoundingClientRect().top;
+         probe.remove();
+         const pBaseline=new DOMPoint(47.5,67.332841).matrixTransform(p.getScreenCTM()).y;
+         const cross=new DOMPoint(76.5,67.332841).matrixTransform(x.getScreenCTM()).y;
+         return{name,crossToLine:cross-line,crossToP:cross-pBaseline};
+       });
+     });
+     console.log('UNIVERSAL RETROGRADE CROSS-ON-BASELINE',JSON.stringify(universalBaselines));
+     assert.equal(universalBaselines.length,4);
+     for(const caseResult of universalBaselines){
+       assert.ok(Math.abs(caseResult.crossToP)<.02,
+         'The x intersection must meet the P baseline for '+caseResult.name);
+       assert.ok(Math.abs(caseResult.crossToLine)<.65,
+         'The x intersection must meet the adjacent placement-name baseline for '+caseResult.name);
+     }
+
      // The reported defect concerns Chiron specifically, not the x within Rx.
      // Verify the P's painted capital height against Chiron's baseline.
      // SVG getBBox() includes font descent, including blank space below P.
@@ -215,7 +245,7 @@ try{
          .find(node=>node.querySelector('.sky-foundation-row-name')?.firstChild?.textContent==='Chiron');
        const label=row?.querySelector('.sky-foundation-row-name');
        const p=label?.querySelector('.sky-placement-rx .relphi-glyph-retrograde text');
-       const stem=label?.querySelector('.sky-placement-rx .relphi-glyph-retrograde path');
+       // The x path contains no third foot shape.
        if(!p)throw new Error('Chiron Rx must display a real canonical P');
        const baselineProbe=document.createElement('span');
        baselineProbe.style.cssText='display:inline-block;width:0;height:0;padding:0;margin:0;border:0;vertical-align:baseline';
@@ -231,12 +261,11 @@ try{
        const pScale=p.getComputedTextLength()*Math.hypot(ctm.a,ctm.b)/nameP.width;
        const paintedBottom=pBaseline+nameP.actualBoundingBoxDescent*pScale;
        const paintedHeight=(nameP.actualBoundingBoxAscent+nameP.actualBoundingBoxDescent)*pScale;
-       const stemInkBottom=new DOMPoint(53.45,70).matrixTransform(stem.getScreenCTM()).y;
+       
        const marker=p.getBoundingClientRect(),labelBox=label.getBoundingClientRect();
        return{
          baseline,
          pInkBottom:paintedBottom,
-         stemInkBottom,stemInkGap:stemInkBottom-baseline,
          pInkGap:paintedBottom-baseline,
          pCapHeight:paintedHeight,
          nameCapHeight:nameP.actualBoundingBoxAscent+nameP.actualBoundingBoxDescent,
@@ -259,8 +288,7 @@ try{
      assert.ok(Math.abs(chironInk.pCapHeight-chironInk.nameCapHeight)<.6,'Retrograde P cap height matches Pluto letter height');
      assert.ok(Math.abs(chironInk.pInkGap-chironInk.namePDescent)<1.1,
        'Painted P stem must reach Chiron baseline, not merely the declared SVG baseline');
-     assert.ok(chironInk.stemInkGap>.15&&chironInk.stemInkGap<1.5,
-       'Actual P stem extension must reach Chiron painted baseline, beyond the undershooting font ink');
+     
      assert.ok(chironInk.markerLeft-chironInk.labelRight>=3,
        'Chiron name and retrograde letter must have comfortable separation');
      await page.screenshot({path:'chiron-retrograde-visible-baseline.png',fullPage:true});
@@ -273,7 +301,7 @@ try{
          .find(n=>n.querySelector('.sky-foundation-row-name')?.firstChild?.textContent==='Chiron');
        const label=row?.querySelector('.sky-foundation-row-name');
        const p=label?.querySelector('.sky-placement-rx .relphi-glyph-retrograde text');
-       const stem=label?.querySelector('.sky-placement-rx .relphi-glyph-retrograde path');
+       // The x path contains no third foot shape.
        if(!p)throw new Error('Mobile Chiron P not rendered');
        const probe=document.createElement('span');
        probe.style.cssText='display:inline-block;width:0;height:0;padding:0;margin:0;border:0;vertical-align:baseline';
@@ -288,10 +316,10 @@ try{
        const pBaseline=matrix.b*Number(p.getAttribute('x'))+matrix.d*Number(p.getAttribute('y'))+matrix.f;
        const width=p.getComputedTextLength()*Math.hypot(matrix.a,matrix.b);
        const paintedBottom=pBaseline+nameP.actualBoundingBoxDescent*width/nameP.width;
-       const stemInkBottom=new DOMPoint(53.45,70).matrixTransform(stem.getScreenCTM()).y;
+       
        range.selectNodeContents(label.firstChild);
        return{
-         pInkBottom:paintedBottom,stemInkBottom,stemInkGap:stemInkBottom-baseline,
+         pInkBottom:paintedBottom,
          baseline,pWidth:width,namePWidth:nameP.width,font:font.fontFamily,nameFont:name.fontFamily,
          nameGap:p.getBoundingClientRect().left-range.getBoundingClientRect().right
        };
@@ -301,8 +329,7 @@ try{
      assert.ok(Math.abs(mobileChiron.pWidth-mobileChiron.namePWidth)<.25,'Mobile P matches Pluto P width');
      assert.ok(Math.abs(mobileChiron.pInkBottom-mobileChiron.baseline)<1.1,
        'Mobile painted P stem must meet the neighboring Chiron baseline');
-     assert.ok(mobileChiron.stemInkGap>.15&&mobileChiron.stemInkGap<1.5,
-       'Mobile P stem extension must reach the actual Chiron ink line');
+     
      assert.ok(mobileChiron.nameGap>=3,'Mobile Rx must remain clearly separate from name');
      await page.screenshot({path:'chiron-retrograde-mobile-visible-baseline.png',fullPage:true});
      await verifyPaintedStemAgainstChiron(page,'mobile');
@@ -344,7 +371,7 @@ try{
      })));
      console.log('PREVIEW PLACEMENTS AND RELATIONSHIPS RETROGRADE',JSON.stringify({placementMark,relationshipsRx}));
      assert.ok(relationshipsRx.length>0,'Retrograde Saturn relationship must have motion indicator');
-     assert.ok(relationshipsRx.every(r=>r.art&&r.path?.startsWith('M60.1246')),'Relationships must render registry-owned SVG');
+     assert.ok(relationshipsRx.every(r=>r.art&&r.path?.startsWith('M61.9513')),'Relationships must render registry-owned SVG');
      assert.ok(relationshipsRx.every(r=>r.mask==='none'),'Relationships must not use raw asset CSS masks');
       const relationshipSizes=relationshipsRx.map(r=>r.height).filter(h=>h>0);
       assert.ok(relationshipSizes.length>0,'Relationships must display a visible motion marker');
@@ -457,7 +484,7 @@ try{
      assert.equal(galleryRetro?.source,'retrograde');
      assert.equal(galleryRetro.paths,1);
      assert.deepEqual(galleryRetro.letters,['P']);
-      assert.ok(galleryRetro.firstPath.startsWith('M60.1246'));
+      assert.ok(galleryRetro.firstPath.startsWith('M61.9513'));
      assert.equal(galleryRetro.ring,'1');
      const galleryAnti=galleryState.marks.find(g=>g.id==='anti-vertex');
      assert.equal(galleryAnti?.source,'anti-vertex');
