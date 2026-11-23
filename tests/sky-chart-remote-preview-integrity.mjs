@@ -75,7 +75,16 @@ try{
   await page.addInitScript(({a,b})=>{localStorage.setItem('relphiSkyChartA',JSON.stringify(a));localStorage.setItem('relphiSkyChartB',JSON.stringify(b));localStorage.setItem('relphiSkyChartLastModeV1','comparison')},{a,b});
   try{
    await page.goto(url,{waitUntil:'domcontentloaded',timeout:25000});
-   await page.waitForTimeout(15000);
+   // CDN and ephemeris startup can exceed a fixed 15-second wait.
+   // The existing Sky Chart root owns readiness; observe that contract.
+   await page.waitForFunction(()=>{
+     const root=document.getElementById('skyFoundationRoot');
+     const mount=document.getElementById('skyFoundationWheelMount');
+     return root?.getAttribute('aria-busy')==='false'&&
+       !!mount?.querySelector('.sky-foundation-wheel');
+   },null,{timeout:60000}).catch(error=>{
+     console.error(kind.toUpperCase()+' WHEEL READINESS DIAGNOSTIC',error.message);
+   });
    const state=await page.evaluate(()=>{const mount=document.querySelector('#skyFoundationWheelMount'),root=document.querySelector('#skyFoundationRoot'),wheel=mount?.querySelector('.sky-foundation-wheel');return{
     href:location.href,base:document.baseURI,rootBusy:root?.getAttribute('aria-busy'),bodyWidth:document.body?.scrollWidth,
     mountVisible:mount?getComputedStyle(mount).visibility:null,
