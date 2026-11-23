@@ -83,7 +83,7 @@ try{
      assert.equal(retro.text[0].value,'P');
      assert.match(retro.text[0].family,/system-ui/i);
      assert.equal(retro.text[0].weight,'700');
-     assert.ok(retro.firstPath.startsWith('M64.1246'));
+     assert.ok(retro.firstPath.startsWith('M60.1246'));
      assert.equal(retro.internalRings,0);
      assert.ok(Math.abs(retro.dx)<1&&Math.abs(retro.dy)<1,'Centered in the existing circle');
      assert.ok(retro.farthest<16.825,'Original artwork stays inside existing ring');
@@ -111,7 +111,7 @@ try{
      });
      assert.ok(placementMark.height>=8&&placementMark.height<=16,'Original Retrograde must fit in name-row annotation');
      assert.equal(placementMark.textCount,1);
-     assert.ok(placementMark.original.startsWith('M64.1246'));
+     assert.ok(placementMark.original.startsWith('M60.1246'));
      assert.equal(placementMark.source,'retrograde');
      assert.equal(placementMark.rawImage,false,'Placements must use shared canonical renderer');
      // Match the live planet-name P exactly, including its baseline and its separation from the name.
@@ -155,6 +155,7 @@ try{
          .find(node=>node.querySelector('.sky-foundation-row-name')?.firstChild?.textContent==='Chiron');
        const label=row?.querySelector('.sky-foundation-row-name');
        const p=label?.querySelector('.sky-placement-rx .relphi-glyph-retrograde text');
+       const stem=label?.querySelector('.sky-placement-rx .relphi-glyph-retrograde path');
        if(!p)throw new Error('Chiron Rx must display a real canonical P');
        const baselineProbe=document.createElement('span');
        baselineProbe.style.cssText='display:inline-block;width:0;height:0;padding:0;margin:0;border:0;vertical-align:baseline';
@@ -170,10 +171,12 @@ try{
        const pScale=p.getComputedTextLength()*Math.hypot(ctm.a,ctm.b)/nameP.width;
        const paintedBottom=pBaseline+nameP.actualBoundingBoxDescent*pScale;
        const paintedHeight=(nameP.actualBoundingBoxAscent+nameP.actualBoundingBoxDescent)*pScale;
+       const stemInkBottom=new DOMPoint(53.45,70).matrixTransform(stem.getScreenCTM()).y;
        const marker=p.getBoundingClientRect(),labelBox=label.getBoundingClientRect();
        return{
          baseline,
          pInkBottom:paintedBottom,
+         stemInkBottom,stemInkGap:stemInkBottom-baseline,
          pInkGap:paintedBottom-baseline,
          pCapHeight:paintedHeight,
          nameCapHeight:nameP.actualBoundingBoxAscent+nameP.actualBoundingBoxDescent,
@@ -196,6 +199,8 @@ try{
      assert.ok(Math.abs(chironInk.pCapHeight-chironInk.nameCapHeight)<.6,'Retrograde P cap height matches Pluto letter height');
      assert.ok(Math.abs(chironInk.pInkGap-chironInk.namePDescent)<1.1,
        'Painted P stem must reach Chiron baseline, not merely the declared SVG baseline');
+     assert.ok(chironInk.stemInkGap>.15&&chironInk.stemInkGap<1.5,
+       'Actual P stem extension must reach Chiron painted baseline, beyond the undershooting font ink');
      assert.ok(chironInk.markerLeft-chironInk.labelRight>=3,
        'Chiron name and retrograde letter must have comfortable separation');
      await page.screenshot({path:'chiron-retrograde-visible-baseline.png',fullPage:true});
@@ -207,6 +212,7 @@ try{
          .find(n=>n.querySelector('.sky-foundation-row-name')?.firstChild?.textContent==='Chiron');
        const label=row?.querySelector('.sky-foundation-row-name');
        const p=label?.querySelector('.sky-placement-rx .relphi-glyph-retrograde text');
+       const stem=label?.querySelector('.sky-placement-rx .relphi-glyph-retrograde path');
        if(!p)throw new Error('Mobile Chiron P not rendered');
        const probe=document.createElement('span');
        probe.style.cssText='display:inline-block;width:0;height:0;padding:0;margin:0;border:0;vertical-align:baseline';
@@ -221,9 +227,10 @@ try{
        const pBaseline=matrix.b*Number(p.getAttribute('x'))+matrix.d*Number(p.getAttribute('y'))+matrix.f;
        const width=p.getComputedTextLength()*Math.hypot(matrix.a,matrix.b);
        const paintedBottom=pBaseline+nameP.actualBoundingBoxDescent*width/nameP.width;
+       const stemInkBottom=new DOMPoint(53.45,70).matrixTransform(stem.getScreenCTM()).y;
        range.selectNodeContents(label.firstChild);
        return{
-         pInkBottom:paintedBottom,
+         pInkBottom:paintedBottom,stemInkBottom,stemInkGap:stemInkBottom-baseline,
          baseline,pWidth:width,namePWidth:nameP.width,font:font.fontFamily,nameFont:name.fontFamily,
          nameGap:p.getBoundingClientRect().left-range.getBoundingClientRect().right
        };
@@ -233,6 +240,8 @@ try{
      assert.ok(Math.abs(mobileChiron.pWidth-mobileChiron.namePWidth)<.25,'Mobile P matches Pluto P width');
      assert.ok(Math.abs(mobileChiron.pInkBottom-mobileChiron.baseline)<1.1,
        'Mobile painted P stem must meet the neighboring Chiron baseline');
+     assert.ok(mobileChiron.stemInkGap>.15&&mobileChiron.stemInkGap<1.5,
+       'Mobile P stem extension must reach the actual Chiron ink line');
      assert.ok(mobileChiron.nameGap>=3,'Mobile Rx must remain clearly separate from name');
      await page.screenshot({path:'chiron-retrograde-mobile-visible-baseline.png',fullPage:true});
      await page.setViewportSize({width:1200,height:820});
@@ -273,7 +282,7 @@ try{
      })));
      console.log('PREVIEW PLACEMENTS AND RELATIONSHIPS RETROGRADE',JSON.stringify({placementMark,relationshipsRx}));
      assert.ok(relationshipsRx.length>0,'Retrograde Saturn relationship must have motion indicator');
-     assert.ok(relationshipsRx.every(r=>r.art&&r.path?.startsWith('M64.1246')),'Relationships must render registry-owned SVG');
+     assert.ok(relationshipsRx.every(r=>r.art&&r.path?.startsWith('M60.1246')),'Relationships must render registry-owned SVG');
      assert.ok(relationshipsRx.every(r=>r.mask==='none'),'Relationships must not use raw asset CSS masks');
       const relationshipSizes=relationshipsRx.map(r=>r.height).filter(h=>h>0);
       assert.ok(relationshipSizes.length>0,'Relationships must display a visible motion marker');
@@ -386,7 +395,7 @@ try{
      assert.equal(galleryRetro?.source,'retrograde');
      assert.equal(galleryRetro.paths,1);
      assert.deepEqual(galleryRetro.letters,['P']);
-      assert.ok(galleryRetro.firstPath.startsWith('M64.1246'));
+      assert.ok(galleryRetro.firstPath.startsWith('M60.1246'));
      assert.equal(galleryRetro.ring,'1');
      const galleryAnti=galleryState.marks.find(g=>g.id==='anti-vertex');
      assert.equal(galleryAnti?.source,'anti-vertex');
