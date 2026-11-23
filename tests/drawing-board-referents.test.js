@@ -29,8 +29,8 @@ const base='http://127.0.0.1:8000/tarot.html';
     await page.locator('#drawingBoardOptionsButton').click({force:true});
     await page.waitForSelector('.relphi-referents-drawer',{state:'visible'});
 
-    assert.equal(await page.locator('.drawing-board-mode-tabs').getAttribute('role'),'tablist','Board and Referents should be the top-level mode tabs');
-    assert.equal(await page.locator('#drawingBoardOptionsButton').getAttribute('aria-selected'),'true','Referents tab should be active while editing referents');
+    assert.equal(await page.locator('.drawing-board-mode-switch').getAttribute('role'),'radiogroup','Board and Referents should be the top-level mode tabs');
+    assert.equal(await page.locator('#drawingBoardOptionsButton').getAttribute('aria-checked'),'true','Referents tab should be active while editing referents');
     assert.equal(await page.locator('.drawing-board-board-mode').isVisible(),false,'Board controls should be hidden while Referents is active');
 
     const paths=page.locator('[data-referent-path]');
@@ -88,7 +88,7 @@ const base='http://127.0.0.1:8000/tarot.html';
     await page.click('#relphiApplyOptions');
 
     await page.waitForSelector('.relphi-referents-drawer',{state:'detached'});
-    assert.equal(await page.locator('#drawingBoardBoardTab').getAttribute('aria-selected'),'true','Start Reading should return to Board mode');
+    assert.equal(await page.locator('#drawingBoardBoardTab').getAttribute('aria-checked'),'true','Start Reading should return to Board mode');
     assert.equal(await page.locator('.drawing-board-board-mode').isVisible(),true,'Board actions should reappear after Start Reading');
     assert.equal(await page.locator('.relphi-focus-reader').count(),0,'No card should be revealed before attunement');
     assert.equal(await page.locator('.relphi-attune-reader').count(),0,'The board guidance toast should be visible before the attunement screen covers the board');
@@ -148,7 +148,7 @@ const base='http://127.0.0.1:8000/tarot.html';
     await page.click('#relphiResetBoard');
     await page.click('#drawingBoardBoardTab');
     await page.waitForSelector('.relphi-referents-drawer',{state:'detached'});
-    assert.equal(await page.locator('#drawingBoardBoardTab').getAttribute('aria-selected'),'true','Board tab should restore Board mode');
+    assert.equal(await page.locator('#drawingBoardBoardTab').getAttribute('aria-checked'),'true','Board tab should restore Board mode');
     assert.equal(await page.locator('.drawing-board-board-mode').isVisible(),true,'Board mode should contain the board controls');
     assert.deepEqual(
       await page.locator('.drawing-board-board-mode .drawing-board-top-actions > button').evaluateAll(nodes=>nodes.map(node=>node.id)),
