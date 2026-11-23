@@ -1767,8 +1767,8 @@
     jupiter: 'https://commons.wikimedia.org/wiki/Special:FilePath/Roman_Marble_Statue_of_Jupiter_%28Zeus%29_Accompanied_by_Eagle%2C_2nd_C._AD_%2827683776204%29.jpg?width=640',
     saturn: 'https://commons.wikimedia.org/wiki/Special:FilePath/Chronos_MET_DP-932-001.jpg?width=640'
   };
-  const browserTimeZone = (Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC');
-  const state = { tz: browserTimeZone, lat: 51.4769, lon: -0.0005, useSystem: true, now: new Date(), locationName: 'Greenwich demo', moonOrientation: 'auto', skyBody: 'Saturn', skyHasRun: false, wandererExpandedBody: null, heptagramHourOverride: null, timeFormat: '12h' };
+  // A demo location is a complete place/time-zone packet, not browser-local time.
+  const state = { tz: 'Europe/London', lat: 51.4769, lon: -0.0005, useSystem: true, now: new Date(), locationName: 'Greenwich demo', moonOrientation: 'auto', skyBody: 'Saturn', skyHasRun: false, wandererExpandedBody: null, heptagramHourOverride: null, timeFormat: '12h' };
   const locationPresets = [
     {name:'Greenwich, London, UK', lat:51.4769, lon:-0.0005, tz:'Europe/London'},
     {name:'Boston, Massachusetts, USA', lat:42.3601, lon:-71.0589, tz:'America/New_York'},
@@ -2716,7 +2716,12 @@
     return {start: prev.sunrise, sunrise: prev.sunrise, sunset: prev.sunset, end: today.sunrise, localNow: instant};
   }
 
-  function dayRulerKeyForWeekday(localStart) { return weekdayToRuler[localStart.getDay()]; }
+  function dayRulerKeyForWeekday(localStart) {
+    // Date#getDay() uses the browser zone, which can be a different date
+    // from the selected location's sunrise and hence the wrong planetary day.
+    const weekday = new Intl.DateTimeFormat('en-US', { timeZone:state.tz, weekday:'short' }).format(localStart);
+    return weekdayToRuler[['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].indexOf(weekday)];
+  }
 
   function buildHours(frame, dayKey) {
     const seq = rotateTo(dayKey);
