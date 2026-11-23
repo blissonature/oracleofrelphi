@@ -33,7 +33,7 @@
     ['earth','Earth',['earth','earth element','element earth','🜃'],'assets/element-glyphs/earth.svg',1,0,2.2,null,'circle'],
     ['conjunction','Conjunction',['conjunction','conjunct','☌'],'assets/aspect-glyphs/conjunction.svg',0.9,0,0,null,'circle'],
     ['opposition','Opposition',['opposition','opposite','☍'],'assets/aspect-glyphs/opposition.svg',1,0,0,null,'circle'],
-    ['trine','Trine',['trine','△','▲'],'assets/element-glyphs/fire.svg',1,0,-2.2,null,'circle'],
+    ['trine','Trine',['trine','△','▲'],'assets/aspect-glyphs/trine.svg',1,0,-2.2,null,'circle'],
     ['square','Square',['square','□','■'],'assets/aspect-glyphs/square.svg',0.9,0,0,null,'circle'],
     ['sextile','Sextile',['sextile','✶','⚹','*'],'assets/aspect-glyphs/sextile.svg',0.96,0,0,null,'circle'],
     ['semi-sextile','Semi-Sextile',['semi-sextile','semisextile','semi sextile','⚺'],'assets/aspect-glyphs/semi-sextile.svg',0.95,0,0,null,'circle'],

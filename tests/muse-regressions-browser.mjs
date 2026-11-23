@@ -1,0 +1,183 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import { chromium } from 'playwright';
+
+const base='http://127.0.0.1:8000/';
+fs.mkdirSync('test-results',{recursive:true});
+const browser=await chromium.launch({headless:true,args:['--no-sandbox']});
+const reports=[];
+async function check(name,run){
+  try{await run();reports.push({name,status:'PASS'});console.log('PASS',name)}
+  catch(error){reports.push({name,status:'FAIL',error:String(error.stack||error)});console.error('FAIL',name,error)}
+}
+async function newPage(width){
+  const context=await browser.newContext({viewport:{width,height:900},timezoneId:'America/Denver',acceptDownloads:true});
+  const page=await context.newPage();
+  page.on('pageerror',e=>console.error('PAGEERROR',page.url(),e.message));
+  return {page,context};
+}
+try {
+  for(const width of [1280,390]){
+    await check('Glyph Trainer canonical symbols and classification '+width,async()=>{
+      const {page,context}=await newPage(width);
+      try{
+        await page.goto(base+'glyphs.html',{waitUntil:'domcontentloaded',timeout:30000});
+        await page.waitForFunction(()=>document.querySelectorAll('#glyphGrid .glyph-card').length>=45,{timeout:18000});
+        await page.waitForFunction(()=>['Sun','Moon','Aries','Trine'].every(name=>{
+          const card=[...document.querySelectorAll('#glyphGrid .glyph-card')].find(el=>el.querySelector('h3')?.textContent===name);
+          return card?.querySelector('svg .relphi-canonical-glyph')?.dataset.canonicalGlyphId === name.toLowerCase();
+        }),{timeout:25000});
+        const results=await page.evaluate(()=>{
+          const cards=[...document.querySelectorAll('#glyphGrid .glyph-card')];
+          return Object.fromEntries(['Sun','Moon','Aries','Trine'].map(name=>{
+            const item=cards.find(card=>card.querySelector('h3')?.textContent===name);
+            const art=item?.querySelector('svg .relphi-canonical-glyph');
+            let box;try{box=art?.getBBox()}catch(_){}
+            return [name,{kind:item?.querySelector('.glyph-kind')?.textContent,
+              id:art?.dataset.canonicalGlyphId,
+              primitives:art?.querySelectorAll('path,circle,line,ellipse,polygon,polyline,rect').length||0,
+              bbox:box?{width:box.width,height:box.height}:null,
+              hasBubble:!!item?.querySelector('.relphi-glyph-bubble')}];
+          }));
+        });
+        assert.equal(results.Sun.id,'sun');assert.equal(results.Moon.id,'moon');assert.equal(results.Aries.id,'aries');assert.equal(results.Trine.id,'trine');
+        assert.match(results.Trine.kind,/Aspect/i);
+        for(const info of Object.values(results)){assert.ok(info.primitives>0,JSON.stringify(info));assert.equal(info.hasBubble,false)}
+        await page.screenshot({path:'test-results/muse-glyphs-'+width+'.png'});
+      }finally{await context.close()}
+    });
+    await check('Astrology Foundations sign sizing '+width,async()=>{
+      const {page,context}=await newPage(width);
+      try{
+        await page.goto(base+'astrology-foundations.html',{waitUntil:'domcontentloaded',timeout:30000});
+        await page.locator('[data-kind="signs"]').click({timeout:10000});
+        await page.waitForFunction(()=>document.querySelectorAll('.foundation-matrix .front-glyph[data-canonical-glyph-id]').length===12,{timeout:30000});
+        const result=await page.evaluate(()=>{
+          return [...document.querySelectorAll('.foundation-matrix .flip-tile')].map(tile=>{
+            const icon=tile.querySelector('svg.front-glyph'),face=tile.querySelector('.flip-front');
+            if(!icon)return {error:'missing glyph'};
+            const i=icon.getBoundingClientRect(),f=face.getBoundingClientRect();
+            return {id:icon.dataset.canonicalGlyphId,icon:{w:i.width,h:i.height},face:{w:f.width,h:f.height},
+              overflow:i.left<f.left-2||i.right>f.right+2||i.top<f.top-2||i.bottom>f.bottom+2};
+          });
+        });
+        assert.equal(result.length,12);assert.ok(result.every(v=>!v.error&&!v.overflow&&v.icon.w<=v.face.w&&v.icon.h<=v.face.h),JSON.stringify(result));
+        await page.screenshot({path:'test-results/muse-foundations-'+width+'.png'});
+      }finally{await context.close()}
+    });
+    await check('Planetary Hours demo timezone '+width,async()=>{
+      const {page,context}=await newPage(width);
+      try{
+        await page.goto(base+'planetaryhours.html',{waitUntil:'domcontentloaded',timeout:30000});
+        await page.waitForFunction(()=>!!document.querySelector('#tzSelect')?.value,{timeout:16000});
+        const packet=await page.evaluate(()=>({
+          tz:document.querySelector('#tzSelect')?.value,
+          lat:Number(document.querySelector('#lat')?.value),
+          name:document.querySelector('#locationSearch')?.value,
+          sunrise:document.querySelector('#sunTimes')?.textContent||''
+        }));
+        assert.equal(packet.tz,'Europe/London',JSON.stringify(packet));
+        assert.ok(Math.abs(packet.lat-51.4769)<.01);
+        assert.match(packet.name,/Greenwich/);
+        assert.match(packet.sunrise,/sunrise/i);
+        await page.screenshot({path:'test-results/muse-planetary-'+width+'.png'});
+      }finally{await context.close()}
+    });
+    await check('Sky Chart paste importer is discoverable '+width,async()=>{
+      const {page,context}=await newPage(width);
+      try{
+        await page.goto(base+'sky-chart.html',{waitUntil:'domcontentloaded',timeout:30000});
+        const where=page.locator('[data-sky-drawer-tab="where"]:visible').first();
+        await where.click({timeout:25000});
+        const importer=page.locator('.sky-where-when-editor .sky-where-when-paste').first();
+        await importer.waitFor({state:'visible',timeout:18000});
+        await importer.locator('summary').click();
+        await importer.locator('[data-ww-paste-placements]').waitFor({state:'visible',timeout:12000});
+        assert.equal(await page.locator('.sky-where-when-editor [data-ww-paste-inference-host]').count(),1);
+        await page.screenshot({path:'test-results/muse-sky-import-'+width+'.png'});
+      }finally{await context.close()}
+    });
+    await check('Planetary Hours and Sky Chart hour-ruler parity '+width,async()=>{
+      const {page,context}=await newPage(width);
+      try{
+        await page.goto(base+'planetaryhours.html',{waitUntil:'domcontentloaded',timeout:30000});
+        await page.waitForFunction(()=>document.querySelector('#phCurrentWheelCard')?.getAttribute('href')?.includes('source=planetary-hours') && /hour/i.test(document.querySelector('#topHourRuler')?.textContent||''),{timeout:24000});
+        const snapshot=await page.evaluate(()=>({
+          href:document.querySelector('#phCurrentWheelCard')?.getAttribute('href'),
+          hour:document.querySelector('#topHourRuler')?.textContent?.trim()||'',
+          sunset:document.querySelector('#sunTimes')?.textContent?.trim()||'',
+          sunTile:document.querySelector('.ph-wanderer-card[data-sky-body="Sun"] .ph-wanderer-caption')?.textContent?.trim()||''
+        }));
+        const planetNames=/\b(Sun|Moon|Mercury|Venus|Mars|Jupiter|Saturn)\b/i;
+        const expected=(snapshot.hour.match(planetNames)||[])[1]?.toLowerCase();
+        assert.ok(expected,'Missing Planetary Hours ruler: '+JSON.stringify(snapshot));
+        const clockPattern=/(\d{1,2}):(\d{2})\s*(a\.?m\.?|p\.?m\.?)/i;
+        const calcSet=snapshot.sunset.match(/sunset at\s+(\d{1,2}:\d{2}\s*(?:a\.?m\.?|p\.?m\.?))/i)?.[1];
+        const tileSet=snapshot.sunTile.match(/Set\s+(\d{1,2}:\d{2}\s*(?:a\.?m\.?|p\.?m\.?))/i)?.[1];
+        const minutes=str=>{const x=str?.match(clockPattern);if(!x)return NaN;return (Number(x[1])%12)*60+Number(x[2])+(x[3].toLowerCase().startsWith('p')?720:0)};
+        assert.ok(Number.isFinite(minutes(calcSet))&&Number.isFinite(minutes(tileSet)),JSON.stringify(snapshot));
+        assert.ok(Math.abs(minutes(calcSet)-minutes(tileSet))<=20,'Sun tile Set and solar sunset mismatch: '+JSON.stringify(snapshot));
+        await page.goto(new URL(snapshot.href,base).href,{waitUntil:'domcontentloaded',timeout:40000});
+        await page.waitForFunction(()=>document.querySelector('.sky-ph-planet.is-hour-ruler'),{timeout:45000});
+        const actual=await page.locator('.sky-ph-planet.is-hour-ruler').first().getAttribute('class');
+        assert.match(actual,new RegExp('\\bsky-ph-'+expected+'\\b'),'Planetary hour mismatch: '+JSON.stringify({expected,actual,snapshot}));
+        await page.screenshot({path:'test-results/muse-planetary-sky-parity-'+width+'.png'});
+      }finally{await context.close()}
+    });
+    await check('Tarot search add card and reload x4 '+width,async()=>{
+      const {page,context}=await newPage(width);
+      try{
+        await page.goto(base+'tarot.html',{waitUntil:'domcontentloaded',timeout:30000});
+        await page.waitForFunction(()=>!!window.RelphiTarotLedgerBridge&&!!window.RelphiDrawingBoardOptionsBridge,{timeout:30000});
+        await page.locator('#oracleCommand').fill('Moon');
+        await page.locator('#runCommand').click();
+        await page.waitForFunction(()=>document.querySelectorAll('#cardList .or-card').length>3,{timeout:14000});
+        const add=page.locator('#cardList [data-shortlist]').first();
+        await add.click({timeout:15000});
+        await page.waitForFunction(()=>{
+          const snap=window.RelphiDrawingBoardOptionsBridge?.capture?.();return snap?.shortList?.length>0;
+        },{timeout:13000});
+        await page.waitForTimeout(350);
+        for(let i=1;i<=4;i++){
+          await page.reload({waitUntil:'load',timeout:30000});
+          await page.waitForFunction(()=>window.RelphiDrawingBoardOptionsBridge?.capture?.()?.shortList?.length>0,{timeout:20000});
+          await page.waitForFunction(()=>document.querySelector('#shortListPanel .card-row-item'),{timeout:15000});
+          await page.evaluate(()=>document.body.dataset.museResponsive=String(Date.now()));
+          console.log('responsive reload',width,i);
+        }
+        await page.locator('#relphiOpenDrawingBoardCurrent').waitFor({state:'visible'});
+        const expanded=await page.locator('#relphiOpenDrawingBoardCurrent').getAttribute('aria-expanded');
+        if(expanded!=='true')await page.locator('#relphiOpenDrawingBoardCurrent').click();
+        await page.locator('#shortListPanel .card-row-item').first().waitFor({state:'visible',timeout:15000});
+
+        // Confirm the real export UI remains actionable after restored sessions.
+        const downloadAction=page.locator('#drawing-board-document-actions #downloadRowHtml');
+        await downloadAction.waitFor({state:'visible',timeout:12000});
+        const [download]=await Promise.all([
+          page.waitForEvent('download',{timeout:20000}),
+          downloadAction.click({timeout:12000})
+        ]);
+        assert.match(download.suggestedFilename(),/\.html$/);
+        await page.screenshot({path:'test-results/muse-tarot-board-'+width+'.png'});
+      }finally{await context.close()}
+    });
+  }
+  if(process.env.RELPHI_COMMIT_SHA){
+    await check('First-party exact-commit preview loads a real Sky Chart',async()=>{
+      const {page,context}=await newPage(1280);
+      try{
+        const link='https://oracleofrelphi.com/sky-chart-preview/sky-chart.html?ref='+process.env.RELPHI_COMMIT_SHA;
+        console.log('Checking first-party preview',link);
+        await page.goto(link,{waitUntil:'domcontentloaded',timeout:45000});
+        await page.waitForFunction(()=>{
+          const error=document.querySelector('#previewStatus');
+          if(error && /Preview failed|returned [45]\\d\\d/.test(error.textContent||''))throw new Error(error.textContent);
+          return !!document.querySelector('#skyFoundationRoot') && !!document.querySelector('.sky-chart-page');
+        },{timeout:65000});
+        await page.screenshot({path:'test-results/muse-first-party-preview.png'});
+      }finally{await context.close()}
+    });
+  }
+}finally{await browser.close()}
+fs.writeFileSync('test-results/muse-report.json',JSON.stringify(reports,null,2));
+if(reports.some(r=>r.status==='FAIL'))process.exitCode=1;

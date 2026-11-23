@@ -15,6 +15,12 @@
     svg.className.baseVal = className || '';
     svg.setAttribute('viewBox', '-19 -19 38 38');
     svg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+    // Text glyphs were replaced by SVGs without dimensions; SVG defaults to
+    // 300×150px and overflowed the compact 12-sign matrix tiles.
+    if (className && className.split(/\s+/).includes('front-glyph')) {
+      svg.setAttribute('width', '1em');
+      svg.setAttribute('height', '1em');
+    }
     svg.setAttribute('aria-hidden', 'true');
     svg.dataset.canonicalGlyphId = id;
     svg.dataset.masterGlyphSource = 'https://oracleofrelphi.com/glyphs-unified-preview.html';
