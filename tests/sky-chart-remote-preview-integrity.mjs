@@ -83,7 +83,7 @@ try{
      assert.equal(retro.text[0].value,'P');
      assert.match(retro.text[0].family,/system-ui/i);
      assert.equal(retro.text[0].weight,'700');
-     assert.ok(retro.firstPath.startsWith('M75.189'));
+     assert.ok(retro.firstPath.startsWith('M64.1246'));
      assert.equal(retro.internalRings,0);
      assert.ok(Math.abs(retro.dx)<1&&Math.abs(retro.dy)<1,'Centered in the existing circle');
      assert.ok(retro.farthest<16.825,'Original artwork stays inside existing ring');
@@ -111,7 +111,7 @@ try{
      });
      assert.ok(placementMark.height>=8&&placementMark.height<=16,'Original Retrograde must fit in name-row annotation');
      assert.equal(placementMark.textCount,1);
-     assert.ok(placementMark.original.startsWith('M75.189'));
+     assert.ok(placementMark.original.startsWith('M64.1246'));
      assert.equal(placementMark.source,'retrograde');
      assert.equal(placementMark.rawImage,false,'Placements must use shared canonical renderer');
      // Match the live planet-name P exactly, including its baseline and its separation from the name.
@@ -273,7 +273,7 @@ try{
      })));
      console.log('PREVIEW PLACEMENTS AND RELATIONSHIPS RETROGRADE',JSON.stringify({placementMark,relationshipsRx}));
      assert.ok(relationshipsRx.length>0,'Retrograde Saturn relationship must have motion indicator');
-     assert.ok(relationshipsRx.every(r=>r.art&&r.path?.startsWith('M75.189')),'Relationships must render registry-owned SVG');
+     assert.ok(relationshipsRx.every(r=>r.art&&r.path?.startsWith('M64.1246')),'Relationships must render registry-owned SVG');
      assert.ok(relationshipsRx.every(r=>r.mask==='none'),'Relationships must not use raw asset CSS masks');
       const relationshipSizes=relationshipsRx.map(r=>r.height).filter(h=>h>0);
       assert.ok(relationshipSizes.length>0,'Relationships must display a visible motion marker');
@@ -386,7 +386,7 @@ try{
      assert.equal(galleryRetro?.source,'retrograde');
      assert.equal(galleryRetro.paths,1);
      assert.deepEqual(galleryRetro.letters,['P']);
-      assert.ok(galleryRetro.firstPath.startsWith('M75.189'));
+      assert.ok(galleryRetro.firstPath.startsWith('M64.1246'));
      assert.equal(galleryRetro.ring,'1');
      const galleryAnti=galleryState.marks.find(g=>g.id==='anti-vertex');
      assert.equal(galleryAnti?.source,'anti-vertex');
