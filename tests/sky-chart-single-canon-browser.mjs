@@ -41,6 +41,16 @@ async function inspect(width,height,suffix){
       };
     });
     const geminiPath=document.querySelector('[data-zodiac-sign="gemini"] .relphi-glyph-gemini path');
+    const angleFrames=[...document.querySelectorAll('[data-layer="placements"] > g[data-angle-axis="true"]')];
+    const expectedAngleLines=angleFrames.filter(host=>{
+      const lane=Number(host.dataset.angleLane);
+      const edge=Number(window.RelphiSkyWheelSpec?.role?.(host.dataset.sky)?.edge);
+      const side=host.dataset.angleExtreme;
+      if(!Number.isFinite(lane)||!Number.isFinite(edge))throw new Error('Missing angle lane/edge geometry');
+      // The renderer draws an axis segment only where the +/-12px
+      // interruption around its frame leaves space to the chart edge.
+      return side==='inner'?edge<lane-12-1e-5:side==='outer'?edge>lane+12+1e-5:false;
+    }).length;
     const angleLines=Array.from(document.querySelectorAll('.sky-foundation-angle-axis')).map(line=>({
       sky:line.dataset.sky,
       edge:Number(line.dataset.axisEdgeRadius),
@@ -73,8 +83,8 @@ async function inspect(width,height,suffix){
       sourceStrokeWidth:sourcePath?.getAttribute('stroke-width')||'',
       renderedFill:geminiPath?.getAttribute('fill')||'',
       renderedStroke:geminiPath?.getAttribute('stroke')||'',
-      angleLines,
-      angleCount:document.querySelectorAll('[data-angle-axis="true"]').length,
+      angleLines,expectedAngleLines,
+      angleCount:angleFrames.length,
       renderedSkyCount:new Set(Array.from(document.querySelectorAll('[data-layer="placements"] > [data-sky]')).map(host=>host.dataset.sky).filter(Boolean)).size,
       diagnostics:document.querySelectorAll('[data-angle-collision-error],[data-canonical-glyph-error]').length,
       placementColors
@@ -94,7 +104,8 @@ async function inspect(width,height,suffix){
   assert.equal(state.renderedStroke,'');
   assert.ok(state.renderedSkyCount===1||state.renderedSkyCount===2);
   assert.equal(state.angleCount,state.renderedSkyCount*4);
-  assert.equal(state.angleLines.length,state.angleCount);
+  assert.equal(state.angleLines.length,state.expectedAngleLines,
+    'Only angle axes with room past their interruption may draw visible segments');
   assert.ok(state.angleLines.every(line=>Number.isFinite(line.expectedEdge)&&line.edge===line.expectedEdge));
   assert.ok(state.placementColors.length>0);
   assert.ok(state.placementColors.every(item=>item.painted>0));
