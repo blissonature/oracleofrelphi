@@ -18,6 +18,51 @@ function sky(name,offset,instant,location,lat,lon,tz){
 }
 const a=sky('Test A',0,'1985-10-08T08:37:00Z','Malden, Massachusetts, United States',42.4251,-71.0662,'America/New_York');
 const b=sky('Test B',29,'2026-10-17T12:00:00Z','Salt Lake City, Utah, United States',40.7608,-111.891,'America/Denver');
+async function verifyPaintedStemAgainstChiron(page,screen){
+  const png=await page.screenshot({path:'sky-remote-chiron-ink-'+screen+'.png',fullPage:true});
+  const evidence=await page.evaluate(async encoded=>{
+    const bytes=Uint8Array.from(atob(encoded),c=>c.charCodeAt(0));
+    const bitmap=await createImageBitmap(new Blob([bytes],{type:'image/png'}));
+    const canvas=document.createElement('canvas');
+    canvas.width=bitmap.width;canvas.height=bitmap.height;
+    const context=canvas.getContext('2d',{willReadFrequently:true});
+    context.drawImage(bitmap,0,0);bitmap.close();
+    const rgba=context.getImageData(0,0,canvas.width,canvas.height).data;
+    const row=[...document.querySelectorAll('#skyFoundationA .sky-foundation-row')]
+      .find(n=>n.querySelector('.sky-foundation-row-name')?.firstChild?.textContent==='Chiron');
+    const label=row?.querySelector('.sky-foundation-row-name');
+    const path=label?.querySelector('.sky-placement-rx .relphi-glyph-retrograde path');
+    if(!path)throw new Error('Cannot inspect painted Chiron P stem');
+    const range=document.createRange();range.selectNodeContents(label.firstChild);
+    const name=range.getBoundingClientRect();
+    const stem=new DOMPoint(53.45,68).matrixTransform(path.getScreenCTM());
+    const xOffset=window.scrollX,yOffset=window.scrollY;
+    const darkBottom=(from,to)=>{
+      let lowest=-1,inkCount=0;
+      const left=Math.max(0,Math.floor(from+xOffset));
+      const right=Math.min(canvas.width,Math.ceil(to+xOffset));
+      const top=Math.max(0,Math.floor(name.top+yOffset-2));
+      const bottom=Math.min(canvas.height,Math.ceil(name.bottom+yOffset+3));
+      for(let y=top;y<bottom;y++)for(let x=left;x<right;x++){
+        const i=(y*canvas.width+x)*4;
+        if(rgba[i]<155&&rgba[i+1]<155&&rgba[i+2]<155&&rgba[i+3]>200){
+          lowest=y;inkCount++;
+        }
+      }
+      return {bottom:lowest,count:inkCount,left,right};
+    };
+    const nameInk=darkBottom(name.right-6,name.right-.5);
+    const pStemInk=darkBottom(stem.x-0.8,stem.x+0.8);
+    return{screen,nameInk,pStemInk,pStemX:stem.x,
+      difference:pStemInk.bottom-nameInk.bottom,originalTextRight:name.right};
+  },png.toString('base64'));
+  console.log('VISIBLE RASTER CHIRON VS P STEM',JSON.stringify(evidence));
+  assert.ok(evidence.nameInk.count>0&&evidence.pStemInk.count>0,
+    'Both Chiron n and Retrograde P stem must have measurable dark pixels');
+  assert.ok(evidence.difference>=0&&evidence.difference<=2,
+    'Actual painted P stem must end on Chiron lettering line, not above it');
+}
+
 const browser=await chromium.launch({headless:true});
 let failed=false;
 try{
@@ -204,6 +249,7 @@ try{
      assert.ok(chironInk.markerLeft-chironInk.labelRight>=3,
        'Chiron name and retrograde letter must have comfortable separation');
      await page.screenshot({path:'chiron-retrograde-visible-baseline.png',fullPage:true});
+     await verifyPaintedStemAgainstChiron(page,'desktop');
      // The reported screenshot was captured on an iPhone. Recheck the actual
      // Chiron ink on the narrow Sky Chart—not merely the Master Glyph gallery.
      await page.setViewportSize({width:390,height:844});
@@ -244,6 +290,7 @@ try{
        'Mobile P stem extension must reach the actual Chiron ink line');
      assert.ok(mobileChiron.nameGap>=3,'Mobile Rx must remain clearly separate from name');
      await page.screenshot({path:'chiron-retrograde-mobile-visible-baseline.png',fullPage:true});
+     await verifyPaintedStemAgainstChiron(page,'mobile');
      await page.setViewportSize({width:1200,height:820});
 
 
