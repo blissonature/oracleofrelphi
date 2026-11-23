@@ -193,6 +193,37 @@ try{
      assert.ok(chironInk.markerLeft-chironInk.labelRight>=3,
        'Chiron name and retrograde letter must have comfortable separation');
      await page.screenshot({path:'chiron-retrograde-visible-baseline.png',fullPage:true});
+     // The reported screenshot was captured on an iPhone. Recheck the actual
+     // Chiron ink on the narrow Sky Chart—not merely the Master Glyph gallery.
+     await page.setViewportSize({width:390,height:844});
+     const mobileChiron=await page.evaluate(()=>{
+       const row=[...document.querySelectorAll('#skyFoundationA .sky-foundation-row')]
+         .find(n=>n.querySelector('.sky-foundation-row-name')?.firstChild?.textContent==='Chiron');
+       const label=row?.querySelector('.sky-foundation-row-name');
+       const p=label?.querySelector('.sky-placement-rx .relphi-glyph-retrograde text');
+       if(!p)throw new Error('Mobile Chiron P not rendered');
+       const probe=document.createElement('span');
+       probe.style.cssText='display:inline-block;width:0;height:0;padding:0;margin:0;border:0;vertical-align:baseline';
+       label.insertBefore(probe,label.querySelector('.sky-placement-rx'));
+       const baseline=probe.getBoundingClientRect().top;
+       probe.remove();
+       const rect=p.getBBox(),matrix=p.getScreenCTM(),name=getComputedStyle(label),
+         font=getComputedStyle(p),range=document.createRange();
+       range.selectNodeContents(label.firstChild);
+       return{
+         pInkBottom:matrix.b*rect.x+matrix.d*(rect.y+rect.height)+matrix.f,
+         baseline,font:font.fontFamily,nameFont:name.fontFamily,
+         nameGap:p.getBoundingClientRect().left-range.getBoundingClientRect().right
+       };
+     });
+     console.log('MOBILE CHIRON RX VISIBLE STEM',JSON.stringify(mobileChiron));
+     assert.equal(mobileChiron.font,mobileChiron.nameFont,'Mobile name and retrograde P use the same font');
+     assert.ok(Math.abs(mobileChiron.pInkBottom-mobileChiron.baseline)<1.1,
+       'Mobile painted P stem must meet the neighboring Chiron baseline');
+     assert.ok(mobileChiron.nameGap>=3,'Mobile Rx must remain clearly separate from name');
+     await page.screenshot({path:'chiron-retrograde-mobile-visible-baseline.png',fullPage:true});
+     await page.setViewportSize({width:1200,height:820});
+
 
      const saturnIdentity=await page.evaluate(()=>{
        const row=[...document.querySelectorAll('#skyFoundationA .sky-foundation-row')]
