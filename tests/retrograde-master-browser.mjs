@@ -68,7 +68,7 @@ try{
       const art=card.querySelector('.relphi-glyph-retrograde');
       const source=await fetch('assets/planet-glyphs/retrograde.svg').then(r=>r.text());
       const svg=new DOMParser().parseFromString(source,'image/svg+xml').documentElement;
-      const points=[...svg.querySelector('path').getAttribute('d').matchAll(/-?\\d+(?:\\.\\d+)?/g)].map(m=>Number(m[0]));
+      const points=[...svg.querySelector('path').getAttribute('d').matchAll(/-?\d+(?:\.\d+)?/g)].map(m=>Number(m[0]));
       if(points.length!==16)throw new Error('R leg must be two simple diagonal strokes');
       const pt=i=>({x:points[2*i],y:points[2*i+1]}),
         avg=(a,b)=>({x:(a.x+b.x)/2,y:(a.y+b.y)/2});
