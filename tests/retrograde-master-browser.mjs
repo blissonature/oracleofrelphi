@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import {chromium} from 'playwright';
 
 const origin=process.env.GLYPH_TEST_ORIGIN||'http://127.0.0.1:4173';
-const assets=[{id:'retrograde',paths:1,first:'M64.1246'},{id:'anti-vertex',paths:3,first:'M27 57.623'}];
+const assets=[{id:'retrograde',paths:1,first:'M60.1246'},{id:'anti-vertex',paths:3,first:'M27 57.623'}];
 const browser=await chromium.launch({headless:true});
 try{
   for(const [name,width,height] of [['desktop',1280,800],['mobile',390,844]]){
@@ -69,7 +69,7 @@ try{
       const source=await fetch('assets/planet-glyphs/retrograde.svg').then(r=>r.text());
       const svg=new DOMParser().parseFromString(source,'image/svg+xml').documentElement;
       const points=[...svg.querySelector('path').getAttribute('d').matchAll(/-?\d+(?:\.\d+)?/g)].map(m=>Number(m[0]));
-      if(points.length!==16)throw new Error('R leg must be two simple diagonal strokes');
+      if(points.length!==24)throw new Error('R leg must contain symmetric diagonals and one P-stem extension');
       const pt=i=>({x:points[2*i],y:points[2*i+1]}),
         avg=(a,b)=>({x:(a.x+b.x)/2,y:(a.y+b.y)/2});
       const slashStart=avg(pt(0),pt(1)),slashEnd=avg(pt(2),pt(3)),
@@ -77,17 +77,21 @@ try{
       const angleA=Math.atan2(slashEnd.y-slashStart.y,slashEnd.x-slashStart.x),
         angleB=Math.atan2(otherTop.y-otherBottom.y,otherTop.x-otherBottom.x);
       const thickness=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
-      const p=art.querySelector('text'),bounds=p.getBBox();
+      const p=art.querySelector('text'),bounds=p.getBBox(),stemBottom=pt(10).y,stemWidth=pt(9).x-pt(8).x;
       return{upperLeft:slashStart,lowerRight:slashEnd,opposingUpperRight:otherTop,
         diagonalAngleDifference:Math.abs(Math.abs(angleA)-Math.abs(angleB)),
         strokeWidthDifference:Math.abs(thickness(pt(0),pt(1))-thickness(pt(4),pt(5))),
         overlapIntoPBowl:bounds.x+bounds.width-slashStart.x,
-        stemBaseline:Number(p.getAttribute('y')),
+        stemBaseline:Number(p.getAttribute('y')),stemBottom,stemWidth,
         pExtent:bounds.x+bounds.width};
     });
     assert.ok(rLeg.diagonalAngleDifference<.001,'Both x diagonals must have the same angle');
     assert.ok(rLeg.strokeWidthDifference<.01,'Both x diagonals must have the same weight');
-    assert.ok(rLeg.overlapIntoPBowl>=2,'The extended upper-left x stroke completes the missing R leg from the P bowl');
+    assert.ok(rLeg.overlapIntoPBowl>=14,'The upper-left diagonal must enter the P bowl, not merely graze its edge');
+    assert.ok(rLeg.upperLeft.x<59&&rLeg.upperLeft.y<54,'R leg must extend inside the P bowl');
+    assert.ok(rLeg.stemWidth>5.4&&rLeg.stemWidth<5.6,'P extension must use the existing bold stem width');
+    assert.ok(rLeg.stemBottom>=rLeg.stemBaseline+2.5&&rLeg.stemBottom<=rLeg.stemBaseline+3,
+      'Visible P stem must extend to the neighboring text ink line');
     assert.ok(rLeg.upperLeft.y<rLeg.stemBaseline-6,'R diagonal must begin at the P bowl, above its baseline');
     console.log('RETROGRADE JOINED R LEG AND SYMMETRIC X',name,JSON.stringify(rLeg));
     await page.screenshot({path:'retrograde-master-'+name+'.png',fullPage:true});
