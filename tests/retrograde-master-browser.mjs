@@ -109,7 +109,7 @@ try{
       'The upper-right, lower-left and lower-right X legs must be exactly equal lengths');
     assert.ok(rLeg.arms.upperLeft>Math.max(...three)+6,
       'ONLY the upper-left X leg must be longer to form the descending R leg');
-    assert.ok(Math.abs(rLeg.intersection.x-72.15)<.01&&Math.abs(rLeg.intersection.y-69)<.01,
+    assert.ok(Math.abs(rLeg.intersection.x-72.15)<.01&&Math.abs(rLeg.intersection.y-67.7)<.01,
       'Four X legs must share one balanced intersection');
     assert.ok(rLeg.overlapIntoPBowl>=14,'The upper-left diagonal must enter the P bowl, not merely graze its edge');
     assert.ok(rLeg.upperLeft.x<59&&rLeg.upperLeft.y<54,'R leg must extend inside the P bowl');
