@@ -135,6 +135,22 @@ try {
       }finally{await context.close()}
     });
   }
+  if(process.env.RELPHI_COMMIT_SHA){
+    await check('First-party exact-commit preview loads a real Sky Chart',async()=>{
+      const {page,context}=await newPage(1280);
+      try{
+        const link='https://oracleofrelphi.com/sky-chart-preview/sky-chart.html?ref='+process.env.RELPHI_COMMIT_SHA;
+        console.log('Checking first-party preview',link);
+        await page.goto(link,{waitUntil:'domcontentloaded',timeout:45000});
+        await page.waitForFunction(()=>{
+          const error=document.querySelector('#previewStatus');
+          if(error && /Preview failed|returned [45]\\d\\d/.test(error.textContent||''))throw new Error(error.textContent);
+          return !!document.querySelector('#skyFoundationRoot') && !!document.querySelector('.sky-chart-page');
+        },{timeout:65000});
+        await page.screenshot({path:'test-results/muse-first-party-preview.png'});
+      }finally{await context.close()}
+    });
+  }
 }finally{await browser.close()}
 fs.writeFileSync('test-results/muse-report.json',JSON.stringify(reports,null,2));
 if(reports.some(r=>r.status==='FAIL'))process.exitCode=1;
