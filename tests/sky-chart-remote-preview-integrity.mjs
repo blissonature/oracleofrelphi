@@ -80,16 +80,20 @@ try{
    await page.waitForFunction(()=>{
      const root=document.getElementById('skyFoundationRoot');
      const mount=document.getElementById('skyFoundationWheelMount');
+     const wheel=mount?.querySelector('.sky-foundation-wheel');
+     // The parent mount may inherit 'hidden' during layout stabilization,
+     // while the child SVG explicitly renders visible. Inspect the actual ink.
      return root?.getAttribute('aria-busy')==='false'&&
-       !!mount?.querySelector('.sky-foundation-wheel')&&
-       getComputedStyle(mount).visibility==='visible'&&
-       mount.getBoundingClientRect().height>0;
+       !!wheel&&getComputedStyle(wheel).visibility==='visible'&&
+       wheel.getBoundingClientRect().width>0&&wheel.getBoundingClientRect().height>0;
    },null,{timeout:60000}).catch(error=>{
      console.error(kind.toUpperCase()+' WHEEL READINESS DIAGNOSTIC',error.message);
    });
    const state=await page.evaluate(()=>{const mount=document.querySelector('#skyFoundationWheelMount'),root=document.querySelector('#skyFoundationRoot'),wheel=mount?.querySelector('.sky-foundation-wheel');return{
     href:location.href,base:document.baseURI,rootBusy:root?.getAttribute('aria-busy'),bodyWidth:document.body?.scrollWidth,
-    mountVisible:mount?getComputedStyle(mount).visibility:null,
+    mountVisibility:mount?getComputedStyle(mount).visibility:null,
+     wheelVisibility:wheel?getComputedStyle(wheel).visibility:null,
+     wheelArea:wheel?wheel.getBoundingClientRect().width*wheel.getBoundingClientRect().height:0,
     wheelCount:mount?.querySelectorAll('.sky-foundation-wheel').length??0,
     wheelOuter:wheel?.outerHTML.slice(0,240)??null,
     status:document.getElementById('previewStatus')?.textContent?.slice(0,250)??null,
@@ -98,7 +102,7 @@ try{
    }});
    console.log(kind.toUpperCase(),JSON.stringify({state,errors:errors.slice(0,15),failures:failures.slice(0,30)}));
    await page.screenshot({path:`sky-remote-${kind}.png`,fullPage:true});
-   if(kind==='preview'&&(!state.wheelCount||state.mountVisible==='hidden'||state.rootBusy!=='false'||errors.length)){failed=true;console.error('FAILED: hosted exact-revision preview did not display a ready wheel');}
+   if(kind==='preview'&&(!state.wheelCount||state.wheelVisibility!=='visible'||state.wheelArea<=0||state.rootBusy!=='false'||errors.length)){failed=true;console.error('FAILED: hosted exact-revision preview did not display a ready wheel');}
    if(kind==='preview'&&!failed){
      // The commit-specific preview must resolve its updated glyph asset, not just display a wheel.
      const marks=await page.evaluate(async()=>{
