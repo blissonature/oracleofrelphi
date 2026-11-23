@@ -81,7 +81,9 @@ try{
      const root=document.getElementById('skyFoundationRoot');
      const mount=document.getElementById('skyFoundationWheelMount');
      return root?.getAttribute('aria-busy')==='false'&&
-       !!mount?.querySelector('.sky-foundation-wheel');
+       !!mount?.querySelector('.sky-foundation-wheel')&&
+       getComputedStyle(mount).visibility==='visible'&&
+       mount.getBoundingClientRect().height>0;
    },null,{timeout:60000}).catch(error=>{
      console.error(kind.toUpperCase()+' WHEEL READINESS DIAGNOSTIC',error.message);
    });
