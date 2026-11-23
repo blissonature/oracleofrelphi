@@ -77,8 +77,25 @@ try{
       const angleA=Math.atan2(slashEnd.y-slashStart.y,slashEnd.x-slashStart.x),
         angleB=Math.atan2(otherTop.y-otherBottom.y,otherTop.x-otherBottom.x);
       const thickness=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
+      // Both diagonal centerlines must cross at one intersection. Three legs
+      // (upper-right, lower-left and lower-right) must have IDENTICAL lengths.
+      // Only upper-left may extend to create the missing leg of the R.
+      const difference=(a,b)=>({x:a.x-b.x,y:a.y-b.y});
+      const determinant=(a,b)=>a.x*b.y-a.y*b.x;
+      const directionA=difference(slashEnd,slashStart);
+      const directionB=difference(otherTop,otherBottom);
+      const divisor=determinant(directionA,directionB);
+      if(Math.abs(divisor)<1e-9)throw new Error('Retrograde X diagonal centerlines must intersect');
+      const t=determinant(difference(otherBottom,slashStart),directionB)/divisor;
+      const intersection={x:slashStart.x+t*directionA.x,y:slashStart.y+t*directionA.y};
+      const lengthTo=(point)=>Math.hypot(point.x-intersection.x,point.y-intersection.y);
+      const arms={
+        upperLeft:lengthTo(slashStart),upperRight:lengthTo(otherTop),
+        lowerLeft:lengthTo(otherBottom),lowerRight:lengthTo(slashEnd)
+      };
       const p=art.querySelector('text'),bounds=p.getBBox(),stemBottom=pt(10).y,stemWidth=pt(9).x-pt(8).x;
       return{upperLeft:slashStart,lowerRight:slashEnd,opposingUpperRight:otherTop,
+        intersection,arms,
         diagonalAngleDifference:Math.abs(Math.abs(angleA)-Math.abs(angleB)),
         strokeWidthDifference:Math.abs(thickness(pt(0),pt(1))-thickness(pt(4),pt(5))),
         overlapIntoPBowl:bounds.x+bounds.width-slashStart.x,
@@ -87,6 +104,13 @@ try{
     });
     assert.ok(rLeg.diagonalAngleDifference<.001,'Both x diagonals must have the same angle');
     assert.ok(rLeg.strokeWidthDifference<.01,'Both x diagonals must have the same weight');
+    const three=[rLeg.arms.upperRight,rLeg.arms.lowerLeft,rLeg.arms.lowerRight];
+    assert.ok(Math.max(...three)-Math.min(...three)<.01,
+      'The upper-right, lower-left and lower-right X legs must be exactly equal lengths');
+    assert.ok(rLeg.arms.upperLeft>Math.max(...three)+6,
+      'ONLY the upper-left X leg must be longer to form the descending R leg');
+    assert.ok(Math.abs(rLeg.intersection.x-72.15)<.01&&Math.abs(rLeg.intersection.y-69)<.01,
+      'Four X legs must share one balanced intersection');
     assert.ok(rLeg.overlapIntoPBowl>=14,'The upper-left diagonal must enter the P bowl, not merely graze its edge');
     assert.ok(rLeg.upperLeft.x<59&&rLeg.upperLeft.y<54,'R leg must extend inside the P bowl');
     assert.ok(rLeg.stemWidth>5.4&&rLeg.stemWidth<5.6,'P extension must use the existing bold stem width');
