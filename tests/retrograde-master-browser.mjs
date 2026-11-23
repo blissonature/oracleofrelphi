@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import {chromium} from 'playwright';
 
 const origin=process.env.GLYPH_TEST_ORIGIN||'http://127.0.0.1:4173';
-const assets=[{id:'retrograde',paths:1,first:'M60.1246'},{id:'anti-vertex',paths:3,first:'M27 57.623'}];
+const assets=[{id:'retrograde',paths:1,first:'M61.9513'},{id:'anti-vertex',paths:3,first:'M27 57.623'}];
 const browser=await chromium.launch({headless:true});
 try{
   for(const [name,width,height] of [['desktop',1280,800],['mobile',390,844]]){
@@ -62,62 +62,78 @@ try{
     assert.match(font.fontFamily,/system-ui/i);
     assert.equal(font.fontWeight,'700');
     assert.equal(font.fill,'rgb(17, 17, 17)');
-    const rLeg=await page.evaluate(async()=>{
+    const construction=await page.evaluate(async()=>{
       const card=[...document.querySelectorAll('#ugGrid .ug-card')]
         .find(node=>node.querySelector('.ug-id')?.textContent==='retrograde');
       const art=card.querySelector('.relphi-glyph-retrograde');
       const source=await fetch('assets/planet-glyphs/retrograde.svg').then(r=>r.text());
       const svg=new DOMParser().parseFromString(source,'image/svg+xml').documentElement;
-      const points=[...svg.querySelector('path').getAttribute('d').matchAll(/-?\d+(?:\.\d+)?/g)].map(m=>Number(m[0]));
-      if(points.length!==24)throw new Error('R leg must contain symmetric diagonals and one P-stem extension');
-      const pt=i=>({x:points[2*i],y:points[2*i+1]}),
-        avg=(a,b)=>({x:(a.x+b.x)/2,y:(a.y+b.y)/2});
-      const slashStart=avg(pt(0),pt(1)),slashEnd=avg(pt(2),pt(3)),
-        otherBottom=avg(pt(4),pt(5)),otherTop=avg(pt(6),pt(7));
-      const angleA=Math.atan2(slashEnd.y-slashStart.y,slashEnd.x-slashStart.x),
-        angleB=Math.atan2(otherTop.y-otherBottom.y,otherTop.x-otherBottom.x);
-      const thickness=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
-      // Both diagonal centerlines must cross at one intersection. Three legs
-      // (upper-right, lower-left and lower-right) must have IDENTICAL lengths.
-      // Only upper-left may extend to create the missing leg of the R.
-      const difference=(a,b)=>({x:a.x-b.x,y:a.y-b.y});
-      const determinant=(a,b)=>a.x*b.y-a.y*b.x;
-      const directionA=difference(slashEnd,slashStart);
-      const directionB=difference(otherTop,otherBottom);
-      const divisor=determinant(directionA,directionB);
-      if(Math.abs(divisor)<1e-9)throw new Error('Retrograde X diagonal centerlines must intersect');
-      const t=determinant(difference(otherBottom,slashStart),directionB)/divisor;
-      const intersection={x:slashStart.x+t*directionA.x,y:slashStart.y+t*directionA.y};
-      const lengthTo=(point)=>Math.hypot(point.x-intersection.x,point.y-intersection.y);
-      const arms={
-        upperLeft:lengthTo(slashStart),upperRight:lengthTo(otherTop),
-        lowerLeft:lengthTo(otherBottom),lowerRight:lengthTo(slashEnd)
+      const path=svg.querySelector('path'),d=path.getAttribute('d'),text=svg.querySelector('text');
+      const values=[...d.matchAll(/-?\d+(?:\.\d+)?/g)].map(x=>Number(x[0]));
+      if(values.length!==16)throw Error('Exactly TWO diagonal quads are permitted; no P foot');
+      const p=i=>({x:values[2*i],y:values[2*i+1]});
+      const avg=(a,b)=>({x:(a.x+b.x)/2,y:(a.y+b.y)/2});
+      const ul=avg(p(0),p(1)),lr=avg(p(2),p(3)),
+        ur=avg(p(4),p(5)),ll=avg(p(6),p(7));
+      const sub=(a,b)=>({x:a.x-b.x,y:a.y-b.y});
+      const cross=(a,b)=>a.x*b.y-a.y*b.x;
+      const v=sub(lr,ul),w=sub(ll,ur);
+      const t=cross(sub(ur,ul),w)/cross(v,w);
+      const center={x:ul.x+t*v.x,y:ul.y+t*v.y};
+      const distance=a=>Math.hypot(a.x-center.x,a.y-center.y);
+      const arms={upperLeft:distance(ul),upperRight:distance(ur),
+        lowerLeft:distance(ll),lowerRight:distance(lr)};
+      const angleA=Math.atan2(v.y,v.x),angleB=Math.atan2(w.y,w.x);
+      const widthA=Math.hypot(p(0).x-p(1).x,p(0).y-p(1).y);
+      const widthB=Math.hypot(p(4).x-p(5).x,p(4).y-p(5).y);
+      // The P's white counter must stay OPEN. The R leg may overlap the
+      // *outer lower-right bowl*, but never paint across the enclosed loop.
+      const canvas=document.createElement('canvas');canvas.width=1000;canvas.height=1000;
+      const ctx=canvas.getContext('2d',{willReadFrequently:true});
+      ctx.setTransform(10,0,0,10,0,0);
+      ctx.font='700 36.0958542px system-ui';
+      ctx.fillText('P',47.5,Number(text.getAttribute('y')));
+      const ink=ctx.getImageData(0,0,1000,1000).data;
+      const hitCtx=document.createElement('canvas').getContext('2d');
+      const hitPath=new Path2D(d);
+      let bowlJoin=0,counterHits=0;
+      for(let y=43;y<61;y+=.25)for(let x=52;x<70;x+=.25){
+        if(!hitCtx.isPointInPath(hitPath,x,y))continue;
+        const index=(Math.floor(y*10)*1000+Math.floor(x*10))*4;
+        const paintedP=ink[index+3]>150;
+        if(paintedP&&x>61&&y>53)bowlJoin++;
+        if(x>54&&x<62&&y>46&&y<51.5&&!paintedP)counterHits++;
+      }
+      return{
+        pathSubpaths:(d.match(/M/g)||[]).length,closed:(d.match(/Z/g)||[]).length,
+        letter:text.textContent,font:text.getAttribute('font-family'),baseline:Number(text.getAttribute('y')),
+        center,arms,angleError:Math.abs(Math.abs(angleA)-Math.abs(angleB)),
+        widthError:Math.abs(widthA-widthB),widthA,widthB,
+        joinPixels:bowlJoin,counterHits,
+        hasAddedFoot:svg.querySelectorAll('path').length!==1||
+          (d.match(/M/g)||[]).length!==2,
+        renderedText:art.querySelectorAll('text').length
       };
-      const p=art.querySelector('text'),bounds=p.getBBox(),stemBottom=pt(10).y,stemWidth=pt(9).x-pt(8).x;
-      return{upperLeft:slashStart,lowerRight:slashEnd,opposingUpperRight:otherTop,
-        intersection,arms,
-        diagonalAngleDifference:Math.abs(Math.abs(angleA)-Math.abs(angleB)),
-        strokeWidthDifference:Math.abs(thickness(pt(0),pt(1))-thickness(pt(4),pt(5))),
-        overlapIntoPBowl:bounds.x+bounds.width-slashStart.x,
-        stemBaseline:Number(p.getAttribute('y')),stemBottom,stemWidth,
-        pExtent:bounds.x+bounds.width};
     });
-    assert.ok(rLeg.diagonalAngleDifference<.001,'Both x diagonals must have the same angle');
-    assert.ok(rLeg.strokeWidthDifference<.01,'Both x diagonals must have the same weight');
-    const three=[rLeg.arms.upperRight,rLeg.arms.lowerLeft,rLeg.arms.lowerRight];
+    assert.equal(construction.letter,'P','The original P must remain a real letter, never augmented');
+    assert.equal(construction.pathSubpaths,2,'The x consists of two diagonals, with no added foot');
+    assert.equal(construction.closed,2,'Exactly two symmetrical capped diagonal strokes');
+    assert.equal(construction.hasAddedFoot,false,'No horizontal foot may be added to the P');
+    assert.equal(construction.renderedText,1);
+    assert.ok(Math.abs(construction.center.x-76.5)<.01,'X arms share one intersection');
+    assert.ok(Math.abs(construction.center.y-construction.baseline)<.001,
+      'X INTERSECTION—not its bottom—must sit ON the P/placement-name baseline');
+    assert.ok(Math.abs(construction.angleError)<.001,'X diagonals must be mirrored at equal angles');
+    assert.ok(Math.abs(construction.widthError)<.01,'X diagonals must have equal stroke weight');
+    const three=[construction.arms.upperRight,construction.arms.lowerLeft,construction.arms.lowerRight];
     assert.ok(Math.max(...three)-Math.min(...three)<.01,
-      'The upper-right, lower-left and lower-right X legs must be exactly equal lengths');
-    assert.ok(rLeg.arms.upperLeft>Math.max(...three)+6,
-      'ONLY the upper-left X leg must be longer to form the descending R leg');
-    assert.ok(Math.abs(rLeg.intersection.x-72.15)<.01&&Math.abs(rLeg.intersection.y-67.7)<.01,
-      'Four X legs must share one balanced intersection');
-    assert.ok(rLeg.overlapIntoPBowl>=14,'The upper-left diagonal must enter the P bowl, not merely graze its edge');
-    assert.ok(rLeg.upperLeft.x<59&&rLeg.upperLeft.y<54,'R leg must extend inside the P bowl');
-    assert.ok(rLeg.stemWidth>5.4&&rLeg.stemWidth<5.6,'P extension must use the existing bold stem width');
-    assert.ok(rLeg.stemBottom>=rLeg.stemBaseline+2.5&&rLeg.stemBottom<=rLeg.stemBaseline+3,
-      'Visible P stem must extend to the neighboring text ink line');
-    assert.ok(rLeg.upperLeft.y<rLeg.stemBaseline-6,'R diagonal must begin at the P bowl, above its baseline');
-    console.log('RETROGRADE JOINED R LEG AND SYMMETRIC X',name,JSON.stringify(rLeg));
+      'Upper-right, lower-left and lower-right legs must be identical');
+    assert.ok(Math.abs(three[0]-10.5)<.01,'Standard X leg length is 10.5 source units');
+    assert.ok(Math.abs(construction.arms.upperLeft-18)<.01,
+      'Only upper-left X leg extends to form the missing R leg');
+    assert.ok(construction.joinPixels>30,'R leg must JOIN the P at the outer lower-right bowl');
+    assert.equal(construction.counterHits,0,'R leg must NEVER cut through the P loop/counter');
+    console.log('RETROGRADE FULL GEOMETRY CANON PASS',name,JSON.stringify(construction));
     await page.screenshot({path:'retrograde-master-'+name+'.png',fullPage:true});
     await page.locator('[data-circle="false"]').click();
     const off=await inspect();
