@@ -25,6 +25,21 @@ async function inspect(width,height,suffix){
   await page.goto('http://127.0.0.1:4173/sky-chart.html',{waitUntil:'domcontentloaded'});
   await page.waitForFunction(()=>document.getElementById('skyFoundationRoot')?.getAttribute('aria-busy')==='false');
   await page.waitForFunction(()=>document.querySelectorAll('[data-layer="zodiac"] > g[data-zodiac-sign] .relphi-canonical-glyph').length===12);
+  // The authoritative angle-frame interrupter removes original leader axes
+  // synchronously and recreates visible segments on requestAnimationFrame.
+  // A ready zodiac gallery does not mean that later axis pass has finished.
+  await page.waitForFunction(()=>{
+    const hosts=[...document.querySelectorAll('[data-layer="placements"] > g[data-angle-axis="true"]')];
+    if(!hosts.length)return false;
+    const expected=hosts.filter(host=>{
+      const lane=Number(host.dataset.angleLane),
+        edge=Number(window.RelphiSkyWheelSpec?.role?.(host.dataset.sky)?.edge);
+      if(!Number.isFinite(lane)||!Number.isFinite(edge))return false;
+      return host.dataset.angleExtreme==='inner'?edge<lane-12-1e-5:
+        host.dataset.angleExtreme==='outer'?edge>lane+12+1e-5:false;
+    }).length;
+    return document.querySelectorAll('.sky-foundation-angle-axis').length===expected;
+  },null,{timeout:12000});
 
   const state=await page.evaluate(async()=>{
     const geminiMarkup=await fetch('assets/zodiac-glyphs/gemini.svg?v=filled-silhouette-test').then(r=>r.text());
