@@ -24,10 +24,11 @@ function makeSvg(entry){
  svg.setAttribute('aria-label',entry.name);
  const component=window.RelphiGlyphComponent;
  try{
-   const bubble=component.createBubble(svg,entry.id,{radius:19,padding:1,color:'currentColor'});
-   bubble.circle.setAttribute('aria-hidden','true');
-   bubble.root.dataset.masterGlyphSource='https://oracleofrelphi.com/glyphs-unified-preview.html';
-   Promise.resolve(bubble.ready).catch(()=>svg.replaceChildren());
+   // Trainer tiles display the canonical artwork itself, not a decorative bubble.
+   // The former white-on-white bubble made every glyph look like the same circle.
+   svg.dataset.masterGlyphSource='https://oracleofrelphi.com/glyphs-unified-preview.html';
+   Promise.resolve(component.draw(svg,entry.id,{radius:18,padding:1,color:'#fff'}))
+     .catch(error=>{ console.error('[Glyph Trainer] Could not render',entry.id,error);svg.replaceChildren(); });
  }catch(_){svg.replaceChildren();}
  return svg;
 }
