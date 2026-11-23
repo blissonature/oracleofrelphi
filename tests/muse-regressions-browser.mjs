@@ -25,7 +25,7 @@ try {
         await page.waitForFunction(()=>document.querySelectorAll('#glyphGrid .glyph-card').length>=45,{timeout:18000});
         await page.waitForFunction(()=>['Sun','Moon','Aries','Trine'].every(name=>{
           const card=[...document.querySelectorAll('#glyphGrid .glyph-card')].find(el=>el.querySelector('h3')?.textContent===name);
-          return card?.querySelector('svg .relphi-canonical-glyph');
+          return card?.querySelector('svg .relphi-canonical-glyph')?.dataset.canonicalGlyphId === name.toLowerCase();
         }),{timeout:25000});
         const results=await page.evaluate(()=>{
           const cards=[...document.querySelectorAll('#glyphGrid .glyph-card')];
@@ -98,7 +98,7 @@ try {
         },{timeout:13000});
         await page.waitForTimeout(350);
         for(let i=1;i<=4;i++){
-          await page.reload({waitUntil:'domcontentloaded',timeout:30000});
+          await page.reload({waitUntil:'load',timeout:30000});
           await page.waitForFunction(()=>window.RelphiDrawingBoardOptionsBridge?.capture?.()?.shortList?.length>0,{timeout:20000});
           await page.waitForFunction(()=>document.querySelector('#shortListPanel .card-row-item'),{timeout:15000});
           await page.evaluate(()=>document.body.dataset.museResponsive=String(Date.now()));
@@ -108,6 +108,15 @@ try {
         const expanded=await page.locator('#relphiOpenDrawingBoardCurrent').getAttribute('aria-expanded');
         if(expanded!=='true')await page.locator('#relphiOpenDrawingBoardCurrent').click();
         await page.locator('#shortListPanel .card-row-item').first().waitFor({state:'visible',timeout:15000});
+
+        // Confirm the real export UI remains actionable after restored sessions.
+        const downloadAction=page.locator('#drawing-board-document-actions #downloadRowHtml');
+        await downloadAction.waitFor({state:'visible',timeout:12000});
+        const [download]=await Promise.all([
+          page.waitForEvent('download',{timeout:20000}),
+          downloadAction.click({timeout:12000})
+        ]);
+        assert.match(download.suggestedFilename(),/\.html$/);
         await page.screenshot({path:'test-results/muse-tarot-board-'+width+'.png'});
       }finally{await context.close()}
     });
