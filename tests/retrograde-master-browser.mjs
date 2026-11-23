@@ -83,7 +83,7 @@ try{
       const distance=a=>Math.hypot(a.x-center.x,a.y-center.y);
       const arms={upperLeft:distance(ul),upperRight:distance(ur),
         lowerLeft:distance(ll),lowerRight:distance(lr)};
-      const angleA=Math.atan2(v.y,v.x),angleB=Math.atan2(w.y,w.x);
+      const angleA=Math.atan2(v.y,v.x),angleB=Math.atan2(-w.y,-w.x);
       const widthA=Math.hypot(p(0).x-p(1).x,p(0).y-p(1).y);
       const widthB=Math.hypot(p(4).x-p(5).x,p(4).y-p(5).y);
       // The P's white counter must stay OPEN. The R leg may overlap the
