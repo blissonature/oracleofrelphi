@@ -83,6 +83,20 @@ try {
         await page.screenshot({path:'test-results/muse-planetary-'+width+'.png'});
       }finally{await context.close()}
     });
+    await check('Sky Chart paste importer is discoverable '+width,async()=>{
+      const {page,context}=await newPage(width);
+      try{
+        await page.goto(base+'sky-chart.html',{waitUntil:'domcontentloaded',timeout:30000});
+        const where=page.locator('[data-sky-drawer-tab="where"]:visible').first();
+        await where.click({timeout:25000});
+        const importer=page.locator('.sky-where-when-editor .sky-where-when-paste').first();
+        await importer.waitFor({state:'visible',timeout:18000});
+        await importer.locator('summary').click();
+        await importer.locator('[data-ww-paste-placements]').waitFor({state:'visible',timeout:12000});
+        assert.equal(await page.locator('.sky-where-when-editor [data-ww-paste-inference-host]').count(),1);
+        await page.screenshot({path:'test-results/muse-sky-import-'+width+'.png'});
+      }finally{await context.close()}
+    });
     await check('Tarot search add card and reload x4 '+width,async()=>{
       const {page,context}=await newPage(width);
       try{
