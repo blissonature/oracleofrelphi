@@ -142,14 +142,14 @@ try{
      console.log('PREVIEW RETROGRADE PLUTO FONT AND CHIRON NAME BASELINE',JSON.stringify(letterMetrics));
      assert.equal(letterMetrics.font,letterMetrics.nameFont,'Retrograde P must use Pluto name typeface');
      assert.equal(letterMetrics.weight,letterMetrics.nameWeight,'Retrograde P must use Pluto name font weight');
-     assert.ok(Math.abs(letterMetrics.widthError)<0.75,'Retrograde P must match Pluto P at rendered name size');
+     assert.ok(Math.abs(letterMetrics.widthError)<0.25,'Retrograde P must match Pluto P at rendered name size');
      assert.ok(Math.abs(letterMetrics.baselineError)<0.65,'Retrograde P stem must end on the planet-name baseline');
      assert.ok(letterMetrics.gap>=3,'Retrograde must have visible separation from the planet name');
      // The reported defect concerns Chiron specifically, not the x within Rx.
-     // Verify painted capital-P geometry against the *neighboring Chiron name*
-     // as well as the CSS text-baseline. SVG getBBox() measures glyph ink,
-     // whereas the old checks could pass even if the P's visible stem stopped
-     // too soon while the typographic baseline was numerically aligned.
+     // Verify the P's painted capital height against Chiron's baseline.
+     // SVG getBBox() includes font descent, including blank space below P.
+     // Use canvas actualBoundingBoxAscent/Descent for real glyph ink; CSS
+     // declarations and the SVG text layout box alone are insufficient.
      const chironInk=await page.evaluate(()=>{
        const row=[...document.querySelectorAll('#skyFoundationA .sky-foundation-row')]
          .find(node=>node.querySelector('.sky-foundation-row-name')?.firstChild?.textContent==='Chiron');
@@ -165,13 +165,18 @@ try{
          canvas=document.createElement('canvas'),context=canvas.getContext('2d');
        context.font=font.fontWeight+' '+font.fontSize+' '+font.fontFamily;
        const nameP=context.measureText('P');
-       const bbox=p.getBBox(),ctm=p.getScreenCTM();
-       const lowerLeft=ctm.b*bbox.x+ctm.d*(bbox.y+bbox.height)+ctm.f;
+       const ctm=p.getScreenCTM();
+       const pBaseline=ctm.b*Number(p.getAttribute('x'))+ctm.d*Number(p.getAttribute('y'))+ctm.f;
+       const pScale=p.getComputedTextLength()*Math.hypot(ctm.a,ctm.b)/nameP.width;
+       const paintedBottom=pBaseline+nameP.actualBoundingBoxDescent*pScale;
+       const paintedHeight=(nameP.actualBoundingBoxAscent+nameP.actualBoundingBoxDescent)*pScale;
        const marker=p.getBoundingClientRect(),labelBox=label.getBoundingClientRect();
        return{
          baseline,
-         pInkBottom:lowerLeft,
-         pInkGap:lowerLeft-baseline,
+         pInkBottom:paintedBottom,
+         pInkGap:paintedBottom-baseline,
+         pCapHeight:paintedHeight,
+         nameCapHeight:nameP.actualBoundingBoxAscent+nameP.actualBoundingBoxDescent,
          namePDescent:nameP.actualBoundingBoxDescent,
          namePAscent:nameP.actualBoundingBoxAscent,
          font:actual.fontFamily,nameFont:font.fontFamily,
@@ -187,7 +192,8 @@ try{
      console.log('CHIRON RX VISIBLE P STEM VS NAME BASELINE',JSON.stringify(chironInk));
      assert.equal(chironInk.font,chironInk.nameFont,'Chiron P matches the actual name font');
      assert.equal(chironInk.weight,chironInk.nameWeight,'Chiron P matches the actual name weight');
-     assert.ok(Math.abs(chironInk.pWidth-chironInk.namePWidth)<.75,'Chiron P has the same width as Pluto P');
+     assert.ok(Math.abs(chironInk.pWidth-chironInk.namePWidth)<.25,'Chiron P has the same width as Pluto P');
+     assert.ok(Math.abs(chironInk.pCapHeight-chironInk.nameCapHeight)<.6,'Retrograde P cap height matches Pluto letter height');
      assert.ok(Math.abs(chironInk.pInkGap-chironInk.namePDescent)<1.1,
        'Painted P stem must reach Chiron baseline, not merely the declared SVG baseline');
      assert.ok(chironInk.markerLeft-chironInk.labelRight>=3,
@@ -207,17 +213,24 @@ try{
        label.insertBefore(probe,label.querySelector('.sky-placement-rx'));
        const baseline=probe.getBoundingClientRect().top;
        probe.remove();
-       const rect=p.getBBox(),matrix=p.getScreenCTM(),name=getComputedStyle(label),
-         font=getComputedStyle(p),range=document.createRange();
+       const matrix=p.getScreenCTM(),name=getComputedStyle(label),
+         font=getComputedStyle(p),range=document.createRange(),
+         canvas=document.createElement('canvas'),context=canvas.getContext('2d');
+       context.font=name.fontWeight+' '+name.fontSize+' '+name.fontFamily;
+       const nameP=context.measureText('P');
+       const pBaseline=matrix.b*Number(p.getAttribute('x'))+matrix.d*Number(p.getAttribute('y'))+matrix.f;
+       const width=p.getComputedTextLength()*Math.hypot(matrix.a,matrix.b);
+       const paintedBottom=pBaseline+nameP.actualBoundingBoxDescent*width/nameP.width;
        range.selectNodeContents(label.firstChild);
        return{
-         pInkBottom:matrix.b*rect.x+matrix.d*(rect.y+rect.height)+matrix.f,
-         baseline,font:font.fontFamily,nameFont:name.fontFamily,
+         pInkBottom:paintedBottom,
+         baseline,pWidth:width,namePWidth:nameP.width,font:font.fontFamily,nameFont:name.fontFamily,
          nameGap:p.getBoundingClientRect().left-range.getBoundingClientRect().right
        };
      });
      console.log('MOBILE CHIRON RX VISIBLE STEM',JSON.stringify(mobileChiron));
      assert.equal(mobileChiron.font,mobileChiron.nameFont,'Mobile name and retrograde P use the same font');
+     assert.ok(Math.abs(mobileChiron.pWidth-mobileChiron.namePWidth)<.25,'Mobile P matches Pluto P width');
      assert.ok(Math.abs(mobileChiron.pInkBottom-mobileChiron.baseline)<1.1,
        'Mobile painted P stem must meet the neighboring Chiron baseline');
      assert.ok(mobileChiron.nameGap>=3,'Mobile Rx must remain clearly separate from name');
