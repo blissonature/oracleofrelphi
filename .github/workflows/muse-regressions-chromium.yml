@@ -39,7 +39,7 @@ jobs:
           python3 -m http.server 8000 --bind 127.0.0.1 >/tmp/muse-local-http.log 2>&1 &
           SERVER_PID=$!
           trap 'kill $SERVER_PID || true' EXIT
-          node tests/muse-regressions-browser.mjs
+          RELPHI_COMMIT_SHA=${{ github.event.pull_request.head.sha || github.sha }} node tests/muse-regressions-browser.mjs
       - name: Save evidence
         if: always()
         uses: actions/upload-artifact@v4
