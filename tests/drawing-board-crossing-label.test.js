@@ -19,7 +19,6 @@ fs.mkdirSync(out,{recursive:true});
     const panel=frame.locator('#shortListPanel');
     if(!(await panel.isVisible())) await frame.click('#relphiOpenDrawingBoardCurrent');
     await panel.waitFor({state:'visible',timeout:10000});
-    await frame.locator('#relphiBoardSettingsButton').click();
     await frame.waitForSelector('#shortListPanel #drawingBoardOptionsButton',{state:'visible',timeout:10000});
 
     await frame.click('#drawingBoardOptionsButton');
