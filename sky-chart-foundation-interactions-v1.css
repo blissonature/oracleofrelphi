@@ -673,3 +673,8 @@
   #skyFoundationFocus .sky-foundation-focus-heading{gap:6px 10px}
   #skyFoundationFocus .sky-focus-tool-brand{white-space:normal;text-align:right;max-width:48%}
 }
+
+#skyFoundationFocus .sky-sky-mode-selector{display:flex;flex-wrap:wrap;gap:5px;padding:7px 10px 2px;align-items:center}
+#skyFoundationFocus .sky-sky-mode-selector button{appearance:none;border:1px solid rgba(31,27,24,.22);background:#fff;color:#332e2a;font:750 .77rem/1.15 system-ui,sans-serif;border-radius:8px;padding:7px 13px;cursor:pointer}
+#skyFoundationFocus .sky-sky-mode-selector button[aria-pressed="true"]{background:#332e2a;color:#fff;border-color:#332e2a}
+#skyFoundationFocus .sky-sky-mode-selector button:focus-visible{outline:2px solid #c9211e;outline-offset:2px}
