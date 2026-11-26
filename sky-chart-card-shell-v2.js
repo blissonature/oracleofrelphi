@@ -148,7 +148,7 @@ function sync(slot,payload){
   const loaded=current.root.querySelector('[data-sky-loaded-name]'),detach=current.root.querySelector('[data-sky-loaded-detach]');
   if(loaded)loaded.textContent=assigned?savedName||String(payload.name||'Saved sky'):'—';
   if(detach)detach.hidden=!assigned;
-  const swap=current.root.querySelector('[data-sky-card-swap]');if(swap)swap.disabled=!(window.RelphiSkySlotControls?.hasStoredSkyB?.()&&window.RelphiSkyWorkingStorage.getItem('relphiSkyChartA'));
+  const swap=current.root.querySelector('[data-sky-card-swap]');if(swap){let readyA=false;try{const a=JSON.parse(window.RelphiSkyWorkingStorage.getItem('relphiSkyChartA')||'null');readyA=!!Object.keys(a?.placements||a?.positions||{}).length}catch(_){}swap.disabled=!(readyA&&window.RelphiSkySlotControls?.hasStoredSkyB?.())}
   const reference=current.root.querySelector('[data-sky-where-reference]'),referenceValue=current.root.querySelector('[data-sky-where-reference-value]');
   if(reference)reference.hidden=!assigned||!hasProfile;
   if(referenceValue&&assigned&&hasProfile){

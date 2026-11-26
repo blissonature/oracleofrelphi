@@ -239,6 +239,8 @@
       rawA=window.RelphiSkyWorkingStorage.getItem(SKY_A_KEY);rawB=window.RelphiSkyWorkingStorage.getItem(SKY_B_KEY);
       ageA=window.RelphiSkyWorkingStorage.getItem(LIVE_AGE_KEYS.A);ageB=window.RelphiSkyWorkingStorage.getItem(LIVE_AGE_KEYS.B);
       if(!rawA||!rawB)return false;
+      const skyA=JSON.parse(rawA),skyB=JSON.parse(rawB);
+      if(!Object.keys(skyA?.placements||skyA?.positions||{}).length||!Object.keys(skyB?.placements||skyB?.positions||{}).length)return false;
       window.RelphiSkyWorkingStorage.setItem(SKY_A_KEY,rawB);window.RelphiSkyWorkingStorage.setItem(SKY_B_KEY,rawA);
       if(ageB===null)window.RelphiSkyWorkingStorage.removeItem(LIVE_AGE_KEYS.A);else window.RelphiSkyWorkingStorage.setItem(LIVE_AGE_KEYS.A,ageB);
       if(ageA===null)window.RelphiSkyWorkingStorage.removeItem(LIVE_AGE_KEYS.B);else window.RelphiSkyWorkingStorage.setItem(LIVE_AGE_KEYS.B,ageA);
