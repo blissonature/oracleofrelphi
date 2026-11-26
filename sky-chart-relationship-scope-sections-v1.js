@@ -47,6 +47,8 @@ function groupList(){
   queued=false;if(applying||whereWhenEditing())return;
   const list=document.getElementById('skyFoundationRelationshipList');if(!list)return;
   list.querySelectorAll(':scope>.sky-relationship-scope-heading,:scope>.sky-relationship-family-heading').forEach(node=>node.remove());
+  // The zodiac lesson has no Sky A/B: do not group its sign relationships as intersky.
+  if(window.RelphiSkyStartupMode?.readMode?.()==='learn')return;
   const rows=[...list.querySelectorAll(':scope>.sky-foundation-relationship-row')];if(!rows.length)return;
   collapsed.clear();
   rows.forEach(row=>row.classList.remove(COLLAPSED_VISUAL_CLASS));
