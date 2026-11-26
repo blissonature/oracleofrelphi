@@ -138,7 +138,7 @@
   flex-wrap:wrap;
 }
 
-.sky-focus-heading-controls .sky-orb-number-field {
+.sky-focus-heading-controls .sky-orb-number-field:not([hidden]) {
   display:inline-flex!important;
   align-items:center!important;
   gap:4px!important;
