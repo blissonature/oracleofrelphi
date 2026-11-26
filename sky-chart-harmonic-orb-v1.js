@@ -22,7 +22,7 @@ const ASPECTS=Object.freeze([
 const BY_ID=new Map(ASPECTS.map(aspect=>[aspect.id,aspect]));
 let activeWindow=DEFAULT_WINDOW;
 try{
-  const stored=localStorage.getItem(WINDOW_STORAGE_KEY);
+  const stored=window.RelphiSkyWorkingStorage.getItem(WINDOW_STORAGE_KEY);
   if(stored!==null&&String(stored).trim()!==''){
     const saved=Number(stored);
     if(Number.isFinite(saved)&&saved>=0)activeWindow=Math.min(MAX_WINDOW,saved);
@@ -42,7 +42,7 @@ function syncVisibleControls(sourceInput=null){
 function setWindow(value,sourceInput=null){
   const next=clampWindow(value),changed=next!==activeWindow;
   activeWindow=next;
-  try{localStorage.setItem(WINDOW_STORAGE_KEY,String(activeWindow))}catch(_){}
+  try{window.RelphiSkyWorkingStorage.setItem(WINDOW_STORAGE_KEY,String(activeWindow))}catch(_){}
   document.documentElement.dataset.skyHarmonicWindow=String(activeWindow);
   syncVisibleControls(sourceInput);
   if(changed)window.dispatchEvent(new CustomEvent('relphi:sky-harmonic-window-model-changed',{detail:{harmonicWindow:activeWindow}}));
