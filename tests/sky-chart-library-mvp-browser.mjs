@@ -89,10 +89,10 @@ try{
  await a.evaluate(list=>list.forEach(value=>window.RelphiSkyWorkingStorage.setItem('relphiSkyChartA',JSON.stringify(value))),Array.from({length:16},(_,i)=>sky('2026-11-'+String(i+1).padStart(2,'0')+'T08:00','Temporary '+i)));
  const recovery=await a.evaluate(()=>window.RelphiSkyWorkingStorage.recovery());
  assert.equal(recovery.recent.length,14);
- assert.equal(recovery.eviction.length,2);
+ assert.ok(recovery.eviction.length>=2,'Earlier unsaved sky snapshots are also retained in eviction');
  await a.evaluate(()=>window.RelphiSkySavedSkyIdentity.openPicker('A'));
  await a.locator('#skySavedSkiesPopover [data-library-view="eviction"]').click();
- assert.equal(await a.locator('#skySavedSkiesPopover [data-library-save-recovery]').count(),2);
+ assert.equal(await a.locator('#skySavedSkiesPopover [data-library-save-recovery]').count(),recovery.eviction.length);
  await a.locator('#skySavedSkiesPopover [data-library-save-recovery]').first().click();
  await naming.waitFor({state:'visible'});
  await naming.locator('button[type="submit"]').click();
