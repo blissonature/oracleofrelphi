@@ -616,7 +616,7 @@
    outside the wheel's circular perimeter. The SVG remains fully interactive. */
 #skyFoundationWheelMount{position:relative}
 #skyFoundationWheelMount .sky-wheel-sector-description{
-  position:absolute;z-index:8;
+  position:absolute;z-index:50;
   width:clamp(80px,17%,172px);
   max-width:22%;
   padding:7px 8px;
@@ -649,12 +649,12 @@
   flex-wrap:wrap;
 }
 #skyFoundationFocus .sky-focus-tool-brand{
-  order:3;
+  order:-1;
   display:flex;
   flex-direction:column;
-  align-items:flex-end;
+  align-items:flex-start;
   gap:2px;
-  margin-left:auto;
+  margin-right:auto;
   white-space:nowrap;
   color:#332e2a;
   line-height:1.1;
@@ -671,7 +671,7 @@
 }
 @media(max-width:600px){
   #skyFoundationFocus .sky-foundation-focus-heading{gap:6px 10px}
-  #skyFoundationFocus .sky-focus-tool-brand{white-space:normal;text-align:right;max-width:48%}
+  #skyFoundationFocus .sky-focus-tool-brand{white-space:normal;text-align:left;max-width:48%}
 }
 
 #skyFoundationFocus .sky-sky-mode-selector{display:flex;flex-wrap:wrap;gap:5px;padding:7px 10px 2px;align-items:center}
