@@ -15,6 +15,7 @@
   let editingRecordId='';
   let draft={owner:[],associate:[],groups:[]};
   let mergePending=null;
+  let correctingSavedSky=false;
 
   const normalize=value=>String(value||'').trim().toLowerCase().replace(/\s+/g,' ');
   const clone=value=>JSON.parse(JSON.stringify(value));
@@ -129,7 +130,7 @@
     }
     if(!extras.length){const p=document.createElement('p');p.textContent='No additional assignments are needed.';review.appendChild(p)}
     const actions=document.createElement('div');actions.className='sky-save-name-actions';
-    const back=document.createElement('button');back.type='button';back.textContent='Back';back.addEventListener('click',()=>{review.remove();dialog.querySelector('[data-save-main-fields]').hidden=false;mergePending=null});
+    const back=document.createElement('button');back.type='button';back.textContent='Back';back.addEventListener('click',()=>{review.remove();if(correctingSavedSky){closeDialog();return}dialog.querySelector('[data-save-main-fields]').hidden=false;mergePending=null});
     const confirm=document.createElement('button');confirm.type='button';confirm.textContent='Merge Skies';
     confirm.addEventListener('click',()=>{
       const entries=[...review.querySelectorAll('[data-merge-role]:checked')].map(x=>x.__mergeItem);
@@ -139,7 +140,9 @@
         window.dispatchEvent(new CustomEvent('relphi:sky-name-updated',{detail:{slot:activeSlot,name:active.name,source:'merge'}}));
         try{window.dispatchEvent(new StorageEvent('storage',{key:SLOT_KEYS[activeSlot],storageArea:localStorage}))}catch(_){}
       }
+      const corrected=correctingSavedSky&&activeSlot?activeSlot:null;
       closeDialog();
+      if(corrected)window.RelphiSkyWhereWhen?.finishExternalCommit?.(corrected,{source:'where-when-merge'});
     });
     actions.append(back,confirm);review.append(actions);
     dialog.querySelector('[data-save-main-fields]').hidden=true;dialog.append(review);
@@ -182,11 +185,11 @@
     overlay.addEventListener('pointerdown',event=>{if(event.target===overlay)event.preventDefault()});
   }
   function openDialog(slot){
-    ensureDialog();activeSlot=slot;editingRecordId='';mergePending=null;status.textContent='';draft={owner:[],associate:[],groups:[]};input.value=suggested(payload(slot));overlay.querySelector('[data-save-main-fields]').hidden=false;overlay.querySelector('[data-save-merge-review]')?.remove();syncChosen('owner');syncChosen('associate');syncGroups();overlay.querySelector('[data-save-sky-name-cancel]').hidden=true;overlay.hidden=false;document.documentElement.dataset.skySaveNameOpen='true';
+    ensureDialog();activeSlot=slot;editingRecordId='';mergePending=null;correctingSavedSky=false;status.textContent='';draft={owner:[],associate:[],groups:[]};input.value=suggested(payload(slot));overlay.querySelector('[data-save-main-fields]').hidden=false;overlay.querySelector('[data-save-merge-review]')?.remove();syncChosen('owner');syncChosen('associate');syncGroups();overlay.querySelector('[data-save-sky-name-cancel]').hidden=true;overlay.hidden=false;document.documentElement.dataset.skySaveNameOpen='true';
     if(!matchMedia('(pointer:coarse)').matches)requestAnimationFrame(()=>input.focus({preventScroll:true}));
   }
   function closeDialog(){
-    if(!overlay)return;overlay.hidden=true;activeSlot=null;editingRecordId='';mergePending=null;document.documentElement.removeAttribute('data-sky-save-name-open');
+    if(!overlay)return;overlay.hidden=true;activeSlot=null;editingRecordId='';mergePending=null;correctingSavedSky=false;document.documentElement.removeAttribute('data-sky-save-name-open');
     const trigger=document.querySelector('[data-saved-sky-trigger][aria-expanded="true"]');trigger?.focus?.({preventScroll:true});
   }
   function activeSlotFromPopover(){
@@ -212,12 +215,21 @@
   document.addEventListener('keydown',event=>{if(event.key==='Escape'&&activeSlot){event.preventDefault();event.stopImmediatePropagation();closeDialog()}},true);
   function openRecord(recordId){
     const record=records()?.library()?.find(x=>records().ref(x)===recordId);if(!record)return;
-    ensureDialog();editingRecordId=recordId;activeSlot=null;mergePending=null;status.textContent='';
+    ensureDialog();editingRecordId=recordId;activeSlot=null;mergePending=null;correctingSavedSky=false;status.textContent='';
     const people=records().entities(),resolve=id=>{const x=people.find(p=>p.id===id);return x?{id:x.id,name:x.name}:null};
     draft={owner:records().links(record,'owner').map(resolve).filter(Boolean),associate:records().links(record,'associate').map(resolve).filter(Boolean),groups:records().groupList(record)};
     input.value=record.name||'';overlay.querySelector('[data-save-main-fields]').hidden=false;overlay.querySelector('[data-save-merge-review]')?.remove();
     syncChosen('owner');syncChosen('associate');syncGroups();overlay.querySelector('[data-save-sky-name-cancel]').hidden=false;overlay.hidden=false;
     document.documentElement.dataset.skySaveNameOpen='true';
   }
-  window.RelphiSkySaveNameDialog=Object.freeze({open:openDialog,openRecord,close:closeDialog});
+  function reviewDuplicateForEdit(slot,sourceId,target){
+    const source=records()?.library()?.find(x=>records().ref(x)===sourceId);
+    if(!source||!target)return false;
+    ensureDialog();activeSlot=slot;editingRecordId=sourceId;correctingSavedSky=true;status.textContent='';
+    const people=records().entities(),resolve=id=>{const p=people.find(x=>x.id===id);return p?{id:p.id,name:p.name}:null};
+    draft={owner:records().links(source,'owner').map(resolve).filter(Boolean),associate:records().links(source,'associate').map(resolve).filter(Boolean),groups:records().groupList(source)};
+    input.value=source.name;overlay.hidden=false;document.documentElement.dataset.skySaveNameOpen='true';
+    renderMerge(target);return true;
+  }
+  window.RelphiSkySaveNameDialog=Object.freeze({open:openDialog,openRecord,reviewDuplicateForEdit,close:closeDialog});
 })();
