@@ -19,7 +19,7 @@
     quintile:'Quintile', square:'Square', trine:'Trine', 'tri-octile':'Tri-Octile',
     'bi-quintile':'Bi-Quintile', quincunx:'Quincunx', opposition:'Opposition'
   };
-  const filters = { aspect:'all', placement:'all', houseA:'all', houseB:'all' };
+  const filters = { aspect:'all', placement:'all', houseA:'all', houseB:'all', sign:'all' };
   const baseSetItem = Storage.prototype.setItem;
   let enriching = false;
   let queued = false;
@@ -510,6 +510,16 @@
     if (focusHeading && focusPanel.firstElementChild !== focusHeading) focusPanel.prepend(focusHeading);
   }
 
+  function syncLearnFilters(bar) {
+    const learn=window.RelphiSkyStartupMode?.readMode?.()==='learn';
+    bar.dataset.learnFocus=String(learn);
+    const names=learn?['Aspects by Sign','Placements','Houses','Sky B House','House System']:['Aspects','Placements','Sky A House','Sky B House','House System'];
+    [...bar.querySelectorAll(':scope > label')].slice(0,5).forEach((label,index)=>{
+      if(label.firstChild?.nodeType===Node.TEXT_NODE)label.firstChild.textContent=names[index];
+    });
+    if(!learn){filters.sign='all';const select=bar.querySelector('[data-filter="sign"]');if(select)select.value='all';}
+  }
+
   function addFilters() {
     const relationshipPanel = document.getElementById('skyFoundationRelationships');
     if (!relationshipPanel) return;
@@ -520,7 +530,7 @@
       bar.className = 'sky-chart-filter-bar';
     }
     ensureFocusStructure(relationshipPanel, bar);
-    if (bar.dataset.finalFilterOwner === 'true') return;
+    if (bar.dataset.finalFilterOwner === 'true') {syncLearnFilters(bar);return;}
     bar.dataset.finalFilterOwner = 'true';
     const aspectOptions = Object.entries(ASPECT_LABELS).map(([value, label]) => `<option value="${value}">${label}</option>`).join('');
     const houses = ['all', ...Array.from({ length:12 }, (_, index) => String(index + 1))]
@@ -528,7 +538,9 @@
     const current = read('A')?.calcProfile?.houseSystem || read('B')?.calcProfile?.houseSystem || 'whole-sign';
     const systems = Object.entries(HOUSE_SYSTEMS)
       .map(([value, label]) => `<option value="${value}"${value === current ? ' selected' : ''}>${label}</option>`).join('');
-    bar.innerHTML = `<label>Aspects<select data-filter="aspect">${aspectOptions}</select></label><label>Placements<select data-filter="placement"><option value="all">All</option></select></label><label>Sky A House<select data-filter="houseA">${houses}</select></label><label>Sky B House<select data-filter="houseB">${houses}</select></label><label>House System<select data-house-system-filter>${systems}</select></label>`;
+    const signs = ['all',...SIGNS].map(value=>`<option value="${value==='all'?'all':String(SIGNS.indexOf(value))}">${value==='all'?'All':value}</option>`).join('');
+    bar.innerHTML = `<label>Aspects<select data-filter="aspect">${aspectOptions}</select></label><label>Placements<select data-filter="placement"><option value="all">All</option></select></label><label>Sky A House<select data-filter="houseA">${houses}</select></label><label>Sky B House<select data-filter="houseB">${houses}</select></label><label>House System<select data-house-system-filter>${systems}</select></label><label>Signs<select data-filter="sign">${signs}</select></label>`;
+    syncLearnFilters(bar);
     bar.addEventListener('change', event => {
       if (event.target.matches('[data-house-system-filter]')) return changeHouseSystem(event.target);
       if (!event.target.dataset.filter) return;
@@ -577,7 +589,8 @@
         (filters.aspect === 'all' || label.includes(filters.aspect)) &&
         (filters.placement === 'all' || row.dataset.leftPlacement === filters.placement || row.dataset.rightPlacement === filters.placement) &&
         (filters.houseA === 'all' || row.dataset.leftHouse === filters.houseA) &&
-        (filters.houseB === 'all' || row.dataset.rightHouse === filters.houseB);
+        (filters.houseB === 'all' || row.dataset.rightHouse === filters.houseB) &&
+        (filters.sign === 'all' || row.dataset.leftSign === filters.sign || row.dataset.rightSign === filters.sign);
       row.classList.toggle('sky-chart-filter-hidden', !visible);
       (linesByIndex.get(String(row.dataset.relationIndex || '')) || [])
         .forEach(node => node.classList.toggle('sky-chart-filter-hidden', !visible));
@@ -603,7 +616,7 @@
 
   function refresh() {
     queued = false;
-    if (whereWhenEditing()) return;
+    if (whereWhenEditing() && window.RelphiSkyStartupMode?.readMode?.()!=='learn') return;
     ['A','B'].forEach(slot => {
       addHeaderActions(slot);
       addEditorControls(slot);
