@@ -321,10 +321,7 @@
       if(slots.includes('B')||hasStoredSkyB()||document.documentElement.dataset.skyBEditing!=='true')return schedule();
       delete document.documentElement.dataset.skyBEditing;
       const startup=window.RelphiSkyStartupMode;
-      startup?.writeMode?.('single');
       startup?.syncRoot?.();
-      document.documentElement.dataset.skyLastMode='single';
-      document.documentElement.dataset.skyBPresent='false';
       schedule();
     });
   }
