@@ -261,10 +261,31 @@
     });
     schedule();return true;
   }
+  function ensureAddControl(){
+    const heading=document.querySelector('#skyFoundationA > .sky-foundation-heading');
+    if(!heading)return;
+    let add=heading.querySelector('[data-card-add-sky-b]');
+    if(!add){
+      add=document.createElement('button');
+      add.type='button';
+      add.dataset.cardAddSkyB='true';
+      add.className='sky-slot-card-control sky-slot-card-control--add';
+      add.setAttribute('aria-label','Add Sky B');
+      add.title='Add Sky B';
+      add.appendChild(icon('plus'));
+      add.addEventListener('click',event=>{
+        event.preventDefault();
+        event.stopPropagation();
+        startAddSkyB();
+      });
+      heading.appendChild(add);
+    }
+    add.hidden=skyBPresent()||document.documentElement.dataset.skyBEditing==='true'||hasStoredSkyB();
+  }
   function sync(){
     queued=false;
     suppressInternalAdd();
-    document.querySelectorAll('#skyFoundationA > .sky-foundation-heading [data-card-add-sky-b]').forEach(node=>node.remove());
+    ensureAddControl();
     ensureRemoveControl();
     styleRemove();
   }
