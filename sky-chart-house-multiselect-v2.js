@@ -155,6 +155,7 @@
   }
 
   function visible(node) {
+    if(window.RelphiSkyStartupMode?.readMode?.()==='learn'&&(node?.dataset?.learnRelationship==='true'||node?.dataset?.learnRelation==='true'))return true;
     const slots = relationshipSlots(node);
     return endpointVisible(node, 'left', slots.left) && endpointVisible(node, 'right', slots.right);
   }
