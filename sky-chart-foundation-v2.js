@@ -233,6 +233,7 @@ function buildSingleWheel(listA,cuspsA,slot='A'){
   chart.dataset.finalGeometryReady='true';
   return{chart,jobs};
 }
+let previouslyDrawnLearnAscendant=null;
 function learnAscendantIndex(){
   const value=Number(document.documentElement.dataset.skyLearnAscendant||0);
   return Number.isInteger(value)&&value>=0&&value<12?value:0;
@@ -265,6 +266,17 @@ function buildLearnWheel(){
   chart.setAttribute('aria-label','Zodiac template: twelve signs and twelve houses');
   const houseLayerNode=chart.querySelector('[data-layer="a-houses"]');
   houseLayerNode?.querySelectorAll('.sky-foundation-house-sector').forEach(node=>node.setAttribute('fill-opacity','1'));
+  const selectedAscendant=learnAscendantIndex();
+  if(previouslyDrawnLearnAscendant!==null && previouslyDrawnLearnAscendant!==selectedAscendant &&
+     !window.matchMedia?.('(prefers-reduced-motion: reduce)').matches && houseLayerNode?.animate){
+    const clockwiseSteps=(selectedAscendant-previouslyDrawnLearnAscendant+12)%12;
+    const offset=-clockwiseSteps*30;
+    const c=center();
+    houseLayerNode.style.transformOrigin=c.x+'px '+c.y+'px';
+    houseLayerNode.animate([{transform:'rotate('+offset+'deg)'},{transform:'rotate(0deg)'}],
+      {duration:700,easing:'cubic-bezier(.22,.61,.36,1)',iterations:1});
+  }
+  previouslyDrawnLearnAscendant=selectedAscendant;
   chart.querySelectorAll('.sky-foundation-sign-sector').forEach(node=>node.setAttribute('fill-opacity','1'));
   return result;
 }
