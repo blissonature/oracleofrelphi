@@ -277,6 +277,11 @@
     const slots=rowSlots(row);
     if(state.kind==='aspect')return relationshipIdentity(row)===String(state.value);
     if(state.kind==='sign')return Number(row.dataset.leftSign)===state.value||Number(row.dataset.rightSign)===state.value;
+    if(state.kind==='house'&&window.RelphiSkyStartupMode?.readMode?.()==='learn'){
+      const asc=Number(document.documentElement.dataset.skyLearnAscendant||0);
+      const sign=(asc+Number(state.value)-1)%12;
+      return Number(row.dataset.leftSign)===sign||Number(row.dataset.rightSign)===sign;
+    }
     if(state.kind==='house')return (slots.left===state.sky&&Number(row.dataset.leftHouse)===state.value)||
       (slots.right===state.sky&&Number(row.dataset.rightHouse)===state.value)||
       !!houseKeys?.has(`${slots.left}:${row.dataset.leftPlacement}`)||
@@ -342,6 +347,7 @@
         const left=String(line.dataset.leftPlacement||''),right=String(line.dataset.rightPlacement||'');
         if(!left||!right||!identity)return;
         const matches=state.kind==='aspect'?identity===String(state.value):
+          state.kind==='house'&&window.RelphiSkyStartupMode?.readMode?.()==='learn'?(()=>{const sign=(Number(document.documentElement.dataset.skyLearnAscendant||0)+Number(state.value)-1)%12;return Number(line.dataset.leftSign)===sign||Number(line.dataset.rightSign)===sign})():
           state.kind==='house'?((slots.left===state.sky&&Number(line.dataset.leftHouse)===state.value)||
             (slots.right===state.sky&&Number(line.dataset.rightHouse)===state.value)||
             houseKeys.has(`${slots.left}:${left}`)||houseKeys.has(`${slots.right}:${right}`)):
