@@ -139,12 +139,12 @@ try{
      });
      console.log('PREVIEW MONTSERRAT LETTER MASTERS',JSON.stringify(marks));
      const retro=marks.find(g=>g.id==='retrograde'),anti=marks.find(g=>g.id==='anti-vertex');
-     assert.equal(retro?.paths,1,'Retrograde retains the single X outline in the canonical master');
-     assert.equal(retro.text.length,1,'Retrograde must use one P letter from the planet-name font');
-     assert.equal(retro.text[0].value,'P');
-     assert.match(retro.text[0].family,/system-ui/i);
-     assert.equal(retro.text[0].weight,'700');
-     assert.ok(retro.firstPath.startsWith('M61.9513'));
+     assert.equal(retro?.paths,0,'Uploaded type design needs no synthetic paths');
+     assert.equal(retro.text.length,3,'Uploaded Retrograde is three aligned text elements');
+     assert.deepEqual(retro.text.map(t=>t.value),['P','l','x']);
+     assert.ok(retro.text.every(t=>/Montserrat/i.test(t.family)),'Use original Montserrat Bold');
+     assert.ok(retro.text.every(t=>t.weight==='700'));
+     assert.equal(retro.firstPath,'');
      assert.equal(retro.internalRings,0);
      assert.ok(Math.abs(retro.dx)<1&&Math.abs(retro.dy)<1,'Centered in the existing circle');
      assert.ok(retro.farthest<16.825,'Original artwork stays inside existing ring');
@@ -156,7 +156,7 @@ try{
      await page.waitForFunction(()=>{
        const row=[...document.querySelectorAll('#skyFoundationA .sky-foundation-row')]
          .find(x=>x.querySelector('.sky-foundation-row-name')?.textContent?.startsWith('Saturn'));
-       return !!row?.querySelector('.sky-placement-rx .relphi-glyph-retrograde path');
+       return !!row?.querySelector('.sky-placement-rx .relphi-glyph-retrograde text');
      },null,{timeout:20000});
      const placementMark=await page.evaluate(()=>{
        const row=[...document.querySelectorAll('#skyFoundationA .sky-foundation-row')]
@@ -165,176 +165,73 @@ try{
        return{
          height:art.getBoundingClientRect().height,
          source:art.dataset.canonicalGlyphId,
-         original:art.querySelector('path')?.getAttribute('d')?.slice(0,12),
+         letters:[...art.querySelectorAll('text')].map(t=>t.textContent),
          textCount:art.querySelectorAll('text').length,
          rawImage:!!row.querySelector('.sky-placement-rx img')
        };
      });
      assert.ok(placementMark.height>=8&&placementMark.height<=16,'Original Retrograde must fit in name-row annotation');
-     assert.equal(placementMark.textCount,1);
-     assert.ok(placementMark.original.startsWith('M61.9513'));
+     assert.equal(placementMark.textCount,3);
+     assert.deepEqual(placementMark.letters,['P','l','x']);
      assert.equal(placementMark.source,'retrograde');
      assert.equal(placementMark.rawImage,false,'Placements must use shared canonical renderer');
-     // Match the live planet-name P exactly, including its baseline and its separation from the name.
-     const letterMetrics=await page.evaluate(()=>{
-       const rows=[...document.querySelectorAll('#skyFoundationA .sky-foundation-row')];
-       const saturn=rows.find(row=>row.querySelector('.sky-foundation-row-name')?.firstChild?.textContent==='Saturn');
-       const pluto=rows.find(row=>row.querySelector('.sky-foundation-row-name')?.firstChild?.textContent==='Pluto');
-       const label=saturn?.querySelector('.sky-foundation-row-name');
-       const name=pluto?.querySelector('.sky-foundation-row-name');
-       const mark=label?.querySelector('.sky-placement-rx');
-       const p=mark?.querySelector('.relphi-glyph-retrograde text');
-       if(!p||!name||!label)throw Error('Missing Saturn Retrograde P or Pluto name');
-       const probe=document.createElement('span');probe.style.cssText='display:inline-block;width:0;height:0;padding:0;margin:0;border:0;vertical-align:baseline';
-       label.insertBefore(probe,mark);
-       const nameBaseline=probe.getBoundingClientRect().top;
-       probe.remove();
-       const matrix=p.getScreenCTM();
-       const pBaseline=matrix.b*Number(p.getAttribute('x'))+matrix.d*Number(p.getAttribute('y'))+matrix.f;
-       const s=getComputedStyle(name),c=document.createElement('canvas').getContext('2d');
-       c.font=s.fontWeight+' '+s.fontSize+' '+s.fontFamily;
-       const namePWidth=c.measureText('P').width;
-       const glyphPWidth=p.getComputedTextLength()*Math.hypot(matrix.a,matrix.b);
-       const range=document.createRange();range.selectNodeContents(label.firstChild);
-       const nameRight=range.getBoundingClientRect().right;
-       return{baselineError:pBaseline-nameBaseline,widthError:glyphPWidth-namePWidth,gap:p.getBoundingClientRect().left-nameRight,
-         font:getComputedStyle(p).fontFamily,nameFont:s.fontFamily,weight:getComputedStyle(p).fontWeight,nameWeight:s.fontWeight};
-     });
-     console.log('PREVIEW RETROGRADE PLUTO FONT AND CHIRON NAME BASELINE',JSON.stringify(letterMetrics));
-     assert.equal(letterMetrics.font,letterMetrics.nameFont,'Retrograde P must use Pluto name typeface');
-     assert.equal(letterMetrics.weight,letterMetrics.nameWeight,'Retrograde P must use Pluto name font weight');
-     assert.ok(Math.abs(letterMetrics.widthError)<0.25,'Retrograde P must match Pluto P at rendered name size');
-     assert.ok(Math.abs(letterMetrics.baselineError)<0.65,'Retrograde P stem must end on the planet-name baseline');
-     assert.ok(letterMetrics.gap>=3,'Retrograde must have visible separation from the planet name');
-     const universalBaselines=await page.evaluate(()=>{
-       const names=['Saturn','Uranus','Neptune','Chiron'];
-       return names.map(name=>{
-         const row=[...document.querySelectorAll('#skyFoundationA .sky-foundation-row')]
-           .find(r=>r.querySelector('.sky-foundation-row-name')?.firstChild?.textContent===name);
-         const label=row?.querySelector('.sky-foundation-row-name');
-         const svg=label?.querySelector('.sky-placement-rx svg');
-         const p=svg?.querySelector('.relphi-glyph-retrograde text');
-         const x=svg?.querySelector('.relphi-glyph-retrograde path');
-         if(!p||!x)throw Error('Missing retrograde on '+name);
-         const probe=document.createElement('span');
-         probe.style.cssText='display:inline-block;width:0;height:0;padding:0;margin:0;border:0;vertical-align:baseline';
-         label.insertBefore(probe,label.querySelector('.sky-placement-rx'));
-         const line=probe.getBoundingClientRect().top;
-         probe.remove();
-         const pBaseline=new DOMPoint(47.5,67.332841).matrixTransform(p.getScreenCTM()).y;
-         const cross=new DOMPoint(76.5,67.332841).matrixTransform(x.getScreenCTM()).y;
-         return{name,crossToLine:cross-line,crossToP:cross-pBaseline};
-       });
-     });
-     console.log('UNIVERSAL RETROGRADE CROSS-ON-BASELINE',JSON.stringify(universalBaselines));
-     assert.equal(universalBaselines.length,4);
-     for(const caseResult of universalBaselines){
-       assert.ok(Math.abs(caseResult.crossToP)<.02,
-         'The x intersection must meet the P baseline for '+caseResult.name);
-       assert.ok(Math.abs(caseResult.crossToLine)<.65,
-         'The x intersection must meet the adjacent placement-name baseline for '+caseResult.name);
+     // Every retrograde body uses the exact three text layers from the uploaded SVG.
+     // Chiron is a test case, not the specification or the owner of the symbol.
+     async function inspectRetrogradePlacements(label){
+       return page.evaluate(label=>{
+         const bodies=['Saturn','Uranus','Neptune','Chiron'];
+         const rows=[...document.querySelectorAll('#skyFoundationA .sky-foundation-row')];
+         return bodies.map(name=>{
+           const row=rows.find(r=>r.querySelector('.sky-foundation-row-name')?.firstChild?.textContent===name);
+           const wrapper=row?.querySelector('.sky-placement-rx');
+           const art=wrapper?.querySelector('.relphi-glyph-retrograde');
+           const p=art?.querySelector('#text1');
+           const elements=art?[...art.querySelectorAll('text')]:[];
+           if(!p||elements.length!==3)throw Error('Missing uploaded Rx layers on '+name);
+           const nameRange=document.createRange();
+           nameRange.selectNodeContents(row.querySelector('.sky-foundation-row-name').firstChild);
+           return{
+             name,screen:label,letters:elements.map(t=>t.textContent),
+             fonts:elements.map(t=>getComputedStyle(t).fontFamily),
+             weights:elements.map(t=>getComputedStyle(t).fontWeight),
+             colors:elements.map(t=>getComputedStyle(t).fill),
+             expectedColor:getComputedStyle(row.querySelector('.sky-foundation-row-name')).color,
+             gap:p.getBoundingClientRect().left-nameRange.getBoundingClientRect().right,
+             height:art.getBoundingClientRect().height,
+             widths:elements.map(t=>t.getBoundingClientRect().width),
+             paths:art.querySelectorAll('path,rect,line,polygon,circle').length,
+             originalLTransform:art.querySelector('#text2')?.getAttribute('transform'),
+             staticMaster:art.dataset.staticMaster,
+             source:art.dataset.canonicalGlyphId
+           };
+         });
+       },label);
      }
-
-     // The reported defect concerns Chiron specifically, not the x within Rx.
-     // Verify the P's painted capital height against Chiron's baseline.
-     // SVG getBBox() includes font descent, including blank space below P.
-     // Use canvas actualBoundingBoxAscent/Descent for real glyph ink; CSS
-     // declarations and the SVG text layout box alone are insufficient.
-     const chironInk=await page.evaluate(()=>{
-       const row=[...document.querySelectorAll('#skyFoundationA .sky-foundation-row')]
-         .find(node=>node.querySelector('.sky-foundation-row-name')?.firstChild?.textContent==='Chiron');
-       const label=row?.querySelector('.sky-foundation-row-name');
-       const p=label?.querySelector('.sky-placement-rx .relphi-glyph-retrograde text');
-       // The x path contains no third foot shape.
-       if(!p)throw new Error('Chiron Rx must display a real canonical P');
-       const baselineProbe=document.createElement('span');
-       baselineProbe.style.cssText='display:inline-block;width:0;height:0;padding:0;margin:0;border:0;vertical-align:baseline';
-       label.insertBefore(baselineProbe,label.querySelector('.sky-placement-rx'));
-       const baseline=baselineProbe.getBoundingClientRect().top;
-       baselineProbe.remove();
-       const font=getComputedStyle(label),actual=getComputedStyle(p),
-         canvas=document.createElement('canvas'),context=canvas.getContext('2d');
-       context.font=font.fontWeight+' '+font.fontSize+' '+font.fontFamily;
-       const nameP=context.measureText('P');
-       const ctm=p.getScreenCTM();
-       const pBaseline=ctm.b*Number(p.getAttribute('x'))+ctm.d*Number(p.getAttribute('y'))+ctm.f;
-       const pScale=p.getComputedTextLength()*Math.hypot(ctm.a,ctm.b)/nameP.width;
-       const paintedBottom=pBaseline+nameP.actualBoundingBoxDescent*pScale;
-       const paintedHeight=(nameP.actualBoundingBoxAscent+nameP.actualBoundingBoxDescent)*pScale;
-       
-       const marker=p.getBoundingClientRect(),labelBox=label.getBoundingClientRect();
-       return{
-         baseline,
-         pInkBottom:paintedBottom,
-         pInkGap:paintedBottom-baseline,
-         pCapHeight:paintedHeight,
-         nameCapHeight:nameP.actualBoundingBoxAscent+nameP.actualBoundingBoxDescent,
-         namePDescent:nameP.actualBoundingBoxDescent,
-         namePAscent:nameP.actualBoundingBoxAscent,
-         font:actual.fontFamily,nameFont:font.fontFamily,
-         weight:actual.fontWeight,nameWeight:font.fontWeight,
-         pWidth:p.getComputedTextLength()*Math.hypot(ctm.a,ctm.b),
-         namePWidth:nameP.width,
-         labelRight:(()=>{const range=document.createRange();range.selectNodeContents(label.firstChild);return range.getBoundingClientRect().right})(),
-         markerLeft:marker.left,
-         labelBoxHeight:labelBox.height,
-         glyphWidth:marker.width
-       };
-     });
-     console.log('CHIRON RX VISIBLE P STEM VS NAME BASELINE',JSON.stringify(chironInk));
-     assert.equal(chironInk.font,chironInk.nameFont,'Chiron P matches the actual name font');
-     assert.equal(chironInk.weight,chironInk.nameWeight,'Chiron P matches the actual name weight');
-     assert.ok(Math.abs(chironInk.pWidth-chironInk.namePWidth)<.25,'Chiron P has the same width as Pluto P');
-     assert.ok(Math.abs(chironInk.pCapHeight-chironInk.nameCapHeight)<.6,'Retrograde P cap height matches Pluto letter height');
-     assert.ok(Math.abs(chironInk.pInkGap-chironInk.namePDescent)<1.1,
-       'Painted P stem must reach Chiron baseline, not merely the declared SVG baseline');
-     
-     assert.ok(chironInk.markerLeft-chironInk.labelRight>=3,
-       'Chiron name and retrograde letter must have comfortable separation');
-     await page.screenshot({path:'chiron-retrograde-visible-baseline.png',fullPage:true});
-     await verifyPaintedStemAgainstChiron(page,'desktop');
-     // The reported screenshot was captured on an iPhone. Recheck the actual
-     // Chiron ink on the narrow Sky Chart—not merely the Master Glyph gallery.
+     const placements=await inspectRetrogradePlacements('desktop');
+     console.log('USER-UPLOADED RETROGRADE ALL PLACEMENTS',JSON.stringify(placements));
+     for(const entry of placements){
+       assert.deepEqual(entry.letters,['P','l','x'],'All retrograde marks use uploaded P–l–x');
+       assert.ok(entry.fonts.every(x=>/Montserrat/i.test(x)),'Keep the authored Montserrat');
+       assert.ok(entry.weights.every(w=>w==='700'),'Keep the authored Bold weight');
+       assert.ok(entry.colors.every(x=>x===entry.expectedColor),'Use the existing placement color owner');
+       assert.ok(entry.gap>=3,'Maintain separation from the placement name');
+       assert.ok(entry.height>6&&entry.height<20,'Keep the mark compact in Placements');
+       assert.equal(entry.paths,0,'No invented R strokes, P foot, or X geometry');
+       assert.equal(entry.originalLTransform,'scale(1.0259205,0.97473437)');
+       assert.equal(entry.staticMaster,'true');
+       assert.equal(entry.source,'retrograde');
+     }
+     await page.screenshot({path:'sky-remote-preview-user-rx-desktop.png',fullPage:true});
      await page.setViewportSize({width:390,height:844});
-     const mobileChiron=await page.evaluate(()=>{
-       const row=[...document.querySelectorAll('#skyFoundationA .sky-foundation-row')]
-         .find(n=>n.querySelector('.sky-foundation-row-name')?.firstChild?.textContent==='Chiron');
-       const label=row?.querySelector('.sky-foundation-row-name');
-       const p=label?.querySelector('.sky-placement-rx .relphi-glyph-retrograde text');
-       // The x path contains no third foot shape.
-       if(!p)throw new Error('Mobile Chiron P not rendered');
-       const probe=document.createElement('span');
-       probe.style.cssText='display:inline-block;width:0;height:0;padding:0;margin:0;border:0;vertical-align:baseline';
-       label.insertBefore(probe,label.querySelector('.sky-placement-rx'));
-       const baseline=probe.getBoundingClientRect().top;
-       probe.remove();
-       const matrix=p.getScreenCTM(),name=getComputedStyle(label),
-         font=getComputedStyle(p),range=document.createRange(),
-         canvas=document.createElement('canvas'),context=canvas.getContext('2d');
-       context.font=name.fontWeight+' '+name.fontSize+' '+name.fontFamily;
-       const nameP=context.measureText('P');
-       const pBaseline=matrix.b*Number(p.getAttribute('x'))+matrix.d*Number(p.getAttribute('y'))+matrix.f;
-       const width=p.getComputedTextLength()*Math.hypot(matrix.a,matrix.b);
-       const paintedBottom=pBaseline+nameP.actualBoundingBoxDescent*width/nameP.width;
-       
-       range.selectNodeContents(label.firstChild);
-       return{
-         pInkBottom:paintedBottom,
-         baseline,pWidth:width,namePWidth:nameP.width,font:font.fontFamily,nameFont:name.fontFamily,
-         nameGap:p.getBoundingClientRect().left-range.getBoundingClientRect().right
-       };
-     });
-     console.log('MOBILE CHIRON RX VISIBLE STEM',JSON.stringify(mobileChiron));
-     assert.equal(mobileChiron.font,mobileChiron.nameFont,'Mobile name and retrograde P use the same font');
-     assert.ok(Math.abs(mobileChiron.pWidth-mobileChiron.namePWidth)<.25,'Mobile P matches Pluto P width');
-     assert.ok(Math.abs(mobileChiron.pInkBottom-mobileChiron.baseline)<1.1,
-       'Mobile painted P stem must meet the neighboring Chiron baseline');
-     
-     assert.ok(mobileChiron.nameGap>=3,'Mobile Rx must remain clearly separate from name');
-     await page.screenshot({path:'chiron-retrograde-mobile-visible-baseline.png',fullPage:true});
-     await verifyPaintedStemAgainstChiron(page,'mobile');
+     const mobilePlacements=await inspectRetrogradePlacements('mobile');
+     console.log('USER-UPLOADED RETROGRADE MOBILE',JSON.stringify(mobilePlacements));
+     for(const entry of mobilePlacements){
+       assert.deepEqual(entry.letters,['P','l','x']);
+       assert.ok(entry.colors.every(x=>x===entry.expectedColor));
+       assert.ok(entry.gap>=3&&entry.height>6&&entry.height<20);
+     }
+     await page.screenshot({path:'sky-remote-preview-user-rx-mobile.png',fullPage:true});
      await page.setViewportSize({width:1200,height:820});
-
 
      const saturnIdentity=await page.evaluate(()=>{
        const row=[...document.querySelectorAll('#skyFoundationA .sky-foundation-row')]
@@ -365,20 +262,20 @@ try{
 
      const relationshipsRx=await page.evaluate(()=>[...document.querySelectorAll('#skyFoundationRelationshipList .sky-rx-glyph-overlay')].map(node=>({
        art:!!node.querySelector('.relphi-glyph-retrograde'),
-       path:node.querySelector('.relphi-glyph-retrograde path')?.getAttribute('d')?.slice(0,12),
+       letters:[...node.querySelectorAll('.relphi-glyph-retrograde text')].map(t=>t.textContent),
        mask:getComputedStyle(node).maskImage,
         height:node.querySelector('.relphi-glyph-retrograde')?.getBoundingClientRect().height||0
      })));
      console.log('PREVIEW PLACEMENTS AND RELATIONSHIPS RETROGRADE',JSON.stringify({placementMark,relationshipsRx}));
      assert.ok(relationshipsRx.length>0,'Retrograde Saturn relationship must have motion indicator');
-     assert.ok(relationshipsRx.every(r=>r.art&&r.path?.startsWith('M61.9513')),'Relationships must render registry-owned SVG');
+     assert.ok(relationshipsRx.every(r=>r.art&&r.letters.join('')==='Plx'),'Relationships must reuse all three uploaded text layers');
      assert.ok(relationshipsRx.every(r=>r.mask==='none'),'Relationships must not use raw asset CSS masks');
       const relationshipSizes=relationshipsRx.map(r=>r.height).filter(h=>h>0);
       assert.ok(relationshipSizes.length>0,'Relationships must display a visible motion marker');
       assert.ok(relationshipSizes.every(h=>h>=7&&h<=20),'Relationships Retrograde must stay compact beside planet glyphs');
 
      await page.locator('#skyFoundationA [data-sky-vocab-view-button="vocab"]').click();
-     await page.waitForFunction(()=>!!document.querySelector('#skyFoundationA .sky-vocab-token[data-vocab-id="saturn"][data-vocab-retrograde="true"] .sky-vocab-rx .relphi-glyph-retrograde path'),null,{timeout:20000});
+     await page.waitForFunction(()=>!!document.querySelector('#skyFoundationA .sky-vocab-token[data-vocab-id="saturn"][data-vocab-retrograde="true"] .sky-vocab-rx .relphi-glyph-retrograde text'),null,{timeout:20000});
      const vocab=await page.evaluate(()=>{
        const node=document.querySelector('#skyFoundationA .sky-vocab-token[data-vocab-id="saturn"][data-vocab-retrograde="true"]');
        const mark=node?.querySelector('.sky-vocab-rx');
@@ -405,7 +302,7 @@ try{
        const row=[...document.querySelectorAll('#skyFoundationA .sky-foundation-row')].find(node=>node.querySelector('.sky-foundation-row-name')?.textContent?.startsWith('Saturn'));
        const mark=row?.querySelector('.sky-placement-rx .relphi-glyph-retrograde');
        return {placementsHeight:mark?.getBoundingClientRect().height||0,
-         relationshipMarks:document.querySelectorAll('#skyFoundationRelationshipList .sky-rx-glyph-overlay .relphi-glyph-retrograde path').length};
+         relationshipMarks:document.querySelectorAll('#skyFoundationRelationshipList .sky-rx-glyph-overlay .relphi-glyph-retrograde text').length};
      });
      console.log('PREVIEW MOBILE RETROGRADE',JSON.stringify(mobileRx));
      assert.ok(mobileRx.placementsHeight>=8&&mobileRx.placementsHeight<=22,'Mobile Placements must retain compact Retrograde');
@@ -461,7 +358,7 @@ try{
     await gallery.waitForURL(url=>url.pathname==='/sky-chart-preview/sky-chart.html'&&url.searchParams.get('page')==='glyphs-unified-preview.html',{timeout:30000});
     await gallery.waitForFunction(()=>{
       const card=id=>[...document.querySelectorAll('#ugGrid .ug-card')].find(node=>node.querySelector('.ug-id')?.textContent===id);
-      return !!card('retrograde')?.querySelector('.relphi-glyph-retrograde path')
+      return !!card('retrograde')?.querySelector('.relphi-glyph-retrograde text')
         && !!card('anti-vertex')?.querySelector('.relphi-glyph-anti-vertex path');
     },null,{timeout:45000});
     const galleryState=await gallery.evaluate(()=>{
@@ -482,9 +379,9 @@ try{
     assert.ok(galleryState.masters>80,'Original canonical master list must load');
     const galleryRetro=galleryState.marks.find(g=>g.id==='retrograde');
      assert.equal(galleryRetro?.source,'retrograde');
-     assert.equal(galleryRetro.paths,1);
-     assert.deepEqual(galleryRetro.letters,['P']);
-      assert.ok(galleryRetro.firstPath.startsWith('M61.9513'));
+     assert.equal(galleryRetro.paths,0);
+     assert.deepEqual(galleryRetro.letters,['P','l','x']);
+      assert.equal(galleryRetro.firstPath,undefined);
      assert.equal(galleryRetro.ring,'1');
      const galleryAnti=galleryState.marks.find(g=>g.id==='anti-vertex');
      assert.equal(galleryAnti?.source,'anti-vertex');
