@@ -243,6 +243,24 @@ function buildLearnWheel(){
   const cusps=Array.from({length:12},(_,index)=>norm(start+index*30));
   const result=buildSingleWheel([],cusps,'A');
   const chart=result.chart;
+  const lines=chart.querySelector('[data-layer="aspects"]');
+  const byStep=['','semi-sextile','sextile','square','trine','quincunx','opposition'];
+  const byAspect=Object.fromEntries(ASPECTS.map(aspect=>[aspect.id,aspect]));
+  const radius=Math.max(1,geometry('A').inner-1);
+  for(let i=0;i<12;i+=1)for(let j=i+1;j<12;j+=1){
+    const steps=Math.min(j-i,12-(j-i)),id=byStep[steps],aspect=byAspect[id];
+    if(!aspect)continue;
+    const left=polar(radius,i*30+15),right=polar(radius,j*30+15);
+    lines.appendChild(svg('line',{x1:left.x,y1:left.y,x2:right.x,y2:right.y,
+      stroke:aspect.color,class:'sky-foundation-aspect',
+      'data-aspect':id,'data-left-placement':SIGN_NAMES[i].toLowerCase(),
+      'data-right-placement':SIGN_NAMES[j].toLowerCase(),
+      'data-left-sky':'A','data-right-sky':'B','data-relationship-mode':'A-B',
+      'data-orb':'0.000000','data-left-sign':String(i),'data-right-sign':String(j),
+      'data-interactive':'aspect','data-focus-piece':'aspect',
+      tabindex:'0',role:'button',
+      'aria-label':SIGN_NAMES[i]+' '+id+' '+SIGN_NAMES[j]}));
+  }
   chart.dataset.skyExperience='learn';
   chart.setAttribute('aria-label','Zodiac template: twelve signs and twelve houses');
   const houseLayerNode=chart.querySelector('[data-layer="a-houses"]');
