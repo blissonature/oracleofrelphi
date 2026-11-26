@@ -343,6 +343,7 @@
   ['relphi:sky-foundation-ready','relphi:sky-name-updated','relphi:sky-where-when-committed'].forEach(name=>window.addEventListener(name,schedule));
   window.addEventListener('relphi:saved-sky-library-changed',()=>{schedule();refreshOpenPopover()});
   window.addEventListener('relphi:sky-recovery-changed',()=>{if(openSlot&&libraryView!=='saved')refreshOpenPopover()});
+  window.addEventListener('relphi:sky-default-name-restored',()=>window.RelphiSkySlotControls?.offerNotice?.('Default name restored'));
 
   window.RelphiSkySavedSkyIdentity=Object.freeze({identity,matchingRecord,settingsSignature:skySettingsSignature,library,openPicker:open,detach:newSky});
   function start(){ensurePopover();schedule()}

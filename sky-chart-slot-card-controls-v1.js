@@ -145,6 +145,11 @@
     window.dispatchEvent(new CustomEvent('relphi:sky-b-restored'));
     dismissUndo();
   }
+  function offerNotice(message){
+    dismissUndo();
+    const toast=document.createElement('div');toast.className='sky-slot-undo-toast';toast.setAttribute('role','status');toast.textContent=String(message||'Updated');
+    document.body.appendChild(toast);undoTimer=window.setTimeout(dismissUndo,3500);
+  }
   function offerUndo(slot,raw,label){
     if(!raw)return;
     dismissUndo();
@@ -299,7 +304,8 @@
     swapSkies,
     hasSkyB:skyBPresent,
     hasStoredSkyB,
-    offerUndo
+    offerUndo,
+    offerNotice
   });
   document.readyState==='loading'?document.addEventListener('DOMContentLoaded',start,{once:true}):start();
 })();
