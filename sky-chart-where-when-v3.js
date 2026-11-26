@@ -153,8 +153,9 @@ function editorMarkup(slot,p){
 // Only a confirmed search result or selected Here location counts as "Where".
 function shareText(slot){
   if(!SLOT_KEYS[slot])return'';
-  const form=formFor(slot);if(!form)return'';
+  const form=formFor(slot);
   const chart=payload(slot)||{},selected=cardState[slot].selected;
+  if(!form){const p=profileFor(slot);return [String(chart.name||chart.title||'Sky '+slot)+' — Where and When','Where: '+String(p.location||'Not selected'),'Date and time: '+String(p.dateTime||'Not set')+(p.timeUnknown?' (time unknown)':''),'Time zone: '+String(p.timeZone||'Not set')].join('\n')}
   const name=String(panel(slot)?.querySelector('.sky-foundation-name')?.textContent||chart.name||chart.title||`Sky ${slot}`).trim()||`Sky ${slot}`;
   const date=String(form.querySelector('[data-ww-field="date"]')?.value||'').trim();
   const time=String(form.querySelector('[data-ww-field="time"]')?.value||'').trim();
@@ -462,7 +463,8 @@ async function submitCalculated(slot,form,options={}){
       window.dispatchEvent(new CustomEvent('relphi:sky-live-origin-changed',{detail:{slot,origin:null,reason:'fixed-now-snapshot'}}));
       window.dispatchEvent(new CustomEvent('relphi:sky-name-updated',{detail:{slot,name:'Now',source:'fixed-now-snapshot'}}));
     }
-  }catch(error){setBusy(slot,false);status(slot,error.message||'The Sky could not be calculated.',true)}
+    return true;
+  }catch(error){setBusy(slot,false);status(slot,error.message||'The Sky could not be calculated.',true);return false}
 }
 async function submitForm(slot,form,options={}){
   const pasted=window.RelphiSkyWhereWhenPasteInference;
@@ -470,7 +472,7 @@ async function submitForm(slot,form,options={}){
     const handled=await pasted.commit(form,{requestedLiveOrigin:options.liveOrigin||''});
     if(handled)return;
   }
-  await submitCalculated(slot,form,options);
+  return await submitCalculated(slot,form,options);
 }
 function enableKnownTime(form){
   const unknown=form.querySelector('[data-ww-field="time-unknown"]');
@@ -521,8 +523,7 @@ async function hereAndNow(slot){
     updateNowFields(slot);
     syncModes(slot);
     setBusy(slot,false);
-    await submitForm(slot,form,{snapshotNow:true,instant:form.dataset.nowInstant,quickCreate:true});
-    return true;
+    return await submitForm(slot,form,{snapshotNow:true,instant:form.dataset.nowInstant,quickCreate:true})===true;
   }catch(error){setBusy(slot,false);status(slot,error?.code===1?'Location permission was denied.':error?.message||'Here and Now could not be resolved.',true)}
 }
 

@@ -157,10 +157,12 @@
     try{if(transaction?.active?.()===false){document.documentElement.dataset.skyWhereWhenEditing='false';document.documentElement.dataset.skyWhereWhenEditingSlots=''}}catch(_){}
   }
   function loadRecord(slot,record){
-    closeWhereWhenEditors();const id=recordRef(record),active=applyNamedIdentity(record,String(record.name||'Saved sky').trim(),id);delete active.savedAt;delete active.updatedAt;
+    closeWhereWhenEditors();const previous=payload(slot),priorRaw=window.RelphiSkyWorkingStorage.getItem(SLOT_KEYS[slot]);const id=recordRef(record),active=applyNamedIdentity(record,String(record.name||'Saved sky').trim(),id);delete active.savedAt;delete active.updatedAt;
     if(!writeJson(SLOT_KEYS[slot],active))return false;
     if(slot==='B'){try{window.RelphiSkyWorkingStorage.setItem('relphiSkyChartLastModeV1','comparison')}catch(_){}document.documentElement.dataset.skyLastMode='comparison'}
-    dispatchStorage(slot);window.dispatchEvent(new CustomEvent('relphi:saved-sky-loaded',{detail:{slot,id,name:String(record.name||'Saved sky').trim()}}));return true;
+    dispatchStorage(slot);window.dispatchEvent(new CustomEvent('relphi:saved-sky-loaded',{detail:{slot,id,name:String(record.name||'Saved sky').trim()}}));
+    if(priorRaw&&hasPlacements(previous)&&String(previous?.metadata?.savedSkyId||'')!==id)window.RelphiSkySlotControls?.offerUndo?.(slot,priorRaw,'Sky '+slot+' loaded from Sky Library');
+    return true;
   }
   function deleteRecord(ref){
     const result=window.RelphiSkyLibraryRecords?.deleteSky?.(ref);if(!result?.ok)return false;
@@ -259,7 +261,7 @@
   function schedule(){if(queued)return;queued=true;requestAnimationFrame(sync)}
 
   document.addEventListener('click',event=>{
-    const trigger=event.target.closest?.('[data-sky-library-browse],[data-saved-sky-trigger]');
+    const trigger=event.target.closest?.('[data-sky-library-browse]');
     if(trigger){event.preventDefault();event.stopPropagation();const slot=trigger.dataset.slot||trigger.dataset.savedSkyTrigger;if(openSlot===slot&&!popover?.hidden)close();else open(slot);return}
     if(event.target.closest?.('[data-saved-close]')){close();return}
     const detach=event.target.closest?.('[data-sky-loaded-detach]');if(detach){event.preventDefault();event.stopPropagation();const slot=detach.dataset.slot;newSky(slot);schedule();return}

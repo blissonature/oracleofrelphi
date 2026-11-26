@@ -145,26 +145,23 @@
     window.dispatchEvent(new CustomEvent('relphi:sky-b-restored'));
     dismissUndo();
   }
-  function showUndo(raw){
+  function offerUndo(slot,raw,label){
     if(!raw)return;
     dismissUndo();
-    const toast=document.createElement('div');
-    toast.className='sky-slot-undo-toast';
-    toast.setAttribute('role','status');
-    toast.setAttribute('aria-live','polite');
-    const message=document.createElement('span');
-    message.textContent='Sky B removed';
-    const undo=document.createElement('button');
-    undo.type='button';
-    undo.className='sky-slot-undo-button';
-    undo.textContent='Undo';
+    const toast=document.createElement('div');toast.className='sky-slot-undo-toast';toast.setAttribute('role','status');
+    const message=document.createElement('span');message.textContent=label||'Sky changed';
+    const undo=document.createElement('button');undo.type='button';undo.className='sky-slot-undo-button';undo.textContent='Undo';
     undo.addEventListener('click',event=>{
-      event.preventDefault();event.stopPropagation();restoreSkyB(raw);
+      event.preventDefault();event.stopPropagation();
+      if(slot==='B'){restoreSkyB(raw);return}
+      try{window.RelphiSkyWorkingStorage.setItem(SKY_A_KEY,raw)}catch(error){console.error(error);return}
+      dispatchSkyAStorage(raw);try{window.RelphiSkyCardShell?.sync?.('A',JSON.parse(raw))}catch(_){}
+      dismissUndo();
     });
-    toast.append(message,undo);
-    document.body.appendChild(toast);
+    toast.append(message,undo);document.body.appendChild(toast);
     undoTimer=window.setTimeout(dismissUndo,6000);
   }
+  function showUndo(raw){offerUndo('B',raw,'Sky B removed')}
   function bindRemoveUndo(remove){
     if(remove.dataset.cardUndoBound==='true')return;
     remove.dataset.cardUndoBound='true';
@@ -299,7 +296,8 @@
     promoteSkyBToA,
     swapSkies,
     hasSkyB:skyBPresent,
-    hasStoredSkyB
+    hasStoredSkyB,
+    offerUndo
   });
   document.readyState==='loading'?document.addEventListener('DOMContentLoaded',start,{once:true}):start();
 })();
