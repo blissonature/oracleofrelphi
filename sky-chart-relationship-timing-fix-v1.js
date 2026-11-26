@@ -30,7 +30,7 @@ const rad=value=>Number(value)*Math.PI/180;
 const deg=value=>Number(value)*180/Math.PI;
 function clamp(value,min,max){return Math.max(min,Math.min(max,value))}
 function read(slot){
-  const raw=localStorage.getItem(KEYS[slot])||'null',entry=readCache[slot];
+  const raw=window.RelphiSkyWorkingStorage.getItem(KEYS[slot])||'null',entry=readCache[slot];
   if(entry.raw===raw)return entry.value;
   let value=null;try{value=JSON.parse(raw)}catch(_){}
   entry.raw=raw;entry.value=value;return value;
