@@ -678,3 +678,12 @@
 #skyFoundationFocus .sky-sky-mode-selector button{appearance:none;border:1px solid rgba(31,27,24,.22);background:#fff;color:#332e2a;font:750 .77rem/1.15 system-ui,sans-serif;border-radius:8px;padding:7px 13px;cursor:pointer}
 #skyFoundationFocus .sky-sky-mode-selector button[aria-pressed="true"]{background:#332e2a;color:#fff;border-color:#332e2a}
 #skyFoundationFocus .sky-sky-mode-selector button:focus-visible{outline:2px solid #c9211e;outline-offset:2px}
+
+#skyFoundationFocus .sky-learn-ascendant{display:flex;align-items:center;gap:8px;padding:5px 10px 8px;font:750 .77rem/1.3 system-ui,sans-serif;color:#332e2a}
+#skyFoundationFocus .sky-learn-ascendant[hidden]{display:none}
+#skyFoundationFocus .sky-learn-ascendant select{min-height:31px;border:1px solid rgba(31,27,24,.25);border-radius:8px;background:#fff;color:#332e2a;font:inherit;padding:3px 9px}
+html[data-sky-last-mode="learn"] #skyFoundationA,
+html[data-sky-last-mode="learn"] #skyFoundationB,
+html[data-sky-last-mode="learn"] .sky-one-click-outer{display:none}
+html[data-sky-last-mode="learn"] #skyFoundationRoot{grid-template-columns:minmax(0,1fr)}
+html[data-sky-last-mode="learn"] #skyFoundationComparison{grid-column:1/-1}
