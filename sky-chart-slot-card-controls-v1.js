@@ -264,6 +264,9 @@
   function ensureAddControl(){
     const heading=document.querySelector('#skyFoundationA > .sky-foundation-heading');
     if(!heading)return;
+    // The mode selector, not Sky A's card, owns entry into Compare.
+    heading.querySelector('[data-card-add-sky-b]')?.remove();
+    return;
     let add=heading.querySelector('[data-card-add-sky-b]');
     if(!add){
       add=document.createElement('button');
