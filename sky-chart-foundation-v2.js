@@ -247,7 +247,12 @@ function buildLearnWheel(){
   const lines=chart.querySelector('[data-layer="aspects"]');
   const byStep=['','semi-sextile','sextile','square','trine','quincunx','opposition'];
   const byAspect=Object.fromEntries(ASPECTS.map(aspect=>[aspect.id,aspect]));
-  const radius=Math.max(1,geometry('A').inner-1);
+  // Sign relationships connect the centers of their zodiac wedges,
+  // using the same radial lane as the canonical sign glyphs.
+  const zodiac=comparison().zodiac;
+  const glyphLane=Number(zodiac.glyphLane);
+  const radius=Number.isFinite(glyphLane)&&glyphLane>0
+    ?glyphLane:(Number(zodiac.inner)+Number(zodiac.outer))/2;
   for(let i=0;i<12;i+=1)for(let j=i+1;j<12;j+=1){
     const steps=Math.min(j-i,12-(j-i)),id=byStep[steps],aspect=byAspect[id];
     if(!aspect)continue;
