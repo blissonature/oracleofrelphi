@@ -98,6 +98,21 @@ try{
  await naming.locator('button[type="submit"]').click();
  await naming.waitFor({state:'hidden'});
  assert.equal((await a.evaluate(()=>window.RelphiSkyLibraryRecords.library())).length,3,'Evicted sky is saved permanently');
+ // Saved sky details are legible by default. Edit unlocks all Where and When fields.
+ await a.evaluate(()=>window.RelphiSkyWhereWhen.editSaved('A'));
+ const editForm=a.locator('#skyFoundationA .sky-where-when-editor[data-slot="A"]');
+ await editForm.waitFor({state:'visible'});
+ const oldId=await a.evaluate(()=>JSON.parse(window.RelphiSkyWorkingStorage.getItem('relphiSkyChartA'))?.metadata?.savedSkyId);
+ assert.ok(oldId);
+ await editForm.evaluate(form=>{
+   const date=form.querySelector('[data-ww-field="date"]'),time=form.querySelector('[data-ww-field="time"]');
+   date.value='2026-07-01';time.value='23:30';time.dispatchEvent(new Event('change',{bubbles:true}));
+ });
+ await editForm.locator('[data-ww-action="toggle-time-mode"]').click();
+ assert.equal(await editForm.locator('[data-ww-field="date"]').inputValue(),'2026-07-02','Local to UTC should advance the visible date across midnight');
+ await editForm.locator('[data-ww-action="toggle-time-mode"]').click();
+ assert.equal(await editForm.locator('[data-ww-field="date"]').inputValue(),'2026-07-01','UTC to Local restores the original date');
+ assert.equal(await editForm.locator('[data-ww-field="time"]').inputValue(),'23:30','Round-trip preserves time');
  const mobile=await openPage(context,390);
  await mobile.locator('#skyFoundationA [data-sky-drawer-tab="where"]').click();
  await mobile.locator('#skyFoundationA [data-sky-library-browse]').click();
@@ -105,6 +120,6 @@ try{
  const width=await mobile.locator('#skySavedSkiesPopover').evaluate(el=>({width:el.getBoundingClientRect().width,screen:innerWidth}));
  assert.ok(width.width<=width.screen+1,'Mobile library fits viewport');
  assert.deepEqual(errors,[],'No unhandled page errors');
- console.log('PASS_SKY_LIBRARY_MVP',JSON.stringify({tabs:'isolated',saved:'shared',entities:true,groups:true,pin:true,duplicate:true,recovery:true,evictionSave:true,mobileWidth:width}));
+ console.log('PASS_SKY_LIBRARY_MVP',JSON.stringify({tabs:'isolated',saved:'shared',entities:true,groups:true,pin:true,duplicate:true,recovery:true,evictionSave:true,localUtcDateRollover:true,mobileWidth:width}));
  await mobile.close();await a.close();await b.close();await context.close();
 }finally{await browser.close()}
