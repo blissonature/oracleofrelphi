@@ -455,19 +455,10 @@
         const chosen = button.dataset.skyExperience;
         const startup = window.RelphiSkyStartupMode;
         if (!startup?.writeMode) return;
-        if (chosen === 'comparison' && !startup.hasStoredSkyB?.()) {
-          // Reuse the Sky Card controller's established B-opening workflow.
-          const add = document.querySelector('#skyFoundationA [data-card-add-sky-b]') ||
-            document.querySelector('#skyFoundationComparison [data-add-sky-b]');
-          if (add) { add.click(); return; }
-        }
         startup.writeMode(chosen);
         startup.syncRoot?.();
         window.dispatchEvent(new CustomEvent('relphi:sky-experience-changed',{detail:{mode:chosen}}));
-        if (chosen !== 'learn' && !window.RelphiSkyWorkingStorage?.getItem('relphiSkyChartA')) {
-          window.RelphiSkyCardShell?.ensure?.('A',null);
-          window.RelphiSkyCardShell?.openDrawer?.('A','where');
-        }
+        // Mode changes do not assign a sky or open a second slot implicitly.
       });
     }
     let ascendantControl = focusPanel.querySelector(':scope > .sky-learn-ascendant');
