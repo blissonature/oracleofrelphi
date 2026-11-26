@@ -92,7 +92,7 @@ function groupForMode(value){return GROUPS.find(group=>group.mode===value)||null
 function familyForGroup(group){return FAMILIES.find(family=>family.id===group?.family)||null}
 function skyIdentity(slot){
   let payload=null;
-  try{payload=JSON.parse(localStorage.getItem('relphiSkyChart'+slot)||'null')}catch(_){}
+  try{payload=JSON.parse(window.RelphiSkyWorkingStorage.getItem('relphiSkyChart'+slot)||'null')}catch(_){}
   let title='';
   try{title=String(window.RelphiSkyCardTitle?.nameFor?.(slot,payload)||'').trim()}catch(_){}
   const metadata=payload?.metadata||{};
@@ -100,7 +100,7 @@ function skyIdentity(slot){
 }
 function skyIsPresent(slot){
   let value=null;
-  try{value=JSON.parse(localStorage.getItem('relphiSkyChart'+slot)||'null')}catch(_){}
+  try{value=JSON.parse(window.RelphiSkyWorkingStorage.getItem('relphiSkyChart'+slot)||'null')}catch(_){}
   if(!value||typeof value!=='object')return false;
   // A stored placeholder is not a loaded sky. Use actual placements rather
   // than the existence of the slot key or its generic display name.
@@ -120,7 +120,7 @@ function matrixFocus(){
   const scopes=MATRIX_SCOPES.filter(scope=>scope.id==='A-A'||skyIsPresent('B'));
   const all=MATRIX_ASPECTS.length;
   let stored=null;
-  try{stored=JSON.parse(localStorage.getItem('relphiSkyAspectMatrixV1')||'null')}catch(_){}
+  try{stored=JSON.parse(window.RelphiSkyWorkingStorage.getItem('relphiSkyAspectMatrixV1')||'null')}catch(_){}
   const values=Object.fromEntries(scopes.map(scope=>{
     // The master checkbox shows the current scope state; the persisted value
     // covers both checked and partially checked matrices.
