@@ -25,7 +25,7 @@ test('Both Sky Card Placements lists render Retrograde through the shared glyph 
 test('Placements reserve a readable annotation space rather than scaling the glyph master',()=>{
   assert.match(css,/\.sky-foundation-row-name \.sky-placement-rx\{[^}]*width:\.9em;height:1em/);
   assert.match(css,/\.sky-foundation-row-name \.sky-placement-rx>svg\{[^}]*width:3\.6em;height:3\.6em/);
-  assert.match(css,/margin-left:\.62em;vertical-align:-\.133em/);
+  assert.match(css,/margin-left:\.62em;vertical-align:-\.305em/);
   assert.doesNotMatch(css,/\.sky-rx-master/);
   assert.match(html,/sky-chart-foundation-v1\.css\?v=\d+/);
 });
