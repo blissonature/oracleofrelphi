@@ -119,8 +119,10 @@
     return rows.every((row,index)=>{
       const relation=relations[index];
       return row.dataset.leftPlacement===relation.left.id&&row.dataset.aspect===relation.aspect.id&&row.dataset.rightPlacement===relation.right.id&&Number(row.dataset.sourceOrb).toFixed(6)===relation.orb.toFixed(6)&&
-        (row.dataset.leftHouse==null?null:Number(row.dataset.leftHouse))===relation.left.house&&
-        (row.dataset.rightHouse==null?null:Number(row.dataset.rightHouse))===relation.right.house;
+        (row.dataset.leftHouse==null?null:Number(row.dataset.leftHouse))===
+          (relation.learn?(relation.left.sign-Number(document.documentElement.dataset.skyLearnAscendant||0)+12)%12+1:relation.left.house)&&
+        (row.dataset.rightHouse==null?null:Number(row.dataset.rightHouse))===
+          (relation.learn?(relation.right.sign-Number(document.documentElement.dataset.skyLearnAscendant||0)+12)%12+1:relation.right.house);
     });
   }
   function coordinate(record){
