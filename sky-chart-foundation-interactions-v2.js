@@ -114,18 +114,23 @@
   }
   function relationshipRowsIntact(relations){
     const list=document.getElementById('skyFoundationRelationshipList');if(!list)return false;
-    const rows=Array.from(list.children).filter(node=>node.classList?.contains('sky-foundation-relationship-row')&&String(node.dataset.relationshipMode||'A-B').toUpperCase()==='A-B');
+    const rows=[...list.children].filter(node=>node.classList?.contains('sky-foundation-relationship-row')&&
+      String(node.dataset.relationshipMode||'A-B').toUpperCase()==='A-B');
     if(rows.length!==relations.length)return false;
-    return rows.every((row,index)=>{
-      const relation=relations[index];
-      return row.dataset.leftPlacement===relation.left.id&&row.dataset.aspect===relation.aspect.id&&row.dataset.rightPlacement===relation.right.id&&Number(row.dataset.sourceOrb).toFixed(6)===relation.orb.toFixed(6)&&
-        (row.dataset.leftHouse==null?null:Number(row.dataset.leftHouse))===
-          (relation.learn?(relation.left.sign-Number(document.documentElement.dataset.skyLearnAscendant||0)+12)%12+1:relation.left.house)&&
-        (row.dataset.rightHouse==null?null:Number(row.dataset.rightHouse))===
-          (relation.learn?(relation.right.sign-Number(document.documentElement.dataset.skyLearnAscendant||0)+12)%12+1:relation.right.house);
+    const asc=Number(document.documentElement.dataset.skyLearnAscendant||0);
+    const identity=(left,aspect,right)=>left+'|'+aspect+'|'+right;
+    const byIdentity=new Map(rows.map(row=>[identity(row.dataset.leftPlacement,row.dataset.aspect,row.dataset.rightPlacement),row]));
+    if(byIdentity.size!==rows.length)return false;
+    return relations.every(relation=>{
+      const row=byIdentity.get(identity(relation.left.id,relation.aspect.id,relation.right.id));
+      if(!row||Number(row.dataset.sourceOrb).toFixed(6)!==relation.orb.toFixed(6))return false;
+      const houseLeft=relation.learn?(relation.left.sign-asc+12)%12+1:relation.left.house;
+      const houseRight=relation.learn?(relation.right.sign-asc+12)%12+1:relation.right.house;
+      return (row.dataset.leftHouse==null?null:Number(row.dataset.leftHouse))===houseLeft&&
+        (row.dataset.rightHouse==null?null:Number(row.dataset.rightHouse))===houseRight;
     });
   }
-  function coordinate(record){
+    function coordinate(record){
     const value=norm(record.value),sign=Math.floor(value/30),within=value-sign*30,degree=Math.floor(within),minute=Math.floor((within-degree)*60+1e-9);
     return{sign,text:`${degree}°${String(minute).padStart(2,'0')}′`};
   }
