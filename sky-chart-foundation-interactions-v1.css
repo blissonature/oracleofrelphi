@@ -687,3 +687,13 @@ html[data-sky-last-mode="learn"] #skyFoundationB,
 html[data-sky-last-mode="learn"] .sky-one-click-outer{display:none}
 html[data-sky-last-mode="learn"] #skyFoundationRoot{grid-template-columns:minmax(0,1fr);grid-template-areas:"comparison"}
 html[data-sky-last-mode="learn"] #skyFoundationComparison{grid-column:1/-1}
+
+/* Learn uses the canonical Focus controls without Sky A/B-specific fields. */
+#skyFoundationFocus .sky-chart-filter-bar > label:has(> [data-filter="sign"]){display:none}
+#skyFoundationFocus .sky-chart-filter-bar[data-learn-focus="true"]{grid-template-columns:repeat(3,minmax(0,1fr))}
+#skyFoundationFocus .sky-chart-filter-bar[data-learn-focus="true"] > label:has(> [data-filter="placement"]),
+#skyFoundationFocus .sky-chart-filter-bar[data-learn-focus="true"] > label:has(> [data-filter="houseB"]),
+#skyFoundationFocus .sky-chart-filter-bar[data-learn-focus="true"] > label:has(> [data-house-system-filter]){display:none}
+#skyFoundationFocus .sky-chart-filter-bar[data-learn-focus="true"] > label:has(> [data-filter="sign"]){display:grid}
+html[data-sky-last-mode="learn"] #skyFoundationWheelMount > svg.sky-foundation-wheel{max-height:none;width:min(100%,1020px)}
+@media(max-width:620px){#skyFoundationFocus .sky-chart-filter-bar[data-learn-focus="true"]{grid-template-columns:repeat(2,minmax(0,1fr))}}
