@@ -262,33 +262,40 @@
     schedule();return true;
   }
   function ensureAddControl(){
+    // Sky B is created by Compare, never from Sky A's card header.
+    document.querySelector('#skyFoundationA > .sky-foundation-heading [data-card-add-sky-b]')?.remove();
+  }
+  function ensureCloseAControl(){
     const heading=document.querySelector('#skyFoundationA > .sky-foundation-heading');
     if(!heading)return;
-    // The mode selector, not Sky A's card, owns entry into Compare.
-    heading.querySelector('[data-card-add-sky-b]')?.remove();
-    return;
-    let add=heading.querySelector('[data-card-add-sky-b]');
-    if(!add){
-      add=document.createElement('button');
-      add.type='button';
-      add.dataset.cardAddSkyB='true';
-      add.className='sky-slot-card-control sky-slot-card-control--add';
-      add.setAttribute('aria-label','Add Sky B');
-      add.title='Add Sky B';
-      add.appendChild(icon('plus'));
-      add.addEventListener('click',event=>{
+    let close=heading.querySelector('[data-close-sky-a]');
+    if(!close){
+      close=document.createElement('button');
+      close.type='button';
+      close.className='sky-slot-card-control sky-slot-card-control--remove';
+      close.dataset.closeSkyA='true';
+      close.setAttribute('aria-label','Close Sky A');
+      close.title='Close Sky A';
+      close.appendChild(icon('close'));
+      close.addEventListener('click',event=>{
         event.preventDefault();
         event.stopPropagation();
-        startAddSkyB();
+        const old=window.RelphiSkyWorkingStorage.getItem(SKY_A_KEY);
+        window.RelphiSkyWorkingStorage.removeItem(SKY_A_KEY);
+        dispatchSkyAStorage(null);
+        window.RelphiSkyCardShell?.sync?.('A',null);
+        window.dispatchEvent(new CustomEvent('relphi:sky-working-slot-cleared',{detail:{slot:'A'}}));
+        if(old)offerUndo('A',old,'Sky A closed');
       });
-      heading.appendChild(add);
+      heading.appendChild(close);
     }
-    add.hidden=skyBPresent()||document.documentElement.dataset.skyBEditing==='true'||hasStoredSkyB();
+    close.hidden=document.documentElement.dataset.skyLastMode==='learn';
   }
   function sync(){
     queued=false;
     suppressInternalAdd();
     ensureAddControl();
+    ensureCloseAControl();
     ensureRemoveControl();
     styleRemove();
   }
