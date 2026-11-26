@@ -54,7 +54,7 @@
   const records=()=>window.RelphiSkyLibraryRecords;
   const ehtml=x=>String(x==null?'':x).replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','"':'&quot;',"'":'&#39;'}[ch]));
   function activeSky(){return editingRecordId?records()?.library()?.find(r=>records().ref(r)===editingRecordId):payload(activeSlot)}
-  function suggested(sky){return window.RelphiSkySuggestedName?.preferred?.(sky)||candidateName(sky)||''}
+  function suggested(sky){return window.RelphiSkySuggestedName?.format?.(sky)||candidateName(sky)||''}
   function syncChosen(role){
     const host=overlay?.querySelector('[data-entity-picked="'+role+'"]');if(!host)return;
     host.replaceChildren();
@@ -187,7 +187,7 @@
     overlay.addEventListener('pointerdown',event=>{if(event.target===overlay)event.preventDefault()});
   }
   function openDialog(slot){
-    ensureDialog();activeSlot=slot;editingRecordId='';mergePending=null;correctingSavedSky=false;status.textContent='';draft={owner:[],associate:[],groups:[]};input.value=suggested(payload(slot));overlay.querySelector('[data-save-main-fields]').hidden=false;overlay.querySelector('[data-save-merge-review]')?.remove();syncChosen('owner');syncChosen('associate');syncGroups();overlay.querySelector('[data-save-sky-name-cancel]').hidden=true;overlay.hidden=false;document.documentElement.dataset.skySaveNameOpen='true';
+    ensureDialog();activeSlot=slot;editingRecordId='';mergePending=null;correctingSavedSky=false;status.textContent='';draft={owner:[],associate:[],groups:[]};input.value=window.RelphiSkySuggestedName?.preferred?.(payload(slot))||suggested(payload(slot));overlay.querySelector('[data-save-main-fields]').hidden=false;overlay.querySelector('[data-save-merge-review]')?.remove();syncChosen('owner');syncChosen('associate');syncGroups();overlay.querySelector('[data-save-sky-name-cancel]').hidden=true;overlay.hidden=false;document.documentElement.dataset.skySaveNameOpen='true';
     if(!matchMedia('(pointer:coarse)').matches)requestAnimationFrame(()=>input.focus({preventScroll:true}));
   }
   function closeDialog(){
