@@ -25,7 +25,10 @@ function installStyles(){
   style.textContent=`
     .sky-where-when-editor{display:grid;grid-template-rows:minmax(0,1fr) auto;min-height:0}
     .sky-where-when-scroll-body{min-height:0;overflow:auto;padding-bottom:.2rem}
-    .sky-time-label-line{display:flex;align-items:center;gap:.4rem;justify-content:space-between}\n    .sky-time-mode-toggle{appearance:none;background:none;border:0;padding:0;color:#241f1b;font:750 .66rem/1 system-ui,sans-serif;cursor:pointer}\n    .sky-time-mode-toggle [data-time-active]{text-decoration:underline;text-underline-offset:2px}\n    .sky-where-when-here-now-row{display:flex;align-items:center;padding:.62rem .62rem .18rem}
+    .sky-time-label-line{display:flex;align-items:center;gap:.4rem;justify-content:space-between}
+    .sky-time-mode-toggle{appearance:none;background:none;border:0;padding:0;color:#241f1b;font:750 .66rem/1 system-ui,sans-serif;cursor:pointer}
+    .sky-time-mode-toggle [data-time-active]{text-decoration:underline;text-underline-offset:2px}
+    .sky-where-when-here-now-row{display:flex;align-items:center;padding:.62rem .62rem .18rem}
     .sky-where-when-here-now{border-radius:999px}
     [data-ww-when] .sky-where-when-now-row{display:flex;align-items:center;justify-content:space-between;gap:.45rem}
     [data-ww-when] .sky-where-when-grid{gap:.42rem}
