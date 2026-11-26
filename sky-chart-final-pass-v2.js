@@ -618,7 +618,12 @@
 
   function refresh() {
     queued = false;
-    if (whereWhenEditing() && window.RelphiSkyStartupMode?.readMode?.()!=='learn') return;
+    if (whereWhenEditing() && window.RelphiSkyStartupMode?.readMode?.()!=='learn') {
+      const relationshipPanel=document.getElementById('skyFoundationRelationships');
+      const bar=document.querySelector('#skyFoundationFocus > .sky-chart-filter-bar');
+      if(relationshipPanel&&bar){ensureFocusStructure(relationshipPanel,bar);syncLearnFilters(bar)}
+      return;
+    }
     ['A','B'].forEach(slot => {
       addHeaderActions(slot);
       addEditorControls(slot);
