@@ -104,20 +104,18 @@ window.__relphiSkyStartupModeV1=true;
 const MODE_KEY='relphiSkyChartLastModeV1';
 const SKY_B_KEY='relphiSkyChartB';
 const html=document.documentElement;
-const nativeGetItem=Storage.prototype.getItem;
-const nativeSetItem=Storage.prototype.setItem;
 const BASE_SKY_NAMES=new Set(['sun','moon','mercury','venus','mars','jupiter','saturn','uranus','neptune','pluto','asc','ascendant','rising','ac','mc','midheaven','mediumcoeli']);
 const baseSkyName=value=>String(value||'').trim().toLowerCase().replace(/[^a-z0-9]/g,'');
 
 function rawGet(key){
-  try{return nativeGetItem.call(localStorage,key)}catch(_){return null}
+  try{return window.RelphiSkyWorkingStorage.getItem(key)}catch(_){return null}
 }
 function readMode(){
   return rawGet(MODE_KEY)==='comparison'?'comparison':'single';
 }
 function writeMode(mode){
   const next=mode==='comparison'?'comparison':'single';
-  try{if(rawGet(MODE_KEY)!==next)nativeSetItem.call(localStorage,MODE_KEY,next)}catch(_){}
+  try{if(rawGet(MODE_KEY)!==next)window.RelphiSkyWorkingStorage.setItem(MODE_KEY,next)}catch(_){}
   if(html.dataset.skyLastMode!==next)html.dataset.skyLastMode=next;
   return next;
 }
