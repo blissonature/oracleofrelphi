@@ -392,7 +392,7 @@ function selectLocation(slot,source){
   const oldMode=oldForm?.dataset.timeMode==='utc'?'utc':'local';
   if(!packet||!Number.isFinite(Number(packet.latitude))||!Number.isFinite(Number(packet.longitude))||!packet.timezone){status(slot,'That result did not include a complete coordinate and time-zone packet.',true);return false}
   if(oldSelected?.timezone&&oldDate?.value&&oldTime?.value&&!modeValue(oldForm,'time-unknown')&&oldMode==='local'&&oldSelected.timezone!==packet.timezone){
-    const m=window.luxon?.DateTime?.fromISO(oldDate.value+'T'+oldTime.value,{zone:oldSelected.timezone,setZone:true}).setZone(packet.timezone);
+    const m=window.luxon?.DateTime?.fromISO(oldDate.value+'T'+oldTime.value,{zone:oldSelected.timezone,setZone:true})?.setZone(packet.timezone);
     if(m?.isValid){oldDate.value=m.toFormat('yyyy-MM-dd');oldTime.value=m.toFormat('HH:mm');oldTime.dispatchEvent(new Event('change',{bubbles:true}))}
   }
   packet.latitude=Number(packet.latitude);packet.longitude=Number(packet.longitude);cardState[slot].selected=packet;
@@ -451,13 +451,13 @@ async function submitCalculated(slot,form,options={}){
   const selected=cardState[slot].selected; if(modeValue(form,'now'))updateNowFields(slot);
   let date=form.querySelector('[data-ww-field="date"]')?.value||'',time=form.querySelector('[data-ww-field="time"]')?.value||'';
   const timeUnknown=!modeValue(form,'now')&&form.querySelector('[data-ww-field="time-unknown"]')?.checked===true;
-  if(form.dataset.timeMode==='utc'&&!timeUnknown&&date&&time&&cardState[slot].selected?.timezone){const m=window.luxon?.DateTime?.fromISO(date+'T'+time,{zone:'UTC',setZone:true}).setZone(cardState[slot].selected.timezone);if(m?.isValid){date=m.toFormat('yyyy-MM-dd');time=m.toFormat('HH:mm')}}
+  if(form.dataset.timeMode==='utc'&&!timeUnknown&&date&&time&&cardState[slot].selected?.timezone){const m=window.luxon?.DateTime?.fromISO(date+'T'+time,{zone:'UTC',setZone:true})?.setZone(cardState[slot].selected.timezone);if(m?.isValid){date=m.toFormat('yyyy-MM-dd');time=m.toFormat('HH:mm')}}
   if(!selected)return status(slot,'Choose a canonical location first.',true);
   if(!date||(!timeUnknown&&!time))return status(slot,timeUnknown?'Enter the local date.':'Enter both the local date and local time.',true);
   setBusy(slot,true);status(slot,'Calculating placements and Planetary Hours…');
   try{
     const isNow=modeValue(form,'now');
-    const effectiveOptions=isNow?{...options,timeUnknown:false,liveOrigin:'',instant:form.dataset.nowInstant,snapshotNow:true}:{...options,timeUnknown};
+    const effectiveOptions=isNow?{...options,timeUnknown:false,liveOrigin:'',instant:form.dataset.nowInstant,snapshotNow:true,replaceExisting:options.quickCreate===true}:{...options,timeUnknown};
     const previous=payload(slot),savedId=String(previous?.metadata?.savedSkyId||'');
     const oldRecord=savedId?window.RelphiSkyLibraryRecords?.library()?.find(record=>window.RelphiSkyLibraryRecords.ref(record)===savedId):null;
     const nextPayload=calculateSky(slot,selected,date,time,effectiveOptions);

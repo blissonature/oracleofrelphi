@@ -15,9 +15,20 @@ function ref(s){return clean(s?.id||s?.metadata?.savedSkyId||s?.savedSkyId)}
 function profile(s){return s?.calcProfile||s?.profile||s||{}}
 function identity(s){
   const p=profile(s),lat=Number(p.latitude??s?.latitude),lon=Number(p.longitude??s?.longitude);
-  const date=clean(p.dateTime||s?.dateTime);
+  const date=clean(p.dateTime||s?.dateTime),unknown=p.timeUnknown===true;
   if(!date||!Number.isFinite(lat)||!Number.isFinite(lon))return '';
-  return JSON.stringify([date.slice(0,p.timeUnknown?10:19),!!p.timeUnknown,lat.toFixed(5),lon.toFixed(5),clean(p.timeZone||s?.timeZone).toLowerCase()]);
+  let moment=unknown?'unknown:'+date.slice(0,10):'';
+  if(!unknown){
+    const instant=clean(p.instant||s?.instant);
+    const ms=instant?Date.parse(instant):NaN;
+    if(Number.isFinite(ms))moment='instant:'+new Date(ms).toISOString();
+    else if(window.luxon?.DateTime){
+      const dt=window.luxon.DateTime.fromISO(date,{zone:clean(p.timeZone||s?.timeZone),setZone:true});
+      if(dt?.isValid)moment='instant:'+dt.toUTC().toISO();
+    }
+    if(!moment)moment='local:'+date.slice(0,19)+'@'+clean(p.timeZone||s?.timeZone);
+  }
+  return JSON.stringify([moment,lat.toFixed(5),lon.toFixed(5)]);
 }
 function duplicate(s,exclude){const sig=identity(s);return sig?library().find(x=>ref(x)!==clean(exclude)&&identity(x)===sig)||null:null}
 function links(s,role){const meta=s?.metadata||{};const values=role==='owner'?meta.skyOwners:meta.skyAssociates;return Array.isArray(values)?[...new Set(values.map(clean).filter(Boolean))]:[]}
