@@ -22,7 +22,7 @@ on:
       - '.github/workflows/sky-chart-house-flashlight.yml'
 jobs:
   unit:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -34,7 +34,7 @@ jobs:
           node --check sky-chart-house-flashlight-v1.js
           node --test tests/sky-chart-house-flashlight.test.cjs
   browser:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
