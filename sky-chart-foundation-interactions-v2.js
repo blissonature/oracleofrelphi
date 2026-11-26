@@ -668,8 +668,8 @@
     if(!mount)return;
     let label=mount.querySelector(':scope > .sky-wheel-sector-description');
     if(!label){label=document.createElement('div');label.className='sky-wheel-sector-description';label.setAttribute('role','status');label.setAttribute('aria-live','polite');mount.appendChild(label)}
-    if(!spec||!['house','sign','placement'].includes(spec.kind)){label.hidden=true;return}
-    const vocab=window.RelphiSkyVocab?.describeFocus?.(spec.kind,spec.value)||
+    if(!spec||!['house','sign','placement','aspect'].includes(spec.kind)){label.hidden=true;return}
+    const vocab=window.RelphiSkyVocab?.describeFocus?.(spec.kind,spec.kind==='aspect'?node?.dataset?.aspect:spec.value)||
       (spec.kind==='sign'?{name:SIGN_NAMES[Number(spec.value)],description:'Explore this zodiac sign and its relationships.'}:
        spec.kind==='house'?{name:'House '+spec.value,description:'Explore this house of experience.'}:null);
     if(!vocab?.description){label.hidden=true;return}
