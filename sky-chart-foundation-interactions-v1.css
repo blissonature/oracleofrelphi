@@ -642,3 +642,34 @@
 /* A locked Wheel selection narrows only the Relationships scroll list.
    Keep rows in the DOM so blank-space clear restores their original order. */
 #skyFoundationRelationshipList > .sky-foundation-relationship-row.is-wheel-selection-excluded {display:none!important}
+
+/* Sky Chart identity belongs to the existing Focus heading, not a second masthead. */
+#skyFoundationFocus .sky-foundation-focus-heading{
+  column-gap:12px;
+  flex-wrap:wrap;
+}
+#skyFoundationFocus .sky-focus-tool-brand{
+  order:3;
+  display:flex;
+  flex-direction:column;
+  align-items:flex-end;
+  gap:2px;
+  margin-left:auto;
+  white-space:nowrap;
+  color:#332e2a;
+  line-height:1.1;
+}
+#skyFoundationFocus .sky-focus-tool-brand strong{
+  font:800 clamp(.82rem,1.2vw,1rem)/1.1 system-ui,sans-serif;
+}
+#skyFoundationFocus .sky-focus-tool-brand span{
+  font:650 clamp(.59rem,1vw,.73rem)/1.15 system-ui,sans-serif;
+}
+#skyFoundationFocus .sky-focus-heading-controls{
+  margin-left:0;
+  flex:1 1 auto;
+}
+@media(max-width:600px){
+  #skyFoundationFocus .sky-foundation-focus-heading{gap:6px 10px}
+  #skyFoundationFocus .sky-focus-tool-brand{white-space:normal;text-align:right;max-width:48%}
+}
