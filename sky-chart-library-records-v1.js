@@ -79,6 +79,7 @@ function saveSky(args){
  const record=named(sky,display,skyId,!!suggested&&display===suggested);
  composeAssociations(record,args?.owners??(old?links(old,'owner').map(v=>({id:v})):[]),args?.associates??(old?links(old,'associate').map(v=>({id:v})):[]),args?.groups??(old?groupList(old):[]),people);
  record.metadata.pinned=old?.metadata?.pinned===true;
+ record.metadata.skyType=clean(args?.skyType??old?.metadata?.skyType??'');
  record.savedAt=old?.savedAt||record.savedAt;
  if(current<0)skies.push(record);else skies[current]=record;
  const mergedGroups=[...new Set([...labels,...groupList(record)])];
