@@ -165,7 +165,6 @@ function recoverTransientState(options={}){
   const activeSlots=typeof transaction?.slots==='function'?transaction.slots():[];
   if(html.dataset.skyBEditing==='true'&&!hasStoredSkyB()&&!activeSlots.includes('B')&&!visibleEditor('B')){
     delete html.dataset.skyBEditing;
-    writeMode('single');
     changed=true;
   }
   if(html.dataset.skyWhereWhenEditing==='true'&&!activeSlots.length&&!visibleEditor('A')&&!visibleEditor('B')){
