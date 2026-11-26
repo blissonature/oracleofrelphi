@@ -456,7 +456,9 @@
         const startup = window.RelphiSkyStartupMode;
         if (!startup?.writeMode) return;
         if (chosen === 'comparison' && !startup.hasStoredSkyB?.()) {
-          const add = document.querySelector('#skyFoundationComparison [data-add-sky-b]');
+          // Reuse the Sky Card controller's established B-opening workflow.
+          const add = document.querySelector('#skyFoundationA [data-card-add-sky-b]') ||
+            document.querySelector('#skyFoundationComparison [data-add-sky-b]');
           if (add) { add.click(); return; }
         }
         startup.writeMode(chosen);
