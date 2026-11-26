@@ -1,0 +1,60 @@
+import assert from 'node:assert/strict';
+import {chromium} from 'playwright';
+import path from 'node:path';
+
+const browser=await chromium.launch({headless:true});
+const base='http://127.0.0.1:4173/sky-chart.html';
+const sky=(time,name)=>({name,calcProfile:{dateTime:time,instant:time.replace('T','T')+':00.000Z',latitude:40.7276,longitude:-111.87999,location:'Salt Lake City, Utah, USA',timeZone:'America/Denver',houseSystem:'porphyry'},placements:{Sun:{name:'Sun',longitude:195.25,sign:'Libra',degree:15,minute:15},Moon:{name:'Moon',longitude:118,sign:'Cancer',degree:28}}});
+const errors=[];
+async function openPage(context,width=1280){
+ const page=await context.newPage();
+ await page.setViewportSize({width,height:900});
+ page.on('pageerror',e=>errors.push(e.message));
+ await page.route('https://unpkg.com/suncalc@1.9.0/suncalc.js',r=>r.fulfill({path:path.resolve('node_modules/suncalc/suncalc.js'),contentType:'application/javascript'}));
+ await page.route('https://cdn.jsdelivr.net/npm/luxon@3/build/global/luxon.min.js',r=>r.fulfill({path:path.resolve('node_modules/luxon/build/global/luxon.min.js'),contentType:'application/javascript'}));
+ await page.goto(base,{waitUntil:'domcontentloaded'});
+ await page.waitForFunction(()=>!!window.RelphiSkyWorkingStorage&&!!window.RelphiSkyLibraryRecords&&!!window.RelphiSkySavedSkyIdentity,{timeout:30000});
+ return page;
+}
+try{
+ const context=await browser.newContext();
+ const a=await openPage(context),b=await openPage(context);
+ const sa=sky('1985-10-08T04:37','Natal A'),sb=sky('2000-01-01T12:00','Other B');
+ await a.evaluate(value=>window.RelphiSkyWorkingStorage.setItem('relphiSkyChartA',JSON.stringify(value)),sa);
+ assert.equal(await b.evaluate(()=>window.RelphiSkyWorkingStorage.getItem('relphiSkyChartA')),null,'Second tab must not receive first tab working Sky A');
+ await b.evaluate(value=>window.RelphiSkyWorkingStorage.setItem('relphiSkyChartB',JSON.stringify(value)),sb);
+ assert.equal(await a.evaluate(()=>window.RelphiSkyWorkingStorage.getItem('relphiSkyChartB')),null,'First tab must not receive second tab working Sky B');
+ await a.reload({waitUntil:'domcontentloaded'});
+ await a.waitForFunction(()=>!!window.RelphiSkyWorkingStorage);
+ assert.equal(JSON.parse(await a.evaluate(()=>window.RelphiSkyWorkingStorage.getItem('relphiSkyChartA'))).name,'Natal A','Refresh restores same tab workspace');
+ const record=await a.evaluate(value=>window.RelphiSkyLibraryRecords.saveSky({sky:value,name:'Natal A',defaultName:'4:37 a.m.',owners:[{name:'Person A'}],associates:[{name:'Witness A'}],groups:['Family & Friends']}),sa);
+ assert.equal(record.ok,true,'Save succeeds');
+ await b.waitForFunction(()=>window.RelphiSkyLibraryRecords.library().length===1);
+ assert.equal(await b.evaluate(()=>window.RelphiSkyLibraryRecords.entities().length),2,'Entities shared through library, not working slots');
+ assert.equal(await b.evaluate(()=>window.RelphiSkyWorkingStorage.getItem('relphiSkyChartA')),null,'Library changes never replace working A');
+ const dup=await b.evaluate(value=>window.RelphiSkyLibraryRecords.saveSky({sky:{...value,calcProfile:{...value.calcProfile,houseSystem:'whole-sign'}},name:'Duplicate sky'}),sa);
+ assert.ok(dup.duplicate,'Same Where and When with different house system is duplicate');
+ await a.evaluate(()=>window.RelphiSkySavedSkyIdentity.openPicker('A'));
+ await a.locator('#skySavedSkiesPopover [data-library-query]').waitFor({state:'visible'});
+ assert.equal(await a.locator('#skySavedSkiesPopover [data-saved-sky-ref]').count(),1);
+ await a.locator('[data-library-query]').fill('Natal A');
+ assert.equal(await a.locator('#skySavedSkiesPopover [data-saved-sky-ref]:visible').count(),1);
+ await a.locator('#skySavedSkiesPopover [data-library-pin-ref]').click();
+ assert.equal(await a.evaluate(()=>window.RelphiSkyLibraryRecords.library()[0].metadata.pinned),true);
+ await a.locator('#skySavedSkiesPopover [data-saved-sky-ref]').click();
+ await a.waitForFunction(()=>!!JSON.parse(window.RelphiSkyWorkingStorage.getItem('relphiSkyChartA')||'null')?.metadata?.savedSkyId);
+ await a.locator('#skyFoundationA [data-sky-drawer-tab="where"]').click();
+ await a.locator('#skyFoundationA [data-sky-loaded-name]').waitFor({state:'visible'});
+ assert.equal((await a.locator('#skyFoundationA [data-sky-loaded-name]').innerText()).trim(),'Natal A');
+ await a.locator('#skyFoundationA [data-sky-loaded-detach]').click();
+ assert.equal(await a.locator('#skyFoundationA [data-sky-loaded-name]').innerText(),'—');
+ const mobile=await openPage(context,390);
+ await mobile.locator('#skyFoundationA [data-sky-drawer-tab="where"]').click();
+ await mobile.locator('#skyFoundationA [data-sky-library-browse]').click();
+ await mobile.locator('#skySavedSkiesPopover [data-library-query]').waitFor({state:'visible'});
+ const width=await mobile.locator('#skySavedSkiesPopover').evaluate(el=>({width:el.getBoundingClientRect().width,screen:innerWidth}));
+ assert.ok(width.width<=width.screen+1,'Mobile library fits viewport');
+ assert.deepEqual(errors,[],'No unhandled page errors');
+ console.log('PASS_SKY_LIBRARY_MVP',JSON.stringify({tabs:'isolated',saved:'shared',entityCount:2,groups:['Family & Friends'],pin:true,duplicate:true,mobileWidth:width}));
+ await mobile.close();await a.close();await b.close();await context.close();
+}finally{await browser.close()}
