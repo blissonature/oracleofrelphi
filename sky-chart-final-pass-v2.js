@@ -513,6 +513,11 @@
   function syncLearnFilters(bar) {
     const learn=window.RelphiSkyStartupMode?.readMode?.()==='learn';
     bar.dataset.learnFocus=String(learn);
+    const heading=bar.closest('#skyFoundationFocus');
+    heading?.querySelectorAll('.sky-orb-number-field,[data-harmonic-window-input]').forEach(control=>{
+      const field=control.closest('.sky-orb-number-field')||control;
+      field.hidden=learn;
+    });
     const names=learn?['Aspects by Sign','Placements','Houses','Sky B House','House System']:['Aspects','Placements','Sky A House','Sky B House','House System'];
     const select=bar.querySelector('[data-filter="aspect"]');
     if(select&&select.dataset.learnOptions!==String(learn)){
