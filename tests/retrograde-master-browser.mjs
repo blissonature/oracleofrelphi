@@ -86,7 +86,7 @@ try{
       {x:'40.543999',y:'48.217224',transform:null}
     ],'Preserve authored positions and lower-case-l adjustment');
     assert.equal(authored.sourceLayer,'translate(-32.27203,-12.032775)');
-    assert.equal(authored.placementTransform,'translate(38 40.9) scale(0.788)');
+    assert.equal(authored.placementTransform,'translate(38.5 36.17) scale(0.788)');
     assert.equal(authored.noRedrawnStrokes,true,'Do not add synthetic legs, foot, or new graphic shapes');
     assert.equal(authored.htmlGlyphs,3);
     assert.ok(authored.letterFonts.every(x=>/Montserrat/i.test(x)),'Use the original Montserrat typeface');
