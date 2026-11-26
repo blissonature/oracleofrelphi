@@ -9,7 +9,7 @@
   const norm = value => ((Number(value) % 360) + 360) % 360;
 
   function read(key) {
-    try { return JSON.parse(localStorage.getItem(key) || 'null'); }
+    try { return JSON.parse(window.RelphiSkyWorkingStorage.getItem(key) || 'null'); }
     catch (_) { return null; }
   }
 

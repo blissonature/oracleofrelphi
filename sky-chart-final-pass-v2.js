@@ -45,7 +45,7 @@
   }
 
   function read(slot) {
-    try { return JSON.parse(localStorage.getItem(KEYS[slot]) || 'null'); }
+    try { return JSON.parse(window.RelphiSkyWorkingStorage.getItem(KEYS[slot]) || 'null'); }
     catch (_) { return null; }
   }
 
@@ -182,7 +182,7 @@
     if (!enriching && this === localStorage && Object.values(KEYS).includes(String(key))) {
       try {
         const next = JSON.parse(String(raw));
-        const previous = JSON.parse(localStorage.getItem(String(key)) || 'null');
+        const previous = JSON.parse(window.RelphiSkyWorkingStorage.getItem(String(key)) || 'null');
         enriching = true;
         return baseSetItem.call(this, key, JSON.stringify(enrichPayload(next, previous)));
       } catch (_) {
@@ -197,7 +197,7 @@
   function dispatch(slot) {
     try {
       window.dispatchEvent(new StorageEvent('storage', {
-        key:KEYS[slot], newValue:localStorage.getItem(KEYS[slot]), storageArea:localStorage
+        key:KEYS[slot], newValue:window.RelphiSkyWorkingStorage.getItem(KEYS[slot]), storageArea:localStorage
       }));
     } catch (_) {
       const event = new Event('storage');
@@ -212,7 +212,7 @@
     const before = JSON.stringify(current);
     const after = JSON.stringify(enrichPayload(current, current));
     if (before === after) return false;
-    localStorage.setItem(KEYS[slot], after);
+    window.RelphiSkyWorkingStorage.setItem(KEYS[slot], after);
     if (emit) dispatch(slot);
     return true;
   }
@@ -392,7 +392,7 @@
     Object.values(source).forEach(item => {
       if (Number.isFinite(Number(item?.longitude))) item.house = houseFor(Number(item.longitude), result.cusps);
     });
-    localStorage.setItem(KEYS[slot], JSON.stringify(value));
+    window.RelphiSkyWorkingStorage.setItem(KEYS[slot], JSON.stringify(value));
     dispatch(slot);
   }
 

@@ -20,7 +20,7 @@ const MINI={cx:120,cy:120,aspectRadius:66,zodiacInner:76,zodiacOuter:99,signRadi
 let mount,selectedIndex=null,token=0;
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot',"'":'&#39;'}[c]));
 const norm=v=>((Number(v)%360)+360)%360;
-function read(k){try{return JSON.parse(localStorage.getItem(k)||'null')}catch(_){return null}}
+function read(k){try{return JSON.parse(window.RelphiSkyWorkingStorage.getItem(k)||'null')}catch(_){return null}}
 function source(p){const x=[p?.placements,p?.positions,p?.points,p?.bodies].find(v=>v&&typeof v==='object')||p||{};return Array.isArray(x)?x.map((v,i)=>[String(v?.name||v?.id||i),v]):Object.entries(x)}
 function longitude(x){if(Number.isFinite(Number(x?.longitude)))return norm(x.longitude);const s=SIGNS.findIndex(n=>n.toLowerCase()===String(x?.sign||x?.zodiac||'').toLowerCase());return s<0?NaN:norm(s*30+Number(x.degree||x.degrees||0)+Number(x.minute||x.minutes||0)/60)}
 function canonical(k,x){const r=window.RelphiGlyphRegistry;for(const c of [x?.glyphId,x?.id,x?.name,x?.label,x?.body,x?.planet,x?.point,k]){if(!c)continue;const raw=String(c).trim(),e=r?.resolve?.(ALIASES[raw.toLowerCase()]||raw)||r?.get?.(ALIASES[raw.toLowerCase()]||raw);if(e)return e}return null}
