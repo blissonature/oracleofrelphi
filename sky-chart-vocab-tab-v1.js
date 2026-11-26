@@ -1897,6 +1897,7 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden)schedule()
 window.RelphiSkyVocab=Object.freeze({render:schedule,activate,getDisplay:displayState,getFilters:filterState,getScopeFilters:scopeFilterState,getWheelFilters:()=>wheelFilterState,getWheelFilterSpec:()=>wheelFilterSpec,
   // Shared source of truth for wheel sector descriptions.
   describeFocus(kind,value){
+    if(kind==='aspect'){const id=String(value||'');return {name:ASPECT_NAMES[id]||id,description:ASPECT_REFERENTS[id]||''}}
     if(kind==='house'){const n=Number(value);return {name:HOUSE_NAMES[n]||'House '+n,description:HOUSE_MENU_DESCRIPTIONS[n]||''}}
     if(kind==='sign'){const name=SIGNS[Number(value)];return {name,description:SIGN_REFERENTS[name]||''}}
     if(kind==='placement'){
