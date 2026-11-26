@@ -461,6 +461,11 @@
   function ensure(){
     const bar=filterBar();
     if(!bar)return false;
+    if(window.RelphiSkyStartupMode?.readMode?.()==='learn'){
+      const owner=bar.querySelector('[data-placement-filter="combined"]');
+      if(owner){close(owner);owner.remove();}
+      return false;
+    }
     removeLegacyControls(bar);
     let owner=bar.querySelector('[data-placement-filter="combined"]');
     if(!owner)owner=createControl();
@@ -478,7 +483,8 @@
   function whereWhenEditing(){return document.documentElement.dataset.skyWhereWhenEditing==='true'}
   function refresh(){
     refreshQueued=false;
-    if(whereWhenEditing()||!ensure())return;
+    if(whereWhenEditing()&&window.RelphiSkyStartupMode?.readMode?.()!=='learn')return;
+    if(!ensure())return;
     const scopeSignature=bActive()?'A+B':'A',scopeChanged=scopeSignature!==lastScopeSignature;
     lastScopeSignature=scopeSignature;
 
