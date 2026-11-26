@@ -25,6 +25,21 @@ async function inspect(width,height,suffix){
   await page.goto('http://127.0.0.1:4173/sky-chart.html',{waitUntil:'domcontentloaded'});
   await page.waitForFunction(()=>document.getElementById('skyFoundationRoot')?.getAttribute('aria-busy')==='false');
   await page.waitForFunction(()=>document.querySelectorAll('[data-layer="zodiac"] > g[data-zodiac-sign] .relphi-canonical-glyph').length===12);
+  // The authoritative angle-frame interrupter removes original leader axes
+  // synchronously and recreates visible segments on requestAnimationFrame.
+  // A ready zodiac gallery does not mean that later axis pass has finished.
+  await page.waitForFunction(()=>{
+    const hosts=[...document.querySelectorAll('[data-layer="placements"] > g[data-angle-axis="true"]')];
+    if(!hosts.length)return false;
+    const expected=hosts.filter(host=>{
+      const lane=Number(host.dataset.angleLane),
+        edge=Number(window.RelphiSkyWheelSpec?.role?.(host.dataset.sky)?.edge);
+      if(!Number.isFinite(lane)||!Number.isFinite(edge))return false;
+      return host.dataset.angleExtreme==='inner'?edge<lane-12-1e-5:
+        host.dataset.angleExtreme==='outer'?edge>lane+12+1e-5:false;
+    }).length;
+    return document.querySelectorAll('.sky-foundation-angle-axis').length===expected;
+  },null,{timeout:12000});
 
   const state=await page.evaluate(async()=>{
     const geminiMarkup=await fetch('assets/zodiac-glyphs/gemini.svg?v=filled-silhouette-test').then(r=>r.text());
@@ -41,6 +56,16 @@ async function inspect(width,height,suffix){
       };
     });
     const geminiPath=document.querySelector('[data-zodiac-sign="gemini"] .relphi-glyph-gemini path');
+    const angleFrames=[...document.querySelectorAll('[data-layer="placements"] > g[data-angle-axis="true"]')];
+    const expectedAngleLines=angleFrames.filter(host=>{
+      const lane=Number(host.dataset.angleLane);
+      const edge=Number(window.RelphiSkyWheelSpec?.role?.(host.dataset.sky)?.edge);
+      const side=host.dataset.angleExtreme;
+      if(!Number.isFinite(lane)||!Number.isFinite(edge))throw new Error('Missing angle lane/edge geometry');
+      // The renderer draws an axis segment only where the +/-12px
+      // interruption around its frame leaves space to the chart edge.
+      return side==='inner'?edge<lane-12-1e-5:side==='outer'?edge>lane+12+1e-5:false;
+    }).length;
     const angleLines=Array.from(document.querySelectorAll('.sky-foundation-angle-axis')).map(line=>({
       sky:line.dataset.sky,
       edge:Number(line.dataset.axisEdgeRadius),
@@ -73,8 +98,8 @@ async function inspect(width,height,suffix){
       sourceStrokeWidth:sourcePath?.getAttribute('stroke-width')||'',
       renderedFill:geminiPath?.getAttribute('fill')||'',
       renderedStroke:geminiPath?.getAttribute('stroke')||'',
-      angleLines,
-      angleCount:document.querySelectorAll('[data-angle-axis="true"]').length,
+      angleLines,expectedAngleLines,
+      angleCount:angleFrames.length,
       renderedSkyCount:new Set(Array.from(document.querySelectorAll('[data-layer="placements"] > [data-sky]')).map(host=>host.dataset.sky).filter(Boolean)).size,
       diagnostics:document.querySelectorAll('[data-angle-collision-error],[data-canonical-glyph-error]').length,
       placementColors
@@ -94,7 +119,8 @@ async function inspect(width,height,suffix){
   assert.equal(state.renderedStroke,'');
   assert.ok(state.renderedSkyCount===1||state.renderedSkyCount===2);
   assert.equal(state.angleCount,state.renderedSkyCount*4);
-  assert.equal(state.angleLines.length,state.angleCount);
+  assert.equal(state.angleLines.length,state.expectedAngleLines,
+    'Only angle axes with room past their interruption may draw visible segments');
   assert.ok(state.angleLines.every(line=>Number.isFinite(line.expectedEdge)&&line.edge===line.expectedEdge));
   assert.ok(state.placementColors.length>0);
   assert.ok(state.placementColors.every(item=>item.painted>0));

@@ -9,7 +9,7 @@
   const svg = name => document.createElementNS(NS, name);
 
   function recolor(root, color) {
-    root.querySelectorAll('path,circle,ellipse,rect,polygon,polyline,line').forEach(node => {
+    root.querySelectorAll('path,circle,ellipse,rect,polygon,polyline,line,text').forEach(node => {
       const fill = node.getAttribute('fill');
       const stroke = node.getAttribute('stroke');
       if (fill && fill !== 'none') node.setAttribute('fill', color);
@@ -31,7 +31,7 @@
       String(entry.asset || '').startsWith('assets/aspect-glyphs/')
     ) return;
 
-    root.querySelectorAll('path,circle,ellipse,rect,polygon,polyline,line').forEach(node => {
+    root.querySelectorAll('path,circle,ellipse,rect,polygon,polyline,line,text').forEach(node => {
       const fill = node.getAttribute('fill');
       const stroke = node.getAttribute('stroke');
       const current = parseFloat(node.getAttribute('stroke-width')) || 0;
@@ -50,7 +50,7 @@
 
   async function loadAsset(path) {
     if (cache.has(path)) return cache.get(path).cloneNode(true);
-    const response = await fetch(path + '?v=24');
+    const response = await fetch(path + '?v=30');
     if (!response.ok) throw new Error('Could not load glyph asset: ' + path);
     const source = new DOMParser().parseFromString(await response.text(), 'image/svg+xml').documentElement;
     cache.set(path, source);
@@ -189,7 +189,7 @@
     } else if (greekLetter) {
       text.style.fontFamily = 'Noto Serif,Times New Roman,Georgia,serif';
     } else {
-      text.style.fontFamily = lettered ? 'Arial,Helvetica,sans-serif' : 'Apple Symbols,Segoe UI Symbol,Noto Sans Symbols 2,serif';
+      text.style.fontFamily = lettered ? 'Montserrat,Arial,Helvetica,sans-serif' : 'Apple Symbols,Segoe UI Symbol,Noto Sans Symbols 2,serif';
     }
     text.style.fontWeight = entry.fontWeight || (lettered ? '700' : '600');
     text.style.fontSize = hebrewLetter ? '31px' : greekLetter ? '30px' : aspectLetter ? '24px' : lettered ? '16px' : '34px';

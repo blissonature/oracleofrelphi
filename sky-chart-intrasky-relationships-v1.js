@@ -194,7 +194,7 @@ function referenceRank(text){
 function reorderPlacementLedgers(){
   document.querySelectorAll('#skyFoundationA .sky-foundation-ledger,#skyFoundationB .sky-foundation-ledger').forEach(ledger=>{
     const rows=[...ledger.querySelectorAll(':scope>.sky-foundation-row')];
-    const references=rows.map((row,index)=>({row,index,rank:referenceRank(row.querySelector('.sky-foundation-row-name')?.textContent)})).filter(entry=>entry.rank>=0);
+    const references=rows.map((row,index)=>({row,index,rank:referenceRank(row.querySelector('.sky-foundation-row-name')?.firstChild?.textContent)})).filter(entry=>entry.rank>=0);
     references.sort((a,b)=>a.rank-b.rank||a.index-b.index).forEach(entry=>ledger.appendChild(entry.row));
   });
 }

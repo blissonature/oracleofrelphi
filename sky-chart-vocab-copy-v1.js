@@ -37,7 +37,7 @@ function serializeToken(tokenNode){
   const name=clean(nameNode?.textContent),referent=clean(referentNode?.textContent),parts=[];
   let glyphText='';
   if(glyph)glyphText=canonicalGlyph(tokenNode,!!nameNode);
-  if(glyphText)parts.push(glyphText);
+  if(glyphText)parts.push(glyphText+(tokenNode.dataset.vocabRetrograde==='true'?' Rx':''));
   if(referent)parts.push(referent);
   if(name){
     const duplicate=!window.RelphiGlyphCopySerializer?.unicodeFor?.(tokenNode.dataset.vocabGlyphId)&&clean(glyphText).toLowerCase()===name.toLowerCase();
