@@ -588,7 +588,9 @@
       const visible =
         (filters.aspect === 'all' || label.includes(filters.aspect)) &&
         (filters.placement === 'all' || row.dataset.leftPlacement === filters.placement || row.dataset.rightPlacement === filters.placement) &&
-        (filters.houseA === 'all' || row.dataset.leftHouse === filters.houseA) &&
+        (filters.houseA === 'all' || (window.RelphiSkyStartupMode?.readMode?.()==='learn'
+          ?[row.dataset.leftSign,row.dataset.rightSign].includes(String((Number(document.documentElement.dataset.skyLearnAscendant||0)+Number(filters.houseA)-1)%12))
+          :row.dataset.leftHouse === filters.houseA)) &&
         (filters.houseB === 'all' || row.dataset.rightHouse === filters.houseB) &&
         (filters.sign === 'all' || row.dataset.leftSign === filters.sign || row.dataset.rightSign === filters.sign);
       row.classList.toggle('sky-chart-filter-hidden', !visible);
@@ -656,6 +658,7 @@
     window.addEventListener('relphi:sky-foundation-ready', schedule);
     window.addEventListener('relphi:sky-foundation-interactions-ready', schedule);
     window.addEventListener('relphi:sky-experience-changed', schedule);
+    window.addEventListener('relphi:sky-learn-ascendant-changed', schedule);
     window.addEventListener('storage', schedule);
     schedule();
   }
