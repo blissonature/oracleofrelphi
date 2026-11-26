@@ -29,7 +29,6 @@
   }
   function hasPlacements(value){return Object.keys(placementSource(value)).length>0}
   function library(){const list=readJson(LIBRARY_KEY,[]);return Array.isArray(list)?list.filter(record=>record&&String(record.name||'').trim()&&hasPlacements(record)):[]}
-  function writeLibrary(list){return writeJson(LIBRARY_KEY,list)}
   function recordRef(record){return String(record?.id||record?.savedSkyId||record?.metadata?.savedSkyId||`legacy:${normalize(record?.name)}`)}
   function newId(){return `sky-${Date.now().toString(36)}-${Math.random().toString(36).slice(2,8)}`}
 
@@ -115,7 +114,6 @@
     next.calcProfile=next.calcProfile&&typeof next.calcProfile==='object'?next.calcProfile:{};next.calcProfile.name=clean;next.calcProfile.title=clean;
     return next;
   }
-  function recordFrom(value,name,id,previous){const next=applyNamedIdentity(value,name,id);next.id=id;next.savedAt=previous?.savedAt||next.savedAt||new Date().toISOString();next.updatedAt=new Date().toISOString();return next}
 
   function dispatchStorage(slot){
     const key=SLOT_KEYS[slot];
@@ -125,17 +123,18 @@
   }
   function saveActive(slot,name,overwriteRecord=null){
     const value=payload(slot);if(!value||!hasPlacements(value))return{ok:false,message:'There is no sky to save.'};
-    const clean=String(name||'').trim();if(!clean)return{ok:false,message:'Give this sky a name.'};
-    const records=library(),duplicate=records.find(record=>normalize(record.name)===normalize(clean)&&(!overwriteRecord||recordRef(record)!==recordRef(overwriteRecord)));
-    if(duplicate)return{ok:false,message:'That name is already in Saved skies.'};
-    const previous=overwriteRecord||null,id=previous?recordRef(previous):newId(),nextRecord=recordFrom(value,clean,id,previous),index=previous?records.findIndex(record=>recordRef(record)===recordRef(previous)):-1;
-    if(index>=0)records[index]=nextRecord;else records.push(nextRecord);
-    if(!writeLibrary(records))return{ok:false,message:'Saved skies could not be written.'};
-    const active=applyNamedIdentity(value,clean,id);writeJson(SLOT_KEYS[slot],active);dispatchStorage(slot);
-    window.dispatchEvent(new CustomEvent('relphi:saved-sky-library-changed',{detail:{slot,name:clean,id,action:index>=0?'update':'create'}}));
-    window.dispatchEvent(new CustomEvent('relphi:sky-name-updated',{detail:{slot,name:clean,source:'saved-skies-dropdown'}}));
-    return{ok:true,message:index>=0?'Saved sky updated.':'Sky saved.'};
+    const generated=window.RelphiSkySuggestedName?.format?.(value)||'';
+    const clean=String(name||'').trim()||generated;
+    const result=window.RelphiSkyLibraryRecords?.saveSky?.({sky:value,name:clean,defaultName:generated,updateId:overwriteRecord?recordRef(overwriteRecord):undefined});
+    if(result?.duplicate)return{ok:false,duplicate:result.duplicate,message:'An identical saved sky already exists. Open Sky Library to review its associations.'};
+    if(!result?.ok)return result||{ok:false,message:'Sky Library is unavailable.'};
+    window.RelphiSkyWorkingStorage?.releaseRecovery?.(value);
+    const active=clone(result.record);delete active.savedAt;delete active.updatedAt;
+    writeJson(SLOT_KEYS[slot],active);dispatchStorage(slot);
+    window.dispatchEvent(new CustomEvent('relphi:sky-name-updated',{detail:{slot,name:clean,source:'saved-skies'}}));
+    return{ok:true,message:'Sky saved.'};
   }
+
   function applyIdentityChoice(slot,name,save){
     const value=payload(slot);if(!value||!hasPlacements(value))return{ok:false,message:'There is no sky to update.'};
     const active=identity(slot),clean=String(name||'').trim();if(save)return saveActive(slot,clean,active.record||null);
