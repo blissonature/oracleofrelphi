@@ -13,8 +13,8 @@ function installStyles(){if(document.getElementById('skyHeaderStateStylesV2'))re
 #skyFoundationA>.sky-foundation-heading>.sky-foundation-name,#skyFoundationB>.sky-foundation-heading>.sky-foundation-name{grid-column:2!important;grid-row:1!important;min-width:0!important;overflow:visible!important;line-height:1.2!important;padding:0 .45rem 0 .8rem!important;margin:0!important}
 #skyFoundationA>.sky-foundation-heading>.sky-slot-card-control,#skyFoundationB>.sky-foundation-heading>.sky-slot-card-control{grid-column:3!important;grid-row:1!important;margin:0 .45rem 0 .15rem!important}
 `;document.head.appendChild(style)}
-function read(slot){try{return JSON.parse(localStorage.getItem(KEYS[slot])||'null')}catch(_){return null}}
-function write(slot,value){try{localStorage.setItem(KEYS[slot],JSON.stringify(value));return true}catch(_){return false}}
+function read(slot){try{return JSON.parse(window.RelphiSkyWorkingStorage.getItem(KEYS[slot])||'null')}catch(_){return null}}
+function write(slot,value){try{window.RelphiSkyWorkingStorage.setItem(KEYS[slot],JSON.stringify(value));return true}catch(_){return false}}
 function slotFrom(node){const panel=node?.closest?.('#skyFoundationA,#skyFoundationB');return panel?.id==='skyFoundationA'?'A':panel?.id==='skyFoundationB'?'B':null}
 function isUpdateNow(button){return /update\s+to\s+now/i.test(String(button?.textContent||'').replace(/\s+/g,' ').trim())}
 function currentName(){return'Now'}
