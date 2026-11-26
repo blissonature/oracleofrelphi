@@ -623,6 +623,7 @@ function freezeLegacyLiveSky(slot){
 window.RelphiSkyWhereWhen=Object.freeze({
   form:formFor,
   selectPacket:(slot,packet)=>selectLocation(slot,packet),
+  currentLocationPacket,
   finishExternalCommit:(slot,detail)=>finishCommitted(slot,detail),
   status,
   setBusy,
