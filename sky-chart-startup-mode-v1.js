@@ -142,15 +142,11 @@ function hasStoredSkyB(){
 }
 function syncRoot(){
   let changed=false,mode=readMode();
-  if(mode==='comparison'&&!hasStoredSkyB()&&html.dataset.skyBEditing!=='true'){
-    const prior=html.dataset.skyLastMode;
-    mode=writeMode('single');
-    changed=changed||prior!==mode;
-  }else if(html.dataset.skyLastMode!==mode){
+  if(html.dataset.skyLastMode!==mode){
     html.dataset.skyLastMode=mode;
     changed=true;
   }
-  const present=mode==='comparison'&&hasStoredSkyB()?'true':'false';
+  const present=mode==='comparison'?'true':'false';
   if(html.dataset.skyBPresent!==present){
     html.dataset.skyBPresent=present;
     changed=true;
@@ -254,7 +250,6 @@ document.addEventListener('click',event=>{
 
 window.addEventListener('storage',event=>{
   if(event.storageArea&&event.storageArea!==localStorage)return;
-  if(event.key===SKY_B_KEY&&!hasStoredSkyB()&&readMode()==='comparison')writeMode('single');
   if(event.key===SKY_B_KEY||event.key===MODE_KEY)syncRoot();
 });
 window.addEventListener('pageshow',event=>{
