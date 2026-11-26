@@ -64,8 +64,8 @@ function installStyles(){
   `;
   document.head.appendChild(style);
 }
-function readJson(key,fallback){try{const raw=localStorage.getItem(key);return raw?JSON.parse(raw):fallback}catch(_){return fallback}}
-function writeJson(key,value){localStorage.setItem(key,JSON.stringify(value))}
+function readJson(key,fallback){try{const raw=window.RelphiSkyWorkingStorage.getItem(key);return raw?JSON.parse(raw):fallback}catch(_){return fallback}}
+function writeJson(key,value){window.RelphiSkyWorkingStorage.setItem(key,JSON.stringify(value))}
 function payload(slot){return readJson(SLOT_KEYS[slot],null)}
 function profileFor(slot){const value=payload(slot);return window.RelphiSkyCardShell?.profile?.(value)||(value?.calcProfile&&typeof value.calcProfile==='object'?value.calcProfile:{})}
 function completeProfile(p){return!!(p&&(p.instant||p.dateTime)&&p.location&&p.timeZone&&Number.isFinite(Number(p.latitude))&&Number.isFinite(Number(p.longitude)))}
@@ -308,7 +308,7 @@ function calculateSky(slot,selected,date,time,options={}){
   const asc=ascendantLongitude(instant,selected.latitude,selected.longitude),mc=midheavenLongitude(instant,selected.longitude);
   placements.Ascendant=placementObject('Ascendant',asc);placements.Midheaven=placementObject('Midheaven',mc);
   const storedHouseSystem=String(profileFor(slot).houseSystem||'').trim();
-  const houseSystem=localStorage.getItem(SHARED_HOUSE_KEY)||(storedHouseSystem&&storedHouseSystem!=='none'?storedHouseSystem:'whole-sign');
+  const houseSystem=window.RelphiSkyWorkingStorage.getItem(SHARED_HOUSE_KEY)||(storedHouseSystem&&storedHouseSystem!=='none'?storedHouseSystem:'whole-sign');
   const houses=window.RelphiHouseSystems.calculateCusps({system:houseSystem,ascendant:asc,midheaven:mc,siderealDegrees:siderealDegrees(instant,selected.longitude),obliquityDegrees:obliquity(instant),latitude:selected.latitude});
   const existing=options.replaceExisting?{}:(payload(slot)||{}),metadata=existing.metadata&&typeof existing.metadata==='object'?{...existing.metadata}:{},priorProfile=existing.calcProfile&&typeof existing.calcProfile==='object'?{...existing.calcProfile}:{},liveOrigin=String(options.liveOrigin||'');
   // A known-time calculation must not inherit unknown-time state from the prior working copy.
@@ -343,7 +343,7 @@ function calculateSky(slot,selected,date,time,options={}){
   delete priorProfile.liveNowOrigin;delete priorProfile.liveNowAt;
   return{...existing,name:options.snapshotNow?'Now':`Sky ${slot}`,title:options.snapshotNow?'Now':`Sky ${slot}`,displayName:options.snapshotNow?'Now':`Sky ${slot}`,skyName:options.snapshotNow?'Now':`Sky ${slot}`,saved:false,placements,houseCusps:houses.cusps,metadata,calcProfile:{...priorProfile,dateTime:options.snapshotNow?dt.toFormat("yyyy-MM-dd'T'HH:mm"):`${date}T${time}`,instant:dt.toUTC().toISO(),timeUnknown:false,latitude:String(selected.latitude),longitude:String(selected.longitude),location:selected.canonical,locationQuery:selected.query||selected.canonical,timeZone:selected.timezone,whereWhenSource:selected.source||'manual',houseSystem:houses.system||houseSystem,houseCusps:houses.cusps,cusps:houses.cusps,houseSystemNote:houses.note,source:'where-when-v3'},savedAt:new Date().toISOString()};
 }
-function dispatchSlotChange(slot){try{window.dispatchEvent(new StorageEvent('storage',{key:SLOT_KEYS[slot],newValue:localStorage.getItem(SLOT_KEYS[slot]),storageArea:localStorage}))}catch(_){const event=new Event('storage');Object.defineProperty(event,'key',{value:SLOT_KEYS[slot]});window.dispatchEvent(event)}}
+function dispatchSlotChange(slot){try{window.dispatchEvent(new StorageEvent('storage',{key:SLOT_KEYS[slot],newValue:window.RelphiSkyWorkingStorage.getItem(SLOT_KEYS[slot]),storageArea:localStorage}))}catch(_){const event=new Event('storage');Object.defineProperty(event,'key',{value:SLOT_KEYS[slot]});window.dispatchEvent(event)}}
 function normalizePacket(packet){
   if(!packet||typeof packet!=='object')return null;
   const next={...packet},inferred=next.source==='placement-inference'||String(next.query||'').trim()===INFERENCE_MARKER;
@@ -443,7 +443,7 @@ async function submitCalculated(slot,form,options={}){
     finishCommitted(slot,{source:'where-when',dateTime:timeUnknown?date:`${date}T${time}`,location:selected.canonical});
     if(!timeUnknown)scheduleSummary(slot,true);
     if(effectiveOptions.snapshotNow){
-      try{localStorage.removeItem(`relphiSkyLiveAgeAnchor${slot}`)}catch(_){}
+      try{window.RelphiSkyWorkingStorage.removeItem(`relphiSkyLiveAgeAnchor${slot}`)}catch(_){}
       window.dispatchEvent(new CustomEvent('relphi:sky-live-origin-changed',{detail:{slot,origin:null,reason:'fixed-now-snapshot'}}));
       window.dispatchEvent(new CustomEvent('relphi:sky-name-updated',{detail:{slot,name:'Now',source:'fixed-now-snapshot'}}));
     }
@@ -561,7 +561,7 @@ function freezeLegacyLiveSky(slot){
   metadata.liveNowDisabled=true;metadata.liveNowDisabledReason='fixed-now-snapshot';
   const calcProfile={...value.calcProfile};delete calcProfile.liveNowOrigin;delete calcProfile.liveNowAt;
   writeJson(SLOT_KEYS[slot],{...value,metadata,calcProfile});
-  try{localStorage.removeItem(`relphiSkyLiveAgeAnchor${slot}`)}catch(_){}
+  try{window.RelphiSkyWorkingStorage.removeItem(`relphiSkyLiveAgeAnchor${slot}`)}catch(_){}
 }
 window.RelphiSkyWhereWhen=Object.freeze({
   form:formFor,
@@ -662,7 +662,7 @@ if(handoff.name){nextPayload.name=handoff.name;nextPayload.title=handoff.name;ne
 // Chiron is optional when the local ephemeris cannot cover this date.
 if(window.RelphiChironEphemeris)await window.RelphiChironEphemeris.completePayload(nextPayload);
 // A sky without Chiron remains valid; never synthesize a position.
-if(choice.clearBoth){localStorage.removeItem(SLOT_KEYS.A);localStorage.removeItem(SLOT_KEYS.B)}
+if(choice.clearBoth){window.RelphiSkyWorkingStorage.removeItem(SLOT_KEYS.A);window.RelphiSkyWorkingStorage.removeItem(SLOT_KEYS.B)}
 writeJson(SLOT_KEYS[slot],nextPayload);
 const hasB=!choice.clearBoth&&(slot==='B'||slotHasPlacements('B'));
 if(window.RelphiSkyStartupMode){

@@ -35,7 +35,7 @@
   // legacy rows still retain house medallions or stale house numbers.
   function includeExportHouse(slot){
     if(slot!=='A'&&slot!=='B')return false;
-    let sky=null;try{sky=JSON.parse(localStorage.getItem('relphiSkyChart'+slot)||'null')}catch(_){}
+    let sky=null;try{sky=JSON.parse(window.RelphiSkyWorkingStorage.getItem('relphiSkyChart'+slot)||'null')}catch(_){}
     if(!sky)return false;
     const p=sky.calcProfile||{};
     return p.timeUnknown!==true&&sky.timeUnknown!==true&&String(p.houseSystem||sky.houseSystem||'').toLowerCase()!=='none';
