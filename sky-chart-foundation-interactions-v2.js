@@ -842,7 +842,6 @@
   async function refresh(){
     refreshQueued=false;if(whereWhenEditing()&&!(records(read(KEYS.A)).length===0&&records(read(KEYS.B)).length>0))return;const root=document.getElementById('skyFoundationRoot'),wheel=document.querySelector('#skyFoundationWheelMount > .sky-foundation-wheel');if(!root||!wheel||root.getAttribute('aria-busy')!=='false'||!HARMONIC)return;ensurePanel();
     const isLearn=wheel.dataset.skyExperience==='learn';
-    if(isLearn){lockedState=null;hoverState=null;rowLockedState=null;rowHoverState=null;}
     const preparedA=isLearn?{list:[],houseCusps:Array.from({length:12},(_,i)=>(Number(document.documentElement.dataset.skyLearnAscendant||0)*30+i*30)%360)}:prepare(read(KEYS.A),'A'),preparedB=isLearn?{list:[],houseCusps:[]}:prepare(read(KEYS.B),'B'),relations=isLearn?templateRelationships():relationships(preparedA.list,preparedB.list),nextSignature=relationshipSignature(relations);current={listA:preparedA.list,listB:preparedB.list,relations,cuspsA:preparedA.houseCusps,cuspsB:preparedB.houseCusps};
     annotateHouseLayer('a-houses','A');annotateHouseLayer('b-houses','B');annotateSigns();annotatePlacements(current.listA,current.listB);annotateAspects(relations);annotateLedger('A',current.listA);annotateLedger('B',current.listB);
     if(!isLearn&&(!preparedA.list.length||!preparedB.list.length)){
