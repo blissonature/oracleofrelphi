@@ -111,10 +111,13 @@ function rawGet(key){
   try{return window.RelphiSkyWorkingStorage.getItem(key)}catch(_){return null}
 }
 function readMode(){
-  return rawGet(MODE_KEY)==='comparison'?'comparison':'single';
+  const stored=rawGet(MODE_KEY);
+  if(stored==='learn'||stored==='comparison'||stored==='single')return stored;
+  // First-time visitors enter the zodiac lesson; an existing sky opens Discover.
+  return rawGet('relphiSkyChartA')?'single':'learn';
 }
 function writeMode(mode){
-  const next=mode==='comparison'?'comparison':'single';
+  const next=mode==='learn'?'learn':mode==='comparison'?'comparison':'single';
   try{if(rawGet(MODE_KEY)!==next)window.RelphiSkyWorkingStorage.setItem(MODE_KEY,next)}catch(_){}
   if(html.dataset.skyLastMode!==next)html.dataset.skyLastMode=next;
   return next;
@@ -201,7 +204,7 @@ function rewritePreviewTarotLinks(root){
   });
 }
 
-// Stored Sky B data is not itself permission to enter comparison mode.
+// Stored Sky B data is not itself permission to enter comparison mode; Learn keeps both working skies intact.
 function read(key){
   if(key===SKY_B_KEY&&readMode()!=='comparison'&&html.dataset.skyBEditing!=='true')return null;
   return rawGet(key);
@@ -251,7 +254,7 @@ document.addEventListener('click',event=>{
 
 window.addEventListener('storage',event=>{
   if(event.storageArea&&event.storageArea!==localStorage)return;
-  if(event.key===SKY_B_KEY&&!hasStoredSkyB())writeMode('single');
+  if(event.key===SKY_B_KEY&&!hasStoredSkyB()&&readMode()==='comparison')writeMode('single');
   if(event.key===SKY_B_KEY||event.key===MODE_KEY)syncRoot();
 });
 window.addEventListener('pageshow',event=>{
