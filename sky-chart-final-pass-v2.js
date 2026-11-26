@@ -468,7 +468,26 @@
         }
       });
     }
+    let ascendantControl = focusPanel.querySelector(':scope > .sky-learn-ascendant');
+    if (!ascendantControl) {
+      ascendantControl = document.createElement('label');
+      ascendantControl.className = 'sky-learn-ascendant';
+      ascendantControl.textContent = 'Ascendant';
+      const select = document.createElement('select');
+      select.setAttribute('aria-label','Choose an Ascendant sign for the zodiac template');
+      ['Aries','Taurus','Gemini','Cancer','Leo','Virgo','Libra','Scorpio','Sagittarius','Capricorn','Aquarius','Pisces'].forEach((sign,index)=>{
+        const option=document.createElement('option');option.value=String(index);option.textContent=sign;select.appendChild(option);
+      });
+      select.value=document.documentElement.dataset.skyLearnAscendant||'0';
+      select.addEventListener('change',()=>{
+        document.documentElement.dataset.skyLearnAscendant=select.value;
+        window.dispatchEvent(new CustomEvent('relphi:sky-learn-ascendant-changed',{detail:{sign:Number(select.value)}}));
+      });
+      ascendantControl.appendChild(select);
+      modes.after(ascendantControl);
+    }
     const currentMode = window.RelphiSkyStartupMode?.readMode?.() || 'single';
+    ascendantControl.hidden = currentMode !== 'learn';
     modes.querySelectorAll('[data-sky-experience]').forEach(button => {
       const active = button.dataset.skyExperience === currentMode;
       button.setAttribute('aria-pressed',String(active));
@@ -630,6 +649,7 @@
     }).observe(root, { childList:true, subtree:true });
     window.addEventListener('relphi:sky-foundation-ready', schedule);
     window.addEventListener('relphi:sky-foundation-interactions-ready', schedule);
+    window.addEventListener('relphi:sky-experience-changed', schedule);
     window.addEventListener('storage', schedule);
     schedule();
   }
