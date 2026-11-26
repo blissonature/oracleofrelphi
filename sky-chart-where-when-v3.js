@@ -350,22 +350,79 @@ function normalizePacket(packet){
   if(inferred){next.source='placement-inference';next.query=''}else if(!next.source)next.source='search';
   return next;
 }
+// One owner for search, selection, and time-zone resolution. Do not block
+// visible search results on seven independent time-zone network requests.
 async function searchLocation(slot){
   const card=panel(slot),input=card?.querySelector('[data-ww-field="location-query"]'),resultsNode=card?.querySelector('.sky-location-results'),query=input?.value.trim()||'';
   if(!query){status(slot,'Type a location first.',true);input?.focus();return}
   status(slot,`Searching for ${query}…`);resultsNode?.replaceChildren();
+  const request=async(url)=>{
+    const response=await fetch(url.toString(),{headers:{Accept:'application/json'},signal:AbortSignal.timeout(9000)});
+    if(!response.ok)throw new Error(`Location service returned ${response.status}.`);
+    return response.json();
+  };
   try{
-    const url=new URL('https://geocoding-api.open-meteo.com/v1/search');url.searchParams.set('name',query);url.searchParams.set('count','7');url.searchParams.set('language','en');url.searchParams.set('format','json');
-    const response=await fetch(url.toString(),{headers:{Accept:'application/json'}});if(!response.ok)throw new Error(`Location search returned ${response.status}.`);
-    const data=await response.json(),results=Array.isArray(data.results)?data.results:[];if(!results.length)throw new Error('No matching location was found. Try a city plus state, region, or country.');
+    let packets=[];
+    try{
+      const url=new URL('https://nominatim.openstreetmap.org/search');
+      url.searchParams.set('q',query);url.searchParams.set('format','jsonv2');
+      url.searchParams.set('addressdetails','1');url.searchParams.set('limit','7');
+      url.searchParams.set('accept-language','en');
+      const data=await request(url);
+      packets=(Array.isArray(data)?data:[]).map(result=>({
+        source:'search',query,canonical:String(result.display_name||result.name||query),
+        latitude:Number(result.lat),longitude:Number(result.lon),timezone:''
+      }));
+    }catch(primaryError){
+      // The fallback covers cities when the point-of-interest provider is down.
+      const url=new URL('https://geocoding-api.open-meteo.com/v1/search');
+      url.searchParams.set('name',query);url.searchParams.set('count','7');
+      url.searchParams.set('language','en');url.searchParams.set('format','json');
+      try{
+        const data=await request(url);
+        packets=(Array.isArray(data.results)?data.results:[]).map(result=>({
+          source:'search',query,
+          canonical:[result.name,result.admin1,result.country].map(v=>String(v||'').trim()).filter(Boolean).join(', '),
+          latitude:Number(result.latitude),longitude:Number(result.longitude),
+          timezone:String(result.timezone||'')
+        }));
+      }catch(fallbackError){
+        throw new Error('Location services are unreachable. Check your connection and try again.');
+      }
+    }
+    packets=packets.filter(packet=>Number.isFinite(packet.latitude)&&Number.isFinite(packet.longitude));
+    if(!packets.length)throw new Error('No matching location was found. Try a city, region, country, or street address.');
     const fragment=document.createDocumentFragment();
-    results.forEach((result,index)=>{
-      const canonical=[result.name,result.admin1,result.country].map(v=>String(v||'').trim()).filter((v,i,list)=>v&&list.indexOf(v)===i).join(','+' '),button=document.createElement('button');
-      button.type='button';button.className='sky-location-result';button.dataset.wwAction='select-location';button.dataset.locationIndex=String(index);button.innerHTML=`<strong>${escapeHtml(canonical)}</strong><span>${displayCoordinate(result.latitude)}, ${displayCoordinate(result.longitude)} · ${escapeHtml(result.timezone||'Time zone unavailable')}</span>`;
-      button.__locationPacket={source:'search',query,canonical,latitude:Number(result.latitude),longitude:Number(result.longitude),timezone:String(result.timezone||'')};fragment.appendChild(button);
+    packets.forEach((packet,index)=>{
+      const button=document.createElement('button');button.type='button';
+      button.className='sky-location-result';button.dataset.wwAction='select-location';
+      button.dataset.locationIndex=String(index);
+      button.innerHTML=`<strong>${escapeHtml(packet.canonical)}</strong><span>${displayCoordinate(packet.latitude)}, ${displayCoordinate(packet.longitude)}${packet.timezone?' · '+escapeHtml(packet.timezone):''}</span>`;
+      button.__locationPacket=packet;fragment.appendChild(button);
     });
-    resultsNode.appendChild(fragment);status(slot,'Choose the canonical location that matches what you meant.');
+    resultsNode?.appendChild(fragment);
+    status(slot,'Choose the location that matches what you meant.');
   }catch(error){status(slot,error.message||'Location search failed.',true)}
+}
+async function selectSearchResult(slot,node){
+  const packet=normalizePacket(node?.__locationPacket);
+  if(!packet)return;
+  if(!packet.timezone){
+    status(slot,'Resolving the selected location’s time zone…');
+    try{
+      const url=new URL('https://api.open-meteo.com/v1/forecast');
+      url.searchParams.set('latitude',String(packet.latitude));
+      url.searchParams.set('longitude',String(packet.longitude));
+      url.searchParams.set('timezone','auto');url.searchParams.set('forecast_days','1');
+      const response=await fetch(url.toString(),{headers:{Accept:'application/json'},signal:AbortSignal.timeout(9000)});
+      if(!response.ok)throw new Error('Time-zone service returned '+response.status);
+      const data=await response.json();
+      const timezone=String(data.timezone||'');
+      if(!window.luxon?.IANAZone?.isValidZone?.(timezone))throw new Error('Invalid geographic time zone');
+      packet.timezone=timezone;
+    }catch(error){status(slot,'The selected location’s time zone could not be verified. Try again.',true);return}
+  }
+  selectLocation(slot,packet);
 }
 function selectLocation(slot,source){
   const packet=normalizePacket(source?.__locationPacket||source);
@@ -407,7 +464,7 @@ async function reversePacket(latitude,longitude){
 }
 // Let the browser reuse a location fix up to five minutes old. Obtaining a
 // new device location is slower than the ephemeris calculation on many phones.
-function currentPosition(){return new Promise((resolve,reject)=>{if(!navigator.geolocation)return reject(new Error('Current location is unavailable in this browser.'));navigator.geolocation.getCurrentPosition(resolve,reject,{enableHighAccuracy:false,timeout:6000,maximumAge:300000})})}
+function currentPosition(){return new Promise((resolve,reject)=>{if(!navigator.geolocation)return reject(new Error('Current location is unavailable in this browser.'));navigator.geolocation.getCurrentPosition(resolve,reject,{enableHighAccuracy:false,timeout:15000,maximumAge:300000})})}
 async function currentLocationPacket(){
   const shared=window.RelphiSkyLocationSearch?.currentLocationPacket;
   if(typeof shared==='function'){const packet=await shared();return{...packet,source:'current-location'}}
@@ -575,7 +632,7 @@ window.RelphiSkyWhereWhen=Object.freeze({
 
 document.addEventListener('click',event=>{
   const actionNode=event.target.closest?.('[data-ww-action]');if(!actionNode)return;const slot=eventSlot(actionNode);if(!slot)return;const action=actionNode.dataset.wwAction;
-  if(action==='cancel')closeEditor(slot);else if(action==='search-location')void searchLocation(slot);else if(action==='select-location')selectLocation(slot,actionNode);else if(action==='refresh-here'){const toggle=formFor(slot)?.querySelector('[data-ww-field="here"]');if(toggle&&!toggle.checked){toggle.checked=true;syncModes(slot)}void checkHere(slot)}else if(action==='refresh-now')refreshNow(slot);else if(action==='use-here')void useHere(slot,actionNode);else if(action==='use-now')void currentLocalTime(slot);else if(action==='here-and-now')void hereAndNow(slot);
+  if(action==='cancel')closeEditor(slot);else if(action==='search-location')void searchLocation(slot);else if(action==='select-location')void selectSearchResult(slot,actionNode);else if(action==='refresh-here'){const toggle=formFor(slot)?.querySelector('[data-ww-field="here"]');if(toggle&&!toggle.checked){toggle.checked=true;syncModes(slot)}void checkHere(slot)}else if(action==='refresh-now')refreshNow(slot);else if(action==='use-here')void useHere(slot,actionNode);else if(action==='use-now')void currentLocalTime(slot);else if(action==='here-and-now')void hereAndNow(slot);
 });
 document.addEventListener('change',event=>{
   const modeToggle=event.target.closest?.('[data-ww-field="here"],[data-ww-field="now"]');
