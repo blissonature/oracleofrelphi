@@ -14,7 +14,7 @@
   const SLOT_KEYS={A:'relphiSkyChartA',B:'relphiSkyChartB'};
   const GENERIC_NAMES=new Set(['','current sky','sky a','sky b','standalone sky','comparison','unnamed sky','untitled sky','new sky','where and when']);
   let openSlot=null,queued=false,popover=null;
-  let deletePendingRef='',menuView='load',libraryQuery='',groupFilter='All';
+  let deletePendingRef='',menuView='load',libraryQuery='',groupFilter='All',libraryView='saved';
 
   const normalize=value=>String(value||'').trim().toLowerCase().replace(/\s+/g,' ');
   const clone=value=>JSON.parse(JSON.stringify(value));
@@ -234,8 +234,18 @@
         const confirmation=confirming?'<div class="sky-saved-delete-confirmation" role="group"><span>Delete sky and remove its associations?<small>'+escapeHtml(notice)+'</small></span><button type="button" data-saved-delete-cancel>Cancel</button><button type="button" class="is-danger" data-saved-delete-confirm="'+escapeHtml(ref)+'">Delete</button></div>':'';
         return '<div class="sky-saved-list-row'+(current?' is-active':'')+'" data-search-text="'+escapeHtml(search)+'" data-sky-groups="'+escapeHtml(groups.join('|'))+'"><button type="button" class="sky-saved-list-item" data-saved-sky-ref="'+escapeHtml(ref)+'" aria-label="Load '+escapeHtml(name)+' into Sky '+openSlot+'"><span class="sky-saved-list-name">'+escapeHtml(name)+'</span><span class="sky-saved-list-meta">'+escapeHtml(meta)+'</span></button><button type="button" data-library-pin-ref="'+escapeHtml(ref)+'" aria-pressed="'+String(pinned)+'" aria-label="'+(pinned?'Unpin':'Pin')+' '+escapeHtml(name)+'" title="'+(pinned?'Unpin':'Pin')+'">'+'📌'+'</button><button type="button" data-library-manage-ref="'+escapeHtml(ref)+'" title="Name, Entities and Groups" aria-label="Edit '+escapeHtml(name)+'">✎</button><button type="button" class="sky-saved-list-delete" data-saved-delete-ref="'+escapeHtml(ref)+'" aria-label="Delete '+escapeHtml(name)+'">×</button>'+confirmation+'</div>';
       }).join(''):'<p class="sky-saved-empty">No saved skies yet.</p>';
+      const recoveryState=window.RelphiSkyWorkingStorage?.recovery?.()||{recent:[],eviction:[]};
+      const recoveries=libraryView==='eviction'?recoveryState.eviction:recoveryState.recent;
+      const recoveryItems=recoveries.map(item=>{
+        const name=window.RelphiSkySuggestedName?.format?.(item.sky)||String(item.sky?.name||'Recovered Sky');
+        const detail=String(item.sky?.calcProfile?.location||'')+' · Last used '+new Date(item.lastUsedAt).toLocaleDateString();
+        const command=libraryView==='eviction'?'<button type="button" data-library-save-recovery="'+escapeHtml(item.id)+'">Save</button>':'<button type="button" data-library-load-recovery="'+escapeHtml(item.id)+'">Load</button>';
+        return '<div class="sky-saved-list-row" data-search-text="'+escapeHtml(name+' '+detail)+'" data-sky-groups=""><span class="sky-saved-list-item"><span class="sky-saved-list-name">'+escapeHtml(name)+'</span><span class="sky-saved-list-meta">'+escapeHtml(detail)+'</span></span>'+command+'</div>';
+      }).join('');
+      const displayed=libraryView==='saved'?items:recoveryItems;
+      const tabs=[['saved','Saved',records.length],['recovery','Recovery',recoveryState.recent.length],['eviction','Eviction',recoveryState.eviction.length]].map(([key,label,count])=>'<button type="button" data-library-view="'+key+'" aria-pressed="'+String(libraryView===key)+'">'+label+' ('+count+')</button>').join('');
       const groupOptions=['All',...allGroups].map(name=>'<option value="'+escapeHtml(name)+'"'+(groupFilter===name?' selected':'')+'>'+escapeHtml(name)+'</option>').join('');
-      menu.innerHTML='<div class="sky-library-browser-head"><strong>Sky Library</strong><span data-library-match-count></span></div><div class="sky-library-search-row"><input type="search" data-library-query aria-label="Search Sky Library" placeholder="Search name, date, location or Entity" value="'+escapeHtml(libraryQuery)+'"><select data-library-group aria-label="Filter by Group">'+groupOptions+'</select></div><div class="sky-saved-list">'+items+'<p data-library-no-results hidden>No matching skies.</p></div>';
+      menu.innerHTML='<div class="sky-library-browser-head"><strong>Sky Library</strong><span data-library-match-count></span></div><div class="sky-library-tabs">'+tabs+'</div><div class="sky-library-search-row"><input type="search" data-library-query aria-label="Search Sky Library" placeholder="Search name, date, location or Entity" value="'+escapeHtml(libraryQuery)+'"><select data-library-group aria-label="Filter by Group"'+(libraryView==='saved'?'':' hidden')+'>'+groupOptions+'</select></div><div class="sky-saved-list">'+displayed+'<p data-library-no-results hidden>No matching skies.</p></div>';
       applyLibraryFilter();
       window.RelphiSkyPrivateLoad?.redactNow?.();
       positionPopover();return;
@@ -253,7 +263,7 @@
     const mobile=window.matchMedia('(max-width:620px)').matches;
     Object.assign(popover.style,{position:'fixed',width:mobile?'100vw':'min(880px,calc(100vw - 40px))',maxWidth:'none',height:mobile?'100dvh':'min(76vh,720px)',maxHeight:mobile?'100dvh':'min(76vh,720px)',minHeight:'0',top:mobile?'0':'50%',left:mobile?'0':'50%',right:'auto',bottom:'auto',transform:mobile?'none':'translate(-50%,-50%)',overflowY:'auto',zIndex:'4000'});
   }
-  function open(slot){openSlot=slot;deletePendingRef='';menuView='load';const menu=ensurePopover();menu.hidden=false;renderPopover();triggerFor(slot)?.setAttribute('aria-expanded','true')}
+  function open(slot){openSlot=slot;deletePendingRef='';menuView='load';libraryView='saved';const menu=ensurePopover();menu.hidden=false;renderPopover();triggerFor(slot)?.setAttribute('aria-expanded','true')}
   function close(){if(!popover)return;triggerFor(openSlot)?.setAttribute('aria-expanded','false');popover.hidden=true;popover.removeAttribute('style');openSlot=null;deletePendingRef='';menuView='load'}
 
   // Title/menu trigger rendering has one owner: sky-chart-sky-card-title-integrity.
@@ -267,6 +277,20 @@
     if(trigger){event.preventDefault();event.stopPropagation();const slot=trigger.dataset.slot||trigger.dataset.savedSkyTrigger;if(openSlot===slot&&!popover?.hidden)close();else open(slot);return}
     if(event.target.closest?.('[data-saved-close]')){close();return}
     const detach=event.target.closest?.('[data-sky-loaded-detach]');if(detach){event.preventDefault();event.stopPropagation();const slot=detach.dataset.slot;newSky(slot);schedule();return}
+    const view=event.target.closest?.('[data-library-view]');if(view){event.preventDefault();event.stopPropagation();libraryView=view.dataset.libraryView;groupFilter='All';renderPopover();return}
+    const recoveryLoad=event.target.closest?.('[data-library-load-recovery],[data-library-save-recovery]');
+    if(recoveryLoad&&openSlot){
+      event.preventDefault();event.stopPropagation();
+      const slot=openSlot,recoveryId=recoveryLoad.dataset.libraryLoadRecovery||recoveryLoad.dataset.librarySaveRecovery;
+      const previous=payload(slot),raw=window.RelphiSkyWorkingStorage.getItem(SLOT_KEYS[slot]),sky=window.RelphiSkyWorkingStorage?.loadRecovery?.(recoveryId);
+      if(!sky)return;
+      if(!writeJson(SLOT_KEYS[slot],sky))return;
+      if(slot==='B'){window.RelphiSkyStartupMode?.writeMode?.('comparison');window.RelphiSkyStartupMode?.syncRoot?.()}
+      dispatchStorage(slot);close();schedule();
+      if(raw&&hasPlacements(previous))window.RelphiSkySlotControls?.offerUndo?.(slot,raw,'Sky '+slot+' loaded from Recovery');
+      if(recoveryLoad.hasAttribute('data-library-save-recovery'))window.RelphiSkySaveNameDialog?.open?.(slot);
+      return;
+    }
     const manage=event.target.closest?.('[data-library-manage-ref]');if(manage){event.preventDefault();event.stopPropagation();close();window.RelphiSkySaveNameDialog?.openRecord?.(manage.dataset.libraryManageRef);return}
     const pin=event.target.closest?.('[data-library-pin-ref]');if(pin){event.preventDefault();event.stopPropagation();const rec=library().find(x=>recordRef(x)===pin.dataset.libraryPinRef);if(rec&&window.RelphiSkyLibraryRecords?.pin?.(recordRef(rec),rec?.metadata?.pinned!==true)){renderPopover()}return}
     if(event.target.closest?.('[data-sky-menu-back]')&&openSlot){menuView='commands';deletePendingRef='';renderPopover();return}
@@ -302,6 +326,7 @@
   window.addEventListener('storage',event=>{if(!event.key||event.key===LIBRARY_KEY||Object.values(SLOT_KEYS).includes(event.key))schedule();if(event.key===LIBRARY_KEY)refreshOpenPopover()});
   ['relphi:sky-foundation-ready','relphi:sky-name-updated','relphi:sky-where-when-committed'].forEach(name=>window.addEventListener(name,schedule));
   window.addEventListener('relphi:saved-sky-library-changed',()=>{schedule();refreshOpenPopover()});
+  window.addEventListener('relphi:sky-recovery-changed',()=>{if(openSlot&&libraryView!=='saved')refreshOpenPopover()});
 
   window.RelphiSkySavedSkyIdentity=Object.freeze({identity,matchingRecord,settingsSignature:skySettingsSignature,library,openPicker:open,detach:newSky});
   function start(){ensurePopover();schedule()}
