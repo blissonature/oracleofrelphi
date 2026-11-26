@@ -167,9 +167,7 @@
   function deleteRecord(ref){
     const result=window.RelphiSkyLibraryRecords?.deleteSky?.(ref);if(!result?.ok)return false;
     ['A','B'].forEach(slot=>{const value=payload(slot);if(String(value?.metadata?.savedSkyId||'')!==String(ref))return;
-      const next=clone(value);next.metadata={...(next.metadata||{})};
-      delete next.metadata.savedSkyId;delete next.metadata.savedSkyName;delete next.metadata.savedSkyLoadedAt;
-      writeJson(SLOT_KEYS[slot],next);dispatchStorage(slot);
+      newSky(slot);
     });
     return true;
   }
