@@ -539,8 +539,16 @@
     [...bar.querySelectorAll(':scope > label')].slice(0,5).forEach((label,index)=>{
       if(label.firstChild?.nodeType===Node.TEXT_NODE)label.firstChild.textContent=names[index];
     });
-    if(!learn){filters.sign='all';filters.houseA='all';filters.houseB='all';const sign=bar.querySelector('[data-filter="sign"]');if(sign)sign.value='all';const house=bar.querySelector('[data-filter="houseA"]');if(house)house.value='all';}
+    if(!learn){
+      if(bar.dataset.previousExperience==='learn'){
+        filters.aspect='all';const aspect=bar.querySelector('[data-filter="aspect"]');if(aspect)aspect.value='all';
+      }
+      filters.sign='all';filters.houseA='all';filters.houseB='all';
+      const sign=bar.querySelector('[data-filter="sign"]');if(sign)sign.value='all';
+      const house=bar.querySelector('[data-filter="houseA"]');if(house)house.value='all';
+    }
     else{filters.placement='all';filters.houseB='all';const placement=bar.querySelector('[data-filter="placement"]');if(placement)placement.value='all';}
+    bar.dataset.previousExperience=learn?'learn':'natal';
   }
 
   function addFilters() {
