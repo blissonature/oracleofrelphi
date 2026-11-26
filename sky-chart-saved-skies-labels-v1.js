@@ -11,7 +11,7 @@ window.__relphiSkySavedSkiesLabelsV1=true;
 const LIBRARY_KEY='relphiSkyLibraryV1';
 let queued=false;
 
-function readJson(key,fallback){try{const raw=localStorage.getItem(key);return raw?JSON.parse(raw):fallback}catch(_){return fallback}}
+function readJson(key,fallback){try{const raw=window.RelphiSkyWorkingStorage.getItem(key);return raw?JSON.parse(raw):fallback}catch(_){return fallback}}
 function normalize(value){return String(value||'').trim().toLowerCase().replace(/\s+/g,' ')}
 function recordRef(record){return String(record?.id||record?.savedSkyId||record?.metadata?.savedSkyId||`legacy:${normalize(record?.name)}`)}
 function library(){const fromApi=window.RelphiSkySavedSkyIdentity?.library?.();const list=Array.isArray(fromApi)?fromApi:readJson(LIBRARY_KEY,[]);return Array.isArray(list)?list:[]}

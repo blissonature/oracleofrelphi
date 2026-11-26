@@ -35,7 +35,7 @@
     document.head.appendChild(style);
   }
 
-  function read(slot){try{return JSON.parse(localStorage.getItem(KEYS[slot])||'null')}catch(_){return null}}
+  function read(slot){try{return JSON.parse(window.RelphiSkyWorkingStorage.getItem(KEYS[slot])||'null')}catch(_){return null}}
   function normalize(value){return String(value||'').trim().toLowerCase().replace(/\s+/g,' ')}
   function metadata(value){return value?.metadata&&typeof value.metadata==='object'?value.metadata:{}}
   function profile(value){return value?.calcProfile&&typeof value.calcProfile==='object'?value.calcProfile:{}}

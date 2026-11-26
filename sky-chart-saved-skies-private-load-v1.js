@@ -23,8 +23,8 @@ let queued=false;
 
 const norm=value=>((Number(value)%360)+360)%360;
 const normalized=value=>String(value||'').trim().toLowerCase().replace(/\s+/g,' ');
-function readJson(key,fallback){try{const raw=localStorage.getItem(key);return raw?JSON.parse(raw):fallback}catch(_){return fallback}}
-function writeJson(key,value){try{localStorage.setItem(key,JSON.stringify(value));return true}catch(_){return false}}
+function readJson(key,fallback){try{const raw=window.RelphiSkyWorkingStorage.getItem(key);return raw?JSON.parse(raw):fallback}catch(_){return fallback}}
+function writeJson(key,value){try{window.RelphiSkyWorkingStorage.setItem(key,JSON.stringify(value));return true}catch(_){return false}}
 function newId(){return `sky-${Date.now().toString(36)}-${Math.random().toString(36).slice(2,8)}`}
 function recordRef(record){return String(record?.id||record?.savedSkyId||record?.metadata?.savedSkyId||`legacy:${normalized(record?.name)}`)}
 function library(){const api=window.RelphiSkySavedSkyIdentity;const list=api?.library?.()||readJson(LIBRARY_KEY,[]);return Array.isArray(list)?list:[]}
@@ -35,7 +35,7 @@ function migrateLegacyIds(){
   let changed=false;
   list.forEach(record=>{if(record&&typeof record==='object'&&!String(record.id||record.savedSkyId||record?.metadata?.savedSkyId||'').trim()){record.id=newId();changed=true}});
   if(!changed||!writeJson(LIBRARY_KEY,list))return;
-  try{window.dispatchEvent(new StorageEvent('storage',{key:LIBRARY_KEY,newValue:localStorage.getItem(LIBRARY_KEY),storageArea:localStorage}))}catch(_){window.dispatchEvent(new Event('storage'))}
+  try{window.dispatchEvent(new StorageEvent('storage',{key:LIBRARY_KEY,newValue:window.RelphiSkyWorkingStorage.getItem(LIBRARY_KEY),storageArea:localStorage}))}catch(_){window.dispatchEvent(new Event('storage'))}
   window.dispatchEvent(new CustomEvent('relphi:saved-sky-library-changed',{detail:{action:'privacy-id-migration'}}));
 }
 
