@@ -23,7 +23,7 @@ function normalizeState(value){
 }
 function legacyState(){
   try{
-    const mode=localStorage.getItem(LEGACY_STORAGE_KEY);
+    const mode=window.RelphiSkyWorkingStorage.getItem(LEGACY_STORAGE_KEY);
     if(mode==='glyphs')return{glyphs:true,names:false,referents:false};
     if(mode==='names')return{glyphs:true,names:true,referents:false};
     if(mode==='referents')return{glyphs:true,names:true,referents:true};
@@ -32,7 +32,7 @@ function legacyState(){
 }
 function readState(){
   try{
-    const raw=localStorage.getItem(SHARED_STORAGE_KEY);
+    const raw=window.RelphiSkyWorkingStorage.getItem(SHARED_STORAGE_KEY);
     if(raw){
       const parsed=JSON.parse(raw);
       if(parsed&&typeof parsed==='object')return normalizeState(parsed);
@@ -42,7 +42,7 @@ function readState(){
 }
 function writeState(next){
   const state=normalizeState(next);
-  try{localStorage.setItem(SHARED_STORAGE_KEY,JSON.stringify(state))}catch(_){}
+  try{window.RelphiSkyWorkingStorage.setItem(SHARED_STORAGE_KEY,JSON.stringify(state))}catch(_){}
   document.documentElement.dataset.skyVocabGlyphs=state.glyphs?'true':'false';
   document.documentElement.dataset.skyVocabNames=state.names?'true':'false';
   document.documentElement.dataset.skyVocabReferents=state.referents?'true':'false';
@@ -119,7 +119,7 @@ function legacyModeFromState(state=readState()){
   return state.referents?'referents':state.names?'names':'glyphs';
 }
 function setMode(mode,{announce=true}={}){
-  try{localStorage.setItem(LEGACY_STORAGE_KEY,String(mode||''))}catch(_){}
+  try{window.RelphiSkyWorkingStorage.setItem(LEGACY_STORAGE_KEY,String(mode||''))}catch(_){}
   return setState(stateFromLegacyMode(mode),{announce});
 }
 
