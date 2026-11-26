@@ -185,7 +185,7 @@ try{
            const row=rows.find(r=>r.querySelector('.sky-foundation-row-name')?.firstChild?.textContent===name);
            const wrapper=row?.querySelector('.sky-placement-rx');
            const art=wrapper?.querySelector('.relphi-glyph-retrograde');
-           const p=art?.querySelector('#text1');
+           const p=art?.querySelectorAll('text')[0];
            const elements=art?[...art.querySelectorAll('text')]:[];
            if(!p||elements.length!==3)throw Error('Missing uploaded Rx layers on '+name);
            const nameRange=document.createRange();
@@ -200,7 +200,7 @@ try{
              height:art.getBoundingClientRect().height,
              widths:elements.map(t=>t.getBoundingClientRect().width),
              paths:art.querySelectorAll('path,rect,line,polygon,circle').length,
-             originalLTransform:art.querySelector('#text2')?.getAttribute('transform'),
+             originalLTransform:elements[1]?.getAttribute('transform'),
              staticMaster:art.dataset.staticMaster,
              source:art.dataset.canonicalGlyphId
            };
