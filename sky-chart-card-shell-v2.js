@@ -11,6 +11,18 @@ function installStyles(){
   const style=document.createElement('style');
   style.id='skyCardShellV2Styles';
   style.textContent=`
+    .sky-where-library-controls{display:grid;gap:.33rem;padding:.5rem .62rem .25rem;border-bottom:1px solid rgba(31,27,24,.12)}
+    .sky-where-library-heading{display:flex;align-items:center;justify-content:space-between;gap:.3rem}
+    .sky-where-library-heading strong{font:850 .76rem/1.15 system-ui,sans-serif}
+    .sky-where-library-heading button,.sky-loaded-row button,.sky-where-reference button{min-height:28px;min-width:28px;border:1px solid rgba(31,27,24,.2);border-radius:7px;background:#fffdf8;color:#241f1b;cursor:pointer}
+    .sky-loaded-caption{font:750 .62rem/1.1 system-ui,sans-serif;color:#514941}
+    .sky-loaded-row{display:flex;align-items:center;gap:.35rem;min-height:30px;padding:.2rem .4rem;border:1px solid rgba(31,27,24,.16);border-radius:7px}
+    .sky-loaded-row output{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font:750 .71rem/1.25 system-ui,sans-serif}
+    .sky-loaded-row button[hidden]{display:none}
+    .sky-where-reference{display:grid;gap:.25rem;font:.68rem/1.4 system-ui,sans-serif;color:#241f1b}
+    .sky-where-reference-row{display:flex;align-items:start;gap:.4rem;justify-content:space-between}
+    .sky-where-reference-value{overflow-wrap:anywhere;white-space:pre-line}
+    .sky-where-reference button{font-weight:750;min-width:46px}
     .sky-placement-copy-row{display:flex;justify-content:space-between;align-items:center;gap:.65rem;padding:.42rem .62rem .12rem}
     .sky-placement-copy-title{min-width:0;margin:0;color:#241f1b;font:900 .9rem/1.15 system-ui,sans-serif}
     @media(max-width:620px){.sky-placement-copy-row{gap:.5rem;padding:.38rem .56rem .08rem}.sky-placement-copy-title{font-size:.86rem}}
@@ -54,6 +66,12 @@ function markup(slot,hasProfile){
     <details class="sky-card-drawer" data-sky-drawer="where">
       <summary class="sky-card-drawer-summary" tabindex="-1" aria-hidden="true"><span>Where and When</span></summary>
       <div class="sky-card-drawer-body" id="skyDrawerBody${slot}Where" data-sky-drawer-mount="where">
+        <div class="sky-where-library-controls">
+          <div class="sky-where-library-heading"><strong>Sky Library</strong><button type="button" data-sky-library-browse data-slot="${slot}" aria-label="Browse Sky Library for Sky ${slot}" title="Browse Sky Library">⌕</button></div>
+          <div class="sky-loaded-caption">Loaded</div>
+          <div class="sky-loaded-row"><output data-sky-loaded-name>—</output><button type="button" data-sky-loaded-detach data-slot="${slot}" title="Detach sky without deleting it" aria-label="Detach loaded sky from Sky ${slot}" hidden>×</button></div>
+          <div class="sky-where-reference" data-sky-where-reference hidden><div class="sky-where-reference-row"><div class="sky-where-reference-value" data-sky-where-reference-value></div><button type="button" data-sky-where-edit data-slot="${slot}">Edit</button></div></div>
+        </div>
         <section class="sky-where-when-summary" data-sky-where-summary="${slot}"${hasProfile?'':' hidden'}><span class="sky-ph-jump" data-sky-heptagram-frame="${slot}"><svg class="sky-ph-heptagram" data-sky-heptagram="${slot}" data-canonical-source-ready="pending" viewBox="8 8 344 344" role="img" aria-label="Planetary Hours heptagram for Sky ${slot}"></svg></span></section>
         <div class="sky-where-when-editor-mount" id="skyWhereWhenEditor${slot}" data-ww-editor-mount="${slot}" hidden></div>
       </div>
@@ -124,6 +142,16 @@ function sync(slot,payload){
   const current=refs(slot);if(!current)return null;
   const hasProfile=complete(payload),previous=current.root.dataset.whereWhenAvailable;
   current.summary.hidden=!hasProfile;current.root.dataset.whereWhenAvailable=hasProfile?'true':'false';
+  const metadata=payload?.metadata||{},savedName=String(metadata.savedSkyName||'').trim(),assigned=!!String(metadata.savedSkyId||'').trim();
+  const loaded=current.root.querySelector('[data-sky-loaded-name]'),detach=current.root.querySelector('[data-sky-loaded-detach]');
+  if(loaded)loaded.textContent=assigned?savedName||String(payload.name||'Saved sky'):'—';
+  if(detach)detach.hidden=!assigned;
+  const reference=current.root.querySelector('[data-sky-where-reference]'),referenceValue=current.root.querySelector('[data-sky-where-reference-value]');
+  if(reference)reference.hidden=!assigned||!hasProfile;
+  if(referenceValue&&assigned&&hasProfile){
+    const p=profile(payload),unknown=p.timeUnknown===true;
+    referenceValue.textContent=[String(p.dateTime||'').replace('T',' ')+(unknown?' · Time unknown':''),p.location||'',p.timeZone||''].filter(Boolean).join('\n');
+  }
   if(previous==='true'&&!hasProfile){current.editor.hidden=true;current.editor.replaceChildren();current.root.dataset.whereEditorExpanded='false';current.summary?.classList.remove('is-editor-expanded')}
   return current;
 }
