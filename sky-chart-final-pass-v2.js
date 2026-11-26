@@ -514,10 +514,20 @@
     const learn=window.RelphiSkyStartupMode?.readMode?.()==='learn';
     bar.dataset.learnFocus=String(learn);
     const names=learn?['Aspects by Sign','Placements','Houses','Sky B House','House System']:['Aspects','Placements','Sky A House','Sky B House','House System'];
+    const select=bar.querySelector('[data-filter="aspect"]');
+    if(select&&select.dataset.learnOptions!==String(learn)){
+      const keep=select.value;
+      const options=learn?['all','semi-sextile','sextile','square','trine','quincunx','opposition']:Object.keys(ASPECT_LABELS);
+      select.replaceChildren(...options.map(value=>new Option(ASPECT_LABELS[value],value)));
+      select.value=options.includes(keep)?keep:'all';
+      filters.aspect=select.value;
+      select.dataset.learnOptions=String(learn);
+    }
     [...bar.querySelectorAll(':scope > label')].slice(0,5).forEach((label,index)=>{
       if(label.firstChild?.nodeType===Node.TEXT_NODE)label.firstChild.textContent=names[index];
     });
-    if(!learn){filters.sign='all';const select=bar.querySelector('[data-filter="sign"]');if(select)select.value='all';}
+    if(!learn){filters.sign='all';filters.houseA='all';filters.houseB='all';const sign=bar.querySelector('[data-filter="sign"]');if(sign)sign.value='all';const house=bar.querySelector('[data-filter="houseA"]');if(house)house.value='all';}
+    else{filters.placement='all';filters.houseB='all';const placement=bar.querySelector('[data-filter="placement"]');if(placement)placement.value='all';}
   }
 
   function addFilters() {
