@@ -440,6 +440,40 @@
       controls.setAttribute('aria-label', 'Focus display controls');
       focusHeading.appendChild(controls);
     }
+
+    // The Focus header owns the three mutually exclusive experiences.
+    let modes = focusPanel.querySelector(':scope > .sky-sky-mode-selector');
+    if (!modes) {
+      modes = document.createElement('nav');
+      modes.className = 'sky-sky-mode-selector';
+      modes.setAttribute('aria-label', 'Sky Chart mode');
+      modes.innerHTML = '<button type="button" data-sky-experience="learn">Learn</button><button type="button" data-sky-experience="single">Discover</button><button type="button" data-sky-experience="comparison">Compare</button>';
+      focusPanel.querySelector(':scope > .sky-foundation-focus-heading')?.after(modes);
+      modes.addEventListener('click', event => {
+        const button = event.target.closest('[data-sky-experience]');
+        if (!button) return;
+        const chosen = button.dataset.skyExperience;
+        const startup = window.RelphiSkyStartupMode;
+        if (!startup?.writeMode) return;
+        if (chosen === 'comparison' && !startup.hasStoredSkyB?.()) {
+          const add = document.querySelector('#skyFoundationComparison [data-add-sky-b]');
+          if (add) { add.click(); return; }
+        }
+        startup.writeMode(chosen);
+        startup.syncRoot?.();
+        window.dispatchEvent(new CustomEvent('relphi:sky-experience-changed',{detail:{mode:chosen}}));
+        if (chosen !== 'learn' && !window.RelphiSkyWorkingStorage?.getItem('relphiSkyChartA')) {
+          window.RelphiSkyCardShell?.ensure?.('A',null);
+          window.RelphiSkyCardShell?.openDrawer?.('A','where');
+        }
+      });
+    }
+    const currentMode = window.RelphiSkyStartupMode?.readMode?.() || 'single';
+    modes.querySelectorAll('[data-sky-experience]').forEach(button => {
+      const active = button.dataset.skyExperience === currentMode;
+      button.setAttribute('aria-pressed',String(active));
+      button.classList.toggle('is-active',active);
+    });
     if (bar.parentElement !== focusPanel) focusPanel.appendChild(bar);
 
     const wheelMount = comparison.querySelector(':scope > #skyFoundationWheelMount');
