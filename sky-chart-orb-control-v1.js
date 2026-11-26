@@ -194,6 +194,7 @@
     if(!slot)return false;
     const learn=window.RelphiSkyStartupMode?.readMode?.()==='learn';
     let field=document.querySelector('[data-orb-field="true"]');
+    if(learn){field?.remove();return true;}
     const display=slot.querySelector(':scope>[data-relationship-display-control]');
     const wheelActions=slot.querySelector(':scope>.sky-export-wheel-slot');
     if(field&&field.parentElement!==slot)slot.insertBefore(field,wheelActions||null);
