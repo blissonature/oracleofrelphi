@@ -423,6 +423,16 @@
       focusPanel.innerHTML = '<header class="sky-foundation-focus-heading"><h2>Focus</h2><span class="sky-focus-heading-controls" aria-label="Focus display controls"></span></header>';
     }
 
+    // The Focus panel owns the compact tool identity; avoid a second page-sized masthead.
+    const heading = focusPanel.querySelector(':scope > .sky-foundation-focus-heading');
+    if (heading && !heading.querySelector('.sky-focus-tool-brand')) {
+      const brand = document.createElement('div');
+      brand.className = 'sky-focus-tool-brand';
+      brand.setAttribute('aria-label', 'Sky Chart by Oracle of Relphi');
+      brand.innerHTML = '<strong>Sky Chart</strong><span>by Oracle of Relphi</span>';
+      heading.appendChild(brand);
+    }
+
     const focusHeading = focusPanel.querySelector(':scope > .sky-foundation-focus-heading');
     if (focusHeading && !focusHeading.querySelector(':scope > .sky-focus-heading-controls')) {
       const controls = document.createElement('span');
