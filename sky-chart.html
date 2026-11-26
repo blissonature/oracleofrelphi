@@ -20,6 +20,12 @@
   #skySavedSkiesPopover .sky-saved-list-row{display:flex;align-items:center;gap:.25rem;flex-wrap:wrap}
   #skySavedSkiesPopover .sky-saved-list-item{flex:1;min-width:8rem}
   #skySavedSkiesPopover [data-library-pin-ref],#skySavedSkiesPopover [data-library-manage-ref]{border:0;background:transparent;min-width:26px;min-height:32px;cursor:pointer}
+  #skySavedSkiesPopover [data-library-pin-ref][aria-pressed="false"]{opacity:.35}
+  #skySavedSkiesPopover .sky-library-browser-head [data-library-close]{border:0;background:none;cursor:pointer;font-size:1.3rem;min-width:34px;min-height:34px}
+  #skySavedSkiesPopover .sky-library-tabs{display:flex;flex-wrap:wrap;gap:.25rem;padding:.35rem .65rem}
+  #skySavedSkiesPopover .sky-library-tabs button{border:1px solid #cfc4ba;border-radius:8px;background:#fffdf8;cursor:pointer;padding:.3rem .5rem;font-size:.7rem}
+  #skySavedSkiesPopover .sky-library-tabs button[aria-pressed="true"]{background:#f0e9dd;border-color:#8e8277;font-weight:800}
+  #skySavedSkiesPopover .sky-library-entity-filter{padding:.4rem .65rem;font-size:.72rem}
   #skySavedSkiesPopover .sky-saved-delete-confirmation{flex-basis:100%}
   #skySavedSkiesPopover .sky-saved-delete-confirmation small{display:block;line-height:1.3}
   #skySavedSkiesPopover [hidden]{display:none}

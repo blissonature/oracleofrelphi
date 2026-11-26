@@ -222,7 +222,7 @@
     if(menuView==='load'){
       const activeRef=active.record?recordRef(active.record):'';
       const api=window.RelphiSkyLibraryRecords,people=api?.entities?.()||[],allGroups=api?.groups?.()||[];
-      const sorted=[...records].sort((a,b)=>Number(b?.metadata?.pinned===true)-Number(a?.metadata?.pinned===true));
+      const sorted=libraryQuery.trim()?records:[...records].sort((a,b)=>Number(b?.metadata?.pinned===true)-Number(a?.metadata?.pinned===true));
       const items=sorted.length?sorted.map(record=>{
         const ref=recordRef(record),name=String(record.name||'Saved sky'),meta=shortMeta(record),current=ref===activeRef,confirming=ref===deletePendingRef;
         const own=(api?.links?.(record,'owner')||[]).map(id=>people.find(p=>p.id===id)?.name||'Unknown Entity');
@@ -254,7 +254,7 @@
       const tabs=[['saved','Saved',records.length],['entities','Entities',people.length],['recovery','Recovery',recoveryState.recent.length],['eviction','Eviction',recoveryState.eviction.length]].map(([key,label,count])=>'<button type="button" data-library-view="'+key+'" aria-pressed="'+String(libraryView===key)+'">'+label+' ('+count+')</button>').join('');
       const selectedEntity=people.find(x=>x.id===entityFilter);
       const groupOptions=['All',...allGroups].map(name=>'<option value="'+escapeHtml(name)+'"'+(groupFilter===name?' selected':'')+'>'+escapeHtml(name)+'</option>').join('');
-      menu.innerHTML='<div class="sky-library-browser-head"><strong>Sky Library</strong><span data-library-match-count></span></div><div class="sky-library-tabs">'+tabs+'</div>'+(selectedEntity&&libraryView==='saved'?'<div class="sky-library-entity-filter">Associated with '+escapeHtml(selectedEntity.name)+' <button type="button" data-library-clear-entity>Clear</button></div>':'')<div class="sky-library-search-row"><input type="search" data-library-query aria-label="Search Sky Library" placeholder="Search name, date, location or Entity" value="'+escapeHtml(libraryQuery)+'"><select data-library-group aria-label="Filter by Group"'+(libraryView==='saved'?'':' hidden')+'>'+groupOptions+'</select></div><div class="sky-saved-list">'+displayed+'<p data-library-no-results hidden>No matching skies.</p></div>';
+      menu.innerHTML='<div class="sky-library-browser-head"><strong>Sky Library</strong><span data-library-match-count></span><button type="button" data-library-close aria-label="Close Sky Library">×</button></div><div class="sky-library-tabs">'+tabs+'</div>'+(selectedEntity&&libraryView==='saved'?'<div class="sky-library-entity-filter">Associated with '+escapeHtml(selectedEntity.name)+' <button type="button" data-library-clear-entity>Clear</button></div>':'')<div class="sky-library-search-row"><input type="search" data-library-query aria-label="Search Sky Library" placeholder="Search name, date, location or Entity" value="'+escapeHtml(libraryQuery)+'"><select data-library-group aria-label="Filter by Group"'+(libraryView==='saved'?'':' hidden')+'>'+groupOptions+'</select></div><div class="sky-saved-list">'+displayed+'<p data-library-no-results hidden>No matching skies.</p></div>';
       applyLibraryFilter();
       window.RelphiSkyPrivateLoad?.redactNow?.();
       positionPopover();return;
@@ -295,6 +295,7 @@
     const confirmEntity=event.target.closest?.('[data-entity-delete-confirm]');
     if(confirmEntity){event.preventDefault();event.stopPropagation();const result=window.RelphiSkyLibraryRecords?.deleteEntity?.(confirmEntity.dataset.entityDeleteConfirm);
       if(result?.ok){const removed=new Set((result.deletedSkies||[]).map(x=>recordRef(x)));for(const slot of ['A','B']){if(removed.has(String(payload(slot)?.metadata?.savedSkyId||'')))newSky(slot)}entityDeletePending='';entityFilter='';libraryView='entities';renderPopover()}return}
+    if(event.target.closest?.('[data-library-close]')){event.preventDefault();close();return}
     const view=event.target.closest?.('[data-library-view]');if(view){event.preventDefault();event.stopPropagation();libraryView=view.dataset.libraryView;groupFilter='All';entityFilter='';entityDeletePending='';renderPopover();return}
     const recoveryLoad=event.target.closest?.('[data-library-load-recovery],[data-library-save-recovery]');
     if(recoveryLoad&&openSlot){
