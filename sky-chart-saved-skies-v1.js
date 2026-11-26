@@ -272,7 +272,7 @@
     const mobile=window.matchMedia('(max-width:620px)').matches;
     Object.assign(popover.style,{position:'fixed',width:mobile?'100vw':'min(880px,calc(100vw - 40px))',maxWidth:'none',height:mobile?'100dvh':'min(76vh,720px)',maxHeight:mobile?'100dvh':'min(76vh,720px)',minHeight:'0',top:mobile?'0':'50%',left:mobile?'0':'50%',right:'auto',bottom:'auto',transform:mobile?'none':'translate(-50%,-50%)',overflowY:'auto',zIndex:'4000'});
   }
-  function open(slot){openSlot=slot;deletePendingRef='';entityDeletePending='';entityFilter='';menuView='load';libraryView='saved';const menu=ensurePopover();menu.hidden=false;renderPopover();triggerFor(slot)?.setAttribute('aria-expanded','true')}
+  function open(slot){openSlot=slot;deletePendingRef='';entityDeletePending='';entityFilter='';libraryQuery='';groupFilter='All';menuView='load';libraryView='saved';const menu=ensurePopover();menu.hidden=false;renderPopover();triggerFor(slot)?.setAttribute('aria-expanded','true')}
   function close(){if(!popover)return;triggerFor(openSlot)?.setAttribute('aria-expanded','false');popover.hidden=true;popover.removeAttribute('style');openSlot=null;deletePendingRef='';menuView='load'}
 
   // Title/menu trigger rendering has one owner: sky-chart-sky-card-title-integrity.
@@ -296,7 +296,7 @@
     if(confirmEntity){event.preventDefault();event.stopPropagation();const result=window.RelphiSkyLibraryRecords?.deleteEntity?.(confirmEntity.dataset.entityDeleteConfirm);
       if(result?.ok){const removed=new Set((result.deletedSkies||[]).map(x=>recordRef(x)));for(const slot of ['A','B']){if(removed.has(String(payload(slot)?.metadata?.savedSkyId||'')))newSky(slot)}entityDeletePending='';entityFilter='';libraryView='entities';renderPopover()}return}
     if(event.target.closest?.('[data-library-close]')){event.preventDefault();close();return}
-    const view=event.target.closest?.('[data-library-view]');if(view){event.preventDefault();event.stopPropagation();libraryView=view.dataset.libraryView;groupFilter='All';entityFilter='';entityDeletePending='';renderPopover();return}
+    const view=event.target.closest?.('[data-library-view]');if(view){event.preventDefault();event.stopPropagation();libraryView=view.dataset.libraryView;libraryQuery='';groupFilter='All';entityFilter='';entityDeletePending='';renderPopover();return}
     const recoveryLoad=event.target.closest?.('[data-library-load-recovery],[data-library-save-recovery]');
     if(recoveryLoad&&openSlot){
       event.preventDefault();event.stopPropagation();
