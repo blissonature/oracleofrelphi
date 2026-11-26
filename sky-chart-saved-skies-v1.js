@@ -237,6 +237,7 @@
       const groupOptions=['All',...allGroups].map(name=>'<option value="'+escapeHtml(name)+'"'+(groupFilter===name?' selected':'')+'>'+escapeHtml(name)+'</option>').join('');
       menu.innerHTML='<div class="sky-library-browser-head"><strong>Sky Library</strong><span data-library-match-count></span></div><div class="sky-library-search-row"><input type="search" data-library-query aria-label="Search Sky Library" placeholder="Search name, date, location or Entity" value="'+escapeHtml(libraryQuery)+'"><select data-library-group aria-label="Filter by Group">'+groupOptions+'</select></div><div class="sky-saved-list">'+items+'<p data-library-no-results hidden>No matching skies.</p></div>';
       applyLibraryFilter();
+      window.RelphiSkyPrivateLoad?.redactNow?.();
       positionPopover();return;
     }
     if(menuView==='save'){
