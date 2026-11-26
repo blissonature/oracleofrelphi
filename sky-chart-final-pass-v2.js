@@ -233,52 +233,18 @@
     actions.prepend(button);
   }
 
-  function currentPosition() {
-    return new Promise((resolve, reject) => {
-      if (!navigator.geolocation) return reject(new Error('Current location is unavailable in this browser.'));
-      navigator.geolocation.getCurrentPosition(resolve, reject, {
-        enableHighAccuracy:false, timeout:12000, maximumAge:0
-      });
-    });
-  }
-
+  // The Where and When owner resolves geolocation, reverse place names, and
+  // time zones. Reuse that single path instead of duplicating unbounded fetches.
   async function currentLocationPacket() {
-    const position = await currentPosition();
-    const latitude = Number(position.coords.latitude);
-    const longitude = Number(position.coords.longitude);
-    const [placeResponse, zoneResponse] = await Promise.all([
-      fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${encodeURIComponent(latitude)}&lon=${encodeURIComponent(longitude)}&zoom=10&addressdetails=1`, { headers:{ Accept:'application/json' } }),
-      fetch(`https://api.open-meteo.com/v1/forecast?latitude=${encodeURIComponent(latitude)}&longitude=${encodeURIComponent(longitude)}&timezone=auto&current=temperature_2m`, { headers:{ Accept:'application/json' } })
-    ]);
-    const place = placeResponse.ok ? await placeResponse.json() : {};
-    const zone = zoneResponse.ok ? await zoneResponse.json() : {};
-    const address = place.address || {};
-    const canonical = place.display_name || [
-      address.city || address.town || address.village || address.county,
-      address.state,
-      address.country
-    ].filter(Boolean).join(', ') || `${latitude.toFixed(5)}, ${longitude.toFixed(5)}`;
-    const timezone = String(zone.timezone || '');
-    if (!timezone) throw new Error('The current location did not resolve to an IANA time zone.');
-    return { query:'My current location', canonical, latitude, longitude, timezone };
+    const owner = window.RelphiSkyWhereWhen;
+    if (typeof owner?.currentLocationPacket !== 'function') {
+      throw new Error('The shared location service is unavailable.');
+    }
+    return owner.currentLocationPacket();
   }
 
   function selectCurrentLocation(slot, packet) {
-    const card = panel(slot);
-    const results = card?.querySelector('.sky-location-results');
-    if (!results) return false;
-    const choice = document.createElement('button');
-    choice.type = 'button';
-    choice.className = 'sky-location-result';
-    choice.dataset.wwAction = 'select-location';
-    choice.innerHTML = `<strong>${packet.canonical}</strong><span>${packet.latitude.toFixed(5)}, ${packet.longitude.toFixed(5)} · ${packet.timezone}</span>`;
-    choice.__locationPacket = packet;
-    results.replaceChildren(choice);
-    choice.click();
-    const latitude = Number(card.querySelector('[data-ww-field="latitude"]')?.value);
-    const longitude = Number(card.querySelector('[data-ww-field="longitude"]')?.value);
-    const timezone = card.querySelector('[data-ww-field="timezone"]')?.value;
-    return Math.abs(latitude - packet.latitude) < 1e-5 && Math.abs(longitude - packet.longitude) < 1e-5 && timezone === packet.timezone;
+    return window.RelphiSkyWhereWhen?.selectPacket?.(slot, packet) === true;
   }
 
   function waitForStored(slot, predicate, timeout = 20000) {
