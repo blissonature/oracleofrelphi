@@ -25,7 +25,7 @@ function installStyles(){
   style.textContent=`
     .sky-where-when-editor{display:grid;grid-template-rows:minmax(0,1fr) auto;min-height:0}
     .sky-where-when-scroll-body{min-height:0;overflow:auto;padding-bottom:.2rem}
-    .sky-where-when-here-now-row{display:flex;align-items:center;padding:.62rem .62rem .18rem}
+    .sky-time-label-line{display:flex;align-items:center;gap:.4rem;justify-content:space-between}\n    .sky-time-mode-toggle{appearance:none;background:none;border:0;padding:0;color:#241f1b;font:750 .66rem/1 system-ui,sans-serif;cursor:pointer}\n    .sky-time-mode-toggle [data-time-active]{text-decoration:underline;text-underline-offset:2px}\n    .sky-where-when-here-now-row{display:flex;align-items:center;padding:.62rem .62rem .18rem}
     .sky-where-when-here-now{border-radius:999px}
     [data-ww-when] .sky-where-when-now-row{display:flex;align-items:center;justify-content:space-between;gap:.45rem}
     [data-ww-when] .sky-where-when-grid{gap:.42rem}
@@ -139,7 +139,7 @@ function editorMarkup(slot,p){
       <fieldset class="sky-where-when-section sky-where-when-mode" data-ww-when><legend>When</legend>
         <div class="sky-ww-mode-row sky-ww-when-row"><span class="sky-ww-mode-primary"><label class="sky-ww-choice"><input data-ww-field="now" type="checkbox"${now?' checked':''}><span>Now</span></label><button class="sky-ww-refresh" type="button" data-ww-action="refresh-now" aria-label="Refresh current instant" title="Capture current instant"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6v5h-5M4 18v-5h5M18 10A7 7 0 0 0 6 7L4 9M6 14a7 7 0 0 0 12 3l2-2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button></span><label class="sky-time-unknown-option sky-ww-unknown"><input data-ww-field="time-unknown" type="checkbox"${p.timeUnknown?' checked':''}><span>Time unknown</span></label></div>
         <p class="sky-ww-mode-value sky-ww-clock" data-ww-now-value${now?'':' hidden'} role="timer" aria-live="off"></p>
-        <div class="sky-ww-manual" data-ww-manual-when${now?' hidden':''}><div class="sky-where-when-grid"><label class="sky-where-when-label">Date<input class="sky-where-when-input" data-ww-field="date" type="date" value="${escapeHtml(date)}"></label><label class="sky-where-when-label">Local time<input class="sky-where-when-input" data-ww-field="time" type="time" value="${escapeHtml(time)}"${p.timeUnknown?' disabled':''}></label></div></div>
+        <div class="sky-ww-manual" data-ww-manual-when${now?' hidden':''}><div class="sky-where-when-grid"><label class="sky-where-when-label">Date<input class="sky-where-when-input" data-ww-field="date" type="date" value="${escapeHtml(date)}"></label><label class="sky-where-when-label"><span class="sky-time-label-line"><span>Time</span><button class="sky-time-mode-toggle" data-ww-action="toggle-time-mode" type="button" aria-label="Switch between Local and UTC time"><span data-time-selected="local">Local</span> / <span data-time-selected="utc">UTC</span></button></span><input class="sky-where-when-input" data-ww-field="time" type="time" value="${escapeHtml(time)}"${p.timeUnknown?' disabled':''}></label></div></div>
       </fieldset>
       <details class="sky-where-when-advanced"><summary>Advanced settings</summary><div class="sky-where-when-advanced-body"><label class="sky-where-when-label">Time zone<input class="sky-where-when-input" data-ww-field="timezone" type="text" readonly value="${escapeHtml(selected?.timezone||p.timeZone||'')}"></label><div class="sky-where-when-coordinate-grid"><label class="sky-where-when-label">Latitude<input class="sky-where-when-input" data-ww-field="latitude" type="number" step="0.00001" min="-90" max="90" value="${escapeHtml(displayCoordinate(selected?.latitude??p.latitude))}"></label><label class="sky-where-when-label">Longitude<input class="sky-where-when-input" data-ww-field="longitude" type="number" step="0.00001" min="-180" max="180" value="${escapeHtml(displayCoordinate(selected?.longitude??p.longitude))}"></label></div><div data-ww-paste-inference-host></div></div></details>
       <p class="sky-where-when-status" data-update-now-status aria-live="polite"></p>
@@ -182,6 +182,24 @@ function syncModes(slot){
   if(now)updateNowFields(slot);
   window.RelphiSkyWhereWhenDraftHeptagram?.render?.(slot,0);
 }
+function toggleTimeMode(slot){
+  const form=formFor(slot),selected=cardState[slot].selected,DateTime=window.luxon?.DateTime;
+  if(!form)return;
+  const current=form.dataset.timeMode==='utc'?'utc':'local',next=current==='local'?'utc':'local';
+  const date=form.querySelector('[data-ww-field="date"]'),time=form.querySelector('[data-ww-field="time"]');
+  if(!modeValue(form,'time-unknown')&&date?.value&&time?.value&&DateTime&&selected?.timezone){
+    const from=current==='local'?selected.timezone:'UTC',to=next==='local'?selected.timezone:'UTC';
+    const moment=DateTime.fromISO(date.value+'T'+time.value,{zone:from,setZone:true});
+    if(!moment.isValid){status(slot,'The current time could not be converted.',true);return}
+    const converted=moment.setZone(to);if(!converted.isValid){status(slot,'The selected time zone could not be resolved.',true);return}
+    date.value=converted.toFormat('yyyy-MM-dd');time.value=converted.toFormat('HH:mm');
+    time.dispatchEvent(new Event('change',{bubbles:true}));
+  }
+  form.dataset.timeMode=next;
+  form.querySelectorAll('[data-time-selected]').forEach(node=>{if(node.dataset.timeSelected===next)node.setAttribute('data-time-active','true');else node.removeAttribute('data-time-active')});
+  form.querySelector('[data-sky-time-entry]')?.setAttribute('aria-label',next==='utc'?'UTC time':'Local time');
+  window.RelphiSkyWhereWhenDraftHeptagram?.render?.(slot,0);
+}
 function updateNowFields(slot){
   const form=formFor(slot);if(!form||!modeValue(form,'now'))return;
   const selected=cardState[slot].selected,DateTime=window.luxon?.DateTime;
@@ -190,7 +208,7 @@ function updateNowFields(slot){
   const instant=DateTime.fromISO(form.dataset.nowInstant,{setZone:true});
   if(!instant?.isValid)return;
   const timezone=selected?.timezone||DateTime.local().zoneName;
-  const local=instant.setZone(timezone);if(!local?.isValid)return;
+  const local=instant.setZone(form.dataset.timeMode==='utc'?'UTC':timezone);if(!local?.isValid)return;
   const date=form.querySelector('[data-ww-field="date"]'),time=form.querySelector('[data-ww-field="time"]'),summary=form.querySelector('[data-ww-now-value]');
   if(date)date.value=local.toFormat('yyyy-MM-dd');
   if(time)time.value=local.toFormat('HH:mm');
@@ -263,6 +281,7 @@ function openEditor(slot,focus=false){
   keepCommittedHeptagramInSummary(slot);
   window.RelphiSkyCardShell.setEditorExpanded(slot,true);
   syncModes(slot);
+  formFor(slot)?.querySelector('[data-time-selected="local"]')?.setAttribute('data-time-active','true');
   // A saved Here location is a historical stamp. Recapture only on explicit Refresh.
   window.dispatchEvent(new CustomEvent('relphi:sky-where-when-editor-ready',{detail:{slot,form:formFor(slot)}}));
   if(focus)requestAnimationFrame(()=>formFor(slot)?.querySelector('[data-ww-field="location-query"]')?.focus());
@@ -369,7 +388,13 @@ async function searchLocation(slot){
 }
 function selectLocation(slot,source){
   const packet=normalizePacket(source?.__locationPacket||source);
+  const oldSelected=cardState[slot].selected,oldForm=formFor(slot),oldDate=oldForm?.querySelector('[data-ww-field="date"]'),oldTime=oldForm?.querySelector('[data-ww-field="time"]');
+  const oldMode=oldForm?.dataset.timeMode==='utc'?'utc':'local';
   if(!packet||!Number.isFinite(Number(packet.latitude))||!Number.isFinite(Number(packet.longitude))||!packet.timezone){status(slot,'That result did not include a complete coordinate and time-zone packet.',true);return false}
+  if(oldSelected?.timezone&&oldDate?.value&&oldTime?.value&&!modeValue(oldForm,'time-unknown')&&oldMode==='local'&&oldSelected.timezone!==packet.timezone){
+    const m=window.luxon?.DateTime?.fromISO(oldDate.value+'T'+oldTime.value,{zone:oldSelected.timezone,setZone:true}).setZone(packet.timezone);
+    if(m?.isValid){oldDate.value=m.toFormat('yyyy-MM-dd');oldTime.value=m.toFormat('HH:mm');oldTime.dispatchEvent(new Event('change',{bubbles:true}))}
+  }
   packet.latitude=Number(packet.latitude);packet.longitude=Number(packet.longitude);cardState[slot].selected=packet;
   const card=panel(slot),queryInput=card?.querySelector('[data-ww-field="location-query"]');if(queryInput){queryInput.value=packet.source==='current-location'?'':packet.query||'';queryInput.classList.toggle('is-current-location',packet.source==='current-location')}
   card?.querySelector('.sky-location-results')?.replaceChildren();
@@ -424,7 +449,9 @@ function finishCommitted(slot,detail={}){
 }
 async function submitCalculated(slot,form,options={}){
   const selected=cardState[slot].selected; if(modeValue(form,'now'))updateNowFields(slot);
-  const date=form.querySelector('[data-ww-field="date"]')?.value||'',time=form.querySelector('[data-ww-field="time"]')?.value||'',timeUnknown=!modeValue(form,'now')&&form.querySelector('[data-ww-field="time-unknown"]')?.checked===true;
+  let date=form.querySelector('[data-ww-field="date"]')?.value||'',time=form.querySelector('[data-ww-field="time"]')?.value||'';
+  const timeUnknown=!modeValue(form,'now')&&form.querySelector('[data-ww-field="time-unknown"]')?.checked===true;
+  if(form.dataset.timeMode==='utc'&&!timeUnknown&&date&&time&&cardState[slot].selected?.timezone){const m=window.luxon?.DateTime?.fromISO(date+'T'+time,{zone:'UTC',setZone:true}).setZone(cardState[slot].selected.timezone);if(m?.isValid){date=m.toFormat('yyyy-MM-dd');time=m.toFormat('HH:mm')}}
   if(!selected)return status(slot,'Choose a canonical location first.',true);
   if(!date||(!timeUnknown&&!time))return status(slot,timeUnknown?'Enter the local date.':'Enter both the local date and local time.',true);
   setBusy(slot,true);status(slot,'Calculating placements and Planetary Hours…');
@@ -601,7 +628,7 @@ document.addEventListener('click',event=>{
   }
   const edit=event.target.closest?.('[data-sky-where-edit]');if(edit){event.preventDefault();openEditor(edit.dataset.slot,false);return}
   const actionNode=event.target.closest?.('[data-ww-action]');if(!actionNode)return;const slot=eventSlot(actionNode);if(!slot)return;const action=actionNode.dataset.wwAction;
-  if(action==='cancel')closeEditor(slot);else if(action==='search-location')void searchLocation(slot);else if(action==='select-location')selectLocation(slot,actionNode);else if(action==='refresh-here'){const toggle=formFor(slot)?.querySelector('[data-ww-field="here"]');if(toggle&&!toggle.checked){toggle.checked=true;syncModes(slot)}void checkHere(slot)}else if(action==='refresh-now')refreshNow(slot);else if(action==='use-here')void useHere(slot,actionNode);else if(action==='use-now')void currentLocalTime(slot);else if(action==='here-and-now')void hereAndNow(slot);
+  if(action==='cancel')closeEditor(slot);else if(action==='toggle-time-mode')toggleTimeMode(slot);else if(action==='search-location')void searchLocation(slot);else if(action==='select-location')selectLocation(slot,actionNode);else if(action==='refresh-here'){const toggle=formFor(slot)?.querySelector('[data-ww-field="here"]');if(toggle&&!toggle.checked){toggle.checked=true;syncModes(slot)}void checkHere(slot)}else if(action==='refresh-now')refreshNow(slot);else if(action==='use-here')void useHere(slot,actionNode);else if(action==='use-now')void currentLocalTime(slot);else if(action==='here-and-now')void hereAndNow(slot);
 });
 document.addEventListener('change',event=>{
   const modeToggle=event.target.closest?.('[data-ww-field="here"],[data-ww-field="now"]');
