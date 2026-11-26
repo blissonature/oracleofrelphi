@@ -130,7 +130,7 @@ function editorMarkup(slot,p){
   const nowMoment=Number.isFinite(Date.parse(moment))?moment:'';
   return `<form class="sky-where-when-editor" data-slot="${slot}" data-now-instant="${escapeHtml(nowMoment)}">
     <div class="sky-where-when-scroll-body">
-      <div class="sky-where-when-main-actions"><button class="sky-where-when-button secondary sky-where-when-one-click" type="button" data-ww-action="here-and-now"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6v5h-5M4 18v-5h5M18 10A7 7 0 0 0 6 7L4 9M6 14a7 7 0 0 0 12 3l2-2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span>1-Click Here and Now</span></button><button class="sky-quick-copy-button sky-where-when-copy" type="button" data-copy-where-when aria-label="Copy Where and When for Sky ${slot}" title="Copy Where and When">Copy</button></div>
+      
       <fieldset class="sky-where-when-section sky-where-when-mode" data-ww-where><legend>Where</legend>
         <div class="sky-ww-mode-row"><span class="sky-ww-mode-primary"><label class="sky-ww-choice"><input data-ww-field="here" type="checkbox"${here?' checked':''}><span>Here</span></label><button class="sky-ww-refresh" type="button" data-ww-action="refresh-here" aria-label="Refresh current location" title="Refresh current location"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6v5h-5M4 18v-5h5M18 10A7 7 0 0 0 6 7L4 9M6 14a7 7 0 0 0 12 3l2-2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button></span></div>
         <p class="sky-ww-mode-value" data-ww-here-value${here?'':' hidden'}>${escapeHtml(here?selected.canonical:'')}</p>
@@ -522,6 +522,7 @@ async function hereAndNow(slot){
     syncModes(slot);
     setBusy(slot,false);
     await submitForm(slot,form,{snapshotNow:true,instant:form.dataset.nowInstant,quickCreate:true});
+    return true;
   }catch(error){setBusy(slot,false);status(slot,error?.code===1?'Location permission was denied.':error?.message||'Here and Now could not be resolved.',true)}
 }
 
@@ -590,6 +591,13 @@ window.RelphiSkyWhereWhen=Object.freeze({
 });
 
 document.addEventListener('click',event=>{
+  const quick=event.target.closest?.('[data-sky-oneclick-external]');
+  if(quick){event.preventDefault();const slot=quick.dataset.skyOneclickExternal;
+    const old=window.RelphiSkyWorkingStorage.getItem(SLOT_KEYS[slot]);
+    if(!formFor(slot))openEditor(slot,false);
+    void hereAndNow(slot).then(success=>{if(success&&old)window.RelphiSkySlotControls?.offerUndo?.(slot,old,'Sky '+slot+' updated to Here and Now')});
+    return;
+  }
   const edit=event.target.closest?.('[data-sky-where-edit]');if(edit){event.preventDefault();openEditor(edit.dataset.slot,false);return}
   const actionNode=event.target.closest?.('[data-ww-action]');if(!actionNode)return;const slot=eventSlot(actionNode);if(!slot)return;const action=actionNode.dataset.wwAction;
   if(action==='cancel')closeEditor(slot);else if(action==='search-location')void searchLocation(slot);else if(action==='select-location')selectLocation(slot,actionNode);else if(action==='refresh-here'){const toggle=formFor(slot)?.querySelector('[data-ww-field="here"]');if(toggle&&!toggle.checked){toggle.checked=true;syncModes(slot)}void checkHere(slot)}else if(action==='refresh-now')refreshNow(slot);else if(action==='use-here')void useHere(slot,actionNode);else if(action==='use-now')void currentLocalTime(slot);else if(action==='here-and-now')void hereAndNow(slot);

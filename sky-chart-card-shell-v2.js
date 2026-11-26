@@ -14,6 +14,8 @@ function installStyles(){
     .sky-where-library-controls{display:grid;gap:.33rem;padding:.5rem .62rem .25rem;border-bottom:1px solid rgba(31,27,24,.12)}
     .sky-where-library-heading{display:flex;align-items:center;justify-content:space-between;gap:.3rem}
     .sky-where-library-heading strong{font:850 .76rem/1.15 system-ui,sans-serif}
+    .sky-library-inline-actions{display:flex;align-items:center;gap:.2rem}
+    .sky-library-inline-actions button{font-size:.7rem}
     .sky-where-library-heading button,.sky-loaded-row button,.sky-where-reference button{min-height:28px;min-width:28px;border:1px solid rgba(31,27,24,.2);border-radius:7px;background:#fffdf8;color:#241f1b;cursor:pointer}
     .sky-loaded-caption{font:750 .62rem/1.1 system-ui,sans-serif;color:#514941}
     .sky-loaded-row{display:flex;align-items:center;gap:.35rem;min-height:30px;padding:.2rem .4rem;border:1px solid rgba(31,27,24,.16);border-radius:7px}
@@ -67,7 +69,7 @@ function markup(slot,hasProfile){
       <summary class="sky-card-drawer-summary" tabindex="-1" aria-hidden="true"><span>Where and When</span></summary>
       <div class="sky-card-drawer-body" id="skyDrawerBody${slot}Where" data-sky-drawer-mount="where">
         <div class="sky-where-library-controls">
-          <div class="sky-where-library-heading"><strong>Sky Library</strong><button type="button" data-sky-library-browse data-slot="${slot}" aria-label="Browse Sky Library for Sky ${slot}" title="Browse Sky Library">⌕</button></div>
+          <div class="sky-where-library-heading"><strong>Sky Library</strong><div class="sky-library-inline-actions"><button type="button" data-sky-library-browse data-slot="${slot}" aria-label="Browse Sky Library for Sky ${slot}" title="Browse Sky Library">⌕</button><button type="button" data-sky-card-swap title="Swap Sky A and Sky B" aria-label="Swap Sky A and Sky B">⇄</button><button type="button" class="sky-quick-copy-button" data-copy-where-when>Copy</button></div></div>
           <div class="sky-loaded-caption">Loaded</div>
           <div class="sky-loaded-row"><output data-sky-loaded-name>—</output><button type="button" data-sky-loaded-detach data-slot="${slot}" title="Detach sky without deleting it" aria-label="Detach loaded sky from Sky ${slot}" hidden>×</button></div>
           <div class="sky-where-reference" data-sky-where-reference hidden><div class="sky-where-reference-row"><div class="sky-where-reference-value" data-sky-where-reference-value></div><button type="button" data-sky-where-edit data-slot="${slot}">Edit</button></div></div>
@@ -146,6 +148,7 @@ function sync(slot,payload){
   const loaded=current.root.querySelector('[data-sky-loaded-name]'),detach=current.root.querySelector('[data-sky-loaded-detach]');
   if(loaded)loaded.textContent=assigned?savedName||String(payload.name||'Saved sky'):'—';
   if(detach)detach.hidden=!assigned;
+  const swap=current.root.querySelector('[data-sky-card-swap]');if(swap)swap.disabled=!(window.RelphiSkySlotControls?.hasStoredSkyB?.()&&window.RelphiSkyWorkingStorage.getItem('relphiSkyChartA'));
   const reference=current.root.querySelector('[data-sky-where-reference]'),referenceValue=current.root.querySelector('[data-sky-where-reference-value]');
   if(reference)reference.hidden=!assigned||!hasProfile;
   if(referenceValue&&assigned&&hasProfile){

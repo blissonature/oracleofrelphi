@@ -29,7 +29,7 @@
       }
       #skyFoundationA>.sky-foundation-heading>.sky-card-title-stable>.sky-saved-name-trigger,
       #skyFoundationB>.sky-foundation-heading>.sky-card-title-stable>.sky-saved-name-trigger{
-        width:100%!important;min-width:0!important
+        display:block;width:100%;min-width:0;pointer-events:none;cursor:default
       }
     `;
     document.head.appendChild(style);
@@ -130,11 +130,10 @@
     const host=ensureHost(slot);if(!host)return null;
     let button=host.querySelector(':scope > [data-saved-sky-trigger]');
     if(!button){
-      host.replaceChildren();button=document.createElement('button');button.type='button';button.className='sky-saved-name-trigger';button.dataset.savedSkyTrigger=slot;
+      host.replaceChildren();button=document.createElement('span');button.className='sky-saved-name-trigger';button.dataset.savedSkyTrigger=slot;
       button.setAttribute('aria-haspopup','dialog');button.setAttribute('aria-expanded','false');
       const label=document.createElement('span');label.className='sky-saved-name-label';
-      const chevron=document.createElement('span');chevron.className='sky-saved-name-chevron';chevron.setAttribute('aria-hidden','true');
-      button.append(label,chevron);host.appendChild(button);
+      button.append(label);host.appendChild(button);
     }
     return button;
   }
@@ -145,8 +144,7 @@
     if(label&&label.textContent!==name)label.textContent=name;
     button.classList.toggle('is-saved',isSaved);
     button.classList.toggle('is-dirty',!!matched?.dirty);
-    button.title=`${name} · open Sky menu`;
-    button.setAttribute('aria-label',`${name}. Open Sky menu for Sky ${slot}.`);
+    button.title=name;
   }
   function nextLiveDelay(){
     const now=Date.now();let soon=Infinity;
