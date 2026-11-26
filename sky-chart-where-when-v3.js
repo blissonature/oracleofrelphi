@@ -262,8 +262,7 @@ function openEditor(slot,focus=false){
   keepCommittedHeptagramInSummary(slot);
   window.RelphiSkyCardShell.setEditorExpanded(slot,true);
   syncModes(slot);
-  // A persisted 'Here' tag is not a fresh geolocation result for this editing session.
-  if(formFor(slot)?.querySelector('[data-ww-field="here"]')?.checked)void checkHere(slot);
+  // A saved Here location is a historical stamp. Recapture only on explicit Refresh.
   window.dispatchEvent(new CustomEvent('relphi:sky-where-when-editor-ready',{detail:{slot,form:formFor(slot)}}));
   if(focus)requestAnimationFrame(()=>formFor(slot)?.querySelector('[data-ww-field="location-query"]')?.focus());
 }
@@ -431,16 +430,32 @@ async function submitCalculated(slot,form,options={}){
   try{
     const isNow=modeValue(form,'now');
     const effectiveOptions=isNow?{...options,timeUnknown:false,liveOrigin:'',instant:form.dataset.nowInstant,snapshotNow:true}:{...options,timeUnknown};
+    const previous=payload(slot),savedId=String(previous?.metadata?.savedSkyId||'');
+    const oldRecord=savedId?window.RelphiSkyLibraryRecords?.library()?.find(record=>window.RelphiSkyLibraryRecords.ref(record)===savedId):null;
     const nextPayload=calculateSky(slot,selected,date,time,effectiveOptions);
     if(selected.timeZoneSource)nextPayload.calcProfile.timeZoneSource=selected.timeZoneSource;
     // Chiron is optional when the local ephemeris cannot cover this date.
     status(slot,'Calculating Chiron…');
     if(window.RelphiChironEphemeris)await window.RelphiChironEphemeris.completePayload(nextPayload);
     // A sky without Chiron remains valid; never synthesize a position.
-    writeJson(SLOT_KEYS[slot],nextPayload);
+    let finalPayload=nextPayload;
+    if(oldRecord&&!options.quickCreate){
+      const generated=window.RelphiSkySuggestedName?.preferred?.(nextPayload)||oldRecord.name;
+      const name=oldRecord?.metadata?.nameIsDefault===true?generated:oldRecord.name;
+      const result=window.RelphiSkyLibraryRecords?.saveSky?.({sky:nextPayload,updateId:savedId,name,defaultName:generated});
+      if(result?.duplicate){
+        setBusy(slot,false);status(slot,'An identical saved sky was found. Review the merge.');
+        window.RelphiSkySaveNameDialog?.reviewDuplicateForEdit?.(slot,savedId,result.duplicate);
+        return;
+      }
+      if(!result?.ok)throw new Error(result?.message||'The permanent sky correction could not be saved.');
+      finalPayload=result.record;
+    }
+    writeJson(SLOT_KEYS[slot],finalPayload);
     const committed=payload(slot),profile=committed?.calcProfile||{};
     if(String(profile.location||'')!==String(selected.canonical||''))throw new Error('The new Where and When did not persist.');
     finishCommitted(slot,{source:'where-when',dateTime:timeUnknown?date:`${date}T${time}`,location:selected.canonical});
+    if(!oldRecord&&!options.quickCreate)requestAnimationFrame(()=>window.RelphiSkySaveNameDialog?.open?.(slot));
     if(!timeUnknown)scheduleSummary(slot,true);
     if(effectiveOptions.snapshotNow){
       try{window.RelphiSkyWorkingStorage.removeItem(`relphiSkyLiveAgeAnchor${slot}`)}catch(_){}
@@ -506,7 +521,7 @@ async function hereAndNow(slot){
     updateNowFields(slot);
     syncModes(slot);
     setBusy(slot,false);
-    await submitForm(slot,form,{snapshotNow:true,instant:form.dataset.nowInstant});
+    await submitForm(slot,form,{snapshotNow:true,instant:form.dataset.nowInstant,quickCreate:true});
   }catch(error){setBusy(slot,false);status(slot,error?.code===1?'Location permission was denied.':error?.message||'Here and Now could not be resolved.',true)}
 }
 
@@ -570,10 +585,12 @@ window.RelphiSkyWhereWhen=Object.freeze({
   status,
   setBusy,
   profile:profileFor,
-  shareText
+  shareText,
+  editSaved:slot=>openEditor(slot,false)
 });
 
 document.addEventListener('click',event=>{
+  const edit=event.target.closest?.('[data-sky-where-edit]');if(edit){event.preventDefault();openEditor(edit.dataset.slot,false);return}
   const actionNode=event.target.closest?.('[data-ww-action]');if(!actionNode)return;const slot=eventSlot(actionNode);if(!slot)return;const action=actionNode.dataset.wwAction;
   if(action==='cancel')closeEditor(slot);else if(action==='search-location')void searchLocation(slot);else if(action==='select-location')selectLocation(slot,actionNode);else if(action==='refresh-here'){const toggle=formFor(slot)?.querySelector('[data-ww-field="here"]');if(toggle&&!toggle.checked){toggle.checked=true;syncModes(slot)}void checkHere(slot)}else if(action==='refresh-now')refreshNow(slot);else if(action==='use-here')void useHere(slot,actionNode);else if(action==='use-now')void currentLocalTime(slot);else if(action==='here-and-now')void hereAndNow(slot);
 });
@@ -594,8 +611,13 @@ document.addEventListener('change',event=>{
 document.addEventListener('submit',event=>{const form=event.target.closest?.('.sky-where-when-editor');if(!form)return;event.preventDefault();void submitForm(form.dataset.slot,form)});
 document.addEventListener('input',event=>{const input=event.target.closest?.('[data-ww-field="location-query"]');if(input)input.classList.remove('is-current-location')});
 document.addEventListener('keydown',event=>{if(event.key!=='Enter')return;const input=event.target.closest?.('[data-ww-field="location-query"]');if(!input)return;event.preventDefault();const slot=eventSlot(input);if(slot)void searchLocation(slot)});
-window.addEventListener('relphi:sky-drawer-preparing',event=>{const{slot,drawer}=event.detail||{};if(drawer==='where'&&SLOT_KEYS[slot])openEditor(slot,false)});
-window.addEventListener('relphi:sky-drawer-opened',event=>{const{slot,drawer}=event.detail||{};if(drawer==='where'&&SLOT_KEYS[slot]&&!transactionState.editing.has(slot))openEditor(slot,false)});
+function maybeOpenEditor(slot){
+  if(!SLOT_KEYS[slot]||transactionState.editing.has(slot))return;
+  if(payload(slot)?.metadata?.savedSkyId)return;
+  openEditor(slot,false);
+}
+window.addEventListener('relphi:sky-drawer-preparing',event=>{const{slot,drawer}=event.detail||{};if(drawer==='where')maybeOpenEditor(slot)});
+window.addEventListener('relphi:sky-drawer-opened',event=>{const{slot,drawer}=event.detail||{};if(drawer==='where')maybeOpenEditor(slot)});
 window.addEventListener('relphi:sky-drawer-closed',event=>{const{slot,drawer}=event.detail||{};if(drawer==='where'&&SLOT_KEYS[slot]&&transactionState.editing.has(slot))closeEditor(slot)});
 function readPlanetaryHoursHandoff(){
   const params=new URLSearchParams(location.search);
