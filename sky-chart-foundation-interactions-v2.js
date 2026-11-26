@@ -96,7 +96,7 @@
       if(!aspect)continue;
       const left=signs[i],right={...signs[j],sky:'B'};
       const angle=steps*30;
-      const harmonicOrder=steps===5?12:12/steps;
+      const harmonicOrder=aspect.harmonic||12;
       relations.push({left,right,aspect,distance:angle,orb:0,bySignOnly:true,learn:true,
         harmonicOrder,harmonicNumerator:1,phaseError:0,signedPhaseError:0,
         masterWindow:12,windowFraction:0,coherence:1,coherencePercent:100});
@@ -118,7 +118,9 @@
     if(rows.length!==relations.length)return false;
     return rows.every((row,index)=>{
       const relation=relations[index];
-      return row.dataset.leftPlacement===relation.left.id&&row.dataset.aspect===relation.aspect.id&&row.dataset.rightPlacement===relation.right.id&&Number(row.dataset.sourceOrb).toFixed(6)===relation.orb.toFixed(6)&&Number(row.dataset.leftHouse)===relation.left.house&&Number(row.dataset.rightHouse)===relation.right.house;
+      return row.dataset.leftPlacement===relation.left.id&&row.dataset.aspect===relation.aspect.id&&row.dataset.rightPlacement===relation.right.id&&Number(row.dataset.sourceOrb).toFixed(6)===relation.orb.toFixed(6)&&
+        (row.dataset.leftHouse==null?null:Number(row.dataset.leftHouse))===relation.left.house&&
+        (row.dataset.rightHouse==null?null:Number(row.dataset.rightHouse))===relation.right.house;
     });
   }
   function coordinate(record){
@@ -661,7 +663,9 @@
     let label=mount.querySelector(':scope > .sky-wheel-sector-description');
     if(!label){label=document.createElement('div');label.className='sky-wheel-sector-description';label.setAttribute('role','status');label.setAttribute('aria-live','polite');mount.appendChild(label)}
     if(!spec||!['house','sign','placement'].includes(spec.kind)){label.hidden=true;return}
-    const vocab=window.RelphiSkyVocab?.describeFocus?.(spec.kind,spec.value);
+    const vocab=window.RelphiSkyVocab?.describeFocus?.(spec.kind,spec.value)||
+      (spec.kind==='sign'?{name:SIGN_NAMES[Number(spec.value)],description:'Explore this zodiac sign and its relationships.'}:
+       spec.kind==='house'?{name:'House '+spec.value,description:'Explore this house of experience.'}:null);
     if(!vocab?.description){label.hidden=true;return}
     const bbox=node?.getBoundingClientRect(),outer=wheel.getBoundingClientRect();
     // Four corner spaces outside the circular perimeter, determined by the
@@ -838,6 +842,7 @@
   async function refresh(){
     refreshQueued=false;if(whereWhenEditing()&&!(records(read(KEYS.A)).length===0&&records(read(KEYS.B)).length>0))return;const root=document.getElementById('skyFoundationRoot'),wheel=document.querySelector('#skyFoundationWheelMount > .sky-foundation-wheel');if(!root||!wheel||root.getAttribute('aria-busy')!=='false'||!HARMONIC)return;ensurePanel();
     const isLearn=wheel.dataset.skyExperience==='learn';
+    if(isLearn){lockedState=null;hoverState=null;rowLockedState=null;rowHoverState=null;}
     const preparedA=isLearn?{list:[],houseCusps:Array.from({length:12},(_,i)=>(Number(document.documentElement.dataset.skyLearnAscendant||0)*30+i*30)%360)}:prepare(read(KEYS.A),'A'),preparedB=isLearn?{list:[],houseCusps:[]}:prepare(read(KEYS.B),'B'),relations=isLearn?templateRelationships():relationships(preparedA.list,preparedB.list),nextSignature=relationshipSignature(relations);current={listA:preparedA.list,listB:preparedB.list,relations,cuspsA:preparedA.houseCusps,cuspsB:preparedB.houseCusps};
     annotateHouseLayer('a-houses','A');annotateHouseLayer('b-houses','B');annotateSigns();annotatePlacements(current.listA,current.listB);annotateAspects(relations);annotateLedger('A',current.listA);annotateLedger('B',current.listB);
     if(!isLearn&&(!preparedA.list.length||!preparedB.list.length)){
