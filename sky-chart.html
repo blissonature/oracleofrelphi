@@ -9,9 +9,9 @@
   <link rel="icon" href="favicon.ico" type="image/x-icon">
   <style id="sky-library-inline-style">
   #skyFoundationRoot{margin-top:0}
-  #skyFoundationRoot>.sky-one-click-outer{grid-area:a;align-self:start;justify-self:stretch;position:relative;transform:none;z-index:4;min-height:32px;border:1px solid #c8bdb2;border-radius:999px;background:#fffdf8;color:#28211c;font:750 .69rem/1.2 system-ui,sans-serif;cursor:pointer}
-  #skyFoundationRoot>.sky-one-click-outer[data-sky-oneclick-external="B"]{grid-area:b}
-  html:not([data-sky-b-present="true"]):not([data-sky-b-editing="true"]) #skyFoundationRoot>.sky-one-click-outer[data-sky-oneclick-external="B"]{display:none}
+  .sky-foundation-panel>.sky-one-click-outer{display:block;width:calc(100% - 20px);margin:8px 10px 5px;position:relative;min-height:32px;border:1px solid #c8bdb2;border-radius:999px;background:#fffdf8;color:#28211c;font:750 .69rem/1.2 system-ui,sans-serif;cursor:pointer}
+  
+  html:not([data-sky-b-present="true"]):not([data-sky-b-editing="true"]) #skyFoundationB>.sky-one-click-outer[data-sky-oneclick-external="B"]{display:none}
 
   #skySavedSkiesPopover .sky-library-browser-head{display:flex;align-items:center;justify-content:space-between;gap:.5rem;padding:.5rem .65rem;font:750 .85rem/1.2 system-ui,sans-serif}
   #skySavedSkiesPopover .sky-library-browser-head [data-library-match-count]{font-size:.63rem;color:#665d55}
@@ -78,11 +78,9 @@
   <main class="tarot-app-shell">
     <section id="chartPanel" class="tarot-tool-panel" aria-label="Sky Chart">
       <section id="skyFoundationRoot" aria-label="Sky Chart foundation" aria-busy="true">
-        <button type="button" class="sky-one-click-outer" data-sky-oneclick-external="A">1-Click Here and Now</button>
-        <aside id="skyFoundationA" class="sky-foundation-panel" aria-label="Sky A"><header class="sky-foundation-heading"><span class="sky-foundation-slot" style="--slot-color:#c9211e">Sky A</span><span class="sky-foundation-name">Sky A</span></header><div class="sky-foundation-body"></div></aside>
+        <aside id="skyFoundationA" class="sky-foundation-panel" aria-label="Sky A"><header class="sky-foundation-heading"><span class="sky-foundation-slot" style="--slot-color:#c9211e">Sky A</span><span class="sky-foundation-name">Sky A</span></header><button type="button" class="sky-one-click-outer" data-sky-oneclick-external="A">1-Click Here and Now</button><div class="sky-foundation-body"></div></aside>
         <section id="skyFoundationComparison" class="sky-foundation-panel" aria-label="Sky comparison"><div id="skyFoundationWheelMount"></div></section>
-        <button type="button" class="sky-one-click-outer" data-sky-oneclick-external="B">1-Click Here and Now</button>
-        <aside id="skyFoundationB" class="sky-foundation-panel" aria-label="Sky B"><header class="sky-foundation-heading"><span class="sky-foundation-slot" style="--slot-color:#2462d0">Sky B</span><span class="sky-foundation-name">Sky B</span></header><div class="sky-foundation-body"></div></aside>
+        <aside id="skyFoundationB" class="sky-foundation-panel" aria-label="Sky B"><header class="sky-foundation-heading"><span class="sky-foundation-slot" style="--slot-color:#2462d0">Sky B</span><span class="sky-foundation-name">Sky B</span></header><button type="button" class="sky-one-click-outer" data-sky-oneclick-external="B">1-Click Here and Now</button><div class="sky-foundation-body"></div></aside>
       </section>
     </section>
   </main>
