@@ -190,6 +190,13 @@ try{
            if(!p||elements.length!==3)throw Error('Missing uploaded Rx layers on '+name);
            const nameRange=document.createRange();
            nameRange.selectNodeContents(row.querySelector('.sky-foundation-row-name').firstChild);
+           const probe=document.createElement('span');
+           probe.style.cssText='display:inline-block;width:0;height:0;margin:0;padding:0;border:0;vertical-align:baseline';
+           row.querySelector('.sky-foundation-row-name').insertBefore(probe,wrapper);
+           const nameBaseline=probe.getBoundingClientRect().top;
+           probe.remove();
+           const stemBaseline=new DOMPoint(28.856976,39.145775).matrixTransform(elements[1].getScreenCTM()).y;
+           const capitalBaseline=new DOMPoint(29.381699,36.727123).matrixTransform(p.getScreenCTM()).y;
            return{
              name,screen:label,letters:elements.map(t=>t.textContent),
              fonts:elements.map(t=>getComputedStyle(t).fontFamily),
@@ -197,6 +204,7 @@ try{
              colors:elements.map(t=>getComputedStyle(t).fill),
              expectedColor:getComputedStyle(row.querySelector('.sky-foundation-row-name')).color,
              gap:p.getBoundingClientRect().left-nameRange.getBoundingClientRect().right,
+             stemBaselineGap:stemBaseline-nameBaseline,capitalBaselineGap:capitalBaseline-nameBaseline,
              height:art.getBoundingClientRect().height,
              widths:elements.map(t=>t.getBoundingClientRect().width),
              paths:art.querySelectorAll('path,rect,line,polygon,circle').length,
@@ -215,6 +223,7 @@ try{
        assert.ok(entry.weights.every(w=>w==='700'),'Keep the authored Bold weight');
        assert.ok(entry.colors.every(x=>x===entry.expectedColor),'Use the existing placement color owner');
        assert.ok(entry.gap>=3,'Maintain separation from the placement name');
+       assert.ok(Math.abs(entry.stemBaselineGap)<1.5,'Authored l stem must meet adjacent name baseline');
        assert.ok(entry.height>6&&entry.height<20,'Keep the mark compact in Placements');
        assert.equal(entry.paths,0,'No invented R strokes, P foot, or X geometry');
        assert.equal(entry.originalLTransform,'scale(1.0259205,0.97473437)');
@@ -229,6 +238,7 @@ try{
        assert.deepEqual(entry.letters,['P','l','x']);
        assert.ok(entry.colors.every(x=>x===entry.expectedColor));
        assert.ok(entry.gap>=3&&entry.height>6&&entry.height<20);
+       assert.ok(Math.abs(entry.stemBaselineGap)<1.5,'Mobile l stem must meet adjacent name baseline');
      }
      await page.screenshot({path:'sky-remote-preview-user-rx-mobile.png',fullPage:true});
      await page.setViewportSize({width:1200,height:820});
