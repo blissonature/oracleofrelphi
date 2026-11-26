@@ -312,6 +312,7 @@
   }
   function ruleMatchesRow(rule,row){return rowEndpoints(row).some(endpoint=>ruleMatchesEndpoint(rule,endpoint))}
   function relationshipMatches(row){
+    if(window.RelphiSkyStartupMode?.readMode?.()==='learn'&&row?.dataset?.learnRelationship==='true')return true;
     const rules=activeRules();
     if(!rules.length)return true;
     const notRules=rules.filter(rule=>rule.op==='not');
