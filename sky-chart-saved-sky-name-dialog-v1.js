@@ -96,6 +96,7 @@
     const result=records()?.saveSky({sky,slot,name:chosen,defaultName,updateId:editingRecordId||undefined,owners:draft.owner,associates:draft.associate,groups:draft.groups});
     if(result?.duplicate)return{ok:false,duplicate:result.duplicate,message:'An identical sky already exists.'};
     if(!result?.ok)return result||{ok:false,message:'Sky Library is unavailable.'};
+    window.RelphiSkyWorkingStorage?.releaseRecovery?.(sky);
     if(slot&&!editingRecordId){
       const active=clone(result.record);delete active.savedAt;delete active.updatedAt;
       if(!writeJson(SLOT_KEYS[slot],active))return{ok:false,message:'Saved to Library, but the active slot could not be updated.'};
@@ -136,6 +137,7 @@
       const entries=[...review.querySelectorAll('[data-merge-role]:checked')].map(x=>x.__mergeItem);
       const merged=records().mergeSky({targetId:records().ref(conflict),sourceId:editingRecordId||'',owners:entries.filter(x=>x.role==='owner'),associates:entries.filter(x=>x.role==='associate'),groups:entries.filter(x=>x.role==='group').map(x=>x.name)});
       if(!merged.ok){status.textContent=merged.message||'Merge could not be completed.';return}
+      if(activeSlot)window.RelphiSkyWorkingStorage?.releaseRecovery?.(payload(activeSlot));
       if(activeSlot){const active=clone(merged.record);delete active.savedAt;delete active.updatedAt;writeJson(SLOT_KEYS[activeSlot],active);
         window.dispatchEvent(new CustomEvent('relphi:sky-name-updated',{detail:{slot:activeSlot,name:active.name,source:'merge'}}));
         try{window.dispatchEvent(new StorageEvent('storage',{key:SLOT_KEYS[activeSlot],storageArea:localStorage}))}catch(_){}
@@ -212,7 +214,7 @@
     const popover=document.getElementById('skySavedSkiesPopover');if(popover)popover.hidden=true;
     const trigger=document.querySelector(`[data-saved-sky-trigger="${slot}"]`);trigger?.setAttribute('aria-expanded','false');
   },true);
-  document.addEventListener('keydown',event=>{if(event.key==='Escape'&&activeSlot){event.preventDefault();event.stopImmediatePropagation();closeDialog()}},true);
+  document.addEventListener('keydown',event=>{if(event.key==='Escape'&&activeSlot&&!correctingSavedSky){event.preventDefault();event.stopImmediatePropagation();/* A new sky must be named before leaving this prompt. */}},true);
   function openRecord(recordId){
     const record=records()?.library()?.find(x=>records().ref(x)===recordId);if(!record)return;
     ensureDialog();editingRecordId=recordId;activeSlot=null;mergePending=null;correctingSavedSky=false;status.textContent='';
