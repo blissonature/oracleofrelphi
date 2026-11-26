@@ -430,7 +430,7 @@
       brand.className = 'sky-focus-tool-brand';
       brand.setAttribute('aria-label', 'Sky Chart by Oracle of Relphi');
       brand.innerHTML = '<strong>Sky Chart</strong><span>by Oracle of Relphi</span>';
-      heading.appendChild(brand);
+      heading.prepend(brand);
     }
 
     const focusHeading = focusPanel.querySelector(':scope > .sky-foundation-focus-heading');
