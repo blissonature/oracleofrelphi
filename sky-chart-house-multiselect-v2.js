@@ -285,8 +285,16 @@
   function ensure() {
     const bar = filterBar();
     if (!bar) return false;
-    bar.querySelector('[data-filter="houseA"]')?.closest('label')?.remove();
-    bar.querySelector('[data-filter="houseB"]')?.closest('label')?.remove();
+    const learn=window.RelphiSkyStartupMode?.readMode?.()==='learn';
+    const houseA=bar.querySelector('[data-filter="houseA"]')?.closest('label');
+    const houseB=bar.querySelector('[data-filter="houseB"]')?.closest('label');
+    if(houseA)houseA.hidden=!learn;
+    if(houseB)houseB.hidden=learn;
+    if(learn){
+      const former=bar.querySelector('[data-house-filter="combined"]');
+      if(former){close(former);former.remove();}
+      return false;
+    }
     let owner = bar.querySelector('[data-house-filter="combined"]');
     if (!owner) owner = createControl();
     if (!owner.isConnected) {
@@ -306,7 +314,8 @@
   }
   function refresh() {
     queued = false;
-    if (whereWhenEditing() || !ensure()) return;
+    if (whereWhenEditing()&&window.RelphiSkyStartupMode?.readMode?.()!=='learn') return;
+    if(!ensure())return;
     const scopeSignature = bActive() ? 'A+B' : 'A';
     if (scopeSignature !== lastScopeSignature) {
       lastScopeSignature = scopeSignature;
@@ -322,7 +331,7 @@
     position();
   }
   function schedule() {
-    if (queued || whereWhenEditing()) return;
+    if (queued || (whereWhenEditing()&&window.RelphiSkyStartupMode?.readMode?.()!=='learn')) return;
     queued = true;
     requestAnimationFrame(refresh);
   }
@@ -339,7 +348,7 @@
       if (records.every(record => record.target?.closest?.('.sky-chart-house-filter'))) return;
       schedule();
     }).observe(root, { childList:true, subtree:true });
-    ['relphi:sky-foundation-ready','relphi:sky-foundation-interactions-ready','relphi:sky-placement-multiselect-changed','relphi:sky-aspect-multiselect-changed','relphi:sky-single-sky-aspects-rendered','relphi:sky-b-removed','relphi:sky-b-restored'].forEach(name => window.addEventListener(name, schedule));
+    ['relphi:sky-foundation-ready','relphi:sky-foundation-interactions-ready','relphi:sky-placement-multiselect-changed','relphi:sky-aspect-multiselect-changed','relphi:sky-single-sky-aspects-rendered','relphi:sky-b-removed','relphi:sky-b-restored','relphi:sky-experience-changed'].forEach(name => window.addEventListener(name, schedule));
     window.addEventListener('relphi:sky-foundation-filter-changed', filterChanged);
     document.addEventListener('change', handleChange);
     document.addEventListener('pointerdown', event => {
