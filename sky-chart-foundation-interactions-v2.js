@@ -82,6 +82,27 @@
     }
     return result.sort((a,b)=>a.phaseError-b.phaseError||a.harmonicOrder-b.harmonicOrder||a.orb-b.orb);
   }
+  function templateRelationships(){
+    const aspectsByStep=['','semi-sextile','sextile','square','trine','quincunx','opposition'];
+    const aspectById=new Map(ASPECTS.map(aspect=>[aspect.id,aspect]));
+    const registry=window.RelphiGlyphRegistry;
+    const signs=SIGN_NAMES.map((name,index)=>{
+      const entry=registry?.resolve?.(name)||registry?.get?.(name.toLowerCase())||{id:name.toLowerCase(),name};
+      return{id:name.toLowerCase(),entry:{...entry,name},value:index*30+15,sign:index,sky:'A',house:null};
+    });
+    const relations=[];
+    for(let i=0;i<12;i++)for(let j=i+1;j<12;j++){
+      const steps=Math.min(j-i,12-(j-i)),aspect=aspectById.get(aspectsByStep[steps]);
+      if(!aspect)continue;
+      const left=signs[i],right={...signs[j],sky:'B'};
+      const angle=steps*30;
+      const harmonicOrder=steps===5?12:12/steps;
+      relations.push({left,right,aspect,distance:angle,orb:0,bySignOnly:true,
+        harmonicOrder,harmonicNumerator:1,phaseError:0,signedPhaseError:0,
+        masterWindow:12,windowFraction:0,coherence:1,coherencePercent:100});
+    }
+    return relations;
+  }
   function relationshipSignature(relations){
     return relations.map(relation=>[
       relation.left.id,relation.aspect.id,relation.right.id,relation.orb.toFixed(6),
@@ -816,9 +837,10 @@
   function whereWhenEditing(){return document.documentElement.dataset.skyWhereWhenEditing==='true'}
   async function refresh(){
     refreshQueued=false;if(whereWhenEditing()&&!(records(read(KEYS.A)).length===0&&records(read(KEYS.B)).length>0))return;const root=document.getElementById('skyFoundationRoot'),wheel=document.querySelector('#skyFoundationWheelMount > .sky-foundation-wheel');if(!root||!wheel||root.getAttribute('aria-busy')!=='false'||!HARMONIC)return;ensurePanel();
-    const preparedA=prepare(read(KEYS.A),'A'),preparedB=prepare(read(KEYS.B),'B'),relations=relationships(preparedA.list,preparedB.list),nextSignature=relationshipSignature(relations);current={listA:preparedA.list,listB:preparedB.list,relations,cuspsA:preparedA.houseCusps,cuspsB:preparedB.houseCusps};
+    const isLearn=wheel.dataset.skyExperience==='learn';
+    const preparedA=isLearn?{list:[],houseCusps:Array.from({length:12},(_,i)=>(Number(document.documentElement.dataset.skyLearnAscendant||0)*30+i*30)%360)}:prepare(read(KEYS.A),'A'),preparedB=isLearn?{list:[],houseCusps:[]}:prepare(read(KEYS.B),'B'),relations=isLearn?templateRelationships():relationships(preparedA.list,preparedB.list),nextSignature=relationshipSignature(relations);current={listA:preparedA.list,listB:preparedB.list,relations,cuspsA:preparedA.houseCusps,cuspsB:preparedB.houseCusps};
     annotateHouseLayer('a-houses','A');annotateHouseLayer('b-houses','B');annotateSigns();annotatePlacements(current.listA,current.listB);annotateAspects(relations);annotateLedger('A',current.listA);annotateLedger('B',current.listB);
-    if(!preparedA.list.length||!preparedB.list.length){
+    if(!isLearn&&(!preparedA.list.length||!preparedB.list.length)){
       // In either single-sky state the intrasky renderer owns the remaining
       // A↔A or B↔B rows. Remove only orphaned intersky rows.
       const list=document.getElementById('skyFoundationRelationshipList');
