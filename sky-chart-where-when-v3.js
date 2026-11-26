@@ -625,8 +625,9 @@ document.addEventListener('click',event=>{
   const quick=event.target.closest?.('[data-sky-oneclick-external]');
   if(quick){event.preventDefault();const slot=quick.dataset.skyOneclickExternal;
     const old=window.RelphiSkyWorkingStorage.getItem(SLOT_KEYS[slot]);
+    let occupied=false;try{const prior=JSON.parse(old||'null');occupied=!!Object.keys(prior?.placements||prior?.positions||{}).length}catch(_){}
     if(!formFor(slot))openEditor(slot,false);
-    void hereAndNow(slot).then(success=>{if(success&&old)window.RelphiSkySlotControls?.offerUndo?.(slot,old,'Sky '+slot+' updated to Here and Now')});
+    void hereAndNow(slot).then(success=>{if(success&&occupied)window.RelphiSkySlotControls?.offerUndo?.(slot,old,'Sky '+slot+' updated to Here and Now')});
     return;
   }
   const edit=event.target.closest?.('[data-sky-where-edit]');if(edit){event.preventDefault();openEditor(edit.dataset.slot,false);return}
