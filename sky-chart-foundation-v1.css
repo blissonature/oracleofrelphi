@@ -194,7 +194,7 @@ body.sky-chart-page.sky-foundation-active #chartPanel > :not(#skyFoundationRoot)
 /* Keep retrograde state attached to its placement name in the Sky Card ledger. */
 .sky-foundation-row-name .sky-placement-rx{
   position:relative;display:inline-block;width:.9em;height:1em;
-  margin-left:.62em;vertical-align:-.133em;color:inherit;
+  margin-left:.62em;vertical-align:-.305em;color:inherit;
 }
 .sky-foundation-row-name .sky-placement-rx>svg{
   position:absolute;left:50%;top:50%;display:block;
