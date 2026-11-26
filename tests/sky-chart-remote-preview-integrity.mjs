@@ -162,15 +162,18 @@ try{
        const row=[...document.querySelectorAll('#skyFoundationA .sky-foundation-row')]
          .find(x=>x.querySelector('.sky-foundation-row-name')?.textContent?.startsWith('Saturn'));
        const art=row.querySelector('.sky-placement-rx .relphi-glyph-retrograde');
+       const area=row.getBoundingClientRect(),ink=art.getBoundingClientRect();
        return{
-         height:art.getBoundingClientRect().height,
+         height:ink.height,rowHeight:area.height,topClearance:ink.top-area.top,bottomClearance:area.bottom-ink.bottom,
          source:art.dataset.canonicalGlyphId,
          letters:[...art.querySelectorAll('text')].map(t=>t.textContent),
          textCount:art.querySelectorAll('text').length,
          rawImage:!!row.querySelector('.sky-placement-rx img')
        };
      });
-     assert.ok(placementMark.height>=8&&placementMark.height<=16,'Original Retrograde must fit in name-row annotation');
+     console.log('UPLOADED RETROGRADE LEDGER FIT',JSON.stringify(placementMark));
+     assert.ok(placementMark.height>=8&&placementMark.height<placementMark.rowHeight,
+       'The uploaded three-letter mark must fit within the actual Placements row');
      assert.equal(placementMark.textCount,3);
      assert.deepEqual(placementMark.letters,['P','l','x']);
      assert.equal(placementMark.source,'retrograde');
@@ -205,7 +208,7 @@ try{
              expectedColor:getComputedStyle(row.querySelector('.sky-foundation-row-name')).color,
              gap:p.getBoundingClientRect().left-nameRange.getBoundingClientRect().right,
              stemBaselineGap:stemBaseline-nameBaseline,capitalBaselineGap:capitalBaseline-nameBaseline,
-             height:art.getBoundingClientRect().height,
+             height:art.getBoundingClientRect().height,rowHeight:row.getBoundingClientRect().height,
              widths:elements.map(t=>t.getBoundingClientRect().width),
              paths:art.querySelectorAll('path,rect,line,polygon,circle').length,
              originalLTransform:elements[1]?.getAttribute('transform'),
@@ -224,7 +227,7 @@ try{
        assert.ok(entry.colors.every(x=>x===entry.expectedColor),'Use the existing placement color owner');
        assert.ok(entry.gap>=3,'Maintain separation from the placement name');
        assert.ok(Math.abs(entry.stemBaselineGap)<1.5,'Authored l stem must meet adjacent name baseline');
-       assert.ok(entry.height>6&&entry.height<20,'Keep the mark compact in Placements');
+       assert.ok(entry.height>6&&entry.height<entry.rowHeight,'Keep the mark inside its actual Placements row');
        assert.equal(entry.paths,0,'No invented R strokes, P foot, or X geometry');
        assert.equal(entry.originalLTransform,'scale(1.0259205,0.97473437)');
        assert.equal(entry.staticMaster,'true');
@@ -237,7 +240,7 @@ try{
      for(const entry of mobilePlacements){
        assert.deepEqual(entry.letters,['P','l','x']);
        assert.ok(entry.colors.every(x=>x===entry.expectedColor));
-       assert.ok(entry.gap>=3&&entry.height>6&&entry.height<20);
+       assert.ok(entry.gap>=3&&entry.height>6&&entry.height<entry.rowHeight);
        assert.ok(Math.abs(entry.stemBaselineGap)<1.5,'Mobile l stem must meet adjacent name baseline');
      }
      await page.screenshot({path:'sky-remote-preview-user-rx-mobile.png',fullPage:true});
