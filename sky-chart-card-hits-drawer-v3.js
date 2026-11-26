@@ -21,7 +21,7 @@ let queued=false,savedObserver=null,priorFoundationFocus=null;
 const esc=v=>String(v==null?'':v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const norm=v=>((Number(v)%360)+360)%360;
 const canonical=v=>String(v||'').trim().toLowerCase().replace(/_/g,'-').replace(/\s+/g,'-').replace(/[^a-z0-9-]/g,'');
-function json(key,fallback=null){try{const raw=localStorage.getItem(key);return raw?JSON.parse(raw):fallback}catch(_){return fallback}}
+function json(key,fallback=null){try{const raw=window.RelphiSkyWorkingStorage.getItem(key);return raw?JSON.parse(raw):fallback}catch(_){return fallback}}
 function read(slot){return json(KEYS[slot])}
 function profile(p){return p?.calcProfile&&typeof p.calcProfile==='object'?p.calcProfile:{}}
 function source(p){if(!p||typeof p!=='object')return[];const raw=[p.placements,p.positions,p.points,p.bodies].find(v=>v&&typeof v==='object')||p;if(Array.isArray(raw))return raw.map((v,i)=>[String(v?.name||v?.label||v?.id||i),v]);return Object.entries(raw).filter(([k,v])=>v&&typeof v==='object'&&!Array.isArray(v)&&!/^(calcProfile|metadata|profile|location|notes|houseCusps|cusps|houses)$/i.test(k))}
