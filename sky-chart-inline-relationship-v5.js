@@ -34,9 +34,23 @@ function source(p){const x=[p?.placements,p?.positions,p?.points,p?.bodies].find
 function lon(x){if(Number.isFinite(Number(x?.longitude)))return norm(x.longitude);const s=SIGNS.findIndex(n=>n.toLowerCase()===String(x?.sign||x?.zodiac||'').toLowerCase());return s<0?NaN:norm(s*30+Number(x.degree||x.degrees||0)+Number(x.minute||x.minutes||0)/60)}
 function canonical(k,x){const r=window.RelphiGlyphRegistry;for(const c of [x?.glyphId,x?.id,x?.name,x?.label,x?.body,x?.planet,x?.point,k]){if(!c)continue;const raw=String(c).trim(),e=r?.resolve?.(ALIAS[raw.toLowerCase()]||raw)||r?.get?.(ALIAS[raw.toLowerCase()]||raw);if(e)return e}return null}
 function rowSky(row,side){const explicit=row.dataset[side==='left'?'leftSky':'rightSky'];if(explicit==='A'||explicit==='B')return explicit;const mode=row.dataset.relationshipMode||'A-B';if(mode==='A-A')return'A';if(mode==='B-B')return'B';return side==='left'?'A':'B'}
-function find(slot,id,row,side){for(const[k,x]of source(read(KEYS[slot]))){if(!x||typeof x!=='object'||Array.isArray(x))continue;const e=canonical(k,x),v=lon(x);if(e?.id===id&&Number.isFinite(v)){const h=Number(row.dataset[side==='left'?'leftHouse':'rightHouse']);return{id:e.id,entry:e,value:v,sky:slot,house:Number.isFinite(h)&&h>0?h:null}}}return null}
+function find(slot,id,row,side){
+  if(row?.dataset?.learnRelationship==='true'){
+    const index=SIGNS.findIndex(name=>name.toLowerCase()===String(id).toLowerCase());
+    if(index<0)return null;
+    return{id:SIGNS[index].toLowerCase(),entry:{id:SIGNS[index].toLowerCase(),name:SIGNS[index]},value:index*30+15,sky:slot,house:null,learn:true};
+  }
+  for(const[k,x]of source(read(KEYS[slot]))){if(!x||typeof x!=='object'||Array.isArray(x))continue;const e=canonical(k,x),v=lon(x);if(e?.id===id&&Number.isFinite(v)){const h=Number(row.dataset[side==='left'?'leftHouse':'rightHouse']);return{id:e.id,entry:e,value:v,sky:slot,house:Number.isFinite(h)&&h>0?h:null}}}return null}
 function relation(row){const leftSky=rowSky(row,'left'),rightSky=rowSky(row,'right'),l=find(leftSky,row.dataset.leftPlacement,row,'left'),r=find(rightSky,row.dataset.rightPlacement,row,'right');if(!l||!r)return null;return{left:l,right:r,aspect:String(row.dataset.aspect||''),orb:Number(row.dataset.sourceOrb||0)}}
-function card(rec){const v=norm(rec.value),s=Math.floor(v/30),d=Math.floor(v-s*30),[id,title]=DECANS[s][Math.min(2,Math.floor(d/10))];return{id,title,image:`assets/tarot/rws-export/${id}.webp`}}
+function card(rec){
+  if(rec.learn){
+    const sign=SIGNS[Math.floor(norm(rec.value)/30)];
+    const card=(window.RELPHI_TAROT_CARDS||[]).find(item=>item.arcana==='Major'&&String(item.astrology?.sign||'').split(',').map(x=>x.trim()).includes(sign));
+    if(!card)throw new Error('Zodiac Major Arcana correspondence unavailable for '+sign);
+    return{id:card.card_id,title:card.name,image:`assets/tarot/rws-export/${card.card_id}.webp`};
+  }
+  const v=norm(rec.value),s=Math.floor(v/30),d=Math.floor(v-s*30),[id,title]=DECANS[s][Math.min(2,Math.floor(d/10))];return{id,title,image:`assets/tarot/rws-export/${id}.webp`};
+}
 function warmCardArt(src){const key=String(src||'');if(!key)return Promise.resolve();const existing=cardArtWarmups.get(key);if(existing)return existing.ready;const image=new Image();image.decoding='async';let settle;const loaded=new Promise(resolve=>{settle=resolve});image.addEventListener('load',settle,{once:true});image.addEventListener('error',settle,{once:true});image.src=key;const ready=typeof image.decode==='function'?image.decode().catch(()=>loaded):loaded;cardArtWarmups.set(key,{image,ready});return ready}
 function warmCurrentCardArt(){const paths=new Set();['A','B'].forEach(slot=>{for(const[,x]of source(read(KEYS[slot]))){if(!x||typeof x!=='object'||Array.isArray(x))continue;const v=lon(x);if(Number.isFinite(v))paths.add(card({value:v}).image)}});paths.forEach(warmCardArt)}
 function point(v,r=48){const a=(norm(v)-180)*Math.PI/180;return{x:60+r*Math.cos(a),y:60+r*Math.sin(a)}}
