@@ -731,6 +731,19 @@
     getSelectionOrigin,
     learnSignContext,
     learnPairContext,
+    // Read-only access to the same resolved geometry that produced the relationship rows.
+    relationshipEndpoint(slot,id){
+      const list=slot==='B'?current.listB:current.listA;
+      const cusps=slot==='B'?current.cuspsB:current.cuspsA;
+      const record=list.find(item=>item.id===id);
+      if(!record)return null;
+      const house=record.house;
+      const cusp=house!=null?cusps[house-1]:null;
+      const sun=list.find(item=>item.id==='sun');
+      const asc=list.find(item=>item.id==='asc');
+      const day=cusps.length===12&&sun&&asc?norm(sun.value-asc.value)>=180:null;
+      return {longitude:record.value,sign:record.sign,house,cusp:Number.isFinite(cusp)?cusp:null,day};
+    },
     syncLearnHouseRing(){
       current.cuspsA=Array.from({length:12},(_,i)=>(learnAsc()*30+i*30)%360);
       annotateHouseLayer('a-houses','A');
