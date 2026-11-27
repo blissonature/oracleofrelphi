@@ -2,8 +2,9 @@
 /* The page title shares the first horizontal line with the fixed navigation logo. */
 body.sky-chart-page .tarot-app-shell{max-width:min(1600px,calc(100vw - 32px));margin:0 auto 2rem}
 body.sky-chart-page #chartPanel{margin:0;padding:.45rem}
-body.sky-chart-page .sky-chart-page-brand{box-sizing:border-box;min-height:48px;margin:1rem 1rem .45rem;padding-left:56px;display:flex;flex-direction:column;justify-content:flex-start;align-items:flex-start;text-align:left;gap:2px;color:#211d19}
+body.sky-chart-page .sky-chart-page-brand{box-sizing:border-box;min-height:64px;margin:0 1rem .45rem;padding:1rem 0 0 56px;display:flex;flex-direction:column;justify-content:flex-start;align-items:flex-start;text-align:left;gap:2px;color:#211d19}
 .sky-chart-page-brand h1{font:800 1.15rem/1.1 system-ui,sans-serif;margin:0}
+.sky-chart-page-brand .red{color:var(--relphi-red)}
 .sky-chart-page-brand p{font:600 .76rem/1.2 system-ui,sans-serif;margin:0}
 @media(max-width:620px){body.sky-chart-page .tarot-app-shell{max-width:calc(100vw - 16px);margin-top:0}body.sky-chart-page #chartPanel{padding:.2rem}}
 

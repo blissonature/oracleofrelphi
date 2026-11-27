@@ -96,6 +96,10 @@
 }
 
 #skyFoundationRelationships {
+  box-sizing:border-box;
+  width:100%;
+  max-width:480px;
+  justify-self:center;
   min-width:0;
   background:#fffdf8;
 }
@@ -242,22 +246,8 @@
   }
 }
 
-.sky-foundation-relationships-heading {
-  display:grid;
-  grid-template-columns:auto minmax(0,1fr);
-  align-items:center;
-  column-gap:100px;
-  row-gap:6px;
-  min-height:44px;
-  padding:0 10px;
-  border-bottom:1px solid rgba(31,27,24,.11);
-}
-
-.sky-foundation-relationships-heading h2 {
-  min-width:0;
-  margin:0;
-  font:800 .82rem/1.2 system-ui,sans-serif;
-}
+.sky-foundation-relationships-heading {border-bottom:1px solid rgba(31,27,24,.11)}
+.sky-foundation-relationships-heading h2 {margin:0;font:800 .82rem/1.2 system-ui,sans-serif}
 
 #skyFoundationRelationshipCount {
   display:inline-flex;
@@ -323,106 +313,74 @@
   display:none!important;
 }
 
-.sky-foundation-relationships-heading>.sky-relationship-heading-actions{
-  grid-column:2/-1;
+/* Relationships: two rows at every panel width. Keep the selected sort visible. */
+.sky-foundation-relationships-heading{
   display:grid;
-  grid-template-columns:minmax(210px,1fr) 76px 101px max-content max-content;
+  grid-template-columns:minmax(0,1fr) auto auto auto;
+  grid-template-rows:auto auto;
   align-items:center;
-  gap:5px;
-  width:100%;
-  min-width:0;
-  order:2;
+  gap:6px 5px;
+  min-height:0;
+  padding:7px 9px;
+  box-sizing:border-box;
 }
-.sky-foundation-relationships-heading>.sky-relationship-heading-actions>.sky-relationship-sort-control{
+.sky-foundation-relationships-heading>h2,
+.sky-foundation-relationships-heading>.sky-relationship-vocab-tabs{
   grid-column:1;
-  min-width:0;
-  width:100%;
-}
-.sky-foundation-relationships-heading>.sky-relationship-heading-actions>.sky-relationship-sort-control>.sky-relationship-sort-select{
-  width:100%;
+  grid-row:1;
   min-width:0;
   max-width:100%;
+  align-self:center;
+  justify-self:start;
+  white-space:normal;
+  overflow:visible;
+  text-overflow:clip;
 }
-.sky-foundation-relationships-heading>.sky-relationship-heading-actions>.sky-relationship-limit-control{
-  grid-column:2;
-  min-width:max-content;
+.sky-foundation-relationships-heading>.sky-relationship-heading-actions{
+  display:contents;
 }
 .sky-foundation-relationships-heading>.sky-relationship-heading-actions>#skyFoundationRelationshipCount{
-  grid-column:3;
+  grid-column:2;
+  grid-row:1;
   justify-self:end;
-  min-width:88px;
-  max-width:100%;
-  margin-left:0;
+  min-width:0;
+  width:max-content;
+  margin:0;
   white-space:nowrap;
 }
 .sky-foundation-relationships-heading>.sky-relationship-heading-actions>.sky-relationship-copy-button{
-  grid-column:4;
-  margin-left:0!important;
+  grid-column:3;
+  grid-row:1;
+  justify-self:end;
+  margin:0;
 }
 .sky-foundation-relationships-heading>.sky-relationship-heading-actions>#skyChartRelationshipsExport{
-  grid-column:5;
+  grid-column:4;
+  grid-row:1;
+  justify-self:end;
+  margin:0;
 }
-
-@media(max-width:620px){
-  .sky-foundation-relationships-heading{
-    display:grid;
-    grid-template-columns:minmax(0,1fr) auto;
-    grid-template-rows:auto auto;
-    column-gap:10px;
-    row-gap:9px;
-    min-height:0;
-    padding:8px 10px;
-  }
-  .sky-foundation-relationships-heading>h2,
-  .sky-foundation-relationships-heading>.sky-relationship-vocab-tabs{
-    grid-column:1;
-    grid-row:1;
-    align-self:center;
-    justify-self:start;
-    z-index:2;
-    max-width:none;
-  }
-  .sky-foundation-relationships-heading>.sky-relationship-heading-actions{
-    grid-column:1/-1;
-    grid-row:1/3;
-    display:grid;
-    grid-template-columns:minmax(0,1fr) auto auto auto;
-    grid-template-rows:auto auto;
-    align-items:center;
-    column-gap:6px;
-    row-gap:9px;
-    width:100%;
-    min-width:0;
-  }
-  .sky-foundation-relationships-heading>.sky-relationship-heading-actions>.sky-relationship-sort-control{
-    grid-column:1/4;
-    grid-row:2;
-    min-width:0;
-    width:100%;
-  }
-  .sky-foundation-relationships-heading>.sky-relationship-heading-actions>.sky-relationship-limit-control{
-    grid-column:4;
-    grid-row:2;
-    justify-self:end;
-    margin:0;
-  }
-  .sky-foundation-relationships-heading>.sky-relationship-heading-actions>#skyFoundationRelationshipCount{
-    grid-column:2;
-    grid-row:1;
-    justify-self:end;
-    margin-left:0;
-    transform:none;
-  }
-  .sky-foundation-relationships-heading>.sky-relationship-heading-actions>.sky-relationship-copy-button{
-    grid-column:3;
-    grid-row:1;
-    justify-self:end;
-  }
-  .sky-foundation-relationships-heading>.sky-relationship-heading-actions>#skyChartRelationshipsExport{
-    grid-column:4;
-    grid-row:1;
-    justify-self:end;
-  }
+.sky-foundation-relationships-heading>.sky-relationship-heading-actions>.sky-relationship-sort-control{
+  grid-column:1/4;
+  grid-row:2;
+  min-width:0;
+  width:100%;
+  margin:0;
+}
+.sky-foundation-relationships-heading>.sky-relationship-heading-actions .sky-relationship-sort-select{
+  display:block;
+  width:100%;
+  min-width:0;
+  max-width:100%;
+  text-overflow:clip;
+}
+.sky-foundation-relationships-heading>.sky-relationship-heading-actions>.sky-relationship-limit-control{
+  grid-column:4;
+  grid-row:2;
+  justify-self:end;
+  width:76px;
+  min-width:0;
+  margin:0;
 }
 
 #skyFoundationClearIsolation {
@@ -546,56 +504,6 @@
 }
 
 @media(max-width:620px) {
-  .sky-foundation-relationships-heading{
-    grid-template-columns:minmax(0,1fr) auto auto auto;
-    grid-template-rows:auto auto;
-    gap:6px 5px;
-    min-height:0;
-    padding:8px;
-  }
-  .sky-foundation-relationships-heading>h2{
-    grid-column:1;
-    grid-row:1;
-    overflow:hidden;
-    text-overflow:ellipsis;
-    white-space:nowrap;
-  }
-  .sky-foundation-relationships-heading>.sky-relationship-heading-actions{
-    display:contents;
-  }
-  #skyFoundationRelationshipCount{
-    grid-column:2;
-    grid-row:1;
-    min-width:0;
-    padding:0;
-    justify-self:end;
-  }
-  .sky-foundation-relationships-heading .sky-relationship-copy-button{
-    grid-column:3;
-    grid-row:1;
-    margin-left:0!important;
-    justify-self:end;
-  }
-  .sky-foundation-relationships-heading #skyChartRelationshipsExport{
-    grid-column:4;
-    grid-row:1;
-    justify-self:end;
-  }
-  .sky-foundation-relationships-heading .sky-relationship-sort-control{
-    grid-column:1 / 4;
-    grid-row:2;
-    width:100%;
-    min-width:0;
-  }
-  .sky-foundation-relationships-heading .sky-relationship-sort-select{
-    width:100%;
-    max-width:none;
-  }
-  .sky-foundation-relationships-heading .sky-relationship-limit-control{
-    grid-column:4;
-    grid-row:2;
-    justify-self:end;
-  }
   #skyFoundationRelationshipList {
     grid-template-columns:1fr;
     max-height:420px;
@@ -682,7 +590,7 @@ html[data-sky-last-mode="learn"] #skyFoundationA,
 html[data-sky-last-mode="learn"] #skyFoundationB,
 html[data-sky-last-mode="learn"] .sky-one-click-outer{display:none}
 html[data-sky-last-mode="learn"] #skyFoundationRoot{grid-template-columns:minmax(0,1fr);grid-template-areas:"comparison"}
-html[data-sky-last-mode="learn"] #skyFoundationComparison{grid-column:1/-1;display:grid;grid-template-columns:minmax(245px,1fr) minmax(0,1.5fr) minmax(275px,1.08fr);grid-template-areas:"focus focus focus" "core wheel relations";grid-template-rows:auto minmax(0,1fr);align-items:stretch;gap:10px;padding-bottom:10px}
+html[data-sky-last-mode="learn"] #skyFoundationComparison{grid-column:1/-1;display:grid;grid-template-columns:minmax(245px,1fr) minmax(0,1.5fr) minmax(275px,480px);grid-template-areas:"focus focus focus" "core wheel relations";grid-template-rows:auto minmax(0,1fr);align-items:stretch;gap:10px;padding-bottom:10px}
 html[data-sky-last-mode="learn"] #skyFoundationFocus{grid-area:focus}
 html[data-sky-last-mode="learn"] #skyFoundationWheelMount{grid-area:wheel;min-height:0}
 html[data-sky-last-mode="learn"] #skyFoundationRelationships{grid-area:relations;min-width:0;container-type:inline-size;container-name:relphi-relationships}
@@ -727,9 +635,8 @@ html[data-sky-last-mode="learn"] #skyFoundationRelationships{grid-area:relations
   html[data-sky-last-mode="learn"] #skyFoundationLearnCore{min-height:0;overflow:auto;margin-left:10px}
   html[data-sky-last-mode="learn"] #skyFoundationWheelMount{min-height:0;height:100%;padding:0;box-sizing:border-box;align-self:stretch}
   html[data-sky-last-mode="learn"] #skyFoundationWheelMount > svg.sky-foundation-wheel{width:min(100%,var(--learn-workspace-height));max-height:100%;height:auto}
-  html[data-sky-last-mode="learn"] #skyFoundationRelationships{min-height:0;display:grid;grid-template-rows:auto auto minmax(0,1fr) auto;overflow:hidden;margin-right:10px;border:1px solid rgba(31,27,24,.18);border-radius:16px}
+  html[data-sky-last-mode="learn"] #skyFoundationRelationships{min-height:0;display:grid;grid-template-rows:auto auto minmax(0,1fr) auto;overflow:hidden;margin-right:0;border:1px solid rgba(31,27,24,.18);border-radius:16px}
   html[data-sky-last-mode="learn"] #skyFoundationRelationshipList{grid-row:3;min-height:0;max-height:none;grid-template-columns:minmax(0,1fr);grid-auto-rows:max-content;align-content:start;overflow:auto}
-  html[data-sky-last-mode="learn"] #skyFoundationRelationshipCount{grid-column:1;grid-row:1;justify-self:start;min-width:0}
   html[data-sky-last-mode="learn"] .sky-learn-core-identity{grid-template-columns:minmax(0,1fr) minmax(58px,28%);gap:8px}
   html[data-sky-last-mode="learn"] .sky-learn-core-houses{grid-template-columns:repeat(4,minmax(0,1fr))}
   html[data-sky-last-mode="learn"] .sky-learn-core-identity p{font-size:.86rem}
