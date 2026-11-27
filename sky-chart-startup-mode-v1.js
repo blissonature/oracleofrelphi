@@ -112,20 +112,23 @@ function rawGet(key){
 }
 function readMode(){
   const stored=rawGet(MODE_KEY);
-  if(stored==='learn'||stored==='comparison'||stored==='single')return stored;
+  if(stored==='comparison')return hasStoredSkyA()?'comparison':'single';
+  if(stored==='learn'||stored==='single')return stored;
   // First-time visitors enter the zodiac lesson; an existing sky opens Discover.
   return rawGet('relphiSkyChartA')?'single':'learn';
 }
 function readLearnAscendant(){const n=Number(html.dataset.skyLearnAscendant||0);return Number.isInteger(n)&&n>=0&&n<12?n:0}
 function setLearnAscendant(value){const n=Number(value);if(!Number.isInteger(n)||n<0||n>11)return false;if(readLearnAscendant()===n)return false;html.dataset.skyLearnAscendant=String(n);window.dispatchEvent(new CustomEvent('relphi:sky-learn-ascendant-changed',{detail:{sign:n}}));return true}
 function writeMode(mode){
-  const next=mode==='learn'?'learn':mode==='comparison'?'comparison':'single';
+  const next=mode==='learn'?'learn':mode==='comparison'&&hasStoredSkyA()?'comparison':'single';
   try{if(rawGet(MODE_KEY)!==next)window.RelphiSkyWorkingStorage.setItem(MODE_KEY,next)}catch(_){}
   if(html.dataset.skyLastMode!==next)html.dataset.skyLastMode=next;
   return next;
 }
-function hasStoredSkyB(){
-  const raw=rawGet(SKY_B_KEY);
+function hasStoredSkyA(){return hasStoredSky('relphiSkyChartA')}
+function hasStoredSkyB(){return hasStoredSky(SKY_B_KEY)}
+function hasStoredSky(key){
+  const raw=rawGet(key);
   if(!raw)return false;
   try{
     const value=JSON.parse(raw);
@@ -206,7 +209,7 @@ function read(key){
   if(key===SKY_B_KEY&&readMode()!=='comparison'&&html.dataset.skyBEditing!=='true')return null;
   return rawGet(key);
 }
-window.RelphiSkyStartupMode=Object.freeze({read,readMode,writeMode,syncRoot,hasStoredSkyB,recoverTransientState,readLearnAscendant,setLearnAscendant});
+window.RelphiSkyStartupMode=Object.freeze({read,readMode,writeMode,syncRoot,hasStoredSkyA,hasStoredSkyB,recoverTransientState,readLearnAscendant,setLearnAscendant});
 
 // Fail closed into the ordinary single-sky view before the body can paint.
 syncRoot();
@@ -244,14 +247,17 @@ document.addEventListener('click',event=>{
 document.addEventListener('click',event=>{
   const target=event.target?.closest?.('[data-add-sky-b],[data-remove-sky-b]');
   if(!target)return;
-  if(target.matches('[data-add-sky-b]'))writeMode('comparison');
+  if(target.matches('[data-add-sky-b]')){
+    if(!hasStoredSkyA()){event.preventDefault();event.stopImmediatePropagation();return;}
+    writeMode('comparison');
+  }
   if(target.matches('[data-remove-sky-b]'))writeMode('single');
   syncRoot();
 },true);
 
 window.addEventListener('storage',event=>{
   if(event.storageArea&&event.storageArea!==localStorage)return;
-  if(event.key===SKY_B_KEY||event.key===MODE_KEY)syncRoot();
+  if(event.key==='relphiSkyChartA'||event.key===SKY_B_KEY||event.key===MODE_KEY)syncRoot();
 });
 window.addEventListener('pageshow',event=>{
   // Ordinary tab switching must be inert. Repair only a real BFCache/discard restore.

@@ -716,12 +716,11 @@ html[data-sky-last-mode="learn"] #skyFoundationRelationships{grid-area:relations
 .sky-learn-pair-qualities th,.sky-learn-pair-qualities td{padding:4px;border-bottom:1px solid #ddd}
 @media(min-width:1050px){
   html[data-sky-last-mode="learn"] #skyFoundationComparison{--learn-workspace-height:clamp(340px,calc(100svh - 190px),780px);grid-template-rows:auto var(--learn-workspace-height)}
-  html[data-sky-last-mode="learn"] #skyFoundationFocus{grid-template-columns:auto auto minmax(0,1fr) auto;grid-template-areas:"heading heading heading heading" "modes asc filters entries";align-items:center;gap:4px 6px}
+  html[data-sky-last-mode="learn"] #skyFoundationFocus{grid-template-columns:auto auto minmax(0,1fr);grid-template-areas:"heading heading heading" "modes asc filters";align-items:center;gap:4px 6px}
   html[data-sky-last-mode="learn"] #skyFoundationFocus>.sky-foundation-focus-heading{grid-area:heading}
   html[data-sky-last-mode="learn"] #skyFoundationFocus>.sky-sky-mode-selector{grid-area:modes;padding:5px 0 5px 10px}
   html[data-sky-last-mode="learn"] #skyFoundationFocus>.sky-learn-ascendant{grid-area:asc;padding:5px 0}
   html[data-sky-last-mode="learn"] #skyFoundationFocus>.sky-chart-filter-bar{grid-area:filters;background:transparent;padding:4px 0;align-items:end;grid-template-columns:repeat(3,minmax(0,1fr))}
-  html[data-sky-last-mode="learn"] #skyFoundationFocus>.sky-learn-sky-entry{grid-area:entries;justify-content:flex-end;padding:5px 10px 5px 0}
   html[data-sky-last-mode="learn"] #skyFoundationLearnCore{min-height:0;overflow:auto;margin-left:10px}
   html[data-sky-last-mode="learn"] #skyFoundationWheelMount{min-height:0;height:100%;padding:0;box-sizing:border-box;align-self:stretch}
   html[data-sky-last-mode="learn"] #skyFoundationWheelMount > svg.sky-foundation-wheel{width:min(100%,var(--learn-workspace-height));max-height:100%;height:auto}
@@ -750,7 +749,3 @@ html[data-sky-last-mode="learn"] #skyFoundationRelationships{grid-area:relations
 @media(max-width:1049px){html[data-sky-last-mode="learn"] #skyFoundationWheelMount > svg.sky-foundation-wheel{max-height:clamp(230px,calc(100svh - 16rem),600px);width:min(100%,clamp(230px,calc(100svh - 16rem),600px));height:auto}}
 @media(max-width:620px){#skyFoundationFocus .sky-chart-filter-bar[data-learn-focus="true"]{grid-template-columns:repeat(2,minmax(0,1fr))}}
 
-#skyFoundationFocus .sky-learn-sky-entry{display:flex;justify-content:space-between;gap:8px;padding:5px 10px}
-#skyFoundationFocus .sky-learn-sky-entry[hidden]{display:none}
-#skyFoundationFocus .sky-learn-sky-entry button{border:1px solid currentColor;border-radius:999px;background:#fffdf8;font:750 .77rem system-ui;padding:6px 12px;cursor:pointer;color:#c9211e}
-#skyFoundationFocus .sky-learn-sky-entry button[data-learn-open-sky="B"]{color:#2462d0}

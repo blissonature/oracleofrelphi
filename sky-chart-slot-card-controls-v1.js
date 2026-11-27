@@ -35,7 +35,7 @@
   }
 
   function startAddSkyB(){
-    if(skyBPresent()||document.documentElement.dataset.skyBEditing==='true')return;
+    if(!window.RelphiSkyStartupMode?.hasStoredSkyA?.()||skyBPresent()||document.documentElement.dataset.skyBEditing==='true')return;
     // A hidden/stale B payload must not suppress the user's Add Sky B control
     // or silently restore an old comparison. Add Sky B always starts a fresh B workflow.
     if(hasStoredSkyB()){
