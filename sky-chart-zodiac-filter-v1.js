@@ -20,7 +20,7 @@ const SIGNS=[
   ['aquarius','Aquarius','Bucket'],
   ['pisces','Pisces','Fishes']
 ];
-const COLORS=['#e53935','#f06b32','#f39a2e','#f5be3d','#f1dc43','#a9cf46','#43a85b','#2ca69b','#3285c7','#5961c8','#8c4fb4','#bd438e'];
+const COLORS=window.RelphiSkyWheelSpec.COLORS;
 const ALL=SIGNS.map((_,index)=>String(index));
 const STORAGE_KEY='relphiSkyZodiacFilterV1';
 let selected=new Set(ALL),queued=false,root=null,button=null,menu=null;
@@ -196,7 +196,7 @@ function createAscendantPicker(){
   const list=document.createElement('div');list.className='sky-chart-zodiac-filter-list';popup.appendChild(list);document.body.appendChild(popup);
   const startup=()=>window.RelphiSkyStartupMode;
   const options=SIGNS.map(([id,name,figure],index)=>{
-    const option=document.createElement('button');option.type='button';option.className='sky-chart-zodiac-filter-row sky-learn-ascendant-option';option.dataset.ascendantOption=String(index);option.setAttribute('role','option');option.setAttribute('aria-selected','false');option.append(signPresentation(index));
+    const option=document.createElement('button');option.type='button';option.className='sky-chart-zodiac-filter-row sky-learn-ascendant-option';option.dataset.ascendantOption=String(index);option.setAttribute('role','option');option.setAttribute('aria-label',name+' · '+figure);option.setAttribute('aria-selected','false');option.append(signPresentation(index));
     option.addEventListener('click',()=>{startup().setLearnAscendant(index);sync();close(true)});list.appendChild(option);return option;
   });
   function sync(){

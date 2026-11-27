@@ -1,6 +1,5 @@
 /* One visual system for every relationship-filter heading and closed control. */
-:is(#skyFoundationFocus,#skyFoundationRelationships,.sky-vocab-panel) .sky-chart-filter-bar,
-.sky-vocab-panel{
+:is(#skyFoundationFocus,#skyFoundationRelationships,.sky-vocab-panel){
   --sky-filter-label-color:#4e463f;
   --sky-filter-control-color:#191613;
   --sky-filter-border:1px solid rgba(31,27,24,.2);
@@ -8,7 +7,11 @@
   --sky-filter-height:35px;
   --sky-filter-label-font:800 .62rem/1.2 system-ui,sans-serif;
   --sky-filter-control-font:700 .68rem/1.2 system-ui,sans-serif;
-  --sky-filter-control-padding:.52rem .58rem;
+  --sky-filter-control-padding:0 .58rem;
+  --sky-filter-label-gap:4px;
+  --sky-filter-chevron-width:32px;
+  --sky-filter-surface:#fff;
+  --sky-filter-hover:#f5f1eb;
 }
 :is(#skyFoundationFocus,#skyFoundationRelationships,.sky-vocab-panel) .sky-chart-filter-bar>label,
 :is(#skyFoundationFocus,#skyFoundationRelationships,.sky-vocab-panel) .sky-chart-filter-bar>.sky-chart-aspect-filter,
@@ -16,11 +19,11 @@
 :is(#skyFoundationFocus,#skyFoundationRelationships,.sky-vocab-panel) .sky-chart-filter-bar>.sky-chart-house-filter{
   align-self:end!important;min-width:0!important;color:var(--sky-filter-label-color)!important;font:var(--sky-filter-label-font)!important
 }
-:is(#skyFoundationFocus,#skyFoundationRelationships,.sky-vocab-panel) .sky-chart-filter-bar>label:not([hidden]){display:grid!important;grid-template-rows:auto var(--sky-filter-height)!important;gap:4px!important}
+:is(#skyFoundationFocus,#skyFoundationRelationships,.sky-vocab-panel) .sky-chart-filter-bar>label:not([hidden]){display:grid!important;grid-template-rows:auto var(--sky-filter-height)!important;gap:var(--sky-filter-label-gap)!important}
 :is(#skyFoundationFocus,#skyFoundationRelationships,.sky-vocab-panel) .sky-chart-aspect-filter-head,
 :is(#skyFoundationFocus,#skyFoundationRelationships,.sky-vocab-panel) .sky-chart-placement-filter-head,
 :is(#skyFoundationFocus,#skyFoundationRelationships,.sky-vocab-panel) .sky-chart-house-filter-head{
-  display:grid!important;grid-template-columns:minmax(0,1fr) 32px!important;grid-template-rows:auto var(--sky-filter-height)!important;grid-template-areas:"label label" "field field"!important;align-items:center!important;gap:4px 0!important;min-height:0!important;height:auto!important;padding:0!important;border:0!important;border-radius:0!important;background:transparent!important;box-shadow:none!important;color:var(--sky-filter-label-color)!important;font:var(--sky-filter-label-font)!important
+  display:grid!important;grid-template-columns:minmax(0,1fr) var(--sky-filter-chevron-width)!important;grid-template-rows:auto var(--sky-filter-height)!important;grid-template-areas:"label label" "field field"!important;align-items:center!important;gap:var(--sky-filter-label-gap) 0!important;min-height:0!important;height:auto!important;padding:0!important;border:0!important;border-radius:0!important;background:transparent!important;box-shadow:none!important;color:var(--sky-filter-label-color)!important;font:var(--sky-filter-label-font)!important
 }
 :is(#skyFoundationFocus,#skyFoundationRelationships,.sky-vocab-panel) .sky-chart-aspect-filter-label,
 :is(#skyFoundationFocus,#skyFoundationRelationships,.sky-vocab-panel) .sky-chart-placement-filter-label,
@@ -38,7 +41,7 @@
 :is(#skyFoundationFocus,#skyFoundationRelationships,.sky-vocab-panel) .sky-chart-aspect-summary-choices,
 :is(#skyFoundationFocus,#skyFoundationRelationships,.sky-vocab-panel) .sky-chart-placement-summary-choices,
 :is(#skyFoundationFocus,#skyFoundationRelationships,.sky-vocab-panel) .sky-chart-house-summary-choices{
-  grid-area:field!important;grid-column:1/3!important;grid-row:2!important;align-self:stretch!important;width:100%!important;min-width:0!important;height:var(--sky-filter-height)!important;min-height:var(--sky-filter-height)!important;box-sizing:border-box!important;margin:0!important;padding:var(--sky-filter-control-padding)!important;padding-right:36px!important;border:var(--sky-filter-border)!important;border-radius:var(--sky-filter-radius)!important;background:#fff!important;box-shadow:none!important;color:var(--sky-filter-control-color)!important;font:var(--sky-filter-control-font)!important;line-height:1.2!important;letter-spacing:normal!important
+  grid-area:field!important;grid-column:1/3!important;grid-row:2!important;align-self:stretch!important;width:100%!important;min-width:0!important;height:var(--sky-filter-height)!important;min-height:var(--sky-filter-height)!important;box-sizing:border-box!important;margin:0!important;padding:var(--sky-filter-control-padding)!important;padding-right:36px!important;border:var(--sky-filter-border)!important;border-radius:var(--sky-filter-radius)!important;background:var(--sky-filter-surface)!important;box-shadow:none!important;color:var(--sky-filter-control-color)!important;font:var(--sky-filter-control-font)!important;line-height:1.2!important;letter-spacing:normal!important
 }
 :is(#skyFoundationFocus,#skyFoundationRelationships,.sky-vocab-panel) .sky-chart-aspect-filter-value{display:flex!important;align-items:center!important;overflow:hidden!important;text-align:left!important;text-overflow:ellipsis!important;white-space:nowrap!important}
 :is(#skyFoundationFocus,#skyFoundationRelationships,.sky-vocab-panel) .sky-chart-aspect-summary-choices,
@@ -90,8 +93,8 @@
     padding:7px 8px!important
   }
 
-  /* Learn uses the same controls without fictional sky-scope columns. */
-  body.sky-chart-page #skyFoundationFocus .sky-chart-filter-bar[data-learn-focus="true"]{grid-template-columns:repeat(3,minmax(0,1fr))!important}
+  /* Learn uses three equal, unscoped fields and shares the toolbar baseline. */
+  body.sky-chart-page #skyFoundationFocus .sky-chart-filter-bar[data-learn-focus="true"]{grid-template-columns:repeat(3,minmax(0,1fr))!important;padding:0!important;gap:6px!important}
   /* Row 1: Aspects needs room for All + A↔A + B↔B + A↔B + chevron. */
   body.sky-chart-page :is(#skyFoundationFocus,#skyFoundationRelationships,.sky-vocab-panel) .sky-chart-filter-bar:not([data-learn-focus="true"])>.sky-chart-aspect-filter{grid-column:1/span 4!important;grid-row:1!important}
   body.sky-chart-page :is(#skyFoundationFocus,#skyFoundationRelationships,.sky-vocab-panel) .sky-chart-filter-bar:not([data-learn-focus="true"])>.sky-chart-placement-filter{grid-column:5/span 3!important;grid-row:1!important}

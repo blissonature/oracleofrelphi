@@ -84,6 +84,24 @@ try{
    assert.ok(header.brand.top<header.modes.bottom&&header.modes.top<header.brand.bottom,'Mode selector must share brand row');
    if(viewport.width>=1050)assert.ok(header.asc.top<header.controls.bottom&&header.controls.top<header.asc.bottom,'Ascendant and Focus controls must share second row');
    const trigger=focus.locator('#skyLearnAscendantSelect');
+   const checkWheel=async()=>{
+    const wheel=await page.locator('#skyFoundationWheelMount .sky-foundation-wheel[data-learn-ascendant]').evaluate(el=>{
+     const layer=el.querySelector('[data-layer="a-houses"]');
+     return {colors:[...layer.querySelectorAll('.sky-foundation-house-sector')].map(n=>n.getAttribute('fill')),opacity:[...layer.querySelectorAll('.sky-foundation-house-sector')].map(n=>Number(n.getAttribute('fill-opacity'))),dividers:[...layer.querySelectorAll('.sky-foundation-learn-divider')].map(n=>[getComputedStyle(n).stroke,getComputedStyle(n).strokeWidth]),palette:[...window.RelphiSkyWheelSpec.COLORS],expectedOpacity:window.RelphiSkyWheelSpec.comparison.houseFillOpacity};
+    });
+    assert.deepEqual(wheel.colors,wheel.palette);
+    assert.ok(wheel.opacity.every(n=>n===wheel.expectedOpacity));
+    assert.equal(wheel.dividers.length,12);
+    assert.ok(wheel.dividers.every(([color,width])=>color==='rgb(0, 0, 0)'&&parseFloat(width)===1));
+   };
+   await page.locator('#skyFoundationWheelMount .sky-foundation-wheel[data-learn-ascendant]').waitFor({state:'visible'});
+   await checkWheel();
+   if(viewport.width>=1050){
+    const boxes=await focus.evaluate(el=>['#skyLearnAscendantSelect','.sky-chart-aspect-summary-choices','.sky-chart-house-summary-choices','[data-zodiac-summary]','[data-relationship-display-value]'].map(s=>{const r=el.querySelector(s).getBoundingClientRect();return {bottom:r.bottom,height:r.height}}));
+    console.log('FOCUS FIELD BOXES',JSON.stringify(boxes));
+    assert.ok(boxes.every(b=>Math.abs(b.height-35)<1),'All fields share height');
+    assert.ok(boxes.every(b=>Math.abs(b.bottom-boxes[0].bottom)<1),'All fields share bottom baseline');
+   }
    await trigger.click();
    const menu=page.locator('#skyLearnAscendantMenu');
    await menu.waitFor({state:'visible'});
@@ -93,6 +111,8 @@ try{
    assert.equal(await trigger.getAttribute('data-selected-sign'),'10');
    await focus.locator('[data-ascendant-step="1"]').click();
    assert.equal(await trigger.getAttribute('data-selected-sign'),'11');
+   await page.waitForSelector('#skyFoundationWheelMount .sky-foundation-wheel[data-learn-ascendant="11"]');
+   await checkWheel();
    await focus.locator('[data-zodiac-summary]').click();
    await page.locator('#skyChartZodiacFilterMenu').waitFor({state:'visible'});
    assert.equal(await page.locator('#skyChartZodiacFilterMenu input[type=checkbox]').count(),12);
