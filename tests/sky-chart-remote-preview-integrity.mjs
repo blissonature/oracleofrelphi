@@ -134,7 +134,20 @@ try{
    assert.equal(await core.locator('.sky-card-ruler-detail').count(),0);
    // Expansion replaces the selected compact tile in the original flow; art is not duplicated.
    const order=await core.locator('.sky-card-rulers-grid [data-core-ruler]').evaluateAll(nodes=>nodes.map(n=>n.dataset.coreRuler));
-   await core.locator('[data-core-ruler="Venus"]').click();
+   const venus=core.locator('[data-core-ruler="Venus"]');
+   const keptSigns=()=>page.locator('#skyFoundationWheelMount [data-interactive="sign"].is-kept').evaluateAll(nodes=>nodes.map(n=>Number(n.dataset.sign)).sort((a,b)=>a-b));
+   const beforeHover=await core.locator('.sky-card-rulers-grid').innerHTML();
+   const countBeforeHover=await page.locator('#skyFoundationRelationshipCount').textContent();
+   if(viewport.width>=1050)await venus.hover();
+   else await venus.dispatchEvent('pointerover',{pointerType:'mouse',relatedTarget:null});
+   assert.deepEqual(await keptSigns(),[1,6],'Hover previews Venus domiciles on wheel');
+   assert.equal(await core.locator('.sky-card-ruler-detail').count(),0,'Hover must not expand a ruler');
+   assert.equal(await core.locator('.sky-card-rulers-grid').innerHTML(),beforeHover,'Hover must not re-render compact tiles');
+   assert.equal(await page.locator('#skyFoundationRelationshipCount').textContent(),countBeforeHover,'Hover must not change Relationships count');
+   if(viewport.width>=1050)await core.getByRole('tab',{name:'Rulers',exact:true}).hover();
+   else await venus.dispatchEvent('pointerout',{pointerType:'mouse',relatedTarget:null});
+   assert.deepEqual(await keptSigns(),[],'Wheel restores on pointer exit');
+   if(viewport.width>=1050)await venus.click();else await venus.tap();
    const expanded=core.locator('.sky-card-ruler-detail[data-card-ruler-detail="Venus"]');
    await expanded.waitFor({state:'visible'});
    const layout=await expanded.evaluate(el=>{
@@ -148,6 +161,14 @@ try{
    assert.ok(Math.abs(layout.width-layout.gridWidth)<2&&layout.scroll<=layout.client+1,'Expanded tile fits the grid without overflow');
    assert.equal(layout.artCount,1);
    assert.deepEqual(await core.locator('.sky-card-rulers-grid [data-core-ruler]').evaluateAll(nodes=>nodes.map(n=>n.dataset.coreRuler)),order);
+   const saturn=core.locator('[data-core-ruler="Saturn"]');
+   if(viewport.width>=1050)await saturn.hover();else await saturn.dispatchEvent('pointerover',{pointerType:'mouse',relatedTarget:null});
+   assert.deepEqual(await keptSigns(),[9,10],'Hover previews Saturn even when Venus is expanded');
+   assert.equal(await expanded.count(),1,'Hover must preserve expanded Venus');
+   assert.equal(await core.locator('.sky-card-ruler-detail[data-card-ruler-detail="Saturn"]').count(),0);
+   if(viewport.width>=1050)await core.getByRole('tab',{name:'Rulers',exact:true}).hover();else await saturn.dispatchEvent('pointerout',{pointerType:'mouse',relatedTarget:null});
+   assert.deepEqual(await keptSigns(),[1,6],'Leaving preview restores selected Venus');
+   console.log('RULER HOVER PASS',viewport.width);
    await page.screenshot({path:'sky-remote-inline-ruler-'+viewport.width+'.png'});
    await expanded.locator('[data-core-ruler="Venus"]').click();
    assert.equal(await core.locator('.sky-card-ruler-detail').count(),0,'Clicking the expanded art collapses it');

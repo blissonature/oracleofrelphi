@@ -490,12 +490,13 @@
   }
   function rowMarksNode(node,state){return node.dataset.focusPiece==='aspect'&&rowLineMatches(node,state)}
   function applyState(){
-    const focusState=lockedState||(!rowLockedState&&hoverState),aspectFocus=focusState?.kind==='aspect',filterState=aspectFocus?null:focusState,filterKeep=keepSets(focusState),rowState=rowLockedState||rowHoverState,wheelState=focusState||rowState,wheel=document.querySelector('#skyFoundationWheelMount > .sky-foundation-wheel');
+    const rulerPreview=hoverState?.kind==='ruler'?hoverState:null;
+    const focusState=lockedState||(!rowLockedState&&!rulerPreview&&hoverState),aspectFocus=focusState?.kind==='aspect',filterState=aspectFocus?null:focusState,filterKeep=keepSets(focusState),rowState=rowLockedState||rowHoverState,wheelFocus=rulerPreview||focusState,wheelKeep=rulerPreview?keepSets(rulerPreview):filterKeep,wheelState=wheelFocus||rowState,wheel=document.querySelector('#skyFoundationWheelMount > .sky-foundation-wheel');
     if(wheel){
       wheel.classList.toggle('has-isolation',!!wheelState);
       wheel.classList.toggle('has-locked-isolation',!!(lockedState||rowLockedState));
       wheel.querySelectorAll('[data-focus-piece]').forEach(node=>{
-        const isRowDriven=!focusState&&!!rowState,isKept=!!wheelState&&(isRowDriven?rowKeeps(node,rowState):kept(node,filterKeep)||!!focusState&&focusState.kind==='aspect'&&matchesNode(node,focusState)),type=node.dataset.focusPiece;
+        const isRowDriven=!wheelFocus&&!!rowState,isKept=!!wheelState&&(isRowDriven?rowKeeps(node,rowState):kept(node,wheelKeep)||!!wheelFocus&&wheelFocus.kind==='aspect'&&matchesNode(node,wheelFocus)),type=node.dataset.focusPiece;
         node.classList.toggle('is-kept',isKept);
         if(type==='aspect')node.setAttribute('tabindex',(!lockedState&&!rowLockedState||isKept)?'0':'-1');
         node.classList.toggle('is-aspect-endpoint',(isRowDriven||aspectFocus)&&isKept&&(type==='placement'||type==='leader'));
@@ -503,6 +504,9 @@
         node.classList.toggle('is-hovered',!!hoverState&&!lockedState&&matchesNode(node,hoverState)||(!filterState&&!rowLockedState&&!!rowHoverState&&rowMarksNode(node,rowHoverState)));
       });
     }
+    // A ruler hover previews the wheel only; the click lock owns the expanded
+    // tile and the Relationships list, including when previewing another ruler.
+    if(rulerPreview)return;
     updateLearnCore(lockedState);
     if(wheelOnlyExternal)return;
     ['A','B'].forEach(slot=>{const panel=document.getElementById(slot==='A'?'skyFoundationA':'skyFoundationB');if(!panel)return;panel.classList.toggle('has-ledger-isolation',!!filterState);panel.querySelectorAll('.sky-foundation-row[data-placement]').forEach(row=>{row.classList.toggle('is-kept',!!filterState&&filterKeep.placements.has(`${slot}:${row.dataset.placement}`));row.classList.toggle('is-selected',!!lockedState&&matchesNode(row,lockedState));row.classList.toggle('is-hovered',!!hoverState&&!lockedState&&matchesNode(row,hoverState))})});
@@ -901,6 +905,8 @@
     root.addEventListener('pointerover',event=>{
       if(event.pointerType==='touch'||event.pointerType==='pen'||(event.pointerType==='mouse'&&performance.now()<ignoreNativeClickUntil))return;
       wheelOnlyExternal=false;
+      const ruler=event.target.closest?.('#skyFoundationLearnCore button[data-core-ruler]');
+      if(ruler){if(ruler.contains(event.relatedTarget))return;const next={kind:'ruler',sky:null,value:ruler.dataset.coreRuler};if(!same(hoverState,next)){hoverState=next;applyState()}return}
       const row=event.target.closest?.('.sky-foundation-relationship-row[data-relation-index]');
       if(row)return;
       if(lockedState)return;
@@ -910,6 +916,8 @@
     root.addEventListener('pointermove',event=>{if(event.pointerType==='touch'||event.pointerType==='pen')return;if(lockedState||!event.target.closest?.('#skyFoundationWheelMount'))return;const direct=event.target.closest?.('[data-interactive]:not([data-interactive="aspect"])');if(direct)return;rowHoverState=null;const next=specFrom(nearestAspect(event));if(same(hoverState,next)||(!hoverState&&!next))return;hoverState=next;applyState()});
     root.addEventListener('pointerout',event=>{
       if(event.pointerType==='touch'||event.pointerType==='pen')return;
+      const ruler=event.target.closest?.('#skyFoundationLearnCore button[data-core-ruler]');
+      if(ruler){if(!ruler.contains(event.relatedTarget)&&hoverState?.kind==='ruler'&&hoverState.value===ruler.dataset.coreRuler){hoverState=null;applyState()}return}
       const row=event.target.closest?.('.sky-foundation-relationship-row[data-relation-index]');
       if(row)return;
       if(lockedState)return;
