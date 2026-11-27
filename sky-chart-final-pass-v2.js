@@ -420,7 +420,7 @@
       focusPanel.id = 'skyFoundationFocus';
       focusPanel.className = 'sky-foundation-focus-panel';
       focusPanel.setAttribute('aria-label', 'Focus');
-      focusPanel.innerHTML = '<header class="sky-foundation-focus-heading"><h2>Focus</h2><span class="sky-focus-heading-controls" aria-label="Focus display controls"></span></header>';
+      focusPanel.innerHTML = '<header class="sky-foundation-focus-heading"><span class="sky-focus-heading-controls" aria-label="Focus display controls"></span></header>';
     }
 
     const focusHeading = focusPanel.querySelector(':scope > .sky-foundation-focus-heading');
@@ -438,7 +438,7 @@
       modes.className = 'sky-sky-mode-selector';
       modes.setAttribute('aria-label', 'Sky Chart mode');
       modes.innerHTML = '<button type="button" data-sky-experience="learn">Learn</button><button type="button" data-sky-experience="single">Explore</button><button type="button" data-sky-experience="comparison">Compare</button>';
-      focusHeading.insertBefore(modes,focusHeading.querySelector('h2'));
+      focusHeading.insertBefore(modes,focusHeading.querySelector('.sky-focus-heading-controls'));
       modes.addEventListener('click', event => {
         const button = event.target.closest('[data-sky-experience]');
         if (!button) return;

@@ -92,9 +92,7 @@ function closeMenu(){
 function positionPopup(menu,button){
   if(!menu||menu.hidden||!button)return;
   const rect=button.getBoundingClientRect(),margin=12,gap=5;
-  const width=Math.max(220,Math.min(330,window.innerWidth-margin*2));
-  const left=Math.max(margin,Math.min(rect.left,window.innerWidth-width-margin));
-  menu.style.width=`${width}px`;
+  menu.style.width='';
 
   // Let the menu use its natural height whenever the viewport can hold it. Only turn
   // on scrolling when the full sign list genuinely cannot fit on screen.
@@ -118,6 +116,8 @@ function positionPopup(menu,button){
     menu.style.overflowY='hidden';
   }
 
+  const width=menu.getBoundingClientRect().width;
+  const left=Math.max(margin,Math.min(rect.left,window.innerWidth-width-margin));
   const belowTop=rect.bottom+gap;
   const aboveTop=rect.top-renderedHeight-gap;
   let top;

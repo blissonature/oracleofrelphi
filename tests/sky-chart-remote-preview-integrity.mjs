@@ -77,6 +77,7 @@ try{
    await page.goto(urls[0][1],{waitUntil:'domcontentloaded',timeout:25000});
    const focus=page.locator('#skyFoundationFocus');
    await focus.locator('[data-zodiac-summary]').waitFor({state:'visible',timeout:20000});
+   assert.equal(await focus.locator('.sky-foundation-focus-heading h2').count(),0,'No redundant Focus heading');
    const header=await focus.evaluate(el=>{
      const rect=s=>{const r=el.querySelector(s).getBoundingClientRect();return {top:r.top,bottom:r.bottom,left:r.left,right:r.right}};
      return {brand:rect('.sky-chart-page-brand'),modes:rect('.sky-sky-mode-selector'),controls:rect('.sky-focus-heading-controls'),asc:rect('.sky-learn-ascendant'),signs:rect('[data-zodiac-filter]')};
@@ -106,6 +107,14 @@ try{
    const menu=page.locator('#skyLearnAscendantMenu');
    await menu.waitFor({state:'visible'});
    assert.equal(await menu.getByRole('option').count(),12);
+   const menuFit=await menu.evaluate(el=>{
+     const box=el.getBoundingClientRect(),style=getComputedStyle(el),names=[...el.querySelectorAll('.sky-chart-zodiac-filter-name')];
+     const right=Math.max(...names.map(n=>n.querySelector('.sky-chart-sign-list-figure').getBoundingClientRect().right));
+     const expectedPadding=parseFloat(style.paddingRight)+parseFloat(style.borderRightWidth)+11;
+     return {width:box.width,rightGap:box.right-right,expectedPadding,viewport:innerWidth};
+   });
+   console.log('ASCENDANT MENU FIT',JSON.stringify(menuFit));
+   assert.ok(menuFit.width<330&&menuFit.rightGap<=menuFit.expectedPadding+3,'Ascendant menu fits its longest content without spare checkbox space');
    assert.equal(await menu.locator('.sky-chart-zodiac-filter-glyph svg').count(),12);
    await menu.getByRole('option',{name:'Aquarius · Bucket'}).click();
    assert.equal(await trigger.getAttribute('data-selected-sign'),'10');
