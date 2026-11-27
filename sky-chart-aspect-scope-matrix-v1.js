@@ -39,7 +39,10 @@ const SCOPES=Object.freeze([
 ]);
 const STORAGE_KEY='relphiSkyAspectMatrixV1';
 const state=Object.fromEntries(SCOPES.map(scope=>[scope.id,new Set(IDS)]));
-(function loadPersistedState(){try{const saved=JSON.parse(window.RelphiSkyWorkingStorage.getItem(STORAGE_KEY)||'null');if(!saved||typeof saved!=='object')return;SCOPES.forEach(scope=>{if(Array.isArray(saved[scope.id]))state[scope.id]=new Set(saved[scope.id].filter(id=>IDS.includes(id)))})}catch(_){}})();
+const LEARN_IDS=SIGN_ASPECTS.filter(id=>id!=='conjunction');
+const learn=()=>window.RelphiSkyStartupMode?.readMode?.()==='learn';
+state.learn=new Set(LEARN_IDS);
+(function loadPersistedState(){try{const saved=JSON.parse(window.RelphiSkyWorkingStorage.getItem(STORAGE_KEY)||'null');if(!saved||typeof saved!=='object')return;if(Array.isArray(saved.learn))state.learn=new Set(saved.learn.filter(id=>LEARN_IDS.includes(id)));SCOPES.forEach(scope=>{if(Array.isArray(saved[scope.id]))state[scope.id]=new Set(saved[scope.id].filter(id=>IDS.includes(id)))})}catch(_){}})();
 let queued=false;
 let applying=false;
 let menuObserver=null;
@@ -69,6 +72,7 @@ function relationshipMode(node){
   return'A-B';
 }
 function cells(scope,aspect){
+  if(learn())return (aspect==='all'?LEARN_IDS:LEARN_IDS.includes(aspect)?[aspect]:[]).map(id=>['learn',id]);
   const scopes=scope==='all'?activeScopes():activeScopes().includes(scope)?[scope]:[];
   const groupId=String(aspect||'').startsWith('group:')?String(aspect).slice(6):'';
   const aspects=aspect==='all'?IDS:GROUP_MAP.has(groupId)?GROUP_MAP.get(groupId).aspects:IDS.includes(aspect)?[aspect]:[];
@@ -108,7 +112,7 @@ function matrixRow(aspect,labelText,master=false,angle=null){
   }
   const name=document.createElement('span');name.className='sky-chart-aspect-name';name.textContent=labelText;label.appendChild(name);
   const choices=document.createElement('div');choices.className='sky-chart-aspect-list-choices';choices.setAttribute('role','group');choices.setAttribute('aria-label',Number.isFinite(angle)?`${labelText}, ${angle} degrees`:labelText);
-  const scopes=SCOPES.filter(scope=>activeScopes().includes(scope.id));
+  const scopes=learn()?[]:SCOPES.filter(scope=>activeScopes().includes(scope.id));
   choices.append(choice('all',aspect,`${labelText}: all relationship scopes`),...scopes.map(scope=>choice(scope.id,aspect,`${labelText}: ${scope.label}`)));
   row.append(label,choices);return row;
 }
@@ -121,6 +125,7 @@ function signChoice(id){
 function renderPopover(){
   const body=popover()?.querySelector('.sky-chart-aspect-filter-body');if(!body)return;
   const list=document.createElement('div');list.className='sky-chart-aspect-list sky-chart-aspect-matrix-list';list.dataset.aspectList='matrix';
+  if(learn()){list.dataset.learnMatrix='true';list.append(matrixRow('all','All aspects',true));ASPECTS.filter(a=>LEARN_IDS.includes(a.id)).forEach(a=>list.append(matrixRow(a.id,a.label,false,a.angle)));body.replaceChildren(list);window.dispatchEvent(new Event('relphi:sky-aspect-filter-rendered'));return;}
   const header=document.createElement('div');header.className='sky-chart-aspect-list-header';
   const title=document.createElement('strong');title.textContent='Aspect';
   const cols=document.createElement('div');cols.className='sky-chart-aspect-list-header-choices';
@@ -176,13 +181,13 @@ function updateCount(){
     if(count)count.textContent=`${shown}/${rows.length}`;if(empty)empty.hidden=shown!==0;
   });
 }
-function visible(node){if(window.RelphiSkyStartupMode?.readMode?.()==='learn'&&node?.dataset?.learnRelationship==='true'||window.RelphiSkyStartupMode?.readMode?.()==='learn'&&node?.dataset?.learnRelation==='true')return true;const mode=relationshipMode(node);if(!activeScopes().includes(mode))return false;const aspect=normalize(node?.dataset?.aspect||'');if(node?.dataset?.bySignOnly==='true')return signSelected.has(aspect);if(!aspect)return true;const anySelected=activeScopes().some(scope=>state[scope]?.size>0);if(!anySelected)return false;if(window.RelphiAspectConfigurations?.participates?.(node))return true;return!!state[mode]?.has(aspect)}
+function visible(node){if(learn()&&(node?.dataset?.learnRelationship==='true'||node?.dataset?.learnRelation==='true'))return state.learn.has(normalize(node.dataset.aspect));const mode=relationshipMode(node);if(!activeScopes().includes(mode))return false;const aspect=normalize(node?.dataset?.aspect||'');if(node?.dataset?.bySignOnly==='true')return signSelected.has(aspect);if(!aspect)return true;const anySelected=activeScopes().some(scope=>state[scope]?.size>0);if(!anySelected)return false;if(window.RelphiAspectConfigurations?.participates?.(node))return true;return!!state[mode]?.has(aspect)}
 function applyMatrix({announce=true}={}){
   applying=true;
   document.querySelectorAll('.sky-foundation-relationship-row,[data-layer="aspects"]>.sky-foundation-aspect').forEach(node=>node.classList.toggle('sky-chart-aspect-multiselect-hidden',!visible(node)));
   updateInputs();
   const matrix=Object.fromEntries(SCOPES.map(scope=>[scope.id,IDS.filter(id=>state[scope.id].has(id))]));
-  try{window.RelphiSkyWorkingStorage.setItem(STORAGE_KEY,JSON.stringify(matrix))}catch(_){}
+  try{window.RelphiSkyWorkingStorage.setItem(STORAGE_KEY,JSON.stringify({...matrix,learn:[...state.learn]}))}catch(_){}
   const active=new Set(activeScopes());
   const scopes=SCOPES.filter(scope=>active.has(scope.id)&&(state[scope.id].size>0||signSelected.size>0)).map(scope=>scope.id);
   const selected=IDS.filter(id=>signSelected.has(id)||SCOPES.some(scope=>active.has(scope.id)&&state[scope.id].has(id)));
@@ -232,15 +237,15 @@ function handleChange(event){
   setCells(input.dataset.aspectMatrixScope,input.dataset.aspectMatrixAspect,input.checked);applyMatrix();
 }
 function whereWhenEditing(){return document.documentElement.dataset.skyWhereWhenEditing==='true'}
-function refresh(){queued=false;if(whereWhenEditing())return;const scopeSignature=bActive()?'A+B':'A',scopeChanged=scopeSignature!==lastScopeSignature;lastScopeSignature=scopeSignature;if(!ensureUI())return;if(scopeChanged)renderPopover();renderClosedSummary(control());updateInputs();applyMatrix({announce:false});positionPopover()}
-function schedule(){if(queued||applying||whereWhenEditing())return;queued=true;requestAnimationFrame(refresh)}
+function refresh(){queued=false;if(whereWhenEditing()&&!learn())return;const scopeSignature=learn()?'learn':bActive()?'A+B':'A',scopeChanged=scopeSignature!==lastScopeSignature;lastScopeSignature=scopeSignature;if(!ensureUI())return;if(scopeChanged)renderPopover();renderClosedSummary(control());updateInputs();applyMatrix({announce:false});positionPopover()}
+function schedule(){if(queued||applying||(whereWhenEditing()&&!learn()))return;queued=true;requestAnimationFrame(refresh)}
 function handleLegacyAspectPass(event){
   if(event.detail?.matrix)return;
   schedule();
 }
 function start(){
   schedule();document.addEventListener('change',handleChange);
-  ['relphi:sky-foundation-ready','relphi:sky-foundation-interactions-ready','relphi:sky-intrasky-relationships-ready','relphi:sky-intrasky-b-relationships-ready','relphi:sky-single-sky-aspects-rendered','relphi:sky-placement-multiselect-changed','relphi:sky-house-multiselect-changed','relphi:sky-foundation-filter-changed','relphi:sky-b-removed','relphi:sky-b-restored','relphi:sky-configuration-selection-changed','relphi:sky-configurations-detected'].forEach(name=>window.addEventListener(name,schedule));
+  ['relphi:sky-experience-changed','relphi:sky-foundation-ready','relphi:sky-foundation-interactions-ready','relphi:sky-intrasky-relationships-ready','relphi:sky-intrasky-b-relationships-ready','relphi:sky-single-sky-aspects-rendered','relphi:sky-placement-multiselect-changed','relphi:sky-house-multiselect-changed','relphi:sky-foundation-filter-changed','relphi:sky-b-removed','relphi:sky-b-restored','relphi:sky-configuration-selection-changed','relphi:sky-configurations-detected'].forEach(name=>window.addEventListener(name,schedule));
   window.addEventListener('relphi:sky-aspect-multiselect-changed',handleLegacyAspectPass);
   window.addEventListener('storage',event=>{if(!event.key||event.key==='relphiSkyChartB')schedule()});
   new MutationObserver(schedule).observe(document.documentElement,{attributes:true,attributeFilter:['data-sky-b-present','data-sky-b-editing']});

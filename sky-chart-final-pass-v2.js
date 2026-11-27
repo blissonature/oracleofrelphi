@@ -509,6 +509,7 @@
     const enteringLearn=learn&&bar.dataset.learnFocus!=='true';
     bar.dataset.learnFocus=String(learn);
     for(const selector of ['[data-filter="placement"]','[data-filter="houseB"]','[data-house-system-filter]']){const label=bar.querySelector(selector)?.closest('label');if(label)label.hidden=learn;}
+    for(const name of ['aspect','houseA','sign']){const label=bar.querySelector('[data-filter="'+name+'"]')?.closest('label');if(label)label.hidden=true;}
     if(enteringLearn){
       filters.aspect='all';filters.houseA='all';filters.sign='all';
       ['aspect','houseA','sign'].forEach(name=>{
@@ -611,14 +612,14 @@
     });
     document.querySelectorAll('.sky-foundation-relationship-row').forEach(row => {
       const label = String(row.getAttribute('aria-label') || '').toLowerCase();
-      const visible =
+      const visible = window.RelphiSkyStartupMode?.readMode?.()==='learn'|| (
         (filters.aspect === 'all' || label.includes(filters.aspect)) &&
         (filters.placement === 'all' || row.dataset.leftPlacement === filters.placement || row.dataset.rightPlacement === filters.placement) &&
         (filters.houseA === 'all' || (window.RelphiSkyStartupMode?.readMode?.()==='learn'
           ?[row.dataset.leftSign,row.dataset.rightSign].includes(String((Number(document.documentElement.dataset.skyLearnAscendant||0)+Number(filters.houseA)-1)%12))
           :row.dataset.leftHouse === filters.houseA)) &&
         (filters.houseB === 'all' || row.dataset.rightHouse === filters.houseB) &&
-        (filters.sign === 'all' || row.dataset.leftSign === filters.sign || row.dataset.rightSign === filters.sign);
+        (filters.sign === 'all' || row.dataset.leftSign === filters.sign || row.dataset.rightSign === filters.sign));
       row.classList.toggle('sky-chart-filter-hidden', !visible);
       (linesByIndex.get(String(row.dataset.relationIndex || '')) || [])
         .forEach(node => node.classList.toggle('sky-chart-filter-hidden', !visible));

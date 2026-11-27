@@ -370,12 +370,7 @@
     if (!bar) return false;
     const learn=window.RelphiSkyStartupMode?.readMode?.()==='learn';
     const simple=bar.querySelector('[data-filter="aspect"]')?.closest('label');
-    if(simple)simple.hidden=!learn;
-    if(learn){
-      const former=bar.querySelector('[data-aspect-filter="combined"]');
-      if(former){close(former);former.remove();}
-      return false;
-    }
+    if(simple)simple.hidden=true;
     let owner = bar.querySelector('[data-aspect-filter="combined"]');
     if (!owner) owner = createControl();
     if (!owner.isConnected) {
@@ -385,6 +380,7 @@
       else if (placements) placements.insertAdjacentElement('beforebegin', owner);
       else bar.prepend(owner);
     }
+    owner.querySelector('.sky-chart-aspect-filter-label').textContent=learn?'Aspects by Sign':'Aspects';
     bar.dataset.multiselectAspectFilters = 'true';
     if (!popover()?.querySelector('[data-aspect-list]')) renderControl();
     return true;

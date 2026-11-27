@@ -52,7 +52,7 @@ function syncChecks(){
 function apply(){
   queued=false;
   const all=selected.size===12;
-  document.querySelectorAll('.sky-foundation-relationship-row[data-relation-index]').forEach(row=>{
+  document.querySelectorAll('.sky-foundation-relationship-row[data-relation-index], [data-layer="aspects"] > .sky-foundation-aspect[data-learn-relation="true"]').forEach(row=>{
     const match=all||selected.has(String(row.dataset.leftSign))||selected.has(String(row.dataset.rightSign));
     row.classList.toggle('sky-chart-sign-filter-hidden',!match);
   });
