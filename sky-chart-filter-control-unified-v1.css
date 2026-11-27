@@ -1,4 +1,5 @@
 /* One visual system for every relationship-filter heading and closed control. */
+:root{--sky-menu-check-width:40px}
 :is(#skyFoundationFocus,#skyFoundationRelationships,.sky-vocab-panel){
   --sky-filter-label-color:#4e463f;
   --sky-filter-control-color:#191613;

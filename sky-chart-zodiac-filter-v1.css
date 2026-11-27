@@ -10,7 +10,7 @@
 .sky-chart-zodiac-filter-actions button{min-height:26px;margin:0;padding:4px 7px;border:1px solid rgba(31,27,24,.25);border-radius:6px;background:#fff;color:#29231e;font:800 .58rem/1 system-ui,sans-serif;cursor:pointer}
 .sky-chart-zodiac-filter-actions button:hover{background:#f7f2ea}
 .sky-chart-zodiac-filter-actions button:focus-visible{outline:2px solid #625a52;outline-offset:1px}
-.sky-chart-zodiac-filter-row{display:grid;grid-template-columns:minmax(0,1fr) 40px;align-items:center;min-height:42px;border-top:1px solid rgba(31,27,24,.075);color:#29231e;cursor:pointer}
+.sky-chart-zodiac-filter-row{display:grid;grid-template-columns:minmax(0,1fr) var(--sky-menu-check-width);align-items:center;min-height:42px;border-top:1px solid rgba(31,27,24,.075);color:#29231e;cursor:pointer}
 .sky-chart-zodiac-filter-row:first-of-type{border-top:0}
 .sky-chart-zodiac-filter-row:hover{background:#f4efe8}
 .sky-chart-zodiac-filter-name{display:flex;align-items:center;justify-content:flex-start;gap:9px;min-width:0;padding:7px 10px;font:750 .67rem/1.15 system-ui,sans-serif;text-align:left}

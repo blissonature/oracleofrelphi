@@ -17,10 +17,10 @@
 .sky-chart-aspect-filter-popover[hidden]{display:none!important}
 .sky-chart-aspect-filter-popover.is-portaled{position:fixed;z-index:10000;right:auto;bottom:auto;margin:0;transform:none;isolation:isolate;width:min(400px,calc(100vw - 20px))!important;min-width:min(400px,calc(100vw - 20px))!important;max-width:min(400px,calc(100vw - 20px))!important;left:var(--sky-aspect-popover-left,10px)!important;top:var(--sky-aspect-popover-top,10px)!important;max-height:var(--sky-aspect-popover-max-height,min(520px,78vh))!important}
 .sky-chart-aspect-list{overflow:hidden;border:1px solid rgba(31,27,24,.17);border-radius:9px;background:#fff}
-.sky-chart-aspect-list-header,.sky-chart-aspect-list-item{display:grid;grid-template-columns:minmax(0,1fr) 148px;align-items:center}
+.sky-chart-aspect-list-header,.sky-chart-aspect-list-item{display:grid;grid-template-columns:minmax(0,1fr) var(--sky-aspect-scope-width,148px);align-items:center}
 .sky-chart-aspect-list-header{position:sticky;z-index:2;top:-7px;min-height:31px;border-bottom:1px solid rgba(31,27,24,.16);background:#e9e3da;color:#29231e;font:900 .61rem/1 system-ui,sans-serif}
 .sky-chart-aspect-list-header>strong{padding:7px 10px;text-align:left}
-.sky-chart-aspect-list-header-choices,.sky-chart-aspect-list-choices{display:grid;grid-template-columns:repeat(4,37px);align-self:stretch;border-left:1px solid rgba(31,27,24,.1)}
+.sky-chart-aspect-list-header-choices,.sky-chart-aspect-list-choices{display:grid;grid-template-columns:repeat(var(--sky-aspect-scope-count,4),var(--sky-aspect-check-width,37px));align-self:stretch;border-left:1px solid rgba(31,27,24,.1)}
 .sky-chart-aspect-list-header-choices>span{display:flex;align-items:center;justify-content:center;min-width:0;border-left:1px solid rgba(31,27,24,.08);white-space:nowrap;font:900 .55rem/1 system-ui,sans-serif}
 .sky-chart-aspect-list-header-choices>span:first-child{border-left:0;color:#514a44;background:rgba(31,27,24,.025)}
 .sky-chart-aspect-list-header-choices>span:nth-child(2){color:#a21b18;background:rgba(201,33,30,.035)}
@@ -50,8 +50,7 @@
 .sky-foundation-row[data-angle-placement]{background:rgba(31,27,24,.018)}
 @media(max-width:410px){
   .sky-chart-aspect-filter-popover,.sky-chart-aspect-filter-popover.is-portaled{width:min(374px,calc(100vw - 16px))!important;min-width:min(374px,calc(100vw - 16px))!important;max-width:min(374px,calc(100vw - 16px))!important}
-  .sky-chart-aspect-list-header,.sky-chart-aspect-list-item{grid-template-columns:minmax(0,1fr) 136px}
-  .sky-chart-aspect-list-header-choices,.sky-chart-aspect-list-choices{grid-template-columns:repeat(4,34px)}
+   .sky-chart-aspect-list{--sky-aspect-scope-width:136px;--sky-aspect-check-width:34px}
   .sky-chart-aspect-list-header-choices>span{font-size:.52rem}
 }
 @media(max-width:620px){
@@ -59,28 +58,30 @@
   .sky-chart-aspect-filter{grid-column:1/-1!important;width:100%!important}
 }
 
-html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]) .sky-chart-aspect-list-header,
-html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]) .sky-chart-aspect-list-item{
+html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]):not([data-sky-last-mode="learn"]) .sky-chart-aspect-list-header,
+html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]):not([data-sky-last-mode="learn"]) .sky-chart-aspect-list-item{
   grid-template-columns:minmax(0,1fr) 74px;
 }
-html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]) .sky-chart-aspect-list-header-choices,
-html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]) .sky-chart-aspect-list-choices{
+html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]):not([data-sky-last-mode="learn"]) .sky-chart-aspect-list-header-choices,
+html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]):not([data-sky-last-mode="learn"]) .sky-chart-aspect-list-choices{
   grid-template-columns:repeat(2,37px);
 }
 @media(max-width:620px){
-  html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]) .sky-chart-aspect-list-header,
-  html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]) .sky-chart-aspect-list-item{
+  html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]):not([data-sky-last-mode="learn"]) .sky-chart-aspect-list-header,
+  html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]):not([data-sky-last-mode="learn"]) .sky-chart-aspect-list-item{
     grid-template-columns:minmax(0,1fr) 68px;
   }
-  html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]) .sky-chart-aspect-list-header-choices,
-  html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]) .sky-chart-aspect-list-choices{
+  html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]):not([data-sky-last-mode="learn"]) .sky-chart-aspect-list-header-choices,
+  html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]):not([data-sky-last-mode="learn"]) .sky-chart-aspect-list-choices{
     grid-template-columns:repeat(2,34px);
   }
 }
 
+/* The one-column Learn list shares the Zodiac checkbox track. */
+.sky-chart-aspect-list[data-learn-matrix]{--sky-aspect-scope-width:var(--sky-menu-check-width);--sky-aspect-scope-count:1;--sky-aspect-check-width:var(--sky-menu-check-width)}
 /* By Sign sits between aspect names and unchanged scope checkbox columns. */
-.sky-chart-aspect-matrix-list .sky-chart-aspect-list-header,
-.sky-chart-aspect-matrix-list .sky-chart-aspect-list-item{
+.sky-chart-aspect-matrix-list:not([data-learn-matrix]) .sky-chart-aspect-list-header,
+.sky-chart-aspect-matrix-list:not([data-learn-matrix]) .sky-chart-aspect-list-item{
   grid-template-columns:minmax(105px,1fr) 62px 148px!important;
 }
 .sky-chart-aspect-matrix-list .sky-chart-by-sign-heading{
@@ -91,10 +92,10 @@ html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]) .sky-chart-asp
   height:100%;min-height:34px;box-sizing:border-box;
   border-left:1px solid rgba(31,27,24,.07);
 }
-.sky-chart-aspect-matrix-list .sky-chart-aspect-list-choices{
+.sky-chart-aspect-matrix-list:not([data-learn-matrix]) .sky-chart-aspect-list-choices{
   grid-column:3;
 }
-.sky-chart-aspect-matrix-list .sky-chart-aspect-list-item:not(:has(.sky-chart-by-sign-choice))::before{
+.sky-chart-aspect-matrix-list:not([data-learn-matrix]) .sky-chart-aspect-list-item:not(:has(.sky-chart-by-sign-choice))::before{
   content:'';grid-column:2;grid-row:1;min-width:0;
 }
 .sky-by-sign-label{
@@ -102,18 +103,18 @@ html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]) .sky-chart-asp
   color:inherit;opacity:.75;
 }
 @media(max-width:410px){
- .sky-chart-aspect-matrix-list .sky-chart-aspect-list-header,
- .sky-chart-aspect-matrix-list .sky-chart-aspect-list-item{
+ .sky-chart-aspect-matrix-list:not([data-learn-matrix]) .sky-chart-aspect-list-header,
+ .sky-chart-aspect-matrix-list:not([data-learn-matrix]) .sky-chart-aspect-list-item{
     grid-template-columns:minmax(88px,1fr) 51px 136px!important;
  }
 }
-html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]) .sky-chart-aspect-matrix-list .sky-chart-aspect-list-header,
-html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]) .sky-chart-aspect-matrix-list .sky-chart-aspect-list-item{
+html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]) .sky-chart-aspect-matrix-list:not([data-learn-matrix]) .sky-chart-aspect-list-header,
+html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]) .sky-chart-aspect-matrix-list:not([data-learn-matrix]) .sky-chart-aspect-list-item{
   grid-template-columns:minmax(105px,1fr) 62px 74px!important;
 }
 @media(max-width:410px){
- html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]) .sky-chart-aspect-matrix-list .sky-chart-aspect-list-header,
- html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]) .sky-chart-aspect-matrix-list .sky-chart-aspect-list-item{
+ html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]) .sky-chart-aspect-matrix-list:not([data-learn-matrix]) .sky-chart-aspect-list-header,
+ html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]) .sky-chart-aspect-matrix-list:not([data-learn-matrix]) .sky-chart-aspect-list-item{
   grid-template-columns:minmax(88px,1fr) 51px 68px!important;
  }
 }

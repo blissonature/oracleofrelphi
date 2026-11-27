@@ -134,6 +134,7 @@
     const list = document.createElement('div');
     list.className = 'sky-chart-house-list';
     list.dataset.houseList = 'combined';
+    list.dataset.houseScopeCount = String(activeKinds().length);
     const header = document.createElement('div');
     header.className = 'sky-chart-house-list-header';
     header.innerHTML = learn()?'<strong>House</strong><span>Show</span>':bActive() ? '<strong>House</strong><span>All</span><span>A</span><span>B</span>' : '<strong>House</strong><span>All</span><span>A</span>';

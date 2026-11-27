@@ -15,7 +15,10 @@
 .sky-chart-house-filter-popover[hidden]{display:none!important}
 .sky-chart-house-filter-popover.is-portaled{position:fixed;z-index:10000;right:auto;bottom:auto;margin:0;transform:none;isolation:isolate}
 .sky-chart-house-list{overflow:hidden;border:1px solid rgba(31,27,24,.17);border-radius:10px;background:#fff}
-.sky-chart-house-list-header,.sky-chart-house-list-item{display:grid;grid-template-columns:minmax(0,1fr) repeat(3,40px);align-items:center}
+.sky-chart-house-list{--sky-house-scope-count:3;--sky-house-check-width:var(--sky-menu-check-width)}
+.sky-chart-house-list[data-house-scope-count="1"]{--sky-house-scope-count:1}
+.sky-chart-house-list[data-house-scope-count="2"]{--sky-house-scope-count:2}
+.sky-chart-house-list-header,.sky-chart-house-list-item{display:grid;grid-template-columns:minmax(0,1fr) repeat(var(--sky-house-scope-count),var(--sky-house-check-width));align-items:center}
 .sky-chart-house-list-header{position:sticky;top:-10px;z-index:2;min-height:34px;border-bottom:1px solid rgba(31,27,24,.16);background:#e9e3da;color:#29231e;font:900 .61rem/1 system-ui,sans-serif;text-align:center}
 .sky-chart-house-list-header strong{padding:7px 10px;text-align:left}
 .sky-chart-house-list-header span{align-self:stretch;display:flex;align-items:center;justify-content:center;border-left:1px solid rgba(31,27,24,.1)}
@@ -44,14 +47,9 @@
 @media(max-width:620px){
   .sky-chart-filter-bar[data-multiselect-placement-filters="true"][data-multiselect-house-filters="true"]{grid-template-columns:repeat(2,minmax(0,1fr))}
   .sky-chart-filter-bar[data-multiselect-house-filters="true"]>.sky-chart-house-filter{grid-column:1/-1!important}
-  .sky-chart-house-list-header,.sky-chart-house-list-item{grid-template-columns:minmax(0,1fr) repeat(3,38px)}
+  .sky-chart-house-list:not([data-house-scope-count="1"]){--sky-house-check-width:38px}
   .sky-chart-house-list-label{gap:6px;padding:7px 8px;font-size:.63rem;overflow:visible}
   .sky-chart-house-menu-description{white-space:normal;line-height:1.12}
   .sky-chart-house-list-item-house,.sky-chart-house-list-item-house .sky-chart-house-choice{min-height:43px}
 }
-html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]) .sky-chart-house-list-header,
-html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]) .sky-chart-house-list-item{grid-template-columns:minmax(0,1fr) repeat(2,40px)}
-@media(max-width:620px){
-  html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]) .sky-chart-house-list-header,
-  html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]) .sky-chart-house-list-item{grid-template-columns:minmax(0,1fr) repeat(2,38px)}
-}
+

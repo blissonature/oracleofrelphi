@@ -117,6 +117,22 @@ try{
    await page.locator('#skyChartZodiacFilterMenu').waitFor({state:'visible'});
    assert.equal(await page.locator('#skyChartZodiacFilterMenu input[type=checkbox]').count(),12);
    await page.keyboard.press('Escape');
+   for(const [toggle,popover,rowSelector] of [
+    ['[data-aspect-filter-toggle]','.sky-chart-aspect-filter-popover','.sky-chart-aspect-list-item'],
+    ['[data-house-filter-toggle]','.sky-chart-house-filter-popover','.sky-chart-house-list-item']
+   ]){
+    await focus.locator(toggle).click();
+    const popup=page.locator(popover);
+    await popup.waitFor({state:'visible'});
+    const layout=await popup.locator(rowSelector).evaluateAll(rows=>rows.map(row=>{
+     const input=row.querySelector('input[type=checkbox]'),r=row.getBoundingClientRect(),check=input.getBoundingClientRect(),tracks=getComputedStyle(row).gridTemplateColumns.split(' ');
+     return {count:row.querySelectorAll('input[type=checkbox]').length,tracks,rightGap:r.right-check.right,checkboxCenter:check.x+check.width/2,right:r.right};
+    }));
+    console.log('LEARN MENU COLUMNS',viewport.width,popover,JSON.stringify(layout));
+    assert.ok(layout.length>0&&layout.every(r=>r.count===1&&r.tracks.length===2&&Math.abs(parseFloat(r.tracks[1])-40)<1&&Math.abs(r.right-r.checkboxCenter-20)<2),'One 40px checkbox column must reach the row right edge');
+    await page.screenshot({path:'sky-remote-'+(toggle.includes('aspect')?'aspect':'house')+'-menu-'+viewport.width+'.png'});
+    await page.keyboard.press('Escape');
+   }
    await page.screenshot({path:'sky-remote-learn-'+viewport.width+'.png',fullPage:true});
    console.log('LEARN TOOLBAR',viewport.width,JSON.stringify(header));
   }catch(e){failed=true;console.error('LEARN '+viewport.width+' FAILED '+e.message)}
