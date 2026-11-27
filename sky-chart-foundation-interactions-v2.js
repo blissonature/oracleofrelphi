@@ -109,16 +109,27 @@
     if(!active){if(core)core.hidden=true;return}
     if(!core){
       core=document.createElement('section');core.id='skyFoundationLearnCore';core.className='sky-foundation-panel';core.setAttribute('aria-label','Sky Card Core');
-      core.innerHTML='<header><h2>Sky Card Core</h2></header><div data-core-prompt>Select a sign or house on the wheel to explore its twelve house manifestations.</div><div data-core-content hidden><div class="sky-learn-core-identity"><div><h3 data-core-title></h3><p data-core-qualities></p><p data-core-description></p></div><a data-core-card><img alt=""><span></span></a></div><div class="sky-learn-core-houses" aria-label="Explore houses">'+Array.from({length:12},(_,i)=>'<button type="button" data-core-house="'+(i+1)+'" aria-pressed="false" style="--ruler-house-color:'+window.RelphiSkyWheelSpec.COLORS[i]+'"><span class="sky-card-ruler-rail sky-card-ruler-rail-sign" aria-hidden="true"></span><span>'+(i+1)+'</span><span class="sky-card-ruler-rail sky-card-ruler-rail-house" aria-hidden="true"></span></button>').join('')+'</div><div class="sky-learn-core-nav"><button type="button" data-core-step="-1">Previous House</button><button type="button" data-core-step="1">Next House</button></div></div>';
+      core.innerHTML='<header><h2>Sky Card Core</h2></header><div class="sky-card-hits-structure-tabs sky-core-tabs" role="tablist" aria-label="Core views"><button type="button" class="sky-card-hits-structure-tab" data-core-tab="houses" role="tab" aria-selected="true">Houses</button><button type="button" class="sky-card-hits-structure-tab" data-core-tab="rulers" role="tab" aria-selected="false">Rulers</button><button type="button" class="sky-card-hits-structure-tab" data-core-tab="vocab" role="tab" aria-selected="false">Vocab</button></div><div data-core-structure class="sky-card-hits-structure"></div><div data-core-prompt>Select a sign or house on the wheel to explore its twelve house manifestations.</div><div data-core-content hidden><div class="sky-learn-core-identity"><div><h3 data-core-title></h3><p data-core-qualities></p><p data-core-description></p></div><a data-core-card><img alt=""><span></span></a></div><div class="sky-learn-core-houses" aria-label="Explore houses">'+Array.from({length:12},(_,i)=>'<button type="button" data-core-house="'+(i+1)+'" aria-pressed="false" style="--ruler-house-color:'+window.RelphiSkyWheelSpec.COLORS[i]+'"><span class="sky-card-ruler-rail sky-card-ruler-rail-sign" aria-hidden="true"></span><span data-core-house-number="'+(i+1)+'">'+(i+1)+'</span><span class="sky-card-ruler-rail sky-card-ruler-rail-house" aria-hidden="true"></span></button>').join('')+'</div><div class="sky-learn-core-nav"><button type="button" data-core-step="-1">Previous House</button><button type="button" data-core-step="1">Next House</button></div></div>';
       mount.after(core);
+      core.querySelectorAll('[data-core-house-number]').forEach(host=>window.RelphiHouseMedallion?.create?.(Number(host.dataset.coreHouseNumber),'',false,host));
     }
     core.hidden=false;
+    const tab=core.dataset.coreTab||'houses',asc=learnAsc(),ruler=state?.kind==='ruler'?state.value:'';
+    const structure=core.querySelector('[data-core-structure]'),structureKey=[tab,asc,ruler].join('|');
+    if(structure.dataset.structureKey!==structureKey){
+      structure.dataset.structureKey=structureKey;
+      core.querySelectorAll('[data-core-tab]').forEach(button=>button.setAttribute('aria-selected',String(button.dataset.coreTab===tab)));
+      if(tab==='vocab')window.RelphiSkyVocab?.renderTemplate?.(structure,asc);
+      else window.RelphiSkyCardHitsStructure?.renderTemplate?.(structure,asc,ruler,tab);
+    }
     const index=learnSignForState(state),ctx=Number.isInteger(index)?learnSignContext(index):null;
     core.querySelector('[data-core-prompt]').hidden=!!ctx;core.querySelector('[data-core-content]').hidden=!ctx;
     if(!ctx){delete core.dataset.coreSign;delete core.dataset.coreHouse;return}
     if(core.dataset.coreSign===String(index)&&core.dataset.coreHouse===String(ctx.house))return;
     core.dataset.coreSign=String(index);core.dataset.coreHouse=String(ctx.house);
-    core.querySelector('[data-core-title]').textContent=ctx.name+' in House '+ctx.house;
+    const title=core.querySelector('[data-core-title]'),shared=window.RelphiSkyCardHitsStructure;
+    title.innerHTML=(shared?.glyphMarkup(index)||'')+' '+ctx.name+' in House '+(shared?.houseMedallionMarkup(ctx.house)||ctx.house);
+    shared?.hydrateCanonicalGlyphs(title);shared?.hydrateHouseMedallions(title);
     core.querySelector('[data-core-qualities]').textContent=ctx.ruler+' · '+ctx.structure+' · '+ctx.polarity;
     core.querySelector('[data-core-description]').textContent=ctx.description;
     const link=core.querySelector('[data-core-card]');link.hidden=!ctx.card;
@@ -342,6 +353,7 @@
     if(!state)return true;
     const slots=rowSlots(row);
     if(state.kind==='aspect')return relationshipIdentity(row)===String(state.value);
+    if(state.kind==='ruler'){const signs=window.RelphiSkyCardHitsStructure?.templateRulerSigns(state.value)||[];return signs.includes(Number(row.dataset.leftSign))||signs.includes(Number(row.dataset.rightSign))}
     if(state.kind==='sign')return Number(row.dataset.leftSign)===state.value||Number(row.dataset.rightSign)===state.value;
     if(state.kind==='house'&&window.RelphiSkyStartupMode?.readMode?.()==='learn'){
       const asc=Number(document.documentElement.dataset.skyLearnAscendant||0);
@@ -430,6 +442,7 @@
       });
     }
     if(window.RelphiSkyStartupMode?.readMode?.()==='learn'){
+      if(state?.kind==='ruler'){signs.clear();(window.RelphiSkyCardHitsStructure?.templateRulerSigns(state.value)||[]).forEach(sign=>signs.add(sign));}
       houses.clear();
       signs.forEach(sign=>housesForSign(current.cuspsA,sign).forEach(house=>houses.add(`A:${house}`)));
     }
@@ -784,7 +797,6 @@
     wheelOnlyExternal=false;
     rowLockedState=null;rowHoverState=null;
     const next=specFrom(node);
-    if(next?.kind==='house'&&window.RelphiSkyStartupMode?.readMode?.()==='learn'&&Number.isInteger(learnSignForState(lockedState))){selectLearnHouse(next.value);return;}
     if(next?.kind==='aspect'&&window.RelphiSkyStartupMode?.readMode?.()==='learn')next.learnAnchor=learnSignForState(lockedState);
     if(same(lockedState,next)){lockedState=null;selectionOrigin=null}
     else{lockedState=next;selectionOrigin=originFromNode(node,next)}
@@ -931,7 +943,15 @@
     root.addEventListener('click',event=>{
       wheelOnlyExternal=false;
       const coreButton=event.target.closest?.('#skyFoundationLearnCore button[data-core-house],#skyFoundationLearnCore button[data-core-step]');if(coreButton){browseLearnHouse(coreButton);return}
-      if(event.target.closest?.('#skyFoundationLearnCore'))return;
+      const core=event.target.closest?.('#skyFoundationLearnCore');
+      if(core){
+        const tab=event.target.closest('[data-core-tab]'),ruler=event.target.closest('[data-core-ruler]'),sign=event.target.closest('[data-core-select-sign]'),clear=event.target.closest('[data-core-clear-ruler]');
+        if(tab){core.dataset.coreTab=tab.dataset.coreTab;updateLearnCore(lockedState);return}
+        if(ruler||sign||clear){const next=clear?null:ruler?{kind:'ruler',sky:null,value:ruler.dataset.coreRuler}:{kind:'sign',sky:null,value:Number(sign.dataset.coreSelectSign)};
+          lockedState=same(lockedState,next)?null:next;hoverState=null;rowLockedState=null;rowHoverState=null;selectionOrigin=lockedState?{source:'Sky Card Core',...lockedState}:null;
+          clearWheelTargets();window.RelphiInlineRelationship?.collapse?.();applyState();}
+        return;
+      }
       const row=event.target.closest?.('.sky-foundation-relationship-row[data-relation-index]');
       if(row)return;
       const node=interactive(event);if(node){event.preventDefault();toggleInteractiveNode(node);return}if(clearableWhitespace(event))clearFromWhitespace()

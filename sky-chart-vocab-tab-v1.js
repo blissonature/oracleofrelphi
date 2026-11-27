@@ -1894,7 +1894,13 @@ document.addEventListener('keydown',event=>{if(event.key==='Escape')closeDropdow
 window.addEventListener('resize',scheduleDropdownPosition);
 window.addEventListener('scroll',scheduleDropdownPosition,true);
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)schedule()});
-window.RelphiSkyVocab=Object.freeze({render:schedule,activate,getDisplay:displayState,getFilters:filterState,getScopeFilters:scopeFilterState,getWheelFilters:()=>wheelFilterState,getWheelFilterSpec:()=>wheelFilterSpec,
+function renderTemplate(target,asc){
+  const content=document.createElement('div');content.className='sky-vocab-paragraph';
+  for(let i=0;i<12;i++){const sign=(asc+i)%12,line=document.createElement('div');line.append(token(signInfo(sign),'sign',true),token(houseInfo(i+1),'house',false,' in '));content.appendChild(line)}
+  target.replaceChildren(content);
+  target.onclick=progressive;target.onkeydown=event=>{if(['Enter',' '].includes(event.key))progressive(event)};
+}
+window.RelphiSkyVocab=Object.freeze({renderTemplate,render:schedule,activate,getDisplay:displayState,getFilters:filterState,getScopeFilters:scopeFilterState,getWheelFilters:()=>wheelFilterState,getWheelFilterSpec:()=>wheelFilterSpec,
   // Shared source of truth for wheel sector descriptions.
   describeFocus(kind,value){
     if(kind==='aspect'){const id=String(value||'');return {name:ASPECT_NAMES[id]||id,description:ASPECT_REFERENTS[id]||''}}

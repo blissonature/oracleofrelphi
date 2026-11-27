@@ -685,6 +685,11 @@ html[data-sky-last-mode="learn"] #skyFoundationWheelMount{grid-area:wheel;min-he
 html[data-sky-last-mode="learn"] #skyFoundationRelationships{grid-area:relations;min-width:0}
 #skyFoundationLearnCore{grid-area:core;padding:14px;color:#332e2a}
 #skyFoundationLearnCore[hidden],#skyFoundationLearnCore [hidden]{display:none}
+#skyFoundationLearnCore .sky-core-tabs{grid-template-columns:repeat(3,minmax(0,1fr));margin-bottom:8px}
+#skyFoundationLearnCore [data-core-structure]{padding:0;gap:8px;margin-bottom:12px}
+#skyFoundationLearnCore .sky-core-house-row{width:100%;text-align:left;background:#fff;border:1px solid rgba(31,27,24,.13);border-radius:7px;cursor:pointer;padding:4px 8px}
+#skyFoundationLearnCore .sky-core-house-row:hover{border-color:#655d56}
+#skyFoundationLearnCore [data-core-title]{display:flex;align-items:center;gap:4px;flex-wrap:wrap}
 #skyFoundationLearnCore h2{margin:0 0 12px;font-size:1.1rem}
 #skyFoundationLearnCore h3{margin:0 0 6px;font-size:1.05rem}
 .sky-learn-core-identity{display:grid;grid-template-columns:minmax(0,1fr) minmax(65px,24%);gap:12px;align-items:start}
