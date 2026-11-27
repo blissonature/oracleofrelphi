@@ -109,9 +109,8 @@
     if(!active){if(core)core.hidden=true;return}
     if(!core){
       core=document.createElement('section');core.id='skyFoundationLearnCore';core.className='sky-foundation-panel';core.setAttribute('aria-label','Sky Card Core');
-      core.innerHTML='<header><h2>Sky Card Core</h2></header><div class="sky-card-hits-structure-tabs sky-core-tabs" role="tablist" aria-label="Core views"><button type="button" class="sky-card-hits-structure-tab" data-core-tab="houses" role="tab" aria-selected="true">Houses</button><button type="button" class="sky-card-hits-structure-tab" data-core-tab="signs" role="tab" aria-selected="false">Signs</button><button type="button" class="sky-card-hits-structure-tab" data-core-tab="rulers" role="tab" aria-selected="false">Rulers</button><button type="button" class="sky-card-hits-structure-tab" data-core-tab="vocab" role="tab" aria-selected="false">Vocab</button></div><div data-core-structure class="sky-card-hits-structure"></div><div data-core-prompt>Select a sign or house on the wheel to explore its twelve house manifestations.</div><div data-core-content hidden><div class="sky-learn-core-identity"><div><h3 data-core-title></h3><p data-core-qualities></p><p data-core-description></p></div><a data-core-card><img alt=""><span></span></a></div><div class="sky-learn-core-houses" aria-label="Explore houses">'+Array.from({length:12},(_,i)=>'<button type="button" data-core-house="'+(i+1)+'" aria-pressed="false" style="--ruler-house-color:'+window.RelphiSkyWheelSpec.COLORS[i]+'"><span class="sky-card-ruler-rail sky-card-ruler-rail-sign" aria-hidden="true"></span><span data-core-house-number="'+(i+1)+'">'+(i+1)+'</span><span class="sky-card-ruler-rail sky-card-ruler-rail-house" aria-hidden="true"></span></button>').join('')+'</div></div>';
+      core.innerHTML='<header><h2>Sky Card Core</h2></header><div class="sky-card-hits-structure-tabs sky-core-tabs" role="tablist" aria-label="Core views"><button type="button" class="sky-card-hits-structure-tab" data-core-tab="houses" role="tab" aria-selected="true">Houses</button><button type="button" class="sky-card-hits-structure-tab" data-core-tab="signs" role="tab" aria-selected="false">Signs</button><button type="button" class="sky-card-hits-structure-tab" data-core-tab="rulers" role="tab" aria-selected="false">Rulers</button><button type="button" class="sky-card-hits-structure-tab" data-core-tab="vocab" role="tab" aria-selected="false">Vocab</button></div><div data-core-structure class="sky-card-hits-structure"></div><div data-core-prompt>Select a sign or house on the wheel to explore its twelve house manifestations.</div><div data-core-content hidden><div class="sky-learn-core-identity"><div><h3 data-core-title></h3><p data-core-qualities></p><p data-core-description></p></div><a data-core-card><img alt=""><span></span></a></div></div>';
       mount.after(core);
-      core.querySelectorAll('[data-core-house-number]').forEach(host=>window.RelphiHouseMedallion?.create?.(Number(host.dataset.coreHouseNumber),'',false,host));
     }
     core.hidden=false;
     const tab=core.dataset.coreTab||'houses',asc=learnAsc(),ruler=state?.kind==='ruler'?state.value:'';
@@ -142,22 +141,6 @@
     core.querySelector('[data-core-description]').textContent=ctx.description;
     const link=core.querySelector('[data-core-card]');link.hidden=!ctx.card;
     if(ctx.card){link.dataset.inlineLedger=ctx.card.id;link.href='tarot.html?card='+encodeURIComponent(ctx.card.id);link.querySelector('img').src=ctx.card.image;link.querySelector('img').alt=ctx.card.title;link.querySelector('span').textContent=ctx.card.title}
-    core.querySelectorAll('[data-core-house]').forEach(button=>{button.style.setProperty('--ruler-sign-color',window.RelphiSkyWheelSpec.COLORS[index]);button.setAttribute('aria-pressed',String(Number(button.dataset.coreHouse)===ctx.house))});
-  }
-  function selectLearnHouse(house){
-    const index=learnSignForState(lockedState);if(!Number.isInteger(index)||!Number.isInteger(house)||house<1||house>12)return false;
-    lockedState={kind:'sign',sky:null,value:index};hoverState=null;rowLockedState=null;rowHoverState=null;wheelOnlyExternal=false;
-    selectionOrigin={source:'Sky Card Core',kind:'sign',value:index};
-    clearWheelTargets();window.RelphiInlineRelationship?.collapse?.();
-    applyState();
-    if(!window.RelphiSkyStartupMode.setLearnAscendant((index-house+1+12)%12))applyState();
-    return true;
-  }
-  function browseLearnHouse(button){
-    const index=learnSignForState(lockedState);if(!Number.isInteger(index))return;
-    const old=learnSignContext(index);if(!old)return;
-    const house=Number(button.dataset.coreHouse);
-    selectLearnHouse(house);
   }
   function templateRelationships(){
     const aspectsByStep=['','semi-sextile','sextile','square','trine','quincunx','opposition'];
@@ -964,7 +947,6 @@
     },true);
     root.addEventListener('click',event=>{
       wheelOnlyExternal=false;
-      const coreButton=event.target.closest?.('#skyFoundationLearnCore button[data-core-house]');if(coreButton){browseLearnHouse(coreButton);return}
       const core=event.target.closest?.('#skyFoundationLearnCore');
       if(core){
         const tab=event.target.closest('[data-core-tab]'),ruler=event.target.closest('[data-core-ruler]'),sign=event.target.closest('[data-core-select-sign]'),clear=event.target.closest('[data-core-clear-ruler]');
