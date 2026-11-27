@@ -238,7 +238,7 @@
       const leftGlyph=glyphSlot('left',relation.left.entry.name),aspectGlyph=glyphSlot('aspect',relation.aspect.id),rightGlyph=glyphSlot('right',relation.right.entry.name),leftCopy=document.createElement('span'),rightCopy=document.createElement('span'),leftMeta=document.createElement('small'),rightMeta=document.createElement('small');
       leftCopy.className=rightCopy.className='sky-foundation-relationship-copy';
       leftCopy.append(document.createTextNode(relation.left.entry.name),leftMeta);rightCopy.append(document.createTextNode(relation.right.entry.name),rightMeta);
-      if(relation.learn){leftMeta.textContent='House '+learnHouses.left;rightMeta.textContent='House '+learnHouses.right}else{if(relation.left.house!=null)sourceHouseCoordinate(leftMeta,left.text,relation.left.house,'left-house');else leftMeta.textContent=left.text;if(relation.right.house!=null)sourceHouseCoordinate(rightMeta,right.text,relation.right.house,'right-house');else rightMeta.textContent=right.text;}
+      if(relation.learn){sourceHouseCoordinate(leftMeta,'House',learnHouses.left,'left-house');sourceHouseCoordinate(rightMeta,'House',learnHouses.right,'right-house')}else{if(relation.left.house!=null)sourceHouseCoordinate(leftMeta,left.text,relation.left.house,'left-house');else leftMeta.textContent=left.text;if(relation.right.house!=null)sourceHouseCoordinate(rightMeta,right.text,relation.right.house,'right-house');else rightMeta.textContent=right.text;}
       row.append(leftGlyph,leftCopy,aspectGlyph,rightGlyph,rightCopy);list.appendChild(row);
       const key=[row.dataset.leftPlacement,row.dataset.aspect,row.dataset.rightPlacement,row.getAttribute('aria-label')].join('|');if(key===selectedKey)row.setAttribute('aria-current','true');
     });
