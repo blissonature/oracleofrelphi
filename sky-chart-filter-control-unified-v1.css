@@ -16,7 +16,7 @@
 :is(#skyFoundationFocus,#skyFoundationRelationships,.sky-vocab-panel) .sky-chart-filter-bar>.sky-chart-house-filter{
   align-self:end!important;min-width:0!important;color:var(--sky-filter-label-color)!important;font:var(--sky-filter-label-font)!important
 }
-:is(#skyFoundationFocus,#skyFoundationRelationships,.sky-vocab-panel) .sky-chart-filter-bar>label{display:grid!important;grid-template-rows:auto var(--sky-filter-height)!important;gap:4px!important}
+:is(#skyFoundationFocus,#skyFoundationRelationships,.sky-vocab-panel) .sky-chart-filter-bar>label:not([hidden]){display:grid!important;grid-template-rows:auto var(--sky-filter-height)!important;gap:4px!important}
 :is(#skyFoundationFocus,#skyFoundationRelationships,.sky-vocab-panel) .sky-chart-aspect-filter-head,
 :is(#skyFoundationFocus,#skyFoundationRelationships,.sky-vocab-panel) .sky-chart-placement-filter-head,
 :is(#skyFoundationFocus,#skyFoundationRelationships,.sky-vocab-panel) .sky-chart-house-filter-head{

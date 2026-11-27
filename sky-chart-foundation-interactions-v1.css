@@ -693,7 +693,7 @@ html[data-sky-last-mode="learn"] #skyFoundationA,
 html[data-sky-last-mode="learn"] #skyFoundationB,
 html[data-sky-last-mode="learn"] .sky-one-click-outer{display:none}
 html[data-sky-last-mode="learn"] #skyFoundationRoot{grid-template-columns:minmax(0,1fr);grid-template-areas:"comparison"}
-html[data-sky-last-mode="learn"] #skyFoundationComparison{grid-column:1/-1;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);grid-template-areas:"focus focus" "wheel core" "relations core";grid-template-rows:auto auto 1fr;align-items:start;gap:12px}
+html[data-sky-last-mode="learn"] #skyFoundationComparison{grid-column:1/-1;display:grid;grid-template-columns:minmax(245px,1fr) minmax(0,1.5fr) minmax(275px,1.08fr);grid-template-areas:"focus focus focus" "core wheel relations";grid-template-rows:auto minmax(0,1fr);align-items:stretch;gap:10px;padding-bottom:10px}
 html[data-sky-last-mode="learn"] #skyFoundationFocus{grid-area:focus}
 html[data-sky-last-mode="learn"] #skyFoundationWheelMount{grid-area:wheel;min-height:0}
 html[data-sky-last-mode="learn"] #skyFoundationRelationships{grid-area:relations;min-width:0}
@@ -714,7 +714,31 @@ html[data-sky-last-mode="learn"] #skyFoundationRelationships{grid-area:relations
 .sky-learn-pair-reading{grid-column:1/-1;padding:4px 0;line-height:1.5;text-align:left}
 .sky-learn-pair-qualities{grid-column:1/-1;width:100%;font-size:.72rem;border-collapse:collapse;text-align:left}
 .sky-learn-pair-qualities th,.sky-learn-pair-qualities td{padding:4px;border-bottom:1px solid #ddd}
-@media(max-width:780px){html[data-sky-last-mode="learn"] #skyFoundationComparison{grid-template-columns:minmax(0,1fr);grid-template-areas:"focus" "wheel" "core" "relations";grid-template-rows:auto}}
+@media(min-width:1050px){
+  html[data-sky-last-mode="learn"] #skyFoundationComparison{--learn-workspace-height:clamp(340px,calc(100svh - 190px),780px);grid-template-rows:auto var(--learn-workspace-height)}
+  html[data-sky-last-mode="learn"] #skyFoundationFocus{grid-template-columns:auto auto minmax(0,1fr) auto;grid-template-areas:"heading heading heading heading" "modes asc filters entries";align-items:center;gap:4px 6px}
+  html[data-sky-last-mode="learn"] #skyFoundationFocus>.sky-foundation-focus-heading{grid-area:heading}
+  html[data-sky-last-mode="learn"] #skyFoundationFocus>.sky-sky-mode-selector{grid-area:modes;padding:5px 0 5px 10px}
+  html[data-sky-last-mode="learn"] #skyFoundationFocus>.sky-learn-ascendant{grid-area:asc;padding:5px 0}
+  html[data-sky-last-mode="learn"] #skyFoundationFocus>.sky-chart-filter-bar{grid-area:filters;background:transparent;padding:4px 0;align-items:end;grid-template-columns:repeat(3,minmax(0,1fr))}
+  html[data-sky-last-mode="learn"] #skyFoundationFocus>.sky-learn-sky-entry{grid-area:entries;justify-content:flex-end;padding:5px 10px 5px 0}
+  html[data-sky-last-mode="learn"] #skyFoundationLearnCore{min-height:0;overflow:auto;margin-left:10px}
+  html[data-sky-last-mode="learn"] #skyFoundationWheelMount{min-height:0;height:100%;padding:0;box-sizing:border-box;align-self:stretch}
+  html[data-sky-last-mode="learn"] #skyFoundationWheelMount > svg.sky-foundation-wheel{width:min(100%,var(--learn-workspace-height));max-height:100%;height:auto}
+  html[data-sky-last-mode="learn"] #skyFoundationRelationships{min-height:0;display:flex;flex-direction:column;overflow:hidden;margin-right:10px;border:1px solid rgba(31,27,24,.18);border-radius:16px}
+  html[data-sky-last-mode="learn"] #skyFoundationRelationshipList{flex:1 1 auto;min-height:0;max-height:none;grid-template-columns:minmax(0,1fr);grid-auto-rows:max-content;align-content:start;overflow:auto}
+  html[data-sky-last-mode="learn"] #skyFoundationRelationships .sky-foundation-relationships-heading{display:flex;flex-direction:column;align-items:stretch;gap:6px;padding:8px}
+  html[data-sky-last-mode="learn"] #skyFoundationRelationships .sky-relationship-heading-actions{grid-template-columns:minmax(0,1fr) auto auto;grid-template-rows:auto auto}
+  html[data-sky-last-mode="learn"] #skyFoundationRelationships .sky-relationship-sort-control{grid-column:1/3;grid-row:2}
+  html[data-sky-last-mode="learn"] #skyFoundationRelationships .sky-relationship-limit-control{grid-column:3;grid-row:2}
+  html[data-sky-last-mode="learn"] #skyFoundationRelationshipCount{grid-column:1;grid-row:1;justify-self:start;min-width:0}
+  html[data-sky-last-mode="learn"] #skyFoundationRelationships .sky-relationship-copy-button{grid-column:2;grid-row:1}
+  html[data-sky-last-mode="learn"] #skyFoundationRelationships #skyChartRelationshipsExport{grid-column:3;grid-row:1}
+  html[data-sky-last-mode="learn"] .sky-learn-core-identity{grid-template-columns:minmax(0,1fr) minmax(58px,28%);gap:8px}
+  html[data-sky-last-mode="learn"] .sky-learn-core-houses{grid-template-columns:repeat(4,minmax(0,1fr))}
+  html[data-sky-last-mode="learn"] .sky-learn-core-identity p{font-size:.86rem}
+}
+@media(max-width:1049px){html[data-sky-last-mode="learn"] #skyFoundationComparison{grid-template-columns:minmax(0,1fr);grid-template-areas:"focus" "wheel" "core" "relations";grid-template-rows:auto;align-items:start}}
 
 /* Learn uses the canonical Focus controls without Sky A/B-specific fields. */
 #skyFoundationFocus .sky-chart-filter-bar > label:has(> [data-filter="sign"]){display:none}
@@ -723,7 +747,7 @@ html[data-sky-last-mode="learn"] #skyFoundationRelationships{grid-area:relations
 #skyFoundationFocus .sky-chart-filter-bar[data-learn-focus="true"] > label:has(> [data-filter="houseB"]),
 #skyFoundationFocus .sky-chart-filter-bar[data-learn-focus="true"] > label:has(> [data-house-system-filter]){display:none}
 #skyFoundationFocus .sky-chart-filter-bar[data-learn-focus="true"] > label:has(> [data-filter="sign"]){display:grid}
-html[data-sky-last-mode="learn"] #skyFoundationWheelMount > svg.sky-foundation-wheel{max-height:clamp(230px,calc(100svh - 16rem),600px);width:min(100%,clamp(230px,calc(100svh - 16rem),600px));height:auto}
+@media(max-width:1049px){html[data-sky-last-mode="learn"] #skyFoundationWheelMount > svg.sky-foundation-wheel{max-height:clamp(230px,calc(100svh - 16rem),600px);width:min(100%,clamp(230px,calc(100svh - 16rem),600px));height:auto}}
 @media(max-width:620px){#skyFoundationFocus .sky-chart-filter-bar[data-learn-focus="true"]{grid-template-columns:repeat(2,minmax(0,1fr))}}
 
 #skyFoundationFocus .sky-learn-sky-entry{display:flex;justify-content:space-between;gap:8px;padding:5px 10px}

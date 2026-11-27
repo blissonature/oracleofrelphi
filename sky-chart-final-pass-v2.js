@@ -447,7 +447,7 @@
       modes = document.createElement('nav');
       modes.className = 'sky-sky-mode-selector';
       modes.setAttribute('aria-label', 'Sky Chart mode');
-      modes.innerHTML = '<button type="button" data-sky-experience="learn">Learn</button><button type="button" data-sky-experience="single">Discover</button><button type="button" data-sky-experience="comparison">Compare</button>';
+      modes.innerHTML = '<button type="button" data-sky-experience="learn">Learn</button><button type="button" data-sky-experience="single">Explore</button><button type="button" data-sky-experience="comparison">Compare</button>';
       focusPanel.querySelector(':scope > .sky-foundation-focus-heading')?.after(modes);
       modes.addEventListener('click', event => {
         const button = event.target.closest('[data-sky-experience]');
@@ -530,6 +530,7 @@
     const learn=window.RelphiSkyStartupMode?.readMode?.()==='learn';
     const enteringLearn=learn&&bar.dataset.learnFocus!=='true';
     bar.dataset.learnFocus=String(learn);
+    for(const selector of ['[data-filter="placement"]','[data-filter="houseB"]','[data-house-system-filter]']){const label=bar.querySelector(selector)?.closest('label');if(label)label.hidden=learn;}
     if(enteringLearn){
       filters.aspect='all';filters.houseA='all';filters.sign='all';
       ['aspect','houseA','sign'].forEach(name=>{
