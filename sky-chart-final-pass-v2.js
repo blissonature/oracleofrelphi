@@ -432,13 +432,13 @@
     }
 
     // The Focus header owns the three mutually exclusive experiences.
-    let modes = focusPanel.querySelector(':scope > .sky-sky-mode-selector');
+    let modes = focusHeading.querySelector(':scope > .sky-sky-mode-selector');
     if (!modes) {
       modes = document.createElement('nav');
       modes.className = 'sky-sky-mode-selector';
       modes.setAttribute('aria-label', 'Sky Chart mode');
       modes.innerHTML = '<button type="button" data-sky-experience="learn">Learn</button><button type="button" data-sky-experience="single">Explore</button><button type="button" data-sky-experience="comparison">Compare</button>';
-      focusPanel.querySelector(':scope > .sky-foundation-focus-heading')?.after(modes);
+      focusHeading.insertBefore(modes,focusHeading.querySelector('h2'));
       modes.addEventListener('click', event => {
         const button = event.target.closest('[data-sky-experience]');
         if (!button) return;
@@ -480,7 +480,7 @@
         return button;
       };
       ascendantControl.append(step(-1),select,step(1));
-      modes.after(ascendantControl);
+      focusHeading.after(ascendantControl);
     }
     const currentMode = window.RelphiSkyStartupMode?.readMode?.() || 'single';
     ascendantControl.hidden = currentMode !== 'learn';
