@@ -278,7 +278,8 @@ function mountLearnWheel(mount,chart){
   const from=Number(previous?.dataset.learnAscendant),to=Number(chart.dataset.learnAscendant);
   let residual=0;
   if(oldLayer){
-    const transform=getComputedStyle(oldLayer).transform;
+    const oldShape=oldLayer.querySelector('.sky-foundation-house-sector');
+    const transform=oldShape?getComputedStyle(oldShape).transform:'none';
     if(transform&&transform!=='none'){const matrix=new DOMMatrixReadOnly(transform);residual=Math.atan2(matrix.b,matrix.a)*180/Math.PI}
   }
   if(previous?.dataset.skyExperience==='learn'&&oldLayer&&newLayer){
@@ -292,14 +293,24 @@ function mountLearnWheel(mount,chart){
   const offset=((from*30+residual-to*30+180)%360+360)%360-180;
   if(Math.abs(offset)<.01)return;
   const c=center();
-  newLayer.style.transformOrigin=c.x+'px '+c.y+'px';
+  // Rotate the sector/divider geometry only. Numerals travel on the same
+  // arc by translation alone. No ancestor of a numeral is rotated.
+  const numbers=[...newLayer.querySelectorAll('.sky-foundation-house-number')];
+  // Keep paths direct children of the house layer for the shared interaction
+  // annotator: animate each existing shape instead of introducing a wrapper.
   const timing={duration:700,easing:'cubic-bezier(.22,.61,.36,1)',iterations:1};
-  const ringAnimation=newLayer.animate([{transform:'rotate('+offset+'deg)'},{transform:'rotate(0deg)'}],timing);
-  newLayer.querySelectorAll('.sky-foundation-house-number').forEach(number=>{
-    number.style.transformOrigin=number.getAttribute('x')+'px '+number.getAttribute('y')+'px';
-    const upright=number.animate([{transform:'rotate('+(-offset)+'deg)'},{transform:'rotate(0deg)'}],timing);
-    upright.startTime=ringAnimation.startTime;
-  });
+  const frames=Array.from({length:61},(_,i)=>({offset:i/60,angle:offset*(1-i/60)}));
+  const startTime=document.timeline.currentTime;
+  for(const shape of [...newLayer.children].filter(node=>!numbers.includes(node))){
+    shape.style.transformOrigin=c.x+'px '+c.y+'px';
+    const animation=shape.animate([{transform:'rotate('+offset+'deg)'},{transform:'rotate(0deg)'}],timing);
+    animation.startTime=startTime;
+  }
+  for(const number of numbers){
+    const x=Number(number.getAttribute('x'))-c.x,y=Number(number.getAttribute('y'))-c.y;
+    const keyframes=frames.map(frame=>{const a=frame.angle*Math.PI/180;return{offset:frame.offset,transform:'translate('+(x*Math.cos(a)-y*Math.sin(a)-x)+'px,'+(x*Math.sin(a)+y*Math.cos(a)-y)+'px)'}});
+    const animation=number.animate(keyframes,timing);animation.startTime=startTime;
+  }
 }
 function signature(a,b){try{return JSON.stringify([a,b,requestedOrb(),window.RelphiSkyStartupMode?.readMode?.(),learnAscendantIndex()])}catch(_){return String(Date.now())}}
 function whereWhenEditing(){return document.documentElement.dataset.skyWhereWhenEditing==='true'}
