@@ -682,7 +682,7 @@ html[data-sky-last-mode="learn"] #skyFoundationRoot{grid-template-columns:minmax
 html[data-sky-last-mode="learn"] #skyFoundationComparison{grid-column:1/-1;display:grid;grid-template-columns:minmax(245px,1fr) minmax(0,1.5fr) minmax(275px,1.08fr);grid-template-areas:"focus focus focus" "core wheel relations";grid-template-rows:auto minmax(0,1fr);align-items:stretch;gap:10px;padding-bottom:10px}
 html[data-sky-last-mode="learn"] #skyFoundationFocus{grid-area:focus}
 html[data-sky-last-mode="learn"] #skyFoundationWheelMount{grid-area:wheel;min-height:0}
-html[data-sky-last-mode="learn"] #skyFoundationRelationships{grid-area:relations;min-width:0}
+html[data-sky-last-mode="learn"] #skyFoundationRelationships{grid-area:relations;min-width:0;container-type:inline-size;container-name:relphi-relationships}
 #skyFoundationLearnCore{grid-area:core;padding:14px;color:#332e2a}
 #skyFoundationLearnCore[hidden],#skyFoundationLearnCore [hidden]{display:none}
 #skyFoundationLearnCore .sky-core-tabs{grid-template-columns:repeat(4,minmax(0,1fr));margin-bottom:8px}
@@ -725,8 +725,8 @@ html[data-sky-last-mode="learn"] #skyFoundationRelationships{grid-area:relations
   html[data-sky-last-mode="learn"] #skyFoundationLearnCore{min-height:0;overflow:auto;margin-left:10px}
   html[data-sky-last-mode="learn"] #skyFoundationWheelMount{min-height:0;height:100%;padding:0;box-sizing:border-box;align-self:stretch}
   html[data-sky-last-mode="learn"] #skyFoundationWheelMount > svg.sky-foundation-wheel{width:min(100%,var(--learn-workspace-height));max-height:100%;height:auto}
-  html[data-sky-last-mode="learn"] #skyFoundationRelationships{min-height:0;display:flex;flex-direction:column;overflow:hidden;margin-right:10px;border:1px solid rgba(31,27,24,.18);border-radius:16px}
-  html[data-sky-last-mode="learn"] #skyFoundationRelationshipList{flex:1 1 auto;min-height:0;max-height:none;grid-template-columns:minmax(0,1fr);grid-auto-rows:max-content;align-content:start;overflow:auto}
+  html[data-sky-last-mode="learn"] #skyFoundationRelationships{min-height:0;display:grid;grid-template-rows:auto auto minmax(0,1fr) auto;overflow:hidden;margin-right:10px;border:1px solid rgba(31,27,24,.18);border-radius:16px}
+  html[data-sky-last-mode="learn"] #skyFoundationRelationshipList{grid-row:3;min-height:0;max-height:none;grid-template-columns:minmax(0,1fr);grid-auto-rows:max-content;align-content:start;overflow:auto}
   html[data-sky-last-mode="learn"] #skyFoundationRelationships .sky-foundation-relationships-heading{display:flex;flex-direction:column;align-items:stretch;gap:6px;padding:8px}
   html[data-sky-last-mode="learn"] #skyFoundationRelationships .sky-relationship-heading-actions{grid-template-columns:minmax(0,1fr) auto auto;grid-template-rows:auto auto}
   html[data-sky-last-mode="learn"] #skyFoundationRelationships .sky-relationship-sort-control{grid-column:1/3;grid-row:2}
