@@ -71,8 +71,8 @@ function compatibilityMarkup(row){
     if(prefix)return subjects[prefix]+' · '+key.slice(prefix.length+1);
     return key.replace(/^first /,left+' · ').replace(/^second /,right+' · ');
   }
-  const rows=result.entries.filter(e=>e.points!==0).map(e=>'<tr><th scope="row">'+esc(label(e.criterion))+'</th><td data-compatibility-points="'+e.points+'">'+points(e.points)+'</td></tr>').join('');
-  return '<section class="sky-relationship-compatibility" aria-label="Compatibility score"><h4>Compatibility score</h4><p class="sky-relationship-compatibility-total"><span>Support '+points(result.support)+'</span><span>Challenge '+points(-result.challenge)+'</span><strong>Net '+points(result.total)+'</strong></p><table><thead><tr><th>Criterion</th><th>Points</th></tr></thead><tbody>'+rows+'</tbody></table><p class="sky-relationship-compatibility-note">Neutral criteria contribute zero. House archetype and ruler affinities are Relphi teaching correspondences.</p></section>';
+  const rows=result.entries.map(e=>'<tr><th scope="row">'+esc(label(e.criterion))+'</th><td data-compatibility-points="'+e.points+'">'+points(e.points)+'</td></tr>').join('');
+  return '<section class="sky-relationship-compatibility" aria-label="Compatibility score"><h4>Compatibility score</h4><p class="sky-relationship-compatibility-total"><span>Support '+points(result.support)+'</span><span>Challenge '+points(-result.challenge)+'</span><strong>Net '+points(result.total)+'</strong></p><table><thead><tr><th>Criterion</th><th>Points</th></tr></thead><tbody>'+rows+'</tbody></table><p class="sky-relationship-compatibility-note">House archetype and ruler affinities are Relphi teaching correspondences.</p></section>';
 }
 function contextMarkup(rel){const lp=position(rel.left),rp=position(rel.right);if(rel.left.learn){
   const pair=window.RelphiSkyFoundationInteractions?.learnPairContext(Math.floor(norm(rel.left.value)/30),Math.floor(norm(rel.right.value)/30));if(!pair)return '';
