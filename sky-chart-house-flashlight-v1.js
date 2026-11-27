@@ -8,19 +8,8 @@ if(!root||!root.document||!/(^|\/)sky-chart\.html$/.test(root.location?.pathname
 if(root.__relphiSkyHouseFlashlightV1)return;
 root.__relphiSkyHouseFlashlightV1=true;
 const document=root.document,NS='http://www.w3.org/2000/svg';
-let pinned=null,hovered=null,lastWheel=null;
+let focus=null,lastWheel=null;
 const wrap=(v)=>((Number(v)%360)+360)%360;
-function houseNode(target){
- return target?.closest?.('#skyFoundationWheelMount [data-interactive="house"][data-sky][data-house]')||null;
-}
-function position(node){
- if(!node)return null;
- const sky=String(node.dataset.sky||'').toUpperCase();
- const house=Number(node.dataset.house);
- if(!['A','B'].includes(sky)||!Number.isInteger(house)||house<1||house>12)return null;
- return {sky,house};
-}
-function same(a,b){return!!a&&!!b&&a.sky===b.sky&&a.house===b.house}
 function wheel(){
  return document.querySelector('#skyFoundationWheelMount > svg.sky-foundation-wheel');
 }
@@ -60,8 +49,7 @@ function decorate(parent,angle,section,center,color,index){
 function render(){
  const chart=wheel(),layer=host();
  if(!layer||!chart)return;
- const focus=pinned||hovered;
- if(!focus){layer.replaceChildren();layer.removeAttribute('data-sky');layer.removeAttribute('data-house');return}
+ if(!focus){layer.replaceChildren();layer.removeAttribute('data-sky');layer.removeAttribute('data-house');layer.removeAttribute('data-pinned');return}
  const sector=chart.querySelector('[data-layer="'+(focus.sky==='A'?'a-houses':'b-houses')+'"] > path[data-house="'+focus.house+'"][data-house-cusp-start][data-house-cusp-end]');
  if(!sector){layer.replaceChildren();return} // unknown-time charts have no valid house sectors
  const starts=[Number(sector.dataset.houseCuspStart),Number(sector.dataset.houseCuspEnd)];
@@ -78,64 +66,25 @@ function render(){
  });
  layer.replaceChildren(fragment);
  layer.dataset.sky=focus.sky;layer.dataset.house=String(focus.house);
- layer.dataset.pinned=String(!!pinned);
+ layer.dataset.pinned=String(focus.mode==='selected');
  layer.setAttribute('aria-label','Sky '+focus.sky+' house '+focus.house+' cusp extensions');
  lastWheel=chart;
 }
-function setHover(value){
- if(same(hovered,value)||(!hovered&&!value))return;
- hovered=value;render();
+// The foundation interaction controller owns hover, selection and exit.
+// Do not maintain a second pointer-derived hover or a second pin.
+function setFocus(state){
+ const next=state?.kind==='house'&&['A','B'].includes(state.sky)&&Number.isInteger(Number(state.value))&&['hover','selected'].includes(state.mode)
+  ?{sky:state.sky,house:Number(state.value),mode:state.mode}:null;
+ if(focus?.sky===next?.sky&&focus?.house===next?.house&&focus?.mode===next?.mode)return;
+ focus=next;render();
 }
-function setPinned(value){
- pinned=value;render();
-}
-document.addEventListener('pointerover',event=>{
- const node=houseNode(event.target);
- if(!node)return;
- setHover(position(node));
-});
-document.addEventListener('pointerout',event=>{
- const node=houseNode(event.target);
- if(!node||node.contains(event.relatedTarget))return;
- if(same(hovered,position(node)))setHover(null);
-});
-root.addEventListener('relphi:sky-house-focus-bridge-changed',event=>{
- const detail=event.detail||{};
- if(detail.active===true&&(detail.slot==='A'||detail.slot==='B')&&Number.isInteger(Number(detail.house))){
-  setPinned({sky:detail.slot,house:Number(detail.house)});
- }else{
-  setPinned(null);
- }
-});
-root.addEventListener('relphi:sky-foundation-filter-changed',event=>{
- const state=event.detail?.state;
- // Hover/selected house focus may originate outside the house wedge itself
- // (e.g. a card). Don't overwrite explicit house taps while pinned.
- if(pinned)return;
- if(state?.kind==='house'&&(state.sky==='A'||state.sky==='B')){
-  setHover({sky:state.sky,house:Number(state.value)});
- }else if(state?.kind&&hovered&&!houseNode(document.querySelector(':hover [data-interactive="house"]'))){
-  setHover(null);
- }
-});
-root.addEventListener('relphi:sky-foundation-clear-selection',()=>{setPinned(null);setHover(null)});
-root.addEventListener('relphi:sky-b-removed',()=>{
- if(pinned?.sky==='B')pinned=null;
- if(hovered?.sky==='B')hovered=null;
- root.requestAnimationFrame(render);
-});
-// A normal click away from a house should not leave a pinned highlight.
-document.addEventListener('click',event=>{
- if(!pinned||houseNode(event.target))return;
- const inside=document.getElementById('skyFoundationRoot')?.contains(event.target);
- if(!inside)return;
- if(event.target.closest('button,input,select,textarea,label,summary,details'))return;
- setPinned(null);
-});
+root.addEventListener('relphi:sky-foundation-filter-changed',event=>setFocus(event.detail?.state));
+root.addEventListener('relphi:sky-foundation-clear-selection',()=>setFocus(null));
+root.addEventListener('relphi:sky-b-removed',()=>{if(focus?.sky==='B')setFocus(null)});
 root.addEventListener('relphi:sky-foundation-ready',()=>root.requestAnimationFrame(()=>{
- if(wheel()!==lastWheel||pinned||hovered)render();
+ if(wheel()!==lastWheel||focus)render();
 }));
-root.RelphiSkyHouseFlashlight=Object.freeze({render,getFocus:()=>pinned||hovered});
+root.RelphiSkyHouseFlashlight=Object.freeze({render,getFocus:()=>focus?{sky:focus.sky,house:focus.house}:null});
 })(typeof window!=='undefined'?window:null,function(){
  'use strict';
  function polar(center,radius,degree){

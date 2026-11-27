@@ -722,3 +722,8 @@ html[data-sky-last-mode="learn"] #skyFoundationRelationships{grid-area:relations
 #skyFoundationFocus .sky-chart-filter-bar[data-learn-focus="true"] > label:has(> [data-filter="sign"]){display:grid}
 html[data-sky-last-mode="learn"] #skyFoundationWheelMount > svg.sky-foundation-wheel{max-height:clamp(230px,calc(100svh - 16rem),600px);width:min(100%,clamp(230px,calc(100svh - 16rem),600px));height:auto}
 @media(max-width:620px){#skyFoundationFocus .sky-chart-filter-bar[data-learn-focus="true"]{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+#skyFoundationFocus .sky-learn-sky-entry{display:flex;justify-content:space-between;gap:8px;padding:5px 10px}
+#skyFoundationFocus .sky-learn-sky-entry[hidden]{display:none}
+#skyFoundationFocus .sky-learn-sky-entry button{border:1px solid currentColor;border-radius:999px;background:#fffdf8;font:750 .77rem system-ui;padding:6px 12px;cursor:pointer;color:#c9211e}
+#skyFoundationFocus .sky-learn-sky-entry button[data-learn-open-sky="B"]{color:#2462d0}

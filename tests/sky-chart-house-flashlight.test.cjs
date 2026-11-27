@@ -33,14 +33,14 @@ test('standalone A rays stop at zodiac outer edge and unknown-time B is excluded
  assert.equal(segments({slot:'B',inside:166,zIn:323,zOut:414,outside:414,comparable:false}),null);
  assert.equal(segments({slot:'C',inside:166,zIn:323,zOut:414,outside:574,comparable:true}),null);
 });
-test('flashlight derives cusps from the rendered sectors and accepts house focus bridge events',()=>{
+test('flashlight derives cusps from the rendered sectors and uses the authoritative foundation focus events',()=>{
  assert.match(source,/'data-house-cusp-start':String\(norm\(start\)\)/);
  assert.match(source,/'data-house-cusp-end':String\(norm\(end\)\)/);
  assert.match(controller,/data-house-cusp-start/);
- assert.match(controller,/relphi:sky-house-focus-bridge-changed/);
+ assert.match(controller,/relphi:sky-foundation-filter-changed/);
  assert.match(controller,/relphi:sky-foundation-ready/);
- assert.match(controller,/pointerover/);
- assert.match(controller,/pointerout/);
+ assert.doesNotMatch(controller,/addEventListener\('pointer(?:over|out)'/);
+ assert.match(controller,/setFocus\(event.detail\?\.state\)/);
  assert.match(controller,/pointer-events':'none'/);
  assert.match(html,/sky-chart-house-flashlight-v1\.js/);
  assert.match(html,/sky-chart-house-flashlight-v1\.css/);

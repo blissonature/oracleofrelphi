@@ -461,6 +461,21 @@
         // Mode changes do not assign a sky or open a second slot implicitly.
       });
     }
+    let skyEntry=focusPanel.querySelector(':scope > .sky-learn-sky-entry');
+    if(!skyEntry){
+      skyEntry=document.createElement('div');skyEntry.className='sky-learn-sky-entry';
+      skyEntry.innerHTML='<button type="button" data-learn-open-sky="A" aria-label="Sky A Where and When">+ Sky A</button><button type="button" data-learn-open-sky="B" aria-label="Sky B Where and When">+ Sky B</button>';
+      modes.after(skyEntry);
+      skyEntry.addEventListener('click',event=>{
+        const slot=event.target.closest('[data-learn-open-sky]')?.dataset.learnOpenSky;if(!slot)return;
+        const startup=window.RelphiSkyStartupMode,chosen=slot==='A'?'single':'comparison';
+        startup.writeMode(chosen);startup.syncRoot();
+        const panel=document.getElementById('skyFoundation'+slot);if(panel)panel.hidden=false;
+        window.RelphiSkyCardShell?.ensure?.(slot,JSON.parse(window.RelphiSkyWorkingStorage.getItem('relphiSkyChart'+slot)||'null'));
+        window.dispatchEvent(new CustomEvent('relphi:sky-experience-changed',{detail:{mode:chosen}}));
+        window.RelphiSkyCardShell?.openDrawer?.(slot,'where');
+      });
+    }
     let ascendantControl = focusPanel.querySelector(':scope > .sky-learn-ascendant');
     if (!ascendantControl) {
       ascendantControl = document.createElement('label');
@@ -480,6 +495,7 @@
     }
     const currentMode = window.RelphiSkyStartupMode?.readMode?.() || 'single';
     ascendantControl.hidden = currentMode !== 'learn';
+    skyEntry.hidden=currentMode!=='learn';
     ascendantControl.querySelector('select').value=String(window.RelphiSkyStartupMode.readLearnAscendant());
     modes.querySelectorAll('[data-sky-experience]').forEach(button => {
       const active = button.dataset.skyExperience === currentMode;
