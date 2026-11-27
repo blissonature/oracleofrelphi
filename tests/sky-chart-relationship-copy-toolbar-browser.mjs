@@ -87,25 +87,20 @@ for(const width of [320,390,451,480,510,540,595,600,630,740,760,900,1200]){
     assert.equal(b.visibility,'visible',width+': '+key+' must be visible');
   }
   assert.ok(result.header.scrollWidth<=result.header.clientWidth+3,JSON.stringify({width,error:'header overflow',result}));
-  if(result.container.width>650){
-    const ts=result.titleAndSort;
-    assert.ok(Math.abs(ts.titleCenter-ts.sortCenter)<=6,
-      JSON.stringify({width,error:'Relationships heading and controls must remain in ONE ROW',result}));
-    assert.ok(ts.titleRight<=ts.sortLeft+1,
-      JSON.stringify({width,error:'sort dropdown may not overlap Relationships title',result}));
-    const baseline=result.bounds.sort.top;
-    for(const key of ['limit','count','copy','download']){
-      const b=result.bounds[key];
-      assert.ok(Math.abs((b.top+b.bottom)/2-(result.bounds.sort.top+result.bounds.sort.bottom)/2)<=6,
-        JSON.stringify({width,key,error:'all controls must be vertically aligned in the same row',result}));
-    }
+  const ts=result.titleAndSort;
+  assert.ok(ts.titleBottom+2<=ts.sortTop,JSON.stringify({width,error:'title must be above sort selector',result}));
+  const center=b=>(b.top+b.bottom)/2;
+  for(const key of ['count','copy','download']){
+    assert.ok(Math.abs(center(result.bounds[key])-ts.titleCenter)<=6,JSON.stringify({width,key,error:'first row alignment',result}));
   }
-  // Mobile header must never paint the title over the sort control.
-  if(result.container.width<=650){
-    const ts=result.titleAndSort;
-    assert.ok(ts.titleBottom+2<=ts.sortTop,
-      JSON.stringify({width,error:'mobile Relationships heading overlaps sort selector',result}));
-  }
+  assert.ok(Math.abs(center(result.bounds.limit)-ts.sortCenter)<=6,JSON.stringify({width,error:'second row alignment',result}));
+  const fit=await page.locator('.sky-relationship-sort-select').evaluate(select=>{
+    const style=getComputedStyle(select),ctx=document.createElement('canvas').getContext('2d');
+    ctx.font=[style.fontWeight,style.fontSize,style.fontFamily].join(' ');
+    const available=select.clientWidth-parseFloat(style.paddingLeft)-parseFloat(style.paddingRight);
+    return {available,options:[...select.options].map(o=>({label:o.text,required:ctx.measureText(o.text).width}))};
+  });
+  for(const option of fit.options)assert.ok(option.required<=fit.available+1,JSON.stringify({width,error:'sort option would truncate',option,fit}));
   assert.equal(result.button.iconHref,'relphi-icons.svg#relphi-copy',width+': all Copy buttons must reference the one canonical path');
   assert.equal(result.button.iconWidth,'20px',width+': canonical icon width is fixed');
   assert.equal(result.button.iconHeight,'20px',width+': canonical icon height is fixed');
@@ -175,4 +170,4 @@ await page.waitForFunction(()=>{
 assert.deepEqual(errors.filter(e=>/Uncaught|SyntaxError|ReferenceError/.test(e)),[],'No critical page errors');
 await context.close();
 await browser.close();
-console.log('Relationship toolbar containment, copy action, icon and feedback checks passed at nine widths.');
+console.log('Relationship toolbar containment, copy action, icon and feedback checks passed at thirteen widths.');
