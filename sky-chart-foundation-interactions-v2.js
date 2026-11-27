@@ -113,7 +113,7 @@
     if(!active){if(core)core.hidden=true;return}
     if(!core){
       core=document.createElement('section');core.id='skyFoundationLearnCore';core.setAttribute('aria-label','Sky Card Core');
-      core.innerHTML='<header><h2>Sky Card Core</h2></header><div data-core-prompt>Select a sign or house on the wheel to explore its twelve house manifestations.</div><div data-core-content hidden><div class="sky-learn-core-identity"><div><h3 data-core-title></h3><p data-core-qualities></p><p data-core-description></p></div><a data-core-card><img alt=""><span></span></a></div><div class="sky-learn-core-houses" aria-label="Explore houses">'+Array.from({length:12},(_,i)=>'<button type="button" data-core-house="'+(i+1)+'" aria-pressed="false" style="--ruler-item-color:'+window.RelphiSkyWheelSpec.COLORS[i]+'"><span class="sky-card-ruler-color-bar" aria-hidden="true"></span>'+(i+1)+'</button>').join('')+'</div><div class="sky-learn-core-nav"><button type="button" data-core-step="-1">Previous House</button><button type="button" data-core-step="1">Next House</button></div></div>';
+      core.innerHTML='<header><h2>Sky Card Core</h2></header><div data-core-prompt>Select a sign or house on the wheel to explore its twelve house manifestations.</div><div data-core-content hidden><div class="sky-learn-core-identity"><div><h3 data-core-title></h3><p data-core-qualities></p><p data-core-description></p></div><a data-core-card><img alt=""><span></span></a></div><div class="sky-learn-core-houses" aria-label="Explore houses">'+Array.from({length:12},(_,i)=>'<button type="button" data-core-house="'+(i+1)+'" aria-pressed="false" style="--ruler-house-color:'+window.RelphiSkyWheelSpec.COLORS[i]+'"><span class="sky-card-ruler-rail sky-card-ruler-rail-sign" aria-hidden="true"></span><span>'+(i+1)+'</span><span class="sky-card-ruler-rail sky-card-ruler-rail-house" aria-hidden="true"></span></button>').join('')+'</div><div class="sky-learn-core-nav"><button type="button" data-core-step="-1">Previous House</button><button type="button" data-core-step="1">Next House</button></div></div>';
       mount.after(core);
     }
     core.hidden=false;
@@ -127,7 +127,7 @@
     core.querySelector('[data-core-description]').textContent=ctx.description;
     const link=core.querySelector('[data-core-card]');link.hidden=!ctx.card;
     if(ctx.card){link.dataset.inlineLedger=ctx.card.id;link.href='tarot.html?card='+encodeURIComponent(ctx.card.id);link.querySelector('img').src=ctx.card.image;link.querySelector('img').alt=ctx.card.title;link.querySelector('span').textContent=ctx.card.title}
-    core.querySelectorAll('[data-core-house]').forEach(button=>button.setAttribute('aria-pressed',String(Number(button.dataset.coreHouse)===ctx.house)));
+    core.querySelectorAll('[data-core-house]').forEach(button=>{button.style.setProperty('--ruler-sign-color',window.RelphiSkyWheelSpec.COLORS[index]);button.setAttribute('aria-pressed',String(Number(button.dataset.coreHouse)===ctx.house))});
   }
   function browseLearnHouse(button){
     const index=learnSignForState(lockedState);if(!Number.isInteger(index))return;

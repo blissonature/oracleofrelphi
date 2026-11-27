@@ -130,7 +130,8 @@
     const host=ensureHost(slot);if(!host)return null;
     let button=host.querySelector(':scope > [data-saved-sky-trigger]');
     if(!button){
-      host.replaceChildren();button=document.createElement('span');button.className='sky-saved-name-trigger';button.dataset.savedSkyTrigger=slot;
+      host.replaceChildren();button=document.createElement('button');button.type='button';button.className='sky-saved-name-trigger';button.dataset.savedSkyTrigger=slot;
+      button.addEventListener('click',()=>window.RelphiSkyCardShell?.openDrawer?.(slot,'where'));
       button.setAttribute('aria-haspopup','dialog');button.setAttribute('aria-expanded','false');
       const label=document.createElement('span');label.className='sky-saved-name-label';
       button.append(label);host.appendChild(button);

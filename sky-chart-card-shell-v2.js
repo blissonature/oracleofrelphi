@@ -59,7 +59,7 @@ function panel(slot){return document.getElementById(PANELS[slot]||'')}
 function body(slot){return panel(slot)?.querySelector(':scope > .sky-foundation-body')||null}
 function fingerprint(slot,name,label){return `<span class="sky-drawer-fingerprint sky-drawer-fingerprint-${name}" data-sky-drawer-fingerprint="${name}" data-sky-slot="${slot}" role="img" aria-label="${label}" hidden></span>`}
 function markup(slot,hasProfile){
-  return `<div class="sky-card-drawers" data-sky-card-drawers="${slot}" data-sky-initial-drawer="placements" data-where-editor-expanded="false">
+  return `<div class="sky-card-drawers" data-sky-card-drawers="${slot}" data-sky-initial-drawer="${hasProfile?'placements':'where'}" data-where-editor-expanded="false">
     <div class="sky-card-fingerprint-tabs" data-sky-fingerprint-tabs="${slot}" role="group" aria-label="Sky ${slot} views">
       <button type="button" class="sky-card-fingerprint-tab" data-sky-drawer-tab="where" aria-label="Where and When" title="Where and When" aria-controls="skyDrawerBody${slot}Where">${fingerprint(slot,'where','Where and When fingerprint')}</button>
       <button type="button" class="sky-card-fingerprint-tab" data-sky-drawer-tab="placements" aria-label="Placements" title="Placements" aria-controls="skyDrawerBody${slot}Placements">${fingerprint(slot,'placements','Placements fingerprint')}</button>
@@ -162,7 +162,11 @@ function ensure(slot,payload){
   installStyles();const host=body(slot);if(!host)return null;host.removeAttribute('inert');
   let current=refs(slot);
   if(!current){const holder=document.createElement('div');holder.innerHTML=markup(slot,complete(payload)).trim();host.replaceChildren(holder.firstElementChild);current=refs(slot)}
-  installDrawerBehavior(slot,current.root);return sync(slot,payload);
+  installDrawerBehavior(slot,current.root);const result=sync(slot,payload);
+  if(current.root.dataset.skyInitialDrawer==='where'&&!current.root.dataset.initialWhereOpened&&document.documentElement.dataset.skyLastMode!=='learn'&&!complete(payload)){
+    current.root.dataset.initialWhereOpened='true';activateDrawer(current.root,drawer(current.root,'where'));
+  }
+  return result;
 }
 function setEditorExpanded(slot,expanded){const current=refs(slot);if(!current)return;current.editor.hidden=!expanded;current.summary?.classList.toggle('is-editor-expanded',!!expanded);current.root.dataset.whereEditorExpanded=expanded?'true':'false'}
 function openDrawer(slot,name){const current=refs(slot);if(!current)return;activateDrawer(current.root,drawer(current.root,name))}

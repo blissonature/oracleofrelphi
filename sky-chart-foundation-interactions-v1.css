@@ -707,7 +707,7 @@ html[data-sky-last-mode="learn"] #skyFoundationRelationships{grid-area:relations
 .sky-learn-core-houses{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:5px;margin:12px 0}
 .sky-learn-core-nav{display:flex;justify-content:space-between;gap:8px}
 .sky-learn-core-houses button,.sky-learn-core-nav button{min-height:34px;padding:5px;border:1px solid rgba(31,27,24,.25);border-radius:7px;background:white;color:#332e2a;font:inherit;cursor:pointer}
-.sky-learn-core-houses button{position:relative;overflow:hidden}
+.sky-learn-core-houses button{display:grid;grid-template-rows:auto 1fr auto;align-items:center;overflow:hidden;padding:0;--ruler-art-width:100%}
 .sky-learn-core-houses button[aria-pressed="true"]{background:#332e2a;color:white}
 .sky-learn-pair-reading{padding:4px 0;line-height:1.5;text-align:left}
 .sky-learn-pair-qualities{width:100%;font-size:.72rem;border-collapse:collapse;text-align:left}

@@ -83,14 +83,14 @@ function renderWhere(slot,payload){
   const mount=whereMount(slot);if(!mount)return;
   const refs=window.RelphiSkyCardShell?.get?.(slot),sourceSvg=refs?.heptagram;
   mount.replaceChildren();
-  if(timeUnknown(payload,slot)){
+  if(!payload||!refs?.root||refs.root.dataset.whereWhenAvailable!=='true'||timeUnknown(payload,slot)){
     whereRetry[slot]=0;
     const label=document.createElement('span');
     label.className='sky-card-fingerprint-text';
     label.textContent='Where & When';
     mount.appendChild(label);
     mount.hidden=false;
-    mount.setAttribute('aria-label',`Where and When for Sky ${slot}; time of day unknown.`);
+    mount.setAttribute('aria-label',`Where and When for Sky ${slot}`);
     return;
   }
   // The full Where and When heptagram is the single source of truth for this
