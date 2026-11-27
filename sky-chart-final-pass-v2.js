@@ -469,7 +469,7 @@
       const step=direction=>{
         const button=document.createElement('button');button.type='button';
         button.className='sky-learn-ascendant-step';button.dataset.ascendantStep=String(direction);
-        button.textContent=direction<0?'‹':'›';
+        button.innerHTML='<svg viewBox="0 0 20 20" width="16" height="16" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="'+(direction<0?'M12 6l-4 4 4 4':'M8 6l4 4-4 4')+'"/></svg>';
         const name=direction<0?'Previous rising sign':'Next rising sign';
         button.setAttribute('aria-label',name);button.title=name;
         button.addEventListener('click',()=>{
