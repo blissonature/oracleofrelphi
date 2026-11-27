@@ -42,6 +42,24 @@ try{
    await page.screenshot({path:`sky-remote-${kind}.png`,fullPage:true});
    if(kind==='preview'&&(!state.wheelCount||state.mountVisible==='hidden'||state.rootBusy!=='false'||errors.length)){failed=true;console.error('FAILED: hosted exact-revision preview did not display a ready wheel');}
    if(kind==='preview'&&!failed){
+     // Clipboard handoff: a pending long-press must not replace an external capture.
+     await ctx.grantPermissions(['clipboard-read','clipboard-write']);
+     const row=page.locator('#skyFoundationRelationshipList .sky-foundation-relationship-row:visible').first();
+     await row.waitFor({state:'visible'});
+     for(const handoff of ['blur','pointerout']){
+       await page.evaluate(()=>navigator.clipboard.writeText('external capture sentinel'));
+       await row.evaluate(el=>el.dispatchEvent(new PointerEvent('pointerdown',{bubbles:true,pointerId:7,pointerType:'mouse',button:0,buttons:1,clientX:5,clientY:5})));
+       if(handoff==='blur')await page.evaluate(()=>window.dispatchEvent(new Event('blur')));
+       else await row.evaluate(el=>el.dispatchEvent(new PointerEvent('pointerout',{bubbles:true,pointerId:7,pointerType:'mouse',relatedTarget:null})));
+       await page.waitForTimeout(550);
+       const value=await page.evaluate(()=>navigator.clipboard.readText());
+       assert.equal(value,'external capture sentinel',handoff+' must cancel pending automatic clipboard write');
+     }
+     await row.evaluate(el=>el.dispatchEvent(new PointerEvent('pointerdown',{bubbles:true,pointerId:7,pointerType:'mouse',button:0,buttons:1,clientX:5,clientY:5})));
+     await page.waitForTimeout(550);
+     assert.notEqual(await page.evaluate(()=>navigator.clipboard.readText()),'external capture sentinel','Intentional long press must still copy');
+     await row.evaluate(el=>el.dispatchEvent(new PointerEvent('pointerup',{bubbles:true,pointerId:7,pointerType:'mouse',button:0,buttons:0})));
+     console.log('CLIPBOARD HANDOFF PASS: blur and pointer departure preserve clipboard, intentional press copies');
      await page.locator('#skyFoundationB [data-sky-drawer-tab="where"]').click();
      await page.waitForSelector('#skyFoundationB .sky-where-when-editor [data-ww-action="refresh-now"]',{timeout:15000});
      await page.waitForSelector('#skyFoundationB [data-draft-heptagram-ready="true"] .sky-where-when-draft-heptagram',{timeout:20000});

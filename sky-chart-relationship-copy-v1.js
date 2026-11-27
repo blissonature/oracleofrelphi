@@ -85,7 +85,8 @@
       if(!rows.length)return;
       const text=serializeBlock(rows);
       if(!text)return;
-      const copied=await writeClipboard(text);
+      state.copyPromise=writeClipboard(text,()=>longPress===state&&!document.hidden&&document.hasFocus());
+    const copied=await state.copyPromise;
       if(!copied)return;
       window.clearTimeout(feedbackTimer);
       button.textContent=`Copied ${rows.length}`;
@@ -171,10 +172,12 @@
     return `${heading}\n\n${sections.join('\n\n')}`;
   }
 
-  async function writeClipboard(text){
+  async function writeClipboard(text,canWrite=()=>true){
+    if(!canWrite())return false;
     try{
       if(navigator.clipboard?.writeText){await navigator.clipboard.writeText(text);return true}
     }catch(_){}
+    if(!canWrite())return false;
     const textarea=document.createElement('textarea');
     textarea.value=text;
     textarea.setAttribute('readonly','');
@@ -201,7 +204,8 @@
     longPress=null;
   }
   async function commitLongPress(state,event){
-    if(!state||state.copied||!state.row.isConnected)return false;
+    if(!state||state.copied||!state.row.isConnected||longPress!==state||document.hidden||!document.hasFocus())return false;
+    if(state.copyPromise)return state.copyPromise;
     const text=serializeRow(state.row);
     if(!text)return false;
     suppressClickUntil=Date.now()+900;
@@ -220,6 +224,7 @@
   }
   function beginLongPress(event){
     if(event.button!==0&&!['touch','pen'].includes(event.pointerType))return;
+    if(document.hidden||!document.hasFocus())return;
     const row=relationshipRow(event.target);
     if(!row||row.hidden||row.getAttribute('aria-hidden')==='true'||getComputedStyle(row).display==='none')return;
     clearLongPress();
@@ -238,6 +243,7 @@
   }
   function moveLongPress(event){
     if(!longPress||event.pointerId!==longPress.pointerId||longPress.copied)return;
+    if(event.pointerType==='mouse'&&!(event.buttons&1)){clearLongPress();return}
     const dx=(Number(event.clientX)||0)-longPress.x,dy=(Number(event.clientY)||0)-longPress.y;
     if(Math.hypot(dx,dy)>LONG_PRESS_MOVE_PX)clearLongPress();
   }
@@ -247,7 +253,7 @@
     window.clearTimeout(state.timer);
     if(!state.copied&&event.timeStamp-state.startedAt>=LONG_PRESS_MS)await commitLongPress(state,event);
     const copied=state.copied;
-    longPress=null;
+    if(longPress===state)longPress=null;
     if(copied){
       event.preventDefault();
       event.stopPropagation();
@@ -275,6 +281,13 @@
       return;
     }
     clearLongPress();
+  },{capture:true});
+  // A screen-capture overlay or another application may take the pointer without
+  // delivering pointerup. Never let the abandoned gesture write to the clipboard.
+  window.addEventListener('blur',clearLongPress);
+  document.addEventListener('visibilitychange',()=>{if(document.hidden)clearLongPress()});
+  document.addEventListener('pointerout',event=>{
+    if(longPress?.pointerId===event.pointerId&&event.relatedTarget===null)clearLongPress();
   },{capture:true});
   document.addEventListener('click',suppressLongPressClick,{capture:true});
   document.addEventListener('contextmenu',event=>{
