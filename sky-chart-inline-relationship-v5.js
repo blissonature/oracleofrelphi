@@ -72,7 +72,7 @@ function compatibilityMarkup(row){
     return key.replace(/^first /,left+' · ').replace(/^second /,right+' · ');
   }
   const rows=result.entries.map(e=>'<tr><th scope="row">'+esc(label(e.criterion))+'</th><td data-compatibility-points="'+e.points+'">'+points(e.points)+'</td></tr>').join('');
-  return '<section class="sky-relationship-compatibility" aria-label="Compatibility score"><h4>Compatibility score</h4><p class="sky-relationship-compatibility-total"><span>Support '+points(result.support)+'</span><span>Challenge '+points(-result.challenge)+'</span><strong>Net '+points(result.total)+'</strong></p><table><thead><tr><th>Criterion</th><th>Points</th></tr></thead><tbody>'+rows+'</tbody></table><p class="sky-relationship-compatibility-note">House archetype and ruler affinities are Relphi teaching correspondences.</p></section>';
+  return '<details class="sky-relationship-compatibility"><summary><span>Compatibility Score</span><strong>'+points(result.total)+'</strong></summary><p class="sky-relationship-compatibility-total"><span>Support '+points(result.support)+'</span><span>Challenge '+points(-result.challenge)+'</span><strong>Net '+points(result.total)+'</strong></p><table><thead><tr><th>Criterion</th><th>Points</th></tr></thead><tbody>'+rows+'</tbody></table><p class="sky-relationship-compatibility-note">House archetype and ruler affinities are Relphi teaching correspondences.</p></details>';
 }
 function contextMarkup(rel){const lp=position(rel.left),rp=position(rel.right);if(rel.left.learn){
   const pair=window.RelphiSkyFoundationInteractions?.learnPairContext(Math.floor(norm(rel.left.value)/30),Math.floor(norm(rel.right.value)/30));if(!pair)return '';
@@ -143,19 +143,19 @@ function close(row){clearReveal(row);const detail=row?.querySelector(':scope>.in
 function open(row){if(row?.classList.contains('is-inline-expanded')){close(row);openRow=null;return}if(openRow&&openRow!==row)close(openRow);const rel=relation(row);if(!rel)return;openRow=row;row.classList.add('is-inline-expanded');row.setAttribute('aria-expanded','true');decorateTopReveal(row);const signature=`${rel.left.sky}:${rel.left.id}@${rel.left.value.toFixed(7)}|${rel.aspect}|${rel.right.sky}:${rel.right.id}@${rel.right.value.toFixed(7)}`;let detail=row.querySelector(':scope>.inline-rel-detail');if(detail&&detail.dataset.inlineRelationshipSignature===signature){detail.hidden=false;const previousScore=detail.querySelector('.sky-relationship-compatibility');if(previousScore)previousScore.outerHTML=compatibilityMarkup(row);else detail.insertAdjacentHTML('beforeend',compatibilityMarkup(row));bindInlineTileCopy(row,detail,rel);document.getElementById('skySelectedRelationship')?.setAttribute('hidden','');return}detail?.remove();detail=document.createElement('div');detail.className='inline-rel-detail';detail.dataset.inlineRelationshipSignature=signature;const ca=card(rel.left),cb=card(rel.right);warmCardArt(ca.image);warmCardArt(cb.image);detail.innerHTML=`<div class="inline-rel-top-reveal" role="status" aria-live="polite" hidden></div><div class="inline-rel-visual">${cardMarkup(rel.left.sky,ca,rel.left.learn?rel.left.entry.name:undefined)}${wheelMarkup(rel)}${cardMarkup(rel.right.sky,cb,rel.right.learn?rel.right.entry.name:undefined)}</div>${contextMarkup(rel)}${compatibilityMarkup(row)}`;row.appendChild(detail);bindInlineTileCopy(row,detail,rel);document.getElementById('skySelectedRelationship')?.setAttribute('hidden','')}
 function rowFromTarget(target){return target?.closest?.('.sky-foundation-relationship-row[data-relation-index]')||null}
 function touchPointer(event){return event.pointerType==='touch'||event.pointerType==='pen'}
-function onPointerDown(event){if(!touchPointer(event)||event.target.closest?.('.inline-rel-tile-copy'))return;const row=rowFromTarget(event.target);if(!row)return;touchGesture={id:event.pointerId,row,x:event.clientX,y:event.clientY,moved:false}}
+function onPointerDown(event){if(!touchPointer(event)||event.target.closest?.('.inline-rel-tile-copy,.sky-relationship-compatibility'))return;const row=rowFromTarget(event.target);if(!row)return;touchGesture={id:event.pointerId,row,x:event.clientX,y:event.clientY,moved:false}}
 function onPointerMove(event){if(!touchGesture||touchGesture.id!==event.pointerId)return;const dx=event.clientX-touchGesture.x,dy=event.clientY-touchGesture.y;if(Math.hypot(dx,dy)>10)touchGesture.moved=true}
 function onPointerCancel(event){if(touchGesture?.id===event.pointerId)touchGesture=null}
 function onPointerUp(event){
   if(!touchPointer(event)||!touchGesture||touchGesture.id!==event.pointerId)return;
   const gesture=touchGesture;touchGesture=null;
   if(gesture.moved||event.target.closest?.('[data-inline-ledger]'))return;
-  if(event.target.closest?.('.inline-rel-tile-copy'))return;
+  if(event.target.closest?.('.inline-rel-tile-copy,.sky-relationship-compatibility'))return;
   const row=rowFromTarget(event.target);if(!row||row!==gesture.row)return;
   open(row);suppressClickRow=row;suppressClickAt=performance.now();
 }
 function onClick(event){
-  if(event.target.closest?.('.inline-rel-tile-copy'))return;
+  if(event.target.closest?.('.inline-rel-tile-copy,.sky-relationship-compatibility'))return;
   const row=rowFromTarget(event.target);
   if(row&&row===suppressClickRow&&performance.now()-suppressClickAt<900){event.preventDefault();event.stopImmediatePropagation();suppressClickRow=null;return}
   suppressClickRow=null;
