@@ -103,19 +103,15 @@ button.relphi-copy-icon-button[data-relphi-copy-format]::after{
   width:2.25rem!important;min-width:2.25rem!important;max-width:2.25rem!important;
   padding:0!important;font-size:0!important;
 }
-/* Relationships: use ONE compact row wherever the content can fit.
-   Flex the sort control, never relocate it to a second row at tablet widths.
-   A genuinely narrow (< 450px) panel can use the accessible two-row fallback. */
-#skyFoundationRelationships{container-type:inline-size}
+/* Relationships: two rows at every panel width. Keep the selected sort visible. */
 #skyFoundationRelationships .sky-foundation-relationships-heading{
   display:grid;
-  grid-template-columns:max-content minmax(0,1fr);
-  grid-template-rows:minmax(36px,auto);
+  grid-template-columns:minmax(0,1fr) auto auto auto;
+  grid-template-rows:auto auto;
   align-items:center;
-  column-gap:8px;
-  row-gap:0;
-  min-height:44px;
-  padding:4px 9px;
+  gap:6px 5px;
+  min-height:0;
+  padding:7px 9px;
   box-sizing:border-box;
 }
 #skyFoundationRelationships .sky-foundation-relationships-heading>h2,
@@ -126,25 +122,37 @@ button.relphi-copy-icon-button[data-relphi-copy-format]::after{
   max-width:100%;
   align-self:center;
   justify-self:start;
-  white-space:nowrap;
+  white-space:normal;
+  overflow:visible;
+  text-overflow:clip;
 }
 #skyFoundationRelationships .sky-foundation-relationships-heading>.sky-relationship-heading-actions{
+  display:contents;
+}
+#skyFoundationRelationships .sky-foundation-relationships-heading>.sky-relationship-heading-actions>#skyFoundationRelationshipCount{
   grid-column:2;
   grid-row:1;
-  display:grid;
-  grid-template-columns:minmax(0,1fr) 76px max-content 34px 30px;
-  grid-template-rows:1fr;
-  align-items:center;
-  column-gap:5px;
-  row-gap:0;
-  width:100%;
+  justify-self:end;
   min-width:0;
-  max-width:100%;
+  width:max-content;
+  margin:0;
+  white-space:nowrap;
+}
+#skyFoundationRelationships .sky-foundation-relationships-heading>.sky-relationship-heading-actions>.sky-relationship-copy-button{
+  grid-column:3;
+  grid-row:1;
+  justify-self:end;
+  margin:0;
+}
+#skyFoundationRelationships .sky-foundation-relationships-heading>.sky-relationship-heading-actions>#skyChartRelationshipsExport{
+  grid-column:4;
+  grid-row:1;
+  justify-self:end;
   margin:0;
 }
 #skyFoundationRelationships .sky-foundation-relationships-heading>.sky-relationship-heading-actions>.sky-relationship-sort-control{
-  grid-column:1;
-  grid-row:1;
+  grid-column:1/4;
+  grid-row:2;
   min-width:0;
   width:100%;
   margin:0;
@@ -154,85 +162,15 @@ button.relphi-copy-icon-button[data-relphi-copy-format]::after{
   width:100%;
   min-width:0;
   max-width:100%;
-  text-overflow:ellipsis;
+  text-overflow:clip;
 }
 #skyFoundationRelationships .sky-foundation-relationships-heading>.sky-relationship-heading-actions>.sky-relationship-limit-control{
-  grid-column:2;
-  grid-row:1;
+  grid-column:4;
+  grid-row:2;
   justify-self:end;
   width:76px;
   min-width:0;
   margin:0;
-}
-#skyFoundationRelationships .sky-foundation-relationships-heading>.sky-relationship-heading-actions>#skyFoundationRelationshipCount{
-  grid-column:3;
-  grid-row:1;
-  justify-self:end;
-  min-width:0;
-  width:max-content;
-  margin:0;
-  white-space:nowrap;
-}
-#skyFoundationRelationships .sky-foundation-relationships-heading>.sky-relationship-heading-actions>.sky-relationship-copy-button{
-  grid-column:4;
-  grid-row:1;
-  justify-self:center;
-  margin:0!important;
-}
-#skyFoundationRelationships .sky-foundation-relationships-heading>.sky-relationship-heading-actions>#skyChartRelationshipsExport{
-  grid-column:5;
-  grid-row:1;
-  justify-self:center;
-  margin:0!important;
-}
-/* This fallback is for phones too narrow to carry every control. It must not
-   trigger at the ~600px panel shown in the report. */
-@container (max-width:450px){
-  #skyFoundationRelationships .sky-foundation-relationships-heading{
-    grid-template-columns:minmax(0,1fr) auto auto auto;
-    grid-template-rows:auto auto;
-    column-gap:5px;
-    row-gap:6px;
-    padding:7px 8px;
-  }
-  #skyFoundationRelationships .sky-foundation-relationships-heading>h2,
-  #skyFoundationRelationships .sky-foundation-relationships-heading>.sky-relationship-vocab-tabs{
-    grid-column:1;
-    grid-row:1;
-    min-width:0;
-    overflow:hidden;
-    text-overflow:ellipsis;
-  }
-  #skyFoundationRelationships .sky-foundation-relationships-heading>.sky-relationship-heading-actions{
-    display:contents;
-  }
-  #skyFoundationRelationships .sky-foundation-relationships-heading #skyFoundationRelationshipCount{
-    grid-column:2;
-    grid-row:1;
-    justify-self:end;
-  }
-  #skyFoundationRelationships .sky-foundation-relationships-heading .sky-relationship-copy-button{
-    grid-column:3;
-    grid-row:1;
-    justify-self:end;
-  }
-  #skyFoundationRelationships .sky-foundation-relationships-heading #skyChartRelationshipsExport{
-    grid-column:4;
-    grid-row:1;
-    justify-self:end;
-  }
-  #skyFoundationRelationships .sky-foundation-relationships-heading .sky-relationship-sort-control{
-    grid-column:1 / 4;
-    grid-row:2;
-    width:100%;
-    min-width:0;
-  }
-  #skyFoundationRelationships .sky-foundation-relationships-heading .sky-relationship-limit-control{
-    grid-column:4;
-    grid-row:2;
-    justify-self:end;
-    width:76px;
-  }
 }
 
 /* A clickable Invocation Card is itself a clipboard action.
