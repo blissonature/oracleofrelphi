@@ -43,7 +43,7 @@
     return ALIASES.get(raw) || raw.replace(/[.]/g,'').replace(/\s+/g,'-');
   }
 
-  const norm = value => ((Number(value) % 360) + 360) % 360;
+  const norm = value => {const n=Number(value)%360;return n<0?n+360:n===0?0:n;};
 
   function longitude(item) {
     if (!item) return NaN;
