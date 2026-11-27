@@ -281,7 +281,13 @@ function mountLearnWheel(mount,chart){
     const transform=getComputedStyle(oldLayer).transform;
     if(transform&&transform!=='none'){const matrix=new DOMMatrixReadOnly(transform);residual=Math.atan2(matrix.b,matrix.a)*180/Math.PI}
   }
-  mount.replaceChildren(chart);
+  if(previous?.dataset.skyExperience==='learn'&&oldLayer&&newLayer){
+    // Zodiac and by-sign aspect geometry do not change when houses rotate.
+    // Preserve the mounted wheel and all existing isolation/filter classes.
+    oldLayer.replaceWith(newLayer);
+    previous.dataset.learnAscendant=chart.dataset.learnAscendant;
+    window.RelphiSkyFoundationInteractions?.syncLearnHouseRing?.();
+  }else mount.replaceChildren(chart);
   if(!oldLayer||!newLayer||!Number.isFinite(from)||!Number.isFinite(to)||window.matchMedia?.('(prefers-reduced-motion: reduce)').matches)return;
   const offset=((from*30+residual-to*30+180)%360+360)%360-180;
   if(Math.abs(offset)<.01)return;

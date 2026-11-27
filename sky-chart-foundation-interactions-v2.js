@@ -125,13 +125,20 @@
     if(ctx.card){link.dataset.inlineLedger=ctx.card.id;link.href='tarot.html?card='+encodeURIComponent(ctx.card.id);link.querySelector('img').src=ctx.card.image;link.querySelector('img').alt=ctx.card.title;link.querySelector('span').textContent=ctx.card.title}
     core.querySelectorAll('[data-core-house]').forEach(button=>{button.style.setProperty('--ruler-sign-color',window.RelphiSkyWheelSpec.COLORS[index]);button.setAttribute('aria-pressed',String(Number(button.dataset.coreHouse)===ctx.house))});
   }
+  function selectLearnHouse(house){
+    const index=learnSignForState(lockedState);if(!Number.isInteger(index)||!Number.isInteger(house)||house<1||house>12)return false;
+    lockedState={kind:'sign',sky:null,value:index};hoverState=null;rowLockedState=null;rowHoverState=null;wheelOnlyExternal=false;
+    selectionOrigin={source:'Sky Card Core',kind:'sign',value:index};
+    clearWheelTargets();window.RelphiInlineRelationship?.collapse?.();
+    applyState();
+    if(!window.RelphiSkyStartupMode.setLearnAscendant((index-house+1+12)%12))applyState();
+    return true;
+  }
   function browseLearnHouse(button){
     const index=learnSignForState(lockedState);if(!Number.isInteger(index))return;
     const old=learnSignContext(index);if(!old)return;
     const house=button.dataset.coreHouse?Number(button.dataset.coreHouse):((old.house-1+Number(button.dataset.coreStep)+12)%12)+1;
-    lockedState={kind:'sign',sky:null,value:index};hoverState=null;rowLockedState=null;rowHoverState=null;wheelOnlyExternal=false;
-    selectionOrigin={source:'Sky Card Core',kind:'sign',value:index};
-    if(!window.RelphiSkyStartupMode.setLearnAscendant((index-house+1+12)%12))applyState();
+    selectLearnHouse(house);
   }
   function templateRelationships(){
     const aspectsByStep=['','semi-sextile','sextile','square','trine','quincunx','opposition'];
@@ -691,7 +698,12 @@
     restoreFocus,
     getSelectionOrigin,
     learnSignContext,
-    learnPairContext
+    learnPairContext,
+    syncLearnHouseRing(){
+      current.cuspsA=Array.from({length:12},(_,i)=>(learnAsc()*30+i*30)%360);
+      annotateHouseLayer('a-houses','A');
+      applyState();
+    }
   });
   // Wheel-to-Relationships navigation uses endpoint identity rather than a
   // transient list index, so A↔A, B↔B and A↔B survive sorting and filtering.
@@ -762,6 +774,7 @@
     wheelOnlyExternal=false;
     rowLockedState=null;rowHoverState=null;
     const next=specFrom(node);
+    if(next?.kind==='house'&&window.RelphiSkyStartupMode?.readMode?.()==='learn'&&Number.isInteger(learnSignForState(lockedState))){selectLearnHouse(next.value);return;}
     if(next?.kind==='aspect'&&window.RelphiSkyStartupMode?.readMode?.()==='learn')next.learnAnchor=learnSignForState(lockedState);
     if(same(lockedState,next)){lockedState=null;selectionOrigin=null}
     else{lockedState=next;selectionOrigin=originFromNode(node,next)}

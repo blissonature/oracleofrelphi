@@ -709,8 +709,8 @@ html[data-sky-last-mode="learn"] #skyFoundationRelationships{grid-area:relations
 .sky-learn-core-houses button,.sky-learn-core-nav button{min-height:34px;padding:5px;border:1px solid rgba(31,27,24,.25);border-radius:7px;background:#faf4e9;color:#332e2a;font:inherit;cursor:pointer}
 .sky-learn-core-houses button{display:grid;grid-template-rows:auto 1fr auto;align-items:center;overflow:hidden;padding:0;--ruler-art-width:100%}
 .sky-learn-core-houses button[aria-pressed="true"]{background:color-mix(in srgb,var(--ruler-house-color) 24%,#faf4e9);color:#42372a;font-weight:750}
-.sky-learn-pair-reading{padding:4px 0;line-height:1.5;text-align:left}
-.sky-learn-pair-qualities{width:100%;font-size:.72rem;border-collapse:collapse;text-align:left}
+.sky-learn-pair-reading{grid-column:1/-1;padding:4px 0;line-height:1.5;text-align:left}
+.sky-learn-pair-qualities{grid-column:1/-1;width:100%;font-size:.72rem;border-collapse:collapse;text-align:left}
 .sky-learn-pair-qualities th,.sky-learn-pair-qualities td{padding:4px;border-bottom:1px solid #ddd}
 @media(max-width:780px){html[data-sky-last-mode="learn"] #skyFoundationComparison{grid-template-columns:minmax(0,1fr);grid-template-areas:"focus" "wheel" "core" "relations";grid-template-rows:auto}}
 
