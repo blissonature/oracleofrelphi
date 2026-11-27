@@ -695,7 +695,7 @@ html[data-sky-last-mode="learn"] #skyFoundationComparison{grid-column:1/-1;displ
 html[data-sky-last-mode="learn"] #skyFoundationFocus{grid-area:focus}
 html[data-sky-last-mode="learn"] #skyFoundationWheelMount{grid-area:wheel;min-height:0}
 html[data-sky-last-mode="learn"] #skyFoundationRelationships{grid-area:relations;min-width:0}
-#skyFoundationLearnCore{grid-area:core;min-width:0;border:1px solid rgba(31,27,24,.22);border-radius:12px;background:#f2e9da;padding:14px;color:#332e2a}
+#skyFoundationLearnCore{grid-area:core;padding:14px;color:#332e2a}
 #skyFoundationLearnCore[hidden],#skyFoundationLearnCore [hidden]{display:none}
 #skyFoundationLearnCore h2{margin:0 0 12px;font-size:1.1rem}
 #skyFoundationLearnCore h3{margin:0 0 6px;font-size:1.05rem}
