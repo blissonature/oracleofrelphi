@@ -156,7 +156,7 @@ function renderClosedSummary(owner){
     summary=document.createElement('div');summary.className='sky-chart-aspect-summary-choices';summary.setAttribute('role','group');summary.setAttribute('aria-label','All aspects by relationship scope');
     const toggle=head.querySelector('[data-aspect-filter-toggle]');head.insertBefore(summary,toggle||null);
   }
-  const scopes=SCOPES.filter(scope=>activeScopes().includes(scope.id));
+  const scopes=learn()?[]:SCOPES.filter(scope=>activeScopes().includes(scope.id));
   summary.replaceChildren(choice('all','all','All aspects in all relationship scopes',true),...scopes.map(scope=>choice(scope.id,'all',`All aspects in ${scope.label}`,true)));
 }
 function updateInputs(){

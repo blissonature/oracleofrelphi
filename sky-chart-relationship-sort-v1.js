@@ -5,6 +5,7 @@ if(!/(^|\/)sky-chart\.html$/.test(location.pathname)||window.__relphiRelationshi
 window.__relphiRelationshipSortV1=true;
 
 const MODES=Object.freeze({
+  angular:'angular-separation',harmonic:'harmonic-order',zodiac:'zodiacal-order',
   exact:'exact',
   aspect:'aspect',
   strongest:'strongest',
@@ -117,6 +118,10 @@ const SCORE_MODEL=Object.freeze({
 
 let scoreCache=new WeakMap();
 let mode=MODES.exact;
+const learn=()=>window.RelphiSkyStartupMode?.readMode?.()==='learn';
+const LEARN_OPTIONS=[[MODES.angular,'Angular Separation'],[MODES.harmonic,'Harmonic Order'],[MODES.challenging,'Most Challenging First'],[MODES.supportive,'Most Supportive First'],[MODES.zodiac,'Zodiacal Order']];
+let learnMode=MODES.angular,natalMode=MODES.exact,previousLearn=null;
+function syncMode(){const current=learn();if(current===previousLearn)return;if(previousLearn!==null){if(previousLearn)learnMode=mode;else natalMode=mode;}mode=current?learnMode:natalMode;previousLearn=current;calculationGeneration++;busy=false;clearTimeout(transitTimer);}
 let calculationGeneration=0;
 let busy=false,transitTimer=0;
 function whereWhenEditing(){return document.documentElement.dataset.skyWhereWhenEditing==='true'}
@@ -364,7 +369,15 @@ function referenceResolutionFor(row){
 function compareReferenceResolution(a,b){
   return referenceResolutionFor(b)-referenceResolutionFor(a)||compareExact(a,b);
 }
+function zodiacCompare(a,b){const pair=r=>[Number(r.dataset.leftSign),Number(r.dataset.rightSign)].sort((x,y)=>x-y);const x=pair(a),y=pair(b);return x[0]-y[0]||x[1]-y[1]}
+function angularDistance(row){const n=Math.abs(Number(row.dataset.leftSign)-Number(row.dataset.rightSign));return Math.min(n,12-n)*30}
 function compareRows(a,b){
+  if(learn()){
+    if(mode===MODES.angular)return angularDistance(a)-angularDistance(b)||zodiacCompare(a,b);
+    if(mode===MODES.harmonic)return (HARMONIC_ORDER[a.dataset.aspect]??99)-(HARMONIC_ORDER[b.dataset.aspect]??99)||angularDistance(a)-angularDistance(b)||zodiacCompare(a,b);
+    if(mode===MODES.challenging||mode===MODES.supportive){const score=r=>(ASPECT_PROMINENCE[r.dataset.aspect]??.8)*(ASPECT_VALENCE[r.dataset.aspect]??0);return (mode===MODES.supportive?-1:1)*(score(a)-score(b))||zodiacCompare(a,b)}
+    return zodiacCompare(a,b);
+  }
   if(mode===MODES.referenceResolution)return compareReferenceResolution(a,b);
   if(mode===MODES.applying||mode===MODES.separating)return compareMotion(a,b,'phase');
   if(mode===MODES.closing||mode===MODES.opening)return compareMotion(a,b,'distance');
@@ -410,6 +423,7 @@ function ensureHeadingActions(relationships){
   return actions;
 }
 function ensureControl(){
+  syncMode();
   installStyles();
   const relationships=document.getElementById('skyFoundationRelationships');
   const actions=ensureHeadingActions(relationships);
@@ -426,7 +440,14 @@ function ensureControl(){
     select.dataset.relationshipSort='true';
     select.setAttribute('aria-label','Sort relationships');
     select.title='Sort relationships';
-    [
+    select.value=mode;
+    select.addEventListener('change',()=>setMode(select.value));
+    control.appendChild(select);
+  }
+  const sortAnchor=actions.querySelector(':scope>.sky-relationship-limit-control,:scope>#skyFoundationRelationshipCount,:scope>.sky-relationship-copy-button,:scope>#skyChartRelationshipsExport');
+  if(control.parentElement!==actions||control.nextElementSibling!==sortAnchor)actions.insertBefore(control,sortAnchor||actions.firstChild);
+
+const NATAL_OPTIONS=[
       [MODES.exact,'Most Exact First'],
       [MODES.aspect,'Aspect Type'],
       [MODES.strongest,'Strongest First'],
@@ -442,20 +463,9 @@ function ensureControl(){
       [MODES.closing,'Closing First'],
       [MODES.opening,'Opening First'],
       [MODES.referenceResolution,'Highest Reference Resolution']
-    ].forEach(([value,text])=>{
-      const option=document.createElement('option');
-      option.value=value;
-      option.textContent=text;
-      select.appendChild(option);
-    });
-    select.value=mode;
-    select.addEventListener('change',()=>setMode(select.value));
-    control.appendChild(select);
-  }
-  const sortAnchor=actions.querySelector(':scope>.sky-relationship-limit-control,:scope>#skyFoundationRelationshipCount,:scope>.sky-relationship-copy-button,:scope>#skyChartRelationshipsExport');
-  if(control.parentElement!==actions||control.nextElementSibling!==sortAnchor)actions.insertBefore(control,sortAnchor||actions.firstChild);
-
+    ];
   const select=control.querySelector('select');
+  if(select&&select.dataset.sortExperience!==String(learn())){select.replaceChildren(...(learn()?LEARN_OPTIONS:NATAL_OPTIONS).map(([value,label])=>new Option(label,value)));select.dataset.sortExperience=String(learn());}
   if(select&&select.value!==mode)select.value=mode;
   if(select){
     select.setAttribute('aria-busy',busy?'true':'false');
@@ -494,7 +504,7 @@ function scheduleTransitSort(delay=90){
   transitTimer=setTimeout(()=>prepareTransitSort(),Math.max(0,Number(delay)||0));
 }
 function setMode(next){
-  if(!Object.values(MODES).includes(next))next=MODES.exact;
+  if(learn()){if(!LEARN_OPTIONS.some(([id])=>id===next))next=MODES.angular;}else if(!Object.values(MODES).includes(next)||[MODES.angular,MODES.harmonic,MODES.zodiac].includes(next))next=MODES.exact;
   mode=next;
   calculationGeneration+=1;
   busy=false;
@@ -537,6 +547,7 @@ window.RelphiRelationshipSort=Object.freeze({
 function start(){
   ensureControl();
   [
+    'relphi:sky-experience-changed',
     'relphi:sky-foundation-ready',
     'relphi:sky-foundation-interactions-ready',
     'relphi:sky-intrasky-relationships-ready',
