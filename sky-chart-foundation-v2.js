@@ -293,7 +293,13 @@ function mountLearnWheel(mount,chart){
   if(Math.abs(offset)<.01)return;
   const c=center();
   newLayer.style.transformOrigin=c.x+'px '+c.y+'px';
-  newLayer.animate([{transform:'rotate('+offset+'deg)'},{transform:'rotate(0deg)'}],{duration:700,easing:'cubic-bezier(.22,.61,.36,1)',iterations:1});
+  const timing={duration:700,easing:'cubic-bezier(.22,.61,.36,1)',iterations:1};
+  const ringAnimation=newLayer.animate([{transform:'rotate('+offset+'deg)'},{transform:'rotate(0deg)'}],timing);
+  newLayer.querySelectorAll('.sky-foundation-house-number').forEach(number=>{
+    number.style.transformOrigin=number.getAttribute('x')+'px '+number.getAttribute('y')+'px';
+    const upright=number.animate([{transform:'rotate('+(-offset)+'deg)'},{transform:'rotate(0deg)'}],timing);
+    upright.startTime=ringAnimation.startTime;
+  });
 }
 function signature(a,b){try{return JSON.stringify([a,b,requestedOrb(),window.RelphiSkyStartupMode?.readMode?.(),learnAscendantIndex()])}catch(_){return String(Date.now())}}
 function whereWhenEditing(){return document.documentElement.dataset.skyWhereWhenEditing==='true'}

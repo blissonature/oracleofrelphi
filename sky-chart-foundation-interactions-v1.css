@@ -64,6 +64,8 @@
   opacity:1;
 }
 
+.sky-foundation-wheel .sky-foundation-aspect {pointer-events:stroke}
+.sky-foundation-wheel.has-locked-isolation .sky-foundation-aspect:not(.is-kept) {pointer-events:none}
 .sky-foundation-wheel.has-isolation .sky-foundation-aspect.is-kept {
   stroke-width:4.2;
 }

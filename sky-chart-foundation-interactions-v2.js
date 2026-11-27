@@ -238,14 +238,14 @@
       const mode=String(line.dataset.relationshipMode||'').toUpperCase();
       if(mode==='A-A'||mode==='B-B'){
         line.classList.add('sky-foundation-interactive','sky-foundation-aspect');
-        line.dataset.interactive='aspect';line.dataset.focusPiece='aspect';line.style.pointerEvents='stroke';
+        line.dataset.interactive='aspect';line.dataset.focusPiece='aspect';line.style.removeProperty('pointer-events');
         return;
       }
       const index=indexes.get(relationKey(line.dataset.leftPlacement,line.dataset.aspect,line.dataset.rightPlacement,line.dataset.orb)),relation=relations[index];
       if(!relation){delete line.dataset.relationIndex;return}
       line.classList.add('sky-foundation-interactive','sky-foundation-aspect');
       Object.assign(line.dataset,{interactive:'aspect',focusPiece:'aspect',relationIndex:String(index),relationshipMode:'A-B',leftSky:'A',rightSky:'B',aspect:relation.aspect.id,leftPlacement:relation.left.id,rightPlacement:relation.right.id,leftHouse:relation.left.house==null?'':String(relation.left.house),rightHouse:relation.right.house==null?'':String(relation.right.house),leftSign:String(relation.left.sign),rightSign:String(relation.right.sign),harmonicOrder:String(relation.harmonicOrder),harmonicNumerator:String(relation.harmonicNumerator),phaseError:relation.phaseError.toFixed(6),harmonicCoherence:relation.coherence.toFixed(8)});
-      line.setAttribute('tabindex','0');line.setAttribute('role','button');line.setAttribute('aria-label',relation.learn?`${relation.left.entry.name} ${relation.aspect.id} ${relation.right.entry.name}, by sign`:`Sky A ${relation.left.entry.name} ${relation.aspect.id} Sky B ${relation.right.entry.name}, harmonic ${relation.harmonicOrder}, phase error ${relation.phaseError.toFixed(2)} degrees`);line.style.pointerEvents='stroke'
+      line.setAttribute('tabindex','0');line.setAttribute('role','button');line.setAttribute('aria-label',relation.learn?`${relation.left.entry.name} ${relation.aspect.id} ${relation.right.entry.name}, by sign`:`Sky A ${relation.left.entry.name} ${relation.aspect.id} Sky B ${relation.right.entry.name}, harmonic ${relation.harmonicOrder}, phase error ${relation.phaseError.toFixed(2)} degrees`);line.style.removeProperty('pointer-events')
     })
   }
   function ledgerRecord(row,list){
@@ -488,9 +488,11 @@
     const focusState=lockedState||(!rowLockedState&&hoverState),aspectFocus=focusState?.kind==='aspect',filterState=aspectFocus?null:focusState,filterKeep=keepSets(focusState),rowState=rowLockedState||rowHoverState,wheelState=focusState||rowState,wheel=document.querySelector('#skyFoundationWheelMount > .sky-foundation-wheel');
     if(wheel){
       wheel.classList.toggle('has-isolation',!!wheelState);
+      wheel.classList.toggle('has-locked-isolation',!!(lockedState||rowLockedState));
       wheel.querySelectorAll('[data-focus-piece]').forEach(node=>{
         const isRowDriven=!focusState&&!!rowState,isKept=!!wheelState&&(isRowDriven?rowKeeps(node,rowState):kept(node,filterKeep)||!!focusState&&focusState.kind==='aspect'&&matchesNode(node,focusState)),type=node.dataset.focusPiece;
         node.classList.toggle('is-kept',isKept);
+        if(type==='aspect')node.setAttribute('tabindex',(!lockedState&&!rowLockedState||isKept)?'0':'-1');
         node.classList.toggle('is-aspect-endpoint',(isRowDriven||aspectFocus)&&isKept&&(type==='placement'||type==='leader'));
         node.classList.toggle('is-selected',!!lockedState&&matchesNode(node,lockedState)||(!filterState&&!!rowLockedState&&rowMarksNode(node,rowLockedState)));
         node.classList.toggle('is-hovered',!!hoverState&&!lockedState&&matchesNode(node,hoverState)||(!filterState&&!rowLockedState&&!!rowHoverState&&rowMarksNode(node,rowHoverState)));
@@ -532,11 +534,19 @@
     window.dispatchEvent(new CustomEvent('relphi:sky-foundation-filter-changed',{detail:{state:focusState?{...focusState,mode:lockedState?'selected':'hover'}:null,origin:lockedState&&selectionOrigin?{...selectionOrigin}:null,relationshipIndexes}}));
   }
   function distanceToSegment(x,y,a,b){const dx=b.x-a.x,dy=b.y-a.y,length=dx*dx+dy*dy;if(!length)return Math.hypot(x-a.x,y-a.y);const t=Math.max(0,Math.min(1,((x-a.x)*dx+(y-a.y)*dy)/length)),px=a.x+t*dx,py=a.y+t*dy;return Math.hypot(x-px,y-py)}
+  // The same eligibility rule governs native SVG hits, nearest-line fallback,
+  // keyboard activation and virtual/mobile pointers. Hover is not a lock.
+  function aspectInteractive(line){
+    if(!line||line.hidden||PERSISTENT_HIDDEN_CLASSES.some(name=>line.classList.contains(name)))return false;
+    if((lockedState||rowLockedState)&&!line.classList.contains('is-kept'))return false;
+    const style=getComputedStyle(line);
+    return style.display!=='none'&&style.visibility!=='hidden'&&style.pointerEvents!=='none';
+  }
   function nearestAspect(event){
     if(!Number.isFinite(event.clientX)||!Number.isFinite(event.clientY))return null;
     let nearest=null,best=Infinity;
     document.querySelectorAll('[data-layer="aspects"] > line.sky-foundation-aspect:not(.sky-foundation-aspect-hit)').forEach(line=>{
-      if(line.classList.contains('sky-chart-filter-hidden')||line.classList.contains('sky-chart-orb-hidden')||line.classList.contains('sky-orb-filter-hidden')||getComputedStyle(line).display==='none')return;
+      if(!aspectInteractive(line))return;
       const matrix=line.getScreenCTM(),svg=line.ownerSVGElement;if(!matrix||!svg?.createSVGPoint)return;
       const start=svg.createSVGPoint(),end=svg.createSVGPoint();start.x=Number(line.getAttribute('x1'));start.y=Number(line.getAttribute('y1'));end.x=Number(line.getAttribute('x2'));end.y=Number(line.getAttribute('y2'));
       const distance=distanceToSegment(event.clientX,event.clientY,start.matrixTransform(matrix),end.matrixTransform(matrix));if(distance<best){best=distance;nearest=line}
@@ -549,7 +559,7 @@
     if(node&&root.contains(node)){
       // A struck SVG aspect already identifies its exact endpoints and
       // harmonic. Do not replace it with a geometrically nearby crossing line.
-      return node;
+      if(node.dataset.interactive!=='aspect'||aspectInteractive(node))return node;
     }
     const wheel=event.target.closest?.('#skyFoundationWheelMount .sky-foundation-wheel');
     if(wheel&&root.contains(event.target))return nearestAspect(event);
@@ -770,7 +780,7 @@
   // it directly rather than dispatching a second click through unrelated
   // capture-phase listeners (which can retarget or consume that click).
   function toggleInteractiveNode(node){
-    if(!node)return;
+    if(!node||(node.dataset.interactive==='aspect'&&!aspectInteractive(node)))return;
     wheelOnlyExternal=false;
     rowLockedState=null;rowHoverState=null;
     const next=specFrom(node);

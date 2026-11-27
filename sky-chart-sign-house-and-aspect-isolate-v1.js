@@ -71,6 +71,7 @@
   }
 
   function applySignHouseCorrection(event) {
+    if(window.RelphiSkyStartupMode?.readMode?.()==='learn')return;
     const state = event.detail?.state;
     // The fast hover path already computes sign-to-house overlap from cached cusps.
     // Re-reading both saved skies and recomputing cusps here would duplicate that work.
