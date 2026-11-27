@@ -132,6 +132,26 @@ try{
    assert.deepEqual(await page.locator('#skyFoundationWheelMount [data-interactive="sign"].is-kept').evaluateAll(nodes=>nodes.map(n=>Number(n.dataset.sign)).sort((a,b)=>a-b)),[0,7]);
    await core.locator('[data-core-clear-ruler]').click();
    assert.equal(await core.locator('.sky-card-ruler-detail').count(),0);
+   // Expansion replaces the selected compact tile in the original flow; art is not duplicated.
+   const order=await core.locator('.sky-card-rulers-grid [data-core-ruler]').evaluateAll(nodes=>nodes.map(n=>n.dataset.coreRuler));
+   await core.locator('[data-core-ruler="Venus"]').click();
+   const expanded=core.locator('.sky-card-ruler-detail[data-card-ruler-detail="Venus"]');
+   await expanded.waitFor({state:'visible'});
+   const layout=await expanded.evaluate(el=>{
+     const art=el.querySelector('img'),body=el.querySelector('.sky-card-ruler-detail-body'),grid=el.parentElement,ar=art.getBoundingClientRect(),br=body.getBoundingClientRect(),r=el.getBoundingClientRect(),gr=grid.getBoundingClientRect();
+     return {parent:grid.className,next:el.nextElementSibling?.dataset.coreRuler,artRight:ar.right,bodyLeft:br.left,artTop:ar.top,bodyBottom:br.bottom,width:r.width,gridWidth:gr.width,scroll:el.scrollWidth,client:el.clientWidth,artCount:el.querySelectorAll('img').length};
+   });
+   console.log('INLINE RULER TILE',viewport.width,JSON.stringify(layout));
+   assert.equal(layout.parent,'sky-card-rulers-grid');
+   assert.equal(layout.next,'Jupiter','Jupiter must follow expanded Venus in original order');
+   assert.ok(layout.artRight<=layout.bodyLeft&&layout.artTop<layout.bodyBottom,'Art and detail must be side by side');
+   assert.ok(Math.abs(layout.width-layout.gridWidth)<2&&layout.scroll<=layout.client+1,'Expanded tile fits the grid without overflow');
+   assert.equal(layout.artCount,1);
+   assert.deepEqual(await core.locator('.sky-card-rulers-grid [data-core-ruler]').evaluateAll(nodes=>nodes.map(n=>n.dataset.coreRuler)),order);
+   await page.screenshot({path:'sky-remote-inline-ruler-'+viewport.width+'.png'});
+   await expanded.locator('[data-core-ruler="Venus"]').click();
+   assert.equal(await core.locator('.sky-card-ruler-detail').count(),0,'Clicking the expanded art collapses it');
+   assert.deepEqual(await core.locator('.sky-card-rulers-grid [data-core-ruler]').evaluateAll(nodes=>nodes.map(n=>n.dataset.coreRuler)),order);
    await core.getByRole('tab',{name:'Signs',exact:true}).click();
    assert.equal(await core.locator('[data-core-select-sign]').count(),12);
    await core.locator('[data-core-select-sign="7"]').click();
