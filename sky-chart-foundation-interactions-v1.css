@@ -695,7 +695,7 @@ html[data-sky-last-mode="learn"] #skyFoundationComparison{grid-column:1/-1;displ
 html[data-sky-last-mode="learn"] #skyFoundationFocus{grid-area:focus}
 html[data-sky-last-mode="learn"] #skyFoundationWheelMount{grid-area:wheel;min-height:0}
 html[data-sky-last-mode="learn"] #skyFoundationRelationships{grid-area:relations;min-width:0}
-#skyFoundationLearnCore{grid-area:core;min-width:0;border:1px solid rgba(31,27,24,.22);border-radius:12px;background:#fff;padding:14px;color:#332e2a}
+#skyFoundationLearnCore{grid-area:core;min-width:0;border:1px solid rgba(31,27,24,.22);border-radius:12px;background:#f2e9da;padding:14px;color:#332e2a}
 #skyFoundationLearnCore[hidden],#skyFoundationLearnCore [hidden]{display:none}
 #skyFoundationLearnCore h2{margin:0 0 12px;font-size:1.1rem}
 #skyFoundationLearnCore h3{margin:0 0 6px;font-size:1.05rem}
@@ -706,9 +706,9 @@ html[data-sky-last-mode="learn"] #skyFoundationRelationships{grid-area:relations
 .sky-learn-core-identity img{width:100%;height:auto;border-radius:5px}
 .sky-learn-core-houses{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:5px;margin:12px 0}
 .sky-learn-core-nav{display:flex;justify-content:space-between;gap:8px}
-.sky-learn-core-houses button,.sky-learn-core-nav button{min-height:34px;padding:5px;border:1px solid rgba(31,27,24,.25);border-radius:7px;background:white;color:#332e2a;font:inherit;cursor:pointer}
+.sky-learn-core-houses button,.sky-learn-core-nav button{min-height:34px;padding:5px;border:1px solid rgba(31,27,24,.25);border-radius:7px;background:#faf4e9;color:#332e2a;font:inherit;cursor:pointer}
 .sky-learn-core-houses button{display:grid;grid-template-rows:auto 1fr auto;align-items:center;overflow:hidden;padding:0;--ruler-art-width:100%}
-.sky-learn-core-houses button[aria-pressed="true"]{background:#332e2a;color:white}
+.sky-learn-core-houses button[aria-pressed="true"]{background:color-mix(in srgb,var(--ruler-house-color) 24%,#faf4e9);color:#42372a;font-weight:750}
 .sky-learn-pair-reading{padding:4px 0;line-height:1.5;text-align:left}
 .sky-learn-pair-qualities{width:100%;font-size:.72rem;border-collapse:collapse;text-align:left}
 .sky-learn-pair-qualities th,.sky-learn-pair-qualities td{padding:4px;border-bottom:1px solid #ddd}
