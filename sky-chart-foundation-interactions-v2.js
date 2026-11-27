@@ -116,7 +116,9 @@
     core.hidden=false;
     const tab=core.dataset.coreTab||'houses',asc=learnAsc(),ruler=state?.kind==='ruler'?state.value:'';
     const structure=core.querySelector('[data-core-structure]'),structureKey=[tab,asc,ruler].join('|');
+    const detail=core.querySelector('[data-core-content]'),prompt=core.querySelector('[data-core-prompt]');
     if(structure.dataset.structureKey!==structureKey){
+      if(structure.contains(detail))structure.after(detail);
       structure.dataset.structureKey=structureKey;
       core.querySelectorAll('[data-core-tab]').forEach(button=>button.setAttribute('aria-selected',String(button.dataset.coreTab===tab)));
       if(tab==='vocab')window.RelphiSkyVocab?.renderTemplate?.(structure,asc);
@@ -124,7 +126,12 @@
     }
     const index=learnSignForState(state),ctx=Number.isInteger(index)?learnSignContext(index):null;
     structure.querySelectorAll('[data-core-select-sign]').forEach(tile=>{const selected=Number(tile.dataset.coreSelectSign)===index;tile.classList.toggle('is-selected',selected);tile.setAttribute('aria-pressed',String(selected))});
-    core.querySelector('[data-core-prompt]').hidden=!!ctx;core.querySelector('[data-core-content]').hidden=!ctx;
+    const selectedTile=tab==='houses'&&ctx?structure.querySelector('[data-core-select-sign="'+index+'"]'):null;
+    if(selectedTile){
+      if(selectedTile.nextElementSibling!==detail)selectedTile.after(detail);
+    }else if(structure.contains(detail))structure.after(detail);
+    structure.querySelectorAll('[data-core-select-sign]').forEach(tile=>tile.setAttribute('aria-expanded',String(tile===selectedTile)));
+    prompt.hidden=!!ctx;detail.hidden=!ctx;
     if(!ctx){delete core.dataset.coreSign;delete core.dataset.coreHouse;return}
     if(core.dataset.coreSign===String(index)&&core.dataset.coreHouse===String(ctx.house))return;
     core.dataset.coreSign=String(index);core.dataset.coreHouse=String(ctx.house);
