@@ -24,7 +24,7 @@ const COLORS=['#e53935','#f06b32','#f39a2e','#f5be3d','#f1dc43','#a9cf46','#43a8
 const ALL=SIGNS.map((_,index)=>String(index));
 const STORAGE_KEY='relphiSkyZodiacFilterV1';
 let selected=new Set(ALL),queued=false,root=null,button=null,menu=null;
-try{const saved=JSON.parse(localStorage.getItem(STORAGE_KEY)||'null');if(Array.isArray(saved))selected=new Set(saved.map(String).filter(value=>ALL.includes(value)))}catch(_){}
+try{const saved=JSON.parse(window.RelphiSkyWorkingStorage.getItem(STORAGE_KEY)||'null');if(Array.isArray(saved))selected=new Set(saved.map(String).filter(value=>ALL.includes(value)))}catch(_){}
 
 function canonicalGlyph(host,id,color){
   const registry=window.RelphiGlyphRegistry,component=window.RelphiGlyphComponent,entry=registry&&(registry.get(id)||registry.resolve(id));
@@ -52,13 +52,13 @@ function syncChecks(){
 function apply(){
   queued=false;
   const all=selected.size===12;
-  document.querySelectorAll('.sky-foundation-relationship-row[data-relation-index]').forEach(row=>{
+  document.querySelectorAll('.sky-foundation-relationship-row[data-relation-index], [data-layer="aspects"] > .sky-foundation-aspect[data-learn-relation="true"]').forEach(row=>{
     const match=all||selected.has(String(row.dataset.leftSign))||selected.has(String(row.dataset.rightSign));
     row.classList.toggle('sky-chart-sign-filter-hidden',!match);
   });
   syncChecks();
   document.documentElement.dataset.skyZodiacFilterSource='manual';
-  try{localStorage.setItem(STORAGE_KEY,JSON.stringify(Array.from(selected)))}catch(_){}
+  try{window.RelphiSkyWorkingStorage.setItem(STORAGE_KEY,JSON.stringify(Array.from(selected)))}catch(_){}
   window.dispatchEvent(new CustomEvent('relphi:sky-zodiac-filter-changed',{detail:{signs:Array.from(selected,Number),source:'manual'}}));
 }
 function schedule(){if(queued)return;queued=true;requestAnimationFrame(apply)}

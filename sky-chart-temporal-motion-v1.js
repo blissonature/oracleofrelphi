@@ -7,7 +7,7 @@ const KEYS={A:'relphiSkyChartA',B:'relphiSkyChartB'};
 const BODY={sun:'Sun',moon:'Moon',mercury:'Mercury',venus:'Venus',mars:'Mars',jupiter:'Jupiter',saturn:'Saturn',uranus:'Uranus',neptune:'Neptune',pluto:'Pluto'};
 const ALIAS={ascendant:'asc',descendant:'dsc',midheaven:'mc','imum coeli':'ic','north node':'north-node','south node':'south-node','part of fortune':'part-of-fortune'};
 const norm=x=>((Number(x)%360)+360)%360,short=x=>((Number(x)+180)%360+360)%360-180,separation=(a,b)=>Math.abs(short(Number(a)-Number(b)));
-function read(k){try{return JSON.parse(localStorage.getItem(k)||'null')}catch(_){return null}}
+function read(k){try{return JSON.parse(window.RelphiSkyWorkingStorage.getItem(k)||'null')}catch(_){return null}}
 function source(p){const x=[p?.placements,p?.positions,p?.points,p?.bodies].find(v=>v&&typeof v==='object')||p||{};return Array.isArray(x)?x.map((v,i)=>[String(v?.name||v?.id||i),v]):Object.entries(x)}
 function cid(k,x){const r=window.RelphiGlyphRegistry;for(const c of [x?.glyphId,x?.id,x?.name,x?.label,x?.body,x?.planet,x?.point,k]){if(!c)continue;const raw=String(c).trim(),e=r?.resolve?.(ALIAS[raw.toLowerCase()]||raw)||r?.get?.(ALIAS[raw.toLowerCase()]||raw);if(e)return e.id}return''}
 function longitude(x){if(Number.isFinite(Number(x?.longitude)))return norm(x.longitude);return NaN}

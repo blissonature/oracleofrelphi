@@ -17,8 +17,8 @@ const STEP_MS=5*60*1000;
 const STYLE_ID='skyLiveHeaderV14Styles';
 let queued=false,timer=0;
 
-function read(slot){try{return JSON.parse(localStorage.getItem(KEYS[slot])||'null')}catch(_){return null}}
-function write(slot,value){try{localStorage.setItem(KEYS[slot],JSON.stringify(value));return true}catch(_){return false}}
+function read(slot){try{return JSON.parse(window.RelphiSkyWorkingStorage.getItem(KEYS[slot])||'null')}catch(_){return null}}
+function write(slot,value){try{window.RelphiSkyWorkingStorage.setItem(KEYS[slot],JSON.stringify(value));return true}catch(_){return false}}
 function metadata(value){return value?.metadata&&typeof value.metadata==='object'?value.metadata:{}}
 function profile(value){return value?.calcProfile&&typeof value.calcProfile==='object'?value.calcProfile:{}}
 function saved(value){const m=metadata(value);return!!String(m.savedSkyId||m.savedSkyName||m.savedSkyLoadedAt||'').trim()}
@@ -33,9 +33,9 @@ function parseMs(value){
 function explicitOrigin(value){const m=String(metadata(value).liveNowOrigin||''),p=String(profile(value).liveNowOrigin||'');return LIVE_ORIGINS.has(m)?m:LIVE_ORIGINS.has(p)?p:''}
 function liveOrigin(value){return explicitOrigin(value)||window.RelphiSkyLiveOriginMigration?.legacyOrigin?.(value)||''}
 function markerMs(value){const a=Date.parse(metadata(value).liveAgeAnchorAt||''),b=Date.parse(metadata(value).liveNowAt||profile(value).liveNowAt||'');return Number.isFinite(a)?a:Number.isFinite(b)?b:parseMs(value)}
-function ageRecord(slot){try{const raw=JSON.parse(localStorage.getItem(AGE_KEYS[slot])||'null'),at=Date.parse(raw?.at||'');return Number.isFinite(at)&&LIVE_ORIGINS.has(String(raw?.origin||''))?{origin:String(raw.origin),at}:null}catch(_){return null}}
-function saveAge(slot,origin,at){if(!LIVE_ORIGINS.has(origin)||!Number.isFinite(at))return;try{localStorage.setItem(AGE_KEYS[slot],JSON.stringify({origin,at:new Date(at).toISOString()}))}catch(_){}}
-function clearAge(slot){try{localStorage.removeItem(AGE_KEYS[slot])}catch(_){}}
+function ageRecord(slot){try{const raw=JSON.parse(window.RelphiSkyWorkingStorage.getItem(AGE_KEYS[slot])||'null'),at=Date.parse(raw?.at||'');return Number.isFinite(at)&&LIVE_ORIGINS.has(String(raw?.origin||''))?{origin:String(raw.origin),at}:null}catch(_){return null}}
+function saveAge(slot,origin,at){if(!LIVE_ORIGINS.has(origin)||!Number.isFinite(at))return;try{window.RelphiSkyWorkingStorage.setItem(AGE_KEYS[slot],JSON.stringify({origin,at:new Date(at).toISOString()}))}catch(_){}}
+function clearAge(slot){try{window.RelphiSkyWorkingStorage.removeItem(AGE_KEYS[slot])}catch(_){}}
 function persistAge(slot,value,origin,at){
   if(!value||!LIVE_ORIGINS.has(origin)||!Number.isFinite(at))return;
   const iso=new Date(at).toISOString(),m={...metadata(value)};

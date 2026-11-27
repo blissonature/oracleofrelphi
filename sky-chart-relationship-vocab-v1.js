@@ -234,7 +234,13 @@ function relationshipLine(row){
     {id:String(row.dataset.leftPlacement||''),sign:Number(row.dataset.leftSign),house:Number(row.dataset.leftHouse)},
     {id:String(row.dataset.rightPlacement||''),sign:Number(row.dataset.rightSign),house:Number(row.dataset.rightHouse)}
   ];applyRelationshipRails(line,members);
-  const frag=document.createDocumentFragment();frag.append(makeToken(placementInfo(row.dataset.leftPlacement),'placement',true),document.createTextNode(' is in '),makeToken(aspectInfo(row.dataset.aspect),'aspect'),document.createTextNode(' with '),makeToken(placementInfo(row.dataset.rightPlacement),'placement'),document.createTextNode('.'));line.appendChild(frag);line.dataset.relationshipScope=relationshipMode(row);line.dataset.leftSky=s.left;line.dataset.rightSky=s.right;return line
+  const frag=document.createDocumentFragment();
+  if(row.dataset.learnRelationship==='true'){
+    frag.append(makeToken(signInfo(Number(row.dataset.leftSign)),'sign',true),document.createTextNode(' is in '),makeToken(aspectInfo(row.dataset.aspect),'aspect'),document.createTextNode(' by sign with '),makeToken(signInfo(Number(row.dataset.rightSign)),'sign'),document.createTextNode('.'));
+  }else{
+    frag.append(makeToken(placementInfo(row.dataset.leftPlacement),'placement',true),document.createTextNode(' is in '),makeToken(aspectInfo(row.dataset.aspect),'aspect'),document.createTextNode(' with '),makeToken(placementInfo(row.dataset.rightPlacement),'placement'),document.createTextNode('.'));
+  }
+  line.appendChild(frag);line.dataset.relationshipScope=relationshipMode(row);line.dataset.leftSky=s.left;line.dataset.rightSky=s.right;return line
 }
 function groupState(){return readJson(sessionStorage,GROUP_KEY,{})||{}}
 function saveGroup(key,open){const state=groupState();state[key]=!!open;writeJson(sessionStorage,GROUP_KEY,state)}

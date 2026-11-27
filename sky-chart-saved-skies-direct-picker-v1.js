@@ -23,7 +23,7 @@ function ensureSaveSky(popover){
   const head=popover.querySelector('.sky-saved-subview-head');
   if(!head)return;
   const slot=document.querySelector('[data-saved-sky-trigger][aria-expanded="true"]')?.dataset.savedSkyTrigger;
-  const value=slot&&localStorage.getItem('relphiSkyChart'+slot);
+  const value=slot&&window.RelphiSkyWorkingStorage.getItem('relphiSkyChart'+slot);
   let hasSky=false;
   try{const sky=value&&JSON.parse(value),source=sky?.placements||sky?.positions||sky?.points||sky?.bodies;
     hasSky=!!(source&&typeof source==='object'&&Object.keys(source).length)}catch(_){}

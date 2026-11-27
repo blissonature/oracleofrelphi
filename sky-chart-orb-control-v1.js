@@ -88,6 +88,10 @@
   }
   function apply(){
     queued=false;
+    if(window.RelphiSkyStartupMode?.readMode?.()==='learn'){
+      document.querySelectorAll('[data-learn-relationship="true"],[data-learn-relation="true"]').forEach(node=>node.classList.remove('sky-chart-orb-hidden','sky-orb-filter-hidden'));
+      return;
+    }
     const limit=Number(model()?.getWindow?.()??model()?.defaultWindow??7);
     if(!Number.isFinite(limit))return;
     const visibleIndexes=new Set(),lineVisibleKeys=new Set(),rows=[...document.querySelectorAll('.sky-foundation-relationship-row[data-relation-index]')],identity=relationshipKey,rowsByIndex=new Map(rows.map(row=>[identity(row),row]));
@@ -188,16 +192,19 @@
   function install(){
     const slot=document.querySelector('#skyFoundationFocus .sky-focus-heading-controls');
     if(!slot)return false;
+    const learn=window.RelphiSkyStartupMode?.readMode?.()==='learn';
     let field=document.querySelector('[data-orb-field="true"]');
+    if(learn){field?.remove();return true;}
     const display=slot.querySelector(':scope>[data-relationship-display-control]');
     const wheelActions=slot.querySelector(':scope>.sky-export-wheel-slot');
     if(field&&field.parentElement!==slot)slot.insertBefore(field,wheelActions||null);
     if(field){
+      field.hidden=learn;
       field.style.order='20';
       if(display&&field.previousElementSibling!==display)slot.insertBefore(field,display.nextSibling);
       return true;
     }
-    field=document.createElement('label');field.className='sky-orb-number-field';field.dataset.orbField='true';
+    field=document.createElement('label');field.className='sky-orb-number-field';field.dataset.orbField='true';field.hidden=learn;
     const caption=document.createElement('span');caption.textContent='Harmonic Window';
     const input=document.createElement('input'),m=model();
     input.type='text';input.inputMode='decimal';input.autocomplete='off';input.value=String(initialWindow());
@@ -241,6 +248,7 @@
     ['relphi:sky-foundation-interactions-ready','relphi:sky-intrasky-relationships-ready','relphi:sky-intrasky-b-relationships-ready','relphi:sky-placement-multiselect-changed','relphi:sky-house-multiselect-changed','relphi:sky-aspect-multiselect-changed','relphi:sky-zodiac-filter-changed','relphi:selected-relationship-rendered','relphi:sky-foundation-ready'].forEach(name=>window.addEventListener(name,ensureInstalled));
     ['relphi:sky-configuration-selection-changed','relphi:sky-configurations-detected','relphi:sky-aspect-visibility-applied'].forEach(name=>window.addEventListener(name,()=>{ensureInstalled();schedule()}));
     window.addEventListener('relphi:sky-harmonic-window-model-changed',schedule);
+    window.addEventListener('relphi:sky-experience-changed',ensureInstalled);
     document.getElementById('skyFoundationRelationships')?.addEventListener('change',schedule);
   }
 

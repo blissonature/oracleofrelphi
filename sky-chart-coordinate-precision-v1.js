@@ -25,7 +25,7 @@
   ]);
 
   function read(key) {
-    try { return JSON.parse(localStorage.getItem(key) || 'null'); }
+    try { return JSON.parse(window.RelphiSkyWorkingStorage.getItem(key) || 'null'); }
     catch (_) { return null; }
   }
 
@@ -43,29 +43,33 @@
     return ALIASES.get(raw) || raw.replace(/[.]/g,'').replace(/\s+/g,'-');
   }
 
-  const norm = value => ((Number(value) % 360) + 360) % 360;
+  const norm = value => {const n=Number(value)%360;return n<0?n+360:n===0?0:n;};
 
   function longitude(item) {
     if (!item) return NaN;
-    if (Number.isFinite(Number(item.longitude))) return norm(item.longitude);
+    if (item.longitude != null && item.longitude !== '' && Number.isFinite(Number(item.longitude))) return norm(item.longitude);
     const sign = SIGNS.findIndex(name => name.toLowerCase() === String(item.sign || item.zodiac || '').trim().toLowerCase());
-    const degree = Number(item.degree ?? item.degrees);
-    const minute = Number(item.minute ?? item.minutes);
+    const degree = Number(item.degree ?? item.degrees ?? 0);
+    const minute = Number(item.minute ?? item.minutes ?? 0);
     const second = Number(item.second ?? item.seconds ?? 0);
     if (sign < 0 || !Number.isFinite(degree) || !Number.isFinite(minute)) return NaN;
     return norm(sign * 30 + degree + minute / 60 + (Number.isFinite(second) ? second : 0) / 3600);
   }
 
-  function exactCoordinate(item) {
-    const value = longitude(item);
-    if (!Number.isFinite(value)) return null;
-    const signIndex = Math.floor(value / 30);
-    const within = value - signIndex * 30;
-    const degree = Math.floor(within);
-    const minute = Math.floor((within - degree) * 60 + 1e-9);
-    const sign = SIGNS[signIndex];
-    return { text:`${degree}°${String(minute).padStart(2,'0')}′`, sign, signIndex, full:`${degree}°${String(minute).padStart(2,'0')}′ ${sign}` };
+  // Round at arcsecond precision, preserving the actual zodiac sign and degree
+  // at boundaries. Geometry and aspect arithmetic never use these display fields.
+  function format(value) {
+    value=norm(value);
+    if(!Number.isFinite(value))return null;
+    const signIndex=Math.floor(value/30), within=value-signIndex*30;
+    const degree=Math.floor(within);
+    const secondsInDegree=Math.min(3599,Math.round((within-degree)*3600));
+    const minute=Math.floor(secondsInDegree/60),second=secondsInDegree%60;
+    const text=`${degree}°${String(minute).padStart(2,'0')}′${String(second).padStart(2,'0')}″`;
+    return {signIndex,degree,minute,second,text,sign:SIGNS[signIndex],full:text+' '+SIGNS[signIndex]};
   }
+  window.RelphiSkyCoordinatePrecision=Object.freeze({format,longitude});
+  function exactCoordinate(item){return format(longitude(item));}
 
   // Presentation is deliberately read-only. Longitude is authoritative, but this
   // layer never rewrites persisted Sky records while the chart is rendering.
@@ -143,7 +147,7 @@
   }
 
   function correctRelationships(mapsA,mapsB) {
-    document.querySelectorAll('#skyFoundationRelationshipList .sky-foundation-relationship-row').forEach(row => {
+    document.querySelectorAll('#skyFoundationRelationshipList .sky-foundation-relationship-row:not([data-learn-relationship="true"])').forEach(row => {
       const leftMaps = mapsForRowSide(row,'left',mapsA,mapsB);
       const rightMaps = mapsForRowSide(row,'right',mapsA,mapsB);
       const left = leftMaps.byIdentity.get(row.dataset.leftPlacement || '');
@@ -169,7 +173,7 @@
       maps.byName.forEach((coordinate,name) => {
         const visibleName = name.replace(/[-]/g,' ');
         if (!text.toLowerCase().includes(visibleName)) return;
-        text = text.replace(/\b\d{1,2}°\d{2}[′']\s+(Aries|Taurus|Gemini|Cancer|Leo|Virgo|Libra|Scorpio|Sagittarius|Capricorn|Aquarius|Pisces)\b/g, coordinate.full);
+        text = text.replace(/\b\d{1,2}°\d{2}[′'](?:\d{2}[″"])?\s+(Aries|Taurus|Gemini|Cancer|Leo|Virgo|Libra|Scorpio|Sagittarius|Capricorn|Aquarius|Pisces)\b/g, coordinate.full);
       });
       if (text !== node.nodeValue) node.nodeValue = text;
     });

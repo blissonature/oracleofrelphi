@@ -240,6 +240,7 @@
     if(event.target.closest?.('[data-ww-action="apply-inference"]'))requestAnimationFrame(()=>document.querySelectorAll(TIME_SELECTOR).forEach(syncFromCanonical));
   },true);
 
+  document.addEventListener('change',event=>{const canonical=event.target.closest?.(TIME_SELECTOR);if(canonical)syncFromCanonical(canonical)},true);
   document.addEventListener('input',event=>{
     const entry=event.target.closest?.('[data-sky-time-entry]');
     if(!entry)return;

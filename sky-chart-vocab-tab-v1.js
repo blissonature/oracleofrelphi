@@ -260,11 +260,8 @@ function aspectInfo(aspect){return{id:aspect.id,glyphId:aspect.id,name:ASPECT_NA
 
 function displayState(){
   const value=readJson(localStorage,DISPLAY_KEY,null);
-  return{
-    glyphs:value?.glyphs!==false,
-    names:value?.names!==false,
-    referents:value?.referents!==false
-  };
+  const state={glyphs:value?.glyphs!==false,names:value?.names!==false,referents:value?.referents!==false};
+  return Object.values(state).some(Boolean)?state:{glyphs:true,names:true,referents:true};
 }
 function saveDisplay(next){writeJson(localStorage,DISPLAY_KEY,next);document.documentElement.dataset.skyVocabGlyphs=next.glyphs?'true':'false';document.documentElement.dataset.skyVocabNames=next.names?'true':'false';document.documentElement.dataset.skyVocabReferents=next.referents?'true':'false'}
 function filterState(){
@@ -1346,7 +1343,7 @@ function basicDropdownShell(slot,kind,label,summary,body){
 }
 function layerDropdownMarkup(slot){
   const state=displayState(),rows=['glyphs','referents','names'].map(id=>'<label class="sky-vocab-filter-row"><span class="sky-vocab-filter-name">'+optionLabel(id)+'</span><span class="sky-vocab-filter-check"><input type="checkbox" data-vocab-layer="'+id+'" data-vocab-slot="'+slot+'" '+(state[id]?'checked':'')+' aria-label="'+optionLabel(id)+'"></span></label>').join('');
-  const body='<div class="sky-vocab-filter-list"><div class="sky-vocab-filter-header"><strong>DISPLAY</strong><span class="sky-vocab-filter-actions"><button type="button" data-vocab-layer-all="'+slot+'">All</button><button type="button" data-vocab-layer-none="'+slot+'">None</button></span></div>'+rows+'</div>';
+  const body='<div class="sky-vocab-filter-list"><div class="sky-vocab-filter-header"><strong>DISPLAY</strong><span class="sky-vocab-filter-actions"><button type="button" data-vocab-layer-all="'+slot+'">All</button></span></div>'+rows+'</div>';
   return basicDropdownShell(slot,'layers','Display',layerSummary(),body);
 }
 function relationshipChoice(inputMarkup,choiceClass=''){
@@ -1476,7 +1473,7 @@ function setHarmonicWindowFromVocab(input,commit=false){
 function syncControlState(){
   syncHarmonicWindowControls();
   const display=displayState(),filters=filterState();
-  document.querySelectorAll('[data-vocab-layer]').forEach(input=>{input.checked=!!display[input.dataset.vocabLayer]});
+  document.querySelectorAll('[data-vocab-layer]').forEach(input=>{input.checked=!!display[input.dataset.vocabLayer];input.disabled=input.checked&&Object.values(display).filter(Boolean).length===1;});
   document.querySelectorAll('[data-vocab-filter="relationships"]').forEach(input=>{input.checked=filters.relationships!==false});
   ['A','B'].forEach(slot=>{
     const list=records(slot);
@@ -1516,7 +1513,7 @@ function releaseWheelIsolationForManualFilter(){
   wheelFilterState=null;wheelFilterSpec=null;
   const clear=document.getElementById('skyFoundationClearIsolation');if(clear&&!clear.hidden)clear.click();
 }
-function setLayerAll(checked){const state=displayState();['glyphs','referents','names'].forEach(id=>{state[id]=checked});saveDisplay(state);refreshDisplayLayers()}
+function setLayerAll(){saveDisplay({glyphs:true,names:true,referents:true});refreshDisplayLayers()}
 function setDimensionAll(slot,kind,checked){
   releaseWheelIsolationForManualFilter();
   const all=kind==='placements'?records(slot).map(record=>record.id):kind==='signs'?ALL_SIGNS:ALL_HOUSES;
@@ -1560,7 +1557,7 @@ function ensurePanel(slot,view){
     input.addEventListener('change',()=>setHarmonicWindowFromVocab(input,true));
     input.addEventListener('blur',()=>setHarmonicWindowFromVocab(input,true));
   });
-  panel.querySelectorAll('[data-vocab-layer]').forEach(input=>input.addEventListener('change',()=>{const state=displayState();state[input.dataset.vocabLayer]=input.checked;saveDisplay(state);refreshDisplayLayers()}));
+  panel.querySelectorAll('[data-vocab-layer]').forEach(input=>input.addEventListener('change',()=>{const state=displayState();if(!input.checked&&state[input.dataset.vocabLayer]&&Object.values(state).filter(Boolean).length===1){syncControlState();return}state[input.dataset.vocabLayer]=input.checked;saveDisplay(state);refreshDisplayLayers()}));
   panel.querySelectorAll('[data-vocab-shared-placement-toggle]').forEach(button=>button.addEventListener('click',event=>{event.preventDefault();event.stopPropagation();openSharedPlacementDropdown(button)}));
   panel.querySelectorAll('[data-vocab-sign]').forEach(input=>input.addEventListener('change',()=>toggleDimension(slot,'signs',input.dataset.vocabSign,input.checked)));
   panel.querySelectorAll('[data-vocab-house]').forEach(input=>input.addEventListener('change',()=>toggleDimension(slot,'houses',input.dataset.vocabHouse,input.checked)));
@@ -1569,7 +1566,6 @@ function ensurePanel(slot,view){
   panel.querySelectorAll('[data-vocab-dimension-none]').forEach(button=>button.addEventListener('click',event=>{event.preventDefault();event.stopPropagation();setDimensionAll(slot,button.dataset.vocabDimensionNone,false)}));
   panel.querySelectorAll('[data-vocab-dropdown-toggle]').forEach(button=>button.addEventListener('click',event=>{event.preventDefault();event.stopPropagation();openDropdown(slot,button.dataset.vocabDropdownToggle)}));
   panel.querySelector('[data-vocab-layer-all]')?.addEventListener('click',event=>{event.preventDefault();event.stopPropagation();setLayerAll(true)});
-  panel.querySelector('[data-vocab-layer-none]')?.addEventListener('click',event=>{event.preventDefault();event.stopPropagation();setLayerAll(false)});
   panel.querySelectorAll('[data-indeterminate="true"]').forEach(input=>{input.indeterminate=true});
   panel.addEventListener('click',event=>progressive(event));panel.addEventListener('keydown',event=>{if(event.key==='Enter'||event.key===' ')progressive(event)});
   bindVocabWheelContext(panel);
@@ -1894,9 +1890,16 @@ document.addEventListener('keydown',event=>{if(event.key==='Escape')closeDropdow
 window.addEventListener('resize',scheduleDropdownPosition);
 window.addEventListener('scroll',scheduleDropdownPosition,true);
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)schedule()});
-window.RelphiSkyVocab=Object.freeze({render:schedule,activate,getDisplay:displayState,getFilters:filterState,getScopeFilters:scopeFilterState,getWheelFilters:()=>wheelFilterState,getWheelFilterSpec:()=>wheelFilterSpec,
+function renderTemplate(target,asc){
+  const content=document.createElement('div');content.className='sky-vocab-paragraph';
+  for(let i=0;i<12;i++){const sign=(asc+i)%12,line=document.createElement('div');line.append(token(signInfo(sign),'sign',true),token(houseInfo(i+1),'house',false,' in '));content.appendChild(line)}
+  target.replaceChildren(content);
+  target.onclick=progressive;target.onkeydown=event=>{if(['Enter',' '].includes(event.key))progressive(event)};
+}
+window.RelphiSkyVocab=Object.freeze({renderTemplate,render:schedule,activate,getDisplay:displayState,getFilters:filterState,getScopeFilters:scopeFilterState,getWheelFilters:()=>wheelFilterState,getWheelFilterSpec:()=>wheelFilterSpec,
   // Shared source of truth for wheel sector descriptions.
   describeFocus(kind,value){
+    if(kind==='aspect'){const id=String(value||'');return {name:ASPECT_NAMES[id]||id,description:ASPECT_REFERENTS[id]||''}}
     if(kind==='house'){const n=Number(value);return {name:HOUSE_NAMES[n]||'House '+n,description:HOUSE_MENU_DESCRIPTIONS[n]||''}}
     if(kind==='sign'){const name=SIGNS[Number(value)];return {name,description:SIGN_REFERENTS[name]||''}}
     if(kind==='placement'){

@@ -88,7 +88,7 @@
       line.dataset.interactive = 'aspect';
       line.dataset.focusPiece = 'aspect';
       line.classList.add('sky-foundation-interactive', 'sky-foundation-aspect');
-      line.style.pointerEvents = 'stroke';
+      line.style.removeProperty('pointer-events');
       addMappedLine(nextByIdentity, identity, line);
       addMappedLine(nextByIndex, index, line);
     });
@@ -101,7 +101,8 @@
     visibilityQueued = false;
     let visible = 0;
     rowsByIndex.forEach(row => {
-      const show = !row.classList.contains('sky-chart-filter-hidden') &&
+      const show = !row.classList.contains('is-wheel-selection-excluded') &&
+        !row.classList.contains('sky-chart-filter-hidden') &&
         !row.classList.contains('sky-chart-orb-hidden') &&
         !row.classList.contains('sky-orb-filter-hidden');
       row.hidden = !show;

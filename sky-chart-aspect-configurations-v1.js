@@ -87,7 +87,7 @@ let openConfigurationTile=null;
 
 function resultNorm(value){return((Number(value)%360)+360)%360}
 function resultSource(payload){const source=[payload?.placements,payload?.positions,payload?.points,payload?.bodies].find(value=>value&&typeof value==='object')||payload||{};return Array.isArray(source)?source.map((item,index)=>[String(item?.name||item?.id||index),item]):Object.entries(source)}
-function resultRead(slot){try{return JSON.parse(localStorage.getItem(RESULT_KEYS[slot])||'null')}catch(_){return null}}
+function resultRead(slot){try{return JSON.parse(window.RelphiSkyWorkingStorage.getItem(RESULT_KEYS[slot])||'null')}catch(_){return null}}
 function resultLongitude(item){if(Number.isFinite(Number(item?.longitude)))return resultNorm(item.longitude);const signs=['aries','taurus','gemini','cancer','leo','virgo','libra','scorpio','sagittarius','capricorn','aquarius','pisces'],sign=signs.indexOf(String(item?.sign||item?.zodiac||'').trim().toLowerCase());return sign<0?NaN:resultNorm(sign*30+Number(item?.degree||item?.degrees||0)+Number(item?.minute||item?.minutes||0)/60+Number(item?.second||item?.seconds||0)/3600)}
 function resultCanonical(key,item){const registry=window.RelphiGlyphRegistry;for(const candidate of[item?.glyphId,item?.id,item?.name,item?.label,item?.body,item?.planet,item?.point,key]){if(!candidate)continue;const raw=String(candidate).trim(),alias=RESULT_ALIASES[raw.toLowerCase()]||raw,entry=registry?.resolve?.(alias)||registry?.get?.(alias);if(entry)return entry.id}return''}
 function resultHouseFor(sky,id,item){
@@ -655,7 +655,7 @@ function inevitableMoreButton(hiddenCount){
   button.addEventListener('click',event=>{
     event.preventDefault();event.stopPropagation();
     inevitableEnabled=true;
-    try{localStorage.setItem(INEVITABLE_STORAGE_KEY,'true')}catch(_){}
+    try{window.RelphiSkyWorkingStorage.setItem(INEVITABLE_STORAGE_KEY,'true')}catch(_){}
     document.querySelectorAll('[data-configuration-inevitable]').forEach(input=>{input.checked=true});
     renderConfigurationSection();renderOverlay();renderResultsPanel();
     window.dispatchEvent(new CustomEvent('relphi:sky-configuration-inevitable-changed',{detail:{enabled:true}}));
@@ -682,13 +682,13 @@ const CONFIG_STORAGE_KEY='relphiSkyConfigurationMatrixV1';
 const INEVITABLE_STORAGE_KEY='relphiSkyConfigurationInevitableV1';
 const INEVITABLE_TOOLTIP='Describes how we know the relationship is there, not how real or strong it is.';
 const configurationState=Object.fromEntries(SCOPES.map(scope=>[scope.id,new Set()]));
-(function loadPersistedConfigurationState(){try{const saved=JSON.parse(localStorage.getItem(CONFIG_STORAGE_KEY)||'null');if(!saved||typeof saved!=='object')return;SCOPES.forEach(scope=>{if(Array.isArray(saved[scope.id]))configurationState[scope.id]=new Set(saved[scope.id].filter(type=>TYPE_IDS.includes(type)))})}catch(_){}})();
+(function loadPersistedConfigurationState(){try{const saved=JSON.parse(window.RelphiSkyWorkingStorage.getItem(CONFIG_STORAGE_KEY)||'null');if(!saved||typeof saved!=='object')return;SCOPES.forEach(scope=>{if(Array.isArray(saved[scope.id]))configurationState[scope.id]=new Set(saved[scope.id].filter(type=>TYPE_IDS.includes(type)))})}catch(_){}})();
 let inevitableEnabled=false;
 // Recovery migration: an earlier Inevitable implementation persisted "true" before
 // its combinatorial path was safe to restore at startup. Never let that stale value
 // block Sky Chart initialization. A fresh user change can enable it after startup.
 try{
-  if(localStorage.getItem(INEVITABLE_STORAGE_KEY)==='true')localStorage.setItem(INEVITABLE_STORAGE_KEY,'false');
+  if(window.RelphiSkyWorkingStorage.getItem(INEVITABLE_STORAGE_KEY)==='true')window.RelphiSkyWorkingStorage.setItem(INEVITABLE_STORAGE_KEY,'false');
 }catch(_){}
 let patterns=[];
 let queued=false;
@@ -878,7 +878,7 @@ function configCellState(scope,type){
 }
 function setConfigCells(scope,type,checked){configCells(scope,type).forEach(([scopeId,typeId])=>checked?configurationState[scopeId].add(typeId):configurationState[scopeId].delete(typeId))}
 function configurationMatrix(){return Object.fromEntries(SCOPES.map(scope=>[scope.id,TYPE_IDS.filter(type=>configurationState[scope.id].has(type))]))}
-function saveConfigurationState(){try{localStorage.setItem(CONFIG_STORAGE_KEY,JSON.stringify(configurationMatrix()))}catch(_){}}
+function saveConfigurationState(){try{window.RelphiSkyWorkingStorage.setItem(CONFIG_STORAGE_KEY,JSON.stringify(configurationMatrix()))}catch(_){}}
 function configChoice(scope,type,labelText){
   const label=document.createElement('label');label.className='sky-chart-aspect-matrix-choice sky-chart-configuration-matrix-choice';
   const input=document.createElement('input');input.type='checkbox';input.dataset.configurationScope=scope;input.dataset.configurationType=type;input.setAttribute('aria-label',labelText);
@@ -902,6 +902,7 @@ function syncConfigInputs(){
 function renderConfigurationSection(){
   const body=popoverBody();if(!body)return;
   body.querySelector('.sky-chart-configuration-section')?.remove();
+  if(window.RelphiSkyStartupMode?.readMode?.()==='learn')return;
   const section=document.createElement('section');section.className='sky-chart-configuration-section';section.setAttribute('aria-label','Configurations');
   const title=document.createElement('div');title.className='sky-chart-configuration-title';
   const heading=document.createElement('strong');heading.textContent='Configurations';
@@ -1041,12 +1042,12 @@ function ensureConfigurationObserver(){
   const body=popoverBody();if(!body||body===observedConfigurationBody)return;
   configurationObserver?.disconnect();observedConfigurationBody=body;
   configurationObserver=new MutationObserver(()=>{
-    if(body.querySelector('[data-aspect-list="matrix"]')&&!body.querySelector('.sky-chart-configuration-section'))schedule();
+    if(window.RelphiSkyStartupMode?.readMode?.()!=='learn'&&body.querySelector('[data-aspect-list="matrix"]')&&!body.querySelector('.sky-chart-configuration-section'))schedule();
   });
   configurationObserver.observe(body,{childList:true});
 }
 function schedule(){if(queued)return;queued=true;requestAnimationFrame(refresh)}
-function handleChange(event){const inevitable=event.target.closest?.('[data-configuration-inevitable]');if(inevitable){event.stopPropagation();inevitableEnabled=inevitable.checked;try{localStorage.setItem(INEVITABLE_STORAGE_KEY,String(inevitableEnabled))}catch(_){}schedule();return}const input=event.target.closest?.('[data-configuration-scope][data-configuration-type]');if(!input)return;event.stopPropagation();setSelection(input.dataset.configurationScope,input.dataset.configurationType,input.checked)}
+function handleChange(event){const inevitable=event.target.closest?.('[data-configuration-inevitable]');if(inevitable){event.stopPropagation();inevitableEnabled=inevitable.checked;try{window.RelphiSkyWorkingStorage.setItem(INEVITABLE_STORAGE_KEY,String(inevitableEnabled))}catch(_){}schedule();return}const input=event.target.closest?.('[data-configuration-scope][data-configuration-type]');if(!input)return;event.stopPropagation();setSelection(input.dataset.configurationScope,input.dataset.configurationType,input.checked)}
 function start(){
   document.addEventListener('change',handleChange,true);
   window.addEventListener('relphi:sky-filter-wheel-focus-changed',receiveConfigurationFocus);

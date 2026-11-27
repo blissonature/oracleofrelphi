@@ -1,5 +1,5 @@
-html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]) #skyFoundationB{display:none!important}
-html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]) #skyFoundationRoot{grid-template-columns:minmax(220px,270px) minmax(520px,1fr);grid-template-areas:"a comparison"}
+html[data-sky-last-mode="single"][data-sky-b-present="false"]:not([data-sky-b-editing="true"]) #skyFoundationB{display:none!important}
+html[data-sky-last-mode="single"][data-sky-b-present="false"]:not([data-sky-b-editing="true"]) #skyFoundationRoot{grid-template-columns:minmax(220px,270px) minmax(520px,1fr);grid-template-areas:"a comparison"}
 .sky-slot-presence-button{appearance:none;border:1px solid rgba(31,27,24,.2);border-radius:999px;background:#fff;color:#241f1b;padding:.38rem .65rem;font:800 .64rem/1 system-ui,sans-serif;white-space:nowrap;cursor:pointer}
 .sky-slot-presence-button:hover,.sky-slot-presence-button:focus-visible{background:#f4efe8;border-color:rgba(31,27,24,.4);outline:none}
 .sky-slot-remove{color:#8f1f1b}
@@ -9,32 +9,32 @@ html[data-sky-last-mode="comparison"] [data-add-sky-b],html[data-sky-b-editing="
 /* Keep the authored blue slot tab as Sky B's identity; suppress the redundant plain heading beside it. */
 #skyFoundationB>.sky-foundation-heading .sky-foundation-name{display:none!important}
 #skyFoundationWheelMount>.sky-foundation-single-wheel{display:block;width:min(100%,78vh,900px);height:auto;max-width:100%;max-height:min(78vh,900px);margin-inline:auto;overflow:visible}
-html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]) #skyFoundationWheelMount>.sky-foundation-wheel:not([data-single-sky="A"]){visibility:hidden!important}
+
 #skyFoundationWheelMount[data-single-sky-pending="true"]>*{visibility:hidden!important}
 .sky-foundation-single-wheel [data-layer="zodiac"] .sky-foundation-sign-glyph{filter:var(--sky-silver-glow)}
 .sky-foundation-single-wheel [data-layer="zodiac"] .sky-foundation-sign-glyph .relphi-glyph-bubble>circle{display:none!important}
 /* In true one-sky mode keep the authored red slot-tab identity and remove the
    duplicate plain name plus the redundant title over the main wheel. */
-html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]) #skyFoundationA>.sky-foundation-heading .sky-foundation-slot{display:inline-flex!important}
-html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]) #skyFoundationA>.sky-foundation-heading .sky-foundation-name{display:none!important}
-html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]) #skyFoundationComparison>.sky-foundation-heading>span:first-child{display:none!important}
-html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]) #skyFoundationComparison>.sky-foundation-heading{justify-content:flex-end}
+html[data-sky-last-mode="single"][data-sky-b-present="false"]:not([data-sky-b-editing="true"]) #skyFoundationA>.sky-foundation-heading .sky-foundation-slot{display:inline-flex!important}
+html[data-sky-last-mode="single"][data-sky-b-present="false"]:not([data-sky-b-editing="true"]) #skyFoundationA>.sky-foundation-heading .sky-foundation-name{display:none!important}
+html[data-sky-last-mode="single"][data-sky-b-present="false"]:not([data-sky-b-editing="true"]) #skyFoundationComparison>.sky-foundation-heading>span:first-child{display:none!important}
+html[data-sky-last-mode="single"][data-sky-b-present="false"]:not([data-sky-b-editing="true"]) #skyFoundationComparison>.sky-foundation-heading{justify-content:flex-end}
 /* The main wheel already is the standalone chart. Keep the house-system control in
    Placements, but suppress the duplicate miniature wheel and its Standalone Sky label. */
-html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]) #skyFoundationA .sky-placement-mini-head>strong,
-html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]) #skyFoundationA .sky-placement-mini-wheel-mount{display:none!important}
-html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]) #skyFoundationA .sky-placement-mini-shell{display:flex!important;justify-content:flex-end;gap:0;margin:0 0 .55rem;padding:0;border:0;background:transparent}
-html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]) #skyFoundationA .sky-placement-mini-head{width:100%;justify-content:flex-end;align-items:end}
-html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]) .sky-chart-placement-choice-b,
-html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]) [data-placement-choice="b"],
-html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]) label:has(>input[data-placement-choice="b"]){display:none!important}
-html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]) .sky-chart-placement-list-choices{grid-template-columns:repeat(2,34px)!important}
-html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]) .sky-chart-house-choice-b,
-html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]) [data-house-choice="b"],
-html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]) label:has(>input[data-house-choice="b"]){display:none!important}
-html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]) .sky-chart-house-list-header,
-html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]) .sky-chart-house-list-item{grid-template-columns:minmax(0,1fr) repeat(2,40px)!important}
-html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]) .sky-chart-house-list-header>span:last-child{display:none!important}
-@media(max-width:900px){html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]) #skyFoundationRoot{grid-template-columns:1fr;grid-template-areas:"a" "comparison"}}
-@media(max-width:410px){html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]) .sky-chart-placement-list-choices{grid-template-columns:repeat(2,32px)!important}}
-@media(max-width:620px){html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]) #skyFoundationRoot{grid-template-columns:1fr;grid-template-areas:"a" "comparison"}.sky-slot-presence-button{padding:.34rem .55rem;font-size:.6rem}}
+html[data-sky-last-mode="single"][data-sky-b-present="false"]:not([data-sky-b-editing="true"]) #skyFoundationA .sky-placement-mini-head>strong,
+html[data-sky-last-mode="single"][data-sky-b-present="false"]:not([data-sky-b-editing="true"]) #skyFoundationA .sky-placement-mini-wheel-mount{display:none!important}
+html[data-sky-last-mode="single"][data-sky-b-present="false"]:not([data-sky-b-editing="true"]) #skyFoundationA .sky-placement-mini-shell{display:flex!important;justify-content:flex-end;gap:0;margin:0 0 .55rem;padding:0;border:0;background:transparent}
+html[data-sky-last-mode="single"][data-sky-b-present="false"]:not([data-sky-b-editing="true"]) #skyFoundationA .sky-placement-mini-head{width:100%;justify-content:flex-end;align-items:end}
+html[data-sky-last-mode="single"][data-sky-b-present="false"]:not([data-sky-b-editing="true"]) .sky-chart-placement-choice-b,
+html[data-sky-last-mode="single"][data-sky-b-present="false"]:not([data-sky-b-editing="true"]) [data-placement-choice="b"],
+html[data-sky-last-mode="single"][data-sky-b-present="false"]:not([data-sky-b-editing="true"]) label:has(>input[data-placement-choice="b"]){display:none!important}
+html[data-sky-last-mode="single"][data-sky-b-present="false"]:not([data-sky-b-editing="true"]) .sky-chart-placement-list-choices{grid-template-columns:repeat(2,34px)!important}
+html[data-sky-last-mode="single"][data-sky-b-present="false"]:not([data-sky-b-editing="true"]) .sky-chart-house-choice-b,
+html[data-sky-last-mode="single"][data-sky-b-present="false"]:not([data-sky-b-editing="true"]) [data-house-choice="b"],
+html[data-sky-last-mode="single"][data-sky-b-present="false"]:not([data-sky-b-editing="true"]) label:has(>input[data-house-choice="b"]){display:none!important}
+html[data-sky-last-mode="single"][data-sky-b-present="false"]:not([data-sky-b-editing="true"]) .sky-chart-house-list-header,
+html[data-sky-last-mode="single"][data-sky-b-present="false"]:not([data-sky-b-editing="true"]) .sky-chart-house-list-item{grid-template-columns:minmax(0,1fr) repeat(2,40px)!important}
+html[data-sky-last-mode="single"][data-sky-b-present="false"]:not([data-sky-b-editing="true"]) .sky-chart-house-list-header>span:last-child{display:none!important}
+@media(max-width:900px){html[data-sky-last-mode="single"][data-sky-b-present="false"]:not([data-sky-b-editing="true"]) #skyFoundationRoot{grid-template-columns:1fr;grid-template-areas:"a" "comparison"}}
+@media(max-width:410px){html[data-sky-last-mode="single"][data-sky-b-present="false"]:not([data-sky-b-editing="true"]) .sky-chart-placement-list-choices{grid-template-columns:repeat(2,32px)!important}}
+@media(max-width:620px){html[data-sky-last-mode="single"][data-sky-b-present="false"]:not([data-sky-b-editing="true"]) #skyFoundationRoot{grid-template-columns:1fr;grid-template-areas:"a" "comparison"}.sky-slot-presence-button{padding:.34rem .55rem;font-size:.6rem}}
