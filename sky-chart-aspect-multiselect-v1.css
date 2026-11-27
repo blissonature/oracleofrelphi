@@ -119,7 +119,7 @@ html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]) .sky-chart-asp
 }
 
 
-.sky-foundation-relationship-row[data-by-sign-only="true"] .sky-foundation-relationship-glyph--aspect::after{
+.sky-foundation-relationship-row[data-by-sign-only="true"]:not([data-learn-relationship="true"]) .sky-foundation-relationship-glyph--aspect::after{
   content:"sign";
   position:absolute;
   left:50%;
