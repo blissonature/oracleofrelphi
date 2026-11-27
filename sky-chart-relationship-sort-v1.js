@@ -469,7 +469,7 @@ const NATAL_OPTIONS=[
   if(select&&select.value!==mode)select.value=mode;
   if(select){
     select.setAttribute('aria-busy',busy?'true':'false');
-    select.title=busy?'Calculating relationship timing…':'Sort relationships';
+    select.title=busy?'Calculating relationship timing…':'Sort: '+(select.selectedOptions[0]?.textContent||'Relationships');
   }
   return select;
 }

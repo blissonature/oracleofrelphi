@@ -36,6 +36,7 @@ function syncControl(){
   const next=limit==='all'?'':limit;
   if(!editingCustom&&input.value!==next)input.value=next;
   if(select.value!==preset)select.value=preset;
+  select.title=limit==='all'?'Maximum results: All':'Maximum results: '+limit;
   const custom=preset==='custom';
   input.hidden=!custom;
   input.disabled=!custom;
