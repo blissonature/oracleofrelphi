@@ -429,6 +429,10 @@
         }
       });
     }
+    if(window.RelphiSkyStartupMode?.readMode?.()==='learn'){
+      houses.clear();
+      signs.forEach(sign=>housesForSign(current.cuspsA,sign).forEach(house=>houses.add(`A:${house}`)));
+    }
     return{matched,relationships,placements,houses,signs,houseKeys};
   }
   function kept(node,keep){const type=node.dataset.focusPiece;if(type==='aspect')return keep.relationships.has(relationshipIdentity(node));if(type==='house')return keep.houses.has(`${node.dataset.sky}:${node.dataset.house}`);if(type==='sign')return keep.signs.has(Number(node.dataset.sign));if(type==='placement'||type==='leader')return keep.placements.has(`${node.dataset.sky}:${node.dataset.placement}`);return false}
@@ -469,6 +473,7 @@
       return key===`${state.left.sky}:${state.left.id}`||key===`${state.right.sky}:${state.right.id}`;
     }
     if(type==='house'){
+      if(window.RelphiSkyStartupMode?.readMode?.()==='learn')return [state.left.house,state.right.house].includes(Number(node.dataset.house));
       const key=`${node.dataset.sky}:${Number(node.dataset.house)}`;
       return (Number.isFinite(state.left.house)&&key===`${state.left.sky}:${state.left.house}`)||(Number.isFinite(state.right.house)&&key===`${state.right.sky}:${state.right.house}`);
     }

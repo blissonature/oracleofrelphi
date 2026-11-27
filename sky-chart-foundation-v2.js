@@ -233,7 +233,6 @@ function buildSingleWheel(listA,cuspsA,slot='A',template=false){
   chart.dataset.finalGeometryReady='true';
   return{chart,jobs};
 }
-let previouslyDrawnLearnAscendant=null;
 function learnAscendantIndex(){
   const value=Number(document.documentElement.dataset.skyLearnAscendant||0);
   return Number.isInteger(value)&&value>=0&&value<12?value:0;
@@ -269,18 +268,26 @@ function buildLearnWheel(){
   const houseLayerNode=chart.querySelector('[data-layer="a-houses"]');
   houseLayerNode?.querySelectorAll('.sky-foundation-house-sector').forEach(node=>node.setAttribute('fill-opacity','1'));
   const selectedAscendant=learnAscendantIndex();
-  if(previouslyDrawnLearnAscendant!==null && previouslyDrawnLearnAscendant!==selectedAscendant &&
-     !window.matchMedia?.('(prefers-reduced-motion: reduce)').matches && houseLayerNode?.animate){
-    const clockwiseSteps=(selectedAscendant-previouslyDrawnLearnAscendant+12)%12;
-    const offset=-clockwiseSteps*30;
-    const c=center();
-    houseLayerNode.style.transformOrigin=c.x+'px '+c.y+'px';
-    houseLayerNode.animate([{transform:'rotate('+offset+'deg)'},{transform:'rotate(0deg)'}],
-      {duration:700,easing:'cubic-bezier(.22,.61,.36,1)',iterations:1});
-  }
-  previouslyDrawnLearnAscendant=selectedAscendant;
+  chart.dataset.learnAscendant=String(selectedAscendant);
   chart.querySelectorAll('.sky-foundation-sign-sector').forEach(node=>node.setAttribute('fill-opacity','1'));
   return result;
+}
+function mountLearnWheel(mount,chart){
+  const previous=mount.querySelector(':scope > .sky-foundation-wheel[data-learn-ascendant]');
+  const oldLayer=previous?.querySelector('[data-layer="a-houses"]'),newLayer=chart.querySelector('[data-layer="a-houses"]');
+  const from=Number(previous?.dataset.learnAscendant),to=Number(chart.dataset.learnAscendant);
+  let residual=0;
+  if(oldLayer){
+    const transform=getComputedStyle(oldLayer).transform;
+    if(transform&&transform!=='none'){const matrix=new DOMMatrixReadOnly(transform);residual=Math.atan2(matrix.b,matrix.a)*180/Math.PI}
+  }
+  mount.replaceChildren(chart);
+  if(!oldLayer||!newLayer||!Number.isFinite(from)||!Number.isFinite(to)||window.matchMedia?.('(prefers-reduced-motion: reduce)').matches)return;
+  const offset=((from*30+residual-to*30+180)%360+360)%360-180;
+  if(Math.abs(offset)<.01)return;
+  const c=center();
+  newLayer.style.transformOrigin=c.x+'px '+c.y+'px';
+  newLayer.animate([{transform:'rotate('+offset+'deg)'},{transform:'rotate(0deg)'}],{duration:700,easing:'cubic-bezier(.22,.61,.36,1)',iterations:1});
 }
 function signature(a,b){try{return JSON.stringify([a,b,requestedOrb(),window.RelphiSkyStartupMode?.readMode?.(),learnAscendantIndex()])}catch(_){return String(Date.now())}}
 function whereWhenEditing(){return document.documentElement.dataset.skyWhereWhenEditing==='true'}
@@ -290,7 +297,7 @@ async function backfillKnownTimeChiron(slot,payload){
   try{if(await provider.completePayload(payload))window.RelphiSkyWorkingStorage.setItem(KEYS[slot],JSON.stringify(payload))}
   catch(error){console.warn('Chiron backfill failed for Sky '+slot,error)}
 }
-async function render(force=false){if(!force&&whereWhenEditing()&&window.RelphiSkyStartupMode?.readMode?.()!=='learn'&&!(records(read(KEYS.A)).length===0&&records(read(KEYS.B)).length>0))return;if(rendering){const queuedSignature=signature(read(KEYS.A),read(KEYS.B));if(queuedSignature!==renderingSignature)rerender=true;return}const root=shell();if(!root)return;const registry=window.RelphiGlyphRegistry,component=window.RelphiGlyphComponent;if(!registry||!component?.draw||!component?.createBubble||!spec()){setTimeout(()=>render(true),20);return}rendering=true;rerender=false;let renderSucceeded=false;renderingSignature=signature(read(KEYS.A),read(KEYS.B));try{const payloadA=read(KEYS.A),payloadB=read(KEYS.B);await backfillKnownTimeChiron('A',payloadA);await backfillKnownTimeChiron('B',payloadB);const nextSignature=signature(payloadA,payloadB);renderingSignature=nextSignature;if(!force&&nextSignature===lastSignature)return;const listA=records(payloadA),listB=records(payloadB),cuspsA=houseCusps(payloadA,listA),cuspsB=houseCusps(payloadB,listB),cardJobs=[...renderCard('A',payloadA,listA,cuspsA),...renderCard('B',payloadB,listB,cuspsB)],mount=document.getElementById('skyFoundationWheelMount');if(window.RelphiSkyStartupMode?.readMode?.()==='learn'){const wheel=buildLearnWheel();await Promise.allSettled(wheel.jobs);mount.replaceChildren(wheel.chart)}else if(!listA.length&&listB.length){delete mount.dataset.comparisonYieldedToSingleSky;const wheel=buildSingleWheel(listB,cuspsB,'B');await Promise.allSettled([...cardJobs,...wheel.jobs]);if(records(read(KEYS.B)).length)mount.replaceChildren(wheel.chart);else rerender=true}else if(!listA.length){const wheel=buildLearnWheel();wheel.chart.dataset.skyExperience='discover-empty';await Promise.allSettled(wheel.jobs);mount.replaceChildren(wheel.chart)}else if(!listB.length){delete mount.dataset.comparisonYieldedToSingleSky;const wheel=buildSingleWheel(listA,cuspsA);await Promise.allSettled([...cardJobs,...wheel.jobs]);if(!records(read(KEYS.B)).length)mount.replaceChildren(wheel.chart);else rerender=true}else{delete mount.dataset.comparisonYieldedToSingleSky;const wheel=buildWheel(listA,listB,cuspsA,cuspsB);await Promise.allSettled([...cardJobs,...wheel.jobs]);if(records(read(KEYS.B)).length)mount.replaceChildren(wheel.chart);else{const single=buildSingleWheel(listA,cuspsA);await Promise.allSettled(single.jobs);mount.replaceChildren(single.chart)}}root.setAttribute('aria-busy','false');lastSignature=nextSignature;renderSucceeded=true;window.dispatchEvent(new Event('relphi:sky-foundation-ready'))}catch(error){console.error('Sky Chart foundation render failed:',error);const mount=document.getElementById('skyFoundationWheelMount');if(records(read(KEYS.B)).length)mount.innerHTML='<p class="sky-foundation-empty">The canonical foundation could not render.</p>';else window.dispatchEvent(new CustomEvent('relphi:sky-comparison-yielded',{detail:{mode:'A-A',error:true}}))}finally{rendering=false;renderingSignature='';if(renderSucceeded&&(rerender||signature(read(KEYS.A),read(KEYS.B))!==lastSignature))requestAnimationFrame(()=>render())}}
+async function render(force=false){if(!force&&whereWhenEditing()&&window.RelphiSkyStartupMode?.readMode?.()!=='learn'&&!(records(read(KEYS.A)).length===0&&records(read(KEYS.B)).length>0))return;if(rendering){const queuedSignature=signature(read(KEYS.A),read(KEYS.B));if(queuedSignature!==renderingSignature)rerender=true;return}const root=shell();if(!root)return;const registry=window.RelphiGlyphRegistry,component=window.RelphiGlyphComponent;if(!registry||!component?.draw||!component?.createBubble||!spec()){setTimeout(()=>render(true),20);return}rendering=true;rerender=false;let renderSucceeded=false;renderingSignature=signature(read(KEYS.A),read(KEYS.B));try{const payloadA=read(KEYS.A),payloadB=read(KEYS.B);await backfillKnownTimeChiron('A',payloadA);await backfillKnownTimeChiron('B',payloadB);const nextSignature=signature(payloadA,payloadB);renderingSignature=nextSignature;if(!force&&nextSignature===lastSignature)return;const listA=records(payloadA),listB=records(payloadB),cuspsA=houseCusps(payloadA,listA),cuspsB=houseCusps(payloadB,listB),cardJobs=[...renderCard('A',payloadA,listA,cuspsA),...renderCard('B',payloadB,listB,cuspsB)],mount=document.getElementById('skyFoundationWheelMount');if(window.RelphiSkyStartupMode?.readMode?.()==='learn'){const wheel=buildLearnWheel();await Promise.allSettled(wheel.jobs);mountLearnWheel(mount,wheel.chart)}else if(!listA.length&&listB.length){delete mount.dataset.comparisonYieldedToSingleSky;const wheel=buildSingleWheel(listB,cuspsB,'B');await Promise.allSettled([...cardJobs,...wheel.jobs]);if(records(read(KEYS.B)).length)mount.replaceChildren(wheel.chart);else rerender=true}else if(!listA.length){const wheel=buildLearnWheel();wheel.chart.dataset.skyExperience='discover-empty';await Promise.allSettled(wheel.jobs);mount.replaceChildren(wheel.chart)}else if(!listB.length){delete mount.dataset.comparisonYieldedToSingleSky;const wheel=buildSingleWheel(listA,cuspsA);await Promise.allSettled([...cardJobs,...wheel.jobs]);if(!records(read(KEYS.B)).length)mount.replaceChildren(wheel.chart);else rerender=true}else{delete mount.dataset.comparisonYieldedToSingleSky;const wheel=buildWheel(listA,listB,cuspsA,cuspsB);await Promise.allSettled([...cardJobs,...wheel.jobs]);if(records(read(KEYS.B)).length)mount.replaceChildren(wheel.chart);else{const single=buildSingleWheel(listA,cuspsA);await Promise.allSettled(single.jobs);mount.replaceChildren(single.chart)}}root.setAttribute('aria-busy','false');lastSignature=nextSignature;renderSucceeded=true;window.dispatchEvent(new Event('relphi:sky-foundation-ready'))}catch(error){console.error('Sky Chart foundation render failed:',error);const mount=document.getElementById('skyFoundationWheelMount');if(records(read(KEYS.B)).length)mount.innerHTML='<p class="sky-foundation-empty">The canonical foundation could not render.</p>';else window.dispatchEvent(new CustomEvent('relphi:sky-comparison-yielded',{detail:{mode:'A-A',error:true}}))}finally{rendering=false;renderingSignature='';if(renderSucceeded&&(rerender||signature(read(KEYS.A),read(KEYS.B))!==lastSignature))requestAnimationFrame(()=>render())}}
 function start(){shell();void render(true);window.addEventListener('storage',event=>{if((!event.key||event.key===KEYS.A||event.key===KEYS.B)&&!whereWhenEditing())void render()});window.addEventListener('relphi:sky-orb-limit-changed',()=>{if(!whereWhenEditing())void render()});window.addEventListener('relphi:sky-experience-changed',()=>void render(true));window.addEventListener('relphi:sky-learn-ascendant-changed',()=>void render(true));window.addEventListener('relphi:sky-where-when-committed',()=>void render());window.addEventListener('relphi:sky-working-slot-cleared',()=>void render(true));window.addEventListener('relphi:sky-b-removed',()=>void render());window.addEventListener('relphi:sky-b-restored',()=>void render());window.addEventListener('relphi:sky-session-recovered',()=>{if(!whereWhenEditing())void render(true)});window.addEventListener('relphi:saved-sky-loaded',()=>{if(!whereWhenEditing())void render()})}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
 })();
