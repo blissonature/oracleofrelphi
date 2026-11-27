@@ -415,12 +415,11 @@ function selectLocation(slot,source){
 async function reversePacket(latitude,longitude){
   const reverseUrl=new URL('https://api.bigdatacloud.net/data/reverse-geocode-client');reverseUrl.searchParams.set('latitude',String(latitude));reverseUrl.searchParams.set('longitude',String(longitude));reverseUrl.searchParams.set('localityLanguage','en');
   const zoneUrl=new URL('https://api.open-meteo.com/v1/forecast');zoneUrl.searchParams.set('latitude',String(latitude));zoneUrl.searchParams.set('longitude',String(longitude));zoneUrl.searchParams.set('timezone','auto');zoneUrl.searchParams.set('forecast_days','1');
-  // Prefer the geographic time zone, but keep both optional network reads on
-  // a short deadline. The current position and device time zone are available
-  // without either external lookup.
+  // The geographic time-zone provider is preferred. A place-name lookup is
+  // optional and must never hold the one-click calculation indefinitely.
   const[reverseResult,zoneResult]=await Promise.allSettled([
-    fetch(reverseUrl.toString(),{headers:{Accept:'application/json'},signal:AbortSignal.timeout(400)}).then(response=>{if(!response.ok)throw new Error('Place-name lookup failed.');return response.json()}),
-    fetch(zoneUrl.toString(),{headers:{Accept:'application/json'},signal:AbortSignal.timeout(1500)}).then(response=>{if(!response.ok)throw new Error('Time-zone lookup failed.');return response.json()})
+    fetch(reverseUrl.toString(),{headers:{Accept:'application/json'},signal:AbortSignal.timeout(1000)}).then(response=>{if(!response.ok)throw new Error('Place-name lookup failed.');return response.json()}),
+    fetch(zoneUrl.toString(),{headers:{Accept:'application/json'},signal:AbortSignal.timeout(6000)}).then(response=>{if(!response.ok)throw new Error('Time-zone lookup failed.');return response.json()})
   ]);
   // When Open-Meteo is unreachable, the device's IANA time zone can be used
   // for a current-location sky, with its weaker provenance explicitly stored.
@@ -433,9 +432,7 @@ async function reversePacket(latitude,longitude){
   const canonical=[reverse.locality||reverse.city,reverse.principalSubdivision,reverse.countryName].map(v=>String(v||'').trim()).filter((v,i,list)=>v&&list.indexOf(v)===i).join(', ')||`${displayCoordinate(latitude)}, ${displayCoordinate(longitude)}`;
   return{canonical,timezone,timeZoneSource:timezone===remoteZone?'coordinate-service':'browser-fallback'};
 }
-// Let the browser reuse a location fix up to five minutes old. Obtaining a
-// new device location is slower than the ephemeris calculation on many phones.
-function currentPosition(){return new Promise((resolve,reject)=>{if(!navigator.geolocation)return reject(new Error('Current location is unavailable in this browser.'));navigator.geolocation.getCurrentPosition(resolve,reject,{enableHighAccuracy:false,timeout:6000,maximumAge:300000})})}
+function currentPosition(){return new Promise((resolve,reject)=>{if(!navigator.geolocation)return reject(new Error('Current location is unavailable in this browser.'));navigator.geolocation.getCurrentPosition(resolve,reject,{enableHighAccuracy:false,timeout:12000,maximumAge:0})})}
 async function currentLocationPacket(){
   const shared=window.RelphiSkyLocationSearch?.currentLocationPacket;
   if(typeof shared==='function'){const packet=await shared();return{...packet,source:'current-location'}}
