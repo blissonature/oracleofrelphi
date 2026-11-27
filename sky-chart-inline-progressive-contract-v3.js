@@ -35,7 +35,7 @@ function infoFor(row,field){
   const id=String(row.dataset.aspect||'');return{name:ASPECT_NAMES[id]||id,referent:ASPECT_REFERENTS[id]||'a measured relationship between the two placements',tone:'aspect'};
 }
 function tokenMarkup(row,field){const info=infoFor(row,field);return `<span class="inline-rel-progressive-token" data-inline-progressive-token="${field}" data-inline-progressive-stage="0" data-tone="${info.tone}" hidden><span class="inline-rel-progressive-level inline-rel-progressive-name" data-inline-progressive-level="name">${esc(info.name)}</span><span class="inline-rel-progressive-level inline-rel-progressive-referent" data-inline-progressive-level="referent" hidden>${esc(info.referent)}</span></span>`}
-function stripMarkup(row){return `<div class="inline-rel-progressive-strip" aria-label="Progressive symbolic reveal"><div class="inline-rel-progressive-side inline-rel-progressive-side-a">${tokenMarkup(row,'left-placement')}${tokenMarkup(row,'left-sign')}${tokenMarkup(row,'left-house')}</div>${tokenMarkup(row,'aspect')}<div class="inline-rel-progressive-side inline-rel-progressive-side-b">${tokenMarkup(row,'right-placement')}${tokenMarkup(row,'right-sign')}${tokenMarkup(row,'right-house')}</div></div>`}
+function stripMarkup(row){if(row.dataset.learnRelationship==='true')return `<div class="inline-rel-progressive-strip" aria-label="Progressive symbolic reveal"><div class="inline-rel-progressive-side inline-rel-progressive-side-a">${tokenMarkup(row,'left-sign')}${tokenMarkup(row,'left-house')}</div>${tokenMarkup(row,'aspect')}<div class="inline-rel-progressive-side inline-rel-progressive-side-b">${tokenMarkup(row,'right-sign')}${tokenMarkup(row,'right-house')}</div></div>`;return `<div class="inline-rel-progressive-strip" aria-label="Progressive symbolic reveal"><div class="inline-rel-progressive-side inline-rel-progressive-side-a">${tokenMarkup(row,'left-placement')}${tokenMarkup(row,'left-sign')}${tokenMarkup(row,'left-house')}</div>${tokenMarkup(row,'aspect')}<div class="inline-rel-progressive-side inline-rel-progressive-side-b">${tokenMarkup(row,'right-placement')}${tokenMarkup(row,'right-sign')}${tokenMarkup(row,'right-house')}</div></div>`}
 function coordinateText(small){const stored=String(small?.dataset?.relationshipCoordinate||'').trim();if(stored)return stored;const match=String(small?.textContent||'').match(/\d{1,2}°\d{2}′/);return match?.[0]||String(small?.textContent||'').split('·')[0].trim()}
 function decorateTopHouseTrigger(row,side){
   const group=row.querySelector(`.sky-foundation-relationship-placement--${side}`),small=group?.querySelector('.sky-foundation-relationship-copy small'),house=houseNumber(row,side);if(!small||!house)return;
@@ -50,7 +50,7 @@ function ensureStrip(row){
   detail.querySelector(':scope>.inline-rel-top-reveal')?.remove();
   detail.querySelector(':scope>.inline-rel-house-context')?.remove();
   let strip=detail.querySelector(':scope>.inline-rel-progressive-strip');if(!strip){detail.insertAdjacentHTML('afterbegin',stripMarkup(row));strip=detail.querySelector(':scope>.inline-rel-progressive-strip')}
-  GLYPH_FIELDS.forEach(([field,selector])=>{const glyph=row.querySelector(selector);if(!glyph)return;glyph.dataset.inlineProgressiveGlyph=field;glyph.setAttribute('title','Reveal name')});
+  GLYPH_FIELDS.forEach(([field,selector])=>{const glyph=row.querySelector(selector);if(!glyph)return;glyph.dataset.inlineProgressiveGlyph=row.dataset.learnRelationship==='true'&&field.endsWith('-placement')?field.replace('-placement','-sign'):field;glyph.setAttribute('title','Reveal name')});
   decorateTopHouseTrigger(row,'left');decorateTopHouseTrigger(row,'right');return strip;
 }
 function tokenFor(row,field){return ensureStrip(row)?.querySelector(`[data-inline-progressive-token="${field}"]`)||null}
@@ -98,10 +98,18 @@ function installStyles(){
     .inline-rel-progressive-strip>[data-inline-progressive-token="aspect"]{grid-column:2}
     .inline-rel-progressive-token{grid-row:1;display:grid;justify-items:center;gap:4px;min-width:0;padding:4px 5px;border-radius:7px;background:rgba(45,39,34,.04);cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
     .inline-rel-progressive-token[data-tone="a"]{border-top:2px solid #c9211e}.inline-rel-progressive-token[data-tone="b"]{border-top:2px solid #2462d0}.inline-rel-progressive-token[data-tone="aspect"]{border-top:2px solid var(--relationship-stripe,#777)}
+    .sky-foundation-relationship-row[data-learn-relationship="true"] .inline-rel-progressive-strip{grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:9px}
+    .sky-foundation-relationship-row[data-learn-relationship="true"] .inline-rel-progressive-side{display:flex;flex-direction:column;gap:7px}
+    .sky-foundation-relationship-row[data-learn-relationship="true"] .inline-rel-progressive-side-a{grid-column:1;grid-row:1}
+    .sky-foundation-relationship-row[data-learn-relationship="true"] .inline-rel-progressive-side-b{grid-column:2;grid-row:1}
+    .sky-foundation-relationship-row[data-learn-relationship="true"] .inline-rel-progressive-strip>[data-inline-progressive-token="aspect"]{grid-column:1/-1;grid-row:2;width:100%;justify-self:stretch}
+    .sky-foundation-relationship-row[data-learn-relationship="true"] .inline-rel-progressive-token{width:100%;box-sizing:border-box;padding:7px;justify-items:start}
+    .sky-foundation-relationship-row[data-learn-relationship="true"] .inline-rel-progressive-level{text-align:left;font-size:.72rem;line-height:1.45}
     .inline-rel-progressive-token[hidden],.inline-rel-progressive-level[hidden]{display:none!important}
     .inline-rel-progressive-level{display:inline-block;max-width:100%;padding:0;border:0;background:transparent;color:#352f2a;cursor:pointer;font-family:system-ui,sans-serif;text-align:center;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
     .inline-rel-progressive-name{font-size:.6rem;font-weight:900;line-height:1.15;overflow-wrap:normal;word-break:normal;hyphens:none}.inline-rel-progressive-referent{font-size:.55rem;font-weight:680;line-height:1.28;color:#625a53;white-space:normal;overflow-wrap:normal;word-break:normal;hyphens:none}
     @media(max-width:620px){
+
       .inline-rel-progressive-strip{grid-template-columns:minmax(0,1fr);grid-template-rows:auto auto auto;gap:6px}
       .inline-rel-progressive-side-a{grid-column:1;grid-row:1}.inline-rel-progressive-strip>[data-inline-progressive-token="aspect"]{grid-column:1;grid-row:2;justify-self:center;width:min(180px,100%)}.inline-rel-progressive-side-b{grid-column:1;grid-row:3}
       .inline-rel-progressive-side{grid-template-columns:repeat(3,minmax(0,1fr));gap:5px;width:100%}
