@@ -50,30 +50,33 @@ await page.setViewportSize({width:390,height:844});
 await page.waitForTimeout(100);
 const mobileFocusLayout=await page.locator('#skyFoundationFocus>.sky-foundation-focus-heading').evaluate(heading=>{
   const r=node=>node?.getBoundingClientRect();
-  const title=r(heading.querySelector('h2'));
+  const brand=r(heading.querySelector('.sky-chart-page-brand'));
+  const modes=r(heading.querySelector('.sky-sky-mode-selector'));
   const actions=r(heading.querySelector('.sky-export-wheel-slot'));
   const display=r(heading.querySelector('[data-relationship-display-control]'));
   const harmonic=r(heading.querySelector('[data-orb-field="true"]'));
   const hr=r(heading);
   return{
-    titleTop:title?.top??null,
-    titleCenter:title?(title.top+title.bottom)/2:null,
+    brandCenter:brand?(brand.top+brand.bottom)/2:null,
+    modesCenter:modes?(modes.top+modes.bottom)/2:null,
+    hasFocusHeading:!!heading.querySelector('h2'),
     actionsTop:actions?.top??null,
     actionsCenter:actions?(actions.top+actions.bottom)/2:null,
     displayTop:display?.top??null,
     harmonicTop:harmonic?.top??null,
-    firstRowBottom:Math.max(title?.bottom||0,actions?.bottom||0),
+    firstRowBottom:Math.max(brand?.bottom||0,modes?.bottom||0),
     secondRowTop:Math.min(display?.top??Infinity,harmonic?.top??Infinity),
     actionsRightGap:hr&&actions?hr.right-actions.right:null,
     height:hr?.height??null
   };
 });
 console.log('FOCUS_MOBILE_LAYOUT_DEBUG',JSON.stringify(mobileFocusLayout));
-assert.ok(Math.abs(mobileFocusLayout.titleCenter-mobileFocusLayout.actionsCenter)<=4,'On mobile, Copy and Download must share the Focus title row.');
+assert.equal(mobileFocusLayout.hasFocusHeading,false);
+assert.ok(Math.abs(mobileFocusLayout.brandCenter-mobileFocusLayout.modesCenter)<=4,'On mobile, brand and mode selector share the first row.');
 assert.ok(Math.abs(mobileFocusLayout.displayTop-mobileFocusLayout.harmonicTop)<=4,'On mobile, Display and Harmonic Window must share the second row.');
-assert.ok(mobileFocusLayout.secondRowTop>mobileFocusLayout.firstRowBottom,'The selector row must sit below the Focus title/action row.');
+assert.ok(mobileFocusLayout.secondRowTop>mobileFocusLayout.firstRowBottom,'The selector row must sit below the brand/mode row.');
 assert.ok(mobileFocusLayout.actionsRightGap!==null&&mobileFocusLayout.actionsRightGap<=12,'Mobile Copy and Download must remain right-aligned.');
-assert.ok(mobileFocusLayout.height<105,'Focus should remain a compact two-row header on mobile.');
+assert.ok(mobileFocusLayout.height<150,'The toolbar remains compact at mobile width, allowing controls to wrap if required.');
 await page.setViewportSize({width:1440,height:800});
 await page.waitForTimeout(80);
 
