@@ -109,7 +109,7 @@
     );
     const stored=small?.dataset?.relationshipCoordinate?.trim();
     if(stored)return stored;
-    const match=String(small?.textContent||'').match(/\d{1,2}°\d{2}′/);
+    const match=String(small?.textContent||'').match(/\d{1,2}°\d{2}′(?:\d{2}″)?/);
     return match?.[0]||'';
   }
 

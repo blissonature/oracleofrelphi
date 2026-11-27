@@ -140,7 +140,7 @@ function suppressCloneHouseInfo(clone,row){
       side==='left'?clone.querySelector(':scope > .sky-foundation-relationship-copy:nth-child(2) small'):clone.querySelector(':scope > .sky-foundation-relationship-copy:nth-child(5) small')
     );
     if(!small)continue;
-    const coordinate=String(small.dataset.relationshipCoordinate||small.textContent||'').match(/\d{1,2}°\d{2}′/)?.[0]||'';
+    const coordinate=String(small.dataset.relationshipCoordinate||small.textContent||'').match(/\d{1,2}°\d{2}′(?:\d{2}″)?/)?.[0]||'';
     small.classList.remove('relphi-house-coordinate');
     if(coordinate)small.replaceChildren(document.createTextNode(coordinate));
     else small.querySelectorAll('.relphi-house-medallion').forEach(node=>node.remove());
@@ -204,7 +204,7 @@ function pname(id){
 }
 function coord(row,side){
   const s=row.querySelector(`.sky-foundation-relationship-placement--${side} small`);
-  return String(s?.dataset?.relationshipCoordinate||s?.textContent||'').match(/\d{1,2}°\d{2}′/)?.[0]||'';
+  return String(s?.dataset?.relationshipCoordinate||s?.textContent||'').match(/\d{1,2}°\d{2}′(?:\d{2}″)?/)?.[0]||'';
 }
 function timing(row){
   const x=window.RelphiRelationshipTransitMeta?.exportTimingForRow?.(row);

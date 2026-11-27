@@ -27,7 +27,7 @@ const separation=(a,b)=>Math.abs(((a-b+180)%360+360)%360-180);
 const esc=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot',"'":'&#39;'}[c]));
 function read(slot='A'){const key=slot==='B'?KEY_B:KEY;try{return JSON.parse(window.RelphiSkyWorkingStorage.getItem(key)||'null')}catch(_){return null}}
 function source(payload){if(!payload||typeof payload!=='object')return[];const known=[payload.placements,payload.positions,payload.points,payload.bodies].find(value=>value&&typeof value==='object'),raw=known||payload;if(Array.isArray(raw))return raw.map((item,index)=>[String(item?.name||item?.label||item?.id||index),item]);return Object.entries(raw).filter(([key,item])=>item&&typeof item==='object'&&!Array.isArray(item)&&!/^(calcProfile|metadata|profile|location|notes|houseCusps|cusps|houses)$/i.test(key)&&(Number.isFinite(Number(item.longitude))||item.sign||item.zodiac))}
-function longitude(item){if(Number.isFinite(Number(item?.longitude)))return norm(item.longitude);const sign=SIGNS.indexOf(String(item?.sign||item?.zodiac||'').trim().toLowerCase());return sign<0?NaN:norm(sign*30+Number(item.degree||item.degrees||0)+Number(item.minute||item.minutes||0)/60+Number(item.second||item.seconds||0)/3600)}
+function longitude(item){return window.RelphiSkyCoordinatePrecision.longitude(item)}
 function canonical(key,item){const registry=window.RelphiGlyphRegistry;if(!registry)return null;for(const candidate of[item?.glyphId,item?.id,item?.name,item?.label,item?.body,item?.planet,item?.point,key]){if(candidate==null)continue;const raw=String(candidate).trim(),id=ALIASES[raw.toLowerCase()]||raw,entry=registry.resolve?.(id)||registry.get?.(id);if(entry)return entry}return null}
 function profile(payload){return payload?.calcProfile&&typeof payload.calcProfile==='object'?payload.calcProfile:{}}
 function ascendant(payload,list){const record=list.find(item=>item.id==='asc');if(record)return record.value;const value=Number(profile(payload).ascendant??payload?.ascendant??payload?.asc);return Number.isFinite(value)?norm(value):0}
@@ -54,7 +54,7 @@ function relationships(list){const harmonic=window.RelphiHarmonicOrb,aspects=har
   }
  }
  return result.sort((a,b)=>a.phaseError-b.phaseError||a.harmonicOrder-b.harmonicOrder||a.orb-b.orb)}
-function coordinate(record){const value=norm(record.value),sign=Math.floor(value/30),within=value-sign*30,degree=Math.floor(within),minute=Math.floor((within-degree)*60+1e-9);return{sign,text:`${degree}°${String(minute).padStart(2,'0')}′`}}
+function coordinate(record){const p=window.RelphiSkyCoordinatePrecision.format(record.value);return{sign:p.signIndex,text:p.text}}
 function glyphSlot(role,label){const slot=document.createElement('span');slot.className=`sky-foundation-relationship-glyph sky-foundation-relationship-glyph--${role}`;slot.dataset.glyphRole=role;slot.setAttribute('aria-label',label);return slot}
 function houseCoordinateSmall(coordinateValue,house,field){const small=document.createElement('small'),marker=window.RelphiHouseMedallion?.decorateCoordinate?.(small,coordinateValue,house,field,false);if(!marker)throw new Error('House medallion source primitive is unavailable.');return small}
 function makeRow(relation,index,slot='A'){

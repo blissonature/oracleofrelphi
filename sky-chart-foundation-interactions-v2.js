@@ -31,11 +31,7 @@
     if(Array.isArray(value))return value.map((item,index)=>[String(item?.name||item?.label||item?.id||index),item]);
     return Object.entries(value).filter(([key,item])=>item&&typeof item==='object'&&!Array.isArray(item)&&!/^(calcProfile|metadata|profile|location|notes|houseCusps|cusps|houses)$/i.test(key)&&(Number.isFinite(Number(item.longitude))||item.sign||item.zodiac));
   }
-  function longitude(item){
-    if(Number.isFinite(Number(item?.longitude)))return norm(item.longitude);
-    const sign=SIGNS.indexOf(String(item?.sign||item?.zodiac||'').trim().toLowerCase());
-    return sign<0?NaN:norm(sign*30+Number(item.degree||item.degrees||0)+Number(item.minute||item.minutes||0)/60+Number(item.second||item.seconds||0)/3600);
-  }
+  function longitude(item){return window.RelphiSkyCoordinatePrecision.longitude(item)}
   function canonical(key,item){
     const registry=window.RelphiGlyphRegistry;if(!registry)return null;
     for(const candidate of [item?.glyphId,item?.id,item?.name,item?.label,item?.body,item?.planet,item?.point,key]){
@@ -185,10 +181,7 @@
         (row.dataset.rightHouse==null?null:Number(row.dataset.rightHouse))===houseRight;
     });
   }
-    function coordinate(record){
-    const value=norm(record.value),sign=Math.floor(value/30),within=value-sign*30,degree=Math.floor(within),minute=Math.floor((within-degree)*60+1e-9);
-    return{sign,text:`${degree}°${String(minute).padStart(2,'0')}′`};
-  }
+    function coordinate(record){const p=window.RelphiSkyCoordinatePrecision.format(record.value);return{sign:p.signIndex,text:p.text}}
 
   function ensurePanel(){
     let panel=document.getElementById('skyFoundationRelationships');if(panel)return panel;
