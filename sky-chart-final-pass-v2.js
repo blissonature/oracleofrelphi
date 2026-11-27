@@ -457,15 +457,8 @@
       ascendantControl = document.createElement('div');
       ascendantControl.className = 'sky-learn-ascendant';
       const label=document.createElement('label');label.textContent='Ascendant';label.htmlFor='skyLearnAscendantSelect';ascendantControl.appendChild(label);
-      const select = document.createElement('select');
-      select.id='skyLearnAscendantSelect';select.setAttribute('aria-label','Choose an Ascendant sign for the zodiac template');
-      ['Aries','Taurus','Gemini','Cancer','Leo','Virgo','Libra','Scorpio','Sagittarius','Capricorn','Aquarius','Pisces'].forEach((sign,index)=>{
-        const option=document.createElement('option');option.value=String(index);option.textContent=sign;select.appendChild(option);
-      });
-      select.value=document.documentElement.dataset.skyLearnAscendant||'0';
-      select.addEventListener('change',()=>{
-        window.RelphiSkyStartupMode.setLearnAscendant(select.value);
-      });
+      const picker=window.RelphiSkyZodiacFilter.createAscendantPicker();
+      ascendantControl.syncAscendant=picker.sync;
       const step=direction=>{
         const button=document.createElement('button');button.type='button';
         button.className='sky-learn-ascendant-step';button.dataset.ascendantStep=String(direction);
@@ -475,16 +468,16 @@
         button.addEventListener('click',()=>{
           const startup=window.RelphiSkyStartupMode;
           const next=(startup.readLearnAscendant()+direction+12)%12;
-          startup.setLearnAscendant(next);select.value=String(next);
+          startup.setLearnAscendant(next);picker.sync();
         });
         return button;
       };
-      ascendantControl.append(step(-1),select,step(1));
+      ascendantControl.append(step(-1),picker.trigger,step(1));
       focusHeading.after(ascendantControl);
     }
     const currentMode = window.RelphiSkyStartupMode?.readMode?.() || 'single';
     ascendantControl.hidden = currentMode !== 'learn';
-    ascendantControl.querySelector('select').value=String(window.RelphiSkyStartupMode.readLearnAscendant());
+    ascendantControl.syncAscendant();
     modes.querySelectorAll('[data-sky-experience]').forEach(button => {
       const active = button.dataset.skyExperience === currentMode;
       const unavailable=button.dataset.skyExperience==='comparison'&&!window.RelphiSkyStartupMode.hasStoredSkyA();
@@ -570,7 +563,7 @@
       bar.className = 'sky-chart-filter-bar';
     }
     ensureFocusStructure(relationshipPanel, bar);
-    if (bar.dataset.finalFilterOwner === 'true') {syncLearnFilters(bar);return;}
+    if (bar.dataset.finalFilterOwner === 'true') {syncLearnFilters(bar);window.RelphiSkyZodiacFilter.install(bar);return;}
     bar.dataset.finalFilterOwner = 'true';
     const aspectOptions = Object.entries(ASPECT_LABELS).map(([value, label]) => `<option value="${value}">${label}</option>`).join('');
     const houses = ['all', ...Array.from({ length:12 }, (_, index) => String(index + 1))]
@@ -587,6 +580,7 @@
       filters[event.target.dataset.filter] = event.target.value;
       applyFilters();
     });
+    window.RelphiSkyZodiacFilter.install(bar);
     refreshPlacementFilter();
   }
 

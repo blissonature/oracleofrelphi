@@ -68,5 +68,39 @@ try{
   }catch(e){failed=true;console.error(kind+' FAILED '+e.message);await page.screenshot({path:`sky-remote-${kind}.png`,fullPage:true}).catch(()=>{})}
   await ctx.close();
  }
+ // Exercise the actual exact revision in Learn at desktop and mobile sizes.
+ for(const viewport of [{width:1280,height:900},{width:390,height:844}]){
+  const ctx=await browser.newContext({viewport,serviceWorkers:'block',hasTouch:viewport.width<600});
+  const page=await ctx.newPage();
+  try{
+   await page.addInitScript(()=>localStorage.setItem('relphiSkyChartLastModeV1','learn'));
+   await page.goto(urls[0][1],{waitUntil:'domcontentloaded',timeout:25000});
+   const focus=page.locator('#skyFoundationFocus');
+   await focus.locator('[data-zodiac-summary]').waitFor({state:'visible',timeout:20000});
+   const header=await focus.evaluate(el=>{
+     const rect=s=>{const r=el.querySelector(s).getBoundingClientRect();return {top:r.top,bottom:r.bottom,left:r.left,right:r.right}};
+     return {brand:rect('.sky-chart-page-brand'),modes:rect('.sky-sky-mode-selector'),controls:rect('.sky-focus-heading-controls'),asc:rect('.sky-learn-ascendant'),signs:rect('[data-zodiac-filter]')};
+   });
+   assert.ok(header.brand.top<header.modes.bottom&&header.modes.top<header.brand.bottom,'Mode selector must share brand row');
+   if(viewport.width>=1050)assert.ok(header.asc.top<header.controls.bottom&&header.controls.top<header.asc.bottom,'Ascendant and Focus controls must share second row');
+   const trigger=focus.locator('#skyLearnAscendantSelect');
+   await trigger.click();
+   const menu=page.locator('#skyLearnAscendantMenu');
+   await menu.waitFor({state:'visible'});
+   assert.equal(await menu.getByRole('option').count(),12);
+   assert.equal(await menu.locator('.sky-chart-zodiac-filter-glyph svg').count(),12);
+   await menu.getByRole('option',{name:'Aquarius · Bucket'}).click();
+   assert.equal(await trigger.getAttribute('data-selected-sign'),'10');
+   await focus.locator('[data-ascendant-step="1"]').click();
+   assert.equal(await trigger.getAttribute('data-selected-sign'),'11');
+   await focus.locator('[data-zodiac-summary]').click();
+   await page.locator('#skyChartZodiacFilterMenu').waitFor({state:'visible'});
+   assert.equal(await page.locator('#skyChartZodiacFilterMenu input[type=checkbox]').count(),12);
+   await page.keyboard.press('Escape');
+   await page.screenshot({path:'sky-remote-learn-'+viewport.width+'.png',fullPage:true});
+   console.log('LEARN TOOLBAR',viewport.width,JSON.stringify(header));
+  }catch(e){failed=true;console.error('LEARN '+viewport.width+' FAILED '+e.message)}
+  finally{await ctx.close()}
+ }
 }finally{await browser.close()}
 if(failed)process.exitCode=1;

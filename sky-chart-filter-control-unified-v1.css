@@ -94,10 +94,13 @@
   body.sky-chart-page #skyFoundationFocus .sky-chart-filter-bar[data-learn-focus="true"]{grid-template-columns:repeat(3,minmax(0,1fr))!important}
   /* Row 1: Aspects needs room for All + A↔A + B↔B + A↔B + chevron. */
   body.sky-chart-page :is(#skyFoundationFocus,#skyFoundationRelationships,.sky-vocab-panel) .sky-chart-filter-bar:not([data-learn-focus="true"])>.sky-chart-aspect-filter{grid-column:1/span 4!important;grid-row:1!important}
-  body.sky-chart-page :is(#skyFoundationFocus,#skyFoundationRelationships,.sky-vocab-panel) .sky-chart-filter-bar>.sky-chart-placement-filter{grid-column:5/span 3!important;grid-row:1!important}
+  body.sky-chart-page :is(#skyFoundationFocus,#skyFoundationRelationships,.sky-vocab-panel) .sky-chart-filter-bar:not([data-learn-focus="true"])>.sky-chart-placement-filter{grid-column:5/span 3!important;grid-row:1!important}
   body.sky-chart-page :is(#skyFoundationFocus,#skyFoundationRelationships,.sky-vocab-panel) .sky-chart-filter-bar:not([data-learn-focus="true"])>.sky-chart-zodiac-filter{grid-column:8/span 2!important;grid-row:1!important}
   body.sky-chart-page :is(#skyFoundationFocus,#skyFoundationRelationships,.sky-vocab-panel) .sky-chart-filter-bar:not([data-learn-focus="true"])>.sky-chart-house-filter{grid-column:10/span 3!important;grid-row:1!important}
 
+  body.sky-chart-page #skyFoundationFocus .sky-chart-filter-bar[data-learn-focus="true"]>.sky-chart-aspect-filter{grid-column:1;grid-row:1}
+  body.sky-chart-page #skyFoundationFocus .sky-chart-filter-bar[data-learn-focus="true"]>.sky-chart-house-filter{grid-column:2;grid-row:1}
+  body.sky-chart-page #skyFoundationFocus .sky-chart-filter-bar[data-learn-focus="true"]>.sky-chart-zodiac-filter{grid-column:3;grid-row:1}
   /* Row 2: evaluation / presentation controls. */
   body.sky-chart-page :is(#skyFoundationFocus,#skyFoundationRelationships,.sky-vocab-panel) .sky-chart-filter-bar>.sky-orb-number-field{grid-column:1/span 4!important;grid-row:2!important}
   body.sky-chart-page :is(#skyFoundationFocus,#skyFoundationRelationships,.sky-vocab-panel) .sky-chart-filter-bar>.sky-relationship-display-control{grid-column:5/span 3!important;grid-row:2!important;max-width:none!important;min-width:0!important}
