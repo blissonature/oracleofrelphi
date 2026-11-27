@@ -15935,8 +15935,8 @@ html body .question-card:focus-within {
 /* v309 small UI fixes.
    The shared brand banner should not follow the page while scrolling;
    otherwise it can obscure content on tool pages. */
-html body:not(.sky-chart-page) .menu-container,
-html body:not(.sky-chart-page) .menu-container.anniversary-nav {
+html body .menu-container,
+html body .menu-container.anniversary-nav {
   position: absolute !important;
   top: 1rem !important;
   left: 1rem !important;
@@ -15956,8 +15956,8 @@ html body .ph-datefield-link {
 /* v310 targeted nav correction.
    Restore the floating logo thumbnail for navigation while preventing the
    following brand words/badge from covering page content on tool pages. */
-html body:not(.anniversary-home):not(.sky-chart-page) .menu-container,
-html body:not(.anniversary-home):not(.sky-chart-page) .menu-container.anniversary-nav {
+html body:not(.anniversary-home) .menu-container,
+html body:not(.anniversary-home) .menu-container.anniversary-nav {
   position: fixed !important;
   top: 1rem !important;
   left: 1rem !important;
