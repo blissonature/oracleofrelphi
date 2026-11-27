@@ -454,11 +454,11 @@
     }
     let ascendantControl = focusPanel.querySelector(':scope > .sky-learn-ascendant');
     if (!ascendantControl) {
-      ascendantControl = document.createElement('label');
+      ascendantControl = document.createElement('div');
       ascendantControl.className = 'sky-learn-ascendant';
-      ascendantControl.textContent = 'Ascendant';
+      const label=document.createElement('label');label.textContent='Ascendant';label.htmlFor='skyLearnAscendantSelect';ascendantControl.appendChild(label);
       const select = document.createElement('select');
-      select.setAttribute('aria-label','Choose an Ascendant sign for the zodiac template');
+      select.id='skyLearnAscendantSelect';select.setAttribute('aria-label','Choose an Ascendant sign for the zodiac template');
       ['Aries','Taurus','Gemini','Cancer','Leo','Virgo','Libra','Scorpio','Sagittarius','Capricorn','Aquarius','Pisces'].forEach((sign,index)=>{
         const option=document.createElement('option');option.value=String(index);option.textContent=sign;select.appendChild(option);
       });
@@ -466,7 +466,20 @@
       select.addEventListener('change',()=>{
         window.RelphiSkyStartupMode.setLearnAscendant(select.value);
       });
-      ascendantControl.appendChild(select);
+      const step=direction=>{
+        const button=document.createElement('button');button.type='button';
+        button.className='sky-learn-ascendant-step';button.dataset.ascendantStep=String(direction);
+        button.textContent=direction<0?'‹':'›';
+        const name=direction<0?'Previous rising sign':'Next rising sign';
+        button.setAttribute('aria-label',name);button.title=name;
+        button.addEventListener('click',()=>{
+          const startup=window.RelphiSkyStartupMode;
+          const next=(startup.readLearnAscendant()+direction+12)%12;
+          startup.setLearnAscendant(next);select.value=String(next);
+        });
+        return button;
+      };
+      ascendantControl.append(step(-1),select,step(1));
       modes.after(ascendantControl);
     }
     const currentMode = window.RelphiSkyStartupMode?.readMode?.() || 'single';
