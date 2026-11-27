@@ -97,6 +97,28 @@ try{
    };
    await page.locator('#skyFoundationWheelMount .sky-foundation-wheel[data-learn-ascendant]').waitFor({state:'visible'});
    await checkWheel();
+   const core=page.locator('#skyFoundationLearnCore');
+   const coreErrors=[];
+   page.on('pageerror',e=>{coreErrors.push(e.message);console.log('CORE PAGE ERROR',e.message)});
+   await core.getByRole('tab',{name:'Rulers',exact:true}).click();
+   console.log('CORE RULERS STATE',JSON.stringify(await core.evaluate(el=>({tab:el.dataset.coreTab,selected:el.querySelector('[aria-selected="true"]')?.textContent,key:el.querySelector('[data-core-structure]')?.dataset.structureKey,content:el.querySelector('[data-core-structure]')?.innerText,buttons:el.querySelectorAll('[data-core-ruler]').length,ready:!!window.RelphiSkyCardHitsStructure?.renderTemplate}))));
+   await core.locator('[data-core-ruler="Mars"]').waitFor({state:'visible',timeout:5000});
+   assert.equal(await core.locator('[data-core-ruler]').count(),7,'All seven rulers are available in Learn');
+   assert.equal(await core.getByRole('tab',{name:'Rulers',exact:true}).getAttribute('aria-selected'),'true');
+   await core.locator('[data-core-ruler="Mars"]').click();
+   console.log('CORE RULER FOCUS',JSON.stringify(await core.evaluate(el=>({selected:el.querySelector('[data-core-ruler][aria-pressed="true"]')?.dataset.coreRuler,detail:el.querySelector('.sky-card-ruler-detail')?.innerText}))));
+   await core.locator('.sky-card-ruler-detail').waitFor({state:'visible',timeout:5000});
+   assert.equal(await core.locator('[data-core-ruler="Mars"]').getAttribute('aria-pressed'),'true');
+   assert.match(await core.locator('.sky-card-ruler-detail').innerText(),/Aries/);
+   assert.match(await core.locator('.sky-card-ruler-detail').innerText(),/Scorpio/);
+   assert.deepEqual(await page.locator('#skyFoundationWheelMount [data-interactive="sign"].is-kept').evaluateAll(nodes=>nodes.map(n=>Number(n.dataset.sign)).sort((a,b)=>a-b)),[0,7]);
+   await core.locator('[data-core-clear-ruler]').click();
+   assert.equal(await core.locator('.sky-card-ruler-detail').count(),0);
+   await core.getByRole('tab',{name:'Signs',exact:true}).click();
+   assert.equal(await core.locator('[data-core-select-sign]').count(),12);
+   await core.getByRole('tab',{name:'Houses',exact:true}).click();
+   assert.equal(await core.getByRole('tab',{name:'Houses',exact:true}).getAttribute('aria-selected'),'true');
+   assert.deepEqual(coreErrors,[]);
    if(viewport.width>=1050){
     const boxes=await focus.evaluate(el=>['#skyLearnAscendantSelect','.sky-chart-aspect-summary-choices','.sky-chart-house-summary-choices','[data-zodiac-summary]','[data-relationship-display-value]'].map(s=>{const r=el.querySelector(s).getBoundingClientRect();return {bottom:r.bottom,height:r.height}}));
     console.log('FOCUS FIELD BOXES',JSON.stringify(boxes));
