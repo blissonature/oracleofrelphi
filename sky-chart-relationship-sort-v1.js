@@ -262,7 +262,7 @@ function compareRawStrength(a,b){
 }
 function compareRawSigned(a,b,direction){
   const as=relationshipScore(a),bs=relationshipScore(b);
-  const delta=as.signed-bs.signed;
+  const delta=chartCompatibility(a)-chartCompatibility(b);
   if(delta!==0)return direction==='supportive'?-delta:delta;
   return bs.strength-as.strength || compareExact(a,b);
 }
@@ -437,6 +437,82 @@ const LEARN_WHOLE_SIGN_SCORES=Object.freeze([
   [[0,3,0,7,3,2,-2,2,3,5,5,11],[3,0,11,6,4,8,1,-2,4,7,10,4],[0,11,0,9,3,10,3,1,6,5,4,8],[7,6,9,0,4,6,0,3,5,-2,1,5],[3,4,3,4,0,5,1,6,4,1,1,5],[2,8,10,6,5,0,6,0,6,8,6,7],[-2,1,3,0,1,6,0,5,5,11,8,6],[2,-2,1,3,6,0,5,0,8,6,7,10],[3,4,6,5,4,6,5,8,0,11,10,11],[5,7,5,-2,1,8,11,6,11,0,9,9],[5,10,4,1,1,6,8,7,10,9,0,10],[11,4,8,5,5,7,6,10,11,9,10,0]]
 ]);
 function learnWholeSignScore(row){const asc=window.RelphiSkyStartupMode?.readLearnAscendant?.()??0;const a=Number(row.dataset.leftSign),b=Number(row.dataset.rightSign);return LEARN_WHOLE_SIGN_SCORES[asc]?.[a]?.[b]??0;}
+// Chart relationships use the same vote vocabulary, plus actual planetary
+// dignities and the geometry resolved by the selected house system.
+const CHART_BOUNDS=[
+  [['jupiter',6],['venus',14],['mercury',21],['mars',26],['saturn',30]],
+  [['venus',8],['mercury',14],['jupiter',22],['saturn',27],['mars',30]],
+  [['mercury',6],['jupiter',12],['venus',17],['mars',24],['saturn',30]],
+  [['mars',7],['venus',13],['mercury',19],['jupiter',26],['saturn',30]],
+  [['jupiter',6],['venus',11],['saturn',18],['mercury',24],['mars',30]],
+  [['mercury',7],['venus',17],['jupiter',21],['mars',28],['saturn',30]],
+  [['saturn',6],['mercury',14],['jupiter',21],['venus',28],['mars',30]],
+  [['mars',7],['venus',11],['mercury',19],['jupiter',24],['saturn',30]],
+  [['jupiter',12],['venus',17],['mercury',21],['saturn',26],['mars',30]],
+  [['mercury',7],['jupiter',14],['venus',22],['saturn',26],['mars',30]],
+  [['mercury',7],['venus',13],['jupiter',20],['mars',25],['saturn',30]],
+  [['venus',12],['jupiter',16],['mercury',19],['mars',28],['saturn',30]]
+];
+function chartEndpoint(row,side){
+  const p=normalizedPoint(row.dataset[side+'Placement']);
+  const actual=window.RelphiSkyFoundationInteractions?.relationshipEndpoint?.(endpointSky(row,side),p);
+  const sign=Number(row.dataset[side+'Sign']),house=Number(row.dataset[side+'House']);
+  return {p,sign:Number.isInteger(sign)&&sign>=0&&sign<12?sign:null,
+    house:Number.isInteger(house)&&house>=1&&house<=12?house-1:null,
+    ...actual,...(actual?.house!=null?{house:actual.house-1}:{})};
+}
+function chartPairVotes(row){
+  const a=chartEndpoint(row,'left'),b=chartEndpoint(row,'right');
+  const votes={};
+  if(a.sign!=null&&b.sign!=null&&a.house!=null&&b.house!=null){
+    Object.assign(votes,learnPairVotes(a.sign,b.sign,a.house,b.house));
+    delete votes['sign pair geometry']; // actual aspect is the geometric vote
+  }else if(a.sign!=null&&b.sign!=null){
+    const pa=LEARN_RULERS[a.sign],pb=LEARN_RULERS[b.sign];
+    votes['sign pair dignity']=learnDignity(pa,b.sign);
+    if(pa!==pb)votes['sign pair reciprocal dignity']=learnDignity(pb,a.sign);
+    votes['sign pair face affinity']=learnFace(pa,b.sign);
+    votes['sign pair reciprocal face affinity']=learnFace(pb,a.sign);
+    votes['sign pair triplicity affinity']=learnTriplicity(pa,b.sign);
+    votes['sign pair reciprocal triplicity affinity']=learnTriplicity(pb,a.sign);
+    votes['sign pair antiscia or contra-antiscia']=learnMirror(a.sign,b.sign);
+  }
+  const valence=ASPECT_VALENCE[row.dataset.aspect]??0;
+  votes['actual aspect']=Math.sign(valence);
+  for(const [name,e,other] of [['first',a,b],['second',b,a]]){
+    if(e.sign==null)continue;
+    if(!Object.hasOwn(LEARN_EXALTATION,e.p))continue; // no invented traditional dignities for outer planets or points
+    votes[name+' planetary dignity']=learnDignity(e.p,e.sign);
+    const day=e.day;
+    const trip=LEARN_TRIPLICITY[e.sign%4];
+    votes[name+' planetary triplicity']=day==null?(trip.includes(e.p)?1:0):((trip[day?0:1]===e.p||trip[2]===e.p)?1:0);
+    if(Number.isFinite(e.longitude)){
+      const degree=((e.longitude%30)+30)%30;
+      votes[name+' planetary face']=LEARN_FACE_SEQUENCE[(e.sign*3+Math.floor(degree/10))%7]===e.p?1:0;
+      if(e.p!=='sun'&&e.p!=='moon')votes[name+' planetary bound']=CHART_BOUNDS[e.sign].find(([,end])=>degree<end)?.[0]===e.p?1:0;
+    }
+    if(e.house!=null){
+      // A planet actually rejoicing supersedes the corresponding proxy ruler joy.
+      if(e.p===LEARN_RULERS[e.sign])delete votes[name+' ruler joy'];
+      votes[name+' planetary joy']=LEARN_JOYS[e.house]===e.p?1:0;
+    }
+    if(Number.isFinite(e.cusp)){
+      const cuspLord=LEARN_RULERS[Math.floor(e.cusp/30)];
+      if(cuspLord!==LEARN_RULERS[e.sign])votes[name+' actual cusp lord affinity']=other.p===cuspLord?1:0;
+    }
+    if(day!=null&&['mars','saturn'].includes(e.p))votes[name+' malefic sect']=(e.p==='saturn'?day:!day)?0:-1;
+    if(other.sign!=null&&e.p!==LEARN_RULERS[e.sign]){
+      votes[name+' dignity in other sign']=learnDignity(e.p,other.sign);
+    }
+  }
+  return votes;
+}
+function chartCompatibility(row){
+  const votes=chartPairVotes(row);
+  const score=Object.values(votes).reduce((sum,v)=>sum+v,0);
+  row.dataset.relationshipCompatibilityScore=String(score);
+  return score;
+}
 function compareRows(a,b){
   if(learn()){
     if(mode===MODES.angular)return angularDistance(a)-angularDistance(b)||zodiacCompare(a,b);
@@ -607,6 +683,8 @@ window.RelphiRelationshipSort=Object.freeze({
   scoreRow:relationshipScore,
   learnPairVotes,
   learnPairScore,
+  chartPairVotes,
+  chartCompatibility,
   referenceResolutionFor,
   referenceResolution:REFERENCE_RESOLUTION,
   setMode
