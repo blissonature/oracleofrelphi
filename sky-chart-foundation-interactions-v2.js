@@ -123,6 +123,7 @@
       else window.RelphiSkyCardHitsStructure?.renderTemplate?.(structure,asc,ruler,tab);
     }
     const index=learnSignForState(state),ctx=Number.isInteger(index)?learnSignContext(index):null;
+    structure.querySelectorAll('[data-core-select-sign]').forEach(tile=>{const selected=Number(tile.dataset.coreSelectSign)===index;tile.classList.toggle('is-selected',selected);tile.setAttribute('aria-pressed',String(selected))});
     core.querySelector('[data-core-prompt]').hidden=!!ctx;core.querySelector('[data-core-content]').hidden=!ctx;
     if(!ctx){delete core.dataset.coreSign;delete core.dataset.coreHouse;return}
     if(core.dataset.coreSign===String(index)&&core.dataset.coreHouse===String(ctx.house))return;
@@ -300,6 +301,7 @@
     return String(spec.value||'');
   }
   function selectionSource(node){
+    if(node?.closest?.('#skyFoundationLearnCore'))return'Sky Card Core';
     if(node?.closest?.('.sky-foundation-row[data-placement]'))return'Placements';
     if(node?.closest?.('#skyFoundationWheelMount'))return'Zodiac Wheel';
     if(node?.closest?.('[data-sky-vocab-panel]'))return'Vocab';
@@ -947,7 +949,8 @@
       if(core){
         const tab=event.target.closest('[data-core-tab]'),ruler=event.target.closest('[data-core-ruler]'),sign=event.target.closest('[data-core-select-sign]'),clear=event.target.closest('[data-core-clear-ruler]');
         if(tab){core.dataset.coreTab=tab.dataset.coreTab;updateLearnCore(lockedState);return}
-        if(ruler||sign||clear){const next=clear?null:ruler?{kind:'ruler',sky:null,value:ruler.dataset.coreRuler}:{kind:'sign',sky:null,value:Number(sign.dataset.coreSelectSign)};
+        if(sign){toggleInteractiveNode(sign);return}
+        if(ruler||clear){const next=clear?null:ruler?{kind:'ruler',sky:null,value:ruler.dataset.coreRuler}:{kind:'sign',sky:null,value:Number(sign.dataset.coreSelectSign)};
           lockedState=same(lockedState,next)?null:next;hoverState=null;rowLockedState=null;rowHoverState=null;selectionOrigin=lockedState?{source:'Sky Card Core',...lockedState}:null;
           clearWheelTargets();window.RelphiInlineRelationship?.collapse?.();applyState();}
         return;

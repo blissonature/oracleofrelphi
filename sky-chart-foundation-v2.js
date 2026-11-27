@@ -265,8 +265,6 @@ function buildLearnWheel(){
   }
   chart.dataset.skyExperience='learn';
   chart.setAttribute('aria-label','Zodiac template: twelve signs and twelve houses');
-  const houseLayerNode=chart.querySelector('[data-layer="a-houses"]');
-  houseLayerNode?.querySelectorAll('.sky-foundation-house-sector').forEach(node=>node.setAttribute('fill-opacity','1'));
   const selectedAscendant=learnAscendantIndex();
   chart.dataset.learnAscendant=String(selectedAscendant);
   chart.querySelectorAll('.sky-foundation-sign-sector').forEach(node=>node.setAttribute('fill-opacity','1'));
