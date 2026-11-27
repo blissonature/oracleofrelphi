@@ -58,8 +58,8 @@ function placement(row,side){const left=side==='left',cls=left?'left':'right';le
     if(pair.lastElementChild!==signSlot)pair.appendChild(signSlot);
   }if(copy.parentElement!==group)group.appendChild(copy);[...copy.childNodes].filter(n=>n!==small).forEach(n=>n.remove());if(row.dataset.learnRelationship==='true'){
     const house=Number(row.dataset[left?'leftHouse':'rightHouse']);
-    small.textContent=Number.isInteger(house)&&house>=1&&house<=12?'House '+house:'';
-    group.setAttribute('aria-label',signName+(small.textContent?', '+small.textContent:''));
+    decorateHouseCoordinate(small,'House',house,field);
+    group.setAttribute('aria-label',signName+(Number.isInteger(house)&&house>=1&&house<=12?', House '+house:''));
   }else{
     decorateHouseCoordinate(small,coordinate,house,field);
     group.setAttribute('aria-label',`${row.dataset[left?'leftPlacement':'rightPlacement']} in ${signName}, ${coordinate}${Number.isFinite(house)&&house>0?`, house ${house}`:''}`);
