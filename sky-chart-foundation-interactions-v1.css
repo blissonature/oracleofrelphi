@@ -691,7 +691,27 @@ html[data-sky-last-mode="learn"] #skyFoundationA,
 html[data-sky-last-mode="learn"] #skyFoundationB,
 html[data-sky-last-mode="learn"] .sky-one-click-outer{display:none}
 html[data-sky-last-mode="learn"] #skyFoundationRoot{grid-template-columns:minmax(0,1fr);grid-template-areas:"comparison"}
-html[data-sky-last-mode="learn"] #skyFoundationComparison{grid-column:1/-1}
+html[data-sky-last-mode="learn"] #skyFoundationComparison{grid-column:1/-1;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);grid-template-areas:"focus focus" "wheel core" "relations core";grid-template-rows:auto auto 1fr;align-items:start;gap:12px}
+html[data-sky-last-mode="learn"] #skyFoundationFocus{grid-area:focus}
+html[data-sky-last-mode="learn"] #skyFoundationWheelMount{grid-area:wheel;min-height:0}
+html[data-sky-last-mode="learn"] #skyFoundationRelationships{grid-area:relations;min-width:0}
+#skyFoundationLearnCore{grid-area:core;min-width:0;border:1px solid rgba(31,27,24,.22);border-radius:12px;background:#fff;padding:14px;color:#332e2a}
+#skyFoundationLearnCore[hidden],#skyFoundationLearnCore [hidden]{display:none}
+#skyFoundationLearnCore h2{margin:0 0 12px;font-size:1.1rem}
+#skyFoundationLearnCore h3{margin:0 0 6px;font-size:1.05rem}
+.sky-learn-core-identity{display:grid;grid-template-columns:minmax(0,1fr) minmax(65px,24%);gap:12px;align-items:start}
+.sky-learn-core-identity p{line-height:1.55}
+.sky-learn-core-identity [data-core-qualities]{font-size:.82rem;color:#645c53}
+.sky-learn-core-identity a{display:grid;gap:4px;text-align:center;font-size:.72rem;color:inherit}
+.sky-learn-core-identity img{width:100%;height:auto;border-radius:5px}
+.sky-learn-core-houses{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:5px;margin:12px 0}
+.sky-learn-core-nav{display:flex;justify-content:space-between;gap:8px}
+.sky-learn-core-houses button,.sky-learn-core-nav button{min-height:34px;padding:5px;border:1px solid rgba(31,27,24,.25);border-radius:7px;background:white;color:#332e2a;font:inherit;cursor:pointer}
+.sky-learn-core-houses button[aria-pressed="true"]{background:#332e2a;color:white}
+.sky-learn-pair-reading{padding:4px 0;line-height:1.5;text-align:left}
+.sky-learn-pair-qualities{width:100%;font-size:.72rem;border-collapse:collapse;text-align:left}
+.sky-learn-pair-qualities th,.sky-learn-pair-qualities td{padding:4px;border-bottom:1px solid #ddd}
+@media(max-width:780px){html[data-sky-last-mode="learn"] #skyFoundationComparison{grid-template-columns:minmax(0,1fr);grid-template-areas:"focus" "wheel" "core" "relations";grid-template-rows:auto}}
 
 /* Learn uses the canonical Focus controls without Sky A/B-specific fields. */
 #skyFoundationFocus .sky-chart-filter-bar > label:has(> [data-filter="sign"]){display:none}
@@ -700,5 +720,5 @@ html[data-sky-last-mode="learn"] #skyFoundationComparison{grid-column:1/-1}
 #skyFoundationFocus .sky-chart-filter-bar[data-learn-focus="true"] > label:has(> [data-filter="houseB"]),
 #skyFoundationFocus .sky-chart-filter-bar[data-learn-focus="true"] > label:has(> [data-house-system-filter]){display:none}
 #skyFoundationFocus .sky-chart-filter-bar[data-learn-focus="true"] > label:has(> [data-filter="sign"]){display:grid}
-html[data-sky-last-mode="learn"] #skyFoundationWheelMount > svg.sky-foundation-wheel{max-height:none;width:min(100%,1020px)}
+html[data-sky-last-mode="learn"] #skyFoundationWheelMount > svg.sky-foundation-wheel{max-height:clamp(230px,calc(100svh - 16rem),600px);width:min(100%,clamp(230px,calc(100svh - 16rem),600px));height:auto}
 @media(max-width:620px){#skyFoundationFocus .sky-chart-filter-bar[data-learn-focus="true"]{grid-template-columns:repeat(2,minmax(0,1fr))}}

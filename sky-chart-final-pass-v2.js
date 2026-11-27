@@ -473,14 +473,14 @@
       });
       select.value=document.documentElement.dataset.skyLearnAscendant||'0';
       select.addEventListener('change',()=>{
-        document.documentElement.dataset.skyLearnAscendant=select.value;
-        window.dispatchEvent(new CustomEvent('relphi:sky-learn-ascendant-changed',{detail:{sign:Number(select.value)}}));
+        window.RelphiSkyStartupMode.setLearnAscendant(select.value);
       });
       ascendantControl.appendChild(select);
       modes.after(ascendantControl);
     }
     const currentMode = window.RelphiSkyStartupMode?.readMode?.() || 'single';
     ascendantControl.hidden = currentMode !== 'learn';
+    ascendantControl.querySelector('select').value=String(window.RelphiSkyStartupMode.readLearnAscendant());
     modes.querySelectorAll('[data-sky-experience]').forEach(button => {
       const active = button.dataset.skyExperience === currentMode;
       button.setAttribute('aria-pressed',String(active));

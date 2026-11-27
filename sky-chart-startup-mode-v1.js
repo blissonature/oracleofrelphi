@@ -116,6 +116,8 @@ function readMode(){
   // First-time visitors enter the zodiac lesson; an existing sky opens Discover.
   return rawGet('relphiSkyChartA')?'single':'learn';
 }
+function readLearnAscendant(){const n=Number(html.dataset.skyLearnAscendant||0);return Number.isInteger(n)&&n>=0&&n<12?n:0}
+function setLearnAscendant(value){const n=Number(value);if(!Number.isInteger(n)||n<0||n>11)return false;if(readLearnAscendant()===n)return false;html.dataset.skyLearnAscendant=String(n);window.dispatchEvent(new CustomEvent('relphi:sky-learn-ascendant-changed',{detail:{sign:n}}));return true}
 function writeMode(mode){
   const next=mode==='learn'?'learn':mode==='comparison'?'comparison':'single';
   try{if(rawGet(MODE_KEY)!==next)window.RelphiSkyWorkingStorage.setItem(MODE_KEY,next)}catch(_){}
@@ -204,7 +206,7 @@ function read(key){
   if(key===SKY_B_KEY&&readMode()!=='comparison'&&html.dataset.skyBEditing!=='true')return null;
   return rawGet(key);
 }
-window.RelphiSkyStartupMode=Object.freeze({read,readMode,writeMode,syncRoot,hasStoredSkyB,recoverTransientState});
+window.RelphiSkyStartupMode=Object.freeze({read,readMode,writeMode,syncRoot,hasStoredSkyB,recoverTransientState,readLearnAscendant,setLearnAscendant});
 
 // Fail closed into the ordinary single-sky view before the body can paint.
 syncRoot();

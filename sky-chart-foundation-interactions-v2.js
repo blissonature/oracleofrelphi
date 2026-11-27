@@ -82,13 +82,68 @@
     }
     return result.sort((a,b)=>a.phaseError-b.phaseError||a.harmonicOrder-b.harmonicOrder||a.orb-b.orb);
   }
+  function learnAsc(){return window.RelphiSkyStartupMode?.readLearnAscendant?.()||0}
+  function learnSignContext(index){
+    if(!Number.isInteger(index)||index<0||index>11)return null;
+    const name=SIGN_NAMES[index],house=(index-learnAsc()+12)%12+1,source=window.RELPHI_RISING_SIGN_HOUSE_OFFSET_EFFECTS;
+    const entry=source?.entries?.find(item=>item.sign===name&&Number(item.houseNumber)===house);
+    const ingredients=source?.signIngredients?.[name];if(!entry||!ingredients)return null;
+    const tarot=(window.RELPHI_TAROT_CARDS||[]).find(item=>item.arcana==='Major'&&String(item.astrology?.sign||'').split(',').map(x=>x.trim()).includes(name));
+    return {index,name,house,ruler:ingredients.ruler,modality:ingredients.modality,element:ingredients.element,polarity:['fire','air'].includes(ingredients.element)?'masculine':'feminine',structure:ingredients.structure||ingredients.modality+' '+ingredients.element,field:entry.ingredients.houseField,description:entry.description,card:tarot?{id:tarot.card_id,title:tarot.name,image:'assets/tarot/rws-export/'+tarot.card_id+'.webp'}:null};
+  }
+  function learnSignForState(state){
+    if(!state)return null;
+    if(state.kind==='sign')return Number(state.value);
+    if(state.kind==='house')return (learnAsc()+Number(state.value)-1)%12;
+    if(state.kind==='aspect'){const rel=current.relations.find(r=>r.learn&&('A:'+r.left.id+'|'+r.aspect.id+'|B:'+r.right.id)===state.value);if(rel)return [rel.left.sign,rel.right.sign].includes(state.learnAnchor)?state.learnAnchor:rel.left.sign}
+    return null;
+  }
+  function learnPairContext(left,right){
+    const a=learnSignContext(left),b=learnSignContext(right);if(!a||!b)return null;
+    const selected=learnSignForState(lockedState),first=selected===right?b:a,second=first===a?b:a;
+    const planet=c=>['Sun','Moon'].includes(c.ruler)?'the '+c.ruler:c.ruler;
+    const field=c=>c.house===12?'hidden things':c.house===9?'belief, travel, study, and law':c.field;
+    const sentence="While "+planet(first)+"'s affairs of "+first.structure+" concern "+field(first)+", "+planet(second)+" in "+second.structure+" has jurisdiction over "+field(second)+".";
+    return {left:a,right:b,sentence,modality:a.modality===b.modality?'Same':'Different',polarity:a.polarity===b.polarity?'Same':'Different',element:a.element===b.element?'Same':'Different',adjacent:[1,11].includes(Math.abs(left-right))?'Yes':'No'};
+  }
+  function updateLearnCore(state){
+    const mount=document.getElementById('skyFoundationWheelMount');if(!mount)return;
+    let core=document.getElementById('skyFoundationLearnCore');
+    const active=window.RelphiSkyStartupMode?.readMode?.()==='learn';
+    if(!active){if(core)core.hidden=true;return}
+    if(!core){
+      core=document.createElement('section');core.id='skyFoundationLearnCore';core.setAttribute('aria-label','Sky Card Core');
+      core.innerHTML='<header><h2>Sky Card Core</h2></header><div data-core-prompt>Select a sign or house on the wheel to explore its twelve house manifestations.</div><div data-core-content hidden><div class="sky-learn-core-identity"><div><h3 data-core-title></h3><p data-core-qualities></p><p data-core-description></p></div><a data-core-card><img alt=""><span></span></a></div><div class="sky-learn-core-houses" aria-label="Explore houses">'+Array.from({length:12},(_,i)=>'<button type="button" data-core-house="'+(i+1)+'" aria-pressed="false">'+(i+1)+'</button>').join('')+'</div><div class="sky-learn-core-nav"><button type="button" data-core-step="-1">Previous House</button><button type="button" data-core-step="1">Next House</button></div></div>';
+      mount.after(core);
+    }
+    core.hidden=false;
+    const index=learnSignForState(state),ctx=Number.isInteger(index)?learnSignContext(index):null;
+    core.querySelector('[data-core-prompt]').hidden=!!ctx;core.querySelector('[data-core-content]').hidden=!ctx;
+    if(!ctx){delete core.dataset.coreSign;delete core.dataset.coreHouse;return}
+    if(core.dataset.coreSign===String(index)&&core.dataset.coreHouse===String(ctx.house))return;
+    core.dataset.coreSign=String(index);core.dataset.coreHouse=String(ctx.house);
+    core.querySelector('[data-core-title]').textContent=ctx.name+' in House '+ctx.house;
+    core.querySelector('[data-core-qualities]').textContent=ctx.ruler+' · '+ctx.structure+' · '+ctx.polarity;
+    core.querySelector('[data-core-description]').textContent=ctx.description;
+    const link=core.querySelector('[data-core-card]');link.hidden=!ctx.card;
+    if(ctx.card){link.dataset.inlineLedger=ctx.card.id;link.href='tarot.html?card='+encodeURIComponent(ctx.card.id);link.querySelector('img').src=ctx.card.image;link.querySelector('img').alt=ctx.card.title;link.querySelector('span').textContent=ctx.card.title}
+    core.querySelectorAll('[data-core-house]').forEach(button=>button.setAttribute('aria-pressed',String(Number(button.dataset.coreHouse)===ctx.house)));
+  }
+  function browseLearnHouse(button){
+    const index=learnSignForState(lockedState);if(!Number.isInteger(index))return;
+    const old=learnSignContext(index);if(!old)return;
+    const house=button.dataset.coreHouse?Number(button.dataset.coreHouse):((old.house-1+Number(button.dataset.coreStep)+12)%12)+1;
+    lockedState={kind:'sign',sky:null,value:index};hoverState=null;rowLockedState=null;rowHoverState=null;wheelOnlyExternal=false;
+    selectionOrigin={source:'Sky Card Core',kind:'sign',value:index};
+    if(!window.RelphiSkyStartupMode.setLearnAscendant((index-house+1+12)%12))applyState();
+  }
   function templateRelationships(){
     const aspectsByStep=['','semi-sextile','sextile','square','trine','quincunx','opposition'];
     const aspectById=new Map(ASPECTS.map(aspect=>[aspect.id,aspect]));
     const registry=window.RelphiGlyphRegistry;
     const signs=SIGN_NAMES.map((name,index)=>{
       const entry=registry?.resolve?.(name)||registry?.get?.(name.toLowerCase())||{id:name.toLowerCase(),name};
-      return{id:name.toLowerCase(),entry:{...entry,name},value:index*30+15,sign:index,sky:'A',house:null};
+      return{id:name.toLowerCase(),entry:{...entry,name},value:index*30+15,sign:index,sky:'A',house:(index-learnAsc()+12)%12+1};
     });
     const relations=[];
     for(let i=0;i<12;i++)for(let j=i+1;j<12;j++){
@@ -155,6 +210,7 @@
   async function renderRows(relations){
     const list=document.getElementById('skyFoundationRelationshipList'),count=document.getElementById('skyFoundationRelationshipCount');if(!list||!count)return;
     const selectionCleared=document.getElementById('skyFoundationRoot')?.dataset.relationshipSelectionCleared==='true',selected=selectionCleared?null:document.querySelector('.sky-foundation-relationship-row[aria-current="true"]');const selectedKey=selected?[selected.dataset.leftPlacement,selected.dataset.aspect,selected.dataset.rightPlacement,selected.getAttribute('aria-label')].join('|'):'';
+    const expanded=window.RelphiInlineRelationship?.selected?.();const expandedKey=expanded?.dataset.learnRelationship==='true'?relationshipIdentity(expanded):'';
     list.replaceChildren();count.textContent=relations.length+'/'+relations.length;count.dataset.total=String(relations.length);
     relations.forEach((relation,index)=>{
       const left=coordinate(relation.left),right=coordinate(relation.right),row=document.createElement('button');
@@ -167,6 +223,7 @@
       row.append(leftGlyph,leftCopy,aspectGlyph,rightGlyph,rightCopy);list.appendChild(row);
       const key=[row.dataset.leftPlacement,row.dataset.aspect,row.dataset.rightPlacement,row.getAttribute('aria-label')].join('|');if(key===selectedKey)row.setAttribute('aria-current','true');
     });
+    if(expandedKey){const replacement=[...list.querySelectorAll('[data-learn-relationship="true"]')].find(row=>relationshipIdentity(row)===expandedKey);if(replacement)window.RelphiInlineRelationship?.expand?.(replacement)}
   }
   function annotateHouseLayer(layerName,slot){const layer=document.querySelector(`[data-layer="${layerName}"]`);if(!layer)return;Array.from(layer.children).filter(node=>node.tagName?.toLowerCase()==='path').forEach((node,index)=>{node.classList.add('sky-foundation-interactive','sky-foundation-house-sector');Object.assign(node.dataset,{interactive:'house',focusPiece:'house',sky:slot,house:String(index+1)});node.setAttribute('tabindex','0');node.setAttribute('role','button');node.setAttribute('aria-label',window.RelphiSkyStartupMode?.readMode?.()==='learn'?`House ${index+1}`:`Sky ${slot} house ${index+1}`)})}
   function annotateSigns(){const layer=document.querySelector('[data-layer="zodiac"]');if(!layer)return;const paths=Array.from(layer.children).filter(node=>node.tagName?.toLowerCase()==='path'),glyphs=Array.from(layer.children).filter(node=>node.tagName?.toLowerCase()==='g');paths.forEach((node,index)=>{node.classList.add('sky-foundation-interactive','sky-foundation-sign-sector');Object.assign(node.dataset,{interactive:'sign',focusPiece:'sign',sign:String(index)});node.setAttribute('tabindex','0');node.setAttribute('role','button');node.setAttribute('aria-label',SIGN_NAMES[index])});glyphs.forEach((node,index)=>{node.classList.add('sky-foundation-sign-glyph');Object.assign(node.dataset,{focusPiece:'sign',sign:String(index)});node.style.pointerEvents='none'})}
@@ -434,6 +491,7 @@
         node.classList.toggle('is-hovered',!!hoverState&&!lockedState&&matchesNode(node,hoverState)||(!filterState&&!rowLockedState&&!!rowHoverState&&rowMarksNode(node,rowHoverState)));
       });
     }
+    updateLearnCore(lockedState);
     if(wheelOnlyExternal)return;
     ['A','B'].forEach(slot=>{const panel=document.getElementById(slot==='A'?'skyFoundationA':'skyFoundationB');if(!panel)return;panel.classList.toggle('has-ledger-isolation',!!filterState);panel.querySelectorAll('.sky-foundation-row[data-placement]').forEach(row=>{row.classList.toggle('is-kept',!!filterState&&filterKeep.placements.has(`${slot}:${row.dataset.placement}`));row.classList.toggle('is-selected',!!lockedState&&matchesNode(row,lockedState));row.classList.toggle('is-hovered',!!hoverState&&!lockedState&&matchesNode(row,hoverState))})});
     // A clicked/tapped wheel selection temporarily narrows the Relationships
@@ -633,7 +691,9 @@
     clearWheel:clearExternalWheel,
     captureFocus,
     restoreFocus,
-    getSelectionOrigin
+    getSelectionOrigin,
+    learnSignContext,
+    learnPairContext
   });
   // Wheel-to-Relationships navigation uses endpoint identity rather than a
   // transient list index, so A↔A, B↔B and A↔B survive sorting and filtering.
@@ -682,6 +742,7 @@
       (spec.kind==='sign'?{name:SIGN_NAMES[Number(spec.value)],description:'Explore this zodiac sign and its relationships.'}:
        spec.kind==='house'?{name:'House '+spec.value,description:'Explore this house of experience.'}:null);
     if(!vocab?.description){label.hidden=true;return}
+    if(wheel.dataset.skyExperience==='learn'){const index=learnSignForState(spec),ctx=Number.isInteger(index)?learnSignContext(index):null;if(ctx)node=wheel.querySelector('[data-layer="a-houses"] [data-house="'+ctx.house+'"]')||node}
     const bbox=node?.getBoundingClientRect(),outer=wheel.getBoundingClientRect();
     // Four corner spaces outside the circular perimeter, determined by the
     // activated node position. Use the upper/lower and left/right half of wheel.
@@ -703,6 +764,7 @@
     wheelOnlyExternal=false;
     rowLockedState=null;rowHoverState=null;
     const next=specFrom(node);
+    if(next?.kind==='aspect'&&window.RelphiSkyStartupMode?.readMode?.()==='learn')next.learnAnchor=learnSignForState(lockedState);
     if(same(lockedState,next)){lockedState=null;selectionOrigin=null}
     else{lockedState=next;selectionOrigin=originFromNode(node,next)}
     hoverState=null;applyState();
@@ -847,6 +909,8 @@
     },true);
     root.addEventListener('click',event=>{
       wheelOnlyExternal=false;
+      const coreButton=event.target.closest?.('#skyFoundationLearnCore button[data-core-house],#skyFoundationLearnCore button[data-core-step]');if(coreButton){browseLearnHouse(coreButton);return}
+      if(event.target.closest?.('#skyFoundationLearnCore'))return;
       const row=event.target.closest?.('.sky-foundation-relationship-row[data-relation-index]');
       if(row)return;
       const node=interactive(event);if(node){event.preventDefault();toggleInteractiveNode(node);return}if(clearableWhitespace(event))clearFromWhitespace()
