@@ -101,7 +101,7 @@ try{
    const coreErrors=[];
    page.on('pageerror',e=>{coreErrors.push(e.message);console.log('CORE PAGE ERROR',e.message)});
    await core.getByRole('tab',{name:'Rulers',exact:true}).click();
-   console.log('CORE RULERS STATE',JSON.stringify(await core.evaluate(el=>({tab:el.dataset.coreTab,selected:el.querySelector('[aria-selected="true"]')?.textContent,key:el.querySelector('[data-core-structure]')?.dataset.structureKey,content:el.querySelector('[data-core-structure]')?.innerText,buttons:el.querySelectorAll('[data-core-ruler]').length,ready:!!window.RelphiSkyCardHitsStructure?.renderTemplate}))));
+   console.log('CORE RULERS STATE',JSON.stringify(await core.evaluate(el=>({tab:el.dataset.coreActiveTab,selected:el.querySelector('[aria-selected="true"]')?.textContent,key:el.querySelector('[data-core-structure]')?.dataset.structureKey,content:el.querySelector('[data-core-structure]')?.innerText,buttons:el.querySelectorAll('[data-core-ruler]').length,ready:!!window.RelphiSkyCardHitsStructure?.renderTemplate}))));
    await core.locator('[data-core-ruler="Mars"]').waitFor({state:'visible',timeout:5000});
    assert.equal(await core.locator('[data-core-ruler]').count(),7,'All seven rulers are available in Learn');
    assert.equal(await core.getByRole('tab',{name:'Rulers',exact:true}).getAttribute('aria-selected'),'true');
@@ -116,6 +116,10 @@ try{
    assert.equal(await core.locator('.sky-card-ruler-detail').count(),0);
    await core.getByRole('tab',{name:'Signs',exact:true}).click();
    assert.equal(await core.locator('[data-core-select-sign]').count(),12);
+   await core.locator('[data-core-select-sign="7"]').click();
+   assert.equal(await core.locator('[data-core-select-sign="7"]').getAttribute('aria-expanded'),'true','Switching tabs must not intercept sign selection');
+   await core.locator('[data-core-select-sign="7"]').click();
+   assert.equal(await core.locator('[data-core-select-sign="7"]').getAttribute('aria-expanded'),'false');
    await core.getByRole('tab',{name:'Houses',exact:true}).click();
    assert.equal(await core.getByRole('tab',{name:'Houses',exact:true}).getAttribute('aria-selected'),'true');
    assert.deepEqual(coreErrors,[]);

@@ -113,13 +113,13 @@
       mount.after(core);
     }
     core.hidden=false;
-    const tab=core.dataset.coreTab||'houses',asc=learnAsc(),ruler=state?.kind==='ruler'?state.value:'';
+    const tab=core.dataset.coreActiveTab||'houses',asc=learnAsc(),ruler=state?.kind==='ruler'?state.value:'';
     const structure=core.querySelector('[data-core-structure]'),structureKey=[tab,asc,ruler].join('|');
     const detail=core.querySelector('[data-core-content]'),prompt=core.querySelector('[data-core-prompt]');
     if(structure.dataset.structureKey!==structureKey){
       if(structure.contains(detail))structure.after(detail);
       structure.dataset.structureKey=structureKey;
-      core.querySelectorAll('[data-core-tab]').forEach(button=>button.setAttribute('aria-selected',String(button.dataset.coreTab===tab)));
+      core.querySelectorAll('button[data-core-tab]').forEach(button=>button.setAttribute('aria-selected',String(button.dataset.coreTab===tab)));
       if(tab==='vocab')window.RelphiSkyVocab?.renderTemplate?.(structure,asc);
       else window.RelphiSkyCardHitsStructure?.renderTemplate?.(structure,asc,ruler,tab);
     }
@@ -949,8 +949,8 @@
       wheelOnlyExternal=false;
       const core=event.target.closest?.('#skyFoundationLearnCore');
       if(core){
-        const tab=event.target.closest('[data-core-tab]'),ruler=event.target.closest('[data-core-ruler]'),sign=event.target.closest('[data-core-select-sign]'),clear=event.target.closest('[data-core-clear-ruler]');
-        if(tab){core.dataset.coreTab=tab.dataset.coreTab;updateLearnCore(lockedState);return}
+        const tab=event.target.closest('button[data-core-tab]'),ruler=event.target.closest('[data-core-ruler]'),sign=event.target.closest('[data-core-select-sign]'),clear=event.target.closest('[data-core-clear-ruler]');
+        if(tab){core.dataset.coreActiveTab=tab.dataset.coreTab;updateLearnCore(lockedState);return}
         if(sign){toggleInteractiveNode(sign);return}
         if(ruler||clear){const next=clear?null:ruler?{kind:'ruler',sky:null,value:ruler.dataset.coreRuler}:{kind:'sign',sky:null,value:Number(sign.dataset.coreSelectSign)};
           lockedState=same(lockedState,next)?null:next;hoverState=null;rowLockedState=null;rowHoverState=null;selectionOrigin=lockedState?{source:'Sky Card Core',...lockedState}:null;
