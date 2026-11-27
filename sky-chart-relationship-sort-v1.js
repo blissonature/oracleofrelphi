@@ -507,6 +507,17 @@ function chartPairVotes(row){
   }
   return votes;
 }
+function compatibilityBreakdown(row){
+  const isLearn=row.dataset.learnRelationship==='true';
+  const a=Number(row.dataset.leftSign),b=Number(row.dataset.rightSign);
+  const asc=window.RelphiSkyStartupMode?.readLearnAscendant?.()??0;
+  const votes=isLearn?learnPairVotes(a,b,learnMod(a-asc),learnMod(b-asc)):chartPairVotes(row);
+  const entries=Object.entries(votes).map(([criterion,points])=>({criterion,points}));
+  const support=entries.filter(e=>e.points>0).reduce((n,e)=>n+e.points,0);
+  const challenge=entries.filter(e=>e.points<0).reduce((n,e)=>n-e.points,0);
+  const total=isLearn?learnWholeSignScore(row):support-challenge;
+  return {entries,support,challenge,total};
+}
 function chartCompatibility(row){
   const votes=chartPairVotes(row);
   const score=Object.values(votes).reduce((sum,v)=>sum+v,0);
@@ -684,6 +695,7 @@ window.RelphiRelationshipSort=Object.freeze({
   learnPairVotes,
   learnPairScore,
   chartPairVotes,
+  compatibilityBreakdown,
   chartCompatibility,
   referenceResolutionFor,
   referenceResolution:REFERENCE_RESOLUTION,
