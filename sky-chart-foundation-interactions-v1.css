@@ -108,8 +108,8 @@
   display:grid;
   min-width:0;
   overflow:visible;
-  border-top:1px solid rgba(31,27,24,.11);
-  border-bottom:1px solid rgba(31,27,24,.11);
+  border:1px solid rgba(31,27,24,.18);
+  border-radius:16px;
   background:#fffdf8;
 }
 
@@ -539,8 +539,8 @@
 html[data-sky-last-mode="learn"] #skyFoundationA,
 html[data-sky-last-mode="learn"] #skyFoundationB,
 html[data-sky-last-mode="learn"] .sky-one-click-outer{display:none}
-html[data-sky-last-mode="learn"] #skyFoundationRoot{grid-template-columns:minmax(0,1fr);grid-template-areas:"comparison"}
-html[data-sky-last-mode="learn"] #skyFoundationComparison{grid-column:1/-1;display:grid;grid-template-columns:minmax(245px,1fr) minmax(0,1.5fr) minmax(275px,480px);grid-template-areas:"focus focus focus" "core wheel relations";grid-template-rows:auto minmax(0,1fr);align-items:stretch;gap:10px;padding-bottom:10px}
+html[data-sky-last-mode="learn"] #skyFoundationRoot{grid-template-columns:minmax(0,1fr);grid-template-areas:"focus" "comparison"}
+html[data-sky-last-mode="learn"] #skyFoundationComparison{grid-column:1/-1;display:grid;grid-template-columns:minmax(245px,1fr) minmax(0,1.5fr) minmax(275px,480px);grid-template-areas:"core wheel relations";grid-template-rows:minmax(0,1fr);align-items:stretch;gap:10px;padding-bottom:10px}
 html[data-sky-last-mode="learn"] #skyFoundationFocus{grid-area:focus}
 html[data-sky-last-mode="learn"] #skyFoundationWheelMount{grid-area:wheel;min-height:0}
 html[data-sky-last-mode="learn"] #skyFoundationRelationships{grid-area:relations;min-width:0;container-type:inline-size;container-name:relphi-relationships}
@@ -573,7 +573,7 @@ html:not([data-sky-last-mode="learn"]) #skyFoundationLearnCore,#skyFoundationLea
 .sky-learn-pair-qualities{grid-column:1/-1;width:100%;font-size:.72rem;border-collapse:collapse;text-align:left}
 .sky-learn-pair-qualities th,.sky-learn-pair-qualities td{padding:4px;border-bottom:1px solid #ddd}
 @media(min-width:1050px){
-  html[data-sky-last-mode="learn"] #skyFoundationComparison{--learn-workspace-height:clamp(340px,calc(100svh - 190px),780px);grid-template-rows:auto var(--learn-workspace-height)}
+  html[data-sky-last-mode="learn"] #skyFoundationComparison{--learn-workspace-height:clamp(340px,calc(100svh - 190px),780px);grid-template-rows:var(--learn-workspace-height)}
   html[data-sky-last-mode="learn"] #skyFoundationFocus{grid-template-columns:minmax(248px,auto) minmax(0,1fr) auto;grid-template-rows:auto auto;align-items:end;gap:6px 8px;padding:6px 10px}
   html[data-sky-last-mode="learn"] #skyFoundationFocus>.sky-foundation-focus-heading{display:contents}
   html[data-sky-last-mode="learn"] #skyFoundationFocus .sky-chart-page-brand{grid-column:1;grid-row:1}
@@ -589,7 +589,7 @@ html:not([data-sky-last-mode="learn"]) #skyFoundationLearnCore,#skyFoundationLea
   html[data-sky-last-mode="learn"] .sky-learn-core-identity{grid-template-columns:minmax(0,1fr) minmax(58px,28%);gap:8px}
   html[data-sky-last-mode="learn"] .sky-learn-core-identity p{font-size:.86rem}
 }
-@media(max-width:1049px){html[data-sky-last-mode="learn"] #skyFoundationComparison{grid-template-columns:minmax(0,1fr);grid-template-areas:"focus" "wheel" "core" "relations";grid-template-rows:auto;align-items:start}}
+@media(max-width:1049px){html[data-sky-last-mode="learn"] #skyFoundationComparison{grid-template-columns:minmax(0,1fr);grid-template-areas:"wheel" "core" "relations";grid-template-rows:auto;align-items:start}}
 
 /* Learn uses the canonical Focus controls without Sky A/B-specific fields. */
 #skyFoundationFocus .sky-chart-filter-bar > label:has(> [data-filter="sign"]){display:none}

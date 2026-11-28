@@ -34,8 +34,8 @@
   <script src="sky-chart-startup-mode-v1.js?v=11"></script>
   <script src="sky-chart-text-editing-priority-v1.js?v=5"></script>
   <link rel="stylesheet" href="style.css?v=367">
-  <link rel="stylesheet" href="sky-chart-foundation-v1.css?v=26-fixed-nav">
-  <link rel="stylesheet" href="sky-chart-foundation-interactions-v1.css?v=83-core-mode-visibility">
+  <link rel="stylesheet" href="sky-chart-foundation-v1.css?v=27-shared-toolbar">
+  <link rel="stylesheet" href="sky-chart-foundation-interactions-v1.css?v=84-shared-toolbar">
   <link rel="stylesheet" href="sky-chart-filter-wheel-focus-v1.css?v=5">
   <link rel="stylesheet" href="sky-chart-where-when-v1.css?v=9">
   <link rel="stylesheet" href="sky-chart-time-control-v1.css?v=7">
@@ -43,7 +43,7 @@
   <link rel="stylesheet" href="sky-chart-final-pass-v1.css?v=6">
   <link rel="stylesheet" href="sky-chart-multiselect-filters-v1.css?v=13">
   <link rel="stylesheet" href="sky-chart-placement-compact-v1.css?v=4">
-  <link rel="stylesheet" href="sky-chart-single-sky-mode-v1.css?v=13">
+  <link rel="stylesheet" href="sky-chart-single-sky-mode-v1.css?v=14-shared-toolbar">
   <link rel="stylesheet" href="sky-chart-slot-card-controls-v1.css?v=1">
   <link rel="stylesheet" href="sky-chart-saved-skies-v1.css?v=10">
   <link rel="stylesheet" href="sky-chart-house-multiselect-v1.css?v=5">
@@ -78,8 +78,9 @@
   <main class="tarot-app-shell">
     <section id="chartPanel" class="tarot-tool-panel" aria-label="Sky Chart">
       <section id="skyFoundationRoot" aria-label="Sky Chart foundation" aria-busy="true">
+         <section id="skyFoundationFocus" class="sky-foundation-focus-panel" aria-label="Focus"><header class="sky-foundation-focus-heading"><div class="sky-chart-page-brand"><div><h1>Sky <span class="red">Chart</span></h1><p>by Oracle of <span class="red">Relphi</span></p></div></div><span class="sky-focus-heading-controls" aria-label="Focus display controls"></span></header></section>
         <aside id="skyFoundationA" class="sky-foundation-panel" aria-label="Sky A"><header class="sky-foundation-heading"><span class="sky-foundation-slot" style="--slot-color:#c9211e">Sky A</span><span class="sky-foundation-name">Sky A</span></header><button type="button" class="sky-one-click-outer" data-sky-oneclick-external="A">1-Click Here and Now</button><div class="sky-foundation-body"></div></aside>
-        <section id="skyFoundationComparison" class="sky-foundation-panel" aria-label="Sky comparison"><section id="skyFoundationFocus" class="sky-foundation-focus-panel" aria-label="Focus"><header class="sky-foundation-focus-heading"><div class="sky-chart-page-brand"><div><h1>Sky <span class="red">Chart</span></h1><p>by Oracle of <span class="red">Relphi</span></p></div></div><span class="sky-focus-heading-controls" aria-label="Focus display controls"></span></header></section><div id="skyFoundationWheelMount"></div></section>
+        <section id="skyFoundationComparison" class="sky-foundation-panel" aria-label="Sky comparison"><div id="skyFoundationWheelMount"></div></section>
         <aside id="skyFoundationB" class="sky-foundation-panel" aria-label="Sky B"><header class="sky-foundation-heading"><span class="sky-foundation-slot" style="--slot-color:#2462d0">Sky B</span><span class="sky-foundation-name">Sky B</span></header><button type="button" class="sky-one-click-outer" data-sky-oneclick-external="B">1-Click Here and Now</button><div class="sky-foundation-body"></div></aside>
       </section>
     </section>
@@ -108,7 +109,7 @@
   <script src="sky-chart-placement-collision-order-v1.js?v=19"></script>
   <script src="sky-chart-card-shell-v2.js?v=4"></script>
   <script src="sky-chart-quick-copy-v2.js?v=3"></script>
-  <script src="sky-chart-foundation-v2.js?v=59"></script>
+  <script src="sky-chart-foundation-v2.js?v=60-shared-toolbar"></script>
   <script src="sky-chart-single-sky-layout-v1.js?v=7"></script>
   <script src="sky-chart-harmonic-candidate-prune-v1.js?v=1"></script>
   <script src="sky-chart-foundation-interactions-v2.js?v=69-core-mode-visibility"></script>
@@ -139,7 +140,7 @@
   <script src="sky-chart-progressive-comparison-v1.js?v=10"></script>
   <script src="sky-chart-selected-relationship-wheel-bridge-v1.js?v=5"></script>
   <script src="sky-chart-sign-house-and-aspect-isolate-v1.js?v=3"></script>
-  <script src="sky-chart-final-pass-v2.js?v=30-no-focus-label"></script>
+  <script src="sky-chart-final-pass-v2.js?v=31-shared-toolbar"></script>
   <script src="sky-chart-final-behavior-v2.js?v=5"></script>
   <script src="sky-chart-highlight-without-filtering-v1.js?v=7"></script>
   <script src="sky-chart-orb-control-v1.js?v=36"></script>

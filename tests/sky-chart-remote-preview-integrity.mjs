@@ -335,6 +335,9 @@ try{
      return {mode:document.documentElement.dataset.skyLastMode,display:getComputedStyle(core).display,hasBox:!!core.getClientRects().length};
    });
    assert.deepEqual(immediate,{mode:'single',display:'none',hasBox:false});
+   const toolbarLayout=await focus.evaluate(el=>({root:el.parentElement.id,first:el.parentElement.firstElementChild===el,above:el.getBoundingClientRect().bottom<=document.getElementById('skyFoundationA').getBoundingClientRect().top+1,button:el.querySelector('[data-sky-experience="learn"]').getBoundingClientRect().right<=innerWidth}));
+   assert.deepEqual(toolbarLayout,{root:'skyFoundationRoot',first:true,above:true,button:true});
+   await page.screenshot({path:'sky-remote-explore-toolbar-'+viewport.width+'.png'});
    await page.waitForSelector('#skyFoundationWheelMount .sky-foundation-wheel:not([data-sky-experience="learn"])');
    assert.equal(await core.isVisible(),false);
    await focus.locator('[data-sky-experience="learn"]').click();
@@ -343,6 +346,22 @@ try{
    assert.equal(await core.locator('.sky-core-house-tile').count(),12);
    console.log('CORE MODE VISIBILITY PASS',viewport.width,JSON.stringify(immediate));
 
+   // Start directly in Explore with an established sky and exercise both navigation directions.
+   await page.evaluate(a=>{localStorage.setItem('relphiSkyChartA',JSON.stringify(a));localStorage.setItem('relphiSkyChartLastModeV1','single')},a);
+   await page.reload({waitUntil:'domcontentloaded'});
+   await focus.locator('[data-sky-experience="learn"]').waitFor({state:'visible',timeout:20000});
+   await page.waitForSelector('#skyFoundationWheelMount .sky-foundation-wheel[data-single-sky]',{timeout:20000});
+   const topLayout=await focus.evaluate(el=>({first:el.parentElement.firstElementChild===el,above:el.getBoundingClientRect().bottom<=document.getElementById('skyFoundationA').getBoundingClientRect().top+1,button:el.querySelector('[data-sky-experience="learn"]').getBoundingClientRect().right<=innerWidth}));
+   assert.deepEqual(topLayout,{first:true,above:true,button:true});
+   await focus.locator('[data-sky-experience="learn"]').click();
+   await page.waitForSelector('#skyFoundationWheelMount .sky-foundation-wheel[data-sky-experience="learn"]');
+   await core.waitFor({state:'visible'});
+   await focus.locator('[data-sky-experience="single"]').click();
+   await page.waitForSelector('#skyFoundationWheelMount .sky-foundation-wheel[data-single-sky]');
+   assert.equal(await core.isVisible(),false);
+   await focus.locator('[data-sky-experience="learn"]').click();
+   await page.waitForSelector('#skyFoundationWheelMount .sky-foundation-wheel[data-sky-experience="learn"]');
+   console.log('SHARED MODE TOOLBAR PASS',viewport.width,JSON.stringify(topLayout));
   }catch(e){failed=true;console.error('LEARN '+viewport.width+' FAILED '+e.message)}
   finally{await ctx.close()}
  }

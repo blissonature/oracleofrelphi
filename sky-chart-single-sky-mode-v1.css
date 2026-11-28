@@ -1,5 +1,5 @@
 html[data-sky-last-mode="single"][data-sky-b-present="false"]:not([data-sky-b-editing="true"]) #skyFoundationB{display:none!important}
-html[data-sky-last-mode="single"][data-sky-b-present="false"]:not([data-sky-b-editing="true"]) #skyFoundationRoot{grid-template-columns:minmax(220px,270px) minmax(520px,1fr);grid-template-areas:"a comparison"}
+html[data-sky-last-mode="single"][data-sky-b-present="false"]:not([data-sky-b-editing="true"]) #skyFoundationRoot{grid-template-columns:minmax(220px,270px) minmax(520px,1fr);grid-template-areas:"focus focus" "a comparison"}
 .sky-slot-presence-button{appearance:none;border:1px solid rgba(31,27,24,.2);border-radius:999px;background:#fff;color:#241f1b;padding:.38rem .65rem;font:800 .64rem/1 system-ui,sans-serif;white-space:nowrap;cursor:pointer}
 .sky-slot-presence-button:hover,.sky-slot-presence-button:focus-visible{background:#f4efe8;border-color:rgba(31,27,24,.4);outline:none}
 .sky-slot-remove{color:#8f1f1b}
@@ -35,6 +35,6 @@ html[data-sky-last-mode="single"][data-sky-b-present="false"]:not([data-sky-b-ed
 html[data-sky-last-mode="single"][data-sky-b-present="false"]:not([data-sky-b-editing="true"]) .sky-chart-house-list-header,
 html[data-sky-last-mode="single"][data-sky-b-present="false"]:not([data-sky-b-editing="true"]) .sky-chart-house-list-item{grid-template-columns:minmax(0,1fr) repeat(2,40px)!important}
 html[data-sky-last-mode="single"][data-sky-b-present="false"]:not([data-sky-b-editing="true"]) .sky-chart-house-list-header>span:last-child{display:none!important}
-@media(max-width:900px){html[data-sky-last-mode="single"][data-sky-b-present="false"]:not([data-sky-b-editing="true"]) #skyFoundationRoot{grid-template-columns:1fr;grid-template-areas:"a" "comparison"}}
+@media(max-width:900px){html[data-sky-last-mode="single"][data-sky-b-present="false"]:not([data-sky-b-editing="true"]) #skyFoundationRoot{grid-template-columns:1fr;grid-template-areas:"focus" "a" "comparison"}}
 @media(max-width:410px){html[data-sky-last-mode="single"][data-sky-b-present="false"]:not([data-sky-b-editing="true"]) .sky-chart-placement-list-choices{grid-template-columns:repeat(2,32px)!important}}
-@media(max-width:620px){html[data-sky-last-mode="single"][data-sky-b-present="false"]:not([data-sky-b-editing="true"]) #skyFoundationRoot{grid-template-columns:1fr;grid-template-areas:"a" "comparison"}.sky-slot-presence-button{padding:.34rem .55rem;font-size:.6rem}}
+@media(max-width:620px){html[data-sky-last-mode="single"][data-sky-b-present="false"]:not([data-sky-b-editing="true"]) #skyFoundationRoot{grid-template-columns:1fr;grid-template-areas:"focus" "a" "comparison"}.sky-slot-presence-button{padding:.34rem .55rem;font-size:.6rem}}

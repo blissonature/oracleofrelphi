@@ -409,10 +409,9 @@
   }
 
   function ensureFocusStructure(relationshipPanel, bar) {
-    if (!relationshipPanel || !bar) return;
-
+    const root = document.getElementById('skyFoundationRoot');
     const comparison = document.getElementById('skyFoundationComparison');
-    if (!comparison) return;
+    if (!root || !comparison) return;
 
     let focusPanel = document.getElementById('skyFoundationFocus');
     if (!focusPanel) {
@@ -420,7 +419,7 @@
       focusPanel.id = 'skyFoundationFocus';
       focusPanel.className = 'sky-foundation-focus-panel';
       focusPanel.setAttribute('aria-label', 'Focus');
-      focusPanel.innerHTML = '<header class="sky-foundation-focus-heading"><span class="sky-focus-heading-controls" aria-label="Focus display controls"></span></header>';
+      focusPanel.innerHTML = '<header class="sky-foundation-focus-heading"><div class="sky-chart-page-brand"><div><h1>Sky <span class="red">Chart</span></h1><p>by Oracle of <span class="red">Relphi</span></p></div></div><span class="sky-focus-heading-controls" aria-label="Focus display controls"></span></header>';
     }
 
     const focusHeading = focusPanel.querySelector(':scope > .sky-foundation-focus-heading');
@@ -486,15 +485,10 @@
       button.setAttribute('aria-pressed',String(active));
       button.classList.toggle('is-active',active);
     });
-    if (bar.parentElement !== focusPanel) focusPanel.appendChild(bar);
-
-    const wheelMount = comparison.querySelector(':scope > #skyFoundationWheelMount');
-    if (wheelMount) {
-      if (focusPanel.parentElement !== comparison || focusPanel.nextElementSibling !== wheelMount) comparison.insertBefore(focusPanel, wheelMount);
-    } else if (!focusPanel.isConnected) {
-      comparison.prepend(focusPanel);
-    }
+    if (bar && bar.parentElement !== focusPanel) focusPanel.appendChild(bar);
+    if (focusPanel.parentElement !== root || root.firstElementChild !== focusPanel) root.prepend(focusPanel);
     comparison.querySelector(':scope > .sky-foundation-heading')?.remove();
+    if (!relationshipPanel) return;
 
     let relationshipControls = relationshipPanel.querySelector(':scope > .sky-relationship-controls');
     if (!relationshipControls) {
@@ -555,9 +549,9 @@
 
   function addFilters() {
     const relationshipPanel = document.getElementById('skyFoundationRelationships');
-    if (!relationshipPanel) return;
     let focusPanel = document.getElementById('skyFoundationFocus');
-    let bar = focusPanel?.querySelector(':scope > .sky-chart-filter-bar') || relationshipPanel.querySelector(':scope > .sky-chart-filter-bar');
+    let bar = focusPanel?.querySelector(':scope > .sky-chart-filter-bar') || relationshipPanel?.querySelector(':scope > .sky-chart-filter-bar');
+    if (!relationshipPanel) {ensureFocusStructure(null,bar);return;}
     if (!bar) {
       bar = document.createElement('div');
       bar.className = 'sky-chart-filter-bar';
@@ -655,7 +649,7 @@
     if (whereWhenEditing() && window.RelphiSkyStartupMode?.readMode?.()!=='learn') {
       const relationshipPanel=document.getElementById('skyFoundationRelationships');
       const bar=document.querySelector('#skyFoundationFocus > .sky-chart-filter-bar');
-      if(relationshipPanel&&bar){ensureFocusStructure(relationshipPanel,bar);syncLearnFilters(bar)}
+      ensureFocusStructure(relationshipPanel,bar);if(bar)syncLearnFilters(bar);
       return;
     }
     ['A','B'].forEach(slot => {
