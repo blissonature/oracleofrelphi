@@ -353,6 +353,16 @@ try{
    await page.waitForSelector('#skyFoundationWheelMount .sky-foundation-wheel[data-single-sky]',{timeout:20000});
    const topLayout=await focus.evaluate(el=>({first:el.parentElement.firstElementChild===el,above:el.getBoundingClientRect().bottom<=document.getElementById('skyFoundationA').getBoundingClientRect().top+1,button:el.querySelector('[data-sky-experience="learn"]').getBoundingClientRect().right<=innerWidth}));
    assert.deepEqual(topLayout,{first:true,above:true,button:true});
+   const relationships=page.locator('#skyFoundationRelationships');
+   await relationships.waitFor({state:'visible',timeout:20000});
+   const exploreLayout=await relationships.evaluate(el=>{
+     const p=el.getBoundingClientRect(),w=document.getElementById('skyFoundationWheelMount').getBoundingClientRect(),a=document.getElementById('skyFoundationA').getBoundingClientRect();
+     return {right:p.left>=w.right-1,below:p.top>=w.bottom-1,cardBefore:a.right<=w.left+1,within:p.right<=innerWidth+1,columns:getComputedStyle(document.getElementById('skyFoundationRelationshipList')).gridTemplateColumns.split(' ').length};
+   });
+   if(viewport.width>=1050)assert.ok(exploreLayout.right&&exploreLayout.cardBefore&&exploreLayout.within&&exploreLayout.columns===1,'Explore must show Sky A, wheel, and Relationships from left to right');
+   else assert.ok(exploreLayout.below&&exploreLayout.within,'Narrow Explore must keep Relationships below the wheel without horizontal clipping');
+   console.log('EXPLORE RELATIONSHIPS LAYOUT PASS',viewport.width,JSON.stringify(exploreLayout));
+   await page.screenshot({path:'sky-remote-explore-relationships-'+viewport.width+'.png',fullPage:true});
    await focus.locator('[data-sky-experience="learn"]').click();
    await page.waitForSelector('#skyFoundationWheelMount .sky-foundation-wheel[data-sky-experience="learn"]');
    await core.waitFor({state:'visible'});
