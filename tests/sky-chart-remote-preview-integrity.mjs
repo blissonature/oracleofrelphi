@@ -180,13 +180,19 @@ try{
    const venus=core.locator('[data-core-ruler="Venus"]');
    const keptSigns=()=>page.locator('#skyFoundationWheelMount [data-interactive="sign"].is-kept').evaluateAll(nodes=>nodes.map(n=>Number(n.dataset.sign)).sort((a,b)=>a-b));
    const beforeHover=await core.locator('.sky-card-rulers-grid').innerHTML();
-   const countBeforeHover=await page.locator('#skyFoundationRelationshipCount').textContent();
+   // Legacy filter timers may rewrite the hidden raw counter (e.g. 66/66).
+   // Compare the visible list identities and the canonical displayed match count.
+   const relationshipSnapshot=()=>page.evaluate(()=>({
+     count:document.getElementById('skyFoundationRelationshipCount').dataset.matchCount,
+     visible:[...document.querySelectorAll('#skyFoundationRelationshipList>.sky-foundation-relationship-row[data-relation-index]')].filter(r=>!r.hidden&&getComputedStyle(r).display!=='none'&&getComputedStyle(r).visibility!=='hidden').map(r=>r.dataset.relationIndex)
+   }));
+   const countBeforeHover=await relationshipSnapshot();
    if(viewport.width>=1050)await venus.hover();
    else await venus.dispatchEvent('pointerover',{pointerType:'mouse',relatedTarget:null});
    assert.deepEqual(await keptSigns(),[1,6],'Hover previews Venus domiciles on wheel');
    assert.equal(await core.locator('.sky-card-ruler-detail').count(),0,'Hover must not expand a ruler');
    assert.equal(await core.locator('.sky-card-rulers-grid').innerHTML(),beforeHover,'Hover must not re-render compact tiles');
-   assert.equal(await page.locator('#skyFoundationRelationshipCount').textContent(),countBeforeHover,'Hover must not change Relationships count');
+   assert.deepEqual(await relationshipSnapshot(),countBeforeHover,'Hover must not change the actual visible Relationships or displayed match count');
    if(viewport.width>=1050)await core.getByRole('tab',{name:'Rulers',exact:true}).hover();
    else await venus.dispatchEvent('pointerout',{pointerType:'mouse',relatedTarget:null});
    assert.deepEqual(await keptSigns(),[],'Wheel restores on pointer exit');

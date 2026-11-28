@@ -474,7 +474,7 @@ function renderToken(node){
     node.appendChild(meta);
   }
 }
-function rerenderTokens(root=document){root.querySelectorAll?.('.sky-vocab-token').forEach(renderToken)}
+function rerenderTokens(root=document,{reset=false}={}){root.querySelectorAll?.('.sky-vocab-token').forEach(node=>{if(reset)node.dataset.vocabLocalStage='0';renderToken(node)})}
 
 function phrasePlacement(record){
   const frag=document.createDocumentFragment();
@@ -1499,7 +1499,7 @@ function refreshDisplayLayers(){
   syncControlState();
   // A global preset resets local reveals consistently, regardless of the
   // currently visible mode. The token renderer remains shared by all Vocab.
-  document.querySelectorAll('.sky-vocab-token').forEach(node=>{node.dataset.vocabLocalStage='0';renderToken(node)});
+  rerenderTokens(document,{reset:true});
   refreshGroupPreviews();
 }
 function rerenderPanels(){vocabWheelTouchLine=null;clearVocabWheelContext();syncControlState();document.querySelectorAll('[data-sky-vocab-panel]').forEach(panel=>renderParagraph(panel.dataset.skyVocabPanel,panel))}
